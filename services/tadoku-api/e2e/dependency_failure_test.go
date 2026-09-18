@@ -11,7 +11,7 @@ import (
 // when the same dependency and failure behavior are already covered here.
 func TestDependencyFailures(t *testing.T) {
 	closedPool := openClosedPool(t, api.db.DSN)
-	handler, err := newTestRouter(closedPool, keto.ReadURL())
+	handler, err := newTestRouter(t.Context(), closedPool, keto.ReadURL())
 	if err != nil {
 		t.Fatal(err)
 	}

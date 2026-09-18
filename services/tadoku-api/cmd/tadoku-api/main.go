@@ -33,6 +33,7 @@ type config struct {
 	MetricsPort int    `validate:"gt=0,lte=65535" envconfig:"metrics_port" default:"9090"`
 	ServiceName string `validate:"required" envconfig:"service_name" default:"tadoku-api"`
 	JWKS        string `validate:"required"`
+	JWTIssuer   string `envconfig:"jwt_issuer"`
 	KetoReadURL string `validate:"required" envconfig:"keto_read_url"`
 
 	AuthzURL     string `validate:"required" envconfig:"authz_url"`
@@ -44,6 +45,7 @@ type config struct {
 	Postgres               postgresconfig.Config `ignored:"true"`
 
 	DialTimeout           time.Duration `validate:"gt=0" envconfig:"dial_timeout" default:"3s"`
+	MaxTokenAge           time.Duration `validate:"gt=0" envconfig:"max_token_age" default:"24h"`
 	ResponseHeaderTimeout time.Duration `validate:"gt=0" envconfig:"response_header_timeout" default:"10s"`
 	RequestTimeout        time.Duration `validate:"gt=0" envconfig:"request_timeout" default:"30s"`
 	IdleTimeout           time.Duration `validate:"gt=0" envconfig:"idle_timeout" default:"30s"`
@@ -73,6 +75,8 @@ func loadConfig() (config, error) {
 }
 
 type application struct {
+	ctx          context.Context
+	cancel       context.CancelFunc
 	server       *http.Server
 	listener     net.Listener
 	serverErrors chan error
@@ -85,18 +89,75 @@ type application struct {
 	pool            *pgxpool.Pool
 }
 
-func start(cfg config, logger *slog.Logger) (*application, error) {
+type pgxPoolCollector struct {
+	pool                *pgxpool.Pool
+	acquireCount        *prometheus.Desc
+	acquiredConnections *prometheus.Desc
+	emptyAcquireCount   *prometheus.Desc
+	acquireDuration     *prometheus.Desc
+}
+
+func newPGXPoolCollector(pool *pgxpool.Pool) *pgxPoolCollector {
+	return &pgxPoolCollector{
+		pool: pool,
+		acquireCount: prometheus.NewDesc(
+			"tadoku_api_postgres_pool_acquire_count_total",
+			"Total number of successful PostgreSQL pool acquisitions.",
+			nil,
+			nil,
+		),
+		acquiredConnections: prometheus.NewDesc(
+			"tadoku_api_postgres_pool_acquired_connections",
+			"Number of PostgreSQL connections currently acquired from the pool.",
+			nil,
+			nil,
+		),
+		emptyAcquireCount: prometheus.NewDesc(
+			"tadoku_api_postgres_pool_empty_acquire_count_total",
+			"Total number of successful PostgreSQL pool acquisitions that waited for a connection.",
+			nil,
+			nil,
+		),
+		acquireDuration: prometheus.NewDesc(
+			"tadoku_api_postgres_pool_acquire_duration_seconds_total",
+			"Total time spent on successful PostgreSQL pool acquisitions.",
+			nil,
+			nil,
+		),
+	}
+}
+
+func (c *pgxPoolCollector) Describe(descriptions chan<- *prometheus.Desc) {
+	descriptions <- c.acquireCount
+	descriptions <- c.acquiredConnections
+	descriptions <- c.emptyAcquireCount
+	descriptions <- c.acquireDuration
+}
+
+func (c *pgxPoolCollector) Collect(metrics chan<- prometheus.Metric) {
+	stats := c.pool.Stat()
+	metrics <- prometheus.MustNewConstMetric(c.acquireCount, prometheus.CounterValue, float64(stats.AcquireCount()))
+	metrics <- prometheus.MustNewConstMetric(c.acquiredConnections, prometheus.GaugeValue, float64(stats.AcquiredConns()))
+	metrics <- prometheus.MustNewConstMetric(c.emptyAcquireCount, prometheus.CounterValue, float64(stats.EmptyAcquireCount()))
+	metrics <- prometheus.MustNewConstMetric(c.acquireDuration, prometheus.CounterValue, stats.AcquireDuration().Seconds())
+}
+
+func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, error) {
+	ctx, cancel := context.WithCancel(ctx)
+	started := false
+	defer func() {
+		if !started {
+			cancel()
+		}
+	}()
+
 	logger = logger.With("service", cfg.ServiceName)
-	authenticate, err := transporthttp.NewJWTAuthentication(cfg.JWKS, cfg.DialTimeout)
+	authenticate, err := transporthttp.NewJWTAuthentication(ctx, cfg.JWKS, cfg.DialTimeout, cfg.MaxTokenAge, cfg.JWTIssuer, logger)
 	if err != nil {
 		return nil, err
 	}
 
 	metrics := prometheus.NewRegistry()
-	metrics.MustRegister(
-		collectors.NewGoCollector(),
-		collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
-	)
 
 	transport := &http.Transport{
 		Proxy:                 http.ProxyFromEnvironment,
@@ -110,7 +171,7 @@ func start(cfg config, logger *slog.Logger) (*application, error) {
 		ExpectContinueTimeout: time.Second,
 	}
 
-	startupContext, cancelStartup := context.WithTimeout(context.Background(), cfg.DialTimeout)
+	startupContext, cancelStartup := context.WithTimeout(ctx, cfg.DialTimeout)
 	defer cancelStartup()
 
 	pool, err := postgres.Open(startupContext, cfg.Postgres.WithApplicationName(cfg.ServiceName).URL(), cfg.PostgresMaxConnections)
@@ -119,13 +180,17 @@ func start(cfg config, logger *slog.Logger) (*application, error) {
 		return nil, fmt.Errorf("open postgres: %s", cfg.Postgres.Redact(err))
 	}
 
-	started := false
 	defer func() {
 		if !started {
 			pool.Close()
 			transport.CloseIdleConnections()
 		}
 	}()
+	metrics.MustRegister(
+		collectors.NewGoCollector(),
+		collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
+		newPGXPoolCollector(pool),
+	)
 
 	keto := ketoclient.NewReadClient(cfg.KetoReadURL)
 	permissionChecker := permissions.NewKetoChecker(keto)
@@ -134,7 +199,7 @@ func start(cfg config, logger *slog.Logger) (*application, error) {
 	api := app.New(contentService, pool, permissionChecker)
 	rejectBanned := newBannedUserMiddleware(cfg.KetoReadURL, logger)
 
-	handler, err := transporthttp.NewHandler(api, pool.Ping, cfg.RequestTimeout, logger, authenticate, rejectBanned)
+	handler, err := transporthttp.NewHandler(api, pool.Ping, cfg.RequestTimeout, metrics, logger, authenticate, rejectBanned)
 	if err != nil {
 		return nil, err
 	}
@@ -151,7 +216,6 @@ func start(cfg config, logger *slog.Logger) (*application, error) {
 		upstreams,
 		transport,
 		cfg.RequestTimeout,
-		metrics,
 		logger,
 	)
 	if err != nil {
@@ -185,6 +249,8 @@ func start(cfg config, logger *slog.Logger) (*application, error) {
 	}
 
 	app := &application{
+		ctx:             ctx,
+		cancel:          cancel,
 		server:          server,
 		listener:        listener,
 		serverErrors:    make(chan error, 2),
@@ -223,12 +289,13 @@ func newBannedUserMiddleware(ketoReadURL string, logger *slog.Logger) func(http.
 	}, logger)
 }
 
-func (app *application) wait(ctx context.Context) error {
+func (app *application) wait() error {
 	var runErr error
 	select {
-	case <-ctx.Done():
+	case <-app.ctx.Done():
 	case runErr = <-app.serverErrors:
 	}
+	app.cancel()
 
 	shutdownContext, cancel := context.WithTimeout(context.Background(), app.shutdownTimeout)
 	defer cancel()
@@ -252,21 +319,20 @@ func (app *application) wait(ctx context.Context) error {
 
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
 
 	cfg, err := loadConfig()
 	if err != nil {
 		panic(err)
 	}
 
-	app, err := start(cfg, logger)
+	app, err := start(ctx, cfg, logger)
 	if err != nil {
 		panic(err)
 	}
 
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
-	defer stop()
-
-	if err := app.wait(ctx); err != nil {
+	if err := app.wait(); err != nil {
 		panic(err)
 	}
 }

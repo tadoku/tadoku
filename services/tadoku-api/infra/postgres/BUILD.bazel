@@ -4,6 +4,7 @@ go_library(
     name = "postgres",
     srcs = [
         "pool.go",
+        "timestamp.go",
         "transaction.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/infra/postgres",
@@ -11,6 +12,7 @@ go_library(
     deps = [
         "@com_github_jackc_pgx_v5//:pgx",
         "@com_github_jackc_pgx_v5//pgconn",
+        "@com_github_jackc_pgx_v5//pgtype",
         "@com_github_jackc_pgx_v5//pgxpool",
     ],
 )
@@ -20,6 +22,7 @@ go_test(
     srcs = [
         "pool_test.go",
         "sqlc_compat_test.go",
+        "timestamp_test.go",
         "transaction_test.go",
     ],
     args = ["-test.parallel=4"],

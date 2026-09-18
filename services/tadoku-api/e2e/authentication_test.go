@@ -33,15 +33,18 @@ func TestAuthentication(t *testing.T) {
 		},
 		{
 			description: []string{"without", "exp"},
-			want:        http.StatusOK,
+			want:        http.StatusUnauthorized,
+			skipParity:  "Tadoku API requires exp but legacy accepts tokens without it",
 		},
 		{
 			description: []string{"old", "iat"},
-			want:        http.StatusOK,
+			want:        http.StatusUnauthorized,
+			skipParity:  "Tadoku API rejects tokens older than the configured maximum age",
 		},
 		{
-			description: []string{"other", "issuer", "audience"},
-			want:        http.StatusOK,
+			description: []string{"wrong", "issuer"},
+			want:        http.StatusUnauthorized,
+			skipParity:  "Tadoku API enforces the configured issuer but legacy accepts other issuers",
 		},
 		{
 			description: []string{"lowercase", "bearer"},
@@ -112,13 +115,11 @@ func TestAuthentication(t *testing.T) {
 			want:        http.StatusUnauthorized,
 		},
 		{
-			// Legacy Identity panics when iat is missing.
 			description: []string{"missing", "iat"},
 			want:        http.StatusUnauthorized,
 			skipParity:  "legacy Identity panics when iat is missing",
 		},
 		{
-			// Service identities are intentionally unsupported by Tadoku API.
 			description: []string{"service", "token"},
 			want:        http.StatusUnauthorized,
 			skipParity:  "service identities are intentionally unsupported by Tadoku API",
@@ -127,10 +128,9 @@ func TestAuthentication(t *testing.T) {
 	for _, test := range tests {
 		name := APITestName("Authentication", test.want, test.description...)
 		t.Run(name, func(t *testing.T) {
-			legacy := implementation{name: "legacy", handler: legacyAuthentication, skip: test.skipParity}
 			runCase(t, api, name, test.want,
 				implementation{name: "tadoku-api", handler: api.handler},
-				legacy,
+				implementation{name: "legacy", handler: legacyAuthentication, skip: test.skipParity},
 			)
 		})
 	}

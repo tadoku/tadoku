@@ -2,22 +2,15 @@ package http
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"log/slog"
 	stdhttp "net/http"
 	"net/http/httputil"
 	"net/url"
-	"strconv"
 	"strings"
 	"time"
-
-	"github.com/prometheus/client_golang/prometheus"
 )
-
-const correlationHeader = "X-Request-Id"
 
 type Upstreams struct {
 	Authz     string
@@ -39,7 +32,6 @@ func RegisterProxyRoutes(
 	upstreams Upstreams,
 	transport stdhttp.RoundTripper,
 	requestTimeout time.Duration,
-	registerer prometheus.Registerer,
 	logger *slog.Logger,
 ) error {
 	if router == nil || router.rootMux == nil {
@@ -51,19 +43,11 @@ func RegisterProxyRoutes(
 	if transport == nil {
 		return fmt.Errorf("transport is required")
 	}
-	if registerer == nil {
-		return fmt.Errorf("metrics registerer is required")
-	}
 	if logger == nil {
 		return fmt.Errorf("logger is required")
 	}
-
-	duration := prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		Name: "tadoku_api_proxy_request_duration_seconds",
-		Help: "Duration of requests proxied to legacy APIs.",
-	}, []string{"route", "upstream", "mode", "status"})
-	if err := registerer.Register(duration); err != nil {
-		return fmt.Errorf("register proxy metrics: %w", err)
+	if router.requestDuration == nil {
+		return fmt.Errorf("request metrics are required")
 	}
 
 	// The gateway removes its external prefix before forwarding here.
@@ -85,7 +69,15 @@ func RegisterProxyRoutes(
 			return fmt.Errorf("%s upstream: %w", current.name, err)
 		}
 
-		handler := observe(current, requestTimeout, newReverseProxy(current, target, transport, logger), duration, logger)
+		handler := observe(
+			func(*stdhttp.Request) string { return current.prefix },
+			current.name,
+			"proxy",
+			requestTimeout,
+			newReverseProxy(current, target, transport, logger),
+			router.requestDuration,
+			logger,
+		)
 		router.rootMux.Handle(current.prefix, handler)
 		headRoutes.Handle(current.prefix, handler)
 	}
@@ -144,79 +136,4 @@ func newReverseProxy(current route, target *url.URL, transport stdhttp.RoundTrip
 			stdhttp.Error(response, stdhttp.StatusText(status), status)
 		},
 	}
-}
-
-func observe(current route, timeout time.Duration, next stdhttp.Handler, duration *prometheus.HistogramVec, logger *slog.Logger) stdhttp.Handler {
-	return stdhttp.HandlerFunc(func(response stdhttp.ResponseWriter, request *stdhttp.Request) {
-		started := time.Now()
-		ctx, cancel := context.WithTimeout(request.Context(), timeout)
-		defer cancel()
-
-		request = request.WithContext(withCorrelationID(ctx, request.Header.Get(correlationHeader)))
-		request.Header.Set(correlationHeader, correlationID(request))
-		response.Header().Set(correlationHeader, correlationID(request))
-		recorder := &statusRecorder{ResponseWriter: response}
-		next.ServeHTTP(recorder, request)
-
-		status := recorder.status
-		if status == 0 {
-			status = stdhttp.StatusOK
-		}
-		elapsed := time.Since(started)
-		duration.WithLabelValues(current.prefix, current.name, "proxy", strconv.Itoa(status)).Observe(elapsed.Seconds())
-		logger.InfoContext(request.Context(), "request completed",
-			"correlation_id", correlationID(request),
-			"method", request.Method,
-			"route", current.prefix,
-			"upstream", current.name,
-			"mode", "proxy",
-			"status", status,
-			"latency", elapsed,
-		)
-	})
-}
-
-type statusRecorder struct {
-	stdhttp.ResponseWriter
-	status int
-}
-
-func (r *statusRecorder) WriteHeader(status int) {
-	if status >= 100 && status < 200 {
-		r.ResponseWriter.WriteHeader(status)
-		return
-	}
-	if r.status != 0 {
-		return
-	}
-	r.status = status
-	r.ResponseWriter.WriteHeader(status)
-}
-
-func (r *statusRecorder) Write(body []byte) (int, error) {
-	if r.status == 0 {
-		r.WriteHeader(stdhttp.StatusOK)
-	}
-	return r.ResponseWriter.Write(body)
-}
-
-func (r *statusRecorder) Unwrap() stdhttp.ResponseWriter { return r.ResponseWriter }
-
-type correlationIDKey struct{}
-
-func withCorrelationID(ctx context.Context, id string) context.Context {
-	if id == "" {
-		var value [16]byte
-		if _, err := rand.Read(value[:]); err == nil {
-			id = hex.EncodeToString(value[:])
-		} else {
-			id = "unavailable"
-		}
-	}
-	return context.WithValue(ctx, correlationIDKey{}, id)
-}
-
-func correlationID(request *stdhttp.Request) string {
-	id, _ := request.Context().Value(correlationIDKey{}).(string)
-	return id
 }

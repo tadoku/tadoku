@@ -33,8 +33,8 @@ func (s *server) ContentAnnouncementCreate(
 		Content:   body.Content,
 		Style:     string(body.Style),
 		Href:      href,
-		StartsAt:  body.StartsAt,
-		EndsAt:    body.EndsAt,
+		StartsAt:  body.StartsAt.UTC(),
+		EndsAt:    body.EndsAt.UTC(),
 	})
 	if err != nil {
 		s.logger.ErrorContext(ctx, "create announcement failed", "error", err)

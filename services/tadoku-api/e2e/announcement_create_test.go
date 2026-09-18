@@ -17,7 +17,8 @@ func TestCreateAnnouncement(t *testing.T) {
 		{description: []string{"empty", "href"}, want: http.StatusCreated},
 		{description: []string{"ignored", "server", "fields"}, want: http.StatusCreated},
 		{description: []string{"trailing", "json"}, want: http.StatusCreated},
-		{description: []string{"offset", "dates"}, want: http.StatusCreated},
+		// Legacy stores timestamp offsets as wall-clock fields instead of UTC instants.
+		{description: []string{"offset", "dates"}, want: http.StatusCreated, skipParity: "legacy stores timestamp offsets as wall-clock fields"},
 		{description: []string{"empty", "title"}, want: http.StatusBadRequest},
 		{description: []string{"empty", "content"}, want: http.StatusBadRequest},
 		{description: []string{"invalid", "style"}, want: http.StatusBadRequest},

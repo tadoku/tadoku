@@ -97,6 +97,9 @@ In addition to the existing four upstream URLs, startup now requires:
   `PASSWORD`, `SSLMODE` fields. `API_POSTGRES_URL` remains rejected.
 - `API_POSTGRES_MAX_CONNECTIONS` (default 4, validated range 1–32).
 - `API_JWKS`, the gateway's public signing-key URL.
+- `API_MAX_TOKEN_AGE` (default 24h), the maximum accepted age since `iat`.
+- `API_JWT_ISSUER`, an optional exact issuer match. Empty leaves issuer unchecked
+  for rollout compatibility.
 - `API_KETO_READ_URL`, the Keto read API URL. Tadoku API receives no Keto write
   URL or credential.
 
@@ -111,11 +114,12 @@ Shutdown closes request/metrics listeners, the pool and idle HTTP
 connections. The dev deployment uses the existing disposable development DB role;
 secret synchronization and reset scripts include Tadoku API.
 
-Authentication verifies bearer JWT signatures and the existing `exp`, `nbf` and
-`iat` time constraints. `exp` remains optional, and `iat` has no maximum age.
-Issuer and audience are not additionally restricted. Subject, email, display name
-and issued-at time are propagated; the identity's `CreatedAt` means token issue
-time, not account creation time. JWT parsing itself performs no role, ban,
+Authentication accepts only RS256 bearer JWTs, requires `exp` and `iat`, and
+rejects tokens older than `API_MAX_TOKEN_AGE`. It also verifies the existing `nbf`
+constraint and, when configured, requires an exact `API_JWT_ISSUER` match. Audience
+is not additionally restricted. Subject, email, display name and issued-at time are
+propagated; the identity's `CreatedAt` means token issue time, not account creation
+time. JWT parsing itself performs no role, ban,
 permission or service-audience policy. After authentication, the application router checks
 the authenticated subject's direct `app:tadoku#banned` relation once. Missing,
 empty and signed `guest` subjects skip Keto. A ban returns an empty 403, including
@@ -129,10 +133,11 @@ discard a successful ban result. Request deadlines bound the provider call.
 Missing or malformed bearer headers return the legacy 400 JSON error; extracted
 but invalid JWTs return its 401 JSON error. Anonymous gateway traffic supplies a
 signed user token with subject `guest`, so it is distinct from a direct request
-without credentials. Signed tokens missing `iat` now return 401 instead of the
-legacy identity middleware's panic/500. Service tokens are unsupported and return
-401; they are never converted into human identities. These two cases intentionally
-differ from legacy behavior.
+without credentials. Signed tokens missing `iat` or `exp`, exceeding the configured
+maximum age, or failing the configured issuer check return 401. A missing `iat`
+avoids the legacy identity middleware's panic/500. Service tokens are unsupported
+and return 401; they are never converted into human identities. These cases
+intentionally differ from legacy behavior.
 
 **Production activation is not part of this change.** Provision a dedicated
 runtime credential with only the grants required by the application, not

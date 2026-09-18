@@ -58,6 +58,7 @@ func TestApplicationStartsAndShutsDown(t *testing.T) {
 		ProfileURL:   upstream.URL,
 
 		DialTimeout:           time.Second,
+		MaxTokenAge:           24 * time.Hour,
 		ResponseHeaderTimeout: time.Second,
 		RequestTimeout:        time.Second,
 		IdleTimeout:           time.Second,
@@ -74,14 +75,14 @@ func TestApplicationStartsAndShutsDown(t *testing.T) {
 		},
 	}
 
-	app, err := start(cfg, slog.New(slog.NewTextHandler(io.Discard, nil)))
+	ctx, cancel := context.WithCancel(t.Context())
+	app, err := start(ctx, cfg, slog.New(slog.NewTextHandler(io.Discard, nil)))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	t.Cleanup(func() {
-		ctx, cancel := context.WithCancel(context.Background())
 		cancel()
-		if err := app.wait(ctx); err != nil {
+		if err := app.wait(); err != nil {
 			t.Errorf("cleanup application: %v", err)
 		}
 	})
@@ -125,11 +126,20 @@ func TestApplicationStartsAndShutsDown(t *testing.T) {
 	if !strings.Contains(string(metricsBody), "go_goroutines") {
 		t.Error("process metrics not exported")
 	}
+	for _, name := range []string{
+		"tadoku_api_postgres_pool_acquire_count_total",
+		"tadoku_api_postgres_pool_acquired_connections",
+		"tadoku_api_postgres_pool_empty_acquire_count_total",
+		"tadoku_api_postgres_pool_acquire_duration_seconds_total",
+	} {
+		if !strings.Contains(string(metricsBody), name) {
+			t.Errorf("pool metric %q not exported", name)
+		}
+	}
 
 	// Shutdown closes both listeners and the shared database pool.
-	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	if err := app.wait(ctx); err != nil {
+	if err := app.wait(); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
@@ -173,6 +183,12 @@ func TestLoadConfigUsesValidatedDefaults(t *testing.T) {
 	if cfg.RequestTimeout != 30*time.Second {
 		t.Errorf("got %v, want %v", cfg.RequestTimeout, 30*time.Second)
 	}
+	if cfg.MaxTokenAge != 24*time.Hour {
+		t.Errorf("maximum token age=%v, want %v", cfg.MaxTokenAge, 24*time.Hour)
+	}
+	if cfg.JWTIssuer != "" {
+		t.Errorf("JWT issuer=%q, want empty", cfg.JWTIssuer)
+	}
 	if cfg.PostgresMaxConnections != 4 {
 		t.Errorf("pool limit=%d want=4", cfg.PostgresMaxConnections)
 	}
@@ -193,6 +209,19 @@ func TestLoadConfigUsesValidatedDefaults(t *testing.T) {
 			t.Errorf("Keto read URL %q error=%v", ketoURL, err)
 		}
 	}
+	t.Setenv("API_KETO_READ_URL", "http://keto-read.test")
+	t.Setenv("API_JWT_ISSUER", "https://issuer.example.test/")
+	issuerConfig, err := loadConfig()
+	if err != nil {
+		t.Fatalf("load issuer configuration: %v", err)
+	}
+	if issuerConfig.JWTIssuer != "https://issuer.example.test/" {
+		t.Errorf("JWT issuer=%q", issuerConfig.JWTIssuer)
+	}
+	t.Setenv("API_MAX_TOKEN_AGE", "0s")
+	if _, err := loadConfig(); err == nil || !strings.Contains(err.Error(), "MaxTokenAge") {
+		t.Errorf("invalid maximum token age error=%v", err)
+	}
 }
 
 func TestApplicationRejectsUnavailableJWKSBeforeStarting(t *testing.T) {
@@ -201,9 +230,10 @@ func TestApplicationRejectsUnavailableJWKSBeforeStarting(t *testing.T) {
 	}))
 	t.Cleanup(provider.Close)
 
-	app, err := start(config{
+	app, err := start(t.Context(), config{
 		JWKS:        provider.URL,
 		DialTimeout: time.Second,
+		MaxTokenAge: 24 * time.Hour,
 	}, slog.New(slog.NewTextHandler(io.Discard, nil)))
 	if app != nil || err == nil || !strings.Contains(err.Error(), "fetch authentication JWKS") {
 		t.Errorf("startup with unavailable JWKS: application=%v error=%v", app, err)

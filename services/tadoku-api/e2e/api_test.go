@@ -57,22 +57,24 @@ func runTests(m *testing.M) (code int) {
 		_, _ = w.Write(jwks)
 	}))
 	defer authenticationJWKS.Close()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	legacyAuthentication = newLegacyAuthenticationHandler(authenticationJWKS.URL)
-	keto, err = testketo.New(context.Background())
+	keto, err = testketo.New(ctx)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}
 	defer func() { cleanupErr = errors.Join(cleanupErr, keto.Close()) }()
 
-	api, err = newTestAPI(context.Background(), keto)
+	api, err = newTestAPI(ctx, keto)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}
 	defer func() { cleanupErr = errors.Join(cleanupErr, api.db.Close()) }()
 
-	legacyContent, err = newLegacyContentAPI(context.Background(), api.db.DSN, authenticationJWKS.URL, keto.ReadURL())
+	legacyContent, err = newLegacyContentAPI(ctx, api.db.DSN, authenticationJWKS.URL, keto.ReadURL())
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
@@ -103,11 +105,15 @@ func newTestAPI(ctx context.Context, ketoFixture *testketo.Fixture) (_ *suite, e
 		}
 	}()
 
-	handler, err := newTestRouter(db.Pool, ketoFixture.ReadURL())
+	handler, err := newTestRouter(ctx, db.Pool, ketoFixture.ReadURL())
 	if err != nil {
 		return nil, err
 	}
-	api := &suite{db: db, keto: ketoFixture, handler: handler}
+	api := &suite{
+		db:      db,
+		keto:    ketoFixture,
+		handler: handler,
+	}
 	if err := registerSentinelProxy(api); err != nil {
 		return nil, err
 	}
@@ -116,21 +122,21 @@ func newTestAPI(ctx context.Context, ketoFixture *testketo.Fixture) (_ *suite, e
 	return api, nil
 }
 
-func newTestRouter(pool *pgxpool.Pool, ketoReadURL string) (*transport.Router, error) {
+func newTestRouter(ctx context.Context, pool *pgxpool.Pool, ketoReadURL string) (*transport.Router, error) {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	reader := ketoclient.NewReadClient(ketoReadURL)
 	permissionChecker := permissions.NewKetoChecker(reader)
 	repository := content.NewAnnouncementsRepository(pool)
 	service := content.NewService(repository)
 	application := app.New(service, pool, permissionChecker)
-	authenticate, err := transport.NewJWTAuthentication(authenticationJWKS.URL, time.Second)
+	authenticate, err := transport.NewJWTAuthentication(ctx, authenticationJWKS.URL, time.Second, 24*time.Hour, "http://oathkeeper-api/", logger)
 	if err != nil {
 		return nil, err
 	}
 	rejectBanned := transport.RejectBannedUsers(func(ctx context.Context, subjectID string) (bool, error) {
 		return reader.CheckPermission(ctx, "app", "tadoku", "banned", ketoclient.Subject{ID: subjectID})
 	}, logger)
-	handler, err := transport.NewHandler(application, pool.Ping, time.Second, logger, authenticate, rejectBanned)
+	handler, err := transport.NewHandler(application, pool.Ping, time.Second, prometheus.NewRegistry(), logger, authenticate, rejectBanned)
 	if err != nil {
 		return nil, fmt.Errorf("create API handler: %w", err)
 	}
@@ -147,7 +153,7 @@ func registerSentinelProxy(s *suite) error {
 		Immersion: "http://upstream.test",
 		Profile:   "http://upstream.test",
 	}
-	if err := transport.RegisterProxyRoutes(s.handler, upstreams, s, time.Second, prometheus.NewRegistry(), logger); err != nil {
+	if err := transport.RegisterProxyRoutes(s.handler, upstreams, s, time.Second, logger); err != nil {
 		return fmt.Errorf("register proxy routes: %w", err)
 	}
 	return nil

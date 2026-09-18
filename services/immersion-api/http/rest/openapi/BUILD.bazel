@@ -2,10 +2,7 @@ load("@rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "openapi",
-    srcs = [
-        "api.gen.go",
-        "generate.go",
-    ],
+    srcs = ["api.gen.go"],
     importpath = "github.com/tadoku/tadoku/services/immersion-api/http/rest/openapi",
     visibility = ["//visibility:public"],
     deps = [

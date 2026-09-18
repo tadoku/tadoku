@@ -19,6 +19,8 @@ export interface ActionMenuProps {
   readonly defaultOpen?: boolean;
   /** Use the labelled ellipsis trigger when the surrounding item provides context. */
   readonly iconOnly?: boolean;
+  /** Replace the default trigger icon; the menu label remains its accessible name. */
+  readonly triggerIcon?: ReactNode;
 }
 
 export function ActionMenu({
@@ -27,6 +29,7 @@ export function ActionMenu({
   triggerVariant = "outline",
   defaultOpen,
   iconOnly = false,
+  triggerIcon,
 }: ActionMenuProps) {
   const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
 
@@ -38,20 +41,20 @@ export function ActionMenu({
             setPortalContainer(node.ownerDocument.body);
           }
         }}
-        className={buttonClassName({ variant: triggerVariant })}
+        className={buttonClassName({ variant: triggerVariant, className: iconOnly ? "paper-action-menu__trigger--icon-only" : undefined })}
         aria-label={iconOnly ? label : undefined}
         title={iconOnly ? label : undefined}
       >
-        {iconOnly ? <EllipsisHorizontalIcon className={iconClassName()} aria-hidden="true" /> : <>
-          <span>{label}</span>
-          <ChevronDownIcon className={iconClassName("compact")} aria-hidden="true" />
-        </>}
+        {!iconOnly && <span>{label}</span>}
+        {triggerIcon ? <span className="paper-action-menu__icon" aria-hidden="true">{triggerIcon}</span> : iconOnly
+          ? <EllipsisHorizontalIcon className={iconClassName()} aria-hidden="true" />
+          : <ChevronDownIcon className={iconClassName("compact")} aria-hidden="true" />}
       </Menu.Trigger>
       <Menu.Portal container={portalContainer}>
         <Menu.Positioner
           className="paper-action-menu__positioner"
           sideOffset={6}
-          align="start"
+          align="end"
         >
           <Menu.Popup className="paper-action-menu paper-elevation-floating">
             {items.map((item) => (

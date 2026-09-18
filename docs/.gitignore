@@ -1,3 +1,6 @@
 node_modules/
 build/
 .docusaurus/
+
+# Derived public views of the canonical Tadoku API contract
+.generated/

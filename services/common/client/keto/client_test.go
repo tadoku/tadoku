@@ -3,13 +3,175 @@ package keto
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"net"
 	"net/http"
 	"net/http/httptest"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestNewReadClientUsesHTTPClientTimeout(t *testing.T) {
+	started := make(chan struct{})
+	server := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		close(started)
+		<-r.Context().Done()
+	}))
+	t.Cleanup(server.Close)
+	t.Cleanup(server.CloseClientConnections)
+
+	client := NewReadClient(server.URL, WithHTTPClient(&http.Client{Timeout: 50 * time.Millisecond}))
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	t.Cleanup(cancel)
+	requestStarted := time.Now()
+	_, err := client.CheckPermission(
+		ctx,
+		"app",
+		"tadoku",
+		"banned",
+		Subject{ID: "user"},
+	)
+
+	select {
+	case <-started:
+	default:
+		t.Fatal("Keto provider did not receive the request")
+	}
+	if err == nil {
+		t.Fatal("permission check unexpectedly succeeded")
+	}
+	if !errors.Is(err, context.DeadlineExceeded) {
+		t.Errorf("permission check error=%v, want context deadline exceeded", err)
+	}
+	if elapsed := time.Since(requestStarted); elapsed > time.Second {
+		t.Fatalf("permission check took %v, want less than 1s", elapsed)
+	}
+}
+
+func TestNewReadClientUsesHTTPClientConnectionPool(t *testing.T) {
+	const concurrentChecks = 5
+
+	started := [2]chan struct{}{make(chan struct{}, concurrentChecks), make(chan struct{}, concurrentChecks)}
+	release := [2]chan struct{}{make(chan struct{}), make(chan struct{})}
+	var connections atomic.Int32
+	server := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		wave := 0
+		if r.URL.Query().Get("relation") == "second" {
+			wave = 1
+		}
+		started[wave] <- struct{}{}
+		<-release[wave]
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"allowed":true}`))
+	}))
+	server.Config.ConnState = func(_ net.Conn, state http.ConnState) {
+		if state == http.StateNew {
+			connections.Add(1)
+		}
+	}
+	server.Start()
+	t.Cleanup(server.Close)
+	t.Cleanup(func() {
+		for _, ch := range release {
+			select {
+			case <-ch:
+			default:
+				close(ch)
+			}
+		}
+	})
+
+	transport := &http.Transport{
+		MaxIdleConns:        concurrentChecks,
+		MaxIdleConnsPerHost: concurrentChecks,
+	}
+	t.Cleanup(transport.CloseIdleConnections)
+	client := NewReadClient(server.URL, WithHTTPClient(&http.Client{
+		Transport: transport,
+		Timeout:   5 * time.Second,
+	}))
+
+	runWave := func(relation string, wave int) {
+		t.Helper()
+		errs := make(chan error, concurrentChecks)
+		for range concurrentChecks {
+			go func() {
+				_, err := client.CheckPermission(
+					context.Background(),
+					"app",
+					"tadoku",
+					relation,
+					Subject{ID: "user"},
+				)
+				errs <- err
+			}()
+		}
+
+		for range concurrentChecks {
+			select {
+			case <-started[wave]:
+			case <-time.After(5 * time.Second):
+				t.Fatal("Keto provider did not receive all concurrent requests")
+			}
+		}
+		close(release[wave])
+		for range concurrentChecks {
+			if err := <-errs; err != nil {
+				t.Errorf("permission check: %v", err)
+			}
+		}
+	}
+
+	runWave("first", 0)
+	runWave("second", 1)
+
+	if got := connections.Load(); got != concurrentChecks {
+		t.Errorf("new connections=%d, want %d", got, concurrentChecks)
+	}
+}
+
+func TestCheckPermissionPropagatesCancellation(t *testing.T) {
+	started := make(chan struct{})
+	server := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		close(started)
+		<-r.Context().Done()
+	}))
+	t.Cleanup(server.Close)
+	t.Cleanup(server.CloseClientConnections)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	result := make(chan error, 1)
+	go func() {
+		_, err := NewReadClient(server.URL).CheckPermission(
+			ctx,
+			"app",
+			"tadoku",
+			"banned",
+			Subject{ID: "user"},
+		)
+		result <- err
+	}()
+
+	select {
+	case <-started:
+	case <-time.After(5 * time.Second):
+		t.Fatal("Keto client did not start the HTTP request")
+	}
+	cancel()
+	select {
+	case err := <-result:
+		if !errors.Is(err, context.Canceled) {
+			t.Errorf("permission check error=%v, want context canceled", err)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("Keto client did not return after cancellation")
+	}
+}
 
 func TestCheckPermission(t *testing.T) {
 	tests := []struct {

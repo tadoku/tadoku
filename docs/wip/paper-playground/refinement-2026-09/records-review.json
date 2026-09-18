@@ -1,0 +1,881 @@
+{
+  "scope": "Profile overview and activity, log details, admin dashboard and all admin sections",
+  "updated": "2026-09-12",
+  "direction": "Personal reading records with a coherent annual summary; a contained log entry with secondary score context; an admin workspace centered on the review queue.",
+  "files": [
+    "frontend/apps/paper-playground/src/pages/ProfilePages.tsx",
+    "frontend/apps/paper-playground/src/pages/LogPage.tsx",
+    "frontend/apps/paper-playground/src/pages/AdminPage.tsx",
+    "frontend/apps/paper-playground/src/pages/records.css",
+    "frontend/packages/paper-ui/src/components/forms/Input/input.css",
+    "frontend/packages/paper-ui/src/components/data-display/HeatmapChart.tsx",
+    "frontend/packages/paper-ui/tests/data-display-layout.test.tsx"
+  ],
+  "changes": [
+    "Unified the profile year selector, summary statistics and responsive immersion calendar in one annual record.",
+    "Aligned language/activity breakdowns and contest/recent activity sections as grid rows, with consistent heading baselines and spacing.",
+    "Grouped activity search, filters and result counts; aligned all outer edges; constrained entry notes instead of the entire section.",
+    "Tightened narrow-screen identity/actions and kept search beside Filters so entries become visible sooner.",
+    "Replaced empty profile charts and repeated empty summaries with one contextual first-entry invitation; hid unusable activity filters when the record is empty.",
+    "Made the log title and actions align with the page container, the recorded activity a contained paper section, and scoring a quieter adjacent context.",
+    "Replaced horizontally scrolling editorial/admin review tables with responsive lists of content, status and actions; retained semantic tables for members and contests, with accessible captions hidden when duplicating the page heading.",
+    "Reduced admin summary prominence, secondary button emphasis and modal action spacing; kept review actions beside queue records at390px.",
+    "Removed Paper field's arbitrary32rem maximum so parent forms own width; added min-inline-size:0 for shrinking grid fields.",
+    "Fixed HeatmapChart tooltip measurement to use SVG units and skip measuring hidden text."
+  ],
+  "visualReview": {
+    "desktopAndPhoneRoutes": [
+      [
+        "profile-2026",
+        "/users/anton?scenario=profile&year=2026"
+      ],
+      [
+        "profile-2025",
+        "/users/anton?scenario=profile&year=2025"
+      ],
+      [
+        "profile-2024",
+        "/users/anton?scenario=profile&year=2024"
+      ],
+      [
+        "profile-2023",
+        "/users/anton?scenario=profile&year=2023"
+      ],
+      [
+        "profile-visitor",
+        "/users/anton?scenario=visitor"
+      ],
+      [
+        "profile-empty",
+        "/users/anton?scenario=empty"
+      ],
+      [
+        "activity",
+        "/users/anton/activity?scenario=profile"
+      ],
+      [
+        "activity-empty",
+        "/users/anton/activity?scenario=empty"
+      ],
+      [
+        "log-reading",
+        "/logs/reading-konbini?scenario=reading"
+      ],
+      [
+        "log-listening",
+        "/logs/reading-konbini?scenario=listening"
+      ],
+      [
+        "log-visitor",
+        "/logs/reading-konbini?scenario=visitor"
+      ],
+      [
+        "log-personal",
+        "/logs/reading-konbini?scenario=personal"
+      ],
+      [
+        "log-ended",
+        "/logs/reading-konbini?scenario=ended"
+      ],
+      [
+        "log-missing",
+        "/logs/reading-konbini?scenario=missing"
+      ],
+      [
+        "log-unavailable",
+        "/logs/reading-konbini?scenario=unavailable"
+      ],
+      [
+        "admin-dashboard",
+        "/admin"
+      ],
+      [
+        "admin-posts",
+        "/admin/posts"
+      ],
+      [
+        "admin-pages",
+        "/admin/pages"
+      ],
+      [
+        "admin-announcements",
+        "/admin/announcements"
+      ],
+      [
+        "admin-languages",
+        "/admin/languages"
+      ],
+      [
+        "admin-contests",
+        "/admin/contests"
+      ],
+      [
+        "admin-users",
+        "/admin/users"
+      ],
+      [
+        "admin-reports",
+        "/admin/reports"
+      ]
+    ],
+    "breakpoints": [
+      320,
+      390,
+      768,
+      1280
+    ],
+    "themes": [
+      "light",
+      "dark"
+    ],
+    "screenshots": [
+      {
+        "label": "profile-2026",
+        "path": "/users/anton?scenario=profile&year=2026",
+        "width": 1280,
+        "height": 900,
+        "error": false,
+        "overflow": false,
+        "theme": "light",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1xjml-5c385cd5.png"
+      },
+      {
+        "label": "profile-2025",
+        "path": "/users/anton?scenario=profile&year=2025",
+        "width": 1280,
+        "height": 900,
+        "error": false,
+        "firstEntryY": 1356.09375,
+        "heading": "Anton",
+        "overflow": false,
+        "theme": "light",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1xjzn-f611ccbe.png"
+      },
+      {
+        "label": "profile-2024",
+        "path": "/users/anton?scenario=profile&year=2024",
+        "width": 1280,
+        "height": 900,
+        "error": false,
+        "firstEntryY": 1356.09375,
+        "heading": "Anton",
+        "overflow": false,
+        "theme": "light",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1xkeu-5e2322c7.png"
+      },
+      {
+        "label": "profile-2023",
+        "path": "/users/anton?scenario=profile&year=2023",
+        "width": 1280,
+        "height": 900,
+        "error": false,
+        "firstEntryY": 1356.09375,
+        "heading": "Anton",
+        "overflow": false,
+        "theme": "light",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1xl27-5479c0f9.png"
+      },
+      {
+        "label": "profile-visitor",
+        "path": "/users/anton?scenario=visitor",
+        "width": 1280,
+        "height": 900,
+        "error": false,
+        "firstEntryY": 1353.3671875,
+        "heading": "Anton",
+        "overflow": false,
+        "theme": "light",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1xlf0-53bc7521.png"
+      },
+      {
+        "label": "profile-empty",
+        "path": "/users/anton?scenario=empty",
+        "width": 1280,
+        "height": 900,
+        "error": false,
+        "heading": "Anton",
+        "overflow": false,
+        "theme": "light",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1xlwo-f470f1c0.png"
+      },
+      {
+        "label": "activity",
+        "path": "/users/anton/activity?scenario=profile",
+        "width": 1280,
+        "height": 900,
+        "error": false,
+        "firstEntryY": 617.4921875,
+        "heading": "Anton",
+        "overflow": false,
+        "theme": "light",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1xm8m-70c727a7.png"
+      },
+      {
+        "label": "activity-empty",
+        "path": "/users/anton/activity?scenario=empty",
+        "width": 1280,
+        "height": 900,
+        "error": false,
+        "heading": "Anton",
+        "overflow": false,
+        "theme": "light",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1xmlj-231c3e63.png"
+      },
+      {
+        "label": "log-reading",
+        "path": "/logs/reading-konbini?scenario=reading",
+        "width": 1280,
+        "height": 900,
+        "error": false,
+        "heading": "コンビニ人間 — finished chapter 3",
+        "overflow": false,
+        "theme": "light",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1xmw0-6968f2af.png"
+      },
+      {
+        "label": "log-listening",
+        "path": "/logs/reading-konbini?scenario=listening",
+        "width": 1280,
+        "height": 900,
+        "error": false,
+        "heading": "Nihongo con Teppei — episode 920",
+        "overflow": false,
+        "theme": "light",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1xnit-c273bdfb.png"
+      },
+      {
+        "label": "log-visitor",
+        "path": "/logs/reading-konbini?scenario=visitor",
+        "width": 1280,
+        "height": 900,
+        "error": false,
+        "heading": "コンビニ人間 — finished chapter 3",
+        "overflow": false,
+        "theme": "light",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1xnzn-b2e52b4f.png"
+      },
+      {
+        "label": "log-personal",
+        "path": "/logs/reading-konbini?scenario=personal",
+        "width": 1280,
+        "height": 900,
+        "error": false,
+        "heading": "Japanese reading",
+        "overflow": false,
+        "theme": "light",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1xob0-99ac305a.png"
+      },
+      {
+        "label": "log-ended",
+        "path": "/logs/reading-konbini?scenario=ended",
+        "width": 1280,
+        "height": 900,
+        "error": false,
+        "heading": "コンビニ人間 — finished chapter 3",
+        "overflow": false,
+        "theme": "light",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1xols-ff9bad9c.png"
+      },
+      {
+        "label": "log-missing",
+        "path": "/logs/reading-konbini?scenario=missing",
+        "width": 1280,
+        "height": 900,
+        "error": false,
+        "heading": "Log not found",
+        "overflow": false,
+        "theme": "light",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1xov9-5051bf5b.png"
+      },
+      {
+        "label": "log-unavailable",
+        "path": "/logs/reading-konbini?scenario=unavailable",
+        "width": 1280,
+        "height": 900,
+        "error": false,
+        "heading": "This log couldn’t be loaded",
+        "overflow": false,
+        "theme": "light",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1xp3u-8c7fd27c.png"
+      },
+      {
+        "label": "admin-dashboard",
+        "path": "/admin",
+        "width": 1280,
+        "height": 900,
+        "error": false,
+        "heading": "Dashboard",
+        "overflow": false,
+        "theme": "light",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1xpl5-390f677c.png"
+      },
+      {
+        "label": "admin-posts",
+        "path": "/admin/posts",
+        "width": 1280,
+        "height": 900,
+        "error": false,
+        "heading": "Posts",
+        "overflow": false,
+        "theme": "light",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1xpwp-c02ec4bd.png"
+      },
+      {
+        "label": "admin-pages",
+        "path": "/admin/pages",
+        "width": 1280,
+        "height": 900,
+        "error": false,
+        "heading": "Posts",
+        "overflow": false,
+        "theme": "light",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1y23z-6a923ac1.png"
+      },
+      {
+        "label": "admin-announcements",
+        "path": "/admin/announcements",
+        "width": 1280,
+        "height": 900,
+        "error": false,
+        "heading": "Announcements",
+        "overflow": false,
+        "theme": "light",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1y2jd-8d124a05.png"
+      },
+      {
+        "label": "admin-languages",
+        "path": "/admin/languages",
+        "width": 1280,
+        "height": 900,
+        "error": false,
+        "heading": "Languages",
+        "overflow": false,
+        "theme": "light",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1y2um-41ab2d24.png"
+      },
+      {
+        "label": "admin-contests",
+        "path": "/admin/contests",
+        "width": 1280,
+        "height": 900,
+        "error": false,
+        "heading": "Contests",
+        "overflow": false,
+        "theme": "light",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1y361-b64d2ae4.png"
+      },
+      {
+        "label": "admin-users",
+        "path": "/admin/users",
+        "width": 1280,
+        "height": 900,
+        "error": false,
+        "heading": "Users",
+        "overflow": false,
+        "theme": "light",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1y3ni-fae112f6.png"
+      },
+      {
+        "label": "admin-reports",
+        "path": "/admin/reports",
+        "width": 1280,
+        "height": 900,
+        "error": false,
+        "heading": "Reports",
+        "overflow": false,
+        "theme": "light",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1y3xj-6b0de348.png"
+      },
+      {
+        "label": "profile-2026",
+        "path": "/users/anton?scenario=profile&year=2026",
+        "width": 390,
+        "height": 844,
+        "error": false,
+        "firstEntryY": 2113.390625,
+        "heading": "Anton",
+        "overflow": false,
+        "theme": "light",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1y4t4-fef54fa8.png"
+      },
+      {
+        "label": "profile-2025",
+        "path": "/users/anton?scenario=profile&year=2025",
+        "width": 390,
+        "height": 844,
+        "error": false,
+        "firstEntryY": 1916.1484375,
+        "heading": "Anton",
+        "overflow": false,
+        "theme": "light",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1y5lr-4e88f06c.png"
+      },
+      {
+        "label": "profile-2024",
+        "path": "/users/anton?scenario=profile&year=2024",
+        "width": 390,
+        "height": 844,
+        "error": false,
+        "firstEntryY": 1916.1484375,
+        "heading": "Anton",
+        "overflow": false,
+        "theme": "light",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1y65o-7ad355e5.png"
+      },
+      {
+        "label": "profile-2023",
+        "path": "/users/anton?scenario=profile&year=2023",
+        "width": 390,
+        "height": 844,
+        "error": false,
+        "firstEntryY": 1916.1484375,
+        "heading": "Anton",
+        "overflow": false,
+        "theme": "light",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1y6i7-297b415c.png"
+      },
+      {
+        "label": "profile-visitor",
+        "path": "/users/anton?scenario=visitor",
+        "width": 390,
+        "height": 844,
+        "error": false,
+        "firstEntryY": 2143.390625,
+        "heading": "Anton",
+        "overflow": false,
+        "theme": "light",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1y7xc-892e2a02.png"
+      },
+      {
+        "label": "profile-empty",
+        "path": "/users/anton?scenario=empty",
+        "width": 390,
+        "height": 844,
+        "error": false,
+        "heading": "Anton",
+        "overflow": false,
+        "theme": "light",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1y8eb-b3287fd9.png"
+      },
+      {
+        "label": "activity",
+        "path": "/users/anton/activity?scenario=profile",
+        "width": 390,
+        "height": 844,
+        "error": false,
+        "firstEntryY": 603.890625,
+        "heading": "Anton",
+        "overflow": false,
+        "theme": "light",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1y8pk-8153ba19.png"
+      },
+      {
+        "label": "activity-empty",
+        "path": "/users/anton/activity?scenario=empty",
+        "width": 390,
+        "height": 844,
+        "error": false,
+        "heading": "Anton",
+        "overflow": false,
+        "theme": "light",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1y97l-bf0367b3.png"
+      },
+      {
+        "label": "log-reading",
+        "path": "/logs/reading-konbini?scenario=reading",
+        "width": 390,
+        "height": 844,
+        "error": false,
+        "heading": "コンビニ人間 — finished chapter 3",
+        "overflow": false,
+        "theme": "light",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1y9gn-cc220bfc.png"
+      },
+      {
+        "label": "log-listening",
+        "path": "/logs/reading-konbini?scenario=listening",
+        "width": 390,
+        "height": 844,
+        "error": false,
+        "heading": "Nihongo con Teppei — episode 920",
+        "overflow": false,
+        "theme": "light",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1y9qj-a9ee63f5.png"
+      },
+      {
+        "label": "log-visitor",
+        "path": "/logs/reading-konbini?scenario=visitor",
+        "width": 390,
+        "height": 844,
+        "error": false,
+        "heading": "コンビニ人間 — finished chapter 3",
+        "overflow": false,
+        "theme": "light",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1yac4-b95189e8.png"
+      },
+      {
+        "label": "log-personal",
+        "path": "/logs/reading-konbini?scenario=personal",
+        "width": 390,
+        "height": 844,
+        "error": false,
+        "heading": "Japanese reading",
+        "overflow": false,
+        "theme": "light",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1yaoh-23b27488.png"
+      },
+      {
+        "label": "log-ended",
+        "path": "/logs/reading-konbini?scenario=ended",
+        "width": 390,
+        "height": 844,
+        "error": false,
+        "heading": "コンビニ人間 — finished chapter 3",
+        "overflow": false,
+        "theme": "light",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1yaz7-f1f43770.png"
+      },
+      {
+        "label": "log-missing",
+        "path": "/logs/reading-konbini?scenario=missing",
+        "width": 390,
+        "height": 844,
+        "error": false,
+        "heading": "Log not found",
+        "overflow": false,
+        "theme": "light",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1ybap-c3a41e37.png"
+      },
+      {
+        "label": "log-unavailable",
+        "path": "/logs/reading-konbini?scenario=unavailable",
+        "width": 390,
+        "height": 844,
+        "error": false,
+        "heading": "This log couldn’t be loaded",
+        "overflow": false,
+        "theme": "light",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1ybld-48352d17.png"
+      },
+      {
+        "label": "admin-dashboard",
+        "path": "/admin",
+        "width": 390,
+        "height": 844,
+        "error": false,
+        "heading": "Dashboard",
+        "overflow": false,
+        "theme": "light",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1ybuu-09964e6a.png"
+      },
+      {
+        "label": "admin-posts",
+        "path": "/admin/posts",
+        "width": 390,
+        "height": 844,
+        "error": false,
+        "heading": "Posts",
+        "overflow": false,
+        "theme": "light",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1ycd8-ebd8ba07.png"
+      },
+      {
+        "label": "admin-pages",
+        "path": "/admin/pages",
+        "width": 390,
+        "height": 844,
+        "error": false,
+        "heading": "Pages",
+        "overflow": false,
+        "theme": "light",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1yczk-a2c037b7.png"
+      },
+      {
+        "label": "admin-announcements",
+        "path": "/admin/announcements",
+        "width": 390,
+        "height": 844,
+        "error": false,
+        "heading": "Announcements",
+        "overflow": false,
+        "theme": "light",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1ydj0-7b93bf62.png"
+      },
+      {
+        "label": "admin-languages",
+        "path": "/admin/languages",
+        "width": 390,
+        "height": 844,
+        "error": false,
+        "heading": "Languages",
+        "overflow": false,
+        "theme": "light",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1ydte-c697973a.png"
+      },
+      {
+        "label": "admin-contests",
+        "path": "/admin/contests",
+        "width": 390,
+        "height": 844,
+        "error": false,
+        "heading": "Contests",
+        "overflow": false,
+        "theme": "light",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1ye3r-0ae07d04.png"
+      },
+      {
+        "label": "admin-users",
+        "path": "/admin/users",
+        "width": 390,
+        "height": 844,
+        "error": false,
+        "heading": "Users",
+        "overflow": false,
+        "theme": "light",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1yefy-82d234fd.png"
+      },
+      {
+        "label": "admin-reports",
+        "path": "/admin/reports",
+        "width": 390,
+        "height": 844,
+        "error": false,
+        "heading": "Reports",
+        "overflow": false,
+        "theme": "light",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1yer0-bfc9b558.png"
+      },
+      {
+        "label": "profile",
+        "path": "/users/anton?scenario=profile",
+        "overflow": false,
+        "theme": "light",
+        "width": 320,
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1uv1a-b387b46e.png"
+      },
+      {
+        "label": "activity",
+        "path": "/users/anton/activity?scenario=profile",
+        "firstEntryY": 662.9921875,
+        "heading": "Anton",
+        "overflow": false,
+        "theme": "light",
+        "width": 320,
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1uvlv-f8e6ea6b.png"
+      },
+      {
+        "label": "log",
+        "path": "/logs/reading-konbini?scenario=reading",
+        "heading": "コンビニ人間 — finished chapter 3",
+        "overflow": false,
+        "theme": "light",
+        "width": 320,
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1uw2i-2288769a.png"
+      },
+      {
+        "label": "admin",
+        "path": "/admin/posts",
+        "heading": "Posts",
+        "overflow": false,
+        "theme": "light",
+        "width": 320,
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1uwj2-704e0ba2.png"
+      },
+      {
+        "label": "profile",
+        "path": "/users/anton?scenario=profile",
+        "firstEntryY": 2057,
+        "heading": "Anton",
+        "overflow": false,
+        "theme": "light",
+        "width": 768,
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1ux13-1f2d2c7d.png"
+      },
+      {
+        "label": "activity",
+        "path": "/users/anton/activity?scenario=profile",
+        "firstEntryY": 601.4921875,
+        "heading": "Anton",
+        "overflow": false,
+        "theme": "light",
+        "width": 768,
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1uxmt-ad28c9e1.png"
+      },
+      {
+        "label": "log",
+        "path": "/logs/reading-konbini?scenario=reading",
+        "heading": "コンビニ人間 — finished chapter 3",
+        "overflow": false,
+        "theme": "light",
+        "width": 768,
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1uyfi-fe6eedf0.png"
+      },
+      {
+        "label": "admin",
+        "path": "/admin/posts",
+        "heading": "Posts",
+        "overflow": false,
+        "theme": "light",
+        "width": 768,
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1uyxr-505b3f41.png"
+      },
+      {
+        "label": "profile",
+        "path": "/users/anton?scenario=profile",
+        "width": 1280,
+        "height": 900,
+        "heading": "Anton",
+        "overflow": false,
+        "scrollY": 0,
+        "theme": "dark",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1zh8n-a758641b.png"
+      },
+      {
+        "label": "activity",
+        "path": "/users/anton/activity?scenario=profile",
+        "width": 1280,
+        "height": 900,
+        "heading": "Anton",
+        "overflow": false,
+        "scrollY": 0,
+        "theme": "dark",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1zhnh-aaeaedd4.png"
+      },
+      {
+        "label": "log",
+        "path": "/logs/reading-konbini?scenario=reading",
+        "width": 1280,
+        "height": 900,
+        "heading": "コンビニ人間 — finished chapter 3",
+        "overflow": false,
+        "scrollY": 0,
+        "theme": "dark",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1zi75-e652f040.png"
+      },
+      {
+        "label": "admin",
+        "path": "/admin/reports",
+        "width": 1280,
+        "height": 900,
+        "heading": "Reports",
+        "overflow": false,
+        "scrollY": 0,
+        "theme": "dark",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1ziiz-3809c1f6.png"
+      },
+      {
+        "label": "profile",
+        "path": "/users/anton?scenario=profile",
+        "width": 390,
+        "height": 844,
+        "heading": "Anton",
+        "overflow": false,
+        "scrollY": 0,
+        "theme": "dark",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1ziwz-38c1cacf.png"
+      },
+      {
+        "label": "activity",
+        "path": "/users/anton/activity?scenario=profile",
+        "width": 390,
+        "height": 844,
+        "heading": "Anton",
+        "overflow": false,
+        "scrollY": 0,
+        "theme": "dark",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1zkbe-a52c1a8f.png"
+      },
+      {
+        "label": "log",
+        "path": "/logs/reading-konbini?scenario=reading",
+        "width": 390,
+        "height": 844,
+        "heading": "コンビニ人間 — finished chapter 3",
+        "overflow": false,
+        "scrollY": 0,
+        "theme": "dark",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1zl0a-c8e95c95.png"
+      },
+      {
+        "label": "admin",
+        "path": "/admin/reports",
+        "width": 390,
+        "height": 844,
+        "heading": "Reports",
+        "overflow": false,
+        "scrollY": 0,
+        "theme": "dark",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1zld8-4c85fab0.png"
+      }
+    ],
+    "interactions": [
+      {
+        "description": "Activity filter disclosure, no-match search and recovery reviewed in browser.",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1kk16-37779aca.png"
+      },
+      {
+        "description": "Mobile admin new-post editor; fields aligned, then action gap corrected from48px to28px.",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1sbwr-fd390371.png"
+      },
+      {
+        "description": "Mobile admin section drawer and link navigation reviewed.",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1t3q8-52ad79c7.png"
+      },
+      {
+        "description": "Mobile report review editor and Escape dismissal reviewed.",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1twrg-e10d908c.png"
+      },
+      {
+        "description": "Mobile log submission manager, eligibility notes, actions and Escape dismissal reviewed.",
+        "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1txrt-d0ba902a.png"
+      }
+    ],
+    "interpretation": "Route and overflow checks supplement visual review. Main layouts, responsive variants, empty/error states, representative record content and dialogs were visually inspected; shared admin-list variants were also captured and structurally checked.",
+    "captureNotes": "Dark screenshots use per-tab theme and canonical reversed-wordmark selection to avoid changing other agents' shared localStorage. Some intermediate captures predate the last mobile admin summary adjustment; final replacements are appended after verification."
+  },
+  "tests": [
+    {
+      "command": "pnpm --filter paper-playground typecheck",
+      "result": "passed"
+    },
+    {
+      "command": "pnpm exec eslint src/pages/ProfilePages.tsx src/pages/LogPage.tsx src/pages/AdminPage.tsx",
+      "result": "passed with4 existing Fast Refresh warnings"
+    },
+    {
+      "command": "pnpm --filter paper-playground exec vitest run tests/records.test.tsx",
+      "result": "12 passed"
+    },
+    {
+      "command": "pnpm --filter paper-ui exec vitest run tests/data-display-layout.test.tsx",
+      "result": "12 passed including2 new scaled-calendar regressions"
+    },
+    {
+      "command": "pnpm --filter paper-ui typecheck",
+      "result": "passed"
+    }
+  ],
+  "regressions": {
+    "fieldWidth": {
+      "baseline": "Root reproduced640px parent form versus512px single fields before the fix.",
+      "fix": "Fields fill their parent and can shrink with their grid."
+    },
+    "heatmap": {
+      "before": {
+        "backgroundSVGWidth": 260.5546875,
+        "expectedSVGWidth": 179.90208435058594,
+        "svgCSSWidth": 1094,
+        "svgViewBox": 739,
+        "textCSSWidth": 248.55470275878906,
+        "textSVGWidth": 167.90208435058594
+      },
+      "failingTest": "Both focused tests expected192 SVG units but received372 because the old code measured CSS pixels.",
+      "fix": "getBBox() measures in SVG user units; visible-only measurement avoids zero-sized hidden text.",
+      "testResult": "Both regressions pass; keyboard focus/blur and containment at both year edges preserved.",
+      "browserAfter": {"backgroundSVGWidth":179.90208435058594,"expectedSVGWidth":179.90208435058594,"svgCSSWidth":1094,"svgViewBox":739,"textCSSWidth":248.55470275878906,"textSVGWidth":167.90208435058594},
+      "browserScreenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty28ujw-b0438072.png"
+    }
+  },
+  "finalAdminReview": {"firstReviewBottom":813.078125,"firstReviewY":769.078125,"overflow":false,"statsHeight":161.78125,"viewport":844,"screenshot":"/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty28vba-64b218a5.png","result":"First Review button is fully visible in the390×844 viewport after removing redundant summaries and aligning queue actions."},
+  "outstanding": []
+}

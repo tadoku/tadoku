@@ -1,0 +1,43 @@
+{
+  "result": "passed",
+  "input": {
+    "route": "/components/forms/input",
+    "visibleGuidance": true,
+    "desktopTitleEdges": [
+      8,
+      680
+    ],
+    "desktopPagesEdges": [
+      8,
+      336
+    ],
+    "desktopDateEdges": [
+      352,
+      680
+    ],
+    "pairedControlsTop": 111.1875,
+    "fit575StacksFields": true,
+    "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ae17b0722f74311813aae851-lab-mty2otdv-39623822.png"
+  },
+  "layout": {
+    "route": "/foundations/layout",
+    "sharedFrameAndFormGuidanceVisible": true
+  },
+  "actionMenu": {
+    "route": "/components/actions/action-menu",
+    "triggerIconApiVisible": true,
+    "accountIconDecorative": true,
+    "accessibleName": "Anton account menu",
+    "target": [
+      44,
+      44
+    ],
+    "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ae17b0722f74311813aae851-lab-mty2o9bh-2b371fe5.png"
+  },
+  "checks": [
+    "Paper UI build passed",
+    "Paper styleguide build passed",
+    "49 examples typechecked",
+    "Catalog lint passed"
+  ]
+}

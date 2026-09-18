@@ -1,4 +1,5 @@
 import { ActionMenu } from 'paper-ui'
+import { UserCircleIcon } from 'paper-ui/icons'
 import { useState } from 'react'
 
 export default function ActionMenuFixture() {
@@ -42,6 +43,11 @@ export default function ActionMenuFixture() {
           iconOnly
           triggerVariant="ghost"
         />
+      </div>
+      <div className="paper-cluster">
+        <span>Account menu</span>
+        <ActionMenu label="Anton account menu" iconOnly triggerIcon={<UserCircleIcon />} triggerVariant="ghost"
+          items={[{ id: 'profile', label: 'My profile', onSelect: () => setResult('My profile selected') }]} />
       </div>
       <p role="status">{result}</p>
       <p>Duplication is unavailable for this archived example.</p>

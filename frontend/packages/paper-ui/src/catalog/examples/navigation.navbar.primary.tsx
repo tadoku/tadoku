@@ -4,14 +4,13 @@ import { Navbar } from 'paper-ui'
 const navbarNavigation = [
   { type: 'link', id: 'home', label: 'Home', href: '#home' },
   { type: 'link', id: 'contests', label: 'Contests', href: '#contests' },
-  { type: 'link', id: 'manual', label: 'Manual', href: '#manual' },
   {
     type: 'dropdown',
-    id: 'account',
-    label: 'Account',
+    id: 'guides',
+    label: 'Guides',
     links: [
-      { id: 'profile', label: 'Profile', href: '#profile' },
-      { id: 'settings', label: 'Settings', href: '#settings' },
+      { id: 'start', label: 'Start here', href: '#start' },
+      { id: 'scoring', label: 'Scoring and rules', href: '#scoring' },
     ],
   },
 ] as const
@@ -25,6 +24,20 @@ export default function NavbarExample() {
         brandHref="#home"
         currentPath={path}
         navigation={navbarNavigation}
+        mobileFooter={closeMenu => (
+          <a
+            className="paper-navbar__mobile-link"
+            href="#profile"
+            aria-current={path === '#profile' ? 'page' : undefined}
+            onClick={event => {
+              event.preventDefault()
+              setPath('#profile')
+              closeMenu()
+            }}
+          >
+            Your profile
+          </a>
+        )}
         renderLink={props => (
           <a
             {...props}

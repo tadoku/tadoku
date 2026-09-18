@@ -4,7 +4,7 @@ keto:
     type: initContainer
 
   config:
-    dsn: postgres://keto@tadoku-dev-db:5432/keto?sslmode=require
+    dsn: postgres://keto@tadoku-dev-db:5432/keto?sslmode=require&application_name=keto
 
     log:
       level: debug

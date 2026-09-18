@@ -1,0 +1,6 @@
+>>> GET /content/announcements/main?page=9223372036854775807
+HTTP/1.1 200 OK
+Content-Length: 57
+Content-Type: application/json; charset=UTF-8
+
+{"announcements":[],"next_page_token":"","total_size":1}

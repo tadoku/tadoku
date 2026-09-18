@@ -5,18 +5,12 @@ on:
     branches: [main]
     paths:
       - "docs/**"
-      - "services/authz-api/http/rest/openapi/api.yaml"
-      - "services/content-api/http/rest/openapi/api.yaml"
-      - "services/immersion-api/http/rest/openapi/api.yaml"
-      - "services/profile-api/http/rest/openapi/api.yaml"
+      - "services/tadoku-api/spec/**"
       - ".github/workflows/deploy-docs.yaml"
   pull_request:
     paths:
       - "docs/**"
-      - "services/authz-api/http/rest/openapi/api.yaml"
-      - "services/content-api/http/rest/openapi/api.yaml"
-      - "services/immersion-api/http/rest/openapi/api.yaml"
-      - "services/profile-api/http/rest/openapi/api.yaml"
+      - "services/tadoku-api/spec/**"
       - ".github/workflows/deploy-docs.yaml"
   workflow_dispatch:
 

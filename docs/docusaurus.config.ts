@@ -54,11 +54,9 @@ const config: Config = {
         docsPluginId: 'classic',
         config: {
           immersion: {
-            specPath: '../services/immersion-api/http/rest/openapi/api.yaml',
+            specPath: '.generated/api/immersion.yaml',
             outputDir: 'docs/api/immersion',
             label: 'Immersion API',
-            downloadUrl:
-              'https://raw.githubusercontent.com/tadoku/tadoku/main/services/immersion-api/http/rest/openapi/api.yaml',
             hideSendButton: true,
             sidebarOptions: {
               groupPathsBy: 'tag',
@@ -66,11 +64,9 @@ const config: Config = {
             },
           } satisfies OpenApiPlugin.Options,
           content: {
-            specPath: '../services/content-api/http/rest/openapi/api.yaml',
+            specPath: '.generated/api/content.yaml',
             outputDir: 'docs/api/content',
             label: 'Content API',
-            downloadUrl:
-              'https://raw.githubusercontent.com/tadoku/tadoku/main/services/content-api/http/rest/openapi/api.yaml',
             hideSendButton: true,
             sidebarOptions: {
               groupPathsBy: 'tag',
@@ -78,11 +74,9 @@ const config: Config = {
             },
           } satisfies OpenApiPlugin.Options,
           profile: {
-            specPath: '../services/profile-api/http/rest/openapi/api.yaml',
+            specPath: '.generated/api/profile.yaml',
             outputDir: 'docs/api/profile',
             label: 'Profile API',
-            downloadUrl:
-              'https://raw.githubusercontent.com/tadoku/tadoku/main/services/profile-api/http/rest/openapi/api.yaml',
             hideSendButton: true,
             sidebarOptions: {
               groupPathsBy: 'tag',
@@ -90,11 +84,9 @@ const config: Config = {
             },
           } satisfies OpenApiPlugin.Options,
           authorization: {
-            specPath: '../services/authz-api/http/rest/openapi/api.yaml',
+            specPath: '.generated/api/authz.yaml',
             outputDir: 'docs/api/authorization',
             label: 'Authorization API',
-            downloadUrl:
-              'https://raw.githubusercontent.com/tadoku/tadoku/main/services/authz-api/http/rest/openapi/api.yaml',
             hideSendButton: true,
             sidebarOptions: {
               groupPathsBy: 'tag',

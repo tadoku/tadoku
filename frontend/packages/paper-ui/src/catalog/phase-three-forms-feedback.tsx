@@ -30,6 +30,10 @@ import Example17 from "./examples/radio-select.viewport";
 import Example18 from "./examples/radio-select.viewport.empty";
 import Example18Source from "./examples/radio-select.viewport.empty.tsx?raw";
 import Example17Source from "./examples/radio-select.viewport.tsx?raw";
+import ToggleModifiersExample from "./examples/toggle-select.modifiers";
+import ToggleModifiersSource from "./examples/toggle-select.modifiers.tsx?raw";
+import EmptyToggleModifiersExample from "./examples/toggle-select.modifiers.empty";
+import EmptyToggleModifiersSource from "./examples/toggle-select.modifiers.empty.tsx?raw";
 import Example13 from "./examples/select.language";
 import Example14 from "./examples/select.language.empty";
 import Example14Source from "./examples/select.language.empty.tsx?raw";
@@ -132,6 +136,20 @@ const details: Record<string, { example: string; anatomy: string; variants: stri
     variants: "Default uses visible native radio indicators; segmented joins concise peer choices.", states: "One option can be selected. Use defaultValues to initialize a required decision; disabled may apply to the whole group or an option.", content: "Use short peer labels.", implementation: formSetup,
     props: [...fieldProps, validationProp, optionsProp, { name: "variant", type: '"default" | "segmented"', defaultValue: '"default"', description: "Default radios for ordinary forms; segmented for two to four short peer choices." }, disabledProp],
   },
+  "component.toggle-select": {
+    example: "Select a different reading modifier, or press the selected one again to clear it. Save selection shows the stored choice. The listening example starts with its one optional modifier off.",
+    anatomy: "One labelled group joins equal-width choices inside a shared border. A short description sits below each label, and a check has reserved space so selection does not move the text.",
+    variants: "One connected presentation for one to four concise options. Wide controls use equal-width segments with descriptions beneath the labels. Narrow controls stack connected rows with inline descriptions; a single option spans the control.",
+    states: "Initialize the field with [] for no selection or [value] for one selected option. Disabled options cannot be pressed. reset restores the initial selection; validation errors describe the group and focus its first enabled choice.",
+    content: "Keep labels parallel and short. Use description for a rate or another small fact that changes the decision. Explain that all options can be off when that is not obvious.",
+    implementation: formSetup,
+    props: [
+      ...fieldProps.filter((prop) => prop.name !== "required"),
+      { ...optionsProp, description: "Each option has value and label, with optional description and disabled. The form stores [] or [value]; choosing another option replaces the previous choice." },
+      validationProp,
+      disabledProp,
+    ],
+  },
   "component.radio-group": {
     example: "Choose Book or Audio and inspect the saved string value. Other is visibly unavailable. The empty example shows the required error for the whole decision.",
     anatomy: "A fieldset/legend contains native radios presented as cards, each with a label and supporting description.",
@@ -165,12 +183,12 @@ const details: Record<string, { example: string; anatomy: string; variants: stri
     props: [...autocompleteProps, selectionLimit],
   },
   "component.tags-input": {
-    example: "Choose known reading tags, remove a chip, or select all four to inspect the limit. An unmatched query shows the empty result instead of creating a new tag.",
-    anatomy: "A string specialization of MultiAutocomplete: known-string options become removable chips.",
+    example: "Choose a reading tag, type book club and press Enter to create it, then remove a chip. The input keeps focus so another tag can be added immediately.",
+    anatomy: "A text input and removable chips share one field. The popup offers unselected suggestions and an Add action for a new tag.",
     variants: "Accepts string[] instead of objects, so format and getId are not needed. Use MultiAutocomplete when tags have separate identifiers and labels.",
-    states: "Empty, filtered, no-results, selected, and selection-limit states share the same combobox. required means at least one tag. The four-tag limit leaves removal available.",
-    content: "Keep tags short and consistent in case. Tell users that only existing tags are available when creation might otherwise be expected.", implementation: formSetup,
-    props: [...autocompleteProps.filter((prop) => !["getId", "format", "options"].includes(prop.name)), { name: "options", type: "readonly string[]", required: true, description: "Known tags; each string is both its visible label and identity. Free-text creation is not supported." }, selectionLimit],
+    states: "Selected tags are absent from suggestions. New tags are trimmed and duplicates are ignored regardless of case. required means at least one tag. At the limit the input keeps focus but accepts no additions; removal stays available.",
+    content: "Offer common tags as suggestions without making them a fixed vocabulary. State any selection limit in the hint. An empty options array still allows free-text tags.", implementation: formSetup,
+    props: [...autocompleteProps.filter((prop) => !["getId", "format", "options"].includes(prop.name)), { name: "options", type: "readonly string[]", required: true, description: "Suggested tags. Users can also create their own strings; selected tags are hidden from this list." }, selectionLimit],
   },
   "component.button-group": {
     example: "View log follows an in-preview anchor, Edit log updates the status, and Delete log is disabled with a visible reason. These actions stay independently focusable.",
@@ -246,11 +264,12 @@ const commonMistakes: Record<string, string> = {
   "component.select": "Do not store a placeholder as a real language value. Initialize the empty option with an empty string and validate required selections.",
   "component.checkbox": "Do not mark an optional preference required; required means the user must check it to continue.",
   "component.radio-select": "Do not use segmented radios for commands. A radio changes one stored value; a button runs an operation.",
+  "component.toggle-select": "Do not use this for several simultaneous choices or a required decision that cannot be cleared. Use checkboxes or RadioSelect for those cases.",
   "component.radio-group": "Do not hide the distinction between options in a tooltip. Keep decision-making descriptions visible beside each radio.",
   "component.amount-with-unit": "Do not initialize a single progress object: this component registers progressValue and progressUnit as two sibling fields.",
   "component.autocomplete": "Do not persist the typed query as the selected option. Submission stores the chosen object, not arbitrary search text.",
   "component.multi-autocomplete": "Do not use maxResults to limit selection; maxSelections limits the chosen array and should be explained in the hint.",
-  "component.tags-input": "Do not imply that Enter creates a new tag. Enter selects a known matching string only.",
+  "component.tags-input": "Do not intercept Enter on the parent form to save while the tags field is focused. TagsInput uses Enter to add a tag or select the highlighted suggestion.",
   "component.button-group": "Do not add toolbar arrow-key expectations: each link or button is reached independently with Tab.",
   "component.flash": "Do not use a danger rail for neutral context; danger also interrupts assistive technology with an alert.",
   "component.loading": "Do not assume label is visible: it is visually hidden. Supply visible waiting copy when users need more than a spinner.",
@@ -301,6 +320,36 @@ function document(spec: DocSpec): CatalogDocument {
 }
 
 export const phaseThreeFormsFeedbackFixtures = [
+  defineCatalogFixture({
+    id: "toggle-select.modifiers",
+    name: "Optional reading modifier",
+    description: "Choose one modifier, clear it, save the selection, and restore the initial value.",
+    tags: ["toggle", "selection", "modifiers"],
+    themes: ["light", "dark"],
+    densities: ["comfortable", "compact"],
+    viewports: [
+      { id: "phone", label: "Phone", width: 320, height: 720 },
+      { id: "desktop", label: "Desktop", width: 1280, height: 800 },
+    ],
+    deterministic: true,
+    code: ToggleModifiersSource,
+    render: () => <ToggleModifiersExample />,
+  }),
+  defineCatalogFixture({
+    id: "toggle-select.modifiers.empty",
+    name: "Single optional modifier",
+    description: "An empty selection is valid. Turn passive listening on or off before saving.",
+    tags: ["toggle", "selection", "modifiers", "empty"],
+    themes: ["light", "dark"],
+    densities: ["comfortable", "compact"],
+    viewports: [
+      { id: "phone", label: "Phone", width: 320, height: 720 },
+      { id: "desktop", label: "Desktop", width: 1280, height: 800 },
+    ],
+    deterministic: true,
+    code: EmptyToggleModifiersSource,
+    render: () => <EmptyToggleModifiersExample />,
+  }),
   defineCatalogFixture({ ...{
   "id": "textarea.reading-notes",
   "name": "Reading notes",
@@ -929,7 +978,7 @@ export const phaseThreeFormsFeedbackFixtures = [
 }, code: Example26Source, render: () => <Example26 /> }),
   defineCatalogFixture({ ...{
   "id": "tags.entry",
-  "name": "Known entry tags",
+  "name": "Suggested and custom entry tags",
   "description": "Edit, save, reset, and inspect the current form values.",
   "tags": [
     "tags",
@@ -967,7 +1016,7 @@ export const phaseThreeFormsFeedbackFixtures = [
 }, code: Example27Source, render: () => <Example27 /> }),
   defineCatalogFixture({ ...{
   "id": "tags.entry.empty",
-  "name": "Known entry tags — empty and validation",
+  "name": "Entry tags — empty and validation",
   "description": "Edit, save, reset, and inspect the current form values.",
   "tags": [
     "tags",
@@ -1239,6 +1288,24 @@ export const phaseThreeFormsFeedbackFixtures = [
 ] as const;
 
 const specs: readonly DocSpec[] = [
+  {
+    id: "component.toggle-select",
+    route: "/components/forms/toggle-select",
+    name: "ToggleSelect",
+    category: "forms",
+    summary: "Choose one optional value, with a second press to clear it.",
+    fixtureId: "toggle-select.modifiers",
+    sourcePath: "src/components/forms/ToggleSelect.tsx",
+    react: ["ToggleSelect"],
+    types: ["ToggleSelectProps", "Option"],
+    css: ["paper-toggle-select", "paper-toggle-select__options", "paper-toggle-select__option", "paper-toggle-select__text", "paper-toggle-select__description", "paper-toggle-select__check"],
+    when: "Use for a small set of optional, mutually exclusive choices such as score modifiers.",
+    avoid: "Use RadioSelect when one choice must always remain selected, or Checkbox for independent choices that can be combined.",
+    choose: "ToggleSelect lets users return to no selection by pressing the active option again.",
+    behavior: "Tab moves between enabled choices. Enter, Space, or a click toggles the focused choice without submitting the form. Selecting another choice clears the previous one; focus stays on the pressed option.",
+    accessibility: "The visible legend names the group. Each button exposes its pressed state, and a check reinforces selection without relying on color. Disabled choices are skipped by Tab.",
+    migration: "Replace separate form buttons and selection state with ToggleSelect inside FormProvider. Initialize the named field with [] or [value].",
+  },
   { id: "component.textarea", route: "/components/forms/textarea", name: "TextArea", category: "forms", summary: "Collects multiline text with the same deterministic field anatomy as Input.", fixtureId: "textarea.reading-notes", sourcePath: "src/components/forms/controls.tsx", react: ["TextArea"], types: ["TextAreaProps"], css: ["paper-textarea"], when: "Use for prose, notes, and other values that genuinely need multiple lines.", avoid: "Use Input for short single-line values and do not resize away the user's editing space.", choose: "Choose TextArea over Input by content length, not by visual preference.", behavior: "Native text editing, Tab focus, and React Hook Form validation remain intact.", accessibility: "Associate the persistent label, hint, and recoverable error with the native textarea.", migration: "Replace legacy TextArea while retaining the existing field name and register rules." },
   { id: "component.select", route: "/components/forms/select", name: "Select", category: "forms", summary: "Uses the native platform picker for a known set of concise choices.", fixtureId: "select.language", sourcePath: "src/components/forms/controls.tsx", react: ["Select"], types: ["SelectProps", "Option", "OptionGroup"], when: "Use when one value must be chosen from a stable, reasonably short option set.", avoid: "Use Autocomplete for long searchable collections and RadioSelect when every choice should remain visible.", choose: "Prefer native Select unless a documented requirement needs composite listbox behavior.", behavior: "Platform keyboard, touch, and form submission behavior is preserved.", accessibility: "Provide a visible label and meaningful option labels; disabled options remain programmatically unavailable.", migration: "Map legacy values and groups directly without copying global select selectors." },
   { id: "component.checkbox", route: "/components/forms/checkbox", name: "Checkbox", category: "forms", summary: "Captures an independent boolean choice with native semantics.", fixtureId: "checkbox.public-entry", sourcePath: "src/components/forms/controls.tsx", react: ["Checkbox"], types: ["CheckboxProps"], when: "Use for an independent yes/no setting or acknowledgement.", avoid: "Use radio choices when exactly one option in a set must be selected.", choose: "A checkbox toggles one proposition; a radio group chooses among mutually exclusive propositions.", behavior: "Space toggles the focused native checkbox and React Hook Form owns its boolean value.", accessibility: "Put the consequence in the visible label or hint and retain the native checkbox input.", migration: "Replace legacy Checkbox without converting it into a custom switch role." },
@@ -1247,7 +1314,7 @@ const specs: readonly DocSpec[] = [
   { id: "component.amount-with-unit", route: "/components/forms/amount-with-unit", name: "AmountWithUnit", category: "forms", summary: "Groups a numeric amount with the unit that gives it meaning.", fixtureId: "amount.progress", sourcePath: "src/components/forms/controls.tsx", react: ["AmountWithUnit"], types: ["AmountWithUnitProps", "Option"], when: "Use when a numeric value is invalid or ambiguous without one unit from a short set.", avoid: "Use Input alone when the unit is fixed and can be stated in the label.", choose: "Keep the unit fixed in content when users cannot change it; otherwise group amount and native Select.", behavior: "The amount and unit submit as nameValue and nameUnit for legacy-compatible migration.", accessibility: "Name the amount visibly and provide a generated accessible name for the unit picker.", migration: "Retain the legacy paired field names while replacing its implicit layout and error selectors." },
   { id: "component.autocomplete", route: "/components/forms/autocomplete", name: "Autocomplete", category: "forms", summary: "Filters a long option collection while Base UI manages active-descendant selection.", fixtureId: "autocomplete.language", sourcePath: "src/components/forms/controls.tsx", react: ["AutocompleteInput"], types: ["AutocompleteInputProps"], when: "Use for a long known collection where searching is materially faster than scanning.", avoid: "Use native Select for short sets and Input when free-form values are valid.", choose: "Autocomplete selects one known object; Input accepts text and Select exposes a short known list.", behavior: "Typing filters, Arrow keys highlight, Enter selects, and Escape dismisses the popup and preserves the selected value, including when the popup is already closed.", accessibility: "Keep the combobox label, expanded state, active option, empty result, and error relationships programmatic.", migration: "Replace Headless UI Combobox and pass stable format/getId functions to Paper." },
   { id: "component.multi-autocomplete", route: "/components/forms/multi-autocomplete", name: "MultiAutocomplete", category: "forms", summary: "Selects several known objects from a searchable collection and represents them as removable chips.", fixtureId: "multi-autocomplete.languages", sourcePath: "src/components/forms/controls.tsx", react: ["AutocompleteMultiInput"], types: ["AutocompleteMultiInputProps"], when: "Use when several values may be selected from one long known collection.", avoid: "Use Checkbox lists for a short stable set and TagsInput for simple string labels.", choose: "MultiAutocomplete preserves object identity; TagsInput is optimized for string tags.", behavior: "Base UI manages filtering and selection; named remove buttons update the React Hook Form array.", accessibility: "Each chip has a named removal action and the input exposes combobox state and results.", migration: "Replace Headless UI multi-combobox and supply stable object identifiers." },
-  { id: "component.tags-input", route: "/components/forms/tags-input", name: "TagsInput", category: "forms", summary: "Selects a bounded set of known string tags with removable chip semantics.", fixtureId: "tags.entry", sourcePath: "src/components/forms/controls.tsx", react: ["TagsInput"], types: ["TagsInputProps"], when: "Use for several short known labels such as reading-entry categories.", avoid: "Do not use for arbitrary server-backed creation or object values; use MultiAutocomplete instead.", choose: "TagsInput is the string specialization of MultiAutocomplete and does not hide asynchronous data fetching.", behavior: "Typing filters known tags, Enter selects, Backspace and named controls support removal, and limits disable further input.", accessibility: "Announce the combobox results and give every selected tag an explicit remove label.", migration: "Move suggestion data loading to the application and pass a deterministic option set to Paper." },
+  { id: "component.tags-input", route: "/components/forms/tags-input", name: "TagsInput", category: "forms", summary: "Adds suggested or custom text tags as removable chips.", fixtureId: "tags.entry", sourcePath: "src/components/forms/controls.tsx", react: ["TagsInput"], types: ["TagsInputProps"], when: "Use for short user-defined labels such as reading-entry categories.", avoid: "Use MultiAutocomplete for a fixed vocabulary or objects with separate identifiers and labels. TagsInput does not fetch or persist suggestions.", choose: "TagsInput accepts free text and suggested strings. MultiAutocomplete limits selection to known values.", behavior: "Enter adds the typed tag or chooses the highlighted suggestion without submitting the form. The Add suggestion also supports pointer selection. Adding clears the query and keeps input focus; IME composition never commits a tag. Escape dismisses without clearing tags.", accessibility: "Suggestions expose combobox semantics; selected tags have named removal actions. The input retains focus after adding or removing, including when the selection limit is reached.", migration: "Pass existing tags as suggestions; custom tags are included in the React Hook Form string array and saved by the application." },
   { id: "component.button-group", route: "/components/actions/button-group", name: "ButtonGroup", category: "actions", summary: "Keeps related visible actions together without changing link or button semantics.", fixtureId: "button-group.entry-actions", sourcePath: "src/components/feedback/feedback.tsx", react: ["ButtonGroup"], types: ["ButtonGroupProps", "ButtonGroupAction"], when: "Use for a small, stable set of related actions that should remain visible.", avoid: "Use ActionMenu when the set is contextual or too large for the available width.", choose: "ButtonGroup prioritizes visibility; ActionMenu prioritizes compact contextual access.", behavior: "Each entry remains a real anchor or button and the wrapper contributes only a labelled group.", accessibility: "Preserve native roles, express disabled links with aria-disabled plus blocked activation, and label the group.", migration: "Replace responsive Next Link coupling with router-neutral href or onSelect actions." },
   { id: "component.flash", route: "/components/feedback/flash", name: "Flash", category: "feedback", summary: "Places persistent contextual feedback beside the content it describes.", fixtureId: "flash.statuses", sourcePath: "src/components/feedback/feedback.tsx", react: ["Flash"], types: ["FlashProps", "FlashVariant"], when: "Use for page or section feedback that should remain until the context changes, such as a saved result, a contest warning, or a failed page-level operation.", avoid: "Use Toast for brief asynchronous confirmation and an inline field error when the user must repair one value. Do not put required recovery only in a Flash that may disappear with its surrounding content.", choose: "Flash stays beside the content it explains. Toast is transient and global; field errors identify a specific control and its recovery.", variants: "Information covers neutral context, success confirms a completed outcome, and warning calls for review before proceeding. Danger is reserved for an urgent failure and changes the live-region role from status to alert.", states: "Setting visible=false removes the message from the document. Actions are caller-owned links or buttons, so their label, disabled state, and navigation behavior must remain explicit.", behavior: "Danger feedback is announced as an alert; information, success, and warning use a polite status announcement. Changing visible to false unmounts the message instead of merely hiding it.", content: "Write the title as the outcome or issue, then use the body for consequence and recovery. Keep any action label specific\u2014Review fields or Try again instead of OK.", accessibility: "Pair the colored edge with a title and message text, because color does not name the status. Provide actions as real links or buttons and reserve danger for messages that warrant an interrupting alert.", migration: "Map error to danger, remove Next Link ownership, and pass any action as router-owned React content.", pageSections: ["usage", "examples", "variantsAndStates", "behavior", "contentGuidance", "accessibility"] },
   { id: "component.loading", route: "/components/feedback/loading", name: "Loading", category: "feedback", summary: "Communicates indeterminate progress with a named, reduced-motion-safe status.", fixtureId: "loading.entries", sourcePath: "src/components/feedback/feedback.tsx", react: ["Loading"], types: ["LoadingProps"], when: "Use while a bounded region is waiting and no meaningful progress value exists.", avoid: "Use native progress for measurable work and retain existing content when optimistic updates are safer.", choose: "Loading indicates indeterminate work; Button loading prevents repeat action while keeping its name.", behavior: "The status label is available to assistive technology and animation stops under reduced motion.", accessibility: "Supply a label that names what is loading and do not rely on spinner motion alone.", migration: "Replace legacy Loading and remove application-owned spinner SVGs." },

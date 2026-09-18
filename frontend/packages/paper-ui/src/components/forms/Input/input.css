@@ -4,7 +4,7 @@
     align-content: start;
     gap: 0.35rem;
     inline-size: 100%;
-    max-inline-size: 32rem;
+    min-inline-size: 0;
   }
 
   .paper-field__label {

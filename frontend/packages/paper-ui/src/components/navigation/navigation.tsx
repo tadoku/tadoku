@@ -77,6 +77,8 @@ export interface NavbarProps {
   readonly brandHref: string;
   /** Optional controls or account utilities rendered at the end of the bar. */
   readonly actions?: ReactNode;
+  /** Narrow-only account or utility content; call closeMenu after activating an action. */
+  readonly mobileFooter?: (closeMenu: () => void) => ReactNode;
   /** Set to false when the application provides its own narrow navigation pattern. */
   readonly mobileNavigation?: boolean;
   readonly currentPath?: string;
@@ -164,6 +166,7 @@ export function Navbar({
   brand,
   brandHref,
   actions,
+  mobileFooter,
   mobileNavigation = true,
   currentPath,
   renderLink,
@@ -176,6 +179,10 @@ export function Navbar({
   const mobileTriggerRef = useRef<HTMLButtonElement>(null);
 
   const closeMobile = () => setMobileOpen(false);
+  const onMobileClick = (event: MouseEvent<HTMLElement>) => {
+    const link = (event.target as Element).closest("a[href]");
+    if (link && event.currentTarget.contains(link) && link.getAttribute("aria-disabled") !== "true") closeMobile();
+  };
   const onMobileKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key !== "Escape") return;
     setMobileOpen(false);
@@ -183,7 +190,7 @@ export function Navbar({
   };
 
   return (
-    <nav className="paper-navbar" aria-label={label} onKeyDown={mobileNavigation && mobileOpen ? onMobileKeyDown : undefined}>
+    <nav className="paper-navbar" aria-label={label} onKeyDown={mobileNavigation && mobileOpen ? onMobileKeyDown : undefined} onClick={mobileNavigation && mobileOpen ? onMobileClick : undefined}>
       <div className="paper-navbar__inner">
         <div className="paper-navbar__brand">
           {renderNavigationLink(renderLink, { href: brandHref, children: brand })}
@@ -274,6 +281,7 @@ export function Navbar({
             </section>
           ),
           )}
+          {mobileFooter?.(closeMobile)}
         </div>
       ) : null}
       {isLoading ? <div className="paper-navbar__loading" role="status"><span className="paper-sr-only">Loading navigation</span></div> : null}

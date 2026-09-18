@@ -1,0 +1,15 @@
+package: openapi
+generate:
+  models: true
+  std-http-server: true
+  strict-server: true
+output-options:
+  include-operation-ids:
+    - ContentAnnouncementCreate
+    - ContentAnnouncementDelete
+    - ContentAnnouncementFindByID
+    - ContentAnnouncementList
+    - ContentAnnouncementListActive
+    - ContentAnnouncementUpdate
+  nullable-type: true
+  skip-prune: true

@@ -1,0 +1,302 @@
+[
+  {
+    "route": "/",
+    "width": 320,
+    "aligned": true,
+    "brokenImages": 0,
+    "overflow": false,
+    "scrollWidth": 305,
+    "title": "Keep your immersion moving.",
+    "url": "/"
+  },
+  {
+    "route": "/about",
+    "width": 320,
+    "aligned": true,
+    "brokenImages": 0,
+    "overflow": false,
+    "scrollWidth": 305,
+    "title": "A little more immersion, together.",
+    "url": "/about"
+  },
+  {
+    "route": "/guide",
+    "width": 320,
+    "aligned": true,
+    "brokenImages": 0,
+    "overflow": false,
+    "scrollWidth": 305,
+    "title": "Make your first entry.",
+    "url": "/guide"
+  },
+  {
+    "route": "/guide/scoring",
+    "width": 320,
+    "aligned": true,
+    "brokenImages": 0,
+    "overflow": false,
+    "scrollWidth": 305,
+    "title": "Fair play. Clear scores.",
+    "url": "/guide/scoring"
+  },
+  {
+    "route": "/guide/questions",
+    "width": 320,
+    "aligned": true,
+    "brokenImages": 0,
+    "overflow": false,
+    "scrollWidth": 305,
+    "title": "What would you like to know?",
+    "url": "/guide/questions"
+  },
+  {
+    "route": "/leaderboard/latest?scenario=participant",
+    "width": 320,
+    "aligned": true,
+    "brokenImages": 0,
+    "overflow": false,
+    "scrollWidth": 305,
+    "title": "Leaderboard",
+    "url": "/leaderboard/latest"
+  },
+  {
+    "route": "/contests/official",
+    "width": 320,
+    "aligned": true,
+    "brokenImages": 0,
+    "overflow": false,
+    "scrollWidth": 305,
+    "title": "Contests",
+    "url": "/contests/official"
+  },
+  {
+    "route": "/users/anton",
+    "width": 320,
+    "aligned": true,
+    "brokenImages": 0,
+    "overflow": false,
+    "scrollWidth": 305,
+    "title": "Anton",
+    "url": "/users/anton"
+  },
+  {
+    "route": "/users/anton/activity",
+    "width": 320,
+    "aligned": true,
+    "brokenImages": 0,
+    "overflow": false,
+    "scrollWidth": 305,
+    "title": "Anton",
+    "url": "/users/anton/activity"
+  },
+  {
+    "route": "/logs/reading-konbini?scenario=reading",
+    "width": 320,
+    "aligned": true,
+    "brokenImages": 0,
+    "overflow": false,
+    "scrollWidth": 305,
+    "title": "コンビニ人間 — finished chapter 3",
+    "url": "/logs/reading-konbini"
+  },
+  {
+    "route": "/admin",
+    "width": 320,
+    "aligned": true,
+    "brokenImages": 0,
+    "overflow": false,
+    "scrollWidth": 305,
+    "title": "Dashboard",
+    "url": "/admin"
+  },
+  {
+    "route": "/logs/new",
+    "width": 320,
+    "aligned": true,
+    "brokenImages": 0,
+    "overflow": false,
+    "scrollWidth": 305,
+    "title": "Log activity",
+    "url": "/logs/new"
+  },
+  {
+    "route": "/settings",
+    "width": 320,
+    "aligned": true,
+    "brokenImages": 0,
+    "overflow": false,
+    "scrollWidth": 305,
+    "title": "Account settings",
+    "url": "/settings"
+  },
+  {
+    "route": "/contact",
+    "width": 320,
+    "aligned": true,
+    "brokenImages": 0,
+    "overflow": false,
+    "scrollWidth": 305,
+    "title": "Get in touch",
+    "url": "/contact"
+  },
+  {
+    "route": "/sign-in",
+    "width": 320,
+    "aligned": true,
+    "brokenImages": 0,
+    "overflow": false,
+    "scrollWidth": 320,
+    "title": "Join in, keep going.",
+    "url": "/sign-in"
+  },
+  {
+    "route": "/",
+    "width": 768,
+    "aligned": true,
+    "brokenImages": 0,
+    "overflow": false,
+    "scrollWidth": 753,
+    "title": "Keep your immersion moving.",
+    "url": "/"
+  },
+  {
+    "route": "/about",
+    "width": 768,
+    "aligned": true,
+    "brokenImages": 0,
+    "overflow": false,
+    "scrollWidth": 753,
+    "title": "A little more immersion, together.",
+    "url": "/about"
+  },
+  {
+    "route": "/guide",
+    "width": 768,
+    "aligned": true,
+    "brokenImages": 0,
+    "overflow": false,
+    "scrollWidth": 753,
+    "title": "Make your first entry.",
+    "url": "/guide"
+  },
+  {
+    "route": "/guide/scoring",
+    "width": 768,
+    "aligned": true,
+    "brokenImages": 0,
+    "overflow": false,
+    "scrollWidth": 753,
+    "title": "Fair play. Clear scores.",
+    "url": "/guide/scoring"
+  },
+  {
+    "route": "/guide/questions",
+    "width": 768,
+    "aligned": true,
+    "brokenImages": 0,
+    "overflow": false,
+    "scrollWidth": 753,
+    "title": "What would you like to know?",
+    "url": "/guide/questions"
+  },
+  {
+    "route": "/leaderboard/latest?scenario=participant",
+    "width": 768,
+    "aligned": true,
+    "brokenImages": 0,
+    "overflow": false,
+    "scrollWidth": 753,
+    "title": "Leaderboard",
+    "url": "/leaderboard/latest"
+  },
+  {
+    "route": "/contests/official",
+    "width": 768,
+    "aligned": true,
+    "brokenImages": 0,
+    "overflow": false,
+    "scrollWidth": 753,
+    "title": "Contests",
+    "url": "/contests/official"
+  },
+  {
+    "route": "/users/anton",
+    "width": 768,
+    "aligned": true,
+    "brokenImages": 0,
+    "overflow": false,
+    "scrollWidth": 753,
+    "title": "Anton",
+    "url": "/users/anton"
+  },
+  {
+    "route": "/users/anton/activity",
+    "width": 768,
+    "aligned": true,
+    "brokenImages": 0,
+    "overflow": false,
+    "scrollWidth": 753,
+    "title": "Anton",
+    "url": "/users/anton/activity"
+  },
+  {
+    "route": "/logs/reading-konbini?scenario=reading",
+    "width": 768,
+    "aligned": true,
+    "brokenImages": 0,
+    "overflow": false,
+    "scrollWidth": 753,
+    "title": "コンビニ人間 — finished chapter 3",
+    "url": "/logs/reading-konbini"
+  },
+  {
+    "route": "/admin",
+    "width": 768,
+    "aligned": true,
+    "brokenImages": 0,
+    "overflow": false,
+    "scrollWidth": 753,
+    "title": "Dashboard",
+    "url": "/admin"
+  },
+  {
+    "route": "/logs/new",
+    "width": 768,
+    "aligned": true,
+    "brokenImages": 0,
+    "overflow": false,
+    "scrollWidth": 753,
+    "title": "Log activity",
+    "url": "/logs/new"
+  },
+  {
+    "route": "/settings",
+    "width": 768,
+    "aligned": true,
+    "brokenImages": 0,
+    "overflow": false,
+    "scrollWidth": 768,
+    "title": "Account settings",
+    "url": "/settings"
+  },
+  {
+    "route": "/contact",
+    "width": 768,
+    "aligned": true,
+    "brokenImages": 0,
+    "overflow": false,
+    "scrollWidth": 753,
+    "title": "Get in touch",
+    "url": "/contact"
+  },
+  {
+    "route": "/sign-in",
+    "width": 768,
+    "aligned": true,
+    "brokenImages": 0,
+    "overflow": false,
+    "scrollWidth": 768,
+    "title": "Join in, keep going.",
+    "url": "/sign-in"
+  }
+]

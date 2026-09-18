@@ -1,0 +1,19 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "content",
+    srcs = [
+        "announcements.sql.go",
+        "db.go",
+        "models.go",
+    ],
+    importpath = "github.com/tadoku/tadoku/services/tadoku-api/generated/sqlc/content",
+    visibility = [
+        "//services/tadoku-api/features/content:__pkg__",
+    ],
+    deps = [
+        "@com_github_jackc_pgx_v5//:pgx",
+        "@com_github_jackc_pgx_v5//pgconn",
+        "@com_github_jackc_pgx_v5//pgtype",
+    ],
+)

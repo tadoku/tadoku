@@ -1,0 +1,25 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "app",
+    srcs = [
+        "announcement_create.go",
+        "announcement_delete.go",
+        "announcement_update.go",
+        "announcements.go",
+        "app.go",
+    ],
+    importpath = "github.com/tadoku/tadoku/services/tadoku-api/app",
+    visibility = [
+        "//services/tadoku-api/cmd/tadoku-api:__pkg__",
+        "//services/tadoku-api/e2e:__pkg__",
+        "//services/tadoku-api/transport/http:__pkg__",
+    ],
+    deps = [
+        "//services/tadoku-api/features/content",
+        "//services/tadoku-api/infra/postgres",
+        "//services/tadoku-api/internal/permissions",
+        "@com_github_google_uuid//:uuid",
+        "@com_github_jackc_pgx_v5//pgxpool",
+    ],
+)

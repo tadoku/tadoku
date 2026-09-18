@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   HeatmapChart,
   Table,
@@ -199,6 +199,7 @@ describe("HeatmapChart", () => {
     const svg = container.querySelector("svg")!;
     const januaryFifth = calendarCells(svg)[10];
     const tooltipText = screen.getByText("100 points on January 5, 2023");
+    Object.defineProperty(tooltipText, "getBBox", { value: () => new DOMRect(0, 0, 180, 16) });
     const tooltip = tooltipText.closest("g");
 
     expect(tooltip).toBeInstanceOf(SVGGElement);
@@ -207,6 +208,26 @@ describe("HeatmapChart", () => {
     expect(tooltipIsHidden(tooltip!)).toBe(false);
     fireEvent.mouseOut(januaryFifth);
     expect(tooltipIsHidden(tooltip!)).toBe(true);
+  });
+
+  it.each(["2023-01-02", "2023-12-31"])("keeps a scaled calendar tooltip sized and contained in SVG units at %s", (date) => {
+    const { container } = render(<HeatmapChart {...heatmapProps} data={[{ date, value: 10, tooltip: "A recorded reading session" }]} />);
+    const cell = container.querySelector(`[data-date="${date}"]`)!;
+    const text = screen.getByText("A recorded reading session");
+    // A responsive SVG doubles the rendered pixels, while its viewBox units stay fixed.
+    Object.defineProperty(text, "getBBox", { value: () => new DOMRect(0, 0, 180, 16) });
+    vi.spyOn(text, "getBoundingClientRect").mockReturnValue(new DOMRect(0, 0, 360, 32));
+    fireEvent.focus(cell);
+
+    const tooltip = text.closest("g")!;
+    const background = tooltip.querySelector("rect")!;
+    expect(tooltipIsHidden(tooltip)).toBe(false);
+    expect(background).toHaveAttribute("width", "192");
+    expect(background).toHaveAttribute("height", "28");
+    expect(Number(background.getAttribute("x"))).toBeGreaterThanOrEqual(0);
+    expect(Number(background.getAttribute("x")) + Number(background.getAttribute("width"))).toBeLessThanOrEqual(Number(container.querySelector("svg")!.getAttribute("width")));
+    fireEvent.blur(cell);
+    expect(tooltipIsHidden(tooltip)).toBe(true);
   });
 });
 

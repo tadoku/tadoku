@@ -1,0 +1,6 @@
+>>> GET /content/announcements/empty
+HTTP/1.1 200 OK
+Content-Length: 57
+Content-Type: application/json; charset=UTF-8
+
+{"announcements":[],"next_page_token":"","total_size":0}

@@ -27,6 +27,7 @@ export {
   Select,
   TagsInput,
   TextArea,
+  ToggleSelect,
   type AmountWithUnitProps,
   type AutocompleteInputProps,
   type AutocompleteMultiInputProps,
@@ -41,6 +42,7 @@ export {
   type SelectProps,
   type TagsInputProps,
   type TextAreaProps,
+  type ToggleSelectProps,
 } from './components/forms'
 export {
   ButtonGroup,

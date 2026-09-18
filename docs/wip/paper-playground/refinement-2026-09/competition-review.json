@@ -1,0 +1,1098 @@
+{
+  "reviewedAt": "2026-09-12",
+  "owner": "refine_competitions",
+  "tab": "tab_3",
+  "matrix": [
+    {
+      "viewport": 1280,
+      "density": "comfortable",
+      "theme": "light",
+      "empty": null,
+      "firstRow": 485.59375,
+      "path": "/leaderboard/latest?scenario=participant",
+      "rows": 6,
+      "scrollWidth": 1265,
+      "title": "Leaderboard",
+      "width": 1265
+    },
+    {
+      "viewport": 1280,
+      "density": "comfortable",
+      "theme": "light",
+      "empty": null,
+      "firstRow": 432.59375,
+      "path": "/leaderboard/latest?scenario=guest",
+      "rows": 6,
+      "scrollWidth": 1265,
+      "title": "Leaderboard",
+      "width": 1265
+    },
+    {
+      "viewport": 1280,
+      "density": "comfortable",
+      "theme": "light",
+      "empty": null,
+      "firstRow": 432.59375,
+      "path": "/leaderboard/latest?scenario=member",
+      "rows": 6,
+      "scrollWidth": 1265,
+      "title": "Leaderboard",
+      "width": 1265
+    },
+    {
+      "viewport": 1280,
+      "density": "comfortable",
+      "theme": "light",
+      "empty": null,
+      "firstRow": 432.59375,
+      "path": "/leaderboard/latest?scenario=closed",
+      "rows": 6,
+      "scrollWidth": 1265,
+      "title": "Leaderboard",
+      "width": 1265
+    },
+    {
+      "viewport": 1280,
+      "density": "comfortable",
+      "theme": "light",
+      "empty": null,
+      "firstRow": 485.59375,
+      "path": "/leaderboard/latest?scenario=closed-participant",
+      "rows": 6,
+      "scrollWidth": 1265,
+      "title": "Leaderboard",
+      "width": 1265
+    },
+    {
+      "viewport": 1280,
+      "density": "comfortable",
+      "theme": "light",
+      "empty": "The first page is yours to write",
+      "firstRow": null,
+      "path": "/leaderboard/latest?scenario=upcoming",
+      "rows": 0,
+      "scrollWidth": 1280,
+      "title": "Leaderboard",
+      "width": 1280
+    },
+    {
+      "viewport": 1280,
+      "density": "comfortable",
+      "theme": "light",
+      "empty": null,
+      "firstRow": 485.59375,
+      "path": "/leaderboard/latest?scenario=ended",
+      "rows": 6,
+      "scrollWidth": 1265,
+      "title": "Leaderboard",
+      "width": 1265
+    },
+    {
+      "viewport": 1280,
+      "density": "comfortable",
+      "theme": "light",
+      "empty": "The first page is yours to write",
+      "firstRow": null,
+      "path": "/leaderboard/latest?scenario=empty",
+      "rows": 0,
+      "scrollWidth": 1280,
+      "title": "Leaderboard",
+      "width": 1280
+    },
+    {
+      "viewport": 1280,
+      "density": "comfortable",
+      "theme": "light",
+      "empty": "Standings could not be loaded",
+      "firstRow": null,
+      "path": "/leaderboard/latest?scenario=error",
+      "rows": 0,
+      "scrollWidth": 1280,
+      "title": "Leaderboard",
+      "width": 1280
+    },
+    {
+      "viewport": 1280,
+      "density": "comfortable",
+      "theme": "light",
+      "empty": null,
+      "firstRow": 515.1875,
+      "path": "/leaderboard/yearly/2025?scenario=participant",
+      "rows": 6,
+      "scrollWidth": 1265,
+      "title": "Leaderboard",
+      "width": 1265
+    },
+    {
+      "viewport": 1280,
+      "density": "comfortable",
+      "theme": "light",
+      "empty": null,
+      "firstRow": 479.59375,
+      "path": "/leaderboard/all-time?scenario=participant",
+      "rows": 6,
+      "scrollWidth": 1265,
+      "title": "Leaderboard",
+      "width": 1265
+    },
+    {
+      "viewport": 1280,
+      "density": "comfortable",
+      "theme": "light",
+      "empty": "The first page is yours to write",
+      "firstRow": null,
+      "path": "/contests/novels/leaderboard?scenario=participant",
+      "rows": 0,
+      "scrollWidth": 1265,
+      "title": "Leaderboard",
+      "width": 1265
+    },
+    {
+      "viewport": 1280,
+      "empty": null,
+      "firstRow": null,
+      "path": "/contests/official?scenario=member",
+      "rows": 0,
+      "scrollWidth": 1265,
+      "title": "Contests",
+      "width": 1265
+    },
+    {
+      "viewport": 1280,
+      "empty": null,
+      "firstRow": null,
+      "path": "/contests/official?scenario=guest",
+      "rows": 0,
+      "scrollWidth": 1265,
+      "title": "Contests",
+      "width": 1265
+    },
+    {
+      "viewport": 1280,
+      "empty": null,
+      "firstRow": null,
+      "path": "/contests/official?scenario=between",
+      "rows": 0,
+      "scrollWidth": 1265,
+      "title": "Contests",
+      "width": 1265
+    },
+    {
+      "viewport": 1280,
+      "empty": "You haven\u2019t organized a contest yet.",
+      "firstRow": null,
+      "path": "/contests/mine?scenario=empty",
+      "rows": 0,
+      "scrollWidth": 1265,
+      "title": "Contests",
+      "width": 1265
+    },
+    {
+      "viewport": 1280,
+      "empty": null,
+      "firstRow": null,
+      "path": "/contests/mine?scenario=creator",
+      "rows": 0,
+      "scrollWidth": 1265,
+      "title": "Contests",
+      "width": 1265
+    },
+    {
+      "viewport": 1280,
+      "empty": "Contests could not be loaded.",
+      "firstRow": null,
+      "path": "/contests/official?scenario=unavailable",
+      "rows": 0,
+      "scrollWidth": 1280,
+      "title": "Contests",
+      "width": 1280
+    },
+    {
+      "viewport": 1280,
+      "empty": null,
+      "firstRow": null,
+      "path": "/contests/community?scenario=member",
+      "rows": 0,
+      "scrollWidth": 1265,
+      "title": "Contests",
+      "width": 1265
+    },
+    {
+      "viewport": 1280,
+      "empty": null,
+      "firstRow": null,
+      "path": "/contests/mine?scenario=creator",
+      "rows": 0,
+      "scrollWidth": 1265,
+      "title": "Contests",
+      "width": 1265
+    },
+    {
+      "viewport": 1280,
+      "empty": null,
+      "firstRow": null,
+      "path": "/contests/round5?scenario=member",
+      "rows": 0,
+      "scrollWidth": 1265,
+      "title": "2026 Round 5",
+      "width": 1265
+    },
+    {
+      "viewport": 1280,
+      "empty": null,
+      "firstRow": null,
+      "path": "/contests/round5/registration?scenario=member",
+      "rows": 0,
+      "scrollWidth": 1280,
+      "title": "Join 2026 Round 5",
+      "width": 1280
+    },
+    {
+      "viewport": 1280,
+      "empty": null,
+      "firstRow": null,
+      "path": "/contests/new?scenario=creator",
+      "rows": 0,
+      "scrollWidth": 1265,
+      "title": "Create a community contest",
+      "width": 1265
+    },
+    {
+      "viewport": 1280,
+      "empty": null,
+      "firstRow": null,
+      "path": "/contests/reading-circle/edit?scenario=creator",
+      "rows": 0,
+      "scrollWidth": 1280,
+      "title": "Organizer access required",
+      "width": 1280
+    },
+    {
+      "viewport": 390,
+      "density": "comfortable",
+      "theme": "light",
+      "empty": null,
+      "firstRow": 653.578125,
+      "path": "/leaderboard/latest?scenario=participant",
+      "rows": 6,
+      "scrollWidth": 375,
+      "title": "Leaderboard",
+      "width": 375
+    },
+    {
+      "viewport": 390,
+      "density": "comfortable",
+      "theme": "light",
+      "empty": null,
+      "firstRow": 586.578125,
+      "path": "/leaderboard/latest?scenario=guest",
+      "rows": 6,
+      "scrollWidth": 375,
+      "title": "Leaderboard",
+      "width": 375
+    },
+    {
+      "viewport": 390,
+      "density": "comfortable",
+      "theme": "light",
+      "empty": null,
+      "firstRow": 636.578125,
+      "path": "/leaderboard/latest?scenario=member",
+      "rows": 6,
+      "scrollWidth": 375,
+      "title": "Leaderboard",
+      "width": 375
+    },
+    {
+      "viewport": 390,
+      "density": "comfortable",
+      "theme": "light",
+      "empty": null,
+      "firstRow": 636.578125,
+      "path": "/leaderboard/latest?scenario=closed",
+      "rows": 6,
+      "scrollWidth": 375,
+      "title": "Leaderboard",
+      "width": 375
+    },
+    {
+      "viewport": 390,
+      "density": "comfortable",
+      "theme": "light",
+      "empty": null,
+      "firstRow": 653.578125,
+      "path": "/leaderboard/latest?scenario=closed-participant",
+      "rows": 6,
+      "scrollWidth": 375,
+      "title": "Leaderboard",
+      "width": 375
+    },
+    {
+      "viewport": 390,
+      "density": "comfortable",
+      "theme": "light",
+      "empty": "The first page is yours to write",
+      "firstRow": null,
+      "path": "/leaderboard/latest?scenario=upcoming",
+      "rows": 0,
+      "scrollWidth": 375,
+      "title": "Leaderboard",
+      "width": 375
+    },
+    {
+      "viewport": 390,
+      "density": "comfortable",
+      "theme": "light",
+      "empty": null,
+      "firstRow": 703.578125,
+      "path": "/leaderboard/latest?scenario=ended",
+      "rows": 6,
+      "scrollWidth": 375,
+      "title": "Leaderboard",
+      "width": 375
+    },
+    {
+      "viewport": 390,
+      "density": "comfortable",
+      "theme": "light",
+      "empty": "The first page is yours to write",
+      "firstRow": null,
+      "path": "/leaderboard/latest?scenario=empty",
+      "rows": 0,
+      "scrollWidth": 375,
+      "title": "Leaderboard",
+      "width": 375
+    },
+    {
+      "viewport": 390,
+      "density": "comfortable",
+      "theme": "light",
+      "empty": "Standings could not be loaded",
+      "firstRow": null,
+      "path": "/leaderboard/latest?scenario=error",
+      "rows": 0,
+      "scrollWidth": 375,
+      "title": "Leaderboard",
+      "width": 375
+    },
+    {
+      "viewport": 390,
+      "density": "comfortable",
+      "theme": "light",
+      "empty": null,
+      "firstRow": 656.375,
+      "path": "/leaderboard/yearly/2025?scenario=participant",
+      "rows": 6,
+      "scrollWidth": 375,
+      "title": "Leaderboard",
+      "width": 375
+    },
+    {
+      "viewport": 390,
+      "density": "comfortable",
+      "theme": "light",
+      "empty": null,
+      "firstRow": 620.78125,
+      "path": "/leaderboard/all-time?scenario=participant",
+      "rows": 6,
+      "scrollWidth": 375,
+      "title": "Leaderboard",
+      "width": 375
+    },
+    {
+      "viewport": 390,
+      "density": "comfortable",
+      "theme": "light",
+      "empty": "The first page is yours to write",
+      "firstRow": null,
+      "path": "/contests/novels/leaderboard?scenario=participant",
+      "rows": 0,
+      "scrollWidth": 375,
+      "title": "Leaderboard",
+      "width": 375
+    },
+    {
+      "viewport": 390,
+      "empty": null,
+      "firstRow": null,
+      "path": "/contests/official?scenario=member",
+      "rows": 0,
+      "scrollWidth": 375,
+      "title": "Contests",
+      "width": 375
+    },
+    {
+      "viewport": 390,
+      "empty": null,
+      "firstRow": null,
+      "path": "/contests/official?scenario=guest",
+      "rows": 0,
+      "scrollWidth": 375,
+      "title": "Contests",
+      "width": 375
+    },
+    {
+      "viewport": 390,
+      "empty": null,
+      "firstRow": null,
+      "path": "/contests/official?scenario=between",
+      "rows": 0,
+      "scrollWidth": 375,
+      "title": "Contests",
+      "width": 375
+    },
+    {
+      "viewport": 390,
+      "empty": "You haven\u2019t organized a contest yet.",
+      "firstRow": null,
+      "path": "/contests/mine?scenario=empty",
+      "rows": 0,
+      "scrollWidth": 375,
+      "title": "Contests",
+      "width": 375
+    },
+    {
+      "viewport": 390,
+      "empty": null,
+      "firstRow": null,
+      "path": "/contests/mine?scenario=creator",
+      "rows": 0,
+      "scrollWidth": 375,
+      "title": "Contests",
+      "width": 375
+    },
+    {
+      "viewport": 390,
+      "empty": "Contests could not be loaded.",
+      "firstRow": null,
+      "path": "/contests/official?scenario=unavailable",
+      "rows": 0,
+      "scrollWidth": 390,
+      "title": "Contests",
+      "width": 390
+    },
+    {
+      "viewport": 390,
+      "empty": null,
+      "firstRow": null,
+      "path": "/contests/community?scenario=member",
+      "rows": 0,
+      "scrollWidth": 375,
+      "title": "Contests",
+      "width": 375
+    },
+    {
+      "viewport": 390,
+      "empty": null,
+      "firstRow": null,
+      "path": "/contests/mine?scenario=creator",
+      "rows": 0,
+      "scrollWidth": 375,
+      "title": "Contests",
+      "width": 375
+    },
+    {
+      "viewport": 390,
+      "empty": null,
+      "firstRow": null,
+      "path": "/contests/round5?scenario=member",
+      "rows": 0,
+      "scrollWidth": 375,
+      "title": "2026 Round 5",
+      "width": 375
+    },
+    {
+      "viewport": 390,
+      "empty": null,
+      "firstRow": null,
+      "path": "/contests/round5/registration?scenario=member",
+      "rows": 0,
+      "scrollWidth": 375,
+      "title": "Join 2026 Round 5",
+      "width": 375
+    },
+    {
+      "viewport": 390,
+      "empty": null,
+      "firstRow": null,
+      "path": "/contests/new?scenario=creator",
+      "rows": 0,
+      "scrollWidth": 375,
+      "title": "Create a community contest",
+      "width": 375
+    },
+    {
+      "viewport": 390,
+      "empty": null,
+      "firstRow": null,
+      "path": "/contests/reading-circle/edit?scenario=creator",
+      "rows": 0,
+      "scrollWidth": 390,
+      "title": "Organizer access required",
+      "width": 390
+    }
+  ],
+  "before": {
+    "desktop": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty18rn2-fabe8c97.png",
+    "mobile": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty19hjj-683ae03d.png",
+    "desktopFirstRow": 770.28125,
+    "mobileFirstRow": 994.3671875
+  },
+  "after": {
+    "leaderboardMobileDark": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1nljy-5eec5717.png",
+    "leaderboardDesktopDarkFocused": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1o0pl-059a3f95.png",
+    "contestsDesktop": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1jgrf-66e06e8d.png",
+    "registrationDesktop": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1kw9i-c13b4602.png",
+    "editorDesktop": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1l9hz-7074e104.png"
+  },
+  "interaction": {
+    "findMyRow": {
+      "viewport": 390,
+      "focused": "standing-anton",
+      "row": "8AntonYou600",
+      "aria-current": "true"
+    }
+  },
+  "darkMethod": "Tab-only data-theme dark plus existing reversed wordmark asset; no persisted settings changed.",
+  "tests": "Paper playground typecheck and all 41 tests passed after initial implementation.",
+  "finalScreenshots": [
+    {
+      "name": "leaderboardDesktopLight",
+      "viewport": 1280,
+      "path": "/leaderboard/latest?scenario=participant",
+      "dark": false,
+      "screenshotPath": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1ub1q-4fbdb232.png",
+      "firstRow": 485.59375,
+      "scrollWidth": 1265,
+      "title": "Leaderboard",
+      "width": 1265
+    },
+    {
+      "name": "leaderboardMobileLight",
+      "viewport": 390,
+      "path": "/leaderboard/latest?scenario=participant",
+      "dark": false,
+      "screenshotPath": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1uckh-7a267e91.png",
+      "firstRow": 575.984375,
+      "scrollWidth": 375,
+      "title": "Leaderboard",
+      "width": 375
+    },
+    {
+      "name": "leaderboardYearly320",
+      "viewport": 320,
+      "path": "/leaderboard/yearly/2025?scenario=participant",
+      "dark": false,
+      "screenshotPath": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1ue4n-968ed38a.png",
+      "firstRow": 671.375,
+      "scrollWidth": 305,
+      "title": "Leaderboard",
+      "width": 305
+    },
+    {
+      "name": "contestEditor320",
+      "viewport": 320,
+      "path": "/contests/friends/edit?scenario=creator",
+      "dark": false,
+      "screenshotPath": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1ufm6-3ed6011b.png",
+      "firstRow": null,
+      "scrollWidth": 305,
+      "title": "Manage contest",
+      "width": 305
+    },
+    {
+      "name": "contestsDesktopDark",
+      "viewport": 1280,
+      "path": "/contests/official?scenario=member",
+      "dark": true,
+      "screenshotPath": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1uglj-a8bd70c0.png",
+      "firstRow": null,
+      "scrollWidth": 1265,
+      "title": "Contests",
+      "width": 1265
+    },
+    {
+      "name": "contestRegistrationMobile",
+      "viewport": 390,
+      "path": "/contests/round5/registration?scenario=member",
+      "dark": false,
+      "screenshotPath": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1uipp-1c820278.png",
+      "firstRow": null,
+      "scrollWidth": 375,
+      "title": "Join 2026 Round 5",
+      "width": 375
+    }
+  ],
+  "remainingSharedIssue": null,
+  "refinements": [
+    "Removed the separate introductory paragraph, repeated date blocks, filter note and visible duplicate table caption from the leaderboard.",
+    "Integrated round context, filters, personal rank, table and pagination into one paper sheet; retained accessible table caption.",
+    "Changed page-specific logging CTA to outline, keeping the global navigation action primary.",
+    "Reduced sidebar to participation context, deadline, count and recent activity.",
+    "Combined contest descriptions with collection header, aligned search and count, restrained current-round feature and tightened calendar rows.",
+    "Aligned detail/status/back links and registration/editor field widths with application rhythm.",
+    "At widths below 440px, leaderboard selects occupy a full row so selected options stay readable."
+  ],
+  "additionalCompactDarkChecks": [
+    {
+      "viewport": 1280,
+      "empty": null,
+      "firstRow": 439.59375,
+      "path": "/leaderboard/latest?scenario=participant",
+      "rows": 6,
+      "scrollWidth": 1265,
+      "title": "Leaderboard",
+      "width": 1265,
+      "density": "compact",
+      "theme": "dark"
+    },
+    {
+      "viewport": 1280,
+      "empty": null,
+      "firstRow": 394.59375,
+      "path": "/leaderboard/latest?scenario=guest",
+      "rows": 6,
+      "scrollWidth": 1265,
+      "title": "Leaderboard",
+      "width": 1265,
+      "density": "compact",
+      "theme": "dark"
+    },
+    {
+      "viewport": 1280,
+      "empty": null,
+      "firstRow": 394.59375,
+      "path": "/leaderboard/latest?scenario=member",
+      "rows": 6,
+      "scrollWidth": 1265,
+      "title": "Leaderboard",
+      "width": 1265,
+      "density": "compact",
+      "theme": "dark"
+    },
+    {
+      "viewport": 1280,
+      "empty": null,
+      "firstRow": 394.59375,
+      "path": "/leaderboard/latest?scenario=closed",
+      "rows": 6,
+      "scrollWidth": 1265,
+      "title": "Leaderboard",
+      "width": 1265,
+      "density": "compact",
+      "theme": "dark"
+    },
+    {
+      "viewport": 1280,
+      "empty": null,
+      "firstRow": 439.59375,
+      "path": "/leaderboard/latest?scenario=closed-participant",
+      "rows": 6,
+      "scrollWidth": 1265,
+      "title": "Leaderboard",
+      "width": 1265,
+      "density": "compact",
+      "theme": "dark"
+    },
+    {
+      "viewport": 1280,
+      "empty": "The first page is yours to write",
+      "firstRow": null,
+      "path": "/leaderboard/latest?scenario=upcoming",
+      "rows": 0,
+      "scrollWidth": 1280,
+      "title": "Leaderboard",
+      "width": 1280,
+      "density": "compact",
+      "theme": "dark"
+    },
+    {
+      "viewport": 1280,
+      "empty": null,
+      "firstRow": 439.59375,
+      "path": "/leaderboard/latest?scenario=ended",
+      "rows": 6,
+      "scrollWidth": 1265,
+      "title": "Leaderboard",
+      "width": 1265,
+      "density": "compact",
+      "theme": "dark"
+    },
+    {
+      "viewport": 1280,
+      "empty": "The first page is yours to write",
+      "firstRow": null,
+      "path": "/leaderboard/latest?scenario=empty",
+      "rows": 0,
+      "scrollWidth": 1280,
+      "title": "Leaderboard",
+      "width": 1280,
+      "density": "compact",
+      "theme": "dark"
+    },
+    {
+      "viewport": 1280,
+      "empty": "Standings could not be loaded",
+      "firstRow": null,
+      "path": "/leaderboard/latest?scenario=error",
+      "rows": 0,
+      "scrollWidth": 1280,
+      "title": "Leaderboard",
+      "width": 1280,
+      "density": "compact",
+      "theme": "dark"
+    },
+    {
+      "viewport": 1280,
+      "empty": null,
+      "firstRow": 467.1875,
+      "path": "/leaderboard/yearly/2025?scenario=participant",
+      "rows": 6,
+      "scrollWidth": 1265,
+      "title": "Leaderboard",
+      "width": 1265,
+      "density": "compact",
+      "theme": "dark"
+    },
+    {
+      "viewport": 1280,
+      "empty": null,
+      "firstRow": 439.59375,
+      "path": "/leaderboard/all-time?scenario=participant",
+      "rows": 6,
+      "scrollWidth": 1265,
+      "title": "Leaderboard",
+      "width": 1265,
+      "density": "compact",
+      "theme": "dark"
+    },
+    {
+      "viewport": 1280,
+      "empty": "The first page is yours to write",
+      "firstRow": null,
+      "path": "/contests/novels/leaderboard?scenario=participant",
+      "rows": 0,
+      "scrollWidth": 1280,
+      "title": "Leaderboard",
+      "width": 1280,
+      "density": "compact",
+      "theme": "dark"
+    },
+    {
+      "viewport": 390,
+      "empty": null,
+      "firstRow": 599.578125,
+      "path": "/leaderboard/latest?scenario=participant",
+      "rows": 6,
+      "scrollWidth": 375,
+      "title": "Leaderboard",
+      "width": 375,
+      "density": "compact",
+      "theme": "dark"
+    },
+    {
+      "viewport": 390,
+      "empty": null,
+      "firstRow": 540.578125,
+      "path": "/leaderboard/latest?scenario=guest",
+      "rows": 6,
+      "scrollWidth": 375,
+      "title": "Leaderboard",
+      "width": 375,
+      "density": "compact",
+      "theme": "dark"
+    },
+    {
+      "viewport": 390,
+      "empty": null,
+      "firstRow": 540.578125,
+      "path": "/leaderboard/latest?scenario=member",
+      "rows": 6,
+      "scrollWidth": 375,
+      "title": "Leaderboard",
+      "width": 375,
+      "density": "compact",
+      "theme": "dark"
+    },
+    {
+      "viewport": 390,
+      "empty": null,
+      "firstRow": 540.578125,
+      "path": "/leaderboard/latest?scenario=closed",
+      "rows": 6,
+      "scrollWidth": 375,
+      "title": "Leaderboard",
+      "width": 375,
+      "density": "compact",
+      "theme": "dark"
+    },
+    {
+      "viewport": 390,
+      "empty": null,
+      "firstRow": 599.578125,
+      "path": "/leaderboard/latest?scenario=closed-participant",
+      "rows": 6,
+      "scrollWidth": 375,
+      "title": "Leaderboard",
+      "width": 375,
+      "density": "compact",
+      "theme": "dark"
+    },
+    {
+      "viewport": 390,
+      "empty": "The first page is yours to write",
+      "firstRow": null,
+      "path": "/leaderboard/latest?scenario=upcoming",
+      "rows": 0,
+      "scrollWidth": 375,
+      "title": "Leaderboard",
+      "width": 375,
+      "density": "compact",
+      "theme": "dark"
+    },
+    {
+      "viewport": 390,
+      "empty": null,
+      "firstRow": 599.578125,
+      "path": "/leaderboard/latest?scenario=ended",
+      "rows": 6,
+      "scrollWidth": 375,
+      "title": "Leaderboard",
+      "width": 375,
+      "density": "compact",
+      "theme": "dark"
+    },
+    {
+      "viewport": 390,
+      "empty": "The first page is yours to write",
+      "firstRow": null,
+      "path": "/leaderboard/latest?scenario=empty",
+      "rows": 0,
+      "scrollWidth": 375,
+      "title": "Leaderboard",
+      "width": 375,
+      "density": "compact",
+      "theme": "dark"
+    },
+    {
+      "viewport": 390,
+      "empty": "Standings could not be loaded",
+      "firstRow": null,
+      "path": "/leaderboard/latest?scenario=error",
+      "rows": 0,
+      "scrollWidth": 375,
+      "title": "Leaderboard",
+      "width": 375,
+      "density": "compact",
+      "theme": "dark"
+    },
+    {
+      "viewport": 390,
+      "empty": null,
+      "firstRow": 600.375,
+      "path": "/leaderboard/yearly/2025?scenario=participant",
+      "rows": 6,
+      "scrollWidth": 375,
+      "title": "Leaderboard",
+      "width": 375,
+      "density": "compact",
+      "theme": "dark"
+    },
+    {
+      "viewport": 390,
+      "empty": null,
+      "firstRow": 572.78125,
+      "path": "/leaderboard/all-time?scenario=participant",
+      "rows": 6,
+      "scrollWidth": 375,
+      "title": "Leaderboard",
+      "width": 375,
+      "density": "compact",
+      "theme": "dark"
+    },
+    {
+      "viewport": 390,
+      "empty": "The first page is yours to write",
+      "firstRow": null,
+      "path": "/contests/novels/leaderboard?scenario=participant",
+      "rows": 0,
+      "scrollWidth": 375,
+      "title": "Leaderboard",
+      "width": 375,
+      "density": "compact",
+      "theme": "dark"
+    }
+  ],
+  "sharedControlFix": {
+    "source": "frontend/packages/paper-ui/src/components/forms/forms.css",
+    "changes": "Anchor single and multiple autocomplete dropdowns at the inline end with 44px targets, reserve chip padding, wrap long labels without overlapping the remove action, preserve compact control height.",
+    "testScript": "docs/wip/paper-playground/refinement-2026-09/check-multi-input.js",
+    "geometry": [
+      {
+        "density": "comfortable",
+        "theme": "light",
+        "aligned": true,
+        "rightInset": 1,
+        "target": {
+          "height": 44,
+          "width": 44
+        },
+        "usableTarget": true,
+        "viewport": 320,
+        "error": false
+      },
+      {
+        "density": "comfortable",
+        "theme": "dark",
+        "aligned": true,
+        "rightInset": 1,
+        "target": {
+          "height": 44,
+          "width": 44
+        },
+        "usableTarget": true,
+        "viewport": 320,
+        "error": false
+      },
+      {
+        "density": "compact",
+        "theme": "light",
+        "aligned": true,
+        "rightInset": 1,
+        "target": {
+          "height": 44,
+          "width": 44
+        },
+        "usableTarget": true,
+        "viewport": 320,
+        "error": false
+      },
+      {
+        "density": "compact",
+        "theme": "dark",
+        "aligned": true,
+        "rightInset": 1,
+        "target": {
+          "height": 44,
+          "width": 44
+        },
+        "usableTarget": true,
+        "viewport": 320,
+        "error": false
+      },
+      {
+        "density": "comfortable",
+        "theme": "light",
+        "aligned": true,
+        "rightInset": 1,
+        "target": {
+          "height": 44,
+          "width": 44
+        },
+        "usableTarget": true,
+        "viewport": 390,
+        "error": false
+      },
+      {
+        "density": "comfortable",
+        "theme": "dark",
+        "aligned": true,
+        "rightInset": 1,
+        "target": {
+          "height": 44,
+          "width": 44
+        },
+        "usableTarget": true,
+        "viewport": 390,
+        "error": false
+      },
+      {
+        "density": "compact",
+        "theme": "light",
+        "aligned": true,
+        "rightInset": 1,
+        "target": {
+          "height": 44,
+          "width": 44
+        },
+        "usableTarget": true,
+        "viewport": 390,
+        "error": false
+      },
+      {
+        "density": "compact",
+        "theme": "dark",
+        "aligned": true,
+        "rightInset": 1,
+        "target": {
+          "height": 44,
+          "width": 44
+        },
+        "usableTarget": true,
+        "viewport": 390,
+        "error": false
+      }
+    ],
+    "singleAutocomplete": [
+      {
+        "density": "comfortable",
+        "fieldHeight": 44,
+        "rightInset": 0,
+        "target": {
+          "height": 44,
+          "width": 44
+        }
+      },
+      {
+        "density": "compact",
+        "fieldHeight": 36,
+        "rightInset": 0,
+        "target": {
+          "height": 44,
+          "width": 44
+        }
+      }
+    ],
+    "atSelectionLimit": {
+      "chips": [
+        "Japanese",
+        "Spanish",
+        "French"
+      ],
+      "inputDisabled": true,
+      "triggerDisabled": true
+    },
+    "afterRemovalAndEscape": {
+      "chips": [
+        "Japanese",
+        "Spanish"
+      ],
+      "expanded": "false",
+      "focused": "paper-combobox__chip-input",
+      "inputDisabled": false,
+      "triggerDisabled": false
+    },
+    "longLabel": {
+      "chipWidth": 289,
+      "groupWidth": 343,
+      "triggerLeft": 314,
+      "chipRight": 310,
+      "overlapsTrigger": false,
+      "pageOverflow": false
+    },
+    "tests": "56 form visual, density and feedback tests passed.",
+    "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty2a9b9-2c518cde.png"
+  },
+  "finalMobileLeaderboard": {
+    "screenshot": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty2alhv-4baceb46.png",
+    "viewport": 390,
+    "density": "comfortable",
+    "theme": "light",
+    "firstRow": 653.578125,
+    "overflow": false,
+    "selectLabelWidth": 97.78125,
+    "selectAvailableWidthBefore": 95,
+    "selectAvailableWidthAfter": 255,
+    "breakpoint": 440
+  }
+}

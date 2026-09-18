@@ -3,10 +3,20 @@ module(
     version = "1.0.0",
 )
 
+http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+http_archive(
+    name = "keto_v25_4_0",
+    build_file_content = "exports_files([\"keto\"])\n",
+    sha256 = "9241ee405b3ed0ecd03e3506ecc8485dd8d8a05e5dc9ea011853eb5800ed31c9",
+    urls = ["https://github.com/ory/keto/releases/download/v25.4.0/keto_25.4.0-linux_sqlite_64bit.tar.gz"],
+)
+
 # Golang
 
 bazel_dep(name = "rules_go", version = "0.62.0")
 bazel_dep(name = "gazelle", version = "0.52.2")
+bazel_dep(name = "platforms", version = "1.1.0")
 
 # Shell
 
@@ -14,7 +24,11 @@ bazel_dep(name = "rules_shell", version = "0.8.0")
 
 ## Go version
 go_sdk = use_extension("@rules_go//go:extensions.bzl", "go_sdk")
-go_sdk.from_file(go_mod = "//:go.mod")
+go_sdk.from_file(
+    name = "tadoku_go_sdk",
+    go_mod = "//:go.mod",
+)
+use_repo(go_sdk, "tadoku_go_sdk")
 
 ## Read deps from go.mod
 go_deps = use_extension("@gazelle//:extensions.bzl", "go_deps")
@@ -25,6 +39,7 @@ use_repo(
     go_deps,
     "com_github_bwmarrin_discordgo",
     "com_github_deepmap_oapi_codegen",
+    "com_github_getkin_kin_openapi",
     "com_github_getsentry_sentry_go",
     "com_github_go_playground_validator_v10",
     "com_github_golang_jwt_jwt",
@@ -34,19 +49,24 @@ use_repo(
     "com_github_jackc_pgconn",
     "com_github_jackc_pgerrcode",
     "com_github_jackc_pgx_v4",
+    "com_github_jackc_pgx_v5",
     "com_github_kelseyhightower_envconfig",
     "com_github_labstack_echo_v4",
     "com_github_lib_pq",
     "com_github_micahparks_keyfunc",
     "com_github_ory_keto_client_go",
     "com_github_ory_kratos_client_go",
+    "com_github_oapi_codegen_nullable",
+    "com_github_oapi_codegen_runtime",
     "com_github_pkg_errors",
     "com_github_prometheus_client_golang",
     "com_github_sahilm_fuzzy",
+    "com_github_satorunooshie_depolicy",
     "com_github_stretchr_testify",
     "com_github_valkey_io_valkey_go",
     "io_flipt_go_flipt_client",
     "org_golang_x_sync",
+    "org_golang_x_tools",
 )
 
 # Packaging

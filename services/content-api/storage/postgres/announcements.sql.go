@@ -38,7 +38,9 @@ insert into announcements (
   style,
   href,
   starts_at,
-  ends_at
+  ends_at,
+  created_at,
+  updated_at
 ) values (
   $1,
   $2,
@@ -47,7 +49,9 @@ insert into announcements (
   $5,
   $6,
   $7,
-  $8
+  $8,
+  $9,
+  $10
 ) returning id
 `
 
@@ -60,6 +64,8 @@ type CreateAnnouncementParams struct {
 	Href      sql.NullString
 	StartsAt  time.Time
 	EndsAt    time.Time
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 func (q *Queries) CreateAnnouncement(ctx context.Context, arg CreateAnnouncementParams) (uuid.UUID, error) {
@@ -72,6 +78,8 @@ func (q *Queries) CreateAnnouncement(ctx context.Context, arg CreateAnnouncement
 		arg.Href,
 		arg.StartsAt,
 		arg.EndsAt,
+		arg.CreatedAt,
+		arg.UpdatedAt,
 	)
 	var id uuid.UUID
 	err := row.Scan(&id)
@@ -167,11 +175,16 @@ from announcements
 where
   deleted_at is null
   and "namespace" = $1
-  and starts_at <= now()
-  and ends_at > now()
+  and starts_at <= $2::timestamptz
+  and ends_at > $2::timestamptz
 order by starts_at desc
 limit 10
 `
+
+type ListActiveAnnouncementsParams struct {
+	Namespace string
+	Now       time.Time
+}
 
 type ListActiveAnnouncementsRow struct {
 	ID        uuid.UUID
@@ -186,8 +199,8 @@ type ListActiveAnnouncementsRow struct {
 	UpdatedAt time.Time
 }
 
-func (q *Queries) ListActiveAnnouncements(ctx context.Context, namespace string) ([]ListActiveAnnouncementsRow, error) {
-	rows, err := q.db.QueryContext(ctx, listActiveAnnouncements, namespace)
+func (q *Queries) ListActiveAnnouncements(ctx context.Context, arg ListActiveAnnouncementsParams) ([]ListActiveAnnouncementsRow, error) {
+	rows, err := q.db.QueryContext(ctx, listActiveAnnouncements, arg.Namespace, arg.Now)
 	if err != nil {
 		return nil, err
 	}
@@ -304,9 +317,9 @@ set
   href = $5,
   starts_at = $6,
   ends_at = $7,
-  updated_at = now()
+  updated_at = $8
 where
-  id = $8 and
+  id = $9 and
   deleted_at is null
 returning id
 `
@@ -319,6 +332,7 @@ type UpdateAnnouncementParams struct {
 	Href      sql.NullString
 	StartsAt  time.Time
 	EndsAt    time.Time
+	UpdatedAt time.Time
 	ID        uuid.UUID
 }
 
@@ -331,6 +345,7 @@ func (q *Queries) UpdateAnnouncement(ctx context.Context, arg UpdateAnnouncement
 		arg.Href,
 		arg.StartsAt,
 		arg.EndsAt,
+		arg.UpdatedAt,
 		arg.ID,
 	)
 	var id uuid.UUID

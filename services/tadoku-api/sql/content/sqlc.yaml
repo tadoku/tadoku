@@ -1,0 +1,12 @@
+version: "2"
+sql:
+  - engine: postgresql
+    schema: ../../../immersion-api/storage/postgres/migrations
+    queries: announcements.sql
+    gen:
+      go:
+        package: content
+        out: ../../generated/sqlc/content
+        sql_package: pgx/v5
+        emit_empty_slices: true
+        omit_unused_structs: true

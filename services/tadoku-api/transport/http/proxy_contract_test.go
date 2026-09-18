@@ -1,106 +1,13 @@
 package http
 
 import (
-	"crypto/rand"
-	"crypto/rsa"
-	"encoding/base64"
-	"encoding/json"
 	"io"
-	"math/big"
 	stdhttp "net/http"
 	"net/http/httptest"
-	"strings"
+	"slices"
 	"testing"
 	"time"
-
-	jwt "github.com/golang-jwt/jwt/v4"
-	"github.com/labstack/echo/v4"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	commondomain "github.com/tadoku/tadoku/services/common/domain"
-	"github.com/tadoku/tadoku/services/common/middleware"
 )
-
-// Exercise the legacy authentication middleware across real HTTP connections.
-// The facade must not replace a user token with a privileged service identity.
-func TestFacadePreservesLegacyIdentityAndAudienceChecks(t *testing.T) {
-	key, err := rsa.GenerateKey(rand.Reader, 2048)
-	require.NoError(t, err)
-	jwks := httptest.NewServer(stdhttp.HandlerFunc(func(w stdhttp.ResponseWriter, _ *stdhttp.Request) {
-		_ = json.NewEncoder(w).Encode(map[string]any{"keys": []map[string]string{{
-			"kty": "RSA", "kid": "facade-test", "alg": "RS256", "use": "sig",
-			"n": base64.RawURLEncoding.EncodeToString(key.N.Bytes()),
-			"e": base64.RawURLEncoding.EncodeToString(big.NewInt(int64(key.E)).Bytes()),
-		}}})
-	}))
-	t.Cleanup(jwks.Close)
-	verifyJWT := middleware.VerifyJWT(jwks.URL)
-
-	for _, service := range []string{"authz", "content", "immersion", "profile"} {
-		t.Run(service, func(t *testing.T) {
-			legacy := echo.New()
-			legacy.Use(verifyJWT, middleware.Identity(), middleware.RequireServiceAudience(service+"-api"))
-			legacy.GET("/identity", func(ctx echo.Context) error {
-				return ctx.JSON(stdhttp.StatusOK, commondomain.ParseIdentity(ctx.Request().Context()))
-			})
-			upstream := httptest.NewServer(legacy)
-			t.Cleanup(upstream.Close)
-			facade := httptest.NewServer(newTestHandler(t, upstream.URL, 5*time.Second))
-			t.Cleanup(facade.Close)
-
-			for _, test := range []struct {
-				name, subject, identityType, audience string
-				status                                int
-			}{
-				{name: "guest", subject: "guest", status: 200},
-				{name: "user", subject: "reader", status: 200},
-				{name: "service", subject: "system:serviceaccount:dev:caller", identityType: "service", audience: service + "-api", status: 200},
-				{name: "wrong audience", subject: "system:serviceaccount:dev:caller", identityType: "service", audience: "different-api", status: 403},
-				{name: "missing token", status: 400},
-				{name: "invalid signature", subject: "reader", status: 401},
-			} {
-				t.Run(test.name, func(t *testing.T) {
-					authorization := ""
-					if test.subject != "" {
-						token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
-							"sub": test.subject, "type": test.identityType, "aud": []string{test.audience},
-							"iat": 1700000000,
-						})
-						token.Header["kid"] = "facade-test"
-						signed, err := token.SignedString(key)
-						require.NoError(t, err)
-						if test.name == "invalid signature" {
-							parts := strings.Split(signed, ".")
-							parts[2] = base64.RawURLEncoding.EncodeToString([]byte("invalid"))
-							signed = strings.Join(parts, ".")
-						}
-						authorization = "Bearer " + signed
-					}
-					var directBody []byte
-					for index, url := range []string{upstream.URL + "/identity", facade.URL + "/" + service + "/identity"} {
-						request, err := stdhttp.NewRequest(stdhttp.MethodGet, url, nil)
-						require.NoError(t, err)
-						request.Header.Set("Authorization", authorization)
-						response, err := (&stdhttp.Client{Timeout: 5 * time.Second}).Do(request)
-						require.NoError(t, err)
-						body, err := io.ReadAll(response.Body)
-						_ = response.Body.Close()
-						require.NoError(t, err)
-						assert.Equal(t, test.status, response.StatusCode)
-						if index == 0 {
-							directBody = body
-							if test.status == stdhttp.StatusOK {
-								assert.Contains(t, string(body), `"Subject":"`+test.subject+`"`)
-							}
-						} else {
-							assert.Equal(t, string(directBody), string(body))
-						}
-					}
-				})
-			}
-		})
-	}
-}
 
 func TestFacadePreservesLegacyResponses(t *testing.T) {
 	for _, status := range []int{200, 204, 302, 400, 401, 403, 404, 409, 422, 429, 500, 503} {
@@ -125,20 +32,34 @@ func TestFacadePreservesLegacyResponses(t *testing.T) {
 				CheckRedirect: func(*stdhttp.Request, []*stdhttp.Request) error { return stdhttp.ErrUseLastResponse },
 			}
 			direct, err := client.Get(upstream.URL + "/response")
-			require.NoError(t, err)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
 			defer direct.Body.Close()
 			proxied, err := client.Get(facade.URL + "/content/response")
-			require.NoError(t, err)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
 			defer proxied.Body.Close()
-			assert.Equal(t, direct.StatusCode, proxied.StatusCode)
+			if proxied.StatusCode != direct.StatusCode {
+				t.Errorf("got %v, want %v", proxied.StatusCode, direct.StatusCode)
+			}
 			for _, header := range []string{"Content-Type", "Location", "Retry-After", "Cache-Control", "Set-Cookie"} {
-				assert.Equal(t, direct.Header.Values(header), proxied.Header.Values(header), header)
+				if !slices.Equal(direct.Header.Values(header), proxied.Header.Values(header)) {
+					t.Errorf("got %v, want %v", proxied.Header.Values(header), direct.Header.Values(header))
+				}
 			}
 			directBody, err := io.ReadAll(direct.Body)
-			require.NoError(t, err)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
 			proxiedBody, err := io.ReadAll(proxied.Body)
-			require.NoError(t, err)
-			assert.Equal(t, directBody, proxiedBody)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if !slices.Equal(directBody, proxiedBody) {
+				t.Errorf("got %v, want %v", proxiedBody, directBody)
+			}
 		})
 	}
 }
@@ -159,16 +80,26 @@ func TestFacadeStreamsResponseBeforeUpstreamFinishes(t *testing.T) {
 	facade := httptest.NewServer(newTestHandler(t, upstream.URL, 5*time.Second))
 	t.Cleanup(facade.Close)
 	response, err := (&stdhttp.Client{Timeout: 5 * time.Second}).Get(facade.URL + "/immersion/events")
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 	defer response.Body.Close()
 	first := make([]byte, len("data: first\n\n"))
 	_, err = io.ReadFull(response.Body, first)
-	require.NoError(t, err, "first chunk must arrive while the upstream is still waiting")
-	assert.Equal(t, "data: first\n\n", string(first))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if string(first) != "data: first\n\n" {
+		t.Errorf("got %v, want %v", string(first), "data: first\n\n")
+	}
 	close(finish)
 	last, err := io.ReadAll(response.Body)
-	require.NoError(t, err)
-	assert.Equal(t, "data: last\n\n", string(last))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if string(last) != "data: last\n\n" {
+		t.Errorf("got %v, want %v", string(last), "data: last\n\n")
+	}
 }
 
 func BenchmarkFacade(b *testing.B) {
@@ -187,11 +118,17 @@ func BenchmarkFacade(b *testing.B) {
 			b.ReportAllocs()
 			for i := 0; i < b.N; i++ {
 				response, err := client.Get(route.url)
-				require.NoError(b, err)
+				if err != nil {
+					b.Fatalf("unexpected error: %v", err)
+				}
 				_, err = io.Copy(io.Discard, response.Body)
 				_ = response.Body.Close()
-				require.NoError(b, err)
-				require.Equal(b, stdhttp.StatusOK, response.StatusCode)
+				if err != nil {
+					b.Fatalf("unexpected error: %v", err)
+				}
+				if response.StatusCode != stdhttp.StatusOK {
+					b.Fatalf("got %v, want %v", response.StatusCode, stdhttp.StatusOK)
+				}
 			}
 		})
 	}

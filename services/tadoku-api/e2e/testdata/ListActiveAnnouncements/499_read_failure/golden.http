@@ -1,0 +1,4 @@
+>>> GET /content/announcements/main/active
+HTTP/1.1 499 status code 499
+Content-Length: 0
+

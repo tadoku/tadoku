@@ -48,6 +48,7 @@ const NAVIGATION_DOCUMENT_ORDER: Readonly<Record<string, readonly string[]>> = {
     'Select',
     'Checkbox',
     'RadioSelect',
+    'ToggleSelect',
     'RadioGroup',
     'Autocomplete',
     'MultiAutocomplete',

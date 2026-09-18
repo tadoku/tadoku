@@ -7,7 +7,9 @@ insert into announcements (
   style,
   href,
   starts_at,
-  ends_at
+  ends_at,
+  created_at,
+  updated_at
 ) values (
   sqlc.arg('id'),
   sqlc.arg('namespace'),
@@ -16,7 +18,9 @@ insert into announcements (
   sqlc.arg('style'),
   sqlc.arg('href'),
   sqlc.arg('starts_at'),
-  sqlc.arg('ends_at')
+  sqlc.arg('ends_at'),
+  sqlc.arg('created_at'),
+  sqlc.arg('updated_at')
 ) returning id;
 
 -- name: FindAnnouncementByID :one
@@ -47,7 +51,7 @@ set
   href = sqlc.arg('href'),
   starts_at = sqlc.arg('starts_at'),
   ends_at = sqlc.arg('ends_at'),
-  updated_at = now()
+  updated_at = sqlc.arg('updated_at')
 where
   id = sqlc.arg('id') and
   deleted_at is null
@@ -104,7 +108,7 @@ from announcements
 where
   deleted_at is null
   and "namespace" = sqlc.arg('namespace')
-  and starts_at <= now()
-  and ends_at > now()
+  and starts_at <= sqlc.arg('now')::timestamptz
+  and ends_at > sqlc.arg('now')::timestamptz
 order by starts_at desc
 limit 10;

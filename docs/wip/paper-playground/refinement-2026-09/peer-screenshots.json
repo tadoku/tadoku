@@ -1,0 +1,128 @@
+[
+  {
+    "route": "/",
+    "width": 1280,
+    "theme": "light",
+    "path": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1qwla-99dbfe5e.png"
+  },
+  {
+    "route": "/users/anton",
+    "width": 1280,
+    "theme": "light",
+    "path": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1yhf2-e491baf3.png"
+  },
+  {
+    "route": "/users/anton/activity",
+    "width": 1280,
+    "theme": "light",
+    "path": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1yi7w-722a10c3.png"
+  },
+  {
+    "route": "/logs/reading-konbini?scenario=reading",
+    "width": 1280,
+    "theme": "light",
+    "path": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1yipd-fdf1c680.png"
+  },
+  {
+    "route": "/about",
+    "width": 1280,
+    "theme": "light",
+    "path": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1yzt1-686531ce.png"
+  },
+  {
+    "route": "/guide",
+    "width": 1280,
+    "theme": "light",
+    "path": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1z0ap-781e6519.png"
+  },
+  {
+    "route": "/guide/scoring",
+    "width": 1280,
+    "theme": "light",
+    "path": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1z0mc-28b6741f.png"
+  },
+  {
+    "route": "/guide/questions",
+    "width": 1280,
+    "theme": "light",
+    "path": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1zkcw-085d89c1.png"
+  },
+  {
+    "route": "/admin",
+    "width": 1280,
+    "theme": "light",
+    "path": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty1zwwr-29092b31.png"
+  },
+  {
+    "route": "/contests/official",
+    "width": 1280,
+    "theme": "light",
+    "path": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty21iaa-ff2e32c5.png"
+  },
+  {
+    "route": "/",
+    "width": 390,
+    "theme": "light",
+    "path": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty2221e-6d7388fa.png"
+  },
+  {
+    "route": "/users/anton",
+    "width": 390,
+    "theme": "light",
+    "path": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty222hy-488d210e.png"
+  },
+  {
+    "route": "/users/anton/activity",
+    "width": 390,
+    "theme": "light",
+    "path": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty2235q-fb761589.png"
+  },
+  {
+    "route": "/about",
+    "width": 390,
+    "theme": "light",
+    "path": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty22khc-4a011346.png"
+  },
+  {
+    "route": "/guide",
+    "width": 390,
+    "theme": "light",
+    "path": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty22krw-697cf5af.png"
+  },
+  {
+    "route": "/guide/scoring",
+    "width": 390,
+    "theme": "light",
+    "path": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty22l7v-ce5f6ea6.png"
+  },
+  {
+    "route": "/guide/questions",
+    "width": 390,
+    "theme": "light",
+    "path": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty22m1h-bc22b763.png"
+  },
+  {
+    "route": "/leaderboard/latest?scenario=participant",
+    "width": 390,
+    "theme": "light",
+    "path": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty234x0-f54e27a4.png"
+  },
+  {
+    "route": "/contests/official",
+    "width": 390,
+    "theme": "light",
+    "path": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty2356k-24640248.png"
+  },
+  {
+    "route": "/logs/reading-konbini?scenario=reading",
+    "width": 390,
+    "theme": "light",
+    "path": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty235kl-7d93700a.png"
+  },
+  {
+    "route": "/admin",
+    "width": 390,
+    "theme": "light",
+    "path": "/var/lib/t3/userdata/browser-artifacts/browser-screenshot-t3-ff08555d5d6ded8a5d7d06de-lab-mty235tz-333c0f26.png"
+  }
+]

@@ -26,7 +26,24 @@ func TestLoadIndividualAndConnConfig(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "2001:db8::1", parsed.Host)
 	assert.Equal(t, "sentinel:/?#[]@!$&'()*+,;=", parsed.Password)
+	assert.Empty(t, parsed.RuntimeParams["application_name"])
 	assert.NotContains(t, fmt.Sprint(cfg), "sentinel")
+}
+
+func TestWithApplicationNameLabelsConnections(t *testing.T) {
+	setIndividual(t)
+	cfg, err := Load("TEST", "TEST_URL")
+	require.NoError(t, err)
+
+	labeled := cfg.WithApplicationName(" immersion-api ")
+	assert.Empty(t, cfg.ApplicationName)
+	assert.Equal(t, "immersion-api", labeled.ApplicationName)
+	assert.Contains(t, labeled.URL(), "application_name=immersion-api")
+	assert.NotContains(t, cfg.URL(), "application_name=")
+
+	parsed, err := labeled.ConnConfig()
+	require.NoError(t, err)
+	assert.Equal(t, "immersion-api", parsed.RuntimeParams["application_name"])
 }
 
 func TestLoadRejectsPartialMixedAndInvalid(t *testing.T) {

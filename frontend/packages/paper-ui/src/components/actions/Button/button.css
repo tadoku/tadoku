@@ -52,7 +52,8 @@
     background: var(--paper-color-surface-paper);
   }
 
-  .paper-button--outline:hover:not(:disabled) {
+  .paper-button--outline:hover:not(:disabled),
+  .paper-button--outline:active:not(:disabled) {
     border-color: var(--paper-color-rule-field-edge);
     background: var(--paper-color-action-neutral-hover);
   }
@@ -63,7 +64,8 @@
     background: transparent;
   }
 
-  .paper-button--ghost:hover:not(:disabled) {
+  .paper-button--ghost:hover:not(:disabled),
+  .paper-button--ghost:active:not(:disabled) {
     border-color: transparent;
     color: var(--paper-color-text-ink);
     background: var(--paper-color-action-neutral-hover);
@@ -79,7 +81,8 @@
     text-underline-offset: 0.2em;
   }
 
-  .paper-button--link:hover:not(:disabled) {
+  .paper-button--link:hover:not(:disabled),
+  .paper-button--link:active:not(:disabled) {
     background: transparent;
   }
 
@@ -89,7 +92,8 @@
     border-block-end-color: var(--paper-color-rule-destructive-action-edge);
   }
 
-  .paper-button--destructive:hover:not(:disabled) {
+  .paper-button--destructive:hover:not(:disabled),
+  .paper-button--destructive:active:not(:disabled) {
     border-color: var(--paper-color-action-destructive-hover);
     border-block-end-color: var(--paper-color-rule-destructive-action-edge);
     background: var(--paper-color-action-destructive-hover);

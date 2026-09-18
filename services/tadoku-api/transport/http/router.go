@@ -1,0 +1,181 @@
+package http
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"log/slog"
+	stdhttp "net/http"
+	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/tadoku/tadoku/services/tadoku-api/app"
+	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
+)
+
+// Router keeps application routes behind shared middleware while allowing this
+// package to attach probes and temporary legacy proxies outside it.
+type Router struct {
+	rootHandler                 stdhttp.Handler
+	rootMux                     *stdhttp.ServeMux
+	applicationMux              *stdhttp.ServeMux
+	protectedApplicationHandler stdhttp.Handler
+	requestDuration             *prometheus.HistogramVec
+}
+
+type server struct {
+	application *app.Application
+	logger      *slog.Logger
+}
+
+var _ openapi.StrictServerInterface = (*server)(nil)
+
+// Handle registers an application route behind the shared middleware.
+func (r *Router) Handle(pattern string, handler stdhttp.Handler) {
+	r.applicationMux.Handle(pattern, handler)
+	r.rootMux.Handle(pattern, r.protectedApplicationHandler)
+}
+
+// HandleFunc registers an application route behind the shared middleware.
+func (r *Router) HandleFunc(pattern string, handler func(stdhttp.ResponseWriter, *stdhttp.Request)) {
+	r.applicationMux.HandleFunc(pattern, handler)
+	r.rootMux.Handle(pattern, r.protectedApplicationHandler)
+}
+
+func (r *Router) ServeHTTP(w stdhttp.ResponseWriter, request *stdhttp.Request) {
+	r.rootHandler.ServeHTTP(w, request)
+}
+
+// NewHandler builds the application router without any legacy upstreams.
+func NewHandler(
+	application *app.Application,
+	ready func(context.Context) error,
+	timeout time.Duration,
+	registerer prometheus.Registerer,
+	logger *slog.Logger,
+	authenticate func(stdhttp.Handler) stdhttp.Handler,
+	rejectBanned func(stdhttp.Handler) stdhttp.Handler,
+) (*Router, error) {
+	if application == nil || ready == nil {
+		return nil, fmt.Errorf("application and readiness are required")
+	}
+	if timeout <= 0 {
+		return nil, fmt.Errorf("request timeout must be positive")
+	}
+	if registerer == nil {
+		return nil, fmt.Errorf("metrics registerer is required")
+	}
+	if logger == nil {
+		return nil, fmt.Errorf("logger is required")
+	}
+	if authenticate == nil {
+		return nil, fmt.Errorf("authentication middleware is required")
+	}
+	if rejectBanned == nil {
+		return nil, fmt.Errorf("banned-user middleware is required")
+	}
+
+	requestDuration, err := newRequestDuration(registerer)
+	if err != nil {
+		return nil, err
+	}
+	router := &Router{
+		rootMux:         stdhttp.NewServeMux(),
+		applicationMux:  stdhttp.NewServeMux(),
+		requestDuration: requestDuration,
+	}
+	router.rootHandler = router.rootMux
+
+	applicationHandler := stdhttp.Handler(router.applicationMux)
+	applicationHandler = rejectBanned(applicationHandler)
+	applicationHandler = authenticate(applicationHandler)
+	applicationHandler = withPanicRecovery(logger, applicationHandler)
+	router.protectedApplicationHandler = observe(
+		nativeRouteLabel,
+		"",
+		"native",
+		timeout,
+		applicationHandler,
+		requestDuration,
+		logger,
+	)
+	router.rootMux.HandleFunc("GET /livez", func(w stdhttp.ResponseWriter, _ *stdhttp.Request) {
+		_, _ = w.Write([]byte("ok"))
+	})
+	router.rootMux.Handle("GET /readyz", withRequestTimeout(timeout, readinessHandler(ready)))
+	strictServer := openapi.NewStrictHandlerWithOptions(
+		&server{
+			application: application,
+			logger:      logger,
+		},
+		nil,
+		openapi.StrictHTTPServerOptions{
+			RequestErrorHandlerFunc: func(w stdhttp.ResponseWriter, _ *stdhttp.Request, _ error) {
+				w.WriteHeader(stdhttp.StatusBadRequest)
+			},
+			ResponseErrorHandlerFunc: func(w stdhttp.ResponseWriter, request *stdhttp.Request, err error) {
+				w.WriteHeader(errorStatus(request.Context(), err))
+			},
+		},
+	)
+	openapi.HandlerWithOptions(strictServer, openapi.StdHTTPServerOptions{
+		BaseRouter: router,
+		Middlewares: []openapi.MiddlewareFunc{
+			withJSONCharsetCompatibility,
+		},
+		ErrorHandlerFunc: func(w stdhttp.ResponseWriter, _ *stdhttp.Request, err error) {
+			writeJSON(w, stdhttp.StatusBadRequest, map[string]string{"message": err.Error()})
+		},
+	})
+
+	return router, nil
+}
+
+func withRequestTimeout(timeout time.Duration, next stdhttp.Handler) stdhttp.Handler {
+	return stdhttp.HandlerFunc(func(w stdhttp.ResponseWriter, r *stdhttp.Request) {
+		ctx, cancel := context.WithTimeout(r.Context(), timeout)
+		defer cancel()
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+func readinessHandler(ready func(context.Context) error) stdhttp.Handler {
+	return stdhttp.HandlerFunc(func(w stdhttp.ResponseWriter, r *stdhttp.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if err := ready(r.Context()); err != nil {
+			w.WriteHeader(stdhttp.StatusServiceUnavailable)
+			_, _ = w.Write([]byte(`{"status":"not_ready","checks":[{"name":"postgres","status":"failed"}]}`))
+			return
+		}
+
+		_, _ = w.Write([]byte(`{"status":"ready","checks":[{"name":"postgres","status":"ok"}]}`))
+	})
+}
+
+func withJSONCharsetCompatibility(next stdhttp.Handler) stdhttp.Handler {
+	return stdhttp.HandlerFunc(func(w stdhttp.ResponseWriter, r *stdhttp.Request) {
+		next.ServeHTTP(&jsonCharsetResponseWriter{ResponseWriter: w}, r)
+	})
+}
+
+type jsonCharsetResponseWriter struct {
+	stdhttp.ResponseWriter
+}
+
+func (w *jsonCharsetResponseWriter) WriteHeader(status int) {
+	if w.Header().Get("Content-Type") == "application/json" {
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	}
+	w.ResponseWriter.WriteHeader(status)
+}
+
+func (w *jsonCharsetResponseWriter) Unwrap() stdhttp.ResponseWriter {
+	return w.ResponseWriter
+}
+
+func writeJSON(w stdhttp.ResponseWriter, status int, value any) {
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(value)
+}

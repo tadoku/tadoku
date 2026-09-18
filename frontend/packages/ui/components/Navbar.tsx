@@ -36,8 +36,18 @@ export interface NavigationLinkProps {
   current?: boolean
 }
 
+export interface NavigationActionProps {
+  type: 'action'
+  label: string
+  href: string
+}
+
 interface Props {
-  navigation: (NavigationLinkProps | NavigationDropDownProps)[]
+  navigation: (
+    | NavigationLinkProps
+    | NavigationDropDownProps
+    | NavigationActionProps
+  )[]
   width?: string
   logoHref: string
   isLoading?: boolean
@@ -57,7 +67,7 @@ export function Navbar({
 
   return (
     <>
-      <div className="h-10 sm:h-16 absolute top-0 left-0 right-0 bg-white z-0"></div>
+      <div className="h-14 md:h-16 absolute top-0 left-0 right-0 bg-white z-0"></div>
       <Disclosure
         as="nav"
         className="sticky top-0 z-40 border-b border-black/10 bg-white shadow shadow-slate-500/10"
@@ -66,32 +76,25 @@ export function Navbar({
           <>
             <MobileScrollLock active={open} />
             <div className={`mx-auto ${width} px-2 sm:px-6 lg:px-8 z-10`}>
-              <div className="relative flex h-10 sm:h-16 items-center justify-between">
-                <div className="absolute inset-y-0 left-0 flex items-center sm:hidden">
-                  {/* Mobile menu button*/}
-                  <DisclosureButton className="inline-flex items-center justify-center p-2 text-secondary hover:bg-secondary/5 focus:bg-secondary/5 focus:outline-none focus:ring-3 focus:ring-inset focus:ring-secondary/20">
-                    <span className="sr-only">Open main menu</span>
-                    {open ? (
-                      <XMarkIcon className="block h-6 w-6" aria-hidden="true" />
-                    ) : (
-                      <Bars3Icon className="block h-6 w-6" aria-hidden="true" />
-                    )}
-                  </DisclosureButton>
-                </div>
-                <div className="flex flex-1 items-center justify-center sm:items-stretch sm:justify-between">
+              <div className="relative flex h-14 md:h-16 items-center justify-between">
+                <div className="flex min-w-0 flex-1 items-center justify-between">
                   <div className="flex flex-shrink-0 items-center">
                     <Link href={logoHref}>
-                      <span className="hidden sm:block">
+                      <span className="hidden md:block">
                         <Logo scale={0.8} priority />
                       </span>
-                      <span className="block sm:hidden">
-                        <Logo scale={0.5} priority />
+                      <span className="block md:hidden">
+                        <Logo scale={0.625} priority />
                       </span>
                     </Link>
                   </div>
-                  <div className="hidden sm:ml-6 sm:block">
-                    <div className="flex space-x-1 md:space-x-2">
+                  <div className="hidden md:ml-4 md:block">
+                    <div className="flex items-center space-x-1 lg:space-x-2">
                       {navigation.map(item => {
+                        if (item.type === 'action') {
+                          return <NavigationAction {...item} key={item.label} />
+                        }
+
                         if (item.type === 'dropdown') {
                           return <DropDown {...item} key={item.label} />
                         }
@@ -108,7 +111,7 @@ export function Navbar({
                                 isCurrent
                                   ? 'bg-secondary !text-white hover:bg-secondary/80'
                                   : 'text-secondary hover:bg-secondary/5 focus:bg-secondary/5',
-                                'reset text-xs px-2 py-1 md:px-3 md:py-2 md:text-sm font-bold inline-flex items-center justify-center',
+                                'reset text-xs px-2 py-1 lg:px-3 lg:py-2 lg:text-sm font-bold inline-flex items-center justify-center',
                               )}
                               aria-current={isCurrent ? 'page' : undefined}
                             >
@@ -120,11 +123,29 @@ export function Navbar({
                     </div>
                   </div>
                 </div>
+                <div className="ml-2 flex items-center gap-2 md:hidden">
+                  {!open &&
+                    navigation.map(item =>
+                      item.type === 'action' ? (
+                        <NavigationAction {...item} key={item.label} />
+                      ) : null,
+                    )}
+                  <DisclosureButton className="btn ghost flex !h-11 !w-11 items-center justify-center !p-0 text-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                    <span className="sr-only">
+                      {open ? 'Close main menu' : 'Open main menu'}
+                    </span>
+                    {open ? (
+                      <XMarkIcon className="!h-5 !w-5" aria-hidden="true" />
+                    ) : (
+                      <Bars3Icon className="!h-5 !w-5" aria-hidden="true" />
+                    )}
+                  </DisclosureButton>
+                </div>
               </div>
             </div>
 
-            <DisclosurePanel className="sm:hidden">
-              <div className="fixed inset-x-0 bottom-0 top-10 z-30 overflow-y-auto bg-white p-2 shadow-lg">
+            <DisclosurePanel className="md:hidden">
+              <div className="fixed inset-x-0 bottom-0 top-14 z-30 overflow-y-auto bg-white p-2 shadow-lg">
                 <div className="flex min-h-full flex-col">
                   <div className="space-y-1">
                     {navigation.map(item =>
@@ -267,6 +288,35 @@ export function Navbar({
   )
 }
 
+const NavigationAction = ({ label, href }: NavigationActionProps) => {
+  const router = useRouter()
+  const isCurrent = router.pathname === href
+
+  return (
+    <Link
+      href={href}
+      aria-label={label}
+      aria-current={isCurrent ? 'page' : undefined}
+      onClick={event => {
+        // Keep an in-progress form intact when its header action is selected again.
+        if (
+          isCurrent &&
+          event.button === 0 &&
+          !event.metaKey &&
+          !event.ctrlKey &&
+          !event.shiftKey &&
+          !event.altKey
+        ) {
+          event.preventDefault()
+        }
+      }}
+      className="btn primary border-0 !h-11 md:!h-auto shrink-0 whitespace-nowrap px-2 py-1 lg:px-3 lg:py-2 md:text-xs lg:text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+    >
+      {label}
+    </Link>
+  )
+}
+
 const MobileScrollLock = ({ active }: { active: boolean }) => {
   useEffect(() => {
     if (!active) return
@@ -334,11 +384,11 @@ const DropDown = ({ label, links }: NavigationDropDownProps) => (
   <div className="">
     <Menu as="div" className="relative">
       <div>
-        <MenuButton className="text-secondary hover:bg-secondary/5 focus:bg-secondary/5 text-xs px-2 py-1 md:px-3 md:py-2 md:text-sm font-bold flex items-center justify-center">
+        <MenuButton className="max-w-24 lg:max-w-48 text-secondary hover:bg-secondary/5 focus:bg-secondary/5 text-xs px-2 py-1 lg:px-3 lg:py-2 lg:text-sm font-bold flex items-center justify-center">
           <span className="sr-only">Open navigation menu</span>
-          {label}
+          <span className="truncate">{label}</span>
           <ChevronDownIcon
-            className="ml-2 h-4 w-3 md:h-5 md:w-4"
+            className="ml-2 h-4 w-3 shrink-0 lg:h-5 lg:w-4"
             aria-hidden="true"
           />
         </MenuButton>

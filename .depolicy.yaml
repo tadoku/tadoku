@@ -1,0 +1,124 @@
+# Tadoku API only: tools/ci/depolicy supplies the exact scope, including tests.
+# First matching import rule wins. Every package must match exactly one policy.
+version: 1
+
+rule-sets:
+  language-dependencies:
+    - id: standard-library-and-third-party
+      allow: [std:..., external:...]
+
+policies:
+  - id: transport
+    packages: [local:services/tadoku-api/transport/...]
+    imports:
+      default: deny
+      rules:
+        - use: language-dependencies
+        - id: http-boundary
+          allow:
+            - local:services/tadoku-api/transport/...
+            - local:services/tadoku-api/app/...
+            - local:services/tadoku-api/generated/openapi/...
+            - local:services/tadoku-api/internal/...
+
+  - id: application
+    packages: [local:services/tadoku-api/app/...]
+    imports:
+      default: deny
+      rules:
+        - use: language-dependencies
+        - id: composition
+          allow:
+            - local:services/tadoku-api/app/...
+            - local:services/tadoku-api/features/...
+            - local:services/tadoku-api/infra/...
+            - local:services/tadoku-api/internal/...
+
+  - id: feature
+    packages: ["local:services/tadoku-api/features/{feature}"]
+    imports:
+      default: deny
+      rules:
+        - use: language-dependencies
+        - id: own-data-and-infrastructure
+          allow:
+            - local:services/tadoku-api/features/{feature}/...
+            - local:services/tadoku-api/generated/sqlc/{feature}/...
+            - local:services/tadoku-api/infra/...
+            - local:services/tadoku-api/internal/...
+
+  - id: pure-domain
+    packages: ["local:services/tadoku-api/features/{feature}/domain/..."]
+    imports:
+      default: deny
+      rules:
+        - use: language-dependencies
+        - id: domain-values
+          allow:
+            - local:services/tadoku-api/features/{feature}/domain/...
+            - local:services/tadoku-api/internal/...
+
+  - id: infrastructure
+    packages: [local:services/tadoku-api/infra/...]
+    imports:
+      default: deny
+      rules:
+        - use: language-dependencies
+        - id: infrastructure-dependencies
+          allow: [local:services/tadoku-api/infra/..., local:services/tadoku-api/internal/...]
+
+  - id: generated
+    packages: [local:services/tadoku-api/generated/..., local:services/tadoku-api/sql/...]
+    imports:
+      default: deny
+      rules:
+        - use: language-dependencies
+        - id: generated-dependencies
+          allow: [local:services/tadoku-api/generated/...]
+
+  - id: internal
+    packages:
+      - local:services/tadoku-api/internal/errx/...
+      - local:services/tadoku-api/internal/identity/...
+      - local:services/tadoku-api/internal/testketo/...
+      - local:services/tadoku-api/internal/testpostgres/...
+      - local:services/tadoku-api/internal/timex/...
+    imports:
+      default: deny
+      rules:
+        - use: language-dependencies
+        - id: utility-dependencies
+          allow: [local:services/tadoku-api/internal/...]
+
+  - id: permissions
+    packages: [local:services/tadoku-api/internal/permissions/...]
+    imports:
+      default: deny
+      rules:
+        - use: language-dependencies
+        - id: identity-and-keto-client
+          allow:
+            - local:services/tadoku-api/internal/errx/...
+            - local:services/tadoku-api/internal/permissions/...
+            - local:services/tadoku-api/internal/identity/...
+            - local:services/common/client/keto
+
+  - id: construction
+    packages: [local:services/tadoku-api/cmd/...]
+    imports:
+      default: deny
+      rules:
+        - use: language-dependencies
+        - id: production-assembly
+          allow:
+            - local:services/tadoku-api/...
+            - local:services/common/...
+
+  - id: integration-tests
+    packages: [local:services/tadoku-api/e2e/..., local:services/tadoku-api/spec/...]
+    imports:
+      default: deny
+      rules:
+        - use: language-dependencies
+        - id: test-assembly
+          allow: [local:services/...]

@@ -15,16 +15,6 @@ import (
 	valkeygo "github.com/valkey-io/valkey-go"
 )
 
-type dialContextFunc func(context.Context, string, *net.Dialer, *tls.Config) (net.Conn, error)
-
-type startupState struct {
-	ctx  context.Context
-	done chan struct{}
-
-	mu     sync.Mutex
-	active bool
-}
-
 // Open constructs a standalone client. A non-nil client returned with an error
 // can reconnect on a later command and must still be closed by the caller.
 func Open(ctx context.Context, rawURL string, timeout time.Duration) (valkeygo.Client, error) {
@@ -36,10 +26,55 @@ func Open(ctx context.Context, rawURL string, timeout time.Duration) (valkeygo.C
 		return nil, fmt.Errorf("open valkey: %w", err)
 	}
 
-	startup := &startupState{ctx: ctx, done: make(chan struct{}), active: true}
-	option.DialCtxFn = startupDialer(startup, option.DialCtxFn)
+	// NewClient has no context, so bridge ctx through its initial dial and
+	// handshake. Detaching under the mutex leaves later reconnect contexts intact.
+	var mu sync.Mutex
+	initializing := true
+	var initialConnection net.Conn
+	stopClose := context.AfterFunc(ctx, func() {
+		mu.Lock()
+		defer mu.Unlock()
+		if initializing && initialConnection != nil {
+			_ = initialConnection.Close()
+		}
+	})
+	option.DialCtxFn = func(dialContext context.Context, address string, dialer *net.Dialer, tlsConfig *tls.Config) (net.Conn, error) {
+		mu.Lock()
+		initial := initializing
+		mu.Unlock()
+		if initial {
+			dialContext = ctx
+		}
+
+		var connection net.Conn
+		var dialErr error
+		if tlsConfig != nil {
+			connection, dialErr = (&tls.Dialer{NetDialer: dialer, Config: tlsConfig}).DialContext(dialContext, "tcp", address)
+		} else {
+			connection, dialErr = dialer.DialContext(dialContext, "tcp", address)
+		}
+		if dialErr != nil {
+			return nil, dialErr
+		}
+		if initial {
+			mu.Lock()
+			if initializing && ctx.Err() == nil {
+				initialConnection = connection
+			} else {
+				_ = connection.Close()
+				dialErr = ctx.Err()
+			}
+			mu.Unlock()
+		}
+		return connection, dialErr
+	}
+
 	client, err := valkeygo.NewClient(option)
-	startup.finish()
+	mu.Lock()
+	initializing = false
+	initialConnection = nil
+	mu.Unlock()
+	stopClose()
 
 	if ctxErr := ctx.Err(); ctxErr != nil {
 		if client != nil {
@@ -47,10 +82,7 @@ func Open(ctx context.Context, rawURL string, timeout time.Duration) (valkeygo.C
 		}
 		return nil, fmt.Errorf("open valkey: %w", ctxErr)
 	}
-	if client == nil {
-		if err == nil {
-			err = errors.New("client constructor returned nil")
-		}
+	if client == nil && err != nil {
 		return nil, fmt.Errorf("open valkey: %w", err)
 	}
 	if err != nil {
@@ -64,56 +96,27 @@ func clientOption(rawURL string, timeout time.Duration) (valkeygo.ClientOption, 
 		return valkeygo.ClientOption{}, errors.New("valkey timeout must be positive")
 	}
 	u, err := url.Parse(rawURL)
-	if err != nil {
-		return valkeygo.ClientOption{}, errors.New("invalid valkey URL")
-	}
-	query, err := url.ParseQuery(u.RawQuery)
-	if err != nil {
-		return valkeygo.ClientOption{}, errors.New("invalid valkey URL option")
-	}
-	allowedQuery := map[string]bool{
-		"client_cache": true,
-		"client_name":  true,
-		"db":           true,
-		"protocol":     true,
-		"skip_verify":  true,
-	}
-	for key, values := range query {
-		if !allowedQuery[key] || len(values) != 1 {
-			return valkeygo.ClientOption{}, errors.New("invalid valkey URL option")
-		}
-	}
-	if u.Fragment != "" || (u.Scheme != "unix" && u.Path != "" && query.Has("db")) {
+	if err != nil ||
+		(u.Scheme != "redis" && u.Scheme != "rediss") ||
+		u.Hostname() == "" ||
+		u.Path != "" ||
+		u.ForceQuery ||
+		u.RawQuery != "" ||
+		u.Fragment != "" {
 		return valkeygo.ClientOption{}, errors.New("invalid valkey URL")
 	}
 
 	option, err := valkeygo.ParseURL(rawURL)
 	if err != nil {
-		// ParseURL can include its input in URL syntax errors. Do not expose credentials.
 		return valkeygo.ClientOption{}, errors.New("invalid valkey URL")
 	}
-	if len(option.InitAddress) != 1 || option.Sentinel.MasterSet != "" {
-		return valkeygo.ClientOption{}, errors.New("valkey URL must configure exactly one standalone address")
+	_, port, err := net.SplitHostPort(option.InitAddress[0])
+	if err != nil {
+		return valkeygo.ClientOption{}, errors.New("invalid valkey URL")
 	}
-	if option.SelectDB < 0 {
-		return valkeygo.ClientOption{}, errors.New("valkey database must not be negative")
-	}
-	if u.Scheme == "unix" {
-		if option.InitAddress[0] == "" {
-			return valkeygo.ClientOption{}, errors.New("valkey Unix socket path must not be empty")
-		}
-	} else {
-		if u.Hostname() == "" {
-			return valkeygo.ClientOption{}, errors.New("valkey URL must include a host and valid port")
-		}
-		host, port, err := net.SplitHostPort(option.InitAddress[0])
-		if err != nil || host == "" {
-			return valkeygo.ClientOption{}, errors.New("valkey URL must include a host and valid port")
-		}
-		n, err := strconv.Atoi(port)
-		if err != nil || n < 1 || n > 65535 {
-			return valkeygo.ClientOption{}, errors.New("valkey URL must include a host and valid port")
-		}
+	n, err := strconv.Atoi(port)
+	if err != nil || n < 1 || n > 65535 {
+		return valkeygo.ClientOption{}, errors.New("invalid valkey URL")
 	}
 
 	option.Dialer.Timeout = timeout
@@ -123,54 +126,4 @@ func clientOption(rawURL string, timeout time.Duration) (valkeygo.ClientOption, 
 	option.DisableRetry = true
 	option.AlwaysPipelining = true
 	return option, nil
-}
-
-func (s *startupState) finish() {
-	s.mu.Lock()
-	s.active = false
-	close(s.done)
-	s.mu.Unlock()
-}
-
-func startupDialer(startup *startupState, parsed dialContextFunc) dialContextFunc {
-	return func(ctx context.Context, address string, dialer *net.Dialer, tlsConfig *tls.Config) (net.Conn, error) {
-		startup.mu.Lock()
-		active := startup.active
-		startup.mu.Unlock()
-		if !active {
-			return dial(ctx, address, dialer, tlsConfig, parsed)
-		}
-
-		dialContext, cancel := context.WithCancel(ctx)
-		stop := context.AfterFunc(startup.ctx, cancel)
-		connection, err := dial(dialContext, address, dialer, tlsConfig, parsed)
-		stop()
-		cancel()
-		if err != nil {
-			return nil, err
-		}
-
-		go func() {
-			select {
-			case <-startup.ctx.Done():
-				startup.mu.Lock()
-				if startup.active {
-					_ = connection.Close()
-				}
-				startup.mu.Unlock()
-			case <-startup.done:
-			}
-		}()
-		return connection, nil
-	}
-}
-
-func dial(ctx context.Context, address string, dialer *net.Dialer, tlsConfig *tls.Config, parsed dialContextFunc) (net.Conn, error) {
-	if parsed != nil {
-		return parsed(ctx, address, dialer, tlsConfig)
-	}
-	if tlsConfig != nil {
-		return (&tls.Dialer{NetDialer: dialer, Config: tlsConfig}).DialContext(ctx, "tcp", address)
-	}
-	return dialer.DialContext(ctx, "tcp", address)
 }

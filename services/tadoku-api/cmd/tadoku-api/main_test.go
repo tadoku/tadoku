@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
 	"errors"
 	"io"
 	"log/slog"
@@ -24,10 +25,7 @@ import (
 
 func TestApplicationStartsAndShutsDown(t *testing.T) {
 	cfg := validApplicationConfig(t)
-	observerURL := cfg.ValkeyURL
-	clientName := "tadoku-api-lifecycle-test"
-	cfg.ValkeyURL += "?client_name=" + clientName
-	observer, err := valkeygo.NewClient(valkeygo.MustParseURL(observerURL))
+	observer, err := valkeygo.NewClient(valkeygo.MustParseURL(cfg.ValkeyURL))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -49,9 +47,9 @@ func TestApplicationStartsAndShutsDown(t *testing.T) {
 		}
 	})
 
-	clients, err := observer.Do(t.Context(), observer.B().ClientList().Build()).ToString()
-	if err != nil || !strings.Contains(clients, "name="+clientName) {
-		t.Fatalf("owned Valkey client missing from CLIENT LIST: error=%v", err)
+	clientID, err := application.valkey.Do(t.Context(), application.valkey.B().ClientId().Build()).AsInt64()
+	if err != nil {
+		t.Fatalf("owned Valkey client ID: %v", err)
 	}
 
 	// Verify the application is ready to accept requests.
@@ -122,11 +120,11 @@ func TestApplicationStartsAndShutsDown(t *testing.T) {
 		response.Body.Close()
 		t.Error("metrics listener remained open")
 	}
-	clients, err = observer.Do(t.Context(), observer.B().ClientList().Build()).ToString()
+	clients, err := observer.Do(t.Context(), observer.B().ClientList().Build()).ToString()
 	if err != nil {
 		t.Fatal(err)
 	}
-	if strings.Contains(clients, "name="+clientName) {
+	if strings.Contains(clients, "id="+strconv.FormatInt(clientID, 10)+" ") {
 		t.Error("Valkey client remained open after shutdown")
 	}
 }
@@ -318,8 +316,23 @@ func TestApplicationClosesValkeyWhenLaterStartupFails(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Cleanup(observer.Close)
-	clientName := "tadoku-api-failed-start-test"
-	cfg.ValkeyURL += "?client_name=" + clientName
+	username := "tadoku_api_test_" + rand.Text()
+	if err := observer.Do(t.Context(), observer.B().AclSetuser().Username(username).Rule("reset", "on", ">synthetic", "~*", "+@all").Build()).Error(); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+		if err := observer.Do(ctx, observer.B().AclDeluser().Username(username).Build()).Error(); err != nil {
+			t.Errorf("delete test Valkey user: %v", err)
+		}
+	})
+	valkeyURL, err := url.Parse(cfg.ValkeyURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	valkeyURL.User = url.UserPassword(username, "synthetic")
+	cfg.ValkeyURL = valkeyURL.String()
 
 	occupied, err := net.Listen("tcp", "0.0.0.0:0")
 	if err != nil {
@@ -344,7 +357,7 @@ func TestApplicationClosesValkeyWhenLaterStartupFails(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if strings.Contains(clients, "name="+clientName) {
+	if strings.Contains(clients, "user="+username) {
 		t.Error("Valkey client remained open after later startup failure")
 	}
 }

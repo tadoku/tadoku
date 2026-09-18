@@ -100,10 +100,8 @@ In addition to the existing four upstream URLs, startup now requires:
 - Individual `API_POSTGRES_HOST`, `PORT` (default 5432), `DATABASE`, `USER`,
   `PASSWORD`, `SSLMODE` fields. `API_POSTGRES_URL` remains rejected.
 - `API_POSTGRES_MAX_CONNECTIONS` (default 4, validated range 1–32).
-- `API_VALKEY_URL`, one standalone `redis`, `valkey`, `rediss`, `valkeys` or
-  Unix-socket URL. URL credentials, TLS and a non-negative database are supported.
-  The only supported query options are `client_cache`, `client_name`, `db`,
-  `protocol` and `skip_verify`.
+- `API_VALKEY_URL`, one standalone `redis` or `rediss` TCP URL. URL credentials
+  and TLS are supported; paths, queries and fragments are rejected.
 - `API_VALKEY_TIMEOUT` (default 1s), the positive bound for each connection and
   handshake attempt and the established-connection keepalive/I/O interval.
 - `API_JWKS`, the gateway's public signing-key URL.

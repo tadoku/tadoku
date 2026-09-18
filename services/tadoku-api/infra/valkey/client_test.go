@@ -315,21 +315,21 @@ func TestEstablishedPipelineUsesConfiguredLivenessBound(t *testing.T) {
 	}
 }
 
-func TestClientOptionPreservesURLConnectionSettings(t *testing.T) {
-	option, err := clientOption("rediss://user:secret@valkey.test:6380/3?client_name=tadoku-api", 250*time.Millisecond)
+func TestClientOptionPreservesTLSAndCredentials(t *testing.T) {
+	option, err := clientOption("rediss://user:secret@valkey.test:6380", 250*time.Millisecond)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(option.InitAddress) != 1 || option.InitAddress[0] != "valkey.test:6380" {
 		t.Errorf("addresses=%v", option.InitAddress)
 	}
-	if option.Username != "user" || option.Password != "secret" || option.SelectDB != 3 {
-		t.Errorf("URL settings user=%q password=%q db=%d", option.Username, option.Password, option.SelectDB)
+	if option.Username != "user" || option.Password != "secret" {
+		t.Errorf("URL credentials user=%q password=%q", option.Username, option.Password)
 	}
 	if option.TLSConfig == nil || option.TLSConfig.ServerName != "valkey.test" {
 		t.Errorf("TLS config=%v", option.TLSConfig)
 	}
-	if option.ClientName != "tadoku-api" || option.Dialer.Timeout != 250*time.Millisecond || option.ConnWriteTimeout != 250*time.Millisecond {
+	if option.Dialer.Timeout != 250*time.Millisecond || option.ConnWriteTimeout != 250*time.Millisecond {
 		t.Errorf("client option=%+v", option)
 	}
 	if !option.ForceSingleClient || !option.DisableRetry || !option.AlwaysPipelining {
@@ -344,16 +344,16 @@ func TestClientOptionRejectsInvalidConfigurationWithoutLeakingCredentials(t *tes
 		timeout time.Duration
 	}{
 		{name: "timeout", rawURL: "redis://127.0.0.1:6379"},
-		{name: "multiple addresses", rawURL: "redis://127.0.0.1:6379?addr=127.0.0.1:6380", timeout: time.Second},
-		{name: "sentinel", rawURL: "redis://127.0.0.1:6379?master_set=main", timeout: time.Second},
+		{name: "valkey scheme", rawURL: "valkey://127.0.0.1:6379", timeout: time.Second},
+		{name: "valkeys scheme", rawURL: "valkeys://127.0.0.1:6379", timeout: time.Second},
+		{name: "Unix socket", rawURL: "unix:///tmp/valkey.sock", timeout: time.Second},
 		{name: "empty host", rawURL: "redis://:6379", timeout: time.Second},
 		{name: "zero port", rawURL: "redis://127.0.0.1:0", timeout: time.Second},
 		{name: "large port", rawURL: "redis://127.0.0.1:99999", timeout: time.Second},
-		{name: "negative database", rawURL: "redis://127.0.0.1:6379/-1", timeout: time.Second},
-		{name: "empty Unix path", rawURL: "unix://", timeout: time.Second},
+		{name: "database path", rawURL: "redis://127.0.0.1:6379/1", timeout: time.Second},
 		{name: "fragment", rawURL: "redis://127.0.0.1:6379#ignored", timeout: time.Second},
-		{name: "unknown option", rawURL: "redis://127.0.0.1:6379?unknown=ignored", timeout: time.Second},
-		{name: "malformed option", rawURL: "redis://127.0.0.1:6379?client_name=bad%zz", timeout: time.Second},
+		{name: "empty query", rawURL: "redis://127.0.0.1:6379?", timeout: time.Second},
+		{name: "query", rawURL: "redis://127.0.0.1:6379?db=1", timeout: time.Second},
 		{name: "malformed secret", rawURL: "redis://user:do-not-log-%zz@127.0.0.1:6379", timeout: time.Second},
 	} {
 		t.Run(test.name, func(t *testing.T) {
@@ -365,16 +365,6 @@ func TestClientOptionRejectsInvalidConfigurationWithoutLeakingCredentials(t *tes
 				t.Errorf("error exposed credentials: %v", err)
 			}
 		})
-	}
-}
-
-func TestClientOptionAcceptsUnixDatabaseQuery(t *testing.T) {
-	option, err := clientOption("unix:///tmp/valkey.sock?db=3", time.Second)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if option.InitAddress[0] != "/tmp/valkey.sock" || option.SelectDB != 3 {
-		t.Errorf("address=%q db=%d", option.InitAddress[0], option.SelectDB)
 	}
 }
 

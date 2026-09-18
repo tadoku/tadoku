@@ -67,6 +67,18 @@ func (c *Checker) IsAdmin(ctx context.Context) (bool, error) {
 }
 
 func (c *Checker) RequireAuthenticated(ctx context.Context) error {
+	if err := c.RequireAuthenticatedAllowingUnknownBan(ctx); err != nil {
+		return err
+	}
+	if err, _ := ctx.Value(banLookupErrorKey{}).(error); err != nil {
+		return errx.NewUnavailableError("check ban permission", err)
+	}
+	return nil
+}
+
+// RequireAuthenticatedAllowingUnknownBan requires a verified user but permits an
+// inconclusive shared ban lookup. It is only safe for read-only operations.
+func (c *Checker) RequireAuthenticatedAllowingUnknownBan(ctx context.Context) error {
 	user := identity.FromContext(ctx)
 	if user == nil || user.Subject == "" || user.Subject == "guest" {
 		return errx.NewUnauthorizedError("unauthorized")

@@ -14,15 +14,18 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
 )
 
 func TestApplicationPanicRecovery(t *testing.T) {
 	var logs bytes.Buffer
+	registry := prometheus.NewRegistry()
 	router, err := NewHandler(
 		app.New(nil, nil, nil),
 		func(context.Context) error { return nil },
 		time.Second,
+		registry,
 		slog.New(slog.NewJSONHandler(&logs, nil)),
 		func(next stdhttp.Handler) stdhttp.Handler { return next },
 		func(next stdhttp.Handler) stdhttp.Handler { return next },
@@ -71,6 +74,34 @@ func TestApplicationPanicRecovery(t *testing.T) {
 		!strings.Contains(got, `"stack":`) {
 		t.Errorf("structured logs missing recovered panic and stack: %s", got)
 	}
+	if got := logs.String(); !strings.Contains(got, `"msg":"request completed"`) ||
+		!strings.Contains(got, `"route":"GET /test/panic"`) ||
+		!strings.Contains(got, `"mode":"native"`) ||
+		!strings.Contains(got, `"status":500`) {
+		t.Errorf("structured logs missing observed panic response: %s", got)
+	}
+	metricFamilies, err := registry.Gather()
+	if err != nil {
+		t.Fatal(err)
+	}
+	observed := false
+	for _, family := range metricFamilies {
+		if family.GetName() != "tadoku_api_proxy_request_duration_seconds" {
+			continue
+		}
+		for _, metric := range family.GetMetric() {
+			labels := make(map[string]string, len(metric.GetLabel()))
+			for _, label := range metric.GetLabel() {
+				labels[label.GetName()] = label.GetValue()
+			}
+			if labels["route"] == "GET /test/panic" && labels["mode"] == "native" && labels["status"] == "500" {
+				observed = metric.GetHistogram().GetSampleCount() == 1
+			}
+		}
+	}
+	if !observed {
+		t.Error("native panic histogram sample with status 500 not found")
+	}
 	if got := serverErrors.String(); got != "" {
 		t.Errorf("net/http logged recovered panic: %s", got)
 	}
@@ -82,6 +113,7 @@ func TestApplicationPanicRecoveryPreservesWrittenStatus(t *testing.T) {
 		app.New(nil, nil, nil),
 		func(context.Context) error { return nil },
 		time.Second,
+		prometheus.NewRegistry(),
 		slog.New(slog.NewJSONHandler(&logs, nil)),
 		func(next stdhttp.Handler) stdhttp.Handler { return next },
 		func(next stdhttp.Handler) stdhttp.Handler { return next },
@@ -130,6 +162,7 @@ func TestApplicationPanicRecoveryHandlesInvalidStatusPanic(t *testing.T) {
 		app.New(nil, nil, nil),
 		func(context.Context) error { return nil },
 		time.Second,
+		prometheus.NewRegistry(),
 		slog.New(slog.NewJSONHandler(&logs, nil)),
 		func(next stdhttp.Handler) stdhttp.Handler { return next },
 		func(next stdhttp.Handler) stdhttp.Handler { return next },
@@ -169,6 +202,7 @@ func TestApplicationPanicRecoveryTracksFlushedResponse(t *testing.T) {
 		app.New(nil, nil, nil),
 		func(context.Context) error { return nil },
 		time.Second,
+		prometheus.NewRegistry(),
 		slog.New(slog.NewJSONHandler(&logs, nil)),
 		func(next stdhttp.Handler) stdhttp.Handler { return next },
 		func(next stdhttp.Handler) stdhttp.Handler { return next },

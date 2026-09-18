@@ -85,6 +85,59 @@ type application struct {
 	pool            *pgxpool.Pool
 }
 
+type pgxPoolCollector struct {
+	pool                *pgxpool.Pool
+	acquireCount        *prometheus.Desc
+	acquiredConnections *prometheus.Desc
+	emptyAcquireCount   *prometheus.Desc
+	acquireDuration     *prometheus.Desc
+}
+
+func newPGXPoolCollector(pool *pgxpool.Pool) *pgxPoolCollector {
+	return &pgxPoolCollector{
+		pool: pool,
+		acquireCount: prometheus.NewDesc(
+			"tadoku_api_postgres_pool_acquire_count_total",
+			"Total number of successful PostgreSQL pool acquisitions.",
+			nil,
+			nil,
+		),
+		acquiredConnections: prometheus.NewDesc(
+			"tadoku_api_postgres_pool_acquired_connections",
+			"Number of PostgreSQL connections currently acquired from the pool.",
+			nil,
+			nil,
+		),
+		emptyAcquireCount: prometheus.NewDesc(
+			"tadoku_api_postgres_pool_empty_acquire_count_total",
+			"Total number of successful PostgreSQL pool acquisitions that waited for a connection.",
+			nil,
+			nil,
+		),
+		acquireDuration: prometheus.NewDesc(
+			"tadoku_api_postgres_pool_acquire_duration_seconds_total",
+			"Total time spent on successful PostgreSQL pool acquisitions.",
+			nil,
+			nil,
+		),
+	}
+}
+
+func (c *pgxPoolCollector) Describe(descriptions chan<- *prometheus.Desc) {
+	descriptions <- c.acquireCount
+	descriptions <- c.acquiredConnections
+	descriptions <- c.emptyAcquireCount
+	descriptions <- c.acquireDuration
+}
+
+func (c *pgxPoolCollector) Collect(metrics chan<- prometheus.Metric) {
+	stats := c.pool.Stat()
+	metrics <- prometheus.MustNewConstMetric(c.acquireCount, prometheus.CounterValue, float64(stats.AcquireCount()))
+	metrics <- prometheus.MustNewConstMetric(c.acquiredConnections, prometheus.GaugeValue, float64(stats.AcquiredConns()))
+	metrics <- prometheus.MustNewConstMetric(c.emptyAcquireCount, prometheus.CounterValue, float64(stats.EmptyAcquireCount()))
+	metrics <- prometheus.MustNewConstMetric(c.acquireDuration, prometheus.CounterValue, stats.AcquireDuration().Seconds())
+}
+
 func start(cfg config, logger *slog.Logger) (*application, error) {
 	logger = logger.With("service", cfg.ServiceName)
 	authenticate, err := transporthttp.NewJWTAuthentication(cfg.JWKS, cfg.DialTimeout)
@@ -93,10 +146,6 @@ func start(cfg config, logger *slog.Logger) (*application, error) {
 	}
 
 	metrics := prometheus.NewRegistry()
-	metrics.MustRegister(
-		collectors.NewGoCollector(),
-		collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
-	)
 
 	transport := &http.Transport{
 		Proxy:                 http.ProxyFromEnvironment,
@@ -126,6 +175,11 @@ func start(cfg config, logger *slog.Logger) (*application, error) {
 			transport.CloseIdleConnections()
 		}
 	}()
+	metrics.MustRegister(
+		collectors.NewGoCollector(),
+		collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
+		newPGXPoolCollector(pool),
+	)
 
 	keto := ketoclient.NewReadClient(cfg.KetoReadURL)
 	permissionChecker := permissions.NewKetoChecker(keto)
@@ -134,7 +188,7 @@ func start(cfg config, logger *slog.Logger) (*application, error) {
 	api := app.New(contentService, pool, permissionChecker)
 	rejectBanned := newBannedUserMiddleware(cfg.KetoReadURL, logger)
 
-	handler, err := transporthttp.NewHandler(api, pool.Ping, cfg.RequestTimeout, logger, authenticate, rejectBanned)
+	handler, err := transporthttp.NewHandler(api, pool.Ping, cfg.RequestTimeout, metrics, logger, authenticate, rejectBanned)
 	if err != nil {
 		return nil, err
 	}
@@ -151,7 +205,6 @@ func start(cfg config, logger *slog.Logger) (*application, error) {
 		upstreams,
 		transport,
 		cfg.RequestTimeout,
-		metrics,
 		logger,
 	)
 	if err != nil {

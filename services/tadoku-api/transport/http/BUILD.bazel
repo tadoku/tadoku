@@ -16,6 +16,8 @@ go_library(
         "page_find.go",
         "page_list.go",
         "page_update.go",
+        "page_version_get.go",
+        "page_version_list.go",
         "panic_recovery.go",
         "post_create.go",
         "post_delete.go",

@@ -1,0 +1,4 @@
+>>> GET /content/pages/main/not-a-uuid/versions
+HTTP/1.1 400 Bad Request
+Content-Length: 0
+

@@ -466,7 +466,7 @@ paths:
           description: Page not found
       x-tadoku-source: Content
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /pages/{namespace}/{id}/versions
       x-legacy-operation-id: pageVersionList
   "/content/pages/{namespace}/{id}/versions/{contentId}":
@@ -509,7 +509,7 @@ paths:
           description: Page or version not found
       x-tadoku-source: Content
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /pages/{namespace}/{id}/versions/{contentId}
       x-legacy-operation-id: pageVersionGet
   "/content/posts/{namespace}/{slug}":

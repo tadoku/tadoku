@@ -35,7 +35,7 @@ func TestListAnnouncements(t *testing.T) {
 	tests := []struct {
 		description []string
 		want        int
-		skipParity  bool
+		skipParity  string
 	}{
 		{description: []string{"admin"}, want: http.StatusOK},
 		{description: []string{"non", "admin"}, want: http.StatusForbidden},
@@ -47,22 +47,16 @@ func TestListAnnouncements(t *testing.T) {
 		{description: []string{"page", "size", "capped"}, want: http.StatusOK},
 		{description: []string{"invalid", "page", "size"}, want: http.StatusBadRequest},
 		{description: []string{"invalid", "page"}, want: http.StatusBadRequest},
-		{description: []string{"negative", "page", "size"}, want: http.StatusBadRequest, skipParity: true},
-		{description: []string{"negative", "page"}, want: http.StatusBadRequest, skipParity: true},
-		{description: []string{"offset", "overflow"}, want: http.StatusOK, skipParity: true},
+		{description: []string{"negative", "page", "size"}, want: http.StatusBadRequest, skipParity: "legacy returns 500; a malformed query parameter is a client error"},
+		{description: []string{"negative", "page"}, want: http.StatusBadRequest, skipParity: "legacy returns 500; a malformed query parameter is a client error"},
+		{description: []string{"offset", "overflow"}, want: http.StatusOK, skipParity: "legacy overflows pagination offsets"},
 		{description: []string{"page", "beyond", "total", "size"}, want: http.StatusOK},
 	}
 
 	for _, test := range tests {
 		name := APITestName("ListAnnouncements", test.want, test.description...)
 		t.Run(name, func(t *testing.T) {
-			legacy := implementation{name: "content-api", handler: legacyContent.handler}
-			if test.skipParity {
-				legacy.skip = "legacy overflows pagination offsets"
-				if test.want == http.StatusBadRequest {
-					legacy.skip = "legacy returns 500; a malformed query parameter is a client error"
-				}
-			}
+			legacy := implementation{name: "content-api", handler: legacyContent.handler, skip: test.skipParity}
 			runCase(t, api, name, test.want,
 				implementation{name: "tadoku-api", handler: api.handler},
 				legacy,

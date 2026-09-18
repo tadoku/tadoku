@@ -9,6 +9,7 @@ sql:
       - post_list.sql
       - post_create.sql
       - post_update.sql
+      - post_version_list.sql
     gen:
       go:
         package: content

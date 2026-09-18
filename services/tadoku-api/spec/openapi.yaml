@@ -720,7 +720,7 @@ paths:
           description: Post not found
       x-tadoku-source: Content
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /posts/{namespace}/{id}/versions
       x-legacy-operation-id: postVersionList
   "/content/posts/{namespace}/{id}/versions/{contentId}":

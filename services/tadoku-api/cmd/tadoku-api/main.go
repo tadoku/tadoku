@@ -150,11 +150,17 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 			cancel()
 		}
 	}()
+	if err := ctx.Err(); err != nil {
+		return nil, fmt.Errorf("start application: %w", err)
+	}
 
 	logger = logger.With("service", cfg.ServiceName)
 	authenticate, err := transporthttp.NewJWTAuthentication(ctx, cfg.JWKS, cfg.DialTimeout, cfg.MaxTokenAge, cfg.JWTIssuer, logger)
 	if err != nil {
 		return nil, err
+	}
+	if err := ctx.Err(); err != nil {
+		return nil, fmt.Errorf("start application: %w", err)
 	}
 
 	metrics := prometheus.NewRegistry()
@@ -224,6 +230,9 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	)
 	if err != nil {
 		return nil, err
+	}
+	if err := ctx.Err(); err != nil {
+		return nil, fmt.Errorf("start application: %w", err)
 	}
 
 	listener, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", cfg.Port))
@@ -300,16 +309,18 @@ func (app *application) wait() error {
 	}
 	app.cancel()
 
-	shutdownContext, cancel := context.WithTimeout(context.Background(), app.shutdownTimeout)
-	defer cancel()
-
+	// Each server gets the full configured grace period.
+	shutdownContext, cancelShutdown := context.WithTimeout(context.Background(), app.shutdownTimeout)
 	shutdownErr := app.server.Shutdown(shutdownContext)
+	cancelShutdown()
 	if shutdownErr != nil {
 		// Cancel request contexts that outlasted graceful shutdown.
 		_ = app.server.Close()
 	}
 
-	metricsErr := app.metricsServer.Shutdown(shutdownContext)
+	metricsContext, cancelMetrics := context.WithTimeout(context.Background(), app.shutdownTimeout)
+	metricsErr := app.metricsServer.Shutdown(metricsContext)
+	cancelMetrics()
 	if metricsErr != nil {
 		_ = app.metricsServer.Close()
 	}
@@ -327,15 +338,18 @@ func main() {
 
 	cfg, err := loadConfig()
 	if err != nil {
-		panic(err)
+		logger.Error("load configuration", "error", err)
+		os.Exit(1)
 	}
 
 	app, err := start(ctx, cfg, logger)
 	if err != nil {
-		panic(err)
+		logger.Error("start tadoku-api", "error", err)
+		os.Exit(1)
 	}
 
 	if err := app.wait(); err != nil {
-		panic(err)
+		logger.Error("stop tadoku-api", "error", err)
+		os.Exit(1)
 	}
 }

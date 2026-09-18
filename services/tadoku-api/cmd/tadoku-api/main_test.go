@@ -2,12 +2,15 @@ package main
 
 import (
 	"context"
+	"errors"
 	"io"
 	"log/slog"
 	"net"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 	"testing"
@@ -237,5 +240,68 @@ func TestApplicationRejectsUnavailableJWKSBeforeStarting(t *testing.T) {
 	}, slog.New(slog.NewTextHandler(io.Discard, nil)))
 	if app != nil || err == nil || !strings.Contains(err.Error(), "fetch authentication JWKS") {
 		t.Errorf("startup with unavailable JWKS: application=%v error=%v", app, err)
+	}
+}
+
+func TestApplicationCancelsStalledJWKSFetch(t *testing.T) {
+	requestStarted := make(chan struct{})
+	requestCanceled := make(chan struct{})
+	provider := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		close(requestStarted)
+		<-r.Context().Done()
+		close(requestCanceled)
+	}))
+	t.Cleanup(provider.Close)
+
+	ctx, cancel := context.WithCancel(t.Context())
+	result := make(chan error, 1)
+	go func() {
+		_, err := start(ctx, config{
+			JWKS:        provider.URL,
+			DialTimeout: time.Second,
+			MaxTokenAge: 24 * time.Hour,
+		}, slog.New(slog.NewTextHandler(io.Discard, nil)))
+		result <- err
+	}()
+
+	<-requestStarted
+	cancel()
+
+	select {
+	case err := <-result:
+		if !errors.Is(err, context.Canceled) {
+			t.Errorf("canceled startup error=%v", err)
+		}
+	case <-time.After(200 * time.Millisecond):
+		t.Error("startup did not return promptly after cancellation")
+		<-result
+	}
+	select {
+	case <-requestCanceled:
+	case <-time.After(200 * time.Millisecond):
+		t.Error("JWKS provider did not observe request cancellation")
+	}
+}
+
+func TestMainLogsConfigErrorsAndExitsOne(t *testing.T) {
+	if os.Getenv("TADOKU_API_MAIN_HELPER") == "1" {
+		main()
+		return
+	}
+
+	cmd := exec.Command(os.Args[0], "-test.run=^TestMainLogsConfigErrorsAndExitsOne$")
+	cmd.Env = []string{"TADOKU_API_MAIN_HELPER=1", "API_JWKS="}
+	output, err := cmd.CombinedOutput()
+	var exitErr *exec.ExitError
+	if !errors.As(err, &exitErr) || exitErr.ExitCode() != 1 {
+		t.Fatalf("main error=%v output=%s", err, output)
+	}
+
+	log := string(output)
+	if !strings.Contains(log, `"level":"ERROR"`) || !strings.Contains(log, `"msg":"load configuration"`) {
+		t.Errorf("main output=%s", output)
+	}
+	if strings.Contains(log, "panic:") {
+		t.Errorf("main output contains panic: %s", output)
 	}
 }

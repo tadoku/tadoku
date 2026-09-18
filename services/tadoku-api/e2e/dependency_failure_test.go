@@ -90,7 +90,7 @@ func TestDependencyFailures(t *testing.T) {
 			subtest:     "canceled read",
 			operation:   "ListActiveAnnouncements",
 			description: []string{"read", "failure"},
-			want:        http.StatusInternalServerError,
+			want:        499,
 			suite:       api,
 			handler:     canceled,
 		},

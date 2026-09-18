@@ -10,9 +10,33 @@ import (
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/content"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
+
+func TestAnnouncementsRepositoryGenericDriverErrorIsUnclassified(t *testing.T) {
+	t.Parallel()
+	db, err := testpostgres.New(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Error(err)
+		}
+	})
+	db.Pool.Close()
+
+	repository := content.NewAnnouncementsRepository(db.Pool)
+	_, err = repository.FindAnnouncementByID(t.Context(), "main", uuid.New())
+	if err == nil {
+		t.Fatal("closed-pool read succeeded")
+	}
+	if got := errx.KindOf(err); got != errx.Unknown {
+		t.Errorf("closed-pool read kind=%v, want unknown", got)
+	}
+}
 
 func TestAnnouncementsRepositoryUsesSuppliedPolicyAndTransaction(t *testing.T) {
 	t.Parallel()

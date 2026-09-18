@@ -35,6 +35,7 @@ go_test(
     deps = [
         ":postgres",
         "//services/tadoku-api/infra/postgres/internal/pgxcompat",
+        "//services/tadoku-api/internal/errx",
         "//services/tadoku-api/internal/testpostgres",
         "@com_github_google_uuid//:uuid",
         "@com_github_jackc_pgx_v5//:pgx",

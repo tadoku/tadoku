@@ -140,6 +140,9 @@ func reconcileHTTPGolden(path, got string, gotStatus, wantStatus int, update boo
 // before serializing the response and normalizing HTTP line endings.
 func formatHTTPGolden(request *http.Request, recorder *httptest.ResponseRecorder) (string, error) {
 	response := recorder.Result()
+	if http.StatusText(response.StatusCode) == "" {
+		response.Status = ""
+	}
 	if response.ContentLength == -1 {
 		response.ContentLength = int64(recorder.Body.Len())
 	}
@@ -172,6 +175,11 @@ func TestFormatHTTPGolden(t *testing.T) {
 			name:   "empty error",
 			status: http.StatusBadRequest,
 			want:   "HTTP/1.1 400 Bad Request\nContent-Length: 0\n\n",
+		},
+		{
+			name:   "unknown status text",
+			status: 499,
+			want:   "HTTP/1.1 499 status code 499\nContent-Length: 0\n\n",
 		},
 		{
 			name:   "no content",

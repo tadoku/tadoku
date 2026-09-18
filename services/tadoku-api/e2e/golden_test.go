@@ -3,6 +3,7 @@ package e2e_test
 import (
 	"bufio"
 	"bytes"
+	"flag"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -18,6 +19,10 @@ import (
 )
 
 var fixtureInstant = time.Date(2026, 9, 12, 12, 0, 0, 0, time.UTC)
+var updateGoldens = flag.Bool("update-goldens", false, "rewrite golden.http files from actual responses; review the diff before committing")
+
+const goldenSourceRootEnv = "TADOKU_GOLDEN_SOURCE_ROOT"
+const goldenRecorder = "tadoku-api"
 
 func APITestName(operation string, status int, description ...string) string {
 	return fmt.Sprintf("%s/%d_%s", operation, status, strings.Join(description, "_"))
@@ -45,7 +50,8 @@ func runCase(t *testing.T, s *suite, name string, want int, implementations ...i
 				t.Skip(impl.skip)
 			}
 			s.reset(t, dir)
-			atFixtureInstant(func() { checkHTTPGolden(t, impl.handler, dir, want) })
+			record := *updateGoldens && impl.name == goldenRecorder
+			atFixtureInstant(func() { checkHTTPGolden(t, impl.handler, dir, want, record) })
 			if s.proxied.Load() != 0 {
 				t.Error("handler contacted an upstream")
 			}
@@ -54,8 +60,8 @@ func runCase(t *testing.T, s *suite, name string, want int, implementations ...i
 }
 
 // checkHTTPGolden sends the checked-in HTTP request through the handler and
-// compares its complete response with the reviewed golden file.
-func checkHTTPGolden(t *testing.T, handler http.Handler, directory string, wantStatus int) {
+// compares or explicitly records its complete response.
+func checkHTTPGolden(t *testing.T, handler http.Handler, directory string, wantStatus int, update bool) {
 	t.Helper()
 
 	input, err := os.ReadFile(filepath.Join(directory, "request.http"))
@@ -73,23 +79,61 @@ func checkHTTPGolden(t *testing.T, handler http.Handler, directory string, wantS
 	response := recorder.Result()
 	defer response.Body.Close()
 
-	if response.StatusCode != wantStatus {
-		t.Errorf("HTTP status=%d, want %d", response.StatusCode, wantStatus)
-	}
-
 	got, err := formatHTTPGolden(request, recorder)
 	if err != nil {
 		t.Fatalf("format response: %v", err)
 	}
 
-	goldenPath := filepath.Join(directory, "golden.http")
-	want, err := os.ReadFile(goldenPath)
+	goldenPath, err := goldenFilePath(directory, *updateGoldens)
 	if err != nil {
-		t.Fatalf("read golden: %v", err)
+		t.Fatal(err)
+	}
+	updated, err := reconcileHTTPGolden(goldenPath, got, response.StatusCode, wantStatus, update)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if updated {
+		fmt.Fprintf(os.Stderr, "rewrote HTTP golden %s\n", goldenPath)
+	}
+}
+
+func goldenFilePath(directory string, update bool) (string, error) {
+	if !update {
+		return filepath.Join(directory, "golden.http"), nil
+	}
+
+	root := os.Getenv(goldenSourceRootEnv)
+	if !filepath.IsAbs(root) {
+		return "", fmt.Errorf("%s must be an absolute path to services/tadoku-api/e2e/testdata", goldenSourceRootEnv)
+	}
+	relative, err := filepath.Rel("testdata", directory)
+	if err != nil || relative == ".." || strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
+		return "", fmt.Errorf("golden directory %q is outside testdata", directory)
+	}
+
+	return filepath.Join(root, relative, "golden.http"), nil
+}
+
+func reconcileHTTPGolden(path, got string, gotStatus, wantStatus int, update bool) (bool, error) {
+	want, err := os.ReadFile(path)
+	if err != nil {
+		return false, fmt.Errorf("read golden: %w", err)
+	}
+	if gotStatus != wantStatus {
+		return false, fmt.Errorf("HTTP status=%d, want %d", gotStatus, wantStatus)
+	}
+	if update {
+		if err := os.WriteFile(path, []byte(got), 0o644); err != nil {
+			return false, fmt.Errorf("write golden: %w", err)
+		}
+		return true, nil
 	}
 	if got != string(want) {
-		t.Errorf("HTTP response differs from %s\n--- got ---\n%s\n--- want ---\n%s", goldenPath, got, want)
+		return false, fmt.Errorf("HTTP response differs from %s\n--- got ---\n%s\n--- want ---\n%s", path, got, want)
 	}
+
+	return false, nil
 }
 
 // formatHTTPGolden completes an unknown response length from the buffered body
@@ -203,5 +247,102 @@ func TestFormatHTTPGolden(t *testing.T) {
 				t.Errorf("HTTP golden=%q, want %q", got, want)
 			}
 		})
+	}
+}
+
+func TestReconcileHTTPGolden(t *testing.T) {
+	directory := t.TempDir()
+	path := filepath.Join(directory, "golden.http")
+	if err := os.WriteFile(path, []byte("old"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Run("updates existing fixture", func(t *testing.T) {
+		updated, err := reconcileHTTPGolden(path, "new", http.StatusOK, http.StatusOK, true)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !updated {
+			t.Error("golden was not reported as updated")
+		}
+		got, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if string(got) != "new" {
+			t.Errorf("golden=%q, want %q", got, "new")
+		}
+	})
+
+	t.Run("comparison never overwrites", func(t *testing.T) {
+		path := filepath.Join(t.TempDir(), "golden.http")
+		if err := os.WriteFile(path, []byte("new"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+
+		updated, err := reconcileHTTPGolden(path, "legacy", http.StatusOK, http.StatusOK, false)
+		if err == nil {
+			t.Fatal("mismatched golden comparison succeeded")
+		}
+		if updated {
+			t.Error("comparison reported an update")
+		}
+		got, readErr := os.ReadFile(path)
+		if readErr != nil {
+			t.Fatal(readErr)
+		}
+		if string(got) != "new" {
+			t.Errorf("golden=%q, want %q", got, "new")
+		}
+	})
+
+	t.Run("unexpected status never overwrites", func(t *testing.T) {
+		path := filepath.Join(t.TempDir(), "golden.http")
+		if err := os.WriteFile(path, []byte("new"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+
+		updated, err := reconcileHTTPGolden(path, "unexpected", http.StatusBadRequest, http.StatusOK, true)
+		if err == nil {
+			t.Fatal("unexpected status succeeded")
+		}
+		if updated {
+			t.Error("unexpected status reported an update")
+		}
+		got, readErr := os.ReadFile(path)
+		if readErr != nil {
+			t.Fatal(readErr)
+		}
+		if string(got) != "new" {
+			t.Errorf("golden=%q, want %q", got, "new")
+		}
+	})
+
+	t.Run("missing fixture is not created", func(t *testing.T) {
+		missing := filepath.Join(directory, "missing.http")
+		updated, err := reconcileHTTPGolden(missing, "new", http.StatusOK, http.StatusOK, true)
+		if err == nil {
+			t.Fatal("missing golden update succeeded")
+		}
+		if updated {
+			t.Error("missing golden reported an update")
+		}
+		if _, statErr := os.Stat(missing); !os.IsNotExist(statErr) {
+			t.Fatalf("missing golden stat error=%v, want not exist", statErr)
+		}
+	})
+}
+
+func TestGoldenFilePathUsesSourceRootForUpdates(t *testing.T) {
+	root := t.TempDir()
+	t.Setenv(goldenSourceRootEnv, root)
+
+	got, err := goldenFilePath(filepath.Join("testdata", "Operation", "200_case"), true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := filepath.Join(root, "Operation", "200_case", "golden.http")
+	if got != want {
+		t.Errorf("golden path=%q, want %q", got, want)
 	}
 }

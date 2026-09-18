@@ -23,7 +23,7 @@ func TestRouterWorksWithoutLegacyProxyRoutes(t *testing.T) {
 
 	dir := filepath.Join("testdata", APITestName("ListActiveAnnouncements", http.StatusOK, "guest"))
 	api.reset(t, dir)
-	atFixtureInstant(func() { checkHTTPGolden(t, handler, dir, http.StatusOK) })
+	atFixtureInstant(func() { checkHTTPGolden(t, handler, dir, http.StatusOK, *updateGoldens) })
 
 	for _, test := range []struct {
 		name   string

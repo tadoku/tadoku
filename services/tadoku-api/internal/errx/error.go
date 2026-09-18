@@ -15,44 +15,44 @@ const (
 )
 
 type Error struct {
-	Kind    Kind
-	Message string
-	Cause   error
+	kind    Kind
+	message string
+	cause   error
 }
 
 func NewInvalidInputError(message string) *Error {
-	return &Error{Kind: InvalidInput, Message: message}
+	return &Error{kind: InvalidInput, message: message}
 }
 
 func NewUnauthorizedError(message string) *Error {
-	return &Error{Kind: Unauthorized, Message: message}
+	return &Error{kind: Unauthorized, message: message}
 }
 
 func NewForbiddenError(message string) *Error {
-	return &Error{Kind: Forbidden, Message: message}
+	return &Error{kind: Forbidden, message: message}
 }
 
 func NewNotFoundError(message string) *Error {
-	return &Error{Kind: NotFound, Message: message}
+	return &Error{kind: NotFound, message: message}
 }
 
 // NewUnavailableError preserves the underlying cause, which may be nil.
 func NewUnavailableError(message string, cause error) *Error {
-	return &Error{Kind: Unavailable, Message: message, Cause: cause}
+	return &Error{kind: Unavailable, message: message, cause: cause}
 }
 
 func (e *Error) Error() string {
-	if e.Cause == nil {
-		return e.Message
+	if e.cause == nil {
+		return e.message
 	}
-	if e.Message == "" {
-		return e.Cause.Error()
+	if e.message == "" {
+		return e.cause.Error()
 	}
-	return e.Message + ": " + e.Cause.Error()
+	return e.message + ": " + e.cause.Error()
 }
 
 func (e *Error) Unwrap() error {
-	return e.Cause
+	return e.cause
 }
 
 // KindOf reads the outermost application error's metadata, including through
@@ -60,7 +60,7 @@ func (e *Error) Unwrap() error {
 func KindOf(err error) Kind {
 	var applicationError *Error
 	if errors.As(err, &applicationError) && applicationError != nil {
-		return applicationError.Kind
+		return applicationError.kind
 	}
 	return Unknown
 }

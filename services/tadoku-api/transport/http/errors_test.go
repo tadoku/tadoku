@@ -16,15 +16,13 @@ func TestErrorStatus(t *testing.T) {
 		err  error
 		want int
 	}{
-		{name: "invalid input", err: &errx.Error{Kind: errx.InvalidInput}, want: stdhttp.StatusBadRequest},
-		{name: "unauthorized", err: &errx.Error{Kind: errx.Unauthorized}, want: stdhttp.StatusUnauthorized},
-		{name: "forbidden", err: &errx.Error{Kind: errx.Forbidden}, want: stdhttp.StatusForbidden},
-		{name: "not found", err: &errx.Error{Kind: errx.NotFound}, want: stdhttp.StatusNotFound},
-		{name: "unavailable", err: &errx.Error{Kind: errx.Unavailable}, want: stdhttp.StatusServiceUnavailable},
-		{name: "wrapped metadata", err: fmt.Errorf("operation: %w", &errx.Error{Kind: errx.InvalidInput}), want: stdhttp.StatusBadRequest},
-		{name: "outer kind wins", err: &errx.Error{Kind: errx.Unavailable, Cause: &errx.Error{Kind: errx.InvalidInput}}, want: stdhttp.StatusServiceUnavailable},
-		{name: "unknown outer kind", err: &errx.Error{Cause: &errx.Error{Kind: errx.InvalidInput}}, want: stdhttp.StatusInternalServerError},
-		{name: "unknown kind", err: &errx.Error{Kind: errx.Kind(255)}, want: stdhttp.StatusInternalServerError},
+		{name: "invalid input", err: errx.NewInvalidInputError(""), want: stdhttp.StatusBadRequest},
+		{name: "unauthorized", err: errx.NewUnauthorizedError(""), want: stdhttp.StatusUnauthorized},
+		{name: "forbidden", err: errx.NewForbiddenError(""), want: stdhttp.StatusForbidden},
+		{name: "not found", err: errx.NewNotFoundError(""), want: stdhttp.StatusNotFound},
+		{name: "unavailable", err: errx.NewUnavailableError("", nil), want: stdhttp.StatusServiceUnavailable},
+		{name: "wrapped metadata", err: fmt.Errorf("operation: %w", errx.NewInvalidInputError("")), want: stdhttp.StatusBadRequest},
+		{name: "outer kind wins", err: errx.NewUnavailableError("", errx.NewInvalidInputError("")), want: stdhttp.StatusServiceUnavailable},
 		{name: "message is not metadata", err: errors.New("invalid input"), want: stdhttp.StatusInternalServerError},
 		{name: "nil", want: stdhttp.StatusInternalServerError},
 		{name: "typed nil", err: (*errx.Error)(nil), want: stdhttp.StatusInternalServerError},

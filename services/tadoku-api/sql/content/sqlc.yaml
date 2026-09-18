@@ -8,6 +8,7 @@ sql:
       - post_find.sql
       - post_list.sql
       - post_create.sql
+      - post_update.sql
     gen:
       go:
         package: content

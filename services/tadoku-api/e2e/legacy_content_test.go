@@ -42,7 +42,7 @@ func newLegacyContentAPI(ctx context.Context, dsn, jwksURL, ketoReadURL string) 
 	server := rest.NewServer(
 		nil, nil, nil, nil, nil, nil, nil, nil, // Page operations are not exercised.
 		domain.NewPostCreate(postsRepository, scenarioClock{}),
-		nil,
+		domain.NewPostUpdate(postsRepository, scenarioClock{}),
 		domain.NewPostDelete(postsRepository),
 		domain.NewPostFind(postsRepository, scenarioClock{}),
 		domain.NewPostFindByID(postsRepository),

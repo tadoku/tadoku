@@ -26,6 +26,9 @@ test('all retained wire contracts survive the merge, including internal callers'
       if (contract.paths['/content/posts/{namespace}'].post['x-tadoku-owner'] === 'native') {
         legacy.paths['/posts/{namespace}'].post.responses['409'] = {description: 'Post ID or slug already exists'};
       }
+      if (contract.paths['/content/posts/{namespace}/{slug}'].put['x-tadoku-owner'] === 'native') {
+        legacy.paths['/posts/{namespace}/{id}'].put.responses['409'] = {description: 'Post slug already exists'};
+      }
       legacy.components.schemas.Announcement.properties.href.maxLength = 2048;
       legacy.components.schemas.AnnouncementList.allOf[1].properties.announcements.maxItems = 100;
     }

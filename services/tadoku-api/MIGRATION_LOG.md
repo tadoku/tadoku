@@ -6,3 +6,5 @@
 - [ ] Move the announcements timestamp columns to `timestamptz` in a standalone migration.
 - [ ] Add a covering announcements index on (`namespace`, `created_at desc`, `id desc`) where `deleted_at is null`.
 - [ ] Reconsider the announcements primary key as (`namespace`, `id`) so IDs can be scoped to their namespace.
+- [ ] After every endpoint owned by a legacy service has migrated, observe the replacement for one to seven days, then delete the legacy service together with its parity subtests and Bazel dependencies.
+- [ ] After the Tadoku API migration is complete, make a final documentation pass and delete all references to this migration.

@@ -51,6 +51,8 @@ func TestListAnnouncements(t *testing.T) {
 		{description: []string{"negative", "page"}, want: http.StatusBadRequest, skipParity: "legacy returns 500; a malformed query parameter is a client error"},
 		{description: []string{"offset", "overflow"}, want: http.StatusOK, skipParity: "legacy overflows pagination offsets"},
 		{description: []string{"page", "beyond", "total", "size"}, want: http.StatusOK},
+		{description: []string{"tied", "timestamps", "first", "page"}, want: http.StatusOK, skipParity: "intentional stable-ordering difference"},
+		{description: []string{"tied", "timestamps", "final", "page"}, want: http.StatusOK, skipParity: "intentional stable-ordering difference"},
 	}
 
 	for _, test := range tests {

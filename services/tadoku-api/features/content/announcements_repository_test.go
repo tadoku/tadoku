@@ -85,6 +85,53 @@ func TestAnnouncementsRepositoryUsesSuppliedPolicyAndTransaction(t *testing.T) {
 	}
 }
 
+func TestAnnouncementsRepositoryListAnnouncementsBreaksCreatedAtTiesByID(t *testing.T) {
+	t.Parallel()
+	db, err := testpostgres.New(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Error(err)
+		}
+	})
+	if err := db.Reset(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = db.Pool.Exec(t.Context(), `
+		insert into announcements (id, namespace, title, content, starts_at, ends_at, created_at, updated_at)
+		values
+			('10000000-0000-4000-8000-000000000001', 'main', 'one', 'one', '2026-09-12 10:00:00', '2026-09-12 14:00:00', '2026-09-12 11:00:00', '2026-09-12 11:00:00'),
+			('10000000-0000-4000-8000-000000000002', 'main', 'two', 'two', '2026-09-12 10:00:00', '2026-09-12 14:00:00', '2026-09-12 11:00:00', '2026-09-12 11:00:00'),
+			('10000000-0000-4000-8000-000000000003', 'main', 'three', 'three', '2026-09-12 10:00:00', '2026-09-12 14:00:00', '2026-09-12 11:00:00', '2026-09-12 11:00:00')`)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	want := []uuid.UUID{
+		uuid.MustParse("10000000-0000-4000-8000-000000000003"),
+		uuid.MustParse("10000000-0000-4000-8000-000000000002"),
+		uuid.MustParse("10000000-0000-4000-8000-000000000001"),
+	}
+	repository := content.NewAnnouncementsRepository(db.Pool)
+	for attempt := 0; attempt < 5; attempt++ {
+		items, err := repository.ListAnnouncements(t.Context(), "main", 3, 0)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		got := make([]uuid.UUID, 0, len(items))
+		for _, item := range items {
+			got = append(got, item.ID)
+		}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("attempt %d IDs=%v, want %v", attempt+1, got, want)
+		}
+	}
+}
+
 func TestAnnouncementsRepositoryDeleteAnnouncement(t *testing.T) {
 	t.Parallel()
 	db, err := testpostgres.New(t.Context())

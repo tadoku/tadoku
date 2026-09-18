@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/announcements"
+	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 )
 
 func (a *Application) FindAnnouncementByID(ctx context.Context, namespace string, id uuid.UUID) (*announcements.Announcement, error) {
@@ -25,4 +26,56 @@ func (a *Application) ListAnnouncements(ctx context.Context, namespace string, p
 	}
 
 	return a.announcements.ListAnnouncements(ctx, namespace, pageSize, page)
+}
+
+type CreateAnnouncementParameters = announcements.CreateAnnouncementParameters
+
+func (a *Application) CreateAnnouncement(ctx context.Context, parameters CreateAnnouncementParameters) (*announcements.Announcement, error) {
+	if err := a.permissions.RequireAdmin(ctx); err != nil {
+		return nil, err
+	}
+
+	var result *announcements.Announcement
+	err := postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) (err error) {
+		if err := a.announcements.CreateAnnouncement(ctx, parameters); err != nil {
+			return err
+		}
+		result, err = a.announcements.FindAnnouncementByID(ctx, parameters.Namespace, parameters.ID)
+		return err
+	})
+	if err != nil {
+		// The readback precedes commit; discard it if the transaction fails.
+		return nil, err
+	}
+	return result, nil
+}
+
+type UpdateAnnouncementParameters = announcements.UpdateAnnouncementParameters
+
+func (a *Application) UpdateAnnouncement(ctx context.Context, parameters UpdateAnnouncementParameters) (*announcements.Announcement, error) {
+	if err := a.permissions.RequireAdmin(ctx); err != nil {
+		return nil, err
+	}
+
+	var result *announcements.Announcement
+	err := postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) (err error) {
+		if err := a.announcements.UpdateAnnouncement(ctx, parameters); err != nil {
+			return err
+		}
+		result, err = a.announcements.FindAnnouncementByID(ctx, parameters.Namespace, parameters.ID)
+		return err
+	})
+	if err != nil {
+		// The readback precedes commit; discard it if the transaction fails.
+		return nil, err
+	}
+	return result, nil
+}
+
+func (a *Application) DeleteAnnouncement(ctx context.Context, namespace string, id uuid.UUID) error {
+	if err := a.permissions.RequireAdmin(ctx); err != nil {
+		return err
+	}
+
+	return a.announcements.DeleteAnnouncement(ctx, namespace, id)
 }

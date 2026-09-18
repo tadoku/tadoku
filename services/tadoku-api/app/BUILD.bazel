@@ -3,18 +3,9 @@ load("@rules_go//go:def.bzl", "go_library")
 go_library(
     name = "app",
     srcs = [
-        "announcement_create.go",
-        "announcement_delete.go",
-        "announcement_update.go",
         "announcements.go",
         "app.go",
-        "post_create.go",
-        "post_delete.go",
-        "post_find.go",
-        "post_list.go",
-        "post_update.go",
-        "post_version_get.go",
-        "post_version_list.go",
+        "posts.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/app",
     visibility = [

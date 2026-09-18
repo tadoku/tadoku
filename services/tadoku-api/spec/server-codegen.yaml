@@ -16,6 +16,7 @@ output-options:
     - ContentPostFindBySlug
     - ContentPostList
     - ContentPostUpdate
+    - ContentPostVersionGet
     - ContentPostVersionList
   nullable-type: true
   skip-prune: true

@@ -20,6 +20,7 @@ go_test(
         "post_find_test.go",
         "post_list_test.go",
         "post_update_test.go",
+        "post_version_get_test.go",
         "post_version_list_test.go",
         "routing_test.go",
     ],

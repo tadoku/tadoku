@@ -1,0 +1,6 @@
+>>> GET /content/posts/main/44444444-4444-4444-8444-444444444444/versions/dddddddd-dddd-4ddd-8ddd-ddddddddddd1
+HTTP/1.1 200 OK
+Content-Length: 177
+Content-Type: application/json; charset=UTF-8
+
+{"content":"\u003cp\u003eScheduled content\u003c/p\u003e","created_at":"2026-09-10T13:00:00Z","id":"dddddddd-dddd-4ddd-8ddd-ddddddddddd1","title":"Scheduled title","version":1}

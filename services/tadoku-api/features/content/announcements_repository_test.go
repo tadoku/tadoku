@@ -205,6 +205,52 @@ func TestAnnouncementsRepositoryCreateAnnouncement(t *testing.T) {
 	}
 }
 
+func TestAnnouncementsRepositoryPreservesTimestampInstants(t *testing.T) {
+	t.Parallel()
+	db, err := testpostgres.New(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Error(err)
+		}
+	})
+
+	location := time.FixedZone("UTC+9", 9*60*60)
+	startsAt := time.Date(2026, 9, 13, 10, 0, 0, 0, location)
+	item := &content.Announcement{
+		ID:        uuid.New(),
+		Namespace: "main",
+		Title:     "Title",
+		Content:   "Content",
+		Style:     "info",
+		StartsAt:  startsAt,
+		EndsAt:    startsAt.Add(time.Hour),
+		CreatedAt: startsAt.Add(-2 * time.Hour),
+		UpdatedAt: startsAt.Add(-time.Hour),
+	}
+	repository := content.NewAnnouncementsRepository(db.Pool)
+	if err := repository.CreateAnnouncement(t.Context(), item); err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := repository.FindAnnouncementByID(t.Context(), item.Namespace, item.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for name, timestamps := range map[string][2]time.Time{
+		"starts_at":  {got.StartsAt, item.StartsAt},
+		"ends_at":    {got.EndsAt, item.EndsAt},
+		"created_at": {got.CreatedAt, item.CreatedAt},
+		"updated_at": {got.UpdatedAt, item.UpdatedAt},
+	} {
+		if !timestamps[0].Equal(timestamps[1]) {
+			t.Errorf("%s instant=%v, want %v", name, timestamps[0], timestamps[1])
+		}
+	}
+}
+
 func TestEmptyNamespaceIsRejectedBeforeStorage(t *testing.T) {
 	service := content.NewService(nil)
 	_, err := service.ListActiveAnnouncements(context.Background(), "")

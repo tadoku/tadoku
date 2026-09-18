@@ -9,7 +9,7 @@ func TestCreateAnnouncement(t *testing.T) {
 	tests := []struct {
 		description []string
 		want        int
-		skipParity  bool
+		skipParity  string
 	}{
 		{description: []string{"admin"}, want: http.StatusCreated},
 		{description: []string{"null", "href"}, want: http.StatusCreated},
@@ -17,7 +17,8 @@ func TestCreateAnnouncement(t *testing.T) {
 		{description: []string{"empty", "href"}, want: http.StatusCreated},
 		{description: []string{"ignored", "server", "fields"}, want: http.StatusCreated},
 		{description: []string{"trailing", "json"}, want: http.StatusCreated},
-		{description: []string{"offset", "dates"}, want: http.StatusCreated},
+		// Legacy stores timestamp offsets as wall-clock fields instead of UTC instants.
+		{description: []string{"offset", "dates"}, want: http.StatusCreated, skipParity: "legacy stores timestamp offsets as wall-clock fields"},
 		{description: []string{"empty", "title"}, want: http.StatusBadRequest},
 		{description: []string{"empty", "content"}, want: http.StatusBadRequest},
 		{description: []string{"invalid", "style"}, want: http.StatusBadRequest},
@@ -36,8 +37,8 @@ func TestCreateAnnouncement(t *testing.T) {
 		{description: []string{"null", "body"}, want: http.StatusBadRequest},
 		// Empty JSON input is no longer rewritten to an empty object for the
 		// legacy binder; reject it before application-level authorization.
-		{description: []string{"empty", "guest"}, want: http.StatusBadRequest, skipParity: true},
-		{description: []string{"empty", "non", "admin"}, want: http.StatusBadRequest, skipParity: true},
+		{description: []string{"empty", "guest"}, want: http.StatusBadRequest, skipParity: "intentional JSON-only decoding difference"},
+		{description: []string{"empty", "non", "admin"}, want: http.StatusBadRequest, skipParity: "intentional JSON-only decoding difference"},
 		{description: []string{"guest"}, want: http.StatusUnauthorized},
 		{description: []string{"null", "guest"}, want: http.StatusUnauthorized},
 		{description: []string{"non", "admin"}, want: http.StatusForbidden},
@@ -48,10 +49,7 @@ func TestCreateAnnouncement(t *testing.T) {
 	for _, test := range tests {
 		name := APITestName("CreateAnnouncement", test.want, test.description...)
 		t.Run(name, func(t *testing.T) {
-			legacy := implementation{name: "content-api", handler: legacyContent.handler}
-			if test.skipParity {
-				legacy.skip = "intentional JSON-only decoding difference"
-			}
+			legacy := implementation{name: "content-api", handler: legacyContent.handler, skip: test.skipParity}
 			runCase(t, api, name, test.want,
 				implementation{name: "tadoku-api", handler: api.handler},
 				legacy,

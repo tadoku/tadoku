@@ -35,8 +35,8 @@ func (s *server) ContentAnnouncementUpdate(
 		Content:   body.Content,
 		Style:     string(body.Style),
 		Href:      href,
-		StartsAt:  body.StartsAt,
-		EndsAt:    body.EndsAt,
+		StartsAt:  body.StartsAt.UTC(),
+		EndsAt:    body.EndsAt.UTC(),
 	})
 	if err != nil {
 		s.logger.ErrorContext(ctx, "update announcement failed", "error", err)

@@ -16,8 +16,15 @@ func (a *Application) UpdateAnnouncement(ctx context.Context, parameters UpdateA
 
 	var result *content.Announcement
 	err := postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) (err error) {
-		result, err = a.content.UpdateAnnouncement(ctx, parameters)
-		return
+		if err := a.content.UpdateAnnouncement(ctx, parameters); err != nil {
+			return err
+		}
+		result, err = a.content.FindAnnouncementByID(ctx, parameters.Namespace, parameters.ID)
+		return err
 	})
-	return result, err
+	if err != nil {
+		// The readback precedes commit; discard it if the transaction fails.
+		return nil, err
+	}
+	return result, nil
 }

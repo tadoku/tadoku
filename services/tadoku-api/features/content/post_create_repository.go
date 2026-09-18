@@ -31,8 +31,8 @@ func (r *PostsRepository) CreatePost(ctx context.Context, item *Post) error {
 		Slug:             item.Slug,
 		CurrentContentID: pgtype.UUID{Bytes: contentID, Valid: true},
 		PublishedAt:      publishedAt,
-		CreatedAt:        postgres.Timestamp(item.CreatedAt),
-		UpdatedAt:        postgres.Timestamp(item.UpdatedAt),
+		CreatedAt:        postgres.Timestamp(*item.CreatedAt),
+		UpdatedAt:        postgres.Timestamp(*item.UpdatedAt),
 	})
 	var pgError *pgconn.PgError
 	if errors.As(err, &pgError) && pgError.Code == pgerrcode.UniqueViolation {
@@ -47,7 +47,7 @@ func (r *PostsRepository) CreatePost(ctx context.Context, item *Post) error {
 		PostID:    pgtype.UUID{Bytes: item.ID, Valid: true},
 		Title:     item.Title,
 		Content:   item.Content,
-		CreatedAt: postgres.Timestamp(item.CreatedAt),
+		CreatedAt: postgres.Timestamp(*item.CreatedAt),
 	})
 	if err != nil {
 		return fmt.Errorf("create post content: %w", err)

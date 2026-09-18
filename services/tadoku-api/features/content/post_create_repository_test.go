@@ -37,6 +37,8 @@ func TestPostsRepositoryCreatePost(t *testing.T) {
 		{name: "published", publishedAt: &instant},
 	} {
 		t.Run(test.name, func(t *testing.T) {
+			createdAt := instant.Add(-2 * time.Hour)
+			updatedAt := instant.Add(-time.Hour)
 			item := &content.Post{
 				ID:          uuid.New(),
 				Namespace:   "main",
@@ -44,12 +46,14 @@ func TestPostsRepositoryCreatePost(t *testing.T) {
 				Title:       "Title",
 				Content:     "Content",
 				PublishedAt: test.publishedAt,
-				CreatedAt:   instant.Add(-2 * time.Hour),
-				UpdatedAt:   instant.Add(-time.Hour),
+				CreatedAt:   &createdAt,
+				UpdatedAt:   &updatedAt,
 			}
 			want := *item
-			want.CreatedAt = want.CreatedAt.UTC()
-			want.UpdatedAt = want.UpdatedAt.UTC()
+			createdAtUTC := want.CreatedAt.UTC()
+			updatedAtUTC := want.UpdatedAt.UTC()
+			want.CreatedAt = &createdAtUTC
+			want.UpdatedAt = &updatedAtUTC
 			if want.PublishedAt != nil {
 				utc := want.PublishedAt.UTC()
 				want.PublishedAt = &utc
@@ -93,7 +97,7 @@ func TestPostsRepositoryCreatePost(t *testing.T) {
 			if contentID == uuid.Nil {
 				t.Error("first revision has a zero ID")
 			}
-			if !contentCreatedAt.Equal(item.CreatedAt) {
+			if !contentCreatedAt.Equal(*item.CreatedAt) {
 				t.Errorf("revision timestamp=%v, want %v", contentCreatedAt, item.CreatedAt)
 			}
 			var revisions int
@@ -127,8 +131,8 @@ func TestPostsRepositoryCreatePostConflictsPreserveData(t *testing.T) {
 		Slug:      "first-post",
 		Title:     "Original title",
 		Content:   "Original content",
-		CreatedAt: instant,
-		UpdatedAt: instant,
+		CreatedAt: &instant,
+		UpdatedAt: &instant,
 	}
 	if err := postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
 		return repository.CreatePost(ctx, original)
@@ -208,8 +212,8 @@ func TestPostsRepositoryCreatePostRollsBackWhenRevisionFails(t *testing.T) {
 		Slug:      "failed-post",
 		Title:     "Rejected",
 		Content:   "Content",
-		CreatedAt: instant,
-		UpdatedAt: instant,
+		CreatedAt: &instant,
+		UpdatedAt: &instant,
 	}
 	err = postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
 		return repository.CreatePost(ctx, item)

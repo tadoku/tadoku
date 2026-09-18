@@ -53,8 +53,8 @@ func (s *Service) CreatePost(ctx context.Context, parameters CreatePostParameter
 		Title:       parameters.Title,
 		Content:     parameters.Content,
 		PublishedAt: parameters.PublishedAt,
-		CreatedAt:   now,
-		UpdatedAt:   now,
+		CreatedAt:   &now,
+		UpdatedAt:   &now,
 	}
 	return s.posts.CreatePost(ctx, item)
 }

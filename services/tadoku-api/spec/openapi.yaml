@@ -383,9 +383,11 @@ paths:
                 $ref: "#/components/schemas/ContentPage"
         "400":
           description: Invalid page
+        "409":
+          description: Page ID or slug already exists
       x-tadoku-source: Content
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /pages/{namespace}
       x-legacy-operation-id: pageCreate
     get:

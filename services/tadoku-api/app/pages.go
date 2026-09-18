@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/pages"
+	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
 
@@ -42,4 +43,25 @@ func (a *Application) ListPages(ctx context.Context, namespace string, includeDr
 	}
 
 	return a.pages.ListPages(ctx, namespace, includeDrafts, pageSize, page)
+}
+
+type CreatePageParameters = pages.CreatePageParameters
+
+func (a *Application) CreatePage(ctx context.Context, parameters CreatePageParameters) (*pages.Page, error) {
+	if err := a.permissions.RequireAdmin(ctx); err != nil {
+		return nil, err
+	}
+
+	var result *pages.Page
+	err := postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) (err error) {
+		if err := a.pages.CreatePage(ctx, parameters); err != nil {
+			return err
+		}
+		result, err = a.pages.FindPageByID(ctx, parameters.Namespace, parameters.ID)
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }

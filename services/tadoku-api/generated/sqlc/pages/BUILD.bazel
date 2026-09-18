@@ -9,7 +9,9 @@ go_library(
         "page_list.sql.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/generated/sqlc/pages",
-    visibility = ["//visibility:public"],
+    visibility = [
+        "//services/tadoku-api/features/pages:__pkg__",
+    ],
     deps = [
         "@com_github_jackc_pgx_v5//:pgx",
         "@com_github_jackc_pgx_v5//pgconn",

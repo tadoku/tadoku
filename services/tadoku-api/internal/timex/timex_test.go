@@ -9,11 +9,14 @@ import (
 )
 
 func TestNow(t *testing.T) {
-	before := time.Now().UTC()
+	before := time.Now().UTC().Truncate(time.Microsecond)
 	got := timex.Now()
-	after := time.Now().UTC()
+	after := time.Now().UTC().Truncate(time.Microsecond)
 	if got.Location() != time.UTC || got.Before(before) || got.After(after) {
 		t.Errorf("Now() = %v (%v), want UTC time between %v and %v", got, got.Location(), before, after)
+	}
+	if got.Nanosecond()%1000 != 0 {
+		t.Errorf("Now() nanoseconds = %d, want microsecond precision", got.Nanosecond())
 	}
 }
 
@@ -35,9 +38,9 @@ func TestTheWorldFixedUTCAndRestoration(t *testing.T) {
 		if !called {
 			t.Error("TheWorld did not call its callback")
 		}
-		before := time.Now().UTC()
+		before := time.Now().UTC().Truncate(time.Microsecond)
 		got := timex.Now()
-		after := time.Now().UTC()
+		after := time.Now().UTC().Truncate(time.Microsecond)
 		if got.Location() != time.UTC || got.Before(before) || got.After(after) {
 			t.Errorf("after scope: Now() = %v (%v), want UTC time between %v and %v", got, got.Location(), before, after)
 		}
@@ -74,9 +77,9 @@ func TestTheWorldRestoresAfterPanic(t *testing.T) {
 		}()
 		timex.TheWorld(time.Time{}, func() { panic(panicValue) })
 	}()
-	before := time.Now().UTC()
+	before := time.Now().UTC().Truncate(time.Microsecond)
 	got := timex.Now()
-	after := time.Now().UTC()
+	after := time.Now().UTC().Truncate(time.Microsecond)
 	if got.Location() != time.UTC || got.Before(before) || got.After(after) {
 		t.Errorf("after panic: Now() = %v (%v), want UTC time between %v and %v", got, got.Location(), before, after)
 	}

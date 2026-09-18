@@ -11,6 +11,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/features/content"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
 
 func TestAnnouncementsRepositoryUsesSuppliedPolicyAndTransaction(t *testing.T) {
@@ -231,7 +232,7 @@ func TestAnnouncementsRepositoryCreateAnnouncement(t *testing.T) {
 		}
 	})
 	repository := content.NewAnnouncementsRepository(db.Pool)
-	instant := time.Date(2026, 9, 12, 12, 0, 0, 0, time.UTC)
+	instant := timex.Now()
 	emptyHref, href := "", "https://example.test/announcement"
 	for _, test := range []struct {
 		name string

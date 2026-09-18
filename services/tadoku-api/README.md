@@ -243,6 +243,7 @@ TADOKU_GOLDEN_SOURCE_ROOT="$PWD/services/tadoku-api/e2e/testdata" \
   bazel test //services/tadoku-api/e2e:e2e_test \
   --test_env=TADOKU_GOLDEN_SOURCE_ROOT \
   --test_arg=-update-goldens \
+  --sandbox_writable_path="$PWD/services/tadoku-api/e2e/testdata" \
   --cache_test_results=no \
   --test_output=all
 ```

@@ -7,6 +7,7 @@ sql:
       - post_delete.sql
       - post_find.sql
       - post_list.sql
+      - post_create.sql
     gen:
       go:
         package: content

@@ -8,6 +8,7 @@ go_library(
         "announcement_update.go",
         "announcements.go",
         "app.go",
+        "post_create.go",
         "post_delete.go",
         "post_find.go",
         "post_list.go",

@@ -11,6 +11,7 @@ output-options:
     - ContentAnnouncementList
     - ContentAnnouncementListActive
     - ContentAnnouncementUpdate
+    - ContentPostCreate
     - ContentPostDelete
     - ContentPostFindBySlug
     - ContentPostList

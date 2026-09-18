@@ -28,6 +28,7 @@ var operationAccess = map[string]accessLevel{
 	"ContentAnnouncementList":       accessAdmin,
 	"ContentAnnouncementListActive": accessPublic,
 	"ContentAnnouncementUpdate":     accessAdmin,
+	"ContentPostCreate":             accessAdmin,
 	"ContentPostDelete":             accessAdmin,
 	"ContentPostFindBySlug":         accessPublic,
 	"ContentPostList":               accessPublic,
@@ -39,6 +40,7 @@ var operationFixtures = map[string]string{
 	"ContentAnnouncementFindByID": "FindAnnouncementByID",
 	"ContentAnnouncementList":     "ListAnnouncements",
 	"ContentAnnouncementUpdate":   "UpdateAnnouncement",
+	"ContentPostCreate":           "CreatePost",
 	"ContentPostDelete":           "DeletePost",
 }
 

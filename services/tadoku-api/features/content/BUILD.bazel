@@ -6,6 +6,8 @@ go_test(
         "announcement_create_test.go",
         "announcement_update_test.go",
         "announcements_repository_test.go",
+        "post_create_repository_test.go",
+        "post_create_test.go",
         "post_delete_repository_test.go",
         "post_find_repository_test.go",
         "post_list_repository_test.go",
@@ -25,6 +27,8 @@ go_test(
         "//services/tadoku-api/internal/testpostgres",
         "//services/tadoku-api/internal/timex",
         "@com_github_google_uuid//:uuid",
+        "@com_github_jackc_pgerrcode//:pgerrcode",
+        "@com_github_jackc_pgx_v5//pgconn",
     ],
 )
 
@@ -36,6 +40,8 @@ go_library(
         "announcement_update.go",
         "announcements_repository.go",
         "content.go",
+        "post_create.go",
+        "post_create_repository.go",
         "post_delete.go",
         "post_delete_repository.go",
         "post_find.go",

@@ -575,9 +575,11 @@ paths:
           description: Invalid post
         "404":
           description: Post does not exist and cannot be updated
+        "409":
+          description: Post slug already exists
       x-tadoku-source: Content
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /posts/{namespace}/{id}
       x-legacy-operation-id: postUpdate
     delete:

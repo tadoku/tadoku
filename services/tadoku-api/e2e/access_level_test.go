@@ -32,6 +32,7 @@ var operationAccess = map[string]accessLevel{
 	"ContentPostDelete":             accessAdmin,
 	"ContentPostFindBySlug":         accessPublic,
 	"ContentPostList":               accessPublic,
+	"ContentPostUpdate":             accessAdmin,
 }
 
 var operationFixtures = map[string]string{
@@ -42,6 +43,7 @@ var operationFixtures = map[string]string{
 	"ContentAnnouncementUpdate":   "UpdateAnnouncement",
 	"ContentPostCreate":           "CreatePost",
 	"ContentPostDelete":           "DeletePost",
+	"ContentPostUpdate":           "UpdatePost",
 }
 
 func TestOperationAccessLevels(t *testing.T) {

@@ -1091,6 +1091,9 @@ type ContentAnnouncementUpdateJSONRequestBody = ContentAnnouncement
 // ContentPostCreateJSONRequestBody defines body for ContentPostCreate for application/json ContentType.
 type ContentPostCreateJSONRequestBody = ContentPost
 
+// ContentPostUpdateJSONRequestBody defines body for ContentPostUpdate for application/json ContentType.
+type ContentPostUpdateJSONRequestBody = ContentPost
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// ContentAnnouncementList Lists all announcements
@@ -1123,6 +1126,9 @@ type ServerInterface interface {
 	// ContentPostFindBySlug Returns page content for a given slug
 	// (GET /content/posts/{namespace}/{slug})
 	ContentPostFindBySlug(w http.ResponseWriter, r *http.Request, namespace string, slug string)
+	// ContentPostUpdate Updates an existing post
+	// (PUT /content/posts/{namespace}/{slug})
+	ContentPostUpdate(w http.ResponseWriter, r *http.Request, namespace string, slug string)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -1510,6 +1516,41 @@ func (siw *ServerInterfaceWrapper) ContentPostFindBySlug(w http.ResponseWriter, 
 	handler.ServeHTTP(w, r)
 }
 
+// ContentPostUpdate operation middleware
+func (siw *ServerInterfaceWrapper) ContentPostUpdate(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "namespace" -------------
+	var namespace string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "namespace", r.PathValue("namespace"), &namespace, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "namespace", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "slug" -------------
+	var slug string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "slug", r.PathValue("slug"), &slug, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "slug", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ContentPostUpdate(w, r, namespace, slug)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 type UnescapedCookieParamError struct {
 	ParamName string
 	Err       error
@@ -1632,6 +1673,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/content/posts/{namespace}/{slug}", wrapper.ContentPostDelete)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/content/posts/{namespace}/{slug}", wrapper.ContentPostFindBySlug)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/content/posts/{namespace}/{slug}", wrapper.ContentPostUpdate)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/content/posts/{namespace}", wrapper.ContentPostList)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/content/posts/{namespace}", wrapper.ContentPostCreate)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/content/announcements/{namespace}/active", wrapper.ContentAnnouncementListActive)
@@ -1968,6 +2010,54 @@ func (response ContentPostFindBySlug404Response) VisitContentPostFindBySlugRespo
 	return nil
 }
 
+type ContentPostUpdateRequestObject struct {
+	Namespace string `json:"namespace"`
+	Slug      string `json:"slug"`
+	Body      *ContentPostUpdateJSONRequestBody
+}
+
+type ContentPostUpdateResponseObject interface {
+	VisitContentPostUpdateResponse(w http.ResponseWriter) error
+}
+
+type ContentPostUpdate200JSONResponse ContentPost
+
+func (response ContentPostUpdate200JSONResponse) VisitContentPostUpdateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ContentPostUpdate400Response struct {
+}
+
+func (response ContentPostUpdate400Response) VisitContentPostUpdateResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
+type ContentPostUpdate404Response struct {
+}
+
+func (response ContentPostUpdate404Response) VisitContentPostUpdateResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type ContentPostUpdate409Response struct {
+}
+
+func (response ContentPostUpdate409Response) VisitContentPostUpdateResponse(w http.ResponseWriter) error {
+	w.WriteHeader(409)
+	return nil
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 	// ContentAnnouncementList Lists all announcements
@@ -2000,6 +2090,9 @@ type StrictServerInterface interface {
 	// ContentPostFindBySlug Returns page content for a given slug
 	// (GET /content/posts/{namespace}/{slug})
 	ContentPostFindBySlug(ctx context.Context, request ContentPostFindBySlugRequestObject) (ContentPostFindBySlugResponseObject, error)
+	// ContentPostUpdate Updates an existing post
+	// (PUT /content/posts/{namespace}/{slug})
+	ContentPostUpdate(ctx context.Context, request ContentPostUpdateRequestObject) (ContentPostUpdateResponseObject, error)
 }
 
 type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error)
@@ -2331,6 +2424,43 @@ func (sh *strictHandler) ContentPostFindBySlug(w http.ResponseWriter, r *http.Re
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ContentPostFindBySlugResponseObject); ok {
 		if err := validResponse.VisitContentPostFindBySlugResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ContentPostUpdate operation middleware
+func (sh *strictHandler) ContentPostUpdate(w http.ResponseWriter, r *http.Request, namespace string, slug string) {
+	var request ContentPostUpdateRequestObject
+
+	request.Namespace = namespace
+	request.Slug = slug
+
+	var body ContentPostUpdateJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		if !errors.Is(err, io.EOF) {
+			sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+			return
+		}
+	} else {
+		request.Body = &body
+	}
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ContentPostUpdate(ctx, request.(ContentPostUpdateRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ContentPostUpdate")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ContentPostUpdateResponseObject); ok {
+		if err := validResponse.VisitContentPostUpdateResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

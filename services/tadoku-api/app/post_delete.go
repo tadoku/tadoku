@@ -11,5 +11,5 @@ func (a *Application) DeletePost(ctx context.Context, namespace string, id uuid.
 		return err
 	}
 
-	return a.content.DeletePost(ctx, namespace, id)
+	return a.posts.DeletePost(ctx, namespace, id)
 }

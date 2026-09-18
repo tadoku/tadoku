@@ -3,23 +3,23 @@ package app
 import (
 	"context"
 
-	"github.com/tadoku/tadoku/services/tadoku-api/features/content"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/posts"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 )
 
-type CreatePostParameters = content.CreatePostParameters
+type CreatePostParameters = posts.CreatePostParameters
 
-func (a *Application) CreatePost(ctx context.Context, parameters CreatePostParameters) (*content.Post, error) {
+func (a *Application) CreatePost(ctx context.Context, parameters CreatePostParameters) (*posts.Post, error) {
 	if err := a.permissions.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 
-	var result *content.Post
+	var result *posts.Post
 	err := postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) (err error) {
-		if err := a.content.CreatePost(ctx, parameters); err != nil {
+		if err := a.posts.CreatePost(ctx, parameters); err != nil {
 			return err
 		}
-		result, err = a.content.FindPostByID(ctx, parameters.Namespace, parameters.ID)
+		result, err = a.posts.FindPostByID(ctx, parameters.Namespace, parameters.ID)
 		return err
 	})
 	if err != nil {

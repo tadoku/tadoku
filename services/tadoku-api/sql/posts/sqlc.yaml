@@ -1,0 +1,19 @@
+version: "2"
+sql:
+  - engine: postgresql
+    schema: ../../../immersion-api/storage/postgres/migrations
+    queries:
+      - post_delete.sql
+      - post_find.sql
+      - post_list.sql
+      - post_create.sql
+      - post_update.sql
+      - post_version_list.sql
+      - post_version_get.sql
+    gen:
+      go:
+        package: posts
+        out: ../../generated/sqlc/posts
+        sql_package: pgx/v5
+        emit_empty_slices: true
+        omit_unused_structs: true

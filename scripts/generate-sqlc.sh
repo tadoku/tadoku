@@ -7,7 +7,8 @@ SQLC_PACKAGES=(
   "services/content-api/storage/postgres"
   "services/profile-api/storage/postgres"
   "services/tadoku-api/infra/postgres/testdata/sqlc"
-  "services/tadoku-api/sql/content"
+  "services/tadoku-api/sql/announcements"
+  "services/tadoku-api/sql/posts"
 )
 
 require_cmd() {

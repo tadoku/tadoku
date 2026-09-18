@@ -11,5 +11,5 @@ func (a *Application) DeleteAnnouncement(ctx context.Context, namespace string, 
 		return err
 	}
 
-	return a.content.DeleteAnnouncement(ctx, namespace, id)
+	return a.announcements.DeleteAnnouncement(ctx, namespace, id)
 }

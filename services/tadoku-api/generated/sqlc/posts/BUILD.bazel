@@ -1,0 +1,25 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "posts",
+    srcs = [
+        "db.go",
+        "models.go",
+        "post_create.sql.go",
+        "post_delete.sql.go",
+        "post_find.sql.go",
+        "post_list.sql.go",
+        "post_update.sql.go",
+        "post_version_get.sql.go",
+        "post_version_list.sql.go",
+    ],
+    importpath = "github.com/tadoku/tadoku/services/tadoku-api/generated/sqlc/posts",
+    visibility = [
+        "//services/tadoku-api/features/posts:__pkg__",
+    ],
+    deps = [
+        "@com_github_jackc_pgx_v5//:pgx",
+        "@com_github_jackc_pgx_v5//pgconn",
+        "@com_github_jackc_pgx_v5//pgtype",
+    ],
+)

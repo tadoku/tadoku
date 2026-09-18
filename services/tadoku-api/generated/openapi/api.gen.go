@@ -1098,6 +1098,9 @@ type ContentAnnouncementUpdateJSONRequestBody = ContentAnnouncement
 // ContentPageCreateJSONRequestBody defines body for ContentPageCreate for application/json ContentType.
 type ContentPageCreateJSONRequestBody = ContentPage
 
+// ContentPageUpdateJSONRequestBody defines body for ContentPageUpdate for application/json ContentType.
+type ContentPageUpdateJSONRequestBody = ContentPage
+
 // ContentPostCreateJSONRequestBody defines body for ContentPostCreate for application/json ContentType.
 type ContentPostCreateJSONRequestBody = ContentPost
 
@@ -1130,9 +1133,15 @@ type ServerInterface interface {
 	// ContentPageCreate Creates a new page
 	// (POST /content/pages/{namespace})
 	ContentPageCreate(w http.ResponseWriter, r *http.Request, namespace string)
+	// ContentPageDelete Deletes an existing page
+	// (DELETE /content/pages/{namespace}/{slug})
+	ContentPageDelete(w http.ResponseWriter, r *http.Request, namespace string, slug string)
 	// ContentPageFindBySlug Returns page content for a given slug
 	// (GET /content/pages/{namespace}/{slug})
 	ContentPageFindBySlug(w http.ResponseWriter, r *http.Request, namespace string, slug string)
+	// ContentPageUpdate Updates an existing page
+	// (PUT /content/pages/{namespace}/{slug})
+	ContentPageUpdate(w http.ResponseWriter, r *http.Request, namespace string, slug string)
 	// ContentPostList lists all posts
 	// (GET /content/posts/{namespace})
 	ContentPostList(w http.ResponseWriter, r *http.Request, namespace string, params ContentPostListParams)
@@ -1471,6 +1480,41 @@ func (siw *ServerInterfaceWrapper) ContentPageCreate(w http.ResponseWriter, r *h
 	handler.ServeHTTP(w, r)
 }
 
+// ContentPageDelete operation middleware
+func (siw *ServerInterfaceWrapper) ContentPageDelete(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "namespace" -------------
+	var namespace string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "namespace", r.PathValue("namespace"), &namespace, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "namespace", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "slug" -------------
+	var slug string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "slug", r.PathValue("slug"), &slug, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "slug", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ContentPageDelete(w, r, namespace, slug)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ContentPageFindBySlug operation middleware
 func (siw *ServerInterfaceWrapper) ContentPageFindBySlug(w http.ResponseWriter, r *http.Request) {
 
@@ -1497,6 +1541,41 @@ func (siw *ServerInterfaceWrapper) ContentPageFindBySlug(w http.ResponseWriter, 
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ContentPageFindBySlug(w, r, namespace, slug)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ContentPageUpdate operation middleware
+func (siw *ServerInterfaceWrapper) ContentPageUpdate(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "namespace" -------------
+	var namespace string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "namespace", r.PathValue("namespace"), &namespace, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "namespace", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "slug" -------------
+	var slug string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "slug", r.PathValue("slug"), &slug, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "slug", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ContentPageUpdate(w, r, namespace, slug)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -1904,7 +1983,9 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/content/pages/{namespace}/{slug}", wrapper.ContentPageDelete)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/content/pages/{namespace}/{slug}", wrapper.ContentPageFindBySlug)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/content/pages/{namespace}/{slug}", wrapper.ContentPageUpdate)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/content/pages/{namespace}", wrapper.ContentPageList)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/content/pages/{namespace}", wrapper.ContentPageCreate)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/content/posts/{namespace}/{slug}", wrapper.ContentPostDelete)
@@ -2184,6 +2265,39 @@ func (response ContentPageCreate409Response) VisitContentPageCreateResponse(w ht
 	return nil
 }
 
+type ContentPageDeleteRequestObject struct {
+	Namespace string `json:"namespace"`
+	Slug      string `json:"slug"`
+}
+
+type ContentPageDeleteResponseObject interface {
+	VisitContentPageDeleteResponse(w http.ResponseWriter) error
+}
+
+type ContentPageDelete204Response struct {
+}
+
+func (response ContentPageDelete204Response) VisitContentPageDeleteResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type ContentPageDelete403Response struct {
+}
+
+func (response ContentPageDelete403Response) VisitContentPageDeleteResponse(w http.ResponseWriter) error {
+	w.WriteHeader(403)
+	return nil
+}
+
+type ContentPageDelete404Response struct {
+}
+
+func (response ContentPageDelete404Response) VisitContentPageDeleteResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
 type ContentPageFindBySlugRequestObject struct {
 	Namespace string `json:"namespace"`
 	Slug      string `json:"slug"`
@@ -2212,6 +2326,54 @@ type ContentPageFindBySlug404Response struct {
 
 func (response ContentPageFindBySlug404Response) VisitContentPageFindBySlugResponse(w http.ResponseWriter) error {
 	w.WriteHeader(404)
+	return nil
+}
+
+type ContentPageUpdateRequestObject struct {
+	Namespace string `json:"namespace"`
+	Slug      string `json:"slug"`
+	Body      *ContentPageUpdateJSONRequestBody
+}
+
+type ContentPageUpdateResponseObject interface {
+	VisitContentPageUpdateResponse(w http.ResponseWriter) error
+}
+
+type ContentPageUpdate200JSONResponse ContentPage
+
+func (response ContentPageUpdate200JSONResponse) VisitContentPageUpdateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ContentPageUpdate400Response struct {
+}
+
+func (response ContentPageUpdate400Response) VisitContentPageUpdateResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
+type ContentPageUpdate404Response struct {
+}
+
+func (response ContentPageUpdate404Response) VisitContentPageUpdateResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type ContentPageUpdate409Response struct {
+}
+
+func (response ContentPageUpdate409Response) VisitContentPageUpdateResponse(w http.ResponseWriter) error {
+	w.WriteHeader(409)
 	return nil
 }
 
@@ -2494,9 +2656,15 @@ type StrictServerInterface interface {
 	// ContentPageCreate Creates a new page
 	// (POST /content/pages/{namespace})
 	ContentPageCreate(ctx context.Context, request ContentPageCreateRequestObject) (ContentPageCreateResponseObject, error)
+	// ContentPageDelete Deletes an existing page
+	// (DELETE /content/pages/{namespace}/{slug})
+	ContentPageDelete(ctx context.Context, request ContentPageDeleteRequestObject) (ContentPageDeleteResponseObject, error)
 	// ContentPageFindBySlug Returns page content for a given slug
 	// (GET /content/pages/{namespace}/{slug})
 	ContentPageFindBySlug(ctx context.Context, request ContentPageFindBySlugRequestObject) (ContentPageFindBySlugResponseObject, error)
+	// ContentPageUpdate Updates an existing page
+	// (PUT /content/pages/{namespace}/{slug})
+	ContentPageUpdate(ctx context.Context, request ContentPageUpdateRequestObject) (ContentPageUpdateResponseObject, error)
 	// ContentPostList lists all posts
 	// (GET /content/posts/{namespace})
 	ContentPostList(ctx context.Context, request ContentPostListRequestObject) (ContentPostListResponseObject, error)
@@ -2802,6 +2970,33 @@ func (sh *strictHandler) ContentPageCreate(w http.ResponseWriter, r *http.Reques
 	}
 }
 
+// ContentPageDelete operation middleware
+func (sh *strictHandler) ContentPageDelete(w http.ResponseWriter, r *http.Request, namespace string, slug string) {
+	var request ContentPageDeleteRequestObject
+
+	request.Namespace = namespace
+	request.Slug = slug
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ContentPageDelete(ctx, request.(ContentPageDeleteRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ContentPageDelete")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ContentPageDeleteResponseObject); ok {
+		if err := validResponse.VisitContentPageDeleteResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ContentPageFindBySlug operation middleware
 func (sh *strictHandler) ContentPageFindBySlug(w http.ResponseWriter, r *http.Request, namespace string, slug string) {
 	var request ContentPageFindBySlugRequestObject
@@ -2822,6 +3017,43 @@ func (sh *strictHandler) ContentPageFindBySlug(w http.ResponseWriter, r *http.Re
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ContentPageFindBySlugResponseObject); ok {
 		if err := validResponse.VisitContentPageFindBySlugResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ContentPageUpdate operation middleware
+func (sh *strictHandler) ContentPageUpdate(w http.ResponseWriter, r *http.Request, namespace string, slug string) {
+	var request ContentPageUpdateRequestObject
+
+	request.Namespace = namespace
+	request.Slug = slug
+
+	var body ContentPageUpdateJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		if !errors.Is(err, io.EOF) {
+			sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+			return
+		}
+	} else {
+		request.Body = &body
+	}
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ContentPageUpdate(ctx, request.(ContentPageUpdateRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ContentPageUpdate")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ContentPageUpdateResponseObject); ok {
+		if err := validResponse.VisitContentPageUpdateResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

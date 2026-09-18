@@ -6,8 +6,10 @@ go_library(
         "db.go",
         "models.go",
         "page_create.sql.go",
+        "page_delete.sql.go",
         "page_find.sql.go",
         "page_list.sql.go",
+        "page_update.sql.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/generated/sqlc/pages",
     visibility = [

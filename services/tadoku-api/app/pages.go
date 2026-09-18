@@ -65,3 +65,32 @@ func (a *Application) CreatePage(ctx context.Context, parameters CreatePageParam
 	}
 	return result, nil
 }
+
+type UpdatePageParameters = pages.UpdatePageParameters
+
+func (a *Application) UpdatePage(ctx context.Context, parameters UpdatePageParameters) (*pages.Page, error) {
+	if err := a.permissions.RequireAdmin(ctx); err != nil {
+		return nil, err
+	}
+
+	var result *pages.Page
+	err := postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) (err error) {
+		if err := a.pages.UpdatePage(ctx, parameters); err != nil {
+			return err
+		}
+		result, err = a.pages.FindPageByID(ctx, parameters.Namespace, parameters.ID)
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (a *Application) DeletePage(ctx context.Context, namespace string, id uuid.UUID) error {
+	if err := a.permissions.RequireAdmin(ctx); err != nil {
+		return err
+	}
+
+	return a.pages.DeletePage(ctx, namespace, id)
+}

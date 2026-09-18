@@ -317,11 +317,13 @@ paths:
                 $ref: "#/components/schemas/ContentPage"
         "400":
           description: Invalid page
+        "409":
+          description: Page already exists
         "404":
           description: Page does not exist and cannot be updated
       x-tadoku-source: Content
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /pages/{namespace}/{id}
       x-legacy-operation-id: pageUpdate
     delete:
@@ -352,7 +354,7 @@ paths:
           description: Page not found
       x-tadoku-source: Content
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /pages/{namespace}/{id}
       x-legacy-operation-id: pageDelete
   "/content/pages/{namespace}":

@@ -8,6 +8,8 @@ output-options:
     - ContentPageFindBySlug
     - ContentPageList
     - ContentPageCreate
+    - ContentPageDelete
+    - ContentPageUpdate
     - ContentAnnouncementCreate
     - ContentAnnouncementDelete
     - ContentAnnouncementFindByID

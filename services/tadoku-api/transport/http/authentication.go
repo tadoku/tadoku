@@ -1,7 +1,10 @@
 package http
 
 import (
+	"context"
+	"errors"
 	"fmt"
+	"log/slog"
 	stdhttp "net/http"
 	"strings"
 	"time"
@@ -11,20 +14,55 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
 )
 
-// NewJWTAuthentication loads the gateway's signing keys once and verifies user JWTs.
+// NewJWTAuthentication loads the gateway's signing keys and verifies user JWTs.
 // It performs no role, ban, permission, or service-audience checks.
-func NewJWTAuthentication(jwksURL string, timeout time.Duration) (func(stdhttp.Handler) stdhttp.Handler, error) {
-	if jwksURL == "" || timeout <= 0 {
-		return nil, fmt.Errorf("JWKS URL and positive fetch timeout are required")
+func NewJWTAuthentication(lifetime context.Context, jwksURL string, timeout time.Duration, logger *slog.Logger) (func(stdhttp.Handler) stdhttp.Handler, error) {
+	if lifetime == nil {
+		return nil, fmt.Errorf("authentication lifetime context is required")
+	}
+	if jwksURL == "" {
+		return nil, fmt.Errorf("JWKS URL is required")
+	}
+	if timeout <= 0 {
+		return nil, fmt.Errorf("JWKS fetch timeout must be positive")
+	}
+	if logger == nil {
+		return nil, fmt.Errorf("logger is required")
 	}
 
-	keys, err := keyfunc.Get(jwksURL, keyfunc.Options{RefreshTimeout: timeout})
+	keys, err := keyfunc.Get(jwksURL, keyfunc.Options{
+		Ctx:              lifetime,
+		RefreshTimeout:   timeout,
+		RefreshInterval:  time.Hour,
+		RefreshRateLimit: time.Minute,
+		RefreshErrorHandler: func(err error) {
+			logger.Error("jwks refresh failed", "error", err)
+		},
+	})
 	if err != nil {
 		return nil, fmt.Errorf("fetch authentication JWKS: %w", err)
 	}
+	// keyfunc v1.8 replaces Options.Ctx before starting its refresh worker.
+	context.AfterFunc(lifetime, keys.EndBackground)
 
 	return func(next stdhttp.Handler) stdhttp.Handler {
 		return stdhttp.HandlerFunc(func(w stdhttp.ResponseWriter, r *stdhttp.Request) {
+			keyForToken := func(token *jwt.Token) (interface{}, error) {
+				key, err := keys.Keyfunc(token)
+				if !errors.Is(err, keyfunc.ErrKIDNotFound) {
+					return key, err
+				}
+
+				refreshContext, cancelRefresh := context.WithCancel(r.Context())
+				stopLifetimeCancellation := context.AfterFunc(lifetime, cancelRefresh)
+				defer stopLifetimeCancellation()
+				defer cancelRefresh()
+				if err := keys.Refresh(refreshContext, keyfunc.RefreshOptions{}); err != nil {
+					return nil, err
+				}
+				return keys.Keyfunc(token)
+			}
+
 			foundToken := false
 			for i, header := range r.Header.Values("Authorization") {
 				if len(header) <= len("Bearer ") || !strings.EqualFold(header[:len("Bearer ")], "Bearer ") {
@@ -33,7 +71,7 @@ func NewJWTAuthentication(jwksURL string, timeout time.Duration) (func(stdhttp.H
 				foundToken = true
 
 				claims := &userClaims{}
-				token, err := jwt.ParseWithClaims(header[len("Bearer "):], claims, keys.Keyfunc)
+				token, err := jwt.ParseWithClaims(header[len("Bearer "):], claims, keyForToken)
 				if err == nil && token.Valid && claims.IssuedAt != nil && claims.Type != "service" {
 					user := &identity.User{
 						Subject:     claims.Subject,

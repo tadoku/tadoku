@@ -3,7 +3,7 @@ module github.com/tadoku/tadoku
 go 1.26.6
 
 require (
-	github.com/MicahParks/keyfunc v1.7.0
+	github.com/MicahParks/keyfunc v1.8.0
 	github.com/bwmarrin/discordgo v0.27.1
 	github.com/deepmap/oapi-codegen v1.12.4
 	github.com/getkin/kin-openapi v0.107.0

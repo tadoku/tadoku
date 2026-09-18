@@ -74,14 +74,14 @@ func TestApplicationStartsAndShutsDown(t *testing.T) {
 		},
 	}
 
-	app, err := start(cfg, slog.New(slog.NewTextHandler(io.Discard, nil)))
+	ctx, cancel := context.WithCancel(t.Context())
+	app, err := start(ctx, cfg, slog.New(slog.NewTextHandler(io.Discard, nil)))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	t.Cleanup(func() {
-		ctx, cancel := context.WithCancel(context.Background())
 		cancel()
-		if err := app.wait(ctx); err != nil {
+		if err := app.wait(); err != nil {
 			t.Errorf("cleanup application: %v", err)
 		}
 	})
@@ -137,9 +137,8 @@ func TestApplicationStartsAndShutsDown(t *testing.T) {
 	}
 
 	// Shutdown closes both listeners and the shared database pool.
-	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	if err := app.wait(ctx); err != nil {
+	if err := app.wait(); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
@@ -211,7 +210,7 @@ func TestApplicationRejectsUnavailableJWKSBeforeStarting(t *testing.T) {
 	}))
 	t.Cleanup(provider.Close)
 
-	app, err := start(config{
+	app, err := start(t.Context(), config{
 		JWKS:        provider.URL,
 		DialTimeout: time.Second,
 	}, slog.New(slog.NewTextHandler(io.Discard, nil)))

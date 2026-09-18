@@ -44,7 +44,7 @@ func TestCreateAnnouncement(t *testing.T) {
 		{description: []string{"non", "admin"}, want: http.StatusForbidden},
 		{description: []string{"invalid", "non", "admin"}, want: http.StatusForbidden},
 		// legacy returns 500 for a unique violation.
-		{description: []string{"duplicate", "id"}, want: http.StatusConflict, skipParity: "legacy returns 500 for a unique violation"},
+		{description: []string{"duplicate", "id"}, want: http.StatusConflict, skipParity: "native returns 409 for a unique violation; legacy returns 500"},
 	}
 
 	for _, test := range tests {

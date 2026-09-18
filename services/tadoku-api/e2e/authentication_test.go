@@ -17,7 +17,7 @@ func TestAuthentication(t *testing.T) {
 	tests := []struct {
 		description []string
 		want        int
-		skipParity  bool
+		skipParity  string
 	}{
 		{
 			description: []string{"user"},
@@ -112,28 +112,22 @@ func TestAuthentication(t *testing.T) {
 			want:        http.StatusUnauthorized,
 		},
 		{
-			// Legacy Identity panics when iat is missing.
 			description: []string{"missing", "iat"},
 			want:        http.StatusUnauthorized,
-			skipParity:  true,
+			skipParity:  "legacy Identity panics when iat is missing",
 		},
 		{
-			// Service identities are intentionally unsupported by Tadoku API.
 			description: []string{"service", "token"},
 			want:        http.StatusUnauthorized,
-			skipParity:  true,
+			skipParity:  "service identities are intentionally unsupported by Tadoku API",
 		},
 	}
 	for _, test := range tests {
 		name := APITestName("Authentication", test.want, test.description...)
 		t.Run(name, func(t *testing.T) {
-			legacy := implementation{name: "legacy", handler: legacyAuthentication}
-			if test.skipParity {
-				legacy.skip = "intentional authentication difference"
-			}
 			runCase(t, api, name, test.want,
 				implementation{name: "tadoku-api", handler: api.handler},
-				legacy,
+				implementation{name: "legacy", handler: legacyAuthentication, skip: test.skipParity},
 			)
 		})
 	}

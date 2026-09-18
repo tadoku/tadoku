@@ -11,6 +11,7 @@ go_library(
         "//services/tadoku-api/app",
         "//services/tadoku-api/features/content",
         "//services/tadoku-api/infra/postgres",
+        "//services/tadoku-api/infra/valkey",
         "//services/tadoku-api/internal/permissions",
         "//services/tadoku-api/transport/http",
         "@com_github_go_playground_validator_v10//:validator",
@@ -19,6 +20,7 @@ go_library(
         "@com_github_prometheus_client_golang//prometheus",
         "@com_github_prometheus_client_golang//prometheus/collectors",
         "@com_github_prometheus_client_golang//prometheus/promhttp",
+        "@com_github_valkey_io_valkey_go//:valkey-go",
     ],
 )
 
@@ -32,7 +34,10 @@ go_test(
     name = "tadoku-api_test",
     srcs = ["main_test.go"],
     embed = [":tadoku-api_lib"],
-    env_inherit = ["TADOKU_TEST_POSTGRES_URL"],
+    env_inherit = [
+        "TADOKU_TEST_POSTGRES_URL",
+        "TADOKU_TEST_VALKEY_URL",
+    ],
     tags = [
         "no-cache",
         "no-remote-exec",
@@ -41,5 +46,7 @@ go_test(
     deps = [
         "//services/common/postgresconfig",
         "//services/tadoku-api/internal/testpostgres",
+        "//services/tadoku-api/internal/testvalkey",
+        "@com_github_valkey_io_valkey_go//:valkey-go",
     ],
 )

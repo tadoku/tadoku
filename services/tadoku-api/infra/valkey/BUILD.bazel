@@ -1,0 +1,25 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "valkey",
+    srcs = ["client.go"],
+    importpath = "github.com/tadoku/tadoku/services/tadoku-api/infra/valkey",
+    visibility = ["//services/tadoku-api:__subpackages__"],
+    deps = ["@com_github_valkey_io_valkey_go//:valkey-go"],
+)
+
+go_test(
+    name = "valkey_test",
+    srcs = ["client_test.go"],
+    embed = [":valkey"],
+    env_inherit = ["TADOKU_TEST_VALKEY_URL"],
+    tags = [
+        "no-cache",
+        "no-remote-exec",
+        "requires-network",
+    ],
+    deps = [
+        "//services/tadoku-api/internal/testvalkey",
+        "@com_github_valkey_io_valkey_go//:valkey-go",
+    ],
+)

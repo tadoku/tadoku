@@ -24,8 +24,10 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/content"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
+	valkeyinfra "github.com/tadoku/tadoku/services/tadoku-api/infra/valkey"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
 	transporthttp "github.com/tadoku/tadoku/services/tadoku-api/transport/http"
+	valkeygo "github.com/valkey-io/valkey-go"
 )
 
 type config struct {
@@ -43,6 +45,8 @@ type config struct {
 
 	PostgresMaxConnections int32                 `validate:"gt=0,lte=32" envconfig:"postgres_max_connections" default:"4"`
 	Postgres               postgresconfig.Config `ignored:"true"`
+	ValkeyURL              string                `validate:"required" envconfig:"valkey_url"`
+	ValkeyTimeout          time.Duration         `validate:"gt=0" envconfig:"valkey_timeout" default:"1s"`
 
 	DialTimeout           time.Duration `validate:"gt=0" envconfig:"dial_timeout" default:"3s"`
 	MaxTokenAge           time.Duration `validate:"gt=0" envconfig:"max_token_age" default:"24h"`
@@ -87,6 +91,7 @@ type application struct {
 	shutdownTimeout time.Duration
 	transport       *http.Transport
 	pool            *pgxpool.Pool
+	valkey          valkeygo.Client
 }
 
 type pgxPoolCollector struct {
@@ -192,6 +197,23 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 			transport.CloseIdleConnections()
 		}
 	}()
+
+	valkeyClient, valkeyErr := valkeyinfra.Open(ctx, cfg.ValkeyURL, cfg.ValkeyTimeout)
+	if valkeyClient == nil {
+		return nil, valkeyErr
+	}
+	defer func() {
+		if !started {
+			valkeyClient.Close()
+		}
+	}()
+	if valkeyErr != nil {
+		logger.Warn("valkey unavailable at startup; starting in degraded mode", "error", valkeyErr)
+	}
+	if err := ctx.Err(); err != nil {
+		return nil, fmt.Errorf("start application: %w", err)
+	}
+
 	metrics.MustRegister(
 		collectors.NewGoCollector(),
 		collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
@@ -273,6 +295,7 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 		shutdownTimeout: cfg.ShutdownTimeout,
 		transport:       transport,
 		pool:            pool,
+		valkey:          valkeyClient,
 	}
 
 	go func() {
@@ -327,6 +350,7 @@ func (app *application) wait() error {
 	}
 
 	app.pool.Close()
+	app.valkey.Close()
 	app.transport.CloseIdleConnections()
 
 	return errors.Join(runErr, shutdownErr, metricsErr)

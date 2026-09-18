@@ -18,80 +18,44 @@ import (
 
 	"github.com/tadoku/tadoku/services/common/postgresconfig"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/testvalkey"
+	valkeygo "github.com/valkey-io/valkey-go"
 )
 
 func TestApplicationStartsAndShutsDown(t *testing.T) {
-	db, err := testpostgres.New(t.Context())
+	cfg := validApplicationConfig(t)
+	observerURL := cfg.ValkeyURL
+	clientName := "tadoku-api-lifecycle-test"
+	cfg.ValkeyURL += "?client_name=" + clientName
+	observer, err := valkeygo.NewClient(valkeygo.MustParseURL(observerURL))
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() {
-		if err := db.Close(); err != nil {
-			t.Error(err)
-		}
-	})
-
-	databaseURL, err := url.Parse(db.DSN)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	databasePort, err := strconv.Atoi(databaseURL.Port())
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	upstream := httptest.NewServer(http.NotFoundHandler())
-	t.Cleanup(upstream.Close)
-	jwks := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		_, _ = w.Write([]byte(`{"keys":[]}`))
-	}))
-	t.Cleanup(jwks.Close)
-
-	cfg := config{
-		Port:        0,
-		MetricsPort: 0,
-		ServiceName: "tadoku-api-test",
-		JWKS:        jwks.URL,
-		KetoReadURL: upstream.URL,
-
-		AuthzURL:     upstream.URL,
-		ContentURL:   upstream.URL,
-		ImmersionURL: upstream.URL,
-		ProfileURL:   upstream.URL,
-
-		DialTimeout:           time.Second,
-		MaxTokenAge:           24 * time.Hour,
-		ResponseHeaderTimeout: time.Second,
-		RequestTimeout:        time.Second,
-		IdleTimeout:           time.Second,
-		ShutdownTimeout:       time.Second,
-
-		PostgresMaxConnections: 4,
-		Postgres: postgresconfig.Config{
-			Host:     "127.0.0.1",
-			Port:     uint16(databasePort),
-			Database: databaseURL.Path[1:],
-			User:     "postgres",
-			Password: "postgres",
-			SSLMode:  "disable",
-		},
-	}
+	t.Cleanup(observer.Close)
 
 	ctx, cancel := context.WithCancel(t.Context())
-	app, err := start(ctx, cfg, slog.New(slog.NewTextHandler(io.Discard, nil)))
+	application, err := start(ctx, cfg, slog.New(slog.NewTextHandler(io.Discard, nil)))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
+	stopped := false
 	t.Cleanup(func() {
+		if stopped {
+			return
+		}
 		cancel()
-		if err := app.wait(); err != nil {
+		if err := application.wait(); err != nil {
 			t.Errorf("cleanup application: %v", err)
 		}
 	})
 
+	clients, err := observer.Do(t.Context(), observer.B().ClientList().Build()).ToString()
+	if err != nil || !strings.Contains(clients, "name="+clientName) {
+		t.Fatalf("owned Valkey client missing from CLIENT LIST: error=%v", err)
+	}
+
 	// Verify the application is ready to accept requests.
-	_, port, err := net.SplitHostPort(app.listener.Addr().String())
+	_, port, err := net.SplitHostPort(application.listener.Addr().String())
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -104,15 +68,15 @@ func TestApplicationStartsAndShutsDown(t *testing.T) {
 	if response.StatusCode != http.StatusOK {
 		t.Errorf("got %v, want %v", response.StatusCode, http.StatusOK)
 	}
-	if app.pool.Config().MaxConns != 4 {
-		t.Errorf("pool max=%d", app.pool.Config().MaxConns)
+	if application.pool.Config().MaxConns != 4 {
+		t.Errorf("pool max=%d", application.pool.Config().MaxConns)
 	}
-	if got := app.pool.Config().ConnConfig.RuntimeParams["application_name"]; got != cfg.ServiceName {
+	if got := application.pool.Config().ConnConfig.RuntimeParams["application_name"]; got != cfg.ServiceName {
 		t.Errorf("application_name=%q want=%q", got, cfg.ServiceName)
 	}
 
 	// Existing process metrics still use their own listener.
-	_, metricsPort, err := net.SplitHostPort(app.metricsListener.Addr().String())
+	_, metricsPort, err := net.SplitHostPort(application.metricsListener.Addr().String())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -140,22 +104,96 @@ func TestApplicationStartsAndShutsDown(t *testing.T) {
 		}
 	}
 
-	// Shutdown closes both listeners and the shared database pool.
+	// Shutdown closes both listeners and the owned database and Valkey clients.
 	cancel()
-	if err := app.wait(); err != nil {
+	if err := application.wait(); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
+	stopped = true
 
 	_, err = http.Get("http://" + address + "/livez")
 	if err == nil {
 		t.Errorf("expected an error")
 	}
-	if err := app.pool.Ping(context.Background()); err == nil {
+	if err := application.pool.Ping(context.Background()); err == nil {
 		t.Error("pool remained usable after shutdown")
 	}
 	if response, err := http.Get(metricsURL); err == nil {
 		response.Body.Close()
 		t.Error("metrics listener remained open")
+	}
+	clients, err = observer.Do(t.Context(), observer.B().ClientList().Build()).ToString()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(clients, "name="+clientName) {
+		t.Error("Valkey client remained open after shutdown")
+	}
+}
+
+func validApplicationConfig(t *testing.T) config {
+	t.Helper()
+	db, err := testpostgres.New(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Error(err)
+		}
+	})
+
+	databaseURL, err := url.Parse(db.DSN)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	databasePort, err := strconv.Atoi(databaseURL.Port())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	upstream := httptest.NewServer(http.NotFoundHandler())
+	t.Cleanup(upstream.Close)
+	jwks := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte(`{"keys":[]}`))
+	}))
+	t.Cleanup(jwks.Close)
+	valkeyURL, err := testvalkey.URL()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return config{
+		Port:        0,
+		MetricsPort: 0,
+		ServiceName: "tadoku-api-test",
+		JWKS:        jwks.URL,
+		KetoReadURL: upstream.URL,
+
+		AuthzURL:     upstream.URL,
+		ContentURL:   upstream.URL,
+		ImmersionURL: upstream.URL,
+		ProfileURL:   upstream.URL,
+
+		DialTimeout:           time.Second,
+		MaxTokenAge:           24 * time.Hour,
+		ResponseHeaderTimeout: time.Second,
+		RequestTimeout:        time.Second,
+		IdleTimeout:           time.Second,
+		ShutdownTimeout:       time.Second,
+
+		PostgresMaxConnections: 4,
+		Postgres: postgresconfig.Config{
+			Host:     "127.0.0.1",
+			Port:     uint16(databasePort),
+			Database: databaseURL.Path[1:],
+			User:     "postgres",
+			Password: "postgres",
+			SSLMode:  "disable",
+		},
+		ValkeyURL:     valkeyURL,
+		ValkeyTimeout: time.Second,
 	}
 }
 
@@ -166,6 +204,7 @@ func TestLoadConfigUsesValidatedDefaults(t *testing.T) {
 	t.Setenv("API_CONTENT_URL", "http://content")
 	t.Setenv("API_IMMERSION_URL", "http://immersion")
 	t.Setenv("API_PROFILE_URL", "http://profile")
+	t.Setenv("API_VALKEY_URL", "redis://valkey:6379")
 	for key, value := range map[string]string{"HOST": "localhost", "DATABASE": "tadoku", "USER": "tadoku", "PASSWORD": "synthetic", "SSLMODE": "disable"} {
 		t.Setenv("API_POSTGRES_"+key, value)
 	}
@@ -194,6 +233,9 @@ func TestLoadConfigUsesValidatedDefaults(t *testing.T) {
 	}
 	if cfg.PostgresMaxConnections != 4 {
 		t.Errorf("pool limit=%d want=4", cfg.PostgresMaxConnections)
+	}
+	if cfg.ValkeyURL != "redis://valkey:6379" || cfg.ValkeyTimeout != time.Second {
+		t.Errorf("Valkey URL=%q timeout=%v", cfg.ValkeyURL, cfg.ValkeyTimeout)
 	}
 	if cfg.JWKS != "http://jwks.test" {
 		t.Errorf("JWKS=%q", cfg.JWKS)
@@ -224,6 +266,86 @@ func TestLoadConfigUsesValidatedDefaults(t *testing.T) {
 	t.Setenv("API_MAX_TOKEN_AGE", "0s")
 	if _, err := loadConfig(); err == nil || !strings.Contains(err.Error(), "MaxTokenAge") {
 		t.Errorf("invalid maximum token age error=%v", err)
+	}
+	t.Setenv("API_MAX_TOKEN_AGE", "24h")
+	t.Setenv("API_VALKEY_TIMEOUT", "0s")
+	if _, err := loadConfig(); err == nil || !strings.Contains(err.Error(), "ValkeyTimeout") {
+		t.Errorf("invalid Valkey timeout error=%v", err)
+	}
+}
+
+func TestApplicationReadinessDoesNotDependOnValkey(t *testing.T) {
+	cfg := validApplicationConfig(t)
+	reserved, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	address := reserved.Addr().String()
+	_ = reserved.Close()
+	cfg.ValkeyURL = "redis://" + address
+	cfg.ValkeyTimeout = 50 * time.Millisecond
+
+	ctx, cancel := context.WithCancel(t.Context())
+	application, err := start(ctx, cfg, slog.New(slog.NewTextHandler(io.Discard, nil)))
+	if err != nil {
+		t.Fatalf("degraded startup: %v", err)
+	}
+	t.Cleanup(func() {
+		cancel()
+		if err := application.wait(); err != nil {
+			t.Error(err)
+		}
+	})
+
+	_, port, err := net.SplitHostPort(application.listener.Addr().String())
+	if err != nil {
+		t.Fatal(err)
+	}
+	response, err := http.Get("http://" + net.JoinHostPort("127.0.0.1", port) + "/readyz")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		t.Errorf("readiness status=%d", response.StatusCode)
+	}
+}
+
+func TestApplicationClosesValkeyWhenLaterStartupFails(t *testing.T) {
+	cfg := validApplicationConfig(t)
+	observer, err := valkeygo.NewClient(valkeygo.MustParseURL(cfg.ValkeyURL))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(observer.Close)
+	clientName := "tadoku-api-failed-start-test"
+	cfg.ValkeyURL += "?client_name=" + clientName
+
+	occupied, err := net.Listen("tcp", "0.0.0.0:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = occupied.Close() })
+	_, port, err := net.SplitHostPort(occupied.Addr().String())
+	if err != nil {
+		t.Fatal(err)
+	}
+	cfg.Port, err = strconv.Atoi(port)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	application, err := start(t.Context(), cfg, slog.New(slog.NewTextHandler(io.Discard, nil)))
+	if application != nil || err == nil || !strings.Contains(err.Error(), "listen for API requests") {
+		t.Fatalf("application=%v error=%v", application, err)
+	}
+
+	clients, err := observer.Do(t.Context(), observer.B().ClientList().Build()).ToString()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(clients, "name="+clientName) {
+		t.Error("Valkey client remained open after later startup failure")
 	}
 }
 

@@ -27,6 +27,7 @@ go_library(
 go_test(
     name = "pages_test",
     srcs = ["pages_repository_test.go"],
+    env_inherit = ["TADOKU_TEST_POSTGRES_URL"],
     deps = [
         ":pages",
         "//services/tadoku-api/internal/testpostgres",

@@ -33,15 +33,18 @@ func TestAuthentication(t *testing.T) {
 		},
 		{
 			description: []string{"without", "exp"},
-			want:        http.StatusOK,
+			want:        http.StatusUnauthorized,
+			skipParity:  "Tadoku API requires exp but legacy accepts tokens without it",
 		},
 		{
 			description: []string{"old", "iat"},
-			want:        http.StatusOK,
+			want:        http.StatusUnauthorized,
+			skipParity:  "Tadoku API rejects tokens older than the configured maximum age",
 		},
 		{
-			description: []string{"other", "issuer", "audience"},
-			want:        http.StatusOK,
+			description: []string{"wrong", "issuer"},
+			want:        http.StatusUnauthorized,
+			skipParity:  "Tadoku API enforces the configured issuer but legacy accepts other issuers",
 		},
 		{
 			description: []string{"lowercase", "bearer"},

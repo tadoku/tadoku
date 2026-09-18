@@ -16,7 +16,7 @@ import (
 
 // NewJWTAuthentication loads the gateway's signing keys and verifies user JWTs.
 // It performs no role, ban, permission, or service-audience checks.
-func NewJWTAuthentication(lifetime context.Context, jwksURL string, timeout time.Duration, logger *slog.Logger) (func(stdhttp.Handler) stdhttp.Handler, error) {
+func NewJWTAuthentication(lifetime context.Context, jwksURL string, timeout, maxTokenAge time.Duration, issuer string, logger *slog.Logger) (func(stdhttp.Handler) stdhttp.Handler, error) {
 	if lifetime == nil {
 		return nil, fmt.Errorf("authentication lifetime context is required")
 	}
@@ -25,6 +25,9 @@ func NewJWTAuthentication(lifetime context.Context, jwksURL string, timeout time
 	}
 	if timeout <= 0 {
 		return nil, fmt.Errorf("JWKS fetch timeout must be positive")
+	}
+	if maxTokenAge <= 0 {
+		return nil, fmt.Errorf("maximum token age must be positive")
 	}
 	if logger == nil {
 		return nil, fmt.Errorf("logger is required")
@@ -71,8 +74,14 @@ func NewJWTAuthentication(lifetime context.Context, jwksURL string, timeout time
 				foundToken = true
 
 				claims := &userClaims{}
-				token, err := jwt.ParseWithClaims(header[len("Bearer "):], claims, keyForToken)
-				if err == nil && token.Valid && claims.IssuedAt != nil && claims.Type != "service" {
+				token, err := jwt.ParseWithClaims(header[len("Bearer "):], claims, keyForToken, jwt.WithValidMethods([]string{"RS256"}))
+				if err == nil &&
+					token.Valid &&
+					claims.ExpiresAt != nil &&
+					claims.IssuedAt != nil &&
+					!claims.IssuedAt.Time.Add(maxTokenAge).Before(jwt.TimeFunc()) &&
+					(issuer == "" || claims.Issuer == issuer) &&
+					claims.Type != "service" {
 					user := &identity.User{
 						Subject:     claims.Subject,
 						DisplayName: claims.Session.Identity.Traits.DisplayName,

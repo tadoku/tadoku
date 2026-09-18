@@ -3,6 +3,8 @@ package http
 import (
 	"context"
 	"crypto/ed25519"
+	"crypto/rand"
+	"crypto/rsa"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -28,23 +30,31 @@ func (write writerFunc) Write(p []byte) (int, error) {
 	return write(p)
 }
 
+func rsaJWK(kid string, publicKey *rsa.PublicKey) string {
+	return fmt.Sprintf(`{"kty":"RSA","kid":%q,"alg":"RS256","use":"sig","n":%q,"e":"AQAB"}`,
+		kid, base64.RawURLEncoding.EncodeToString(publicKey.N.Bytes()))
+}
+
 func TestAuthenticationRequiresConfiguration(t *testing.T) {
 	for _, test := range []struct {
 		name      string
 		lifetime  context.Context
 		url       string
 		timeout   time.Duration
+		maxAge    time.Duration
 		logger    *slog.Logger
 		wantError string
 	}{
-		{name: "missing lifetime", url: "http://jwks.test", timeout: time.Second, logger: slog.Default(), wantError: "authentication lifetime context is required"},
-		{name: "missing URL", lifetime: t.Context(), timeout: time.Second, logger: slog.Default(), wantError: "JWKS URL is required"},
-		{name: "missing timeout", lifetime: t.Context(), url: "http://jwks.test", logger: slog.Default(), wantError: "JWKS fetch timeout must be positive"},
-		{name: "negative timeout", lifetime: t.Context(), url: "http://jwks.test", timeout: -time.Second, logger: slog.Default(), wantError: "JWKS fetch timeout must be positive"},
-		{name: "missing logger", lifetime: t.Context(), url: "http://jwks.test", timeout: time.Second, wantError: "logger is required"},
+		{name: "missing lifetime", url: "http://jwks.test", timeout: time.Second, maxAge: 24 * time.Hour, logger: slog.Default(), wantError: "authentication lifetime context is required"},
+		{name: "missing URL", lifetime: t.Context(), timeout: time.Second, maxAge: 24 * time.Hour, logger: slog.Default(), wantError: "JWKS URL is required"},
+		{name: "missing timeout", lifetime: t.Context(), url: "http://jwks.test", maxAge: 24 * time.Hour, logger: slog.Default(), wantError: "JWKS fetch timeout must be positive"},
+		{name: "negative timeout", lifetime: t.Context(), url: "http://jwks.test", timeout: -time.Second, maxAge: 24 * time.Hour, logger: slog.Default(), wantError: "JWKS fetch timeout must be positive"},
+		{name: "missing maximum token age", lifetime: t.Context(), url: "http://jwks.test", timeout: time.Second, logger: slog.Default(), wantError: "maximum token age must be positive"},
+		{name: "negative maximum token age", lifetime: t.Context(), url: "http://jwks.test", timeout: time.Second, maxAge: -time.Hour, logger: slog.Default(), wantError: "maximum token age must be positive"},
+		{name: "missing logger", lifetime: t.Context(), url: "http://jwks.test", timeout: time.Second, maxAge: 24 * time.Hour, wantError: "logger is required"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			_, err := NewJWTAuthentication(test.lifetime, test.url, test.timeout, test.logger)
+			_, err := NewJWTAuthentication(test.lifetime, test.url, test.timeout, test.maxAge, "", test.logger)
 			if err == nil || err.Error() != test.wantError {
 				t.Errorf("error=%v, want %q", err, test.wantError)
 			}
@@ -59,6 +69,76 @@ func TestAuthenticationRequiresConfiguration(t *testing.T) {
 	_, err = NewHandler(app.New(nil, nil, nil), func(context.Context) error { return nil }, time.Second, prometheus.NewRegistry(), slog.Default(), passthrough, nil)
 	if err == nil {
 		t.Error("router accepted missing banned-user middleware")
+	}
+}
+
+func TestAuthenticationTokenPolicy(t *testing.T) {
+	oldTimeFunc := jwt.TimeFunc
+	now := time.Date(2026, 9, 18, 12, 0, 0, 0, time.UTC)
+	jwt.TimeFunc = func() time.Time { return now }
+	defer func() { jwt.TimeFunc = oldTimeFunc }()
+
+	rsaPrivateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatal(err)
+	}
+	edPublicKey, edPrivateKey, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+	jwks := fmt.Sprintf(`{"keys":[%s,{"kty":"OKP","crv":"Ed25519","kid":"ed-key","alg":"EdDSA","use":"sig","x":%q}]}`,
+		rsaJWK("rsa-key", &rsaPrivateKey.PublicKey), base64.RawURLEncoding.EncodeToString(edPublicKey))
+	server := httptest.NewServer(stdhttp.HandlerFunc(func(w stdhttp.ResponseWriter, _ *stdhttp.Request) {
+		_, _ = w.Write([]byte(jwks))
+	}))
+	t.Cleanup(server.Close)
+
+	authenticate, err := NewJWTAuthentication(t.Context(), server.URL, time.Second, 24*time.Hour, "", slog.Default())
+	if err != nil {
+		t.Fatal(err)
+	}
+	handler := authenticate(stdhttp.HandlerFunc(func(w stdhttp.ResponseWriter, _ *stdhttp.Request) {
+		w.WriteHeader(stdhttp.StatusNoContent)
+	}))
+
+	for _, test := range []struct {
+		name       string
+		issuedAt   time.Time
+		issuer     string
+		method     jwt.SigningMethod
+		kid        string
+		privateKey any
+		want       int
+	}{
+		{name: "exact maximum age", issuedAt: now.Add(-24 * time.Hour), method: jwt.SigningMethodRS256, kid: "rsa-key", privateKey: rsaPrivateKey, want: stdhttp.StatusNoContent},
+		{name: "just beyond maximum age", issuedAt: now.Add(-24*time.Hour - time.Second), method: jwt.SigningMethodRS256, kid: "rsa-key", privateKey: rsaPrivateKey, want: stdhttp.StatusUnauthorized},
+		{name: "other issuer when unpinned", issuedAt: now.Add(-time.Minute), issuer: "https://other.example.test/", method: jwt.SigningMethodRS256, kid: "rsa-key", privateKey: rsaPrivateKey, want: stdhttp.StatusNoContent},
+		{name: "missing issuer when unpinned", issuedAt: now.Add(-time.Minute), method: jwt.SigningMethodRS256, kid: "rsa-key", privateKey: rsaPrivateKey, want: stdhttp.StatusNoContent},
+		{name: "non RS256 with matching key", issuedAt: now.Add(-time.Minute), method: jwt.SigningMethodEdDSA, kid: "ed-key", privateKey: edPrivateKey, want: stdhttp.StatusUnauthorized},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			token := jwt.NewWithClaims(test.method, &userClaims{
+				RegisteredClaims: jwt.RegisteredClaims{
+					Issuer:    test.issuer,
+					Subject:   "policy-user",
+					IssuedAt:  jwt.NewNumericDate(test.issuedAt),
+					ExpiresAt: jwt.NewNumericDate(now.Add(time.Hour)),
+				},
+			})
+			token.Header["kid"] = test.kid
+			signed, err := token.SignedString(test.privateKey)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			request := httptest.NewRequest(stdhttp.MethodGet, "/", nil)
+			request.Header.Set("Authorization", "Bearer "+signed)
+			response := httptest.NewRecorder()
+			handler.ServeHTTP(response, request)
+			if response.Code != test.want {
+				t.Errorf("status=%d, want %d", response.Code, test.want)
+			}
+		})
 	}
 }
 
@@ -156,7 +236,7 @@ func TestAuthenticationRejectsFailedJWKSFetch(t *testing.T) {
 			}))
 			t.Cleanup(server.Close)
 
-			_, err := NewJWTAuthentication(t.Context(), server.URL, time.Second, slog.Default())
+			_, err := NewJWTAuthentication(t.Context(), server.URL, time.Second, 24*time.Hour, "", slog.Default())
 			if err == nil {
 				t.Fatal("failed JWKS fetch accepted")
 			}
@@ -180,7 +260,7 @@ func TestAuthenticationBoundsJWKSFetch(t *testing.T) {
 	}))
 	t.Cleanup(server.Close)
 
-	_, err := NewJWTAuthentication(t.Context(), server.URL, 20*time.Millisecond, slog.Default())
+	_, err := NewJWTAuthentication(t.Context(), server.URL, 20*time.Millisecond, 24*time.Hour, "", slog.Default())
 	if !errors.Is(err, context.DeadlineExceeded) {
 		t.Fatalf("JWKS fetch error=%v, want deadline exceeded", err)
 	}
@@ -199,7 +279,7 @@ func TestAuthenticationCancelsInitialJWKSFetchWithLifetime(t *testing.T) {
 	lifetime, cancelLifetime := context.WithCancel(t.Context())
 	result := make(chan error, 1)
 	go func() {
-		_, err := NewJWTAuthentication(lifetime, server.URL, time.Minute, slog.Default())
+		_, err := NewJWTAuthentication(lifetime, server.URL, time.Minute, 24*time.Hour, "", slog.Default())
 		result <- err
 	}()
 
@@ -225,14 +305,16 @@ func TestAuthenticationCancelsInitialJWKSFetchWithLifetime(t *testing.T) {
 }
 
 func TestAuthenticationRefreshesUnknownSigningKey(t *testing.T) {
-	oldPrivateKey := ed25519.NewKeyFromSeed(make([]byte, ed25519.SeedSize))
-	newSeed := make([]byte, ed25519.SeedSize)
-	newSeed[0] = 1
-	newPrivateKey := ed25519.NewKeyFromSeed(newSeed)
-	oldJWK := fmt.Sprintf(`{"kty":"OKP","crv":"Ed25519","kid":"old-key","alg":"EdDSA","use":"sig","x":%q}`,
-		base64.RawURLEncoding.EncodeToString(oldPrivateKey.Public().(ed25519.PublicKey)))
-	newJWK := fmt.Sprintf(`{"kty":"OKP","crv":"Ed25519","kid":"new-key","alg":"EdDSA","use":"sig","x":%q}`,
-		base64.RawURLEncoding.EncodeToString(newPrivateKey.Public().(ed25519.PublicKey)))
+	oldPrivateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatal(err)
+	}
+	newPrivateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatal(err)
+	}
+	oldJWK := rsaJWK("old-key", &oldPrivateKey.PublicKey)
+	newJWK := rsaJWK("new-key", &newPrivateKey.PublicKey)
 
 	var jwks atomic.Value
 	jwks.Store(fmt.Sprintf(`{"keys":[%s]}`, oldJWK))
@@ -243,17 +325,18 @@ func TestAuthenticationRefreshesUnknownSigningKey(t *testing.T) {
 	}))
 	t.Cleanup(server.Close)
 
-	authenticate, err := NewJWTAuthentication(t.Context(), server.URL, time.Second, slog.Default())
+	authenticate, err := NewJWTAuthentication(t.Context(), server.URL, time.Second, 24*time.Hour, "", slog.Default())
 	if err != nil {
 		t.Fatal(err)
 	}
 	jwks.Store(fmt.Sprintf(`{"keys":[%s,%s]}`, oldJWK, newJWK))
 
-	issuedAt := time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)
-	token := jwt.NewWithClaims(jwt.SigningMethodEdDSA, &userClaims{
+	issuedAt := jwt.TimeFunc().Add(-time.Minute).UTC().Truncate(time.Second)
+	token := jwt.NewWithClaims(jwt.SigningMethodRS256, &userClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
-			Subject:  "rotated-user",
-			IssuedAt: jwt.NewNumericDate(issuedAt),
+			Subject:   "rotated-user",
+			IssuedAt:  jwt.NewNumericDate(issuedAt),
+			ExpiresAt: jwt.NewNumericDate(issuedAt.Add(time.Hour)),
 		},
 	})
 	token.Header["kid"] = "new-key"
@@ -295,15 +378,20 @@ func TestAuthenticationRateLimitsUnknownSigningKeyRefresh(t *testing.T) {
 	}))
 	t.Cleanup(server.Close)
 
-	authenticate, err := NewJWTAuthentication(t.Context(), server.URL, time.Second, slog.Default())
+	authenticate, err := NewJWTAuthentication(t.Context(), server.URL, time.Second, 24*time.Hour, "", slog.Default())
 	if err != nil {
 		t.Fatal(err)
 	}
-	privateKey := ed25519.NewKeyFromSeed(make([]byte, ed25519.SeedSize))
-	token := jwt.NewWithClaims(jwt.SigningMethodEdDSA, &userClaims{
+	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatal(err)
+	}
+	issuedAt := jwt.TimeFunc().Add(-time.Minute).UTC().Truncate(time.Second)
+	token := jwt.NewWithClaims(jwt.SigningMethodRS256, &userClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
-			Subject:  "unknown-user",
-			IssuedAt: jwt.NewNumericDate(time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)),
+			Subject:   "unknown-user",
+			IssuedAt:  jwt.NewNumericDate(issuedAt),
+			ExpiresAt: jwt.NewNumericDate(issuedAt.Add(time.Hour)),
 		},
 	})
 	token.Header["kid"] = "unknown-key"
@@ -364,15 +452,20 @@ func TestAuthenticationCancelsRefreshWithLifetime(t *testing.T) {
 	t.Cleanup(func() { close(releaseRefreshFailure) })
 
 	lifetime, cancelLifetime := context.WithCancel(t.Context())
-	authenticate, err := NewJWTAuthentication(lifetime, server.URL, time.Minute, logger)
+	authenticate, err := NewJWTAuthentication(lifetime, server.URL, time.Minute, 24*time.Hour, "", logger)
 	if err != nil {
 		t.Fatal(err)
 	}
-	privateKey := ed25519.NewKeyFromSeed(make([]byte, ed25519.SeedSize))
-	token := jwt.NewWithClaims(jwt.SigningMethodEdDSA, &userClaims{
+	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatal(err)
+	}
+	issuedAt := jwt.TimeFunc().Add(-time.Minute).UTC().Truncate(time.Second)
+	token := jwt.NewWithClaims(jwt.SigningMethodRS256, &userClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
-			Subject:  "canceled-user",
-			IssuedAt: jwt.NewNumericDate(time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)),
+			Subject:   "canceled-user",
+			IssuedAt:  jwt.NewNumericDate(issuedAt),
+			ExpiresAt: jwt.NewNumericDate(issuedAt.Add(time.Hour)),
 		},
 	})
 	token.Header["kid"] = "unknown-key"

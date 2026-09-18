@@ -14,7 +14,7 @@ func (a *Application) ListPosts(ctx context.Context, namespace string, includeDr
 			return nil, err
 		}
 		if !allowed {
-			return nil, errx.NewForbiddenError("forbidden")
+			return nil, errx.NewForbiddenError("drafts require admin access")
 		}
 	}
 

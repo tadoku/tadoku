@@ -17,6 +17,7 @@ go_library(
         "post_find.go",
         "post_list.go",
         "post_update.go",
+        "post_version_get.go",
         "post_version_list.go",
         "proxy.go",
         "router.go",

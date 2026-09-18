@@ -48,7 +48,7 @@ func newLegacyContentAPI(ctx context.Context, dsn, jwksURL, ketoReadURL string) 
 		domain.NewPostFindByID(postsRepository),
 		domain.NewPostList(postsRepository),
 		domain.NewPostVersionList(postsRepository),
-		nil,
+		domain.NewPostVersionGet(postsRepository),
 		domain.NewAnnouncementCreate(repository, scenarioClock{}),
 		domain.NewAnnouncementUpdate(repository, scenarioClock{}),
 		domain.NewAnnouncementDelete(repository),

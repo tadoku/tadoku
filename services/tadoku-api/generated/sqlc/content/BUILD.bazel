@@ -11,6 +11,7 @@ go_library(
         "post_find.sql.go",
         "post_list.sql.go",
         "post_update.sql.go",
+        "post_version_get.sql.go",
         "post_version_list.sql.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/generated/sqlc/content",

@@ -13,6 +13,7 @@ go_library(
         "post_find.go",
         "post_list.go",
         "post_update.go",
+        "post_version_get.go",
         "post_version_list.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/app",

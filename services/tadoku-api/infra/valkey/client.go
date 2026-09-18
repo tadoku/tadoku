@@ -7,8 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"net/url"
-	"strconv"
 	"sync"
 	"time"
 
@@ -82,11 +80,8 @@ func Open(ctx context.Context, rawURL string, timeout time.Duration) (valkeygo.C
 		}
 		return nil, fmt.Errorf("open valkey: %w", ctxErr)
 	}
-	if client == nil && err != nil {
-		return nil, fmt.Errorf("open valkey: %w", err)
-	}
 	if err != nil {
-		return client, fmt.Errorf("connect to valkey: %w", err)
+		return client, fmt.Errorf("open valkey: %w", err)
 	}
 	return client, nil
 }
@@ -95,28 +90,15 @@ func clientOption(rawURL string, timeout time.Duration) (valkeygo.ClientOption, 
 	if timeout <= 0 {
 		return valkeygo.ClientOption{}, errors.New("valkey timeout must be positive")
 	}
-	u, err := url.Parse(rawURL)
-	if err != nil ||
-		(u.Scheme != "redis" && u.Scheme != "rediss") ||
-		u.Hostname() == "" ||
-		u.Path != "" ||
-		u.ForceQuery ||
-		u.RawQuery != "" ||
-		u.Fragment != "" {
-		return valkeygo.ClientOption{}, errors.New("invalid valkey URL")
-	}
-
 	option, err := valkeygo.ParseURL(rawURL)
 	if err != nil {
 		return valkeygo.ClientOption{}, errors.New("invalid valkey URL")
 	}
-	_, port, err := net.SplitHostPort(option.InitAddress[0])
-	if err != nil {
-		return valkeygo.ClientOption{}, errors.New("invalid valkey URL")
+	if len(option.InitAddress) != 1 || option.Sentinel.MasterSet != "" {
+		return valkeygo.ClientOption{}, errors.New("valkey URL must configure one standalone address")
 	}
-	n, err := strconv.Atoi(port)
-	if err != nil || n < 1 || n > 65535 {
-		return valkeygo.ClientOption{}, errors.New("invalid valkey URL")
+	if option.DialCtxFn != nil {
+		return valkeygo.ClientOption{}, errors.New("valkey URL must use TCP")
 	}
 
 	option.Dialer.Timeout = timeout

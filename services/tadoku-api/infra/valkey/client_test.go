@@ -315,16 +315,16 @@ func TestEstablishedPipelineUsesConfiguredLivenessBound(t *testing.T) {
 	}
 }
 
-func TestClientOptionPreservesTLSAndCredentials(t *testing.T) {
-	option, err := clientOption("rediss://user:secret@valkey.test:6380", 250*time.Millisecond)
+func TestClientOptionPreservesParsedSettingsAndOverridesServicePolicy(t *testing.T) {
+	option, err := clientOption("valkeys://user:secret@valkey.test:6380/3?client_name=custom&dial_timeout=9s&write_timeout=8s&max_retries=10", 250*time.Millisecond)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(option.InitAddress) != 1 || option.InitAddress[0] != "valkey.test:6380" {
 		t.Errorf("addresses=%v", option.InitAddress)
 	}
-	if option.Username != "user" || option.Password != "secret" {
-		t.Errorf("URL credentials user=%q password=%q", option.Username, option.Password)
+	if option.Username != "user" || option.Password != "secret" || option.SelectDB != 3 || option.ClientName != "custom" {
+		t.Errorf("parsed settings user=%q password=%q db=%d client_name=%q", option.Username, option.Password, option.SelectDB, option.ClientName)
 	}
 	if option.TLSConfig == nil || option.TLSConfig.ServerName != "valkey.test" {
 		t.Errorf("TLS config=%v", option.TLSConfig)
@@ -344,16 +344,9 @@ func TestClientOptionRejectsInvalidConfigurationWithoutLeakingCredentials(t *tes
 		timeout time.Duration
 	}{
 		{name: "timeout", rawURL: "redis://127.0.0.1:6379"},
-		{name: "valkey scheme", rawURL: "valkey://127.0.0.1:6379", timeout: time.Second},
-		{name: "valkeys scheme", rawURL: "valkeys://127.0.0.1:6379", timeout: time.Second},
+		{name: "multiple addresses", rawURL: "redis://127.0.0.1:6379?addr=127.0.0.1:6380", timeout: time.Second},
+		{name: "sentinel", rawURL: "redis://127.0.0.1:6379?master_set=main", timeout: time.Second},
 		{name: "Unix socket", rawURL: "unix:///tmp/valkey.sock", timeout: time.Second},
-		{name: "empty host", rawURL: "redis://:6379", timeout: time.Second},
-		{name: "zero port", rawURL: "redis://127.0.0.1:0", timeout: time.Second},
-		{name: "large port", rawURL: "redis://127.0.0.1:99999", timeout: time.Second},
-		{name: "database path", rawURL: "redis://127.0.0.1:6379/1", timeout: time.Second},
-		{name: "fragment", rawURL: "redis://127.0.0.1:6379#ignored", timeout: time.Second},
-		{name: "empty query", rawURL: "redis://127.0.0.1:6379?", timeout: time.Second},
-		{name: "query", rawURL: "redis://127.0.0.1:6379?db=1", timeout: time.Second},
 		{name: "malformed secret", rawURL: "redis://user:do-not-log-%zz@127.0.0.1:6379", timeout: time.Second},
 	} {
 		t.Run(test.name, func(t *testing.T) {

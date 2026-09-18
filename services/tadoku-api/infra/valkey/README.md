@@ -7,9 +7,10 @@ directly with their request context:
 result := client.Do(ctx, client.B().Get().Key(key).Build())
 ```
 
-Configuration accepts one `redis` or `rediss` TCP URL with optional credentials,
-plus a positive timeout. Paths, queries, fragments, clusters, sentinels and Unix
-sockets are outside this client's current deployment needs.
+Configuration accepts one standalone TCP URL parsed by `valkey-go`, plus a
+positive timeout. Parsed credentials, TLS, databases and client options are
+preserved. The service overrides connection timing, retry and pipelining policy;
+Sentinel, multiple-address and Unix-socket configurations are rejected.
 
 The configured timeout bounds each connection attempt and handshake. On an
 established pipeline, `valkey-go` detects an unresponsive connection after its

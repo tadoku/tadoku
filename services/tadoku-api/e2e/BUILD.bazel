@@ -15,6 +15,7 @@ go_test(
         "dependency_failure_test.go",
         "golden_test.go",
         "legacy_content_test.go",
+        "post_delete_test.go",
         "routing_test.go",
     ],
     data = glob([

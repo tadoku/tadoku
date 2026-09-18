@@ -205,7 +205,8 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	keto := ketoclient.NewReadClient(cfg.KetoReadURL, ketoclient.WithHTTPClient(ketoHTTP))
 	permissionChecker := permissions.NewKetoChecker(keto)
 	contentRepository := content.NewAnnouncementsRepository(pool)
-	contentService := content.NewService(contentRepository)
+	postsRepository := content.NewPostsRepository(pool)
+	contentService := content.NewService(contentRepository, postsRepository)
 	api := app.New(contentService, pool, permissionChecker)
 	rejectBanned := newBannedUserMiddleware(keto, logger)
 

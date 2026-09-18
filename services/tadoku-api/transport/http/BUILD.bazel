@@ -12,6 +12,7 @@ go_library(
         "errors.go",
         "observability.go",
         "panic_recovery.go",
+        "post_delete.go",
         "proxy.go",
         "router.go",
     ],

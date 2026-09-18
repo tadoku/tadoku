@@ -608,7 +608,7 @@ paths:
           description: Post not found
       x-tadoku-source: Content
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /posts/{namespace}/{id}
       x-legacy-operation-id: postDelete
   "/content/posts/{namespace}":

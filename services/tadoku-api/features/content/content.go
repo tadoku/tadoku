@@ -72,11 +72,13 @@ var (
 
 type Service struct {
 	announcements *AnnouncementsRepository
+	posts         *PostsRepository
 }
 
-func NewService(announcements *AnnouncementsRepository) *Service {
+func NewService(announcements *AnnouncementsRepository, posts *PostsRepository) *Service {
 	return &Service{
 		announcements: announcements,
+		posts:         posts,
 	}
 }
 

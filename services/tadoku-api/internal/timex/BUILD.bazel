@@ -1,3 +1,5 @@
+# gazelle:exclude testing_test.go
+
 load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
@@ -11,14 +13,25 @@ go_library(
     deps = ["//services/tadoku-api/internal/timex/internal/clockstate"],
 )
 
-go_test(
+# keep: test-only extension of the production package.
+go_library(
     name = "timex_test",
+    testonly = True,
+    srcs = ["testing_test.go"],
+    importpath = "github.com/tadoku/tadoku/services/tadoku-api/internal/timex/timex_test",
+    visibility = ["//services/tadoku-api/e2e:__pkg__"],
+    deps = ["//services/tadoku-api/internal/timex/internal/clockstate"],
+)
+
+go_test(
+    name = "timex_unit_test",
     srcs = [
         "range_test.go",
+        "testing_test.go",
         "timex_test.go",
     ],
     deps = [
         ":timex",
-        "//services/tadoku-api/internal/timex/timextest",
+        "//services/tadoku-api/internal/timex/internal/clockstate",
     ],
 )

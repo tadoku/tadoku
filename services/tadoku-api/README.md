@@ -200,7 +200,7 @@ There is no outer rollback transaction and no change to `RunInTransaction`.
 Database helpers take contexts and return errors, with explicit `Close` cleanup
 instead of `testing.TB`. Suite teardown preserves test failures and reports cleanup
 failures; partial setup also cleans up. Freeze business time inside the tests that
-need it, not in `TestMain`; a scenario can use separate `timextest.TheWorld` scopes for
+need it, not in `TestMain`; a scenario can use separate `timex_test.TheWorld` scopes for
 different times. No test-only request-context wrapper is needed. The pool-closing
 failure test opens a second pool on the shared DSN and closes it; it does not
 create another migrated database. Repository/transaction tests retain their

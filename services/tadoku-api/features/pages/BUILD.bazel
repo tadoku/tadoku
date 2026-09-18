@@ -1,0 +1,35 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "pages",
+    srcs = [
+        "page_find.go",
+        "page_find_repository.go",
+        "page_list.go",
+        "page_list_repository.go",
+        "pages.go",
+        "pages_repository.go",
+    ],
+    importpath = "github.com/tadoku/tadoku/services/tadoku-api/features/pages",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//services/tadoku-api/generated/sqlc/pages",
+        "//services/tadoku-api/infra/postgres",
+        "//services/tadoku-api/internal/errx",
+        "//services/tadoku-api/internal/timex",
+        "@com_github_google_uuid//:uuid",
+        "@com_github_jackc_pgx_v5//:pgx",
+        "@com_github_jackc_pgx_v5//pgtype",
+        "@com_github_jackc_pgx_v5//pgxpool",
+    ],
+)
+
+go_test(
+    name = "pages_test",
+    srcs = ["pages_repository_test.go"],
+    deps = [
+        ":pages",
+        "//services/tadoku-api/internal/testpostgres",
+        "@com_github_google_uuid//:uuid",
+    ],
+)

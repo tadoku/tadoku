@@ -62,11 +62,11 @@ func TestAuthenticationRequiresConfiguration(t *testing.T) {
 	}
 
 	passthrough := func(next stdhttp.Handler) stdhttp.Handler { return next }
-	_, err := NewHandler(app.New(nil, nil, nil, nil), func(context.Context) error { return nil }, time.Second, prometheus.NewRegistry(), slog.Default(), nil, passthrough)
+	_, err := NewHandler(app.New(nil, nil, nil, nil, nil), func(context.Context) error { return nil }, time.Second, prometheus.NewRegistry(), slog.Default(), nil, passthrough)
 	if err == nil {
 		t.Error("router accepted missing authentication middleware")
 	}
-	_, err = NewHandler(app.New(nil, nil, nil, nil), func(context.Context) error { return nil }, time.Second, prometheus.NewRegistry(), slog.Default(), passthrough, nil)
+	_, err = NewHandler(app.New(nil, nil, nil, nil, nil), func(context.Context) error { return nil }, time.Second, prometheus.NewRegistry(), slog.Default(), passthrough, nil)
 	if err == nil {
 		t.Error("router accepted missing banned-user middleware")
 	}
@@ -175,7 +175,7 @@ func TestNewApplicationRoutesInheritSharedMiddleware(t *testing.T) {
 			next.ServeHTTP(w, r)
 		})
 	}
-	router, err := NewHandler(app.New(nil, nil, nil, nil), func(context.Context) error { return nil }, time.Second, prometheus.NewRegistry(), slog.Default(), authenticate, rejectBanned)
+	router, err := NewHandler(app.New(nil, nil, nil, nil, nil), func(context.Context) error { return nil }, time.Second, prometheus.NewRegistry(), slog.Default(), authenticate, rejectBanned)
 	if err != nil {
 		t.Fatal(err)
 	}

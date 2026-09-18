@@ -23,6 +23,7 @@ import (
 	"github.com/tadoku/tadoku/services/common/postgresconfig"
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/announcements"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/pages"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/posts"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 	valkeyinfra "github.com/tadoku/tadoku/services/tadoku-api/infra/valkey"
@@ -228,10 +229,12 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	keto := ketoclient.NewReadClient(cfg.KetoReadURL, ketoclient.WithHTTPClient(ketoHTTP))
 	permissionChecker := permissions.NewKetoChecker(keto)
 	announcementsRepository := announcements.NewAnnouncementsRepository(pool)
+	pagesRepository := pages.NewPagesRepository(pool)
 	postsRepository := posts.NewPostsRepository(pool)
 	announcementsService := announcements.NewService(announcementsRepository)
+	pagesService := pages.NewService(pagesRepository)
 	postsService := posts.NewService(postsRepository)
-	api := app.New(announcementsService, postsService, pool, permissionChecker)
+	api := app.New(announcementsService, pagesService, postsService, pool, permissionChecker)
 	rejectBanned := newBannedUserMiddleware(keto, logger)
 
 	handler, err := transporthttp.NewHandler(api, pool.Ping, cfg.RequestTimeout, metrics, logger, authenticate, rejectBanned)

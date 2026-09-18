@@ -9,6 +9,7 @@ SQLC_PACKAGES=(
   "services/tadoku-api/infra/postgres/testdata/sqlc"
   "services/tadoku-api/sql/announcements"
   "services/tadoku-api/sql/posts"
+  "services/tadoku-api/sql/pages"
 )
 
 require_cmd() {

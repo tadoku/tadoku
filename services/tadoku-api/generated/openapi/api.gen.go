@@ -1075,6 +1075,13 @@ type ContentAnnouncementListParams struct {
 	Page     *int `form:"page,omitempty" json:"page,omitempty"`
 }
 
+// ContentPageListParams defines parameters for ContentPageList.
+type ContentPageListParams struct {
+	PageSize      *int  `form:"page_size,omitempty" json:"page_size,omitempty"`
+	Page          *int  `form:"page,omitempty" json:"page,omitempty"`
+	IncludeDrafts *bool `form:"include_drafts,omitempty" json:"include_drafts,omitempty"`
+}
+
 // ContentPostListParams defines parameters for ContentPostList.
 type ContentPostListParams struct {
 	PageSize      *int  `form:"page_size,omitempty" json:"page_size,omitempty"`
@@ -1114,6 +1121,12 @@ type ServerInterface interface {
 	// ContentAnnouncementUpdate Updates an existing announcement
 	// (PUT /content/announcements/{namespace}/{id})
 	ContentAnnouncementUpdate(w http.ResponseWriter, r *http.Request, namespace string, id string)
+	// ContentPageList lists all pages
+	// (GET /content/pages/{namespace})
+	ContentPageList(w http.ResponseWriter, r *http.Request, namespace string, params ContentPageListParams)
+	// ContentPageFindBySlug Returns page content for a given slug
+	// (GET /content/pages/{namespace}/{slug})
+	ContentPageFindBySlug(w http.ResponseWriter, r *http.Request, namespace string, slug string)
 	// ContentPostList lists all posts
 	// (GET /content/posts/{namespace})
 	ContentPostList(w http.ResponseWriter, r *http.Request, namespace string, params ContentPostListParams)
@@ -1349,6 +1362,109 @@ func (siw *ServerInterfaceWrapper) ContentAnnouncementUpdate(w http.ResponseWrit
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ContentAnnouncementUpdate(w, r, namespace, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ContentPageList operation middleware
+func (siw *ServerInterfaceWrapper) ContentPageList(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "namespace" -------------
+	var namespace string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "namespace", r.PathValue("namespace"), &namespace, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "namespace", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ContentPageListParams
+
+	// ------------- Optional query parameter "page_size" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page_size", r.URL.Query(), &params.PageSize, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page_size"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page_size", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "include_drafts" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "include_drafts", r.URL.Query(), &params.IncludeDrafts, runtime.BindQueryParameterOptions{Type: "boolean", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "include_drafts"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "include_drafts", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ContentPageList(w, r, namespace, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ContentPageFindBySlug operation middleware
+func (siw *ServerInterfaceWrapper) ContentPageFindBySlug(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "namespace" -------------
+	var namespace string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "namespace", r.PathValue("namespace"), &namespace, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "namespace", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "slug" -------------
+	var slug string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "slug", r.PathValue("slug"), &slug, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "slug", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ContentPageFindBySlug(w, r, namespace, slug)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -1756,6 +1872,8 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/content/pages/{namespace}/{slug}", wrapper.ContentPageFindBySlug)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/content/pages/{namespace}", wrapper.ContentPageList)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/content/posts/{namespace}/{slug}", wrapper.ContentPostDelete)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/content/posts/{namespace}/{slug}", wrapper.ContentPostFindBySlug)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/content/posts/{namespace}/{slug}", wrapper.ContentPostUpdate)
@@ -1967,6 +2085,60 @@ type ContentAnnouncementUpdate404Response struct {
 }
 
 func (response ContentAnnouncementUpdate404Response) VisitContentAnnouncementUpdateResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type ContentPageListRequestObject struct {
+	Namespace string `json:"namespace"`
+	Params    ContentPageListParams
+}
+
+type ContentPageListResponseObject interface {
+	VisitContentPageListResponse(w http.ResponseWriter) error
+}
+
+type ContentPageList200JSONResponse ContentPages
+
+func (response ContentPageList200JSONResponse) VisitContentPageListResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ContentPageFindBySlugRequestObject struct {
+	Namespace string `json:"namespace"`
+	Slug      string `json:"slug"`
+}
+
+type ContentPageFindBySlugResponseObject interface {
+	VisitContentPageFindBySlugResponse(w http.ResponseWriter) error
+}
+
+type ContentPageFindBySlug200JSONResponse ContentPage
+
+func (response ContentPageFindBySlug200JSONResponse) VisitContentPageFindBySlugResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ContentPageFindBySlug404Response struct {
+}
+
+func (response ContentPageFindBySlug404Response) VisitContentPageFindBySlugResponse(w http.ResponseWriter) error {
 	w.WriteHeader(404)
 	return nil
 }
@@ -2244,6 +2416,12 @@ type StrictServerInterface interface {
 	// ContentAnnouncementUpdate Updates an existing announcement
 	// (PUT /content/announcements/{namespace}/{id})
 	ContentAnnouncementUpdate(ctx context.Context, request ContentAnnouncementUpdateRequestObject) (ContentAnnouncementUpdateResponseObject, error)
+	// ContentPageList lists all pages
+	// (GET /content/pages/{namespace})
+	ContentPageList(ctx context.Context, request ContentPageListRequestObject) (ContentPageListResponseObject, error)
+	// ContentPageFindBySlug Returns page content for a given slug
+	// (GET /content/pages/{namespace}/{slug})
+	ContentPageFindBySlug(ctx context.Context, request ContentPageFindBySlugRequestObject) (ContentPageFindBySlugResponseObject, error)
 	// ContentPostList lists all posts
 	// (GET /content/posts/{namespace})
 	ContentPostList(ctx context.Context, request ContentPostListRequestObject) (ContentPostListResponseObject, error)
@@ -2479,6 +2657,60 @@ func (sh *strictHandler) ContentAnnouncementUpdate(w http.ResponseWriter, r *htt
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ContentAnnouncementUpdateResponseObject); ok {
 		if err := validResponse.VisitContentAnnouncementUpdateResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ContentPageList operation middleware
+func (sh *strictHandler) ContentPageList(w http.ResponseWriter, r *http.Request, namespace string, params ContentPageListParams) {
+	var request ContentPageListRequestObject
+
+	request.Namespace = namespace
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ContentPageList(ctx, request.(ContentPageListRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ContentPageList")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ContentPageListResponseObject); ok {
+		if err := validResponse.VisitContentPageListResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ContentPageFindBySlug operation middleware
+func (sh *strictHandler) ContentPageFindBySlug(w http.ResponseWriter, r *http.Request, namespace string, slug string) {
+	var request ContentPageFindBySlugRequestObject
+
+	request.Namespace = namespace
+	request.Slug = slug
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ContentPageFindBySlug(ctx, request.(ContentPageFindBySlugRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ContentPageFindBySlug")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ContentPageFindBySlugResponseObject); ok {
+		if err := validResponse.VisitContentPageFindBySlugResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

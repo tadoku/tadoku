@@ -37,10 +37,18 @@ func newLegacyContentAPI(ctx context.Context, dsn, jwksURL, ketoReadURL string) 
 		return nil, errors.Join(err, db.Close())
 	}
 
+	pageRepository := postgres.NewPageRepository(db)
 	repository := postgres.NewAnnouncementRepository(db)
 	postsRepository := postgres.NewPostRepository(db)
 	server := rest.NewServer(
-		nil, nil, nil, nil, nil, nil, nil, nil, // Page operations are not exercised.
+		domain.NewPageCreate(pageRepository, scenarioClock{}),
+		domain.NewPageUpdate(pageRepository, scenarioClock{}),
+		domain.NewPageDelete(pageRepository),
+		domain.NewPageFind(pageRepository, scenarioClock{}),
+		domain.NewPageFindByID(pageRepository),
+		domain.NewPageList(pageRepository),
+		domain.NewPageVersionList(pageRepository),
+		domain.NewPageVersionGet(pageRepository),
 		domain.NewPostCreate(postsRepository, scenarioClock{}),
 		domain.NewPostUpdate(postsRepository, scenarioClock{}),
 		domain.NewPostDelete(postsRepository),

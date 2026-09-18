@@ -281,7 +281,7 @@ paths:
           description: Page not found or not published
       x-tadoku-source: Content
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /pages/{namespace}/{slug}
       x-legacy-operation-id: pageFindBySlug
     put:
@@ -426,7 +426,7 @@ paths:
                 $ref: "#/components/schemas/ContentPages"
       x-tadoku-source: Content
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /pages/{namespace}
       x-legacy-operation-id: pageList
   "/content/pages/{namespace}/{id}/versions":

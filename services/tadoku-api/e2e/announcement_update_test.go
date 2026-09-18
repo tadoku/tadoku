@@ -50,10 +50,9 @@ func TestUpdateAnnouncement(t *testing.T) {
 	for _, test := range tests {
 		name := APITestName("UpdateAnnouncement", test.want, test.description...)
 		t.Run(name, func(t *testing.T) {
-			legacy := implementation{name: "content-api", handler: legacyContent.handler, skip: test.skipParity}
 			runCase(t, api, name, test.want,
 				implementation{name: "tadoku-api", handler: api.handler},
-				legacy,
+				implementation{name: "content-api", handler: legacyContent.handler, skip: test.skipParity},
 			)
 		})
 	}

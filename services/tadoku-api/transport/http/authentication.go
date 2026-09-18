@@ -17,8 +17,17 @@ import (
 // NewJWTAuthentication loads the gateway's signing keys and verifies user JWTs.
 // It performs no role, ban, permission, or service-audience checks.
 func NewJWTAuthentication(lifetime context.Context, jwksURL string, timeout time.Duration, logger *slog.Logger) (func(stdhttp.Handler) stdhttp.Handler, error) {
-	if lifetime == nil || jwksURL == "" || timeout <= 0 || logger == nil {
-		return nil, fmt.Errorf("lifetime context, JWKS URL, positive fetch timeout, and logger are required")
+	if lifetime == nil {
+		return nil, fmt.Errorf("authentication lifetime context is required")
+	}
+	if jwksURL == "" {
+		return nil, fmt.Errorf("JWKS URL is required")
+	}
+	if timeout <= 0 {
+		return nil, fmt.Errorf("JWKS fetch timeout must be positive")
+	}
+	if logger == nil {
+		return nil, fmt.Errorf("logger is required")
 	}
 
 	keys, err := keyfunc.Get(jwksURL, keyfunc.Options{

@@ -29,22 +29,24 @@ func (write writerFunc) Write(p []byte) (int, error) {
 }
 
 func TestAuthenticationRequiresConfiguration(t *testing.T) {
-	if _, err := NewJWTAuthentication(nil, "http://jwks.test", time.Second, slog.Default()); err == nil {
-		t.Error("missing lifetime context accepted")
-	}
-
 	for _, test := range []struct {
-		name    string
-		url     string
-		timeout time.Duration
+		name      string
+		lifetime  context.Context
+		url       string
+		timeout   time.Duration
+		logger    *slog.Logger
+		wantError string
 	}{
-		{name: "missing URL", timeout: time.Second},
-		{name: "missing timeout", url: "http://jwks.test"},
-		{name: "negative timeout", url: "http://jwks.test", timeout: -time.Second},
+		{name: "missing lifetime", url: "http://jwks.test", timeout: time.Second, logger: slog.Default(), wantError: "authentication lifetime context is required"},
+		{name: "missing URL", lifetime: t.Context(), timeout: time.Second, logger: slog.Default(), wantError: "JWKS URL is required"},
+		{name: "missing timeout", lifetime: t.Context(), url: "http://jwks.test", logger: slog.Default(), wantError: "JWKS fetch timeout must be positive"},
+		{name: "negative timeout", lifetime: t.Context(), url: "http://jwks.test", timeout: -time.Second, logger: slog.Default(), wantError: "JWKS fetch timeout must be positive"},
+		{name: "missing logger", lifetime: t.Context(), url: "http://jwks.test", timeout: time.Second, wantError: "logger is required"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			if _, err := NewJWTAuthentication(t.Context(), test.url, test.timeout, slog.Default()); err == nil {
-				t.Error("invalid authentication configuration accepted")
+			_, err := NewJWTAuthentication(test.lifetime, test.url, test.timeout, test.logger)
+			if err == nil || err.Error() != test.wantError {
+				t.Errorf("error=%v, want %q", err, test.wantError)
 			}
 		})
 	}

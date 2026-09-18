@@ -24,8 +24,6 @@ func (s *Service) FindPostBySlug(ctx context.Context, namespace, slug string) (*
 		return nil, ErrPostNotFound
 	}
 
-	post.CreatedAt = nil
-	post.UpdatedAt = nil
 	return post, nil
 }
 

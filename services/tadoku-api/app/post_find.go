@@ -12,6 +12,8 @@ import (
 func (a *Application) FindPostBySlug(ctx context.Context, namespace, slug string) (*content.Post, error) {
 	post, err := a.content.FindPostBySlug(ctx, namespace, slug)
 	if err == nil {
+		post.CreatedAt = nil
+		post.UpdatedAt = nil
 		return post, nil
 	}
 	if !errors.Is(err, content.ErrPostNotFound) && errx.KindOf(err) != errx.InvalidInput {

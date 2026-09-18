@@ -94,3 +94,19 @@ func (a *Application) DeletePage(ctx context.Context, namespace string, id uuid.
 
 	return a.pages.DeletePage(ctx, namespace, id)
 }
+
+func (a *Application) ListPageVersions(ctx context.Context, namespace string, id uuid.UUID) ([]pages.PageVersion, error) {
+	if err := a.permissions.RequireAdmin(ctx); err != nil {
+		return nil, err
+	}
+
+	return a.pages.ListPageVersions(ctx, namespace, id)
+}
+
+func (a *Application) GetPageVersion(ctx context.Context, namespace string, pageID, contentID uuid.UUID) (*pages.PageVersion, error) {
+	if err := a.permissions.RequireAdmin(ctx); err != nil {
+		return nil, err
+	}
+
+	return a.pages.GetPageVersion(ctx, namespace, pageID, contentID)
+}

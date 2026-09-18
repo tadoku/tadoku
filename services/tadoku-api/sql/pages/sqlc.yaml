@@ -5,6 +5,7 @@ sql:
     queries:
       - page_find.sql
       - page_list.sql
+      - page_create.sql
     gen:
       go:
         package: pages

@@ -3,6 +3,8 @@ load("@rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "pages",
     srcs = [
+        "page_create.go",
+        "page_create_repository.go",
         "page_find.go",
         "page_find_repository.go",
         "page_list.go",
@@ -22,7 +24,9 @@ go_library(
         "//services/tadoku-api/internal/errx",
         "//services/tadoku-api/internal/timex",
         "@com_github_google_uuid//:uuid",
+        "@com_github_jackc_pgerrcode//:pgerrcode",
         "@com_github_jackc_pgx_v5//:pgx",
+        "@com_github_jackc_pgx_v5//pgconn",
         "@com_github_jackc_pgx_v5//pgtype",
         "@com_github_jackc_pgx_v5//pgxpool",
     ],
@@ -30,7 +34,11 @@ go_library(
 
 go_test(
     name = "pages_test",
-    srcs = ["pages_repository_test.go"],
+    srcs = [
+        "page_create_repository_test.go",
+        "page_create_test.go",
+        "pages_repository_test.go",
+    ],
     args = ["-test.parallel=4"],
     env_inherit = ["TADOKU_TEST_POSTGRES_URL"],
     tags = [
@@ -40,7 +48,10 @@ go_test(
     ],
     deps = [
         ":pages",
+        "//services/tadoku-api/infra/postgres",
         "//services/tadoku-api/internal/testpostgres",
         "@com_github_google_uuid//:uuid",
+        "@com_github_jackc_pgerrcode//:pgerrcode",
+        "@com_github_jackc_pgx_v5//pgconn",
     ],
 )

@@ -1,0 +1,6 @@
+>>> POST /content/pages/main
+HTTP/1.1 201 Created
+Content-Length: 163
+Content-Type: application/json; charset=UTF-8
+
+{"html":"\u003cp\u003eHello\u003c/p\u003e","id":"22222222-2222-4222-8222-222222222222","published_at":"2026-09-11T12:00:00Z","slug":"new-page","title":"New page"}

@@ -1095,6 +1095,9 @@ type ContentAnnouncementCreateJSONRequestBody = ContentAnnouncement
 // ContentAnnouncementUpdateJSONRequestBody defines body for ContentAnnouncementUpdate for application/json ContentType.
 type ContentAnnouncementUpdateJSONRequestBody = ContentAnnouncement
 
+// ContentPageCreateJSONRequestBody defines body for ContentPageCreate for application/json ContentType.
+type ContentPageCreateJSONRequestBody = ContentPage
+
 // ContentPostCreateJSONRequestBody defines body for ContentPostCreate for application/json ContentType.
 type ContentPostCreateJSONRequestBody = ContentPost
 
@@ -1124,6 +1127,9 @@ type ServerInterface interface {
 	// ContentPageList lists all pages
 	// (GET /content/pages/{namespace})
 	ContentPageList(w http.ResponseWriter, r *http.Request, namespace string, params ContentPageListParams)
+	// ContentPageCreate Creates a new page
+	// (POST /content/pages/{namespace})
+	ContentPageCreate(w http.ResponseWriter, r *http.Request, namespace string)
 	// ContentPageFindBySlug Returns page content for a given slug
 	// (GET /content/pages/{namespace}/{slug})
 	ContentPageFindBySlug(w http.ResponseWriter, r *http.Request, namespace string, slug string)
@@ -1430,6 +1436,32 @@ func (siw *ServerInterfaceWrapper) ContentPageList(w http.ResponseWriter, r *htt
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ContentPageList(w, r, namespace, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ContentPageCreate operation middleware
+func (siw *ServerInterfaceWrapper) ContentPageCreate(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "namespace" -------------
+	var namespace string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "namespace", r.PathValue("namespace"), &namespace, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "namespace", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ContentPageCreate(w, r, namespace)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -1874,6 +1906,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/content/pages/{namespace}/{slug}", wrapper.ContentPageFindBySlug)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/content/pages/{namespace}", wrapper.ContentPageList)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/content/pages/{namespace}", wrapper.ContentPageCreate)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/content/posts/{namespace}/{slug}", wrapper.ContentPostDelete)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/content/posts/{namespace}/{slug}", wrapper.ContentPostFindBySlug)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/content/posts/{namespace}/{slug}", wrapper.ContentPostUpdate)
@@ -2110,6 +2143,45 @@ func (response ContentPageList200JSONResponse) VisitContentPageListResponse(w ht
 	w.WriteHeader(200)
 	_, err := buf.WriteTo(w)
 	return err
+}
+
+type ContentPageCreateRequestObject struct {
+	Namespace string `json:"namespace"`
+	Body      *ContentPageCreateJSONRequestBody
+}
+
+type ContentPageCreateResponseObject interface {
+	VisitContentPageCreateResponse(w http.ResponseWriter) error
+}
+
+type ContentPageCreate201JSONResponse ContentPage
+
+func (response ContentPageCreate201JSONResponse) VisitContentPageCreateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ContentPageCreate400Response struct {
+}
+
+func (response ContentPageCreate400Response) VisitContentPageCreateResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
+type ContentPageCreate409Response struct {
+}
+
+func (response ContentPageCreate409Response) VisitContentPageCreateResponse(w http.ResponseWriter) error {
+	w.WriteHeader(409)
+	return nil
 }
 
 type ContentPageFindBySlugRequestObject struct {
@@ -2419,6 +2491,9 @@ type StrictServerInterface interface {
 	// ContentPageList lists all pages
 	// (GET /content/pages/{namespace})
 	ContentPageList(ctx context.Context, request ContentPageListRequestObject) (ContentPageListResponseObject, error)
+	// ContentPageCreate Creates a new page
+	// (POST /content/pages/{namespace})
+	ContentPageCreate(ctx context.Context, request ContentPageCreateRequestObject) (ContentPageCreateResponseObject, error)
 	// ContentPageFindBySlug Returns page content for a given slug
 	// (GET /content/pages/{namespace}/{slug})
 	ContentPageFindBySlug(ctx context.Context, request ContentPageFindBySlugRequestObject) (ContentPageFindBySlugResponseObject, error)
@@ -2684,6 +2759,42 @@ func (sh *strictHandler) ContentPageList(w http.ResponseWriter, r *http.Request,
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ContentPageListResponseObject); ok {
 		if err := validResponse.VisitContentPageListResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ContentPageCreate operation middleware
+func (sh *strictHandler) ContentPageCreate(w http.ResponseWriter, r *http.Request, namespace string) {
+	var request ContentPageCreateRequestObject
+
+	request.Namespace = namespace
+
+	var body ContentPageCreateJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		if !errors.Is(err, io.EOF) {
+			sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+			return
+		}
+	} else {
+		request.Body = &body
+	}
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ContentPageCreate(ctx, request.(ContentPageCreateRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ContentPageCreate")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ContentPageCreateResponseObject); ok {
+		if err := validResponse.VisitContentPageCreateResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

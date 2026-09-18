@@ -2,7 +2,9 @@ version: "2"
 sql:
   - engine: postgresql
     schema: ../../../immersion-api/storage/postgres/migrations
-    queries: announcements.sql
+    queries:
+      - announcements.sql
+      - post_delete.sql
     gen:
       go:
         package: content

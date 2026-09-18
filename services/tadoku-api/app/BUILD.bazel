@@ -8,6 +8,7 @@ go_library(
         "announcement_update.go",
         "announcements.go",
         "app.go",
+        "post_delete.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/app",
     visibility = [

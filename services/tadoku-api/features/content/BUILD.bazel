@@ -6,6 +6,7 @@ go_test(
         "announcement_create_test.go",
         "announcement_update_test.go",
         "announcements_repository_test.go",
+        "post_delete_repository_test.go",
     ],
     args = ["-test.parallel=4"],
     data = glob(["testdata/*.sql"]),
@@ -33,6 +34,9 @@ go_library(
         "announcement_update.go",
         "announcements_repository.go",
         "content.go",
+        "post_delete.go",
+        "post_delete_repository.go",
+        "posts_repository.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/features/content",
     visibility = [

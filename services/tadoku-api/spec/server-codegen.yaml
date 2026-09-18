@@ -11,5 +11,6 @@ output-options:
     - ContentAnnouncementList
     - ContentAnnouncementListActive
     - ContentAnnouncementUpdate
+    - ContentPostDelete
   nullable-type: true
   skip-prune: true

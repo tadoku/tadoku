@@ -38,9 +38,12 @@ func newLegacyContentAPI(ctx context.Context, dsn, jwksURL, ketoReadURL string) 
 	}
 
 	repository := postgres.NewAnnouncementRepository(db)
+	postsRepository := postgres.NewPostRepository(db)
 	server := rest.NewServer(
 		nil, nil, nil, nil, nil, nil, nil, nil, // Page operations are not exercised.
-		nil, nil, nil, nil, nil, nil, nil, nil, // Post operations are not exercised.
+		nil, nil,
+		domain.NewPostDelete(postsRepository),
+		nil, nil, nil, nil, nil,
 		domain.NewAnnouncementCreate(repository, scenarioClock{}),
 		domain.NewAnnouncementUpdate(repository, scenarioClock{}),
 		domain.NewAnnouncementDelete(repository),

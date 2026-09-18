@@ -1101,6 +1101,9 @@ type ServerInterface interface {
 	// ContentAnnouncementUpdate Updates an existing announcement
 	// (PUT /content/announcements/{namespace}/{id})
 	ContentAnnouncementUpdate(w http.ResponseWriter, r *http.Request, namespace string, id string)
+	// ContentPostDelete Deletes an existing post
+	// (DELETE /content/posts/{namespace}/{slug})
+	ContentPostDelete(w http.ResponseWriter, r *http.Request, namespace string, slug string)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -1324,6 +1327,41 @@ func (siw *ServerInterfaceWrapper) ContentAnnouncementUpdate(w http.ResponseWrit
 	handler.ServeHTTP(w, r)
 }
 
+// ContentPostDelete operation middleware
+func (siw *ServerInterfaceWrapper) ContentPostDelete(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "namespace" -------------
+	var namespace string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "namespace", r.PathValue("namespace"), &namespace, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "namespace", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "slug" -------------
+	var slug string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "slug", r.PathValue("slug"), &slug, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "slug", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ContentPostDelete(w, r, namespace, slug)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 type UnescapedCookieParamError struct {
 	ParamName string
 	Err       error
@@ -1444,6 +1482,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/content/posts/{namespace}/{slug}", wrapper.ContentPostDelete)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/content/announcements/{namespace}/active", wrapper.ContentAnnouncementListActive)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/content/announcements/{namespace}", wrapper.ContentAnnouncementList)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/content/announcements/{namespace}", wrapper.ContentAnnouncementCreate)
@@ -1652,6 +1691,39 @@ func (response ContentAnnouncementUpdate404Response) VisitContentAnnouncementUpd
 	return nil
 }
 
+type ContentPostDeleteRequestObject struct {
+	Namespace string `json:"namespace"`
+	Slug      string `json:"slug"`
+}
+
+type ContentPostDeleteResponseObject interface {
+	VisitContentPostDeleteResponse(w http.ResponseWriter) error
+}
+
+type ContentPostDelete204Response struct {
+}
+
+func (response ContentPostDelete204Response) VisitContentPostDeleteResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type ContentPostDelete403Response struct {
+}
+
+func (response ContentPostDelete403Response) VisitContentPostDeleteResponse(w http.ResponseWriter) error {
+	w.WriteHeader(403)
+	return nil
+}
+
+type ContentPostDelete404Response struct {
+}
+
+func (response ContentPostDelete404Response) VisitContentPostDeleteResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 	// ContentAnnouncementList Lists all announcements
@@ -1672,6 +1744,9 @@ type StrictServerInterface interface {
 	// ContentAnnouncementUpdate Updates an existing announcement
 	// (PUT /content/announcements/{namespace}/{id})
 	ContentAnnouncementUpdate(ctx context.Context, request ContentAnnouncementUpdateRequestObject) (ContentAnnouncementUpdateResponseObject, error)
+	// ContentPostDelete Deletes an existing post
+	// (DELETE /content/posts/{namespace}/{slug})
+	ContentPostDelete(ctx context.Context, request ContentPostDeleteRequestObject) (ContentPostDeleteResponseObject, error)
 }
 
 type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error)
@@ -1886,6 +1961,33 @@ func (sh *strictHandler) ContentAnnouncementUpdate(w http.ResponseWriter, r *htt
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ContentAnnouncementUpdateResponseObject); ok {
 		if err := validResponse.VisitContentAnnouncementUpdateResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ContentPostDelete operation middleware
+func (sh *strictHandler) ContentPostDelete(w http.ResponseWriter, r *http.Request, namespace string, slug string) {
+	var request ContentPostDeleteRequestObject
+
+	request.Namespace = namespace
+	request.Slug = slug
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ContentPostDelete(ctx, request.(ContentPostDeleteRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ContentPostDelete")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ContentPostDeleteResponseObject); ok {
+		if err := validResponse.VisitContentPostDeleteResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

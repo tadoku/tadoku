@@ -25,6 +25,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/features/posts"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testketo"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/testkratos"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
 	transport "github.com/tadoku/tadoku/services/tadoku-api/transport/http"
 )
@@ -78,7 +79,14 @@ func runTests(m *testing.M) (code int) {
 	}
 	defer func() { cleanupErr = errors.Join(cleanupErr, keto.Close()) }()
 
-	api, err = newTestAPI(ctx, keto)
+	kratos, err := testkratos.New(ctx, "testdata/kratos.sql")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	defer func() { cleanupErr = errors.Join(cleanupErr, kratos.Close()) }()
+
+	api, err = newTestAPI(ctx, keto, kratos)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
@@ -106,11 +114,12 @@ func runTests(m *testing.M) (code int) {
 type suite struct {
 	db      *testpostgres.Database
 	keto    *testketo.Fixture
+	kratos  *testkratos.Fixture
 	handler *transport.Router
 	proxied atomic.Int32
 }
 
-func newTestAPI(ctx context.Context, ketoFixture *testketo.Fixture) (_ *suite, err error) {
+func newTestAPI(ctx context.Context, ketoFixture *testketo.Fixture, kratosFixture *testkratos.Fixture) (_ *suite, err error) {
 	db, err := testpostgres.New(ctx)
 	if err != nil {
 		return nil, err
@@ -129,6 +138,7 @@ func newTestAPI(ctx context.Context, ketoFixture *testketo.Fixture) (_ *suite, e
 	api := &suite{
 		db:      db,
 		keto:    ketoFixture,
+		kratos:  kratosFixture,
 		handler: handler,
 	}
 	if err := registerSentinelProxy(api); err != nil {
@@ -198,6 +208,11 @@ func (s *suite) RoundTrip(request *http.Request) (*http.Response, error) {
 
 func (s *suite) reset(t *testing.T, caseDir string) {
 	t.Helper()
+	if s.kratos != nil {
+		if err := s.kratos.Err(); err != nil {
+			t.Fatal(err)
+		}
+	}
 	requireKnownCaseFiles(t, caseDir)
 
 	var postgresSeeds, ketoSeeds []string

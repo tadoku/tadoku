@@ -60,6 +60,11 @@ var stepNamePattern = regexp.MustCompile(`^[a-z0-9_]+$`)
 // It stops at the first failing step because later steps depend on it.
 func runJourney(t *testing.T, s *suite, name string, steps []step) {
 	t.Helper()
+	if s.kratos != nil {
+		if err := s.kratos.Err(); err != nil {
+			t.Fatal(err)
+		}
+	}
 
 	directory := filepath.Join(journeysDir, name)
 	names, err := stepDirNames(steps)

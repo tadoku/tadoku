@@ -195,12 +195,14 @@ the master rollout gate under separate release authorization before deployment.
 
 The composition root keeps a concrete `*kratosapi.APIClient` on its runtime
 `application.kratos` field, ready to pass explicitly into a future consumer's
-constructor. `services/common/client/kratos.NewAPIClient(baseURL, httpClient)`
+constructor. `services/common/client/kratos.NewAPIClient(baseURL, kratos.WithHTTPClient(httpClient))`
 constructs the pinned `github.com/ory/kratos-client-go` v0.11.1 SDK. It does not
 validate deployment configuration or own the supplied HTTP client. Tadoku API
 validates configuration and supplies a client with a total timeout using its
-existing owned HTTP transport. Existing `NewClient(baseURL)` callers keep their
-helper behavior and default HTTP client.
+existing owned HTTP transport. Both constructors accept `WithHTTPClient`;
+`NewClient(baseURL, kratos.WithHTTPClient(httpClient))` uses that same client for
+SDK operations and cursor pagination. Existing `NewClient(baseURL)` callers keep
+their helper behavior and the SDK's default HTTP client.
 
 Call the SDK directly with the operation's caller context:
 

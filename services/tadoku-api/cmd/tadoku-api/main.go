@@ -211,10 +211,10 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 		}
 	}()
 
-	kratos := kratosclient.NewAPIClient(cfg.KratosAdminURL, &http.Client{
+	kratos := kratosclient.NewAPIClient(cfg.KratosAdminURL, kratosclient.WithHTTPClient(&http.Client{
 		Transport: transport,
 		Timeout:   cfg.KratosTimeout,
-	})
+	}))
 
 	startupContext, cancelStartup := context.WithTimeout(ctx, cfg.DialTimeout)
 	defer cancelStartup()

@@ -3,16 +3,84 @@ package kratos_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	commonkratos "github.com/tadoku/tadoku/services/common/client/kratos"
 )
+
+func TestClientUsesConfiguredHTTPClientForAllRequests(t *testing.T) {
+	id := uuid.MustParse("00000000-0000-0000-0000-000000000001")
+	// Only the supplied HTTP client trusts this scoped provider's certificate.
+	provider := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/admin/identities/" + id.String():
+			_, _ = w.Write([]byte(identityJSON(id, "active")))
+		case "/admin/identities":
+			if r.URL.Query().Get("page_size") != "10" || r.URL.Query().Get("page_token") != "next" {
+				t.Errorf("unexpected pagination query: %s", r.URL.RawQuery)
+			}
+			_, _ = w.Write([]byte("[" + identityJSON(id, "active") + "]"))
+		default:
+			t.Errorf("unexpected request: %s %s", r.Method, r.URL.String())
+			http.NotFound(w, r)
+		}
+	}))
+	t.Cleanup(provider.Close)
+	httpClient := provider.Client()
+	httpClient.Timeout = time.Second
+	t.Cleanup(httpClient.CloseIdleConnections)
+	client := commonkratos.NewClient(provider.URL, commonkratos.WithHTTPClient(httpClient))
+
+	identity, err := client.FetchIdentity(t.Context(), id)
+	if err != nil {
+		t.Fatalf("fetch identity using supplied HTTP client: %v", err)
+	}
+	if identity == nil || identity.GetId() != id.String() {
+		t.Errorf("identity=%v, want %s", identity, id)
+	}
+
+	identities, next, err := client.ListIdentities(t.Context(), 10, "next")
+	if err != nil {
+		t.Fatalf("list identities using supplied HTTP client: %v", err)
+	}
+	if len(identities) != 1 || identities[0].GetId() != id.String() || next != "" {
+		t.Errorf("identities=%v next=%q", identities, next)
+	}
+}
+
+func TestListIdentitiesUsesConfiguredHTTPTimeout(t *testing.T) {
+	canceled := make(chan struct{})
+	provider := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		<-r.Context().Done()
+		close(canceled)
+	}))
+	t.Cleanup(provider.Close)
+	httpClient := provider.Client()
+	httpClient.Timeout = 100 * time.Millisecond
+	t.Cleanup(httpClient.CloseIdleConnections)
+	client := commonkratos.NewClient(provider.URL, commonkratos.WithHTTPClient(httpClient))
+
+	ctx, cancel := context.WithTimeout(t.Context(), time.Second)
+	t.Cleanup(cancel)
+	_, _, err := client.ListIdentities(ctx, 10, "")
+	if !errors.Is(err, context.DeadlineExceeded) || ctx.Err() != nil {
+		t.Errorf("list error=%v, caller error=%v; want configured HTTP timeout", err, ctx.Err())
+	}
+	select {
+	case <-canceled:
+	case <-time.After(time.Second):
+		t.Error("provider did not observe timeout cancellation")
+	}
+}
 
 func TestListIdentitiesFetchesOnlyRequestedPage(t *testing.T) {
 	requests := 0

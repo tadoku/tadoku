@@ -44,7 +44,7 @@ func TestRawAPIClientPreservesProviderResponses(t *testing.T) {
 			httpClient := provider.Client()
 			httpClient.Timeout = time.Second
 			t.Cleanup(httpClient.CloseIdleConnections)
-			client := commonkratos.NewAPIClient(provider.URL+"/provider", httpClient)
+			client := commonkratos.NewAPIClient(provider.URL+"/provider", commonkratos.WithHTTPClient(httpClient))
 
 			identity, response, err := client.IdentityApi.GetIdentity(t.Context(), id.String()).IncludeCredential([]string{"oidc"}).Execute()
 			if response == nil {
@@ -111,7 +111,7 @@ func TestRawAPIClientPreservesCancellation(t *testing.T) {
 					Timeout:   time.Second,
 				}
 				t.Cleanup(httpClient.CloseIdleConnections)
-				client := commonkratos.NewAPIClient(provider.URL, httpClient)
+				client := commonkratos.NewAPIClient(provider.URL, commonkratos.WithHTTPClient(httpClient))
 				timeout := 3 * time.Second
 				if cause == "caller deadline" {
 					timeout = 100 * time.Millisecond

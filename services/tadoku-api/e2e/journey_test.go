@@ -23,12 +23,12 @@ type member string
 
 const (
 	// none sends the request without credentials.
-	none    member = "none"
-	guest   member = "guest"
-	reader  member = "reader"
-	reader2 member = "reader2"
-	admin   member = "admin"
-	banned  member = "banned"
+	none   member = "none"
+	guest  member = "guest"
+	user   member = "user"
+	user2  member = "user2"
+	admin  member = "admin"
+	banned member = "banned"
 )
 
 // cast maps cast members to the status each must receive when replaying a

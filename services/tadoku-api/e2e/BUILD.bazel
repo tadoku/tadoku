@@ -7,7 +7,6 @@ go_test(
         "access_level_test.go",
         "announcement_create_test.go",
         "announcement_delete_test.go",
-        "announcement_lifecycle_journey_test.go",
         "announcement_update_test.go",
         "announcements_test.go",
         "api_test.go",
@@ -30,6 +29,7 @@ go_test(
         "post_version_get_test.go",
         "post_version_list_test.go",
         "routing_test.go",
+        "user_journeys_test.go",
     ],
     data = glob([
         "testdata/**/*.http",

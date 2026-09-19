@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "db.go",
         "models.go",
+        "page_create.sql.go",
         "page_find.sql.go",
         "page_list.sql.go",
     ],

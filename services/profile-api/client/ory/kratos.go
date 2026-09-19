@@ -23,16 +23,13 @@ type Traits struct {
 	Email       string
 }
 
-func (k *KratosClient) ListIdentities(ctx context.Context, perPage int64, page int64) (*domain.ListIdentitiesResult, error) {
-	identities, err := k.client.ListIdentities(ctx, perPage, page)
+func (k *KratosClient) ListIdentities(ctx context.Context) ([]domain.IdentityInfo, error) {
+	identities, err := k.client.ListIdentities(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	result := &domain.ListIdentitiesResult{
-		Identities: make([]domain.IdentityInfo, 0, len(identities)),
-		HasMore:    len(identities) == int(perPage),
-	}
+	result := make([]domain.IdentityInfo, 0, len(identities))
 
 	for _, identity := range identities {
 		if identity.GetSchemaId() != "user" {
@@ -54,7 +51,7 @@ func (k *KratosClient) ListIdentities(ctx context.Context, perPage int64, page i
 			createdAt = identity.GetCreatedAt().Format("2006-01-02T15:04:05Z")
 		}
 
-		result.Identities = append(result.Identities, domain.IdentityInfo{
+		result = append(result, domain.IdentityInfo{
 			ID:          identity.GetId(),
 			DisplayName: traits.DisplayName,
 			Email:       traits.Email,

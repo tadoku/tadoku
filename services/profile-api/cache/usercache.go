@@ -89,32 +89,22 @@ func (c *UserCache) run(ctx context.Context) {
 func (c *UserCache) refreshUsers(ctx context.Context) error {
 	var allUsers []domain.UserCacheEntry
 	seen := make(map[string]bool)
-	page := int64(0)
-	perPage := int64(500)
+	identities, err := c.kratos.ListIdentities(ctx)
+	if err != nil {
+		return err
+	}
 
-	for {
-		result, err := c.kratos.ListIdentities(ctx, perPage, page)
-		if err != nil {
-			return err
+	for _, identity := range identities {
+		if seen[identity.ID] {
+			continue
 		}
-
-		for _, identity := range result.Identities {
-			if seen[identity.ID] {
-				continue
-			}
-			seen[identity.ID] = true
-			allUsers = append(allUsers, domain.UserCacheEntry{
-				ID:          identity.ID,
-				DisplayName: identity.DisplayName,
-				Email:       identity.Email,
-				CreatedAt:   identity.CreatedAt,
-			})
-		}
-
-		if !result.HasMore {
-			break
-		}
-		page++
+		seen[identity.ID] = true
+		allUsers = append(allUsers, domain.UserCacheEntry{
+			ID:          identity.ID,
+			DisplayName: identity.DisplayName,
+			Email:       identity.Email,
+			CreatedAt:   identity.CreatedAt,
+		})
 	}
 
 	suppressedIdentityIDs, err := c.suppressionRepository.ListAccountDeletionSuppressedIdentityIDs(ctx)

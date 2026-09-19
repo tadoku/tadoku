@@ -1,0 +1,39 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "testkratos",
+    testonly = True,
+    srcs = ["kratos.go"],
+    data = [
+        "//infra/dev/ory:identity.default.schema.json",
+        "@kratos_v26_2_0//:kratos",
+    ],
+    importpath = "github.com/tadoku/tadoku/services/tadoku-api/internal/testkratos",
+    target_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
+    visibility = ["//services/tadoku-api:__subpackages__"],
+    deps = [
+        "//services/common/client/kratos",
+        "@com_github_mattn_go_sqlite3//:go-sqlite3",
+        "@com_github_ory_kratos_client_go//:kratos-client-go",
+        "@rules_go//go/runfiles",
+    ],
+)
+
+go_test(
+    name = "testkratos_test",
+    srcs = ["kratos_test.go"],
+    data = glob(["testdata/*.sql"]),
+    embed = [":testkratos"],
+    tags = [
+        "no-cache",
+        "no-remote-exec",
+    ],
+    target_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
+    deps = ["@com_github_ory_kratos_client_go//:kratos-client-go"],
+)

@@ -1133,6 +1133,12 @@ type ServerInterface interface {
 	// ContentPageCreate Creates a new page
 	// (POST /content/pages/{namespace})
 	ContentPageCreate(w http.ResponseWriter, r *http.Request, namespace string)
+	// ContentPageVersionList Lists all versions of a page
+	// (GET /content/pages/{namespace}/{id}/versions)
+	ContentPageVersionList(w http.ResponseWriter, r *http.Request, namespace string, id string)
+	// ContentPageVersionGet Gets a specific version of a page
+	// (GET /content/pages/{namespace}/{id}/versions/{contentId})
+	ContentPageVersionGet(w http.ResponseWriter, r *http.Request, namespace string, id string, contentId openapi_types.UUID)
 	// ContentPageDelete Deletes an existing page
 	// (DELETE /content/pages/{namespace}/{slug})
 	ContentPageDelete(w http.ResponseWriter, r *http.Request, namespace string, slug string)
@@ -1471,6 +1477,85 @@ func (siw *ServerInterfaceWrapper) ContentPageCreate(w http.ResponseWriter, r *h
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ContentPageCreate(w, r, namespace)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ContentPageVersionList operation middleware
+func (siw *ServerInterfaceWrapper) ContentPageVersionList(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "namespace" -------------
+	var namespace string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "namespace", r.PathValue("namespace"), &namespace, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "namespace", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ContentPageVersionList(w, r, namespace, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ContentPageVersionGet operation middleware
+func (siw *ServerInterfaceWrapper) ContentPageVersionGet(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "namespace" -------------
+	var namespace string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "namespace", r.PathValue("namespace"), &namespace, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "namespace", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "contentId" -------------
+	var contentId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "contentId", r.PathValue("contentId"), &contentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "contentId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ContentPageVersionGet(w, r, namespace, id, contentId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -1988,6 +2073,8 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/content/pages/{namespace}/{slug}", wrapper.ContentPageUpdate)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/content/pages/{namespace}", wrapper.ContentPageList)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/content/pages/{namespace}", wrapper.ContentPageCreate)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/content/pages/{namespace}/{id}/versions", wrapper.ContentPageVersionList)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/content/pages/{namespace}/{id}/versions/{contentId}", wrapper.ContentPageVersionGet)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/content/posts/{namespace}/{slug}", wrapper.ContentPostDelete)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/content/posts/{namespace}/{slug}", wrapper.ContentPostFindBySlug)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/content/posts/{namespace}/{slug}", wrapper.ContentPostUpdate)
@@ -2262,6 +2349,85 @@ type ContentPageCreate409Response struct {
 
 func (response ContentPageCreate409Response) VisitContentPageCreateResponse(w http.ResponseWriter) error {
 	w.WriteHeader(409)
+	return nil
+}
+
+type ContentPageVersionListRequestObject struct {
+	Namespace string `json:"namespace"`
+	Id        string `json:"id"`
+}
+
+type ContentPageVersionListResponseObject interface {
+	VisitContentPageVersionListResponse(w http.ResponseWriter) error
+}
+
+type ContentPageVersionList200JSONResponse ContentPageVersions
+
+func (response ContentPageVersionList200JSONResponse) VisitContentPageVersionListResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ContentPageVersionList403Response struct {
+}
+
+func (response ContentPageVersionList403Response) VisitContentPageVersionListResponse(w http.ResponseWriter) error {
+	w.WriteHeader(403)
+	return nil
+}
+
+type ContentPageVersionList404Response struct {
+}
+
+func (response ContentPageVersionList404Response) VisitContentPageVersionListResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type ContentPageVersionGetRequestObject struct {
+	Namespace string             `json:"namespace"`
+	Id        string             `json:"id"`
+	ContentId openapi_types.UUID `json:"contentId"`
+}
+
+type ContentPageVersionGetResponseObject interface {
+	VisitContentPageVersionGetResponse(w http.ResponseWriter) error
+}
+
+type ContentPageVersionGet200JSONResponse ContentPageVersion
+
+func (response ContentPageVersionGet200JSONResponse) VisitContentPageVersionGetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ContentPageVersionGet403Response struct {
+}
+
+func (response ContentPageVersionGet403Response) VisitContentPageVersionGetResponse(w http.ResponseWriter) error {
+	w.WriteHeader(403)
+	return nil
+}
+
+type ContentPageVersionGet404Response struct {
+}
+
+func (response ContentPageVersionGet404Response) VisitContentPageVersionGetResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
 	return nil
 }
 
@@ -2656,6 +2822,12 @@ type StrictServerInterface interface {
 	// ContentPageCreate Creates a new page
 	// (POST /content/pages/{namespace})
 	ContentPageCreate(ctx context.Context, request ContentPageCreateRequestObject) (ContentPageCreateResponseObject, error)
+	// ContentPageVersionList Lists all versions of a page
+	// (GET /content/pages/{namespace}/{id}/versions)
+	ContentPageVersionList(ctx context.Context, request ContentPageVersionListRequestObject) (ContentPageVersionListResponseObject, error)
+	// ContentPageVersionGet Gets a specific version of a page
+	// (GET /content/pages/{namespace}/{id}/versions/{contentId})
+	ContentPageVersionGet(ctx context.Context, request ContentPageVersionGetRequestObject) (ContentPageVersionGetResponseObject, error)
 	// ContentPageDelete Deletes an existing page
 	// (DELETE /content/pages/{namespace}/{slug})
 	ContentPageDelete(ctx context.Context, request ContentPageDeleteRequestObject) (ContentPageDeleteResponseObject, error)
@@ -2963,6 +3135,61 @@ func (sh *strictHandler) ContentPageCreate(w http.ResponseWriter, r *http.Reques
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ContentPageCreateResponseObject); ok {
 		if err := validResponse.VisitContentPageCreateResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ContentPageVersionList operation middleware
+func (sh *strictHandler) ContentPageVersionList(w http.ResponseWriter, r *http.Request, namespace string, id string) {
+	var request ContentPageVersionListRequestObject
+
+	request.Namespace = namespace
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ContentPageVersionList(ctx, request.(ContentPageVersionListRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ContentPageVersionList")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ContentPageVersionListResponseObject); ok {
+		if err := validResponse.VisitContentPageVersionListResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ContentPageVersionGet operation middleware
+func (sh *strictHandler) ContentPageVersionGet(w http.ResponseWriter, r *http.Request, namespace string, id string, contentId openapi_types.UUID) {
+	var request ContentPageVersionGetRequestObject
+
+	request.Namespace = namespace
+	request.Id = id
+	request.ContentId = contentId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ContentPageVersionGet(ctx, request.(ContentPageVersionGetRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ContentPageVersionGet")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ContentPageVersionGetResponseObject); ok {
+		if err := validResponse.VisitContentPageVersionGetResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

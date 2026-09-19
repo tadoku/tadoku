@@ -19,6 +19,14 @@ type Page struct {
 	UpdatedAt   *time.Time
 }
 
+type PageVersion struct {
+	ID        uuid.UUID
+	Version   int
+	Title     string
+	HTML      string
+	CreatedAt time.Time
+}
+
 var (
 	ErrInvalidNamespace  = errx.NewInvalidInputError("namespace is required")
 	ErrInvalidPagination = errx.NewInvalidInputError("invalid pagination")

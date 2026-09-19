@@ -10,6 +10,8 @@ output-options:
     - ContentPageCreate
     - ContentPageDelete
     - ContentPageUpdate
+    - ContentPageVersionGet
+    - ContentPageVersionList
     - ContentAnnouncementCreate
     - ContentAnnouncementDelete
     - ContentAnnouncementFindByID

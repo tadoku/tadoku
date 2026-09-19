@@ -20,6 +20,8 @@ go_test(
         "page_find_test.go",
         "page_list_test.go",
         "page_update_test.go",
+        "page_version_get_test.go",
+        "page_version_list_test.go",
         "post_create_test.go",
         "post_delete_test.go",
         "post_find_test.go",

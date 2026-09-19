@@ -1,0 +1,6 @@
+>>> POST /content/announcements/main
+HTTP/1.1 201 Created
+Content-Length: 335
+Content-Type: application/json; charset=UTF-8
+
+{"content":"Tadoku is read-only this weekend.","created_at":"2026-09-12T12:00:00Z","ends_at":"2026-09-19T12:00:00Z","href":"https://example.test/status","id":"11111111-1111-4111-8111-000000000001","namespace":"main","starts_at":"2026-09-12T12:00:00Z","style":"warning","title":"Maintenance window","updated_at":"2026-09-12T12:00:00Z"}

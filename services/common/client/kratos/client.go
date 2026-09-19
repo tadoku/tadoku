@@ -17,16 +17,35 @@ var ErrNotFound = errors.New("kratos identity not found")
 
 type Client struct {
 	client            *kratosapi.APIClient
-	httpClient        *http.Client
 	listIdentitiesURL string
 }
 
-func NewClient(kratosURL string) *Client {
+// Option configures a Kratos client.
+type Option func(*kratosapi.Configuration)
+
+// WithHTTPClient sets the HTTP client for both SDK and cursor-pagination requests.
+// The caller owns the client and its transport.
+func WithHTTPClient(client *http.Client) Option {
+	return func(cfg *kratosapi.Configuration) {
+		cfg.HTTPClient = client
+	}
+}
+
+// NewAPIClient exposes the pinned Kratos SDK without translating provider models,
+// responses or errors. Without WithHTTPClient, the SDK uses its default HTTP
+// client. Construction makes no requests.
+func NewAPIClient(kratosURL string, opts ...Option) *kratosapi.APIClient {
 	cfg := kratosapi.NewConfiguration()
 	cfg.Servers = kratosapi.ServerConfigurations{{URL: kratosURL}}
+	for _, opt := range opts {
+		opt(cfg)
+	}
+	return kratosapi.NewAPIClient(cfg)
+}
+
+func NewClient(kratosURL string, opts ...Option) *Client {
 	return &Client{
-		client:            kratosapi.NewAPIClient(cfg),
-		httpClient:        http.DefaultClient,
+		client:            NewAPIClient(kratosURL, opts...),
 		listIdentitiesURL: strings.TrimRight(kratosURL, "/") + "/admin/identities",
 	}
 }
@@ -73,7 +92,7 @@ func (c *Client) ListIdentities(ctx context.Context, pageSize int64, pageToken s
 	}
 	req.Header.Set("Accept", "application/json")
 
-	res, err := c.httpClient.Do(req)
+	res, err := c.client.GetConfig().HTTPClient.Do(req)
 	if err != nil {
 		return nil, "", fmt.Errorf("could not list identities: %w", err)
 	}

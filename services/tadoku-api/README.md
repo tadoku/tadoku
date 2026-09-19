@@ -9,7 +9,7 @@ Externally the gateway still adds `/api`.
 
 ```
 transport/http -> app -> features/<feature> -> generated/sqlc/<feature>
-cmd/tadoku-api constructs and closes the shared pgx/v5 pool, raw Valkey client and HTTP resources
+cmd/tadoku-api constructs and owns the pgx/v5 pool, raw Valkey/Kratos clients and HTTP resources
 ```
 
 `transport/http/router.go` constructs the application router with standard
@@ -121,6 +121,13 @@ In addition to the existing four upstream URLs, startup now requires:
   for rollout compatibility.
 - `API_KETO_READ_URL`, the Keto read API URL. Tadoku API receives no Keto write
   URL or credential.
+- `API_KRATOS_ADMIN_URL`, an absolute HTTP(S) base URL for the existing Kratos
+  admin service. Credentials, query strings and fragments are rejected.
+  Path prefixes are supported; trailing slashes are removed. Development
+  uses `http://kratos-admin.default`.
+- `API_KRATOS_TIMEOUT` (default 2s), a positive total HTTP request timeout,
+  including reading the response body. The owned transport also applies
+  `API_DIAL_TIMEOUT`, `API_RESPONSE_HEADER_TIMEOUT` and `API_IDLE_TIMEOUT`.
 
 Startup fetches JWKS within `API_DIAL_TIMEOUT` and pings PostgreSQL before opening
 listeners. Either failure aborts startup. Tadoku API also constructs and owns its
@@ -129,6 +136,8 @@ aborts startup; an unavailable standalone server logs a warning and starts in
 degraded mode so the retained client can reconnect on a later command. Signing
 keys remain cached until restart; there is no periodic refresh or refresh on an
 unknown key ID.
+Startup also constructs and retains the raw Kratos SDK client without making a
+provider request. Kratos availability is not a startup or health-check gate.
 `/readyz` checks PostgreSQL; `/livez` remains independent of dependency health.
 Valkey is deliberately not a readiness or liveness gate. Commands use the caller's
 context, and blocking commands require an explicit caller deadline. The raw client
@@ -142,7 +151,9 @@ The existing proxy metrics and Go process metrics remain on the metrics listener
 (`API_METRICS_PORT`, default 9090). They describe proxy request volume/latency/errors
 and process health. This thin slice adds no native-specific metric family.
 Shutdown closes request/metrics listeners, the pool, the Valkey client and idle
-HTTP connections. Valkey close follows the upstream client's native per-connection
+HTTP connections, including Kratos connections. Startup failure closes the same
+owned transport; the SDK itself has no separate close operation or background job.
+Valkey close follows the upstream client's native per-connection
 close allowance rather than `API_VALKEY_TIMEOUT`. The dev deployment uses the
 existing disposable development DB role;
 secret synchronization and reset scripts include Tadoku API.
@@ -179,6 +190,38 @@ a migration/admin DSN. Confirm provider TLS/pooling settings and the coexistence
 connection budget: two native replicas default to eight connections, in addition
 to the still-running legacy pools. Update production secrets/manifests and complete
 the master rollout gate under separate release authorization before deployment.
+
+### Raw Kratos primitive
+
+The composition root keeps a concrete `*kratosapi.APIClient` on its runtime
+`application.kratos` field, ready to pass explicitly into a future consumer's
+constructor. `services/common/client/kratos.NewAPIClient(baseURL, kratos.WithHTTPClient(httpClient))`
+constructs the pinned `github.com/ory/kratos-client-go` v0.11.1 SDK. It does not
+validate deployment configuration or own the supplied HTTP client. Tadoku API
+validates configuration and supplies a client with a total timeout using its
+existing owned HTTP transport. Both constructors accept `WithHTTPClient`;
+`NewClient(baseURL, kratos.WithHTTPClient(httpClient))` uses that same client for
+SDK operations and cursor pagination. Existing `NewClient(baseURL)` callers keep
+their helper behavior and the SDK's default HTTP client.
+
+Call the SDK directly with the operation's caller context:
+
+```go
+identity, response, err := kratos.IdentityApi.GetIdentity(ctx, identityID).Execute()
+```
+
+`response` can be nil for transport/cancellation failures. When present, its
+status and headers remain available even with an error. Use `errors.As` to inspect
+`*kratosapi.GenericOpenAPIError`, including its `Body()` and `Model()`, and
+`errors.Is` for `context.Canceled` or `context.DeadlineExceeded`.
+
+The raw client returns the SDK's models, response metadata and errors unchanged;
+it does not apply the legacy helpers' not-found or idempotent-delete translations.
+Use the pinned SDK's request builders and pagination options directly. The total
+client timeout and any earlier caller deadline bound requests; caller cancellation
+also interrupts response-body reads. No profile model, trait policy, account-age
+rule, identity cache, refresh job or application consumer is installed. Future
+migrations own domain mapping and consuming operations.
 
 ## Verification
 

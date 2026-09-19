@@ -14,6 +14,7 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -25,6 +26,26 @@ import (
 
 func TestApplicationStartsAndShutsDown(t *testing.T) {
 	cfg := validApplicationConfig(t)
+	var kratosRequests atomic.Int32
+	kratosDisconnected := make(chan struct{}, 1)
+	kratos := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		kratosRequests.Add(1)
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"id":"synthetic","schema_id":"user","schema_url":"http://kratos.test/schema","traits":{}}`))
+	}))
+	kratos.Config.ConnState = func(_ net.Conn, state http.ConnState) {
+		if state == http.StateClosed {
+			select {
+			case kratosDisconnected <- struct{}{}:
+			default:
+			}
+		}
+	}
+	kratos.Start()
+	t.Cleanup(kratos.Close)
+	cfg.KratosAdminURL = kratos.URL
+	// Keep the idle connection alive until shutdown even on a busy test host.
+	cfg.IdleTimeout = time.Minute
 	observer, err := valkeygo.NewClient(valkeygo.MustParseURL(cfg.ValkeyURL))
 	if err != nil {
 		t.Fatal(err)
@@ -72,6 +93,21 @@ func TestApplicationStartsAndShutsDown(t *testing.T) {
 	if got := application.pool.Config().ConnConfig.RuntimeParams["application_name"]; got != cfg.ServiceName {
 		t.Errorf("application_name=%q want=%q", got, cfg.ServiceName)
 	}
+	if got := kratosRequests.Load(); got != 0 {
+		t.Fatalf("startup/readiness made %d Kratos requests", got)
+	}
+	if application.kratos == nil {
+		t.Fatal("startup did not retain the raw Kratos client")
+	}
+	// Exercise the owned SDK directly, without an application consumer.
+	if _, _, err := application.kratos.IdentityApi.GetIdentity(t.Context(), "synthetic").Execute(); err != nil {
+		t.Fatalf("owned Kratos request: %v", err)
+	}
+	select {
+	case <-kratosDisconnected:
+		t.Fatal("Kratos connection was not kept idle until shutdown")
+	default:
+	}
 
 	// Existing process metrics still use their own listener.
 	_, metricsPort, err := net.SplitHostPort(application.metricsListener.Addr().String())
@@ -102,7 +138,7 @@ func TestApplicationStartsAndShutsDown(t *testing.T) {
 		}
 	}
 
-	// Shutdown closes both listeners and the owned database and Valkey clients.
+	// Shutdown closes both listeners, database/Valkey clients and Kratos connections.
 	cancel()
 	if err := application.wait(); err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -124,6 +160,11 @@ func TestApplicationStartsAndShutsDown(t *testing.T) {
 		t.Errorf("closed Valkey client PING error=%v, want ErrClosing", err)
 	}
 	waitForValkeyDisconnect(t, observer, "id="+strconv.FormatInt(clientID, 10))
+	select {
+	case <-kratosDisconnected:
+	case <-time.After(time.Second):
+		t.Error("Kratos connection remained open after shutdown")
+	}
 }
 
 func validApplicationConfig(t *testing.T) config {
@@ -160,11 +201,13 @@ func validApplicationConfig(t *testing.T) config {
 	}
 
 	return config{
-		Port:        0,
-		MetricsPort: 0,
-		ServiceName: "tadoku-api-test",
-		JWKS:        jwks.URL,
-		KetoReadURL: upstream.URL,
+		Port:           0,
+		MetricsPort:    0,
+		ServiceName:    "tadoku-api-test",
+		JWKS:           jwks.URL,
+		KetoReadURL:    upstream.URL,
+		KratosAdminURL: upstream.URL,
+		KratosTimeout:  time.Second,
 
 		AuthzURL:     upstream.URL,
 		ContentURL:   upstream.URL,
@@ -195,6 +238,7 @@ func validApplicationConfig(t *testing.T) config {
 func TestLoadConfigUsesValidatedDefaults(t *testing.T) {
 	t.Setenv("API_JWKS", "http://jwks.test")
 	t.Setenv("API_KETO_READ_URL", "http://keto-read.test")
+	t.Setenv("API_KRATOS_ADMIN_URL", "http://kratos-admin.test")
 	t.Setenv("API_AUTHZ_URL", "http://authz")
 	t.Setenv("API_CONTENT_URL", "http://content")
 	t.Setenv("API_IMMERSION_URL", "http://immersion")
@@ -238,6 +282,35 @@ func TestLoadConfigUsesValidatedDefaults(t *testing.T) {
 	if cfg.KetoReadURL != "http://keto-read.test" {
 		t.Errorf("Keto read URL=%q", cfg.KetoReadURL)
 	}
+	if cfg.KratosAdminURL != "http://kratos-admin.test" || cfg.KratosTimeout != 2*time.Second {
+		t.Errorf("Kratos admin URL=%q timeout=%v", cfg.KratosAdminURL, cfg.KratosTimeout)
+	}
+	for _, rawURL := range []string{
+		"", "not-a-url", "/relative", "ftp://kratos.test", "http://:4434",
+		"http://kratos.test:bad",
+		"http://user:secret@kratos.test", "http://kratos.test?query=1", "http://kratos.test?",
+		"http://kratos.test#fragment", "http://kratos.test#",
+	} {
+		t.Setenv("API_KRATOS_ADMIN_URL", rawURL)
+		if _, err := loadConfig(); err == nil || !strings.Contains(err.Error(), "KratosAdminURL") {
+			t.Errorf("Kratos admin URL %q error=%v", rawURL, err)
+		}
+	}
+	t.Setenv("API_KRATOS_ADMIN_URL", "https://kratos-admin.test:4434/provider/")
+	for _, timeout := range []string{"0s", "-1s", "invalid"} {
+		t.Setenv("API_KRATOS_TIMEOUT", timeout)
+		if _, err := loadConfig(); err == nil || !strings.Contains(err.Error(), "KratosTimeout") {
+			t.Errorf("Kratos timeout %q error=%v", timeout, err)
+		}
+	}
+	t.Setenv("API_KRATOS_TIMEOUT", "750ms")
+	kratosConfig, err := loadConfig()
+	if err != nil {
+		t.Fatalf("load explicit Kratos configuration: %v", err)
+	}
+	if kratosConfig.KratosAdminURL != "https://kratos-admin.test:4434/provider" || kratosConfig.KratosTimeout != 750*time.Millisecond {
+		t.Errorf("Kratos admin URL=%q timeout=%v", kratosConfig.KratosAdminURL, kratosConfig.KratosTimeout)
+	}
 	t.Setenv("API_JWKS", "")
 	if _, err := loadConfig(); err == nil || !strings.Contains(err.Error(), "JWKS") {
 		t.Errorf("missing JWKS configuration error=%v", err)
@@ -266,6 +339,37 @@ func TestLoadConfigUsesValidatedDefaults(t *testing.T) {
 	t.Setenv("API_VALKEY_TIMEOUT", "0s")
 	if _, err := loadConfig(); err == nil || !strings.Contains(err.Error(), "ValkeyTimeout") {
 		t.Errorf("invalid Valkey timeout error=%v", err)
+	}
+}
+
+func TestApplicationBoundsKratosRequests(t *testing.T) {
+	cfg := validApplicationConfig(t)
+	provider := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		<-r.Context().Done()
+	}))
+	t.Cleanup(provider.Close)
+	cfg.KratosAdminURL = provider.URL
+	cfg.KratosTimeout = 50 * time.Millisecond
+
+	ctx, cancel := context.WithCancel(t.Context())
+	t.Cleanup(cancel)
+	application, err := start(ctx, cfg, slog.New(slog.NewTextHandler(io.Discard, nil)))
+	if err != nil {
+		t.Fatalf("startup without a responsive Kratos provider: %v", err)
+	}
+	t.Cleanup(func() {
+		cancel()
+		if err := application.wait(); err != nil {
+			t.Error(err)
+		}
+	})
+
+	// The runtime timeout must expire before the caller or transport deadlines.
+	requestContext, cancelRequest := context.WithTimeout(t.Context(), 500*time.Millisecond)
+	t.Cleanup(cancelRequest)
+	_, _, err = application.kratos.IdentityApi.GetIdentity(requestContext, "synthetic").Execute()
+	if !errors.Is(err, context.DeadlineExceeded) || requestContext.Err() != nil {
+		t.Errorf("Kratos request error=%v, caller error=%v", err, requestContext.Err())
 	}
 }
 
@@ -308,6 +412,11 @@ func TestApplicationReadinessDoesNotDependOnValkey(t *testing.T) {
 
 func TestApplicationClosesValkeyWhenLaterStartupFails(t *testing.T) {
 	cfg := validApplicationConfig(t)
+	kratos := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {
+		t.Error("failed startup must not make Kratos requests")
+	}))
+	t.Cleanup(kratos.Close)
+	cfg.KratosAdminURL = kratos.URL
 	observer, err := valkeygo.NewClient(valkeygo.MustParseURL(cfg.ValkeyURL))
 	if err != nil {
 		t.Fatal(err)

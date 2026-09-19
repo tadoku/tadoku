@@ -7,6 +7,7 @@ go_library(
     visibility = ["//visibility:private"],
     deps = [
         "//services/common/client/keto",
+        "//services/common/client/kratos",
         "//services/common/postgresconfig",
         "//services/tadoku-api/app",
         "//services/tadoku-api/features/announcements",
@@ -19,6 +20,7 @@ go_library(
         "@com_github_go_playground_validator_v10//:validator",
         "@com_github_jackc_pgx_v5//pgxpool",
         "@com_github_kelseyhightower_envconfig//:envconfig",
+        "@com_github_ory_kratos_client_go//:kratos-client-go",
         "@com_github_prometheus_client_golang//prometheus",
         "@com_github_prometheus_client_golang//prometheus/collectors",
         "@com_github_prometheus_client_golang//prometheus/promhttp",

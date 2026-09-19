@@ -1,0 +1,48 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "profile",
+    srcs = [
+        "domain.go",
+        "profile_cache.go",
+        "profile_repository.go",
+        "profile_service.go",
+    ],
+    importpath = "github.com/tadoku/tadoku/services/tadoku-api/features/profile",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//services/common/authz/roles",
+        "//services/tadoku-api/generated/sqlc/profile",
+        "//services/tadoku-api/infra/postgres",
+        "//services/tadoku-api/internal/errx",
+        "//services/tadoku-api/internal/permissions",
+        "@com_github_jackc_pgx_v5//pgxpool",
+        "@com_github_ory_kratos_client_go//:kratos-client-go",
+        "@com_github_sahilm_fuzzy//:fuzzy",
+    ],
+)
+
+go_test(
+    name = "profile_test",
+    srcs = [
+        "profile_cache_test.go",
+        "profile_repository_test.go",
+        "profile_service_test.go",
+    ],
+    args = ["-test.parallel=4"],
+    embed = [":profile"],
+    env_inherit = ["TADOKU_TEST_POSTGRES_URL"],
+    tags = [
+        "no-cache",
+        "no-remote-exec",
+        "requires-network",
+    ],
+    deps = [
+        "//services/common/authz/roles",
+        "//services/tadoku-api/internal/errx",
+        "//services/tadoku-api/internal/identity",
+        "//services/tadoku-api/internal/permissions",
+        "//services/tadoku-api/internal/testpostgres",
+        "@com_github_ory_kratos_client_go//:kratos-client-go",
+    ],
+)

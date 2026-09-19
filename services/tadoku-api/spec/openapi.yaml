@@ -2567,7 +2567,7 @@ paths:
           description: forbidden (not admin)
       x-tadoku-source: Profile
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /users
       x-legacy-operation-id: usersList
   /authz/internal/v1/ping:

@@ -1,0 +1,3 @@
+GET /profile/users?query=example.test&page_size=1&page=1 HTTP/1.1
+Host: api.test
+

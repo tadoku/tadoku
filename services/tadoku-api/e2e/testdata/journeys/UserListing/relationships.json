@@ -1,0 +1,14 @@
+[
+  {
+    "namespace": "app",
+    "object": "tadoku",
+    "relation": "admins",
+    "subject_id": "44444444-4444-4444-8444-444444444444"
+  },
+  {
+    "namespace": "app",
+    "object": "tadoku",
+    "relation": "banned",
+    "subject_id": "44444444-4444-4444-8444-444444444444"
+  }
+]

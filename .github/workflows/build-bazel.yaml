@@ -143,6 +143,7 @@ jobs:
           //services/tadoku-api/infra/valkey:valkey_test
           //services/tadoku-api/features/announcements:announcements_test
           //services/tadoku-api/features/pages:pages_test
+          //services/tadoku-api/features/profile:profile_test
           //services/tadoku-api/features/posts:posts_test
           //services/tadoku-api/e2e:e2e_test
           //services/tadoku-api/cmd/tadoku-api:tadoku-api_test

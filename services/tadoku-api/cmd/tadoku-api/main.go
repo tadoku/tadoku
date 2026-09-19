@@ -21,6 +21,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	commonroles "github.com/tadoku/tadoku/services/common/authz/roles"
 	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
 	kratosclient "github.com/tadoku/tadoku/services/common/client/kratos"
 	"github.com/tadoku/tadoku/services/common/postgresconfig"
@@ -29,6 +30,7 @@ import (
 	featureauthz "github.com/tadoku/tadoku/services/tadoku-api/features/authz"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/pages"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/posts"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/profile"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 	valkeyinfra "github.com/tadoku/tadoku/services/tadoku-api/infra/valkey"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
@@ -117,6 +119,7 @@ type application struct {
 	valkey          valkeygo.Client
 	kratos          *kratosapi.APIClient
 	keto            *ketoclient.Client
+	userCacheDone   chan struct{}
 }
 
 type pgxPoolCollector struct {
@@ -212,10 +215,12 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 		}
 	}()
 
-	kratos := kratosclient.NewAPIClient(cfg.KratosAdminURL, kratosclient.WithHTTPClient(&http.Client{
+	kratosHTTP := &http.Client{
 		Transport: transport,
 		Timeout:   cfg.KratosTimeout,
-	}))
+	}
+	kratos := kratosclient.NewAPIClient(cfg.KratosAdminURL, kratosclient.WithHTTPClient(kratosHTTP))
+	kratosIdentities := kratosclient.NewClient(cfg.KratosAdminURL, kratosclient.WithHTTPClient(kratosHTTP))
 	keto := ketoclient.NewClient(cfg.KetoReadURL, cfg.KetoWriteURL, ketoclient.WithHTTPClient(&http.Client{
 		Transport: transport,
 		Timeout:   cfg.KetoWriteTimeout,
@@ -267,10 +272,13 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	announcementsRepository := announcements.NewAnnouncementsRepository(pool)
 	pagesRepository := pages.NewPagesRepository(pool)
 	postsRepository := posts.NewPostsRepository(pool)
+	profileRepository := profile.NewProfileRepository(pool)
+	userCache := profile.NewUserCache(kratosIdentities, profileRepository)
 	announcementsService := announcements.NewService(announcementsRepository)
 	pagesService := pages.NewService(pagesRepository)
 	postsService := posts.NewService(postsRepository)
-	api := app.New(announcementsService, authzService, pagesService, postsService, pool, permissionChecker)
+	profileService := profile.NewService(userCache, commonroles.NewKetoService(ketoReader, "app", "tadoku"), permissionChecker)
+	api := app.New(announcementsService, authzService, pagesService, postsService, profileService, pool, permissionChecker)
 	rejectBanned := newBannedUserMiddleware(ketoReader, logger)
 
 	handler, err := transporthttp.NewHandler(api, pool.Ping, cfg.RequestTimeout, metrics, logger, authenticate, rejectBanned)
@@ -339,7 +347,13 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 		valkey:          valkeyClient,
 		kratos:          kratos,
 		keto:            keto,
+		userCacheDone:   make(chan struct{}),
 	}
+
+	go func() {
+		defer close(app.userCacheDone)
+		userCache.Run(ctx)
+	}()
 
 	go func() {
 		if err := server.Serve(listener); err != nil && !errors.Is(err, http.ErrServerClosed) {
@@ -375,6 +389,9 @@ func (app *application) wait() error {
 	case runErr = <-app.serverErrors:
 	}
 	app.cancel()
+	if app.userCacheDone != nil {
+		<-app.userCacheDone
+	}
 
 	// Each server gets the full configured grace period.
 	shutdownContext, cancelShutdown := context.WithTimeout(context.Background(), app.shutdownTimeout)

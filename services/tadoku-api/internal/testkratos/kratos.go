@@ -124,6 +124,12 @@ func New(ctx context.Context, seedFile string) (_ *Fixture, resultErr error) {
 // Client returns the raw SDK, using the fixture's bounded, private transport.
 func (fixture *Fixture) Client() *kratosapi.APIClient { return fixture.client }
 
+// CursorClient returns the production cursor-pagination client over the same
+// bounded private transport as Client.
+func (fixture *Fixture) CursorClient() *kratosclient.Client {
+	return kratosclient.NewClient(adminURL, kratosclient.WithHTTPClient(fixture.http))
+}
+
 // Err prevents another scenario from using a closed, failed or exited fixture.
 func (fixture *Fixture) Err() error {
 	if fixture.failed != nil {

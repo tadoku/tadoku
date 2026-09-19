@@ -16,7 +16,7 @@ func TestDependencyFailures(t *testing.T) {
 	closedPool := openClosedPool(t, api.db.DSN)
 	var logs bytes.Buffer
 	logger := slog.New(slog.NewTextHandler(&logs, &slog.HandlerOptions{Level: slog.LevelDebug}))
-	handler, err := newTestRouterWithLogger(t.Context(), closedPool, keto.ReadURL(), logger)
+	handler, err := newTestRouterWithLogger(t.Context(), closedPool, keto.ReadURL(), &nativeProfileCacheHolder{}, logger)
 	if err != nil {
 		t.Fatal(err)
 	}

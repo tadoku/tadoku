@@ -1089,6 +1089,15 @@ type ContentPostListParams struct {
 	IncludeDrafts *bool `form:"include_drafts,omitempty" json:"include_drafts,omitempty"`
 }
 
+// ProfileUsersListParams defines parameters for ProfileUsersList.
+type ProfileUsersListParams struct {
+	PageSize *int `form:"page_size,omitempty" json:"page_size,omitempty"`
+	Page     *int `form:"page,omitempty" json:"page,omitempty"`
+
+	// Query Fuzzy search on display name and email
+	Query *string `form:"query,omitempty" json:"query,omitempty"`
+}
+
 // AuthzPermissionCheckJSONRequestBody defines body for AuthzPermissionCheck for application/json ContentType.
 type AuthzPermissionCheckJSONRequestBody = AuthzPermissionCheckRequest
 
@@ -1178,6 +1187,9 @@ type ServerInterface interface {
 	// ContentPostUpdate Updates an existing post
 	// (PUT /content/posts/{namespace}/{slug})
 	ContentPostUpdate(w http.ResponseWriter, r *http.Request, namespace string, slug string)
+	// ProfileUsersList Lists all users (admin only)
+	// (GET /profile/users)
+	ProfileUsersList(w http.ResponseWriter, r *http.Request, params ProfileUsersListParams)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -1985,6 +1997,65 @@ func (siw *ServerInterfaceWrapper) ContentPostUpdate(w http.ResponseWriter, r *h
 	handler.ServeHTTP(w, r)
 }
 
+// ProfileUsersList operation middleware
+func (siw *ServerInterfaceWrapper) ProfileUsersList(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ProfileUsersListParams
+
+	// ------------- Optional query parameter "page_size" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page_size", r.URL.Query(), &params.PageSize, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page_size"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page_size", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "query" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "query", r.URL.Query(), &params.Query, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "query"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "query", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ProfileUsersList(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 type UnescapedCookieParamError struct {
 	ParamName string
 	Err       error
@@ -2127,6 +2198,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/content/announcements/{namespace}/{id}", wrapper.ContentAnnouncementDelete)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/content/announcements/{namespace}/{id}", wrapper.ContentAnnouncementFindByID)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/content/announcements/{namespace}/{id}", wrapper.ContentAnnouncementUpdate)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/profile/users", wrapper.ProfileUsersList)
 
 	return m
 }
@@ -2926,6 +2998,44 @@ func (response ContentPostUpdate409Response) VisitContentPostUpdateResponse(w ht
 	return nil
 }
 
+type ProfileUsersListRequestObject struct {
+	Params ProfileUsersListParams
+}
+
+type ProfileUsersListResponseObject interface {
+	VisitProfileUsersListResponse(w http.ResponseWriter) error
+}
+
+type ProfileUsersList200JSONResponse ProfileUserList
+
+func (response ProfileUsersList200JSONResponse) VisitProfileUsersListResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ProfileUsersList401Response struct {
+}
+
+func (response ProfileUsersList401Response) VisitProfileUsersListResponse(w http.ResponseWriter) error {
+	w.WriteHeader(401)
+	return nil
+}
+
+type ProfileUsersList403Response struct {
+}
+
+func (response ProfileUsersList403Response) VisitProfileUsersListResponse(w http.ResponseWriter) error {
+	w.WriteHeader(403)
+	return nil
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 	// AuthzRoleGet Fetches the role of the current user
@@ -2994,6 +3104,9 @@ type StrictServerInterface interface {
 	// ContentPostUpdate Updates an existing post
 	// (PUT /content/posts/{namespace}/{slug})
 	ContentPostUpdate(ctx context.Context, request ContentPostUpdateRequestObject) (ContentPostUpdateResponseObject, error)
+	// ProfileUsersList Lists all users (admin only)
+	// (GET /profile/users)
+	ProfileUsersList(ctx context.Context, request ProfileUsersListRequestObject) (ProfileUsersListResponseObject, error)
 }
 
 type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error)
@@ -3681,6 +3794,32 @@ func (sh *strictHandler) ContentPostUpdate(w http.ResponseWriter, r *http.Reques
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ContentPostUpdateResponseObject); ok {
 		if err := validResponse.VisitContentPostUpdateResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ProfileUsersList operation middleware
+func (sh *strictHandler) ProfileUsersList(w http.ResponseWriter, r *http.Request, params ProfileUsersListParams) {
+	var request ProfileUsersListRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ProfileUsersList(ctx, request.(ProfileUsersListRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ProfileUsersList")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ProfileUsersListResponseObject); ok {
+		if err := validResponse.VisitProfileUsersListResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

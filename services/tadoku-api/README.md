@@ -66,6 +66,22 @@ shared ban lookup is inconclusive. `RequireAuthenticatedAllowingUnknownBan` is a
 explicit availability opt-out for read-only operations. Operations that mutate
 state must never use the fail-open variant.
 
+Response enrichment may consume shared authorization facts through a narrow
+consumer-owned interface implemented by `services/common/authz/roles`. Batch
+facts are read for each request and are never treated as caller authorization;
+the operation still uses `permissions.Checker` for its own access decision and
+the shared HTTP ban gate still applies first.
+
+Provider-backed read caches reuse the common provider client's cursor support,
+preserve provider order, read every cursor page and reject repeated continuation
+tokens. Construction performs no provider request. Production starts refresh
+loops only after successful application construction and does not make provider
+availability a startup or health gate. Such caches expose one synchronous refresh
+for deterministic assembly tests and a context-cancellable production loop. A
+provider refresh failure retains the last complete snapshot; failure to read an
+authoritative suppression source clears visible data, and learned suppressions
+remain sticky for the cache's lifetime.
+
 ## Contract and compatibility
 
 `spec/openapi.yaml` is the one canonical contract: 72 public operations plus nine
@@ -145,8 +161,11 @@ degraded mode so the retained client can reconnect on a later command. Signing
 keys remain cached until restart; there is no periodic refresh or refresh on an
 unknown key ID.
 Startup also constructs and retains the raw Kratos SDK and shared Keto read/write
-clients without making provider requests. Their availability is not a startup or
-health-check gate; startup and health checks never mutate relationships.
+clients; constructing them makes no provider request. After the application is
+successfully constructed, owned cache loops may begin asynchronous reads without
+waiting for an initial refresh. Provider availability and refresh completion are
+not startup or health-check gates; startup and health checks never mutate provider
+state.
 `/readyz` checks PostgreSQL; `/livez` remains independent of dependency health.
 Valkey is deliberately not a readiness or liveness gate. Commands use the caller's
 context, and blocking commands require an explicit caller deadline. The raw client
@@ -161,8 +180,9 @@ The existing proxy metrics and Go process metrics remain on the metrics listener
 and process health. This thin slice adds no native-specific metric family.
 Shutdown closes request/metrics listeners, the pool, the Valkey client and idle
 HTTP connections, including Kratos and Keto connections. Startup failure closes
-the same owned transport; these clients have no separate close operation or
-background job.
+the same owned transport. Raw clients have no separate close operation. Shutdown
+cancels and joins owned cache loops before closing their database and provider
+transport dependencies.
 Valkey close follows the upstream client's native per-connection
 close allowance rather than `API_VALKEY_TIMEOUT`. The dev deployment uses the
 existing disposable development DB role;
@@ -270,12 +290,11 @@ status and headers remain available even with an error. Use `errors.As` to inspe
 `errors.Is` for `context.Canceled` or `context.DeadlineExceeded`.
 
 The raw client returns the SDK's models, response metadata and errors unchanged;
-it does not apply the legacy helpers' not-found or idempotent-delete translations.
-Use the pinned SDK's request builders and pagination options directly. The total
-client timeout and any earlier caller deadline bound requests; caller cancellation
-also interrupts response-body reads. No profile model, trait policy, account-age
-rule, identity cache, refresh job or application consumer is installed. Future
-migrations own domain mapping and consuming operations.
+it does not apply legacy domain mapping, trait policy, account-age rules or the
+legacy helpers' not-found and idempotent-delete translations. Consuming features
+own those decisions and any cache lifecycle. Use the pinned SDK's request builders
+and pagination options directly. The total client timeout and any earlier caller
+deadline bound requests; caller cancellation also interrupts response-body reads.
 
 ## Verification
 

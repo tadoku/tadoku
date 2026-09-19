@@ -9,6 +9,7 @@ on:
   pull_request:
     paths:
       - "services/**"
+      - "infra/dev/ory/identity.default.schema.json"
       - "tools/ci/**"
       - "tools/oapi-codegen/**"
       - ".depolicy.yaml"
@@ -28,6 +29,7 @@ on:
   push:
     paths:
       - "services/**"
+      - "infra/dev/ory/identity.default.schema.json"
       - "tools/ci/**"
       - "tools/oapi-codegen/**"
       - ".depolicy.yaml"

@@ -1,0 +1,6 @@
+>>> GET /content/pages/main?page_size=2&page=0
+HTTP/1.1 200 OK
+Content-Length: 447
+Content-Type: application/json; charset=UTF-8
+
+{"next_page_token":"1","pages":[{"created_at":"2026-09-12T10:00:00Z","html":"Three","id":"10000000-0000-4000-8000-000000000003","published_at":"2026-09-11T00:00:00Z","slug":"three","title":"Three","updated_at":"2026-09-12T10:00:00Z"},{"created_at":"2026-09-12T10:00:00Z","html":"Two","id":"10000000-0000-4000-8000-000000000002","published_at":"2026-09-11T00:00:00Z","slug":"two","title":"Two","updated_at":"2026-09-12T10:00:00Z"}],"total_size":3}

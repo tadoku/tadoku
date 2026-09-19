@@ -1,0 +1,14 @@
+version: "2"
+sql:
+  - engine: postgresql
+    schema: ../../../immersion-api/storage/postgres/migrations
+    queries:
+      - page_find.sql
+      - page_list.sql
+    gen:
+      go:
+        package: pages
+        out: ../../generated/sqlc/pages
+        sql_package: pgx/v5
+        emit_empty_slices: true
+        omit_unused_structs: true

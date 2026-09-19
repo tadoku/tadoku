@@ -46,7 +46,7 @@ func TestRouterWorksWithoutLegacyProxyRoutes(t *testing.T) {
 		{
 			name:   "unimplemented paths are not found",
 			method: http.MethodGet,
-			path:   "/content/pages/example",
+			path:   "/content/flags/example",
 			status: http.StatusNotFound,
 		},
 		{

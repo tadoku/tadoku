@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "announcements.go",
         "app.go",
+        "pages.go",
         "posts.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/app",
@@ -15,6 +16,7 @@ go_library(
     ],
     deps = [
         "//services/tadoku-api/features/announcements",
+        "//services/tadoku-api/features/pages",
         "//services/tadoku-api/features/posts",
         "//services/tadoku-api/infra/postgres",
         "//services/tadoku-api/internal/errx",

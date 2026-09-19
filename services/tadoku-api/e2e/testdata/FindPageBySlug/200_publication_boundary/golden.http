@@ -1,0 +1,6 @@
+>>> GET /content/pages/main/boundary
+HTTP/1.1 200 OK
+Content-Length: 128
+Content-Type: application/json; charset=UTF-8
+
+{"html":"\u003cp\u003eBoundary\u003c/p\u003e","id":"66666666-6666-4666-8666-666666666666","slug":"boundary","title":"Boundary"}

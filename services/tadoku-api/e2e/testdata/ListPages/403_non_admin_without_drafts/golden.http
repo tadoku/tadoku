@@ -1,0 +1,4 @@
+>>> GET /content/pages/main?include_drafts=false
+HTTP/1.1 403 Forbidden
+Content-Length: 0
+

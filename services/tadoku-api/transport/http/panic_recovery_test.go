@@ -22,7 +22,7 @@ func TestApplicationPanicRecovery(t *testing.T) {
 	var logs bytes.Buffer
 	registry := prometheus.NewRegistry()
 	router, err := NewHandler(
-		app.New(nil, nil, nil, nil),
+		app.New(nil, nil, nil, nil, nil),
 		func(context.Context) error { return nil },
 		time.Second,
 		registry,
@@ -110,7 +110,7 @@ func TestApplicationPanicRecovery(t *testing.T) {
 func TestApplicationPanicRecoveryPreservesWrittenStatus(t *testing.T) {
 	var logs bytes.Buffer
 	router, err := NewHandler(
-		app.New(nil, nil, nil, nil),
+		app.New(nil, nil, nil, nil, nil),
 		func(context.Context) error { return nil },
 		time.Second,
 		prometheus.NewRegistry(),
@@ -159,7 +159,7 @@ func TestApplicationPanicRecoveryPreservesWrittenStatus(t *testing.T) {
 func TestApplicationPanicRecoveryHandlesInvalidStatusPanic(t *testing.T) {
 	var logs bytes.Buffer
 	router, err := NewHandler(
-		app.New(nil, nil, nil, nil),
+		app.New(nil, nil, nil, nil, nil),
 		func(context.Context) error { return nil },
 		time.Second,
 		prometheus.NewRegistry(),
@@ -199,7 +199,7 @@ func TestApplicationPanicRecoveryHandlesInvalidStatusPanic(t *testing.T) {
 func TestApplicationPanicRecoveryTracksFlushedResponse(t *testing.T) {
 	var logs bytes.Buffer
 	router, err := NewHandler(
-		app.New(nil, nil, nil, nil),
+		app.New(nil, nil, nil, nil, nil),
 		func(context.Context) error { return nil },
 		time.Second,
 		prometheus.NewRegistry(),

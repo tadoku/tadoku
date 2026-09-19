@@ -26,6 +26,9 @@ test('all retained wire contracts survive the merge, including internal callers'
       if (contract.paths['/content/pages/{namespace}'].post['x-tadoku-owner'] === 'native') {
         legacy.paths['/pages/{namespace}'].post.responses['409'] = {description: 'Page ID or slug already exists'};
       }
+      if (contract.paths['/content/pages/{namespace}/{slug}'].put['x-tadoku-owner'] === 'native') {
+        legacy.paths['/pages/{namespace}/{id}'].put.responses['409'] = {description: 'Page already exists'};
+      }
       if (contract.paths['/content/posts/{namespace}'].post['x-tadoku-owner'] === 'native') {
         legacy.paths['/posts/{namespace}'].post.responses['409'] = {description: 'Post ID or slug already exists'};
       }

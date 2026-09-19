@@ -5,10 +5,14 @@ go_library(
     srcs = [
         "page_create.go",
         "page_create_repository.go",
+        "page_delete.go",
+        "page_delete_repository.go",
         "page_find.go",
         "page_find_repository.go",
         "page_list.go",
         "page_list_repository.go",
+        "page_update.go",
+        "page_update_repository.go",
         "pages.go",
         "pages_repository.go",
     ],
@@ -37,6 +41,8 @@ go_test(
     srcs = [
         "page_create_repository_test.go",
         "page_create_test.go",
+        "page_delete_repository_test.go",
+        "page_update_repository_test.go",
         "pages_repository_test.go",
     ],
     args = ["-test.parallel=4"],

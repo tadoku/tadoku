@@ -7,6 +7,14 @@
       "kid": "authentication-fixture",
       "alg": "RS256",
       "use": "sig"
+    },
+    {
+      "kty": "RSA",
+      "n": "s8rK6ghwRE8FHLyhHEvJWrEbzPJOfPCitihJTIVY2G0upWq69emdhmo_zr0vMv3IKZ2sRn3uveFHklo3vV2HDd6gB1hPfmFKduSVkhDGYgumfZv2SMJZBVyI_j8rrBBVFH_HWXriZYd9wp5t5_YZaRF883jQfh0mgiLf4Z0Dixv7yj9JKHSC53jIpzIwwOMMkPFj7wrB41LtnumH0uvrCyBplOSKqEyOartf5m2oKdnabdfWqySFFIhJ2IJme-_lahVbPcXqFm9Rryz4V4haDUz7IirzKRPWMhPge5vBXY0IIVLiMNr4F3MtZDHCVC4AH3rP7eM5KlTwnUo-rnBDDw",
+      "e": "AQAB",
+      "kid": "journey-cast-fixture",
+      "use": "sig",
+      "alg": "RS256"
     }
   ]
 }

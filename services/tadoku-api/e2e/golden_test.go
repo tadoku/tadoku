@@ -63,6 +63,12 @@ func runCase(t *testing.T, s *suite, name string, want int, implementations ...i
 // compares or explicitly records its complete response.
 func checkHTTPGolden(t *testing.T, handler http.Handler, directory string, wantStatus int, update bool) {
 	t.Helper()
+	checkHTTPResponseGolden(t, handler, readHTTPRequest(t, directory), directory, wantStatus, update)
+}
+
+// readHTTPRequest parses the directory's request.http with a fresh body.
+func readHTTPRequest(t *testing.T, directory string) *http.Request {
+	t.Helper()
 
 	input, err := os.ReadFile(filepath.Join(directory, "request.http"))
 	if err != nil {
@@ -72,6 +78,13 @@ func checkHTTPGolden(t *testing.T, handler http.Handler, directory string, wantS
 	if err != nil {
 		t.Fatalf("parse request: %v", err)
 	}
+	return request
+}
+
+// checkHTTPResponseGolden serves the request and compares or explicitly
+// records the complete response against the directory's golden.http.
+func checkHTTPResponseGolden(t *testing.T, handler http.Handler, request *http.Request, directory string, wantStatus int, update bool) {
+	t.Helper()
 	defer request.Body.Close()
 
 	recorder := httptest.NewRecorder()
@@ -84,7 +97,7 @@ func checkHTTPGolden(t *testing.T, handler http.Handler, directory string, wantS
 		t.Fatalf("format response: %v", err)
 	}
 
-	goldenPath, err := goldenFilePath(directory, *updateGoldens)
+	goldenPath, err := goldenFilePath(directory, "golden.http", *updateGoldens)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -98,9 +111,9 @@ func checkHTTPGolden(t *testing.T, handler http.Handler, directory string, wantS
 	}
 }
 
-func goldenFilePath(directory string, update bool) (string, error) {
+func goldenFilePath(directory, name string, update bool) (string, error) {
 	if !update {
-		return filepath.Join(directory, "golden.http"), nil
+		return filepath.Join(directory, name), nil
 	}
 
 	root := os.Getenv(goldenSourceRootEnv)
@@ -112,16 +125,22 @@ func goldenFilePath(directory string, update bool) (string, error) {
 		return "", fmt.Errorf("golden directory %q is outside testdata", directory)
 	}
 
-	return filepath.Join(root, relative, "golden.http"), nil
+	return filepath.Join(root, relative, name), nil
 }
 
 func reconcileHTTPGolden(path, got string, gotStatus, wantStatus int, update bool) (bool, error) {
+	if gotStatus != wantStatus {
+		return false, fmt.Errorf("HTTP status=%d, want %d", gotStatus, wantStatus)
+	}
+	return reconcileGolden(path, got, update)
+}
+
+// reconcileGolden compares got with the checked-in golden, or rewrites an
+// existing golden in update mode. It never creates a missing file.
+func reconcileGolden(path, got string, update bool) (bool, error) {
 	want, err := os.ReadFile(path)
 	if err != nil {
 		return false, fmt.Errorf("read golden: %w", err)
-	}
-	if gotStatus != wantStatus {
-		return false, fmt.Errorf("HTTP status=%d, want %d", gotStatus, wantStatus)
 	}
 	if update {
 		if err := os.WriteFile(path, []byte(got), 0o644); err != nil {
@@ -130,7 +149,7 @@ func reconcileHTTPGolden(path, got string, gotStatus, wantStatus int, update boo
 		return true, nil
 	}
 	if got != string(want) {
-		return false, fmt.Errorf("HTTP response differs from %s\n--- got ---\n%s\n--- want ---\n%s", path, got, want)
+		return false, fmt.Errorf("golden %s differs\n--- got ---\n%s\n--- want ---\n%s", path, got, want)
 	}
 
 	return false, nil
@@ -345,7 +364,7 @@ func TestGoldenFilePathUsesSourceRootForUpdates(t *testing.T) {
 	root := t.TempDir()
 	t.Setenv(goldenSourceRootEnv, root)
 
-	got, err := goldenFilePath(filepath.Join("testdata", "Operation", "200_case"), true)
+	got, err := goldenFilePath(filepath.Join("testdata", "Operation", "200_case"), "golden.http", true)
 	if err != nil {
 		t.Fatal(err)
 	}

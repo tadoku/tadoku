@@ -52,7 +52,7 @@ type Client struct {
 	writeClient *keto.APIClient
 }
 
-// Option configures a read client.
+// Option configures a Keto API client.
 type Option func(*keto.Configuration)
 
 // WithHTTPClient configures the HTTP client used for Keto requests.
@@ -68,12 +68,18 @@ var (
 	_ AuthorizationClient = (*Client)(nil)
 )
 
-func NewClient(readURL, writeURL string) *Client {
+// NewClient creates a read/write client. Options apply to both APIs; the caller
+// owns any supplied HTTP client and its transport.
+func NewClient(readURL, writeURL string, opts ...Option) *Client {
 	readCfg := keto.NewConfiguration()
 	readCfg.Servers = keto.ServerConfigurations{{URL: readURL}}
 
 	writeCfg := keto.NewConfiguration()
 	writeCfg.Servers = keto.ServerConfigurations{{URL: writeURL}}
+	for _, opt := range opts {
+		opt(readCfg)
+		opt(writeCfg)
+	}
 
 	return &Client{
 		readClient:  keto.NewAPIClient(readCfg),

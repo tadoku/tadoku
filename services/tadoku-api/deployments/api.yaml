@@ -34,6 +34,8 @@ spec:
             - {name: API_SERVICE_NAME, value: tadoku-api}
             - {name: API_JWKS, value: "http://oathkeeper-api.default:4456/.well-known/jwks.json"}
             - {name: API_KETO_READ_URL, value: "http://keto-read.default:4466"}
+            - {name: API_KETO_WRITE_URL, value: "http://keto-write.default:4467"}
+            - {name: API_KETO_WRITE_TIMEOUT, value: "2s"}
             - {name: API_KRATOS_ADMIN_URL, value: "http://kratos-admin.default"}
             - {name: API_KRATOS_TIMEOUT, value: "2s"}
             - {name: API_AUTHZ_URL, value: "http://authz-api.tdk-authz-api"}

@@ -17,6 +17,11 @@ import (
 func TestLanguageCreateListJourney(t *testing.T) {
 	runJourney(t, api, "LanguageCreateList", []step{
 		{
+			request: "list_languages",
+			as:      admin,
+			want:    http.StatusOK,
+		},
+		{
 			request: "create_language",
 			as:      admin,
 			want:    http.StatusOK,

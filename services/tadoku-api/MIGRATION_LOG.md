@@ -10,3 +10,4 @@
 - [ ] After every endpoint owned by a legacy service has migrated, observe the replacement for one to seven days, then delete the legacy service together with its parity subtests and Bazel dependencies.
 - [ ] After the Tadoku API migration is complete, make a final documentation pass and delete all references to this migration.
 - [ ] Add the job step kind to the journey runner together with the first migrated worker. Workers expose one synchronous pass as a method returning an error; production `Run` loops over it and tests never start the loop.
+- [ ] Restructure the Tadoku API documentation for progressive disclosure for agents: a short entry point with focused documents behind it instead of one long README.

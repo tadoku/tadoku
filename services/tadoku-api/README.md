@@ -400,18 +400,19 @@ Never use production signing keys or tokens in fixtures.
 CI checks Depolicy, OpenAPI/sqlc generation and the database suites. The standalone
 Echo and Testify graph checks have been removed. Bazel visibility remains in place.
 
-### Journeys
+### User journeys
 
-A journey chains requests against one seeded state, so everything after its
-first step comes from the API itself: write and read paths must agree without
-a handwritten seed between them, business time can move between steps, and one
-cast member's writes can be observed by another. Journeys run only against
-Tadoku API; parity stays per operation in the golden-case tables. Keep them few
-and meaningful, because every response-header change breaks every step of every
-journey.
+A user journey chains requests against one seeded state, so everything after
+its first step comes from the API itself: write and read paths must agree
+without a handwritten seed between them, business time can move between steps,
+and one user's writes can be observed by another. User journeys exist to keep
+the functionality users expect working, so cover every important user journey
+in the application. They run only against Tadoku API; parity stays per
+operation in the golden-case tables.
 
-Each journey is one explicit Go table passed to `runJourney`, with fixtures
-under `e2e/testdata/journeys/<Journey>/`:
+All user journeys live in `e2e/user_journeys_test.go`, one explicit Go table
+per journey passed to `runJourney`, with fixtures under
+`e2e/testdata/journeys/<Journey>/`:
 
 ```text
 e2e/testdata/journeys/
@@ -432,8 +433,11 @@ Steps are numbered by their position in the table. A request step names the
 cast member that sends `request.http`; the runner injects that member's token,
 and `none` sends no credentials. Its optional `others` map replays the same
 request as other members before the primary request and checks their status
-only. Those replays must not legitimately mutate state, so an identity that is
-supposed to succeed at a write gets its own step. A verify step runs
+only. Add replays only where they add information: identities that must be
+rejected on mutating steps, `banned` included, and a second user only to
+observe limited visibility of a resource. Those replays must not legitimately
+mutate state, so an identity that is supposed to succeed at a write gets its
+own step. A verify step runs
 `verify.sql`, aggregates the rows into one JSON array in query order and
 compares the indented result with `verify.json`. Reserve verify steps for
 effects no endpoint exposes, such as soft deletes, outbox rows or audit
@@ -449,7 +453,7 @@ instant through `timex`. The runner stops at the first failing step and, like
 every scenario, fails if a legacy upstream was contacted. Unknown entries in a
 journey or step directory fail the journey.
 
-Cast members are `guest`, `reader`, `reader2`, `admin` and `banned`, plus the
+Cast members are `guest`, `user`, `user2`, `admin` and `banned`, plus the
 implicit `none`. `admin` and `banned` hold their `app:tadoku` tuples through the
 shared relationships file. Add a member by signing a token with the recipe
 above, appending its public key when a new signing key is used, adding the
@@ -457,7 +461,7 @@ token to `cast.json` and any tuple to `relationships.json`.
 
 Golden regeneration uses the same `-update-goldens` command and source root as
 the golden-case tables and covers `verify.json` too. It never creates a missing
-file, so add empty placeholders before recording a new journey and review the
+file, so add empty placeholders before recording a new user journey and review the
 complete diff.
 
 Asynchronous work will be covered by running a worker's single synchronous pass

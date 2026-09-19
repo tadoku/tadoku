@@ -1,0 +1,36 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "languages",
+    srcs = [
+        "domain.go",
+        "languages_repository.go",
+        "languages_service.go",
+    ],
+    importpath = "github.com/tadoku/tadoku/services/tadoku-api/features/languages",
+    visibility = [
+        "//services/tadoku-api/app:__pkg__",
+        "//services/tadoku-api/cmd/tadoku-api:__pkg__",
+        "//services/tadoku-api/e2e:__pkg__",
+    ],
+    deps = [
+        "//services/tadoku-api/generated/sqlc/languages",
+        "//services/tadoku-api/infra/postgres",
+        "@com_github_jackc_pgx_v5//pgxpool",
+    ],
+)
+
+go_test(
+    name = "languages_test",
+    srcs = ["languages_repository_test.go"],
+    env_inherit = ["TADOKU_TEST_POSTGRES_URL"],
+    tags = [
+        "no-cache",
+        "no-remote-exec",
+        "requires-network",
+    ],
+    deps = [
+        ":languages",
+        "//services/tadoku-api/internal/testpostgres",
+    ],
+)

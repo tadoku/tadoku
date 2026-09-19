@@ -36,6 +36,11 @@ func TestResetClearsWritesAndPreservesStaticData(t *testing.T) {
 	if err := db.Pool.QueryRow(t.Context(), staticState).Scan(&before); err != nil {
 		t.Fatal(err)
 	}
+	if _, err := db.Pool.Exec(t.Context(), `
+		update languages set name = 'changed' where code = 'jpn';
+		insert into languages (code, name) values ('test-new', 'Test language')`); err != nil {
+		t.Fatal(err)
+	}
 	missingSeed := filepath.Join(t.TempDir(), "setup.sql")
 	if err := db.Reset(t.Context(), missingSeed, "testdata/announcements.sql", missingSeed); err != nil {
 		t.Fatal(err)

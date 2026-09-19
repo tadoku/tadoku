@@ -36,6 +36,12 @@ func resetKratosAfter(t *testing.T, s *suite) {
 }
 
 func TestKratosCastMatchesSignedSubjects(t *testing.T) {
+	createdAt := map[string]time.Time{
+		"11111111-1111-4111-8111-111111111111": time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC),
+		"22222222-2222-4222-8222-222222222222": fixtureInstant,
+		"33333333-3333-4333-8333-333333333333": fixtureInstant,
+		"44444444-4444-4444-8444-444444444444": time.Date(2026, 8, 12, 12, 0, 0, 0, time.UTC),
+	}
 	cast, err := loadCast(nil)
 	if err != nil {
 		t.Fatal(err)
@@ -63,7 +69,7 @@ func TestKratosCastMatchesSignedSubjects(t *testing.T) {
 		if !reflect.DeepEqual(identity.Traits, traits) {
 			t.Errorf("%s provider traits = %#v, token traits = %#v", who, identity.Traits, traits)
 		}
-		if identity.Id != subject || identity.SchemaId != "user" || identity.GetState() != "active" || !identity.GetCreatedAt().Equal(fixtureInstant) {
+		if identity.Id != subject || identity.SchemaId != "user" || identity.GetState() != "active" || !identity.GetCreatedAt().Equal(createdAt[subject]) {
 			t.Errorf("%s provider identity = %+v", who, identity)
 		}
 	}

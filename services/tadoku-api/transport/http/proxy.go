@@ -79,9 +79,8 @@ func RegisterProxyRoutes(
 		router.rootMux.Handle(current.prefix, handler)
 		headRoutes.Handle(current.prefix, handler)
 		if current.name == "immersion" {
-			// These one-segment routes would otherwise bind to the native
+			// This one-segment route would otherwise bind to the native
 			// /immersion/contests/{id} pattern before their own migrations.
-			router.rootMux.Handle("GET /immersion/contests/create-permissions", handler)
 			router.rootMux.Handle("GET /immersion/contests/ongoing-registrations", handler)
 		}
 	}

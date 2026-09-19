@@ -291,7 +291,7 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	postsRepository := posts.NewPostsRepository(pool)
 	userCache := profile.NewUserCache(kratosIdentities)
 	announcementsService := announcements.NewService(announcementsRepository)
-	contestsService := contests.NewService(contestsRepository)
+	contestsService := contests.NewService(contestsRepository, kratos)
 	languagesService := languages.NewService(languagesRepository)
 	pagesService := pages.NewService(pagesRepository)
 	postsService := posts.NewService(postsRepository)

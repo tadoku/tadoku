@@ -15,6 +15,7 @@ go_library(
         "banned_users.go",
         "callback_authentication.go",
         "contest_configuration.go",
+        "contest_create_permission.go",
         "contest_find.go",
         "contest_list.go",
         "errors.go",

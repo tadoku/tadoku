@@ -2,6 +2,7 @@
 package contests
 
 import (
+	"errors"
 	"sort"
 	"time"
 
@@ -25,8 +26,12 @@ var activities = []Activity{
 }
 
 var (
-	ErrContestNotFound = errx.NewNotFoundError("contest not found")
-	ErrInvalidActivity = errx.NewInvalidInputError("invalid contest activity")
+	ErrContestNotFound          = errx.NewNotFoundError("contest not found")
+	ErrContestCreatorNotFound   = errx.NewNotFoundError("contest creator not found")
+	ErrContestCreationForbidden = errx.NewForbiddenError("contest creation forbidden")
+	ErrInvalidContestCreator    = errors.New("invalid contest creator identity")
+	ErrContestCreatorTooYoung   = errors.New("contest creator account too young")
+	ErrInvalidActivity          = errx.NewInvalidInputError("invalid contest activity")
 )
 
 type Language struct {

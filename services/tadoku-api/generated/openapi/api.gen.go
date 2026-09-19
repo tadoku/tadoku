@@ -1184,6 +1184,9 @@ type ServerInterface interface {
 	// ImmersionContestGetConfigurations Fetches the configuration options for a new contest
 	// (GET /immersion/contests/configuration-options)
 	ImmersionContestGetConfigurations(w http.ResponseWriter, r *http.Request)
+	// ImmersionContestCreatePermissionCheck Check if user has permission to create a new contest
+	// (GET /immersion/contests/create-permissions)
+	ImmersionContestCreatePermissionCheck(w http.ResponseWriter, r *http.Request)
 	// ImmersionContestFindLatestOfficial Fetches the latest official contest
 	// (GET /immersion/contests/latest-official)
 	ImmersionContestFindLatestOfficial(w http.ResponseWriter, r *http.Request)
@@ -2134,6 +2137,20 @@ func (siw *ServerInterfaceWrapper) ImmersionContestGetConfigurations(w http.Resp
 	handler.ServeHTTP(w, r)
 }
 
+// ImmersionContestCreatePermissionCheck operation middleware
+func (siw *ServerInterfaceWrapper) ImmersionContestCreatePermissionCheck(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ImmersionContestCreatePermissionCheck(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ImmersionContestFindLatestOfficial operation middleware
 func (siw *ServerInterfaceWrapper) ImmersionContestFindLatestOfficial(w http.ResponseWriter, r *http.Request) {
 
@@ -2431,6 +2448,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/content/announcements/{namespace}/{id}", wrapper.ContentAnnouncementFindByID)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/content/announcements/{namespace}/{id}", wrapper.ContentAnnouncementUpdate)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests", wrapper.ImmersionContestList)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/create-permissions", wrapper.ImmersionContestCreatePermissionCheck)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/{id}", wrapper.ImmersionContestFindByID)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/latest-official", wrapper.ImmersionContestFindLatestOfficial)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/configuration-options", wrapper.ImmersionContestGetConfigurations)
@@ -3337,6 +3355,53 @@ func (response ImmersionContestGetConfigurations200JSONResponse) VisitImmersionC
 	return err
 }
 
+type ImmersionContestCreatePermissionCheckRequestObject struct {
+}
+
+type ImmersionContestCreatePermissionCheckResponseObject interface {
+	VisitImmersionContestCreatePermissionCheckResponse(w http.ResponseWriter) error
+}
+
+type ImmersionContestCreatePermissionCheck200Response struct {
+}
+
+func (response ImmersionContestCreatePermissionCheck200Response) VisitImmersionContestCreatePermissionCheckResponse(w http.ResponseWriter) error {
+	w.WriteHeader(200)
+	return nil
+}
+
+type ImmersionContestCreatePermissionCheck403Response struct {
+}
+
+func (response ImmersionContestCreatePermissionCheck403Response) VisitImmersionContestCreatePermissionCheckResponse(w http.ResponseWriter) error {
+	w.WriteHeader(403)
+	return nil
+}
+
+type ImmersionContestCreatePermissionCheck404Response struct {
+}
+
+func (response ImmersionContestCreatePermissionCheck404Response) VisitImmersionContestCreatePermissionCheckResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type ImmersionContestCreatePermissionCheck500JSONResponse struct {
+	Message string `json:"message"`
+}
+
+func (response ImmersionContestCreatePermissionCheck500JSONResponse) VisitImmersionContestCreatePermissionCheckResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ImmersionContestFindLatestOfficialRequestObject struct {
 }
 
@@ -3645,6 +3710,9 @@ type StrictServerInterface interface {
 	// ImmersionContestGetConfigurations Fetches the configuration options for a new contest
 	// (GET /immersion/contests/configuration-options)
 	ImmersionContestGetConfigurations(ctx context.Context, request ImmersionContestGetConfigurationsRequestObject) (ImmersionContestGetConfigurationsResponseObject, error)
+	// ImmersionContestCreatePermissionCheck Check if user has permission to create a new contest
+	// (GET /immersion/contests/create-permissions)
+	ImmersionContestCreatePermissionCheck(ctx context.Context, request ImmersionContestCreatePermissionCheckRequestObject) (ImmersionContestCreatePermissionCheckResponseObject, error)
 	// ImmersionContestFindLatestOfficial Fetches the latest official contest
 	// (GET /immersion/contests/latest-official)
 	ImmersionContestFindLatestOfficial(ctx context.Context, request ImmersionContestFindLatestOfficialRequestObject) (ImmersionContestFindLatestOfficialResponseObject, error)
@@ -4433,6 +4501,30 @@ func (sh *strictHandler) ImmersionContestGetConfigurations(w http.ResponseWriter
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ImmersionContestGetConfigurationsResponseObject); ok {
 		if err := validResponse.VisitImmersionContestGetConfigurationsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ImmersionContestCreatePermissionCheck operation middleware
+func (sh *strictHandler) ImmersionContestCreatePermissionCheck(w http.ResponseWriter, r *http.Request) {
+	var request ImmersionContestCreatePermissionCheckRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ImmersionContestCreatePermissionCheck(ctx, request.(ImmersionContestCreatePermissionCheckRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ImmersionContestCreatePermissionCheck")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ImmersionContestCreatePermissionCheckResponseObject); ok {
+		if err := validResponse.VisitImmersionContestCreatePermissionCheckResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

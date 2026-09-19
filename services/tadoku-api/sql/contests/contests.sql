@@ -70,6 +70,12 @@ from total
 left join page on true
 order by page.created_at desc;
 
+-- name: CountContestsCreatedByUserForYear :one
+select count(id)
+from contests
+where owner_user_id = sqlc.arg(owner_user_id)
+  and extract(year from created_at) = sqlc.arg(year)::integer;
+
 -- name: FindContestByID :one
 select
   contests.id,

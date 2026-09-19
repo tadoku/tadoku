@@ -144,7 +144,6 @@ func TestRetiredAuthzRoutesAreNotForwarded(t *testing.T) {
 
 func TestUnmigratedContestDiscoveryNeighborsRemainProxied(t *testing.T) {
 	for _, path := range []string{
-		"/immersion/contests/create-permissions",
 		"/immersion/contests/ongoing-registrations",
 	} {
 		t.Run(path, func(t *testing.T) {

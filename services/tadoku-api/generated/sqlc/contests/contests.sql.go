@@ -11,6 +11,25 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countContestsCreatedByUserForYear = `-- name: CountContestsCreatedByUserForYear :one
+select count(id)
+from contests
+where owner_user_id = $1
+  and extract(year from created_at) = $2::integer
+`
+
+type CountContestsCreatedByUserForYearParams struct {
+	OwnerUserID pgtype.UUID
+	Year        int32
+}
+
+func (q *Queries) CountContestsCreatedByUserForYear(ctx context.Context, arg CountContestsCreatedByUserForYearParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countContestsCreatedByUserForYear, arg.OwnerUserID, arg.Year)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const findContestByID = `-- name: FindContestByID :one
 select
   contests.id,

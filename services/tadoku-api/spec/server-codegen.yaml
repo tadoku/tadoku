@@ -27,5 +27,6 @@ output-options:
     - ContentPostVersionList
     - ImmersionLanguageList
     - ImmersionLanguageCreate
+    - ImmersionLanguageUpdate
   nullable-type: true
   skip-prune: true

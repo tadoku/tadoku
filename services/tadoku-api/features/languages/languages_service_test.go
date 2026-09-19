@@ -33,3 +33,26 @@ func TestCreateLanguageParametersValidateByteLengths(t *testing.T) {
 		})
 	}
 }
+
+func TestUpdateLanguageParametersValidateByteLengths(t *testing.T) {
+	t.Parallel()
+	for _, test := range []struct {
+		name      string
+		value     string
+		wantError bool
+	}{
+		{name: "minimum", value: "x"},
+		{name: "maximum", value: strings.Repeat("x", 100)},
+		{name: "whitespace retained", value: " x "},
+		{name: "empty", wantError: true},
+		{name: "long", value: strings.Repeat("x", 101), wantError: true},
+		{name: "unicode bytes", value: strings.Repeat("語", 34), wantError: true},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			err := (languages.UpdateLanguageParameters{Code: "code", Name: test.value}).Validate()
+			if got := errors.Is(err, languages.ErrInvalidLanguage); got != test.wantError {
+				t.Errorf("invalid error=%v, want %t", err, test.wantError)
+			}
+		})
+	}
+}

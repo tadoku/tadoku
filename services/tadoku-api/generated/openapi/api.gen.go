@@ -1089,6 +1089,11 @@ type ContentPostListParams struct {
 	IncludeDrafts *bool `form:"include_drafts,omitempty" json:"include_drafts,omitempty"`
 }
 
+// ImmersionLanguageUpdateJSONBody defines parameters for ImmersionLanguageUpdate.
+type ImmersionLanguageUpdateJSONBody struct {
+	Name string `json:"name"`
+}
+
 // ContentAnnouncementCreateJSONRequestBody defines body for ContentAnnouncementCreate for application/json ContentType.
 type ContentAnnouncementCreateJSONRequestBody = ContentAnnouncement
 
@@ -1109,6 +1114,9 @@ type ContentPostUpdateJSONRequestBody = ContentPost
 
 // ImmersionLanguageCreateJSONRequestBody defines body for ImmersionLanguageCreate for application/json ContentType.
 type ImmersionLanguageCreateJSONRequestBody = ImmersionLanguage
+
+// ImmersionLanguageUpdateJSONRequestBody defines body for ImmersionLanguageUpdate for application/json ContentType.
+type ImmersionLanguageUpdateJSONRequestBody ImmersionLanguageUpdateJSONBody
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
@@ -1178,6 +1186,9 @@ type ServerInterface interface {
 	// ImmersionLanguageCreate Creates a new language (admin only)
 	// (POST /immersion/languages)
 	ImmersionLanguageCreate(w http.ResponseWriter, r *http.Request)
+	// ImmersionLanguageUpdate Updates an existing language (admin only)
+	// (PUT /immersion/languages/{code})
+	ImmersionLanguageUpdate(w http.ResponseWriter, r *http.Request, code string)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -1985,6 +1996,32 @@ func (siw *ServerInterfaceWrapper) ImmersionLanguageCreate(w http.ResponseWriter
 	handler.ServeHTTP(w, r)
 }
 
+// ImmersionLanguageUpdate operation middleware
+func (siw *ServerInterfaceWrapper) ImmersionLanguageUpdate(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "code" -------------
+	var code string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "code", r.PathValue("code"), &code, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "code", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ImmersionLanguageUpdate(w, r, code)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 type UnescapedCookieParamError struct {
 	ParamName string
 	Err       error
@@ -2127,6 +2164,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/content/announcements/{namespace}/{id}", wrapper.ContentAnnouncementUpdate)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/languages", wrapper.ImmersionLanguageList)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/immersion/languages", wrapper.ImmersionLanguageCreate)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/immersion/languages/{code}", wrapper.ImmersionLanguageUpdate)
 
 	return m
 }
@@ -2920,6 +2958,55 @@ func (response ImmersionLanguageCreate409Response) VisitImmersionLanguageCreateR
 	return nil
 }
 
+type ImmersionLanguageUpdateRequestObject struct {
+	Code string `json:"code"`
+	Body *ImmersionLanguageUpdateJSONRequestBody
+}
+
+type ImmersionLanguageUpdateResponseObject interface {
+	VisitImmersionLanguageUpdateResponse(w http.ResponseWriter) error
+}
+
+type ImmersionLanguageUpdate200Response struct {
+}
+
+func (response ImmersionLanguageUpdate200Response) VisitImmersionLanguageUpdateResponse(w http.ResponseWriter) error {
+	w.WriteHeader(200)
+	return nil
+}
+
+type ImmersionLanguageUpdate400Response struct {
+}
+
+func (response ImmersionLanguageUpdate400Response) VisitImmersionLanguageUpdateResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
+type ImmersionLanguageUpdate401Response struct {
+}
+
+func (response ImmersionLanguageUpdate401Response) VisitImmersionLanguageUpdateResponse(w http.ResponseWriter) error {
+	w.WriteHeader(401)
+	return nil
+}
+
+type ImmersionLanguageUpdate403Response struct {
+}
+
+func (response ImmersionLanguageUpdate403Response) VisitImmersionLanguageUpdateResponse(w http.ResponseWriter) error {
+	w.WriteHeader(403)
+	return nil
+}
+
+type ImmersionLanguageUpdate404Response struct {
+}
+
+func (response ImmersionLanguageUpdate404Response) VisitImmersionLanguageUpdateResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 	// ContentAnnouncementList Lists all announcements
@@ -2988,6 +3075,9 @@ type StrictServerInterface interface {
 	// ImmersionLanguageCreate Creates a new language (admin only)
 	// (POST /immersion/languages)
 	ImmersionLanguageCreate(ctx context.Context, request ImmersionLanguageCreateRequestObject) (ImmersionLanguageCreateResponseObject, error)
+	// ImmersionLanguageUpdate Updates an existing language (admin only)
+	// (PUT /immersion/languages/{code})
+	ImmersionLanguageUpdate(ctx context.Context, request ImmersionLanguageUpdateRequestObject) (ImmersionLanguageUpdateResponseObject, error)
 }
 
 type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error)
@@ -3675,6 +3765,39 @@ func (sh *strictHandler) ImmersionLanguageCreate(w http.ResponseWriter, r *http.
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ImmersionLanguageCreateResponseObject); ok {
 		if err := validResponse.VisitImmersionLanguageCreateResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ImmersionLanguageUpdate operation middleware
+func (sh *strictHandler) ImmersionLanguageUpdate(w http.ResponseWriter, r *http.Request, code string) {
+	var request ImmersionLanguageUpdateRequestObject
+
+	request.Code = code
+
+	var body ImmersionLanguageUpdateJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ImmersionLanguageUpdate(ctx, request.(ImmersionLanguageUpdateRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ImmersionLanguageUpdate")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ImmersionLanguageUpdateResponseObject); ok {
+		if err := validResponse.VisitImmersionLanguageUpdateResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

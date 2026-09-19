@@ -22,3 +22,12 @@ func (a *Application) CreateLanguage(ctx context.Context, parameters CreateLangu
 	}
 	return a.languages.CreateLanguage(ctx, parameters)
 }
+
+type UpdateLanguageParameters = languages.UpdateLanguageParameters
+
+func (a *Application) UpdateLanguage(ctx context.Context, parameters UpdateLanguageParameters) error {
+	if err := a.permissions.RequireAdmin(ctx); err != nil {
+		return err
+	}
+	return a.languages.UpdateLanguage(ctx, parameters)
+}

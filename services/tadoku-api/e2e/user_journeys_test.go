@@ -14,7 +14,7 @@ import (
 // identities on mutating steps, and a second user only to observe limited
 // visibility of a resource.
 
-func TestLanguageCreateListJourney(t *testing.T) {
+func TestLanguageLifecycleJourney(t *testing.T) {
 	runJourney(t, api, "LanguageCreateList", []step{
 		{
 			request: "list_languages",
@@ -34,6 +34,46 @@ func TestLanguageCreateListJourney(t *testing.T) {
 		},
 		{
 			request: "list_languages",
+			as:      admin,
+			want:    http.StatusOK,
+		},
+		{
+			request: "rename_language",
+			as:      admin,
+			want:    http.StatusOK,
+			others: cast{
+				none:   http.StatusBadRequest,
+				guest:  http.StatusUnauthorized,
+				user:   http.StatusForbidden,
+				banned: http.StatusForbidden,
+			},
+		},
+		{
+			request: "list_renamed",
+			as:      admin,
+			want:    http.StatusOK,
+		},
+		{
+			request: "repeat_update",
+			as:      admin,
+			want:    http.StatusOK,
+		},
+		{
+			request: "duplicate_create",
+			as:      admin,
+			want:    http.StatusConflict,
+		},
+		{
+			request: "rejected_update",
+			as:      user,
+			want:    http.StatusForbidden,
+			others: cast{
+				guest:  http.StatusUnauthorized,
+				banned: http.StatusForbidden,
+			},
+		},
+		{
+			request: "list_unchanged",
 			as:      admin,
 			want:    http.StatusOK,
 		},

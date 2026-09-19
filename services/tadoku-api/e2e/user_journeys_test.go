@@ -14,6 +14,40 @@ import (
 // identities on mutating steps, and a second user only to observe limited
 // visibility of a resource.
 
+func TestAuthorizationVisibilityJourney(t *testing.T) {
+	runJourney(t, api, "AuthorizationVisibility", []step{
+		{
+			request: "guest_role",
+			as:      guest,
+			want:    http.StatusOK,
+		},
+		{
+			request: "user_role",
+			as:      user,
+			want:    http.StatusOK,
+		},
+		{
+			request: "admin_role",
+			as:      admin,
+			want:    http.StatusOK,
+		},
+		{
+			request: "banned_role_rejected",
+			as:      banned,
+			want:    http.StatusForbidden,
+		},
+		{
+			request: "permission_denied",
+			as:      user,
+			want:    http.StatusForbidden,
+			others: cast{
+				guest:  http.StatusUnauthorized,
+				banned: http.StatusForbidden,
+			},
+		},
+	})
+}
+
 func TestAnnouncementLifecycleJourney(t *testing.T) {
 	afterExpiry := fixtureInstant.Add(8 * 24 * time.Hour)
 

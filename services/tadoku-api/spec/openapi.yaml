@@ -176,7 +176,7 @@ paths:
           description: authorization unavailable
       x-tadoku-source: Authz
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /current-user/role
       x-legacy-operation-id: roleGet
   "/authz/users/{id}/role":
@@ -249,7 +249,7 @@ paths:
           description: authorization unavailable
       x-tadoku-source: Authz
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /permission/check
       x-legacy-operation-id: permissionCheck
   "/content/pages/{namespace}/{slug}":

@@ -1089,6 +1089,9 @@ type ContentPostListParams struct {
 	IncludeDrafts *bool `form:"include_drafts,omitempty" json:"include_drafts,omitempty"`
 }
 
+// AuthzPermissionCheckJSONRequestBody defines body for AuthzPermissionCheck for application/json ContentType.
+type AuthzPermissionCheckJSONRequestBody = AuthzPermissionCheckRequest
+
 // ContentAnnouncementCreateJSONRequestBody defines body for ContentAnnouncementCreate for application/json ContentType.
 type ContentAnnouncementCreateJSONRequestBody = ContentAnnouncement
 
@@ -1109,6 +1112,12 @@ type ContentPostUpdateJSONRequestBody = ContentPost
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// AuthzRoleGet Fetches the role of the current user
+	// (GET /authz/current-user/role)
+	AuthzRoleGet(w http.ResponseWriter, r *http.Request)
+	// AuthzPermissionCheck Checks if the current user has a specific permission
+	// (POST /authz/permission/check)
+	AuthzPermissionCheck(w http.ResponseWriter, r *http.Request)
 	// ContentAnnouncementList Lists all announcements
 	// (GET /content/announcements/{namespace})
 	ContentAnnouncementList(w http.ResponseWriter, r *http.Request, namespace string, params ContentAnnouncementListParams)
@@ -1179,6 +1188,34 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(http.Handler) http.Handler
+
+// AuthzRoleGet operation middleware
+func (siw *ServerInterfaceWrapper) AuthzRoleGet(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AuthzRoleGet(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AuthzPermissionCheck operation middleware
+func (siw *ServerInterfaceWrapper) AuthzPermissionCheck(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AuthzPermissionCheck(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
 
 // ContentAnnouncementList operation middleware
 func (siw *ServerInterfaceWrapper) ContentAnnouncementList(w http.ResponseWriter, r *http.Request) {
@@ -2068,6 +2105,8 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/authz/current-user/role", wrapper.AuthzRoleGet)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/authz/permission/check", wrapper.AuthzPermissionCheck)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/content/pages/{namespace}/{slug}", wrapper.ContentPageDelete)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/content/pages/{namespace}/{slug}", wrapper.ContentPageFindBySlug)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/content/pages/{namespace}/{slug}", wrapper.ContentPageUpdate)
@@ -2093,6 +2132,97 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 }
 
 type ImmersionAccountDeletionInProgressJSONResponse ImmersionErrorResponse
+
+type AuthzRoleGetRequestObject struct {
+}
+
+type AuthzRoleGetResponseObject interface {
+	VisitAuthzRoleGetResponse(w http.ResponseWriter) error
+}
+
+type AuthzRoleGet200JSONResponse AuthzUserRole
+
+func (response AuthzRoleGet200JSONResponse) VisitAuthzRoleGetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AuthzRoleGet401Response struct {
+}
+
+func (response AuthzRoleGet401Response) VisitAuthzRoleGetResponse(w http.ResponseWriter) error {
+	w.WriteHeader(401)
+	return nil
+}
+
+type AuthzRoleGet503Response struct {
+}
+
+func (response AuthzRoleGet503Response) VisitAuthzRoleGetResponse(w http.ResponseWriter) error {
+	w.WriteHeader(503)
+	return nil
+}
+
+type AuthzPermissionCheckRequestObject struct {
+	Body *AuthzPermissionCheckJSONRequestBody
+}
+
+type AuthzPermissionCheckResponseObject interface {
+	VisitAuthzPermissionCheckResponse(w http.ResponseWriter) error
+}
+
+type AuthzPermissionCheck200JSONResponse AuthzPermissionCheckResponse
+
+func (response AuthzPermissionCheck200JSONResponse) VisitAuthzPermissionCheckResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AuthzPermissionCheck400Response struct {
+}
+
+func (response AuthzPermissionCheck400Response) VisitAuthzPermissionCheckResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
+type AuthzPermissionCheck401Response struct {
+}
+
+func (response AuthzPermissionCheck401Response) VisitAuthzPermissionCheckResponse(w http.ResponseWriter) error {
+	w.WriteHeader(401)
+	return nil
+}
+
+type AuthzPermissionCheck403Response struct {
+}
+
+func (response AuthzPermissionCheck403Response) VisitAuthzPermissionCheckResponse(w http.ResponseWriter) error {
+	w.WriteHeader(403)
+	return nil
+}
+
+type AuthzPermissionCheck503Response struct {
+}
+
+func (response AuthzPermissionCheck503Response) VisitAuthzPermissionCheckResponse(w http.ResponseWriter) error {
+	w.WriteHeader(503)
+	return nil
+}
 
 type ContentAnnouncementListRequestObject struct {
 	Namespace string `json:"namespace"`
@@ -2798,6 +2928,12 @@ func (response ContentPostUpdate409Response) VisitContentPostUpdateResponse(w ht
 
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
+	// AuthzRoleGet Fetches the role of the current user
+	// (GET /authz/current-user/role)
+	AuthzRoleGet(ctx context.Context, request AuthzRoleGetRequestObject) (AuthzRoleGetResponseObject, error)
+	// AuthzPermissionCheck Checks if the current user has a specific permission
+	// (POST /authz/permission/check)
+	AuthzPermissionCheck(ctx context.Context, request AuthzPermissionCheckRequestObject) (AuthzPermissionCheckResponseObject, error)
 	// ContentAnnouncementList Lists all announcements
 	// (GET /content/announcements/{namespace})
 	ContentAnnouncementList(ctx context.Context, request ContentAnnouncementListRequestObject) (ContentAnnouncementListResponseObject, error)
@@ -2897,6 +3033,61 @@ type strictHandler struct {
 	ssi         StrictServerInterface
 	middlewares []StrictMiddlewareFunc
 	options     StrictHTTPServerOptions
+}
+
+// AuthzRoleGet operation middleware
+func (sh *strictHandler) AuthzRoleGet(w http.ResponseWriter, r *http.Request) {
+	var request AuthzRoleGetRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AuthzRoleGet(ctx, request.(AuthzRoleGetRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AuthzRoleGet")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AuthzRoleGetResponseObject); ok {
+		if err := validResponse.VisitAuthzRoleGetResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AuthzPermissionCheck operation middleware
+func (sh *strictHandler) AuthzPermissionCheck(w http.ResponseWriter, r *http.Request) {
+	var request AuthzPermissionCheckRequestObject
+
+	var body AuthzPermissionCheckJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AuthzPermissionCheck(ctx, request.(AuthzPermissionCheckRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AuthzPermissionCheck")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AuthzPermissionCheckResponseObject); ok {
+		if err := validResponse.VisitAuthzPermissionCheckResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
 }
 
 // ContentAnnouncementList operation middleware

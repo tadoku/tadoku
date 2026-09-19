@@ -22,6 +22,8 @@ const (
 
 // Every operation on openapi.StrictServerInterface must declare its access level.
 var operationAccess = map[string]accessLevel{
+	"AuthzPermissionCheck":          accessAuthenticated,
+	"AuthzRoleGet":                  accessPublic,
 	"ContentAnnouncementCreate":     accessAdmin,
 	"ContentAnnouncementDelete":     accessAdmin,
 	"ContentAnnouncementFindByID":   accessAdmin,
@@ -45,6 +47,7 @@ var operationAccess = map[string]accessLevel{
 }
 
 var operationFixtures = map[string]string{
+	"AuthzPermissionCheck":        "AuthzPermissionCheck",
 	"ContentAnnouncementCreate":   "CreateAnnouncement",
 	"ContentAnnouncementDelete":   "DeleteAnnouncement",
 	"ContentAnnouncementFindByID": "FindAnnouncementByID",

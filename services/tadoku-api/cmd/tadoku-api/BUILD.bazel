@@ -11,6 +11,7 @@ go_library(
         "//services/common/postgresconfig",
         "//services/tadoku-api/app",
         "//services/tadoku-api/features/announcements",
+        "//services/tadoku-api/features/authz",
         "//services/tadoku-api/features/pages",
         "//services/tadoku-api/features/posts",
         "//services/tadoku-api/infra/postgres",

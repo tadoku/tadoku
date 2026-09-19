@@ -1,0 +1,6 @@
+POST /authz/permission/check HTTP/1.1
+Host: api.test
+Content-Type: application/json
+Content-Length: 58
+
+{"namespace":"app","object":"tadoku","relation":"admins"}

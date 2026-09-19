@@ -11,6 +11,7 @@ go_library(
         "banned_users.go",
         "errors.go",
         "observability.go",
+        "page_create.go",
         "page_find.go",
         "page_list.go",
         "panic_recovery.go",

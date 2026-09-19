@@ -25,5 +25,6 @@ output-options:
     - ContentPostUpdate
     - ContentPostVersionGet
     - ContentPostVersionList
+    - ImmersionLanguageList
   nullable-type: true
   skip-prune: true

@@ -1,0 +1,13 @@
+version: "2"
+sql:
+  - engine: postgresql
+    schema: ../../../immersion-api/storage/postgres/migrations
+    queries:
+      - languages.sql
+    gen:
+      go:
+        package: languages
+        out: ../../generated/sqlc/languages
+        sql_package: pgx/v5
+        emit_empty_slices: true
+        omit_unused_structs: true

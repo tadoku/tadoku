@@ -64,10 +64,9 @@ func isValidAnnouncementHref(href *string) bool {
 var (
 	ErrInvalidNamespace     = errx.NewInvalidInputError("namespace is required")
 	ErrInvalidPagination    = errx.NewInvalidInputError("invalid pagination")
+	ErrInvalidAnnouncement  = errx.NewInvalidInputError("invalid announcement")
 	ErrAnnouncementNotFound = errx.NewNotFoundError("announcement not found")
 )
-
-var ErrInvalidAnnouncement = errx.NewInvalidInputError("invalid announcement")
 
 type CreateAnnouncementParameters struct {
 	ID        uuid.UUID
@@ -101,7 +100,7 @@ type UpdateAnnouncementParameters struct {
 }
 
 func (p UpdateAnnouncementParameters) Validate() error {
-	if p.Namespace == "" || p.Title == "" || p.Content == "" ||
+	if p.ID == uuid.Nil || p.Namespace == "" || p.Title == "" || p.Content == "" ||
 		!isValidAnnouncementStyle(p.Style) || !isValidAnnouncementHref(p.Href) ||
 		!timex.IsValidRange(p.StartsAt, p.EndsAt) {
 		return ErrInvalidAnnouncement

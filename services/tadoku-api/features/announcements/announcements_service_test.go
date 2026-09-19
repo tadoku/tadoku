@@ -117,6 +117,14 @@ func TestUpdateAnnouncementParametersValidation(t *testing.T) {
 		t.Fatalf("valid parameters rejected: %v", err)
 	}
 
+	t.Run("zero ID", func(t *testing.T) {
+		parameters := parameters
+		parameters.ID = uuid.Nil
+		if err := parameters.Validate(); !errors.Is(err, announcements.ErrInvalidAnnouncement) {
+			t.Errorf("error=%v, want invalid announcement for zero ID", err)
+		}
+	})
+
 	parameters.Namespace = ""
 	if err := parameters.Validate(); !errors.Is(err, announcements.ErrInvalidAnnouncement) {
 		t.Errorf("error=%v, want invalid announcement", err)

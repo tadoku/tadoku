@@ -35,6 +35,7 @@ func TestUpdateAnnouncement(t *testing.T) {
 		{description: []string{"data", "href"}, want: http.StatusBadRequest, skipParity: "intentional native href validation difference"},
 		{description: []string{"href", "too", "long"}, want: http.StatusBadRequest, skipParity: "intentional native href validation difference"},
 		{description: []string{"invalid", "body", "id"}, want: http.StatusBadRequest},
+		{description: []string{"zero", "id"}, want: http.StatusBadRequest, skipParity: "native rejects zero update IDs; legacy looks up the ID and returns not found"},
 		{description: []string{"invalid", "id", "guest"}, want: http.StatusBadRequest},
 		{description: []string{"malformed", "json", "guest"}, want: http.StatusBadRequest},
 		{description: []string{"empty", "body"}, want: http.StatusBadRequest},

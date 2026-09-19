@@ -1054,6 +1054,15 @@ type ContentPostListParams struct {
 	IncludeDrafts *bool `form:"include_drafts,omitempty" json:"include_drafts,omitempty"`
 }
 
+// ImmersionContestListParams defines parameters for ImmersionContestList.
+type ImmersionContestListParams struct {
+	PageSize       *int                `form:"page_size,omitempty" json:"page_size,omitempty"`
+	Page           *int                `form:"page,omitempty" json:"page,omitempty"`
+	IncludeDeleted *bool               `form:"include_deleted,omitempty" json:"include_deleted,omitempty"`
+	Official       *bool               `form:"official,omitempty" json:"official,omitempty"`
+	UserId         *openapi_types.UUID `form:"user_id,omitempty" json:"user_id,omitempty"`
+}
+
 // ImmersionLanguageUpdateJSONBody defines parameters for ImmersionLanguageUpdate.
 type ImmersionLanguageUpdateJSONBody struct {
 	Name string `json:"name"`
@@ -1169,6 +1178,18 @@ type ServerInterface interface {
 	// ContentPostUpdate Updates an existing post
 	// (PUT /content/posts/{namespace}/{slug})
 	ContentPostUpdate(w http.ResponseWriter, r *http.Request, namespace string, slug string)
+	// ImmersionContestList Lists all the contests, paginated
+	// (GET /immersion/contests)
+	ImmersionContestList(w http.ResponseWriter, r *http.Request, params ImmersionContestListParams)
+	// ImmersionContestGetConfigurations Fetches the configuration options for a new contest
+	// (GET /immersion/contests/configuration-options)
+	ImmersionContestGetConfigurations(w http.ResponseWriter, r *http.Request)
+	// ImmersionContestFindLatestOfficial Fetches the latest official contest
+	// (GET /immersion/contests/latest-official)
+	ImmersionContestFindLatestOfficial(w http.ResponseWriter, r *http.Request)
+	// ImmersionContestFindByID Fetches a contest by id
+	// (GET /immersion/contests/{id})
+	ImmersionContestFindByID(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
 	// ImmersionLanguageList Lists all languages (admin only)
 	// (GET /immersion/languages)
 	ImmersionLanguageList(w http.ResponseWriter, r *http.Request)
@@ -2014,6 +2035,145 @@ func (siw *ServerInterfaceWrapper) ContentPostUpdate(w http.ResponseWriter, r *h
 	handler.ServeHTTP(w, r)
 }
 
+// ImmersionContestList operation middleware
+func (siw *ServerInterfaceWrapper) ImmersionContestList(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ImmersionContestListParams
+
+	// ------------- Optional query parameter "page_size" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page_size", r.URL.Query(), &params.PageSize, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page_size"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page_size", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "include_deleted" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "include_deleted", r.URL.Query(), &params.IncludeDeleted, runtime.BindQueryParameterOptions{Type: "boolean", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "include_deleted"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "include_deleted", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "official" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "official", r.URL.Query(), &params.Official, runtime.BindQueryParameterOptions{Type: "boolean", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "official"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "official", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "user_id" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "user_id", r.URL.Query(), &params.UserId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "user_id"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "user_id", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ImmersionContestList(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ImmersionContestGetConfigurations operation middleware
+func (siw *ServerInterfaceWrapper) ImmersionContestGetConfigurations(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ImmersionContestGetConfigurations(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ImmersionContestFindLatestOfficial operation middleware
+func (siw *ServerInterfaceWrapper) ImmersionContestFindLatestOfficial(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ImmersionContestFindLatestOfficial(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ImmersionContestFindByID operation middleware
+func (siw *ServerInterfaceWrapper) ImmersionContestFindByID(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ImmersionContestFindByID(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ImmersionLanguageList operation middleware
 func (siw *ServerInterfaceWrapper) ImmersionLanguageList(w http.ResponseWriter, r *http.Request) {
 
@@ -2270,6 +2430,10 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/content/announcements/{namespace}/{id}", wrapper.ContentAnnouncementDelete)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/content/announcements/{namespace}/{id}", wrapper.ContentAnnouncementFindByID)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/content/announcements/{namespace}/{id}", wrapper.ContentAnnouncementUpdate)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests", wrapper.ImmersionContestList)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/{id}", wrapper.ImmersionContestFindByID)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/latest-official", wrapper.ImmersionContestFindLatestOfficial)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/configuration-options", wrapper.ImmersionContestGetConfigurations)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/languages", wrapper.ImmersionLanguageList)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/immersion/languages", wrapper.ImmersionLanguageCreate)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/immersion/languages/{code}", wrapper.ImmersionLanguageUpdate)
@@ -3130,6 +3294,108 @@ func (response ContentPostUpdate409Response) VisitContentPostUpdateResponse(w ht
 	return nil
 }
 
+type ImmersionContestListRequestObject struct {
+	Params ImmersionContestListParams
+}
+
+type ImmersionContestListResponseObject interface {
+	VisitImmersionContestListResponse(w http.ResponseWriter) error
+}
+
+type ImmersionContestList200JSONResponse ImmersionContests
+
+func (response ImmersionContestList200JSONResponse) VisitImmersionContestListResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImmersionContestGetConfigurationsRequestObject struct {
+}
+
+type ImmersionContestGetConfigurationsResponseObject interface {
+	VisitImmersionContestGetConfigurationsResponse(w http.ResponseWriter) error
+}
+
+type ImmersionContestGetConfigurations200JSONResponse ImmersionContestConfigurationOptions
+
+func (response ImmersionContestGetConfigurations200JSONResponse) VisitImmersionContestGetConfigurationsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImmersionContestFindLatestOfficialRequestObject struct {
+}
+
+type ImmersionContestFindLatestOfficialResponseObject interface {
+	VisitImmersionContestFindLatestOfficialResponse(w http.ResponseWriter) error
+}
+
+type ImmersionContestFindLatestOfficial200JSONResponse ImmersionContestView
+
+func (response ImmersionContestFindLatestOfficial200JSONResponse) VisitImmersionContestFindLatestOfficialResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImmersionContestFindLatestOfficial404Response struct {
+}
+
+func (response ImmersionContestFindLatestOfficial404Response) VisitImmersionContestFindLatestOfficialResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type ImmersionContestFindByIDRequestObject struct {
+	Id openapi_types.UUID `json:"id"`
+}
+
+type ImmersionContestFindByIDResponseObject interface {
+	VisitImmersionContestFindByIDResponse(w http.ResponseWriter) error
+}
+
+type ImmersionContestFindByID200JSONResponse ImmersionContestView
+
+func (response ImmersionContestFindByID200JSONResponse) VisitImmersionContestFindByIDResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImmersionContestFindByID404Response struct {
+}
+
+func (response ImmersionContestFindByID404Response) VisitImmersionContestFindByIDResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
 type ImmersionLanguageListRequestObject struct {
 }
 
@@ -3373,6 +3639,18 @@ type StrictServerInterface interface {
 	// ContentPostUpdate Updates an existing post
 	// (PUT /content/posts/{namespace}/{slug})
 	ContentPostUpdate(ctx context.Context, request ContentPostUpdateRequestObject) (ContentPostUpdateResponseObject, error)
+	// ImmersionContestList Lists all the contests, paginated
+	// (GET /immersion/contests)
+	ImmersionContestList(ctx context.Context, request ImmersionContestListRequestObject) (ImmersionContestListResponseObject, error)
+	// ImmersionContestGetConfigurations Fetches the configuration options for a new contest
+	// (GET /immersion/contests/configuration-options)
+	ImmersionContestGetConfigurations(ctx context.Context, request ImmersionContestGetConfigurationsRequestObject) (ImmersionContestGetConfigurationsResponseObject, error)
+	// ImmersionContestFindLatestOfficial Fetches the latest official contest
+	// (GET /immersion/contests/latest-official)
+	ImmersionContestFindLatestOfficial(ctx context.Context, request ImmersionContestFindLatestOfficialRequestObject) (ImmersionContestFindLatestOfficialResponseObject, error)
+	// ImmersionContestFindByID Fetches a contest by id
+	// (GET /immersion/contests/{id})
+	ImmersionContestFindByID(ctx context.Context, request ImmersionContestFindByIDRequestObject) (ImmersionContestFindByIDResponseObject, error)
 	// ImmersionLanguageList Lists all languages (admin only)
 	// (GET /immersion/languages)
 	ImmersionLanguageList(ctx context.Context, request ImmersionLanguageListRequestObject) (ImmersionLanguageListResponseObject, error)
@@ -4105,6 +4383,106 @@ func (sh *strictHandler) ContentPostUpdate(w http.ResponseWriter, r *http.Reques
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ContentPostUpdateResponseObject); ok {
 		if err := validResponse.VisitContentPostUpdateResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ImmersionContestList operation middleware
+func (sh *strictHandler) ImmersionContestList(w http.ResponseWriter, r *http.Request, params ImmersionContestListParams) {
+	var request ImmersionContestListRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ImmersionContestList(ctx, request.(ImmersionContestListRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ImmersionContestList")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ImmersionContestListResponseObject); ok {
+		if err := validResponse.VisitImmersionContestListResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ImmersionContestGetConfigurations operation middleware
+func (sh *strictHandler) ImmersionContestGetConfigurations(w http.ResponseWriter, r *http.Request) {
+	var request ImmersionContestGetConfigurationsRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ImmersionContestGetConfigurations(ctx, request.(ImmersionContestGetConfigurationsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ImmersionContestGetConfigurations")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ImmersionContestGetConfigurationsResponseObject); ok {
+		if err := validResponse.VisitImmersionContestGetConfigurationsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ImmersionContestFindLatestOfficial operation middleware
+func (sh *strictHandler) ImmersionContestFindLatestOfficial(w http.ResponseWriter, r *http.Request) {
+	var request ImmersionContestFindLatestOfficialRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ImmersionContestFindLatestOfficial(ctx, request.(ImmersionContestFindLatestOfficialRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ImmersionContestFindLatestOfficial")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ImmersionContestFindLatestOfficialResponseObject); ok {
+		if err := validResponse.VisitImmersionContestFindLatestOfficialResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ImmersionContestFindByID operation middleware
+func (sh *strictHandler) ImmersionContestFindByID(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	var request ImmersionContestFindByIDRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ImmersionContestFindByID(ctx, request.(ImmersionContestFindByIDRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ImmersionContestFindByID")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ImmersionContestFindByIDResponseObject); ok {
+		if err := validResponse.VisitImmersionContestFindByIDResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

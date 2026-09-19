@@ -1,0 +1,6 @@
+>>> GET /immersion/contests?page=%3A%20error%20unmarshaling%20%27
+HTTP/1.1 400 Bad Request
+Content-Length: 150
+Content-Type: application/json; charset=UTF-8
+
+{"message":"Invalid format for parameter page: error binding string parameter: strconv.ParseInt: parsing \": error unmarshaling '\": invalid syntax"}

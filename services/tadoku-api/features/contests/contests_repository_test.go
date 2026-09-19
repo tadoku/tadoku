@@ -1,0 +1,108 @@
+package contests
+
+import (
+	"errors"
+	"reflect"
+	"testing"
+
+	"github.com/google/uuid"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
+)
+
+func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
+	t.Parallel()
+	db, err := testpostgres.New(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Error(err)
+		}
+	})
+
+	_, err = db.Pool.Exec(t.Context(), `
+		insert into users (id, display_name, created_at, updated_at, deleted_at)
+		values
+			('11111111-1111-4111-8111-111111111111', 'Owner One', '2026-01-01', '2026-01-01', null),
+			('22222222-2222-4222-8222-222222222222', 'Owner Two', '2026-01-01', '2026-01-01', '2026-09-01');
+
+		insert into contests (
+			id, owner_user_id, owner_user_display_name, "private", contest_start, contest_end,
+			registration_end, title, "description", language_code_allow_list,
+			activity_type_id_allow_list, official, created_at, updated_at, deleted_at
+		)
+		values
+			('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1', '11111111-1111-4111-8111-111111111111', 'stale', false,
+			 '2026-01-01', '2026-01-31', '2026-01-15', 'Public official', null, null, '{1}', true,
+			 '2026-01-01', '2026-01-01', null),
+			('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2', '22222222-2222-4222-8222-222222222222', 'stale', true,
+			 '2026-02-01', '2026-02-28', '2026-02-15', 'Private official', 'private', '{jpn,eng}', '{2,1}', true,
+			 '2026-02-01', '2026-02-01', null),
+			('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3', '11111111-1111-4111-8111-111111111111', 'stale', true,
+			 '2026-03-01', '2026-03-31', '2026-03-15', 'Private unofficial', null, '{}', '{3}', false,
+			 '2026-03-01', '2026-03-01', null),
+			('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa4', '22222222-2222-4222-8222-222222222222', 'stale', false,
+			 '2027-01-01', '2027-01-31', '2026-12-15', 'Deleted future official', null, '{eng}', '{5}', true,
+			 '2026-04-01', '2026-04-01', '2026-04-02')`)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	repository := NewContestsRepository(db.Pool)
+	items, total, err := repository.ListContests(t.Context(), ListParameters{
+		Official: true,
+		PageSize: 10,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(items) != 1 || items[0].Title != "Public official" || total != 2 {
+		t.Errorf("public list=%+v total=%d, want one visible of two live official contests", items, total)
+	}
+
+	ownerID := uuid.MustParse("11111111-1111-4111-8111-111111111111")
+	items, total, err = repository.ListContests(t.Context(), ListParameters{
+		UserID:   &ownerID,
+		Official: false,
+		PageSize: 10,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(items) != 1 || items[0].Title != "Private unofficial" || total != 1 {
+		t.Errorf("owner list=%+v total=%d, want private owner contest", items, total)
+	}
+
+	deletedID := uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa4")
+	if _, err := repository.FindContestByID(t.Context(), FindParameters{ID: deletedID}); !errors.Is(err, ErrContestNotFound) {
+		t.Errorf("deleted contest error=%v, want not found", err)
+	}
+	deleted, err := repository.FindContestByID(t.Context(), FindParameters{ID: deletedID, includeDeleted: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !deleted.Deleted || deleted.OwnerUserDisplayName != "Deleted organizer" {
+		t.Errorf("deleted contest=%+v", deleted)
+	}
+
+	privateID := uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2")
+	private, err := repository.FindContestByID(t.Context(), FindParameters{ID: privateID})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(private.AllowedLanguages) != 2 {
+		t.Fatalf("languages=%+v, want two", private.AllowedLanguages)
+	}
+	if got := []string{private.AllowedLanguages[0].Name, private.AllowedLanguages[1].Name}; !reflect.DeepEqual(got, []string{"English", "Japanese"}) {
+		t.Errorf("language names=%v", got)
+	}
+
+	latest, err := repository.FindLatestOfficialContest(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if latest.ID != deletedID {
+		t.Errorf("latest official=%s, want future deleted contest %s", latest.ID, deletedID)
+	}
+}

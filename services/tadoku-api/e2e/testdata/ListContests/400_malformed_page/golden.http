@@ -1,0 +1,6 @@
+>>> GET /immersion/contests?page=wat
+HTTP/1.1 400 Bad Request
+Content-Length: 131
+Content-Type: application/json; charset=UTF-8
+
+{"message":"Invalid format for parameter page: error binding string parameter: strconv.ParseInt: parsing \"wat\": invalid syntax"}

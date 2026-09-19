@@ -3,9 +3,11 @@ package http
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	stdhttp "net/http"
+	"strings"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -169,8 +171,15 @@ func NewHandler(
 		Middlewares: []openapi.MiddlewareFunc{
 			withJSONCharsetCompatibility,
 		},
-		ErrorHandlerFunc: func(w stdhttp.ResponseWriter, _ *stdhttp.Request, err error) {
-			writeJSON(w, stdhttp.StatusBadRequest, map[string]string{"message": err.Error()})
+		ErrorHandlerFunc: func(w stdhttp.ResponseWriter, request *stdhttp.Request, err error) {
+			message := err.Error()
+			var parameterErr *openapi.InvalidParamFormatError
+			if strings.HasPrefix(request.URL.Path, "/immersion/") &&
+				errors.As(err, &parameterErr) &&
+				strings.HasPrefix(parameterErr.Err.Error(), "error unmarshaling '") {
+				message = strings.Replace(message, ": error unmarshaling '", ": error unmarshalling '", 1)
+			}
+			writeJSON(w, stdhttp.StatusBadRequest, map[string]string{"message": message})
 		},
 	})
 	callbackStrictServer := callbackopenapi.NewStrictHandlerWithOptions(

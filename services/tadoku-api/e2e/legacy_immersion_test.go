@@ -35,8 +35,16 @@ func newLegacyImmersionAPI(ctx context.Context, dsn, jwksURL, ketoReadURL string
 		return nil, errors.Join(err, db.Close())
 	}
 
-	languages := repository.NewRepository(db)
+	postgresRepository := repository.NewRepository(db)
 	server := rest.NewServer(
+		domain.NewContestConfigurationOptions(postgresRepository),
+		nil,
+		domain.NewContestFindLatestOfficial(postgresRepository),
+		nil,
+		nil,
+		domain.NewContestFind(postgresRepository),
+		nil,
+		domain.NewContestList(postgresRepository),
 		nil,
 		nil,
 		nil,
@@ -57,17 +65,9 @@ func newLegacyImmersionAPI(ctx context.Context, dsn, jwksURL, ketoReadURL string
 		nil,
 		nil,
 		nil,
-		nil,
-		nil,
-		nil,
-		nil,
-		nil,
-		nil,
-		nil,
-		nil,
-		domain.NewLanguageList(languages),
-		domain.NewLanguageCreate(languages),
-		domain.NewLanguageUpdate(languages),
+		domain.NewLanguageList(postgresRepository),
+		domain.NewLanguageCreate(postgresRepository),
+		domain.NewLanguageUpdate(postgresRepository),
 		nil,
 		nil,
 		nil,

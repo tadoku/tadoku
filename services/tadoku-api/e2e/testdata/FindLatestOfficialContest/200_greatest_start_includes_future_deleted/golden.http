@@ -1,0 +1,6 @@
+>>> GET /immersion/contests/latest-official
+HTTP/1.1 200 OK
+Content-Length: 620
+Content-Type: application/json; charset=UTF-8
+
+{"allowed_activities":[{"id":2,"input_type":"time_primary","name":"Listening"},{"id":5,"input_type":"time_primary","name":"Study"}],"allowed_languages":[{"code":"eng","name":"English"},{"code":"jpn","name":"Japanese"}],"contest_end":"2027-01-31","contest_start":"2027-01-01","created_at":"2026-09-12T11:00:00Z","deleted":true,"description":"latest","id":"cccccccc-cccc-4ccc-8ccc-ccccccccccc2","official":true,"owner_user_display_name":"Owner One","owner_user_id":"11111111-1111-4111-8111-111111111111","private":true,"registration_end":"2026-12-15","title":"Future deleted official","updated_at":"2026-09-12T11:01:00Z"}

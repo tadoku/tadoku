@@ -1,0 +1,6 @@
+>>> PUT /content/posts/main/11111111-1111-4111-8111-000000000003
+HTTP/1.1 200 OK
+Content-Length: 174
+Content-Type: application/json; charset=UTF-8
+
+{"content":"Read a little **every day**.","id":"11111111-1111-4111-8111-000000000003","published_at":"2026-09-12T14:00:00Z","slug":"reading-habit","title":"A reading habit"}

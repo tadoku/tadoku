@@ -1,0 +1,6 @@
+>>> GET /content/posts/main/11111111-1111-4111-8111-000000000003/versions/a369012d-b92d-484f-839d-1734ff571642
+HTTP/1.1 200 OK
+Content-Length: 200
+Content-Type: application/json; charset=UTF-8
+
+{"content":"Read a little **every day** and share your progress.","created_at":"2026-09-12T16:00:00Z","id":"a369012d-b92d-484f-839d-1734ff571642","title":"Building a daily reading habit","version":3}

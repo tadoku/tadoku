@@ -32,6 +32,8 @@ type implementation struct {
 	name    string
 	handler http.Handler
 	skip    string
+
+	resetKratos bool
 }
 
 func atFixtureInstant(fn func()) {
@@ -48,6 +50,9 @@ func runCase(t *testing.T, s *suite, name string, want int, implementations ...i
 		t.Run(impl.name, func(t *testing.T) {
 			if impl.skip != "" {
 				t.Skip(impl.skip)
+			}
+			if impl.resetKratos {
+				resetKratosAfter(t, s)
 			}
 			s.reset(t, dir)
 			record := *updateGoldens && impl.name == goldenRecorder

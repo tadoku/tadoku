@@ -36,7 +36,7 @@ type AnnouncementList struct {
 	NextPageToken string
 }
 
-func IsValidAnnouncementStyle(style string) bool {
+func isValidAnnouncementStyle(style string) bool {
 	switch style {
 	case "success", "warning", "error", "info":
 		return true

@@ -24,7 +24,7 @@ type CreateAnnouncementParameters struct {
 
 func (p CreateAnnouncementParameters) Validate() error {
 	if p.ID == uuid.Nil || p.Namespace == "" || p.Title == "" || p.Content == "" ||
-		!IsValidAnnouncementStyle(p.Style) || !isValidAnnouncementHref(p.Href) ||
+		!isValidAnnouncementStyle(p.Style) || !isValidAnnouncementHref(p.Href) ||
 		!timex.IsValidRange(p.StartsAt, p.EndsAt) {
 		return ErrInvalidAnnouncement
 	}

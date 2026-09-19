@@ -120,13 +120,10 @@ func TestApplicationStartsAndShutsDown(t *testing.T) {
 		response.Body.Close()
 		t.Error("metrics listener remained open")
 	}
-	clients, err := observer.Do(t.Context(), observer.B().ClientList().Build()).ToString()
-	if err != nil {
-		t.Fatal(err)
+	if err := application.valkey.Do(t.Context(), application.valkey.B().Ping().Build()).Error(); !errors.Is(err, valkeygo.ErrClosing) {
+		t.Errorf("closed Valkey client PING error=%v, want ErrClosing", err)
 	}
-	if strings.Contains(clients, "id="+strconv.FormatInt(clientID, 10)+" ") {
-		t.Error("Valkey client remained open after shutdown")
-	}
+	waitForValkeyDisconnect(t, observer, "id="+strconv.FormatInt(clientID, 10))
 }
 
 func validApplicationConfig(t *testing.T) config {
@@ -353,13 +350,7 @@ func TestApplicationClosesValkeyWhenLaterStartupFails(t *testing.T) {
 		t.Fatalf("application=%v error=%v", application, err)
 	}
 
-	clients, err := observer.Do(t.Context(), observer.B().ClientList().Build()).ToString()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if strings.Contains(clients, "user="+username) {
-		t.Error("Valkey client remained open after later startup failure")
-	}
+	waitForValkeyDisconnect(t, observer, "user="+username)
 }
 
 func TestApplicationRejectsUnavailableJWKSBeforeStarting(t *testing.T) {
@@ -438,5 +429,36 @@ func TestMainLogsConfigErrorsAndExitsOne(t *testing.T) {
 	}
 	if strings.Contains(log, "panic:") {
 		t.Errorf("main output contains panic: %s", output)
+	}
+}
+
+// Close completes locally before Valkey necessarily processes the disconnect.
+func waitForValkeyDisconnect(t *testing.T, observer valkeygo.Client, clientField string) {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(t.Context(), time.Second)
+	defer cancel()
+	ticker := time.NewTicker(5 * time.Millisecond)
+	defer ticker.Stop()
+
+	var remaining []string
+	for {
+		clients, err := observer.Do(ctx, observer.B().ClientList().Build()).ToString()
+		if err != nil {
+			t.Fatalf("observe Valkey disconnect for %s: %v; last matching clients: %s", clientField, err, strings.Join(remaining, "\n"))
+		}
+		remaining = remaining[:0]
+		for _, line := range strings.Split(clients, "\n") {
+			if strings.Contains(line, clientField+" ") {
+				remaining = append(remaining, line)
+			}
+		}
+		if len(remaining) == 0 {
+			return
+		}
+		select {
+		case <-ctx.Done():
+			t.Fatalf("Valkey clients remained open for %s: %s", clientField, strings.Join(remaining, "\n"))
+		case <-ticker.C:
+		}
 	}
 }

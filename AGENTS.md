@@ -70,6 +70,8 @@ Migration PRs must remain compatible with the application version currently depl
 
 **Keep each operation's HTTP E2Es in one golden-case table.** Do not add separate generated-ID, persistence-readback or hand-decoded response tests beside it. Put persistence assertions in repository tests. Request-body fixtures use JSON only.
 
+**Use a journey when the behavior spans requests.** A journey under `e2e/testdata/journeys/` chains requests against one reset, so every state after the first step comes from the API: write-then-read agreement, business time moving between steps, and one cast member observing another's writes. Journeys run only against Tadoku API, never reset or seed between steps, and name their cast member per step in the Go table instead of embedding tokens in `request.http`. Use the `others` map for identities that must be rejected and give any identity that legitimately writes its own step. Reserve verify steps for effects no endpoint exposes, such as soft deletes, outbox rows and audit entries; API-observable persistence still belongs in the next request or a repository test. Keep journeys few; a header change breaks every step of every journey.
+
 **SQL style: always use lowercase keywords** (select, create table, not SELECT, CREATE TABLE)
 
 ### sqlc code generation

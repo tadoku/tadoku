@@ -14,6 +14,32 @@ import (
 // identities on mutating steps, and a second user only to observe limited
 // visibility of a resource.
 
+func TestLanguageCreateListJourney(t *testing.T) {
+	runJourney(t, api, "LanguageCreateList", []step{
+		{
+			request: "list_languages",
+			as:      admin,
+			want:    http.StatusOK,
+		},
+		{
+			request: "create_language",
+			as:      admin,
+			want:    http.StatusOK,
+			others: cast{
+				none:   http.StatusBadRequest,
+				guest:  http.StatusUnauthorized,
+				user:   http.StatusForbidden,
+				banned: http.StatusForbidden,
+			},
+		},
+		{
+			request: "list_languages",
+			as:      admin,
+			want:    http.StatusOK,
+		},
+	})
+}
+
 func TestAnnouncementLifecycleJourney(t *testing.T) {
 	afterExpiry := fixtureInstant.Add(8 * 24 * time.Hour)
 

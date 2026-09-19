@@ -15,14 +15,11 @@ import (
 )
 
 type mockKratosClient struct {
-	pages map[int64]*domain.ListIdentitiesResult
+	identities []domain.IdentityInfo
 }
 
-func (m *mockKratosClient) ListIdentities(ctx context.Context, perPage int64, page int64) (*domain.ListIdentitiesResult, error) {
-	if result, ok := m.pages[page]; ok {
-		return result, nil
-	}
-	return &domain.ListIdentitiesResult{Identities: nil, HasMore: false}, nil
+func (m *mockKratosClient) ListIdentities(context.Context, int64, string) ([]domain.IdentityInfo, string, error) {
+	return m.identities, "", nil
 }
 
 type mockSuppressionRepository struct {
@@ -57,25 +54,13 @@ func containsUser(users []domain.UserCacheEntry, identityID uuid.UUID) bool {
 	return false
 }
 
-func TestUserCache_DeduplicatesUsersAcrossPages(t *testing.T) {
-	// Simulate pagination race condition: user "2" appears on both page 0 and page 1
-	// This happens when a new user is created between page requests, shifting results
+func TestUserCache_DeduplicatesUsers(t *testing.T) {
 	kratos := &mockKratosClient{
-		pages: map[int64]*domain.ListIdentitiesResult{
-			0: {
-				Identities: []domain.IdentityInfo{
-					{ID: "1", DisplayName: "Alice", Email: "alice@test.com"},
-					{ID: "2", DisplayName: "Bob", Email: "bob@test.com"},
-				},
-				HasMore: true,
-			},
-			1: {
-				Identities: []domain.IdentityInfo{
-					{ID: "2", DisplayName: "Bob", Email: "bob@test.com"}, // duplicate due to pagination shift
-					{ID: "3", DisplayName: "Charlie", Email: "charlie@test.com"},
-				},
-				HasMore: false,
-			},
+		identities: []domain.IdentityInfo{
+			{ID: "1", DisplayName: "Alice", Email: "alice@test.com"},
+			{ID: "2", DisplayName: "Bob", Email: "bob@test.com"},
+			{ID: "2", DisplayName: "Bob", Email: "bob@test.com"},
+			{ID: "3", DisplayName: "Charlie", Email: "charlie@test.com"},
 		},
 	}
 
@@ -106,13 +91,9 @@ func TestUserCache_DeduplicatesUsersAcrossPages(t *testing.T) {
 func TestUserCacheFiltersDurableSuppressionsOnStartupAndRestart(t *testing.T) {
 	suppressedID := uuid.New()
 	visibleID := uuid.New()
-	kratos := &mockKratosClient{pages: map[int64]*domain.ListIdentitiesResult{
-		0: {
-			Identities: []domain.IdentityInfo{
-				{ID: suppressedID.String(), DisplayName: "Deleted user"},
-				{ID: visibleID.String(), DisplayName: "Visible user"},
-			},
-		},
+	kratos := &mockKratosClient{identities: []domain.IdentityInfo{
+		{ID: suppressedID.String(), DisplayName: "Deleted user"},
+		{ID: visibleID.String(), DisplayName: "Visible user"},
 	}}
 	suppressions := &mockSuppressionRepository{identityIDs: []uuid.UUID{suppressedID}}
 
@@ -137,7 +118,7 @@ type blockingRefreshKratosClient struct {
 	releaseRefresh chan struct{}
 }
 
-func (m *blockingRefreshKratosClient) ListIdentities(ctx context.Context, _ int64, _ int64) (*domain.ListIdentitiesResult, error) {
+func (m *blockingRefreshKratosClient) ListIdentities(ctx context.Context, _ int64, _ string) ([]domain.IdentityInfo, string, error) {
 	m.mu.Lock()
 	m.calls++
 	call := m.calls
@@ -146,11 +127,11 @@ func (m *blockingRefreshKratosClient) ListIdentities(ctx context.Context, _ int6
 		close(m.refreshStarted)
 		select {
 		case <-ctx.Done():
-			return nil, ctx.Err()
+			return nil, "", ctx.Err()
 		case <-m.releaseRefresh:
 		}
 	}
-	return &domain.ListIdentitiesResult{Identities: m.identities}, nil
+	return m.identities, "", nil
 }
 
 func TestUserCacheImmediateSuppressionWinsAgainstInflightRefresh(t *testing.T) {
@@ -186,9 +167,7 @@ func TestUserCacheImmediateSuppressionWinsAgainstInflightRefresh(t *testing.T) {
 
 func TestUserCacheFailsClosedWhenSuppressionLookupFails(t *testing.T) {
 	identityID := uuid.New()
-	kratos := &mockKratosClient{pages: map[int64]*domain.ListIdentitiesResult{
-		0: {Identities: []domain.IdentityInfo{{ID: identityID.String(), DisplayName: "Visible user"}}},
-	}}
+	kratos := &mockKratosClient{identities: []domain.IdentityInfo{{ID: identityID.String(), DisplayName: "Visible user"}}}
 	suppressions := &mockSuppressionRepository{}
 	c := cache.NewUserCache(kratos, suppressions, 10*time.Millisecond)
 	c.Start()

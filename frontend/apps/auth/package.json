@@ -7,13 +7,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.0",
     "@heroicons/react": "^2.0.13",
-    "@ory/client": "^0.2.0-alpha.48",
-    "@ory/integrations": "^0.2.8",
+    "@ory/kratos-client": "26.2.0",
     "axios": "^1.18.0",
     "jotai": "^1.8.3",
     "next": "^13.1.1",
@@ -26,6 +26,7 @@
     "ui": "workspace:*"
   },
   "devDependencies": {
+    "@playwright/test": "1.63.0",
     "@types/node": "18.7.18",
     "@types/react": "18.0.20",
     "@types/react-dom": "18.0.6",

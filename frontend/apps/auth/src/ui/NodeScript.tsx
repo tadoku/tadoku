@@ -1,4 +1,4 @@
-import { UiNode, UiNodeScriptAttributes } from '@ory/client'
+import { UiNode, UiNodeScriptAttributes } from '@ory/kratos-client'
 import { HTMLAttributeReferrerPolicy, useEffect } from 'react'
 
 interface Props {

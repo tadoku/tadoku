@@ -1,4 +1,4 @@
-import { SelfServiceSettingsFlow } from '@ory/client'
+import { SettingsFlow } from '@ory/kratos-client'
 import type { NextPage } from 'next'
 import { useEffect, useState } from 'react'
 import Flow from '../src/ui/Flow'
@@ -12,9 +12,7 @@ import MessagesList from '../src/ui/MessagesList'
 interface Props {}
 
 const Settings: NextPage<Props> = () => {
-  const [flow, setFlow] = useState(
-    undefined as SelfServiceSettingsFlow | undefined,
-  )
+  const [flow, setFlow] = useState(undefined as SettingsFlow | undefined)
   const [session, setSession] = useSession()
   const router = useRouter()
   const { flow: flowId, return_to: returnTo } = router.query
@@ -33,7 +31,7 @@ const Settings: NextPage<Props> = () => {
     // If ?flow=.. was in the URL, we fetch it
     if (flowId) {
       ory
-        .getSelfServiceSettingsFlow(String(flowId))
+        .getSettingsFlow({ id: String(flowId) })
         .then(({ data }) => {
           setFlow(data)
         })
@@ -42,9 +40,9 @@ const Settings: NextPage<Props> = () => {
     }
 
     ory
-      .initializeSelfServiceSettingsFlowForBrowsers(
-        returnTo ? String(returnTo) : undefined,
-      )
+      .createBrowserSettingsFlow({
+        returnTo: returnTo ? String(returnTo) : undefined,
+      })
       .then(({ data }) => {
         setFlow(data)
       })
@@ -65,8 +63,8 @@ const Settings: NextPage<Props> = () => {
       shallow: true,
     })
 
-    ory
-      .submitSelfServiceSettingsFlow(flow.id, data)
+    return ory
+      .updateSettingsFlow({ flow: flow.id, updateSettingsFlowBody: data })
       .then(async ({ data }) => {
         setFlow(data)
 
@@ -78,7 +76,7 @@ const Settings: NextPage<Props> = () => {
       .catch(async (err: AxiosError) => {
         // If the previous handler did not catch the error it's most likely a form validation error
         if (err.response?.status === 400) {
-          setFlow(err.response.data as SelfServiceSettingsFlow)
+          setFlow(err.response.data as SettingsFlow)
           return
         }
 

@@ -1,4 +1,3 @@
-import { getNodeLabel } from '@ory/integrations/ui'
 import { useFormContext } from 'react-hook-form'
 
 import { NodeInputProps } from './helpers'
@@ -38,7 +37,7 @@ export function NodeInputButton<T>({
         disabled={attributes.disabled || disabled}
         className="btn"
       >
-        {getNodeLabel(node)}
+        {node.meta.label?.text ?? attributes.name}
       </button>
     </>
   )

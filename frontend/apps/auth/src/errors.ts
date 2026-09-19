@@ -12,7 +12,7 @@ function flowTypeToRoute(
     case 'registration':
       return '/register'
     case 'settings':
-      return '/settings'
+      return '/'
     case 'recovery':
       return '/account-recovery'
     case 'verification':

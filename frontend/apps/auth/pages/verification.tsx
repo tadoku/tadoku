@@ -1,12 +1,11 @@
 import {
-  SelfServiceVerificationFlow,
-  SubmitSelfServiceVerificationFlowBody,
-} from '@ory/client'
+  VerificationFlow,
+  UpdateVerificationFlowBody,
+} from '@ory/kratos-client'
 import type { NextPage } from 'next'
 import { useEffect, useState } from 'react'
 import Flow from '../src/ui/Flow'
 import ory from '../src/ory'
-import { useSession } from '../src/session'
 import { useRouter } from 'next/router'
 import { handleFlowError } from '../src/errors'
 import { AxiosError } from 'axios'
@@ -14,8 +13,7 @@ import { AxiosError } from 'axios'
 interface Props {}
 
 const Verification: NextPage<Props> = () => {
-  const [flow, setFlow] = useState<SelfServiceVerificationFlow>()
-  const [_, setSession] = useSession()
+  const [flow, setFlow] = useState<VerificationFlow>()
   const router = useRouter()
   const { flow: flowId, return_to: returnTo } = router.query
 
@@ -29,7 +27,7 @@ const Verification: NextPage<Props> = () => {
     // If ?flow=.. was in the URL, we fetch it
     if (flowId) {
       ory
-        .getSelfServiceVerificationFlow(String(flowId))
+        .getVerificationFlow({ id: String(flowId) })
         .then(({ data }) => {
           // We received the flow - let's use its data and render the form!
           setFlow(data)
@@ -50,9 +48,9 @@ const Verification: NextPage<Props> = () => {
 
     // Otherwise we initialize it
     ory
-      .initializeSelfServiceVerificationFlowForBrowsers(
-        returnTo ? String(returnTo) : undefined,
-      )
+      .createBrowserVerificationFlow({
+        returnTo: returnTo ? String(returnTo) : undefined,
+      })
       .then(({ data }) => {
         setFlow(data)
       })
@@ -67,27 +65,25 @@ const Verification: NextPage<Props> = () => {
       })
   }, [flowId, router, router.isReady, returnTo, flow])
 
-  const onSubmit = async (data: SubmitSelfServiceVerificationFlowBody) => {
+  const onSubmit = async (data: UpdateVerificationFlowBody) => {
     await router.push(`/verification?flow=${flow?.id}`, undefined, {
       shallow: true,
     })
 
-    ory
-      .submitSelfServiceVerificationFlow(String(flow?.id), data)
+    return ory
+      .updateVerificationFlow({
+        flow: String(flow?.id),
+        updateVerificationFlowBody: data,
+      })
       .then(async ({ data }) => {
         setFlow(data)
-
-        const res = await ory.toSession()
-        setSession(res.data)
-
-        return router.push(flow?.return_to || '/')
       })
-      .catch(handleFlowError(router, 'registration', setFlow))
+      .catch(handleFlowError(router, 'verification', setFlow))
       .catch(async (err: AxiosError) => {
         // If the previous handler did not catch the error it's most likely a form validation error
         if (err.response?.status === 400) {
           // Yup, it is!
-          setFlow(err.response?.data as SelfServiceVerificationFlow | undefined)
+          setFlow(err.response?.data as VerificationFlow | undefined)
           return
         }
 
@@ -98,7 +94,7 @@ const Verification: NextPage<Props> = () => {
   return (
     <div>
       <h1 className="title mb-4">Account verification</h1>
-      <Flow flow={flow} method="password" onSubmit={onSubmit} />
+      <Flow flow={flow} onSubmit={onSubmit} />
     </div>
   )
 }

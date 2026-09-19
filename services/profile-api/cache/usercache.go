@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"sync"
 	"time"
@@ -89,16 +90,15 @@ func (c *UserCache) run(ctx context.Context) {
 func (c *UserCache) refreshUsers(ctx context.Context) error {
 	var allUsers []domain.UserCacheEntry
 	seen := make(map[string]bool)
-	page := int64(0)
-	perPage := int64(500)
-
+	pageToken := ""
+	seenPageTokens := make(map[string]struct{})
 	for {
-		result, err := c.kratos.ListIdentities(ctx, perPage, page)
+		identities, nextPageToken, err := c.kratos.ListIdentities(ctx, 500, pageToken)
 		if err != nil {
 			return err
 		}
 
-		for _, identity := range result.Identities {
+		for _, identity := range identities {
 			if seen[identity.ID] {
 				continue
 			}
@@ -111,10 +111,14 @@ func (c *UserCache) refreshUsers(ctx context.Context) error {
 			})
 		}
 
-		if !result.HasMore {
+		if nextPageToken == "" {
 			break
 		}
-		page++
+		if _, exists := seenPageTokens[nextPageToken]; exists {
+			return fmt.Errorf("could not refresh users: repeated next page token")
+		}
+		seenPageTokens[nextPageToken] = struct{}{}
+		pageToken = nextPageToken
 	}
 
 	suppressedIdentityIDs, err := c.suppressionRepository.ListAccountDeletionSuppressedIdentityIDs(ctx)

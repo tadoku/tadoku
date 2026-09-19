@@ -67,6 +67,13 @@ def frontend_build(image, project_name, package_trigger, shared_package_manifest
       './apps/%s' % project_name,
       './packages',
     ],
+    ignore=[
+        '**/.next',
+        '**/node_modules',
+        '**/tsconfig.tsbuildinfo',
+        '**/test-results',
+        '**/playwright-report',
+    ],
     disable_push=True,
     skips_local_docker=is_shared_cluster(),
     live_update=[

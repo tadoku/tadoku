@@ -177,7 +177,7 @@ export const LogDetailsV2 = ({ log }: Props) => {
 
 function DeleteButton({ log }: { log: Log }) {
   const [session] = useSession()
-  const isOwner = log.user_id === session?.identity.id
+  const isOwner = log.user_id === session?.identity?.id
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const router = useRouter()
 

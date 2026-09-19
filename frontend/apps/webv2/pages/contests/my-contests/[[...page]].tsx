@@ -27,7 +27,7 @@ const Contests: NextPage<Props> = () => {
       pageSize: 25,
       official: false,
       includeDeleted: false,
-      userId: session?.identity.id,
+      userId: session?.identity?.id,
     }
   }
   const [filters, setFilters] = useState(() => newFilter())
@@ -37,9 +37,9 @@ const Contests: NextPage<Props> = () => {
       pageSize: 25,
       official: false,
       includeDeleted: false,
-      userId: session?.identity.id,
+      userId: session?.identity?.id,
     })
-  }, [router.asPath, session?.identity.id, router.query.page])
+  }, [router.asPath, session?.identity?.id, router.query.page])
 
   const options = useContestConfigurationOptions({ enabled: !!session })
   const list = useContestList(filters, { enabled: !!options.data })

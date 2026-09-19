@@ -1,7 +1,4 @@
-import {
-  SelfServiceLoginFlow,
-  SubmitSelfServiceLoginFlowBody,
-} from '@ory/client'
+import { LoginFlow, UpdateLoginFlowBody } from '@ory/kratos-client'
 import type { NextPage } from 'next'
 import { useEffect, useState } from 'react'
 import Flow from '../src/ui/Flow'
@@ -16,7 +13,7 @@ import { ErrorFallback, withOryErrorBoundary } from '../src/OryErrorBoundary'
 interface Props {}
 
 const Login: NextPage<Props> = () => {
-  const [flow, setFlow] = useState<SelfServiceLoginFlow>()
+  const [flow, setFlow] = useState<LoginFlow>()
   const [session, setSession] = useSession()
   const router = useRouter()
   const { flow: flowId, return_to: returnTo, refresh, aal } = router.query
@@ -32,7 +29,7 @@ const Login: NextPage<Props> = () => {
       return
     }
 
-    if (session) {
+    if (session && !flowId && refresh !== 'true' && !aal) {
       router.replace('/')
       return
     }
@@ -40,7 +37,7 @@ const Login: NextPage<Props> = () => {
     // If ?flow=.. was in the URL, we fetch it
     if (flowId) {
       ory
-        .getSelfServiceLoginFlow(String(flowId))
+        .getLoginFlow({ id: String(flowId) })
         .then(({ data }) => {
           setFlow(data)
         })
@@ -49,18 +46,27 @@ const Login: NextPage<Props> = () => {
     }
 
     ory
-      .initializeSelfServiceLoginFlowForBrowsers(
-        Boolean(refresh),
-        aal ? String(aal) : undefined,
-        returnTo ? String(returnTo) : undefined,
-      )
+      .createBrowserLoginFlow({
+        refresh: refresh === 'true',
+        aal: aal ? String(aal) : undefined,
+        returnTo: returnTo ? String(returnTo) : undefined,
+      })
       .then(({ data }) => {
-        console.log(data)
         setFlow(data)
       })
       .catch(handleFlowError(router, 'login', setFlow))
       .catch(err => setError(err))
-  }, [flowId, router, router.isReady, aal, refresh, returnTo, flow, error, session])
+  }, [
+    flowId,
+    router,
+    router.isReady,
+    aal,
+    refresh,
+    returnTo,
+    flow,
+    error,
+    session,
+  ])
 
   if (error) {
     return (
@@ -75,13 +81,13 @@ const Login: NextPage<Props> = () => {
     return null
   }
 
-  const onSubmit = async (data: SubmitSelfServiceLoginFlowBody) => {
+  const onSubmit = async (data: UpdateLoginFlowBody) => {
     await router.push(`/login?flow=${flow?.id}`, undefined, {
       shallow: true,
     })
 
-    ory
-      .submitSelfServiceLoginFlow(flow.id, data)
+    return ory
+      .updateLoginFlow({ flow: flow.id, updateLoginFlowBody: data })
       .then(async ({ data }) => {
         if (flow?.return_to) {
           window.location.href = flow?.return_to
@@ -98,7 +104,7 @@ const Login: NextPage<Props> = () => {
         // If the previous handler did not catch the error it's most likely a form validation error
         if (err.response?.status === 400) {
           // Yup, it is!
-          setFlow(err.response?.data as SelfServiceLoginFlow | undefined)
+          setFlow(err.response?.data as LoginFlow | undefined)
           return
         }
 

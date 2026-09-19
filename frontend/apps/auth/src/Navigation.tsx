@@ -22,7 +22,7 @@ export default function Navigation() {
       ? [
           {
             type: 'dropdown',
-            label: session.identity.traits.display_name ?? 'User',
+            label: session.identity?.traits.display_name ?? 'User',
             links: [
               { label: 'Settings', href: '/', IconComponent: Cog8ToothIcon },
               {

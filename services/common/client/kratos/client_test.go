@@ -14,6 +14,64 @@ import (
 	commonkratos "github.com/tadoku/tadoku/services/common/client/kratos"
 )
 
+func TestListIdentitiesFetchesOnlyRequestedPage(t *testing.T) {
+	requests := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		requests++
+		if req.URL.Path != "/admin/identities" || req.URL.Query().Get("page_size") != "600" {
+			t.Errorf("unexpected requested page: %s", req.URL.String())
+		}
+		if req.URL.Query().Has("page") || req.URL.Query().Has("per_page") {
+			t.Errorf("request used unsupported offset pagination: %s", req.URL.RawQuery)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		switch req.URL.Query().Get("page_token") {
+		case "":
+			w.Header().Set("Link", `</admin/identities?page_size=600&page_token=>; rel="first",</admin/identities?page_size=600&page_token=second>; rel="next"`)
+			_, _ = w.Write([]byte(`[{"id":"first-page"}]`))
+		case "second":
+			_, _ = w.Write([]byte(`[{"id":"second-page"}]`))
+		default:
+			t.Errorf("unexpected page token %q", req.URL.Query().Get("page_token"))
+			w.WriteHeader(http.StatusBadRequest)
+		}
+	}))
+	defer server.Close()
+
+	client := commonkratos.NewClient(server.URL)
+	identities, next, err := client.ListIdentities(context.Background(), 600, "")
+	if err != nil {
+		t.Fatalf("list first page: %v", err)
+	}
+	if len(identities) != 1 || identities[0].GetId() != "first-page" || next != "second" || requests != 1 {
+		t.Fatalf("first page: identities=%v next=%q requests=%d", identities, next, requests)
+	}
+	identities, next, err = client.ListIdentities(context.Background(), 600, next)
+	if err != nil {
+		t.Fatalf("list second page: %v", err)
+	}
+	if len(identities) != 1 || identities[0].GetId() != "second-page" || next != "" || requests != 2 {
+		t.Fatalf("second page: identities=%v next=%q requests=%d", identities, next, requests)
+	}
+}
+
+func TestListIdentitiesRejectsMalformedContinuation(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Link", `</admin/identities?page_size=500>; rel="next"`)
+		_, _ = w.Write([]byte(`[]`))
+	}))
+	defer server.Close()
+
+	identities, next, err := commonkratos.NewClient(server.URL).ListIdentities(context.Background(), 500, "")
+	if err == nil || !strings.Contains(err.Error(), "page_token") {
+		t.Fatalf("error = %v, want missing page_token error", err)
+	}
+	if identities != nil || next != "" {
+		t.Fatalf("identities = %v, next = %q, want no result on malformed continuation", identities, next)
+	}
+}
+
 func TestDeactivateIdentityOnlyPatchesState(t *testing.T) {
 	identityID := uuid.New()
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {

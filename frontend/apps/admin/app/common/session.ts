@@ -1,5 +1,5 @@
 import { atom, useAtom } from 'jotai'
-import { Session } from '@ory/client'
+import { Session } from '@ory/kratos-client'
 import { useRouter } from 'next/router'
 import { useEffect, useRef, DependencyList } from 'react'
 import { AxiosError } from 'axios'
@@ -55,7 +55,6 @@ export const logoutTokenAtom = atom(undefined as undefined | string)
 export const useLogoutHandler = (deps?: DependencyList) => {
   const [logoutToken, setLogoutToken] = useAtom(logoutTokenAtom)
   const [session] = useSession()
-  const router = useRouter()
 
   useEffect(() => {
     if (logoutToken || !session) {
@@ -63,9 +62,7 @@ export const useLogoutHandler = (deps?: DependencyList) => {
     }
 
     ory
-      .createSelfServiceLogoutFlowUrlForBrowsers(undefined, {
-        withCredentials: true,
-      })
+      .createBrowserLogoutFlow()
       .then(({ data }) => {
         setLogoutToken(data.logout_token)
       })
@@ -85,11 +82,8 @@ export const useLogoutHandler = (deps?: DependencyList) => {
   return () => {
     if (logoutToken) {
       ory
-        .submitSelfServiceLogoutFlow(logoutToken, undefined, {
-          withCredentials: true,
-        })
-        .then(() => router.push(routes.authLogin()))
-        .then(() => router.reload())
+        .updateLogoutFlow({ token: logoutToken })
+        .then(() => window.location.assign(routes.authLogin()))
     }
   }
 }

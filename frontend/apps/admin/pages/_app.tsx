@@ -3,8 +3,13 @@ import { NextPage } from 'next'
 import { ReactElement, ReactNode, useEffect } from 'react'
 import { sdkServer as ory } from '@app/common/ory'
 import { Atom, Provider, useAtom } from 'jotai'
-import { AppContextWithSession, sessionAtom, useUserRole, useCurrentLocation } from '@app/common/session'
-import { Session } from '@ory/client'
+import {
+  AppContextWithSession,
+  sessionAtom,
+  useUserRole,
+  useCurrentLocation,
+} from '@app/common/session'
+import { Session } from '@ory/kratos-client'
 import { ToastContainer } from 'ui/components/toasts'
 import 'ui/styles/globals.css'
 import { QueryCache, QueryClient, QueryClientProvider } from 'react-query'
@@ -96,7 +101,7 @@ const MyApp = ({ Component, pageProps }: AppPropsWithLayout) => {
 
   setInitialValues(sessionAtom, initializedSession)
 
-  const getLayout = Component.getLayout ?? ((page) => page)
+  const getLayout = Component.getLayout ?? (page => page)
 
   return (
     <Provider initialValues={getInitialValues()}>
@@ -135,7 +140,7 @@ MyApp.getInitialProps = async (ctx: AppContextWithSession) => {
 
   if (cookie) {
     try {
-      const { data: session } = await ory.toSession(undefined, cookie)
+      const { data: session } = await ory.toSession({ cookie })
       props.pageProps.initialState.session = session
       ctx.ctx.session = session
     } catch (err) {}

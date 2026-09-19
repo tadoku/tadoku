@@ -1,4 +1,3 @@
-import { getNodeLabel } from '@ory/integrations/ui'
 import { useFormContext } from 'react-hook-form'
 
 import { NodeInputProps } from './helpers'
@@ -25,7 +24,9 @@ export function NodeInputSubmit<T>({
         disabled={attributes.disabled || disabled}
         className="btn primary"
       >
-        {getNodeLabel(node).replaceAll('Sign in', 'Log in')}
+        {(
+          node.meta.label?.text ?? String(attributes.value ?? attributes.name)
+        ).replaceAll('Sign in', 'Log in')}
       </button>
     </>
   )

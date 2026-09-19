@@ -23,16 +23,13 @@ type Traits struct {
 	Email       string
 }
 
-func (k *KratosClient) ListIdentities(ctx context.Context, perPage int64, page int64) (*domain.ListIdentitiesResult, error) {
-	identities, err := k.client.ListIdentities(ctx, perPage, page)
+func (k *KratosClient) ListIdentities(ctx context.Context, pageSize int64, pageToken string) ([]domain.IdentityInfo, string, error) {
+	identities, nextPageToken, err := k.client.ListIdentities(ctx, pageSize, pageToken)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
-	result := &domain.ListIdentitiesResult{
-		Identities: make([]domain.IdentityInfo, 0, len(identities)),
-		HasMore:    len(identities) == int(perPage),
-	}
+	result := make([]domain.IdentityInfo, 0, len(identities))
 
 	for _, identity := range identities {
 		if identity.GetSchemaId() != "user" {
@@ -54,7 +51,7 @@ func (k *KratosClient) ListIdentities(ctx context.Context, perPage int64, page i
 			createdAt = identity.GetCreatedAt().Format("2006-01-02T15:04:05Z")
 		}
 
-		result.Identities = append(result.Identities, domain.IdentityInfo{
+		result = append(result, domain.IdentityInfo{
 			ID:          identity.GetId(),
 			DisplayName: traits.DisplayName,
 			Email:       traits.Email,
@@ -62,7 +59,7 @@ func (k *KratosClient) ListIdentities(ctx context.Context, perPage int64, page i
 		})
 	}
 
-	return result, nil
+	return result, nextPageToken, nil
 }
 
 // Verify KratosClient implements domain.KratosClient at compile time.

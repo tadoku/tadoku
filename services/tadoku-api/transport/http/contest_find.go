@@ -4,7 +4,7 @@ import (
 	"context"
 
 	openapiTypes "github.com/oapi-codegen/runtime/types"
-	"github.com/tadoku/tadoku/services/tadoku-api/features/contests"
+	"github.com/tadoku/tadoku/services/tadoku-api/app"
 	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
 )
 
@@ -32,7 +32,7 @@ func (s *server) ImmersionContestFindLatestOfficial(
 	return openapi.ImmersionContestFindLatestOfficial200JSONResponse(contestViewResponse(item)), nil
 }
 
-func contestViewResponse(item *contests.ContestView) openapi.ImmersionContestView {
+func contestViewResponse(item *app.ContestView) openapi.ImmersionContestView {
 	activities := make([]openapi.ImmersionActivity, 0, len(item.AllowedActivities))
 	for _, activity := range item.AllowedActivities {
 		inputType := openapi.ImmersionActivityInputType(activity.InputType)

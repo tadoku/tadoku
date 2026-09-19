@@ -45,7 +45,6 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//services/tadoku-api/app",
-        "//services/tadoku-api/features/contests",
         "//services/tadoku-api/generated/openapi",
         "//services/tadoku-api/generated/openapi/callback",
         "//services/tadoku-api/internal/callbackauth",

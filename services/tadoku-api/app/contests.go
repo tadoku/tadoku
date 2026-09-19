@@ -8,6 +8,7 @@ import (
 )
 
 type ListContestsParameters = contests.ListParameters
+type ContestView = contests.ContestView
 
 func (a *Application) ListContests(ctx context.Context, parameters ListContestsParameters) (*contests.ContestList, error) {
 	includePrivate := a.permissions.IsAdminForPublicRead(ctx)

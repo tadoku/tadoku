@@ -1,0 +1,3 @@
+GET /content/pages/main/reading-guide HTTP/1.1
+Host: api.test
+

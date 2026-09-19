@@ -35,8 +35,10 @@ one; do not add feature or repository interfaces solely for mocking.
 Each feature package groups its operations in `<feature>_service.go` and
 `<feature>_repository.go`, with matching `_test.go` files. Keep domain types,
 errors and shared validation in `domain.go`; service and repository structs and
-constructors stay with their implementations. Within feature packages, database
-tests exercise repositories directly and live only in `<feature>_repository_test.go`.
+constructors stay with their implementations. Declare each feature's domain errors
+together in one `var` block and reuse them from services and repositories.
+Within feature packages, database tests exercise repositories directly and live
+only in `<feature>_repository_test.go`.
 Service and validation tests in `<feature>_service_test.go` remain database-free.
 
 Application errors use `internal/errx.Error`, which carries a transport-neutral

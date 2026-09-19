@@ -32,11 +32,9 @@ type PageVersion struct {
 var (
 	ErrInvalidNamespace  = errx.NewInvalidInputError("namespace is required")
 	ErrInvalidPagination = errx.NewInvalidInputError("invalid pagination")
-	ErrPageNotFound      = errx.NewNotFoundError("page not found")
-)
-
-var (
+	ErrInvalidSlug       = errx.NewInvalidInputError("slug is required")
 	ErrInvalidPage       = errx.NewInvalidInputError("invalid page")
+	ErrPageNotFound      = errx.NewNotFoundError("page not found")
 	ErrPageAlreadyExists = errx.NewConflictError("page already exists")
 )
 

@@ -24,7 +24,10 @@ type Post struct {
 var (
 	ErrInvalidNamespace  = errx.NewInvalidInputError("namespace is required")
 	ErrInvalidPagination = errx.NewInvalidInputError("invalid pagination")
+	ErrInvalidSlug       = errx.NewInvalidInputError("slug is required")
+	ErrInvalidPost       = errx.NewInvalidInputError("invalid post")
 	ErrPostNotFound      = errx.NewNotFoundError("post not found")
+	ErrPostAlreadyExists = errx.NewConflictError("post already exists")
 )
 
 type PostVersion struct {
@@ -34,11 +37,6 @@ type PostVersion struct {
 	Content   string
 	CreatedAt time.Time
 }
-
-var (
-	ErrInvalidPost       = errx.NewInvalidInputError("invalid post")
-	ErrPostAlreadyExists = errx.NewConflictError("post already exists")
-)
 
 type CreatePostParameters struct {
 	ID          uuid.UUID

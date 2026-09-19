@@ -62,10 +62,11 @@ func isValidAnnouncementHref(href *string) bool {
 }
 
 var (
-	ErrInvalidNamespace     = errx.NewInvalidInputError("namespace is required")
-	ErrInvalidPagination    = errx.NewInvalidInputError("invalid pagination")
-	ErrInvalidAnnouncement  = errx.NewInvalidInputError("invalid announcement")
-	ErrAnnouncementNotFound = errx.NewNotFoundError("announcement not found")
+	ErrInvalidNamespace          = errx.NewInvalidInputError("namespace is required")
+	ErrInvalidPagination         = errx.NewInvalidInputError("invalid pagination")
+	ErrInvalidAnnouncement       = errx.NewInvalidInputError("invalid announcement")
+	ErrAnnouncementNotFound      = errx.NewNotFoundError("announcement not found")
+	ErrAnnouncementAlreadyExists = errx.NewConflictError("announcement already exists")
 )
 
 type CreateAnnouncementParameters struct {

@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/google/uuid"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
 
@@ -46,7 +45,7 @@ func (s *Service) FindPostBySlug(ctx context.Context, namespace, slug string) (*
 		return nil, ErrInvalidNamespace
 	}
 	if slug == "" {
-		return nil, errx.NewInvalidInputError("slug is required")
+		return nil, ErrInvalidSlug
 	}
 
 	post, err := s.posts.FindPostBySlug(ctx, namespace, slug)

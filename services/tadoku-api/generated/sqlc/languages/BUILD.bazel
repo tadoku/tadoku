@@ -1,0 +1,16 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "languages",
+    srcs = [
+        "db.go",
+        "languages.sql.go",
+        "models.go",
+    ],
+    importpath = "github.com/tadoku/tadoku/services/tadoku-api/generated/sqlc/languages",
+    visibility = ["//services/tadoku-api/features/languages:__pkg__"],
+    deps = [
+        "@com_github_jackc_pgx_v5//:pgx",
+        "@com_github_jackc_pgx_v5//pgconn",
+    ],
+)

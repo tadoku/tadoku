@@ -103,6 +103,9 @@ func New(ctx context.Context) (_ *Database, err error) {
 	if err := db.Pool.Ping(ctx); err != nil {
 		return nil, fmt.Errorf("ping test pool: %w", err)
 	}
+	if _, err := db.Pool.Exec(ctx, "create table tadoku_test_language_baseline as select code, name from languages"); err != nil {
+		return nil, fmt.Errorf("snapshot language baseline: %w", err)
+	}
 	return db, nil
 }
 

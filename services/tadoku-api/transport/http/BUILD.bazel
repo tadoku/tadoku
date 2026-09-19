@@ -10,6 +10,7 @@ go_library(
         "authentication.go",
         "banned_users.go",
         "errors.go",
+        "languages.go",
         "observability.go",
         "page_create.go",
         "page_delete.go",

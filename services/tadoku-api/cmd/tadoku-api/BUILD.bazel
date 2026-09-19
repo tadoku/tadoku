@@ -36,7 +36,10 @@ go_binary(
 
 go_test(
     name = "tadoku-api_test",
-    srcs = ["main_test.go"],
+    srcs = [
+        "keto_test.go",
+        "main_test.go",
+    ],
     embed = [":tadoku-api_lib"],
     env_inherit = [
         "TADOKU_TEST_POSTGRES_URL",
@@ -48,7 +51,9 @@ go_test(
         "requires-network",
     ],
     deps = [
+        "//services/common/client/keto",
         "//services/common/postgresconfig",
+        "//services/tadoku-api/internal/testketo",
         "//services/tadoku-api/internal/testpostgres",
         "//services/tadoku-api/internal/testvalkey",
         "@com_github_valkey_io_valkey_go//:valkey-go",

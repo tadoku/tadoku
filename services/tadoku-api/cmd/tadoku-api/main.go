@@ -36,12 +36,14 @@ import (
 )
 
 type config struct {
-	Port        int    `validate:"gt=0,lte=65535" default:"8000"`
-	MetricsPort int    `validate:"gt=0,lte=65535" envconfig:"metrics_port" default:"9090"`
-	ServiceName string `validate:"required" envconfig:"service_name" default:"tadoku-api"`
-	JWKS        string `validate:"required"`
-	JWTIssuer   string `envconfig:"jwt_issuer"`
-	KetoReadURL string `validate:"required" envconfig:"keto_read_url"`
+	Port             int           `validate:"gt=0,lte=65535" default:"8000"`
+	MetricsPort      int           `validate:"gt=0,lte=65535" envconfig:"metrics_port" default:"9090"`
+	ServiceName      string        `validate:"required" envconfig:"service_name" default:"tadoku-api"`
+	JWKS             string        `validate:"required"`
+	JWTIssuer        string        `envconfig:"jwt_issuer"`
+	KetoReadURL      string        `validate:"required" envconfig:"keto_read_url"`
+	KetoWriteURL     string        `validate:"required" envconfig:"keto_write_url"`
+	KetoWriteTimeout time.Duration `validate:"gt=0" envconfig:"keto_write_timeout" default:"2s"`
 
 	KratosAdminURL string        `validate:"required" envconfig:"kratos_admin_url"`
 	KratosTimeout  time.Duration `validate:"gt=0" envconfig:"kratos_timeout" default:"2s"`
@@ -77,6 +79,12 @@ func loadConfig() (config, error) {
 	if err != nil || ketoURL.Host == "" || (ketoURL.Scheme != "http" && ketoURL.Scheme != "https") {
 		return config{}, fmt.Errorf("validate config: KetoReadURL must be an HTTP(S) URL")
 	}
+	ketoWriteURL, err := url.Parse(cfg.KetoWriteURL)
+	if err != nil || ketoWriteURL.Hostname() == "" || (ketoWriteURL.Scheme != "http" && ketoWriteURL.Scheme != "https") ||
+		ketoWriteURL.User != nil || ketoWriteURL.RawQuery != "" || ketoWriteURL.ForceQuery || strings.Contains(cfg.KetoWriteURL, "#") {
+		return config{}, fmt.Errorf("validate config: KetoWriteURL must be an HTTP(S) URL without credentials, query or fragment")
+	}
+	cfg.KetoWriteURL = strings.TrimRight(cfg.KetoWriteURL, "/")
 	kratosURL, err := url.Parse(cfg.KratosAdminURL)
 	if err != nil || kratosURL.Hostname() == "" || (kratosURL.Scheme != "http" && kratosURL.Scheme != "https") ||
 		kratosURL.User != nil || kratosURL.RawQuery != "" || kratosURL.ForceQuery || strings.Contains(cfg.KratosAdminURL, "#") {
@@ -107,6 +115,7 @@ type application struct {
 	pool            *pgxpool.Pool
 	valkey          valkeygo.Client
 	kratos          *kratosapi.APIClient
+	keto            *ketoclient.Client
 }
 
 type pgxPoolCollector struct {
@@ -206,6 +215,10 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 		Transport: transport,
 		Timeout:   cfg.KratosTimeout,
 	}))
+	keto := ketoclient.NewClient(cfg.KetoReadURL, cfg.KetoWriteURL, ketoclient.WithHTTPClient(&http.Client{
+		Transport: transport,
+		Timeout:   cfg.KetoWriteTimeout,
+	}))
 
 	startupContext, cancelStartup := context.WithTimeout(ctx, cfg.DialTimeout)
 	defer cancelStartup()
@@ -247,8 +260,8 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 		Transport: transport,
 		Timeout:   2 * time.Second,
 	}
-	keto := ketoclient.NewReadClient(cfg.KetoReadURL, ketoclient.WithHTTPClient(ketoHTTP))
-	permissionChecker := permissions.NewKetoChecker(keto)
+	ketoReader := ketoclient.NewReadClient(cfg.KetoReadURL, ketoclient.WithHTTPClient(ketoHTTP))
+	permissionChecker := permissions.NewKetoChecker(ketoReader)
 	announcementsRepository := announcements.NewAnnouncementsRepository(pool)
 	pagesRepository := pages.NewPagesRepository(pool)
 	postsRepository := posts.NewPostsRepository(pool)
@@ -256,7 +269,7 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	pagesService := pages.NewService(pagesRepository)
 	postsService := posts.NewService(postsRepository)
 	api := app.New(announcementsService, pagesService, postsService, pool, permissionChecker)
-	rejectBanned := newBannedUserMiddleware(keto, logger)
+	rejectBanned := newBannedUserMiddleware(ketoReader, logger)
 
 	handler, err := transporthttp.NewHandler(api, pool.Ping, cfg.RequestTimeout, metrics, logger, authenticate, rejectBanned)
 	if err != nil {
@@ -323,6 +336,7 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 		pool:            pool,
 		valkey:          valkeyClient,
 		kratos:          kratos,
+		keto:            keto,
 	}
 
 	go func() {

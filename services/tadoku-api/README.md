@@ -119,8 +119,16 @@ In addition to the existing four upstream URLs, startup now requires:
 - `API_MAX_TOKEN_AGE` (default 24h), the maximum accepted age since `iat`.
 - `API_JWT_ISSUER`, an optional exact issuer match. Empty leaves issuer unchecked
   for rollout compatibility.
-- `API_KETO_READ_URL`, the Keto read API URL. Tadoku API receives no Keto write
-  URL or credential.
+- `API_KETO_READ_URL`, the Keto read API URL. Existing ban and administrator
+  checks retain a separate read-only client with a 2s total request timeout.
+- `API_KETO_WRITE_URL`, an absolute HTTP(S) base URL for the existing Keto write
+  service. Credentials, query strings and fragments are rejected. Path prefixes
+  are supported; trailing slashes are removed. Development uses
+  `http://keto-write.default:4467`.
+- `API_KETO_WRITE_TIMEOUT` (default 2s), a positive total HTTP request timeout
+  for the retained raw read/write client, including response-body reads. It shares
+  the owned transport's `API_DIAL_TIMEOUT`, `API_RESPONSE_HEADER_TIMEOUT` and
+  `API_IDLE_TIMEOUT` bounds.
 - `API_KRATOS_ADMIN_URL`, an absolute HTTP(S) base URL for the existing Kratos
   admin service. Credentials, query strings and fragments are rejected.
   Path prefixes are supported; trailing slashes are removed. Development
@@ -136,8 +144,9 @@ aborts startup; an unavailable standalone server logs a warning and starts in
 degraded mode so the retained client can reconnect on a later command. Signing
 keys remain cached until restart; there is no periodic refresh or refresh on an
 unknown key ID.
-Startup also constructs and retains the raw Kratos SDK client without making a
-provider request. Kratos availability is not a startup or health-check gate.
+Startup also constructs and retains the raw Kratos SDK and shared Keto read/write
+clients without making provider requests. Their availability is not a startup or
+health-check gate; startup and health checks never mutate relationships.
 `/readyz` checks PostgreSQL; `/livez` remains independent of dependency health.
 Valkey is deliberately not a readiness or liveness gate. Commands use the caller's
 context, and blocking commands require an explicit caller deadline. The raw client
@@ -151,8 +160,9 @@ The existing proxy metrics and Go process metrics remain on the metrics listener
 (`API_METRICS_PORT`, default 9090). They describe proxy request volume/latency/errors
 and process health. This thin slice adds no native-specific metric family.
 Shutdown closes request/metrics listeners, the pool, the Valkey client and idle
-HTTP connections, including Kratos connections. Startup failure closes the same
-owned transport; the SDK itself has no separate close operation or background job.
+HTTP connections, including Kratos and Keto connections. Startup failure closes
+the same owned transport; these clients have no separate close operation or
+background job.
 Valkey close follows the upstream client's native per-connection
 close allowance rather than `API_VALKEY_TIMEOUT`. The dev deployment uses the
 existing disposable development DB role;
@@ -190,6 +200,50 @@ a migration/admin DSN. Confirm provider TLS/pooling settings and the coexistence
 connection budget: two native replicas default to eight connections, in addition
 to the still-running legacy pools. Update production secrets/manifests and complete
 the master rollout gate under separate release authorization before deployment.
+
+### Raw Keto relationship primitive
+
+The composition root retains a concrete `*ketoclient.Client` from
+`services/common/client/keto` on `application.keto`. Pass it explicitly into a
+future consumer's constructor, using an interface defined by that consumer with
+only the methods it needs. Existing ban/admin consumers receive the separate
+`NewReadClient` instance, which has no configured write API.
+
+`keto.NewClient(readURL, writeURL, keto.WithHTTPClient(httpClient))` applies options
+to both APIs. The caller owns the HTTP client and transport. The two-argument
+constructor remains compatible with existing callers and keeps SDK defaults;
+Tadoku API supplies the bounded HTTP client described above.
+
+Use the existing primitives with the operation's caller context and a complete
+tuple target. Set exactly one of `Subject.ID` or `Subject.Set`:
+
+```go
+subject := keto.Subject{ID: subjectID}
+err := client.AddRelation(ctx, namespace, object, relation, subject)
+// Delete only this namespace/object/relation/subject tuple.
+err = client.DeleteRelation(ctx, namespace, object, relation, subject)
+
+group := keto.Subject{Set: &keto.SubjectSet{
+    Namespace: groupNamespace,
+    Object:    groupID,
+    Relation:  membershipRelation,
+}}
+err = client.AddRelation(ctx, namespace, object, relation, group)
+err = client.DeleteRelation(ctx, namespace, object, relation, group)
+```
+
+Direct subjects use `subject_id`; subject sets retain their namespace, object and
+relation. Delete sends every target component, including every subject-set field.
+The existing idempotency rules remain: add treats HTTP 409 as success and delete
+treats HTTP 404 as success. Other errors retain their wrapped provider error;
+`errors.As` can inspect `*ketoapi.GenericOpenAPIError` and its `Body()`/`Model()`.
+`errors.Is` identifies `context.Canceled` and `context.DeadlineExceeded`. These
+primitives return an error only, not separate HTTP response metadata.
+
+The total client timeout, any earlier caller deadline and caller cancellation
+bound requests, including response-body reads. No mutation retry loop is added;
+a timeout or cancellation does not establish whether Keto committed the write.
+Future migrations supply authorization, auditing and application consumers.
 
 ### Raw Kratos primitive
 

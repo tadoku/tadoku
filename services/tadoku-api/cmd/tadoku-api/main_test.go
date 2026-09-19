@@ -18,6 +18,7 @@ import (
 	"testing"
 	"time"
 
+	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
 	"github.com/tadoku/tadoku/services/common/postgresconfig"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testvalkey"
@@ -26,6 +27,26 @@ import (
 
 func TestApplicationStartsAndShutsDown(t *testing.T) {
 	cfg := validApplicationConfig(t)
+	var ketoRequests atomic.Int32
+	ketoDisconnected := make(chan struct{}, 1)
+	keto := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ketoRequests.Add(1)
+		_, _ = io.Copy(io.Discard, r.Body)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		_, _ = w.Write([]byte(`{}`))
+	}))
+	keto.Config.ConnState = func(_ net.Conn, state http.ConnState) {
+		if state == http.StateClosed {
+			select {
+			case ketoDisconnected <- struct{}{}:
+			default:
+			}
+		}
+	}
+	keto.Start()
+	t.Cleanup(keto.Close)
+	cfg.KetoWriteURL = keto.URL
 	var kratosRequests atomic.Int32
 	kratosDisconnected := make(chan struct{}, 1)
 	kratos := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
@@ -96,6 +117,20 @@ func TestApplicationStartsAndShutsDown(t *testing.T) {
 	if got := kratosRequests.Load(); got != 0 {
 		t.Fatalf("startup/readiness made %d Kratos requests", got)
 	}
+	if got := ketoRequests.Load(); got != 0 {
+		t.Fatalf("startup/readiness made %d Keto write requests", got)
+	}
+	if application.keto == nil {
+		t.Fatal("startup did not retain the raw Keto client")
+	}
+	if err := application.keto.AddRelation(t.Context(), "app", "synthetic", "admins", ketoclient.Subject{ID: "synthetic"}); err != nil {
+		t.Fatalf("owned Keto request: %v", err)
+	}
+	select {
+	case <-ketoDisconnected:
+		t.Fatal("Keto connection was not kept idle until shutdown")
+	default:
+	}
 	if application.kratos == nil {
 		t.Fatal("startup did not retain the raw Kratos client")
 	}
@@ -138,7 +173,7 @@ func TestApplicationStartsAndShutsDown(t *testing.T) {
 		}
 	}
 
-	// Shutdown closes both listeners, database/Valkey clients and Kratos connections.
+	// Shutdown closes both listeners, database/Valkey clients and provider connections.
 	cancel()
 	if err := application.wait(); err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -164,6 +199,11 @@ func TestApplicationStartsAndShutsDown(t *testing.T) {
 	case <-kratosDisconnected:
 	case <-time.After(time.Second):
 		t.Error("Kratos connection remained open after shutdown")
+	}
+	select {
+	case <-ketoDisconnected:
+	case <-time.After(time.Second):
+		t.Error("Keto connection remained open after shutdown")
 	}
 }
 
@@ -201,13 +241,15 @@ func validApplicationConfig(t *testing.T) config {
 	}
 
 	return config{
-		Port:           0,
-		MetricsPort:    0,
-		ServiceName:    "tadoku-api-test",
-		JWKS:           jwks.URL,
-		KetoReadURL:    upstream.URL,
-		KratosAdminURL: upstream.URL,
-		KratosTimeout:  time.Second,
+		Port:             0,
+		MetricsPort:      0,
+		ServiceName:      "tadoku-api-test",
+		JWKS:             jwks.URL,
+		KetoReadURL:      upstream.URL,
+		KetoWriteURL:     upstream.URL,
+		KetoWriteTimeout: time.Second,
+		KratosAdminURL:   upstream.URL,
+		KratosTimeout:    time.Second,
 
 		AuthzURL:     upstream.URL,
 		ContentURL:   upstream.URL,
@@ -238,6 +280,7 @@ func validApplicationConfig(t *testing.T) config {
 func TestLoadConfigUsesValidatedDefaults(t *testing.T) {
 	t.Setenv("API_JWKS", "http://jwks.test")
 	t.Setenv("API_KETO_READ_URL", "http://keto-read.test")
+	t.Setenv("API_KETO_WRITE_URL", "http://keto-write.test")
 	t.Setenv("API_KRATOS_ADMIN_URL", "http://kratos-admin.test")
 	t.Setenv("API_AUTHZ_URL", "http://authz")
 	t.Setenv("API_CONTENT_URL", "http://content")
@@ -281,6 +324,34 @@ func TestLoadConfigUsesValidatedDefaults(t *testing.T) {
 	}
 	if cfg.KetoReadURL != "http://keto-read.test" {
 		t.Errorf("Keto read URL=%q", cfg.KetoReadURL)
+	}
+	if cfg.KetoWriteURL != "http://keto-write.test" || cfg.KetoWriteTimeout != 2*time.Second {
+		t.Errorf("Keto write URL=%q timeout=%v", cfg.KetoWriteURL, cfg.KetoWriteTimeout)
+	}
+	for _, rawURL := range []string{
+		"", "not-a-url", "/relative", "ftp://keto.test", "http://:4467", "http://keto.test:bad",
+		"http://user:secret@keto.test", "http://keto.test?query=1", "http://keto.test?",
+		"http://keto.test#fragment", "http://keto.test#",
+	} {
+		t.Setenv("API_KETO_WRITE_URL", rawURL)
+		if _, err := loadConfig(); err == nil || !strings.Contains(err.Error(), "KetoWriteURL") {
+			t.Errorf("Keto write URL %q error=%v", rawURL, err)
+		}
+	}
+	t.Setenv("API_KETO_WRITE_URL", "https://keto-write.test:4467/provider/")
+	for _, timeout := range []string{"0s", "-1s", "invalid"} {
+		t.Setenv("API_KETO_WRITE_TIMEOUT", timeout)
+		if _, err := loadConfig(); err == nil || !strings.Contains(err.Error(), "KetoWriteTimeout") {
+			t.Errorf("Keto write timeout %q error=%v", timeout, err)
+		}
+	}
+	t.Setenv("API_KETO_WRITE_TIMEOUT", "750ms")
+	ketoConfig, err := loadConfig()
+	if err != nil {
+		t.Fatalf("load explicit Keto configuration: %v", err)
+	}
+	if ketoConfig.KetoWriteURL != "https://keto-write.test:4467/provider" || ketoConfig.KetoWriteTimeout != 750*time.Millisecond {
+		t.Errorf("Keto write URL=%q timeout=%v", ketoConfig.KetoWriteURL, ketoConfig.KetoWriteTimeout)
 	}
 	if cfg.KratosAdminURL != "http://kratos-admin.test" || cfg.KratosTimeout != 2*time.Second {
 		t.Errorf("Kratos admin URL=%q timeout=%v", cfg.KratosAdminURL, cfg.KratosTimeout)
@@ -412,6 +483,11 @@ func TestApplicationReadinessDoesNotDependOnValkey(t *testing.T) {
 
 func TestApplicationClosesValkeyWhenLaterStartupFails(t *testing.T) {
 	cfg := validApplicationConfig(t)
+	keto := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {
+		t.Error("failed startup must not make Keto write requests")
+	}))
+	t.Cleanup(keto.Close)
+	cfg.KetoWriteURL = keto.URL
 	kratos := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {
 		t.Error("failed startup must not make Kratos requests")
 	}))

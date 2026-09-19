@@ -54,67 +54,52 @@ func (c *Client) UserExists(ctx context.Context, id uuid.UUID) (bool, error) {
 	return true, nil
 }
 
-func (c *Client) ListIdentities(ctx context.Context) ([]kratosapi.Identity, error) {
-	const pageSize = 500
+// ListIdentities fetches one page. An empty returned token marks the last page.
+func (c *Client) ListIdentities(ctx context.Context, pageSize int64, pageToken string) ([]kratosapi.Identity, string, error) {
+	requestURL, err := url.Parse(c.listIdentitiesURL)
+	if err != nil {
+		return nil, "", fmt.Errorf("could not list identities: %w", err)
+	}
+	query := requestURL.Query()
+	query.Set("page_size", fmt.Sprint(pageSize))
+	if pageToken != "" {
+		query.Set("page_token", pageToken)
+	}
+	requestURL.RawQuery = query.Encode()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, requestURL.String(), nil)
+	if err != nil {
+		return nil, "", fmt.Errorf("could not list identities: %w", err)
+	}
+	req.Header.Set("Accept", "application/json")
+
+	res, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, "", fmt.Errorf("could not list identities: %w", err)
+	}
+	if res.StatusCode >= http.StatusMultipleChoices {
+		_ = res.Body.Close()
+		return nil, "", fmt.Errorf("could not list identities: %s", res.Status)
+	}
 
 	var identities []kratosapi.Identity
-	pageToken := ""
-	seenPageTokens := make(map[string]struct{})
-
-	for {
-		requestURL, err := url.Parse(c.listIdentitiesURL)
-		if err != nil {
-			return nil, fmt.Errorf("could not list identities: %w", err)
-		}
-		query := requestURL.Query()
-		query.Set("page_size", fmt.Sprint(pageSize))
-		if pageToken != "" {
-			query.Set("page_token", pageToken)
-		}
-		requestURL.RawQuery = query.Encode()
-
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, requestURL.String(), nil)
-		if err != nil {
-			return nil, fmt.Errorf("could not list identities: %w", err)
-		}
-		req.Header.Set("Accept", "application/json")
-
-		res, err := c.httpClient.Do(req)
-		if err != nil {
-			return nil, fmt.Errorf("could not list identities: %w", err)
-		}
-		if res.StatusCode >= http.StatusMultipleChoices {
-			_ = res.Body.Close()
-			return nil, fmt.Errorf("could not list identities: %s", res.Status)
-		}
-
-		var page []kratosapi.Identity
-		decodeErr := json.NewDecoder(res.Body).Decode(&page)
-		closeErr := res.Body.Close()
-		if decodeErr != nil {
-			return nil, fmt.Errorf("could not list identities: %w", decodeErr)
-		}
-		if closeErr != nil {
-			return nil, fmt.Errorf("could not list identities: %w", closeErr)
-		}
-		identities = append(identities, page...)
-
-		nextPageToken, hasNext, err := nextPageToken(res)
-		if err != nil {
-			return nil, fmt.Errorf("could not list identities: %w", err)
-		}
-		if !hasNext {
-			return identities, nil
-		}
-		if _, seen := seenPageTokens[nextPageToken]; seen {
-			return nil, fmt.Errorf("could not list identities: repeated next page token")
-		}
-		seenPageTokens[nextPageToken] = struct{}{}
-		pageToken = nextPageToken
+	decodeErr := json.NewDecoder(res.Body).Decode(&identities)
+	closeErr := res.Body.Close()
+	if decodeErr != nil {
+		return nil, "", fmt.Errorf("could not list identities: %w", decodeErr)
 	}
+	if closeErr != nil {
+		return nil, "", fmt.Errorf("could not list identities: %w", closeErr)
+	}
+
+	next, err := nextPageToken(res)
+	if err != nil {
+		return nil, "", fmt.Errorf("could not list identities: %w", err)
+	}
+	return identities, next, nil
 }
 
-func nextPageToken(res *http.Response) (string, bool, error) {
+func nextPageToken(res *http.Response) (string, error) {
 	for _, header := range res.Header.Values("Link") {
 		for _, link := range strings.Split(header, ",") {
 			parts := strings.Split(link, ";")
@@ -124,20 +109,20 @@ func nextPageToken(res *http.Response) (string, bool, error) {
 
 			target := strings.TrimSpace(parts[0])
 			if len(target) < 2 || target[0] != '<' || target[len(target)-1] != '>' {
-				return "", false, fmt.Errorf("invalid next page link")
+				return "", fmt.Errorf("invalid next page link")
 			}
 			parsed, err := url.Parse(target[1 : len(target)-1])
 			if err != nil {
-				return "", false, fmt.Errorf("invalid next page link: %w", err)
+				return "", fmt.Errorf("invalid next page link: %w", err)
 			}
 			pageTokens, ok := parsed.Query()["page_token"]
 			if !ok || len(pageTokens) != 1 || pageTokens[0] == "" {
-				return "", false, fmt.Errorf("next page link has no page_token")
+				return "", fmt.Errorf("next page link has no page_token")
 			}
-			return pageTokens[0], true, nil
+			return pageTokens[0], nil
 		}
 	}
-	return "", false, nil
+	return "", nil
 }
 
 func hasNextRelation(parameters []string) bool {

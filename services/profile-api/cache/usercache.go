@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"sync"
 	"time"
@@ -89,22 +90,35 @@ func (c *UserCache) run(ctx context.Context) {
 func (c *UserCache) refreshUsers(ctx context.Context) error {
 	var allUsers []domain.UserCacheEntry
 	seen := make(map[string]bool)
-	identities, err := c.kratos.ListIdentities(ctx)
-	if err != nil {
-		return err
-	}
-
-	for _, identity := range identities {
-		if seen[identity.ID] {
-			continue
+	pageToken := ""
+	seenPageTokens := make(map[string]struct{})
+	for {
+		identities, nextPageToken, err := c.kratos.ListIdentities(ctx, 500, pageToken)
+		if err != nil {
+			return err
 		}
-		seen[identity.ID] = true
-		allUsers = append(allUsers, domain.UserCacheEntry{
-			ID:          identity.ID,
-			DisplayName: identity.DisplayName,
-			Email:       identity.Email,
-			CreatedAt:   identity.CreatedAt,
-		})
+
+		for _, identity := range identities {
+			if seen[identity.ID] {
+				continue
+			}
+			seen[identity.ID] = true
+			allUsers = append(allUsers, domain.UserCacheEntry{
+				ID:          identity.ID,
+				DisplayName: identity.DisplayName,
+				Email:       identity.Email,
+				CreatedAt:   identity.CreatedAt,
+			})
+		}
+
+		if nextPageToken == "" {
+			break
+		}
+		if _, exists := seenPageTokens[nextPageToken]; exists {
+			return fmt.Errorf("could not refresh users: repeated next page token")
+		}
+		seenPageTokens[nextPageToken] = struct{}{}
+		pageToken = nextPageToken
 	}
 
 	suppressedIdentityIDs, err := c.suppressionRepository.ListAccountDeletionSuppressedIdentityIDs(ctx)

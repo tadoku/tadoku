@@ -6,7 +6,7 @@ import (
 
 // KratosClient provides identity management operations
 type KratosClient interface {
-	ListIdentities(ctx context.Context) ([]IdentityInfo, error)
+	ListIdentities(ctx context.Context, pageSize int64, pageToken string) ([]IdentityInfo, string, error)
 }
 
 // UserListCache provides cached user data

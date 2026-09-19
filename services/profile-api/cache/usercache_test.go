@@ -18,8 +18,8 @@ type mockKratosClient struct {
 	identities []domain.IdentityInfo
 }
 
-func (m *mockKratosClient) ListIdentities(context.Context) ([]domain.IdentityInfo, error) {
-	return m.identities, nil
+func (m *mockKratosClient) ListIdentities(context.Context, int64, string) ([]domain.IdentityInfo, string, error) {
+	return m.identities, "", nil
 }
 
 type mockSuppressionRepository struct {
@@ -118,7 +118,7 @@ type blockingRefreshKratosClient struct {
 	releaseRefresh chan struct{}
 }
 
-func (m *blockingRefreshKratosClient) ListIdentities(ctx context.Context) ([]domain.IdentityInfo, error) {
+func (m *blockingRefreshKratosClient) ListIdentities(ctx context.Context, _ int64, _ string) ([]domain.IdentityInfo, string, error) {
 	m.mu.Lock()
 	m.calls++
 	call := m.calls
@@ -127,11 +127,11 @@ func (m *blockingRefreshKratosClient) ListIdentities(ctx context.Context) ([]dom
 		close(m.refreshStarted)
 		select {
 		case <-ctx.Done():
-			return nil, ctx.Err()
+			return nil, "", ctx.Err()
 		case <-m.releaseRefresh:
 		}
 	}
-	return m.identities, nil
+	return m.identities, "", nil
 }
 
 func TestUserCacheImmediateSuppressionWinsAgainstInflightRefresh(t *testing.T) {

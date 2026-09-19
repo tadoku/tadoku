@@ -23,10 +23,10 @@ type Traits struct {
 	Email       string
 }
 
-func (k *KratosClient) ListIdentities(ctx context.Context) ([]domain.IdentityInfo, error) {
-	identities, err := k.client.ListIdentities(ctx)
+func (k *KratosClient) ListIdentities(ctx context.Context, pageSize int64, pageToken string) ([]domain.IdentityInfo, string, error) {
+	identities, nextPageToken, err := k.client.ListIdentities(ctx, pageSize, pageToken)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	result := make([]domain.IdentityInfo, 0, len(identities))
@@ -59,7 +59,7 @@ func (k *KratosClient) ListIdentities(ctx context.Context) ([]domain.IdentityInf
 		})
 	}
 
-	return result, nil
+	return result, nextPageToken, nil
 }
 
 // Verify KratosClient implements domain.KratosClient at compile time.

@@ -21,11 +21,19 @@ type Client struct {
 	listIdentitiesURL string
 }
 
-func NewClient(kratosURL string) *Client {
+// NewAPIClient exposes the pinned Kratos SDK without translating provider models,
+// responses or errors. The caller owns httpClient and its transport; nil uses
+// http.DefaultClient, matching the SDK default. Construction makes no requests.
+func NewAPIClient(kratosURL string, httpClient *http.Client) *kratosapi.APIClient {
 	cfg := kratosapi.NewConfiguration()
 	cfg.Servers = kratosapi.ServerConfigurations{{URL: kratosURL}}
+	cfg.HTTPClient = httpClient
+	return kratosapi.NewAPIClient(cfg)
+}
+
+func NewClient(kratosURL string) *Client {
 	return &Client{
-		client:            kratosapi.NewAPIClient(cfg),
+		client:            NewAPIClient(kratosURL, http.DefaultClient),
 		httpClient:        http.DefaultClient,
 		listIdentitiesURL: strings.TrimRight(kratosURL, "/") + "/admin/identities",
 	}

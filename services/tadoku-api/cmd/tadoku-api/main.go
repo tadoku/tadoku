@@ -10,16 +10,20 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/kelseyhightower/envconfig"
+	kratosapi "github.com/ory/kratos-client-go"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
+	kratosclient "github.com/tadoku/tadoku/services/common/client/kratos"
 	"github.com/tadoku/tadoku/services/common/postgresconfig"
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/announcements"
@@ -39,6 +43,9 @@ type config struct {
 	JWKS        string `validate:"required"`
 	JWTIssuer   string `envconfig:"jwt_issuer"`
 	KetoReadURL string `validate:"required" envconfig:"keto_read_url"`
+
+	KratosAdminURL string        `validate:"required" envconfig:"kratos_admin_url"`
+	KratosTimeout  time.Duration `validate:"gt=0" envconfig:"kratos_timeout" default:"2s"`
 
 	AuthzURL     string `validate:"required" envconfig:"authz_url"`
 	ContentURL   string `validate:"required" envconfig:"content_url"`
@@ -71,6 +78,20 @@ func loadConfig() (config, error) {
 	if err != nil || ketoURL.Host == "" || (ketoURL.Scheme != "http" && ketoURL.Scheme != "https") {
 		return config{}, fmt.Errorf("validate config: KetoReadURL must be an HTTP(S) URL")
 	}
+	kratosURL, err := url.Parse(cfg.KratosAdminURL)
+	if err != nil || kratosURL.Hostname() == "" || (kratosURL.Scheme != "http" && kratosURL.Scheme != "https") ||
+		kratosURL.User != nil || kratosURL.RawQuery != "" || kratosURL.ForceQuery || strings.Contains(cfg.KratosAdminURL, "#") {
+		return config{}, fmt.Errorf("validate config: KratosAdminURL must be an HTTP(S) URL without credentials, query or fragment")
+	}
+	if port := kratosURL.Port(); port != "" {
+		number, err := strconv.Atoi(port)
+		if err != nil || number < 1 || number > 65535 {
+			return config{}, fmt.Errorf("validate config: KratosAdminURL port must be between 1 and 65535")
+		}
+	} else if strings.HasSuffix(kratosURL.Host, ":") {
+		return config{}, fmt.Errorf("validate config: KratosAdminURL port must not be empty")
+	}
+	cfg.KratosAdminURL = strings.TrimRight(cfg.KratosAdminURL, "/")
 
 	cfg.Postgres, err = postgresconfig.Load("API_POSTGRES", "API_POSTGRES_URL")
 	if err != nil {
@@ -94,6 +115,7 @@ type application struct {
 	transport       *http.Transport
 	pool            *pgxpool.Pool
 	valkey          valkeygo.Client
+	kratos          *kratosapi.APIClient
 }
 
 type pgxPoolCollector struct {
@@ -183,20 +205,28 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 		ResponseHeaderTimeout: cfg.ResponseHeaderTimeout,
 		ExpectContinueTimeout: time.Second,
 	}
+	defer func() {
+		if !started {
+			transport.CloseIdleConnections()
+		}
+	}()
+
+	kratos := kratosclient.NewAPIClient(cfg.KratosAdminURL, &http.Client{
+		Transport: transport,
+		Timeout:   cfg.KratosTimeout,
+	})
 
 	startupContext, cancelStartup := context.WithTimeout(ctx, cfg.DialTimeout)
 	defer cancelStartup()
 
 	pool, err := postgres.Open(startupContext, cfg.Postgres.WithApplicationName(cfg.ServiceName).URL(), cfg.PostgresMaxConnections)
 	if err != nil {
-		transport.CloseIdleConnections()
 		return nil, fmt.Errorf("open postgres: %s", cfg.Postgres.Redact(err))
 	}
 
 	defer func() {
 		if !started {
 			pool.Close()
-			transport.CloseIdleConnections()
 		}
 	}()
 
@@ -301,6 +331,7 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 		transport:       transport,
 		pool:            pool,
 		valkey:          valkeyClient,
+		kratos:          kratos,
 	}
 
 	go func() {

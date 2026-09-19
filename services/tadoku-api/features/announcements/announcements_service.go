@@ -1,73 +1,12 @@
-// Package announcements owns announcements and their persistence.
 package announcements
 
 import (
 	"context"
 	"math"
-	"net/url"
 	"strconv"
-	"strings"
-	"time"
-	"unicode/utf8"
 
 	"github.com/google/uuid"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
-)
-
-const announcementHrefMaxLength = 2048
-
-type Announcement struct {
-	ID        uuid.UUID
-	Namespace string
-	Title     string
-	Content   string
-	Style     string
-	Href      *string
-	StartsAt  time.Time
-	EndsAt    time.Time
-	CreatedAt time.Time
-	UpdatedAt time.Time
-}
-
-type AnnouncementList struct {
-	Announcements []Announcement
-	TotalSize     int
-	NextPageToken string
-}
-
-func isValidAnnouncementStyle(style string) bool {
-	switch style {
-	case "success", "warning", "error", "info":
-		return true
-	default:
-		return false
-	}
-}
-
-func isValidAnnouncementHref(href *string) bool {
-	if href == nil || *href == "" {
-		return true
-	}
-	if utf8.RuneCountInString(*href) > announcementHrefMaxLength {
-		return false
-	}
-
-	parsed, err := url.Parse(*href)
-	if err != nil {
-		return false
-	}
-	if parsed.Scheme == "http" || parsed.Scheme == "https" {
-		return true
-	}
-	return parsed.Scheme == "" && strings.HasPrefix(*href, "/") &&
-		!strings.HasPrefix(*href, "//") && !strings.HasPrefix(*href, `/\`)
-}
-
-var (
-	ErrInvalidNamespace     = errx.NewInvalidInputError("namespace is required")
-	ErrInvalidPagination    = errx.NewInvalidInputError("invalid pagination")
-	ErrAnnouncementNotFound = errx.NewNotFoundError("announcement not found")
 )
 
 type Service struct {
@@ -130,4 +69,50 @@ func (s *Service) ListAnnouncements(ctx context.Context, namespace string, pageS
 		TotalSize:     totalSize,
 		NextPageToken: nextPageToken,
 	}, nil
+}
+
+func (s *Service) CreateAnnouncement(ctx context.Context, parameters CreateAnnouncementParameters) error {
+	if err := parameters.Validate(); err != nil {
+		return err
+	}
+
+	now := timex.Now()
+	item := &Announcement{
+		ID:        parameters.ID,
+		Namespace: parameters.Namespace,
+		Title:     parameters.Title,
+		Content:   parameters.Content,
+		Style:     parameters.Style,
+		Href:      parameters.Href,
+		StartsAt:  parameters.StartsAt,
+		EndsAt:    parameters.EndsAt,
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+	return s.announcements.CreateAnnouncement(ctx, item)
+}
+
+func (s *Service) DeleteAnnouncement(ctx context.Context, namespace string, id uuid.UUID) error {
+	return s.announcements.DeleteAnnouncement(ctx, namespace, id, timex.Now())
+}
+
+func (s *Service) UpdateAnnouncement(ctx context.Context, parameters UpdateAnnouncementParameters) error {
+	if err := parameters.Validate(); err != nil {
+		return err
+	}
+
+	announcement, err := s.announcements.FindAnnouncementByID(ctx, parameters.Namespace, parameters.ID)
+	if err != nil {
+		return err
+	}
+
+	announcement.Title = parameters.Title
+	announcement.Content = parameters.Content
+	announcement.Style = parameters.Style
+	announcement.Href = parameters.Href
+	announcement.StartsAt = parameters.StartsAt
+	announcement.EndsAt = parameters.EndsAt
+	announcement.UpdatedAt = timex.Now()
+
+	return s.announcements.UpdateAnnouncement(ctx, announcement)
 }

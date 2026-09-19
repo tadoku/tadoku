@@ -3,9 +3,8 @@ load("@rules_go//go:def.bzl", "go_library", "go_test")
 go_test(
     name = "announcements_test",
     srcs = [
-        "announcement_create_test.go",
-        "announcement_update_test.go",
         "announcements_repository_test.go",
+        "announcements_service_test.go",
     ],
     args = ["-test.parallel=4"],
     data = glob(["testdata/*.sql"]),
@@ -28,11 +27,9 @@ go_test(
 go_library(
     name = "announcements",
     srcs = [
-        "announcement_create.go",
-        "announcement_delete.go",
-        "announcement_update.go",
-        "announcements.go",
         "announcements_repository.go",
+        "announcements_service.go",
+        "domain.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/features/announcements",
     visibility = [

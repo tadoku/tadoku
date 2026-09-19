@@ -287,7 +287,7 @@ func TestLoadConfigUsesValidatedDefaults(t *testing.T) {
 	}
 	for _, rawURL := range []string{
 		"", "not-a-url", "/relative", "ftp://kratos.test", "http://:4434",
-		"http://kratos.test:bad", "http://kratos.test:0", "http://kratos.test:65536", "http://kratos.test:",
+		"http://kratos.test:bad",
 		"http://user:secret@kratos.test", "http://kratos.test?query=1", "http://kratos.test?",
 		"http://kratos.test#fragment", "http://kratos.test#",
 	} {

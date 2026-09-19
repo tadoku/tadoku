@@ -122,8 +122,8 @@ In addition to the existing four upstream URLs, startup now requires:
 - `API_KETO_READ_URL`, the Keto read API URL. Tadoku API receives no Keto write
   URL or credential.
 - `API_KRATOS_ADMIN_URL`, an absolute HTTP(S) base URL for the existing Kratos
-  admin service. Credentials, query strings, fragments and invalid ports are
-  rejected. Path prefixes are supported; trailing slashes are removed. Development
+  admin service. Credentials, query strings and fragments are rejected.
+  Path prefixes are supported; trailing slashes are removed. Development
   uses `http://kratos-admin.default`.
 - `API_KRATOS_TIMEOUT` (default 2s), a positive total HTTP request timeout,
   including reading the response body. The owned transport also applies

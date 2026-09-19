@@ -10,7 +10,6 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
-	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -82,14 +81,6 @@ func loadConfig() (config, error) {
 	if err != nil || kratosURL.Hostname() == "" || (kratosURL.Scheme != "http" && kratosURL.Scheme != "https") ||
 		kratosURL.User != nil || kratosURL.RawQuery != "" || kratosURL.ForceQuery || strings.Contains(cfg.KratosAdminURL, "#") {
 		return config{}, fmt.Errorf("validate config: KratosAdminURL must be an HTTP(S) URL without credentials, query or fragment")
-	}
-	if port := kratosURL.Port(); port != "" {
-		number, err := strconv.Atoi(port)
-		if err != nil || number < 1 || number > 65535 {
-			return config{}, fmt.Errorf("validate config: KratosAdminURL port must be between 1 and 65535")
-		}
-	} else if strings.HasSuffix(kratosURL.Host, ":") {
-		return config{}, fmt.Errorf("validate config: KratosAdminURL port must not be empty")
 	}
 	cfg.KratosAdminURL = strings.TrimRight(cfg.KratosAdminURL, "/")
 

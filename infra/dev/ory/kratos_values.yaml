@@ -69,7 +69,7 @@ kratos:
           url: file:///etc/config/identity.default.schema.json
       default_schema_id: "user"
 
-    version: v0.10.1
+    version: v26.2.0
     log:
       leak_sensitive_values: true
 
@@ -83,6 +83,7 @@ kratos:
         link:
           enabled: true
         password:
+          enabled: true
           config:
             haveibeenpwned_enabled: false
       flows:
@@ -96,6 +97,8 @@ kratos:
           ui_url: "{{TADOKU_AUTH_URL}}/account-recovery"
 
         registration:
+          # Keep the existing combined profile and password registration form.
+          style: unified
           ui_url: "/register"
           lifespan: 1h
           after:

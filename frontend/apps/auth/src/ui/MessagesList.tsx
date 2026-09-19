@@ -1,4 +1,4 @@
-import { UiText } from '@ory/client'
+import { UiText } from '@ory/kratos-client'
 
 interface MessagesListProps {
   messages: UiText[] | undefined

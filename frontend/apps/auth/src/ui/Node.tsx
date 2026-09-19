@@ -1,11 +1,4 @@
-import { UiNode } from '@ory/client'
-import {
-  isUiNodeInputAttributes,
-  isUiNodeImageAttributes,
-  isUiNodeScriptAttributes,
-  isUiNodeTextAttributes,
-  isUiNodeAnchorAttributes,
-} from '@ory/integrations/ui'
+import { UiNode } from '@ory/kratos-client'
 import { FormDispatcher } from './helpers'
 import { NodeAnchor } from './NodeAnchor'
 import { NodeImage } from './NodeImage'
@@ -20,23 +13,23 @@ interface NodeProps {
 }
 
 export const Node = ({ node, disabled, dispatchSubmit }: NodeProps) => {
-  if (isUiNodeImageAttributes(node.attributes)) {
+  if (node.attributes.node_type === 'img') {
     return <NodeImage node={node} attributes={node.attributes} />
   }
 
-  if (isUiNodeScriptAttributes(node.attributes)) {
+  if (node.attributes.node_type === 'script') {
     return <NodeScript node={node} attributes={node.attributes} />
   }
 
-  if (isUiNodeTextAttributes(node.attributes)) {
+  if (node.attributes.node_type === 'text') {
     return <NodeText node={node} attributes={node.attributes} />
   }
 
-  if (isUiNodeAnchorAttributes(node.attributes)) {
+  if (node.attributes.node_type === 'a') {
     return <NodeAnchor attributes={node.attributes} />
   }
 
-  if (isUiNodeInputAttributes(node.attributes)) {
+  if (node.attributes.node_type === 'input') {
     return (
       <NodeInput
         node={node}

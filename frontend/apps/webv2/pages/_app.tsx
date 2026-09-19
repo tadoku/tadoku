@@ -8,7 +8,7 @@ import {
   sessionAtom,
   useUserRole,
 } from '@app/common/session'
-import { Session } from '@ory/client'
+import { Session } from '@ory/kratos-client'
 import { ToastContainer } from 'ui/components/toasts'
 import 'ui/styles/globals.css'
 import Navigation from '@app/ui/Navigation'
@@ -132,7 +132,7 @@ MyApp.getInitialProps = async (ctx: AppContextWithSession) => {
 
   if (cookie) {
     try {
-      const { data: session } = await ory.toSession(undefined, cookie)
+      const { data: session } = await ory.toSession({ cookie })
       props.pageProps.initialState.session = session
       ctx.ctx.session = session
     } catch (err) {}

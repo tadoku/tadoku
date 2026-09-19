@@ -1,5 +1,5 @@
 import { atom, useAtom } from 'jotai'
-import { Session } from '@ory/client'
+import { Session } from '@ory/kratos-client'
 import { useEffect, DependencyList, useState } from 'react'
 import { AxiosError } from 'axios'
 import ory from './ory'
@@ -17,11 +17,10 @@ export const useSession = () => {
 // TODO: cache result as this is now triggering four logout flows at once
 export const useLogoutHandler = (deps?: DependencyList) => {
   const [logoutToken, setLogoutToken] = useState<string>('')
-  const router = useRouter()
 
   useEffect(() => {
     ory
-      .createSelfServiceLogoutFlowUrlForBrowsers()
+      .createBrowserLogoutFlow()
       .then(({ data }) => {
         setLogoutToken(data.logout_token)
       })
@@ -41,9 +40,8 @@ export const useLogoutHandler = (deps?: DependencyList) => {
   return () => {
     if (logoutToken) {
       ory
-        .submitSelfServiceLogoutFlow(logoutToken)
-        .then(() => router.push('/login'))
-        .then(() => router.reload())
+        .updateLogoutFlow({ token: logoutToken })
+        .then(() => window.location.assign('/login'))
     }
   }
 }

@@ -1,23 +1,22 @@
 import {
-  SelfServiceLoginFlow,
-  SelfServiceRecoveryFlow,
-  SelfServiceRegistrationFlow,
-  SelfServiceSettingsFlow,
-  SelfServiceVerificationFlow,
+  LoginFlow,
+  RecoveryFlow,
+  RegistrationFlow,
+  SettingsFlow,
+  VerificationFlow,
   UiNode,
-  UiNodeInputAttributes,
-} from '@ory/client'
-import { isUiNodeInputAttributes, getNodeId } from '@ory/integrations/ui'
-import { FormProvider, useForm } from 'react-hook-form'
+} from '@ory/kratos-client'
+import { FormProvider, set, useForm } from 'react-hook-form'
+import { useMemo } from 'react'
 import MessagesList from './MessagesList'
 import Node from './Node'
 
 export type SelfServiceFlow =
-  | SelfServiceLoginFlow
-  | SelfServiceRegistrationFlow
-  | SelfServiceSettingsFlow
-  | SelfServiceVerificationFlow
-  | SelfServiceRecoveryFlow
+  | LoginFlow
+  | RegistrationFlow
+  | SettingsFlow
+  | VerificationFlow
+  | RecoveryFlow
 
 export type Method =
   | 'oidc'
@@ -53,28 +52,27 @@ const filterNodes = (
 }
 
 const defaultValuesFromNodes = (nodes: UiNode[]): { [key: string]: any } => {
-  const ignoredNodeTypes = ['button', 'submit']
-  return nodes
-    .filter(node => isUiNodeInputAttributes(node.attributes))
-    .filter(
-      node =>
-        !ignoredNodeTypes.includes(
-          (node.attributes as UiNodeInputAttributes).type,
-        ),
-    )
-    .reduce((acc, node) => {
-      const attr = node.attributes as UiNodeInputAttributes
-      acc[attr.name] = attr.value
-      return acc
-    }, {} as { [key: string]: any })
+  return nodes.reduce((values, { attributes }) => {
+    if (
+      attributes.node_type === 'input' &&
+      attributes.type !== 'button' &&
+      attributes.type !== 'submit'
+    ) {
+      set(values, attributes.name, attributes.value)
+    }
+    return values
+  }, {} as { [key: string]: any })
 }
 
 const Flow = ({ flow, method, onSubmit, hideGlobalMessages }: FlowProps) => {
   const nodes = filterNodes(flow, method)
-  const defaultValues = defaultValuesFromNodes(nodes)
+  const defaultValues = useMemo(
+    () => defaultValuesFromNodes(filterNodes(flow, method)),
+    [flow, method],
+  )
 
   const methods = useForm({
-    defaultValues,
+    values: defaultValues,
   })
 
   if (!flow) {
@@ -91,10 +89,9 @@ const Flow = ({ flow, method, onSubmit, hideGlobalMessages }: FlowProps) => {
       >
         {!hideGlobalMessages && <MessagesList messages={flow.ui.messages} />}
         {nodes.map((node, k) => {
-          const id = getNodeId(node)
           return (
             <Node
-              key={`${id}-${k}`}
+              key={`${node.group}-${node.type}-${k}`}
               disabled={disabled}
               node={node}
               dispatchSubmit={methods.handleSubmit(onSubmit)}

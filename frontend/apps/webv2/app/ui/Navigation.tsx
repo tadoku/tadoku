@@ -28,7 +28,7 @@ export default function Navigation() {
     | NavigationLinkProps
     | NavigationDropDownProps
     | NavigationActionProps
-  )[] = session
+  )[] = session?.identity
     ? [
         {
           type: 'action',

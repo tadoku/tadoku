@@ -1,7 +1,7 @@
 import {
-  SelfServiceRegistrationFlow,
-  SubmitSelfServiceRegistrationFlowBody,
-} from '@ory/client'
+  RegistrationFlow,
+  UpdateRegistrationFlowBody,
+} from '@ory/kratos-client'
 import type { NextPage } from 'next'
 import { useEffect, useState } from 'react'
 import Flow from '../src/ui/Flow'
@@ -15,7 +15,7 @@ import Link from 'next/link'
 interface Props {}
 
 const Register: NextPage<Props> = () => {
-  const [flow, setFlow] = useState<SelfServiceRegistrationFlow>()
+  const [flow, setFlow] = useState<RegistrationFlow>()
   const [session, setSession] = useSession()
   const router = useRouter()
   const { flow: flowId, return_to: returnTo } = router.query
@@ -35,7 +35,7 @@ const Register: NextPage<Props> = () => {
     // If ?flow=.. was in the URL, we fetch it
     if (flowId) {
       ory
-        .getSelfServiceRegistrationFlow(String(flowId))
+        .getRegistrationFlow({ id: String(flowId) })
         .then(({ data }) => {
           // We received the flow - let's use its data and render the form!
           setFlow(data)
@@ -46,22 +46,25 @@ const Register: NextPage<Props> = () => {
 
     // Otherwise we initialize it
     ory
-      .initializeSelfServiceRegistrationFlowForBrowsers(
-        returnTo ? String(returnTo) : undefined,
-      )
+      .createBrowserRegistrationFlow({
+        returnTo: returnTo ? String(returnTo) : undefined,
+      })
       .then(({ data }) => {
         setFlow(data)
       })
       .catch(handleFlowError(router, 'registration', setFlow))
   }, [flowId, router, router.isReady, returnTo, flow, session])
 
-  const onSubmit = async (data: SubmitSelfServiceRegistrationFlowBody) => {
+  const onSubmit = async (data: UpdateRegistrationFlowBody) => {
     await router.push(`/register?flow=${flow?.id}`, undefined, {
       shallow: true,
     })
 
-    ory
-      .submitSelfServiceRegistrationFlow(String(flow?.id), data)
+    return ory
+      .updateRegistrationFlow({
+        flow: String(flow?.id),
+        updateRegistrationFlowBody: data,
+      })
       .then(async ({ data }) => {
         const res = await ory.toSession()
         setSession(res.data)
@@ -73,7 +76,7 @@ const Register: NextPage<Props> = () => {
         // If the previous handler did not catch the error it's most likely a form validation error
         if (err.response?.status === 400) {
           // Yup, it is!
-          setFlow(err.response?.data as SelfServiceRegistrationFlow | undefined)
+          setFlow(err.response?.data as RegistrationFlow | undefined)
           return
         }
 

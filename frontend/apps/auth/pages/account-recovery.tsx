@@ -1,7 +1,4 @@
-import {
-  SelfServiceRecoveryFlow,
-  SubmitSelfServiceRecoveryFlowBody,
-} from '@ory/client'
+import { RecoveryFlow, UpdateRecoveryFlowBody } from '@ory/kratos-client'
 import type { NextPage } from 'next'
 import { useEffect, useState } from 'react'
 import Flow from '../src/ui/Flow'
@@ -16,7 +13,7 @@ import Link from 'next/link'
 interface Props {}
 
 const AccountRecovery: NextPage<Props> = () => {
-  const [flow, setFlow] = useState<SelfServiceRecoveryFlow>()
+  const [flow, setFlow] = useState<RecoveryFlow>()
   const [session, setSession] = useSession()
   const router = useRouter()
   const { flow: flowId, return_to: returnTo } = router.query
@@ -36,7 +33,7 @@ const AccountRecovery: NextPage<Props> = () => {
     // If ?flow=.. was in the URL, we fetch it
     if (flowId) {
       ory
-        .getSelfServiceRecoveryFlow(String(flowId))
+        .getRecoveryFlow({ id: String(flowId) })
         .then(({ data }) => {
           setFlow(data)
         })
@@ -45,9 +42,10 @@ const AccountRecovery: NextPage<Props> = () => {
     }
 
     ory
-      .initializeSelfServiceRecoveryFlowForBrowsers()
+      .createBrowserRecoveryFlow({
+        returnTo: returnTo ? String(returnTo) : undefined,
+      })
       .then(({ data }) => {
-        console.log(data)
         setFlow(data)
       })
       .catch(handleFlowError(router, 'recovery', setFlow))
@@ -67,13 +65,13 @@ const AccountRecovery: NextPage<Props> = () => {
     return null
   }
 
-  const onSubmit = async (data: SubmitSelfServiceRecoveryFlowBody) => {
+  const onSubmit = async (data: UpdateRecoveryFlowBody) => {
     await router.push(`/account-recovery?flow=${flow?.id}`, undefined, {
       shallow: true,
     })
 
-    ory
-      .submitSelfServiceRecoveryFlow(flow.id, data)
+    return ory
+      .updateRecoveryFlow({ flow: flow.id, updateRecoveryFlowBody: data })
       .then(async ({ data }) => {
         setFlow(data)
       })
@@ -82,7 +80,7 @@ const AccountRecovery: NextPage<Props> = () => {
         // If the previous handler did not catch the error it's most likely a form validation error
         if (err.response?.status === 400) {
           // Yup, it is!
-          setFlow(err.response?.data as SelfServiceRecoveryFlow | undefined)
+          setFlow(err.response?.data as RecoveryFlow | undefined)
           return
         }
 

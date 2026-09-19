@@ -2,7 +2,7 @@ import App, { AppProps } from 'next/app'
 import { sdkServer as ory } from '../src/ory'
 import { Atom, Provider } from 'jotai'
 import { AppContextWithSession, sessionAtom } from '../src/session'
-import { Session } from '@ory/client'
+import { Session } from '@ory/kratos-client'
 import { ToastContainer } from 'ui'
 import 'ui/styles/globals.css'
 import Navigation from '../src/Navigation'
@@ -68,7 +68,7 @@ MyApp.getInitialProps = async (ctx: AppContextWithSession) => {
 
   if (cookie) {
     try {
-      const { data: session } = await ory.toSession(undefined, cookie)
+      const { data: session } = await ory.toSession({ cookie })
       props.pageProps.initialState.session = session
       ctx.ctx.session = session
     } catch (err) {

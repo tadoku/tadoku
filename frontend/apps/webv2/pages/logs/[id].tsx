@@ -216,7 +216,7 @@ function ActionBar({ log }: { log: Log }) {
       return hasEnded
     })
     .some(it => it === false)
-  const isOwner = log.user_id === session?.identity.id
+  const isOwner = log.user_id === session?.identity?.id
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const router = useRouter()

@@ -1,4 +1,4 @@
-import type { Session } from '@ory/client'
+import type { Session } from '@ory/kratos-client'
 import getConfig from 'next/config'
 import {
   defaultFeatureFlagDecisions,

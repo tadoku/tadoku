@@ -1,4 +1,4 @@
-import { Session } from '@ory/client'
+import { Session } from '@ory/kratos-client'
 import { describe, expect, it, vi } from 'vitest'
 import { bootstrapFeatureFlagDecisions } from './bootstrap'
 

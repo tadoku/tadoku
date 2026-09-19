@@ -1,4 +1,3 @@
-import { getNodeLabel } from '@ory/integrations/ui'
 import { useFormContext } from 'react-hook-form'
 
 import { NodeInputProps } from './helpers'
@@ -19,7 +18,9 @@ export function NodeInputCheckbox<T>({
           : 'inherit',
       }}
     >
-      <label htmlFor={attributes.name}>{getNodeLabel(node)}</label>
+      <label htmlFor={attributes.name}>
+        {node.meta.label?.text ?? attributes.name}
+      </label>
       <input
         {...register(attributes.name)}
         type="checkbox"

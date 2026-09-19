@@ -1,5 +1,5 @@
-import { UiNode, UiNodeTextAttributes } from '@ory/client'
-import { UiText } from '@ory/client'
+import { UiNode, UiNodeTextAttributes } from '@ory/kratos-client'
+import { UiText } from '@ory/kratos-client'
 
 interface Props {
   node: UiNode

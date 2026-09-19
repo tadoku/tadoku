@@ -14,7 +14,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	queries "github.com/tadoku/tadoku/services/tadoku-api/generated/sqlc/announcements"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
 
 type AnnouncementsRepository struct {
@@ -69,7 +68,7 @@ func (r *AnnouncementsRepository) CreateAnnouncement(ctx context.Context, item *
 	})
 	var pgError *pgconn.PgError
 	if errors.As(err, &pgError) && pgError.Code == pgerrcode.UniqueViolation {
-		return errx.NewConflictError("announcement already exists")
+		return ErrAnnouncementAlreadyExists
 	}
 	if err != nil {
 		return fmt.Errorf("create announcement: %w", err)

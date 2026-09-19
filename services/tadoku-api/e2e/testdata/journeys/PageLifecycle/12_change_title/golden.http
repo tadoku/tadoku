@@ -1,0 +1,6 @@
+>>> PUT /content/pages/main/11111111-1111-4111-8111-000000000002
+HTTP/1.1 200 OK
+Content-Length: 207
+Content-Type: application/json; charset=UTF-8
+
+{"html":"\u003cp\u003eRead a little every day.\u003c/p\u003e","id":"11111111-1111-4111-8111-000000000002","published_at":"2026-09-12T14:00:00Z","slug":"reading-guide","title":"Getting started with reading"}

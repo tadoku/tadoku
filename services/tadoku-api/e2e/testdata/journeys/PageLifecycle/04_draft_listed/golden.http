@@ -1,0 +1,6 @@
+>>> GET /content/pages/main
+HTTP/1.1 200 OK
+Content-Length: 280
+Content-Type: application/json; charset=UTF-8
+
+{"next_page_token":"","pages":[{"created_at":"2026-09-12T12:00:00Z","html":"\u003cp\u003eRead a little every day.\u003c/p\u003e","id":"11111111-1111-4111-8111-000000000002","slug":"reading-guide-draft","title":"Reading guide","updated_at":"2026-09-12T12:00:00Z"}],"total_size":1}

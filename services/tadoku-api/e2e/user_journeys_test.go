@@ -1,9 +1,12 @@
 package e2e_test
 
 import (
+	"math/rand"
 	"net/http"
 	"testing"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 // Every important user journey in the application lives in this file. Replay a
@@ -63,5 +66,187 @@ func TestAnnouncementLifecycleJourney(t *testing.T) {
 			at:      afterExpiry,
 		},
 		{verify: "soft_deleted"},
+	})
+}
+
+func TestPageLifecycleJourney(t *testing.T) {
+	// Keep API-created revision IDs stable in the HTTP fixtures. This journey
+	// and its steps must stay sequential while the UUID source is overridden.
+	uuid.SetRand(rand.New(rand.NewSource(1)))
+	defer uuid.SetRand(nil)
+
+	scheduled := fixtureInstant.Add(time.Hour)
+	published := fixtureInstant.Add(2 * time.Hour)
+	retitled := fixtureInstant.Add(3 * time.Hour)
+	revised := fixtureInstant.Add(4 * time.Hour)
+	saved := fixtureInstant.Add(5 * time.Hour)
+	deleted := fixtureInstant.Add(6 * time.Hour)
+
+	runJourney(t, api, "PageLifecycle", []step{
+		{
+			request: "create_draft",
+			as:      admin,
+			want:    http.StatusCreated,
+			others: cast{
+				none:   http.StatusBadRequest,
+				guest:  http.StatusUnauthorized,
+				user:   http.StatusForbidden,
+				banned: http.StatusForbidden,
+			},
+		},
+		{
+			request: "draft_for_admin",
+			as:      admin,
+			want:    http.StatusOK,
+			others:  cast{user: http.StatusForbidden},
+		},
+		{
+			request: "draft_hidden",
+			as:      guest,
+			want:    http.StatusNotFound,
+		},
+		{
+			request: "draft_listed",
+			as:      admin,
+			want:    http.StatusOK,
+		},
+		{
+			request: "draft_excluded",
+			as:      admin,
+			want:    http.StatusOK,
+		},
+		{
+			request: "initial_version",
+			as:      admin,
+			want:    http.StatusOK,
+		},
+		{
+			request: "schedule_and_rename",
+			as:      admin,
+			want:    http.StatusOK,
+			at:      scheduled,
+			others:  cast{guest: http.StatusUnauthorized, user: http.StatusForbidden, banned: http.StatusForbidden},
+		},
+		{
+			request: "scheduled_hidden",
+			as:      guest,
+			want:    http.StatusNotFound,
+			at:      scheduled,
+		},
+		{
+			request: "metadata_keeps_version",
+			as:      admin,
+			want:    http.StatusOK,
+			at:      scheduled,
+		},
+		{
+			request: "published",
+			as:      guest,
+			want:    http.StatusOK,
+			at:      published,
+		},
+		{
+			request: "old_slug_gone",
+			as:      guest,
+			want:    http.StatusNotFound,
+			at:      published,
+		},
+		{
+			request: "change_title",
+			as:      admin,
+			want:    http.StatusOK,
+			at:      retitled,
+			others:  cast{guest: http.StatusUnauthorized, user: http.StatusForbidden, banned: http.StatusForbidden},
+		},
+		{
+			request: "change_html",
+			as:      admin,
+			want:    http.StatusOK,
+			at:      revised,
+			others:  cast{guest: http.StatusUnauthorized, user: http.StatusForbidden, banned: http.StatusForbidden},
+		},
+		{
+			request: "latest_visible",
+			as:      guest,
+			want:    http.StatusOK,
+			at:      revised,
+		},
+		{
+			request: "version_history",
+			as:      admin,
+			want:    http.StatusOK,
+			at:      revised,
+			others:  cast{user: http.StatusForbidden},
+		},
+		{
+			request: "original_version",
+			as:      admin,
+			want:    http.StatusOK,
+			at:      revised,
+			others:  cast{user: http.StatusForbidden},
+		},
+		{
+			request: "title_version",
+			as:      admin,
+			want:    http.StatusOK,
+			at:      revised,
+		},
+		{
+			request: "latest_version",
+			as:      admin,
+			want:    http.StatusOK,
+			at:      revised,
+		},
+		{
+			request: "save_unchanged",
+			as:      admin,
+			want:    http.StatusOK,
+			at:      saved,
+			others:  cast{guest: http.StatusUnauthorized, user: http.StatusForbidden, banned: http.StatusForbidden},
+		},
+		{
+			request: "unchanged_history",
+			as:      admin,
+			want:    http.StatusOK,
+			at:      saved,
+		},
+		{
+			request: "delete_page",
+			as:      admin,
+			want:    http.StatusNoContent,
+			at:      deleted,
+			others:  cast{guest: http.StatusUnauthorized, user: http.StatusForbidden, banned: http.StatusForbidden},
+		},
+		{
+			request: "deleted_page_hidden",
+			as:      guest,
+			want:    http.StatusNotFound,
+			at:      deleted,
+		},
+		{
+			request: "deleted_admin_page",
+			as:      admin,
+			want:    http.StatusNotFound,
+			at:      deleted,
+		},
+		{
+			request: "deleted_from_list",
+			as:      admin,
+			want:    http.StatusOK,
+			at:      deleted,
+		},
+		{
+			request: "deleted_history_empty",
+			as:      admin,
+			want:    http.StatusOK,
+			at:      deleted,
+		},
+		{
+			request: "deleted_version_missing",
+			as:      admin,
+			want:    http.StatusNotFound,
+			at:      deleted,
+		},
+		{verify: "soft_deleted", at: deleted},
 	})
 }

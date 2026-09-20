@@ -32,6 +32,8 @@ var (
 	ErrContestCreationForbidden = errx.NewForbiddenError("contest creation forbidden")
 	ErrContestCreatorTooYoung   = errors.New("contest creator account too young")
 	ErrInvalidActivity          = errx.NewInvalidInputError("invalid contest activity")
+	ErrInvalidRegistration      = errx.NewInvalidInputError("invalid contest registration")
+	ErrRegistrationNotFound     = errx.NewNotFoundError("contest registration not found")
 )
 
 type Language struct {
@@ -87,6 +89,42 @@ type ContestList struct {
 	TotalSize     int
 	NextPageToken string
 }
+
+type Registration struct {
+	ID              uuid.UUID
+	ContestID       uuid.UUID
+	UserID          uuid.UUID
+	UserDisplayName string
+	Languages       []Language
+	Contest         *ContestView
+}
+
+type RegistrationList struct {
+	Registrations []Registration
+	TotalSize     int
+	NextPageToken string
+}
+
+type RegistrationUpsertParameters struct {
+	ContestID     uuid.UUID
+	LanguageCodes []string
+
+	id               uuid.UUID
+	userID           uuid.UUID
+	officialContest  bool
+	year             int16
+	removedLanguages []string
+	createdAt        time.Time
+	updatedAt        time.Time
+}
+
+func (p RegistrationUpsertParameters) ID() uuid.UUID              { return p.id }
+func (p RegistrationUpsertParameters) UserID() uuid.UUID          { return p.userID }
+func (p RegistrationUpsertParameters) OfficialContest() bool      { return p.officialContest }
+func (p RegistrationUpsertParameters) Year() int16                { return p.year }
+func (p RegistrationUpsertParameters) RemovedLanguages() []string { return p.removedLanguages }
+func (p RegistrationUpsertParameters) CreatedAt() time.Time       { return p.createdAt }
+func (p RegistrationUpsertParameters) UpdatedAt() time.Time       { return p.updatedAt }
 
 type CreateContestParameters struct {
 	ContestStart            time.Time
@@ -179,6 +217,15 @@ func allActivities() []Activity {
 }
 
 func hydrateActivities(ids []int32) ([]Activity, error) {
+	result, err := hydrateActivitiesInOrder(ids)
+	if err != nil {
+		return nil, err
+	}
+	sort.Slice(result, func(i, j int) bool { return result[i].Name < result[j].Name })
+	return result, nil
+}
+
+func hydrateActivitiesInOrder(ids []int32) ([]Activity, error) {
 	result := make([]Activity, 0, len(ids))
 	for _, id := range ids {
 		if id < 1 || int(id) > len(activities) || activities[id-1].ID != id {
@@ -186,6 +233,5 @@ func hydrateActivities(ids []int32) ([]Activity, error) {
 		}
 		result = append(result, activities[id-1])
 	}
-	sort.Slice(result, func(i, j int) bool { return result[i].Name < result[j].Name })
 	return result, nil
 }

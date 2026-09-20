@@ -1,0 +1,7 @@
+POST /immersion/contests/33333333-3333-4333-b333-333333333333/registration HTTP/1.1
+Host: api.test
+X-Request-Id: contest-registration-journey
+Content-Type: application/json
+Content-Length: 26
+
+{"language_codes":["eng"]}

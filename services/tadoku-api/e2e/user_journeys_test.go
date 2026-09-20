@@ -137,6 +137,86 @@ func TestContestCreationJourney(t *testing.T) {
 	})
 }
 
+func TestContestRegistrationJourney(t *testing.T) {
+	ids := append(bytes.Repeat([]byte{0x33}, 16), bytes.Repeat([]byte{0x44}, 16)...)
+	ids = append(ids, bytes.Repeat([]byte{0x55}, 16)...)
+	ids = append(ids, bytes.Repeat([]byte{0x66}, 16)...)
+	uuid.SetRand(bytes.NewReader(ids))
+	defer uuid.SetRand(nil)
+
+	runJourney(t, api, "ContestRegistration", []step{
+		{
+			request: "create_ongoing_contest",
+			as:      user,
+			want:    http.StatusOK,
+		},
+		{
+			request: "registration_initially_missing",
+			as:      user,
+			want:    http.StatusNoContent,
+		},
+		{
+			request: "register",
+			as:      user,
+			want:    http.StatusOK,
+			others:  cast{guest: http.StatusUnauthorized, banned: http.StatusForbidden},
+		},
+		{
+			request: "registration_visible",
+			as:      user,
+			want:    http.StatusOK,
+		},
+		{
+			request: "second_user_registers",
+			as:      user2,
+			want:    http.StatusOK,
+		},
+		{
+			request: "second_user_sees_own_registration",
+			as:      user2,
+			want:    http.StatusOK,
+		},
+		{
+			request: "ongoing_registration",
+			as:      user,
+			want:    http.StatusOK,
+		},
+		{
+			request: "update_languages",
+			as:      user,
+			want:    http.StatusOK,
+		},
+		{
+			request: "updated_registration_visible",
+			as:      user,
+			want:    http.StatusOK,
+		},
+		{
+			request: "registration_no_longer_ongoing",
+			as:      user,
+			want:    http.StatusOK,
+			at:      fixtureInstant.Add(24 * time.Hour),
+		},
+	})
+}
+
+func TestContestRegistrationDetachJourney(t *testing.T) {
+	runJourney(t, api, "ContestRegistrationDetach", []step{
+		{
+			request: "remove_language",
+			as:      user,
+			want:    http.StatusOK,
+			others:  cast{guest: http.StatusUnauthorized, banned: http.StatusForbidden},
+		},
+		{
+			request: "registration_updated",
+			as:      user,
+			want:    http.StatusOK,
+		},
+		{verify: "logs_detached_and_refreshes_enqueued"},
+	})
+}
+
 func TestAuthorizationVisibilityJourney(t *testing.T) {
 	runJourney(t, api, "AuthorizationVisibility", []step{
 		{

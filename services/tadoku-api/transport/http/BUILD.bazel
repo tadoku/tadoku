@@ -19,6 +19,7 @@ go_library(
         "contest_create_permission.go",
         "contest_find.go",
         "contest_list.go",
+        "contest_registration.go",
         "errors.go",
         "language_create.go",
         "language_update.go",

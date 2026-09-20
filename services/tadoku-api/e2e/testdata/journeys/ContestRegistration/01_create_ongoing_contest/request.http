@@ -1,0 +1,7 @@
+POST /immersion/contests HTTP/1.1
+Host: api.test
+X-Request-Id: contest-registration-journey
+Content-Type: application/json
+Content-Length: 230
+
+{"contest_start":"2026-09-12","contest_end":"2026-09-12","registration_end":"2026-09-30","title":"Registration journey","private":false,"official":false,"language_code_allow_list":["jpn","eng"],"activity_type_id_allow_list":[2,1]}

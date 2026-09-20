@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -35,6 +36,155 @@ func (r *ContestsRepository) CountContestsCreatedByUserForYear(ctx context.Conte
 		return 0, fmt.Errorf("count contests created by user for year: %w", err)
 	}
 	return count, nil
+}
+
+func (r *ContestsRepository) FindRegistrationForUser(ctx context.Context, userID, contestID uuid.UUID) (*Registration, error) {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return nil, err
+	}
+	q := queries.New(executor)
+	row, err := q.FindContestRegistrationForUser(ctx, queries.FindContestRegistrationForUserParams{
+		UserID:    pgtype.UUID{Bytes: userID, Valid: true},
+		ContestID: pgtype.UUID{Bytes: contestID, Valid: true},
+	})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, ErrRegistrationNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("find contest registration: %w", err)
+	}
+	languages, err := q.ListRegistrationLanguages(ctx, row.LanguageCodes)
+	if err != nil {
+		return nil, fmt.Errorf("list registration languages: %w", err)
+	}
+	return &Registration{
+		ID:              uuid.UUID(row.ID.Bytes),
+		ContestID:       uuid.UUID(row.ContestID.Bytes),
+		UserID:          uuid.UUID(row.UserID.Bytes),
+		UserDisplayName: row.UserDisplayName,
+		Languages:       registrationLanguages(languages),
+	}, nil
+}
+
+func (r *ContestsRepository) ListOngoingRegistrations(ctx context.Context, userID uuid.UUID, now time.Time) ([]Registration, error) {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return nil, err
+	}
+	q := queries.New(executor)
+	rows, err := q.ListOngoingContestRegistrations(ctx, queries.ListOngoingContestRegistrationsParams{
+		UserID: pgtype.UUID{Bytes: userID, Valid: true},
+		Now:    pgtype.Timestamp{Time: now, Valid: true},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("list ongoing contest registrations: %w", err)
+	}
+	languages, err := q.ListLanguages(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("list ongoing registration languages: %w", err)
+	}
+	languageNames := make(map[string]string, len(languages))
+	for _, language := range languages {
+		languageNames[language.Code] = language.Name
+	}
+
+	result := make([]Registration, 0, len(rows))
+	for _, row := range rows {
+		registration := Registration{
+			ID:              uuid.UUID(row.ID.Bytes),
+			ContestID:       uuid.UUID(row.ContestID.Bytes),
+			UserID:          uuid.UUID(row.UserID.Bytes),
+			UserDisplayName: row.UserDisplayName,
+			Languages:       make([]Language, 0, len(row.LanguageCodes)),
+			Contest: &ContestView{
+				ID:                   uuid.UUID(row.ContestID.Bytes),
+				ContestStart:         row.ContestStart.Time,
+				ContestEnd:           row.ContestEnd.Time,
+				RegistrationEnd:      row.RegistrationEnd.Time,
+				Title:                row.Title,
+				Description:          nullableString(row.Description),
+				OwnerUserID:          uuid.UUID(row.OwnerUserID.Bytes),
+				OwnerUserDisplayName: row.OwnerUserDisplayName,
+				Official:             row.Official,
+				Private:              row.Private,
+				AllowedLanguages:     []Language{},
+				AllowedActivities:    make([]Activity, 0, len(row.ActivityTypeIDAllowList)),
+				allowedActivityIDs:   row.ActivityTypeIDAllowList,
+			},
+		}
+		for _, code := range row.LanguageCodes {
+			registration.Languages = append(registration.Languages, Language{Code: code, Name: languageNames[code]})
+		}
+		result = append(result, registration)
+	}
+	return result, nil
+}
+
+func (r *ContestsRepository) DetachContestLogsForLanguages(ctx context.Context, parameters RegistrationUpsertParameters) error {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return err
+	}
+	err = queries.New(executor).DetachContestLogsForLanguages(ctx, queries.DetachContestLogsForLanguagesParams{
+		ContestID:     pgtype.UUID{Bytes: parameters.ContestID, Valid: true},
+		UserID:        pgtype.UUID{Bytes: parameters.UserID(), Valid: true},
+		LanguageCodes: parameters.RemovedLanguages(),
+	})
+	if err != nil {
+		return fmt.Errorf("detach contest logs for languages: %w", err)
+	}
+	return nil
+}
+
+func (r *ContestsRepository) UpsertRegistration(ctx context.Context, parameters RegistrationUpsertParameters) error {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return err
+	}
+	err = queries.New(executor).UpsertContestRegistration(ctx, queries.UpsertContestRegistrationParams{
+		ID:            pgtype.UUID{Bytes: parameters.ID(), Valid: true},
+		ContestID:     pgtype.UUID{Bytes: parameters.ContestID, Valid: true},
+		UserID:        pgtype.UUID{Bytes: parameters.UserID(), Valid: true},
+		LanguageCodes: parameters.LanguageCodes,
+		CreatedAt:     pgtype.Timestamp{Time: parameters.CreatedAt(), Valid: true},
+		UpdatedAt:     pgtype.Timestamp{Time: parameters.UpdatedAt(), Valid: true},
+	})
+	if err != nil {
+		return fmt.Errorf("upsert contest registration: %w", err)
+	}
+	return nil
+}
+
+func (r *ContestsRepository) InsertRegistrationLeaderboardOutbox(ctx context.Context, parameters RegistrationUpsertParameters) error {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return err
+	}
+	q := queries.New(executor)
+	if err := q.InsertContestScoreRefresh(ctx, queries.InsertContestScoreRefreshParams{
+		UserID:    pgtype.UUID{Bytes: parameters.UserID(), Valid: true},
+		ContestID: pgtype.UUID{Bytes: parameters.ContestID, Valid: true},
+	}); err != nil {
+		return fmt.Errorf("insert contest score refresh: %w", err)
+	}
+	if parameters.OfficialContest() {
+		if err := q.InsertOfficialScoresRefresh(ctx, queries.InsertOfficialScoresRefreshParams{
+			UserID: pgtype.UUID{Bytes: parameters.UserID(), Valid: true},
+			Year:   pgtype.Int2{Int16: parameters.Year(), Valid: true},
+		}); err != nil {
+			return fmt.Errorf("insert official scores refresh: %w", err)
+		}
+	}
+	return nil
+}
+
+func registrationLanguages(rows []queries.Language) []Language {
+	result := make([]Language, 0, len(rows))
+	for _, row := range rows {
+		result = append(result, Language{Code: row.Code, Name: row.Name})
+	}
+	return result
 }
 
 func (r *ContestsRepository) LanguagesExist(ctx context.Context, codes []string) (bool, error) {

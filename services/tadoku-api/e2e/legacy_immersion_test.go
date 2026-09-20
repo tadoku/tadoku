@@ -40,6 +40,7 @@ func newLegacyImmersionAPI(ctx context.Context, dsn, jwksURL, ketoReadURL string
 	}
 
 	postgresRepository := repository.NewRepository(db)
+	userUpsert := domain.NewUserUpsert(postgresRepository)
 	kratosConfig := kratos.GetConfig()
 	kratosClient := immersionory.NewKratosClient(
 		kratosConfig.Servers[0].URL,
@@ -56,7 +57,7 @@ func newLegacyImmersionAPI(ctx context.Context, dsn, jwksURL, ketoReadURL string
 		domain.NewContestList(postgresRepository),
 		nil, // user logs
 		nil, // contest logs
-		nil, // registration find
+		domain.NewRegistrationFind(postgresRepository),
 		nil, // yearly registrations
 		nil, // contest leaderboard
 		nil, // yearly leaderboard
@@ -66,14 +67,14 @@ func newLegacyImmersionAPI(ctx context.Context, dsn, jwksURL, ketoReadURL string
 		nil, // profile yearly activity
 		nil, // profile yearly scores
 		nil, // profile fetch
-		nil, // ongoing registrations
+		domain.NewRegistrationListOngoing(postgresRepository, scenarioClock{}),
 		domain.NewContestPermissionCheck(postgresRepository, kratosClient, scenarioClock{}),
 		nil, // log delete
 		nil, // moderation detach log
-		nil, // registration upsert
+		domain.NewRegistrationUpsert(postgresRepository, userUpsert),
 		nil, // log create
 		nil, // log update
-		domain.NewContestCreate(postgresRepository, scenarioClock{}, domain.NewUserUpsert(postgresRepository)),
+		domain.NewContestCreate(postgresRepository, scenarioClock{}, userUpsert),
 		domain.NewLanguageList(postgresRepository),
 		domain.NewLanguageCreate(postgresRepository),
 		domain.NewLanguageUpdate(postgresRepository),

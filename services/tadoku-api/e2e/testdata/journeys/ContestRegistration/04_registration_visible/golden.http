@@ -1,0 +1,6 @@
+>>> GET /immersion/contests/33333333-3333-4333-b333-333333333333/registration
+HTTP/1.1 200 OK
+Content-Length: 259
+Content-Type: application/json; charset=UTF-8
+
+{"contest_id":"33333333-3333-4333-b333-333333333333","id":"44444444-4444-4444-8444-444444444444","languages":[{"code":"eng","name":"English"},{"code":"jpn","name":"Japanese"}],"user_display_name":"Reader One","user_id":"11111111-1111-4111-8111-111111111111"}

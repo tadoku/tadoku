@@ -78,11 +78,6 @@ func RegisterProxyRoutes(
 		)
 		router.rootMux.Handle(current.prefix, handler)
 		headRoutes.Handle(current.prefix, handler)
-		if current.name == "immersion" {
-			// This one-segment route would otherwise bind to the native
-			// /immersion/contests/{id} pattern before their own migrations.
-			router.rootMux.Handle("GET /immersion/contests/ongoing-registrations", handler)
-		}
 	}
 	router.rootHandler = stdhttp.HandlerFunc(func(w stdhttp.ResponseWriter, r *stdhttp.Request) {
 		if r.Method == stdhttp.MethodHead {

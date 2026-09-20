@@ -141,17 +141,3 @@ func TestRetiredAuthzRoutesAreNotForwarded(t *testing.T) {
 		})
 	}
 }
-
-func TestUnmigratedContestDiscoveryNeighborsRemainProxied(t *testing.T) {
-	for _, path := range []string{
-		"/immersion/contests/ongoing-registrations",
-	} {
-		t.Run(path, func(t *testing.T) {
-			response := httptest.NewRecorder()
-			api.handler.ServeHTTP(response, httptest.NewRequest(http.MethodGet, path, nil))
-			if response.Header().Get("X-Proxied") != "yes" {
-				t.Errorf("%s was claimed by a native wildcard route", path)
-			}
-		})
-	}
-}

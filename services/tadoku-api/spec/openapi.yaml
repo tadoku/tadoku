@@ -1145,11 +1145,22 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ImmersionContestRegistration"
-        "404":
-          description: not found
+        "204":
+          description: registration does not exist
+        "500":
+          description: Invalid authenticated identity
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - message
+                properties:
+                  message:
+                    type: string
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /contests/{id}/registration
       x-legacy-operation-id: contestFindRegistration
     post:
@@ -1167,6 +1178,7 @@ paths:
             type: string
             format: uuid
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -1187,9 +1199,20 @@ paths:
           description: contest not found
         "409":
           $ref: "#/components/responses/ImmersionAccountDeletionInProgress"
+        "500":
+          description: Invalid authenticated identity or persistence failure
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - message
+                properties:
+                  message:
+                    type: string
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /contests/{id}/registration
       x-legacy-operation-id: contestRegistrationUpsert
   "/immersion/contests/{id}/leaderboard":
@@ -1448,9 +1471,20 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ImmersionContestRegistrations"
+        "500":
+          description: Invalid authenticated identity
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - message
+                properties:
+                  message:
+                    type: string
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /contests/ongoing-registrations
       x-legacy-operation-id: contestFindOngoingRegistrations
   /immersion/contests/configuration-options:

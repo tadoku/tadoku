@@ -72,7 +72,7 @@ Migration PRs must remain compatible with the application version currently depl
 
 **Group feature packages by responsibility.** Use `<feature>_service.go`, `<feature>_service_test.go`, `<feature>_repository.go`, `<feature>_repository_test.go` and `domain.go`, rather than separate feature files for each operation. Keep domain types, errors and shared validation in `domain.go`; service and repository structs and constructors stay with their implementations. Declare each feature's domain errors together in one `var` block and reuse them from services and repositories. Within feature packages, database tests must exercise repositories directly and live only in the repository test file. Keep service and validation tests database-free; exercise service orchestration through HTTP E2Es.
 
-**Return specific validation errors.** Prefer one validation condition per branch with an error that identifies the invalid field or rule. Combine conditions only when they intentionally represent the same domain error.
+**Return specific validation errors.** Prefer one validation condition per branch with a direct call to the shared invalid-input error constructor and a message that identifies the invalid field or rule. Do not create per-validation sentinel errors or error types. Combine conditions only when they intentionally represent the same validation message.
 
 **Keep each operation's HTTP E2Es in one golden-case table.** Do not add separate generated-ID, persistence-readback or hand-decoded response tests beside it. Put persistence assertions in repository tests. Request-body fixtures use JSON only.
 

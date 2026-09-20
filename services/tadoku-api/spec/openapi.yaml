@@ -2436,7 +2436,7 @@ paths:
           description: forbidden (not admin)
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /languages
       x-legacy-operation-id: languageList
     post:

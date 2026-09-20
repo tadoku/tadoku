@@ -1178,6 +1178,9 @@ type ServerInterface interface {
 	// ContentPostUpdate Updates an existing post
 	// (PUT /content/posts/{namespace}/{slug})
 	ContentPostUpdate(w http.ResponseWriter, r *http.Request, namespace string, slug string)
+	// ImmersionLanguageList Lists all languages (admin only)
+	// (GET /immersion/languages)
+	ImmersionLanguageList(w http.ResponseWriter, r *http.Request)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -1985,6 +1988,20 @@ func (siw *ServerInterfaceWrapper) ContentPostUpdate(w http.ResponseWriter, r *h
 	handler.ServeHTTP(w, r)
 }
 
+// ImmersionLanguageList operation middleware
+func (siw *ServerInterfaceWrapper) ImmersionLanguageList(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ImmersionLanguageList(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 type UnescapedCookieParamError struct {
 	ParamName string
 	Err       error
@@ -2127,6 +2144,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/content/announcements/{namespace}/{id}", wrapper.ContentAnnouncementDelete)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/content/announcements/{namespace}/{id}", wrapper.ContentAnnouncementFindByID)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/content/announcements/{namespace}/{id}", wrapper.ContentAnnouncementUpdate)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/languages", wrapper.ImmersionLanguageList)
 
 	return m
 }
@@ -2926,6 +2944,43 @@ func (response ContentPostUpdate409Response) VisitContentPostUpdateResponse(w ht
 	return nil
 }
 
+type ImmersionLanguageListRequestObject struct {
+}
+
+type ImmersionLanguageListResponseObject interface {
+	VisitImmersionLanguageListResponse(w http.ResponseWriter) error
+}
+
+type ImmersionLanguageList200JSONResponse ImmersionLanguages
+
+func (response ImmersionLanguageList200JSONResponse) VisitImmersionLanguageListResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImmersionLanguageList401Response struct {
+}
+
+func (response ImmersionLanguageList401Response) VisitImmersionLanguageListResponse(w http.ResponseWriter) error {
+	w.WriteHeader(401)
+	return nil
+}
+
+type ImmersionLanguageList403Response struct {
+}
+
+func (response ImmersionLanguageList403Response) VisitImmersionLanguageListResponse(w http.ResponseWriter) error {
+	w.WriteHeader(403)
+	return nil
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 	// AuthzRoleGet Fetches the role of the current user
@@ -2994,6 +3049,9 @@ type StrictServerInterface interface {
 	// ContentPostUpdate Updates an existing post
 	// (PUT /content/posts/{namespace}/{slug})
 	ContentPostUpdate(ctx context.Context, request ContentPostUpdateRequestObject) (ContentPostUpdateResponseObject, error)
+	// ImmersionLanguageList Lists all languages (admin only)
+	// (GET /immersion/languages)
+	ImmersionLanguageList(ctx context.Context, request ImmersionLanguageListRequestObject) (ImmersionLanguageListResponseObject, error)
 }
 
 type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error)
@@ -3681,6 +3739,30 @@ func (sh *strictHandler) ContentPostUpdate(w http.ResponseWriter, r *http.Reques
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ContentPostUpdateResponseObject); ok {
 		if err := validResponse.VisitContentPostUpdateResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ImmersionLanguageList operation middleware
+func (sh *strictHandler) ImmersionLanguageList(w http.ResponseWriter, r *http.Request) {
+	var request ImmersionLanguageListRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ImmersionLanguageList(ctx, request.(ImmersionLanguageListRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ImmersionLanguageList")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ImmersionLanguageListResponseObject); ok {
+		if err := validResponse.VisitImmersionLanguageListResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

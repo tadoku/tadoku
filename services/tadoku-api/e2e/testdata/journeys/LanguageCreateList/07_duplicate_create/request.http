@@ -1,0 +1,6 @@
+POST /immersion/languages HTTP/1.1
+Host: api.test
+Content-Type: application/json
+Content-Length: 55
+
+{"code":"test-life","name":"Must not replace language"}

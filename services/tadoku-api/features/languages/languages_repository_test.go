@@ -1,6 +1,7 @@
 package languages_test
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/tadoku/tadoku/services/tadoku-api/features/languages"
@@ -51,5 +52,81 @@ func TestLanguagesRepositoryListsByName(t *testing.T) {
 	}
 	if items == nil || len(items) != 0 {
 		t.Errorf("empty languages=%v, want non-nil empty slice", items)
+	}
+}
+
+func TestLanguagesRepositoryCreatesLanguageAndRejectsDuplicateCode(t *testing.T) {
+	t.Parallel()
+	db, err := testpostgres.New(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Error(err)
+		}
+	})
+	if err := db.Reset(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+
+	repository := languages.NewLanguagesRepository(db.Pool)
+	parameters := languages.CreateLanguageParameters{Code: "test-new", Name: "  Test language  "}
+	if err := repository.CreateLanguage(t.Context(), parameters); err != nil {
+		t.Fatal(err)
+	}
+
+	var name string
+	if err := db.Pool.QueryRow(t.Context(), "select name from languages where code = $1", parameters.Code).Scan(&name); err != nil {
+		t.Fatal(err)
+	}
+	if name != parameters.Name {
+		t.Errorf("name=%q, want exact %q", name, parameters.Name)
+	}
+	duplicate := parameters
+	duplicate.Name = "Replacement"
+	if err := repository.CreateLanguage(t.Context(), duplicate); !errors.Is(err, languages.ErrLanguageAlreadyExists) {
+		t.Errorf("duplicate error=%v, want language already exists", err)
+	}
+	if err := db.Pool.QueryRow(t.Context(), "select name from languages where code = $1", parameters.Code).Scan(&name); err != nil {
+		t.Fatal(err)
+	}
+	if name != parameters.Name {
+		t.Errorf("name after conflict=%q, want original %q", name, parameters.Name)
+	}
+}
+
+func TestLanguagesRepositoryUpdatesLanguageAndRejectsMissingCode(t *testing.T) {
+	t.Parallel()
+	db, err := testpostgres.New(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Error(err)
+		}
+	})
+	if err := db.Reset(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+
+	repository := languages.NewLanguagesRepository(db.Pool)
+	parameters := languages.UpdateLanguageParameters{Code: "jpn", Name: "  Updated Japanese  "}
+	if err := repository.UpdateLanguage(t.Context(), parameters); err != nil {
+		t.Fatal(err)
+	}
+
+	var name string
+	if err := db.Pool.QueryRow(t.Context(), "select name from languages where code = $1", parameters.Code).Scan(&name); err != nil {
+		t.Fatal(err)
+	}
+	if name != parameters.Name {
+		t.Errorf("name=%q, want exact %q", name, parameters.Name)
+	}
+
+	missing := languages.UpdateLanguageParameters{Code: "missing", Name: "Unknown"}
+	if err := repository.UpdateLanguage(t.Context(), missing); !errors.Is(err, languages.ErrLanguageNotFound) {
+		t.Errorf("missing error=%v, want language not found", err)
 	}
 }

@@ -9,6 +9,21 @@ import (
 	"context"
 )
 
+const createLanguage = `-- name: CreateLanguage :exec
+insert into languages (code, name)
+values ($1, $2)
+`
+
+type CreateLanguageParams struct {
+	Code string
+	Name string
+}
+
+func (q *Queries) CreateLanguage(ctx context.Context, arg CreateLanguageParams) error {
+	_, err := q.db.Exec(ctx, createLanguage, arg.Code, arg.Name)
+	return err
+}
+
 const listLanguages = `-- name: ListLanguages :many
 select code, name
 from languages
@@ -33,4 +48,23 @@ func (q *Queries) ListLanguages(ctx context.Context) ([]Language, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateLanguage = `-- name: UpdateLanguage :execrows
+update languages
+set name = $1
+where code = $2
+`
+
+type UpdateLanguageParams struct {
+	Name string
+	Code string
+}
+
+func (q *Queries) UpdateLanguage(ctx context.Context, arg UpdateLanguageParams) (int64, error) {
+	result, err := q.db.Exec(ctx, updateLanguage, arg.Name, arg.Code)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }

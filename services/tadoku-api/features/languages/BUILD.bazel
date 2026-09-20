@@ -16,13 +16,19 @@ go_library(
     deps = [
         "//services/tadoku-api/generated/sqlc/languages",
         "//services/tadoku-api/infra/postgres",
+        "//services/tadoku-api/internal/errx",
+        "@com_github_jackc_pgerrcode//:pgerrcode",
+        "@com_github_jackc_pgx_v5//pgconn",
         "@com_github_jackc_pgx_v5//pgxpool",
     ],
 )
 
 go_test(
     name = "languages_test",
-    srcs = ["languages_repository_test.go"],
+    srcs = [
+        "languages_repository_test.go",
+        "languages_service_test.go",
+    ],
     env_inherit = ["TADOKU_TEST_POSTGRES_URL"],
     tags = [
         "no-cache",

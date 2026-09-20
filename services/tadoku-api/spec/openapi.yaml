@@ -2465,7 +2465,7 @@ paths:
           description: language with this code already exists
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /languages
       x-legacy-operation-id: languageCreate
   "/immersion/languages/{code}":
@@ -2508,7 +2508,7 @@ paths:
           description: language not found
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /languages/{code}
       x-legacy-operation-id: languageUpdate
   /profile/ping:

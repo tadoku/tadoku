@@ -16,6 +16,7 @@ type Checker struct {
 }
 
 type banLookupErrorKey struct{}
+type bannedKey struct{}
 
 // WithBanLookupError records a failed shared ban lookup for later privilege checks.
 func WithBanLookupError(ctx context.Context, err error) context.Context {
@@ -23,6 +24,17 @@ func WithBanLookupError(ctx context.Context, err error) context.Context {
 		return ctx
 	}
 	return context.WithValue(ctx, banLookupErrorKey{}, err)
+}
+
+// WithBanned records a confirmed ban for operations that need to report it.
+func WithBanned(ctx context.Context) context.Context {
+	return context.WithValue(ctx, bannedKey{}, true)
+}
+
+// IsBanned reports whether the shared ban lookup confirmed a ban.
+func IsBanned(ctx context.Context) bool {
+	banned, _ := ctx.Value(bannedKey{}).(bool)
+	return banned
 }
 
 func NewChecker(lookupAdmin func(context.Context, string) (bool, error)) *Checker {

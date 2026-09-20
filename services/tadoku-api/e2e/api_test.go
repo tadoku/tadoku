@@ -20,6 +20,7 @@ import (
 	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/announcements"
+	featureauthz "github.com/tadoku/tadoku/services/tadoku-api/features/authz"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/languages"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/pages"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/posts"
@@ -31,6 +32,7 @@ import (
 )
 
 var api *suite
+var legacyAuthz *legacyAuthzAPI
 var legacyContent *legacyContentAPI
 var legacyImmersion *legacyImmersionAPI
 var legacyAuthentication http.Handler
@@ -92,6 +94,12 @@ func runTests(m *testing.M) (code int) {
 		return 1
 	}
 	defer func() { cleanupErr = errors.Join(cleanupErr, api.db.Close()) }()
+
+	legacyAuthz, err = newLegacyAuthzAPI(authenticationJWKS.URL, keto.ReadURL())
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
 
 	legacyContent, err = newLegacyContentAPI(ctx, api.db.DSN, authenticationJWKS.URL, keto.ReadURL())
 	if err != nil {
@@ -157,6 +165,7 @@ func newTestRouter(ctx context.Context, pool *pgxpool.Pool, ketoReadURL string) 
 func newTestRouterWithLogger(ctx context.Context, pool *pgxpool.Pool, ketoReadURL string, logger *slog.Logger) (*transport.Router, error) {
 	reader := ketoclient.NewReadClient(ketoReadURL)
 	permissionChecker := permissions.NewKetoChecker(reader)
+	authzService := featureauthz.NewService(permissionChecker)
 	announcementsRepository := announcements.NewAnnouncementsRepository(pool)
 	languagesRepository := languages.NewLanguagesRepository(pool)
 	pagesRepository := pages.NewPagesRepository(pool)
@@ -165,7 +174,7 @@ func newTestRouterWithLogger(ctx context.Context, pool *pgxpool.Pool, ketoReadUR
 	languagesService := languages.NewService(languagesRepository)
 	pagesService := pages.NewService(pagesRepository)
 	postsService := posts.NewService(postsRepository)
-	application := app.New(announcementsService, languagesService, pagesService, postsService, pool, permissionChecker)
+	application := app.New(announcementsService, authzService, languagesService, pagesService, postsService, pool, permissionChecker)
 	authenticate, err := transport.NewJWTAuthentication(ctx, authenticationJWKS.URL, time.Second, 24*time.Hour, "http://oathkeeper-api/", logger)
 	if err != nil {
 		return nil, err

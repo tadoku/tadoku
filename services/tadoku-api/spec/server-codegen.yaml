@@ -5,6 +5,8 @@ generate:
   strict-server: true
 output-options:
   include-operation-ids:
+    - AuthzRoleGet
+    - AuthzPermissionCheck
     - ContentPageFindBySlug
     - ContentPageList
     - ContentPageCreate

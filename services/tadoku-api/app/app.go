@@ -4,6 +4,7 @@ package app
 import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/announcements"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/authz"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/languages"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/pages"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/posts"
@@ -12,6 +13,7 @@ import (
 
 type Application struct {
 	announcements *announcements.Service
+	authorization *authz.Service
 	languages     *languages.Service
 	pages         *pages.Service
 	posts         *posts.Service
@@ -19,9 +21,10 @@ type Application struct {
 	permissions   *permissions.Checker
 }
 
-func New(announcements *announcements.Service, languages *languages.Service, pages *pages.Service, posts *posts.Service, db *pgxpool.Pool, permissions *permissions.Checker) *Application {
+func New(announcements *announcements.Service, authorization *authz.Service, languages *languages.Service, pages *pages.Service, posts *posts.Service, db *pgxpool.Pool, permissions *permissions.Checker) *Application {
 	return &Application{
 		announcements: announcements,
+		authorization: authorization,
 		languages:     languages,
 		pages:         pages,
 		posts:         posts,

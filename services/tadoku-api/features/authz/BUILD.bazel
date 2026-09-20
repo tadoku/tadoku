@@ -1,0 +1,27 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "authz",
+    srcs = [
+        "authz_service.go",
+        "domain.go",
+    ],
+    importpath = "github.com/tadoku/tadoku/services/tadoku-api/features/authz",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//services/tadoku-api/internal/errx",
+        "//services/tadoku-api/internal/identity",
+        "//services/tadoku-api/internal/permissions",
+    ],
+)
+
+go_test(
+    name = "authz_test",
+    srcs = ["authz_service_test.go"],
+    embed = [":authz"],
+    deps = [
+        "//services/tadoku-api/internal/errx",
+        "//services/tadoku-api/internal/identity",
+        "//services/tadoku-api/internal/permissions",
+    ],
+)

@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "announcements.go",
         "app.go",
+        "authz.go",
         "languages.go",
         "pages.go",
         "posts.go",
@@ -17,6 +18,7 @@ go_library(
     ],
     deps = [
         "//services/tadoku-api/features/announcements",
+        "//services/tadoku-api/features/authz",
         "//services/tadoku-api/features/languages",
         "//services/tadoku-api/features/pages",
         "//services/tadoku-api/features/posts",

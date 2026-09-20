@@ -1,1 +1,4 @@
-exports_files(["namespaces.keto.ts"])
+exports_files([
+    "identity.default.schema.json",
+    "namespaces.keto.ts",
+])

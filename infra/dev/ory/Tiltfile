@@ -30,8 +30,9 @@ helm_resource('kratos',
               flags=[
                 '--version=0.64.0',
                 '-f', kratos_values,
+                '--set-file', 'kratos.identitySchemas.identity\\.default\\.schema\\.json=%s' % repo_path('infra/dev/ory/identity.default.schema.json'),
               ],
-              deps=['./kratos_values.yaml'],
+              deps=['./kratos_values.yaml', './identity.default.schema.json'],
               resource_deps=['helm-repo-ory', 'tadoku-dev-db-ready'])
 
 k8s_resource("kratos", labels=["auth"])

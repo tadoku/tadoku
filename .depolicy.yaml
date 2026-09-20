@@ -91,6 +91,17 @@ policies:
         - id: utility-dependencies
           allow: [local:services/tadoku-api/internal/...]
 
+  - id: kratos-fixture
+    packages: [local:services/tadoku-api/internal/testkratos/...]
+    imports:
+      default: deny
+      rules:
+        - use: language-dependencies
+        - id: raw-provider-client
+          allow:
+            - local:services/tadoku-api/internal/testkratos/...
+            - local:services/common/client/kratos
+
   - id: permissions
     packages: [local:services/tadoku-api/internal/permissions/...]
     imports:

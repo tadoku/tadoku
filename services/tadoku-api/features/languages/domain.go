@@ -11,6 +11,7 @@ type Language struct {
 var (
 	ErrInvalidLanguage       = errx.NewInvalidInputError("invalid language")
 	ErrLanguageAlreadyExists = errx.NewConflictError("language already exists")
+	ErrLanguageNotFound      = errx.NewNotFoundError("language not found")
 )
 
 type CreateLanguageParameters struct {
@@ -20,6 +21,18 @@ type CreateLanguageParameters struct {
 
 func (p CreateLanguageParameters) Validate() error {
 	if len(p.Code) < 1 || len(p.Code) > 10 || len(p.Name) < 1 || len(p.Name) > 100 {
+		return ErrInvalidLanguage
+	}
+	return nil
+}
+
+type UpdateLanguageParameters struct {
+	Code string
+	Name string
+}
+
+func (p UpdateLanguageParameters) Validate() error {
+	if len(p.Name) < 1 || len(p.Name) > 100 {
 		return ErrInvalidLanguage
 	}
 	return nil

@@ -40,6 +40,25 @@ func (r *LanguagesRepository) CreateLanguage(ctx context.Context, parameters Cre
 	return nil
 }
 
+func (r *LanguagesRepository) UpdateLanguage(ctx context.Context, parameters UpdateLanguageParameters) error {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return err
+	}
+
+	updated, err := queries.New(executor).UpdateLanguage(ctx, queries.UpdateLanguageParams{
+		Code: parameters.Code,
+		Name: parameters.Name,
+	})
+	if err != nil {
+		return fmt.Errorf("update language: %w", err)
+	}
+	if updated == 0 {
+		return ErrLanguageNotFound
+	}
+	return nil
+}
+
 func (r *LanguagesRepository) ListLanguages(ctx context.Context) ([]Language, error) {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {

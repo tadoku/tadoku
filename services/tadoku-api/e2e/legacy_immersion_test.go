@@ -67,7 +67,7 @@ func newLegacyImmersionAPI(ctx context.Context, dsn, jwksURL, ketoReadURL string
 		nil,
 		domain.NewLanguageList(languages),
 		domain.NewLanguageCreate(languages),
-		nil,
+		domain.NewLanguageUpdate(languages),
 		nil,
 		nil,
 		nil,

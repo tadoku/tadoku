@@ -11,6 +11,7 @@ go_library(
         "banned_users.go",
         "errors.go",
         "language_create.go",
+        "language_update.go",
         "languages.go",
         "observability.go",
         "page_create.go",

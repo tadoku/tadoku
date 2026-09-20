@@ -17,6 +17,7 @@ go_test(
         "journey_test.go",
         "language_create_test.go",
         "language_list_test.go",
+        "language_update_test.go",
         "legacy_content_test.go",
         "legacy_immersion_test.go",
         "page_create_test.go",

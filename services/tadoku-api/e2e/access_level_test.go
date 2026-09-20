@@ -44,6 +44,7 @@ var operationAccess = map[string]accessLevel{
 	"ContentPostVersionList":        accessAdmin,
 	"ImmersionLanguageList":         accessAdmin,
 	"ImmersionLanguageCreate":       accessAdmin,
+	"ImmersionLanguageUpdate":       accessAdmin,
 }
 
 var operationFixtures = map[string]string{
@@ -65,6 +66,7 @@ var operationFixtures = map[string]string{
 	"ContentPostVersionList":      "ListPostVersions",
 	"ImmersionLanguageList":       "ListLanguages",
 	"ImmersionLanguageCreate":     "CreateLanguage",
+	"ImmersionLanguageUpdate":     "UpdateLanguage",
 }
 
 func TestOperationAccessLevels(t *testing.T) {

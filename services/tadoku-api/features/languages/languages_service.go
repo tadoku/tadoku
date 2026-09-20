@@ -20,3 +20,10 @@ func (s *Service) CreateLanguage(ctx context.Context, parameters CreateLanguageP
 	}
 	return s.languages.CreateLanguage(ctx, parameters)
 }
+
+func (s *Service) UpdateLanguage(ctx context.Context, parameters UpdateLanguageParameters) error {
+	if err := parameters.Validate(); err != nil {
+		return err
+	}
+	return s.languages.UpdateLanguage(ctx, parameters)
+}

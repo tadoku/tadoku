@@ -32,7 +32,6 @@ type implementation struct {
 	name    string
 	handler http.Handler
 	skip    string
-	prepare func(*testing.T, *suite)
 
 	resetKratos bool
 }
@@ -56,9 +55,6 @@ func runCase(t *testing.T, s *suite, name string, want int, implementations ...i
 				resetKratosAfter(t, s)
 			}
 			s.reset(t, dir)
-			if impl.prepare != nil {
-				impl.prepare(t, s)
-			}
 			record := *updateGoldens && impl.name == goldenRecorder
 			atFixtureInstant(func() { checkHTTPGolden(t, impl.handler, dir, want, record) })
 			if s.proxied.Load() != 0 {

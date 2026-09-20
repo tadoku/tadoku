@@ -76,13 +76,12 @@ the shared HTTP ban gate still applies first.
 
 Provider-backed read caches reuse the common provider client's cursor support,
 preserve provider order, read every cursor page and reject repeated continuation
-tokens. Construction performs no provider request. Production starts refresh
-loops only after successful application construction and does not make provider
-availability a startup or health gate. Such caches expose one synchronous refresh
-for deterministic assembly tests and a context-cancellable production loop. A
-provider refresh failure retains the last complete snapshot; failure to read an
-authoritative suppression source clears visible data, and learned suppressions
-remain sticky for the cache's lifetime.
+tokens. Construction performs no provider request. The first operation that needs
+a cache loads it with the request context; later operations reuse that snapshot
+for five minutes and serialize refreshes. Provider availability is not a startup
+or health gate. A provider refresh failure retains the last complete snapshot;
+failure to read an authoritative suppression source clears visible data, and
+learned suppressions remain sticky for the cache's lifetime.
 
 ## Contract and compatibility
 
@@ -164,10 +163,9 @@ keys remain cached until restart; there is no periodic refresh or refresh on an
 unknown key ID.
 Startup also constructs and retains the raw Kratos SDK and shared Keto read/write
 clients; constructing them makes no provider request. After the application is
-successfully constructed, owned cache loops may begin asynchronous reads without
-waiting for an initial refresh. Provider availability and refresh completion are
-not startup or health-check gates; startup and health checks never mutate provider
-state.
+successfully constructed, provider-backed caches remain cold until a request needs
+them. Provider availability and cache refresh completion are not startup or
+health-check gates; startup and health checks never mutate provider state.
 `/readyz` checks PostgreSQL; `/livez` remains independent of dependency health.
 Valkey is deliberately not a readiness or liveness gate. Commands use the caller's
 context, and blocking commands require an explicit caller deadline. The raw client
@@ -183,8 +181,7 @@ and process health. This thin slice adds no native-specific metric family.
 Shutdown closes request/metrics listeners, the pool, the Valkey client and idle
 HTTP connections, including Kratos and Keto connections. Startup failure closes
 the same owned transport. Raw clients have no separate close operation. Shutdown
-cancels and joins owned cache loops before closing their database and provider
-transport dependencies.
+closes database and provider transport dependencies after request handling stops.
 Valkey close follows the upstream client's native per-connection
 close allowance rather than `API_VALKEY_TIMEOUT`. The dev deployment uses the
 existing disposable development DB role;

@@ -8,11 +8,10 @@ import (
 	"github.com/sahilm/fuzzy"
 	commonroles "github.com/tadoku/tadoku/services/common/authz/roles"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
 )
 
 type userCache interface {
-	Users() []CachedUser
+	Users(context.Context) ([]CachedUser, error)
 }
 
 type roleProvider interface {
@@ -20,24 +19,18 @@ type roleProvider interface {
 }
 
 type Service struct {
-	cache       userCache
-	roles       roleProvider
-	permissions *permissions.Checker
+	cache userCache
+	roles roleProvider
 }
 
-func NewService(cache userCache, roles roleProvider, checker *permissions.Checker) *Service {
+func NewService(cache userCache, roles roleProvider) *Service {
 	return &Service{
-		cache:       cache,
-		roles:       roles,
-		permissions: checker,
+		cache: cache,
+		roles: roles,
 	}
 }
 
 func (s *Service) ListUsers(ctx context.Context, pageSize, page int, query string) (*UserList, error) {
-	if err := s.permissions.RequireAdmin(ctx); err != nil {
-		return nil, err
-	}
-
 	if pageSize <= 0 {
 		pageSize = 20
 	}
@@ -48,7 +41,10 @@ func (s *Service) ListUsers(ctx context.Context, pageSize, page int, query strin
 		page = 0
 	}
 
-	users := s.cache.Users()
+	users, err := s.cache.Users(ctx)
+	if err != nil {
+		return nil, errx.NewUnavailableError("list users", err)
+	}
 	if query != "" {
 		users = searchUsers(users, query)
 	}

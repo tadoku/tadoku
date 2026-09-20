@@ -7,9 +7,6 @@ import (
 	"testing"
 
 	commonroles "github.com/tadoku/tadoku/services/common/authz/roles"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
 )
 
 type recordingUserCache struct {
@@ -17,9 +14,9 @@ type recordingUserCache struct {
 	calls int
 }
 
-func (c *recordingUserCache) Users() []CachedUser {
+func (c *recordingUserCache) Users(context.Context) ([]CachedUser, error) {
 	c.calls++
-	return append([]CachedUser(nil), c.users...)
+	return append([]CachedUser(nil), c.users...), nil
 }
 
 type recordingRoleProvider struct {
@@ -34,38 +31,6 @@ func (p *recordingRoleProvider) ClaimsForSubjects(_ context.Context, subjectIDs 
 		return nil, p.err
 	}
 	return p.claims, nil
-}
-
-func adminContext(t *testing.T, allowed bool) (context.Context, *permissions.Checker) {
-	t.Helper()
-	ctx := identity.WithUser(t.Context(), &identity.User{Subject: "caller"})
-	return ctx, permissions.NewChecker(func(got context.Context, subject string) (bool, error) {
-		if got != ctx || subject != "caller" {
-			t.Errorf("admin lookup context/subject = (%v, %q)", got, subject)
-		}
-		return allowed, nil
-	})
-}
-
-func TestListUsersRequiresAdministratorBeforeReadingUsers(t *testing.T) {
-	cache := &recordingUserCache{users: []CachedUser{{ID: "one"}}}
-	roles := &recordingRoleProvider{}
-	service := NewService(cache, roles, permissions.NewChecker(nil))
-
-	result, err := service.ListUsers(t.Context(), 20, 0, "")
-	if result != nil || errx.KindOf(err) != errx.Unauthorized {
-		t.Fatalf("guest result/error = (%+v, %v), want unauthorized", result, err)
-	}
-
-	ctx, checker := adminContext(t, false)
-	service = NewService(cache, roles, checker)
-	result, err = service.ListUsers(ctx, 20, 0, "")
-	if result != nil || errx.KindOf(err) != errx.Forbidden {
-		t.Fatalf("non-admin result/error = (%+v, %v), want forbidden", result, err)
-	}
-	if cache.calls != 0 || len(roles.calls) != 0 {
-		t.Errorf("authorization failure read cache/roles: cache=%d roles=%d", cache.calls, len(roles.calls))
-	}
 }
 
 func TestListUsersPaginationPreservesProviderOrder(t *testing.T) {
@@ -91,8 +56,7 @@ func TestListUsersPaginationPreservesProviderOrder(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			cache := &recordingUserCache{users: users}
 			roles := &recordingRoleProvider{}
-			ctx, checker := adminContext(t, true)
-			result, err := NewService(cache, roles, checker).ListUsers(ctx, test.pageSize, test.page, "")
+			result, err := NewService(cache, roles).ListUsers(t.Context(), test.pageSize, test.page, "")
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -119,8 +83,8 @@ func TestListUsersSearchesBeforePaginationAndReadsCurrentRoles(t *testing.T) {
 		"bob":   {Banned: true},
 		"bobby": {Admin: true, Banned: true},
 	}}
-	ctx, checker := adminContext(t, true)
-	service := NewService(cache, roles, checker)
+	ctx := t.Context()
+	service := NewService(cache, roles)
 
 	result, err := service.ListUsers(ctx, 2, 0, "BOB")
 	if err != nil {

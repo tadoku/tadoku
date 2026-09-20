@@ -151,6 +151,7 @@ func newTestAPI(ctx context.Context, ketoFixture *testketo.Fixture, kratosFixtur
 	}()
 
 	profileHolder := &nativeProfileCacheHolder{}
+	profileHolder.replace(featureprofile.NewUserCache(kratosFixture.CursorClient(), featureprofile.NewProfileRepository(db.Pool)))
 	handler, err := newTestRouter(ctx, db.Pool, ketoFixture.ReadURL(), profileHolder)
 	if err != nil {
 		return nil, err
@@ -187,7 +188,8 @@ func newTestRouterWithLogger(ctx context.Context, pool *pgxpool.Pool, ketoReadUR
 	languagesService := languages.NewService(languagesRepository)
 	pagesService := pages.NewService(pagesRepository)
 	postsService := posts.NewService(postsRepository)
-	profileService := featureprofile.NewService(profileHolder, commonroles.NewKetoService(reader, "app", "tadoku"), permissionChecker)
+	roleService := commonroles.NewKetoService(reader, "app", "tadoku")
+	profileService := featureprofile.NewService(profileHolder, roleService)
 	application := app.New(announcementsService, authzService, languagesService, pagesService, postsService, profileService, pool, permissionChecker)
 	authenticate, err := transport.NewJWTAuthentication(ctx, authenticationJWKS.URL, time.Second, 24*time.Hour, "http://oathkeeper-api/", logger)
 	if err != nil {
@@ -210,29 +212,20 @@ type nativeProfileCacheHolder struct {
 	cache *featureprofile.UserCache
 }
 
-func (h *nativeProfileCacheHolder) Users() []featureprofile.CachedUser {
+func (h *nativeProfileCacheHolder) Users(ctx context.Context) ([]featureprofile.CachedUser, error) {
 	h.mu.RLock()
 	cache := h.cache
 	h.mu.RUnlock()
 	if cache == nil {
-		return []featureprofile.CachedUser{}
+		return []featureprofile.CachedUser{}, nil
 	}
-	return cache.Users()
+	return cache.Users(ctx)
 }
 
 func (h *nativeProfileCacheHolder) replace(cache *featureprofile.UserCache) {
 	h.mu.Lock()
 	h.cache = cache
 	h.mu.Unlock()
-}
-
-func (s *suite) refreshProfileCache(t *testing.T) {
-	t.Helper()
-	cache := featureprofile.NewUserCache(s.kratos.CursorClient(), featureprofile.NewProfileRepository(s.db.Pool))
-	if err := cache.Refresh(t.Context()); err != nil {
-		t.Fatal(err)
-	}
-	s.profile.replace(cache)
 }
 
 func registerSentinelProxy(s *suite) error {
@@ -278,12 +271,22 @@ func (s *suite) reset(t *testing.T, caseDir string) {
 			t.Fatal(err)
 		}
 	}
+	s.resetProfileCaches()
 	if s.keto != nil {
 		if err := s.keto.Reset(t.Context(), ketoSeeds...); err != nil {
 			t.Fatal(err)
 		}
 	}
 	s.proxied.Store(0)
+}
+
+func (s *suite) resetProfileCaches() {
+	if s.profile != nil {
+		s.profile.replace(featureprofile.NewUserCache(s.kratos.CursorClient(), featureprofile.NewProfileRepository(s.db.Pool)))
+	}
+	if legacyProfile != nil {
+		legacyProfile.resetCache()
+	}
 }
 
 func fixtureSeeds(caseDir, name string) []string {

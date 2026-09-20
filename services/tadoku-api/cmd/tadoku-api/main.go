@@ -120,7 +120,6 @@ type application struct {
 	valkey          valkeygo.Client
 	kratos          *kratosapi.APIClient
 	keto            *ketoclient.Client
-	userCacheDone   chan struct{}
 }
 
 type pgxPoolCollector struct {
@@ -276,11 +275,12 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	postsRepository := posts.NewPostsRepository(pool)
 	profileRepository := profile.NewProfileRepository(pool)
 	userCache := profile.NewUserCache(kratosIdentities, profileRepository)
+	roleService := commonroles.NewKetoService(ketoReader, "app", "tadoku")
 	announcementsService := announcements.NewService(announcementsRepository)
 	languagesService := languages.NewService(languagesRepository)
 	pagesService := pages.NewService(pagesRepository)
 	postsService := posts.NewService(postsRepository)
-	profileService := profile.NewService(userCache, commonroles.NewKetoService(ketoReader, "app", "tadoku"), permissionChecker)
+	profileService := profile.NewService(userCache, roleService)
 	api := app.New(announcementsService, authzService, languagesService, pagesService, postsService, profileService, pool, permissionChecker)
 	rejectBanned := newBannedUserMiddleware(ketoReader, logger)
 
@@ -350,13 +350,7 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 		valkey:          valkeyClient,
 		kratos:          kratos,
 		keto:            keto,
-		userCacheDone:   make(chan struct{}),
 	}
-
-	go func() {
-		defer close(app.userCacheDone)
-		userCache.Run(ctx)
-	}()
 
 	go func() {
 		if err := server.Serve(listener); err != nil && !errors.Is(err, http.ErrServerClosed) {
@@ -392,9 +386,6 @@ func (app *application) wait() error {
 	case runErr = <-app.serverErrors:
 	}
 	app.cancel()
-	if app.userCacheDone != nil {
-		<-app.userCacheDone
-	}
 
 	// Each server gets the full configured grace period.
 	shutdownContext, cancelShutdown := context.WithTimeout(context.Background(), app.shutdownTimeout)

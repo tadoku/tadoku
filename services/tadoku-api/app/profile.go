@@ -7,5 +7,9 @@ import (
 )
 
 func (a *Application) ListUsers(ctx context.Context, pageSize, page int, query string) (*profile.UserList, error) {
+	if err := a.permissions.RequireAdmin(ctx); err != nil {
+		return nil, err
+	}
+
 	return a.profile.ListUsers(ctx, pageSize, page, query)
 }

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	kratosapi "github.com/ory/kratos-client-go"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
 
 const (
@@ -26,8 +27,13 @@ type suppressionRepository interface {
 }
 
 type UserCache struct {
-	mu                    sync.RWMutex
-	users                 []CachedUser
+	mu        sync.Mutex
+	users     []CachedUser
+	loaded    bool
+	checkedAt time.Time
+	// Accepted account deletions must disappear from administrator listings
+	// before Kratos deletion completes. Learned IDs stay suppressed for this
+	// cache's lifetime so a later provider snapshot cannot reintroduce them.
 	suppressedIdentityIDs map[string]struct{}
 	identities            identityProvider
 	suppressions          suppressionRepository
@@ -42,64 +48,32 @@ func NewUserCache(identities identityProvider, suppressions suppressionRepositor
 	}
 }
 
-// Run refreshes the cache until ctx is canceled. The initial retries preserve
-// the legacy cache's startup behavior; later failures wait for the next tick.
-func (c *UserCache) Run(ctx context.Context) {
-	for attempt := 0; attempt < 3; attempt++ {
-		if err := c.Refresh(ctx); err == nil {
-			break
-		} else {
-			slog.ErrorContext(ctx, "initial user cache refresh failed", "attempt", attempt+1, "error", err)
-		}
-		if attempt < 2 && !waitForUserCache(ctx, time.Duration(attempt+1)*5*time.Second) {
-			return
-		}
-	}
-
-	ticker := time.NewTicker(userCacheRefreshInterval)
-	defer ticker.Stop()
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-ticker.C:
-			if err := c.Refresh(ctx); err != nil {
-				slog.ErrorContext(ctx, "user cache refresh failed", "error", err)
-			}
-		}
-	}
-}
-
-func waitForUserCache(ctx context.Context, delay time.Duration) bool {
-	timer := time.NewTimer(delay)
-	defer timer.Stop()
-	select {
-	case <-ctx.Done():
-		return false
-	case <-timer.C:
-		return true
-	}
-}
-
-// Refresh synchronously replaces the visible snapshot after both providers
-// succeed. Identity-provider failures retain the previous complete snapshot;
-// suppression failures clear it so accepted deletions cannot reappear.
-func (c *UserCache) Refresh(ctx context.Context) error {
+// refresh is called with c.mu held. It replaces the visible snapshot after
+// both providers succeed. Identity-provider failures retain the previous
+// complete snapshot; suppression failures clear it so accepted deletions
+// cannot reappear.
+func (c *UserCache) refresh(ctx context.Context, checkedAt time.Time) error {
 	users, err := c.listUsers(ctx)
 	if err != nil {
+		if c.loaded && ctx.Err() == nil {
+			c.checkedAt = checkedAt
+		}
 		return err
 	}
 
 	suppressedIDs, err := c.suppressions.ListAccountDeletionSuppressedIdentityIDs(ctx)
 	if err != nil {
-		c.mu.Lock()
 		c.users = []CachedUser{}
-		c.mu.Unlock()
+		c.loaded = true
+		if ctx.Err() == nil {
+			c.checkedAt = checkedAt
+		}
 		return fmt.Errorf("refresh user suppressions: %w", err)
 	}
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 
-	c.mu.Lock()
-	defer c.mu.Unlock()
 	for _, identityID := range suppressedIDs {
 		c.suppressedIdentityIDs[identityID] = struct{}{}
 	}
@@ -111,6 +85,8 @@ func (c *UserCache) Refresh(ctx context.Context) error {
 		}
 	}
 	c.users = visible
+	c.loaded = true
+	c.checkedAt = checkedAt
 	return nil
 }
 
@@ -180,11 +156,26 @@ func cachedUser(identity kratosapi.Identity) (CachedUser, bool) {
 	}, true
 }
 
-func (c *UserCache) Users() []CachedUser {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
+func (c *UserCache) Users(ctx context.Context) ([]CachedUser, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	now := timex.Now()
+	if c.loaded && now.Before(c.checkedAt.Add(userCacheRefreshInterval)) {
+		return append([]CachedUser{}, c.users...), nil
+	}
 
-	users := make([]CachedUser, len(c.users))
-	copy(users, c.users)
-	return users
+	err := c.refresh(ctx, now)
+	if err != nil {
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return nil, ctxErr
+		}
+		if !c.loaded {
+			return nil, err
+		}
+		slog.ErrorContext(ctx, "user cache refresh failed; serving current snapshot", "error", err)
+	}
+	return append([]CachedUser{}, c.users...), nil
 }

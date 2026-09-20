@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"io"
+	"log/slog"
 	"net/http"
 	"sync"
 	"time"
@@ -33,14 +34,15 @@ type legacyProfileAPI struct {
 }
 
 type legacyProfileCacheHolder struct {
-	mu    sync.RWMutex
+	mu    sync.Mutex
 	cache *legacycache.UserCache
+	warm  bool
 }
 
 func (h *legacyProfileCacheHolder) GetUsers() []legacydomain.UserCacheEntry {
-	h.mu.RLock()
+	h.mu.Lock()
 	cache := h.cache
-	h.mu.RUnlock()
+	h.mu.Unlock()
 	if cache == nil {
 		return []legacydomain.UserCacheEntry{}
 	}
@@ -49,8 +51,23 @@ func (h *legacyProfileCacheHolder) GetUsers() []legacydomain.UserCacheEntry {
 
 func (h *legacyProfileCacheHolder) replace(cache *legacycache.UserCache) {
 	h.mu.Lock()
+	defer h.mu.Unlock()
 	h.cache = cache
-	h.mu.Unlock()
+	h.warm = false
+}
+
+func (h *legacyProfileCacheHolder) warmCache(ctx context.Context) error {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	if h.warm {
+		return nil
+	}
+
+	if err := h.cache.Refresh(ctx); err != nil {
+		return err
+	}
+	h.warm = true
+	return nil
 }
 
 func newLegacyProfileAPI(ctx context.Context, dsn, jwksURL, ketoReadURL string, cursorClient *kratosclient.Client) (*legacyProfileAPI, error) {
@@ -79,20 +96,22 @@ func newLegacyProfileAPI(ctx context.Context, dsn, jwksURL, ketoReadURL string, 
 	legacyopenapi.RegisterHandlers(api, server)
 
 	repository := legacyrepository.NewRepository(db)
-	return &legacyProfileAPI{
+	legacy := &legacyProfileAPI{
 		db:         db,
-		handler:    router,
 		cache:      holder,
 		kratos:     legacyory.NewKratosClientFromClient(cursorClient),
 		repository: repository,
-	}, nil
+	}
+	legacy.resetCache()
+	legacy.handler = http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
+		if err := holder.warmCache(request.Context()); err != nil {
+			slog.ErrorContext(request.Context(), "refresh legacy profile cache", "error", err)
+		}
+		router.ServeHTTP(response, request)
+	})
+	return legacy, nil
 }
 
-func (a *legacyProfileAPI) refreshCache(ctx context.Context) error {
-	cache := legacycache.NewUserCache(a.kratos, a.repository, time.Hour)
-	if err := cache.Refresh(ctx); err != nil {
-		return err
-	}
-	a.cache.replace(cache)
-	return nil
+func (a *legacyProfileAPI) resetCache() {
+	a.cache.replace(legacycache.NewUserCache(a.kratos, a.repository, time.Hour))
 }

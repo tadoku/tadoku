@@ -60,18 +60,6 @@ var stepNamePattern = regexp.MustCompile(`^[a-z0-9_]+$`)
 // It stops at the first failing step because later steps depend on it.
 func runJourney(t *testing.T, s *suite, name string, steps []step) {
 	t.Helper()
-	runJourneyAfterReset(t, s, name, steps, nil)
-}
-
-func runProfileJourney(t *testing.T, s *suite, name string, steps []step) {
-	t.Helper()
-	runJourneyAfterReset(t, s, name, steps, func(t *testing.T, s *suite) {
-		s.refreshProfileCache(t)
-	})
-}
-
-func runJourneyAfterReset(t *testing.T, s *suite, name string, steps []step, afterReset func(*testing.T, *suite)) {
-	t.Helper()
 	if s.kratos != nil {
 		if err := s.kratos.Err(); err != nil {
 			t.Fatal(err)
@@ -92,9 +80,6 @@ func runJourneyAfterReset(t *testing.T, s *suite, name string, steps []step, aft
 	}
 
 	resetJourney(t, s, directory)
-	if afterReset != nil {
-		afterReset(t, s)
-	}
 
 	previous := jwt.TimeFunc
 	jwt.TimeFunc = func() time.Time { return fixtureInstant }
@@ -260,6 +245,7 @@ func resetJourney(t *testing.T, s *suite, directory string) {
 	if err := s.keto.Reset(ctx, filepath.Join(journeysDir, "relationships.json"), filepath.Join(directory, "relationships.json")); err != nil {
 		t.Fatal(err)
 	}
+	s.resetProfileCaches()
 	s.proxied.Store(0)
 }
 

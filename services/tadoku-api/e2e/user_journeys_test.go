@@ -115,9 +115,9 @@ func TestAuthorizationVisibilityJourney(t *testing.T) {
 }
 
 func TestUserListingJourney(t *testing.T) {
-	runProfileJourney(t, api, "UserListing", []step{
+	runJourney(t, api, "UserListing", []step{
 		{
-			request: "accepted_deletion_hidden",
+			request: "list_users_excludes_pending_account_deletion",
 			as:      admin,
 			want:    http.StatusOK,
 			others: cast{

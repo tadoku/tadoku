@@ -15,7 +15,7 @@ go_library(
         "//services/tadoku-api/generated/sqlc/profile",
         "//services/tadoku-api/infra/postgres",
         "//services/tadoku-api/internal/errx",
-        "//services/tadoku-api/internal/permissions",
+        "//services/tadoku-api/internal/timex",
         "@com_github_jackc_pgx_v5//pgxpool",
         "@com_github_ory_kratos_client_go//:kratos-client-go",
         "@com_github_sahilm_fuzzy//:fuzzy",
@@ -39,10 +39,8 @@ go_test(
     ],
     deps = [
         "//services/common/authz/roles",
-        "//services/tadoku-api/internal/errx",
-        "//services/tadoku-api/internal/identity",
-        "//services/tadoku-api/internal/permissions",
         "//services/tadoku-api/internal/testpostgres",
+        "//services/tadoku-api/internal/timex",
         "@com_github_ory_kratos_client_go//:kratos-client-go",
     ],
 )

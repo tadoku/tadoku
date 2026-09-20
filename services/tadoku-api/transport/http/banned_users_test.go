@@ -123,6 +123,49 @@ func TestRejectBannedUsersIdentityGuardsAndProviderErrors(t *testing.T) {
 	}
 }
 
+func TestRejectBannedUsersAllowsOnlyRoleIntrospection(t *testing.T) {
+	tests := []struct {
+		name       string
+		method     string
+		path       string
+		want       int
+		wantCalled bool
+	}{
+		{name: "current role", method: stdhttp.MethodGet, path: "/authz/current-user/role", want: stdhttp.StatusNoContent, wantCalled: true},
+		{name: "current role wrong method", method: stdhttp.MethodPost, path: "/authz/current-user/role", want: stdhttp.StatusForbidden},
+		{name: "current role subpath", method: stdhttp.MethodGet, path: "/authz/current-user/role/extra", want: stdhttp.StatusForbidden},
+		{name: "permission check", method: stdhttp.MethodPost, path: "/authz/permission/check", want: stdhttp.StatusForbidden},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			called := false
+			middleware := RejectBannedUsers(func(context.Context, string) (bool, error) {
+				return true, nil
+			}, slog.New(slog.NewTextHandler(io.Discard, nil)))
+			handler := middleware(stdhttp.HandlerFunc(func(w stdhttp.ResponseWriter, r *stdhttp.Request) {
+				called = true
+				if !permissions.IsBanned(r.Context()) {
+					t.Error("downstream request is missing confirmed ban")
+				}
+				w.WriteHeader(stdhttp.StatusNoContent)
+			}))
+			request := httptest.NewRequest(test.method, test.path, nil)
+			request = request.WithContext(identity.WithUser(request.Context(), &identity.User{Subject: "banned"}))
+			response := httptest.NewRecorder()
+
+			handler.ServeHTTP(response, request)
+
+			if response.Code != test.want {
+				t.Errorf("status = %d, want %d", response.Code, test.want)
+			}
+			if called != test.wantCalled {
+				t.Errorf("downstream called = %t, want %t", called, test.wantCalled)
+			}
+		})
+	}
+}
+
 func TestRejectBannedUsersUsesRequestContext(t *testing.T) {
 	var checkedContext context.Context
 	rejectBanned := RejectBannedUsers(func(ctx context.Context, _ string) (bool, error) {

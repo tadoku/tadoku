@@ -25,7 +25,9 @@ or feature flag. Register application routes through the router's `Handle` or
 `HandleFunc` methods during construction; every such route inherits the shared
 request deadline, authentication and ban check. Health probes and temporary proxy
 registrations keep their existing behavior. Verified user claims travel in request
-context through `internal/identity`.
+context through `internal/identity`. The shared ban lookup records a confirmed ban
+for role-introspection reads so they can report it; every other business route
+rejects that identity before its handler runs.
 
 Application operations compose features. Feature services own business decisions;
 repositories only query and map rows. `postgres.Executor` lets repositories use
@@ -196,8 +198,9 @@ propagated; the identity's `CreatedAt` means token issue time, not account creat
 time. JWT parsing itself performs no role, ban,
 permission or service-audience policy. After authentication, the application router checks
 the authenticated subject's direct `app:tadoku#banned` relation once. Missing,
-empty and signed `guest` subjects skip Keto. A ban returns an empty 403, including
-for administrators. Keto ban read errors are logged and deliberately allow
+empty and signed `guest` subjects skip Keto. A confirmed ban is returned to
+role-introspection reads as request context and returns an empty 403 from every
+other business route, including for administrators. Keto ban read errors are logged and deliberately allow
 the shared gate to continue, preserving the existing availability policy for
 explicitly opted-in read operations. The failed lookup is kept in the request
 context so authenticated and administrator checks return unavailable without

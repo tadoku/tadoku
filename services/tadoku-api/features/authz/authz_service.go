@@ -24,6 +24,9 @@ func (s *Service) CurrentUserRole(ctx context.Context) (Role, error) {
 	if user.Subject == "" || user.Subject == "guest" {
 		return RoleGuest, nil
 	}
+	if permissions.IsBanned(ctx) {
+		return RoleBanned, nil
+	}
 
 	admin, err := s.permissions.IsAdmin(ctx)
 	if err != nil {

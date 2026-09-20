@@ -31,6 +31,11 @@ func RejectBannedUsers(
 				return
 			}
 			if banned {
+				if r.Method == stdhttp.MethodGet && r.URL.Path == "/authz/current-user/role" {
+					ctx := permissions.WithBanned(r.Context())
+					next.ServeHTTP(w, r.WithContext(ctx))
+					return
+				}
 				w.WriteHeader(stdhttp.StatusForbidden)
 				return
 			}

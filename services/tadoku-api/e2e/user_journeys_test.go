@@ -98,9 +98,9 @@ func TestAuthorizationVisibilityJourney(t *testing.T) {
 			want:    http.StatusOK,
 		},
 		{
-			request: "banned_role_rejected",
+			request: "banned_role_visible",
 			as:      banned,
-			want:    http.StatusForbidden,
+			want:    http.StatusOK,
 		},
 		{
 			request: "permission_denied",

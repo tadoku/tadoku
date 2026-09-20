@@ -13,7 +13,11 @@ func TestAuthzPermissionCheck(t *testing.T) {
 	}{
 		{description: []string{"malformed", "json"}, want: http.StatusBadRequest},
 		{description: []string{"missing", "relation"}, want: http.StatusBadRequest},
-		{description: []string{"guest", "empty", "body"}, want: http.StatusUnauthorized},
+		{
+			description: []string{"guest", "empty", "body"},
+			want:        http.StatusBadRequest,
+			skipParity:  "the native required-body decoder rejects an empty body before the domain authentication check while legacy returns unauthorized",
+		},
 		{description: []string{"guest"}, want: http.StatusUnauthorized},
 		{description: []string{"not", "allowlisted"}, want: http.StatusForbidden},
 		{

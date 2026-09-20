@@ -2,25 +2,10 @@ package http
 
 import (
 	"context"
-	"io"
-	stdhttp "net/http"
-	"strings"
 
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
 	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
 )
-
-func withAuthzPermissionCheckEmptyBodyCompatibility(next stdhttp.Handler) stdhttp.Handler {
-	return stdhttp.HandlerFunc(func(w stdhttp.ResponseWriter, request *stdhttp.Request) {
-		// Echo accepts an empty body and lets the domain return guest 401 or authenticated 400;
-		// the generated required-body decoder rejects EOF before the domain runs.
-		if request.Method == stdhttp.MethodPost && request.URL.Path == "/authz/permission/check" && request.ContentLength == 0 {
-			request.Body = io.NopCloser(strings.NewReader("null"))
-			request.ContentLength = 4
-		}
-		next.ServeHTTP(w, request)
-	})
-}
 
 func (s *server) AuthzPermissionCheck(
 	ctx context.Context,

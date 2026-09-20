@@ -61,6 +61,20 @@ func isValidAnnouncementHref(href *string) bool {
 		!strings.HasPrefix(*href, "//") && !strings.HasPrefix(*href, `/\`)
 }
 
+func validateAnnouncement(
+	id uuid.UUID,
+	namespace, title, content, style string,
+	href *string,
+	startsAt, endsAt time.Time,
+) error {
+	if id == uuid.Nil || namespace == "" || title == "" || content == "" ||
+		!isValidAnnouncementStyle(style) || !isValidAnnouncementHref(href) ||
+		!timex.IsValidRange(startsAt, endsAt) {
+		return ErrInvalidAnnouncement
+	}
+	return nil
+}
+
 var (
 	ErrInvalidNamespace          = errx.NewInvalidInputError("namespace is required")
 	ErrInvalidPagination         = errx.NewInvalidInputError("invalid pagination")
@@ -81,12 +95,7 @@ type CreateAnnouncementParameters struct {
 }
 
 func (p CreateAnnouncementParameters) Validate() error {
-	if p.ID == uuid.Nil || p.Namespace == "" || p.Title == "" || p.Content == "" ||
-		!isValidAnnouncementStyle(p.Style) || !isValidAnnouncementHref(p.Href) ||
-		!timex.IsValidRange(p.StartsAt, p.EndsAt) {
-		return ErrInvalidAnnouncement
-	}
-	return nil
+	return validateAnnouncement(p.ID, p.Namespace, p.Title, p.Content, p.Style, p.Href, p.StartsAt, p.EndsAt)
 }
 
 type UpdateAnnouncementParameters struct {
@@ -101,10 +110,5 @@ type UpdateAnnouncementParameters struct {
 }
 
 func (p UpdateAnnouncementParameters) Validate() error {
-	if p.ID == uuid.Nil || p.Namespace == "" || p.Title == "" || p.Content == "" ||
-		!isValidAnnouncementStyle(p.Style) || !isValidAnnouncementHref(p.Href) ||
-		!timex.IsValidRange(p.StartsAt, p.EndsAt) {
-		return ErrInvalidAnnouncement
-	}
-	return nil
+	return validateAnnouncement(p.ID, p.Namespace, p.Title, p.Content, p.Style, p.Href, p.StartsAt, p.EndsAt)
 }

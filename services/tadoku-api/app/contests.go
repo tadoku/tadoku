@@ -5,13 +5,17 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/contests"
+	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
 )
 
 type ListContestsParameters = contests.ListParameters
 type ContestView = contests.ContestView
+type Contest = contests.Contest
+type CreateContestParameters = contests.CreateParameters
 
 var ErrInvalidContestCreator = contests.ErrInvalidContestCreator
+var ErrAccountDeletionInProgress = contests.ErrAccountDeletionInProgress
 
 func (a *Application) CheckContestCreatePermission(ctx context.Context) error {
 	if a.permissions.IsAdminOrFalse(ctx) {
@@ -27,6 +31,42 @@ func (a *Application) CheckContestCreatePermission(ctx context.Context) error {
 		return contests.ErrInvalidContestCreator
 	}
 	return a.contests.CheckCreatePermission(ctx, userID)
+}
+
+func (a *Application) CreateContest(ctx context.Context, parameters CreateContestParameters) (*Contest, error) {
+	admin := false
+	if parameters.Official {
+		if err := a.permissions.RequireAdmin(ctx); err != nil {
+			return nil, err
+		}
+		admin = true
+	} else {
+		if err := a.permissions.RequireAuthenticated(ctx); err != nil {
+			return nil, err
+		}
+		var err error
+		admin, err = a.permissions.IsAdmin(ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	prepared, err := a.contests.PrepareContestCreation(ctx, parameters, admin)
+	if err != nil {
+		return nil, err
+	}
+
+	var result *contests.Contest
+	err = postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) error {
+		var createErr error
+		result, createErr = a.contests.CreateContest(ctx, prepared)
+		return createErr
+	})
+	if err != nil {
+		result = nil
+		return nil, err
+	}
+	return result, nil
 }
 
 func (a *Application) ListContests(ctx context.Context, parameters ListContestsParameters) (*contests.ContestList, error) {

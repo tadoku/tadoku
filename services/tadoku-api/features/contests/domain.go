@@ -5,6 +5,7 @@ import (
 	"errors"
 	"sort"
 	"time"
+	"unicode/utf8"
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
@@ -26,12 +27,14 @@ var activities = []Activity{
 }
 
 var (
-	ErrContestNotFound          = errx.NewNotFoundError("contest not found")
-	ErrContestCreatorNotFound   = errx.NewNotFoundError("contest creator not found")
-	ErrContestCreationForbidden = errx.NewForbiddenError("contest creation forbidden")
-	ErrInvalidContestCreator    = errors.New("invalid contest creator identity")
-	ErrContestCreatorTooYoung   = errors.New("contest creator account too young")
-	ErrInvalidActivity          = errx.NewInvalidInputError("invalid contest activity")
+	ErrContestNotFound           = errx.NewNotFoundError("contest not found")
+	ErrContestCreatorNotFound    = errx.NewNotFoundError("contest creator not found")
+	ErrContestCreationForbidden  = errx.NewForbiddenError("contest creation forbidden")
+	ErrInvalidContestCreator     = errors.New("invalid contest creator identity")
+	ErrContestCreatorTooYoung    = errors.New("contest creator account too young")
+	ErrInvalidActivity           = errx.NewInvalidInputError("invalid contest activity")
+	ErrInvalidContest            = errx.NewInvalidInputError("invalid contest")
+	ErrAccountDeletionInProgress = errx.NewConflictError("account deletion in progress")
 )
 
 type Language struct {
@@ -86,6 +89,58 @@ type ContestList struct {
 	Contests      []Contest
 	TotalSize     int
 	NextPageToken string
+}
+
+type CreateParameters struct {
+	ContestStart            time.Time
+	ContestEnd              time.Time
+	RegistrationEnd         time.Time
+	Title                   string
+	Description             *string
+	Official                bool
+	Private                 bool
+	LanguageCodeAllowList   []string
+	ActivityTypeIDAllowList []int32
+
+	id                   uuid.UUID
+	ownerUserID          uuid.UUID
+	ownerUserDisplayName string
+	sessionCreatedAt     time.Time
+	createdAt            time.Time
+	updatedAt            time.Time
+}
+
+func (p CreateParameters) ID() uuid.UUID                { return p.id }
+func (p CreateParameters) OwnerUserID() uuid.UUID       { return p.ownerUserID }
+func (p CreateParameters) OwnerUserDisplayName() string { return p.ownerUserDisplayName }
+func (p CreateParameters) SessionCreatedAt() time.Time  { return p.sessionCreatedAt }
+func (p CreateParameters) CreatedAt() time.Time         { return p.createdAt }
+func (p CreateParameters) UpdatedAt() time.Time         { return p.updatedAt }
+
+func (p CreateParameters) validate(admin bool, now time.Time) error {
+	if p.ownerUserID == uuid.Nil || p.ownerUserDisplayName == "" ||
+		p.ContestStart.IsZero() || p.ContestEnd.IsZero() || p.RegistrationEnd.IsZero() ||
+		utf8.RuneCountInString(p.Title) <= 3 || len(p.ActivityTypeIDAllowList) == 0 {
+		return ErrInvalidContest
+	}
+	if p.Official && (p.Private || len(p.LanguageCodeAllowList) != 0) {
+		return ErrInvalidContest
+	}
+	if p.ContestStart.After(p.ContestEnd) {
+		return ErrInvalidContest
+	}
+	for _, id := range p.ActivityTypeIDAllowList {
+		if id < 1 || int(id) > len(activities) || activities[id-1].ID != id {
+			return ErrInvalidContest
+		}
+	}
+	if !admin {
+		today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
+		if p.ContestStart.Before(today) || p.ContestEnd.Before(today) {
+			return ErrInvalidContest
+		}
+	}
+	return nil
 }
 
 type ConfigurationOptions struct {

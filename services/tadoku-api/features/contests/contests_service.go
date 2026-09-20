@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	kratosapi "github.com/ory/kratos-client-go"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
 
@@ -23,6 +24,62 @@ func NewService(repository *ContestsRepository, kratos *kratosapi.APIClient) *Se
 		contests: repository,
 		kratos:   kratos,
 	}
+}
+
+func (s *Service) PrepareContestCreation(ctx context.Context, parameters CreateParameters, admin bool) (CreateParameters, error) {
+	creator := identity.FromContext(ctx)
+	if creator == nil {
+		return parameters, ErrInvalidContestCreator
+	}
+	creatorID, err := uuid.Parse(creator.Subject)
+	if err != nil {
+		return parameters, ErrInvalidContestCreator
+	}
+	parameters.ownerUserID = creatorID
+	parameters.ownerUserDisplayName = creator.DisplayName
+	parameters.sessionCreatedAt = creator.CreatedAt
+
+	now := timex.Now()
+	if err := s.contests.UpsertContestCreator(ctx, parameters, now); err != nil {
+		return parameters, err
+	}
+
+	if !admin {
+		count, err := s.contests.CountContestsCreatedByUserForYear(ctx, creatorID, int32(now.Year()))
+		if err != nil {
+			return parameters, err
+		}
+		if count >= contestCreationYearlyLimit {
+			return parameters, ErrContestCreationForbidden
+		}
+	}
+	if err := parameters.validate(admin, now); err != nil {
+		return parameters, err
+	}
+	if len(parameters.LanguageCodeAllowList) > 0 {
+		exists, err := s.contests.LanguagesExist(ctx, parameters.LanguageCodeAllowList)
+		if err != nil {
+			return parameters, err
+		}
+		if !exists {
+			return parameters, ErrInvalidContest
+		}
+	}
+
+	parameters.id = uuid.New()
+	parameters.createdAt = now
+	parameters.updatedAt = now
+	return parameters, nil
+}
+
+func (s *Service) CreateContest(ctx context.Context, parameters CreateParameters) (*Contest, error) {
+	if err := s.contests.LockContestCreator(ctx, parameters.OwnerUserID()); err != nil {
+		return nil, err
+	}
+	if err := s.contests.CreateContest(ctx, parameters); err != nil {
+		return nil, err
+	}
+	return s.contests.FindCreatedContestByID(ctx, parameters.ID())
 }
 
 func (s *Service) CheckCreatePermission(ctx context.Context, userID uuid.UUID) error {

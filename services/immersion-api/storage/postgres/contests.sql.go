@@ -90,6 +90,7 @@ func (q *Queries) ContestsMetadata(ctx context.Context, arg ContestsMetadataPara
 
 const createContest = `-- name: CreateContest :one
 insert into contests (
+  id,
   owner_user_id,
   owner_user_display_name,
   official,
@@ -100,7 +101,9 @@ insert into contests (
   title,
   "description",
   language_code_allow_list,
-  activity_type_id_allow_list
+  activity_type_id_allow_list,
+  created_at,
+  updated_at
 ) values (
   $1,
   $2,
@@ -112,11 +115,15 @@ insert into contests (
   $8,
   $9,
   $10,
-  $11
+  $11,
+  $12,
+  $13,
+  $14
 ) returning id
 `
 
 type CreateContestParams struct {
+	ID                      uuid.UUID
 	OwnerUserID             uuid.UUID
 	OwnerUserDisplayName    string
 	Official                bool
@@ -128,10 +135,13 @@ type CreateContestParams struct {
 	Description             sql.NullString
 	LanguageCodeAllowList   []string
 	ActivityTypeIDAllowList []int32
+	CreatedAt               time.Time
+	UpdatedAt               time.Time
 }
 
 func (q *Queries) CreateContest(ctx context.Context, arg CreateContestParams) (uuid.UUID, error) {
 	row := q.db.QueryRowContext(ctx, createContest,
+		arg.ID,
 		arg.OwnerUserID,
 		arg.OwnerUserDisplayName,
 		arg.Official,
@@ -143,6 +153,8 @@ func (q *Queries) CreateContest(ctx context.Context, arg CreateContestParams) (u
 		arg.Description,
 		pq.Array(arg.LanguageCodeAllowList),
 		pq.Array(arg.ActivityTypeIDAllowList),
+		arg.CreatedAt,
+		arg.UpdatedAt,
 	)
 	var id uuid.UUID
 	err := row.Scan(&id)

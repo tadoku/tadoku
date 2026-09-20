@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
 
@@ -33,7 +34,8 @@ type implementation struct {
 	handler http.Handler
 	skip    string
 
-	resetKratos bool
+	resetKratos       bool
+	deterministicUUID bool
 }
 
 func atFixtureInstant(fn func()) {
@@ -56,7 +58,13 @@ func runCase(t *testing.T, s *suite, name string, want int, implementations ...i
 			}
 			s.reset(t, dir)
 			record := *updateGoldens && impl.name == goldenRecorder
-			atFixtureInstant(func() { checkHTTPGolden(t, impl.handler, dir, want, record) })
+			atFixtureInstant(func() {
+				if impl.deterministicUUID {
+					uuid.SetRand(bytes.NewReader(bytes.Repeat([]byte{0x11}, 64)))
+					defer uuid.SetRand(nil)
+				}
+				checkHTTPGolden(t, impl.handler, dir, want, record)
+			})
 			if s.proxied.Load() != 0 {
 				t.Error("handler contacted an upstream")
 			}

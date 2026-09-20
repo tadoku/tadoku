@@ -5,50 +5,6 @@ kratos:
     type: initContainer
 
   identitySchemas:
-    "identity.default.schema.json": |
-      {
-        "$id": "test",
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "title": "User",
-        "type": "object",
-        "properties": {
-          "traits": {
-            "type": "object",
-            "properties": {
-              "email": {
-                "type": "string",
-                "format": "email",
-                "title": "Email",
-                "minLength": 3,
-                "ory.sh/kratos": {
-                  "credentials": {
-                    "password": {
-                      "identifier": true
-                    }
-                  },
-                  "verification": {
-                    "via": "email"
-                  },
-                  "recovery": {
-                    "via": "email"
-                  }
-                }
-              },
-              "display_name": {
-                "type": "string",
-                "title": "Display Name",
-                "minLength": 2,
-                "maxLength": 32
-              }
-            },
-            "required": [
-              "email",
-              "display_name"
-            ],
-            "additionalProperties": false
-          }
-        }
-      }
     # this shouldn't be under identitySchemas but it's the easiest way to add a file to the container
     "post-profile-update-hook.jsonnet": |
       function (ctx) {

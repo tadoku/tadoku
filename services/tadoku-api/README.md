@@ -294,6 +294,22 @@ complete canonical migration history. Do not point them at shared dev or product
 Relationship scenarios also start a pinned, official Linux x86-64 Keto v25.4.0
 SQLite-enabled executable under Bazel. Each helper owns an in-memory, loopback-only
 process using `infra/dev/ory/namespaces.keto.ts`; it never accepts an external target.
+HTTP E2Es also own a pinned Kratos v26.2.0 SQLite-enabled Linux x86-64 process.
+`internal/testkratos` runs its migrations against a private database under writable
+tmpfs at `/dev/shm`, then seeds the standard identities from `e2e/testdata/kratos.sql`.
+It uses the shared `infra/dev/ory/identity.default.schema.json` and private Unix
+sockets, with a bounded HTTP client supplied to the existing raw SDK constructor.
+No Docker service, external Kratos URL or Kratos environment variable is required
+by these tests. Startup and reset are bounded; failure/shutdown closes connections,
+reaps the child and removes the owned database, journals and sockets.
+
+Direct SQL seeding preserves the existing signed subjects, traits and timestamps.
+This is SQLite on RAM-backed storage, not Kratos's process-private `dsn: memory`.
+The test seed depends on the pinned provider schema and creates identity records
+only; it does not create passwords, credential identifiers or sessions. Tests for
+those operations must arrange the corresponding provider state explicitly. Guest
+and unauthenticated requests have no Kratos identity; roles and bans stay in Keto.
+
 Raw Valkey and application lifecycle tests also require
 `TADOKU_TEST_VALKEY_URL` in the exact form `redis://127.0.0.1:<port>` (or
 `localhost`) for a disposable Valkey 9 service. They isolate and delete their own
@@ -308,6 +324,9 @@ native production HTTP router and the legacy handlers required by the E2E suite
 once, using real JWT verification, ban checks and Keto-backed permissions. There
 is no second bypass router or injected administrator identity. Handlers and the
 fallback sentinel execute in process, without HTTP listeners.
+The suite also retains the raw Kratos SDK through `api.kratos.Client()` for future
+explicit dependency injection. Construction adds no business consumer or startup
+identity lookup to the running application.
 Cover each operation's response mapping, input handling, business rules and relevant
 boundaries. Keep shared dependency-failure and route-ownership checks at their own
 boundaries instead of repeating them for every operation.
@@ -317,7 +336,22 @@ or non-JSON request fixtures to reproduce legacy binder behavior. Mark intention
 JSON-decoding differences in the parity test table.
 
 HTTP scenarios run sequentially and call `reset` before each implementation of each
-scenario, not between dependent requests. `internal/testpostgres/cleanup.sql`
+scenario, not between dependent requests. **Kratos is seeded once in `TestMain` and
+excluded from that ordinary reset.** Unmarked tests must leave its state unchanged.
+For a case that may mutate Kratos, set `resetKratos: true` on each native/legacy
+`implementation`. For a journey or direct test, call `resetKratosAfter(t, api)` on
+the enclosing test before any mutation. The marker registers `t.Cleanup` to restore
+the full seed after the implementation or whole journey, even after `t.Fatal` or
+cancellation. It uses a fresh bounded context because `t.Context()` is cancelled
+before cleanup. Never mark individual journey steps.
+
+An explicit Kratos reset stops the process, recreates/migrates the database and
+restores the original seed. Existing SDK clients keep working through the same
+socket path. A reset failure fails the test and subsequent cases reject the
+unusable fixture. Neither automatic mutation detection nor response UUID
+normalization is used; the existing tokens and goldens remain unchanged.
+
+`internal/testpostgres/cleanup.sql`
 explicitly lists mutable tables to truncate with `restart identity`. Add tables
 there as their slices gain tests; do not discover tables automatically or use
 `cascade`. Static data from migrations and `schema_migrations` are preserved.

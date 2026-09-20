@@ -12,12 +12,6 @@ const (
 	RoleGuest  Role = "guest"
 )
 
-var (
-	ErrPermissionNamespaceRequired = errx.NewInvalidInputError("namespace is required")
-	ErrPermissionObjectRequired    = errx.NewInvalidInputError("object is required")
-	ErrPermissionRelationRequired  = errx.NewInvalidInputError("relation is required")
-)
-
 type PermissionCheckParameters struct {
 	Namespace string
 	Object    string
@@ -26,13 +20,13 @@ type PermissionCheckParameters struct {
 
 func (p PermissionCheckParameters) Validate() error {
 	if p.Namespace == "" {
-		return ErrPermissionNamespaceRequired
+		return errx.NewInvalidInputError("namespace is required")
 	}
 	if p.Object == "" {
-		return ErrPermissionObjectRequired
+		return errx.NewInvalidInputError("object is required")
 	}
 	if p.Relation == "" {
-		return ErrPermissionRelationRequired
+		return errx.NewInvalidInputError("relation is required")
 	}
 	return nil
 }

@@ -2,9 +2,9 @@ package authz
 
 import (
 	"context"
-	"errors"
 	"testing"
 
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
 )
@@ -47,29 +47,33 @@ func TestPermissionCheckParametersValidate(t *testing.T) {
 	tests := []struct {
 		name       string
 		parameters PermissionCheckParameters
-		want       error
+		want       string
 	}{
 		{
 			name:       "namespace is required",
 			parameters: PermissionCheckParameters{Object: "tadoku", Relation: "admins"},
-			want:       ErrPermissionNamespaceRequired,
+			want:       "namespace is required",
 		},
 		{
 			name:       "object is required",
 			parameters: PermissionCheckParameters{Namespace: "app", Relation: "admins"},
-			want:       ErrPermissionObjectRequired,
+			want:       "object is required",
 		},
 		{
 			name:       "relation is required",
 			parameters: PermissionCheckParameters{Namespace: "app", Object: "tadoku"},
-			want:       ErrPermissionRelationRequired,
+			want:       "relation is required",
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			if err := test.parameters.Validate(); !errors.Is(err, test.want) {
-				t.Errorf("Validate() error = %v, want %v", err, test.want)
+			err := test.parameters.Validate()
+			if errx.KindOf(err) != errx.InvalidInput {
+				t.Errorf("Validate() error kind = %v, want invalid input", errx.KindOf(err))
+			}
+			if err == nil || err.Error() != test.want {
+				t.Errorf("Validate() error = %v, want %q", err, test.want)
 			}
 		})
 	}

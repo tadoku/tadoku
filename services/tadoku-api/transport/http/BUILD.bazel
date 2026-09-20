@@ -12,6 +12,7 @@ go_library(
         "authz_role_get.go",
         "banned_users.go",
         "errors.go",
+        "languages.go",
         "observability.go",
         "page_create.go",
         "page_delete.go",

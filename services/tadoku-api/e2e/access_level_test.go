@@ -44,6 +44,7 @@ var operationAccess = map[string]accessLevel{
 	"ContentPostUpdate":             accessAdmin,
 	"ContentPostVersionGet":         accessAdmin,
 	"ContentPostVersionList":        accessAdmin,
+	"ImmersionLanguageList":         accessAdmin,
 	"ProfileUsersList":              accessAdmin,
 }
 
@@ -65,6 +66,7 @@ var operationFixtures = map[string]string{
 	"ContentPostUpdate":           "UpdatePost",
 	"ContentPostVersionGet":       "GetPostVersion",
 	"ContentPostVersionList":      "ListPostVersions",
+	"ImmersionLanguageList":       "ListLanguages",
 	"ProfileUsersList":            "ProfileUsersList",
 }
 

@@ -8,6 +8,7 @@ SQLC_PACKAGES=(
   "services/profile-api/storage/postgres"
   "services/tadoku-api/infra/postgres/testdata/sqlc"
   "services/tadoku-api/sql/announcements"
+  "services/tadoku-api/sql/languages"
   "services/tadoku-api/sql/posts"
   "services/tadoku-api/sql/pages"
   "services/tadoku-api/sql/profile"

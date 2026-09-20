@@ -28,6 +28,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/announcements"
 	featureauthz "github.com/tadoku/tadoku/services/tadoku-api/features/authz"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/languages"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/pages"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/posts"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/profile"
@@ -270,15 +271,17 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	permissionChecker := permissions.NewKetoChecker(ketoReader)
 	authzService := featureauthz.NewService(permissionChecker)
 	announcementsRepository := announcements.NewAnnouncementsRepository(pool)
+	languagesRepository := languages.NewLanguagesRepository(pool)
 	pagesRepository := pages.NewPagesRepository(pool)
 	postsRepository := posts.NewPostsRepository(pool)
 	profileRepository := profile.NewProfileRepository(pool)
 	userCache := profile.NewUserCache(kratosIdentities, profileRepository)
 	announcementsService := announcements.NewService(announcementsRepository)
+	languagesService := languages.NewService(languagesRepository)
 	pagesService := pages.NewService(pagesRepository)
 	postsService := posts.NewService(postsRepository)
 	profileService := profile.NewService(userCache, commonroles.NewKetoService(ketoReader, "app", "tadoku"), permissionChecker)
-	api := app.New(announcementsService, authzService, pagesService, postsService, profileService, pool, permissionChecker)
+	api := app.New(announcementsService, authzService, languagesService, pagesService, postsService, profileService, pool, permissionChecker)
 	rejectBanned := newBannedUserMiddleware(ketoReader, logger)
 
 	handler, err := transporthttp.NewHandler(api, pool.Ping, cfg.RequestTimeout, metrics, logger, authenticate, rejectBanned)

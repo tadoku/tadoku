@@ -23,6 +23,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/announcements"
 	featureauthz "github.com/tadoku/tadoku/services/tadoku-api/features/authz"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/languages"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/pages"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/posts"
 	featureprofile "github.com/tadoku/tadoku/services/tadoku-api/features/profile"
@@ -37,6 +38,7 @@ var api *suite
 var legacyAuthz *legacyAuthzAPI
 var legacyContent *legacyContentAPI
 var legacyProfile *legacyProfileAPI
+var legacyImmersion *legacyImmersionAPI
 var legacyAuthentication http.Handler
 var legacyBannedUsers http.Handler
 var authenticationJWKS *httptest.Server
@@ -115,6 +117,12 @@ func runTests(m *testing.M) (code int) {
 		return 1
 	}
 	defer func() { cleanupErr = errors.Join(cleanupErr, legacyProfile.db.Close()) }()
+	legacyImmersion, err = newLegacyImmersionAPI(ctx, api.db.DSN, authenticationJWKS.URL, keto.ReadURL())
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	defer func() { cleanupErr = errors.Join(cleanupErr, legacyImmersion.db.Close()) }()
 	legacyBannedUsers = newLegacyBannedUsersHandler(authenticationJWKS.URL, keto.ReadURL())
 
 	return m.Run()
@@ -172,13 +180,15 @@ func newTestRouterWithLogger(ctx context.Context, pool *pgxpool.Pool, ketoReadUR
 	permissionChecker := permissions.NewKetoChecker(reader)
 	authzService := featureauthz.NewService(permissionChecker)
 	announcementsRepository := announcements.NewAnnouncementsRepository(pool)
+	languagesRepository := languages.NewLanguagesRepository(pool)
 	pagesRepository := pages.NewPagesRepository(pool)
 	postsRepository := posts.NewPostsRepository(pool)
 	announcementsService := announcements.NewService(announcementsRepository)
+	languagesService := languages.NewService(languagesRepository)
 	pagesService := pages.NewService(pagesRepository)
 	postsService := posts.NewService(postsRepository)
 	profileService := featureprofile.NewService(profileHolder, commonroles.NewKetoService(reader, "app", "tadoku"), permissionChecker)
-	application := app.New(announcementsService, authzService, pagesService, postsService, profileService, pool, permissionChecker)
+	application := app.New(announcementsService, authzService, languagesService, pagesService, postsService, profileService, pool, permissionChecker)
 	authenticate, err := transport.NewJWTAuthentication(ctx, authenticationJWKS.URL, time.Second, 24*time.Hour, "http://oathkeeper-api/", logger)
 	if err != nil {
 		return nil, err

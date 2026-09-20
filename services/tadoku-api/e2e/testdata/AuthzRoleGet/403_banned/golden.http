@@ -1,4 +1,0 @@
->>> GET /authz/current-user/role
-HTTP/1.1 403 Forbidden
-Content-Length: 0
-

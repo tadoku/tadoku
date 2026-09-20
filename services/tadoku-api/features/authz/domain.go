@@ -6,9 +6,16 @@ import "github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 type Role string
 
 const (
-	RoleAdmin Role = "admin"
-	RoleUser  Role = "user"
-	RoleGuest Role = "guest"
+	RoleAdmin  Role = "admin"
+	RoleBanned Role = "banned"
+	RoleUser   Role = "user"
+	RoleGuest  Role = "guest"
+)
+
+var (
+	ErrPermissionNamespaceRequired = errx.NewInvalidInputError("namespace is required")
+	ErrPermissionObjectRequired    = errx.NewInvalidInputError("object is required")
+	ErrPermissionRelationRequired  = errx.NewInvalidInputError("relation is required")
 )
 
 type PermissionCheckParameters struct {
@@ -18,8 +25,14 @@ type PermissionCheckParameters struct {
 }
 
 func (p PermissionCheckParameters) Validate() error {
-	if p.Namespace == "" || p.Object == "" || p.Relation == "" {
-		return errx.NewInvalidInputError("namespace, object, and relation are required")
+	if p.Namespace == "" {
+		return ErrPermissionNamespaceRequired
+	}
+	if p.Object == "" {
+		return ErrPermissionObjectRequired
+	}
+	if p.Relation == "" {
+		return ErrPermissionRelationRequired
 	}
 	return nil
 }

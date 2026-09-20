@@ -9,16 +9,12 @@ func TestAuthzRoleGet(t *testing.T) {
 	tests := []struct {
 		description []string
 		want        int
-		skipParity  string
 	}{
 		{description: []string{"guest"}, want: http.StatusOK},
 		{description: []string{"user"}, want: http.StatusOK},
 		{description: []string{"admin"}, want: http.StatusOK},
-		{
-			description: []string{"banned"},
-			want:        http.StatusForbidden,
-			skipParity:  "the native shared ban gate rejects banned callers while legacy returns their banned role",
-		},
+		{description: []string{"banned"}, want: http.StatusOK},
+		{description: []string{"admin", "banned"}, want: http.StatusOK},
 	}
 
 	for _, test := range tests {
@@ -26,7 +22,7 @@ func TestAuthzRoleGet(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			runCase(t, api, name, test.want,
 				implementation{name: "tadoku-api", handler: api.handler},
-				implementation{name: "authz-api", handler: legacyAuthz.handler, skip: test.skipParity},
+				implementation{name: "authz-api", handler: legacyAuthz.handler},
 			)
 		})
 	}

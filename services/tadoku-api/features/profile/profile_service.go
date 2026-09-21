@@ -4,22 +4,51 @@ import (
 	"context"
 	"math"
 	"strings"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/sahilm/fuzzy"
 	commonroles "github.com/tadoku/tadoku/services/common/authz/roles"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
 )
 
 type Service struct {
-	cache *UserCache
-	roles *commonroles.KetoService
+	repository *Repository
+	cache      *UserCache
+	roles      *commonroles.KetoService
 }
 
-func NewService(cache *UserCache, roles *commonroles.KetoService) *Service {
+func NewService(repository *Repository, cache *UserCache, roles *commonroles.KetoService) *Service {
 	return &Service{
-		cache: cache,
-		roles: roles,
+		repository: repository,
+		cache:      cache,
+		roles:      roles,
 	}
+}
+
+func (s *Service) SignedUser(ctx context.Context) (SignedUser, error) {
+	requestUser := identity.FromContext(ctx)
+	if requestUser == nil {
+		return SignedUser{}, ErrInvalidSignedUser
+	}
+	userID, err := uuid.Parse(requestUser.Subject)
+	if err != nil {
+		return SignedUser{}, ErrInvalidSignedUser
+	}
+	return SignedUser{
+		ID:               userID,
+		DisplayName:      requestUser.DisplayName,
+		sessionCreatedAt: requestUser.CreatedAt,
+	}, nil
+}
+
+func (s *Service) SynchronizeUser(ctx context.Context, user SignedUser, now time.Time) error {
+	return s.repository.SynchronizeUser(ctx, user, now)
+}
+
+func (s *Service) LockUser(ctx context.Context, userID uuid.UUID) error {
+	return s.repository.LockUser(ctx, userID)
 }
 
 func (s *Service) ListUsers(ctx context.Context, pageSize, page int, query string) (*UserList, error) {

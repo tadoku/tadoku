@@ -1,0 +1,17 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "profile",
+    srcs = [
+        "db.go",
+        "models.go",
+        "profile.sql.go",
+    ],
+    importpath = "github.com/tadoku/tadoku/services/tadoku-api/generated/sqlc/profile",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_jackc_pgx_v5//:pgx",
+        "@com_github_jackc_pgx_v5//pgconn",
+        "@com_github_jackc_pgx_v5//pgtype",
+    ],
+)

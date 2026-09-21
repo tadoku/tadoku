@@ -165,7 +165,7 @@ func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
 	}
 }
 
-func TestContestsRepositoryCreationTransactionAndDeletionLock(t *testing.T) {
+func TestContestsRepositoryCreationTransaction(t *testing.T) {
 	t.Parallel()
 	db, err := testpostgres.New(t.Context())
 	if err != nil {
@@ -180,7 +180,7 @@ func TestContestsRepositoryCreationTransactionAndDeletionLock(t *testing.T) {
 	repository := NewContestsRepository(db.Pool)
 	now := time.Date(2026, time.September, 12, 12, 0, 0, 0, time.UTC)
 	description := "Created through the repository"
-	parameters := CreateParameters{
+	parameters := CreateContestParameters{
 		ContestStart:            time.Date(2026, time.October, 1, 0, 0, 0, 0, time.UTC),
 		ContestEnd:              time.Date(2026, time.October, 31, 0, 0, 0, 0, time.UTC),
 		RegistrationEnd:         time.Date(2026, time.September, 30, 0, 0, 0, 0, time.UTC),
@@ -191,19 +191,17 @@ func TestContestsRepositoryCreationTransactionAndDeletionLock(t *testing.T) {
 		id:                      uuid.MustParse("77777777-7777-4777-8777-777777777777"),
 		ownerUserID:             uuid.MustParse("11111111-1111-4111-8111-111111111111"),
 		ownerUserDisplayName:    "Reader One",
-		sessionCreatedAt:        now,
 		createdAt:               now,
 		updatedAt:               now,
 	}
-	if err := repository.UpsertContestCreator(t.Context(), parameters, now); err != nil {
+	if _, err := db.Pool.Exec(t.Context(), `
+		insert into users (id, display_name, created_at, updated_at)
+		values ($1, $2, $3, $3)`, parameters.OwnerUserID(), parameters.OwnerUserDisplayName(), now); err != nil {
 		t.Fatal(err)
 	}
 
 	var created *Contest
 	err = postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
-		if err := repository.LockContestCreator(ctx, parameters.OwnerUserID()); err != nil {
-			return err
-		}
 		if err := repository.CreateContest(ctx, parameters); err != nil {
 			return err
 		}
@@ -232,16 +230,6 @@ func TestContestsRepositoryCreationTransactionAndDeletionLock(t *testing.T) {
 	}
 	if _, err := repository.FindCreatedContestByID(t.Context(), rolledBack.ID()); !errors.Is(err, ErrContestNotFound) {
 		t.Errorf("rolled-back contest error=%v, want contest not found", err)
-	}
-
-	if _, err := db.Pool.Exec(t.Context(), `update users set deletion_locked_at = $1 where id = $2`, now, parameters.OwnerUserID()); err != nil {
-		t.Fatal(err)
-	}
-	err = postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
-		return repository.LockContestCreator(ctx, parameters.OwnerUserID())
-	})
-	if !errors.Is(err, ErrAccountDeletionInProgress) {
-		t.Errorf("locked creator error=%v, want account deletion conflict", err)
 	}
 }
 

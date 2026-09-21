@@ -5,6 +5,8 @@ import (
 	"errors"
 	stdhttp "net/http"
 
+	"github.com/tadoku/tadoku/services/tadoku-api/app"
+	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
 
@@ -16,6 +18,19 @@ func (s *server) logOperationError(ctx context.Context, operation string, err er
 		return
 	}
 	s.logger.DebugContext(ctx, operation+" rejected", "error", err)
+}
+
+func writeResponseError(w stdhttp.ResponseWriter, request *stdhttp.Request, err error) {
+	switch {
+	case errors.Is(err, app.ErrAccountDeletionInProgress):
+		writeJSON(w, stdhttp.StatusConflict, openapi.ImmersionAccountDeletionInProgress{
+			Error: openapi.AccountDeletionInProgress,
+		})
+	case errors.Is(err, app.ErrInvalidContestCreator):
+		writeJSON(w, stdhttp.StatusInternalServerError, map[string]string{"message": "Internal Server Error"})
+	default:
+		w.WriteHeader(errorStatus(request.Context(), err))
+	}
 }
 
 func errorStatus(ctx context.Context, err error) int {

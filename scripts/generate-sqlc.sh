@@ -13,6 +13,7 @@ SQLC_PACKAGES=(
   "services/tadoku-api/sql/posts"
   "services/tadoku-api/sql/pages"
   "services/tadoku-api/sql/contests"
+  "services/tadoku-api/sql/profile"
 )
 
 require_cmd() {

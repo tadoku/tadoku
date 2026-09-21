@@ -230,12 +230,13 @@ func newTestRouterWithLogger(
 	languagesRepository := languages.NewLanguagesRepository(pool)
 	pagesRepository := pages.NewPagesRepository(pool)
 	postsRepository := posts.NewPostsRepository(pool)
+	profileRepository := featureprofile.NewRepository(pool)
 	announcementsService := announcements.NewService(announcementsRepository)
 	contestsService := contests.NewService(contestsRepository, kratosFixture.Client())
 	languagesService := languages.NewService(languagesRepository)
 	pagesService := pages.NewService(pagesRepository)
 	postsService := posts.NewService(postsRepository)
-	profileService := featureprofile.NewService(featureprofile.NewUserCache(identities), roleService)
+	profileService := featureprofile.NewService(profileRepository, featureprofile.NewUserCache(identities), roleService)
 	application := app.New(announcementsService, auditService, authzService, contestsService, languagesService, pagesService, postsService, profileService, pool, permissionChecker)
 	authenticate, err := transport.NewJWTAuthentication(ctx, authenticationJWKS.URL, time.Second, 24*time.Hour, "http://oathkeeper-api/", logger)
 	if err != nil {
@@ -310,7 +311,7 @@ func (s *suite) reset(t *testing.T, caseDir string) {
 
 func (s *suite) resetProfileCaches() {
 	if s.profile != nil {
-		*s.profile = *featureprofile.NewService(featureprofile.NewUserCache(s.kratos.CursorClient()), s.roles)
+		*s.profile = *featureprofile.NewService(featureprofile.NewRepository(s.db.Pool), featureprofile.NewUserCache(s.kratos.CursorClient()), s.roles)
 	}
 	if legacyProfile != nil {
 		legacyProfile.resetCache()

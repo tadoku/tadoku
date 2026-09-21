@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -38,45 +37,6 @@ func (r *ContestsRepository) CountContestsCreatedByUserForYear(ctx context.Conte
 	return count, nil
 }
 
-func (r *ContestsRepository) UpsertContestCreator(ctx context.Context, parameters CreateParameters, now time.Time) error {
-	executor, err := postgres.Executor(ctx, r.db)
-	if err != nil {
-		return err
-	}
-	_, err = queries.New(executor).UpsertContestCreator(ctx, queries.UpsertContestCreatorParams{
-		ID:               pgtype.UUID{Bytes: parameters.OwnerUserID(), Valid: true},
-		DisplayName:      parameters.OwnerUserDisplayName(),
-		SessionCreatedAt: pgtype.Timestamp{Time: parameters.SessionCreatedAt(), Valid: true},
-		CreatedAt:        pgtype.Timestamp{Time: now, Valid: true},
-		UpdatedAt:        pgtype.Timestamp{Time: now, Valid: true},
-	})
-	if errors.Is(err, pgx.ErrNoRows) {
-		return ErrAccountDeletionInProgress
-	}
-	if err != nil {
-		return fmt.Errorf("upsert contest creator: %w", err)
-	}
-	return nil
-}
-
-func (r *ContestsRepository) LockContestCreator(ctx context.Context, userID uuid.UUID) error {
-	executor, err := postgres.Executor(ctx, r.db)
-	if err != nil {
-		return err
-	}
-	creator, err := queries.New(executor).LockContestCreator(ctx, pgtype.UUID{Bytes: userID, Valid: true})
-	if errors.Is(err, pgx.ErrNoRows) {
-		return ErrContestCreatorNotFound
-	}
-	if err != nil {
-		return fmt.Errorf("lock contest creator: %w", err)
-	}
-	if creator.DeletionLockedAt.Valid || creator.DeletedAt.Valid {
-		return ErrAccountDeletionInProgress
-	}
-	return nil
-}
-
 func (r *ContestsRepository) LanguagesExist(ctx context.Context, codes []string) (bool, error) {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
@@ -89,7 +49,7 @@ func (r *ContestsRepository) LanguagesExist(ctx context.Context, codes []string)
 	return exists, nil
 }
 
-func (r *ContestsRepository) CreateContest(ctx context.Context, parameters CreateParameters) error {
+func (r *ContestsRepository) CreateContest(ctx context.Context, parameters CreateContestParameters) error {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return err

@@ -161,7 +161,7 @@ func NewHandler(
 				w.WriteHeader(stdhttp.StatusBadRequest)
 			},
 			ResponseErrorHandlerFunc: func(w stdhttp.ResponseWriter, request *stdhttp.Request, err error) {
-				w.WriteHeader(errorStatus(request.Context(), err))
+				writeResponseError(w, request, err)
 			},
 		},
 	)
@@ -187,7 +187,7 @@ func NewHandler(
 				w.WriteHeader(stdhttp.StatusBadRequest)
 			},
 			ResponseErrorHandlerFunc: func(w stdhttp.ResponseWriter, request *stdhttp.Request, err error) {
-				w.WriteHeader(errorStatus(request.Context(), err))
+				writeResponseError(w, request, err)
 			},
 		},
 	)

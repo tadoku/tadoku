@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/google/uuid"
 	kratosapi "github.com/ory/kratos-client-go"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
 
@@ -26,23 +27,16 @@ func NewService(repository *ContestsRepository, kratos *kratosapi.APIClient) *Se
 	}
 }
 
-func (s *Service) PrepareContestCreation(ctx context.Context, parameters CreateParameters, admin bool) (CreateParameters, error) {
-	creator := identity.FromContext(ctx)
-	if creator == nil {
-		return parameters, ErrInvalidContestCreator
-	}
-	creatorID, err := uuid.Parse(creator.Subject)
-	if err != nil {
-		return parameters, ErrInvalidContestCreator
-	}
+func (s *Service) PrepareContestCreation(
+	ctx context.Context,
+	parameters CreateContestParameters,
+	creatorID uuid.UUID,
+	creatorDisplayName string,
+	admin bool,
+	now time.Time,
+) (CreateContestParameters, error) {
 	parameters.ownerUserID = creatorID
-	parameters.ownerUserDisplayName = creator.DisplayName
-	parameters.sessionCreatedAt = creator.CreatedAt
-
-	now := timex.Now()
-	if err := s.contests.UpsertContestCreator(ctx, parameters, now); err != nil {
-		return parameters, err
-	}
+	parameters.ownerUserDisplayName = creatorDisplayName
 
 	if !admin {
 		count, err := s.contests.CountContestsCreatedByUserForYear(ctx, creatorID, int32(now.Year()))
@@ -62,7 +56,7 @@ func (s *Service) PrepareContestCreation(ctx context.Context, parameters CreateP
 			return parameters, err
 		}
 		if !exists {
-			return parameters, ErrInvalidContest
+			return parameters, errx.NewInvalidInputError("invalid contest LanguageCodeAllowList: one or more languages do not exist")
 		}
 	}
 
@@ -72,10 +66,7 @@ func (s *Service) PrepareContestCreation(ctx context.Context, parameters CreateP
 	return parameters, nil
 }
 
-func (s *Service) CreateContest(ctx context.Context, parameters CreateParameters) (*Contest, error) {
-	if err := s.contests.LockContestCreator(ctx, parameters.OwnerUserID()); err != nil {
-		return nil, err
-	}
+func (s *Service) CreateContest(ctx context.Context, parameters CreateContestParameters) (*Contest, error) {
 	if err := s.contests.CreateContest(ctx, parameters); err != nil {
 		return nil, err
 	}

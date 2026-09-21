@@ -27,14 +27,11 @@ var activities = []Activity{
 }
 
 var (
-	ErrContestNotFound           = errx.NewNotFoundError("contest not found")
-	ErrContestCreatorNotFound    = errx.NewNotFoundError("contest creator not found")
-	ErrContestCreationForbidden  = errx.NewForbiddenError("contest creation forbidden")
-	ErrInvalidContestCreator     = errors.New("invalid contest creator identity")
-	ErrContestCreatorTooYoung    = errors.New("contest creator account too young")
-	ErrInvalidActivity           = errx.NewInvalidInputError("invalid contest activity")
-	ErrInvalidContest            = errx.NewInvalidInputError("invalid contest")
-	ErrAccountDeletionInProgress = errx.NewConflictError("account deletion in progress")
+	ErrContestNotFound          = errx.NewNotFoundError("contest not found")
+	ErrContestCreatorNotFound   = errx.NewNotFoundError("contest creator not found")
+	ErrContestCreationForbidden = errx.NewForbiddenError("contest creation forbidden")
+	ErrContestCreatorTooYoung   = errors.New("contest creator account too young")
+	ErrInvalidActivity          = errx.NewInvalidInputError("invalid contest activity")
 )
 
 type Language struct {
@@ -91,7 +88,7 @@ type ContestList struct {
 	NextPageToken string
 }
 
-type CreateParameters struct {
+type CreateContestParameters struct {
 	ContestStart            time.Time
 	ContestEnd              time.Time
 	RegistrationEnd         time.Time
@@ -105,39 +102,59 @@ type CreateParameters struct {
 	id                   uuid.UUID
 	ownerUserID          uuid.UUID
 	ownerUserDisplayName string
-	sessionCreatedAt     time.Time
 	createdAt            time.Time
 	updatedAt            time.Time
 }
 
-func (p CreateParameters) ID() uuid.UUID                { return p.id }
-func (p CreateParameters) OwnerUserID() uuid.UUID       { return p.ownerUserID }
-func (p CreateParameters) OwnerUserDisplayName() string { return p.ownerUserDisplayName }
-func (p CreateParameters) SessionCreatedAt() time.Time  { return p.sessionCreatedAt }
-func (p CreateParameters) CreatedAt() time.Time         { return p.createdAt }
-func (p CreateParameters) UpdatedAt() time.Time         { return p.updatedAt }
+func (p CreateContestParameters) ID() uuid.UUID                { return p.id }
+func (p CreateContestParameters) OwnerUserID() uuid.UUID       { return p.ownerUserID }
+func (p CreateContestParameters) OwnerUserDisplayName() string { return p.ownerUserDisplayName }
+func (p CreateContestParameters) CreatedAt() time.Time         { return p.createdAt }
+func (p CreateContestParameters) UpdatedAt() time.Time         { return p.updatedAt }
 
-func (p CreateParameters) validate(admin bool, now time.Time) error {
-	if p.ownerUserID == uuid.Nil || p.ownerUserDisplayName == "" ||
-		p.ContestStart.IsZero() || p.ContestEnd.IsZero() || p.RegistrationEnd.IsZero() ||
-		utf8.RuneCountInString(p.Title) <= 3 || len(p.ActivityTypeIDAllowList) == 0 {
-		return ErrInvalidContest
+func (p CreateContestParameters) validate(admin bool, now time.Time) error {
+	if p.ownerUserID == uuid.Nil {
+		return errx.NewInvalidInputError("invalid contest OwnerUserID: must not be nil")
 	}
-	if p.Official && (p.Private || len(p.LanguageCodeAllowList) != 0) {
-		return ErrInvalidContest
+	if p.ownerUserDisplayName == "" {
+		return errx.NewInvalidInputError("invalid contest OwnerUserDisplayName: must not be empty")
+	}
+	if p.ContestStart.IsZero() {
+		return errx.NewInvalidInputError("invalid contest ContestStart: must not be zero")
+	}
+	if p.ContestEnd.IsZero() {
+		return errx.NewInvalidInputError("invalid contest ContestEnd: must not be zero")
+	}
+	if p.RegistrationEnd.IsZero() {
+		return errx.NewInvalidInputError("invalid contest RegistrationEnd: must not be zero")
+	}
+	if utf8.RuneCountInString(p.Title) <= 3 {
+		return errx.NewInvalidInputError("invalid contest Title: must contain more than three characters")
+	}
+	if len(p.ActivityTypeIDAllowList) == 0 {
+		return errx.NewInvalidInputError("invalid contest ActivityTypeIDAllowList: must not be empty")
+	}
+	if p.Official && p.Private {
+		return errx.NewInvalidInputError("invalid contest Private: official contests must be public")
+	}
+	if p.Official && len(p.LanguageCodeAllowList) != 0 {
+		return errx.NewInvalidInputError("invalid contest LanguageCodeAllowList: official contests must allow every language")
 	}
 	if p.ContestStart.After(p.ContestEnd) {
-		return ErrInvalidContest
+		return errx.NewInvalidInputError("invalid contest ContestStart: must not be after ContestEnd")
 	}
 	for _, id := range p.ActivityTypeIDAllowList {
 		if id < 1 || int(id) > len(activities) || activities[id-1].ID != id {
-			return ErrInvalidContest
+			return errx.NewInvalidInputError("invalid contest ActivityTypeIDAllowList: contains an unknown activity")
 		}
 	}
 	if !admin {
 		today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
-		if p.ContestStart.Before(today) || p.ContestEnd.Before(today) {
-			return ErrInvalidContest
+		if p.ContestStart.Before(today) {
+			return errx.NewInvalidInputError("invalid contest ContestStart: non-admin contests must not start in the past")
+		}
+		if p.ContestEnd.Before(today) {
+			return errx.NewInvalidInputError("invalid contest ContestEnd: non-admin contests must not end in the past")
 		}
 	}
 	return nil

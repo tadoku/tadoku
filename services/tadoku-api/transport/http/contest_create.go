@@ -2,7 +2,6 @@ package http
 
 import (
 	"context"
-	"errors"
 
 	openapiTypes "github.com/oapi-codegen/runtime/types"
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
@@ -27,16 +26,6 @@ func (s *server) ImmersionContestCreate(
 	contest, err := s.application.CreateContest(ctx, parameters)
 	if err != nil {
 		s.logOperationError(ctx, "create contest", err)
-		if errors.Is(err, app.ErrAccountDeletionInProgress) {
-			return openapi.ImmersionContestCreate409JSONResponse{
-				ImmersionAccountDeletionInProgressJSONResponse: openapi.ImmersionAccountDeletionInProgressJSONResponse{
-					Error: openapi.AccountDeletionInProgress,
-				},
-			}, nil
-		}
-		if errors.Is(err, app.ErrInvalidContestCreator) {
-			return openapi.ImmersionContestCreate500JSONResponse{Message: "Internal Server Error"}, nil
-		}
 		return nil, err
 	}
 

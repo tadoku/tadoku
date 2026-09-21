@@ -31,7 +31,7 @@ importers:
         version: 6.39.12
       '@headlessui/react':
         specifier: ^2.2.0
-        version: 2.2.9(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
+        version: 2.2.10(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
       '@heroicons/react':
         specifier: ^2.0.13
         version: 2.2.0(react@18.2.0)
@@ -152,7 +152,7 @@ importers:
     dependencies:
       '@headlessui/react':
         specifier: ^2.2.0
-        version: 2.2.9(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
+        version: 2.2.10(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
       '@heroicons/react':
         specifier: ^2.0.13
         version: 2.2.0(react@18.2.0)
@@ -480,7 +480,7 @@ importers:
     dependencies:
       '@headlessui/react':
         specifier: ^2.2.0
-        version: 2.2.9(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
+        version: 2.2.10(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
       '@heroicons/react':
         specifier: ^2.0.13
         version: 2.2.0(react@18.2.0)
@@ -677,7 +677,7 @@ importers:
     dependencies:
       '@headlessui/react':
         specifier: ^2.2.0
-        version: 2.2.9(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
+        version: 2.2.10(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
       '@heroicons/react':
         specifier: ^2.0.13
         version: 2.2.0(react@18.2.0)
@@ -1396,8 +1396,8 @@ packages:
   '@floating-ui/utils@0.2.12':
     resolution: {integrity: sha512-HpCo8tmWzLVad5s2d19EhAz5zqrrQ6s69qd6moPMQvkOuSwDT1YgRfWSVuc4ennqrgv3OHppiOGMQ7oC13yIww==}
 
-  '@headlessui/react@2.2.9':
-    resolution: {integrity: sha512-Mb+Un58gwBn0/yWZfyrCh0TJyurtT+dETj7YHleylHk5od3dv2XqETPGWMyQ5/7sYN7oWdyM1u9MvC0OC8UmzQ==}
+  '@headlessui/react@2.2.10':
+    resolution: {integrity: sha512-5pVLNK9wlpxTUTy9GpgbX/SdcRh+HBnPktjM2wbiLTH4p+2EPHBO1aoSryUCuKUIItdDWO9ITlhUL8UnUN/oIA==}
     engines: {node: '>=10'}
     peerDependencies:
       react: 18.2.0
@@ -5713,7 +5713,7 @@ snapshots:
 
   '@floating-ui/utils@0.2.12': {}
 
-  '@headlessui/react@2.2.9(react-dom@18.2.0(react@18.2.0))(react@18.2.0)':
+  '@headlessui/react@2.2.10(react-dom@18.2.0(react@18.2.0))(react@18.2.0)':
     dependencies:
       '@floating-ui/react': 0.26.28(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
       '@react-aria/focus': 3.21.3(react-dom@18.2.0(react@18.2.0))(react@18.2.0)

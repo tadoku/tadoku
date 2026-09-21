@@ -133,7 +133,7 @@
   authorizer:
     handler: remote_json
     config:
-      remote: http://authz-api.tdk-authz-api/internal/v1/proxy/admin-check
+      remote: http://tadoku-api.tdk-tadoku-api/authz/internal/v1/proxy/admin-check
       headers:
         Authorization: 'Bearer {{ env "OATHKEEPER_AUTHZ_TOKEN" }}'
       payload: |
@@ -252,34 +252,6 @@
             "type": "service",
             "sub": "{{ .Subject }}",
             "aud": ["profile-api"]
-          }
-  upstream:
-    url: "http://token-reflector.tdk-token-reflector"
-
-- id: "s2s:to-authz"
-  match:
-    url: "http://oathkeeper-proxy.default:4455/token-exchange/authz-api"
-    methods:
-      - GET
-  authenticators:
-    - handler: jwt
-      config:
-        jwks_urls:
-          - http://token-reflector.tdk-token-reflector/jwks
-        target_audience:
-          - immersion-api
-          - profile-api
-          - content-api
-  authorizer:
-    handler: allow
-  mutators:
-    - handler: id_token
-      config:
-        claims: |
-          {
-            "type": "service",
-            "sub": "{{ .Subject }}",
-            "aud": ["authz-api"]
           }
   upstream:
     url: "http://token-reflector.tdk-token-reflector"

@@ -315,7 +315,6 @@ func newTestRouterWithLogger(
 func registerSentinelProxy(s *suite) error {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	upstreams := transport.Upstreams{
-		Authz:     "http://upstream.test",
 		Content:   "http://upstream.test",
 		Immersion: "http://upstream.test",
 		Profile:   "http://upstream.test",

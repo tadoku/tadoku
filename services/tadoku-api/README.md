@@ -142,7 +142,7 @@ failure matrices at their own boundaries instead of duplicating them per endpoin
 
 ## Runtime configuration
 
-In addition to the existing four upstream URLs, startup now requires:
+In addition to the three remaining upstream URLs, startup now requires:
 
 - Individual `API_POSTGRES_HOST`, `PORT` (default 5432), `DATABASE`, `USER`,
   `PASSWORD`, `SSLMODE` fields. `API_POSTGRES_URL` remains rejected.

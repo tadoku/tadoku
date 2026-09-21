@@ -179,7 +179,7 @@ func TestAuthenticationDoesNotChangeProbesOrProxyRoutes(t *testing.T) {
 	}{
 		{method: http.MethodGet, path: "/livez", want: http.StatusOK},
 		{method: http.MethodGet, path: "/readyz", want: http.StatusOK},
-		{method: http.MethodGet, path: "/authz/ping", want: http.StatusNoContent, proxied: true},
+		{method: http.MethodGet, path: "/authz/ping", want: http.StatusNotFound},
 		{method: http.MethodGet, path: "/content/ping", want: http.StatusNoContent, proxied: true},
 		{method: http.MethodGet, path: "/immersion/ping", want: http.StatusNoContent, proxied: true},
 		{method: http.MethodGet, path: "/profile/ping", want: http.StatusNoContent, proxied: true},

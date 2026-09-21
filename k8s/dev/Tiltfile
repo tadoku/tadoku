@@ -105,7 +105,6 @@ local_resource(
     ],
     labels=['infra'],
     resource_deps=[
-        'authz-api',
         'content-api',
         'immersion-api',
         'profile-api',

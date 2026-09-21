@@ -30,7 +30,6 @@ x-tadoku-sources:
   Authz:
     domain: authz
     exposure: public
-    path: services/authz-api/http/rest/openapi/api.yaml
     info:
       title: authz-api
       license:
@@ -84,32 +83,18 @@ x-tadoku-sources:
     externalDocs:
       description: Find out more about Tadoku
       url: https://tadoku.github.io/tadoku/
-  AuthzInternal:
-    domain: authz
-    exposure: internal
-    path: services/authz-api/http/rest/openapi/internal-api.yaml
-    info:
-      title: authz-api-internal
-      description: Internal API for service-to-service communication
-      license:
-        name: MIT
-        url: https://github.com/tadoku/tadoku/blob/main/LICENSE
-      version: 1.0.0
-    servers:
-      - url: http://authz-api:8080/
   AuthzProxy:
     domain: authz
     exposure: callback
-    path: services/authz-api/http/rest/openapi/proxy-api.yaml
     info:
-      title: authz-api-oathkeeper-callback
+      title: tadoku-api-oathkeeper-callback
       description: Internal callback API used only by Oathkeeper authorization rules
       license:
         name: MIT
         url: https://github.com/tadoku/tadoku/blob/main/LICENSE
       version: 1.0.0
     servers:
-      - url: http://authz-api:8080/
+      - url: http://tadoku-api.tdk-tadoku-api/authz/
   ImmersionInternal:
     domain: immersion
     exposure: internal
@@ -137,24 +122,6 @@ x-tadoku-sources:
     servers:
       - url: http://profile-api:8080/
 paths:
-  /authz/ping:
-    get:
-      summary: Checks if service is responsive
-      operationId: AuthzPing
-      tags:
-        - metadata
-      responses:
-        "200":
-          description: successful operation
-          content:
-            text/plain:
-              schema:
-                type: string
-      x-tadoku-source: Authz
-      x-tadoku-exposure: public
-      x-tadoku-owner: legacy
-      x-legacy-path: /ping
-      x-legacy-operation-id: ping
   /authz/current-user/role:
     get:
       summary: Fetches the role of the current user
@@ -2570,123 +2537,6 @@ paths:
       x-tadoku-owner: native
       x-legacy-path: /users
       x-legacy-operation-id: usersList
-  /authz/internal/v1/ping:
-    get:
-      summary: Internal health check for service-to-service calls
-      operationId: AuthzInternalInternalPing
-      tags:
-        - internal
-      security:
-        - AuthzInternalserviceAuth: []
-      responses:
-        "200":
-          description: successful operation
-          content:
-            text/plain:
-              schema:
-                type: string
-        "401":
-          description: unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AuthzInternalErrorResponse"
-      x-tadoku-source: AuthzInternal
-      x-tadoku-exposure: internal
-      x-tadoku-owner: legacy
-      x-legacy-path: /internal/v1/ping
-      x-legacy-operation-id: internalPing
-  /authz/internal/v1/permission/check:
-    post:
-      summary: Checks a permission for an arbitrary subject (no allowlist)
-      operationId: AuthzInternalInternalPermissionCheck
-      tags:
-        - internal
-      security:
-        - AuthzInternalserviceAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/AuthzInternalInternalPermissionCheckRequest"
-      responses:
-        "200":
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AuthzInternalPermissionCheckResponse"
-        "400":
-          description: invalid request
-        "401":
-          description: unauthorized
-        "503":
-          description: authorization unavailable
-      x-tadoku-source: AuthzInternal
-      x-tadoku-exposure: internal
-      x-tadoku-owner: legacy
-      x-legacy-path: /internal/v1/permission/check
-      x-legacy-operation-id: internalPermissionCheck
-  /authz/internal/v1/relationships:
-    post:
-      summary: Creates a relation tuple in Keto (allowlisted per-service)
-      operationId: AuthzInternalInternalRelationshipCreate
-      tags:
-        - internal
-      security:
-        - AuthzInternalserviceAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/AuthzInternalRelationshipWriteRequest"
-      responses:
-        "200":
-          description: successful operation
-        "400":
-          description: invalid request
-        "401":
-          description: unauthorized
-        "403":
-          description: forbidden (not allowlisted)
-        "503":
-          description: authorization unavailable
-      x-tadoku-source: AuthzInternal
-      x-tadoku-exposure: internal
-      x-tadoku-owner: legacy
-      x-legacy-path: /internal/v1/relationships
-      x-legacy-operation-id: internalRelationshipCreate
-    delete:
-      summary: Deletes a relation tuple in Keto (allowlisted per-service)
-      operationId: AuthzInternalInternalRelationshipDelete
-      tags:
-        - internal
-      security:
-        - AuthzInternalserviceAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/AuthzInternalRelationshipWriteRequest"
-      responses:
-        "200":
-          description: successful operation
-        "400":
-          description: invalid request
-        "401":
-          description: unauthorized
-        "403":
-          description: forbidden (not allowlisted)
-        "503":
-          description: authorization unavailable
-      x-tadoku-source: AuthzInternal
-      x-tadoku-exposure: internal
-      x-tadoku-owner: legacy
-      x-legacy-path: /internal/v1/relationships
-      x-legacy-operation-id: internalRelationshipDelete
   /authz/internal/v1/proxy/admin-check:
     post:
       summary: Authorizes a Kratos subject as a Tadoku administrator
@@ -3944,76 +3794,6 @@ components:
           type: string
         role:
           type: string
-    AuthzInternalErrorResponse:
-      type: object
-      required:
-        - error
-      properties:
-        error:
-          type: string
-    AuthzInternalPermissionCheckResponse:
-      type: object
-      required:
-        - allowed
-      properties:
-        allowed:
-          type: boolean
-    AuthzInternalSubjectSet:
-      type: object
-      required:
-        - namespace
-        - object
-        - relation
-      properties:
-        namespace:
-          type: string
-          minLength: 1
-        object:
-          type: string
-          minLength: 1
-        relation:
-          type: string
-          minLength: 1
-    AuthzInternalInternalPermissionCheckRequest:
-      type: object
-      required:
-        - namespace
-        - object
-        - relation
-      properties:
-        namespace:
-          type: string
-          minLength: 1
-        object:
-          type: string
-          minLength: 1
-        relation:
-          type: string
-          minLength: 1
-        subject_id:
-          type: string
-        subject_set:
-          $ref: "#/components/schemas/AuthzInternalSubjectSet"
-    AuthzInternalRelationshipWriteRequest:
-      type: object
-      required:
-        - namespace
-        - object
-        - relation
-      properties:
-        namespace:
-          type: string
-          minLength: 1
-        object:
-          type: string
-          minLength: 1
-        relation:
-          type: string
-          minLength: 1
-        subject_id:
-          type: string
-        subject_set:
-          $ref: "#/components/schemas/AuthzInternalSubjectSet"
     AuthzProxyProxyAdminCheckRequest:
       type: object
       additionalProperties: false
@@ -4093,10 +3873,6 @@ components:
       type: apiKey
       in: cookie
       name: ory_kratos_session
-    AuthzInternalserviceAuth:
-      type: http
-      scheme: bearer
-      description: JWT token for service-to-service authentication (ES256)
     AuthzProxyoathkeeperCallbackAuth:
       type: http
       scheme: bearer

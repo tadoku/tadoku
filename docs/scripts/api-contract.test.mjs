@@ -12,6 +12,21 @@ test('all retained wire contracts survive the merge, including internal callers'
   let publicOperations = 0;
   const ids = new Set();
   for (const [name, source] of Object.entries(contract['x-tadoku-sources'])) {
+    const view = sourceView(contract, name);
+    if (!source.path) {
+      let sourceOperations = 0;
+      for (const item of Object.values(contract.paths)) {
+        for (const operation of Object.values(item)) {
+          if (operation['x-tadoku-source'] !== name) continue;
+          sourceOperations++;
+          assert.equal(operation['x-tadoku-owner'], 'native');
+        }
+      }
+      assert.ok(sourceOperations > 0, `${name} has no operations`);
+      if (source.exposure === 'public') assert.doesNotMatch(JSON.stringify(view), /\/internal\/v1\/|:8080/);
+      continue;
+    }
+
     const legacy = parseContract(await readFile(`../${source.path}`, 'utf8'));
     // Path-level parameters and security may be expressed on each operation.
     for (const item of Object.values(legacy.paths)) {
@@ -39,7 +54,6 @@ test('all retained wire contracts survive the merge, including internal callers'
       legacy.components.schemas.Announcement.properties.href.maxLength = 2048;
       legacy.components.schemas.AnnouncementList.allOf[1].properties.announcements.maxItems = 100;
     }
-    const view = sourceView(contract, name);
     assert.deepEqual(view.paths, legacy.paths, `${name} paths`);
     assert.deepEqual(view.components, legacy.components ?? {}, `${name} components`);
     if (source.exposure === 'public') {
@@ -54,8 +68,8 @@ test('all retained wire contracts survive the merge, including internal callers'
       if (operation['x-tadoku-exposure'] === 'public') publicOperations++;
     }
   }
-  assert.equal(operations, 81);
-  assert.equal(publicOperations, 72);
+  assert.equal(operations, 76);
+  assert.equal(publicOperations, 71);
 });
 
 test('native-owned operations match server generation', () => {

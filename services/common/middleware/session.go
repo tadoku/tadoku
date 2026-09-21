@@ -7,12 +7,17 @@ import (
 	"strings"
 
 	"github.com/MicahParks/keyfunc"
-	"github.com/golang-jwt/jwt"
-	jwtv4 "github.com/golang-jwt/jwt/v4"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 	"github.com/tadoku/tadoku/services/common/authz/roles"
 	"github.com/tadoku/tadoku/services/common/domain"
+)
+
+const (
+	bearerPrefix              = "Bearer "
+	echoJWTExtractorLimit     = 20
+	echoJWTMissingOrMalformed = "missing or malformed jwt"
+	echoJWTInvalidOrExpired   = "invalid or expired jwt"
 )
 
 func VerifyJWT(jwksURL string) echo.MiddlewareFunc {
@@ -26,24 +31,68 @@ func VerifyJWT(jwksURL string) echo.MiddlewareFunc {
 		panic(fmt.Errorf("unable to fetch jwks: %w", err))
 	}
 
-	return middleware.JWTWithConfig(middleware.JWTConfig{
-		Skipper: func(context echo.Context) bool {
-			return context.Path() == "/ping"
-		},
-		Claims: &UnifiedClaims{},
-		KeyFunc: func(token *jwt.Token) (interface{}, error) {
-			t, _, err := new(jwtv4.Parser).ParseUnverified(token.Raw, &UnifiedClaims{})
-			if err != nil {
-				return nil, err
+	// Echo v4.10+ moved JWT helpers out of echo/v4/middleware. Keep the v4.9
+	// status mapping (400 missing, 401 invalid) so legacy services stay compatible.
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			if c.Path() == "/ping" {
+				return next(c)
 			}
-			return jwks.Keyfunc(t)
-		},
-	})
+
+			tokens, err := bearerTokens(c)
+			if err != nil {
+				return echo.NewHTTPError(http.StatusBadRequest, echoJWTMissingOrMalformed)
+			}
+
+			var lastTokenErr error
+			for _, raw := range tokens {
+				token, err := jwt.ParseWithClaims(raw, &UnifiedClaims{}, jwks.Keyfunc)
+				if err != nil || token == nil || !token.Valid {
+					lastTokenErr = err
+					continue
+				}
+
+				c.Set("user", token)
+
+				return next(c)
+			}
+
+			return &echo.HTTPError{
+				Code:     http.StatusUnauthorized,
+				Message:  echoJWTInvalidOrExpired,
+				Internal: lastTokenErr,
+			}
+		}
+	}
+}
+
+func bearerTokens(c echo.Context) ([]string, error) {
+	values := c.Request().Header.Values(echo.HeaderAuthorization)
+	if len(values) == 0 {
+		return nil, echo.ErrBadRequest
+	}
+
+	prefixLen := len(bearerPrefix)
+	result := make([]string, 0)
+	for i, value := range values {
+		if len(value) > prefixLen && strings.EqualFold(value[:prefixLen], bearerPrefix) {
+			result = append(result, value[prefixLen:])
+			if i >= echoJWTExtractorLimit-1 {
+				break
+			}
+		}
+	}
+
+	if len(result) == 0 {
+		return nil, echo.ErrBadRequest
+	}
+
+	return result, nil
 }
 
 // UnifiedClaims handles both user and service tokens.
 type UnifiedClaims struct {
-	jwtv4.RegisteredClaims
+	jwt.RegisteredClaims
 	Type      string `json:"type,omitempty"`
 	Namespace string `json:"namespace,omitempty"`
 	Session   struct {

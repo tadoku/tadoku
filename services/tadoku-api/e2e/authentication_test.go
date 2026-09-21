@@ -147,6 +147,7 @@ func observeIdentity(w http.ResponseWriter, r *http.Request) {
 
 func newLegacyAuthenticationHandler(jwksURL string) http.Handler {
 	router := echo.New()
+	middleware.RestoreJSONCharset(router)
 	router.Logger.SetOutput(io.Discard)
 	router.GET("/test/authentication", func(c echo.Context) error {
 		if user := commondomain.ParseUserIdentity(c.Request().Context()); user != nil {

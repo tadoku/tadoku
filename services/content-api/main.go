@@ -74,6 +74,7 @@ func main() {
 	}
 
 	e := echo.New()
+	tadokumiddleware.RestoreJSONCharset(e)
 	e.Use(serviceMetrics.Middleware())
 	e.Use(middleware.Recover())
 

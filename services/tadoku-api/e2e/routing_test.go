@@ -88,12 +88,11 @@ func TestContractRouteOwnership(t *testing.T) {
 		t.Fatal(err)
 	}
 	pathParameters := regexp.MustCompile(`\{[^}]+\}`)
-	for path, pathItem := range contract.Paths {
+	for path, pathItem := range contract.Paths.Map() {
 		for method, operation := range pathItem.Operations() {
-			ownerJSON, ok := operation.Extensions["x-tadoku-owner"].(json.RawMessage)
-			var owner string
-			if !ok || json.Unmarshal(ownerJSON, &owner) != nil || (owner != "legacy" && owner != "native") {
-				t.Fatalf("%s %s has invalid x-tadoku-owner %s", method, path, ownerJSON)
+			owner, ok := tadokuOwner(operation.Extensions["x-tadoku-owner"])
+			if !ok || (owner != "legacy" && owner != "native") {
+				t.Fatalf("%s %s has invalid x-tadoku-owner %v", method, path, operation.Extensions["x-tadoku-owner"])
 			}
 			requestPath := strings.NewReplacer("{year}", "2026", "{flagKey}", "release-log-entry-v2").Replace(path)
 			requestPath = pathParameters.ReplaceAllString(requestPath, "11111111-1111-4111-8111-111111111111")
@@ -106,6 +105,21 @@ func TestContractRouteOwnership(t *testing.T) {
 				}
 			})
 		}
+	}
+}
+
+func tadokuOwner(raw any) (string, bool) {
+	switch owner := raw.(type) {
+	case string:
+		return owner, true
+	case json.RawMessage:
+		var value string
+		if json.Unmarshal(owner, &value) != nil {
+			return "", false
+		}
+		return value, true
+	default:
+		return "", false
 	}
 }
 

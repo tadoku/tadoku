@@ -3,6 +3,7 @@ load("@rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "middleware",
     srcs = [
+        "json.go",
         "logger.go",
         "optional_auth.go",
         "roles.go",
@@ -13,7 +14,6 @@ go_library(
     deps = [
         "//services/common/authz/roles",
         "//services/common/domain",
-        "@com_github_golang_jwt_jwt//:jwt",
         "@com_github_golang_jwt_jwt_v4//:jwt",
         "@com_github_labstack_echo_v4//:echo",
         "@com_github_labstack_echo_v4//middleware",
@@ -24,6 +24,7 @@ go_library(
 go_test(
     name = "middleware_test",
     srcs = [
+        "json_test.go",
         "optional_auth_test.go",
         "session_test.go",
     ],

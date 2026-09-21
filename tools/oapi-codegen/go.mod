@@ -5,7 +5,7 @@ go 1.26.6
 // The complete v2.8.0 build list keeps Gazelle's isolated tool repository graph
 // explicit; application dependencies remain in the root module.
 require (
-	github.com/getkin/kin-openapi v0.142.0
+	github.com/getkin/kin-openapi v0.144.0
 	github.com/oapi-codegen/oapi-codegen/v2 v2.8.0
 	github.com/speakeasy-api/openapi v1.24.0
 	github.com/stretchr/testify v1.11.1

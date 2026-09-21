@@ -80,6 +80,7 @@ func main() {
 	userList := profiledomain.NewUserList(userCache, rolesSvc)
 
 	e := echo.New()
+	tadokumiddleware.RestoreJSONCharset(e)
 	e.Use(serviceMetrics.Middleware())
 	e.Use(middleware.Recover())
 

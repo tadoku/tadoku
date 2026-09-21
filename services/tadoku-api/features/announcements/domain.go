@@ -2,6 +2,7 @@
 package announcements
 
 import (
+	"fmt"
 	"net/url"
 	"strings"
 	"time"
@@ -61,20 +62,6 @@ func isValidAnnouncementHref(href *string) bool {
 		!strings.HasPrefix(*href, "//") && !strings.HasPrefix(*href, `/\`)
 }
 
-func validateAnnouncement(
-	id uuid.UUID,
-	namespace, title, content, style string,
-	href *string,
-	startsAt, endsAt time.Time,
-) error {
-	if id == uuid.Nil || namespace == "" || title == "" || content == "" ||
-		!isValidAnnouncementStyle(style) || !isValidAnnouncementHref(href) ||
-		!timex.IsValidRange(startsAt, endsAt) {
-		return ErrInvalidAnnouncement
-	}
-	return nil
-}
-
 var (
 	ErrInvalidNamespace          = errx.NewInvalidInputError("namespace is required")
 	ErrInvalidPagination         = errx.NewInvalidInputError("invalid pagination")
@@ -95,7 +82,7 @@ type CreateAnnouncementParameters struct {
 }
 
 func (p CreateAnnouncementParameters) Validate() error {
-	return validateAnnouncement(p.ID, p.Namespace, p.Title, p.Content, p.Style, p.Href, p.StartsAt, p.EndsAt)
+	return validateAnnouncement(p)
 }
 
 type UpdateAnnouncementParameters struct {
@@ -110,5 +97,30 @@ type UpdateAnnouncementParameters struct {
 }
 
 func (p UpdateAnnouncementParameters) Validate() error {
-	return validateAnnouncement(p.ID, p.Namespace, p.Title, p.Content, p.Style, p.Href, p.StartsAt, p.EndsAt)
+	return validateAnnouncement(p)
+}
+
+func validateAnnouncement[T CreateAnnouncementParameters | UpdateAnnouncementParameters](p T) error {
+	if p.ID == uuid.Nil {
+		return fmt.Errorf("%w: id is nil", ErrInvalidAnnouncement)
+	}
+	if p.Namespace == "" {
+		return fmt.Errorf("%w: namespace is required", ErrInvalidAnnouncement)
+	}
+	if p.Title == "" {
+		return fmt.Errorf("%w: title is required", ErrInvalidAnnouncement)
+	}
+	if p.Content == "" {
+		return fmt.Errorf("%w: content is required", ErrInvalidAnnouncement)
+	}
+	if !isValidAnnouncementStyle(p.Style) {
+		return fmt.Errorf("%w: style is invalid", ErrInvalidAnnouncement)
+	}
+	if !isValidAnnouncementHref(p.Href) {
+		return fmt.Errorf("%w: href is invalid", ErrInvalidAnnouncement)
+	}
+	if !timex.IsValidRange(p.StartsAt, p.EndsAt) {
+		return fmt.Errorf("%w: date range is invalid", ErrInvalidAnnouncement)
+	}
+	return nil
 }

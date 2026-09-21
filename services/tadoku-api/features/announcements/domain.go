@@ -70,36 +70,6 @@ var (
 	ErrAnnouncementAlreadyExists = errx.NewConflictError("announcement already exists")
 )
 
-type CreateAnnouncementParameters struct {
-	ID        uuid.UUID
-	Namespace string
-	Title     string
-	Content   string
-	Style     string
-	Href      *string
-	StartsAt  time.Time
-	EndsAt    time.Time
-}
-
-func (p CreateAnnouncementParameters) Validate() error {
-	return validateAnnouncement(announcementParameters(p))
-}
-
-type UpdateAnnouncementParameters struct {
-	ID        uuid.UUID
-	Namespace string
-	Title     string
-	Content   string
-	Style     string
-	Href      *string
-	StartsAt  time.Time
-	EndsAt    time.Time
-}
-
-func (p UpdateAnnouncementParameters) Validate() error {
-	return validateAnnouncement(announcementParameters(p))
-}
-
 type announcementParameters struct {
 	ID        uuid.UUID
 	Namespace string
@@ -109,6 +79,13 @@ type announcementParameters struct {
 	Href      *string
 	StartsAt  time.Time
 	EndsAt    time.Time
+}
+
+type CreateAnnouncementParameters = announcementParameters
+type UpdateAnnouncementParameters = announcementParameters
+
+func (p announcementParameters) Validate() error {
+	return validateAnnouncement(p)
 }
 
 func validateAnnouncement(p announcementParameters) error {

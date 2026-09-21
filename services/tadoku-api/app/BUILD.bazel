@@ -19,6 +19,7 @@ go_library(
     ],
     deps = [
         "//services/tadoku-api/features/announcements",
+        "//services/tadoku-api/features/audit",
         "//services/tadoku-api/features/authz",
         "//services/tadoku-api/features/languages",
         "//services/tadoku-api/features/pages",
@@ -26,6 +27,7 @@ go_library(
         "//services/tadoku-api/features/profile",
         "//services/tadoku-api/infra/postgres",
         "//services/tadoku-api/internal/errx",
+        "//services/tadoku-api/internal/identity",
         "//services/tadoku-api/internal/permissions",
         "@com_github_google_uuid//:uuid",
         "@com_github_jackc_pgx_v5//pgxpool",

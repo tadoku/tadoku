@@ -27,6 +27,7 @@ import (
 	"github.com/tadoku/tadoku/services/common/postgresconfig"
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/announcements"
+	featureaudit "github.com/tadoku/tadoku/services/tadoku-api/features/audit"
 	featureauthz "github.com/tadoku/tadoku/services/tadoku-api/features/authz"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/languages"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/pages"
@@ -268,19 +269,25 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	}
 	ketoReader := ketoclient.NewReadClient(cfg.KetoReadURL, ketoclient.WithHTTPClient(ketoHTTP))
 	permissionChecker := permissions.NewKetoChecker(ketoReader)
-	authzService := featureauthz.NewService(permissionChecker)
+	roleService := commonroles.NewKetoService(ketoReader, "app", "tadoku")
+	authzService := featureauthz.NewService(
+		permissionChecker,
+		kratosIdentities,
+		roleService,
+		commonroles.NewKetoManager(keto, "app", "tadoku"),
+	)
+	auditService := featureaudit.NewService(featureaudit.NewRepository(pool))
 	announcementsRepository := announcements.NewAnnouncementsRepository(pool)
 	languagesRepository := languages.NewLanguagesRepository(pool)
 	pagesRepository := pages.NewPagesRepository(pool)
 	postsRepository := posts.NewPostsRepository(pool)
 	userCache := profile.NewUserCache(kratosIdentities)
-	roleService := commonroles.NewKetoService(ketoReader, "app", "tadoku")
 	announcementsService := announcements.NewService(announcementsRepository)
 	languagesService := languages.NewService(languagesRepository)
 	pagesService := pages.NewService(pagesRepository)
 	postsService := posts.NewService(postsRepository)
 	profileService := profile.NewService(userCache, roleService)
-	api := app.New(announcementsService, authzService, languagesService, pagesService, postsService, profileService, pool, permissionChecker)
+	api := app.New(announcementsService, auditService, authzService, languagesService, pagesService, postsService, profileService, pool, permissionChecker)
 	rejectBanned := newBannedUserMiddleware(ketoReader, logger)
 
 	handler, err := transporthttp.NewHandler(api, pool.Ping, cfg.RequestTimeout, metrics, logger, authenticate, rejectBanned)

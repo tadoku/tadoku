@@ -6,6 +6,7 @@ generate:
 output-options:
   include-operation-ids:
     - AuthzRoleGet
+    - AuthzRoleUpdate
     - AuthzPermissionCheck
     - ProfileUsersList
     - ContentPageFindBySlug

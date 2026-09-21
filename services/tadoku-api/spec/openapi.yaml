@@ -215,7 +215,7 @@ paths:
           description: authorization unavailable
       x-tadoku-source: Authz
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /users/{id}/role
       x-legacy-operation-id: roleUpdate
   /authz/permission/check:

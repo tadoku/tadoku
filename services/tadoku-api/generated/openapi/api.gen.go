@@ -1106,6 +1106,9 @@ type ProfileUsersListParams struct {
 // AuthzPermissionCheckJSONRequestBody defines body for AuthzPermissionCheck for application/json ContentType.
 type AuthzPermissionCheckJSONRequestBody = AuthzPermissionCheckRequest
 
+// AuthzRoleUpdateJSONRequestBody defines body for AuthzRoleUpdate for application/json ContentType.
+type AuthzRoleUpdateJSONRequestBody = AuthzRoleUpdateRequest
+
 // ContentAnnouncementCreateJSONRequestBody defines body for ContentAnnouncementCreate for application/json ContentType.
 type ContentAnnouncementCreateJSONRequestBody = ContentAnnouncement
 
@@ -1138,6 +1141,9 @@ type ServerInterface interface {
 	// AuthzPermissionCheck Checks if the current user has a specific permission
 	// (POST /authz/permission/check)
 	AuthzPermissionCheck(w http.ResponseWriter, r *http.Request)
+	// AuthzRoleUpdate Update user role (admin only)
+	// (PUT /authz/users/{id}/role)
+	AuthzRoleUpdate(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
 	// ContentAnnouncementList Lists all announcements
 	// (GET /content/announcements/{namespace})
 	ContentAnnouncementList(w http.ResponseWriter, r *http.Request, namespace string, params ContentAnnouncementListParams)
@@ -1240,6 +1246,32 @@ func (siw *ServerInterfaceWrapper) AuthzPermissionCheck(w http.ResponseWriter, r
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.AuthzPermissionCheck(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AuthzRoleUpdate operation middleware
+func (siw *ServerInterfaceWrapper) AuthzRoleUpdate(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AuthzRoleUpdate(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -2251,6 +2283,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	}
 
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/authz/current-user/role", wrapper.AuthzRoleGet)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/authz/users/{id}/role", wrapper.AuthzRoleUpdate)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/authz/permission/check", wrapper.AuthzPermissionCheck)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/content/pages/{namespace}/{slug}", wrapper.ContentPageDelete)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/content/pages/{namespace}/{slug}", wrapper.ContentPageFindBySlug)
@@ -2369,6 +2402,63 @@ type AuthzPermissionCheck503Response struct {
 }
 
 func (response AuthzPermissionCheck503Response) VisitAuthzPermissionCheckResponse(w http.ResponseWriter) error {
+	w.WriteHeader(503)
+	return nil
+}
+
+type AuthzRoleUpdateRequestObject struct {
+	Id   openapi_types.UUID `json:"id"`
+	Body *AuthzRoleUpdateJSONRequestBody
+}
+
+type AuthzRoleUpdateResponseObject interface {
+	VisitAuthzRoleUpdateResponse(w http.ResponseWriter) error
+}
+
+type AuthzRoleUpdate200Response struct {
+}
+
+func (response AuthzRoleUpdate200Response) VisitAuthzRoleUpdateResponse(w http.ResponseWriter) error {
+	w.WriteHeader(200)
+	return nil
+}
+
+type AuthzRoleUpdate400Response struct {
+}
+
+func (response AuthzRoleUpdate400Response) VisitAuthzRoleUpdateResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
+type AuthzRoleUpdate401Response struct {
+}
+
+func (response AuthzRoleUpdate401Response) VisitAuthzRoleUpdateResponse(w http.ResponseWriter) error {
+	w.WriteHeader(401)
+	return nil
+}
+
+type AuthzRoleUpdate403Response struct {
+}
+
+func (response AuthzRoleUpdate403Response) VisitAuthzRoleUpdateResponse(w http.ResponseWriter) error {
+	w.WriteHeader(403)
+	return nil
+}
+
+type AuthzRoleUpdate404Response struct {
+}
+
+func (response AuthzRoleUpdate404Response) VisitAuthzRoleUpdateResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type AuthzRoleUpdate503Response struct {
+}
+
+func (response AuthzRoleUpdate503Response) VisitAuthzRoleUpdateResponse(w http.ResponseWriter) error {
 	w.WriteHeader(503)
 	return nil
 }
@@ -3255,6 +3345,9 @@ type StrictServerInterface interface {
 	// AuthzPermissionCheck Checks if the current user has a specific permission
 	// (POST /authz/permission/check)
 	AuthzPermissionCheck(ctx context.Context, request AuthzPermissionCheckRequestObject) (AuthzPermissionCheckResponseObject, error)
+	// AuthzRoleUpdate Update user role (admin only)
+	// (PUT /authz/users/{id}/role)
+	AuthzRoleUpdate(ctx context.Context, request AuthzRoleUpdateRequestObject) (AuthzRoleUpdateResponseObject, error)
 	// ContentAnnouncementList Lists all announcements
 	// (GET /content/announcements/{namespace})
 	ContentAnnouncementList(ctx context.Context, request ContentAnnouncementListRequestObject) (ContentAnnouncementListResponseObject, error)
@@ -3416,6 +3509,39 @@ func (sh *strictHandler) AuthzPermissionCheck(w http.ResponseWriter, r *http.Req
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(AuthzPermissionCheckResponseObject); ok {
 		if err := validResponse.VisitAuthzPermissionCheckResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AuthzRoleUpdate operation middleware
+func (sh *strictHandler) AuthzRoleUpdate(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	var request AuthzRoleUpdateRequestObject
+
+	request.Id = id
+
+	var body AuthzRoleUpdateJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AuthzRoleUpdate(ctx, request.(AuthzRoleUpdateRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AuthzRoleUpdate")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AuthzRoleUpdateResponseObject); ok {
+		if err := validResponse.VisitAuthzRoleUpdateResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

@@ -9,9 +9,12 @@ go_library(
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/features/authz",
     visibility = ["//visibility:public"],
     deps = [
+        "//services/common/authz/roles",
+        "//services/common/client/kratos",
         "//services/tadoku-api/internal/errx",
         "//services/tadoku-api/internal/identity",
         "//services/tadoku-api/internal/permissions",
+        "@com_github_google_uuid//:uuid",
     ],
 )
 
@@ -23,5 +26,6 @@ go_test(
         "//services/tadoku-api/internal/errx",
         "//services/tadoku-api/internal/identity",
         "//services/tadoku-api/internal/permissions",
+        "@com_github_google_uuid//:uuid",
     ],
 )

@@ -16,7 +16,7 @@ import (
 func TestRouterWorksWithoutLegacyProxyRoutes(t *testing.T) {
 	// Construct the same application router but do not attach legacy routes.
 	// Normal scenarios continue to use the single suite-level router.
-	handler, _, _, err := newTestRouter(t.Context(), api.db.Pool, keto.ReadURL(), api.kratos.CursorClient())
+	handler, _, _, err := newTestRouter(t.Context(), api.db.Pool, keto, api.kratos)
 	if err != nil {
 		t.Fatal(err)
 	}

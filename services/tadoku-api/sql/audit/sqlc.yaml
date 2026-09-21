@@ -1,0 +1,13 @@
+version: "2"
+sql:
+  - engine: postgresql
+    schema: ../../../immersion-api/storage/postgres/migrations
+    queries:
+      - audit.sql
+    gen:
+      go:
+        package: audit
+        out: ../../generated/sqlc/audit
+        sql_package: pgx/v5
+        emit_empty_slices: true
+        omit_unused_structs: true

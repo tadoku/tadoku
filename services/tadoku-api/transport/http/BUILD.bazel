@@ -10,6 +10,7 @@ go_library(
         "authentication.go",
         "authz_permission_check.go",
         "authz_role_get.go",
+        "authz_role_update.go",
         "banned_users.go",
         "errors.go",
         "language_create.go",

@@ -1,0 +1,16 @@
+// Package audit records application actions.
+package audit
+
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
+
+type Event struct {
+	ActorID     uuid.UUID
+	Action      string
+	Metadata    map[string]string
+	Description string
+	recordedAt  time.Time
+}

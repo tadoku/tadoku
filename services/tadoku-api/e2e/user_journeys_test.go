@@ -134,6 +134,101 @@ func TestUserListingJourney(t *testing.T) {
 	})
 }
 
+func TestUserModerationJourney(t *testing.T) {
+	unbannedAt := fixtureInstant.Add(time.Minute)
+
+	runJourney(t, api, "UserModeration", []step{
+		{
+			request: "users_before_ban",
+			as:      admin,
+			want:    http.StatusOK,
+		},
+		{
+			request: "ban_user",
+			as:      admin,
+			want:    http.StatusOK,
+			others: cast{
+				guest:  http.StatusUnauthorized,
+				user:   http.StatusForbidden,
+				banned: http.StatusForbidden,
+			},
+		},
+		{
+			request: "users_after_ban",
+			as:      admin,
+			want:    http.StatusOK,
+		},
+		{
+			request: "banned_role_visible",
+			as:      user,
+			want:    http.StatusOK,
+		},
+		{
+			request: "banned_user_rejected",
+			as:      user,
+			want:    http.StatusForbidden,
+		},
+		{
+			request: "unban_user",
+			as:      admin,
+			want:    http.StatusOK,
+			others: cast{
+				guest:  http.StatusUnauthorized,
+				user:   http.StatusForbidden,
+				banned: http.StatusForbidden,
+			},
+			at: unbannedAt,
+		},
+		{
+			request: "users_after_unban",
+			as:      admin,
+			want:    http.StatusOK,
+			at:      unbannedAt,
+		},
+		{
+			request: "unbanned_user_restored",
+			as:      user,
+			want:    http.StatusOK,
+			at:      unbannedAt,
+		},
+		{
+			verify: "moderation_audited",
+			at:     unbannedAt,
+		},
+	})
+}
+
+func TestModerationAuditFailureJourney(t *testing.T) {
+	handler, _ := auditUnavailableRoleUpdateHandlers(t)
+	failureAPI := &suite{
+		db:      api.db,
+		keto:    api.keto,
+		kratos:  api.kratos,
+		handler: handler,
+	}
+
+	runJourney(t, failureAPI, "ModerationAuditFailure", []step{
+		{
+			request: "ban_user_audit_unavailable",
+			as:      admin,
+			want:    http.StatusInternalServerError,
+		},
+		{
+			request: "banned_role_visible",
+			as:      user,
+			want:    http.StatusOK,
+		},
+		{
+			request: "banned_user_rejected",
+			as:      user,
+			want:    http.StatusForbidden,
+		},
+		{
+			verify: "audit_empty",
+		},
+	})
+}
+
 func TestAnnouncementLifecycleJourney(t *testing.T) {
 	afterExpiry := fixtureInstant.Add(8 * 24 * time.Hour)
 

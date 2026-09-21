@@ -1,0 +1,3 @@
+GET /content/announcements/main/active HTTP/1.1
+Host: api.test
+

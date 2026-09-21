@@ -4,17 +4,17 @@ Develop **webv2 (Next.js/pnpm)** and **native tadoku-api** at
 **https://tadoku.dev.lab**. The committed `.dev/config.yaml` is the real Homelab
 configuration; no hostname substitution is needed.
 
-The configuration now targets the fresh `tdk-dev-*` GitOps base. Activation is
-still gated on repository credentials and an approved old-stack cutover; it is
-not compatible with the old Tilt namespaces. See
+The fresh `tdk-dev-*` GitOps base is active on `homelab-dev`. The approved cutover
+retired the old Tilt namespaces and disposable databases on 2026-09-21. See
 [`k8s/dev/base/README.md`](../k8s/dev/base/README.md) before first use.
 
 ## Start working
 
-Install a CLI revision containing YAML support (merged in antonve/dev-cli#16):
+Install a CLI revision containing YAML support and the cold-start Pod-creation
+wait (antonve/dev-cli#16 and #17):
 
 ```sh
-GOPRIVATE=github.com/antonve/dev-cli go install github.com/antonve/dev-cli/cmd/dev@d9f9aed7f2c381d772db366217afca2627889cbf
+GOPRIVATE=github.com/antonve/dev-cli go install github.com/antonve/dev-cli/cmd/dev@8e028267f44527b4ef31f63170b3d93eeac49467
 dev doctor
 make dev-seed  # shared synthetic identities and base fixtures; safe to rerun
 # Make service edits, then:
@@ -26,6 +26,16 @@ before API startup. Frontend edits sync into the pnpm Next.js dev server for HMR
 Go edits rebuild the selected binary and restart it in the same pod. Compilation
 failure keeps the last working process running. The CLI builds/pushes images to
 the configured development registry and injects immutable digests.
+
+Go must be able to authenticate Git access to the private CLI repository. If your
+existing credentials use SSH only, add per-command Git URL rewriting to the
+installation command (no new credential is required):
+
+```sh
+GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=url.git@github.com:.insteadOf \
+GIT_CONFIG_VALUE_0=https://github.com/ GOPRIVATE=github.com/antonve/dev-cli \
+go install github.com/antonve/dev-cli/cmd/dev@8e028267f44527b4ef31f63170b3d93eeac49467
+```
 
 In another terminal, in the same checkout:
 
@@ -150,6 +160,7 @@ pnpm --filter webv2 lint
 pnpm build
 ```
 
-Tadoku integration remains one PR; reusable CLI changes land separately.
-Merging Tadoku may trigger its existing production image publication workflow.
-Development verification does not authorize that publication or rollout.
+The original integration landed in Tadoku #981; live startup corrections landed
+in #1007 and #1008. Reusable CLI changes land separately. Merging Tadoku may
+trigger its existing production image publication workflow; development cluster
+access alone does not authorize that publication or rollout.

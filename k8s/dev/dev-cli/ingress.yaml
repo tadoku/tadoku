@@ -1,0 +1,57 @@
+# Canonical development entrypoints. Apply after the gateway routes are Ready.
+# Reuses the existing Ingress names and TLS Secret; does not create credentials.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tadoku-web
+  namespace: default
+  labels:
+    app.kubernetes.io/managed-by: tadoku-dev-cli
+    app.kubernetes.io/part-of: tadoku-dev
+  annotations:
+    cert-manager.io/cluster-issuer: lab-ca-acme
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts: [tadoku.dev.lab]
+      secretName: tadoku-dev-app-tls
+  rules:
+    - host: tadoku.dev.lab
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: tadoku-cli-api
+                port:
+                  number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tadoku-api
+  namespace: default
+  labels:
+    app.kubernetes.io/managed-by: tadoku-dev-cli
+    app.kubernetes.io/part-of: tadoku-dev
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: tadoku.dev.lab
+      http:
+        paths:
+          - path: /api/internal
+            pathType: Prefix
+            backend:
+              service:
+                name: tadoku-cli-api
+                port:
+                  number: 80

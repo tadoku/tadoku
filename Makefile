@@ -1,16 +1,17 @@
 .PHONY: dev-up dev-down dev-reset dev-seed dev-logs
 
 dev-up:
-	tilt up
+	dev up --task migrate --task seed
 
 dev-down:
-	tilt down
+	dev down
 
 dev-reset:
-	./scripts/dev/reset-env.sh
+	@echo 'dev-reset is disabled: the legacy reset targets the old shared stack. Use dev down for overlay cleanup; database deletion requires an explicitly approved, scoped runbook.' >&2
+	@exit 1
 
 dev-seed:
 	./scripts/dev/seed-db.sh
 
 dev-logs:
-	tilt logs
+	dev logs

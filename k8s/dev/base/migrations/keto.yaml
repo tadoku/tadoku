@@ -1,0 +1,56 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: keto-migrate
+  namespace: tdk-dev-data
+  annotations:
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/sync-wave: "-10"
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
+spec:
+  activeDeadlineSeconds: 600
+  backoffLimit: 0
+  template:
+    spec:
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      initContainers:
+        - name: wait-for-database
+          image: docker.io/library/postgres@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
+          command: ["/bin/sh", "-ec"]
+          args:
+            - |
+              until psql -X -Atqc 'select 1' >/dev/null 2>&1; do
+                echo "Waiting for the development database"
+                sleep 2
+              done
+          env:
+            - {name: PGHOST, value: tadoku-dev-db.tdk-dev-data.svc.cluster.local}
+            - {name: PGDATABASE, value: keto}
+            - {name: PGSSLMODE, value: require}
+            - {name: PGCONNECT_TIMEOUT, value: "5"}
+            - name: PGUSER
+              valueFrom: {secretKeyRef: {name: keto.tadoku-dev-db.credentials.postgresql.acid.zalan.do, key: username}}
+            - name: PGPASSWORD
+              valueFrom: {secretKeyRef: {name: keto.tadoku-dev-db.credentials.postgresql.acid.zalan.do, key: password}}
+          resources:
+            requests: {cpu: 10m, memory: 16Mi}
+            limits: {cpu: 100m, memory: 64Mi}
+      containers:
+        - name: migrate
+          image: docker.io/oryd/keto:v26.2.0
+          imagePullPolicy: Always
+          command: ["keto"]
+          args: ["migrate", "up", "--yes", "--config", "/etc/config/keto.yaml"]
+          volumeMounts:
+            - {name: config, mountPath: /etc/config, readOnly: true}
+          env:
+            - {name: DSN, value: "postgres://keto@tadoku-dev-db.tdk-dev-data.svc.cluster.local:5432/keto?sslmode=require"}
+            - name: PGPASSWORD
+              valueFrom: {secretKeyRef: {name: keto.tadoku-dev-db.credentials.postgresql.acid.zalan.do, key: password}}
+          resources:
+            requests: {cpu: 50m, memory: 64Mi}
+            limits: {cpu: "1", memory: 256Mi}
+      volumes:
+        - name: config
+          configMap: {name: keto-migration-config}

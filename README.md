@@ -10,48 +10,36 @@ The documentation for this repository can be found at https://tadoku.github.io/t
 
 ## Dev Environment
 
-Use `k8s/dev/` through the root `Tiltfile` for both shared and local clusters.
-Set `TADOKU_TILT_CONFIG` to a machine-level config path so the same config works
-across Git worktrees, or copy `tilt_config.json.example` to the gitignored
-`tilt_config.json` for a checkout-local override. Tilt fails closed when neither
-is configured.
-
-Common commands:
+Use **DevCLI** for webv2 and native Tadoku API development on
+[https://tadoku.dev.lab](https://tadoku.dev.lab). See
+[the development runbook](.dev/README.md) for installation, shared-stack
+prerequisites, branch databases, routing and cleanup.
 
 ```sh
-make dev-up      # start Tilt
-make dev-down    # stop Tilt-managed resources
-make dev-reset   # delete/recreate the operator-managed dev DB, rerun migrations, and seed data
-make dev-seed    # rerun idempotent seed data only
-make dev-logs    # stream Tilt logs
+dev doctor
+make dev-seed  # shared synthetic users and base fixtures
+DEV_OWNER=anton make dev-up
+# In another terminal, same checkout:
+dev url --owner anton '/'
+dev status --owner anton
+dev logs --owner anton tadoku-api
+dev down --owner anton
 ```
 
-The dev Postgres cluster is a Zalando `postgresql` custom resource with persistent volumes, so ordinary `tilt down`/`tilt up` keeps data.
-`make dev-reset` is the destructive reset path: it deletes the operator CR and its PVCs, reapplies the CR, restarts services so init-container migrations run, then seeds deterministic dev users/content/activity data.
-Seed users are `dev@tadoku.app` and `reader@tadoku.app`, both with password `tadoku`.
+Keep the development loop running: frontend edits use the pnpm Next.js dev
+server/HMR; backend edits rebuild the affected Bazel binary in a long-lived pod.
+The printed link selects your environment without copying branch strings.
 
-### Tadoku API facade rehearsal
+One shared Postgres pod holds the base/auth databases and a unique application
+database per branch/owner. Migration and seed Jobs run explicitly before API
+startup; branch databases survive `dev down`. Kratos and Keto stay shared.
+The existing seeder provides `dev@tadoku.app` and `reader@tadoku.app` with the
+development fixture password `tadoku`, unless overridden outside Git.
 
-Tilt builds and starts `tadoku-api` alongside the four legacy APIs. Both local
-and shared development route existing browser API URLs and the internal
-feature-flag request through it. Oathkeeper authenticates requests and issues
-the same tokens, then strips `/api/internal`. Tadoku API receives domain paths
-such as `/content/pages/blog`, chooses the legacy service, and forwards
-`/pages/blog`. Native endpoints can replace those proxy routes without knowing
-the external gateway prefix. Service-token exchanges and the Flipt authorization
-callback keep their existing targets.
-
-Run the automated facade checks before rehearsing against the dev stack:
-
-```sh
-bazel test //services/tadoku-api/...
-bazel test //services/tadoku-api/transport/http:http_test --test_filter='^$' --test_arg=-test.bench=BenchmarkFacade --test_arg=-test.benchtime=1s --test_output=all
-```
-
-The benchmark compares direct and proxied loopback HTTP requests. It does not
-measure deployed gateway latency or replace the full application contract run.
-
-Frontend pods use Tilt `live_update` with scoped sync paths and polling file watchers for Next.js.
-Routine edits under a frontend app or `frontend/packages/ui` should sync into the running pod and hot-reload without an image rebuild; package file changes run `pnpm -r install` inside the container.
-
-Registry cache is intentionally skipped for now: the dev stack already pulls from the configured per-environment registry, and there is no committed evidence that image pulls are a bottleneck.
+The fresh **development-only** base is defined in
+[`k8s/dev/base/`](k8s/dev/base/README.md) for Argo CD, with automatic migrations
+and existing GHCR images tracked by development Image Updater. Its activation
+still requires repository credentials and an approved cutover from the old Tilt
+stack. The configuration in this branch targets the new `tdk-dev-*` namespaces.
+Do not run Tilt concurrently or apply the historical pilot manifests.
+`make dev-reset` is disabled; any reset needs an explicitly approved, scoped runbook.

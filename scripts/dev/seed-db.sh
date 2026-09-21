@@ -3,11 +3,17 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 DB_NAME="tadoku-dev-db"
-DB_NAMESPACE="${TADOKU_DEV_NAMESPACE:-default}"
+DB_NAMESPACE="${TADOKU_DEV_NAMESPACE:-tdk-dev-data}"
+KUBE_CONTEXT="${TADOKU_DEV_CONTEXT:-homelab-dev}"
 ADMIN_EMAIL="${TADOKU_DEV_ADMIN_EMAIL:-dev@tadoku.app}"
 ADMIN_PASSWORD="${TADOKU_DEV_ADMIN_PASSWORD:-tadoku}"
 READER_EMAIL="${TADOKU_DEV_READER_EMAIL:-reader@tadoku.app}"
 READER_PASSWORD="${TADOKU_DEV_READER_PASSWORD:-tadoku}"
+
+if [ "$KUBE_CONTEXT" != "homelab-dev" ]; then
+  echo "refusing to seed: only the homelab-dev Kubernetes context is supported" >&2
+  exit 1
+fi
 
 require_cmd() {
   if ! command -v "$1" >/dev/null 2>&1; then
@@ -17,7 +23,7 @@ require_cmd() {
 }
 
 db_pod() {
-  kubectl -n "$DB_NAMESPACE" get pod \
+  kubectl --context "$KUBE_CONTEXT" -n "$DB_NAMESPACE" get pod \
     -l "application=spilo,cluster-name=${DB_NAME},spilo-role=master" \
     -o jsonpath='{.items[0].metadata.name}'
 }
@@ -26,7 +32,7 @@ wait_for_db() {
   echo "waiting for ${DB_NAME} pod..."
   local _i found=""
   for _i in $(seq 1 60); do
-    if [ -n "$(kubectl -n "$DB_NAMESPACE" get pod \
+    if [ -n "$(kubectl --context "$KUBE_CONTEXT" -n "$DB_NAMESPACE" get pod \
       -l "application=spilo,cluster-name=${DB_NAME}" \
       -o name 2>/dev/null)" ]; then
       found=1
@@ -38,7 +44,7 @@ wait_for_db() {
     echo "timed out waiting for ${DB_NAME} pod to appear in namespace ${DB_NAMESPACE}; is the dev Postgres cluster deployed?" >&2
     exit 1
   fi
-  kubectl -n "$DB_NAMESPACE" wait \
+  kubectl --context "$KUBE_CONTEXT" -n "$DB_NAMESPACE" wait \
     --for=condition=Ready \
     pod \
     -l "application=spilo,cluster-name=${DB_NAME}" \
@@ -47,7 +53,7 @@ wait_for_db() {
 
 database_password() {
   local user="$1"
-  kubectl -n "$DB_NAMESPACE" get secret \
+  kubectl --context "$KUBE_CONTEXT" -n "$DB_NAMESPACE" get secret \
     "${user}.${DB_NAME}.credentials.postgresql.acid.zalan.do" \
     -o jsonpath='{.data.password}' | base64 --decode
 }
@@ -62,7 +68,7 @@ wait_for_relation() {
   database_password_value="$(database_password "$user")"
 
   for _ in $(seq 1 120); do
-    if kubectl -n "$DB_NAMESPACE" exec "$pod" -- env PGPASSWORD="$database_password_value" PGSSLMODE=require \
+    if kubectl --context "$KUBE_CONTEXT" -n "$DB_NAMESPACE" exec "$pod" -- env PGPASSWORD="$database_password_value" PGSSLMODE=require \
       psql -X -qAt -h "${DB_NAME}.${DB_NAMESPACE}" -U "$user" -d "$database" \
       -c "select coalesce(to_regclass('public.${relation}') is not null, false)" 2>/dev/null | grep -q '^t$'; then
       return 0
@@ -81,7 +87,7 @@ seed_identity() {
   local pod_name
   pod_name="tadoku-dev-identity-seed-${RANDOM}-${RANDOM}"
 
-  kubectl -n "$DB_NAMESPACE" run "$pod_name" \
+  kubectl --context "$KUBE_CONTEXT" -n "$DB_NAMESPACE" run "$pod_name" \
     --quiet \
     --rm \
     -i \
@@ -90,6 +96,7 @@ seed_identity() {
     --env="SEED_EMAIL=${email}" \
     --env="SEED_DISPLAY_NAME=${display_name}" \
     --env="SEED_PASSWORD=${password}" \
+    --env="KRATOS_ADMIN_URL=${TADOKU_KRATOS_ADMIN_URL:-http://kratos-admin.tdk-dev-kratos}" \
     -- python - <<'PY'
 import json
 import os
@@ -138,8 +145,9 @@ while time.time() < deadline:
                 print(
                     f"error: identity {email} already exists but is not owned by the dev seed "
                     f"(missing metadata_admin.seeded_by={SEED_MARKER}); refusing to touch its credentials.\n"
-                    f"remediation: run `make dev-reset` for a clean database, or delete the identity "
-                    f"(or set metadata_admin.seeded_by={SEED_MARKER} on it) and rerun `make dev-seed`.",
+                    "remediation: inspect the conflicting identity; only after explicit approval, "
+                    "remove that disposable identity and rerun `make dev-seed`. Do not reset shared databases "
+                    "or add a seed ownership marker to an unrelated identity.",
                     file=sys.stderr,
                 )
                 sys.exit(2)
@@ -182,7 +190,7 @@ refresh_identity_password() {
 
   local database_password_value
   database_password_value="$(database_password kratos)"
-  kubectl -n "$DB_NAMESPACE" exec -i "$pod" -- env PGPASSWORD="$database_password_value" PGSSLMODE=require \
+  kubectl --context "$KUBE_CONTEXT" -n "$DB_NAMESPACE" exec -i "$pod" -- env PGPASSWORD="$database_password_value" PGSSLMODE=require \
     psql -X -q \
       -v ON_ERROR_STOP=1 \
       -v "seed_email=${email}" \
@@ -212,13 +220,14 @@ seed_keto_admin() {
   local pod_name
   pod_name="tadoku-dev-keto-seed-${RANDOM}-${RANDOM}"
 
-  kubectl -n "$DB_NAMESPACE" run "$pod_name" \
+  kubectl --context "$KUBE_CONTEXT" -n "$DB_NAMESPACE" run "$pod_name" \
     --quiet \
     --rm \
     -i \
     --restart=Never \
     --image=python:3.12-alpine \
     --env="SEED_SUBJECT_ID=${subject_id}" \
+    --env="KETO_WRITE_URL=${TADOKU_KETO_WRITE_URL:-http://keto-write.tdk-dev-keto:4467}" \
     -- python - <<'PY'
 import json
 import os
@@ -276,7 +285,7 @@ run_seed_sql() {
   echo "seeding ${database} from ${file#"$ROOT"/}"
   local database_password_value
   database_password_value="$(database_password "$user")"
-  kubectl -n "$DB_NAMESPACE" exec -i "$pod" -- env PGPASSWORD="$database_password_value" PGSSLMODE=require \
+  kubectl --context "$KUBE_CONTEXT" -n "$DB_NAMESPACE" exec -i "$pod" -- env PGPASSWORD="$database_password_value" PGSSLMODE=require \
     psql -X \
       -v ON_ERROR_STOP=1 \
       -v "admin_user_id=${ADMIN_USER_ID}" \
@@ -304,5 +313,5 @@ run_seed_sql immersion immersion "$ROOT/scripts/dev/seed/profile.sql"
 run_seed_sql immersion immersion "$ROOT/scripts/dev/seed/content.sql"
 
 echo "dev seed complete"
-echo "admin: ${ADMIN_EMAIL} / ${ADMIN_PASSWORD}"
-echo "reader: ${READER_EMAIL} / ${READER_PASSWORD}"
+echo "admin: ${ADMIN_EMAIL}"
+echo "reader: ${READER_EMAIL}"

@@ -1,0 +1,111 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  annotations:
+    argocd.argoproj.io/sync-wave: "-30"
+  name: tdk-dev-tadoku-api
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    argocd.argoproj.io/sync-wave: "20"
+  name: tadoku-api
+  namespace: tdk-dev-tadoku-api
+  labels:
+    app: tadoku-api
+spec:
+  replicas: 1
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: tadoku-api
+  template:
+    metadata:
+      labels:
+        app: tadoku-api
+    spec:
+      containers:
+        - name: tadoku-api
+          image: tadoku-api-image
+          resources:
+            requests: {cpu: 25m, memory: 64Mi}
+            limits: {cpu: "1", memory: 256Mi}
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8000
+            - name: metrics
+              containerPort: 9090
+          env:
+            - {name: API_PORT, value: "8000"}
+            - {name: API_METRICS_PORT, value: "9090"}
+            - {name: API_SERVICE_NAME, value: tadoku-api}
+            - {name: API_JWKS, value: "http://oathkeeper-api.tdk-dev-oathkeeper:4456/.well-known/jwks.json"}
+            - {name: API_KETO_READ_URL, value: "http://keto-read.tdk-dev-keto:4466"}
+            - {name: API_KETO_WRITE_URL, value: "http://keto-write.tdk-dev-keto:4467"}
+            - {name: API_KETO_WRITE_TIMEOUT, value: "2s"}
+            - name: API_OATHKEEPER_AUTHZ_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: dev-oathkeeper-authz
+                  key: token
+            - {name: API_KRATOS_ADMIN_URL, value: "http://kratos-admin.tdk-dev-kratos"}
+            - {name: API_KRATOS_TIMEOUT, value: "2s"}
+            - {name: API_CONTENT_URL, value: "http://content-api.tdk-dev-content-api"}
+            - {name: API_IMMERSION_URL, value: "http://immersion-api.tdk-dev-immersion-api"}
+            - {name: API_PROFILE_URL, value: "http://profile-api.tdk-dev-profile-api"}
+            - {name: API_POSTGRES_HOST, value: tadoku-dev-db.tdk-dev-data.svc.cluster.local}
+            - {name: API_POSTGRES_DATABASE, value: immersion}
+            - {name: API_POSTGRES_SSLMODE, value: require}
+            - {name: API_POSTGRES_MAX_CONNECTIONS, value: "4"}
+            - {name: API_VALKEY_URL, value: "redis://valkey.tdk-dev-data:6379"}
+            - {name: API_VALKEY_TIMEOUT, value: "1s"}
+            - name: API_POSTGRES_USER
+              valueFrom: {secretKeyRef: {name: immersion.tadoku-dev-db.credentials.postgresql.acid.zalan.do, key: username}}
+            - name: API_POSTGRES_PASSWORD
+              valueFrom: {secretKeyRef: {name: immersion.tadoku-dev-db.credentials.postgresql.acid.zalan.do, key: password}}
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            initialDelaySeconds: 2
+            periodSeconds: 3
+          livenessProbe:
+            httpGet:
+              path: /livez
+              port: http
+            initialDelaySeconds: 2
+            periodSeconds: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tadoku-api
+  namespace: tdk-dev-tadoku-api
+  labels:
+    app: tadoku-api
+    service: tadoku-api
+spec:
+  ports:
+    - port: 80
+      targetPort: http
+      name: http
+  selector:
+    app: tadoku-api
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tadoku-api-metrics
+  namespace: tdk-dev-tadoku-api
+  labels:
+    app: tadoku-api
+    service: tadoku-api-metrics
+spec:
+  ports:
+    - port: 9090
+      targetPort: metrics
+      name: metrics
+  selector:
+    app: tadoku-api

@@ -1,0 +1,26 @@
+# Development only. This is the one shared server for base and branch databases.
+apiVersion: acid.zalan.do/v1
+kind: postgresql
+metadata:
+  name: tadoku-dev-db
+  annotations:
+    argocd.argoproj.io/sync-wave: "-20"
+    argocd.argoproj.io/sync-options: Prune=false,Delete=false
+spec:
+  teamId: tadoku
+  numberOfInstances: 1
+  users:
+    immersion: []
+    kratos: []
+    keto: []
+  databases:
+    immersion: immersion
+    kratos: kratos
+    keto: keto
+  postgresql:
+    version: "17"
+  volume:
+    size: 2Gi
+  resources:
+    requests: {cpu: 250m, memory: 512Mi}
+    limits: {cpu: "1", memory: 1Gi}

@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: keto-read
+spec:
+  selector: {app: keto}
+  ports: [{name: http, port: 4466, targetPort: 4466}]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: keto-write
+spec:
+  selector: {app: keto}
+  ports: [{name: http, port: 4467, targetPort: 4467}]

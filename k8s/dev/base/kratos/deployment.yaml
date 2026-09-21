@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kratos
+spec:
+  replicas: 1
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels: {app: kratos}
+  template:
+    metadata:
+      labels: {app: kratos}
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: kratos
+          image: docker.io/oryd/kratos:v26.2.0
+          args: [serve, --config, /etc/config/kratos.yaml, --watch-courier]
+          env:
+            - {name: DSN, value: "postgres://kratos@tadoku-dev-db.tdk-dev-data.svc.cluster.local:5432/kratos?sslmode=require"}
+            - name: PGPASSWORD
+              valueFrom: {secretKeyRef: {name: kratos.tadoku-dev-db.credentials.postgresql.acid.zalan.do, key: password}}
+            - name: SECRETS_DEFAULT
+              valueFrom: {secretKeyRef: {name: kratos-runtime, key: secret}}
+          ports:
+            - {name: public, containerPort: 4433}
+            - {name: admin, containerPort: 4434}
+          readinessProbe:
+            httpGet: {path: /health/ready, port: 4434}
+          livenessProbe:
+            httpGet: {path: /health/alive, port: 4434}
+          resources:
+            requests: {cpu: 25m, memory: 64Mi}
+            limits: {cpu: 500m, memory: 256Mi}
+          volumeMounts:
+            - {name: config, mountPath: /etc/config, readOnly: true}
+      volumes:
+        - name: config
+          configMap: {name: kratos-config}

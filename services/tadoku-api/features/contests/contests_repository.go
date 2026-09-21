@@ -96,28 +96,24 @@ func (r *ContestsRepository) ListOngoingRegistrations(ctx context.Context, userI
 
 	result := make([]Registration, 0, len(rows))
 	for _, row := range rows {
-		registration := Registration{
-			ID:              uuid.UUID(row.ID.Bytes),
-			ContestID:       uuid.UUID(row.ContestID.Bytes),
-			UserID:          uuid.UUID(row.UserID.Bytes),
-			UserDisplayName: row.UserDisplayName,
-			LanguageCodes:   row.LanguageCodes,
-			Contest: &ContestView{
-				ID:                   uuid.UUID(row.ContestID.Bytes),
-				ContestStart:         row.ContestStart.Time,
-				ContestEnd:           row.ContestEnd.Time,
-				RegistrationEnd:      row.RegistrationEnd.Time,
-				Title:                row.Title,
-				Description:          nullableString(row.Description),
-				OwnerUserID:          uuid.UUID(row.OwnerUserID.Bytes),
-				OwnerUserDisplayName: row.OwnerUserDisplayName,
-				Official:             row.Official,
-				Private:              row.Private,
-				AllowedLanguages:     []Language{},
-				AllowedActivities:    make([]Activity, 0, len(row.ActivityTypeIDAllowList)),
-				allowedActivityIDs:   row.ActivityTypeIDAllowList,
-			},
-		}
+		registration := registrationFromRow(queries.ListYearlyContestRegistrationsRow{
+			ID:                      row.ID,
+			ContestID:               row.ContestID,
+			UserID:                  row.UserID,
+			LanguageCodes:           row.LanguageCodes,
+			UserDisplayName:         row.UserDisplayName,
+			ActivityTypeIDAllowList: row.ActivityTypeIDAllowList,
+			RegistrationEnd:         row.RegistrationEnd,
+			ContestStart:            row.ContestStart,
+			ContestEnd:              row.ContestEnd,
+			Private:                 row.Private,
+			Official:                row.Official,
+			Title:                   row.Title,
+			Description:             row.Description,
+		})
+		registration.Contest.OwnerUserID = uuid.UUID(row.OwnerUserID.Bytes)
+		registration.Contest.OwnerUserDisplayName = row.OwnerUserDisplayName
+
 		result = append(result, registration)
 	}
 
@@ -141,27 +137,7 @@ func (r *ContestsRepository) ListYearlyRegistrations(ctx context.Context, userID
 
 	result := make([]Registration, 0, len(rows))
 	for _, row := range rows {
-		registration := Registration{
-			ID:              uuid.UUID(row.ID.Bytes),
-			ContestID:       uuid.UUID(row.ContestID.Bytes),
-			UserID:          uuid.UUID(row.UserID.Bytes),
-			UserDisplayName: row.UserDisplayName,
-			LanguageCodes:   row.LanguageCodes,
-			Contest: &ContestView{
-				ID:                 uuid.UUID(row.ContestID.Bytes),
-				ContestStart:       row.ContestStart.Time,
-				ContestEnd:         row.ContestEnd.Time,
-				RegistrationEnd:    row.RegistrationEnd.Time,
-				Title:              row.Title,
-				Description:        nullableString(row.Description),
-				Official:           row.Official,
-				Private:            row.Private,
-				AllowedLanguages:   []Language{},
-				AllowedActivities:  make([]Activity, 0, len(row.ActivityTypeIDAllowList)),
-				allowedActivityIDs: row.ActivityTypeIDAllowList,
-			},
-		}
-		result = append(result, registration)
+		result = append(result, registrationFromRow(row))
 	}
 
 	return result, nil
@@ -412,6 +388,29 @@ func (r *ContestsRepository) ListLanguages(ctx context.Context) ([]Language, err
 		result = append(result, Language{Code: row.Code, Name: row.Name})
 	}
 	return result, nil
+}
+
+func registrationFromRow(row queries.ListYearlyContestRegistrationsRow) Registration {
+	return Registration{
+		ID:              uuid.UUID(row.ID.Bytes),
+		ContestID:       uuid.UUID(row.ContestID.Bytes),
+		UserID:          uuid.UUID(row.UserID.Bytes),
+		UserDisplayName: row.UserDisplayName,
+		LanguageCodes:   row.LanguageCodes,
+		Contest: &ContestView{
+			ID:                 uuid.UUID(row.ContestID.Bytes),
+			ContestStart:       row.ContestStart.Time,
+			ContestEnd:         row.ContestEnd.Time,
+			RegistrationEnd:    row.RegistrationEnd.Time,
+			Title:              row.Title,
+			Description:        nullableString(row.Description),
+			Official:           row.Official,
+			Private:            row.Private,
+			AllowedLanguages:   []Language{},
+			AllowedActivities:  make([]Activity, 0, len(row.ActivityTypeIDAllowList)),
+			allowedActivityIDs: row.ActivityTypeIDAllowList,
+		},
+	}
 }
 
 func contestFromRow(row queries.FindContestByIDRow) Contest {

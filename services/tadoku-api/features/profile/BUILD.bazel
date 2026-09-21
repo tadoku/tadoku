@@ -1,0 +1,45 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "profile",
+    srcs = [
+        "domain.go",
+        "profile_cache.go",
+        "profile_service.go",
+    ],
+    importpath = "github.com/tadoku/tadoku/services/tadoku-api/features/profile",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//services/common/authz/roles",
+        "//services/common/client/kratos",
+        "//services/tadoku-api/internal/errx",
+        "//services/tadoku-api/internal/timex",
+        "@com_github_ory_kratos_client_go//:kratos-client-go",
+        "@com_github_sahilm_fuzzy//:fuzzy",
+    ],
+)
+
+go_test(
+    name = "profile_test",
+    size = "medium",
+    srcs = [
+        "profile_cache_test.go",
+        "profile_service_test.go",
+    ],
+    data = glob(["testdata/**"]),
+    embed = [":profile"],
+    tags = [
+        "no-cache",
+        "no-remote-exec",
+        "requires-network",
+    ],
+    target_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
+    deps = [
+        "//services/tadoku-api/internal/testkratos",
+        "//services/tadoku-api/internal/timex",
+        "@com_github_ory_kratos_client_go//:kratos-client-go",
+    ],
+)

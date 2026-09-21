@@ -13,9 +13,11 @@ type KratosClient struct {
 }
 
 func NewKratosClient(kratosURL string) *KratosClient {
-	return &KratosClient{
-		client: commonkratos.NewClient(kratosURL),
-	}
+	return NewKratosClientFromClient(commonkratos.NewClient(kratosURL))
+}
+
+func NewKratosClientFromClient(client *commonkratos.Client) *KratosClient {
+	return &KratosClient{client: client}
 }
 
 type Traits struct {

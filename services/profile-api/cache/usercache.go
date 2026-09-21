@@ -150,6 +150,12 @@ func (c *UserCache) refreshUsers(ctx context.Context) error {
 	return nil
 }
 
+// Refresh synchronously updates the production cache. Tests use this narrow
+// entrypoint after resetting real providers; normal runtime refreshes via Start.
+func (c *UserCache) Refresh(ctx context.Context) error {
+	return c.refreshUsers(ctx)
+}
+
 // SuppressAndEvict keeps an accepted deletion out of the cache immediately and
 // prevents an in-flight or later Kratos refresh from reintroducing it.
 func (c *UserCache) SuppressAndEvict(identityID uuid.UUID) {

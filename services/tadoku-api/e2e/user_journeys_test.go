@@ -114,6 +114,26 @@ func TestAuthorizationVisibilityJourney(t *testing.T) {
 	})
 }
 
+func TestUserListingJourney(t *testing.T) {
+	runJourney(t, api, "UserListing", []step{
+		{
+			request: "list_users",
+			as:      admin,
+			want:    http.StatusOK,
+			others: cast{
+				guest:  http.StatusUnauthorized,
+				user:   http.StatusForbidden,
+				banned: http.StatusForbidden,
+			},
+		},
+		{
+			request: "search_and_paginate",
+			as:      admin,
+			want:    http.StatusOK,
+		},
+	})
+}
+
 func TestAnnouncementLifecycleJourney(t *testing.T) {
 	afterExpiry := fixtureInstant.Add(8 * 24 * time.Hour)
 

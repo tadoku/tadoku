@@ -14,11 +14,22 @@ go_library(
 
 go_test(
     name = "permissions_test",
+    size = "medium",
     srcs = ["checker_test.go"],
     embed = [":permissions"],
+    tags = [
+        "no-cache",
+        "no-remote-exec",
+        "requires-network",
+    ],
+    target_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
     deps = [
         "//services/common/client/keto",
         "//services/tadoku-api/internal/errx",
         "//services/tadoku-api/internal/identity",
+        "//services/tadoku-api/internal/testketo",
     ],
 )

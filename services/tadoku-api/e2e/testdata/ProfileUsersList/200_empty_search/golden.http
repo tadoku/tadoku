@@ -1,0 +1,6 @@
+>>> GET /profile/users?query=nobody-matches
+HTTP/1.1 200 OK
+Content-Length: 28
+Content-Type: application/json; charset=UTF-8
+
+{"total_size":0,"users":[]}

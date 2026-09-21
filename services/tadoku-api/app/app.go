@@ -8,6 +8,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/features/languages"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/pages"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/posts"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/profile"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
 )
 
@@ -17,17 +18,19 @@ type Application struct {
 	languages     *languages.Service
 	pages         *pages.Service
 	posts         *posts.Service
+	profile       *profile.Service
 	db            *pgxpool.Pool
 	permissions   *permissions.Checker
 }
 
-func New(announcements *announcements.Service, authorization *authz.Service, languages *languages.Service, pages *pages.Service, posts *posts.Service, db *pgxpool.Pool, permissions *permissions.Checker) *Application {
+func New(announcements *announcements.Service, authorization *authz.Service, languages *languages.Service, pages *pages.Service, posts *posts.Service, profile *profile.Service, db *pgxpool.Pool, permissions *permissions.Checker) *Application {
 	return &Application{
 		announcements: announcements,
 		authorization: authorization,
 		languages:     languages,
 		pages:         pages,
 		posts:         posts,
+		profile:       profile,
 		db:            db,
 		permissions:   permissions,
 	}

@@ -245,6 +245,7 @@ func resetJourney(t *testing.T, s *suite, directory string) {
 	if err := s.keto.Reset(ctx, filepath.Join(journeysDir, "relationships.json"), filepath.Join(directory, "relationships.json")); err != nil {
 		t.Fatal(err)
 	}
+	s.resetProfileCaches()
 	s.proxied.Store(0)
 }
 

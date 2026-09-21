@@ -17,13 +17,16 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/prometheus/client_golang/prometheus"
+	commonroles "github.com/tadoku/tadoku/services/common/authz/roles"
 	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
+	kratosclient "github.com/tadoku/tadoku/services/common/client/kratos"
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/announcements"
 	featureauthz "github.com/tadoku/tadoku/services/tadoku-api/features/authz"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/languages"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/pages"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/posts"
+	featureprofile "github.com/tadoku/tadoku/services/tadoku-api/features/profile"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testketo"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testkratos"
@@ -34,6 +37,7 @@ import (
 var api *suite
 var legacyAuthz *legacyAuthzAPI
 var legacyContent *legacyContentAPI
+var legacyProfile *legacyProfileAPI
 var legacyImmersion *legacyImmersionAPI
 var legacyAuthentication http.Handler
 var legacyBannedUsers http.Handler
@@ -107,6 +111,12 @@ func runTests(m *testing.M) (code int) {
 		return 1
 	}
 	defer func() { cleanupErr = errors.Join(cleanupErr, legacyContent.db.Close()) }()
+	legacyProfile, err = newLegacyProfileAPI(ctx, api.db.DSN, authenticationJWKS.URL, keto.ReadURL(), kratos.CursorClient())
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	defer func() { cleanupErr = errors.Join(cleanupErr, legacyProfile.db.Close()) }()
 	legacyImmersion, err = newLegacyImmersionAPI(ctx, api.db.DSN, authenticationJWKS.URL, keto.ReadURL())
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -124,6 +134,8 @@ type suite struct {
 	keto    *testketo.Fixture
 	kratos  *testkratos.Fixture
 	handler *transport.Router
+	profile *featureprofile.Service
+	roles   *commonroles.KetoService
 	proxied atomic.Int32
 }
 
@@ -139,7 +151,7 @@ func newTestAPI(ctx context.Context, ketoFixture *testketo.Fixture, kratosFixtur
 		}
 	}()
 
-	handler, err := newTestRouter(ctx, db.Pool, ketoFixture.ReadURL())
+	handler, profileService, roleService, err := newTestRouter(ctx, db.Pool, ketoFixture.ReadURL(), kratosFixture.CursorClient())
 	if err != nil {
 		return nil, err
 	}
@@ -148,6 +160,8 @@ func newTestAPI(ctx context.Context, ketoFixture *testketo.Fixture, kratosFixtur
 		keto:    ketoFixture,
 		kratos:  kratosFixture,
 		handler: handler,
+		profile: profileService,
+		roles:   roleService,
 	}
 	if err := registerSentinelProxy(api); err != nil {
 		return nil, err
@@ -157,12 +171,12 @@ func newTestAPI(ctx context.Context, ketoFixture *testketo.Fixture, kratosFixtur
 	return api, nil
 }
 
-func newTestRouter(ctx context.Context, pool *pgxpool.Pool, ketoReadURL string) (*transport.Router, error) {
+func newTestRouter(ctx context.Context, pool *pgxpool.Pool, ketoReadURL string, identities *kratosclient.Client) (*transport.Router, *featureprofile.Service, *commonroles.KetoService, error) {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	return newTestRouterWithLogger(ctx, pool, ketoReadURL, logger)
+	return newTestRouterWithLogger(ctx, pool, ketoReadURL, identities, logger)
 }
 
-func newTestRouterWithLogger(ctx context.Context, pool *pgxpool.Pool, ketoReadURL string, logger *slog.Logger) (*transport.Router, error) {
+func newTestRouterWithLogger(ctx context.Context, pool *pgxpool.Pool, ketoReadURL string, identities *kratosclient.Client, logger *slog.Logger) (*transport.Router, *featureprofile.Service, *commonroles.KetoService, error) {
 	reader := ketoclient.NewReadClient(ketoReadURL)
 	permissionChecker := permissions.NewKetoChecker(reader)
 	authzService := featureauthz.NewService(permissionChecker)
@@ -174,21 +188,23 @@ func newTestRouterWithLogger(ctx context.Context, pool *pgxpool.Pool, ketoReadUR
 	languagesService := languages.NewService(languagesRepository)
 	pagesService := pages.NewService(pagesRepository)
 	postsService := posts.NewService(postsRepository)
-	application := app.New(announcementsService, authzService, languagesService, pagesService, postsService, pool, permissionChecker)
+	roleService := commonroles.NewKetoService(reader, "app", "tadoku")
+	profileService := featureprofile.NewService(featureprofile.NewUserCache(identities), roleService)
+	application := app.New(announcementsService, authzService, languagesService, pagesService, postsService, profileService, pool, permissionChecker)
 	authenticate, err := transport.NewJWTAuthentication(ctx, authenticationJWKS.URL, time.Second, 24*time.Hour, "http://oathkeeper-api/", logger)
 	if err != nil {
-		return nil, err
+		return nil, nil, nil, err
 	}
 	rejectBanned := transport.RejectBannedUsers(func(ctx context.Context, subjectID string) (bool, error) {
 		return reader.CheckPermission(ctx, "app", "tadoku", "banned", ketoclient.Subject{ID: subjectID})
 	}, logger)
 	handler, err := transport.NewHandler(application, pool.Ping, time.Second, prometheus.NewRegistry(), logger, authenticate, rejectBanned)
 	if err != nil {
-		return nil, fmt.Errorf("create API handler: %w", err)
+		return nil, nil, nil, fmt.Errorf("create API handler: %w", err)
 	}
 	handler.HandleFunc("GET /test/authentication", observeIdentity)
 	handler.HandleFunc("GET /test/banned", observeIdentity)
-	return handler, nil
+	return handler, profileService, roleService, nil
 }
 
 func registerSentinelProxy(s *suite) error {
@@ -234,12 +250,22 @@ func (s *suite) reset(t *testing.T, caseDir string) {
 			t.Fatal(err)
 		}
 	}
+	s.resetProfileCaches()
 	if s.keto != nil {
 		if err := s.keto.Reset(t.Context(), ketoSeeds...); err != nil {
 			t.Fatal(err)
 		}
 	}
 	s.proxied.Store(0)
+}
+
+func (s *suite) resetProfileCaches() {
+	if s.profile != nil {
+		*s.profile = *featureprofile.NewService(featureprofile.NewUserCache(s.kratos.CursorClient()), s.roles)
+	}
+	if legacyProfile != nil {
+		legacyProfile.resetCache()
+	}
 }
 
 func fixtureSeeds(caseDir, name string) []string {

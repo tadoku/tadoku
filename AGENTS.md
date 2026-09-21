@@ -94,7 +94,7 @@ Run the repository generator from the repository root. It downloads and runs the
 
 CI runs the same script on every pull request and fails if code generation changes the working tree. Before pushing, commit the complete generated output so this check stays clean.
 
-**Accept narrow interfaces** — define interfaces where they are used, with only the methods that consumer needs. Don't create wide/shared interfaces that bundle many methods together. Concrete implementations can be large, but each consumer should accept the smallest dependency possible. This follows Go's interface segregation principle and makes testing easier.
+**Prefer concrete dependencies in native Tadoku API** — pass concrete application-owned collaborators through constructors. Introduce a narrow consumer-owned interface only for a genuine provider or layer boundary with multiple implementations; do not add one solely to inject mocks. Exercise concrete providers through their boundary tests and HTTP E2Es.
 
 **Use "Repository" for persistent source-of-truth data, "Store" for everything else** — `Repository` interfaces access the primary database (Postgres) where authoritative data lives. `Store` interfaces access auxiliary storage (e.g. Valkey/Redis) for caches, derived data, pub/sub, coordination state, or any non-authoritative data. Implementations live under `storage/postgres/` and `storage/valkey/` respectively.
 

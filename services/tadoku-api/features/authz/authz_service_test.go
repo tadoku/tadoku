@@ -1,7 +1,6 @@
 package authz
 
 import (
-	"context"
 	"testing"
 
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
@@ -25,11 +24,7 @@ func TestCurrentUserRoleTreatsEmptySubjectAsGuest(t *testing.T) {
 func TestCurrentUserRoleBannedTakesPrecedence(t *testing.T) {
 	ctx := identity.WithUser(t.Context(), &identity.User{Subject: "admin"})
 	ctx = permissions.WithBanned(ctx)
-	adminLookups := 0
-	service := NewService(permissions.NewChecker(func(context.Context, string) (bool, error) {
-		adminLookups++
-		return true, nil
-	}))
+	service := NewService(permissions.NewKetoChecker(nil))
 
 	role, err := service.CurrentUserRole(ctx)
 	if err != nil {
@@ -37,9 +32,6 @@ func TestCurrentUserRoleBannedTakesPrecedence(t *testing.T) {
 	}
 	if role != RoleBanned {
 		t.Errorf("role = %q, want %q", role, RoleBanned)
-	}
-	if adminLookups != 0 {
-		t.Errorf("admin lookups = %d, want 0", adminLookups)
 	}
 }
 

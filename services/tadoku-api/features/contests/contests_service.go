@@ -92,7 +92,7 @@ func (s *Service) PrepareRegistrationUpsert(
 	parameters.userID = userID
 	parameters.id = uuid.New()
 
-	contest, err := s.contests.FindContestByID(ctx, FindParameters{ID: parameters.ContestID})
+	contest, allowedLanguages, err := s.findContestWithLanguages(ctx, parameters.ContestID, false)
 	if err != nil {
 		return parameters, err
 	}
@@ -113,9 +113,9 @@ func (s *Service) PrepareRegistrationUpsert(
 	if !exist {
 		return parameters, ErrInvalidRegistration
 	}
-	if len(contest.AllowedLanguages) > 0 {
-		allowed := make(map[string]struct{}, len(contest.AllowedLanguages))
-		for _, language := range contest.AllowedLanguages {
+	if len(allowedLanguages) > 0 {
+		allowed := make(map[string]struct{}, len(allowedLanguages))
+		for _, language := range allowedLanguages {
 			allowed[language.Code] = struct{}{}
 		}
 		for _, code := range parameters.LanguageCodes {

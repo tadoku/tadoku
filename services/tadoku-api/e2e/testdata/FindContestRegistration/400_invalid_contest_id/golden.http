@@ -1,6 +1,6 @@
 >>> GET /immersion/contests/not-a-uuid/registration
 HTTP/1.1 400 Bad Request
-Content-Length: 124
+Content-Length: 123
 Content-Type: application/json; charset=UTF-8
 
-{"message":"Invalid format for parameter id: error unmarshalling 'not-a-uuid' text as *uuid.UUID: invalid UUID length: 10"}
+{"message":"Invalid format for parameter id: error unmarshaling 'not-a-uuid' text as *uuid.UUID: invalid UUID length: 10"}

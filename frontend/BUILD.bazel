@@ -3,6 +3,20 @@ load("@rules_pkg//pkg:mappings.bzl", "pkg_attributes", "pkg_files", "strip_prefi
 load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
 load("//.dev:deployable.bzl", "dev_deployable")
 
+# Image startup and DevCLI's initial dependency sync may overlap. BusyBox flock
+# serializes writes to node_modules and releases the lock if either process exits.
+_WEBV2_DEV_INSTALL = [
+    "flock",
+    "/tmp/tadoku-pnpm-install.lock",
+    "pnpm",
+    "install",
+    "--frozen-lockfile",
+    "--network-concurrency=4",
+    "--child-concurrency=1",
+]
+
+_WEBV2_DEV_COMMAND = " ".join(_WEBV2_DEV_INSTALL) + " && exec pnpm --filter webv2 dev"
+
 filegroup(
     name = "webv2_sources",
     srcs = glob(
@@ -53,7 +67,7 @@ pkg_tar(
 oci_image(
     name = "webv2_dev_image",
     base = "@tadoku_dev_node_linux_amd64",
-    cmd = ["pnpm install --frozen-lockfile && exec pnpm --filter webv2 dev"],
+    cmd = [_WEBV2_DEV_COMMAND],
     entrypoint = [
         "/bin/sh",
         "-ec",
@@ -93,7 +107,7 @@ dev_deployable(
         "devCommand": [
             "/bin/sh",
             "-ec",
-            "pnpm install --frozen-lockfile && exec pnpm --filter webv2 dev",
+            _WEBV2_DEV_COMMAND,
         ],
         "sourceRoots": [
             "frontend/apps/webv2",
@@ -122,11 +136,7 @@ dev_deployable(
             "frontend/pnpm-lock.yaml",
             "frontend/pnpm-workspace.yaml",
         ],
-        "dependencyCommand": [
-            "pnpm",
-            "install",
-            "--frozen-lockfile",
-        ],
+        "dependencyCommand": _WEBV2_DEV_INSTALL,
     }),
     workload_template = "//.dev:webv2.yaml",
     deps = [

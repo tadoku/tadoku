@@ -1,4 +1,6 @@
-// Package activities defines the shared immersion activity catalog.
+// Package activities defines the immersion activity catalog shared by logs and
+// contests. It stays independent of both features so they can use the same
+// definitions without importing each other.
 package activities
 
 type ActivityInputType string

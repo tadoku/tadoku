@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 DB_NAME="tadoku-dev-db"
-DB_NAMESPACE="${TADOKU_DEV_NAMESPACE:-default}"
+DB_NAMESPACE="${TADOKU_DEV_NAMESPACE:-tdk-dev-data}"
 KUBE_CONTEXT="${TADOKU_DEV_CONTEXT:-homelab-dev}"
 ADMIN_EMAIL="${TADOKU_DEV_ADMIN_EMAIL:-dev@tadoku.app}"
 ADMIN_PASSWORD="${TADOKU_DEV_ADMIN_PASSWORD:-tadoku}"
@@ -96,6 +96,7 @@ seed_identity() {
     --env="SEED_EMAIL=${email}" \
     --env="SEED_DISPLAY_NAME=${display_name}" \
     --env="SEED_PASSWORD=${password}" \
+    --env="KRATOS_ADMIN_URL=${TADOKU_KRATOS_ADMIN_URL:-http://kratos-admin.tdk-dev-kratos}" \
     -- python - <<'PY'
 import json
 import os
@@ -144,8 +145,9 @@ while time.time() < deadline:
                 print(
                     f"error: identity {email} already exists but is not owned by the dev seed "
                     f"(missing metadata_admin.seeded_by={SEED_MARKER}); refusing to touch its credentials.\n"
-                    f"remediation: run `make dev-reset` for a clean database, or delete the identity "
-                    f"(or set metadata_admin.seeded_by={SEED_MARKER} on it) and rerun `make dev-seed`.",
+                    "remediation: inspect the conflicting identity; only after explicit approval, "
+                    "remove that disposable identity and rerun `make dev-seed`. Do not reset shared databases "
+                    "or add a seed ownership marker to an unrelated identity.",
                     file=sys.stderr,
                 )
                 sys.exit(2)
@@ -225,6 +227,7 @@ seed_keto_admin() {
     --restart=Never \
     --image=python:3.12-alpine \
     --env="SEED_SUBJECT_ID=${subject_id}" \
+    --env="KETO_WRITE_URL=${TADOKU_KETO_WRITE_URL:-http://keto-write.tdk-dev-keto:4467}" \
     -- python - <<'PY'
 import json
 import os

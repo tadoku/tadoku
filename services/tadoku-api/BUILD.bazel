@@ -60,7 +60,7 @@ dev_deployable(
     metadata = json.encode({
         "name": "tadoku-api",
         "kind": "backend",
-        "namespace": "tdk-tadoku-api",
+        "namespace": "tdk-dev-tadoku-api",
         "buildTarget": "//services/tadoku-api/cmd/tadoku-api",
         "imageTarget": "//services/tadoku-api:cli_image",
         "imageName": "tadoku-api",
@@ -70,15 +70,15 @@ dev_deployable(
         "servicePort": 80,
         "readinessPath": "/readyz",
         "publicPath": "/api/internal",
-        "internalHost": "tadoku-cli-api.default.svc.cluster.local",
+        "internalHost": "tadoku-cli-api.tdk-dev-oathkeeper.svc.cluster.local",
         "baseService": {
             "name": "tadoku-api",
-            "namespace": "tdk-tadoku-api",
+            "namespace": "tdk-dev-tadoku-api",
             "port": 80,
         },
         "publicProxy": {
-            "name": "tadoku-cli-oathkeeper",
-            "namespace": "default",
+            "name": "oathkeeper-proxy",
+            "namespace": "tdk-dev-oathkeeper",
             "port": 4455,
         },
         "devContainer": "tadoku-api",

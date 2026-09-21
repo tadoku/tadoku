@@ -76,7 +76,7 @@ dev_deployable(
     metadata = json.encode({
         "name": "webv2",
         "kind": "frontend",
-        "namespace": "default",
+        "namespace": "tdk-dev-frontend-webv2",
         "buildTarget": "//frontend:webv2_dev_image",
         "imageTarget": "//frontend:webv2_dev_image",
         "imageName": "webv2",
@@ -86,7 +86,7 @@ dev_deployable(
         "publicPath": "/",
         "baseService": {
             "name": "frontend-webv2",
-            "namespace": "default",
+            "namespace": "tdk-dev-frontend-webv2",
             "port": 3000,
         },
         "devContainer": "webv2",

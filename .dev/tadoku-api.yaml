@@ -10,23 +10,26 @@ spec:
         - name: API_SERVICE_NAME
           value: tadoku-api
         - name: API_JWKS
-          value: http://oathkeeper-api.default:4456/.well-known/jwks.json
+          value: http://oathkeeper-api.tdk-dev-oathkeeper:4456/.well-known/jwks.json
         - name: API_KETO_READ_URL
-          value: http://keto-read.default:4466
+          value: http://keto-read.tdk-dev-keto:4466
         - name: API_KETO_WRITE_URL
-          value: http://keto-write.default:4467
+          value: http://keto-write.tdk-dev-keto:4467
         - name: API_KRATOS_ADMIN_URL
-          value: http://kratos-admin.default
-        - name: API_AUTHZ_URL
-          value: http://authz-api.tdk-authz-api
+          value: http://kratos-admin.tdk-dev-kratos
+        - name: API_OATHKEEPER_AUTHZ_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: dev-oathkeeper-authz
+              key: token
         - name: API_CONTENT_URL
-          value: http://content-api.tdk-content-api
+          value: http://content-api.tdk-dev-content-api
         - name: API_IMMERSION_URL
-          value: http://immersion-api.tdk-immersion-api
+          value: http://immersion-api.tdk-dev-immersion-api
         - name: API_PROFILE_URL
-          value: http://profile-api.tdk-profile-api
+          value: http://profile-api.tdk-dev-profile-api
         - name: API_POSTGRES_HOST
-          value: tadoku-dev-db.default
+          value: tadoku-dev-db.tdk-dev-data
         - name: API_POSTGRES_DATABASE
           value: immersion-${DEV_ROUTE}
         - name: API_POSTGRES_SSLMODE
@@ -34,7 +37,7 @@ spec:
         - name: API_POSTGRES_MAX_CONNECTIONS
           value: "4"
         - name: API_VALKEY_URL
-          value: redis://valkey-immersion.default:6379
+          value: redis://valkey.tdk-dev-data:6379
         - name: API_POSTGRES_USER
           valueFrom:
             secretKeyRef:

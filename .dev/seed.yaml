@@ -15,7 +15,7 @@ spec:
           image: invalid.example/replace-through-dev-task
           env:
             - name: PGHOST
-              value: tadoku-dev-db.default
+              value: tadoku-dev-db.tdk-dev-data
             - name: PGDATABASE
               value: immersion-${DEV_ROUTE}
             - name: PGSSLMODE

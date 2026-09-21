@@ -47,7 +47,7 @@ spec:
             - name: DEV_ROUTE
               value: ${DEV_ROUTE}
             - name: PGHOST
-              value: tadoku-dev-db.default
+              value: tadoku-dev-db.tdk-dev-data
             - name: PGDATABASE
               value: postgres
             - name: PGSSLMODE

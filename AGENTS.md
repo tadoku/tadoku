@@ -145,15 +145,17 @@ bazel build //services/... && bazel test //services/...
 
 Use DevCLI for frontend/native API development; `.dev/README.md` owns its workflow.
 The real, non-secret Homelab configuration is committed in `.dev/config.yaml` and
-`k8s/dev/dev-cli/`. Keep credentials, private keys and kube access details outside
+`k8s/dev/base/`. This is development-only GitOps, not the production deployment.
+Keep credentials, private keys and kube access details outside
 Git; manifests may reference existing Secrets and include the public Lab CA.
 Use an ignored local file with `dev <command> --config <path>` for overrides.
-Legacy Tilt files remain for the existing base stack; do not run Tilt concurrently
-with DevCLI, because its old Ingress definitions can overwrite the gateway entrypoints.
+Legacy Tilt and `k8s/dev/dev-cli/` pilot files are historical; do not apply them
+alongside the fresh base. Follow `k8s/dev/base/README.md` for activation, automatic
+migrations, credential bootstrap and explicitly approved old-stack cleanup.
 
 Dev Postgres is provisioned with the Zalando `postgresql` custom resource. Do not add or reintroduce hand-rolled Postgres Deployments or Helm releases for the dev stack.
 
-Use `make dev-seed` (`scripts/dev/seed-db.sh`) to rerun the idempotent seed data and `make dev-reset` (`scripts/dev/reset-env.sh`) for a destructive database reset; both are also exposed as `dev-seed`/`dev-reset` Tilt resources.
+Use `make dev-seed` (`scripts/dev/seed-db.sh`) to rerun idempotent seed data. `make dev-reset` is disabled: the historical Tilt reset targets the old shared stack. Use `dev down` for overlays; any database deletion requires an explicitly approved, scoped runbook.
 
 ## Commit Guidelines
 

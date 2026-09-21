@@ -19,7 +19,7 @@ spec:
             - up
           env:
             - name: POSTGRES_HOST
-              value: tadoku-dev-db.default
+              value: tadoku-dev-db.tdk-dev-data
             - name: POSTGRES_DATABASE
               value: immersion-${DEV_ROUTE}
             - name: POSTGRES_SSLMODE

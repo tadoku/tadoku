@@ -4,6 +4,11 @@ Develop **webv2 (Next.js/pnpm)** and **native tadoku-api** at
 **https://tadoku.dev.lab**. The committed `.dev/config.yaml` is the real Homelab
 configuration; no hostname substitution is needed.
 
+The configuration now targets the fresh `tdk-dev-*` GitOps base. Activation is
+still gated on repository credentials and an approved old-stack cutover; it is
+not compatible with the old Tilt namespaces. See
+[`k8s/dev/base/README.md`](../k8s/dev/base/README.md) before first use.
+
 ## Start working
 
 Install a CLI revision containing YAML support (merged in antonve/dev-cli#16):
@@ -49,7 +54,7 @@ the loop to add services. `--no-watch` does not provide live updates.
 
 ## One Postgres pod, branch databases
 
-The existing operator-managed `default/tadoku-dev-db` is the only required
+The operator-managed `tdk-dev-data/tadoku-dev-db` is the only required
 Postgres cluster. Base `immersion`, `kratos`, and `keto` databases stay shared.
 Each native overlay uses `immersion-<owner-and-branch-route>` on that same server.
 The route contains a collision-resistant hash. No branch creates another
@@ -81,45 +86,36 @@ consistent data across services otherwise using base data.
 **Branch databases are retained**, also after overlay TTL cleanup. No automatic
 SQL-drop operation exists. Deletion requires inspecting the exact database and
 ownership, then separate authorization. Never drop shared `immersion`,
-`kratos`, or `keto`. `make dev-reset` is the old destructive whole-stack reset,
-not part of this workflow.
+`kratos`, or `keto`. `make dev-reset` is disabled; any reset needs an explicitly
+approved, scoped runbook, not the historical Tilt reset script.
 
 ## Shared setup and routing
 
-The existing base workloads, Postgres operator, Secrets and Envoy Gateway must
-already exist. `k8s/dev/dev-cli/` configures their canonical development
-entrypoint, reusing base frontend/API Services and the existing TLS Secret.
+Argo CD reconciles the development-only base from `k8s/dev/base/`, including
+automatic migration Jobs, base workloads and canonical routing. The platform
+Postgres operator and Envoy Gateway must already exist. Homelab owns the Argo
+Application and development Image Updater; Tadoku's existing CI publishes the
+GHCR base images. Development Image Updater follows `latest` by digest.
 
 ```text
 browser → ingress-nginx → Envoy → webv2
                              → Oathkeeper → Envoy → native API
 ```
 
-The development Oathkeeper references existing signing credentials and auth
+The development Oathkeeper references development-only signing credentials and auth
 providers. It propagates Envoy's normalized branch header internally. Browser
 cookie selection wins over supplied routing headers. Each service independently
 selects its healthy overlay or base. The canonical hostname is already allowed
 by Kratos, so no temporary auth allowlist is required.
 
-Operators stage backends before handing over the existing canonical Ingresses:
-
-```sh
-kubectl --context homelab-dev apply --dry-run=server -k k8s/dev/dev-cli
-kubectl --context homelab-dev apply -f k8s/dev/dev-cli/base.yaml
-kubectl --context homelab-dev -n default rollout status deployment/tadoku-cli-oathkeeper
-kubectl --context homelab-dev -n tadoku-dev-cli get httproute
-# Require current-generation Accepted/ResolvedRefs and test gateway traffic.
-kubectl --context homelab-dev apply -f k8s/dev/dev-cli/ingress.yaml
-kubectl --context homelab-dev -n default patch deployment frontend-webv2 --type=strategic --patch-file k8s/dev/dev-cli/frontend-base-patch.yaml
-kubectl --context homelab-dev -n default rollout status deployment/frontend-webv2
-```
-
-Do not run Tilt concurrently: its old Ingress definitions can overwrite these
-entrypoints and base environment. The versioned frontend patch preserves its
-published image while sending SSR through the same gateway with Lab CA trust;
-without it, API-only selections would use base API data during SSR.
-Legacy Tilt files still describe the existing base; full retirement
-and Argo ownership are separate work. Production remains unchanged.
+Operators must follow the fresh-base bootstrap and explicit cutover gates in
+the base README. Full Argo syncs run migrations before dependent workloads;
+selective resource sync skips hooks and must not be used for releases.
+Do not run Tilt concurrently or apply the historical `k8s/dev/dev-cli/` pilot
+manifests. Both can conflict with the new base's canonical routes. Base and branch
+frontends send SSR through the same gateway with Lab CA trust, preserving API-only
+branch selection. Old resources and data must not be deleted without explicit
+approval. Production remains unchanged.
 Only the public CA and Secret references are committed, never private keys,
 kubeconfigs, tokens or plaintext Secrets.
 

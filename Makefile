@@ -7,7 +7,8 @@ dev-down:
 	dev down
 
 dev-reset:
-	./scripts/dev/reset-env.sh
+	@echo 'dev-reset is disabled: the legacy reset targets the old shared stack. Use dev down for overlay cleanup; database deletion requires an explicitly approved, scoped runbook.' >&2
+	@exit 1
 
 dev-seed:
 	./scripts/dev/seed-db.sh

@@ -36,7 +36,10 @@ startup; branch databases survive `dev down`. Kratos and Keto stay shared.
 The existing seeder provides `dev@tadoku.app` and `reader@tadoku.app` with the
 development fixture password `tadoku`, unless overridden outside Git.
 
-Legacy Tilt files remain for base infrastructure; do not run Tilt concurrently
-with DevCLI because it can replace canonical routing. Full base GitOps adoption
-is separate work. `make dev-reset` is a destructive shared-database reset, not
-normal branch cleanup.
+The fresh **development-only** base is defined in
+[`k8s/dev/base/`](k8s/dev/base/README.md) for Argo CD, with automatic migrations
+and existing GHCR images tracked by development Image Updater. Its activation
+still requires repository credentials and an approved cutover from the old Tilt
+stack. The configuration in this branch targets the new `tdk-dev-*` namespaces.
+Do not run Tilt concurrently or apply the historical pilot manifests.
+`make dev-reset` is disabled; any reset needs an explicitly approved, scoped runbook.

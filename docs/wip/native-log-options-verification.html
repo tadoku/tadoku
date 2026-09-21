@@ -45,8 +45,8 @@ git diff --exit-code</pre>
 <p>Resource limits used in this container: Bazel JVM heap <code>768m</code>, <code>ActiveProcessorCount=2</code>, <code>--jobs=2</code> and <code>--local_resources=memory=2048</code>. The initial generation attempts were interrupted during container memory/I/O pressure; resumed checks completed. The complete generated diff is retained, and final OpenAPI/Gazelle drift checks left the tree clean.</p>
 <p>To intentionally rerecord existing goldens, unset <code>CI</code>, set <code>TADOKU_GOLDEN_SOURCE_ROOT</code> to the absolute fixture directory above, and add <code>--test_arg=-update-goldens</code> to the focused command. Review the complete resulting diff, then run again without update mode.</p>
 <details><summary>Final named HTTP parity output — 50 comparisons</summary><pre>INFO: Invocation ID: 7f003168-e2ac-44df-8f64-4dc2078c5519
-Computing main repo mapping: 
-Loading: 
+Computing main repo mapping:
+Loading:
 Loading: 0 packages loaded
 Analyzing: target //services/tadoku-api/e2e:e2e_test (0 packages loaded, 0 targets configured)
 Analyzing: target //services/tadoku-api/e2e:e2e_test (0 packages loaded, 0 targets configured)
@@ -223,8 +223,8 @@ Executed 1 out of 1 test: 1 test passes.
 There were tests whose specified size is too big. Use the --test_verbose_timeout_warnings command line option to see which ones these are.
 </pre></details>
 <details><summary>Final services test output — 47 passing targets</summary><pre>INFO: Invocation ID: 3de24f66-30fe-4a11-bd94-00c8575568bc
-Computing main repo mapping: 
-Loading: 
+Computing main repo mapping:
+Loading:
 Loading: 0 packages loaded
 Analyzing: 229 targets (0 packages loaded, 0 targets configured)
 Analyzing: 229 targets (0 packages loaded, 0 targets configured)
@@ -289,8 +289,8 @@ Executed 1 out of 47 tests: 47 tests pass.
 There were tests whose specified size is too big. Use the --test_verbose_timeout_warnings command line option to see which ones these are.
 </pre></details>
 <details><summary>Final build output</summary><pre>INFO: Invocation ID: 3017be37-56c6-488f-bf90-ea363fbf844f
-Computing main repo mapping: 
-Loading: 
+Computing main repo mapping:
+Loading:
 Loading: 0 packages loaded
 Analyzing: 229 targets (0 packages loaded, 0 targets configured)
 Analyzing: 229 targets (0 packages loaded, 0 targets configured)

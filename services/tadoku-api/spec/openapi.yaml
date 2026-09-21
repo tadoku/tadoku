@@ -1334,9 +1334,11 @@ paths:
                 $ref: "#/components/schemas/ImmersionLogs"
         "404":
           description: not found
+        "500":
+          description: log list could not be fetched
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /contests/{id}/logs
       x-legacy-operation-id: contestListLogs
   "/immersion/contests/{id}/moderation/detach/{log_id}":
@@ -1658,9 +1660,11 @@ paths:
                 $ref: "#/components/schemas/ImmersionLog"
         "404":
           description: not found
+        "500":
+          description: log could not be fetched
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /logs/{id}
       x-legacy-operation-id: logFindByID
     delete:
@@ -1994,9 +1998,11 @@ paths:
                 $ref: "#/components/schemas/ImmersionLogs"
         "404":
           description: not found
+        "500":
+          description: log list could not be fetched
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /users/{user_id}/logs
       x-legacy-operation-id: profileListLogs
   "/immersion/users/{userId}/contest-registrations/{year}":

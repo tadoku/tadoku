@@ -160,3 +160,45 @@ func (s *Service) ContestScores(ctx context.Context, userID, contestID uuid.UUID
 func (s *Service) ContestActivity(ctx context.Context, userID, contestID uuid.UUID) ([]ContestActivity, error) {
 	return s.logs.ContestActivity(ctx, userID, contestID)
 }
+
+func (s *Service) FindLog(ctx context.Context, id uuid.UUID, includeDeleted bool) (*Log, error) {
+	log, err := s.logs.FindLog(ctx, id, includeDeleted)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Registrations, err = s.logs.AttachedRegistrations(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if err := hydrateLogActivity(log); err != nil {
+		return nil, err
+	}
+	return log, nil
+}
+
+func (s *Service) ListUserLogs(ctx context.Context, parameters ListParameters) (*LogList, error) {
+	result, err := s.logs.ListUserLogs(ctx, parameters.normalized())
+	if err != nil {
+		return nil, err
+	}
+	for i := range result.Logs {
+		if err := hydrateLogActivity(&result.Logs[i]); err != nil {
+			return nil, err
+		}
+	}
+	return result, nil
+}
+
+func (s *Service) ListContestLogs(ctx context.Context, parameters ListParameters) (*LogList, error) {
+	result, err := s.logs.ListContestLogs(ctx, parameters.normalized())
+	if err != nil {
+		return nil, err
+	}
+	for i := range result.Logs {
+		if err := hydrateLogActivity(&result.Logs[i]); err != nil {
+			return nil, err
+		}
+	}
+	return result, nil
+}

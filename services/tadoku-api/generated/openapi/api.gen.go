@@ -1063,6 +1063,14 @@ type ImmersionContestListParams struct {
 	UserId         *openapi_types.UUID `form:"user_id,omitempty" json:"user_id,omitempty"`
 }
 
+// ImmersionContestListLogsParams defines parameters for ImmersionContestListLogs.
+type ImmersionContestListLogsParams struct {
+	IncludeDeleted *bool               `form:"include_deleted,omitempty" json:"include_deleted,omitempty"`
+	PageSize       *int                `form:"page_size,omitempty" json:"page_size,omitempty"`
+	Page           *int                `form:"page,omitempty" json:"page,omitempty"`
+	UserId         *openapi_types.UUID `form:"user_id,omitempty" json:"user_id,omitempty"`
+}
+
 // ImmersionContestRegistrationUpsertJSONBody defines parameters for ImmersionContestRegistrationUpsert.
 type ImmersionContestRegistrationUpsertJSONBody struct {
 	LanguageCodes []string `json:"language_codes"`
@@ -1076,6 +1084,13 @@ type ImmersionLanguageUpdateJSONBody struct {
 // ImmersionLogTagSuggestionsParams defines parameters for ImmersionLogTagSuggestions.
 type ImmersionLogTagSuggestionsParams struct {
 	Query *string `form:"query,omitempty" json:"query,omitempty"`
+}
+
+// ImmersionProfileListLogsParams defines parameters for ImmersionProfileListLogs.
+type ImmersionProfileListLogsParams struct {
+	IncludeDeleted *bool `form:"include_deleted,omitempty" json:"include_deleted,omitempty"`
+	PageSize       *int  `form:"page_size,omitempty" json:"page_size,omitempty"`
+	Page           *int  `form:"page,omitempty" json:"page,omitempty"`
 }
 
 // ProfileUsersListParams defines parameters for ProfileUsersList.
@@ -1215,6 +1230,9 @@ type ServerInterface interface {
 	// ImmersionContestFindByID Fetches a contest by id
 	// (GET /immersion/contests/{id})
 	ImmersionContestFindByID(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// ImmersionContestListLogs Lists the logs attached to a contest
+	// (GET /immersion/contests/{id}/logs)
+	ImmersionContestListLogs(w http.ResponseWriter, r *http.Request, id openapi_types.UUID, params ImmersionContestListLogsParams)
 	// ImmersionContestProfileFetchActivity Fetches the activity of a user profile in a contest
 	// (GET /immersion/contests/{id}/profile/{user_id}/activity)
 	ImmersionContestProfileFetchActivity(w http.ResponseWriter, r *http.Request, id openapi_types.UUID, userId openapi_types.UUID)
@@ -1245,6 +1263,9 @@ type ServerInterface interface {
 	// ImmersionLogTagSuggestions Fetches tag suggestions for autocomplete
 	// (GET /immersion/logs/tag-suggestions)
 	ImmersionLogTagSuggestions(w http.ResponseWriter, r *http.Request, params ImmersionLogTagSuggestionsParams)
+	// ImmersionLogFindByID Fetches a log by id
+	// (GET /immersion/logs/{id})
+	ImmersionLogFindByID(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
 	// ImmersionProfileYearlyActivitySplitByUserID Fetches a activity split summary of a user for a given year
 	// (GET /immersion/users/{userId}/activity-split/{year})
 	ImmersionProfileYearlyActivitySplitByUserID(w http.ResponseWriter, r *http.Request, userId openapi_types.UUID, year int)
@@ -1260,6 +1281,9 @@ type ServerInterface interface {
 	// ImmersionProfileYearlyScoresByUserID Fetches the scores of a user for a given year
 	// (GET /immersion/users/{userId}/scores/{year})
 	ImmersionProfileYearlyScoresByUserID(w http.ResponseWriter, r *http.Request, userId openapi_types.UUID, year int)
+	// ImmersionProfileListLogs Lists the logs of a user
+	// (GET /immersion/users/{user_id}/logs)
+	ImmersionProfileListLogs(w http.ResponseWriter, r *http.Request, userId openapi_types.UUID, params ImmersionProfileListLogsParams)
 	// ProfileUsersList Lists all users (admin only)
 	// (GET /profile/users)
 	ProfileUsersList(w http.ResponseWriter, r *http.Request, params ProfileUsersListParams)
@@ -2277,6 +2301,87 @@ func (siw *ServerInterfaceWrapper) ImmersionContestFindByID(w http.ResponseWrite
 	handler.ServeHTTP(w, r)
 }
 
+// ImmersionContestListLogs operation middleware
+func (siw *ServerInterfaceWrapper) ImmersionContestListLogs(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ImmersionContestListLogsParams
+
+	// ------------- Optional query parameter "include_deleted" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "include_deleted", r.URL.Query(), &params.IncludeDeleted, runtime.BindQueryParameterOptions{Type: "boolean", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "include_deleted"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "include_deleted", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page_size" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page_size", r.URL.Query(), &params.PageSize, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page_size"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page_size", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "user_id" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "user_id", r.URL.Query(), &params.UserId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "user_id"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "user_id", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ImmersionContestListLogs(w, r, id, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ImmersionContestProfileFetchActivity operation middleware
 func (siw *ServerInterfaceWrapper) ImmersionContestProfileFetchActivity(w http.ResponseWriter, r *http.Request) {
 
@@ -2526,6 +2631,32 @@ func (siw *ServerInterfaceWrapper) ImmersionLogTagSuggestions(w http.ResponseWri
 	handler.ServeHTTP(w, r)
 }
 
+// ImmersionLogFindByID operation middleware
+func (siw *ServerInterfaceWrapper) ImmersionLogFindByID(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ImmersionLogFindByID(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ImmersionProfileYearlyActivitySplitByUserID operation middleware
 func (siw *ServerInterfaceWrapper) ImmersionProfileYearlyActivitySplitByUserID(w http.ResponseWriter, r *http.Request) {
 
@@ -2683,6 +2814,74 @@ func (siw *ServerInterfaceWrapper) ImmersionProfileYearlyScoresByUserID(w http.R
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ImmersionProfileYearlyScoresByUserID(w, r, userId, year)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ImmersionProfileListLogs operation middleware
+func (siw *ServerInterfaceWrapper) ImmersionProfileListLogs(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "user_id" -------------
+	var userId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "user_id", r.PathValue("user_id"), &userId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "user_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ImmersionProfileListLogsParams
+
+	// ------------- Optional query parameter "include_deleted" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "include_deleted", r.URL.Query(), &params.IncludeDeleted, runtime.BindQueryParameterOptions{Type: "boolean", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "include_deleted"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "include_deleted", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page_size" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page_size", r.URL.Query(), &params.PageSize, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page_size"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page_size", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ImmersionProfileListLogs(w, r, userId, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -2902,15 +3101,18 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/{id}/registration", wrapper.ImmersionContestFindRegistration)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/immersion/contests/{id}/registration", wrapper.ImmersionContestRegistrationUpsert)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/{id}/summary", wrapper.ImmersionContestFetchSummary)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/{id}/logs", wrapper.ImmersionContestListLogs)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/{id}/profile/{user_id}/scores", wrapper.ImmersionContestProfileFetchScores)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/{id}/profile/{user_id}/activity", wrapper.ImmersionContestProfileFetchActivity)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/ongoing-registrations", wrapper.ImmersionContestFindOngoingRegistrations)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/configuration-options", wrapper.ImmersionContestGetConfigurations)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/logs/{id}", wrapper.ImmersionLogFindByID)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/logs/configuration-options", wrapper.ImmersionLogGetConfigurations)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/logs/tag-suggestions", wrapper.ImmersionLogTagSuggestions)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/users/{userId}/profile", wrapper.ImmersionProfileFindByUserID)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/users/{userId}/activity/{year}", wrapper.ImmersionProfileYearlyActivityByUserID)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/users/{userId}/scores/{year}", wrapper.ImmersionProfileYearlyScoresByUserID)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/users/{user_id}/logs", wrapper.ImmersionProfileListLogs)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/users/{userId}/contest-registrations/{year}", wrapper.ImmersionProfileYearlyContestRegistrationsByUserID)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/users/{userId}/activity-split/{year}", wrapper.ImmersionProfileYearlyActivitySplitByUserID)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/languages", wrapper.ImmersionLanguageList)
@@ -4029,6 +4231,45 @@ func (response ImmersionContestFindByID404Response) VisitImmersionContestFindByI
 	return nil
 }
 
+type ImmersionContestListLogsRequestObject struct {
+	Id     openapi_types.UUID `json:"id"`
+	Params ImmersionContestListLogsParams
+}
+
+type ImmersionContestListLogsResponseObject interface {
+	VisitImmersionContestListLogsResponse(w http.ResponseWriter) error
+}
+
+type ImmersionContestListLogs200JSONResponse ImmersionLogs
+
+func (response ImmersionContestListLogs200JSONResponse) VisitImmersionContestListLogsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImmersionContestListLogs404Response struct {
+}
+
+func (response ImmersionContestListLogs404Response) VisitImmersionContestListLogsResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type ImmersionContestListLogs500Response struct {
+}
+
+func (response ImmersionContestListLogs500Response) VisitImmersionContestListLogsResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
 type ImmersionContestProfileFetchActivityRequestObject struct {
 	Id     openapi_types.UUID `json:"id"`
 	UserId openapi_types.UUID `json:"user_id"`
@@ -4425,6 +4666,44 @@ func (response ImmersionLogTagSuggestions200JSONResponse) VisitImmersionLogTagSu
 	return err
 }
 
+type ImmersionLogFindByIDRequestObject struct {
+	Id openapi_types.UUID `json:"id"`
+}
+
+type ImmersionLogFindByIDResponseObject interface {
+	VisitImmersionLogFindByIDResponse(w http.ResponseWriter) error
+}
+
+type ImmersionLogFindByID200JSONResponse ImmersionLog
+
+func (response ImmersionLogFindByID200JSONResponse) VisitImmersionLogFindByIDResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImmersionLogFindByID404Response struct {
+}
+
+func (response ImmersionLogFindByID404Response) VisitImmersionLogFindByIDResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type ImmersionLogFindByID500Response struct {
+}
+
+func (response ImmersionLogFindByID500Response) VisitImmersionLogFindByIDResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
 type ImmersionProfileYearlyActivitySplitByUserIDRequestObject struct {
 	UserId openapi_types.UUID `json:"userId"`
 	Year   int                `json:"year"`
@@ -4603,6 +4882,45 @@ func (response ImmersionProfileYearlyScoresByUserID500Response) VisitImmersionPr
 	return nil
 }
 
+type ImmersionProfileListLogsRequestObject struct {
+	UserId openapi_types.UUID `json:"user_id"`
+	Params ImmersionProfileListLogsParams
+}
+
+type ImmersionProfileListLogsResponseObject interface {
+	VisitImmersionProfileListLogsResponse(w http.ResponseWriter) error
+}
+
+type ImmersionProfileListLogs200JSONResponse ImmersionLogs
+
+func (response ImmersionProfileListLogs200JSONResponse) VisitImmersionProfileListLogsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImmersionProfileListLogs404Response struct {
+}
+
+func (response ImmersionProfileListLogs404Response) VisitImmersionProfileListLogsResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type ImmersionProfileListLogs500Response struct {
+}
+
+func (response ImmersionProfileListLogs500Response) VisitImmersionProfileListLogsResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
 type ProfileUsersListRequestObject struct {
 	Params ProfileUsersListParams
 }
@@ -4733,6 +5051,9 @@ type StrictServerInterface interface {
 	// ImmersionContestFindByID Fetches a contest by id
 	// (GET /immersion/contests/{id})
 	ImmersionContestFindByID(ctx context.Context, request ImmersionContestFindByIDRequestObject) (ImmersionContestFindByIDResponseObject, error)
+	// ImmersionContestListLogs Lists the logs attached to a contest
+	// (GET /immersion/contests/{id}/logs)
+	ImmersionContestListLogs(ctx context.Context, request ImmersionContestListLogsRequestObject) (ImmersionContestListLogsResponseObject, error)
 	// ImmersionContestProfileFetchActivity Fetches the activity of a user profile in a contest
 	// (GET /immersion/contests/{id}/profile/{user_id}/activity)
 	ImmersionContestProfileFetchActivity(ctx context.Context, request ImmersionContestProfileFetchActivityRequestObject) (ImmersionContestProfileFetchActivityResponseObject, error)
@@ -4763,6 +5084,9 @@ type StrictServerInterface interface {
 	// ImmersionLogTagSuggestions Fetches tag suggestions for autocomplete
 	// (GET /immersion/logs/tag-suggestions)
 	ImmersionLogTagSuggestions(ctx context.Context, request ImmersionLogTagSuggestionsRequestObject) (ImmersionLogTagSuggestionsResponseObject, error)
+	// ImmersionLogFindByID Fetches a log by id
+	// (GET /immersion/logs/{id})
+	ImmersionLogFindByID(ctx context.Context, request ImmersionLogFindByIDRequestObject) (ImmersionLogFindByIDResponseObject, error)
 	// ImmersionProfileYearlyActivitySplitByUserID Fetches a activity split summary of a user for a given year
 	// (GET /immersion/users/{userId}/activity-split/{year})
 	ImmersionProfileYearlyActivitySplitByUserID(ctx context.Context, request ImmersionProfileYearlyActivitySplitByUserIDRequestObject) (ImmersionProfileYearlyActivitySplitByUserIDResponseObject, error)
@@ -4778,6 +5102,9 @@ type StrictServerInterface interface {
 	// ImmersionProfileYearlyScoresByUserID Fetches the scores of a user for a given year
 	// (GET /immersion/users/{userId}/scores/{year})
 	ImmersionProfileYearlyScoresByUserID(ctx context.Context, request ImmersionProfileYearlyScoresByUserIDRequestObject) (ImmersionProfileYearlyScoresByUserIDResponseObject, error)
+	// ImmersionProfileListLogs Lists the logs of a user
+	// (GET /immersion/users/{user_id}/logs)
+	ImmersionProfileListLogs(ctx context.Context, request ImmersionProfileListLogsRequestObject) (ImmersionProfileListLogsResponseObject, error)
 	// ProfileUsersList Lists all users (admin only)
 	// (GET /profile/users)
 	ProfileUsersList(ctx context.Context, request ProfileUsersListRequestObject) (ProfileUsersListResponseObject, error)
@@ -5690,6 +6017,33 @@ func (sh *strictHandler) ImmersionContestFindByID(w http.ResponseWriter, r *http
 	}
 }
 
+// ImmersionContestListLogs operation middleware
+func (sh *strictHandler) ImmersionContestListLogs(w http.ResponseWriter, r *http.Request, id openapi_types.UUID, params ImmersionContestListLogsParams) {
+	var request ImmersionContestListLogsRequestObject
+
+	request.Id = id
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ImmersionContestListLogs(ctx, request.(ImmersionContestListLogsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ImmersionContestListLogs")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ImmersionContestListLogsResponseObject); ok {
+		if err := validResponse.VisitImmersionContestListLogsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ImmersionContestProfileFetchActivity operation middleware
 func (sh *strictHandler) ImmersionContestProfileFetchActivity(w http.ResponseWriter, r *http.Request, id openapi_types.UUID, userId openapi_types.UUID) {
 	var request ImmersionContestProfileFetchActivityRequestObject
@@ -5967,6 +6321,32 @@ func (sh *strictHandler) ImmersionLogTagSuggestions(w http.ResponseWriter, r *ht
 	}
 }
 
+// ImmersionLogFindByID operation middleware
+func (sh *strictHandler) ImmersionLogFindByID(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	var request ImmersionLogFindByIDRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ImmersionLogFindByID(ctx, request.(ImmersionLogFindByIDRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ImmersionLogFindByID")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ImmersionLogFindByIDResponseObject); ok {
+		if err := validResponse.VisitImmersionLogFindByIDResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ImmersionProfileYearlyActivitySplitByUserID operation middleware
 func (sh *strictHandler) ImmersionProfileYearlyActivitySplitByUserID(w http.ResponseWriter, r *http.Request, userId openapi_types.UUID, year int) {
 	var request ImmersionProfileYearlyActivitySplitByUserIDRequestObject
@@ -6094,6 +6474,33 @@ func (sh *strictHandler) ImmersionProfileYearlyScoresByUserID(w http.ResponseWri
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ImmersionProfileYearlyScoresByUserIDResponseObject); ok {
 		if err := validResponse.VisitImmersionProfileYearlyScoresByUserIDResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ImmersionProfileListLogs operation middleware
+func (sh *strictHandler) ImmersionProfileListLogs(w http.ResponseWriter, r *http.Request, userId openapi_types.UUID, params ImmersionProfileListLogsParams) {
+	var request ImmersionProfileListLogsRequestObject
+
+	request.UserId = userId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ImmersionProfileListLogs(ctx, request.(ImmersionProfileListLogsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ImmersionProfileListLogs")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ImmersionProfileListLogsResponseObject); ok {
+		if err := validResponse.VisitImmersionProfileListLogsResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

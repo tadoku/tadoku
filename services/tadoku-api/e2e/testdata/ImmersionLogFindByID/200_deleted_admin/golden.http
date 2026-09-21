@@ -1,0 +1,6 @@
+>>> GET /immersion/logs/d4444444-4444-4444-8444-444444444444
+HTTP/1.1 200 OK
+Content-Length: 665
+Content-Type: application/json; charset=UTF-8
+
+{"activity":{"id":2,"input_type":"time_primary","name":"Listening"},"amount":5,"created_at":"2026-09-05T00:00:00Z","deleted":true,"duration_seconds":90,"id":"d4444444-4444-4444-8444-444444444444","language":{"code":"eng","name":"English"},"modifier":2,"registrations":[{"contest_end":"2026-09-30","contest_id":"f1111111-1111-4111-8111-111111111111","official":true,"owner_user_display_name":"Owner","registration_id":"e1111111-1111-4111-8111-111111111111","score":50,"title":"Detach fixture"}],"score":10,"tags":[],"unit_id":"00000000-0000-0000-0000-000000000000","unit_name":"","user_display_name":"Stored Reader","user_id":"11111111-1111-4111-8111-111111111111"}

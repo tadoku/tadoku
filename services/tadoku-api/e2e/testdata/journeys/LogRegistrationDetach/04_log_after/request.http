@@ -1,0 +1,3 @@
+GET /immersion/logs/d2222222-2222-4222-8222-222222222222 HTTP/1.1
+Host: api.test
+

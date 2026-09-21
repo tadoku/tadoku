@@ -68,13 +68,13 @@ shared ban lookup is inconclusive. `RequireAuthenticatedAllowingUnknownBan` is a
 explicit availability opt-out for read-only operations. Operations that mutate
 state must never use the fail-open variant.
 
-Response enrichment consumes the concrete shared authorization service from
-`services/common/authz/roles`. Batch facts are read for each request and are
-never treated as caller authorization; the operation still uses the permission
-checker for its own access decision and the shared HTTP ban gate still applies
-first. Native feature services accept concrete application collaborators by
-default. A narrow interface is reserved for a real provider or layer boundary,
-not as a seam for mock-only tests.
+Feature services consume concrete shared authorization fact and mutation
+services from `services/common/authz/roles`. Target facts are never treated as
+caller authorization; the operation still uses the permission checker for its
+own access decision and the shared HTTP ban gate still applies first. Batch facts
+are read for each request rather than cached. Native feature services accept
+concrete application collaborators by default. A narrow interface is reserved
+for a real provider or layer boundary, not as a seam for mock-only tests.
 
 Provider-backed read caches reuse the common provider client's cursor support,
 preserve provider order, read every cursor page and reject repeated continuation
@@ -226,10 +226,11 @@ the master rollout gate under separate release authorization before deployment.
 ### Raw Keto relationship primitive
 
 The composition root retains a concrete `*ketoclient.Client` from
-`services/common/client/keto` on `application.keto`. Pass concrete clients and
-shared application services explicitly into consumers. Existing ban/admin
-consumers receive the separate `NewReadClient` instance, which has no configured
-write API.
+`services/common/client/keto` on `application.keto`. The retained client feeds
+concrete relationship mutation services. The bounded `NewReadClient` instance
+feeds shared role facts, request ban checks and caller administrator checks, and
+has no configured write API. Pass concrete clients and shared application
+services explicitly into consumers.
 
 `keto.NewClient(readURL, writeURL, keto.WithHTTPClient(httpClient))` applies options
 to both APIs. The caller owns the HTTP client and transport. The two-argument
@@ -265,13 +266,15 @@ primitives return an error only, not separate HTTP response metadata.
 The total client timeout, any earlier caller deadline and caller cancellation
 bound requests, including response-body reads. No mutation retry loop is added;
 a timeout or cancellation does not establish whether Keto committed the write.
-Future migrations supply authorization, auditing and application consumers.
+Feature services remain responsible for authorization, auditing and operation
+ordering around these primitives.
 
 ### Raw Kratos primitive
 
 The composition root keeps a concrete `*kratosapi.APIClient` on its runtime
-`application.kratos` field, ready to pass explicitly into a future consumer's
-constructor. `services/common/client/kratos.NewAPIClient(baseURL, kratos.WithHTTPClient(httpClient))`
+`application.kratos` field and passes the production Kratos client into concrete
+consumers for identity reads.
+`services/common/client/kratos.NewAPIClient(baseURL, kratos.WithHTTPClient(httpClient))`
 constructs the pinned `github.com/ory/kratos-client-go` v0.11.1 SDK. It does not
 validate deployment configuration or own the supplied HTTP client. Tadoku API
 validates configuration and supplies a client with a total timeout using its

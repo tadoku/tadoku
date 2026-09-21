@@ -1,7 +1,12 @@
 // Package authz owns public authorization behavior.
 package authz
 
-import "github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
+import (
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
+)
 
 type Role string
 
@@ -10,6 +15,11 @@ const (
 	RoleBanned Role = "banned"
 	RoleUser   Role = "user"
 	RoleGuest  Role = "guest"
+)
+
+var (
+	ErrUserNotFound       = errx.NewNotFoundError("user not found")
+	ErrAdminRoleProtected = errx.NewForbiddenError("cannot modify role of an admin user")
 )
 
 type PermissionCheckParameters struct {
@@ -29,4 +39,39 @@ func (p PermissionCheckParameters) Validate() error {
 		return errx.NewInvalidInputError("relation is required")
 	}
 	return nil
+}
+
+type RoleUpdateParameters struct {
+	UserID uuid.UUID
+	Role   Role
+	Reason string
+}
+
+func (p RoleUpdateParameters) Validate() error {
+	if p.Role != RoleUser && p.Role != RoleBanned {
+		return errx.NewInvalidInputError("role must be 'user' or 'banned'")
+	}
+	if p.Reason == "" {
+		return errx.NewInvalidInputError("reason is required")
+	}
+	if len(p.Reason) > 1000 {
+		return errx.NewInvalidInputError("reason must be at most 1000 bytes")
+	}
+	return nil
+}
+
+type ModerationAction string
+
+const (
+	ModerationActionBanUser   ModerationAction = "ban_user"
+	ModerationActionUnbanUser ModerationAction = "unban_user"
+)
+
+type ModerationAudit struct {
+	ModeratorUserID uuid.UUID
+	Action          ModerationAction
+	TargetUserID    uuid.UUID
+	NewRole         Role
+	Description     string
+	CreatedAt       time.Time
 }

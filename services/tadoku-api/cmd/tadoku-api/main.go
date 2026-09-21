@@ -268,13 +268,20 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	}
 	ketoReader := ketoclient.NewReadClient(cfg.KetoReadURL, ketoclient.WithHTTPClient(ketoHTTP))
 	permissionChecker := permissions.NewKetoChecker(ketoReader)
-	authzService := featureauthz.NewService(permissionChecker)
+	roleService := commonroles.NewKetoService(ketoReader, "app", "tadoku")
+	authzRepository := featureauthz.NewAuthzRepository(pool)
+	authzService := featureauthz.NewService(
+		permissionChecker,
+		kratosIdentities,
+		roleService,
+		commonroles.NewKetoManager(keto, "app", "tadoku"),
+		authzRepository,
+	)
 	announcementsRepository := announcements.NewAnnouncementsRepository(pool)
 	languagesRepository := languages.NewLanguagesRepository(pool)
 	pagesRepository := pages.NewPagesRepository(pool)
 	postsRepository := posts.NewPostsRepository(pool)
 	userCache := profile.NewUserCache(kratosIdentities)
-	roleService := commonroles.NewKetoService(ketoReader, "app", "tadoku")
 	announcementsService := announcements.NewService(announcementsRepository)
 	languagesService := languages.NewService(languagesRepository)
 	pagesService := pages.NewService(pagesRepository)

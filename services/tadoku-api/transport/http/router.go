@@ -122,6 +122,7 @@ func NewHandler(
 		BaseRouter: router,
 		Middlewares: []openapi.MiddlewareFunc{
 			withJSONCharsetCompatibility,
+			withAuthzRoleUpdateEmptyBodyCompatibility,
 		},
 		ErrorHandlerFunc: func(w stdhttp.ResponseWriter, _ *stdhttp.Request, err error) {
 			writeJSON(w, stdhttp.StatusBadRequest, map[string]string{"message": err.Error()})

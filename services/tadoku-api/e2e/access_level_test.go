@@ -24,6 +24,7 @@ const (
 var operationAccess = map[string]accessLevel{
 	"AuthzPermissionCheck":          accessAuthenticated,
 	"AuthzRoleGet":                  accessPublic,
+	"AuthzRoleUpdate":               accessAdmin,
 	"ContentAnnouncementCreate":     accessAdmin,
 	"ContentAnnouncementDelete":     accessAdmin,
 	"ContentAnnouncementFindByID":   accessAdmin,
@@ -52,6 +53,7 @@ var operationAccess = map[string]accessLevel{
 
 var operationFixtures = map[string]string{
 	"AuthzPermissionCheck":        "AuthzPermissionCheck",
+	"AuthzRoleUpdate":             "AuthzRoleUpdate",
 	"ContentAnnouncementCreate":   "CreateAnnouncement",
 	"ContentAnnouncementDelete":   "DeleteAnnouncement",
 	"ContentAnnouncementFindByID": "FindAnnouncementByID",

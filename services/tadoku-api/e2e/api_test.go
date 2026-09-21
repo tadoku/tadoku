@@ -19,7 +19,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	commonroles "github.com/tadoku/tadoku/services/common/authz/roles"
 	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
-	kratosclient "github.com/tadoku/tadoku/services/common/client/kratos"
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/announcements"
 	featureauthz "github.com/tadoku/tadoku/services/tadoku-api/features/authz"
@@ -99,11 +98,12 @@ func runTests(m *testing.M) (code int) {
 	}
 	defer func() { cleanupErr = errors.Join(cleanupErr, api.db.Close()) }()
 
-	legacyAuthz, err = newLegacyAuthzAPI(authenticationJWKS.URL, keto.ReadURL())
+	legacyAuthz, err = newLegacyAuthzAPI(ctx, api.db.DSN, authenticationJWKS.URL, keto.ReadURL(), keto.WriteURL(), kratos.CursorClient())
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}
+	defer func() { cleanupErr = errors.Join(cleanupErr, legacyAuthz.db.Close()) }()
 
 	legacyContent, err = newLegacyContentAPI(ctx, api.db.DSN, authenticationJWKS.URL, keto.ReadURL())
 	if err != nil {
@@ -151,7 +151,7 @@ func newTestAPI(ctx context.Context, ketoFixture *testketo.Fixture, kratosFixtur
 		}
 	}()
 
-	handler, profileService, roleService, err := newTestRouter(ctx, db.Pool, ketoFixture.ReadURL(), kratosFixture.CursorClient())
+	handler, profileService, roleService, err := newTestRouter(ctx, db.Pool, ketoFixture, kratosFixture)
 	if err != nil {
 		return nil, err
 	}
@@ -171,15 +171,36 @@ func newTestAPI(ctx context.Context, ketoFixture *testketo.Fixture, kratosFixtur
 	return api, nil
 }
 
-func newTestRouter(ctx context.Context, pool *pgxpool.Pool, ketoReadURL string, identities *kratosclient.Client) (*transport.Router, *featureprofile.Service, *commonroles.KetoService, error) {
+func newTestRouter(
+	ctx context.Context,
+	pool *pgxpool.Pool,
+	ketoFixture *testketo.Fixture,
+	kratosFixture *testkratos.Fixture,
+) (*transport.Router, *featureprofile.Service, *commonroles.KetoService, error) {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	return newTestRouterWithLogger(ctx, pool, ketoReadURL, identities, logger)
+	return newTestRouterWithLogger(ctx, pool, pool, ketoFixture, kratosFixture, logger)
 }
 
-func newTestRouterWithLogger(ctx context.Context, pool *pgxpool.Pool, ketoReadURL string, identities *kratosclient.Client, logger *slog.Logger) (*transport.Router, *featureprofile.Service, *commonroles.KetoService, error) {
-	reader := ketoclient.NewReadClient(ketoReadURL)
+func newTestRouterWithLogger(
+	ctx context.Context,
+	pool *pgxpool.Pool,
+	auditPool *pgxpool.Pool,
+	ketoFixture *testketo.Fixture,
+	kratosFixture *testkratos.Fixture,
+	logger *slog.Logger,
+) (*transport.Router, *featureprofile.Service, *commonroles.KetoService, error) {
+	reader := ketoclient.NewReadClient(ketoFixture.ReadURL())
+	readWriter := ketoclient.NewClient(ketoFixture.ReadURL(), ketoFixture.WriteURL())
 	permissionChecker := permissions.NewKetoChecker(reader)
-	authzService := featureauthz.NewService(permissionChecker)
+	roleService := commonroles.NewKetoService(reader, "app", "tadoku")
+	identities := kratosFixture.CursorClient()
+	authzService := featureauthz.NewService(
+		permissionChecker,
+		identities,
+		roleService,
+		commonroles.NewKetoManager(readWriter, "app", "tadoku"),
+		featureauthz.NewAuthzRepository(auditPool),
+	)
 	announcementsRepository := announcements.NewAnnouncementsRepository(pool)
 	languagesRepository := languages.NewLanguagesRepository(pool)
 	pagesRepository := pages.NewPagesRepository(pool)
@@ -188,7 +209,6 @@ func newTestRouterWithLogger(ctx context.Context, pool *pgxpool.Pool, ketoReadUR
 	languagesService := languages.NewService(languagesRepository)
 	pagesService := pages.NewService(pagesRepository)
 	postsService := posts.NewService(postsRepository)
-	roleService := commonroles.NewKetoService(reader, "app", "tadoku")
 	profileService := featureprofile.NewService(featureprofile.NewUserCache(identities), roleService)
 	application := app.New(announcementsService, authzService, languagesService, pagesService, postsService, profileService, pool, permissionChecker)
 	authenticate, err := transport.NewJWTAuthentication(ctx, authenticationJWKS.URL, time.Second, 24*time.Hour, "http://oathkeeper-api/", logger)

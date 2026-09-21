@@ -28,7 +28,7 @@ type receivedRequest struct {
 func TestHandlerProxiesEachLegacyPrefix(t *testing.T) {
 	received := make(map[string]chan receivedRequest)
 	servers := make(map[string]*httptest.Server)
-	for _, name := range []string{"authz", "content", "immersion", "profile"} {
+	for _, name := range []string{"content", "immersion", "profile"} {
 		name := name
 		received[name] = make(chan receivedRequest, 1)
 		servers[name] = httptest.NewServer(stdhttp.HandlerFunc(func(response stdhttp.ResponseWriter, request *stdhttp.Request) {
@@ -56,7 +56,6 @@ func TestHandlerProxiesEachLegacyPrefix(t *testing.T) {
 	registry := prometheus.NewRegistry()
 	handler := newProxyTestRouter(registry)
 	err := RegisterProxyRoutes(handler, Upstreams{
-		Authz:     servers["authz"].URL,
 		Content:   servers["content"].URL,
 		Immersion: servers["immersion"].URL,
 		Profile:   servers["profile"].URL,
@@ -74,8 +73,7 @@ func TestHandlerProxiesEachLegacyPrefix(t *testing.T) {
 		wantPath string
 		body     string
 	}{
-		{name: "authz", method: stdhttp.MethodGet, path: "/authz/ping?detail=full", wantPath: "/ping"},
-		{name: "content", method: stdhttp.MethodPost, path: "/content/pages/blog", wantPath: "/pages/blog", body: `{"title":"hello"}`},
+		{name: "content", method: stdhttp.MethodPost, path: "/content/pages/blog?detail=full", wantPath: "/pages/blog", body: `{"title":"hello"}`},
 		{name: "immersion", method: stdhttp.MethodPatch, path: "/immersion/logs/a%2Fb", wantPath: "/logs/a%2Fb", body: `{"amount":10}`},
 		{name: "profile", method: stdhttp.MethodDelete, path: "/profile/users/old", wantPath: "/users/old"},
 	}
@@ -136,7 +134,7 @@ func TestHandlerProxiesEachLegacyPrefix(t *testing.T) {
 			if got.path != test.wantPath {
 				t.Errorf("got %v, want %v", got.path, test.wantPath)
 			}
-			if test.name == "authz" {
+			if test.name == "content" {
 				if got.rawQuery != "detail=full" {
 					t.Errorf("got %v, want %v", got.rawQuery, "detail=full")
 				}
@@ -194,7 +192,6 @@ func TestHandlerGeneratesAndForwardsCorrelationID(t *testing.T) {
 	var logs bytes.Buffer
 	handler := newProxyTestRouter(prometheus.NewRegistry())
 	err := RegisterProxyRoutes(handler, Upstreams{
-		Authz:     upstream.URL,
 		Content:   upstream.URL,
 		Immersion: upstream.URL,
 		Profile:   upstream.URL,
@@ -224,7 +221,7 @@ func TestHandlerReturnsBadGatewayWhenUpstreamIsUnavailable(t *testing.T) {
 
 	handler := newTestHandler(t, url, time.Second)
 	response := httptest.NewRecorder()
-	handler.ServeHTTP(response, httptest.NewRequest(stdhttp.MethodGet, "/authz/ping", nil))
+	handler.ServeHTTP(response, httptest.NewRequest(stdhttp.MethodGet, "/content/ping", nil))
 
 	if response.Code != stdhttp.StatusBadGateway {
 		t.Errorf("got %v, want %v", response.Code, stdhttp.StatusBadGateway)
@@ -285,7 +282,6 @@ func TestProxyDoesNotOwnHealthOrUnknownRoutes(t *testing.T) {
 
 func TestRegisterProxyRoutesRejectsInvalidConfiguration(t *testing.T) {
 	valid := Upstreams{
-		Authz:     "http://authz",
 		Content:   "http://content",
 		Immersion: "http://immersion",
 		Profile:   "http://profile",
@@ -297,7 +293,7 @@ func TestRegisterProxyRoutesRejectsInvalidConfiguration(t *testing.T) {
 		timeout   time.Duration
 	}{
 		{name: "missing upstream", upstreams: Upstreams{}, timeout: time.Second},
-		{name: "upstream path", upstreams: Upstreams{Authz: "http://authz/base", Content: valid.Content, Immersion: valid.Immersion, Profile: valid.Profile}, timeout: time.Second},
+		{name: "upstream path", upstreams: Upstreams{Content: "http://content/base", Immersion: valid.Immersion, Profile: valid.Profile}, timeout: time.Second},
 		{name: "timeout", upstreams: valid},
 	}
 	for _, test := range tests {
@@ -314,7 +310,6 @@ func newTestHandler(t testing.TB, upstream string, timeout time.Duration) stdhtt
 	t.Helper()
 	handler := newProxyTestRouter(prometheus.NewRegistry())
 	err := RegisterProxyRoutes(handler, Upstreams{
-		Authz:     upstream,
 		Content:   upstream,
 		Immersion: upstream,
 		Profile:   upstream,
@@ -329,7 +324,6 @@ func newTestHandlerWithTransport(t *testing.T, transport stdhttp.RoundTripper, t
 	t.Helper()
 	handler := newProxyTestRouter(prometheus.NewRegistry())
 	err := RegisterProxyRoutes(handler, Upstreams{
-		Authz:     "http://authz",
 		Content:   "http://content",
 		Immersion: "http://immersion",
 		Profile:   "http://profile",

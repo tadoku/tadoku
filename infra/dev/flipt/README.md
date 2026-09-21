@@ -29,15 +29,15 @@ is limited to cluster DNS; in particular, no GitHub egress is allowed.
 
 The local Flipt operator UI uses the dedicated host configured as `hosts.flipt`
 in the ignored `tilt_config.json`. The host resolves to Oathkeeper, which
-requires a Kratos session and sends only the Kratos subject to authz-api's
+requires a Kratos session and sends only the Kratos subject to Tadoku API's
 fixed Tadoku-admin check. There is no anonymous authenticator on this rule.
-Authz-api returns 200 for an allowed administrator, 403 for a denial, and 503
+Tadoku API returns 200 for an allowed administrator, 403 for a denial, and 503
 when Keto is unavailable; Oathkeeper's `remote_json` authorizer requires the
 200 response to allow the request.
 
 Tilt initializes the callback credential automatically. It generates a random
 token when the active cluster does not already have one, then creates matching
-`dev-oathkeeper-authz` Secrets for Oathkeeper and authz-api. No credential needs
+`dev-oathkeeper-authz` Secrets for Oathkeeper and Tadoku API. No credential needs
 to be added to `tilt_config.json` before running `tilt up`.
 
 ## Application access

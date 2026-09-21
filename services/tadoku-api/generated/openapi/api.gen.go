@@ -275,41 +275,6 @@ func (e ImmersionScoringRuleSetDraftMode) Valid() bool {
 	}
 }
 
-// AuthzInternalErrorResponse defines model for AuthzInternalErrorResponse.
-type AuthzInternalErrorResponse struct {
-	Error string `json:"error"`
-}
-
-// AuthzInternalInternalPermissionCheckRequest defines model for AuthzInternalInternalPermissionCheckRequest.
-type AuthzInternalInternalPermissionCheckRequest struct {
-	Namespace  string                   `json:"namespace"`
-	Object     string                   `json:"object"`
-	Relation   string                   `json:"relation"`
-	SubjectId  *string                  `json:"subject_id,omitempty"`
-	SubjectSet *AuthzInternalSubjectSet `json:"subject_set,omitempty"`
-}
-
-// AuthzInternalPermissionCheckResponse defines model for AuthzInternalPermissionCheckResponse.
-type AuthzInternalPermissionCheckResponse struct {
-	Allowed bool `json:"allowed"`
-}
-
-// AuthzInternalRelationshipWriteRequest defines model for AuthzInternalRelationshipWriteRequest.
-type AuthzInternalRelationshipWriteRequest struct {
-	Namespace  string                   `json:"namespace"`
-	Object     string                   `json:"object"`
-	Relation   string                   `json:"relation"`
-	SubjectId  *string                  `json:"subject_id,omitempty"`
-	SubjectSet *AuthzInternalSubjectSet `json:"subject_set,omitempty"`
-}
-
-// AuthzInternalSubjectSet defines model for AuthzInternalSubjectSet.
-type AuthzInternalSubjectSet struct {
-	Namespace string `json:"namespace"`
-	Object    string `json:"object"`
-	Relation  string `json:"relation"`
-}
-
 // AuthzPermissionCheckRequest defines model for AuthzPermissionCheckRequest.
 type AuthzPermissionCheckRequest struct {
 	Namespace string `json:"namespace"`

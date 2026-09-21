@@ -108,3 +108,36 @@ func TestContractRouteOwnership(t *testing.T) {
 		}
 	}
 }
+
+func TestRetiredAuthzRoutesAreNotForwarded(t *testing.T) {
+	tests := []struct {
+		method string
+		path   string
+		want   int
+	}{
+		{method: http.MethodGet, path: "/authz/ping", want: http.StatusNotFound},
+		{method: http.MethodHead, path: "/authz/ping", want: http.StatusNotFound},
+		{method: http.MethodGet, path: "/authz/internal/v1/ping", want: http.StatusNotFound},
+		{method: http.MethodPost, path: "/authz/internal/v1/permission/check", want: http.StatusNotFound},
+		{method: http.MethodPost, path: "/authz/internal/v1/relationships", want: http.StatusNotFound},
+		{method: http.MethodDelete, path: "/authz/internal/v1/relationships", want: http.StatusNotFound},
+		{method: http.MethodHead, path: "/authz/internal/v1/proxy/admin-check", want: http.StatusMethodNotAllowed},
+		{method: http.MethodPost, path: "/authz/internal/v1/proxy/admin-check/extra", want: http.StatusNotFound},
+		{method: http.MethodGet, path: "/authz/unknown", want: http.StatusNotFound},
+	}
+
+	for _, test := range tests {
+		t.Run(test.method+" "+test.path, func(t *testing.T) {
+			api.resetProxyCount()
+			response := httptest.NewRecorder()
+			api.handler.ServeHTTP(response, httptest.NewRequest(test.method, test.path, nil))
+
+			if response.Code != test.want {
+				t.Errorf("status=%d, want %d", response.Code, test.want)
+			}
+			if got := api.proxied.Load(); got != 0 {
+				t.Errorf("retired route made %d upstream requests", got)
+			}
+		})
+	}
+}

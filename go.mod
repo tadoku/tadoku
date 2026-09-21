@@ -27,7 +27,7 @@ require (
 	github.com/ory/kratos-client-go v0.11.1
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.20.5
-	github.com/sahilm/fuzzy v0.1.1
+	github.com/sahilm/fuzzy v0.1.3
 	github.com/satorunooshie/depolicy v0.0.0-20260729001356-d754cd9f261c
 	github.com/stretchr/testify v1.11.1
 	github.com/valkey-io/valkey-go v1.0.69

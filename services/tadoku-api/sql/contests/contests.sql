@@ -161,6 +161,21 @@ where official = true
 order by contest_start desc
 limit 1;
 
+-- name: FetchContestSummary :one
+select
+  coalesce(sum(
+    case
+      when logs.id is null then null
+      else coalesce(contest_logs.computed_score, contest_logs.score)
+    end
+  ), 0)::real as total_score,
+  count(distinct logs.user_id) as participant_count,
+  count(distinct logs.language_code) as language_count
+from contests
+left join contest_logs on contest_logs.contest_id = contests.id
+left join logs on contest_logs.log_id = logs.id and logs.deleted_at is null
+where contests.id = sqlc.arg('contest_id');
+
 -- name: ListLanguagesForContest :many
 select code, name
 from languages

@@ -91,6 +91,12 @@ type ContestList struct {
 	NextPageToken string
 }
 
+type ContestSummary struct {
+	ParticipantCount int
+	LanguageCount    int
+	TotalScore       float32
+}
+
 type Registration struct {
 	ID              uuid.UUID
 	ContestID       uuid.UUID

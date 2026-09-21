@@ -1,0 +1,6 @@
+>>> GET /immersion/contests/not-a-uuid/summary
+HTTP/1.1 400 Bad Request
+Content-Length: 46
+Content-Type: application/json; charset=UTF-8
+
+{"message":"Invalid format for parameter id"}

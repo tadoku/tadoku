@@ -79,6 +79,27 @@ test('all retained wire contracts survive the merge, including internal callers'
           description: 'Invalid authenticated identity',
         };
       }
+      if (contract.paths['/immersion/contests/{id}/registration'].get['x-tadoku-owner'] === 'native') {
+        delete legacy.paths['/contests/{id}/registration'].get.responses['404'];
+        legacy.paths['/contests/{id}/registration'].get.responses['204'] = {description: 'registration does not exist'};
+        legacy.paths['/contests/{id}/registration'].get.responses['500'] = {
+          ...permissionFailure,
+          description: 'Invalid authenticated identity',
+        };
+      }
+      if (contract.paths['/immersion/contests/{id}/registration'].post['x-tadoku-owner'] === 'native') {
+        legacy.paths['/contests/{id}/registration'].post.requestBody.required = true;
+        legacy.paths['/contests/{id}/registration'].post.responses['500'] = {
+          ...permissionFailure,
+          description: 'Invalid authenticated identity or persistence failure',
+        };
+      }
+      if (contract.paths['/immersion/contests/ongoing-registrations'].get['x-tadoku-owner'] === 'native') {
+        legacy.paths['/contests/ongoing-registrations'].get.responses['500'] = {
+          ...permissionFailure,
+          description: 'Invalid authenticated identity',
+        };
+      }
     }
     assert.deepEqual(view.paths, legacy.paths, `${name} paths`);
     assert.deepEqual(view.components, legacy.components ?? {}, `${name} components`);

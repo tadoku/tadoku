@@ -34,6 +34,9 @@ output-options:
     - ImmersionContestCreatePermissionCheck
     - ImmersionContestFindByID
     - ImmersionContestFindLatestOfficial
+    - ImmersionContestFindRegistration
+    - ImmersionContestRegistrationUpsert
+    - ImmersionContestFindOngoingRegistrations
     - ImmersionContestGetConfigurations
     - ImmersionLanguageList
     - ImmersionLanguageCreate

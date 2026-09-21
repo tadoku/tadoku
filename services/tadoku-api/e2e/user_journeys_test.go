@@ -137,6 +137,91 @@ func TestContestCreationJourney(t *testing.T) {
 	})
 }
 
+func TestContestRegistrationJourney(t *testing.T) {
+	// Keep API-created contest and registration IDs stable in the HTTP fixtures.
+	uuid.SetRand(rand.New(rand.NewSource(1)))
+	defer uuid.SetRand(nil)
+
+	runJourney(t, api, "ContestRegistration", []step{
+		{
+			request: "create_ongoing_contest",
+			as:      user,
+			want:    http.StatusOK,
+		},
+		{
+			request: "registration_initially_missing",
+			as:      user,
+			want:    http.StatusNoContent,
+		},
+		{
+			request: "register",
+			as:      user,
+			want:    http.StatusOK,
+			others:  cast{guest: http.StatusUnauthorized, banned: http.StatusForbidden},
+		},
+		{
+			request: "registration_visible",
+			as:      user,
+			want:    http.StatusOK,
+		},
+		{
+			request: "second_user_registers",
+			as:      user2,
+			want:    http.StatusOK,
+		},
+		{
+			request: "second_user_sees_own_registration",
+			as:      user2,
+			want:    http.StatusOK,
+		},
+		{
+			request: "ongoing_registration",
+			as:      user,
+			want:    http.StatusOK,
+		},
+		{
+			request: "update_languages",
+			as:      user,
+			want:    http.StatusOK,
+		},
+		{
+			request: "updated_registration_visible",
+			as:      user,
+			want:    http.StatusOK,
+		},
+		{
+			request: "registration_no_longer_ongoing",
+			as:      user,
+			want:    http.StatusOK,
+			at:      fixtureInstant.Add(24 * time.Hour),
+		},
+	})
+}
+
+func TestContestRegistrationDetachJourney(t *testing.T) {
+	// Detachment requires an existing registration and linked logs, so this
+	// journey first exposes the seeded registration through the API.
+	runJourney(t, api, "ContestRegistrationDetach", []step{
+		{
+			request: "existing_registration",
+			as:      user,
+			want:    http.StatusOK,
+		},
+		{
+			request: "remove_language",
+			as:      user,
+			want:    http.StatusOK,
+			others:  cast{guest: http.StatusUnauthorized, banned: http.StatusForbidden},
+		},
+		{
+			request: "registration_updated",
+			as:      user,
+			want:    http.StatusOK,
+		},
+		{verify: "logs_detached_and_refreshes_enqueued"},
+	})
+}
+
 func TestAuthorizationVisibilityJourney(t *testing.T) {
 	runJourney(t, api, "AuthorizationVisibility", []step{
 		{

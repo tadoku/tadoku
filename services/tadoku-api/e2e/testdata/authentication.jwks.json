@@ -31,6 +31,14 @@
       "kid": "contest-empty-display-fixture",
       "use": "sig",
       "alg": "RS256"
+    },
+    {
+      "kty": "RSA",
+      "n": "yBy0_SS4XDNJwrby8Bm_CFbH-tK7mUeU7BSybY20zBzDnDfZQl7GKCE3CWSpbx0beEDLIcXgeu2uu7uLpCz9GkZ2Y43h7pCkZhFssWl8eqxLtuxy4F8GOdN8unJb8wo4P_qmv5Qhrf9ze3IsU-hFGfUamb278K93DV68WOHVbqeUkFgnx3dfhSptfWV5m6zdVIZCZddxJlUPL67iplvvhNb_q5pTmne-7uakrJmb9NSPxyB96-PV_wkv7a9D53w4oN5l9VAskMMT6BlHP7FMncgcOQrnYWEWpx8VDLwgZJPsE76EitjWYA9f_KRDY4qJpGAe35s--_xCUt2b_KPSjw",
+      "e": "AQAB",
+      "kid": "registration-invalid-subject-fixture",
+      "use": "sig",
+      "alg": "RS256"
     }
   ]
 }

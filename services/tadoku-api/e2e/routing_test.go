@@ -129,6 +129,7 @@ func TestRetiredAuthzRoutesAreNotForwarded(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.method+" "+test.path, func(t *testing.T) {
 			api.resetProxyCount()
+
 			response := httptest.NewRecorder()
 			api.handler.ServeHTTP(response, httptest.NewRequest(test.method, test.path, nil))
 
@@ -137,20 +138,6 @@ func TestRetiredAuthzRoutesAreNotForwarded(t *testing.T) {
 			}
 			if got := api.proxied.Load(); got != 0 {
 				t.Errorf("retired route made %d upstream requests", got)
-			}
-		})
-	}
-}
-
-func TestUnmigratedContestDiscoveryNeighborsRemainProxied(t *testing.T) {
-	for _, path := range []string{
-		"/immersion/contests/ongoing-registrations",
-	} {
-		t.Run(path, func(t *testing.T) {
-			response := httptest.NewRecorder()
-			api.handler.ServeHTTP(response, httptest.NewRequest(http.MethodGet, path, nil))
-			if response.Header().Get("X-Proxied") != "yes" {
-				t.Errorf("%s was claimed by a native wildcard route", path)
 			}
 		})
 	}

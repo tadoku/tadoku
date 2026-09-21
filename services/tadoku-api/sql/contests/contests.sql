@@ -173,3 +173,89 @@ order by name asc;
 select code, name
 from languages
 order by name asc;
+
+-- name: FindContestRegistrationForUser :one
+select
+  contest_registrations.id,
+  contest_registrations.contest_id,
+  contest_registrations.user_id,
+  contest_registrations.language_codes,
+  contest_registrations.created_at,
+  contest_registrations.updated_at,
+  users.display_name as user_display_name
+from contest_registrations
+inner join contests on contests.id = contest_registrations.contest_id
+inner join users on users.id = contest_registrations.user_id
+where contest_registrations.user_id = sqlc.arg(user_id)
+  and contest_registrations.contest_id = sqlc.arg(contest_id)
+  and contest_registrations.deleted_at is null;
+
+-- name: ListRegistrationLanguages :many
+select code, name
+from languages
+where code = any(sqlc.arg(codes)::varchar[])
+order by name asc;
+
+-- name: ListOngoingContestRegistrations :many
+select
+  contest_registrations.id,
+  contest_registrations.contest_id,
+  contest_registrations.user_id,
+  contest_registrations.language_codes,
+  users.display_name as user_display_name,
+  contests.activity_type_id_allow_list,
+  contests.registration_end,
+  contests.contest_start,
+  contests.contest_end,
+  contests.private,
+  contests.official,
+  contests.title,
+  contests.description,
+  contests.owner_user_id,
+  owner_users.display_name as owner_user_display_name
+from contest_registrations
+inner join contests on contests.id = contest_registrations.contest_id
+inner join users on users.id = contest_registrations.user_id
+inner join users as owner_users on owner_users.id = contests.owner_user_id
+where contest_registrations.user_id = sqlc.arg(user_id)
+  and contests.contest_start <= sqlc.arg(now)::timestamp
+  and (contests.contest_end + '1 day'::interval) > sqlc.arg(now)::timestamp
+  and contest_registrations.deleted_at is null;
+
+-- name: UpsertContestRegistration :exec
+insert into contest_registrations (
+  id,
+  contest_id,
+  user_id,
+  language_codes,
+  created_at,
+  updated_at
+) values (
+  sqlc.arg(id),
+  sqlc.arg(contest_id),
+  sqlc.arg(user_id),
+  sqlc.arg(language_codes),
+  sqlc.arg(created_at),
+  sqlc.arg(updated_at)
+) on conflict (id) do update set
+  language_codes = sqlc.arg(language_codes),
+  updated_at = sqlc.arg(updated_at);
+
+-- name: DetachContestLogsForLanguages :exec
+delete from contest_logs
+where contest_id = sqlc.arg(contest_id)
+  and log_id in (
+    select logs.id
+    from logs
+    where logs.user_id = sqlc.arg(user_id)
+      and logs.language_code = any(sqlc.arg(language_codes)::varchar[])
+      and logs.deleted_at is null
+  );
+
+-- name: InsertContestScoreRefresh :exec
+insert into leaderboard_outbox (event_type, user_id, contest_id)
+values ('refresh_contest_score', sqlc.arg(user_id), sqlc.arg(contest_id));
+
+-- name: InsertOfficialScoresRefresh :exec
+insert into leaderboard_outbox (event_type, user_id, year)
+values ('refresh_official_scores', sqlc.arg(user_id), sqlc.arg(year));

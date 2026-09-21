@@ -101,6 +101,29 @@ func (q *Queries) CreateContest(ctx context.Context, arg CreateContestParams) er
 	return err
 }
 
+const detachContestLogsForLanguages = `-- name: DetachContestLogsForLanguages :exec
+delete from contest_logs
+where contest_id = $1
+  and log_id in (
+    select logs.id
+    from logs
+    where logs.user_id = $2
+      and logs.language_code = any($3::varchar[])
+      and logs.deleted_at is null
+  )
+`
+
+type DetachContestLogsForLanguagesParams struct {
+	ContestID     pgtype.UUID
+	UserID        pgtype.UUID
+	LanguageCodes []string
+}
+
+func (q *Queries) DetachContestLogsForLanguages(ctx context.Context, arg DetachContestLogsForLanguagesParams) error {
+	_, err := q.db.Exec(ctx, detachContestLogsForLanguages, arg.ContestID, arg.UserID, arg.LanguageCodes)
+	return err
+}
+
 const findContestByID = `-- name: FindContestByID :one
 select
   contests.id,
@@ -172,6 +195,53 @@ func (q *Queries) FindContestByID(ctx context.Context, arg FindContestByIDParams
 	return i, err
 }
 
+const findContestRegistrationForUser = `-- name: FindContestRegistrationForUser :one
+select
+  contest_registrations.id,
+  contest_registrations.contest_id,
+  contest_registrations.user_id,
+  contest_registrations.language_codes,
+  contest_registrations.created_at,
+  contest_registrations.updated_at,
+  users.display_name as user_display_name
+from contest_registrations
+inner join contests on contests.id = contest_registrations.contest_id
+inner join users on users.id = contest_registrations.user_id
+where contest_registrations.user_id = $1
+  and contest_registrations.contest_id = $2
+  and contest_registrations.deleted_at is null
+`
+
+type FindContestRegistrationForUserParams struct {
+	UserID    pgtype.UUID
+	ContestID pgtype.UUID
+}
+
+type FindContestRegistrationForUserRow struct {
+	ID              pgtype.UUID
+	ContestID       pgtype.UUID
+	UserID          pgtype.UUID
+	LanguageCodes   []string
+	CreatedAt       pgtype.Timestamp
+	UpdatedAt       pgtype.Timestamp
+	UserDisplayName string
+}
+
+func (q *Queries) FindContestRegistrationForUser(ctx context.Context, arg FindContestRegistrationForUserParams) (FindContestRegistrationForUserRow, error) {
+	row := q.db.QueryRow(ctx, findContestRegistrationForUser, arg.UserID, arg.ContestID)
+	var i FindContestRegistrationForUserRow
+	err := row.Scan(
+		&i.ID,
+		&i.ContestID,
+		&i.UserID,
+		&i.LanguageCodes,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.UserDisplayName,
+	)
+	return i, err
+}
+
 const findLatestOfficialContest = `-- name: FindLatestOfficialContest :one
 select
   contests.id,
@@ -235,6 +305,36 @@ func (q *Queries) FindLatestOfficialContest(ctx context.Context) (FindLatestOffi
 		&i.DeletedAt,
 	)
 	return i, err
+}
+
+const insertContestScoreRefresh = `-- name: InsertContestScoreRefresh :exec
+insert into leaderboard_outbox (event_type, user_id, contest_id)
+values ('refresh_contest_score', $1, $2)
+`
+
+type InsertContestScoreRefreshParams struct {
+	UserID    pgtype.UUID
+	ContestID pgtype.UUID
+}
+
+func (q *Queries) InsertContestScoreRefresh(ctx context.Context, arg InsertContestScoreRefreshParams) error {
+	_, err := q.db.Exec(ctx, insertContestScoreRefresh, arg.UserID, arg.ContestID)
+	return err
+}
+
+const insertOfficialScoresRefresh = `-- name: InsertOfficialScoresRefresh :exec
+insert into leaderboard_outbox (event_type, user_id, year)
+values ('refresh_official_scores', $1, $2)
+`
+
+type InsertOfficialScoresRefreshParams struct {
+	UserID pgtype.UUID
+	Year   pgtype.Int2
+}
+
+func (q *Queries) InsertOfficialScoresRefresh(ctx context.Context, arg InsertOfficialScoresRefreshParams) error {
+	_, err := q.db.Exec(ctx, insertOfficialScoresRefresh, arg.UserID, arg.Year)
+	return err
 }
 
 const languagesExist = `-- name: LanguagesExist :one
@@ -448,4 +548,158 @@ func (q *Queries) ListLanguagesForContest(ctx context.Context, contestID pgtype.
 		return nil, err
 	}
 	return items, nil
+}
+
+const listOngoingContestRegistrations = `-- name: ListOngoingContestRegistrations :many
+select
+  contest_registrations.id,
+  contest_registrations.contest_id,
+  contest_registrations.user_id,
+  contest_registrations.language_codes,
+  users.display_name as user_display_name,
+  contests.activity_type_id_allow_list,
+  contests.registration_end,
+  contests.contest_start,
+  contests.contest_end,
+  contests.private,
+  contests.official,
+  contests.title,
+  contests.description,
+  contests.owner_user_id,
+  owner_users.display_name as owner_user_display_name
+from contest_registrations
+inner join contests on contests.id = contest_registrations.contest_id
+inner join users on users.id = contest_registrations.user_id
+inner join users as owner_users on owner_users.id = contests.owner_user_id
+where contest_registrations.user_id = $1
+  and contests.contest_start <= $2::timestamp
+  and (contests.contest_end + '1 day'::interval) > $2::timestamp
+  and contest_registrations.deleted_at is null
+`
+
+type ListOngoingContestRegistrationsParams struct {
+	UserID pgtype.UUID
+	Now    pgtype.Timestamp
+}
+
+type ListOngoingContestRegistrationsRow struct {
+	ID                      pgtype.UUID
+	ContestID               pgtype.UUID
+	UserID                  pgtype.UUID
+	LanguageCodes           []string
+	UserDisplayName         string
+	ActivityTypeIDAllowList []int32
+	RegistrationEnd         pgtype.Date
+	ContestStart            pgtype.Date
+	ContestEnd              pgtype.Date
+	Private                 bool
+	Official                bool
+	Title                   string
+	Description             pgtype.Text
+	OwnerUserID             pgtype.UUID
+	OwnerUserDisplayName    string
+}
+
+func (q *Queries) ListOngoingContestRegistrations(ctx context.Context, arg ListOngoingContestRegistrationsParams) ([]ListOngoingContestRegistrationsRow, error) {
+	rows, err := q.db.Query(ctx, listOngoingContestRegistrations, arg.UserID, arg.Now)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListOngoingContestRegistrationsRow{}
+	for rows.Next() {
+		var i ListOngoingContestRegistrationsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.ContestID,
+			&i.UserID,
+			&i.LanguageCodes,
+			&i.UserDisplayName,
+			&i.ActivityTypeIDAllowList,
+			&i.RegistrationEnd,
+			&i.ContestStart,
+			&i.ContestEnd,
+			&i.Private,
+			&i.Official,
+			&i.Title,
+			&i.Description,
+			&i.OwnerUserID,
+			&i.OwnerUserDisplayName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listRegistrationLanguages = `-- name: ListRegistrationLanguages :many
+select code, name
+from languages
+where code = any($1::varchar[])
+order by name asc
+`
+
+func (q *Queries) ListRegistrationLanguages(ctx context.Context, codes []string) ([]Language, error) {
+	rows, err := q.db.Query(ctx, listRegistrationLanguages, codes)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Language{}
+	for rows.Next() {
+		var i Language
+		if err := rows.Scan(&i.Code, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const upsertContestRegistration = `-- name: UpsertContestRegistration :exec
+insert into contest_registrations (
+  id,
+  contest_id,
+  user_id,
+  language_codes,
+  created_at,
+  updated_at
+) values (
+  $1,
+  $2,
+  $3,
+  $4,
+  $5,
+  $6
+) on conflict (id) do update set
+  language_codes = $4,
+  updated_at = $6
+`
+
+type UpsertContestRegistrationParams struct {
+	ID            pgtype.UUID
+	ContestID     pgtype.UUID
+	UserID        pgtype.UUID
+	LanguageCodes []string
+	CreatedAt     pgtype.Timestamp
+	UpdatedAt     pgtype.Timestamp
+}
+
+func (q *Queries) UpsertContestRegistration(ctx context.Context, arg UpsertContestRegistrationParams) error {
+	_, err := q.db.Exec(ctx, upsertContestRegistration,
+		arg.ID,
+		arg.ContestID,
+		arg.UserID,
+		arg.LanguageCodes,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+	)
+	return err
 }

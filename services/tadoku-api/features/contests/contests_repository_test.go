@@ -289,3 +289,177 @@ func TestContestsRepositoryCountsEveryContestCreatedByUserInYear(t *testing.T) {
 		t.Errorf("2025 count = %d, want 1", count)
 	}
 }
+
+func TestContestsRepositoryRegistrationPersistenceAndTransaction(t *testing.T) {
+	t.Parallel()
+
+	db, err := testpostgres.New(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Error(err)
+		}
+	})
+
+	_, err = db.Pool.Exec(t.Context(), `
+		insert into users (id, display_name, created_at, updated_at)
+		values
+			('11111111-1111-4111-8111-111111111111', 'Reader', '2026-01-01', '2026-01-01'),
+			('99999999-9999-4999-8999-999999999999', 'Owner', '2026-01-01', '2026-01-01');
+		insert into contests (
+			id, owner_user_id, owner_user_display_name, "private", contest_start, contest_end,
+			registration_end, title, activity_type_id_allow_list, official, created_at, updated_at
+		) values (
+			'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '99999999-9999-4999-8999-999999999999', 'stale', true,
+			'2026-09-01', '2026-09-12', '2026-08-31', 'Registration fixture', '{2,1}', true,
+			'2026-01-01', '2026-01-01'
+		);
+		insert into contest_registrations (id, contest_id, user_id, language_codes, created_at, updated_at)
+		values (
+			'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+			'11111111-1111-4111-8111-111111111111', '{jpn,eng}', '2026-01-01', '2026-01-01'
+		);
+		insert into logs (
+			id, user_id, language_code, log_activity_id, duration_seconds, computed_score,
+			eligible_official_leaderboard, created_at, updated_at
+		) values
+			('cccccccc-cccc-4ccc-8ccc-ccccccccccc1', '11111111-1111-4111-8111-111111111111', 'eng', 1, 60, 1, true, '2026-09-01', '2026-09-01'),
+			('cccccccc-cccc-4ccc-8ccc-ccccccccccc2', '11111111-1111-4111-8111-111111111111', 'jpn', 1, 60, 1, true, '2026-09-01', '2026-09-01');
+		insert into contest_logs (contest_id, log_id, duration_seconds, computed_score)
+		values
+			('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'cccccccc-cccc-4ccc-8ccc-ccccccccccc1', 60, 1),
+			('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'cccccccc-cccc-4ccc-8ccc-ccccccccccc2', 60, 1);
+	`)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	repository := NewContestsRepository(db.Pool)
+	userID := uuid.MustParse("11111111-1111-4111-8111-111111111111")
+	contestID := uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")
+	registration, err := repository.FindRegistrationForUser(t.Context(), userID, contestID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !reflect.DeepEqual(registration.LanguageCodes, []string{"jpn", "eng"}) {
+		t.Errorf("registration language codes=%v", registration.LanguageCodes)
+	}
+	createdAt := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	if !registration.CreatedAt.Equal(createdAt) || !registration.UpdatedAt.Equal(createdAt) {
+		t.Errorf("registration timestamps=%s/%s, want %s", registration.CreatedAt, registration.UpdatedAt, createdAt)
+	}
+
+	languages, err := repository.ListRegistrationLanguages(t.Context(), registration.LanguageCodes)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(languages, []Language{{Code: "eng", Name: "English"}, {Code: "jpn", Name: "Japanese"}}) {
+		t.Errorf("registration languages=%v", languages)
+	}
+
+	ongoing, err := repository.ListOngoingRegistrations(t.Context(), userID, time.Date(2026, 9, 12, 23, 59, 59, 0, time.UTC))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(ongoing) != 1 || !reflect.DeepEqual(ongoing[0].LanguageCodes, []string{"jpn", "eng"}) ||
+		!reflect.DeepEqual(ongoing[0].Contest.allowedActivityIDs, []int32{2, 1}) {
+		t.Errorf("ongoing registration=%+v", ongoing)
+	}
+
+	ongoing, err = repository.ListOngoingRegistrations(t.Context(), userID, time.Date(2026, 9, 13, 0, 0, 0, 0, time.UTC))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(ongoing) != 0 {
+		t.Errorf("registration remains ongoing after end day: %+v", ongoing)
+	}
+
+	now := time.Date(2026, 9, 12, 12, 0, 0, 0, time.UTC)
+	updatedRegistration := *registration
+	updatedRegistration.LanguageCodes = []string{"jpn"}
+	updatedRegistration.UpdatedAt = now
+	removedLanguages := []string{"eng"}
+	insertRefreshes := func(ctx context.Context) error {
+		if err := repository.InsertContestScoreRefresh(ctx, userID, contestID); err != nil {
+			return err
+		}
+		return repository.InsertOfficialScoresRefresh(ctx, userID, 2026)
+	}
+
+	rollbackErr := errors.New("force registration rollback")
+	err = postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
+		if err := repository.DetachContestLogsForLanguages(ctx, userID, contestID, removedLanguages); err != nil {
+			return err
+		}
+		if err := insertRefreshes(ctx); err != nil {
+			return err
+		}
+		if err := repository.UpsertRegistration(ctx, updatedRegistration); err != nil {
+			return err
+		}
+		if err := insertRefreshes(ctx); err != nil {
+			return err
+		}
+		return rollbackErr
+	})
+	if !errors.Is(err, rollbackErr) {
+		t.Fatalf("rollback error=%v", err)
+	}
+
+	var links, events int
+	if err := db.Pool.QueryRow(t.Context(), `select count(*) from contest_logs`).Scan(&links); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Pool.QueryRow(t.Context(), `select count(*) from leaderboard_outbox`).Scan(&events); err != nil {
+		t.Fatal(err)
+	}
+	if links != 2 || events != 0 {
+		t.Errorf("after rollback links=%d events=%d, want 2 and 0", links, events)
+	}
+
+	registration, err = repository.FindRegistrationForUser(t.Context(), userID, contestID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(registration.LanguageCodes, []string{"jpn", "eng"}) {
+		t.Errorf("rolled-back language codes=%+v", registration.LanguageCodes)
+	}
+
+	err = postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
+		if err := repository.DetachContestLogsForLanguages(ctx, userID, contestID, removedLanguages); err != nil {
+			return err
+		}
+		if err := insertRefreshes(ctx); err != nil {
+			return err
+		}
+		if err := repository.UpsertRegistration(ctx, updatedRegistration); err != nil {
+			return err
+		}
+		return insertRefreshes(ctx)
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := db.Pool.QueryRow(t.Context(), `select count(*) from contest_logs`).Scan(&links); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Pool.QueryRow(t.Context(), `select count(*) from leaderboard_outbox`).Scan(&events); err != nil {
+		t.Fatal(err)
+	}
+	if links != 1 || events != 4 {
+		t.Errorf("after update links=%d events=%d, want 1 and 4", links, events)
+	}
+
+	registration, err = repository.FindRegistrationForUser(t.Context(), userID, contestID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(registration.LanguageCodes, []string{"jpn"}) {
+		t.Errorf("updated language codes=%+v", registration.LanguageCodes)
+	}
+}

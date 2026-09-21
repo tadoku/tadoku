@@ -1,0 +1,6 @@
+>>> GET /immersion/contests/ongoing-registrations
+HTTP/1.1 200 OK
+Content-Length: 684
+Content-Type: application/json; charset=UTF-8
+
+{"next_page_token":"","registrations":[{"contest":{"allowed_activities":[{"id":1,"input_type":"amount_primary","name":"Reading"}],"allowed_languages":[],"contest_end":"2026-09-30","contest_start":"2026-09-12","id":"f0000000-0000-4000-8000-000000000002","official":true,"owner_user_display_name":"Raw Owner Name","owner_user_id":"99999999-9999-4999-8999-999999999999","private":false,"registration_end":"2026-08-31","title":"Starts today"},"contest_id":"f0000000-0000-4000-8000-000000000002","id":"eeeeeeee-eeee-4eee-8eee-000000000002","languages":[{"code":"eng","name":"English"}],"user_display_name":"Stored Reader","user_id":"11111111-1111-4111-8111-111111111111"}],"total_size":1}

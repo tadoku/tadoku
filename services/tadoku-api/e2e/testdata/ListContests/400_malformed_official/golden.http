@@ -1,6 +1,6 @@
 >>> GET /immersion/contests?official=maybe
 HTTP/1.1 400 Bad Request
-Content-Length: 138
+Content-Length: 52
 Content-Type: application/json; charset=UTF-8
 
-{"message":"Invalid format for parameter official: error binding string parameter: strconv.ParseBool: parsing \"maybe\": invalid syntax"}
+{"message":"Invalid format for parameter official"}

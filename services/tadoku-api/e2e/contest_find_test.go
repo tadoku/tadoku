@@ -19,7 +19,7 @@ func TestFindContestByID(t *testing.T) {
 		{
 			description: []string{"invalid", "path", "id"},
 			want:        http.StatusBadRequest,
-			skipParity:  "generated runtimes spell the unmarshaling error differently",
+			skipParity:  "native responses omit parser details and reflected parameter input",
 		},
 	}
 

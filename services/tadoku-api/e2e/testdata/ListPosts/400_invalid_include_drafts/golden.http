@@ -1,6 +1,6 @@
 >>> GET /content/posts/main?include_drafts=invalid
 HTTP/1.1 400 Bad Request
-Content-Length: 146
+Content-Length: 58
 Content-Type: application/json; charset=UTF-8
 
-{"message":"Invalid format for parameter include_drafts: error binding string parameter: strconv.ParseBool: parsing \"invalid\": invalid syntax"}
+{"message":"Invalid format for parameter include_drafts"}

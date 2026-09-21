@@ -16,7 +16,6 @@ sh_binary(
     name = "load_images",
     srcs = ["tools/ci/run_bazel_images.sh"],
     args = [
-        "$(rlocationpath //services/authz-api:load)",
         "$(rlocationpath //services/content-api:load)",
         "$(rlocationpath //services/image-webhook-gateway:load)",
         "$(rlocationpath //services/immersion-api:load)",
@@ -26,7 +25,6 @@ sh_binary(
         "$(rlocationpath //services/token-reflector:load)",
     ],
     data = [
-        "//services/authz-api:load",
         "//services/content-api:load",
         "//services/image-webhook-gateway:load",
         "//services/immersion-api:load",
@@ -45,7 +43,6 @@ sh_binary(
     name = "push_images",
     srcs = ["tools/ci/run_bazel_images.sh"],
     args = [
-        "$(rlocationpath //services/authz-api:push)",
         "$(rlocationpath //services/content-api:push)",
         "$(rlocationpath //services/image-webhook-gateway:push)",
         "$(rlocationpath //services/immersion-api:push)",
@@ -55,7 +52,6 @@ sh_binary(
         "$(rlocationpath //services/token-reflector:push)",
     ],
     data = [
-        "//services/authz-api:push",
         "//services/content-api:push",
         "//services/image-webhook-gateway:push",
         "//services/immersion-api:push",

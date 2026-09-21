@@ -199,7 +199,7 @@ func TestUserModerationJourney(t *testing.T) {
 }
 
 func TestModerationAuditFailureJourney(t *testing.T) {
-	handler, _ := auditUnavailableRoleUpdateHandlers(t)
+	handler := auditUnavailableRoleUpdateHandler(t)
 	failureAPI := &suite{
 		db:      api.db,
 		keto:    api.keto,

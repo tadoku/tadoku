@@ -20,7 +20,6 @@ x-tadoku-operational-surfaces:
     endpoints retain their optional-auth middleware. No gateway exposure changes are implied.
   apis:
     - tadoku-api
-    - authz-api
     - content-api
     - immersion-api
     - profile-api

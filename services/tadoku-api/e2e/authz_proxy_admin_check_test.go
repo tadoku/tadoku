@@ -26,14 +26,13 @@ func TestAuthzProxyAdminCheck(t *testing.T) {
 	for _, test := range tests {
 		name := APITestName("AuthzProxyProxyAdminCheck", test.want, test.description...)
 		t.Run(name, func(t *testing.T) {
-			handlers := authzHandlerPair{native: api.handler, legacy: legacyAuthz.handler}
+			handler := http.Handler(api.handler)
 			if test.unavailable {
-				handlers = unavailableCallback
+				handler = unavailableCallback
 			}
 
 			runCase(t, api, name, test.want,
-				implementation{name: "tadoku-api", handler: handlers.native},
-				implementation{name: "authz-api", handler: handlers.legacy},
+				implementation{name: "tadoku-api", handler: handler},
 			)
 		})
 	}

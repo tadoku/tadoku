@@ -103,7 +103,7 @@ use_repo(
 oci.pull(
     name = "tadoku_dev_alpine",
     image = "index.docker.io/library/alpine",
-    digest = "sha256:14358309a308569c32bdc37e2e0e9694be33a9d99e68afb0f5ff33cc1f695dce",
+    digest = "sha256:294b683cb724975bec92580e1e685676bd4b50bda910ddb8c51d4cabeaec77e6",
     platforms = ["linux/amd64"],
 )
 oci.pull(

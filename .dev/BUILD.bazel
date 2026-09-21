@@ -3,7 +3,11 @@ load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
 
 package(default_visibility = ["//visibility:public"])
 
-exports_files(glob(["*.json"]))
+exports_files([
+    "tadoku-api.isolated.json",
+    "tadoku-api.shared.json",
+    "webv2.json",
+])
 
 config_setting(
     name = "isolated_database",

@@ -72,7 +72,6 @@ type ContestView struct {
 	Private              bool
 	AllowedLanguages     []Language
 	AllowedActivities    []Activity
-	allowedActivityIDs   []int32
 	CreatedAt            time.Time
 	UpdatedAt            time.Time
 	Deleted              bool

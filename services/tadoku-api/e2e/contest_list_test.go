@@ -9,13 +9,18 @@ func TestListContests(t *testing.T) {
 	tests := []struct {
 		description []string
 		want        int
+		skipParity  string
 	}{
 		{description: []string{"guest", "defaults", "hide", "private", "but", "count", "it"}, want: http.StatusOK},
 		{description: []string{"guest", "owner", "filter", "shows", "private", "unofficial"}, want: http.StatusOK},
 		{description: []string{"guest", "includes", "deleted"}, want: http.StatusOK},
 		{description: []string{"admin", "includes", "private", "and", "deleted"}, want: http.StatusOK},
 		{description: []string{"first", "page", "token", "counts", "hidden", "private"}, want: http.StatusOK},
-		{description: []string{"invalid", "user", "id"}, want: http.StatusBadRequest},
+		{
+			description: []string{"invalid", "user", "id"},
+			want:        http.StatusBadRequest,
+			skipParity:  "generated runtimes spell the unmarshaling error differently",
+		},
 		{description: []string{"malformed", "official"}, want: http.StatusBadRequest},
 		{description: []string{"malformed", "page"}, want: http.StatusBadRequest},
 		{description: []string{"malformed", "page", "preserves", "unmarshaling", "input"}, want: http.StatusBadRequest},
@@ -31,7 +36,7 @@ func TestListContests(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			runCase(t, api, name, test.want,
 				implementation{name: "tadoku-api", handler: api.handler},
-				implementation{name: "immersion-api", handler: legacyImmersion.handler},
+				implementation{name: "immersion-api", handler: legacyImmersion.handler, skip: test.skipParity},
 			)
 		})
 	}

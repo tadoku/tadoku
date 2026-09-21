@@ -50,10 +50,15 @@ func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
 	}
 
 	repository := NewContestsRepository(db.Pool)
-	items, total, err := repository.ListContests(t.Context(), ListParameters{
+	parameters := ListParameters{
 		Official: true,
 		PageSize: 10,
-	})
+	}
+	total, err := repository.CountContests(t.Context(), parameters)
+	if err != nil {
+		t.Fatal(err)
+	}
+	items, err := repository.ListContests(t.Context(), parameters)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -62,11 +67,16 @@ func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
 	}
 
 	ownerID := uuid.MustParse("11111111-1111-4111-8111-111111111111")
-	items, total, err = repository.ListContests(t.Context(), ListParameters{
+	parameters = ListParameters{
 		UserID:   &ownerID,
 		Official: false,
 		PageSize: 10,
-	})
+	}
+	total, err = repository.CountContests(t.Context(), parameters)
+	if err != nil {
+		t.Fatal(err)
+	}
+	items, err = repository.ListContests(t.Context(), parameters)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -91,10 +101,14 @@ func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(private.AllowedLanguages) != 2 {
-		t.Fatalf("languages=%+v, want two", private.AllowedLanguages)
+	languages, err := repository.ListLanguagesForContest(t.Context(), private.ID)
+	if err != nil {
+		t.Fatal(err)
 	}
-	if got := []string{private.AllowedLanguages[0].Name, private.AllowedLanguages[1].Name}; !reflect.DeepEqual(got, []string{"English", "Japanese"}) {
+	if len(languages) != 2 {
+		t.Fatalf("languages=%+v, want two", languages)
+	}
+	if got := []string{languages[0].Name, languages[1].Name}; !reflect.DeepEqual(got, []string{"English", "Japanese"}) {
 		t.Errorf("language names=%v", got)
 	}
 

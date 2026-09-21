@@ -83,9 +83,9 @@ func (c *Checker) IsAdmin(ctx context.Context) (bool, error) {
 	return allowed, nil
 }
 
-// IsAdminForPublicRead grants optional read visibility only after a successful
-// administrator lookup. Provider failures keep the request public.
-func (c *Checker) IsAdminForPublicRead(ctx context.Context) bool {
+// IsAdminOrFalse reports administrator access only after a successful lookup.
+// Provider failures return false.
+func (c *Checker) IsAdminOrFalse(ctx context.Context) bool {
 	allowed, err := c.IsAdmin(ctx)
 	return err == nil && allowed
 }

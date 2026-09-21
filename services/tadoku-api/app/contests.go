@@ -11,13 +11,13 @@ type ListContestsParameters = contests.ListParameters
 type ContestView = contests.ContestView
 
 func (a *Application) ListContests(ctx context.Context, parameters ListContestsParameters) (*contests.ContestList, error) {
-	includePrivate := a.permissions.IsAdminForPublicRead(ctx)
+	includePrivate := a.permissions.IsAdminOrFalse(ctx)
 
 	return a.contests.ListContests(ctx, parameters, includePrivate)
 }
 
 func (a *Application) FindContestByID(ctx context.Context, id uuid.UUID) (*contests.ContestView, error) {
-	includeDeleted := a.permissions.IsAdminForPublicRead(ctx)
+	includeDeleted := a.permissions.IsAdminOrFalse(ctx)
 	return a.contests.FindContestByID(ctx, id, includeDeleted)
 }
 
@@ -26,6 +26,6 @@ func (a *Application) FindLatestOfficialContest(ctx context.Context) (*contests.
 }
 
 func (a *Application) ContestConfigurationOptions(ctx context.Context) (*contests.ConfigurationOptions, error) {
-	canCreateOfficialRound := a.permissions.IsAdminForPublicRead(ctx)
+	canCreateOfficialRound := a.permissions.IsAdminOrFalse(ctx)
 	return a.contests.ConfigurationOptions(ctx, canCreateOfficialRound)
 }

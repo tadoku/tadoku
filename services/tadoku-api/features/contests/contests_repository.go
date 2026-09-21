@@ -21,65 +21,55 @@ func NewContestsRepository(db *pgxpool.Pool) *ContestsRepository {
 	return &ContestsRepository{db: db}
 }
 
-func (r *ContestsRepository) ListContests(ctx context.Context, parameters ListParameters) ([]Contest, int, error) {
+func (r *ContestsRepository) CountContests(ctx context.Context, parameters ListParameters) (int, error) {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
-		return nil, 0, err
+		return 0, err
 	}
 
-	userID := nullableUUID(parameters.UserID)
-	q := queries.New(executor)
-	total, err := q.ContestsMetadata(ctx, queries.ContestsMetadataParams{
+	total, err := queries.New(executor).ContestsMetadata(ctx, queries.ContestsMetadataParams{
 		IncludeDeleted: parameters.IncludeDeleted,
-		UserID:         userID,
+		UserID:         nullableUUID(parameters.UserID),
 		Official:       parameters.Official,
 	})
 	if err != nil {
-		return nil, 0, fmt.Errorf("count contests: %w", err)
+		return 0, fmt.Errorf("count contests: %w", err)
 	}
-	rows, err := q.ListContests(ctx, queries.ListContestsParams{
+	return int(total), nil
+}
+
+func (r *ContestsRepository) ListContests(ctx context.Context, parameters ListParameters) ([]Contest, error) {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := queries.New(executor).ListContests(ctx, queries.ListContestsParams{
 		IncludeDeleted: parameters.IncludeDeleted,
-		UserID:         userID,
+		UserID:         nullableUUID(parameters.UserID),
 		Official:       parameters.Official,
 		IncludePrivate: parameters.IncludePrivate(),
 		StartFrom:      int32(parameters.Page * parameters.PageSize),
 		PageSize:       int32(parameters.PageSize),
 	})
 	if err != nil {
-		return nil, 0, fmt.Errorf("list contests: %w", err)
+		return nil, fmt.Errorf("list contests: %w", err)
 	}
 
 	result := make([]Contest, 0, len(rows))
 	for _, row := range rows {
-		result = append(result, Contest{
-			ID:                      uuid.UUID(row.ID.Bytes),
-			ContestStart:            row.ContestStart.Time,
-			ContestEnd:              row.ContestEnd.Time,
-			RegistrationEnd:         row.RegistrationEnd.Time,
-			Title:                   row.Title,
-			Description:             nullableString(row.Description),
-			OwnerUserID:             uuid.UUID(row.OwnerUserID.Bytes),
-			OwnerUserDisplayName:    row.OwnerUserDisplayName,
-			Official:                row.Official,
-			Private:                 row.Private,
-			LanguageCodeAllowList:   row.LanguageCodeAllowList,
-			ActivityTypeIDAllowList: row.ActivityTypeIDAllowList,
-			CreatedAt:               row.CreatedAt.Time,
-			UpdatedAt:               row.UpdatedAt.Time,
-			Deleted:                 row.DeletedAt.Valid,
-		})
+		result = append(result, contestFromRow(queries.FindContestByIDRow(row)))
 	}
-	return result, int(total), nil
+	return result, nil
 }
 
-func (r *ContestsRepository) FindContestByID(ctx context.Context, parameters FindParameters) (*ContestView, error) {
+func (r *ContestsRepository) FindContestByID(ctx context.Context, parameters FindParameters) (*Contest, error) {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return nil, err
 	}
 
-	q := queries.New(executor)
-	row, err := q.FindContestByID(ctx, queries.FindContestByIDParams{
+	row, err := queries.New(executor).FindContestByID(ctx, queries.FindContestByIDParams{
 		ID:             pgtype.UUID{Bytes: parameters.ID, Valid: true},
 		IncludeDeleted: parameters.IncludeDeleted(),
 	})
@@ -90,21 +80,17 @@ func (r *ContestsRepository) FindContestByID(ctx context.Context, parameters Fin
 		return nil, fmt.Errorf("find contest by ID: %w", err)
 	}
 
-	languages, err := listContestLanguages(ctx, q, row.ID, row.LanguageCodeAllowList)
-	if err != nil {
-		return nil, err
-	}
-	return contestView(row, languages), nil
+	result := contestFromRow(row)
+	return &result, nil
 }
 
-func (r *ContestsRepository) FindLatestOfficialContest(ctx context.Context) (*ContestView, error) {
+func (r *ContestsRepository) FindLatestOfficialContest(ctx context.Context) (*Contest, error) {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return nil, err
 	}
 
-	q := queries.New(executor)
-	row, err := q.FindLatestOfficialContest(ctx)
+	row, err := queries.New(executor).FindLatestOfficialContest(ctx)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrContestNotFound
 	}
@@ -112,11 +98,25 @@ func (r *ContestsRepository) FindLatestOfficialContest(ctx context.Context) (*Co
 		return nil, fmt.Errorf("find latest official contest: %w", err)
 	}
 
-	languages, err := listContestLanguages(ctx, q, row.ID, row.LanguageCodeAllowList)
+	result := contestFromRow(queries.FindContestByIDRow(row))
+	return &result, nil
+}
+
+func (r *ContestsRepository) ListLanguagesForContest(ctx context.Context, contestID uuid.UUID) ([]Language, error) {
+	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return nil, err
 	}
-	return contestView(queries.FindContestByIDRow(row), languages), nil
+
+	rows, err := queries.New(executor).ListLanguagesForContest(ctx, pgtype.UUID{Bytes: contestID, Valid: true})
+	if err != nil {
+		return nil, fmt.Errorf("list contest languages: %w", err)
+	}
+	result := make([]Language, 0, len(rows))
+	for _, row := range rows {
+		result = append(result, Language{Code: row.Code, Name: row.Name})
+	}
+	return result, nil
 }
 
 func (r *ContestsRepository) ListLanguages(ctx context.Context) ([]Language, error) {
@@ -136,39 +136,23 @@ func (r *ContestsRepository) ListLanguages(ctx context.Context) ([]Language, err
 	return result, nil
 }
 
-func listContestLanguages(ctx context.Context, q *queries.Queries, contestID pgtype.UUID, allowList []string) ([]Language, error) {
-	if len(allowList) == 0 {
-		return nil, nil
-	}
-	rows, err := q.ListLanguagesForContest(ctx, contestID)
-	if err != nil {
-		return nil, fmt.Errorf("list contest languages: %w", err)
-	}
-	result := make([]Language, 0, len(rows))
-	for _, row := range rows {
-		result = append(result, Language{Code: row.Code, Name: row.Name})
-	}
-	return result, nil
-}
-
-func contestView(row queries.FindContestByIDRow, languages []Language) *ContestView {
-	return &ContestView{
-		ID:                   uuid.UUID(row.ID.Bytes),
-		ContestStart:         row.ContestStart.Time,
-		ContestEnd:           row.ContestEnd.Time,
-		RegistrationEnd:      row.RegistrationEnd.Time,
-		Title:                row.Title,
-		Description:          nullableString(row.Description),
-		OwnerUserID:          uuid.UUID(row.OwnerUserID.Bytes),
-		OwnerUserDisplayName: row.OwnerUserDisplayName,
-		Official:             row.Official,
-		Private:              row.Private,
-		AllowedLanguages:     languages,
-		AllowedActivities:    make([]Activity, 0, len(row.ActivityTypeIDAllowList)),
-		allowedActivityIDs:   row.ActivityTypeIDAllowList,
-		CreatedAt:            row.CreatedAt.Time,
-		UpdatedAt:            row.UpdatedAt.Time,
-		Deleted:              row.DeletedAt.Valid,
+func contestFromRow(row queries.FindContestByIDRow) Contest {
+	return Contest{
+		ID:                      uuid.UUID(row.ID.Bytes),
+		ContestStart:            row.ContestStart.Time,
+		ContestEnd:              row.ContestEnd.Time,
+		RegistrationEnd:         row.RegistrationEnd.Time,
+		Title:                   row.Title,
+		Description:             nullableString(row.Description),
+		OwnerUserID:             uuid.UUID(row.OwnerUserID.Bytes),
+		OwnerUserDisplayName:    row.OwnerUserDisplayName,
+		Official:                row.Official,
+		Private:                 row.Private,
+		LanguageCodeAllowList:   row.LanguageCodeAllowList,
+		ActivityTypeIDAllowList: row.ActivityTypeIDAllowList,
+		CreatedAt:               row.CreatedAt.Time,
+		UpdatedAt:               row.UpdatedAt.Time,
+		Deleted:                 row.DeletedAt.Valid,
 	}
 }
 

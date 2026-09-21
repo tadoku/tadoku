@@ -24,7 +24,11 @@ func (s *Service) ListContests(ctx context.Context, parameters ListParameters, i
 	}
 	parameters.includePrivate = includePrivate
 
-	items, total, err := s.contests.ListContests(ctx, parameters)
+	total, err := s.contests.CountContests(ctx, parameters)
+	if err != nil {
+		return nil, err
+	}
+	items, err := s.contests.ListContests(ctx, parameters)
 	if err != nil {
 		return nil, err
 	}
@@ -41,11 +45,11 @@ func (s *Service) ListContests(ctx context.Context, parameters ListParameters, i
 }
 
 func (s *Service) FindContestByID(ctx context.Context, id uuid.UUID, includeDeleted bool) (*ContestView, error) {
-	item, err := s.contests.FindContestByID(ctx, FindParameters{ID: id, includeDeleted: includeDeleted})
+	item, languages, err := s.findContestWithLanguages(ctx, id, includeDeleted)
 	if err != nil {
 		return nil, err
 	}
-	return hydrateContest(item)
+	return hydrateContest(item, languages)
 }
 
 func (s *Service) FindLatestOfficialContest(ctx context.Context) (*ContestView, error) {
@@ -53,7 +57,11 @@ func (s *Service) FindLatestOfficialContest(ctx context.Context) (*ContestView, 
 	if err != nil {
 		return nil, err
 	}
-	return hydrateContest(item)
+	languages, err := s.languagesForContest(ctx, item)
+	if err != nil {
+		return nil, err
+	}
+	return hydrateContest(item, languages)
 }
 
 func (s *Service) ConfigurationOptions(ctx context.Context, canCreateOfficialRound bool) (*ConfigurationOptions, error) {
@@ -68,11 +76,45 @@ func (s *Service) ConfigurationOptions(ctx context.Context, canCreateOfficialRou
 	}, nil
 }
 
-func hydrateContest(item *ContestView) (*ContestView, error) {
-	activities, err := hydrateActivities(item.allowedActivityIDs)
+func (s *Service) findContestWithLanguages(ctx context.Context, id uuid.UUID, includeDeleted bool) (*Contest, []Language, error) {
+	item, err := s.contests.FindContestByID(ctx, FindParameters{ID: id, includeDeleted: includeDeleted})
+	if err != nil {
+		return nil, nil, err
+	}
+	languages, err := s.languagesForContest(ctx, item)
+	if err != nil {
+		return nil, nil, err
+	}
+	return item, languages, nil
+}
+
+func (s *Service) languagesForContest(ctx context.Context, item *Contest) ([]Language, error) {
+	if len(item.LanguageCodeAllowList) == 0 {
+		return nil, nil
+	}
+	return s.contests.ListLanguagesForContest(ctx, item.ID)
+}
+
+func hydrateContest(item *Contest, languages []Language) (*ContestView, error) {
+	activities, err := hydrateActivities(item.ActivityTypeIDAllowList)
 	if err != nil {
 		return nil, err
 	}
-	item.AllowedActivities = activities
-	return item, nil
+	return &ContestView{
+		ID:                   item.ID,
+		ContestStart:         item.ContestStart,
+		ContestEnd:           item.ContestEnd,
+		RegistrationEnd:      item.RegistrationEnd,
+		Title:                item.Title,
+		Description:          item.Description,
+		OwnerUserID:          item.OwnerUserID,
+		OwnerUserDisplayName: item.OwnerUserDisplayName,
+		Official:             item.Official,
+		Private:              item.Private,
+		AllowedLanguages:     languages,
+		AllowedActivities:    activities,
+		CreatedAt:            item.CreatedAt,
+		UpdatedAt:            item.UpdatedAt,
+		Deleted:              item.Deleted,
+	}, nil
 }

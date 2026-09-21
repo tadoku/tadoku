@@ -15,7 +15,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgconn v1.14.3
 	github.com/jackc/pgerrcode v0.0.0-20250907135507-afb5586c32a6
-	github.com/jackc/pgx/v4 v4.18.2
+	github.com/jackc/pgx/v4 v4.18.3
 	github.com/jackc/pgx/v5 v5.11.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/labstack/echo/v4 v4.15.1

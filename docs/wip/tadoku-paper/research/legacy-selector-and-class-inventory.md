@@ -56,7 +56,7 @@ This table is based on static/template `className` strings. It excludes classes 
 | admin | `auto-format`, `btn` + primary/secondary/danger/ghost, `card`, `default`, `fill`, `modal-actions`, `modal-body`, `spaced`, `subtitle`, `table-container`, `tag`, `title`, `v-stack` | editors/preview, users/languages modals, default tables, dashboard layout |
 | auth | `btn` + primary/ghost/small, `card`, `h-stack`, `kratos-form`, `spaced`, `subtitle`, `title`, `v-stack` | dynamic Ory node output and adjacent-primary selector-order hack |
 | legacy styleguide | all documented button states, `card`, `h-stack`, `input-frame`, form label recipes, `list`, modal recipes, `reset`, stacks, table recipe, typography recipes | raw-class documentation is part of the content migration, not dead demo code |
-| webv2 | `auto-format`, `btn` + primary/danger/ghost, `card`/`narrow`, `default`, `h-stack`/`v-stack`/`spaced`, `input-frame`, modal recipes, `reset`, subtitles/titles, table/container, tags | product prose, manual, both logging generations, contest/profile tables, page-counter size exception |
+| webv2 | `auto-format`, `btn` + primary/danger/ghost, `card`/`narrow`, `default`, `h-stack`/`v-stack`/`spaced`, `input-frame`, modal recipes, `reset`, subtitles/titles, table/container, tags | product prose, manual, both logging generations, contest/profile tables |
 
 ### Button semantics requiring review
 

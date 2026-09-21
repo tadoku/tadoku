@@ -69,7 +69,6 @@ These matrices are pre-cutover checklists. Each smoke run needs desktop and narr
 | browse/data | tables, menus, tabs, pagination, dynamic route links | high | all leaderboard/profile/blog list variants |
 | charts | palette, heatmap, responsive canvas/overflow | high | activity/split/heatmap fixtures including empty/long data |
 | rich content | sanitized blog/pages/manual rely on `.auto-format` and tables | high | prose, inline code, links, multi-table manual |
-| page counter | intentionally oversized button is outside standard control sizing | medium-high | documented app exception; touch/keyboard smoke |
 | router adapters | Navbar/Breadcrumb/Tabs/Pagination currently rely on Next-aware legacy code | high | app-owned current-route/link adapter tests |
 | responsive breadth | widest app surface and table/profile overflow | high | phone/desktop route matrix |
 
@@ -82,7 +81,6 @@ These matrices are pre-cutover checklists. Each smoke run needs desktop and narr
 - [ ] Latest/all-time/yearly leaderboards: tabs/vertical tabs, ButtonGroup, pagination, narrow table overflow.
 - [ ] Profiles: updates, statistics/year switching, heatmap, activity/split charts, contest list, empty/loading/error states.
 - [ ] Blog list/post, dynamic content page, manual tables/prose, sanitized links and inline code.
-- [ ] Page counter increment/reset behavior with keyboard, touch target, and deliberate oversized visual exception.
 - [ ] Every menu/dialog supports keyboard/focus/dismissal; destructive operations are explicit.
 - [ ] Direct dynamic routes and paginated deep links preserve path/query/current state.
 - [ ] App lint, typecheck, production build, image build, whole-frontend matrix, deployment telemetry, and rollback command pass.

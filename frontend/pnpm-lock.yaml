@@ -112,7 +112,7 @@ importers:
         specifier: ^3.2.0
         version: 3.2.0
       '@types/luxon':
-        specifier: ^3.1.0
+        specifier: ^3.7.1
         version: 3.7.1
       '@types/node':
         specifier: 18.7.18
@@ -455,7 +455,7 @@ importers:
         version: 3.25.76
     devDependencies:
       '@types/luxon':
-        specifier: ^3.1.0
+        specifier: ^3.7.1
         version: 3.7.1
       '@types/react-syntax-highlighter':
         specifier: ^15.5.5
@@ -564,7 +564,7 @@ importers:
         specifier: ^3.2.0
         version: 3.2.0
       '@types/luxon':
-        specifier: ^3.1.0
+        specifier: ^3.7.1
         version: 3.7.1
       '@types/node':
         specifier: 18.7.18
@@ -719,7 +719,7 @@ importers:
         version: 4.9.3
     devDependencies:
       '@types/luxon':
-        specifier: ^3.1.0
+        specifier: ^3.7.1
         version: 3.7.1
       autoprefixer:
         specifier: ^10.4.13

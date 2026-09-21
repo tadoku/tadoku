@@ -8,7 +8,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/google/uuid"
-	activitiescatalog "github.com/tadoku/tadoku/services/tadoku-api/internal/activities"
+	activitiescatalog "github.com/tadoku/tadoku/services/tadoku-api/domain/activities"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
 

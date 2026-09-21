@@ -3,6 +3,6 @@ load("@rules_go//go:def.bzl", "go_library")
 go_library(
     name = "activities",
     srcs = ["activities.go"],
-    importpath = "github.com/tadoku/tadoku/services/tadoku-api/internal/activities",
+    importpath = "github.com/tadoku/tadoku/services/tadoku-api/domain/activities",
     visibility = ["//services/tadoku-api:__subpackages__"],
 )

@@ -62,8 +62,8 @@ var operationAccess = map[string]accessLevel{
 	"ImmersionContestRegistrationUpsert":       accessAuthenticated,
 
 	"ImmersionProfileYearlyContestRegistrationsByUserID": accessPublic,
-	"ImmersionLogGetConfigurations": accessAuthenticated,
-	"ImmersionLogTagSuggestions":    accessAuthenticated,
+	"ImmersionLogGetConfigurations":                      accessAuthenticated,
+	"ImmersionLogTagSuggestions":                         accessAuthenticated,
 
 	"ImmersionLanguageList":   accessAdmin,
 	"ImmersionLanguageCreate": accessAdmin,

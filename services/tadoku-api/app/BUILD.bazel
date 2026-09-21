@@ -20,6 +20,7 @@ go_library(
         "//services/tadoku-api/transport/http:__pkg__",
     ],
     deps = [
+        "//services/tadoku-api/domain/activities",
         "//services/tadoku-api/features/announcements",
         "//services/tadoku-api/features/audit",
         "//services/tadoku-api/features/authz",
@@ -30,7 +31,6 @@ go_library(
         "//services/tadoku-api/features/posts",
         "//services/tadoku-api/features/profile",
         "//services/tadoku-api/infra/postgres",
-        "//services/tadoku-api/internal/activities",
         "//services/tadoku-api/internal/callbackauth",
         "//services/tadoku-api/internal/errx",
         "//services/tadoku-api/internal/identity",

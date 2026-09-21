@@ -3,9 +3,9 @@ package app
 import (
 	"context"
 
+	"github.com/tadoku/tadoku/services/tadoku-api/domain/activities"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/languages"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/logs"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/activities"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
 )

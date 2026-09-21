@@ -9,6 +9,7 @@ Externally the gateway still adds `/api`.
 
 ```
 transport/http -> app -> features/<feature> -> generated/sqlc/<feature>
+app and features/<feature> -> domain/<concept>
 cmd/tadoku-api constructs and owns the pgx/v5 pool, raw Valkey/Kratos clients and HTTP resources
 ```
 
@@ -40,6 +41,20 @@ Application operations compose features. Feature services own business decisions
 repositories only query and map rows. `postgres.Executor` lets repositories use
 the active app-owned transaction. Open transactions only when the operation needs
 one; do not add feature or repository interfaces solely for mocking.
+
+Shared business concepts and pure rules used by multiple features belong in
+`domain/<concept>`. Application operations and features may import these packages;
+shared domain packages must not import application, feature, transport, storage,
+generated or infrastructure packages, or technical support packages under
+`internal`. Keep this layer about business values and rules, without services,
+repositories or provider APIs. Technical support concerns, such as business-time
+control and request identity, remain under `internal`. The dependency policy in
+`.depolicy.yaml` enforces these import boundaries.
+
+Keep types, errors and validation used by only one feature in that feature's
+`domain.go`; sharing a concept does not require moving its feature operations.
+Features still compose only through the application layer and never import or
+call sibling features.
 
 Each feature package groups its operations in `<feature>_service.go` and
 `<feature>_repository.go`, with matching `_test.go` files. Keep domain types,
@@ -692,9 +707,12 @@ Compilation/type checking remains in the ordinary Bazel build.
 
 Policies describe layer direction: transport uses application operations and
 HTTP contract types; application code composes features; features use their own
-domain and generated SQL plus infrastructure; infrastructure and domain code
-cannot import application or transport code. Shared internal utilities sit below
-these layers. Startup and integration tests are assembly boundaries.
+domain and generated SQL plus infrastructure. Application and feature code may
+also use shared `domain/<concept>` packages, which depend only on other shared
+domain packages within this application. Infrastructure cannot import application,
+feature or transport code. Shared internal support packages sit below the runtime
+layers and remain independent of shared business domain packages. Startup and
+integration tests are assembly boundaries.
 
 Rules use layer/feature patterns, not lists of utility, database-driver or provider
 packages. Standard-library and third-party imports are outside this local-layer

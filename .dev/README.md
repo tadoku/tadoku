@@ -110,19 +110,13 @@ dev logs --owner alice tadoku-api
 ```
 
 Open the printed link; it sets a host-only branch cookie without application UI
-changes. Until the pilot origin is onboarded in shared Kratos, authenticate at
-the existing account hostname first, then open the pilot link. Its session
-cookie must already cover the pilot hostname. Each browser profile has its own
-selection; tabs within one profile share it.
-
-This separate sign-in does **not** prove the pilot's normal Login button works.
-That button supplies the pilot URL as `return_to`; Kratos rejects it unless its
-return-URL allowlist includes that origin. Browser auth operations also need
-the exact pilot origin in Kratos's CORS allowlist. Onboard both through the
-existing development configuration, preserving existing origins and avoiding
-wildcards. This changes a shared Tilt-owned provider and needs operator approval;
-its current pod startup includes a migration init container. Do not patch the
-live provider or weaken authentication as a pilot workaround.
+changes. For the normal Navbar `Log in` flow, an operator must temporarily add
+the exact pilot origin to shared development Kratos's return-URL and CORS
+allowlists, preserving existing origins and avoiding wildcards. This is a
+live-only acceptance prerequisite, not an auth configuration change for this
+PR. Each browser profile has its own branch selection; tabs within one profile
+share it. Signing in at the account hostname first remains an optional manual
+diagnostic, but it does not satisfy the full acceptance gate.
 
 Source edits sync into the existing pnpm Next dev server. Go edits rebuild only
 the selected binary and restart it in the same pod after upload. A compilation
@@ -192,18 +186,20 @@ node .dev/acceptance.mjs --routing-only
 node .dev/acceptance.mjs --base-only
 ```
 
-The script signs in at the account hostname independently; the normal pilot
-Login button/return redirect is a separate onboarding gate. The script verifies
-real login/SSR, native authorization, legacy proxy traffic,
-two selections, spoofed routing headers, isolated seed visibility, actual
-leaderboard rendering on both overlay and base frontend, and branch
-switching/clearing. A blank-page input control distinguishes a broken browser
-installation from an application login failure. The live fixture currently
-requires HTTPS development Lab hosts. It does not weaken provider authentication
-or retry guessed credentials. Independently test a deliberate Go compilation
-failure, old-response availability, recovery, pod UID/image stability, and
-browser HMR without navigation. Measure from file modification to visible
-browser update or successful new API response; report sample counts and ranges.
+The full script starts on each selected pilot route, follows the real Navbar
+`Log in` link to the account form, requires its `return_to` to bring the browser
+back to that pilot route, and reads the resulting Kratos session from the pilot
+page to prove the exact CORS origin. It then verifies authenticated SSR, native
+authorization, legacy proxy traffic, two selections, spoofed routing headers,
+isolated seed visibility, actual leaderboard rendering on both overlay and base
+frontend, and branch switching/clearing. A blank-page input control distinguishes
+a broken browser installation from an application login failure. The live
+fixture currently requires HTTPS development Lab hosts. It does not weaken
+provider authentication or retry guessed credentials. Independently test a
+deliberate Go compilation failure, old-response availability, recovery, pod
+UID/image stability, and browser HMR without navigation. Measure from file
+modification to visible browser update or successful new API response; report
+sample counts and ranges.
 
 Repository checks before review:
 

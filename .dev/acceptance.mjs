@@ -29,7 +29,14 @@ try {
   await pageA.locator('[name="control-b"]').fill('second');
   assert(await pageA.locator('[name="control-a"]').inputValue() === 'first' && await pageA.locator('[name="control-b"]').inputValue() === 'second', 'browser input control failed; install browser system dependencies/fonts before testing authentication');
   async function login(page, email, password) {
-    await page.goto(`${auth}/login`);
+    const pilotURL = new URL(page.url());
+    assert.equal(pilotURL.origin,new URL(host).origin,'login must start from the pilot');
+    const loginLink = page.getByRole('link',{name:'Log in',exact:true});
+    const loginURL = new URL(await loginLink.getAttribute('href'),pilotURL);
+    assert.equal(loginURL.origin,new URL(auth).origin,'Navbar login must use the account origin');
+    assert.equal(loginURL.pathname,'/login','Navbar login path');
+    assert.equal(loginURL.searchParams.get('return_to'),pilotURL.href,'Navbar must return to the selected pilot URL');
+    await loginLink.click();
     const form = page.locator('form.kratos-form');
     await form.waitFor({state:'visible'});
     await page.waitForLoadState('networkidle');
@@ -39,6 +46,9 @@ try {
     await secret.fill(password);
     assert(await identifier.inputValue() === email && await secret.inputValue() === password, 'login inputs did not retain values');
     const submitted = page.waitForResponse(r => r.url().includes('/self-service/login') && r.request().method() === 'POST');
+    submitted.catch(()=>{});
+    const returned = page.waitForURL(url => url.origin === new URL(host).origin);
+    returned.catch(()=>{});
     await form.locator('button[type="submit"]').click();
     const loginResponse = await submitted;
     if (loginResponse.status() >= 400) {
@@ -47,9 +57,19 @@ try {
       const messages = [...(body.ui?.messages || []), ...(body.ui?.nodes || []).flatMap(n=>n.messages || [])];
       throw new Error(`real login rejected: HTTP ${loginResponse.status()}, submitted fields ${Object.keys(loginResponse.request().postDataJSON() || {}).join(',')}, missing ${messages.map(m=>m.context?.property || m.id).join(',')}, error ${body.error?.id || ''}`);
     }
-    const response = await page.request.get(`${auth}/kratos/sessions/whoami`);
-    assert.equal(response.status(),200,'real Kratos session required');
-    return (await response.json()).identity.id;
+    await returned;
+    assert.equal(page.url(),pilotURL.href,'Kratos must return to the selected pilot URL');
+    const session = await page.evaluate(async endpoint => {
+      try {
+        const response = await fetch(`${endpoint}/kratos/sessions/whoami`,{credentials:'include'});
+        return {status:response.status,identity:response.ok?(await response.json()).identity?.id:''};
+      } catch {
+        return {status:0,identity:''};
+      }
+    },auth);
+    assert.equal(session.status,200,'pilot origin must be allowed to read the real Kratos session');
+    assert(session.identity,'real Kratos identity required');
+    return session.identity;
   }
   async function select(page, route) {
     const leaderboard = page.waitForResponse(r => new URL(r.url()).pathname.includes('/api/internal/immersion/leaderboard/yearly/'));
@@ -104,11 +124,11 @@ try {
   console.log('PASS: two-owner routing, spoof protection, legacy hop, partial frontend fallback, isolated seed, switch/clear/missing selection');
   }
   if (!routingOnly && !baseOnly) {
+    await select(pageA,routeA);
+    await select(pageB,routeB);
     const identityA = await login(pageA, required('ADMIN_EMAIL'), required('ADMIN_PASSWORD'));
     const identityB = await login(pageB, required('READER_EMAIL'), required('READER_PASSWORD'));
     assert.notEqual(identityA,identityB,'use two distinct fixture identities');
-    await select(pageA,routeA);
-    await select(pageB,routeB);
     const sessionA = await pageA.evaluate(()=>window.__NEXT_DATA__.props.pageProps.session?.identity.id);
     assert(sessionA === identityA,'Next.js SSR must retain the authenticated session');
     const sessionB = await pageB.evaluate(()=>window.__NEXT_DATA__.props.pageProps.session?.identity.id);

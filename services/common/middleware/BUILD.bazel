@@ -3,6 +3,7 @@ load("@rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "middleware",
     srcs = [
+        "json.go",
         "logger.go",
         "optional_auth.go",
         "roles.go",
@@ -23,6 +24,7 @@ go_library(
 go_test(
     name = "middleware_test",
     srcs = [
+        "json_test.go",
         "optional_auth_test.go",
         "session_test.go",
     ],

@@ -209,6 +209,7 @@ func main() {
 	go outboxWorker.Run(workerCtx)
 
 	e := echo.New()
+	tadokumiddleware.RestoreJSONCharset(e)
 	e.Use(serviceMetrics.Middleware())
 	e.Use(middleware.Recover())
 

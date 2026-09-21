@@ -65,6 +65,7 @@ func newLegacyContentAPI(ctx context.Context, dsn, jwksURL, ketoReadURL string) 
 		domain.NewAnnouncementListActive(repository, scenarioClock{}),
 	)
 	router := echo.New()
+	middleware.RestoreJSONCharset(router)
 	router.Logger.SetOutput(io.Discard)
 	roles := commonroles.NewKetoService(ketoclient.NewReadClient(ketoReadURL), "app", "tadoku")
 	// Reuse production route registration and its business authentication stack.

@@ -91,6 +91,7 @@ func newLegacyImmersionAPI(ctx context.Context, dsn, jwksURL, ketoReadURL string
 			nil, // feature access
 		)
 		router := echo.New()
+		middleware.RestoreJSONCharset(router)
 		router.Logger.SetOutput(io.Discard)
 		router.Use(echomiddleware.Recover())
 

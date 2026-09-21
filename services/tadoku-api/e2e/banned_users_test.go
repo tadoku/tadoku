@@ -39,6 +39,7 @@ func TestBannedUsers(t *testing.T) {
 func newLegacyBannedUsersHandler(jwksURL, ketoReadURL string) http.Handler {
 	roles := commonroles.NewKetoService(ketoclient.NewReadClient(ketoReadURL), "app", "tadoku")
 	router := echo.New()
+	middleware.RestoreJSONCharset(router)
 	router.Logger.SetOutput(io.Discard)
 	router.GET("/test/banned", func(c echo.Context) error {
 		if user := commondomain.ParseUserIdentity(c.Request().Context()); user != nil {

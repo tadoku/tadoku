@@ -85,6 +85,7 @@ func newLegacyProfileAPI(ctx context.Context, dsn, jwksURL, ketoReadURL string, 
 	holder := &legacyProfileCacheHolder{}
 	server := legacyrest.NewServer(legacydomain.NewUserList(holder, roles))
 	router := echo.New()
+	middleware.RestoreJSONCharset(router)
 	router.Logger.SetOutput(io.Discard)
 	api := router.Group("/profile",
 		middleware.VerifyJWT(jwksURL),

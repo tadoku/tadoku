@@ -21,27 +21,10 @@ func NewContestsRepository(db *pgxpool.Pool) *ContestsRepository {
 	return &ContestsRepository{db: db}
 }
 
-func (r *ContestsRepository) CountContests(ctx context.Context, parameters ListParameters) (int, error) {
+func (r *ContestsRepository) ListContests(ctx context.Context, parameters ListParameters) ([]Contest, int, error) {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
-		return 0, err
-	}
-
-	total, err := queries.New(executor).ContestsMetadata(ctx, queries.ContestsMetadataParams{
-		IncludeDeleted: parameters.IncludeDeleted,
-		UserID:         nullableUUID(parameters.UserID),
-		Official:       parameters.Official,
-	})
-	if err != nil {
-		return 0, fmt.Errorf("count contests: %w", err)
-	}
-	return int(total), nil
-}
-
-func (r *ContestsRepository) ListContests(ctx context.Context, parameters ListParameters) ([]Contest, error) {
-	executor, err := postgres.Executor(ctx, r.db)
-	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	rows, err := queries.New(executor).ListContests(ctx, queries.ListContestsParams{
@@ -53,14 +36,35 @@ func (r *ContestsRepository) ListContests(ctx context.Context, parameters ListPa
 		PageSize:       int32(parameters.PageSize),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("list contests: %w", err)
+		return nil, 0, fmt.Errorf("list contests: %w", err)
 	}
 
 	result := make([]Contest, 0, len(rows))
+	var total int
 	for _, row := range rows {
-		result = append(result, contestFromRow(queries.FindContestByIDRow(row)))
+		total = int(row.TotalSize)
+		if !row.ID.Valid {
+			continue
+		}
+		result = append(result, Contest{
+			ID:                      uuid.UUID(row.ID.Bytes),
+			ContestStart:            row.ContestStart.Time,
+			ContestEnd:              row.ContestEnd.Time,
+			RegistrationEnd:         row.RegistrationEnd.Time,
+			Title:                   row.Title.String,
+			Description:             nullableString(row.Description),
+			OwnerUserID:             uuid.UUID(row.OwnerUserID.Bytes),
+			OwnerUserDisplayName:    row.OwnerUserDisplayName.String,
+			Official:                row.Official.Bool,
+			Private:                 row.Private.Bool,
+			LanguageCodeAllowList:   row.LanguageCodeAllowList,
+			ActivityTypeIDAllowList: row.ActivityTypeIDAllowList,
+			CreatedAt:               row.CreatedAt.Time,
+			UpdatedAt:               row.UpdatedAt.Time,
+			Deleted:                 row.DeletedAt.Valid,
+		})
 	}
-	return result, nil
+	return result, total, nil
 }
 
 func (r *ContestsRepository) FindContestByID(ctx context.Context, parameters FindParameters) (*Contest, error) {

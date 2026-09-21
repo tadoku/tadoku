@@ -44,7 +44,10 @@ func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
 			 '2026-03-01', '2026-03-01', null),
 			('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa4', '22222222-2222-4222-8222-222222222222', 'stale', false,
 			 '2027-01-01', '2027-01-31', '2026-12-15', 'Deleted future official', null, '{eng}', '{5}', true,
-			 '2026-04-01', '2026-04-01', '2026-04-02')`)
+			 '2026-04-01', '2026-04-01', '2026-04-02'),
+			('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa5', '33333333-3333-4333-8333-333333333333', 'missing', false,
+			 '2026-02-15', '2026-02-28', '2026-02-01', 'Orphan official', null, null, '{1}', true,
+			 '2026-02-15', '2026-02-15', null)`)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -54,16 +57,45 @@ func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
 		Official: true,
 		PageSize: 10,
 	}
-	total, err := repository.CountContests(t.Context(), parameters)
+	items, total, err := repository.ListContests(t.Context(), parameters)
 	if err != nil {
 		t.Fatal(err)
 	}
-	items, err := repository.ListContests(t.Context(), parameters)
+	if len(items) != 1 || items[0].Title != "Public official" || total != 3 {
+		t.Errorf("public list=%+v total=%d, want one visible of three matching official contests", items, total)
+	}
+
+	parameters.Page = 1
+	items, total, err = repository.ListContests(t.Context(), parameters)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(items) != 1 || items[0].Title != "Public official" || total != 2 {
-		t.Errorf("public list=%+v total=%d, want one visible of two live official contests", items, total)
+	if len(items) != 0 || total != 3 {
+		t.Errorf("out-of-range list=%+v total=%d, want empty page with three matches", items, total)
+	}
+
+	items, total, err = repository.ListContests(t.Context(), ListParameters{
+		Official: false,
+		PageSize: 10,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(items) != 0 || total != 1 {
+		t.Errorf("hidden-only list=%+v total=%d, want empty page with one private match", items, total)
+	}
+
+	orphanOwnerID := uuid.MustParse("33333333-3333-4333-8333-333333333333")
+	items, total, err = repository.ListContests(t.Context(), ListParameters{
+		UserID:   &orphanOwnerID,
+		Official: true,
+		PageSize: 10,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(items) != 0 || total != 1 {
+		t.Errorf("orphan-only list=%+v total=%d, want empty page with one orphan match", items, total)
 	}
 
 	ownerID := uuid.MustParse("11111111-1111-4111-8111-111111111111")
@@ -72,16 +104,25 @@ func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
 		Official: false,
 		PageSize: 10,
 	}
-	total, err = repository.CountContests(t.Context(), parameters)
-	if err != nil {
-		t.Fatal(err)
-	}
-	items, err = repository.ListContests(t.Context(), parameters)
+	items, total, err = repository.ListContests(t.Context(), parameters)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(items) != 1 || items[0].Title != "Private unofficial" || total != 1 {
 		t.Errorf("owner list=%+v total=%d, want private owner contest", items, total)
+	}
+
+	missingOwnerID := uuid.MustParse("44444444-4444-4444-8444-444444444444")
+	items, total, err = repository.ListContests(t.Context(), ListParameters{
+		UserID:   &missingOwnerID,
+		Official: false,
+		PageSize: 10,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(items) != 0 || total != 0 {
+		t.Errorf("zero-match list=%+v total=%d, want empty page and zero total", items, total)
 	}
 
 	deletedID := uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa4")

@@ -24,11 +24,7 @@ func (s *Service) ListContests(ctx context.Context, parameters ListParameters, i
 	}
 	parameters.includePrivate = includePrivate
 
-	total, err := s.contests.CountContests(ctx, parameters)
-	if err != nil {
-		return nil, err
-	}
-	items, err := s.contests.ListContests(ctx, parameters)
+	items, total, err := s.contests.ListContests(ctx, parameters)
 	if err != nil {
 		return nil, err
 	}

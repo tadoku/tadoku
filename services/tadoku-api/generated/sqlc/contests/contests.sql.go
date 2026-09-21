@@ -11,28 +11,6 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const contestsMetadata = `-- name: ContestsMetadata :one
-select count(contests.id) as total_size
-from contests
-where
-  ($1::boolean or contests.deleted_at is null)
-  and (owner_user_id = $2::uuid or $2::uuid is null)
-  and official = $3
-`
-
-type ContestsMetadataParams struct {
-	IncludeDeleted bool
-	UserID         pgtype.UUID
-	Official       bool
-}
-
-func (q *Queries) ContestsMetadata(ctx context.Context, arg ContestsMetadataParams) (int64, error) {
-	row := q.db.QueryRow(ctx, contestsMetadata, arg.IncludeDeleted, arg.UserID, arg.Official)
-	var total_size int64
-	err := row.Scan(&total_size)
-	return total_size, err
-}
-
 const findContestByID = `-- name: FindContestByID :one
 select
   contests.id,
@@ -170,32 +148,76 @@ func (q *Queries) FindLatestOfficialContest(ctx context.Context) (FindLatestOffi
 }
 
 const listContests = `-- name: ListContests :many
+with matches as materialized (
+  select
+    contests.id,
+    owner_user_id,
+    "private",
+    contest_start,
+    contest_end,
+    registration_end,
+    title,
+    "description",
+    language_code_allow_list,
+    activity_type_id_allow_list,
+    official,
+    contests.created_at,
+    contests.updated_at,
+    contests.deleted_at
+  from contests
+  where
+    ($1::boolean or contests.deleted_at is null)
+    and (owner_user_id = $2::uuid or $2::uuid is null)
+    and official = $3
+), page as (
+  select
+    matches.id,
+    matches.owner_user_id,
+    case when users.deleted_at is not null then 'Deleted organizer' else users.display_name end::varchar as owner_user_display_name,
+    matches."private",
+    matches.contest_start,
+    matches.contest_end,
+    matches.registration_end,
+    matches.title,
+    matches."description",
+    matches.language_code_allow_list,
+    matches.activity_type_id_allow_list,
+    matches.official,
+    matches.created_at,
+    matches.updated_at,
+    matches.deleted_at
+  from matches
+  inner join users on users.id = matches.owner_user_id
+  where matches."private" = false
+    or $4::boolean
+    or matches.owner_user_id = $2::uuid
+  order by matches.created_at desc
+  limit $6
+  offset $5
+), total as (
+  select count(*) as total_size
+  from matches
+)
 select
-  contests.id,
-  owner_user_id,
-  case when users.deleted_at is not null then 'Deleted organizer' else users.display_name end::varchar as owner_user_display_name,
-  "private",
-  contest_start,
-  contest_end,
-  registration_end,
-  title,
-  "description",
-  language_code_allow_list,
-  activity_type_id_allow_list,
-  official,
-  contests.created_at,
-  contests.updated_at,
-  contests.deleted_at
-from contests
-inner join users on users.id = contests.owner_user_id
-where
-  ($1::boolean or contests.deleted_at is null)
-  and (owner_user_id = $2::uuid or $2::uuid is null)
-  and official = $3
-  and ("private" = false or ($4::boolean or owner_user_id = $2::uuid))
-order by contests.created_at desc
-limit $6
-offset $5
+  page.id,
+  page.owner_user_id,
+  page.owner_user_display_name,
+  page."private",
+  page.contest_start,
+  page.contest_end,
+  page.registration_end,
+  page.title,
+  page."description",
+  page.language_code_allow_list,
+  page.activity_type_id_allow_list,
+  page.official,
+  page.created_at,
+  page.updated_at,
+  page.deleted_at,
+  total.total_size
+from total
+left join page on true
+order by page.created_at desc
 `
 
 type ListContestsParams struct {
@@ -210,19 +232,20 @@ type ListContestsParams struct {
 type ListContestsRow struct {
 	ID                      pgtype.UUID
 	OwnerUserID             pgtype.UUID
-	OwnerUserDisplayName    string
-	Private                 bool
+	OwnerUserDisplayName    pgtype.Text
+	Private                 pgtype.Bool
 	ContestStart            pgtype.Date
 	ContestEnd              pgtype.Date
 	RegistrationEnd         pgtype.Date
-	Title                   string
+	Title                   pgtype.Text
 	Description             pgtype.Text
 	LanguageCodeAllowList   []string
 	ActivityTypeIDAllowList []int32
-	Official                bool
+	Official                pgtype.Bool
 	CreatedAt               pgtype.Timestamp
 	UpdatedAt               pgtype.Timestamp
 	DeletedAt               pgtype.Timestamp
+	TotalSize               int64
 }
 
 func (q *Queries) ListContests(ctx context.Context, arg ListContestsParams) ([]ListContestsRow, error) {
@@ -257,6 +280,7 @@ func (q *Queries) ListContests(ctx context.Context, arg ListContestsParams) ([]L
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
+			&i.TotalSize,
 		); err != nil {
 			return nil, err
 		}

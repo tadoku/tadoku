@@ -138,10 +138,8 @@ func TestContestCreationJourney(t *testing.T) {
 }
 
 func TestContestRegistrationJourney(t *testing.T) {
-	ids := append(bytes.Repeat([]byte{0x33}, 16), bytes.Repeat([]byte{0x44}, 16)...)
-	ids = append(ids, bytes.Repeat([]byte{0x55}, 16)...)
-	ids = append(ids, bytes.Repeat([]byte{0x66}, 16)...)
-	uuid.SetRand(bytes.NewReader(ids))
+	// Keep API-created contest and registration IDs stable in the HTTP fixtures.
+	uuid.SetRand(rand.New(rand.NewSource(1)))
 	defer uuid.SetRand(nil)
 
 	runJourney(t, api, "ContestRegistration", []step{

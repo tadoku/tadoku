@@ -3,10 +3,14 @@
 <style>body{font:17px/1.6 system-ui,sans-serif;color:#20252b;max-width:960px;margin:40px auto;padding:0 24px}h1,h2,h3{line-height:1.2}h1{font-size:2rem}h2{margin-top:2em;padding-top:1em;border-top:1px solid #d7dce0}p,li{max-width:78ch}a{color:#175d88}table{border-collapse:collapse;width:100%;font-size:.93rem}th,td{border-bottom:1px solid #d7dce0;text-align:left;vertical-align:top;padding:12px 10px}th{background:#f4f6f7}code{font-size:.88em;overflow-wrap:anywhere}pre{font:13px/1.5 ui-monospace,monospace;overflow:auto;background:#f4f6f7;padding:18px;white-space:pre-wrap;overflow-wrap:anywhere}aside{border-left:3px solid #927126;padding:0 18px}details{margin:20px 0}summary{cursor:pointer;font-weight:600}@media(max-width:600px){body{padding:0 16px;margin:24px auto}table{font-size:.82rem}th,td{padding:8px 5px}}</style></head><body>
 <h1>Native log configuration and tag suggestions</h1>
 <p><strong>Both read operations match the legacy HTTP contract in all 25 scenarios.</strong> The final services build passes, all 47 Bazel test targets pass, and a separate named run confirms 50 complete native/legacy response comparisons. No operation-specific parity exceptions were introduced.</p>
-<p>Tested application revision: <a href="https://github.com/tadoku/tadoku/commit/cbb1cd7d7f2f485b6eee88b86b9c5058376b1184"><code>cbb1cd7d7f2f485b6eee88b86b9c5058376b1184</code></a>. The later documentation commit contains this report only. Verified on 21 September 2026.</p>
+<p>Tested application revision: <a href="https://github.com/tadoku/tadoku/commit/ceb823754837d12e43d9c0e8fa53e3d2c45fb1a3"><code>ceb823754837d12e43d9c0e8fa53e3d2c45fb1a3</code></a>. Rebased onto <code>f9b43f5eeb7a896e65bfb7c97528b96e98ccbeff</code> from <code>main</code>. Later changes only refresh verification documentation. Verified on 21 September 2026.</p>
 <h2>Delivered scope</h2>
-<p><code>ImmersionLogGetConfigurations</code> and <code>ImmersionLogTagSuggestions</code> now run through native production JWT verification, shared ban enforcement, application authorization, concrete feature services and PostgreSQL queries. The canonical contract owns both routes natively, and the generated strict router includes them. The application composes independent language and log features; the shared native activity catalog also serves contests.</p>
+<p><code>ImmersionLogGetConfigurations</code> and <code>ImmersionLogTagSuggestions</code> now run through native production JWT verification, shared ban enforcement, application authorization, concrete feature services and PostgreSQL queries. The canonical contract owns both routes natively, and the generated strict router includes them. The application composes independent language and log features; the shared native activity catalog in <code>domain/activities</code> also serves contests.</p>
 <p>Log writes, score preview, scoring-rule management and database schema remain outside this change. No production action or merge was performed.</p>
+<h2>Architecture and review follow-up</h2>
+<p>The shared activity catalog moved from <code>internal/activities</code> to <code>domain/activities</code> without changing its values or behavior. The application and contest feature import the same shared business vocabulary; neither feature imports a sibling feature. Technical support stays under <code>internal</code>, while feature-specific types stay in each feature’s <code>domain.go</code>.</p>
+<p>The application README, root AGENTS.md and enforced <code>.depolicy.yaml</code> now document the shared domain layer. Shared domain packages cannot import application, feature, HTTP, generated, storage, infrastructure or internal packages. Depolicy checked 236 Go files, including 91 test files, with zero violations. Bazel visibility still restricts the activity package to this application.</p>
+<p>The rebase retains the contest summary and yearly registration history operations newly on main, including their legacy production-handler comparisons. The combined OpenAPI router was regenerated, and the full suite passes with those endpoints included.</p>
 <h2>Preserved behavior</h2>
 <table><thead><tr><th>Contract</th><th>Observed result</th></tr></thead><tbody>
 <tr><td>Configuration data</td><td>52 migration-seeded languages, all five activities and 25 units match field-for-field and in order. Activity <code>default</code> is omitted, nullable unit language codes stay omitted, and empty history is <code>[]</code>.</td></tr>
@@ -19,14 +23,20 @@
 <tr><td>Caller authorization</td><td>Signed guests and malformed signed UUID subjects receive the legacy 401 response. The full JWT/ban/provider matrix remains at the shared boundary.</td></tr>
 </tbody></table>
 <h2>Configuration coordination</h2>
-<p>The checked-in development manifests set both services to <code>false</code>. The production legacy writer manifest uses <code>true</code>. <a href="https://github.com/antonve/tadoku-argocd/pull/175">Companion GitOps PR #175</a> explicitly sets native <code>API_SCORING_ENGINE_ENABLED=true</code>; rendered native and legacy settings match. This setting is independent of Flipt.</p>
-<aside><p>Release gate: configure the native value before activating this application revision, and keep it aligned with the legacy writer throughout coexistence. Native startup has no implicit false fallback. PR creation changes no live service; merging or deploying remains a separate authorized action.</p></aside>
+<p>The checked-in development manifests set both services to <code>false</code>. The production legacy writer manifest uses <code>true</code>. <a href="https://github.com/antonve/tadoku-argocd/pull/175">Companion GitOps PR #175</a>, now merged as <code>dca7db2e81d277b32faad3e891aefb89c2397987</code>, explicitly sets native <code>API_SCORING_ENGINE_ENABLED=true</code>; rendered native and legacy settings match. This setting is independent of Flipt.</p>
+<aside><p>Release gate: configure the native value before activating this application revision, and keep it aligned with the legacy writer throughout coexistence. Native startup has no implicit false fallback. The GitOps PR is merged; actual cluster reconciliation and live values were not verified. This work did not merge or deploy either change.</p></aside>
 <p>GitOps verification at <code>469a9d193acacf3f8b84545f64efa27adc1641fd</code>: Kustomize rendering and Kubernetes 1.34 schema validation passed (5 valid resources, 0 invalid/errors, 3 custom resources skipped). Full <code>make validate</code> did not complete: an initial pinned Alloy evaluation failed, and subsequent candidate and unchanged <code>0063d41</code> baseline runs both failed downloading the pinned sealed-secrets Helm chart with HTTP 504. These external validation failures remain a stated limitation.</p>
 <h2>Repeatable verification</h2>
 <p>Fixtures live under <code>services/tadoku-api/e2e/testdata/ImmersionLogGetConfigurations/</code> and <code>ImmersionLogTagSuggestions/</code>. One explicit Go case table per operation names every SQL seed, signed HTTP request and complete golden response. Both implementations use the same SQL, relationships and request after a reset; only the native response records goldens.</p>
 <p>The suite starts real pinned Keto and Kratos, uses real PostgreSQL 17 and production JWT/ban middleware, and freezes fixture time at <code>2026-09-12T12:00:00Z</code>. Synthetic signed credentials and public JWKS are fixtures. No authorization mock or legacy network response server is used. HTTP goldens compare status, headers and body; normalization is limited to the repository's buffered Content-Length framing and line endings.</p>
 <p>The first fresh-database rerun exposed migration-generated random unit UUIDs in the fixture. The corrected SQL seed assigns deterministic IDs derived from unit key and optional language, preserving reference rows and all other fields. Goldens were explicitly rerecorded and inspected; the subsequent fresh-database full suite and named parity run passed. Runtime SQL and response values are not rewritten.</p>
-<pre># Disposable loopback services; tests create/reset their own databases and keys.
+<pre># Start these disposable loopback fixtures if not already available.
+docker run -d --name tadoku-log-options-pg -p 127.0.0.1:55432:5432 \
+  -e POSTGRES_PASSWORD=postgres postgres:17
+docker run -d --name tadoku-log-options-valkey -p 127.0.0.1:56379:6379 valkey/valkey:9
+# This rerun reused existing stopped containers with the same images and ports:
+# docker start tadoku-language-resume-pg tadoku-language-resume-valkey
+# Wait for pg_isready before testing; tests create/reset their own databases and keys.
 export TADOKU_TEST_POSTGRES_URL=&#x27;postgres://postgres:postgres@127.0.0.1:55432/postgres?sslmode=disable&#x27;
 export TADOKU_TEST_VALKEY_URL=&#x27;redis://127.0.0.1:56379&#x27;
 
@@ -35,6 +45,7 @@ export TADOKU_TEST_VALKEY_URL=&#x27;redis://127.0.0.1:56379&#x27;
 gofmt -w services/tadoku-api
 bazel run //:gazelle
 bazel run //:gazelle -- -mode=diff
+bazel run //tools/ci/depolicy
 bazel build //services/...
 bazel test //services/... --test_output=errors
 bazel test //services/tadoku-api/e2e:e2e_test \
@@ -44,7 +55,7 @@ bazel test //services/tadoku-api/e2e:e2e_test \
 git diff --exit-code</pre>
 <p>Resource limits used in this container: Bazel JVM heap <code>768m</code>, <code>ActiveProcessorCount=2</code>, <code>--jobs=2</code> and <code>--local_resources=memory=2048</code>. The initial generation attempts were interrupted during container memory/I/O pressure; resumed checks completed. The complete generated diff is retained, and final OpenAPI/Gazelle drift checks left the tree clean.</p>
 <p>To intentionally rerecord existing goldens, unset <code>CI</code>, set <code>TADOKU_GOLDEN_SOURCE_ROOT</code> to the absolute fixture directory above, and add <code>--test_arg=-update-goldens</code> to the focused command. Review the complete resulting diff, then run again without update mode.</p>
-<details><summary>Final named HTTP parity output — 50 comparisons</summary><pre>INFO: Invocation ID: 7f003168-e2ac-44df-8f64-4dc2078c5519
+<details><summary>Final named HTTP parity output — 50 comparisons</summary><pre>INFO: Invocation ID: 5fc0a38b-afd9-4498-817a-3a5a8a1f6378
 Computing main repo mapping:
 Loading:
 Loading: 0 packages loaded
@@ -52,7 +63,6 @@ Analyzing: target //services/tadoku-api/e2e:e2e_test (0 packages loaded, 0 targe
 Analyzing: target //services/tadoku-api/e2e:e2e_test (0 packages loaded, 0 targets configured)
 
 INFO: Analyzed target //services/tadoku-api/e2e:e2e_test (0 packages loaded, 6 targets configured).
-[233 / 234] 1 / 1 tests; Testing //services/tadoku-api/e2e:e2e_test; 1s processwrapper-sandbox
 INFO: From Testing //services/tadoku-api/e2e:e2e_test:
 ==================== Test output for //services/tadoku-api/e2e:e2e_test:
 === RUN   TestImmersionLogGetConfigurations
@@ -77,25 +87,25 @@ INFO: From Testing //services/tadoku-api/e2e:e2e_test:
 === RUN   TestImmersionLogGetConfigurations/ImmersionLogGetConfigurations/401_guest
 === RUN   TestImmersionLogGetConfigurations/ImmersionLogGetConfigurations/401_guest/tadoku-api
 === RUN   TestImmersionLogGetConfigurations/ImmersionLogGetConfigurations/401_guest/immersion-api
---- PASS: TestImmersionLogGetConfigurations (0.07s)
-    --- PASS: TestImmersionLogGetConfigurations/ImmersionLogGetConfigurations/200_empty_history_disabled (0.02s)
+--- PASS: TestImmersionLogGetConfigurations (0.08s)
+    --- PASS: TestImmersionLogGetConfigurations/ImmersionLogGetConfigurations/200_empty_history_disabled (0.01s)
         --- PASS: TestImmersionLogGetConfigurations/ImmersionLogGetConfigurations/200_empty_history_disabled/tadoku-api (0.01s)
         --- PASS: TestImmersionLogGetConfigurations/ImmersionLogGetConfigurations/200_empty_history_disabled/immersion-api (0.01s)
     --- PASS: TestImmersionLogGetConfigurations/ImmersionLogGetConfigurations/200_empty_history_enabled (0.01s)
         --- PASS: TestImmersionLogGetConfigurations/ImmersionLogGetConfigurations/200_empty_history_enabled/tadoku-api (0.01s)
         --- PASS: TestImmersionLogGetConfigurations/ImmersionLogGetConfigurations/200_empty_history_enabled/immersion-api (0.01s)
     --- PASS: TestImmersionLogGetConfigurations/ImmersionLogGetConfigurations/200_populated_disabled (0.01s)
-        --- PASS: TestImmersionLogGetConfigurations/ImmersionLogGetConfigurations/200_populated_disabled/tadoku-api (0.00s)
-        --- PASS: TestImmersionLogGetConfigurations/ImmersionLogGetConfigurations/200_populated_disabled/immersion-api (0.00s)
+        --- PASS: TestImmersionLogGetConfigurations/ImmersionLogGetConfigurations/200_populated_disabled/tadoku-api (0.01s)
+        --- PASS: TestImmersionLogGetConfigurations/ImmersionLogGetConfigurations/200_populated_disabled/immersion-api (0.01s)
     --- PASS: TestImmersionLogGetConfigurations/ImmersionLogGetConfigurations/200_populated_enabled (0.01s)
-        --- PASS: TestImmersionLogGetConfigurations/ImmersionLogGetConfigurations/200_populated_enabled/tadoku-api (0.00s)
+        --- PASS: TestImmersionLogGetConfigurations/ImmersionLogGetConfigurations/200_populated_enabled/tadoku-api (0.01s)
         --- PASS: TestImmersionLogGetConfigurations/ImmersionLogGetConfigurations/200_populated_enabled/immersion-api (0.01s)
     --- PASS: TestImmersionLogGetConfigurations/ImmersionLogGetConfigurations/200_other_user_history (0.01s)
-        --- PASS: TestImmersionLogGetConfigurations/ImmersionLogGetConfigurations/200_other_user_history/tadoku-api (0.00s)
+        --- PASS: TestImmersionLogGetConfigurations/ImmersionLogGetConfigurations/200_other_user_history/tadoku-api (0.01s)
         --- PASS: TestImmersionLogGetConfigurations/ImmersionLogGetConfigurations/200_other_user_history/immersion-api (0.01s)
     --- PASS: TestImmersionLogGetConfigurations/ImmersionLogGetConfigurations/401_invalid_signed_subject (0.01s)
-        --- PASS: TestImmersionLogGetConfigurations/ImmersionLogGetConfigurations/401_invalid_signed_subject/tadoku-api (0.00s)
-        --- PASS: TestImmersionLogGetConfigurations/ImmersionLogGetConfigurations/401_invalid_signed_subject/immersion-api (0.00s)
+        --- PASS: TestImmersionLogGetConfigurations/ImmersionLogGetConfigurations/401_invalid_signed_subject/tadoku-api (0.01s)
+        --- PASS: TestImmersionLogGetConfigurations/ImmersionLogGetConfigurations/401_invalid_signed_subject/immersion-api (0.01s)
     --- PASS: TestImmersionLogGetConfigurations/ImmersionLogGetConfigurations/401_guest (0.01s)
         --- PASS: TestImmersionLogGetConfigurations/ImmersionLogGetConfigurations/401_guest/tadoku-api (0.00s)
         --- PASS: TestImmersionLogGetConfigurations/ImmersionLogGetConfigurations/401_guest/immersion-api (0.00s)
@@ -154,9 +164,9 @@ INFO: From Testing //services/tadoku-api/e2e:e2e_test:
 === RUN   TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/401_guest
 === RUN   TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/401_guest/tadoku-api
 === RUN   TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/401_guest/immersion-api
---- PASS: TestImmersionLogTagSuggestions (0.18s)
+--- PASS: TestImmersionLogTagSuggestions (0.17s)
     --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/200_empty_history (0.01s)
-        --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/200_empty_history/tadoku-api (0.00s)
+        --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/200_empty_history/tadoku-api (0.01s)
         --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/200_empty_history/immersion-api (0.01s)
     --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/200_empty_query (0.01s)
         --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/200_empty_query/tadoku-api (0.00s)
@@ -169,40 +179,40 @@ INFO: From Testing //services/tadoku-api/e2e:e2e_test:
         --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/200_matching_case/immersion-api (0.00s)
     --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/200_duplicate_youtube_default (0.01s)
         --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/200_duplicate_youtube_default/tadoku-api (0.01s)
-        --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/200_duplicate_youtube_default/immersion-api (0.00s)
+        --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/200_duplicate_youtube_default/immersion-api (0.01s)
     --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/200_default_only_youtube (0.01s)
         --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/200_default_only_youtube/tadoku-api (0.00s)
         --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/200_default_only_youtube/immersion-api (0.00s)
     --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/200_nonmatching (0.01s)
         --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/200_nonmatching/tadoku-api (0.00s)
-        --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/200_nonmatching/immersion-api (0.00s)
+        --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/200_nonmatching/immersion-api (0.01s)
     --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/200_frequency_and_ties (0.01s)
         --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/200_frequency_and_ties/tadoku-api (0.00s)
-        --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/200_frequency_and_ties/immersion-api (0.00s)
+        --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/200_frequency_and_ties/immersion-api (0.01s)
     --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/200_underscore_wildcard (0.01s)
         --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/200_underscore_wildcard/tadoku-api (0.00s)
         --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/200_underscore_wildcard/immersion-api (0.01s)
     --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/200_wildcard_with_text (0.01s)
-        --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/200_wildcard_with_text/tadoku-api (0.00s)
+        --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/200_wildcard_with_text/tadoku-api (0.01s)
         --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/200_wildcard_with_text/immersion-api (0.01s)
     --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/200_escaped_percent (0.01s)
         --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/200_escaped_percent/tadoku-api (0.00s)
-        --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/200_escaped_percent/immersion-api (0.01s)
+        --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/200_escaped_percent/immersion-api (0.00s)
     --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/200_space_not_trimmed (0.01s)
-        --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/200_space_not_trimmed/tadoku-api (0.01s)
-        --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/200_space_not_trimmed/immersion-api (0.01s)
+        --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/200_space_not_trimmed/tadoku-api (0.00s)
+        --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/200_space_not_trimmed/immersion-api (0.00s)
     --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/200_other_user (0.01s)
         --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/200_other_user/tadoku-api (0.00s)
         --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/200_other_user/immersion-api (0.00s)
     --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/200_limit_with_default (0.01s)
         --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/200_limit_with_default/tadoku-api (0.00s)
-        --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/200_limit_with_default/immersion-api (0.01s)
+        --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/200_limit_with_default/immersion-api (0.00s)
     --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/200_limit_without_default (0.01s)
         --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/200_limit_without_default/tadoku-api (0.00s)
         --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/200_limit_without_default/immersion-api (0.01s)
     --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/200_default_fill_to_limit (0.01s)
-        --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/200_default_fill_to_limit/tadoku-api (0.01s)
-        --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/200_default_fill_to_limit/immersion-api (0.01s)
+        --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/200_default_fill_to_limit/tadoku-api (0.00s)
+        --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/200_default_fill_to_limit/immersion-api (0.00s)
     --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/401_invalid_signed_subject (0.01s)
         --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/401_invalid_signed_subject/tadoku-api (0.00s)
         --- PASS: TestImmersionLogTagSuggestions/ImmersionLogTagSuggestions/401_invalid_signed_subject/immersion-api (0.00s)
@@ -214,29 +224,31 @@ PASS
 INFO: Found 1 test target...
 Target //services/tadoku-api/e2e:e2e_test up-to-date:
   bazel-bin/services/tadoku-api/e2e/e2e_test_/e2e_test
-INFO: Elapsed time: 1.392s, Critical Path: 1.09s
-INFO: 2 processes: 15 action cache hit, 1 internal, 1 processwrapper-sandbox.
+INFO: Elapsed time: 1.109s, Critical Path: 0.73s
+INFO: 2 processes: 12 action cache hit, 1 internal, 1 processwrapper-sandbox.
 INFO: Build completed successfully, 2 total actions
-//services/tadoku-api/e2e:e2e_test                                       PASSED in 1.0s
+//services/tadoku-api/e2e:e2e_test                                       PASSED in 0.7s
 
 Executed 1 out of 1 test: 1 test passes.
 There were tests whose specified size is too big. Use the --test_verbose_timeout_warnings command line option to see which ones these are.
 </pre></details>
-<details><summary>Final services test output — 47 passing targets</summary><pre>INFO: Invocation ID: 3de24f66-30fe-4a11-bd94-00c8575568bc
+<details><summary>Final services test output — 47 passing targets</summary><pre>INFO: Invocation ID: 43b67daf-1ea4-4aa6-b5f2-52faac6be897
 Computing main repo mapping:
 Loading:
 Loading: 0 packages loaded
 Analyzing: 229 targets (0 packages loaded, 0 targets configured)
 Analyzing: 229 targets (0 packages loaded, 0 targets configured)
 
-INFO: Analyzed 229 targets (0 packages loaded, 4407 targets configured).
-[1,069 / 1,107] 18 / 47 tests; checking cached actions
-[1,110 / 1,111] 46 / 47 tests; Testing //services/tadoku-api/e2e:e2e_test; 1s processwrapper-sandbox
-[1,110 / 1,111] 47 / 47 tests; Testing //services/tadoku-api/e2e:e2e_test; 6s processwrapper-sandbox
+INFO: Analyzed 229 targets (0 packages loaded, 0 targets configured).
+[26 / 48] 26 / 47 tests; Testing //services/tadoku-api/internal/testkratos:testkratos_test; 1s processwrapper-sandbox ... (2 actions running)
+[33 / 48] 33 / 47 tests; Testing //services/tadoku-api/internal/testkratos:testkratos_test; 2s processwrapper-sandbox ... (2 actions running)
+[42 / 48] 41 / 47 tests; Testing //services/tadoku-api/e2e:e2e_test; 1s processwrapper-sandbox ... (2 actions running)
+[47 / 48] 46 / 47 tests; Testing //services/tadoku-api/e2e:e2e_test; 2s processwrapper-sandbox
+[47 / 48] 47 / 47 tests; Testing //services/tadoku-api/e2e:e2e_test; 6s processwrapper-sandbox
 INFO: Found 182 targets and 47 test targets...
-INFO: Elapsed time: 7.955s, Critical Path: 6.60s
-INFO: 3 processes: 888 action cache hit, 2 internal, 1 processwrapper-sandbox.
-INFO: Build completed successfully, 3 total actions
+INFO: Elapsed time: 8.744s, Critical Path: 6.28s
+INFO: 48 processes: 30 remote cache hit, 1 internal, 17 processwrapper-sandbox.
+INFO: Build completed successfully, 48 total actions
 //services/common/authz/roles:roles_test                        (cached) PASSED in 0.0s
 //services/common/client/flipt:flipt_test                       (cached) PASSED in 5.7s
 //services/common/client/keto:keto_test                         (cached) PASSED in 0.9s
@@ -262,45 +274,76 @@ INFO: Build completed successfully, 3 total actions
 //services/profile-api/cache:cache_test                         (cached) PASSED in 0.1s
 //services/profile-api/domain:domain_test                       (cached) PASSED in 0.0s
 //services/profile-api/storage/postgres/repository:repository_test (cached) PASSED in 0.0s
-//services/tadoku-api/cmd/tadoku-api:tadoku-api_test            (cached) PASSED in 0.7s
-//services/tadoku-api/features/announcements:announcements_test (cached) PASSED in 0.3s
-//services/tadoku-api/features/audit:audit_test                 (cached) PASSED in 0.1s
 //services/tadoku-api/features/authz:authz_test                 (cached) PASSED in 0.3s
-//services/tadoku-api/features/contests:contests_test           (cached) PASSED in 0.3s
-//services/tadoku-api/features/languages:languages_test         (cached) PASSED in 0.2s
-//services/tadoku-api/features/pages:pages_test                 (cached) PASSED in 0.4s
-//services/tadoku-api/features/posts:posts_test                 (cached) PASSED in 0.4s
-//services/tadoku-api/features/profile:profile_test             (cached) PASSED in 0.4s
-//services/tadoku-api/infra/postgres:postgres_test              (cached) PASSED in 0.2s
-//services/tadoku-api/infra/valkey:valkey_test                  (cached) PASSED in 0.2s
 //services/tadoku-api/internal/errx:errx_test                   (cached) PASSED in 0.0s
-//services/tadoku-api/internal/permissions:permissions_test     (cached) PASSED in 0.1s
-//services/tadoku-api/internal/testketo:testketo_test           (cached) PASSED in 0.2s
-//services/tadoku-api/internal/testkratos:testkratos_test       (cached) PASSED in 2.6s
-//services/tadoku-api/internal/testpostgres:testpostgres_test   (cached) PASSED in 0.2s
 //services/tadoku-api/internal/testvalkey:testvalkey_test       (cached) PASSED in 0.0s
 //services/tadoku-api/internal/timex:timex_test                 (cached) PASSED in 0.0s
-//services/tadoku-api/spec:spec_test                            (cached) PASSED in 0.5s
-//services/tadoku-api/transport/http:http_test                  (cached) PASSED in 0.3s
 //services/token-reflector:token-reflector_test                 (cached) PASSED in 0.0s
-//services/tadoku-api/e2e:e2e_test                                       PASSED in 6.6s
+//services/tadoku-api/cmd/tadoku-api:tadoku-api_test                     PASSED in 0.7s
+//services/tadoku-api/e2e:e2e_test                                       PASSED in 6.2s
+//services/tadoku-api/features/announcements:announcements_test          PASSED in 0.2s
+//services/tadoku-api/features/audit:audit_test                          PASSED in 0.1s
+//services/tadoku-api/features/contests:contests_test                    PASSED in 0.1s
+//services/tadoku-api/features/languages:languages_test                  PASSED in 0.1s
+//services/tadoku-api/features/pages:pages_test                          PASSED in 0.3s
+//services/tadoku-api/features/posts:posts_test                          PASSED in 0.3s
+//services/tadoku-api/features/profile:profile_test                      PASSED in 0.6s
+//services/tadoku-api/infra/postgres:postgres_test                       PASSED in 0.2s
+//services/tadoku-api/infra/valkey:valkey_test                           PASSED in 0.2s
+//services/tadoku-api/internal/permissions:permissions_test              PASSED in 0.0s
+//services/tadoku-api/internal/testketo:testketo_test                    PASSED in 0.2s
+//services/tadoku-api/internal/testkratos:testkratos_test                PASSED in 2.7s
+//services/tadoku-api/internal/testpostgres:testpostgres_test            PASSED in 0.1s
+//services/tadoku-api/spec:spec_test                                     PASSED in 0.1s
+//services/tadoku-api/transport/http:http_test                           PASSED in 0.3s
 
-Executed 1 out of 47 tests: 47 tests pass.
+Executed 17 out of 47 tests: 47 tests pass.
 There were tests whose specified size is too big. Use the --test_verbose_timeout_warnings command line option to see which ones these are.
 </pre></details>
-<details><summary>Final build output</summary><pre>INFO: Invocation ID: 3017be37-56c6-488f-bf90-ea363fbf844f
+<details><summary>Final build output</summary><pre>INFO: Invocation ID: d6291c19-9c2d-464b-87f4-8364ca7deec0
 Computing main repo mapping:
 Loading:
 Loading: 0 packages loaded
-Analyzing: 229 targets (0 packages loaded, 0 targets configured)
-Analyzing: 229 targets (0 packages loaded, 0 targets configured)
+Analyzing: 229 targets (96 packages loaded, 0 targets configured)
+Analyzing: 229 targets (96 packages loaded, 0 targets configured)
 
-INFO: Analyzed 229 targets (0 packages loaded, 0 targets configured).
+Analyzing: 229 targets (129 packages loaded, 952 targets configured)
+[13 / 13] no actions running
+Analyzing: 229 targets (153 packages loaded, 1253 targets configured)
+[29 / 52] checking cached actions
+Analyzing: 229 targets (157 packages loaded, 1305 targets configured)
+[29 / 54] checking cached actions
+Analyzing: 229 targets (201 packages loaded, 1728 targets configured)
+[29 / 57] checking cached actions
+Analyzing: 229 targets (216 packages loaded, 1882 targets configured)
+[29 / 57] checking cached actions
+Analyzing: 229 targets (309 packages loaded, 5063 targets configured)
+[40 / 65] checking cached actions
+Analyzing: 229 targets (311 packages loaded, 5069 targets configured)
+[40 / 65] checking cached actions
+Analyzing: 229 targets (342 packages loaded, 7627 targets configured)
+[117 / 270] GoCompilePkg services/tadoku-api/generated/openapi/openapi.a; 0s remote-cache, processwrapper-sandbox ... (2 actions, 1 running)
+Analyzing: 229 targets (346 packages loaded, 7716 targets configured)
+[200 / 363] checking cached actions
+Analyzing: 229 targets (346 packages loaded, 7716 targets configured)
+[200 / 363] checking cached actions
+Analyzing: 229 targets (347 packages loaded, 9988 targets configured)
+[200 / 363] checking cached actions
+Analyzing: 229 targets (360 packages loaded, 12769 targets configured)
+[403 / 771] [Prepa] GoCompilePkg services/tadoku-api/features/posts/posts.a ... (2 actions, 0 running)
+INFO: Analyzed 229 targets (360 packages loaded, 12909 targets configured).
+[518 / 771] GoLink services/tadoku-api/cmd/tadoku-api/tadoku-api_/tadoku-api; 0s remote-cache, processwrapper-sandbox ... (2 actions, 1 running)
+[531 / 771] GoLink services/tadoku-api/internal/testkratos/testkratos_test_/testkratos_test; 0s processwrapper-sandbox ... (2 actions, 1 running)
+[570 / 771] GoLink services/tadoku-api/features/contests/contests_test_/contests_test; 0s processwrapper-sandbox ... (2 actions, 1 running)
+[623 / 771] [Prepa] GoLink services/profile-api/storage/postgres/repository/repository_test_/repository_test
+[780 / 821] Creating runfiles tree bazel-out/k8-fastbuild/bin/services/tadoku-api/e2e/e2e_test_/e2e_test.runfiles; 0s local ... (2 actions, 1 running)
+[1,003 / 1,061] GoCompilePkgExternal services/tadoku-api/e2e/e2e_test_test.external.a; 0s processwrapper-sandbox ... (2 actions, 1 running)
 INFO: Found 229 targets...
-INFO: Elapsed time: 0.530s, Critical Path: 0.01s
-INFO: 1 process: 1 internal.
-INFO: Build completed successfully, 1 total action
+INFO: Elapsed time: 20.129s, Critical Path: 2.61s
+INFO: 1052 processes: 5 action cache hit, 568 remote cache hit, 390 internal, 1 local, 93 processwrapper-sandbox.
+INFO: Build completed successfully, 1052 total actions
 </pre></details>
+<p>The full-suite run executed 17 changed test targets and reused 30 valid cached results. The separate named parity run executed again. SQL/OpenAPI generation and Gazelle drift checks left the committed source unchanged.</p>
 <h2>Verification boundaries</h2>
 <p>Requests execute through production routers in process. Public gateway token issuance, live production configuration, deployment reconciliation and browser log-writing journeys were not exercised. Production configuration evidence is from GitOps source and local rendering, not a live-cluster inspection. No write operation was migrated to manufacture a journey. The shared suite supplies existing authentication, provider and journey coverage.</p>
 <p>Raw logs and rendered configuration evidence are retained in <code>/tmp/tadoku-log-migration-evidence/</code>. This self-contained report retains the successful verification transcripts durably alongside the reviewable HTTP fixtures.</p>

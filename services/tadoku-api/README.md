@@ -193,6 +193,17 @@ In addition to the three remaining upstream URLs, startup now requires:
   `API_IDLE_TIMEOUT` bounds.
 - `API_OATHKEEPER_AUTHZ_TOKEN`, the bearer credential required on trusted
   Oathkeeper authorization callbacks.
+- `API_OATHKEEPER_URL` (default `http://oathkeeper-proxy.default:4455`), used
+  for outgoing service-token exchange. `API_SERVICE_ACCOUNT_TOKEN_PATH`
+  defaults to the projected credential at `/var/run/secrets/tokens/token`.
+- Legacy-compatible `API_FLIPT_ENABLED`, `API_FLIPT_URL`,
+  `API_FLIPT_ENVIRONMENT`, `API_FLIPT_NAMESPACE`,
+  `API_FLIPT_UPDATE_INTERVAL`, `API_FLIPT_REQUEST_TIMEOUT`,
+  `API_FLIPT_STARTUP_TIMEOUT`, and `API_FLIPT_MANAGEMENT_URL` configure the
+  evaluation provider and retained management client. Evaluation and management
+  exchange separate credentials for `flipt-evaluation/tadoku-api` and
+  `flipt-management/tadoku-api`. Provider outages keep safe defaults active and
+  do not fail startup; later polling recovers without a restart.
 - `API_KRATOS_ADMIN_URL`, an absolute HTTP(S) base URL for the existing Kratos
   admin service. Credentials, query strings and fragments are rejected.
   Path prefixes are supported; trailing slashes are removed. Development
@@ -224,9 +235,11 @@ also retain the upstream client's native cancellation behavior. See
 
 The existing proxy metrics and Go process metrics remain on the metrics listener
 (`API_METRICS_PORT`, default 9090). They describe proxy request volume/latency/errors
-and process health. This thin slice adds no native-specific metric family.
-Shutdown closes request/metrics listeners, the pool, the Valkey client and idle
-HTTP connections, including Kratos and Keto connections. Startup failure closes
+and process health. The common feature-flag metrics report bounded provider
+initialization, refresh, error, and evaluation labels without user identities.
+Shutdown closes request/metrics listeners, the Flipt polling provider, the pool,
+the Valkey client and idle HTTP connections, including Flipt, Kratos and Keto
+connections. Startup failure closes
 the same owned transport. Raw clients have no separate close operation. Shutdown
 closes database and provider transport dependencies after request handling stops.
 Valkey close follows the upstream client's native per-connection

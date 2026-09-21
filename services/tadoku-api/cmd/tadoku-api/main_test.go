@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync/atomic"
@@ -27,6 +28,30 @@ import (
 
 func TestApplicationStartsAndShutsDown(t *testing.T) {
 	cfg := validApplicationConfig(t)
+	cfg.FliptEnabled = true
+	tokenPath := filepath.Join(t.TempDir(), "token")
+	if err := os.WriteFile(tokenPath, []byte("projected-token"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	cfg.ServiceAccountTokenPath = tokenPath
+	var evaluationExchanges atomic.Int32
+	var managementExchanges atomic.Int32
+	exchange := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Authorization") != "Bearer projected-token" {
+			t.Errorf("exchange authorization=%q", r.Header.Get("Authorization"))
+		}
+		switch r.URL.Path {
+		case "/token-exchange/flipt-evaluation/tadoku-api":
+			evaluationExchanges.Add(1)
+		case "/token-exchange/flipt-management/tadoku-api":
+			managementExchanges.Add(1)
+		default:
+			t.Errorf("exchange path=%q", r.URL.Path)
+		}
+		_, _ = w.Write([]byte(`{"access_token":"exchanged-token","token_type":"bearer","expires_in":600}`))
+	}))
+	t.Cleanup(exchange.Close)
+	cfg.OathkeeperURL = exchange.URL
 	var ketoRequests atomic.Int32
 	ketoDisconnected := make(chan struct{}, 1)
 	keto := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -132,6 +157,49 @@ func TestApplicationStartsAndShutsDown(t *testing.T) {
 	}
 	if application.kratos == nil {
 		t.Fatal("startup did not retain the raw Kratos client")
+	}
+	if application.flipt == nil {
+		t.Fatal("Flipt outage did not preserve the fallback provider")
+	}
+	var redirectedRequests atomic.Int32
+	redirected := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+		redirectedRequests.Add(1)
+	}))
+	t.Cleanup(redirected.Close)
+	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Authorization") != "Bearer exchanged-token" {
+			t.Errorf("provider authorization=%q", r.Header.Get("Authorization"))
+		}
+		if r.URL.Path == "/redirect" {
+			http.Redirect(w, r, redirected.URL, http.StatusFound)
+			return
+		}
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	t.Cleanup(provider.Close)
+	for name, client := range map[string]*http.Client{
+		"evaluation": application.fliptEvaluation,
+		"management": application.fliptManagement,
+	} {
+		response, err := client.Get(provider.URL + "/" + name)
+		if err != nil {
+			t.Fatalf("%s Flipt request: %v", name, err)
+		}
+		_ = response.Body.Close()
+		if response.StatusCode != http.StatusNoContent {
+			t.Errorf("%s Flipt status=%d", name, response.StatusCode)
+		}
+	}
+	response, err = application.fliptManagement.Get(provider.URL + "/redirect")
+	if err != nil {
+		t.Fatalf("management redirect request: %v", err)
+	}
+	_ = response.Body.Close()
+	if response.StatusCode != http.StatusFound || redirectedRequests.Load() != 0 {
+		t.Errorf("management redirect status=%d followed=%d", response.StatusCode, redirectedRequests.Load())
+	}
+	if evaluationExchanges.Load() == 0 || managementExchanges.Load() != 1 {
+		t.Errorf("token exchanges: evaluation=%d management=%d", evaluationExchanges.Load(), managementExchanges.Load())
 	}
 	// Exercise the owned SDK directly, without an application consumer.
 	if _, _, err := application.kratos.IdentityApi.GetIdentity(t.Context(), "synthetic").Execute(); err != nil {
@@ -240,16 +308,25 @@ func validApplicationConfig(t *testing.T) config {
 	}
 
 	return config{
-		Port:                 0,
-		MetricsPort:          0,
-		ServiceName:          "tadoku-api-test",
-		JWKS:                 jwks.URL,
-		KetoReadURL:          upstream.URL,
-		KetoWriteURL:         upstream.URL,
-		KetoWriteTimeout:     time.Second,
-		OathkeeperAuthzToken: "callback-token",
-		KratosAdminURL:       upstream.URL,
-		KratosTimeout:        time.Second,
+		Port:                    0,
+		MetricsPort:             0,
+		ServiceName:             "tadoku-api-test",
+		JWKS:                    jwks.URL,
+		KetoReadURL:             upstream.URL,
+		KetoWriteURL:            upstream.URL,
+		KetoWriteTimeout:        time.Second,
+		OathkeeperAuthzToken:    "callback-token",
+		OathkeeperURL:           upstream.URL,
+		ServiceAccountTokenPath: "/var/run/secrets/tokens/token",
+		FliptURL:                upstream.URL + "/flipt",
+		FliptEnvironment:        "local",
+		FliptNamespace:          "default",
+		FliptUpdateInterval:     time.Minute,
+		FliptRequestTimeout:     time.Second,
+		FliptStartupTimeout:     10 * time.Millisecond,
+		FliptManagementURL:      upstream.URL + "/flipt-management",
+		KratosAdminURL:          upstream.URL,
+		KratosTimeout:           time.Second,
 
 		ContentURL:   upstream.URL,
 		ImmersionURL: upstream.URL,
@@ -333,6 +410,66 @@ func TestLoadConfigUsesValidatedDefaults(t *testing.T) {
 	if cfg.OathkeeperAuthzToken != "callback-token" {
 		t.Errorf("Oathkeeper authorization token=%q", cfg.OathkeeperAuthzToken)
 	}
+	if cfg.OathkeeperURL != "http://oathkeeper-proxy.default:4455" {
+		t.Errorf("Oathkeeper URL=%q", cfg.OathkeeperURL)
+	}
+	if cfg.ServiceAccountTokenPath != "/var/run/secrets/tokens/token" {
+		t.Errorf("service account token path=%q", cfg.ServiceAccountTokenPath)
+	}
+	if cfg.FliptEnabled || cfg.FliptURL != "http://oathkeeper-proxy.default:4455/flipt" || cfg.FliptEnvironment != "local" ||
+		cfg.FliptNamespace != "default" || cfg.FliptUpdateInterval != 30*time.Second || cfg.FliptRequestTimeout != 5*time.Second ||
+		cfg.FliptStartupTimeout != 3*time.Second || cfg.FliptManagementURL != "http://oathkeeper-proxy.default:4455/flipt-management" {
+		t.Errorf("unexpected Flipt defaults: %+v", cfg)
+	}
+	t.Setenv("API_FLIPT_ENABLED", "true")
+	for variable, test := range map[string]struct {
+		validURL string
+		field    string
+	}{
+		"API_OATHKEEPER_URL":       {validURL: "http://oathkeeper.test", field: "OathkeeperURL"},
+		"API_FLIPT_URL":            {validURL: "http://flipt.test/evaluation", field: "FliptURL"},
+		"API_FLIPT_MANAGEMENT_URL": {validURL: "http://flipt.test/management", field: "FliptManagementURL"},
+	} {
+		for _, invalidURL := range []string{"not-a-url", "http://:4455", "http://user:secret@gateway.test", "http://gateway.test?route=1", "http://gateway.test#fragment"} {
+			t.Setenv(variable, invalidURL)
+			if _, err := loadConfig(); err == nil || !strings.Contains(err.Error(), test.field) {
+				t.Errorf("invalid %s=%q error=%v", variable, invalidURL, err)
+			}
+		}
+		t.Setenv(variable, test.validURL+"/")
+	}
+	canonicalFlipt, err := loadConfig()
+	if err != nil {
+		t.Fatalf("canonical Flipt configuration: %v", err)
+	}
+	if canonicalFlipt.OathkeeperURL != "http://oathkeeper.test" || canonicalFlipt.FliptURL != "http://flipt.test/evaluation" ||
+		canonicalFlipt.FliptManagementURL != "http://flipt.test/management" {
+		t.Errorf("canonical Flipt URLs: %+v", canonicalFlipt)
+	}
+	for variable, field := range map[string]string{
+		"API_FLIPT_ENVIRONMENT": "FliptEnvironment",
+		"API_FLIPT_NAMESPACE":   "FliptNamespace",
+	} {
+		t.Setenv(variable, "   ")
+		if _, err := loadConfig(); err == nil || !strings.Contains(err.Error(), field) {
+			t.Errorf("blank %s error=%v", variable, err)
+		}
+		t.Setenv(variable, "default")
+	}
+	t.Setenv("API_FLIPT_ENABLED", "false")
+	t.Setenv("API_OATHKEEPER_URL", "")
+	t.Setenv("API_FLIPT_URL", "")
+	t.Setenv("API_FLIPT_MANAGEMENT_URL", "")
+	t.Setenv("API_FLIPT_ENVIRONMENT", "   ")
+	t.Setenv("API_FLIPT_NAMESPACE", "   ")
+	if _, err := loadConfig(); err != nil {
+		t.Errorf("disabled Flipt rejected dormant provider configuration: %v", err)
+	}
+	t.Setenv("API_OATHKEEPER_URL", "http://oathkeeper.test")
+	t.Setenv("API_FLIPT_URL", "http://flipt.test/evaluation")
+	t.Setenv("API_FLIPT_MANAGEMENT_URL", "http://flipt.test/management")
+	t.Setenv("API_FLIPT_ENVIRONMENT", "local")
+	t.Setenv("API_FLIPT_NAMESPACE", "default")
 	for _, value := range []string{"true", "false"} {
 		t.Setenv("API_SCORING_ENGINE_ENABLED", value)
 		loaded, err := loadConfig()

@@ -254,3 +254,67 @@
           }
   upstream:
     url: http://token-reflector.tdk-dev-token-reflector
+- id: s2s:tadoku-to-flipt-evaluation
+  match:
+    url: http://oathkeeper-proxy.tdk-dev-oathkeeper:4455/token-exchange/flipt-evaluation/tadoku-api
+    methods:
+      - GET
+  authenticators:
+    - handler: jwt
+      config:
+        jwks_urls:
+          - http://token-reflector.tdk-dev-token-reflector/jwks
+        target_audience:
+          - tadoku-api
+  authorizer:
+    handler: remote_json
+    config:
+      remote: http://token-reflector.tdk-dev-token-reflector/authorize-service-account
+      payload: |
+        {
+          "subject": {{ .Subject | toJson }},
+          "expected_subject": "system:serviceaccount:tdk-dev-tadoku-api:tadoku-api"
+        }
+  mutators:
+    - handler: id_token
+      config:
+        claims: |
+          {
+            "type": "service",
+            "sub": "{{ .Subject }}",
+            "aud": ["flipt-evaluation"]
+          }
+  upstream:
+    url: http://token-reflector.tdk-dev-token-reflector
+- id: s2s:tadoku-to-flipt-management
+  match:
+    url: http://oathkeeper-proxy.tdk-dev-oathkeeper:4455/token-exchange/flipt-management/tadoku-api
+    methods:
+      - GET
+  authenticators:
+    - handler: jwt
+      config:
+        jwks_urls:
+          - http://token-reflector.tdk-dev-token-reflector/jwks
+        target_audience:
+          - tadoku-api
+  authorizer:
+    handler: remote_json
+    config:
+      remote: http://token-reflector.tdk-dev-token-reflector/authorize-service-account
+      payload: |
+        {
+          "subject": {{ .Subject | toJson }},
+          "expected_subject": "system:serviceaccount:tdk-dev-tadoku-api:tadoku-api"
+        }
+  mutators:
+    - handler: id_token
+      config:
+        claims: |
+          {
+            "type": "service",
+            "sub": "{{ .Subject }}",
+            "aud": ["flipt-management"]
+          }
+  upstream:
+    url: http://token-reflector.tdk-dev-token-reflector

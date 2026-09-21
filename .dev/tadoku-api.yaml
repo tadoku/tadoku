@@ -1,5 +1,6 @@
 spec:
   automountServiceAccountToken: false
+  serviceAccountName: tadoku-api
   containers:
     - name: tadoku-api
       env:
@@ -13,6 +14,24 @@ spec:
           value: tadoku-api
         - name: API_JWKS
           value: http://oathkeeper-api.tdk-dev-oathkeeper:4456/.well-known/jwks.json
+        - name: API_OATHKEEPER_URL
+          value: http://oathkeeper-proxy.tdk-dev-oathkeeper:4455
+        - name: API_FLIPT_URL
+          value: http://oathkeeper-proxy.tdk-dev-oathkeeper:4455/flipt
+        - name: API_FLIPT_ENABLED
+          value: "true"
+        - name: API_FLIPT_ENVIRONMENT
+          value: local
+        - name: API_FLIPT_NAMESPACE
+          value: default
+        - name: API_FLIPT_UPDATE_INTERVAL
+          value: 30s
+        - name: API_FLIPT_REQUEST_TIMEOUT
+          value: 5s
+        - name: API_FLIPT_STARTUP_TIMEOUT
+          value: 3s
+        - name: API_FLIPT_MANAGEMENT_URL
+          value: http://oathkeeper-proxy.tdk-dev-oathkeeper:4455/flipt-management
         - name: API_KETO_READ_URL
           value: http://keto-read.tdk-dev-keto:4466
         - name: API_KETO_WRITE_URL
@@ -55,6 +74,10 @@ spec:
           containerPort: 8000
         - name: metrics
           containerPort: 9090
+      volumeMounts:
+        - name: k8s-token
+          mountPath: /var/run/secrets/tokens
+          readOnly: true
       readinessProbe:
         httpGet:
           path: /readyz
@@ -67,3 +90,11 @@ spec:
         limits:
           cpu: "1"
           memory: 512Mi
+  volumes:
+    - name: k8s-token
+      projected:
+        sources:
+          - serviceAccountToken:
+              path: token
+              expirationSeconds: 3600
+              audience: tadoku-api

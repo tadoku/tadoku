@@ -35,14 +35,36 @@ type cachedToken struct {
 	expiresAt time.Time
 }
 
-func NewClient(oathkeeperURL string, clock commondomain.Clock) *Client {
-	return &Client{
+type Option func(*Client)
+
+func WithHTTPClient(httpClient *http.Client) Option {
+	return func(client *Client) {
+		if httpClient != nil {
+			client.httpClient = httpClient
+		}
+	}
+}
+
+func WithTokenPath(path string) Option {
+	return func(client *Client) {
+		if path != "" {
+			client.k8sTokenPath = path
+		}
+	}
+}
+
+func NewClient(oathkeeperURL string, clock commondomain.Clock, options ...Option) *Client {
+	client := &Client{
 		oathkeeperURL: oathkeeperURL,
 		k8sTokenPath:  "/var/run/secrets/tokens/token",
 		httpClient:    &http.Client{Timeout: 10 * time.Second},
 		clock:         clock,
 		tokenCache:    make(map[string]*cachedToken),
 	}
+	for _, option := range options {
+		option(client)
+	}
+	return client
 }
 
 // GetToken returns a JWT for calling the target service.
@@ -90,6 +112,9 @@ func (c *Client) GetTokenContext(ctx context.Context, targetService string) (str
 	var tokenResp TokenResponse
 	if err := json.NewDecoder(resp.Body).Decode(&tokenResp); err != nil {
 		return "", fmt.Errorf("failed to decode token response: %w", err)
+	}
+	if strings.TrimSpace(tokenResp.AccessToken) == "" || !strings.EqualFold(tokenResp.TokenType, "bearer") || tokenResp.ExpiresIn <= 0 {
+		return "", fmt.Errorf("token exchange returned an invalid bearer token")
 	}
 
 	expiresIn := tokenResp.ExpiresIn

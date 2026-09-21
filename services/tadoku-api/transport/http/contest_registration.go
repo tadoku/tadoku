@@ -18,11 +18,14 @@ func (s *server) ImmersionContestFindRegistration(
 		s.logOperationError(ctx, "find contest registration", err)
 		switch {
 		case errors.Is(err, app.ErrContestRegistrationNotFound):
+			// A missing registration is optional state: the legacy endpoint returns
+			// 204 and the existing client treats that response as no registration.
 			return openapi.ImmersionContestFindRegistration204Response{}, nil
 		default:
 			return nil, err
 		}
 	}
+
 	return openapi.ImmersionContestFindRegistration200JSONResponse(registrationResponse(registration)), nil
 }
 
@@ -35,6 +38,7 @@ func (s *server) ImmersionContestFindOngoingRegistrations(
 		s.logOperationError(ctx, "list ongoing contest registrations", err)
 		return nil, err
 	}
+
 	response := openapi.ImmersionContestFindOngoingRegistrations200JSONResponse{
 		Registrations: make([]openapi.ImmersionContestRegistration, 0, len(registrations.Registrations)),
 		TotalSize:     registrations.TotalSize,
@@ -43,6 +47,7 @@ func (s *server) ImmersionContestFindOngoingRegistrations(
 	for i := range registrations.Registrations {
 		response.Registrations = append(response.Registrations, registrationResponse(&registrations.Registrations[i]))
 	}
+
 	return response, nil
 }
 
@@ -54,6 +59,7 @@ func (s *server) ImmersionContestRegistrationUpsert(
 	if request.Body != nil {
 		languageCodes = request.Body.LanguageCodes
 	}
+
 	err := s.application.UpsertContestRegistration(ctx, app.ContestRegistrationUpsertParameters{
 		ContestID:     request.Id,
 		LanguageCodes: languageCodes,
@@ -62,6 +68,7 @@ func (s *server) ImmersionContestRegistrationUpsert(
 		s.logOperationError(ctx, "upsert contest registration", err)
 		return nil, err
 	}
+
 	return openapi.ImmersionContestRegistrationUpsert200Response{}, nil
 }
 
@@ -73,12 +80,14 @@ func registrationResponse(registration *app.ContestRegistration) openapi.Immersi
 		UserDisplayName: registration.UserDisplayName,
 		UserId:          registration.UserID,
 	}
+
 	for _, language := range registration.Languages {
 		response.Languages = append(response.Languages, openapi.ImmersionLanguage{
 			Code: language.Code,
 			Name: language.Name,
 		})
 	}
+
 	if registration.Contest == nil {
 		return response
 	}
@@ -106,5 +115,6 @@ func registrationResponse(registration *app.ContestRegistration) openapi.Immersi
 			Name:      activity.Name,
 		})
 	}
+
 	return response
 }

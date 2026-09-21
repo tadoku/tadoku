@@ -43,6 +43,7 @@ func (r *ContestsRepository) FindRegistrationForUser(ctx context.Context, userID
 	if err != nil {
 		return nil, err
 	}
+
 	row, err := queries.New(executor).FindContestRegistrationForUser(ctx, queries.FindContestRegistrationForUserParams{
 		UserID:    pgtype.UUID{Bytes: userID, Valid: true},
 		ContestID: pgtype.UUID{Bytes: contestID, Valid: true},
@@ -53,6 +54,7 @@ func (r *ContestsRepository) FindRegistrationForUser(ctx context.Context, userID
 	if err != nil {
 		return nil, fmt.Errorf("find contest registration: %w", err)
 	}
+
 	return &Registration{
 		ID:              uuid.UUID(row.ID.Bytes),
 		ContestID:       uuid.UUID(row.ContestID.Bytes),
@@ -69,10 +71,12 @@ func (r *ContestsRepository) ListRegistrationLanguages(ctx context.Context, code
 	if err != nil {
 		return nil, err
 	}
+
 	rows, err := queries.New(executor).ListRegistrationLanguages(ctx, codes)
 	if err != nil {
 		return nil, fmt.Errorf("list registration languages: %w", err)
 	}
+
 	return registrationLanguages(rows), nil
 }
 
@@ -81,6 +85,7 @@ func (r *ContestsRepository) ListOngoingRegistrations(ctx context.Context, userI
 	if err != nil {
 		return nil, err
 	}
+
 	rows, err := queries.New(executor).ListOngoingContestRegistrations(ctx, queries.ListOngoingContestRegistrationsParams{
 		UserID: pgtype.UUID{Bytes: userID, Valid: true},
 		Now:    pgtype.Timestamp{Time: now, Valid: true},
@@ -115,6 +120,7 @@ func (r *ContestsRepository) ListOngoingRegistrations(ctx context.Context, userI
 		}
 		result = append(result, registration)
 	}
+
 	return result, nil
 }
 
@@ -128,6 +134,7 @@ func (r *ContestsRepository) DetachContestLogsForLanguages(
 	if err != nil {
 		return err
 	}
+
 	err = queries.New(executor).DetachContestLogsForLanguages(ctx, queries.DetachContestLogsForLanguagesParams{
 		ContestID:     pgtype.UUID{Bytes: contestID, Valid: true},
 		UserID:        pgtype.UUID{Bytes: userID, Valid: true},
@@ -136,6 +143,7 @@ func (r *ContestsRepository) DetachContestLogsForLanguages(
 	if err != nil {
 		return fmt.Errorf("detach contest logs for languages: %w", err)
 	}
+
 	return nil
 }
 
@@ -144,6 +152,7 @@ func (r *ContestsRepository) UpsertRegistration(ctx context.Context, registratio
 	if err != nil {
 		return err
 	}
+
 	err = queries.New(executor).UpsertContestRegistration(ctx, queries.UpsertContestRegistrationParams{
 		ID:            pgtype.UUID{Bytes: registration.ID, Valid: true},
 		ContestID:     pgtype.UUID{Bytes: registration.ContestID, Valid: true},
@@ -155,6 +164,7 @@ func (r *ContestsRepository) UpsertRegistration(ctx context.Context, registratio
 	if err != nil {
 		return fmt.Errorf("upsert contest registration: %w", err)
 	}
+
 	return nil
 }
 
@@ -163,12 +173,14 @@ func (r *ContestsRepository) InsertContestScoreRefresh(ctx context.Context, user
 	if err != nil {
 		return err
 	}
+
 	if err := queries.New(executor).InsertContestScoreRefresh(ctx, queries.InsertContestScoreRefreshParams{
 		UserID:    pgtype.UUID{Bytes: userID, Valid: true},
 		ContestID: pgtype.UUID{Bytes: contestID, Valid: true},
 	}); err != nil {
 		return fmt.Errorf("insert contest score refresh: %w", err)
 	}
+
 	return nil
 }
 
@@ -177,12 +189,14 @@ func (r *ContestsRepository) InsertOfficialScoresRefresh(ctx context.Context, us
 	if err != nil {
 		return err
 	}
+
 	if err := queries.New(executor).InsertOfficialScoresRefresh(ctx, queries.InsertOfficialScoresRefreshParams{
 		UserID: pgtype.UUID{Bytes: userID, Valid: true},
 		Year:   pgtype.Int2{Int16: year, Valid: true},
 	}); err != nil {
 		return fmt.Errorf("insert official scores refresh: %w", err)
 	}
+
 	return nil
 }
 
@@ -191,6 +205,7 @@ func registrationLanguages(rows []queries.Language) []Language {
 	for _, row := range rows {
 		result = append(result, Language{Code: row.Code, Name: row.Name})
 	}
+
 	return result
 }
 

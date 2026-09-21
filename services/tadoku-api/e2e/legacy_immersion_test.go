@@ -41,11 +41,13 @@ func newLegacyImmersionAPI(ctx context.Context, dsn, jwksURL, ketoReadURL string
 
 	postgresRepository := repository.NewRepository(db)
 	userUpsert := domain.NewUserUpsert(postgresRepository)
+
 	kratosConfig := kratos.GetConfig()
 	kratosClient := immersionory.NewKratosClient(
 		kratosConfig.Servers[0].URL,
 		commonkratos.WithHTTPClient(kratosConfig.HTTPClient),
 	)
+
 	server := rest.NewServer(
 		domain.NewContestConfigurationOptions(postgresRepository),
 		nil, // log configuration options
@@ -88,6 +90,7 @@ func newLegacyImmersionAPI(ctx context.Context, dsn, jwksURL, ketoReadURL string
 	router := echo.New()
 	router.Logger.SetOutput(io.Discard)
 	router.Use(echomiddleware.Recover())
+
 	roles := commonroles.NewKetoService(ketoclient.NewReadClient(ketoReadURL), "app", "tadoku")
 	api := router.Group("/immersion",
 		middleware.VerifyJWT(jwksURL),
@@ -96,6 +99,7 @@ func newLegacyImmersionAPI(ctx context.Context, dsn, jwksURL, ketoReadURL string
 		middleware.RequireServiceAudience("immersion-api"),
 		middleware.RejectBannedUsers(),
 	)
+
 	openapi.RegisterHandlers(api, server)
 
 	return &legacyImmersionAPI{db: db, handler: router}, nil

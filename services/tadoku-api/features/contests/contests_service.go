@@ -64,10 +64,12 @@ func (s *Service) FindRegistration(ctx context.Context, userID, contestID uuid.U
 	if err != nil {
 		return nil, err
 	}
+
 	registration.Languages, err = s.contests.ListRegistrationLanguages(ctx, registration.LanguageCodes)
 	if err != nil {
 		return nil, err
 	}
+
 	return registration, nil
 }
 
@@ -76,25 +78,30 @@ func (s *Service) ListOngoingRegistrations(ctx context.Context, userID uuid.UUID
 	if err != nil {
 		return nil, err
 	}
+
 	languages, err := s.contests.ListLanguages(ctx)
 	if err != nil {
 		return nil, err
 	}
+
 	languageNames := make(map[string]string, len(languages))
 	for _, language := range languages {
 		languageNames[language.Code] = language.Name
 	}
+
 	for i := range registrations {
 		registrations[i].Languages = make([]Language, 0, len(registrations[i].LanguageCodes))
 		for _, code := range registrations[i].LanguageCodes {
 			registrations[i].Languages = append(registrations[i].Languages, Language{Code: code, Name: languageNames[code]})
 		}
+
 		activities, err := hydrateActivitiesInOrder(registrations[i].Contest.allowedActivityIDs)
 		if err != nil {
 			return nil, err
 		}
 		registrations[i].Contest.AllowedActivities = activities
 	}
+
 	return &RegistrationList{
 		Registrations: registrations,
 		TotalSize:     len(registrations),
@@ -110,6 +117,7 @@ func (s *Service) ValidateRegistrationUpsert(
 	if err != nil {
 		return nil, err
 	}
+
 	if len(parameters.LanguageCodes) < 1 || len(parameters.LanguageCodes) > 3 {
 		return nil, ErrInvalidRegistration
 	}
@@ -120,6 +128,7 @@ func (s *Service) ValidateRegistrationUpsert(
 		}
 		languages[code] = struct{}{}
 	}
+
 	exist, err := s.contests.LanguagesExist(ctx, parameters.LanguageCodes)
 	if err != nil {
 		return nil, err
@@ -127,6 +136,7 @@ func (s *Service) ValidateRegistrationUpsert(
 	if !exist {
 		return nil, ErrInvalidRegistration
 	}
+
 	if len(allowedLanguages) > 0 {
 		allowed := make(map[string]struct{}, len(allowedLanguages))
 		for _, language := range allowedLanguages {
@@ -138,15 +148,29 @@ func (s *Service) ValidateRegistrationUpsert(
 			}
 		}
 	}
+
 	return contest, nil
 }
 
 func (s *Service) ApplyRegistration(
 	ctx context.Context,
 	registration Registration,
-	removedLanguages []string,
+	existing *Registration,
 	contest Contest,
 ) error {
+	removedLanguages := []string{}
+	if existing != nil {
+		selectedLanguages := make(map[string]struct{}, len(registration.LanguageCodes))
+		for _, code := range registration.LanguageCodes {
+			selectedLanguages[code] = struct{}{}
+		}
+		for _, language := range existing.Languages {
+			if _, selected := selectedLanguages[language.Code]; !selected {
+				removedLanguages = append(removedLanguages, language.Code)
+			}
+		}
+	}
+
 	if len(removedLanguages) > 0 {
 		if err := s.contests.DetachContestLogsForLanguages(
 			ctx,
@@ -160,9 +184,11 @@ func (s *Service) ApplyRegistration(
 			return err
 		}
 	}
+
 	if err := s.contests.UpsertRegistration(ctx, registration); err != nil {
 		return err
 	}
+
 	return s.insertRegistrationLeaderboardOutbox(ctx, registration, contest)
 }
 
@@ -170,9 +196,11 @@ func (s *Service) insertRegistrationLeaderboardOutbox(ctx context.Context, regis
 	if err := s.contests.InsertContestScoreRefresh(ctx, registration.UserID, registration.ContestID); err != nil {
 		return err
 	}
+
 	if contest.Official {
 		return s.contests.InsertOfficialScoresRefresh(ctx, registration.UserID, int16(contest.ContestStart.Year()))
 	}
+
 	return nil
 }
 
@@ -180,6 +208,7 @@ func (s *Service) CreateContest(ctx context.Context, contest Contest) (*Contest,
 	if err := s.contests.CreateContest(ctx, contest); err != nil {
 		return nil, err
 	}
+
 	return s.contests.FindCreatedContestByID(ctx, contest.ID)
 }
 

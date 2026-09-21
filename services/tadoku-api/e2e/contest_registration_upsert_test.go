@@ -40,6 +40,7 @@ func TestUpsertContestRegistration(t *testing.T) {
 
 	for _, test := range tests {
 		name := APITestName("UpsertContestRegistration", test.want, test.description...)
+
 		t.Run(name, func(t *testing.T) {
 			runCase(t, api, name, test.want,
 				implementation{name: "tadoku-api", handler: api.handler},

@@ -114,10 +114,12 @@ func (a *Application) FindContestRegistration(ctx context.Context, contestID uui
 	if err := a.permissions.RequireAuthenticated(ctx); err != nil {
 		return nil, err
 	}
+
 	userID, err := identity.FromContext(ctx).UUID()
 	if err != nil {
 		return nil, err
 	}
+
 	return a.contests.FindRegistration(ctx, userID, contestID)
 }
 
@@ -125,10 +127,12 @@ func (a *Application) ListOngoingContestRegistrations(ctx context.Context) (*Con
 	if err := a.permissions.RequireAuthenticated(ctx); err != nil {
 		return nil, err
 	}
+
 	userID, err := identity.FromContext(ctx).UUID()
 	if err != nil {
 		return nil, err
 	}
+
 	return a.contests.ListOngoingRegistrations(ctx, userID)
 }
 
@@ -136,36 +140,31 @@ func (a *Application) UpsertContestRegistration(ctx context.Context, parameters 
 	if err := a.permissions.RequireAuthenticated(ctx); err != nil {
 		return err
 	}
+
 	user := identity.FromContext(ctx)
 	now := timex.Now()
 	userID, err := a.profile.SynchronizeUser(ctx, user, now)
 	if err != nil {
 		return err
 	}
+
 	registrationID := uuid.New()
 	contest, err := a.contests.ValidateRegistrationUpsert(ctx, parameters)
 	if err != nil {
 		return err
 	}
+
 	existing, err := a.contests.FindRegistration(ctx, userID, parameters.ContestID)
 	if errors.Is(err, contests.ErrRegistrationNotFound) {
 		existing = nil
 	} else if err != nil {
 		return err
 	}
-	removedLanguages := []string{}
+
 	if existing != nil {
 		registrationID = existing.ID
-		selectedLanguages := make(map[string]struct{}, len(parameters.LanguageCodes))
-		for _, code := range parameters.LanguageCodes {
-			selectedLanguages[code] = struct{}{}
-		}
-		for _, language := range existing.Languages {
-			if _, selected := selectedLanguages[language.Code]; !selected {
-				removedLanguages = append(removedLanguages, language.Code)
-			}
-		}
 	}
+
 	registration := contests.Registration{
 		ID:            registrationID,
 		ContestID:     parameters.ContestID,
@@ -174,10 +173,12 @@ func (a *Application) UpsertContestRegistration(ctx context.Context, parameters 
 		CreatedAt:     now,
 		UpdatedAt:     now,
 	}
+
 	return postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) error {
 		if err := a.profile.LockUser(ctx, userID); err != nil {
 			return err
 		}
-		return a.contests.ApplyRegistration(ctx, registration, removedLanguages, *contest)
+
+		return a.contests.ApplyRegistration(ctx, registration, existing, *contest)
 	})
 }

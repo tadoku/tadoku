@@ -79,6 +79,7 @@ func RegisterProxyRoutes(
 		router.rootMux.Handle(current.prefix, handler)
 		headRoutes.Handle(current.prefix, handler)
 	}
+
 	router.rootHandler = stdhttp.HandlerFunc(func(w stdhttp.ResponseWriter, r *stdhttp.Request) {
 		if r.Method == stdhttp.MethodHead {
 			headRoutes.ServeHTTP(w, r)

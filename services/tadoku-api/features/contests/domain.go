@@ -97,10 +97,11 @@ type Registration struct {
 	UserID          uuid.UUID
 	UserDisplayName string
 	LanguageCodes   []string
-	Languages       []Language
-	Contest         *ContestView
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
+
+	Languages []Language
+	Contest   *ContestView
 }
 
 type RegistrationList struct {

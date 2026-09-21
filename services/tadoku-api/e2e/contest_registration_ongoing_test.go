@@ -23,6 +23,7 @@ func TestFindOngoingContestRegistrations(t *testing.T) {
 
 	for _, test := range tests {
 		name := APITestName("FindOngoingContestRegistrations", test.want, test.description...)
+
 		t.Run(name, func(t *testing.T) {
 			runCase(t, api, name, test.want,
 				implementation{name: "tadoku-api", handler: api.handler},

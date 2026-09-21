@@ -292,10 +292,12 @@ func TestContestsRepositoryCountsEveryContestCreatedByUserInYear(t *testing.T) {
 
 func TestContestsRepositoryRegistrationPersistenceAndTransaction(t *testing.T) {
 	t.Parallel()
+
 	db, err := testpostgres.New(t.Context())
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	t.Cleanup(func() {
 		if err := db.Close(); err != nil {
 			t.Error(err)
@@ -342,6 +344,7 @@ func TestContestsRepositoryRegistrationPersistenceAndTransaction(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if !reflect.DeepEqual(registration.LanguageCodes, []string{"jpn", "eng"}) {
 		t.Errorf("registration language codes=%v", registration.LanguageCodes)
 	}
@@ -349,6 +352,7 @@ func TestContestsRepositoryRegistrationPersistenceAndTransaction(t *testing.T) {
 	if !registration.CreatedAt.Equal(createdAt) || !registration.UpdatedAt.Equal(createdAt) {
 		t.Errorf("registration timestamps=%s/%s, want %s", registration.CreatedAt, registration.UpdatedAt, createdAt)
 	}
+
 	languages, err := repository.ListRegistrationLanguages(t.Context(), registration.LanguageCodes)
 	if err != nil {
 		t.Fatal(err)
@@ -365,6 +369,7 @@ func TestContestsRepositoryRegistrationPersistenceAndTransaction(t *testing.T) {
 		!reflect.DeepEqual(ongoing[0].Contest.allowedActivityIDs, []int32{2, 1}) {
 		t.Errorf("ongoing registration=%+v", ongoing)
 	}
+
 	ongoing, err = repository.ListOngoingRegistrations(t.Context(), userID, time.Date(2026, 9, 13, 0, 0, 0, 0, time.UTC))
 	if err != nil {
 		t.Fatal(err)
@@ -384,6 +389,7 @@ func TestContestsRepositoryRegistrationPersistenceAndTransaction(t *testing.T) {
 		}
 		return repository.InsertOfficialScoresRefresh(ctx, userID, 2026)
 	}
+
 	rollbackErr := errors.New("force registration rollback")
 	err = postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
 		if err := repository.DetachContestLogsForLanguages(ctx, userID, contestID, removedLanguages); err != nil {
@@ -403,6 +409,7 @@ func TestContestsRepositoryRegistrationPersistenceAndTransaction(t *testing.T) {
 	if !errors.Is(err, rollbackErr) {
 		t.Fatalf("rollback error=%v", err)
 	}
+
 	var links, events int
 	if err := db.Pool.QueryRow(t.Context(), `select count(*) from contest_logs`).Scan(&links); err != nil {
 		t.Fatal(err)
@@ -413,6 +420,7 @@ func TestContestsRepositoryRegistrationPersistenceAndTransaction(t *testing.T) {
 	if links != 2 || events != 0 {
 		t.Errorf("after rollback links=%d events=%d, want 2 and 0", links, events)
 	}
+
 	registration, err = repository.FindRegistrationForUser(t.Context(), userID, contestID)
 	if err != nil {
 		t.Fatal(err)
@@ -436,6 +444,7 @@ func TestContestsRepositoryRegistrationPersistenceAndTransaction(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if err := db.Pool.QueryRow(t.Context(), `select count(*) from contest_logs`).Scan(&links); err != nil {
 		t.Fatal(err)
 	}
@@ -445,6 +454,7 @@ func TestContestsRepositoryRegistrationPersistenceAndTransaction(t *testing.T) {
 	if links != 1 || events != 4 {
 		t.Errorf("after update links=%d events=%d, want 1 and 4", links, events)
 	}
+
 	registration, err = repository.FindRegistrationForUser(t.Context(), userID, contestID)
 	if err != nil {
 		t.Fatal(err)

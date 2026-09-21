@@ -129,6 +129,7 @@ func TestRetiredAuthzRoutesAreNotForwarded(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.method+" "+test.path, func(t *testing.T) {
 			api.resetProxyCount()
+
 			response := httptest.NewRecorder()
 			api.handler.ServeHTTP(response, httptest.NewRequest(test.method, test.path, nil))
 

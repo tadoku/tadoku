@@ -1873,6 +1873,8 @@ paths:
                 $ref: "#/components/schemas/ImmersionUserProfile"
         "404":
           description: not found
+        "500":
+          description: profile read failed
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
       x-tadoku-owner: native
@@ -1907,6 +1909,8 @@ paths:
                 $ref: "#/components/schemas/ImmersionUserActivity"
         "404":
           description: not found
+        "500":
+          description: profile read failed
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
       x-tadoku-owner: native
@@ -1941,6 +1945,8 @@ paths:
                 $ref: "#/components/schemas/ImmersionProfileScores"
         "404":
           description: not found
+        "500":
+          description: profile read failed
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
       x-tadoku-owner: native
@@ -2051,6 +2057,8 @@ paths:
                 $ref: "#/components/schemas/ImmersionActivitySplit"
         "404":
           description: not found
+        "500":
+          description: profile read failed
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
       x-tadoku-owner: native

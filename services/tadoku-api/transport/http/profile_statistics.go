@@ -11,7 +11,7 @@ func (s *server) ImmersionProfileFindByUserID(ctx context.Context, request opena
 	result, err := s.application.FindProfile(ctx, request.UserId)
 	if err != nil {
 		s.logOperationError(ctx, "FindProfile", err)
-		return nil, err
+		return openapi.ImmersionProfileFindByUserID500Response{}, nil
 	}
 
 	return openapi.ImmersionProfileFindByUserID200JSONResponse(openapi.ImmersionUserProfile{
@@ -25,7 +25,7 @@ func (s *server) ImmersionProfileYearlyActivityByUserID(ctx context.Context, req
 	result, err := s.application.YearlyActivity(ctx, request.UserId, request.Year)
 	if err != nil {
 		s.logOperationError(ctx, "YearlyActivity", err)
-		return nil, err
+		return openapi.ImmersionProfileYearlyActivityByUserID500Response{}, nil
 	}
 
 	response := openapi.ImmersionUserActivity{
@@ -46,7 +46,7 @@ func (s *server) ImmersionProfileYearlyScoresByUserID(ctx context.Context, reque
 	result, err := s.application.YearlyScores(ctx, request.UserId, request.Year)
 	if err != nil {
 		s.logOperationError(ctx, "YearlyScores", err)
-		return nil, err
+		return openapi.ImmersionProfileYearlyScoresByUserID500Response{}, nil
 	}
 
 	response := openapi.ImmersionProfileScores{
@@ -68,7 +68,7 @@ func (s *server) ImmersionProfileYearlyActivitySplitByUserID(ctx context.Context
 	result, err := s.application.YearlyActivitySplit(ctx, request.UserId, request.Year)
 	if err != nil {
 		s.logOperationError(ctx, "YearlyActivitySplit", err)
-		return nil, err
+		return openapi.ImmersionProfileYearlyActivitySplitByUserID500Response{}, nil
 	}
 
 	response := openapi.ImmersionActivitySplit{Activities: make([]openapi.ImmersionActivitySplitScore, 0, len(result))}

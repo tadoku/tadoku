@@ -4300,6 +4300,14 @@ func (response ImmersionProfileYearlyActivitySplitByUserID404Response) VisitImme
 	return nil
 }
 
+type ImmersionProfileYearlyActivitySplitByUserID500Response struct {
+}
+
+func (response ImmersionProfileYearlyActivitySplitByUserID500Response) VisitImmersionProfileYearlyActivitySplitByUserIDResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
 type ImmersionProfileYearlyActivityByUserIDRequestObject struct {
 	UserId openapi_types.UUID `json:"userId"`
 	Year   int                `json:"year"`
@@ -4328,6 +4336,14 @@ type ImmersionProfileYearlyActivityByUserID404Response struct {
 
 func (response ImmersionProfileYearlyActivityByUserID404Response) VisitImmersionProfileYearlyActivityByUserIDResponse(w http.ResponseWriter) error {
 	w.WriteHeader(404)
+	return nil
+}
+
+type ImmersionProfileYearlyActivityByUserID500Response struct {
+}
+
+func (response ImmersionProfileYearlyActivityByUserID500Response) VisitImmersionProfileYearlyActivityByUserIDResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
 	return nil
 }
 
@@ -4384,6 +4400,14 @@ func (response ImmersionProfileFindByUserID404Response) VisitImmersionProfileFin
 	return nil
 }
 
+type ImmersionProfileFindByUserID500Response struct {
+}
+
+func (response ImmersionProfileFindByUserID500Response) VisitImmersionProfileFindByUserIDResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
 type ImmersionProfileYearlyScoresByUserIDRequestObject struct {
 	UserId openapi_types.UUID `json:"userId"`
 	Year   int                `json:"year"`
@@ -4412,6 +4436,14 @@ type ImmersionProfileYearlyScoresByUserID404Response struct {
 
 func (response ImmersionProfileYearlyScoresByUserID404Response) VisitImmersionProfileYearlyScoresByUserIDResponse(w http.ResponseWriter) error {
 	w.WriteHeader(404)
+	return nil
+}
+
+type ImmersionProfileYearlyScoresByUserID500Response struct {
+}
+
+func (response ImmersionProfileYearlyScoresByUserID500Response) VisitImmersionProfileYearlyScoresByUserIDResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
 	return nil
 }
 

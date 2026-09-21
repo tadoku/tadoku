@@ -88,7 +88,7 @@ func TestContractRouteOwnership(t *testing.T) {
 		t.Fatal(err)
 	}
 	pathParameters := regexp.MustCompile(`\{[^}]+\}`)
-	for path, pathItem := range contract.Paths {
+	for path, pathItem := range contract.Paths.Map() {
 		for method, operation := range pathItem.Operations() {
 			ownerJSON, ok := operation.Extensions["x-tadoku-owner"].(json.RawMessage)
 			var owner string

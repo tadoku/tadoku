@@ -8,23 +8,18 @@ import (
 	"unicode/utf8"
 
 	"github.com/google/uuid"
+	activitiescatalog "github.com/tadoku/tadoku/services/tadoku-api/internal/activities"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
 
-type ActivityInputType string
+type ActivityInputType = activitiescatalog.ActivityInputType
 
 const (
-	ActivityInputTypeAmountPrimary ActivityInputType = "amount_primary"
-	ActivityInputTypeTimePrimary   ActivityInputType = "time_primary"
+	ActivityInputTypeAmountPrimary = activitiescatalog.ActivityInputTypeAmountPrimary
+	ActivityInputTypeTimePrimary   = activitiescatalog.ActivityInputTypeTimePrimary
 )
 
-var activities = []Activity{
-	{ID: 1, Name: "Reading", Default: true, InputType: ActivityInputTypeAmountPrimary},
-	{ID: 2, Name: "Listening", Default: true, InputType: ActivityInputTypeTimePrimary},
-	{ID: 3, Name: "Writing", Default: false, InputType: ActivityInputTypeAmountPrimary},
-	{ID: 4, Name: "Speaking", Default: false, InputType: ActivityInputTypeTimePrimary},
-	{ID: 5, Name: "Study", Default: false, InputType: ActivityInputTypeTimePrimary},
-}
+var activities = activitiescatalog.All()
 
 var (
 	ErrContestNotFound          = errx.NewNotFoundError("contest not found")
@@ -41,12 +36,7 @@ type Language struct {
 	Name string
 }
 
-type Activity struct {
-	ID        int32
-	Name      string
-	Default   bool
-	InputType ActivityInputType
-}
+type Activity = activitiescatalog.Activity
 
 type Contest struct {
 	ID                      uuid.UUID

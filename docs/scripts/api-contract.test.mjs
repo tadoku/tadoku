@@ -88,6 +88,7 @@ test('all retained wire contracts survive the merge, including internal callers'
         };
       }
       if (contract.paths['/immersion/contests/{id}/registration'].post['x-tadoku-owner'] === 'native') {
+        legacy.paths['/contests/{id}/registration'].post.requestBody.required = true;
         legacy.paths['/contests/{id}/registration'].post.responses['500'] = {
           ...permissionFailure,
           description: 'Invalid authenticated identity or persistence failure',

@@ -29,6 +29,13 @@ context through `internal/identity`. The shared ban lookup records a confirmed b
 for role-introspection reads so they can report it; every other business route
 rejects that identity before its handler runs.
 
+Trusted HTTP callbacks use a separate required bearer credential and never create
+a user identity. The exact callback route authenticates before request decoding,
+then records a callback-authentication fact that its application operation must
+require. It does not enter the business JWT or ban pipeline; the subject in its
+body remains a target for a provider fact lookup and is never treated as the
+caller.
+
 Application operations compose features. Feature services own business decisions;
 repositories only query and map rows. `postgres.Executor` lets repositories use
 the active app-owned transaction. Open transactions only when the operation needs
@@ -158,6 +165,8 @@ In addition to the existing four upstream URLs, startup now requires:
   for the retained raw read/write client, including response-body reads. It shares
   the owned transport's `API_DIAL_TIMEOUT`, `API_RESPONSE_HEADER_TIMEOUT` and
   `API_IDLE_TIMEOUT` bounds.
+- `API_OATHKEEPER_AUTHZ_TOKEN`, the bearer credential required on trusted
+  Oathkeeper authorization callbacks.
 - `API_KRATOS_ADMIN_URL`, an absolute HTTP(S) base URL for the existing Kratos
   admin service. Credentials, query strings and fragments are rejected.
   Path prefixes are supported; trailing slashes are removed. Development

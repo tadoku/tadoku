@@ -49,6 +49,7 @@ func TestNativeRequestMetricUsesMatchedPattern(t *testing.T) {
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 		authenticate,
 		passthrough,
+		passthrough,
 	)
 	if err != nil {
 		t.Fatal(err)

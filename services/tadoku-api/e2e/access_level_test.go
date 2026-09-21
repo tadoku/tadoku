@@ -18,11 +18,13 @@ const (
 	accessPublic accessLevel = iota
 	accessAuthenticated
 	accessAdmin
+	accessCallback
 )
 
 // Every operation on openapi.StrictServerInterface must declare its access level.
 var operationAccess = map[string]accessLevel{
 	"AuthzPermissionCheck":          accessAuthenticated,
+	"AuthzProxyProxyAdminCheck":     accessCallback,
 	"AuthzRoleGet":                  accessPublic,
 	"AuthzRoleUpdate":               accessAdmin,
 	"ContentAnnouncementCreate":     accessAdmin,
@@ -53,6 +55,7 @@ var operationAccess = map[string]accessLevel{
 
 var operationFixtures = map[string]string{
 	"AuthzPermissionCheck":        "AuthzPermissionCheck",
+	"AuthzProxyProxyAdminCheck":   "AuthzProxyProxyAdminCheck",
 	"AuthzRoleUpdate":             "AuthzRoleUpdate",
 	"ContentAnnouncementCreate":   "CreateAnnouncement",
 	"ContentAnnouncementDelete":   "DeleteAnnouncement",
@@ -97,6 +100,8 @@ func TestOperationAccessLevels(t *testing.T) {
 		case accessAdmin:
 			requireAccessFixture(t, operation, http.StatusUnauthorized)
 			requireAccessFixture(t, operation, http.StatusForbidden)
+		case accessCallback:
+			requireAccessFixture(t, operation, http.StatusUnauthorized)
 		default:
 			t.Errorf("operation %q has unknown access level %d", operation, level)
 		}

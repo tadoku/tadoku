@@ -20,8 +20,11 @@ type Router struct {
 	rootMux                     *stdhttp.ServeMux
 	applicationMux              *stdhttp.ServeMux
 	protectedApplicationHandler stdhttp.Handler
+	callbackApplicationHandler  stdhttp.Handler
 	requestDuration             *prometheus.HistogramVec
 }
+
+const callbackAdminCheckPattern = "POST /authz/internal/v1/proxy/admin-check"
 
 type server struct {
 	application *app.Application
@@ -33,13 +36,16 @@ var _ openapi.StrictServerInterface = (*server)(nil)
 // Handle registers an application route behind the shared middleware.
 func (r *Router) Handle(pattern string, handler stdhttp.Handler) {
 	r.applicationMux.Handle(pattern, handler)
-	r.rootMux.Handle(pattern, r.protectedApplicationHandler)
+	applicationHandler := r.protectedApplicationHandler
+	if pattern == callbackAdminCheckPattern {
+		applicationHandler = r.callbackApplicationHandler
+	}
+	r.rootMux.Handle(pattern, applicationHandler)
 }
 
 // HandleFunc registers an application route behind the shared middleware.
 func (r *Router) HandleFunc(pattern string, handler func(stdhttp.ResponseWriter, *stdhttp.Request)) {
-	r.applicationMux.HandleFunc(pattern, handler)
-	r.rootMux.Handle(pattern, r.protectedApplicationHandler)
+	r.Handle(pattern, stdhttp.HandlerFunc(handler))
 }
 
 func (r *Router) ServeHTTP(w stdhttp.ResponseWriter, request *stdhttp.Request) {
@@ -55,6 +61,7 @@ func NewHandler(
 	logger *slog.Logger,
 	authenticate func(stdhttp.Handler) stdhttp.Handler,
 	rejectBanned func(stdhttp.Handler) stdhttp.Handler,
+	authenticateCallback func(stdhttp.Handler) stdhttp.Handler,
 ) (*Router, error) {
 	if application == nil || ready == nil {
 		return nil, fmt.Errorf("application and readiness are required")
@@ -73,6 +80,9 @@ func NewHandler(
 	}
 	if rejectBanned == nil {
 		return nil, fmt.Errorf("banned-user middleware is required")
+	}
+	if authenticateCallback == nil {
+		return nil, fmt.Errorf("callback authentication middleware is required")
 	}
 
 	requestDuration, err := newRequestDuration(registerer)
@@ -96,6 +106,17 @@ func NewHandler(
 		"native",
 		timeout,
 		applicationHandler,
+		requestDuration,
+		logger,
+	)
+	callbackHandler := authenticateCallback(stdhttp.Handler(router.applicationMux))
+	callbackHandler = withPanicRecovery(logger, callbackHandler)
+	router.callbackApplicationHandler = observe(
+		nativeRouteLabel,
+		"",
+		"native",
+		timeout,
+		callbackHandler,
 		requestDuration,
 		logger,
 	)

@@ -1,0 +1,7 @@
+POST /authz/internal/v1/proxy/admin-check HTTP/1.1
+Host: api.test
+Authorization: Bearer wrong-token
+Content-Type: application/json
+Content-Length: 50
+
+{"subject":"22222222-2222-4222-8222-222222222222"}

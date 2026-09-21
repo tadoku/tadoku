@@ -10,6 +10,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//services/common/authz/roles",
+        "//services/common/client/keto",
         "//services/common/client/kratos",
         "//services/tadoku-api/internal/errx",
         "//services/tadoku-api/internal/identity",

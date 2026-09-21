@@ -2715,7 +2715,7 @@ paths:
           description: authorization unavailable
       x-tadoku-source: AuthzProxy
       x-tadoku-exposure: callback
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /internal/v1/proxy/admin-check
       x-legacy-operation-id: proxyAdminCheck
   /immersion/internal/v1/account-deletion-eligibility:

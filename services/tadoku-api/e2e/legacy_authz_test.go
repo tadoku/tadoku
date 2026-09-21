@@ -13,6 +13,7 @@ import (
 	"github.com/tadoku/tadoku/services/authz-api/domain"
 	"github.com/tadoku/tadoku/services/authz-api/http/rest"
 	legacyopenapi "github.com/tadoku/tadoku/services/authz-api/http/rest/openapi"
+	proxyapi "github.com/tadoku/tadoku/services/authz-api/http/rest/openapi/proxyapi"
 	legacyrepository "github.com/tadoku/tadoku/services/authz-api/storage/postgres/repository"
 	commonroles "github.com/tadoku/tadoku/services/common/authz/roles"
 	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
@@ -32,6 +33,7 @@ func newLegacyAuthzAPI(
 	ketoReadURL string,
 	ketoWriteURL string,
 	kratos *kratosclient.Client,
+	callbackToken string,
 ) (*legacyAuthzAPI, error) {
 	config, err := pgx.ParseConfig(dsn)
 	if err != nil {
@@ -51,6 +53,7 @@ func newLegacyAuthzAPI(
 		kratos,
 		legacyrepository.NewRepository(db),
 		"",
+		callbackToken,
 	)
 	if err != nil {
 		_ = db.Close()
@@ -66,6 +69,7 @@ func newLegacyAuthzHandler(
 	kratos *kratosclient.Client,
 	audit domain.ModerationAuditRepository,
 	allowlistCSV string,
+	callbackToken string,
 ) (http.Handler, error) {
 	allowlist, err := domain.ParsePermissionAllowlist(allowlistCSV)
 	if err != nil {
@@ -81,7 +85,7 @@ func newLegacyAuthzHandler(
 		domain.NewPublicPermissionCheck(keto, allowlist),
 		nil,
 		nil,
-		nil,
+		domain.NewProxyAdminCheck(keto),
 	)
 	router := echo.New()
 	router.Logger.SetOutput(io.Discard)
@@ -92,6 +96,8 @@ func newLegacyAuthzHandler(
 		middleware.RequireServiceAudience("authz-api"),
 	)
 	legacyopenapi.RegisterHandlers(api, server)
+	callback := router.Group("/authz", rest.OathkeeperAuthorization(callbackToken))
+	proxyapi.RegisterHandlers(callback, server)
 
 	return router, nil
 }

@@ -66,6 +66,18 @@ func TestRouterWorksWithoutLegacyProxyRoutes(t *testing.T) {
 	}
 }
 
+func TestCallbackCredentialDoesNotAuthenticateBusinessRoutes(t *testing.T) {
+	request := httptest.NewRequest(http.MethodGet, "/content/announcements/main/active", nil)
+	request.Header.Set("Authorization", "Bearer "+callbackToken)
+	response := httptest.NewRecorder()
+
+	api.handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusUnauthorized {
+		t.Errorf("status=%d, want %d", response.Code, http.StatusUnauthorized)
+	}
+}
+
 func TestContractRouteOwnership(t *testing.T) {
 	specPath, err := bazel.Runfile("services/tadoku-api/spec/openapi.yaml")
 	if err != nil {

@@ -7,11 +7,20 @@ import (
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/audit"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/authz"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/callbackauth"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
 )
 
 type Role = authz.Role
+
+func (a *Application) ProxyAdminCheck(ctx context.Context, subject uuid.UUID) (bool, error) {
+	if !callbackauth.IsAuthenticated(ctx) {
+		return false, errx.NewUnauthorizedError("unauthorized")
+	}
+
+	return a.authorization.ProxyAdminCheck(ctx, subject)
+}
 
 func (a *Application) CurrentUserRole(ctx context.Context) (Role, error) {
 	if identity.FromContext(ctx) == nil {

@@ -45,5 +45,9 @@ output-options:
     - ImmersionLanguageList
     - ImmersionLanguageCreate
     - ImmersionLanguageUpdate
+    - ImmersionProfileFindByUserID
+    - ImmersionProfileYearlyActivityByUserID
+    - ImmersionProfileYearlyScoresByUserID
+    - ImmersionProfileYearlyActivitySplitByUserID
   nullable-type: true
   skip-prune: true

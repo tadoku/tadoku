@@ -1,0 +1,6 @@
+>>> GET /immersion/users/invalid/activity-split/2026
+HTTP/1.1 400 Bad Request
+Content-Length: 50
+Content-Type: application/json; charset=UTF-8
+
+{"message":"Invalid format for parameter userId"}

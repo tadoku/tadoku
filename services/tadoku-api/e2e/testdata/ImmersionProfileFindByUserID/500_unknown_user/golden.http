@@ -1,0 +1,4 @@
+>>> GET /immersion/users/99999999-9999-4999-8999-999999999999/profile
+HTTP/1.1 500 Internal Server Error
+Content-Length: 0
+

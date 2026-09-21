@@ -300,7 +300,7 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	logsService := logs.NewService(logsRepository, cfg.ScoringEngineEnabled)
 	pagesService := pages.NewService(pagesRepository)
 	postsService := posts.NewService(postsRepository)
-	profileService := profile.NewService(profileRepository, userCache, roleService)
+	profileService := profile.NewService(profileRepository, userCache, roleService, kratosIdentities)
 	api := app.New(announcementsService, auditService, authzService, contestsService, languagesService, logsService, pagesService, postsService, profileService, pool, permissionChecker)
 	rejectBanned := newBannedUserMiddleware(ketoReader, logger)
 

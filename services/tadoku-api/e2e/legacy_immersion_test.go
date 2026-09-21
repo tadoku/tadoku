@@ -56,7 +56,7 @@ func newLegacyImmersionAPI(ctx context.Context, dsn, jwksURL, ketoReadURL string
 			domain.NewLogConfigurationOptionsWithScoringEngine(postgresRepository, enabled),
 			domain.NewContestFindLatestOfficial(postgresRepository),
 			domain.NewContestSummaryFetch(postgresRepository),
-			nil, // yearly activity split
+			domain.NewProfileYearlyActivitySplit(postgresRepository),
 			domain.NewContestFind(postgresRepository),
 			nil, // log find
 			domain.NewContestList(postgresRepository),
@@ -69,9 +69,9 @@ func newLegacyImmersionAPI(ctx context.Context, dsn, jwksURL, ketoReadURL string
 			nil, // global leaderboard
 			nil, // profile contest
 			nil, // profile contest activity
-			nil, // profile yearly activity
-			nil, // profile yearly scores
-			nil, // profile fetch
+			domain.NewProfileYearlyActivity(postgresRepository),
+			domain.NewProfileYearlyScores(postgresRepository),
+			domain.NewProfileFetch(kratosClient),
 			domain.NewRegistrationListOngoing(postgresRepository, scenarioClock{}),
 			domain.NewContestPermissionCheck(postgresRepository, kratosClient, scenarioClock{}),
 			nil, // log delete

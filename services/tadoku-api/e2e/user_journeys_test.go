@@ -841,3 +841,13 @@ func TestPostLifecycleJourney(t *testing.T) {
 		{verify: "soft_deleted", at: deleted},
 	})
 }
+
+// An administrator updates the language catalog display name; another user sees
+// that name on existing yearly scores without changing any logs.
+func TestYearlyScoresLanguageNameChangeJourney(t *testing.T) {
+	runJourney(t, api, "YearlyScoresLanguageNameChange", []step{
+		{request: "scores_before", as: user, want: http.StatusOK},
+		{request: "update_language_name", as: admin, want: http.StatusOK, others: cast{guest: http.StatusUnauthorized, user: http.StatusForbidden, banned: http.StatusForbidden}},
+		{request: "scores_after", as: user2, want: http.StatusOK},
+	})
+}

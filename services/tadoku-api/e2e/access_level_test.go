@@ -24,6 +24,11 @@ const (
 
 // Every operation on the generated strict server interfaces must declare its access level.
 var operationAccess = map[string]accessLevel{
+	"ImmersionProfileFindByUserID":                accessPublic,
+	"ImmersionProfileYearlyActivityByUserID":      accessPublic,
+	"ImmersionProfileYearlyScoresByUserID":        accessPublic,
+	"ImmersionProfileYearlyActivitySplitByUserID": accessPublic,
+
 	"AuthzPermissionCheck":      accessAuthenticated,
 	"AuthzProxyProxyAdminCheck": accessCallback,
 	"AuthzRoleGet":              accessPublic,

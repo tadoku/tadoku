@@ -1,7 +1,10 @@
-// Package logs owns immersion log configuration data and tag suggestions.
+// Package logs owns immersion log data, derived statistics and configuration.
 package logs
 
-import "github.com/google/uuid"
+import (
+	"github.com/google/uuid"
+	"time"
+)
 
 type Unit struct {
 	ID            uuid.UUID
@@ -21,4 +24,32 @@ type ConfigurationOptions struct {
 type TagSuggestion struct {
 	Tag   string
 	Count int
+}
+
+type ActivityScore struct {
+	Date    time.Time
+	Score   float32
+	Updates int
+}
+
+type YearlyActivity struct {
+	Scores       []ActivityScore
+	TotalUpdates int
+}
+
+type Score struct {
+	LanguageCode string
+	LanguageName string
+	Score        float32
+}
+
+type YearlyScores struct {
+	Scores       []Score
+	OverallScore float32
+}
+
+type ActivitySplitScore struct {
+	ActivityID   int
+	ActivityName string
+	Score        float32
 }

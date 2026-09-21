@@ -8,6 +8,7 @@ go_library(
         "authz.go",
         "contests.go",
         "languages.go",
+        "log_statistics.go",
         "logs.go",
         "pages.go",
         "posts.go",

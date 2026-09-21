@@ -2,6 +2,8 @@ package profile
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"math"
 	"strings"
 	"time"
@@ -9,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/sahilm/fuzzy"
 	commonroles "github.com/tadoku/tadoku/services/common/authz/roles"
+	kratosclient "github.com/tadoku/tadoku/services/common/client/kratos"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
 )
@@ -17,13 +20,15 @@ type Service struct {
 	repository *Repository
 	cache      *UserCache
 	roles      *commonroles.KetoService
+	identities *kratosclient.Client
 }
 
-func NewService(repository *Repository, cache *UserCache, roles *commonroles.KetoService) *Service {
+func NewService(repository *Repository, cache *UserCache, roles *commonroles.KetoService, identities *kratosclient.Client) *Service {
 	return &Service{
 		repository: repository,
 		cache:      cache,
 		roles:      roles,
+		identities: identities,
 	}
 }
 
@@ -116,6 +121,7 @@ func (s userSearchSource) Len() int {
 
 func searchUsers(users []CachedUser, query string) []CachedUser {
 	matches := fuzzy.FindFrom(strings.ToLower(query), userSearchSource(users))
+
 	result := make([]CachedUser, 0, len(matches))
 	for _, match := range matches {
 		result = append(result, users[match.Index])
@@ -136,4 +142,32 @@ func userPage(users []CachedUser, pageSize, page int) []CachedUser {
 	start := int(offset)
 	end := start + min(pageSize, len(users)-start)
 	return users[start:end]
+}
+
+func (s *Service) FindProfile(ctx context.Context, userID uuid.UUID) (*PublicProfile, error) {
+	identity, err := s.identities.FetchIdentity(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	if identity.GetSchemaId() != "user" {
+		return nil, fmt.Errorf("unexpected schema %s", identity.GetSchemaId())
+	}
+
+	data, err := json.Marshal(identity.GetTraits())
+	if err != nil {
+		return nil, err
+	}
+
+	var traits struct {
+		DisplayName string `json:"display_name"`
+		Email       string
+	}
+	if err := json.Unmarshal(data, &traits); err != nil {
+		return nil, err
+	}
+
+	return &PublicProfile{
+		DisplayName: traits.DisplayName,
+		CreatedAt:   identity.GetCreatedAt(),
+	}, nil
 }

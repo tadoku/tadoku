@@ -1,0 +1,6 @@
+>>> GET /immersion/users/11111111-1111-4111-8111-111111111111/scores/2027
+HTTP/1.1 200 OK
+Content-Length: 96
+Content-Type: application/json; charset=UTF-8
+
+{"overall_score":200,"scores":[{"language_code":"jpn","language_name":"Japanese","score":200}]}

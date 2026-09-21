@@ -1,0 +1,6 @@
+>>> GET /immersion/users/11111111-1111-4111-8111-111111111111/activity-split/2026
+HTTP/1.1 200 OK
+Content-Length: 291
+Content-Type: application/json; charset=UTF-8
+
+{"activities":[{"activity_id":1,"activity_name":"Reading","score":20},{"activity_id":2,"activity_name":"Listening","score":7.5},{"activity_id":4,"activity_name":"Speaking","score":4},{"activity_id":3,"activity_name":"Writing","score":3},{"activity_id":5,"activity_name":"Study","score":2}]}

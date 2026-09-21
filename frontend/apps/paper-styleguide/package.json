@@ -33,7 +33,7 @@
     "@types/react-dom": "18.0.9",
     "@typescript/native": "npm:typescript@7.0.2",
     "@vitejs/plugin-react": "4.7.0",
-    "autoprefixer": "10.4.21",
+    "autoprefixer": "10.6.1",
     "eslint": "9.39.2",
     "eslint-plugin-react-hooks": "7.0.1",
     "eslint-plugin-react-refresh": "0.4.24",

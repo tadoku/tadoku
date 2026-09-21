@@ -1,3 +1,6 @@
 # A custom merge driver for the Bazel lockfile.
 # https://bazel.build/external/lockfile#automatic-resolution
 MODULE.bazel.lock merge=bazel-lockfile-merge
+
+# Collapse test fixtures and golden snapshots in GitHub diffs by default.
+**/testdata/** linguist-generated=true

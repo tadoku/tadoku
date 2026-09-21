@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/google/uuid"
 	kratosapi "github.com/ory/kratos-client-go"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
 
@@ -23,6 +25,45 @@ func NewService(repository *ContestsRepository, kratos *kratosapi.APIClient) *Se
 		contests: repository,
 		kratos:   kratos,
 	}
+}
+
+func (s *Service) ValidateContestCreation(
+	ctx context.Context,
+	parameters CreateContestParameters,
+	creatorID uuid.UUID,
+	creatorDisplayName string,
+	admin bool,
+	now time.Time,
+) error {
+	if !admin {
+		count, err := s.contests.CountContestsCreatedByUserForYear(ctx, creatorID, int32(now.Year()))
+		if err != nil {
+			return err
+		}
+		if count >= contestCreationYearlyLimit {
+			return ErrContestCreationForbidden
+		}
+	}
+	if err := parameters.validate(creatorID, creatorDisplayName, admin, now); err != nil {
+		return err
+	}
+	if len(parameters.LanguageCodeAllowList) > 0 {
+		exists, err := s.contests.LanguagesExist(ctx, parameters.LanguageCodeAllowList)
+		if err != nil {
+			return err
+		}
+		if !exists {
+			return errx.NewInvalidInputError("invalid contest LanguageCodeAllowList: one or more languages do not exist")
+		}
+	}
+	return nil
+}
+
+func (s *Service) CreateContest(ctx context.Context, contest Contest) (*Contest, error) {
+	if err := s.contests.CreateContest(ctx, contest); err != nil {
+		return nil, err
+	}
+	return s.contests.FindCreatedContestByID(ctx, contest.ID)
 }
 
 func (s *Service) CheckCreatePermission(ctx context.Context, userID uuid.UUID) error {

@@ -4,22 +4,49 @@ import (
 	"context"
 	"math"
 	"strings"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/sahilm/fuzzy"
 	commonroles "github.com/tadoku/tadoku/services/common/authz/roles"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
 )
 
 type Service struct {
-	cache *UserCache
-	roles *commonroles.KetoService
+	repository *Repository
+	cache      *UserCache
+	roles      *commonroles.KetoService
 }
 
-func NewService(cache *UserCache, roles *commonroles.KetoService) *Service {
+func NewService(repository *Repository, cache *UserCache, roles *commonroles.KetoService) *Service {
 	return &Service{
-		cache: cache,
-		roles: roles,
+		repository: repository,
+		cache:      cache,
+		roles:      roles,
 	}
+}
+
+func (s *Service) SynchronizeUser(ctx context.Context, user *identity.User, now time.Time) (uuid.UUID, error) {
+	userID, err := user.UUID()
+	if err != nil {
+		return uuid.Nil, err
+	}
+	if err := s.repository.SynchronizeUser(ctx, userID, user.DisplayName, user.CreatedAt, now); err != nil {
+		return uuid.Nil, err
+	}
+	return userID, nil
+}
+
+func (s *Service) LockUser(ctx context.Context, userID uuid.UUID) error {
+	state, err := s.repository.LockUser(ctx, userID)
+	if err != nil {
+		return err
+	}
+	if state.DeletionLocked || state.Deleted {
+		return ErrAccountDeletionInProgress
+	}
+	return nil
 }
 
 func (s *Service) ListUsers(ctx context.Context, pageSize, page int, query string) (*UserList, error) {

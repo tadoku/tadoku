@@ -981,9 +981,20 @@ paths:
           description: Not allowed to create this contest
         "409":
           $ref: "#/components/responses/ImmersionAccountDeletionInProgress"
+        "500":
+          description: Invalid authenticated identity
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - message
+                properties:
+                  message:
+                    type: string
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /contests
       x-legacy-operation-id: contestCreate
     get:

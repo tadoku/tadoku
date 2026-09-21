@@ -37,6 +37,49 @@ func (r *ContestsRepository) CountContestsCreatedByUserForYear(ctx context.Conte
 	return count, nil
 }
 
+func (r *ContestsRepository) LanguagesExist(ctx context.Context, codes []string) (bool, error) {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return false, err
+	}
+	exists, err := queries.New(executor).LanguagesExist(ctx, codes)
+	if err != nil {
+		return false, fmt.Errorf("check contest languages: %w", err)
+	}
+	return exists, nil
+}
+
+func (r *ContestsRepository) CreateContest(ctx context.Context, contest Contest) error {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return err
+	}
+	err = queries.New(executor).CreateContest(ctx, queries.CreateContestParams{
+		ID:                      pgtype.UUID{Bytes: contest.ID, Valid: true},
+		OwnerUserID:             pgtype.UUID{Bytes: contest.OwnerUserID, Valid: true},
+		OwnerUserDisplayName:    contest.OwnerUserDisplayName,
+		Official:                contest.Official,
+		Private:                 contest.Private,
+		ContestStart:            pgtype.Date{Time: contest.ContestStart, Valid: true},
+		ContestEnd:              pgtype.Date{Time: contest.ContestEnd, Valid: true},
+		RegistrationEnd:         pgtype.Date{Time: contest.RegistrationEnd, Valid: true},
+		Title:                   contest.Title,
+		Description:             text(contest.Description),
+		LanguageCodeAllowList:   contest.LanguageCodeAllowList,
+		ActivityTypeIDAllowList: contest.ActivityTypeIDAllowList,
+		CreatedAt:               pgtype.Timestamp{Time: contest.CreatedAt, Valid: true},
+		UpdatedAt:               pgtype.Timestamp{Time: contest.UpdatedAt, Valid: true},
+	})
+	if err != nil {
+		return fmt.Errorf("create contest: %w", err)
+	}
+	return nil
+}
+
+func (r *ContestsRepository) FindCreatedContestByID(ctx context.Context, id uuid.UUID) (*Contest, error) {
+	return r.FindContestByID(ctx, FindParameters{ID: id})
+}
+
 func (r *ContestsRepository) ListContests(ctx context.Context, parameters ListParameters) ([]Contest, int, error) {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
@@ -188,4 +231,11 @@ func nullableString(value pgtype.Text) *string {
 		return nil
 	}
 	return &value.String
+}
+
+func text(value *string) pgtype.Text {
+	if value == nil {
+		return pgtype.Text{}
+	}
+	return pgtype.Text{String: *value, Valid: true}
 }

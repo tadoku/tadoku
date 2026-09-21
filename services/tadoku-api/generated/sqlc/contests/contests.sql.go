@@ -30,6 +30,77 @@ func (q *Queries) CountContestsCreatedByUserForYear(ctx context.Context, arg Cou
 	return count, err
 }
 
+const createContest = `-- name: CreateContest :exec
+insert into contests (
+  id,
+  owner_user_id,
+  owner_user_display_name,
+  official,
+  "private",
+  contest_start,
+  contest_end,
+  registration_end,
+  title,
+  "description",
+  language_code_allow_list,
+  activity_type_id_allow_list,
+  created_at,
+  updated_at
+) values (
+  $1,
+  $2,
+  $3,
+  $4,
+  $5,
+  $6,
+  $7,
+  $8,
+  $9,
+  $10,
+  $11,
+  $12,
+  $13,
+  $14
+)
+`
+
+type CreateContestParams struct {
+	ID                      pgtype.UUID
+	OwnerUserID             pgtype.UUID
+	OwnerUserDisplayName    string
+	Official                bool
+	Private                 bool
+	ContestStart            pgtype.Date
+	ContestEnd              pgtype.Date
+	RegistrationEnd         pgtype.Date
+	Title                   string
+	Description             pgtype.Text
+	LanguageCodeAllowList   []string
+	ActivityTypeIDAllowList []int32
+	CreatedAt               pgtype.Timestamp
+	UpdatedAt               pgtype.Timestamp
+}
+
+func (q *Queries) CreateContest(ctx context.Context, arg CreateContestParams) error {
+	_, err := q.db.Exec(ctx, createContest,
+		arg.ID,
+		arg.OwnerUserID,
+		arg.OwnerUserDisplayName,
+		arg.Official,
+		arg.Private,
+		arg.ContestStart,
+		arg.ContestEnd,
+		arg.RegistrationEnd,
+		arg.Title,
+		arg.Description,
+		arg.LanguageCodeAllowList,
+		arg.ActivityTypeIDAllowList,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+	)
+	return err
+}
+
 const findContestByID = `-- name: FindContestByID :one
 select
   contests.id,
@@ -164,6 +235,19 @@ func (q *Queries) FindLatestOfficialContest(ctx context.Context) (FindLatestOffi
 		&i.DeletedAt,
 	)
 	return i, err
+}
+
+const languagesExist = `-- name: LanguagesExist :one
+select count(distinct languages.code) = count(distinct requested.code)
+from unnest($1::varchar[]) as requested(code)
+left join languages using (code)
+`
+
+func (q *Queries) LanguagesExist(ctx context.Context, codes []string) (bool, error) {
+	row := q.db.QueryRow(ctx, languagesExist, codes)
+	var column_1 bool
+	err := row.Scan(&column_1)
+	return column_1, err
 }
 
 const listContests = `-- name: ListContests :many

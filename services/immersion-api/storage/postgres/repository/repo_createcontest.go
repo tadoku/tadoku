@@ -15,14 +15,15 @@ func (r *Repository) CreateContest(ctx context.Context, req *domain.ContestCreat
 	}
 
 	qtx := r.q.WithTx(tx)
-	if err = lockUserForMutation(ctx, qtx, req.OwnerUserID); err != nil {
+	if err = lockUserForMutation(ctx, qtx, req.OwnerUserID()); err != nil {
 		_ = tx.Rollback()
 		return nil, err
 	}
 
 	id, err := qtx.CreateContest(ctx, postgres.CreateContestParams{
-		OwnerUserID:             req.OwnerUserID,
-		OwnerUserDisplayName:    req.OwnerUserDisplayName,
+		ID:                      req.ID(),
+		OwnerUserID:             req.OwnerUserID(),
+		OwnerUserDisplayName:    req.OwnerUserDisplayName(),
 		Official:                req.Official,
 		Private:                 req.Private,
 		ContestStart:            req.ContestStart,
@@ -32,6 +33,8 @@ func (r *Repository) CreateContest(ctx context.Context, req *domain.ContestCreat
 		Description:             postgres.NewNullString(req.Description),
 		LanguageCodeAllowList:   req.LanguageCodeAllowList,
 		ActivityTypeIDAllowList: req.ActivityTypeIDAllowList,
+		CreatedAt:               req.CreatedAt(),
+		UpdatedAt:               req.UpdatedAt(),
 	})
 
 	if err != nil {

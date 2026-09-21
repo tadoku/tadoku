@@ -18,6 +18,7 @@ go_test(
         "banned_users_test.go",
         "contest_configuration_test.go",
         "contest_create_permission_test.go",
+        "contest_create_test.go",
         "contest_find_test.go",
         "contest_latest_official_test.go",
         "contest_list_test.go",

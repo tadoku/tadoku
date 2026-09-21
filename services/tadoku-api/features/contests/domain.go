@@ -5,6 +5,7 @@ import (
 	"errors"
 	"sort"
 	"time"
+	"unicode/utf8"
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
@@ -29,7 +30,6 @@ var (
 	ErrContestNotFound          = errx.NewNotFoundError("contest not found")
 	ErrContestCreatorNotFound   = errx.NewNotFoundError("contest creator not found")
 	ErrContestCreationForbidden = errx.NewForbiddenError("contest creation forbidden")
-	ErrInvalidContestCreator    = errors.New("invalid contest creator identity")
 	ErrContestCreatorTooYoung   = errors.New("contest creator account too young")
 	ErrInvalidActivity          = errx.NewInvalidInputError("invalid contest activity")
 )
@@ -86,6 +86,66 @@ type ContestList struct {
 	Contests      []Contest
 	TotalSize     int
 	NextPageToken string
+}
+
+type CreateContestParameters struct {
+	ContestStart            time.Time
+	ContestEnd              time.Time
+	RegistrationEnd         time.Time
+	Title                   string
+	Description             *string
+	Official                bool
+	Private                 bool
+	LanguageCodeAllowList   []string
+	ActivityTypeIDAllowList []int32
+}
+
+func (p CreateContestParameters) validate(ownerUserID uuid.UUID, ownerUserDisplayName string, admin bool, now time.Time) error {
+	if ownerUserID == uuid.Nil {
+		return errx.NewInvalidInputError("invalid contest OwnerUserID: must not be nil")
+	}
+	if ownerUserDisplayName == "" {
+		return errx.NewInvalidInputError("invalid contest OwnerUserDisplayName: must not be empty")
+	}
+	if p.ContestStart.IsZero() {
+		return errx.NewInvalidInputError("invalid contest ContestStart: must not be zero")
+	}
+	if p.ContestEnd.IsZero() {
+		return errx.NewInvalidInputError("invalid contest ContestEnd: must not be zero")
+	}
+	if p.RegistrationEnd.IsZero() {
+		return errx.NewInvalidInputError("invalid contest RegistrationEnd: must not be zero")
+	}
+	if utf8.RuneCountInString(p.Title) <= 3 {
+		return errx.NewInvalidInputError("invalid contest Title: must contain more than three characters")
+	}
+	if len(p.ActivityTypeIDAllowList) == 0 {
+		return errx.NewInvalidInputError("invalid contest ActivityTypeIDAllowList: must not be empty")
+	}
+	if p.Official && p.Private {
+		return errx.NewInvalidInputError("invalid contest Private: official contests must be public")
+	}
+	if p.Official && len(p.LanguageCodeAllowList) != 0 {
+		return errx.NewInvalidInputError("invalid contest LanguageCodeAllowList: official contests must allow every language")
+	}
+	if p.ContestStart.After(p.ContestEnd) {
+		return errx.NewInvalidInputError("invalid contest ContestStart: must not be after ContestEnd")
+	}
+	for _, id := range p.ActivityTypeIDAllowList {
+		if id < 1 || int(id) > len(activities) || activities[id-1].ID != id {
+			return errx.NewInvalidInputError("invalid contest ActivityTypeIDAllowList: contains an unknown activity")
+		}
+	}
+	if !admin {
+		today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
+		if p.ContestStart.Before(today) {
+			return errx.NewInvalidInputError("invalid contest ContestStart: non-admin contests must not start in the past")
+		}
+		if p.ContestEnd.Before(today) {
+			return errx.NewInvalidInputError("invalid contest ContestEnd: non-admin contests must not end in the past")
+		}
+	}
+	return nil
 }
 
 type ConfigurationOptions struct {

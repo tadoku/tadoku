@@ -76,6 +76,44 @@ from contests
 where owner_user_id = sqlc.arg(owner_user_id)
   and extract(year from created_at) = sqlc.arg(year)::integer;
 
+-- name: LanguagesExist :one
+select count(distinct languages.code) = count(distinct requested.code)
+from unnest(sqlc.arg(codes)::varchar[]) as requested(code)
+left join languages using (code);
+
+-- name: CreateContest :exec
+insert into contests (
+  id,
+  owner_user_id,
+  owner_user_display_name,
+  official,
+  "private",
+  contest_start,
+  contest_end,
+  registration_end,
+  title,
+  "description",
+  language_code_allow_list,
+  activity_type_id_allow_list,
+  created_at,
+  updated_at
+) values (
+  sqlc.arg(id),
+  sqlc.arg(owner_user_id),
+  sqlc.arg(owner_user_display_name),
+  sqlc.arg(official),
+  sqlc.arg(private),
+  sqlc.arg(contest_start),
+  sqlc.arg(contest_end),
+  sqlc.arg(registration_end),
+  sqlc.arg(title),
+  sqlc.narg(description),
+  sqlc.arg(language_code_allow_list),
+  sqlc.arg(activity_type_id_allow_list),
+  sqlc.arg(created_at),
+  sqlc.arg(updated_at)
+);
+
 -- name: FindContestByID :one
 select
   contests.id,

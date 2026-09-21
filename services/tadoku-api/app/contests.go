@@ -5,28 +5,84 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/contests"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/profile"
+	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
 
 type ListContestsParameters = contests.ListParameters
 type ContestView = contests.ContestView
+type Contest = contests.Contest
+type CreateContestParameters = contests.CreateContestParameters
 
-var ErrInvalidContestCreator = contests.ErrInvalidContestCreator
+var ErrAccountDeletionInProgress = profile.ErrAccountDeletionInProgress
 
 func (a *Application) CheckContestCreatePermission(ctx context.Context) error {
 	if a.permissions.IsAdminOrFalse(ctx) {
 		return nil
 	}
 
-	user := identity.FromContext(ctx)
-	if user == nil {
-		return contests.ErrInvalidContestCreator
-	}
-	userID, err := uuid.Parse(user.Subject)
+	userID, err := identity.FromContext(ctx).UUID()
 	if err != nil {
-		return contests.ErrInvalidContestCreator
+		return err
 	}
 	return a.contests.CheckCreatePermission(ctx, userID)
+}
+
+func (a *Application) CreateContest(ctx context.Context, parameters CreateContestParameters) (*Contest, error) {
+	if err := a.permissions.RequireAuthenticated(ctx); err != nil {
+		return nil, err
+	}
+	admin, err := a.permissions.IsAdmin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if parameters.Official && !admin {
+		return nil, contests.ErrContestCreationForbidden
+	}
+
+	creator := identity.FromContext(ctx)
+	now := timex.Now()
+	creatorID, err := a.profile.SynchronizeUser(ctx, creator, now)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := a.contests.ValidateContestCreation(ctx, parameters, creatorID, creator.DisplayName, admin, now); err != nil {
+		return nil, err
+	}
+	contest := contests.Contest{
+		ID:                      uuid.New(),
+		ContestStart:            parameters.ContestStart,
+		ContestEnd:              parameters.ContestEnd,
+		RegistrationEnd:         parameters.RegistrationEnd,
+		Title:                   parameters.Title,
+		Description:             parameters.Description,
+		OwnerUserID:             creatorID,
+		OwnerUserDisplayName:    creator.DisplayName,
+		Official:                parameters.Official,
+		Private:                 parameters.Private,
+		LanguageCodeAllowList:   parameters.LanguageCodeAllowList,
+		ActivityTypeIDAllowList: parameters.ActivityTypeIDAllowList,
+		CreatedAt:               now,
+		UpdatedAt:               now,
+	}
+
+	var result *contests.Contest
+	err = postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) error {
+		if err := a.profile.LockUser(ctx, creatorID); err != nil {
+			return err
+		}
+		var createErr error
+		result, createErr = a.contests.CreateContest(ctx, contest)
+		return createErr
+	})
+	if err != nil {
+		result = nil
+		return nil, err
+	}
+	return result, nil
 }
 
 func (a *Application) ListContests(ctx context.Context, parameters ListContestsParameters) (*contests.ContestList, error) {

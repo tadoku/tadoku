@@ -73,7 +73,7 @@ func newLegacyImmersionAPI(ctx context.Context, dsn, jwksURL, ketoReadURL string
 		nil, // registration upsert
 		nil, // log create
 		nil, // log update
-		nil, // contest create
+		domain.NewContestCreate(postgresRepository, scenarioClock{}, domain.NewUserUpsert(postgresRepository)),
 		domain.NewLanguageList(postgresRepository),
 		domain.NewLanguageCreate(postgresRepository),
 		domain.NewLanguageUpdate(postgresRepository),

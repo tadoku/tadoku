@@ -1,0 +1,6 @@
+>>> POST /immersion/contests
+HTTP/1.1 200 OK
+Content-Length: 426
+Content-Type: application/json; charset=UTF-8
+
+{"activity_type_id_allow_list":[1],"contest_end":"2026-09-12","contest_start":"2026-09-12","created_at":"2026-09-12T12:00:00Z","id":"11111111-1111-4111-9111-111111111111","language_code_allow_list":["jpn"],"official":false,"owner_user_display_name":"Reader One","owner_user_id":"11111111-1111-4111-8111-111111111111","private":false,"registration_end":"2026-09-30","title":"Contest title","updated_at":"2026-09-12T12:00:00Z"}

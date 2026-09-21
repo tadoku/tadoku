@@ -1101,6 +1101,9 @@ type ContentPostCreateJSONRequestBody = ContentPost
 // ContentPostUpdateJSONRequestBody defines body for ContentPostUpdate for application/json ContentType.
 type ContentPostUpdateJSONRequestBody = ContentPost
 
+// ImmersionContestCreateJSONRequestBody defines body for ImmersionContestCreate for application/json ContentType.
+type ImmersionContestCreateJSONRequestBody = ImmersionContest
+
 // ImmersionLanguageCreateJSONRequestBody defines body for ImmersionLanguageCreate for application/json ContentType.
 type ImmersionLanguageCreateJSONRequestBody = ImmersionLanguage
 
@@ -1181,6 +1184,9 @@ type ServerInterface interface {
 	// ImmersionContestList Lists all the contests, paginated
 	// (GET /immersion/contests)
 	ImmersionContestList(w http.ResponseWriter, r *http.Request, params ImmersionContestListParams)
+	// ImmersionContestCreate Creates a new contest
+	// (POST /immersion/contests)
+	ImmersionContestCreate(w http.ResponseWriter, r *http.Request)
 	// ImmersionContestGetConfigurations Fetches the configuration options for a new contest
 	// (GET /immersion/contests/configuration-options)
 	ImmersionContestGetConfigurations(w http.ResponseWriter, r *http.Request)
@@ -2123,6 +2129,20 @@ func (siw *ServerInterfaceWrapper) ImmersionContestList(w http.ResponseWriter, r
 	handler.ServeHTTP(w, r)
 }
 
+// ImmersionContestCreate operation middleware
+func (siw *ServerInterfaceWrapper) ImmersionContestCreate(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ImmersionContestCreate(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ImmersionContestGetConfigurations operation middleware
 func (siw *ServerInterfaceWrapper) ImmersionContestGetConfigurations(w http.ResponseWriter, r *http.Request) {
 
@@ -2448,6 +2468,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/content/announcements/{namespace}/{id}", wrapper.ContentAnnouncementFindByID)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/content/announcements/{namespace}/{id}", wrapper.ContentAnnouncementUpdate)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests", wrapper.ImmersionContestList)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/immersion/contests", wrapper.ImmersionContestCreate)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/create-permissions", wrapper.ImmersionContestCreatePermissionCheck)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/{id}", wrapper.ImmersionContestFindByID)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/latest-official", wrapper.ImmersionContestFindLatestOfficial)
@@ -3334,6 +3355,76 @@ func (response ImmersionContestList200JSONResponse) VisitImmersionContestListRes
 	return err
 }
 
+type ImmersionContestCreateRequestObject struct {
+	Body *ImmersionContestCreateJSONRequestBody
+}
+
+type ImmersionContestCreateResponseObject interface {
+	VisitImmersionContestCreateResponse(w http.ResponseWriter) error
+}
+
+type ImmersionContestCreate200JSONResponse ImmersionContest
+
+func (response ImmersionContestCreate200JSONResponse) VisitImmersionContestCreateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImmersionContestCreate400Response struct {
+}
+
+func (response ImmersionContestCreate400Response) VisitImmersionContestCreateResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
+type ImmersionContestCreate403Response struct {
+}
+
+func (response ImmersionContestCreate403Response) VisitImmersionContestCreateResponse(w http.ResponseWriter) error {
+	w.WriteHeader(403)
+	return nil
+}
+
+type ImmersionContestCreate409JSONResponse struct {
+	ImmersionAccountDeletionInProgressJSONResponse
+}
+
+func (response ImmersionContestCreate409JSONResponse) VisitImmersionContestCreateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImmersionContestCreate500JSONResponse struct {
+	Message string `json:"message"`
+}
+
+func (response ImmersionContestCreate500JSONResponse) VisitImmersionContestCreateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ImmersionContestGetConfigurationsRequestObject struct {
 }
 
@@ -3707,6 +3798,9 @@ type StrictServerInterface interface {
 	// ImmersionContestList Lists all the contests, paginated
 	// (GET /immersion/contests)
 	ImmersionContestList(ctx context.Context, request ImmersionContestListRequestObject) (ImmersionContestListResponseObject, error)
+	// ImmersionContestCreate Creates a new contest
+	// (POST /immersion/contests)
+	ImmersionContestCreate(ctx context.Context, request ImmersionContestCreateRequestObject) (ImmersionContestCreateResponseObject, error)
 	// ImmersionContestGetConfigurations Fetches the configuration options for a new contest
 	// (GET /immersion/contests/configuration-options)
 	ImmersionContestGetConfigurations(ctx context.Context, request ImmersionContestGetConfigurationsRequestObject) (ImmersionContestGetConfigurationsResponseObject, error)
@@ -4477,6 +4571,40 @@ func (sh *strictHandler) ImmersionContestList(w http.ResponseWriter, r *http.Req
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ImmersionContestListResponseObject); ok {
 		if err := validResponse.VisitImmersionContestListResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ImmersionContestCreate operation middleware
+func (sh *strictHandler) ImmersionContestCreate(w http.ResponseWriter, r *http.Request) {
+	var request ImmersionContestCreateRequestObject
+
+	var body ImmersionContestCreateJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		if !errors.Is(err, io.EOF) {
+			sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+			return
+		}
+	} else {
+		request.Body = &body
+	}
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ImmersionContestCreate(ctx, request.(ImmersionContestCreateRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ImmersionContestCreate")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ImmersionContestCreateResponseObject); ok {
+		if err := validResponse.VisitImmersionContestCreateResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

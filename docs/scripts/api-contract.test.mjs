@@ -54,9 +54,8 @@ test('all retained wire contracts survive the merge, including internal callers'
       legacy.components.schemas.Announcement.properties.href.maxLength = 2048;
       legacy.components.schemas.AnnouncementList.allOf[1].properties.announcements.maxItems = 100;
     }
-    if (name === 'Immersion' && contract.paths['/immersion/contests/create-permissions'].get['x-tadoku-owner'] === 'native') {
-      legacy.paths['/contests/create-permissions'].get.responses['404'] = {description: 'User identity not found'};
-      legacy.paths['/contests/create-permissions'].get.responses['500'] = {
+    if (name === 'Immersion') {
+      const permissionFailure = {
         description: 'Permission check failed',
         content: {
           'application/json': {
@@ -70,6 +69,16 @@ test('all retained wire contracts survive the merge, including internal callers'
           },
         },
       };
+      if (contract.paths['/immersion/contests/create-permissions'].get['x-tadoku-owner'] === 'native') {
+        legacy.paths['/contests/create-permissions'].get.responses['404'] = {description: 'User identity not found'};
+        legacy.paths['/contests/create-permissions'].get.responses['500'] = permissionFailure;
+      }
+      if (contract.paths['/immersion/contests'].post['x-tadoku-owner'] === 'native') {
+        legacy.paths['/contests'].post.responses['500'] = {
+          ...permissionFailure,
+          description: 'Invalid authenticated identity',
+        };
+      }
     }
     assert.deepEqual(view.paths, legacy.paths, `${name} paths`);
     assert.deepEqual(view.components, legacy.components ?? {}, `${name} components`);

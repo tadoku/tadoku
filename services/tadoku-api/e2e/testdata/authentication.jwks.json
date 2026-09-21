@@ -23,6 +23,14 @@
       "kid": "contest-permissions-f1cf9b99-4022-43d7-9a44-0be5181f23a7",
       "use": "sig",
       "alg": "RS256"
+    },
+    {
+      "kty": "RSA",
+      "n": "44veLH0pmQOcCZF82bZGM-iuwp6ftNwOmH9OVT2qLIy4GnOexY3WQxkIGEi94z6vdubp_GHKT49zs6rPWPJWS0r1nUdIW6IjODwso7_iC1Jw8b1pTRCPi7QcISnj9rbvSnKINPChcCJT3j44FeuM85xyXOE-Ko1V2Dt9dTP7FGG9z17EVLeQFLSqNYisSZR1l3C2I1iVUJpB8y5NrVGh9QsAExxhgZxA0nqdNDlp1cGO06igjPk124agOxhvoqeqvtGRp1acKjAX-r50e_FaupKqr87Nm9CYS0ruujuGzjc5QJzgatl3kfgXdQK-yplX0xftVxY5e1yK0vdf5I3zIw",
+      "e": "AQAB",
+      "kid": "contest-empty-display-fixture",
+      "use": "sig",
+      "alg": "RS256"
     }
   ]
 }

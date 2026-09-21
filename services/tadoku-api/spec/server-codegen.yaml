@@ -30,6 +30,7 @@ output-options:
     - ContentPostVersionGet
     - ContentPostVersionList
     - ImmersionContestList
+    - ImmersionContestCreate
     - ImmersionContestCreatePermissionCheck
     - ImmersionContestFindByID
     - ImmersionContestFindLatestOfficial

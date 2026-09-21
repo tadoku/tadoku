@@ -1,0 +1,4 @@
+>>> POST /immersion/contests
+HTTP/1.1 400 Bad Request
+Content-Length: 0
+

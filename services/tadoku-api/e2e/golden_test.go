@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
 
@@ -34,6 +35,17 @@ type implementation struct {
 	skip    string
 
 	resetKratos bool
+}
+
+type repeatingByteReader byte
+
+func (r repeatingByteReader) Read(buffer []byte) (int, error) {
+	// Native observability and legacy handlers consume different UUID counts.
+	// Repeating entropy keeps business IDs equal without coupling draw order.
+	for i := range buffer {
+		buffer[i] = byte(r)
+	}
+	return len(buffer), nil
 }
 
 func atFixtureInstant(fn func()) {
@@ -56,7 +68,11 @@ func runCase(t *testing.T, s *suite, name string, want int, implementations ...i
 			}
 			s.reset(t, dir)
 			record := *updateGoldens && impl.name == goldenRecorder
-			atFixtureInstant(func() { checkHTTPGolden(t, impl.handler, dir, want, record) })
+			atFixtureInstant(func() {
+				uuid.SetRand(repeatingByteReader(0x11))
+				defer uuid.SetRand(nil)
+				checkHTTPGolden(t, impl.handler, dir, want, record)
+			})
 			if s.proxied.Load() != 0 {
 				t.Error("handler contacted an upstream")
 			}

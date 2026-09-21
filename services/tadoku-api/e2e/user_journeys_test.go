@@ -1,6 +1,7 @@
 package e2e_test
 
 import (
+	"bytes"
 	"math/rand"
 	"net/http"
 	"testing"
@@ -75,6 +76,62 @@ func TestLanguageLifecycleJourney(t *testing.T) {
 		{
 			request: "list_unchanged",
 			as:      admin,
+			want:    http.StatusOK,
+		},
+	})
+}
+
+func TestContestCreationJourney(t *testing.T) {
+	ids := append(bytes.Repeat([]byte{0x11}, 16), bytes.Repeat([]byte{0x22}, 16)...)
+	uuid.SetRand(bytes.NewReader(ids))
+	defer uuid.SetRand(nil)
+
+	runJourney(t, api, "ContestCreation", []step{
+		{
+			request: "reject_invalid_contest",
+			as:      user,
+			want:    http.StatusBadRequest,
+			others: cast{
+				none:   http.StatusBadRequest,
+				guest:  http.StatusUnauthorized,
+				banned: http.StatusForbidden,
+			},
+		},
+		{verify: "rejection_keeps_user_upsert"},
+		{
+			request: "create_public_contest",
+			as:      user,
+			want:    http.StatusOK,
+			others: cast{
+				none:   http.StatusBadRequest,
+				guest:  http.StatusUnauthorized,
+				banned: http.StatusForbidden,
+			},
+		},
+		{
+			request: "other_user_finds_contest",
+			as:      user2,
+			want:    http.StatusOK,
+		},
+		{
+			request: "other_user_lists_contest",
+			as:      user2,
+			want:    http.StatusOK,
+		},
+		{
+			request: "admin_creates_official_contest",
+			as:      admin,
+			want:    http.StatusOK,
+			others: cast{
+				none:   http.StatusBadRequest,
+				guest:  http.StatusUnauthorized,
+				user:   http.StatusForbidden,
+				banned: http.StatusForbidden,
+			},
+		},
+		{
+			request: "official_contest_is_latest",
+			as:      user2,
 			want:    http.StatusOK,
 		},
 	})

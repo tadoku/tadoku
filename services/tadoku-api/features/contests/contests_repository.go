@@ -124,6 +124,49 @@ func (r *ContestsRepository) ListOngoingRegistrations(ctx context.Context, userI
 	return result, nil
 }
 
+func (r *ContestsRepository) ListYearlyRegistrations(ctx context.Context, userID uuid.UUID, year int32, includePrivate bool) ([]Registration, error) {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := queries.New(executor).ListYearlyContestRegistrations(ctx, queries.ListYearlyContestRegistrationsParams{
+		UserID:         pgtype.UUID{Bytes: userID, Valid: true},
+		Year:           year,
+		IncludePrivate: includePrivate,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("list yearly contest registrations: %w", err)
+	}
+
+	result := make([]Registration, 0, len(rows))
+	for _, row := range rows {
+		registration := Registration{
+			ID:              uuid.UUID(row.ID.Bytes),
+			ContestID:       uuid.UUID(row.ContestID.Bytes),
+			UserID:          uuid.UUID(row.UserID.Bytes),
+			UserDisplayName: row.UserDisplayName,
+			LanguageCodes:   row.LanguageCodes,
+			Contest: &ContestView{
+				ID:                 uuid.UUID(row.ContestID.Bytes),
+				ContestStart:       row.ContestStart.Time,
+				ContestEnd:         row.ContestEnd.Time,
+				RegistrationEnd:    row.RegistrationEnd.Time,
+				Title:              row.Title,
+				Description:        nullableString(row.Description),
+				Official:           row.Official,
+				Private:            row.Private,
+				AllowedLanguages:   []Language{},
+				AllowedActivities:  make([]Activity, 0, len(row.ActivityTypeIDAllowList)),
+				allowedActivityIDs: row.ActivityTypeIDAllowList,
+			},
+		}
+		result = append(result, registration)
+	}
+
+	return result, nil
+}
+
 func (r *ContestsRepository) DetachContestLogsForLanguages(
 	ctx context.Context,
 	userID uuid.UUID,

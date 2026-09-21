@@ -79,6 +79,19 @@ func (s *Service) ListOngoingRegistrations(ctx context.Context, userID uuid.UUID
 		return nil, err
 	}
 
+	return s.hydrateRegistrations(ctx, registrations)
+}
+
+func (s *Service) ListYearlyRegistrations(ctx context.Context, userID uuid.UUID, year int, includePrivate bool) (*RegistrationList, error) {
+	registrations, err := s.contests.ListYearlyRegistrations(ctx, userID, int32(year), includePrivate)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.hydrateRegistrations(ctx, registrations)
+}
+
+func (s *Service) hydrateRegistrations(ctx context.Context, registrations []Registration) (*RegistrationList, error) {
 	languages, err := s.contests.ListLanguages(ctx)
 	if err != nil {
 		return nil, err

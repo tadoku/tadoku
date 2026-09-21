@@ -663,6 +663,89 @@ func (q *Queries) ListRegistrationLanguages(ctx context.Context, codes []string)
 	return items, nil
 }
 
+const listYearlyContestRegistrations = `-- name: ListYearlyContestRegistrations :many
+select
+  contest_registrations.id,
+  contest_registrations.contest_id,
+  contest_registrations.user_id,
+  contest_registrations.language_codes,
+  users.display_name as user_display_name,
+  contests.activity_type_id_allow_list,
+  contests.registration_end,
+  contests.contest_start,
+  contests.contest_end,
+  contests.private,
+  contests.official,
+  contests.title,
+  contests.description
+from contest_registrations
+inner join contests
+  on contests.id = contest_registrations.contest_id
+inner join users
+  on users.id = contest_registrations.user_id
+where
+  user_id = $1
+  and (contests.private != true or $2::boolean)
+  and extract(year from contests.contest_start) = $3::integer
+  and contest_registrations.deleted_at is null
+`
+
+type ListYearlyContestRegistrationsParams struct {
+	UserID         pgtype.UUID
+	IncludePrivate bool
+	Year           int32
+}
+
+type ListYearlyContestRegistrationsRow struct {
+	ID                      pgtype.UUID
+	ContestID               pgtype.UUID
+	UserID                  pgtype.UUID
+	LanguageCodes           []string
+	UserDisplayName         string
+	ActivityTypeIDAllowList []int32
+	RegistrationEnd         pgtype.Date
+	ContestStart            pgtype.Date
+	ContestEnd              pgtype.Date
+	Private                 bool
+	Official                bool
+	Title                   string
+	Description             pgtype.Text
+}
+
+func (q *Queries) ListYearlyContestRegistrations(ctx context.Context, arg ListYearlyContestRegistrationsParams) ([]ListYearlyContestRegistrationsRow, error) {
+	rows, err := q.db.Query(ctx, listYearlyContestRegistrations, arg.UserID, arg.IncludePrivate, arg.Year)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListYearlyContestRegistrationsRow{}
+	for rows.Next() {
+		var i ListYearlyContestRegistrationsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.ContestID,
+			&i.UserID,
+			&i.LanguageCodes,
+			&i.UserDisplayName,
+			&i.ActivityTypeIDAllowList,
+			&i.RegistrationEnd,
+			&i.ContestStart,
+			&i.ContestEnd,
+			&i.Private,
+			&i.Official,
+			&i.Title,
+			&i.Description,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const upsertContestRegistration = `-- name: UpsertContestRegistration :exec
 insert into contest_registrations (
   id,

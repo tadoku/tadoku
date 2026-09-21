@@ -1,0 +1,7 @@
+POST /immersion/contests/81855ad8-681d-4d86-91e9-1e00167939cb/registration HTTP/1.1
+Host: api.test
+X-Request-Id: yearly-registration-journey
+Content-Type: application/json
+Content-Length: 33
+
+{"language_codes":["jpn","eng"]}

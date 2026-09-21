@@ -259,3 +259,29 @@ values ('refresh_contest_score', sqlc.arg(user_id), sqlc.arg(contest_id));
 -- name: InsertOfficialScoresRefresh :exec
 insert into leaderboard_outbox (event_type, user_id, year)
 values ('refresh_official_scores', sqlc.arg(user_id), sqlc.arg(year));
+
+-- name: ListYearlyContestRegistrations :many
+select
+  contest_registrations.id,
+  contest_registrations.contest_id,
+  contest_registrations.user_id,
+  contest_registrations.language_codes,
+  users.display_name as user_display_name,
+  contests.activity_type_id_allow_list,
+  contests.registration_end,
+  contests.contest_start,
+  contests.contest_end,
+  contests.private,
+  contests.official,
+  contests.title,
+  contests.description
+from contest_registrations
+inner join contests
+  on contests.id = contest_registrations.contest_id
+inner join users
+  on users.id = contest_registrations.user_id
+where
+  user_id = sqlc.arg('user_id')
+  and (contests.private != true or sqlc.arg('include_private')::boolean)
+  and extract(year from contests.contest_start) = sqlc.arg('year')::integer
+  and contest_registrations.deleted_at is null;

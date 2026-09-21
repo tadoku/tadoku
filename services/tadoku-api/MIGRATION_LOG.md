@@ -10,6 +10,7 @@
 - [ ] After every endpoint owned by a legacy service has migrated, require operational acceptance and evidence that no active caller uses the legacy service, then delete it together with its parity subtests and Bazel dependencies.
 - [ ] After the Tadoku API migration is complete, make a final documentation pass and delete all references to this migration.
 - [ ] Add the job step kind to the journey runner together with the first migrated worker. Workers expose one synchronous pass as a method returning an error; production `Run` loops over it and tests never start the loop.
+- [ ] Maintain the Keto-backed contest-create permission through a background reconciliation job.
 - [ ] Restructure the Tadoku API documentation for progressive disclosure for agents: a short entry point with focused documents behind it instead of one long README.
 - [ ] Rename the standard test identity from `Reader One` to `User One` across Kratos seeds, tests and HTTP goldens; regenerate affected signed JWT fixtures and update the public JWKS together.
 - [ ] Rename `moderation_audit_log` to an audit-owned table in a standalone migration after the legacy authorization service is retired.

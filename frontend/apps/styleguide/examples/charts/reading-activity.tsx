@@ -2,7 +2,7 @@ import { chartColors } from 'ui'
 import { Chart as ChartJS, registerables } from 'chart.js'
 import { Chart } from 'react-chartjs-2'
 import 'chartjs-adapter-luxon'
-import { faker } from '@faker-js/faker'
+import { faker } from '../../lib/faker'
 
 ChartJS.register(...registerables)
 
@@ -12,10 +12,10 @@ export default function ReadingActivityChart() {
   )
 
   const comicData = labels.map(() =>
-    faker.datatype.number({ min: 0, max: 1000 }),
+    faker.number.int({ min: 0, max: 1000 }),
   )
   const bookData = labels.map(() =>
-    faker.datatype.number({ min: 0, max: 1000 }),
+    faker.number.int({ min: 0, max: 1000 }),
   )
   const cumulativeScore = comicData
     .map((comic, i) => comic + bookData[i])

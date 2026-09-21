@@ -34,8 +34,18 @@ type implementation struct {
 	handler http.Handler
 	skip    string
 
-	resetKratos       bool
-	deterministicUUID bool
+	resetKratos bool
+}
+
+type repeatingByteReader byte
+
+func (r repeatingByteReader) Read(buffer []byte) (int, error) {
+	// Native observability and legacy handlers consume different UUID counts.
+	// Repeating entropy keeps business IDs equal without coupling draw order.
+	for i := range buffer {
+		buffer[i] = byte(r)
+	}
+	return len(buffer), nil
 }
 
 func atFixtureInstant(fn func()) {
@@ -59,10 +69,8 @@ func runCase(t *testing.T, s *suite, name string, want int, implementations ...i
 			s.reset(t, dir)
 			record := *updateGoldens && impl.name == goldenRecorder
 			atFixtureInstant(func() {
-				if impl.deterministicUUID {
-					uuid.SetRand(bytes.NewReader(bytes.Repeat([]byte{0x11}, 64)))
-					defer uuid.SetRand(nil)
-				}
+				uuid.SetRand(repeatingByteReader(0x11))
+				defer uuid.SetRand(nil)
 				checkHTTPGolden(t, impl.handler, dir, want, record)
 			})
 			if s.proxied.Load() != 0 {

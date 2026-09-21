@@ -10,7 +10,9 @@ func TestCreateContest(t *testing.T) {
 		description []string
 		want        int
 	}{
-		{description: []string{"member", "uses", "stored", "display", "and", "keeps", "duplicate", "allow", "lists"}, want: http.StatusOK},
+		// The signed name is older than Stored Reader. The response must use that
+		// newer local name while preserving duplicate language and activity entries.
+		{description: []string{"member", "with", "stale", "signed", "name", "keeps", "newer", "stored", "name", "and", "duplicate", "allow", "lists"}, want: http.StatusOK},
 		{description: []string{"admin", "creates", "official", "past", "contest"}, want: http.StatusOK},
 		{description: []string{"member", "creates", "same", "day", "contest"}, want: http.StatusOK},
 		{description: []string{"malformed", "json"}, want: http.StatusBadRequest},
@@ -34,8 +36,8 @@ func TestCreateContest(t *testing.T) {
 		name := APITestName("CreateContest", test.want, test.description...)
 		t.Run(name, func(t *testing.T) {
 			runCase(t, api, name, test.want,
-				implementation{name: "tadoku-api", handler: api.handler, deterministicUUID: true},
-				implementation{name: "immersion-api", handler: legacyImmersion.handler, deterministicUUID: true},
+				implementation{name: "tadoku-api", handler: api.handler},
+				implementation{name: "immersion-api", handler: legacyImmersion.handler},
 			)
 		})
 	}

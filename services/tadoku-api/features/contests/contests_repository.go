@@ -356,6 +356,24 @@ func (r *ContestsRepository) FindLatestOfficialContest(ctx context.Context) (*Co
 	return &result, nil
 }
 
+func (r *ContestsRepository) FetchContestSummary(ctx context.Context, contestID uuid.UUID) (*ContestSummary, error) {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return nil, err
+	}
+
+	row, err := queries.New(executor).FetchContestSummary(ctx, pgtype.UUID{Bytes: contestID, Valid: true})
+	if err != nil {
+		return nil, fmt.Errorf("fetch contest summary: %w", err)
+	}
+
+	return &ContestSummary{
+		ParticipantCount: int(row.ParticipantCount),
+		LanguageCount:    int(row.LanguageCount),
+		TotalScore:       row.TotalScore,
+	}, nil
+}
+
 func (r *ContestsRepository) ListLanguagesForContest(ctx context.Context, contestID uuid.UUID) ([]Language, error) {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {

@@ -1,0 +1,6 @@
+>>> GET /immersion/contests/afffffff-ffff-4fff-8fff-ffffffffffff/summary
+HTTP/1.1 200 OK
+Content-Length: 59
+Content-Type: application/json; charset=UTF-8
+
+{"language_count":0,"participant_count":0,"total_score":0}

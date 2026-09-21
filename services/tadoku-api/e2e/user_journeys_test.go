@@ -225,6 +225,11 @@ func TestContestRegistrationDetachJourney(t *testing.T) {
 			want:    http.StatusOK,
 		},
 		{
+			request: "summary_before_detach",
+			as:      guest,
+			want:    http.StatusOK,
+		},
+		{
 			request: "remove_language",
 			as:      user,
 			want:    http.StatusOK,
@@ -233,6 +238,11 @@ func TestContestRegistrationDetachJourney(t *testing.T) {
 		{
 			request: "registration_updated",
 			as:      user,
+			want:    http.StatusOK,
+		},
+		{
+			request: "summary_after_detach",
+			as:      guest,
 			want:    http.StatusOK,
 		},
 		{verify: "logs_detached_and_refreshes_enqueued"},

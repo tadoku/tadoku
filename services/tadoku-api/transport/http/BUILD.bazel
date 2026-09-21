@@ -20,6 +20,7 @@ go_library(
         "contest_find.go",
         "contest_list.go",
         "contest_registration.go",
+        "contest_summary.go",
         "errors.go",
         "language_create.go",
         "language_update.go",

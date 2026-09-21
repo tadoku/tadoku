@@ -1286,7 +1286,7 @@ paths:
           description: not found
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /contests/{id}/summary
       x-legacy-operation-id: contestFetchSummary
   "/immersion/contests/{id}/logs":

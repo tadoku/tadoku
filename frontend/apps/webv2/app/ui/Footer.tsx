@@ -104,9 +104,6 @@ export default function Footer() {
               <li>
                 <Link href={routes.blogPage('faq')}>FAQ</Link>
               </li>
-              <li>
-                <Link href={routes.pageCounter()}>Page counter</Link>
-              </li>
             </ul>
           </div>
           <div className="flex flex-col items-start">

@@ -82,7 +82,7 @@ type CreateAnnouncementParameters struct {
 }
 
 func (p CreateAnnouncementParameters) Validate() error {
-	return validateAnnouncement(p)
+	return validateAnnouncement(announcementParameters(p))
 }
 
 type UpdateAnnouncementParameters struct {
@@ -97,10 +97,21 @@ type UpdateAnnouncementParameters struct {
 }
 
 func (p UpdateAnnouncementParameters) Validate() error {
-	return validateAnnouncement(p)
+	return validateAnnouncement(announcementParameters(p))
 }
 
-func validateAnnouncement[T CreateAnnouncementParameters | UpdateAnnouncementParameters](p T) error {
+type announcementParameters struct {
+	ID        uuid.UUID
+	Namespace string
+	Title     string
+	Content   string
+	Style     string
+	Href      *string
+	StartsAt  time.Time
+	EndsAt    time.Time
+}
+
+func validateAnnouncement(p announcementParameters) error {
 	if p.ID == uuid.Nil {
 		return fmt.Errorf("%w: id is nil", ErrInvalidAnnouncement)
 	}

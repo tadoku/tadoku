@@ -19,7 +19,7 @@ require (
 	github.com/jackc/pgx/v5 v5.11.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/labstack/echo/v4 v4.15.1
-	github.com/lib/pq v1.10.9
+	github.com/lib/pq v1.12.3
 	github.com/mattn/go-sqlite3 v1.14.52
 	github.com/oapi-codegen/nullable v1.1.0
 	github.com/oapi-codegen/runtime v1.6.0

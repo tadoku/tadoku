@@ -1103,9 +1103,6 @@ type ProfileUsersListParams struct {
 	Query *string `form:"query,omitempty" json:"query,omitempty"`
 }
 
-// AuthzProxyProxyAdminCheckJSONRequestBody defines body for AuthzProxyProxyAdminCheck for application/json ContentType.
-type AuthzProxyProxyAdminCheckJSONRequestBody = AuthzProxyProxyAdminCheckRequest
-
 // AuthzPermissionCheckJSONRequestBody defines body for AuthzPermissionCheck for application/json ContentType.
 type AuthzPermissionCheckJSONRequestBody = AuthzPermissionCheckRequest
 
@@ -1141,9 +1138,6 @@ type ServerInterface interface {
 	// AuthzRoleGet Fetches the role of the current user
 	// (GET /authz/current-user/role)
 	AuthzRoleGet(w http.ResponseWriter, r *http.Request)
-	// AuthzProxyProxyAdminCheck Authorizes a Kratos subject as a Tadoku administrator
-	// (POST /authz/internal/v1/proxy/admin-check)
-	AuthzProxyProxyAdminCheck(w http.ResponseWriter, r *http.Request)
 	// AuthzPermissionCheck Checks if the current user has a specific permission
 	// (POST /authz/permission/check)
 	AuthzPermissionCheck(w http.ResponseWriter, r *http.Request)
@@ -1238,20 +1232,6 @@ func (siw *ServerInterfaceWrapper) AuthzRoleGet(w http.ResponseWriter, r *http.R
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.AuthzRoleGet(w, r)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// AuthzProxyProxyAdminCheck operation middleware
-func (siw *ServerInterfaceWrapper) AuthzProxyProxyAdminCheck(w http.ResponseWriter, r *http.Request) {
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.AuthzProxyProxyAdminCheck(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -2329,7 +2309,6 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/immersion/languages", wrapper.ImmersionLanguageCreate)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/immersion/languages/{code}", wrapper.ImmersionLanguageUpdate)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/profile/users", wrapper.ProfileUsersList)
-	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/authz/internal/v1/proxy/admin-check", wrapper.AuthzProxyProxyAdminCheck)
 
 	return m
 }
@@ -2369,54 +2348,6 @@ type AuthzRoleGet503Response struct {
 }
 
 func (response AuthzRoleGet503Response) VisitAuthzRoleGetResponse(w http.ResponseWriter) error {
-	w.WriteHeader(503)
-	return nil
-}
-
-type AuthzProxyProxyAdminCheckRequestObject struct {
-	Body *AuthzProxyProxyAdminCheckJSONRequestBody
-}
-
-type AuthzProxyProxyAdminCheckResponseObject interface {
-	VisitAuthzProxyProxyAdminCheckResponse(w http.ResponseWriter) error
-}
-
-type AuthzProxyProxyAdminCheck200Response struct {
-}
-
-func (response AuthzProxyProxyAdminCheck200Response) VisitAuthzProxyProxyAdminCheckResponse(w http.ResponseWriter) error {
-	w.WriteHeader(200)
-	return nil
-}
-
-type AuthzProxyProxyAdminCheck400Response struct {
-}
-
-func (response AuthzProxyProxyAdminCheck400Response) VisitAuthzProxyProxyAdminCheckResponse(w http.ResponseWriter) error {
-	w.WriteHeader(400)
-	return nil
-}
-
-type AuthzProxyProxyAdminCheck401Response struct {
-}
-
-func (response AuthzProxyProxyAdminCheck401Response) VisitAuthzProxyProxyAdminCheckResponse(w http.ResponseWriter) error {
-	w.WriteHeader(401)
-	return nil
-}
-
-type AuthzProxyProxyAdminCheck403Response struct {
-}
-
-func (response AuthzProxyProxyAdminCheck403Response) VisitAuthzProxyProxyAdminCheckResponse(w http.ResponseWriter) error {
-	w.WriteHeader(403)
-	return nil
-}
-
-type AuthzProxyProxyAdminCheck503Response struct {
-}
-
-func (response AuthzProxyProxyAdminCheck503Response) VisitAuthzProxyProxyAdminCheckResponse(w http.ResponseWriter) error {
 	w.WriteHeader(503)
 	return nil
 }
@@ -3411,9 +3342,6 @@ type StrictServerInterface interface {
 	// AuthzRoleGet Fetches the role of the current user
 	// (GET /authz/current-user/role)
 	AuthzRoleGet(ctx context.Context, request AuthzRoleGetRequestObject) (AuthzRoleGetResponseObject, error)
-	// AuthzProxyProxyAdminCheck Authorizes a Kratos subject as a Tadoku administrator
-	// (POST /authz/internal/v1/proxy/admin-check)
-	AuthzProxyProxyAdminCheck(ctx context.Context, request AuthzProxyProxyAdminCheckRequestObject) (AuthzProxyProxyAdminCheckResponseObject, error)
 	// AuthzPermissionCheck Checks if the current user has a specific permission
 	// (POST /authz/permission/check)
 	AuthzPermissionCheck(ctx context.Context, request AuthzPermissionCheckRequestObject) (AuthzPermissionCheckResponseObject, error)
@@ -3550,37 +3478,6 @@ func (sh *strictHandler) AuthzRoleGet(w http.ResponseWriter, r *http.Request) {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(AuthzRoleGetResponseObject); ok {
 		if err := validResponse.VisitAuthzRoleGetResponse(w); err != nil {
-			sh.options.ResponseErrorHandlerFunc(w, r, err)
-		}
-	} else if response != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
-	}
-}
-
-// AuthzProxyProxyAdminCheck operation middleware
-func (sh *strictHandler) AuthzProxyProxyAdminCheck(w http.ResponseWriter, r *http.Request) {
-	var request AuthzProxyProxyAdminCheckRequestObject
-
-	var body AuthzProxyProxyAdminCheckJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
-		return
-	}
-	request.Body = &body
-
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.AuthzProxyProxyAdminCheck(ctx, request.(AuthzProxyProxyAdminCheckRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "AuthzProxyProxyAdminCheck")
-	}
-
-	response, err := handler(r.Context(), w, r, request)
-
-	if err != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(AuthzProxyProxyAdminCheckResponseObject); ok {
-		if err := validResponse.VisitAuthzProxyProxyAdminCheckResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

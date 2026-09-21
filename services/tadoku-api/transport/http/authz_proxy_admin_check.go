@@ -4,13 +4,13 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
+	callbackopenapi "github.com/tadoku/tadoku/services/tadoku-api/generated/openapi/callback"
 )
 
 func (s *server) AuthzProxyProxyAdminCheck(
 	ctx context.Context,
-	request openapi.AuthzProxyProxyAdminCheckRequestObject,
-) (openapi.AuthzProxyProxyAdminCheckResponseObject, error) {
+	request callbackopenapi.AuthzProxyProxyAdminCheckRequestObject,
+) (callbackopenapi.AuthzProxyProxyAdminCheckResponseObject, error) {
 	subject := uuid.Nil
 	if request.Body != nil {
 		subject = request.Body.Subject
@@ -22,8 +22,8 @@ func (s *server) AuthzProxyProxyAdminCheck(
 		return nil, err
 	}
 	if !allowed {
-		return openapi.AuthzProxyProxyAdminCheck403Response{}, nil
+		return callbackopenapi.AuthzProxyProxyAdminCheck403Response{}, nil
 	}
 
-	return openapi.AuthzProxyProxyAdminCheck200Response{}, nil
+	return callbackopenapi.AuthzProxyProxyAdminCheck200Response{}, nil
 }

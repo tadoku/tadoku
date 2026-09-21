@@ -1,4 +1,4 @@
-load("@rules_go//go:def.bzl", "go_library", "go_test")
+load("@rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "app",
@@ -32,15 +32,5 @@ go_library(
         "//services/tadoku-api/internal/permissions",
         "@com_github_google_uuid//:uuid",
         "@com_github_jackc_pgx_v5//pgxpool",
-    ],
-)
-
-go_test(
-    name = "app_test",
-    srcs = ["authz_test.go"],
-    embed = [":app"],
-    deps = [
-        "//services/tadoku-api/internal/errx",
-        "@com_github_google_uuid//:uuid",
     ],
 )

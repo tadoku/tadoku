@@ -43,6 +43,7 @@ go_library(
     deps = [
         "//services/tadoku-api/app",
         "//services/tadoku-api/generated/openapi",
+        "//services/tadoku-api/generated/openapi/callback",
         "//services/tadoku-api/internal/callbackauth",
         "//services/tadoku-api/internal/errx",
         "//services/tadoku-api/internal/identity",

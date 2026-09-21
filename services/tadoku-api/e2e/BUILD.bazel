@@ -98,6 +98,7 @@ go_test(
         "//services/tadoku-api/features/posts",
         "//services/tadoku-api/features/profile",
         "//services/tadoku-api/generated/openapi",
+        "//services/tadoku-api/generated/openapi/callback",
         "//services/tadoku-api/internal/identity",
         "//services/tadoku-api/internal/permissions",
         "//services/tadoku-api/internal/testketo",

@@ -11,36 +11,50 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
 	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
+	callbackopenapi "github.com/tadoku/tadoku/services/tadoku-api/generated/openapi/callback"
 )
 
 // Router keeps application routes behind shared middleware while allowing this
 // package to attach probes and temporary legacy proxies outside it.
 type Router struct {
-	rootHandler                 stdhttp.Handler
-	rootMux                     *stdhttp.ServeMux
-	applicationMux              *stdhttp.ServeMux
-	protectedApplicationHandler stdhttp.Handler
-	callbackApplicationHandler  stdhttp.Handler
-	requestDuration             *prometheus.HistogramVec
+	rootHandler     stdhttp.Handler
+	rootMux         *stdhttp.ServeMux
+	protectedRoutes *routeRegistrar
+	requestDuration *prometheus.HistogramVec
 }
 
-const callbackAdminCheckPattern = "POST /authz/internal/v1/proxy/admin-check"
+type routeRegistrar struct {
+	rootMux *stdhttp.ServeMux
+	mux     *stdhttp.ServeMux
+	handler stdhttp.Handler
+}
+
+func (r *routeRegistrar) Handle(pattern string, handler stdhttp.Handler) {
+	r.mux.Handle(pattern, handler)
+	r.rootMux.Handle(pattern, r.handler)
+}
+
+func (r *routeRegistrar) HandleFunc(pattern string, handler func(stdhttp.ResponseWriter, *stdhttp.Request)) {
+	r.Handle(pattern, stdhttp.HandlerFunc(handler))
+}
+
+func (r *routeRegistrar) ServeHTTP(w stdhttp.ResponseWriter, request *stdhttp.Request) {
+	r.mux.ServeHTTP(w, request)
+}
 
 type server struct {
 	application *app.Application
 	logger      *slog.Logger
 }
 
-var _ openapi.StrictServerInterface = (*server)(nil)
+var (
+	_ openapi.StrictServerInterface         = (*server)(nil)
+	_ callbackopenapi.StrictServerInterface = (*server)(nil)
+)
 
 // Handle registers an application route behind the shared middleware.
 func (r *Router) Handle(pattern string, handler stdhttp.Handler) {
-	r.applicationMux.Handle(pattern, handler)
-	applicationHandler := r.protectedApplicationHandler
-	if pattern == callbackAdminCheckPattern {
-		applicationHandler = r.callbackApplicationHandler
-	}
-	r.rootMux.Handle(pattern, applicationHandler)
+	r.protectedRoutes.Handle(pattern, handler)
 }
 
 // HandleFunc registers an application route behind the shared middleware.
@@ -91,16 +105,19 @@ func NewHandler(
 	}
 	router := &Router{
 		rootMux:         stdhttp.NewServeMux(),
-		applicationMux:  stdhttp.NewServeMux(),
 		requestDuration: requestDuration,
 	}
 	router.rootHandler = router.rootMux
 
-	applicationHandler := stdhttp.Handler(router.applicationMux)
+	protectedRoutes := &routeRegistrar{
+		rootMux: router.rootMux,
+		mux:     stdhttp.NewServeMux(),
+	}
+	applicationHandler := stdhttp.Handler(protectedRoutes)
 	applicationHandler = rejectBanned(applicationHandler)
 	applicationHandler = authenticate(applicationHandler)
 	applicationHandler = withPanicRecovery(logger, applicationHandler)
-	router.protectedApplicationHandler = observe(
+	protectedRoutes.handler = observe(
 		nativeRouteLabel,
 		"",
 		"native",
@@ -109,9 +126,15 @@ func NewHandler(
 		requestDuration,
 		logger,
 	)
-	callbackHandler := authenticateCallback(stdhttp.Handler(router.applicationMux))
+	router.protectedRoutes = protectedRoutes
+
+	callbackRoutes := &routeRegistrar{
+		rootMux: router.rootMux,
+		mux:     stdhttp.NewServeMux(),
+	}
+	callbackHandler := authenticateCallback(stdhttp.Handler(callbackRoutes))
 	callbackHandler = withPanicRecovery(logger, callbackHandler)
-	router.callbackApplicationHandler = observe(
+	callbackRoutes.handler = observe(
 		nativeRouteLabel,
 		"",
 		"native",
@@ -124,11 +147,13 @@ func NewHandler(
 		_, _ = w.Write([]byte("ok"))
 	})
 	router.rootMux.Handle("GET /readyz", withRequestTimeout(timeout, readinessHandler(ready)))
+
+	apiServer := &server{
+		application: application,
+		logger:      logger,
+	}
 	strictServer := openapi.NewStrictHandlerWithOptions(
-		&server{
-			application: application,
-			logger:      logger,
-		},
+		apiServer,
 		nil,
 		openapi.StrictHTTPServerOptions{
 			RequestErrorHandlerFunc: func(w stdhttp.ResponseWriter, _ *stdhttp.Request, _ error) {
@@ -140,8 +165,29 @@ func NewHandler(
 		},
 	)
 	openapi.HandlerWithOptions(strictServer, openapi.StdHTTPServerOptions{
-		BaseRouter: router,
+		BaseRouter: protectedRoutes,
 		Middlewares: []openapi.MiddlewareFunc{
+			withJSONCharsetCompatibility,
+		},
+		ErrorHandlerFunc: func(w stdhttp.ResponseWriter, _ *stdhttp.Request, err error) {
+			writeJSON(w, stdhttp.StatusBadRequest, map[string]string{"message": err.Error()})
+		},
+	})
+	callbackStrictServer := callbackopenapi.NewStrictHandlerWithOptions(
+		apiServer,
+		nil,
+		callbackopenapi.StrictHTTPServerOptions{
+			RequestErrorHandlerFunc: func(w stdhttp.ResponseWriter, _ *stdhttp.Request, _ error) {
+				w.WriteHeader(stdhttp.StatusBadRequest)
+			},
+			ResponseErrorHandlerFunc: func(w stdhttp.ResponseWriter, request *stdhttp.Request, err error) {
+				w.WriteHeader(errorStatus(request.Context(), err))
+			},
+		},
+	)
+	callbackopenapi.HandlerWithOptions(callbackStrictServer, callbackopenapi.StdHTTPServerOptions{
+		BaseRouter: callbackRoutes,
+		Middlewares: []callbackopenapi.MiddlewareFunc{
 			withJSONCharsetCompatibility,
 		},
 		ErrorHandlerFunc: func(w stdhttp.ResponseWriter, _ *stdhttp.Request, err error) {

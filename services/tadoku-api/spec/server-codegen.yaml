@@ -5,7 +5,6 @@ generate:
   strict-server: true
 output-options:
   include-operation-ids:
-    - AuthzProxyProxyAdminCheck
     - AuthzRoleGet
     - AuthzRoleUpdate
     - AuthzPermissionCheck

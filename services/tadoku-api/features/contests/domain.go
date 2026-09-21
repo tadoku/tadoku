@@ -96,8 +96,11 @@ type Registration struct {
 	ContestID       uuid.UUID
 	UserID          uuid.UUID
 	UserDisplayName string
+	LanguageCodes   []string
 	Languages       []Language
 	Contest         *ContestView
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
 }
 
 type RegistrationList struct {
@@ -109,23 +112,7 @@ type RegistrationList struct {
 type RegistrationUpsertParameters struct {
 	ContestID     uuid.UUID
 	LanguageCodes []string
-
-	id               uuid.UUID
-	userID           uuid.UUID
-	officialContest  bool
-	year             int16
-	removedLanguages []string
-	createdAt        time.Time
-	updatedAt        time.Time
 }
-
-func (p RegistrationUpsertParameters) ID() uuid.UUID              { return p.id }
-func (p RegistrationUpsertParameters) UserID() uuid.UUID          { return p.userID }
-func (p RegistrationUpsertParameters) OfficialContest() bool      { return p.officialContest }
-func (p RegistrationUpsertParameters) Year() int16                { return p.year }
-func (p RegistrationUpsertParameters) RemovedLanguages() []string { return p.removedLanguages }
-func (p RegistrationUpsertParameters) CreatedAt() time.Time       { return p.createdAt }
-func (p RegistrationUpsertParameters) UpdatedAt() time.Time       { return p.updatedAt }
 
 type CreateContestParameters struct {
 	ContestStart            time.Time

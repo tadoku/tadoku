@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"errors"
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/contests"
@@ -141,14 +142,42 @@ func (a *Application) UpsertContestRegistration(ctx context.Context, parameters 
 	if err != nil {
 		return err
 	}
-	prepared, err := a.contests.PrepareRegistrationUpsert(ctx, parameters, userID, now)
+	registrationID := uuid.New()
+	contest, err := a.contests.ValidateRegistrationUpsert(ctx, parameters)
 	if err != nil {
 		return err
+	}
+	existing, err := a.contests.FindRegistration(ctx, userID, parameters.ContestID)
+	if errors.Is(err, contests.ErrRegistrationNotFound) {
+		existing = nil
+	} else if err != nil {
+		return err
+	}
+	removedLanguages := []string{}
+	if existing != nil {
+		registrationID = existing.ID
+		selectedLanguages := make(map[string]struct{}, len(parameters.LanguageCodes))
+		for _, code := range parameters.LanguageCodes {
+			selectedLanguages[code] = struct{}{}
+		}
+		for _, language := range existing.Languages {
+			if _, selected := selectedLanguages[language.Code]; !selected {
+				removedLanguages = append(removedLanguages, language.Code)
+			}
+		}
+	}
+	registration := contests.Registration{
+		ID:            registrationID,
+		ContestID:     parameters.ContestID,
+		UserID:        userID,
+		LanguageCodes: parameters.LanguageCodes,
+		CreatedAt:     now,
+		UpdatedAt:     now,
 	}
 	return postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) error {
 		if err := a.profile.LockUser(ctx, userID); err != nil {
 			return err
 		}
-		return a.contests.ApplyRegistration(ctx, prepared)
+		return a.contests.ApplyRegistration(ctx, registration, removedLanguages, *contest)
 	})
 }

@@ -180,6 +180,8 @@ select
   contest_registrations.contest_id,
   contest_registrations.user_id,
   contest_registrations.language_codes,
+  contest_registrations.created_at,
+  contest_registrations.updated_at,
   users.display_name as user_display_name
 from contest_registrations
 inner join contests on contests.id = contest_registrations.contest_id

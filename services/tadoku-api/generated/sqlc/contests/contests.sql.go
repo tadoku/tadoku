@@ -201,6 +201,8 @@ select
   contest_registrations.contest_id,
   contest_registrations.user_id,
   contest_registrations.language_codes,
+  contest_registrations.created_at,
+  contest_registrations.updated_at,
   users.display_name as user_display_name
 from contest_registrations
 inner join contests on contests.id = contest_registrations.contest_id
@@ -220,6 +222,8 @@ type FindContestRegistrationForUserRow struct {
 	ContestID       pgtype.UUID
 	UserID          pgtype.UUID
 	LanguageCodes   []string
+	CreatedAt       pgtype.Timestamp
+	UpdatedAt       pgtype.Timestamp
 	UserDisplayName string
 }
 
@@ -231,6 +235,8 @@ func (q *Queries) FindContestRegistrationForUser(ctx context.Context, arg FindCo
 		&i.ContestID,
 		&i.UserID,
 		&i.LanguageCodes,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 		&i.UserDisplayName,
 	)
 	return i, err

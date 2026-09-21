@@ -342,15 +342,26 @@ func TestContestsRepositoryRegistrationPersistenceAndTransaction(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got := []string{registration.Languages[0].Name, registration.Languages[1].Name}; !reflect.DeepEqual(got, []string{"English", "Japanese"}) {
-		t.Errorf("registration language order=%v", got)
+	if !reflect.DeepEqual(registration.LanguageCodes, []string{"jpn", "eng"}) {
+		t.Errorf("registration language codes=%v", registration.LanguageCodes)
+	}
+	createdAt := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	if !registration.CreatedAt.Equal(createdAt) || !registration.UpdatedAt.Equal(createdAt) {
+		t.Errorf("registration timestamps=%s/%s, want %s", registration.CreatedAt, registration.UpdatedAt, createdAt)
+	}
+	languages, err := repository.ListRegistrationLanguages(t.Context(), registration.LanguageCodes)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(languages, []Language{{Code: "eng", Name: "English"}, {Code: "jpn", Name: "Japanese"}}) {
+		t.Errorf("registration languages=%v", languages)
 	}
 
 	ongoing, err := repository.ListOngoingRegistrations(t.Context(), userID, time.Date(2026, 9, 12, 23, 59, 59, 0, time.UTC))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(ongoing) != 1 || !reflect.DeepEqual(ongoing[0].Languages, []Language{{Code: "jpn", Name: "Japanese"}, {Code: "eng", Name: "English"}}) ||
+	if len(ongoing) != 1 || !reflect.DeepEqual(ongoing[0].LanguageCodes, []string{"jpn", "eng"}) ||
 		!reflect.DeepEqual(ongoing[0].Contest.allowedActivityIDs, []int32{2, 1}) {
 		t.Errorf("ongoing registration=%+v", ongoing)
 	}
@@ -363,29 +374,28 @@ func TestContestsRepositoryRegistrationPersistenceAndTransaction(t *testing.T) {
 	}
 
 	now := time.Date(2026, 9, 12, 12, 0, 0, 0, time.UTC)
-	parameters := RegistrationUpsertParameters{
-		ContestID:        contestID,
-		LanguageCodes:    []string{"jpn"},
-		id:               registration.ID,
-		userID:           userID,
-		officialContest:  true,
-		year:             2026,
-		removedLanguages: []string{"eng"},
-		createdAt:        now,
-		updatedAt:        now,
+	updatedRegistration := *registration
+	updatedRegistration.LanguageCodes = []string{"jpn"}
+	updatedRegistration.UpdatedAt = now
+	removedLanguages := []string{"eng"}
+	insertRefreshes := func(ctx context.Context) error {
+		if err := repository.InsertContestScoreRefresh(ctx, userID, contestID); err != nil {
+			return err
+		}
+		return repository.InsertOfficialScoresRefresh(ctx, userID, 2026)
 	}
 	rollbackErr := errors.New("force registration rollback")
 	err = postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
-		if err := repository.DetachContestLogsForLanguages(ctx, parameters); err != nil {
+		if err := repository.DetachContestLogsForLanguages(ctx, userID, contestID, removedLanguages); err != nil {
 			return err
 		}
-		if err := repository.InsertRegistrationLeaderboardOutbox(ctx, parameters); err != nil {
+		if err := insertRefreshes(ctx); err != nil {
 			return err
 		}
-		if err := repository.UpsertRegistration(ctx, parameters); err != nil {
+		if err := repository.UpsertRegistration(ctx, updatedRegistration); err != nil {
 			return err
 		}
-		if err := repository.InsertRegistrationLeaderboardOutbox(ctx, parameters); err != nil {
+		if err := insertRefreshes(ctx); err != nil {
 			return err
 		}
 		return rollbackErr
@@ -407,21 +417,21 @@ func TestContestsRepositoryRegistrationPersistenceAndTransaction(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !reflect.DeepEqual(registration.Languages, []Language{{Code: "eng", Name: "English"}, {Code: "jpn", Name: "Japanese"}}) {
-		t.Errorf("rolled-back languages=%+v", registration.Languages)
+	if !reflect.DeepEqual(registration.LanguageCodes, []string{"jpn", "eng"}) {
+		t.Errorf("rolled-back language codes=%+v", registration.LanguageCodes)
 	}
 
 	err = postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
-		if err := repository.DetachContestLogsForLanguages(ctx, parameters); err != nil {
+		if err := repository.DetachContestLogsForLanguages(ctx, userID, contestID, removedLanguages); err != nil {
 			return err
 		}
-		if err := repository.InsertRegistrationLeaderboardOutbox(ctx, parameters); err != nil {
+		if err := insertRefreshes(ctx); err != nil {
 			return err
 		}
-		if err := repository.UpsertRegistration(ctx, parameters); err != nil {
+		if err := repository.UpsertRegistration(ctx, updatedRegistration); err != nil {
 			return err
 		}
-		return repository.InsertRegistrationLeaderboardOutbox(ctx, parameters)
+		return insertRefreshes(ctx)
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -439,7 +449,7 @@ func TestContestsRepositoryRegistrationPersistenceAndTransaction(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !reflect.DeepEqual(registration.Languages, []Language{{Code: "jpn", Name: "Japanese"}}) {
-		t.Errorf("updated languages=%+v", registration.Languages)
+	if !reflect.DeepEqual(registration.LanguageCodes, []string{"jpn"}) {
+		t.Errorf("updated language codes=%+v", registration.LanguageCodes)
 	}
 }

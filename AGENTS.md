@@ -102,6 +102,8 @@ CI runs the same script on every pull request and fails if code generation chang
 
 **Use "Repository" for persistent source-of-truth data, "Store" for everything else** — `Repository` interfaces access the primary database (Postgres) where authoritative data lives. `Store` interfaces access auxiliary storage (e.g. Valkey/Redis) for caches, derived data, pub/sub, coordination state, or any non-authoritative data. Implementations live under `storage/postgres/` and `storage/valkey/` respectively.
 
+**Keep each repository method to one SQL statement.** A coherent join or CTE still counts as one statement and is appropriate when the data needs one database snapshot. Compose independent repository reads and writes in the feature service or application layer, using an application-owned transaction when the operation must commit atomically.
+
 **Never call `time.Now()` directly** — always inject `commondomain.Clock` and use `clock.Now()`. This applies to domain services, repository methods, and background workers. The clock is created in `main.go` and threaded through constructors. This makes time-dependent code testable via `mockClock`.
 
 For new native `tadoku-api` code, use `internal/timex.Now()` for business time instead of an injected clock. Its implementation and wall-clock tests may read `time.Now()` directly; real timers and deadlines remain independent. Scope `timex.TheWorld` inside tests that need controlled business time, never around the whole suite in `TestMain`. A test may use separate, non-nested scopes for different times. Tests using `timex.TheWorld`, including their parent tests, must not use `t.Parallel`. Leave legacy clock consumers unchanged until their slice is migrated.

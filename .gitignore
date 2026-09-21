@@ -29,3 +29,7 @@ tilt_modules/
 
 node_modules/
 .claude
+
+# Environment-specific dev-cli settings and rendered manifests.
+.dev/config.json
+.dev/local/

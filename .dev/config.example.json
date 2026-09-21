@@ -1,0 +1,65 @@
+{
+  "kubeContext": "development-context",
+  "namespace": "tadoku-dev-cli",
+  "namespaces": [
+    "tadoku-dev-cli",
+    "default",
+    "tdk-tadoku-api"
+  ],
+  "registry": "registry.example.invalid/tadoku-dev-cli",
+  "ingressHost": "pilot.tadoku.example.invalid",
+  "ingressClass": "nginx",
+  "gatewayName": "existing-dev-gateway",
+  "gatewayNamespace": "envoy-gateway-system",
+  "internalGateway": "http://dev-cli-gateway.tadoku-dev-cli.svc.cluster.local",
+  "ttl": "8h",
+  "bazelArgs": [
+    "--platforms=@rules_go//go/toolchain:linux_amd64",
+    "--@rules_go//go/config:pure"
+  ],
+  "dependencies": [
+    {
+      "name": "postgres",
+      "namespace": "tdk-tadoku-api",
+      "manifest": ".dev/postgres.json",
+      "retention": "retain",
+      "readiness": [
+        {
+          "resource": "postgresql",
+          "name": "tadoku-cli-${DEV_ROUTE}",
+          "jsonPath": ".status.PostgresClusterStatus",
+          "value": "Running",
+          "timeout": "300s"
+        }
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "name": "migrate",
+      "namespace": "tdk-tadoku-api",
+      "manifest": ".dev/migrate.json",
+      "target": "tdk-tadoku-api/tadoku-cli-${DEV_ROUTE}",
+      "dependencies": [
+        "postgres"
+      ],
+      "timeout": "5m",
+      "imageName": "migrate",
+      "pushTarget": "//services/tadoku-api/migrations:dev_push",
+      "container": "migrate"
+    },
+    {
+      "name": "seed",
+      "namespace": "tdk-tadoku-api",
+      "manifest": ".dev/seed.json",
+      "target": "tdk-tadoku-api/tadoku-cli-${DEV_ROUTE}",
+      "dependencies": [
+        "postgres"
+      ],
+      "timeout": "5m",
+      "imageName": "seed",
+      "pushTarget": "//.dev:seed_push",
+      "container": "seed"
+    }
+  ]
+}

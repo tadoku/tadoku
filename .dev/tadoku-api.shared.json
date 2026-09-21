@@ -1,0 +1,121 @@
+{
+  "spec": {
+    "automountServiceAccountToken": false,
+    "containers": [
+      {
+        "name": "tadoku-api",
+        "env": [
+          {
+            "name": "API_PORT",
+            "value": "8000"
+          },
+          {
+            "name": "API_METRICS_PORT",
+            "value": "9090"
+          },
+          {
+            "name": "API_SERVICE_NAME",
+            "value": "tadoku-api"
+          },
+          {
+            "name": "API_JWKS",
+            "value": "http://oathkeeper-api.default:4456/.well-known/jwks.json"
+          },
+          {
+            "name": "API_KETO_READ_URL",
+            "value": "http://keto-read.default:4466"
+          },
+          {
+            "name": "API_KETO_WRITE_URL",
+            "value": "http://keto-write.default:4467"
+          },
+          {
+            "name": "API_KRATOS_ADMIN_URL",
+            "value": "http://kratos-admin.default"
+          },
+          {
+            "name": "API_AUTHZ_URL",
+            "value": "http://authz-api.tdk-authz-api"
+          },
+          {
+            "name": "API_CONTENT_URL",
+            "value": "http://content-api.tdk-content-api"
+          },
+          {
+            "name": "API_IMMERSION_URL",
+            "value": "http://immersion-api.tdk-immersion-api"
+          },
+          {
+            "name": "API_PROFILE_URL",
+            "value": "http://profile-api.tdk-profile-api"
+          },
+          {
+            "name": "API_POSTGRES_HOST",
+            "value": "tadoku-dev-db.default"
+          },
+          {
+            "name": "API_POSTGRES_DATABASE",
+            "value": "immersion"
+          },
+          {
+            "name": "API_POSTGRES_SSLMODE",
+            "value": "require"
+          },
+          {
+            "name": "API_POSTGRES_MAX_CONNECTIONS",
+            "value": "4"
+          },
+          {
+            "name": "API_VALKEY_URL",
+            "value": "redis://valkey-immersion.default:6379"
+          },
+          {
+            "name": "API_POSTGRES_USER",
+            "valueFrom": {
+              "secretKeyRef": {
+                "name": "immersion.tadoku-dev-db.credentials.postgresql.acid.zalan.do",
+                "key": "username"
+              }
+            }
+          },
+          {
+            "name": "API_POSTGRES_PASSWORD",
+            "valueFrom": {
+              "secretKeyRef": {
+                "name": "immersion.tadoku-dev-db.credentials.postgresql.acid.zalan.do",
+                "key": "password"
+              }
+            }
+          }
+        ],
+        "ports": [
+          {
+            "name": "http",
+            "containerPort": 8000
+          },
+          {
+            "name": "metrics",
+            "containerPort": 9090
+          }
+        ],
+        "readinessProbe": {
+          "httpGet": {
+            "path": "/readyz",
+            "port": 8000
+          },
+          "periodSeconds": 1
+        },
+        "resources": {
+          "requests": {
+            "cpu": "50m",
+            "memory": "64Mi"
+          },
+          "limits": {
+            "cpu": "1",
+            "memory": "512Mi"
+          }
+        }
+      }
+    ]
+  }
+}

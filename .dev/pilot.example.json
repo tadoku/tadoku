@@ -1,0 +1,544 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "v1",
+      "kind": "ConfigMap",
+      "metadata": {
+        "name": "tadoku-cli-ca",
+        "namespace": "default",
+        "labels": {
+          "app.kubernetes.io/managed-by": "tadoku-dev-cli-pilot",
+          "app.kubernetes.io/part-of": "tadoku-dev-cli"
+        }
+      },
+      "data": {
+        "ca.crt": "REPLACE_WITH_PUBLIC_DEVELOPMENT_CA_CERTIFICATE"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Namespace",
+      "metadata": {
+        "name": "tadoku-dev-cli",
+        "labels": {
+          "app.kubernetes.io/managed-by": "tadoku-dev-cli-pilot",
+          "app.kubernetes.io/part-of": "tadoku-dev-cli",
+          "dev-cli.io/routing-enabled": "true"
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "ConfigMap",
+      "metadata": {
+        "name": "tadoku-cli-web",
+        "namespace": "default",
+        "labels": {
+          "app.kubernetes.io/managed-by": "tadoku-dev-cli-pilot",
+          "app.kubernetes.io/part-of": "tadoku-dev-cli"
+        }
+      },
+      "data": {
+        "NEXT_PUBLIC_KRATOS_INTERNAL_ENDPOINT": "http://kratos-public.default",
+        "NEXT_PUBLIC_KRATOS_ENDPOINT": "https://account.tadoku.example.invalid/kratos",
+        "NEXT_PUBLIC_AUTH_UI_URL": "https://account.tadoku.example.invalid",
+        "NEXT_PUBLIC_HOME_URL": "https://pilot.tadoku.example.invalid",
+        "NEXT_PUBLIC_API_ENDPOINT": "https://pilot.tadoku.example.invalid/api/internal",
+        "NEXT_SERVER_API_ENDPOINT": "https://pilot.tadoku.example.invalid/api/internal",
+        "NEXT_PUBLIC_COOKIE_DOMAIN": ".tadoku.example.invalid",
+        "NEXT_PUBLIC_COOKIE_SECURE": "true",
+        "NEXT_PUBLIC_ADMIN_URL": "https://admin.tadoku.example.invalid",
+        "NODE_EXTRA_CA_CERTS": "/etc/dev-ca/ca.crt"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "ConfigMap",
+      "metadata": {
+        "name": "tadoku-cli-oathkeeper",
+        "namespace": "default",
+        "labels": {
+          "app.kubernetes.io/managed-by": "tadoku-dev-cli-pilot",
+          "app.kubernetes.io/part-of": "tadoku-dev-cli"
+        }
+      },
+      "data": {
+        "config.json": "{\n  \"log\": {\n    \"level\": \"info\",\n    \"format\": \"json\",\n    \"leak_sensitive_values\": false\n  },\n  \"serve\": {\n    \"proxy\": {\n      \"port\": 4455,\n      \"trust_forwarded_headers\": true\n    },\n    \"api\": {\n      \"port\": 4456\n    }\n  },\n  \"errors\": {\n    \"fallback\": [\n      \"json\"\n    ],\n    \"handlers\": {\n      \"json\": {\n        \"enabled\": true,\n        \"config\": {\n          \"verbose\": false\n        }\n      }\n    }\n  },\n  \"access_rules\": {\n    \"matching_strategy\": \"glob\",\n    \"repositories\": [\n      \"file:///etc/rules/rules.json\"\n    ]\n  },\n  \"authenticators\": {\n    \"anonymous\": {\n      \"enabled\": true,\n      \"config\": {\n        \"subject\": \"guest\"\n      }\n    },\n    \"cookie_session\": {\n      \"enabled\": true,\n      \"config\": {\n        \"check_session_url\": \"http://kratos-public.default/sessions/whoami\",\n        \"preserve_path\": true,\n        \"extra_from\": \"@this\",\n        \"subject_from\": \"identity.id\",\n        \"only\": [\n          \"ory_kratos_session\"\n        ]\n      }\n    }\n  },\n  \"authorizers\": {\n    \"allow\": {\n      \"enabled\": true\n    }\n  },\n  \"mutators\": {\n    \"id_token\": {\n      \"enabled\": true,\n      \"config\": {\n        \"issuer_url\": \"http://oathkeeper-api/\",\n        \"jwks_url\": \"file:///etc/secrets/oathkeeper/jwks.json\",\n        \"claims\": \"{\\\"type\\\":\\\"user\\\",\\\"session\\\":{{ .Extra | toJson }}}\"\n      }\n    }\n  }\n}",
+        "rules.json": "[\n  {\n    \"id\": \"pilot-content\",\n    \"upstream\": {\n      \"preserve_host\": false,\n      \"url\": \"http://tadoku-cli-api.default.svc.cluster.local\",\n      \"strip_path\": \"/api/internal\"\n    },\n    \"match\": {\n      \"url\": \"http://pilot.tadoku.example.invalid/api/internal/content/<**>\",\n      \"methods\": [\n        \"GET\",\n        \"POST\",\n        \"PUT\",\n        \"DELETE\",\n        \"PATCH\"\n      ]\n    },\n    \"authenticators\": [\n      {\n        \"handler\": \"cookie_session\"\n      },\n      {\n        \"handler\": \"anonymous\"\n      }\n    ],\n    \"authorizer\": {\n      \"handler\": \"allow\"\n    },\n    \"mutators\": [\n      {\n        \"handler\": \"id_token\"\n      }\n    ]\n  },\n  {\n    \"id\": \"pilot-immersion\",\n    \"upstream\": {\n      \"preserve_host\": false,\n      \"url\": \"http://tadoku-cli-api.default.svc.cluster.local\",\n      \"strip_path\": \"/api/internal\"\n    },\n    \"match\": {\n      \"url\": \"http://pilot.tadoku.example.invalid/api/internal/immersion/<**>\",\n      \"methods\": [\n        \"GET\",\n        \"POST\",\n        \"PUT\",\n        \"DELETE\",\n        \"PATCH\"\n      ]\n    },\n    \"authenticators\": [\n      {\n        \"handler\": \"cookie_session\"\n      },\n      {\n        \"handler\": \"anonymous\"\n      }\n    ],\n    \"authorizer\": {\n      \"handler\": \"allow\"\n    },\n    \"mutators\": [\n      {\n        \"handler\": \"id_token\"\n      }\n    ]\n  },\n  {\n    \"id\": \"pilot-profile\",\n    \"upstream\": {\n      \"preserve_host\": false,\n      \"url\": \"http://tadoku-cli-api.default.svc.cluster.local\",\n      \"strip_path\": \"/api/internal\"\n    },\n    \"match\": {\n      \"url\": \"http://pilot.tadoku.example.invalid/api/internal/profile/<**>\",\n      \"methods\": [\n        \"GET\",\n        \"POST\",\n        \"PUT\",\n        \"DELETE\",\n        \"PATCH\"\n      ]\n    },\n    \"authenticators\": [\n      {\n        \"handler\": \"cookie_session\"\n      },\n      {\n        \"handler\": \"anonymous\"\n      }\n    ],\n    \"authorizer\": {\n      \"handler\": \"allow\"\n    },\n    \"mutators\": [\n      {\n        \"handler\": \"id_token\"\n      }\n    ]\n  },\n  {\n    \"id\": \"pilot-authz\",\n    \"upstream\": {\n      \"preserve_host\": false,\n      \"url\": \"http://tadoku-cli-api.default.svc.cluster.local\",\n      \"strip_path\": \"/api/internal\"\n    },\n    \"match\": {\n      \"url\": \"http://pilot.tadoku.example.invalid/api/internal/authz/<**>\",\n      \"methods\": [\n        \"GET\",\n        \"POST\",\n        \"PUT\",\n        \"DELETE\",\n        \"PATCH\"\n      ]\n    },\n    \"authenticators\": [\n      {\n        \"handler\": \"cookie_session\"\n      },\n      {\n        \"handler\": \"anonymous\"\n      }\n    ],\n    \"authorizer\": {\n      \"handler\": \"allow\"\n    },\n    \"mutators\": [\n      {\n        \"handler\": \"id_token\"\n      }\n    ]\n  }\n]"
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "tadoku-cli-oathkeeper",
+        "namespace": "default",
+        "labels": {
+          "app.kubernetes.io/managed-by": "tadoku-dev-cli-pilot",
+          "app.kubernetes.io/part-of": "tadoku-dev-cli"
+        }
+      },
+      "spec": {
+        "replicas": 1,
+        "selector": {
+          "matchLabels": {
+            "tadoku.dev/role": "cli-oathkeeper"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "tadoku.dev/role": "cli-oathkeeper"
+            }
+          },
+          "spec": {
+            "automountServiceAccountToken": false,
+            "securityContext": {
+              "runAsNonRoot": true,
+              "runAsUser": 65534,
+              "runAsGroup": 65534,
+              "fsGroup": 65534
+            },
+            "containers": [
+              {
+                "name": "oathkeeper",
+                "image": "docker.io/oryd/oathkeeper:v26.2.0",
+                "args": [
+                  "serve",
+                  "--config",
+                  "/etc/pilot/config.json"
+                ],
+                "ports": [
+                  {
+                    "name": "proxy",
+                    "containerPort": 4455
+                  },
+                  {
+                    "name": "api",
+                    "containerPort": 4456
+                  }
+                ],
+                "readinessProbe": {
+                  "httpGet": {
+                    "path": "/health/ready",
+                    "port": 4456
+                  },
+                  "periodSeconds": 2
+                },
+                "resources": {
+                  "requests": {
+                    "cpu": "20m",
+                    "memory": "32Mi"
+                  },
+                  "limits": {
+                    "cpu": "500m",
+                    "memory": "128Mi"
+                  }
+                },
+                "securityContext": {
+                  "allowPrivilegeEscalation": false,
+                  "readOnlyRootFilesystem": true,
+                  "capabilities": {
+                    "drop": [
+                      "ALL"
+                    ]
+                  }
+                },
+                "volumeMounts": [
+                  {
+                    "name": "pilot",
+                    "mountPath": "/etc/pilot",
+                    "readOnly": true
+                  },
+                  {
+                    "name": "pilot",
+                    "mountPath": "/etc/rules",
+                    "readOnly": true
+                  },
+                  {
+                    "name": "jwks",
+                    "mountPath": "/etc/secrets/oathkeeper",
+                    "readOnly": true
+                  }
+                ]
+              }
+            ],
+            "volumes": [
+              {
+                "name": "pilot",
+                "configMap": {
+                  "name": "tadoku-cli-oathkeeper"
+                }
+              },
+              {
+                "name": "jwks",
+                "secret": {
+                  "secretName": "dev-oathkeeper-jwks"
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "tadoku-cli-oathkeeper",
+        "namespace": "default",
+        "labels": {
+          "app.kubernetes.io/managed-by": "tadoku-dev-cli-pilot",
+          "app.kubernetes.io/part-of": "tadoku-dev-cli"
+        }
+      },
+      "spec": {
+        "selector": {
+          "tadoku.dev/role": "cli-oathkeeper"
+        },
+        "ports": [
+          {
+            "name": "proxy",
+            "port": 4455,
+            "targetPort": 4455
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "tadoku-cli-api",
+        "namespace": "default",
+        "labels": {
+          "app.kubernetes.io/managed-by": "tadoku-dev-cli-pilot",
+          "app.kubernetes.io/part-of": "tadoku-dev-cli"
+        }
+      },
+      "spec": {
+        "type": "ExternalName",
+        "externalName": "existing-dev-gateway.envoy-gateway-system.svc.cluster.local",
+        "ports": [
+          {
+            "name": "http",
+            "port": 80,
+            "targetPort": 80
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "dev-cli-gateway",
+        "namespace": "tadoku-dev-cli",
+        "labels": {
+          "app.kubernetes.io/managed-by": "tadoku-dev-cli-pilot",
+          "app.kubernetes.io/part-of": "tadoku-dev-cli"
+        }
+      },
+      "spec": {
+        "type": "ExternalName",
+        "externalName": "existing-dev-gateway.envoy-gateway-system.svc.cluster.local",
+        "ports": [
+          {
+            "name": "http",
+            "port": 80,
+            "targetPort": 80
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "Ingress",
+      "metadata": {
+        "name": "tadoku-cli-pilot",
+        "namespace": "tadoku-dev-cli",
+        "labels": {
+          "app.kubernetes.io/managed-by": "tadoku-dev-cli-pilot",
+          "app.kubernetes.io/part-of": "tadoku-dev-cli"
+        },
+        "annotations": {
+          "cert-manager.io/cluster-issuer": "development-ca",
+          "nginx.ingress.kubernetes.io/ssl-redirect": "true",
+          "nginx.ingress.kubernetes.io/proxy-read-timeout": "3600",
+          "nginx.ingress.kubernetes.io/proxy-send-timeout": "3600"
+        }
+      },
+      "spec": {
+        "ingressClassName": "nginx",
+        "tls": [
+          {
+            "hosts": [
+              "pilot.tadoku.example.invalid"
+            ],
+            "secretName": "tadoku-cli-pilot-tls"
+          }
+        ],
+        "rules": [
+          {
+            "host": "pilot.tadoku.example.invalid",
+            "http": {
+              "paths": [
+                {
+                  "path": "/",
+                  "pathType": "Prefix",
+                  "backend": {
+                    "service": {
+                      "name": "dev-cli-gateway",
+                      "port": {
+                        "number": 80
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "gateway.envoyproxy.io/v1alpha1",
+      "kind": "Backend",
+      "metadata": {
+        "name": "tadoku-cli-web",
+        "namespace": "tadoku-dev-cli",
+        "labels": {
+          "app.kubernetes.io/managed-by": "tadoku-dev-cli-pilot",
+          "app.kubernetes.io/part-of": "tadoku-dev-cli"
+        }
+      },
+      "spec": {
+        "endpoints": [
+          {
+            "fqdn": {
+              "hostname": "frontend-webv2.default.svc.cluster.local",
+              "port": 3000
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "gateway.networking.k8s.io/v1",
+      "kind": "HTTPRoute",
+      "metadata": {
+        "name": "tadoku-cli-web-base",
+        "namespace": "tadoku-dev-cli",
+        "labels": {
+          "app.kubernetes.io/managed-by": "tadoku-dev-cli-pilot",
+          "app.kubernetes.io/part-of": "tadoku-dev-cli"
+        }
+      },
+      "spec": {
+        "parentRefs": [
+          {
+            "name": "existing-dev-gateway",
+            "namespace": "envoy-gateway-system"
+          }
+        ],
+        "hostnames": [
+          "pilot.tadoku.example.invalid"
+        ],
+        "rules": [
+          {
+            "backendRefs": [
+              {
+                "group": "gateway.envoyproxy.io",
+                "kind": "Backend",
+                "name": "tadoku-cli-web",
+                "port": 3000
+              }
+            ],
+            "matches": [
+              {
+                "path": {
+                  "type": "PathPrefix",
+                  "value": "/"
+                }
+              }
+            ],
+            "filters": [
+              {
+                "type": "RequestHeaderModifier",
+                "requestHeaderModifier": {
+                  "remove": [
+                    "x-dev-branch"
+                  ]
+                }
+              },
+              {
+                "type": "ResponseHeaderModifier",
+                "responseHeaderModifier": {
+                  "set": [
+                    {
+                      "name": "Cache-Control",
+                      "value": "no-store"
+                    },
+                    {
+                      "name": "Vary",
+                      "value": "Cookie"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "gateway.envoyproxy.io/v1alpha1",
+      "kind": "Backend",
+      "metadata": {
+        "name": "tadoku-cli-proxy",
+        "namespace": "tadoku-dev-cli",
+        "labels": {
+          "app.kubernetes.io/managed-by": "tadoku-dev-cli-pilot",
+          "app.kubernetes.io/part-of": "tadoku-dev-cli"
+        }
+      },
+      "spec": {
+        "endpoints": [
+          {
+            "fqdn": {
+              "hostname": "tadoku-cli-oathkeeper.default.svc.cluster.local",
+              "port": 4455
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "gateway.networking.k8s.io/v1",
+      "kind": "HTTPRoute",
+      "metadata": {
+        "name": "tadoku-cli-proxy-base",
+        "namespace": "tadoku-dev-cli",
+        "labels": {
+          "app.kubernetes.io/managed-by": "tadoku-dev-cli-pilot",
+          "app.kubernetes.io/part-of": "tadoku-dev-cli"
+        }
+      },
+      "spec": {
+        "parentRefs": [
+          {
+            "name": "existing-dev-gateway",
+            "namespace": "envoy-gateway-system"
+          }
+        ],
+        "hostnames": [
+          "pilot.tadoku.example.invalid"
+        ],
+        "rules": [
+          {
+            "backendRefs": [
+              {
+                "group": "gateway.envoyproxy.io",
+                "kind": "Backend",
+                "name": "tadoku-cli-proxy",
+                "port": 4455
+              }
+            ],
+            "matches": [
+              {
+                "path": {
+                  "type": "PathPrefix",
+                  "value": "/api/internal"
+                }
+              }
+            ],
+            "filters": [
+              {
+                "type": "RequestHeaderModifier",
+                "requestHeaderModifier": {
+                  "remove": [
+                    "x-dev-branch"
+                  ]
+                }
+              },
+              {
+                "type": "ResponseHeaderModifier",
+                "responseHeaderModifier": {
+                  "set": [
+                    {
+                      "name": "Cache-Control",
+                      "value": "no-store"
+                    },
+                    {
+                      "name": "Vary",
+                      "value": "Cookie"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "gateway.envoyproxy.io/v1alpha1",
+      "kind": "Backend",
+      "metadata": {
+        "name": "tadoku-cli-api",
+        "namespace": "tadoku-dev-cli",
+        "labels": {
+          "app.kubernetes.io/managed-by": "tadoku-dev-cli-pilot",
+          "app.kubernetes.io/part-of": "tadoku-dev-cli"
+        }
+      },
+      "spec": {
+        "endpoints": [
+          {
+            "fqdn": {
+              "hostname": "tadoku-api.tdk-tadoku-api.svc.cluster.local",
+              "port": 80
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "gateway.networking.k8s.io/v1",
+      "kind": "HTTPRoute",
+      "metadata": {
+        "name": "tadoku-cli-api-base",
+        "namespace": "tadoku-dev-cli",
+        "labels": {
+          "app.kubernetes.io/managed-by": "tadoku-dev-cli-pilot",
+          "app.kubernetes.io/part-of": "tadoku-dev-cli"
+        }
+      },
+      "spec": {
+        "parentRefs": [
+          {
+            "name": "existing-dev-gateway",
+            "namespace": "envoy-gateway-system"
+          }
+        ],
+        "hostnames": [
+          "tadoku-cli-api.default.svc.cluster.local"
+        ],
+        "rules": [
+          {
+            "backendRefs": [
+              {
+                "group": "gateway.envoyproxy.io",
+                "kind": "Backend",
+                "name": "tadoku-cli-api",
+                "port": 80
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

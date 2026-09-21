@@ -99,3 +99,50 @@ use_repo(
     "distroless_base",
     "distroless_base_linux_amd64",
 )
+
+# Development runtimes only; production images above remain unchanged.
+oci.pull(
+    name = "tadoku_dev_alpine",
+    image = "index.docker.io/library/alpine",
+    digest = "sha256:14358309a308569c32bdc37e2e0e9694be33a9d99e68afb0f5ff33cc1f695dce",
+    platforms = ["linux/amd64"],
+)
+oci.pull(
+    name = "tadoku_dev_node",
+    image = "index.docker.io/library/node",
+    digest = "sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293",
+    platforms = ["linux/amd64"],
+)
+use_repo(oci, "tadoku_dev_alpine", "tadoku_dev_alpine_linux_amd64", "tadoku_dev_node", "tadoku_dev_node_linux_amd64")
+
+oci.pull(
+    name = "tadoku_dev_postgres",
+    image = "index.docker.io/library/postgres",
+    digest = "sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24",
+    platforms = ["linux/amd64"],
+)
+use_repo(oci, "tadoku_dev_postgres", "tadoku_dev_postgres_linux_amd64")
+
+# Match frontend/Dockerfile.dev; no Corepack or new JS build framework.
+http_archive(
+    name = "tadoku_dev_pnpm",
+    urls = ["https://registry.npmjs.org/pnpm/-/pnpm-10.10.0.tgz"],
+    integrity = "sha512-1hXbJG/nDyXc/qbY1z3ueCziPiJF48T2+Igkn7VoFJMYY33Kc8LFyO8qTKDVZX+5VnGIv6tH9WbR7mzph4FcOQ==",
+    strip_prefix = "package",
+    build_file_content = """
+load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
+load("@rules_pkg//pkg:mappings.bzl", "pkg_attributes", "pkg_files", "strip_prefix")
+pkg_files(
+    name = "files",
+    srcs = glob(["**"], exclude = ["BUILD.bazel", "WORKSPACE", "REPO.bazel"]),
+    prefix = "/opt/pnpm",
+    strip_prefix = strip_prefix.from_root(),
+    attributes = pkg_attributes(mode = "0755"),
+)
+pkg_tar(
+    name = "layer",
+    srcs = [":files"],
+    visibility = ["//visibility:public"],
+)
+""",
+)

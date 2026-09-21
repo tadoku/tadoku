@@ -1,5 +1,6 @@
 load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load", "oci_push")
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
+load("//.dev:deployable.bzl", "dev_deployable")
 
 pkg_tar(
     name = "app_layer",
@@ -38,4 +39,43 @@ oci_push(
     ],
     repository = "ghcr.io/tadoku/tadoku/tadoku-api",
     visibility = ["//visibility:public"],
+)
+
+# Separate from production's distroless image and Tilt's existing dev_push.
+oci_image(
+    name = "cli_image",
+    base = "@tadoku_dev_alpine_linux_amd64",
+    entrypoint = ["/tadoku-api"],
+    tars = [":app_layer"],
+    user = "65532:65532",
+)
+
+oci_push(name = "cli_push", image = ":cli_image")
+
+dev_deployable(
+    name = "dev",
+    workload_template = select({
+        "//.dev:isolated_database": "//.dev:tadoku-api.isolated.json",
+        "//conditions:default": "//.dev:tadoku-api.shared.json",
+    }),
+    metadata = json.encode({
+        "name": "tadoku-api",
+        "kind": "backend",
+        "namespace": "tdk-tadoku-api",
+        "buildTarget": "//services/tadoku-api/cmd/tadoku-api",
+        "imageTarget": "//services/tadoku-api:cli_image",
+        "imageName": "tadoku-api",
+        "pushTarget": "//services/tadoku-api:cli_push",
+        "containerPath": "/tadoku-api",
+        "port": 8000,
+        "servicePort": 80,
+        "readinessPath": "/readyz",
+        "publicPath": "/api/internal",
+        "internalHost": "tadoku-cli-api.default.svc.cluster.local",
+        "baseService": {"name": "tadoku-api", "namespace": "tdk-tadoku-api", "port": 80},
+        "publicProxy": {"name": "tadoku-cli-oathkeeper", "namespace": "default", "port": 4455},
+        "devContainer": "tadoku-api",
+        "sourceRoots": ["services/tadoku-api", "services/common"],
+    }),
+    deps = [":cli_image", "//services/tadoku-api/cmd/tadoku-api"],
 )

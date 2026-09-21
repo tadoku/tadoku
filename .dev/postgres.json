@@ -1,0 +1,33 @@
+{
+  "apiVersion": "acid.zalan.do/v1",
+  "kind": "postgresql",
+  "metadata": {
+    "name": "tadoku-cli-${DEV_ROUTE}"
+  },
+  "spec": {
+    "teamId": "tadoku",
+    "numberOfInstances": 1,
+    "users": {
+      "immersion": []
+    },
+    "databases": {
+      "immersion": "immersion"
+    },
+    "postgresql": {
+      "version": "17"
+    },
+    "volume": {
+      "size": "1Gi"
+    },
+    "resources": {
+      "requests": {
+        "cpu": "100m",
+        "memory": "256Mi"
+      },
+      "limits": {
+        "cpu": "1",
+        "memory": "768Mi"
+      }
+    }
+  }
+}

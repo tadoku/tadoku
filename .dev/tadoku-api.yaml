@@ -3,6 +3,8 @@ spec:
   containers:
     - name: tadoku-api
       env:
+        - name: API_SCORING_ENGINE_ENABLED
+          value: "false"
         - name: API_PORT
           value: "8000"
         - name: API_METRICS_PORT

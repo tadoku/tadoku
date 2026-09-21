@@ -164,6 +164,7 @@ func (s *Service) ApplyRegistration(
 		for _, code := range registration.LanguageCodes {
 			selectedLanguages[code] = struct{}{}
 		}
+
 		for _, language := range existing.Languages {
 			if _, selected := selectedLanguages[language.Code]; !selected {
 				removedLanguages = append(removedLanguages, language.Code)

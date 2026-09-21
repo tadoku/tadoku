@@ -55,6 +55,15 @@ test('all retained wire contracts survive the merge, including internal callers'
       legacy.components.schemas.AnnouncementList.allOf[1].properties.announcements.maxItems = 100;
     }
     if (name === 'Immersion') {
+      // Native participant statistics document the legacy empty failure response.
+      for (const path of [
+        '/contests/{id}/profile/{user_id}/scores',
+        '/contests/{id}/profile/{user_id}/activity',
+      ]) {
+        if (contract.paths[`/immersion${path}`].get['x-tadoku-owner'] === 'native') {
+          legacy.paths[path].get.responses['500'] = {description: 'participant statistics could not be fetched'};
+        }
+      }
       const permissionFailure = {
         description: 'Permission check failed',
         content: {

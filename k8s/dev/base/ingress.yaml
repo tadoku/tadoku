@@ -114,10 +114,10 @@ metadata:
 spec:
   ingressClassName: nginx
   tls:
-    - hosts: [flipt.tadoku.dev.lab]
+    - hosts: [flags.tadoku.dev.lab]
       secretName: tadoku-flipt-tls
   rules:
-    - host: flipt.tadoku.dev.lab
+    - host: flags.tadoku.dev.lab
       http:
         paths:
           - path: /

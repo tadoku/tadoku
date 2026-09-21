@@ -95,7 +95,7 @@
     - handler: id_token
 - id: tadoku:flipt:operator
   match:
-    url: https://flipt.tadoku.dev.lab/<**>
+    url: https://flags.tadoku.dev.lab/<**>
     methods:
       - GET
       - POST

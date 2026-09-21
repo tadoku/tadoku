@@ -13,7 +13,6 @@ go_library(
     deps = [
         "//services/common/authz/roles",
         "//services/common/domain",
-        "@com_github_golang_jwt_jwt//:jwt",
         "@com_github_golang_jwt_jwt_v4//:jwt",
         "@com_github_labstack_echo_v4//:echo",
         "@com_github_labstack_echo_v4//middleware",

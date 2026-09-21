@@ -49,7 +49,6 @@ use_repo(
     "com_github_getkin_kin_openapi",
     "com_github_getsentry_sentry_go",
     "com_github_go_playground_validator_v10",
-    "com_github_golang_jwt_jwt",
     "com_github_golang_jwt_jwt_v4",
     "com_github_golang_migrate_migrate_v4",
     "com_github_google_uuid",

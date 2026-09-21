@@ -683,7 +683,7 @@ importers:
         version: 2.2.0(react@18.2.0)
       '@tailwindcss/forms':
         specifier: ^0.5.3
-        version: 0.5.10(tailwindcss@3.4.18(yaml@2.7.1))
+        version: 0.5.11(tailwindcss@3.4.18(yaml@2.7.1))
       '@types/node':
         specifier: 18.11.10
         version: 18.11.10
@@ -1888,8 +1888,8 @@ packages:
   '@swc/helpers@0.5.2':
     resolution: {integrity: sha512-E4KcWTpoLHqwPHLxidpOqQbcrZVgi0rsmmZXUle1jXmJfuIf/UWpczUJ7MZZ5tlxytgJXyp0w4PGkkeLiuIdZw==}
 
-  '@tailwindcss/forms@0.5.10':
-    resolution: {integrity: sha512-utI1ONF6uf/pPNO68kmN1b8rEwNXv3czukalo8VtJH8ksIkZXr3Q3VYudZLkCsDd4Wku120uF02hYK25XGPorw==}
+  '@tailwindcss/forms@0.5.11':
+    resolution: {integrity: sha512-h9wegbZDPurxG22xZSoWtdzc41/OlNEUQERNqI/0fOwa2aVlWGu7C35E/x6LDyD3lgtztFSSjKZyuVM0hxhbgA==}
     peerDependencies:
       tailwindcss: '>=3.0.0 || >= 3.0.0-alpha.1 || >= 4.0.0-alpha.20 || >= 4.0.0-beta.1'
 
@@ -6147,7 +6147,7 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
-  '@tailwindcss/forms@0.5.10(tailwindcss@3.4.18(yaml@2.7.1))':
+  '@tailwindcss/forms@0.5.11(tailwindcss@3.4.18(yaml@2.7.1))':
     dependencies:
       mini-svg-data-uri: 1.4.4
       tailwindcss: 3.4.18(yaml@2.7.1)

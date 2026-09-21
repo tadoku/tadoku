@@ -5,6 +5,7 @@ import {parseContract, sourceView} from './api-contract.mjs';
 
 const contract = parseContract(await readFile('../services/tadoku-api/spec/openapi.yaml', 'utf8'));
 const serverCodegen = parseContract(await readFile('../services/tadoku-api/spec/server-codegen.yaml', 'utf8'));
+const callbackServerCodegen = parseContract(await readFile('../services/tadoku-api/spec/callback-server-codegen.yaml', 'utf8'));
 
 test('all retained wire contracts survive the merge, including internal callers', async () => {
   let operations = 0;
@@ -66,5 +67,10 @@ test('native-owned operations match server generation', () => {
       if (operation['x-tadoku-owner'] === 'native') owned.push(operation.operationId);
     }
   }
-  assert.deepEqual(owned.sort(), [...serverCodegen['output-options']['include-operation-ids']].sort());
+  const generated = [
+    ...serverCodegen['output-options']['include-operation-ids'],
+    ...callbackServerCodegen['output-options']['include-operation-ids'],
+  ];
+  assert.equal(new Set(generated).size, generated.length, 'generated operations must belong to one server');
+  assert.deepEqual(owned.sort(), generated.sort());
 });

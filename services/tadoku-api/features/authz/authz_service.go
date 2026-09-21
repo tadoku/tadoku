@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/google/uuid"
 	commonroles "github.com/tadoku/tadoku/services/common/authz/roles"
+	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
 	kratosclient "github.com/tadoku/tadoku/services/common/client/kratos"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
@@ -13,6 +15,7 @@ import (
 
 type Service struct {
 	permissions       *permissions.Checker
+	keto              *ketoclient.Client
 	users             *kratosclient.Client
 	roles             *commonroles.KetoService
 	roleManager       *commonroles.KetoManager
@@ -21,6 +24,7 @@ type Service struct {
 
 func NewService(
 	permissions *permissions.Checker,
+	keto *ketoclient.Client,
 	users *kratosclient.Client,
 	roles *commonroles.KetoService,
 	roleManager *commonroles.KetoManager,
@@ -28,11 +32,31 @@ func NewService(
 ) *Service {
 	return &Service{
 		permissions:       permissions,
+		keto:              keto,
 		users:             users,
 		roles:             roles,
 		roleManager:       roleManager,
 		publicPermissions: publicPermissions,
 	}
+}
+
+func (s *Service) ProxyAdminCheck(ctx context.Context, subject uuid.UUID) (bool, error) {
+	if subject == uuid.Nil {
+		return false, errx.NewInvalidInputError("subject must be a UUID")
+	}
+
+	allowed, err := s.keto.CheckPermission(
+		ctx,
+		"app",
+		"tadoku",
+		"admins",
+		ketoclient.Subject{ID: subject.String()},
+	)
+	if err != nil {
+		return false, errx.NewUnavailableError("check proxy admin permission", err)
+	}
+
+	return allowed, nil
 }
 
 func (s *Service) CurrentUserRole(ctx context.Context) (Role, error) {

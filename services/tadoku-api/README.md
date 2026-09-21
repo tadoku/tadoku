@@ -29,6 +29,13 @@ context through `internal/identity`. The shared ban lookup records a confirmed b
 for role-introspection reads so they can report it; every other business route
 rejects that identity before its handler runs.
 
+Trusted HTTP callbacks use a separate required bearer credential and never create
+a user identity. The exact callback route authenticates before request decoding,
+then records a callback-authentication fact that its application operation must
+require. It does not enter the business JWT or ban pipeline; the subject in its
+body remains a target for a provider fact lookup and is never treated as the
+caller.
+
 Application operations compose features. Feature services own business decisions;
 repositories only query and map rows. `postgres.Executor` lets repositories use
 the active app-owned transaction. Open transactions only when the operation needs
@@ -107,14 +114,16 @@ direct internal callers; the merge does not make those routes public.
 Run `./scripts/generate-openapi.sh` for the shared DTOs and standard-library
 strict-server bindings. The isolated oapi-codegen tool module under
 `tools/oapi-codegen` generates every canonical component schema while
-`spec/server-codegen.yaml` limits server registration to operations owned by this
-application. Generation runs through Bazel and writes one checked-in output file.
+the server codegen configs limit registration to operations owned by this
+application and separate routes with different HTTP authentication boundaries.
+Generation runs through Bazel and writes checked-in output files.
 The Bazel binary has no Go module build-info header, so read its pin from the tool
 module's `go.mod` rather than the generated header. Generated routes register
-through the application `Router` as their base router, preserving its shared
-deadline, authentication and ban checks. Run `./scripts/generate-sqlc.sh` for SQL
-output. Legacy service OpenAPI output remains frozen on v1.12.4 until those services
-are retired. The native query uses sqlc v1.31.1/pgx-v5.
+through boundary-specific registrars: business routes use JWT authentication and
+ban checks, while callback routes use callback credentials. Both retain shared
+deadlines and observability. Run `./scripts/generate-sqlc.sh` for SQL output. Legacy
+service OpenAPI output remains frozen on v1.12.4 until those services are retired.
+The native query uses sqlc v1.31.1/pgx-v5.
 
 Documentation builds filtered public views from the canonical contract. They
 retain the four existing documentation sections/URLs, not four independent API
@@ -158,6 +167,8 @@ In addition to the existing four upstream URLs, startup now requires:
   for the retained raw read/write client, including response-body reads. It shares
   the owned transport's `API_DIAL_TIMEOUT`, `API_RESPONSE_HEADER_TIMEOUT` and
   `API_IDLE_TIMEOUT` bounds.
+- `API_OATHKEEPER_AUTHZ_TOKEN`, the bearer credential required on trusted
+  Oathkeeper authorization callbacks.
 - `API_KRATOS_ADMIN_URL`, an absolute HTTP(S) base URL for the existing Kratos
   admin service. Credentials, query strings and fragments are rejected.
   Path prefixes are supported; trailing slashes are removed. Development

@@ -26,6 +26,7 @@ go_library(
         "//services/tadoku-api/features/posts",
         "//services/tadoku-api/features/profile",
         "//services/tadoku-api/infra/postgres",
+        "//services/tadoku-api/internal/callbackauth",
         "//services/tadoku-api/internal/errx",
         "//services/tadoku-api/internal/identity",
         "//services/tadoku-api/internal/permissions",

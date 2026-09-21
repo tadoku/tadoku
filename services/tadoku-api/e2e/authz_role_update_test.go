@@ -94,6 +94,7 @@ func auditUnavailableRoleUpdateHandlers(t *testing.T) (*transport.Router, http.H
 		api.kratos.CursorClient(),
 		legacyrepository.NewRepository(closedDB),
 		"",
+		callbackToken,
 	)
 	if err != nil {
 		t.Fatal(err)

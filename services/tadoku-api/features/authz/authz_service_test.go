@@ -11,7 +11,7 @@ import (
 )
 
 func TestCurrentUserRoleTreatsEmptySubjectAsGuest(t *testing.T) {
-	service := NewService(nil, nil, nil, nil, nil)
+	service := NewService(nil, nil, nil, nil, nil, nil)
 	ctx := identity.WithUser(t.Context(), &identity.User{})
 
 	role, err := service.CurrentUserRole(ctx)
@@ -23,10 +23,22 @@ func TestCurrentUserRoleTreatsEmptySubjectAsGuest(t *testing.T) {
 	}
 }
 
+func TestProxyAdminCheckRejectsNilSubject(t *testing.T) {
+	service := NewService(nil, nil, nil, nil, nil, nil)
+
+	_, err := service.ProxyAdminCheck(t.Context(), uuid.Nil)
+	if errx.KindOf(err) != errx.InvalidInput {
+		t.Errorf("ProxyAdminCheck() error kind = %v, want invalid input", errx.KindOf(err))
+	}
+	if err == nil || err.Error() != "subject must be a UUID" {
+		t.Errorf("ProxyAdminCheck() error = %v, want %q", err, "subject must be a UUID")
+	}
+}
+
 func TestCurrentUserRoleBannedTakesPrecedence(t *testing.T) {
 	ctx := identity.WithUser(t.Context(), &identity.User{Subject: "admin"})
 	ctx = permissions.WithBanned(ctx)
-	service := NewService(permissions.NewKetoChecker(nil), nil, nil, nil, nil)
+	service := NewService(permissions.NewKetoChecker(nil), nil, nil, nil, nil, nil)
 
 	role, err := service.CurrentUserRole(ctx)
 	if err != nil {

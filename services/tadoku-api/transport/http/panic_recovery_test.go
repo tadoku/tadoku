@@ -29,6 +29,7 @@ func TestApplicationPanicRecovery(t *testing.T) {
 		slog.New(slog.NewJSONHandler(&logs, nil)),
 		func(next stdhttp.Handler) stdhttp.Handler { return next },
 		func(next stdhttp.Handler) stdhttp.Handler { return next },
+		func(next stdhttp.Handler) stdhttp.Handler { return next },
 	)
 	if err != nil {
 		t.Fatalf("create handler: %v", err)
@@ -117,6 +118,7 @@ func TestApplicationPanicRecoveryPreservesWrittenStatus(t *testing.T) {
 		slog.New(slog.NewJSONHandler(&logs, nil)),
 		func(next stdhttp.Handler) stdhttp.Handler { return next },
 		func(next stdhttp.Handler) stdhttp.Handler { return next },
+		func(next stdhttp.Handler) stdhttp.Handler { return next },
 	)
 	if err != nil {
 		t.Fatalf("create handler: %v", err)
@@ -166,6 +168,7 @@ func TestApplicationPanicRecoveryHandlesInvalidStatusPanic(t *testing.T) {
 		slog.New(slog.NewJSONHandler(&logs, nil)),
 		func(next stdhttp.Handler) stdhttp.Handler { return next },
 		func(next stdhttp.Handler) stdhttp.Handler { return next },
+		func(next stdhttp.Handler) stdhttp.Handler { return next },
 	)
 	if err != nil {
 		t.Fatalf("create handler: %v", err)
@@ -204,6 +207,7 @@ func TestApplicationPanicRecoveryTracksFlushedResponse(t *testing.T) {
 		time.Second,
 		prometheus.NewRegistry(),
 		slog.New(slog.NewJSONHandler(&logs, nil)),
+		func(next stdhttp.Handler) stdhttp.Handler { return next },
 		func(next stdhttp.Handler) stdhttp.Handler { return next },
 		func(next stdhttp.Handler) stdhttp.Handler { return next },
 	)

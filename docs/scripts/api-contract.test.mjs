@@ -55,6 +55,15 @@ test('all retained wire contracts survive the merge, including internal callers'
       legacy.components.schemas.AnnouncementList.allOf[1].properties.announcements.maxItems = 100;
     }
     if (name === 'Immersion') {
+      // Native log reads document the empty failure responses already returned by legacy.
+      for (const path of ['/contests/{id}/logs', '/users/{user_id}/logs']) {
+        if (contract.paths[`/immersion${path}`].get['x-tadoku-owner'] === 'native') {
+          legacy.paths[path].get.responses['500'] = {description: 'log list could not be fetched'};
+        }
+      }
+      if (contract.paths['/immersion/logs/{id}'].get['x-tadoku-owner'] === 'native') {
+        legacy.paths['/logs/{id}'].get.responses['500'] = {description: 'log could not be fetched'};
+      }
       // Native participant statistics document the legacy empty failure response.
       for (const path of [
         '/contests/{id}/profile/{user_id}/scores',

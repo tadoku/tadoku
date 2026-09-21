@@ -27,6 +27,7 @@ go_library(
         "language_update.go",
         "languages.go",
         "log_configuration.go",
+        "log_reads.go",
         "log_tag_suggestions.go",
         "observability.go",
         "page_create.go",

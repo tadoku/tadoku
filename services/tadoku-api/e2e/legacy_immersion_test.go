@@ -58,10 +58,10 @@ func newLegacyImmersionAPI(ctx context.Context, dsn, jwksURL, ketoReadURL string
 			domain.NewContestSummaryFetch(postgresRepository),
 			domain.NewProfileYearlyActivitySplit(postgresRepository),
 			domain.NewContestFind(postgresRepository),
-			nil, // log find
+			domain.NewLogFind(postgresRepository),
 			domain.NewContestList(postgresRepository),
-			nil, // user logs
-			nil, // contest logs
+			domain.NewLogListForUser(postgresRepository),
+			domain.NewLogListForContest(postgresRepository),
 			domain.NewRegistrationFind(postgresRepository),
 			domain.NewRegistrationListYearly(postgresRepository),
 			nil, // contest leaderboard

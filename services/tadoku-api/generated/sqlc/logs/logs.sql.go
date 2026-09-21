@@ -156,6 +156,163 @@ func (q *Queries) FetchScoresForProfile(ctx context.Context, arg FetchScoresForP
 	return items, nil
 }
 
+const findAttachedContestRegistrationsForLog = `-- name: FindAttachedContestRegistrationsForLog :many
+select
+  contest_logs.contest_id,
+  contests.title,
+  contest_registrations.id,
+  contests.contest_end,
+  case when owner_users.deleted_at is not null then 'Deleted organizer' else owner_users.display_name end::varchar as owner_user_display_name,
+  contests.official,
+  coalesce(contest_logs.computed_score, contest_logs.score) as score
+from contest_logs
+inner join contests on (contests.id = contest_logs.contest_id)
+inner join logs on (logs.id = contest_logs.log_id)
+inner join contest_registrations on (
+  contest_registrations.contest_id = contest_logs.contest_id
+  and contest_registrations.user_id = logs.user_id
+)
+inner join users as owner_users on (owner_users.id = contests.owner_user_id)
+where log_id = $1
+`
+
+type FindAttachedContestRegistrationsForLogRow struct {
+	ContestID            pgtype.UUID
+	Title                string
+	ID                   pgtype.UUID
+	ContestEnd           pgtype.Date
+	OwnerUserDisplayName string
+	Official             bool
+	Score                pgtype.Float4
+}
+
+func (q *Queries) FindAttachedContestRegistrationsForLog(ctx context.Context, id pgtype.UUID) ([]FindAttachedContestRegistrationsForLogRow, error) {
+	rows, err := q.db.Query(ctx, findAttachedContestRegistrationsForLog, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []FindAttachedContestRegistrationsForLogRow{}
+	for rows.Next() {
+		var i FindAttachedContestRegistrationsForLogRow
+		if err := rows.Scan(
+			&i.ContestID,
+			&i.Title,
+			&i.ID,
+			&i.ContestEnd,
+			&i.OwnerUserDisplayName,
+			&i.Official,
+			&i.Score,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const findLogByID = `-- name: FindLogByID :one
+select
+  logs.id,
+  logs.user_id,
+  users.display_name as user_display_name,
+  logs.language_code,
+  languages.name as language_name,
+  logs.log_activity_id as activity_id,
+  logs.unit_id,
+  coalesce(logs.unit_key, '') as unit_key,
+  coalesce(log_units.name, '') as unit_name,
+  logs.description,
+  logs.amount,
+  logs.modifier,
+  logs.duration_seconds,
+  coalesce(logs.computed_score, logs.score) as score,
+  logs.score_rule_set_id,
+  logs.score_rule_ids,
+  logs.score_rates,
+  logs.score_source,
+  logs.eligible_official_leaderboard,
+  logs.created_at,
+  logs.updated_at,
+  logs.deleted_at,
+  coalesce(
+    (select array_agg(tag order by tag) from log_tags where log_id = logs.id),
+    array[]::text[]
+  )::text as tags
+from logs
+inner join languages on (languages.code = logs.language_code)
+left join log_units on (log_units.id = logs.unit_id)
+inner join users on (users.id = logs.user_id)
+where
+  ($1::boolean or logs.deleted_at is null)
+  and logs.id = $2
+`
+
+type FindLogByIDParams struct {
+	IncludeDeleted bool
+	ID             pgtype.UUID
+}
+
+type FindLogByIDRow struct {
+	ID                          pgtype.UUID
+	UserID                      pgtype.UUID
+	UserDisplayName             string
+	LanguageCode                string
+	LanguageName                string
+	ActivityID                  int16
+	UnitID                      pgtype.UUID
+	UnitKey                     string
+	UnitName                    string
+	Description                 pgtype.Text
+	Amount                      pgtype.Float4
+	Modifier                    pgtype.Float4
+	DurationSeconds             pgtype.Int4
+	Score                       pgtype.Float4
+	ScoreRuleSetID              pgtype.UUID
+	ScoreRuleIds                []pgtype.UUID
+	ScoreRates                  []float32
+	ScoreSource                 pgtype.Text
+	EligibleOfficialLeaderboard bool
+	CreatedAt                   pgtype.Timestamp
+	UpdatedAt                   pgtype.Timestamp
+	DeletedAt                   pgtype.Timestamp
+	Tags                        string
+}
+
+func (q *Queries) FindLogByID(ctx context.Context, arg FindLogByIDParams) (FindLogByIDRow, error) {
+	row := q.db.QueryRow(ctx, findLogByID, arg.IncludeDeleted, arg.ID)
+	var i FindLogByIDRow
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.UserDisplayName,
+		&i.LanguageCode,
+		&i.LanguageName,
+		&i.ActivityID,
+		&i.UnitID,
+		&i.UnitKey,
+		&i.UnitName,
+		&i.Description,
+		&i.Amount,
+		&i.Modifier,
+		&i.DurationSeconds,
+		&i.Score,
+		&i.ScoreRuleSetID,
+		&i.ScoreRuleIds,
+		&i.ScoreRates,
+		&i.ScoreSource,
+		&i.EligibleOfficialLeaderboard,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+		&i.Tags,
+	)
+	return i, err
+}
+
 const listDistinctLanguageCodesForUser = `-- name: ListDistinctLanguageCodesForUser :many
 select distinct language_code
 from logs
@@ -175,6 +332,260 @@ func (q *Queries) ListDistinctLanguageCodesForUser(ctx context.Context, userID p
 			return nil, err
 		}
 		items = append(items, language_code)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listLogsForContest = `-- name: ListLogsForContest :many
+with eligible_logs as (
+  select
+    logs.id,
+    logs.user_id,
+    logs.language_code,
+    languages.name as language_name,
+    logs.log_activity_id as activity_id,
+    logs.unit_id,
+    coalesce(contest_logs.unit_key, '') as unit_key,
+    coalesce(log_units.name, '') as unit_name,
+    logs.description,
+    contest_logs.amount,
+    contest_logs.modifier,
+    contest_logs.duration_seconds,
+    coalesce(contest_logs.computed_score, contest_logs.score) as score,
+    contest_logs.score_rule_set_id,
+    contest_logs.score_rule_ids,
+    contest_logs.score_rates,
+    contest_logs.score_source,
+    logs.created_at,
+    logs.updated_at,
+    logs.deleted_at,
+    users.display_name as user_display_name,
+    coalesce(
+      (select array_agg(tag order by tag) from log_tags where log_id = logs.id),
+      array[]::text[]
+    )::text as tags
+  from contest_logs
+  inner join logs on (logs.id = contest_logs.log_id)
+  inner join languages on (languages.code = logs.language_code)
+  left join log_units on (log_units.id = logs.unit_id)
+  inner join users on (users.id = logs.user_id)
+  where
+    ($3::boolean or logs.deleted_at is null)
+    and (logs.user_id = $4 or $4 is null)
+    and contest_logs.contest_id = $5
+)
+select
+  id, user_id, language_code, language_name, activity_id, unit_id, unit_key, unit_name, description, amount, modifier, duration_seconds, score, score_rule_set_id, score_rule_ids, score_rates, score_source, created_at, updated_at, deleted_at, user_display_name, tags,
+  (select count(eligible_logs.id) from eligible_logs) as total_size
+from eligible_logs
+order by created_at desc
+limit $2
+offset $1
+`
+
+type ListLogsForContestParams struct {
+	StartFrom      int32
+	PageSize       int32
+	IncludeDeleted bool
+	UserID         pgtype.UUID
+	ContestID      pgtype.UUID
+}
+
+type ListLogsForContestRow struct {
+	ID              pgtype.UUID
+	UserID          pgtype.UUID
+	LanguageCode    string
+	LanguageName    string
+	ActivityID      int16
+	UnitID          pgtype.UUID
+	UnitKey         string
+	UnitName        string
+	Description     pgtype.Text
+	Amount          pgtype.Float4
+	Modifier        pgtype.Float4
+	DurationSeconds pgtype.Int4
+	Score           pgtype.Float4
+	ScoreRuleSetID  pgtype.UUID
+	ScoreRuleIds    []pgtype.UUID
+	ScoreRates      []float32
+	ScoreSource     pgtype.Text
+	CreatedAt       pgtype.Timestamp
+	UpdatedAt       pgtype.Timestamp
+	DeletedAt       pgtype.Timestamp
+	UserDisplayName string
+	Tags            string
+	TotalSize       int64
+}
+
+func (q *Queries) ListLogsForContest(ctx context.Context, arg ListLogsForContestParams) ([]ListLogsForContestRow, error) {
+	rows, err := q.db.Query(ctx, listLogsForContest,
+		arg.StartFrom,
+		arg.PageSize,
+		arg.IncludeDeleted,
+		arg.UserID,
+		arg.ContestID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListLogsForContestRow{}
+	for rows.Next() {
+		var i ListLogsForContestRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.LanguageCode,
+			&i.LanguageName,
+			&i.ActivityID,
+			&i.UnitID,
+			&i.UnitKey,
+			&i.UnitName,
+			&i.Description,
+			&i.Amount,
+			&i.Modifier,
+			&i.DurationSeconds,
+			&i.Score,
+			&i.ScoreRuleSetID,
+			&i.ScoreRuleIds,
+			&i.ScoreRates,
+			&i.ScoreSource,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+			&i.UserDisplayName,
+			&i.Tags,
+			&i.TotalSize,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listLogsForUser = `-- name: ListLogsForUser :many
+with eligible_logs as (
+  select
+    logs.id,
+    logs.user_id,
+    logs.language_code,
+    languages.name as language_name,
+    logs.log_activity_id as activity_id,
+    logs.unit_id,
+    coalesce(logs.unit_key, '') as unit_key,
+    coalesce(log_units.name, '') as unit_name,
+    logs.description,
+    logs.amount,
+    logs.modifier,
+    logs.duration_seconds,
+    coalesce(logs.computed_score, logs.score) as score,
+    logs.score_rule_set_id,
+    logs.score_rule_ids,
+    logs.score_rates,
+    logs.score_source,
+    logs.created_at,
+    logs.updated_at,
+    logs.deleted_at,
+    coalesce(
+      (select array_agg(tag order by tag) from log_tags where log_id = logs.id),
+      array[]::text[]
+    )::text as tags
+  from logs
+  inner join languages on (languages.code = logs.language_code)
+  left join log_units on (log_units.id = logs.unit_id)
+  where
+    ($3::boolean or logs.deleted_at is null)
+    and logs.user_id = $4
+)
+select
+  id, user_id, language_code, language_name, activity_id, unit_id, unit_key, unit_name, description, amount, modifier, duration_seconds, score, score_rule_set_id, score_rule_ids, score_rates, score_source, created_at, updated_at, deleted_at, tags,
+  (select count(eligible_logs.id) from eligible_logs) as total_size
+from eligible_logs
+order by created_at desc
+limit $2
+offset $1
+`
+
+type ListLogsForUserParams struct {
+	StartFrom      int32
+	PageSize       int32
+	IncludeDeleted bool
+	UserID         pgtype.UUID
+}
+
+type ListLogsForUserRow struct {
+	ID              pgtype.UUID
+	UserID          pgtype.UUID
+	LanguageCode    string
+	LanguageName    string
+	ActivityID      int16
+	UnitID          pgtype.UUID
+	UnitKey         string
+	UnitName        string
+	Description     pgtype.Text
+	Amount          pgtype.Float4
+	Modifier        pgtype.Float4
+	DurationSeconds pgtype.Int4
+	Score           pgtype.Float4
+	ScoreRuleSetID  pgtype.UUID
+	ScoreRuleIds    []pgtype.UUID
+	ScoreRates      []float32
+	ScoreSource     pgtype.Text
+	CreatedAt       pgtype.Timestamp
+	UpdatedAt       pgtype.Timestamp
+	DeletedAt       pgtype.Timestamp
+	Tags            string
+	TotalSize       int64
+}
+
+func (q *Queries) ListLogsForUser(ctx context.Context, arg ListLogsForUserParams) ([]ListLogsForUserRow, error) {
+	rows, err := q.db.Query(ctx, listLogsForUser,
+		arg.StartFrom,
+		arg.PageSize,
+		arg.IncludeDeleted,
+		arg.UserID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListLogsForUserRow{}
+	for rows.Next() {
+		var i ListLogsForUserRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.LanguageCode,
+			&i.LanguageName,
+			&i.ActivityID,
+			&i.UnitID,
+			&i.UnitKey,
+			&i.UnitName,
+			&i.Description,
+			&i.Amount,
+			&i.Modifier,
+			&i.DurationSeconds,
+			&i.Score,
+			&i.ScoreRuleSetID,
+			&i.ScoreRuleIds,
+			&i.ScoreRates,
+			&i.ScoreSource,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+			&i.Tags,
+			&i.TotalSize,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err

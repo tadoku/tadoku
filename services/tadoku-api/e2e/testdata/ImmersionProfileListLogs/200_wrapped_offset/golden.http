@@ -1,0 +1,6 @@
+>>> GET /immersion/users/11111111-1111-4111-8111-111111111111/logs?page_size=1&page=4294967296
+HTTP/1.1 200 OK
+Content-Length: 434
+Content-Type: application/json; charset=UTF-8
+
+{"logs":[{"activity":{"id":1,"input_type":"amount_primary","name":"Reading"},"amount":0,"created_at":"2026-09-03T00:00:00Z","deleted":false,"duration_seconds":60,"id":"d2222222-2222-4222-8222-222222222222","language":{"code":"eng","name":"English"},"modifier":0,"score":0,"tags":[],"unit_id":"00000000-0000-0000-0000-000000000000","unit_name":"","user_id":"11111111-1111-4111-8111-111111111111"}],"next_page_token":"","total_size":3}

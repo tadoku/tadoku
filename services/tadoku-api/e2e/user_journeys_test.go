@@ -861,3 +861,14 @@ func TestContestParticipantDetachJourney(t *testing.T) {
 		{request: "activity_after", as: guest, want: http.StatusOK},
 	})
 }
+
+func TestLogRegistrationDetachJourney(t *testing.T) {
+	runJourney(t, api, "LogRegistrationDetach", []step{
+		{request: "log_before", as: user, want: http.StatusOK},
+		{request: "contest_logs_before", as: user2, want: http.StatusOK},
+		{request: "remove_language", as: user, want: http.StatusOK, others: cast{guest: http.StatusUnauthorized, banned: http.StatusForbidden}},
+		{request: "log_after", as: user, want: http.StatusOK},
+		{request: "contest_logs_after", as: user2, want: http.StatusOK},
+		{request: "profile_logs_unchanged", as: user, want: http.StatusOK},
+	})
+}

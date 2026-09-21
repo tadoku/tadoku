@@ -9,6 +9,7 @@ go_library(
         "contest_profile.go",
         "contests.go",
         "languages.go",
+        "log_reads.go",
         "log_statistics.go",
         "logs.go",
         "pages.go",

@@ -1,0 +1,4 @@
+>>> GET /immersion/logs/99999999-9999-4999-8999-999999999998
+HTTP/1.1 404 Not Found
+Content-Length: 0
+

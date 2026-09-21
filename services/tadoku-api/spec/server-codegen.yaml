@@ -51,5 +51,8 @@ output-options:
     - ImmersionProfileYearlyActivitySplitByUserID
     - ImmersionContestProfileFetchScores
     - ImmersionContestProfileFetchActivity
+    - ImmersionLogFindByID
+    - ImmersionProfileListLogs
+    - ImmersionContestListLogs
   nullable-type: true
   skip-prune: true

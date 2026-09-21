@@ -2,8 +2,11 @@
 package logs
 
 import (
-	"github.com/google/uuid"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/tadoku/tadoku/services/tadoku-api/domain/activities"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
 
 type Unit struct {
@@ -58,4 +61,74 @@ type ContestActivity struct {
 	Date         time.Time
 	LanguageCode string
 	Score        float32
+}
+
+var (
+	ErrLogNotFound     = errx.NewNotFoundError("log not found")
+	ErrInvalidActivity = errx.NewInvalidInputError("invalid log activity")
+)
+
+type Log struct {
+	ID              uuid.UUID
+	UserID          uuid.UUID
+	UserDisplayName *string
+	Description     *string
+	LanguageCode    string
+	LanguageName    string
+	Activity        activities.Activity
+	UnitID          uuid.UUID
+	UnitKey         string
+	UnitName        string
+	Tags            []string
+	Amount          float32
+	Modifier        float32
+	Score           float32
+	DurationSeconds *int32
+	CreatedAt       time.Time
+	Deleted         bool
+	Registrations   []RegistrationReference
+}
+
+type RegistrationReference struct {
+	RegistrationID       uuid.UUID
+	ContestID            uuid.UUID
+	ContestEnd           time.Time
+	Title                string
+	OwnerUserDisplayName string
+	Official             bool
+	Score                float32
+}
+
+type ListParameters struct {
+	UserID         *uuid.UUID
+	ContestID      uuid.UUID
+	IncludeDeleted bool
+	PageSize       int
+	Page           int
+}
+
+type LogList struct {
+	Logs          []Log
+	TotalSize     int
+	NextPageToken string
+}
+
+func (p ListParameters) normalized() ListParameters {
+	if p.PageSize == 0 {
+		p.PageSize = 50
+	}
+	if p.PageSize > 100 || p.PageSize < 0 {
+		p.PageSize = 100
+	}
+	return p
+}
+
+func hydrateLogActivity(log *Log) error {
+	for _, activity := range activities.All() {
+		if activity.ID == log.Activity.ID {
+			log.Activity = activity
+			return nil
+		}
+	}
+	return ErrInvalidActivity
 }

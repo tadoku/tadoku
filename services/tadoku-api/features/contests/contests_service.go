@@ -356,3 +356,10 @@ func hydrateContest(item *Contest, languages []Language) (*ContestView, error) {
 		Deleted:              item.Deleted,
 	}, nil
 }
+
+// RequireExistingContest checks the stored contest and organizer without hydrating
+// catalogs or introducing visibility rules into public log reads.
+func (s *Service) RequireExistingContest(ctx context.Context, id uuid.UUID) error {
+	_, err := s.contests.FindContestByID(ctx, FindParameters{ID: id})
+	return err
+}

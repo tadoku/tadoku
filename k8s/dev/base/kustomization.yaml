@@ -63,19 +63,19 @@ images:
   - name: tadoku-api-image
     newName: ghcr.io/tadoku/tadoku/tadoku-api
     newTag: latest
-    digest: sha256:7844b734680bc292e9ddbd70a2e29214b395fd16a09999e087ef13529698ae07
+    digest: sha256:e244b646b7be1b78ca4169d14afe17e94edc01e8b75581fc852c0d3ff3ba138f
   - name: immersion-api-image
     newName: ghcr.io/tadoku/tadoku/immersion-api
     newTag: latest
-    digest: sha256:02ab0fe64823194055b966016687d0515b052b24c38fc4dde985baa86053952c
+    digest: sha256:7e443609efb8ce3059847444999a6d806116e66003fd86e5d377a01a25674db9
   - name: content-api-image
     newName: ghcr.io/tadoku/tadoku/content-api
     newTag: latest
-    digest: sha256:6ddf851543e8c43a7ec7cd3db90ffaaf749fcd9bea7cffecb3e0052820bdbfb3
+    digest: sha256:d63cbd32692cdad030dbc27a227bfd75c522a579edd6bfb28bcfb6fdee5f6995
   - name: profile-api-image
     newName: ghcr.io/tadoku/tadoku/profile-api
     newTag: latest
-    digest: sha256:6510aa930343cfe965c442db711caaebcce64792501fb3ac50522699bc49a855
+    digest: sha256:cb0130f12a0765092c5a7174fb6227882a7355c24c42441fc5d809143eb50cd5
   - name: token-reflector-image
     newName: ghcr.io/tadoku/tadoku/token-reflector
     newTag: latest

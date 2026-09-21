@@ -201,7 +201,14 @@ func TestContestRegistrationJourney(t *testing.T) {
 }
 
 func TestContestRegistrationDetachJourney(t *testing.T) {
+	// Detachment requires an existing registration and linked logs, so this
+	// journey first exposes the seeded registration through the API.
 	runJourney(t, api, "ContestRegistrationDetach", []step{
+		{
+			request: "existing_registration",
+			as:      user,
+			want:    http.StatusOK,
+		},
 		{
 			request: "remove_language",
 			as:      user,

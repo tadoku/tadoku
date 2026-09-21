@@ -39,7 +39,24 @@ func (s *server) ImmersionContestFindOngoingRegistrations(
 		return nil, err
 	}
 
-	response := openapi.ImmersionContestFindOngoingRegistrations200JSONResponse{
+	return openapi.ImmersionContestFindOngoingRegistrations200JSONResponse(registrationListResponse(registrations)), nil
+}
+
+func (s *server) ImmersionProfileYearlyContestRegistrationsByUserID(
+	ctx context.Context,
+	request openapi.ImmersionProfileYearlyContestRegistrationsByUserIDRequestObject,
+) (openapi.ImmersionProfileYearlyContestRegistrationsByUserIDResponseObject, error) {
+	registrations, err := s.application.ListYearlyContestRegistrations(ctx, request.UserId, request.Year)
+	if err != nil {
+		s.logOperationError(ctx, "list yearly contest registrations", err)
+		return nil, err
+	}
+
+	return openapi.ImmersionProfileYearlyContestRegistrationsByUserID200JSONResponse(registrationListResponse(registrations)), nil
+}
+
+func registrationListResponse(registrations *app.ContestRegistrationList) openapi.ImmersionContestRegistrations {
+	response := openapi.ImmersionContestRegistrations{
 		Registrations: make([]openapi.ImmersionContestRegistration, 0, len(registrations.Registrations)),
 		TotalSize:     registrations.TotalSize,
 		NextPageToken: registrations.NextPageToken,
@@ -48,7 +65,7 @@ func (s *server) ImmersionContestFindOngoingRegistrations(
 		response.Registrations = append(response.Registrations, registrationResponse(&registrations.Registrations[i]))
 	}
 
-	return response, nil
+	return response
 }
 
 func (s *server) ImmersionContestRegistrationUpsert(

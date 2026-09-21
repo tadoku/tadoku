@@ -1225,6 +1225,9 @@ type ServerInterface interface {
 	// ImmersionLanguageUpdate Updates an existing language (admin only)
 	// (PUT /immersion/languages/{code})
 	ImmersionLanguageUpdate(w http.ResponseWriter, r *http.Request, code string)
+	// ImmersionProfileYearlyContestRegistrationsByUserID Fetches the contest registrations of a user for a given year
+	// (GET /immersion/users/{userId}/contest-registrations/{year})
+	ImmersionProfileYearlyContestRegistrationsByUserID(w http.ResponseWriter, r *http.Request, userId openapi_types.UUID, year int)
 	// ProfileUsersList Lists all users (admin only)
 	// (GET /profile/users)
 	ProfileUsersList(w http.ResponseWriter, r *http.Request, params ProfileUsersListParams)
@@ -2348,6 +2351,41 @@ func (siw *ServerInterfaceWrapper) ImmersionLanguageUpdate(w http.ResponseWriter
 	handler.ServeHTTP(w, r)
 }
 
+// ImmersionProfileYearlyContestRegistrationsByUserID operation middleware
+func (siw *ServerInterfaceWrapper) ImmersionProfileYearlyContestRegistrationsByUserID(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "userId" -------------
+	var userId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "userId", r.PathValue("userId"), &userId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "userId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "year" -------------
+	var year int
+
+	err = runtime.BindStyledParameterWithOptions("simple", "year", r.PathValue("year"), &year, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "year", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ImmersionProfileYearlyContestRegistrationsByUserID(w, r, userId, year)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ProfileUsersList operation middleware
 func (siw *ServerInterfaceWrapper) ProfileUsersList(w http.ResponseWriter, r *http.Request) {
 
@@ -2559,6 +2597,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/immersion/contests/{id}/registration", wrapper.ImmersionContestRegistrationUpsert)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/ongoing-registrations", wrapper.ImmersionContestFindOngoingRegistrations)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/configuration-options", wrapper.ImmersionContestGetConfigurations)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/users/{userId}/contest-registrations/{year}", wrapper.ImmersionProfileYearlyContestRegistrationsByUserID)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/languages", wrapper.ImmersionLanguageList)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/immersion/languages", wrapper.ImmersionLanguageCreate)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/immersion/languages/{code}", wrapper.ImmersionLanguageUpdate)
@@ -3920,6 +3959,29 @@ func (response ImmersionLanguageUpdate404Response) VisitImmersionLanguageUpdateR
 	return nil
 }
 
+type ImmersionProfileYearlyContestRegistrationsByUserIDRequestObject struct {
+	UserId openapi_types.UUID `json:"userId"`
+	Year   int                `json:"year"`
+}
+
+type ImmersionProfileYearlyContestRegistrationsByUserIDResponseObject interface {
+	VisitImmersionProfileYearlyContestRegistrationsByUserIDResponse(w http.ResponseWriter) error
+}
+
+type ImmersionProfileYearlyContestRegistrationsByUserID200JSONResponse ImmersionContestRegistrations
+
+func (response ImmersionProfileYearlyContestRegistrationsByUserID200JSONResponse) VisitImmersionProfileYearlyContestRegistrationsByUserIDResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ProfileUsersListRequestObject struct {
 	Params ProfileUsersListParams
 }
@@ -4065,6 +4127,9 @@ type StrictServerInterface interface {
 	// ImmersionLanguageUpdate Updates an existing language (admin only)
 	// (PUT /immersion/languages/{code})
 	ImmersionLanguageUpdate(ctx context.Context, request ImmersionLanguageUpdateRequestObject) (ImmersionLanguageUpdateResponseObject, error)
+	// ImmersionProfileYearlyContestRegistrationsByUserID Fetches the contest registrations of a user for a given year
+	// (GET /immersion/users/{userId}/contest-registrations/{year})
+	ImmersionProfileYearlyContestRegistrationsByUserID(ctx context.Context, request ImmersionProfileYearlyContestRegistrationsByUserIDRequestObject) (ImmersionProfileYearlyContestRegistrationsByUserIDResponseObject, error)
 	// ProfileUsersList Lists all users (admin only)
 	// (GET /profile/users)
 	ProfileUsersList(ctx context.Context, request ProfileUsersListRequestObject) (ProfileUsersListResponseObject, error)
@@ -5117,6 +5182,33 @@ func (sh *strictHandler) ImmersionLanguageUpdate(w http.ResponseWriter, r *http.
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ImmersionLanguageUpdateResponseObject); ok {
 		if err := validResponse.VisitImmersionLanguageUpdateResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ImmersionProfileYearlyContestRegistrationsByUserID operation middleware
+func (sh *strictHandler) ImmersionProfileYearlyContestRegistrationsByUserID(w http.ResponseWriter, r *http.Request, userId openapi_types.UUID, year int) {
+	var request ImmersionProfileYearlyContestRegistrationsByUserIDRequestObject
+
+	request.UserId = userId
+	request.Year = year
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ImmersionProfileYearlyContestRegistrationsByUserID(ctx, request.(ImmersionProfileYearlyContestRegistrationsByUserIDRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ImmersionProfileYearlyContestRegistrationsByUserID")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ImmersionProfileYearlyContestRegistrationsByUserIDResponseObject); ok {
+		if err := validResponse.VisitImmersionProfileYearlyContestRegistrationsByUserIDResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

@@ -1,0 +1,4 @@
+>>> POST /immersion/contests/81855ad8-681d-4d86-91e9-1e00167939cb/registration
+HTTP/1.1 200 OK
+Content-Length: 0
+

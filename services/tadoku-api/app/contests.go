@@ -8,6 +8,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/features/contests"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/profile"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
@@ -181,4 +182,17 @@ func (a *Application) UpsertContestRegistration(ctx context.Context, parameters 
 
 		return a.contests.ApplyRegistration(ctx, registration, existing, *contest)
 	})
+}
+
+func (a *Application) ListYearlyContestRegistrations(ctx context.Context, userID uuid.UUID, year int) (*ContestRegistrationList, error) {
+	user := identity.FromContext(ctx)
+	if user == nil {
+		return nil, errx.NewUnauthorizedError("unauthorized")
+	}
+
+	// Signed guests have a user identity but no UUID; they receive public history.
+	callerID, err := uuid.Parse(user.Subject)
+	includePrivate := a.permissions.IsAdminOrFalse(ctx) || (err == nil && callerID == userID)
+
+	return a.contests.ListYearlyRegistrations(ctx, userID, year, includePrivate)
 }

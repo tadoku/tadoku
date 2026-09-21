@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tdk-dev-data
+  labels:
+    app.kubernetes.io/part-of: tadoku-dev
+  annotations:
+    argocd.argoproj.io/sync-wave: "-30"
+    argocd.argoproj.io/sync-options: Prune=false,Delete=false

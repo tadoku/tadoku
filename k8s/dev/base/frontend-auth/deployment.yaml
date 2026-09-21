@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-auth
+  annotations:
+    argocd.argoproj.io/sync-wave: "30"
+spec:
+  replicas: 1
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: frontend-auth
+  template:
+    metadata:
+      labels:
+        app: frontend-auth
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: frontend-auth
+          image: ghcr.io/tadoku/tadoku/frontend-auth:latest
+          imagePullPolicy: Always
+          command:
+            - node
+            - /etc/dev/frontend-start.cjs
+          env:
+            - name: NEXT_APP_DIR
+              value: /app/apps/auth
+            - name: NODE_EXTRA_CA_CERTS
+              value: /etc/dev/ca.crt
+            - name: NODE_OPTIONS
+              value: --max-old-space-size=384
+          ports:
+            - name: http
+              containerPort: 3000
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 3
+            timeoutSeconds: 3
+          resources:
+            requests:
+              cpu: 50m
+              memory: 160Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          volumeMounts:
+            - name: startup
+              mountPath: /etc/dev
+              readOnly: true
+      volumes:
+        - name: startup
+          configMap:
+            name: frontend-runtime

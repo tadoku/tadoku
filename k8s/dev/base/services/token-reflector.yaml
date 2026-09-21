@@ -1,0 +1,61 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  annotations:
+    argocd.argoproj.io/sync-wave: "-30"
+  name: tdk-dev-token-reflector
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+  name: token-reflector
+  namespace: tdk-dev-token-reflector
+  labels:
+    app: token-reflector
+spec:
+  replicas: 1
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: token-reflector
+  template:
+    metadata:
+      labels:
+        app: token-reflector
+    spec:
+      serviceAccountName: token-reflector
+      containers:
+      - name: token-reflector
+        image: token-reflector-image
+        resources:
+          requests: {cpu: 25m, memory: 64Mi}
+          limits: {cpu: "1", memory: 256Mi}
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: token-reflector
+  namespace: tdk-dev-token-reflector
+spec:
+  ports:
+  - port: 80
+    targetPort: 8080
+  selector:
+    app: token-reflector
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: token-reflector
+  namespace: tdk-dev-token-reflector

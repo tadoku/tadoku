@@ -1,0 +1,128 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tadoku-web
+  namespace: tdk-dev-routing
+  annotations:
+    argocd.argoproj.io/sync-wave: "50"
+    cert-manager.io/cluster-issuer: lab-ca-acme
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts: [tadoku.dev.lab]
+      secretName: tadoku-web-tls
+  rules:
+    - host: tadoku.dev.lab
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: dev-cli-gateway
+                port: {number: 80}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tadoku-auth
+  namespace: tdk-dev-frontend-auth
+  annotations:
+    argocd.argoproj.io/sync-wave: "50"
+    cert-manager.io/cluster-issuer: lab-ca-acme
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts: [account.tadoku.dev.lab]
+      secretName: tadoku-auth-tls
+  rules:
+    - host: account.tadoku.dev.lab
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend-auth
+                port: {number: 3000}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tadoku-admin
+  namespace: tdk-dev-frontend-admin
+  annotations:
+    argocd.argoproj.io/sync-wave: "50"
+    cert-manager.io/cluster-issuer: lab-ca-acme
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts: [admin.tadoku.dev.lab]
+      secretName: tadoku-admin-tls
+  rules:
+    - host: admin.tadoku.dev.lab
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend-admin
+                port: {number: 3000}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tadoku-kratos
+  namespace: tdk-dev-kratos
+  annotations:
+    argocd.argoproj.io/sync-wave: "50"
+    cert-manager.io/cluster-issuer: lab-ca-acme
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: "/$2"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts: [account.tadoku.dev.lab]
+      secretName: tadoku-kratos-tls
+  rules:
+    - host: account.tadoku.dev.lab
+      http:
+        paths:
+          - path: /kratos(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: kratos-public
+                port: {number: 80}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tadoku-flipt
+  namespace: tdk-dev-oathkeeper
+  annotations:
+    argocd.argoproj.io/sync-wave: "50"
+    cert-manager.io/cluster-issuer: lab-ca-acme
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts: [flipt.tadoku.dev.lab]
+      secretName: tadoku-flipt-tls
+  rules:
+    - host: flipt.tadoku.dev.lab
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: oathkeeper-proxy
+                port: {number: 4455}

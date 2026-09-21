@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: valkey
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: valkey}
+  template:
+    metadata:
+      labels: {app: valkey}
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: valkey
+          image: docker.io/valkey/valkey:9.0.0
+          args: ["--save", "", "--appendonly", "no", "--maxmemory", "96mb", "--maxmemory-policy", "allkeys-lru"]
+          ports: [{name: redis, containerPort: 6379}]
+          readinessProbe:
+            exec: {command: [valkey-cli, ping]}
+          livenessProbe:
+            exec: {command: [valkey-cli, ping]}
+          resources:
+            requests: {cpu: 25m, memory: 32Mi}
+            limits: {cpu: 250m, memory: 192Mi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: valkey
+spec:
+  selector: {app: valkey}
+  ports: [{name: redis, port: 6379, targetPort: redis}]

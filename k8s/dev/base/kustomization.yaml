@@ -1,0 +1,82 @@
+# DEVELOPMENT ONLY: homelab-dev. Never use this root for production.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: tadoku-dev
+    includeSelectors: false
+resources:
+  - data
+  - migrations
+  - services
+  - kratos
+  - keto
+  - oathkeeper
+  - flipt
+  - frontend-webv2
+  - frontend-auth
+  - frontend-admin
+  - routing
+  - ingress.yaml
+configMapGenerator:
+  - name: keto-migration-config
+    namespace: tdk-dev-data
+    files: [keto/keto.yaml, keto/namespaces.keto.ts]
+  - name: frontend-runtime
+    namespace: tdk-dev-frontend-webv2
+    files: [frontend-start.cjs, ca.crt=lab-root-ca.crt]
+  - name: frontend-runtime
+    namespace: tdk-dev-frontend-auth
+    files: [frontend-start.cjs, ca.crt=lab-root-ca.crt]
+  - name: frontend-runtime
+    namespace: tdk-dev-frontend-admin
+    files: [frontend-start.cjs, ca.crt=lab-root-ca.crt]
+  - name: tadoku-cli-ca
+    namespace: tdk-dev-frontend-webv2
+    options:
+      disableNameSuffixHash: true
+    files: [ca.crt=lab-root-ca.crt]
+  - name: tadoku-cli-web
+    namespace: tdk-dev-frontend-webv2
+    options:
+      disableNameSuffixHash: true
+    literals:
+      - NEXT_PUBLIC_KRATOS_INTERNAL_ENDPOINT=http://kratos-public.tdk-dev-kratos
+      - NEXT_PUBLIC_KRATOS_ENDPOINT=https://account.tadoku.dev.lab/kratos
+      - NEXT_PUBLIC_AUTH_UI_URL=https://account.tadoku.dev.lab
+      - NEXT_PUBLIC_HOME_URL=https://tadoku.dev.lab
+      - NEXT_PUBLIC_API_ENDPOINT=/api/internal
+      - NEXT_SERVER_API_ENDPOINT=https://tadoku.dev.lab/api/internal
+      - NEXT_PUBLIC_COOKIE_DOMAIN=.tadoku.dev.lab
+      - NEXT_PUBLIC_COOKIE_SECURE=true
+      - NEXT_PUBLIC_ADMIN_URL=https://admin.tadoku.dev.lab
+      - NODE_EXTRA_CA_CERTS=/etc/dev-ca/ca.crt
+      - NODE_OPTIONS=--max-old-space-size=384
+generatorOptions:
+  annotations:
+    argocd.argoproj.io/sync-wave: "-20"
+images:
+  - name: tadoku-api-migrations-image
+    newName: ghcr.io/tadoku/tadoku/tadoku-api-migrations
+    newTag: latest
+  - name: tadoku-api-image
+    newName: ghcr.io/tadoku/tadoku/tadoku-api
+    newTag: latest
+  - name: immersion-api-image
+    newName: ghcr.io/tadoku/tadoku/immersion-api
+    newTag: latest
+  - name: content-api-image
+    newName: ghcr.io/tadoku/tadoku/content-api
+    newTag: latest
+  - name: profile-api-image
+    newName: ghcr.io/tadoku/tadoku/profile-api
+    newTag: latest
+  - name: token-reflector-image
+    newName: ghcr.io/tadoku/tadoku/token-reflector
+    newTag: latest
+  - name: ghcr.io/tadoku/tadoku/frontend-webv2
+    newTag: latest
+  - name: ghcr.io/tadoku/tadoku/frontend-auth
+    newTag: latest
+  - name: ghcr.io/tadoku/tadoku/frontend-admin
+    newTag: latest

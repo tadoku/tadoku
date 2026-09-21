@@ -1,0 +1,60 @@
+version: v26.2.0
+log:
+  level: info
+  leak_sensitive_values: false
+identity:
+  default_schema_id: user
+  schemas:
+    - {id: user, url: "file:///etc/config/identity.default.schema.json"}
+selfservice:
+  default_browser_return_url: https://tadoku.dev.lab/
+  allowed_return_urls:
+    - https://tadoku.dev.lab/
+    - https://account.tadoku.dev.lab/
+    - https://admin.tadoku.dev.lab/
+  methods:
+    link: {enabled: true}
+    password:
+      enabled: true
+      config: {haveibeenpwned_enabled: false}
+  flows:
+    verification:
+      ui_url: https://account.tadoku.dev.lab/verification
+    recovery:
+      enabled: true
+      use: link
+      ui_url: https://account.tadoku.dev.lab/account-recovery
+    registration:
+      style: unified
+      ui_url: https://account.tadoku.dev.lab/register
+      lifespan: 1h
+      after:
+        password:
+          hooks: [{hook: session}]
+    login:
+      ui_url: https://account.tadoku.dev.lab/login
+    settings:
+      ui_url: https://account.tadoku.dev.lab/
+cookies:
+  domain: tadoku.dev.lab
+  path: /
+  same_site: Lax
+session:
+  lifespan: 720h
+courier:
+  smtp:
+    connection_uri: smtp://mailhog.tdk-dev-data:1025/?disable_starttls=true
+serve:
+  public:
+    base_url: https://account.tadoku.dev.lab/kratos/
+    cors:
+      enabled: true
+      allowed_origins:
+        - https://tadoku.dev.lab
+        - https://account.tadoku.dev.lab
+        - https://admin.tadoku.dev.lab
+      allowed_methods: [POST, GET, PUT, PATCH, DELETE]
+      allowed_headers: [Authorization, Cookie, Content-Type]
+      exposed_headers: [Content-Type, Set-Cookie]
+  admin:
+    base_url: http://kratos-admin.tdk-dev-kratos/

@@ -1,0 +1,154 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tdk-dev-routing
+  annotations:
+    argocd.argoproj.io/sync-wave: "-30"
+  labels:
+    dev-cli.io/routing-enabled: "true"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dev-cli-gateway
+  namespace: tdk-dev-routing
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  type: ExternalName
+  externalName: dev-cli-playground-gateway.envoy-gateway-system.svc.cluster.local
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: Backend
+metadata:
+  name: tadoku-cli-web
+  namespace: tdk-dev-routing
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  endpoints:
+    - fqdn:
+        hostname: frontend-webv2.tdk-dev-frontend-webv2.svc.cluster.local
+        port: 3000
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: Backend
+metadata:
+  name: tadoku-cli-proxy
+  namespace: tdk-dev-routing
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  endpoints:
+    - fqdn:
+        hostname: oathkeeper-proxy.tdk-dev-oathkeeper.svc.cluster.local
+        port: 4455
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: tadoku-cli-proxy-base
+  namespace: tdk-dev-routing
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  parentRefs:
+    - name: dev-cli-playground
+      namespace: envoy-gateway-system
+  hostnames:
+    - tadoku.dev.lab
+  rules:
+    - backendRefs:
+        - group: gateway.envoyproxy.io
+          kind: Backend
+          name: tadoku-cli-proxy
+          port: 4455
+      matches:
+        - path:
+            type: PathPrefix
+            value: /api/internal
+      filters:
+        - type: RequestHeaderModifier
+          requestHeaderModifier:
+            remove:
+              - x-dev-branch
+        - type: ResponseHeaderModifier
+          responseHeaderModifier:
+            set:
+              - name: Cache-Control
+                value: no-store
+              - name: Vary
+                value: Cookie
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: Backend
+metadata:
+  name: tadoku-cli-api
+  namespace: tdk-dev-routing
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  endpoints:
+    - fqdn:
+        hostname: tadoku-api.tdk-dev-tadoku-api.svc.cluster.local
+        port: 80
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: tadoku-cli-api-base
+  namespace: tdk-dev-routing
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  parentRefs:
+    - name: dev-cli-playground
+      namespace: envoy-gateway-system
+  hostnames:
+    - tadoku-cli-api.tdk-dev-oathkeeper.svc.cluster.local
+  rules:
+    - backendRefs:
+        - group: gateway.envoyproxy.io
+          kind: Backend
+          name: tadoku-cli-api
+          port: 80
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: tadoku-cli-web-base
+  namespace: tdk-dev-routing
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  parentRefs:
+    - name: dev-cli-playground
+      namespace: envoy-gateway-system
+  hostnames:
+    - tadoku.dev.lab
+  rules:
+    - backendRefs:
+        - group: gateway.envoyproxy.io
+          kind: Backend
+          name: tadoku-cli-web
+          port: 3000
+      matches:
+        - path:
+            type: PathPrefix
+            value: /
+      filters:
+        - type: RequestHeaderModifier
+          requestHeaderModifier:
+            remove:
+              - x-dev-branch
+        - type: ResponseHeaderModifier
+          responseHeaderModifier:
+            set:
+              - name: Cache-Control
+                value: no-store
+              - name: Vary
+                value: Cookie

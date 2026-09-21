@@ -1,0 +1,256 @@
+- id: tadoku:content:api
+  upstream:
+    preserve_host: false
+    url: http://tadoku-cli-api.tdk-dev-oathkeeper.svc.cluster.local
+    strip_path: /api/internal
+  match:
+    url: http://tadoku.dev.lab/api/internal/content/<**>
+    methods:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+      - PATCH
+  authenticators:
+    - handler: cookie_session
+    - handler: anonymous
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: id_token
+- id: tadoku:immersion:api
+  upstream:
+    preserve_host: false
+    url: http://tadoku-cli-api.tdk-dev-oathkeeper.svc.cluster.local
+    strip_path: /api/internal
+  match:
+    url: http://tadoku.dev.lab/api/internal/immersion/<**>
+    methods:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+      - PATCH
+  authenticators:
+    - handler: cookie_session
+    - handler: anonymous
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: id_token
+- id: tadoku:immersion:feature-flags:internal
+  upstream:
+    preserve_host: true
+    url: http://tadoku-api.tdk-dev-tadoku-api:80
+    strip_path: /api/internal
+  match:
+    url: http://oathkeeper-proxy.tdk-dev-oathkeeper:4455/api/internal/immersion/feature-flags
+    methods:
+      - GET
+  authenticators:
+    - handler: cookie_session
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: id_token
+- id: tadoku:authz:api
+  upstream:
+    preserve_host: false
+    url: http://tadoku-cli-api.tdk-dev-oathkeeper.svc.cluster.local
+    strip_path: /api/internal
+  match:
+    url: http://tadoku.dev.lab/api/internal/authz/<**>
+    methods:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+      - PATCH
+  authenticators:
+    - handler: cookie_session
+    - handler: anonymous
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: id_token
+- id: tadoku:profile:api
+  upstream:
+    preserve_host: false
+    url: http://tadoku-cli-api.tdk-dev-oathkeeper.svc.cluster.local
+    strip_path: /api/internal
+  match:
+    url: http://tadoku.dev.lab/api/internal/profile/<**>
+    methods:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+      - PATCH
+  authenticators:
+    - handler: cookie_session
+    - handler: anonymous
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: id_token
+- id: tadoku:flipt:operator
+  match:
+    url: https://flipt.tadoku.dev.lab/<**>
+    methods:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+      - PATCH
+  authenticators:
+    - handler: cookie_session
+  authorizer:
+    handler: remote_json
+    config:
+      remote: http://tadoku-api.tdk-dev-tadoku-api/authz/internal/v1/proxy/admin-check
+      headers:
+        Authorization: Bearer {{ env "OATHKEEPER_AUTHZ_TOKEN" }}
+      payload: |
+        {
+          "subject": "{{ print .Subject }}"
+        }
+  mutators:
+    - handler: noop
+  upstream:
+    preserve_host: true
+    url: http://flipt.tdk-dev-flipt.svc.cluster.local:8080
+- id: tadoku:flipt:evaluation:snapshot
+  match:
+    url: http://oathkeeper-proxy.tdk-dev-oathkeeper:4455/flipt/internal/v1/evaluation/snapshot/namespace/default
+    methods:
+      - GET
+  authenticators:
+    - handler: jwt
+      config:
+        jwks_urls:
+          - http://oathkeeper-api.tdk-dev-oathkeeper:4456/.well-known/jwks.json
+        target_audience:
+          - flipt-evaluation
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: noop
+  upstream:
+    preserve_host: false
+    url: http://flipt.tdk-dev-flipt.svc.cluster.local:8080
+    strip_path: /flipt
+- id: tadoku:flipt:management:feature-access:get
+  match:
+    url: http://oathkeeper-proxy.tdk-dev-oathkeeper:4455/flipt-management/api/v2/environments/local/namespaces/default/resources/flipt.core.Segment/release-log-entry-v2-access
+    methods:
+      - GET
+  authenticators:
+    - handler: jwt
+      config:
+        jwks_urls:
+          - http://oathkeeper-api.tdk-dev-oathkeeper:4456/.well-known/jwks.json
+        target_audience:
+          - flipt-management
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: noop
+  upstream:
+    preserve_host: false
+    url: http://flipt.tdk-dev-flipt.svc.cluster.local:8080
+    strip_path: /flipt-management
+- id: tadoku:flipt:management:feature-access:update
+  match:
+    url: http://oathkeeper-proxy.tdk-dev-oathkeeper:4455/flipt-management/api/v2/environments/local/namespaces/default/resources
+    methods:
+      - PUT
+  authenticators:
+    - handler: jwt
+      config:
+        jwks_urls:
+          - http://oathkeeper-api.tdk-dev-oathkeeper:4456/.well-known/jwks.json
+        target_audience:
+          - flipt-management
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: noop
+  upstream:
+    preserve_host: false
+    url: http://flipt.tdk-dev-flipt.svc.cluster.local:8080
+    strip_path: /flipt-management
+- id: s2s:to-profile
+  match:
+    url: http://oathkeeper-proxy.tdk-dev-oathkeeper:4455/token-exchange/profile-api
+    methods:
+      - GET
+  authenticators:
+    - handler: jwt
+      config:
+        jwks_urls:
+          - http://token-reflector.tdk-dev-token-reflector/jwks
+        target_audience:
+          - immersion-api
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: id_token
+      config:
+        claims: |
+          {
+            "type": "service",
+            "sub": "{{ .Subject }}",
+            "aud": ["profile-api"]
+          }
+  upstream:
+    url: http://token-reflector.tdk-dev-token-reflector
+- id: s2s:immersion-to-flipt-evaluation
+  match:
+    url: http://oathkeeper-proxy.tdk-dev-oathkeeper:4455/token-exchange/flipt-evaluation/immersion-api
+    methods:
+      - GET
+  authenticators:
+    - handler: jwt
+      config:
+        jwks_urls:
+          - http://token-reflector.tdk-dev-token-reflector/jwks
+        target_audience:
+          - immersion-api
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: id_token
+      config:
+        claims: |
+          {
+            "type": "service",
+            "sub": "{{ .Subject }}",
+            "aud": ["flipt-evaluation"]
+          }
+  upstream:
+    url: http://token-reflector.tdk-dev-token-reflector
+- id: s2s:immersion-to-flipt-management
+  match:
+    url: http://oathkeeper-proxy.tdk-dev-oathkeeper:4455/token-exchange/flipt-management/immersion-api
+    methods:
+      - GET
+  authenticators:
+    - handler: jwt
+      config:
+        jwks_urls:
+          - http://token-reflector.tdk-dev-token-reflector/jwks
+        target_audience:
+          - immersion-api
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: id_token
+      config:
+        claims: |
+          {
+            "type": "service",
+            "sub": "{{ .Subject }}",
+            "aud": ["flipt-management"]
+          }
+  upstream:
+    url: http://token-reflector.tdk-dev-token-reflector

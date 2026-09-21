@@ -1,0 +1,12 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: tdk-dev-flipt
+resources:
+  - resources.yaml
+configMapGenerator:
+  - name: flipt-seed
+    options:
+      annotations:
+        argocd.argoproj.io/sync-wave: "-20"
+    files:
+      - features.yaml

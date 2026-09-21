@@ -1,0 +1,94 @@
+log:
+  level: info
+  format: json
+  leak_sensitive_values: false
+serve:
+  proxy:
+    trust_forwarded_headers: true
+    cors:
+      enabled: true
+      allowed_origins:
+        - https://tadoku.dev.lab
+        - https://account.tadoku.dev.lab
+        - https://admin.tadoku.dev.lab
+      allowed_methods:
+        - POST
+        - GET
+        - PUT
+        - PATCH
+        - DELETE
+      allowed_headers:
+        - Authorization
+        - Content-Type
+      exposed_headers:
+        - Content-Type
+      allow_credentials: true
+    port: 4455
+  api:
+    port: 4456
+errors:
+  fallback:
+    - json
+  handlers:
+    redirect:
+      enabled: true
+      config:
+        to: https://account.tadoku.dev.lab/
+        when:
+          - error:
+              - unauthorized
+              - forbidden
+            request:
+              header:
+                accept:
+                  - text/html
+    json:
+      enabled: true
+      config:
+        verbose: false
+access_rules:
+  matching_strategy: glob
+  repositories:
+    - file:///etc/config/rules.yaml
+authenticators:
+  anonymous:
+    enabled: true
+    config:
+      subject: guest
+  cookie_session:
+    enabled: true
+    config:
+      check_session_url: http://kratos-public.tdk-dev-kratos/sessions/whoami
+      preserve_path: true
+      extra_from: "@this"
+      subject_from: identity.id
+      only:
+        - ory_kratos_session
+  jwt:
+    enabled: true
+    config:
+      jwks_urls:
+        - http://token-reflector.tdk-dev-token-reflector/jwks
+  noop:
+    enabled: true
+authorizers:
+  allow:
+    enabled: true
+  remote_json:
+    enabled: true
+    config:
+      remote: http://127.0.0.1
+      payload: "{}"
+mutators:
+  noop:
+    enabled: true
+  id_token:
+    enabled: true
+    config:
+      issuer_url: http://oathkeeper-api/
+      jwks_url: file:///etc/secrets/oathkeeper/jwks.json
+      claims: |
+        {
+          "type": "user",
+          "session": {{ .Extra | toJson }}
+        }

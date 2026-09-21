@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oathkeeper
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: oathkeeper
+  template:
+    metadata:
+      labels:
+        app: oathkeeper
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+        fsGroup: 65534
+      containers:
+        - name: oathkeeper
+          image: docker.io/oryd/oathkeeper:v26.2.0
+          args:
+            - serve
+            - --config
+            - /etc/config/oathkeeper.yaml
+          ports:
+            - name: proxy
+              containerPort: 4455
+            - name: api
+              containerPort: 4456
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 4456
+            periodSeconds: 2
+          resources:
+            requests:
+              cpu: 20m
+              memory: 32Mi
+            limits:
+              cpu: 500m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: configuration
+              mountPath: /etc/config
+              readOnly: true
+            - name: jwks
+              mountPath: /etc/secrets/oathkeeper
+              readOnly: true
+          env:
+            - name: OATHKEEPER_AUTHZ_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: dev-oathkeeper-authz
+                  key: token
+      volumes:
+        - name: configuration
+          configMap:
+            name: oathkeeper-config
+        - name: jwks
+          secret:
+            secretName: dev-oathkeeper-jwks

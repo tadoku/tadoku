@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-admin
+spec:
+  selector:
+    app: frontend-admin
+  ports:
+    - name: http
+      port: 3000
+      targetPort: http

@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keto
+spec:
+  replicas: 1
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels: {app: keto}
+  template:
+    metadata:
+      labels: {app: keto}
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: keto
+          image: docker.io/oryd/keto:v26.2.0
+          args: [serve, --config, /etc/config/keto.yaml]
+          env:
+            - {name: DSN, value: "postgres://keto@tadoku-dev-db.tdk-dev-data.svc.cluster.local:5432/keto?sslmode=require"}
+            - name: PGPASSWORD
+              valueFrom: {secretKeyRef: {name: keto.tadoku-dev-db.credentials.postgresql.acid.zalan.do, key: password}}
+          ports:
+            - {name: read, containerPort: 4466}
+            - {name: write, containerPort: 4467}
+          readinessProbe:
+            httpGet: {path: /health/ready, port: 4466}
+          livenessProbe:
+            httpGet: {path: /health/alive, port: 4466}
+          resources:
+            requests: {cpu: 25m, memory: 64Mi}
+            limits: {cpu: 500m, memory: 256Mi}
+          volumeMounts:
+            - {name: config, mountPath: /etc/config, readOnly: true}
+      volumes:
+        - name: config
+          configMap: {name: keto-config}

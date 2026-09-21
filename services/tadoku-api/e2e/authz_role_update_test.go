@@ -64,7 +64,6 @@ func auditUnavailableRoleUpdateHandler(t *testing.T) *transport.Router {
 		keto,
 		api.kratos,
 		logger,
-		nil,
 	)
 	if err != nil {
 		t.Fatal(err)

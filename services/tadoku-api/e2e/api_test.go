@@ -46,7 +46,6 @@ var keto *testketo.Fixture
 
 const callbackToken = "test-oathkeeper-callback-token"
 
-var configuredAuthz http.Handler
 var unavailableCallback http.Handler
 
 func TestMain(m *testing.M) {
@@ -104,21 +103,6 @@ func runTests(m *testing.M) (code int) {
 	}
 	defer func() { cleanupErr = errors.Join(cleanupErr, api.db.Close()) }()
 
-	configuredNative, _, _, err := newTestRouterWithLogger(
-		ctx,
-		api.db.Pool,
-		api.db.Pool,
-		keto,
-		kratos,
-		slog.New(slog.NewTextHandler(io.Discard, nil)),
-		featureauthz.PublicPermissionAllowlist{{Namespace: "app", Relation: "admins"}},
-	)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return 1
-	}
-	configuredAuthz = configuredNative
-
 	unavailableKeto, err := testketo.New(ctx)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -131,7 +115,6 @@ func runTests(m *testing.M) (code int) {
 		unavailableKeto,
 		kratos,
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
-		nil,
 	)
 	if err != nil {
 		_ = unavailableKeto.Close()
@@ -217,7 +200,7 @@ func newTestRouter(
 	kratosFixture *testkratos.Fixture,
 ) (*transport.Router, *featureprofile.Service, *commonroles.KetoService, error) {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	return newTestRouterWithLogger(ctx, pool, pool, ketoFixture, kratosFixture, logger, nil)
+	return newTestRouterWithLogger(ctx, pool, pool, ketoFixture, kratosFixture, logger)
 }
 
 func newTestRouterWithLogger(
@@ -227,7 +210,6 @@ func newTestRouterWithLogger(
 	ketoFixture *testketo.Fixture,
 	kratosFixture *testkratos.Fixture,
 	logger *slog.Logger,
-	publicPermissions featureauthz.PublicPermissionAllowlist,
 ) (*transport.Router, *featureprofile.Service, *commonroles.KetoService, error) {
 	reader := ketoclient.NewReadClient(ketoFixture.ReadURL())
 	readWriter := ketoclient.NewClient(ketoFixture.ReadURL(), ketoFixture.WriteURL())
@@ -240,7 +222,7 @@ func newTestRouterWithLogger(
 		identities,
 		roleService,
 		commonroles.NewKetoManager(readWriter, "app", "tadoku"),
-		publicPermissions,
+		nil,
 	)
 	auditService := featureaudit.NewService(featureaudit.NewRepository(auditPool))
 	announcementsRepository := announcements.NewAnnouncementsRepository(pool)

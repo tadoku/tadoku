@@ -1,0 +1,30 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:best-practices"],
+  "timezone": "Asia/Tokyo",
+  "schedule": ["before 6am on monday"],
+  "prHourlyLimit": 1,
+  "prConcurrentLimit": 1,
+  "dependencyDashboard": true,
+  "automerge": false,
+  "rebaseWhen": "behind-base-branch",
+  "labels": ["dependencies"],
+  "packageRules": [
+    {
+      "description": "Canonicalize Go module updates",
+      "matchManagers": ["gomod"],
+      "postUpdateOptions": ["gomodTidy"]
+    },
+    {
+      "description": "Group low-risk Bazel's rules patch/minor updates",
+      "matchManagers": ["bazel"],
+      "matchUpdateTypes": ["patch", "minor"],
+      "groupName": "bazel rules (non-major)"
+    },
+    {
+      "description": "Do not automerge majors; keep them reviewable",
+      "matchUpdateTypes": ["major"],
+      "dependencyDashboardApproval": true
+    }
+  ]
+}

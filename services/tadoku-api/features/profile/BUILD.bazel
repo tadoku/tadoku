@@ -13,6 +13,7 @@ go_library(
     deps = [
         "//services/common/authz/roles",
         "//services/common/client/kratos",
+        "//services/tadoku-api/domain/activities",
         "//services/tadoku-api/generated/sqlc/profile",
         "//services/tadoku-api/infra/postgres",
         "//services/tadoku-api/internal/errx",

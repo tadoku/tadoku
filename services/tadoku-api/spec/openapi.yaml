@@ -1875,7 +1875,7 @@ paths:
           description: not found
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /users/{userId}/profile
       x-legacy-operation-id: profileFindByUserID
   "/immersion/users/{userId}/activity/{year}":
@@ -1909,7 +1909,7 @@ paths:
           description: not found
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /users/{userId}/activity/{year}
       x-legacy-operation-id: profileYearlyActivityByUserID
   "/immersion/users/{userId}/scores/{year}":
@@ -1943,7 +1943,7 @@ paths:
           description: not found
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /users/{userId}/scores/{year}
       x-legacy-operation-id: profileYearlyScoresByUserID
   "/immersion/users/{user_id}/logs":
@@ -2053,7 +2053,7 @@ paths:
           description: not found
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /users/{userId}/activity-split/{year}
       x-legacy-operation-id: profileYearlyActivitySplitByUserID
   "/immersion/leaderboard/yearly/{year}":

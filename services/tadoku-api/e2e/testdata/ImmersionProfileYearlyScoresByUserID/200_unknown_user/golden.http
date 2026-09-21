@@ -1,0 +1,6 @@
+>>> GET /immersion/users/99999999-9999-4999-8999-999999999999/scores/2026
+HTTP/1.1 200 OK
+Content-Length: 32
+Content-Type: application/json; charset=UTF-8
+
+{"overall_score":0,"scores":[]}

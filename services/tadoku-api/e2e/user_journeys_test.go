@@ -841,3 +841,11 @@ func TestPostLifecycleJourney(t *testing.T) {
 		{verify: "soft_deleted", at: deleted},
 	})
 }
+
+func TestProfileLanguageRenameJourney(t *testing.T) {
+	runJourney(t, api, "ProfileLanguageRename", []step{
+		{request: "scores_before", as: user, want: http.StatusOK},
+		{request: "rename_language", as: admin, want: http.StatusOK, others: cast{guest: http.StatusUnauthorized, user: http.StatusForbidden, banned: http.StatusForbidden}},
+		{request: "scores_after", as: user2, want: http.StatusOK},
+	})
+}

@@ -1,0 +1,6 @@
+>>> GET /immersion/users/11111111-1111-4111-8111-111111111111/scores/67562
+HTTP/1.1 200 OK
+Content-Length: 276
+Content-Type: application/json; charset=UTF-8
+
+{"overall_score":36.5,"scores":[{"language_code":"jpn","language_name":"Japanese","score":23},{"language_code":"eng","language_name":"English","score":7.5},{"language_code":"fra","language_name":"French","score":4},{"language_code":"deu","language_name":"German","score":2}]}

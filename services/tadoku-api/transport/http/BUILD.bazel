@@ -43,6 +43,7 @@ go_library(
         "post_update.go",
         "post_version_get.go",
         "post_version_list.go",
+        "profile_statistics.go",
         "profile_users_list.go",
         "proxy.go",
         "router.go",

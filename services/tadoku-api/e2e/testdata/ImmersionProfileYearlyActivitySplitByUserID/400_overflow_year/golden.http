@@ -1,0 +1,6 @@
+>>> GET /immersion/users/11111111-1111-4111-8111-111111111111/activity-split/9999999999999999999999999
+HTTP/1.1 400 Bad Request
+Content-Length: 48
+Content-Type: application/json; charset=UTF-8
+
+{"message":"Invalid format for parameter year"}

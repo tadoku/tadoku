@@ -1,7 +1,11 @@
 // Package profile owns user profile operations.
 package profile
 
-import "github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
+import (
+	"time"
+
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
+)
 
 var (
 	ErrLocalUserNotFound         = errx.NewNotFoundError("local user not found")
@@ -31,4 +35,37 @@ type User struct {
 type UserList struct {
 	Users     []User
 	TotalSize int
+}
+
+type PublicProfile struct {
+	DisplayName string
+	CreatedAt   time.Time
+}
+
+type ActivityScore struct {
+	Date    time.Time
+	Score   float32
+	Updates int
+}
+
+type YearlyActivity struct {
+	Scores       []ActivityScore
+	TotalUpdates int
+}
+
+type Score struct {
+	LanguageCode string
+	LanguageName string
+	Score        float32
+}
+
+type YearlyScores struct {
+	Scores       []Score
+	OverallScore float32
+}
+
+type ActivitySplitScore struct {
+	ActivityID   int
+	ActivityName string
+	Score        float32
 }

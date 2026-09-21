@@ -59,25 +59,11 @@ func (s *Service) ValidateContestCreation(
 	return nil
 }
 
-func (s *Service) PrepareContestCreation(
-	parameters CreateContestParameters,
-	creatorID uuid.UUID,
-	creatorDisplayName string,
-	now time.Time,
-) CreateContestParameters {
-	parameters.ownerUserID = creatorID
-	parameters.ownerUserDisplayName = creatorDisplayName
-	parameters.id = uuid.New()
-	parameters.createdAt = now
-	parameters.updatedAt = now
-	return parameters
-}
-
-func (s *Service) CreateContest(ctx context.Context, parameters CreateContestParameters) (*Contest, error) {
-	if err := s.contests.CreateContest(ctx, parameters); err != nil {
+func (s *Service) CreateContest(ctx context.Context, contest Contest) (*Contest, error) {
+	if err := s.contests.CreateContest(ctx, contest); err != nil {
 		return nil, err
 	}
-	return s.contests.FindCreatedContestByID(ctx, parameters.ID())
+	return s.contests.FindCreatedContestByID(ctx, contest.ID)
 }
 
 func (s *Service) CheckCreatePermission(ctx context.Context, userID uuid.UUID) error {

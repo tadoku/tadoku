@@ -98,19 +98,7 @@ type CreateContestParameters struct {
 	Private                 bool
 	LanguageCodeAllowList   []string
 	ActivityTypeIDAllowList []int32
-
-	id                   uuid.UUID
-	ownerUserID          uuid.UUID
-	ownerUserDisplayName string
-	createdAt            time.Time
-	updatedAt            time.Time
 }
-
-func (p CreateContestParameters) ID() uuid.UUID                { return p.id }
-func (p CreateContestParameters) OwnerUserID() uuid.UUID       { return p.ownerUserID }
-func (p CreateContestParameters) OwnerUserDisplayName() string { return p.ownerUserDisplayName }
-func (p CreateContestParameters) CreatedAt() time.Time         { return p.createdAt }
-func (p CreateContestParameters) UpdatedAt() time.Time         { return p.updatedAt }
 
 func (p CreateContestParameters) validate(ownerUserID uuid.UUID, ownerUserDisplayName string, admin bool, now time.Time) error {
 	if ownerUserID == uuid.Nil {

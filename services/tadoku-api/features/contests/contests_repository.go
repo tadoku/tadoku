@@ -49,26 +49,26 @@ func (r *ContestsRepository) LanguagesExist(ctx context.Context, codes []string)
 	return exists, nil
 }
 
-func (r *ContestsRepository) CreateContest(ctx context.Context, parameters CreateContestParameters) error {
+func (r *ContestsRepository) CreateContest(ctx context.Context, contest Contest) error {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return err
 	}
 	err = queries.New(executor).CreateContest(ctx, queries.CreateContestParams{
-		ID:                      pgtype.UUID{Bytes: parameters.ID(), Valid: true},
-		OwnerUserID:             pgtype.UUID{Bytes: parameters.OwnerUserID(), Valid: true},
-		OwnerUserDisplayName:    parameters.OwnerUserDisplayName(),
-		Official:                parameters.Official,
-		Private:                 parameters.Private,
-		ContestStart:            pgtype.Date{Time: parameters.ContestStart, Valid: true},
-		ContestEnd:              pgtype.Date{Time: parameters.ContestEnd, Valid: true},
-		RegistrationEnd:         pgtype.Date{Time: parameters.RegistrationEnd, Valid: true},
-		Title:                   parameters.Title,
-		Description:             text(parameters.Description),
-		LanguageCodeAllowList:   parameters.LanguageCodeAllowList,
-		ActivityTypeIDAllowList: parameters.ActivityTypeIDAllowList,
-		CreatedAt:               pgtype.Timestamp{Time: parameters.CreatedAt(), Valid: true},
-		UpdatedAt:               pgtype.Timestamp{Time: parameters.UpdatedAt(), Valid: true},
+		ID:                      pgtype.UUID{Bytes: contest.ID, Valid: true},
+		OwnerUserID:             pgtype.UUID{Bytes: contest.OwnerUserID, Valid: true},
+		OwnerUserDisplayName:    contest.OwnerUserDisplayName,
+		Official:                contest.Official,
+		Private:                 contest.Private,
+		ContestStart:            pgtype.Date{Time: contest.ContestStart, Valid: true},
+		ContestEnd:              pgtype.Date{Time: contest.ContestEnd, Valid: true},
+		RegistrationEnd:         pgtype.Date{Time: contest.RegistrationEnd, Valid: true},
+		Title:                   contest.Title,
+		Description:             text(contest.Description),
+		LanguageCodeAllowList:   contest.LanguageCodeAllowList,
+		ActivityTypeIDAllowList: contest.ActivityTypeIDAllowList,
+		CreatedAt:               pgtype.Timestamp{Time: contest.CreatedAt, Valid: true},
+		UpdatedAt:               pgtype.Timestamp{Time: contest.UpdatedAt, Valid: true},
 	})
 	if err != nil {
 		return fmt.Errorf("create contest: %w", err)

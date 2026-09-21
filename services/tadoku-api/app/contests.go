@@ -52,7 +52,22 @@ func (a *Application) CreateContest(ctx context.Context, parameters CreateContes
 	if err := a.contests.ValidateContestCreation(ctx, parameters, creatorID, creator.DisplayName, admin, now); err != nil {
 		return nil, err
 	}
-	prepared := a.contests.PrepareContestCreation(parameters, creatorID, creator.DisplayName, now)
+	contest := contests.Contest{
+		ID:                      uuid.New(),
+		ContestStart:            parameters.ContestStart,
+		ContestEnd:              parameters.ContestEnd,
+		RegistrationEnd:         parameters.RegistrationEnd,
+		Title:                   parameters.Title,
+		Description:             parameters.Description,
+		OwnerUserID:             creatorID,
+		OwnerUserDisplayName:    creator.DisplayName,
+		Official:                parameters.Official,
+		Private:                 parameters.Private,
+		LanguageCodeAllowList:   parameters.LanguageCodeAllowList,
+		ActivityTypeIDAllowList: parameters.ActivityTypeIDAllowList,
+		CreatedAt:               now,
+		UpdatedAt:               now,
+	}
 
 	var result *contests.Contest
 	err = postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) error {
@@ -60,7 +75,7 @@ func (a *Application) CreateContest(ctx context.Context, parameters CreateContes
 			return err
 		}
 		var createErr error
-		result, createErr = a.contests.CreateContest(ctx, prepared)
+		result, createErr = a.contests.CreateContest(ctx, contest)
 		return createErr
 	})
 	if err != nil {

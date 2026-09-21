@@ -180,44 +180,44 @@ func TestContestsRepositoryCreationTransaction(t *testing.T) {
 	repository := NewContestsRepository(db.Pool)
 	now := time.Date(2026, time.September, 12, 12, 0, 0, 0, time.UTC)
 	description := "Created through the repository"
-	parameters := CreateContestParameters{
+	contest := Contest{
+		ID:                      uuid.MustParse("77777777-7777-4777-8777-777777777777"),
 		ContestStart:            time.Date(2026, time.October, 1, 0, 0, 0, 0, time.UTC),
 		ContestEnd:              time.Date(2026, time.October, 31, 0, 0, 0, 0, time.UTC),
 		RegistrationEnd:         time.Date(2026, time.September, 30, 0, 0, 0, 0, time.UTC),
 		Title:                   "October contest",
 		Description:             &description,
+		OwnerUserID:             uuid.MustParse("11111111-1111-4111-8111-111111111111"),
+		OwnerUserDisplayName:    "Reader One",
 		LanguageCodeAllowList:   []string{"jpn"},
 		ActivityTypeIDAllowList: []int32{1, 2},
-		id:                      uuid.MustParse("77777777-7777-4777-8777-777777777777"),
-		ownerUserID:             uuid.MustParse("11111111-1111-4111-8111-111111111111"),
-		ownerUserDisplayName:    "Reader One",
-		createdAt:               now,
-		updatedAt:               now,
+		CreatedAt:               now,
+		UpdatedAt:               now,
 	}
 	if _, err := db.Pool.Exec(t.Context(), `
 		insert into users (id, display_name, created_at, updated_at)
-		values ($1, $2, $3, $3)`, parameters.OwnerUserID(), parameters.OwnerUserDisplayName(), now); err != nil {
+		values ($1, $2, $3, $3)`, contest.OwnerUserID, contest.OwnerUserDisplayName, now); err != nil {
 		t.Fatal(err)
 	}
 
 	var created *Contest
 	err = postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
-		if err := repository.CreateContest(ctx, parameters); err != nil {
+		if err := repository.CreateContest(ctx, contest); err != nil {
 			return err
 		}
 		var err error
-		created, err = repository.FindCreatedContestByID(ctx, parameters.ID())
+		created, err = repository.FindCreatedContestByID(ctx, contest.ID)
 		return err
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if created.ID != parameters.ID() || created.OwnerUserDisplayName != "Reader One" || !reflect.DeepEqual(created.LanguageCodeAllowList, []string{"jpn"}) {
+	if created.ID != contest.ID || created.OwnerUserDisplayName != "Reader One" || !reflect.DeepEqual(created.LanguageCodeAllowList, []string{"jpn"}) {
 		t.Errorf("created contest=%+v", created)
 	}
 
-	rolledBack := parameters
-	rolledBack.id = uuid.MustParse("88888888-8888-4888-8888-888888888888")
+	rolledBack := contest
+	rolledBack.ID = uuid.MustParse("88888888-8888-4888-8888-888888888888")
 	rollbackErr := errors.New("force rollback")
 	err = postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
 		if err := repository.CreateContest(ctx, rolledBack); err != nil {
@@ -228,7 +228,7 @@ func TestContestsRepositoryCreationTransaction(t *testing.T) {
 	if !errors.Is(err, rollbackErr) {
 		t.Fatalf("rollback error=%v, want %v", err, rollbackErr)
 	}
-	if _, err := repository.FindCreatedContestByID(t.Context(), rolledBack.ID()); !errors.Is(err, ErrContestNotFound) {
+	if _, err := repository.FindCreatedContestByID(t.Context(), rolledBack.ID); !errors.Is(err, ErrContestNotFound) {
 		t.Errorf("rolled-back contest error=%v, want contest not found", err)
 	}
 }

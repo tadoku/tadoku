@@ -18,7 +18,7 @@ func TestFindContestRegistration(t *testing.T) {
 		{
 			description: []string{"invalid", "contest", "id"},
 			want:        http.StatusBadRequest,
-			skipParity:  "generated runtimes spell the unmarshaling error differently",
+			skipParity:  "native responses omit parser details and reflected parameter input",
 		},
 		{description: []string{"guest"}, want: http.StatusUnauthorized},
 		{description: []string{"banned"}, want: http.StatusForbidden},

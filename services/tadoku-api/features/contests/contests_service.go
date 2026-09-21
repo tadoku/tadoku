@@ -27,43 +27,50 @@ func NewService(repository *ContestsRepository, kratos *kratosapi.APIClient) *Se
 	}
 }
 
-func (s *Service) PrepareContestCreation(
+func (s *Service) ValidateContestCreation(
 	ctx context.Context,
 	parameters CreateContestParameters,
 	creatorID uuid.UUID,
 	creatorDisplayName string,
 	admin bool,
 	now time.Time,
-) (CreateContestParameters, error) {
-	parameters.ownerUserID = creatorID
-	parameters.ownerUserDisplayName = creatorDisplayName
-
+) error {
 	if !admin {
 		count, err := s.contests.CountContestsCreatedByUserForYear(ctx, creatorID, int32(now.Year()))
 		if err != nil {
-			return parameters, err
+			return err
 		}
 		if count >= contestCreationYearlyLimit {
-			return parameters, ErrContestCreationForbidden
+			return ErrContestCreationForbidden
 		}
 	}
-	if err := parameters.validate(admin, now); err != nil {
-		return parameters, err
+	if err := parameters.validate(creatorID, creatorDisplayName, admin, now); err != nil {
+		return err
 	}
 	if len(parameters.LanguageCodeAllowList) > 0 {
 		exists, err := s.contests.LanguagesExist(ctx, parameters.LanguageCodeAllowList)
 		if err != nil {
-			return parameters, err
+			return err
 		}
 		if !exists {
-			return parameters, errx.NewInvalidInputError("invalid contest LanguageCodeAllowList: one or more languages do not exist")
+			return errx.NewInvalidInputError("invalid contest LanguageCodeAllowList: one or more languages do not exist")
 		}
 	}
+	return nil
+}
 
+func (s *Service) PrepareContestCreation(
+	parameters CreateContestParameters,
+	creatorID uuid.UUID,
+	creatorDisplayName string,
+	now time.Time,
+) CreateContestParameters {
+	parameters.ownerUserID = creatorID
+	parameters.ownerUserDisplayName = creatorDisplayName
 	parameters.id = uuid.New()
 	parameters.createdAt = now
 	parameters.updatedAt = now
-	return parameters, nil
+	return parameters
 }
 
 func (s *Service) CreateContest(ctx context.Context, parameters CreateContestParameters) (*Contest, error) {

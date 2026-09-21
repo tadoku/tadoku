@@ -112,11 +112,11 @@ func (p CreateContestParameters) OwnerUserDisplayName() string { return p.ownerU
 func (p CreateContestParameters) CreatedAt() time.Time         { return p.createdAt }
 func (p CreateContestParameters) UpdatedAt() time.Time         { return p.updatedAt }
 
-func (p CreateContestParameters) validate(admin bool, now time.Time) error {
-	if p.ownerUserID == uuid.Nil {
+func (p CreateContestParameters) validate(ownerUserID uuid.UUID, ownerUserDisplayName string, admin bool, now time.Time) error {
+	if ownerUserID == uuid.Nil {
 		return errx.NewInvalidInputError("invalid contest OwnerUserID: must not be nil")
 	}
-	if p.ownerUserDisplayName == "" {
+	if ownerUserDisplayName == "" {
 		return errx.NewInvalidInputError("invalid contest OwnerUserDisplayName: must not be empty")
 	}
 	if p.ContestStart.IsZero() {

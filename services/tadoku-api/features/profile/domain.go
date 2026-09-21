@@ -1,28 +1,17 @@
 // Package profile owns user profile operations.
 package profile
 
-import (
-	"errors"
-	"time"
-
-	"github.com/google/uuid"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
-)
+import "github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 
 var (
-	ErrInvalidSignedUser         = errors.New("invalid signed user identity")
 	ErrLocalUserNotFound         = errx.NewNotFoundError("local user not found")
 	ErrAccountDeletionInProgress = errx.NewConflictError("account deletion in progress")
 )
 
-type SignedUser struct {
-	ID          uuid.UUID
-	DisplayName string
-
-	sessionCreatedAt time.Time
+type UserDeletionState struct {
+	DeletionLocked bool
+	Deleted        bool
 }
-
-func (u SignedUser) SessionCreatedAt() time.Time { return u.sessionCreatedAt }
 
 type CachedUser struct {
 	ID          string

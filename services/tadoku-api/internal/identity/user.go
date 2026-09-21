@@ -4,6 +4,9 @@ package identity
 import (
 	"context"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
 
 // User includes the signed guest subject used for anonymous gateway requests.
@@ -24,4 +27,15 @@ func WithUser(ctx context.Context, user *User) context.Context {
 func FromContext(ctx context.Context) *User {
 	user, _ := ctx.Value(userKey{}).(*User)
 	return user
+}
+
+func (u *User) UUID() (uuid.UUID, error) {
+	if u == nil {
+		return uuid.Nil, errx.NewInternalError("invalid signed user identity")
+	}
+	userID, err := uuid.Parse(u.Subject)
+	if err != nil {
+		return uuid.Nil, errx.NewInternalError("invalid signed user identity")
+	}
+	return userID, nil
 }

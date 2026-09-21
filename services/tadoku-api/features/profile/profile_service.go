@@ -27,28 +27,26 @@ func NewService(repository *Repository, cache *UserCache, roles *commonroles.Ket
 	}
 }
 
-func (s *Service) SignedUser(ctx context.Context) (SignedUser, error) {
-	requestUser := identity.FromContext(ctx)
-	if requestUser == nil {
-		return SignedUser{}, ErrInvalidSignedUser
-	}
-	userID, err := uuid.Parse(requestUser.Subject)
+func (s *Service) SynchronizeUser(ctx context.Context, user *identity.User, now time.Time) (uuid.UUID, error) {
+	userID, err := user.UUID()
 	if err != nil {
-		return SignedUser{}, ErrInvalidSignedUser
+		return uuid.Nil, err
 	}
-	return SignedUser{
-		ID:               userID,
-		DisplayName:      requestUser.DisplayName,
-		sessionCreatedAt: requestUser.CreatedAt,
-	}, nil
-}
-
-func (s *Service) SynchronizeUser(ctx context.Context, user SignedUser, now time.Time) error {
-	return s.repository.SynchronizeUser(ctx, user, now)
+	if err := s.repository.SynchronizeUser(ctx, userID, user.DisplayName, user.CreatedAt, now); err != nil {
+		return uuid.Nil, err
+	}
+	return userID, nil
 }
 
 func (s *Service) LockUser(ctx context.Context, userID uuid.UUID) error {
-	return s.repository.LockUser(ctx, userID)
+	state, err := s.repository.LockUser(ctx, userID)
+	if err != nil {
+		return err
+	}
+	if state.DeletionLocked || state.Deleted {
+		return ErrAccountDeletionInProgress
+	}
+	return nil
 }
 
 func (s *Service) ListUsers(ctx context.Context, pageSize, page int, query string) (*UserList, error) {

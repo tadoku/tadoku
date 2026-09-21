@@ -26,7 +26,7 @@ func writeResponseError(w stdhttp.ResponseWriter, request *stdhttp.Request, err 
 		writeJSON(w, stdhttp.StatusConflict, openapi.ImmersionAccountDeletionInProgress{
 			Error: openapi.AccountDeletionInProgress,
 		})
-	case errors.Is(err, app.ErrInvalidContestCreator):
+	case errx.KindOf(err) == errx.Internal:
 		writeJSON(w, stdhttp.StatusInternalServerError, map[string]string{"message": "Internal Server Error"})
 	default:
 		w.WriteHeader(errorStatus(request.Context(), err))

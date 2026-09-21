@@ -7,6 +7,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/features/contests"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/profile"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
 
@@ -15,7 +16,6 @@ type ContestView = contests.ContestView
 type Contest = contests.Contest
 type CreateContestParameters = contests.CreateContestParameters
 
-var ErrInvalidContestCreator = profile.ErrInvalidSignedUser
 var ErrAccountDeletionInProgress = profile.ErrAccountDeletionInProgress
 
 func (a *Application) CheckContestCreatePermission(ctx context.Context) error {
@@ -23,11 +23,11 @@ func (a *Application) CheckContestCreatePermission(ctx context.Context) error {
 		return nil
 	}
 
-	user, err := a.profile.SignedUser(ctx)
+	userID, err := identity.FromContext(ctx).UUID()
 	if err != nil {
 		return err
 	}
-	return a.contests.CheckCreatePermission(ctx, user.ID)
+	return a.contests.CheckCreatePermission(ctx, userID)
 }
 
 func (a *Application) CreateContest(ctx context.Context, parameters CreateContestParameters) (*Contest, error) {
@@ -42,23 +42,21 @@ func (a *Application) CreateContest(ctx context.Context, parameters CreateContes
 		return nil, contests.ErrContestCreationForbidden
 	}
 
-	creator, err := a.profile.SignedUser(ctx)
-	if err != nil {
-		return nil, err
-	}
+	creator := identity.FromContext(ctx)
 	now := timex.Now()
-	if err := a.profile.SynchronizeUser(ctx, creator, now); err != nil {
+	creatorID, err := a.profile.SynchronizeUser(ctx, creator, now)
+	if err != nil {
 		return nil, err
 	}
 
-	prepared, err := a.contests.PrepareContestCreation(ctx, parameters, creator.ID, creator.DisplayName, admin, now)
-	if err != nil {
+	if err := a.contests.ValidateContestCreation(ctx, parameters, creatorID, creator.DisplayName, admin, now); err != nil {
 		return nil, err
 	}
+	prepared := a.contests.PrepareContestCreation(parameters, creatorID, creator.DisplayName, now)
 
 	var result *contests.Contest
 	err = postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) error {
-		if err := a.profile.LockUser(ctx, creator.ID); err != nil {
+		if err := a.profile.LockUser(ctx, creatorID); err != nil {
 			return err
 		}
 		var createErr error

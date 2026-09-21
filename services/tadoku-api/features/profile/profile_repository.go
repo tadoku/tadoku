@@ -22,15 +22,21 @@ func NewRepository(db *pgxpool.Pool) *Repository {
 	return &Repository{db: db}
 }
 
-func (r *Repository) SynchronizeUser(ctx context.Context, user SignedUser, now time.Time) error {
+func (r *Repository) SynchronizeUser(
+	ctx context.Context,
+	userID uuid.UUID,
+	displayName string,
+	sessionCreatedAt time.Time,
+	now time.Time,
+) error {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return err
 	}
 	_, err = queries.New(executor).SynchronizeUser(ctx, queries.SynchronizeUserParams{
-		ID:               pgtype.UUID{Bytes: user.ID, Valid: true},
-		DisplayName:      user.DisplayName,
-		SessionCreatedAt: pgtype.Timestamp{Time: user.SessionCreatedAt(), Valid: true},
+		ID:               pgtype.UUID{Bytes: userID, Valid: true},
+		DisplayName:      displayName,
+		SessionCreatedAt: pgtype.Timestamp{Time: sessionCreatedAt, Valid: true},
 		CreatedAt:        pgtype.Timestamp{Time: now, Valid: true},
 		UpdatedAt:        pgtype.Timestamp{Time: now, Valid: true},
 	})
@@ -43,20 +49,20 @@ func (r *Repository) SynchronizeUser(ctx context.Context, user SignedUser, now t
 	return nil
 }
 
-func (r *Repository) LockUser(ctx context.Context, userID uuid.UUID) error {
+func (r *Repository) LockUser(ctx context.Context, userID uuid.UUID) (UserDeletionState, error) {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
-		return err
+		return UserDeletionState{}, err
 	}
 	user, err := queries.New(executor).LockUser(ctx, pgtype.UUID{Bytes: userID, Valid: true})
 	if errors.Is(err, pgx.ErrNoRows) {
-		return ErrLocalUserNotFound
+		return UserDeletionState{}, ErrLocalUserNotFound
 	}
 	if err != nil {
-		return fmt.Errorf("lock local user: %w", err)
+		return UserDeletionState{}, fmt.Errorf("lock local user: %w", err)
 	}
-	if user.DeletionLockedAt.Valid || user.DeletedAt.Valid {
-		return ErrAccountDeletionInProgress
-	}
-	return nil
+	return UserDeletionState{
+		DeletionLocked: user.DeletionLockedAt.Valid,
+		Deleted:        user.DeletedAt.Valid,
+	}, nil
 }

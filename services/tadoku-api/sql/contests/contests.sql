@@ -197,7 +197,14 @@ select
   contest_registrations.language_codes,
   contest_registrations.created_at,
   contest_registrations.updated_at,
-  users.display_name as user_display_name
+  users.display_name as user_display_name,
+  contests.contest_start,
+  contests.contest_end,
+  contests.registration_end,
+  contests.title,
+  contests.description,
+  contests.private,
+  contests.official
 from contest_registrations
 inner join contests on contests.id = contest_registrations.contest_id
 inner join users on users.id = contest_registrations.user_id

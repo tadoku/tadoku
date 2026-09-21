@@ -26,7 +26,10 @@ func (s *server) ImmersionContestFindRegistration(
 		}
 	}
 
-	return openapi.ImmersionContestFindRegistration200JSONResponse(registrationResponse(registration)), nil
+	response := registrationResponse(registration)
+	// The registration lookup omits the contest; participant statistics includes it.
+	response.Contest = nil
+	return openapi.ImmersionContestFindRegistration200JSONResponse(response), nil
 }
 
 func (s *server) ImmersionContestFindOngoingRegistrations(

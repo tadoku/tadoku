@@ -6,6 +6,7 @@ go_library(
         "announcements.go",
         "app.go",
         "authz.go",
+        "contest_profile.go",
         "contests.go",
         "languages.go",
         "log_statistics.go",

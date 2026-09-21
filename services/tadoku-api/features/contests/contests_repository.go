@@ -63,6 +63,18 @@ func (r *ContestsRepository) FindRegistrationForUser(ctx context.Context, userID
 		LanguageCodes:   row.LanguageCodes,
 		CreatedAt:       row.CreatedAt.Time,
 		UpdatedAt:       row.UpdatedAt.Time,
+		Contest: &ContestView{
+			ID:                uuid.UUID(row.ContestID.Bytes),
+			ContestStart:      row.ContestStart.Time,
+			ContestEnd:        row.ContestEnd.Time,
+			RegistrationEnd:   row.RegistrationEnd.Time,
+			Title:             row.Title,
+			Description:       nullableString(row.Description),
+			Private:           row.Private,
+			Official:          row.Official,
+			AllowedLanguages:  []Language{},
+			AllowedActivities: []Activity{},
+		},
 	}, nil
 }
 

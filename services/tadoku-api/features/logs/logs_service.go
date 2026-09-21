@@ -152,3 +152,11 @@ func (s *Service) YearlyActivitySplit(ctx context.Context, userID uuid.UUID, yea
 	}
 	return scores, nil
 }
+
+func (s *Service) ContestScores(ctx context.Context, userID, contestID uuid.UUID) ([]Score, error) {
+	return s.logs.ContestScores(ctx, userID, contestID)
+}
+
+func (s *Service) ContestActivity(ctx context.Context, userID, contestID uuid.UUID) ([]ContestActivity, error) {
+	return s.logs.ContestActivity(ctx, userID, contestID)
+}

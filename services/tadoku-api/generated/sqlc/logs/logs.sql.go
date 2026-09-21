@@ -11,6 +11,105 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const activityPerLanguageForContestProfile = `-- name: ActivityPerLanguageForContestProfile :many
+with eligible_logs as (
+  select
+    logs.created_at::date as "date",
+    logs.language_code,
+    coalesce(contest_logs.computed_score, contest_logs.score) as score
+  from contest_logs
+  inner join logs
+    on logs.id = contest_logs.log_id
+  where
+    contest_logs.contest_id = $1
+    and logs.user_id = $2
+    and logs.deleted_at is null
+)
+select
+  "date",
+  language_code,
+  sum(eligible_logs.score)::real as score
+from eligible_logs
+group by language_code, "date"
+order by "date" asc
+`
+
+type ActivityPerLanguageForContestProfileParams struct {
+	ContestID pgtype.UUID
+	UserID    pgtype.UUID
+}
+
+type ActivityPerLanguageForContestProfileRow struct {
+	Date         pgtype.Date
+	LanguageCode string
+	Score        float32
+}
+
+func (q *Queries) ActivityPerLanguageForContestProfile(ctx context.Context, arg ActivityPerLanguageForContestProfileParams) ([]ActivityPerLanguageForContestProfileRow, error) {
+	rows, err := q.db.Query(ctx, activityPerLanguageForContestProfile, arg.ContestID, arg.UserID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ActivityPerLanguageForContestProfileRow{}
+	for rows.Next() {
+		var i ActivityPerLanguageForContestProfileRow
+		if err := rows.Scan(&i.Date, &i.LanguageCode, &i.Score); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const fetchScoresForContestProfile = `-- name: FetchScoresForContestProfile :many
+select
+  logs.language_code,
+  sum(coalesce(contest_logs.computed_score, contest_logs.score))::real as score
+from contest_logs
+inner join logs
+  on logs.id = contest_logs.log_id
+where
+  contest_logs.contest_id = $1
+  and logs.user_id = $2
+  and logs.deleted_at is null
+group by logs.language_code
+order by 2 desc
+`
+
+type FetchScoresForContestProfileParams struct {
+	ContestID pgtype.UUID
+	UserID    pgtype.UUID
+}
+
+type FetchScoresForContestProfileRow struct {
+	LanguageCode string
+	Score        float32
+}
+
+func (q *Queries) FetchScoresForContestProfile(ctx context.Context, arg FetchScoresForContestProfileParams) ([]FetchScoresForContestProfileRow, error) {
+	rows, err := q.db.Query(ctx, fetchScoresForContestProfile, arg.ContestID, arg.UserID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []FetchScoresForContestProfileRow{}
+	for rows.Next() {
+		var i FetchScoresForContestProfileRow
+		if err := rows.Scan(&i.LanguageCode, &i.Score); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const fetchScoresForProfile = `-- name: FetchScoresForProfile :many
 select
   language_code,

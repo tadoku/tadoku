@@ -53,3 +53,9 @@ type ActivitySplitScore struct {
 	ActivityName string
 	Score        float32
 }
+
+type ContestActivity struct {
+	Date         time.Time
+	LanguageCode string
+	Score        float32
+}

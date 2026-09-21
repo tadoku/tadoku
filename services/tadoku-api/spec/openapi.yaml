@@ -1419,7 +1419,7 @@ paths:
           description: not found
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /contests/{id}/profile/{user_id}/scores
       x-legacy-operation-id: contestProfileFetchScores
   "/immersion/contests/{id}/profile/{user_id}/activity":
@@ -1452,7 +1452,7 @@ paths:
           description: not found
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /contests/{id}/profile/{user_id}/activity
       x-legacy-operation-id: contestProfileFetchActivity
   /immersion/contests/ongoing-registrations:

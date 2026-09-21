@@ -100,6 +100,17 @@ test('all retained wire contracts survive the merge, including internal callers'
           description: 'Invalid authenticated identity',
         };
       }
+      // Native profile reads document the empty 500 already returned by legacy.
+      for (const path of [
+        '/users/{userId}/profile',
+        '/users/{userId}/activity/{year}',
+        '/users/{userId}/scores/{year}',
+        '/users/{userId}/activity-split/{year}',
+      ]) {
+        if (contract.paths[`/immersion${path}`].get['x-tadoku-owner'] === 'native') {
+          legacy.paths[path].get.responses['500'] = {description: 'profile read failed'};
+        }
+      }
     }
     assert.deepEqual(view.paths, legacy.paths, `${name} paths`);
     assert.deepEqual(view.components, legacy.components ?? {}, `${name} components`);

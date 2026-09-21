@@ -249,6 +249,16 @@ connection budget: two native replicas default to eight connections, in addition
 to the still-running legacy pools. Update production secrets/manifests and complete
 the master rollout gate under separate release authorization before deployment.
 
+Shared runtime behavior must use the same configuration in the native reader and
+its legacy writer for the entire coexistence period. Tadoku API requires an
+explicit `API_SCORING_ENGINE_ENABLED` boolean at startup, matching immersion-api's
+setting; it does not derive this value from Flipt. The checked-in development
+manifests set both to `false`. Before activating native routes in another
+environment, configure the native value from the writer's effective setting and
+verify both deployment manifests together. Changes to this setting require
+coordinated reader/writer configuration and restart; do not independently toggle
+one service. Missing or malformed native configuration fails startup.
+
 ### Raw Keto relationship primitive
 
 The composition root retains a concrete `*ketoclient.Client` from

@@ -1073,6 +1073,11 @@ type ImmersionLanguageUpdateJSONBody struct {
 	Name string `json:"name"`
 }
 
+// ImmersionLogTagSuggestionsParams defines parameters for ImmersionLogTagSuggestions.
+type ImmersionLogTagSuggestionsParams struct {
+	Query *string `form:"query,omitempty" json:"query,omitempty"`
+}
+
 // ProfileUsersListParams defines parameters for ProfileUsersList.
 type ProfileUsersListParams struct {
 	PageSize *int `form:"page_size,omitempty" json:"page_size,omitempty"`
@@ -1228,6 +1233,12 @@ type ServerInterface interface {
 	// ImmersionLanguageUpdate Updates an existing language (admin only)
 	// (PUT /immersion/languages/{code})
 	ImmersionLanguageUpdate(w http.ResponseWriter, r *http.Request, code string)
+	// ImmersionLogGetConfigurations Fetches the configuration options for a log
+	// (GET /immersion/logs/configuration-options)
+	ImmersionLogGetConfigurations(w http.ResponseWriter, r *http.Request)
+	// ImmersionLogTagSuggestions Fetches tag suggestions for autocomplete
+	// (GET /immersion/logs/tag-suggestions)
+	ImmersionLogTagSuggestions(w http.ResponseWriter, r *http.Request, params ImmersionLogTagSuggestionsParams)
 	// ImmersionProfileYearlyContestRegistrationsByUserID Fetches the contest registrations of a user for a given year
 	// (GET /immersion/users/{userId}/contest-registrations/{year})
 	ImmersionProfileYearlyContestRegistrationsByUserID(w http.ResponseWriter, r *http.Request, userId openapi_types.UUID, year int)
@@ -2380,6 +2391,53 @@ func (siw *ServerInterfaceWrapper) ImmersionLanguageUpdate(w http.ResponseWriter
 	handler.ServeHTTP(w, r)
 }
 
+// ImmersionLogGetConfigurations operation middleware
+func (siw *ServerInterfaceWrapper) ImmersionLogGetConfigurations(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ImmersionLogGetConfigurations(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ImmersionLogTagSuggestions operation middleware
+func (siw *ServerInterfaceWrapper) ImmersionLogTagSuggestions(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ImmersionLogTagSuggestionsParams
+
+	// ------------- Optional query parameter "query" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "query", r.URL.Query(), &params.Query, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "query"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "query", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ImmersionLogTagSuggestions(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ImmersionProfileYearlyContestRegistrationsByUserID operation middleware
 func (siw *ServerInterfaceWrapper) ImmersionProfileYearlyContestRegistrationsByUserID(w http.ResponseWriter, r *http.Request) {
 
@@ -2627,6 +2685,8 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/{id}/summary", wrapper.ImmersionContestFetchSummary)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/ongoing-registrations", wrapper.ImmersionContestFindOngoingRegistrations)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/configuration-options", wrapper.ImmersionContestGetConfigurations)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/logs/configuration-options", wrapper.ImmersionLogGetConfigurations)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/logs/tag-suggestions", wrapper.ImmersionLogTagSuggestions)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/users/{userId}/contest-registrations/{year}", wrapper.ImmersionProfileYearlyContestRegistrationsByUserID)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/languages", wrapper.ImmersionLanguageList)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/immersion/languages", wrapper.ImmersionLanguageCreate)
@@ -4019,6 +4079,49 @@ func (response ImmersionLanguageUpdate404Response) VisitImmersionLanguageUpdateR
 	return nil
 }
 
+type ImmersionLogGetConfigurationsRequestObject struct {
+}
+
+type ImmersionLogGetConfigurationsResponseObject interface {
+	VisitImmersionLogGetConfigurationsResponse(w http.ResponseWriter) error
+}
+
+type ImmersionLogGetConfigurations200JSONResponse ImmersionLogConfigurationOptions
+
+func (response ImmersionLogGetConfigurations200JSONResponse) VisitImmersionLogGetConfigurationsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImmersionLogTagSuggestionsRequestObject struct {
+	Params ImmersionLogTagSuggestionsParams
+}
+
+type ImmersionLogTagSuggestionsResponseObject interface {
+	VisitImmersionLogTagSuggestionsResponse(w http.ResponseWriter) error
+}
+
+type ImmersionLogTagSuggestions200JSONResponse ImmersionTagSuggestions
+
+func (response ImmersionLogTagSuggestions200JSONResponse) VisitImmersionLogTagSuggestionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ImmersionProfileYearlyContestRegistrationsByUserIDRequestObject struct {
 	UserId openapi_types.UUID `json:"userId"`
 	Year   int                `json:"year"`
@@ -4190,6 +4293,12 @@ type StrictServerInterface interface {
 	// ImmersionLanguageUpdate Updates an existing language (admin only)
 	// (PUT /immersion/languages/{code})
 	ImmersionLanguageUpdate(ctx context.Context, request ImmersionLanguageUpdateRequestObject) (ImmersionLanguageUpdateResponseObject, error)
+	// ImmersionLogGetConfigurations Fetches the configuration options for a log
+	// (GET /immersion/logs/configuration-options)
+	ImmersionLogGetConfigurations(ctx context.Context, request ImmersionLogGetConfigurationsRequestObject) (ImmersionLogGetConfigurationsResponseObject, error)
+	// ImmersionLogTagSuggestions Fetches tag suggestions for autocomplete
+	// (GET /immersion/logs/tag-suggestions)
+	ImmersionLogTagSuggestions(ctx context.Context, request ImmersionLogTagSuggestionsRequestObject) (ImmersionLogTagSuggestionsResponseObject, error)
 	// ImmersionProfileYearlyContestRegistrationsByUserID Fetches the contest registrations of a user for a given year
 	// (GET /immersion/users/{userId}/contest-registrations/{year})
 	ImmersionProfileYearlyContestRegistrationsByUserID(ctx context.Context, request ImmersionProfileYearlyContestRegistrationsByUserIDRequestObject) (ImmersionProfileYearlyContestRegistrationsByUserIDResponseObject, error)
@@ -5271,6 +5380,56 @@ func (sh *strictHandler) ImmersionLanguageUpdate(w http.ResponseWriter, r *http.
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ImmersionLanguageUpdateResponseObject); ok {
 		if err := validResponse.VisitImmersionLanguageUpdateResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ImmersionLogGetConfigurations operation middleware
+func (sh *strictHandler) ImmersionLogGetConfigurations(w http.ResponseWriter, r *http.Request) {
+	var request ImmersionLogGetConfigurationsRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ImmersionLogGetConfigurations(ctx, request.(ImmersionLogGetConfigurationsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ImmersionLogGetConfigurations")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ImmersionLogGetConfigurationsResponseObject); ok {
+		if err := validResponse.VisitImmersionLogGetConfigurationsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ImmersionLogTagSuggestions operation middleware
+func (sh *strictHandler) ImmersionLogTagSuggestions(w http.ResponseWriter, r *http.Request, params ImmersionLogTagSuggestionsParams) {
+	var request ImmersionLogTagSuggestionsRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ImmersionLogTagSuggestions(ctx, request.(ImmersionLogTagSuggestionsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ImmersionLogTagSuggestions")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ImmersionLogTagSuggestionsResponseObject); ok {
+		if err := validResponse.VisitImmersionLogTagSuggestionsResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

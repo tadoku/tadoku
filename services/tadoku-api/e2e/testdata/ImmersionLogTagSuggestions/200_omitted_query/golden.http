@@ -1,0 +1,6 @@
+>>> GET /immersion/logs/tag-suggestions
+HTTP/1.1 200 OK
+Content-Length: 857
+Content-Type: application/json; charset=UTF-8
+
+{"suggestions":[{"count":3,"tag":"custom"},{"count":2,"tag":"Anime"},{"count":1,"tag":""},{"count":1,"tag":"100%"},{"count":1,"tag":"alpha"},{"count":1,"tag":"anime"},{"count":1,"tag":"ANIME"},{"count":1,"tag":"deleted-log-only"},{"count":1,"tag":"space tag"},{"count":1,"tag":"under_score"},{"count":1,"tag":"UpperCase"},{"count":1,"tag":"YouTube"},{"count":1,"tag":"zebra"},{"count":0,"tag":"audiobook"},{"count":0,"tag":"book"},{"count":0,"tag":"chat"},{"count":0,"tag":"chorusing"},{"count":0,"tag":"comic"},{"count":0,"tag":"conversation"},{"count":0,"tag":"drama"},{"count":0,"tag":"ebook"},{"count":0,"tag":"fiction"},{"count":0,"tag":"game"},{"count":0,"tag":"grammar"},{"count":0,"tag":"lyric"},{"count":0,"tag":"news"},{"count":0,"tag":"non-fiction"},{"count":0,"tag":"online video"},{"count":0,"tag":"podcast"},{"count":0,"tag":"presentation"}]}

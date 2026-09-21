@@ -1,0 +1,6 @@
+>>> GET /immersion/logs/tag-suggestions?query=%20
+HTTP/1.1 200 OK
+Content-Length: 143
+Content-Type: application/json; charset=UTF-8
+
+{"suggestions":[{"count":1,"tag":"space tag"},{"count":0,"tag":"online video"},{"count":0,"tag":"social media"},{"count":0,"tag":"web page"}]}

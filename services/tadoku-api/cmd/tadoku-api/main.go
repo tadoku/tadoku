@@ -31,6 +31,7 @@ import (
 	featureauthz "github.com/tadoku/tadoku/services/tadoku-api/features/authz"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/contests"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/languages"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/logs"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/pages"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/posts"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/profile"
@@ -42,6 +43,7 @@ import (
 )
 
 type config struct {
+	ScoringEngineEnabled bool          `envconfig:"scoring_engine_enabled" required:"true"`
 	Port                 int           `validate:"gt=0,lte=65535" default:"8000"`
 	MetricsPort          int           `validate:"gt=0,lte=65535" envconfig:"metrics_port" default:"9090"`
 	ServiceName          string        `validate:"required" envconfig:"service_name" default:"tadoku-api"`
@@ -287,6 +289,7 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	announcementsRepository := announcements.NewAnnouncementsRepository(pool)
 	contestsRepository := contests.NewContestsRepository(pool)
 	languagesRepository := languages.NewLanguagesRepository(pool)
+	logsRepository := logs.NewLogsRepository(pool)
 	pagesRepository := pages.NewPagesRepository(pool)
 	postsRepository := posts.NewPostsRepository(pool)
 	profileRepository := profile.NewRepository(pool)
@@ -294,10 +297,11 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	announcementsService := announcements.NewService(announcementsRepository)
 	contestsService := contests.NewService(contestsRepository, kratos)
 	languagesService := languages.NewService(languagesRepository)
+	logsService := logs.NewService(logsRepository, cfg.ScoringEngineEnabled)
 	pagesService := pages.NewService(pagesRepository)
 	postsService := posts.NewService(postsRepository)
 	profileService := profile.NewService(profileRepository, userCache, roleService)
-	api := app.New(announcementsService, auditService, authzService, contestsService, languagesService, pagesService, postsService, profileService, pool, permissionChecker)
+	api := app.New(announcementsService, auditService, authzService, contestsService, languagesService, logsService, pagesService, postsService, profileService, pool, permissionChecker)
 	rejectBanned := newBannedUserMiddleware(ketoReader, logger)
 
 	handler, err := transporthttp.NewHandler(api, pool.Ping, cfg.RequestTimeout, metrics, logger, authenticate, rejectBanned, authenticateCallback)

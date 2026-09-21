@@ -1,0 +1,6 @@
+>>> GET /immersion/logs/tag-suggestions?query=ANi
+HTTP/1.1 200 OK
+Content-Length: 96
+Content-Type: application/json; charset=UTF-8
+
+{"suggestions":[{"count":2,"tag":"Anime"},{"count":1,"tag":"anime"},{"count":1,"tag":"ANIME"}]}

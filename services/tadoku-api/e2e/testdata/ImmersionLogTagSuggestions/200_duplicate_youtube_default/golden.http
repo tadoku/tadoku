@@ -1,0 +1,6 @@
+>>> GET /immersion/logs/tag-suggestions?query=YOUT
+HTTP/1.1 200 OK
+Content-Length: 46
+Content-Type: application/json; charset=UTF-8
+
+{"suggestions":[{"count":1,"tag":"YouTube"}]}

@@ -1,0 +1,19 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "logs",
+    srcs = [
+        "domain.go",
+        "logs_repository.go",
+        "logs_service.go",
+    ],
+    importpath = "github.com/tadoku/tadoku/services/tadoku-api/features/logs",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//services/tadoku-api/generated/sqlc/logs",
+        "//services/tadoku-api/infra/postgres",
+        "@com_github_google_uuid//:uuid",
+        "@com_github_jackc_pgx_v5//pgtype",
+        "@com_github_jackc_pgx_v5//pgxpool",
+    ],
+)

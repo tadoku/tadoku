@@ -59,15 +59,15 @@ images:
   - name: tadoku-api-migrations-image
     newName: ghcr.io/tadoku/tadoku/tadoku-api-migrations
     newTag: latest
-    digest: sha256:59735fbb1080a6c62c68d18924cf050a36a8fc77b2a3c6aef3f5ca895ecbba0b
+    digest: sha256:7b2a609c06af9d10c3abff6063f74af41faadfb2bfdbd0f004edb6fccdda5496
   - name: tadoku-api-image
     newName: ghcr.io/tadoku/tadoku/tadoku-api
     newTag: latest
-    digest: sha256:17f18f434be76cd20798b1c6662d0acf9782cf0de61a153c315ffbf8b4a00efd
+    digest: sha256:7844b734680bc292e9ddbd70a2e29214b395fd16a09999e087ef13529698ae07
   - name: immersion-api-image
     newName: ghcr.io/tadoku/tadoku/immersion-api
     newTag: latest
-    digest: sha256:63c67dda67009eab6bdb3af3b9ea9197ac7ba3c98a8c42ec6dc5bbf02a3ddb29
+    digest: sha256:02ab0fe64823194055b966016687d0515b052b24c38fc4dde985baa86053952c
   - name: content-api-image
     newName: ghcr.io/tadoku/tadoku/content-api
     newTag: latest
@@ -75,7 +75,7 @@ images:
   - name: profile-api-image
     newName: ghcr.io/tadoku/tadoku/profile-api
     newTag: latest
-    digest: sha256:756db73b4e8bacd758b76b87ae878eb4b7af51ff9f03c3552d9226ebb9a41914
+    digest: sha256:6510aa930343cfe965c442db711caaebcce64792501fb3ac50522699bc49a855
   - name: token-reflector-image
     newName: ghcr.io/tadoku/tadoku/token-reflector
     newTag: latest
@@ -83,7 +83,7 @@ images:
   - name: ghcr.io/tadoku/tadoku/frontend-webv2
     newTag: latest
     newName: ghcr.io/tadoku/tadoku/frontend-webv2
-    digest: sha256:abde285278b0827e84c55fa2b1180679355c01c1fe87c079f12abd45db4486fd
+    digest: sha256:e5d1c6177fd596a7aa3d49d20cd46a7d0c27bfdb6cf88d3eda4477a0f2d7daee
   - name: ghcr.io/tadoku/tadoku/frontend-auth
     newTag: latest
     newName: ghcr.io/tadoku/tadoku/frontend-auth
@@ -91,4 +91,4 @@ images:
   - name: ghcr.io/tadoku/tadoku/frontend-admin
     newTag: latest
     newName: ghcr.io/tadoku/tadoku/frontend-admin
-    digest: sha256:c3081010451daec80fadb33745de15046ce100bbad53b33a539b1efe72dd41c4
+    digest: sha256:b15350ad0199ac5fb45baf2455d7150aea2067341cfcb0c9ad58ff511ff859e8

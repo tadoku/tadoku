@@ -105,6 +105,12 @@ retained on `dev down`; deletion needs exact ownership checks and permission.
 
 ## Cutover is not adoption
 
+The owner-approved fresh cutover was activated on 2026-09-21 through Homelab
+#430. The old Tadoku namespaces, canonical routes, `default/tadoku-dev-db`, its
+PVC and the old Valkey PVC were deleted as explicitly approved disposable data.
+No backup was retained. Unrelated development workloads and production were not
+deleted or adopted. New runtime credentials were generated in development.
+
 This is a fresh design derived from main's Tilt configuration and production's
 topology, not exported live objects. **Do not activate it alongside the old
 canonical Ingresses and HTTPRoutes.** Both claim the same hosts and the older
@@ -117,6 +123,9 @@ Do not run `tilt down`, delete old namespaces or delete database PVCs as an
 implicit cleanup step. A temporary second base during a specifically reviewed
 cutover is not the steady-state database model. The intended final state has one
 Postgres pod. Preserve old data until its deletion is separately authorized.
+
+These gates also apply to any future fresh cutover; the completed one-time
+deletion approval is not blanket permission to erase later data.
 
 ## Verification
 

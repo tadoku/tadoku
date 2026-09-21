@@ -26,7 +26,12 @@ func TestAuthzRoleUpdate(t *testing.T) {
 		{description: []string{"malformed", "json"}, want: http.StatusBadRequest},
 		{description: []string{"invalid", "role"}, want: http.StatusBadRequest},
 		{description: []string{"missing", "reason"}, want: http.StatusBadRequest},
-		{description: []string{"guest", "empty", "body"}, want: http.StatusUnauthorized},
+		{
+			description: []string{"guest", "empty", "body"},
+			want:        http.StatusBadRequest,
+			skipParity:  "the native required-body decoder rejects an empty body before application authorization while legacy returns unauthorized for the guest",
+		},
+		{description: []string{"guest"}, want: http.StatusUnauthorized},
 		{description: []string{"non", "admin", "invalid", "role"}, want: http.StatusForbidden},
 		{
 			description: []string{"banned", "malformed", "json"},

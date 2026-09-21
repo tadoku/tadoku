@@ -89,7 +89,7 @@ func NewClient(readURL, writeURL string, opts ...Option) *Client {
 
 // NewReadClient creates a client that can only check permissions.
 // Relation operations will return an error.
-func NewReadClient(readURL string, opts ...Option) AuthorizationReader {
+func NewReadClient(readURL string, opts ...Option) *Client {
 	readCfg := keto.NewConfiguration()
 	readCfg.Servers = keto.ServerConfigurations{{URL: readURL}}
 	for _, opt := range opts {

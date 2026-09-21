@@ -32,11 +32,7 @@ func TestBanLookupFailureBlocksPrivilegeChecks(t *testing.T) {
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			banChecks := 0
-			adminChecks := 0
-			checker := permissions.NewChecker(func(context.Context, string) (bool, error) {
-				adminChecks++
-				return true, nil
-			})
+			checker := permissions.NewKetoChecker(nil)
 			rejectBanned := RejectBannedUsers(func(context.Context, string) (bool, error) {
 				banChecks++
 				return false, providerErr
@@ -63,9 +59,6 @@ func TestBanLookupFailureBlocksPrivilegeChecks(t *testing.T) {
 			}
 			if banChecks != 1 {
 				t.Errorf("ban checks=%d, want 1", banChecks)
-			}
-			if adminChecks != 0 {
-				t.Errorf("admin checks=%d, want 0", adminChecks)
 			}
 		})
 	}

@@ -10,20 +10,12 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
 
-type userCache interface {
-	Users(context.Context) ([]CachedUser, error)
-}
-
-type roleProvider interface {
-	ClaimsForSubjects(context.Context, []string) (map[string]commonroles.Claims, error)
-}
-
 type Service struct {
-	cache userCache
-	roles roleProvider
+	cache *UserCache
+	roles *commonroles.KetoService
 }
 
-func NewService(cache userCache, roles roleProvider) *Service {
+func NewService(cache *UserCache, roles *commonroles.KetoService) *Service {
 	return &Service{
 		cache: cache,
 		roles: roles,
@@ -31,15 +23,7 @@ func NewService(cache userCache, roles roleProvider) *Service {
 }
 
 func (s *Service) ListUsers(ctx context.Context, pageSize, page int, query string) (*UserList, error) {
-	if pageSize <= 0 {
-		pageSize = 20
-	}
-	if pageSize > 100 {
-		pageSize = 100
-	}
-	if page < 0 {
-		page = 0
-	}
+	pageSize, page = normalizeUserPage(pageSize, page)
 
 	users, err := s.cache.Users(ctx)
 	if err != nil {
@@ -78,6 +62,19 @@ func (s *Service) ListUsers(ctx context.Context, pageSize, page int, query strin
 	}
 
 	return &UserList{Users: result, TotalSize: totalSize}, nil
+}
+
+func normalizeUserPage(pageSize, page int) (int, int) {
+	if pageSize <= 0 {
+		pageSize = 20
+	}
+	if pageSize > 100 {
+		pageSize = 100
+	}
+	if page < 0 {
+		page = 0
+	}
+	return pageSize, page
 }
 
 type userSearchSource []CachedUser

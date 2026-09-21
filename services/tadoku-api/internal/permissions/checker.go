@@ -12,7 +12,7 @@ import (
 // Checker evaluates identity and admin-role requirements for the verified user.
 // A shared ban gate may record an inconclusive lookup so privileges fail closed.
 type Checker struct {
-	lookupAdmin func(context.Context, string) (bool, error)
+	client *ketoclient.Client
 }
 
 type banLookupErrorKey struct{}
@@ -37,23 +37,9 @@ func IsBanned(ctx context.Context) bool {
 	return banned
 }
 
-func NewChecker(lookupAdmin func(context.Context, string) (bool, error)) *Checker {
-	return &Checker{lookupAdmin: lookupAdmin}
-}
-
-// KetoReader is the permission lookup required by the checker.
-type KetoReader interface {
-	CheckPermission(context.Context, string, string, string, ketoclient.Subject) (bool, error)
-}
-
 // NewKetoChecker checks admin membership using the shared application relation.
-func NewKetoChecker(client KetoReader) *Checker {
-	if client == nil {
-		return NewChecker(nil)
-	}
-	return NewChecker(func(ctx context.Context, subjectID string) (bool, error) {
-		return client.CheckPermission(ctx, "app", "tadoku", "admins", ketoclient.Subject{ID: subjectID})
-	})
+func NewKetoChecker(client *ketoclient.Client) *Checker {
+	return &Checker{client: client}
 }
 
 func (c *Checker) IsAdmin(ctx context.Context) (bool, error) {
@@ -64,11 +50,11 @@ func (c *Checker) IsAdmin(ctx context.Context) (bool, error) {
 	if err, _ := ctx.Value(banLookupErrorKey{}).(error); err != nil {
 		return false, errx.NewUnavailableError("check ban permission", err)
 	}
-	if c == nil || c.lookupAdmin == nil {
+	if c == nil || c.client == nil {
 		return false, errx.NewUnavailableError("permissions unavailable", nil)
 	}
 
-	allowed, err := c.lookupAdmin(ctx, user.Subject)
+	allowed, err := c.client.CheckPermission(ctx, "app", "tadoku", "admins", ketoclient.Subject{ID: user.Subject})
 	if err != nil {
 		return false, errx.NewUnavailableError("check admin permission", err)
 	}

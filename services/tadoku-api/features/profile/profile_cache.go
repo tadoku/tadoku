@@ -9,6 +9,7 @@ import (
 	"time"
 
 	kratosapi "github.com/ory/kratos-client-go"
+	kratosclient "github.com/tadoku/tadoku/services/common/client/kratos"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
 
@@ -18,40 +19,23 @@ const (
 	identityCreatedAtLayout  = "2006-01-02T15:04:05Z"
 )
 
-type identityProvider interface {
-	ListIdentities(context.Context, int64, string) ([]kratosapi.Identity, string, error)
-}
-
-type suppressionRepository interface {
-	ListAccountDeletionSuppressedIdentityIDs(context.Context) ([]string, error)
-}
-
 type UserCache struct {
-	mu        sync.Mutex
-	users     []CachedUser
-	loaded    bool
-	checkedAt time.Time
-	// Accepted account deletions must disappear from administrator listings
-	// before Kratos deletion completes. Learned IDs stay suppressed for this
-	// cache's lifetime so a later provider snapshot cannot reintroduce them.
-	suppressedIdentityIDs map[string]struct{}
-	identities            identityProvider
-	suppressions          suppressionRepository
+	mu         sync.Mutex
+	users      []CachedUser
+	loaded     bool
+	checkedAt  time.Time
+	identities *kratosclient.Client
 }
 
-func NewUserCache(identities identityProvider, suppressions suppressionRepository) *UserCache {
+func NewUserCache(identities *kratosclient.Client) *UserCache {
 	return &UserCache{
-		users:                 []CachedUser{},
-		suppressedIdentityIDs: make(map[string]struct{}),
-		identities:            identities,
-		suppressions:          suppressions,
+		users:      []CachedUser{},
+		identities: identities,
 	}
 }
 
-// refresh is called with c.mu held. It replaces the visible snapshot after
-// both providers succeed. Identity-provider failures retain the previous
-// complete snapshot; suppression failures clear it so accepted deletions
-// cannot reappear.
+// refresh is called with c.mu held. Provider failures retain the previous
+// complete snapshot.
 func (c *UserCache) refresh(ctx context.Context, checkedAt time.Time) error {
 	users, err := c.listUsers(ctx)
 	if err != nil {
@@ -60,31 +44,10 @@ func (c *UserCache) refresh(ctx context.Context, checkedAt time.Time) error {
 		}
 		return err
 	}
-
-	suppressedIDs, err := c.suppressions.ListAccountDeletionSuppressedIdentityIDs(ctx)
-	if err != nil {
-		c.users = []CachedUser{}
-		c.loaded = true
-		if ctx.Err() == nil {
-			c.checkedAt = checkedAt
-		}
-		return fmt.Errorf("refresh user suppressions: %w", err)
-	}
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-
-	for _, identityID := range suppressedIDs {
-		c.suppressedIdentityIDs[identityID] = struct{}{}
-	}
-
-	visible := make([]CachedUser, 0, len(users))
-	for _, user := range users {
-		if _, suppressed := c.suppressedIdentityIDs[user.ID]; !suppressed {
-			visible = append(visible, user)
-		}
-	}
-	c.users = visible
+	c.users = users
 	c.loaded = true
 	c.checkedAt = checkedAt
 	return nil

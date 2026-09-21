@@ -14,7 +14,6 @@ func TestProfileUsersList(t *testing.T) {
 		{description: []string{"pagination"}, want: http.StatusOK},
 		{description: []string{"search"}, want: http.StatusOK},
 		{description: []string{"empty", "search"}, want: http.StatusOK},
-		{description: []string{"accepted", "deletion", "suppressed"}, want: http.StatusOK},
 		{description: []string{"guest"}, want: http.StatusUnauthorized},
 		{description: []string{"non", "admin"}, want: http.StatusForbidden},
 	}

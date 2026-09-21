@@ -68,11 +68,13 @@ shared ban lookup is inconclusive. `RequireAuthenticatedAllowingUnknownBan` is a
 explicit availability opt-out for read-only operations. Operations that mutate
 state must never use the fail-open variant.
 
-Response enrichment may consume shared authorization facts through a narrow
-consumer-owned interface implemented by `services/common/authz/roles`. Batch
-facts are read for each request and are never treated as caller authorization;
-the operation still uses `permissions.Checker` for its own access decision and
-the shared HTTP ban gate still applies first.
+Response enrichment consumes the concrete shared authorization service from
+`services/common/authz/roles`. Batch facts are read for each request and are
+never treated as caller authorization; the operation still uses the permission
+checker for its own access decision and the shared HTTP ban gate still applies
+first. Native feature services accept concrete application collaborators by
+default. A narrow interface is reserved for a real provider or layer boundary,
+not as a seam for mock-only tests.
 
 Provider-backed read caches reuse the common provider client's cursor support,
 preserve provider order, read every cursor page and reject repeated continuation
@@ -80,8 +82,8 @@ tokens. Construction performs no provider request. The first operation that need
 a cache loads it with the request context; later operations reuse that snapshot
 for five minutes and serialize refreshes. Provider availability is not a startup
 or health gate. A provider refresh failure retains the last complete snapshot;
-failure to read an authoritative suppression source clears visible data, and
-learned suppressions remain sticky for the cache's lifetime.
+an initial provider failure returns unavailable because no complete snapshot
+exists yet.
 
 ## Contract and compatibility
 
@@ -224,10 +226,10 @@ the master rollout gate under separate release authorization before deployment.
 ### Raw Keto relationship primitive
 
 The composition root retains a concrete `*ketoclient.Client` from
-`services/common/client/keto` on `application.keto`. Pass it explicitly into a
-future consumer's constructor, using an interface defined by that consumer with
-only the methods it needs. Existing ban/admin consumers receive the separate
-`NewReadClient` instance, which has no configured write API.
+`services/common/client/keto` on `application.keto`. Pass concrete clients and
+shared application services explicitly into consumers. Existing ban/admin
+consumers receive the separate `NewReadClient` instance, which has no configured
+write API.
 
 `keto.NewClient(readURL, writeURL, keto.WithHTTPClient(httpClient))` applies options
 to both APIs. The caller owns the HTTP client and transport. The two-argument

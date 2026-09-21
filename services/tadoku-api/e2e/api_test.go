@@ -11,7 +11,6 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
-	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -20,6 +19,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	commonroles "github.com/tadoku/tadoku/services/common/authz/roles"
 	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
+	kratosclient "github.com/tadoku/tadoku/services/common/client/kratos"
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/announcements"
 	featureauthz "github.com/tadoku/tadoku/services/tadoku-api/features/authz"
@@ -134,7 +134,8 @@ type suite struct {
 	keto    *testketo.Fixture
 	kratos  *testkratos.Fixture
 	handler *transport.Router
-	profile *nativeProfileCacheHolder
+	profile *featureprofile.Service
+	roles   *commonroles.KetoService
 	proxied atomic.Int32
 }
 
@@ -150,9 +151,7 @@ func newTestAPI(ctx context.Context, ketoFixture *testketo.Fixture, kratosFixtur
 		}
 	}()
 
-	profileHolder := &nativeProfileCacheHolder{}
-	profileHolder.replace(featureprofile.NewUserCache(kratosFixture.CursorClient(), featureprofile.NewProfileRepository(db.Pool)))
-	handler, err := newTestRouter(ctx, db.Pool, ketoFixture.ReadURL(), profileHolder)
+	handler, profileService, roleService, err := newTestRouter(ctx, db.Pool, ketoFixture.ReadURL(), kratosFixture.CursorClient())
 	if err != nil {
 		return nil, err
 	}
@@ -161,7 +160,8 @@ func newTestAPI(ctx context.Context, ketoFixture *testketo.Fixture, kratosFixtur
 		keto:    ketoFixture,
 		kratos:  kratosFixture,
 		handler: handler,
-		profile: profileHolder,
+		profile: profileService,
+		roles:   roleService,
 	}
 	if err := registerSentinelProxy(api); err != nil {
 		return nil, err
@@ -171,12 +171,12 @@ func newTestAPI(ctx context.Context, ketoFixture *testketo.Fixture, kratosFixtur
 	return api, nil
 }
 
-func newTestRouter(ctx context.Context, pool *pgxpool.Pool, ketoReadURL string, profileHolder *nativeProfileCacheHolder) (*transport.Router, error) {
+func newTestRouter(ctx context.Context, pool *pgxpool.Pool, ketoReadURL string, identities *kratosclient.Client) (*transport.Router, *featureprofile.Service, *commonroles.KetoService, error) {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	return newTestRouterWithLogger(ctx, pool, ketoReadURL, profileHolder, logger)
+	return newTestRouterWithLogger(ctx, pool, ketoReadURL, identities, logger)
 }
 
-func newTestRouterWithLogger(ctx context.Context, pool *pgxpool.Pool, ketoReadURL string, profileHolder *nativeProfileCacheHolder, logger *slog.Logger) (*transport.Router, error) {
+func newTestRouterWithLogger(ctx context.Context, pool *pgxpool.Pool, ketoReadURL string, identities *kratosclient.Client, logger *slog.Logger) (*transport.Router, *featureprofile.Service, *commonroles.KetoService, error) {
 	reader := ketoclient.NewReadClient(ketoReadURL)
 	permissionChecker := permissions.NewKetoChecker(reader)
 	authzService := featureauthz.NewService(permissionChecker)
@@ -189,43 +189,22 @@ func newTestRouterWithLogger(ctx context.Context, pool *pgxpool.Pool, ketoReadUR
 	pagesService := pages.NewService(pagesRepository)
 	postsService := posts.NewService(postsRepository)
 	roleService := commonroles.NewKetoService(reader, "app", "tadoku")
-	profileService := featureprofile.NewService(profileHolder, roleService)
+	profileService := featureprofile.NewService(featureprofile.NewUserCache(identities), roleService)
 	application := app.New(announcementsService, authzService, languagesService, pagesService, postsService, profileService, pool, permissionChecker)
 	authenticate, err := transport.NewJWTAuthentication(ctx, authenticationJWKS.URL, time.Second, 24*time.Hour, "http://oathkeeper-api/", logger)
 	if err != nil {
-		return nil, err
+		return nil, nil, nil, err
 	}
 	rejectBanned := transport.RejectBannedUsers(func(ctx context.Context, subjectID string) (bool, error) {
 		return reader.CheckPermission(ctx, "app", "tadoku", "banned", ketoclient.Subject{ID: subjectID})
 	}, logger)
 	handler, err := transport.NewHandler(application, pool.Ping, time.Second, prometheus.NewRegistry(), logger, authenticate, rejectBanned)
 	if err != nil {
-		return nil, fmt.Errorf("create API handler: %w", err)
+		return nil, nil, nil, fmt.Errorf("create API handler: %w", err)
 	}
 	handler.HandleFunc("GET /test/authentication", observeIdentity)
 	handler.HandleFunc("GET /test/banned", observeIdentity)
-	return handler, nil
-}
-
-type nativeProfileCacheHolder struct {
-	mu    sync.RWMutex
-	cache *featureprofile.UserCache
-}
-
-func (h *nativeProfileCacheHolder) Users(ctx context.Context) ([]featureprofile.CachedUser, error) {
-	h.mu.RLock()
-	cache := h.cache
-	h.mu.RUnlock()
-	if cache == nil {
-		return []featureprofile.CachedUser{}, nil
-	}
-	return cache.Users(ctx)
-}
-
-func (h *nativeProfileCacheHolder) replace(cache *featureprofile.UserCache) {
-	h.mu.Lock()
-	h.cache = cache
-	h.mu.Unlock()
+	return handler, profileService, roleService, nil
 }
 
 func registerSentinelProxy(s *suite) error {
@@ -282,7 +261,7 @@ func (s *suite) reset(t *testing.T, caseDir string) {
 
 func (s *suite) resetProfileCaches() {
 	if s.profile != nil {
-		s.profile.replace(featureprofile.NewUserCache(s.kratos.CursorClient(), featureprofile.NewProfileRepository(s.db.Pool)))
+		*s.profile = *featureprofile.NewService(featureprofile.NewUserCache(s.kratos.CursorClient()), s.roles)
 	}
 	if legacyProfile != nil {
 		legacyProfile.resetCache()

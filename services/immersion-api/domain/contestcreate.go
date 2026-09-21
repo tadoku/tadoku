@@ -17,8 +17,6 @@ type ContestCreateRepository interface {
 }
 
 type ContestCreateRequest struct {
-	OwnerUserID             uuid.UUID `validate:"required"`
-	OwnerUserDisplayName    string    `validate:"required"`
 	ContestStart            time.Time `validate:"required"`
 	ContestEnd              time.Time `validate:"required"`
 	RegistrationEnd         time.Time `validate:"required"`
@@ -30,7 +28,19 @@ type ContestCreateRequest struct {
 	Official              bool
 	Private               bool
 	LanguageCodeAllowList []string
+
+	id                   uuid.UUID
+	ownerUserID          uuid.UUID
+	ownerUserDisplayName string
+	createdAt            time.Time
+	updatedAt            time.Time
 }
+
+func (r *ContestCreateRequest) ID() uuid.UUID                { return r.id }
+func (r *ContestCreateRequest) OwnerUserID() uuid.UUID       { return r.ownerUserID }
+func (r *ContestCreateRequest) OwnerUserDisplayName() string { return r.ownerUserDisplayName }
+func (r *ContestCreateRequest) CreatedAt() time.Time         { return r.createdAt }
+func (r *ContestCreateRequest) UpdatedAt() time.Time         { return r.updatedAt }
 
 type ContestCreateResponse struct {
 	ID                      uuid.UUID
@@ -84,12 +94,12 @@ func (s *ContestCreate) Execute(ctx context.Context, req *ContestCreateRequest) 
 	if session == nil {
 		return nil, ErrUnauthorized
 	}
-	req.OwnerUserID = uuid.MustParse(session.Subject)
-	req.OwnerUserDisplayName = session.DisplayName
+	req.ownerUserID = uuid.MustParse(session.Subject)
+	req.ownerUserDisplayName = session.DisplayName
 
 	// Check if user has permission to create contest
 	if !isAdmin(ctx) {
-		contestCount, err := s.repo.GetContestsByUserCountForYear(ctx, s.clock.Now(), req.OwnerUserID)
+		contestCount, err := s.repo.GetContestsByUserCountForYear(ctx, s.clock.Now(), req.ownerUserID)
 		if err != nil {
 			return nil, fmt.Errorf("could not check permission for contest creation: %w", err)
 		}
@@ -97,6 +107,9 @@ func (s *ContestCreate) Execute(ctx context.Context, req *ContestCreateRequest) 
 		if contestCount >= UserCreateContestYearlyLimit {
 			return nil, fmt.Errorf("hit limit of created contests: %w", ErrForbidden)
 		}
+	}
+	if req.ownerUserID == uuid.Nil || req.ownerUserDisplayName == "" {
+		return nil, fmt.Errorf("unable to validate: %w", ErrInvalidContest)
 	}
 
 	err := s.validate.Struct(req)
@@ -140,5 +153,9 @@ func (s *ContestCreate) Execute(ctx context.Context, req *ContestCreateRequest) 
 		}
 	}
 
+	now := s.clock.Now()
+	req.id = uuid.New()
+	req.createdAt = now
+	req.updatedAt = now
 	return s.repo.CreateContest(ctx, req)
 }

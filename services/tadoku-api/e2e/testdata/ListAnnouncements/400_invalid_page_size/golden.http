@@ -1,6 +1,6 @@
 >>> GET /content/announcements/main?page_size=invalid
 HTTP/1.1 400 Bad Request
-Content-Length: 140
+Content-Length: 53
 Content-Type: application/json; charset=UTF-8
 
-{"message":"Invalid format for parameter page_size: error binding string parameter: strconv.ParseInt: parsing \"invalid\": invalid syntax"}
+{"message":"Invalid format for parameter page_size"}

@@ -43,6 +43,7 @@ var defaultTagSuggestions = []string{
 	"tv",
 	"vocabulary",
 	"web page",
+	"youtube",
 }
 
 type TagSuggestionsRequest struct {

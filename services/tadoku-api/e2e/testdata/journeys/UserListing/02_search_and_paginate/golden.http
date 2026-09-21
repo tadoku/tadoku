@@ -3,4 +3,4 @@ HTTP/1.1 200 OK
 Content-Length: 179
 Content-Type: application/json; charset=UTF-8
 
-{"total_size":4,"users":[{"created_at":"2026-09-12T12:00:00Z","display_name":"User Two","email":"user2@example.test","id":"44444444-4444-4444-8444-444444444444","role":"admin"}]}
+{"total_size":5,"users":[{"created_at":"2026-08-12T12:00:00Z","display_name":"User Two","email":"user2@example.test","id":"44444444-4444-4444-8444-444444444444","role":"admin"}]}

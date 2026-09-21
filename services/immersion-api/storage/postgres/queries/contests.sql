@@ -1,5 +1,6 @@
 -- name: CreateContest :one
 insert into contests (
+  id,
   owner_user_id,
   owner_user_display_name,
   official,
@@ -10,8 +11,11 @@ insert into contests (
   title,
   "description",
   language_code_allow_list,
-  activity_type_id_allow_list
+  activity_type_id_allow_list,
+  created_at,
+  updated_at
 ) values (
+  sqlc.arg('id'),
   sqlc.arg('owner_user_id'),
   sqlc.arg('owner_user_display_name'),
   sqlc.arg('official'),
@@ -22,7 +26,9 @@ insert into contests (
   sqlc.arg('title'),
   sqlc.arg('description'),
   sqlc.arg('language_code_allow_list'),
-  sqlc.arg('activity_type_id_allow_list')
+  sqlc.arg('activity_type_id_allow_list'),
+  sqlc.arg('created_at'),
+  sqlc.arg('updated_at')
 ) returning id;
 
 -- name: GetContestsByUserCountForYear :one

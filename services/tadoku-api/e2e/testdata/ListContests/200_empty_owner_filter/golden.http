@@ -1,0 +1,6 @@
+>>> GET /immersion/contests?user_id=99999999-9999-4999-8999-999999999999
+HTTP/1.1 200 OK
+Content-Length: 52
+Content-Type: application/json; charset=UTF-8
+
+{"contests":[],"next_page_token":"","total_size":0}

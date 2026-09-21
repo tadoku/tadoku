@@ -1,0 +1,6 @@
+POST /authz/internal/v1/proxy/admin-check HTTP/1.1
+Host: api.test
+Content-Type: application/json
+Content-Length: 1
+
+{

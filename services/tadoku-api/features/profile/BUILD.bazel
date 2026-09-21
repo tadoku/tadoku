@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "domain.go",
         "profile_cache.go",
+        "profile_repository.go",
         "profile_service.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/features/profile",
@@ -12,8 +13,15 @@ go_library(
     deps = [
         "//services/common/authz/roles",
         "//services/common/client/kratos",
+        "//services/tadoku-api/generated/sqlc/profile",
+        "//services/tadoku-api/infra/postgres",
         "//services/tadoku-api/internal/errx",
+        "//services/tadoku-api/internal/identity",
         "//services/tadoku-api/internal/timex",
+        "@com_github_google_uuid//:uuid",
+        "@com_github_jackc_pgx_v5//:pgx",
+        "@com_github_jackc_pgx_v5//pgtype",
+        "@com_github_jackc_pgx_v5//pgxpool",
         "@com_github_ory_kratos_client_go//:kratos-client-go",
         "@com_github_sahilm_fuzzy//:fuzzy",
     ],
@@ -24,10 +32,12 @@ go_test(
     size = "medium",
     srcs = [
         "profile_cache_test.go",
+        "profile_repository_test.go",
         "profile_service_test.go",
     ],
     data = glob(["testdata/**"]),
     embed = [":profile"],
+    env_inherit = ["TADOKU_TEST_POSTGRES_URL"],
     tags = [
         "no-cache",
         "no-remote-exec",
@@ -38,8 +48,11 @@ go_test(
         "@platforms//os:linux",
     ],
     deps = [
+        "//services/tadoku-api/infra/postgres",
         "//services/tadoku-api/internal/testkratos",
+        "//services/tadoku-api/internal/testpostgres",
         "//services/tadoku-api/internal/timex",
+        "@com_github_google_uuid//:uuid",
         "@com_github_ory_kratos_client_go//:kratos-client-go",
     ],
 )

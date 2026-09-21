@@ -15,9 +15,9 @@ type KratosClient struct {
 	client *commonkratos.Client
 }
 
-func NewKratosClient(kratosURL string) *KratosClient {
+func NewKratosClient(kratosURL string, options ...commonkratos.Option) *KratosClient {
 	return &KratosClient{
-		client: commonkratos.NewClient(kratosURL),
+		client: commonkratos.NewClient(kratosURL, options...),
 	}
 }
 

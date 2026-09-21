@@ -240,17 +240,17 @@ func validApplicationConfig(t *testing.T) config {
 	}
 
 	return config{
-		Port:             0,
-		MetricsPort:      0,
-		ServiceName:      "tadoku-api-test",
-		JWKS:             jwks.URL,
-		KetoReadURL:      upstream.URL,
-		KetoWriteURL:     upstream.URL,
-		KetoWriteTimeout: time.Second,
-		KratosAdminURL:   upstream.URL,
-		KratosTimeout:    time.Second,
+		Port:                 0,
+		MetricsPort:          0,
+		ServiceName:          "tadoku-api-test",
+		JWKS:                 jwks.URL,
+		KetoReadURL:          upstream.URL,
+		KetoWriteURL:         upstream.URL,
+		KetoWriteTimeout:     time.Second,
+		OathkeeperAuthzToken: "callback-token",
+		KratosAdminURL:       upstream.URL,
+		KratosTimeout:        time.Second,
 
-		AuthzURL:     upstream.URL,
 		ContentURL:   upstream.URL,
 		ImmersionURL: upstream.URL,
 		ProfileURL:   upstream.URL,
@@ -280,8 +280,8 @@ func TestLoadConfigUsesValidatedDefaults(t *testing.T) {
 	t.Setenv("API_JWKS", "http://jwks.test")
 	t.Setenv("API_KETO_READ_URL", "http://keto-read.test")
 	t.Setenv("API_KETO_WRITE_URL", "http://keto-write.test")
+	t.Setenv("API_OATHKEEPER_AUTHZ_TOKEN", "callback-token")
 	t.Setenv("API_KRATOS_ADMIN_URL", "http://kratos-admin.test")
-	t.Setenv("API_AUTHZ_URL", "http://authz")
 	t.Setenv("API_CONTENT_URL", "http://content")
 	t.Setenv("API_IMMERSION_URL", "http://immersion")
 	t.Setenv("API_PROFILE_URL", "http://profile")
@@ -326,6 +326,9 @@ func TestLoadConfigUsesValidatedDefaults(t *testing.T) {
 	}
 	if cfg.KetoWriteURL != "http://keto-write.test" || cfg.KetoWriteTimeout != 2*time.Second {
 		t.Errorf("Keto write URL=%q timeout=%v", cfg.KetoWriteURL, cfg.KetoWriteTimeout)
+	}
+	if cfg.OathkeeperAuthzToken != "callback-token" {
+		t.Errorf("Oathkeeper authorization token=%q", cfg.OathkeeperAuthzToken)
 	}
 	for _, rawURL := range []string{
 		"", "not-a-url", "/relative", "ftp://keto.test", "http://:4467", "http://keto.test:bad",
@@ -386,6 +389,11 @@ func TestLoadConfigUsesValidatedDefaults(t *testing.T) {
 		t.Errorf("missing JWKS configuration error=%v", err)
 	}
 	t.Setenv("API_JWKS", "http://jwks.test")
+	t.Setenv("API_OATHKEEPER_AUTHZ_TOKEN", "")
+	if _, err := loadConfig(); err == nil || !strings.Contains(err.Error(), "OathkeeperAuthzToken") {
+		t.Errorf("missing Oathkeeper callback credential error=%v", err)
+	}
+	t.Setenv("API_OATHKEEPER_AUTHZ_TOKEN", "callback-token")
 	for _, ketoURL := range []string{"", "not-a-url", "ftp://keto-read.test"} {
 		t.Setenv("API_KETO_READ_URL", ketoURL)
 		if _, err := loadConfig(); err == nil || !strings.Contains(err.Error(), "KetoReadURL") {

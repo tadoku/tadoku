@@ -29,6 +29,15 @@ output-options:
     - ContentPostUpdate
     - ContentPostVersionGet
     - ContentPostVersionList
+    - ImmersionContestList
+    - ImmersionContestCreate
+    - ImmersionContestCreatePermissionCheck
+    - ImmersionContestFindByID
+    - ImmersionContestFindLatestOfficial
+    - ImmersionContestFindRegistration
+    - ImmersionContestRegistrationUpsert
+    - ImmersionContestFindOngoingRegistrations
+    - ImmersionContestGetConfigurations
     - ImmersionLanguageList
     - ImmersionLanguageCreate
     - ImmersionLanguageUpdate

@@ -1,0 +1,4 @@
+>>> POST /immersion/contests/cccccccc-cccc-4ccc-8ccc-ccccccccccc9/registration
+HTTP/1.1 400 Bad Request
+Content-Length: 0
+

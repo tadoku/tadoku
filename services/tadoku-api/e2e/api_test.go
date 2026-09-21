@@ -17,13 +17,13 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/prometheus/client_golang/prometheus"
-	legacyrepository "github.com/tadoku/tadoku/services/authz-api/storage/postgres/repository"
 	commonroles "github.com/tadoku/tadoku/services/common/authz/roles"
 	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/announcements"
 	featureaudit "github.com/tadoku/tadoku/services/tadoku-api/features/audit"
 	featureauthz "github.com/tadoku/tadoku/services/tadoku-api/features/authz"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/contests"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/languages"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/pages"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/posts"
@@ -36,7 +36,6 @@ import (
 )
 
 var api *suite
-var legacyAuthz *legacyAuthzAPI
 var legacyContent *legacyContentAPI
 var legacyProfile *legacyProfileAPI
 var legacyImmersion *legacyImmersionAPI
@@ -45,12 +44,9 @@ var legacyBannedUsers http.Handler
 var authenticationJWKS *httptest.Server
 var keto *testketo.Fixture
 
-type authzHandlerPair struct {
-	native http.Handler
-	legacy http.Handler
-}
+const callbackToken = "test-oathkeeper-callback-token"
 
-var configuredAuthz authzHandlerPair
+var unavailableCallback http.Handler
 
 func TestMain(m *testing.M) {
 	flag.Parse()
@@ -107,38 +103,29 @@ func runTests(m *testing.M) (code int) {
 	}
 	defer func() { cleanupErr = errors.Join(cleanupErr, api.db.Close()) }()
 
-	legacyAuthz, err = newLegacyAuthzAPI(ctx, api.db.DSN, authenticationJWKS.URL, keto.ReadURL(), keto.WriteURL(), kratos.CursorClient())
+	unavailableKeto, err := testketo.New(ctx)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}
-	defer func() { cleanupErr = errors.Join(cleanupErr, legacyAuthz.db.Close()) }()
-	configuredNative, _, _, err := newTestRouterWithLogger(
+	unavailableNative, _, _, err := newTestRouterWithLogger(
 		ctx,
 		api.db.Pool,
 		api.db.Pool,
-		keto,
+		unavailableKeto,
 		kratos,
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
-		featureauthz.PublicPermissionAllowlist{{Namespace: "app", Relation: "admins"}},
 	)
 	if err != nil {
+		_ = unavailableKeto.Close()
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}
-	configuredLegacy, err := newLegacyAuthzHandler(
-		authenticationJWKS.URL,
-		keto.ReadURL(),
-		keto.WriteURL(),
-		kratos.CursorClient(),
-		legacyrepository.NewRepository(legacyAuthz.db),
-		"app:admins",
-	)
-	if err != nil {
+	if err := unavailableKeto.Close(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}
-	configuredAuthz = authzHandlerPair{native: configuredNative, legacy: configuredLegacy}
+	unavailableCallback = unavailableNative
 
 	legacyContent, err = newLegacyContentAPI(ctx, api.db.DSN, authenticationJWKS.URL, keto.ReadURL())
 	if err != nil {
@@ -152,7 +139,7 @@ func runTests(m *testing.M) (code int) {
 		return 1
 	}
 	defer func() { cleanupErr = errors.Join(cleanupErr, legacyProfile.db.Close()) }()
-	legacyImmersion, err = newLegacyImmersionAPI(ctx, api.db.DSN, authenticationJWKS.URL, keto.ReadURL())
+	legacyImmersion, err = newLegacyImmersionAPI(ctx, api.db.DSN, authenticationJWKS.URL, keto.ReadURL(), kratos.Client())
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
@@ -213,7 +200,7 @@ func newTestRouter(
 	kratosFixture *testkratos.Fixture,
 ) (*transport.Router, *featureprofile.Service, *commonroles.KetoService, error) {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	return newTestRouterWithLogger(ctx, pool, pool, ketoFixture, kratosFixture, logger, nil)
+	return newTestRouterWithLogger(ctx, pool, pool, ketoFixture, kratosFixture, logger)
 }
 
 func newTestRouterWithLogger(
@@ -223,7 +210,6 @@ func newTestRouterWithLogger(
 	ketoFixture *testketo.Fixture,
 	kratosFixture *testkratos.Fixture,
 	logger *slog.Logger,
-	publicPermissions featureauthz.PublicPermissionAllowlist,
 ) (*transport.Router, *featureprofile.Service, *commonroles.KetoService, error) {
 	reader := ketoclient.NewReadClient(ketoFixture.ReadURL())
 	readWriter := ketoclient.NewClient(ketoFixture.ReadURL(), ketoFixture.WriteURL())
@@ -232,22 +218,26 @@ func newTestRouterWithLogger(
 	identities := kratosFixture.CursorClient()
 	authzService := featureauthz.NewService(
 		permissionChecker,
+		reader,
 		identities,
 		roleService,
 		commonroles.NewKetoManager(readWriter, "app", "tadoku"),
-		publicPermissions,
+		nil,
 	)
 	auditService := featureaudit.NewService(featureaudit.NewRepository(auditPool))
 	announcementsRepository := announcements.NewAnnouncementsRepository(pool)
+	contestsRepository := contests.NewContestsRepository(pool)
 	languagesRepository := languages.NewLanguagesRepository(pool)
 	pagesRepository := pages.NewPagesRepository(pool)
 	postsRepository := posts.NewPostsRepository(pool)
+	profileRepository := featureprofile.NewRepository(pool)
 	announcementsService := announcements.NewService(announcementsRepository)
+	contestsService := contests.NewService(contestsRepository, kratosFixture.Client())
 	languagesService := languages.NewService(languagesRepository)
 	pagesService := pages.NewService(pagesRepository)
 	postsService := posts.NewService(postsRepository)
-	profileService := featureprofile.NewService(featureprofile.NewUserCache(identities), roleService)
-	application := app.New(announcementsService, auditService, authzService, languagesService, pagesService, postsService, profileService, pool, permissionChecker)
+	profileService := featureprofile.NewService(profileRepository, featureprofile.NewUserCache(identities), roleService)
+	application := app.New(announcementsService, auditService, authzService, contestsService, languagesService, pagesService, postsService, profileService, pool, permissionChecker)
 	authenticate, err := transport.NewJWTAuthentication(ctx, authenticationJWKS.URL, time.Second, 24*time.Hour, "http://oathkeeper-api/", logger)
 	if err != nil {
 		return nil, nil, nil, err
@@ -255,7 +245,11 @@ func newTestRouterWithLogger(
 	rejectBanned := transport.RejectBannedUsers(func(ctx context.Context, subjectID string) (bool, error) {
 		return reader.CheckPermission(ctx, "app", "tadoku", "banned", ketoclient.Subject{ID: subjectID})
 	}, logger)
-	handler, err := transport.NewHandler(application, pool.Ping, time.Second, prometheus.NewRegistry(), logger, authenticate, rejectBanned)
+	authenticateCallback, err := transport.NewCallbackAuthentication(callbackToken)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	handler, err := transport.NewHandler(application, pool.Ping, time.Second, prometheus.NewRegistry(), logger, authenticate, rejectBanned, authenticateCallback)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("create API handler: %w", err)
 	}
@@ -267,7 +261,6 @@ func newTestRouterWithLogger(
 func registerSentinelProxy(s *suite) error {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	upstreams := transport.Upstreams{
-		Authz:     "http://upstream.test",
 		Content:   "http://upstream.test",
 		Immersion: "http://upstream.test",
 		Profile:   "http://upstream.test",
@@ -318,7 +311,7 @@ func (s *suite) reset(t *testing.T, caseDir string) {
 
 func (s *suite) resetProfileCaches() {
 	if s.profile != nil {
-		*s.profile = *featureprofile.NewService(featureprofile.NewUserCache(s.kratos.CursorClient()), s.roles)
+		*s.profile = *featureprofile.NewService(featureprofile.NewRepository(s.db.Pool), featureprofile.NewUserCache(s.kratos.CursorClient()), s.roles)
 	}
 	if legacyProfile != nil {
 		legacyProfile.resetCache()

@@ -1,0 +1,6 @@
+>>> POST /immersion/contests
+HTTP/1.1 409 Conflict
+Content-Length: 41
+Content-Type: application/json; charset=UTF-8
+
+{"error":"account_deletion_in_progress"}

@@ -1,0 +1,6 @@
+>>> GET /immersion/contests/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2
+HTTP/1.1 200 OK
+Content-Length: 480
+Content-Type: application/json; charset=UTF-8
+
+{"allowed_activities":[{"id":5,"input_type":"time_primary","name":"Study"}],"allowed_languages":null,"contest_end":"2026-03-31","contest_start":"2026-03-01","created_at":"2026-09-12T11:00:00Z","deleted":true,"id":"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2","official":true,"owner_user_display_name":"Deleted organizer","owner_user_id":"22222222-2222-4222-8222-222222222222","private":false,"registration_end":"2026-02-15","title":"Deleted contest","updated_at":"2026-09-12T11:01:00Z"}

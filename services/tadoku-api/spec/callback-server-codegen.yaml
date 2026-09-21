@@ -1,0 +1,9 @@
+package: callback
+generate:
+  models: true
+  std-http-server: true
+  strict-server: true
+output-options:
+  include-operation-ids:
+    - AuthzProxyProxyAdminCheck
+  nullable-type: true

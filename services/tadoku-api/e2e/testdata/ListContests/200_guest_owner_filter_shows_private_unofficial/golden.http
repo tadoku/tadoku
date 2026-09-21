@@ -1,0 +1,6 @@
+>>> GET /immersion/contests?official=false&user_id=11111111-1111-4111-8111-111111111111
+HTTP/1.1 200 OK
+Content-Length: 496
+Content-Type: application/json; charset=UTF-8
+
+{"contests":[{"activity_type_id_allow_list":[3],"contest_end":"2026-03-31","contest_start":"2026-03-01","created_at":"2026-09-12T12:00:00Z","deleted":false,"id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa4","language_code_allow_list":["eng"],"official":false,"owner_user_display_name":"Owner One","owner_user_id":"11111111-1111-4111-8111-111111111111","private":true,"registration_end":"2026-02-15","title":"Private unofficial","updated_at":"2026-09-12T12:01:00Z"}],"next_page_token":"","total_size":1}

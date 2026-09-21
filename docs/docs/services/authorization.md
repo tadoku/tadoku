@@ -9,7 +9,7 @@ This document describes how Tadoku uses Ory Keto for authorization, specifically
 
 The public HTTP contract is available in the
 [Authorization API reference](../api/authorization/authz-api), with the
-[OpenAPI source](https://github.com/tadoku/tadoku/blob/main/services/authz-api/http/rest/openapi/api.yaml)
+[OpenAPI source](https://github.com/tadoku/tadoku/blob/main/services/tadoku-api/spec/openapi.yaml)
 kept in the repository.
 
 ## Overview

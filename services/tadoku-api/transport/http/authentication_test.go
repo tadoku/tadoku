@@ -62,13 +62,17 @@ func TestAuthenticationRequiresConfiguration(t *testing.T) {
 	}
 
 	passthrough := func(next stdhttp.Handler) stdhttp.Handler { return next }
-	_, err := NewHandler(app.New(nil, nil, nil, nil, nil, nil, nil, nil, nil), func(context.Context) error { return nil }, time.Second, prometheus.NewRegistry(), slog.Default(), nil, passthrough)
+	_, err := NewHandler(app.New(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil), func(context.Context) error { return nil }, time.Second, prometheus.NewRegistry(), slog.Default(), nil, passthrough, passthrough)
 	if err == nil {
 		t.Error("router accepted missing authentication middleware")
 	}
-	_, err = NewHandler(app.New(nil, nil, nil, nil, nil, nil, nil, nil, nil), func(context.Context) error { return nil }, time.Second, prometheus.NewRegistry(), slog.Default(), passthrough, nil)
+	_, err = NewHandler(app.New(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil), func(context.Context) error { return nil }, time.Second, prometheus.NewRegistry(), slog.Default(), passthrough, nil, passthrough)
 	if err == nil {
 		t.Error("router accepted missing banned-user middleware")
+	}
+	_, err = NewHandler(app.New(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil), func(context.Context) error { return nil }, time.Second, prometheus.NewRegistry(), slog.Default(), passthrough, passthrough, nil)
+	if err == nil {
+		t.Error("router accepted missing callback authentication middleware")
 	}
 }
 
@@ -175,7 +179,16 @@ func TestNewApplicationRoutesInheritSharedMiddleware(t *testing.T) {
 			next.ServeHTTP(w, r)
 		})
 	}
-	router, err := NewHandler(app.New(nil, nil, nil, nil, nil, nil, nil, nil, nil), func(context.Context) error { return nil }, time.Second, prometheus.NewRegistry(), slog.Default(), authenticate, rejectBanned)
+	router, err := NewHandler(
+		app.New(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil),
+		func(context.Context) error { return nil },
+		time.Second,
+		prometheus.NewRegistry(),
+		slog.Default(),
+		authenticate,
+		rejectBanned,
+		func(next stdhttp.Handler) stdhttp.Handler { return next },
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -217,6 +230,56 @@ func TestNewApplicationRoutesInheritSharedMiddleware(t *testing.T) {
 	}
 	if authenticated != 4 || checkedBans != 3 {
 		t.Errorf("authentication calls=%d ban checks=%d, want 4 and 3", authenticated, checkedBans)
+	}
+}
+
+func TestCallbackAuthenticationIsScopedToExactOperation(t *testing.T) {
+	callback, err := NewCallbackAuthentication("callback-token")
+	if err != nil {
+		t.Fatal(err)
+	}
+	businessAuthentication := func(next stdhttp.Handler) stdhttp.Handler {
+		return stdhttp.HandlerFunc(func(w stdhttp.ResponseWriter, _ *stdhttp.Request) {
+			w.WriteHeader(stdhttp.StatusUnauthorized)
+		})
+	}
+	passthrough := func(next stdhttp.Handler) stdhttp.Handler { return next }
+	router, err := NewHandler(
+		app.New(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil),
+		func(context.Context) error { return nil },
+		time.Second,
+		prometheus.NewRegistry(),
+		slog.Default(),
+		businessAuthentication,
+		passthrough,
+		callback,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	router.HandleFunc("PUT /authz/internal/v1/proxy/admin-check", func(stdhttp.ResponseWriter, *stdhttp.Request) {
+		t.Error("callback credential bypassed business authentication for another method")
+	})
+	router.HandleFunc("POST /authz/internal/v1/proxy/admin-check/{extra}", func(stdhttp.ResponseWriter, *stdhttp.Request) {
+		t.Error("callback credential bypassed business authentication for a subpath")
+	})
+
+	for _, target := range []struct {
+		method string
+		path   string
+	}{
+		{method: stdhttp.MethodPut, path: "/authz/internal/v1/proxy/admin-check"},
+		{method: stdhttp.MethodPost, path: "/authz/internal/v1/proxy/admin-check/extra"},
+	} {
+		request := httptest.NewRequest(target.method, target.path, nil)
+		request.Header.Set("Authorization", "Bearer callback-token")
+		response := httptest.NewRecorder()
+
+		router.ServeHTTP(response, request)
+
+		if response.Code != stdhttp.StatusUnauthorized {
+			t.Errorf("%s %s status=%d, want %d", target.method, target.path, response.Code, stdhttp.StatusUnauthorized)
+		}
 	}
 }
 

@@ -1,5 +1,17 @@
-// Package profile owns administrator-facing user profile operations.
+// Package profile owns user profile operations.
 package profile
+
+import "github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
+
+var (
+	ErrLocalUserNotFound         = errx.NewNotFoundError("local user not found")
+	ErrAccountDeletionInProgress = errx.NewConflictError("account deletion in progress")
+)
+
+type UserDeletionState struct {
+	DeletionLocked bool
+	Deleted        bool
+}
 
 type CachedUser struct {
 	ID          string

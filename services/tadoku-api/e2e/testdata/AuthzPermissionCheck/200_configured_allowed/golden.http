@@ -1,6 +1,0 @@
->>> POST /authz/permission/check
-HTTP/1.1 200 OK
-Content-Length: 17
-Content-Type: application/json; charset=UTF-8
-
-{"allowed":true}

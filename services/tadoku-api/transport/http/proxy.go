@@ -13,7 +13,6 @@ import (
 )
 
 type Upstreams struct {
-	Authz     string
 	Content   string
 	Immersion string
 	Profile   string
@@ -52,7 +51,6 @@ func RegisterProxyRoutes(
 
 	// The gateway removes its external prefix before forwarding here.
 	routes := []route{
-		{name: "authz", prefix: "/authz/", target: upstreams.Authz},
 		{name: "content", prefix: "/content/", target: upstreams.Content},
 		{name: "immersion", prefix: "/immersion/", target: upstreams.Immersion},
 		{name: "profile", prefix: "/profile/", target: upstreams.Profile},
@@ -81,6 +79,7 @@ func RegisterProxyRoutes(
 		router.rootMux.Handle(current.prefix, handler)
 		headRoutes.Handle(current.prefix, handler)
 	}
+
 	router.rootHandler = stdhttp.HandlerFunc(func(w stdhttp.ResponseWriter, r *stdhttp.Request) {
 		if r.Method == stdhttp.MethodHead {
 			headRoutes.ServeHTTP(w, r)

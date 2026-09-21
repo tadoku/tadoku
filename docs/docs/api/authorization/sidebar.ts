@@ -8,18 +8,6 @@ const sidebar: SidebarsConfig = {
     },
     {
       type: "category",
-      label: "metadata",
-      items: [
-        {
-          type: "doc",
-          id: "api/authorization/ping",
-          label: "Checks if service is responsive",
-          className: "api-method get",
-        },
-      ],
-    },
-    {
-      type: "category",
       label: "role",
       items: [
         {

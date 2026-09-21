@@ -1,0 +1,5 @@
+// Package profile contains the native Profile SQL generation inputs.
+package profile
+
+//go:generate go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.31.1
+//go:generate sqlc generate

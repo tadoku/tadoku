@@ -1,0 +1,3 @@
+>>> GET /immersion/contests/52fdfc07-2182-454f-963f-5f0f9a621d72/registration
+HTTP/1.1 204 No Content
+

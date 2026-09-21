@@ -1,6 +1,7 @@
 package e2e_test
 
 import (
+	"bytes"
 	"math/rand"
 	"net/http"
 	"testing"
@@ -77,6 +78,147 @@ func TestLanguageLifecycleJourney(t *testing.T) {
 			as:      admin,
 			want:    http.StatusOK,
 		},
+	})
+}
+
+func TestContestCreationJourney(t *testing.T) {
+	ids := append(bytes.Repeat([]byte{0x11}, 16), bytes.Repeat([]byte{0x22}, 16)...)
+	uuid.SetRand(bytes.NewReader(ids))
+	defer uuid.SetRand(nil)
+
+	runJourney(t, api, "ContestCreation", []step{
+		{
+			request: "reject_invalid_contest",
+			as:      user,
+			want:    http.StatusBadRequest,
+			others: cast{
+				none:   http.StatusBadRequest,
+				guest:  http.StatusUnauthorized,
+				banned: http.StatusForbidden,
+			},
+		},
+		{verify: "rejection_keeps_user_upsert"},
+		{
+			request: "create_public_contest",
+			as:      user,
+			want:    http.StatusOK,
+			others: cast{
+				none:   http.StatusBadRequest,
+				guest:  http.StatusUnauthorized,
+				banned: http.StatusForbidden,
+			},
+		},
+		{
+			request: "other_user_finds_contest",
+			as:      user2,
+			want:    http.StatusOK,
+		},
+		{
+			request: "other_user_lists_contest",
+			as:      user2,
+			want:    http.StatusOK,
+		},
+		{
+			request: "admin_creates_official_contest",
+			as:      admin,
+			want:    http.StatusOK,
+			others: cast{
+				none:   http.StatusBadRequest,
+				guest:  http.StatusUnauthorized,
+				user:   http.StatusForbidden,
+				banned: http.StatusForbidden,
+			},
+		},
+		{
+			request: "official_contest_is_latest",
+			as:      user2,
+			want:    http.StatusOK,
+		},
+	})
+}
+
+func TestContestRegistrationJourney(t *testing.T) {
+	// Keep API-created contest and registration IDs stable in the HTTP fixtures.
+	uuid.SetRand(rand.New(rand.NewSource(1)))
+	defer uuid.SetRand(nil)
+
+	runJourney(t, api, "ContestRegistration", []step{
+		{
+			request: "create_ongoing_contest",
+			as:      user,
+			want:    http.StatusOK,
+		},
+		{
+			request: "registration_initially_missing",
+			as:      user,
+			want:    http.StatusNoContent,
+		},
+		{
+			request: "register",
+			as:      user,
+			want:    http.StatusOK,
+			others:  cast{guest: http.StatusUnauthorized, banned: http.StatusForbidden},
+		},
+		{
+			request: "registration_visible",
+			as:      user,
+			want:    http.StatusOK,
+		},
+		{
+			request: "second_user_registers",
+			as:      user2,
+			want:    http.StatusOK,
+		},
+		{
+			request: "second_user_sees_own_registration",
+			as:      user2,
+			want:    http.StatusOK,
+		},
+		{
+			request: "ongoing_registration",
+			as:      user,
+			want:    http.StatusOK,
+		},
+		{
+			request: "update_languages",
+			as:      user,
+			want:    http.StatusOK,
+		},
+		{
+			request: "updated_registration_visible",
+			as:      user,
+			want:    http.StatusOK,
+		},
+		{
+			request: "registration_no_longer_ongoing",
+			as:      user,
+			want:    http.StatusOK,
+			at:      fixtureInstant.Add(24 * time.Hour),
+		},
+	})
+}
+
+func TestContestRegistrationDetachJourney(t *testing.T) {
+	// Detachment requires an existing registration and linked logs, so this
+	// journey first exposes the seeded registration through the API.
+	runJourney(t, api, "ContestRegistrationDetach", []step{
+		{
+			request: "existing_registration",
+			as:      user,
+			want:    http.StatusOK,
+		},
+		{
+			request: "remove_language",
+			as:      user,
+			want:    http.StatusOK,
+			others:  cast{guest: http.StatusUnauthorized, banned: http.StatusForbidden},
+		},
+		{
+			request: "registration_updated",
+			as:      user,
+			want:    http.StatusOK,
+		},
+		{verify: "logs_detached_and_refreshes_enqueued"},
 	})
 }
 
@@ -199,7 +341,7 @@ func TestUserModerationJourney(t *testing.T) {
 }
 
 func TestModerationAuditFailureJourney(t *testing.T) {
-	handler, _ := auditUnavailableRoleUpdateHandlers(t)
+	handler := auditUnavailableRoleUpdateHandler(t)
 	failureAPI := &suite{
 		db:      api.db,
 		keto:    api.keto,

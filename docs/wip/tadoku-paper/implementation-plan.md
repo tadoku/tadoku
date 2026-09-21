@@ -724,7 +724,7 @@ webv2 is last because it has the largest and broadest surface. Use four parallel
 | Global shell | Navigation, Footer, announcement banner, signed-in/out/admin/banned states, mobile disclosure. |
 | Logging/contest forms | New/old/edit log flows, contest create/register/submit flows, form validation and overlays. |
 | Browse/data | Leaderboards, profiles, lists, tables, pagination, tabs, menus, responsive and overflow behavior. |
-| Content/charts | Blog, pages, manual, Chart.js palettes, heatmaps, activity charts, page counter exception. |
+| Content/charts | Blog, pages, manual, Chart.js palettes, heatmaps, and activity charts. |
 | Verification | Import/class audit, route and role smoke matrix, Paper tests, full frontend and container builds. |
 
 Do not combine product refactors with the visual migration. App adapters provide routing data to Navbar, Breadcrumb, Tabs, and Pagination. Charts use semantic categorical tokens and prepare non-color cues for #763.
@@ -734,7 +734,7 @@ Checklist:
 - [ ] Migrate global Navigation, Footer, announcement, signed-in/out/admin/banned, and mobile states.
 - [ ] Migrate old/new/edit logging and contest create/register/submit flows without unrelated product consolidation.
 - [ ] Migrate leaderboards, profiles, lists, tables, pagination, tabs, menus, responsive behavior, and overflow.
-- [ ] Migrate blog, pages, manual, Page Counter exception, Chart.js palettes, heatmaps, and activity charts.
+- [ ] Migrate blog, pages, manual, Chart.js palettes, heatmaps, and activity charts.
 - [ ] Supply routing and current-page data through webv2-owned adapters.
 - [ ] Remove all webv2 `ui` imports, legacy stylesheet use, legacy-only classes, and unused Headless UI dependency.
 - [ ] Add discovered shared states to Paper fixtures/tests/docs before Stable promotion.

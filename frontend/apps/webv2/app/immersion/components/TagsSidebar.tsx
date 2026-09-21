@@ -30,6 +30,7 @@ const activityTags: Record<number, ActivityTagSuggestion[]> = {
     { tag: 'tv' },
     { tag: 'news' },
     { tag: 'online video' },
+    { tag: 'youtube' },
     { tag: 'fiction' },
     { tag: 'non-fiction' },
   ],

@@ -1,0 +1,7 @@
+POST /immersion/contests HTTP/1.1
+Host: api.test
+X-Request-Id: contest-creation-journey
+Content-Type: application/json
+Content-Length: 221
+
+{"contest_start":"2026-11-01","contest_end":"2026-11-30","registration_end":"2026-10-31","title":"Official November","private":false,"official":true,"language_code_allow_list":[],"activity_type_id_allow_list":[1,2,3,4,5]}

@@ -1,37 +1,31 @@
-# How to contribute
+# Contributing to Tadoku
 
-I'm really glad you're reading this, because volunteer developers are always welcome to improve Tadoku.
+Thanks for caring about Tadoku.
 
-If you haven't already, come find us on our [Discord server](https://discord.gg/AsC9vZs2Ex). We want you working on things you're excited about.
+We are **not accepting pull requests from outside contributors** right now. Development is handled by the maintainer and internal tooling. Unsolicited PRs will generally be closed without merge.
 
-## Architecture
+## How to contribute ideas and feedback
 
-TODO: please ask on Discord if you need more info and this hasn't been written yet.
+If you have a bug report, feature idea, or improvement suggestion:
 
-### Design-system coexistence
+1. **Open a GitHub issue** on [tadoku/tadoku](https://github.com/tadoku/tadoku/issues) with enough detail to reproduce or understand the ask, **or**
+2. **Message us on Discord** — [join the server](https://discord.gg/AsC9vZs2Ex) and post in `#feedback` or `#general`.
 
-The legacy `ui` package remains the only design system used by `admin`, `auth`, `webv2`, and the legacy `styleguide` until each application receives its complete Tadoku Paper cutover. The new `paper-styleguide` is the first and initially only `paper-ui` application.
+That is the best way to get something on the radar. We read both channels and turn durable product feedback into tracked work.
 
-Do not mix `ui` and `paper-ui` imports or styles in one application, import `paper-ui/src/*`, add Next.js or Headless UI dependencies to Paper, or load `paper-ui/styles.css` more than once. Run `cd frontend && pnpm check:paper-boundaries` when changing shared UI or an application boundary. The migration state is recorded in `frontend/paper-boundaries.json` and changes only in the coordinated cutover for an entire application.
+## What helps most in an issue or Discord post
 
-## Testing
+- What you were trying to do
+- What happened instead (screenshots welcome)
+- Whether it blocks contest logging or is a nice-to-have
+- Links to related logs, contests, or prior discussion if any
 
-Nearly all code should be tested. Please include a test so your contribution can be quickly reviewed. We're not aiming for 100% coverage here, just enough so we can refactor swiftly and have faith in the test suite.
+Please do **not** open a PR to "start the work" unless a maintainer explicitly invited you to.
 
-## Submitting changes
+## Security / sensitive reports
 
-Please send a [GitHub Pull Request](https://github.com/tadoku/tadoku/pull/new/main) with a clear list of what you've done (read more about [pull requests](http://help.github.com/pull-requests/)).
+If you believe you found a security issue, contact the maintainer privately (Discord DM to the server owner, or the contact options on the site) rather than filing a public issue with exploit details.
 
-Always write a clear log message for your commits without the use of capital letters.
+## For maintainers (internal)
 
-    $ git commit -m "a brief summary of the commit"
-
-## Coding conventions
-
-Start reading our code and you'll get the hang of it. We optimize for readability:
-
-  * Code should be formatted with `gofmt`
-  * The project is structured in layers, it's roughly an implementation of clean architecture
-    * It's okay to depend on domain in infra, but the other way around is not okay
-  * Use interfaces instead of depending on external types
-    * Even internally this should be done so that we can mock them
+Internal agents and maintainers still use the usual review and merge flow. Architecture notes (Paper boundaries, testing expectations, coding conventions) live with the maintainers; ask on Discord if you need orientation and you have been invited to work on the codebase.

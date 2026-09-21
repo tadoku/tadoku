@@ -17,7 +17,7 @@ func TestGetPageVersion(t *testing.T) {
 		{description: []string{"draft", "empty", "html"}, want: http.StatusOK, skipParity: "legacy returns version 0; revisions now use their 1-based history number"},
 		{description: []string{"scheduled"}, want: http.StatusOK, skipParity: "legacy returns version 0; revisions now use their 1-based history number"},
 		{description: []string{"invalid", "page", "id"}, want: http.StatusBadRequest},
-		{description: []string{"invalid", "content", "id"}, want: http.StatusBadRequest, skipParity: "generated runtimes spell the unmarshaling error differently"},
+		{description: []string{"invalid", "content", "id"}, want: http.StatusBadRequest, skipParity: "native responses omit parser details and reflected parameter input"},
 		{description: []string{"missing", "page"}, want: http.StatusNotFound},
 		{description: []string{"missing", "version"}, want: http.StatusNotFound},
 		{description: []string{"wrong", "page"}, want: http.StatusNotFound},

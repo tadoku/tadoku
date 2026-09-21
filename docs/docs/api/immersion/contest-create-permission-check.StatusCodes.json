@@ -1,1 +1,1 @@
-{"responses":{"200":{"description":"Allowed to create a contest"},"403":{"description":"Not allowed to create a contest"}}}
+{"responses":{"200":{"description":"Allowed to create a contest"},"403":{"description":"Not allowed to create a contest"},"404":{"description":"User identity not found"},"500":{"description":"Permission check failed","content":{"application/json":{"schema":{"type":"object","required":["message"],"properties":{"message":{"type":"string"}}}}}}}}

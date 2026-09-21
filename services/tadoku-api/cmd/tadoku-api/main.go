@@ -29,6 +29,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/features/announcements"
 	featureaudit "github.com/tadoku/tadoku/services/tadoku-api/features/audit"
 	featureauthz "github.com/tadoku/tadoku/services/tadoku-api/features/authz"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/contests"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/languages"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/pages"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/posts"
@@ -41,19 +42,19 @@ import (
 )
 
 type config struct {
-	Port             int           `validate:"gt=0,lte=65535" default:"8000"`
-	MetricsPort      int           `validate:"gt=0,lte=65535" envconfig:"metrics_port" default:"9090"`
-	ServiceName      string        `validate:"required" envconfig:"service_name" default:"tadoku-api"`
-	JWKS             string        `validate:"required"`
-	JWTIssuer        string        `envconfig:"jwt_issuer"`
-	KetoReadURL      string        `validate:"required" envconfig:"keto_read_url"`
-	KetoWriteURL     string        `validate:"required" envconfig:"keto_write_url"`
-	KetoWriteTimeout time.Duration `validate:"gt=0" envconfig:"keto_write_timeout" default:"2s"`
+	Port                 int           `validate:"gt=0,lte=65535" default:"8000"`
+	MetricsPort          int           `validate:"gt=0,lte=65535" envconfig:"metrics_port" default:"9090"`
+	ServiceName          string        `validate:"required" envconfig:"service_name" default:"tadoku-api"`
+	JWKS                 string        `validate:"required"`
+	JWTIssuer            string        `envconfig:"jwt_issuer"`
+	KetoReadURL          string        `validate:"required" envconfig:"keto_read_url"`
+	KetoWriteURL         string        `validate:"required" envconfig:"keto_write_url"`
+	KetoWriteTimeout     time.Duration `validate:"gt=0" envconfig:"keto_write_timeout" default:"2s"`
+	OathkeeperAuthzToken string        `validate:"required" envconfig:"oathkeeper_authz_token"`
 
 	KratosAdminURL string        `validate:"required" envconfig:"kratos_admin_url"`
 	KratosTimeout  time.Duration `validate:"gt=0" envconfig:"kratos_timeout" default:"2s"`
 
-	AuthzURL     string `validate:"required" envconfig:"authz_url"`
 	ContentURL   string `validate:"required" envconfig:"content_url"`
 	ImmersionURL string `validate:"required" envconfig:"immersion_url"`
 	ProfileURL   string `validate:"required" envconfig:"profile_url"`
@@ -196,6 +197,10 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	if err := ctx.Err(); err != nil {
 		return nil, fmt.Errorf("start application: %w", err)
 	}
+	authenticateCallback, err := transporthttp.NewCallbackAuthentication(cfg.OathkeeperAuthzToken)
+	if err != nil {
+		return nil, err
+	}
 
 	metrics := prometheus.NewRegistry()
 
@@ -272,6 +277,7 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	roleService := commonroles.NewKetoService(ketoReader, "app", "tadoku")
 	authzService := featureauthz.NewService(
 		permissionChecker,
+		ketoReader,
 		kratosIdentities,
 		roleService,
 		commonroles.NewKetoManager(keto, "app", "tadoku"),
@@ -279,26 +285,28 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	)
 	auditService := featureaudit.NewService(featureaudit.NewRepository(pool))
 	announcementsRepository := announcements.NewAnnouncementsRepository(pool)
+	contestsRepository := contests.NewContestsRepository(pool)
 	languagesRepository := languages.NewLanguagesRepository(pool)
 	pagesRepository := pages.NewPagesRepository(pool)
 	postsRepository := posts.NewPostsRepository(pool)
+	profileRepository := profile.NewRepository(pool)
 	userCache := profile.NewUserCache(kratosIdentities)
 	announcementsService := announcements.NewService(announcementsRepository)
+	contestsService := contests.NewService(contestsRepository, kratos)
 	languagesService := languages.NewService(languagesRepository)
 	pagesService := pages.NewService(pagesRepository)
 	postsService := posts.NewService(postsRepository)
-	profileService := profile.NewService(userCache, roleService)
-	api := app.New(announcementsService, auditService, authzService, languagesService, pagesService, postsService, profileService, pool, permissionChecker)
+	profileService := profile.NewService(profileRepository, userCache, roleService)
+	api := app.New(announcementsService, auditService, authzService, contestsService, languagesService, pagesService, postsService, profileService, pool, permissionChecker)
 	rejectBanned := newBannedUserMiddleware(ketoReader, logger)
 
-	handler, err := transporthttp.NewHandler(api, pool.Ping, cfg.RequestTimeout, metrics, logger, authenticate, rejectBanned)
+	handler, err := transporthttp.NewHandler(api, pool.Ping, cfg.RequestTimeout, metrics, logger, authenticate, rejectBanned, authenticateCallback)
 	if err != nil {
 		return nil, err
 	}
 
 	// Temporary legacy routes; the application router stands on its own.
 	upstreams := transporthttp.Upstreams{
-		Authz:     cfg.AuthzURL,
 		Content:   cfg.ContentURL,
 		Immersion: cfg.ImmersionURL,
 		Profile:   cfg.ProfileURL,

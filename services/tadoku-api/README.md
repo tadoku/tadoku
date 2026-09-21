@@ -50,6 +50,11 @@ Within feature packages, database tests exercise repositories directly and live
 only in `<feature>_repository_test.go`.
 Service and validation tests in `<feature>_service_test.go` remain database-free.
 
+HTTP scenarios reset only explicitly listed mutable tables and retain
+migration-seeded reference data. Use `delete` instead of `truncate` when a
+preserved table's foreign key makes PostgreSQL reject truncation, and document
+that exception in the shared cleanup file.
+
 Application errors use `internal/errx.Error`, which carries a transport-neutral
 `Kind`, a message and an optional cause. Use named constructors such as
 `errx.NewInvalidInputError(message)` or `errx.NewUnavailableError(message, cause)`;

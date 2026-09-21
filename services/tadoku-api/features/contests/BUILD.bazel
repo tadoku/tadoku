@@ -1,0 +1,38 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "contests",
+    srcs = [
+        "contests_repository.go",
+        "contests_service.go",
+        "domain.go",
+    ],
+    importpath = "github.com/tadoku/tadoku/services/tadoku-api/features/contests",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//services/tadoku-api/generated/sqlc/contests",
+        "//services/tadoku-api/infra/postgres",
+        "//services/tadoku-api/internal/errx",
+        "@com_github_google_uuid//:uuid",
+        "@com_github_jackc_pgx_v5//:pgx",
+        "@com_github_jackc_pgx_v5//pgtype",
+        "@com_github_jackc_pgx_v5//pgxpool",
+    ],
+)
+
+go_test(
+    name = "contests_test",
+    srcs = ["contests_repository_test.go"],
+    args = ["-test.parallel=4"],
+    embed = [":contests"],
+    env_inherit = ["TADOKU_TEST_POSTGRES_URL"],
+    tags = [
+        "no-cache",
+        "no-remote-exec",
+        "requires-network",
+    ],
+    deps = [
+        "//services/tadoku-api/internal/testpostgres",
+        "@com_github_google_uuid//:uuid",
+    ],
+)

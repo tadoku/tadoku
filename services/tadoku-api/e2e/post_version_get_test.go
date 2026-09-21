@@ -17,7 +17,7 @@ func TestGetPostVersion(t *testing.T) {
 		{description: []string{"draft", "empty", "content"}, want: http.StatusOK, skipParity: "legacy returns version 0; revisions now use their 1-based history number"},
 		{description: []string{"scheduled"}, want: http.StatusOK, skipParity: "legacy returns version 0; revisions now use their 1-based history number"},
 		{description: []string{"invalid", "post", "id"}, want: http.StatusBadRequest},
-		{description: []string{"invalid", "content", "id"}, want: http.StatusBadRequest, skipParity: "approved generated runtime wording: error unmarshalling becomes error unmarshaling"},
+		{description: []string{"invalid", "content", "id"}, want: http.StatusBadRequest, skipParity: "native responses omit parser details and reflected parameter input"},
 		{description: []string{"missing", "post"}, want: http.StatusNotFound},
 		{description: []string{"missing", "version"}, want: http.StatusNotFound},
 		{description: []string{"wrong", "post"}, want: http.StatusNotFound},

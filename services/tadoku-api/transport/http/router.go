@@ -3,6 +3,7 @@ package http
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	stdhttp "net/http"
@@ -170,7 +171,12 @@ func NewHandler(
 			withJSONCharsetCompatibility,
 		},
 		ErrorHandlerFunc: func(w stdhttp.ResponseWriter, _ *stdhttp.Request, err error) {
-			writeJSON(w, stdhttp.StatusBadRequest, map[string]string{"message": err.Error()})
+			message := err.Error()
+			var parameterError *openapi.InvalidParamFormatError
+			if errors.As(err, &parameterError) {
+				message = fmt.Sprintf("Invalid format for parameter %s", parameterError.ParamName)
+			}
+			writeJSON(w, stdhttp.StatusBadRequest, map[string]string{"message": message})
 		},
 	})
 	callbackStrictServer := callbackopenapi.NewStrictHandlerWithOptions(

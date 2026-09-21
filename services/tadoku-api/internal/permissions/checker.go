@@ -83,6 +83,13 @@ func (c *Checker) IsAdmin(ctx context.Context) (bool, error) {
 	return allowed, nil
 }
 
+// IsAdminOrFalse reports administrator access only after a successful lookup.
+// Provider failures return false.
+func (c *Checker) IsAdminOrFalse(ctx context.Context) bool {
+	allowed, err := c.IsAdmin(ctx)
+	return err == nil && allowed
+}
+
 func (c *Checker) RequireAuthenticated(ctx context.Context) error {
 	if err := c.RequireAuthenticatedAllowingUnknownBan(ctx); err != nil {
 		return err

@@ -102,6 +102,12 @@ func TestCheckerClassifiesKetoFailures(t *testing.T) {
 			}
 		})
 	}
+	if checker.IsAdminOrFalse(ctx) {
+		t.Error("provider failure granted administrator read visibility")
+	}
+	if checker.IsAdminOrFalse(WithBanLookupError(ctx, errors.New("ban lookup failed"))) {
+		t.Error("unknown ban status granted administrator read visibility")
+	}
 }
 
 func TestAuthenticationRequirements(t *testing.T) {

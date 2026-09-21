@@ -55,7 +55,7 @@ go_test(
         "post_version_list_test.go",
         "profile_activity_split_test.go",
         "profile_activity_test.go",
-        "profile_profile_test.go",
+        "profile_lookup_test.go",
         "profile_scores_test.go",
         "profile_users_list_test.go",
         "routing_test.go",

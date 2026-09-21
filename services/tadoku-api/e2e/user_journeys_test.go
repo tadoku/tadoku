@@ -851,3 +851,13 @@ func TestYearlyScoresLanguageNameChangeJourney(t *testing.T) {
 		{request: "scores_after", as: user2, want: http.StatusOK},
 	})
 }
+
+func TestContestParticipantDetachJourney(t *testing.T) {
+	runJourney(t, api, "ContestParticipantDetach", []step{
+		{request: "scores_before", as: user2, want: http.StatusOK},
+		{request: "activity_before", as: guest, want: http.StatusOK},
+		{request: "remove_language", as: user, want: http.StatusOK, others: cast{guest: http.StatusUnauthorized, banned: http.StatusForbidden}},
+		{request: "scores_after", as: user2, want: http.StatusOK},
+		{request: "activity_after", as: guest, want: http.StatusOK},
+	})
+}

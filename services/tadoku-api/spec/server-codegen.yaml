@@ -49,5 +49,7 @@ output-options:
     - ImmersionProfileYearlyActivityByUserID
     - ImmersionProfileYearlyScoresByUserID
     - ImmersionProfileYearlyActivitySplitByUserID
+    - ImmersionContestProfileFetchScores
+    - ImmersionContestProfileFetchActivity
   nullable-type: true
   skip-prune: true

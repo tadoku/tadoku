@@ -67,8 +67,8 @@ func newLegacyImmersionAPI(ctx context.Context, dsn, jwksURL, ketoReadURL string
 			nil, // contest leaderboard
 			nil, // yearly leaderboard
 			nil, // global leaderboard
-			nil, // profile contest
-			nil, // profile contest activity
+			domain.NewProfileContest(postgresRepository),
+			domain.NewProfileContestActivity(postgresRepository),
 			domain.NewProfileYearlyActivity(postgresRepository),
 			domain.NewProfileYearlyScores(postgresRepository),
 			domain.NewProfileFetch(kratosClient),

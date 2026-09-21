@@ -24,6 +24,9 @@ const (
 
 // Every operation on the generated strict server interfaces must declare its access level.
 var operationAccess = map[string]accessLevel{
+	"ImmersionContestProfileFetchScores":   accessPublic,
+	"ImmersionContestProfileFetchActivity": accessPublic,
+
 	"ImmersionProfileFindByUserID":                accessPublic,
 	"ImmersionProfileYearlyActivityByUserID":      accessPublic,
 	"ImmersionProfileYearlyScoresByUserID":        accessPublic,

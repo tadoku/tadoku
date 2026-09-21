@@ -151,3 +151,52 @@ func (r *LogsRepository) YearlyActivitySplit(ctx context.Context, userID uuid.UU
 
 	return result, nil
 }
+
+func (r *LogsRepository) ContestScores(ctx context.Context, userID, contestID uuid.UUID) ([]Score, error) {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := queries.New(executor).FetchScoresForContestProfile(ctx, queries.FetchScoresForContestProfileParams{
+		UserID:    pgtype.UUID{Bytes: userID, Valid: true},
+		ContestID: pgtype.UUID{Bytes: contestID, Valid: true},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("ContestScores: %w", err)
+	}
+
+	result := make([]Score, 0, len(rows))
+	for _, row := range rows {
+		result = append(result, Score{
+			LanguageCode: row.LanguageCode,
+			Score:        row.Score,
+		})
+	}
+	return result, nil
+}
+
+func (r *LogsRepository) ContestActivity(ctx context.Context, userID, contestID uuid.UUID) ([]ContestActivity, error) {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := queries.New(executor).ActivityPerLanguageForContestProfile(ctx, queries.ActivityPerLanguageForContestProfileParams{
+		UserID:    pgtype.UUID{Bytes: userID, Valid: true},
+		ContestID: pgtype.UUID{Bytes: contestID, Valid: true},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("ContestActivity: %w", err)
+	}
+
+	result := make([]ContestActivity, 0, len(rows))
+	for _, row := range rows {
+		result = append(result, ContestActivity{
+			Date:         row.Date.Time,
+			LanguageCode: row.LanguageCode,
+			Score:        row.Score,
+		})
+	}
+	return result, nil
+}

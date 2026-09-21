@@ -10,15 +10,26 @@ config_setting(
     define_values = {"dev_cli_database": "isolated"},
 )
 
-pkg_tar(name = "seed_layer", srcs = ["seed.sql"], package_dir = "/", mode = "0644")
+pkg_tar(
+    name = "seed_layer",
+    srcs = ["seed.sql"],
+    mode = "0644",
+    package_dir = "/",
+)
 
 oci_image(
     name = "seed_image",
     base = "@tadoku_dev_postgres_linux_amd64",
-    tars = [":seed_layer"],
-    entrypoint = ["/bin/sh", "-ec"],
     cmd = ["case \"$PGHOST\" in tadoku-cli-*) ;; *) echo 'refusing seed outside the disposable pilot database' >&2; exit 1;; esac; exec psql -X --set=ON_ERROR_STOP=1 --file=/seed.sql"],
+    entrypoint = [
+        "/bin/sh",
+        "-ec",
+    ],
+    tars = [":seed_layer"],
     user = "65532:65532",
 )
 
-oci_push(name = "seed_push", image = ":seed_image")
+oci_push(
+    name = "seed_push",
+    image = ":seed_image",
+)

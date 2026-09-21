@@ -50,14 +50,13 @@ oci_image(
     user = "65532:65532",
 )
 
-oci_push(name = "cli_push", image = ":cli_image")
+oci_push(
+    name = "cli_push",
+    image = ":cli_image",
+)
 
 dev_deployable(
     name = "dev",
-    workload_template = select({
-        "//.dev:isolated_database": "//.dev:tadoku-api.isolated.json",
-        "//conditions:default": "//.dev:tadoku-api.shared.json",
-    }),
     metadata = json.encode({
         "name": "tadoku-api",
         "kind": "backend",
@@ -72,10 +71,28 @@ dev_deployable(
         "readinessPath": "/readyz",
         "publicPath": "/api/internal",
         "internalHost": "tadoku-cli-api.default.svc.cluster.local",
-        "baseService": {"name": "tadoku-api", "namespace": "tdk-tadoku-api", "port": 80},
-        "publicProxy": {"name": "tadoku-cli-oathkeeper", "namespace": "default", "port": 4455},
+        "baseService": {
+            "name": "tadoku-api",
+            "namespace": "tdk-tadoku-api",
+            "port": 80,
+        },
+        "publicProxy": {
+            "name": "tadoku-cli-oathkeeper",
+            "namespace": "default",
+            "port": 4455,
+        },
         "devContainer": "tadoku-api",
-        "sourceRoots": ["services/tadoku-api", "services/common"],
+        "sourceRoots": [
+            "services/tadoku-api",
+            "services/common",
+        ],
     }),
-    deps = [":cli_image", "//services/tadoku-api/cmd/tadoku-api"],
+    workload_template = select({
+        "//.dev:isolated_database": "//.dev:tadoku-api.isolated.json",
+        "//conditions:default": "//.dev:tadoku-api.shared.json",
+    }),
+    deps = [
+        ":cli_image",
+        "//services/tadoku-api/cmd/tadoku-api",
+    ],
 )

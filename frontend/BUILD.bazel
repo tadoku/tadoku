@@ -6,42 +6,72 @@ load("//.dev:deployable.bzl", "dev_deployable")
 filegroup(
     name = "webv2_sources",
     srcs = glob(
-        ["apps/webv2/**", "packages/ui/**", "package.json", "pnpm-lock.yaml", "pnpm-workspace.yaml"],
-        exclude = ["**/node_modules/**", "**/.next/**", "**/.env*", "**/dist/**", "**/coverage/**", "**/test-results/**", "**/playwright-report/**", "**/*.tsbuildinfo"],
+        [
+            "apps/webv2/**",
+            "packages/ui/**",
+            "package.json",
+            "pnpm-lock.yaml",
+            "pnpm-workspace.yaml",
+        ],
+        exclude = [
+            "**/node_modules/**",
+            "**/.next/**",
+            "**/.env*",
+            "**/dist/**",
+            "**/coverage/**",
+            "**/test-results/**",
+            "**/playwright-report/**",
+            "**/*.tsbuildinfo",
+        ],
     ),
 )
 
 pkg_files(
     name = "webv2_dev_files",
     srcs = [":webv2_sources"],
+    attributes = pkg_attributes(
+        gid = 1000,
+        mode = "0644",
+        uid = 1000,
+    ),
     prefix = "/app",
     strip_prefix = strip_prefix.from_pkg(),
-    attributes = pkg_attributes(uid = 1000, gid = 1000, mode = "0644"),
 )
 
-pkg_tar(name = "webv2_dev_layer", srcs = [":webv2_dev_files"])
+pkg_tar(
+    name = "webv2_dev_layer",
+    srcs = [":webv2_dev_files"],
+)
 
 pkg_tar(
     name = "pnpm_dev_layer",
-    deps = ["@tadoku_dev_pnpm//:layer"],
     symlinks = {"/usr/local/bin/pnpm": "/opt/pnpm/bin/pnpm.cjs"},
+    deps = ["@tadoku_dev_pnpm//:layer"],
 )
 
 oci_image(
     name = "webv2_dev_image",
     base = "@tadoku_dev_node_linux_amd64",
-    tars = [":pnpm_dev_layer", ":webv2_dev_layer"],
+    cmd = ["pnpm install --frozen-lockfile && exec pnpm --filter webv2 dev"],
+    entrypoint = [
+        "/bin/sh",
+        "-ec",
+    ],
+    tars = [
+        ":pnpm_dev_layer",
+        ":webv2_dev_layer",
+    ],
     user = "1000:1000",
     workdir = "/app",
-    entrypoint = ["/bin/sh", "-ec"],
-    cmd = ["pnpm install --frozen-lockfile && exec pnpm --filter webv2 dev"],
 )
 
-oci_push(name = "webv2_dev_push", image = ":webv2_dev_image")
+oci_push(
+    name = "webv2_dev_push",
+    image = ":webv2_dev_image",
+)
 
 dev_deployable(
     name = "webv2_dev",
-    workload_template = "//.dev:webv2.json",
     metadata = json.encode({
         "name": "webv2",
         "kind": "frontend",
@@ -53,16 +83,50 @@ dev_deployable(
         "port": 3000,
         "readinessPath": "/",
         "publicPath": "/",
-        "baseService": {"name": "frontend-webv2", "namespace": "default", "port": 3000},
+        "baseService": {
+            "name": "frontend-webv2",
+            "namespace": "default",
+            "port": 3000,
+        },
         "devContainer": "webv2",
-        "devCommand": ["/bin/sh", "-ec", "pnpm install --frozen-lockfile && exec pnpm --filter webv2 dev"],
-        "sourceRoots": ["frontend/apps/webv2", "frontend/packages/ui", "frontend/package.json", "frontend/pnpm-lock.yaml", "frontend/pnpm-workspace.yaml"],
-        "syncPaths": ["frontend/apps/webv2", "frontend/packages/ui", "frontend/package.json", "frontend/pnpm-lock.yaml", "frontend/pnpm-workspace.yaml"],
+        "devCommand": [
+            "/bin/sh",
+            "-ec",
+            "pnpm install --frozen-lockfile && exec pnpm --filter webv2 dev",
+        ],
+        "sourceRoots": [
+            "frontend/apps/webv2",
+            "frontend/packages/ui",
+            "frontend/package.json",
+            "frontend/pnpm-lock.yaml",
+            "frontend/pnpm-workspace.yaml",
+        ],
+        "syncPaths": [
+            "frontend/apps/webv2",
+            "frontend/packages/ui",
+            "frontend/package.json",
+            "frontend/pnpm-lock.yaml",
+            "frontend/pnpm-workspace.yaml",
+        ],
         "syncRoot": "/app",
         "syncStripPrefix": "frontend",
         "syncExcludes": ["*.tsbuildinfo"],
-        "dependencyPaths": ["frontend/apps/webv2/package.json", "frontend/packages/ui/package.json", "frontend/package.json", "frontend/pnpm-lock.yaml", "frontend/pnpm-workspace.yaml"],
-        "dependencyCommand": ["pnpm", "install", "--frozen-lockfile"],
+        "dependencyPaths": [
+            "frontend/apps/webv2/package.json",
+            "frontend/packages/ui/package.json",
+            "frontend/package.json",
+            "frontend/pnpm-lock.yaml",
+            "frontend/pnpm-workspace.yaml",
+        ],
+        "dependencyCommand": [
+            "pnpm",
+            "install",
+            "--frozen-lockfile",
+        ],
     }),
-    deps = [":webv2_dev_image", ":webv2_sources"],
+    workload_template = "//.dev:webv2.json",
+    deps = [
+        ":webv2_dev_image",
+        ":webv2_sources",
+    ],
 )

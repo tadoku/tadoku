@@ -6,18 +6,14 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/stdlib"
-	legacyrepository "github.com/tadoku/tadoku/services/authz-api/storage/postgres/repository"
 	transport "github.com/tadoku/tadoku/services/tadoku-api/transport/http"
 )
 
 func TestAuthzRoleUpdate(t *testing.T) {
-	nativeAuditUnavailable, legacyAuditUnavailable := auditUnavailableRoleUpdateHandlers(t)
+	auditUnavailable := auditUnavailableRoleUpdateHandler(t)
 	tests := []struct {
 		description      []string
 		want             int
-		skipParity       string
 		auditUnavailable bool
 	}{
 		{description: []string{"ban", "user"}, want: http.StatusOK},
@@ -29,14 +25,12 @@ func TestAuthzRoleUpdate(t *testing.T) {
 		{
 			description: []string{"guest", "empty", "body"},
 			want:        http.StatusBadRequest,
-			skipParity:  "the native required-body decoder rejects an empty body before application authorization while legacy returns unauthorized for the guest",
 		},
 		{description: []string{"guest"}, want: http.StatusUnauthorized},
 		{description: []string{"non", "admin", "invalid", "role"}, want: http.StatusForbidden},
 		{
 			description: []string{"banned", "malformed", "json"},
 			want:        http.StatusForbidden,
-			skipParity:  "the native shared ban gate rejects before decoding while legacy reports malformed JSON",
 		},
 		{description: []string{"missing", "user", "marked", "admin"}, want: http.StatusNotFound},
 		{description: []string{"target", "admin"}, want: http.StatusForbidden},
@@ -47,21 +41,18 @@ func TestAuthzRoleUpdate(t *testing.T) {
 		name := APITestName("AuthzRoleUpdate", test.want, test.description...)
 		t.Run(name, func(t *testing.T) {
 			nativeHandler := api.handler
-			legacyHandler := legacyAuthz.handler
 			if test.auditUnavailable {
-				nativeHandler = nativeAuditUnavailable
-				legacyHandler = legacyAuditUnavailable
+				nativeHandler = auditUnavailable
 			}
 
 			runCase(t, api, name, test.want,
 				implementation{name: "tadoku-api", handler: nativeHandler},
-				implementation{name: "authz-api", handler: legacyHandler, skip: test.skipParity},
 			)
 		})
 	}
 }
 
-func auditUnavailableRoleUpdateHandlers(t *testing.T) (*transport.Router, http.Handler) {
+func auditUnavailableRoleUpdateHandler(t *testing.T) *transport.Router {
 	t.Helper()
 
 	closedPool := openClosedPool(t, api.db.DSN)
@@ -73,32 +64,10 @@ func auditUnavailableRoleUpdateHandlers(t *testing.T) (*transport.Router, http.H
 		keto,
 		api.kratos,
 		logger,
-		nil,
 	)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	config, err := pgx.ParseConfig(api.db.DSN)
-	if err != nil {
-		t.Fatal(err)
-	}
-	closedDB := stdlib.OpenDB(*config)
-	if err := closedDB.Close(); err != nil {
-		t.Fatal(err)
-	}
-	legacy, err := newLegacyAuthzHandler(
-		authenticationJWKS.URL,
-		keto.ReadURL(),
-		keto.WriteURL(),
-		api.kratos.CursorClient(),
-		legacyrepository.NewRepository(closedDB),
-		"",
-		callbackToken,
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	return native, legacy
+	return native
 }

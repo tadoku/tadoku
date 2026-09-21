@@ -17,7 +17,6 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/prometheus/client_golang/prometheus"
-	legacyrepository "github.com/tadoku/tadoku/services/authz-api/storage/postgres/repository"
 	commonroles "github.com/tadoku/tadoku/services/common/authz/roles"
 	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
@@ -37,7 +36,6 @@ import (
 )
 
 var api *suite
-var legacyAuthz *legacyAuthzAPI
 var legacyContent *legacyContentAPI
 var legacyProfile *legacyProfileAPI
 var legacyImmersion *legacyImmersionAPI
@@ -48,13 +46,7 @@ var keto *testketo.Fixture
 
 const callbackToken = "test-oathkeeper-callback-token"
 
-type authzHandlerPair struct {
-	native http.Handler
-	legacy http.Handler
-}
-
-var configuredAuthz authzHandlerPair
-var unavailableCallback authzHandlerPair
+var unavailableCallback http.Handler
 
 func TestMain(m *testing.M) {
 	flag.Parse()
@@ -111,40 +103,6 @@ func runTests(m *testing.M) (code int) {
 	}
 	defer func() { cleanupErr = errors.Join(cleanupErr, api.db.Close()) }()
 
-	legacyAuthz, err = newLegacyAuthzAPI(ctx, api.db.DSN, authenticationJWKS.URL, keto.ReadURL(), keto.WriteURL(), kratos.CursorClient(), callbackToken)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return 1
-	}
-	defer func() { cleanupErr = errors.Join(cleanupErr, legacyAuthz.db.Close()) }()
-	configuredNative, _, _, err := newTestRouterWithLogger(
-		ctx,
-		api.db.Pool,
-		api.db.Pool,
-		keto,
-		kratos,
-		slog.New(slog.NewTextHandler(io.Discard, nil)),
-		featureauthz.PublicPermissionAllowlist{{Namespace: "app", Relation: "admins"}},
-	)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return 1
-	}
-	configuredLegacy, err := newLegacyAuthzHandler(
-		authenticationJWKS.URL,
-		keto.ReadURL(),
-		keto.WriteURL(),
-		kratos.CursorClient(),
-		legacyrepository.NewRepository(legacyAuthz.db),
-		"app:admins",
-		callbackToken,
-	)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return 1
-	}
-	configuredAuthz = authzHandlerPair{native: configuredNative, legacy: configuredLegacy}
-
 	unavailableKeto, err := testketo.New(ctx)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -157,21 +115,6 @@ func runTests(m *testing.M) (code int) {
 		unavailableKeto,
 		kratos,
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
-		nil,
-	)
-	if err != nil {
-		_ = unavailableKeto.Close()
-		fmt.Fprintln(os.Stderr, err)
-		return 1
-	}
-	unavailableLegacy, err := newLegacyAuthzHandler(
-		authenticationJWKS.URL,
-		unavailableKeto.ReadURL(),
-		unavailableKeto.WriteURL(),
-		kratos.CursorClient(),
-		legacyrepository.NewRepository(legacyAuthz.db),
-		"",
-		callbackToken,
 	)
 	if err != nil {
 		_ = unavailableKeto.Close()
@@ -182,7 +125,7 @@ func runTests(m *testing.M) (code int) {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}
-	unavailableCallback = authzHandlerPair{native: unavailableNative, legacy: unavailableLegacy}
+	unavailableCallback = unavailableNative
 
 	legacyContent, err = newLegacyContentAPI(ctx, api.db.DSN, authenticationJWKS.URL, keto.ReadURL())
 	if err != nil {
@@ -257,7 +200,7 @@ func newTestRouter(
 	kratosFixture *testkratos.Fixture,
 ) (*transport.Router, *featureprofile.Service, *commonroles.KetoService, error) {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	return newTestRouterWithLogger(ctx, pool, pool, ketoFixture, kratosFixture, logger, nil)
+	return newTestRouterWithLogger(ctx, pool, pool, ketoFixture, kratosFixture, logger)
 }
 
 func newTestRouterWithLogger(
@@ -267,7 +210,6 @@ func newTestRouterWithLogger(
 	ketoFixture *testketo.Fixture,
 	kratosFixture *testkratos.Fixture,
 	logger *slog.Logger,
-	publicPermissions featureauthz.PublicPermissionAllowlist,
 ) (*transport.Router, *featureprofile.Service, *commonroles.KetoService, error) {
 	reader := ketoclient.NewReadClient(ketoFixture.ReadURL())
 	readWriter := ketoclient.NewClient(ketoFixture.ReadURL(), ketoFixture.WriteURL())
@@ -280,7 +222,7 @@ func newTestRouterWithLogger(
 		identities,
 		roleService,
 		commonroles.NewKetoManager(readWriter, "app", "tadoku"),
-		publicPermissions,
+		nil,
 	)
 	auditService := featureaudit.NewService(featureaudit.NewRepository(auditPool))
 	announcementsRepository := announcements.NewAnnouncementsRepository(pool)

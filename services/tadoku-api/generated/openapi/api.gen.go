@@ -4060,6 +4060,14 @@ func (response ImmersionContestProfileFetchActivity404Response) VisitImmersionCo
 	return nil
 }
 
+type ImmersionContestProfileFetchActivity500Response struct {
+}
+
+func (response ImmersionContestProfileFetchActivity500Response) VisitImmersionContestProfileFetchActivityResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
 type ImmersionContestProfileFetchScoresRequestObject struct {
 	Id     openapi_types.UUID `json:"id"`
 	UserId openapi_types.UUID `json:"user_id"`
@@ -4088,6 +4096,14 @@ type ImmersionContestProfileFetchScores404Response struct {
 
 func (response ImmersionContestProfileFetchScores404Response) VisitImmersionContestProfileFetchScoresResponse(w http.ResponseWriter) error {
 	w.WriteHeader(404)
+	return nil
+}
+
+type ImmersionContestProfileFetchScores500Response struct {
+}
+
+func (response ImmersionContestProfileFetchScores500Response) VisitImmersionContestProfileFetchScoresResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
 	return nil
 }
 

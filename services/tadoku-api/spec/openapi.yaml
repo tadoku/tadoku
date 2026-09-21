@@ -1417,6 +1417,8 @@ paths:
                 $ref: "#/components/schemas/ImmersionContestProfileScores"
         "404":
           description: not found
+        "500":
+          description: participant statistics could not be fetched
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
       x-tadoku-owner: native
@@ -1450,6 +1452,8 @@ paths:
                 $ref: "#/components/schemas/ImmersionContestProfileActivity"
         "404":
           description: not found
+        "500":
+          description: participant statistics could not be fetched
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
       x-tadoku-owner: native

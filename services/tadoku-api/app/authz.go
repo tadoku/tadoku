@@ -23,9 +23,9 @@ func (a *Application) CurrentUserRole(ctx context.Context) (Role, error) {
 
 type PermissionCheckParameters = authz.PermissionCheckParameters
 
-func (a *Application) CheckPermission(ctx context.Context, parameters PermissionCheckParameters) error {
+func (a *Application) CheckPermission(ctx context.Context, parameters PermissionCheckParameters) (bool, error) {
 	if err := a.permissions.RequireAuthenticated(ctx); err != nil {
-		return err
+		return false, err
 	}
 
 	return a.authorization.CheckPermission(ctx, parameters)

@@ -26,6 +26,22 @@ type PermissionCheckParameters struct {
 	Relation  string
 }
 
+type PublicPermission struct {
+	Namespace string
+	Relation  string
+}
+
+type PublicPermissionAllowlist []PublicPermission
+
+func (a PublicPermissionAllowlist) Allows(namespace, relation string) bool {
+	for _, permission := range a {
+		if permission.Namespace == namespace && permission.Relation == relation {
+			return true
+		}
+	}
+	return false
+}
+
 func (p PermissionCheckParameters) Validate() error {
 	if p.Namespace == "" {
 		return errx.NewInvalidInputError("namespace is required")

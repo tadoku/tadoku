@@ -50,6 +50,7 @@ func newLegacyAuthzAPI(
 		ketoWriteURL,
 		kratos,
 		legacyrepository.NewRepository(db),
+		"",
 	)
 	if err != nil {
 		_ = db.Close()
@@ -64,13 +65,15 @@ func newLegacyAuthzHandler(
 	ketoWriteURL string,
 	kratos *kratosclient.Client,
 	audit domain.ModerationAuditRepository,
+	allowlistCSV string,
 ) (http.Handler, error) {
-	keto := ketoclient.NewClient(ketoReadURL, ketoWriteURL)
-	roles := commonroles.NewKetoService(keto, "app", "tadoku")
-	allowlist, err := domain.ParsePermissionAllowlist("")
+	allowlist, err := domain.ParsePermissionAllowlist(allowlistCSV)
 	if err != nil {
 		return nil, fmt.Errorf("parse public permission allowlist: %w", err)
 	}
+
+	keto := ketoclient.NewClient(ketoReadURL, ketoWriteURL)
+	roles := commonroles.NewKetoService(keto, "app", "tadoku")
 
 	server := rest.NewServer(
 		domain.NewRoleGet(roles),

@@ -275,6 +275,7 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 		kratosIdentities,
 		roleService,
 		commonroles.NewKetoManager(keto, "app", "tadoku"),
+		nil,
 	)
 	auditService := featureaudit.NewService(featureaudit.NewRepository(pool))
 	announcementsRepository := announcements.NewAnnouncementsRepository(pool)

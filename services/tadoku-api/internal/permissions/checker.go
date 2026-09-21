@@ -42,6 +42,25 @@ func NewKetoChecker(client *ketoclient.Client) *Checker {
 	return &Checker{client: client}
 }
 
+func (c *Checker) CheckPermission(ctx context.Context, namespace, object, relation string) (bool, error) {
+	if err := c.RequireAuthenticated(ctx); err != nil {
+		return false, err
+	}
+	if c == nil || c.client == nil {
+		return false, errx.NewUnavailableError("permissions unavailable", nil)
+	}
+
+	user := identity.FromContext(ctx)
+	allowed, err := c.client.CheckPermission(ctx, namespace, object, relation, ketoclient.Subject{ID: user.Subject})
+	if err != nil {
+		return false, errx.NewUnavailableError("check permission", err)
+	}
+	if err := ctx.Err(); err != nil {
+		return false, errx.NewUnavailableError("check permission", err)
+	}
+	return allowed, nil
+}
+
 func (c *Checker) IsAdmin(ctx context.Context) (bool, error) {
 	user := identity.FromContext(ctx)
 	if user == nil || user.Subject == "" || user.Subject == "guest" {

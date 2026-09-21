@@ -12,10 +12,11 @@ import (
 )
 
 type Service struct {
-	permissions *permissions.Checker
-	users       *kratosclient.Client
-	roles       *commonroles.KetoService
-	roleManager *commonroles.KetoManager
+	permissions       *permissions.Checker
+	users             *kratosclient.Client
+	roles             *commonroles.KetoService
+	roleManager       *commonroles.KetoManager
+	publicPermissions PublicPermissionAllowlist
 }
 
 func NewService(
@@ -23,12 +24,14 @@ func NewService(
 	users *kratosclient.Client,
 	roles *commonroles.KetoService,
 	roleManager *commonroles.KetoManager,
+	publicPermissions PublicPermissionAllowlist,
 ) *Service {
 	return &Service{
-		permissions: permissions,
-		users:       users,
-		roles:       roles,
-		roleManager: roleManager,
+		permissions:       permissions,
+		users:             users,
+		roles:             roles,
+		roleManager:       roleManager,
+		publicPermissions: publicPermissions,
 	}
 }
 
@@ -51,13 +54,15 @@ func (s *Service) CurrentUserRole(ctx context.Context) (Role, error) {
 	return RoleUser, nil
 }
 
-func (s *Service) CheckPermission(ctx context.Context, parameters PermissionCheckParameters) error {
+func (s *Service) CheckPermission(ctx context.Context, parameters PermissionCheckParameters) (bool, error) {
 	if err := parameters.Validate(); err != nil {
-		return err
+		return false, err
+	}
+	if !s.publicPermissions.Allows(parameters.Namespace, parameters.Relation) {
+		return false, errx.NewForbiddenError("forbidden")
 	}
 
-	// Production intentionally exposes no public permissions.
-	return errx.NewForbiddenError("forbidden")
+	return s.permissions.CheckPermission(ctx, parameters.Namespace, parameters.Object, parameters.Relation)
 }
 
 func (s *Service) UpdateRole(ctx context.Context, parameters RoleUpdateParameters) error {

@@ -16,7 +16,7 @@ func TestDependencyFailures(t *testing.T) {
 	closedPool := openClosedPool(t, api.db.DSN)
 	var logs bytes.Buffer
 	logger := slog.New(slog.NewTextHandler(&logs, &slog.HandlerOptions{Level: slog.LevelDebug}))
-	handler, _, _, err := newTestRouterWithLogger(t.Context(), closedPool, closedPool, keto, api.kratos, logger)
+	handler, _, _, err := newTestRouterWithLogger(t.Context(), closedPool, closedPool, keto, api.kratos, logger, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

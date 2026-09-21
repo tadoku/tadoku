@@ -161,3 +161,60 @@ func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
 		t.Errorf("latest official=%s, want future deleted contest %s", latest.ID, deletedID)
 	}
 }
+
+func TestContestsRepositoryCountsEveryContestCreatedByUserInYear(t *testing.T) {
+	t.Parallel()
+	db, err := testpostgres.New(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Error(err)
+		}
+	})
+
+	_, err = db.Pool.Exec(t.Context(), `
+		insert into contests (
+			id, owner_user_id, owner_user_display_name, "private", contest_start, contest_end,
+			registration_end, title, activity_type_id_allow_list, official, created_at, updated_at, deleted_at
+		)
+		select
+			('10000000-0000-4000-8000-' || lpad(n::text, 12, '0'))::uuid,
+			'11111111-1111-4111-8111-111111111111', 'Owner One', n % 2 = 0,
+			'2025-01-01', '2025-01-31', '2025-01-01', 'Current year ' || n, '{}', n % 2 = 1,
+			'2026-01-01'::timestamp + n * interval '1 day', '2026-01-01',
+			case when n = 12 then '2026-02-01'::timestamp end
+		from generate_series(1, 12) as n;
+
+		insert into contests (
+			id, owner_user_id, owner_user_display_name, "private", contest_start, contest_end,
+			registration_end, title, activity_type_id_allow_list, official, created_at, updated_at
+		)
+		values
+			('20000000-0000-4000-8000-000000000001', '11111111-1111-4111-8111-111111111111', 'Owner One', false,
+			 '2026-01-01', '2026-01-31', '2026-01-01', 'Prior year', '{}', true, '2025-12-31', '2025-12-31'),
+			('20000000-0000-4000-8000-000000000002', '22222222-2222-4222-8222-222222222222', 'Owner Two', false,
+			 '2026-01-01', '2026-01-31', '2026-01-01', 'Other owner', '{}', true, '2026-01-01', '2026-01-01')`)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	repository := NewContestsRepository(db.Pool)
+	ownerID := uuid.MustParse("11111111-1111-4111-8111-111111111111")
+	count, err := repository.CountContestsCreatedByUserForYear(t.Context(), ownerID, 2026)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if count != 12 {
+		t.Errorf("2026 count = %d, want 12 including private, unofficial, and deleted contests", count)
+	}
+
+	count, err = repository.CountContestsCreatedByUserForYear(t.Context(), ownerID, 2025)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if count != 1 {
+		t.Errorf("2025 count = %d, want 1", count)
+	}
+}

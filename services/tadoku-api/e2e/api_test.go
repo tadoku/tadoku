@@ -196,7 +196,7 @@ func runTests(m *testing.M) (code int) {
 		return 1
 	}
 	defer func() { cleanupErr = errors.Join(cleanupErr, legacyProfile.db.Close()) }()
-	legacyImmersion, err = newLegacyImmersionAPI(ctx, api.db.DSN, authenticationJWKS.URL, keto.ReadURL())
+	legacyImmersion, err = newLegacyImmersionAPI(ctx, api.db.DSN, authenticationJWKS.URL, keto.ReadURL(), kratos.Client())
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
@@ -289,7 +289,7 @@ func newTestRouterWithLogger(
 	pagesRepository := pages.NewPagesRepository(pool)
 	postsRepository := posts.NewPostsRepository(pool)
 	announcementsService := announcements.NewService(announcementsRepository)
-	contestsService := contests.NewService(contestsRepository)
+	contestsService := contests.NewService(contestsRepository, kratosFixture.Client())
 	languagesService := languages.NewService(languagesRepository)
 	pagesService := pages.NewService(pagesRepository)
 	postsService := posts.NewService(postsRepository)

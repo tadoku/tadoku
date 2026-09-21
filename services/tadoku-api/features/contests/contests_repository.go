@@ -21,6 +21,22 @@ func NewContestsRepository(db *pgxpool.Pool) *ContestsRepository {
 	return &ContestsRepository{db: db}
 }
 
+func (r *ContestsRepository) CountContestsCreatedByUserForYear(ctx context.Context, userID uuid.UUID, year int32) (int64, error) {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return 0, err
+	}
+
+	count, err := queries.New(executor).CountContestsCreatedByUserForYear(ctx, queries.CountContestsCreatedByUserForYearParams{
+		OwnerUserID: pgtype.UUID{Bytes: userID, Valid: true},
+		Year:        year,
+	})
+	if err != nil {
+		return 0, fmt.Errorf("count contests created by user for year: %w", err)
+	}
+	return count, nil
+}
+
 func (r *ContestsRepository) ListContests(ctx context.Context, parameters ListParameters) ([]Contest, int, error) {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {

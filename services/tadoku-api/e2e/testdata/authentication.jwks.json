@@ -15,6 +15,14 @@
       "kid": "journey-cast-fixture",
       "use": "sig",
       "alg": "RS256"
+    },
+    {
+      "kty": "RSA",
+      "n": "lFm4Tv9vwer4GdTxMF9stZVKlDidU5Btw3iHLLwgfWLAvh6x2KOuBFjCZJQ8UuqGenH8rtyg6JxvW1wqnGBge5w9aZVlcoVzubvMuwRHBc5XlMxzzXBpVi5XKIZb2Ok5uFTFiesJZmb3W3jxKoUlbtC00zpn5Fz0q7axMSh2hFAgOdU3CV-Z_DoEmP6K_6WRLvRM27w3wITxQQbJbPQaKAlVlgkOQEJaCH28ZdmaK_jAdbRzEBc6T5imRaEjxks9uJEdsDMOD4HrI-bvZoa9zkT_kYjFuDFWwKxXXxayMYy_H_mSYmIpxwV9NfnErpFHL4LnFVqA1o_WWadnVxCshw",
+      "e": "AQAB",
+      "kid": "contest-permissions-f1cf9b99-4022-43d7-9a44-0be5181f23a7",
+      "use": "sig",
+      "alg": "RS256"
     }
   ]
 }

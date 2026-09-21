@@ -24,38 +24,39 @@ const (
 
 // Every operation on the generated strict server interfaces must declare its access level.
 var operationAccess = map[string]accessLevel{
-	"AuthzPermissionCheck":               accessAuthenticated,
-	"AuthzProxyProxyAdminCheck":          accessCallback,
-	"AuthzRoleGet":                       accessPublic,
-	"AuthzRoleUpdate":                    accessAdmin,
-	"ContentAnnouncementCreate":          accessAdmin,
-	"ContentAnnouncementDelete":          accessAdmin,
-	"ContentAnnouncementFindByID":        accessAdmin,
-	"ContentAnnouncementList":            accessAdmin,
-	"ContentAnnouncementListActive":      accessPublic,
-	"ContentAnnouncementUpdate":          accessAdmin,
-	"ContentPageCreate":                  accessAdmin,
-	"ContentPageDelete":                  accessAdmin,
-	"ContentPageFindBySlug":              accessPublic,
-	"ContentPageList":                    accessAdmin,
-	"ContentPageUpdate":                  accessAdmin,
-	"ContentPageVersionGet":              accessAdmin,
-	"ContentPageVersionList":             accessAdmin,
-	"ContentPostCreate":                  accessAdmin,
-	"ContentPostDelete":                  accessAdmin,
-	"ContentPostFindBySlug":              accessPublic,
-	"ContentPostList":                    accessPublic,
-	"ContentPostUpdate":                  accessAdmin,
-	"ContentPostVersionGet":              accessAdmin,
-	"ContentPostVersionList":             accessAdmin,
-	"ImmersionContestList":               accessPublic,
-	"ImmersionContestFindByID":           accessPublic,
-	"ImmersionContestFindLatestOfficial": accessPublic,
-	"ImmersionContestGetConfigurations":  accessPublic,
-	"ImmersionLanguageList":              accessAdmin,
-	"ImmersionLanguageCreate":            accessAdmin,
-	"ImmersionLanguageUpdate":            accessAdmin,
-	"ProfileUsersList":                   accessAdmin,
+	"AuthzPermissionCheck":                  accessAuthenticated,
+	"AuthzProxyProxyAdminCheck":             accessCallback,
+	"AuthzRoleGet":                          accessPublic,
+	"AuthzRoleUpdate":                       accessAdmin,
+	"ContentAnnouncementCreate":             accessAdmin,
+	"ContentAnnouncementDelete":             accessAdmin,
+	"ContentAnnouncementFindByID":           accessAdmin,
+	"ContentAnnouncementList":               accessAdmin,
+	"ContentAnnouncementListActive":         accessPublic,
+	"ContentAnnouncementUpdate":             accessAdmin,
+	"ContentPageCreate":                     accessAdmin,
+	"ContentPageDelete":                     accessAdmin,
+	"ContentPageFindBySlug":                 accessPublic,
+	"ContentPageList":                       accessAdmin,
+	"ContentPageUpdate":                     accessAdmin,
+	"ContentPageVersionGet":                 accessAdmin,
+	"ContentPageVersionList":                accessAdmin,
+	"ContentPostCreate":                     accessAdmin,
+	"ContentPostDelete":                     accessAdmin,
+	"ContentPostFindBySlug":                 accessPublic,
+	"ContentPostList":                       accessPublic,
+	"ContentPostUpdate":                     accessAdmin,
+	"ContentPostVersionGet":                 accessAdmin,
+	"ContentPostVersionList":                accessAdmin,
+	"ImmersionContestCreatePermissionCheck": accessPublic,
+	"ImmersionContestList":                  accessPublic,
+	"ImmersionContestFindByID":              accessPublic,
+	"ImmersionContestFindLatestOfficial":    accessPublic,
+	"ImmersionContestGetConfigurations":     accessPublic,
+	"ImmersionLanguageList":                 accessAdmin,
+	"ImmersionLanguageCreate":               accessAdmin,
+	"ImmersionLanguageUpdate":               accessAdmin,
+	"ProfileUsersList":                      accessAdmin,
 }
 
 var operationFixtures = map[string]string{
@@ -123,7 +124,7 @@ func TestOperationAccessLevels(t *testing.T) {
 
 	for operation := range operationAccess {
 		if !methods[operation] {
-		t.Errorf("declared operation %q is not on a generated strict server interface", operation)
+			t.Errorf("declared operation %q is not on a generated strict server interface", operation)
 		}
 	}
 }

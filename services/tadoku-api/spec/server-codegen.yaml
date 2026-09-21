@@ -39,6 +39,7 @@ output-options:
     - ImmersionProfileYearlyContestRegistrationsByUserID
     - ImmersionContestFindOngoingRegistrations
     - ImmersionContestGetConfigurations
+    - ImmersionContestFetchSummary
     - ImmersionLanguageList
     - ImmersionLanguageCreate
     - ImmersionLanguageUpdate

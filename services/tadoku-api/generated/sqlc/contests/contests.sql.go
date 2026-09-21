@@ -124,6 +124,35 @@ func (q *Queries) DetachContestLogsForLanguages(ctx context.Context, arg DetachC
 	return err
 }
 
+const fetchContestSummary = `-- name: FetchContestSummary :one
+select
+  coalesce(sum(
+    case
+      when logs.id is null then null
+      else coalesce(contest_logs.computed_score, contest_logs.score)
+    end
+  ), 0)::real as total_score,
+  count(distinct logs.user_id) as participant_count,
+  count(distinct logs.language_code) as language_count
+from contests
+left join contest_logs on contest_logs.contest_id = contests.id
+left join logs on contest_logs.log_id = logs.id and logs.deleted_at is null
+where contests.id = $1
+`
+
+type FetchContestSummaryRow struct {
+	TotalScore       float32
+	ParticipantCount int64
+	LanguageCount    int64
+}
+
+func (q *Queries) FetchContestSummary(ctx context.Context, contestID pgtype.UUID) (FetchContestSummaryRow, error) {
+	row := q.db.QueryRow(ctx, fetchContestSummary, contestID)
+	var i FetchContestSummaryRow
+	err := row.Scan(&i.TotalScore, &i.ParticipantCount, &i.LanguageCount)
+	return i, err
+}
+
 const findContestByID = `-- name: FindContestByID :one
 select
   contests.id,

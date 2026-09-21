@@ -57,6 +57,7 @@ var operationAccess = map[string]accessLevel{
 	"ImmersionContestFindOngoingRegistrations": accessAuthenticated,
 	"ImmersionContestFindRegistration":         accessAuthenticated,
 	"ImmersionContestFindLatestOfficial":       accessPublic,
+	"ImmersionContestFetchSummary":             accessPublic,
 	"ImmersionContestGetConfigurations":        accessPublic,
 	"ImmersionContestRegistrationUpsert":       accessAuthenticated,
 

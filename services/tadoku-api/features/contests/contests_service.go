@@ -27,6 +27,10 @@ func NewService(repository *ContestsRepository, kratos *kratosapi.APIClient) *Se
 	}
 }
 
+func (s *Service) FetchContestSummary(ctx context.Context, contestID uuid.UUID) (*ContestSummary, error) {
+	return s.contests.FetchContestSummary(ctx, contestID)
+}
+
 func (s *Service) ValidateContestCreation(
 	ctx context.Context,
 	parameters CreateContestParameters,

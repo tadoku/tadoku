@@ -26,6 +26,7 @@ go_test(
         "contest_registration_ongoing_test.go",
         "contest_registration_upsert_test.go",
         "contest_registration_yearly_test.go",
+        "contest_summary_test.go",
         "dependency_failure_test.go",
         "golden_test.go",
         "journey_test.go",

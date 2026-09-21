@@ -52,7 +52,7 @@ func newLegacyImmersionAPI(ctx context.Context, dsn, jwksURL, ketoReadURL string
 		domain.NewContestConfigurationOptions(postgresRepository),
 		nil, // log configuration options
 		domain.NewContestFindLatestOfficial(postgresRepository),
-		nil, // contest summary
+		domain.NewContestSummaryFetch(postgresRepository),
 		nil, // yearly activity split
 		domain.NewContestFind(postgresRepository),
 		nil, // log find

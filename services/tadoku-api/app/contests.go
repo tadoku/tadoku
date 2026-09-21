@@ -16,6 +16,7 @@ import (
 type ListContestsParameters = contests.ListParameters
 type ContestView = contests.ContestView
 type Contest = contests.Contest
+type ContestSummary = contests.ContestSummary
 type CreateContestParameters = contests.CreateContestParameters
 type ContestRegistration = contests.Registration
 type ContestRegistrationList = contests.RegistrationList
@@ -104,6 +105,10 @@ func (a *Application) FindContestByID(ctx context.Context, id uuid.UUID) (*conte
 
 func (a *Application) FindLatestOfficialContest(ctx context.Context) (*contests.ContestView, error) {
 	return a.contests.FindLatestOfficialContest(ctx)
+}
+
+func (a *Application) FetchContestSummary(ctx context.Context, id uuid.UUID) (*ContestSummary, error) {
+	return a.contests.FetchContestSummary(ctx, id)
 }
 
 func (a *Application) ContestConfigurationOptions(ctx context.Context) (*contests.ConfigurationOptions, error) {

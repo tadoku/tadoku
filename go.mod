@@ -21,7 +21,7 @@ require (
 	github.com/labstack/echo/v4 v4.15.1
 	github.com/lib/pq v1.12.3
 	github.com/mattn/go-sqlite3 v1.14.52
-	github.com/oapi-codegen/nullable v1.1.0
+	github.com/oapi-codegen/nullable v1.2.0
 	github.com/oapi-codegen/runtime v1.6.0
 	github.com/ory/keto-client-go v0.11.0-alpha.0
 	github.com/ory/kratos-client-go v0.11.1

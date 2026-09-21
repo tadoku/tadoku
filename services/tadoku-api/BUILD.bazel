@@ -87,10 +87,7 @@ dev_deployable(
             "services/common",
         ],
     }),
-    workload_template = select({
-        "//.dev:isolated_database": "//.dev:tadoku-api.isolated.json",
-        "//conditions:default": "//.dev:tadoku-api.shared.json",
-    }),
+    workload_template = "//.dev:tadoku-api.yaml",
     deps = [
         ":cli_image",
         "//services/tadoku-api/cmd/tadoku-api",

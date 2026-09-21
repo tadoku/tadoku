@@ -1,0 +1,48 @@
+kubeContext: homelab-dev
+namespace: tadoku-dev-cli
+namespaces:
+  - tadoku-dev-cli
+  - default
+  - tdk-tadoku-api
+registry: registry.dev.lab/tadoku-dev-cli
+ingressHost: tadoku.dev.lab
+ingressClass: nginx
+gatewayName: dev-cli-playground
+gatewayNamespace: envoy-gateway-system
+internalGateway: http://dev-cli-gateway.tadoku-dev-cli.svc.cluster.local
+ttl: 8h
+bazelArgs:
+  - --platforms=@rules_go//go/toolchain:linux_amd64
+  - --@rules_go//go/config:pure
+  - --jobs=2
+dependencies:
+  - name: database
+    namespace: default
+    manifest: .dev/database.yaml
+    retention: down
+    readiness:
+      - resource: job
+        name: immersion-${DEV_ROUTE}
+        condition: Complete
+        timeout: 300s
+tasks:
+  - name: migrate
+    namespace: tdk-tadoku-api
+    manifest: .dev/migrate.yaml
+    target: tadoku-dev-db.default/immersion-${DEV_ROUTE}
+    dependencies:
+      - database
+    timeout: 5m
+    imageName: migrate
+    pushTarget: //services/tadoku-api/migrations:dev_push
+    container: migrate
+  - name: seed
+    namespace: tdk-tadoku-api
+    manifest: .dev/seed.yaml
+    target: tadoku-dev-db.default/immersion-${DEV_ROUTE}
+    dependencies:
+      - database
+    timeout: 5m
+    imageName: seed
+    pushTarget: //.dev:seed_push
+    container: seed

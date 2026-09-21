@@ -85,7 +85,7 @@ dev_deployable(
         "readinessPath": "/",
         "publicPath": "/",
         "baseService": {
-            "name": "tadoku-cli-web-base",
+            "name": "frontend-webv2",
             "namespace": "default",
             "port": 3000,
         },
@@ -128,7 +128,7 @@ dev_deployable(
             "--frozen-lockfile",
         ],
     }),
-    workload_template = "//.dev:webv2.json",
+    workload_template = "//.dev:webv2.yaml",
     deps = [
         ":webv2_dev_image",
         ":webv2_sources",

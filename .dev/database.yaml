@@ -1,0 +1,79 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: immersion-${DEV_ROUTE}
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 240
+  template:
+    spec:
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      containers:
+        - name: create-database
+          # Client only: the database stays in the existing shared Postgres pod.
+          image: docker.io/library/postgres@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
+          command: ["/bin/sh", "-ec"]
+          args:
+            - |
+              psql -X --set=ON_ERROR_STOP=1 --set=route="$DEV_ROUTE" <<'SQL'
+              select 'immersion-' || :'route' as database,
+                     'dev-cli branch database route=' || :'route' as marker,
+                     octet_length('immersion-' || :'route') <= 63
+                     and :'route' ~ '^[a-z0-9][a-z0-9-]*-[0-9a-f]{8}$' as valid_name
+              \gset
+              \if :valid_name
+              \else
+                do $$ begin raise exception 'refusing invalid or overlong branch database name'; end $$;
+              \endif
+              select pg_advisory_lock(hashtextextended(:'database', 0));
+              select exists(select from pg_database where datname = :'database') as exists,
+                     exists(select from pg_database where datname = :'database'
+                            and pg_get_userbyid(datdba) = 'immersion'
+                            and shobj_description(oid, 'pg_database') = :'marker') as owned
+              \gset
+              \if :exists
+                \if :owned
+                  \echo 'branch database already provisioned'
+                \else
+                  do $$ begin raise exception 'refusing existing database without matching dev-cli ownership'; end $$;
+                \endif
+              \else
+                select format('create database %I owner immersion', :'database') \gexec
+                select format('comment on database %I is %L', :'database', :'marker') \gexec
+              \endif
+              SQL
+          env:
+            - name: DEV_ROUTE
+              value: ${DEV_ROUTE}
+            - name: PGHOST
+              value: tadoku-dev-db.default
+            - name: PGDATABASE
+              value: postgres
+            - name: PGSSLMODE
+              value: require
+            - name: PGCONNECT_TIMEOUT
+              value: "10"
+            - name: PGUSER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres.tadoku-dev-db.credentials.postgresql.acid.zalan.do
+                  key: username
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres.tadoku-dev-db.credentials.postgresql.acid.zalan.do
+                  key: password
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65532
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              cpu: "1"
+              memory: 128Mi

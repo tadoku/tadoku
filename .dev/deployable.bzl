@@ -11,7 +11,7 @@ dev_deployable = rule(
     implementation = _impl,
     attrs = {
         "metadata": attr.string(mandatory = True),
-        "workload_template": attr.label(allow_single_file = [".json"], mandatory = True),
+        "workload_template": attr.label(allow_single_file = [".yaml"], mandatory = True),
         "deps": attr.label_list(allow_files = True),
     },
 )

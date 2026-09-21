@@ -141,8 +141,13 @@ bazel build //services/... && bazel test //services/...
 
 ## Dev Environment
 
-Use `k8s/dev/` as the Tilt entrypoint for the shared and local Kubernetes dev stacks.
-Cluster-specific hostnames, registry hosts, and kube access details belong in ignored local config (`tilt_config.json`, `.env.local`); committed files should use placeholder examples.
+Use DevCLI for frontend/native API development; `.dev/README.md` owns its workflow.
+The real, non-secret Homelab configuration is committed in `.dev/config.yaml` and
+`k8s/dev/dev-cli/`. Keep credentials, private keys and kube access details outside
+Git; manifests may reference existing Secrets and include the public Lab CA.
+Use an ignored local file with `dev <command> --config <path>` for overrides.
+Legacy Tilt files remain for the existing base stack; do not run Tilt concurrently
+with DevCLI, because its old Ingress definitions can overwrite the gateway entrypoints.
 
 Dev Postgres is provisioned with the Zalando `postgresql` custom resource. Do not add or reintroduce hand-rolled Postgres Deployments or Helm releases for the dev stack.
 

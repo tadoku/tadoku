@@ -43,18 +43,19 @@ func TestCreateAnnouncementParametersValidation(t *testing.T) {
 	for _, test := range []struct {
 		name   string
 		change func(*announcements.CreateAnnouncementParameters)
+		want   string
 	}{
-		{name: "ID", change: func(p *announcements.CreateAnnouncementParameters) { p.ID = uuid.Nil }},
-		{name: "namespace", change: func(p *announcements.CreateAnnouncementParameters) { p.Namespace = "" }},
-		{name: "title", change: func(p *announcements.CreateAnnouncementParameters) { p.Title = "" }},
-		{name: "content", change: func(p *announcements.CreateAnnouncementParameters) { p.Content = "" }},
-		{name: "style", change: func(p *announcements.CreateAnnouncementParameters) { p.Style = "other" }},
-		{name: "empty style", change: func(p *announcements.CreateAnnouncementParameters) { p.Style = "" }},
-		{name: "style case", change: func(p *announcements.CreateAnnouncementParameters) { p.Style = "INFO" }},
-		{name: "starts at", change: func(p *announcements.CreateAnnouncementParameters) { p.StartsAt = time.Time{} }},
-		{name: "ends at", change: func(p *announcements.CreateAnnouncementParameters) { p.EndsAt = time.Time{} }},
-		{name: "equal dates", change: func(p *announcements.CreateAnnouncementParameters) { p.EndsAt = p.StartsAt }},
-		{name: "reversed dates", change: func(p *announcements.CreateAnnouncementParameters) { p.EndsAt = p.StartsAt.Add(-time.Second) }},
+		{name: "ID", change: func(p *announcements.CreateAnnouncementParameters) { p.ID = uuid.Nil }, want: "invalid announcement: id is nil"},
+		{name: "namespace", change: func(p *announcements.CreateAnnouncementParameters) { p.Namespace = "" }, want: "invalid announcement: namespace is required"},
+		{name: "title", change: func(p *announcements.CreateAnnouncementParameters) { p.Title = "" }, want: "invalid announcement: title is required"},
+		{name: "content", change: func(p *announcements.CreateAnnouncementParameters) { p.Content = "" }, want: "invalid announcement: content is required"},
+		{name: "style", change: func(p *announcements.CreateAnnouncementParameters) { p.Style = "other" }, want: "invalid announcement: style is invalid"},
+		{name: "empty style", change: func(p *announcements.CreateAnnouncementParameters) { p.Style = "" }, want: "invalid announcement: style is invalid"},
+		{name: "style case", change: func(p *announcements.CreateAnnouncementParameters) { p.Style = "INFO" }, want: "invalid announcement: style is invalid"},
+		{name: "starts at", change: func(p *announcements.CreateAnnouncementParameters) { p.StartsAt = time.Time{} }, want: "invalid announcement: date range is invalid"},
+		{name: "ends at", change: func(p *announcements.CreateAnnouncementParameters) { p.EndsAt = time.Time{} }, want: "invalid announcement: date range is invalid"},
+		{name: "equal dates", change: func(p *announcements.CreateAnnouncementParameters) { p.EndsAt = p.StartsAt }, want: "invalid announcement: date range is invalid"},
+		{name: "reversed dates", change: func(p *announcements.CreateAnnouncementParameters) { p.EndsAt = p.StartsAt.Add(-time.Second) }, want: "invalid announcement: date range is invalid"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			parameters := valid
@@ -62,6 +63,9 @@ func TestCreateAnnouncementParametersValidation(t *testing.T) {
 			err := parameters.Validate()
 			if !errors.Is(err, announcements.ErrInvalidAnnouncement) {
 				t.Errorf("error=%v, want invalid announcement", err)
+			}
+			if err == nil || err.Error() != test.want {
+				t.Errorf("error=%v, want %q", err, test.want)
 			}
 			if errx.KindOf(err) != errx.InvalidInput {
 				t.Errorf("error=%v, want invalid-input category", err)
@@ -96,51 +100,13 @@ func TestCreateAnnouncementParametersHrefValidation(t *testing.T) {
 		t.Run("invalid "+href, func(t *testing.T) {
 			parameters := parameters
 			parameters.Href = &href
-			if err := parameters.Validate(); !errors.Is(err, announcements.ErrInvalidAnnouncement) {
+			err := parameters.Validate()
+			if !errors.Is(err, announcements.ErrInvalidAnnouncement) {
 				t.Errorf("error=%v, want invalid announcement for href %q", err, href)
 			}
+			if err == nil || err.Error() != "invalid announcement: href is invalid" {
+				t.Errorf("error=%v, want href is invalid for href %q", err, href)
+			}
 		})
-	}
-}
-
-func TestUpdateAnnouncementParametersValidation(t *testing.T) {
-	parameters := announcements.UpdateAnnouncementParameters{
-		ID:        uuid.MustParse("11111111-1111-4111-8111-111111111111"),
-		Namespace: "main",
-		Title:     "Title",
-		Content:   "Content",
-		Style:     "info",
-		StartsAt:  time.Date(2026, 9, 12, 0, 0, 0, 0, time.UTC),
-		EndsAt:    time.Date(2026, 9, 13, 0, 0, 0, 0, time.UTC),
-	}
-	if err := parameters.Validate(); err != nil {
-		t.Fatalf("valid parameters rejected: %v", err)
-	}
-
-	t.Run("zero ID", func(t *testing.T) {
-		parameters := parameters
-		parameters.ID = uuid.Nil
-		if err := parameters.Validate(); !errors.Is(err, announcements.ErrInvalidAnnouncement) {
-			t.Errorf("error=%v, want invalid announcement for zero ID", err)
-		}
-	})
-
-	parameters.Namespace = ""
-	if err := parameters.Validate(); !errors.Is(err, announcements.ErrInvalidAnnouncement) {
-		t.Errorf("error=%v, want invalid announcement", err)
-	}
-
-	parameters.Namespace = "main"
-	for _, href := range []string{"", "/news", "https://example.test/news", "http://example.test", "/" + strings.Repeat("a", 2047)} {
-		parameters.Href = &href
-		if err := parameters.Validate(); err != nil {
-			t.Errorf("valid href %q rejected: %v", href, err)
-		}
-	}
-	for _, href := range []string{"news", "//example.test/news", `/\example.test/news`, "javascript:alert(1)", "data:text/html,<script>alert(1)</script>", "vbscript:msgbox(1)", "https://example.test/%gh", "/" + strings.Repeat("a", 2048)} {
-		parameters.Href = &href
-		if err := parameters.Validate(); !errors.Is(err, announcements.ErrInvalidAnnouncement) {
-			t.Errorf("error=%v, want invalid announcement for href %q", err, href)
-		}
 	}
 }

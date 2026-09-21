@@ -2,6 +2,7 @@
 package announcements
 
 import (
+	"fmt"
 	"net/url"
 	"strings"
 	"time"
@@ -81,12 +82,7 @@ type CreateAnnouncementParameters struct {
 }
 
 func (p CreateAnnouncementParameters) Validate() error {
-	if p.ID == uuid.Nil || p.Namespace == "" || p.Title == "" || p.Content == "" ||
-		!isValidAnnouncementStyle(p.Style) || !isValidAnnouncementHref(p.Href) ||
-		!timex.IsValidRange(p.StartsAt, p.EndsAt) {
-		return ErrInvalidAnnouncement
-	}
-	return nil
+	return validateAnnouncement(announcementParameters(p))
 }
 
 type UpdateAnnouncementParameters struct {
@@ -101,10 +97,41 @@ type UpdateAnnouncementParameters struct {
 }
 
 func (p UpdateAnnouncementParameters) Validate() error {
-	if p.ID == uuid.Nil || p.Namespace == "" || p.Title == "" || p.Content == "" ||
-		!isValidAnnouncementStyle(p.Style) || !isValidAnnouncementHref(p.Href) ||
-		!timex.IsValidRange(p.StartsAt, p.EndsAt) {
-		return ErrInvalidAnnouncement
+	return validateAnnouncement(announcementParameters(p))
+}
+
+type announcementParameters struct {
+	ID        uuid.UUID
+	Namespace string
+	Title     string
+	Content   string
+	Style     string
+	Href      *string
+	StartsAt  time.Time
+	EndsAt    time.Time
+}
+
+func validateAnnouncement(p announcementParameters) error {
+	if p.ID == uuid.Nil {
+		return fmt.Errorf("%w: id is nil", ErrInvalidAnnouncement)
+	}
+	if p.Namespace == "" {
+		return fmt.Errorf("%w: namespace is required", ErrInvalidAnnouncement)
+	}
+	if p.Title == "" {
+		return fmt.Errorf("%w: title is required", ErrInvalidAnnouncement)
+	}
+	if p.Content == "" {
+		return fmt.Errorf("%w: content is required", ErrInvalidAnnouncement)
+	}
+	if !isValidAnnouncementStyle(p.Style) {
+		return fmt.Errorf("%w: style is invalid", ErrInvalidAnnouncement)
+	}
+	if !isValidAnnouncementHref(p.Href) {
+		return fmt.Errorf("%w: href is invalid", ErrInvalidAnnouncement)
+	}
+	if !timex.IsValidRange(p.StartsAt, p.EndsAt) {
+		return fmt.Errorf("%w: date range is invalid", ErrInvalidAnnouncement)
 	}
 	return nil
 }

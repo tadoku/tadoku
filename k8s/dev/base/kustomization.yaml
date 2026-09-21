@@ -91,4 +91,4 @@ images:
   - name: ghcr.io/tadoku/tadoku/frontend-admin
     newTag: latest
     newName: ghcr.io/tadoku/tadoku/frontend-admin
-    digest: sha256:765fee1eaab27b553f78f82e7f1a8a559eda38e461616a38473f37106d94e265
+    digest: sha256:661d5e1cbbab59c55a4d9897e4145cd94f4fe441c59f65a3dc29a31ebc35686d

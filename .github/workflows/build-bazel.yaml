@@ -142,6 +142,7 @@ jobs:
           //services/tadoku-api/infra/postgres:postgres_test
           //services/tadoku-api/infra/valkey:valkey_test
           //services/tadoku-api/features/announcements:announcements_test
+          //services/tadoku-api/features/audit:audit_test
           //services/tadoku-api/features/authz:authz_test
           //services/tadoku-api/features/pages:pages_test
           //services/tadoku-api/features/profile:profile_test

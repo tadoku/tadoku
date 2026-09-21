@@ -1,8 +1,8 @@
 load("@rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "authz",
+    name = "audit",
     srcs = ["generate.go"],
-    importpath = "github.com/tadoku/tadoku/services/tadoku-api/sql/authz",
+    importpath = "github.com/tadoku/tadoku/services/tadoku-api/sql/audit",
     visibility = ["//visibility:public"],
 )

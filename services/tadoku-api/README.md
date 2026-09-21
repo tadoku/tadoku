@@ -54,19 +54,23 @@ and `Unwrap` preserves causes for `errors.Is`/`errors.As`. Do not encode categor
 in error text or wrap category sentinels. Legacy error types and mapping stay
 unchanged. Add call-site context only when it contributes useful diagnostics.
 
-Application operations and feature services that need authorization receive a
+Application operations own full endpoint caller-access checks. They receive a
 named `*permissions.Checker` and call `RequireAuthenticated`,
-`RequireAuthenticatedAllowingUnknownBan`, `RequireAdmin` or `IsAdmin` explicitly.
+`RequireAuthenticatedAllowingUnknownBan` or `RequireAdmin` explicitly.
 Do not enforce administrator access with HTTP middleware.
 Construction for a protected slice binds the checker to the request-scoped
 `app:tadoku#admins` Keto lookup; the checker derives its subject from the verified
 `internal/identity` context and does not cache results. The shared HTTP ban gate
-remains separate and must not be duplicated in feature operations. Direct
+remains separate and must not be duplicated in application operations or feature
+services. Feature services may inspect permissions only to expand behavior within
+an operation the application has already authorized. Compose independent features
+in the application layer; features do not import or call sibling features. Direct
 invocation outside the application router must provide its own equivalent baseline
-ban policy. `RequireAuthenticated` and administrator checks fail closed when the
-shared ban lookup is inconclusive. `RequireAuthenticatedAllowingUnknownBan` is an
-explicit availability opt-out for read-only operations. Operations that mutate
-state must never use the fail-open variant.
+ban policy.
+`RequireAuthenticated` and administrator checks fail closed when the shared ban
+lookup is inconclusive. `RequireAuthenticatedAllowingUnknownBan` is an explicit
+availability opt-out for read-only operations. Operations that mutate state must
+never use the fail-open variant.
 
 Feature services consume concrete shared authorization fact and mutation
 services from `services/common/authz/roles`. Target facts are never treated as
@@ -266,8 +270,9 @@ primitives return an error only, not separate HTTP response metadata.
 The total client timeout, any earlier caller deadline and caller cancellation
 bound requests, including response-body reads. No mutation retry loop is added;
 a timeout or cancellation does not establish whether Keto committed the write.
-Feature services remain responsible for authorization, auditing and operation
-ordering around these primitives.
+Application operations remain responsible for caller authorization and ordering
+feature work around these primitives. Audit services own recording details such as
+business timestamps and persistence.
 
 ### Raw Kratos primitive
 

@@ -1,4 +1,4 @@
--- name: CreateModerationAudit :exec
+-- name: CreateAudit :exec
 insert into moderation_audit_log (
   user_id,
   action,
@@ -6,9 +6,9 @@ insert into moderation_audit_log (
   description,
   created_at
 ) values (
-  sqlc.arg(moderator_user_id)::uuid,
+  sqlc.arg(actor_id)::uuid,
   sqlc.arg(action),
   sqlc.arg(metadata)::jsonb,
   sqlc.arg(description)::text,
-  sqlc.arg(created_at)::timestamp
+  sqlc.arg(recorded_at)::timestamp
 );

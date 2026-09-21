@@ -7,7 +7,7 @@ SQLC_PACKAGES=(
   "services/content-api/storage/postgres"
   "services/profile-api/storage/postgres"
   "services/tadoku-api/infra/postgres/testdata/sqlc"
-  "services/tadoku-api/sql/authz"
+  "services/tadoku-api/sql/audit"
   "services/tadoku-api/sql/announcements"
   "services/tadoku-api/sql/languages"
   "services/tadoku-api/sql/posts"

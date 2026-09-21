@@ -2,8 +2,6 @@
 package authz
 
 import (
-	"time"
-
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
@@ -58,20 +56,4 @@ func (p RoleUpdateParameters) Validate() error {
 		return errx.NewInvalidInputError("reason must be at most 1000 bytes")
 	}
 	return nil
-}
-
-type ModerationAction string
-
-const (
-	ModerationActionBanUser   ModerationAction = "ban_user"
-	ModerationActionUnbanUser ModerationAction = "unban_user"
-)
-
-type ModerationAudit struct {
-	ModeratorUserID uuid.UUID
-	Action          ModerationAction
-	TargetUserID    uuid.UUID
-	NewRole         Role
-	Description     string
-	CreatedAt       time.Time
 }

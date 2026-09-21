@@ -25,6 +25,16 @@
       "description": "Do not automerge majors; keep them reviewable",
       "matchUpdateTypes": ["major"],
       "dependencyDashboardApproval": true
+    },
+    {
+      "description": "Never bump Next.js — migrating to TanStack Start",
+      "matchPackageNames": ["next", "eslint-config-next", "@next/*"],
+      "enabled": false
+    },
+    {
+      "description": "Never bump Echo — services being deprecated",
+      "matchPackageNames": ["github.com/labstack/echo/v4", "github.com/labstack/echo"],
+      "enabled": false
     }
   ]
 }

@@ -2019,7 +2019,7 @@ paths:
                 $ref: "#/components/schemas/ImmersionContestRegistrations"
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /users/{userId}/contest-registrations/{year}
       x-legacy-operation-id: profileYearlyContestRegistrationsByUserID
   "/immersion/users/{userId}/activity-split/{year}":

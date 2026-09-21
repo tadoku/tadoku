@@ -126,7 +126,14 @@ func (a *Application) FindContestRegistration(ctx context.Context, contestID uui
 		return nil, err
 	}
 
-	return a.contests.FindRegistration(ctx, userID, contestID)
+	registration, err := a.contests.FindRegistration(ctx, userID, contestID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Registration lookup omits the contest; participant statistics includes it.
+	registration.Contest = nil
+	return registration, nil
 }
 
 func (a *Application) ListOngoingContestRegistrations(ctx context.Context) (*ContestRegistrationList, error) {

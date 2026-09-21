@@ -12,13 +12,6 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
 
-type ActivityInputType = activitiescatalog.ActivityInputType
-
-const (
-	ActivityInputTypeAmountPrimary = activitiescatalog.ActivityInputTypeAmountPrimary
-	ActivityInputTypeTimePrimary   = activitiescatalog.ActivityInputTypeTimePrimary
-)
-
 var activities = activitiescatalog.All()
 
 var (

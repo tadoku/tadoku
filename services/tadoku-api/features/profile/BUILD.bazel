@@ -37,6 +37,7 @@ go_test(
     ],
     data = glob(["testdata/**"]),
     embed = [":profile"],
+    env_inherit = ["TADOKU_TEST_POSTGRES_URL"],
     tags = [
         "no-cache",
         "no-remote-exec",

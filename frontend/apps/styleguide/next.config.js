@@ -3,7 +3,7 @@ const nextConfig = {
   output: 'standalone',
   reactStrictMode: true,
   swcMinify: true,
-  transpilePackages: ['ui'],
+  transpilePackages: ['ui', '@faker-js/faker'],
   webpack: config => {
     // Add raw source loader for ?raw imports
     config.module.rules.push({

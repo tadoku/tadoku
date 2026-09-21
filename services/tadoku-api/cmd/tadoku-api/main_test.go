@@ -277,6 +277,9 @@ func validApplicationConfig(t *testing.T) config {
 }
 
 func TestLoadConfigUsesValidatedDefaults(t *testing.T) {
+	// A missing or malformed writer setting must fail startup; both explicit
+	// boolean values must survive configuration loading unchanged.
+	t.Setenv("API_SCORING_ENGINE_ENABLED", "false")
 	t.Setenv("API_JWKS", "http://jwks.test")
 	t.Setenv("API_KETO_READ_URL", "http://keto-read.test")
 	t.Setenv("API_KETO_WRITE_URL", "http://keto-write.test")
@@ -330,6 +333,24 @@ func TestLoadConfigUsesValidatedDefaults(t *testing.T) {
 	if cfg.OathkeeperAuthzToken != "callback-token" {
 		t.Errorf("Oathkeeper authorization token=%q", cfg.OathkeeperAuthzToken)
 	}
+	for _, value := range []string{"true", "false"} {
+		t.Setenv("API_SCORING_ENGINE_ENABLED", value)
+		loaded, err := loadConfig()
+		if err != nil || loaded.ScoringEngineEnabled != (value == "true") {
+			t.Fatalf("scoring setting %q: config=%v error=%v", value, loaded.ScoringEngineEnabled, err)
+		}
+	}
+	t.Setenv("API_SCORING_ENGINE_ENABLED", "invalid")
+	if _, err := loadConfig(); err == nil {
+		t.Fatal("malformed scoring setting accepted")
+	}
+	if err := os.Unsetenv("API_SCORING_ENGINE_ENABLED"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := loadConfig(); err == nil {
+		t.Fatal("missing scoring setting accepted")
+	}
+	t.Setenv("API_SCORING_ENGINE_ENABLED", "false")
 	for _, rawURL := range []string{
 		"", "not-a-url", "/relative", "ftp://keto.test", "http://:4467", "http://keto.test:bad",
 		"http://user:secret@keto.test", "http://keto.test?query=1", "http://keto.test?",

@@ -25,6 +25,7 @@ import (
 	featureauthz "github.com/tadoku/tadoku/services/tadoku-api/features/authz"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/contests"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/languages"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/logs"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/pages"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/posts"
 	featureprofile "github.com/tadoku/tadoku/services/tadoku-api/features/profile"
@@ -36,6 +37,7 @@ import (
 )
 
 var api *suite
+var scoringEnabledHandler http.Handler
 var legacyContent *legacyContentAPI
 var legacyProfile *legacyProfileAPI
 var legacyImmersion *legacyImmersionAPI
@@ -102,6 +104,12 @@ func runTests(m *testing.M) (code int) {
 		return 1
 	}
 	defer func() { cleanupErr = errors.Join(cleanupErr, api.db.Close()) }()
+
+	scoringEnabledHandler, _, _, err = newTestRouterWithScoringEngine(ctx, api.db.Pool, api.db.Pool, keto, kratos, slog.New(slog.NewTextHandler(io.Discard, nil)), true)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
 
 	unavailableKeto, err := testketo.New(ctx)
 	if err != nil {
@@ -211,6 +219,18 @@ func newTestRouterWithLogger(
 	kratosFixture *testkratos.Fixture,
 	logger *slog.Logger,
 ) (*transport.Router, *featureprofile.Service, *commonroles.KetoService, error) {
+	return newTestRouterWithScoringEngine(ctx, pool, auditPool, ketoFixture, kratosFixture, logger, false)
+}
+
+func newTestRouterWithScoringEngine(
+	ctx context.Context,
+	pool *pgxpool.Pool,
+	auditPool *pgxpool.Pool,
+	ketoFixture *testketo.Fixture,
+	kratosFixture *testkratos.Fixture,
+	logger *slog.Logger,
+	scoringEngineEnabled bool,
+) (*transport.Router, *featureprofile.Service, *commonroles.KetoService, error) {
 	reader := ketoclient.NewReadClient(ketoFixture.ReadURL())
 	readWriter := ketoclient.NewClient(ketoFixture.ReadURL(), ketoFixture.WriteURL())
 	permissionChecker := permissions.NewKetoChecker(reader)
@@ -228,16 +248,18 @@ func newTestRouterWithLogger(
 	announcementsRepository := announcements.NewAnnouncementsRepository(pool)
 	contestsRepository := contests.NewContestsRepository(pool)
 	languagesRepository := languages.NewLanguagesRepository(pool)
+	logsRepository := logs.NewLogsRepository(pool)
 	pagesRepository := pages.NewPagesRepository(pool)
 	postsRepository := posts.NewPostsRepository(pool)
 	profileRepository := featureprofile.NewRepository(pool)
 	announcementsService := announcements.NewService(announcementsRepository)
 	contestsService := contests.NewService(contestsRepository, kratosFixture.Client())
 	languagesService := languages.NewService(languagesRepository)
+	logsService := logs.NewService(logsRepository, scoringEngineEnabled)
 	pagesService := pages.NewService(pagesRepository)
 	postsService := posts.NewService(postsRepository)
 	profileService := featureprofile.NewService(profileRepository, featureprofile.NewUserCache(identities), roleService)
-	application := app.New(announcementsService, auditService, authzService, contestsService, languagesService, pagesService, postsService, profileService, pool, permissionChecker)
+	application := app.New(announcementsService, auditService, authzService, contestsService, languagesService, logsService, pagesService, postsService, profileService, pool, permissionChecker)
 	authenticate, err := transport.NewJWTAuthentication(ctx, authenticationJWKS.URL, time.Second, 24*time.Hour, "http://oathkeeper-api/", logger)
 	if err != nil {
 		return nil, nil, nil, err

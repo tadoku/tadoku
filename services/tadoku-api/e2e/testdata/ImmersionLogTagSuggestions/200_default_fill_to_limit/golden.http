@@ -1,0 +1,6 @@
+>>> GET /immersion/logs/tag-suggestions
+HTTP/1.1 200 OK
+Content-Length: 914
+Content-Type: application/json; charset=UTF-8
+
+{"suggestions":[{"count":1,"tag":"custom-01"},{"count":1,"tag":"custom-02"},{"count":1,"tag":"custom-03"},{"count":1,"tag":"custom-04"},{"count":1,"tag":"custom-05"},{"count":1,"tag":"custom-06"},{"count":1,"tag":"custom-07"},{"count":1,"tag":"custom-08"},{"count":1,"tag":"custom-09"},{"count":1,"tag":"custom-10"},{"count":1,"tag":"custom-11"},{"count":1,"tag":"custom-12"},{"count":1,"tag":"custom-13"},{"count":1,"tag":"custom-14"},{"count":1,"tag":"custom-15"},{"count":1,"tag":"custom-16"},{"count":1,"tag":"custom-17"},{"count":1,"tag":"custom-18"},{"count":1,"tag":"custom-19"},{"count":1,"tag":"custom-20"},{"count":1,"tag":"custom-21"},{"count":1,"tag":"custom-22"},{"count":1,"tag":"custom-23"},{"count":1,"tag":"custom-24"},{"count":1,"tag":"custom-25"},{"count":1,"tag":"custom-26"},{"count":1,"tag":"custom-27"},{"count":1,"tag":"custom-28"},{"count":1,"tag":"custom-29"},{"count":0,"tag":"anime"}]}

@@ -40,6 +40,8 @@ output-options:
     - ImmersionContestFindOngoingRegistrations
     - ImmersionContestGetConfigurations
     - ImmersionContestFetchSummary
+    - ImmersionLogGetConfigurations
+    - ImmersionLogTagSuggestions
     - ImmersionLanguageList
     - ImmersionLanguageCreate
     - ImmersionLanguageUpdate

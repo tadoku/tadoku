@@ -1,0 +1,6 @@
+>>> GET /immersion/logs/tag-suggestions?query=%25
+HTTP/1.1 200 OK
+Content-Length: 378
+Content-Type: application/json; charset=UTF-8
+
+{"suggestions":[{"count":3,"tag":"custom"},{"count":2,"tag":"Anime"},{"count":1,"tag":""},{"count":1,"tag":"100%"},{"count":1,"tag":"alpha"},{"count":1,"tag":"anime"},{"count":1,"tag":"ANIME"},{"count":1,"tag":"deleted-log-only"},{"count":1,"tag":"space tag"},{"count":1,"tag":"under_score"},{"count":1,"tag":"UpperCase"},{"count":1,"tag":"YouTube"},{"count":1,"tag":"zebra"}]}

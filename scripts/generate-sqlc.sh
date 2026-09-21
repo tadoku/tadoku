@@ -10,6 +10,7 @@ SQLC_PACKAGES=(
   "services/tadoku-api/sql/audit"
   "services/tadoku-api/sql/announcements"
   "services/tadoku-api/sql/languages"
+  "services/tadoku-api/sql/logs"
   "services/tadoku-api/sql/posts"
   "services/tadoku-api/sql/pages"
   "services/tadoku-api/sql/contests"

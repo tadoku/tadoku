@@ -1,0 +1,6 @@
+>>> GET /immersion/logs/tag-suggestions?query=c_st
+HTTP/1.1 200 OK
+Content-Length: 45
+Content-Type: application/json; charset=UTF-8
+
+{"suggestions":[{"count":3,"tag":"custom"}]}

@@ -1821,7 +1821,7 @@ paths:
                 $ref: "#/components/schemas/ImmersionLogConfigurationOptions"
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /logs/configuration-options
       x-legacy-operation-id: logGetConfigurations
   /immersion/logs/tag-suggestions:
@@ -1847,7 +1847,7 @@ paths:
                 $ref: "#/components/schemas/ImmersionTagSuggestions"
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /logs/tag-suggestions
       x-legacy-operation-id: logTagSuggestions
   "/immersion/users/{userId}/profile":

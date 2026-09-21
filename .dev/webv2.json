@@ -7,7 +7,7 @@
       "volumeMounts": [{"name": "development-ca", "mountPath": "/etc/dev-ca", "readOnly": true}],
       "envFrom": [{"configMapRef": {"name": "tadoku-cli-web"}}],
       "env": [{"name": "NEXT_TELEMETRY_DISABLED", "value": "1"}],
-      "resources": {"requests": {"cpu": "100m", "memory": "256Mi"}, "limits": {"cpu": "2", "memory": "1Gi"}}
+      "resources": {"requests": {"cpu": "100m", "memory": "256Mi"}, "limits": {"cpu": "2", "memory": "1536Mi"}}
     }],
     "volumes": [{"name": "development-ca", "configMap": {"name": "tadoku-cli-ca"}}]
   }

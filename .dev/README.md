@@ -129,8 +129,10 @@ The pilot-owned base frontend uses the pilot hostname for SSR and a relative
 frontend that remains on the pilot origin and sends its branch cookie through
 the pilot Oathkeeper route. The shared Tilt frontend and its canonical runtime
 configuration are unchanged. Both pilot Next.js processes inherit a 384 MiB
-V8 heap ceiling from `tadoku-cli-web` and have a 1 GiB container limit so a base
-and one overlay remain bounded on the development node.
+V8 heap ceiling from `tadoku-cli-web`. The base has a 1 GiB container limit; the
+overlay has a 1536 MiB limit because initial sync can run `pnpm install` while
+the Next.js dev server is already live. This keeps their concurrent memory use
+bounded without giving each Node process a larger heap.
 
 ## Disposable native database
 

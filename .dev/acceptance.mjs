@@ -91,6 +91,7 @@ try {
   assert.equal((await b.request.get(isolated)).status(),200,'isolated seed must be visible in B');
   assert.equal((await a.request.get(isolated)).status(),404,'shared A database must not receive isolated seed');
   assert.equal((await guest.request.get(isolated)).status(),404,'base database must not receive isolated seed');
+  assert.equal(await pageA.evaluate(()=>getComputedStyle(document.body).backgroundColor),'rgb(219, 234, 254)','A must use its edited frontend overlay');
   assert.notEqual(await pageB.evaluate(()=>getComputedStyle(document.body).backgroundColor),'rgb(219, 234, 254)','API-only B must fall back to base frontend');
   await select(pageA,routeB);
   await ping(a,markerB);
@@ -110,6 +111,8 @@ try {
     await select(pageB,routeB);
     const sessionA = await pageA.evaluate(()=>window.__NEXT_DATA__.props.pageProps.session?.identity.id);
     assert(sessionA === identityA,'Next.js SSR must retain the authenticated session');
+    const sessionB = await pageB.evaluate(()=>window.__NEXT_DATA__.props.pageProps.session?.identity.id);
+    assert(sessionB === identityB,'base frontend SSR must retain B session with an API-only overlay');
     const listPath = `${host}/api/internal/content/pages/main`;
     assert.equal((await a.request.get(listPath)).status(),200,'administrator should pass native authorization');
     assert.equal((await b.request.get(listPath)).status(),403,'reader must not pass administrator authorization');

@@ -27,11 +27,11 @@ precedence over browser-supplied `x-dev-branch`.
 
 ## Prerequisites and local configuration
 
-Use the Phase 1 CLI commit `fa41d05e0de846a118f8b2c529e0c8acbf4c3aa7`
+Use CLI commit `9ab8ef8517d7a1745f431ad749a56b890e1772e1`
 or a release containing it; older releases do not have dependency/task support:
 
 ```sh
-GOPRIVATE=github.com/antonve/dev-cli go install github.com/antonve/dev-cli/cmd/dev@fa41d05e0de846a118f8b2c529e0c8acbf4c3aa7
+GOPRIVATE=github.com/antonve/dev-cli go install github.com/antonve/dev-cli/cmd/dev@9ab8ef8517d7a1745f431ad749a56b890e1772e1
 cp .dev/config.example.json .dev/config.json
 mkdir -p .dev/local
 cp .dev/pilot.example.json .dev/local/pilot.json
@@ -110,10 +110,19 @@ dev logs --owner alice tadoku-api
 ```
 
 Open the printed link; it sets a host-only branch cookie without application UI
-changes. Authenticate at the existing account hostname first, then open the
-pilot link. The existing account service need not allow a new return URL. Its
-session cookie must already cover the pilot hostname. Each browser profile has
-its own selection; tabs within one profile share it.
+changes. Until the pilot origin is onboarded in shared Kratos, authenticate at
+the existing account hostname first, then open the pilot link. Its session
+cookie must already cover the pilot hostname. Each browser profile has its own
+selection; tabs within one profile share it.
+
+This separate sign-in does **not** prove the pilot's normal Login button works.
+That button supplies the pilot URL as `return_to`; Kratos rejects it unless its
+return-URL allowlist includes that origin. Browser auth operations also need
+the exact pilot origin in Kratos's CORS allowlist. Onboard both through the
+existing development configuration, preserving existing origins and avoiding
+wildcards. This changes a shared Tilt-owned provider and needs operator approval;
+its current pod startup includes a migration init container. Do not patch the
+live provider or weaken authentication as a pilot workaround.
 
 Source edits sync into the existing pnpm Next dev server. Go edits rebuild only
 the selected binary and restart it in the same pod after upload. A compilation
@@ -183,7 +192,9 @@ node .dev/acceptance.mjs --routing-only
 node .dev/acceptance.mjs --base-only
 ```
 
-The script verifies real login/SSR, native authorization, legacy proxy traffic,
+The script signs in at the account hostname independently; the normal pilot
+Login button/return redirect is a separate onboarding gate. The script verifies
+real login/SSR, native authorization, legacy proxy traffic,
 two selections, spoofed routing headers, isolated seed visibility, actual
 leaderboard rendering on both overlay and base frontend, and branch
 switching/clearing. A blank-page input control distinguishes a broken browser

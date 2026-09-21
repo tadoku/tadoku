@@ -113,42 +113,40 @@ func (a *Application) FindContestRegistration(ctx context.Context, contestID uui
 	if err := a.permissions.RequireAuthenticated(ctx); err != nil {
 		return nil, err
 	}
-	user, err := a.profile.SignedUser(ctx)
+	userID, err := identity.FromContext(ctx).UUID()
 	if err != nil {
 		return nil, err
 	}
-	return a.contests.FindRegistration(ctx, user.ID, contestID)
+	return a.contests.FindRegistration(ctx, userID, contestID)
 }
 
 func (a *Application) ListOngoingContestRegistrations(ctx context.Context) (*ContestRegistrationList, error) {
 	if err := a.permissions.RequireAuthenticated(ctx); err != nil {
 		return nil, err
 	}
-	user, err := a.profile.SignedUser(ctx)
+	userID, err := identity.FromContext(ctx).UUID()
 	if err != nil {
 		return nil, err
 	}
-	return a.contests.ListOngoingRegistrations(ctx, user.ID)
+	return a.contests.ListOngoingRegistrations(ctx, userID)
 }
 
 func (a *Application) UpsertContestRegistration(ctx context.Context, parameters ContestRegistrationUpsertParameters) error {
 	if err := a.permissions.RequireAuthenticated(ctx); err != nil {
 		return err
 	}
-	user, err := a.profile.SignedUser(ctx)
+	user := identity.FromContext(ctx)
+	now := timex.Now()
+	userID, err := a.profile.SynchronizeUser(ctx, user, now)
 	if err != nil {
 		return err
 	}
-	now := timex.Now()
-	if err := a.profile.SynchronizeUser(ctx, user, now); err != nil {
-		return err
-	}
-	prepared, err := a.contests.PrepareRegistrationUpsert(ctx, parameters, user.ID, now)
+	prepared, err := a.contests.PrepareRegistrationUpsert(ctx, parameters, userID, now)
 	if err != nil {
 		return err
 	}
 	return postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) error {
-		if err := a.profile.LockUser(ctx, user.ID); err != nil {
+		if err := a.profile.LockUser(ctx, userID); err != nil {
 			return err
 		}
 		return a.contests.ApplyRegistration(ctx, prepared)

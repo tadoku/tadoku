@@ -20,11 +20,11 @@ func (s *server) AuthzPermissionCheck(
 		}
 	}
 
-	err := s.application.CheckPermission(ctx, parameters)
+	allowed, err := s.application.CheckPermission(ctx, parameters)
 	if err != nil {
 		s.logOperationError(ctx, "check permission", err)
 		return nil, err
 	}
 
-	return openapi.AuthzPermissionCheck200JSONResponse{Allowed: false}, nil
+	return openapi.AuthzPermissionCheck200JSONResponse{Allowed: allowed}, nil
 }

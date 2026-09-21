@@ -72,6 +72,12 @@ lookup is inconclusive. `RequireAuthenticatedAllowingUnknownBan` is an explicit
 availability opt-out for read-only operations. Operations that mutate state must
 never use the fail-open variant.
 
+Public permission exposure uses a typed construction-time allowlist keyed by
+namespace and relation. Production supplies an empty list. After authentication,
+input validation and allowlist membership, `permissions.Checker` evaluates the
+requested object in Keto for the verified request subject and returns the provider
+decision. Provider failures return unavailable.
+
 Feature services consume concrete shared authorization fact and mutation
 services from `services/common/authz/roles`. Target facts are never treated as
 caller authorization; the operation still uses the permission checker for its

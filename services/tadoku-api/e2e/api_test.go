@@ -17,6 +17,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/prometheus/client_golang/prometheus"
+	legacyrepository "github.com/tadoku/tadoku/services/authz-api/storage/postgres/repository"
 	commonroles "github.com/tadoku/tadoku/services/common/authz/roles"
 	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
@@ -43,6 +44,13 @@ var legacyAuthentication http.Handler
 var legacyBannedUsers http.Handler
 var authenticationJWKS *httptest.Server
 var keto *testketo.Fixture
+
+type authzHandlerPair struct {
+	native http.Handler
+	legacy http.Handler
+}
+
+var configuredAuthz authzHandlerPair
 
 func TestMain(m *testing.M) {
 	flag.Parse()
@@ -105,6 +113,32 @@ func runTests(m *testing.M) (code int) {
 		return 1
 	}
 	defer func() { cleanupErr = errors.Join(cleanupErr, legacyAuthz.db.Close()) }()
+	configuredNative, _, _, err := newTestRouterWithLogger(
+		ctx,
+		api.db.Pool,
+		api.db.Pool,
+		keto,
+		kratos,
+		slog.New(slog.NewTextHandler(io.Discard, nil)),
+		featureauthz.PublicPermissionAllowlist{{Namespace: "app", Relation: "admins"}},
+	)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	configuredLegacy, err := newLegacyAuthzHandler(
+		authenticationJWKS.URL,
+		keto.ReadURL(),
+		keto.WriteURL(),
+		kratos.CursorClient(),
+		legacyrepository.NewRepository(legacyAuthz.db),
+		"app:admins",
+	)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	configuredAuthz = authzHandlerPair{native: configuredNative, legacy: configuredLegacy}
 
 	legacyContent, err = newLegacyContentAPI(ctx, api.db.DSN, authenticationJWKS.URL, keto.ReadURL())
 	if err != nil {
@@ -179,7 +213,7 @@ func newTestRouter(
 	kratosFixture *testkratos.Fixture,
 ) (*transport.Router, *featureprofile.Service, *commonroles.KetoService, error) {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	return newTestRouterWithLogger(ctx, pool, pool, ketoFixture, kratosFixture, logger)
+	return newTestRouterWithLogger(ctx, pool, pool, ketoFixture, kratosFixture, logger, nil)
 }
 
 func newTestRouterWithLogger(
@@ -189,6 +223,7 @@ func newTestRouterWithLogger(
 	ketoFixture *testketo.Fixture,
 	kratosFixture *testkratos.Fixture,
 	logger *slog.Logger,
+	publicPermissions featureauthz.PublicPermissionAllowlist,
 ) (*transport.Router, *featureprofile.Service, *commonroles.KetoService, error) {
 	reader := ketoclient.NewReadClient(ketoFixture.ReadURL())
 	readWriter := ketoclient.NewClient(ketoFixture.ReadURL(), ketoFixture.WriteURL())
@@ -200,6 +235,7 @@ func newTestRouterWithLogger(
 		identities,
 		roleService,
 		commonroles.NewKetoManager(readWriter, "app", "tadoku"),
+		publicPermissions,
 	)
 	auditService := featureaudit.NewService(featureaudit.NewRepository(auditPool))
 	announcementsRepository := announcements.NewAnnouncementsRepository(pool)

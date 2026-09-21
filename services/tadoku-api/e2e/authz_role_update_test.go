@@ -73,6 +73,7 @@ func auditUnavailableRoleUpdateHandlers(t *testing.T) (*transport.Router, http.H
 		keto,
 		api.kratos,
 		logger,
+		nil,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -92,6 +93,7 @@ func auditUnavailableRoleUpdateHandlers(t *testing.T) (*transport.Router, http.H
 		keto.WriteURL(),
 		api.kratos.CursorClient(),
 		legacyrepository.NewRepository(closedDB),
+		"",
 	)
 	if err != nil {
 		t.Fatal(err)

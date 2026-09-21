@@ -14,25 +14,23 @@ type LogList = logs.LogList
 type LogListParameters = logs.ListParameters
 
 func (a *Application) FindLog(ctx context.Context, id uuid.UUID) (*Log, error) {
-	callerID := uuid.Nil
-	admin := false
-	caller := identity.FromContext(ctx)
-	authenticated := caller != nil && caller.Subject != "guest"
-	if authenticated {
-		var err error
-		callerID, err = caller.UUID()
+	var callerID *uuid.UUID
+	if caller := identity.FromContext(ctx); caller != nil && caller.Subject != "guest" {
+		userID, err := caller.UUID()
 		if err != nil {
 			return nil, errx.NewUnauthorizedError("unauthorized")
 		}
-		admin = a.permissions.IsAdminOrFalse(ctx)
+		callerID = &userID
 	}
 
-	log, err := a.logs.FindLog(ctx, id, admin)
+	isAdmin := callerID != nil && a.permissions.IsAdminOrFalse(ctx)
+	log, err := a.logs.FindLog(ctx, id, isAdmin)
 	if err != nil {
 		return nil, err
 	}
 
-	if !admin && !(authenticated && log.UserID == callerID) {
+	isOwner := callerID != nil && log.UserID == *callerID
+	if !isAdmin && !isOwner {
 		log.Registrations = nil
 	}
 	return log, nil

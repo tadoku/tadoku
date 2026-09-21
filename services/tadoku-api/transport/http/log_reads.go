@@ -15,8 +15,10 @@ func (s *server) ImmersionLogFindByID(ctx context.Context, request openapi.Immer
 		s.logOperationError(ctx, "find log", err)
 		switch errx.KindOf(err) {
 		case errx.InvalidInput, errx.Unauthorized, errx.NotFound:
+			// The shared response-error handler maps these to HTTP 400, 401 and 404.
 			return nil, err
 		default:
+			// Explicit HTTP 500 preserves the legacy response, including for timeouts.
 			return openapi.ImmersionLogFindByID500Response{}, nil
 		}
 	}
@@ -59,6 +61,7 @@ func (s *server) ImmersionProfileListLogs(ctx context.Context, request openapi.I
 	if err != nil {
 		s.logOperationError(ctx, "list user logs", err)
 		if errx.KindOf(err) == errx.Forbidden {
+			// Propagate access denials to the shared HTTP 403 handler.
 			return nil, err
 		}
 		// Legacy list handlers return an empty 500 for query, missing-resource and hydration failures.
@@ -86,6 +89,7 @@ func (s *server) ImmersionContestListLogs(ctx context.Context, request openapi.I
 	if err != nil {
 		s.logOperationError(ctx, "list contest logs", err)
 		if errx.KindOf(err) == errx.Forbidden {
+			// Propagate access denials to the shared HTTP 403 handler.
 			return nil, err
 		}
 		// Legacy list handlers return an empty 500 for query, missing-resource and hydration failures.

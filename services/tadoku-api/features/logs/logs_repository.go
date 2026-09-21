@@ -380,8 +380,9 @@ func intPointer(value pgtype.Int4) *int32 {
 	return &value.Int32
 }
 
-// Preserve the legacy array-text decoder, including its handling of escaped
-// quotes and backslashes. Changing this requires a separate response-contract fix.
+// Decode PostgreSQL array text at the storage boundary, preserving the legacy
+// handling of escaped quotes and backslashes. Changing the decoded values
+// requires a separate response-contract fix.
 func legacyLogTags(encoded string) []string {
 	result := []string{}
 	if len(encoded) <= 2 {

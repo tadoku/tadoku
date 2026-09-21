@@ -43,13 +43,45 @@ Gateway references. In the pilot manifest replace example hostnames, Gateway
 names/namespaces and Service references, and insert the **public** development
 CA certificate. Never copy private keys, Secret contents or kubeconfig into Git.
 
-The shared Tilt stack must already supply the named base Services, Ory providers,
-Valkey, Postgres operator and referenced Secrets. The native API's shared schema
-must already match its binary; this pilot never migrates the shared database.
-The gateway must support Envoy `Backend` and Gateway API resources, and permit
-routes from the separately labeled pilot namespace. Review every manifest
-target before applying; do not relabel shared namespaces or modify the Gateway
-to bypass a policy rejection.
+Build and publish the clean webv2 source image, then replace the base
+Deployment's invalid image with the immutable registry digest. Do this after
+the cluster-specific edits above so rendering does not overwrite them:
+
+```sh
+pilot_registry=$(jq -er '.registry | select(type == "string" and length > 0)' .dev/config.json)
+pilot_repository="${pilot_registry}/webv2"
+pilot_tag="pilot-base-$(git rev-parse --short=12 HEAD)"
+# This pilot registry is anonymous; do not reuse a read-only admin Docker config.
+pilot_docker_config=$(mktemp -d)
+DOCKER_CONFIG="$pilot_docker_config" bazel --host_jvm_args=-Xmx1024m run --jobs=1 //frontend:webv2_dev_push -- \
+  --repository "$pilot_repository" --tag "$pilot_tag"
+pilot_digest=$(DOCKER_CONFIG="$pilot_docker_config" docker buildx imagetools inspect \
+  "${pilot_repository}:${pilot_tag}" --format '{{json .Manifest.Digest}}' | jq -er .)
+pilot_image="${pilot_repository}@${pilot_digest}"
+jq --arg image "$pilot_image" '
+  (.items[]
+    | select(.kind == "Deployment" and .metadata.name == "tadoku-cli-web-base")
+    | .spec.template.spec.containers[]
+    | select(.name == "webv2")
+    | .image) = $image
+' .dev/local/pilot.json > .dev/local/pilot.rendered.json
+mv .dev/local/pilot.rendered.json .dev/local/pilot.json
+jq -e --arg image "$pilot_image" '
+  any(.items[];
+    .kind == "Deployment"
+    and .metadata.name == "tadoku-cli-web-base"
+    and any(.spec.template.spec.containers[]; .name == "webv2" and .image == $image))
+' .dev/local/pilot.json >/dev/null
+```
+
+The shared Tilt stack must already supply the native API base Service, Ory
+providers, Valkey, Postgres operator and referenced Secrets. The pilot manifest
+owns its base webv2 Deployment and Service; their selector is isolated from the
+shared Tilt frontend. The native API's shared schema must already match its
+binary; this pilot never migrates the shared database. The gateway must support
+Envoy `Backend` and Gateway API resources, and permit routes from the separately
+labeled pilot namespace. Review every manifest target before applying; do not
+relabel shared namespaces or modify the Gateway to bypass a policy rejection.
 
 ```sh
 kubectl --context "$DEV_CONTEXT" apply --dry-run=server -f .dev/local/pilot.json
@@ -89,10 +121,13 @@ failure leaves the working binary serving and is visible in `dev status`.
 Add another deployable explicitly with `--service` on a restarted loop; the CLI
 does not continuously expand its initial affected-service selection.
 
-The unchanged base frontend keeps its existing canonical URLs. An API-only
-overlay falls back to that frontend, whose absolute links may leave the pilot
-host. Use the pilot API URL directly or also select webv2 for a complete browser
-flow. This pilot does not patch the shared frontend environment.
+The pilot-owned base frontend uses the pilot hostname for SSR and a relative
+`/api/internal` browser endpoint. An API-only overlay therefore falls back to a
+frontend that remains on the pilot origin and sends its branch cookie through
+the pilot Oathkeeper route. The shared Tilt frontend and its canonical runtime
+configuration are unchanged. Both pilot Next.js processes inherit a 384 MiB
+V8 heap ceiling from `tadoku-cli-web` and have a 1 GiB container limit so a base
+and one overlay remain bounded on the development node.
 
 ## Disposable native database
 
@@ -129,7 +164,8 @@ in each checkout. Give A's `frontend/packages/ui/styles/globals.css` a temporary
 `body { background-color: rgb(219, 234, 254) !important; }` rule. Do not commit
 these application edits. Make another edit while each original loop runs.
 
-The browser check uses Playwright and two **existing** development identities
+The browser check uses Playwright with its system dependencies (including fonts)
+and two **existing** development identities
 (administrator and non-administrator). Supply credentials through environment
 variables; it creates sessions, never accounts or role assignments. First verify
 the pilot/account endpoints with normal TLS-validating curl. Browser contexts
@@ -143,11 +179,15 @@ the host's private CA trust store. Do not record storage state or cookies.
 node .dev/acceptance.mjs
 # Narrow routing diagnosis when existing login is unavailable (NOT a full pass):
 node .dev/acceptance.mjs --routing-only
+# Check that the normal UI still renders data after all overlays are removed:
+node .dev/acceptance.mjs --base-only
 ```
 
 The script verifies real login/SSR, native authorization, legacy proxy traffic,
-two selections, spoofed routing headers, isolated seed visibility, partial
-frontend fallback and branch switching/clearing. The live fixture currently
+two selections, spoofed routing headers, isolated seed visibility, actual
+leaderboard rendering on both overlay and base frontend, and branch
+switching/clearing. A blank-page input control distinguishes a broken browser
+installation from an application login failure. The live fixture currently
 requires HTTPS development Lab hosts. It does not weaken provider authentication
 or retry guessed credentials. Independently test a deliberate Go compilation
 failure, old-response availability, recovery, pod UID/image stability, and

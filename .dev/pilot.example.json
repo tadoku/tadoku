@@ -45,12 +45,141 @@
         "NEXT_PUBLIC_KRATOS_ENDPOINT": "https://account.tadoku.example.invalid/kratos",
         "NEXT_PUBLIC_AUTH_UI_URL": "https://account.tadoku.example.invalid",
         "NEXT_PUBLIC_HOME_URL": "https://pilot.tadoku.example.invalid",
-        "NEXT_PUBLIC_API_ENDPOINT": "https://pilot.tadoku.example.invalid/api/internal",
+        "NEXT_PUBLIC_API_ENDPOINT": "/api/internal",
         "NEXT_SERVER_API_ENDPOINT": "https://pilot.tadoku.example.invalid/api/internal",
         "NEXT_PUBLIC_COOKIE_DOMAIN": ".tadoku.example.invalid",
         "NEXT_PUBLIC_COOKIE_SECURE": "true",
         "NEXT_PUBLIC_ADMIN_URL": "https://admin.tadoku.example.invalid",
-        "NODE_EXTRA_CA_CERTS": "/etc/dev-ca/ca.crt"
+        "NODE_EXTRA_CA_CERTS": "/etc/dev-ca/ca.crt",
+        "NODE_OPTIONS": "--max-old-space-size=384"
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "tadoku-cli-web-base",
+        "namespace": "default",
+        "labels": {
+          "app.kubernetes.io/managed-by": "tadoku-dev-cli-pilot",
+          "app.kubernetes.io/part-of": "tadoku-dev-cli"
+        }
+      },
+      "spec": {
+        "replicas": 1,
+        "selector": {
+          "matchLabels": {
+            "tadoku.dev/role": "cli-web-base"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "tadoku.dev/role": "cli-web-base"
+            }
+          },
+          "spec": {
+            "automountServiceAccountToken": false,
+            "securityContext": {
+              "runAsNonRoot": true,
+              "runAsUser": 1000,
+              "runAsGroup": 1000,
+              "fsGroup": 1000
+            },
+            "containers": [
+              {
+                "name": "webv2",
+                "image": "invalid.example/replace-with-pilot-webv2-image-digest",
+                "imagePullPolicy": "IfNotPresent",
+                "workingDir": "/app",
+                "ports": [
+                  {
+                    "name": "http",
+                    "containerPort": 3000
+                  }
+                ],
+                "envFrom": [
+                  {
+                    "configMapRef": {
+                      "name": "tadoku-cli-web"
+                    }
+                  }
+                ],
+                "env": [
+                  {
+                    "name": "NEXT_TELEMETRY_DISABLED",
+                    "value": "1"
+                  }
+                ],
+                "readinessProbe": {
+                  "httpGet": {
+                    "path": "/",
+                    "port": 3000
+                  },
+                  "periodSeconds": 2,
+                  "failureThreshold": 30
+                },
+                "resources": {
+                  "requests": {
+                    "cpu": "100m",
+                    "memory": "256Mi"
+                  },
+                  "limits": {
+                    "cpu": "2",
+                    "memory": "1Gi"
+                  }
+                },
+                "securityContext": {
+                  "allowPrivilegeEscalation": false,
+                  "capabilities": {
+                    "drop": [
+                      "ALL"
+                    ]
+                  }
+                },
+                "volumeMounts": [
+                  {
+                    "name": "development-ca",
+                    "mountPath": "/etc/dev-ca",
+                    "readOnly": true
+                  }
+                ]
+              }
+            ],
+            "volumes": [
+              {
+                "name": "development-ca",
+                "configMap": {
+                  "name": "tadoku-cli-ca"
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "tadoku-cli-web-base",
+        "namespace": "default",
+        "labels": {
+          "app.kubernetes.io/managed-by": "tadoku-dev-cli-pilot",
+          "app.kubernetes.io/part-of": "tadoku-dev-cli"
+        }
+      },
+      "spec": {
+        "selector": {
+          "tadoku.dev/role": "cli-web-base"
+        },
+        "ports": [
+          {
+            "name": "http",
+            "port": 3000,
+            "targetPort": 3000
+          }
+        ]
       }
     },
     {
@@ -318,7 +447,7 @@
         "endpoints": [
           {
             "fqdn": {
-              "hostname": "frontend-webv2.default.svc.cluster.local",
+              "hostname": "tadoku-cli-web-base.default.svc.cluster.local",
               "port": 3000
             }
           }

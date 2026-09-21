@@ -22,6 +22,7 @@ filegroup(
             "**/test-results/**",
             "**/playwright-report/**",
             "**/*.tsbuildinfo",
+            "**/next-env.d.ts",
         ],
     ),
 )
@@ -84,7 +85,7 @@ dev_deployable(
         "readinessPath": "/",
         "publicPath": "/",
         "baseService": {
-            "name": "frontend-webv2",
+            "name": "tadoku-cli-web-base",
             "namespace": "default",
             "port": 3000,
         },
@@ -110,7 +111,10 @@ dev_deployable(
         ],
         "syncRoot": "/app",
         "syncStripPrefix": "frontend",
-        "syncExcludes": ["*.tsbuildinfo"],
+        "syncExcludes": [
+            "*.tsbuildinfo",
+            "next-env.d.ts",
+        ],
         "dependencyPaths": [
             "frontend/apps/webv2/package.json",
             "frontend/packages/ui/package.json",

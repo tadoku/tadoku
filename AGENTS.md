@@ -1,5 +1,13 @@
 # Development Workflow
 
+## CMS content
+
+**Page content managed by the CMS must only be changed in the admin CMS.** Public pages such as Contact and About store their HTML in the CMS (`pages` / `pages_content`, namespace `tadoku`, slug such as `contact`).
+
+**Do not ship CMS copy as a code change.** Do not open a pull request, hardcode the copy in the frontend, or write a database migration or other SQL rewrite that updates CMS page HTML or equivalent content rows.
+
+**Stop as soon as the request is CMS-managed page content.** When the change is page copy rather than application UI or code, stop the coding work immediately. Do not open a pull request, write a migration, or invent a code workaround. Report that the edit belongs in the admin CMS and wait for that edit.
+
 ## Frontend
 
 **Always use `pnpm`, not `npm`.**

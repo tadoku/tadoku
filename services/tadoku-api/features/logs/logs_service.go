@@ -2,9 +2,11 @@ package logs
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/tadoku/tadoku/services/tadoku-api/domain/activities"
 )
 
 type Service struct {
@@ -100,4 +102,53 @@ func matchingDefaultTags(query string) []string {
 		}
 	}
 	return tags
+}
+
+func (s *Service) YearlyActivity(ctx context.Context, userID uuid.UUID, year int) (*YearlyActivity, error) {
+	scores, err := s.logs.YearlyActivity(ctx, userID, int16(year))
+	if err != nil {
+		return nil, err
+	}
+
+	result := &YearlyActivity{Scores: scores}
+	for _, score := range scores {
+		result.TotalUpdates += score.Updates
+	}
+
+	return result, nil
+}
+
+func (s *Service) YearlyScores(ctx context.Context, userID uuid.UUID, year int) (*YearlyScores, error) {
+	scores, err := s.logs.YearlyScores(ctx, userID, int16(year))
+	if err != nil {
+		return nil, err
+	}
+
+	result := &YearlyScores{Scores: scores}
+	for _, score := range scores {
+		result.OverallScore += score.Score
+	}
+
+	return result, nil
+}
+
+func (s *Service) YearlyActivitySplit(ctx context.Context, userID uuid.UUID, year int) ([]ActivitySplitScore, error) {
+	scores, err := s.logs.YearlyActivitySplit(ctx, userID, int16(year))
+	if err != nil {
+		return nil, err
+	}
+	for i := range scores {
+		found := false
+		for _, activity := range activities.All() {
+			if int(activity.ID) == scores[i].ActivityID {
+				scores[i].ActivityName = activity.Name
+				found = true
+				break
+			}
+		}
+		if !found {
+			return nil, fmt.Errorf("invalid activity %d", scores[i].ActivityID)
+		}
+	}
+	return scores, nil
 }

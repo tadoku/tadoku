@@ -77,3 +77,77 @@ func (r *LogsRepository) ListTagSuggestions(ctx context.Context, userID uuid.UUI
 	}
 	return result, nil
 }
+
+func (r *LogsRepository) YearlyActivity(ctx context.Context, userID uuid.UUID, year int16) ([]ActivityScore, error) {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := queries.New(executor).YearlyActivityForUser(ctx, queries.YearlyActivityForUserParams{
+		UserID: pgtype.UUID{Bytes: userID, Valid: true},
+		Year:   year,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("YearlyActivity: %w", err)
+	}
+
+	result := make([]ActivityScore, 0, len(rows))
+	for _, row := range rows {
+		result = append(result, ActivityScore{
+			Date:    row.Date.Time,
+			Score:   row.Score,
+			Updates: int(row.UpdateCount),
+		})
+	}
+
+	return result, nil
+}
+
+func (r *LogsRepository) YearlyScores(ctx context.Context, userID uuid.UUID, year int16) ([]Score, error) {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := queries.New(executor).FetchScoresForProfile(ctx, queries.FetchScoresForProfileParams{
+		UserID: pgtype.UUID{Bytes: userID, Valid: true},
+		Year:   year,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("YearlyScores: %w", err)
+	}
+
+	result := make([]Score, 0, len(rows))
+	for _, row := range rows {
+		result = append(result, Score{
+			LanguageCode: row.LanguageCode,
+			LanguageName: row.LanguageName,
+			Score:        row.Score,
+		})
+	}
+
+	return result, nil
+}
+
+func (r *LogsRepository) YearlyActivitySplit(ctx context.Context, userID uuid.UUID, year int16) ([]ActivitySplitScore, error) {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := queries.New(executor).YearlyActivitySplitForUser(ctx, queries.YearlyActivitySplitForUserParams{
+		UserID: pgtype.UUID{Bytes: userID, Valid: true},
+		Year:   year,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("YearlyActivitySplit: %w", err)
+	}
+
+	result := make([]ActivitySplitScore, 0, len(rows))
+	for _, row := range rows {
+		result = append(result, ActivitySplitScore{
+			ActivityID: int(row.LogActivityID),
+			Score:      row.Score,
+		})
+	}
+
+	return result, nil
+}

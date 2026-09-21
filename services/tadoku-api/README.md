@@ -37,6 +37,10 @@ require. It does not enter the business JWT or ban pipeline; the subject in its
 body remains a target for a provider fact lookup and is never treated as the
 caller.
 
+Group feature operations by the business data they own, rather than the page or
+URL that exposes them. Aggregates belong with their source data; application
+operations compose those results with independently owned identity or catalog data.
+
 Application operations compose features. Feature services own business decisions;
 repositories only query and map rows. `postgres.Executor` lets repositories use
 the active app-owned transaction. Open transactions only when the operation needs

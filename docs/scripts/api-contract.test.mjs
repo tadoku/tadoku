@@ -47,6 +47,16 @@ test('all retained wire contracts survive the merge, including internal callers'
           };
         }
       }
+      // Native leaderboard reads document the empty failure responses already returned by legacy.
+      for (const path of [
+        '/contests/{id}/leaderboard',
+        '/leaderboard/yearly/{year}',
+        '/leaderboard/global',
+      ]) {
+        if (contract.paths[`/immersion${path}`].get['x-tadoku-owner'] === 'native') {
+          legacy.paths[path].get.responses['500'] = {description: 'leaderboard read failed'};
+        }
+      }
       // Native log reads document the empty failure responses already returned by legacy.
       for (const path of ['/contests/{id}/logs', '/users/{user_id}/logs']) {
         if (contract.paths[`/immersion${path}`].get['x-tadoku-owner'] === 'native') {

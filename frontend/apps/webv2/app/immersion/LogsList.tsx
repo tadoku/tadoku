@@ -1,3 +1,4 @@
+import { LogDescription } from '@app/immersion/components/LogDescription'
 import {
   ChevronRightIcon,
   EllipsisVerticalIcon,
@@ -147,9 +148,12 @@ const LogsList = ({ logs, showUsername = false, contestId }: Props) => {
                   !it.description ? 'opacity-50' : ''
                 }`}
               >
-                <Link className="reset" href={routes.log(it.id)}>
-                  {truncate(it.description, 38) ?? 'N/A'}
-                </Link>
+                <LogDescription
+                  key={it.id + it.description}
+                  description={truncate(it.description, 38) ?? 'N/A'}
+                  tags={it.description ? it.tags : []}
+                  href={routes.log(it.id)}
+                />
               </td>
               <td className="default link font-bold hidden md:table-cell">
                 <Link className="reset" href={routes.log(it.id)}>

@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"sort"
 	"strings"
 
 	"github.com/google/uuid"
@@ -44,6 +45,7 @@ var defaultTagSuggestions = []string{
 	"vocabulary",
 	"web page",
 	"youtube",
+	"nsfw",
 }
 
 type TagSuggestionsRequest struct {
@@ -92,6 +94,11 @@ func (s *TagSuggestions) Execute(ctx context.Context, req *TagSuggestionsRequest
 			}
 		}
 	}
+
+	// Keep NSFW below ordinary suggestions, including frequently used tags.
+	sort.SliceStable(suggestions, func(i, j int) bool {
+		return !strings.EqualFold(suggestions[i].Tag, "nsfw") && strings.EqualFold(suggestions[j].Tag, "nsfw")
+	})
 
 	return &TagSuggestionsResponse{
 		Suggestions: suggestions,

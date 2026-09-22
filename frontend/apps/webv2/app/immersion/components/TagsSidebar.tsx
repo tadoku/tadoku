@@ -19,6 +19,7 @@ const activityTags: Record<number, ActivityTagSuggestion[]> = {
     { tag: 'web page' },
     { tag: 'lyric' },
     { tag: 'game' },
+    { tag: 'nsfw' },
   ],
   // Listening
   2: [
@@ -33,6 +34,7 @@ const activityTags: Record<number, ActivityTagSuggestion[]> = {
     { tag: 'youtube' },
     { tag: 'fiction' },
     { tag: 'non-fiction' },
+    { tag: 'nsfw' },
   ],
   // Writing
   3: [
@@ -40,6 +42,7 @@ const activityTags: Record<number, ActivityTagSuggestion[]> = {
     { tag: 'non-fiction' },
     { tag: 'social media' },
     { tag: 'chat' },
+    { tag: 'nsfw' },
   ],
   // Speaking
   4: [
@@ -48,6 +51,7 @@ const activityTags: Record<number, ActivityTagSuggestion[]> = {
     { tag: 'presentation' },
     { tag: 'shadowing' },
     { tag: 'chorusing' },
+    { tag: 'nsfw' },
   ],
   // Study
   5: [
@@ -55,6 +59,7 @@ const activityTags: Record<number, ActivityTagSuggestion[]> = {
     { tag: 'vocabulary' },
     { tag: 'srs' },
     { tag: 'textbook' },
+    { tag: 'nsfw' },
   ],
 }
 

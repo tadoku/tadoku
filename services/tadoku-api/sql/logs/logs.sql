@@ -239,4 +239,5 @@ inner join contest_registrations on (
   and contest_registrations.user_id = logs.user_id
 )
 inner join users as owner_users on (owner_users.id = contests.owner_user_id)
-where log_id = sqlc.arg('id');
+where log_id = sqlc.arg('id')
+order by contest_logs.contest_id;

@@ -395,6 +395,7 @@ inner join contest_registrations on (
 )
 inner join users as owner_users on (owner_users.id = contests.owner_user_id)
 where log_id = $1
+order by contest_logs.contest_id
 `
 
 type FindAttachedContestRegistrationsForLogRow struct {

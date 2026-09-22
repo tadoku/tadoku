@@ -1,6 +1,6 @@
 >>> GET /immersion/logs/tag-suggestions
 HTTP/1.1 200 OK
-Content-Length: 786
+Content-Length: 811
 Content-Type: application/json; charset=UTF-8
 
-{"suggestions":[{"count":1,"tag":"other-user-only"},{"count":0,"tag":"anime"},{"count":0,"tag":"audiobook"},{"count":0,"tag":"book"},{"count":0,"tag":"chat"},{"count":0,"tag":"chorusing"},{"count":0,"tag":"comic"},{"count":0,"tag":"conversation"},{"count":0,"tag":"drama"},{"count":0,"tag":"ebook"},{"count":0,"tag":"fiction"},{"count":0,"tag":"game"},{"count":0,"tag":"grammar"},{"count":0,"tag":"lyric"},{"count":0,"tag":"news"},{"count":0,"tag":"non-fiction"},{"count":0,"tag":"online video"},{"count":0,"tag":"podcast"},{"count":0,"tag":"presentation"},{"count":0,"tag":"shadowing"},{"count":0,"tag":"social media"},{"count":0,"tag":"srs"},{"count":0,"tag":"textbook"},{"count":0,"tag":"tv"},{"count":0,"tag":"vocabulary"},{"count":0,"tag":"web page"},{"count":0,"tag":"youtube"}]}
+{"suggestions":[{"count":1,"tag":"other-user-only"},{"count":0,"tag":"anime"},{"count":0,"tag":"audiobook"},{"count":0,"tag":"book"},{"count":0,"tag":"chat"},{"count":0,"tag":"chorusing"},{"count":0,"tag":"comic"},{"count":0,"tag":"conversation"},{"count":0,"tag":"drama"},{"count":0,"tag":"ebook"},{"count":0,"tag":"fiction"},{"count":0,"tag":"game"},{"count":0,"tag":"grammar"},{"count":0,"tag":"lyric"},{"count":0,"tag":"news"},{"count":0,"tag":"non-fiction"},{"count":0,"tag":"online video"},{"count":0,"tag":"podcast"},{"count":0,"tag":"presentation"},{"count":0,"tag":"shadowing"},{"count":0,"tag":"social media"},{"count":0,"tag":"srs"},{"count":0,"tag":"textbook"},{"count":0,"tag":"tv"},{"count":0,"tag":"vocabulary"},{"count":0,"tag":"web page"},{"count":0,"tag":"youtube"},{"count":0,"tag":"nsfw"}]}

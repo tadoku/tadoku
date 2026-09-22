@@ -1,3 +1,4 @@
+import { LogDescription } from '@app/immersion/components/LogDescription'
 import { CheckIcon, CheckBadgeIcon } from '@heroicons/react/20/solid'
 import { FormProvider, useForm } from 'react-hook-form'
 import {
@@ -60,7 +61,10 @@ export const SubmitToContest = ({ log, registrations, preselect }: Props) => {
 
   return (
     <FormProvider {...methods}>
-      <form onSubmit={methods.handleSubmit(onSubmit)} className="v-stack spaced">
+      <form
+        onSubmit={methods.handleSubmit(onSubmit)}
+        className="v-stack spaced"
+      >
         <div className="card">
           <div className="bg-neutral-50 -mx-4 -mt-4 md:-mx-7 md:-mt-7 px-4 py-3 md:px-7 rounded-t">
             <div className="text-xs font-medium text-neutral-400 mb-1">
@@ -69,10 +73,15 @@ export const SubmitToContest = ({ log, registrations, preselect }: Props) => {
             <div className="text-sm flex items-baseline justify-between">
               <span>
                 <strong>{log.language.name}</strong> &middot;{' '}
-                {log.activity.name} &middot;{' '}
-                {formatTracking(log)}
+                {log.activity.name} &middot; {formatTracking(log)}
               </span>
-              {log.description ? <span>{log.description}</span> : null}
+              {log.description ? (
+                <LogDescription
+                  key={log.id + log.description}
+                  description={log.description}
+                  tags={log.tags}
+                />
+              ) : null}
             </div>
           </div>
           <div className="mt-6" />
@@ -101,7 +110,9 @@ export const SubmitToContest = ({ log, registrations, preselect }: Props) => {
                               <CheckBadgeIcon className="ml-1 w-4 h-4 text-lime-700/30" />
                             </>
                           ) : (
-                            <strong className="ml-1">{contest.owner_user_display_name}</strong>
+                            <strong className="ml-1">
+                              {contest.owner_user_display_name}
+                            </strong>
                           )}
                         </div>
                       </div>
@@ -143,7 +154,9 @@ export const SubmitToContest = ({ log, registrations, preselect }: Props) => {
                             <CheckBadgeIcon className="ml-1 w-4 h-4 text-lime-700" />
                           </>
                         ) : (
-                          <strong className="ml-1">{contest.owner_user_display_name}</strong>
+                          <strong className="ml-1">
+                            {contest.owner_user_display_name}
+                          </strong>
                         )}
                       </div>
                     </div>

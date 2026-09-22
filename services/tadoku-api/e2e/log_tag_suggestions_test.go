@@ -10,6 +10,9 @@ func TestImmersionLogTagSuggestions(t *testing.T) {
 		description []string
 		want        int
 	}{
+		{description: []string{"default_only_nsfw"}, want: http.StatusOK},
+		{description: []string{"nsfw_history_last"}, want: http.StatusOK},
+		{description: []string{"nsfw_history_filtered"}, want: http.StatusOK},
 		{description: []string{"empty_history"}, want: http.StatusOK},
 		{description: []string{"empty_query"}, want: http.StatusOK},
 		{description: []string{"omitted_query"}, want: http.StatusOK},

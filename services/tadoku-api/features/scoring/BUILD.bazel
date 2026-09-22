@@ -1,4 +1,4 @@
-load("@rules_go//go:def.bzl", "go_library")
+load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "scoring",
@@ -19,4 +19,11 @@ go_library(
         "@com_github_jackc_pgx_v5//pgtype",
         "@com_github_jackc_pgx_v5//pgxpool",
     ],
+)
+
+go_test(
+    name = "scoring_test",
+    srcs = ["scoring_service_test.go"],
+    embed = [":scoring"],
+    deps = ["@com_github_google_uuid//:uuid"],
 )

@@ -33,26 +33,19 @@ func (a *Application) PreviewScore(ctx context.Context, parameters ScorePreviewP
 	if err != nil {
 		return nil, errx.NewUnauthorizedError("unauthorized")
 	}
-	if parameters.ActivityID == 0 {
-		return nil, errx.NewInvalidInputError("activity_id is required")
-	}
-	if parameters.LanguageCode == "" {
-		return nil, errx.NewInvalidInputError("language_code is required")
-	}
-	tags, err := scoring.NormalizeTags(parameters.Tags)
-	if err != nil {
-		return nil, err
-	}
 
-	featureParameters := scoring.PreviewParameters{
+	featureParameters, err := scoring.PreparePreview(scoring.PreviewParameters{
 		UnitID:          parameters.UnitID,
 		UnitKey:         parameters.UnitKey,
 		ActivityID:      parameters.ActivityID,
 		LanguageCode:    parameters.LanguageCode,
 		Amount:          parameters.Amount,
 		DurationSeconds: parameters.DurationSeconds,
-		Tags:            tags,
+		Tags:            parameters.Tags,
 		Contests:        make([]scoring.PreviewContest, 0, len(parameters.RegistrationIDs)),
+	})
+	if err != nil {
+		return nil, err
 	}
 	if len(parameters.RegistrationIDs) == 0 {
 		return a.scoring.Preview(ctx, featureParameters)
@@ -62,43 +55,24 @@ func (a *Application) PreviewScore(ctx context.Context, parameters ScorePreviewP
 	if err != nil {
 		return nil, err
 	}
-	available := make(map[uuid.UUID]contests.Registration, len(registrations.Registrations))
-	for _, registration := range registrations.Registrations {
-		available[registration.ID] = registration
+	selected, err := contests.SelectRegistrationsForScoring(
+		parameters.RegistrationIDs,
+		registrations.Registrations,
+		parameters.LanguageCode,
+		parameters.ActivityID,
+	)
+	if err != nil {
+		return nil, err
 	}
-	for _, registrationID := range parameters.RegistrationIDs {
-		registration, ok := available[registrationID]
-		if !ok {
-			return nil, errx.NewInvalidInputError("registration_id is not ongoing for the current user")
-		}
-		if !registrationAllowsScoring(registration, parameters.LanguageCode, parameters.ActivityID) {
-			return nil, errx.NewInvalidInputError("language_code or activity_id is not allowed for registration_id")
-		}
+
+	for _, registration := range selected {
 		featureParameters.Contests = append(featureParameters.Contests, scoring.PreviewContest{
-			RegistrationID: registrationID,
+			RegistrationID: registration.ID,
 			ContestID:      registration.ContestID,
 		})
 	}
-	return a.scoring.Preview(ctx, featureParameters)
-}
 
-func registrationAllowsScoring(registration contests.Registration, languageCode string, activityID int32) bool {
-	languageAllowed := false
-	for _, language := range registration.LanguageCodes {
-		if language == languageCode {
-			languageAllowed = true
-			break
-		}
-	}
-	if !languageAllowed || registration.Contest == nil {
-		return false
-	}
-	for _, activity := range registration.Contest.AllowedActivities {
-		if activity.ID == activityID {
-			return true
-		}
-	}
-	return false
+	return a.scoring.Preview(ctx, featureParameters)
 }
 
 func (a *Application) ListPlatformScoringRuleSets(ctx context.Context) ([]ScoringRuleSet, error) {

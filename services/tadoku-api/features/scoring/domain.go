@@ -98,6 +98,23 @@ type scoringInput struct {
 	durationSeconds *int32
 }
 
+func PreparePreview(parameters PreviewParameters) (PreviewParameters, error) {
+	if parameters.ActivityID == 0 {
+		return PreviewParameters{}, errx.NewInvalidInputError("activity_id is required")
+	}
+	if parameters.LanguageCode == "" {
+		return PreviewParameters{}, errx.NewInvalidInputError("language_code is required")
+	}
+
+	tags, err := NormalizeTags(parameters.Tags)
+	if err != nil {
+		return PreviewParameters{}, err
+	}
+	parameters.Tags = tags
+
+	return parameters, nil
+}
+
 func evaluate(input scoringInput, ruleSet RuleSet) (Estimate, bool, error) {
 	value, source, err := scoreableValue(input)
 	if err != nil {
@@ -106,6 +123,7 @@ func evaluate(input scoringInput, ruleSet RuleSet) (Estimate, bool, error) {
 
 	rules := append([]Rule(nil), ruleSet.Rules...)
 	sort.SliceStable(rules, func(i, j int) bool { return rules[i].Priority < rules[j].Priority })
+
 	tags := make(map[string]struct{}, len(input.tags))
 	for _, tag := range input.tags {
 		tags[tag] = struct{}{}
@@ -116,20 +134,13 @@ func evaluate(input scoringInput, ruleSet RuleSet) (Estimate, bool, error) {
 	priorities := make(map[int32]struct{}, len(rules))
 	for i := range rules {
 		rule := &rules[i]
-		if _, duplicate := priorities[rule.Priority]; duplicate || !validActivity(rule.ActivityID) ||
-			(rule.Source != SourceAmount && rule.Source != SourceDurationMinutes) || !finite(rule.Rate) || rule.Rate < 0 {
-			return Estimate{}, false, errx.NewInternalError("invalid scoring rule set")
+		if err := validateStoredRule(*rule, priorities); err != nil {
+			return Estimate{}, false, err
 		}
 		priorities[rule.Priority] = struct{}{}
-		if rule.Source != source || rule.ActivityID != input.activityID ||
-			(rule.UnitKey != "" && rule.UnitKey != input.unitKey) ||
-			(rule.LanguageCode != "" && rule.LanguageCode != input.languageCode) {
+
+		if !ruleMatches(*rule, input, source, tags) {
 			continue
-		}
-		if rule.Tag != "" {
-			if _, ok := tags[rule.Tag]; !ok {
-				continue
-			}
 		}
 		if rule.Stackable {
 			modifiers = append(modifiers, *rule)
@@ -160,6 +171,39 @@ func evaluate(input scoringInput, ruleSet RuleSet) (Estimate, bool, error) {
 		})
 	}
 	return estimate, true, nil
+}
+
+func validateStoredRule(rule Rule, priorities map[int32]struct{}) error {
+	if _, duplicate := priorities[rule.Priority]; duplicate {
+		return errx.NewInternalError("duplicate rule priority")
+	}
+	if !validActivity(rule.ActivityID) {
+		return errx.NewInternalError("invalid rule activity")
+	}
+	if rule.Source != SourceAmount && rule.Source != SourceDurationMinutes {
+		return errx.NewInternalError("invalid rule source")
+	}
+	if !finite(rule.Rate) || rule.Rate < 0 {
+		return errx.NewInternalError("invalid rule rate")
+	}
+	return nil
+}
+
+func ruleMatches(rule Rule, input scoringInput, source Source, tags map[string]struct{}) bool {
+	if rule.Source != source || rule.ActivityID != input.activityID {
+		return false
+	}
+	if rule.UnitKey != "" && rule.UnitKey != input.unitKey {
+		return false
+	}
+	if rule.LanguageCode != "" && rule.LanguageCode != input.languageCode {
+		return false
+	}
+	if rule.Tag != "" {
+		_, matches := tags[rule.Tag]
+		return matches
+	}
+	return true
 }
 
 func scoreableValue(input scoringInput) (float32, Source, error) {

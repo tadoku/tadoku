@@ -93,6 +93,47 @@ type Registration struct {
 	Contest   *ContestView
 }
 
+func (r Registration) AllowsScoring(languageCode string, activityID int32) bool {
+	languageAllowed := false
+	for _, code := range r.LanguageCodes {
+		if code == languageCode {
+			languageAllowed = true
+			break
+		}
+	}
+	if !languageAllowed || r.Contest == nil {
+		return false
+	}
+
+	for _, activity := range r.Contest.AllowedActivities {
+		if activity.ID == activityID {
+			return true
+		}
+	}
+	return false
+}
+
+func SelectRegistrationsForScoring(requested []uuid.UUID, available []Registration, languageCode string, activityID int32) ([]Registration, error) {
+	byID := make(map[uuid.UUID]Registration, len(available))
+	for _, registration := range available {
+		byID[registration.ID] = registration
+	}
+
+	selected := make([]Registration, 0, len(requested))
+	for _, id := range requested {
+		registration, exists := byID[id]
+		if !exists {
+			return nil, errx.NewInvalidInputError("registration_id is not ongoing for the current user")
+		}
+		if !registration.AllowsScoring(languageCode, activityID) {
+			return nil, errx.NewInvalidInputError("language_code or activity_id is not allowed for registration_id")
+		}
+		selected = append(selected, registration)
+	}
+
+	return selected, nil
+}
+
 type RegistrationList struct {
 	Registrations []Registration
 	TotalSize     int

@@ -189,6 +189,35 @@ func TestScoringRuleSetDraftAtomicFailureJourney(t *testing.T) {
 	})
 }
 
+func TestPlatformScoringRuleSetLifecycleJourney(t *testing.T) {
+	uuid.SetRand(rand.New(rand.NewSource(1)))
+	defer uuid.SetRand(nil)
+
+	runJourney(t, api, "PlatformScoringRuleSetLifecycle", []step{
+		{request: "create_draft", as: admin, want: http.StatusOK, others: cast{user: http.StatusForbidden, guest: http.StatusForbidden, banned: http.StatusForbidden}},
+		{request: "publish_draft", as: admin, want: http.StatusOK, others: cast{user: http.StatusForbidden, guest: http.StatusForbidden, banned: http.StatusForbidden}},
+		{request: "published_not_active", as: admin, want: http.StatusOK},
+		{request: "activate_published", as: admin, want: http.StatusNoContent, others: cast{user: http.StatusForbidden, guest: http.StatusForbidden, banned: http.StatusForbidden}},
+		{request: "active_scores_preview", as: user, want: http.StatusOK},
+	})
+}
+
+func TestContestScoringRuleSetLifecycleJourney(t *testing.T) {
+	uuid.SetRand(rand.New(rand.NewSource(1)))
+	defer uuid.SetRand(nil)
+
+	start := fixtureInstant.Add(12 * time.Hour)
+	runJourney(t, api, "ContestScoringRuleSetLifecycle", []step{
+		{request: "create_override_draft", as: user, want: http.StatusOK, others: cast{user2: http.StatusForbidden, guest: http.StatusForbidden, banned: http.StatusForbidden}},
+		{request: "publish_draft", as: user, want: http.StatusOK, others: cast{user2: http.StatusForbidden, guest: http.StatusForbidden, banned: http.StatusForbidden}},
+		{request: "activate_published", as: user, want: http.StatusNoContent, others: cast{user2: http.StatusForbidden, guest: http.StatusForbidden, banned: http.StatusForbidden}},
+		{request: "active_rule_set_visible", as: user, want: http.StatusOK},
+		{request: "change_rejected_at_start", as: user, want: http.StatusConflict, others: cast{admin: http.StatusConflict, user2: http.StatusForbidden, guest: http.StatusForbidden, banned: http.StatusForbidden}, at: start},
+		{request: "activate_new_platform", as: admin, want: http.StatusNoContent, at: start},
+		{request: "pinned_fallback_preview", as: user, want: http.StatusOK, at: start},
+	})
+}
+
 func TestContestRegistrationJourney(t *testing.T) {
 	// Keep API-created contest and registration IDs stable in the HTTP fixtures.
 	uuid.SetRand(rand.New(rand.NewSource(1)))

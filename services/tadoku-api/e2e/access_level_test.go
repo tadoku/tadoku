@@ -84,6 +84,8 @@ var operationAccess = map[string]accessLevel{
 	"ImmersionScoringRuleSetListContest":                 accessAuthenticated,
 	"ImmersionScoringRuleSetCreatePlatform":              accessAdmin,
 	"ImmersionScoringRuleSetCreateContest":               accessAuthenticated,
+	"ImmersionScoringRuleSetPublish":                     accessAuthenticated,
+	"ImmersionScoringRuleSetActivate":                    accessAuthenticated,
 
 	"ImmersionLanguageList":         accessAdmin,
 	"ImmersionLanguageCreate":       accessAdmin,
@@ -130,6 +132,8 @@ var operationFixtures = map[string]string{
 	"ImmersionScoringRuleSetListContest":    "ImmersionScoringRuleSetListContest",
 	"ImmersionScoringRuleSetCreatePlatform": "ImmersionScoringRuleSetCreatePlatform",
 	"ImmersionScoringRuleSetCreateContest":  "ImmersionScoringRuleSetCreateContest",
+	"ImmersionScoringRuleSetPublish":        "ImmersionScoringRuleSetPublish",
+	"ImmersionScoringRuleSetActivate":       "ImmersionScoringRuleSetActivate",
 
 	"ImmersionLanguageList":        "ListLanguages",
 	"ImmersionLanguageCreate":      "CreateLanguage",

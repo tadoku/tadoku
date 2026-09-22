@@ -1,1 +1,1 @@
-{"responses":{"204":{"description":"activated"}}}
+{"responses":{"204":{"description":"activated"},"500":{"description":"internal server error"}}}

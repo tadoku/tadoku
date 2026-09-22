@@ -73,6 +73,8 @@ test('all retained wire contracts survive the merge, including internal callers'
         ['/scoring/rule-sets', 'post'],
         ['/contests/{id}/scoring/rule-sets', 'get'],
         ['/contests/{id}/scoring/rule-sets', 'post'],
+        ['/scoring/rule-sets/{id}/publish', 'post'],
+        ['/scoring/rule-sets/{id}/activate', 'post'],
       ]) {
         if (contract.paths[`/immersion${path}`][method]['x-tadoku-owner'] === 'native') {
           legacy.paths[path][method].responses['500'] = {description: 'internal server error'};

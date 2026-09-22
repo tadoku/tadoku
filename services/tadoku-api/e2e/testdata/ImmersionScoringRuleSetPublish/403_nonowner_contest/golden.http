@@ -1,0 +1,4 @@
+>>> POST /immersion/scoring/rule-sets/cccccccc-cccc-4ccc-8ccc-000000000003/publish
+HTTP/1.1 403 Forbidden
+Content-Length: 0
+

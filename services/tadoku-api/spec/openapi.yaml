@@ -2268,9 +2268,11 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ImmersionScoringRuleSet"
+        "500":
+          description: internal server error
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /scoring/rule-sets/{id}/publish
       x-legacy-operation-id: scoringRuleSetPublish
   "/immersion/scoring/rule-sets/{id}/activate":
@@ -2291,9 +2293,11 @@ paths:
       responses:
         "204":
           description: activated
+        "500":
+          description: internal server error
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /scoring/rule-sets/{id}/activate
       x-legacy-operation-id: scoringRuleSetActivate
   /immersion/ping:

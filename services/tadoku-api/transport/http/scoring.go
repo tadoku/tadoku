@@ -92,6 +92,29 @@ func (s *server) ImmersionScoringRuleSetCreateContest(ctx context.Context, reque
 	return openapi.ImmersionScoringRuleSetCreateContest200JSONResponse(scoringRuleSetResponse(*created)), nil
 }
 
+func (s *server) ImmersionScoringRuleSetPublish(ctx context.Context, request openapi.ImmersionScoringRuleSetPublishRequestObject) (openapi.ImmersionScoringRuleSetPublishResponseObject, error) {
+	published, err := s.application.PublishScoringRuleSet(ctx, request.Id)
+	if err != nil {
+		s.logOperationError(ctx, "publish scoring rule set", err)
+		if scoringHTTPError(err) {
+			return nil, err
+		}
+		return openapi.ImmersionScoringRuleSetPublish500Response{}, nil
+	}
+	return openapi.ImmersionScoringRuleSetPublish200JSONResponse(scoringRuleSetResponse(*published)), nil
+}
+
+func (s *server) ImmersionScoringRuleSetActivate(ctx context.Context, request openapi.ImmersionScoringRuleSetActivateRequestObject) (openapi.ImmersionScoringRuleSetActivateResponseObject, error) {
+	if err := s.application.ActivateScoringRuleSet(ctx, request.Id); err != nil {
+		s.logOperationError(ctx, "activate scoring rule set", err)
+		if scoringHTTPError(err) {
+			return nil, err
+		}
+		return openapi.ImmersionScoringRuleSetActivate500Response{}, nil
+	}
+	return openapi.ImmersionScoringRuleSetActivate204Response{}, nil
+}
+
 func scoringRules(rules []openapi.ImmersionScoringRule) []app.ScoringRule {
 	result := make([]app.ScoringRule, len(rules))
 	for i, rule := range rules {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -214,6 +215,53 @@ func (r *ScoringRepository) CreateRule(ctx context.Context, ruleSetID uuid.UUID,
 		Rate:         rule.Rate,
 	}); err != nil {
 		return fmt.Errorf("create scoring rule: %w", err)
+	}
+	return nil
+}
+
+func (r *ScoringRepository) PublishRuleSet(ctx context.Context, id uuid.UUID, publishedAt time.Time) (*RuleSet, error) {
+	q, err := r.queries(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	row, err := q.PublishScoringRuleSet(ctx, queries.PublishScoringRuleSetParams{
+		ID:          postgresUUID(id),
+		PublishedAt: pgtype.Timestamp{Time: publishedAt, Valid: true},
+	})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, errx.NewConflictError("only draft scoring rule sets can be published")
+	}
+	if err != nil {
+		return nil, fmt.Errorf("publish scoring rule set: %w", err)
+	}
+	return ruleSet(row), nil
+}
+
+func (r *ScoringRepository) ActivatePlatformRuleSet(ctx context.Context, id uuid.UUID) error {
+	q, err := r.queries(ctx)
+	if err != nil {
+		return err
+	}
+
+	if err := q.ActivatePlatformScoringRuleSet(ctx, postgresUUID(id)); err != nil {
+		return fmt.Errorf("activate platform scoring rule set: %w", err)
+	}
+	return nil
+}
+
+func (r *ScoringRepository) ActivateContestRuleSet(ctx context.Context, contestID, id uuid.UUID, updatedAt time.Time) error {
+	q, err := r.queries(ctx)
+	if err != nil {
+		return err
+	}
+
+	if err := q.ActivateContestScoringRuleSet(ctx, queries.ActivateContestScoringRuleSetParams{
+		RuleSetID: postgresUUID(id),
+		UpdatedAt: pgtype.Timestamp{Time: updatedAt, Valid: true},
+		ContestID: postgresUUID(contestID),
+	}); err != nil {
+		return fmt.Errorf("activate contest scoring rule set: %w", err)
 	}
 	return nil
 }

@@ -1344,6 +1344,12 @@ type ServerInterface interface {
 	// ImmersionScoringRuleSetCreatePlatform Creates a draft platform scoring rule-set version
 	// (POST /immersion/scoring/rule-sets)
 	ImmersionScoringRuleSetCreatePlatform(w http.ResponseWriter, r *http.Request)
+	// ImmersionScoringRuleSetActivate Activates a published scoring rule-set version
+	// (POST /immersion/scoring/rule-sets/{id}/activate)
+	ImmersionScoringRuleSetActivate(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// ImmersionScoringRuleSetPublish Publishes an immutable scoring rule-set version
+	// (POST /immersion/scoring/rule-sets/{id}/publish)
+	ImmersionScoringRuleSetPublish(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
 	// ImmersionProfileYearlyActivitySplitByUserID Fetches a activity split summary of a user for a given year
 	// (GET /immersion/users/{userId}/activity-split/{year})
 	ImmersionProfileYearlyActivitySplitByUserID(w http.ResponseWriter, r *http.Request, userId openapi_types.UUID, year int)
@@ -3182,6 +3188,58 @@ func (siw *ServerInterfaceWrapper) ImmersionScoringRuleSetCreatePlatform(w http.
 	handler.ServeHTTP(w, r)
 }
 
+// ImmersionScoringRuleSetActivate operation middleware
+func (siw *ServerInterfaceWrapper) ImmersionScoringRuleSetActivate(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ImmersionScoringRuleSetActivate(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ImmersionScoringRuleSetPublish operation middleware
+func (siw *ServerInterfaceWrapper) ImmersionScoringRuleSetPublish(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ImmersionScoringRuleSetPublish(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ImmersionProfileYearlyActivitySplitByUserID operation middleware
 func (siw *ServerInterfaceWrapper) ImmersionProfileYearlyActivitySplitByUserID(w http.ResponseWriter, r *http.Request) {
 
@@ -3648,6 +3706,8 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/immersion/scoring/rule-sets", wrapper.ImmersionScoringRuleSetCreatePlatform)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/{id}/scoring/rule-sets", wrapper.ImmersionScoringRuleSetListContest)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/immersion/contests/{id}/scoring/rule-sets", wrapper.ImmersionScoringRuleSetCreateContest)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/immersion/scoring/rule-sets/{id}/publish", wrapper.ImmersionScoringRuleSetPublish)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/immersion/scoring/rule-sets/{id}/activate", wrapper.ImmersionScoringRuleSetActivate)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/feature-flags", wrapper.ImmersionFeatureFlagDecisions)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/immersion/admin/feature-flags/{flagKey}/users/{userId}", wrapper.ImmersionFeatureAccessRevoke)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/admin/feature-flags/{flagKey}/users/{userId}", wrapper.ImmersionFeatureAccessGet)
@@ -5741,6 +5801,60 @@ func (response ImmersionScoringRuleSetCreatePlatform500Response) VisitImmersionS
 	return nil
 }
 
+type ImmersionScoringRuleSetActivateRequestObject struct {
+	Id openapi_types.UUID `json:"id"`
+}
+
+type ImmersionScoringRuleSetActivateResponseObject interface {
+	VisitImmersionScoringRuleSetActivateResponse(w http.ResponseWriter) error
+}
+
+type ImmersionScoringRuleSetActivate204Response struct {
+}
+
+func (response ImmersionScoringRuleSetActivate204Response) VisitImmersionScoringRuleSetActivateResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type ImmersionScoringRuleSetActivate500Response struct {
+}
+
+func (response ImmersionScoringRuleSetActivate500Response) VisitImmersionScoringRuleSetActivateResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
+type ImmersionScoringRuleSetPublishRequestObject struct {
+	Id openapi_types.UUID `json:"id"`
+}
+
+type ImmersionScoringRuleSetPublishResponseObject interface {
+	VisitImmersionScoringRuleSetPublishResponse(w http.ResponseWriter) error
+}
+
+type ImmersionScoringRuleSetPublish200JSONResponse ImmersionScoringRuleSet
+
+func (response ImmersionScoringRuleSetPublish200JSONResponse) VisitImmersionScoringRuleSetPublishResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImmersionScoringRuleSetPublish500Response struct {
+}
+
+func (response ImmersionScoringRuleSetPublish500Response) VisitImmersionScoringRuleSetPublishResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
 type ImmersionProfileYearlyActivitySplitByUserIDRequestObject struct {
 	UserId openapi_types.UUID `json:"userId"`
 	Year   int                `json:"year"`
@@ -6160,6 +6274,12 @@ type StrictServerInterface interface {
 	// ImmersionScoringRuleSetCreatePlatform Creates a draft platform scoring rule-set version
 	// (POST /immersion/scoring/rule-sets)
 	ImmersionScoringRuleSetCreatePlatform(ctx context.Context, request ImmersionScoringRuleSetCreatePlatformRequestObject) (ImmersionScoringRuleSetCreatePlatformResponseObject, error)
+	// ImmersionScoringRuleSetActivate Activates a published scoring rule-set version
+	// (POST /immersion/scoring/rule-sets/{id}/activate)
+	ImmersionScoringRuleSetActivate(ctx context.Context, request ImmersionScoringRuleSetActivateRequestObject) (ImmersionScoringRuleSetActivateResponseObject, error)
+	// ImmersionScoringRuleSetPublish Publishes an immutable scoring rule-set version
+	// (POST /immersion/scoring/rule-sets/{id}/publish)
+	ImmersionScoringRuleSetPublish(ctx context.Context, request ImmersionScoringRuleSetPublishRequestObject) (ImmersionScoringRuleSetPublishResponseObject, error)
 	// ImmersionProfileYearlyActivitySplitByUserID Fetches a activity split summary of a user for a given year
 	// (GET /immersion/users/{userId}/activity-split/{year})
 	ImmersionProfileYearlyActivitySplitByUserID(ctx context.Context, request ImmersionProfileYearlyActivitySplitByUserIDRequestObject) (ImmersionProfileYearlyActivitySplitByUserIDResponseObject, error)
@@ -7743,6 +7863,58 @@ func (sh *strictHandler) ImmersionScoringRuleSetCreatePlatform(w http.ResponseWr
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ImmersionScoringRuleSetCreatePlatformResponseObject); ok {
 		if err := validResponse.VisitImmersionScoringRuleSetCreatePlatformResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ImmersionScoringRuleSetActivate operation middleware
+func (sh *strictHandler) ImmersionScoringRuleSetActivate(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	var request ImmersionScoringRuleSetActivateRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ImmersionScoringRuleSetActivate(ctx, request.(ImmersionScoringRuleSetActivateRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ImmersionScoringRuleSetActivate")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ImmersionScoringRuleSetActivateResponseObject); ok {
+		if err := validResponse.VisitImmersionScoringRuleSetActivateResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ImmersionScoringRuleSetPublish operation middleware
+func (sh *strictHandler) ImmersionScoringRuleSetPublish(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	var request ImmersionScoringRuleSetPublishRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ImmersionScoringRuleSetPublish(ctx, request.(ImmersionScoringRuleSetPublishRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ImmersionScoringRuleSetPublish")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ImmersionScoringRuleSetPublishResponseObject); ok {
+		if err := validResponse.VisitImmersionScoringRuleSetPublishResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

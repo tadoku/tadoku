@@ -1,0 +1,4 @@
+>>> POST /immersion/scoring/rule-sets/cccccccc-cccc-4ccc-8ccc-000000000002/publish
+HTTP/1.1 409 Conflict
+Content-Length: 0
+

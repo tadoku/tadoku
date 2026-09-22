@@ -1,0 +1,7 @@
+POST /immersion/logs/score-preview HTTP/1.1
+Host: api.test
+Content-Type: application/json
+Content-Length: 72
+X-Request-Id: 22222222-2222-4222-8222-222222222222
+
+{"language_code":"eng","activity_id":5,"duration_seconds":600,"tags":[]}

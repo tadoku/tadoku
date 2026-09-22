@@ -23,3 +23,30 @@
 - [ ] Introduce generic conversion helpers for repeated slice and type mappings after common conversion patterns stabilize across migrated features.
 
 - [ ] Review the legacy log tag array-text decoding contract before replacing it with native array decoding; escaped quotes and backslashes currently affect returned tags.
+
+- [ ] Make scoring `ErrRuleSetNotFound` an `errx` NotFound (plain `errors.New` maps to Unknown→500). Guard with a KindOf unit test and a domain-errors lint that not-found sentinels use errx.
+- [ ] Make scoring `NormalizeTags` client-limit failures InvalidInput, never Internal (currently 500). Guard with unit + transport golden expecting 400; ban `Normalize*` returning Internal.
+- [ ] Stop contests owning the full language catalog (`ListLanguages`); compose `features/languages` in app like log configuration. Depolicy/sqlc: contests SQL must not declare catalog-only `from languages` without a contest join/filter.
+- [ ] Remove raw Kratos from contests; account-age/schema eligibility belongs with profile (or app over profile). Contests constructor accepts only the repository; CI deny `ory/kratos-client-go` under `features/contests`.
+- [ ] Deduplicate the yearly contest-create limit into one helper shared by create validation and permission check; unit-test the helper edges.
+- [ ] Add `RegistrationUpsertParameters.Validate()` with field-specific invalid-input messages; drop the catch-all sentinel for pure registration rules.
+- [ ] Split pages/posts Create+Update into one-SQL repository methods; allocate content IDs in the service under the app transaction; ban `uuid.New` in `*_repository.go`.
+- [ ] Extract leaderboard Valkey cache I/O from `Service` into a Store (mirror immersion `LeaderboardStore`); deny `valkey-go` imports outside Store packages.
+- [ ] Move scoring `unitActivities` into shared `domain/activities`; ban private unit→activity maps elsewhere.
+- [ ] Share one profile Kratos traits decoder; remove the dead untagged `Email` field in `FindProfile`.
+- [ ] Make logs `YearlyActivitySplit` reuse `hydrateLogActivity` / typed `ErrInvalidActivity` (not `fmt.Errorf` → 500).
+- [ ] Unify page/post slug-resolve authz masking into one helper; paired guest/non-admin goldens so Unauthorized/Unavailable do not leak on pages while posts mask to NotFound.
+- [ ] Strengthen e2e `accessAuthenticated` to require a `401_guest` fixture specifically (stop accepting middleware-only 401s); contest scoring list currently declares authenticated but guests get 403/404.
+- [ ] Move FindLog registration visibility into the logs feature (explicit deleted vs visibility params); skip attachment SQL when hidden; stop overloading the admin bool as `includeDeleted`.
+- [ ] Fix contests `FindRegistration` language hydration to match list hydrate; delete the app padding loop in `contest_profile`.
+- [ ] Stop loading contest on find-registration when the response omits it; remove app `registration.Contest = nil`.
+- [ ] Centralize the banned Keto relation in `internal/permissions`; cmd/e2e call it; forbid raw banned triples elsewhere.
+- [ ] After legacy retirement: `CheckContestCreatePermission` guest→401 and too-young→403 (replace 500 parity goldens); flip access level.
+- [ ] Align contest scoring rule-set list guest auth with platform (`RequireAuthenticated` + owner/admin); guest 401 golden.
+- [ ] Standardize caller UUID / self-or-admin helpers in app; ban ad-hoc Subject UUID parse outside allowlisted guest paths.
+- [ ] Keep the Flipt management client flag-agnostic; product flag allowlist only in featureflags (no product flag names in infra). Distinct from consolidating management clients after legacy retirement.
+- [ ] Decide whether pages/posts should share content-revision primitives or stay intentional twins; align list publication policy (pages lack the `published_at` cutoff posts apply when excluding drafts).
+- [ ] Bind the ban-middleware path carve-out to the mux/generated `AuthzRoleGet` pattern, not the magic `"/authz/current-user/role"` string.
+- [ ] Replace `Application.New` positional `*Service` args with a `Dependencies` struct (open log/scoring PRs already churn this surface).
+- [ ] Extract an app `mutateThenReadBack` helper for the repeated announcements/pages/posts transaction+find blocks.
+- [ ] Move the pgx pool Prometheus collector from `cmd` into `infra/postgres`.

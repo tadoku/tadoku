@@ -33,7 +33,7 @@ func (a *Application) PreviewScore(ctx context.Context, parameters ScorePreviewP
 		return nil, errx.NewUnauthorizedError("unauthorized")
 	}
 
-	featureParameters, err := scoring.ValidateAndNormalizePreview(scoring.PreviewParameters{
+	featureParameters := scoring.PreviewParameters{
 		UnitID:          parameters.UnitID,
 		UnitKey:         parameters.UnitKey,
 		ActivityID:      parameters.ActivityID,
@@ -42,8 +42,8 @@ func (a *Application) PreviewScore(ctx context.Context, parameters ScorePreviewP
 		DurationSeconds: parameters.DurationSeconds,
 		Tags:            parameters.Tags,
 		Contests:        make([]scoring.PreviewContest, 0, len(parameters.RegistrationIDs)),
-	})
-	if err != nil {
+	}
+	if err := scoring.ValidatePreview(featureParameters); err != nil {
 		return nil, err
 	}
 	if len(parameters.RegistrationIDs) == 0 {

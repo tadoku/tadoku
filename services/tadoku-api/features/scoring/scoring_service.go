@@ -64,11 +64,16 @@ func (s *Service) Preview(ctx context.Context, parameters PreviewParameters) (*P
 	if err != nil {
 		return nil, err
 	}
+	tags, err := NormalizeTags(parameters.Tags)
+	if err != nil {
+		return nil, err
+	}
+
 	input := scoringInput{
 		activityID:      parameters.ActivityID,
 		unitKey:         unitKey,
 		languageCode:    parameters.LanguageCode,
-		tags:            parameters.Tags,
+		tags:            tags,
 		amount:          parameters.Amount,
 		durationSeconds: parameters.DurationSeconds,
 	}

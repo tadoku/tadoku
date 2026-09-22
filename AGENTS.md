@@ -88,7 +88,7 @@ Migration PRs must remain compatible with the application version currently depl
 
 **Return specific validation errors.** Prefer one validation condition per branch with a direct call to the shared invalid-input error constructor and a message that identifies the invalid field or rule. Do not create per-validation sentinel errors or error types. Combine conditions only when they intentionally represent the same validation message.
 
-**Name validation and normalization operations precisely.** Use `Validate` when an operation checks input, `Normalize` when it only canonicalizes input, and `ValidateAndNormalize` when it does both. Do not use vague names such as `Prepare` for input validation or normalization.
+**Name validation and normalization operations precisely.** Use `Validate` for checks that leave request data unchanged and `Normalize` for canonicalization performed on local service or persistence input. Do not use vague names such as `Prepare` for input validation or normalization, and do not make validation functions return a rewritten request.
 
 **Keep each operation's HTTP E2Es in one golden-case table.** Do not add separate generated-ID, persistence-readback or hand-decoded response tests beside it. Put persistence assertions in repository tests. Request-body fixtures use JSON only.
 

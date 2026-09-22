@@ -98,21 +98,20 @@ type scoringInput struct {
 	durationSeconds *int32
 }
 
-func ValidateAndNormalizePreview(parameters PreviewParameters) (PreviewParameters, error) {
+func ValidatePreview(parameters PreviewParameters) error {
 	if parameters.ActivityID == 0 {
-		return PreviewParameters{}, errx.NewInvalidInputError("activity_id is required")
+		return errx.NewInvalidInputError("activity_id is required")
 	}
 	if parameters.LanguageCode == "" {
-		return PreviewParameters{}, errx.NewInvalidInputError("language_code is required")
+		return errx.NewInvalidInputError("language_code is required")
 	}
 
-	tags, err := NormalizeTags(parameters.Tags)
+	_, err := NormalizeTags(parameters.Tags)
 	if err != nil {
-		return PreviewParameters{}, err
+		return err
 	}
-	parameters.Tags = tags
 
-	return parameters, nil
+	return nil
 }
 
 func evaluate(input scoringInput, ruleSet RuleSet) (Estimate, bool, error) {

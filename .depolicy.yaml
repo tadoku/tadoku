@@ -119,6 +119,17 @@ policies:
             - local:services/tadoku-api/internal/testkratos/...
             - local:services/common/client/kratos
 
+  - id: flipt-fixture
+    packages: [local:services/tadoku-api/internal/testflipt/...]
+    imports:
+      default: deny
+      rules:
+        - use: language-dependencies
+        - id: provider-contract
+          allow:
+            - local:services/tadoku-api/internal/testflipt/...
+            - local:services/common/featureflags
+
   - id: permissions
     packages: [local:services/tadoku-api/internal/permissions/...]
     imports:

@@ -1,12 +1,12 @@
 load("@rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "featureaccess",
+    name = "featureflags",
     srcs = [
         "domain.go",
-        "featureaccess_service.go",
+        "featureflags_service.go",
     ],
-    importpath = "github.com/tadoku/tadoku/services/tadoku-api/features/featureaccess",
+    importpath = "github.com/tadoku/tadoku/services/tadoku-api/features/featureflags",
     visibility = ["//visibility:public"],
     deps = [
         "//services/common/featureflags",

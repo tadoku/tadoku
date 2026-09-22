@@ -1,4 +1,4 @@
-package featureaccess
+package featureflags
 
 import (
 	"context"
@@ -45,7 +45,15 @@ func (s *Service) GetNamedUserAccess(ctx context.Context, flagKey string, target
 	return fromClient(state), nil
 }
 
-func (s *Service) SetNamedUserAccess(ctx context.Context, flagKey string, targetUserID uuid.UUID, enabled bool) (State, error) {
+func (s *Service) Grant(ctx context.Context, flagKey string, targetUserID uuid.UUID) (State, error) {
+	return s.setNamedUserAccess(ctx, flagKey, targetUserID, true)
+}
+
+func (s *Service) Revoke(ctx context.Context, flagKey string, targetUserID uuid.UUID) (State, error) {
+	return s.setNamedUserAccess(ctx, flagKey, targetUserID, false)
+}
+
+func (s *Service) setNamedUserAccess(ctx context.Context, flagKey string, targetUserID uuid.UUID, enabled bool) (State, error) {
 	key, err := validate(flagKey, targetUserID)
 	if err != nil {
 		return State{}, err

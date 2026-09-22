@@ -17,5 +17,6 @@
 - [ ] Replace `github.com/google/uuid` with the standard-library UUID API when it is available in the adopted Go toolchain.
 - [ ] Introduce a generic paginated request type and convert every existing paginated operation to use it.
 - [ ] Support two-step audit recording for external actions: persist the start before calling the external system, then record the correlated completion and outcome. External changes cannot share an atomic PostgreSQL transaction with the audit write.
+- [ ] Consolidate the Flipt management clients only after the legacy parity reference is retired; parity comparisons must continue exercising the unchanged legacy production client until then.
 
 - [ ] Review the legacy log tag array-text decoding contract before replacing it with native array decoding; escaped quotes and backslashes currently affect returned tags.

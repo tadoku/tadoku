@@ -1,4 +1,5 @@
-package e2e_test
+// Package testflipt provides a deterministic, stateful Flipt boundary for integration tests.
+package testflipt
 
 import (
 	"context"
@@ -13,11 +14,11 @@ import (
 	"github.com/tadoku/tadoku/services/common/featureflags"
 )
 
-// testFlipt simulates Flipt's management HTTP boundary and public boolean
+// Fixture simulates Flipt's management HTTP boundary and public boolean
 // provider. Both APIs use the real management client and common evaluator;
 // SDK snapshot polling and caching stay covered by the provider boundary tests.
 // Evaluation reads the same membership state as management.
-type testFlipt struct {
+type Fixture struct {
 	mu          sync.Mutex
 	members     map[string]struct{}
 	revision    uint64
@@ -25,18 +26,18 @@ type testFlipt struct {
 	server      *httptest.Server
 }
 
-func newTestFlipt() *testFlipt {
-	f := &testFlipt{}
+func New() *Fixture {
+	f := &Fixture{}
 	f.server = httptest.NewServer(http.HandlerFunc(f.serveHTTP))
 	f.Reset()
 	return f
 }
 
-func (f *testFlipt) Close() { f.server.Close() }
+func (f *Fixture) Close() { f.server.Close() }
 
-func (f *testFlipt) URL() string { return f.server.URL }
+func (f *Fixture) URL() string { return f.server.URL }
 
-func (f *testFlipt) Reset() {
+func (f *Fixture) Reset() {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.members = map[string]struct{}{
@@ -46,13 +47,13 @@ func (f *testFlipt) Reset() {
 	f.unavailable = false
 }
 
-func (f *testFlipt) SetUnavailable(unavailable bool) {
+func (f *Fixture) SetUnavailable(unavailable bool) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.unavailable = unavailable
 }
 
-func (f *testFlipt) EvaluateBoolean(ctx context.Context, request featureflags.EvaluationRequest) (featureflags.ProviderResult, error) {
+func (f *Fixture) EvaluateBoolean(ctx context.Context, request featureflags.EvaluationRequest) (featureflags.ProviderResult, error) {
 	if err := ctx.Err(); err != nil {
 		return featureflags.ProviderResult{}, err
 	}
@@ -71,7 +72,7 @@ func (f *testFlipt) EvaluateBoolean(ctx context.Context, request featureflags.Ev
 	return featureflags.ProviderResult{Enabled: enabled, Reason: "MATCH_EVALUATION_REASON"}, nil
 }
 
-func (f *testFlipt) serveHTTP(response http.ResponseWriter, request *http.Request) {
+func (f *Fixture) serveHTTP(response http.ResponseWriter, request *http.Request) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.unavailable {
@@ -115,7 +116,7 @@ func (f *testFlipt) serveHTTP(response http.ResponseWriter, request *http.Reques
 	}
 }
 
-func (f *testFlipt) writeSegment(response http.ResponseWriter) {
+func (f *Fixture) writeSegment(response http.ResponseWriter) {
 	members := make([]string, 0, len(f.members))
 	for member := range f.members {
 		members = append(members, member)
@@ -140,4 +141,4 @@ func (f *testFlipt) writeSegment(response http.ResponseWriter) {
 	})
 }
 
-func (f *testFlipt) revisionString() string { return fmt.Sprintf("%040x", f.revision) }
+func (f *Fixture) revisionString() string { return fmt.Sprintf("%040x", f.revision) }

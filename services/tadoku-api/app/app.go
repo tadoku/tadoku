@@ -7,7 +7,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/features/audit"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/authz"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/contests"
-	"github.com/tadoku/tadoku/services/tadoku-api/features/featureaccess"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/featureflags"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/languages"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/logs"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/pages"
@@ -26,12 +26,12 @@ type Application struct {
 	pages         *pages.Service
 	posts         *posts.Service
 	profile       *profile.Service
-	featureFlags  *featureaccess.Service
+	featureFlags  *featureflags.Service
 	db            *pgxpool.Pool
 	permissions   *permissions.Checker
 }
 
-func New(announcements *announcements.Service, audit *audit.Service, authorization *authz.Service, contests *contests.Service, languages *languages.Service, logs *logs.Service, pages *pages.Service, posts *posts.Service, profile *profile.Service, featureFlags *featureaccess.Service, db *pgxpool.Pool, permissions *permissions.Checker) *Application {
+func New(announcements *announcements.Service, audit *audit.Service, authorization *authz.Service, contests *contests.Service, languages *languages.Service, logs *logs.Service, pages *pages.Service, posts *posts.Service, profile *profile.Service, featureFlags *featureflags.Service, db *pgxpool.Pool, permissions *permissions.Checker) *Application {
 	return &Application{
 		announcements: announcements,
 		audit:         audit,

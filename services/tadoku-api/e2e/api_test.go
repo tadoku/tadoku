@@ -26,7 +26,7 @@ import (
 	featureaudit "github.com/tadoku/tadoku/services/tadoku-api/features/audit"
 	featureauthz "github.com/tadoku/tadoku/services/tadoku-api/features/authz"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/contests"
-	"github.com/tadoku/tadoku/services/tadoku-api/features/featureaccess"
+	nativefeatureflags "github.com/tadoku/tadoku/services/tadoku-api/features/featureflags"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/languages"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/logs"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/pages"
@@ -34,6 +34,7 @@ import (
 	featureprofile "github.com/tadoku/tadoku/services/tadoku-api/features/profile"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/fliptmanagement"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/testflipt"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testketo"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testkratos"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
@@ -47,7 +48,7 @@ var legacyAuthentication http.Handler
 var legacyBannedUsers http.Handler
 var authenticationJWKS *httptest.Server
 var keto *testketo.Fixture
-var flipt *testFlipt
+var flipt *testflipt.Fixture
 
 const callbackToken = "test-oathkeeper-callback-token"
 
@@ -87,7 +88,7 @@ func runTests(m *testing.M) (code int) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	legacyAuthentication = newLegacyAuthenticationHandler(authenticationJWKS.URL)
-	flipt = newTestFlipt()
+	flipt = testflipt.New()
 	defer flipt.Close()
 	keto, err = testketo.New(ctx)
 	if err != nil {
@@ -156,7 +157,7 @@ type suite struct {
 	db      *testpostgres.Database
 	keto    *testketo.Fixture
 	kratos  *testkratos.Fixture
-	flipt   *testFlipt
+	flipt   *testflipt.Fixture
 	handler *transport.Router
 	profile *featureprofile.Service
 	roles   *commonroles.KetoService
@@ -255,7 +256,7 @@ func newTestRouterWithScoringEngine(
 	postsService := posts.NewService(postsRepository)
 	profileService := featureprofile.NewService(profileRepository, featureprofile.NewUserCache(identities), roleService, identities)
 	featureFlagEvaluator := featureflags.NewEvaluator(flipt, nil, commondomain.NewMockClock(fixtureInstant))
-	featureFlagsService := featureaccess.NewService(featureFlagEvaluator, fliptmanagement.NewClient(fliptmanagement.Config{URL: flipt.URL(), Environment: "local"}))
+	featureFlagsService := nativefeatureflags.NewService(featureFlagEvaluator, fliptmanagement.NewClient(fliptmanagement.Config{URL: flipt.URL(), Environment: "local"}))
 	application := app.New(announcementsService, auditService, authzService, contestsService, languagesService, logsService, pagesService, postsService, profileService, featureFlagsService, pool, permissionChecker)
 	authenticate, err := transport.NewJWTAuthentication(ctx, authenticationJWKS.URL, time.Second, 24*time.Hour, "http://oathkeeper-api/", logger)
 	if err != nil {

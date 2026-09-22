@@ -1,8 +1,9 @@
-// Package featureaccess manages allowlisted named-user feature access.
-package featureaccess
+// Package featureflags evaluates flags and manages allowlisted named-user access.
+package featureflags
 
 import (
 	"errors"
+
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/fliptmanagement"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"

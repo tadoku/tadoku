@@ -54,6 +54,10 @@ func (s *Service) LockUser(ctx context.Context, userID uuid.UUID) error {
 	return nil
 }
 
+func (s *Service) DisplayNames(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]string, error) {
+	return s.repository.DisplayNames(ctx, ids)
+}
+
 func (s *Service) ListUsers(ctx context.Context, pageSize, page int, query string) (*UserList, error) {
 	pageSize, page = normalizeUserPage(pageSize, page)
 

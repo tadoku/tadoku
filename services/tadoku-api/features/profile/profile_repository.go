@@ -66,3 +66,23 @@ func (r *Repository) LockUser(ctx context.Context, userID uuid.UUID) (UserDeleti
 		Deleted:        user.DeletedAt.Valid,
 	}, nil
 }
+
+func (r *Repository) DisplayNames(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]string, error) {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return nil, err
+	}
+	values := make([]pgtype.UUID, len(ids))
+	for i, id := range ids {
+		values[i] = pgtype.UUID{Bytes: id, Valid: true}
+	}
+	rows, err := queries.New(executor).FindUserDisplayNames(ctx, values)
+	if err != nil {
+		return nil, fmt.Errorf("fetch user display names: %w", err)
+	}
+	names := make(map[uuid.UUID]string, len(rows))
+	for _, row := range rows {
+		names[uuid.UUID(row.ID.Bytes)] = row.DisplayName
+	}
+	return names, nil
+}

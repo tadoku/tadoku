@@ -58,5 +58,8 @@ output-options:
     - ImmersionFeatureAccessGet
     - ImmersionFeatureAccessGrant
     - ImmersionFeatureAccessRevoke
+    - ImmersionContestFetchLeaderboard
+    - ImmersionFetchLeaderboardForYear
+    - ImmersionFetchLeaderboardGlobal
   nullable-type: true
   skip-prune: true

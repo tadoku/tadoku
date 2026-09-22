@@ -18,3 +18,6 @@ select deletion_locked_at, deleted_at
 from users
 where id = sqlc.arg(id)
 for update;
+
+-- name: FindUserDisplayNames :many
+select id, display_name from users where id = any(sqlc.arg('ids')::uuid[]);

@@ -412,7 +412,10 @@ and unauthenticated requests have no Kratos identity; roles and bans stay in Ket
 Raw Valkey and application lifecycle tests also require
 `TADOKU_TEST_VALKEY_URL` in the exact form `redis://127.0.0.1:<port>` (or
 `localhost`) for a disposable Valkey 9 service. They isolate and delete their own
-keys and never flush the shared instance.
+keys and never flush the shared instance. HTTP E2Es reserve logical database 15,
+and their nested cleanup probe reserves database 14. Each uses a suite lease,
+refuses to overwrite pre-existing fixture keys and deletes only its explicit
+production-format keys during reset and cleanup.
 
 ```sh
 bazel test //services/tadoku-api/... --test_output=errors

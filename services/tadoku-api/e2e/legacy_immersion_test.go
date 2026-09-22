@@ -25,7 +25,9 @@ import (
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest/openapi"
 	"github.com/tadoku/tadoku/services/immersion-api/storage/postgres/repository"
+	valkeystore "github.com/tadoku/tadoku/services/immersion-api/storage/valkey"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
+	valkeygo "github.com/valkey-io/valkey-go"
 )
 
 type scenarioClock struct{}
@@ -38,7 +40,11 @@ type legacyImmersionAPI struct {
 	scoringEnabledHandler http.Handler
 }
 
-func newLegacyImmersionAPI(ctx context.Context, dsn, jwksURL, ketoReadURL string, kratos *kratosapi.APIClient) (*legacyImmersionAPI, error) {
+func newLegacyImmersionAPI(ctx context.Context, dsn, jwksURL, ketoReadURL string, kratos *kratosapi.APIClient, valkeyClient valkeygo.Client) (*legacyImmersionAPI, error) {
+	return newLegacyImmersionAPIWithTimeout(ctx, dsn, jwksURL, ketoReadURL, kratos, valkeyClient, time.Second)
+}
+
+func newLegacyImmersionAPIWithTimeout(ctx context.Context, dsn, jwksURL, ketoReadURL string, kratos *kratosapi.APIClient, valkeyClient valkeygo.Client, valkeyTimeout time.Duration) (*legacyImmersionAPI, error) {
 	config, err := pgx.ParseConfig(dsn)
 	if err != nil {
 		return nil, err
@@ -53,6 +59,7 @@ func newLegacyImmersionAPI(ctx context.Context, dsn, jwksURL, ketoReadURL string
 	userUpsert := domain.NewUserUpsert(postgresRepository)
 	featureAccess := domain.NewFeatureAccess(fliptmanagement.NewClient(fliptmanagement.Config{URL: flipt.URL(), Environment: "local"}), postgresRepository)
 	featureFlagEvaluator := featureflags.NewEvaluator(flipt, nil, commondomain.NewMockClock(fixtureInstant))
+	leaderboardStore := valkeystore.NewLeaderboardStore(valkeyClient, scenarioClock{}, valkeyTimeout)
 
 	kratosConfig := kratos.GetConfig()
 	kratosClient := immersionory.NewKratosClient(
@@ -75,9 +82,9 @@ func newLegacyImmersionAPI(ctx context.Context, dsn, jwksURL, ketoReadURL string
 			domain.NewLogListForContest(postgresRepository),
 			domain.NewRegistrationFind(postgresRepository),
 			domain.NewRegistrationListYearly(postgresRepository),
-			nil, // contest leaderboard
-			nil, // yearly leaderboard
-			nil, // global leaderboard
+			domain.NewContestLeaderboardFetch(postgresRepository, leaderboardStore),
+			domain.NewLeaderboardYearly(postgresRepository, leaderboardStore),
+			domain.NewLeaderboardGlobal(postgresRepository, leaderboardStore),
 			domain.NewProfileContest(postgresRepository),
 			domain.NewProfileContestActivity(postgresRepository),
 			domain.NewProfileYearlyActivity(postgresRepository),

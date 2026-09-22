@@ -36,6 +36,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/features/contests"
 	featureflagsservice "github.com/tadoku/tadoku/services/tadoku-api/features/featureflags"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/languages"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/logs"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/pages"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/posts"
@@ -395,6 +396,7 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	announcementsRepository := announcements.NewAnnouncementsRepository(pool)
 	contestsRepository := contests.NewContestsRepository(pool)
 	languagesRepository := languages.NewLanguagesRepository(pool)
+	leaderboardRepository := leaderboard.NewRepository(pool)
 	logsRepository := logs.NewLogsRepository(pool)
 	pagesRepository := pages.NewPagesRepository(pool)
 	postsRepository := posts.NewPostsRepository(pool)
@@ -403,6 +405,7 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	announcementsService := announcements.NewService(announcementsRepository)
 	contestsService := contests.NewService(contestsRepository, kratos)
 	languagesService := languages.NewService(languagesRepository)
+	leaderboardService := leaderboard.NewService(leaderboardRepository, valkeyClient, cfg.ValkeyTimeout)
 	logsService := logs.NewService(logsRepository, cfg.ScoringEngineEnabled)
 	pagesService := pages.NewService(pagesRepository)
 	postsService := posts.NewService(postsRepository)
@@ -412,7 +415,7 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 		Environment: cfg.FliptEnvironment,
 		HTTPClient:  fliptManagement,
 	}))
-	api := app.New(announcementsService, auditService, authzService, contestsService, languagesService, logsService, pagesService, postsService, profileService, featureFlagService, pool, permissionChecker)
+	api := app.New(announcementsService, auditService, authzService, contestsService, leaderboardService, languagesService, logsService, pagesService, postsService, profileService, featureFlagService, pool, permissionChecker)
 	rejectBanned := newBannedUserMiddleware(ketoReader, logger)
 
 	handler, err := transporthttp.NewHandler(api, pool.Ping, cfg.RequestTimeout, metrics, logger, authenticate, rejectBanned, authenticateCallback)

@@ -248,6 +248,11 @@ func resetJourney(t *testing.T, s *suite, directory string) {
 	if s.flipt != nil {
 		s.flipt.Reset()
 	}
+	if leaderboardValkey != nil {
+		if err := leaderboardValkey.reset(ctx); err != nil {
+			t.Fatal(err)
+		}
+	}
 	s.resetProfileCaches()
 	s.proxied.Store(0)
 }

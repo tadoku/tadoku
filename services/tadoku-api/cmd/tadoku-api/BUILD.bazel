@@ -21,6 +21,7 @@ go_library(
         "//services/tadoku-api/features/contests",
         "//services/tadoku-api/features/featureflags",
         "//services/tadoku-api/features/languages",
+        "//services/tadoku-api/features/leaderboard",
         "//services/tadoku-api/features/logs",
         "//services/tadoku-api/features/pages",
         "//services/tadoku-api/features/posts",

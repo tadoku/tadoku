@@ -41,7 +41,8 @@ with leaderboard as (
   left join ranked_leaderboard using(user_id)
   order by
     score desc,
-    registrations.created_at asc
+    registrations.created_at asc,
+    registrations.user_id desc
 )
 select
   *,

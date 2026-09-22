@@ -267,7 +267,7 @@ func (r *ContestsRepository) CreateContest(ctx context.Context, contest Contest)
 		ContestEnd:              pgtype.Date{Time: contest.ContestEnd, Valid: true},
 		RegistrationEnd:         pgtype.Date{Time: contest.RegistrationEnd, Valid: true},
 		Title:                   contest.Title,
-		Description:             text(contest.Description),
+		Description:             postgres.NullableText(contest.Description),
 		LanguageCodeAllowList:   contest.LanguageCodeAllowList,
 		ActivityTypeIDAllowList: contest.ActivityTypeIDAllowList,
 		CreatedAt:               pgtype.Timestamp{Time: contest.CreatedAt, Valid: true},
@@ -475,11 +475,4 @@ func nullableString(value pgtype.Text) *string {
 		return nil
 	}
 	return &value.String
-}
-
-func text(value *string) pgtype.Text {
-	if value == nil {
-		return pgtype.Text{}
-	}
-	return pgtype.Text{String: *value, Valid: true}
 }

@@ -6,7 +6,6 @@ import (
 	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
 )
 
-// TODO: This should not be in common but rather in profile-api when the role management endpoints live there
 type Manager interface {
 	SetAdmin(ctx context.Context, subjectID string, enabled bool) error
 	SetBanned(ctx context.Context, subjectID string, enabled bool) error

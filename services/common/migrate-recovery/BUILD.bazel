@@ -39,6 +39,5 @@ pkg_tar(
     package_dir = "/",
     visibility = [
         "//services/immersion-api:__pkg__",
-        "//services/profile-api:__pkg__",
     ],
 )

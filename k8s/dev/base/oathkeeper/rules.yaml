@@ -179,31 +179,6 @@
     preserve_host: false
     url: http://flipt.tdk-dev-flipt.svc.cluster.local:8080
     strip_path: /flipt-management
-- id: s2s:to-profile
-  match:
-    url: http://oathkeeper-proxy.tdk-dev-oathkeeper:4455/token-exchange/profile-api
-    methods:
-      - GET
-  authenticators:
-    - handler: jwt
-      config:
-        jwks_urls:
-          - http://token-reflector.tdk-dev-token-reflector/jwks
-        target_audience:
-          - immersion-api
-  authorizer:
-    handler: allow
-  mutators:
-    - handler: id_token
-      config:
-        claims: |
-          {
-            "type": "service",
-            "sub": "{{ .Subject }}",
-            "aud": ["profile-api"]
-          }
-  upstream:
-    url: http://token-reflector.tdk-dev-token-reflector
 - id: s2s:immersion-to-flipt-evaluation
   match:
     url: http://oathkeeper-proxy.tdk-dev-oathkeeper:4455/token-exchange/flipt-evaluation/immersion-api

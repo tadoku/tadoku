@@ -45,8 +45,6 @@ spec:
               key: token
         - name: API_IMMERSION_URL
           value: http://immersion-api.tdk-dev-immersion-api
-        - name: API_PROFILE_URL
-          value: http://profile-api.tdk-dev-profile-api
         - name: API_POSTGRES_HOST
           value: tadoku-dev-db.tdk-dev-data
         - name: API_POSTGRES_DATABASE

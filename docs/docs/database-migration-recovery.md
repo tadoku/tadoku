@@ -64,8 +64,8 @@ database owner Secret and migration source as the PreSync Job:
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: content-api-migration-inspect
-  namespace: tdk-prod-content-api
+  name: immersion-api-migration-inspect
+  namespace: tdk-prod-immersion-api
 spec:
   backoffLimit: 0
   template:
@@ -73,7 +73,7 @@ spec:
       restartPolicy: Never
       containers:
         - name: inspect
-          image: ghcr.io/tadoku/tadoku/content-api@sha256:REPLACE_ME
+          image: ghcr.io/tadoku/tadoku/immersion-api@sha256:REPLACE_ME
           command: ["/migrate-recovery"]
           args:
             - "-source"
@@ -85,18 +85,18 @@ spec:
             - name: POSTGRES_PORT
               value: "5432"
             - name: POSTGRES_DATABASE
-              value: tadoku_prod_content
+              value: tadoku_prod_immersion
             - name: POSTGRES_SSLMODE
               value: require
             - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
-                  name: tadoku-prod-content-owner-user.io-postgres.credentials.postgresql.acid.zalan.do
+                  name: tadoku-prod-immersion-owner-user.io-postgres.credentials.postgresql.acid.zalan.do
                   key: username
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: tadoku-prod-content-owner-user.io-postgres.credentials.postgresql.acid.zalan.do
+                  name: tadoku-prod-immersion-owner-user.io-postgres.credentials.postgresql.acid.zalan.do
                   key: password
 ```
 

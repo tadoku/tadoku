@@ -12,7 +12,7 @@ run against this environment. Homelab contains the Application and development
 Image Updater infrastructure, not copies of these workload manifests.
 
 Production's `tdk-prod-*` service boundaries become `tdk-dev-*`: the three
-frontends, native Tadoku API, remaining immersion/content/profile APIs, Kratos,
+frontends, native Tadoku API, remaining immersion/profile APIs, Kratos,
 Keto, Oathkeeper, Flipt and token-reflector. `tdk-dev-data` contains one
 operator-managed Postgres server plus disposable Valkey and Mailhog;
 `tdk-dev-routing` attaches application routes to the existing platform Envoy
@@ -20,7 +20,7 @@ Gateway. Retired authz/memory/echo services and optional styleguides/admin tools
 are not deployed. There is no production data, PlanetScale, Upstash, external
 backup or notification configuration here.
 
-Existing CI publishes the nine GHCR runtime/migration images. The root's `images`
+Existing CI publishes the eight GHCR runtime/migration images. The root's `images`
 entries select `latest`; development Image Updater uses the **digest** strategy
 and writes immutable resolutions back to this Kustomization. Do not add another
 build/push pipeline. Hook migration images need `force-update` because successful

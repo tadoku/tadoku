@@ -23,10 +23,7 @@ func TestDeletePage(t *testing.T) {
 	for _, test := range tests {
 		name := APITestName("DeletePage", test.want, test.description...)
 		t.Run(name, func(t *testing.T) {
-			runCase(t, api, name, test.want,
-				implementation{name: "tadoku-api", handler: api.handler},
-				implementation{name: "content-api", handler: legacyContent.handler},
-			)
+			runCase(t, api, name, test.want, implementation{name: "tadoku-api", handler: api.handler})
 		})
 	}
 }

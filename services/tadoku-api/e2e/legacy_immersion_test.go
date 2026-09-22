@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/stdlib"
@@ -21,7 +22,12 @@ import (
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest/openapi"
 	"github.com/tadoku/tadoku/services/immersion-api/storage/postgres/repository"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
+
+type scenarioClock struct{}
+
+func (scenarioClock) Now() time.Time { return timex.Now() }
 
 type legacyImmersionAPI struct {
 	db                    *sql.DB

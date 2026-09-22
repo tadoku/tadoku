@@ -72,7 +72,7 @@ func (a *Application) CreateLog(ctx context.Context, p LogCreateParameters) (*Lo
 			if !ok {
 				return nil, errx.NewInvalidInputError("registration_id is not ongoing for the current user")
 			}
-			if !registrationAllowsScoring(registration, p.LanguageCode, p.ActivityID) {
+			if !registration.IsEligibleForScoring(p.LanguageCode, p.ActivityID) {
 				return nil, errx.NewInvalidInputError("language_code or activity_id is not allowed for registration_id")
 			}
 		}

@@ -12,7 +12,7 @@ The Tadoku app consists of several backend services & frontends deployed to a Ku
 ### Backend services
 
 - [immersion-api](./services/immersion-api.md)
-- [tadoku-api](https://github.com/tadoku/tadoku/tree/main/services/tadoku-api), including the public [Content API](./services/content-api.md) namespace
+- [tadoku-api](https://github.com/tadoku/tadoku/tree/main/services/tadoku-api), including the public [Content API](./services/content-api.md) and Profile API namespaces
 - [Ory Kratos](https://github.com/ory/kratos)
 
 ### Frontends
@@ -27,6 +27,6 @@ The Tadoku app consists of several backend services & frontends deployed to a Ku
 
 ## Historical system diagram
 
-This diagram predates the consolidation of Content API routes into Tadoku API.
+This diagram predates the consolidation of Content and Profile API routes into Tadoku API.
 
 ![Historical system diagram](./assets/architects.excalidraw.svg)

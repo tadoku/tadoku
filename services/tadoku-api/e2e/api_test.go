@@ -38,7 +38,6 @@ import (
 
 var api *suite
 var scoringEnabledHandler http.Handler
-var legacyProfile *legacyProfileAPI
 var legacyImmersion *legacyImmersionAPI
 var legacyAuthentication http.Handler
 var legacyBannedUsers http.Handler
@@ -134,12 +133,6 @@ func runTests(m *testing.M) (code int) {
 	}
 	unavailableCallback = unavailableNative
 
-	legacyProfile, err = newLegacyProfileAPI(ctx, api.db.DSN, authenticationJWKS.URL, keto.ReadURL(), kratos.CursorClient())
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return 1
-	}
-	defer func() { cleanupErr = errors.Join(cleanupErr, legacyProfile.db.Close()) }()
 	legacyImmersion, err = newLegacyImmersionAPI(ctx, api.db.DSN, authenticationJWKS.URL, keto.ReadURL(), kratos.Client())
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -277,7 +270,6 @@ func registerSentinelProxy(s *suite) error {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	upstreams := transport.Upstreams{
 		Immersion: "http://upstream.test",
-		Profile:   "http://upstream.test",
 	}
 	if err := transport.RegisterProxyRoutes(s.handler, upstreams, s, time.Second, logger); err != nil {
 		return fmt.Errorf("register proxy routes: %w", err)
@@ -326,9 +318,6 @@ func (s *suite) reset(t *testing.T, caseDir string) {
 func (s *suite) resetProfileCaches() {
 	if s.profile != nil {
 		*s.profile = *featureprofile.NewService(featureprofile.NewRepository(s.db.Pool), featureprofile.NewUserCache(s.kratos.CursorClient()), s.roles, s.kratos.CursorClient())
-	}
-	if legacyProfile != nil {
-		legacyProfile.resetCache()
 	}
 }
 

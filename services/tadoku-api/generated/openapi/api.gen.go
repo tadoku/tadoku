@@ -1011,11 +1011,6 @@ type ImmersionUserProfile struct {
 	Id          openapi_types.UUID `json:"id"`
 }
 
-// ProfileInternalErrorResponse defines model for ProfileInternalErrorResponse.
-type ProfileInternalErrorResponse struct {
-	Error string `json:"error"`
-}
-
 // ProfileUserList defines model for ProfileUserList.
 type ProfileUserList struct {
 	TotalSize int                    `json:"total_size"`

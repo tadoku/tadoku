@@ -39,7 +39,7 @@ local_resource(
 )
 
 # The Zalando operator creates credentials beside the Postgres resource in
-# default, while each API runs in its own namespace. Copy only the four API
+# default, while each API runs in its own namespace. Copy only the remaining API
 # credentials after provisioning; the target Namespace owns each copy so Tilt
 # teardown garbage-collects it with the rest of that API's dev resources.
 local_resource(
@@ -87,7 +87,6 @@ include('../../infra/dev/tools/Tiltfile')
 
 include('../../services/token-reflector/Tiltfile')
 include('../../services/immersion-api/Tiltfile')
-include('../../services/profile-api/Tiltfile')
 include('../../services/tadoku-api/Tiltfile')
 
 include('../../frontend/Tiltfile')
@@ -104,7 +103,6 @@ local_resource(
     labels=['infra'],
     resource_deps=[
         'immersion-api',
-        'profile-api',
         'kratos',
         'keto',
     ],

@@ -1222,9 +1222,11 @@ paths:
                 $ref: "#/components/schemas/ImmersionLeaderboard"
         "404":
           description: not found
+        "500":
+          description: leaderboard read failed
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /contests/{id}/leaderboard
       x-legacy-operation-id: contestFetchLeaderboard
   "/immersion/contests/{id}/summary":
@@ -2080,9 +2082,11 @@ paths:
                 $ref: "#/components/schemas/ImmersionLeaderboard"
         "404":
           description: not found
+        "500":
+          description: leaderboard read failed
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /leaderboard/yearly/{year}
       x-legacy-operation-id: fetchLeaderboardForYear
   /immersion/leaderboard/global:
@@ -2121,9 +2125,11 @@ paths:
                 $ref: "#/components/schemas/ImmersionLeaderboard"
         "404":
           description: not found
+        "500":
+          description: leaderboard read failed
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /leaderboard/global
       x-legacy-operation-id: fetchLeaderboardGlobal
   /immersion/scoring/rule-sets:

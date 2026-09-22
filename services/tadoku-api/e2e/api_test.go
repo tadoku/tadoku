@@ -28,6 +28,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/features/contests"
 	nativefeatureflags "github.com/tadoku/tadoku/services/tadoku-api/features/featureflags"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/languages"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/logs"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/pages"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/posts"
@@ -39,6 +40,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testkratos"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
 	transport "github.com/tadoku/tadoku/services/tadoku-api/transport/http"
+	valkeygo "github.com/valkey-io/valkey-go"
 )
 
 var api *suite
@@ -49,6 +51,9 @@ var legacyBannedUsers http.Handler
 var authenticationJWKS *httptest.Server
 var keto *testketo.Fixture
 var flipt *testflipt.Fixture
+var leaderboardValkey *leaderboardValkeyFixture
+var unavailableLeaderboardNative http.Handler
+var unavailableLeaderboardLegacy *legacyImmersionAPI
 
 const callbackToken = "test-oathkeeper-callback-token"
 
@@ -104,6 +109,13 @@ func runTests(m *testing.M) (code int) {
 	}
 	defer func() { cleanupErr = errors.Join(cleanupErr, kratos.Close()) }()
 
+	leaderboardValkey, err = newLeaderboardValkeyFixture(ctx)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	defer func() { cleanupErr = errors.Join(cleanupErr, leaderboardValkey.close()) }()
+
 	api, err = newTestAPI(ctx, keto, kratos)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -141,12 +153,28 @@ func runTests(m *testing.M) (code int) {
 	}
 	unavailableCallback = unavailableNative
 
-	legacyImmersion, err = newLegacyImmersionAPI(ctx, api.db.DSN, authenticationJWKS.URL, keto.ReadURL(), kratos.Client())
+	legacyImmersion, err = newLegacyImmersionAPI(ctx, api.db.DSN, authenticationJWKS.URL, keto.ReadURL(), kratos.Client(), leaderboardValkey.client)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}
 	defer func() { cleanupErr = errors.Join(cleanupErr, legacyImmersion.db.Close()) }()
+	unavailableValkey, err := newClosedLeaderboardValkeyClient()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	unavailableLeaderboardNative, _, _, err = newTestRouterWithLeaderboard(ctx, api.db.Pool, api.db.Pool, keto, kratos, slog.New(slog.NewTextHandler(io.Discard, nil)), false, unavailableValkey, 25*time.Millisecond)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	unavailableLeaderboardLegacy, err = newLegacyImmersionAPIWithTimeout(ctx, api.db.DSN, authenticationJWKS.URL, keto.ReadURL(), kratos.Client(), unavailableValkey, 25*time.Millisecond)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	defer func() { cleanupErr = errors.Join(cleanupErr, unavailableLeaderboardLegacy.db.Close()) }()
 	legacyBannedUsers = newLegacyBannedUsersHandler(authenticationJWKS.URL, keto.ReadURL())
 
 	return m.Run()
@@ -227,6 +255,20 @@ func newTestRouterWithScoringEngine(
 	logger *slog.Logger,
 	scoringEngineEnabled bool,
 ) (*transport.Router, *featureprofile.Service, *commonroles.KetoService, error) {
+	return newTestRouterWithLeaderboard(ctx, pool, auditPool, ketoFixture, kratosFixture, logger, scoringEngineEnabled, leaderboardValkey.client, time.Second)
+}
+
+func newTestRouterWithLeaderboard(
+	ctx context.Context,
+	pool *pgxpool.Pool,
+	auditPool *pgxpool.Pool,
+	ketoFixture *testketo.Fixture,
+	kratosFixture *testkratos.Fixture,
+	logger *slog.Logger,
+	scoringEngineEnabled bool,
+	valkeyClient valkeygo.Client,
+	valkeyTimeout time.Duration,
+) (*transport.Router, *featureprofile.Service, *commonroles.KetoService, error) {
 	reader := ketoclient.NewReadClient(ketoFixture.ReadURL())
 	readWriter := ketoclient.NewClient(ketoFixture.ReadURL(), ketoFixture.WriteURL())
 	permissionChecker := permissions.NewKetoChecker(reader)
@@ -250,6 +292,7 @@ func newTestRouterWithScoringEngine(
 	profileRepository := featureprofile.NewRepository(pool)
 	announcementsService := announcements.NewService(announcementsRepository)
 	contestsService := contests.NewService(contestsRepository, kratosFixture.Client())
+	leaderboardService := leaderboard.NewService(leaderboard.NewRepository(pool), valkeyClient, valkeyTimeout)
 	languagesService := languages.NewService(languagesRepository)
 	logsService := logs.NewService(logsRepository, scoringEngineEnabled)
 	pagesService := pages.NewService(pagesRepository)
@@ -257,7 +300,7 @@ func newTestRouterWithScoringEngine(
 	profileService := featureprofile.NewService(profileRepository, featureprofile.NewUserCache(identities), roleService, identities)
 	featureFlagEvaluator := featureflags.NewEvaluator(flipt, nil, commondomain.NewMockClock(fixtureInstant))
 	featureFlagsService := nativefeatureflags.NewService(featureFlagEvaluator, fliptmanagement.NewClient(fliptmanagement.Config{URL: flipt.URL(), Environment: "local"}))
-	application := app.New(announcementsService, auditService, authzService, contestsService, languagesService, logsService, pagesService, postsService, profileService, featureFlagsService, pool, permissionChecker)
+	application := app.New(announcementsService, auditService, authzService, contestsService, leaderboardService, languagesService, logsService, pagesService, postsService, profileService, featureFlagsService, pool, permissionChecker)
 	authenticate, err := transport.NewJWTAuthentication(ctx, authenticationJWKS.URL, time.Second, 24*time.Hour, "http://oathkeeper-api/", logger)
 	if err != nil {
 		return nil, nil, nil, err
@@ -315,6 +358,11 @@ func (s *suite) reset(t *testing.T, caseDir string) {
 	}
 	if s.db != nil {
 		if err := s.db.Reset(t.Context(), postgresSeeds...); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if leaderboardValkey != nil {
+		if err := leaderboardValkey.reset(t.Context()); err != nil {
 			t.Fatal(err)
 		}
 	}

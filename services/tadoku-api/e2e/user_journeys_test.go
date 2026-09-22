@@ -224,6 +224,12 @@ func TestContestRegistrationJourney(t *testing.T) {
 			want:    http.StatusOK,
 			at:      fixtureInstant.Add(24 * time.Hour),
 		},
+		{
+			request: "registrants_appear_on_leaderboard",
+			as:      user2,
+			want:    http.StatusOK,
+			at:      fixtureInstant.Add(24 * time.Hour),
+		},
 	})
 }
 

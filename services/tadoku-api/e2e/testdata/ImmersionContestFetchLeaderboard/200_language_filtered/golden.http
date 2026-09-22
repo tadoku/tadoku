@@ -1,0 +1,6 @@
+>>> GET /immersion/contests/f1111111-1111-4111-8111-111111111111/leaderboard?language_code=eng
+HTTP/1.1 200 OK
+Content-Length: 164
+Content-Type: application/json; charset=UTF-8
+
+{"entries":[{"is_tie":false,"rank":1,"score":20,"user_display_name":"Baker","user_id":"22222222-2222-4222-8222-222222222222"}],"next_page_token":"","total_size":1}

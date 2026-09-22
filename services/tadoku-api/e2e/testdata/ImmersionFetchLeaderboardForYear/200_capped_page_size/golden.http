@@ -1,0 +1,6 @@
+>>> GET /immersion/leaderboard/yearly/2026?page_size=101&page=1
+HTTP/1.1 200 OK
+Content-Length: 169
+Content-Type: application/json; charset=UTF-8
+
+{"entries":[{"is_tie":false,"rank":101,"score":1,"user_display_name":"Cap 101","user_id":"80000000-0000-4000-8000-000000000101"}],"next_page_token":"","total_size":101}

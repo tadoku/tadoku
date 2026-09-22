@@ -1058,6 +1058,14 @@ type ImmersionContestListParams struct {
 	UserId         *openapi_types.UUID `form:"user_id,omitempty" json:"user_id,omitempty"`
 }
 
+// ImmersionContestFetchLeaderboardParams defines parameters for ImmersionContestFetchLeaderboard.
+type ImmersionContestFetchLeaderboardParams struct {
+	PageSize     *int    `form:"page_size,omitempty" json:"page_size,omitempty"`
+	Page         *int    `form:"page,omitempty" json:"page,omitempty"`
+	LanguageCode *string `form:"language_code,omitempty" json:"language_code,omitempty"`
+	ActivityId   *int    `form:"activity_id,omitempty" json:"activity_id,omitempty"`
+}
+
 // ImmersionContestListLogsParams defines parameters for ImmersionContestListLogs.
 type ImmersionContestListLogsParams struct {
 	IncludeDeleted *bool               `form:"include_deleted,omitempty" json:"include_deleted,omitempty"`
@@ -1074,6 +1082,22 @@ type ImmersionContestRegistrationUpsertJSONBody struct {
 // ImmersionLanguageUpdateJSONBody defines parameters for ImmersionLanguageUpdate.
 type ImmersionLanguageUpdateJSONBody struct {
 	Name string `json:"name"`
+}
+
+// ImmersionFetchLeaderboardGlobalParams defines parameters for ImmersionFetchLeaderboardGlobal.
+type ImmersionFetchLeaderboardGlobalParams struct {
+	PageSize     *int    `form:"page_size,omitempty" json:"page_size,omitempty"`
+	Page         *int    `form:"page,omitempty" json:"page,omitempty"`
+	LanguageCode *string `form:"language_code,omitempty" json:"language_code,omitempty"`
+	ActivityId   *int    `form:"activity_id,omitempty" json:"activity_id,omitempty"`
+}
+
+// ImmersionFetchLeaderboardForYearParams defines parameters for ImmersionFetchLeaderboardForYear.
+type ImmersionFetchLeaderboardForYearParams struct {
+	PageSize     *int    `form:"page_size,omitempty" json:"page_size,omitempty"`
+	Page         *int    `form:"page,omitempty" json:"page,omitempty"`
+	LanguageCode *string `form:"language_code,omitempty" json:"language_code,omitempty"`
+	ActivityId   *int    `form:"activity_id,omitempty" json:"activity_id,omitempty"`
 }
 
 // ImmersionLogTagSuggestionsParams defines parameters for ImmersionLogTagSuggestions.
@@ -1234,6 +1258,9 @@ type ServerInterface interface {
 	// ImmersionContestFindByID Fetches a contest by id
 	// (GET /immersion/contests/{id})
 	ImmersionContestFindByID(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// ImmersionContestFetchLeaderboard Fetches the leaderboard for a contest
+	// (GET /immersion/contests/{id}/leaderboard)
+	ImmersionContestFetchLeaderboard(w http.ResponseWriter, r *http.Request, id openapi_types.UUID, params ImmersionContestFetchLeaderboardParams)
 	// ImmersionContestListLogs Lists the logs attached to a contest
 	// (GET /immersion/contests/{id}/logs)
 	ImmersionContestListLogs(w http.ResponseWriter, r *http.Request, id openapi_types.UUID, params ImmersionContestListLogsParams)
@@ -1264,6 +1291,12 @@ type ServerInterface interface {
 	// ImmersionLanguageUpdate Updates an existing language (admin only)
 	// (PUT /immersion/languages/{code})
 	ImmersionLanguageUpdate(w http.ResponseWriter, r *http.Request, code string)
+	// ImmersionFetchLeaderboardGlobal Fetches the global leaderboard
+	// (GET /immersion/leaderboard/global)
+	ImmersionFetchLeaderboardGlobal(w http.ResponseWriter, r *http.Request, params ImmersionFetchLeaderboardGlobalParams)
+	// ImmersionFetchLeaderboardForYear Fetches the leaderboard for a given year
+	// (GET /immersion/leaderboard/yearly/{year})
+	ImmersionFetchLeaderboardForYear(w http.ResponseWriter, r *http.Request, year int, params ImmersionFetchLeaderboardForYearParams)
 	// ImmersionLogGetConfigurations Fetches the configuration options for a log
 	// (GET /immersion/logs/configuration-options)
 	ImmersionLogGetConfigurations(w http.ResponseWriter, r *http.Request)
@@ -2413,6 +2446,87 @@ func (siw *ServerInterfaceWrapper) ImmersionContestFindByID(w http.ResponseWrite
 	handler.ServeHTTP(w, r)
 }
 
+// ImmersionContestFetchLeaderboard operation middleware
+func (siw *ServerInterfaceWrapper) ImmersionContestFetchLeaderboard(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ImmersionContestFetchLeaderboardParams
+
+	// ------------- Optional query parameter "page_size" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page_size", r.URL.Query(), &params.PageSize, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page_size"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page_size", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "language_code" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "language_code", r.URL.Query(), &params.LanguageCode, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "language_code"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "language_code", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "activity_id" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "activity_id", r.URL.Query(), &params.ActivityId, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "activity_id"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "activity_id", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ImmersionContestFetchLeaderboard(w, r, id, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ImmersionContestListLogs operation middleware
 func (siw *ServerInterfaceWrapper) ImmersionContestListLogs(w http.ResponseWriter, r *http.Request) {
 
@@ -2701,6 +2815,159 @@ func (siw *ServerInterfaceWrapper) ImmersionLanguageUpdate(w http.ResponseWriter
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ImmersionLanguageUpdate(w, r, code)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ImmersionFetchLeaderboardGlobal operation middleware
+func (siw *ServerInterfaceWrapper) ImmersionFetchLeaderboardGlobal(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ImmersionFetchLeaderboardGlobalParams
+
+	// ------------- Optional query parameter "page_size" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page_size", r.URL.Query(), &params.PageSize, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page_size"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page_size", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "language_code" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "language_code", r.URL.Query(), &params.LanguageCode, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "language_code"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "language_code", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "activity_id" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "activity_id", r.URL.Query(), &params.ActivityId, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "activity_id"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "activity_id", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ImmersionFetchLeaderboardGlobal(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ImmersionFetchLeaderboardForYear operation middleware
+func (siw *ServerInterfaceWrapper) ImmersionFetchLeaderboardForYear(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "year" -------------
+	var year int
+
+	err = runtime.BindStyledParameterWithOptions("simple", "year", r.PathValue("year"), &year, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "year", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ImmersionFetchLeaderboardForYearParams
+
+	// ------------- Optional query parameter "page_size" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page_size", r.URL.Query(), &params.PageSize, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page_size"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page_size", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "language_code" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "language_code", r.URL.Query(), &params.LanguageCode, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "language_code"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "language_code", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "activity_id" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "activity_id", r.URL.Query(), &params.ActivityId, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "activity_id"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "activity_id", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ImmersionFetchLeaderboardForYear(w, r, year, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -3226,6 +3493,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/latest-official", wrapper.ImmersionContestFindLatestOfficial)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/{id}/registration", wrapper.ImmersionContestFindRegistration)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/immersion/contests/{id}/registration", wrapper.ImmersionContestRegistrationUpsert)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/{id}/leaderboard", wrapper.ImmersionContestFetchLeaderboard)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/{id}/summary", wrapper.ImmersionContestFetchSummary)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/{id}/logs", wrapper.ImmersionContestListLogs)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/{id}/profile/{user_id}/scores", wrapper.ImmersionContestProfileFetchScores)
@@ -3245,6 +3513,8 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/immersion/admin/feature-flags/{flagKey}/users/{userId}", wrapper.ImmersionFeatureAccessRevoke)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/admin/feature-flags/{flagKey}/users/{userId}", wrapper.ImmersionFeatureAccessGet)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/immersion/admin/feature-flags/{flagKey}/users/{userId}", wrapper.ImmersionFeatureAccessGrant)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/leaderboard/yearly/{year}", wrapper.ImmersionFetchLeaderboardForYear)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/leaderboard/global", wrapper.ImmersionFetchLeaderboardGlobal)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/languages", wrapper.ImmersionLanguageList)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/immersion/languages", wrapper.ImmersionLanguageCreate)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/immersion/languages/{code}", wrapper.ImmersionLanguageUpdate)
@@ -4556,6 +4826,45 @@ func (response ImmersionContestFindByID404Response) VisitImmersionContestFindByI
 	return nil
 }
 
+type ImmersionContestFetchLeaderboardRequestObject struct {
+	Id     openapi_types.UUID `json:"id"`
+	Params ImmersionContestFetchLeaderboardParams
+}
+
+type ImmersionContestFetchLeaderboardResponseObject interface {
+	VisitImmersionContestFetchLeaderboardResponse(w http.ResponseWriter) error
+}
+
+type ImmersionContestFetchLeaderboard200JSONResponse ImmersionLeaderboard
+
+func (response ImmersionContestFetchLeaderboard200JSONResponse) VisitImmersionContestFetchLeaderboardResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImmersionContestFetchLeaderboard404Response struct {
+}
+
+func (response ImmersionContestFetchLeaderboard404Response) VisitImmersionContestFetchLeaderboardResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type ImmersionContestFetchLeaderboard500Response struct {
+}
+
+func (response ImmersionContestFetchLeaderboard500Response) VisitImmersionContestFetchLeaderboardResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
 type ImmersionContestListLogsRequestObject struct {
 	Id     openapi_types.UUID `json:"id"`
 	Params ImmersionContestListLogsParams
@@ -4976,6 +5285,83 @@ type ImmersionLanguageUpdate404Response struct {
 
 func (response ImmersionLanguageUpdate404Response) VisitImmersionLanguageUpdateResponse(w http.ResponseWriter) error {
 	w.WriteHeader(404)
+	return nil
+}
+
+type ImmersionFetchLeaderboardGlobalRequestObject struct {
+	Params ImmersionFetchLeaderboardGlobalParams
+}
+
+type ImmersionFetchLeaderboardGlobalResponseObject interface {
+	VisitImmersionFetchLeaderboardGlobalResponse(w http.ResponseWriter) error
+}
+
+type ImmersionFetchLeaderboardGlobal200JSONResponse ImmersionLeaderboard
+
+func (response ImmersionFetchLeaderboardGlobal200JSONResponse) VisitImmersionFetchLeaderboardGlobalResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImmersionFetchLeaderboardGlobal404Response struct {
+}
+
+func (response ImmersionFetchLeaderboardGlobal404Response) VisitImmersionFetchLeaderboardGlobalResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type ImmersionFetchLeaderboardGlobal500Response struct {
+}
+
+func (response ImmersionFetchLeaderboardGlobal500Response) VisitImmersionFetchLeaderboardGlobalResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
+type ImmersionFetchLeaderboardForYearRequestObject struct {
+	Year   int `json:"year"`
+	Params ImmersionFetchLeaderboardForYearParams
+}
+
+type ImmersionFetchLeaderboardForYearResponseObject interface {
+	VisitImmersionFetchLeaderboardForYearResponse(w http.ResponseWriter) error
+}
+
+type ImmersionFetchLeaderboardForYear200JSONResponse ImmersionLeaderboard
+
+func (response ImmersionFetchLeaderboardForYear200JSONResponse) VisitImmersionFetchLeaderboardForYearResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImmersionFetchLeaderboardForYear404Response struct {
+}
+
+func (response ImmersionFetchLeaderboardForYear404Response) VisitImmersionFetchLeaderboardForYearResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type ImmersionFetchLeaderboardForYear500Response struct {
+}
+
+func (response ImmersionFetchLeaderboardForYear500Response) VisitImmersionFetchLeaderboardForYearResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
 	return nil
 }
 
@@ -5416,6 +5802,9 @@ type StrictServerInterface interface {
 	// ImmersionContestFindByID Fetches a contest by id
 	// (GET /immersion/contests/{id})
 	ImmersionContestFindByID(ctx context.Context, request ImmersionContestFindByIDRequestObject) (ImmersionContestFindByIDResponseObject, error)
+	// ImmersionContestFetchLeaderboard Fetches the leaderboard for a contest
+	// (GET /immersion/contests/{id}/leaderboard)
+	ImmersionContestFetchLeaderboard(ctx context.Context, request ImmersionContestFetchLeaderboardRequestObject) (ImmersionContestFetchLeaderboardResponseObject, error)
 	// ImmersionContestListLogs Lists the logs attached to a contest
 	// (GET /immersion/contests/{id}/logs)
 	ImmersionContestListLogs(ctx context.Context, request ImmersionContestListLogsRequestObject) (ImmersionContestListLogsResponseObject, error)
@@ -5446,6 +5835,12 @@ type StrictServerInterface interface {
 	// ImmersionLanguageUpdate Updates an existing language (admin only)
 	// (PUT /immersion/languages/{code})
 	ImmersionLanguageUpdate(ctx context.Context, request ImmersionLanguageUpdateRequestObject) (ImmersionLanguageUpdateResponseObject, error)
+	// ImmersionFetchLeaderboardGlobal Fetches the global leaderboard
+	// (GET /immersion/leaderboard/global)
+	ImmersionFetchLeaderboardGlobal(ctx context.Context, request ImmersionFetchLeaderboardGlobalRequestObject) (ImmersionFetchLeaderboardGlobalResponseObject, error)
+	// ImmersionFetchLeaderboardForYear Fetches the leaderboard for a given year
+	// (GET /immersion/leaderboard/yearly/{year})
+	ImmersionFetchLeaderboardForYear(ctx context.Context, request ImmersionFetchLeaderboardForYearRequestObject) (ImmersionFetchLeaderboardForYearResponseObject, error)
 	// ImmersionLogGetConfigurations Fetches the configuration options for a log
 	// (GET /immersion/logs/configuration-options)
 	ImmersionLogGetConfigurations(ctx context.Context, request ImmersionLogGetConfigurationsRequestObject) (ImmersionLogGetConfigurationsResponseObject, error)
@@ -6466,6 +6861,33 @@ func (sh *strictHandler) ImmersionContestFindByID(w http.ResponseWriter, r *http
 	}
 }
 
+// ImmersionContestFetchLeaderboard operation middleware
+func (sh *strictHandler) ImmersionContestFetchLeaderboard(w http.ResponseWriter, r *http.Request, id openapi_types.UUID, params ImmersionContestFetchLeaderboardParams) {
+	var request ImmersionContestFetchLeaderboardRequestObject
+
+	request.Id = id
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ImmersionContestFetchLeaderboard(ctx, request.(ImmersionContestFetchLeaderboardRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ImmersionContestFetchLeaderboard")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ImmersionContestFetchLeaderboardResponseObject); ok {
+		if err := validResponse.VisitImmersionContestFetchLeaderboardResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ImmersionContestListLogs operation middleware
 func (sh *strictHandler) ImmersionContestListLogs(w http.ResponseWriter, r *http.Request, id openapi_types.UUID, params ImmersionContestListLogsParams) {
 	var request ImmersionContestListLogsRequestObject
@@ -6737,6 +7159,59 @@ func (sh *strictHandler) ImmersionLanguageUpdate(w http.ResponseWriter, r *http.
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ImmersionLanguageUpdateResponseObject); ok {
 		if err := validResponse.VisitImmersionLanguageUpdateResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ImmersionFetchLeaderboardGlobal operation middleware
+func (sh *strictHandler) ImmersionFetchLeaderboardGlobal(w http.ResponseWriter, r *http.Request, params ImmersionFetchLeaderboardGlobalParams) {
+	var request ImmersionFetchLeaderboardGlobalRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ImmersionFetchLeaderboardGlobal(ctx, request.(ImmersionFetchLeaderboardGlobalRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ImmersionFetchLeaderboardGlobal")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ImmersionFetchLeaderboardGlobalResponseObject); ok {
+		if err := validResponse.VisitImmersionFetchLeaderboardGlobalResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ImmersionFetchLeaderboardForYear operation middleware
+func (sh *strictHandler) ImmersionFetchLeaderboardForYear(w http.ResponseWriter, r *http.Request, year int, params ImmersionFetchLeaderboardForYearParams) {
+	var request ImmersionFetchLeaderboardForYearRequestObject
+
+	request.Year = year
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ImmersionFetchLeaderboardForYear(ctx, request.(ImmersionFetchLeaderboardForYearRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ImmersionFetchLeaderboardForYear")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ImmersionFetchLeaderboardForYearResponseObject); ok {
+		if err := validResponse.VisitImmersionFetchLeaderboardForYearResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

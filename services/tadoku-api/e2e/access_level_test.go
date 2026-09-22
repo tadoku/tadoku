@@ -30,6 +30,9 @@ var operationAccess = map[string]accessLevel{
 
 	"ImmersionContestProfileFetchScores":   accessPublic,
 	"ImmersionContestProfileFetchActivity": accessPublic,
+	"ImmersionContestFetchLeaderboard":     accessPublic,
+	"ImmersionFetchLeaderboardForYear":     accessPublic,
+	"ImmersionFetchLeaderboardGlobal":      accessPublic,
 
 	"ImmersionProfileFindByUserID":                accessPublic,
 	"ImmersionProfileYearlyActivityByUserID":      accessPublic,

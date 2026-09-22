@@ -1,0 +1,6 @@
+>>> GET /immersion/leaderboard/yearly/2024
+HTTP/1.1 200 OK
+Content-Length: 51
+Content-Type: application/json; charset=UTF-8
+
+{"entries":[],"next_page_token":"","total_size":0}

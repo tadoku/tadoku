@@ -144,18 +144,6 @@ const sidebar: SidebarsConfig = {
         },
       ],
     },
-    {
-      type: "category",
-      label: "metadata",
-      items: [
-        {
-          type: "doc",
-          id: "api/content/ping",
-          label: "Checks if service is responsive",
-          className: "api-method get",
-        },
-      ],
-    },
   ],
 };
 

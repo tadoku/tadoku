@@ -3,6 +3,7 @@ package domain
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
@@ -38,6 +39,7 @@ type LogCreateRequest struct {
 	year                        int16
 	tracking                    LogTracking
 	contestTrackings            []ContestLogTracking
+	createdAt                   time.Time
 }
 
 func (r *LogCreateRequest) UserID() uuid.UUID                 { return r.userID }
@@ -47,6 +49,7 @@ func (r *LogCreateRequest) Tracking() LogTracking             { return r.trackin
 func (r *LogCreateRequest) ContestTrackings() []ContestLogTracking {
 	return r.contestTrackings
 }
+func (r *LogCreateRequest) CreatedAt() time.Time { return r.createdAt }
 
 type LogCreate struct {
 	repo             LogCreateRepository
@@ -226,7 +229,9 @@ func (s *LogCreate) Execute(ctx context.Context, req *LogCreateRequest) (*Log, e
 		}
 	}
 
-	req.year = int16(s.clock.Now().Year())
+	now := s.clock.Now()
+	req.year = int16(now.Year())
+	req.createdAt = now
 
 	logId, err := s.repo.CreateLog(ctx, req)
 	if err != nil {

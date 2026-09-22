@@ -69,6 +69,8 @@ test('all retained wire contracts survive the merge, including internal callers'
       // Native scoring operations document the empty 500 already returned by legacy.
       for (const [path, method] of [
         ['/logs/score-preview', 'post'],
+        ['/logs', 'post'],
+        ['/logs/{id}', 'put'],
         ['/scoring/rule-sets', 'get'],
         ['/scoring/rule-sets', 'post'],
         ['/contests/{id}/scoring/rule-sets', 'get'],

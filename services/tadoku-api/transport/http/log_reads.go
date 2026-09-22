@@ -23,7 +23,12 @@ func (s *server) ImmersionLogFindByID(ctx context.Context, request openapi.Immer
 		}
 	}
 
-	response := logResponse(*log)
+	response := logDetailResponse(*log)
+	return openapi.ImmersionLogFindByID200JSONResponse(response), nil
+}
+
+func logDetailResponse(log app.Log) openapi.ImmersionLog {
+	response := logResponse(log)
 	response.UnitId = log.UnitID
 	if log.UnitKey != "" {
 		response.UnitKey = &log.UnitKey
@@ -41,7 +46,7 @@ func (s *server) ImmersionLogFindByID(ctx context.Context, request openapi.Immer
 		})
 	}
 	response.Registrations = &refs
-	return openapi.ImmersionLogFindByID200JSONResponse(response), nil
+	return response
 }
 
 func (s *server) ImmersionProfileListLogs(ctx context.Context, request openapi.ImmersionProfileListLogsRequestObject) (openapi.ImmersionProfileListLogsResponseObject, error) {

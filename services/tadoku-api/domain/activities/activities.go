@@ -26,3 +26,24 @@ type Activity struct {
 }
 
 func All() []Activity { return append([]Activity(nil), catalog...) }
+
+var unitActivities = map[string]int32{
+	"reading_page":            1,
+	"reading_two_column_page": 1,
+	"reading_comic_page":      1,
+	"reading_sentence":        1,
+	"reading_character":       1,
+	"listening_minute":        2,
+	"listening_dense_minutes": 2,
+	"writing_page":            3,
+	"writing_sentence":        3,
+	"writing_character":       3,
+	"speaking_minute":         4,
+	"speaking_dense_minutes":  4,
+	"study_minute":            5,
+}
+
+func UnitActivityID(key string) (int32, bool) {
+	id, ok := unitActivities[key]
+	return id, ok
+}

@@ -68,5 +68,7 @@ output-options:
     - ImmersionScoringRuleSetCreateContest
     - ImmersionScoringRuleSetPublish
     - ImmersionScoringRuleSetActivate
+    - ImmersionLogCreate
+    - ImmersionLogUpdate
   nullable-type: true
   skip-prune: true

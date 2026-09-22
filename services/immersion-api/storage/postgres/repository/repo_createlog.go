@@ -39,6 +39,7 @@ func (r *Repository) CreateLog(ctx context.Context, req *domain.LogCreateRequest
 		ScoreSource:                 scoreSource(tracking.ScoreProvenance),
 		EligibleOfficialLeaderboard: req.EligibleOfficialLeaderboard(),
 		Description:                 postgres.NewNullString(req.Description),
+		CreatedAt:                   req.CreatedAt(),
 	})
 	if err != nil {
 		_ = tx.Rollback()

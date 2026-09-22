@@ -129,7 +129,8 @@ func (p *DraftRules) normalize(languages []domainlanguages.Language) error {
 		if !validActivity(rule.ActivityID) {
 			return errx.NewInvalidInputError("rule activity_id is not valid")
 		}
-		if rule.UnitKey != "" && unitActivities[rule.UnitKey] != rule.ActivityID {
+		unitActivity, knownUnit := activities.UnitActivityID(rule.UnitKey)
+		if rule.UnitKey != "" && (!knownUnit || unitActivity != rule.ActivityID) {
 			return errx.NewInvalidInputError("rule unit_key is not valid for activity_id")
 		}
 		if len(rule.LanguageCode) > 10 {
@@ -334,22 +335,6 @@ func scoreableValue(input scoringInput) (float32, Source, error) {
 func validActivity(id int32) bool {
 	all := activities.All()
 	return id > 0 && int(id) <= len(all) && all[id-1].ID == id
-}
-
-var unitActivities = map[string]int32{
-	"reading_page":            1,
-	"reading_two_column_page": 1,
-	"reading_comic_page":      1,
-	"reading_sentence":        1,
-	"reading_character":       1,
-	"listening_minute":        2,
-	"listening_dense_minutes": 2,
-	"writing_page":            3,
-	"writing_sentence":        3,
-	"writing_character":       3,
-	"speaking_minute":         4,
-	"speaking_dense_minutes":  4,
-	"study_minute":            5,
 }
 
 func finite(value float32) bool { return !math.IsNaN(float64(value)) && !math.IsInf(float64(value), 0) }

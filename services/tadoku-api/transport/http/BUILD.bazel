@@ -30,6 +30,7 @@ go_library(
         "languages.go",
         "leaderboard.go",
         "log_configuration.go",
+        "log_mutations.go",
         "log_reads.go",
         "log_tag_suggestions.go",
         "observability.go",

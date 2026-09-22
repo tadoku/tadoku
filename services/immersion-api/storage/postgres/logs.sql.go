@@ -113,7 +113,9 @@ insert into logs (
   score_rates,
   score_source,
   eligible_official_leaderboard,
-  "description"
+  "description",
+  created_at,
+  updated_at
 ) values (
   $1,
   $2,
@@ -130,7 +132,9 @@ insert into logs (
   $13,
   $14,
   $15,
-  $16
+  $16,
+  $17,
+  $17
 ) returning id
 `
 
@@ -151,6 +155,7 @@ type CreateLogParams struct {
 	ScoreSource                 sql.NullString
 	EligibleOfficialLeaderboard bool
 	Description                 sql.NullString
+	CreatedAt                   time.Time
 }
 
 func (q *Queries) CreateLog(ctx context.Context, arg CreateLogParams) (uuid.UUID, error) {
@@ -171,6 +176,7 @@ func (q *Queries) CreateLog(ctx context.Context, arg CreateLogParams) (uuid.UUID
 		arg.ScoreSource,
 		arg.EligibleOfficialLeaderboard,
 		arg.Description,
+		arg.CreatedAt,
 	)
 	var id uuid.UUID
 	err := row.Scan(&id)

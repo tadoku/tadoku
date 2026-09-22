@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/tadoku/tadoku/services/tadoku-api/domain/activities"
 	domainlanguages "github.com/tadoku/tadoku/services/tadoku-api/domain/languages"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
@@ -93,7 +94,10 @@ func (s *Service) Preview(ctx context.Context, parameters PreviewParameters) (*P
 		return nil, fmt.Errorf("preview platform score: %w", err)
 	}
 
-	result := &Preview{Platform: platform, Contests: make([]ContestEstimate, 0, len(parameters.Contests))}
+	result := &Preview{
+		Platform: platform,
+		Contests: make([]ContestEstimate, 0, len(parameters.Contests)),
+	}
 	for _, contest := range parameters.Contests {
 		set, fallback, err := s.findContestRuleSets(ctx, contest.ContestID)
 		if err != nil {
@@ -128,11 +132,72 @@ func (s *Service) Preview(ctx context.Context, parameters PreviewParameters) (*P
 	return result, nil
 }
 
+func (s *Service) ScorePlatform(ctx context.Context, parameters PreviewParameters) (Estimate, bool, error) {
+	unitKey, err := s.resolveUnit(ctx, parameters)
+	if err != nil {
+		return Estimate{}, false, err
+	}
+	input := scoringInput{
+		activityID:      parameters.ActivityID,
+		unitKey:         unitKey,
+		languageCode:    parameters.LanguageCode,
+		tags:            parameters.Tags,
+		amount:          parameters.Amount,
+		durationSeconds: parameters.DurationSeconds,
+	}
+	set, err := s.repository.FindActivePlatformRuleSet(ctx)
+	if err != nil {
+		return Estimate{}, false, err
+	}
+	set.Rules, err = s.repository.ListRules(ctx, set.ID)
+	if err != nil {
+		return Estimate{}, false, err
+	}
+	return evaluate(input, *set)
+}
+
+func (s *Service) ScoreContest(ctx context.Context, parameters PreviewParameters, contestID uuid.UUID, platform Estimate) (Estimate, error) {
+	unitKey, err := s.resolveUnit(ctx, parameters)
+	if err != nil {
+		return Estimate{}, err
+	}
+	input := scoringInput{
+		activityID:      parameters.ActivityID,
+		unitKey:         unitKey,
+		languageCode:    parameters.LanguageCode,
+		tags:            parameters.Tags,
+		amount:          parameters.Amount,
+		durationSeconds: parameters.DurationSeconds,
+	}
+	set, fallback, err := s.findContestRuleSets(ctx, contestID)
+	if err != nil {
+		return Estimate{}, err
+	}
+	if set == nil {
+		return platform, nil
+	}
+	estimate, matched, err := evaluate(input, *set)
+	if err != nil {
+		return Estimate{}, err
+	}
+	if !matched && set.Mode == "override" {
+		if fallback == nil {
+			return Estimate{}, errx.NewInternalError("override scoring rule set requires a fallback")
+		}
+		estimate, _, err = evaluate(input, *fallback)
+	}
+	if !matched && set.Mode != "override" && set.Mode != "replace" {
+		return Estimate{}, errx.NewInternalError("unknown contest scoring mode")
+	}
+	return estimate, err
+}
+
 func (s *Service) resolveUnit(ctx context.Context, parameters PreviewParameters) (string, error) {
 	if !validActivity(parameters.ActivityID) {
 		return "", errx.NewInvalidInputError("activity_id is not valid")
 	}
-	if parameters.UnitKey != nil && unitActivities[*parameters.UnitKey] != parameters.ActivityID {
+	unitActivity, knownUnit := activities.UnitActivityID(stringValue(parameters.UnitKey))
+	if parameters.UnitKey != nil && (!knownUnit || unitActivity != parameters.ActivityID) {
 		return "", errx.NewInvalidInputError("unit_key is not valid for activity_id")
 	}
 	hasUnit := parameters.UnitID != nil || parameters.UnitKey != nil
@@ -170,10 +235,18 @@ func (s *Service) resolveUnit(ctx context.Context, parameters PreviewParameters)
 	if parameters.UnitKey != nil && resolved != *parameters.UnitKey {
 		return "", errx.NewInvalidInputError("unit_id and unit_key identify different units")
 	}
-	if unitActivities[resolved] != parameters.ActivityID {
+	unitActivity, knownUnit = activities.UnitActivityID(resolved)
+	if !knownUnit || unitActivity != parameters.ActivityID {
 		return "", errx.NewInvalidInputError("resolved unit_key is not valid for activity_id")
 	}
 	return resolved, nil
+}
+
+func stringValue(value *string) string {
+	if value == nil {
+		return ""
+	}
+	return *value
 }
 
 func (s *Service) hydrateRuleSets(ctx context.Context, sets []RuleSet) error {

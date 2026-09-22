@@ -6,8 +6,8 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/tadoku/tadoku/services/common/client/fliptmanagement"
 	commonflags "github.com/tadoku/tadoku/services/common/featureflags"
+	"github.com/tadoku/tadoku/services/tadoku-api/infra/fliptmanagement"
 )
 
 type Service struct {

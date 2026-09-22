@@ -87,7 +87,6 @@ go_test(
     ],
     deps = [
         "//services/common/authz/roles",
-        "//services/common/client/fliptmanagement",
         "//services/common/client/keto",
         "//services/common/client/kratos",
         "//services/common/domain",
@@ -112,6 +111,7 @@ go_test(
         "//services/tadoku-api/features/profile",
         "//services/tadoku-api/generated/openapi",
         "//services/tadoku-api/generated/openapi/callback",
+        "//services/tadoku-api/infra/fliptmanagement",
         "//services/tadoku-api/internal/identity",
         "//services/tadoku-api/internal/permissions",
         "//services/tadoku-api/internal/testketo",

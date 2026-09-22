@@ -4,7 +4,7 @@ package featureaccess
 import (
 	"errors"
 	"github.com/google/uuid"
-	"github.com/tadoku/tadoku/services/common/client/fliptmanagement"
+	"github.com/tadoku/tadoku/services/tadoku-api/infra/fliptmanagement"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
 

@@ -6,7 +6,6 @@ go_library(
     importpath = "github.com/tadoku/tadoku/services/immersion-api/client/fliptmanagement",
     visibility = ["//visibility:public"],
     deps = [
-        "//services/common/client/fliptmanagement",
         "//services/immersion-api/domain",
         "@com_github_google_uuid//:uuid",
     ],

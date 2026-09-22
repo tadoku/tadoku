@@ -1,0 +1,4 @@
+>>> PUT /immersion/logs/d9999999-9999-4999-8999-999999999999/contest-registrations
+HTTP/1.1 404 Not Found
+Content-Length: 0
+

@@ -1074,6 +1074,11 @@ type ImmersionContestListLogsParams struct {
 	UserId         *openapi_types.UUID `form:"user_id,omitempty" json:"user_id,omitempty"`
 }
 
+// ImmersionContestModerationDetachLogJSONBody defines parameters for ImmersionContestModerationDetachLog.
+type ImmersionContestModerationDetachLogJSONBody struct {
+	Reason string `json:"reason"`
+}
+
 // ImmersionContestRegistrationUpsertJSONBody defines parameters for ImmersionContestRegistrationUpsert.
 type ImmersionContestRegistrationUpsertJSONBody struct {
 	LanguageCodes []string `json:"language_codes"`
@@ -1148,6 +1153,11 @@ type ImmersionLogUpdateJSONBody struct {
 	UnitKey *string             `json:"unit_key,omitempty"`
 }
 
+// ImmersionLogContestRegistrationUpdateJSONBody defines parameters for ImmersionLogContestRegistrationUpdate.
+type ImmersionLogContestRegistrationUpdateJSONBody struct {
+	RegistrationIds []openapi_types.UUID `json:"registration_ids"`
+}
+
 // ImmersionProfileListLogsParams defines parameters for ImmersionProfileListLogs.
 type ImmersionProfileListLogsParams struct {
 	IncludeDeleted *bool `form:"include_deleted,omitempty" json:"include_deleted,omitempty"`
@@ -1191,6 +1201,9 @@ type ContentPostUpdateJSONRequestBody = ContentPost
 // ImmersionContestCreateJSONRequestBody defines body for ImmersionContestCreate for application/json ContentType.
 type ImmersionContestCreateJSONRequestBody = ImmersionContest
 
+// ImmersionContestModerationDetachLogJSONRequestBody defines body for ImmersionContestModerationDetachLog for application/json ContentType.
+type ImmersionContestModerationDetachLogJSONRequestBody ImmersionContestModerationDetachLogJSONBody
+
 // ImmersionContestRegistrationUpsertJSONRequestBody defines body for ImmersionContestRegistrationUpsert for application/json ContentType.
 type ImmersionContestRegistrationUpsertJSONRequestBody ImmersionContestRegistrationUpsertJSONBody
 
@@ -1211,6 +1224,9 @@ type ImmersionScorePreviewJSONRequestBody ImmersionScorePreviewJSONBody
 
 // ImmersionLogUpdateJSONRequestBody defines body for ImmersionLogUpdate for application/json ContentType.
 type ImmersionLogUpdateJSONRequestBody ImmersionLogUpdateJSONBody
+
+// ImmersionLogContestRegistrationUpdateJSONRequestBody defines body for ImmersionLogContestRegistrationUpdate for application/json ContentType.
+type ImmersionLogContestRegistrationUpdateJSONRequestBody ImmersionLogContestRegistrationUpdateJSONBody
 
 // ImmersionScoringRuleSetCreatePlatformJSONRequestBody defines body for ImmersionScoringRuleSetCreatePlatform for application/json ContentType.
 type ImmersionScoringRuleSetCreatePlatformJSONRequestBody = ImmersionScoringRuleSetDraft
@@ -1322,6 +1338,9 @@ type ServerInterface interface {
 	// ImmersionContestListLogs Lists the logs attached to a contest
 	// (GET /immersion/contests/{id}/logs)
 	ImmersionContestListLogs(w http.ResponseWriter, r *http.Request, id openapi_types.UUID, params ImmersionContestListLogsParams)
+	// ImmersionContestModerationDetachLog Detaches a log from a contest (moderation action)
+	// (POST /immersion/contests/{id}/moderation/detach/{log_id})
+	ImmersionContestModerationDetachLog(w http.ResponseWriter, r *http.Request, id openapi_types.UUID, logId openapi_types.UUID)
 	// ImmersionContestProfileFetchActivity Fetches the activity of a user profile in a contest
 	// (GET /immersion/contests/{id}/profile/{user_id}/activity)
 	ImmersionContestProfileFetchActivity(w http.ResponseWriter, r *http.Request, id openapi_types.UUID, userId openapi_types.UUID)
@@ -1373,12 +1392,18 @@ type ServerInterface interface {
 	// ImmersionLogTagSuggestions Fetches tag suggestions for autocomplete
 	// (GET /immersion/logs/tag-suggestions)
 	ImmersionLogTagSuggestions(w http.ResponseWriter, r *http.Request, params ImmersionLogTagSuggestionsParams)
+	// ImmersionLogDeleteByID Deletes a log by id
+	// (DELETE /immersion/logs/{id})
+	ImmersionLogDeleteByID(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
 	// ImmersionLogFindByID Fetches a log by id
 	// (GET /immersion/logs/{id})
 	ImmersionLogFindByID(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
 	// ImmersionLogUpdate Updates an existing log
 	// (PUT /immersion/logs/{id})
 	ImmersionLogUpdate(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// ImmersionLogContestRegistrationUpdate Updates the contest registrations for a log
+	// (PUT /immersion/logs/{id}/contest-registrations)
+	ImmersionLogContestRegistrationUpdate(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
 	// ImmersionScoringRuleSetListPlatform Lists platform scoring rule-set versions
 	// (GET /immersion/scoring/rule-sets)
 	ImmersionScoringRuleSetListPlatform(w http.ResponseWriter, r *http.Request)
@@ -2693,6 +2718,41 @@ func (siw *ServerInterfaceWrapper) ImmersionContestListLogs(w http.ResponseWrite
 	handler.ServeHTTP(w, r)
 }
 
+// ImmersionContestModerationDetachLog operation middleware
+func (siw *ServerInterfaceWrapper) ImmersionContestModerationDetachLog(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "log_id" -------------
+	var logId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "log_id", r.PathValue("log_id"), &logId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "log_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ImmersionContestModerationDetachLog(w, r, id, logId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ImmersionContestProfileFetchActivity operation middleware
 func (siw *ServerInterfaceWrapper) ImmersionContestProfileFetchActivity(w http.ResponseWriter, r *http.Request) {
 
@@ -3189,6 +3249,32 @@ func (siw *ServerInterfaceWrapper) ImmersionLogTagSuggestions(w http.ResponseWri
 	handler.ServeHTTP(w, r)
 }
 
+// ImmersionLogDeleteByID operation middleware
+func (siw *ServerInterfaceWrapper) ImmersionLogDeleteByID(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ImmersionLogDeleteByID(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ImmersionLogFindByID operation middleware
 func (siw *ServerInterfaceWrapper) ImmersionLogFindByID(w http.ResponseWriter, r *http.Request) {
 
@@ -3232,6 +3318,32 @@ func (siw *ServerInterfaceWrapper) ImmersionLogUpdate(w http.ResponseWriter, r *
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ImmersionLogUpdate(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ImmersionLogContestRegistrationUpdate operation middleware
+func (siw *ServerInterfaceWrapper) ImmersionLogContestRegistrationUpdate(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ImmersionLogContestRegistrationUpdate(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -3767,14 +3879,17 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/{id}/leaderboard", wrapper.ImmersionContestFetchLeaderboard)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/{id}/summary", wrapper.ImmersionContestFetchSummary)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/{id}/logs", wrapper.ImmersionContestListLogs)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/immersion/contests/{id}/moderation/detach/{log_id}", wrapper.ImmersionContestModerationDetachLog)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/{id}/profile/{user_id}/scores", wrapper.ImmersionContestProfileFetchScores)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/{id}/profile/{user_id}/activity", wrapper.ImmersionContestProfileFetchActivity)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/ongoing-registrations", wrapper.ImmersionContestFindOngoingRegistrations)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/configuration-options", wrapper.ImmersionContestGetConfigurations)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/immersion/logs", wrapper.ImmersionLogCreate)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/immersion/logs/score-preview", wrapper.ImmersionScorePreview)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/immersion/logs/{id}", wrapper.ImmersionLogDeleteByID)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/logs/{id}", wrapper.ImmersionLogFindByID)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/immersion/logs/{id}", wrapper.ImmersionLogUpdate)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/immersion/logs/{id}/contest-registrations", wrapper.ImmersionLogContestRegistrationUpdate)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/logs/configuration-options", wrapper.ImmersionLogGetConfigurations)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/logs/tag-suggestions", wrapper.ImmersionLogTagSuggestions)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/users/{userId}/profile", wrapper.ImmersionProfileFindByUserID)
@@ -5184,6 +5299,72 @@ func (response ImmersionContestListLogs500Response) VisitImmersionContestListLog
 	return nil
 }
 
+type ImmersionContestModerationDetachLogRequestObject struct {
+	Id    openapi_types.UUID `json:"id"`
+	LogId openapi_types.UUID `json:"log_id"`
+	Body  *ImmersionContestModerationDetachLogJSONRequestBody
+}
+
+type ImmersionContestModerationDetachLogResponseObject interface {
+	VisitImmersionContestModerationDetachLogResponse(w http.ResponseWriter) error
+}
+
+type ImmersionContestModerationDetachLog200Response struct {
+}
+
+func (response ImmersionContestModerationDetachLog200Response) VisitImmersionContestModerationDetachLogResponse(w http.ResponseWriter) error {
+	w.WriteHeader(200)
+	return nil
+}
+
+type ImmersionContestModerationDetachLog401Response struct {
+}
+
+func (response ImmersionContestModerationDetachLog401Response) VisitImmersionContestModerationDetachLogResponse(w http.ResponseWriter) error {
+	w.WriteHeader(401)
+	return nil
+}
+
+type ImmersionContestModerationDetachLog403Response struct {
+}
+
+func (response ImmersionContestModerationDetachLog403Response) VisitImmersionContestModerationDetachLogResponse(w http.ResponseWriter) error {
+	w.WriteHeader(403)
+	return nil
+}
+
+type ImmersionContestModerationDetachLog404Response struct {
+}
+
+func (response ImmersionContestModerationDetachLog404Response) VisitImmersionContestModerationDetachLogResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type ImmersionContestModerationDetachLog409JSONResponse struct {
+	ImmersionAccountDeletionInProgressJSONResponse
+}
+
+func (response ImmersionContestModerationDetachLog409JSONResponse) VisitImmersionContestModerationDetachLogResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImmersionContestModerationDetachLog500Response struct {
+}
+
+func (response ImmersionContestModerationDetachLog500Response) VisitImmersionContestModerationDetachLogResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
 type ImmersionContestProfileFetchActivityRequestObject struct {
 	Id     openapi_types.UUID `json:"id"`
 	UserId openapi_types.UUID `json:"user_id"`
@@ -5841,6 +6022,70 @@ func (response ImmersionLogTagSuggestions200JSONResponse) VisitImmersionLogTagSu
 	return err
 }
 
+type ImmersionLogDeleteByIDRequestObject struct {
+	Id openapi_types.UUID `json:"id"`
+}
+
+type ImmersionLogDeleteByIDResponseObject interface {
+	VisitImmersionLogDeleteByIDResponse(w http.ResponseWriter) error
+}
+
+type ImmersionLogDeleteByID200Response struct {
+}
+
+func (response ImmersionLogDeleteByID200Response) VisitImmersionLogDeleteByIDResponse(w http.ResponseWriter) error {
+	w.WriteHeader(200)
+	return nil
+}
+
+type ImmersionLogDeleteByID401Response struct {
+}
+
+func (response ImmersionLogDeleteByID401Response) VisitImmersionLogDeleteByIDResponse(w http.ResponseWriter) error {
+	w.WriteHeader(401)
+	return nil
+}
+
+type ImmersionLogDeleteByID403Response struct {
+}
+
+func (response ImmersionLogDeleteByID403Response) VisitImmersionLogDeleteByIDResponse(w http.ResponseWriter) error {
+	w.WriteHeader(403)
+	return nil
+}
+
+type ImmersionLogDeleteByID404Response struct {
+}
+
+func (response ImmersionLogDeleteByID404Response) VisitImmersionLogDeleteByIDResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type ImmersionLogDeleteByID409JSONResponse struct {
+	ImmersionAccountDeletionInProgressJSONResponse
+}
+
+func (response ImmersionLogDeleteByID409JSONResponse) VisitImmersionLogDeleteByIDResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImmersionLogDeleteByID500Response struct {
+}
+
+func (response ImmersionLogDeleteByID500Response) VisitImmersionLogDeleteByIDResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
 type ImmersionLogFindByIDRequestObject struct {
 	Id openapi_types.UUID `json:"id"`
 }
@@ -5954,6 +6199,85 @@ type ImmersionLogUpdate500Response struct {
 }
 
 func (response ImmersionLogUpdate500Response) VisitImmersionLogUpdateResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
+type ImmersionLogContestRegistrationUpdateRequestObject struct {
+	Id   openapi_types.UUID `json:"id"`
+	Body *ImmersionLogContestRegistrationUpdateJSONRequestBody
+}
+
+type ImmersionLogContestRegistrationUpdateResponseObject interface {
+	VisitImmersionLogContestRegistrationUpdateResponse(w http.ResponseWriter) error
+}
+
+type ImmersionLogContestRegistrationUpdate200JSONResponse ImmersionLog
+
+func (response ImmersionLogContestRegistrationUpdate200JSONResponse) VisitImmersionLogContestRegistrationUpdateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImmersionLogContestRegistrationUpdate400Response struct {
+}
+
+func (response ImmersionLogContestRegistrationUpdate400Response) VisitImmersionLogContestRegistrationUpdateResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
+type ImmersionLogContestRegistrationUpdate401Response struct {
+}
+
+func (response ImmersionLogContestRegistrationUpdate401Response) VisitImmersionLogContestRegistrationUpdateResponse(w http.ResponseWriter) error {
+	w.WriteHeader(401)
+	return nil
+}
+
+type ImmersionLogContestRegistrationUpdate403Response struct {
+}
+
+func (response ImmersionLogContestRegistrationUpdate403Response) VisitImmersionLogContestRegistrationUpdateResponse(w http.ResponseWriter) error {
+	w.WriteHeader(403)
+	return nil
+}
+
+type ImmersionLogContestRegistrationUpdate404Response struct {
+}
+
+func (response ImmersionLogContestRegistrationUpdate404Response) VisitImmersionLogContestRegistrationUpdateResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type ImmersionLogContestRegistrationUpdate409JSONResponse struct {
+	ImmersionAccountDeletionInProgressJSONResponse
+}
+
+func (response ImmersionLogContestRegistrationUpdate409JSONResponse) VisitImmersionLogContestRegistrationUpdateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImmersionLogContestRegistrationUpdate500Response struct {
+}
+
+func (response ImmersionLogContestRegistrationUpdate500Response) VisitImmersionLogContestRegistrationUpdateResponse(w http.ResponseWriter) error {
 	w.WriteHeader(500)
 	return nil
 }
@@ -6433,6 +6757,9 @@ type StrictServerInterface interface {
 	// ImmersionContestListLogs Lists the logs attached to a contest
 	// (GET /immersion/contests/{id}/logs)
 	ImmersionContestListLogs(ctx context.Context, request ImmersionContestListLogsRequestObject) (ImmersionContestListLogsResponseObject, error)
+	// ImmersionContestModerationDetachLog Detaches a log from a contest (moderation action)
+	// (POST /immersion/contests/{id}/moderation/detach/{log_id})
+	ImmersionContestModerationDetachLog(ctx context.Context, request ImmersionContestModerationDetachLogRequestObject) (ImmersionContestModerationDetachLogResponseObject, error)
 	// ImmersionContestProfileFetchActivity Fetches the activity of a user profile in a contest
 	// (GET /immersion/contests/{id}/profile/{user_id}/activity)
 	ImmersionContestProfileFetchActivity(ctx context.Context, request ImmersionContestProfileFetchActivityRequestObject) (ImmersionContestProfileFetchActivityResponseObject, error)
@@ -6484,12 +6811,18 @@ type StrictServerInterface interface {
 	// ImmersionLogTagSuggestions Fetches tag suggestions for autocomplete
 	// (GET /immersion/logs/tag-suggestions)
 	ImmersionLogTagSuggestions(ctx context.Context, request ImmersionLogTagSuggestionsRequestObject) (ImmersionLogTagSuggestionsResponseObject, error)
+	// ImmersionLogDeleteByID Deletes a log by id
+	// (DELETE /immersion/logs/{id})
+	ImmersionLogDeleteByID(ctx context.Context, request ImmersionLogDeleteByIDRequestObject) (ImmersionLogDeleteByIDResponseObject, error)
 	// ImmersionLogFindByID Fetches a log by id
 	// (GET /immersion/logs/{id})
 	ImmersionLogFindByID(ctx context.Context, request ImmersionLogFindByIDRequestObject) (ImmersionLogFindByIDResponseObject, error)
 	// ImmersionLogUpdate Updates an existing log
 	// (PUT /immersion/logs/{id})
 	ImmersionLogUpdate(ctx context.Context, request ImmersionLogUpdateRequestObject) (ImmersionLogUpdateResponseObject, error)
+	// ImmersionLogContestRegistrationUpdate Updates the contest registrations for a log
+	// (PUT /immersion/logs/{id}/contest-registrations)
+	ImmersionLogContestRegistrationUpdate(ctx context.Context, request ImmersionLogContestRegistrationUpdateRequestObject) (ImmersionLogContestRegistrationUpdateResponseObject, error)
 	// ImmersionScoringRuleSetListPlatform Lists platform scoring rule-set versions
 	// (GET /immersion/scoring/rule-sets)
 	ImmersionScoringRuleSetListPlatform(ctx context.Context, request ImmersionScoringRuleSetListPlatformRequestObject) (ImmersionScoringRuleSetListPlatformResponseObject, error)
@@ -7567,6 +7900,40 @@ func (sh *strictHandler) ImmersionContestListLogs(w http.ResponseWriter, r *http
 	}
 }
 
+// ImmersionContestModerationDetachLog operation middleware
+func (sh *strictHandler) ImmersionContestModerationDetachLog(w http.ResponseWriter, r *http.Request, id openapi_types.UUID, logId openapi_types.UUID) {
+	var request ImmersionContestModerationDetachLogRequestObject
+
+	request.Id = id
+	request.LogId = logId
+
+	var body ImmersionContestModerationDetachLogJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ImmersionContestModerationDetachLog(ctx, request.(ImmersionContestModerationDetachLogRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ImmersionContestModerationDetachLog")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ImmersionContestModerationDetachLogResponseObject); ok {
+		if err := validResponse.VisitImmersionContestModerationDetachLogResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ImmersionContestProfileFetchActivity operation middleware
 func (sh *strictHandler) ImmersionContestProfileFetchActivity(w http.ResponseWriter, r *http.Request, id openapi_types.UUID, userId openapi_types.UUID) {
 	var request ImmersionContestProfileFetchActivityRequestObject
@@ -8045,6 +8412,32 @@ func (sh *strictHandler) ImmersionLogTagSuggestions(w http.ResponseWriter, r *ht
 	}
 }
 
+// ImmersionLogDeleteByID operation middleware
+func (sh *strictHandler) ImmersionLogDeleteByID(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	var request ImmersionLogDeleteByIDRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ImmersionLogDeleteByID(ctx, request.(ImmersionLogDeleteByIDRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ImmersionLogDeleteByID")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ImmersionLogDeleteByIDResponseObject); ok {
+		if err := validResponse.VisitImmersionLogDeleteByIDResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ImmersionLogFindByID operation middleware
 func (sh *strictHandler) ImmersionLogFindByID(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
 	var request ImmersionLogFindByIDRequestObject
@@ -8097,6 +8490,39 @@ func (sh *strictHandler) ImmersionLogUpdate(w http.ResponseWriter, r *http.Reque
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ImmersionLogUpdateResponseObject); ok {
 		if err := validResponse.VisitImmersionLogUpdateResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ImmersionLogContestRegistrationUpdate operation middleware
+func (sh *strictHandler) ImmersionLogContestRegistrationUpdate(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	var request ImmersionLogContestRegistrationUpdateRequestObject
+
+	request.Id = id
+
+	var body ImmersionLogContestRegistrationUpdateJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ImmersionLogContestRegistrationUpdate(ctx, request.(ImmersionLogContestRegistrationUpdateRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ImmersionLogContestRegistrationUpdate")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ImmersionLogContestRegistrationUpdateResponseObject); ok {
+		if err := validResponse.VisitImmersionLogContestRegistrationUpdateResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

@@ -92,8 +92,8 @@ func newLegacyImmersionAPIWithTimeout(ctx context.Context, dsn, jwksURL, ketoRea
 			domain.NewProfileFetch(kratosClient),
 			domain.NewRegistrationListOngoing(postgresRepository, scenarioClock{}),
 			domain.NewContestPermissionCheck(postgresRepository, kratosClient, scenarioClock{}),
-			nil, // log delete
-			nil, // moderation detach log
+			domain.NewLogDelete(postgresRepository, scenarioClock{}),
+			domain.NewContestModerationDetachLog(postgresRepository),
 			domain.NewRegistrationUpsert(postgresRepository, userUpsert),
 			domain.NewLogCreateWithScoringEngine(postgresRepository, scenarioClock{}, userUpsert, enabled),
 			domain.NewLogUpdateWithScoringEngine(postgresRepository, scenarioClock{}, enabled),
@@ -102,7 +102,7 @@ func newLegacyImmersionAPIWithTimeout(ctx context.Context, dsn, jwksURL, ketoRea
 			domain.NewLanguageCreate(postgresRepository),
 			domain.NewLanguageUpdate(postgresRepository),
 			domain.NewTagSuggestions(postgresRepository),
-			nil, // log contest update
+			domain.NewLogContestUpdateWithScoringEngine(postgresRepository, scenarioClock{}, enabled),
 			domain.NewScorePreview(postgresRepository, scenarioClock{}),
 			domain.NewScoringRuleSetManagement(postgresRepository, scenarioClock{}),
 			featureFlagEvaluator,

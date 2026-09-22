@@ -70,5 +70,8 @@ output-options:
     - ImmersionScoringRuleSetActivate
     - ImmersionLogCreate
     - ImmersionLogUpdate
+    - ImmersionLogContestRegistrationUpdate
+    - ImmersionLogDeleteByID
+    - ImmersionContestModerationDetachLog
   nullable-type: true
   skip-prune: true

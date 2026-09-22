@@ -1,0 +1,7 @@
+POST /immersion/contests/f0000000-0000-4000-8000-000000000001/moderation/detach/d1000000-0000-4000-8000-000000000001 HTTP/1.1
+Host: api.test
+Content-Type: application/json
+X-Request-Id: 22222222-2222-4222-8222-222222222222
+Content-Length: 19
+
+{"reason":"repeat"}

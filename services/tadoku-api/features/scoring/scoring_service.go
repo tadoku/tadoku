@@ -375,27 +375,48 @@ func (s *Service) ScoreContest(ctx context.Context, parameters PreviewParameters
 		amount:          parameters.Amount,
 		durationSeconds: parameters.DurationSeconds,
 	}
+	estimate, err := s.scoreContest(ctx, input, contestID)
+	if estimate == nil || err != nil {
+		return platform, err
+	}
+	return *estimate, nil
+}
+
+func (s *Service) ScoreResolvedContest(ctx context.Context, parameters PreviewParameters, contestID uuid.UUID) (*Estimate, error) {
+	input := scoringInput{
+		activityID:      parameters.ActivityID,
+		unitKey:         stringValue(parameters.UnitKey),
+		languageCode:    parameters.LanguageCode,
+		tags:            parameters.Tags,
+		amount:          parameters.Amount,
+		durationSeconds: parameters.DurationSeconds,
+	}
+
+	return s.scoreContest(ctx, input, contestID)
+}
+
+func (s *Service) scoreContest(ctx context.Context, input scoringInput, contestID uuid.UUID) (*Estimate, error) {
 	set, fallback, err := s.findContestRuleSets(ctx, contestID)
 	if err != nil {
-		return Estimate{}, err
+		return nil, err
 	}
 	if set == nil {
-		return platform, nil
+		return nil, nil
 	}
 	estimate, matched, err := evaluate(input, *set)
 	if err != nil {
-		return Estimate{}, err
+		return nil, err
 	}
 	if !matched && set.Mode == "override" {
 		if fallback == nil {
-			return Estimate{}, errx.NewInternalError("override scoring rule set requires a fallback")
+			return nil, errx.NewInternalError("override scoring rule set requires a fallback")
 		}
 		estimate, _, err = evaluate(input, *fallback)
 	}
 	if !matched && set.Mode != "override" && set.Mode != "replace" {
-		return Estimate{}, errx.NewInternalError("unknown contest scoring mode")
+		return nil, errx.NewInternalError("unknown contest scoring mode")
 	}
-	return estimate, err
+	return &estimate, err
 }
 
 func (s *Service) resolveUnit(ctx context.Context, parameters PreviewParameters) (string, error) {

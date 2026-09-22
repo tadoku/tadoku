@@ -23,6 +23,26 @@ func NewService(logs *LogsRepository, scoringEngineEnabled bool) *Service {
 
 func (s *Service) ScoringEngineEnabled() bool { return s.scoringEngineEnabled }
 
+func (s *Service) DetachContest(ctx context.Context, logID, contestID uuid.UUID) error {
+	return s.logs.DetachContest(ctx, logID, contestID)
+}
+
+func (s *Service) RecomputeOfficialEligibility(ctx context.Context, logID uuid.UUID, now time.Time) error {
+	return s.logs.RecomputeOfficialEligibility(ctx, logID, now)
+}
+
+func (s *Service) CanDelete(ctx context.Context, logID uuid.UUID, now time.Time) (bool, error) {
+	return s.logs.CanDelete(ctx, logID, now)
+}
+
+func (s *Service) AttachedContestIDs(ctx context.Context, logID uuid.UUID) ([]uuid.UUID, error) {
+	return s.logs.AttachedContestIDs(ctx, logID)
+}
+
+func (s *Service) SoftDelete(ctx context.Context, logID uuid.UUID, now time.Time) error {
+	return s.logs.SoftDelete(ctx, logID, now)
+}
+
 func (s *Service) ConfigurationOptions(ctx context.Context, userID uuid.UUID) (*ConfigurationOptions, error) {
 	units, err := s.logs.ListUnits(ctx)
 	if err != nil {

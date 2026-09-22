@@ -477,6 +477,23 @@ func (r *LogsRepository) FindLog(ctx context.Context, id uuid.UUID, includeDelet
 		return nil, fmt.Errorf("find log: %w", err)
 	}
 
+	tracking := Tracking{
+		DurationSeconds: intPointer(row.DurationSeconds),
+		Score:           row.Score.Float32,
+		RuleSetID:       uuidPointer(row.ScoreRuleSetID),
+		RuleIDs:         logUUIDs(row.ScoreRuleIds),
+		Rates:           row.ScoreRates,
+	}
+	if row.ScoreSource.Valid {
+		tracking.Source = row.ScoreSource.String
+	}
+	if row.Amount.Valid && row.Modifier.Valid {
+		tracking.UnitID = uuidPointer(row.UnitID)
+		tracking.UnitKey = row.UnitKey
+		tracking.Amount = floatPointer(row.Amount)
+		tracking.Modifier = floatPointer(row.Modifier)
+	}
+
 	return &Log{
 		ID:              uuid.UUID(row.ID.Bytes),
 		UserID:          uuid.UUID(row.UserID.Bytes),
@@ -495,7 +512,74 @@ func (r *LogsRepository) FindLog(ctx context.Context, id uuid.UUID, includeDelet
 		CreatedAt:       row.CreatedAt.Time,
 		Deleted:         row.DeletedAt.Valid,
 		UserDisplayName: &row.UserDisplayName,
+		Tracking:        tracking,
 	}, nil
+}
+
+func (r *LogsRepository) DetachContest(ctx context.Context, logID, contestID uuid.UUID) error {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return err
+	}
+
+	return queries.New(executor).DetachContestLog(ctx, queries.DetachContestLogParams{
+		LogID:     logUUID(logID),
+		ContestID: logUUID(contestID),
+	})
+}
+
+func (r *LogsRepository) RecomputeOfficialEligibility(ctx context.Context, logID uuid.UUID, now time.Time) error {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return err
+	}
+
+	return queries.New(executor).RecomputeLogOfficialEligibility(ctx, queries.RecomputeLogOfficialEligibilityParams{
+		LogID:     logUUID(logID),
+		UpdatedAt: logTime(now),
+	})
+}
+
+func (r *LogsRepository) CanDelete(ctx context.Context, logID uuid.UUID, now time.Time) (bool, error) {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return false, err
+	}
+
+	return queries.New(executor).CanDeleteLog(ctx, queries.CanDeleteLogParams{
+		LogID: logUUID(logID),
+		Now:   pgtype.Date{Time: now, Valid: true},
+	})
+}
+
+func (r *LogsRepository) AttachedContestIDs(ctx context.Context, logID uuid.UUID) ([]uuid.UUID, error) {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := queries.New(executor).ListAttachedContestIDs(ctx, logUUID(logID))
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]uuid.UUID, len(rows))
+	for i, row := range rows {
+		result[i] = row.Bytes
+	}
+	return result, nil
+}
+
+func (r *LogsRepository) SoftDelete(ctx context.Context, logID uuid.UUID, now time.Time) error {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return err
+	}
+
+	return queries.New(executor).SoftDeleteLog(ctx, queries.SoftDeleteLogParams{
+		LogID:     logUUID(logID),
+		DeletedAt: logTime(now),
+	})
 }
 
 func (r *LogsRepository) AttachedRegistrations(ctx context.Context, id uuid.UUID) ([]RegistrationReference, error) {
@@ -627,6 +711,29 @@ func textPointer(value pgtype.Text) *string {
 		return nil
 	}
 	return &value.String
+}
+
+func floatPointer(value pgtype.Float4) *float32 {
+	if !value.Valid {
+		return nil
+	}
+	return &value.Float32
+}
+
+func uuidPointer(value pgtype.UUID) *uuid.UUID {
+	if !value.Valid {
+		return nil
+	}
+	id := uuid.UUID(value.Bytes)
+	return &id
+}
+
+func logUUIDs(values []pgtype.UUID) []uuid.UUID {
+	result := make([]uuid.UUID, len(values))
+	for i, value := range values {
+		result[i] = value.Bytes
+	}
+	return result
 }
 
 func intPointer(value pgtype.Int4) *int32 {

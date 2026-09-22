@@ -1,0 +1,7 @@
+PUT /immersion/logs/52fdfc07-2182-454f-963f-5f0f9a621d72/contest-registrations HTTP/1.1
+Host: api.test
+Content-Type: application/json
+X-Request-Id: 22222222-2222-4222-8222-222222222222
+Content-Length: 139
+
+{"registration_ids":["eeeeeeee-eeee-4eee-8eee-000000000001","eeeeeeee-eeee-4eee-8eee-000000000003","eeeeeeee-eeee-4eee-8eee-000000000004"]}

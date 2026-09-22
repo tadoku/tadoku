@@ -112,6 +112,7 @@ type Log struct {
 	CreatedAt       time.Time
 	Deleted         bool
 	Registrations   []RegistrationReference
+	Tracking        Tracking
 }
 
 type RegistrationReference struct {

@@ -325,3 +325,34 @@ delete from log_tags where log_id = sqlc.arg('log_id');
 select distinct contest_logs.contest_id
 from contest_logs inner join contests on contests.id = contest_logs.contest_id
 where contest_logs.log_id = sqlc.arg('log_id') and contests.contest_end >= sqlc.arg('now');
+
+-- name: DetachContestLog :exec
+delete from contest_logs
+where log_id = sqlc.arg('log_id') and contest_id = sqlc.arg('contest_id');
+
+-- name: RecomputeLogOfficialEligibility :exec
+update logs set
+  eligible_official_leaderboard = (
+    select coalesce(bool_or(contests.official), false)
+    from contest_logs
+    inner join contests on contests.id = contest_logs.contest_id
+    where contest_logs.log_id = sqlc.arg('log_id')
+  ),
+  updated_at = sqlc.arg('updated_at')
+where id = sqlc.arg('log_id');
+
+-- name: CanDeleteLog :one
+select not exists (
+  select 1
+  from contest_logs
+  inner join contests on contests.id = contest_logs.contest_id
+  where contest_logs.log_id = sqlc.arg('log_id')
+    and contests.contest_end < sqlc.arg('now')
+) as can_delete;
+
+-- name: ListAttachedContestIDs :many
+select contest_id from contest_logs where log_id = sqlc.arg('log_id');
+
+-- name: SoftDeleteLog :exec
+update logs set deleted_at = sqlc.arg('deleted_at')
+where id = sqlc.arg('log_id') and deleted_at is null and frozen_at is null;

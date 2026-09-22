@@ -98,7 +98,7 @@ type scoringInput struct {
 	durationSeconds *int32
 }
 
-func PreparePreview(parameters PreviewParameters) (PreviewParameters, error) {
+func ValidateAndNormalizePreview(parameters PreviewParameters) (PreviewParameters, error) {
 	if parameters.ActivityID == 0 {
 		return PreviewParameters{}, errx.NewInvalidInputError("activity_id is required")
 	}

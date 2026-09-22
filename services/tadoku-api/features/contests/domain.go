@@ -93,7 +93,7 @@ type Registration struct {
 	Contest   *ContestView
 }
 
-func (r Registration) AllowsScoring(languageCode string, activityID int32) bool {
+func (r Registration) IsEligibleForScoring(languageCode string, activityID int32) bool {
 	languageAllowed := false
 	for _, code := range r.LanguageCodes {
 		if code == languageCode {
@@ -113,7 +113,7 @@ func (r Registration) AllowsScoring(languageCode string, activityID int32) bool 
 	return false
 }
 
-func SelectRegistrationsForScoring(requested []uuid.UUID, available []Registration, languageCode string, activityID int32) ([]Registration, error) {
+func selectRegistrationsForScoring(requested []uuid.UUID, available []Registration, languageCode string, activityID int32) ([]Registration, error) {
 	byID := make(map[uuid.UUID]Registration, len(available))
 	for _, registration := range available {
 		byID[registration.ID] = registration
@@ -125,7 +125,7 @@ func SelectRegistrationsForScoring(requested []uuid.UUID, available []Registrati
 		if !exists {
 			return nil, errx.NewInvalidInputError("registration_id is not ongoing for the current user")
 		}
-		if !registration.AllowsScoring(languageCode, activityID) {
+		if !registration.IsEligibleForScoring(languageCode, activityID) {
 			return nil, errx.NewInvalidInputError("language_code or activity_id is not allowed for registration_id")
 		}
 		selected = append(selected, registration)

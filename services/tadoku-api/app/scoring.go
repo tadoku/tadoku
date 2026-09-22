@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/tadoku/tadoku/services/tadoku-api/features/contests"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/scoring"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
@@ -34,7 +33,7 @@ func (a *Application) PreviewScore(ctx context.Context, parameters ScorePreviewP
 		return nil, errx.NewUnauthorizedError("unauthorized")
 	}
 
-	featureParameters, err := scoring.PreparePreview(scoring.PreviewParameters{
+	featureParameters, err := scoring.ValidateAndNormalizePreview(scoring.PreviewParameters{
 		UnitID:          parameters.UnitID,
 		UnitKey:         parameters.UnitKey,
 		ActivityID:      parameters.ActivityID,
@@ -51,13 +50,10 @@ func (a *Application) PreviewScore(ctx context.Context, parameters ScorePreviewP
 		return a.scoring.Preview(ctx, featureParameters)
 	}
 
-	registrations, err := a.contests.ListOngoingRegistrations(ctx, userID)
-	if err != nil {
-		return nil, err
-	}
-	selected, err := contests.SelectRegistrationsForScoring(
+	selected, err := a.contests.SelectRegistrationsForScoring(
+		ctx,
+		userID,
 		parameters.RegistrationIDs,
-		registrations.Registrations,
 		parameters.LanguageCode,
 		parameters.ActivityID,
 	)
@@ -83,13 +79,14 @@ func (a *Application) ListPlatformScoringRuleSets(ctx context.Context) ([]Scorin
 }
 
 func (a *Application) ListContestScoringRuleSets(ctx context.Context, contestID uuid.UUID) ([]ScoringRuleSet, error) {
-	contest, err := a.contests.FindContestByID(ctx, contestID, false)
-	if err != nil {
-		return nil, err
-	}
 	caller := identity.FromContext(ctx)
 	if caller == nil {
 		return nil, errx.NewUnauthorizedError("unauthorized")
+	}
+
+	contest, err := a.contests.FindContestByID(ctx, contestID, false)
+	if err != nil {
+		return nil, err
 	}
 	callerID, parseErr := uuid.Parse(caller.Subject)
 	if (parseErr != nil || callerID != contest.OwnerUserID) && !a.permissions.IsAdminOrFalse(ctx) {

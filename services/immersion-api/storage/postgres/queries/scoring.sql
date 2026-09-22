@@ -54,7 +54,8 @@ insert into scoring_rule_sets (
   version,
   status,
   mode,
-  fallback_rule_set_id
+  fallback_rule_set_id,
+  created_at
 ) values (
   sqlc.arg('id'),
   sqlc.arg('scope'),
@@ -62,7 +63,8 @@ insert into scoring_rule_sets (
   sqlc.arg('version'),
   'draft',
   sqlc.arg('mode'),
-  sqlc.arg('fallback_rule_set_id')
+  sqlc.arg('fallback_rule_set_id'),
+  sqlc.arg('created_at')
 )
 returning *;
 

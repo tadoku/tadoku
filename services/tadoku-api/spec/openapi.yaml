@@ -2176,9 +2176,11 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ImmersionScoringRuleSet"
+        "500":
+          description: internal server error
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /scoring/rule-sets
       x-legacy-operation-id: scoringRuleSetCreatePlatform
   "/immersion/contests/{id}/scoring/rule-sets":
@@ -2237,9 +2239,11 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ImmersionScoringRuleSet"
+        "500":
+          description: internal server error
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /contests/{id}/scoring/rule-sets
       x-legacy-operation-id: scoringRuleSetCreateContest
   "/immersion/scoring/rule-sets/{id}/publish":

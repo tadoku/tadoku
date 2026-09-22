@@ -205,3 +205,54 @@ func (s *Service) findContestRuleSets(ctx context.Context, contestID uuid.UUID) 
 	fallback.Rules, err = s.repository.ListRules(ctx, fallback.ID)
 	return set, fallback, err
 }
+
+func (s *Service) ValidateDraftConfiguration(ctx context.Context, scope string, parameters *DraftParameters) error {
+	if err := parameters.validateConfiguration(scope); err != nil {
+		return err
+	}
+	if scope == "contest" && parameters.Mode == "override" && parameters.FallbackRuleSetID != nil {
+		fallback, err := s.repository.FindRuleSetByID(ctx, *parameters.FallbackRuleSetID)
+		if err != nil {
+			return err
+		}
+		if fallback.Scope != "platform" || fallback.Status != "published" {
+			return errx.NewInvalidInputError("fallback must be a published platform rule set")
+		}
+	}
+	return nil
+}
+
+func (s *Service) ValidateDraftRules(parameters *DraftParameters) error {
+	return parameters.validateRules()
+}
+
+func (s *Service) CreateDraft(ctx context.Context, scope string, parameters DraftParameters) (*RuleSet, error) {
+	version, err := s.repository.NextDraftVersion(ctx, parameters.ContestID)
+	if err != nil {
+		return nil, fmt.Errorf("allocate scoring rule set version: %w", err)
+	}
+
+	draft, err := s.repository.CreateDraft(ctx, RuleSet{
+		ID:                uuid.New(),
+		Scope:             scope,
+		ContestID:         parameters.ContestID,
+		Version:           version,
+		Status:            "draft",
+		Mode:              parameters.Mode,
+		FallbackRuleSetID: parameters.FallbackRuleSetID,
+		Rules:             []Rule{},
+		CreatedAt:         parameters.CreatedAt,
+	})
+	if err != nil {
+		return nil, err
+	}
+	draft.Rules = make([]Rule, len(parameters.Rules))
+	for i, rule := range parameters.Rules {
+		rule.ID = uuid.New()
+		if err := s.repository.CreateRule(ctx, draft.ID, rule); err != nil {
+			return nil, err
+		}
+		draft.Rules[i] = rule
+	}
+	return draft, nil
+}

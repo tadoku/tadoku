@@ -11,6 +11,119 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const createScoringRule = `-- name: CreateScoringRule :exec
+insert into scoring_rules (
+  id,
+  rule_set_id,
+  priority,
+  stackable,
+  activity_id,
+  unit_key,
+  language_code,
+  tag,
+  score_source,
+  rate
+) values (
+  $1,
+  $2,
+  $3,
+  $4,
+  $5,
+  $6,
+  $7,
+  $8,
+  $9,
+  $10
+)
+`
+
+type CreateScoringRuleParams struct {
+	ID           pgtype.UUID
+	RuleSetID    pgtype.UUID
+	Priority     int32
+	Stackable    bool
+	ActivityID   int16
+	UnitKey      pgtype.Text
+	LanguageCode pgtype.Text
+	Tag          pgtype.Text
+	ScoreSource  string
+	Rate         float32
+}
+
+func (q *Queries) CreateScoringRule(ctx context.Context, arg CreateScoringRuleParams) error {
+	_, err := q.db.Exec(ctx, createScoringRule,
+		arg.ID,
+		arg.RuleSetID,
+		arg.Priority,
+		arg.Stackable,
+		arg.ActivityID,
+		arg.UnitKey,
+		arg.LanguageCode,
+		arg.Tag,
+		arg.ScoreSource,
+		arg.Rate,
+	)
+	return err
+}
+
+const createScoringRuleSet = `-- name: CreateScoringRuleSet :one
+insert into scoring_rule_sets (
+  id,
+  scope,
+  contest_id,
+  version,
+  status,
+  mode,
+  fallback_rule_set_id,
+  created_at
+) values (
+  $1,
+  $2,
+  $3,
+  $4,
+  'draft',
+  $5,
+  $6,
+  $7
+)
+returning id, scope, contest_id, version, status, mode, fallback_rule_set_id, created_at, published_at
+`
+
+type CreateScoringRuleSetParams struct {
+	ID                pgtype.UUID
+	Scope             string
+	ContestID         pgtype.UUID
+	Version           int32
+	Mode              pgtype.Text
+	FallbackRuleSetID pgtype.UUID
+	CreatedAt         pgtype.Timestamp
+}
+
+func (q *Queries) CreateScoringRuleSet(ctx context.Context, arg CreateScoringRuleSetParams) (ScoringRuleSet, error) {
+	row := q.db.QueryRow(ctx, createScoringRuleSet,
+		arg.ID,
+		arg.Scope,
+		arg.ContestID,
+		arg.Version,
+		arg.Mode,
+		arg.FallbackRuleSetID,
+		arg.CreatedAt,
+	)
+	var i ScoringRuleSet
+	err := row.Scan(
+		&i.ID,
+		&i.Scope,
+		&i.ContestID,
+		&i.Version,
+		&i.Status,
+		&i.Mode,
+		&i.FallbackRuleSetID,
+		&i.CreatedAt,
+		&i.PublishedAt,
+	)
+	return i, err
+}
+
 const findActivePlatformScoringRuleSet = `-- name: FindActivePlatformScoringRuleSet :one
 select scoring_rule_sets.id, scoring_rule_sets.scope, scoring_rule_sets.contest_id, scoring_rule_sets.version, scoring_rule_sets.status, scoring_rule_sets.mode, scoring_rule_sets.fallback_rule_set_id, scoring_rule_sets.created_at, scoring_rule_sets.published_at
 from platform_scoring_config
@@ -239,4 +352,31 @@ func (q *Queries) ListScoringRulesForRuleSet(ctx context.Context, ruleSetID pgty
 		return nil, err
 	}
 	return items, nil
+}
+
+const nextContestScoringRuleSetVersion = `-- name: NextContestScoringRuleSetVersion :one
+select (coalesce(max(version), 0) + 1)::integer
+from scoring_rule_sets
+where scope = 'contest'
+  and contest_id = $1
+`
+
+func (q *Queries) NextContestScoringRuleSetVersion(ctx context.Context, contestID pgtype.UUID) (int32, error) {
+	row := q.db.QueryRow(ctx, nextContestScoringRuleSetVersion, contestID)
+	var column_1 int32
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
+const nextPlatformScoringRuleSetVersion = `-- name: NextPlatformScoringRuleSetVersion :one
+select (coalesce(max(version), 0) + 1)::integer
+from scoring_rule_sets
+where scope = 'platform'
+`
+
+func (q *Queries) NextPlatformScoringRuleSetVersion(ctx context.Context) (int32, error) {
+	row := q.db.QueryRow(ctx, nextPlatformScoringRuleSetVersion)
+	var column_1 int32
+	err := row.Scan(&column_1)
+	return column_1, err
 }

@@ -50,6 +50,77 @@ type RuleSet struct {
 	PublishedAt       *time.Time
 }
 
+type DraftParameters struct {
+	ContestID         *uuid.UUID
+	Mode              string
+	FallbackRuleSetID *uuid.UUID
+	Rules             []Rule
+	LanguageCodes     map[string]struct{}
+	CreatedAt         time.Time
+}
+
+func (p *DraftParameters) validateConfiguration(scope string) error {
+	if scope == "contest" {
+		switch p.Mode {
+		case "replace":
+			if p.FallbackRuleSetID != nil {
+				return errx.NewInvalidInputError("replace rule sets cannot have a fallback")
+			}
+		case "override":
+			if p.FallbackRuleSetID == nil {
+				return errx.NewInvalidInputError("override rule sets require a fallback")
+			}
+		default:
+			return errx.NewInvalidInputError("contest scoring mode is required")
+		}
+	}
+	return nil
+}
+
+func (p *DraftParameters) validateRules() error {
+	priorities := make(map[int32]struct{}, len(p.Rules))
+	for i := range p.Rules {
+		rule := &p.Rules[i]
+		rule.Tag = strings.ToLower(strings.TrimSpace(rule.Tag))
+		rule.LanguageCode = strings.ToLower(strings.TrimSpace(rule.LanguageCode))
+		if rule.Priority < 0 {
+			return errx.NewInvalidInputError("rule priority must be non-negative")
+		}
+		if _, duplicate := priorities[rule.Priority]; duplicate {
+			return errx.NewInvalidInputError("rule priorities must be unique")
+		}
+		priorities[rule.Priority] = struct{}{}
+		if !validActivity(rule.ActivityID) {
+			return errx.NewInvalidInputError("rule activity_id is not valid")
+		}
+		if rule.UnitKey != "" && unitActivities[rule.UnitKey] != rule.ActivityID {
+			return errx.NewInvalidInputError("rule unit_key is not valid for activity_id")
+		}
+		if len(rule.LanguageCode) > 10 {
+			return errx.NewInvalidInputError("rule language_code is too long")
+		}
+		if rule.LanguageCode != "" {
+			if _, exists := p.LanguageCodes[rule.LanguageCode]; !exists {
+				return errx.NewInvalidInputError("rule language_code is not valid")
+			}
+		}
+		if rule.Tag != "" {
+			tags, err := NormalizeTags([]string{rule.Tag})
+			if err != nil || len(tags) != 1 {
+				return errx.NewInvalidInputError("rule tag is invalid")
+			}
+			rule.Tag = tags[0]
+		}
+		if rule.Source != SourceAmount && rule.Source != SourceDurationMinutes {
+			return errx.NewInvalidInputError("rule score_source is not valid")
+		}
+		if !finite(rule.Rate) || rule.Rate < 0 {
+			return errx.NewInvalidInputError("rule rate must be non-negative and finite")
+		}
+	}
+	return nil
+}
+
 type PreviewParameters struct {
 	UnitID          *uuid.UUID
 	UnitKey         *string

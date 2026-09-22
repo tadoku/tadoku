@@ -166,6 +166,29 @@ func TestContestCreationJourney(t *testing.T) {
 	})
 }
 
+func TestScoringRuleSetDraftJourney(t *testing.T) {
+	uuid.SetRand(rand.New(rand.NewSource(1)))
+	defer uuid.SetRand(nil)
+
+	runJourney(t, api, "ScoringRuleSetDraft", []step{
+		{request: "create_platform_draft", as: admin, want: http.StatusOK, others: cast{user: http.StatusForbidden, guest: http.StatusForbidden, banned: http.StatusForbidden}},
+		{request: "platform_draft_visible_to_admin", as: admin, want: http.StatusOK},
+		{request: "platform_draft_hidden_from_member", as: user, want: http.StatusOK},
+		{request: "create_contest_draft", as: user, want: http.StatusOK, others: cast{user2: http.StatusForbidden, guest: http.StatusForbidden, banned: http.StatusForbidden}},
+		{request: "contest_draft_visible_to_owner", as: user, want: http.StatusOK, others: cast{user2: http.StatusForbidden}},
+	})
+}
+
+func TestScoringRuleSetDraftAtomicFailureJourney(t *testing.T) {
+	uuid.SetRand(rand.New(rand.NewSource(1)))
+	defer uuid.SetRand(nil)
+
+	runJourney(t, api, "ScoringRuleSetDraftAtomicFailure", []step{
+		{request: "create_two_rule_draft_with_collision", as: admin, want: http.StatusInternalServerError},
+		{request: "failed_draft_left_no_version", as: admin, want: http.StatusOK},
+	})
+}
+
 func TestContestRegistrationJourney(t *testing.T) {
 	// Keep API-created contest and registration IDs stable in the HTTP fixtures.
 	uuid.SetRand(rand.New(rand.NewSource(1)))

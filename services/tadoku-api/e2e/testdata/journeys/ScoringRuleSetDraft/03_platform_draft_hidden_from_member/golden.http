@@ -1,0 +1,6 @@
+>>> GET /immersion/scoring/rule-sets
+HTTP/1.1 200 OK
+Content-Length: 870
+Content-Type: application/json; charset=UTF-8
+
+{"rule_sets":[{"active":false,"created_at":"2026-02-02T00:00:00Z","id":"aaaaaaaa-aaaa-4aaa-8aaa-000000000003","published_at":"2026-02-03T00:00:00Z","rules":[],"scope":"platform","status":"published","version":3},{"active":true,"created_at":"2026-01-01T00:00:00Z","id":"aaaaaaaa-aaaa-4aaa-8aaa-000000000001","published_at":"2026-01-02T00:00:00Z","rules":[{"activity_id":1,"id":"bbbbbbbb-bbbb-4bbb-8bbb-000000000001","priority":10,"rate":0.5,"score_source":"amount","stackable":true,"tag":"manga","unit_key":"reading_page"},{"activity_id":1,"id":"bbbbbbbb-bbbb-4bbb-8bbb-000000000002","priority":20,"rate":2,"score_source":"amount","stackable":false,"unit_key":"reading_page"},{"activity_id":5,"id":"bbbbbbbb-bbbb-4bbb-8bbb-000000000003","priority":30,"rate":0.5,"score_source":"duration_minutes","stackable":false}],"scope":"platform","status":"published","version":1}]}

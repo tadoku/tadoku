@@ -163,6 +163,61 @@ func (r *ScoringRepository) FindUnitKeyByKey(ctx context.Context, key string, ac
 	return row.UnitKey, nil
 }
 
+func (r *ScoringRepository) NextDraftVersion(ctx context.Context, contestID *uuid.UUID) (int32, error) {
+	q, err := r.queries(ctx)
+	if err != nil {
+		return 0, err
+	}
+	if contestID == nil {
+		return q.NextPlatformScoringRuleSetVersion(ctx)
+	}
+	return q.NextContestScoringRuleSetVersion(ctx, postgresUUID(*contestID))
+}
+
+func (r *ScoringRepository) CreateDraft(ctx context.Context, draft RuleSet) (*RuleSet, error) {
+	q, err := r.queries(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	row, err := q.CreateScoringRuleSet(ctx, queries.CreateScoringRuleSetParams{
+		ID:                postgresUUID(draft.ID),
+		Scope:             draft.Scope,
+		ContestID:         nullablePostgresUUID(draft.ContestID),
+		Version:           draft.Version,
+		Mode:              nullablePostgresText(draft.Mode),
+		FallbackRuleSetID: nullablePostgresUUID(draft.FallbackRuleSetID),
+		CreatedAt:         pgtype.Timestamp{Time: draft.CreatedAt, Valid: true},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("create scoring rule set: %w", err)
+	}
+	return ruleSet(row), nil
+}
+
+func (r *ScoringRepository) CreateRule(ctx context.Context, ruleSetID uuid.UUID, rule Rule) error {
+	q, err := r.queries(ctx)
+	if err != nil {
+		return err
+	}
+
+	if err := q.CreateScoringRule(ctx, queries.CreateScoringRuleParams{
+		ID:           postgresUUID(rule.ID),
+		RuleSetID:    postgresUUID(ruleSetID),
+		Priority:     rule.Priority,
+		Stackable:    rule.Stackable,
+		ActivityID:   int16(rule.ActivityID),
+		UnitKey:      nullablePostgresText(rule.UnitKey),
+		LanguageCode: nullablePostgresText(rule.LanguageCode),
+		Tag:          nullablePostgresText(rule.Tag),
+		ScoreSource:  string(rule.Source),
+		Rate:         rule.Rate,
+	}); err != nil {
+		return fmt.Errorf("create scoring rule: %w", err)
+	}
+	return nil
+}
+
 func (r *ScoringRepository) queries(ctx context.Context) (*queries.Queries, error) {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
@@ -205,3 +260,14 @@ func ruleSet(row queries.ScoringRuleSet) *RuleSet {
 }
 
 func postgresUUID(value uuid.UUID) pgtype.UUID { return pgtype.UUID{Bytes: value, Valid: true} }
+
+func nullablePostgresUUID(value *uuid.UUID) pgtype.UUID {
+	if value == nil {
+		return pgtype.UUID{}
+	}
+	return postgresUUID(*value)
+}
+
+func nullablePostgresText(value string) pgtype.Text {
+	return pgtype.Text{String: value, Valid: value != ""}
+}

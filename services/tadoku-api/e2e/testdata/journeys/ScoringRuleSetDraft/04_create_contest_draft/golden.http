@@ -1,0 +1,6 @@
+>>> POST /immersion/contests/f0000000-0000-4000-8000-000000000001/scoring/rule-sets
+HTTP/1.1 200 OK
+Content-Length: 224
+Content-Type: application/json; charset=UTF-8
+
+{"active":false,"contest_id":"f0000000-0000-4000-8000-000000000001","created_at":"2026-09-12T12:00:00Z","id":"95af5a25-3679-41ba-a2ff-6cd471c483f1","mode":"replace","rules":[],"scope":"contest","status":"draft","version":3}

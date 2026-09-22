@@ -113,7 +113,8 @@ insert into scoring_rule_sets (
   version,
   status,
   mode,
-  fallback_rule_set_id
+  fallback_rule_set_id,
+  created_at
 ) values (
   $1,
   $2,
@@ -121,7 +122,8 @@ insert into scoring_rule_sets (
   $4,
   'draft',
   $5,
-  $6
+  $6,
+  $7
 )
 returning id, scope, contest_id, version, status, mode, fallback_rule_set_id, created_at, published_at
 `
@@ -133,6 +135,7 @@ type CreateScoringRuleSetParams struct {
 	Version           int32
 	Mode              sql.NullString
 	FallbackRuleSetID uuid.NullUUID
+	CreatedAt         time.Time
 }
 
 func (q *Queries) CreateScoringRuleSet(ctx context.Context, arg CreateScoringRuleSetParams) (ScoringRuleSet, error) {
@@ -143,6 +146,7 @@ func (q *Queries) CreateScoringRuleSet(ctx context.Context, arg CreateScoringRul
 		arg.Version,
 		arg.Mode,
 		arg.FallbackRuleSetID,
+		arg.CreatedAt,
 	)
 	var i ScoringRuleSet
 	err := row.Scan(

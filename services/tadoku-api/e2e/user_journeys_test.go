@@ -243,7 +243,7 @@ func TestYearlyContestRegistrationJourney(t *testing.T) {
 		{request: "owner_reads_private_history", as: user, want: http.StatusOK},
 		{request: "other_user_sees_empty_history", as: user2, want: http.StatusOK},
 		{request: "create_public_contest", as: user, want: http.StatusOK, others: cast{guest: http.StatusUnauthorized, banned: http.StatusForbidden}},
-		{request: "register_public_contest", as: user, want: http.StatusOK, others: cast{guest: http.StatusUnauthorized, banned: http.StatusForbidden}},
+		{request: "register_public_contest", as: user, want: http.StatusOK, others: cast{guest: http.StatusUnauthorized, banned: http.StatusForbidden}, at: fixtureInstant.Add(time.Second)},
 		{request: "owner_reads_mixed_history", as: user, want: http.StatusOK},
 		{request: "other_user_reads_public_history", as: user2, want: http.StatusOK},
 		{request: "history_remains_after_contests_end", as: user, want: http.StatusOK, at: fixtureInstant.Add(24 * time.Hour)},

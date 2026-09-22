@@ -127,8 +127,8 @@ test('all retained wire contracts survive the merge, including internal callers'
       if (operation['x-tadoku-exposure'] === 'public') publicOperations++;
     }
   }
-  assert.equal(operations, 75);
-  assert.equal(publicOperations, 70);
+  assert.equal(operations, 73);
+  assert.equal(publicOperations, 69);
 });
 
 test('native-owned operations match server generation', () => {

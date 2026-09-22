@@ -74,7 +74,6 @@ type config struct {
 	KratosTimeout  time.Duration `validate:"gt=0" envconfig:"kratos_timeout" default:"2s"`
 
 	ImmersionURL string `validate:"required" envconfig:"immersion_url"`
-	ProfileURL   string `validate:"required" envconfig:"profile_url"`
 
 	PostgresMaxConnections int32                 `validate:"gt=0,lte=32" envconfig:"postgres_max_connections" default:"4"`
 	Postgres               postgresconfig.Config `ignored:"true"`
@@ -417,7 +416,6 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	// Temporary legacy routes; the application router stands on its own.
 	upstreams := transporthttp.Upstreams{
 		Immersion: cfg.ImmersionURL,
-		Profile:   cfg.ProfileURL,
 	}
 	err = transporthttp.RegisterProxyRoutes(
 		handler,

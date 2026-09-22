@@ -28,7 +28,7 @@ type receivedRequest struct {
 func TestHandlerProxiesEachLegacyPrefix(t *testing.T) {
 	received := make(map[string]chan receivedRequest)
 	servers := make(map[string]*httptest.Server)
-	for _, name := range []string{"immersion", "profile"} {
+	for _, name := range []string{"immersion"} {
 		name := name
 		received[name] = make(chan receivedRequest, 1)
 		servers[name] = httptest.NewServer(stdhttp.HandlerFunc(func(response stdhttp.ResponseWriter, request *stdhttp.Request) {
@@ -57,7 +57,6 @@ func TestHandlerProxiesEachLegacyPrefix(t *testing.T) {
 	handler := newProxyTestRouter(registry)
 	err := RegisterProxyRoutes(handler, Upstreams{
 		Immersion: servers["immersion"].URL,
-		Profile:   servers["profile"].URL,
 	}, stdhttp.DefaultTransport, time.Second, slog.New(slog.NewJSONHandler(&logs, nil)))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -73,7 +72,6 @@ func TestHandlerProxiesEachLegacyPrefix(t *testing.T) {
 		body     string
 	}{
 		{name: "immersion", method: stdhttp.MethodPatch, path: "/immersion/logs/a%2Fb?detail=full", wantPath: "/logs/a%2Fb", body: `{"amount":10}`},
-		{name: "profile", method: stdhttp.MethodDelete, path: "/profile/users/old", wantPath: "/users/old"},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -191,13 +189,12 @@ func TestHandlerGeneratesAndForwardsCorrelationID(t *testing.T) {
 	handler := newProxyTestRouter(prometheus.NewRegistry())
 	err := RegisterProxyRoutes(handler, Upstreams{
 		Immersion: upstream.URL,
-		Profile:   upstream.URL,
 	}, stdhttp.DefaultTransport, time.Second, slog.New(slog.NewJSONHandler(&logs, nil)))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	response := httptest.NewRecorder()
-	handler.ServeHTTP(response, httptest.NewRequest(stdhttp.MethodGet, "/profile/ping", nil))
+	handler.ServeHTTP(response, httptest.NewRequest(stdhttp.MethodGet, "/immersion/ping", nil))
 
 	generatedID := response.Header().Get(correlationHeader)
 	if len(generatedID) == 0 {
@@ -218,7 +215,7 @@ func TestHandlerReturnsBadGatewayWhenUpstreamIsUnavailable(t *testing.T) {
 
 	handler := newTestHandler(t, url, time.Second)
 	response := httptest.NewRecorder()
-	handler.ServeHTTP(response, httptest.NewRequest(stdhttp.MethodGet, "/profile/ping", nil))
+	handler.ServeHTTP(response, httptest.NewRequest(stdhttp.MethodGet, "/immersion/ping", nil))
 
 	if response.Code != stdhttp.StatusBadGateway {
 		t.Errorf("got %v, want %v", response.Code, stdhttp.StatusBadGateway)
@@ -280,7 +277,6 @@ func TestProxyDoesNotOwnHealthOrUnknownRoutes(t *testing.T) {
 func TestRegisterProxyRoutesRejectsInvalidConfiguration(t *testing.T) {
 	valid := Upstreams{
 		Immersion: "http://immersion",
-		Profile:   "http://profile",
 	}
 
 	tests := []struct {
@@ -289,7 +285,7 @@ func TestRegisterProxyRoutesRejectsInvalidConfiguration(t *testing.T) {
 		timeout   time.Duration
 	}{
 		{name: "missing upstream", upstreams: Upstreams{}, timeout: time.Second},
-		{name: "upstream path", upstreams: Upstreams{Immersion: "http://immersion/base", Profile: valid.Profile}, timeout: time.Second},
+		{name: "upstream path", upstreams: Upstreams{Immersion: "http://immersion/base"}, timeout: time.Second},
 		{name: "timeout", upstreams: valid},
 	}
 	for _, test := range tests {
@@ -307,7 +303,6 @@ func newTestHandler(t testing.TB, upstream string, timeout time.Duration) stdhtt
 	handler := newProxyTestRouter(prometheus.NewRegistry())
 	err := RegisterProxyRoutes(handler, Upstreams{
 		Immersion: upstream,
-		Profile:   upstream,
 	}, stdhttp.DefaultTransport, timeout, slog.New(slog.NewTextHandler(io.Discard, nil)))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -320,7 +315,6 @@ func newTestHandlerWithTransport(t *testing.T, transport stdhttp.RoundTripper, t
 	handler := newProxyTestRouter(prometheus.NewRegistry())
 	err := RegisterProxyRoutes(handler, Upstreams{
 		Immersion: "http://immersion",
-		Profile:   "http://profile",
 	}, transport, timeout, slog.New(slog.NewTextHandler(io.Discard, nil)))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -354,7 +348,7 @@ func TestRequestCancellationIsPreserved(t *testing.T) {
 
 	handler := newTestHandlerWithTransport(t, transport, time.Second)
 	ctx, cancel := context.WithCancel(context.Background())
-	request := httptest.NewRequest(stdhttp.MethodGet, "/profile/users", nil).WithContext(ctx)
+	request := httptest.NewRequest(stdhttp.MethodGet, "/immersion/users", nil).WithContext(ctx)
 	done := make(chan struct{})
 	go func() {
 		handler.ServeHTTP(httptest.NewRecorder(), request)

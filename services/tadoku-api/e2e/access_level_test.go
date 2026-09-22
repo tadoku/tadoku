@@ -79,6 +79,9 @@ var operationAccess = map[string]accessLevel{
 	"ImmersionProfileYearlyContestRegistrationsByUserID": accessPublic,
 	"ImmersionLogGetConfigurations":                      accessAuthenticated,
 	"ImmersionLogTagSuggestions":                         accessAuthenticated,
+	"ImmersionScorePreview":                              accessAuthenticated,
+	"ImmersionScoringRuleSetListPlatform":                accessAuthenticated,
+	"ImmersionScoringRuleSetListContest":                 accessAuthenticated,
 
 	"ImmersionLanguageList":         accessAdmin,
 	"ImmersionLanguageCreate":       accessAdmin,
@@ -118,8 +121,11 @@ var operationFixtures = map[string]string{
 	"ImmersionContestFindRegistration":         "FindContestRegistration",
 	"ImmersionContestRegistrationUpsert":       "UpsertContestRegistration",
 
-	"ImmersionLogGetConfigurations": "ImmersionLogGetConfigurations",
-	"ImmersionLogTagSuggestions":    "ImmersionLogTagSuggestions",
+	"ImmersionLogGetConfigurations":       "ImmersionLogGetConfigurations",
+	"ImmersionLogTagSuggestions":          "ImmersionLogTagSuggestions",
+	"ImmersionScorePreview":               "ImmersionScorePreview",
+	"ImmersionScoringRuleSetListPlatform": "ImmersionScoringRuleSetListPlatform",
+	"ImmersionScoringRuleSetListContest":  "ImmersionScoringRuleSetListContest",
 
 	"ImmersionLanguageList":        "ListLanguages",
 	"ImmersionLanguageCreate":      "CreateLanguage",

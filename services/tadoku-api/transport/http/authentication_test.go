@@ -62,15 +62,15 @@ func TestAuthenticationRequiresConfiguration(t *testing.T) {
 	}
 
 	passthrough := func(next stdhttp.Handler) stdhttp.Handler { return next }
-	_, err := NewHandler(app.New(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil), func(context.Context) error { return nil }, time.Second, prometheus.NewRegistry(), slog.Default(), nil, passthrough, passthrough)
+	_, err := NewHandler(app.New(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil), func(context.Context) error { return nil }, time.Second, prometheus.NewRegistry(), slog.Default(), nil, passthrough, passthrough)
 	if err == nil {
 		t.Error("router accepted missing authentication middleware")
 	}
-	_, err = NewHandler(app.New(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil), func(context.Context) error { return nil }, time.Second, prometheus.NewRegistry(), slog.Default(), passthrough, nil, passthrough)
+	_, err = NewHandler(app.New(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil), func(context.Context) error { return nil }, time.Second, prometheus.NewRegistry(), slog.Default(), passthrough, nil, passthrough)
 	if err == nil {
 		t.Error("router accepted missing banned-user middleware")
 	}
-	_, err = NewHandler(app.New(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil), func(context.Context) error { return nil }, time.Second, prometheus.NewRegistry(), slog.Default(), passthrough, passthrough, nil)
+	_, err = NewHandler(app.New(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil), func(context.Context) error { return nil }, time.Second, prometheus.NewRegistry(), slog.Default(), passthrough, passthrough, nil)
 	if err == nil {
 		t.Error("router accepted missing callback authentication middleware")
 	}
@@ -180,7 +180,7 @@ func TestNewApplicationRoutesInheritSharedMiddleware(t *testing.T) {
 		})
 	}
 	router, err := NewHandler(
-		app.New(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil),
+		app.New(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil),
 		func(context.Context) error { return nil },
 		time.Second,
 		prometheus.NewRegistry(),
@@ -245,7 +245,7 @@ func TestCallbackAuthenticationIsScopedToExactOperation(t *testing.T) {
 	}
 	passthrough := func(next stdhttp.Handler) stdhttp.Handler { return next }
 	router, err := NewHandler(
-		app.New(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil),
+		app.New(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil),
 		func(context.Context) error { return nil },
 		time.Second,
 		prometheus.NewRegistry(),

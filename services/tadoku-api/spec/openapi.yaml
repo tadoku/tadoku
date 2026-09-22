@@ -1599,9 +1599,11 @@ paths:
                 $ref: "#/components/schemas/ImmersionScorePreview"
         "400":
           description: invalid preview input
+        "500":
+          description: internal server error
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /logs/score-preview
       x-legacy-operation-id: scorePreview
   "/immersion/logs/{id}":
@@ -2147,9 +2149,11 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ImmersionScoringRuleSets"
+        "500":
+          description: internal server error
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /scoring/rule-sets
       x-legacy-operation-id: scoringRuleSetListPlatform
     post:
@@ -2199,9 +2203,11 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ImmersionScoringRuleSets"
+        "500":
+          description: internal server error
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /contests/{id}/scoring/rule-sets
       x-legacy-operation-id: scoringRuleSetListContest
     post:

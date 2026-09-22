@@ -1,0 +1,6 @@
+>>> POST /immersion/logs/score-preview
+HTTP/1.1 200 OK
+Content-Length: 364
+Content-Type: application/json; charset=UTF-8
+
+{"contests":[{"contest_id":"f0000000-0000-4000-8000-000000000003","estimate":{"rules":[],"score":0,"source":"duration_minutes"},"registration_id":"eeeeeeee-eeee-4eee-8eee-000000000003"}],"platform":{"rule_set_id":"aaaaaaaa-aaaa-4aaa-8aaa-000000000001","rules":[{"rate":0.5,"rule_id":"bbbbbbbb-bbbb-4bbb-8bbb-000000000003"}],"score":5,"source":"duration_minutes"}}

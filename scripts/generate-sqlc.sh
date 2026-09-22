@@ -4,8 +4,6 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SQLC_PACKAGES=(
   "services/immersion-api/storage/postgres"
-  "services/content-api/storage/postgres"
-  "services/profile-api/storage/postgres"
   "services/tadoku-api/infra/postgres/testdata/sqlc"
   "services/tadoku-api/sql/audit"
   "services/tadoku-api/sql/announcements"

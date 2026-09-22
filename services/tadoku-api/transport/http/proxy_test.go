@@ -28,7 +28,7 @@ type receivedRequest struct {
 func TestHandlerProxiesEachLegacyPrefix(t *testing.T) {
 	received := make(map[string]chan receivedRequest)
 	servers := make(map[string]*httptest.Server)
-	for _, name := range []string{"content", "immersion", "profile"} {
+	for _, name := range []string{"immersion"} {
 		name := name
 		received[name] = make(chan receivedRequest, 1)
 		servers[name] = httptest.NewServer(stdhttp.HandlerFunc(func(response stdhttp.ResponseWriter, request *stdhttp.Request) {
@@ -56,9 +56,7 @@ func TestHandlerProxiesEachLegacyPrefix(t *testing.T) {
 	registry := prometheus.NewRegistry()
 	handler := newProxyTestRouter(registry)
 	err := RegisterProxyRoutes(handler, Upstreams{
-		Content:   servers["content"].URL,
 		Immersion: servers["immersion"].URL,
-		Profile:   servers["profile"].URL,
 	}, stdhttp.DefaultTransport, time.Second, slog.New(slog.NewJSONHandler(&logs, nil)))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -73,9 +71,7 @@ func TestHandlerProxiesEachLegacyPrefix(t *testing.T) {
 		wantPath string
 		body     string
 	}{
-		{name: "content", method: stdhttp.MethodPost, path: "/content/pages/blog?detail=full", wantPath: "/pages/blog", body: `{"title":"hello"}`},
-		{name: "immersion", method: stdhttp.MethodPatch, path: "/immersion/logs/a%2Fb", wantPath: "/logs/a%2Fb", body: `{"amount":10}`},
-		{name: "profile", method: stdhttp.MethodDelete, path: "/profile/users/old", wantPath: "/users/old"},
+		{name: "immersion", method: stdhttp.MethodPatch, path: "/immersion/logs/a%2Fb?detail=full", wantPath: "/logs/a%2Fb", body: `{"amount":10}`},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -134,7 +130,7 @@ func TestHandlerProxiesEachLegacyPrefix(t *testing.T) {
 			if got.path != test.wantPath {
 				t.Errorf("got %v, want %v", got.path, test.wantPath)
 			}
-			if test.name == "content" {
+			if test.name == "immersion" {
 				if got.rawQuery != "detail=full" {
 					t.Errorf("got %v, want %v", got.rawQuery, "detail=full")
 				}
@@ -163,7 +159,7 @@ func TestHandlerProxiesEachLegacyPrefix(t *testing.T) {
 			for _, label := range metric.GetLabel() {
 				labels[label.GetName()] = label.GetValue()
 			}
-			if labels["route"] == "/content/" && labels["upstream"] == "content" && labels["mode"] == "proxy" && labels["status"] == "202" {
+			if labels["route"] == "/immersion/" && labels["upstream"] == "immersion" && labels["mode"] == "proxy" && labels["status"] == "202" {
 				proxySampleFound = metric.GetHistogram().GetSampleCount() == 1
 			}
 		}
@@ -192,15 +188,13 @@ func TestHandlerGeneratesAndForwardsCorrelationID(t *testing.T) {
 	var logs bytes.Buffer
 	handler := newProxyTestRouter(prometheus.NewRegistry())
 	err := RegisterProxyRoutes(handler, Upstreams{
-		Content:   upstream.URL,
 		Immersion: upstream.URL,
-		Profile:   upstream.URL,
 	}, stdhttp.DefaultTransport, time.Second, slog.New(slog.NewJSONHandler(&logs, nil)))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	response := httptest.NewRecorder()
-	handler.ServeHTTP(response, httptest.NewRequest(stdhttp.MethodGet, "/content/ping", nil))
+	handler.ServeHTTP(response, httptest.NewRequest(stdhttp.MethodGet, "/immersion/ping", nil))
 
 	generatedID := response.Header().Get(correlationHeader)
 	if len(generatedID) == 0 {
@@ -221,7 +215,7 @@ func TestHandlerReturnsBadGatewayWhenUpstreamIsUnavailable(t *testing.T) {
 
 	handler := newTestHandler(t, url, time.Second)
 	response := httptest.NewRecorder()
-	handler.ServeHTTP(response, httptest.NewRequest(stdhttp.MethodGet, "/content/ping", nil))
+	handler.ServeHTTP(response, httptest.NewRequest(stdhttp.MethodGet, "/immersion/ping", nil))
 
 	if response.Code != stdhttp.StatusBadGateway {
 		t.Errorf("got %v, want %v", response.Code, stdhttp.StatusBadGateway)
@@ -282,9 +276,7 @@ func TestProxyDoesNotOwnHealthOrUnknownRoutes(t *testing.T) {
 
 func TestRegisterProxyRoutesRejectsInvalidConfiguration(t *testing.T) {
 	valid := Upstreams{
-		Content:   "http://content",
 		Immersion: "http://immersion",
-		Profile:   "http://profile",
 	}
 
 	tests := []struct {
@@ -293,7 +285,7 @@ func TestRegisterProxyRoutesRejectsInvalidConfiguration(t *testing.T) {
 		timeout   time.Duration
 	}{
 		{name: "missing upstream", upstreams: Upstreams{}, timeout: time.Second},
-		{name: "upstream path", upstreams: Upstreams{Content: "http://content/base", Immersion: valid.Immersion, Profile: valid.Profile}, timeout: time.Second},
+		{name: "upstream path", upstreams: Upstreams{Immersion: "http://immersion/base"}, timeout: time.Second},
 		{name: "timeout", upstreams: valid},
 	}
 	for _, test := range tests {
@@ -310,9 +302,7 @@ func newTestHandler(t testing.TB, upstream string, timeout time.Duration) stdhtt
 	t.Helper()
 	handler := newProxyTestRouter(prometheus.NewRegistry())
 	err := RegisterProxyRoutes(handler, Upstreams{
-		Content:   upstream,
 		Immersion: upstream,
-		Profile:   upstream,
 	}, stdhttp.DefaultTransport, timeout, slog.New(slog.NewTextHandler(io.Discard, nil)))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -324,9 +314,7 @@ func newTestHandlerWithTransport(t *testing.T, transport stdhttp.RoundTripper, t
 	t.Helper()
 	handler := newProxyTestRouter(prometheus.NewRegistry())
 	err := RegisterProxyRoutes(handler, Upstreams{
-		Content:   "http://content",
 		Immersion: "http://immersion",
-		Profile:   "http://profile",
 	}, transport, timeout, slog.New(slog.NewTextHandler(io.Discard, nil)))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -360,7 +348,7 @@ func TestRequestCancellationIsPreserved(t *testing.T) {
 
 	handler := newTestHandlerWithTransport(t, transport, time.Second)
 	ctx, cancel := context.WithCancel(context.Background())
-	request := httptest.NewRequest(stdhttp.MethodGet, "/profile/users", nil).WithContext(ctx)
+	request := httptest.NewRequest(stdhttp.MethodGet, "/immersion/users", nil).WithContext(ctx)
 	done := make(chan struct{})
 	go func() {
 		handler.ServeHTTP(httptest.NewRecorder(), request)

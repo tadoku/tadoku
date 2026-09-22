@@ -60,7 +60,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       IMMERSION_TEST_POSTGRES_URL: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
-      PROFILE_TEST_POSTGRES_URL: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
       TADOKU_TEST_POSTGRES_URL: postgres://postgres:postgres@127.0.0.1:5432/postgres?sslmode=disable
       TADOKU_TEST_VALKEY_URL: redis://127.0.0.1:6379
     services:
@@ -162,10 +161,8 @@ jobs:
       - name: Scan backend images
         env:
           BACKEND_IMAGES: |
-            ghcr.io/tadoku/tadoku/content-api:latest
             ghcr.io/tadoku/tadoku/image-webhook-gateway:latest
             ghcr.io/tadoku/tadoku/immersion-api:latest
-            ghcr.io/tadoku/tadoku/profile-api:latest
             ghcr.io/tadoku/tadoku/tadoku-api:latest
             ghcr.io/tadoku/tadoku/tadoku-api-migrations:latest
             ghcr.io/tadoku/tadoku/token-reflector:latest

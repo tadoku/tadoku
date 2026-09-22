@@ -171,7 +171,7 @@ func writeIdentityHeaders(header http.Header, subject, displayName, email string
 	header.Set("X-Test-Identity-Created-At", createdAt.UTC().Format(time.RFC3339))
 }
 
-func TestAuthenticationDoesNotChangeProbesOrProxyRoutes(t *testing.T) {
+func TestAuthenticationDoesNotChangeProbesOrRemainingProxyRoutes(t *testing.T) {
 	for _, test := range []struct {
 		method  string
 		path    string
@@ -181,11 +181,10 @@ func TestAuthenticationDoesNotChangeProbesOrProxyRoutes(t *testing.T) {
 		{method: http.MethodGet, path: "/livez", want: http.StatusOK},
 		{method: http.MethodGet, path: "/readyz", want: http.StatusOK},
 		{method: http.MethodGet, path: "/authz/ping", want: http.StatusNotFound},
-		{method: http.MethodGet, path: "/content/ping", want: http.StatusNoContent, proxied: true},
 		{method: http.MethodGet, path: "/immersion/ping", want: http.StatusNoContent, proxied: true},
-		{method: http.MethodGet, path: "/profile/ping", want: http.StatusNoContent, proxied: true},
-		{method: http.MethodHead, path: "/content/announcements/main/active", want: http.StatusNoContent, proxied: true},
-		{method: http.MethodPost, path: "/content/announcements/main/active", want: http.StatusNoContent, proxied: true},
+		{method: http.MethodGet, path: "/immersion/unknown", want: http.StatusNoContent, proxied: true},
+		{method: http.MethodHead, path: "/immersion/languages", want: http.StatusNoContent, proxied: true},
+		{method: http.MethodPatch, path: "/immersion/languages", want: http.StatusNoContent, proxied: true},
 	} {
 		t.Run(test.method+" "+test.path, func(t *testing.T) {
 			for _, authorization := range []string{"", "Bearer invalid-token"} {

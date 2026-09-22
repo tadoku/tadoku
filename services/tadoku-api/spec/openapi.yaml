@@ -20,9 +20,7 @@ x-tadoku-operational-surfaces:
     endpoints retain their optional-auth middleware. No gateway exposure changes are implied.
   apis:
     - tadoku-api
-    - content-api
     - immersion-api
-    - profile-api
   health_paths: [/livez, /readyz]
   metrics_path: /metrics
 x-tadoku-sources:
@@ -40,7 +38,6 @@ x-tadoku-sources:
   Content:
     domain: content
     exposure: public
-    path: services/content-api/http/rest/openapi/api.yaml
     info:
       title: content-api
       license:
@@ -70,7 +67,6 @@ x-tadoku-sources:
   Profile:
     domain: profile
     exposure: public
-    path: services/profile-api/http/rest/openapi/api.yaml
     info:
       title: profile-api
       license:
@@ -107,19 +103,6 @@ x-tadoku-sources:
       version: 1.0.0
     servers:
       - url: http://immersion-api:8080/
-  ProfileInternal:
-    domain: profile
-    exposure: internal
-    path: services/profile-api/http/rest/openapi/internal-api.yaml
-    info:
-      title: profile-api-internal
-      description: Internal API for service-to-service communication
-      license:
-        name: MIT
-        url: https://github.com/tadoku/tadoku/blob/main/LICENSE
-      version: 1.0.0
-    servers:
-      - url: http://profile-api:8080/
 paths:
   /authz/current-user/role:
     get:
@@ -937,24 +920,6 @@ paths:
       x-tadoku-owner: native
       x-legacy-path: /announcements/{namespace}/{id}
       x-legacy-operation-id: announcementDelete
-  /content/ping:
-    get:
-      summary: Checks if service is responsive
-      operationId: ContentPing
-      tags:
-        - metadata
-      responses:
-        "200":
-          description: successful operation
-          content:
-            text/plain:
-              schema:
-                type: string
-      x-tadoku-source: Content
-      x-tadoku-exposure: public
-      x-tadoku-owner: legacy
-      x-legacy-path: /ping
-      x-legacy-operation-id: ping
   /immersion/contests:
     post:
       summary: Creates a new contest
@@ -2565,24 +2530,6 @@ paths:
       x-tadoku-owner: native
       x-legacy-path: /languages/{code}
       x-legacy-operation-id: languageUpdate
-  /profile/ping:
-    get:
-      summary: Checks if service is responsive
-      operationId: ProfilePing
-      tags:
-        - metadata
-      responses:
-        "200":
-          description: successful operation
-          content:
-            text/plain:
-              schema:
-                type: string
-      x-tadoku-source: Profile
-      x-tadoku-exposure: public
-      x-tadoku-owner: legacy
-      x-legacy-path: /ping
-      x-legacy-operation-id: ping
   /profile/users:
     get:
       summary: Lists all users (admin only)
@@ -2749,32 +2696,6 @@ paths:
       x-tadoku-owner: legacy
       x-legacy-path: /internal/v1/account-deletion-locks
       x-legacy-operation-id: internalAccountDeletionLock
-  /profile/internal/v1/ping:
-    get:
-      summary: Internal health check for service-to-service calls
-      operationId: ProfileInternalInternalPing
-      tags:
-        - internal
-      security:
-        - ProfileInternalserviceAuth: []
-      responses:
-        "200":
-          description: successful operation
-          content:
-            text/plain:
-              schema:
-                type: string
-        "401":
-          description: unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ProfileInternalErrorResponse"
-      x-tadoku-source: ProfileInternal
-      x-tadoku-exposure: internal
-      x-tadoku-owner: legacy
-      x-legacy-path: /internal/v1/ping
-      x-legacy-operation-id: internalPing
 components:
   schemas:
     AuthzUserRole:
@@ -3936,13 +3857,6 @@ components:
         request_id:
           type: string
           format: uuid
-    ProfileInternalErrorResponse:
-      type: object
-      required:
-        - error
-      properties:
-        error:
-          type: string
   securitySchemes:
     AuthzcookieAuth:
       type: apiKey
@@ -3965,10 +3879,6 @@ components:
       scheme: bearer
       description: Shared callback token presented only by Oathkeeper
     ImmersionInternalserviceAuth:
-      type: http
-      scheme: bearer
-      description: JWT token for service-to-service authentication (ES256)
-    ProfileInternalserviceAuth:
       type: http
       scheme: bearer
       description: JWT token for service-to-service authentication (ES256)

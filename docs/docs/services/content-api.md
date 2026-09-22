@@ -1,33 +1,27 @@
 ---
 sidebar_position: 2
-title: content-api
+title: Content API
 ---
 
 # Content API
 
-This is the blog/content API of the Tadoku website. It contains the functionality to:
+The Content API is the public namespace for Tadoku's blog, page, and announcement
+operations. These routes are served by Tadoku API.
 
-- Fetch/Create/Update/Delete blog posts
-- Fetch/Create/Update/Delete web pages
+- Fetch, create, update, and delete blog posts
+- Fetch, create, update, and delete web pages
+- Fetch, create, update, and delete announcements
 
 All content uses markdown.
 
-## Architecture
+## Contract and persistence
 
-- This service is written in Golang.
-- OpenAPI REST API over HTTP
-  - Spec can be found at `services/content-api/http/rest/openapi/api.yaml`
-- Uses CQRS (Command Query Responsibility Segregation) to split data read/writes
-- Data is stored in a PostgreSQL database
-- sqlc is used to generate Golang glue code for raw sql queries.
-  - New queries should be written in `services/content-api/storage/postgres/queries`
-  - Run the following command to generate code for the query: `cd services/content-api/storage/postgres && go generate`
-- Migrations use `services/content-api/http/rest/openapi/api.yaml`
-  - Migrations are stored in `services/content-api/storage/postgres/migrations`
-  - Refer to [these instructions](https://github.com/golang-migrate/migrate/blob/master/MIGRATIONS.md) for a reference on how to write migrations.
+- The canonical OpenAPI contract is `services/tadoku-api/spec/openapi.yaml`.
+- Content is stored in PostgreSQL through Tadoku API's page, post, and announcement features.
+- Content schema history is part of the consolidated Tadoku API migration set.
 
 ## Important links
 
-- [Source code](https://github.com/tadoku/tadoku/tree/main/services/content-api)
+- [Source code](https://github.com/tadoku/tadoku/tree/main/services/tadoku-api)
 - [API reference](../api/content/content-api)
-- [OpenAPI source](https://github.com/tadoku/tadoku/blob/main/services/content-api/http/rest/openapi/api.yaml)
+- [OpenAPI source](https://github.com/tadoku/tadoku/blob/main/services/tadoku-api/spec/openapi.yaml)

@@ -328,9 +328,7 @@ func validApplicationConfig(t *testing.T) config {
 		KratosAdminURL:          upstream.URL,
 		KratosTimeout:           time.Second,
 
-		ContentURL:   upstream.URL,
 		ImmersionURL: upstream.URL,
-		ProfileURL:   upstream.URL,
 
 		DialTimeout:           time.Second,
 		MaxTokenAge:           24 * time.Hour,
@@ -362,9 +360,7 @@ func TestLoadConfigUsesValidatedDefaults(t *testing.T) {
 	t.Setenv("API_KETO_WRITE_URL", "http://keto-write.test")
 	t.Setenv("API_OATHKEEPER_AUTHZ_TOKEN", "callback-token")
 	t.Setenv("API_KRATOS_ADMIN_URL", "http://kratos-admin.test")
-	t.Setenv("API_CONTENT_URL", "http://content")
 	t.Setenv("API_IMMERSION_URL", "http://immersion")
-	t.Setenv("API_PROFILE_URL", "http://profile")
 	t.Setenv("API_VALKEY_URL", "redis://valkey:6379")
 	for key, value := range map[string]string{"HOST": "localhost", "DATABASE": "tadoku", "USER": "tadoku", "PASSWORD": "synthetic", "SSLMODE": "disable"} {
 		t.Setenv("API_POSTGRES_"+key, value)

@@ -37,24 +37,16 @@ test('all retained wire contracts survive the merge, including internal callers'
         if (legacy.security && !operation.security) operation.security = legacy.security;
       }
     }
-    if (name === 'Content') {
-      legacy.paths['/announcements/{namespace}'].post.responses['409'] = {description: 'Announcement already exists'};
-      if (contract.paths['/content/pages/{namespace}'].post['x-tadoku-owner'] === 'native') {
-        legacy.paths['/pages/{namespace}'].post.responses['409'] = {description: 'Page ID or slug already exists'};
-      }
-      if (contract.paths['/content/pages/{namespace}/{slug}'].put['x-tadoku-owner'] === 'native') {
-        legacy.paths['/pages/{namespace}/{id}'].put.responses['409'] = {description: 'Page already exists'};
-      }
-      if (contract.paths['/content/posts/{namespace}'].post['x-tadoku-owner'] === 'native') {
-        legacy.paths['/posts/{namespace}'].post.responses['409'] = {description: 'Post ID or slug already exists'};
-      }
-      if (contract.paths['/content/posts/{namespace}/{slug}'].put['x-tadoku-owner'] === 'native') {
-        legacy.paths['/posts/{namespace}/{id}'].put.responses['409'] = {description: 'Post slug already exists'};
-      }
-      legacy.components.schemas.Announcement.properties.href.maxLength = 2048;
-      legacy.components.schemas.AnnouncementList.allOf[1].properties.announcements.maxItems = 100;
-    }
     if (name === 'Immersion') {
+      // Native feature access documents the no-store header already returned by legacy.
+      const featureAccessPath = '/admin/feature-flags/{flagKey}/users/{userId}';
+      for (const method of ['get', 'put', 'delete']) {
+        if (contract.paths[`/immersion${featureAccessPath}`][method]['x-tadoku-owner'] === 'native') {
+          legacy.paths[featureAccessPath][method].responses['200'].headers = {
+            'Cache-Control': {schema: {type: 'string'}},
+          };
+        }
+      }
       // Native log reads document the empty failure responses already returned by legacy.
       for (const path of ['/contests/{id}/logs', '/users/{user_id}/logs']) {
         if (contract.paths[`/immersion${path}`].get['x-tadoku-owner'] === 'native') {
@@ -144,8 +136,8 @@ test('all retained wire contracts survive the merge, including internal callers'
       if (operation['x-tadoku-exposure'] === 'public') publicOperations++;
     }
   }
-  assert.equal(operations, 76);
-  assert.equal(publicOperations, 71);
+  assert.equal(operations, 73);
+  assert.equal(publicOperations, 69);
 });
 
 test('native-owned operations match server generation', () => {

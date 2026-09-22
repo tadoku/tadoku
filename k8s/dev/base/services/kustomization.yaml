@@ -3,6 +3,4 @@ kind: Kustomization
 resources:
   - tadoku-api.yaml
   - immersion-api.yaml
-  - content-api.yaml
-  - profile-api.yaml
   - token-reflector.yaml

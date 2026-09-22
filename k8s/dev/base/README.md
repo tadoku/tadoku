@@ -12,7 +12,7 @@ run against this environment. Homelab contains the Application and development
 Image Updater infrastructure, not copies of these workload manifests.
 
 Production's `tdk-prod-*` service boundaries become `tdk-dev-*`: the three
-frontends, native Tadoku API, remaining immersion/content/profile APIs, Kratos,
+frontends, native Tadoku API, the remaining immersion API, Kratos,
 Keto, Oathkeeper, Flipt and token-reflector. `tdk-dev-data` contains one
 operator-managed Postgres server plus disposable Valkey and Mailhog;
 `tdk-dev-routing` attaches application routes to the existing platform Envoy
@@ -20,12 +20,17 @@ Gateway. Retired authz/memory/echo services and optional styleguides/admin tools
 are not deployed. There is no production data, PlanetScale, Upstash, external
 backup or notification configuration here.
 
-Existing CI publishes the nine GHCR runtime/migration images. The root's `images`
+Existing CI publishes the seven GHCR runtime/migration images. The root's `images`
 entries select `latest`; development Image Updater uses the **digest** strategy
 and writes immutable resolutions back to this Kustomization. Do not add another
 build/push pipeline. Hook migration images need `force-update` because successful
 Jobs are removed from the live resource list. Kustomization-only commits do not
 match the existing production image-publication workflow path filters.
+
+The profile-api removal has an image compatibility gate: publish and pin a
+Tadoku API image that no longer requires `API_PROFILE_URL` before syncing the
+manifests that remove that variable and service. The current pinned digest
+predates this removal; verify the rendered digest has advanced before rollout.
 
 The existing Next standalone images bake production URLs into `server.js`.
 `frontend-start.cjs` uses their unchanged compiled assets and build configuration,
@@ -46,7 +51,7 @@ Full Argo syncs execute these waves:
 | -10 | Tadoku, Kratos and Keto migration Sync hooks; each waits for authenticated database connectivity |
 | 0 | Auth providers, cache, Flipt, token-reflector and Gateway routes |
 | 10 | Oathkeeper (publishes JWKS before APIs start) |
-| 20 | Native and remaining legacy APIs |
+| 20 | Native and remaining legacy API |
 | 30 | Frontends |
 | 50 | Browser Ingresses |
 

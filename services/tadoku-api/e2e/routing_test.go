@@ -78,6 +78,42 @@ func TestCallbackCredentialDoesNotAuthenticateBusinessRoutes(t *testing.T) {
 	}
 }
 
+func TestContentHeadUsesNativeGetRoute(t *testing.T) {
+	dir := filepath.Join("testdata", APITestName("ListActiveAnnouncements", http.StatusOK, "guest"))
+	api.reset(t, dir)
+	request := readHTTPRequest(t, dir)
+	defer request.Body.Close()
+	request.Method = http.MethodHead
+	response := httptest.NewRecorder()
+
+	atFixtureInstant(func() { api.handler.ServeHTTP(response, request) })
+
+	if response.Code != http.StatusOK {
+		t.Errorf("status=%d, want %d", response.Code, http.StatusOK)
+	}
+	if got := api.proxied.Load(); got != 0 {
+		t.Errorf("HEAD request made %d upstream requests", got)
+	}
+}
+
+func TestProfileHeadUsesNativeGetRoute(t *testing.T) {
+	dir := filepath.Join("testdata", APITestName("ProfileUsersList", http.StatusOK, "admin"))
+	api.reset(t, dir)
+	request := readHTTPRequest(t, dir)
+	defer request.Body.Close()
+	request.Method = http.MethodHead
+	response := httptest.NewRecorder()
+
+	atFixtureInstant(func() { api.handler.ServeHTTP(response, request) })
+
+	if response.Code != http.StatusOK {
+		t.Errorf("status=%d, want %d", response.Code, http.StatusOK)
+	}
+	if got := api.proxied.Load(); got != 0 {
+		t.Errorf("HEAD request made %d upstream requests", got)
+	}
+}
+
 func TestContractRouteOwnership(t *testing.T) {
 	specPath, err := bazel.Runfile("services/tadoku-api/spec/openapi.yaml")
 	if err != nil {
@@ -138,6 +174,65 @@ func TestRetiredAuthzRoutesAreNotForwarded(t *testing.T) {
 		{method: http.MethodHead, path: "/authz/internal/v1/proxy/admin-check", want: http.StatusMethodNotAllowed},
 		{method: http.MethodPost, path: "/authz/internal/v1/proxy/admin-check/extra", want: http.StatusNotFound},
 		{method: http.MethodGet, path: "/authz/unknown", want: http.StatusNotFound},
+	}
+
+	for _, test := range tests {
+		t.Run(test.method+" "+test.path, func(t *testing.T) {
+			api.resetProxyCount()
+
+			response := httptest.NewRecorder()
+			api.handler.ServeHTTP(response, httptest.NewRequest(test.method, test.path, nil))
+
+			if response.Code != test.want {
+				t.Errorf("status=%d, want %d", response.Code, test.want)
+			}
+			if got := api.proxied.Load(); got != 0 {
+				t.Errorf("retired route made %d upstream requests", got)
+			}
+		})
+	}
+}
+
+func TestRetiredContentProxyRoutesAreNotForwarded(t *testing.T) {
+	tests := []struct {
+		method string
+		path   string
+		want   int
+	}{
+		{method: http.MethodGet, path: "/content/ping", want: http.StatusNotFound},
+		{method: http.MethodHead, path: "/content/ping", want: http.StatusNotFound},
+		{method: http.MethodPost, path: "/content/announcements/main/active", want: http.StatusMethodNotAllowed},
+	}
+
+	for _, test := range tests {
+		t.Run(test.method+" "+test.path, func(t *testing.T) {
+			api.resetProxyCount()
+
+			response := httptest.NewRecorder()
+			api.handler.ServeHTTP(response, httptest.NewRequest(test.method, test.path, nil))
+
+			if response.Code != test.want {
+				t.Errorf("status=%d, want %d", response.Code, test.want)
+			}
+			if got := api.proxied.Load(); got != 0 {
+				t.Errorf("retired route made %d upstream requests", got)
+			}
+		})
+	}
+}
+
+func TestRetiredProfileProxyRoutesAreNotForwarded(t *testing.T) {
+	tests := []struct {
+		method string
+		path   string
+		want   int
+	}{
+		{method: http.MethodGet, path: "/profile/ping", want: http.StatusNotFound},
+		{method: http.MethodHead, path: "/profile/ping", want: http.StatusNotFound},
+		{method: http.MethodGet, path: "/profile/internal/v1/ping", want: http.StatusNotFound},
+		{method: http.MethodHead, path: "/profile/internal/v1/ping", want: http.StatusNotFound},
+		{method: http.MethodPost, path: "/profile/users", want: http.StatusMethodNotAllowed},
+		{method: http.MethodGet, path: "/profile/users/unknown", want: http.StatusNotFound},
 	}
 
 	for _, test := range tests {

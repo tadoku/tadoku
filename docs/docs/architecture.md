@@ -12,7 +12,7 @@ The Tadoku app consists of several backend services & frontends deployed to a Ku
 ### Backend services
 
 - [immersion-api](./services/immersion-api.md)
-- [content-api](./services/content-api.md)
+- [tadoku-api](https://github.com/tadoku/tadoku/tree/main/services/tadoku-api), including the public [Content API](./services/content-api.md) and Profile API namespaces
 - [Ory Kratos](https://github.com/ory/kratos)
 
 ### Frontends
@@ -25,6 +25,8 @@ The Tadoku app consists of several backend services & frontends deployed to a Ku
 - [Kong gateway](https://docs.konghq.com/gateway/latest/): ingress for all Traffic into the Kubernetes cluster
 - [Ory Oathkeeper](https://github.com/ory/oathkeeper): identity & access proxy responsible for authorizing http traffic to the APIs.
 
-## System Diagram
+## Historical system diagram
 
-![System diagram](./assets/architects.excalidraw.svg)
+This diagram predates the consolidation of Content and Profile API routes into Tadoku API.
+
+![Historical system diagram](./assets/architects.excalidraw.svg)

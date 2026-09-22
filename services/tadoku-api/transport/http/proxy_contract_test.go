@@ -36,7 +36,7 @@ func TestFacadePreservesLegacyResponses(t *testing.T) {
 				t.Fatalf("unexpected error: %v", err)
 			}
 			defer direct.Body.Close()
-			proxied, err := client.Get(facade.URL + "/content/response")
+			proxied, err := client.Get(facade.URL + "/immersion/response")
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -112,7 +112,7 @@ func BenchmarkFacade(b *testing.B) {
 	client := &stdhttp.Client{Timeout: 5 * time.Second}
 	for _, route := range []struct{ name, url string }{
 		{"direct", upstream.URL + "/pages/example"},
-		{"proxy", facade.URL + "/content/pages/example"},
+		{"proxy", facade.URL + "/immersion/pages/example"},
 	} {
 		b.Run(route.name, func(b *testing.B) {
 			b.ReportAllocs()

@@ -39,7 +39,6 @@ pkg_tar(
     mode = "0755",
     package_dir = "/",
     visibility = [
-        "//services/content-api:__pkg__",
         "//services/immersion-api:__pkg__",
         "//services/profile-api:__pkg__",
         "//services/tadoku-api/migrations:__pkg__",

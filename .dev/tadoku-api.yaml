@@ -43,8 +43,6 @@ spec:
             secretKeyRef:
               name: dev-oathkeeper-authz
               key: token
-        - name: API_CONTENT_URL
-          value: http://content-api.tdk-dev-content-api
         - name: API_IMMERSION_URL
           value: http://immersion-api.tdk-dev-immersion-api
         - name: API_PROFILE_URL

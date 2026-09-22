@@ -151,8 +151,9 @@ The native query uses sqlc v1.31.1/pgx-v5.
 
 Documentation builds filtered public views from the canonical contract. They
 retain the four existing documentation sections/URLs, not four independent API
-contract sources. Legacy specs are frozen build and contract-comparison inputs.
-The contract tests compare all 81 operations and their component/security shapes.
+contract sources. Retained legacy specs remain frozen build and contract-comparison
+inputs. The contract tests compare the canonical operations and their
+component/security shapes.
 Manually registered health and metrics endpoints are separately inventoried in
 the contract's `x-tadoku-operational-surfaces` metadata, not rendered as product API.
 
@@ -160,13 +161,13 @@ Every migrated operation must preserve its existing API inputs, outputs and
 business behavior, including response status, headers, field shapes, nullability,
 empty results, filtering, ordering and limits where applicable. Prove parity by
 running the same request/response golden cases against the native and corresponding
-legacy handlers with real authentication and authorization. Native failures must
+retained legacy handlers with real authentication and authorization. Native failures must
 not fall back to the proxy. Keep exhaustive authentication and infrastructure
 failure matrices at their own boundaries instead of duplicating them per endpoint.
 
 ## Runtime configuration
 
-In addition to the three remaining upstream URLs, startup now requires:
+In addition to the two remaining upstream URLs, startup now requires:
 
 - Individual `API_POSTGRES_HOST`, `PORT` (default 5432), `DATABASE`, `USER`,
   `PASSWORD`, `SSLMODE` fields. `API_POSTGRES_URL` remains rejected.
@@ -425,8 +426,7 @@ boundaries. Keep shared dependency-failure and route-ownership checks at their o
 boundaries instead of repeating them for every operation.
 
 New API request bodies use the generated JSON decoder. Do not add XML/form adapters
-or non-JSON request fixtures to reproduce legacy binder behavior. Mark intentional
-JSON-decoding differences in the parity test table.
+or non-JSON request fixtures to reproduce legacy binder behavior.
 
 HTTP scenarios run sequentially and call `reset` before each implementation of each
 scenario, not between dependent requests. **Kratos is seeded once in `TestMain` and
@@ -521,8 +521,8 @@ not a growing list of endpoint assertions.
 
 ### Legacy parity
 
-For every migrated operation, run each case against the native API and its
-corresponding legacy API in separately named subtests. Both consume the same
+For every operation migrated from a retained legacy service, run each case against
+the native API and its corresponding legacy API in separately named subtests. Both consume the same
 optional `setup.sql` and `relationships.json` plus required `request.http` and
 `golden.http`; each must independently match the
 full response. Use production route registration, handlers, domain operations,

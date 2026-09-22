@@ -134,11 +134,9 @@ rollout_wait_if_present default keto
 rollout_wait_if_present default pgweb
 rollout_wait_if_present tdk-immersion-api immersion-api
 
-rollout_restart_if_present tdk-content-api content-api
 rollout_restart_if_present tdk-profile-api profile-api
 rollout_restart_if_present tdk-tadoku-api tadoku-api
 
-rollout_wait_if_present tdk-content-api content-api
 rollout_wait_if_present tdk-profile-api profile-api
 rollout_wait_if_present tdk-tadoku-api tadoku-api
 

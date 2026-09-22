@@ -64,7 +64,6 @@ spec:
                   key: token
             - {name: API_KRATOS_ADMIN_URL, value: "http://kratos-admin.tdk-dev-kratos"}
             - {name: API_KRATOS_TIMEOUT, value: "2s"}
-            - {name: API_CONTENT_URL, value: "http://content-api.tdk-dev-content-api"}
             - {name: API_IMMERSION_URL, value: "http://immersion-api.tdk-dev-immersion-api"}
             - {name: API_PROFILE_URL, value: "http://profile-api.tdk-dev-profile-api"}
             - {name: API_POSTGRES_HOST, value: tadoku-dev-db.tdk-dev-data.svc.cluster.local}

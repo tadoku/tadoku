@@ -38,7 +38,6 @@ import (
 
 var api *suite
 var scoringEnabledHandler http.Handler
-var legacyContent *legacyContentAPI
 var legacyProfile *legacyProfileAPI
 var legacyImmersion *legacyImmersionAPI
 var legacyAuthentication http.Handler
@@ -135,12 +134,6 @@ func runTests(m *testing.M) (code int) {
 	}
 	unavailableCallback = unavailableNative
 
-	legacyContent, err = newLegacyContentAPI(ctx, api.db.DSN, authenticationJWKS.URL, keto.ReadURL())
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return 1
-	}
-	defer func() { cleanupErr = errors.Join(cleanupErr, legacyContent.db.Close()) }()
 	legacyProfile, err = newLegacyProfileAPI(ctx, api.db.DSN, authenticationJWKS.URL, keto.ReadURL(), kratos.CursorClient())
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)

@@ -283,7 +283,6 @@ func newTestRouterWithScoringEngine(
 func registerSentinelProxy(s *suite) error {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	upstreams := transport.Upstreams{
-		Content:   "http://upstream.test",
 		Immersion: "http://upstream.test",
 		Profile:   "http://upstream.test",
 	}

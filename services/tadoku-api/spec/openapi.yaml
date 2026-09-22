@@ -20,7 +20,6 @@ x-tadoku-operational-surfaces:
     endpoints retain their optional-auth middleware. No gateway exposure changes are implied.
   apis:
     - tadoku-api
-    - content-api
     - immersion-api
     - profile-api
   health_paths: [/livez, /readyz]
@@ -40,7 +39,6 @@ x-tadoku-sources:
   Content:
     domain: content
     exposure: public
-    path: services/content-api/http/rest/openapi/api.yaml
     info:
       title: content-api
       license:
@@ -937,24 +935,6 @@ paths:
       x-tadoku-owner: native
       x-legacy-path: /announcements/{namespace}/{id}
       x-legacy-operation-id: announcementDelete
-  /content/ping:
-    get:
-      summary: Checks if service is responsive
-      operationId: ContentPing
-      tags:
-        - metadata
-      responses:
-        "200":
-          description: successful operation
-          content:
-            text/plain:
-              schema:
-                type: string
-      x-tadoku-source: Content
-      x-tadoku-exposure: public
-      x-tadoku-owner: legacy
-      x-legacy-path: /ping
-      x-legacy-operation-id: ping
   /immersion/contests:
     post:
       summary: Creates a new contest

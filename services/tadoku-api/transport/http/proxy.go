@@ -13,7 +13,6 @@ import (
 )
 
 type Upstreams struct {
-	Content   string
 	Immersion string
 	Profile   string
 }
@@ -51,7 +50,6 @@ func RegisterProxyRoutes(
 
 	// The gateway removes its external prefix before forwarding here.
 	routes := []route{
-		{name: "content", prefix: "/content/", target: upstreams.Content},
 		{name: "immersion", prefix: "/immersion/", target: upstreams.Immersion},
 		{name: "profile", prefix: "/profile/", target: upstreams.Profile},
 	}

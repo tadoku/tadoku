@@ -85,10 +85,6 @@ type CreateAnnouncementParameters = announcementParameters
 type UpdateAnnouncementParameters = announcementParameters
 
 func (p announcementParameters) Validate() error {
-	return validateAnnouncement(p)
-}
-
-func validateAnnouncement(p announcementParameters) error {
 	if p.ID == uuid.Nil {
 		return fmt.Errorf("%w: id is nil", ErrInvalidAnnouncement)
 	}

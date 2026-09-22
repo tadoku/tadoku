@@ -45,7 +45,7 @@ func (a *Application) UpdateLogContestRegistrations(ctx context.Context, logID u
 		if !ok {
 			return nil, errx.NewInvalidInputError("registration_id is not ongoing for the current user")
 		}
-		if !registrationAllowsScoring(registration, log.LanguageCode, log.Activity.ID) {
+		if !registration.IsEligibleForScoring(log.LanguageCode, log.Activity.ID) {
 			return nil, errx.NewInvalidInputError("language_code or activity_id is not allowed for registration_id")
 		}
 	}
@@ -267,7 +267,7 @@ func (a *Application) DetachContestLog(ctx context.Context, contestID, logID uui
 		if err := a.audit.Record(ctx, audit.Event{
 			ActorID: callerID,
 			Action:  "detach_log",
-			Metadata: map[string]string{
+			Metadata: map[string]any{
 				"contest_id": contestID.String(),
 				"log_id":     logID.String(),
 			},

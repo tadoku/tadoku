@@ -64,7 +64,7 @@ func (a *Application) UpdateRole(ctx context.Context, parameters RoleUpdateParam
 	if err := a.audit.Record(ctx, audit.Event{
 		ActorID: actorID,
 		Action:  action,
-		Metadata: map[string]string{
+		Metadata: map[string]any{
 			"target_user_id": parameters.UserID.String(),
 			"new_role":       string(parameters.Role),
 		},

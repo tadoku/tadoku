@@ -23,6 +23,8 @@ go_library(
         "contest_registration.go",
         "contest_summary.go",
         "errors.go",
+        "feature_access.go",
+        "feature_flags.go",
         "language_create.go",
         "language_update.go",
         "languages.go",

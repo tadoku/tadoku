@@ -110,7 +110,10 @@ requested object in Keto for the verified request subject and returns the provid
 decision. Provider failures return unavailable.
 
 Feature services consume concrete shared authorization fact and mutation
-services from `services/common/authz/roles`. Target facts are never treated as
+services from `services/common/authz/roles`. Provider-backed feature services may
+also consume the shared feature-flag evaluator and an application-owned provider
+client, keeping provider types and identity adaptation inside the owning feature
+package. Target facts are never treated as
 caller authorization; the operation still uses the permission checker for its
 own access decision and the shared HTTP ban gate still applies first. Batch facts
 are read for each request rather than cached. Native feature services accept
@@ -164,6 +167,8 @@ running the same request/response golden cases against the native and correspond
 retained legacy handlers with real authentication and authorization. Native failures must
 not fall back to the proxy. Keep exhaustive authentication and infrastructure
 failure matrices at their own boundaries instead of duplicating them per endpoint.
+Parity migrations must leave the compared legacy production implementation unchanged;
+native provider clients and adapters belong under Tadoku API ownership.
 
 ## Runtime configuration
 

@@ -38,6 +38,15 @@ test('all retained wire contracts survive the merge, including internal callers'
       }
     }
     if (name === 'Immersion') {
+      // Native feature access documents the no-store header already returned by legacy.
+      const featureAccessPath = '/admin/feature-flags/{flagKey}/users/{userId}';
+      for (const method of ['get', 'put', 'delete']) {
+        if (contract.paths[`/immersion${featureAccessPath}`][method]['x-tadoku-owner'] === 'native') {
+          legacy.paths[featureAccessPath][method].responses['200'].headers = {
+            'Cache-Control': {schema: {type: 'string'}},
+          };
+        }
+      }
       // Native log reads document the empty failure responses already returned by legacy.
       for (const path of ['/contests/{id}/logs', '/users/{user_id}/logs']) {
         if (contract.paths[`/immersion${path}`].get['x-tadoku-owner'] === 'native') {

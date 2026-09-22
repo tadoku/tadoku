@@ -77,9 +77,13 @@ var operationAccess = map[string]accessLevel{
 	"ImmersionLogGetConfigurations":                      accessAuthenticated,
 	"ImmersionLogTagSuggestions":                         accessAuthenticated,
 
-	"ImmersionLanguageList":   accessAdmin,
-	"ImmersionLanguageCreate": accessAdmin,
-	"ImmersionLanguageUpdate": accessAdmin,
+	"ImmersionLanguageList":         accessAdmin,
+	"ImmersionLanguageCreate":       accessAdmin,
+	"ImmersionLanguageUpdate":       accessAdmin,
+	"ImmersionFeatureFlagDecisions": accessPublic,
+	"ImmersionFeatureAccessGet":     accessAdmin,
+	"ImmersionFeatureAccessGrant":   accessAdmin,
+	"ImmersionFeatureAccessRevoke":  accessAdmin,
 
 	"ProfileUsersList": accessAdmin,
 }
@@ -114,9 +118,12 @@ var operationFixtures = map[string]string{
 	"ImmersionLogGetConfigurations": "ImmersionLogGetConfigurations",
 	"ImmersionLogTagSuggestions":    "ImmersionLogTagSuggestions",
 
-	"ImmersionLanguageList":   "ListLanguages",
-	"ImmersionLanguageCreate": "CreateLanguage",
-	"ImmersionLanguageUpdate": "UpdateLanguage",
+	"ImmersionLanguageList":        "ListLanguages",
+	"ImmersionLanguageCreate":      "CreateLanguage",
+	"ImmersionLanguageUpdate":      "UpdateLanguage",
+	"ImmersionFeatureAccessGet":    "ImmersionFeatureAccessGet",
+	"ImmersionFeatureAccessGrant":  "ImmersionFeatureAccessGrant",
+	"ImmersionFeatureAccessRevoke": "ImmersionFeatureAccessRevoke",
 
 	"ProfileUsersList": "ProfileUsersList",
 }

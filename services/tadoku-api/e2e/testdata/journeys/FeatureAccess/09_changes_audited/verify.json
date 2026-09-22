@@ -1,0 +1,32 @@
+[
+  {
+    "moderator_user_id": "22222222-2222-4222-8222-222222222222",
+    "action": "feature_access_grant",
+    "target_user_id": "44444444-4444-4444-8444-444444444444",
+    "flag_key": "release-log-entry-v2",
+    "environment": "local",
+    "changed": true,
+    "resulting_revision": "0000000000000000000000000000000000000002",
+    "created_at": "2026-09-12T12:00:00Z"
+  },
+  {
+    "moderator_user_id": "22222222-2222-4222-8222-222222222222",
+    "action": "feature_access_grant",
+    "target_user_id": "44444444-4444-4444-8444-444444444444",
+    "flag_key": "release-log-entry-v2",
+    "environment": "local",
+    "changed": false,
+    "resulting_revision": "0000000000000000000000000000000000000002",
+    "created_at": "2026-09-12T12:00:00Z"
+  },
+  {
+    "moderator_user_id": "22222222-2222-4222-8222-222222222222",
+    "action": "feature_access_revoke",
+    "target_user_id": "44444444-4444-4444-8444-444444444444",
+    "flag_key": "release-log-entry-v2",
+    "environment": "local",
+    "changed": true,
+    "resulting_revision": "0000000000000000000000000000000000000003",
+    "created_at": "2026-09-12T12:00:00Z"
+  }
+]

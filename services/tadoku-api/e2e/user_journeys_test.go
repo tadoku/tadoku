@@ -15,6 +15,35 @@ import (
 // identities on mutating steps, and a second user only to observe limited
 // visibility of a resource.
 
+func TestFeatureAccessJourney(t *testing.T) {
+	runJourney(t, api, "FeatureAccess", []step{
+		{request: "target_initially_disabled", as: admin, want: http.StatusOK},
+		{request: "grant_target", as: admin, want: http.StatusOK, others: cast{guest: http.StatusUnauthorized, user: http.StatusForbidden, banned: http.StatusForbidden}},
+		{request: "target_enabled", as: admin, want: http.StatusOK},
+		{request: "repeat_grant", as: admin, want: http.StatusOK},
+		{request: "target_decision_enabled", as: user2, want: http.StatusOK},
+		{request: "revoke_target", as: admin, want: http.StatusOK, others: cast{guest: http.StatusUnauthorized, user: http.StatusForbidden, banned: http.StatusForbidden}},
+		{request: "target_disabled_again", as: admin, want: http.StatusOK},
+		{request: "target_decision_disabled", as: user2, want: http.StatusOK},
+		{verify: "changes_audited"},
+	})
+}
+
+func TestFeatureAccessAuditFailureJourney(t *testing.T) {
+	failureAPI := &suite{
+		db:      api.db,
+		keto:    api.keto,
+		kratos:  api.kratos,
+		flipt:   api.flipt,
+		handler: auditUnavailableRoleUpdateHandler(t),
+	}
+	runJourney(t, failureAPI, "FeatureAccessAuditFailure", []step{
+		{request: "grant_audit_unavailable", as: admin, want: http.StatusInternalServerError},
+		{request: "provider_change_persisted", as: admin, want: http.StatusOK},
+		{verify: "audit_empty"},
+	})
+}
+
 func TestLanguageLifecycleJourney(t *testing.T) {
 	runJourney(t, api, "LanguageCreateList", []step{
 		{

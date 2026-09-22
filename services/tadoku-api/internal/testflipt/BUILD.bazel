@@ -1,0 +1,10 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "testflipt",
+    testonly = True,
+    srcs = ["fixture.go"],
+    importpath = "github.com/tadoku/tadoku/services/tadoku-api/internal/testflipt",
+    visibility = ["//services/tadoku-api:__subpackages__"],
+    deps = ["//services/common/featureflags"],
+)

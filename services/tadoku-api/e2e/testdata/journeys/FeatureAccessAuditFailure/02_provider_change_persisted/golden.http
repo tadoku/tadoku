@@ -1,0 +1,7 @@
+>>> GET /immersion/admin/feature-flags/release-log-entry-v2/users/44444444-4444-4444-8444-444444444444
+HTTP/1.1 200 OK
+Content-Length: 109
+Cache-Control: private, no-store
+Content-Type: application/json; charset=UTF-8
+
+{"changed":false,"enabled":true,"environment":"local","revision":"0000000000000000000000000000000000000002"}

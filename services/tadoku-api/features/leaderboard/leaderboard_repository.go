@@ -34,7 +34,7 @@ func (r *Repository) contest(ctx context.Context, request ContestRequest) (*Lead
 	}
 	rows, err := queries.New(executor).LeaderboardForContest(ctx, queries.LeaderboardForContestParams{
 		ContestID:    pgtype.UUID{Bytes: request.ContestID, Valid: true},
-		LanguageCode: postgres.NullableText(sqlLanguageCode(request.LanguageCode)),
+		LanguageCode: postgres.NullableNonEmptyText(request.LanguageCode),
 		ActivityID:   postgres.NullableInt4(request.ActivityID),
 		StartFrom:    int32(request.Page * request.PageSize),
 		PageSize:     int32(request.PageSize),
@@ -66,7 +66,7 @@ func (r *Repository) yearly(ctx context.Context, request YearlyRequest) (*Leader
 	}
 	rows, err := queries.New(executor).YearlyLeaderboard(ctx, queries.YearlyLeaderboardParams{
 		Year:         int16(request.Year),
-		LanguageCode: postgres.NullableText(sqlLanguageCode(request.LanguageCode)),
+		LanguageCode: postgres.NullableNonEmptyText(request.LanguageCode),
 		ActivityID:   postgres.NullableInt4(request.ActivityID),
 		StartFrom:    int32(request.Page * request.PageSize),
 		PageSize:     int32(request.PageSize),
@@ -97,7 +97,7 @@ func (r *Repository) global(ctx context.Context, request Request) (*Leaderboard,
 		return nil, err
 	}
 	rows, err := queries.New(executor).GlobalLeaderboard(ctx, queries.GlobalLeaderboardParams{
-		LanguageCode: postgres.NullableText(sqlLanguageCode(request.LanguageCode)),
+		LanguageCode: postgres.NullableNonEmptyText(request.LanguageCode),
 		ActivityID:   postgres.NullableInt4(request.ActivityID),
 		StartFrom:    int32(request.Page * request.PageSize),
 		PageSize:     int32(request.PageSize),
@@ -168,11 +168,4 @@ func (r *Repository) allGlobalScores(ctx context.Context) ([]score, error) {
 		res[i] = score{userID: uuid.UUID(row.UserID.Bytes), value: float64(row.Score)}
 	}
 	return res, nil
-}
-
-func sqlLanguageCode(value *string) *string {
-	if value != nil && *value == "" {
-		return nil
-	}
-	return value
 }

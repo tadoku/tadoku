@@ -38,6 +38,7 @@ func main() {
 	}
 
 	http.Handle("/", newTokenHandler(clock))
+	http.Handle("/authorize-service-account", newServiceAccountAuthorizer())
 
 	http.HandleFunc("/jwks", func(w http.ResponseWriter, r *http.Request) {
 		body, err := jwksProxy.Fetch(r.Context())
@@ -60,6 +61,32 @@ func main() {
 	}
 
 	_ = http.ListenAndServe(":"+port, nil)
+}
+
+func newServiceAccountAuthorizer() http.Handler {
+	type request struct {
+		Subject         string `json:"subject"`
+		ExpectedSubject string `json:"expected_subject"`
+	}
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var body request
+		if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 4096)).Decode(&body); err != nil {
+			http.Error(w, "invalid authorization request", http.StatusBadRequest)
+			return
+		}
+
+		validServiceAccount := func(subject string) bool {
+			parts := strings.Split(subject, ":")
+			return len(parts) == 4 && parts[0] == "system" && parts[1] == "serviceaccount" && parts[2] != "" && parts[3] != ""
+		}
+		if !validServiceAccount(body.Subject) || !validServiceAccount(body.ExpectedSubject) || body.Subject != body.ExpectedSubject {
+			http.Error(w, "service account is not authorized", http.StatusForbidden)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+	})
 }
 
 func newTokenHandler(clock commondomain.Clock) http.Handler {

@@ -22,8 +22,12 @@ import (
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	commonroles "github.com/tadoku/tadoku/services/common/authz/roles"
+	fliptclient "github.com/tadoku/tadoku/services/common/client/flipt"
 	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
 	kratosclient "github.com/tadoku/tadoku/services/common/client/kratos"
+	"github.com/tadoku/tadoku/services/common/client/s2s"
+	commondomain "github.com/tadoku/tadoku/services/common/domain"
+	"github.com/tadoku/tadoku/services/common/featureflags"
 	"github.com/tadoku/tadoku/services/common/postgresconfig"
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/announcements"
@@ -38,21 +42,33 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 	valkeyinfra "github.com/tadoku/tadoku/services/tadoku-api/infra/valkey"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 	transporthttp "github.com/tadoku/tadoku/services/tadoku-api/transport/http"
 	valkeygo "github.com/valkey-io/valkey-go"
 )
 
 type config struct {
-	ScoringEngineEnabled bool          `envconfig:"scoring_engine_enabled" required:"true"`
-	Port                 int           `validate:"gt=0,lte=65535" default:"8000"`
-	MetricsPort          int           `validate:"gt=0,lte=65535" envconfig:"metrics_port" default:"9090"`
-	ServiceName          string        `validate:"required" envconfig:"service_name" default:"tadoku-api"`
-	JWKS                 string        `validate:"required"`
-	JWTIssuer            string        `envconfig:"jwt_issuer"`
-	KetoReadURL          string        `validate:"required" envconfig:"keto_read_url"`
-	KetoWriteURL         string        `validate:"required" envconfig:"keto_write_url"`
-	KetoWriteTimeout     time.Duration `validate:"gt=0" envconfig:"keto_write_timeout" default:"2s"`
-	OathkeeperAuthzToken string        `validate:"required" envconfig:"oathkeeper_authz_token"`
+	ScoringEngineEnabled    bool          `envconfig:"scoring_engine_enabled" required:"true"`
+	Port                    int           `validate:"gt=0,lte=65535" default:"8000"`
+	MetricsPort             int           `validate:"gt=0,lte=65535" envconfig:"metrics_port" default:"9090"`
+	ServiceName             string        `validate:"required" envconfig:"service_name" default:"tadoku-api"`
+	JWKS                    string        `validate:"required"`
+	JWTIssuer               string        `envconfig:"jwt_issuer"`
+	KetoReadURL             string        `validate:"required" envconfig:"keto_read_url"`
+	KetoWriteURL            string        `validate:"required" envconfig:"keto_write_url"`
+	KetoWriteTimeout        time.Duration `validate:"gt=0" envconfig:"keto_write_timeout" default:"2s"`
+	OathkeeperAuthzToken    string        `validate:"required" envconfig:"oathkeeper_authz_token"`
+	OathkeeperURL           string        `envconfig:"oathkeeper_url" default:"http://oathkeeper-proxy.default:4455"`
+	ServiceAccountTokenPath string        `validate:"required" envconfig:"service_account_token_path" default:"/var/run/secrets/tokens/token"`
+
+	FliptEnabled        bool          `envconfig:"flipt_enabled" default:"false"`
+	FliptURL            string        `envconfig:"flipt_url" default:"http://oathkeeper-proxy.default:4455/flipt"`
+	FliptEnvironment    string        `envconfig:"flipt_environment" default:"local"`
+	FliptNamespace      string        `envconfig:"flipt_namespace" default:"default"`
+	FliptUpdateInterval time.Duration `validate:"gte=1s" envconfig:"flipt_update_interval" default:"30s"`
+	FliptRequestTimeout time.Duration `validate:"gte=1s" envconfig:"flipt_request_timeout" default:"5s"`
+	FliptStartupTimeout time.Duration `validate:"gt=0" envconfig:"flipt_startup_timeout" default:"3s"`
+	FliptManagementURL  string        `envconfig:"flipt_management_url" default:"http://oathkeeper-proxy.default:4455/flipt-management"`
 
 	KratosAdminURL string        `validate:"required" envconfig:"kratos_admin_url"`
 	KratosTimeout  time.Duration `validate:"gt=0" envconfig:"kratos_timeout" default:"2s"`
@@ -83,6 +99,28 @@ func loadConfig() (config, error) {
 	if err := validator.New().Struct(cfg); err != nil {
 		return config{}, fmt.Errorf("validate config: %w", err)
 	}
+	if cfg.FliptEnabled {
+		if strings.TrimSpace(cfg.FliptEnvironment) == "" {
+			return config{}, fmt.Errorf("validate config: FliptEnvironment is required")
+		}
+		if strings.TrimSpace(cfg.FliptNamespace) == "" {
+			return config{}, fmt.Errorf("validate config: FliptNamespace is required")
+		}
+
+		var validationErr error
+		cfg.OathkeeperURL, validationErr = providerBaseURL("OathkeeperURL", cfg.OathkeeperURL)
+		if validationErr != nil {
+			return config{}, validationErr
+		}
+		cfg.FliptURL, validationErr = providerBaseURL("FliptURL", cfg.FliptURL)
+		if validationErr != nil {
+			return config{}, validationErr
+		}
+		cfg.FliptManagementURL, validationErr = providerBaseURL("FliptManagementURL", cfg.FliptManagementURL)
+		if validationErr != nil {
+			return config{}, validationErr
+		}
+	}
 	ketoURL, err := url.ParseRequestURI(cfg.KetoReadURL)
 	if err != nil || ketoURL.Host == "" || (ketoURL.Scheme != "http" && ketoURL.Scheme != "https") {
 		return config{}, fmt.Errorf("validate config: KetoReadURL must be an HTTP(S) URL")
@@ -108,6 +146,15 @@ func loadConfig() (config, error) {
 	return cfg, nil
 }
 
+func providerBaseURL(name, rawURL string) (string, error) {
+	parsedURL, err := url.Parse(rawURL)
+	if err != nil || parsedURL.Hostname() == "" || (parsedURL.Scheme != "http" && parsedURL.Scheme != "https") ||
+		parsedURL.User != nil || parsedURL.RawQuery != "" || parsedURL.ForceQuery || strings.Contains(rawURL, "#") {
+		return "", fmt.Errorf("validate config: %s must be an HTTP(S) URL without credentials, query or fragment", name)
+	}
+	return strings.TrimRight(rawURL, "/"), nil
+}
+
 type application struct {
 	ctx          context.Context
 	cancel       context.CancelFunc
@@ -124,7 +171,18 @@ type application struct {
 	valkey          valkeygo.Client
 	kratos          *kratosapi.APIClient
 	keto            *ketoclient.Client
+	flipt           *fliptclient.Client
+	fliptEvaluation *http.Client
+	fliptManagement *http.Client
 }
+
+type timexClock struct{}
+
+func (timexClock) Now() time.Time { return timex.Now() }
+
+var _ commondomain.Clock = timexClock{}
+
+func noRedirect(_ *http.Request, _ []*http.Request) error { return http.ErrUseLastResponse }
 
 type pgxPoolCollector struct {
 	pool                *pgxpool.Pool
@@ -220,6 +278,54 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	defer func() {
 		if !started {
 			transport.CloseIdleConnections()
+		}
+	}()
+
+	clock := timexClock{}
+	exchangeHTTP := &http.Client{
+		Transport:     transport,
+		Timeout:       cfg.FliptRequestTimeout,
+		CheckRedirect: noRedirect,
+	}
+	s2sClient := s2s.NewClient(
+		cfg.OathkeeperURL,
+		clock,
+		s2s.WithHTTPClient(exchangeHTTP),
+		s2s.WithTokenPath(cfg.ServiceAccountTokenPath),
+	)
+	fliptEvaluation := &http.Client{
+		Transport:     s2s.NewAuthTransport(s2sClient, "flipt-evaluation/tadoku-api", transport),
+		Timeout:       cfg.FliptRequestTimeout,
+		CheckRedirect: noRedirect,
+	}
+	fliptManagement := &http.Client{
+		Transport:     s2s.NewAuthTransport(s2sClient, "flipt-management/tadoku-api", transport),
+		Timeout:       cfg.FliptRequestTimeout,
+		CheckRedirect: noRedirect,
+	}
+
+	featureFlagMetrics := featureflags.NewMetrics(metrics, clock)
+	var fliptProvider *fliptclient.Client
+	if cfg.FliptEnabled {
+		fliptProvider, err = fliptclient.New(ctx, fliptclient.Config{
+			URL:            cfg.FliptURL,
+			Environment:    cfg.FliptEnvironment,
+			Namespace:      cfg.FliptNamespace,
+			UpdateInterval: cfg.FliptUpdateInterval,
+			RequestTimeout: cfg.FliptRequestTimeout,
+			StartupTimeout: cfg.FliptStartupTimeout,
+			HTTPClient:     fliptEvaluation,
+		}, featureFlagMetrics)
+		if err != nil {
+			logger.Warn("feature flag provider unavailable; using safe defaults", "error", err)
+			fliptProvider = nil
+		}
+	}
+	defer func() {
+		if !started && fliptProvider != nil {
+			closeCtx, cancelClose := context.WithTimeout(context.Background(), cfg.ShutdownTimeout)
+			defer cancelClose()
+			_ = fliptProvider.Close(closeCtx)
 		}
 	}()
 
@@ -369,6 +475,9 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 		valkey:          valkeyClient,
 		kratos:          kratos,
 		keto:            keto,
+		flipt:           fliptProvider,
+		fliptEvaluation: fliptEvaluation,
+		fliptManagement: fliptManagement,
 	}
 
 	go func() {
@@ -424,9 +533,15 @@ func (app *application) wait() error {
 
 	app.pool.Close()
 	app.valkey.Close()
+	var fliptErr error
+	if app.flipt != nil {
+		closeContext, cancelClose := context.WithTimeout(context.Background(), app.shutdownTimeout)
+		fliptErr = app.flipt.Close(closeContext)
+		cancelClose()
+	}
 	app.transport.CloseIdleConnections()
 
-	return errors.Join(runErr, shutdownErr, metricsErr)
+	return errors.Join(runErr, shutdownErr, metricsErr, fliptErr)
 }
 
 func main() {

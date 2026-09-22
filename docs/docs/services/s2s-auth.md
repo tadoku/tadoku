@@ -33,8 +33,9 @@ The `subject` (JWT `sub`, short for "subject") is the primary identifier:
    - `GET http://oathkeeper-proxy.default:4455/token-exchange/<target-service>`
    - `Authorization: Bearer <sa-token>`
 3. Oathkeeper validates the SA token using the JWT authenticator and the Kubernetes JWKS served by token-reflector.
-4. Oathkeeper mints a service JWT and forwards the request to token-reflector.
-5. Token-reflector returns a JSON response:
+4. Exchanges restricted to one workload also authorize the verified `sub` against the rule's full `system:serviceaccount:<namespace>:<name>` principal.
+5. Oathkeeper mints a service JWT and forwards the request to token-reflector.
+6. Token-reflector returns a JSON response:
 
 ```json
 {
@@ -44,7 +45,9 @@ The `subject` (JWT `sub`, short for "subject") is the primary identifier:
 }
 ```
 
-6. Caller uses the JWT to call the target service.
+7. Caller uses the JWT to call the target service.
+
+One caller can have separate exchange paths for separate target audiences. For example, `tadoku-api` exchanges its `aud=tadoku-api` projected token at `flipt-evaluation/tadoku-api` and `flipt-management/tadoku-api`. The resulting tokens are accepted only by the corresponding Flipt proxy routes.
 
 ## Token Claims
 
@@ -53,7 +56,8 @@ Service JWTs include:
 - `sub`: full service account name
 - `aud`: array with the target service name
 - `type`: `service`
-- `namespace`: inferred from `sub`
+
+The receiving identity layer derives the service namespace from `sub`; it is not a separate token claim.
 
 User JWTs include:
 
@@ -78,6 +82,7 @@ Authz:
 
 - Each service runs in its own namespace prefixed with `tdk-`.
 - Each service has its own ServiceAccount.
+- Workloads that call another service mount an explicitly projected token at `/var/run/secrets/tokens/token`; its audience identifies the caller, not the target.
 - `token-reflector` runs in `tdk-token-reflector`.
 - Oathkeeper validates SA tokens using a JWKS URL served by token-reflector:
   - `http://token-reflector.tdk-token-reflector/jwks`
@@ -104,7 +109,7 @@ import (
 	profileclient "github.com/tadoku/tadoku/services/profile-api/http/rest/openapi/internalapi"
 )
 
-s2sClient := s2s.NewClient(cfg.OathkeeperURL)
+s2sClient := s2s.NewClient(cfg.OathkeeperURL, clock)
 httpClient := &http.Client{
 	Transport: s2s.NewAuthTransport(s2sClient, "profile-api", nil),
 }
@@ -126,7 +131,8 @@ _ = resp
 
 ## Failure Modes
 
-- Invalid audience: `403 Forbidden`
+- Invalid token audience at Oathkeeper: `401 Unauthorized`
+- Valid caller audience but wrong service-account subject: `403 Forbidden`
 - Missing/invalid JWT: `401 Unauthorized`
 - Missing service name configuration: service tokens rejected (`403`)
 - Token-reflector unavailable: token exchange returns `502 Bad Gateway`

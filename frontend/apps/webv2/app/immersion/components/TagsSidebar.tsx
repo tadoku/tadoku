@@ -73,6 +73,8 @@ export function TagsSidebar({ activityId }: TagsSidebarProps) {
 
   if (modifiers.length === 0 && suggestions.length === 0) return null
 
+  suggestions.push({ tag: 'nsfw' })
+
   const isAtLimit = tags.length >= MAX_TAGS
 
   const handleToggle = (tag: string) => {

@@ -11,6 +11,7 @@ import { routes } from '@app/common/routes'
 import { useSession } from '@app/common/session'
 import { Log, useDeleteLog, useLog } from '@app/immersion/api'
 import { LogDetailsV2 } from '@app/immersion/LogDetailsV2'
+import { LogDescription } from '@app/immersion/components/LogDescription'
 import { HomeIcon, TrashIcon } from '@heroicons/react/20/solid'
 import { XMarkIcon } from '@heroicons/react/24/outline'
 import { DateTime } from 'luxon'
@@ -162,7 +163,13 @@ const Page = () => {
           {log.data.description ? (
             <>
               <h3 className="subtitle my-2">Description</h3>
-              <p className="">{log.data.description}</p>
+              <p>
+                <LogDescription
+                  key={log.data.id + log.data.description}
+                  description={log.data.description}
+                  tags={log.data.tags}
+                />
+              </p>
             </>
           ) : null}
           <div className="h-stack w-full mt-4 spaced">

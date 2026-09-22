@@ -3,6 +3,7 @@ package logs
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/google/uuid"
@@ -63,6 +64,7 @@ var defaultTagSuggestions = []string{
 	"vocabulary",
 	"web page",
 	"youtube",
+	"nsfw",
 }
 
 func (s *Service) TagSuggestions(ctx context.Context, userID uuid.UUID, query string) ([]TagSuggestion, error) {
@@ -85,6 +87,11 @@ func (s *Service) TagSuggestions(ctx context.Context, userID uuid.UUID, query st
 			}
 		}
 	}
+
+	// Keep NSFW below ordinary suggestions, including frequently used tags.
+	sort.SliceStable(suggestions, func(i, j int) bool {
+		return !strings.EqualFold(suggestions[i].Tag, "nsfw") && strings.EqualFold(suggestions[j].Tag, "nsfw")
+	})
 
 	return suggestions, nil
 }

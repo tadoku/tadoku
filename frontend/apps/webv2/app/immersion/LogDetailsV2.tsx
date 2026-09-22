@@ -1,3 +1,4 @@
+import { LogDescription } from '@app/immersion/components/LogDescription'
 import { TrashIcon, CheckBadgeIcon } from '@heroicons/react/20/solid'
 import {
   XMarkIcon,
@@ -68,7 +69,13 @@ export const LogDetailsV2 = ({ log }: Props) => {
           {log.description ? (
             <div className="mb-4">
               <h3 className="subtitle">Description</h3>
-              <p className="text-sm">{log.description}</p>
+              <p className="text-sm">
+                <LogDescription
+                  key={log.id + log.description}
+                  description={log.description}
+                  tags={log.tags}
+                />
+              </p>
             </div>
           ) : null}
           {tags.length > 0 ? (

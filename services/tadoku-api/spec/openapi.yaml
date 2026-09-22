@@ -2352,7 +2352,7 @@ paths:
                 $ref: "#/components/schemas/ImmersionFeatureFlagDecisionsResponse"
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /feature-flags
       x-legacy-operation-id: featureFlagDecisions
   "/immersion/admin/feature-flags/{flagKey}/users/{userId}":
@@ -2366,6 +2366,10 @@ paths:
       responses:
         "200":
           description: Named-user feature access
+          headers:
+            Cache-Control:
+              schema:
+                type: string
           content:
             application/json:
               schema:
@@ -2394,7 +2398,7 @@ paths:
             format: uuid
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /admin/feature-flags/{flagKey}/users/{userId}
       x-legacy-operation-id: featureAccessGet
     put:
@@ -2407,6 +2411,10 @@ paths:
       responses:
         "200":
           description: Updated named-user feature access
+          headers:
+            Cache-Control:
+              schema:
+                type: string
           content:
             application/json:
               schema:
@@ -2424,7 +2432,7 @@ paths:
         - *a2
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /admin/feature-flags/{flagKey}/users/{userId}
       x-legacy-operation-id: featureAccessGrant
     delete:
@@ -2437,6 +2445,10 @@ paths:
       responses:
         "200":
           description: Updated named-user feature access
+          headers:
+            Cache-Control:
+              schema:
+                type: string
           content:
             application/json:
               schema:
@@ -2454,7 +2466,7 @@ paths:
         - *a2
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /admin/feature-flags/{flagKey}/users/{userId}
       x-legacy-operation-id: featureAccessRevoke
   /immersion/languages:

@@ -23,6 +23,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	commonroles "github.com/tadoku/tadoku/services/common/authz/roles"
 	fliptclient "github.com/tadoku/tadoku/services/common/client/flipt"
+	"github.com/tadoku/tadoku/services/common/client/fliptmanagement"
 	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
 	kratosclient "github.com/tadoku/tadoku/services/common/client/kratos"
 	"github.com/tadoku/tadoku/services/common/client/s2s"
@@ -34,6 +35,7 @@ import (
 	featureaudit "github.com/tadoku/tadoku/services/tadoku-api/features/audit"
 	featureauthz "github.com/tadoku/tadoku/services/tadoku-api/features/authz"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/contests"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/featureaccess"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/languages"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/logs"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/pages"
@@ -407,7 +409,12 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	pagesService := pages.NewService(pagesRepository)
 	postsService := posts.NewService(postsRepository)
 	profileService := profile.NewService(profileRepository, userCache, roleService, kratosIdentities)
-	api := app.New(announcementsService, auditService, authzService, contestsService, languagesService, logsService, pagesService, postsService, profileService, pool, permissionChecker)
+	featureFlagService := featureaccess.NewService(featureflags.NewEvaluator(fliptProvider, featureFlagMetrics, clock), fliptmanagement.NewClient(fliptmanagement.Config{
+		URL:         cfg.FliptManagementURL,
+		Environment: cfg.FliptEnvironment,
+		HTTPClient:  fliptManagement,
+	}))
+	api := app.New(announcementsService, auditService, authzService, contestsService, languagesService, logsService, pagesService, postsService, profileService, featureFlagService, pool, permissionChecker)
 	rejectBanned := newBannedUserMiddleware(ketoReader, logger)
 
 	handler, err := transporthttp.NewHandler(api, pool.Ping, cfg.RequestTimeout, metrics, logger, authenticate, rejectBanned, authenticateCallback)

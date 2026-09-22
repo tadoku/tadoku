@@ -10,7 +10,7 @@ import (
 type Event struct {
 	ActorID     uuid.UUID
 	Action      string
-	Metadata    map[string]string
+	Metadata    map[string]any
 	Description string
 	recordedAt  time.Time
 }

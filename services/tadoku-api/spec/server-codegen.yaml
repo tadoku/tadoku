@@ -54,5 +54,9 @@ output-options:
     - ImmersionLogFindByID
     - ImmersionProfileListLogs
     - ImmersionContestListLogs
+    - ImmersionFeatureFlagDecisions
+    - ImmersionFeatureAccessGet
+    - ImmersionFeatureAccessGrant
+    - ImmersionFeatureAccessRevoke
   nullable-type: true
   skip-prune: true

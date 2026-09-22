@@ -15,7 +15,10 @@ import (
 	commonroles "github.com/tadoku/tadoku/services/common/authz/roles"
 	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
 	commonkratos "github.com/tadoku/tadoku/services/common/client/kratos"
+	commondomain "github.com/tadoku/tadoku/services/common/domain"
+	"github.com/tadoku/tadoku/services/common/featureflags"
 	"github.com/tadoku/tadoku/services/common/middleware"
+	"github.com/tadoku/tadoku/services/immersion-api/client/fliptmanagement"
 	immersionory "github.com/tadoku/tadoku/services/immersion-api/client/ory"
 	"github.com/tadoku/tadoku/services/immersion-api/domain"
 	"github.com/tadoku/tadoku/services/immersion-api/http/rest"
@@ -42,6 +45,8 @@ func newLegacyImmersionAPI(ctx context.Context, dsn, jwksURL, ketoReadURL string
 
 	postgresRepository := repository.NewRepository(db)
 	userUpsert := domain.NewUserUpsert(postgresRepository)
+	featureAccess := domain.NewFeatureAccess(fliptmanagement.NewClient(fliptmanagement.Config{URL: flipt.URL(), Environment: "local"}), postgresRepository)
+	featureFlagEvaluator := featureflags.NewEvaluator(flipt, nil, commondomain.NewMockClock(fixtureInstant))
 
 	kratosConfig := kratos.GetConfig()
 	kratosClient := immersionory.NewKratosClient(
@@ -87,8 +92,8 @@ func newLegacyImmersionAPI(ctx context.Context, dsn, jwksURL, ketoReadURL string
 			nil, // log contest update
 			nil, // score preview
 			nil, // scoring rule set management
-			nil, // feature flags
-			nil, // feature access
+			featureFlagEvaluator,
+			featureAccess,
 		)
 		router := echo.New()
 		middleware.RestoreJSONCharset(router)

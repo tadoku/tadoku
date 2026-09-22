@@ -26,7 +26,7 @@ func TestRepositoryPersistsAudit(t *testing.T) {
 	event := Event{
 		ActorID: uuid.MustParse("22222222-2222-4222-8222-222222222222"),
 		Action:  "ban_user",
-		Metadata: map[string]string{
+		Metadata: map[string]any{
 			"target_user_id": "11111111-1111-4111-8111-111111111111",
 			"new_role":       "banned",
 		},
@@ -53,7 +53,7 @@ func TestRepositoryPersistsAudit(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var metadata map[string]string
+	var metadata map[string]any
 	if err := json.Unmarshal(metadataRaw, &metadata); err != nil {
 		t.Fatal(err)
 	}

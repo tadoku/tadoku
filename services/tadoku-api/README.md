@@ -110,7 +110,9 @@ requested object in Keto for the verified request subject and returns the provid
 decision. Provider failures return unavailable.
 
 Feature services consume concrete shared authorization fact and mutation
-services from `services/common/authz/roles`. Target facts are never treated as
+services from `services/common/authz/roles`. Provider-backed feature services may
+also consume the shared feature-flag evaluator and management client, keeping
+provider types and identity adaptation inside the owning feature package. Target facts are never treated as
 caller authorization; the operation still uses the permission checker for its
 own access decision and the shared HTTP ban gate still applies first. Batch facts
 are read for each request rather than cached. Native feature services accept

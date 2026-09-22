@@ -207,7 +207,7 @@ with leaderboard as (
     (select count(registrations.user_id) from registrations) as total_size
   from registrations
   left join ranked_leaderboard using(user_id)
-  order by score desc, registrations.created_at asc
+  order by score desc, registrations.created_at asc, registrations.user_id desc
 )
 select rank, user_id, user_display_name, score, total_size, coalesce((
   "rank" = lag("rank", 1, -1::bigint) over (order by "rank")

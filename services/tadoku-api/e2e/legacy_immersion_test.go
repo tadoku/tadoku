@@ -103,8 +103,8 @@ func newLegacyImmersionAPIWithTimeout(ctx context.Context, dsn, jwksURL, ketoRea
 			domain.NewLanguageUpdate(postgresRepository),
 			domain.NewTagSuggestions(postgresRepository),
 			nil, // log contest update
-			nil, // score preview
-			nil, // scoring rule set management
+			domain.NewScorePreview(postgresRepository, scenarioClock{}),
+			domain.NewScoringRuleSetManagement(postgresRepository, scenarioClock{}),
 			featureFlagEvaluator,
 			featureAccess,
 		)

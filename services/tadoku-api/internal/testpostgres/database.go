@@ -106,6 +106,15 @@ func New(ctx context.Context) (_ *Database, err error) {
 	if _, err := db.Pool.Exec(ctx, "create table tadoku_test_language_baseline as select code, name from languages"); err != nil {
 		return nil, fmt.Errorf("snapshot language baseline: %w", err)
 	}
+	if _, err := db.Pool.Exec(ctx, "create table tadoku_test_scoring_rule_sets_baseline as select * from scoring_rule_sets"); err != nil {
+		return nil, fmt.Errorf("snapshot scoring rule sets baseline: %w", err)
+	}
+	if _, err := db.Pool.Exec(ctx, "create table tadoku_test_scoring_rules_baseline as select * from scoring_rules"); err != nil {
+		return nil, fmt.Errorf("snapshot scoring rules baseline: %w", err)
+	}
+	if _, err := db.Pool.Exec(ctx, "create table tadoku_test_platform_scoring_config_baseline as select * from platform_scoring_config"); err != nil {
+		return nil, fmt.Errorf("snapshot platform scoring config baseline: %w", err)
+	}
 	return db, nil
 }
 

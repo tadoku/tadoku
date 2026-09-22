@@ -1,0 +1,6 @@
+>>> POST /immersion/logs/score-preview
+HTTP/1.1 200 OK
+Content-Length: 1008
+Content-Type: application/json; charset=UTF-8
+
+{"contests":[{"contest_id":"f0000000-0000-4000-8000-000000000004","estimate":{"rule_set_id":"aaaaaaaa-aaaa-4aaa-8aaa-000000000001","rules":[{"rate":2,"rule_id":"bbbbbbbb-bbbb-4bbb-8bbb-000000000002"}],"score":20,"source":"amount"},"registration_id":"eeeeeeee-eeee-4eee-8eee-000000000004"},{"contest_id":"f0000000-0000-4000-8000-000000000001","estimate":{"rule_set_id":"cccccccc-cccc-4ccc-8ccc-000000000001","rules":[{"rate":4,"rule_id":"dddddddd-dddd-4ddd-8ddd-000000000001"}],"score":40,"source":"amount"},"registration_id":"eeeeeeee-eeee-4eee-8eee-000000000001"},{"contest_id":"f0000000-0000-4000-8000-000000000004","estimate":{"rule_set_id":"aaaaaaaa-aaaa-4aaa-8aaa-000000000001","rules":[{"rate":2,"rule_id":"bbbbbbbb-bbbb-4bbb-8bbb-000000000002"}],"score":20,"source":"amount"},"registration_id":"eeeeeeee-eeee-4eee-8eee-000000000004"}],"platform":{"rule_set_id":"aaaaaaaa-aaaa-4aaa-8aaa-000000000001","rules":[{"rate":2,"rule_id":"bbbbbbbb-bbbb-4bbb-8bbb-000000000002"}],"score":20,"source":"amount"}}

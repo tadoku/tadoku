@@ -1,0 +1,13 @@
+version: "2"
+sql:
+  - engine: postgresql
+    schema: ../../../immersion-api/storage/postgres/migrations
+    queries:
+      - scoring.sql
+    gen:
+      go:
+        package: scoring
+        out: ../../generated/sqlc/scoring
+        sql_package: pgx/v5
+        emit_empty_slices: true
+        omit_unused_structs: true

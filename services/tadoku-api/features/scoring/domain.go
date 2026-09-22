@@ -1,0 +1,228 @@
+package scoring
+
+import (
+	"errors"
+	"math"
+	"sort"
+	"strings"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/tadoku/tadoku/services/tadoku-api/domain/activities"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
+)
+
+var (
+	ErrRuleSetNotFound = errors.New("scoring rule set not found")
+	ErrContestNotFound = errx.NewNotFoundError("contest not found")
+)
+
+type Source string
+
+const (
+	SourceAmount          Source = "amount"
+	SourceDurationMinutes Source = "duration_minutes"
+)
+
+type Rule struct {
+	ID           uuid.UUID
+	Priority     int32
+	Stackable    bool
+	ActivityID   int32
+	UnitKey      string
+	LanguageCode string
+	Tag          string
+	Source       Source
+	Rate         float32
+}
+
+type RuleSet struct {
+	ID                uuid.UUID
+	Scope             string
+	ContestID         *uuid.UUID
+	Version           int32
+	Status            string
+	Active            bool
+	Mode              string
+	FallbackRuleSetID *uuid.UUID
+	Rules             []Rule
+	CreatedAt         time.Time
+	PublishedAt       *time.Time
+}
+
+type PreviewParameters struct {
+	UnitID          *uuid.UUID
+	UnitKey         *string
+	ActivityID      int32
+	LanguageCode    string
+	Amount          *float32
+	DurationSeconds *int32
+	Tags            []string
+	Contests        []PreviewContest
+}
+
+type PreviewContest struct {
+	RegistrationID uuid.UUID
+	ContestID      uuid.UUID
+}
+
+type Estimate struct {
+	Score     float32
+	Source    Source
+	RuleSetID *uuid.UUID
+	Rules     []AppliedRule
+}
+
+type AppliedRule struct {
+	RuleID uuid.UUID
+	Rate   float32
+}
+
+type ContestEstimate struct {
+	RegistrationID uuid.UUID
+	ContestID      uuid.UUID
+	Estimate       Estimate
+}
+
+type Preview struct {
+	Platform Estimate
+	Contests []ContestEstimate
+}
+
+type scoringInput struct {
+	activityID      int32
+	unitKey         string
+	languageCode    string
+	tags            []string
+	amount          *float32
+	durationSeconds *int32
+}
+
+func evaluate(input scoringInput, ruleSet RuleSet) (Estimate, bool, error) {
+	value, source, err := scoreableValue(input)
+	if err != nil {
+		return Estimate{}, false, err
+	}
+
+	rules := append([]Rule(nil), ruleSet.Rules...)
+	sort.SliceStable(rules, func(i, j int) bool { return rules[i].Priority < rules[j].Priority })
+	tags := make(map[string]struct{}, len(input.tags))
+	for _, tag := range input.tags {
+		tags[tag] = struct{}{}
+	}
+
+	var base *Rule
+	modifiers := make([]Rule, 0)
+	priorities := make(map[int32]struct{}, len(rules))
+	for i := range rules {
+		rule := &rules[i]
+		if _, duplicate := priorities[rule.Priority]; duplicate || !validActivity(rule.ActivityID) ||
+			(rule.Source != SourceAmount && rule.Source != SourceDurationMinutes) || !finite(rule.Rate) || rule.Rate < 0 {
+			return Estimate{}, false, errx.NewInternalError("invalid scoring rule set")
+		}
+		priorities[rule.Priority] = struct{}{}
+		if rule.Source != source || rule.ActivityID != input.activityID ||
+			(rule.UnitKey != "" && rule.UnitKey != input.unitKey) ||
+			(rule.LanguageCode != "" && rule.LanguageCode != input.languageCode) {
+			continue
+		}
+		if rule.Tag != "" {
+			if _, ok := tags[rule.Tag]; !ok {
+				continue
+			}
+		}
+		if rule.Stackable {
+			modifiers = append(modifiers, *rule)
+		} else if base == nil {
+			base = rule
+		}
+	}
+
+	estimate := Estimate{
+		Score:  0,
+		Source: source,
+		Rules:  []AppliedRule{},
+	}
+	if base == nil {
+		return estimate, false, nil
+	}
+	estimate.Score = value * base.Rate
+	estimate.RuleSetID = &ruleSet.ID
+	estimate.Rules = append(estimate.Rules, AppliedRule{
+		RuleID: base.ID,
+		Rate:   base.Rate,
+	})
+	for _, rule := range modifiers {
+		estimate.Score *= rule.Rate
+		estimate.Rules = append(estimate.Rules, AppliedRule{
+			RuleID: rule.ID,
+			Rate:   rule.Rate,
+		})
+	}
+	return estimate, true, nil
+}
+
+func scoreableValue(input scoringInput) (float32, Source, error) {
+	if !validActivity(input.activityID) {
+		return 0, "", errx.NewInvalidInputError("activity_id is not valid")
+	}
+	if input.languageCode == "" {
+		return 0, "", errx.NewInvalidInputError("language_code is required")
+	}
+	if input.amount != nil {
+		if !finite(*input.amount) || *input.amount <= 0 {
+			return 0, "", errx.NewInvalidInputError("amount must be positive and finite")
+		}
+		return *input.amount, SourceAmount, nil
+	}
+	if input.durationSeconds != nil && *input.durationSeconds > 0 {
+		return float32(*input.durationSeconds) / 60, SourceDurationMinutes, nil
+	}
+	return 0, "", errx.NewInvalidInputError("amount or duration_seconds is required")
+}
+
+func validActivity(id int32) bool {
+	all := activities.All()
+	return id > 0 && int(id) <= len(all) && all[id-1].ID == id
+}
+
+var unitActivities = map[string]int32{
+	"reading_page":            1,
+	"reading_two_column_page": 1,
+	"reading_comic_page":      1,
+	"reading_sentence":        1,
+	"reading_character":       1,
+	"listening_minute":        2,
+	"listening_dense_minutes": 2,
+	"writing_page":            3,
+	"writing_sentence":        3,
+	"writing_character":       3,
+	"speaking_minute":         4,
+	"speaking_dense_minutes":  4,
+	"study_minute":            5,
+}
+
+func finite(value float32) bool { return !math.IsNaN(float64(value)) && !math.IsInf(float64(value), 0) }
+
+func NormalizeTags(tags []string) ([]string, error) {
+	seen := make(map[string]struct{}, len(tags))
+	result := make([]string, 0, len(tags))
+	for _, tag := range tags {
+		tag = strings.ToLower(strings.TrimSpace(tag))
+		if tag == "" {
+			continue
+		}
+		if len(tag) > 50 {
+			return nil, errx.NewInternalError("tag exceeds maximum length of 50 characters")
+		}
+		if _, exists := seen[tag]; exists {
+			continue
+		}
+		seen[tag] = struct{}{}
+		result = append(result, tag)
+	}
+	if len(result) > 10 {
+		return nil, errx.NewInternalError("more than 10 tags remain after normalization")
+	}
+	return result, nil
+}

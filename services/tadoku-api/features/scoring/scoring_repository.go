@@ -1,0 +1,207 @@
+package scoring
+
+import (
+	"context"
+	"errors"
+	"fmt"
+
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/jackc/pgx/v5/pgxpool"
+	queries "github.com/tadoku/tadoku/services/tadoku-api/generated/sqlc/scoring"
+	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
+)
+
+type ScoringRepository struct{ db *pgxpool.Pool }
+
+func NewScoringRepository(db *pgxpool.Pool) *ScoringRepository { return &ScoringRepository{db: db} }
+
+func (r *ScoringRepository) ListPlatformRuleSets(ctx context.Context) ([]RuleSet, error) {
+	q, err := r.queries(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := q.ListPlatformScoringRuleSets(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("list platform scoring rule sets: %w", err)
+	}
+	return ruleSets(rows), nil
+}
+
+func (r *ScoringRepository) ListContestRuleSets(ctx context.Context, contestID uuid.UUID) ([]RuleSet, error) {
+	q, err := r.queries(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := q.ListContestScoringRuleSets(ctx, postgresUUID(contestID))
+	if err != nil {
+		return nil, fmt.Errorf("list contest scoring rule sets: %w", err)
+	}
+	return ruleSets(rows), nil
+}
+
+func (r *ScoringRepository) FindActivePlatformRuleSet(ctx context.Context) (*RuleSet, error) {
+	q, err := r.queries(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	row, err := q.FindActivePlatformScoringRuleSet(ctx)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, ErrRuleSetNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("find active platform scoring rule set: %w", err)
+	}
+	return ruleSet(row), nil
+}
+
+func (r *ScoringRepository) FindContestActiveRuleSetID(ctx context.Context, contestID uuid.UUID) (*uuid.UUID, error) {
+	q, err := r.queries(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := q.FindContestScoringRuleSetID(ctx, postgresUUID(contestID))
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, ErrContestNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("find contest scoring rule set: %w", err)
+	}
+	if !id.Valid {
+		return nil, nil
+	}
+	value := uuid.UUID(id.Bytes)
+	return &value, nil
+}
+
+func (r *ScoringRepository) FindRuleSetByID(ctx context.Context, id uuid.UUID) (*RuleSet, error) {
+	q, err := r.queries(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	row, err := q.FindScoringRuleSetByID(ctx, postgresUUID(id))
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, ErrRuleSetNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("find scoring rule set: %w", err)
+	}
+	return ruleSet(row), nil
+}
+
+func (r *ScoringRepository) ListRules(ctx context.Context, ruleSetID uuid.UUID) ([]Rule, error) {
+	q, err := r.queries(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := q.ListScoringRulesForRuleSet(ctx, postgresUUID(ruleSetID))
+	if err != nil {
+		return nil, fmt.Errorf("list scoring rules: %w", err)
+	}
+	rules := make([]Rule, len(rows))
+	for i, row := range rows {
+		rules[i] = Rule{
+			ID:           row.ID.Bytes,
+			Priority:     row.Priority,
+			Stackable:    row.Stackable,
+			ActivityID:   int32(row.ActivityID),
+			UnitKey:      row.UnitKey.String,
+			LanguageCode: row.LanguageCode.String,
+			Tag:          row.Tag.String,
+			Source:       Source(row.ScoreSource),
+			Rate:         row.Rate,
+		}
+	}
+	return rules, nil
+}
+
+func (r *ScoringRepository) FindUnitKeyByID(ctx context.Context, id uuid.UUID, activityID int32, languageCode string) (string, error) {
+	q, err := r.queries(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	row, err := q.FindUnitForScoringByID(ctx, queries.FindUnitForScoringByIDParams{
+		ID:           postgresUUID(id),
+		ActivityID:   int16(activityID),
+		LanguageCode: pgtype.Text{String: languageCode, Valid: true},
+	})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return "", errx.NewInvalidInputError("unit_id is not valid for activity_id and language_code")
+	}
+	if err != nil {
+		return "", fmt.Errorf("find unit for scoring: %w", err)
+	}
+	return row.UnitKey, nil
+}
+
+func (r *ScoringRepository) FindUnitKeyByKey(ctx context.Context, key string, activityID int32, languageCode string) (string, error) {
+	q, err := r.queries(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	row, err := q.FindUnitForScoringByKey(ctx, queries.FindUnitForScoringByKeyParams{
+		UnitKey:      key,
+		ActivityID:   int16(activityID),
+		LanguageCode: pgtype.Text{String: languageCode, Valid: true},
+	})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return "", errx.NewInvalidInputError("unit_key is not valid for activity_id and language_code")
+	}
+	if err != nil {
+		return "", fmt.Errorf("find unit for scoring: %w", err)
+	}
+	return row.UnitKey, nil
+}
+
+func (r *ScoringRepository) queries(ctx context.Context) (*queries.Queries, error) {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return nil, err
+	}
+	return queries.New(executor), nil
+}
+
+func ruleSets(rows []queries.ScoringRuleSet) []RuleSet {
+	result := make([]RuleSet, len(rows))
+	for i, row := range rows {
+		result[i] = *ruleSet(row)
+	}
+	return result
+}
+
+func ruleSet(row queries.ScoringRuleSet) *RuleSet {
+	result := &RuleSet{
+		ID:        row.ID.Bytes,
+		Scope:     row.Scope,
+		Version:   row.Version,
+		Status:    row.Status,
+		Mode:      row.Mode.String,
+		Rules:     []Rule{},
+		CreatedAt: row.CreatedAt.Time,
+	}
+	if row.ContestID.Valid {
+		id := uuid.UUID(row.ContestID.Bytes)
+		result.ContestID = &id
+	}
+	if row.FallbackRuleSetID.Valid {
+		id := uuid.UUID(row.FallbackRuleSetID.Bytes)
+		result.FallbackRuleSetID = &id
+	}
+	if row.PublishedAt.Valid {
+		publishedAt := row.PublishedAt.Time
+		result.PublishedAt = &publishedAt
+	}
+	return result
+}
+
+func postgresUUID(value uuid.UUID) pgtype.UUID { return pgtype.UUID{Bytes: value, Valid: true} }

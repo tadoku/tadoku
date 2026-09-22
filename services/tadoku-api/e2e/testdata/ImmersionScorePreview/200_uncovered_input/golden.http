@@ -1,0 +1,6 @@
+>>> POST /immersion/logs/score-preview
+HTTP/1.1 200 OK
+Content-Length: 78
+Content-Type: application/json; charset=UTF-8
+
+{"contests":[],"platform":{"rules":[],"score":0,"source":"duration_minutes"}}

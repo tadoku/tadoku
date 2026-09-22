@@ -61,5 +61,8 @@ output-options:
     - ImmersionContestFetchLeaderboard
     - ImmersionFetchLeaderboardForYear
     - ImmersionFetchLeaderboardGlobal
+    - ImmersionScorePreview
+    - ImmersionScoringRuleSetListPlatform
+    - ImmersionScoringRuleSetListContest
   nullable-type: true
   skip-prune: true

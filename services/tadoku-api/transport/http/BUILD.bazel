@@ -52,6 +52,7 @@ go_library(
         "profile_users_list.go",
         "proxy.go",
         "router.go",
+        "scoring.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/transport/http",
     visibility = ["//visibility:public"],

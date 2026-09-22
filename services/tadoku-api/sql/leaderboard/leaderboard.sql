@@ -132,6 +132,3 @@ inner join users on users.id = logs.user_id and users.deleted_at is null
 where eligible_official_leaderboard = true and logs.deleted_at is null
 group by logs.user_id
 having sum(coalesce(computed_score, score)) > 0;
-
--- name: FindUserDisplayNames :many
-select id, display_name from users where id = any(sqlc.arg('ids')::uuid[]);

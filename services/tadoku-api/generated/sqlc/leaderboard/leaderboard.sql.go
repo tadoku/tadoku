@@ -65,35 +65,6 @@ func (q *Queries) ContestLeaderboardAllScores(ctx context.Context, contestID pgt
 	return items, nil
 }
 
-const findUserDisplayNames = `-- name: FindUserDisplayNames :many
-select id, display_name from users where id = any($1::uuid[])
-`
-
-type FindUserDisplayNamesRow struct {
-	ID          pgtype.UUID
-	DisplayName string
-}
-
-func (q *Queries) FindUserDisplayNames(ctx context.Context, ids []pgtype.UUID) ([]FindUserDisplayNamesRow, error) {
-	rows, err := q.db.Query(ctx, findUserDisplayNames, ids)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []FindUserDisplayNamesRow{}
-	for rows.Next() {
-		var i FindUserDisplayNamesRow
-		if err := rows.Scan(&i.ID, &i.DisplayName); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const globalLeaderboard = `-- name: GlobalLeaderboard :many
 with leaderboard as (
   select logs.user_id, sum(coalesce(computed_score, score)) as score

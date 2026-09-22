@@ -42,7 +42,7 @@ func NewService(repository *Repository, client valkeygo.Client, operationTimeout
 	}
 }
 
-func (s *Service) FetchContest(ctx context.Context, request ContestRequest) (*Leaderboard, error) {
+func (s *Service) FetchContest(ctx context.Context, request ContestRequest) (*Result, error) {
 	request.Request = normalize(request.Request)
 	if err := validateActivity(request.ActivityID); err != nil {
 		return nil, err
@@ -66,23 +66,23 @@ func (s *Service) FetchContest(ctx context.Context, request ContestRequest) (*Le
 		}
 		return s.fetchContestFromPostgres(ctx, request)
 	}
-	return s.enrich(ctx, result, request.Page, request.PageSize)
+	return cachedResult(result, request.Page, request.PageSize), nil
 }
 
-func (s *Service) FetchYearly(ctx context.Context, request YearlyRequest) (*Leaderboard, error) {
+func (s *Service) FetchYearly(ctx context.Context, request YearlyRequest) (*Result, error) {
 	request.Request = normalize(request.Request)
 	if err := validateActivity(request.ActivityID); err != nil {
 		return nil, err
 	}
 	if filtered(request.Request) {
-		return s.repository.yearly(ctx, request)
+		return postgresResult(s.repository.yearly(ctx, request))
 	}
 
 	key := yearlyPrefix + strconv.Itoa(int(request.Year))
 	result, exists, err := s.fetchPage(ctx, key, request.Page, request.PageSize)
 	if err != nil {
 		slog.WarnContext(ctx, "yearly leaderboard cache unavailable; falling back to Postgres", "error", err)
-		return s.repository.yearly(ctx, request)
+		return postgresResult(s.repository.yearly(ctx, request))
 	}
 	if !exists {
 		scores, err := s.repository.allYearlyScores(ctx, int(request.Year))
@@ -92,24 +92,24 @@ func (s *Service) FetchYearly(ctx context.Context, request YearlyRequest) (*Lead
 		if err := s.rebuild(ctx, key, scores); err != nil {
 			slog.WarnContext(ctx, "yearly leaderboard cache rebuild failed; falling back to Postgres", "error", err)
 		}
-		return s.repository.yearly(ctx, request)
+		return postgresResult(s.repository.yearly(ctx, request))
 	}
-	return s.enrich(ctx, result, request.Page, request.PageSize)
+	return cachedResult(result, request.Page, request.PageSize), nil
 }
 
-func (s *Service) FetchGlobal(ctx context.Context, request Request) (*Leaderboard, error) {
+func (s *Service) FetchGlobal(ctx context.Context, request Request) (*Result, error) {
 	request = normalize(request)
 	if err := validateActivity(request.ActivityID); err != nil {
 		return nil, err
 	}
 	if filtered(request) {
-		return s.repository.global(ctx, request)
+		return postgresResult(s.repository.global(ctx, request))
 	}
 
 	result, exists, err := s.fetchPage(ctx, globalKey, request.Page, request.PageSize)
 	if err != nil {
 		slog.WarnContext(ctx, "global leaderboard cache unavailable; falling back to Postgres", "error", err)
-		return s.repository.global(ctx, request)
+		return postgresResult(s.repository.global(ctx, request))
 	}
 	if !exists {
 		scores, err := s.repository.allGlobalScores(ctx)
@@ -119,12 +119,12 @@ func (s *Service) FetchGlobal(ctx context.Context, request Request) (*Leaderboar
 		if err := s.rebuild(ctx, globalKey, scores); err != nil {
 			slog.WarnContext(ctx, "global leaderboard cache rebuild failed; falling back to Postgres", "error", err)
 		}
-		return s.repository.global(ctx, request)
+		return postgresResult(s.repository.global(ctx, request))
 	}
-	return s.enrich(ctx, result, request.Page, request.PageSize)
+	return cachedResult(result, request.Page, request.PageSize), nil
 }
 
-func (s *Service) fetchContestFromPostgres(ctx context.Context, request ContestRequest) (*Leaderboard, error) {
+func (s *Service) fetchContestFromPostgres(ctx context.Context, request ContestRequest) (*Result, error) {
 	exists, err := s.repository.contestExists(ctx, request.ContestID)
 	if err != nil {
 		return nil, err
@@ -132,7 +132,7 @@ func (s *Service) fetchContestFromPostgres(ctx context.Context, request ContestR
 	if !exists {
 		return nil, errx.NewNotFoundError("contest not found")
 	}
-	return s.repository.contest(ctx, request)
+	return postgresResult(s.repository.contest(ctx, request))
 }
 
 func normalize(request Request) Request {
@@ -164,20 +164,21 @@ func validateActivity(activityID *int32) error {
 
 func filtered(request Request) bool { return request.LanguageCode != nil || request.ActivityID != nil }
 
-func (s *Service) enrich(ctx context.Context, cached *page, currentPage, pageSize int) (*Leaderboard, error) {
-	ids := make([]uuid.UUID, len(cached.scores))
-	for i, item := range cached.scores {
-		ids[i] = item.userID
-	}
-	names, err := s.repository.displayNames(ctx, ids)
+func postgresResult(value *Leaderboard, err error) (*Result, error) {
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch display names: %w", err)
+		return nil, err
 	}
-	entries := buildEntries(cached, names)
-	return result(entries, cached.totalCount, currentPage, pageSize), nil
+	return &Result{Leaderboard: value}, nil
 }
 
-func buildEntries(cached *page, names map[uuid.UUID]string) []Entry {
+func cachedResult(cached *page, currentPage, pageSize int) *Result {
+	return &Result{
+		Leaderboard:         result(buildEntries(cached), cached.totalCount, currentPage, pageSize),
+		HydrateDisplayNames: true,
+	}
+}
+
+func buildEntries(cached *page) []Entry {
 	if len(cached.scores) == 0 {
 		return []Entry{}
 	}
@@ -188,10 +189,9 @@ func buildEntries(cached *page, names map[uuid.UUID]string) []Entry {
 			rank = cached.startRank + i
 		}
 		entries[i] = Entry{
-			Rank:            rank,
-			UserID:          item.userID,
-			UserDisplayName: names[item.userID],
-			Score:           float32(item.value),
+			Rank:   rank,
+			UserID: item.userID,
+			Score:  float32(item.value),
 		}
 	}
 	for i := range entries {

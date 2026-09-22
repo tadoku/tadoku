@@ -1,7 +1,11 @@
 // Package leaderboard owns leaderboard reads and their Valkey cache.
 package leaderboard
 
-import "github.com/google/uuid"
+import (
+	"fmt"
+
+	"github.com/google/uuid"
+)
 
 type Request struct {
 	LanguageCode *string
@@ -26,6 +30,11 @@ type Leaderboard struct {
 	NextPageToken string
 }
 
+type Result struct {
+	Leaderboard         *Leaderboard
+	HydrateDisplayNames bool
+}
+
 type Entry struct {
 	Rank            int
 	UserID          uuid.UUID
@@ -45,4 +54,16 @@ type page struct {
 	startRank  int
 	hasPrevTie bool
 	hasNextTie bool
+}
+
+func result(entries []Entry, total, currentPage, pageSize int) *Leaderboard {
+	next := ""
+	if currentPage*pageSize+pageSize < total {
+		next = fmt.Sprint(currentPage + 1)
+	}
+	return &Leaderboard{
+		Entries:       entries,
+		TotalSize:     total,
+		NextPageToken: next,
+	}
 }

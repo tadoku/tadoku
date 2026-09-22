@@ -17,6 +17,7 @@ func TestImmersionFetchLeaderboardGlobal(t *testing.T) {
 		{description: []string{"cache", "miss"}, want: http.StatusOK, cache: "miss"},
 		{description: []string{"cache", "hit"}, want: http.StatusOK, cache: "hit"},
 		{description: []string{"language", "filtered"}, want: http.StatusOK, cache: "hit"},
+		{description: []string{"empty", "language"}, want: http.StatusOK, cache: "hit"},
 		{description: []string{"tie", "page", "boundary"}, want: http.StatusOK, cache: "hit_tie"},
 		{description: []string{"tie", "first", "page"}, want: http.StatusOK, cache: "hit_tie"},
 		{description: []string{"cache", "unavailable"}, want: http.StatusOK, cache: "unavailable"},

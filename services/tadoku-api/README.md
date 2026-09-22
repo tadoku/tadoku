@@ -128,9 +128,9 @@ exists yet.
 
 ## Contract and compatibility
 
-`spec/openapi.yaml` is the one canonical contract: 72 public operations plus nine
-retained internal/callback operations. Source-prefixed operation IDs and component
-names avoid collisions. Equivalent Content page/post templates share one canonical
+`spec/openapi.yaml` is the one canonical contract for public and retained
+internal/callback operations. Source-prefixed operation IDs and component names
+avoid collisions. Equivalent Content page/post templates share one canonical
 path; their old parameter names are recorded for compatibility. This changes no
 wire URLs. Original upstream server/path metadata preserves the inventory of
 direct internal callers; the merge does not make those routes public.
@@ -167,7 +167,7 @@ failure matrices at their own boundaries instead of duplicating them per endpoin
 
 ## Runtime configuration
 
-In addition to the two remaining upstream URLs, startup now requires:
+In addition to the remaining upstream URL, startup now requires:
 
 - Individual `API_POSTGRES_HOST`, `PORT` (default 5432), `DATABASE`, `USER`,
   `PASSWORD`, `SSLMODE` fields. `API_POSTGRES_URL` remains rejected.

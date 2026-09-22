@@ -14,7 +14,6 @@ import (
 
 type Upstreams struct {
 	Immersion string
-	Profile   string
 }
 
 type route struct {
@@ -51,7 +50,6 @@ func RegisterProxyRoutes(
 	// The gateway removes its external prefix before forwarding here.
 	routes := []route{
 		{name: "immersion", prefix: "/immersion/", target: upstreams.Immersion},
-		{name: "profile", prefix: "/profile/", target: upstreams.Profile},
 	}
 	// ServeMux GET patterns also match HEAD, and wildcard HEAD exceptions can
 	// conflict with more-specific GET patterns. Keep HEAD on the legacy prefixes

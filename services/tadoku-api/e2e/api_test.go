@@ -277,7 +277,6 @@ func registerSentinelProxy(s *suite) error {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	upstreams := transport.Upstreams{
 		Immersion: "http://upstream.test",
-		Profile:   "http://upstream.test",
 	}
 	if err := transport.RegisterProxyRoutes(s.handler, upstreams, s, time.Second, logger); err != nil {
 		return fmt.Errorf("register proxy routes: %w", err)

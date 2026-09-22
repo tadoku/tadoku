@@ -9,11 +9,29 @@
   "automerge": false,
   "rebaseWhen": "behind-base-branch",
   "labels": ["dependencies"],
+  // Pin Renovate's artifact pnpm to the same version CI uses
+  // (.github/workflows/build-frontend-*.yaml → 10.10.0). Without this,
+  // Renovate falls back to pnpm@latest for frontend/pnpm-lock.yaml; pnpm 11
+  // ignores package.json pnpm.overrides and rewrites the lockfile without the
+  // react/react-dom 18.2.0 pins (ERR_PNPM_LOCKFILE_CONFIG_MISMATCH on frozen
+  // install). Hosted Mend does not allow arbitrary postUpgradeTasks on the
+  // Community plan, so constraints.pnpm is the supported fix.
+  "constraints": {
+    "pnpm": "10.10.0"
+  },
   "packageRules": [
     {
       "description": "Canonicalize Go module updates",
       "matchManagers": ["gomod"],
       "postUpdateOptions": ["gomodTidy"]
+    },
+    {
+      // Gazelle tool module: hand-maintained require graph, no Go packages.
+      // The global gomodTidy postUpdateOption empties go.mod/go.sum
+      // (kin_openapi missing). Keep root-module Go updates + tidy as above.
+      "description": "Disable tools/oapi-codegen updates (Gazelle tool module; gomodTidy empties it)",
+      "matchFileNames": ["tools/oapi-codegen/**"],
+      "enabled": false
     },
     {
       "description": "Group low-risk Bazel's rules patch/minor updates",

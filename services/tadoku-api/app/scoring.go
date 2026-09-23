@@ -191,3 +191,66 @@ func (a *Application) normalizeScoringDraftRules(ctx context.Context, rules *sco
 
 	return a.scoring.NormalizeDraftRules(rules, languages)
 }
+
+func (a *Application) PublishScoringRuleSet(ctx context.Context, id uuid.UUID) (*ScoringRuleSet, error) {
+	if err := a.permissions.RequireAuthenticated(ctx); err != nil {
+		return nil, err
+	}
+
+	ruleSet, err := a.scoring.FindRuleSet(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if err := a.authorizeScoringRuleSetChange(ctx, *ruleSet); err != nil {
+		return nil, err
+	}
+
+	var published *ScoringRuleSet
+	err = postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) error {
+		published, err = a.scoring.PublishRuleSet(ctx, *ruleSet, timex.Now())
+		return err
+	})
+	return published, err
+}
+
+func (a *Application) ActivateScoringRuleSet(ctx context.Context, id uuid.UUID) error {
+	if err := a.permissions.RequireAuthenticated(ctx); err != nil {
+		return err
+	}
+
+	ruleSet, err := a.scoring.FindRuleSet(ctx, id)
+	if err != nil {
+		return err
+	}
+	if err := a.authorizeScoringRuleSetChange(ctx, *ruleSet); err != nil {
+		return err
+	}
+
+	return a.scoring.ActivateRuleSet(ctx, *ruleSet, timex.Now())
+}
+
+func (a *Application) authorizeScoringRuleSetChange(ctx context.Context, ruleSet ScoringRuleSet) error {
+	switch ruleSet.Scope {
+	case "platform":
+		return a.permissions.RequireAdmin(ctx)
+	case "contest":
+		if ruleSet.ContestID == nil {
+			return errx.NewInvalidInputError("contest scoring rule set requires contest_id")
+		}
+		contest, err := a.contests.FindContestByID(ctx, *ruleSet.ContestID, false)
+		if err != nil {
+			return err
+		}
+		if identity.FromContext(ctx).Subject != contest.OwnerUserID.String() {
+			if err := a.permissions.RequireAdmin(ctx); err != nil {
+				return err
+			}
+		}
+		if !timex.Now().Before(contest.ContestStart) {
+			return errx.NewConflictError("contest scoring cannot change after the contest starts")
+		}
+		return nil
+	default:
+		return errx.NewInvalidInputError("scoring rule set scope is invalid")
+	}
+}

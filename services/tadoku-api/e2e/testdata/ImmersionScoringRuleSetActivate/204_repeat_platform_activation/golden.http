@@ -1,0 +1,3 @@
+>>> POST /immersion/scoring/rule-sets/aaaaaaaa-aaaa-4aaa-8aaa-000000000001/activate
+HTTP/1.1 204 No Content
+

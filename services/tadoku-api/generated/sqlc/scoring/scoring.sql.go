@@ -11,6 +11,43 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const activateContestScoringRuleSet = `-- name: ActivateContestScoringRuleSet :exec
+update contests
+set
+  scoring_rule_set_id = $1,
+  updated_at = $2
+where id = $3
+  and deleted_at is null
+`
+
+type ActivateContestScoringRuleSetParams struct {
+	RuleSetID pgtype.UUID
+	UpdatedAt pgtype.Timestamp
+	ContestID pgtype.UUID
+}
+
+func (q *Queries) ActivateContestScoringRuleSet(ctx context.Context, arg ActivateContestScoringRuleSetParams) error {
+	_, err := q.db.Exec(ctx, activateContestScoringRuleSet, arg.RuleSetID, arg.UpdatedAt, arg.ContestID)
+	return err
+}
+
+const activatePlatformScoringRuleSet = `-- name: ActivatePlatformScoringRuleSet :exec
+insert into platform_scoring_config (
+  singleton,
+  active_rule_set_id
+) values (
+  true,
+  $1
+)
+on conflict (singleton) do update
+set active_rule_set_id = excluded.active_rule_set_id
+`
+
+func (q *Queries) ActivatePlatformScoringRuleSet(ctx context.Context, ruleSetID pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, activatePlatformScoringRuleSet, ruleSetID)
+	return err
+}
+
 const createScoringRule = `-- name: CreateScoringRule :exec
 insert into scoring_rules (
   id,
@@ -379,4 +416,36 @@ func (q *Queries) NextPlatformScoringRuleSetVersion(ctx context.Context) (int32,
 	var column_1 int32
 	err := row.Scan(&column_1)
 	return column_1, err
+}
+
+const publishScoringRuleSet = `-- name: PublishScoringRuleSet :one
+update scoring_rule_sets
+set
+  status = 'published',
+  published_at = $1
+where id = $2
+  and status = 'draft'
+returning id, scope, contest_id, version, status, mode, fallback_rule_set_id, created_at, published_at
+`
+
+type PublishScoringRuleSetParams struct {
+	PublishedAt pgtype.Timestamp
+	ID          pgtype.UUID
+}
+
+func (q *Queries) PublishScoringRuleSet(ctx context.Context, arg PublishScoringRuleSetParams) (ScoringRuleSet, error) {
+	row := q.db.QueryRow(ctx, publishScoringRuleSet, arg.PublishedAt, arg.ID)
+	var i ScoringRuleSet
+	err := row.Scan(
+		&i.ID,
+		&i.Scope,
+		&i.ContestID,
+		&i.Version,
+		&i.Status,
+		&i.Mode,
+		&i.FallbackRuleSetID,
+		&i.CreatedAt,
+		&i.PublishedAt,
+	)
+	return i, err
 }

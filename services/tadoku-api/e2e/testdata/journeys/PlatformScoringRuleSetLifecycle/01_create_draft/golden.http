@@ -1,0 +1,6 @@
+>>> POST /immersion/scoring/rule-sets
+HTTP/1.1 200 OK
+Content-Length: 291
+Content-Type: application/json; charset=UTF-8
+
+{"active":false,"created_at":"2026-09-12T12:00:00Z","id":"52fdfc07-2182-454f-963f-5f0f9a621d72","rules":[{"activity_id":5,"id":"9566c74d-1003-4c4d-bbbb-0407d1e2c649","priority":1,"rate":3,"score_source":"duration_minutes","stackable":false}],"scope":"platform","status":"draft","version":3}

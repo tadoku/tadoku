@@ -1,0 +1,6 @@
+>>> POST /immersion/scoring/rule-sets/cccccccc-cccc-4ccc-8ccc-000000000002/publish
+HTTP/1.1 200 OK
+Content-Length: 392
+Content-Type: application/json; charset=UTF-8
+
+{"active":false,"contest_id":"f0000000-0000-4000-8000-000000000001","created_at":"2026-04-01T00:00:00Z","id":"cccccccc-cccc-4ccc-8ccc-000000000002","mode":"replace","published_at":"2026-09-12T12:00:00Z","rules":[{"activity_id":1,"id":"dddddddd-dddd-4ddd-8ddd-000000000002","priority":10,"rate":5,"score_source":"amount","stackable":false}],"scope":"contest","status":"published","version":2}

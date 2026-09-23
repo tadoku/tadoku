@@ -107,3 +107,31 @@ insert into scoring_rules (
   sqlc.arg('score_source'),
   sqlc.arg('rate')
 );
+
+-- name: PublishScoringRuleSet :one
+update scoring_rule_sets
+set
+  status = 'published',
+  published_at = sqlc.arg('published_at')
+where id = sqlc.arg('id')
+  and status = 'draft'
+returning *;
+
+-- name: ActivatePlatformScoringRuleSet :exec
+insert into platform_scoring_config (
+  singleton,
+  active_rule_set_id
+) values (
+  true,
+  sqlc.arg('rule_set_id')
+)
+on conflict (singleton) do update
+set active_rule_set_id = excluded.active_rule_set_id;
+
+-- name: ActivateContestScoringRuleSet :exec
+update contests
+set
+  scoring_rule_set_id = sqlc.arg('rule_set_id'),
+  updated_at = sqlc.arg('updated_at')
+where id = sqlc.arg('contest_id')
+  and deleted_at is null;

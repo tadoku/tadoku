@@ -1,0 +1,7 @@
+POST /immersion/contests/f0000000-0000-4000-8000-000000000001/scoring/rule-sets HTTP/1.1
+Host: api.test
+Content-Type: application/json
+Content-Length: 173
+X-Request-Id: 22222222-2222-4222-8222-222222222222
+
+{"mode":"override","fallback_rule_set_id":"aaaaaaaa-aaaa-4aaa-8aaa-000000000001","rules":[{"priority":1,"stackable":false,"activity_id":1,"score_source":"amount","rate":4}]}

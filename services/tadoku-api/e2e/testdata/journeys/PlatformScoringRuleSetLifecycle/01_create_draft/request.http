@@ -1,0 +1,7 @@
+POST /immersion/scoring/rule-sets HTTP/1.1
+Host: api.test
+Content-Type: application/json
+Content-Length: 103
+X-Request-Id: 22222222-2222-4222-8222-222222222222
+
+{"rules":[{"priority":1,"stackable":false,"activity_id":5,"score_source":"duration_minutes","rate":3}]}

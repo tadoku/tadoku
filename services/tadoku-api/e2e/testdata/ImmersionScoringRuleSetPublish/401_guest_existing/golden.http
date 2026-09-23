@@ -1,0 +1,4 @@
+>>> POST /immersion/scoring/rule-sets/aaaaaaaa-aaaa-4aaa-8aaa-000000000002/publish
+HTTP/1.1 401 Unauthorized
+Content-Length: 0
+

@@ -3,6 +3,7 @@ package scoring
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	domainlanguages "github.com/tadoku/tadoku/services/tadoku-api/domain/languages"
@@ -287,4 +288,39 @@ func (s *Service) createDraft(ctx context.Context, draft RuleSet) (*RuleSet, err
 	}
 
 	return created, nil
+}
+
+func (s *Service) FindRuleSet(ctx context.Context, id uuid.UUID) (*RuleSet, error) {
+	return s.repository.FindRuleSetByID(ctx, id)
+}
+
+func (s *Service) PublishRuleSet(ctx context.Context, ruleSet RuleSet, publishedAt time.Time) (*RuleSet, error) {
+	if ruleSet.Status != "draft" {
+		return nil, errx.NewConflictError("only draft scoring rule sets can be published")
+	}
+
+	published, err := s.repository.PublishRuleSet(ctx, ruleSet.ID, publishedAt)
+	if err != nil {
+		return nil, err
+	}
+	published.Rules, err = s.repository.ListRules(ctx, published.ID)
+	return published, err
+}
+
+func (s *Service) ActivateRuleSet(ctx context.Context, ruleSet RuleSet, updatedAt time.Time) error {
+	if ruleSet.Status != "published" {
+		return errx.NewConflictError("only published scoring rule sets can be activated")
+	}
+
+	switch ruleSet.Scope {
+	case "platform":
+		return s.repository.ActivatePlatformRuleSet(ctx, ruleSet.ID)
+	case "contest":
+		if ruleSet.ContestID == nil {
+			return errx.NewInvalidInputError("contest scoring rule set requires contest_id")
+		}
+		return s.repository.ActivateContestRuleSet(ctx, *ruleSet.ContestID, ruleSet.ID, updatedAt)
+	default:
+		return errx.NewInvalidInputError("scoring rule set scope is invalid")
+	}
 }

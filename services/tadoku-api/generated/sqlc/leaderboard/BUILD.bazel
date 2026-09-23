@@ -6,6 +6,7 @@ go_library(
         "db.go",
         "leaderboard.sql.go",
         "models.go",
+        "outbox.sql.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/generated/sqlc/leaderboard",
     visibility = ["//visibility:public"],

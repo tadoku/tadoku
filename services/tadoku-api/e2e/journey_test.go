@@ -2,6 +2,7 @@ package e2e_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -39,9 +40,11 @@ type cast map[member]int
 // step is one entry of a journey. A request step sends request.http as the
 // named cast member and compares the complete response with golden.http. A
 // verify step runs verify.sql and compares its JSON result with verify.json.
+// A job step runs one synchronous background-work pass.
 type step struct {
 	request string
 	verify  string
+	job     string
 
 	as     member
 	want   int
@@ -63,6 +66,10 @@ func runJourney(t *testing.T, s *suite, name string, steps []step) {
 }
 
 func runJourneyWithHandler(t *testing.T, s *suite, handler http.Handler, name string, steps []step) {
+	runJourneyWithSetup(t, s, handler, name, nil, steps)
+}
+
+func runJourneyWithSetup(t *testing.T, s *suite, handler http.Handler, name string, afterReset func(*testing.T), steps []step) {
 	t.Helper()
 	if s.kratos != nil {
 		if err := s.kratos.Err(); err != nil {
@@ -84,6 +91,19 @@ func runJourneyWithHandler(t *testing.T, s *suite, handler http.Handler, name st
 	}
 
 	resetJourney(t, s, directory)
+	if s.outbox != nil {
+		workerContext, cancel := context.WithCancel(t.Context())
+		s.outboxContext = workerContext
+		defer func() {
+			cancel()
+			if s.outboxDone != nil {
+				<-s.outboxDone
+			}
+		}()
+	}
+	if afterReset != nil {
+		afterReset(t)
+	}
 
 	previous := jwt.TimeFunc
 	jwt.TimeFunc = func() time.Time { return fixtureInstant }
@@ -100,6 +120,10 @@ func runJourneyWithHandler(t *testing.T, s *suite, handler http.Handler, name st
 			timex.TheWorld(at, func() {
 				if current.verify != "" {
 					checkVerifyGolden(t, s, stepDir)
+					return
+				}
+				if current.job != "" {
+					runJobStep(t, s, current.job)
 					return
 				}
 				runRequestStep(t, s, handler, stepDir, current, tokens)
@@ -130,11 +154,14 @@ func stepDirNames(steps []step) ([]string, error) {
 }
 
 func (current step) dirName(position int) (string, error) {
-	switch {
-	case current.request != "" && current.verify != "":
-		return "", fmt.Errorf("step %d sets both request and verify", position)
-	case current.request == "" && current.verify == "":
-		return "", fmt.Errorf("step %d sets neither request nor verify", position)
+	kinds := 0
+	for _, value := range []string{current.request, current.verify, current.job} {
+		if value != "" {
+			kinds++
+		}
+	}
+	if kinds != 1 {
+		return "", fmt.Errorf("step %d must set exactly one request, verify or job", position)
 	}
 
 	name := current.request
@@ -142,6 +169,11 @@ func (current step) dirName(position int) (string, error) {
 		name = current.verify
 		if current.as != "" || current.want != 0 || current.others != nil {
 			return "", fmt.Errorf("verify step %d must not set as, want or others", position)
+		}
+	} else if current.job != "" {
+		name = current.job
+		if current.as != "" || current.want != 0 || current.others != nil {
+			return "", fmt.Errorf("job step %d must not set as, want or others", position)
 		}
 	} else if current.as == "" || current.want == 0 {
 		return "", fmt.Errorf("request step %d must set as and want", position)
@@ -162,8 +194,10 @@ func checkJourneyFiles(directory string, steps []step, names []string) error {
 	}
 
 	expected := make(map[string]bool, len(names))
-	for _, name := range names {
-		expected[name] = true
+	for index, name := range names {
+		if steps[index].job == "" {
+			expected[name] = true
+		}
 	}
 	for _, entry := range entries {
 		switch {
@@ -175,6 +209,9 @@ func checkJourneyFiles(directory string, steps []step, names []string) error {
 	}
 
 	for index, name := range names {
+		if steps[index].job != "" {
+			continue
+		}
 		want := []string{"golden.http", "request.http"}
 		if steps[index].verify != "" {
 			want = []string{"verify.json", "verify.sql"}
@@ -184,6 +221,52 @@ func checkJourneyFiles(directory string, steps []step, names []string) error {
 		}
 	}
 	return nil
+}
+
+func runJobStep(t *testing.T, s *suite, job string) {
+	t.Helper()
+	switch job {
+	case "run_leaderboard_outbox":
+		if s.outbox == nil || s.outboxReady == nil || s.outboxContext == nil {
+			t.Fatal("leaderboard outbox worker is not configured")
+		}
+		if s.outboxDone != nil {
+			t.Fatal("leaderboard outbox worker already started")
+		}
+		done := make(chan struct{})
+		s.outboxDone = done
+		go func() {
+			defer close(done)
+			s.outbox.Run(s.outboxContext)
+		}()
+		select {
+		case <-s.outboxReady:
+		case <-time.After(3 * time.Second):
+			t.Fatal("leaderboard outbox did not become ready")
+		}
+		if err := s.db.Pool.QueryRow(t.Context(), `select coalesce(max(id), 0) from leaderboard_outbox`).Scan(&s.outboxBaseline); err != nil {
+			t.Fatal(err)
+		}
+	case "wait_for_leaderboard_outbox_poll":
+		deadline := time.After(3 * time.Second)
+		for {
+			var total, pending int
+			err := s.db.Pool.QueryRow(t.Context(), `select count(*), count(*) filter (where processed_at is null) from leaderboard_outbox where id > $1`, s.outboxBaseline).Scan(&total, &pending)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if total > 0 && pending == 0 {
+				return
+			}
+			select {
+			case <-deadline:
+				t.Fatalf("leaderboard outbox poll did not process new events: total=%d pending=%d", total, pending)
+			case <-time.After(10 * time.Millisecond):
+			}
+		}
+	default:
+		t.Fatalf("unknown journey job %q", job)
+	}
 }
 
 func checkStepFiles(directory string, want []string) error {

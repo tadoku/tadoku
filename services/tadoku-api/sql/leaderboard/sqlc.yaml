@@ -4,6 +4,7 @@ sql:
     schema: ../../migrations
     queries:
       - leaderboard.sql
+      - outbox.sql
     gen:
       go:
         package: leaderboard

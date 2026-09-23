@@ -1,4 +1,4 @@
-load("@rules_go//go:def.bzl", "go_library")
+load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "leaderboard",
@@ -16,8 +16,33 @@ go_library(
         "//services/tadoku-api/internal/errx",
         "//services/tadoku-api/internal/timex",
         "@com_github_google_uuid//:uuid",
+        "@com_github_jackc_pgx_v5//:pgx",
         "@com_github_jackc_pgx_v5//pgtype",
         "@com_github_jackc_pgx_v5//pgxpool",
+        "@com_github_valkey_io_valkey_go//:valkey-go",
+    ],
+)
+
+go_test(
+    name = "leaderboard_test",
+    srcs = [
+        "leaderboard_repository_test.go",
+        "leaderboard_service_test.go",
+    ],
+    embed = [":leaderboard"],
+    env_inherit = [
+        "TADOKU_TEST_POSTGRES_URL",
+        "TADOKU_TEST_VALKEY_URL",
+    ],
+    tags = [
+        "no-cache",
+        "no-remote-exec",
+        "requires-network",
+    ],
+    deps = [
+        "//services/tadoku-api/internal/testpostgres",
+        "//services/tadoku-api/internal/testvalkey",
+        "@com_github_google_uuid//:uuid",
         "@com_github_valkey_io_valkey_go//:valkey-go",
     ],
 )

@@ -2,12 +2,16 @@ package e2e_test
 
 import (
 	"bytes"
+	"log/slog"
 	"math/rand"
 	"net/http"
+	"strings"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
 )
 
 // Every important user journey in the application lives in this file. Replay a
@@ -232,6 +236,61 @@ func TestLogMutationJourney(t *testing.T) {
 		{request: "read_after_end", as: user, want: http.StatusOK, at: end.AddDate(0, 0, 1)},
 		{verify: "provenance_and_outbox"},
 	})
+}
+
+func TestLogWriteOutboxLeaderboardJourney(t *testing.T) {
+	uuid.SetRand(rand.New(rand.NewSource(1)))
+	defer uuid.SetRand(nil)
+
+	ready := &leaderboardReadyWriter{ready: make(chan struct{})}
+	logger := slog.New(slog.NewTextHandler(ready, nil))
+	leaderboardService := leaderboard.NewService(leaderboard.NewRepository(api.db.Pool), leaderboardValkey.client, time.Second)
+	handler, profileService, roleService, err := newTestRouterWithLeaderboardService(t.Context(), api.db.Pool, api.db.Pool, api.keto, api.kratos, logger, true, leaderboardService)
+	if err != nil {
+		t.Fatal(err)
+	}
+	worker := leaderboard.NewWorker(leaderboardService, logger)
+	journey := &suite{
+		db:          api.db,
+		keto:        api.keto,
+		kratos:      api.kratos,
+		flipt:       api.flipt,
+		handler:     handler,
+		profile:     profileService,
+		leaderboard: leaderboardService,
+		outbox:      worker,
+		outboxReady: ready.ready,
+		roles:       roleService,
+	}
+	runJourneyWithSetup(t, journey, handler, "LeaderboardOutbox", func(t *testing.T) {
+		seedLeaderboardCache(t, "leaderboard:global", "hit")
+	}, []step{
+		{request: "create_log", as: user, want: http.StatusOK},
+		{request: "before_worker", as: guest, want: http.StatusOK},
+		{job: "run_leaderboard_outbox"},
+		{request: "after_worker_cache_miss", as: guest, want: http.StatusOK},
+		{request: "update_log", as: user, want: http.StatusOK},
+		{job: "wait_for_leaderboard_outbox_poll"},
+		{request: "after_poll_cache_miss", as: guest, want: http.StatusOK},
+		{request: "after_poll_cache_hit", as: guest, want: http.StatusOK},
+		{verify: "outbox_processed"},
+	})
+	marker, err := leaderboardValkey.client.Do(t.Context(), leaderboardValkey.client.B().Get().Key("leaderboard:global:last_updated").Build()).ToString()
+	if err != nil || !strings.HasPrefix(marker, "native:") {
+		t.Errorf("leaderboard cache marker after HTTP reads = %q, err = %v", marker, err)
+	}
+}
+
+type leaderboardReadyWriter struct {
+	ready chan struct{}
+	once  sync.Once
+}
+
+func (writer *leaderboardReadyWriter) Write(message []byte) (int, error) {
+	if bytes.Contains(message, []byte("leaderboard outbox ready")) {
+		writer.once.Do(func() { close(writer.ready) })
+	}
+	return len(message), nil
 }
 
 func TestLogCreateAtomicFailureJourney(t *testing.T) {

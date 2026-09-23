@@ -3,8 +3,10 @@ package leaderboard
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	queries "github.com/tadoku/tadoku/services/tadoku-api/generated/sqlc/leaderboard"
@@ -168,4 +170,47 @@ func (r *Repository) allGlobalScores(ctx context.Context) ([]score, error) {
 		res[i] = score{userID: uuid.UUID(row.UserID.Bytes), value: float64(row.Score)}
 	}
 	return res, nil
+}
+
+func (r *Repository) beginOutbox(ctx context.Context) (pgx.Tx, error) {
+	return r.db.Begin(ctx)
+}
+
+func (r *Repository) lockOutbox(ctx context.Context, tx pgx.Tx) ([]outboxEvent, error) {
+	rows, err := queries.New(tx).FetchAndLockLeaderboardOutbox(ctx, 100)
+	if err != nil {
+		return nil, fmt.Errorf("claim leaderboard outbox: %w", err)
+	}
+	events := make([]outboxEvent, len(rows))
+	for i, row := range rows {
+		events[i] = outboxEvent{id: row.ID, eventType: row.EventType}
+		if row.ContestID.Valid {
+			id := uuid.UUID(row.ContestID.Bytes)
+			events[i].contestID = &id
+		}
+		if row.Year.Valid {
+			year := row.Year.Int16
+			events[i].year = &year
+		}
+	}
+	return events, nil
+}
+
+func (r *Repository) markOutbox(ctx context.Context, tx pgx.Tx, ids []int64, processedAt time.Time) error {
+	err := queries.New(tx).MarkLeaderboardOutboxProcessed(ctx, queries.MarkLeaderboardOutboxProcessedParams{
+		ProcessedAt: pgtype.Timestamp{Time: processedAt, Valid: true},
+		Ids:         ids,
+	})
+	if err != nil {
+		return fmt.Errorf("mark leaderboard outbox processed: %w", err)
+	}
+	return nil
+}
+
+func (r *Repository) cleanupOutbox(ctx context.Context, before time.Time) error {
+	err := queries.New(r.db).CleanupLeaderboardOutbox(ctx, pgtype.Timestamp{Time: before, Valid: true})
+	if err != nil {
+		return fmt.Errorf("cleanup leaderboard outbox: %w", err)
+	}
+	return nil
 }

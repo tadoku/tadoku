@@ -124,7 +124,7 @@ func runTests(m *testing.M) (code int) {
 	}
 	defer func() { cleanupErr = errors.Join(cleanupErr, api.db.Close()) }()
 
-	scoringEnabledHandler, _, _, err = newTestRouterWithScoringEngine(ctx, api.db.Pool, api.db.Pool, keto, kratos, slog.New(slog.NewTextHandler(io.Discard, nil)), true)
+	scoringEnabledHandler, _, _, err = newTestRouterWithLeaderboardService(ctx, api.db.Pool, api.db.Pool, keto, kratos, slog.New(slog.NewTextHandler(io.Discard, nil)), true, api.leaderboard)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
@@ -183,13 +183,19 @@ func runTests(m *testing.M) (code int) {
 
 // suite owns the stores a handler reads. Reset only those stores.
 type suite struct {
-	db      *testpostgres.Database
-	keto    *testketo.Fixture
-	kratos  *testkratos.Fixture
-	flipt   *testflipt.Fixture
-	handler *transport.Router
-	profile *featureprofile.Service
-	roles   *commonroles.KetoService
+	db             *testpostgres.Database
+	keto           *testketo.Fixture
+	kratos         *testkratos.Fixture
+	flipt          *testflipt.Fixture
+	handler        *transport.Router
+	profile        *featureprofile.Service
+	leaderboard    *leaderboard.Service
+	outbox         *leaderboard.Worker
+	outboxReady    <-chan struct{}
+	outboxContext  context.Context
+	outboxDone     <-chan struct{}
+	outboxBaseline int64
+	roles          *commonroles.KetoService
 }
 
 func newTestAPI(ctx context.Context, ketoFixture *testketo.Fixture, kratosFixture *testkratos.Fixture) (_ *suite, err error) {
@@ -204,18 +210,20 @@ func newTestAPI(ctx context.Context, ketoFixture *testketo.Fixture, kratosFixtur
 		}
 	}()
 
-	handler, profileService, roleService, err := newTestRouter(ctx, db.Pool, ketoFixture, kratosFixture)
+	leaderboardService := leaderboard.NewService(leaderboard.NewRepository(db.Pool), leaderboardValkey.client, time.Second)
+	handler, profileService, roleService, err := newTestRouterWithLeaderboardService(ctx, db.Pool, db.Pool, ketoFixture, kratosFixture, slog.New(slog.NewTextHandler(io.Discard, nil)), false, leaderboardService)
 	if err != nil {
 		return nil, err
 	}
 	api := &suite{
-		db:      db,
-		keto:    ketoFixture,
-		kratos:  kratosFixture,
-		flipt:   flipt,
-		handler: handler,
-		profile: profileService,
-		roles:   roleService,
+		db:          db,
+		keto:        ketoFixture,
+		kratos:      kratosFixture,
+		flipt:       flipt,
+		handler:     handler,
+		profile:     profileService,
+		leaderboard: leaderboardService,
+		roles:       roleService,
 	}
 	complete = true
 	return api, nil
@@ -265,6 +273,20 @@ func newTestRouterWithLeaderboard(
 	valkeyClient valkeygo.Client,
 	valkeyTimeout time.Duration,
 ) (*transport.Router, *featureprofile.Service, *commonroles.KetoService, error) {
+	leaderboardService := leaderboard.NewService(leaderboard.NewRepository(pool), valkeyClient, valkeyTimeout)
+	return newTestRouterWithLeaderboardService(ctx, pool, auditPool, ketoFixture, kratosFixture, logger, scoringEngineEnabled, leaderboardService)
+}
+
+func newTestRouterWithLeaderboardService(
+	ctx context.Context,
+	pool *pgxpool.Pool,
+	auditPool *pgxpool.Pool,
+	ketoFixture *testketo.Fixture,
+	kratosFixture *testkratos.Fixture,
+	logger *slog.Logger,
+	scoringEngineEnabled bool,
+	leaderboardService *leaderboard.Service,
+) (*transport.Router, *featureprofile.Service, *commonroles.KetoService, error) {
 	reader := ketoclient.NewReadClient(ketoFixture.ReadURL())
 	readWriter := ketoclient.NewClient(ketoFixture.ReadURL(), ketoFixture.WriteURL())
 	permissionChecker := permissions.NewKetoChecker(reader)
@@ -289,7 +311,6 @@ func newTestRouterWithLeaderboard(
 	scoringRepository := scoring.NewScoringRepository(pool)
 	announcementsService := announcements.NewService(announcementsRepository)
 	contestsService := contests.NewService(contestsRepository, kratosFixture.Client())
-	leaderboardService := leaderboard.NewService(leaderboard.NewRepository(pool), valkeyClient, valkeyTimeout)
 	languagesService := languages.NewService(languagesRepository)
 	logsService := logs.NewService(logsRepository, scoringEngineEnabled)
 	pagesService := pages.NewService(pagesRepository)

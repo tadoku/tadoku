@@ -171,10 +171,10 @@ func TestScoringRuleSetDraftJourney(t *testing.T) {
 	defer uuid.SetRand(nil)
 
 	runJourney(t, api, "ScoringRuleSetDraft", []step{
-		{request: "create_platform_draft", as: admin, want: http.StatusOK, others: cast{user: http.StatusForbidden, guest: http.StatusForbidden, banned: http.StatusForbidden}},
+		{request: "create_platform_draft", as: admin, want: http.StatusOK, others: cast{user: http.StatusForbidden, guest: http.StatusUnauthorized, banned: http.StatusForbidden}},
 		{request: "platform_draft_visible_to_admin", as: admin, want: http.StatusOK},
 		{request: "platform_draft_hidden_from_member", as: user, want: http.StatusOK},
-		{request: "create_contest_draft", as: user, want: http.StatusOK, others: cast{user2: http.StatusForbidden, guest: http.StatusForbidden, banned: http.StatusForbidden}},
+		{request: "create_contest_draft", as: user, want: http.StatusOK, others: cast{user2: http.StatusForbidden, guest: http.StatusUnauthorized, banned: http.StatusForbidden}},
 		{request: "contest_draft_visible_to_owner", as: user, want: http.StatusOK, others: cast{user2: http.StatusForbidden}},
 	})
 }

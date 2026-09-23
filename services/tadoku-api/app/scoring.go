@@ -106,12 +106,8 @@ func (a *Application) ListContestScoringRuleSets(ctx context.Context, contestID 
 }
 
 func (a *Application) CreatePlatformScoringRuleSetDraft(ctx context.Context, parameters ScoringRuleSetDraftParameters) (*ScoringRuleSet, error) {
-	admin, err := a.permissions.IsAdmin(ctx)
-	if err != nil {
+	if err := a.permissions.RequireAdmin(ctx); err != nil {
 		return nil, err
-	}
-	if !admin {
-		return nil, errx.NewForbiddenError("forbidden")
 	}
 
 	parameters.Mode = ""
@@ -124,21 +120,13 @@ func (a *Application) CreateContestScoringRuleSetDraft(ctx context.Context, cont
 	if err != nil {
 		return nil, err
 	}
-	caller := identity.FromContext(ctx)
-	if caller == nil {
-		return nil, errx.NewUnauthorizedError("unauthorized")
+	if err := a.permissions.RequireAuthenticated(ctx); err != nil {
+		return nil, err
 	}
-	if caller.Subject == contest.OwnerUserID.String() {
-		if err := a.permissions.RequireAuthenticated(ctx); err != nil {
+	caller := identity.FromContext(ctx)
+	if caller.Subject != contest.OwnerUserID.String() {
+		if err := a.permissions.RequireAdmin(ctx); err != nil {
 			return nil, err
-		}
-	} else {
-		admin, err := a.permissions.IsAdmin(ctx)
-		if err != nil {
-			return nil, err
-		}
-		if !admin {
-			return nil, errx.NewForbiddenError("forbidden")
 		}
 	}
 	if !timex.Now().Before(contest.ContestStart) {

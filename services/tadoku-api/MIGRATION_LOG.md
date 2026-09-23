@@ -21,5 +21,6 @@
 - [ ] Revisit leaderboard HTTP test seeding so each case declares only the data it needs instead of relying on the operation-level fixture.
 - [ ] Remove all helper functions from repositories and move them into shared packages, including the remaining helpers in the contests repository.
 - [ ] Introduce generic conversion helpers for repeated slice and type mappings after common conversion patterns stabilize across migrated features.
+- [ ] Review and standardize the role and identity checking patterns used by application operations.
 
 - [ ] Review the legacy log tag array-text decoding contract before replacing it with native array decoding; escaped quotes and backslashes currently affect returned tags.

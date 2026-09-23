@@ -56,3 +56,16 @@ func TestSearchUsersRanksCaseInsensitiveMatches(t *testing.T) {
 		t.Errorf("matches = %+v, want %+v", matches, want)
 	}
 }
+
+func TestDecodeIdentityTraitsRoundTripsDisplayNameWithoutEmail(t *testing.T) {
+	traits, err := decodeIdentityTraits(map[string]any{"display_name": "Reader"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if traits.DisplayName != "Reader" {
+		t.Errorf("DisplayName = %q, want Reader", traits.DisplayName)
+	}
+	if traits.Email != "" {
+		t.Errorf("Email = %q, want empty when absent from traits", traits.Email)
+	}
+}

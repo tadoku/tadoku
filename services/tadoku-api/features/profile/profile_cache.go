@@ -93,17 +93,25 @@ type identityTraits struct {
 	Email       string `json:"email"`
 }
 
+func decodeIdentityTraits(traits any) (identityTraits, error) {
+	encoded, err := json.Marshal(traits)
+	if err != nil {
+		return identityTraits{}, err
+	}
+	var decoded identityTraits
+	if err := json.Unmarshal(encoded, &decoded); err != nil {
+		return identityTraits{}, err
+	}
+	return decoded, nil
+}
+
 func cachedUser(identity kratosapi.Identity) (CachedUser, bool) {
 	if identity.GetSchemaId() != "user" {
 		return CachedUser{}, false
 	}
 
-	encodedTraits, err := json.Marshal(identity.GetTraits())
+	traits, err := decodeIdentityTraits(identity.GetTraits())
 	if err != nil {
-		return CachedUser{}, false
-	}
-	var traits identityTraits
-	if err := json.Unmarshal(encodedTraits, &traits); err != nil {
 		return CachedUser{}, false
 	}
 

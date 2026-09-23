@@ -18,7 +18,7 @@
     "prismjs": "1.30.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "react-hook-form": "7.40.0",
+    "react-hook-form": "7.88.0",
     "react-router-dom": "7.18.4"
   },
   "devDependencies": {

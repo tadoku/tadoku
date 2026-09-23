@@ -230,8 +230,8 @@ importers:
         specifier: 18.2.0
         version: 18.2.0(react@18.2.0)
       react-hook-form:
-        specifier: 7.40.0
-        version: 7.40.0(react@18.2.0)
+        specifier: 7.88.0
+        version: 7.88.0(react@18.2.0)
       react-router-dom:
         specifier: 7.18.4
         version: 7.18.4(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
@@ -315,8 +315,8 @@ importers:
         specifier: 18.2.0
         version: 18.2.0(react@18.2.0)
       react-hook-form:
-        specifier: 7.40.0
-        version: 7.40.0(react@18.2.0)
+        specifier: 7.88.0
+        version: 7.88.0(react@18.2.0)
       react-router-dom:
         specifier: 7.18.4
         version: 7.18.4(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
@@ -655,8 +655,8 @@ importers:
         specifier: 18.2.0
         version: 18.2.0(react@18.2.0)
       react-hook-form:
-        specifier: 7.40.0
-        version: 7.40.0(react@18.2.0)
+        specifier: 7.88.0
+        version: 7.88.0(react@18.2.0)
       tsup:
         specifier: 8.5.1
         version: 8.5.1(@typescript/typescript6@6.0.2)(jiti@1.21.7)(postcss@8.5.28)(yaml@2.7.1)
@@ -4190,12 +4190,6 @@ packages:
   react-error-boundary@3.1.4:
     resolution: {integrity: sha512-uM9uPzZJTF6wRQORmSrvOIgt4lJ9MC1sNgEOj2XGsDTRE4kmpWxg7ENK9EWNKJRMAOY9z0MuF4yIfl6gp4sotA==}
     engines: {node: '>=10', npm: '>=6'}
-    peerDependencies:
-      react: 18.2.0
-
-  react-hook-form@7.40.0:
-    resolution: {integrity: sha512-0rokdxMPJs0k9bvFtY6dbcSydyNhnZNXCR49jgDr/aR03FDHFOK6gfh8ccqB3fl696Mk7lqh04xdm+agqWXKSw==}
-    engines: {node: '>=12.22.0'}
     peerDependencies:
       react: 18.2.0
 
@@ -8820,10 +8814,6 @@ snapshots:
   react-error-boundary@3.1.4(react@18.2.0):
     dependencies:
       '@babel/runtime': 7.27.1
-      react: 18.2.0
-
-  react-hook-form@7.40.0(react@18.2.0):
-    dependencies:
       react: 18.2.0
 
   react-hook-form@7.88.0(react@18.2.0):

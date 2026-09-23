@@ -193,6 +193,10 @@ func (a *Application) normalizeScoringDraftRules(ctx context.Context, rules *sco
 }
 
 func (a *Application) PublishScoringRuleSet(ctx context.Context, id uuid.UUID) (*ScoringRuleSet, error) {
+	if err := a.permissions.RequireAuthenticated(ctx); err != nil {
+		return nil, err
+	}
+
 	ruleSet, err := a.scoring.FindRuleSet(ctx, id)
 	if err != nil {
 		return nil, err
@@ -210,6 +214,10 @@ func (a *Application) PublishScoringRuleSet(ctx context.Context, id uuid.UUID) (
 }
 
 func (a *Application) ActivateScoringRuleSet(ctx context.Context, id uuid.UUID) error {
+	if err := a.permissions.RequireAuthenticated(ctx); err != nil {
+		return err
+	}
+
 	ruleSet, err := a.scoring.FindRuleSet(ctx, id)
 	if err != nil {
 		return err
@@ -224,14 +232,7 @@ func (a *Application) ActivateScoringRuleSet(ctx context.Context, id uuid.UUID) 
 func (a *Application) authorizeScoringRuleSetChange(ctx context.Context, ruleSet ScoringRuleSet) error {
 	switch ruleSet.Scope {
 	case "platform":
-		admin, err := a.permissions.IsAdmin(ctx)
-		if err != nil {
-			return err
-		}
-		if !admin {
-			return errx.NewForbiddenError("forbidden")
-		}
-		return nil
+		return a.permissions.RequireAdmin(ctx)
 	case "contest":
 		if ruleSet.ContestID == nil {
 			return errx.NewInvalidInputError("contest scoring rule set requires contest_id")
@@ -240,21 +241,9 @@ func (a *Application) authorizeScoringRuleSetChange(ctx context.Context, ruleSet
 		if err != nil {
 			return err
 		}
-		caller := identity.FromContext(ctx)
-		if caller == nil {
-			return errx.NewUnauthorizedError("unauthorized")
-		}
-		if caller.Subject == contest.OwnerUserID.String() {
-			if err := a.permissions.RequireAuthenticated(ctx); err != nil {
+		if identity.FromContext(ctx).Subject != contest.OwnerUserID.String() {
+			if err := a.permissions.RequireAdmin(ctx); err != nil {
 				return err
-			}
-		} else {
-			admin, err := a.permissions.IsAdmin(ctx)
-			if err != nil {
-				return err
-			}
-			if !admin {
-				return errx.NewForbiddenError("forbidden")
 			}
 		}
 		if !timex.Now().Before(contest.ContestStart) {

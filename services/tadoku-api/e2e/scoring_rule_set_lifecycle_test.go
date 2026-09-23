@@ -9,6 +9,7 @@ func TestImmersionScoringRuleSetPublish(t *testing.T) {
 	tests := []struct {
 		description []string
 		want        int
+		skipParity  string
 	}{
 		{description: []string{"admin", "platform", "draft"}, want: http.StatusOK},
 		{description: []string{"owner", "contest", "draft"}, want: http.StatusOK},
@@ -18,8 +19,8 @@ func TestImmersionScoringRuleSetPublish(t *testing.T) {
 		{description: []string{"nonowner", "contest"}, want: http.StatusForbidden},
 		{description: []string{"contest", "already", "started"}, want: http.StatusConflict},
 		{description: []string{"missing"}, want: http.StatusInternalServerError},
-		{description: []string{"guest", "existing"}, want: http.StatusForbidden},
-		{description: []string{"guest", "missing"}, want: http.StatusInternalServerError},
+		{description: []string{"guest", "existing"}, want: http.StatusUnauthorized, skipParity: "Tadoku API requires authentication before changing a rule set; legacy returns forbidden for a signed guest"},
+		{description: []string{"guest", "missing"}, want: http.StatusUnauthorized, skipParity: "Tadoku API authenticates before loading a rule set; legacy returns an internal error for a missing rule set"},
 		{description: []string{"unknown", "signing", "key"}, want: http.StatusUnauthorized},
 	}
 	for _, test := range tests {
@@ -27,7 +28,7 @@ func TestImmersionScoringRuleSetPublish(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			runCase(t, api, name, test.want,
 				implementation{name: "tadoku-api", handler: api.handler},
-				implementation{name: "immersion-api", handler: legacyImmersion.handler},
+				implementation{name: "immersion-api", handler: legacyImmersion.handler, skip: test.skipParity},
 			)
 		})
 	}
@@ -37,6 +38,7 @@ func TestImmersionScoringRuleSetActivate(t *testing.T) {
 	tests := []struct {
 		description []string
 		want        int
+		skipParity  string
 	}{
 		{description: []string{"admin", "platform", "published"}, want: http.StatusNoContent},
 		{description: []string{"repeat", "platform", "activation"}, want: http.StatusNoContent},
@@ -47,8 +49,8 @@ func TestImmersionScoringRuleSetActivate(t *testing.T) {
 		{description: []string{"nonowner", "contest"}, want: http.StatusForbidden},
 		{description: []string{"contest", "already", "started"}, want: http.StatusConflict},
 		{description: []string{"missing"}, want: http.StatusInternalServerError},
-		{description: []string{"guest", "existing"}, want: http.StatusForbidden},
-		{description: []string{"guest", "missing"}, want: http.StatusInternalServerError},
+		{description: []string{"guest", "existing"}, want: http.StatusUnauthorized, skipParity: "Tadoku API requires authentication before changing a rule set; legacy returns forbidden for a signed guest"},
+		{description: []string{"guest", "missing"}, want: http.StatusUnauthorized, skipParity: "Tadoku API authenticates before loading a rule set; legacy returns an internal error for a missing rule set"},
 		{description: []string{"unknown", "signing", "key"}, want: http.StatusUnauthorized},
 	}
 	for _, test := range tests {
@@ -56,7 +58,7 @@ func TestImmersionScoringRuleSetActivate(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			runCase(t, api, name, test.want,
 				implementation{name: "tadoku-api", handler: api.handler},
-				implementation{name: "immersion-api", handler: legacyImmersion.handler},
+				implementation{name: "immersion-api", handler: legacyImmersion.handler, skip: test.skipParity},
 			)
 		})
 	}

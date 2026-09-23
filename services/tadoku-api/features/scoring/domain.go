@@ -74,45 +74,37 @@ type ContestDraftParameters struct {
 	CreatedAt     time.Time
 }
 
-type ContestDraftConfiguration struct {
-	fallbackRuleSetID *uuid.UUID
+type ContestDraftConfiguration interface {
+	isContestDraftConfiguration()
 }
+
+type Replace struct{}
+
+func (Replace) isContestDraftConfiguration() {}
+
+type Override struct {
+	FallbackRuleSetID uuid.UUID
+}
+
+func (Override) isContestDraftConfiguration() {}
 
 func NewContestDraftConfiguration(rawMode string, fallbackRuleSetID *uuid.UUID) (ContestDraftConfiguration, error) {
 	switch Mode(rawMode) {
 	case ModeReplace:
 		if fallbackRuleSetID != nil {
-			return ContestDraftConfiguration{}, errx.NewInvalidInputError("replace rule sets cannot have a fallback")
+			return nil, errx.NewInvalidInputError("replace rule sets cannot have a fallback")
 		}
 
-		return ContestDraftConfiguration{}, nil
+		return Replace{}, nil
 	case ModeOverride:
 		if fallbackRuleSetID == nil {
-			return ContestDraftConfiguration{}, errx.NewInvalidInputError("override rule sets require a fallback")
+			return nil, errx.NewInvalidInputError("override rule sets require a fallback")
 		}
 
-		fallback := *fallbackRuleSetID
-		return ContestDraftConfiguration{fallbackRuleSetID: &fallback}, nil
+		return Override{FallbackRuleSetID: *fallbackRuleSetID}, nil
 	default:
-		return ContestDraftConfiguration{}, errx.NewInvalidInputError("contest scoring mode is required")
+		return nil, errx.NewInvalidInputError("contest scoring mode is required")
 	}
-}
-
-func (c ContestDraftConfiguration) Mode() Mode {
-	if c.fallbackRuleSetID == nil {
-		return ModeReplace
-	}
-
-	return ModeOverride
-}
-
-func (c ContestDraftConfiguration) FallbackRuleSetID() *uuid.UUID {
-	if c.fallbackRuleSetID == nil {
-		return nil
-	}
-
-	fallback := *c.fallbackRuleSetID
-	return &fallback
 }
 
 func (p *DraftRules) normalize(languages []domainlanguages.Language) error {

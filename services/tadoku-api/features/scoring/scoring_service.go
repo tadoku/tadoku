@@ -208,12 +208,17 @@ func (s *Service) findContestRuleSets(ctx context.Context, contestID uuid.UUID) 
 }
 
 func (s *Service) ValidateContestDraftConfiguration(ctx context.Context, parameters *ContestDraftParameters) error {
-	fallbackID := parameters.Configuration.FallbackRuleSetID()
-	if fallbackID == nil {
+	var fallbackID uuid.UUID
+	switch configuration := parameters.Configuration.(type) {
+	case Replace:
 		return nil
+	case Override:
+		fallbackID = configuration.FallbackRuleSetID
+	default:
+		return errx.NewInternalError("invalid contest draft configuration")
 	}
 
-	fallback, err := s.repository.FindRuleSetByID(ctx, *fallbackID)
+	fallback, err := s.repository.FindRuleSetByID(ctx, fallbackID)
 	if err != nil {
 		return err
 	}
@@ -237,14 +242,23 @@ func (s *Service) CreatePlatformDraft(ctx context.Context, parameters PlatformDr
 }
 
 func (s *Service) CreateContestDraft(ctx context.Context, parameters ContestDraftParameters) (*RuleSet, error) {
-	return s.createDraft(ctx, RuleSet{
-		Scope:             "contest",
-		ContestID:         &parameters.ContestID,
-		Mode:              string(parameters.Configuration.Mode()),
-		FallbackRuleSetID: parameters.Configuration.FallbackRuleSetID(),
-		Rules:             parameters.Rules,
-		CreatedAt:         parameters.CreatedAt,
-	})
+	draft := RuleSet{
+		Scope:     "contest",
+		ContestID: &parameters.ContestID,
+		Rules:     parameters.Rules,
+		CreatedAt: parameters.CreatedAt,
+	}
+	switch configuration := parameters.Configuration.(type) {
+	case Replace:
+		draft.Mode = string(ModeReplace)
+	case Override:
+		draft.Mode = string(ModeOverride)
+		draft.FallbackRuleSetID = &configuration.FallbackRuleSetID
+	default:
+		return nil, errx.NewInternalError("invalid contest draft configuration")
+	}
+
+	return s.createDraft(ctx, draft)
 }
 
 func (s *Service) createDraft(ctx context.Context, draft RuleSet) (*RuleSet, error) {

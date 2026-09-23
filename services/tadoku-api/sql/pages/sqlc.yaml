@@ -1,7 +1,7 @@
 version: "2"
 sql:
   - engine: postgresql
-    schema: ../../../immersion-api/storage/postgres/migrations
+    schema: ../../migrations
     queries:
       - page_find.sql
       - page_list.sql

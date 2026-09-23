@@ -1,8 +1,17 @@
 load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load", "oci_push")
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
 
-alias(
-    name = "canonical_tar",
-    actual = "//services/immersion-api/storage/postgres/migrations:tar",
+filegroup(
+    name = "up_files",
+    srcs = glob(["*.up.sql"]),
+    visibility = ["//services/tadoku-api/internal/testpostgres:__pkg__"],
+)
+
+pkg_tar(
+    name = "tar",
+    srcs = glob(["*.sql"]),
+    mode = "0644",
+    package_dir = "/migrations",
 )
 
 oci_image(
@@ -11,7 +20,7 @@ oci_image(
     entrypoint = ["/migrate"],
     tars = [
         "//services/common/migrate-runner:layer",
-        ":canonical_tar",
+        ":tar",
     ],
     visibility = ["//visibility:public"],
 )

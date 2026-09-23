@@ -74,7 +74,7 @@ func New(ctx context.Context) (_ *Database, err error) {
 	u.Path = "/" + name
 	db.DSN = u.String()
 
-	first, err := bazel.Runfile("services/immersion-api/storage/postgres/migrations/0001_init.up.sql")
+	first, err := bazel.Runfile("services/tadoku-api/migrations/0001_init.up.sql")
 	if err != nil {
 		return nil, fmt.Errorf("resolve canonical migrations: %w", err)
 	}

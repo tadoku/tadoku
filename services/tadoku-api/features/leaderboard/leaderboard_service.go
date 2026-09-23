@@ -44,18 +44,22 @@ type Service struct {
 	repository       *Repository
 	client           valkeygo.Client
 	operationTimeout time.Duration
+	cachePrefix      string
 	cacheReady       atomic.Bool
 }
 
-func NewService(repository *Repository, client valkeygo.Client, operationTimeout time.Duration) *Service {
+func NewService(repository *Repository, client valkeygo.Client, operationTimeout time.Duration, cachePrefix string) *Service {
 	service := &Service{
 		repository:       repository,
 		client:           client,
 		operationTimeout: operationTimeout,
+		cachePrefix:      cachePrefix,
 	}
 	service.cacheReady.Store(true)
 	return service
 }
+
+func (s *Service) cacheKey(key string) string { return s.cachePrefix + key }
 
 func (s *Service) FetchContest(ctx context.Context, request ContestRequest) (*Result, error) {
 	request.Request = normalize(request.Request)
@@ -69,13 +73,14 @@ func (s *Service) FetchContest(ctx context.Context, request ContestRequest) (*Re
 		return s.fetchContestFromPostgres(ctx, request)
 	}
 
-	result, exists, err := s.fetchPage(ctx, contestPrefix+request.ContestID.String(), request.Page, request.PageSize)
+	key := s.cacheKey(contestPrefix + request.ContestID.String())
+	result, exists, err := s.fetchPage(ctx, key, request.Page, request.PageSize)
 	if err != nil {
 		slog.WarnContext(ctx, "contest leaderboard cache unavailable; falling back to Postgres", "error", err)
 		return s.fetchContestFromPostgres(ctx, request)
 	}
 	if !exists {
-		generation, err := s.generation(ctx, contestPrefix+request.ContestID.String())
+		generation, err := s.generation(ctx, key)
 		if err != nil {
 			slog.WarnContext(ctx, "contest leaderboard cache unavailable; falling back to Postgres", "error", err)
 			return s.fetchContestFromPostgres(ctx, request)
@@ -84,7 +89,7 @@ func (s *Service) FetchContest(ctx context.Context, request ContestRequest) (*Re
 		if err != nil {
 			return nil, fmt.Errorf("failed to fetch all contest scores for rebuild: %w", err)
 		}
-		if _, err := s.rebuild(ctx, contestPrefix+request.ContestID.String(), scores, generation); err != nil {
+		if _, err := s.rebuild(ctx, key, scores, generation); err != nil {
 			slog.WarnContext(ctx, "contest leaderboard cache rebuild failed; falling back to Postgres", "error", err)
 		}
 		return s.fetchContestFromPostgres(ctx, request)
@@ -104,7 +109,7 @@ func (s *Service) FetchYearly(ctx context.Context, request YearlyRequest) (*Resu
 		return postgresResult(s.repository.yearly(ctx, request))
 	}
 
-	key := yearlyPrefix + strconv.Itoa(int(request.Year))
+	key := s.cacheKey(yearlyPrefix + strconv.Itoa(int(request.Year)))
 	result, exists, err := s.fetchPage(ctx, key, request.Page, request.PageSize)
 	if err != nil {
 		slog.WarnContext(ctx, "yearly leaderboard cache unavailable; falling back to Postgres", "error", err)
@@ -140,13 +145,14 @@ func (s *Service) FetchGlobal(ctx context.Context, request Request) (*Result, er
 		return postgresResult(s.repository.global(ctx, request))
 	}
 
-	result, exists, err := s.fetchPage(ctx, globalKey, request.Page, request.PageSize)
+	key := s.cacheKey(globalKey)
+	result, exists, err := s.fetchPage(ctx, key, request.Page, request.PageSize)
 	if err != nil {
 		slog.WarnContext(ctx, "global leaderboard cache unavailable; falling back to Postgres", "error", err)
 		return postgresResult(s.repository.global(ctx, request))
 	}
 	if !exists {
-		generation, err := s.generation(ctx, globalKey)
+		generation, err := s.generation(ctx, key)
 		if err != nil {
 			slog.WarnContext(ctx, "global leaderboard cache unavailable; falling back to Postgres", "error", err)
 			return postgresResult(s.repository.global(ctx, request))
@@ -155,7 +161,7 @@ func (s *Service) FetchGlobal(ctx context.Context, request Request) (*Result, er
 		if err != nil {
 			return nil, fmt.Errorf("failed to fetch all global scores for rebuild: %w", err)
 		}
-		if _, err := s.rebuild(ctx, globalKey, scores, generation); err != nil {
+		if _, err := s.rebuild(ctx, key, scores, generation); err != nil {
 			slog.WarnContext(ctx, "global leaderboard cache rebuild failed; falling back to Postgres", "error", err)
 		}
 		return postgresResult(s.repository.global(ctx, request))
@@ -371,14 +377,14 @@ func (s *Service) reconcile(ctx context.Context) (int, error) {
 	count := 0
 	for {
 		commandCtx, cancel := context.WithTimeout(ctx, s.operationTimeout)
-		page, err := s.client.Do(commandCtx, s.client.B().Scan().Cursor(cursor).Match("leaderboard:*:last_updated").Count(100).Build()).AsScanEntry()
+		page, err := s.client.Do(commandCtx, s.client.B().Scan().Cursor(cursor).Match(s.cacheKey("leaderboard:*:last_updated")).Count(100).Build()).AsScanEntry()
 		cancel()
 		if err != nil {
 			return count, fmt.Errorf("scan leaderboard cache markers: %w", err)
 		}
 		for _, marker := range page.Elements {
 			key := strings.TrimSuffix(marker, ":last_updated")
-			if !leaderboardCacheKey(key) {
+			if !s.leaderboardCacheKey(key) {
 				continue
 			}
 			if err := s.invalidate(ctx, key); err != nil {
@@ -393,7 +399,11 @@ func (s *Service) reconcile(ctx context.Context) (int, error) {
 	}
 }
 
-func leaderboardCacheKey(key string) bool {
+func (s *Service) leaderboardCacheKey(key string) bool {
+	if !strings.HasPrefix(key, s.cachePrefix) {
+		return false
+	}
+	key = strings.TrimPrefix(key, s.cachePrefix)
 	if key == globalKey {
 		return true
 	}
@@ -516,14 +526,14 @@ func (w *Worker) ProcessBatch(ctx context.Context) (int, error) {
 				w.logger.ErrorContext(ctx, "invalid leaderboard outbox event", "event_id", event.id, "event_type", event.eventType)
 				continue
 			}
-			keys[contestPrefix+event.contestID.String()] = struct{}{}
+			keys[w.service.cacheKey(contestPrefix+event.contestID.String())] = struct{}{}
 		case "refresh_official_scores", "remove_official_scores":
 			if event.year == nil {
 				w.logger.ErrorContext(ctx, "invalid leaderboard outbox event", "event_id", event.id, "event_type", event.eventType)
 				continue
 			}
-			keys[yearlyPrefix+strconv.Itoa(int(*event.year))] = struct{}{}
-			keys[globalKey] = struct{}{}
+			keys[w.service.cacheKey(yearlyPrefix+strconv.Itoa(int(*event.year)))] = struct{}{}
+			keys[w.service.cacheKey(globalKey)] = struct{}{}
 		default:
 			w.logger.ErrorContext(ctx, "unknown leaderboard outbox event", "event_id", event.id, "event_type", event.eventType)
 		}

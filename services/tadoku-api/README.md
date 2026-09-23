@@ -179,9 +179,15 @@ Startup requires:
   Unix-socket configurations are rejected.
 - `API_VALKEY_TIMEOUT` (default 1s), the positive bound for each connection and
   handshake attempt and the established-connection keepalive/I/O interval.
-- `API_LEADERBOARD_OUTBOX_ENABLED` (default `false`). Enable only after every
-  legacy Immersion API outbox worker pod and job has stopped. Both workers must
-  never consume the shared queue or update leaderboard cache keys together.
+- `API_LEADERBOARD_OUTBOX_ENABLED` (default `false`). For a database and cache
+  keyspace previously owned by the legacy worker, enable only after every old
+  worker pod and job has stopped. Legacy and native workers must never consume
+  the same queue or update the same leaderboard cache keys together.
+- `API_LEADERBOARD_CACHE_PREFIX` (default empty). Prefixes every leaderboard
+  cache key and scopes startup marker scans to that namespace. A nonempty
+  prefix requires the native outbox worker and must be unique for each database
+  sharing Valkey. Only lowercase letters, digits, hyphens and colons are
+  accepted; the prefix must end in a colon. Empty preserves existing cache keys.
 - `API_JWKS`, the gateway's public signing-key URL.
 - `API_MAX_TOKEN_AGE` (default 24h), the maximum accepted age since `iat`.
 - `API_JWT_ISSUER`, an optional exact issuer match. Empty leaves issuer unchecked
@@ -239,8 +245,9 @@ also retain the upstream client's native cancellation behavior. See
 [`infra/valkey`](infra/valkey/) for the direct command pattern.
 
 When enabled, the native leaderboard worker first scans existing leaderboard
-cache markers with bounded Valkey `SCAN` calls and invalidates each recognized
-global, yearly and contest key through a generation fence. Leaderboard reads
+cache markers in its configured prefix with bounded Valkey `SCAN` calls and
+invalidates each recognized global, yearly and contest key through a generation
+fence. Leaderboard reads
 use PostgreSQL until reconciliation and the initial outbox drain succeed. The
 worker then claims pending rows with `for update skip locked`, invalidates their
 affected cache keys, and marks rows processed in the same PostgreSQL transaction
@@ -691,11 +698,10 @@ the golden-case tables and covers `verify.json` too. It never creates a missing
 file, so add empty placeholders before recording a new user journey and review the
 complete diff.
 
-Asynchronous work will be covered by running a worker's single synchronous pass
-as a journey step at that step's business instant; tests never start polling
-loops. Migrated workers must expose that single pass as a method returning an
-error and let production `Run` loop over it. The job step kind lands with the
-first migrated worker.
+The leaderboard journey starts the worker's real polling loop as a job step,
+waits for startup reconciliation and an event written after startup, then
+cancels and joins the worker during cleanup. Other job steps can run a worker's
+synchronous pass when that is the behavior under test.
 
 ### Import policies
 

@@ -6,6 +6,10 @@ spec:
       env:
         - name: API_SCORING_ENGINE_ENABLED
           value: "false"
+        - name: API_LEADERBOARD_OUTBOX_ENABLED
+          value: "true"
+        - name: API_LEADERBOARD_CACHE_PREFIX
+          value: "dev:${DEV_ROUTE}:"
         - name: API_PORT
           value: "8000"
         - name: API_METRICS_PORT

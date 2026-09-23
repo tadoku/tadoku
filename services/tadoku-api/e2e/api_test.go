@@ -192,7 +192,7 @@ func newTestAPI(ctx context.Context, ketoFixture *testketo.Fixture, kratosFixtur
 		}
 	}()
 
-	leaderboardService := leaderboard.NewService(leaderboard.NewRepository(db.Pool), leaderboardValkey.client, time.Second)
+	leaderboardService := leaderboard.NewService(leaderboard.NewRepository(db.Pool), leaderboardValkey.client, time.Second, "")
 	handler, profileService, roleService, err := newTestRouterWithLeaderboardService(ctx, db.Pool, db.Pool, ketoFixture, kratosFixture, slog.New(slog.NewTextHandler(io.Discard, nil)), false, leaderboardService)
 	if err != nil {
 		return nil, err
@@ -255,7 +255,7 @@ func newTestRouterWithLeaderboard(
 	valkeyClient valkeygo.Client,
 	valkeyTimeout time.Duration,
 ) (*transport.Router, *featureprofile.Service, *commonroles.KetoService, error) {
-	leaderboardService := leaderboard.NewService(leaderboard.NewRepository(pool), valkeyClient, valkeyTimeout)
+	leaderboardService := leaderboard.NewService(leaderboard.NewRepository(pool), valkeyClient, valkeyTimeout, "")
 	return newTestRouterWithLeaderboardService(ctx, pool, auditPool, ketoFixture, kratosFixture, logger, scoringEngineEnabled, leaderboardService)
 }
 

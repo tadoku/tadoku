@@ -40,6 +40,41 @@ Next startup API must be reverified when the frontend framework version changes.
 The public Lab CA is mounted for server-side HTTPS. Branch pods still use the
 CLI-managed pnpm/Next dev server and do not use this adapter.
 
+## Leaderboard worker handoff
+
+The base `immersion` database and unprefixed leaderboard cache keys have one
+outbox owner. The source cleanup enables the native worker in the base Tadoku
+API Deployment and removes the Immersion Deployment from this root. Argo's
+`PruneLast` behavior can leave the old pod running while the new pod starts, so
+removal and enablement in one sync are not a safe handoff.
+
+Before syncing the source cleanup, deploy the separate dev worker-stop change
+that sets `tdk-dev-immersion-api/immersion-api` replicas to zero. Confirm the
+Deployment reports zero desired and available replicas and that its namespace
+has no Immersion worker Pods or Jobs. Also accept and pin a Tadoku API base image
+whose source includes the native outbox worker; the currently checked-in image
+digest predates that worker. The base uses empty cache prefix, so this image
+need not contain overlay prefix support. Verify the rendered base image resolves
+to the accepted worker digest before the enabled Deployment starts.
+Do not rely on Image Updater convergence or same-sync pruning to satisfy either
+gate.
+
+After the source cleanup sync, confirm there is still no old worker, exactly
+one base Tadoku API replica has `API_LEADERBOARD_OUTBOX_ENABLED=true`, and its
+logs contain `leaderboard outbox ready`. Check that
+`select count(*) from leaderboard_outbox where processed_at is null` is zero
+in the base `immersion` database, then exercise a log write and leaderboard
+read. Branch overlays use their own databases and `dev:${DEV_ROUTE}:`
+leaderboard cache prefixes on shared Valkey, and run their own workers. Verify
+a branch write/read separately; its cache keys must not change the base cache.
+DevCLI must build each overlay image from source with cache prefix support
+before enabling its worker. Any overlay created before the prefix-capable
+template must be restarted through its owner's DevCLI lifecycle so its branch
+database gains a worker; the base worker cannot drain branch outboxes.
+The dev-base offline E2E checks rendered worker ownership; backend E2Es check
+separate PostgreSQL databases with shared Valkey cache namespaces. Live Argo
+ordering and image acceptance remain release gates.
+
 ## Automatic migrations
 
 Full Argo syncs execute these waves:

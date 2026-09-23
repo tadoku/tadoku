@@ -1,0 +1,6 @@
+POST /immersion/logs HTTP/1.1
+Host: api.test
+Content-Type: application/json
+X-Request-Id: 22222222-2222-4222-8222-222222222222
+Content-Length: 0
+

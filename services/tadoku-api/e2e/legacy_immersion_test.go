@@ -95,8 +95,8 @@ func newLegacyImmersionAPIWithTimeout(ctx context.Context, dsn, jwksURL, ketoRea
 			nil, // log delete
 			nil, // moderation detach log
 			domain.NewRegistrationUpsert(postgresRepository, userUpsert),
-			nil, // log create
-			nil, // log update
+			domain.NewLogCreateWithScoringEngine(postgresRepository, scenarioClock{}, userUpsert, enabled),
+			domain.NewLogUpdateWithScoringEngine(postgresRepository, scenarioClock{}, enabled),
 			domain.NewContestCreate(postgresRepository, scenarioClock{}, userUpsert),
 			domain.NewLanguageList(postgresRepository),
 			domain.NewLanguageCreate(postgresRepository),

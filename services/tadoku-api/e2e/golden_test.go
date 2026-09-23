@@ -66,6 +66,10 @@ func atFixtureInstant(fn func()) {
 }
 
 func runCase(t *testing.T, s *suite, name string, want int, implementations ...implementation) {
+	runCaseAt(t, s, name, want, fixtureInstant, implementations...)
+}
+
+func runCaseAt(t *testing.T, s *suite, name string, want int, businessTime time.Time, implementations ...implementation) {
 	t.Helper()
 	dir := filepath.Join("testdata", name)
 	for _, impl := range implementations {
@@ -78,7 +82,10 @@ func runCase(t *testing.T, s *suite, name string, want int, implementations ...i
 			}
 			s.reset(t, dir)
 			record := *updateGoldens && impl.name == goldenRecorder
-			atFixtureInstant(func() {
+			previous := jwt.TimeFunc
+			jwt.TimeFunc = func() time.Time { return fixtureInstant }
+			defer func() { jwt.TimeFunc = previous }()
+			timex.TheWorld(businessTime, func() {
 				uuid.SetRand(impl.uuidReader())
 				defer uuid.SetRand(nil)
 				checkHTTPGolden(t, impl.handler, dir, want, record)

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -17,6 +18,261 @@ import (
 type LogsRepository struct{ db *pgxpool.Pool }
 
 func NewLogsRepository(db *pgxpool.Pool) *LogsRepository { return &LogsRepository{db: db} }
+
+func (r *LogsRepository) LockLog(ctx context.Context, id uuid.UUID) error {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return err
+	}
+	frozen, err := queries.New(executor).LockLogForMutation(ctx, logUUID(id))
+	if errors.Is(err, pgx.ErrNoRows) {
+		return ErrLogNotFound
+	}
+	if err != nil {
+		return fmt.Errorf("lock log: %w", err)
+	}
+	if frozen.Valid {
+		return ErrLogFrozen
+	}
+	return nil
+}
+
+func (r *LogsRepository) CreateLog(ctx context.Context, mutation logMutation) error {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return err
+	}
+	p := trackingParams(mutation.Tracking)
+	return queries.New(executor).CreateLog(ctx, queries.CreateLogParams{
+		ID:                          logUUID(mutation.ID),
+		UserID:                      logUUID(mutation.UserID),
+		LanguageCode:                mutation.LanguageCode,
+		ActivityID:                  int16(mutation.ActivityID),
+		UnitID:                      p.unitID,
+		UnitKey:                     p.unitKey,
+		Amount:                      p.amount,
+		Modifier:                    p.modifier,
+		DurationSeconds:             p.duration,
+		ComputedScore:               pgtype.Float4{Float32: mutation.Tracking.Score, Valid: true},
+		ScoreRuleSetID:              p.ruleSetID,
+		ScoreRuleIds:                p.ruleIDs,
+		ScoreRates:                  mutation.Tracking.Rates,
+		ScoreSource:                 p.source,
+		EligibleOfficialLeaderboard: mutation.EligibleOfficialLeaderboard,
+		Description:                 nullableLogText(mutation.Description),
+		CreatedAt:                   logTime(mutation.Now),
+		UpdatedAt:                   logTime(mutation.Now),
+	})
+}
+
+func (r *LogsRepository) CreateContestLog(ctx context.Context, logID uuid.UUID, tracking ContestTracking) error {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return err
+	}
+	p := trackingParams(tracking.Tracking)
+	return queries.New(executor).CreateContestLog(ctx, queries.CreateContestLogParams{
+		RegistrationID:  logUUID(tracking.RegistrationID),
+		LogID:           logUUID(logID),
+		UnitKey:         p.unitKey,
+		Amount:          p.amount,
+		Modifier:        p.modifier,
+		DurationSeconds: p.duration,
+		ComputedScore:   pgtype.Float4{Float32: tracking.Tracking.Score, Valid: true},
+		ScoreRuleSetID:  p.ruleSetID,
+		ScoreRuleIds:    p.ruleIDs,
+		ScoreRates:      tracking.Tracking.Rates,
+		ScoreSource:     p.source,
+	})
+}
+
+func (r *LogsRepository) InsertTag(ctx context.Context, logID, userID uuid.UUID, tag string) error {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return err
+	}
+	return queries.New(executor).InsertLogTag(ctx, queries.InsertLogTagParams{
+		LogID:  logUUID(logID),
+		UserID: logUUID(userID),
+		Tag:    tag,
+	})
+}
+func (r *LogsRepository) DeleteTags(ctx context.Context, logID uuid.UUID) error {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return err
+	}
+	return queries.New(executor).DeleteLogTags(ctx, logUUID(logID))
+}
+
+func (r *LogsRepository) InsertOutbox(ctx context.Context, userID uuid.UUID, contestID *uuid.UUID, year *int16, event string) error {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return err
+	}
+	var cid pgtype.UUID
+	if contestID != nil {
+		cid = logUUID(*contestID)
+	}
+	var y pgtype.Int2
+	if year != nil {
+		y = pgtype.Int2{Int16: *year, Valid: true}
+	}
+	return queries.New(executor).InsertLogLeaderboardOutbox(ctx, queries.InsertLogLeaderboardOutboxParams{
+		EventType: event,
+		UserID:    logUUID(userID),
+		ContestID: cid,
+		Year:      y,
+	})
+}
+
+func (r *LogsRepository) OutboxContext(ctx context.Context, id uuid.UUID) (OutboxContext, error) {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return OutboxContext{}, err
+	}
+	row, err := queries.New(executor).FetchLogOutboxContext(ctx, logUUID(id))
+	return OutboxContext{
+		UserID:           row.UserID.Bytes,
+		Year:             row.Year,
+		EligibleOfficial: row.EligibleOfficialLeaderboard,
+	}, err
+}
+
+func (r *LogsRepository) UpdateLog(ctx context.Context, mutation logMutation) error {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return err
+	}
+	p := trackingParams(mutation.Tracking)
+	return queries.New(executor).UpdateLog(ctx, queries.UpdateLogParams{
+		UnitID:          p.unitID,
+		UnitKey:         p.unitKey,
+		Amount:          p.amount,
+		Modifier:        p.modifier,
+		DurationSeconds: p.duration,
+		ComputedScore:   pgtype.Float4{Float32: mutation.Tracking.Score, Valid: true},
+		ScoreRuleSetID:  p.ruleSetID,
+		ScoreRuleIds:    p.ruleIDs,
+		ScoreRates:      mutation.Tracking.Rates,
+		ScoreSource:     p.source,
+		Description:     nullableLogText(mutation.Description),
+		UpdatedAt:       logTime(mutation.Now),
+		LogID:           logUUID(mutation.ID),
+	})
+}
+func (r *LogsRepository) UpdateContestLog(ctx context.Context, logID uuid.UUID, tracking ContestTracking, now time.Time) error {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return err
+	}
+	p := trackingParams(tracking.Tracking)
+	return queries.New(executor).UpdateOngoingContestLog(ctx, queries.UpdateOngoingContestLogParams{
+		UnitKey:         p.unitKey,
+		Amount:          p.amount,
+		Modifier:        p.modifier,
+		DurationSeconds: p.duration,
+		ComputedScore:   pgtype.Float4{Float32: tracking.Tracking.Score, Valid: true},
+		ScoreRuleSetID:  p.ruleSetID,
+		ScoreRuleIds:    p.ruleIDs,
+		ScoreRates:      tracking.Tracking.Rates,
+		ScoreSource:     p.source,
+		LogID:           logUUID(logID),
+		ContestID:       logUUID(tracking.ContestID),
+		Now:             pgtype.Date{Time: now, Valid: true},
+	})
+}
+
+func (r *LogsRepository) UpdateOngoingContestLogs(ctx context.Context, logID uuid.UUID, tracking Tracking, now time.Time) error {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return err
+	}
+	p := trackingParams(tracking)
+	return queries.New(executor).UpdateOngoingContestLogs(ctx, queries.UpdateOngoingContestLogsParams{
+		UnitKey:         p.unitKey,
+		Amount:          p.amount,
+		Modifier:        p.modifier,
+		DurationSeconds: p.duration,
+		ComputedScore:   pgtype.Float4{Float32: tracking.Score, Valid: true},
+		ScoreRuleSetID:  p.ruleSetID,
+		ScoreRuleIds:    p.ruleIDs,
+		ScoreRates:      tracking.Rates,
+		ScoreSource:     p.source,
+		LogID:           logUUID(logID),
+		Now:             pgtype.Date{Time: now, Valid: true},
+	})
+}
+
+func (r *LogsRepository) OngoingContestIDs(ctx context.Context, id uuid.UUID, now time.Time) ([]uuid.UUID, error) {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := queries.New(executor).FetchOngoingContestIDsForLog(ctx, queries.FetchOngoingContestIDsForLogParams{
+		LogID: logUUID(id),
+		Now:   pgtype.Date{Time: now, Valid: true},
+	})
+	if err != nil {
+		return nil, err
+	}
+	result := make([]uuid.UUID, len(rows))
+	for i, row := range rows {
+		result[i] = row.Bytes
+	}
+	return result, nil
+}
+
+type logTrackingParams struct {
+	unitID    pgtype.UUID
+	unitKey   pgtype.Text
+	amount    pgtype.Float4
+	modifier  pgtype.Float4
+	duration  pgtype.Int4
+	ruleSetID pgtype.UUID
+	ruleIDs   []pgtype.UUID
+	source    pgtype.Text
+}
+
+func trackingParams(t Tracking) logTrackingParams {
+	p := logTrackingParams{
+		unitKey:  pgtype.Text{String: t.UnitKey, Valid: t.UnitKey != ""},
+		amount:   nullableFloat(t.Amount),
+		modifier: nullableFloat(t.Modifier),
+		duration: nullableInt(t.DurationSeconds),
+		source:   pgtype.Text{String: t.Source, Valid: t.Source != ""},
+	}
+	if t.UnitID != nil {
+		p.unitID = logUUID(*t.UnitID)
+	}
+	if t.RuleSetID != nil {
+		p.ruleSetID = logUUID(*t.RuleSetID)
+	}
+	for _, id := range t.RuleIDs {
+		p.ruleIDs = append(p.ruleIDs, logUUID(id))
+	}
+	return p
+}
+func logUUID(v uuid.UUID) pgtype.UUID      { return pgtype.UUID{Bytes: v, Valid: true} }
+func logTime(v time.Time) pgtype.Timestamp { return pgtype.Timestamp{Time: v, Valid: true} }
+func nullableFloat(v *float32) pgtype.Float4 {
+	if v == nil {
+		return pgtype.Float4{}
+	}
+	return pgtype.Float4{Float32: *v, Valid: true}
+}
+func nullableInt(v *int32) pgtype.Int4 {
+	if v == nil {
+		return pgtype.Int4{}
+	}
+	return pgtype.Int4{Int32: *v, Valid: true}
+}
+func nullableLogText(v *string) pgtype.Text {
+	if v == nil {
+		return pgtype.Text{}
+	}
+	return pgtype.Text{String: *v, Valid: true}
+}
 
 func (r *LogsRepository) ListUnits(ctx context.Context) ([]Unit, error) {
 	executor, err := postgres.Executor(ctx, r.db)

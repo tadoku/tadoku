@@ -43,6 +43,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/features/profile"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/scoring"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/fliptmanagement"
+	"github.com/tadoku/tadoku/services/tadoku-api/infra/observability"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 	valkeyinfra "github.com/tadoku/tadoku/services/tadoku-api/infra/valkey"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
@@ -412,12 +413,13 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	pagesService := pages.NewService(pagesRepository)
 	postsService := posts.NewService(postsRepository)
 	profileService := profile.NewService(profileRepository, userCache, roleService, kratosIdentities)
-	scoringService := scoring.NewService(scoringRepository)
 	featureFlagService := featureflagsservice.NewService(featureflags.NewEvaluator(fliptProvider, featureFlagMetrics, clock), fliptmanagement.NewClient(fliptmanagement.Config{
 		URL:         cfg.FliptManagementURL,
 		Environment: cfg.FliptEnvironment,
 		HTTPClient:  fliptManagement,
 	}))
+	scoringObserver := observability.NewScoringObserver(metrics, logger, cfg.ScoringEngineEnabled)
+	scoringService := scoring.NewService(scoringRepository, cfg.ScoringEngineEnabled, scoringObserver)
 	api := app.New(announcementsService, auditService, authzService, contestsService, leaderboardService, languagesService, logsService, pagesService, postsService, profileService, scoringService, featureFlagService, pool, permissionChecker)
 	rejectBanned := newBannedUserMiddleware(ketoReader, logger)
 

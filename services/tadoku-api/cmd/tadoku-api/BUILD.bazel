@@ -28,6 +28,7 @@ go_library(
         "//services/tadoku-api/features/profile",
         "//services/tadoku-api/features/scoring",
         "//services/tadoku-api/infra/fliptmanagement",
+        "//services/tadoku-api/infra/observability",
         "//services/tadoku-api/infra/postgres",
         "//services/tadoku-api/infra/valkey",
         "//services/tadoku-api/internal/permissions",

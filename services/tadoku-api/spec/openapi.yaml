@@ -1540,9 +1540,11 @@ paths:
           description: invalid submission
         "409":
           $ref: "#/components/responses/ImmersionAccountDeletionInProgress"
+        "500":
+          description: internal server error
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /logs
       x-legacy-operation-id: logCreate
   /immersion/logs/score-preview:
@@ -1724,9 +1726,11 @@ paths:
           description: not found
         "409":
           $ref: "#/components/responses/ImmersionAccountDeletionInProgress"
+        "500":
+          description: internal server error
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /logs/{id}
       x-legacy-operation-id: logUpdate
   "/immersion/logs/{id}/contest-registrations":

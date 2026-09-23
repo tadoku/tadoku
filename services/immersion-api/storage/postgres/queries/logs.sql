@@ -15,7 +15,9 @@ insert into logs (
   score_rates,
   score_source,
   eligible_official_leaderboard,
-  "description"
+  "description",
+  created_at,
+  updated_at
 ) values (
   sqlc.arg('id'),
   sqlc.arg('user_id'),
@@ -32,7 +34,9 @@ insert into logs (
   sqlc.arg('score_rates'),
   sqlc.arg('score_source'),
   sqlc.arg('eligible_official_leaderboard'),
-  sqlc.arg('description')
+  sqlc.arg('description'),
+  sqlc.arg('created_at'),
+  sqlc.arg('created_at')
 ) returning id;
 
 -- name: CreateContestLogRelation :exec

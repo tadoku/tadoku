@@ -164,6 +164,48 @@ func (r *ScoringRepository) FindUnitKeyByKey(ctx context.Context, key string, ac
 	return row.UnitKey, nil
 }
 
+type logUnit struct {
+	ID       uuid.UUID
+	Key      string
+	Modifier float32
+}
+
+func (r *ScoringRepository) FindLogUnit(ctx context.Context, id *uuid.UUID, key *string, activityID int32, languageCode string) (*logUnit, error) {
+	q, err := r.queries(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if id != nil {
+		row, err := q.FindUnitForScoringByID(ctx, queries.FindUnitForScoringByIDParams{
+			ID:           postgresUUID(*id),
+			ActivityID:   int16(activityID),
+			LanguageCode: pgtype.Text{String: languageCode, Valid: true},
+		})
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, errx.NewInvalidInputError("unit_id is not valid")
+		}
+		if err != nil {
+			return nil, fmt.Errorf("find log unit: %w", err)
+		}
+		return &logUnit{ID: row.ID.Bytes, Key: row.UnitKey, Modifier: row.Modifier}, nil
+	}
+	if key != nil {
+		row, err := q.FindUnitForScoringByKey(ctx, queries.FindUnitForScoringByKeyParams{
+			UnitKey:      *key,
+			ActivityID:   int16(activityID),
+			LanguageCode: pgtype.Text{String: languageCode, Valid: true},
+		})
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, errx.NewInvalidInputError("unit_key is not valid")
+		}
+		if err != nil {
+			return nil, fmt.Errorf("find log unit: %w", err)
+		}
+		return &logUnit{ID: row.ID.Bytes, Key: row.UnitKey, Modifier: row.Modifier}, nil
+	}
+	return nil, nil
+}
+
 func (r *ScoringRepository) NextDraftVersion(ctx context.Context, contestID *uuid.UUID) (int32, error) {
 	q, err := r.queries(ctx)
 	if err != nil {

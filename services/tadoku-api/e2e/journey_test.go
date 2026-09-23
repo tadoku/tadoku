@@ -59,6 +59,10 @@ var stepNamePattern = regexp.MustCompile(`^[a-z0-9_]+$`)
 // production router, so state after the first step comes only from the API.
 // It stops at the first failing step because later steps depend on it.
 func runJourney(t *testing.T, s *suite, name string, steps []step) {
+	runJourneyWithHandler(t, s, s.handler, name, steps)
+}
+
+func runJourneyWithHandler(t *testing.T, s *suite, handler http.Handler, name string, steps []step) {
 	t.Helper()
 	if s.kratos != nil {
 		if err := s.kratos.Err(); err != nil {
@@ -98,7 +102,7 @@ func runJourney(t *testing.T, s *suite, name string, steps []step) {
 					checkVerifyGolden(t, s, stepDir)
 					return
 				}
-				runRequestStep(t, s, stepDir, current, tokens)
+				runRequestStep(t, s, handler, stepDir, current, tokens)
 			})
 		})
 		if !passed {
@@ -259,7 +263,7 @@ func resetJourney(t *testing.T, s *suite, directory string) {
 
 // runRequestStep replays the request as every member in others, checking
 // status only, then sends it as the step's member and compares the golden.
-func runRequestStep(t *testing.T, s *suite, directory string, current step, tokens map[member]string) {
+func runRequestStep(t *testing.T, s *suite, handler http.Handler, directory string, current step, tokens map[member]string) {
 	t.Helper()
 
 	if readHTTPRequest(t, directory).Header.Get("Authorization") != "" {
@@ -276,7 +280,7 @@ func runRequestStep(t *testing.T, s *suite, directory string, current step, toke
 		authorize(replay, other, tokens)
 
 		recorder := httptest.NewRecorder()
-		s.handler.ServeHTTP(recorder, replay)
+		handler.ServeHTTP(recorder, replay)
 		if recorder.Code != current.others[other] {
 			t.Errorf("%s: status=%d, want %d", other, recorder.Code, current.others[other])
 		}
@@ -287,7 +291,7 @@ func runRequestStep(t *testing.T, s *suite, directory string, current step, toke
 
 	request := readHTTPRequest(t, directory)
 	authorize(request, current.as, tokens)
-	checkHTTPResponseGolden(t, s.handler, request, directory, current.want, *updateGoldens)
+	checkHTTPResponseGolden(t, handler, request, directory, current.want, *updateGoldens)
 }
 
 func authorize(request *http.Request, who member, tokens map[member]string) {

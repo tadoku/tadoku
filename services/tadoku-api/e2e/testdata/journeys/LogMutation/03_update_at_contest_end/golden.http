@@ -1,0 +1,6 @@
+>>> PUT /immersion/logs/52fdfc07-2182-454f-963f-5f0f9a621d72
+HTTP/1.1 200 OK
+Content-Length: 890
+Content-Type: application/json; charset=UTF-8
+
+{"activity":{"id":1,"input_type":"amount_primary","name":"Reading"},"amount":0,"created_at":"2026-09-12T12:00:00Z","deleted":false,"duration_seconds":300,"id":"52fdfc07-2182-454f-963f-5f0f9a621d72","language":{"code":"eng","name":"English"},"modifier":0,"registrations":[{"contest_end":"2027-01-01","contest_id":"f0000000-0000-4000-8000-000000000001","official":true,"owner_user_display_name":"Reader One","registration_id":"eeeeeeee-eeee-4eee-8eee-000000000001","score":0,"title":"Owned"},{"contest_end":"2027-01-31","contest_id":"f0000000-0000-4000-8000-000000000004","official":false,"owner_user_display_name":"Reader One","registration_id":"eeeeeeee-eeee-4eee-8eee-000000000004","score":0,"title":"Inherit"}],"score":0,"tags":["duration"],"unit_id":"00000000-0000-0000-0000-000000000000","unit_name":"","user_display_name":"Reader One","user_id":"11111111-1111-4111-8111-111111111111"}

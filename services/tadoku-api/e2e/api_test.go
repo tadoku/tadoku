@@ -35,6 +35,7 @@ import (
 	featureprofile "github.com/tadoku/tadoku/services/tadoku-api/features/profile"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/scoring"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/fliptmanagement"
+	"github.com/tadoku/tadoku/services/tadoku-api/infra/observability"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testflipt"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testketo"
@@ -300,9 +301,11 @@ func newTestRouterWithLeaderboard(
 	pagesService := pages.NewService(pagesRepository)
 	postsService := posts.NewService(postsRepository)
 	profileService := featureprofile.NewService(profileRepository, featureprofile.NewUserCache(identities), roleService, identities)
-	scoringService := scoring.NewService(scoringRepository)
 	featureFlagEvaluator := featureflags.NewEvaluator(flipt, nil, commondomain.NewMockClock(fixtureInstant))
 	featureFlagsService := nativefeatureflags.NewService(featureFlagEvaluator, fliptmanagement.NewClient(fliptmanagement.Config{URL: flipt.URL(), Environment: "local"}))
+	registry := prometheus.NewRegistry()
+	scoringObserver := observability.NewScoringObserver(registry, logger, scoringEngineEnabled)
+	scoringService := scoring.NewService(scoringRepository, scoringEngineEnabled, scoringObserver)
 	application := app.New(announcementsService, auditService, authzService, contestsService, leaderboardService, languagesService, logsService, pagesService, postsService, profileService, scoringService, featureFlagsService, pool, permissionChecker)
 	authenticate, err := transport.NewJWTAuthentication(ctx, authenticationJWKS.URL, time.Second, 24*time.Hour, "http://oathkeeper-api/", logger)
 	if err != nil {
@@ -315,7 +318,7 @@ func newTestRouterWithLeaderboard(
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	handler, err := transport.NewHandler(application, pool.Ping, time.Second, prometheus.NewRegistry(), logger, authenticate, rejectBanned, authenticateCallback)
+	handler, err := transport.NewHandler(application, pool.Ping, time.Second, registry, logger, authenticate, rejectBanned, authenticateCallback)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("create API handler: %w", err)
 	}

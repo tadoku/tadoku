@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/activities"
+	"github.com/tadoku/tadoku/services/tadoku-api/domain/logscore"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
 
@@ -66,7 +67,31 @@ type ContestActivity struct {
 var (
 	ErrLogNotFound     = errx.NewNotFoundError("log not found")
 	ErrInvalidActivity = errx.NewInvalidInputError("invalid log activity")
+	ErrLogFrozen       = errx.NewConflictError("log is frozen")
 )
+
+type Tracking = logscore.Tracking
+type ContestTracking = logscore.ContestTracking
+
+type logMutation struct {
+	ID                          uuid.UUID
+	UserID                      uuid.UUID
+	LanguageCode                string
+	ActivityID                  int32
+	Description                 *string
+	Tags                        []string
+	Tracking                    Tracking
+	ContestTrackings            []ContestTracking
+	EligibleOfficialLeaderboard bool
+	Year                        int16
+	Now                         time.Time
+}
+
+type OutboxContext struct {
+	UserID           uuid.UUID
+	Year             int16
+	EligibleOfficial bool
+}
 
 type Log struct {
 	ID              uuid.UUID

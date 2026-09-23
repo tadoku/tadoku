@@ -1100,6 +1100,23 @@ type ImmersionFetchLeaderboardForYearParams struct {
 	ActivityId   *int    `form:"activity_id,omitempty" json:"activity_id,omitempty"`
 }
 
+// ImmersionLogCreateJSONBody defines parameters for ImmersionLogCreate.
+type ImmersionLogCreateJSONBody struct {
+	ActivityId      int32    `json:"activity_id"`
+	Amount          *float32 `json:"amount,omitempty"`
+	Description     *string  `json:"description,omitempty"`
+	DurationSeconds *int32   `json:"duration_seconds,omitempty"`
+
+	// LanguageCode Example: zho
+	LanguageCode    string                `json:"language_code"`
+	RegistrationIds *[]openapi_types.UUID `json:"registration_ids,omitempty"`
+
+	// Tags Example: ["book","fiction"]
+	Tags    []string            `json:"tags"`
+	UnitId  *openapi_types.UUID `json:"unit_id,omitempty"`
+	UnitKey *string             `json:"unit_key,omitempty"`
+}
+
 // ImmersionScorePreviewJSONBody defines parameters for ImmersionScorePreview.
 type ImmersionScorePreviewJSONBody struct {
 	ActivityId      int32    `json:"activity_id"`
@@ -1117,6 +1134,18 @@ type ImmersionScorePreviewJSONBody struct {
 // ImmersionLogTagSuggestionsParams defines parameters for ImmersionLogTagSuggestions.
 type ImmersionLogTagSuggestionsParams struct {
 	Query *string `form:"query,omitempty" json:"query,omitempty"`
+}
+
+// ImmersionLogUpdateJSONBody defines parameters for ImmersionLogUpdate.
+type ImmersionLogUpdateJSONBody struct {
+	Amount          *float32 `json:"amount,omitempty"`
+	Description     *string  `json:"description,omitempty"`
+	DurationSeconds *int32   `json:"duration_seconds,omitempty"`
+
+	// Tags Example: ["book","fiction"]
+	Tags    []string            `json:"tags"`
+	UnitId  *openapi_types.UUID `json:"unit_id,omitempty"`
+	UnitKey *string             `json:"unit_key,omitempty"`
 }
 
 // ImmersionProfileListLogsParams defines parameters for ImmersionProfileListLogs.
@@ -1174,8 +1203,14 @@ type ImmersionLanguageCreateJSONRequestBody = ImmersionLanguage
 // ImmersionLanguageUpdateJSONRequestBody defines body for ImmersionLanguageUpdate for application/json ContentType.
 type ImmersionLanguageUpdateJSONRequestBody ImmersionLanguageUpdateJSONBody
 
+// ImmersionLogCreateJSONRequestBody defines body for ImmersionLogCreate for application/json ContentType.
+type ImmersionLogCreateJSONRequestBody ImmersionLogCreateJSONBody
+
 // ImmersionScorePreviewJSONRequestBody defines body for ImmersionScorePreview for application/json ContentType.
 type ImmersionScorePreviewJSONRequestBody ImmersionScorePreviewJSONBody
+
+// ImmersionLogUpdateJSONRequestBody defines body for ImmersionLogUpdate for application/json ContentType.
+type ImmersionLogUpdateJSONRequestBody ImmersionLogUpdateJSONBody
 
 // ImmersionScoringRuleSetCreatePlatformJSONRequestBody defines body for ImmersionScoringRuleSetCreatePlatform for application/json ContentType.
 type ImmersionScoringRuleSetCreatePlatformJSONRequestBody = ImmersionScoringRuleSetDraft
@@ -1326,6 +1361,9 @@ type ServerInterface interface {
 	// ImmersionFetchLeaderboardForYear Fetches the leaderboard for a given year
 	// (GET /immersion/leaderboard/yearly/{year})
 	ImmersionFetchLeaderboardForYear(w http.ResponseWriter, r *http.Request, year int, params ImmersionFetchLeaderboardForYearParams)
+	// ImmersionLogCreate Submits a new log
+	// (POST /immersion/logs)
+	ImmersionLogCreate(w http.ResponseWriter, r *http.Request)
 	// ImmersionLogGetConfigurations Fetches the configuration options for a log
 	// (GET /immersion/logs/configuration-options)
 	ImmersionLogGetConfigurations(w http.ResponseWriter, r *http.Request)
@@ -1338,6 +1376,9 @@ type ServerInterface interface {
 	// ImmersionLogFindByID Fetches a log by id
 	// (GET /immersion/logs/{id})
 	ImmersionLogFindByID(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// ImmersionLogUpdate Updates an existing log
+	// (PUT /immersion/logs/{id})
+	ImmersionLogUpdate(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
 	// ImmersionScoringRuleSetListPlatform Lists platform scoring rule-set versions
 	// (GET /immersion/scoring/rule-sets)
 	ImmersionScoringRuleSetListPlatform(w http.ResponseWriter, r *http.Request)
@@ -3073,6 +3114,20 @@ func (siw *ServerInterfaceWrapper) ImmersionFetchLeaderboardForYear(w http.Respo
 	handler.ServeHTTP(w, r)
 }
 
+// ImmersionLogCreate operation middleware
+func (siw *ServerInterfaceWrapper) ImmersionLogCreate(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ImmersionLogCreate(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ImmersionLogGetConfigurations operation middleware
 func (siw *ServerInterfaceWrapper) ImmersionLogGetConfigurations(w http.ResponseWriter, r *http.Request) {
 
@@ -3151,6 +3206,32 @@ func (siw *ServerInterfaceWrapper) ImmersionLogFindByID(w http.ResponseWriter, r
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ImmersionLogFindByID(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ImmersionLogUpdate operation middleware
+func (siw *ServerInterfaceWrapper) ImmersionLogUpdate(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ImmersionLogUpdate(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -3690,8 +3771,10 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/{id}/profile/{user_id}/activity", wrapper.ImmersionContestProfileFetchActivity)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/ongoing-registrations", wrapper.ImmersionContestFindOngoingRegistrations)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/configuration-options", wrapper.ImmersionContestGetConfigurations)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/immersion/logs", wrapper.ImmersionLogCreate)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/immersion/logs/score-preview", wrapper.ImmersionScorePreview)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/logs/{id}", wrapper.ImmersionLogFindByID)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/immersion/logs/{id}", wrapper.ImmersionLogUpdate)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/logs/configuration-options", wrapper.ImmersionLogGetConfigurations)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/logs/tag-suggestions", wrapper.ImmersionLogTagSuggestions)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/users/{userId}/profile", wrapper.ImmersionProfileFindByUserID)
@@ -5623,6 +5706,60 @@ func (response ImmersionFetchLeaderboardForYear500Response) VisitImmersionFetchL
 	return nil
 }
 
+type ImmersionLogCreateRequestObject struct {
+	Body *ImmersionLogCreateJSONRequestBody
+}
+
+type ImmersionLogCreateResponseObject interface {
+	VisitImmersionLogCreateResponse(w http.ResponseWriter) error
+}
+
+type ImmersionLogCreate200JSONResponse ImmersionLog
+
+func (response ImmersionLogCreate200JSONResponse) VisitImmersionLogCreateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImmersionLogCreate400Response struct {
+}
+
+func (response ImmersionLogCreate400Response) VisitImmersionLogCreateResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
+type ImmersionLogCreate409JSONResponse struct {
+	ImmersionAccountDeletionInProgressJSONResponse
+}
+
+func (response ImmersionLogCreate409JSONResponse) VisitImmersionLogCreateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImmersionLogCreate500Response struct {
+}
+
+func (response ImmersionLogCreate500Response) VisitImmersionLogCreateResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
 type ImmersionLogGetConfigurationsRequestObject struct {
 }
 
@@ -5738,6 +5875,85 @@ type ImmersionLogFindByID500Response struct {
 }
 
 func (response ImmersionLogFindByID500Response) VisitImmersionLogFindByIDResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
+type ImmersionLogUpdateRequestObject struct {
+	Id   openapi_types.UUID `json:"id"`
+	Body *ImmersionLogUpdateJSONRequestBody
+}
+
+type ImmersionLogUpdateResponseObject interface {
+	VisitImmersionLogUpdateResponse(w http.ResponseWriter) error
+}
+
+type ImmersionLogUpdate200JSONResponse ImmersionLog
+
+func (response ImmersionLogUpdate200JSONResponse) VisitImmersionLogUpdateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImmersionLogUpdate400Response struct {
+}
+
+func (response ImmersionLogUpdate400Response) VisitImmersionLogUpdateResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
+type ImmersionLogUpdate401Response struct {
+}
+
+func (response ImmersionLogUpdate401Response) VisitImmersionLogUpdateResponse(w http.ResponseWriter) error {
+	w.WriteHeader(401)
+	return nil
+}
+
+type ImmersionLogUpdate403Response struct {
+}
+
+func (response ImmersionLogUpdate403Response) VisitImmersionLogUpdateResponse(w http.ResponseWriter) error {
+	w.WriteHeader(403)
+	return nil
+}
+
+type ImmersionLogUpdate404Response struct {
+}
+
+func (response ImmersionLogUpdate404Response) VisitImmersionLogUpdateResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type ImmersionLogUpdate409JSONResponse struct {
+	ImmersionAccountDeletionInProgressJSONResponse
+}
+
+func (response ImmersionLogUpdate409JSONResponse) VisitImmersionLogUpdateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImmersionLogUpdate500Response struct {
+}
+
+func (response ImmersionLogUpdate500Response) VisitImmersionLogUpdateResponse(w http.ResponseWriter) error {
 	w.WriteHeader(500)
 	return nil
 }
@@ -6256,6 +6472,9 @@ type StrictServerInterface interface {
 	// ImmersionFetchLeaderboardForYear Fetches the leaderboard for a given year
 	// (GET /immersion/leaderboard/yearly/{year})
 	ImmersionFetchLeaderboardForYear(ctx context.Context, request ImmersionFetchLeaderboardForYearRequestObject) (ImmersionFetchLeaderboardForYearResponseObject, error)
+	// ImmersionLogCreate Submits a new log
+	// (POST /immersion/logs)
+	ImmersionLogCreate(ctx context.Context, request ImmersionLogCreateRequestObject) (ImmersionLogCreateResponseObject, error)
 	// ImmersionLogGetConfigurations Fetches the configuration options for a log
 	// (GET /immersion/logs/configuration-options)
 	ImmersionLogGetConfigurations(ctx context.Context, request ImmersionLogGetConfigurationsRequestObject) (ImmersionLogGetConfigurationsResponseObject, error)
@@ -6268,6 +6487,9 @@ type StrictServerInterface interface {
 	// ImmersionLogFindByID Fetches a log by id
 	// (GET /immersion/logs/{id})
 	ImmersionLogFindByID(ctx context.Context, request ImmersionLogFindByIDRequestObject) (ImmersionLogFindByIDResponseObject, error)
+	// ImmersionLogUpdate Updates an existing log
+	// (PUT /immersion/logs/{id})
+	ImmersionLogUpdate(ctx context.Context, request ImmersionLogUpdateRequestObject) (ImmersionLogUpdateResponseObject, error)
 	// ImmersionScoringRuleSetListPlatform Lists platform scoring rule-set versions
 	// (GET /immersion/scoring/rule-sets)
 	ImmersionScoringRuleSetListPlatform(ctx context.Context, request ImmersionScoringRuleSetListPlatformRequestObject) (ImmersionScoringRuleSetListPlatformResponseObject, error)
@@ -7708,6 +7930,40 @@ func (sh *strictHandler) ImmersionFetchLeaderboardForYear(w http.ResponseWriter,
 	}
 }
 
+// ImmersionLogCreate operation middleware
+func (sh *strictHandler) ImmersionLogCreate(w http.ResponseWriter, r *http.Request) {
+	var request ImmersionLogCreateRequestObject
+
+	var body ImmersionLogCreateJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		if !errors.Is(err, io.EOF) {
+			sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+			return
+		}
+	} else {
+		request.Body = &body
+	}
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ImmersionLogCreate(ctx, request.(ImmersionLogCreateRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ImmersionLogCreate")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ImmersionLogCreateResponseObject); ok {
+		if err := validResponse.VisitImmersionLogCreateResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ImmersionLogGetConfigurations operation middleware
 func (sh *strictHandler) ImmersionLogGetConfigurations(w http.ResponseWriter, r *http.Request) {
 	var request ImmersionLogGetConfigurationsRequestObject
@@ -7808,6 +8064,39 @@ func (sh *strictHandler) ImmersionLogFindByID(w http.ResponseWriter, r *http.Req
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ImmersionLogFindByIDResponseObject); ok {
 		if err := validResponse.VisitImmersionLogFindByIDResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ImmersionLogUpdate operation middleware
+func (sh *strictHandler) ImmersionLogUpdate(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	var request ImmersionLogUpdateRequestObject
+
+	request.Id = id
+
+	var body ImmersionLogUpdateJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ImmersionLogUpdate(ctx, request.(ImmersionLogUpdateRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ImmersionLogUpdate")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ImmersionLogUpdateResponseObject); ok {
+		if err := validResponse.VisitImmersionLogUpdateResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

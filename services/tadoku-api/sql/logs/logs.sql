@@ -241,3 +241,87 @@ inner join contest_registrations on (
 inner join users as owner_users on (owner_users.id = contests.owner_user_id)
 where log_id = sqlc.arg('id')
 order by contest_logs.contest_id;
+
+-- name: LockLogForMutation :one
+select frozen_at
+from logs
+where id = sqlc.arg('log_id') and deleted_at is null
+for update;
+
+-- name: CreateLog :exec
+insert into logs (
+  id, user_id, language_code, log_activity_id, unit_id, unit_key, amount, modifier,
+  duration_seconds, computed_score, score_rule_set_id, score_rule_ids, score_rates,
+  score_source, eligible_official_leaderboard, description, created_at, updated_at
+) values (
+  sqlc.arg('id'), sqlc.arg('user_id'), sqlc.arg('language_code'), sqlc.arg('activity_id'),
+  sqlc.arg('unit_id'), sqlc.arg('unit_key'), sqlc.arg('amount'), sqlc.arg('modifier'),
+  sqlc.arg('duration_seconds'), sqlc.arg('computed_score'), sqlc.arg('score_rule_set_id'),
+  sqlc.arg('score_rule_ids'), sqlc.arg('score_rates'), sqlc.arg('score_source'),
+  sqlc.arg('eligible_official_leaderboard'), sqlc.arg('description'), sqlc.arg('created_at'),
+  sqlc.arg('updated_at')
+);
+
+-- name: CreateContestLog :exec
+insert into contest_logs (
+  contest_id, log_id, unit_key, amount, modifier, duration_seconds, computed_score,
+  score_rule_set_id, score_rule_ids, score_rates, score_source
+) values (
+  (select contest_id from contest_registrations where id = sqlc.arg('registration_id')),
+  sqlc.arg('log_id'), sqlc.arg('unit_key'), sqlc.arg('amount'),
+  sqlc.arg('modifier'), sqlc.arg('duration_seconds'), sqlc.arg('computed_score'),
+  sqlc.arg('score_rule_set_id'), sqlc.arg('score_rule_ids'), sqlc.arg('score_rates'),
+  sqlc.arg('score_source')
+);
+
+-- name: InsertLogTag :exec
+insert into log_tags (log_id, user_id, tag)
+values (sqlc.arg('log_id'), sqlc.arg('user_id'), sqlc.arg('tag'));
+
+-- name: InsertLogLeaderboardOutbox :exec
+insert into leaderboard_outbox (event_type, user_id, contest_id, year)
+values (sqlc.arg('event_type'), sqlc.arg('user_id'), sqlc.arg('contest_id'), sqlc.arg('year'));
+
+-- name: FetchLogOutboxContext :one
+select user_id, year, eligible_official_leaderboard
+from logs where id = sqlc.arg('log_id');
+
+-- name: UpdateLog :exec
+update logs set
+  unit_id = sqlc.arg('unit_id'), unit_key = sqlc.arg('unit_key'), amount = sqlc.arg('amount'),
+  modifier = sqlc.arg('modifier'), duration_seconds = sqlc.arg('duration_seconds'),
+  computed_score = sqlc.arg('computed_score'), score_rule_set_id = sqlc.arg('score_rule_set_id'),
+  score_rule_ids = sqlc.arg('score_rule_ids'), score_rates = sqlc.arg('score_rates'),
+  score_source = sqlc.arg('score_source'), description = sqlc.arg('description'),
+  updated_at = sqlc.arg('updated_at')
+where id = sqlc.arg('log_id') and deleted_at is null and frozen_at is null;
+
+-- name: UpdateOngoingContestLog :exec
+update contest_logs set
+  unit_key = sqlc.arg('unit_key'), amount = sqlc.arg('amount'), modifier = sqlc.arg('modifier'),
+  duration_seconds = sqlc.arg('duration_seconds'), computed_score = sqlc.arg('computed_score'),
+  score_rule_set_id = sqlc.arg('score_rule_set_id'), score_rule_ids = sqlc.arg('score_rule_ids'),
+  score_rates = sqlc.arg('score_rates'), score_source = sqlc.arg('score_source')
+from contests, logs
+where contest_logs.log_id = sqlc.arg('log_id') and logs.id = contest_logs.log_id
+  and logs.frozen_at is null and contest_logs.contest_id = sqlc.arg('contest_id')
+  and contest_logs.contest_id = contests.id and contests.contest_end >= sqlc.arg('now');
+
+-- name: UpdateOngoingContestLogs :exec
+update contest_logs set
+  unit_key = sqlc.arg('unit_key'), amount = sqlc.arg('amount'), modifier = sqlc.arg('modifier'),
+  duration_seconds = sqlc.arg('duration_seconds'), computed_score = sqlc.arg('computed_score'),
+  score_rule_set_id = sqlc.arg('score_rule_set_id'), score_rule_ids = sqlc.arg('score_rule_ids'),
+  score_rates = sqlc.arg('score_rates'), score_source = sqlc.arg('score_source')
+from contests, logs
+where contest_logs.log_id = sqlc.arg('log_id') and logs.id = contest_logs.log_id
+  and logs.frozen_at is null and contest_logs.contest_id = contests.id
+  and contests.contest_end >= sqlc.arg('now');
+
+-- name: DeleteLogTags :exec
+delete from log_tags where log_id = sqlc.arg('log_id');
+
+-- name: FetchOngoingContestIDsForLog :many
+select distinct contest_logs.contest_id
+from contest_logs inner join contests on contests.id = contest_logs.contest_id
+where contest_logs.log_id = sqlc.arg('log_id') and contests.contest_end >= sqlc.arg('now');

@@ -12,7 +12,9 @@ go_library(
     deps = [
         "//services/tadoku-api/domain/activities",
         "//services/tadoku-api/domain/languages",
+        "//services/tadoku-api/domain/logscore",
         "//services/tadoku-api/generated/sqlc/scoring",
+        "//services/tadoku-api/infra/observability",
         "//services/tadoku-api/infra/postgres",
         "//services/tadoku-api/internal/errx",
         "@com_github_google_uuid//:uuid",

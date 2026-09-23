@@ -11,6 +11,7 @@ go_library(
         "feature_flags.go",
         "languages.go",
         "leaderboard.go",
+        "log_mutations.go",
         "log_reads.go",
         "log_statistics.go",
         "logs.go",
@@ -27,6 +28,7 @@ go_library(
     ],
     deps = [
         "//services/tadoku-api/domain/activities",
+        "//services/tadoku-api/domain/logscore",
         "//services/tadoku-api/features/announcements",
         "//services/tadoku-api/features/audit",
         "//services/tadoku-api/features/authz",

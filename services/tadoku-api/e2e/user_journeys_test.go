@@ -218,6 +218,42 @@ func TestContestScoringRuleSetLifecycleJourney(t *testing.T) {
 	})
 }
 
+func TestLogMutationJourney(t *testing.T) {
+	uuid.SetRand(rand.New(rand.NewSource(1)))
+	defer uuid.SetRand(nil)
+
+	end := time.Date(2027, 1, 1, 0, 0, 0, 0, time.UTC)
+	runJourneyWithHandler(t, api, scoringEnabledHandler, "LogMutation", []step{
+		{request: "create", as: user, want: http.StatusOK, others: cast{guest: http.StatusUnauthorized, banned: http.StatusForbidden}},
+		{request: "read_created", as: user, want: http.StatusOK},
+		{request: "update_at_contest_end", as: user, want: http.StatusOK, others: cast{user2: http.StatusForbidden, banned: http.StatusForbidden}, at: end},
+		{request: "read_exact_end_update", as: user, want: http.StatusOK, at: end},
+		{request: "update_after_contest_end", as: admin, want: http.StatusOK, at: end.AddDate(0, 0, 1)},
+		{request: "read_after_end", as: user, want: http.StatusOK, at: end.AddDate(0, 0, 1)},
+		{verify: "provenance_and_outbox"},
+	})
+}
+
+func TestLogCreateAtomicFailureJourney(t *testing.T) {
+	uuid.SetRand(rand.New(rand.NewSource(1)))
+	defer uuid.SetRand(nil)
+
+	runJourneyWithHandler(t, api, scoringEnabledHandler, "LogCreateAtomicFailure", []step{
+		{request: "create_duplicate_registration", as: user, want: http.StatusInternalServerError, others: cast{guest: http.StatusUnauthorized, banned: http.StatusForbidden}},
+		{request: "failed_log_missing", as: user, want: http.StatusNotFound},
+		{verify: "rollback_keeps_user_sync"},
+	})
+}
+
+func TestLogCreateValidationSyncJourney(t *testing.T) {
+	runJourneyWithHandler(t, api, scoringEnabledHandler, "LogCreateValidationSync", []step{
+		{request: "reject_invalid", as: user, want: http.StatusBadRequest, others: cast{guest: http.StatusUnauthorized, banned: http.StatusForbidden}},
+		{verify: "user_was_synchronized"},
+		{request: "unknown_language_commits_before_readback", as: user, want: http.StatusNotFound},
+		{verify: "unknown_language_log_was_committed"},
+	})
+}
+
 func TestContestRegistrationJourney(t *testing.T) {
 	// Keep API-created contest and registration IDs stable in the HTTP fixtures.
 	uuid.SetRand(rand.New(rand.NewSource(1)))

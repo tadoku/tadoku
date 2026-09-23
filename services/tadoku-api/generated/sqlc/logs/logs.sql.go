@@ -65,6 +65,168 @@ func (q *Queries) ActivityPerLanguageForContestProfile(ctx context.Context, arg 
 	return items, nil
 }
 
+const createContestLog = `-- name: CreateContestLog :exec
+insert into contest_logs (
+  contest_id, log_id, unit_key, amount, modifier, duration_seconds, computed_score,
+  score_rule_set_id, score_rule_ids, score_rates, score_source
+) values (
+  (select contest_id from contest_registrations where id = $1),
+  $2, $3, $4,
+  $5, $6, $7,
+  $8, $9, $10,
+  $11
+)
+`
+
+type CreateContestLogParams struct {
+	RegistrationID  pgtype.UUID
+	LogID           pgtype.UUID
+	UnitKey         pgtype.Text
+	Amount          pgtype.Float4
+	Modifier        pgtype.Float4
+	DurationSeconds pgtype.Int4
+	ComputedScore   pgtype.Float4
+	ScoreRuleSetID  pgtype.UUID
+	ScoreRuleIds    []pgtype.UUID
+	ScoreRates      []float32
+	ScoreSource     pgtype.Text
+}
+
+func (q *Queries) CreateContestLog(ctx context.Context, arg CreateContestLogParams) error {
+	_, err := q.db.Exec(ctx, createContestLog,
+		arg.RegistrationID,
+		arg.LogID,
+		arg.UnitKey,
+		arg.Amount,
+		arg.Modifier,
+		arg.DurationSeconds,
+		arg.ComputedScore,
+		arg.ScoreRuleSetID,
+		arg.ScoreRuleIds,
+		arg.ScoreRates,
+		arg.ScoreSource,
+	)
+	return err
+}
+
+const createLog = `-- name: CreateLog :exec
+insert into logs (
+  id, user_id, language_code, log_activity_id, unit_id, unit_key, amount, modifier,
+  duration_seconds, computed_score, score_rule_set_id, score_rule_ids, score_rates,
+  score_source, eligible_official_leaderboard, description, created_at, updated_at
+) values (
+  $1, $2, $3, $4,
+  $5, $6, $7, $8,
+  $9, $10, $11,
+  $12, $13, $14,
+  $15, $16, $17,
+  $18
+)
+`
+
+type CreateLogParams struct {
+	ID                          pgtype.UUID
+	UserID                      pgtype.UUID
+	LanguageCode                string
+	ActivityID                  int16
+	UnitID                      pgtype.UUID
+	UnitKey                     pgtype.Text
+	Amount                      pgtype.Float4
+	Modifier                    pgtype.Float4
+	DurationSeconds             pgtype.Int4
+	ComputedScore               pgtype.Float4
+	ScoreRuleSetID              pgtype.UUID
+	ScoreRuleIds                []pgtype.UUID
+	ScoreRates                  []float32
+	ScoreSource                 pgtype.Text
+	EligibleOfficialLeaderboard bool
+	Description                 pgtype.Text
+	CreatedAt                   pgtype.Timestamp
+	UpdatedAt                   pgtype.Timestamp
+}
+
+func (q *Queries) CreateLog(ctx context.Context, arg CreateLogParams) error {
+	_, err := q.db.Exec(ctx, createLog,
+		arg.ID,
+		arg.UserID,
+		arg.LanguageCode,
+		arg.ActivityID,
+		arg.UnitID,
+		arg.UnitKey,
+		arg.Amount,
+		arg.Modifier,
+		arg.DurationSeconds,
+		arg.ComputedScore,
+		arg.ScoreRuleSetID,
+		arg.ScoreRuleIds,
+		arg.ScoreRates,
+		arg.ScoreSource,
+		arg.EligibleOfficialLeaderboard,
+		arg.Description,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+	)
+	return err
+}
+
+const deleteLogTags = `-- name: DeleteLogTags :exec
+delete from log_tags where log_id = $1
+`
+
+func (q *Queries) DeleteLogTags(ctx context.Context, logID pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, deleteLogTags, logID)
+	return err
+}
+
+const fetchLogOutboxContext = `-- name: FetchLogOutboxContext :one
+select user_id, year, eligible_official_leaderboard
+from logs where id = $1
+`
+
+type FetchLogOutboxContextRow struct {
+	UserID                      pgtype.UUID
+	Year                        int16
+	EligibleOfficialLeaderboard bool
+}
+
+func (q *Queries) FetchLogOutboxContext(ctx context.Context, logID pgtype.UUID) (FetchLogOutboxContextRow, error) {
+	row := q.db.QueryRow(ctx, fetchLogOutboxContext, logID)
+	var i FetchLogOutboxContextRow
+	err := row.Scan(&i.UserID, &i.Year, &i.EligibleOfficialLeaderboard)
+	return i, err
+}
+
+const fetchOngoingContestIDsForLog = `-- name: FetchOngoingContestIDsForLog :many
+select distinct contest_logs.contest_id
+from contest_logs inner join contests on contests.id = contest_logs.contest_id
+where contest_logs.log_id = $1 and contests.contest_end >= $2
+`
+
+type FetchOngoingContestIDsForLogParams struct {
+	LogID pgtype.UUID
+	Now   pgtype.Date
+}
+
+func (q *Queries) FetchOngoingContestIDsForLog(ctx context.Context, arg FetchOngoingContestIDsForLogParams) ([]pgtype.UUID, error) {
+	rows, err := q.db.Query(ctx, fetchOngoingContestIDsForLog, arg.LogID, arg.Now)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []pgtype.UUID{}
+	for rows.Next() {
+		var contest_id pgtype.UUID
+		if err := rows.Scan(&contest_id); err != nil {
+			return nil, err
+		}
+		items = append(items, contest_id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const fetchScoresForContestProfile = `-- name: FetchScoresForContestProfile :many
 select
   logs.language_code,
@@ -312,6 +474,44 @@ func (q *Queries) FindLogByID(ctx context.Context, arg FindLogByIDParams) (FindL
 		&i.Tags,
 	)
 	return i, err
+}
+
+const insertLogLeaderboardOutbox = `-- name: InsertLogLeaderboardOutbox :exec
+insert into leaderboard_outbox (event_type, user_id, contest_id, year)
+values ($1, $2, $3, $4)
+`
+
+type InsertLogLeaderboardOutboxParams struct {
+	EventType string
+	UserID    pgtype.UUID
+	ContestID pgtype.UUID
+	Year      pgtype.Int2
+}
+
+func (q *Queries) InsertLogLeaderboardOutbox(ctx context.Context, arg InsertLogLeaderboardOutboxParams) error {
+	_, err := q.db.Exec(ctx, insertLogLeaderboardOutbox,
+		arg.EventType,
+		arg.UserID,
+		arg.ContestID,
+		arg.Year,
+	)
+	return err
+}
+
+const insertLogTag = `-- name: InsertLogTag :exec
+insert into log_tags (log_id, user_id, tag)
+values ($1, $2, $3)
+`
+
+type InsertLogTagParams struct {
+	LogID  pgtype.UUID
+	UserID pgtype.UUID
+	Tag    string
+}
+
+func (q *Queries) InsertLogTag(ctx context.Context, arg InsertLogTagParams) error {
+	_, err := q.db.Exec(ctx, insertLogTag, arg.LogID, arg.UserID, arg.Tag)
+	return err
 }
 
 const listDistinctLanguageCodesForUser = `-- name: ListDistinctLanguageCodesForUser :many
@@ -680,6 +880,154 @@ func (q *Queries) ListUnits(ctx context.Context) ([]ListUnitsRow, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const lockLogForMutation = `-- name: LockLogForMutation :one
+select frozen_at
+from logs
+where id = $1 and deleted_at is null
+for update
+`
+
+func (q *Queries) LockLogForMutation(ctx context.Context, logID pgtype.UUID) (pgtype.Timestamp, error) {
+	row := q.db.QueryRow(ctx, lockLogForMutation, logID)
+	var frozen_at pgtype.Timestamp
+	err := row.Scan(&frozen_at)
+	return frozen_at, err
+}
+
+const updateLog = `-- name: UpdateLog :exec
+update logs set
+  unit_id = $1, unit_key = $2, amount = $3,
+  modifier = $4, duration_seconds = $5,
+  computed_score = $6, score_rule_set_id = $7,
+  score_rule_ids = $8, score_rates = $9,
+  score_source = $10, description = $11,
+  updated_at = $12
+where id = $13 and deleted_at is null and frozen_at is null
+`
+
+type UpdateLogParams struct {
+	UnitID          pgtype.UUID
+	UnitKey         pgtype.Text
+	Amount          pgtype.Float4
+	Modifier        pgtype.Float4
+	DurationSeconds pgtype.Int4
+	ComputedScore   pgtype.Float4
+	ScoreRuleSetID  pgtype.UUID
+	ScoreRuleIds    []pgtype.UUID
+	ScoreRates      []float32
+	ScoreSource     pgtype.Text
+	Description     pgtype.Text
+	UpdatedAt       pgtype.Timestamp
+	LogID           pgtype.UUID
+}
+
+func (q *Queries) UpdateLog(ctx context.Context, arg UpdateLogParams) error {
+	_, err := q.db.Exec(ctx, updateLog,
+		arg.UnitID,
+		arg.UnitKey,
+		arg.Amount,
+		arg.Modifier,
+		arg.DurationSeconds,
+		arg.ComputedScore,
+		arg.ScoreRuleSetID,
+		arg.ScoreRuleIds,
+		arg.ScoreRates,
+		arg.ScoreSource,
+		arg.Description,
+		arg.UpdatedAt,
+		arg.LogID,
+	)
+	return err
+}
+
+const updateOngoingContestLog = `-- name: UpdateOngoingContestLog :exec
+update contest_logs set
+  unit_key = $1, amount = $2, modifier = $3,
+  duration_seconds = $4, computed_score = $5,
+  score_rule_set_id = $6, score_rule_ids = $7,
+  score_rates = $8, score_source = $9
+from contests, logs
+where contest_logs.log_id = $10 and logs.id = contest_logs.log_id
+  and logs.frozen_at is null and contest_logs.contest_id = $11
+  and contest_logs.contest_id = contests.id and contests.contest_end >= $12
+`
+
+type UpdateOngoingContestLogParams struct {
+	UnitKey         pgtype.Text
+	Amount          pgtype.Float4
+	Modifier        pgtype.Float4
+	DurationSeconds pgtype.Int4
+	ComputedScore   pgtype.Float4
+	ScoreRuleSetID  pgtype.UUID
+	ScoreRuleIds    []pgtype.UUID
+	ScoreRates      []float32
+	ScoreSource     pgtype.Text
+	LogID           pgtype.UUID
+	ContestID       pgtype.UUID
+	Now             pgtype.Date
+}
+
+func (q *Queries) UpdateOngoingContestLog(ctx context.Context, arg UpdateOngoingContestLogParams) error {
+	_, err := q.db.Exec(ctx, updateOngoingContestLog,
+		arg.UnitKey,
+		arg.Amount,
+		arg.Modifier,
+		arg.DurationSeconds,
+		arg.ComputedScore,
+		arg.ScoreRuleSetID,
+		arg.ScoreRuleIds,
+		arg.ScoreRates,
+		arg.ScoreSource,
+		arg.LogID,
+		arg.ContestID,
+		arg.Now,
+	)
+	return err
+}
+
+const updateOngoingContestLogs = `-- name: UpdateOngoingContestLogs :exec
+update contest_logs set
+  unit_key = $1, amount = $2, modifier = $3,
+  duration_seconds = $4, computed_score = $5,
+  score_rule_set_id = $6, score_rule_ids = $7,
+  score_rates = $8, score_source = $9
+from contests, logs
+where contest_logs.log_id = $10 and logs.id = contest_logs.log_id
+  and logs.frozen_at is null and contest_logs.contest_id = contests.id
+  and contests.contest_end >= $11
+`
+
+type UpdateOngoingContestLogsParams struct {
+	UnitKey         pgtype.Text
+	Amount          pgtype.Float4
+	Modifier        pgtype.Float4
+	DurationSeconds pgtype.Int4
+	ComputedScore   pgtype.Float4
+	ScoreRuleSetID  pgtype.UUID
+	ScoreRuleIds    []pgtype.UUID
+	ScoreRates      []float32
+	ScoreSource     pgtype.Text
+	LogID           pgtype.UUID
+	Now             pgtype.Date
+}
+
+func (q *Queries) UpdateOngoingContestLogs(ctx context.Context, arg UpdateOngoingContestLogsParams) error {
+	_, err := q.db.Exec(ctx, updateOngoingContestLogs,
+		arg.UnitKey,
+		arg.Amount,
+		arg.Modifier,
+		arg.DurationSeconds,
+		arg.ComputedScore,
+		arg.ScoreRuleSetID,
+		arg.ScoreRuleIds,
+		arg.ScoreRates,
+		arg.ScoreSource,
+		arg.LogID,
+		arg.Now,
+	)
+	return err
 }
 
 const yearlyActivityForUser = `-- name: YearlyActivityForUser :many

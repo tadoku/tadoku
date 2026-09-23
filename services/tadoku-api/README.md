@@ -45,6 +45,15 @@ Application operations compose features. Feature services own business decisions
 repositories only query and map rows. `postgres.Executor` lets repositories use
 the active app-owned transaction. Open transactions only when the operation needs
 one; do not add feature or repository interfaces solely for mocking.
+For writes, the application authorizes the caller and coordinates cross-feature
+locks and transactions. Each feature service validates or normalizes its inputs
+and sequences its own repository calls, including related rows and outbox writes.
+Avoid service methods that only expose a repository call for an application
+operation to assemble a single feature's write.
+When several features participate in a write, the application passes shared
+domain values between them without interpreting scoring or persistence details.
+The service that owns a business decision creates its result; the service that
+owns the data translates that result into its stored rows.
 
 Shared business concepts and pure rules used by multiple features belong in
 `domain/<concept>`. Application operations and features may import these packages;

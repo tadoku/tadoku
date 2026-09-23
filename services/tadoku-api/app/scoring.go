@@ -77,7 +77,7 @@ func (a *Application) PreviewScore(ctx context.Context, parameters ScorePreviewP
 
 	for _, registration := range selected {
 		featureParameters.Contests = append(featureParameters.Contests, scoring.PreviewContest{
-			RegistrationID: registration.ID,
+			RegistrationID: registration.RegistrationID,
 			ContestID:      registration.ContestID,
 		})
 	}

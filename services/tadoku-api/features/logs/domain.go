@@ -110,7 +110,8 @@ type OutboxContext struct {
 }
 
 func ValidateAndResolveTracking(activityID int32, unit *Unit, unitID *uuid.UUID, unitKey *string, amount *float32, duration *int32) (Tracking, error) {
-	if activityID < 1 || activityID > 5 {
+	legacyDurationRate, validActivity := activities.LegacyDurationScorePerMinute(activityID)
+	if !validActivity {
 		return Tracking{}, errx.NewInvalidInputError("activity_id is not valid")
 	}
 	unitActivity, knownUnit := activities.UnitActivityID(stringValue(unitKey))
@@ -153,8 +154,7 @@ func ValidateAndResolveTracking(activityID int32, unit *Unit, unitID *uuid.UUID,
 		tracking.Score = *amount * unit.Modifier
 	} else {
 		minutes := float32(*duration) / 60
-		rates := [...]float32{0, .2, .4, .2, .5, .5}
-		tracking.Score = minutes * rates[activityID]
+		tracking.Score = minutes * legacyDurationRate
 	}
 	return tracking, nil
 }

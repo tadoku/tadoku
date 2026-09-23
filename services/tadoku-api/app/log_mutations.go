@@ -3,9 +3,9 @@ package app
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/google/uuid"
-	"github.com/tadoku/tadoku/services/tadoku-api/features/contests"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/logs"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/scoring"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/observability"
@@ -47,60 +47,21 @@ func (a *Application) CreateLog(ctx context.Context, p LogCreateParameters) (*Lo
 	if err != nil {
 		return nil, err
 	}
-	if p.ActivityID == 0 {
-		return nil, errx.NewInvalidInputError("activity_id is required")
-	}
-	if p.LanguageCode == "" {
-		return nil, errx.NewInvalidInputError("language_code is required")
-	}
-	p.Tags, err = scoring.NormalizeTags(p.Tags)
+	scored, err := a.scoreLog(ctx, userID, p)
 	if err != nil {
 		return nil, err
 	}
 
-	valid := map[uuid.UUID]contests.Registration{}
-	if len(p.RegistrationIDs) > 0 {
-		registrations, err := a.contests.ListOngoingRegistrations(ctx, userID)
-		if err != nil {
-			return nil, err
-		}
-		for _, registration := range registrations.Registrations {
-			valid[registration.ID] = registration
-		}
-		for _, id := range p.RegistrationIDs {
-			registration, ok := valid[id]
-			if !ok {
-				return nil, errx.NewInvalidInputError("registration_id is not ongoing for the current user")
-			}
-			if !registration.IsEligibleForScoring(p.LanguageCode, p.ActivityID) {
-				return nil, errx.NewInvalidInputError("language_code or activity_id is not allowed for registration_id")
-			}
-		}
-	}
-	tracking, err := a.logs.ResolveTracking(ctx, p.ActivityID, p.LanguageCode, p.UnitID, p.UnitKey, p.Amount, p.DurationSeconds)
-	if err != nil {
-		return nil, err
-	}
-	tracking, contestTrackings, err := a.scoreLog(ctx, "create", tracking, p.ActivityID, p.LanguageCode, p.UnitID, p.UnitKey, p.Amount, p.DurationSeconds, p.Tags, p.RegistrationIDs, valid)
-	if err != nil {
-		return nil, err
-	}
-
-	eligibleOfficial := false
-	for _, id := range p.RegistrationIDs {
-		if valid[id].Contest.Official {
-			eligibleOfficial = true
-		}
-	}
 	mutation := logs.Mutation{
+		ID:                          uuid.New(),
 		UserID:                      userID,
 		LanguageCode:                p.LanguageCode,
 		ActivityID:                  p.ActivityID,
 		Description:                 p.Description,
-		Tags:                        p.Tags,
-		Tracking:                    tracking,
-		ContestTrackings:            contestTrackings,
-		EligibleOfficialLeaderboard: eligibleOfficial,
+		Tags:                        scored.tags,
+		Tracking:                    scored.tracking,
+		ContestTrackings:            scored.contestTrackings,
+		EligibleOfficialLeaderboard: scored.eligibleOfficial,
 		Year:                        int16(now.Year()),
 		Now:                         now,
 	}
@@ -108,38 +69,7 @@ func (a *Application) CreateLog(ctx context.Context, p LogCreateParameters) (*Lo
 		if err := a.profile.LockUser(ctx, userID); err != nil {
 			return err
 		}
-		mutation.ID = uuid.New()
-		if err := a.logs.Create(ctx, mutation); err != nil {
-			return err
-		}
-		for _, ct := range mutation.ContestTrackings {
-			if err := a.logs.CreateContest(ctx, mutation.ID, ct); err != nil {
-				return err
-			}
-		}
-		for _, tag := range mutation.Tags {
-			if err := a.logs.InsertTag(ctx, mutation.ID, userID, tag); err != nil {
-				return err
-			}
-		}
-		seen := map[uuid.UUID]struct{}{}
-		for _, ct := range mutation.ContestTrackings {
-			if _, ok := seen[ct.ContestID]; ok {
-				continue
-			}
-			seen[ct.ContestID] = struct{}{}
-			id := ct.ContestID
-			if err := a.logs.InsertOutbox(ctx, userID, &id, nil, "refresh_contest_score"); err != nil {
-				return err
-			}
-		}
-		if eligibleOfficial {
-			year := mutation.Year
-			if err := a.logs.InsertOutbox(ctx, userID, nil, &year, "refresh_official_scores"); err != nil {
-				return err
-			}
-		}
-		return nil
+		return a.logs.Create(ctx, mutation)
 	})
 	if err != nil {
 		return nil, err
@@ -168,29 +98,7 @@ func (a *Application) UpdateLog(ctx context.Context, p LogUpdateParameters) (*Lo
 			return nil, errx.NewForbiddenError("forbidden")
 		}
 	}
-	p.Tags, err = scoring.NormalizeTags(p.Tags)
-	if err != nil {
-		return nil, err
-	}
-	tracking, err := a.logs.ResolveTracking(ctx, existing.Activity.ID, existing.LanguageCode, p.UnitID, p.UnitKey, p.Amount, p.DurationSeconds)
-	if err != nil {
-		return nil, err
-	}
-	now := timex.Now()
-	scoringEnabled := a.logs.ScoringEngineEnabled()
-	ids := make([]uuid.UUID, 0, len(existing.Registrations))
-	valid := map[uuid.UUID]contests.Registration{}
-	for _, ref := range existing.Registrations {
-		if !scoringEnabled || ref.ContestEnd.Before(now) {
-			continue
-		}
-		ids = append(ids, ref.RegistrationID)
-		valid[ref.RegistrationID] = contests.Registration{
-			ID:        ref.RegistrationID,
-			ContestID: ref.ContestID,
-		}
-	}
-	tracking, contestTrackings, err := a.scoreLog(ctx, "update", tracking, existing.Activity.ID, existing.LanguageCode, p.UnitID, p.UnitKey, p.Amount, p.DurationSeconds, p.Tags, ids, valid)
+	scored, now, err := a.scoreUpdatedLog(ctx, existing, p)
 	if err != nil {
 		return nil, err
 	}
@@ -198,66 +106,16 @@ func (a *Application) UpdateLog(ctx context.Context, p LogUpdateParameters) (*Lo
 		ID:               p.ID,
 		UserID:           existing.UserID,
 		Description:      p.Description,
-		Tags:             p.Tags,
-		Tracking:         tracking,
-		ContestTrackings: contestTrackings,
+		Tags:             scored.tags,
+		Tracking:         scored.tracking,
+		ContestTrackings: scored.contestTrackings,
 		Now:              now,
 	}
 	err = postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) error {
 		if err := a.profile.LockUser(ctx, existing.UserID); err != nil {
 			return err
 		}
-		if err := a.logs.LockLog(ctx, p.ID); err != nil {
-			return err
-		}
-		outbox, err := a.logs.OutboxContext(ctx, p.ID)
-		if err != nil {
-			return err
-		}
-		if err := a.logs.Update(ctx, mutation); err != nil {
-			return err
-		}
-		if len(contestTrackings) == 0 {
-			inherited := tracking
-			inherited.RuleSetID = nil
-			inherited.RuleIDs = nil
-			inherited.Rates = nil
-			inherited.Source = ""
-			if err := a.logs.UpdateOngoingContests(ctx, p.ID, inherited, now); err != nil {
-				return err
-			}
-		} else {
-			for _, ct := range contestTrackings {
-				if err := a.logs.UpdateContest(ctx, p.ID, ct, now); err != nil {
-					return err
-				}
-			}
-		}
-		if err := a.logs.DeleteTags(ctx, p.ID); err != nil {
-			return err
-		}
-		for _, tag := range p.Tags {
-			if err := a.logs.InsertTag(ctx, p.ID, existing.UserID, tag); err != nil {
-				return err
-			}
-		}
-		contestIDs, err := a.logs.OngoingContestIDs(ctx, p.ID, now)
-		if err != nil {
-			return err
-		}
-		for _, id := range contestIDs {
-			id := id
-			if err := a.logs.InsertOutbox(ctx, outbox.UserID, &id, nil, "refresh_contest_score"); err != nil {
-				return err
-			}
-		}
-		if outbox.EligibleOfficial {
-			year := outbox.Year
-			if err := a.logs.InsertOutbox(ctx, outbox.UserID, nil, &year, "refresh_official_scores"); err != nil {
-				return err
-			}
-		}
-		return nil
+		return a.logs.Update(ctx, mutation)
 	})
 	if err != nil {
 		return nil, err
@@ -265,16 +123,93 @@ func (a *Application) UpdateLog(ctx context.Context, p LogUpdateParameters) (*Lo
 	return a.logs.FindLog(ctx, p.ID, false)
 }
 
-func (a *Application) scoreLog(ctx context.Context, operation string, base logs.Tracking, activityID int32, language string, unitID *uuid.UUID, unitKey *string, amount *float32, duration *int32, tags []string, registrationIDs []uuid.UUID, registrations map[uuid.UUID]contests.Registration) (logs.Tracking, []logs.ContestTracking, error) {
+type scoredLog struct {
+	tracking         logs.Tracking
+	contestTrackings []logs.ContestTracking
+	tags             []string
+	eligibleOfficial bool
+}
+
+func (a *Application) scoreLog(ctx context.Context, userID uuid.UUID, p LogCreateParameters) (scoredLog, error) {
+	if p.ActivityID == 0 {
+		return scoredLog{}, errx.NewInvalidInputError("activity_id is required")
+	}
+	if p.LanguageCode == "" {
+		return scoredLog{}, errx.NewInvalidInputError("language_code is required")
+	}
+	tags, err := scoring.NormalizeTags(p.Tags)
+	if err != nil {
+		return scoredLog{}, err
+	}
+
 	parameters := scoring.PreviewParameters{
-		UnitID:          unitID,
-		UnitKey:         unitKey,
-		ActivityID:      activityID,
-		LanguageCode:    language,
-		Amount:          amount,
-		DurationSeconds: duration,
+		UnitID:          p.UnitID,
+		UnitKey:         p.UnitKey,
+		ActivityID:      p.ActivityID,
+		LanguageCode:    p.LanguageCode,
+		Amount:          p.Amount,
+		DurationSeconds: p.DurationSeconds,
 		Tags:            tags,
 	}
+	eligibleOfficial := false
+	if len(p.RegistrationIDs) > 0 {
+		selected, err := a.contests.SelectRegistrationsForScoring(ctx, userID, p.RegistrationIDs, p.LanguageCode, p.ActivityID)
+		if err != nil {
+			return scoredLog{}, err
+		}
+		for _, registration := range selected {
+			parameters.Contests = append(parameters.Contests, scoring.PreviewContest{
+				RegistrationID: registration.ID,
+				ContestID:      registration.ContestID,
+			})
+			eligibleOfficial = eligibleOfficial || registration.Contest.Official
+		}
+	}
+
+	base, err := a.logs.ResolveTracking(ctx, p.ActivityID, p.LanguageCode, p.UnitID, p.UnitKey, p.Amount, p.DurationSeconds)
+	if err != nil {
+		return scoredLog{}, err
+	}
+	tracking, contestTrackings, err := a.scoreTracking(ctx, "create", base, parameters)
+	if err != nil {
+		return scoredLog{}, err
+	}
+	return scoredLog{tracking: tracking, contestTrackings: contestTrackings, tags: tags, eligibleOfficial: eligibleOfficial}, nil
+}
+
+func (a *Application) scoreUpdatedLog(ctx context.Context, existing *logs.Log, p LogUpdateParameters) (scoredLog, time.Time, error) {
+	tags, err := scoring.NormalizeTags(p.Tags)
+	if err != nil {
+		return scoredLog{}, time.Time{}, err
+	}
+	base, err := a.logs.ResolveTracking(ctx, existing.Activity.ID, existing.LanguageCode, p.UnitID, p.UnitKey, p.Amount, p.DurationSeconds)
+	if err != nil {
+		return scoredLog{}, time.Time{}, err
+	}
+	now := timex.Now()
+	parameters := scoring.PreviewParameters{
+		UnitID:          p.UnitID,
+		UnitKey:         p.UnitKey,
+		ActivityID:      existing.Activity.ID,
+		LanguageCode:    existing.LanguageCode,
+		Amount:          p.Amount,
+		DurationSeconds: p.DurationSeconds,
+		Tags:            tags,
+	}
+	for _, registration := range a.logs.RegistrationsForRescoring(existing, now) {
+		parameters.Contests = append(parameters.Contests, scoring.PreviewContest{
+			RegistrationID: registration.RegistrationID,
+			ContestID:      registration.ContestID,
+		})
+	}
+	tracking, contestTrackings, err := a.scoreTracking(ctx, "update", base, parameters)
+	if err != nil {
+		return scoredLog{}, time.Time{}, err
+	}
+	return scoredLog{tracking: tracking, contestTrackings: contestTrackings, tags: tags}, now, nil
+}
+
+func (a *Application) scoreTracking(ctx context.Context, operation string, base logs.Tracking, parameters scoring.PreviewParameters) (logs.Tracking, []logs.ContestTracking, error) {
 	platform, matched, err := a.scoring.ScorePlatform(ctx, parameters)
 	mode := "shadow"
 	if a.logs.ScoringEngineEnabled() {
@@ -283,13 +218,13 @@ func (a *Application) scoreLog(ctx context.Context, operation string, base logs.
 	comparison := observability.ScoringComparison{
 		Operation:    operation,
 		Mode:         mode,
-		ActivityID:   activityID,
+		ActivityID:   parameters.ActivityID,
 		UnitKey:      base.UnitKey,
-		LanguageCode: language,
+		LanguageCode: parameters.LanguageCode,
 		LegacyScore:  base.Score,
 		Matched:      matched,
 	}
-	if amount != nil {
+	if parameters.Amount != nil {
 		comparison.ScoreSource = "amount"
 	} else {
 		comparison.ScoreSource = "duration_minutes"
@@ -310,26 +245,25 @@ func (a *Application) scoreLog(ctx context.Context, operation string, base logs.
 		}
 	}
 	if !a.logs.ScoringEngineEnabled() {
-		contest := make([]logs.ContestTracking, len(registrationIDs))
-		for i, id := range registrationIDs {
+		contest := make([]logs.ContestTracking, len(parameters.Contests))
+		for i, registration := range parameters.Contests {
 			contest[i] = logs.ContestTracking{
-				RegistrationID: id,
-				ContestID:      registrations[id].ContestID,
+				RegistrationID: registration.RegistrationID,
+				ContestID:      registration.ContestID,
 				Tracking:       base,
 			}
 		}
 		return base, contest, nil
 	}
 	base = trackingFromEstimate(base, platform)
-	contest := make([]logs.ContestTracking, len(registrationIDs))
-	for i, id := range registrationIDs {
-		registration := registrations[id]
+	contest := make([]logs.ContestTracking, len(parameters.Contests))
+	for i, registration := range parameters.Contests {
 		estimate, err := a.scoring.ScoreContest(ctx, parameters, registration.ContestID, platform)
 		if err != nil {
 			return logs.Tracking{}, nil, err
 		}
 		contest[i] = logs.ContestTracking{
-			RegistrationID: id,
+			RegistrationID: registration.RegistrationID,
 			ContestID:      registration.ContestID,
 			Tracking:       trackingFromEstimate(base, estimate),
 		}

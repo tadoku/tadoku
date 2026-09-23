@@ -204,36 +204,101 @@ func (s *Service) ResolveTracking(ctx context.Context, activityID int32, languag
 	return ValidateAndResolveTracking(activityID, unit, unitID, unitKey, amount, duration)
 }
 
-func (s *Service) LockLog(ctx context.Context, id uuid.UUID) error { return s.logs.LockLog(ctx, id) }
 func (s *Service) Create(ctx context.Context, mutation Mutation) error {
-	return s.logs.CreateLog(ctx, mutation)
-}
-func (s *Service) CreateContest(ctx context.Context, logID uuid.UUID, tracking ContestTracking) error {
-	return s.logs.CreateContestLog(ctx, logID, tracking)
-}
-func (s *Service) InsertTag(ctx context.Context, logID, userID uuid.UUID, tag string) error {
-	return s.logs.InsertTag(ctx, logID, userID, tag)
-}
-func (s *Service) DeleteTags(ctx context.Context, logID uuid.UUID) error {
-	return s.logs.DeleteTags(ctx, logID)
-}
-func (s *Service) InsertOutbox(ctx context.Context, userID uuid.UUID, contestID *uuid.UUID, year *int16, event string) error {
-	return s.logs.InsertOutbox(ctx, userID, contestID, year, event)
-}
-func (s *Service) OutboxContext(ctx context.Context, id uuid.UUID) (OutboxContext, error) {
-	return s.logs.OutboxContext(ctx, id)
+	if err := s.logs.CreateLog(ctx, mutation); err != nil {
+		return err
+	}
+	for _, tracking := range mutation.ContestTrackings {
+		if err := s.logs.CreateContestLog(ctx, mutation.ID, tracking); err != nil {
+			return err
+		}
+	}
+	for _, tag := range mutation.Tags {
+		if err := s.logs.InsertTag(ctx, mutation.ID, mutation.UserID, tag); err != nil {
+			return err
+		}
+	}
+
+	seen := make(map[uuid.UUID]struct{}, len(mutation.ContestTrackings))
+	for _, tracking := range mutation.ContestTrackings {
+		if _, exists := seen[tracking.ContestID]; exists {
+			continue
+		}
+		seen[tracking.ContestID] = struct{}{}
+		contestID := tracking.ContestID
+		if err := s.logs.InsertOutbox(ctx, mutation.UserID, &contestID, nil, "refresh_contest_score"); err != nil {
+			return err
+		}
+	}
+	if mutation.EligibleOfficialLeaderboard {
+		year := mutation.Year
+		return s.logs.InsertOutbox(ctx, mutation.UserID, nil, &year, "refresh_official_scores")
+	}
+	return nil
 }
 func (s *Service) Update(ctx context.Context, mutation Mutation) error {
-	return s.logs.UpdateLog(ctx, mutation)
+	if err := s.logs.LockLog(ctx, mutation.ID); err != nil {
+		return err
+	}
+	outbox, err := s.logs.OutboxContext(ctx, mutation.ID)
+	if err != nil {
+		return err
+	}
+	if err := s.logs.UpdateLog(ctx, mutation); err != nil {
+		return err
+	}
+	if len(mutation.ContestTrackings) == 0 {
+		inherited := mutation.Tracking
+		inherited.RuleSetID = nil
+		inherited.RuleIDs = nil
+		inherited.Rates = nil
+		inherited.Source = ""
+		if err := s.logs.UpdateOngoingContestLogs(ctx, mutation.ID, inherited, mutation.Now); err != nil {
+			return err
+		}
+	} else {
+		for _, tracking := range mutation.ContestTrackings {
+			if err := s.logs.UpdateContestLog(ctx, mutation.ID, tracking, mutation.Now); err != nil {
+				return err
+			}
+		}
+	}
+	if err := s.logs.DeleteTags(ctx, mutation.ID); err != nil {
+		return err
+	}
+	for _, tag := range mutation.Tags {
+		if err := s.logs.InsertTag(ctx, mutation.ID, outbox.UserID, tag); err != nil {
+			return err
+		}
+	}
+	contestIDs, err := s.logs.OngoingContestIDs(ctx, mutation.ID, mutation.Now)
+	if err != nil {
+		return err
+	}
+	for _, id := range contestIDs {
+		contestID := id
+		if err := s.logs.InsertOutbox(ctx, outbox.UserID, &contestID, nil, "refresh_contest_score"); err != nil {
+			return err
+		}
+	}
+	if outbox.EligibleOfficial {
+		year := outbox.Year
+		return s.logs.InsertOutbox(ctx, outbox.UserID, nil, &year, "refresh_official_scores")
+	}
+	return nil
 }
-func (s *Service) UpdateContest(ctx context.Context, logID uuid.UUID, tracking ContestTracking, now time.Time) error {
-	return s.logs.UpdateContestLog(ctx, logID, tracking, now)
-}
-func (s *Service) UpdateOngoingContests(ctx context.Context, logID uuid.UUID, tracking Tracking, now time.Time) error {
-	return s.logs.UpdateOngoingContestLogs(ctx, logID, tracking, now)
-}
-func (s *Service) OngoingContestIDs(ctx context.Context, id uuid.UUID, now time.Time) ([]uuid.UUID, error) {
-	return s.logs.OngoingContestIDs(ctx, id, now)
+
+func (s *Service) RegistrationsForRescoring(log *Log, now time.Time) []RegistrationReference {
+	if !s.scoringEngineEnabled {
+		return nil
+	}
+	selected := make([]RegistrationReference, 0, len(log.Registrations))
+	for _, registration := range log.Registrations {
+		if !registration.ContestEnd.Before(now) {
+			selected = append(selected, registration)
+		}
+	}
+	return selected
 }
 
 func (s *Service) ListUserLogs(ctx context.Context, parameters ListParameters) (*LogList, error) {

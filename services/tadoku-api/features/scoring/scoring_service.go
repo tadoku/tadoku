@@ -395,6 +395,36 @@ func (s *Service) ScoreResolvedContest(ctx context.Context, parameters PreviewPa
 	return s.scoreContest(ctx, input, contestID)
 }
 
+func (s *Service) ScoreLogAttachments(ctx context.Context, log logscore.Input, base logscore.Tracking, targets []logscore.Target) ([]logscore.ContestTracking, error) {
+	attachments := make([]logscore.ContestTracking, 0, len(targets))
+	for _, target := range targets {
+		tracking := base
+		if s.logScoringEnabled {
+			unitKey := base.UnitKey
+			estimate, err := s.ScoreResolvedContest(ctx, PreviewParameters{
+				UnitKey:         &unitKey,
+				ActivityID:      log.ActivityID,
+				LanguageCode:    log.LanguageCode,
+				Amount:          base.Amount,
+				DurationSeconds: base.DurationSeconds,
+				Tags:            log.Tags,
+			}, target.ContestID)
+			if err != nil {
+				return nil, err
+			}
+			if estimate != nil {
+				tracking = trackingFromEstimate(base, *estimate)
+			}
+		}
+		attachments = append(attachments, logscore.ContestTracking{
+			RegistrationID: target.RegistrationID,
+			ContestID:      target.ContestID,
+			Tracking:       tracking,
+		})
+	}
+	return attachments, nil
+}
+
 func (s *Service) scoreContest(ctx context.Context, input scoringInput, contestID uuid.UUID) (*Estimate, error) {
 	set, fallback, err := s.findContestRuleSets(ctx, contestID)
 	if err != nil {

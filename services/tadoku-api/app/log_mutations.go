@@ -99,12 +99,8 @@ func (a *Application) UpdateLog(ctx context.Context, p LogUpdateParameters) (*Lo
 		return nil, err
 	}
 	if callerID != existing.UserID {
-		admin, err := a.permissions.IsAdmin(ctx)
-		if err != nil {
+		if err := a.permissions.RequireAdmin(ctx); err != nil {
 			return nil, err
-		}
-		if !admin {
-			return nil, errx.NewForbiddenError("forbidden")
 		}
 	}
 

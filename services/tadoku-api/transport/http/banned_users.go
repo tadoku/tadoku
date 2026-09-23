@@ -9,6 +9,10 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
 )
 
+// authzRoleGetPattern is the ServeMux/OpenAPI pattern for AuthzRoleGet.
+// Middleware runs after rootMux matching, so r.Pattern is already set.
+const authzRoleGetPattern = "GET /authz/current-user/role"
+
 // RejectBannedUsers blocks authenticated users with the app:tadoku#banned relation.
 // Provider failures deliberately fail open to preserve the existing API policy.
 func RejectBannedUsers(
@@ -31,7 +35,7 @@ func RejectBannedUsers(
 				return
 			}
 			if banned {
-				if r.Method == stdhttp.MethodGet && r.URL.Path == "/authz/current-user/role" {
+				if r.Pattern == authzRoleGetPattern {
 					ctx := permissions.WithBanned(r.Context())
 					next.ServeHTTP(w, r.WithContext(ctx))
 					return

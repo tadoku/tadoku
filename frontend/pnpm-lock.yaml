@@ -233,8 +233,8 @@ importers:
         specifier: 7.40.0
         version: 7.40.0(react@18.2.0)
       react-router-dom:
-        specifier: 7.18.2
-        version: 7.18.2(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
+        specifier: 7.18.4
+        version: 7.18.4(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
     devDependencies:
       '@eslint/js':
         specifier: 9.39.2
@@ -318,8 +318,8 @@ importers:
         specifier: 7.40.0
         version: 7.40.0(react@18.2.0)
       react-router-dom:
-        specifier: 7.18.2
-        version: 7.18.2(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
+        specifier: 7.18.4
+        version: 7.18.4(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
     devDependencies:
       '@eslint/js':
         specifier: 9.39.2
@@ -4236,15 +4236,15 @@ packages:
     resolution: {integrity: sha512-z6F7K9bV85EfseRCp2bzrpyQ0Gkw1uLoCel9XBVWPg/TjRj94SkJzUTGfOa4bs7iJvBWtQG0Wq7wnI0syw3EBQ==}
     engines: {node: '>=0.10.0'}
 
-  react-router-dom@7.18.2:
-    resolution: {integrity: sha512-AIKJ/jgGlFb3EbfCXk5Gzshiwt+l3mqbCrNjmEWMMjqQxNJ3svBa6bgzFyCC2Sw3RA0VWF1kg3uQf2OFhxb8hw==}
+  react-router-dom@7.18.4:
+    resolution: {integrity: sha512-yrfmJHIpDG7taCpqKjT1G5B6q3O2K+RN8/fgNf0lTjCwiPbQ0ei6vXX9ZjQR+7ld8Tr7Z5xmyMnZ8YJrphWQUw==}
     engines: {node: '>=20.0.0'}
     peerDependencies:
       react: 18.2.0
       react-dom: 18.2.0
 
-  react-router@7.18.2:
-    resolution: {integrity: sha512-aUVMjFm3GAPTTZL7oYr5E7ETiqfQCHRLH+B+5afnICvf0r7kkK4eR6SMuwbSTJw/7t+12khT/Kahij49fqOCIg==}
+  react-router@7.18.4:
+    resolution: {integrity: sha512-PUPQcMhMGRAslLcvtlPz/kmzBEWPhLdgLFrL7pLNepBL6dX0lWj4WD2cUYVgYCuT3jxvghYFg81cDTj44DhetQ==}
     engines: {node: '>=20.0.0'}
     peerDependencies:
       react: 18.2.0
@@ -8869,13 +8869,13 @@ snapshots:
 
   react-refresh@0.17.0: {}
 
-  react-router-dom@7.18.2(react-dom@18.2.0(react@18.2.0))(react@18.2.0):
+  react-router-dom@7.18.4(react-dom@18.2.0(react@18.2.0))(react@18.2.0):
     dependencies:
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
-      react-router: 7.18.2(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
+      react-router: 7.18.4(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
 
-  react-router@7.18.2(react-dom@18.2.0(react@18.2.0))(react@18.2.0):
+  react-router@7.18.4(react-dom@18.2.0(react@18.2.0))(react@18.2.0):
     dependencies:
       cookie: 1.1.1
       react: 18.2.0

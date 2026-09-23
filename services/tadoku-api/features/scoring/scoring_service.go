@@ -210,7 +210,7 @@ func (s *Service) ValidateDraftConfiguration(ctx context.Context, scope string, 
 	if err := parameters.validateConfiguration(scope); err != nil {
 		return err
 	}
-	if scope == "contest" && parameters.Mode == "override" && parameters.FallbackRuleSetID != nil {
+	if scope == "contest" && parameters.Mode == ModeOverride && parameters.FallbackRuleSetID != nil {
 		fallback, err := s.repository.FindRuleSetByID(ctx, *parameters.FallbackRuleSetID)
 		if err != nil {
 			return err
@@ -238,7 +238,7 @@ func (s *Service) CreateDraft(ctx context.Context, scope string, parameters Draf
 		ContestID:         parameters.ContestID,
 		Version:           version,
 		Status:            "draft",
-		Mode:              parameters.Mode,
+		Mode:              string(parameters.Mode),
 		FallbackRuleSetID: parameters.FallbackRuleSetID,
 		Rules:             []Rule{},
 		CreatedAt:         parameters.CreatedAt,

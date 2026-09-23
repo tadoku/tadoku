@@ -149,9 +149,18 @@ func (a *Application) CreateContestScoringRuleSetDraft(ctx context.Context, cont
 }
 
 func (a *Application) createScoringRuleSetDraft(ctx context.Context, scope string, contestID *uuid.UUID, parameters ScoringRuleSetDraftParameters) (*ScoringRuleSet, error) {
+	var mode scoring.Mode
+	if scope == "contest" {
+		var err error
+		mode, err = scoring.ParseMode(parameters.Mode)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	draft := scoring.DraftParameters{
 		ContestID:         contestID,
-		Mode:              parameters.Mode,
+		Mode:              mode,
 		FallbackRuleSetID: parameters.FallbackRuleSetID,
 		Rules:             parameters.Rules,
 	}

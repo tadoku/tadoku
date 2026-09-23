@@ -24,6 +24,13 @@ const (
 	SourceDurationMinutes Source = "duration_minutes"
 )
 
+type Mode string
+
+const (
+	ModeReplace  Mode = "replace"
+	ModeOverride Mode = "override"
+)
+
 type Rule struct {
 	ID           uuid.UUID
 	Priority     int32
@@ -52,26 +59,33 @@ type RuleSet struct {
 
 type DraftParameters struct {
 	ContestID         *uuid.UUID
-	Mode              string
+	Mode              Mode
 	FallbackRuleSetID *uuid.UUID
 	Rules             []Rule
 	LanguageCodes     map[string]struct{}
 	CreatedAt         time.Time
 }
 
+func ParseMode(value string) (Mode, error) {
+	mode := Mode(value)
+	if mode != ModeReplace && mode != ModeOverride {
+		return "", errx.NewInvalidInputError("contest scoring mode is required")
+	}
+
+	return mode, nil
+}
+
 func (p *DraftParameters) validateConfiguration(scope string) error {
 	if scope == "contest" {
 		switch p.Mode {
-		case "replace":
+		case ModeReplace:
 			if p.FallbackRuleSetID != nil {
 				return errx.NewInvalidInputError("replace rule sets cannot have a fallback")
 			}
-		case "override":
+		case ModeOverride:
 			if p.FallbackRuleSetID == nil {
 				return errx.NewInvalidInputError("override rule sets require a fallback")
 			}
-		default:
-			return errx.NewInvalidInputError("contest scoring mode is required")
 		}
 	}
 	return nil

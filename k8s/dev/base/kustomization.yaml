@@ -63,7 +63,7 @@ images:
   - name: tadoku-api-image
     newName: ghcr.io/tadoku/tadoku/tadoku-api
     newTag: latest
-    digest: sha256:4501736cc21c57190c2b3ba66098f66175b5844c6565c3c78d0c92699a8d8d90
+    digest: sha256:52cd569ea458395dc0bee998d22d03f1fb8af233bdb593ff1aadb37ac1d0dd9c
   - name: immersion-api-image
     newName: ghcr.io/tadoku/tadoku/immersion-api
     newTag: latest

@@ -1,0 +1,6 @@
+>>> GET /immersion/contests/f0000000-0000-4000-8000-000000000001/scoring/rule-sets
+HTTP/1.1 200 OK
+Content-Length: 1044
+Content-Type: application/json; charset=UTF-8
+
+{"rule_sets":[{"active":false,"contest_id":"f0000000-0000-4000-8000-000000000001","created_at":"2026-09-12T12:00:00Z","id":"95af5a25-3679-41ba-a2ff-6cd471c483f1","mode":"replace","rules":[],"scope":"contest","status":"draft","version":3},{"active":false,"contest_id":"f0000000-0000-4000-8000-000000000001","created_at":"2026-04-01T00:00:00Z","id":"cccccccc-cccc-4ccc-8ccc-000000000002","mode":"replace","rules":[{"activity_id":1,"id":"dddddddd-dddd-4ddd-8ddd-000000000002","priority":10,"rate":5,"score_source":"amount","stackable":false}],"scope":"contest","status":"draft","version":2},{"active":true,"contest_id":"f0000000-0000-4000-8000-000000000001","created_at":"2026-03-01T00:00:00Z","fallback_rule_set_id":"aaaaaaaa-aaaa-4aaa-8aaa-000000000001","id":"cccccccc-cccc-4ccc-8ccc-000000000001","mode":"override","published_at":"2026-03-02T00:00:00Z","rules":[{"activity_id":1,"id":"dddddddd-dddd-4ddd-8ddd-000000000001","priority":20,"rate":4,"score_source":"amount","stackable":false}],"scope":"contest","status":"published","version":1}]}

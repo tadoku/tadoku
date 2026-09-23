@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/activities"
+	domainlanguages "github.com/tadoku/tadoku/services/tadoku-api/domain/languages"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
 
@@ -22,6 +23,13 @@ type Source string
 const (
 	SourceAmount          Source = "amount"
 	SourceDurationMinutes Source = "duration_minutes"
+)
+
+type Mode string
+
+const (
+	ModeReplace  Mode = "replace"
+	ModeOverride Mode = "override"
 )
 
 type Rule struct {
@@ -48,6 +56,105 @@ type RuleSet struct {
 	Rules             []Rule
 	CreatedAt         time.Time
 	PublishedAt       *time.Time
+}
+
+type DraftRules struct {
+	Rules []Rule
+}
+
+type PlatformDraftParameters struct {
+	DraftRules
+	CreatedAt time.Time
+}
+
+type ContestDraftParameters struct {
+	DraftRules
+	ContestID     uuid.UUID
+	Configuration ContestDraftConfiguration
+	CreatedAt     time.Time
+}
+
+type ContestDraftConfiguration interface {
+	isContestDraftConfiguration()
+}
+
+type Replace struct{}
+
+func (Replace) isContestDraftConfiguration() {}
+
+type Override struct {
+	FallbackRuleSetID uuid.UUID
+}
+
+func (Override) isContestDraftConfiguration() {}
+
+func NewContestDraftConfiguration(rawMode string, fallbackRuleSetID *uuid.UUID) (ContestDraftConfiguration, error) {
+	switch Mode(rawMode) {
+	case ModeReplace:
+		if fallbackRuleSetID != nil {
+			return nil, errx.NewInvalidInputError("replace rule sets cannot have a fallback")
+		}
+
+		return Replace{}, nil
+	case ModeOverride:
+		if fallbackRuleSetID == nil {
+			return nil, errx.NewInvalidInputError("override rule sets require a fallback")
+		}
+
+		return Override{FallbackRuleSetID: *fallbackRuleSetID}, nil
+	default:
+		return nil, errx.NewInvalidInputError("contest scoring mode is required")
+	}
+}
+
+func (p *DraftRules) normalize(languages []domainlanguages.Language) error {
+	p.Rules = append([]Rule(nil), p.Rules...)
+	languageCodes := make(map[string]struct{}, len(languages))
+	for _, language := range languages {
+		languageCodes[language.Code] = struct{}{}
+	}
+
+	priorities := make(map[int32]struct{}, len(p.Rules))
+	for i := range p.Rules {
+		rule := &p.Rules[i]
+		rule.Tag = strings.ToLower(strings.TrimSpace(rule.Tag))
+		rule.LanguageCode = strings.ToLower(strings.TrimSpace(rule.LanguageCode))
+		if rule.Priority < 0 {
+			return errx.NewInvalidInputError("rule priority must be non-negative")
+		}
+		if _, duplicate := priorities[rule.Priority]; duplicate {
+			return errx.NewInvalidInputError("rule priorities must be unique")
+		}
+		priorities[rule.Priority] = struct{}{}
+		if !validActivity(rule.ActivityID) {
+			return errx.NewInvalidInputError("rule activity_id is not valid")
+		}
+		if rule.UnitKey != "" && unitActivities[rule.UnitKey] != rule.ActivityID {
+			return errx.NewInvalidInputError("rule unit_key is not valid for activity_id")
+		}
+		if len(rule.LanguageCode) > 10 {
+			return errx.NewInvalidInputError("rule language_code is too long")
+		}
+		if rule.LanguageCode != "" {
+			if _, exists := languageCodes[rule.LanguageCode]; !exists {
+				return errx.NewInvalidInputError("rule language_code is not valid")
+			}
+		}
+		if rule.Tag != "" {
+			tags, err := NormalizeTags([]string{rule.Tag})
+			if err != nil || len(tags) != 1 {
+				return errx.NewInvalidInputError("rule tag is invalid")
+			}
+			rule.Tag = tags[0]
+		}
+		if rule.Source != SourceAmount && rule.Source != SourceDurationMinutes {
+			return errx.NewInvalidInputError("rule score_source is not valid")
+		}
+		if !finite(rule.Rate) || rule.Rate < 0 {
+			return errx.NewInvalidInputError("rule rate must be non-negative and finite")
+		}
+	}
+	return nil
 }
 
 type PreviewParameters struct {

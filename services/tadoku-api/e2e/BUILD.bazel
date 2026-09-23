@@ -65,6 +65,7 @@ go_test(
         "profile_users_list_test.go",
         "routing_test.go",
         "scoring_preview_test.go",
+        "scoring_rule_set_create_test.go",
         "scoring_rule_set_list_test.go",
         "user_journeys_test.go",
         "valkey_test.go",

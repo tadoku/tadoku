@@ -1,12 +1,12 @@
 // Package languages owns immersion languages and their persistence.
 package languages
 
-import "github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
+import (
+	domainlanguages "github.com/tadoku/tadoku/services/tadoku-api/domain/languages"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
+)
 
-type Language struct {
-	Code string
-	Name string
-}
+type Language = domainlanguages.Language
 
 var (
 	ErrInvalidLanguage       = errx.NewInvalidInputError("invalid language")

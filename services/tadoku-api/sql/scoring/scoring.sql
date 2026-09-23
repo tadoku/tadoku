@@ -49,3 +49,61 @@ where unit_key = sqlc.arg('unit_key')
   and (language_code is null or language_code = sqlc.arg('language_code'))
 order by language_code is null asc
 limit 1;
+
+-- name: NextPlatformScoringRuleSetVersion :one
+select (coalesce(max(version), 0) + 1)::integer
+from scoring_rule_sets
+where scope = 'platform';
+
+-- name: NextContestScoringRuleSetVersion :one
+select (coalesce(max(version), 0) + 1)::integer
+from scoring_rule_sets
+where scope = 'contest'
+  and contest_id = sqlc.arg('contest_id');
+
+-- name: CreateScoringRuleSet :one
+insert into scoring_rule_sets (
+  id,
+  scope,
+  contest_id,
+  version,
+  status,
+  mode,
+  fallback_rule_set_id,
+  created_at
+) values (
+  sqlc.arg('id'),
+  sqlc.arg('scope'),
+  sqlc.arg('contest_id'),
+  sqlc.arg('version'),
+  'draft',
+  sqlc.arg('mode'),
+  sqlc.arg('fallback_rule_set_id'),
+  sqlc.arg('created_at')
+)
+returning *;
+
+-- name: CreateScoringRule :exec
+insert into scoring_rules (
+  id,
+  rule_set_id,
+  priority,
+  stackable,
+  activity_id,
+  unit_key,
+  language_code,
+  tag,
+  score_source,
+  rate
+) values (
+  sqlc.arg('id'),
+  sqlc.arg('rule_set_id'),
+  sqlc.arg('priority'),
+  sqlc.arg('stackable'),
+  sqlc.arg('activity_id'),
+  sqlc.arg('unit_key'),
+  sqlc.arg('language_code'),
+  sqlc.arg('tag'),
+  sqlc.arg('score_source'),
+  sqlc.arg('rate')
+);

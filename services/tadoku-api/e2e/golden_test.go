@@ -5,6 +5,8 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
+	"io"
+	"math/rand"
 	"net/http"
 	"net/http/httptest"
 	"net/http/httputil"
@@ -35,6 +37,14 @@ type implementation struct {
 	skip    string
 
 	resetKratos bool
+	uuidSeed    *int64
+}
+
+func (i implementation) uuidReader() io.Reader {
+	if i.uuidSeed != nil {
+		return rand.New(rand.NewSource(*i.uuidSeed))
+	}
+	return repeatingByteReader(0x11)
 }
 
 type repeatingByteReader byte
@@ -69,7 +79,7 @@ func runCase(t *testing.T, s *suite, name string, want int, implementations ...i
 			s.reset(t, dir)
 			record := *updateGoldens && impl.name == goldenRecorder
 			atFixtureInstant(func() {
-				uuid.SetRand(repeatingByteReader(0x11))
+				uuid.SetRand(impl.uuidReader())
 				defer uuid.SetRand(nil)
 				checkHTTPGolden(t, impl.handler, dir, want, record)
 			})
@@ -295,6 +305,26 @@ func TestFormatHTTPGolden(t *testing.T) {
 				t.Errorf("HTTP golden=%q, want %q", got, want)
 			}
 		})
+	}
+}
+
+func TestImplementationUUIDReaderUsesFreshSeededStreams(t *testing.T) {
+	seed := int64(7)
+	impl := implementation{uuidSeed: &seed}
+
+	first := make([]byte, 32)
+	second := make([]byte, 32)
+	if _, err := io.ReadFull(impl.uuidReader(), first); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := io.ReadFull(impl.uuidReader(), second); err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(first, second) {
+		t.Fatal("fresh readers with the same seed produced different UUID bytes")
+	}
+	if bytes.Equal(first[:16], first[16:]) {
+		t.Fatal("seeded UUID stream repeated bytes for distinct IDs")
 	}
 }
 

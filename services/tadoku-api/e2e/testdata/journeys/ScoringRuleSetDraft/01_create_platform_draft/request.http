@@ -1,0 +1,7 @@
+POST /immersion/scoring/rule-sets HTTP/1.1
+Host: api.test
+Content-Type: application/json
+Content-Length: 286
+X-Request-Id: 22222222-2222-4222-8222-222222222222
+
+{"rules":[{"priority":20,"stackable":false,"activity_id":1,"unit_key":"reading_page","language_code":" ENG ","tag":" Manga ","score_source":"amount","rate":2},{"priority":10,"stackable":true,"activity_id":1,"unit_key":"reading_page","tag":" Comic ","score_source":"amount","rate":0.5}]}

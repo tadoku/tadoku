@@ -1,5 +1,7 @@
 # Development Workflow
 
+**Make impossible states impossible to represent.** Model data structures so only valid combinations can be constructed. Use distinct types for different operations and explicit variants with required payloads for mutually exclusive states, rather than independent flags and optional fields that permit contradictory combinations. Parse and validate external input at the boundary, then pass the resulting domain values through the application.
+
 ## CMS content
 
 **Page content managed by the CMS must only be changed in the admin CMS.** Public pages such as Contact and About store their HTML in the CMS (`pages` / `pages_content`, namespace `tadoku`, slug such as `contact`).

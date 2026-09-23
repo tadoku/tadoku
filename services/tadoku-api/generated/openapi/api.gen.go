@@ -1165,6 +1165,9 @@ type ImmersionContestCreateJSONRequestBody = ImmersionContest
 // ImmersionContestRegistrationUpsertJSONRequestBody defines body for ImmersionContestRegistrationUpsert for application/json ContentType.
 type ImmersionContestRegistrationUpsertJSONRequestBody ImmersionContestRegistrationUpsertJSONBody
 
+// ImmersionScoringRuleSetCreateContestJSONRequestBody defines body for ImmersionScoringRuleSetCreateContest for application/json ContentType.
+type ImmersionScoringRuleSetCreateContestJSONRequestBody = ImmersionScoringRuleSetDraft
+
 // ImmersionLanguageCreateJSONRequestBody defines body for ImmersionLanguageCreate for application/json ContentType.
 type ImmersionLanguageCreateJSONRequestBody = ImmersionLanguage
 
@@ -1173,6 +1176,9 @@ type ImmersionLanguageUpdateJSONRequestBody ImmersionLanguageUpdateJSONBody
 
 // ImmersionScorePreviewJSONRequestBody defines body for ImmersionScorePreview for application/json ContentType.
 type ImmersionScorePreviewJSONRequestBody ImmersionScorePreviewJSONBody
+
+// ImmersionScoringRuleSetCreatePlatformJSONRequestBody defines body for ImmersionScoringRuleSetCreatePlatform for application/json ContentType.
+type ImmersionScoringRuleSetCreatePlatformJSONRequestBody = ImmersionScoringRuleSetDraft
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
@@ -1296,6 +1302,9 @@ type ServerInterface interface {
 	// ImmersionScoringRuleSetListContest Lists scoring rule-set versions owned by a contest
 	// (GET /immersion/contests/{id}/scoring/rule-sets)
 	ImmersionScoringRuleSetListContest(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// ImmersionScoringRuleSetCreateContest Creates a draft contest scoring rule-set version
+	// (POST /immersion/contests/{id}/scoring/rule-sets)
+	ImmersionScoringRuleSetCreateContest(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
 	// ImmersionContestFetchSummary Fetches the summary for a contest
 	// (GET /immersion/contests/{id}/summary)
 	ImmersionContestFetchSummary(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
@@ -1332,6 +1341,9 @@ type ServerInterface interface {
 	// ImmersionScoringRuleSetListPlatform Lists platform scoring rule-set versions
 	// (GET /immersion/scoring/rule-sets)
 	ImmersionScoringRuleSetListPlatform(w http.ResponseWriter, r *http.Request)
+	// ImmersionScoringRuleSetCreatePlatform Creates a draft platform scoring rule-set version
+	// (POST /immersion/scoring/rule-sets)
+	ImmersionScoringRuleSetCreatePlatform(w http.ResponseWriter, r *http.Request)
 	// ImmersionProfileYearlyActivitySplitByUserID Fetches a activity split summary of a user for a given year
 	// (GET /immersion/users/{userId}/activity-split/{year})
 	ImmersionProfileYearlyActivitySplitByUserID(w http.ResponseWriter, r *http.Request, userId openapi_types.UUID, year int)
@@ -2782,6 +2794,32 @@ func (siw *ServerInterfaceWrapper) ImmersionScoringRuleSetListContest(w http.Res
 	handler.ServeHTTP(w, r)
 }
 
+// ImmersionScoringRuleSetCreateContest operation middleware
+func (siw *ServerInterfaceWrapper) ImmersionScoringRuleSetCreateContest(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ImmersionScoringRuleSetCreateContest(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ImmersionContestFetchSummary operation middleware
 func (siw *ServerInterfaceWrapper) ImmersionContestFetchSummary(w http.ResponseWriter, r *http.Request) {
 
@@ -3121,6 +3159,20 @@ func (siw *ServerInterfaceWrapper) ImmersionScoringRuleSetListPlatform(w http.Re
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ImmersionScoringRuleSetListPlatform(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ImmersionScoringRuleSetCreatePlatform operation middleware
+func (siw *ServerInterfaceWrapper) ImmersionScoringRuleSetCreatePlatform(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ImmersionScoringRuleSetCreatePlatform(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -3593,7 +3645,9 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/leaderboard/yearly/{year}", wrapper.ImmersionFetchLeaderboardForYear)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/leaderboard/global", wrapper.ImmersionFetchLeaderboardGlobal)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/scoring/rule-sets", wrapper.ImmersionScoringRuleSetListPlatform)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/immersion/scoring/rule-sets", wrapper.ImmersionScoringRuleSetCreatePlatform)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/{id}/scoring/rule-sets", wrapper.ImmersionScoringRuleSetListContest)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/immersion/contests/{id}/scoring/rule-sets", wrapper.ImmersionScoringRuleSetCreateContest)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/feature-flags", wrapper.ImmersionFeatureFlagDecisions)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/immersion/admin/feature-flags/{flagKey}/users/{userId}", wrapper.ImmersionFeatureAccessRevoke)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/admin/feature-flags/{flagKey}/users/{userId}", wrapper.ImmersionFeatureAccessGet)
@@ -5206,6 +5260,37 @@ func (response ImmersionScoringRuleSetListContest500Response) VisitImmersionScor
 	return nil
 }
 
+type ImmersionScoringRuleSetCreateContestRequestObject struct {
+	Id   openapi_types.UUID `json:"id"`
+	Body *ImmersionScoringRuleSetCreateContestJSONRequestBody
+}
+
+type ImmersionScoringRuleSetCreateContestResponseObject interface {
+	VisitImmersionScoringRuleSetCreateContestResponse(w http.ResponseWriter) error
+}
+
+type ImmersionScoringRuleSetCreateContest200JSONResponse ImmersionScoringRuleSet
+
+func (response ImmersionScoringRuleSetCreateContest200JSONResponse) VisitImmersionScoringRuleSetCreateContestResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImmersionScoringRuleSetCreateContest500Response struct {
+}
+
+func (response ImmersionScoringRuleSetCreateContest500Response) VisitImmersionScoringRuleSetCreateContestResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
 type ImmersionContestFetchSummaryRequestObject struct {
 	Id openapi_types.UUID `json:"id"`
 }
@@ -5626,6 +5711,36 @@ func (response ImmersionScoringRuleSetListPlatform500Response) VisitImmersionSco
 	return nil
 }
 
+type ImmersionScoringRuleSetCreatePlatformRequestObject struct {
+	Body *ImmersionScoringRuleSetCreatePlatformJSONRequestBody
+}
+
+type ImmersionScoringRuleSetCreatePlatformResponseObject interface {
+	VisitImmersionScoringRuleSetCreatePlatformResponse(w http.ResponseWriter) error
+}
+
+type ImmersionScoringRuleSetCreatePlatform200JSONResponse ImmersionScoringRuleSet
+
+func (response ImmersionScoringRuleSetCreatePlatform200JSONResponse) VisitImmersionScoringRuleSetCreatePlatformResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImmersionScoringRuleSetCreatePlatform500Response struct {
+}
+
+func (response ImmersionScoringRuleSetCreatePlatform500Response) VisitImmersionScoringRuleSetCreatePlatformResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
 type ImmersionProfileYearlyActivitySplitByUserIDRequestObject struct {
 	UserId openapi_types.UUID `json:"userId"`
 	Year   int                `json:"year"`
@@ -6003,6 +6118,9 @@ type StrictServerInterface interface {
 	// ImmersionScoringRuleSetListContest Lists scoring rule-set versions owned by a contest
 	// (GET /immersion/contests/{id}/scoring/rule-sets)
 	ImmersionScoringRuleSetListContest(ctx context.Context, request ImmersionScoringRuleSetListContestRequestObject) (ImmersionScoringRuleSetListContestResponseObject, error)
+	// ImmersionScoringRuleSetCreateContest Creates a draft contest scoring rule-set version
+	// (POST /immersion/contests/{id}/scoring/rule-sets)
+	ImmersionScoringRuleSetCreateContest(ctx context.Context, request ImmersionScoringRuleSetCreateContestRequestObject) (ImmersionScoringRuleSetCreateContestResponseObject, error)
 	// ImmersionContestFetchSummary Fetches the summary for a contest
 	// (GET /immersion/contests/{id}/summary)
 	ImmersionContestFetchSummary(ctx context.Context, request ImmersionContestFetchSummaryRequestObject) (ImmersionContestFetchSummaryResponseObject, error)
@@ -6039,6 +6157,9 @@ type StrictServerInterface interface {
 	// ImmersionScoringRuleSetListPlatform Lists platform scoring rule-set versions
 	// (GET /immersion/scoring/rule-sets)
 	ImmersionScoringRuleSetListPlatform(ctx context.Context, request ImmersionScoringRuleSetListPlatformRequestObject) (ImmersionScoringRuleSetListPlatformResponseObject, error)
+	// ImmersionScoringRuleSetCreatePlatform Creates a draft platform scoring rule-set version
+	// (POST /immersion/scoring/rule-sets)
+	ImmersionScoringRuleSetCreatePlatform(ctx context.Context, request ImmersionScoringRuleSetCreatePlatformRequestObject) (ImmersionScoringRuleSetCreatePlatformResponseObject, error)
 	// ImmersionProfileYearlyActivitySplitByUserID Fetches a activity split summary of a user for a given year
 	// (GET /immersion/users/{userId}/activity-split/{year})
 	ImmersionProfileYearlyActivitySplitByUserID(ctx context.Context, request ImmersionProfileYearlyActivitySplitByUserIDRequestObject) (ImmersionProfileYearlyActivitySplitByUserIDResponseObject, error)
@@ -7243,6 +7364,39 @@ func (sh *strictHandler) ImmersionScoringRuleSetListContest(w http.ResponseWrite
 	}
 }
 
+// ImmersionScoringRuleSetCreateContest operation middleware
+func (sh *strictHandler) ImmersionScoringRuleSetCreateContest(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	var request ImmersionScoringRuleSetCreateContestRequestObject
+
+	request.Id = id
+
+	var body ImmersionScoringRuleSetCreateContestJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ImmersionScoringRuleSetCreateContest(ctx, request.(ImmersionScoringRuleSetCreateContestRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ImmersionScoringRuleSetCreateContest")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ImmersionScoringRuleSetCreateContestResponseObject); ok {
+		if err := validResponse.VisitImmersionScoringRuleSetCreateContestResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ImmersionContestFetchSummary operation middleware
 func (sh *strictHandler) ImmersionContestFetchSummary(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
 	var request ImmersionContestFetchSummaryRequestObject
@@ -7558,6 +7712,37 @@ func (sh *strictHandler) ImmersionScoringRuleSetListPlatform(w http.ResponseWrit
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ImmersionScoringRuleSetListPlatformResponseObject); ok {
 		if err := validResponse.VisitImmersionScoringRuleSetListPlatformResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ImmersionScoringRuleSetCreatePlatform operation middleware
+func (sh *strictHandler) ImmersionScoringRuleSetCreatePlatform(w http.ResponseWriter, r *http.Request) {
+	var request ImmersionScoringRuleSetCreatePlatformRequestObject
+
+	var body ImmersionScoringRuleSetCreatePlatformJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ImmersionScoringRuleSetCreatePlatform(ctx, request.(ImmersionScoringRuleSetCreatePlatformRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ImmersionScoringRuleSetCreatePlatform")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ImmersionScoringRuleSetCreatePlatformResponseObject); ok {
+		if err := validResponse.VisitImmersionScoringRuleSetCreatePlatformResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

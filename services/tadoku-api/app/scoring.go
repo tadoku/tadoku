@@ -5,8 +5,10 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/scoring"
+	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
 
 type ScorePreviewParameters struct {
@@ -23,6 +25,18 @@ type ScorePreviewParameters struct {
 type ScorePreview = scoring.Preview
 type ScoreEstimate = scoring.Estimate
 type ScoringRuleSet = scoring.RuleSet
+type ScoringRule = scoring.Rule
+type ScoringSource = scoring.Source
+
+type PlatformScoringRuleSetDraftParameters struct {
+	Rules []ScoringRule
+}
+
+type ContestScoringRuleSetDraftParameters struct {
+	Mode              string
+	FallbackRuleSetID *uuid.UUID
+	Rules             []ScoringRule
+}
 
 func (a *Application) PreviewScore(ctx context.Context, parameters ScorePreviewParameters) (*ScorePreview, error) {
 	if err := a.permissions.RequireAuthenticated(ctx); err != nil {
@@ -93,4 +107,87 @@ func (a *Application) ListContestScoringRuleSets(ctx context.Context, contestID 
 		return nil, errx.NewForbiddenError("forbidden")
 	}
 	return a.scoring.ListContestRuleSets(ctx, contestID)
+}
+
+func (a *Application) CreatePlatformScoringRuleSetDraft(ctx context.Context, parameters PlatformScoringRuleSetDraftParameters) (*ScoringRuleSet, error) {
+	if err := a.permissions.RequireAdmin(ctx); err != nil {
+		return nil, err
+	}
+
+	draft := scoring.PlatformDraftParameters{
+		DraftRules: scoring.DraftRules{
+			Rules: parameters.Rules,
+		},
+	}
+	if err := a.normalizeScoringDraftRules(ctx, &draft.DraftRules); err != nil {
+		return nil, err
+	}
+	draft.CreatedAt = timex.Now()
+
+	var created *ScoringRuleSet
+	err := postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) error {
+		var createErr error
+		created, createErr = a.scoring.CreatePlatformDraft(ctx, draft)
+		return createErr
+	})
+
+	return created, err
+}
+
+func (a *Application) CreateContestScoringRuleSetDraft(ctx context.Context, contestID uuid.UUID, parameters ContestScoringRuleSetDraftParameters) (*ScoringRuleSet, error) {
+	if err := a.permissions.RequireAuthenticated(ctx); err != nil {
+		return nil, err
+	}
+
+	contest, err := a.contests.FindContestByID(ctx, contestID, false)
+	if err != nil {
+		return nil, err
+	}
+	caller := identity.FromContext(ctx)
+	if caller.Subject != contest.OwnerUserID.String() {
+		if err := a.permissions.RequireAdmin(ctx); err != nil {
+			return nil, err
+		}
+	}
+	if !timex.Now().Before(contest.ContestStart) {
+		return nil, errx.NewConflictError("contest scoring cannot change after the contest starts")
+	}
+
+	configuration, err := scoring.NewContestDraftConfiguration(parameters.Mode, parameters.FallbackRuleSetID)
+	if err != nil {
+		return nil, err
+	}
+
+	draft := scoring.ContestDraftParameters{
+		ContestID:     contestID,
+		Configuration: configuration,
+		DraftRules: scoring.DraftRules{
+			Rules: parameters.Rules,
+		},
+	}
+	if err := a.scoring.ValidateContestDraftConfiguration(ctx, &draft); err != nil {
+		return nil, err
+	}
+	if err := a.normalizeScoringDraftRules(ctx, &draft.DraftRules); err != nil {
+		return nil, err
+	}
+	draft.CreatedAt = timex.Now()
+
+	var created *ScoringRuleSet
+	err = postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) error {
+		var createErr error
+		created, createErr = a.scoring.CreateContestDraft(ctx, draft)
+		return createErr
+	})
+
+	return created, err
+}
+
+func (a *Application) normalizeScoringDraftRules(ctx context.Context, rules *scoring.DraftRules) error {
+	languages, err := a.languages.ListLanguages(ctx)
+	if err != nil {
+		return err
+	}
+
+	return a.scoring.NormalizeDraftRules(rules, languages)
 }

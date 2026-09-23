@@ -58,6 +58,58 @@ func (s *server) ImmersionScoringRuleSetListContest(ctx context.Context, request
 	return openapi.ImmersionScoringRuleSetListContest200JSONResponse(scoringRuleSetsResponse(sets)), nil
 }
 
+func (s *server) ImmersionScoringRuleSetCreatePlatform(ctx context.Context, request openapi.ImmersionScoringRuleSetCreatePlatformRequestObject) (openapi.ImmersionScoringRuleSetCreatePlatformResponseObject, error) {
+	created, err := s.application.CreatePlatformScoringRuleSetDraft(ctx, app.PlatformScoringRuleSetDraftParameters{
+		Rules: scoringRules(request.Body.Rules),
+	})
+	if err != nil {
+		s.logOperationError(ctx, "create platform scoring rule set", err)
+		if scoringHTTPError(err) {
+			return nil, err
+		}
+		return openapi.ImmersionScoringRuleSetCreatePlatform500Response{}, nil
+	}
+	return openapi.ImmersionScoringRuleSetCreatePlatform200JSONResponse(scoringRuleSetResponse(*created)), nil
+}
+
+func (s *server) ImmersionScoringRuleSetCreateContest(ctx context.Context, request openapi.ImmersionScoringRuleSetCreateContestRequestObject) (openapi.ImmersionScoringRuleSetCreateContestResponseObject, error) {
+	parameters := app.ContestScoringRuleSetDraftParameters{
+		FallbackRuleSetID: request.Body.FallbackRuleSetId,
+		Rules:             scoringRules(request.Body.Rules),
+	}
+	if request.Body.Mode != nil {
+		parameters.Mode = string(*request.Body.Mode)
+	}
+
+	created, err := s.application.CreateContestScoringRuleSetDraft(ctx, request.Id, parameters)
+	if err != nil {
+		s.logOperationError(ctx, "create contest scoring rule set", err)
+		if scoringHTTPError(err) {
+			return nil, err
+		}
+		return openapi.ImmersionScoringRuleSetCreateContest500Response{}, nil
+	}
+	return openapi.ImmersionScoringRuleSetCreateContest200JSONResponse(scoringRuleSetResponse(*created)), nil
+}
+
+func scoringRules(rules []openapi.ImmersionScoringRule) []app.ScoringRule {
+	result := make([]app.ScoringRule, len(rules))
+	for i, rule := range rules {
+		result[i] = app.ScoringRule{
+			Priority:     rule.Priority,
+			Stackable:    rule.Stackable,
+			ActivityID:   rule.ActivityId,
+			UnitKey:      scoringString(rule.UnitKey),
+			LanguageCode: scoringString(rule.LanguageCode),
+			Tag:          scoringString(rule.Tag),
+			Source:       app.ScoringSource(rule.ScoreSource),
+			Rate:         rule.Rate,
+		}
+	}
+
+	return result
+}
+
 func scorePreviewResponse(result *app.ScorePreview) openapi.ImmersionScorePreview {
 	response := openapi.ImmersionScorePreview{
 		Platform: scoreEstimateResponse(result.Platform),
@@ -135,9 +187,20 @@ func scoringRuleSetsResponse(sets []app.ScoringRuleSet) openapi.ImmersionScoring
 	return response
 }
 
+func scoringRuleSetResponse(set app.ScoringRuleSet) openapi.ImmersionScoringRuleSet {
+	return scoringRuleSetsResponse([]app.ScoringRuleSet{set}).RuleSets[0]
+}
+
 func optionalScoringString(value string) *string {
 	if value == "" {
 		return nil
 	}
 	return &value
+}
+
+func scoringString(value *string) string {
+	if value == nil {
+		return ""
+	}
+	return *value
 }

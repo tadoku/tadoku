@@ -28,10 +28,12 @@ type ScoringRuleSetDraftCreateRequest struct {
 	FallbackRuleSetID *uuid.UUID
 	Rules             []ScoringRule
 
-	scope ScoringRuleSetScope
+	scope     ScoringRuleSetScope
+	createdAt time.Time
 }
 
 func (r *ScoringRuleSetDraftCreateRequest) Scope() ScoringRuleSetScope { return r.scope }
+func (r *ScoringRuleSetDraftCreateRequest) CreatedAt() time.Time       { return r.createdAt }
 
 type ScoringRuleSetManagement struct {
 	repo  ScoringRuleSetManagementRepository
@@ -89,6 +91,7 @@ func (s *ScoringRuleSetManagement) CreatePlatformDraft(
 	if err := s.validateDraft(ctx, req); err != nil {
 		return nil, err
 	}
+	req.createdAt = s.clock.Now()
 	return s.repo.CreateScoringRuleSetDraft(ctx, req)
 }
 
@@ -105,6 +108,7 @@ func (s *ScoringRuleSetManagement) CreateContestDraft(
 	if err := s.validateDraft(ctx, req); err != nil {
 		return nil, err
 	}
+	req.createdAt = s.clock.Now()
 	return s.repo.CreateScoringRuleSetDraft(ctx, req)
 }
 

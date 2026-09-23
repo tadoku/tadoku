@@ -82,6 +82,8 @@ var operationAccess = map[string]accessLevel{
 	"ImmersionScorePreview":                              accessAuthenticated,
 	"ImmersionScoringRuleSetListPlatform":                accessAuthenticated,
 	"ImmersionScoringRuleSetListContest":                 accessAuthenticated,
+	"ImmersionScoringRuleSetCreatePlatform":              accessAdmin,
+	"ImmersionScoringRuleSetCreateContest":               accessAuthenticated,
 
 	"ImmersionLanguageList":         accessAdmin,
 	"ImmersionLanguageCreate":       accessAdmin,
@@ -121,11 +123,13 @@ var operationFixtures = map[string]string{
 	"ImmersionContestFindRegistration":         "FindContestRegistration",
 	"ImmersionContestRegistrationUpsert":       "UpsertContestRegistration",
 
-	"ImmersionLogGetConfigurations":       "ImmersionLogGetConfigurations",
-	"ImmersionLogTagSuggestions":          "ImmersionLogTagSuggestions",
-	"ImmersionScorePreview":               "ImmersionScorePreview",
-	"ImmersionScoringRuleSetListPlatform": "ImmersionScoringRuleSetListPlatform",
-	"ImmersionScoringRuleSetListContest":  "ImmersionScoringRuleSetListContest",
+	"ImmersionLogGetConfigurations":         "ImmersionLogGetConfigurations",
+	"ImmersionLogTagSuggestions":            "ImmersionLogTagSuggestions",
+	"ImmersionScorePreview":                 "ImmersionScorePreview",
+	"ImmersionScoringRuleSetListPlatform":   "ImmersionScoringRuleSetListPlatform",
+	"ImmersionScoringRuleSetListContest":    "ImmersionScoringRuleSetListContest",
+	"ImmersionScoringRuleSetCreatePlatform": "ImmersionScoringRuleSetCreatePlatform",
+	"ImmersionScoringRuleSetCreateContest":  "ImmersionScoringRuleSetCreateContest",
 
 	"ImmersionLanguageList":        "ListLanguages",
 	"ImmersionLanguageCreate":      "CreateLanguage",

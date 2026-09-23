@@ -102,6 +102,7 @@ func (r *Repository) CreateScoringRuleSetDraft(
 		Version:           version,
 		Mode:              nullableText(string(req.Mode)),
 		FallbackRuleSetID: nullableUUID(req.FallbackRuleSetID),
+		CreatedAt:         req.CreatedAt(),
 	})
 	if err != nil {
 		_ = tx.Rollback()

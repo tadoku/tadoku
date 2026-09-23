@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	domainlanguages "github.com/tadoku/tadoku/services/tadoku-api/domain/languages"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
 
@@ -204,4 +205,86 @@ func (s *Service) findContestRuleSets(ctx context.Context, contestID uuid.UUID) 
 	}
 	fallback.Rules, err = s.repository.ListRules(ctx, fallback.ID)
 	return set, fallback, err
+}
+
+func (s *Service) ValidateContestDraftConfiguration(ctx context.Context, parameters *ContestDraftParameters) error {
+	var fallbackID uuid.UUID
+	switch configuration := parameters.Configuration.(type) {
+	case Replace:
+		return nil
+	case Override:
+		fallbackID = configuration.FallbackRuleSetID
+	default:
+		return errx.NewInternalError("invalid contest draft configuration")
+	}
+
+	fallback, err := s.repository.FindRuleSetByID(ctx, fallbackID)
+	if err != nil {
+		return err
+	}
+	if fallback.Scope != "platform" || fallback.Status != "published" {
+		return errx.NewInvalidInputError("fallback must be a published platform rule set")
+	}
+
+	return nil
+}
+
+func (s *Service) NormalizeDraftRules(parameters *DraftRules, languages []domainlanguages.Language) error {
+	return parameters.normalize(languages)
+}
+
+func (s *Service) CreatePlatformDraft(ctx context.Context, parameters PlatformDraftParameters) (*RuleSet, error) {
+	return s.createDraft(ctx, RuleSet{
+		Scope:     "platform",
+		Rules:     parameters.Rules,
+		CreatedAt: parameters.CreatedAt,
+	})
+}
+
+func (s *Service) CreateContestDraft(ctx context.Context, parameters ContestDraftParameters) (*RuleSet, error) {
+	draft := RuleSet{
+		Scope:     "contest",
+		ContestID: &parameters.ContestID,
+		Rules:     parameters.Rules,
+		CreatedAt: parameters.CreatedAt,
+	}
+	switch configuration := parameters.Configuration.(type) {
+	case Replace:
+		draft.Mode = string(ModeReplace)
+	case Override:
+		draft.Mode = string(ModeOverride)
+		draft.FallbackRuleSetID = &configuration.FallbackRuleSetID
+	default:
+		return nil, errx.NewInternalError("invalid contest draft configuration")
+	}
+
+	return s.createDraft(ctx, draft)
+}
+
+func (s *Service) createDraft(ctx context.Context, draft RuleSet) (*RuleSet, error) {
+	version, err := s.repository.NextDraftVersion(ctx, draft.ContestID)
+	if err != nil {
+		return nil, fmt.Errorf("allocate scoring rule set version: %w", err)
+	}
+
+	draft.ID = uuid.New()
+	draft.Version = version
+	draft.Status = "draft"
+	rules := draft.Rules
+	draft.Rules = []Rule{}
+
+	created, err := s.repository.CreateDraft(ctx, draft)
+	if err != nil {
+		return nil, err
+	}
+	created.Rules = make([]Rule, len(rules))
+	for i, rule := range rules {
+		rule.ID = uuid.New()
+		if err := s.repository.CreateRule(ctx, created.ID, rule); err != nil {
+			return nil, err
+		}
+		created.Rules[i] = rule
+	}
+
+	return created, nil
 }

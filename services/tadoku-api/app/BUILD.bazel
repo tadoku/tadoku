@@ -28,6 +28,7 @@ go_library(
     ],
     deps = [
         "//services/tadoku-api/domain/activities",
+        "//services/tadoku-api/domain/logscore",
         "//services/tadoku-api/features/announcements",
         "//services/tadoku-api/features/audit",
         "//services/tadoku-api/features/authz",
@@ -40,7 +41,6 @@ go_library(
         "//services/tadoku-api/features/posts",
         "//services/tadoku-api/features/profile",
         "//services/tadoku-api/features/scoring",
-        "//services/tadoku-api/infra/observability",
         "//services/tadoku-api/infra/postgres",
         "//services/tadoku-api/internal/callbackauth",
         "//services/tadoku-api/internal/errx",

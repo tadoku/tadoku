@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/activities"
+	"github.com/tadoku/tadoku/services/tadoku-api/domain/logscore"
 )
 
 type Service struct {
@@ -187,24 +188,27 @@ func (s *Service) FindLog(ctx context.Context, id uuid.UUID, includeDeleted bool
 	return log, nil
 }
 
-func (s *Service) ResolveTracking(ctx context.Context, activityID int32, languageCode string, unitID *uuid.UUID, unitKey *string, amount *float32, duration *int32) (Tracking, error) {
-	if activityID < 1 || activityID > 5 {
-		return Tracking{}, ErrInvalidActivity
+func (s *Service) Create(ctx context.Context, userID uuid.UUID, now time.Time, description *string, scored logscore.Result) (uuid.UUID, error) {
+	mutation := logMutation{
+		ID:                          uuid.New(),
+		UserID:                      userID,
+		LanguageCode:                scored.LanguageCode,
+		ActivityID:                  scored.ActivityID,
+		Description:                 description,
+		Tags:                        scored.Tags,
+		Tracking:                    scored.Tracking,
+		ContestTrackings:            scored.ContestTrackings,
+		EligibleOfficialLeaderboard: scored.EligibleOfficial,
+		Year:                        int16(now.Year()),
+		Now:                         now,
 	}
-	var unit *Unit
-	var err error
-	if amount != nil && unitID != nil {
-		unit, err = s.logs.FindTrackingUnit(ctx, unitID, nil, activityID, languageCode)
-	} else if amount != nil && unitKey != nil {
-		unit, err = s.logs.FindTrackingUnit(ctx, nil, unitKey, activityID, languageCode)
+	if err := s.create(ctx, mutation); err != nil {
+		return uuid.Nil, err
 	}
-	if err != nil {
-		return Tracking{}, err
-	}
-	return ValidateAndResolveTracking(activityID, unit, unitID, unitKey, amount, duration)
+	return mutation.ID, nil
 }
 
-func (s *Service) Create(ctx context.Context, mutation Mutation) error {
+func (s *Service) create(ctx context.Context, mutation logMutation) error {
 	if err := s.logs.CreateLog(ctx, mutation); err != nil {
 		return err
 	}
@@ -236,7 +240,20 @@ func (s *Service) Create(ctx context.Context, mutation Mutation) error {
 	}
 	return nil
 }
-func (s *Service) Update(ctx context.Context, mutation Mutation) error {
+func (s *Service) Update(ctx context.Context, id, userID uuid.UUID, now time.Time, description *string, scored logscore.Result) error {
+	mutation := logMutation{
+		ID:               id,
+		UserID:           userID,
+		Description:      description,
+		Tags:             scored.Tags,
+		Tracking:         scored.Tracking,
+		ContestTrackings: scored.ContestTrackings,
+		Now:              now,
+	}
+	return s.update(ctx, mutation)
+}
+
+func (s *Service) update(ctx context.Context, mutation logMutation) error {
 	if err := s.logs.LockLog(ctx, mutation.ID); err != nil {
 		return err
 	}
@@ -288,14 +305,17 @@ func (s *Service) Update(ctx context.Context, mutation Mutation) error {
 	return nil
 }
 
-func (s *Service) RegistrationsForRescoring(log *Log, now time.Time) []RegistrationReference {
+func (s *Service) RegistrationsForRescoring(log *Log, now time.Time) []logscore.Target {
 	if !s.scoringEngineEnabled {
 		return nil
 	}
-	selected := make([]RegistrationReference, 0, len(log.Registrations))
+	selected := make([]logscore.Target, 0, len(log.Registrations))
 	for _, registration := range log.Registrations {
 		if !registration.ContestEnd.Before(now) {
-			selected = append(selected, registration)
+			selected = append(selected, logscore.Target{
+				RegistrationID: registration.RegistrationID,
+				ContestID:      registration.ContestID,
+			})
 		}
 	}
 	return selected

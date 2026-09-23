@@ -2,11 +2,11 @@
 package logs
 
 import (
-	"math"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/activities"
+	"github.com/tadoku/tadoku/services/tadoku-api/domain/logscore"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
 
@@ -70,26 +70,10 @@ var (
 	ErrLogFrozen       = errx.NewConflictError("log is frozen")
 )
 
-type Tracking struct {
-	UnitID          *uuid.UUID
-	UnitKey         string
-	Amount          *float32
-	Modifier        *float32
-	DurationSeconds *int32
-	Score           float32
-	RuleSetID       *uuid.UUID
-	RuleIDs         []uuid.UUID
-	Rates           []float32
-	Source          string
-}
+type Tracking = logscore.Tracking
+type ContestTracking = logscore.ContestTracking
 
-type ContestTracking struct {
-	RegistrationID uuid.UUID
-	ContestID      uuid.UUID
-	Tracking       Tracking
-}
-
-type Mutation struct {
+type logMutation struct {
 	ID                          uuid.UUID
 	UserID                      uuid.UUID
 	LanguageCode                string
@@ -107,64 +91,6 @@ type OutboxContext struct {
 	UserID           uuid.UUID
 	Year             int16
 	EligibleOfficial bool
-}
-
-func ValidateAndResolveTracking(activityID int32, unit *Unit, unitID *uuid.UUID, unitKey *string, amount *float32, duration *int32) (Tracking, error) {
-	legacyDurationRate, validActivity := activities.LegacyDurationScorePerMinute(activityID)
-	if !validActivity {
-		return Tracking{}, errx.NewInvalidInputError("activity_id is not valid")
-	}
-	unitActivity, knownUnit := activities.UnitActivityID(stringValue(unitKey))
-	if unitKey != nil && (!knownUnit || unitActivity != activityID) {
-		return Tracking{}, errx.NewInvalidInputError("unit_key is not valid for activity_id")
-	}
-	if unit != nil {
-		unitActivity, knownUnit = activities.UnitActivityID(unit.Key)
-	}
-	if unit != nil && (!knownUnit || unitActivity != activityID) {
-		return Tracking{}, errx.NewInvalidInputError("resolved unit is not valid for activity_id")
-	}
-	if unit != nil && unitKey != nil && unit.Key != *unitKey {
-		return Tracking{}, errx.NewInvalidInputError("unit_id and unit_key identify different units")
-	}
-	hasAmount := amount != nil
-	hasUnit := unitID != nil || unitKey != nil
-	if duration != nil && *duration <= 0 {
-		return Tracking{}, errx.NewInvalidInputError("duration_seconds must be positive")
-	}
-	if amount != nil && (!finite(*amount) || *amount <= 0) {
-		return Tracking{}, errx.NewInvalidInputError("amount must be positive")
-	}
-	if hasAmount != hasUnit {
-		return Tracking{}, errx.NewInvalidInputError("amount and a unit identifier must be supplied together")
-	}
-	if !hasAmount && duration == nil {
-		return Tracking{}, errx.NewInvalidInputError("amount/unit or duration_seconds is required")
-	}
-
-	tracking := Tracking{DurationSeconds: duration}
-	if hasAmount {
-		if unit == nil {
-			return Tracking{}, errx.NewInvalidInputError("unit is required for amount scoring")
-		}
-		tracking.UnitID = &unit.ID
-		tracking.UnitKey = unit.Key
-		tracking.Amount = amount
-		tracking.Modifier = &unit.Modifier
-		tracking.Score = *amount * unit.Modifier
-	} else {
-		minutes := float32(*duration) / 60
-		tracking.Score = minutes * legacyDurationRate
-	}
-	return tracking, nil
-}
-
-func finite(value float32) bool { return !math.IsNaN(float64(value)) && !math.IsInf(float64(value), 0) }
-func stringValue(value *string) string {
-	if value == nil {
-		return ""
-	}
-	return *value
 }
 
 type Log struct {

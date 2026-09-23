@@ -15,44 +15,41 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/features/posts"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/profile"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/scoring"
-	"github.com/tadoku/tadoku/services/tadoku-api/infra/observability"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
 )
 
 type Application struct {
-	announcements   *announcements.Service
-	audit           *audit.Service
-	authorization   *authz.Service
-	contests        *contests.Service
-	leaderboard     *leaderboard.Service
-	languages       *languages.Service
-	logs            *logs.Service
-	pages           *pages.Service
-	posts           *posts.Service
-	profile         *profile.Service
-	scoring         *scoring.Service
-	featureFlags    *featureflags.Service
-	db              *pgxpool.Pool
-	permissions     *permissions.Checker
-	scoringObserver *observability.ScoringObserver
+	announcements *announcements.Service
+	audit         *audit.Service
+	authorization *authz.Service
+	contests      *contests.Service
+	leaderboard   *leaderboard.Service
+	languages     *languages.Service
+	logs          *logs.Service
+	pages         *pages.Service
+	posts         *posts.Service
+	profile       *profile.Service
+	scoring       *scoring.Service
+	featureFlags  *featureflags.Service
+	db            *pgxpool.Pool
+	permissions   *permissions.Checker
 }
 
-func New(announcements *announcements.Service, audit *audit.Service, authorization *authz.Service, contests *contests.Service, leaderboard *leaderboard.Service, languages *languages.Service, logs *logs.Service, pages *pages.Service, posts *posts.Service, profile *profile.Service, scoring *scoring.Service, featureFlags *featureflags.Service, db *pgxpool.Pool, permissions *permissions.Checker, scoringObserver *observability.ScoringObserver) *Application {
+func New(announcements *announcements.Service, audit *audit.Service, authorization *authz.Service, contests *contests.Service, leaderboard *leaderboard.Service, languages *languages.Service, logs *logs.Service, pages *pages.Service, posts *posts.Service, profile *profile.Service, scoring *scoring.Service, featureFlags *featureflags.Service, db *pgxpool.Pool, permissions *permissions.Checker) *Application {
 	return &Application{
-		announcements:   announcements,
-		audit:           audit,
-		authorization:   authorization,
-		contests:        contests,
-		leaderboard:     leaderboard,
-		languages:       languages,
-		logs:            logs,
-		pages:           pages,
-		posts:           posts,
-		profile:         profile,
-		scoring:         scoring,
-		featureFlags:    featureFlags,
-		db:              db,
-		permissions:     permissions,
-		scoringObserver: scoringObserver,
+		announcements: announcements,
+		audit:         audit,
+		authorization: authorization,
+		contests:      contests,
+		leaderboard:   leaderboard,
+		languages:     languages,
+		logs:          logs,
+		pages:         pages,
+		posts:         posts,
+		profile:       profile,
+		scoring:       scoring,
+		featureFlags:  featureFlags,
+		db:            db,
+		permissions:   permissions,
 	}
 }

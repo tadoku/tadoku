@@ -50,6 +50,10 @@ locks and transactions. Each feature service validates or normalizes its inputs
 and sequences its own repository calls, including related rows and outbox writes.
 Avoid service methods that only expose a repository call for an application
 operation to assemble a single feature's write.
+When several features participate in a write, the application passes shared
+domain values between them without interpreting scoring or persistence details.
+The service that owns a business decision creates its result; the service that
+owns the data translates that result into its stored rows.
 
 Shared business concepts and pure rules used by multiple features belong in
 `domain/<concept>`. Application operations and features may import these packages;

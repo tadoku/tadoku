@@ -242,24 +242,6 @@ inner join users as owner_users on (owner_users.id = contests.owner_user_id)
 where log_id = sqlc.arg('id')
 order by contest_logs.contest_id;
 
--- name: FindUnitForTrackingByID :one
-select id, unit_key, log_activity_id, name, modifier, language_code
-from log_units
-where id = sqlc.arg('id')
-  and log_activity_id = sqlc.arg('activity_id')
-  and (language_code is null or language_code = sqlc.arg('language_code'))
-order by language_code is null asc
-limit 1;
-
--- name: FindUnitForTrackingByKey :one
-select id, unit_key, log_activity_id, name, modifier, language_code
-from log_units
-where unit_key = sqlc.arg('unit_key')
-  and log_activity_id = sqlc.arg('activity_id')
-  and (language_code is null or language_code = sqlc.arg('language_code'))
-order by language_code is null asc
-limit 1;
-
 -- name: LockLogForMutation :one
 select frozen_at
 from logs

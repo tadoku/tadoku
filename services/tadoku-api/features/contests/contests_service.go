@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	kratosapi "github.com/ory/kratos-client-go"
+	"github.com/tadoku/tadoku/services/tadoku-api/domain/logscore"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
@@ -86,13 +87,25 @@ func (s *Service) ListOngoingRegistrations(ctx context.Context, userID uuid.UUID
 	return s.hydrateRegistrations(ctx, registrations)
 }
 
-func (s *Service) SelectRegistrationsForScoring(ctx context.Context, userID uuid.UUID, requested []uuid.UUID, languageCode string, activityID int32) ([]Registration, error) {
+func (s *Service) SelectRegistrationsForScoring(ctx context.Context, userID uuid.UUID, requested []uuid.UUID, languageCode string, activityID int32) ([]logscore.Target, error) {
 	registrations, err := s.ListOngoingRegistrations(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
 
-	return selectRegistrationsForScoring(requested, registrations.Registrations, languageCode, activityID)
+	selected, err := selectRegistrationsForScoring(requested, registrations.Registrations, languageCode, activityID)
+	if err != nil {
+		return nil, err
+	}
+	targets := make([]logscore.Target, 0, len(selected))
+	for _, registration := range selected {
+		targets = append(targets, logscore.Target{
+			RegistrationID: registration.ID,
+			ContestID:      registration.ContestID,
+			Official:       registration.Contest.Official,
+		})
+	}
+	return targets, nil
 }
 
 func (s *Service) ListYearlyRegistrations(ctx context.Context, userID uuid.UUID, year int, includePrivate bool) (*RegistrationList, error) {

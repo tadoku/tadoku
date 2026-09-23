@@ -413,14 +413,14 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	pagesService := pages.NewService(pagesRepository)
 	postsService := posts.NewService(postsRepository)
 	profileService := profile.NewService(profileRepository, userCache, roleService, kratosIdentities)
-	scoringService := scoring.NewService(scoringRepository)
 	featureFlagService := featureflagsservice.NewService(featureflags.NewEvaluator(fliptProvider, featureFlagMetrics, clock), fliptmanagement.NewClient(fliptmanagement.Config{
 		URL:         cfg.FliptManagementURL,
 		Environment: cfg.FliptEnvironment,
 		HTTPClient:  fliptManagement,
 	}))
 	scoringObserver := observability.NewScoringObserver(metrics, logger, cfg.ScoringEngineEnabled)
-	api := app.New(announcementsService, auditService, authzService, contestsService, leaderboardService, languagesService, logsService, pagesService, postsService, profileService, scoringService, featureFlagService, pool, permissionChecker, scoringObserver)
+	scoringService := scoring.NewService(scoringRepository, cfg.ScoringEngineEnabled, scoringObserver)
+	api := app.New(announcementsService, auditService, authzService, contestsService, leaderboardService, languagesService, logsService, pagesService, postsService, profileService, scoringService, featureFlagService, pool, permissionChecker)
 	rejectBanned := newBannedUserMiddleware(ketoReader, logger)
 
 	handler, err := transporthttp.NewHandler(api, pool.Ping, cfg.RequestTimeout, metrics, logger, authenticate, rejectBanned, authenticateCallback)

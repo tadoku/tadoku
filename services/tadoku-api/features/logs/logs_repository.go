@@ -13,63 +13,11 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/activities"
 	queries "github.com/tadoku/tadoku/services/tadoku-api/generated/sqlc/logs"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
 
 type LogsRepository struct{ db *pgxpool.Pool }
 
 func NewLogsRepository(db *pgxpool.Pool) *LogsRepository { return &LogsRepository{db: db} }
-
-func (r *LogsRepository) FindTrackingUnit(ctx context.Context, id *uuid.UUID, key *string, activityID int32, languageCode string) (*Unit, error) {
-	executor, err := postgres.Executor(ctx, r.db)
-	if err != nil {
-		return nil, err
-	}
-	q := queries.New(executor)
-	var unit Unit
-	if id != nil {
-		row, err := q.FindUnitForTrackingByID(ctx, queries.FindUnitForTrackingByIDParams{
-			ID:           logUUID(*id),
-			ActivityID:   int16(activityID),
-			LanguageCode: pgtype.Text{String: languageCode, Valid: true},
-		})
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, errx.NewInvalidInputError("unit_id is not valid")
-		}
-		if err != nil {
-			return nil, fmt.Errorf("find tracking unit: %w", err)
-		}
-		unit = Unit{
-			ID:            row.ID.Bytes,
-			Key:           row.UnitKey,
-			LogActivityID: int(row.LogActivityID),
-			Name:          row.Name,
-			Modifier:      row.Modifier,
-		}
-	} else if key != nil {
-		row, err := q.FindUnitForTrackingByKey(ctx, queries.FindUnitForTrackingByKeyParams{
-			UnitKey:      *key,
-			ActivityID:   int16(activityID),
-			LanguageCode: pgtype.Text{String: languageCode, Valid: true},
-		})
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, errx.NewInvalidInputError("unit_key is not valid")
-		}
-		if err != nil {
-			return nil, fmt.Errorf("find tracking unit: %w", err)
-		}
-		unit = Unit{
-			ID:            row.ID.Bytes,
-			Key:           row.UnitKey,
-			LogActivityID: int(row.LogActivityID),
-			Name:          row.Name,
-			Modifier:      row.Modifier,
-		}
-	} else {
-		return nil, nil
-	}
-	return &unit, nil
-}
 
 func (r *LogsRepository) LockLog(ctx context.Context, id uuid.UUID) error {
 	executor, err := postgres.Executor(ctx, r.db)
@@ -89,7 +37,7 @@ func (r *LogsRepository) LockLog(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-func (r *LogsRepository) CreateLog(ctx context.Context, mutation Mutation) error {
+func (r *LogsRepository) CreateLog(ctx context.Context, mutation logMutation) error {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return err
@@ -191,7 +139,7 @@ func (r *LogsRepository) OutboxContext(ctx context.Context, id uuid.UUID) (Outbo
 	}, err
 }
 
-func (r *LogsRepository) UpdateLog(ctx context.Context, mutation Mutation) error {
+func (r *LogsRepository) UpdateLog(ctx context.Context, mutation logMutation) error {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return err

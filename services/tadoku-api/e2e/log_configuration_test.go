@@ -23,14 +23,11 @@ func TestImmersionLogGetConfigurations(t *testing.T) {
 		name := APITestName("ImmersionLogGetConfigurations", test.want, test.description...)
 		t.Run(name, func(t *testing.T) {
 			var native http.Handler = api.handler
-			legacy := legacyImmersion.handler
 			if test.scoringEngineEnabled {
 				native = scoringEnabledHandler
-				legacy = legacyImmersion.scoringEnabledHandler
 			}
 			runCase(t, api, name, test.want,
 				implementation{name: "tadoku-api", handler: native},
-				implementation{name: "immersion-api", handler: legacy},
 			)
 		})
 	}

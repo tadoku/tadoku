@@ -20,7 +20,6 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: 'Services',
       items: [
-        'services/immersion-api',
         'services/content-api',
         'services/authorization',
         'services/s2s-auth',

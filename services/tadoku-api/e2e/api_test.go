@@ -46,15 +46,11 @@ import (
 
 var api *suite
 var scoringEnabledHandler http.Handler
-var legacyImmersion *legacyImmersionAPI
-var legacyAuthentication http.Handler
-var legacyBannedUsers http.Handler
 var authenticationJWKS *httptest.Server
 var keto *testketo.Fixture
 var flipt *testflipt.Fixture
 var leaderboardValkey *leaderboardValkeyFixture
 var unavailableLeaderboardNative http.Handler
-var unavailableLeaderboardLegacy *legacyImmersionAPI
 
 const callbackToken = "test-oathkeeper-callback-token"
 
@@ -93,7 +89,6 @@ func runTests(m *testing.M) (code int) {
 	defer authenticationJWKS.Close()
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	legacyAuthentication = newLegacyAuthenticationHandler(authenticationJWKS.URL)
 	flipt = testflipt.New()
 	defer flipt.Close()
 	keto, err = testketo.New(ctx)
@@ -154,12 +149,6 @@ func runTests(m *testing.M) (code int) {
 	}
 	unavailableCallback = unavailableNative
 
-	legacyImmersion, err = newLegacyImmersionAPI(ctx, api.db.DSN, authenticationJWKS.URL, keto.ReadURL(), kratos.Client(), leaderboardValkey.client)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return 1
-	}
-	defer func() { cleanupErr = errors.Join(cleanupErr, legacyImmersion.db.Close()) }()
 	unavailableValkey, err := newClosedLeaderboardValkeyClient()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -170,13 +159,6 @@ func runTests(m *testing.M) (code int) {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}
-	unavailableLeaderboardLegacy, err = newLegacyImmersionAPIWithTimeout(ctx, api.db.DSN, authenticationJWKS.URL, keto.ReadURL(), kratos.Client(), unavailableValkey, 25*time.Millisecond)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return 1
-	}
-	defer func() { cleanupErr = errors.Join(cleanupErr, unavailableLeaderboardLegacy.db.Close()) }()
-	legacyBannedUsers = newLegacyBannedUsersHandler(authenticationJWKS.URL, keto.ReadURL())
 
 	return m.Run()
 }

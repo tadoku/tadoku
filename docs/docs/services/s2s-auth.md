@@ -75,7 +75,7 @@ Authn:
 Authz:
 
 - `RequireServiceAudience` enforces the service audience using the configured service name.
-  - Each service sets a default via envconfig: `service_name` defaults to the service's name (for example, `immersion-api`).
+  - Each service sets a default via envconfig: `service_name` defaults to the service's name.
 - `RejectBannedUsers` blocks banned users (except `/current-user/role`).
 
 ## Development Environment Setup

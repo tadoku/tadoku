@@ -9,7 +9,6 @@ type featureAccessCase struct {
 	description []string
 	want        int
 	unavailable bool
-	skipParity  string
 }
 
 func TestImmersionFeatureFlagDecisions(t *testing.T) {
@@ -23,14 +22,11 @@ func TestImmersionFeatureFlagDecisions(t *testing.T) {
 		name := APITestName("ImmersionFeatureFlagDecisions", test.want, test.description...)
 		t.Run(name, func(t *testing.T) {
 			native := http.Handler(api.handler)
-			legacy := legacyImmersion.handler
 			if test.unavailable {
 				native = withFliptUnavailable(native)
-				legacy = withFliptUnavailable(legacy)
 			}
 			runCase(t, api, name, test.want,
 				implementation{name: "tadoku-api", handler: native},
-				implementation{name: "immersion-api", handler: legacy},
 			)
 		})
 	}
@@ -40,7 +36,7 @@ func TestImmersionFeatureAccessGet(t *testing.T) {
 	tests := []featureAccessCase{
 		{description: []string{"enabled"}, want: http.StatusOK},
 		{description: []string{"invalid", "flag"}, want: http.StatusBadRequest},
-		{description: []string{"invalid", "user", "id"}, want: http.StatusBadRequest, skipParity: "generated decoders intentionally expose different UUID parse details"},
+		{description: []string{"invalid", "user", "id"}, want: http.StatusBadRequest},
 		{description: []string{"zero", "user", "id"}, want: http.StatusBadRequest},
 		{description: []string{"guest"}, want: http.StatusUnauthorized},
 		{description: []string{"non", "admin"}, want: http.StatusForbidden},
@@ -79,14 +75,11 @@ func runFeatureAccessCases(t *testing.T, operation string, tests []featureAccess
 		name := APITestName(operation, test.want, test.description...)
 		t.Run(name, func(t *testing.T) {
 			native := http.Handler(api.handler)
-			legacy := legacyImmersion.handler
 			if test.unavailable {
 				native = withFliptUnavailable(native)
-				legacy = withFliptUnavailable(legacy)
 			}
 			runCase(t, api, name, test.want,
 				implementation{name: "tadoku-api", handler: native},
-				implementation{name: "immersion-api", handler: legacy, skip: test.skipParity},
 			)
 		})
 	}

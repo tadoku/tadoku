@@ -74,7 +74,7 @@ A short-lived dependency Job creates the database idempotently; only that Job
 references the existing administrator Secret. API/migration/seed use the existing
 `immersion` role. Credentials remain Secret references. This is cooperative
 development isolation, not a hostile-tenant boundary: the role, Kratos, Keto,
-Valkey and unchanged legacy APIs remain shared.
+Valkey remains shared.
 
 ```sh
 dev task --owner alice migrate

@@ -127,12 +127,10 @@ echo "restarting services against the fresh database..."
 rollout_restart_if_present default kratos
 rollout_restart_if_present default keto
 rollout_restart_if_present default pgweb
-rollout_restart_if_present tdk-immersion-api immersion-api
 
 rollout_wait_if_present default kratos
 rollout_wait_if_present default keto
 rollout_wait_if_present default pgweb
-rollout_wait_if_present tdk-immersion-api immersion-api
 
 rollout_restart_if_present tdk-tadoku-api tadoku-api
 

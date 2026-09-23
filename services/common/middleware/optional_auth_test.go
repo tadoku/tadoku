@@ -204,7 +204,7 @@ func TestOptionalAdminAuth_ServiceToken_Allowed(t *testing.T) {
 
 	claims := &UnifiedClaims{
 		RegisteredClaims: jwtv4.RegisteredClaims{
-			Subject:   "system:serviceaccount:default:immersion-api",
+			Subject:   "system:serviceaccount:default:tadoku-api",
 			ExpiresAt: jwtv4.NewNumericDate(time.Now().Add(time.Hour)),
 		},
 		Type: "service",

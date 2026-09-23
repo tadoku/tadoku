@@ -7,12 +7,11 @@ title: System Architecture
 
 ## Overview
 
-The Tadoku app consists of several backend services & frontends deployed to a Kubernetes cluster. For development we use [Tilt](https://tilt.dev/) to spin up a [development environment](./local-environment.md) which mimics the production deployment.
+The Tadoku app consists of backend services and frontends deployed to Kubernetes. Developers use [DevCLI](https://github.com/tadoku/tadoku/blob/main/.dev/README.md) with the development cluster.
 
 ### Backend services
 
-- [immersion-api](./services/immersion-api.md)
-- [tadoku-api](https://github.com/tadoku/tadoku/tree/main/services/tadoku-api), including the public [Content API](./services/content-api.md) and Profile API namespaces
+- [Tadoku API](https://github.com/tadoku/tadoku/tree/main/services/tadoku-api), including the public Immersion, [Content API](./services/content-api.md), Profile and Authorization namespaces
 - [Ory Kratos](https://github.com/ory/kratos)
 
 ### Frontends

@@ -19,7 +19,6 @@ func TestFindLatestOfficialContest(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			runCase(t, api, name, test.want,
 				implementation{name: "tadoku-api", handler: api.handler},
-				implementation{name: "immersion-api", handler: legacyImmersion.handler},
 			)
 		})
 	}

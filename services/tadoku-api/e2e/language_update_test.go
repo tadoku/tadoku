@@ -9,7 +9,6 @@ func TestUpdateLanguage(t *testing.T) {
 	tests := []struct {
 		description []string
 		want        int
-		skipParity  string
 	}{
 		{description: []string{"admin"}, want: http.StatusOK},
 		{description: []string{"maximum", "byte", "length"}, want: http.StatusOK},
@@ -19,7 +18,7 @@ func TestUpdateLanguage(t *testing.T) {
 		{description: []string{"unicode", "name", "bytes"}, want: http.StatusBadRequest},
 		{description: []string{"malformed", "json"}, want: http.StatusBadRequest},
 		{description: []string{"empty", "body"}, want: http.StatusBadRequest},
-		{description: []string{"empty", "guest"}, want: http.StatusBadRequest, skipParity: "strict JSON decoding rejects an empty body before legacy application authorization"},
+		{description: []string{"empty", "guest"}, want: http.StatusBadRequest},
 		{description: []string{"guest"}, want: http.StatusUnauthorized},
 		{description: []string{"non", "admin"}, want: http.StatusForbidden},
 		{description: []string{"missing", "code"}, want: http.StatusNotFound},
@@ -31,7 +30,6 @@ func TestUpdateLanguage(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			runCase(t, api, name, test.want,
 				implementation{name: "tadoku-api", handler: api.handler},
-				implementation{name: "immersion-api", handler: legacyImmersion.handler, skip: test.skipParity},
 			)
 		})
 	}

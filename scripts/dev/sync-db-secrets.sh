@@ -80,4 +80,3 @@ cleanup() {
 trap cleanup EXIT
 
 sync_secret immersion tdk-tadoku-api
-sync_secret immersion tdk-immersion-api

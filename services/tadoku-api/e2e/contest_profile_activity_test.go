@@ -9,7 +9,6 @@ func TestImmersionContestProfileFetchActivity(t *testing.T) {
 	tests := []struct {
 		description []string
 		want        int
-		skipParity  string
 	}{
 		{description: []string{"public", "guest"}, want: http.StatusOK},
 		{description: []string{"public", "user"}, want: http.StatusOK},
@@ -33,15 +32,15 @@ func TestImmersionContestProfileFetchActivity(t *testing.T) {
 		{description: []string{"deleted", "logs"}, want: http.StatusOK},
 		{description: []string{"deleted", "local", "user"}, want: http.StatusOK},
 		{description: []string{"missing", "owner"}, want: http.StatusOK},
-		{description: []string{"invalid", "user"}, want: http.StatusBadRequest, skipParity: "native responses omit parser details and reflected parameter input"},
-		{description: []string{"invalid", "contest"}, want: http.StatusBadRequest, skipParity: "native responses omit parser details and reflected parameter input"},
+		{description: []string{"invalid", "user"}, want: http.StatusBadRequest},
+		{description: []string{"invalid", "contest"}, want: http.StatusBadRequest},
 	}
 	for _, test := range tests {
 		name := APITestName("ImmersionContestProfileFetchActivity", test.want, test.description...)
 		t.Run(name, func(t *testing.T) {
 			runCase(t, api, name, test.want,
 				implementation{name: "tadoku-api", handler: api.handler},
-				implementation{name: "immersion-api", handler: legacyImmersion.handler, skip: test.skipParity})
+			)
 		})
 	}
 }

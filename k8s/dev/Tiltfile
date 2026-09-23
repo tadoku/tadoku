@@ -86,7 +86,6 @@ include('../../infra/dev/valkey/Tiltfile')
 include('../../infra/dev/tools/Tiltfile')
 
 include('../../services/token-reflector/Tiltfile')
-include('../../services/immersion-api/Tiltfile')
 include('../../services/tadoku-api/Tiltfile')
 
 include('../../frontend/Tiltfile')
@@ -102,7 +101,6 @@ local_resource(
     ],
     labels=['infra'],
     resource_deps=[
-        'immersion-api',
         'kratos',
         'keto',
     ],

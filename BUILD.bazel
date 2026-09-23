@@ -17,14 +17,12 @@ sh_binary(
     srcs = ["tools/ci/run_bazel_images.sh"],
     args = [
         "$(rlocationpath //services/image-webhook-gateway:load)",
-        "$(rlocationpath //services/immersion-api:load)",
         "$(rlocationpath //services/tadoku-api:load)",
         "$(rlocationpath //services/tadoku-api/migrations:load)",
         "$(rlocationpath //services/token-reflector:load)",
     ],
     data = [
         "//services/image-webhook-gateway:load",
-        "//services/immersion-api:load",
         "//services/tadoku-api:load",
         "//services/tadoku-api/migrations:load",
         "//services/token-reflector:load",
@@ -40,14 +38,12 @@ sh_binary(
     srcs = ["tools/ci/run_bazel_images.sh"],
     args = [
         "$(rlocationpath //services/image-webhook-gateway:push)",
-        "$(rlocationpath //services/immersion-api:push)",
         "$(rlocationpath //services/tadoku-api:push)",
         "$(rlocationpath //services/tadoku-api/migrations:push)",
         "$(rlocationpath //services/token-reflector:push)",
     ],
     data = [
         "//services/image-webhook-gateway:push",
-        "//services/immersion-api:push",
         "//services/tadoku-api:push",
         "//services/tadoku-api/migrations:push",
         "//services/token-reflector:push",

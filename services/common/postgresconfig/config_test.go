@@ -35,15 +35,15 @@ func TestWithApplicationNameLabelsConnections(t *testing.T) {
 	cfg, err := Load("TEST", "TEST_URL")
 	require.NoError(t, err)
 
-	labeled := cfg.WithApplicationName(" immersion-api ")
+	labeled := cfg.WithApplicationName(" tadoku-api ")
 	assert.Empty(t, cfg.ApplicationName)
-	assert.Equal(t, "immersion-api", labeled.ApplicationName)
-	assert.Contains(t, labeled.URL(), "application_name=immersion-api")
+	assert.Equal(t, "tadoku-api", labeled.ApplicationName)
+	assert.Contains(t, labeled.URL(), "application_name=tadoku-api")
 	assert.NotContains(t, cfg.URL(), "application_name=")
 
 	parsed, err := labeled.ConnConfig()
 	require.NoError(t, err)
-	assert.Equal(t, "immersion-api", parsed.RuntimeParams["application_name"])
+	assert.Equal(t, "tadoku-api", parsed.RuntimeParams["application_name"])
 }
 
 func TestLoadRejectsPartialMixedAndInvalid(t *testing.T) {

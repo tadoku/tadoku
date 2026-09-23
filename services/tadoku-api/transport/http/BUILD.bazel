@@ -52,7 +52,6 @@ go_library(
         "post_version_list.go",
         "profile_statistics.go",
         "profile_users_list.go",
-        "proxy.go",
         "router.go",
         "scoring.go",
     ],
@@ -84,8 +83,6 @@ go_test(
         "generated_test.go",
         "observability_test.go",
         "panic_recovery_test.go",
-        "proxy_contract_test.go",
-        "proxy_test.go",
     ],
     embed = [":http"],
     deps = [

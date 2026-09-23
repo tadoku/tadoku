@@ -43,8 +43,6 @@ spec:
             secretKeyRef:
               name: dev-oathkeeper-authz
               key: token
-        - name: API_IMMERSION_URL
-          value: http://immersion-api.tdk-dev-immersion-api
         - name: API_POSTGRES_HOST
           value: tadoku-dev-db.tdk-dev-data
         - name: API_POSTGRES_DATABASE

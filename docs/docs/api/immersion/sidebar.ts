@@ -270,12 +270,6 @@ const sidebar: SidebarsConfig = {
       items: [
         {
           type: "doc",
-          id: "api/immersion/ping",
-          label: "Checks if service is responsive",
-          className: "api-method get",
-        },
-        {
-          type: "doc",
           id: "api/immersion/feature-flag-decisions",
           label: "Returns public feature flag decisions for the current user",
           className: "api-method get",

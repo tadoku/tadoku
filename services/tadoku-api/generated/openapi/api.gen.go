@@ -137,21 +137,6 @@ func (e ImmersionFeatureAccessResponseEnvironment) Valid() bool {
 	}
 }
 
-// Defines values for ImmersionInternalAccountDeletionEligibilityConflictError.
-const (
-	RunningContestOwned ImmersionInternalAccountDeletionEligibilityConflictError = "running_contest_owned"
-)
-
-// Valid indicates whether the value is a known member of the ImmersionInternalAccountDeletionEligibilityConflictError enum.
-func (e ImmersionInternalAccountDeletionEligibilityConflictError) Valid() bool {
-	switch e {
-	case RunningContestOwned:
-		return true
-	default:
-		return false
-	}
-}
-
 // Defines values for ImmersionManagedFeatureFlagKey.
 const (
 	ReleaseLogEntryV2 ImmersionManagedFeatureFlagKey = "release-log-entry-v2"
@@ -734,32 +719,6 @@ type ImmersionFeatureFlagDecisions struct {
 // ImmersionFeatureFlagDecisionsResponse defines model for ImmersionFeatureFlagDecisionsResponse.
 type ImmersionFeatureFlagDecisionsResponse struct {
 	Decisions ImmersionFeatureFlagDecisions `json:"decisions"`
-}
-
-// ImmersionInternalAccountDeletionEligibilityConflict defines model for ImmersionInternalAccountDeletionEligibilityConflict.
-type ImmersionInternalAccountDeletionEligibilityConflict struct {
-	AvailableAfter time.Time                                                `json:"available_after"`
-	Error          ImmersionInternalAccountDeletionEligibilityConflictError `json:"error"`
-}
-
-// ImmersionInternalAccountDeletionEligibilityConflictError defines model for ImmersionInternalAccountDeletionEligibilityConflict.Error.
-type ImmersionInternalAccountDeletionEligibilityConflictError string
-
-// ImmersionInternalAccountDeletionEligibilityRequest defines model for ImmersionInternalAccountDeletionEligibilityRequest.
-type ImmersionInternalAccountDeletionEligibilityRequest struct {
-	UserId openapi_types.UUID `json:"user_id"`
-}
-
-// ImmersionInternalAccountDeletionLockRequest defines model for ImmersionInternalAccountDeletionLockRequest.
-type ImmersionInternalAccountDeletionLockRequest struct {
-	RequestId openapi_types.UUID `json:"request_id"`
-	UserId    openapi_types.UUID `json:"user_id"`
-}
-
-// ImmersionInternalAccountDeletionScrubRequest defines model for ImmersionInternalAccountDeletionScrubRequest.
-type ImmersionInternalAccountDeletionScrubRequest struct {
-	RequestId openapi_types.UUID `json:"request_id"`
-	UserId    openapi_types.UUID `json:"user_id"`
 }
 
 // ImmersionLanguage defines model for ImmersionLanguage.

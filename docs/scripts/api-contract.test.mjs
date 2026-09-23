@@ -7,7 +7,7 @@ const contract = parseContract(await readFile('../services/tadoku-api/spec/opena
 const serverCodegen = parseContract(await readFile('../services/tadoku-api/spec/server-codegen.yaml', 'utf8'));
 const callbackServerCodegen = parseContract(await readFile('../services/tadoku-api/spec/callback-server-codegen.yaml', 'utf8'));
 
-test('all retained wire contracts survive the merge, including internal callers', async () => {
+test('retained wire contracts match their legacy shapes', async () => {
   let operations = 0;
   let publicOperations = 0;
   const ids = new Set();
@@ -38,6 +38,8 @@ test('all retained wire contracts survive the merge, including internal callers'
       }
     }
     if (name === 'Immersion') {
+      // The legacy health operation is retired from the canonical product API.
+      delete legacy.paths['/ping'];
       // Native feature access documents the no-store header already returned by legacy.
       const featureAccessPath = '/admin/feature-flags/{flagKey}/users/{userId}';
       for (const method of ['get', 'put', 'delete']) {
@@ -168,17 +170,17 @@ test('all retained wire contracts survive the merge, including internal callers'
       if (operation['x-tadoku-exposure'] === 'public') publicOperations++;
     }
   }
-  assert.equal(operations, 73);
-  assert.equal(publicOperations, 69);
+  assert.equal(operations, 69);
+  assert.equal(publicOperations, 68);
 });
 
 test('native-owned operations match server generation', () => {
   const owned = [];
   for (const item of Object.values(contract.paths)) {
     for (const operation of Object.values(item)) {
-      assert.ok(['native', 'legacy'].includes(operation['x-tadoku-owner']));
+      assert.equal(operation['x-tadoku-owner'], 'native');
       assert.ok(['public', 'internal', 'callback'].includes(operation['x-tadoku-exposure']));
-      if (operation['x-tadoku-owner'] === 'native') owned.push(operation.operationId);
+      owned.push(operation.operationId);
     }
   }
   const generated = [

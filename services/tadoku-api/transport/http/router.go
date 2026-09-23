@@ -15,13 +15,10 @@ import (
 	callbackopenapi "github.com/tadoku/tadoku/services/tadoku-api/generated/openapi/callback"
 )
 
-// Router keeps application routes behind shared middleware while allowing this
-// package to attach probes and temporary legacy proxies outside it.
+// Router keeps application routes behind shared middleware and exposes probes.
 type Router struct {
-	rootHandler     stdhttp.Handler
 	rootMux         *stdhttp.ServeMux
 	protectedRoutes *routeRegistrar
-	requestDuration *prometheus.HistogramVec
 }
 
 type routeRegistrar struct {
@@ -64,10 +61,10 @@ func (r *Router) HandleFunc(pattern string, handler func(stdhttp.ResponseWriter,
 }
 
 func (r *Router) ServeHTTP(w stdhttp.ResponseWriter, request *stdhttp.Request) {
-	r.rootHandler.ServeHTTP(w, request)
+	r.rootMux.ServeHTTP(w, request)
 }
 
-// NewHandler builds the application router without any legacy upstreams.
+// NewHandler builds the application router.
 func NewHandler(
 	application *app.Application,
 	ready func(context.Context) error,
@@ -105,10 +102,8 @@ func NewHandler(
 		return nil, err
 	}
 	router := &Router{
-		rootMux:         stdhttp.NewServeMux(),
-		requestDuration: requestDuration,
+		rootMux: stdhttp.NewServeMux(),
 	}
-	router.rootHandler = router.rootMux
 
 	protectedRoutes := &routeRegistrar{
 		rootMux: router.rootMux,
@@ -120,8 +115,6 @@ func NewHandler(
 	applicationHandler = withPanicRecovery(logger, applicationHandler)
 	protectedRoutes.handler = observe(
 		nativeRouteLabel,
-		"",
-		"native",
 		timeout,
 		applicationHandler,
 		requestDuration,
@@ -137,8 +130,6 @@ func NewHandler(
 	callbackHandler = withPanicRecovery(logger, callbackHandler)
 	callbackRoutes.handler = observe(
 		nativeRouteLabel,
-		"",
-		"native",
 		timeout,
 		callbackHandler,
 		requestDuration,

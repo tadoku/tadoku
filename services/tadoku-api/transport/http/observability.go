@@ -15,6 +15,7 @@ import (
 const correlationHeader = "X-Request-Id"
 
 func newRequestDuration(registerer prometheus.Registerer) (*prometheus.HistogramVec, error) {
+	// Preserve the existing metric contract for dashboards during proxy retirement.
 	duration := prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Name: "tadoku_api_proxy_request_duration_seconds",
 		Help: "Duration of requests handled by Tadoku API.",
@@ -27,8 +28,6 @@ func newRequestDuration(registerer prometheus.Registerer) (*prometheus.Histogram
 
 func observe(
 	routeLabel func(*stdhttp.Request) string,
-	upstream string,
-	mode string,
 	timeout time.Duration,
 	next stdhttp.Handler,
 	duration *prometheus.HistogramVec,
@@ -41,9 +40,6 @@ func observe(
 
 		request = request.WithContext(withCorrelationID(ctx, request.Header.Get(correlationHeader)))
 		request.Header.Set(correlationHeader, correlationID(request))
-		if mode == "proxy" {
-			response.Header().Set(correlationHeader, correlationID(request))
-		}
 		recorder := &statusRecorder{ResponseWriter: response}
 		next.ServeHTTP(recorder, request)
 
@@ -53,13 +49,13 @@ func observe(
 		}
 		elapsed := time.Since(started)
 		route := routeLabel(request)
-		duration.WithLabelValues(route, upstream, mode, strconv.Itoa(status)).Observe(elapsed.Seconds())
+		duration.WithLabelValues(route, "", "native", strconv.Itoa(status)).Observe(elapsed.Seconds())
 		logger.InfoContext(request.Context(), "request completed",
 			"correlation_id", correlationID(request),
 			"method", request.Method,
 			"route", route,
-			"upstream", upstream,
-			"mode", mode,
+			"upstream", "",
+			"mode", "native",
 			"status", status,
 			"latency", elapsed,
 		)

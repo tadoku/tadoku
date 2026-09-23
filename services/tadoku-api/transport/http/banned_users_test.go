@@ -121,13 +121,45 @@ func TestRejectBannedUsersAllowsOnlyRoleIntrospection(t *testing.T) {
 		name       string
 		method     string
 		path       string
+		pattern    string
 		want       int
 		wantCalled bool
 	}{
-		{name: "current role", method: stdhttp.MethodGet, path: "/authz/current-user/role", want: stdhttp.StatusNoContent, wantCalled: true},
-		{name: "current role wrong method", method: stdhttp.MethodPost, path: "/authz/current-user/role", want: stdhttp.StatusForbidden},
-		{name: "current role subpath", method: stdhttp.MethodGet, path: "/authz/current-user/role/extra", want: stdhttp.StatusForbidden},
-		{name: "permission check", method: stdhttp.MethodPost, path: "/authz/permission/check", want: stdhttp.StatusForbidden},
+		{
+			name:       "authz role get pattern",
+			method:     stdhttp.MethodGet,
+			path:       "/authz/current-user/role",
+			pattern:    authzRoleGetPattern,
+			want:       stdhttp.StatusNoContent,
+			wantCalled: true,
+		},
+		{
+			name:   "matching path without pattern",
+			method: stdhttp.MethodGet,
+			path:   "/authz/current-user/role",
+			want:   stdhttp.StatusForbidden,
+		},
+		{
+			name:    "matching path with wrong pattern",
+			method:  stdhttp.MethodGet,
+			path:    "/authz/current-user/role",
+			pattern: "POST /authz/current-user/role",
+			want:    stdhttp.StatusForbidden,
+		},
+		{
+			name:    "role subpath with role pattern still requires exact mux match",
+			method:  stdhttp.MethodGet,
+			path:    "/authz/current-user/role/extra",
+			pattern: "GET /authz/current-user/role/extra",
+			want:    stdhttp.StatusForbidden,
+		},
+		{
+			name:    "permission check pattern",
+			method:  stdhttp.MethodPost,
+			path:    "/authz/permission/check",
+			pattern: "POST /authz/permission/check",
+			want:    stdhttp.StatusForbidden,
+		},
 	}
 
 	for _, test := range tests {
@@ -144,6 +176,7 @@ func TestRejectBannedUsersAllowsOnlyRoleIntrospection(t *testing.T) {
 				w.WriteHeader(stdhttp.StatusNoContent)
 			}))
 			request := httptest.NewRequest(test.method, test.path, nil)
+			request.Pattern = test.pattern
 			request = request.WithContext(identity.WithUser(request.Context(), &identity.User{Subject: "banned"}))
 			response := httptest.NewRecorder()
 

@@ -36,7 +36,7 @@
 - [ ] Split pages/posts Create+Update into one-SQL repository methods; allocate content IDs in the service under the app transaction; ban `uuid.New` in `*_repository.go`.
 - [ ] Extract leaderboard Valkey cache I/O from `Service` into a Store (mirror immersion `LeaderboardStore`); deny `valkey-go` imports outside Store packages.
 - [ ] Move scoring `unitActivities` into shared `domain/activities`; ban private unit→activity maps elsewhere.
-- [ ] Share one profile Kratos traits decoder; remove the dead untagged `Email` field in `FindProfile`.
+- [x] Share one profile Kratos traits decoder; remove the dead untagged `Email` field in `FindProfile`.
 - [ ] Make logs `YearlyActivitySplit` reuse `hydrateLogActivity` / typed `ErrInvalidActivity` (not `fmt.Errorf` → 500).
 - [ ] Unify page/post slug-resolve authz masking into one helper; paired guest/non-admin goldens so Unauthorized/Unavailable do not leak on pages while posts mask to NotFound.
 - [ ] Strengthen e2e `accessAuthenticated` to require a `401_guest` fixture specifically (stop accepting middleware-only 401s); contest scoring list currently declares authenticated but guests get 403/404.

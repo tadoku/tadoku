@@ -2,7 +2,6 @@ package profile
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"math"
 	"strings"
@@ -157,16 +156,8 @@ func (s *Service) FindProfile(ctx context.Context, userID uuid.UUID) (*PublicPro
 		return nil, fmt.Errorf("unexpected schema %s", identity.GetSchemaId())
 	}
 
-	data, err := json.Marshal(identity.GetTraits())
+	traits, err := decodeIdentityTraits(identity.GetTraits())
 	if err != nil {
-		return nil, err
-	}
-
-	var traits struct {
-		DisplayName string `json:"display_name"`
-		Email       string
-	}
-	if err := json.Unmarshal(data, &traits); err != nil {
 		return nil, err
 	}
 

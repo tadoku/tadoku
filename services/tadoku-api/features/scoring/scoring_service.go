@@ -206,11 +206,11 @@ func (s *Service) findContestRuleSets(ctx context.Context, contestID uuid.UUID) 
 	return set, fallback, err
 }
 
-func (s *Service) ValidateDraftConfiguration(ctx context.Context, scope string, parameters *DraftParameters) error {
-	if err := parameters.validateConfiguration(scope); err != nil {
+func (s *Service) ValidateContestDraftConfiguration(ctx context.Context, parameters *ContestDraftParameters) error {
+	if err := parameters.validateConfiguration(); err != nil {
 		return err
 	}
-	if scope == "contest" && parameters.Mode == ModeOverride && parameters.FallbackRuleSetID != nil {
+	if parameters.Mode == ModeOverride && parameters.FallbackRuleSetID != nil {
 		fallback, err := s.repository.FindRuleSetByID(ctx, *parameters.FallbackRuleSetID)
 		if err != nil {
 			return err
@@ -222,37 +222,53 @@ func (s *Service) ValidateDraftConfiguration(ctx context.Context, scope string, 
 	return nil
 }
 
-func (s *Service) ValidateDraftRules(parameters *DraftParameters) error {
-	return parameters.validateRules()
+func (s *Service) NormalizeDraftRules(parameters *DraftRules) error {
+	return parameters.normalize()
 }
 
-func (s *Service) CreateDraft(ctx context.Context, scope string, parameters DraftParameters) (*RuleSet, error) {
-	version, err := s.repository.NextDraftVersion(ctx, parameters.ContestID)
+func (s *Service) CreatePlatformDraft(ctx context.Context, parameters PlatformDraftParameters) (*RuleSet, error) {
+	return s.createDraft(ctx, RuleSet{
+		Scope:     "platform",
+		Rules:     parameters.Rules,
+		CreatedAt: parameters.CreatedAt,
+	})
+}
+
+func (s *Service) CreateContestDraft(ctx context.Context, parameters ContestDraftParameters) (*RuleSet, error) {
+	return s.createDraft(ctx, RuleSet{
+		Scope:             "contest",
+		ContestID:         &parameters.ContestID,
+		Mode:              string(parameters.Mode),
+		FallbackRuleSetID: parameters.FallbackRuleSetID,
+		Rules:             parameters.Rules,
+		CreatedAt:         parameters.CreatedAt,
+	})
+}
+
+func (s *Service) createDraft(ctx context.Context, draft RuleSet) (*RuleSet, error) {
+	version, err := s.repository.NextDraftVersion(ctx, draft.ContestID)
 	if err != nil {
 		return nil, fmt.Errorf("allocate scoring rule set version: %w", err)
 	}
 
-	draft, err := s.repository.CreateDraft(ctx, RuleSet{
-		ID:                uuid.New(),
-		Scope:             scope,
-		ContestID:         parameters.ContestID,
-		Version:           version,
-		Status:            "draft",
-		Mode:              string(parameters.Mode),
-		FallbackRuleSetID: parameters.FallbackRuleSetID,
-		Rules:             []Rule{},
-		CreatedAt:         parameters.CreatedAt,
-	})
+	draft.ID = uuid.New()
+	draft.Version = version
+	draft.Status = "draft"
+	rules := draft.Rules
+	draft.Rules = []Rule{}
+
+	created, err := s.repository.CreateDraft(ctx, draft)
 	if err != nil {
 		return nil, err
 	}
-	draft.Rules = make([]Rule, len(parameters.Rules))
-	for i, rule := range parameters.Rules {
+	created.Rules = make([]Rule, len(rules))
+	for i, rule := range rules {
 		rule.ID = uuid.New()
-		if err := s.repository.CreateRule(ctx, draft.ID, rule); err != nil {
+		if err := s.repository.CreateRule(ctx, created.ID, rule); err != nil {
 			return nil, err
 		}
-		draft.Rules[i] = rule
+		created.Rules[i] = rule
 	}
-	return draft, nil
+
+	return created, nil
 }

@@ -28,7 +28,11 @@ type ScoringRuleSet = scoring.RuleSet
 type ScoringRule = scoring.Rule
 type ScoringSource = scoring.Source
 
-type ScoringRuleSetDraftParameters struct {
+type PlatformScoringRuleSetDraftParameters struct {
+	Rules []ScoringRule
+}
+
+type ContestScoringRuleSetDraftParameters struct {
 	Mode              string
 	FallbackRuleSetID *uuid.UUID
 	Rules             []ScoringRule
@@ -105,17 +109,32 @@ func (a *Application) ListContestScoringRuleSets(ctx context.Context, contestID 
 	return a.scoring.ListContestRuleSets(ctx, contestID)
 }
 
-func (a *Application) CreatePlatformScoringRuleSetDraft(ctx context.Context, parameters ScoringRuleSetDraftParameters) (*ScoringRuleSet, error) {
+func (a *Application) CreatePlatformScoringRuleSetDraft(ctx context.Context, parameters PlatformScoringRuleSetDraftParameters) (*ScoringRuleSet, error) {
 	if err := a.permissions.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 
-	parameters.Mode = ""
-	parameters.FallbackRuleSetID = nil
-	return a.createScoringRuleSetDraft(ctx, "platform", nil, parameters)
+	draft := scoring.PlatformDraftParameters{
+		DraftRules: scoring.DraftRules{
+			Rules: append([]scoring.Rule(nil), parameters.Rules...),
+		},
+	}
+	if err := a.normalizeScoringDraftRules(ctx, &draft.DraftRules); err != nil {
+		return nil, err
+	}
+	draft.CreatedAt = timex.Now()
+
+	var created *ScoringRuleSet
+	err := postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) error {
+		var createErr error
+		created, createErr = a.scoring.CreatePlatformDraft(ctx, draft)
+		return createErr
+	})
+
+	return created, err
 }
 
-func (a *Application) CreateContestScoringRuleSetDraft(ctx context.Context, contestID uuid.UUID, parameters ScoringRuleSetDraftParameters) (*ScoringRuleSet, error) {
+func (a *Application) CreateContestScoringRuleSetDraft(ctx context.Context, contestID uuid.UUID, parameters ContestScoringRuleSetDraftParameters) (*ScoringRuleSet, error) {
 	contest, err := a.contests.FindContestByID(ctx, contestID, false)
 	if err != nil {
 		return nil, err
@@ -133,40 +152,23 @@ func (a *Application) CreateContestScoringRuleSetDraft(ctx context.Context, cont
 		return nil, errx.NewConflictError("contest scoring cannot change after the contest starts")
 	}
 
-	return a.createScoringRuleSetDraft(ctx, "contest", &contestID, parameters)
-}
-
-func (a *Application) createScoringRuleSetDraft(ctx context.Context, scope string, contestID *uuid.UUID, parameters ScoringRuleSetDraftParameters) (*ScoringRuleSet, error) {
-	var mode scoring.Mode
-	if scope == "contest" {
-		var err error
-		mode, err = scoring.ParseMode(parameters.Mode)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	draft := scoring.DraftParameters{
-		ContestID:         contestID,
-		Mode:              mode,
-		FallbackRuleSetID: parameters.FallbackRuleSetID,
-		Rules:             parameters.Rules,
-	}
-	if err := a.scoring.ValidateDraftConfiguration(ctx, scope, &draft); err != nil {
-		return nil, err
-	}
-
-	languages, err := a.languages.ListLanguages(ctx)
+	mode, err := scoring.ParseMode(parameters.Mode)
 	if err != nil {
 		return nil, err
 	}
-	languageCodes := make(map[string]struct{}, len(languages))
-	for _, language := range languages {
-		languageCodes[language.Code] = struct{}{}
-	}
 
-	draft.LanguageCodes = languageCodes
-	if err := a.scoring.ValidateDraftRules(&draft); err != nil {
+	draft := scoring.ContestDraftParameters{
+		ContestID:         contestID,
+		Mode:              mode,
+		FallbackRuleSetID: parameters.FallbackRuleSetID,
+		DraftRules: scoring.DraftRules{
+			Rules: append([]scoring.Rule(nil), parameters.Rules...),
+		},
+	}
+	if err := a.scoring.ValidateContestDraftConfiguration(ctx, &draft); err != nil {
+		return nil, err
+	}
+	if err := a.normalizeScoringDraftRules(ctx, &draft.DraftRules); err != nil {
 		return nil, err
 	}
 	draft.CreatedAt = timex.Now()
@@ -174,8 +176,24 @@ func (a *Application) createScoringRuleSetDraft(ctx context.Context, scope strin
 	var created *ScoringRuleSet
 	err = postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) error {
 		var createErr error
-		created, createErr = a.scoring.CreateDraft(ctx, scope, draft)
+		created, createErr = a.scoring.CreateContestDraft(ctx, draft)
 		return createErr
 	})
+
 	return created, err
+}
+
+func (a *Application) normalizeScoringDraftRules(ctx context.Context, rules *scoring.DraftRules) error {
+	languages, err := a.languages.ListLanguages(ctx)
+	if err != nil {
+		return err
+	}
+	languageCodes := make(map[string]struct{}, len(languages))
+	for _, language := range languages {
+		languageCodes[language.Code] = struct{}{}
+	}
+
+	rules.LanguageCodes = languageCodes
+
+	return a.scoring.NormalizeDraftRules(rules)
 }

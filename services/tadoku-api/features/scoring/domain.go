@@ -57,12 +57,21 @@ type RuleSet struct {
 	PublishedAt       *time.Time
 }
 
-type DraftParameters struct {
-	ContestID         *uuid.UUID
+type DraftRules struct {
+	Rules         []Rule
+	LanguageCodes map[string]struct{}
+}
+
+type PlatformDraftParameters struct {
+	DraftRules
+	CreatedAt time.Time
+}
+
+type ContestDraftParameters struct {
+	DraftRules
+	ContestID         uuid.UUID
 	Mode              Mode
 	FallbackRuleSetID *uuid.UUID
-	Rules             []Rule
-	LanguageCodes     map[string]struct{}
 	CreatedAt         time.Time
 }
 
@@ -75,23 +84,22 @@ func ParseMode(value string) (Mode, error) {
 	return mode, nil
 }
 
-func (p *DraftParameters) validateConfiguration(scope string) error {
-	if scope == "contest" {
-		switch p.Mode {
-		case ModeReplace:
-			if p.FallbackRuleSetID != nil {
-				return errx.NewInvalidInputError("replace rule sets cannot have a fallback")
-			}
-		case ModeOverride:
-			if p.FallbackRuleSetID == nil {
-				return errx.NewInvalidInputError("override rule sets require a fallback")
-			}
+func (p *ContestDraftParameters) validateConfiguration() error {
+	switch p.Mode {
+	case ModeReplace:
+		if p.FallbackRuleSetID != nil {
+			return errx.NewInvalidInputError("replace rule sets cannot have a fallback")
+		}
+	case ModeOverride:
+		if p.FallbackRuleSetID == nil {
+			return errx.NewInvalidInputError("override rule sets require a fallback")
 		}
 	}
+
 	return nil
 }
 
-func (p *DraftParameters) validateRules() error {
+func (p *DraftRules) normalize() error {
 	priorities := make(map[int32]struct{}, len(p.Rules))
 	for i := range p.Rules {
 		rule := &p.Rules[i]

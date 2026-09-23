@@ -22,8 +22,10 @@
 - [ ] Remove all helper functions from repositories and move them into shared packages, including the remaining helpers in the contests repository.
 - [ ] Introduce generic conversion helpers for repeated slice and type mappings after common conversion patterns stabilize across migrated features.
 - [ ] Review and standardize the role and identity checking patterns used by application operations.
+- [ ] Configure `wsl_v5` as a required CI check for handwritten Tadoku API Go code, excluding generated files; enable `after-block` and `after-decl` checks and provide a local auto-fix command.
 
 - [ ] Review the legacy log tag array-text decoding contract before replacing it with native array decoding; escaped quotes and backslashes currently affect returned tags.
+- [ ] After legacy immersion retirement, allow administrators to update another user's log contest registrations; validate requested registrations against the log owner's account and update the authorization HTTP cases.
 
 - [ ] Make scoring `ErrRuleSetNotFound` an `errx` NotFound (plain `errors.New` maps to Unknown→500). Guard with a KindOf unit test and a domain-errors lint that not-found sentinels use errx.
 - [ ] Make scoring `NormalizeTags` client-limit failures InvalidInput, never Internal (currently 500). Guard with unit + transport golden expecting 400; ban `Normalize*` returning Internal.

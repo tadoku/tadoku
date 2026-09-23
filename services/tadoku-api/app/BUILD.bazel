@@ -11,6 +11,7 @@ go_library(
         "feature_flags.go",
         "languages.go",
         "leaderboard.go",
+        "log_attachments.go",
         "log_mutations.go",
         "log_reads.go",
         "log_statistics.go",

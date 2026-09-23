@@ -41,6 +41,7 @@ go_test(
         "legacy_immersion_test.go",
         "log_configuration_test.go",
         "log_contest_reads_test.go",
+        "log_final_mutations_test.go",
         "log_mutations_test.go",
         "log_single_reads_test.go",
         "log_tag_suggestions_test.go",

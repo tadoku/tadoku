@@ -1,0 +1,10 @@
+[
+  {
+    "kind": "log",
+    "count": "1"
+  },
+  {
+    "kind": "refresh_contest_score",
+    "count": "6"
+  }
+]

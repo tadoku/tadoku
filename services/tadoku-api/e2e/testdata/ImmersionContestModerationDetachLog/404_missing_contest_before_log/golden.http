@@ -1,0 +1,4 @@
+>>> POST /immersion/contests/f9999999-9999-4999-8999-999999999999/moderation/detach/d9999999-9999-4999-8999-999999999999
+HTTP/1.1 404 Not Found
+Content-Length: 0
+

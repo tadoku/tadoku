@@ -71,6 +71,9 @@ test('all retained wire contracts survive the merge, including internal callers'
         ['/logs/score-preview', 'post'],
         ['/logs', 'post'],
         ['/logs/{id}', 'put'],
+        ['/logs/{id}', 'delete'],
+        ['/logs/{id}/contest-registrations', 'put'],
+        ['/contests/{id}/moderation/detach/{log_id}', 'post'],
         ['/scoring/rule-sets', 'get'],
         ['/scoring/rule-sets', 'post'],
         ['/contests/{id}/scoring/rule-sets', 'get'],
@@ -81,6 +84,9 @@ test('all retained wire contracts survive the merge, including internal callers'
         if (contract.paths[`/immersion${path}`][method]['x-tadoku-owner'] === 'native') {
           legacy.paths[path][method].responses['500'] = {description: 'internal server error'};
         }
+      }
+      if (contract.paths['/immersion/logs/{id}'].delete['x-tadoku-owner'] === 'native') {
+        legacy.paths['/logs/{id}'].delete.responses['401'] = {description: 'unauthorized'};
       }
       // Native participant statistics document the legacy empty failure response.
       for (const path of [

@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/activities"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/logscore"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
 
 type Service struct {
@@ -22,6 +23,135 @@ func NewService(logs *LogsRepository, scoringEngineEnabled bool) *Service {
 }
 
 func (s *Service) ScoringEngineEnabled() bool { return s.scoringEngineEnabled }
+
+func (s *Service) PlanContestRegistrationUpdate(log *Log, targets []logscore.Target, now time.Time) ([]logscore.Target, []uuid.UUID, error) {
+	desired := make(map[uuid.UUID]struct{}, len(targets))
+	for _, target := range targets {
+		desired[target.RegistrationID] = struct{}{}
+	}
+	current := make(map[uuid.UUID]RegistrationReference, len(log.Registrations))
+	for _, reference := range log.Registrations {
+		if reference.ContestEnd.Add(24 * time.Hour).After(now) {
+			current[reference.RegistrationID] = reference
+		}
+	}
+
+	toAttach := make([]logscore.Target, 0, len(targets))
+	for _, target := range targets {
+		if _, exists := current[target.RegistrationID]; !exists {
+			toAttach = append(toAttach, target)
+		}
+	}
+	toDetach := make([]uuid.UUID, 0)
+	for registrationID, reference := range current {
+		if _, exists := desired[registrationID]; !exists {
+			toDetach = append(toDetach, reference.ContestID)
+		}
+	}
+	if len(toAttach) > 0 && log.Tracking.Amount == nil && log.Tracking.DurationSeconds == nil {
+		return nil, nil, errx.NewInvalidInputError("log tracking data is required for contest attachment")
+	}
+	return toAttach, toDetach, nil
+}
+
+func (s *Service) UpdateContestRegistrations(ctx context.Context, logID uuid.UUID, now time.Time, attachments []ContestTracking, detachments []uuid.UUID) error {
+	if err := s.logs.LockLog(ctx, logID); err != nil {
+		return err
+	}
+	before, err := s.logs.OutboxContext(ctx, logID)
+	if err != nil {
+		return err
+	}
+	for _, contestID := range detachments {
+		if err := s.logs.DetachContest(ctx, logID, contestID); err != nil {
+			return err
+		}
+	}
+	for _, attachment := range attachments {
+		if err := s.logs.CreateContestLog(ctx, logID, attachment); err != nil {
+			return err
+		}
+	}
+	if err := s.logs.RecomputeOfficialEligibility(ctx, logID, now); err != nil {
+		return err
+	}
+	after, err := s.logs.OutboxContext(ctx, logID)
+	if err != nil {
+		return err
+	}
+
+	affected := make(map[uuid.UUID]struct{}, len(detachments)+len(attachments))
+	for _, contestID := range detachments {
+		affected[contestID] = struct{}{}
+	}
+	for _, attachment := range attachments {
+		affected[attachment.ContestID] = struct{}{}
+	}
+	for contestID := range affected {
+		id := contestID
+		if err := s.logs.InsertOutbox(ctx, before.UserID, &id, nil, "refresh_contest_score"); err != nil {
+			return err
+		}
+	}
+	if before.EligibleOfficial || after.EligibleOfficial {
+		year := before.Year
+		return s.logs.InsertOutbox(ctx, before.UserID, nil, &year, "refresh_official_scores")
+	}
+	return nil
+}
+
+func (s *Service) Delete(ctx context.Context, logID uuid.UUID, now time.Time) error {
+	if err := s.logs.LockLog(ctx, logID); err != nil {
+		return err
+	}
+	allowed, err := s.logs.CanDelete(ctx, logID, now)
+	if err != nil {
+		return err
+	}
+	if !allowed {
+		return errx.NewForbiddenError("forbidden")
+	}
+	outbox, err := s.logs.OutboxContext(ctx, logID)
+	if err != nil {
+		return err
+	}
+	contestIDs, err := s.logs.AttachedContestIDs(ctx, logID)
+	if err != nil {
+		return err
+	}
+	if err := s.logs.SoftDelete(ctx, logID, now); err != nil {
+		return err
+	}
+	for _, contestID := range contestIDs {
+		id := contestID
+		if err := s.logs.InsertOutbox(ctx, outbox.UserID, &id, nil, "refresh_contest_score"); err != nil {
+			return err
+		}
+	}
+	if outbox.EligibleOfficial {
+		year := outbox.Year
+		return s.logs.InsertOutbox(ctx, outbox.UserID, nil, &year, "refresh_official_scores")
+	}
+	return nil
+}
+
+func (s *Service) ModerateDetach(ctx context.Context, logID, contestID uuid.UUID) error {
+	outbox, err := s.logs.OutboxContext(ctx, logID)
+	if err != nil {
+		return err
+	}
+	if err := s.logs.DetachContest(ctx, logID, contestID); err != nil {
+		return err
+	}
+	if err := s.logs.InsertOutbox(ctx, outbox.UserID, &contestID, nil, "refresh_contest_score"); err != nil {
+		return err
+	}
+	if outbox.EligibleOfficial {
+		year := outbox.Year
+		return s.logs.InsertOutbox(ctx, outbox.UserID, nil, &year, "refresh_official_scores")
+	}
+	return nil
+}
 
 func (s *Service) ConfigurationOptions(ctx context.Context, userID uuid.UUID) (*ConfigurationOptions, error) {
 	units, err := s.logs.ListUnits(ctx)

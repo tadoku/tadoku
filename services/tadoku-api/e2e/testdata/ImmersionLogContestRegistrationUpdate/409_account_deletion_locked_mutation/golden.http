@@ -1,0 +1,6 @@
+>>> PUT /immersion/logs/d2000000-0000-4000-8000-000000000002/contest-registrations
+HTTP/1.1 409 Conflict
+Content-Length: 41
+Content-Type: application/json; charset=UTF-8
+
+{"error":"account_deletion_in_progress"}

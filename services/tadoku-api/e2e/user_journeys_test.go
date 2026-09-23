@@ -254,6 +254,41 @@ func TestLogCreateValidationSyncJourney(t *testing.T) {
 	})
 }
 
+func TestLogAttachmentAndDeleteJourney(t *testing.T) {
+	uuid.SetRand(rand.New(rand.NewSource(1)))
+	defer uuid.SetRand(nil)
+
+	runJourneyWithHandler(t, api, scoringEnabledHandler, "LogAttachmentAndDelete", []step{
+		{request: "create", as: user, want: http.StatusOK, others: cast{guest: http.StatusUnauthorized, banned: http.StatusForbidden}},
+		{request: "attach", as: user, want: http.StatusOK, others: cast{admin: http.StatusForbidden, guest: http.StatusUnauthorized, banned: http.StatusForbidden}},
+		{request: "read_attached", as: user, want: http.StatusOK},
+		{request: "detach", as: user, want: http.StatusOK, others: cast{admin: http.StatusForbidden, guest: http.StatusUnauthorized, banned: http.StatusForbidden}},
+		{request: "read_detached", as: user, want: http.StatusOK},
+		{request: "delete", as: user, want: http.StatusOK, others: cast{user2: http.StatusForbidden, guest: http.StatusUnauthorized, banned: http.StatusForbidden}},
+		{request: "deleted_missing", as: user, want: http.StatusNotFound},
+		{verify: "effects"},
+	})
+}
+
+func TestLogAttachmentAtomicFailureJourney(t *testing.T) {
+	runJourneyWithHandler(t, api, scoringEnabledHandler, "LogAttachmentAtomicFailure", []step{
+		{request: "replace_with_duplicate", as: user, want: http.StatusInternalServerError},
+		{request: "original_attachment_remains", as: user, want: http.StatusOK},
+		{verify: "no_partial_effects"},
+	})
+}
+
+func TestContestModerationDetachLogJourney(t *testing.T) {
+	mutationTime := time.Date(2027, 1, 2, 12, 0, 0, 0, time.UTC)
+	runJourney(t, api, "ContestModerationDetachLog", []step{
+		{request: "detach", as: user2, want: http.StatusOK, others: cast{user: http.StatusForbidden, guest: http.StatusUnauthorized, banned: http.StatusForbidden}, at: mutationTime},
+		{request: "owner_reads_detached", as: user, want: http.StatusOK, at: mutationTime},
+		{request: "repeat_absent_detach", as: user2, want: http.StatusOK, at: mutationTime},
+		{request: "owner_reads_still_detached", as: user, want: http.StatusOK, at: mutationTime},
+		{verify: "audit_and_outbox"},
+	})
+}
+
 func TestContestRegistrationJourney(t *testing.T) {
 	// Keep API-created contest and registration IDs stable in the HTTP fixtures.
 	uuid.SetRand(rand.New(rand.NewSource(1)))

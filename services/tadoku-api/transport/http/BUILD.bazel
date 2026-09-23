@@ -29,6 +29,7 @@ go_library(
         "language_update.go",
         "languages.go",
         "leaderboard.go",
+        "log_attachments.go",
         "log_configuration.go",
         "log_mutations.go",
         "log_reads.go",

@@ -65,6 +65,28 @@ func (q *Queries) ActivityPerLanguageForContestProfile(ctx context.Context, arg 
 	return items, nil
 }
 
+const canDeleteLog = `-- name: CanDeleteLog :one
+select not exists (
+  select 1
+  from contest_logs
+  inner join contests on contests.id = contest_logs.contest_id
+  where contest_logs.log_id = $1
+    and contests.contest_end < $2
+) as can_delete
+`
+
+type CanDeleteLogParams struct {
+	LogID pgtype.UUID
+	Now   pgtype.Date
+}
+
+func (q *Queries) CanDeleteLog(ctx context.Context, arg CanDeleteLogParams) (bool, error) {
+	row := q.db.QueryRow(ctx, canDeleteLog, arg.LogID, arg.Now)
+	var can_delete bool
+	err := row.Scan(&can_delete)
+	return can_delete, err
+}
+
 const createContestLog = `-- name: CreateContestLog :exec
 insert into contest_logs (
   contest_id, log_id, unit_key, amount, modifier, duration_seconds, computed_score,
@@ -175,6 +197,21 @@ delete from log_tags where log_id = $1
 
 func (q *Queries) DeleteLogTags(ctx context.Context, logID pgtype.UUID) error {
 	_, err := q.db.Exec(ctx, deleteLogTags, logID)
+	return err
+}
+
+const detachContestLog = `-- name: DetachContestLog :exec
+delete from contest_logs
+where log_id = $1 and contest_id = $2
+`
+
+type DetachContestLogParams struct {
+	LogID     pgtype.UUID
+	ContestID pgtype.UUID
+}
+
+func (q *Queries) DetachContestLog(ctx context.Context, arg DetachContestLogParams) error {
+	_, err := q.db.Exec(ctx, detachContestLog, arg.LogID, arg.ContestID)
 	return err
 }
 
@@ -512,6 +549,30 @@ type InsertLogTagParams struct {
 func (q *Queries) InsertLogTag(ctx context.Context, arg InsertLogTagParams) error {
 	_, err := q.db.Exec(ctx, insertLogTag, arg.LogID, arg.UserID, arg.Tag)
 	return err
+}
+
+const listAttachedContestIDs = `-- name: ListAttachedContestIDs :many
+select contest_id from contest_logs where log_id = $1
+`
+
+func (q *Queries) ListAttachedContestIDs(ctx context.Context, logID pgtype.UUID) ([]pgtype.UUID, error) {
+	rows, err := q.db.Query(ctx, listAttachedContestIDs, logID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []pgtype.UUID{}
+	for rows.Next() {
+		var contest_id pgtype.UUID
+		if err := rows.Scan(&contest_id); err != nil {
+			return nil, err
+		}
+		items = append(items, contest_id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listDistinctLanguageCodesForUser = `-- name: ListDistinctLanguageCodesForUser :many
@@ -894,6 +955,43 @@ func (q *Queries) LockLogForMutation(ctx context.Context, logID pgtype.UUID) (pg
 	var frozen_at pgtype.Timestamp
 	err := row.Scan(&frozen_at)
 	return frozen_at, err
+}
+
+const recomputeLogOfficialEligibility = `-- name: RecomputeLogOfficialEligibility :exec
+update logs set
+  eligible_official_leaderboard = (
+    select coalesce(bool_or(contests.official), false)
+    from contest_logs
+    inner join contests on contests.id = contest_logs.contest_id
+    where contest_logs.log_id = $1
+  ),
+  updated_at = $2
+where id = $1
+`
+
+type RecomputeLogOfficialEligibilityParams struct {
+	LogID     pgtype.UUID
+	UpdatedAt pgtype.Timestamp
+}
+
+func (q *Queries) RecomputeLogOfficialEligibility(ctx context.Context, arg RecomputeLogOfficialEligibilityParams) error {
+	_, err := q.db.Exec(ctx, recomputeLogOfficialEligibility, arg.LogID, arg.UpdatedAt)
+	return err
+}
+
+const softDeleteLog = `-- name: SoftDeleteLog :exec
+update logs set deleted_at = $1
+where id = $2 and deleted_at is null and frozen_at is null
+`
+
+type SoftDeleteLogParams struct {
+	DeletedAt pgtype.Timestamp
+	LogID     pgtype.UUID
+}
+
+func (q *Queries) SoftDeleteLog(ctx context.Context, arg SoftDeleteLogParams) error {
+	_, err := q.db.Exec(ctx, softDeleteLog, arg.DeletedAt, arg.LogID)
+	return err
 }
 
 const updateLog = `-- name: UpdateLog :exec

@@ -375,27 +375,78 @@ func (s *Service) ScoreContest(ctx context.Context, parameters PreviewParameters
 		amount:          parameters.Amount,
 		durationSeconds: parameters.DurationSeconds,
 	}
+	estimate, err := s.scoreContest(ctx, input, contestID)
+	if estimate == nil || err != nil {
+		return platform, err
+	}
+	return *estimate, nil
+}
+
+func (s *Service) ScoreResolvedContest(ctx context.Context, parameters PreviewParameters, contestID uuid.UUID) (*Estimate, error) {
+	input := scoringInput{
+		activityID:      parameters.ActivityID,
+		unitKey:         stringValue(parameters.UnitKey),
+		languageCode:    parameters.LanguageCode,
+		tags:            parameters.Tags,
+		amount:          parameters.Amount,
+		durationSeconds: parameters.DurationSeconds,
+	}
+
+	return s.scoreContest(ctx, input, contestID)
+}
+
+func (s *Service) ScoreLogAttachments(ctx context.Context, log logscore.Input, base logscore.Tracking, targets []logscore.Target) ([]logscore.ContestTracking, error) {
+	attachments := make([]logscore.ContestTracking, 0, len(targets))
+	for _, target := range targets {
+		tracking := base
+		if s.logScoringEnabled {
+			unitKey := base.UnitKey
+			estimate, err := s.ScoreResolvedContest(ctx, PreviewParameters{
+				UnitKey:         &unitKey,
+				ActivityID:      log.ActivityID,
+				LanguageCode:    log.LanguageCode,
+				Amount:          base.Amount,
+				DurationSeconds: base.DurationSeconds,
+				Tags:            log.Tags,
+			}, target.ContestID)
+			if err != nil {
+				return nil, err
+			}
+			if estimate != nil {
+				tracking = trackingFromEstimate(base, *estimate)
+			}
+		}
+		attachments = append(attachments, logscore.ContestTracking{
+			RegistrationID: target.RegistrationID,
+			ContestID:      target.ContestID,
+			Tracking:       tracking,
+		})
+	}
+	return attachments, nil
+}
+
+func (s *Service) scoreContest(ctx context.Context, input scoringInput, contestID uuid.UUID) (*Estimate, error) {
 	set, fallback, err := s.findContestRuleSets(ctx, contestID)
 	if err != nil {
-		return Estimate{}, err
+		return nil, err
 	}
 	if set == nil {
-		return platform, nil
+		return nil, nil
 	}
 	estimate, matched, err := evaluate(input, *set)
 	if err != nil {
-		return Estimate{}, err
+		return nil, err
 	}
 	if !matched && set.Mode == "override" {
 		if fallback == nil {
-			return Estimate{}, errx.NewInternalError("override scoring rule set requires a fallback")
+			return nil, errx.NewInternalError("override scoring rule set requires a fallback")
 		}
 		estimate, _, err = evaluate(input, *fallback)
 	}
 	if !matched && set.Mode != "override" && set.Mode != "replace" {
-		return Estimate{}, errx.NewInternalError("unknown contest scoring mode")
+		return nil, errx.NewInternalError("unknown contest scoring mode")
 	}
-	return estimate, err
+	return &estimate, err
 }
 
 func (s *Service) resolveUnit(ctx context.Context, parameters PreviewParameters) (string, error) {

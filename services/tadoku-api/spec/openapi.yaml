@@ -1353,9 +1353,11 @@ paths:
           description: contest or log not found
         "409":
           $ref: "#/components/responses/ImmersionAccountDeletionInProgress"
+        "500":
+          description: internal server error
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /contests/{id}/moderation/detach/{log_id}
       x-legacy-operation-id: contestModerationDetachLog
   "/immersion/contests/{id}/profile/{user_id}/scores":
@@ -1654,15 +1656,19 @@ paths:
       responses:
         "200":
           description: successful operation
+        "401":
+          description: unauthorized
         "403":
           description: forbidden
         "404":
           description: not found
         "409":
           $ref: "#/components/responses/ImmersionAccountDeletionInProgress"
+        "500":
+          description: internal server error
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /logs/{id}
       x-legacy-operation-id: logDeleteByID
     put:
@@ -1780,9 +1786,11 @@ paths:
           description: log not found
         "409":
           $ref: "#/components/responses/ImmersionAccountDeletionInProgress"
+        "500":
+          description: internal server error
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: legacy
+      x-tadoku-owner: native
       x-legacy-path: /logs/{id}/contest-registrations
       x-legacy-operation-id: logContestRegistrationUpdate
   /immersion/logs/configuration-options:

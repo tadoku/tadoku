@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	domainlanguages "github.com/tadoku/tadoku/services/tadoku-api/domain/languages"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
 
@@ -207,23 +208,24 @@ func (s *Service) findContestRuleSets(ctx context.Context, contestID uuid.UUID) 
 }
 
 func (s *Service) ValidateContestDraftConfiguration(ctx context.Context, parameters *ContestDraftParameters) error {
-	if err := parameters.validateConfiguration(); err != nil {
+	fallbackID := parameters.Configuration.FallbackRuleSetID()
+	if fallbackID == nil {
+		return nil
+	}
+
+	fallback, err := s.repository.FindRuleSetByID(ctx, *fallbackID)
+	if err != nil {
 		return err
 	}
-	if parameters.Mode == ModeOverride && parameters.FallbackRuleSetID != nil {
-		fallback, err := s.repository.FindRuleSetByID(ctx, *parameters.FallbackRuleSetID)
-		if err != nil {
-			return err
-		}
-		if fallback.Scope != "platform" || fallback.Status != "published" {
-			return errx.NewInvalidInputError("fallback must be a published platform rule set")
-		}
+	if fallback.Scope != "platform" || fallback.Status != "published" {
+		return errx.NewInvalidInputError("fallback must be a published platform rule set")
 	}
+
 	return nil
 }
 
-func (s *Service) NormalizeDraftRules(parameters *DraftRules) error {
-	return parameters.normalize()
+func (s *Service) NormalizeDraftRules(parameters *DraftRules, languages []domainlanguages.Language) error {
+	return parameters.normalize(languages)
 }
 
 func (s *Service) CreatePlatformDraft(ctx context.Context, parameters PlatformDraftParameters) (*RuleSet, error) {
@@ -238,8 +240,8 @@ func (s *Service) CreateContestDraft(ctx context.Context, parameters ContestDraf
 	return s.createDraft(ctx, RuleSet{
 		Scope:             "contest",
 		ContestID:         &parameters.ContestID,
-		Mode:              string(parameters.Mode),
-		FallbackRuleSetID: parameters.FallbackRuleSetID,
+		Mode:              string(parameters.Configuration.Mode()),
+		FallbackRuleSetID: parameters.Configuration.FallbackRuleSetID(),
 		Rules:             parameters.Rules,
 		CreatedAt:         parameters.CreatedAt,
 	})

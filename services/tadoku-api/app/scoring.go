@@ -116,7 +116,7 @@ func (a *Application) CreatePlatformScoringRuleSetDraft(ctx context.Context, par
 
 	draft := scoring.PlatformDraftParameters{
 		DraftRules: scoring.DraftRules{
-			Rules: append([]scoring.Rule(nil), parameters.Rules...),
+			Rules: parameters.Rules,
 		},
 	}
 	if err := a.normalizeScoringDraftRules(ctx, &draft.DraftRules); err != nil {
@@ -135,11 +135,12 @@ func (a *Application) CreatePlatformScoringRuleSetDraft(ctx context.Context, par
 }
 
 func (a *Application) CreateContestScoringRuleSetDraft(ctx context.Context, contestID uuid.UUID, parameters ContestScoringRuleSetDraftParameters) (*ScoringRuleSet, error) {
-	contest, err := a.contests.FindContestByID(ctx, contestID, false)
-	if err != nil {
+	if err := a.permissions.RequireAuthenticated(ctx); err != nil {
 		return nil, err
 	}
-	if err := a.permissions.RequireAuthenticated(ctx); err != nil {
+
+	contest, err := a.contests.FindContestByID(ctx, contestID, false)
+	if err != nil {
 		return nil, err
 	}
 	caller := identity.FromContext(ctx)
@@ -152,17 +153,16 @@ func (a *Application) CreateContestScoringRuleSetDraft(ctx context.Context, cont
 		return nil, errx.NewConflictError("contest scoring cannot change after the contest starts")
 	}
 
-	mode, err := scoring.ParseMode(parameters.Mode)
+	configuration, err := scoring.NewContestDraftConfiguration(parameters.Mode, parameters.FallbackRuleSetID)
 	if err != nil {
 		return nil, err
 	}
 
 	draft := scoring.ContestDraftParameters{
-		ContestID:         contestID,
-		Mode:              mode,
-		FallbackRuleSetID: parameters.FallbackRuleSetID,
+		ContestID:     contestID,
+		Configuration: configuration,
 		DraftRules: scoring.DraftRules{
-			Rules: append([]scoring.Rule(nil), parameters.Rules...),
+			Rules: parameters.Rules,
 		},
 	}
 	if err := a.scoring.ValidateContestDraftConfiguration(ctx, &draft); err != nil {
@@ -188,12 +188,6 @@ func (a *Application) normalizeScoringDraftRules(ctx context.Context, rules *sco
 	if err != nil {
 		return err
 	}
-	languageCodes := make(map[string]struct{}, len(languages))
-	for _, language := range languages {
-		languageCodes[language.Code] = struct{}{}
-	}
 
-	rules.LanguageCodes = languageCodes
-
-	return a.scoring.NormalizeDraftRules(rules)
+	return a.scoring.NormalizeDraftRules(rules, languages)
 }

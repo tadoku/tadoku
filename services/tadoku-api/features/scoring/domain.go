@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/activities"
+	domainlanguages "github.com/tadoku/tadoku/services/tadoku-api/domain/languages"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
 
@@ -58,8 +59,7 @@ type RuleSet struct {
 }
 
 type DraftRules struct {
-	Rules         []Rule
-	LanguageCodes map[string]struct{}
+	Rules []Rule
 }
 
 type PlatformDraftParameters struct {
@@ -69,37 +69,59 @@ type PlatformDraftParameters struct {
 
 type ContestDraftParameters struct {
 	DraftRules
-	ContestID         uuid.UUID
-	Mode              Mode
-	FallbackRuleSetID *uuid.UUID
-	CreatedAt         time.Time
+	ContestID     uuid.UUID
+	Configuration ContestDraftConfiguration
+	CreatedAt     time.Time
 }
 
-func ParseMode(value string) (Mode, error) {
-	mode := Mode(value)
-	if mode != ModeReplace && mode != ModeOverride {
-		return "", errx.NewInvalidInputError("contest scoring mode is required")
-	}
-
-	return mode, nil
+type ContestDraftConfiguration struct {
+	fallbackRuleSetID *uuid.UUID
 }
 
-func (p *ContestDraftParameters) validateConfiguration() error {
-	switch p.Mode {
+func NewContestDraftConfiguration(rawMode string, fallbackRuleSetID *uuid.UUID) (ContestDraftConfiguration, error) {
+	switch Mode(rawMode) {
 	case ModeReplace:
-		if p.FallbackRuleSetID != nil {
-			return errx.NewInvalidInputError("replace rule sets cannot have a fallback")
+		if fallbackRuleSetID != nil {
+			return ContestDraftConfiguration{}, errx.NewInvalidInputError("replace rule sets cannot have a fallback")
 		}
-	case ModeOverride:
-		if p.FallbackRuleSetID == nil {
-			return errx.NewInvalidInputError("override rule sets require a fallback")
-		}
-	}
 
-	return nil
+		return ContestDraftConfiguration{}, nil
+	case ModeOverride:
+		if fallbackRuleSetID == nil {
+			return ContestDraftConfiguration{}, errx.NewInvalidInputError("override rule sets require a fallback")
+		}
+
+		fallback := *fallbackRuleSetID
+		return ContestDraftConfiguration{fallbackRuleSetID: &fallback}, nil
+	default:
+		return ContestDraftConfiguration{}, errx.NewInvalidInputError("contest scoring mode is required")
+	}
 }
 
-func (p *DraftRules) normalize() error {
+func (c ContestDraftConfiguration) Mode() Mode {
+	if c.fallbackRuleSetID == nil {
+		return ModeReplace
+	}
+
+	return ModeOverride
+}
+
+func (c ContestDraftConfiguration) FallbackRuleSetID() *uuid.UUID {
+	if c.fallbackRuleSetID == nil {
+		return nil
+	}
+
+	fallback := *c.fallbackRuleSetID
+	return &fallback
+}
+
+func (p *DraftRules) normalize(languages []domainlanguages.Language) error {
+	p.Rules = append([]Rule(nil), p.Rules...)
+	languageCodes := make(map[string]struct{}, len(languages))
+	for _, language := range languages {
+		languageCodes[language.Code] = struct{}{}
+	}
+
 	priorities := make(map[int32]struct{}, len(p.Rules))
 	for i := range p.Rules {
 		rule := &p.Rules[i]
@@ -122,7 +144,7 @@ func (p *DraftRules) normalize() error {
 			return errx.NewInvalidInputError("rule language_code is too long")
 		}
 		if rule.LanguageCode != "" {
-			if _, exists := p.LanguageCodes[rule.LanguageCode]; !exists {
+			if _, exists := languageCodes[rule.LanguageCode]; !exists {
 				return errx.NewInvalidInputError("rule language_code is not valid")
 			}
 		}

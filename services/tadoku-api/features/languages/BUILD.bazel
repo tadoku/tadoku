@@ -14,6 +14,7 @@ go_library(
         "//services/tadoku-api/e2e:__pkg__",
     ],
     deps = [
+        "//services/tadoku-api/domain/languages",
         "//services/tadoku-api/generated/sqlc/languages",
         "//services/tadoku-api/infra/postgres",
         "//services/tadoku-api/internal/errx",

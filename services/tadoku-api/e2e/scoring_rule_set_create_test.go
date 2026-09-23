@@ -55,7 +55,8 @@ func TestImmersionScoringRuleSetCreateContest(t *testing.T) {
 		{description: []string{"already", "started"}, want: http.StatusConflict},
 		{description: []string{"unknown", "signing", "key"}, want: http.StatusUnauthorized},
 		{description: []string{"guest", "existing"}, want: http.StatusUnauthorized, skipParity: "Tadoku API consistently requires authentication before administrator authorization; legacy returns forbidden for a signed guest"},
-		{description: []string{"guest", "missing"}, want: http.StatusNotFound},
+		{description: []string{"guest", "missing"}, want: http.StatusUnauthorized, skipParity: "Tadoku API authenticates before loading the contest; legacy returns not found for a missing contest before checking a signed guest"},
+		{description: []string{"member", "missing"}, want: http.StatusNotFound},
 	}
 	seed := int64(1)
 	for _, test := range tests {

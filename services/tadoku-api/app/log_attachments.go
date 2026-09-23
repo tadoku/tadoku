@@ -52,17 +52,24 @@ func (a *Application) UpdateLogContestRegistrations(ctx context.Context, logID u
 		return nil, err
 	}
 
+	var updated *Log
 	err = postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) error {
 		if err := a.profile.LockUser(ctx, log.UserID); err != nil {
 			return err
 		}
-		return a.logs.UpdateContestRegistrations(ctx, logID, now, attachments, detachments)
+		if err := a.logs.UpdateContestRegistrations(ctx, logID, now, attachments, detachments); err != nil {
+			return err
+		}
+
+		var err error
+		updated, err = a.logs.FindLog(ctx, logID, false)
+		return err
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	return a.logs.FindLog(ctx, logID, false)
+	return updated, nil
 }
 
 func (a *Application) DeleteLog(ctx context.Context, logID uuid.UUID) error {

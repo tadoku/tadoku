@@ -49,7 +49,7 @@
 - [ ] Standardize caller UUID / self-or-admin helpers in app; ban ad-hoc Subject UUID parse outside allowlisted guest paths.
 - [ ] Keep the Flipt management client flag-agnostic; product flag allowlist only in featureflags (no product flag names in infra). Distinct from consolidating management clients after legacy retirement.
 - [ ] Decide whether pages/posts should share content-revision primitives or stay intentional twins; align list publication policy (pages lack the `published_at` cutoff posts apply when excluding drafts).
-- [ ] Bind the ban-middleware path carve-out to the mux/generated `AuthzRoleGet` pattern, not the magic `"/authz/current-user/role"` string.
+- [x] Bind the ban-middleware path carve-out to the mux/generated `AuthzRoleGet` pattern, not the magic `"/authz/current-user/role"` string.
 - [ ] Replace `Application.New` positional `*Service` args with a `Dependencies` struct (open log/scoring PRs already churn this surface).
 - [ ] Extract an app `mutateThenReadBack` helper for the repeated announcements/pages/posts transaction+find blocks.
 - [ ] Move the pgx pool Prometheus collector from `cmd` into `infra/postgres`.

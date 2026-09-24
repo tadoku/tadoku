@@ -48,6 +48,9 @@ persistence; see [HTTP golden cases](./http-e2e.md#http-golden-cases).
 ## Request decoding
 
 - Request bodies use the generated JSON decoder.
+- Handlers pass an absent optional body to the application as zero values
+  instead of returning a literal 400 response. The operation authorizes first,
+  and feature validation turns missing required fields into a 400 response.
 - Do not add endpoint-specific middleware, replace request bodies or otherwise
   bypass the generated decoder, for example to alter empty-body behavior.
 - Do not add XML or form adapters to work around generated request decoding.

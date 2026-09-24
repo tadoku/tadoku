@@ -12,6 +12,8 @@ Developer documentation lives in [`docs/docs`](docs/docs) and is published at ht
 Branches run on the shared `homelab-dev` cluster with DevCLI. Installation,
 branch databases, seed accounts, routing and cleanup are in
 [Development environment](docs/docs/develop/environment.md).
+For agent-driven live edits, use the [dev-cli skill](.agents/skills/dev-cli/SKILL.md)
+(`$dev-cli` where repository skill discovery is supported).
 
 To verify a change in the browser, follow the
 [verify-tadoku skill](.agents/skills/verify-tadoku/SKILL.md) (`$verify-tadoku`

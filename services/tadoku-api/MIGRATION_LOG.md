@@ -15,7 +15,6 @@
 - [ ] Replace `github.com/google/uuid` with the standard-library UUID API when it is available in the adopted Go toolchain.
 - [ ] Introduce a generic paginated request type and convert every existing paginated operation to use it.
 - [ ] Support two-step audit recording for external actions: persist the start before calling the external system, then record the correlated completion and outcome. External changes cannot share an atomic PostgreSQL transaction with the audit write.
-- [ ] Consolidate the Flipt management clients.
 - [ ] Revisit leaderboard HTTP test seeding so each case declares only the data it needs instead of relying on the operation-level fixture.
 - [ ] Move the remaining private pgtype conversion helpers in repositories (non-null UUID and timestamp constructors, nullable float, and pgtype-to-pointer conversions other than text) into `infra/postgres`, and decide where shared row mappers belong.
 - [ ] Introduce generic conversion helpers for repeated slice and type mappings after common conversion patterns stabilize across migrated features.
@@ -39,6 +38,5 @@
 - [ ] Stop loading contest on find-registration when the response omits it; remove app `registration.Contest = nil`.
 - [ ] Forbid raw banned/admins Keto triples outside `internal/permissions` (lint).
 - [ ] Standardize caller UUID / self-or-admin helpers in app; ban ad-hoc Subject UUID parse outside allowlisted guest paths.
-- [ ] Keep the Flipt management client flag-agnostic; product flag allowlist only in featureflags (no product flag names in infra).
 - [ ] Decide whether pages/posts should share content-revision primitives or stay intentional twins; align list publication policy (pages lack the `published_at` cutoff posts apply when excluding drafts).
 - [x] Bind the ban-middleware path carve-out to the mux/generated `AuthzRoleGet` pattern, not the magic `"/authz/current-user/role"` string.

@@ -101,7 +101,7 @@ func (r *ContestsRepository) ListOngoingRegistrations(ctx context.Context, userI
 
 	rows, err := queries.New(executor).ListOngoingContestRegistrations(ctx, queries.ListOngoingContestRegistrationsParams{
 		UserID: postgres.UUID(userID),
-		Now:    pgtype.Timestamp{Time: now, Valid: true},
+		Now:    postgres.Timestamp(now),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("list ongoing contest registrations: %w", err)
@@ -190,8 +190,8 @@ func (r *ContestsRepository) UpsertRegistration(ctx context.Context, registratio
 		ContestID:     postgres.UUID(registration.ContestID),
 		UserID:        postgres.UUID(registration.UserID),
 		LanguageCodes: registration.LanguageCodes,
-		CreatedAt:     pgtype.Timestamp{Time: registration.CreatedAt, Valid: true},
-		UpdatedAt:     pgtype.Timestamp{Time: registration.UpdatedAt, Valid: true},
+		CreatedAt:     postgres.Timestamp(registration.CreatedAt),
+		UpdatedAt:     postgres.Timestamp(registration.UpdatedAt),
 	})
 	if err != nil {
 		return fmt.Errorf("upsert contest registration: %w", err)
@@ -273,8 +273,8 @@ func (r *ContestsRepository) CreateContest(ctx context.Context, contest Contest)
 		Description:             postgres.NullableText(contest.Description),
 		LanguageCodeAllowList:   contest.LanguageCodeAllowList,
 		ActivityTypeIDAllowList: contest.ActivityTypeIDAllowList,
-		CreatedAt:               pgtype.Timestamp{Time: contest.CreatedAt, Valid: true},
-		UpdatedAt:               pgtype.Timestamp{Time: contest.UpdatedAt, Valid: true},
+		CreatedAt:               postgres.Timestamp(contest.CreatedAt),
+		UpdatedAt:               postgres.Timestamp(contest.UpdatedAt),
 	})
 	if err != nil {
 		return fmt.Errorf("create contest: %w", err)

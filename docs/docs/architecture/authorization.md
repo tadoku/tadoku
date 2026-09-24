@@ -1,10 +1,10 @@
 ---
 sidebar_position: 3
-title: Authorization (Keto)
+title: Authentication and authorization
 description: How Tadoku API authenticates Kratos users from gateway JWTs and authorizes them with Keto administrator and ban relations.
 ---
 
-# Authorization (Ory Keto)
+# Authentication and authorization
 
 Read this when you add or change an operation's access rules, work with administrator or ban roles, or debug a 400, 401, 403 or 503 from Tadoku API.
 
@@ -128,5 +128,5 @@ only runs against the `homelab-dev` Kubernetes context and is safe to re-run.
   API (`http://keto-write.tdk-dev-keto:4467`).
 - Loads the application seed data from `scripts/dev/seed/`.
 
-See [Development environment](../local-environment.md) for branch seeding and
+See [Development environment](../develop/environment.md) for branch seeding and
 cleanup.

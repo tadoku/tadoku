@@ -1,6 +1,6 @@
 ---
 sidebar_position: 4
-title: S2S Auth
+title: Service-to-service authentication
 description: How Tadoku API exchanges its Kubernetes service account token for short-lived Oathkeeper service JWTs to call internal services such as Flipt.
 ---
 

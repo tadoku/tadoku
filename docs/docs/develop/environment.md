@@ -1,6 +1,7 @@
 ---
+description: How to run a branch of webv2, auth, admin or Tadoku API against the shared development environment with DevCLI, and how to inspect and clean it up.
 sidebar_position: 3
-title: Development Environment
+title: Development environment
 ---
 
 # Development Environment

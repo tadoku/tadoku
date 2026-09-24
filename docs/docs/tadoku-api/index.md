@@ -41,8 +41,8 @@ that compose features live under `services/tadoku-api/app/`.
 ## CMS-managed content
 
 Public pages such as Contact and About store their HTML in the CMS (`pages` and
-`pages_content`, namespace `tadoku`). Change that copy in the admin CMS only.
-Do not ship it as a frontend change, a migration or any other SQL rewrite.
+`pages_content`, namespace `tadoku`). That copy is edited in the admin CMS only;
+see [Contributing workflow](../develop/contributing.md#cms-managed-content).
 
 ## More detail
 

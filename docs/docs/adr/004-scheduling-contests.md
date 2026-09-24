@@ -1,4 +1,5 @@
 ---
+description: Accepted decision to schedule official contests automatically ahead of time instead of creating them by hand.
 sidebar_position: 4
 title: "004 - Contest Scheduling"
 ---

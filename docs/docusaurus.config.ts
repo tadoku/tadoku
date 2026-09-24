@@ -14,11 +14,11 @@ const config: Config = {
   organizationName: 'tadoku',
   projectName: 'tadoku',
 
-  onBrokenLinks: 'warn',
+  onBrokenLinks: 'throw',
 
   markdown: {
     hooks: {
-      onBrokenMarkdownLinks: 'warn',
+      onBrokenMarkdownLinks: 'throw',
     },
   },
 

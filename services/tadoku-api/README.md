@@ -503,10 +503,22 @@ generated-ID, readback or hand-decoded response tests. Persistence assertions be
 in repository tests. Each row declares
 `description []string` and `want` as an HTTP status constant; there is no separate
 fixture-name field to keep in sync. Add a case by adding a descriptive table row and
-its request and golden files; do not discover cases from directories. Add `setup.sql`
-or `relationships.json` only when the case needs that seed data. Shared PostgreSQL
-and Keto cleanup always runs; absent setup files are skipped, while other read,
-decode and provider errors fail the scenario.
+its request and golden files; do not discover cases from directories.
+Seed files resolve per file name (`setup.sql`, `relationships.json`), one level only:
+
+- A non-empty case file is the case's only seed for that name; it replaces,
+  rather than extends, the operation file.
+- A zero-byte case file opts the case out: it loads no seed for that name, even
+  when the operation has one. Keep these files; they are intentional.
+- A missing case file inherits `testdata/<operation>/<name>`. There is no
+  fallback beyond the operation directory.
+
+Put seed data shared by most cases in the operation file, add a case file only
+when a case needs different data, and add a zero-byte case file when a case must
+start without the operation's data. Shared PostgreSQL and Keto cleanup always
+runs; a resolved seed file that does not exist is skipped, while other read,
+decode and provider errors fail the scenario. `-update-goldens` rewrites only
+golden files and never creates, removes or changes seed files.
 The `golden.http` file contains the request label
 and complete expected response. Tests parse the request files with `net/http`,
 execute the production handler at the operation's minimum required access level,

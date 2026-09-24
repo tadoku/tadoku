@@ -130,7 +130,7 @@ CI runs the same script on every pull request and fails if code generation chang
 
 **Use "Repository" for persistent source-of-truth data, "Store" for everything else** — `Repository` interfaces access the primary database (Postgres) where authoritative data lives. `Store` interfaces access auxiliary storage (e.g. Valkey/Redis) for caches, derived data, pub/sub, coordination state, or any non-authoritative data. Implementations live under `storage/postgres/` and `storage/valkey/` respectively.
 
-**Keep each repository method to one SQL statement.** A coherent join or CTE still counts as one statement and is appropriate when the data needs one database snapshot. Compose independent repository reads and writes in the feature service or application layer, using an application-owned transaction when the operation must commit atomically.
+**Keep each repository method to one SQL statement.** A coherent join or CTE still counts as one statement and is appropriate when the data needs one database snapshot. Compose independent repository reads and writes in the feature service or application layer, using an application-owned transaction when the operation must commit atomically. `tools/ci/repopolicy` enforces this in CI: handwritten repository functions issue at most one database statement and never allocate IDs or control transactions.
 
 **Never call `time.Now()` directly** — always inject `commondomain.Clock` and use `clock.Now()`. This applies to domain services, repository methods, and background workers. The clock is created in `main.go` and threaded through constructors. This makes time-dependent code testable via `mockClock`.
 

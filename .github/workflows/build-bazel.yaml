@@ -115,6 +115,9 @@ jobs:
       - name: Verify Tadoku API import policies (including test files)
         run: bazel run --lockfile_mode=error //tools/ci/depolicy
 
+      - name: Verify Tadoku API repository policies
+        run: bazel run --lockfile_mode=error //tools/ci/repopolicy
+
       - name: Verify Tadoku API OpenAPI generation
         run: |
           ./scripts/generate-openapi.sh

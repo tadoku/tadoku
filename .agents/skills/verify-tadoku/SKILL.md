@@ -115,8 +115,9 @@ Git or publicly shared artifacts. One-off browser scripts/screenshots stay outsi
 source commits. Capture trigger and outcome, not merely a loaded page.
 
 For PR verification, follow [Publishing PR evidence](references/pr-evidence.md):
-attach useful screenshots and workflow recordings directly to the authorized PR,
-alongside the tested revision, steps, assertions and limitations. Inspect media
+put one evidence block in the authorized PR description, with a results table,
+visible coverage warning and collapsed media and reproduction details. Attach
+useful screenshots and workflow recordings directly to that PR. Inspect media
 before uploading and verify the posted attachments. Don't substitute local file
 paths for delivered evidence, or claim an attachment was posted when upload failed.
 

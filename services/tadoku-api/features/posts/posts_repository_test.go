@@ -61,7 +61,11 @@ func TestPostsRepositoryCreatePost(t *testing.T) {
 			}
 
 			err := postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
-				if err := repository.CreatePost(ctx, item); err != nil {
+				contentID := uuid.New()
+				if err := repository.CreatePost(ctx, item, contentID); err != nil {
+					return err
+				}
+				if err := repository.CreatePostContent(ctx, item.ID, contentID, item.Title, item.Content, *item.CreatedAt); err != nil {
 					return err
 				}
 				got, err := repository.FindPostByID(ctx, item.Namespace, item.ID)
@@ -136,7 +140,12 @@ func TestPostsRepositoryCreatePostConflictsPreserveData(t *testing.T) {
 		UpdatedAt: &instant,
 	}
 	if err := postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
-		return repository.CreatePost(ctx, original)
+		contentID := uuid.New()
+		if err := repository.CreatePost(ctx, original, contentID); err != nil {
+			return err
+		}
+
+		return repository.CreatePostContent(ctx, original.ID, contentID, original.Title, original.Content, *original.CreatedAt)
 	}); err != nil {
 		t.Fatal(err)
 	}
@@ -157,7 +166,12 @@ func TestPostsRepositoryCreatePostConflictsPreserveData(t *testing.T) {
 			duplicate.Slug = test.slug
 			duplicate.Title = "Must not replace the original"
 			err := postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
-				return repository.CreatePost(ctx, &duplicate)
+				contentID := uuid.New()
+				if err := repository.CreatePost(ctx, &duplicate, contentID); err != nil {
+					return err
+				}
+
+				return repository.CreatePostContent(ctx, duplicate.ID, contentID, duplicate.Title, duplicate.Content, *duplicate.CreatedAt)
 			})
 			if !errors.Is(err, posts.ErrPostAlreadyExists) {
 				t.Fatalf("error=%v, want post already exists", err)
@@ -184,7 +198,12 @@ func TestPostsRepositoryCreatePostConflictsPreserveData(t *testing.T) {
 	otherNamespace.ID = uuid.New()
 	otherNamespace.Namespace = "other"
 	if err := postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
-		return repository.CreatePost(ctx, &otherNamespace)
+		contentID := uuid.New()
+		if err := repository.CreatePost(ctx, &otherNamespace, contentID); err != nil {
+			return err
+		}
+
+		return repository.CreatePostContent(ctx, otherNamespace.ID, contentID, otherNamespace.Title, otherNamespace.Content, *otherNamespace.CreatedAt)
 	}); err != nil {
 		t.Errorf("same slug in another namespace must be accepted: %v", err)
 	}
@@ -217,7 +236,12 @@ func TestPostsRepositoryCreatePostRollsBackWhenRevisionFails(t *testing.T) {
 		UpdatedAt: &instant,
 	}
 	err = postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
-		return repository.CreatePost(ctx, item)
+		contentID := uuid.New()
+		if err := repository.CreatePost(ctx, item, contentID); err != nil {
+			return err
+		}
+
+		return repository.CreatePostContent(ctx, item.ID, contentID, item.Title, item.Content, *item.CreatedAt)
 	})
 	var pgError *pgconn.PgError
 	if !errors.As(err, &pgError) || pgError.Code != pgerrcode.CheckViolation || pgError.ConstraintName != "reject_test_title" {
@@ -579,7 +603,7 @@ func TestPostsRepositoryUpdatePost(t *testing.T) {
 	metadata.PublishedAt = &publishedAt
 	metadata.UpdatedAt = &publishedAt
 	err = postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
-		return repository.UpdatePost(ctx, &metadata, false)
+		return repository.UpdatePost(ctx, &metadata, nil)
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -609,7 +633,11 @@ func TestPostsRepositoryUpdatePost(t *testing.T) {
 	stop := errors.New("roll back revised post")
 	for _, rollback := range []bool{true, false} {
 		err := postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
-			if err := repository.UpdatePost(ctx, &updated, true); err != nil {
+			contentID := uuid.New()
+			if err := repository.UpdatePost(ctx, &updated, &contentID); err != nil {
+				return err
+			}
+			if err := repository.CreatePostContent(ctx, updated.ID, contentID, updated.Title, updated.Content, *updated.UpdatedAt); err != nil {
 				return err
 			}
 			got, err := repository.FindPostByID(ctx, "main", id)
@@ -699,7 +727,12 @@ func TestPostsRepositoryUpdatePost(t *testing.T) {
 			attempt := updated
 			test.change(&attempt)
 			err := postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
-				return repository.UpdatePost(ctx, &attempt, true)
+				contentID := uuid.New()
+				if err := repository.UpdatePost(ctx, &attempt, &contentID); err != nil {
+					return err
+				}
+
+				return repository.CreatePostContent(ctx, attempt.ID, contentID, attempt.Title, attempt.Content, *attempt.UpdatedAt)
 			})
 			if test.want != nil {
 				if !errors.Is(err, test.want) {
@@ -728,7 +761,12 @@ func TestPostsRepositoryUpdatePost(t *testing.T) {
 		t.Fatal(err)
 	}
 	err = postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
-		return repository.UpdatePost(ctx, &updated, true)
+		contentID := uuid.New()
+		if err := repository.UpdatePost(ctx, &updated, &contentID); err != nil {
+			return err
+		}
+
+		return repository.CreatePostContent(ctx, updated.ID, contentID, updated.Title, updated.Content, *updated.UpdatedAt)
 	})
 	if !errors.Is(err, posts.ErrPostNotFound) {
 		t.Errorf("deleted post error=%v, want not found", err)

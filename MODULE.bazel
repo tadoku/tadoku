@@ -51,12 +51,9 @@ use_repo(
     "com_github_golang_jwt_jwt_v4",
     "com_github_golang_migrate_migrate_v4",
     "com_github_google_uuid",
-    "com_github_jackc_pgconn",
     "com_github_jackc_pgerrcode",
-    "com_github_jackc_pgx_v4",
     "com_github_jackc_pgx_v5",
     "com_github_kelseyhightower_envconfig",
-    "com_github_labstack_echo_v4",
     "com_github_lib_pq",
     "com_github_mattn_go_sqlite3",
     "com_github_micahparks_keyfunc",
@@ -101,22 +98,22 @@ use_repo(
 # Development runtimes only; production images above remain unchanged.
 oci.pull(
     name = "tadoku_dev_alpine",
-    image = "index.docker.io/library/alpine",
     digest = "sha256:294b683cb724975bec92580e1e685676bd4b50bda910ddb8c51d4cabeaec77e6",
+    image = "index.docker.io/library/alpine",
     platforms = ["linux/amd64"],
 )
 oci.pull(
     name = "tadoku_dev_node",
-    image = "index.docker.io/library/node",
     digest = "sha256:fa271c47a5d81dc321f4a45be01362f5b3de7559edc7e76b8c4089be1e50d866",
+    image = "index.docker.io/library/node",
     platforms = ["linux/amd64"],
 )
 use_repo(oci, "tadoku_dev_alpine", "tadoku_dev_alpine_linux_amd64", "tadoku_dev_node", "tadoku_dev_node_linux_amd64")
 
 oci.pull(
     name = "tadoku_dev_postgres",
-    image = "index.docker.io/library/postgres",
     digest = "sha256:86c951e05bf56c93d95d397747fb8820ac76cc3bedb78f43abd83eedbe3666ae",
+    image = "index.docker.io/library/postgres",
     platforms = ["linux/amd64"],
 )
 use_repo(oci, "tadoku_dev_postgres", "tadoku_dev_postgres_linux_amd64")
@@ -124,9 +121,6 @@ use_repo(oci, "tadoku_dev_postgres", "tadoku_dev_postgres_linux_amd64")
 # Pinned pnpm for DevCLI frontend images; no Corepack or new JS build framework.
 http_archive(
     name = "tadoku_dev_pnpm",
-    urls = ["https://registry.npmjs.org/pnpm/-/pnpm-10.10.0.tgz"],
-    integrity = "sha512-1hXbJG/nDyXc/qbY1z3ueCziPiJF48T2+Igkn7VoFJMYY33Kc8LFyO8qTKDVZX+5VnGIv6tH9WbR7mzph4FcOQ==",
-    strip_prefix = "package",
     build_file_content = """
 load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
 load("@rules_pkg//pkg:mappings.bzl", "pkg_attributes", "pkg_files", "strip_prefix")
@@ -143,4 +137,7 @@ pkg_tar(
     visibility = ["//visibility:public"],
 )
 """,
+    integrity = "sha512-1hXbJG/nDyXc/qbY1z3ueCziPiJF48T2+Igkn7VoFJMYY33Kc8LFyO8qTKDVZX+5VnGIv6tH9WbR7mzph4FcOQ==",
+    strip_prefix = "package",
+    urls = ["https://registry.npmjs.org/pnpm/-/pnpm-10.10.0.tgz"],
 )

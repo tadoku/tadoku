@@ -5,7 +5,6 @@ go_library(
     srcs = ["config.go"],
     importpath = "github.com/tadoku/tadoku/services/common/postgresconfig",
     visibility = ["//visibility:public"],
-    deps = ["@com_github_jackc_pgx_v4//:pgx"],
 )
 
 go_test(

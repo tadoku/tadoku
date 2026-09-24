@@ -2,6 +2,7 @@ package postgresconfig
 
 import (
 	"fmt"
+	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -17,16 +18,18 @@ func setIndividual(t *testing.T) {
 	t.Setenv("TEST_SSLMODE", "verify-full")
 }
 
-func TestLoadIndividualAndConnConfig(t *testing.T) {
+func TestLoadIndividualAndURL(t *testing.T) {
 	setIndividual(t)
 	cfg, err := Load("TEST", "TEST_URL")
 	require.NoError(t, err)
 	assert.Equal(t, uint16(5432), cfg.Port)
-	parsed, err := cfg.ConnConfig()
+	parsed, err := url.Parse(cfg.URL())
 	require.NoError(t, err)
-	assert.Equal(t, "2001:db8::1", parsed.Host)
-	assert.Equal(t, "sentinel:/?#[]@!$&'()*+,;=", parsed.Password)
-	assert.Empty(t, parsed.RuntimeParams["application_name"])
+	assert.Equal(t, "2001:db8::1", parsed.Hostname())
+	password, ok := parsed.User.Password()
+	assert.True(t, ok)
+	assert.Equal(t, "sentinel:/?#[]@!$&'()*+,;=", password)
+	assert.Empty(t, parsed.Query().Get("application_name"))
 	assert.NotContains(t, fmt.Sprint(cfg), "sentinel")
 }
 
@@ -41,9 +44,9 @@ func TestWithApplicationNameLabelsConnections(t *testing.T) {
 	assert.Contains(t, labeled.URL(), "application_name=tadoku-api")
 	assert.NotContains(t, cfg.URL(), "application_name=")
 
-	parsed, err := labeled.ConnConfig()
+	parsed, err := url.Parse(labeled.URL())
 	require.NoError(t, err)
-	assert.Equal(t, "tadoku-api", parsed.RuntimeParams["application_name"])
+	assert.Equal(t, "tadoku-api", parsed.Query().Get("application_name"))
 }
 
 func TestLoadRejectsPartialMixedAndInvalid(t *testing.T) {

@@ -8,8 +8,7 @@ title: Development Environment
 Use DevCLI for live edits to webv2, auth, admin and the native Tadoku API.
 Argo CD keeps the shared base running on **homelab-dev** even when no developer
 has a CLI loop running. This is development infrastructure, not the production
-deployment. Tilt and its old pilot manifests are retired; do not run them from
-an older checkout against this environment.
+deployment.
 
 The repository's [DevCLI runbook](https://github.com/tadoku/tadoku/blob/main/.dev/README.md)
 owns the full workflow. The [base runbook](https://github.com/tadoku/tadoku/blob/main/k8s/dev/base/README.md)
@@ -25,7 +24,7 @@ owns operator bootstrap, credentials, automatic migrations and GitOps recovery.
   development registry at `registry.dev.lab`.
 
 The existing cluster supplies Postgres, shared auth providers and routing.
-There is no local Kubernetes cluster or Helm/Tilt bootstrap to run. Obtain kube
+There is no local Kubernetes cluster or Helm bootstrap to run. Obtain kube
 access from the operator; never commit kubeconfigs, credentials or private keys.
 The non-secret configuration is committed in `.dev/config.yaml`.
 
@@ -124,7 +123,7 @@ This stops the local loop and removes only that owner/branch's overlay resources
 it does not stop the Argo base. Abandoned overlays can be removed through the
 CLI's explicit TTL cleanup. Branch databases are retained after either cleanup.
 `make dev-reset` fails closed: database deletion needs separate approval and an
-exactly scoped runbook, never `tilt down` or namespace-wide deletion.
+exactly scoped runbook, never namespace-wide deletion.
 
 Use status and service-filtered logs for sync/build errors. Check the selected
 hostname and backend headers before diagnosing stale content. Successful backend

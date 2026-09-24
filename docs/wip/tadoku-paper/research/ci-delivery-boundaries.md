@@ -105,7 +105,7 @@ Recommended atomic boundaries:
 
 1. **Research/guard PR:** documents and automated coexistence checks only; no production component.
 2. **Package foundation PRs:** small `paper-ui` contracts/tests by component/foundation ownership. One integrator owns public exports, tokens, and registry aggregation.
-3. **Paper app/delivery PR:** Vite shell, app-local static image, Paper workflow, and Tilt integration. It may merge only after the Paper jobs pass; merging publishes the first image.
+3. **Paper app/delivery PR:** Vite shell, app-local static image, Paper workflow, and local pnpm development. Live DevCLI overlays for Paper are deferred. It may merge only after the Paper jobs pass; merging publishes the first image.
 4. **Initial GitOps Paper PR:** new namespace/root/Application/Ingress/certificate/updater admission pinned to the already-published digest. Do not reference a nonexistent image.
 5. **Vertical/component PRs:** code, deterministic fixtures, documentation, and tests remain one logical slice. Main publications may auto-update only the independent Paper hostname.
 6. **Static hardening/resource PRs:** Tadoku server-config changes and GitOps resource/probe changes are separate, ordered PRs. Deploy endpoint/config capability before enabling a probe that depends on it.
@@ -122,7 +122,7 @@ The Paper image publication PR and initial GitOps deployment PR cannot be merged
 | --- | --- | --- |
 | Token names, public exports, catalogue registry | Paper integrator | Tadoku PR; sole shared-contract editor during parallel work |
 | Component slice | Category owner | Tadoku PR with implementation, fixture, doc, and tests together |
-| Vite/static server/Tilt | Paper delivery owner | Tadoku PR |
+| Vite/static server/local pnpm | Paper delivery owner | Tadoku PR |
 | Paper workflow and path matrix | Paper CI owner | Tadoku admin needed to make status check required |
 | Image identity and release record | Release operator | GitHub Actions output plus GHCR digest inspection |
 | Production manifests, probes, resources, updater | Production GitOps owner | Separate private `antonve/tadoku-argocd` PR; currently only `antonve` is listed as admin |

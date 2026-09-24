@@ -190,7 +190,7 @@ Phase 0 produces durable evidence under `docs/wip/tadoku-paper/research/` so lat
 | Documentation/content | What legacy knowledge is worth carrying over, what becomes a Pattern or Experiment, and which old routes need redirects? | Page/route migration matrix and content gap report. |
 | Testing | What deterministic fixtures and behavior assertions replace the source-text test; what CI jobs and path filters are missing? | Test inventory, initial fixture map, and CI proposal. |
 | Fonts/brand/assets | Where do licensed font files and canonical logo geometry come from, and which production asset formats are required? | Asset provenance/license record and export list. |
-| Deployment | Where do image, ingress, Kubernetes, DNS, Tilt, and workflow changes live; how are static routes, health, caching, and rollback handled? | Deployment topology, cross-repository touchpoint list, and rollback runbook. |
+| Deployment | Where do image, ingress, Kubernetes, DNS, development, and workflow changes live; how are static routes, health, caching, and rollback handled? | Deployment topology, cross-repository touchpoint list, and rollback runbook. |
 | Resource usage | What does the static container consume at startup, idle, and during representative navigation? | Measured recommendation for requests and limits. |
 | Application risk | Which admin, auth, and webv2 flows are critical, implicit-CSS-dependent, responsive, router-aware, or difficult to roll back? | Per-application smoke and risk matrices. |
 
@@ -552,7 +552,7 @@ Run four lanes in parallel.
 
 | Lane | Deliverables |
 | --- | --- |
-| Package/build | `paper-ui` scaffold, ESM/declaration build, export map, Base UI dependency, immutable Tailwind preset, root scripts, lockfile, package boundary checks, CI and Tilt triggers. |
+| Package/build | `paper-ui` scaffold, ESM/declaration build, export map, Base UI dependency, immutable Tailwind preset, root scripts, lockfile, package boundary checks, CI triggers and local pnpm scripts. |
 | Visual foundation | Semantic tokens, themes, density, typography/font assets, focus, motion, borders, accent rail, hard-offset elevation, chart palette, Cut Meter, wordmark, favicon sources. |
 | Test/catalogue | Vitest setup, RTL helpers, fixture and metadata schemas, registry validation, test utilities, catalogue export. |
 | Paper styleguide | New React + Vite application, route resolver, registry stubs, shell primitives, isolated preview-canvas prototype, static container, and `paper.tadoku.app` deployment workflow. |
@@ -762,9 +762,9 @@ Checklist:
 - [ ] Keep `paper.tadoku.app` as a temporary alias or redirect according to the deployment policy, then remove it when no longer needed.
 - [ ] Retain the previous legacy styleguide image and verify the domain rollback procedure.
 - [ ] Remove `frontend/apps/styleguide` and its build workflow after the final smoke window.
-- [ ] Remove `frontend/packages/ui`, legacy dependencies, lockfile entries, transpilation entries, Tailwind inheritance, and old Tilt triggers.
+- [ ] Remove `frontend/packages/ui`, legacy dependencies, lockfile entries, transpilation entries, Tailwind inheritance, and obsolete development metadata.
 - [ ] Remove Headless UI from the workspace after repository search shows zero uses.
-- [ ] Update all CI paths, Tilt triggers, contributor instructions, documentation status, and styleguide changelog to Paper-only operation.
+- [ ] Update all CI paths, development metadata, contributor instructions, documentation status, and styleguide changelog to Paper-only operation.
 - [ ] Run Paper tests and the complete frontend/application-image matrix from the clean repository.
 
 Previously deployed application images remain rollback-capable because their legacy dependencies are bundled.
@@ -842,7 +842,7 @@ Each application follows the same protocol.
 - Load Paper styles once and set the application density.
 - Replace Next-aware shared behavior with application adapters.
 - Replace Headless UI-backed legacy components with their Paper/Base UI-backed equivalents without exposing Base UI to the application.
-- Update package, Tailwind, framework, image, CI, Tilt, and asset references as applicable.
+- Update package, Tailwind, framework, image, CI, development, and asset references as applicable.
 
 ### 4. Prove zero mixing
 

@@ -39,7 +39,24 @@ const sidebars: SidebarsConfig = {
         },
       ],
     },
-    'tadoku-api/index',
+    {
+      type: 'category',
+      label: 'Tadoku API',
+      link: {
+        type: 'doc',
+        id: 'tadoku-api/index',
+      },
+      items: [
+        'tadoku-api/conventions',
+        'tadoku-api/contract',
+        'tadoku-api/database',
+        'tadoku-api/testing',
+        'tadoku-api/http-e2e',
+        'tadoku-api/user-journeys',
+        'tadoku-api/import-boundaries',
+        'tadoku-api/configuration',
+      ],
+    },
     {
       type: 'category',
       label: 'Frontend',

@@ -35,7 +35,7 @@ details. The rest of this page applies to maintainers and invited contributors.
 A schema or data migration lands on `main` in its own commit and pull request
 and is deployed before any code that depends on it. CI rejects pull requests
 that mix migration files with other changes. See
-[Tadoku API database](../tadoku-api/index.md).
+[Tadoku API database](../tadoku-api/database.md).
 
 ## CMS-managed content
 

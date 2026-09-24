@@ -27,7 +27,7 @@ Tadoku API integration tests need disposable loopback PostgreSQL 17 and
 Valkey 9 instances, passed as `TADOKU_TEST_POSTGRES_URL` and
 `TADOKU_TEST_VALKEY_URL`. CI uses
 `postgres://postgres:postgres@127.0.0.1:5432/postgres?sslmode=disable` and
-`redis://127.0.0.1:6379`. See [Tadoku API testing](../tadoku-api/index.md).
+`redis://127.0.0.1:6379`. See [Tadoku API testing](../tadoku-api/testing.md).
 
 Format Go code with `gofmt -w services/` before committing.
 
@@ -42,7 +42,7 @@ bazel run //:gazelle
 
 CI fails when `bazel run //:gazelle -- -mode=diff` reports changes. Gazelle
 makes new libraries public; narrow their `visibility` as described in
-[Import boundaries](../tadoku-api/index.md), then run
+[Import boundaries](../tadoku-api/import-boundaries.md), then run
 `./scripts/check-tadoku-api-visibility.sh` and
 `./tools/ci/check_tadoku_api_provider_deps.sh`.
 
@@ -61,7 +61,7 @@ generated diff and never edit generated files by hand.
 package's `generate.go`, so it needs only `curl` and `tar`. New query packages
 must be added to `SQLC_PACKAGES` in the script. `./scripts/generate-openapi.sh`
 runs oapi-codegen through Bazel from `tools/oapi-codegen/`. See
-[Tadoku API contract](../tadoku-api/index.md).
+[Tadoku API contract](../tadoku-api/contract.md).
 
 ## pnpm workspaces
 

@@ -21,7 +21,7 @@ import (
 
 const (
 	sqlcImportPrefix = "github.com/tadoku/tadoku/services/tadoku-api/generated/sqlc/"
-	convention       = `see AGENTS.md "Keep each repository method to one SQL statement"`
+	convention       = `see docs/docs/tadoku-api/conventions.md "Repositories and stores"`
 )
 
 var (

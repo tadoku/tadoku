@@ -5,7 +5,6 @@
 - [ ] Remove the v1 OpenAPI runtime/types dependency.
 - [ ] After the Tadoku API migration is complete, split all announcement, post, and page routes into separate admin and frontend routes.
 - [ ] Move the announcements timestamp columns to `timestamptz` in a standalone migration.
-- [ ] Add a covering announcements index on (`namespace`, `created_at desc`, `id desc`) where `deleted_at is null`.
 - [ ] Reconsider the announcements primary key as (`namespace`, `id`) so IDs can be scoped to their namespace.
 - [ ] After the Tadoku API migration is complete, make a final documentation pass and delete all references to this migration.
 - [x] Add the job step kind to the journey runner together with the first migrated worker. The outbox journey starts the production `Run` loop, waits for its ready signal and a later poll after an API write, then stops and joins it during cleanup.

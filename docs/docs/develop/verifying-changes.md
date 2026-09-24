@@ -19,7 +19,10 @@ The verify-tadoku skill at `.agents/skills/verify-tadoku/SKILL.md` is the
 procedure for agents and humans. Start from its feature map,
 `.agents/skills/verify-tadoku/references/features/README.md`, find the user
 goal your change affects, and read only that area. The map lists entry points,
-synthetic accounts, seeded fixtures and known traps.
+synthetic accounts, seeded fixtures and known traps. Update the relevant map in
+the same pull request when navigation, prerequisites or observable behavior
+change. It is a verification aid, not a deployment catalog; Bazel owns service
+discovery.
 
 ## Run it in the development environment
 
@@ -50,7 +53,7 @@ explains each command.
 | SQL queries | `./scripts/generate-sqlc.sh` and commit the full output |
 | OpenAPI contract | `./scripts/generate-openapi.sh` and `pnpm api:generate` in `docs/`; commit both outputs |
 | Frontend | In `frontend/`: `pnpm --filter <app> exec tsc --noEmit`, `pnpm --filter <app> lint`, then `pnpm build` |
-| Docs | In `docs/`: `pnpm build` |
+| Docs | In `docs/`: `pnpm build` and `pnpm docs:check` |
 
 ## Evidence on the pull request
 

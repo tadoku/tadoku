@@ -40,8 +40,9 @@ Each component runs in its own `tdk-dev-*` namespace:
 | `tdk-dev-routing` | Application routes attached to the platform Envoy Gateway |
 
 The Postgres server holds the base `tadoku`, `kratos` and `keto` databases and
-every `tadoku-<route>` branch database. Styleguides and optional admin tools are
-not deployed. The base holds no production data, external backups or
+every `tadoku-<route>` branch database. It is provisioned with the Zalando
+`postgresql` custom resource; do not add hand-rolled Postgres Deployments or Helm
+releases. Styleguides and optional admin tools are not deployed. The base holds no production data, external backups or
 notification configuration.
 
 ## Images and Image Updater
@@ -193,6 +194,9 @@ After activation, run the live acceptance gates listed under
   operation. Never run namespace-wide deletion.
 - `make dev-reset` is disabled. Any reset needs an explicitly approved, scoped
   runbook.
+- `infra/dev/ory/` holds the Kratos schema and Keto namespace fixtures that Bazel
+  backend tests load; they are not obsolete deployment files. Preserve the shared
+  SQL fixtures in `scripts/dev/seed/`, which base and branch seeding both use.
 - Any future rebuild of the environment needs its own data-disposition
   decision. A previous deletion approval is not permission to erase later data.
 

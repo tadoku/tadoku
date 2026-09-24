@@ -8,7 +8,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
 )
 
-func TestCallerID(t *testing.T) {
+func TestActorID(t *testing.T) {
 	userID := uuid.MustParse("11111111-1111-4111-8111-111111111111")
 	tests := []struct {
 		name string
@@ -29,18 +29,18 @@ func TestCallerID(t *testing.T) {
 				ctx = identity.WithUser(ctx, test.user)
 			}
 
-			got, ok := identity.CallerID(ctx)
+			got, ok := identity.ActorID(ctx)
 			if got != test.want || ok != test.ok {
-				t.Errorf("CallerID = %v, %v; want %v, %v", got, ok, test.want, test.ok)
+				t.Errorf("ActorID = %v, %v; want %v, %v", got, ok, test.want, test.ok)
 			}
 
-			got, err := identity.RequireCallerID(ctx)
+			got, err := identity.RequireActorID(ctx)
 			if test.ok {
 				if err != nil || got != test.want {
-					t.Errorf("RequireCallerID = %v, %v; want %v, nil", got, err, test.want)
+					t.Errorf("RequireActorID = %v, %v; want %v, nil", got, err, test.want)
 				}
 			} else if errx.KindOf(err) != errx.Unauthorized {
-				t.Errorf("RequireCallerID error = %v, want unauthorized", err)
+				t.Errorf("RequireActorID error = %v, want unauthorized", err)
 			}
 		})
 	}

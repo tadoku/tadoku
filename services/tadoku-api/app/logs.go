@@ -22,7 +22,7 @@ func (a *Application) LogConfigurationOptions(ctx context.Context) (*LogConfigur
 		return nil, err
 	}
 
-	userID, err := identity.RequireCallerID(ctx)
+	userID, err := identity.RequireActorID(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +50,7 @@ func (a *Application) LogTagSuggestions(ctx context.Context, query string) ([]lo
 		return nil, err
 	}
 
-	userID, err := identity.RequireCallerID(ctx)
+	userID, err := identity.RequireActorID(ctx)
 	if err != nil {
 		return nil, err
 	}

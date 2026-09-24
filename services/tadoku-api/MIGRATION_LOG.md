@@ -31,6 +31,6 @@
 - [ ] Fix contests `FindRegistration` language hydration to match list hydrate; delete the app padding loop in `contest_profile`.
 - [ ] Stop loading contest on find-registration when the response omits it; remove app `registration.Contest = nil`.
 - [ ] Forbid raw banned/admins Keto triples outside `internal/permissions` (lint).
-- [ ] Convert `app/contests.go` to `identity.CallerID`, `identity.RequireCallerID` and `requireOwnerOrAdmin`, then add a CI check that bans parsing the identity subject in application operations.
+- [ ] Convert `app/contests.go` to `identity.ActorID`, `identity.RequireActorID` and `requireOwnerOrAdmin`, then add a CI check that bans parsing the identity subject in application operations.
 - [ ] Decide whether pages/posts should share content-revision primitives or stay intentional twins; align list publication policy (pages lack the `published_at` cutoff posts apply when excluding drafts).
 - [x] Bind the ban-middleware path carve-out to the mux/generated `AuthzRoleGet` pattern, not the magic `"/authz/current-user/role"` string.

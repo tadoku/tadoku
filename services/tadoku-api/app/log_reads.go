@@ -14,14 +14,14 @@ type LogList = logs.LogList
 type LogListParameters = logs.ListParameters
 
 func (a *Application) FindLog(ctx context.Context, id uuid.UUID) (*Log, error) {
-	callerID, hasCaller := identity.CallerID(ctx)
-	isAdmin := hasCaller && a.permissions.IsAdminOrFalse(ctx)
+	actorID, hasActor := identity.ActorID(ctx)
+	isAdmin := hasActor && a.permissions.IsAdminOrFalse(ctx)
 	var viewer logs.Viewer = logs.GuestViewer{}
 	switch {
 	case isAdmin:
 		viewer = logs.AdminViewer{}
-	case hasCaller:
-		viewer = logs.UserViewer{UserID: callerID}
+	case hasActor:
+		viewer = logs.UserViewer{UserID: actorID}
 	}
 
 	return a.logs.FindLogForViewer(ctx, id, logs.FindForViewerParameters{

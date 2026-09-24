@@ -47,7 +47,7 @@ func (a *Application) UpdateRole(ctx context.Context, parameters RoleUpdateParam
 		return err
 	}
 
-	actorID, err := identity.RequireCallerID(ctx)
+	actorID, err := identity.RequireActorID(ctx)
 	if err != nil {
 		return err
 	}

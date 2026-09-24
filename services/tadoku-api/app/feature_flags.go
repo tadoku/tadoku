@@ -35,7 +35,7 @@ func (a *Application) FeatureAccessGrant(ctx context.Context, flagKey string, ta
 	if err := a.featureFlags.ValidateRequest(flagKey, targetUserID); err != nil {
 		return featureflags.State{}, err
 	}
-	actorID, err := identity.RequireCallerID(ctx)
+	actorID, err := identity.RequireActorID(ctx)
 	if err != nil {
 		return featureflags.State{}, err
 	}
@@ -69,7 +69,7 @@ func (a *Application) FeatureAccessRevoke(ctx context.Context, flagKey string, t
 	if err := a.featureFlags.ValidateRequest(flagKey, targetUserID); err != nil {
 		return featureflags.State{}, err
 	}
-	actorID, err := identity.RequireCallerID(ctx)
+	actorID, err := identity.RequireActorID(ctx)
 	if err != nil {
 		return featureflags.State{}, err
 	}

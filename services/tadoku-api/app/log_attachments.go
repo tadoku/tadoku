@@ -94,7 +94,7 @@ func (a *Application) DetachContestLog(ctx context.Context, contestID, logID uui
 		return err
 	}
 
-	callerID, err := identity.RequireCallerID(ctx)
+	actorID, err := identity.RequireActorID(ctx)
 	if err != nil {
 		return err
 	}
@@ -115,7 +115,7 @@ func (a *Application) DetachContestLog(ctx context.Context, contestID, logID uui
 			return err
 		}
 		if err := a.audit.Record(ctx, audit.Event{
-			ActorID: callerID,
+			ActorID: actorID,
 			Action:  "detach_log",
 			Metadata: map[string]any{
 				"contest_id": contestID.String(),

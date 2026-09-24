@@ -81,14 +81,15 @@ The following rules decide where each check belongs.
   authenticated-user and administrator requirements. They receive a named
   `*permissions.Checker` (`internal/permissions`) and call its checks
   explicitly. Do not enforce administrator access with HTTP middleware.
-- Read the caller's user ID with `identity.CallerID`, which reports no caller
-  for a missing identity or a guest, or with `identity.RequireCallerID`, which
-  returns unauthorized in those cases. Do not parse the identity subject in
-  application operations.
+- The actor is the authenticated user performing an operation; audit events
+  record it as `ActorID`. Read the actor's user ID with `identity.ActorID`,
+  which reports no actor for a missing identity or a guest, or with
+  `identity.RequireActorID`, which returns unauthorized in those cases. Do not
+  parse the identity subject in application operations.
 - When the owner of a resource or an administrator may act on it, call the
   application's `requireOwnerOrAdmin` with the owner's user ID after
-  `RequireAuthenticated`. It passes for the owner and otherwise requires
-  administrator access.
+  `RequireAuthenticated`. It passes when the actor is the owner and otherwise
+  requires administrator access.
 - Construction binds the checker to the request-scoped `app:tadoku#admins` Keto
   lookup. The checker derives its subject from the verified `internal/identity`
   context and does not cache results.

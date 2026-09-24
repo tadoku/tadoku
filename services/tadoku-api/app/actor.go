@@ -7,10 +7,11 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
 )
 
-// requireOwnerOrAdmin allows the owner of a resource and administrators. The
-// owner path performs no ban check, so call it after RequireAuthenticated.
+// requireOwnerOrAdmin allows the actor when they own the resource and otherwise
+// requires administrator access. The owner path performs no ban check, so call
+// it after RequireAuthenticated.
 func (a *Application) requireOwnerOrAdmin(ctx context.Context, ownerID uuid.UUID) error {
-	if callerID, ok := identity.CallerID(ctx); ok && callerID == ownerID {
+	if actorID, ok := identity.ActorID(ctx); ok && actorID == ownerID {
 		return nil
 	}
 	return a.permissions.RequireAdmin(ctx)

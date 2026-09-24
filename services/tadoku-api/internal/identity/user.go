@@ -40,9 +40,9 @@ func (u *User) UUID() (uuid.UUID, error) {
 	return userID, nil
 }
 
-// CallerID returns the verified caller's user ID. It reports false for a
+// ActorID returns the verified actor's user ID. It reports false for a
 // missing identity, the guest subject and the nil UUID.
-func CallerID(ctx context.Context) (uuid.UUID, bool) {
+func ActorID(ctx context.Context) (uuid.UUID, bool) {
 	user := FromContext(ctx)
 	if user == nil {
 		return uuid.Nil, false
@@ -54,10 +54,10 @@ func CallerID(ctx context.Context) (uuid.UUID, bool) {
 	return userID, true
 }
 
-// RequireCallerID returns the verified caller's user ID, or an unauthorized
-// error when CallerID reports none.
-func RequireCallerID(ctx context.Context) (uuid.UUID, error) {
-	userID, ok := CallerID(ctx)
+// RequireActorID returns the verified actor's user ID, or an unauthorized
+// error when ActorID reports none.
+func RequireActorID(ctx context.Context) (uuid.UUID, error) {
+	userID, ok := ActorID(ctx)
 	if !ok {
 		return uuid.Nil, errx.NewUnauthorizedError("unauthorized")
 	}

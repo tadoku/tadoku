@@ -37,10 +37,10 @@ func (a *Application) CreateLog(ctx context.Context, p LogCreateParameters) (*Lo
 	if err := a.permissions.RequireAuthenticated(ctx); err != nil {
 		return nil, err
 	}
-	caller := identity.FromContext(ctx)
+	actor := identity.FromContext(ctx)
 
 	now := timex.Now()
-	userID, err := a.profile.SynchronizeUser(ctx, caller, now)
+	userID, err := a.profile.SynchronizeUser(ctx, actor, now)
 	if err != nil {
 		return nil, err
 	}

@@ -41,7 +41,10 @@ export const NewLogFormV2Schema = z
     allUnits: z.array(Unit),
     allActivities: z.array(Activity),
     tags: z.array(z.string().max(50)).max(10, 'Maximum 10 tags allowed'),
-    description: z.string().optional(),
+    description: z
+      .string()
+      .max(255, 'Description must be 255 characters or fewer')
+      .optional(),
   })
   .superRefine((log, ctx) => {
     const activity = log.allActivities.find(it => it.id === log.activityId)

@@ -30,7 +30,10 @@ export const NewLogFormSchema = z
     amountUnit: z.string(),
     allUnits: z.array(Unit),
     tags: z.array(z.string().max(50)).max(10, 'Maximum 10 tags allowed'),
-    description: z.string().optional(),
+    description: z
+      .string()
+      .max(255, 'Description must be 255 characters or fewer')
+      .optional(),
   })
   .refine(
     log => {

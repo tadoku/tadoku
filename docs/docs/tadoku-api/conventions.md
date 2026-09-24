@@ -1,6 +1,6 @@
 ---
 title: Conventions
-description: Layering, feature package, write workflow, caller authorization, dependency, error, validation, business-time and readability rules for Tadoku API code.
+description: Layering, feature package, write workflow, actor authorization, dependency, error, validation, business-time and readability rules for Tadoku API code.
 sidebar_position: 2
 ---
 
@@ -56,7 +56,7 @@ Service orchestration is exercised through HTTP E2Es; see [Testing](./testing.md
 
 ## Write workflows
 
-- The application authorizes the caller, coordinates locks and transactions
+- The application authorizes the actor, coordinates locks and transactions
   across features, and composes their results.
 - A feature service validates or normalizes its own inputs and sequences its
   own repository calls, including related rows and outbox writes.
@@ -68,7 +68,7 @@ Service orchestration is exercised through HTTP E2Es; see [Testing](./testing.md
   service that owns the data translates that result into its stored rows.
 - Transaction mechanics are in [Transactions](./database.md#transactions).
 
-## Routes and caller authorization
+## Routes and actor authorization
 
 [Authorization](../architecture/authorization.md) documents the shared JWT and ban
 pipeline, the `permissions.Checker` methods and the error-to-status mapping.
@@ -77,10 +77,19 @@ The following rules decide where each check belongs.
 - Register application routes through the router's `Handle` or `HandleFunc`
   methods during construction. Every such route inherits the shared request
   deadline, authentication and ban check.
-- Application operations own full caller-access checks, such as
+- Application operations own full actor-access checks, such as
   authenticated-user and administrator requirements. They receive a named
   `*permissions.Checker` (`internal/permissions`) and call its checks
   explicitly. Do not enforce administrator access with HTTP middleware.
+- The actor is the authenticated user performing an operation; audit events
+  record it as `ActorID`. Read the actor's user ID with `identity.ActorID`,
+  which reports no actor for a missing identity or a guest, or with
+  `identity.RequireActorID`, which returns unauthorized in those cases. Do not
+  parse the identity subject in application operations.
+- When the owner of a resource or an administrator may act on it, call the
+  application's `requireOwnerOrAdmin` with the owner's user ID after
+  `RequireAuthenticated`. It passes when the actor is the owner and otherwise
+  requires administrator access.
 - Construction binds the checker to the request-scoped `app:tadoku#admins` Keto
   lookup. The checker derives its subject from the verified `internal/identity`
   context and does not cache results.
@@ -90,7 +99,7 @@ The following rules decide where each check belongs.
 - A feature service may inspect authorization facts only to expand behavior
   inside an operation the application has already authorized.
 - Feature services read and change facts about other users through the concrete
-  services in `services/common/authz/roles`. Target facts are never caller
+  services in `services/common/authz/roles`. Target facts are never actor
   authorization: the operation still uses the checker for its own access
   decision. Batch facts are read for each request, not cached.
 - Public permission checks use a typed, construction-time allowlist keyed by
@@ -102,7 +111,7 @@ The following rules decide where each check belongs.
   before request decoding and records a callback-authentication fact
   (`internal/callbackauth`) that its application operation must require. It
   never creates a user identity or enters the JWT and ban pipeline. A subject in
-  its body is a target for a provider fact lookup, never the caller.
+  its body is a target for a provider fact lookup, never the actor.
 
 ## Repositories and stores
 
@@ -173,11 +182,11 @@ The following rules decide where each check belongs.
 ## Request types
 
 When a feature request type has fields that only the feature sets, such as the
-caller ID from the verified identity or a year from business time, make those
+actor ID from the verified identity or a year from business time, make those
 fields unexported and add getters. The feature package writes them directly
 (`req.userID = ...`); other packages read them through getters
 (`req.UserID()`), so transport and application code cannot set them. Fields
-that callers legitimately set, such as a contest ID or language codes, stay
+that clients legitimately set, such as a contest ID or language codes, stay
 exported.
 
 ## Business time

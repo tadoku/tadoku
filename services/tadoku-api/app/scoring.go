@@ -42,9 +42,9 @@ func (a *Application) PreviewScore(ctx context.Context, parameters ScorePreviewP
 	if err := a.permissions.RequireAuthenticated(ctx); err != nil {
 		return nil, err
 	}
-	userID, err := identity.FromContext(ctx).UUID()
+	userID, err := identity.RequireActorID(ctx)
 	if err != nil {
-		return nil, errx.NewUnauthorizedError("unauthorized")
+		return nil, err
 	}
 
 	featureParameters := scoring.PreviewParameters{
@@ -101,8 +101,8 @@ func (a *Application) ListContestScoringRuleSets(ctx context.Context, contestID 
 	if err != nil {
 		return nil, err
 	}
-	callerID, parseErr := uuid.Parse(identity.FromContext(ctx).Subject)
-	if (parseErr != nil || callerID != contest.OwnerUserID) && !a.permissions.IsAdminOrFalse(ctx) {
+	actorID, hasActor := identity.ActorID(ctx)
+	if (!hasActor || actorID != contest.OwnerUserID) && !a.permissions.IsAdminOrFalse(ctx) {
 		return nil, errx.NewForbiddenError("forbidden")
 	}
 	return a.scoring.ListContestRuleSets(ctx, contestID)
@@ -142,11 +142,8 @@ func (a *Application) CreateContestScoringRuleSetDraft(ctx context.Context, cont
 	if err != nil {
 		return nil, err
 	}
-	caller := identity.FromContext(ctx)
-	if caller.Subject != contest.OwnerUserID.String() {
-		if err := a.permissions.RequireAdmin(ctx); err != nil {
-			return nil, err
-		}
+	if err := a.requireOwnerOrAdmin(ctx, contest.OwnerUserID); err != nil {
+		return nil, err
 	}
 	if !timex.Now().Before(contest.ContestStart) {
 		return nil, errx.NewConflictError("contest scoring cannot change after the contest starts")
@@ -240,10 +237,8 @@ func (a *Application) authorizeScoringRuleSetChange(ctx context.Context, ruleSet
 		if err != nil {
 			return err
 		}
-		if identity.FromContext(ctx).Subject != contest.OwnerUserID.String() {
-			if err := a.permissions.RequireAdmin(ctx); err != nil {
-				return err
-			}
+		if err := a.requireOwnerOrAdmin(ctx, contest.OwnerUserID); err != nil {
+			return err
 		}
 		if !timex.Now().Before(contest.ContestStart) {
 			return errx.NewConflictError("contest scoring cannot change after the contest starts")

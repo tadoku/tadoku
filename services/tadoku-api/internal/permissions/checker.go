@@ -10,7 +10,7 @@ import (
 )
 
 // Checker owns the shared application Keto relations. CheckBanned and CheckAdmin
-// look up a given subject; the other methods evaluate the verified caller.
+// look up a given subject; the other methods evaluate the verified actor.
 // A shared ban gate may record an inconclusive lookup so privileges fail closed.
 type Checker struct {
 	client *ketoclient.Client

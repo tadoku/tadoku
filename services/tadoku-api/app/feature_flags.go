@@ -7,7 +7,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/audit"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/featureflags"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
 )
 
@@ -36,9 +35,9 @@ func (a *Application) FeatureAccessGrant(ctx context.Context, flagKey string, ta
 	if err := a.featureFlags.ValidateRequest(flagKey, targetUserID); err != nil {
 		return featureflags.State{}, err
 	}
-	actorID, err := uuid.Parse(identity.FromContext(ctx).Subject)
-	if err != nil || actorID == uuid.Nil {
-		return featureflags.State{}, errx.NewUnauthorizedError("unauthorized")
+	actorID, err := identity.RequireActorID(ctx)
+	if err != nil {
+		return featureflags.State{}, err
 	}
 
 	result, err := a.featureFlags.Grant(ctx, flagKey, targetUserID)
@@ -70,9 +69,9 @@ func (a *Application) FeatureAccessRevoke(ctx context.Context, flagKey string, t
 	if err := a.featureFlags.ValidateRequest(flagKey, targetUserID); err != nil {
 		return featureflags.State{}, err
 	}
-	actorID, err := uuid.Parse(identity.FromContext(ctx).Subject)
-	if err != nil || actorID == uuid.Nil {
-		return featureflags.State{}, errx.NewUnauthorizedError("unauthorized")
+	actorID, err := identity.RequireActorID(ctx)
+	if err != nil {
+		return featureflags.State{}, err
 	}
 
 	result, err := a.featureFlags.Revoke(ctx, flagKey, targetUserID)

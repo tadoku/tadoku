@@ -21,8 +21,6 @@ func NewService(logs *LogsRepository, scoringEngineEnabled bool) *Service {
 	return &Service{logs: logs, scoringEngineEnabled: scoringEngineEnabled}
 }
 
-func (s *Service) ScoringEngineEnabled() bool { return s.scoringEngineEnabled }
-
 func (s *Service) PlanContestRegistrationUpdate(log *Log, targets []logscore.Target, now time.Time) ([]logscore.Target, []uuid.UUID, error) {
 	desired := make(map[uuid.UUID]struct{}, len(targets))
 	for _, target := range targets {
@@ -295,8 +293,10 @@ func (s *Service) ContestActivity(ctx context.Context, userID, contestID uuid.UU
 	return s.logs.ContestActivity(ctx, userID, contestID)
 }
 
-func (s *Service) FindLog(ctx context.Context, id uuid.UUID, includeDeleted bool) (*Log, error) {
-	log, err := s.logs.FindLog(ctx, id, includeDeleted)
+// FindLog returns a non-deleted log with its contest registrations. It applies
+// no visibility rules; calling operations authorize the actor.
+func (s *Service) FindLog(ctx context.Context, id uuid.UUID) (*Log, error) {
+	log, err := s.logs.FindLog(ctx, id, false)
 	if err != nil {
 		return nil, err
 	}

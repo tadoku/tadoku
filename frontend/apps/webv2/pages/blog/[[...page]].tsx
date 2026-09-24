@@ -72,6 +72,13 @@ const BlogIndex = () => {
         />
       </div>
       <div className="space-y-8">
+        {list.data.total_size === 0 && (
+          <div>
+            <h1 className="font-serif font-bold text-3xl">No blog posts yet</h1>
+            <p className="mt-2 text-slate-700">Check back soon for updates.</p>
+          </div>
+        )}
+
         {heroPost && (
           <div className="pb-8 border-b border-slate-200">
             <Link

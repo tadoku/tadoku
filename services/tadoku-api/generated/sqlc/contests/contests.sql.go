@@ -359,16 +359,17 @@ func (q *Queries) FindLatestOfficialContest(ctx context.Context) (FindLatestOffi
 
 const insertContestScoreRefresh = `-- name: InsertContestScoreRefresh :exec
 insert into leaderboard_outbox (event_type, user_id, contest_id)
-values ('refresh_contest_score', $1, $2)
+values ($1, $2, $3)
 `
 
 type InsertContestScoreRefreshParams struct {
+	EventType string
 	UserID    pgtype.UUID
 	ContestID pgtype.UUID
 }
 
 func (q *Queries) InsertContestScoreRefresh(ctx context.Context, arg InsertContestScoreRefreshParams) error {
-	_, err := q.db.Exec(ctx, insertContestScoreRefresh, arg.UserID, arg.ContestID)
+	_, err := q.db.Exec(ctx, insertContestScoreRefresh, arg.EventType, arg.UserID, arg.ContestID)
 	return err
 }
 

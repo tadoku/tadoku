@@ -11,10 +11,6 @@ func (s *server) ImmersionLanguageUpdate(
 	ctx context.Context,
 	request openapi.ImmersionLanguageUpdateRequestObject,
 ) (openapi.ImmersionLanguageUpdateResponseObject, error) {
-	if request.Body == nil {
-		return openapi.ImmersionLanguageUpdate400Response{}, nil
-	}
-
 	err := s.application.UpdateLanguage(ctx, app.UpdateLanguageParameters{
 		Code: request.Code,
 		Name: request.Body.Name,

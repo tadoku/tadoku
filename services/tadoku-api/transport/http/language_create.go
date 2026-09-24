@@ -11,10 +11,6 @@ func (s *server) ImmersionLanguageCreate(
 	ctx context.Context,
 	request openapi.ImmersionLanguageCreateRequestObject,
 ) (openapi.ImmersionLanguageCreateResponseObject, error) {
-	if request.Body == nil {
-		return openapi.ImmersionLanguageCreate400Response{}, nil
-	}
-
 	err := s.application.CreateLanguage(ctx, app.CreateLanguageParameters{
 		Code: request.Body.Code,
 		Name: request.Body.Name,

@@ -37,6 +37,8 @@ check_secret() {
 # Validate all existing destinations before the first write, including runtime
 # keys we preserve. Namespace ownership alone does not authorize replacing a Secret.
 check_secret tdk-dev-tadoku-api immersion.tadoku-dev-db.credentials.postgresql.acid.zalan.do destination username password
+check_secret tdk-dev-tadoku-api tadoku.tadoku-dev-db.credentials.postgresql.acid.zalan.do destination username password
+check_secret tdk-dev-data tadoku.tadoku-dev-db.credentials.postgresql.acid.zalan.do source username password
 for provider in immersion kratos keto; do
   check_secret tdk-dev-data "$provider.tadoku-dev-db.credentials.postgresql.acid.zalan.do" source username password
   if [ "$provider" != immersion ]; then
@@ -57,6 +59,7 @@ copy_secret() {
 }
 
 copy_secret tdk-dev-data tdk-dev-tadoku-api immersion.tadoku-dev-db.credentials.postgresql.acid.zalan.do
+copy_secret tdk-dev-data tdk-dev-tadoku-api tadoku.tadoku-dev-db.credentials.postgresql.acid.zalan.do
 for provider in kratos keto; do
   copy_secret tdk-dev-data "tdk-dev-$provider" "$provider.tadoku-dev-db.credentials.postgresql.acid.zalan.do"
 done

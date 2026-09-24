@@ -1,7 +1,48 @@
+import {writeFile} from 'node:fs/promises';
+import {join} from 'node:path';
 import {themes as prismThemes} from 'prism-react-renderer';
-import type {Config} from '@docusaurus/types';
+import type {Config, Plugin} from '@docusaurus/types';
+import type {LoadedContent} from '@docusaurus/plugin-content-docs';
 import type * as Preset from '@docusaurus/preset-classic';
 import type * as OpenApiPlugin from 'docusaurus-plugin-openapi-docs';
+
+const llmsSections: [string, string][] = [
+  ['Start here', 'index'],
+  ['Develop', 'develop'],
+  ['Architecture', 'architecture'],
+  ['Decisions', 'adr'],
+  ['Tadoku API', 'tadoku-api'],
+  ['Frontend', 'frontend'],
+  ['Operations', 'operations'],
+  ['API reference', 'api'],
+];
+
+const isOverview = (id: string, key: string) => id === key || id === `${key}/index`;
+
+// Publishes llms.txt: an index of the hand-written pages for agents without a checkout.
+function llmsTxt(): Plugin {
+  let docs: LoadedContent['loadedVersions'][number]['docs'] = [];
+  return {
+    name: 'llms-txt',
+    allContentLoaded({allContent}) {
+      const content = allContent['docusaurus-plugin-content-docs'].default as LoadedContent;
+      docs = content.loadedVersions[0].docs.filter(
+        doc => !/^api\/(immersion|content|profile|authorization)\//.test(doc.id),
+      );
+    },
+    async postBuild({outDir, siteConfig}) {
+      const sections = llmsSections.map(([title, key]) => {
+        const entries = docs
+          .filter(doc => doc.id.split('/')[0] === key)
+          .sort((a, b) => Number(!isOverview(a.id, key)) - Number(!isOverview(b.id, key)) || a.title.localeCompare(b.title))
+          .map(doc => `- [${doc.title}](${siteConfig.url}${doc.permalink}): ${doc.description} Source: \`${doc.source.replace('@site/', 'docs/')}\``);
+        return `## ${title}\n\n${entries.join('\n')}`;
+      });
+      const intro = `# ${siteConfig.title}\n\n> ${siteConfig.tagline}. Each page is the Markdown file named in its Source, in https://github.com/tadoku/tadoku. In a checkout, start with AGENTS.md.`;
+      await writeFile(join(outDir, 'llms.txt'), `${intro}\n\n${sections.join('\n\n')}\n`);
+    },
+  };
+}
 
 const config: Config = {
   title: 'Tadoku',
@@ -15,6 +56,7 @@ const config: Config = {
   projectName: 'tadoku',
 
   onBrokenLinks: 'throw',
+  onBrokenAnchors: 'throw',
 
   markdown: {
     hooks: {
@@ -47,6 +89,7 @@ const config: Config = {
 
   plugins: [
     'docusaurus-plugin-sass',
+    llmsTxt,
     [
       'docusaurus-plugin-openapi-docs',
       {

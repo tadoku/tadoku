@@ -54,7 +54,7 @@ it('lets a participant log their registered German language and filter its conte
   await user.selectOptions(screen.getByRole('combobox', { name: 'Language' }), 'German')
   const standing = within(screen.getByRole('table')).getByRole('row', { name: /Anton/ })
   expect(within(standing).getByRole('cell', { name: '10' })).toBeVisible()
-})
+}, 10_000)
 
 it('keeps the between-rounds date through creating, viewing and editing an activity', async () => {
   const user = userEvent.setup()

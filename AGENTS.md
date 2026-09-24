@@ -29,6 +29,11 @@ files in an area, read its page; those rules are as binding as this file.
   hardcode the copy, write a migration or SQL rewrite, or invent a workaround.
   Report that the edit belongs in the admin CMS.
 - **Use `pnpm`, never `npm`. Use `bazel`, never `go`.**
+- **Go comments give usage instructions, not code narration.** Keep `//go:`
+  directives. Add prose only at a declaration when callers need a non-obvious
+  constraint; test fixture safety comments begin `// Test safety:`. Do not use
+  comments to suppress lint, justify a defect or restate code. Run
+  `bazel run //tools/ci/commentpolicy` after changing Go comments.
 - **Ship every database migration as a standalone change**: its own commit, pull
   request and deployment, before any code that depends on it.
 - **Commit atomic diffs.** Split larger refactors into coherent chunks, such as
@@ -70,7 +75,8 @@ files in an area, read its page; those rules are as binding as this file.
 
 ## Checks before a pull request
 
-- Backend: `gofmt -w services/`, `bazel run //:gazelle`, then
+- Backend: `gofmt -w services/`, `bazel run //:gazelle`,
+  `bazel run //tools/ci/commentpolicy`, then
   `bazel build //services/... && bazel test //services/...`.
 - Frontend, from `frontend/`: `pnpm --filter <app> exec tsc --noEmit`,
   `pnpm --filter <app> lint`, then `pnpm build`.

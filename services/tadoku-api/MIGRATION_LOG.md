@@ -1,6 +1,6 @@
 # Tadoku API migration log
 
-- [ ] Remove all references to the “native” API; use “Tadoku API” instead. The distinction does not make sense long term.
+- [ ] Decide how to replace the remaining “native” values: the proxy request metric `mode` label and the leaderboard cache marker.
 - [ ] Design service authentication for queue workers when they need API access.
 - [ ] After the Tadoku API migration is complete, split all announcement, post, and page routes into separate admin and frontend routes.
 - [ ] Move the announcements timestamp columns to `timestamptz` in a standalone migration.

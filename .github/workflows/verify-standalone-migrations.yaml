@@ -1,0 +1,40 @@
+name: verify-standalone-migrations
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify migrations ship standalone
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Reject migrations bundled with other changes
+        env:
+          MIGRATION_MOVE: ${{ contains(github.event.pull_request.labels.*.name, 'migration-move') }}
+        run: |
+          # HEAD is the PR merge commit; its first parent is the base branch tip.
+          changed="$(git diff --name-only HEAD^1 HEAD)"
+          migrations="$(grep -E '^services/tadoku-api/migrations/[^/]+\.sql$' <<<"$changed" || true)"
+          others="$(grep -v '^services/tadoku-api/migrations/' <<<"$changed" || true)"
+
+          if [[ -z "$migrations" || -z "$others" ]]; then
+            exit 0
+          fi
+
+          if [[ "$MIGRATION_MOVE" == "true" ]]; then
+            echo "::warning::migration-move label set; allowing migrations with other changes."
+            exit 0
+          fi
+
+          echo "::error::Migrations must ship in a standalone PR. Move these files to a separate PR:"
+          echo "$others"
+          exit 1

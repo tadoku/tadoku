@@ -26,10 +26,12 @@ func (a *Application) UpdateLogContestRegistrations(ctx context.Context, logID u
 		return nil, err
 	}
 	if log.UserID != callerID {
-		return nil, errx.NewForbiddenError("forbidden")
+		if err := a.permissions.RequireAdmin(ctx); err != nil {
+			return nil, err
+		}
 	}
 
-	targets, err := a.contests.SelectRegistrationsForScoring(ctx, callerID, registrationIDs, log.LanguageCode, log.Activity.ID)
+	targets, err := a.contests.SelectRegistrationsForScoring(ctx, log.UserID, registrationIDs, log.LanguageCode, log.Activity.ID)
 	if err != nil {
 		return nil, err
 	}

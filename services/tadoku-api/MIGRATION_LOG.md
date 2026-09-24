@@ -21,7 +21,6 @@
 - [ ] Configure `wsl_v5` as a required CI check for handwritten Tadoku API Go code, excluding generated files; enable `after-block` and `after-decl` checks and provide a local auto-fix command.
 
 - [ ] Review the log tag array-text decoding contract before replacing it with native array decoding; escaped quotes and backslashes currently affect returned tags.
-- [ ] Allow administrators to update another user's log contest registrations; validate requested registrations against the log owner's account and update the authorization HTTP cases.
 
 - [ ] Add a domain-errors lint that not-found sentinels use `errx` (plain `errors.New` maps to Unknown→500).
 - [ ] Ban `Normalize*` functions returning Internal errors (lint).

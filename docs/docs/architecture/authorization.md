@@ -80,6 +80,13 @@ HTTP middleware enforces administrator access. They call the
 | `RequireAdmin` | `RequireAuthenticated` passes and the caller holds `admins`. | As above, `403` for non-administrators, `503` on Keto errors. |
 | `IsAdmin`, `IsAdminOrFalse` | Report administrator status to expand behavior inside an already-authorized operation. | `IsAdmin` returns unavailable on errors; `IsAdminOrFalse` returns `false`. |
 
+Log mutations (update, delete and contest registration update) are open to the
+log owner and to administrators: an operation compares the caller with the log
+owner and calls `RequireAdmin` only for other callers. When an administrator
+updates another user's log contest registrations, the requested registrations
+are validated against the log owner's ongoing registrations, not the
+administrator's.
+
 Feature services may inspect permissions only to expand behavior inside an
 operation the application has already authorized, and must not repeat the ban
 gate. Facts about other users, such as whether a target user is an administrator,

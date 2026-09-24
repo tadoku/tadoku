@@ -27,6 +27,7 @@ const sidebars: SidebarsConfig = {
       items: [
         'architecture/authorization',
         'architecture/service-tokens',
+        'architecture/feature-flags',
         {
           type: 'category',
           label: 'Decisions',

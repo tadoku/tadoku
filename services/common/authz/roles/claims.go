@@ -11,16 +11,13 @@ type contextKey string
 
 const ctxRolesKey contextKey = "roles.claims"
 
-// Claims are authorization facts derived from an identity (typically via Keto).
-// These are stored on the request context by middleware, and must be treated as
-// request-scoped (not cached across requests).
+// Claims are request-scoped; do not cache them across requests.
 type Claims struct {
 	Subject       string
 	Authenticated bool
 	Admin         bool
 	Banned        bool
-	// Err is set when we could not evaluate authorization (e.g. Keto unavailable).
-	Err error
+	Err           error
 }
 
 func WithClaims(ctx context.Context, claims Claims) context.Context {
@@ -40,9 +37,8 @@ func IsAuthenticated(ctx context.Context) bool { return FromContext(ctx).Authent
 func IsAdmin(ctx context.Context) bool         { return FromContext(ctx).Admin }
 func IsBanned(ctx context.Context) bool        { return FromContext(ctx).Banned }
 
-// RequireAuthenticated returns nil if the caller is authenticated.
-// It returns commondomain.ErrUnauthorized if the caller is not authenticated.
-// It returns commondomain.ErrAuthzUnavailable when we could not evaluate roles.
+// RequireAuthenticated returns commondomain.ErrUnauthorized for anonymous callers
+// and commondomain.ErrAuthzUnavailable when roles cannot be evaluated.
 func RequireAuthenticated(ctx context.Context) error {
 	c := FromContext(ctx)
 	if !c.Authenticated {
@@ -54,8 +50,7 @@ func RequireAuthenticated(ctx context.Context) error {
 	return nil
 }
 
-// RequireAdmin returns nil if the caller is an authenticated, non-banned admin.
-// It returns commondomain.ErrAuthzUnavailable when we could not evaluate roles.
+// RequireAdmin returns commondomain.ErrAuthzUnavailable when roles cannot be evaluated.
 func RequireAdmin(ctx context.Context) error {
 	c := FromContext(ctx)
 	if !c.Authenticated {

@@ -65,13 +65,11 @@ func NewClient(oathkeeperURL string, options ...Option) *Client {
 	return client
 }
 
-// GetToken returns a JWT for calling the target service.
 func (c *Client) GetToken(targetService string) (string, error) {
 	return c.GetTokenContext(context.Background(), targetService)
 }
 
-// GetTokenContext returns a JWT for calling the target service and binds an
-// uncached token exchange to the caller's cancellation and deadline.
+// GetTokenContext binds uncached exchanges to the caller's cancellation and deadline.
 func (c *Client) GetTokenContext(ctx context.Context, targetService string) (string, error) {
 	c.mu.RLock()
 	if cached, ok := c.tokenCache[targetService]; ok {

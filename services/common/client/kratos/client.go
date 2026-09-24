@@ -20,20 +20,17 @@ type Client struct {
 	listIdentitiesURL string
 }
 
-// Option configures a Kratos client.
 type Option func(*kratosapi.Configuration)
 
-// WithHTTPClient sets the HTTP client for both SDK and cursor-pagination requests.
-// The caller owns the client and its transport.
+// WithHTTPClient leaves ownership of the supplied client and transport with the caller.
 func WithHTTPClient(client *http.Client) Option {
 	return func(cfg *kratosapi.Configuration) {
 		cfg.HTTPClient = client
 	}
 }
 
-// NewAPIClient exposes the pinned Kratos SDK without translating provider models,
-// responses or errors. Without WithHTTPClient, the SDK uses its default HTTP
-// client. Construction makes no requests.
+// NewAPIClient makes no requests during construction. Without WithHTTPClient,
+// it uses the SDK's default HTTP client.
 func NewAPIClient(kratosURL string, opts ...Option) *kratosapi.APIClient {
 	cfg := kratosapi.NewConfiguration()
 	cfg.Servers = kratosapi.ServerConfigurations{{URL: kratosURL}}
@@ -73,7 +70,7 @@ func (c *Client) UserExists(ctx context.Context, id uuid.UUID) (bool, error) {
 	return true, nil
 }
 
-// ListIdentities fetches one page. An empty returned token marks the last page.
+// ListIdentities returns an empty token after the last page.
 func (c *Client) ListIdentities(ctx context.Context, pageSize int64, pageToken string) ([]kratosapi.Identity, string, error) {
 	requestURL, err := url.Parse(c.listIdentitiesURL)
 	if err != nil {

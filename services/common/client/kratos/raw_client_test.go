@@ -22,8 +22,6 @@ func TestRawAPIClientPreservesProviderResponses(t *testing.T) {
 			if status == http.StatusOK {
 				body = identityJSON(id, "active")
 			}
-			// TLS requires the supplied HTTP client; the process default cannot
-			// trust this scoped fixture's certificate.
 			provider := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				if r.Method != http.MethodGet || r.URL.Path != "/provider/admin/identities/"+id.String() {
 					t.Errorf("request=%s %s", r.Method, r.URL.String())

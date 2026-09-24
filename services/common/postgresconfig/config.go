@@ -18,16 +18,13 @@ var allowedSSLModes = map[string]bool{
 	"verify-ca": true, "verify-full": true,
 }
 
-// Config is the complete PostgreSQL connection configuration. Password is
-// intentionally omitted from String and Redact output.
+// Config omits Password from String and Redact output.
 type Config struct {
 	Host, Database, User, Password, SSLMode string
 	Port                                    uint16
 	ApplicationName                         string
 }
 
-// Load reads PREFIX_HOST, PORT, DATABASE, USER, PASSWORD, and SSLMODE. The
-// removed legacy URL variable is rejected explicitly so regressions fail closed.
 func Load(prefix, legacyName string) (Config, error) {
 	keys := []string{"HOST", "PORT", "DATABASE", "USER", "PASSWORD", "SSLMODE"}
 	values := make(map[string]string, len(keys))
@@ -62,8 +59,7 @@ func Load(prefix, legacyName string) (Config, error) {
 	return Config{Host: values["HOST"], Port: uint16(port), Database: values["DATABASE"], User: values["USER"], Password: values["PASSWORD"], SSLMode: values["SSLMODE"]}, nil
 }
 
-// WithApplicationName labels connections in pg_stat_activity and PlanetScale
-// Insights. Set this from the process identity, not from the environment.
+// WithApplicationName must use the process identity, not an environment value.
 func (c Config) WithApplicationName(name string) Config {
 	c.ApplicationName = strings.TrimSpace(name)
 	return c

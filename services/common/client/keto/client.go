@@ -9,17 +9,9 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-// Subject represents the subject of a permission check or relation tuple.
-//
-// Keto supports two encodings:
-// - Direct subject: subject_id
-// - Subject set: subject_set (namespace, object, relation)
-//
-// Exactly one of ID or Set must be provided.
+// Subject requires exactly one of ID or Set.
 type Subject struct {
-	// ID is sent as subject_id.
-	ID string
-	// Set is sent as subject_set.*.
+	ID  string
 	Set *SubjectSet
 }
 
@@ -29,47 +21,39 @@ type SubjectSet struct {
 	Relation  string
 }
 
-// AuthorizationReader is the read-only interface for authorization checks and lookups.
 type AuthorizationReader interface {
 	CheckPermission(ctx context.Context, namespace, object, relation string, subject Subject) (bool, error)
 	CheckPermissions(ctx context.Context, checks []PermissionCheck) []PermissionResult
 
-	// ListSubjectIDsForRelation returns all direct subject IDs which have
-	// (namespace, object, relation). Subject sets are ignored.
+	// ListSubjectIDsForRelation ignores subject sets.
 	ListSubjectIDsForRelation(ctx context.Context, namespace, object, relation string) ([]string, error)
 }
 
-// AuthorizationClient can both check permissions and manage relation tuples.
 type AuthorizationClient interface {
 	AuthorizationReader
 	AddRelation(ctx context.Context, namespace, object, relation string, subject Subject) error
 	DeleteRelation(ctx context.Context, namespace, object, relation string, subject Subject) error
 }
 
-// Client implements AuthorizationClient.
 type Client struct {
 	readClient  *keto.APIClient
 	writeClient *keto.APIClient
 }
 
-// Option configures a Keto API client.
 type Option func(*keto.Configuration)
 
-// WithHTTPClient configures the HTTP client used for Keto requests.
 func WithHTTPClient(client *http.Client) Option {
 	return func(cfg *keto.Configuration) {
 		cfg.HTTPClient = client
 	}
 }
 
-// Compile-time interface compliance checks.
 var (
 	_ AuthorizationReader = (*Client)(nil)
 	_ AuthorizationClient = (*Client)(nil)
 )
 
-// NewClient creates a read/write client. Options apply to both APIs; the caller
-// owns any supplied HTTP client and its transport.
+// NewClient leaves ownership of a supplied HTTP client and transport with the caller.
 func NewClient(readURL, writeURL string, opts ...Option) *Client {
 	readCfg := keto.NewConfiguration()
 	readCfg.Servers = keto.ServerConfigurations{{URL: readURL}}
@@ -87,8 +71,7 @@ func NewClient(readURL, writeURL string, opts ...Option) *Client {
 	}
 }
 
-// NewReadClient creates a client that can only check permissions.
-// Relation operations will return an error.
+// NewReadClient returns an error from relation operations.
 func NewReadClient(readURL string, opts ...Option) *Client {
 	readCfg := keto.NewConfiguration()
 	readCfg.Servers = keto.ServerConfigurations{{URL: readURL}}
@@ -101,9 +84,8 @@ func NewReadClient(readURL string, opts ...Option) *Client {
 	}
 }
 
-// CheckPermission checks if a subject has a relation on an object.
-// Returns (true, nil) if allowed, (false, nil) if denied, or (false, error) on failure.
-// Note: Keto returns HTTP 403 when permission is denied, which is treated as (false, nil).
+// CheckPermission returns (false, nil) for denials, including Keto HTTP 403;
+// provider failures return an error.
 func (c *Client) CheckPermission(ctx context.Context, namespace, object, relation string, subject Subject) (bool, error) {
 	req := c.readClient.PermissionApi.CheckPermission(ctx).
 		Namespace(namespace).
@@ -124,7 +106,6 @@ func (c *Client) CheckPermission(ctx context.Context, namespace, object, relatio
 
 	result, res, err := c.readClient.PermissionApi.CheckPermissionExecute(req)
 	if err != nil {
-		// Keto returns 403 when permission is denied (not an error condition)
 		if res != nil && res.StatusCode == http.StatusForbidden {
 			return false, nil
 		}
@@ -168,7 +149,6 @@ func (c *Client) ListSubjectIDsForRelation(ctx context.Context, namespace, objec
 	}
 }
 
-// AddRelation creates a relation tuple in Keto.
 func (c *Client) AddRelation(ctx context.Context, namespace, object, relation string, subject Subject) error {
 	if c.writeClient == nil {
 		return fmt.Errorf("keto write client not configured")
@@ -205,7 +185,6 @@ func (c *Client) AddRelation(ctx context.Context, namespace, object, relation st
 	return nil
 }
 
-// DeleteRelation removes a relation tuple from Keto.
 func (c *Client) DeleteRelation(ctx context.Context, namespace, object, relation string, subject Subject) error {
 	if c.writeClient == nil {
 		return fmt.Errorf("keto write client not configured")
@@ -239,7 +218,6 @@ func (c *Client) DeleteRelation(ctx context.Context, namespace, object, relation
 	return nil
 }
 
-// PermissionCheck represents a single permission check request.
 type PermissionCheck struct {
 	Namespace string
 	Object    string
@@ -247,20 +225,16 @@ type PermissionCheck struct {
 	Subject   Subject
 }
 
-// PermissionResult represents the result of a single permission check.
 type PermissionResult struct {
 	Check   PermissionCheck
 	Allowed bool
 	Err     error
 }
 
-// DefaultMaxConcurrency is the default maximum number of concurrent permission checks.
 const DefaultMaxConcurrency = 10
 
-// CheckPermissions checks multiple permissions in parallel.
-// Returns results in the same order as the input checks.
-// Limits concurrency to DefaultMaxConcurrency to avoid overwhelming the server.
-// Respects context cancellation - cancelled checks will have ctx.Err() in their result.
+// CheckPermissions preserves input order, caps concurrency at DefaultMaxConcurrency,
+// and returns ctx.Err() in canceled results.
 func (c *Client) CheckPermissions(ctx context.Context, checks []PermissionCheck) []PermissionResult {
 	results := make([]PermissionResult, len(checks))
 	if len(checks) == 0 {
@@ -279,7 +253,7 @@ func (c *Client) CheckPermissions(ctx context.Context, checks []PermissionCheck)
 				Allowed: allowed,
 				Err:     err,
 			}
-			return nil // Don't fail-fast; collect all results
+			return nil
 		})
 	}
 

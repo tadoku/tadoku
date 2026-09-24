@@ -11,8 +11,8 @@ import (
 )
 
 type fakeKeto struct {
-	results         map[string]ketoclient.PermissionResult // keyed by relation
-	subjectIDsByRel map[string][]string                    // keyed by relation
+	results         map[string]ketoclient.PermissionResult
+	subjectIDsByRel map[string][]string
 	listSubjectsErr error
 }
 

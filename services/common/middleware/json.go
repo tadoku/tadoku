@@ -2,9 +2,6 @@ package middleware
 
 import "github.com/labstack/echo/v4"
 
-// RestoreJSONCharset keeps Echo JSON responses on
-// application/json; charset=UTF-8 after Echo v4.15 dropped the charset
-// from MIMEApplicationJSON.
 func RestoreJSONCharset(e *echo.Echo) {
 	inner := e.JSONSerializer
 	if inner == nil {

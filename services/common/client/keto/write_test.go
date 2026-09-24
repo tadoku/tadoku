@@ -20,7 +20,6 @@ func TestRelationWriteProviderResponses(t *testing.T) {
 			t.Run(operation+"/"+http.StatusText(status), func(t *testing.T) {
 				body := fmt.Sprintf(`{"error":{"code":%d,"message":"provider detail"}}`, status)
 				var requests atomic.Int32
-				// TLS also proves NewClient uses the supplied transport.
 				provider := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					requests.Add(1)
 					_, _ = io.Copy(io.Discard, r.Body)
@@ -82,7 +81,6 @@ func TestRelationWritesAreCancellableAndBounded(t *testing.T) {
 						_, _ = io.Copy(io.Discard, r.Body)
 						if stage == "body" {
 							w.Header().Set("Content-Type", "application/json")
-							// Both methods must bound reading an error response, too.
 							w.WriteHeader(http.StatusServiceUnavailable)
 							_, _ = w.Write([]byte(`{"error":`))
 							w.(http.Flusher).Flush()

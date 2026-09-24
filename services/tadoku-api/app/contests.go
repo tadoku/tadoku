@@ -5,7 +5,9 @@ import (
 	"errors"
 
 	"github.com/google/uuid"
+	"github.com/tadoku/tadoku/services/tadoku-api/domain/activities"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/contests"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/languages"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/profile"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
@@ -120,9 +122,25 @@ func (a *Application) FetchContestSummary(ctx context.Context, id uuid.UUID) (*C
 	return a.contests.FetchContestSummary(ctx, id)
 }
 
-func (a *Application) ContestConfigurationOptions(ctx context.Context) (*contests.ConfigurationOptions, error) {
+type ContestConfigurationOptions struct {
+	Languages              []languages.Language
+	Activities             []activities.Activity
+	CanCreateOfficialRound bool
+}
+
+func (a *Application) ContestConfigurationOptions(ctx context.Context) (*ContestConfigurationOptions, error) {
 	canCreateOfficialRound := a.permissions.IsAdminOrFalse(ctx)
-	return a.contests.ConfigurationOptions(ctx, canCreateOfficialRound)
+
+	languages, err := a.languages.ListLanguages(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ContestConfigurationOptions{
+		Languages:              languages,
+		Activities:             activities.All(),
+		CanCreateOfficialRound: canCreateOfficialRound,
+	}, nil
 }
 
 func (a *Application) FindContestRegistration(ctx context.Context, contestID uuid.UUID) (*ContestRegistration, error) {
@@ -155,7 +173,12 @@ func (a *Application) ListOngoingContestRegistrations(ctx context.Context) (*Con
 		return nil, err
 	}
 
-	return a.contests.ListOngoingRegistrations(ctx, userID)
+	languages, err := a.languages.ListLanguages(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return a.contests.ListOngoingRegistrations(ctx, userID, languages)
 }
 
 func (a *Application) UpsertContestRegistration(ctx context.Context, parameters ContestRegistrationUpsertParameters) error {
@@ -215,5 +238,10 @@ func (a *Application) ListYearlyContestRegistrations(ctx context.Context, userID
 	callerID, err := uuid.Parse(user.Subject)
 	includePrivate := a.permissions.IsAdminOrFalse(ctx) || (err == nil && callerID == userID)
 
-	return a.contests.ListYearlyRegistrations(ctx, userID, year, includePrivate)
+	languages, err := a.languages.ListLanguages(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return a.contests.ListYearlyRegistrations(ctx, userID, year, includePrivate, languages)
 }

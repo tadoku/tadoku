@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	domainlanguages "github.com/tadoku/tadoku/services/tadoku-api/domain/languages"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/logscore"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
@@ -71,22 +72,25 @@ func (s *Service) FindRegistration(ctx context.Context, userID, contestID uuid.U
 	return registration, nil
 }
 
-func (s *Service) ListOngoingRegistrations(ctx context.Context, userID uuid.UUID) (*RegistrationList, error) {
+func (s *Service) ListOngoingRegistrations(ctx context.Context, userID uuid.UUID, languages []domainlanguages.Language) (*RegistrationList, error) {
 	registrations, err := s.contests.ListOngoingRegistrations(ctx, userID, timex.Now())
 	if err != nil {
 		return nil, err
 	}
 
-	return s.hydrateRegistrations(ctx, registrations)
+	return hydrateRegistrations(registrations, languages)
 }
 
 func (s *Service) SelectRegistrationsForScoring(ctx context.Context, userID uuid.UUID, requested []uuid.UUID, languageCode string, activityID int32) ([]logscore.Target, error) {
-	registrations, err := s.ListOngoingRegistrations(ctx, userID)
+	registrations, err := s.contests.ListOngoingRegistrations(ctx, userID, timex.Now())
 	if err != nil {
 		return nil, err
 	}
+	if err := hydrateRegistrationActivities(registrations); err != nil {
+		return nil, err
+	}
 
-	selected, err := selectRegistrationsForScoring(requested, registrations.Registrations, languageCode, activityID)
+	selected, err := selectRegistrationsForScoring(requested, registrations, languageCode, activityID)
 	if err != nil {
 		return nil, err
 	}
@@ -101,18 +105,17 @@ func (s *Service) SelectRegistrationsForScoring(ctx context.Context, userID uuid
 	return targets, nil
 }
 
-func (s *Service) ListYearlyRegistrations(ctx context.Context, userID uuid.UUID, year int, includePrivate bool) (*RegistrationList, error) {
+func (s *Service) ListYearlyRegistrations(ctx context.Context, userID uuid.UUID, year int, includePrivate bool, languages []domainlanguages.Language) (*RegistrationList, error) {
 	registrations, err := s.contests.ListYearlyRegistrations(ctx, userID, int32(year), includePrivate)
 	if err != nil {
 		return nil, err
 	}
 
-	return s.hydrateRegistrations(ctx, registrations)
+	return hydrateRegistrations(registrations, languages)
 }
 
-func (s *Service) hydrateRegistrations(ctx context.Context, registrations []Registration) (*RegistrationList, error) {
-	languages, err := s.contests.ListLanguages(ctx)
-	if err != nil {
+func hydrateRegistrations(registrations []Registration, languages []domainlanguages.Language) (*RegistrationList, error) {
+	if err := hydrateRegistrationActivities(registrations); err != nil {
 		return nil, err
 	}
 
@@ -126,12 +129,6 @@ func (s *Service) hydrateRegistrations(ctx context.Context, registrations []Regi
 		for _, code := range registrations[i].LanguageCodes {
 			registrations[i].Languages = append(registrations[i].Languages, Language{Code: code, Name: languageNames[code]})
 		}
-
-		activities, err := hydrateActivitiesInOrder(registrations[i].Contest.allowedActivityIDs)
-		if err != nil {
-			return nil, err
-		}
-		registrations[i].Contest.AllowedActivities = activities
 	}
 
 	return &RegistrationList{
@@ -139,6 +136,17 @@ func (s *Service) hydrateRegistrations(ctx context.Context, registrations []Regi
 		TotalSize:     len(registrations),
 		NextPageToken: "",
 	}, nil
+}
+
+func hydrateRegistrationActivities(registrations []Registration) error {
+	for i := range registrations {
+		activities, err := hydrateActivitiesInOrder(registrations[i].Contest.allowedActivityIDs)
+		if err != nil {
+			return err
+		}
+		registrations[i].Contest.AllowedActivities = activities
+	}
+	return nil
 }
 
 func (s *Service) ValidateRegistrationUpsert(
@@ -294,18 +302,6 @@ func (s *Service) FindLatestOfficialContest(ctx context.Context) (*ContestView, 
 		return nil, err
 	}
 	return hydrateContest(item, languages)
-}
-
-func (s *Service) ConfigurationOptions(ctx context.Context, canCreateOfficialRound bool) (*ConfigurationOptions, error) {
-	languages, err := s.contests.ListLanguages(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return &ConfigurationOptions{
-		Languages:              languages,
-		Activities:             allActivities(),
-		CanCreateOfficialRound: canCreateOfficialRound,
-	}, nil
 }
 
 func (s *Service) findContestWithLanguages(ctx context.Context, id uuid.UUID, includeDeleted bool) (*Contest, []Language, error) {

@@ -34,7 +34,13 @@ func (s *Service) CreatePost(ctx context.Context, parameters CreatePostParameter
 		CreatedAt:   &now,
 		UpdatedAt:   &now,
 	}
-	return s.posts.CreatePost(ctx, item)
+
+	contentID := uuid.New()
+	if err := s.posts.CreatePost(ctx, item, contentID); err != nil {
+		return err
+	}
+
+	return s.posts.CreatePostContent(ctx, item.ID, contentID, item.Title, item.Content, *item.CreatedAt)
 }
 
 func (s *Service) DeletePost(ctx context.Context, namespace string, id uuid.UUID) error {
@@ -123,7 +129,16 @@ func (s *Service) UpdatePost(ctx context.Context, parameters UpdatePostParameter
 	now := timex.Now()
 	post.UpdatedAt = &now
 
-	return s.posts.UpdatePost(ctx, post, contentChanged)
+	if !contentChanged {
+		return s.posts.UpdatePost(ctx, post, nil)
+	}
+
+	contentID := uuid.New()
+	if err := s.posts.UpdatePost(ctx, post, &contentID); err != nil {
+		return err
+	}
+
+	return s.posts.CreatePostContent(ctx, post.ID, contentID, post.Title, post.Content, *post.UpdatedAt)
 }
 
 func (s *Service) GetPostVersion(ctx context.Context, namespace string, postID, contentID uuid.UUID) (*PostVersion, error) {

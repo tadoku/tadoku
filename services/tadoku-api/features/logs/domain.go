@@ -150,11 +150,20 @@ func (p ListParameters) normalized() ListParameters {
 }
 
 func hydrateLogActivity(log *Log) error {
+	activity, err := findActivity(log.Activity.ID)
+	if err != nil {
+		return err
+	}
+
+	log.Activity = activity
+	return nil
+}
+
+func findActivity(id int32) (activities.Activity, error) {
 	for _, activity := range activities.All() {
-		if activity.ID == log.Activity.ID {
-			log.Activity = activity
-			return nil
+		if activity.ID == id {
+			return activity, nil
 		}
 	}
-	return ErrInvalidActivity
+	return activities.Activity{}, ErrInvalidActivity
 }

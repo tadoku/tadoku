@@ -11,6 +11,7 @@ spec:
   numberOfInstances: 1
   users:
     immersion: []
+    tadoku: []
     kratos: []
     keto: []
   databases:

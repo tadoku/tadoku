@@ -2,13 +2,11 @@ package logs
 
 import (
 	"context"
-	"fmt"
 	"sort"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/tadoku/tadoku/services/tadoku-api/domain/activities"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/logscore"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
@@ -279,17 +277,11 @@ func (s *Service) YearlyActivitySplit(ctx context.Context, userID uuid.UUID, yea
 		return nil, err
 	}
 	for i := range scores {
-		found := false
-		for _, activity := range activities.All() {
-			if int(activity.ID) == scores[i].ActivityID {
-				scores[i].ActivityName = activity.Name
-				found = true
-				break
-			}
+		activity, err := findActivity(int32(scores[i].ActivityID))
+		if err != nil {
+			return nil, err
 		}
-		if !found {
-			return nil, fmt.Errorf("invalid activity %d", scores[i].ActivityID)
-		}
+		scores[i].ActivityName = activity.Name
 	}
 	return scores, nil
 }

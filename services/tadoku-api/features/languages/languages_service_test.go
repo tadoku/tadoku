@@ -1,11 +1,11 @@
 package languages_test
 
 import (
-	"errors"
 	"strings"
 	"testing"
 
 	"github.com/tadoku/tadoku/services/tadoku-api/features/languages"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
 
 func TestCreateLanguageParametersValidateByteLengths(t *testing.T) {
@@ -27,7 +27,7 @@ func TestCreateLanguageParametersValidateByteLengths(t *testing.T) {
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			err := test.parameters.Validate()
-			if got := errors.Is(err, languages.ErrInvalidLanguage); got != test.wantError {
+			if got := errx.KindOf(err) == errx.InvalidInput; got != test.wantError {
 				t.Errorf("invalid error=%v, want %t", err, test.wantError)
 			}
 		})
@@ -50,7 +50,7 @@ func TestUpdateLanguageParametersValidateByteLengths(t *testing.T) {
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			err := (languages.UpdateLanguageParameters{Code: "code", Name: test.value}).Validate()
-			if got := errors.Is(err, languages.ErrInvalidLanguage); got != test.wantError {
+			if got := errx.KindOf(err) == errx.InvalidInput; got != test.wantError {
 				t.Errorf("invalid error=%v, want %t", err, test.wantError)
 			}
 		})

@@ -38,6 +38,7 @@ go_test(
     ],
     deps = [
         ":languages",
+        "//services/tadoku-api/internal/errx",
         "//services/tadoku-api/internal/testpostgres",
     ],
 )

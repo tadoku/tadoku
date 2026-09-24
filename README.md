@@ -10,6 +10,12 @@ The documentation for this repository can be found at https://tadoku.github.io/t
 
 ## Dev Environment
 
+New here? Start with the [agent verification guide](.agents/skills/verify-tadoku/SKILL.md)
+and [feature map](.agents/skills/verify-tadoku/references/features/README.md).
+They explain how to find a user journey, select your branch, prove a change in
+the browser, and clean up. Agents can use `$verify-tadoku` when repository skill
+discovery is supported, or read the linked guide directly; no global skill is required.
+
 Use **DevCLI v0.4.0+** for webv2, auth, admin and native Tadoku API development on
 [https://tadoku.dev.lab](https://tadoku.dev.lab). See
 [the development runbook](.dev/README.md) for installation, shared-stack

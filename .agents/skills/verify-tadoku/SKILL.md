@@ -10,6 +10,11 @@ or conversation history is required. If automatic skill discovery is unavailable
 read this file directly. This skill guides verification; it does not grant access,
 authorize unrelated mutations, or replace the repository's `AGENTS.md`.
 
+[Development environment](../../../docs/docs/develop/environment.md) is the
+canonical reference for installing DevCLI, starting, opening and inspecting a
+branch, routing headers, branch databases, fixture accounts and cleanup. This
+skill adds only what verification needs on top of it.
+
 ## Choose the proof
 
 Read the [feature index](references/features/README.md), then the relevant area.
@@ -29,67 +34,43 @@ journeys rather than running the entire inventory for every edit.
    fetching fails. Use a task branch and a unique stable owner for this checkout.
    Check for an existing `dev up` loop belonging to this exact checkout before
    starting another; reuse only your own matching loop.
-2. Run `dev version` and `dev doctor`. The supported baseline is v0.4.0; installation,
-   private Git access, PATH and overrides are in [the runbook](../../../.dev/README.md).
-   Required local tools include Git, Bazel, kubectl and pnpm for frontend checks.
-   Local container-based E2Es additionally need Docker. Lab networking, DNS, CA
-   trust and existing cluster credentials must already work. Doctor is a read-only
-   prerequisite check, not an E2E.
+2. Run `dev version` and `dev doctor`. Installation, prerequisites and overrides
+   are in [Development environment](../../../docs/docs/develop/environment.md).
+   Lab networking, DNS, CA trust and existing cluster credentials must already
+   work. Doctor is a read-only prerequisite check, not an E2E.
 3. Read [`.dev/config.yaml`](../../../.dev/config.yaml). It targets `homelab-dev`
    (`https://192.168.1.190:6443`, node `ct190`), not production. Always specify
    `--context homelab-dev` on kubectl commands. If access or the base is broken,
    report the failing check; do not bootstrap credentials, restart shared services,
    change Argo resources, or substitute production. Operators have a separate
-   [base runbook](../../../k8s/dev/base/README.md).
+   [Development base](../../../docs/docs/operations/development-base.md) runbook.
 
-Synthetic account details and fixture caveats live in the [feature index](references/features/README.md).
+Verification fixtures and their caveats live in the [feature index](references/features/README.md).
 Do not run `make dev-seed` automatically: it mutates shared identities and base
 fixtures. Use it only when missing fixtures need an authorized shared setup.
 
 ## Start the changed code
 
-Make the intended edits **before** starting the loop. Example owner: replace
-`agent-my-task` consistently, including in other terminals.
+Make the intended edits **before** starting the loop, then start it as described
+in [Start a branch](../../../docs/docs/develop/environment.md#start-a-branch). Use
+an owner such as `agent-my-task` consistently, including in other terminals.
 
-```sh
-dev up --owner agent-my-task --task migrate --task seed
-```
+- Keep the loop running in a durable terminal/session; record its handle and
+  working directory.
+- For frontend-only **read-only** checks, omit the `migrate`/`seed` tasks. For
+  writes, run a branch API even if only frontend code changed
+  (`--service tadoku-api --task migrate --task seed`), so writes land in your
+  branch database rather than base.
+- Discovery happens once at startup: restart your loop when edits introduce
+  another service. Do not use `--no-watch` for live-update verification. Do not
+  hand-maintain a service catalog from the feature map.
 
-Keep this process running in a durable terminal/session; record its handle and
-working directory. Tasks prepare a branch application database before API startup.
-For frontend-only **read-only** checks, omit the tasks. For writes, ensure there
-is a branch API even if only frontend code changed:
-
-```sh
-dev up --owner agent-my-task --service tadoku-api --task migrate --task seed
-```
-
-Bazel selects affected deployables from the merge base with `origin/main`, including
-uncommitted edits. `--base <ref>` changes that comparison. `--service` **adds** to
-the affected set, not filters it. Unknown paths can select all services; discovery
-happens once at startup, so restart your loop when edits introduce another service.
-Do not use `--no-watch` for live-update verification. Do not hand-maintain a service
-catalog from this feature map.
-
-In another terminal, in the same checkout:
-
-```sh
-dev status --owner agent-my-task
-dev url --owner agent-my-task '/'
-dev url --owner agent-my-task --host account.tadoku.dev.lab '/login'
-dev url --owner agent-my-task --host admin.tadoku.dev.lab '/'
-dev logs --owner agent-my-task tadoku-api
-```
-
-Use the **printed URLs**, including for deep links. Flags precede positional
-paths/service names. The `dev-branch` query sets a host-only cookie; it remains
-in the URL and wins over an older cookie. Browser routing headers cannot override
-the cookie. A printed URL does not create an overlay or prove it is ready.
-
-Select every host the journey uses in the **same browser context**. In particular,
-admin → API needs both the admin link and the main-host link. Tabs share cookies;
-use separate contexts/profiles for base and other owners. Authentication cookies
-and branch selection are different things. `/kratos` always uses shared Kratos.
+Use the **printed `dev url` links**, including for deep links; a printed link does
+not create an overlay or prove it is ready. Select every host the journey uses in
+the **same browser context**. In particular, admin → API needs both the admin
+link and the main-host link. Tabs share cookies; use separate contexts/profiles
+for base and other owners. Authentication cookies and branch selection are
+different things.
 
 ## Drive and observe
 
@@ -139,21 +120,14 @@ alongside the tested revision, steps, assertions and limitations. Inspect media
 before uploading and verify the posted attachments. Don't substitute local file
 paths for delivered evidence, or claim an attachment was posted when upload failed.
 
-When finished, remove your overlays from the same branch/checkout/owner:
-
-```sh
-dev down --owner agent-my-task
-dev url --owner agent-my-task --clear '/'
-dev url --owner agent-my-task --host account.tadoku.dev.lab --clear '/'
-dev url --owner agent-my-task --host admin.tadoku.dev.lab --clear '/'
-```
-
-Visit the clear links if keeping that browser context; don't revisit stale selected
-links. Confirm owned overlay removal and base availability. `dev down` stops the
-local loop; Ctrl-C alone leaves overlays. Branch databases are intentionally
-retained. Don't drop databases/PVCs or run namespace-wide deletion/cleanup.
-`dev status` and `dev up` can maintain expired overlays; `dev cleanup` is broader
-than the current owner. Stop only port-forwards/browser processes you started.
+When finished, from the same branch/checkout/owner, run `dev down` and clear the
+selection on every host you selected, as described in
+[Clean up](../../../docs/docs/develop/environment.md#clean-up). Visit the clear
+links if keeping that browser context; don't revisit stale selected links.
+Confirm owned overlay removal and base availability. Ctrl-C alone leaves
+overlays. Don't drop databases/PVCs or run namespace-wide deletion/cleanup;
+`dev cleanup` is broader than the current owner. Stop only port-forwards/browser
+processes you started.
 
 If the user wants the environment left running, hand off the links, owner, branch,
 worktree, process handle, sync health, expiry and exact cleanup command instead.

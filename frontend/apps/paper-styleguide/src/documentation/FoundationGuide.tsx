@@ -41,7 +41,7 @@ export function GovernanceGuide({ document }: { document: CatalogDocument }) {
       ['Stable', 'Documented contract and complete examples, behavior evidence and visual review. Compatible changes preserve callers.'],
       ['Deprecated', 'Name the replacement, migration steps and agreed removal timing. Do not remove a used export without an exit path.'],
     ]} />
-    <p><a href="https://github.com/tadoku/tadoku/tree/main/docs/wip/tadoku-paper">Decision log and design history</a> explain the accepted Bookplate direction. Keep application routing, fetching, persistence and contest rules in applications.</p>
+    <p><a href="https://github.com/tadoku/tadoku/tree/62536c7988107f6856c83cf443735638230937ed/docs/wip/tadoku-paper">Decision log and design history</a> explain the accepted Bookplate direction. Keep application routing, fetching, persistence and contest rules in applications.</p>
   </section>
   if (document.id === 'governance.changelog') return <section id="usage" className="document-section foundation-guide">
     <h2 className="paper-type-section">Change history</h2>

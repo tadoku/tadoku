@@ -1,4 +1,5 @@
 ---
+description: Accepted decision to define Tadoku API contracts in OpenAPI before implementing them on the backend and frontend.
 sidebar_position: 2
 title: "002 - API Contracts (OpenAPI)"
 ---

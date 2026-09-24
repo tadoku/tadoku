@@ -1,0 +1,2 @@
+insert into contests (id, owner_user_id, owner_user_display_name, "private", contest_start, contest_end, registration_end, title, language_code_allow_list, activity_type_id_allow_list, official, created_at, updated_at) values
+  ('f2222222-2222-4222-8222-222222222222', '99999999-9999-4999-8999-999999999999', 'Missing', false, '2026-01-01', '2026-12-31', '2026-01-31', 'Missing organizer fixture', '{jpn,eng}', '{1,2}', false, '2026-01-01', '2026-01-01');

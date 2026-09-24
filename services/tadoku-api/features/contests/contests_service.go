@@ -235,7 +235,7 @@ func (s *Service) CreateContest(ctx context.Context, contest Contest) (*Contest,
 		return nil, err
 	}
 
-	return s.contests.FindCreatedContestByID(ctx, contest.ID)
+	return s.contests.FindContestByID(ctx, FindParameters{ID: contest.ID})
 }
 
 func (s *Service) CheckCreatePermission(ctx context.Context, userID uuid.UUID, accountCreatedAt time.Time) error {

@@ -61,8 +61,8 @@ func (r *LogsRepository) CreateLog(ctx context.Context, mutation logMutation) er
 		ScoreSource:                 p.source,
 		EligibleOfficialLeaderboard: mutation.EligibleOfficialLeaderboard,
 		Description:                 postgres.NullableText(mutation.Description),
-		CreatedAt:                   logTime(mutation.Now),
-		UpdatedAt:                   logTime(mutation.Now),
+		CreatedAt:                   postgres.Timestamp(mutation.Now),
+		UpdatedAt:                   postgres.Timestamp(mutation.Now),
 	})
 }
 
@@ -111,10 +111,6 @@ func (r *LogsRepository) InsertOutbox(ctx context.Context, userID uuid.UUID, con
 	if err != nil {
 		return err
 	}
-	var cid pgtype.UUID
-	if contestID != nil {
-		cid = postgres.UUID(*contestID)
-	}
 	var y pgtype.Int2
 	if year != nil {
 		y = pgtype.Int2{Int16: *year, Valid: true}
@@ -122,7 +118,7 @@ func (r *LogsRepository) InsertOutbox(ctx context.Context, userID uuid.UUID, con
 	return queries.New(executor).InsertLogLeaderboardOutbox(ctx, queries.InsertLogLeaderboardOutboxParams{
 		EventType: string(event),
 		UserID:    postgres.UUID(userID),
-		ContestID: cid,
+		ContestID: postgres.NullableUUID(contestID),
 		Year:      y,
 	})
 }
@@ -158,7 +154,7 @@ func (r *LogsRepository) UpdateLog(ctx context.Context, mutation logMutation) er
 		ScoreRates:      mutation.Tracking.Rates,
 		ScoreSource:     p.source,
 		Description:     postgres.NullableText(mutation.Description),
-		UpdatedAt:       logTime(mutation.Now),
+		UpdatedAt:       postgres.Timestamp(mutation.Now),
 		LogID:           postgres.UUID(mutation.ID),
 	})
 }
@@ -237,26 +233,19 @@ type logTrackingParams struct {
 
 func trackingParams(t Tracking) logTrackingParams {
 	p := logTrackingParams{
-		unitKey:  pgtype.Text{String: t.UnitKey, Valid: t.UnitKey != ""},
-		amount:   postgres.NullableFloat4(t.Amount),
-		modifier: postgres.NullableFloat4(t.Modifier),
-		duration: postgres.NullableInt4(t.DurationSeconds),
-		source:   pgtype.Text{String: t.Source, Valid: t.Source != ""},
-	}
-	if t.UnitID != nil {
-		p.unitID = postgres.UUID(*t.UnitID)
-	}
-	if t.RuleSetID != nil {
-		p.ruleSetID = postgres.UUID(*t.RuleSetID)
+		unitKey:   postgres.NullableNonEmptyText(&t.UnitKey),
+		amount:    postgres.NullableFloat4(t.Amount),
+		modifier:  postgres.NullableFloat4(t.Modifier),
+		duration:  postgres.NullableInt4(t.DurationSeconds),
+		source:    postgres.NullableNonEmptyText(&t.Source),
+		unitID:    postgres.NullableUUID(t.UnitID),
+		ruleSetID: postgres.NullableUUID(t.RuleSetID),
 	}
 	for _, id := range t.RuleIDs {
 		p.ruleIDs = append(p.ruleIDs, postgres.UUID(id))
 	}
 	return p
 }
-
-// logTime keeps the caller's location; postgres.Timestamp normalizes to UTC.
-func logTime(v time.Time) pgtype.Timestamp { return pgtype.Timestamp{Time: v, Valid: true} }
 
 func (r *LogsRepository) ListUnits(ctx context.Context) ([]Unit, error) {
 	executor, err := postgres.Executor(ctx, r.db)
@@ -293,7 +282,7 @@ func (r *LogsRepository) ListUserLanguageCodes(ctx context.Context, userID uuid.
 		return nil, err
 	}
 
-	codes, err := queries.New(executor).ListDistinctLanguageCodesForUser(ctx, pgtype.UUID{Bytes: userID, Valid: true})
+	codes, err := queries.New(executor).ListDistinctLanguageCodesForUser(ctx, postgres.UUID(userID))
 	if err != nil {
 		return nil, fmt.Errorf("list user log languages: %w", err)
 	}
@@ -307,7 +296,7 @@ func (r *LogsRepository) ListTagSuggestions(ctx context.Context, userID uuid.UUI
 	}
 
 	rows, err := queries.New(executor).ListTagSuggestionsForUser(ctx, queries.ListTagSuggestionsForUserParams{
-		UserID: pgtype.UUID{Bytes: userID, Valid: true},
+		UserID: postgres.UUID(userID),
 		Query:  pgtype.Text{String: query, Valid: true},
 	})
 	if err != nil {
@@ -327,7 +316,7 @@ func (r *LogsRepository) YearlyActivity(ctx context.Context, userID uuid.UUID, y
 		return nil, err
 	}
 	rows, err := queries.New(executor).YearlyActivityForUser(ctx, queries.YearlyActivityForUserParams{
-		UserID: pgtype.UUID{Bytes: userID, Valid: true},
+		UserID: postgres.UUID(userID),
 		Year:   year,
 	})
 	if err != nil {
@@ -352,7 +341,7 @@ func (r *LogsRepository) YearlyScores(ctx context.Context, userID uuid.UUID, yea
 		return nil, err
 	}
 	rows, err := queries.New(executor).FetchScoresForProfile(ctx, queries.FetchScoresForProfileParams{
-		UserID: pgtype.UUID{Bytes: userID, Valid: true},
+		UserID: postgres.UUID(userID),
 		Year:   year,
 	})
 	if err != nil {
@@ -377,7 +366,7 @@ func (r *LogsRepository) YearlyActivitySplit(ctx context.Context, userID uuid.UU
 		return nil, err
 	}
 	rows, err := queries.New(executor).YearlyActivitySplitForUser(ctx, queries.YearlyActivitySplitForUserParams{
-		UserID: pgtype.UUID{Bytes: userID, Valid: true},
+		UserID: postgres.UUID(userID),
 		Year:   year,
 	})
 	if err != nil {
@@ -402,8 +391,8 @@ func (r *LogsRepository) ContestScores(ctx context.Context, userID, contestID uu
 	}
 
 	rows, err := queries.New(executor).FetchScoresForContestProfile(ctx, queries.FetchScoresForContestProfileParams{
-		UserID:    pgtype.UUID{Bytes: userID, Valid: true},
-		ContestID: pgtype.UUID{Bytes: contestID, Valid: true},
+		UserID:    postgres.UUID(userID),
+		ContestID: postgres.UUID(contestID),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("ContestScores: %w", err)
@@ -426,8 +415,8 @@ func (r *LogsRepository) ContestActivity(ctx context.Context, userID, contestID 
 	}
 
 	rows, err := queries.New(executor).ActivityPerLanguageForContestProfile(ctx, queries.ActivityPerLanguageForContestProfileParams{
-		UserID:    pgtype.UUID{Bytes: userID, Valid: true},
-		ContestID: pgtype.UUID{Bytes: contestID, Valid: true},
+		UserID:    postgres.UUID(userID),
+		ContestID: postgres.UUID(contestID),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("ContestActivity: %w", err)
@@ -451,7 +440,7 @@ func (r *LogsRepository) FindLog(ctx context.Context, id uuid.UUID, includeDelet
 	}
 
 	row, err := queries.New(executor).FindLogByID(ctx, queries.FindLogByIDParams{
-		ID:             pgtype.UUID{Bytes: id, Valid: true},
+		ID:             postgres.UUID(id),
 		IncludeDeleted: includeDeleted,
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -520,7 +509,7 @@ func (r *LogsRepository) RecomputeOfficialEligibility(ctx context.Context, logID
 
 	return queries.New(executor).RecomputeLogOfficialEligibility(ctx, queries.RecomputeLogOfficialEligibilityParams{
 		LogID:     postgres.UUID(logID),
-		UpdatedAt: logTime(now),
+		UpdatedAt: postgres.Timestamp(now),
 	})
 }
 
@@ -562,7 +551,7 @@ func (r *LogsRepository) SoftDelete(ctx context.Context, logID uuid.UUID, now ti
 
 	return queries.New(executor).SoftDeleteLog(ctx, queries.SoftDeleteLogParams{
 		LogID:     postgres.UUID(logID),
-		DeletedAt: logTime(now),
+		DeletedAt: postgres.Timestamp(now),
 	})
 }
 
@@ -572,7 +561,7 @@ func (r *LogsRepository) AttachedRegistrations(ctx context.Context, id uuid.UUID
 		return nil, err
 	}
 
-	rows, err := queries.New(executor).FindAttachedContestRegistrationsForLog(ctx, pgtype.UUID{Bytes: id, Valid: true})
+	rows, err := queries.New(executor).FindAttachedContestRegistrationsForLog(ctx, postgres.UUID(id))
 	if err != nil {
 		return nil, fmt.Errorf("find attached registrations: %w", err)
 	}
@@ -598,12 +587,8 @@ func (r *LogsRepository) ListUserLogs(ctx context.Context, parameters ListParame
 		return nil, err
 	}
 
-	var userID pgtype.UUID
-	if parameters.UserID != nil {
-		userID = pgtype.UUID{Bytes: *parameters.UserID, Valid: true}
-	}
 	rows, err := queries.New(executor).ListLogsForUser(ctx, queries.ListLogsForUserParams{
-		UserID:         userID,
+		UserID:         postgres.NullableUUID(parameters.UserID),
 		StartFrom:      int32(parameters.Page * parameters.PageSize),
 		PageSize:       int32(parameters.PageSize),
 		IncludeDeleted: parameters.IncludeDeleted,
@@ -646,16 +631,12 @@ func (r *LogsRepository) ListContestLogs(ctx context.Context, parameters ListPar
 		return nil, err
 	}
 
-	var userID pgtype.UUID
-	if parameters.UserID != nil {
-		userID = pgtype.UUID{Bytes: *parameters.UserID, Valid: true}
-	}
 	rows, err := queries.New(executor).ListLogsForContest(ctx, queries.ListLogsForContestParams{
-		UserID:         userID,
+		UserID:         postgres.NullableUUID(parameters.UserID),
 		StartFrom:      int32(parameters.Page * parameters.PageSize),
 		PageSize:       int32(parameters.PageSize),
 		IncludeDeleted: parameters.IncludeDeleted,
-		ContestID:      pgtype.UUID{Bytes: parameters.ContestID, Valid: true},
+		ContestID:      postgres.UUID(parameters.ContestID),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("list logs: %w", err)

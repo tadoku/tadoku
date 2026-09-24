@@ -72,7 +72,7 @@ export const phaseThreeFoundationDocuments = [
   guidanceDocument({
     id: "foundation.principles", route: "/foundations/principles", name: "Principles", kind: "foundation",
     summary: "The product and design principles that keep Tadoku calm, legible, and recognizably about reading.",
-    keywords: ["principles", "bookplate", "calm", "reading"], sourcePath: "docs/wip/tadoku-paper/decision-log.md",
+    keywords: ["principles", "bookplate", "calm", "reading"], sourcePath: "src/catalog/phase-three-content.tsx",
     whenToUse: ["Use these principles to resolve component, content, and product-pattern trade-offs."],
     content: ["Paper should feel editorial rather than ornamental: strong hierarchy, quiet structure, and realistic Tadoku language.", "Prefer semantic native behavior, reveal state without relying on color, and introduce complexity only when it helps a reading task."],
     requirements: ["Legibility, keyboard access, and recognizable state outrank decorative novelty."],
@@ -225,16 +225,16 @@ export const phaseThreeGovernanceDocuments = [
   guidanceDocument({
     id: "governance.contributing", route: "/contributing", name: "Contributing", kind: "governance",
     summary: "How Paper changes are proposed, implemented, tested, documented, reviewed, and promoted.",
-    keywords: ["contributing", "lifecycle", "review", "deprecation"], sourcePath: "docs/wip/tadoku-paper/implementation-plan.md",
+    keywords: ["contributing", "lifecycle", "review", "deprecation"], sourcePath: "src/catalog/phase-three-content.tsx",
     whenToUse: ["Use before adding an export, token, fixture, route, or lifecycle change."],
-    content: ["Every change has a canonical source, deterministic fixture, behavior evidence, migration note, and review date before Stable promotion.", "Experimental contracts may change. Stable contracts require migration-safe changes. Deprecated contracts name a registered replacement, removal timing, and exit path.", "Design history includes the refinement audit, visual studies, decision log, implementation plan, research packet, and accepted ADRs under docs/wip/tadoku-paper."],
+    content: ["Every change has a canonical source, deterministic fixture, behavior evidence, migration note, and review date before Stable promotion.", "Experimental contracts may change. Stable contracts require migration-safe changes. Deprecated contracts name a registered replacement, removal timing, and exit path.", "Design history includes the refinement audit, visual studies, decision log, implementation plan, research packet, and accepted ADRs, archived in Git history and linked from the catalogue design history."],
     requirements: ["Review semantics, keyboard behavior, reflow, both themes, both densities, and realistic content before promotion."],
     publicContract: ["The catalogue registry is the source of lifecycle, route, fixture, source, and migration metadata."],
   }),
   guidanceDocument({
     id: "governance.changelog", route: "/changelog", name: "Changelog", kind: "governance",
     summary: "Meaningful package, component, documentation, deployment, and migration changes.",
-    keywords: ["changelog", "release", "version", "migration"], sourcePath: "docs/wip/tadoku-paper/research",
+    keywords: ["changelog", "release", "version", "migration"], sourcePath: "src/catalog/phase-three-content.tsx",
     whenToUse: ["Consult before upgrading Paper or changing an application integration."],
     content: ["0.1.0 establishes semantic foundations, the complete catalogue contract, static delivery at paper.tadoku.app, framework-neutral components, and TypeScript 4.9-compatible built declarations.", "Current review (unreleased) adds usable foundation examples, a spacing scale and layout utilities, and corrects accent-rail perimeter alignment. Documentation coverage is not an application migration or release approval."],
     requirements: ["Record behavior, accessibility, API, or migration consequences instead of listing filenames alone."],

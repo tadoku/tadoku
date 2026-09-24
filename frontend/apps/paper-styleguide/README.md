@@ -3,7 +3,7 @@
 This is the static, registry-driven catalogue for `paper-ui`. It deliberately
 does not depend on Next.js, the legacy `ui` package, or Headless UI.
 
-Paper's [composition guide](../../../docs/wip/tadoku-paper/composition.md)
+Paper's [composition guide](../../../docs/docs/frontend/paper-composition.md)
 explains when a section belongs in a screen, becomes a documented product
 pattern, or qualifies as a shared component.
 

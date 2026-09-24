@@ -2,11 +2,8 @@ package languages
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
-	"github.com/jackc/pgerrcode"
-	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	queries "github.com/tadoku/tadoku/services/tadoku-api/generated/sqlc/languages"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
@@ -30,8 +27,7 @@ func (r *LanguagesRepository) CreateLanguage(ctx context.Context, parameters Cre
 		Code: parameters.Code,
 		Name: parameters.Name,
 	})
-	var pgError *pgconn.PgError
-	if errors.As(err, &pgError) && pgError.Code == pgerrcode.UniqueViolation {
+	if postgres.IsUniqueViolation(err) {
 		return ErrLanguageAlreadyExists
 	}
 	if err != nil {

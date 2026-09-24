@@ -2,13 +2,15 @@
 
 Tadoku lets language learners log activities, track progress and participate in
 contests and leaderboards. The main site is `webv2`; `auth` handles accounts and
-`admin` manages content and moderation. They use the native `tadoku-api` backend.
+`admin` manages content and moderation. They use the Tadoku API backend.
 
 Start with [the verification skill](../../SKILL.md) for environment selection and
-safety. Read only the area your task affects. These are **development** URLs and
-user journeys, not deployment metadata or an assertion that every check has passed.
-Generate selected links with `dev url`; bare links below use your browser's current
-cookie (base in a fresh context). Never use production `tadoku.app` for these checks.
+safety; [Development environment](../../../../../docs/docs/develop/environment.md)
+covers hosts, branch selection and fixture accounts. Read only the area your task
+affects. These are **development** URLs and user journeys, not deployment metadata
+or an assertion that every check has passed. Generate selected links with `dev url`;
+bare links below use your browser's current cookie (base in a fresh context).
+Never use production `tadoku.app` for these checks.
 
 | User goal | Entry point | Read |
 | --- | --- | --- |
@@ -20,17 +22,17 @@ cookie (base in a fresh context). Never use production `tadoku.app` for these ch
 
 ## Fixtures and test boundaries
 
-Hosts: main `https://tadoku.dev.lab`, accounts `https://account.tadoku.dev.lab`,
-admin `https://admin.tadoku.dev.lab`. See [configuration](../../../../../.dev/config.yaml).
-The shared synthetic accounts are `reader@tadoku.app` (Dev Reader) and
-`dev@tadoku.app` (Dev Admin), with development fixture password `tadoku` unless
-overridden outside Git. These email strings are **not** test destination hosts.
-Don't change their credentials/profile/roles for an unrelated test.
+“Main”, “account” and “admin” host below mean `tadoku.dev.lab`,
+`account.tadoku.dev.lab` and `admin.tadoku.dev.lab`. Use the shared synthetic
+accounts Dev Reader and Dev Admin from the
+[fixture accounts](../../../../../docs/docs/develop/environment.md#seed-data). Their
+`@tadoku.app` email strings are **not** test destination hosts. Don't change their
+credentials/profile/roles for an unrelated test.
 
 Branch `migrate`/`seed` tasks reuse those identities and populate branch-local data.
-Missing shared identities require authorized setup from the [runbook](../../../../../.dev/README.md),
-not invented IDs or auth bypasses. User IDs are generated; obtain them from the
-profile link or your authenticated session, not a hardcoded UUID.
+Missing shared identities require authorized setup, not invented IDs or auth
+bypasses. User IDs are generated; obtain them from the profile link or your
+authenticated session, not a hardcoded UUID.
 
 Useful fixtures from [the seed sources](../../../../../scripts/dev/seed/):
 
@@ -53,8 +55,8 @@ adjacent permission/persistence states. Repeat with separate selected/base conte
 when routing or isolation changes. Never mutate shared fixtures for a broad sweep.
 
 Token-reflector is base-only infrastructure, not a separate user journey. Paper
-playground/styleguide are design tooling, not the deployed product; live overlays
-are deferred. No check here implies those previews have been verified.
+playground/styleguide are design tooling, not the deployed product; they have no
+live overlays. No check here implies those previews have been verified.
 
 Maintain the relevant entry alongside behavior changes: entry point, prerequisites,
 observable outcome, failure/empty/permission states, traps and source anchors. Keep

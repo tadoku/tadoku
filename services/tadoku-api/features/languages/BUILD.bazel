@@ -14,8 +14,6 @@ go_library(
         "//services/tadoku-api/generated/sqlc/languages",
         "//services/tadoku-api/infra/postgres",
         "//services/tadoku-api/internal/errx",
-        "@com_github_jackc_pgerrcode//:pgerrcode",
-        "@com_github_jackc_pgx_v5//pgconn",
         "@com_github_jackc_pgx_v5//pgxpool",
     ],
 )

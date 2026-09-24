@@ -25,7 +25,7 @@ browser screenshot and result outside Git. Do not include credentials or cookies
 5. Change a visible application string again while the same loop runs. Verify
    browser HMR without navigation/state loss and unchanged Pod UID/image.
    Check source deletion/dependency sync where applicable; surface sync errors.
-6. Repeat for webv2 and native API with `--task migrate --task seed`. Use current
+6. Repeat for webv2 and Tadoku API with `--task migrate --task seed`. Use current
    `tadoku-<route>` databases. Verify a real branch write updates its leaderboard,
    while base and another branch remain unchanged (separate DB/cache prefixes).
 7. Verify failed Go compilation preserves the old process and corrected source
@@ -36,7 +36,7 @@ browser screenshot and result outside Git. Do not include credentials or cookies
    Deleted selections fall back to base and base remains available.
 
 Branch selection is per hostname, not an authentication cookie. For an admin
-overlay calling a native API overlay on tadoku.dev.lab, visit the CLI links for
+overlay calling a Tadoku API overlay on tadoku.dev.lab, visit the CLI links for
 both hosts in the same browser profile. Clearing one host does not clear others.
 Run browsers with Lab CA trust; note any TLS verification bypass separately.
 

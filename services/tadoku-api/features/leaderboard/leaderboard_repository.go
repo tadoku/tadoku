@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	queries "github.com/tadoku/tadoku/services/tadoku-api/generated/sqlc/leaderboard"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
@@ -21,7 +20,7 @@ func (r *Repository) contestExists(ctx context.Context, id uuid.UUID) (bool, err
 	if err != nil {
 		return false, err
 	}
-	exists, err := queries.New(executor).ContestExists(ctx, pgtype.UUID{Bytes: id, Valid: true})
+	exists, err := queries.New(executor).ContestExists(ctx, postgres.UUID(id))
 	if err != nil {
 		return false, fmt.Errorf("check contest: %w", err)
 	}
@@ -34,7 +33,7 @@ func (r *Repository) contest(ctx context.Context, request ContestRequest) (*Lead
 		return nil, err
 	}
 	rows, err := queries.New(executor).LeaderboardForContest(ctx, queries.LeaderboardForContestParams{
-		ContestID:    pgtype.UUID{Bytes: request.ContestID, Valid: true},
+		ContestID:    postgres.UUID(request.ContestID),
 		LanguageCode: postgres.NullableNonEmptyText(request.LanguageCode),
 		ActivityID:   postgres.NullableInt4(request.ActivityID),
 		StartFrom:    int32(request.Page * request.PageSize),
@@ -128,7 +127,7 @@ func (r *Repository) allContestScores(ctx context.Context, id uuid.UUID) ([]scor
 	if err != nil {
 		return nil, err
 	}
-	rows, err := queries.New(executor).ContestLeaderboardAllScores(ctx, pgtype.UUID{Bytes: id, Valid: true})
+	rows, err := queries.New(executor).ContestLeaderboardAllScores(ctx, postgres.UUID(id))
 	if err != nil {
 		return nil, fmt.Errorf("fetch all contest leaderboard scores: %w", err)
 	}
@@ -201,7 +200,7 @@ func (r *Repository) markOutbox(ctx context.Context, ids []int64, processedAt ti
 		return err
 	}
 	err = queries.New(executor).MarkLeaderboardOutboxProcessed(ctx, queries.MarkLeaderboardOutboxProcessedParams{
-		ProcessedAt: pgtype.Timestamp{Time: processedAt, Valid: true},
+		ProcessedAt: postgres.Timestamp(processedAt),
 		Ids:         ids,
 	})
 	if err != nil {
@@ -215,7 +214,7 @@ func (r *Repository) cleanupOutbox(ctx context.Context, before time.Time) error 
 	if err != nil {
 		return err
 	}
-	err = queries.New(executor).CleanupLeaderboardOutbox(ctx, pgtype.Timestamp{Time: before, Valid: true})
+	err = queries.New(executor).CleanupLeaderboardOutbox(ctx, postgres.Timestamp(before))
 	if err != nil {
 		return fmt.Errorf("cleanup leaderboard outbox: %w", err)
 	}

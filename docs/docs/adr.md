@@ -1,9 +1,12 @@
 ---
+description: What architectural decision records are, the index of Tadoku's ADRs and the template for writing a new one.
 sidebar_position: 2
 title: Architectural Decision Records
 ---
 
 # Architectural Decision Records
+
+Read this when you want the reasoning behind a past design choice or need to record a new one.
 
 ## What are these?
 
@@ -17,6 +20,7 @@ ref. https://github.com/joelparkerhenderson/architecture-decision-record
 - [002 - Define API contracts through OpenAPI](./adr/002-api-contracts.md)
 - [003 - Zod as a request parser](./adr/003-zod.md)
 - [004 - Automating contest scheduling](./adr/004-scheduling-contests.md)
+- [005 - Scoring rules and metadata ownership](./adr/005-scoring-rules.md)
 
 ## Template
 

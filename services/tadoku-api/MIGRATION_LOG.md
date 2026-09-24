@@ -41,7 +41,7 @@
 - [ ] Move FindLog registration visibility into the logs feature (explicit deleted vs visibility params); skip attachment SQL when hidden; stop overloading the admin bool as `includeDeleted`.
 - [ ] Fix contests `FindRegistration` language hydration to match list hydrate; delete the app padding loop in `contest_profile`.
 - [ ] Stop loading contest on find-registration when the response omits it; remove app `registration.Contest = nil`.
-- [ ] Forbid raw banned Keto triples outside `internal/permissions` (lint).
+- [ ] Forbid raw banned/admins Keto triples outside `internal/permissions` (lint).
 - [ ] Change `CheckContestCreatePermission` guest to 401 and too-young to 403; update HTTP goldens and access level.
 - [ ] Align contest scoring rule-set list guest auth with platform (`RequireAuthenticated` + owner/admin); guest 401 golden.
 - [ ] Standardize caller UUID / self-or-admin helpers in app; ban ad-hoc Subject UUID parse outside allowlisted guest paths.

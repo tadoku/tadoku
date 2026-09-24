@@ -9,7 +9,8 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
 )
 
-// Checker evaluates identity and admin-role requirements for the verified user.
+// Checker owns the shared application Keto relations. CheckBanned and CheckAdmin
+// look up a given subject; the other methods evaluate the verified caller.
 // A shared ban gate may record an inconclusive lookup so privileges fail closed.
 type Checker struct {
 	client *ketoclient.Client
@@ -37,12 +38,7 @@ func IsBanned(ctx context.Context) bool {
 	return banned
 }
 
-// CheckBanned reports whether the subject holds the shared application ban relation.
-func CheckBanned(ctx context.Context, reader ketoclient.AuthorizationReader, subjectID string) (bool, error) {
-	return reader.CheckPermission(ctx, "app", "tadoku", "banned", ketoclient.Subject{ID: subjectID})
-}
-
-// NewKetoChecker checks admin membership using the shared application relation.
+// NewKetoChecker checks the shared application relations in Keto.
 func NewKetoChecker(client *ketoclient.Client) *Checker {
 	return &Checker{client: client}
 }
@@ -51,17 +47,32 @@ func (c *Checker) CheckPermission(ctx context.Context, namespace, object, relati
 	if err := c.RequireAuthenticated(ctx); err != nil {
 		return false, err
 	}
+
+	user := identity.FromContext(ctx)
+	return c.lookup(ctx, namespace, object, relation, user.Subject)
+}
+
+// CheckBanned reports whether the subject holds the shared application ban relation.
+func (c *Checker) CheckBanned(ctx context.Context, subjectID string) (bool, error) {
+	return c.lookup(ctx, "app", "tadoku", "banned", subjectID)
+}
+
+// CheckAdmin reports whether the subject holds the shared application admin relation.
+func (c *Checker) CheckAdmin(ctx context.Context, subjectID string) (bool, error) {
+	return c.lookup(ctx, "app", "tadoku", "admins", subjectID)
+}
+
+func (c *Checker) lookup(ctx context.Context, namespace, object, relation, subjectID string) (bool, error) {
 	if c == nil || c.client == nil {
 		return false, errx.NewUnavailableError("permissions unavailable", nil)
 	}
 
-	user := identity.FromContext(ctx)
-	allowed, err := c.client.CheckPermission(ctx, namespace, object, relation, ketoclient.Subject{ID: user.Subject})
+	allowed, err := c.client.CheckPermission(ctx, namespace, object, relation, ketoclient.Subject{ID: subjectID})
 	if err != nil {
-		return false, errx.NewUnavailableError("check permission", err)
+		return false, errx.NewUnavailableError("check "+relation+" permission", err)
 	}
 	if err := ctx.Err(); err != nil {
-		return false, errx.NewUnavailableError("check permission", err)
+		return false, errx.NewUnavailableError("check "+relation+" permission", err)
 	}
 	return allowed, nil
 }
@@ -74,18 +85,8 @@ func (c *Checker) IsAdmin(ctx context.Context) (bool, error) {
 	if err, _ := ctx.Value(banLookupErrorKey{}).(error); err != nil {
 		return false, errx.NewUnavailableError("check ban permission", err)
 	}
-	if c == nil || c.client == nil {
-		return false, errx.NewUnavailableError("permissions unavailable", nil)
-	}
 
-	allowed, err := c.client.CheckPermission(ctx, "app", "tadoku", "admins", ketoclient.Subject{ID: user.Subject})
-	if err != nil {
-		return false, errx.NewUnavailableError("check admin permission", err)
-	}
-	if err := ctx.Err(); err != nil {
-		return false, errx.NewUnavailableError("check admin permission", err)
-	}
-	return allowed, nil
+	return c.CheckAdmin(ctx, user.Subject)
 }
 
 // IsAdminOrFalse reports administrator access only after a successful lookup.

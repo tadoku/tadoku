@@ -84,7 +84,7 @@ func TestImmersionContestModerationDetachLog(t *testing.T) {
 		{description: []string{"absent", "link"}, want: http.StatusOK},
 		{description: []string{"frozen", "log"}, want: http.StatusOK},
 		{description: []string{"log", "owner", "not", "moderator"}, want: http.StatusForbidden},
-		{description: []string{"unauthorized", "missing", "log"}, want: http.StatusForbidden},
+		{description: []string{"non", "moderator", "missing", "log"}, want: http.StatusForbidden},
 		{description: []string{"missing", "contest", "before", "log"}, want: http.StatusNotFound},
 		{description: []string{"deleted", "contest"}, want: http.StatusNotFound},
 		{description: []string{"missing", "log", "after", "authorization"}, want: http.StatusNotFound},

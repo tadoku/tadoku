@@ -26,13 +26,13 @@ spec:
               done
           env:
             - {name: PGHOST, value: tadoku-dev-db.tdk-dev-data.svc.cluster.local}
-            - {name: PGDATABASE, value: immersion}
+            - {name: PGDATABASE, value: tadoku}
             - {name: PGSSLMODE, value: require}
             - {name: PGCONNECT_TIMEOUT, value: "5"}
             - name: PGUSER
-              valueFrom: {secretKeyRef: {name: immersion.tadoku-dev-db.credentials.postgresql.acid.zalan.do, key: username}}
+              valueFrom: {secretKeyRef: {name: tadoku.tadoku-dev-db.credentials.postgresql.acid.zalan.do, key: username}}
             - name: PGPASSWORD
-              valueFrom: {secretKeyRef: {name: immersion.tadoku-dev-db.credentials.postgresql.acid.zalan.do, key: password}}
+              valueFrom: {secretKeyRef: {name: tadoku.tadoku-dev-db.credentials.postgresql.acid.zalan.do, key: password}}
           resources:
             requests: {cpu: 10m, memory: 16Mi}
             limits: {cpu: 100m, memory: 64Mi}
@@ -44,12 +44,12 @@ spec:
           args: ["-source", "file:///migrations", "up"]
           env:
             - {name: POSTGRES_HOST, value: tadoku-dev-db.tdk-dev-data.svc.cluster.local}
-            - {name: POSTGRES_DATABASE, value: immersion}
+            - {name: POSTGRES_DATABASE, value: tadoku}
             - {name: POSTGRES_SSLMODE, value: require}
             - name: POSTGRES_USER
-              valueFrom: {secretKeyRef: {name: immersion.tadoku-dev-db.credentials.postgresql.acid.zalan.do, key: username}}
+              valueFrom: {secretKeyRef: {name: tadoku.tadoku-dev-db.credentials.postgresql.acid.zalan.do, key: username}}
             - name: POSTGRES_PASSWORD
-              valueFrom: {secretKeyRef: {name: immersion.tadoku-dev-db.credentials.postgresql.acid.zalan.do, key: password}}
+              valueFrom: {secretKeyRef: {name: tadoku.tadoku-dev-db.credentials.postgresql.acid.zalan.do, key: password}}
           resources:
             requests: {cpu: 50m, memory: 64Mi}
             limits: {cpu: "1", memory: 256Mi}

@@ -45,7 +45,7 @@ try {
   report.leaderboardWorkers = { base: baseWorker, branch: branchWorker, branchPrefix }
   const jobs = docs.filter(d => d.kind === 'Job')
   const frontends = docs.filter(d => d.kind === 'Deployment' && d.metadata.name.startsWith('frontend-'))
-  const roles = { 'tadoku-api-migrate': 'immersion', 'kratos-migrate': 'kratos', 'keto-migrate': 'keto' }
+  const roles = { 'tadoku-api-migrate': 'tadoku', 'kratos-migrate': 'kratos', 'keto-migrate': 'keto' }
   for (const image of ['postgres:17', ...jobs.concat(frontends).map(j => j.spec.template.spec.containers[0].image)]) {
     // Use an existing resolved artifact; avoid an unnecessary large base pull
     // on the shared T3 disk. Missing images still use the normal registry path.
@@ -68,7 +68,7 @@ try {
     const role = roles[job.metadata.name]
     if (!role) throw new Error(`Unexpected migration Job: ${job.metadata.name}`)
     const name = `${prefix}-${role}-${suffix}`
-    const env = role === 'immersion'
+    const env = role === 'tadoku'
       ? { POSTGRES_HOST: db, POSTGRES_USER: role, POSTGRES_PASSWORD: 'disposable-test-only', POSTGRES_DATABASE: fail ? 'missing_fixture_database' : role, POSTGRES_SSLMODE: 'disable' }
       : { DSN: `postgres://${role}@${db}:5432/${role}?sslmode=disable`, PGPASSWORD: 'disposable-test-only' }
     run('docker', ['create', '--name', name, '--network', prefix, '--label', `tadoku.dev/test=${prefix}`, '--cpus', '0.5', '--memory', '256m', ...Object.entries(env).flatMap(([k,v]) => ['-e', `${k}=${v}`]), '--entrypoint', container.command[0], container.image, ...container.command.slice(1), ...container.args])

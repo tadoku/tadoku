@@ -1,12 +1,12 @@
 -- Reuse the shared development users, but write fixtures only into this branch.
 \getenv branch_database PGDATABASE
 select current_database() = :'branch_database'
-       and current_user = 'immersion'
-       and pg_get_userbyid(datdba) = 'immersion'
+       and current_user = 'tadoku'
+       and pg_get_userbyid(datdba) = 'tadoku'
        and octet_length(:'branch_database') <= 63
-       and :'branch_database' ~ '^immersion-[a-z0-9][a-z0-9-]*-[0-9a-f]{8}$'
+       and :'branch_database' ~ '^tadoku-[a-z0-9][a-z0-9-]*-[0-9a-f]{8}$'
        and shobj_description(oid, 'pg_database') =
-           'dev-cli branch database route=' || substring(:'branch_database' from 11)
+           'dev-cli branch database route=' || substring(:'branch_database' from 8)
        as owned
 from pg_database where datname = current_database()
 \gset
@@ -15,7 +15,7 @@ from pg_database where datname = current_database()
   do $$ begin raise exception 'refusing seed outside an owned branch database'; end $$;
 \endif
 
-\connect immersion
+\connect tadoku
 select count(*) = 1 as admin_found, min(id::text) as admin_user_id
 from users where display_name = 'Dev Admin'
 \gset

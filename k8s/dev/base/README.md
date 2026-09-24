@@ -40,40 +40,23 @@ Next startup API must be reverified when the frontend framework version changes.
 The public Lab CA is mounted for server-side HTTPS. Branch pods still use the
 CLI-managed pnpm/Next dev server and do not use this adapter.
 
-## Leaderboard worker handoff
+## Leaderboard workers
 
-The base `immersion` database and unprefixed leaderboard cache keys have one
-outbox owner. The source cleanup enables the native worker in the base Tadoku
-API Deployment and removes the Immersion Deployment from this root. Argo's
-`PruneLast` behavior can leave the old pod running while the new pod starts, so
-removal and enablement in one sync are not a safe handoff.
+The base `tadoku` database and unprefixed leaderboard cache keys have one
+outbox owner: the worker in the base Tadoku API Deployment. Confirm one ready
+base replica has `API_LEADERBOARD_OUTBOX_ENABLED=true`, its logs contain
+`leaderboard outbox ready`, and no old Immersion worker Pod or Job exists.
+Check that `select count(*) from leaderboard_outbox where processed_at is null`
+is zero in the base `tadoku` database, then exercise a log write and leaderboard
+read.
 
-Before syncing the source cleanup, deploy the separate dev worker-stop change
-that sets `tdk-dev-immersion-api/immersion-api` replicas to zero. Confirm the
-Deployment reports zero desired and available replicas and that its namespace
-has no Immersion worker Pods or Jobs. Also accept and pin a Tadoku API base image
-whose source includes the native outbox worker; the currently checked-in image
-digest predates that worker. The base uses empty cache prefix, so this image
-need not contain overlay prefix support. Verify the rendered base image resolves
-to the accepted worker digest before the enabled Deployment starts.
-Do not rely on Image Updater convergence or same-sync pruning to satisfy either
-gate.
-
-After the source cleanup sync, confirm there is still no old worker, exactly
-one base Tadoku API replica has `API_LEADERBOARD_OUTBOX_ENABLED=true`, and its
-logs contain `leaderboard outbox ready`. Check that
-`select count(*) from leaderboard_outbox where processed_at is null` is zero
-in the base `immersion` database, then exercise a log write and leaderboard
-read. Branch overlays use their own databases and `dev:${DEV_ROUTE}:`
-leaderboard cache prefixes on shared Valkey, and run their own workers. Verify
-a branch write/read separately; its cache keys must not change the base cache.
-DevCLI must build each overlay image from source with cache prefix support
-before enabling its worker. Any overlay created before the prefix-capable
-template must be restarted through its owner's DevCLI lifecycle so its branch
-database gains a worker; the base worker cannot drain branch outboxes.
-The dev-base offline E2E checks rendered worker ownership; backend E2Es check
-separate PostgreSQL databases with shared Valkey cache namespaces. Live Argo
-ordering and image acceptance remain release gates.
+Branch overlays use their own `tadoku-${DEV_ROUTE}` databases and
+`dev:${DEV_ROUTE}:` cache prefixes on shared Valkey. Each branch runs its own
+worker. Verify a branch write/read separately; its cache keys must not change
+the base cache. DevCLI must build each overlay image from source with cache
+prefix support before enabling its worker. The dev-base offline E2E checks
+rendered worker ownership; backend E2Es check separate PostgreSQL databases
+with shared Valkey cache namespaces.
 
 ## Automatic migrations
 
@@ -112,8 +95,8 @@ from migrations: `make dev-seed` uses the existing marked synthetic identities.
 
 There are no plaintext Secret manifests or private keys in this root. The
 Postgres operator generates the `immersion`, `tadoku`, `kratos` and `keto` credentials in
-`tdk-dev-data`. The `tadoku` role is staged for the database-name cutover; the
-base and branch databases still use `immersion` until that cutover completes.
+`tdk-dev-data`. Tadoku API uses the `tadoku` role and database; the old
+`immersion` identity is retained until its separately approved deletion.
 `scripts/dev/bootstrap-gitops-secrets.sh` copies only required
 credentials into consumer namespaces, generates development-only signing/session
 material once, and preserves existing keys on rerun. Run it only with explicit
@@ -137,10 +120,10 @@ variables in existing processes. Base migrations require no manual task on
 subsequent full syncs. Keep generated keys only in development Kubernetes Secrets
 or an approved encrypted backup, never in Git or this worktree.
 
-One shared Postgres pod serves base databases and `immersion-<owner/branch-route>`
+One shared Postgres pod serves base databases and `tadoku-<owner/branch-route>`
 branch databases. The admin Secret stays in `tdk-dev-data` and is used only by the
 short-lived branch database creation Job. Application pods and tasks use the
-`immersion` role. This is cooperative isolation, not hostile multi-tenancy.
+`tadoku` role. This is cooperative isolation, not hostile multi-tenancy.
 Postgres CR and data namespace have `Prune=false,Delete=false`; ordinary Argo
 pruning or Application removal must not destroy data. Branch databases are also
 retained on `dev down`; deletion needs exact ownership checks and permission.

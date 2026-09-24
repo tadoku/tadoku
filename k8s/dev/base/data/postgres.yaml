@@ -16,6 +16,7 @@ spec:
     keto: []
   databases:
     immersion: immersion
+    tadoku: tadoku
     kratos: kratos
     keto: keto
   postgresql:

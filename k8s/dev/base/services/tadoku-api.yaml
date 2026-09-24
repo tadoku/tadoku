@@ -15,7 +15,7 @@ metadata:
   labels:
     app: tadoku-api
 spec:
-  replicas: 0
+  replicas: 1
   revisionHistoryLimit: 2
   selector:
     matchLabels:
@@ -66,15 +66,15 @@ spec:
             - {name: API_KRATOS_ADMIN_URL, value: "http://kratos-admin.tdk-dev-kratos"}
             - {name: API_KRATOS_TIMEOUT, value: "2s"}
             - {name: API_POSTGRES_HOST, value: tadoku-dev-db.tdk-dev-data.svc.cluster.local}
-            - {name: API_POSTGRES_DATABASE, value: immersion}
+            - {name: API_POSTGRES_DATABASE, value: tadoku}
             - {name: API_POSTGRES_SSLMODE, value: require}
             - {name: API_POSTGRES_MAX_CONNECTIONS, value: "4"}
             - {name: API_VALKEY_URL, value: "redis://valkey.tdk-dev-data:6379"}
             - {name: API_VALKEY_TIMEOUT, value: "1s"}
             - name: API_POSTGRES_USER
-              valueFrom: {secretKeyRef: {name: immersion.tadoku-dev-db.credentials.postgresql.acid.zalan.do, key: username}}
+              valueFrom: {secretKeyRef: {name: tadoku.tadoku-dev-db.credentials.postgresql.acid.zalan.do, key: username}}
             - name: API_POSTGRES_PASSWORD
-              valueFrom: {secretKeyRef: {name: immersion.tadoku-dev-db.credentials.postgresql.acid.zalan.do, key: password}}
+              valueFrom: {secretKeyRef: {name: tadoku.tadoku-dev-db.credentials.postgresql.acid.zalan.do, key: password}}
           volumeMounts:
             - name: k8s-token
               mountPath: /var/run/secrets/tokens

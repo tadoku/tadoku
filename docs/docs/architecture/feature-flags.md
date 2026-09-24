@@ -36,7 +36,7 @@ polling mode: it fetches the namespace evaluation snapshot every
 `API_FLIPT_UPDATE_INTERVAL` and evaluates in process. A failed fetch keeps the
 last snapshot and marks results stale. Startup waits at most
 `API_FLIPT_STARTUP_TIMEOUT` before serving safe defaults. See
-[Configuration](../tadoku-api/index.md) for the `API_FLIPT_*` settings.
+[Configuration](../tadoku-api/configuration.md) for the `API_FLIPT_*` settings.
 
 Flipt calls pass through Oathkeeper with service JWTs that
 `services/common/client/s2s/` exchanges for the `flipt-evaluation` or

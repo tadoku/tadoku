@@ -1,27 +1,7 @@
-# Transactions
+# PostgreSQL helpers
 
-`RunInTransaction(ctx, pool, callback)` owns begin, commit, and rollback.
-The callback receives a context carrying the transaction. Repositories select
-the database handle with `Executor(ctx, pool)` for each operation, then pass it
-directly to native pgx-compatible sqlc queries:
-
-```go
-db, err := postgres.Executor(ctx, r.pool)
-if err != nil {
-    return err
-}
-return queries.New(db).InsertItem(ctx, params)
-```
-
-Outside a transaction, `Executor` returns the pool. Inside one, it returns the
-active transaction. Wrong-pool, nested, and ended transaction scopes fail; an
-ended context never falls back to the pool. There are no retries or savepoints.
-All work and row iteration must finish before the callback returns. Do not run
-parallel SQL on one transaction or hold it across network/cache operations.
-
-Callback errors and panics retain their identity. Cleanup gets an independent
-five-second timeout so cancellation does not prevent the rollback attempt.
-A commit transport error can leave an uncertain persistence outcome.
+`RunInTransaction` and `Executor` implement Tadoku API transactions. Their rules
+are documented in [Database and migrations](../../../../docs/docs/tadoku-api/database.md#transactions).
 
 ## Tests
 
@@ -62,5 +42,4 @@ sqlc compatibility. Secondary cleanup transport failures are not simulated.
 
 `testdata/sqlc` contains only synthetic query-generation inputs, not application
 migrations. `internal/pgxcompat` is generated and Bazel-test-only. Regenerate with
-`./scripts/generate-sqlc.sh`; it uses this fixture's separate sqlc v1.31.1 pin
-without upgrading the legacy generators. Never edit generated Go by hand.
+`./scripts/generate-sqlc.sh`; it uses this fixture's separate sqlc v1.31.1 pin. Never edit generated Go by hand.

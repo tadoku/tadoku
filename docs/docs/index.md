@@ -43,6 +43,8 @@ the development environment and verified.
 | Gate behavior behind a flag | [Feature flags](./architecture/feature-flags.md) |
 | Read past design decisions | [Decisions](./adr.md) |
 | Change backend behavior | [Tadoku API](./tadoku-api/index.md) |
+| Change the database schema or a query | [Tadoku API database](./tadoku-api/database.md) |
+| Write backend tests | [Tadoku API testing](./tadoku-api/testing.md) |
 | Change a frontend application | [Frontend overview](./frontend/index.md) |
 | Build a Paper screen | [Paper composition](./frontend/paper-composition.md) |
 | Operate the development base or repair data | [Operations](./operations/index.md) |

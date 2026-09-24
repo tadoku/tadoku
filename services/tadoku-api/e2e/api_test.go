@@ -279,7 +279,7 @@ func newTestRouterWithLeaderboardService(
 	profileRepository := featureprofile.NewRepository(pool)
 	scoringRepository := scoring.NewScoringRepository(pool)
 	announcementsService := announcements.NewService(announcementsRepository)
-	contestsService := contests.NewService(contestsRepository, kratosFixture.Client())
+	contestsService := contests.NewService(contestsRepository)
 	languagesService := languages.NewService(languagesRepository)
 	logsService := logs.NewService(logsRepository, scoringEngineEnabled)
 	pagesService := pages.NewService(pagesRepository)

@@ -1,7 +1,0 @@
-fullnameOverride: "valkey-immersion"
-
-image:
-  tag: "9"
-
-storage:
-  requestedSize: 256Mi

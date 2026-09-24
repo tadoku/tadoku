@@ -43,6 +43,6 @@ The fresh **development-only** base is defined in
 and existing GHCR images tracked by development Image Updater. It is active on
 `homelab-dev` in the `tdk-dev-*` namespaces. Token-reflector is base-only;
 Paper styleguide overlays are deferred and its local pnpm workflow remains.
-Do not run Tilt concurrently or apply the historical pilot manifests.
-Removing the historical Tilt files is a separate owner-approval gate.
+Tilt entrypoints and the old pilot manifests have been removed. Do not restore
+or run them from an older checkout against the GitOps base.
 `make dev-reset` is disabled; any reset needs an explicitly approved, scoped runbook.

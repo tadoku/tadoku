@@ -21,7 +21,7 @@ bazel-*
 tilt_config.json
 .tools/
 
-# Ignore Tilt generated files
+# Keep retired Tilt artifacts ignored in existing checkouts.
 .helm/
 .tilt/
 tilt_modules/

@@ -126,7 +126,7 @@ SQL-drop operation exists. Deletion requires inspecting the exact database and
 ownership, then separate authorization. Never drop shared `tadoku`, `kratos`,
 or `keto`.
 `make dev-reset` is disabled; any reset needs an explicitly
-approved, scoped runbook, not the historical Tilt reset script. The old
+approved, scoped runbook. The old
 `immersion` databases and role were retired from the shared development
 cluster under a separate approved runbook.
 
@@ -152,8 +152,8 @@ by Kratos, so no temporary auth allowlist is required.
 Operators must follow the fresh-base bootstrap and explicit cutover gates in
 the base README. Full Argo syncs run migrations before dependent workloads;
 selective resource sync skips hooks and must not be used for releases.
-Do not run Tilt concurrently or apply the historical `k8s/dev/dev-cli/` pilot
-manifests. Both can conflict with the new base's canonical routes. Base and branch
+Tilt entrypoints and pilot manifests have been removed; do not run them from an
+older checkout because they conflict with the base's canonical routes. Base and branch
 frontends send SSR through the same gateway with Lab CA trust, preserving API-only
 branch selection. Old resources and data must not be deleted without explicit
 approval. Production remains unchanged.
@@ -183,8 +183,9 @@ this is not zero-downtime deployment. Compile failures leave the old process up.
 With `dev up` running, replacement pods receive current source again; without
 the loop they start from their image, not the lost writable container layer.
 
-Tilt decommissioning is held for explicit owner approval. Keep its historical
-files untouched until that gate; do not run Tilt alongside the GitOps base.
+Tilt is no longer a supported repository workflow. Its removal does not tear
+down live resources or delete databases. Historical setup instructions in
+`docs/wip/` and `artifacts/` are design records, not current operator runbooks.
 
 ```sh
 bazel mod deps --lockfile_mode=error

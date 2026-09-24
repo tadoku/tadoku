@@ -12,7 +12,7 @@ test('registration, shared session, settings, reauthentication, logout and recov
 }) => {
   test.skip(
     !authUrl || !appUrl || !mailUrl,
-    'Set AUTH_URL, APP_URL and MAILHOG_URL for the Tilt dev environment',
+    'Set AUTH_URL, APP_URL and MAILHOG_URL for the development GitOps base',
   )
   const email = `kratos-e2e-${randomUUID()}@example.com`
   const password = `Start-${randomUUID()}!`

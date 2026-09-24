@@ -1,6 +1,9 @@
 package postgres
 
-import "github.com/jackc/pgx/v5/pgtype"
+import (
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
+)
 
 func NullableText(value *string) pgtype.Text {
 	if value == nil {
@@ -22,4 +25,19 @@ func NullableInt4(value *int32) pgtype.Int4 {
 		return pgtype.Int4{}
 	}
 	return pgtype.Int4{Int32: *value, Valid: true}
+}
+
+func NullableUUID(value *uuid.UUID) pgtype.UUID {
+	if value == nil {
+		return pgtype.UUID{}
+	}
+	return pgtype.UUID{Bytes: *value, Valid: true}
+}
+
+// TextPointer maps SQL NULL to nil.
+func TextPointer(value pgtype.Text) *string {
+	if !value.Valid {
+		return nil
+	}
+	return &value.String
 }

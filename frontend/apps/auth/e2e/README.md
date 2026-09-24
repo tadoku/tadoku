@@ -1,21 +1,28 @@
 # Kratos browser checks
 
-Run against the Tilt development stack with Kratos and MailHog ready. The account
+Run against the development GitOps base with Kratos and MailHog ready. The account
 journey creates a unique `@example.com` test identity, changes its password and
 profile, and sends recovery mail to MailHog. It does not reset the database or
 modify existing accounts. Test identities and mail remain available for debugging.
 Do not point this test at production.
 
+MailHog is cluster-internal in the GitOps base. In a separate terminal, forward
+its HTTP service to loopback on the machine running Playwright:
+
+```sh
+kubectl --context homelab-dev -n tdk-dev-data port-forward --address 127.0.0.1 service/mailhog 18025:8025
+```
+
 ```sh
 cd frontend
 pnpm --filter auth exec playwright install --with-deps chromium
-AUTH_URL=https://account.example.test \
-APP_URL=https://app.example.test \
-MAILHOG_URL=https://app.example.test/mail \
+AUTH_URL=https://account.tadoku.dev.lab \
+APP_URL=https://tadoku.dev.lab \
+MAILHOG_URL=http://127.0.0.1:18025 \
 pnpm --filter auth test:e2e
 ```
 
-Use the hosts from your ignored Tilt configuration. The checks exercise the real
+Use the hosts from `.dev/config.yaml` and trust the Lab CA. The checks exercise the real
 browser UI, Kratos cookies/CSRF, server-rendered sessions, settings, forced
 reauthentication, logout, and the recovery link sent by the courier. Screenshots
 from failed checks are kept in the ignored `test-results/` directory.

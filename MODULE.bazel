@@ -122,7 +122,7 @@ oci.pull(
 )
 use_repo(oci, "tadoku_dev_postgres", "tadoku_dev_postgres_linux_amd64")
 
-# Match frontend/Dockerfile.dev; no Corepack or new JS build framework.
+# Pinned pnpm for DevCLI frontend images; no Corepack or new JS build framework.
 http_archive(
     name = "tadoku_dev_pnpm",
     urls = ["https://registry.npmjs.org/pnpm/-/pnpm-10.10.0.tgz"],

@@ -164,13 +164,14 @@ The real, non-secret Homelab configuration is committed in `.dev/config.yaml` an
 Keep credentials, private keys and kube access details outside
 Git; manifests may reference existing Secrets and include the public Lab CA.
 Use an ignored local file with `dev <command> --config <path>` for overrides.
-Legacy Tilt and `k8s/dev/dev-cli/` pilot files are historical; do not apply them
-alongside the fresh base. Follow `k8s/dev/base/README.md` for activation, automatic
+Follow `k8s/dev/base/README.md` for activation, automatic
 migrations, credential bootstrap and explicitly approved old-stack cleanup.
 
 Dev Postgres is provisioned with the Zalando `postgresql` custom resource. Do not add or reintroduce hand-rolled Postgres Deployments or Helm releases for the dev stack.
 
-Use `make dev-seed` (`scripts/dev/seed-db.sh`) to rerun idempotent seed data. `make dev-reset` is disabled: the historical Tilt reset targets the old shared stack. Use `dev down` for overlays; any database deletion requires an explicitly approved, scoped runbook.
+Use `make dev-seed` (`scripts/dev/seed-db.sh`) to rerun idempotent seed data. `make dev-reset` is a fail-closed guard. Use `dev down` for overlays; any database deletion requires an explicitly approved, scoped runbook.
+
+`infra/dev/ory/` retains the Kratos schema and Keto namespace fixtures used by Bazel backend tests; these are not obsolete deployment files. Preserve the shared SQL fixtures in `scripts/dev/seed/` for base and branch seeding.
 
 ## Commit Guidelines
 

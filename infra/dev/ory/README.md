@@ -1,13 +1,12 @@
-## Ory
+# Shared Ory test fixtures
 
-### Oathkeeper
+This directory provides shared fixtures, not deployment configuration.
 
-#### References
+Keep `identity.default.schema.json`, `namespaces.keto.ts` and `BUILD.bazel`:
+the native API's `internal/testkratos` and `internal/testketo` helpers load them
+through Bazel runfiles for real authentication/authorization tests.
 
-* https://k8s.ory.sh/helm/oathkeeper.html
-* https://www.ory.sh/docs/oathkeeper
-* https://github.com/ory/kratos/blob/master/contrib/quickstart/oathkeeper/oathkeeper.yml
-* https://www.ory.sh/docs/oathkeeper/pipeline/authz
-* https://www.ory.sh/zero-trust-api-security-ory-tutorial/
-* https://docs.mojaloop.io/business-operations-framework-docs/guide/SecurityBC.html
-* https://gruchalski.com/posts/2021-05-20-figuring-out-oathkeeper/
+The active **development-only** provider manifests live in
+[`k8s/dev/base`](../../../k8s/dev/base/README.md). Shared identity/role seeding
+uses `make dev-seed`; branch migration/seeding uses the
+[DevCLI tasks](../../../.dev/README.md).

@@ -25,12 +25,6 @@ oci_load(
 )
 
 oci_push(
-    name = "dev_push",
-    image = ":image",
-    visibility = ["//visibility:public"],
-)
-
-oci_push(
     name = "push",
     image = ":image",
     remote_tags = [
@@ -41,7 +35,7 @@ oci_push(
     visibility = ["//visibility:public"],
 )
 
-# Separate from production's distroless image and Tilt's existing dev_push.
+# Writable development runtime, separate from production's distroless image.
 oci_image(
     name = "cli_image",
     base = "@tadoku_dev_alpine_linux_amd64",

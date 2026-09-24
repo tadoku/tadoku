@@ -258,7 +258,7 @@ independently.
 
 - [ ] Add support for the final names while retaining the old names as
   temporary fallbacks; prefer the final names when both are present.
-- [ ] Update the local/Tilt admin deployment template to supply the final names.
+- [ ] Update the development GitOps base and DevCLI admin workload template to supply the final names.
 - [ ] Update `tadoku-argocd` to supply the final names and deploy it.
 - [ ] Confirm runtime configuration, login, and health checks with only the
   final names present in the pod.

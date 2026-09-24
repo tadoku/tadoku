@@ -36,7 +36,8 @@ We model global, application-scoped roles under a single object:
 
 The OPL (namespace config) lives at:
 
-- `infra/dev/ory/namespaces.keto.ts`
+- `k8s/dev/base/keto/namespaces.keto.ts` for the development GitOps base
+- `infra/dev/ory/namespaces.keto.ts` for isolated backend test fixtures
 
 Example tuples:
 
@@ -117,14 +118,16 @@ Relevant mappings:
 
 ## Development Environment: Seeding an Admin
 
-Tilt runs an idempotent Kubernetes Job at startup to ensure a dev admin exists:
-
-- `infra/dev/ory/keto_seed_admin_job.yaml`
+Run `make dev-seed` (`scripts/dev/seed-db.sh`) against the development GitOps base.
+The shared Kratos and Keto providers must be ready first. Seeding is explicit,
+not an automatic startup task.
 
 Behavior:
 
-- Looks up the Kratos identity id for `SEED_ADMIN_EMAIL` (default `dev@tadoku.app`) using the Kratos admin API.
+- Creates or refreshes the marked synthetic Kratos identity for `TADOKU_DEV_ADMIN_EMAIL` (default `dev@tadoku.app`); unmarked identities are never taken over.
 - Seeds `app:tadoku#admins@<kratos_subject_id>` into Keto using the write admin API.
-- If the tuple already exists, Keto returns `409` and the job treats that as success.
+- Re-running the seed is idempotent.
 
-The dev seed script (`make dev-seed`, `scripts/dev/seed-db.sh`) also grants the same admin relation for the seeded admin identity, so either path results in a working dev admin. See [Local environment](../local-environment.md) for the full seed/reset workflow.
+DevCLI branch seed tasks reuse these shared identities; they do not provision
+per-branch auth providers. See [Development environment](../local-environment.md)
+for branch migration/seeding and scoped cleanup. Database reset is not implicit.

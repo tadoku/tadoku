@@ -7,8 +7,8 @@ changed by these manifests. Do not apply this root to another Kubernetes context
 ## Ownership and topology
 
 Argo CD owns this always-running base. DevCLI owns only branch overlays, routing
-overrides, short-lived tasks and owner/branch database provisioning. Tilt must not
-run against this environment. Homelab contains the Application and development
+overrides, short-lived tasks and owner/branch database provisioning.
+Homelab contains the Application and development
 Image Updater infrastructure, not copies of these workload manifests.
 
 Production's `tdk-prod-*` service boundaries become `tdk-dev-*`: the three
@@ -102,9 +102,9 @@ approved, scoped development cleanup runbook.
 credentials into consumer namespaces, generates development-only signing/session
 material once, and preserves existing keys on rerun. Run it only with explicit
 credential/bootstrap approval. It fails closed on another API server or unowned
-namespaces and never reads production or old Tilt credentials.
+namespaces and never reads credentials from outside the development GitOps base.
 
-The normal initial sequence is: approve the cutover, land this path on main,
+The normal initial sequence is: approve provisioning, land this path on main,
 configure development repository access, then start a **full** Argo sync. Once
 namespaces and operator-generated Secrets exist, run:
 
@@ -129,29 +129,19 @@ Postgres CR and data namespace have `Prune=false,Delete=false`; ordinary Argo
 pruning or Application removal must not destroy data. Branch databases are also
 retained on `dev down`; deletion needs exact ownership checks and permission.
 
-## Cutover is not adoption
+## Provisioning and ownership safety
 
-The owner-approved fresh cutover was activated on 2026-09-21 through Homelab
-#430. The old Tadoku namespaces, canonical routes, `default/tadoku-dev-db`, its
-PVC and the old Valkey PVC were deleted as explicitly approved disposable data.
-No backup was retained. Unrelated development workloads and production were not
-deleted or adopted. New runtime credentials were generated in development.
+This development base follows production's namespace boundaries without importing
+production data or credentials. Before activation, inventory the canonical hosts
+and confirm there are no competing Ingresses or HTTPRoutes. Conflicting routes
+can keep serving another workload even when these resources are healthy.
 
-This is a fresh design derived from main's Tilt configuration and production's
-topology, not exported live objects. **Do not activate it alongside the old
-canonical Ingresses and HTTPRoutes.** Both claim the same hosts and the older
-Gateway route can continue winning traffic selection. Bootstrap also creates a
-fresh database and auth identities: existing sessions will not transfer.
-
-Before activation, inventory and approve the exact old route/Ingress replacement
-and the disposition of the old `default/tadoku-dev-db` and its branch databases.
-Do not run `tilt down`, delete old namespaces or delete database PVCs as an
-implicit cleanup step. A temporary second base during a specifically reviewed
-cutover is not the steady-state database model. The intended final state has one
-Postgres pod. Preserve old data until its deletion is separately authorized.
-
-These gates also apply to any future fresh cutover; the completed one-time
-deletion approval is not blanket permission to erase later data.
+Provisioning creates fresh development credentials and auth identities. Database
+or namespace deletion is never an implicit setup or cleanup step: inspect the
+exact resources and obtain explicit approval for any destructive operation.
+The steady-state database model has one shared Postgres pod. Any future rebuild
+of the environment needs its own data-disposition decision; a previous deletion
+approval is not permission to erase later data.
 
 ## Verification
 

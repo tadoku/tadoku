@@ -4,8 +4,7 @@ Develop **webv2, auth, admin (Next.js/pnpm)** and **native tadoku-api** on the
 Homelab development cluster. The committed `.dev/config.yaml` is the real Homelab
 configuration; no hostname substitution is needed.
 
-The fresh `tdk-dev-*` GitOps base is active on `homelab-dev`. The approved cutover
-retired the old Tilt namespaces and disposable databases on 2026-09-21. See
+The `tdk-dev-*` GitOps base is active on `homelab-dev`. See
 [`k8s/dev/base/README.md`](../k8s/dev/base/README.md) before first use.
 
 ## Start working
@@ -126,7 +125,7 @@ SQL-drop operation exists. Deletion requires inspecting the exact database and
 ownership, then separate authorization. Never drop shared `tadoku`, `kratos`,
 or `keto`.
 `make dev-reset` is disabled; any reset needs an explicitly
-approved, scoped runbook, not the historical Tilt reset script. The old
+approved, scoped runbook. The old
 `immersion` databases and role were retired from the shared development
 cluster under a separate approved runbook.
 
@@ -152,8 +151,7 @@ by Kratos, so no temporary auth allowlist is required.
 Operators must follow the fresh-base bootstrap and explicit cutover gates in
 the base README. Full Argo syncs run migrations before dependent workloads;
 selective resource sync skips hooks and must not be used for releases.
-Do not run Tilt concurrently or apply the historical `k8s/dev/dev-cli/` pilot
-manifests. Both can conflict with the new base's canonical routes. Base and branch
+Base and branch
 frontends send SSR through the same gateway with Lab CA trust, preserving API-only
 branch selection. Old resources and data must not be deleted without explicit
 approval. Production remains unchanged.
@@ -182,9 +180,6 @@ backend restarts can briefly return 503 while health-based fallback catches up;
 this is not zero-downtime deployment. Compile failures leave the old process up.
 With `dev up` running, replacement pods receive current source again; without
 the loop they start from their image, not the lost writable container layer.
-
-Tilt decommissioning is held for explicit owner approval. Keep its historical
-files untouched until that gate; do not run Tilt alongside the GitOps base.
 
 ```sh
 bazel mod deps --lockfile_mode=error

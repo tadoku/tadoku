@@ -42,7 +42,7 @@ flowchart LR
 | Argo CD | `tadoku-styleguide` was `Synced Healthy` at revision `a4164622...`; auto-prune and self-heal enabled | Direct `kubectl` image edits are not durable and are not a rollback mechanism. |
 | Metrics | Kubernetes Metrics API unavailable; `kubectl top` fails | Resource evidence must use local container metrics and cgroup v2 counters unless cluster metrics are added separately. |
 
-The repository-local `frontend/apps/*/deployments` manifests are development/Tilt inputs. They are not production sources. The legacy styleguide is not present in Tilt and has no deployment manifest in the Tadoku repository.
+Development manifests live under `k8s/dev/base/` and branch workload templates under `.dev/`; neither is a production source. Paper uses its local pnpm workflow, with DevCLI live overlays deferred.
 
 ## Target coexistence topology
 
@@ -105,9 +105,8 @@ Set `runAsNonRoot`, drop all capabilities, disable privilege escalation, use `Ru
 | `frontend/package.json`, `frontend/pnpm-workspace.yaml`, `frontend/pnpm-lock.yaml` | Workspace scripts and reproducible dependency graph | Phase 1; package/build integrator |
 | `frontend/.dockerignore` | Ensure the new build context contains required workspace outputs and excludes caches | Phase 1; delivery owner |
 | `.github/workflows/build-frontend-paper-styleguide.yaml` | PR quality/image-build checks and main-only GHCR publication | Phase 1; delivery owner |
-| `frontend/Tiltfile` | Paper development resource and `paper-ui` live-update/package triggers | Phase 1; delivery owner |
-| `frontend/apps/paper-styleguide/deployments/**` | Development-only Deployment/Service if Paper joins Tilt | Phase 1; delivery owner |
-| `k8s/dev/ingress.yaml`, `k8s/dev/render_template.py`, `tilt_config.json.example` | No change by default: temporary review uses `t3-expose`; touch only if a durable dev Paper hostname is intentionally added | Optional; dev-environment owner |
+| `frontend/package.json` (`paper-styleguide`) | Local pnpm development; no cluster overlay required | Paper styleguide lane |
+| `.dev/`, `frontend/BUILD.bazel`, `k8s/dev/base/` | No Paper change by default: live overlays are deferred; temporary review uses `t3-expose` | Optional; dev-environment owner |
 | `frontend/apps/webv2/app/ui/Footer.tsx` | Currently links to `https://ui.tadoku.app`; no change during coexistence | Phase 8 only if product direction changes |
 | Existing four frontend workflows | Add Paper paths only when that application migrates; retain legacy `ui` triggers until its cutover | Phases 5–8; active application owner |
 

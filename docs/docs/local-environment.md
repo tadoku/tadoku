@@ -5,110 +5,131 @@ title: Development Environment
 
 # Development Environment
 
-Tadoku is made up of several services working together. It can be quite difficult to set up a local development environment with all the required services linked up together. This is a requirement for anyone to be productive in this project, and is also why we've provided a development environment for you.
+Use DevCLI for live edits to webv2, auth, admin and the native Tadoku API.
+Argo CD keeps the shared base running on **homelab-dev** even when no developer
+has a CLI loop running. This is development infrastructure, not the production
+deployment.
 
-We use [Tilt](https://tilt.dev/) to deploy all our backend services & dependencies to a Kubernetes cluster. Tilt can target either a local cluster or a shared development cluster; when targeting the shared cluster, built images are pushed to the registry configured in `tilt_config.json`. The environment includes both the backend services and the frontend apps. Each frontend also has a development mode which is configured to connect to this environment.
+The repository's [DevCLI runbook](https://github.com/tadoku/tadoku/blob/main/.dev/README.md)
+owns the full workflow. The [base runbook](https://github.com/tadoku/tadoku/blob/main/k8s/dev/base/README.md)
+owns operator bootstrap, credentials, automatic migrations and GitOps recovery.
 
-## Getting Started
+## Prerequisites
 
-1. Install [Helm](https://helm.sh/docs/intro/install/).
-2. Install [Bazel](https://docs.bazel.build/bazel-overview.html).
-3. Install [Tilt](https://docs.tilt.dev/install.html).
-4. Install [kubectl](https://kubernetes.io/docs/tasks/tools/).
-5. Point kubectl at the cluster you want to use (see below).
-6. Create a machine-level config and point `TADOKU_TILT_CONFIG` at it so it is shared by all Git worktrees, or copy `tilt_config.json.example` to the gitignored `tilt_config.json` for a checkout-local override:
+- Git access to Tadoku and the private `antonve/dev-cli` repository.
+- Go for installing DevCLI, Bazelisk/Bazel using the repository's pinned version,
+  and kubectl with authorized access to the `homelab-dev` context.
+- Node and pnpm for frontend tools; Docker for local image/build checks.
+- Lab network/DNS access and trust in the Lab CA, including the configured
+  development registry at `registry.dev.lab`.
 
-   ```sh
-   mkdir -p "$HOME/.config/tadoku"
-   cp tilt_config.json.example "$HOME/.config/tadoku/tilt_config.json"
-   export TADOKU_TILT_CONFIG="$HOME/.config/tadoku/tilt_config.json"
-   ```
-
-   Edit the selected config with the hostnames, registries, and contexts for your cluster. Tilt fails before making cluster changes when the environment variable points to a missing file or neither config source exists. The example file is a template and is never loaded automatically.
-7. Read the [Getting Started Tutorial](https://docs.tilt.dev/tutorial.html) for Tilt to get familiar with it.
-8. Run `$ tilt up` in the root of this repository.
-9. Seed data is applied by the `dev-seed` Tilt resource once the services are up (see below); it can also be re-run manually from within Tilt or via `make dev-seed`.
-10. Access the environment using the hostnames from your local Tilt config.
-
-### Option A: Local cluster
-
-Run a local Kubernetes cluster and select its kubectl context. Tilt uses `orbstack` by default for local development. For a persistent local override, set the context and cluster type in `tilt_config.json`:
-
-```json
-{
-  "local_k8s_context": "kind-tadoku",
-  "local_cluster_type": "kind",
-  "local_cluster_name": "tadoku"
-}
-```
-
-Environment variables still work for one-off runs and take precedence over the file:
+The existing cluster supplies Postgres, shared auth providers and routing.
+There is no local Kubernetes cluster or Helm bootstrap to run. Obtain kube
+access from the operator; never commit kubeconfigs, credentials or private keys.
+The non-secret configuration is committed in `.dev/config.yaml`.
 
 ```sh
-kubectl config use-context docker-desktop
-export TADOKU_LOCAL_K8S_CONTEXT=docker-desktop
-export TADOKU_LOCAL_CLUSTER_TYPE=docker-desktop
+GOPRIVATE=github.com/antonve/dev-cli go install github.com/antonve/dev-cli/cmd/dev@latest
+dev version  # v0.4.0 or newer; put the Go install directory on PATH
+git fetch origin main
+dev doctor
 ```
 
-When `TADOKU_LOCAL_K8S_CONTEXT` is set, the `local_cluster_type` and `local_cluster_name` values from `tilt_config.json` are ignored (they describe the file's own context, not the override); set the matching `TADOKU_LOCAL_CLUSTER_TYPE`/`TADOKU_LOCAL_CLUSTER_NAME` env vars or rely on inference from the context name. If the type is inferred as `shared-daemon`, Tilt prints a warning since locally built images will not be loaded into the cluster.
+If Git authentication is SSH-only, use the installation variant in the DevCLI
+runbook. Doctor checks prerequisites without deploying; it is not an end-to-end
+routing or login test.
 
-For local contexts, backend images are built with Bazel and are not pushed to a registry. OrbStack and Docker Desktop use the daemon-sharing path, while kind and minikube run an image-load step after each backend image build (`kind load docker-image` or `minikube image load`). If your kind cluster or minikube profile name is not obvious from the kubectl context, set `local_cluster_name` in `tilt_config.json` or `TADOKU_LOCAL_CLUSTER_NAME`. The cluster type is inferred from the context name; accepted `local_cluster_type` values are `kind`, `minikube`, and the daemon-sharing types `orbstack`, `docker-desktop`, `shared-daemon`, and `none` (the last two skip the image-load step for any other daemon-sharing runtime). Access the environment using the `local.hosts` values in `tilt_config.json`.
+## Start a branch
 
-### Option B: Shared development cluster
-
-Prerequisite: the configured registry hostname must resolve from your machine, and your Docker daemon must trust the registry endpoint (via an insecure-registry entry for HTTP, or the platform TLS certificate once available) before Tilt can push images.
-
-Use the machine-level config selected by `TADOKU_TILT_CONFIG`, or copy `tilt_config.json.example` to the gitignored `tilt_config.json`, then replace the placeholder values with your private operator values. Keep real hostnames, registry names, and context names in private config only. The explicit config path takes precedence over the checkout-local file. The context keys can also be set via environment variables (`shared_k8s_context` → `TADOKU_SHARED_K8S_CONTEXT`, `local_k8s_context` → `TADOKU_LOCAL_K8S_CONTEXT`); environment variables take precedence over values in the selected config. Shared-cluster mode stays disabled until a shared context is configured via `shared_k8s_context` or `TADOKU_SHARED_K8S_CONTEXT`; there is no committed default.
-
-Fetch the dev-cluster kubeconfig after creating `infra/dev/.env.local` from `infra/dev/.env.example`:
+Create a feature branch and edit a service before starting. DevCLI asks Bazel
+which deployables changed relative to the merge base with `origin/main`, including
+uncommitted edits. It creates only affected overlays; the other services keep
+using base. Unknown paths conservatively select all deployables.
 
 ```sh
-cp infra/dev/.env.example infra/dev/.env.local
-# Edit infra/dev/.env.local with your private operator values.
-./infra/dev/kubeconfig.sh
-export KUBECONFIG="$HOME/.kube/<shared-context>.yaml"
-kubectl get nodes
+make dev-seed  # shared synthetic identities and base fixtures; safe to rerun
+dev up --owner alice --task migrate --task seed
 ```
 
-The script reads `/etc/rancher/k3s/k3s.yaml` from `TADOKU_DEV_K3S_SSH_TARGET`, rewrites the API server to `https://$TADOKU_DEV_K3S_HOST:6443`, sets the context to `TADOKU_DEV_K8S_CONTEXT`, and stores the result as `~/.kube/<shared-context>.yaml` unless `TADOKU_DEV_KUBECONFIG` or a destination argument is provided. The host (`TADOKU_DEV_K3S_HOST`), SSH target (`TADOKU_DEV_K3S_SSH_TARGET`), and context (`TADOKU_DEV_K8S_CONTEXT`, falling back to `TADOKU_SHARED_K8S_CONTEXT`) are required and the script exits with an error if any is unset. The read command (`TADOKU_DEV_K3S_READ_CMD`), TLS server name (`TADOKU_DEV_K3S_TLS_SERVER_NAME`), and output path (`TADOKU_DEV_KUBECONFIG`) are optional. All of these can be set in `infra/dev/.env.local` or as environment variables; environment variables take precedence over `.env.local`. Set `TADOKU_DEV_KUBECONFIG_ENV` to read the env file from a different path.
+Leave this terminal running. Frontend sources sync into a pnpm-managed Next.js
+dev server with HMR. Backend edits rebuild the affected Bazel binary and restart
+it in the existing pod; failed compilation keeps the last working process.
+Development images are built on demand and pushed to the configured registry.
+The base instead uses CI-published GHCR images tracked by development Image Updater.
 
-Built images are pushed to `shared.registry` from `tilt_config.json`. The app and auth/admin hostnames come from the `shared.hosts` block.
+Owner is a stable developer/worktree label, not authentication. Use a distinct
+owner for simultaneous checkouts. Restart the loop when you need to add a service.
+Frontend-only work can omit the migration/seed tasks. `make dev-up` wraps the
+command with those tasks; use `DEV_OWNER=alice` consistently for Make wrappers.
 
-### HTTPS and TLS
+## Open and inspect your environment
 
-Each environment block in `tilt_config.json` controls how the dev stack is exposed:
-
-- `scheme` (`http` or `https`): scheme used for the generated app/auth/admin URLs. Defaults to `https` for the shared environment and `http` for local. With `https`, session cookies are marked secure (`NEXT_PUBLIC_COOKIE_SECURE`) and Kratos runs with `development: false` unless overridden.
-- `tls.enabled`: adds a `tls` block and a `cert-manager.io/cluster-issuer` annotation to the app, auth, and admin ingresses. Defaults to true on the shared environment when `scheme` is `https`, false otherwise. When enabled, `tls.cluster_issuer` is required; `tls.secret_names.{app,auth,admin}` override the default certificate secret names (`tadoku-dev-{app,auth,admin}-tls`).
-- `ssl_redirect`: adds nginx annotations that redirect HTTP traffic to HTTPS on all dev ingresses. Defaults to the value of `tls.enabled`. Only supported with `ingress_class: "nginx"` — rendering fails otherwise, so set it to `false` on non-nginx clusters.
-- `kratos_development`: toggles Kratos development mode. Defaults to true unless `scheme` is `https`.
-
-See `tilt_config.json.example` for a complete example of both environments.
-
-### Private infrastructure
-
-Operators can include a private Tiltfile (kept outside this repository) by setting `TADOKU_PRIVATE_INFRA_TILTFILE` to its path before running `tilt up`; it is skipped when unset or when the file does not exist.
-
-## Seeding and resetting the dev database
-
-The root `Makefile` wraps the common dev-environment commands:
+In another terminal, from the same checkout:
 
 ```sh
-make dev-up      # start Tilt
-make dev-down    # stop Tilt-managed resources
-make dev-seed    # rerun idempotent seed data only (scripts/dev/seed-db.sh)
-make dev-reset   # delete/recreate the dev DB, rerun migrations, and seed (scripts/dev/reset-env.sh)
-make dev-logs    # stream Tilt logs
+dev url --owner alice '/'
+dev url --owner alice --host account.tadoku.dev.lab '/login'
+dev url --owner alice --host admin.tadoku.dev.lab '/'
+dev status --owner alice
+dev logs --owner alice tadoku-api
 ```
 
-Seeding (`dev-seed`, also a Tilt resource that runs automatically once the backend services are ready) creates two Kratos identities — an admin `dev@tadoku.app` and a regular user `reader@tadoku.app`, both with password `tadoku` — grants the admin a Keto admin relation, and loads deterministic contests, activity logs, profile, and content data into the `immersion`, `profile`, and `content` databases. The seed is idempotent and safe to re-run: identities created by the seed carry a `seeded_by: tadoku-dev-seed` admin metadata marker, and re-running the seed refreshes their password to the currently configured value, so password overrides take effect on the next `dev-seed`. Identities without the marker (real or manually created accounts) are never modified, even if their email matches. Defaults can be overridden with `TADOKU_DEV_NAMESPACE`, `TADOKU_DEV_DB_PASSWORD`, `TADOKU_DEV_ADMIN_EMAIL`/`TADOKU_DEV_ADMIN_PASSWORD`, and `TADOKU_DEV_READER_EMAIL`/`TADOKU_DEV_READER_PASSWORD`.
+Open the printed link to select the branch automatically. Envoy sets a host-only
+cookie; no branch string needs copying into an application. Selection is per
+hostname, so open the main-host link too when testing an API overlay from admin.
+Separate browser profiles have independent selections; tabs in one profile share
+the cookie. Clear a hostname with `dev url --owner alice --clear '/'` (add
+`--host` for account or admin).
 
-Resetting (`dev-reset`, also available as a manual-only `dev-reset` Tilt resource) is destructive: it deletes the Zalando operator-managed `tadoku-dev-db` cluster and its persistent volume claims, reapplies the `postgresql` custom resource, restarts the backend services so their startup migrations run against the fresh database, and then reseeds. The script refuses to run unless the current kubectl context matches a known dev context (`shared_k8s_context`/`local_k8s_context` from the selected Tilt config, or the `TADOKU_SHARED_K8S_CONTEXT`/`TADOKU_LOCAL_K8S_CONTEXT` env vars), and requires typing the context name to confirm when targeting the shared cluster. Ordinary `tilt down`/`tilt up` keeps data since the database uses persistent volumes.
+Without a selection, browsers use the base at `https://tadoku.dev.lab`,
+`https://account.tadoku.dev.lab` and `https://admin.tadoku.dev.lab`. Each service
+independently falls back to base when no healthy selected overlay exists. Check
+`X-Dev-Backend` to confirm the actual upstream; cold-start routing convergence
+can temporarily serve base even after the CLI prints its link.
 
-## Can't connect connect to service/database
+Token-reflector is base-only. Paper styleguide live overlays are deferred;
+its local workflow is still `cd frontend && pnpm paper-styleguide`.
 
-It's possible that the containers for a particular service or database have been shut down due resource constraints. In this case you can restart the service manually from the Tilt dashboard. If a database is unreachable it might be useful to restart the Tilt cluster.
+## Migrations and seed data
 
-## Connecting to a database within Tilt
+Argo CD automatically runs base migrations during full syncs before dependent
+workloads start. Do not use selective sync for releases because it skips hooks.
+Base seed data is explicit: `make dev-seed` creates the synthetic administrator
+`dev@tadoku.app` and reader `reader@tadoku.app`, with fixture password `tadoku`
+unless overridden outside Git. It marks identities it owns and refuses to take
+over unmarked accounts. Kratos and Keto remain shared.
 
-We have configured a [pgweb instance](https://github.com/sosedoff/pgweb) for access to our PostgreSQL databases. The connection details can be found from the Kubernetes secrets and/or manifest files.
+One operator-managed Postgres pod holds separate application databases for each
+owner/branch. `dev up --task migrate --task seed` provisions and prepares the
+selected branch database before API startup. Tasks can also be rerun explicitly:
+
+```sh
+dev task --owner alice migrate
+dev task --owner alice seed
+```
+
+These tasks do not reset databases. Branch workers and cache prefixes isolate
+leaderboards on shared Valkey. This is cooperative development isolation, not
+hostile multi-tenancy. Deploy related services together when a test requires
+consistent data across services otherwise using different base/branch data.
+
+## Cleanup and troubleshooting
+
+```sh
+dev down --owner alice
+```
+
+This stops the local loop and removes only that owner/branch's overlay resources;
+it does not stop the Argo base. Abandoned overlays can be removed through the
+CLI's explicit TTL cleanup. Branch databases are retained after either cleanup.
+`make dev-reset` fails closed: database deletion needs separate approval and an
+exactly scoped runbook, never namespace-wide deletion.
+
+Use status and service-filtered logs for sync/build errors. Check the selected
+hostname and backend headers before diagnosing stale content. Successful backend
+restarts may briefly return 503; compile failures preserve the old process.
+With the loop running, replacement pods receive the current source again.
+Without it, a replacement starts from its image, not a previous pod's edits.
+
+For a shared-base failure, inspect the Argo application and follow the base
+runbook; do not restart or delete shared databases as a troubleshooting shortcut.

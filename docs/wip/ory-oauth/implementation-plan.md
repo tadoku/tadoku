@@ -374,7 +374,7 @@ Goal: provide a production-shaped Hydra authorization server with private admini
 - [ ] Configure login, consent, logout, and error destinations pointing at placeholder/non-enabled auth frontend routes until Phase 2.
 - [ ] Configure opaque access tokens, refresh rotation/reuse policy, and environment-driven lifetimes.
 - [ ] Add health, readiness, metrics, structured logs, secret redaction, backup, and restore coverage.
-- [ ] Add Hydra to the `k8s/dev/` Tilt stack using ignored local host configuration and committed placeholder examples.
+- [ ] Add Hydra to the development GitOps base in `k8s/dev/base/`, using development-only hostnames and Secret references; keep credentials outside Git.
 - [ ] Document environment configuration, migration order, key rotation, backup/restore, and emergency client/grant revocation.
 
 **Gate 1:** Hydra is healthy in development/staging, discovery is correct, the admin API is not externally reachable, migration and restore procedures are proven, and no existing Tadoku flow regresses.

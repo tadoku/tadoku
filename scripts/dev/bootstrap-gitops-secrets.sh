@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # DEVELOPMENT ONLY. Run after explicit credential/bootstrap approval.
-# Never copy credentials from the old Tilt stack or any production namespace.
+# Never copy credentials from outside the development GitOps namespaces.
 set -euo pipefail
 set +x
 

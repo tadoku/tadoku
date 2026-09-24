@@ -116,29 +116,29 @@ func (s *Service) UpdatePost(ctx context.Context, parameters UpdatePostParameter
 		return err
 	}
 
-	post, err := s.posts.FindPostByID(ctx, parameters.Namespace, parameters.ID)
+	item, err := s.posts.FindPostByID(ctx, parameters.Namespace, parameters.ID)
 	if err != nil {
 		return err
 	}
 
-	contentChanged := post.Title != parameters.Title || post.Content != parameters.Content
-	post.Slug = parameters.Slug
-	post.Title = parameters.Title
-	post.Content = parameters.Content
-	post.PublishedAt = parameters.PublishedAt
+	contentChanged := item.Title != parameters.Title || item.Content != parameters.Content
+	item.Slug = parameters.Slug
+	item.Title = parameters.Title
+	item.Content = parameters.Content
+	item.PublishedAt = parameters.PublishedAt
 	now := timex.Now()
-	post.UpdatedAt = &now
+	item.UpdatedAt = &now
 
 	if !contentChanged {
-		return s.posts.UpdatePost(ctx, post, nil)
+		return s.posts.UpdatePost(ctx, item, nil)
 	}
 
 	contentID := uuid.New()
-	if err := s.posts.UpdatePost(ctx, post, &contentID); err != nil {
+	if err := s.posts.UpdatePost(ctx, item, &contentID); err != nil {
 		return err
 	}
 
-	return s.posts.CreatePostContent(ctx, post.ID, contentID, post.Title, post.Content, *post.UpdatedAt)
+	return s.posts.CreatePostContent(ctx, item.ID, contentID, item.Title, item.Content, *item.UpdatedAt)
 }
 
 func (s *Service) GetPostVersion(ctx context.Context, namespace string, postID, contentID uuid.UUID) (*PostVersion, error) {

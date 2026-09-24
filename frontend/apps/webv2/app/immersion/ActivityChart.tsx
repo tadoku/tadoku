@@ -113,62 +113,69 @@ export function ActivityChart({ userId, registration }: Props) {
     }, [] as number[])
 
   return (
-    <Chart
-      type="bar"
-      data={{
-        labels,
-        datasets: [
-          {
-            type: 'line' as const,
-            label: 'Cumulative Score',
-            borderColor: chartColors[chartColors.length - 1],
-            borderWidth: 2,
-            fill: false,
-            data: cumulativeScore,
-            yAxisID: 'yCumulative',
-          },
-          ...Object.values(datasets),
-        ],
-      }}
-      options={{
-        plugins: {
-          tooltip: {
-            cornerRadius: 0,
-          },
-        },
-        maintainAspectRatio: false,
-        scales: {
-          x: {
-            stacked: true,
-            type: 'time',
-            time: {
-              tooltipFormat: 'MMMM d, yyyy',
-              unit: 'day',
-              displayFormats: {
-                day: 'MMM dd',
+    <div className="overflow-x-auto">
+      <div
+        className="relative h-72 lg:h-[28rem]"
+        style={{ minWidth: labels.length * 12 }}
+      >
+        <Chart
+          type="bar"
+          data={{
+            labels,
+            datasets: [
+              {
+                type: 'line' as const,
+                label: 'Cumulative Score',
+                borderColor: chartColors[chartColors.length - 1],
+                borderWidth: 2,
+                fill: false,
+                data: cumulativeScore,
+                yAxisID: 'yCumulative',
+              },
+              ...Object.values(datasets),
+            ],
+          }}
+          options={{
+            plugins: {
+              tooltip: {
+                cornerRadius: 0,
               },
             },
-          },
-          yScore: {
-            title: {
-              text: 'Score',
-              display: true,
+            maintainAspectRatio: false,
+            scales: {
+              x: {
+                stacked: true,
+                type: 'time',
+                time: {
+                  tooltipFormat: 'MMMM d, yyyy',
+                  unit: 'day',
+                  displayFormats: {
+                    day: 'MMM dd',
+                  },
+                },
+              },
+              yScore: {
+                title: {
+                  text: 'Score',
+                  display: true,
+                },
+                stacked: true,
+                position: 'left',
+              },
+              yCumulative: {
+                title: {
+                  text: 'Cumulative score',
+                  display: true,
+                },
+                position: 'right',
+                grid: {
+                  drawOnChartArea: false,
+                },
+              },
             },
-            stacked: true,
-            position: 'left',
-          },
-          yCumulative: {
-            title: {
-              text: 'Cumulative score',
-              display: true,
-            },
-            position: 'right',
-            grid: {
-              drawOnChartArea: false,
-            },
-          },
-        },
-      }}
-    />
+          }}
+        />
+      </div>
+    </div>
   )
 }

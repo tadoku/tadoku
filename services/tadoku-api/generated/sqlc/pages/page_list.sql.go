@@ -20,13 +20,13 @@ with matches as materialized (
   inner join pages_content on pages_content.id = pages.current_content_id
   where pages.deleted_at is null
     and pages.namespace = $1
-    and ($2::boolean or pages.published_at is not null)
+    and ($2::boolean or pages.published_at <= $3::timestamp)
 ), page as (
   select id, namespace, slug, title, html, published_at, created_at, updated_at
   from matches
   order by created_at desc, id desc
-  limit $4
-  offset $3::bigint
+  limit $5
+  offset $4::bigint
 ), total as (
   select count(*) as total_size
   from matches
@@ -42,6 +42,7 @@ order by page.created_at desc, page.id desc
 type ListPagesParams struct {
 	Namespace     string
 	IncludeDrafts bool
+	Cutoff        pgtype.Timestamp
 	StartFrom     int64
 	ResultLimit   int32
 }
@@ -62,6 +63,7 @@ func (q *Queries) ListPages(ctx context.Context, arg ListPagesParams) ([]ListPag
 	rows, err := q.db.Query(ctx, listPages,
 		arg.Namespace,
 		arg.IncludeDrafts,
+		arg.Cutoff,
 		arg.StartFrom,
 		arg.ResultLimit,
 	)

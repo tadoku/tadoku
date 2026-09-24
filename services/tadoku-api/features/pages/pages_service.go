@@ -94,7 +94,7 @@ func (s *Service) ListPages(ctx context.Context, namespace string, includeDrafts
 		offset *= int64(pageSize)
 	}
 
-	pages, totalSize, err := s.pages.ListPages(ctx, namespace, includeDrafts, int32(pageSize), offset)
+	pages, totalSize, err := s.pages.ListPages(ctx, namespace, includeDrafts, timex.Now(), int32(pageSize), offset)
 	if err != nil {
 		return nil, err
 	}

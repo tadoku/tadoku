@@ -13,7 +13,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
-func TestNativeRouterServesBusinessRoutesAndProbes(t *testing.T) {
+func TestRouterServesBusinessRoutesAndProbes(t *testing.T) {
 	dir := filepath.Join("testdata", APITestName("ListActiveAnnouncements", http.StatusOK, "guest"))
 	api.reset(t, dir)
 	atFixtureInstant(func() { checkHTTPGolden(t, api.handler, dir, http.StatusOK, *updateGoldens) })
@@ -71,7 +71,7 @@ func TestCallbackCredentialDoesNotAuthenticateBusinessRoutes(t *testing.T) {
 	}
 }
 
-func TestContentHeadUsesNativeGetRoute(t *testing.T) {
+func TestContentHeadUsesGetRoute(t *testing.T) {
 	dir := filepath.Join("testdata", APITestName("ListActiveAnnouncements", http.StatusOK, "guest"))
 	api.reset(t, dir)
 	request := readHTTPRequest(t, dir)
@@ -86,7 +86,7 @@ func TestContentHeadUsesNativeGetRoute(t *testing.T) {
 	}
 }
 
-func TestProfileHeadUsesNativeGetRoute(t *testing.T) {
+func TestProfileHeadUsesGetRoute(t *testing.T) {
 	dir := filepath.Join("testdata", APITestName("ProfileUsersList", http.StatusOK, "admin"))
 	api.reset(t, dir)
 	request := readHTTPRequest(t, dir)
@@ -101,7 +101,7 @@ func TestProfileHeadUsesNativeGetRoute(t *testing.T) {
 	}
 }
 
-func TestImmersionHeadUsesNativeGetRoute(t *testing.T) {
+func TestImmersionHeadUsesGetRoute(t *testing.T) {
 	dir := filepath.Join("testdata", APITestName("ListLanguages", http.StatusOK, "admin", "ordered"))
 	api.reset(t, dir)
 	request := readHTTPRequest(t, dir)

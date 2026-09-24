@@ -21,12 +21,12 @@ func TestImmersionLogGetConfigurations(t *testing.T) {
 	for _, test := range tests {
 		name := APITestName("ImmersionLogGetConfigurations", test.want, test.description...)
 		t.Run(name, func(t *testing.T) {
-			var native http.Handler = api.handler
+			var handler http.Handler = api.handler
 			if test.scoringEngineEnabled {
-				native = scoringEnabledHandler
+				handler = scoringEnabledHandler
 			}
 			runCase(t, api, name, test.want,
-				implementation{name: "tadoku-api", handler: native},
+				implementation{name: "tadoku-api", handler: handler},
 			)
 		})
 	}

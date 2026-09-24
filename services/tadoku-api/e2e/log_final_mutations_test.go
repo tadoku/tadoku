@@ -33,16 +33,16 @@ func TestImmersionLogContestRegistrationUpdate(t *testing.T) {
 	for _, test := range tests {
 		name := APITestName("ImmersionLogContestRegistrationUpdate", test.want, test.description...)
 		t.Run(name, func(t *testing.T) {
-			native := http.Handler(api.handler)
+			handler := http.Handler(api.handler)
 			if test.scoringEngineEnabled {
-				native = scoringEnabledHandler
+				handler = scoringEnabledHandler
 			}
 			at := test.at
 			if at.IsZero() {
 				at = fixtureInstant
 			}
 			runCaseAt(t, api, name, test.want, at,
-				implementation{name: "tadoku-api", handler: native},
+				implementation{name: "tadoku-api", handler: handler},
 			)
 		})
 	}

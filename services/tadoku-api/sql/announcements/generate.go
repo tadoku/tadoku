@@ -1,4 +1,4 @@
-// Package announcements contains the native Announcements SQL generation inputs.
+// Package announcements contains the Announcements SQL generation inputs.
 package announcements
 
 //go:generate go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.31.1

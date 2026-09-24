@@ -21,12 +21,12 @@ func TestImmersionFeatureFlagDecisions(t *testing.T) {
 	for _, test := range tests {
 		name := APITestName("ImmersionFeatureFlagDecisions", test.want, test.description...)
 		t.Run(name, func(t *testing.T) {
-			native := http.Handler(api.handler)
+			handler := http.Handler(api.handler)
 			if test.unavailable {
-				native = withFliptUnavailable(native)
+				handler = withFliptUnavailable(handler)
 			}
 			runCase(t, api, name, test.want,
-				implementation{name: "tadoku-api", handler: native},
+				implementation{name: "tadoku-api", handler: handler},
 			)
 		})
 	}

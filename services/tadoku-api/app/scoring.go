@@ -142,11 +142,8 @@ func (a *Application) CreateContestScoringRuleSetDraft(ctx context.Context, cont
 	if err != nil {
 		return nil, err
 	}
-	caller := identity.FromContext(ctx)
-	if caller.Subject != contest.OwnerUserID.String() {
-		if err := a.permissions.RequireAdmin(ctx); err != nil {
-			return nil, err
-		}
+	if err := a.requireOwnerOrAdmin(ctx, contest.OwnerUserID); err != nil {
+		return nil, err
 	}
 	if !timex.Now().Before(contest.ContestStart) {
 		return nil, errx.NewConflictError("contest scoring cannot change after the contest starts")
@@ -240,10 +237,8 @@ func (a *Application) authorizeScoringRuleSetChange(ctx context.Context, ruleSet
 		if err != nil {
 			return err
 		}
-		if identity.FromContext(ctx).Subject != contest.OwnerUserID.String() {
-			if err := a.permissions.RequireAdmin(ctx); err != nil {
-				return err
-			}
+		if err := a.requireOwnerOrAdmin(ctx, contest.OwnerUserID); err != nil {
+			return err
 		}
 		if !timex.Now().Before(contest.ContestStart) {
 			return errx.NewConflictError("contest scoring cannot change after the contest starts")

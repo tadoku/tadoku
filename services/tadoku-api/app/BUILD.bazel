@@ -6,6 +6,7 @@ go_library(
         "announcements.go",
         "app.go",
         "authz.go",
+        "caller.go",
         "contest_profile.go",
         "contests.go",
         "feature_flags.go",

@@ -7,7 +7,6 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/logscore"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/scoring"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
@@ -90,18 +89,12 @@ func (a *Application) UpdateLog(ctx context.Context, p LogUpdateParameters) (*Lo
 	if err := a.permissions.RequireAuthenticated(ctx); err != nil {
 		return nil, err
 	}
-	callerID, err := identity.FromContext(ctx).UUID()
-	if err != nil {
-		return nil, errx.NewUnauthorizedError("unauthorized")
-	}
 	existing, err := a.logs.FindLog(ctx, p.ID, false)
 	if err != nil {
 		return nil, err
 	}
-	if callerID != existing.UserID {
-		if err := a.permissions.RequireAdmin(ctx); err != nil {
-			return nil, err
-		}
+	if err := a.requireOwnerOrAdmin(ctx, existing.UserID); err != nil {
+		return nil, err
 	}
 
 	now := timex.Now()

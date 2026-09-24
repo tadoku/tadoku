@@ -7,7 +7,6 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/logscore"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/audit"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
@@ -17,18 +16,12 @@ func (a *Application) UpdateLogContestRegistrations(ctx context.Context, logID u
 		return nil, err
 	}
 
-	callerID, err := identity.FromContext(ctx).UUID()
-	if err != nil {
-		return nil, errx.NewUnauthorizedError("unauthorized")
-	}
 	log, err := a.logs.FindLog(ctx, logID, false)
 	if err != nil {
 		return nil, err
 	}
-	if log.UserID != callerID {
-		if err := a.permissions.RequireAdmin(ctx); err != nil {
-			return nil, err
-		}
+	if err := a.requireOwnerOrAdmin(ctx, log.UserID); err != nil {
+		return nil, err
 	}
 
 	targets, err := a.contests.SelectRegistrationsForScoring(ctx, log.UserID, registrationIDs, log.LanguageCode, log.Activity.ID)
@@ -79,18 +72,12 @@ func (a *Application) DeleteLog(ctx context.Context, logID uuid.UUID) error {
 		return err
 	}
 
-	callerID, err := identity.FromContext(ctx).UUID()
-	if err != nil {
-		return errx.NewUnauthorizedError("unauthorized")
-	}
 	log, err := a.logs.FindLog(ctx, logID, false)
 	if err != nil {
 		return err
 	}
-	if log.UserID != callerID {
-		if err := a.permissions.RequireAdmin(ctx); err != nil {
-			return err
-		}
+	if err := a.requireOwnerOrAdmin(ctx, log.UserID); err != nil {
+		return err
 	}
 
 	now := timex.Now()
@@ -107,18 +94,16 @@ func (a *Application) DetachContestLog(ctx context.Context, contestID, logID uui
 		return err
 	}
 
-	callerID, err := identity.FromContext(ctx).UUID()
+	callerID, err := identity.RequireCallerID(ctx)
 	if err != nil {
-		return errx.NewUnauthorizedError("unauthorized")
+		return err
 	}
 	contest, err := a.contests.FindContestByID(ctx, contestID, false)
 	if err != nil {
 		return err
 	}
-	if callerID != contest.OwnerUserID {
-		if err := a.permissions.RequireAdmin(ctx); err != nil {
-			return err
-		}
+	if err := a.requireOwnerOrAdmin(ctx, contest.OwnerUserID); err != nil {
+		return err
 	}
 	log, err := a.logs.FindLog(ctx, logID, false)
 	if err != nil {

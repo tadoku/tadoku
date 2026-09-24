@@ -127,6 +127,22 @@ export function SetupPage() {
             demonstrate validation, disabled and read-only states.
           </p>
         </section>
+        <section id="patterns" className="document-section">
+          <h2 className="paper-type-section">Compose patterns and screens</h2>
+          <p>
+            Paper controls provide reusable appearance and behavior. A product
+            pattern describes a recognizable Tadoku task section; a screen owns
+            its route, data, permissions, and actions. Start a section beside its
+            screen and extract it when reuse or independent states make that
+            boundary useful. A documented pattern does not need to be an
+            exported component.
+          </p>
+          <p>
+            See the <Link className="text-link paper-focus-ring" to="/patterns/logging">logging pattern</Link>{' '}
+            for a reading-log summary made from Paper controls. The consuming
+            screen supplies its data and handles navigation and saving.
+          </p>
+        </section>
       </article>
       <TableOfContents
         items={[
@@ -135,6 +151,7 @@ export function SetupPage() {
           { id: 'stylesheet', label: 'Stylesheet' },
           { id: 'compose', label: 'Classes and components' },
           { id: 'forms', label: 'Forms' },
+          { id: 'patterns', label: 'Patterns and screens' },
         ]}
       />
     </div>

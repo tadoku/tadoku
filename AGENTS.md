@@ -14,6 +14,10 @@
 
 **Always use `pnpm`, not `npm`.**
 
+### Tadoku Paper
+
+For Paper applications, use `paper-ui` rather than the legacy `ui` package. Follow the [Paper composition guide](docs/wip/tadoku-paper/composition.md): controls live in `paper-ui`, product patterns describe reusable Tadoku task sections, and application screens own routes, data, permissions, forms, and mutations. Start pattern code beside its screen; a catalogue pattern does not automatically become a shared component. Keep application services and routers out of `paper-ui`.
+
 **Use the `ui` package design system** - never write custom button/form styles. Use:
 - Buttons: `className="btn"` with variants `primary`, `secondary`, `danger`, `ghost`
 - Forms: Import `Input`, `Select`, `Checkbox`, etc. from `ui/components/Form`

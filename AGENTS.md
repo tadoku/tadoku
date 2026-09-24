@@ -178,14 +178,14 @@ agent does not discover `.agents/skills`. Update the relevant map in the same PR
 when navigation, prerequisites or observable behavior changes. The map is a
 verification aid, not a second deployment catalog; Bazel owns service discovery.
 
-Use DevCLI for frontend/native API development; `.dev/README.md` owns its workflow.
+Use DevCLI for frontend and Tadoku API development; [Development environment](docs/docs/develop/environment.md) owns its workflow.
 The real, non-secret Homelab configuration is committed in `.dev/config.yaml` and
 `k8s/dev/base/`. This is development-only GitOps, not the production deployment.
 Keep credentials, private keys and kube access details outside
 Git; manifests may reference existing Secrets and include the public Lab CA.
 Use an ignored local file with `dev <command> --config <path>` for overrides.
-Follow `k8s/dev/base/README.md` for activation, automatic
-migrations, credential bootstrap and explicitly approved old-stack cleanup.
+Follow [Development base](docs/docs/operations/development-base.md) for activation, automatic
+migrations, credential bootstrap and recovery.
 
 Dev Postgres is provisioned with the Zalando `postgresql` custom resource. Do not add or reintroduce hand-rolled Postgres Deployments or Helm releases for the dev stack.
 

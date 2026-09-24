@@ -107,7 +107,6 @@ paths:
           description: authorization unavailable
       x-tadoku-source: Authz
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /current-user/role
       x-legacy-operation-id: roleGet
   "/authz/users/{id}/role":
@@ -146,7 +145,6 @@ paths:
           description: authorization unavailable
       x-tadoku-source: Authz
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /users/{id}/role
       x-legacy-operation-id: roleUpdate
   /authz/permission/check:
@@ -180,7 +178,6 @@ paths:
           description: authorization unavailable
       x-tadoku-source: Authz
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /permission/check
       x-legacy-operation-id: permissionCheck
   "/content/pages/{namespace}/{slug}":
@@ -212,7 +209,6 @@ paths:
           description: Page not found or not published
       x-tadoku-source: Content
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /pages/{namespace}/{slug}
       x-legacy-operation-id: pageFindBySlug
     put:
@@ -254,7 +250,6 @@ paths:
           description: Page does not exist and cannot be updated
       x-tadoku-source: Content
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /pages/{namespace}/{id}
       x-legacy-operation-id: pageUpdate
     delete:
@@ -285,7 +280,6 @@ paths:
           description: Page not found
       x-tadoku-source: Content
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /pages/{namespace}/{id}
       x-legacy-operation-id: pageDelete
   "/content/pages/{namespace}":
@@ -320,7 +314,6 @@ paths:
           description: Page ID or slug already exists
       x-tadoku-source: Content
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /pages/{namespace}
       x-legacy-operation-id: pageCreate
     get:
@@ -361,7 +354,6 @@ paths:
                 $ref: "#/components/schemas/ContentPages"
       x-tadoku-source: Content
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /pages/{namespace}
       x-legacy-operation-id: pageList
   "/content/pages/{namespace}/{id}/versions":
@@ -397,7 +389,6 @@ paths:
           description: Page not found
       x-tadoku-source: Content
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /pages/{namespace}/{id}/versions
       x-legacy-operation-id: pageVersionList
   "/content/pages/{namespace}/{id}/versions/{contentId}":
@@ -440,7 +431,6 @@ paths:
           description: Page or version not found
       x-tadoku-source: Content
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /pages/{namespace}/{id}/versions/{contentId}
       x-legacy-operation-id: pageVersionGet
   "/content/posts/{namespace}/{slug}":
@@ -472,7 +462,6 @@ paths:
           description: Post not found or not published
       x-tadoku-source: Content
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /posts/{namespace}/{slug}
       x-legacy-operation-id: postFindBySlug
     put:
@@ -514,7 +503,6 @@ paths:
           description: Post slug already exists
       x-tadoku-source: Content
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /posts/{namespace}/{id}
       x-legacy-operation-id: postUpdate
     delete:
@@ -545,7 +533,6 @@ paths:
           description: Post not found
       x-tadoku-source: Content
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /posts/{namespace}/{id}
       x-legacy-operation-id: postDelete
   "/content/posts/{namespace}":
@@ -580,7 +567,6 @@ paths:
           description: Post ID or slug already exists
       x-tadoku-source: Content
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /posts/{namespace}
       x-legacy-operation-id: postCreate
     get:
@@ -619,7 +605,6 @@ paths:
                 $ref: "#/components/schemas/ContentPosts"
       x-tadoku-source: Content
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /posts/{namespace}
       x-legacy-operation-id: postList
   "/content/posts/{namespace}/{id}/versions":
@@ -655,7 +640,6 @@ paths:
           description: Post not found
       x-tadoku-source: Content
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /posts/{namespace}/{id}/versions
       x-legacy-operation-id: postVersionList
   "/content/posts/{namespace}/{id}/versions/{contentId}":
@@ -698,7 +682,6 @@ paths:
           description: Post or version not found
       x-tadoku-source: Content
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /posts/{namespace}/{id}/versions/{contentId}
       x-legacy-operation-id: postVersionGet
   "/content/announcements/{namespace}/active":
@@ -722,7 +705,6 @@ paths:
                 $ref: "#/components/schemas/ContentAnnouncements"
       x-tadoku-source: Content
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /announcements/{namespace}/active
       x-legacy-operation-id: announcementListActive
   "/content/announcements/{namespace}":
@@ -757,7 +739,6 @@ paths:
           description: Announcement already exists
       x-tadoku-source: Content
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /announcements/{namespace}
       x-legacy-operation-id: announcementCreate
     get:
@@ -792,7 +773,6 @@ paths:
                 $ref: "#/components/schemas/ContentAnnouncementList"
       x-tadoku-source: Content
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /announcements/{namespace}
       x-legacy-operation-id: announcementList
   "/content/announcements/{namespace}/{id}":
@@ -828,7 +808,6 @@ paths:
           description: Announcement not found
       x-tadoku-source: Content
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /announcements/{namespace}/{id}
       x-legacy-operation-id: announcementFindByID
     put:
@@ -868,7 +847,6 @@ paths:
           description: Announcement does not exist and cannot be updated
       x-tadoku-source: Content
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /announcements/{namespace}/{id}
       x-legacy-operation-id: announcementUpdate
     delete:
@@ -899,7 +877,6 @@ paths:
           description: Announcement not found
       x-tadoku-source: Content
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /announcements/{namespace}/{id}
       x-legacy-operation-id: announcementDelete
   /immersion/contests:
@@ -941,7 +918,6 @@ paths:
                     type: string
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /contests
       x-legacy-operation-id: contestCreate
     get:
@@ -988,7 +964,6 @@ paths:
                 $ref: "#/components/schemas/ImmersionContests"
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /contests
       x-legacy-operation-id: contestList
   /immersion/contests/create-permissions:
@@ -1019,7 +994,6 @@ paths:
                     type: string
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /contests/create-permissions
       x-legacy-operation-id: contestCreatePermissionCheck
   "/immersion/contests/{id}":
@@ -1047,7 +1021,6 @@ paths:
           description: not found
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /contests/{id}
       x-legacy-operation-id: contestFindByID
   /immersion/contests/latest-official:
@@ -1067,7 +1040,6 @@ paths:
           description: not found
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /contests/latest-official
       x-legacy-operation-id: contestFindLatestOfficial
   "/immersion/contests/{id}/registration":
@@ -1107,7 +1079,6 @@ paths:
                     type: string
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /contests/{id}/registration
       x-legacy-operation-id: contestFindRegistration
     post:
@@ -1159,7 +1130,6 @@ paths:
                     type: string
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /contests/{id}/registration
       x-legacy-operation-id: contestRegistrationUpsert
   "/immersion/contests/{id}/leaderboard":
@@ -1208,7 +1178,6 @@ paths:
           description: leaderboard read failed
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /contests/{id}/leaderboard
       x-legacy-operation-id: contestFetchLeaderboard
   "/immersion/contests/{id}/summary":
@@ -1235,7 +1204,6 @@ paths:
           description: not found
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /contests/{id}/summary
       x-legacy-operation-id: contestFetchSummary
   "/immersion/contests/{id}/logs":
@@ -1287,7 +1255,6 @@ paths:
           description: log list could not be fetched
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /contests/{id}/logs
       x-legacy-operation-id: contestListLogs
   "/immersion/contests/{id}/moderation/detach/{log_id}":
@@ -1339,7 +1306,6 @@ paths:
           description: internal server error
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /contests/{id}/moderation/detach/{log_id}
       x-legacy-operation-id: contestModerationDetachLog
   "/immersion/contests/{id}/profile/{user_id}/scores":
@@ -1374,7 +1340,6 @@ paths:
           description: participant statistics could not be fetched
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /contests/{id}/profile/{user_id}/scores
       x-legacy-operation-id: contestProfileFetchScores
   "/immersion/contests/{id}/profile/{user_id}/activity":
@@ -1409,7 +1374,6 @@ paths:
           description: participant statistics could not be fetched
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /contests/{id}/profile/{user_id}/activity
       x-legacy-operation-id: contestProfileFetchActivity
   /immersion/contests/ongoing-registrations:
@@ -1441,7 +1405,6 @@ paths:
                     type: string
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /contests/ongoing-registrations
       x-legacy-operation-id: contestFindOngoingRegistrations
   /immersion/contests/configuration-options:
@@ -1461,7 +1424,6 @@ paths:
                 $ref: "#/components/schemas/ImmersionContestConfigurationOptions"
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /contests/configuration-options
       x-legacy-operation-id: contestGetConfigurations
   /immersion/logs:
@@ -1528,7 +1490,6 @@ paths:
           description: internal server error
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /logs
       x-legacy-operation-id: logCreate
   /immersion/logs/score-preview:
@@ -1589,7 +1550,6 @@ paths:
           description: internal server error
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /logs/score-preview
       x-legacy-operation-id: scorePreview
   "/immersion/logs/{id}":
@@ -1619,7 +1579,6 @@ paths:
           description: log could not be fetched
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /logs/{id}
       x-legacy-operation-id: logFindByID
     delete:
@@ -1650,7 +1609,6 @@ paths:
           description: internal server error
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /logs/{id}
       x-legacy-operation-id: logDeleteByID
     put:
@@ -1718,7 +1676,6 @@ paths:
           description: internal server error
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /logs/{id}
       x-legacy-operation-id: logUpdate
   "/immersion/logs/{id}/contest-registrations":
@@ -1772,7 +1729,6 @@ paths:
           description: internal server error
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /logs/{id}/contest-registrations
       x-legacy-operation-id: logContestRegistrationUpdate
   /immersion/logs/configuration-options:
@@ -1792,7 +1748,6 @@ paths:
                 $ref: "#/components/schemas/ImmersionLogConfigurationOptions"
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /logs/configuration-options
       x-legacy-operation-id: logGetConfigurations
   /immersion/logs/tag-suggestions:
@@ -1818,7 +1773,6 @@ paths:
                 $ref: "#/components/schemas/ImmersionTagSuggestions"
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /logs/tag-suggestions
       x-legacy-operation-id: logTagSuggestions
   "/immersion/users/{userId}/profile":
@@ -1848,7 +1802,6 @@ paths:
           description: profile read failed
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /users/{userId}/profile
       x-legacy-operation-id: profileFindByUserID
   "/immersion/users/{userId}/activity/{year}":
@@ -1884,7 +1837,6 @@ paths:
           description: profile read failed
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /users/{userId}/activity/{year}
       x-legacy-operation-id: profileYearlyActivityByUserID
   "/immersion/users/{userId}/scores/{year}":
@@ -1920,7 +1872,6 @@ paths:
           description: profile read failed
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /users/{userId}/scores/{year}
       x-legacy-operation-id: profileYearlyScoresByUserID
   "/immersion/users/{user_id}/logs":
@@ -1965,7 +1916,6 @@ paths:
           description: log list could not be fetched
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /users/{user_id}/logs
       x-legacy-operation-id: profileListLogs
   "/immersion/users/{userId}/contest-registrations/{year}":
@@ -1998,7 +1948,6 @@ paths:
                 $ref: "#/components/schemas/ImmersionContestRegistrations"
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /users/{userId}/contest-registrations/{year}
       x-legacy-operation-id: profileYearlyContestRegistrationsByUserID
   "/immersion/users/{userId}/activity-split/{year}":
@@ -2034,7 +1983,6 @@ paths:
           description: profile read failed
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /users/{userId}/activity-split/{year}
       x-legacy-operation-id: profileYearlyActivitySplitByUserID
   "/immersion/leaderboard/yearly/{year}":
@@ -2082,7 +2030,6 @@ paths:
           description: leaderboard read failed
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /leaderboard/yearly/{year}
       x-legacy-operation-id: fetchLeaderboardForYear
   /immersion/leaderboard/global:
@@ -2125,7 +2072,6 @@ paths:
           description: leaderboard read failed
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /leaderboard/global
       x-legacy-operation-id: fetchLeaderboardGlobal
   /immersion/scoring/rule-sets:
@@ -2147,7 +2093,6 @@ paths:
           description: internal server error
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /scoring/rule-sets
       x-legacy-operation-id: scoringRuleSetListPlatform
     post:
@@ -2174,7 +2119,6 @@ paths:
           description: internal server error
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /scoring/rule-sets
       x-legacy-operation-id: scoringRuleSetCreatePlatform
   "/immersion/contests/{id}/scoring/rule-sets":
@@ -2203,7 +2147,6 @@ paths:
           description: internal server error
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /contests/{id}/scoring/rule-sets
       x-legacy-operation-id: scoringRuleSetListContest
     post:
@@ -2237,7 +2180,6 @@ paths:
           description: internal server error
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /contests/{id}/scoring/rule-sets
       x-legacy-operation-id: scoringRuleSetCreateContest
   "/immersion/scoring/rule-sets/{id}/publish":
@@ -2266,7 +2208,6 @@ paths:
           description: internal server error
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /scoring/rule-sets/{id}/publish
       x-legacy-operation-id: scoringRuleSetPublish
   "/immersion/scoring/rule-sets/{id}/activate":
@@ -2291,7 +2232,6 @@ paths:
           description: internal server error
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /scoring/rule-sets/{id}/activate
       x-legacy-operation-id: scoringRuleSetActivate
   /immersion/feature-flags:
@@ -2313,7 +2253,6 @@ paths:
                 $ref: "#/components/schemas/ImmersionFeatureFlagDecisionsResponse"
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /feature-flags
       x-legacy-operation-id: featureFlagDecisions
   "/immersion/admin/feature-flags/{flagKey}/users/{userId}":
@@ -2359,7 +2298,6 @@ paths:
             format: uuid
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /admin/feature-flags/{flagKey}/users/{userId}
       x-legacy-operation-id: featureAccessGet
     put:
@@ -2393,7 +2331,6 @@ paths:
         - *a2
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /admin/feature-flags/{flagKey}/users/{userId}
       x-legacy-operation-id: featureAccessGrant
     delete:
@@ -2427,7 +2364,6 @@ paths:
         - *a2
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /admin/feature-flags/{flagKey}/users/{userId}
       x-legacy-operation-id: featureAccessRevoke
   /immersion/languages:
@@ -2451,7 +2387,6 @@ paths:
           description: forbidden (not admin)
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /languages
       x-legacy-operation-id: languageList
     post:
@@ -2480,7 +2415,6 @@ paths:
           description: language with this code already exists
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /languages
       x-legacy-operation-id: languageCreate
   "/immersion/languages/{code}":
@@ -2523,7 +2457,6 @@ paths:
           description: language not found
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /languages/{code}
       x-legacy-operation-id: languageUpdate
   /profile/users:
@@ -2564,7 +2497,6 @@ paths:
           description: forbidden (not admin)
       x-tadoku-source: Profile
       x-tadoku-exposure: public
-      x-tadoku-owner: native
       x-legacy-path: /users
       x-legacy-operation-id: usersList
   /authz/internal/v1/proxy/admin-check:
@@ -2595,7 +2527,6 @@ paths:
           description: authorization unavailable
       x-tadoku-source: AuthzProxy
       x-tadoku-exposure: callback
-      x-tadoku-owner: native
       x-legacy-path: /internal/v1/proxy/admin-check
       x-legacy-operation-id: proxyAdminCheck
 components:

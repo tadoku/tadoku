@@ -13,7 +13,7 @@ import (
 )
 
 func TestLeaderboardOutboxIsolatesBranchCaches(t *testing.T) {
-	api.reset(t, "testdata/ImmersionFetchLeaderboardGlobal/200_cache_hit")
+	api.reset(t, "testdata/ImmersionFetchLeaderboardGlobal/200_cache_miss")
 	branchDB, err := testpostgres.New(t.Context())
 	if err != nil {
 		t.Fatal(err)
@@ -23,7 +23,7 @@ func TestLeaderboardOutboxIsolatesBranchCaches(t *testing.T) {
 			t.Error(err)
 		}
 	})
-	if err := branchDB.Reset(t.Context(), "testdata/ImmersionFetchLeaderboardGlobal/setup.sql"); err != nil {
+	if err := branchDB.Reset(t.Context(), "testdata/ImmersionFetchLeaderboardGlobal/200_cache_miss/setup.sql"); err != nil {
 		t.Fatal(err)
 	}
 
@@ -129,7 +129,7 @@ func cachedLeaderboardScore(t *testing.T, key string) float64 {
 }
 
 func TestLeaderboardOutboxStartupReconcilesWarmCaches(t *testing.T) {
-	api.reset(t, "testdata/ImmersionFetchLeaderboardGlobal/200_cache_hit")
+	api.reset(t, "testdata/ImmersionFetchLeaderboardGlobal/200_cache_miss")
 	keys := []string{
 		"leaderboard:global",
 		"leaderboard:yearly:2026",
@@ -174,7 +174,7 @@ func TestLeaderboardOutboxStartupReconcilesWarmCaches(t *testing.T) {
 }
 
 func TestLeaderboardOutboxRetriesAfterValkeyFailure(t *testing.T) {
-	api.reset(t, "testdata/ImmersionFetchLeaderboardGlobal/200_cache_hit")
+	api.reset(t, "testdata/ImmersionFetchLeaderboardGlobal/200_cache_miss")
 	seedLeaderboardCache(t, "leaderboard:global", "hit")
 
 	if _, err := api.db.Pool.Exec(t.Context(), `update logs set amount = 20 where id = 'a1111111-1111-4111-8111-000000000001'`); err != nil {
@@ -225,7 +225,7 @@ func TestLeaderboardOutboxRetriesAfterValkeyFailure(t *testing.T) {
 }
 
 func TestLeaderboardOutboxSkipsLockedEventsAndRetries(t *testing.T) {
-	api.reset(t, "testdata/ImmersionFetchLeaderboardGlobal/200_cache_hit")
+	api.reset(t, "testdata/ImmersionFetchLeaderboardGlobal/200_cache_miss")
 	if _, err := api.db.Pool.Exec(t.Context(), `insert into leaderboard_outbox (event_type, user_id, year) values ('refresh_official_scores', '11111111-1111-4111-8111-111111111111', 2026)`); err != nil {
 		t.Fatal(err)
 	}

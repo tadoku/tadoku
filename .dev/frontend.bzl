@@ -3,7 +3,7 @@ load("@rules_pkg//pkg:mappings.bzl", "pkg_attributes", "pkg_files", "strip_prefi
 load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
 load("//.dev:deployable.bzl", "dev_deployable")
 
-# Image startup and DevCLI's initial dependency sync may overlap. BusyBox flock
+# Image startup and dev-cli's initial dependency sync may overlap. BusyBox flock
 # serializes writes to node_modules and releases the lock if either process exits.
 _DEV_INSTALL = [
     "flock",
@@ -16,7 +16,7 @@ _DEV_INSTALL = [
 ]
 
 def frontend_dev(name, host, readiness_path = "/"):
-    """One app source graph, OCI runtime and DevCLI contract."""
+    """One app source graph, OCI runtime and dev-cli contract."""
     command = " ".join(_DEV_INSTALL) + " && exec pnpm --filter " + name + " dev"
 
     native.filegroup(

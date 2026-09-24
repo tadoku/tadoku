@@ -26,7 +26,7 @@ discovery.
 
 ## Run it in the development environment
 
-Start a DevCLI branch overlay as described in
+Start a dev-cli branch overlay as described in
 [Development environment](./environment.md), then drive the journey in a
 real browser through the printed `dev url` links. Keep the real login,
 frontend, gateway and API path: no mocked API, injected identity or auth bypass.
@@ -37,7 +37,7 @@ frontend, gateway and API path: no mocked API, injected identity or auth bypass.
   change shared accounts, roles or flag policy.
 - Finish with `dev down` for your owner and clear the selected links.
 
-Changes to DevCLI routing or synchronization must also pass the gates in
+Changes to dev-cli routing or synchronization must also pass the gates in
 `.dev/acceptance.md`, including affected-service discovery, manifest rendering,
 HMR, rebuild latency and owner-scoped teardown.
 

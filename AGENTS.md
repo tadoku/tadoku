@@ -14,7 +14,7 @@ files in an area, read its page; those rules are as binding as this file.
 | `docs/docs/` | Developer documentation, published at https://tadoku.github.io/tadoku/ |
 | `.dev/`, `k8s/dev/base/` | Development environment: DevCLI configuration and the Argo CD base |
 | `scripts/`, `tools/` | Code generation, development seeding and CI checks |
-| `.agents/skills/` | Repository skills, including `verify-tadoku` |
+| `.agents/skills/` | Repository `dev-cli` and `verify-tadoku` skills |
 
 ## Rules for every change
 
@@ -71,6 +71,7 @@ files in an area, read its page; those rules are as binding as this file.
 | A Paper application or `paper-ui` | `docs/docs/frontend/paper-composition.md` |
 | Build tooling, code generation or CI | `docs/docs/develop/toolchain.md` |
 | Running your branch on the development cluster | `docs/docs/develop/environment.md` |
+| Using DevCLI for live branch edits | `.agents/skills/dev-cli/SKILL.md` |
 | Proving a change works | `.agents/skills/verify-tadoku/SKILL.md`, then its feature map |
 | `k8s/dev/base/` or the development base | `docs/docs/operations/development-base.md` |
 | A docs page | `docs/docs/index.md` |

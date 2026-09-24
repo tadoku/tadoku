@@ -15,7 +15,6 @@ var activities = activitiescatalog.All()
 
 var (
 	ErrContestNotFound          = errx.NewNotFoundError("contest not found")
-	ErrContestCreatorNotFound   = errx.NewNotFoundError("contest creator not found")
 	ErrContestCreationForbidden = errx.NewForbiddenError("contest creation forbidden")
 	ErrContestCreatorTooYoung   = errx.NewForbiddenError("contest creator account too young")
 	ErrInvalidActivity          = errx.NewInvalidInputError("invalid contest activity")
@@ -225,6 +224,13 @@ const contestCreationYearlyLimit = 12
 func checkContestCreationYearlyLimit(createdThisYear int64) error {
 	if createdThisYear >= contestCreationYearlyLimit {
 		return ErrContestCreationForbidden
+	}
+	return nil
+}
+
+func checkContestCreatorAccountAge(accountCreatedAt, now time.Time) error {
+	if accountCreatedAt.After(now.AddDate(0, -1, 0)) {
+		return ErrContestCreatorTooYoung
 	}
 	return nil
 }

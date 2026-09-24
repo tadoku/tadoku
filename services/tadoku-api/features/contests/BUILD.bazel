@@ -21,7 +21,6 @@ go_library(
         "@com_github_jackc_pgx_v5//:pgx",
         "@com_github_jackc_pgx_v5//pgtype",
         "@com_github_jackc_pgx_v5//pgxpool",
-        "@com_github_ory_kratos_client_go//:kratos-client-go",
     ],
 )
 

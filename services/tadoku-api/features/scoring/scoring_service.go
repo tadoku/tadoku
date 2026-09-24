@@ -150,7 +150,12 @@ func (s *Service) resolveLogTracking(ctx context.Context, input logscore.Input) 
 	var unit *logUnit
 	var err error
 	if input.Amount != nil {
-		unit, err = s.repository.FindLogUnit(ctx, input.UnitID, input.UnitKey, input.ActivityID, input.LanguageCode)
+		switch {
+		case input.UnitID != nil:
+			unit, err = s.repository.FindLogUnitByID(ctx, *input.UnitID, input.ActivityID, input.LanguageCode)
+		case input.UnitKey != nil:
+			unit, err = s.repository.FindLogUnitByKey(ctx, *input.UnitKey, input.ActivityID, input.LanguageCode)
+		}
 		if err != nil {
 			return logscore.Tracking{}, err
 		}
@@ -592,8 +597,15 @@ func (s *Service) CreateContestDraft(ctx context.Context, parameters ContestDraf
 	return s.createDraft(ctx, draft)
 }
 
+func (s *Service) nextDraftVersion(ctx context.Context, contestID *uuid.UUID) (int32, error) {
+	if contestID == nil {
+		return s.repository.NextPlatformDraftVersion(ctx)
+	}
+	return s.repository.NextContestDraftVersion(ctx, *contestID)
+}
+
 func (s *Service) createDraft(ctx context.Context, draft RuleSet) (*RuleSet, error) {
-	version, err := s.repository.NextDraftVersion(ctx, draft.ContestID)
+	version, err := s.nextDraftVersion(ctx, draft.ContestID)
 	if err != nil {
 		return nil, fmt.Errorf("allocate scoring rule set version: %w", err)
 	}

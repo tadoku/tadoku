@@ -3,6 +3,7 @@ load("@rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "postgres",
     srcs = [
+        "errors.go",
         "metrics.go",
         "nullable.go",
         "pool.go",
@@ -13,6 +14,7 @@ go_library(
     visibility = ["//services/tadoku-api:infrastructure_consumers"],
     deps = [
         "@com_github_google_uuid//:uuid",
+        "@com_github_jackc_pgerrcode//:pgerrcode",
         "@com_github_jackc_pgx_v5//:pgx",
         "@com_github_jackc_pgx_v5//pgconn",
         "@com_github_jackc_pgx_v5//pgtype",
@@ -24,6 +26,7 @@ go_library(
 go_test(
     name = "postgres_test",
     srcs = [
+        "errors_test.go",
         "pool_test.go",
         "sqlc_compat_test.go",
         "timestamp_test.go",
@@ -42,6 +45,7 @@ go_test(
         "//services/tadoku-api/internal/errx",
         "//services/tadoku-api/internal/testpostgres",
         "@com_github_google_uuid//:uuid",
+        "@com_github_jackc_pgerrcode//:pgerrcode",
         "@com_github_jackc_pgx_v5//:pgx",
         "@com_github_jackc_pgx_v5//pgconn",
         "@com_github_jackc_pgx_v5//pgxpool",

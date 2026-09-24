@@ -1,11 +1,12 @@
 ---
+description: Accepted decision to serve global, yearly and contest leaderboards from Redis-compatible sorted sets with a PostgreSQL fallback.
 sidebar_position: 1
 title: "001 - Leaderboard Improvements"
 ---
 
 # [001] Leaderboard Improvements
 
-* Status: proposed
+* Status: accepted
 * Author: @antonve
 * Date: 2022-04-23
 
@@ -135,4 +136,4 @@ This design also seems to lay the foundation for private contests between users 
 
 ## Outcome
 
-To be written after implementation
+Tadoku API keeps the unfiltered global, yearly and per-contest leaderboards in Valkey sorted sets (`services/tadoku-api/features/leaderboard/`). Language and activity filters, and any request made while the cache is unavailable, are served from PostgreSQL. The leaderboard outbox worker invalidates affected sorted sets after score changes, and the next reader rebuilds them from PostgreSQL behind a generation check that prevents stale rebuilds from being published.

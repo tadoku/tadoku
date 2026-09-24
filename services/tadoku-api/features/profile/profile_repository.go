@@ -34,11 +34,11 @@ func (r *Repository) SynchronizeUser(
 		return err
 	}
 	_, err = queries.New(executor).SynchronizeUser(ctx, queries.SynchronizeUserParams{
-		ID:               pgtype.UUID{Bytes: userID, Valid: true},
+		ID:               postgres.UUID(userID),
 		DisplayName:      displayName,
 		SessionCreatedAt: pgtype.Timestamp{Time: sessionCreatedAt, Valid: true},
-		CreatedAt:        pgtype.Timestamp{Time: now, Valid: true},
-		UpdatedAt:        pgtype.Timestamp{Time: now, Valid: true},
+		CreatedAt:        postgres.Timestamp(now),
+		UpdatedAt:        postgres.Timestamp(now),
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
 		return ErrAccountDeletionInProgress
@@ -54,7 +54,7 @@ func (r *Repository) LockUser(ctx context.Context, userID uuid.UUID) (UserDeleti
 	if err != nil {
 		return UserDeletionState{}, err
 	}
-	user, err := queries.New(executor).LockUser(ctx, pgtype.UUID{Bytes: userID, Valid: true})
+	user, err := queries.New(executor).LockUser(ctx, postgres.UUID(userID))
 	if errors.Is(err, pgx.ErrNoRows) {
 		return UserDeletionState{}, ErrLocalUserNotFound
 	}
@@ -74,7 +74,7 @@ func (r *Repository) DisplayNames(ctx context.Context, ids []uuid.UUID) (map[uui
 	}
 	values := make([]pgtype.UUID, len(ids))
 	for i, id := range ids {
-		values[i] = pgtype.UUID{Bytes: id, Valid: true}
+		values[i] = postgres.UUID(id)
 	}
 	rows, err := queries.New(executor).FindUserDisplayNames(ctx, values)
 	if err != nil {

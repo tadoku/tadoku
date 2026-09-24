@@ -1,4 +1,5 @@
 ---
+description: Accepted decision to resolve log scores from ordered, versioned scoring rules and to own scoring metadata outside log units.
 sidebar_position: 5
 title: "005 - Scoring Rules"
 ---

@@ -30,7 +30,7 @@ func (r *ContestsRepository) CountContestsCreatedByUserForYear(ctx context.Conte
 	}
 
 	count, err := queries.New(executor).CountContestsCreatedByUserForYear(ctx, queries.CountContestsCreatedByUserForYearParams{
-		OwnerUserID: pgtype.UUID{Bytes: userID, Valid: true},
+		OwnerUserID: postgres.UUID(userID),
 		Year:        year,
 	})
 	if err != nil {
@@ -46,8 +46,8 @@ func (r *ContestsRepository) FindRegistrationForUser(ctx context.Context, userID
 	}
 
 	row, err := queries.New(executor).FindContestRegistrationForUser(ctx, queries.FindContestRegistrationForUserParams{
-		UserID:    pgtype.UUID{Bytes: userID, Valid: true},
-		ContestID: pgtype.UUID{Bytes: contestID, Valid: true},
+		UserID:    postgres.UUID(userID),
+		ContestID: postgres.UUID(contestID),
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrRegistrationNotFound
@@ -100,8 +100,8 @@ func (r *ContestsRepository) ListOngoingRegistrations(ctx context.Context, userI
 	}
 
 	rows, err := queries.New(executor).ListOngoingContestRegistrations(ctx, queries.ListOngoingContestRegistrationsParams{
-		UserID: pgtype.UUID{Bytes: userID, Valid: true},
-		Now:    pgtype.Timestamp{Time: now, Valid: true},
+		UserID: postgres.UUID(userID),
+		Now:    postgres.Timestamp(now),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("list ongoing contest registrations: %w", err)
@@ -140,7 +140,7 @@ func (r *ContestsRepository) ListYearlyRegistrations(ctx context.Context, userID
 	}
 
 	rows, err := queries.New(executor).ListYearlyContestRegistrations(ctx, queries.ListYearlyContestRegistrationsParams{
-		UserID:         pgtype.UUID{Bytes: userID, Valid: true},
+		UserID:         postgres.UUID(userID),
 		Year:           year,
 		IncludePrivate: includePrivate,
 	})
@@ -168,8 +168,8 @@ func (r *ContestsRepository) DetachContestLogsForLanguages(
 	}
 
 	err = queries.New(executor).DetachContestLogsForLanguages(ctx, queries.DetachContestLogsForLanguagesParams{
-		ContestID:     pgtype.UUID{Bytes: contestID, Valid: true},
-		UserID:        pgtype.UUID{Bytes: userID, Valid: true},
+		ContestID:     postgres.UUID(contestID),
+		UserID:        postgres.UUID(userID),
 		LanguageCodes: languageCodes,
 	})
 	if err != nil {
@@ -186,12 +186,12 @@ func (r *ContestsRepository) UpsertRegistration(ctx context.Context, registratio
 	}
 
 	err = queries.New(executor).UpsertContestRegistration(ctx, queries.UpsertContestRegistrationParams{
-		ID:            pgtype.UUID{Bytes: registration.ID, Valid: true},
-		ContestID:     pgtype.UUID{Bytes: registration.ContestID, Valid: true},
-		UserID:        pgtype.UUID{Bytes: registration.UserID, Valid: true},
+		ID:            postgres.UUID(registration.ID),
+		ContestID:     postgres.UUID(registration.ContestID),
+		UserID:        postgres.UUID(registration.UserID),
 		LanguageCodes: registration.LanguageCodes,
-		CreatedAt:     pgtype.Timestamp{Time: registration.CreatedAt, Valid: true},
-		UpdatedAt:     pgtype.Timestamp{Time: registration.UpdatedAt, Valid: true},
+		CreatedAt:     postgres.Timestamp(registration.CreatedAt),
+		UpdatedAt:     postgres.Timestamp(registration.UpdatedAt),
 	})
 	if err != nil {
 		return fmt.Errorf("upsert contest registration: %w", err)
@@ -208,8 +208,8 @@ func (r *ContestsRepository) InsertContestScoreRefresh(ctx context.Context, user
 
 	if err := queries.New(executor).InsertContestScoreRefresh(ctx, queries.InsertContestScoreRefreshParams{
 		EventType: string(leaderboardoutbox.RefreshContestScore),
-		UserID:    pgtype.UUID{Bytes: userID, Valid: true},
-		ContestID: pgtype.UUID{Bytes: contestID, Valid: true},
+		UserID:    postgres.UUID(userID),
+		ContestID: postgres.UUID(contestID),
 	}); err != nil {
 		return fmt.Errorf("insert contest score refresh: %w", err)
 	}
@@ -225,7 +225,7 @@ func (r *ContestsRepository) InsertOfficialScoresRefresh(ctx context.Context, us
 
 	if err := queries.New(executor).InsertOfficialScoresRefresh(ctx, queries.InsertOfficialScoresRefreshParams{
 		EventType: string(leaderboardoutbox.RefreshOfficialScores),
-		UserID:    pgtype.UUID{Bytes: userID, Valid: true},
+		UserID:    postgres.UUID(userID),
 		Year:      pgtype.Int2{Int16: year, Valid: true},
 	}); err != nil {
 		return fmt.Errorf("insert official scores refresh: %w", err)
@@ -261,8 +261,8 @@ func (r *ContestsRepository) CreateContest(ctx context.Context, contest Contest)
 		return err
 	}
 	err = queries.New(executor).CreateContest(ctx, queries.CreateContestParams{
-		ID:                      pgtype.UUID{Bytes: contest.ID, Valid: true},
-		OwnerUserID:             pgtype.UUID{Bytes: contest.OwnerUserID, Valid: true},
+		ID:                      postgres.UUID(contest.ID),
+		OwnerUserID:             postgres.UUID(contest.OwnerUserID),
 		OwnerUserDisplayName:    contest.OwnerUserDisplayName,
 		Official:                contest.Official,
 		Private:                 contest.Private,
@@ -273,17 +273,13 @@ func (r *ContestsRepository) CreateContest(ctx context.Context, contest Contest)
 		Description:             postgres.NullableText(contest.Description),
 		LanguageCodeAllowList:   contest.LanguageCodeAllowList,
 		ActivityTypeIDAllowList: contest.ActivityTypeIDAllowList,
-		CreatedAt:               pgtype.Timestamp{Time: contest.CreatedAt, Valid: true},
-		UpdatedAt:               pgtype.Timestamp{Time: contest.UpdatedAt, Valid: true},
+		CreatedAt:               postgres.Timestamp(contest.CreatedAt),
+		UpdatedAt:               postgres.Timestamp(contest.UpdatedAt),
 	})
 	if err != nil {
 		return fmt.Errorf("create contest: %w", err)
 	}
 	return nil
-}
-
-func (r *ContestsRepository) FindCreatedContestByID(ctx context.Context, id uuid.UUID) (*Contest, error) {
-	return r.FindContestByID(ctx, FindParameters{ID: id})
 }
 
 func (r *ContestsRepository) ListContests(ctx context.Context, parameters ListParameters) ([]Contest, int, error) {
@@ -339,7 +335,7 @@ func (r *ContestsRepository) FindContestByID(ctx context.Context, parameters Fin
 	}
 
 	row, err := queries.New(executor).FindContestByID(ctx, queries.FindContestByIDParams{
-		ID:             pgtype.UUID{Bytes: parameters.ID, Valid: true},
+		ID:             postgres.UUID(parameters.ID),
 		IncludeDeleted: parameters.IncludeDeleted(),
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -377,7 +373,7 @@ func (r *ContestsRepository) FetchContestSummary(ctx context.Context, contestID 
 		return nil, err
 	}
 
-	row, err := queries.New(executor).FetchContestSummary(ctx, pgtype.UUID{Bytes: contestID, Valid: true})
+	row, err := queries.New(executor).FetchContestSummary(ctx, postgres.UUID(contestID))
 	if err != nil {
 		return nil, fmt.Errorf("fetch contest summary: %w", err)
 	}
@@ -395,7 +391,7 @@ func (r *ContestsRepository) ListLanguagesForContest(ctx context.Context, contes
 		return nil, err
 	}
 
-	rows, err := queries.New(executor).ListLanguagesForContest(ctx, pgtype.UUID{Bytes: contestID, Valid: true})
+	rows, err := queries.New(executor).ListLanguagesForContest(ctx, postgres.UUID(contestID))
 	if err != nil {
 		return nil, fmt.Errorf("list contest languages: %w", err)
 	}

@@ -8,8 +8,8 @@ slug: /api/
 
 Tadoku's public HTTP APIs are documented from the single
 [Tadoku API contract](https://github.com/tadoku/tadoku/blob/main/services/tadoku-api/spec/openapi.yaml).
-The four sections below are filtered public views of that source. The reference
-reflects `main`; native and proxied operations retain the same public URLs.
+Tadoku API serves every operation. The four sections below are filtered public
+views of that one contract, grouped by domain, and reflect `main`.
 
 | Domain | Version | Production base URL | Reference |
 | --- | --- | --- | --- |

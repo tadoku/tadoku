@@ -12,7 +12,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
 
 func TestAuthTransportCancelsTokenExchangeWithRequest(t *testing.T) {
@@ -29,7 +28,7 @@ func TestAuthTransportCancelsTokenExchangeWithRequest(t *testing.T) {
 		oathkeeperURL: server.URL,
 		k8sTokenPath:  tokenPath,
 		httpClient:    &http.Client{Timeout: time.Second},
-		clock:         commondomain.NewMockClock(time.Time{}),
+		now:           time.Now,
 		tokenCache:    make(map[string]*cachedToken),
 	}
 	transport := NewAuthTransport(client, "flipt-evaluation/tadoku-api", http.DefaultTransport)
@@ -52,7 +51,7 @@ func TestAuthTransportCancelsTokenExchangeWithRequest(t *testing.T) {
 	}
 }
 
-func TestClientUsesInjectedClockForTokenCacheExpiry(t *testing.T) {
+func TestClientRefreshesTokenAfterCacheExpiry(t *testing.T) {
 	var exchanges atomic.Int32
 	server := httptest.NewServer(http.HandlerFunc(func(response http.ResponseWriter, _ *http.Request) {
 		exchanges.Add(1)
@@ -62,12 +61,12 @@ func TestClientUsesInjectedClockForTokenCacheExpiry(t *testing.T) {
 	t.Cleanup(server.Close)
 	tokenPath := filepath.Join(t.TempDir(), "token")
 	require.NoError(t, os.WriteFile(tokenPath, []byte("projected-token"), 0o600))
-	clock := commondomain.NewMockClock(time.Date(2026, 8, 24, 6, 0, 0, 0, time.UTC))
+	now := time.Date(2026, 8, 24, 6, 0, 0, 0, time.UTC)
 	client := &Client{
 		oathkeeperURL: server.URL,
 		k8sTokenPath:  tokenPath,
 		httpClient:    &http.Client{Timeout: time.Second},
-		clock:         clock,
+		now:           func() time.Time { return now },
 		tokenCache:    make(map[string]*cachedToken),
 	}
 
@@ -77,7 +76,7 @@ func TestClientUsesInjectedClockForTokenCacheExpiry(t *testing.T) {
 	require.NoError(t, err)
 	assert.EqualValues(t, 1, exchanges.Load())
 
-	clock.SetTime(clock.Now().Add(301 * time.Second))
+	now = now.Add(301 * time.Second)
 	_, err = client.GetTokenContext(context.Background(), "flipt-evaluation/tadoku-api")
 	require.NoError(t, err)
 	assert.EqualValues(t, 2, exchanges.Load())
@@ -108,7 +107,7 @@ func TestClientRejectsInvalidSuccessfulTokenExchange(t *testing.T) {
 				oathkeeperURL: server.URL,
 				k8sTokenPath:  tokenPath,
 				httpClient:    &http.Client{Timeout: time.Second},
-				clock:         commondomain.NewMockClock(time.Time{}),
+				now:           time.Now,
 				tokenCache:    make(map[string]*cachedToken),
 			}
 
@@ -151,7 +150,7 @@ func TestAuthTransportUsesTadokuFliptAudience(t *testing.T) {
 				oathkeeperURL: exchange.URL,
 				k8sTokenPath:  tokenPath,
 				httpClient:    &http.Client{Timeout: time.Second},
-				clock:         commondomain.NewMockClock(time.Time{}),
+				now:           time.Now,
 				tokenCache:    make(map[string]*cachedToken),
 			}
 			httpClient := &http.Client{Transport: NewAuthTransport(client, target, http.DefaultTransport)}

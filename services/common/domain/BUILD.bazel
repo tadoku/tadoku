@@ -3,13 +3,10 @@ load("@rules_go//go:def.bzl", "go_library")
 go_library(
     name = "domain",
     srcs = [
-        "clock.go",
-        "clock_mock.go",
         "context.go",
         "errors.go",
         "identity.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/common/domain",
     visibility = ["//visibility:public"],
-    deps = ["@com_github_pkg_errors//:errors"],
 )

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -43,8 +42,7 @@ func TestRegistryOwnsPilotKeyAndSafeDefault(t *testing.T) {
 func TestEvaluatorUsesOnlyStableSubjectAndAllowlistedContext(t *testing.T) {
 	provider := &fakeProvider{result: ProviderResult{Enabled: true, Reason: "MATCH_EVALUATION_REASON"}}
 	observer := &recordingObserver{}
-	clock := commondomain.NewMockClock(time.Date(2026, 8, 23, 12, 0, 0, 0, time.UTC))
-	evaluator := NewEvaluator(provider, observer, clock)
+	evaluator := NewEvaluator(provider, observer)
 	subject := uuid.NewString()
 
 	enabled := evaluator.Boolean(context.Background(), ReleaseLogEntryV2, &commondomain.UserIdentity{
@@ -74,7 +72,7 @@ func TestEvaluatorPreservesNamedTargetingAndStickyEntity(t *testing.T) {
 			Reason:  "match",
 		}, nil
 	}}
-	evaluator := NewEvaluator(provider, nil, commondomain.NewMockClock(time.Time{}))
+	evaluator := NewEvaluator(provider, nil)
 	targetedUser := &commondomain.UserIdentity{Subject: targetedSubject}
 
 	for range 3 {
@@ -114,7 +112,7 @@ func TestEvaluatorUsesRegistryDefaultForUnsafeStates(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			observer := &recordingObserver{}
-			evaluator := NewEvaluator(tt.provider, observer, commondomain.NewMockClock(time.Time{}))
+			evaluator := NewEvaluator(tt.provider, observer)
 
 			assert.False(t, evaluator.Boolean(tt.ctx(), tt.flag, tt.user))
 			require.Len(t, observer.observations, 1)
@@ -128,7 +126,7 @@ func TestEvaluatorUsesRegistryDefaultForUnsafeStates(t *testing.T) {
 func TestEvaluatorMarksLastKnownGoodDecisionAsStale(t *testing.T) {
 	provider := &fakeProvider{result: ProviderResult{Enabled: true, Reason: "match", Stale: true}}
 	observer := &recordingObserver{}
-	evaluator := NewEvaluator(provider, observer, commondomain.NewMockClock(time.Time{}))
+	evaluator := NewEvaluator(provider, observer)
 
 	assert.True(t, evaluator.Boolean(context.Background(), ReleaseLogEntryV2, &commondomain.UserIdentity{Subject: uuid.NewString()}))
 	require.Len(t, observer.observations, 1)

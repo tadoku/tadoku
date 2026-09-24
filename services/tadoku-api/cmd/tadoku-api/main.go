@@ -26,7 +26,6 @@ import (
 	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
 	kratosclient "github.com/tadoku/tadoku/services/common/client/kratos"
 	"github.com/tadoku/tadoku/services/common/client/s2s"
-	commondomain "github.com/tadoku/tadoku/services/common/domain"
 	"github.com/tadoku/tadoku/services/common/featureflags"
 	"github.com/tadoku/tadoku/services/common/postgresconfig"
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
@@ -47,7 +46,6 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 	valkeyinfra "github.com/tadoku/tadoku/services/tadoku-api/infra/valkey"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 	transporthttp "github.com/tadoku/tadoku/services/tadoku-api/transport/http"
 	valkeygo "github.com/valkey-io/valkey-go"
 )
@@ -190,12 +188,6 @@ type application struct {
 	fliptManagement *http.Client
 }
 
-type timexClock struct{}
-
-func (timexClock) Now() time.Time { return timex.Now() }
-
-var _ commondomain.Clock = timexClock{}
-
 func noRedirect(_ *http.Request, _ []*http.Request) error { return http.ErrUseLastResponse }
 
 func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, error) {
@@ -242,7 +234,6 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 		}
 	}()
 
-	clock := timexClock{}
 	exchangeHTTP := &http.Client{
 		Transport:     transport,
 		Timeout:       cfg.FliptRequestTimeout,
@@ -250,7 +241,6 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	}
 	s2sClient := s2s.NewClient(
 		cfg.OathkeeperURL,
-		clock,
 		s2s.WithHTTPClient(exchangeHTTP),
 		s2s.WithTokenPath(cfg.ServiceAccountTokenPath),
 	)
@@ -265,7 +255,7 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 		CheckRedirect: noRedirect,
 	}
 
-	featureFlagMetrics := featureflags.NewMetrics(metrics, clock)
+	featureFlagMetrics := featureflags.NewMetrics(metrics)
 	var fliptProvider *fliptclient.Client
 	if cfg.FliptEnabled {
 		fliptProvider, err = fliptclient.New(ctx, fliptclient.Config{
@@ -370,7 +360,7 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	pagesService := pages.NewService(pagesRepository)
 	postsService := posts.NewService(postsRepository)
 	profileService := profile.NewService(profileRepository, userCache, roleService, kratosIdentities)
-	featureFlagService := featureflagsservice.NewService(featureflags.NewEvaluator(fliptProvider, featureFlagMetrics, clock), fliptmanagement.NewClient(fliptmanagement.Config{
+	featureFlagService := featureflagsservice.NewService(featureflags.NewEvaluator(fliptProvider, featureFlagMetrics), fliptmanagement.NewClient(fliptmanagement.Config{
 		URL:         cfg.FliptManagementURL,
 		Environment: cfg.FliptEnvironment,
 		HTTPClient:  fliptManagement,

@@ -184,12 +184,14 @@ exported.
 
 - Never call `time.Now()` for business time; use `internal/timex.Now()`. This
   applies to services, repositories and background workers.
-- Only the `timex` implementation and its wall-clock tests read `time.Now()`
-  directly. Real timers and deadlines remain independent of business time.
 - Tests control business time with `timex.TheWorld`; see
   [Time in tests](./http-e2e.md#time-in-tests).
-- `commondomain.Clock` (`services/common/domain`) is only for `services/common`
-  packages; startup adapts `timex.Now()` to it.
+- Real time that only drives expiry, deadlines or latency, such as token-cache
+  expiry or request duration, reads `time.Now()` and stays independent of
+  business time.
+- A shared `services/common` package that needs controllable real time gives
+  the struct an unexported `now func() time.Time` field that defaults to
+  `time.Now`. Only tests in the same package override it.
 
 ## Readability
 

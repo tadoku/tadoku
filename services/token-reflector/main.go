@@ -13,8 +13,6 @@ import (
 	"os"
 	"strings"
 	"time"
-
-	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
 
 type TokenResponse struct {
@@ -32,12 +30,8 @@ var errExpiredToken = errors.New("token is expired")
 
 func main() {
 	jwksProxy := newJWKSProxy()
-	clock, err := commondomain.NewClock("UTC")
-	if err != nil {
-		panic(err)
-	}
 
-	http.Handle("/", newTokenHandler(clock))
+	http.Handle("/", newTokenHandler(time.Now))
 	http.Handle("/authorize-service-account", newServiceAccountAuthorizer())
 
 	http.HandleFunc("/jwks", func(w http.ResponseWriter, r *http.Request) {
@@ -89,7 +83,7 @@ func newServiceAccountAuthorizer() http.Handler {
 	})
 }
 
-func newTokenHandler(clock commondomain.Clock) http.Handler {
+func newTokenHandler(now func() time.Time) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		token := r.Header.Get("X-Id-Token")
 		if token == "" {
@@ -103,7 +97,7 @@ func newTokenHandler(clock commondomain.Clock) http.Handler {
 			return
 		}
 
-		expiresIn, err := tokenExpiresIn(token, clock.Now())
+		expiresIn, err := tokenExpiresIn(token, now())
 		if err != nil {
 			if errors.Is(err, errExpiredToken) {
 				http.Error(w, "token is expired", http.StatusUnauthorized)

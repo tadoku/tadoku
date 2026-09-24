@@ -12,7 +12,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
 
 func TestServiceAccountAuthorizer(t *testing.T) {
@@ -76,7 +75,7 @@ func TestTokenResponseUsesReflectedJWTExpiry(t *testing.T) {
 	request.Header.Set("X-Id-Token", token)
 	recorder := httptest.NewRecorder()
 
-	newTokenHandler(commondomain.NewMockClock(now)).ServeHTTP(recorder, request)
+	newTokenHandler(func() time.Time { return now }).ServeHTTP(recorder, request)
 
 	require.Equal(t, http.StatusOK, recorder.Code)
 	var response TokenResponse

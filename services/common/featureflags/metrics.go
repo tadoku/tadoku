@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
 
 type InitializationStatus string
@@ -19,7 +18,7 @@ const (
 // Metrics exports only registry-owned flag keys and bounded enum labels. User
 // identities and raw provider messages are deliberately absent.
 type Metrics struct {
-	clock           commondomain.Clock
+	now             func() time.Time
 	evaluations     *prometheus.CounterVec
 	duration        *prometheus.HistogramVec
 	errors          *prometheus.CounterVec
@@ -30,9 +29,9 @@ type Metrics struct {
 	lastConfigRefresh time.Time
 }
 
-func NewMetrics(registry *prometheus.Registry, clock commondomain.Clock) *Metrics {
+func NewMetrics(registry *prometheus.Registry) *Metrics {
 	m := &Metrics{
-		clock: clock,
+		now: time.Now,
 		evaluations: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Name: "tadoku_feature_flag_evaluations_total",
 			Help: "Boolean feature flag decisions by bounded result metadata.",
@@ -114,13 +113,6 @@ func (m *Metrics) currentConfigAge() float64 {
 		return 0
 	}
 	return age
-}
-
-func (m *Metrics) now() time.Time {
-	if m.clock == nil {
-		return time.Time{}
-	}
-	return m.clock.Now()
 }
 
 func boolLabel(value bool) string {

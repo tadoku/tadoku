@@ -10,8 +10,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
 
 type TokenResponse struct {
@@ -24,7 +22,7 @@ type Client struct {
 	oathkeeperURL string
 	k8sTokenPath  string
 	httpClient    *http.Client
-	clock         commondomain.Clock
+	now           func() time.Time
 
 	mu         sync.RWMutex
 	tokenCache map[string]*cachedToken
@@ -53,12 +51,12 @@ func WithTokenPath(path string) Option {
 	}
 }
 
-func NewClient(oathkeeperURL string, clock commondomain.Clock, options ...Option) *Client {
+func NewClient(oathkeeperURL string, options ...Option) *Client {
 	client := &Client{
 		oathkeeperURL: oathkeeperURL,
 		k8sTokenPath:  "/var/run/secrets/tokens/token",
 		httpClient:    &http.Client{Timeout: 10 * time.Second},
-		clock:         clock,
+		now:           time.Now,
 		tokenCache:    make(map[string]*cachedToken),
 	}
 	for _, option := range options {
@@ -77,7 +75,7 @@ func (c *Client) GetToken(targetService string) (string, error) {
 func (c *Client) GetTokenContext(ctx context.Context, targetService string) (string, error) {
 	c.mu.RLock()
 	if cached, ok := c.tokenCache[targetService]; ok {
-		if c.clock.Now().Before(cached.expiresAt) {
+		if c.now().Before(cached.expiresAt) {
 			c.mu.RUnlock()
 			return cached.token, nil
 		}
@@ -126,7 +124,7 @@ func (c *Client) GetTokenContext(ctx context.Context, targetService string) (str
 	c.mu.Lock()
 	c.tokenCache[targetService] = &cachedToken{
 		token:     tokenResp.AccessToken,
-		expiresAt: c.clock.Now().Add(time.Duration(cacheSeconds) * time.Second),
+		expiresAt: c.now().Add(time.Duration(cacheSeconds) * time.Second),
 	}
 	c.mu.Unlock()
 

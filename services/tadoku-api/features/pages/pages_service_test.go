@@ -1,11 +1,11 @@
 package pages_test
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/pages"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
 
 func TestCreatePageParametersValidation(t *testing.T) {
@@ -18,21 +18,23 @@ func TestCreatePageParametersValidation(t *testing.T) {
 		HTML:      "<p>Page</p>",
 	}
 	for _, test := range []struct {
-		name   string
-		change func(*pages.CreatePageParameters)
+		name    string
+		change  func(*pages.CreatePageParameters)
+		message string
 	}{
-		{name: "ID", change: func(p *pages.CreatePageParameters) { p.ID = uuid.Nil }},
-		{name: "namespace", change: func(p *pages.CreatePageParameters) { p.Namespace = "" }},
-		{name: "short slug", change: func(p *pages.CreatePageParameters) { p.Slug = "x" }},
-		{name: "uppercase slug", change: func(p *pages.CreatePageParameters) { p.Slug = "New-page" }},
-		{name: "title", change: func(p *pages.CreatePageParameters) { p.Title = "" }},
-		{name: "HTML", change: func(p *pages.CreatePageParameters) { p.HTML = "" }},
+		{name: "ID", change: func(p *pages.CreatePageParameters) { p.ID = uuid.Nil }, message: "id is required"},
+		{name: "namespace", change: func(p *pages.CreatePageParameters) { p.Namespace = "" }, message: "namespace is required"},
+		{name: "short slug", change: func(p *pages.CreatePageParameters) { p.Slug = "x" }, message: "slug must be at least 2 characters"},
+		{name: "uppercase slug", change: func(p *pages.CreatePageParameters) { p.Slug = "New-page" }, message: "slug must be lowercase"},
+		{name: "title", change: func(p *pages.CreatePageParameters) { p.Title = "" }, message: "title is required"},
+		{name: "HTML", change: func(p *pages.CreatePageParameters) { p.HTML = "" }, message: "html is required"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			parameters := valid
 			test.change(&parameters)
-			if err := parameters.Validate(); !errors.Is(err, pages.ErrInvalidPage) {
-				t.Errorf("error=%v, want invalid page", err)
+			err := parameters.Validate()
+			if errx.KindOf(err) != errx.InvalidInput || err.Error() != test.message {
+				t.Errorf("error=%v, want invalid input %q", err, test.message)
 			}
 		})
 	}

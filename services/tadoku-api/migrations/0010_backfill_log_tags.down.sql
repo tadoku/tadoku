@@ -1,0 +1,2 @@
+-- Cannot reverse: tags from logs.tags have already been copied to log_tags
+-- Manual cleanup would be required if rollback is needed

@@ -4,7 +4,7 @@ go_library(
     name = "testpostgres",
     testonly = True,
     srcs = ["database.go"],
-    data = ["//services/immersion-api/storage/postgres/migrations:up_files"],
+    data = ["//services/tadoku-api/migrations:up_files"],
     embedsrcs = ["cleanup.sql"],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres",
     visibility = ["//services/tadoku-api:__subpackages__"],

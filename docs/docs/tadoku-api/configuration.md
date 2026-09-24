@@ -232,10 +232,14 @@ When `API_LEADERBOARD_OUTBOX_ENABLED` is set:
    `leaderboard outbox batch processed` after each non-empty committed batch
    and `leaderboard outbox ready` once the initial drain completes.
 
-Log and registration writes publish the legacy leaderboard invalidation and a
-typed `jobs` task in the same transaction. The embedded worker still
-consumes only `leaderboard_outbox`; the separate worker consumes only
-`jobs`.
+Log and registration writes publish only typed `jobs` tasks in their
+business transaction. The embedded worker still drains existing
+`leaderboard_outbox` rows; the separate worker consumes `jobs`.
+
+For a mixed-version rollout, first run the separate worker and verify typed
+jobs are processed. Confirm every API replica has stopped legacy writes and
+the pending legacy row count reaches zero before disabling the embedded
+worker. Keep the legacy table until a later standalone migration.
 
 A cache miss rebuilds from PostgreSQL only if its generation has not changed,
 and cached reads recheck that generation before returning. The worker has

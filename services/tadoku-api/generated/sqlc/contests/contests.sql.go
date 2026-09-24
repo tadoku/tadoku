@@ -404,38 +404,6 @@ func (q *Queries) FindLatestOfficialContest(ctx context.Context) (FindLatestOffi
 	return i, err
 }
 
-const insertContestScoreRefresh = `-- name: InsertContestScoreRefresh :exec
-insert into leaderboard_outbox (event_type, user_id, contest_id)
-values ($1, $2, $3)
-`
-
-type InsertContestScoreRefreshParams struct {
-	EventType string
-	UserID    pgtype.UUID
-	ContestID pgtype.UUID
-}
-
-func (q *Queries) InsertContestScoreRefresh(ctx context.Context, arg InsertContestScoreRefreshParams) error {
-	_, err := q.db.Exec(ctx, insertContestScoreRefresh, arg.EventType, arg.UserID, arg.ContestID)
-	return err
-}
-
-const insertOfficialScoresRefresh = `-- name: InsertOfficialScoresRefresh :exec
-insert into leaderboard_outbox (event_type, user_id, year)
-values ($1, $2, $3)
-`
-
-type InsertOfficialScoresRefreshParams struct {
-	EventType string
-	UserID    pgtype.UUID
-	Year      pgtype.Int2
-}
-
-func (q *Queries) InsertOfficialScoresRefresh(ctx context.Context, arg InsertOfficialScoresRefreshParams) error {
-	_, err := q.db.Exec(ctx, insertOfficialScoresRefresh, arg.EventType, arg.UserID, arg.Year)
-	return err
-}
-
 const listContests = `-- name: ListContests :many
 with matches as materialized (
   select

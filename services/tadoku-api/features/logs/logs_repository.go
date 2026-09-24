@@ -11,7 +11,6 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/activities"
-	"github.com/tadoku/tadoku/services/tadoku-api/domain/leaderboardoutbox"
 	queries "github.com/tadoku/tadoku/services/tadoku-api/generated/sqlc/logs"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 )
@@ -104,23 +103,6 @@ func (r *LogsRepository) DeleteTags(ctx context.Context, logID uuid.UUID) error 
 		return err
 	}
 	return queries.New(executor).DeleteLogTags(ctx, postgres.UUID(logID))
-}
-
-func (r *LogsRepository) InsertOutbox(ctx context.Context, userID uuid.UUID, contestID *uuid.UUID, year *int16, event leaderboardoutbox.EventType) error {
-	executor, err := postgres.Executor(ctx, r.db)
-	if err != nil {
-		return err
-	}
-	var y pgtype.Int2
-	if year != nil {
-		y = pgtype.Int2{Int16: *year, Valid: true}
-	}
-	return queries.New(executor).InsertLogLeaderboardOutbox(ctx, queries.InsertLogLeaderboardOutboxParams{
-		EventType: string(event),
-		UserID:    postgres.UUID(userID),
-		ContestID: postgres.NullableUUID(contestID),
-		Year:      y,
-	})
 }
 
 func (r *LogsRepository) OutboxContext(ctx context.Context, id uuid.UUID) (OutboxContext, error) {

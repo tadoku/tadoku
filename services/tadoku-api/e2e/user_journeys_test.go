@@ -234,7 +234,7 @@ func TestLogMutationJourney(t *testing.T) {
 	})
 }
 
-func TestLogWriteOutboxLeaderboardJourney(t *testing.T) {
+func TestLegacyLeaderboardOutboxDrainJourney(t *testing.T) {
 	uuid.SetRand(rand.New(rand.NewSource(1)))
 	defer uuid.SetRand(nil)
 
@@ -266,9 +266,6 @@ func TestLogWriteOutboxLeaderboardJourney(t *testing.T) {
 		{job: "run_leaderboard_outbox"},
 		{request: "after_worker_cache_miss", as: guest, want: http.StatusOK},
 		{request: "update_log", as: user, want: http.StatusOK},
-		{job: "wait_for_leaderboard_outbox_poll"},
-		{request: "after_poll_cache_miss", as: guest, want: http.StatusOK},
-		{request: "after_poll_cache_hit", as: guest, want: http.StatusOK},
 		{verify: "outbox_processed"},
 	})
 	marker, err := leaderboardValkey.client.Do(t.Context(), leaderboardValkey.client.B().Get().Key("leaderboard:global:last_updated").Build()).ToString()

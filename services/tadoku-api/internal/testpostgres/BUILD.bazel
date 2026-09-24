@@ -7,7 +7,7 @@ go_library(
     data = ["//services/tadoku-api/migrations:up_files"],
     embedsrcs = ["cleanup.sql"],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres",
-    visibility = ["//services/tadoku-api:__subpackages__"],
+    visibility = ["//services/tadoku-api:internal_consumers"],
     deps = [
         "@com_github_golang_migrate_migrate_v4//:migrate",
         "@com_github_golang_migrate_migrate_v4//database/postgres",

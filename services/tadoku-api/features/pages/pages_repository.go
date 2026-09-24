@@ -24,7 +24,7 @@ func NewPagesRepository(db *pgxpool.Pool) *PagesRepository {
 	return &PagesRepository{db: db}
 }
 
-func (r *PagesRepository) CreatePage(ctx context.Context, item *Page) error {
+func (r *PagesRepository) CreatePage(ctx context.Context, item *Page, contentID uuid.UUID) error {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return err
@@ -34,9 +34,7 @@ func (r *PagesRepository) CreatePage(ctx context.Context, item *Page) error {
 	if item.PublishedAt != nil {
 		publishedAt = postgres.Timestamp(*item.PublishedAt)
 	}
-	contentID := uuid.New()
-	q := queries.New(executor)
-	err = q.CreatePage(ctx, queries.CreatePageParams{
+	err = queries.New(executor).CreatePage(ctx, queries.CreatePageParams{
 		ID:               pgtype.UUID{Bytes: item.ID, Valid: true},
 		Namespace:        item.Namespace,
 		Slug:             item.Slug,
@@ -53,16 +51,26 @@ func (r *PagesRepository) CreatePage(ctx context.Context, item *Page) error {
 		return fmt.Errorf("create page: %w", err)
 	}
 
-	err = q.CreatePageContent(ctx, queries.CreatePageContentParams{
+	return nil
+}
+
+func (r *PagesRepository) CreatePageContent(ctx context.Context, pageID, contentID uuid.UUID, title, html string, createdAt time.Time) error {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return err
+	}
+
+	err = queries.New(executor).CreatePageContent(ctx, queries.CreatePageContentParams{
 		ID:        pgtype.UUID{Bytes: contentID, Valid: true},
-		PageID:    pgtype.UUID{Bytes: item.ID, Valid: true},
-		Title:     item.Title,
-		Html:      item.HTML,
-		CreatedAt: postgres.Timestamp(*item.CreatedAt),
+		PageID:    pgtype.UUID{Bytes: pageID, Valid: true},
+		Title:     title,
+		Html:      html,
+		CreatedAt: postgres.Timestamp(createdAt),
 	})
 	if err != nil {
 		return fmt.Errorf("create page content: %w", err)
 	}
+
 	return nil
 }
 
@@ -182,7 +190,7 @@ func (r *PagesRepository) ListPages(ctx context.Context, namespace string, inclu
 	return result, total, nil
 }
 
-func (r *PagesRepository) UpdatePage(ctx context.Context, item *Page, contentChanged bool) error {
+func (r *PagesRepository) UpdatePage(ctx context.Context, item *Page, contentID *uuid.UUID) error {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return err
@@ -192,17 +200,11 @@ func (r *PagesRepository) UpdatePage(ctx context.Context, item *Page, contentCha
 	if item.PublishedAt != nil {
 		publishedAt = postgres.Timestamp(*item.PublishedAt)
 	}
-	var contentID pgtype.UUID
-	if contentChanged {
-		contentID = pgtype.UUID{Bytes: uuid.New(), Valid: true}
-	}
-
-	query := queries.New(executor)
-	_, err = query.UpdatePage(ctx, queries.UpdatePageParams{
+	_, err = queries.New(executor).UpdatePage(ctx, queries.UpdatePageParams{
 		ID:               pgtype.UUID{Bytes: item.ID, Valid: true},
 		Namespace:        item.Namespace,
 		Slug:             item.Slug,
-		CurrentContentID: contentID,
+		CurrentContentID: postgres.NullableUUID(contentID),
 		PublishedAt:      publishedAt,
 		UpdatedAt:        postgres.Timestamp(*item.UpdatedAt),
 	})
@@ -217,18 +219,6 @@ func (r *PagesRepository) UpdatePage(ctx context.Context, item *Page, contentCha
 		return fmt.Errorf("update page: %w", err)
 	}
 
-	if contentChanged {
-		err = query.CreatePageContent(ctx, queries.CreatePageContentParams{
-			ID:        contentID,
-			PageID:    pgtype.UUID{Bytes: item.ID, Valid: true},
-			Title:     item.Title,
-			Html:      item.HTML,
-			CreatedAt: postgres.Timestamp(*item.UpdatedAt),
-		})
-		if err != nil {
-			return fmt.Errorf("create page revision: %w", err)
-		}
-	}
 	return nil
 }
 

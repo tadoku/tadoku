@@ -4,6 +4,6 @@ go_library(
     name = "fliptmanagement",
     srcs = ["client.go"],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/infra/fliptmanagement",
-    visibility = ["//visibility:public"],
+    visibility = ["//services/tadoku-api:infrastructure_consumers"],
     deps = ["@com_github_google_uuid//:uuid"],
 )

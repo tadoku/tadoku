@@ -4,5 +4,5 @@ go_library(
     name = "leaderboard",
     srcs = ["generate.go"],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/sql/leaderboard",
-    visibility = ["//visibility:public"],
+    visibility = ["//visibility:private"],
 )

@@ -4,5 +4,5 @@ go_library(
     name = "callbackauth",
     srcs = ["callbackauth.go"],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/internal/callbackauth",
-    visibility = ["//services/tadoku-api:__subpackages__"],
+    visibility = ["//services/tadoku-api:internal_consumers"],
 )

@@ -66,6 +66,12 @@ Migration PRs must remain compatible with the application version currently depl
 
 ### Tadoku API
 
+**Maintain Tadoku API import boundaries in Bazel.** Read the [architecture guide](services/tadoku-api/README.md#import-policies) before adding an import, package or feature. Bazel target `visibility` and the [package groups](services/tadoku-api/BUILD.bazel) define the local boundaries. Tests follow their package's layer policy; startup and E2E packages are assembly boundaries.
+
+**Keep new packages inside the architecture.** Gazelle resolves Go imports to Bazel `deps` but generates new libraries as public; replace that default with the narrowest matching visibility. CI rejects public or out-of-service Tadoku API `go_library` visibility; omitted visibility is Bazel-private. A feature's generated sqlc package must be visible only to that feature. When an import boundary intentionally changes, update the relevant target visibility or package group and the architecture guide in the same change; explain the new dependency direction in the PR. Do not widen visibility to `public` merely to make a build pass.
+
+**Verify import-boundary changes** locally with `bazel run //:gazelle -- -mode=diff`, `./scripts/check-tadoku-api-visibility.sh`, and `bazel build //services/tadoku-api/...` before publishing a PR. The legacy depolicy CI check is temporary and does not define the preferred package structure.
+
 **Document durable conventions for the whole application.** State architecture, compatibility and testing rules for all operations. Do not document individual endpoint implementations, enumerate their coverage, or add endpoint-status sections to general documentation. Use generic examples. Keep deferred cleanup notes as checkboxes in `services/tadoku-api/MIGRATION_LOG.md`.
 
 **Keep each runtime slice small and reviewable.** Implement the requested operation without unrelated service identities, audience checks, or authorization features. Keep authentication and shared ban enforcement in separately reviewed changes.
@@ -90,7 +96,7 @@ Migration PRs must remain compatible with the application version currently depl
 
 **Write for readability.** Separate setup, execution, error handling and response mapping with whitespace. Within a function, put a blank line between coherent phases such as authorization, input extraction, persistence and response mapping. Put unrelated struct fields and composite-literal entries on separate lines. Split application and transport operations into files by functionality, and use descriptive operation names. Keep constructors and resource lifecycle code visibly separate from endpoint behavior.
 
-**Put shared business concepts in the native domain layer.** Use `services/tadoku-api/domain/<concept>` for business values and pure rules used by multiple features. Application operations and features may import these packages. Shared domain packages must not depend on application, feature, transport, storage, generated, infrastructure or `internal` packages; keep services, repositories and provider APIs out of them. Keep feature-specific types, errors and validation in that feature's `domain.go`. Technical support concerns stay under `internal`. Update the architecture documentation and `.depolicy.yaml` when changing layer boundaries; features still must not import or call sibling features.
+**Put shared business concepts in the native domain layer.** Use `services/tadoku-api/domain/<concept>` for business values and pure rules used by multiple features. Application operations and features may import these packages. Shared domain packages must not depend on application, feature, transport, storage, generated, infrastructure or `internal` packages; keep services, repositories and provider APIs out of them. Keep feature-specific types, errors and validation in that feature's `domain.go`. Technical support concerns stay under `internal`. Follow the import-boundary maintenance rule above when changing layer boundaries; features still must not import or call sibling features.
 
 **Group feature packages by responsibility.** Use `<feature>_service.go`, `<feature>_service_test.go`, `<feature>_repository.go`, `<feature>_repository_test.go` and `domain.go`, rather than separate feature files for each operation. Keep domain types, errors and shared validation in `domain.go`; service and repository structs and constructors stay with their implementations. Declare each feature's domain errors together in one `var` block and reuse them from services and repositories. Within feature packages, database tests must exercise repositories directly and live only in the repository test file. Keep service and validation tests database-free; exercise service orchestration through HTTP E2Es.
 
@@ -161,6 +167,14 @@ bazel build //services/... && bazel test //services/...
 ```
 
 ## Dev Environment
+
+For verifying application changes, read the checked-in
+[verify-tadoku skill](.agents/skills/verify-tadoku/SKILL.md), then only the relevant
+[feature-map sections](.agents/skills/verify-tadoku/references/features/README.md).
+This works without a globally installed skill: open those files directly if your
+agent does not discover `.agents/skills`. Update the relevant map in the same PR
+when navigation, prerequisites or observable behavior changes. The map is a
+verification aid, not a second deployment catalog; Bazel owns service discovery.
 
 Use DevCLI for frontend/native API development; `.dev/README.md` owns its workflow.
 The real, non-secret Homelab configuration is committed in `.dev/config.yaml` and

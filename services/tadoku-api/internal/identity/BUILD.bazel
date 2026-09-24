@@ -4,7 +4,7 @@ go_library(
     name = "identity",
     srcs = ["user.go"],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/internal/identity",
-    visibility = ["//services/tadoku-api:__subpackages__"],
+    visibility = ["//services/tadoku-api:internal_consumers"],
     deps = [
         "//services/tadoku-api/internal/errx",
         "@com_github_google_uuid//:uuid",

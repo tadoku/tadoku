@@ -2,6 +2,54 @@ load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load", "oci_push")
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
 load("//.dev:deployable.bzl", "dev_deployable")
 
+# Go import boundaries are enforced by the visibility of the imported package.
+package_group(
+    name = "feature_consumers",
+    packages = [
+        "//services/tadoku-api/app/...",
+        "//services/tadoku-api/cmd/...",
+        "//services/tadoku-api/e2e/...",
+    ],
+)
+
+package_group(
+    name = "domain_consumers",
+    packages = [
+        "//services/tadoku-api/app/...",
+        "//services/tadoku-api/cmd/...",
+        "//services/tadoku-api/domain/...",
+        "//services/tadoku-api/e2e/...",
+        "//services/tadoku-api/features/...",
+        "//services/tadoku-api/spec/...",
+    ],
+)
+
+package_group(
+    name = "infrastructure_consumers",
+    packages = [
+        "//services/tadoku-api/app/...",
+        "//services/tadoku-api/cmd/...",
+        "//services/tadoku-api/e2e/...",
+        "//services/tadoku-api/features/...",
+        "//services/tadoku-api/infra/...",
+        "//services/tadoku-api/spec/...",
+    ],
+)
+
+package_group(
+    name = "internal_consumers",
+    packages = [
+        "//services/tadoku-api/app/...",
+        "//services/tadoku-api/cmd/...",
+        "//services/tadoku-api/e2e/...",
+        "//services/tadoku-api/features/...",
+        "//services/tadoku-api/infra/...",
+        "//services/tadoku-api/internal/...",
+        "//services/tadoku-api/spec/...",
+        "//services/tadoku-api/transport/...",
+    ],
+)
+
 pkg_tar(
     name = "app_layer",
     srcs = ["//services/tadoku-api/cmd/tadoku-api"],

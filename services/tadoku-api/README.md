@@ -756,6 +756,11 @@ transitive dependencies.
 Same-package service/repository responsibilities and business signatures still
 require review; import rules do not enforce those conventions.
 
+`verify-tadoku-api-conventions` greps for rules Depolicy cannot express: only
+`internal/permissions` names the banned/admins Keto relations in runtime code, and
+only the leaderboard feature, Valkey infrastructure, startup and integration tests
+import `valkey-go`.
+
 ## Migration notes
 
 Track deferred cleanup in the [migration log](MIGRATION_LOG.md).

@@ -1,0 +1,34 @@
+name: verify-tadoku-api-conventions
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify tadoku-api source conventions
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Reject raw banned/admins Keto relations outside internal/permissions
+        run: |
+          # Runtime code asks internal/permissions for ban/admin facts. Tests are excluded so fixtures can write tuples.
+          if grep -rnE '"tadoku", *"(banned|admins)"|CheckPermission\(.*"(banned|admins)"' services/tadoku-api \
+            --include='*.go' --exclude='*_test.go' --exclude-dir=generated --exclude-dir=permissions; then
+            echo "::error::Use internal/permissions for banned/admins Keto relations."
+            exit 1
+          fi
+
+      - name: Reject valkey-go imports outside allowed packages
+        run: |
+          # Tests included. Only the leaderboard feature, Valkey infrastructure, startup and integration tests use the client.
+          if grep -rlE '"github.com/valkey-io/valkey-go(/[^"]*)?"' services/tadoku-api --include='*.go' \
+            | grep -vE '^services/tadoku-api/(features/leaderboard|infra/valkey|cmd/tadoku-api|e2e)/'; then
+            echo "::error::Only features/leaderboard, infra/valkey, cmd/tadoku-api and e2e may import valkey-go."
+            exit 1
+          fi

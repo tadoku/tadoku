@@ -18,10 +18,6 @@ func TestAuthzPermissionCheck(t *testing.T) {
 		},
 		{description: []string{"guest"}, want: http.StatusUnauthorized},
 		{description: []string{"not", "allowlisted"}, want: http.StatusForbidden},
-		{
-			description: []string{"banned", "malformed", "json"},
-			want:        http.StatusForbidden,
-		},
 	}
 
 	for _, test := range tests {

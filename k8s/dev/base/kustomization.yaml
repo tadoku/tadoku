@@ -52,6 +52,48 @@ configMapGenerator:
       - NEXT_PUBLIC_ADMIN_URL=https://admin.tadoku.dev.lab
       - NODE_EXTRA_CA_CERTS=/etc/dev-ca/ca.crt
       - NODE_OPTIONS=--max-old-space-size=384
+  - name: tadoku-cli-ca
+    namespace: tdk-dev-frontend-auth
+    options:
+      disableNameSuffixHash: true
+    files: [ca.crt=lab-root-ca.crt]
+  - name: tadoku-cli-web
+    namespace: tdk-dev-frontend-auth
+    options:
+      disableNameSuffixHash: true
+    literals:
+      - NEXT_PUBLIC_KRATOS_INTERNAL_ENDPOINT=http://kratos-public.tdk-dev-kratos
+      - NEXT_PUBLIC_KRATOS_ENDPOINT=https://account.tadoku.dev.lab/kratos
+      - NEXT_PUBLIC_AUTH_UI_URL=https://account.tadoku.dev.lab
+      - NEXT_PUBLIC_HOME_URL=https://tadoku.dev.lab
+      - NEXT_PUBLIC_API_ENDPOINT=https://tadoku.dev.lab/api/internal
+      - NEXT_SERVER_API_ENDPOINT=https://tadoku.dev.lab/api/internal
+      - NEXT_PUBLIC_COOKIE_DOMAIN=.tadoku.dev.lab
+      - NEXT_PUBLIC_COOKIE_SECURE=true
+      - NEXT_PUBLIC_ADMIN_URL=https://admin.tadoku.dev.lab
+      - NODE_EXTRA_CA_CERTS=/etc/dev-ca/ca.crt
+      - NODE_OPTIONS=--max-old-space-size=768
+  - name: tadoku-cli-ca
+    namespace: tdk-dev-frontend-admin
+    options:
+      disableNameSuffixHash: true
+    files: [ca.crt=lab-root-ca.crt]
+  - name: tadoku-cli-web
+    namespace: tdk-dev-frontend-admin
+    options:
+      disableNameSuffixHash: true
+    literals:
+      - NEXT_PUBLIC_KRATOS_INTERNAL_ENDPOINT=http://kratos-public.tdk-dev-kratos
+      - NEXT_PUBLIC_KRATOS_ENDPOINT=https://account.tadoku.dev.lab/kratos
+      - NEXT_PUBLIC_AUTH_UI_URL=https://account.tadoku.dev.lab
+      - NEXT_PUBLIC_HOME_URL=https://tadoku.dev.lab
+      - NEXT_PUBLIC_API_ENDPOINT=https://tadoku.dev.lab/api/internal
+      - NEXT_SERVER_API_ENDPOINT=https://tadoku.dev.lab/api/internal
+      - NEXT_PUBLIC_COOKIE_DOMAIN=.tadoku.dev.lab
+      - NEXT_PUBLIC_COOKIE_SECURE=true
+      - NEXT_PUBLIC_ADMIN_URL=https://admin.tadoku.dev.lab
+      - NODE_EXTRA_CA_CERTS=/etc/dev-ca/ca.crt
+      - NODE_OPTIONS=--max-old-space-size=768
 generatorOptions:
   annotations:
     argocd.argoproj.io/sync-wave: "-20"

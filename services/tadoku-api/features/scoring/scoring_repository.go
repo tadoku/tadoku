@@ -133,7 +133,7 @@ func (r *ScoringRepository) FindUnitKeyByID(ctx context.Context, id uuid.UUID, a
 	row, err := q.FindUnitForScoringByID(ctx, queries.FindUnitForScoringByIDParams{
 		ID:           postgres.UUID(id),
 		ActivityID:   int16(activityID),
-		LanguageCode: pgtype.Text{String: languageCode, Valid: true},
+		LanguageCode: postgres.NullableText(&languageCode),
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
 		return "", errx.NewInvalidInputError("unit_id is not valid for activity_id and language_code")
@@ -153,7 +153,7 @@ func (r *ScoringRepository) FindUnitKeyByKey(ctx context.Context, key string, ac
 	row, err := q.FindUnitForScoringByKey(ctx, queries.FindUnitForScoringByKeyParams{
 		UnitKey:      key,
 		ActivityID:   int16(activityID),
-		LanguageCode: pgtype.Text{String: languageCode, Valid: true},
+		LanguageCode: postgres.NullableText(&languageCode),
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
 		return "", errx.NewInvalidInputError("unit_key is not valid for activity_id and language_code")
@@ -170,51 +170,62 @@ type logUnit struct {
 	Modifier float32
 }
 
-func (r *ScoringRepository) FindLogUnit(ctx context.Context, id *uuid.UUID, key *string, activityID int32, languageCode string) (*logUnit, error) {
+func (r *ScoringRepository) FindLogUnitByID(ctx context.Context, id uuid.UUID, activityID int32, languageCode string) (*logUnit, error) {
 	q, err := r.queries(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if id != nil {
-		row, err := q.FindUnitForScoringByID(ctx, queries.FindUnitForScoringByIDParams{
-			ID:           postgres.UUID(*id),
-			ActivityID:   int16(activityID),
-			LanguageCode: pgtype.Text{String: languageCode, Valid: true},
-		})
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, errx.NewInvalidInputError("unit_id is not valid")
-		}
-		if err != nil {
-			return nil, fmt.Errorf("find log unit: %w", err)
-		}
-		return &logUnit{ID: row.ID.Bytes, Key: row.UnitKey, Modifier: row.Modifier}, nil
+
+	row, err := q.FindUnitForScoringByID(ctx, queries.FindUnitForScoringByIDParams{
+		ID:           postgres.UUID(id),
+		ActivityID:   int16(activityID),
+		LanguageCode: postgres.NullableText(&languageCode),
+	})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, errx.NewInvalidInputError("unit_id is not valid")
 	}
-	if key != nil {
-		row, err := q.FindUnitForScoringByKey(ctx, queries.FindUnitForScoringByKeyParams{
-			UnitKey:      *key,
-			ActivityID:   int16(activityID),
-			LanguageCode: pgtype.Text{String: languageCode, Valid: true},
-		})
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, errx.NewInvalidInputError("unit_key is not valid")
-		}
-		if err != nil {
-			return nil, fmt.Errorf("find log unit: %w", err)
-		}
-		return &logUnit{ID: row.ID.Bytes, Key: row.UnitKey, Modifier: row.Modifier}, nil
+	if err != nil {
+		return nil, fmt.Errorf("find log unit: %w", err)
 	}
-	return nil, nil
+	return &logUnit{ID: row.ID.Bytes, Key: row.UnitKey, Modifier: row.Modifier}, nil
 }
 
-func (r *ScoringRepository) NextDraftVersion(ctx context.Context, contestID *uuid.UUID) (int32, error) {
+func (r *ScoringRepository) FindLogUnitByKey(ctx context.Context, key string, activityID int32, languageCode string) (*logUnit, error) {
+	q, err := r.queries(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	row, err := q.FindUnitForScoringByKey(ctx, queries.FindUnitForScoringByKeyParams{
+		UnitKey:      key,
+		ActivityID:   int16(activityID),
+		LanguageCode: postgres.NullableText(&languageCode),
+	})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, errx.NewInvalidInputError("unit_key is not valid")
+	}
+	if err != nil {
+		return nil, fmt.Errorf("find log unit: %w", err)
+	}
+	return &logUnit{ID: row.ID.Bytes, Key: row.UnitKey, Modifier: row.Modifier}, nil
+}
+
+func (r *ScoringRepository) NextPlatformDraftVersion(ctx context.Context) (int32, error) {
 	q, err := r.queries(ctx)
 	if err != nil {
 		return 0, err
 	}
-	if contestID == nil {
-		return q.NextPlatformScoringRuleSetVersion(ctx)
+
+	return q.NextPlatformScoringRuleSetVersion(ctx)
+}
+
+func (r *ScoringRepository) NextContestDraftVersion(ctx context.Context, contestID uuid.UUID) (int32, error) {
+	q, err := r.queries(ctx)
+	if err != nil {
+		return 0, err
 	}
-	return q.NextContestScoringRuleSetVersion(ctx, postgres.UUID(*contestID))
+
+	return q.NextContestScoringRuleSetVersion(ctx, postgres.UUID(contestID))
 }
 
 func (r *ScoringRepository) CreateDraft(ctx context.Context, draft RuleSet) (*RuleSet, error) {

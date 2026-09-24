@@ -134,14 +134,17 @@ jobs:
         run: bazel test --lockfile_mode=error --test_output=errors //...
 
       - name: Load backend images for scanning
+        if: github.event_name != 'pull_request'
         run: bazel run --lockfile_mode=error //:load_images
 
       - name: Install Trivy
+        if: github.event_name != 'pull_request'
         uses: aquasecurity/setup-trivy@81e514348e19b6112ce2a7e3ecbafe19c1e1f567 # v0.3.1
         with:
           version: v0.72.0
 
       - name: Scan backend images
+        if: github.event_name != 'pull_request'
         env:
           BACKEND_IMAGES: |
             ghcr.io/tadoku/tadoku/image-webhook-gateway:latest

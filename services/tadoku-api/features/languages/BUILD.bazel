@@ -8,11 +8,7 @@ go_library(
         "languages_service.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/features/languages",
-    visibility = [
-        "//services/tadoku-api/app:__pkg__",
-        "//services/tadoku-api/cmd/tadoku-api:__pkg__",
-        "//services/tadoku-api/e2e:__pkg__",
-    ],
+    visibility = ["//services/tadoku-api:feature_consumers"],
     deps = [
         "//services/tadoku-api/domain/languages",
         "//services/tadoku-api/generated/sqlc/languages",

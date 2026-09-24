@@ -4,7 +4,7 @@ go_library(
     name = "valkey",
     srcs = ["client.go"],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/infra/valkey",
-    visibility = ["//services/tadoku-api:__subpackages__"],
+    visibility = ["//services/tadoku-api:infrastructure_consumers"],
     deps = ["@com_github_valkey_io_valkey_go//:valkey-go"],
 )
 

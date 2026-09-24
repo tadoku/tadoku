@@ -8,7 +8,7 @@ go_library(
         "scoring_service.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/features/scoring",
-    visibility = ["//visibility:public"],
+    visibility = ["//services/tadoku-api:feature_consumers"],
     deps = [
         "//services/tadoku-api/domain/activities",
         "//services/tadoku-api/domain/languages",

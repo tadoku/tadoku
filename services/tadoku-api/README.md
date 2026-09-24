@@ -717,6 +717,22 @@ synchronous pass when that is the behavior under test.
 
 ### Import policies
 
+The Bazel visibility prototype mirrors the Tadoku API's local layer boundaries
+in `//services/tadoku-api:feature_consumers`, `:domain_consumers`,
+`:infrastructure_consumers` and `:internal_consumers`. Feature libraries are
+visible only to application, startup and E2E packages; generated SQL libraries
+are visible only to their matching feature. `bazel build //services/tadoku-api/...`
+checks those boundaries for the Go packages and tests it builds. `rules_go`
+requires direct imports to be declared in `deps`, and Gazelle's diff check
+keeps those declarations aligned with source imports.
+
+Depolicy remains the complete import check for now. Bazel visibility is owned
+by the imported target, so these rules do not restrict Tadoku API imports from
+public `services/common` packages. A normal Bazel build also does not inspect
+Go files excluded by the active build configuration or require a new package
+to match a policy. Keep the check below until those differences are resolved
+or explicitly accepted.
+
 ```sh
 bazel run //tools/ci/depolicy
 ```

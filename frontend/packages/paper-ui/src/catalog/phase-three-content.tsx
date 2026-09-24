@@ -187,14 +187,14 @@ export const phaseThreePatternDocuments = [
     guidance: {
       whenToUse: ["Use for product flows that record reading and explain where it contributes."],
       whenNotToUse: ["Do not turn the product flow into a reusable low-level component."],
-      content: ["Name the work, amount, language, privacy, and contest state in plain Tadoku language."],
-      commonMistakes: ["Hiding whether an entry is merely saved or also submitted to a contest."],
+      content: ["Name the work, amount, language, privacy, and contest state in plain Tadoku language.", "Compose the summary from Paper controls. Keep log data, routes, and save or submission actions in the consuming screen; this example documents a pattern, not an exported component."],
+      commonMistakes: ["Hiding whether an entry is merely saved or also submitted to a contest.", "Treating the catalogue fixture's local state as application behavior."],
     },
     accessibility: {
       requirements: ["Keep summaries in document order and expose every action as a named link or button."],
       keyboard: ["All actions follow native link and button operation."], knownConstraints: [],
     },
-    api: { react: ["Surface", "ButtonGroup", "Flash"], cssClasses: [], publicTypes: [], defaults: ["Applications own routing, data, and mutation state."], invalidCombinations: ["Patterns must not import application routers into paper-ui."] },
+    api: { react: ["Surface", "ButtonGroup", "Flash"], cssClasses: [], publicTypes: [], defaults: ["Applications own routing, data, and mutation state."], invalidCombinations: ["Patterns must not import application routers into paper-ui.", "The catalogue example is not a shared logging component."] },
     fixtureIds: ["pattern.logging-summary"], dependencies: { documents: ["component.surface", "component.button-group"], packages: ["paper-ui"] },
     migration: { legacy: ["styleguide/pages/logging.tsx"], notes: ["Preserve the realistic information hierarchy, not the legacy local-state implementation."] },
     changelog: [{ date: REVIEW_DATE, note: "Rebuilt logging as a product pattern." }], behaviorTestIds: ["pattern.logging.render"],

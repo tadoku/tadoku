@@ -8,6 +8,7 @@ The studies intentionally include rejected directions. They document why the fin
 
 - [Decision log](decision-log.md)
 - [Implementation plan](implementation-plan.md) ([Presenter](https://presentr.lab/md/tadoku-paper-implementation-plan))
+- [Composition guide](composition.md) — controls, product patterns, screens, and their ownership rules
 - [Phase 4 gate report](artifacts/tadoku-paper-phase-4-gate.html) ([Presenter](https://presentr.lab/html/tadoku-paper-phase-4-gate))
 - [Phase 4 deployment evidence](research/phase-4-deployment-gate.md)
 - [Original design-system refinement audit](artifacts/design-system-refinement-audit.html)

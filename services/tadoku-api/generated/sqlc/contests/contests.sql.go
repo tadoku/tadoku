@@ -547,32 +547,6 @@ func (q *Queries) ListContests(ctx context.Context, arg ListContestsParams) ([]L
 	return items, nil
 }
 
-const listLanguages = `-- name: ListLanguages :many
-select code, name
-from languages
-order by name asc
-`
-
-func (q *Queries) ListLanguages(ctx context.Context) ([]Language, error) {
-	rows, err := q.db.Query(ctx, listLanguages)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []Language{}
-	for rows.Next() {
-		var i Language
-		if err := rows.Scan(&i.Code, &i.Name); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const listLanguagesForContest = `-- name: ListLanguagesForContest :many
 select code, name
 from languages

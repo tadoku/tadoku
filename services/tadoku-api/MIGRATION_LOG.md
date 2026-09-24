@@ -25,7 +25,7 @@
 
 - [ ] Add a domain-errors lint that not-found sentinels use `errx` (plain `errors.New` maps to Unknown→500).
 - [ ] Ban `Normalize*` functions returning Internal errors (lint).
-- [ ] Stop contests owning the full language catalog (`ListLanguages`); compose `features/languages` in app like log configuration. Depolicy/sqlc: contests SQL must not declare catalog-only `from languages` without a contest join/filter.
+- [ ] Depolicy/sqlc lint: contests SQL must not declare catalog-only `from languages` without a contest join/filter.
 - [ ] CI deny `ory/kratos-client-go` imports outside `features/profile`.
 - [ ] Deny `valkey-go` imports outside Store code.
 - [ ] Ban private unit→activity maps outside `domain/activities` (lint).

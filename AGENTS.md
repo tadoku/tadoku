@@ -199,6 +199,8 @@ Use `make dev-seed` (`scripts/dev/seed-db.sh`) to rerun idempotent seed data. `m
 
 **For larger refactors spanning many files**, commit in chunks that make sense — e.g. one commit per page, per service, per domain area, etc.
 
+**Keep plans, work-in-progress notes and verification evidence out of the repository.** Planning documents, research notes, screenshots and reports do not belong in Git; attach evidence to the pull request.
+
 ## Bug Reports
 
 When a bug is reported, follow this process:

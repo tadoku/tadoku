@@ -265,7 +265,7 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 		CheckRedirect: noRedirect,
 	}
 
-	featureFlagMetrics := featureflags.NewMetrics(metrics, clock)
+	featureFlagMetrics := featureflags.NewMetrics(metrics)
 	var fliptProvider *fliptclient.Client
 	if cfg.FliptEnabled {
 		fliptProvider, err = fliptclient.New(ctx, fliptclient.Config{
@@ -370,7 +370,7 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	pagesService := pages.NewService(pagesRepository)
 	postsService := posts.NewService(postsRepository)
 	profileService := profile.NewService(profileRepository, userCache, roleService, kratosIdentities)
-	featureFlagService := featureflagsservice.NewService(featureflags.NewEvaluator(fliptProvider, featureFlagMetrics, clock), fliptmanagement.NewClient(fliptmanagement.Config{
+	featureFlagService := featureflagsservice.NewService(featureflags.NewEvaluator(fliptProvider, featureFlagMetrics), fliptmanagement.NewClient(fliptmanagement.Config{
 		URL:         cfg.FliptManagementURL,
 		Environment: cfg.FliptEnvironment,
 		HTTPClient:  fliptManagement,

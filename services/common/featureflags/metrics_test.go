@@ -10,16 +10,16 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/stretchr/testify/assert"
-	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
 
 func TestMetricsExposeOnlyBoundedLabelsAndConfigAge(t *testing.T) {
-	clock := commondomain.NewMockClock(time.Date(2026, 8, 23, 12, 0, 0, 0, time.UTC))
+	now := time.Date(2026, 8, 23, 12, 0, 0, 0, time.UTC)
 	registry := prometheus.NewRegistry()
-	metrics := NewMetrics(registry, clock)
+	metrics := NewMetrics(registry)
+	metrics.now = func() time.Time { return now }
 	metrics.ObserveInitialization(InitializationStatusFallback)
 	metrics.ObserveConfigRefresh()
-	clock.SetTime(clock.Now().Add(25 * time.Second))
+	now = now.Add(25 * time.Second)
 	metrics.ObserveEvaluation(Observation{
 		Flag:     ReleaseLogEntryV2,
 		Enabled:  false,
@@ -54,7 +54,7 @@ func TestMetricsExposeOnlyBoundedLabelsAndConfigAge(t *testing.T) {
 
 func TestMetricsUseSentinelAgeBeforeAnySuccessfulFetch(t *testing.T) {
 	registry := prometheus.NewRegistry()
-	NewMetrics(registry, commondomain.NewMockClock(time.Time{}))
+	NewMetrics(registry)
 	recorder := httptest.NewRecorder()
 	promhttp.HandlerFor(registry, promhttp.HandlerOpts{}).ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/metrics", nil))
 

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -14,7 +13,7 @@ import (
 
 func TestEvaluatePublicReturnsAllowlistedDecisionForAuthenticatedUser(t *testing.T) {
 	provider := &fakeProvider{result: ProviderResult{Enabled: true, Reason: "match"}}
-	evaluator := NewEvaluator(provider, nil, commondomain.NewMockClock(time.Time{}))
+	evaluator := NewEvaluator(provider, nil)
 	user := &commondomain.UserIdentity{Subject: uuid.NewString()}
 
 	decisions := evaluator.EvaluatePublic(context.Background(), user)
@@ -27,7 +26,7 @@ func TestEvaluatePublicReturnsAllowlistedDecisionForAuthenticatedUser(t *testing
 func TestEvaluatePublicTreatsGuestAsAnonymous(t *testing.T) {
 	provider := &fakeProvider{result: ProviderResult{Enabled: true, Reason: "match"}}
 	observer := &recordingObserver{}
-	evaluator := NewEvaluator(provider, observer, commondomain.NewMockClock(time.Time{}))
+	evaluator := NewEvaluator(provider, observer)
 
 	decisions := evaluator.EvaluatePublic(context.Background(), &commondomain.UserIdentity{Subject: "guest"})
 
@@ -40,7 +39,7 @@ func TestEvaluatePublicTreatsGuestAsAnonymous(t *testing.T) {
 
 func TestEvaluatePublicUsesSafeDefaultWhenProviderFails(t *testing.T) {
 	provider := &fakeProvider{err: errors.New("provider unavailable")}
-	evaluator := NewEvaluator(provider, nil, commondomain.NewMockClock(time.Time{}))
+	evaluator := NewEvaluator(provider, nil)
 
 	decisions := evaluator.EvaluatePublic(context.Background(), &commondomain.UserIdentity{Subject: uuid.NewString()})
 

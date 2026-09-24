@@ -74,11 +74,11 @@ type Observer interface {
 type Evaluator struct {
 	provider BooleanProvider
 	observer Observer
-	clock    commondomain.Clock
+	now      func() time.Time
 }
 
-func NewEvaluator(provider BooleanProvider, observer Observer, clock commondomain.Clock) *Evaluator {
-	return &Evaluator{provider: provider, observer: observer, clock: clock}
+func NewEvaluator(provider BooleanProvider, observer Observer) *Evaluator {
+	return &Evaluator{provider: provider, observer: observer, now: time.Now}
 }
 
 func (e *Evaluator) Boolean(ctx context.Context, flag BooleanFlag, user *commondomain.UserIdentity) bool {
@@ -146,13 +146,6 @@ func (e *Evaluator) Boolean(ctx context.Context, flag BooleanFlag, user *commond
 		Duration: e.now().Sub(started),
 	})
 	return result.Enabled
-}
-
-func (e *Evaluator) now() time.Time {
-	if e.clock == nil {
-		return time.Time{}
-	}
-	return e.clock.Now()
 }
 
 func (e *Evaluator) observe(observation Observation) {

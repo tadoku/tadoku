@@ -13,10 +13,10 @@ func (s *server) ContentPageCreate(
 	ctx context.Context,
 	request openapi.ContentPageCreateRequestObject,
 ) (openapi.ContentPageCreateResponseObject, error) {
-	if request.Body == nil || request.Body.Html == nil {
-		return openapi.ContentPageCreate400Response{}, nil
+	var body openapi.ContentPageCreateJSONRequestBody
+	if request.Body != nil {
+		body = *request.Body
 	}
-	body := request.Body
 	id := uuid.New()
 	if body.Id != nil {
 		id = *body.Id
@@ -26,13 +26,17 @@ func (s *server) ContentPageCreate(
 		instant := body.PublishedAt.UTC()
 		publishedAt = &instant
 	}
+	var html string
+	if body.Html != nil {
+		html = *body.Html
+	}
 
 	item, err := s.application.CreatePage(ctx, app.CreatePageParameters{
 		ID:          id,
 		Namespace:   request.Namespace,
 		Slug:        body.Slug,
 		Title:       body.Title,
-		HTML:        *body.Html,
+		HTML:        html,
 		PublishedAt: publishedAt,
 	})
 	if err != nil {

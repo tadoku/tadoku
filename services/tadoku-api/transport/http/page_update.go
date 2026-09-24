@@ -12,27 +12,30 @@ func (s *server) ContentPageUpdate(
 	ctx context.Context,
 	request openapi.ContentPageUpdateRequestObject,
 ) (openapi.ContentPageUpdateResponseObject, error) {
-	if request.Body == nil || request.Body.Html == nil {
-		return openapi.ContentPageUpdate400Response{}, nil
-	}
-
 	id, err := uuid.Parse(request.Slug)
 	if err != nil {
 		return nil, errInvalidUUID
 	}
 
-	body := request.Body
+	var body openapi.ContentPageUpdateJSONRequestBody
+	if request.Body != nil {
+		body = *request.Body
+	}
 	publishedAt := body.PublishedAt
 	if publishedAt != nil {
 		instant := publishedAt.UTC()
 		publishedAt = &instant
+	}
+	var html string
+	if body.Html != nil {
+		html = *body.Html
 	}
 	item, err := s.application.UpdatePage(ctx, app.UpdatePageParameters{
 		ID:          id,
 		Namespace:   request.Namespace,
 		Slug:        body.Slug,
 		Title:       body.Title,
-		HTML:        *body.Html,
+		HTML:        html,
 		PublishedAt: publishedAt,
 	})
 	if err != nil {

@@ -12,16 +12,15 @@ func (s *server) ContentPostUpdate(
 	ctx context.Context,
 	request openapi.ContentPostUpdateRequestObject,
 ) (openapi.ContentPostUpdateResponseObject, error) {
-	if request.Body == nil {
-		return openapi.ContentPostUpdate400Response{}, nil
-	}
-
 	id, err := uuid.Parse(request.Slug)
 	if err != nil {
 		return nil, errInvalidUUID
 	}
 
-	body := request.Body
+	var body openapi.ContentPostUpdateJSONRequestBody
+	if request.Body != nil {
+		body = *request.Body
+	}
 	publishedAt := body.PublishedAt
 	if publishedAt != nil {
 		value := publishedAt.UTC()

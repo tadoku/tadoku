@@ -13,10 +13,10 @@ func (s *server) ContentPostCreate(
 	ctx context.Context,
 	request openapi.ContentPostCreateRequestObject,
 ) (openapi.ContentPostCreateResponseObject, error) {
-	if request.Body == nil {
-		return openapi.ContentPostCreate400Response{}, nil
+	var body openapi.ContentPostCreateJSONRequestBody
+	if request.Body != nil {
+		body = *request.Body
 	}
-	body := request.Body
 	id := uuid.New()
 	if body.Id != nil {
 		id = *body.Id

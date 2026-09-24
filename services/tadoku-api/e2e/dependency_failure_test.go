@@ -108,6 +108,13 @@ func TestDependencyFailures(t *testing.T) {
 			suite:       api,
 			handler:     cacheUnavailable,
 		},
+		{
+			operation:   "ImmersionFeatureAccessGet",
+			description: []string{"provider", "unavailable"},
+			want:        http.StatusServiceUnavailable,
+			suite:       api,
+			handler:     withFliptUnavailable(api.handler),
+		},
 	}
 
 	for _, test := range tests {

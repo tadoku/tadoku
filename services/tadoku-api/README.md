@@ -55,8 +55,8 @@ shared domain packages must not import application, feature, transport, storage,
 generated or infrastructure packages, or technical support packages under
 `internal`. Keep this layer about business values and rules, without services,
 repositories or provider APIs. Technical support concerns, such as business-time
-control and request identity, remain under `internal`. The dependency policy in
-`.depolicy.yaml` enforces these import boundaries.
+control and request identity, remain under `internal`. Bazel visibility enforces
+these local import boundaries during builds.
 
 Keep types, errors and validation used by only one feature in that feature's
 `domain.go`; sharing a concept does not require moving its feature operations.
@@ -717,41 +717,39 @@ synchronous pass when that is the behavior under test.
 
 ### Import policies
 
-```sh
-bazel run //tools/ci/depolicy
-```
+The Bazel visibility rules express the Tadoku API's local layer boundaries
+in `//services/tadoku-api:feature_consumers`, `:domain_consumers`,
+`:infrastructure_consumers` and `:internal_consumers`. Feature libraries are
+visible only to application, startup and E2E packages; generated SQL libraries
+are visible only to their matching feature. `bazel build //services/tadoku-api/...`
+checks those boundaries for the Go packages and tests it builds. `rules_go`
+requires direct imports to be declared in `deps`, and Gazelle's diff check
+keeps those declarations aligned with source imports. Gazelle preserves existing
+visibility but creates new Go libraries as public. CI rejects public or
+out-of-service Tadoku API Go library visibility; omitted visibility is
+Bazel-private. Assign a new library its matching scoped visibility after
+running Gazelle, then run `./scripts/check-tadoku-api-visibility.sh` locally.
 
-Depolicy is pinned to `d754cd9f261c92d7422a34c7f4b721044ea0b8c3` in `go.mod`.
-Installation was explicitly approved on 13 September 2026 after review of the
-upstream license-file absence. This records project approval, not a change to
-upstream licensing.
+Run `./tools/ci/check_tadoku_api_provider_deps.sh` locally before publishing
+import changes; CI runs the same Bazel graph check. Direct valkey-go dependencies
+are limited to leaderboard, infra/valkey, startup and E2E. Direct raw Keto client
+dependencies are limited to internal/permissions, startup and E2E. This keeps
+other packages on the shared permission checker, but cannot detect a raw
+`banned`/`admins` relation literal in an allowed package.
 
-The Bazel runner validates the root `.depolicy.yaml` and `go.mod`, then invokes
-the unmodified upstream analyzer on every Go file in this subtree. Tests,
-generated code and inactive build-tag files are included. It uses Bazel's pinned
-SDK sources to classify standard-library imports, with no system Go installation
-or package downloads at runtime. Missing/invalid or nested configuration, an
-empty scope, uncovered/ambiguous packages and denied imports fail the check.
-Compilation/type checking remains in the ordinary Bazel build.
+Bazel visibility is owned by the imported target, so it currently does not
+restrict Tadoku API imports from public `services/common` packages. A normal
+build also does not inspect Go files excluded by the active build configuration.
+The CI guard prevents a new library from being public, but cannot infer whether
+its chosen scope matches its architectural role. These are gaps to close or
+accept before relying on Bazel alone.
 
-Policies describe layer direction: transport uses application operations and
-HTTP contract types; application code composes features; features use their own
-domain and generated SQL plus infrastructure. Application and feature code may
-also use shared `domain/<concept>` packages, which depend only on other shared
-domain packages within this application. Infrastructure cannot import application,
-feature or transport code. Shared internal support packages sit below the runtime
-layers and remain independent of shared business domain packages. Startup and
-integration tests are assembly boundaries.
-
-Rules use layer/feature patterns, not lists of utility, database-driver or provider
-packages. Standard-library and third-party imports are outside this local-layer
-check; dependency choices still follow the repository's development guidelines.
-Same-package and external-package tests both use their directory's layer policy,
-without synthetic package names or per-feature test exceptions. Fixture libraries
-retain Bazel's `testonly` restrictions.
-
-Depolicy replaces the temporary graph checks. It checks direct imports, not
-transitive dependencies.
+The legacy depolicy check still runs in CI as a temporary backstop. It scans
+every Go file, including tests and inactive build-tag files, but its YAML is
+not the source of truth for new package boundaries. Its removal is tracked in
+[issue #1174](https://github.com/tadoku/tadoku/issues/1174). The analyzer is pinned to
+`d754cd9f261c92d7422a34c7f4b721044ea0b8c3` in `go.mod`; installation was
+approved on 13 September 2026 after review of the upstream license-file absence.
 
 Same-package service/repository responsibilities and business signatures still
 require review; import rules do not enforce those conventions.

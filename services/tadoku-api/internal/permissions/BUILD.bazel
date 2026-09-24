@@ -4,7 +4,7 @@ go_library(
     name = "permissions",
     srcs = ["checker.go"],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/internal/permissions",
-    visibility = ["//services/tadoku-api:__subpackages__"],
+    visibility = ["//services/tadoku-api:internal_consumers"],
     deps = [
         "//services/common/client/keto",
         "//services/tadoku-api/internal/errx",

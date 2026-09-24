@@ -11,16 +11,11 @@ func (s *server) AuthzPermissionCheck(
 	ctx context.Context,
 	request openapi.AuthzPermissionCheckRequestObject,
 ) (openapi.AuthzPermissionCheckResponseObject, error) {
-	parameters := app.PermissionCheckParameters{}
-	if request.Body != nil {
-		parameters = app.PermissionCheckParameters{
-			Namespace: request.Body.Namespace,
-			Object:    request.Body.Object,
-			Relation:  request.Body.Relation,
-		}
-	}
-
-	allowed, err := s.application.CheckPermission(ctx, parameters)
+	allowed, err := s.application.CheckPermission(ctx, app.PermissionCheckParameters{
+		Namespace: request.Body.Namespace,
+		Object:    request.Body.Object,
+		Relation:  request.Body.Relation,
+	})
 	if err != nil {
 		s.logOperationError(ctx, "check permission", err)
 		return nil, err

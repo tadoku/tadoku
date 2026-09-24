@@ -72,14 +72,9 @@ func (s *server) ImmersionContestRegistrationUpsert(
 	ctx context.Context,
 	request openapi.ImmersionContestRegistrationUpsertRequestObject,
 ) (openapi.ImmersionContestRegistrationUpsertResponseObject, error) {
-	var languageCodes []string
-	if request.Body != nil {
-		languageCodes = request.Body.LanguageCodes
-	}
-
 	err := s.application.UpsertContestRegistration(ctx, app.ContestRegistrationUpsertParameters{
 		ContestID:     request.Id,
-		LanguageCodes: languageCodes,
+		LanguageCodes: request.Body.LanguageCodes,
 	})
 	if err != nil {
 		s.logOperationError(ctx, "upsert contest registration", err)

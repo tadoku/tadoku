@@ -120,7 +120,11 @@ func TestPagesRepositoryCreatePageIsAtomic(t *testing.T) {
 	}
 	repository := pages.NewPagesRepository(db.Pool)
 	if err := postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
-		if err := repository.CreatePage(ctx, item); err != nil {
+		contentID := uuid.New()
+		if err := repository.CreatePage(ctx, item, contentID); err != nil {
+			return err
+		}
+		if err := repository.CreatePageContent(ctx, item.ID, contentID, item.Title, item.HTML, *item.CreatedAt); err != nil {
 			return err
 		}
 		got, err := repository.FindPageByID(ctx, item.Namespace, item.ID)
@@ -155,7 +159,7 @@ func TestPagesRepositoryCreatePageIsAtomic(t *testing.T) {
 	duplicate := *item
 	duplicate.ID = uuid.New()
 	err = postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
-		return repository.CreatePage(ctx, &duplicate)
+		return repository.CreatePage(ctx, &duplicate, uuid.New())
 	})
 	if !errors.Is(err, pages.ErrPageAlreadyExists) {
 		t.Errorf("duplicate slug error=%v, want conflict", err)
@@ -189,7 +193,11 @@ func TestPagesRepositoryCreatePageRollsBackWhenContentFails(t *testing.T) {
 	}
 	repository := pages.NewPagesRepository(db.Pool)
 	err = postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
-		return repository.CreatePage(ctx, item)
+		contentID := uuid.New()
+		if err := repository.CreatePage(ctx, item, contentID); err != nil {
+			return err
+		}
+		return repository.CreatePageContent(ctx, item.ID, contentID, item.Title, item.HTML, *item.CreatedAt)
 	})
 	var pgError *pgconn.PgError
 	if !errors.As(err, &pgError) || pgError.Code != pgerrcode.CheckViolation {
@@ -334,7 +342,7 @@ func TestPagesRepositoryUpdatePage(t *testing.T) {
 	metadata.PublishedAt = &publishedAt
 	metadata.UpdatedAt = &publishedAt
 	err = postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
-		return repository.UpdatePage(ctx, &metadata, false)
+		return repository.UpdatePage(ctx, &metadata, nil)
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -364,7 +372,11 @@ func TestPagesRepositoryUpdatePage(t *testing.T) {
 	stop := errors.New("roll back revised page")
 	for _, rollback := range []bool{true, false} {
 		err := postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
-			if err := repository.UpdatePage(ctx, &updated, true); err != nil {
+			contentID := uuid.New()
+			if err := repository.UpdatePage(ctx, &updated, &contentID); err != nil {
+				return err
+			}
+			if err := repository.CreatePageContent(ctx, updated.ID, contentID, updated.Title, updated.HTML, *updated.UpdatedAt); err != nil {
 				return err
 			}
 			got, err := repository.FindPageByID(ctx, "main", id)
@@ -454,7 +466,11 @@ func TestPagesRepositoryUpdatePage(t *testing.T) {
 			attempt := updated
 			test.change(&attempt)
 			err := postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
-				return repository.UpdatePage(ctx, &attempt, true)
+				contentID := uuid.New()
+				if err := repository.UpdatePage(ctx, &attempt, &contentID); err != nil {
+					return err
+				}
+				return repository.CreatePageContent(ctx, attempt.ID, contentID, attempt.Title, attempt.HTML, *attempt.UpdatedAt)
 			})
 			if test.want != nil {
 				if !errors.Is(err, test.want) {
@@ -483,7 +499,11 @@ func TestPagesRepositoryUpdatePage(t *testing.T) {
 		t.Fatal(err)
 	}
 	err = postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
-		return repository.UpdatePage(ctx, &updated, true)
+		contentID := uuid.New()
+		if err := repository.UpdatePage(ctx, &updated, &contentID); err != nil {
+			return err
+		}
+		return repository.CreatePageContent(ctx, updated.ID, contentID, updated.Title, updated.HTML, *updated.UpdatedAt)
 	})
 	if !errors.Is(err, pages.ErrPageNotFound) {
 		t.Errorf("deleted page error=%v, want not found", err)

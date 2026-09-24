@@ -4,7 +4,7 @@ go_library(
     name = "errx",
     srcs = ["error.go"],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/internal/errx",
-    visibility = ["//services/tadoku-api:__subpackages__"],
+    visibility = ["//services/tadoku-api:internal_consumers"],
 )
 
 go_test(

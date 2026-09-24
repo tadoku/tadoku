@@ -15,9 +15,8 @@
 - [ ] Replace `github.com/google/uuid` with the standard-library UUID API when it is available in the adopted Go toolchain.
 - [ ] Introduce a generic paginated request type and convert every existing paginated operation to use it.
 - [ ] Support two-step audit recording for external actions: persist the start before calling the external system, then record the correlated completion and outcome. External changes cannot share an atomic PostgreSQL transaction with the audit write.
-- [ ] Consolidate the Flipt management clients.
 - [ ] Revisit leaderboard HTTP test seeding so each case declares only the data it needs instead of relying on the operation-level fixture.
-- [ ] Move the remaining private pgtype conversion helpers in repositories (non-null UUID and timestamp constructors, nullable float, and pgtype-to-pointer conversions other than text) into `infra/postgres`, and decide where shared row mappers belong.
+- [ ] Decide where shared repository row mappers belong, and whether the logs repository timestamp constructor, which preserves the caller's location, can use the UTC-normalizing `postgres.Timestamp`.
 - [ ] Introduce generic conversion helpers for repeated slice and type mappings after common conversion patterns stabilize across migrated features.
 - [ ] Review and standardize the role and identity checking patterns used by application operations.
 - [ ] Configure `wsl_v5` as a required CI check for handwritten Tadoku API Go code, excluding generated files; enable `after-block` and `after-decl` checks and provide a local auto-fix command.
@@ -29,7 +28,6 @@
 - [ ] Ban `Normalize*` functions returning Internal errors (lint).
 - [ ] Stop contests owning the full language catalog (`ListLanguages`); compose `features/languages` in app like log configuration. Depolicy/sqlc: contests SQL must not declare catalog-only `from languages` without a contest join/filter.
 - [ ] CI deny `ory/kratos-client-go` under `features/contests`.
-- [ ] Split pages/posts Create+Update into one-SQL repository methods; allocate content IDs in the service under the app transaction; ban `uuid.New` in `*_repository.go`.
 - [ ] Extract leaderboard Valkey cache I/O from `Service` into a Store (mirror immersion `LeaderboardStore`); deny `valkey-go` imports outside Store packages.
 - [ ] Move leaderboard outbox transaction ownership from the repository to a composition layer above it, with the worker run and transaction coordinated there; keep repository methods to one SQL statement each.
 - [ ] Ban private unit→activity maps outside `domain/activities` (lint).
@@ -39,6 +37,5 @@
 - [ ] Stop loading contest on find-registration when the response omits it; remove app `registration.Contest = nil`.
 - [ ] Forbid raw banned/admins Keto triples outside `internal/permissions` (lint).
 - [ ] Standardize caller UUID / self-or-admin helpers in app; ban ad-hoc Subject UUID parse outside allowlisted guest paths.
-- [ ] Keep the Flipt management client flag-agnostic; product flag allowlist only in featureflags (no product flag names in infra).
 - [ ] Decide whether pages/posts should share content-revision primitives or stay intentional twins; align list publication policy (pages lack the `published_at` cutoff posts apply when excluding drafts).
 - [x] Bind the ban-middleware path carve-out to the mux/generated `AuthzRoleGet` pattern, not the magic `"/authz/current-user/role"` string.

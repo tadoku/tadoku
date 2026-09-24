@@ -25,7 +25,7 @@ func (r *LogsRepository) LockLog(ctx context.Context, id uuid.UUID) error {
 	if err != nil {
 		return err
 	}
-	frozen, err := queries.New(executor).LockLogForMutation(ctx, logUUID(id))
+	frozen, err := queries.New(executor).LockLogForMutation(ctx, postgres.UUID(id))
 	if errors.Is(err, pgx.ErrNoRows) {
 		return ErrLogNotFound
 	}
@@ -45,8 +45,8 @@ func (r *LogsRepository) CreateLog(ctx context.Context, mutation logMutation) er
 	}
 	p := trackingParams(mutation.Tracking)
 	return queries.New(executor).CreateLog(ctx, queries.CreateLogParams{
-		ID:                          logUUID(mutation.ID),
-		UserID:                      logUUID(mutation.UserID),
+		ID:                          postgres.UUID(mutation.ID),
+		UserID:                      postgres.UUID(mutation.UserID),
 		LanguageCode:                mutation.LanguageCode,
 		ActivityID:                  int16(mutation.ActivityID),
 		UnitID:                      p.unitID,
@@ -73,8 +73,8 @@ func (r *LogsRepository) CreateContestLog(ctx context.Context, logID uuid.UUID, 
 	}
 	p := trackingParams(tracking.Tracking)
 	return queries.New(executor).CreateContestLog(ctx, queries.CreateContestLogParams{
-		RegistrationID:  logUUID(tracking.RegistrationID),
-		LogID:           logUUID(logID),
+		RegistrationID:  postgres.UUID(tracking.RegistrationID),
+		LogID:           postgres.UUID(logID),
 		UnitKey:         p.unitKey,
 		Amount:          p.amount,
 		Modifier:        p.modifier,
@@ -93,8 +93,8 @@ func (r *LogsRepository) InsertTag(ctx context.Context, logID, userID uuid.UUID,
 		return err
 	}
 	return queries.New(executor).InsertLogTag(ctx, queries.InsertLogTagParams{
-		LogID:  logUUID(logID),
-		UserID: logUUID(userID),
+		LogID:  postgres.UUID(logID),
+		UserID: postgres.UUID(userID),
 		Tag:    tag,
 	})
 }
@@ -103,7 +103,7 @@ func (r *LogsRepository) DeleteTags(ctx context.Context, logID uuid.UUID) error 
 	if err != nil {
 		return err
 	}
-	return queries.New(executor).DeleteLogTags(ctx, logUUID(logID))
+	return queries.New(executor).DeleteLogTags(ctx, postgres.UUID(logID))
 }
 
 func (r *LogsRepository) InsertOutbox(ctx context.Context, userID uuid.UUID, contestID *uuid.UUID, year *int16, event leaderboardoutbox.EventType) error {
@@ -113,7 +113,7 @@ func (r *LogsRepository) InsertOutbox(ctx context.Context, userID uuid.UUID, con
 	}
 	var cid pgtype.UUID
 	if contestID != nil {
-		cid = logUUID(*contestID)
+		cid = postgres.UUID(*contestID)
 	}
 	var y pgtype.Int2
 	if year != nil {
@@ -121,7 +121,7 @@ func (r *LogsRepository) InsertOutbox(ctx context.Context, userID uuid.UUID, con
 	}
 	return queries.New(executor).InsertLogLeaderboardOutbox(ctx, queries.InsertLogLeaderboardOutboxParams{
 		EventType: string(event),
-		UserID:    logUUID(userID),
+		UserID:    postgres.UUID(userID),
 		ContestID: cid,
 		Year:      y,
 	})
@@ -132,7 +132,7 @@ func (r *LogsRepository) OutboxContext(ctx context.Context, id uuid.UUID) (Outbo
 	if err != nil {
 		return OutboxContext{}, err
 	}
-	row, err := queries.New(executor).FetchLogOutboxContext(ctx, logUUID(id))
+	row, err := queries.New(executor).FetchLogOutboxContext(ctx, postgres.UUID(id))
 	return OutboxContext{
 		UserID:           row.UserID.Bytes,
 		Year:             row.Year,
@@ -159,7 +159,7 @@ func (r *LogsRepository) UpdateLog(ctx context.Context, mutation logMutation) er
 		ScoreSource:     p.source,
 		Description:     postgres.NullableText(mutation.Description),
 		UpdatedAt:       logTime(mutation.Now),
-		LogID:           logUUID(mutation.ID),
+		LogID:           postgres.UUID(mutation.ID),
 	})
 }
 func (r *LogsRepository) UpdateContestLog(ctx context.Context, logID uuid.UUID, tracking ContestTracking, now time.Time) error {
@@ -178,8 +178,8 @@ func (r *LogsRepository) UpdateContestLog(ctx context.Context, logID uuid.UUID, 
 		ScoreRuleIds:    p.ruleIDs,
 		ScoreRates:      tracking.Tracking.Rates,
 		ScoreSource:     p.source,
-		LogID:           logUUID(logID),
-		ContestID:       logUUID(tracking.ContestID),
+		LogID:           postgres.UUID(logID),
+		ContestID:       postgres.UUID(tracking.ContestID),
 		Now:             pgtype.Date{Time: now, Valid: true},
 	})
 }
@@ -200,7 +200,7 @@ func (r *LogsRepository) UpdateOngoingContestLogs(ctx context.Context, logID uui
 		ScoreRuleIds:    p.ruleIDs,
 		ScoreRates:      tracking.Rates,
 		ScoreSource:     p.source,
-		LogID:           logUUID(logID),
+		LogID:           postgres.UUID(logID),
 		Now:             pgtype.Date{Time: now, Valid: true},
 	})
 }
@@ -211,7 +211,7 @@ func (r *LogsRepository) OngoingContestIDs(ctx context.Context, id uuid.UUID, no
 		return nil, err
 	}
 	rows, err := queries.New(executor).FetchOngoingContestIDsForLog(ctx, queries.FetchOngoingContestIDsForLogParams{
-		LogID: logUUID(id),
+		LogID: postgres.UUID(id),
 		Now:   pgtype.Date{Time: now, Valid: true},
 	})
 	if err != nil {
@@ -238,30 +238,25 @@ type logTrackingParams struct {
 func trackingParams(t Tracking) logTrackingParams {
 	p := logTrackingParams{
 		unitKey:  pgtype.Text{String: t.UnitKey, Valid: t.UnitKey != ""},
-		amount:   nullableFloat(t.Amount),
-		modifier: nullableFloat(t.Modifier),
+		amount:   postgres.NullableFloat4(t.Amount),
+		modifier: postgres.NullableFloat4(t.Modifier),
 		duration: postgres.NullableInt4(t.DurationSeconds),
 		source:   pgtype.Text{String: t.Source, Valid: t.Source != ""},
 	}
 	if t.UnitID != nil {
-		p.unitID = logUUID(*t.UnitID)
+		p.unitID = postgres.UUID(*t.UnitID)
 	}
 	if t.RuleSetID != nil {
-		p.ruleSetID = logUUID(*t.RuleSetID)
+		p.ruleSetID = postgres.UUID(*t.RuleSetID)
 	}
 	for _, id := range t.RuleIDs {
-		p.ruleIDs = append(p.ruleIDs, logUUID(id))
+		p.ruleIDs = append(p.ruleIDs, postgres.UUID(id))
 	}
 	return p
 }
-func logUUID(v uuid.UUID) pgtype.UUID      { return pgtype.UUID{Bytes: v, Valid: true} }
+
+// logTime keeps the caller's location; postgres.Timestamp normalizes to UTC.
 func logTime(v time.Time) pgtype.Timestamp { return pgtype.Timestamp{Time: v, Valid: true} }
-func nullableFloat(v *float32) pgtype.Float4 {
-	if v == nil {
-		return pgtype.Float4{}
-	}
-	return pgtype.Float4{Float32: *v, Valid: true}
-}
 
 func (r *LogsRepository) ListUnits(ctx context.Context) ([]Unit, error) {
 	executor, err := postgres.Executor(ctx, r.db)
@@ -467,20 +462,20 @@ func (r *LogsRepository) FindLog(ctx context.Context, id uuid.UUID, includeDelet
 	}
 
 	tracking := Tracking{
-		DurationSeconds: intPointer(row.DurationSeconds),
+		DurationSeconds: postgres.Int4Pointer(row.DurationSeconds),
 		Score:           row.Score.Float32,
-		RuleSetID:       uuidPointer(row.ScoreRuleSetID),
-		RuleIDs:         logUUIDs(row.ScoreRuleIds),
+		RuleSetID:       postgres.UUIDPointer(row.ScoreRuleSetID),
+		RuleIDs:         postgres.UUIDs(row.ScoreRuleIds),
 		Rates:           row.ScoreRates,
 	}
 	if row.ScoreSource.Valid {
 		tracking.Source = row.ScoreSource.String
 	}
 	if row.Amount.Valid && row.Modifier.Valid {
-		tracking.UnitID = uuidPointer(row.UnitID)
+		tracking.UnitID = postgres.UUIDPointer(row.UnitID)
 		tracking.UnitKey = row.UnitKey
-		tracking.Amount = floatPointer(row.Amount)
-		tracking.Modifier = floatPointer(row.Modifier)
+		tracking.Amount = postgres.Float4Pointer(row.Amount)
+		tracking.Modifier = postgres.Float4Pointer(row.Modifier)
 	}
 
 	return &Log{
@@ -497,7 +492,7 @@ func (r *LogsRepository) FindLog(ctx context.Context, id uuid.UUID, includeDelet
 		Amount:          row.Amount.Float32,
 		Modifier:        row.Modifier.Float32,
 		Score:           row.Score.Float32,
-		DurationSeconds: intPointer(row.DurationSeconds),
+		DurationSeconds: postgres.Int4Pointer(row.DurationSeconds),
 		CreatedAt:       row.CreatedAt.Time,
 		Deleted:         row.DeletedAt.Valid,
 		UserDisplayName: &row.UserDisplayName,
@@ -512,8 +507,8 @@ func (r *LogsRepository) DetachContest(ctx context.Context, logID, contestID uui
 	}
 
 	return queries.New(executor).DetachContestLog(ctx, queries.DetachContestLogParams{
-		LogID:     logUUID(logID),
-		ContestID: logUUID(contestID),
+		LogID:     postgres.UUID(logID),
+		ContestID: postgres.UUID(contestID),
 	})
 }
 
@@ -524,7 +519,7 @@ func (r *LogsRepository) RecomputeOfficialEligibility(ctx context.Context, logID
 	}
 
 	return queries.New(executor).RecomputeLogOfficialEligibility(ctx, queries.RecomputeLogOfficialEligibilityParams{
-		LogID:     logUUID(logID),
+		LogID:     postgres.UUID(logID),
 		UpdatedAt: logTime(now),
 	})
 }
@@ -536,7 +531,7 @@ func (r *LogsRepository) CanDelete(ctx context.Context, logID uuid.UUID, now tim
 	}
 
 	return queries.New(executor).CanDeleteLog(ctx, queries.CanDeleteLogParams{
-		LogID: logUUID(logID),
+		LogID: postgres.UUID(logID),
 		Now:   pgtype.Date{Time: now, Valid: true},
 	})
 }
@@ -547,7 +542,7 @@ func (r *LogsRepository) AttachedContestIDs(ctx context.Context, logID uuid.UUID
 		return nil, err
 	}
 
-	rows, err := queries.New(executor).ListAttachedContestIDs(ctx, logUUID(logID))
+	rows, err := queries.New(executor).ListAttachedContestIDs(ctx, postgres.UUID(logID))
 	if err != nil {
 		return nil, err
 	}
@@ -566,7 +561,7 @@ func (r *LogsRepository) SoftDelete(ctx context.Context, logID uuid.UUID, now ti
 	}
 
 	return queries.New(executor).SoftDeleteLog(ctx, queries.SoftDeleteLogParams{
-		LogID:     logUUID(logID),
+		LogID:     postgres.UUID(logID),
 		DeletedAt: logTime(now),
 	})
 }
@@ -633,7 +628,7 @@ func (r *LogsRepository) ListUserLogs(ctx context.Context, parameters ListParame
 			Amount:          row.Amount.Float32,
 			Modifier:        row.Modifier.Float32,
 			Score:           row.Score.Float32,
-			DurationSeconds: intPointer(row.DurationSeconds),
+			DurationSeconds: postgres.Int4Pointer(row.DurationSeconds),
 			CreatedAt:       row.CreatedAt.Time,
 			Deleted:         row.DeletedAt.Valid,
 		})
@@ -682,7 +677,7 @@ func (r *LogsRepository) ListContestLogs(ctx context.Context, parameters ListPar
 			Amount:          row.Amount.Float32,
 			Modifier:        row.Modifier.Float32,
 			Score:           row.Score.Float32,
-			DurationSeconds: intPointer(row.DurationSeconds),
+			DurationSeconds: postgres.Int4Pointer(row.DurationSeconds),
 			CreatedAt:       row.CreatedAt.Time,
 			Deleted:         row.DeletedAt.Valid,
 			UserDisplayName: &row.UserDisplayName,
@@ -693,36 +688,6 @@ func (r *LogsRepository) ListContestLogs(ctx context.Context, parameters ListPar
 		result.NextPageToken = fmt.Sprint(parameters.Page + 1)
 	}
 	return result, nil
-}
-
-func floatPointer(value pgtype.Float4) *float32 {
-	if !value.Valid {
-		return nil
-	}
-	return &value.Float32
-}
-
-func uuidPointer(value pgtype.UUID) *uuid.UUID {
-	if !value.Valid {
-		return nil
-	}
-	id := uuid.UUID(value.Bytes)
-	return &id
-}
-
-func logUUIDs(values []pgtype.UUID) []uuid.UUID {
-	result := make([]uuid.UUID, len(values))
-	for i, value := range values {
-		result[i] = value.Bytes
-	}
-	return result
-}
-
-func intPointer(value pgtype.Int4) *int32 {
-	if !value.Valid {
-		return nil
-	}
-	return &value.Int32
 }
 
 // Decode PostgreSQL array text at the storage boundary, preserving the legacy

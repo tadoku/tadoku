@@ -18,6 +18,7 @@ sh_binary(
     args = [
         "$(rlocationpath //services/image-webhook-gateway:load)",
         "$(rlocationpath //services/tadoku-api:load)",
+        "$(rlocationpath //services/tadoku-api/worker:load)",
         "$(rlocationpath //services/tadoku-api/migrations:load)",
         "$(rlocationpath //services/token-reflector:load)",
     ],
@@ -25,6 +26,7 @@ sh_binary(
         "//services/image-webhook-gateway:load",
         "//services/tadoku-api:load",
         "//services/tadoku-api/migrations:load",
+        "//services/tadoku-api/worker:load",
         "//services/token-reflector:load",
         "@bazel_tools//tools/bash/runfiles",
     ],

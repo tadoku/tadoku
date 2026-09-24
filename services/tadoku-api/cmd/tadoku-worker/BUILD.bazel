@@ -1,0 +1,40 @@
+load("@rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+
+go_library(
+    name = "tadoku-worker_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/tadoku/tadoku/services/tadoku-api/cmd/tadoku-worker",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//services/common/postgresconfig",
+        "//services/tadoku-api/app/worker",
+        "//services/tadoku-api/features/leaderboard",
+        "//services/tadoku-api/infra/postgres",
+        "//services/tadoku-api/infra/valkey",
+        "//services/tadoku-api/storage/postgres/asyncoutbox",
+        "@com_github_go_playground_validator_v10//:validator",
+        "@com_github_kelseyhightower_envconfig//:envconfig",
+        "@com_github_prometheus_client_golang//prometheus",
+        "@com_github_prometheus_client_golang//prometheus/collectors",
+        "@com_github_prometheus_client_golang//prometheus/promhttp",
+    ],
+)
+
+go_binary(
+    name = "tadoku-worker",
+    embed = [":tadoku-worker_lib"],
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "tadoku-worker_test",
+    srcs = ["main_test.go"],
+    embed = [":tadoku-worker_lib"],
+    env_inherit = ["TADOKU_TEST_POSTGRES_URL"],
+    tags = [
+        "no-cache",
+        "no-remote-exec",
+        "requires-network",
+    ],
+    deps = ["//services/tadoku-api/internal/testpostgres"],
+)

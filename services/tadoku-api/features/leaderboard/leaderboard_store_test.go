@@ -99,6 +99,59 @@ func TestRebuildDoesNotPublishSnapshotAfterInvalidation(t *testing.T) {
 	}
 }
 
+func TestSharedCacheReadinessIsScopedAndRevocable(t *testing.T) {
+	rawURL, err := testvalkey.URL()
+	if err != nil {
+		t.Fatal(err)
+	}
+	option, err := valkeygo.ParseURL(rawURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	option.SelectDB = 13
+	option.ForceSingleClient = true
+	option.DisableRetry = true
+	client, err := valkeygo.NewClient(option)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(client.Close)
+
+	prefix := "test:" + uuid.NewString() + ":"
+	store := NewStore(client, time.Second, prefix)
+	other := NewStore(client, time.Second, prefix+"other:")
+	t.Cleanup(func() {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+		if err := store.revokeReadiness(ctx); err != nil {
+			t.Error(err)
+		}
+	})
+
+	ready, err := store.readiness(t.Context())
+	if err != nil || ready {
+		t.Fatalf("initial readiness = %t, %v; want false", ready, err)
+	}
+	if err := store.publishReadiness(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	ready, err = store.readiness(t.Context())
+	if err != nil || !ready {
+		t.Errorf("published readiness = %t, %v; want true", ready, err)
+	}
+	ready, err = other.readiness(t.Context())
+	if err != nil || ready {
+		t.Errorf("other prefix readiness = %t, %v; want false", ready, err)
+	}
+	if err := store.revokeReadiness(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	ready, err = store.readiness(t.Context())
+	if err != nil || ready {
+		t.Errorf("revoked readiness = %t, %v; want false", ready, err)
+	}
+}
+
 type invalidateBeforeZcard struct {
 	valkeygo.Client
 	key   string

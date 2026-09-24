@@ -226,10 +226,10 @@ func (r *ScoringRepository) CreateDraft(ctx context.Context, draft RuleSet) (*Ru
 	row, err := q.CreateScoringRuleSet(ctx, queries.CreateScoringRuleSetParams{
 		ID:                postgresUUID(draft.ID),
 		Scope:             draft.Scope,
-		ContestID:         nullablePostgresUUID(draft.ContestID),
+		ContestID:         postgres.NullableUUID(draft.ContestID),
 		Version:           draft.Version,
-		Mode:              nullablePostgresText(draft.Mode),
-		FallbackRuleSetID: nullablePostgresUUID(draft.FallbackRuleSetID),
+		Mode:              postgres.NullableNonEmptyText(&draft.Mode),
+		FallbackRuleSetID: postgres.NullableUUID(draft.FallbackRuleSetID),
 		CreatedAt:         pgtype.Timestamp{Time: draft.CreatedAt, Valid: true},
 	})
 	if err != nil {
@@ -250,9 +250,9 @@ func (r *ScoringRepository) CreateRule(ctx context.Context, ruleSetID uuid.UUID,
 		Priority:     rule.Priority,
 		Stackable:    rule.Stackable,
 		ActivityID:   int16(rule.ActivityID),
-		UnitKey:      nullablePostgresText(rule.UnitKey),
-		LanguageCode: nullablePostgresText(rule.LanguageCode),
-		Tag:          nullablePostgresText(rule.Tag),
+		UnitKey:      postgres.NullableNonEmptyText(&rule.UnitKey),
+		LanguageCode: postgres.NullableNonEmptyText(&rule.LanguageCode),
+		Tag:          postgres.NullableNonEmptyText(&rule.Tag),
 		ScoreSource:  string(rule.Source),
 		Rate:         rule.Rate,
 	}); err != nil {
@@ -350,14 +350,3 @@ func ruleSet(row queries.ScoringRuleSet) *RuleSet {
 }
 
 func postgresUUID(value uuid.UUID) pgtype.UUID { return pgtype.UUID{Bytes: value, Valid: true} }
-
-func nullablePostgresUUID(value *uuid.UUID) pgtype.UUID {
-	if value == nil {
-		return pgtype.UUID{}
-	}
-	return postgresUUID(*value)
-}
-
-func nullablePostgresText(value string) pgtype.Text {
-	return pgtype.Text{String: value, Valid: value != ""}
-}

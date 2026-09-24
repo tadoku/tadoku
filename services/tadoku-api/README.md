@@ -726,7 +726,9 @@ checks those boundaries for the Go packages and tests it builds. `rules_go`
 requires direct imports to be declared in `deps`, and Gazelle's diff check
 keeps those declarations aligned with source imports.
 
-Depolicy remains the complete import check for now. Bazel visibility is owned
+Treat `.depolicy.yaml` as the authoritative import policy and update it with
+the relevant Bazel visibility whenever a boundary changes. Depolicy remains
+the complete import check. Bazel visibility is owned
 by the imported target, so these rules do not restrict Tadoku API imports from
 public `services/common` packages. A normal Bazel build also does not inspect
 Go files excluded by the active build configuration or require a new package

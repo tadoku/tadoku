@@ -304,6 +304,158 @@ func TestLogsRepositoryListUserLogsPaging(t *testing.T) {
 	}
 }
 
+func TestLogsRepositoryContestLogs(t *testing.T) {
+	t.Parallel()
+	repository, db := newTestLogsRepository(t)
+
+	_, err := db.Pool.Exec(t.Context(), `
+		insert into contests (
+			id, owner_user_id, owner_user_display_name, "private", contest_start, contest_end,
+			registration_end, title, activity_type_id_allow_list, official, created_at, updated_at
+		)
+		values
+			('cccccccc-cccc-4ccc-8ccc-ccccccccccc1', '99999999-9999-4999-8999-999999999999', 'Owner', false,
+			 '2026-09-01', '2026-09-30', '2026-09-15', 'Listed', '{2}', false, '2026-08-01', '2026-08-01'),
+			('cccccccc-cccc-4ccc-8ccc-ccccccccccc2', '99999999-9999-4999-8999-999999999999', 'Owner', false,
+			 '2026-09-01', '2026-09-30', '2026-09-15', 'Other', '{2}', false, '2026-08-01', '2026-08-01');
+		insert into contest_registrations (id, contest_id, user_id, language_codes)
+		values
+			('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1', 'cccccccc-cccc-4ccc-8ccc-ccccccccccc1',
+			 '11111111-1111-4111-8111-111111111111', '{jpn}'),
+			('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee2', 'cccccccc-cccc-4ccc-8ccc-ccccccccccc1',
+			 '22222222-2222-4222-8222-222222222222', '{jpn}'),
+			('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee3', 'cccccccc-cccc-4ccc-8ccc-ccccccccccc2',
+			 '11111111-1111-4111-8111-111111111111', '{jpn}')`)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	contestID := uuid.MustParse("cccccccc-cccc-4ccc-8ccc-ccccccccccc1")
+	registration := uuid.MustParse("eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1")
+	otherRegistration := uuid.MustParse("eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee2")
+	otherContestRegistration := uuid.MustParse("eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee3")
+	oldest := uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1")
+	middle := uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2")
+	newest := uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3")
+	deleted := uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa4")
+	otherUser := uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa5")
+	otherContest := uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa6")
+	unattached := uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa7")
+	day := func(d int) time.Time { return time.Date(2026, 9, d, 12, 0, 0, 0, time.UTC) }
+
+	duration := int32(600)
+	attach := func(logID, registrationID uuid.UUID) {
+		t.Helper()
+
+		err := repository.CreateContestLog(t.Context(), logID, ContestTracking{
+			RegistrationID: registrationID,
+			Tracking: Tracking{
+				DurationSeconds: &duration,
+				Score:           7,
+			},
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	for _, log := range []struct {
+		id           uuid.UUID
+		userID       uuid.UUID
+		registration uuid.UUID
+		day          int
+	}{
+		{id: oldest, userID: testUserID, registration: registration, day: 1},
+		{id: middle, userID: testUserID, registration: registration, day: 2},
+		{id: newest, userID: testUserID, registration: registration, day: 3},
+		{id: deleted, userID: testUserID, registration: registration, day: 4},
+		{id: otherUser, userID: testOtherUserID, registration: otherRegistration, day: 5},
+		{id: otherContest, userID: testUserID, registration: otherContestRegistration, day: 6},
+	} {
+		createDurationLog(t, repository, log.id, log.userID, day(log.day))
+		attach(log.id, log.registration)
+	}
+	createDurationLog(t, repository, unattached, testUserID, day(7))
+	if err := repository.SoftDelete(t.Context(), deleted, day(8)); err != nil {
+		t.Fatal(err)
+	}
+
+	userID := testUserID
+	tests := []struct {
+		name           string
+		userID         *uuid.UUID
+		page           int
+		includeDeleted bool
+		wantIDs        []uuid.UUID
+		wantTotal      int
+		wantNext       string
+	}{
+		{name: "all users first page", page: 0, wantIDs: []uuid.UUID{otherUser, newest}, wantTotal: 4, wantNext: "1"},
+		{name: "all users last page", page: 1, wantIDs: []uuid.UUID{middle, oldest}, wantTotal: 4},
+		{name: "past end", page: 2, wantIDs: nil},
+		{name: "one user", userID: &userID, page: 0, wantIDs: []uuid.UUID{newest, middle}, wantTotal: 3, wantNext: "1"},
+		{name: "one user with deleted", userID: &userID, page: 0, includeDeleted: true, wantIDs: []uuid.UUID{deleted, newest}, wantTotal: 4, wantNext: "1"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			list, err := repository.ListContestLogs(t.Context(), ListParameters{
+				UserID:         tt.userID,
+				ContestID:      contestID,
+				IncludeDeleted: tt.includeDeleted,
+				PageSize:       2,
+				Page:           tt.page,
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			var ids []uuid.UUID
+			for _, log := range list.Logs {
+				ids = append(ids, log.ID)
+				if log.Deleted != (log.ID == deleted) {
+					t.Errorf("log %s deleted=%t", log.ID, log.Deleted)
+				}
+				if log.Score != 7 || log.DurationSeconds == nil || *log.DurationSeconds != duration {
+					t.Errorf("log %s score=%v duration=%v, want contest tracking", log.ID, log.Score, log.DurationSeconds)
+				}
+				wantName := "Reader"
+				if log.UserID == testOtherUserID {
+					wantName = "Other"
+				}
+				if log.UserDisplayName == nil || *log.UserDisplayName != wantName {
+					t.Errorf("log %s display name=%v, want %q", log.ID, log.UserDisplayName, wantName)
+				}
+			}
+			if !reflect.DeepEqual(ids, tt.wantIDs) {
+				t.Errorf("ids=%v, want %v", ids, tt.wantIDs)
+			}
+			if list.TotalSize != tt.wantTotal || list.NextPageToken != tt.wantNext {
+				t.Errorf("total=%d next=%q, want total=%d next=%q", list.TotalSize, list.NextPageToken, tt.wantTotal, tt.wantNext)
+			}
+		})
+	}
+
+	contestEnd := time.Date(2026, 9, 30, 23, 0, 0, 0, time.UTC)
+	afterContestEnd := time.Date(2026, 10, 1, 0, 0, 0, 0, time.UTC)
+	for _, tt := range []struct {
+		id   uuid.UUID
+		now  time.Time
+		want bool
+	}{
+		{id: oldest, now: contestEnd, want: true},
+		{id: oldest, now: afterContestEnd, want: false},
+		{id: deleted, now: afterContestEnd, want: false},
+		{id: unattached, now: afterContestEnd, want: true},
+	} {
+		got, err := repository.CanDelete(t.Context(), tt.id, tt.now)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got != tt.want {
+			t.Errorf("can delete %s at %s=%t, want %t", tt.id, tt.now, got, tt.want)
+		}
+	}
+}
+
 func TestLogsRepositoryInsertOutbox(t *testing.T) {
 	t.Parallel()
 	repository, db := newTestLogsRepository(t)

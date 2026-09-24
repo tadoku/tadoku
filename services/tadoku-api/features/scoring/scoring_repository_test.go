@@ -319,6 +319,110 @@ func TestScoringRepositoryContestRuleSets(t *testing.T) {
 	}
 }
 
+func TestScoringRepositoryUnitLookups(t *testing.T) {
+	t.Parallel()
+	db, err := testpostgres.New(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Error(err)
+		}
+	})
+
+	seededUnit := func(key string, languageCode *string) logUnit {
+		t.Helper()
+
+		unit := logUnit{Key: key}
+		err := db.Pool.QueryRow(t.Context(), `
+			select id, modifier from log_units
+			where unit_key = $1 and log_activity_id = 1 and language_code is not distinct from $2`,
+			key, languageCode,
+		).Scan(&unit.ID, &unit.Modifier)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return unit
+	}
+	jpn := "jpn"
+	fallback := seededUnit("reading_character", nil)
+	japanese := seededUnit("reading_character", &jpn)
+	jpnOnly := seededUnit("reading_two_column_page", &jpn)
+
+	repository := NewScoringRepository(db.Pool)
+	missingID := uuid.MustParse("ffffffff-ffff-4fff-8fff-ffffffffffff")
+
+	idTests := []struct {
+		name         string
+		id           uuid.UUID
+		activityID   int32
+		languageCode string
+		want         *logUnit
+	}{
+		{name: "language specific", id: japanese.ID, activityID: 1, languageCode: "jpn", want: &japanese},
+		{name: "fallback for any language", id: fallback.ID, activityID: 1, languageCode: "eng", want: &fallback},
+		{name: "other language", id: japanese.ID, activityID: 1, languageCode: "eng"},
+		{name: "other activity", id: fallback.ID, activityID: 2, languageCode: "jpn"},
+		{name: "missing", id: missingID, activityID: 1, languageCode: "jpn"},
+	}
+	for _, tt := range idTests {
+		t.Run("by id "+tt.name, func(t *testing.T) {
+			key, err := repository.FindUnitKeyByID(t.Context(), tt.id, tt.activityID, tt.languageCode)
+			unit, unitErr := repository.FindLogUnit(t.Context(), &tt.id, nil, tt.activityID, tt.languageCode)
+			assertUnitLookup(t, key, err, unit, unitErr, tt.want)
+		})
+	}
+
+	keyTests := []struct {
+		name         string
+		key          string
+		activityID   int32
+		languageCode string
+		want         *logUnit
+	}{
+		{name: "prefers language specific", key: "reading_character", activityID: 1, languageCode: "jpn", want: &japanese},
+		{name: "falls back without language match", key: "reading_character", activityID: 1, languageCode: "eng", want: &fallback},
+		{name: "language specific only", key: "reading_two_column_page", activityID: 1, languageCode: "jpn", want: &jpnOnly},
+		{name: "other language", key: "reading_two_column_page", activityID: 1, languageCode: "eng"},
+		{name: "other activity", key: "reading_character", activityID: 2, languageCode: "jpn"},
+		{name: "missing", key: "missing_unit", activityID: 1, languageCode: "jpn"},
+	}
+	for _, tt := range keyTests {
+		t.Run("by key "+tt.name, func(t *testing.T) {
+			key, err := repository.FindUnitKeyByKey(t.Context(), tt.key, tt.activityID, tt.languageCode)
+			unit, unitErr := repository.FindLogUnit(t.Context(), nil, &tt.key, tt.activityID, tt.languageCode)
+			assertUnitLookup(t, key, err, unit, unitErr, tt.want)
+		})
+	}
+
+	unit, err := repository.FindLogUnit(t.Context(), nil, nil, 1, "jpn")
+	if unit != nil || err != nil {
+		t.Errorf("log unit without id or key=%+v err=%v, want nil", unit, err)
+	}
+}
+
+func assertUnitLookup(t *testing.T, key string, keyErr error, unit *logUnit, unitErr error, want *logUnit) {
+	t.Helper()
+
+	if want == nil {
+		if errx.KindOf(keyErr) != errx.InvalidInput || key != "" {
+			t.Errorf("unit key=%q err=%v, want invalid input", key, keyErr)
+		}
+		if errx.KindOf(unitErr) != errx.InvalidInput || unit != nil {
+			t.Errorf("log unit=%+v err=%v, want invalid input", unit, unitErr)
+		}
+		return
+	}
+
+	if keyErr != nil || key != want.Key {
+		t.Errorf("unit key=%q err=%v, want %q", key, keyErr, want.Key)
+	}
+	if unitErr != nil || unit == nil || *unit != *want {
+		t.Errorf("log unit=%+v err=%v, want %+v", unit, unitErr, *want)
+	}
+}
+
 func assertConstraintViolation(t *testing.T, err error, code, constraint string) {
 	t.Helper()
 

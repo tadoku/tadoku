@@ -135,6 +135,42 @@ type RegistrationReference struct {
 	Score                float32
 }
 
+// Viewer is the caller reading a log. Only the log's owner and administrators
+// see its contest registrations.
+type Viewer interface {
+	isViewer()
+}
+
+type GuestViewer struct{}
+
+func (GuestViewer) isViewer() {}
+
+type UserViewer struct {
+	UserID uuid.UUID
+}
+
+func (UserViewer) isViewer() {}
+
+type AdminViewer struct{}
+
+func (AdminViewer) isViewer() {}
+
+func mayViewRegistrations(viewer Viewer, ownerID uuid.UUID) bool {
+	switch viewer := viewer.(type) {
+	case AdminViewer:
+		return true
+	case UserViewer:
+		return viewer.UserID == ownerID
+	default:
+		return false
+	}
+}
+
+type FindForViewerParameters struct {
+	Viewer         Viewer
+	IncludeDeleted bool
+}
+
 type ListParameters struct {
 	UserID         *uuid.UUID
 	ContestID      uuid.UUID

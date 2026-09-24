@@ -24,16 +24,18 @@ func (a *Application) FindLog(ctx context.Context, id uuid.UUID) (*Log, error) {
 	}
 
 	isAdmin := callerID != nil && a.permissions.IsAdminOrFalse(ctx)
-	log, err := a.logs.FindLog(ctx, id, isAdmin)
-	if err != nil {
-		return nil, err
+	var viewer logs.Viewer = logs.GuestViewer{}
+	switch {
+	case isAdmin:
+		viewer = logs.AdminViewer{}
+	case callerID != nil:
+		viewer = logs.UserViewer{UserID: *callerID}
 	}
 
-	isOwner := callerID != nil && log.UserID == *callerID
-	if !isAdmin && !isOwner {
-		log.Registrations = nil
-	}
-	return log, nil
+	return a.logs.FindLogForViewer(ctx, id, logs.FindForViewerParameters{
+		Viewer:         viewer,
+		IncludeDeleted: isAdmin,
+	})
 }
 
 func (a *Application) ListUserLogs(ctx context.Context, parameters LogListParameters) (*LogList, error) {

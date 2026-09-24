@@ -1,4 +1,11 @@
+---
+title: Paper composition
+description: How Tadoku Paper splits UI into paper-ui controls, documented product patterns and application-owned screens, and when to extract or share a component.
+---
+
 # Composing Tadoku Paper
+
+Read this when you build or review a screen in a Paper application or change `paper-ui`.
 
 Paper uses three levels of composition. They describe ownership, not mandatory directory names.
 
@@ -31,4 +38,4 @@ For each catalogue pattern, record:
 
 Use realistic, deterministic catalogue fixtures to illustrate the contract. Verify application behavior through the real screen; a fixture alone cannot prove data flow or persistence. When reviewing a new Paper page, ask whether each section is a control, a documented pattern, or screen-owned composition, and whether its current owner matches its data and reuse needs.
 
-The [logging pattern](../../../frontend/packages/paper-ui/src/catalog/phase-three-content.tsx) illustrates this boundary. Its reading-log summary uses `Surface` and `ButtonGroup` to show the work, amount, privacy, and contest state. A consuming logs screen owns the log data, navigation, and save or submission actions. The catalogue example is guidance; it is not a shared logging implementation.
+The logging pattern in `frontend/packages/paper-ui/src/catalog/phase-three-content.tsx` illustrates this boundary. Its reading-log summary uses `Surface` and `ButtonGroup` to show the work, amount, privacy, and contest state. A consuming logs screen owns the log data, navigation, and save or submission actions. The catalogue example is guidance; it is not a shared logging implementation.

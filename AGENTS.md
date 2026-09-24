@@ -16,7 +16,7 @@
 
 ### Tadoku Paper
 
-For Paper applications, use `paper-ui` rather than the legacy `ui` package. Follow the [Paper composition guide](docs/wip/tadoku-paper/composition.md): controls live in `paper-ui`, product patterns describe reusable Tadoku task sections, and application screens own routes, data, permissions, forms, and mutations. Start pattern code beside its screen; a catalogue pattern does not automatically become a shared component. Keep application services and routers out of `paper-ui`.
+For Paper applications, use `paper-ui` rather than the legacy `ui` package. Follow the [Paper composition guide](docs/docs/frontend/paper-composition.md): controls live in `paper-ui`, product patterns describe reusable Tadoku task sections, and application screens own routes, data, permissions, forms, and mutations. Start pattern code beside its screen; a catalogue pattern does not automatically become a shared component. Keep application services and routers out of `paper-ui`.
 
 **Use the `ui` package design system** - never write custom button/form styles. Use:
 - Buttons: `className="btn"` with variants `primary`, `secondary`, `danger`, `ghost`
@@ -198,6 +198,8 @@ Use `make dev-seed` (`scripts/dev/seed-db.sh`) to rerun idempotent seed data. `m
 **Commit in atomic diffs** — each commit should represent one logical change. Don't bundle unrelated changes into a single commit.
 
 **For larger refactors spanning many files**, commit in chunks that make sense — e.g. one commit per page, per service, per domain area, etc.
+
+**Keep plans, work-in-progress notes and verification evidence out of the repository.** Planning documents, research notes, screenshots and reports do not belong in Git; attach evidence to the pull request.
 
 ## Bug Reports
 

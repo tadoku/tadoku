@@ -15,6 +15,7 @@ func TestCreatePage(t *testing.T) {
 		{description: []string{"null", "html"}, want: http.StatusBadRequest},
 		{description: []string{"empty", "html"}, want: http.StatusBadRequest},
 		{description: []string{"short", "slug"}, want: http.StatusBadRequest},
+		{description: []string{"empty", "body"}, want: http.StatusBadRequest},
 		{description: []string{"guest"}, want: http.StatusUnauthorized},
 		{description: []string{"non", "admin"}, want: http.StatusForbidden},
 		{description: []string{"duplicate", "id"}, want: http.StatusConflict},

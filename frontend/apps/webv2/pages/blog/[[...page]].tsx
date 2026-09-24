@@ -2,7 +2,6 @@ import { usePostList } from '@app/content/api'
 import { useRouter } from 'next/router'
 import { Breadcrumb, Loading, Pagination } from 'ui'
 import { HomeIcon } from '@heroicons/react/24/outline'
-import { useState } from 'react'
 import Link from 'next/link'
 import { getQueryStringIntParameter } from '@app/common/router'
 import { routes } from '@app/common/routes'
@@ -29,15 +28,12 @@ const getExcerpt = (markdown: string, maxLength: number): string => {
 const BlogIndex = () => {
   const router = useRouter()
 
-  const [page, setPage] = useState(() => {
-    return getQueryStringIntParameter(router.query.page, 1)
-  })
+  const page = getQueryStringIntParameter(router.query.page, 1)
 
   const pageSize = 10
   const list = usePostList({ pageSize, page: page - 1 })
 
   const navigateToPage = async (page: number) => {
-    setPage(page)
     await router.push(routes.blogList(page))
   }
 
@@ -72,6 +68,23 @@ const BlogIndex = () => {
         />
       </div>
       <div className="space-y-8">
+        {posts.length === 0 && (
+          <div>
+            <h1 className="font-serif font-bold text-3xl">
+              {list.data.total_size === 0
+                ? 'No blog posts yet'
+                : 'No posts on this page'}
+            </h1>
+            {list.data.total_size === 0 ? (
+              <p className="mt-2 text-slate-700">Check back soon for updates.</p>
+            ) : (
+              <Link href={routes.blogList()} className="btn secondary mt-5">
+                Back to the first page
+              </Link>
+            )}
+          </div>
+        )}
+
         {heroPost && (
           <div className="pb-8 border-b border-slate-200">
             <Link
@@ -134,7 +147,7 @@ const BlogIndex = () => {
           </div>
         )}
 
-        {totalPages > 1 ? (
+        {posts.length > 0 && totalPages > 1 ? (
           <Pagination
             currentPage={page}
             totalPages={totalPages}

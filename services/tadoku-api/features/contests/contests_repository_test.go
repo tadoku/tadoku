@@ -206,7 +206,7 @@ func TestContestsRepositoryCreationTransaction(t *testing.T) {
 			return err
 		}
 		var err error
-		created, err = repository.FindCreatedContestByID(ctx, contest.ID)
+		created, err = repository.FindContestByID(ctx, FindParameters{ID: contest.ID})
 		return err
 	})
 	if err != nil {
@@ -228,7 +228,7 @@ func TestContestsRepositoryCreationTransaction(t *testing.T) {
 	if !errors.Is(err, rollbackErr) {
 		t.Fatalf("rollback error=%v, want %v", err, rollbackErr)
 	}
-	if _, err := repository.FindCreatedContestByID(t.Context(), rolledBack.ID); !errors.Is(err, ErrContestNotFound) {
+	if _, err := repository.FindContestByID(t.Context(), FindParameters{ID: rolledBack.ID}); !errors.Is(err, ErrContestNotFound) {
 		t.Errorf("rolled-back contest error=%v, want contest not found", err)
 	}
 }

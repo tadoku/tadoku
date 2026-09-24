@@ -28,8 +28,5 @@ go_test(
     name = "scoring_test",
     srcs = ["scoring_service_test.go"],
     embed = [":scoring"],
-    deps = [
-        "//services/tadoku-api/internal/errx",
-        "@com_github_google_uuid//:uuid",
-    ],
+    deps = ["@com_github_google_uuid//:uuid"],
 )

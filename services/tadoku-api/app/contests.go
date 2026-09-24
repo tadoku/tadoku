@@ -70,6 +70,9 @@ func (a *Application) CreateContest(ctx context.Context, parameters CreateContes
 	if err := a.contests.ValidateContestCreation(ctx, parameters, creatorID, creator.DisplayName, admin, now); err != nil {
 		return nil, err
 	}
+	if err := a.languages.RequireExistingLanguages(ctx, parameters.LanguageCodeAllowList); err != nil {
+		return nil, err
+	}
 	contest := contests.Contest{
 		ID:                      uuid.New(),
 		ContestStart:            parameters.ContestStart,
@@ -194,6 +197,9 @@ func (a *Application) UpsertContestRegistration(ctx context.Context, parameters 
 	registrationID := uuid.New()
 	contest, err := a.contests.ValidateRegistrationUpsert(ctx, parameters)
 	if err != nil {
+		return err
+	}
+	if err := a.languages.RequireExistingLanguages(ctx, parameters.LanguageCodes); err != nil {
 		return err
 	}
 

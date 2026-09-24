@@ -43,19 +43,7 @@ func (s *Service) ValidateContestCreation(
 			return err
 		}
 	}
-	if err := parameters.validate(creatorID, creatorDisplayName, admin, now); err != nil {
-		return err
-	}
-	if len(parameters.LanguageCodeAllowList) > 0 {
-		exists, err := s.contests.LanguagesExist(ctx, parameters.LanguageCodeAllowList)
-		if err != nil {
-			return err
-		}
-		if !exists {
-			return errx.NewInvalidInputError("invalid contest LanguageCodeAllowList: one or more languages do not exist")
-		}
-	}
-	return nil
+	return parameters.validate(creatorID, creatorDisplayName, admin, now)
 }
 
 func (s *Service) FindRegistration(ctx context.Context, userID, contestID uuid.UUID, languages []domainlanguages.Language) (*Registration, error) {
@@ -177,14 +165,6 @@ func (s *Service) ValidateRegistrationUpsert(
 
 	if err := parameters.Validate(); err != nil {
 		return nil, err
-	}
-
-	exist, err := s.contests.LanguagesExist(ctx, parameters.LanguageCodes)
-	if err != nil {
-		return nil, err
-	}
-	if !exist {
-		return nil, errx.NewInvalidInputError("invalid contest registration LanguageCodes: one or more languages do not exist")
 	}
 
 	if len(allowedLanguages) > 0 {

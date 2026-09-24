@@ -436,19 +436,6 @@ func (q *Queries) InsertOfficialScoresRefresh(ctx context.Context, arg InsertOff
 	return err
 }
 
-const languagesExist = `-- name: LanguagesExist :one
-select count(distinct languages.code) = count(distinct requested.code)
-from unnest($1::varchar[]) as requested(code)
-left join languages using (code)
-`
-
-func (q *Queries) LanguagesExist(ctx context.Context, codes []string) (bool, error) {
-	row := q.db.QueryRow(ctx, languagesExist, codes)
-	var column_1 bool
-	err := row.Scan(&column_1)
-	return column_1, err
-}
-
 const listContests = `-- name: ListContests :many
 with matches as materialized (
   select

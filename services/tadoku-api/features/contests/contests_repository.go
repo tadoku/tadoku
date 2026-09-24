@@ -248,18 +248,6 @@ func (r *ContestsRepository) InsertOfficialScoresRefresh(ctx context.Context, us
 	return nil
 }
 
-func (r *ContestsRepository) LanguagesExist(ctx context.Context, codes []string) (bool, error) {
-	executor, err := postgres.Executor(ctx, r.db)
-	if err != nil {
-		return false, err
-	}
-	exists, err := queries.New(executor).LanguagesExist(ctx, codes)
-	if err != nil {
-		return false, fmt.Errorf("check contest languages: %w", err)
-	}
-	return exists, nil
-}
-
 func (r *ContestsRepository) CreateContest(ctx context.Context, contest Contest) error {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {

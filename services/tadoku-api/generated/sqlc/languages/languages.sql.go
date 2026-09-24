@@ -24,6 +24,19 @@ func (q *Queries) CreateLanguage(ctx context.Context, arg CreateLanguageParams) 
 	return err
 }
 
+const languagesExist = `-- name: LanguagesExist :one
+select count(distinct languages.code) = count(distinct requested.code)
+from unnest($1::varchar[]) as requested(code)
+left join languages using (code)
+`
+
+func (q *Queries) LanguagesExist(ctx context.Context, codes []string) (bool, error) {
+	row := q.db.QueryRow(ctx, languagesExist, codes)
+	var column_1 bool
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
 const listLanguages = `-- name: ListLanguages :many
 select code, name
 from languages

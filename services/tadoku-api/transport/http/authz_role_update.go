@@ -11,10 +11,10 @@ func (s *server) AuthzRoleUpdate(
 	ctx context.Context,
 	request openapi.AuthzRoleUpdateRequestObject,
 ) (openapi.AuthzRoleUpdateResponseObject, error) {
-	parameters := app.RoleUpdateParameters{UserID: request.Id}
-	if request.Body != nil {
-		parameters.Role = app.Role(request.Body.Role)
-		parameters.Reason = request.Body.Reason
+	parameters := app.RoleUpdateParameters{
+		UserID: request.Id,
+		Role:   app.Role(request.Body.Role),
+		Reason: request.Body.Reason,
 	}
 
 	if err := s.application.UpdateRole(ctx, parameters); err != nil {

@@ -4,5 +4,5 @@ go_library(
     name = "profile",
     srcs = ["generate.go"],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/sql/profile",
-    visibility = ["//visibility:public"],
+    visibility = ["//visibility:private"],
 )

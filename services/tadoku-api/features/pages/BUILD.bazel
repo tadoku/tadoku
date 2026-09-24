@@ -8,11 +8,7 @@ go_library(
         "pages_service.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/features/pages",
-    visibility = [
-        "//services/tadoku-api/app:__pkg__",
-        "//services/tadoku-api/cmd/tadoku-api:__pkg__",
-        "//services/tadoku-api/e2e:__pkg__",
-    ],
+    visibility = ["//services/tadoku-api:feature_consumers"],
     deps = [
         "//services/tadoku-api/generated/sqlc/pages",
         "//services/tadoku-api/infra/postgres",

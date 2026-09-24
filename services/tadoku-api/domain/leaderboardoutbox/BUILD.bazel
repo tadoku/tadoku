@@ -4,5 +4,5 @@ go_library(
     name = "leaderboardoutbox",
     srcs = ["leaderboardoutbox.go"],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/domain/leaderboardoutbox",
-    visibility = ["//visibility:public"],
+    visibility = ["//services/tadoku-api:domain_consumers"],
 )

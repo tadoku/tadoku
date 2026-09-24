@@ -312,6 +312,10 @@ func (s *Service) FindLog(ctx context.Context, id uuid.UUID, includeDeleted bool
 }
 
 func (s *Service) Create(ctx context.Context, userID uuid.UUID, now time.Time, description *string, scored logscore.Result) (uuid.UUID, error) {
+	if err := validateDescription(description); err != nil {
+		return uuid.Nil, err
+	}
+
 	mutation := logMutation{
 		ID:                          uuid.New(),
 		UserID:                      userID,
@@ -364,6 +368,10 @@ func (s *Service) create(ctx context.Context, mutation logMutation) error {
 	return nil
 }
 func (s *Service) Update(ctx context.Context, id, userID uuid.UUID, now time.Time, description *string, scored logscore.Result) error {
+	if err := validateDescription(description); err != nil {
+		return err
+	}
+
 	mutation := logMutation{
 		ID:               id,
 		UserID:           userID,

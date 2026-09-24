@@ -28,7 +28,6 @@
 - [ ] Ban `Normalize*` functions returning Internal errors (lint).
 - [ ] Stop contests owning the full language catalog (`ListLanguages`); compose `features/languages` in app like log configuration. Depolicy/sqlc: contests SQL must not declare catalog-only `from languages` without a contest join/filter.
 - [ ] Remove raw Kratos from contests; account-age/schema eligibility belongs with profile (or app over profile). Contests constructor accepts only the repository; CI deny `ory/kratos-client-go` under `features/contests`.
-- [ ] Split pages/posts Create+Update into one-SQL repository methods; allocate content IDs in the service under the app transaction; ban `uuid.New` in `*_repository.go`.
 - [ ] Extract leaderboard Valkey cache I/O from `Service` into a Store (mirror immersion `LeaderboardStore`); deny `valkey-go` imports outside Store packages.
 - [ ] Move leaderboard outbox transaction ownership from the repository to a composition layer above it, with the worker run and transaction coordinated there; keep repository methods to one SQL statement each.
 - [ ] Ban private unit→activity maps outside `domain/activities` (lint).

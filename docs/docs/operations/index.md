@@ -12,7 +12,7 @@ Read this when you need a runbook for the development base or a manual data repa
 
 | Runbook | Use it to |
 | --- | --- |
-| Development base (`k8s/dev/base/README.md`) | Operate the development-only base in `k8s/dev/base/`: ownership, automatic migrations, credential bootstrap and verification |
+| [Development base](./development-base.md) | Operate the development-only base in `k8s/dev/base/`: ownership, automatic migrations, credential bootstrap and verification |
 | [Database migration recovery](./migration-recovery.md) | Contain and repair a failed Tadoku API migration that left `schema_migrations` dirty |
 | [Account deletion](./account-deletion.md) | Delete a user's data manually and leave an anonymised tombstone row |
 

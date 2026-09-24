@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 )
 
 // Exercise each shared dependency failure once. Do not add endpoint-specific cases
@@ -21,6 +22,15 @@ func TestDependencyFailures(t *testing.T) {
 		t.Fatal(err)
 	}
 	poolClosed := &suite{keto: keto, handler: handler}
+
+	closedValkey, err := newClosedLeaderboardValkeyClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	cacheUnavailable, _, _, err := newTestRouterWithLeaderboard(t.Context(), api.db.Pool, api.db.Pool, keto, api.kratos, logger, false, closedValkey, 25*time.Millisecond)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	canceled := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithCancel(r.Context())
@@ -90,6 +100,13 @@ func TestDependencyFailures(t *testing.T) {
 			want:        499,
 			suite:       api,
 			handler:     canceled,
+		},
+		{
+			operation:   "ImmersionFetchLeaderboardGlobal",
+			description: []string{"cache", "unavailable"},
+			want:        http.StatusOK,
+			suite:       api,
+			handler:     cacheUnavailable,
 		},
 	}
 

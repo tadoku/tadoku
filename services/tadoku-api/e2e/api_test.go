@@ -50,7 +50,6 @@ var authenticationJWKS *httptest.Server
 var keto *testketo.Fixture
 var flipt *testflipt.Fixture
 var leaderboardValkey *leaderboardValkeyFixture
-var unavailableLeaderboardNative http.Handler
 
 const callbackToken = "test-oathkeeper-callback-token"
 
@@ -148,17 +147,6 @@ func runTests(m *testing.M) (code int) {
 		return 1
 	}
 	unavailableCallback = unavailableNative
-
-	unavailableValkey, err := newClosedLeaderboardValkeyClient()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return 1
-	}
-	unavailableLeaderboardNative, _, _, err = newTestRouterWithLeaderboard(ctx, api.db.Pool, api.db.Pool, keto, kratos, slog.New(slog.NewTextHandler(io.Discard, nil)), false, unavailableValkey, 25*time.Millisecond)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return 1
-	}
 
 	return m.Run()
 }

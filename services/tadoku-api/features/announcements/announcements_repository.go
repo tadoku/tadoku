@@ -7,9 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	queries "github.com/tadoku/tadoku/services/tadoku-api/generated/sqlc/announcements"
@@ -66,8 +64,7 @@ func (r *AnnouncementsRepository) CreateAnnouncement(ctx context.Context, item *
 		CreatedAt: postgres.Timestamp(item.CreatedAt),
 		UpdatedAt: postgres.Timestamp(item.UpdatedAt),
 	})
-	var pgError *pgconn.PgError
-	if errors.As(err, &pgError) && pgError.Code == pgerrcode.UniqueViolation {
+	if postgres.IsUniqueViolation(err) {
 		return ErrAnnouncementAlreadyExists
 	}
 	if err != nil {

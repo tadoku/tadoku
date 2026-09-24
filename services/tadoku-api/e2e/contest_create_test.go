@@ -16,6 +16,7 @@ func TestCreateContest(t *testing.T) {
 		{description: []string{"admin", "creates", "official", "past", "contest"}, want: http.StatusOK},
 		{description: []string{"member", "creates", "same", "day", "contest"}, want: http.StatusOK},
 		{description: []string{"malformed", "json"}, want: http.StatusBadRequest},
+		{description: []string{"empty", "body"}, want: http.StatusBadRequest},
 		{description: []string{"missing", "required", "dates", "and", "activities"}, want: http.StatusBadRequest},
 		{description: []string{"empty", "signed", "display", "name"}, want: http.StatusBadRequest},
 		{description: []string{"three", "rune", "title"}, want: http.StatusBadRequest},

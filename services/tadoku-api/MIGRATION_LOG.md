@@ -32,9 +32,8 @@
 - [ ] Split pages/posts Create+Update into one-SQL repository methods; allocate content IDs in the service under the app transaction; ban `uuid.New` in `*_repository.go`.
 - [ ] Extract leaderboard Valkey cache I/O from `Service` into a Store (mirror immersion `LeaderboardStore`); deny `valkey-go` imports outside Store packages.
 - [ ] Move leaderboard outbox transaction ownership from the repository to a composition layer above it, with the worker run and transaction coordinated there; keep repository methods to one SQL statement each.
-- [ ] Move scoring `unitActivities` into shared `domain/activities`; ban private unit→activity maps elsewhere.
+- [ ] Ban private unit→activity maps outside `domain/activities` (lint).
 - [x] Share one profile Kratos traits decoder; remove the dead untagged `Email` field in `FindProfile`.
-- [ ] Strengthen e2e `accessAuthenticated` to require a `401_guest` fixture specifically (stop accepting middleware-only 401s); contest scoring list currently declares authenticated but guests get 403/404.
 - [ ] Move FindLog registration visibility into the logs feature (explicit deleted vs visibility params); skip attachment SQL when hidden; stop overloading the admin bool as `includeDeleted`.
 - [ ] Fix contests `FindRegistration` language hydration to match list hydrate; delete the app padding loop in `contest_profile`.
 - [ ] Stop loading contest on find-registration when the response omits it; remove app `registration.Contest = nil`.

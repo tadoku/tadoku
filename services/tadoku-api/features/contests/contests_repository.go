@@ -70,7 +70,7 @@ func (r *ContestsRepository) FindRegistrationForUser(ctx context.Context, userID
 			ContestEnd:        row.ContestEnd.Time,
 			RegistrationEnd:   row.RegistrationEnd.Time,
 			Title:             row.Title,
-			Description:       nullableString(row.Description),
+			Description:       postgres.TextPointer(row.Description),
 			Private:           row.Private,
 			Official:          row.Official,
 			AllowedLanguages:  []Language{},
@@ -293,7 +293,7 @@ func (r *ContestsRepository) ListContests(ctx context.Context, parameters ListPa
 
 	rows, err := queries.New(executor).ListContests(ctx, queries.ListContestsParams{
 		IncludeDeleted: parameters.IncludeDeleted,
-		UserID:         nullableUUID(parameters.UserID),
+		UserID:         postgres.NullableUUID(parameters.UserID),
 		Official:       parameters.Official,
 		IncludePrivate: parameters.IncludePrivate(),
 		StartFrom:      int32(parameters.Page * parameters.PageSize),
@@ -316,7 +316,7 @@ func (r *ContestsRepository) ListContests(ctx context.Context, parameters ListPa
 			ContestEnd:              row.ContestEnd.Time,
 			RegistrationEnd:         row.RegistrationEnd.Time,
 			Title:                   row.Title.String,
-			Description:             nullableString(row.Description),
+			Description:             postgres.TextPointer(row.Description),
 			OwnerUserID:             uuid.UUID(row.OwnerUserID.Bytes),
 			OwnerUserDisplayName:    row.OwnerUserDisplayName.String,
 			Official:                row.Official.Bool,
@@ -435,7 +435,7 @@ func registrationFromRow(row queries.ListYearlyContestRegistrationsRow) Registra
 			ContestEnd:         row.ContestEnd.Time,
 			RegistrationEnd:    row.RegistrationEnd.Time,
 			Title:              row.Title,
-			Description:        nullableString(row.Description),
+			Description:        postgres.TextPointer(row.Description),
 			Official:           row.Official,
 			Private:            row.Private,
 			AllowedLanguages:   []Language{},
@@ -452,7 +452,7 @@ func contestFromRow(row queries.FindContestByIDRow) Contest {
 		ContestEnd:              row.ContestEnd.Time,
 		RegistrationEnd:         row.RegistrationEnd.Time,
 		Title:                   row.Title,
-		Description:             nullableString(row.Description),
+		Description:             postgres.TextPointer(row.Description),
 		OwnerUserID:             uuid.UUID(row.OwnerUserID.Bytes),
 		OwnerUserDisplayName:    row.OwnerUserDisplayName,
 		Official:                row.Official,
@@ -463,18 +463,4 @@ func contestFromRow(row queries.FindContestByIDRow) Contest {
 		UpdatedAt:               row.UpdatedAt.Time,
 		Deleted:                 row.DeletedAt.Valid,
 	}
-}
-
-func nullableUUID(value *uuid.UUID) pgtype.UUID {
-	if value == nil {
-		return pgtype.UUID{}
-	}
-	return pgtype.UUID{Bytes: *value, Valid: true}
-}
-
-func nullableString(value pgtype.Text) *string {
-	if !value.Valid {
-		return nil
-	}
-	return &value.String
 }

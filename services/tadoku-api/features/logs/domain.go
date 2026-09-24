@@ -3,6 +3,7 @@ package logs
 
 import (
 	"time"
+	"unicode/utf8"
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/activities"
@@ -69,6 +70,15 @@ var (
 	ErrInvalidActivity = errx.NewInvalidInputError("invalid log activity")
 	ErrLogFrozen       = errx.NewConflictError("log is frozen")
 )
+
+const descriptionMaxLength = 255
+
+func validateDescription(description *string) error {
+	if description != nil && utf8.RuneCountInString(*description) > descriptionMaxLength {
+		return errx.NewInvalidInputError("description must be at most 255 characters")
+	}
+	return nil
+}
 
 type Tracking = logscore.Tracking
 type ContestTracking = logscore.ContestTracking

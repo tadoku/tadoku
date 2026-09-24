@@ -50,7 +50,6 @@ var authenticationJWKS *httptest.Server
 var keto *testketo.Fixture
 var flipt *testflipt.Fixture
 var leaderboardValkey *leaderboardValkeyFixture
-var unavailableLeaderboardNative http.Handler
 
 const callbackToken = "test-oathkeeper-callback-token"
 
@@ -148,17 +147,6 @@ func runTests(m *testing.M) (code int) {
 		return 1
 	}
 	unavailableCallback = unavailableNative
-
-	unavailableValkey, err := newClosedLeaderboardValkeyClient()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return 1
-	}
-	unavailableLeaderboardNative, _, _, err = newTestRouterWithLeaderboard(ctx, api.db.Pool, api.db.Pool, keto, kratos, slog.New(slog.NewTextHandler(io.Discard, nil)), false, unavailableValkey, 25*time.Millisecond)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return 1
-	}
 
 	return m.Run()
 }
@@ -302,7 +290,22 @@ func newTestRouterWithLeaderboardService(
 	registry := prometheus.NewRegistry()
 	scoringObserver := observability.NewScoringObserver(registry, logger, scoringEngineEnabled)
 	scoringService := scoring.NewService(scoringRepository, scoringEngineEnabled, scoringObserver)
-	application := app.New(announcementsService, auditService, authzService, contestsService, leaderboardService, languagesService, logsService, pagesService, postsService, profileService, scoringService, featureFlagsService, pool, permissionChecker)
+	application := app.New(app.Dependencies{
+		Announcements: announcementsService,
+		Audit:         auditService,
+		Authorization: authzService,
+		Contests:      contestsService,
+		Leaderboard:   leaderboardService,
+		Languages:     languagesService,
+		Logs:          logsService,
+		Pages:         pagesService,
+		Posts:         postsService,
+		Profile:       profileService,
+		Scoring:       scoringService,
+		FeatureFlags:  featureFlagsService,
+		DB:            pool,
+		Permissions:   permissionChecker,
+	})
 	authenticate, err := transport.NewJWTAuthentication(ctx, authenticationJWKS.URL, time.Second, 24*time.Hour, "http://oathkeeper-api/", logger)
 	if err != nil {
 		return nil, nil, nil, err

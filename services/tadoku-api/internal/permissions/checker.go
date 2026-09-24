@@ -16,26 +16,54 @@ type Checker struct {
 	client *ketoclient.Client
 }
 
-type banLookupErrorKey struct{}
-type bannedKey struct{}
+type banStateKey struct{}
 
-// WithBanLookupError records a failed shared ban lookup for later privilege checks.
-func WithBanLookupError(ctx context.Context, err error) context.Context {
-	if err == nil {
-		return ctx
-	}
-	return context.WithValue(ctx, banLookupErrorKey{}, err)
+type banStatus int
+
+const (
+	notBanned banStatus = iota
+	banned
+	banUnknown
+)
+
+// BanState is the outcome of the shared ban lookup. The zero value means not
+// banned; only the unknown state carries the lookup error.
+type BanState struct {
+	status banStatus
+	err    error
 }
 
-// WithBanned records a confirmed ban for operations that need to report it.
-func WithBanned(ctx context.Context) context.Context {
-	return context.WithValue(ctx, bannedKey{}, true)
+// Banned records a confirmed ban for operations that need to report it.
+func Banned() BanState {
+	return BanState{status: banned}
+}
+
+// BanUnknown records a failed shared ban lookup so privileges fail closed.
+func BanUnknown(err error) BanState {
+	return BanState{status: banUnknown, err: err}
+}
+
+// WithBanState records the shared ban lookup outcome for the request.
+func WithBanState(ctx context.Context, state BanState) context.Context {
+	return context.WithValue(ctx, banStateKey{}, state)
+}
+
+func banStateFromContext(ctx context.Context) BanState {
+	state, _ := ctx.Value(banStateKey{}).(BanState)
+	return state
 }
 
 // IsBanned reports whether the shared ban lookup confirmed a ban.
 func IsBanned(ctx context.Context) bool {
-	banned, _ := ctx.Value(bannedKey{}).(bool)
-	return banned
+	return banStateFromContext(ctx).status == banned
+}
+
+func banLookupError(ctx context.Context) error {
+	state := banStateFromContext(ctx)
+	if state.status != banUnknown {
+		return nil
+	}
+	return state.err
 }
 
 // NewKetoChecker checks the shared application relations in Keto.
@@ -82,7 +110,7 @@ func (c *Checker) IsAdmin(ctx context.Context) (bool, error) {
 	if user == nil || user.Subject == "" || user.Subject == "guest" {
 		return false, nil
 	}
-	if err, _ := ctx.Value(banLookupErrorKey{}).(error); err != nil {
+	if err := banLookupError(ctx); err != nil {
 		return false, errx.NewUnavailableError("check ban permission", err)
 	}
 
@@ -100,7 +128,7 @@ func (c *Checker) RequireAuthenticated(ctx context.Context) error {
 	if err := c.RequireAuthenticatedAllowingUnknownBan(ctx); err != nil {
 		return err
 	}
-	if err, _ := ctx.Value(banLookupErrorKey{}).(error); err != nil {
+	if err := banLookupError(ctx); err != nil {
 		return errx.NewUnavailableError("check ban permission", err)
 	}
 	return nil

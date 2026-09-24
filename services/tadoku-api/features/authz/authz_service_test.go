@@ -37,7 +37,7 @@ func TestProxyAdminCheckRejectsNilSubject(t *testing.T) {
 
 func TestCurrentUserRoleBannedTakesPrecedence(t *testing.T) {
 	ctx := identity.WithUser(t.Context(), &identity.User{Subject: "admin"})
-	ctx = permissions.WithBanned(ctx)
+	ctx = permissions.WithBanState(ctx, permissions.Banned())
 	service := NewService(permissions.NewKetoChecker(nil), nil, nil, nil, nil)
 
 	role, err := service.CurrentUserRole(ctx)

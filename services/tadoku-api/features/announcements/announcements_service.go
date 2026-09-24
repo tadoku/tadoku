@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/google/uuid"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
 
@@ -25,7 +26,7 @@ func (s *Service) FindAnnouncementByID(ctx context.Context, namespace string, id
 
 func (s *Service) ListActiveAnnouncements(ctx context.Context, namespace string) ([]Announcement, error) {
 	if namespace == "" {
-		return nil, ErrInvalidNamespace
+		return nil, errx.NewInvalidInputError("namespace is required")
 	}
 
 	// Publication policy belongs here; persistence only applies these inputs.
@@ -34,11 +35,14 @@ func (s *Service) ListActiveAnnouncements(ctx context.Context, namespace string)
 
 func (s *Service) ListAnnouncements(ctx context.Context, namespace string, pageSize, page int) (*AnnouncementList, error) {
 	if namespace == "" {
-		return nil, ErrInvalidNamespace
+		return nil, errx.NewInvalidInputError("namespace is required")
 	}
 
-	if pageSize < 0 || page < 0 {
-		return nil, ErrInvalidPagination
+	if pageSize < 0 {
+		return nil, errx.NewInvalidInputError("page_size must not be negative")
+	}
+	if page < 0 {
+		return nil, errx.NewInvalidInputError("page must not be negative")
 	}
 	if pageSize == 0 {
 		pageSize = 10

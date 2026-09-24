@@ -58,3 +58,5 @@ the development environment and verified.
   a "Read this when …" line, so you can choose pages without reading them fully.
 - Repository paths are written as inline code relative to the repository root,
   for example `services/tadoku-api/spec/openapi.yaml`.
+- Without a checkout, start from `llms.txt` on the published site; it lists
+  every page with its description and source file.

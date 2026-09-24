@@ -43,4 +43,4 @@ To run webv2, auth or admin against the shared development backend, use DevCLI a
 
 ## Conventions
 
-`AGENTS.md` is the binding source. In summary, legacy apps build on `ui` components and `btn` classes (`primary`, `secondary`, `danger`, `ghost`) instead of custom styles. Forms use `react-hook-form` with the `ui` form inputs. Paper apps use `paper-ui` and follow [Paper composition](paper-composition.md).
+Legacy apps build on `ui` components and forms use `react-hook-form`; the rules are in [Frontend conventions](conventions.md). Paper apps use `paper-ui` and follow [Paper composition](paper-composition.md).

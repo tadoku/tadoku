@@ -65,6 +65,7 @@ const sidebars: SidebarsConfig = {
         id: 'frontend/index',
       },
       items: [
+        'frontend/conventions',
         'frontend/webv2',
         'frontend/auth',
         'frontend/admin',

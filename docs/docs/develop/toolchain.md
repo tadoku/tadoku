@@ -96,6 +96,7 @@ From `docs/`, after `pnpm install --frozen-lockfile`:
 | `pnpm typecheck` | Type-checks the site's TypeScript, such as its configuration and sidebars |
 | `pnpm api:generate` | Regenerates the API reference from the Tadoku API contract |
 | `pnpm api:check` | Tests the contract views, regenerates and fails if `docs/docs/api` changed |
+| `pnpm docs:check` | Fails when a page lacks a `description`, an inline repository path is missing, or a relative link in `AGENTS.md`, a README or a skill is broken |
 
 ## CI workflows
 
@@ -106,6 +107,7 @@ All workflows live in `.github/workflows/`.
 | `build-bazel.yaml` | PRs and `main` pushes touching Bazel or Go inputs | Frozen lockfile, Gazelle diff, visibility, provider-dependency and `.depolicy.yaml` import checks, OpenAPI generation diff, build, image target coverage, tests and race tests; scans and publishes backend images from `main` |
 | `verify-sqlc.yaml` | Every PR | Reruns `./scripts/generate-sqlc.sh` and fails on any change |
 | `verify-standalone-migrations.yaml` | Every PR | Fails when migration SQL files change together with other files, unless the PR has the `migration-move` label |
+| `verify-docs.yaml` | Every PR | Runs `docs/scripts/docs-check.test.mjs`, so removing code that the docs still name fails |
 | `verify-http-error-mapping.yaml` | Every PR | Rejects literal 5xx responses in `services/tadoku-api/transport/http/`; `services/tadoku-api/transport/http/errors.go` maps errors to statuses |
 | `build-frontend-webv2.yaml` | Pushes touching webv2, `ui` or the lockfile | Builds webv2; publishes its image from `main` |
 | `build-frontend-auth.yaml` | Pushes touching auth, `ui` or the lockfile | Builds auth; publishes its image from `main` |

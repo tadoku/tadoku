@@ -112,10 +112,10 @@ The following rules decide where each check belongs.
   *Store*.
 - Repositories are concrete structs in
   `features/<feature>/<feature>_repository.go`. They reach PostgreSQL through
-  `postgres.Executor` (`infra/postgres`) and the feature's generated sqlc
+  `postgres.Executor` (`services/tadoku-api/infra/postgres/`) and the feature's generated sqlc
   package, and convert between sqlc rows and feature domain types internally.
 - The leaderboard feature issues its Valkey cache commands directly with the
-  raw client from `infra/valkey`; no Store type exists yet.
+  raw client from `services/tadoku-api/infra/valkey/`; no Store type exists yet.
 - Keep each repository method to one SQL statement. A coherent join or CTE
   counts as one statement and is appropriate when the data needs one database
   snapshot. Compose independent repository reads and writes in the feature

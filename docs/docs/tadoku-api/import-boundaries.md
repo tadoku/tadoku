@@ -41,7 +41,7 @@ boundaries described in [Code ownership](./index.md#code-ownership).
 `./tools/ci/check_tadoku_api_provider_deps.sh` checks Bazel's direct dependency
 graph:
 
-- Only `features/leaderboard`, `infra/valkey`, startup and E2E may depend
+- Only `features/leaderboard`, `services/tadoku-api/infra/valkey/`, startup and E2E may depend
   directly on `valkey-go`.
 - Only `internal/permissions`, startup and E2E may depend directly on the raw
   Keto client (`services/common/client/keto`).

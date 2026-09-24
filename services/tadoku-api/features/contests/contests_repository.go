@@ -64,6 +64,34 @@ func (r *ContestsRepository) FindRegistrationForUser(ctx context.Context, userID
 		LanguageCodes:   row.LanguageCodes,
 		CreatedAt:       row.CreatedAt.Time,
 		UpdatedAt:       row.UpdatedAt.Time,
+	}, nil
+}
+
+func (r *ContestsRepository) FindRegistrationWithContestForUser(ctx context.Context, userID, contestID uuid.UUID) (*Registration, error) {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return nil, err
+	}
+
+	row, err := queries.New(executor).FindContestRegistrationWithContestForUser(ctx, queries.FindContestRegistrationWithContestForUserParams{
+		UserID:    postgres.UUID(userID),
+		ContestID: postgres.UUID(contestID),
+	})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, ErrRegistrationNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("find contest registration with contest: %w", err)
+	}
+
+	return &Registration{
+		ID:              uuid.UUID(row.ID.Bytes),
+		ContestID:       uuid.UUID(row.ContestID.Bytes),
+		UserID:          uuid.UUID(row.UserID.Bytes),
+		UserDisplayName: row.UserDisplayName,
+		LanguageCodes:   row.LanguageCodes,
+		CreatedAt:       row.CreatedAt.Time,
+		UpdatedAt:       row.UpdatedAt.Time,
 		Contest: &ContestView{
 			ID:                uuid.UUID(row.ContestID.Bytes),
 			ContestStart:      row.ContestStart.Time,

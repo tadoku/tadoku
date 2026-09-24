@@ -232,14 +232,7 @@ select
   contest_registrations.language_codes,
   contest_registrations.created_at,
   contest_registrations.updated_at,
-  users.display_name as user_display_name,
-  contests.contest_start,
-  contests.contest_end,
-  contests.registration_end,
-  contests.title,
-  contests.description,
-  contests.private,
-  contests.official
+  users.display_name as user_display_name
 from contest_registrations
 inner join contests on contests.id = contest_registrations.contest_id
 inner join users on users.id = contest_registrations.user_id
@@ -261,6 +254,60 @@ type FindContestRegistrationForUserRow struct {
 	CreatedAt       pgtype.Timestamp
 	UpdatedAt       pgtype.Timestamp
 	UserDisplayName string
+}
+
+func (q *Queries) FindContestRegistrationForUser(ctx context.Context, arg FindContestRegistrationForUserParams) (FindContestRegistrationForUserRow, error) {
+	row := q.db.QueryRow(ctx, findContestRegistrationForUser, arg.UserID, arg.ContestID)
+	var i FindContestRegistrationForUserRow
+	err := row.Scan(
+		&i.ID,
+		&i.ContestID,
+		&i.UserID,
+		&i.LanguageCodes,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.UserDisplayName,
+	)
+	return i, err
+}
+
+const findContestRegistrationWithContestForUser = `-- name: FindContestRegistrationWithContestForUser :one
+select
+  contest_registrations.id,
+  contest_registrations.contest_id,
+  contest_registrations.user_id,
+  contest_registrations.language_codes,
+  contest_registrations.created_at,
+  contest_registrations.updated_at,
+  users.display_name as user_display_name,
+  contests.contest_start,
+  contests.contest_end,
+  contests.registration_end,
+  contests.title,
+  contests.description,
+  contests.private,
+  contests.official
+from contest_registrations
+inner join contests on contests.id = contest_registrations.contest_id
+inner join users on users.id = contest_registrations.user_id
+where contest_registrations.user_id = $1
+  and contest_registrations.contest_id = $2
+  and contest_registrations.deleted_at is null
+`
+
+type FindContestRegistrationWithContestForUserParams struct {
+	UserID    pgtype.UUID
+	ContestID pgtype.UUID
+}
+
+type FindContestRegistrationWithContestForUserRow struct {
+	ID              pgtype.UUID
+	ContestID       pgtype.UUID
+	UserID          pgtype.UUID
+	LanguageCodes   []string
+	CreatedAt       pgtype.Timestamp
+	UpdatedAt       pgtype.Timestamp
+	UserDisplayName string
 	ContestStart    pgtype.Date
 	ContestEnd      pgtype.Date
 	RegistrationEnd pgtype.Date
@@ -270,9 +317,9 @@ type FindContestRegistrationForUserRow struct {
 	Official        bool
 }
 
-func (q *Queries) FindContestRegistrationForUser(ctx context.Context, arg FindContestRegistrationForUserParams) (FindContestRegistrationForUserRow, error) {
-	row := q.db.QueryRow(ctx, findContestRegistrationForUser, arg.UserID, arg.ContestID)
-	var i FindContestRegistrationForUserRow
+func (q *Queries) FindContestRegistrationWithContestForUser(ctx context.Context, arg FindContestRegistrationWithContestForUserParams) (FindContestRegistrationWithContestForUserRow, error) {
+	row := q.db.QueryRow(ctx, findContestRegistrationWithContestForUser, arg.UserID, arg.ContestID)
+	var i FindContestRegistrationWithContestForUserRow
 	err := row.Scan(
 		&i.ID,
 		&i.ContestID,

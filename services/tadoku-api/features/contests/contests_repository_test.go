@@ -352,6 +352,18 @@ func TestContestsRepositoryRegistrationPersistenceAndTransaction(t *testing.T) {
 	if !registration.CreatedAt.Equal(createdAt) || !registration.UpdatedAt.Equal(createdAt) {
 		t.Errorf("registration timestamps=%s/%s, want %s", registration.CreatedAt, registration.UpdatedAt, createdAt)
 	}
+	if registration.Contest != nil {
+		t.Errorf("registration contest=%+v, want nil", registration.Contest)
+	}
+
+	withContest, err := repository.FindRegistrationWithContestForUser(t.Context(), userID, contestID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if withContest.ID != registration.ID || withContest.Contest == nil ||
+		withContest.Contest.Title != "Registration fixture" || !withContest.Contest.Official {
+		t.Errorf("registration with contest=%+v", withContest)
+	}
 
 	languages, err := repository.ListRegistrationLanguages(t.Context(), registration.LanguageCodes)
 	if err != nil {

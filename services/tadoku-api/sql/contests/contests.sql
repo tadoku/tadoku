@@ -192,6 +192,22 @@ select
   contest_registrations.language_codes,
   contest_registrations.created_at,
   contest_registrations.updated_at,
+  users.display_name as user_display_name
+from contest_registrations
+inner join contests on contests.id = contest_registrations.contest_id
+inner join users on users.id = contest_registrations.user_id
+where contest_registrations.user_id = sqlc.arg(user_id)
+  and contest_registrations.contest_id = sqlc.arg(contest_id)
+  and contest_registrations.deleted_at is null;
+
+-- name: FindContestRegistrationWithContestForUser :one
+select
+  contest_registrations.id,
+  contest_registrations.contest_id,
+  contest_registrations.user_id,
+  contest_registrations.language_codes,
+  contest_registrations.created_at,
+  contest_registrations.updated_at,
   users.display_name as user_display_name,
   contests.contest_start,
   contests.contest_end,

@@ -15,7 +15,7 @@ type ContestProfileScores struct {
 }
 
 func (a *Application) ContestProfileScores(ctx context.Context, userID, contestID uuid.UUID) (*ContestProfileScores, error) {
-	registration, err := a.contests.FindRegistration(ctx, userID, contestID)
+	registration, err := a.contests.FindRegistrationWithContest(ctx, userID, contestID)
 	if err != nil {
 		return nil, err
 	}

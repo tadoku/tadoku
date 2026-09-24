@@ -72,6 +72,20 @@ func (s *Service) FindRegistration(ctx context.Context, userID, contestID uuid.U
 	return registration, nil
 }
 
+func (s *Service) FindRegistrationWithContest(ctx context.Context, userID, contestID uuid.UUID) (*Registration, error) {
+	registration, err := s.contests.FindRegistrationWithContestForUser(ctx, userID, contestID)
+	if err != nil {
+		return nil, err
+	}
+
+	registration.Languages, err = s.contests.ListRegistrationLanguages(ctx, registration.LanguageCodes)
+	if err != nil {
+		return nil, err
+	}
+
+	return registration, nil
+}
+
 func (s *Service) ListOngoingRegistrations(ctx context.Context, userID uuid.UUID, languages []domainlanguages.Language) (*RegistrationList, error) {
 	registrations, err := s.contests.ListOngoingRegistrations(ctx, userID, timex.Now())
 	if err != nil {

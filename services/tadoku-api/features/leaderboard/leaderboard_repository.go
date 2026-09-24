@@ -21,7 +21,7 @@ func (r *Repository) contestExists(ctx context.Context, id uuid.UUID) (bool, err
 	if err != nil {
 		return false, err
 	}
-	exists, err := queries.New(executor).ContestExists(ctx, pgtype.UUID{Bytes: id, Valid: true})
+	exists, err := queries.New(executor).ContestExists(ctx, postgres.UUID(id))
 	if err != nil {
 		return false, fmt.Errorf("check contest: %w", err)
 	}
@@ -34,7 +34,7 @@ func (r *Repository) contest(ctx context.Context, request ContestRequest) (*Lead
 		return nil, err
 	}
 	rows, err := queries.New(executor).LeaderboardForContest(ctx, queries.LeaderboardForContestParams{
-		ContestID:    pgtype.UUID{Bytes: request.ContestID, Valid: true},
+		ContestID:    postgres.UUID(request.ContestID),
 		LanguageCode: postgres.NullableNonEmptyText(request.LanguageCode),
 		ActivityID:   postgres.NullableInt4(request.ActivityID),
 		StartFrom:    int32(request.Page * request.PageSize),
@@ -128,7 +128,7 @@ func (r *Repository) allContestScores(ctx context.Context, id uuid.UUID) ([]scor
 	if err != nil {
 		return nil, err
 	}
-	rows, err := queries.New(executor).ContestLeaderboardAllScores(ctx, pgtype.UUID{Bytes: id, Valid: true})
+	rows, err := queries.New(executor).ContestLeaderboardAllScores(ctx, postgres.UUID(id))
 	if err != nil {
 		return nil, fmt.Errorf("fetch all contest leaderboard scores: %w", err)
 	}

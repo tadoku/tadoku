@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	queries "github.com/tadoku/tadoku/services/tadoku-api/generated/sqlc/audit"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
@@ -30,7 +29,7 @@ func (r *Repository) Create(ctx context.Context, event Event) error {
 		return err
 	}
 	err = queries.New(executor).CreateAudit(ctx, queries.CreateAuditParams{
-		ActorID:     pgtype.UUID{Bytes: event.ActorID, Valid: true},
+		ActorID:     postgres.UUID(event.ActorID),
 		Action:      event.Action,
 		Metadata:    metadata,
 		Description: event.Description,

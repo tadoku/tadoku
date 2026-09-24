@@ -47,7 +47,7 @@ read and managed segment calls. Metrics are named `tadoku_feature_flag_*`.
 ## Decisions in the browser
 
 `GET /immersion/feature-flags` (`ImmersionFeatureFlagDecisions`) returns the
-caller's decisions with `Cache-Control: private, no-store`. Only flags in
+decisions for the current user or guest with `Cache-Control: private, no-store`. Only flags in
 `PublicDecisions` (`services/common/featureflags/public.go`) are exposed.
 [webv2](../frontend/webv2.md) fetches them server-side in `frontend/apps/webv2/pages/_app.tsx` and
 after each client-side route change, falling back to defaults on any failure.

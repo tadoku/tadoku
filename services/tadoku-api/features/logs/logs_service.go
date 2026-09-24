@@ -294,8 +294,8 @@ func (s *Service) ContestActivity(ctx context.Context, userID, contestID uuid.UU
 }
 
 // FindLog returns a log that is not deleted, including its contest
-// registrations. It applies no viewer visibility rules; callers authorize the
-// actor themselves.
+// registrations. It applies no viewer visibility rules; calling operations
+// authorize the actor themselves.
 func (s *Service) FindLog(ctx context.Context, id uuid.UUID) (*Log, error) {
 	return s.findLog(ctx, id, false, func(uuid.UUID) bool { return true })
 }

@@ -135,8 +135,8 @@ type RegistrationReference struct {
 	Score                float32
 }
 
-// Viewer is the caller reading a log. Only the log's owner and administrators
-// see its contest registrations.
+// Viewer identifies who reads a log: a guest, a user or an administrator. Only
+// the log's owner and administrators see its contest registrations.
 type Viewer interface {
 	isViewer()
 }

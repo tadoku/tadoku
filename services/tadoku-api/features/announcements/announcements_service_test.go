@@ -2,7 +2,6 @@ package announcements_test
 
 import (
 	"context"
-	"errors"
 	"strings"
 	"testing"
 	"time"
@@ -15,8 +14,8 @@ import (
 func TestEmptyNamespaceIsRejectedBeforeStorage(t *testing.T) {
 	service := announcements.NewService(nil)
 	_, err := service.ListActiveAnnouncements(context.Background(), "")
-	if !errors.Is(err, announcements.ErrInvalidNamespace) {
-		t.Errorf("error=%v want invalid namespace", err)
+	if errx.KindOf(err) != errx.InvalidInput || err.Error() != "namespace is required" {
+		t.Errorf("error=%v, want invalid input %q", err, "namespace is required")
 	}
 }
 
@@ -41,34 +40,28 @@ func TestCreateAnnouncementParametersValidation(t *testing.T) {
 		})
 	}
 	for _, test := range []struct {
-		name   string
-		change func(*announcements.CreateAnnouncementParameters)
-		want   string
+		name    string
+		change  func(*announcements.CreateAnnouncementParameters)
+		message string
 	}{
-		{name: "ID", change: func(p *announcements.CreateAnnouncementParameters) { p.ID = uuid.Nil }, want: "invalid announcement: id is nil"},
-		{name: "namespace", change: func(p *announcements.CreateAnnouncementParameters) { p.Namespace = "" }, want: "invalid announcement: namespace is required"},
-		{name: "title", change: func(p *announcements.CreateAnnouncementParameters) { p.Title = "" }, want: "invalid announcement: title is required"},
-		{name: "content", change: func(p *announcements.CreateAnnouncementParameters) { p.Content = "" }, want: "invalid announcement: content is required"},
-		{name: "style", change: func(p *announcements.CreateAnnouncementParameters) { p.Style = "other" }, want: "invalid announcement: style is invalid"},
-		{name: "empty style", change: func(p *announcements.CreateAnnouncementParameters) { p.Style = "" }, want: "invalid announcement: style is invalid"},
-		{name: "style case", change: func(p *announcements.CreateAnnouncementParameters) { p.Style = "INFO" }, want: "invalid announcement: style is invalid"},
-		{name: "starts at", change: func(p *announcements.CreateAnnouncementParameters) { p.StartsAt = time.Time{} }, want: "invalid announcement: date range is invalid"},
-		{name: "ends at", change: func(p *announcements.CreateAnnouncementParameters) { p.EndsAt = time.Time{} }, want: "invalid announcement: date range is invalid"},
-		{name: "equal dates", change: func(p *announcements.CreateAnnouncementParameters) { p.EndsAt = p.StartsAt }, want: "invalid announcement: date range is invalid"},
-		{name: "reversed dates", change: func(p *announcements.CreateAnnouncementParameters) { p.EndsAt = p.StartsAt.Add(-time.Second) }, want: "invalid announcement: date range is invalid"},
+		{name: "ID", change: func(p *announcements.CreateAnnouncementParameters) { p.ID = uuid.Nil }, message: "id is required"},
+		{name: "namespace", change: func(p *announcements.CreateAnnouncementParameters) { p.Namespace = "" }, message: "namespace is required"},
+		{name: "title", change: func(p *announcements.CreateAnnouncementParameters) { p.Title = "" }, message: "title is required"},
+		{name: "content", change: func(p *announcements.CreateAnnouncementParameters) { p.Content = "" }, message: "content is required"},
+		{name: "style", change: func(p *announcements.CreateAnnouncementParameters) { p.Style = "other" }, message: "style must be one of success, warning, error or info"},
+		{name: "empty style", change: func(p *announcements.CreateAnnouncementParameters) { p.Style = "" }, message: "style must be one of success, warning, error or info"},
+		{name: "style case", change: func(p *announcements.CreateAnnouncementParameters) { p.Style = "INFO" }, message: "style must be one of success, warning, error or info"},
+		{name: "starts at", change: func(p *announcements.CreateAnnouncementParameters) { p.StartsAt = time.Time{} }, message: "starts_at is required"},
+		{name: "ends at", change: func(p *announcements.CreateAnnouncementParameters) { p.EndsAt = time.Time{} }, message: "ends_at is required"},
+		{name: "equal dates", change: func(p *announcements.CreateAnnouncementParameters) { p.EndsAt = p.StartsAt }, message: "ends_at must be after starts_at"},
+		{name: "reversed dates", change: func(p *announcements.CreateAnnouncementParameters) { p.EndsAt = p.StartsAt.Add(-time.Second) }, message: "ends_at must be after starts_at"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			parameters := valid
 			test.change(&parameters)
 			err := parameters.Validate()
-			if !errors.Is(err, announcements.ErrInvalidAnnouncement) {
-				t.Errorf("error=%v, want invalid announcement", err)
-			}
-			if err == nil || err.Error() != test.want {
-				t.Errorf("error=%v, want %q", err, test.want)
-			}
-			if errx.KindOf(err) != errx.InvalidInput {
-				t.Errorf("error=%v, want invalid-input category", err)
+			if errx.KindOf(err) != errx.InvalidInput || err.Error() != test.message {
+				t.Errorf("error=%v, want invalid input %q", err, test.message)
 			}
 		})
 	}
@@ -96,16 +89,25 @@ func TestCreateAnnouncementParametersHrefValidation(t *testing.T) {
 		})
 	}
 
-	for _, href := range []string{"news", "//example.test/news", `/\example.test/news`, "javascript:alert(1)", "data:text/html,<script>alert(1)</script>", "vbscript:msgbox(1)", "https://example.test/%gh", "/" + strings.Repeat("a", 2048)} {
-		t.Run("invalid "+href, func(t *testing.T) {
+	for _, test := range []struct {
+		href    string
+		message string
+	}{
+		{href: "news", message: "href must be an http(s) URL or a root-relative path"},
+		{href: "//example.test/news", message: "href must be an http(s) URL or a root-relative path"},
+		{href: `/\example.test/news`, message: "href must be an http(s) URL or a root-relative path"},
+		{href: "javascript:alert(1)", message: "href must be an http(s) URL or a root-relative path"},
+		{href: "data:text/html,<script>alert(1)</script>", message: "href must be an http(s) URL or a root-relative path"},
+		{href: "vbscript:msgbox(1)", message: "href must be an http(s) URL or a root-relative path"},
+		{href: "https://example.test/%gh", message: "href must be an http(s) URL or a root-relative path"},
+		{href: "/" + strings.Repeat("a", 2048), message: "href must be at most 2048 characters"},
+	} {
+		t.Run("invalid "+test.href, func(t *testing.T) {
 			parameters := parameters
-			parameters.Href = &href
+			parameters.Href = &test.href
 			err := parameters.Validate()
-			if !errors.Is(err, announcements.ErrInvalidAnnouncement) {
-				t.Errorf("error=%v, want invalid announcement for href %q", err, href)
-			}
-			if err == nil || err.Error() != "invalid announcement: href is invalid" {
-				t.Errorf("error=%v, want href is invalid for href %q", err, href)
+			if errx.KindOf(err) != errx.InvalidInput || err.Error() != test.message {
+				t.Errorf("error=%v, want invalid input %q for href %q", err, test.message, test.href)
 			}
 		})
 	}

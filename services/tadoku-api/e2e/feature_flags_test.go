@@ -40,7 +40,7 @@ func TestImmersionFeatureAccessGet(t *testing.T) {
 		{description: []string{"zero", "user", "id"}, want: http.StatusBadRequest},
 		{description: []string{"guest"}, want: http.StatusUnauthorized},
 		{description: []string{"non", "admin"}, want: http.StatusForbidden},
-		{description: []string{"provider", "unavailable"}, want: http.StatusBadGateway, unavailable: true},
+		{description: []string{"provider", "unavailable"}, want: http.StatusServiceUnavailable, unavailable: true},
 	}
 	runFeatureAccessCases(t, "ImmersionFeatureAccessGet", tests)
 }
@@ -52,7 +52,7 @@ func TestImmersionFeatureAccessGrant(t *testing.T) {
 		{description: []string{"invalid", "flag"}, want: http.StatusBadRequest},
 		{description: []string{"guest"}, want: http.StatusUnauthorized},
 		{description: []string{"non", "admin"}, want: http.StatusForbidden},
-		{description: []string{"provider", "unavailable"}, want: http.StatusBadGateway, unavailable: true},
+		{description: []string{"provider", "unavailable"}, want: http.StatusServiceUnavailable, unavailable: true},
 	}
 	runFeatureAccessCases(t, "ImmersionFeatureAccessGrant", tests)
 }
@@ -64,7 +64,7 @@ func TestImmersionFeatureAccessRevoke(t *testing.T) {
 		{description: []string{"invalid", "flag"}, want: http.StatusBadRequest},
 		{description: []string{"guest"}, want: http.StatusUnauthorized},
 		{description: []string{"non", "admin"}, want: http.StatusForbidden},
-		{description: []string{"provider", "unavailable"}, want: http.StatusBadGateway, unavailable: true},
+		{description: []string{"provider", "unavailable"}, want: http.StatusServiceUnavailable, unavailable: true},
 	}
 	runFeatureAccessCases(t, "ImmersionFeatureAccessRevoke", tests)
 }

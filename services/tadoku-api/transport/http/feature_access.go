@@ -2,7 +2,6 @@ package http
 
 import (
 	"context"
-	"errors"
 
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
 	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
@@ -15,9 +14,6 @@ func (s *server) ImmersionFeatureAccessGet(
 	result, err := s.application.FeatureAccessGet(ctx, string(request.FlagKey), request.UserId)
 	if err != nil {
 		s.logOperationError(ctx, "get feature access", err)
-		if errors.Is(err, app.ErrFeatureAccessUnavailable) {
-			return openapi.ImmersionFeatureAccessGet502Response{}, nil
-		}
 		return nil, err
 	}
 	return openapi.ImmersionFeatureAccessGet200JSONResponse{
@@ -33,9 +29,6 @@ func (s *server) ImmersionFeatureAccessGrant(
 	result, err := s.application.FeatureAccessGrant(ctx, string(request.FlagKey), request.UserId)
 	if err != nil {
 		s.logOperationError(ctx, "grant feature access", err)
-		if errors.Is(err, app.ErrFeatureAccessUnavailable) {
-			return openapi.ImmersionFeatureAccessGrant502Response{}, nil
-		}
 		return nil, err
 	}
 	return openapi.ImmersionFeatureAccessGrant200JSONResponse{
@@ -51,9 +44,6 @@ func (s *server) ImmersionFeatureAccessRevoke(
 	result, err := s.application.FeatureAccessRevoke(ctx, string(request.FlagKey), request.UserId)
 	if err != nil {
 		s.logOperationError(ctx, "revoke feature access", err)
-		if errors.Is(err, app.ErrFeatureAccessUnavailable) {
-			return openapi.ImmersionFeatureAccessRevoke502Response{}, nil
-		}
 		return nil, err
 	}
 	return openapi.ImmersionFeatureAccessRevoke200JSONResponse{

@@ -27,7 +27,7 @@ func TestImmersionProfileYearlyActivitySplitByUserID(t *testing.T) {
 		{description: []string{"invalid", "year"}, want: http.StatusBadRequest},
 		{description: []string{"overflow", "year"}, want: http.StatusBadRequest},
 		{description: []string{"all", "deleted"}, want: http.StatusOK},
-		{description: []string{"invalid", "activity"}, want: http.StatusInternalServerError},
+		{description: []string{"invalid", "activity"}, want: http.StatusBadRequest},
 	}
 	for _, test := range tests {
 		name := APITestName("ImmersionProfileYearlyActivitySplitByUserID", test.want, test.description...)

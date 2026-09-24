@@ -14,8 +14,6 @@ import (
 type FeatureFlagDecisions = featureflags.PublicDecisions
 type FeatureAccessState = featureflags.State
 
-var ErrFeatureAccessUnavailable = featureflags.ErrUnavailable
-
 func (a *Application) FeatureFlagDecisions(ctx context.Context) FeatureFlagDecisions {
 	user := identity.FromContext(ctx)
 	if user == nil {

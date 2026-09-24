@@ -2,8 +2,6 @@
 package featureflags
 
 import (
-	"errors"
-
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/fliptmanagement"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
@@ -11,7 +9,7 @@ import (
 
 const releaseLogEntryV2 = "release-log-entry-v2"
 
-var ErrUnavailable = errors.New("feature access unavailable")
+var ErrUnavailable = errx.NewUnavailableError("feature access unavailable", nil)
 
 type PublicDecisions struct {
 	ReleaseLogEntryV2 bool

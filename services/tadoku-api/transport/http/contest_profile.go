@@ -5,17 +5,13 @@ import (
 
 	openapiTypes "github.com/oapi-codegen/runtime/types"
 	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
 
 func (s *server) ImmersionContestProfileFetchScores(ctx context.Context, request openapi.ImmersionContestProfileFetchScoresRequestObject) (openapi.ImmersionContestProfileFetchScoresResponseObject, error) {
 	result, err := s.application.ContestProfileScores(ctx, request.UserId, request.Id)
 	if err != nil {
 		s.logOperationError(ctx, "contest profile scores", err)
-		if errx.KindOf(err) == errx.NotFound {
-			return nil, err
-		}
-		return openapi.ImmersionContestProfileFetchScores500Response{}, nil
+		return nil, err
 	}
 
 	response := openapi.ImmersionContestProfileScores{
@@ -36,7 +32,7 @@ func (s *server) ImmersionContestProfileFetchActivity(ctx context.Context, reque
 	result, err := s.application.ContestProfileActivity(ctx, request.UserId, request.Id)
 	if err != nil {
 		s.logOperationError(ctx, "contest profile activity", err)
-		return openapi.ImmersionContestProfileFetchActivity500Response{}, nil
+		return nil, err
 	}
 
 	response := openapi.ImmersionContestProfileActivity{Rows: make([]openapi.ImmersionContestProfileActivityRow, 0, len(result))}

@@ -60,7 +60,7 @@ func (r *LogsRepository) CreateLog(ctx context.Context, mutation logMutation) er
 		ScoreRates:                  mutation.Tracking.Rates,
 		ScoreSource:                 p.source,
 		EligibleOfficialLeaderboard: mutation.EligibleOfficialLeaderboard,
-		Description:                 nullableLogText(mutation.Description),
+		Description:                 postgres.NullableText(mutation.Description),
 		CreatedAt:                   logTime(mutation.Now),
 		UpdatedAt:                   logTime(mutation.Now),
 	})
@@ -157,7 +157,7 @@ func (r *LogsRepository) UpdateLog(ctx context.Context, mutation logMutation) er
 		ScoreRuleIds:    p.ruleIDs,
 		ScoreRates:      mutation.Tracking.Rates,
 		ScoreSource:     p.source,
-		Description:     nullableLogText(mutation.Description),
+		Description:     postgres.NullableText(mutation.Description),
 		UpdatedAt:       logTime(mutation.Now),
 		LogID:           logUUID(mutation.ID),
 	})
@@ -240,7 +240,7 @@ func trackingParams(t Tracking) logTrackingParams {
 		unitKey:  pgtype.Text{String: t.UnitKey, Valid: t.UnitKey != ""},
 		amount:   nullableFloat(t.Amount),
 		modifier: nullableFloat(t.Modifier),
-		duration: nullableInt(t.DurationSeconds),
+		duration: postgres.NullableInt4(t.DurationSeconds),
 		source:   pgtype.Text{String: t.Source, Valid: t.Source != ""},
 	}
 	if t.UnitID != nil {
@@ -261,18 +261,6 @@ func nullableFloat(v *float32) pgtype.Float4 {
 		return pgtype.Float4{}
 	}
 	return pgtype.Float4{Float32: *v, Valid: true}
-}
-func nullableInt(v *int32) pgtype.Int4 {
-	if v == nil {
-		return pgtype.Int4{}
-	}
-	return pgtype.Int4{Int32: *v, Valid: true}
-}
-func nullableLogText(v *string) pgtype.Text {
-	if v == nil {
-		return pgtype.Text{}
-	}
-	return pgtype.Text{String: *v, Valid: true}
 }
 
 func (r *LogsRepository) ListUnits(ctx context.Context) ([]Unit, error) {
@@ -498,7 +486,7 @@ func (r *LogsRepository) FindLog(ctx context.Context, id uuid.UUID, includeDelet
 	return &Log{
 		ID:              uuid.UUID(row.ID.Bytes),
 		UserID:          uuid.UUID(row.UserID.Bytes),
-		Description:     textPointer(row.Description),
+		Description:     postgres.TextPointer(row.Description),
 		LanguageCode:    row.LanguageCode,
 		LanguageName:    row.LanguageName,
 		Activity:        activities.Activity{ID: int32(row.ActivityID)},
@@ -634,7 +622,7 @@ func (r *LogsRepository) ListUserLogs(ctx context.Context, parameters ListParame
 		result.Logs = append(result.Logs, Log{
 			ID:              uuid.UUID(row.ID.Bytes),
 			UserID:          uuid.UUID(row.UserID.Bytes),
-			Description:     textPointer(row.Description),
+			Description:     postgres.TextPointer(row.Description),
 			LanguageCode:    row.LanguageCode,
 			LanguageName:    row.LanguageName,
 			Activity:        activities.Activity{ID: int32(row.ActivityID)},
@@ -683,7 +671,7 @@ func (r *LogsRepository) ListContestLogs(ctx context.Context, parameters ListPar
 		result.Logs = append(result.Logs, Log{
 			ID:              uuid.UUID(row.ID.Bytes),
 			UserID:          uuid.UUID(row.UserID.Bytes),
-			Description:     textPointer(row.Description),
+			Description:     postgres.TextPointer(row.Description),
 			LanguageCode:    row.LanguageCode,
 			LanguageName:    row.LanguageName,
 			Activity:        activities.Activity{ID: int32(row.ActivityID)},
@@ -705,13 +693,6 @@ func (r *LogsRepository) ListContestLogs(ctx context.Context, parameters ListPar
 		result.NextPageToken = fmt.Sprint(parameters.Page + 1)
 	}
 	return result, nil
-}
-
-func textPointer(value pgtype.Text) *string {
-	if !value.Valid {
-		return nil
-	}
-	return &value.String
 }
 
 func floatPointer(value pgtype.Float4) *float32 {

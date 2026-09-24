@@ -3,6 +3,7 @@ load("@rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "postgres",
     srcs = [
+        "metrics.go",
         "nullable.go",
         "pool.go",
         "timestamp.go",
@@ -15,6 +16,7 @@ go_library(
         "@com_github_jackc_pgx_v5//pgconn",
         "@com_github_jackc_pgx_v5//pgtype",
         "@com_github_jackc_pgx_v5//pgxpool",
+        "@com_github_prometheus_client_golang//prometheus",
     ],
 )
 

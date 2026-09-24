@@ -75,23 +75,26 @@ before starting Next. The public Lab CA is mounted for server-side HTTPS.
 
 ## Asynchronous worker ownership
 
-The private `tadoku-worker` Deployment consumes `async_outbox` in the base
+Standalone migration 0032 must be deployed independently before
+this worker runtime. Positively verify no old-name consumer remains, including
+manual tools; see [Database migrations](../tadoku-api/database.md#migrations).
+
+The private `tadoku-worker` Deployment consumes `jobs` in the base
 `tadoku` database and uses unprefixed leaderboard cache keys. It has one
 replica, Recreate rollout, a separate image digest, and no Service or public
 route. Its CPU and memory limits are initial values; verify them with four
 active tasks and startup reconciliation before treating them as settled.
 
-During the outbox transfer, the API's embedded worker remains enabled and
-consumes only the old `leaderboard_outbox` table. The new worker consumes only
-`async_outbox`. API cache reads retain the embedded worker’s existing readiness
-behavior. Verify both queues and owners independently:
+After the old outbox has drained, the API's embedded worker is disabled. The
+new worker consumes `jobs` and invalidates leaderboard caches. Verify worker
+ownership and reads:
 
 1. Confirm the base `tadoku-worker` is ready and its `/readyz` endpoint remains
    healthy while tasks retry or fail.
-2. Confirm one base API replica has `API_LEADERBOARD_OUTBOX_ENABLED=true` and
-   logs `leaderboard outbox ready` for the old table.
-3. Inspect due and failed `async_outbox` rows and old pending rows; a write
-   followed by a leaderboard read must still succeed.
+2. Confirm the base API replicas have `API_LEADERBOARD_OUTBOX_ENABLED=false`.
+3. Inspect due and failed `jobs` rows; a write followed by a
+   leaderboard read must still succeed. Keep the legacy table until a later
+   standalone cleanup migration.
 
 DevCLI pairs each branch API and worker against `tadoku-${DEV_ROUTE}` and the
 `dev:${DEV_ROUTE}:` Valkey prefix. Selecting either workload starts both;

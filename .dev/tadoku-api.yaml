@@ -7,7 +7,7 @@ spec:
         - name: API_SCORING_ENGINE_ENABLED
           value: "false"
         - name: API_LEADERBOARD_OUTBOX_ENABLED
-          value: "true"
+          value: "false"
         - name: API_LEADERBOARD_CACHE_PREFIX
           value: "dev:${DEV_ROUTE}:"
         - name: API_PORT

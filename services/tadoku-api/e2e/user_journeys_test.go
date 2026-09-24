@@ -319,9 +319,9 @@ func TestLogAttachmentAndDeleteJourney(t *testing.T) {
 
 	runJourneyWithHandler(t, api, scoringEnabledHandler, "LogAttachmentAndDelete", []step{
 		{request: "create", as: user, want: http.StatusOK, others: cast{guest: http.StatusUnauthorized, banned: http.StatusForbidden}},
-		{request: "attach", as: user, want: http.StatusOK, others: cast{admin: http.StatusForbidden, guest: http.StatusUnauthorized, banned: http.StatusForbidden}},
+		{request: "attach", as: user, want: http.StatusOK, others: cast{user2: http.StatusForbidden, guest: http.StatusUnauthorized, banned: http.StatusForbidden}},
 		{request: "read_attached", as: user, want: http.StatusOK},
-		{request: "detach", as: user, want: http.StatusOK, others: cast{admin: http.StatusForbidden, guest: http.StatusUnauthorized, banned: http.StatusForbidden}},
+		{request: "detach", as: user, want: http.StatusOK, others: cast{user2: http.StatusForbidden, guest: http.StatusUnauthorized, banned: http.StatusForbidden}},
 		{request: "read_detached", as: user, want: http.StatusOK},
 		{request: "delete", as: user, want: http.StatusOK, others: cast{user2: http.StatusForbidden, guest: http.StatusUnauthorized, banned: http.StatusForbidden}},
 		{request: "deleted_missing", as: user, want: http.StatusNotFound},

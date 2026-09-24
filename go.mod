@@ -6,7 +6,6 @@ require (
 	github.com/MicahParks/keyfunc v1.8.0
 	github.com/bazelbuild/rules_go v0.63.0
 	github.com/bwmarrin/discordgo v0.29.0
-	github.com/deepmap/oapi-codegen v1.12.4
 	github.com/getkin/kin-openapi v0.144.0
 	github.com/getsentry/sentry-go v0.18.0
 	github.com/go-playground/validator/v10 v10.30.5

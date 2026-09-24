@@ -2,7 +2,6 @@
 
 - [ ] Remove all references to the “native” API; use “Tadoku API” instead. The distinction does not make sense long term.
 - [ ] Design service authentication for queue workers when they need API access.
-- [ ] Remove the v1 OpenAPI runtime/types dependency.
 - [ ] After the Tadoku API migration is complete, split all announcement, post, and page routes into separate admin and frontend routes.
 - [ ] Move the announcements timestamp columns to `timestamptz` in a standalone migration.
 - [ ] Reconsider the announcements primary key as (`namespace`, `id`) so IDs can be scoped to their namespace.

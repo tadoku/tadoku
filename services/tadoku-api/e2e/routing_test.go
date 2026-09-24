@@ -1,7 +1,6 @@
 package e2e_test
 
 import (
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
@@ -13,7 +12,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
-func TestNativeRouterServesBusinessRoutesAndProbes(t *testing.T) {
+func TestRouterServesBusinessRoutesAndProbes(t *testing.T) {
 	dir := filepath.Join("testdata", APITestName("ListActiveAnnouncements", http.StatusOK, "guest"))
 	api.reset(t, dir)
 	atFixtureInstant(func() { checkHTTPGolden(t, api.handler, dir, http.StatusOK, *updateGoldens) })
@@ -71,7 +70,7 @@ func TestCallbackCredentialDoesNotAuthenticateBusinessRoutes(t *testing.T) {
 	}
 }
 
-func TestContentHeadUsesNativeGetRoute(t *testing.T) {
+func TestContentHeadUsesGetRoute(t *testing.T) {
 	dir := filepath.Join("testdata", APITestName("ListActiveAnnouncements", http.StatusOK, "guest"))
 	api.reset(t, dir)
 	request := readHTTPRequest(t, dir)
@@ -86,7 +85,7 @@ func TestContentHeadUsesNativeGetRoute(t *testing.T) {
 	}
 }
 
-func TestProfileHeadUsesNativeGetRoute(t *testing.T) {
+func TestProfileHeadUsesGetRoute(t *testing.T) {
 	dir := filepath.Join("testdata", APITestName("ProfileUsersList", http.StatusOK, "admin"))
 	api.reset(t, dir)
 	request := readHTTPRequest(t, dir)
@@ -101,7 +100,7 @@ func TestProfileHeadUsesNativeGetRoute(t *testing.T) {
 	}
 }
 
-func TestImmersionHeadUsesNativeGetRoute(t *testing.T) {
+func TestImmersionHeadUsesGetRoute(t *testing.T) {
 	dir := filepath.Join("testdata", APITestName("ListLanguages", http.StatusOK, "admin", "ordered"))
 	api.reset(t, dir)
 	request := readHTTPRequest(t, dir)
@@ -127,11 +126,7 @@ func TestContractRouteOwnership(t *testing.T) {
 	}
 	pathParameters := regexp.MustCompile(`\{[^}]+\}`)
 	for path, pathItem := range contract.Paths.Map() {
-		for method, operation := range pathItem.Operations() {
-			owner, ok := tadokuOwner(operation.Extensions["x-tadoku-owner"])
-			if !ok || owner != "native" {
-				t.Fatalf("%s %s has invalid x-tadoku-owner %v", method, path, operation.Extensions["x-tadoku-owner"])
-			}
+		for method := range pathItem.Operations() {
 			requestPath := strings.NewReplacer("{year}", "2026", "{flagKey}", "release-log-entry-v2").Replace(path)
 			requestPath = pathParameters.ReplaceAllString(requestPath, "11111111-1111-4111-8111-111111111111")
 			t.Run(method+" "+requestPath, func(t *testing.T) {
@@ -142,21 +137,6 @@ func TestContractRouteOwnership(t *testing.T) {
 				}
 			})
 		}
-	}
-}
-
-func tadokuOwner(raw any) (string, bool) {
-	switch owner := raw.(type) {
-	case string:
-		return owner, true
-	case json.RawMessage:
-		var value string
-		if json.Unmarshal(owner, &value) != nil {
-			return "", false
-		}
-		return value, true
-	default:
-		return "", false
 	}
 }
 

@@ -32,7 +32,7 @@ func (a *Application) FindPageBySlug(ctx context.Context, namespace, slug string
 	return a.pages.FindPageByID(ctx, namespace, id)
 }
 
-func (a *Application) ListPages(ctx context.Context, namespace string, includeDrafts bool, pageSize, page int) (*pages.PageList, error) {
+func (a *Application) ListPages(ctx context.Context, namespace string, includeDrafts *bool, pageSize, page int) (*pages.PageList, error) {
 	if err := a.permissions.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}

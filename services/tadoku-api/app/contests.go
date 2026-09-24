@@ -35,7 +35,7 @@ func (a *Application) CheckContestCreatePermission(ctx context.Context) error {
 		return nil
 	}
 
-	userID, err := identity.FromContext(ctx).UUID()
+	userID, err := identity.RequireActorID(ctx)
 	if err != nil {
 		return err
 	}
@@ -70,6 +70,9 @@ func (a *Application) CreateContest(ctx context.Context, parameters CreateContes
 	if err := a.contests.ValidateContestCreation(ctx, parameters, creatorID, creator.DisplayName, admin, now); err != nil {
 		return nil, err
 	}
+	if err := a.languages.RequireExistingLanguages(ctx, parameters.LanguageCodeAllowList); err != nil {
+		return nil, err
+	}
 	contest := contests.Contest{
 		ID:                      uuid.New(),
 		ContestStart:            parameters.ContestStart,
@@ -97,7 +100,6 @@ func (a *Application) CreateContest(ctx context.Context, parameters CreateContes
 		return createErr
 	})
 	if err != nil {
-		result = nil
 		return nil, err
 	}
 	return result, nil
@@ -148,18 +150,17 @@ func (a *Application) FindContestRegistration(ctx context.Context, contestID uui
 		return nil, err
 	}
 
-	userID, err := identity.FromContext(ctx).UUID()
+	userID, err := identity.RequireActorID(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	registration, err := a.contests.FindRegistration(ctx, userID, contestID)
+	languages, err := a.languages.ListLanguages(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	registration.Contest = nil
-	return registration, nil
+	return a.contests.FindRegistration(ctx, userID, contestID, languages)
 }
 
 func (a *Application) ListOngoingContestRegistrations(ctx context.Context) (*ContestRegistrationList, error) {
@@ -167,7 +168,7 @@ func (a *Application) ListOngoingContestRegistrations(ctx context.Context) (*Con
 		return nil, err
 	}
 
-	userID, err := identity.FromContext(ctx).UUID()
+	userID, err := identity.RequireActorID(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -197,8 +198,16 @@ func (a *Application) UpsertContestRegistration(ctx context.Context, parameters 
 	if err != nil {
 		return err
 	}
+	if err := a.languages.RequireExistingLanguages(ctx, parameters.LanguageCodes); err != nil {
+		return err
+	}
 
-	existing, err := a.contests.FindRegistration(ctx, userID, parameters.ContestID)
+	languages, err := a.languages.ListLanguages(ctx)
+	if err != nil {
+		return err
+	}
+
+	existing, err := a.contests.FindRegistration(ctx, userID, parameters.ContestID, languages)
 	if errors.Is(err, contests.ErrRegistrationNotFound) {
 		existing = nil
 	} else if err != nil {
@@ -228,13 +237,12 @@ func (a *Application) UpsertContestRegistration(ctx context.Context, parameters 
 }
 
 func (a *Application) ListYearlyContestRegistrations(ctx context.Context, userID uuid.UUID, year int) (*ContestRegistrationList, error) {
-	user := identity.FromContext(ctx)
-	if user == nil {
+	if identity.FromContext(ctx) == nil {
 		return nil, errx.NewUnauthorizedError("unauthorized")
 	}
 
-	callerID, err := uuid.Parse(user.Subject)
-	includePrivate := a.permissions.IsAdminOrFalse(ctx) || (err == nil && callerID == userID)
+	actorID, ok := identity.ActorID(ctx)
+	includePrivate := a.permissions.IsAdminOrFalse(ctx) || (ok && actorID == userID)
 
 	languages, err := a.languages.ListLanguages(ctx)
 	if err != nil {

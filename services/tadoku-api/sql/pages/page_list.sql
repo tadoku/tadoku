@@ -7,7 +7,7 @@ with matches as materialized (
   inner join pages_content on pages_content.id = pages.current_content_id
   where pages.deleted_at is null
     and pages.namespace = sqlc.arg(namespace)
-    and (sqlc.arg(include_drafts)::boolean or pages.published_at is not null)
+    and (sqlc.arg(include_drafts)::boolean or pages.published_at <= sqlc.arg(cutoff)::timestamp)
 ), page as (
   select *
   from matches

@@ -69,22 +69,22 @@ passes two shared middlewares before its handler. Health probes (`/livez`,
 
 ## Checks in application operations
 
-Application operations in `services/tadoku-api/app/` own caller authorization; no
+Application operations in `services/tadoku-api/app/` own actor authorization; no
 HTTP middleware enforces administrator access. They call the
 `*permissions.Checker` from `services/tadoku-api/internal/permissions/`:
 
 | Method | Passes when | Otherwise |
 | --- | --- | --- |
-| `RequireAuthenticated` | The caller is a non-guest user and the ban lookup succeeded. | `401` for no user or `guest`; `503` if the ban state is unknown. |
-| `RequireAuthenticatedAllowingUnknownBan` | The caller is a non-guest user. | `401`. Read-only operations only; mutations must never use it. |
-| `RequireAdmin` | `RequireAuthenticated` passes and the caller holds `admins`. | As above, `403` for non-administrators, `503` on Keto errors. |
+| `RequireAuthenticated` | An actor is present (a signed-in, non-guest user) and the ban lookup succeeded. | `401` for no user or `guest`; `503` if the ban state is unknown. |
+| `RequireAuthenticatedAllowingUnknownBan` | An actor is present (a signed-in, non-guest user). | `401`. Read-only operations only; mutations must never use it. |
+| `RequireAdmin` | `RequireAuthenticated` passes and the actor holds `admins`. | As above, `403` for non-administrators, `503` on Keto errors. |
 | `IsAdmin`, `IsAdminOrFalse` | Report administrator status to expand behavior inside an already-authorized operation. | `IsAdmin` returns unavailable on errors; `IsAdminOrFalse` returns `false`. |
 
 Feature services may inspect permissions only to expand behavior inside an
 operation the application has already authorized, and must not repeat the ban
 gate. Facts about other users, such as whether a target user is an administrator,
 come from `services/common/authz/roles/` (`KetoService` for reads, `KetoManager`
-for writes). Target facts are never caller authorization.
+for writes). Target facts are never actor authorization.
 
 ## Oathkeeper administrator callback
 

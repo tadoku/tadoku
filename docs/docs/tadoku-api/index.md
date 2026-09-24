@@ -38,11 +38,11 @@ All paths are relative to `services/tadoku-api/`.
 | Package | Owns |
 | --- | --- |
 | `transport/http/` | The router (`router.go`) with standard method/path registrations, request deadlines and health checks; JWT authentication and the ban gate; mapping application errors to HTTP statuses. |
-| `app/` | Application operations: caller authorization, cross-feature locks and transactions, and composition of feature results. |
+| `app/` | Application operations: actor authorization, cross-feature locks and transactions, and composition of feature results. |
 | `features/<feature>/` | One feature: a service that owns its business decisions and a repository that queries and maps its rows. |
 | `generated/` | Generated code: sqlc queries per feature (`generated/sqlc/<feature>/`) and HTTP bindings (`generated/openapi/`). |
 | `domain/<concept>/` | Business values and pure rules shared by several features. |
-| `internal/` | Technical support: errors (`errx`), request identity (`identity`), caller permissions (`permissions`), business time (`timex`), callback authentication (`callbackauth`) and test fixtures (`test*`). |
+| `internal/` | Technical support: errors (`errx`), request identity (`identity`), actor permissions (`permissions`), business time (`timex`), callback authentication (`callbackauth`) and test fixtures (`test*`). |
 | `infra/` | Infrastructure adapters: the PostgreSQL pool and transactions (`postgres`), the raw Valkey client (`valkey`), the Flipt management client (`fliptmanagement`) and scoring observability (`observability`). |
 | `cmd/tadoku-api/` | The composition root: loads configuration, constructs and owns the pool, provider clients and HTTP resources, and wires them into the application. |
 

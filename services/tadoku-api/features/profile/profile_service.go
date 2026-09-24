@@ -33,9 +33,9 @@ func NewService(repository *Repository, cache *UserCache, roles *commonroles.Ket
 }
 
 func (s *Service) SynchronizeUser(ctx context.Context, user *identity.User, now time.Time) (uuid.UUID, error) {
-	userID, err := user.UUID()
-	if err != nil {
-		return uuid.Nil, err
+	userID, ok := identity.ActorID(ctx)
+	if !ok {
+		return uuid.Nil, errx.NewInternalError("invalid signed user identity")
 	}
 	if err := s.repository.SynchronizeUser(ctx, userID, user.DisplayName, user.CreatedAt, now); err != nil {
 		return uuid.Nil, err

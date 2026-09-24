@@ -1,6 +1,10 @@
 package languages
 
-import "context"
+import (
+	"context"
+
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
+)
 
 type Service struct {
 	languages *LanguagesRepository
@@ -12,6 +16,22 @@ func NewService(languages *LanguagesRepository) *Service {
 
 func (s *Service) ListLanguages(ctx context.Context) ([]Language, error) {
 	return s.languages.ListLanguages(ctx)
+}
+
+// RequireExistingLanguages rejects language codes that are not in the catalog.
+func (s *Service) RequireExistingLanguages(ctx context.Context, codes []string) error {
+	if len(codes) == 0 {
+		return nil
+	}
+
+	exist, err := s.languages.LanguagesExist(ctx, codes)
+	if err != nil {
+		return err
+	}
+	if !exist {
+		return errx.NewInvalidInputError("invalid language codes: one or more languages do not exist")
+	}
+	return nil
 }
 
 func (s *Service) CreateLanguage(ctx context.Context, parameters CreateLanguageParameters) error {

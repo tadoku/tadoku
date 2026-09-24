@@ -141,7 +141,7 @@ responses. In addition:
   `services/common/client/keto` on `application.keto`. It feeds the concrete
   relationship mutation services.
 - A bounded `NewReadClient` instance, with no write API, feeds shared role
-  facts, request ban checks and caller administrator checks.
+  facts, request ban checks and actor administrator checks.
 - Pass concrete clients and shared application services explicitly into
   consumers.
 - `keto.NewClient(readURL, writeURL, keto.WithHTTPClient(httpClient))` applies
@@ -179,7 +179,7 @@ err = client.DeleteRelation(ctx, namespace, object, relation, group)
   bound requests, including response-body reads. There is no mutation retry
   loop; a timeout or cancellation does not establish whether Keto committed the
   write.
-- Application operations remain responsible for caller authorization and for
+- Application operations remain responsible for actor authorization and for
   ordering feature work around these primitives. Audit services own recording
   details such as business timestamps and persistence.
 

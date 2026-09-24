@@ -11,18 +11,14 @@ func (s *server) ContentPageList(
 	request openapi.ContentPageListRequestObject,
 ) (openapi.ContentPageListResponseObject, error) {
 	pageSize, page := 0, 0
-	includeDrafts := true
 	if request.Params.PageSize != nil {
 		pageSize = *request.Params.PageSize
 	}
 	if request.Params.Page != nil {
 		page = *request.Params.Page
 	}
-	if request.Params.IncludeDrafts != nil {
-		includeDrafts = *request.Params.IncludeDrafts
-	}
 
-	result, err := s.application.ListPages(ctx, request.Namespace, includeDrafts, pageSize, page)
+	result, err := s.application.ListPages(ctx, request.Namespace, request.Params.IncludeDrafts, pageSize, page)
 	if err != nil {
 		s.logOperationError(ctx, "list pages", err)
 		return nil, err

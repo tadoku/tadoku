@@ -42,5 +42,5 @@ Avoid comparing exact shared seed totals after another test may have edited them
 [Contest routes](../../../../../frontend/apps/webv2/pages/contests/),
 [leaderboard routes](../../../../../frontend/apps/webv2/pages/leaderboard/),
 [contest/log components](../../../../../frontend/apps/webv2/app/immersion/),
-[native features](../../../../../services/tadoku-api/features/),
+[Tadoku API features](../../../../../services/tadoku-api/features/),
 [HTTP journeys](../../../../../services/tadoku-api/e2e/user_journeys_test.go).

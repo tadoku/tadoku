@@ -7,7 +7,6 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/logscore"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/scoring"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
@@ -38,10 +37,10 @@ func (a *Application) CreateLog(ctx context.Context, p LogCreateParameters) (*Lo
 	if err := a.permissions.RequireAuthenticated(ctx); err != nil {
 		return nil, err
 	}
-	caller := identity.FromContext(ctx)
+	actor := identity.FromContext(ctx)
 
 	now := timex.Now()
-	userID, err := a.profile.SynchronizeUser(ctx, caller, now)
+	userID, err := a.profile.SynchronizeUser(ctx, actor, now)
 	if err != nil {
 		return nil, err
 	}
@@ -83,25 +82,19 @@ func (a *Application) CreateLog(ctx context.Context, p LogCreateParameters) (*Lo
 	if err != nil {
 		return nil, err
 	}
-	return a.logs.FindLog(ctx, id, false)
+	return a.logs.FindLog(ctx, id)
 }
 
 func (a *Application) UpdateLog(ctx context.Context, p LogUpdateParameters) (*Log, error) {
 	if err := a.permissions.RequireAuthenticated(ctx); err != nil {
 		return nil, err
 	}
-	callerID, err := identity.FromContext(ctx).UUID()
-	if err != nil {
-		return nil, errx.NewUnauthorizedError("unauthorized")
-	}
-	existing, err := a.logs.FindLog(ctx, p.ID, false)
+	existing, err := a.logs.FindLog(ctx, p.ID)
 	if err != nil {
 		return nil, err
 	}
-	if callerID != existing.UserID {
-		if err := a.permissions.RequireAdmin(ctx); err != nil {
-			return nil, err
-		}
+	if err := a.requireOwnerOrAdmin(ctx, existing.UserID); err != nil {
+		return nil, err
 	}
 
 	now := timex.Now()
@@ -129,5 +122,5 @@ func (a *Application) UpdateLog(ctx context.Context, p LogUpdateParameters) (*Lo
 	if err != nil {
 		return nil, err
 	}
-	return a.logs.FindLog(ctx, p.ID, false)
+	return a.logs.FindLog(ctx, p.ID)
 }

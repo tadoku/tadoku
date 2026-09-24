@@ -1,6 +1,6 @@
 # Tadoku API migration log
 
-- [ ] Remove all references to the “native” API; use “Tadoku API” instead. The distinction does not make sense long term.
+- [ ] Decide how to replace the remaining “native” values: the proxy request metric `mode` label and the leaderboard cache marker.
 - [ ] Design service authentication for queue workers when they need API access.
 - [ ] After the Tadoku API migration is complete, split all announcement, post, and page routes into separate admin and frontend routes.
 - [ ] Move the announcements timestamp columns to `timestamptz` in a standalone migration.
@@ -28,9 +28,7 @@
 - [ ] Deny `valkey-go` imports outside Store code.
 - [ ] Ban private unit→activity maps outside `domain/activities` (lint).
 - [x] Share one profile Kratos traits decoder; remove the dead untagged `Email` field in `FindProfile`.
-- [ ] Fix contests `FindRegistration` language hydration to match list hydrate; delete the app padding loop in `contest_profile`.
-- [ ] Stop loading contest on find-registration when the response omits it; remove app `registration.Contest = nil`.
 - [ ] Forbid raw banned/admins Keto triples outside `internal/permissions` (lint).
-- [ ] Standardize caller UUID / self-or-admin helpers in app; ban ad-hoc Subject UUID parse outside allowlisted guest paths.
-- [ ] Decide whether pages/posts should share content-revision primitives or stay intentional twins; align list publication policy (pages lack the `published_at` cutoff posts apply when excluding drafts).
+- [ ] Add a CI check that bans parsing the identity subject in application operations.
+- [ ] Decide whether pages/posts should share content-revision primitives or stay intentional twins.
 - [x] Bind the ban-middleware path carve-out to the mux/generated `AuthzRoleGet` pattern, not the magic `"/authz/current-user/role"` string.

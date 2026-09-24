@@ -144,7 +144,7 @@ func pageFromFindRow(row queries.FindPageBySlugRow) *Page {
 	}
 }
 
-func (r *PagesRepository) ListPages(ctx context.Context, namespace string, includeDrafts bool, limit int32, offset int64) ([]Page, int, error) {
+func (r *PagesRepository) ListPages(ctx context.Context, namespace string, includeDrafts bool, cutoff time.Time, limit int32, offset int64) ([]Page, int, error) {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return nil, 0, err
@@ -153,6 +153,7 @@ func (r *PagesRepository) ListPages(ctx context.Context, namespace string, inclu
 	rows, err := queries.New(executor).ListPages(ctx, queries.ListPagesParams{
 		Namespace:     namespace,
 		IncludeDrafts: includeDrafts,
+		Cutoff:        postgres.Timestamp(cutoff),
 		ResultLimit:   limit,
 		StartFrom:     offset,
 	})

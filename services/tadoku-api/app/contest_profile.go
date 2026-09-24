@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/tadoku/tadoku/services/tadoku-api/features/contests"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/logs"
 )
 
@@ -15,14 +14,16 @@ type ContestProfileScores struct {
 }
 
 func (a *Application) ContestProfileScores(ctx context.Context, userID, contestID uuid.UUID) (*ContestProfileScores, error) {
-	registration, err := a.contests.FindRegistration(ctx, userID, contestID)
+	languages, err := a.languages.ListLanguages(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	for len(registration.Languages) < len(registration.LanguageCodes) {
-		registration.Languages = append(registration.Languages, contests.Language{})
+	registration, err := a.contests.FindRegistrationWithContest(ctx, userID, contestID, languages)
+	if err != nil {
+		return nil, err
 	}
+
 	scores, err := a.logs.ContestScores(ctx, userID, contestID)
 	if err != nil {
 		return nil, err

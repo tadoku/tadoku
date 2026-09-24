@@ -63,7 +63,7 @@ func New(ctx context.Context) (_ *Database, err error) {
 		}
 	}()
 
-	name := "tadoku_native_test_" + strings.ReplaceAll(uuid.NewString(), "-", "")
+	name := "tadoku_test_" + strings.ReplaceAll(uuid.NewString(), "-", "")
 	if _, err := admin.Exec(ctx, `create database "`+name+`"`); err != nil {
 		return nil, fmt.Errorf("create disposable database: %w", err)
 	}

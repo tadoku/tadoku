@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/google/uuid"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
 
@@ -42,10 +43,10 @@ func (s *Service) DeletePost(ctx context.Context, namespace string, id uuid.UUID
 
 func (s *Service) FindPostBySlug(ctx context.Context, namespace, slug string) (*Post, error) {
 	if namespace == "" {
-		return nil, ErrInvalidNamespace
+		return nil, errx.NewInvalidInputError("namespace is required")
 	}
 	if slug == "" {
-		return nil, ErrInvalidSlug
+		return nil, errx.NewInvalidInputError("slug is required")
 	}
 
 	post, err := s.posts.FindPostBySlug(ctx, namespace, slug)
@@ -65,10 +66,13 @@ func (s *Service) FindPostByID(ctx context.Context, namespace string, id uuid.UU
 
 func (s *Service) ListPosts(ctx context.Context, namespace string, includeDrafts bool, pageSize, page int) (*PostList, error) {
 	if namespace == "" {
-		return nil, ErrInvalidNamespace
+		return nil, errx.NewInvalidInputError("namespace is required")
 	}
-	if pageSize < 0 || page < 0 {
-		return nil, ErrInvalidPagination
+	if pageSize < 0 {
+		return nil, errx.NewInvalidInputError("page_size must not be negative")
+	}
+	if page < 0 {
+		return nil, errx.NewInvalidInputError("page must not be negative")
 	}
 	if pageSize == 0 {
 		pageSize = 10

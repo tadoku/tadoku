@@ -10,7 +10,7 @@ The documentation for this repository can be found at https://tadoku.github.io/t
 
 ## Dev Environment
 
-Use **DevCLI** for webv2 and native Tadoku API development on
+Use **DevCLI v0.4.0+** for webv2, auth, admin and native Tadoku API development on
 [https://tadoku.dev.lab](https://tadoku.dev.lab). See
 [the development runbook](.dev/README.md) for installation, shared-stack
 prerequisites, branch databases, routing and cleanup.
@@ -21,6 +21,8 @@ make dev-seed  # shared synthetic users and base fixtures
 DEV_OWNER=anton make dev-up
 # In another terminal, same checkout:
 dev url --owner anton '/'
+dev url --owner anton --host account.tadoku.dev.lab '/login'
+dev url --owner anton --host admin.tadoku.dev.lab '/'
 dev status --owner anton
 dev logs --owner anton tadoku-api
 dev down --owner anton
@@ -38,8 +40,9 @@ development fixture password `tadoku`, unless overridden outside Git.
 
 The fresh **development-only** base is defined in
 [`k8s/dev/base/`](k8s/dev/base/README.md) for Argo CD, with automatic migrations
-and existing GHCR images tracked by development Image Updater. Its activation
-still requires repository credentials and an approved cutover from the old Tilt
-stack. The configuration in this branch targets the new `tdk-dev-*` namespaces.
+and existing GHCR images tracked by development Image Updater. It is active on
+`homelab-dev` in the `tdk-dev-*` namespaces. Token-reflector is base-only;
+Paper styleguide overlays are deferred and its local pnpm workflow remains.
 Do not run Tilt concurrently or apply the historical pilot manifests.
+Removing the historical Tilt files is a separate owner-approval gate.
 `make dev-reset` is disabled; any reset needs an explicitly approved, scoped runbook.

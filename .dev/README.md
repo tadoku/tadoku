@@ -10,11 +10,13 @@ retired the old Tilt namespaces and disposable databases on 2026-09-21. See
 
 ## Start working
 
-Install a CLI revision containing YAML support and the cold-start Pod-creation
-wait (antonve/dev-cli#16 and #17):
+Install [DevCLI v0.4.0](https://github.com/antonve/dev-cli/releases/tag/v0.4.0)
+or newer. This release includes YAML configuration, multi-host routing,
+dependency/tasks, cold-start waiting and non-blocking TTL heartbeats:
 
 ```sh
-GOPRIVATE=github.com/antonve/dev-cli go install github.com/antonve/dev-cli/cmd/dev@8e028267f44527b4ef31f63170b3d93eeac49467
+GOPRIVATE=github.com/antonve/dev-cli go install github.com/antonve/dev-cli/cmd/dev@latest
+dev version  # v0.4.0 or newer
 dev doctor
 make dev-seed  # shared synthetic identities and base fixtures; safe to rerun
 # Make service edits, then:
@@ -34,8 +36,15 @@ installation command (no new credential is required):
 ```sh
 GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=url.git@github.com:.insteadOf \
 GIT_CONFIG_VALUE_0=https://github.com/ GOPRIVATE=github.com/antonve/dev-cli \
-go install github.com/antonve/dev-cli/cmd/dev@8e028267f44527b4ef31f63170b3d93eeac49467
+go install github.com/antonve/dev-cli/cmd/dev@latest
 ```
+
+Put `$(go env GOPATH)/bin` (or your explicit `GOBIN`) on `PATH`. Check
+`command -v dev` and `dev version` to avoid running an older installation.
+On T3 the current user-local installation is `/home/t3/.local/bin/dev`; it is
+not bundled in the Homelab image. Upgrade that installation with
+`GOBIN=/home/t3/.local/bin` on the same command. For a reproducible pin, replace
+`@latest` with `@v0.4.0`. Stop only your own existing loops before upgrading.
 
 In another terminal, in the same checkout:
 
@@ -167,6 +176,15 @@ browser profiles, API-only frontend fallback, switch/clear, spoofed headers,
 real Navbar login and rendered leaderboard. Removing one overlay must preserve
 the other owner and base. Routing convergence can briefly serve base.
 One-off browser verification programs belong outside source control.
+Cold-start DNS/health convergence can initially serve base even after `dev up`
+prints a link. Check `X-Dev-Backend` before testing overlay behavior. Successful
+backend restarts can briefly return 503 while health-based fallback catches up;
+this is not zero-downtime deployment. Compile failures leave the old process up.
+With `dev up` running, replacement pods receive current source again; without
+the loop they start from their image, not the lost writable container layer.
+
+Tilt decommissioning is held for explicit owner approval. Keep its historical
+files untouched until that gate; do not run Tilt alongside the GitOps base.
 
 ```sh
 bazel mod deps --lockfile_mode=error

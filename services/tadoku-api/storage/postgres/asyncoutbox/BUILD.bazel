@@ -21,6 +21,7 @@ go_test(
     name = "asyncoutbox_test",
     srcs = ["asyncoutbox_repository_test.go"],
     embed = [":asyncoutbox"],
+    env_inherit = ["TADOKU_TEST_POSTGRES_URL"],
     deps = [
         "//services/tadoku-api/infra/postgres",
         "//services/tadoku-api/internal/asyncwork",

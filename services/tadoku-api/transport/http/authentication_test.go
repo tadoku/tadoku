@@ -105,26 +105,31 @@ func TestAuthenticationTokenPolicy(t *testing.T) {
 		w.WriteHeader(stdhttp.StatusNoContent)
 	}))
 
+	userID := "22222222-2222-4222-8222-222222222222"
 	for _, test := range []struct {
 		name       string
 		issuedAt   time.Time
 		issuer     string
+		subject    string
 		method     jwt.SigningMethod
 		kid        string
 		privateKey any
 		want       int
 	}{
-		{name: "exact maximum age", issuedAt: now.Add(-24 * time.Hour), method: jwt.SigningMethodRS256, kid: "rsa-key", privateKey: rsaPrivateKey, want: stdhttp.StatusNoContent},
-		{name: "just beyond maximum age", issuedAt: now.Add(-24*time.Hour - time.Second), method: jwt.SigningMethodRS256, kid: "rsa-key", privateKey: rsaPrivateKey, want: stdhttp.StatusUnauthorized},
-		{name: "other issuer when unpinned", issuedAt: now.Add(-time.Minute), issuer: "https://other.example.test/", method: jwt.SigningMethodRS256, kid: "rsa-key", privateKey: rsaPrivateKey, want: stdhttp.StatusNoContent},
-		{name: "missing issuer when unpinned", issuedAt: now.Add(-time.Minute), method: jwt.SigningMethodRS256, kid: "rsa-key", privateKey: rsaPrivateKey, want: stdhttp.StatusNoContent},
-		{name: "non RS256 with matching key", issuedAt: now.Add(-time.Minute), method: jwt.SigningMethodEdDSA, kid: "ed-key", privateKey: edPrivateKey, want: stdhttp.StatusUnauthorized},
+		{name: "exact maximum age", issuedAt: now.Add(-24 * time.Hour), subject: userID, method: jwt.SigningMethodRS256, kid: "rsa-key", privateKey: rsaPrivateKey, want: stdhttp.StatusNoContent},
+		{name: "just beyond maximum age", issuedAt: now.Add(-24*time.Hour - time.Second), subject: userID, method: jwt.SigningMethodRS256, kid: "rsa-key", privateKey: rsaPrivateKey, want: stdhttp.StatusUnauthorized},
+		{name: "other issuer when unpinned", issuedAt: now.Add(-time.Minute), issuer: "https://other.example.test/", subject: userID, method: jwt.SigningMethodRS256, kid: "rsa-key", privateKey: rsaPrivateKey, want: stdhttp.StatusNoContent},
+		{name: "missing issuer when unpinned", issuedAt: now.Add(-time.Minute), subject: userID, method: jwt.SigningMethodRS256, kid: "rsa-key", privateKey: rsaPrivateKey, want: stdhttp.StatusNoContent},
+		{name: "non RS256 with matching key", issuedAt: now.Add(-time.Minute), subject: userID, method: jwt.SigningMethodEdDSA, kid: "ed-key", privateKey: edPrivateKey, want: stdhttp.StatusUnauthorized},
+		{name: "guest subject", issuedAt: now.Add(-time.Minute), subject: "guest", method: jwt.SigningMethodRS256, kid: "rsa-key", privateKey: rsaPrivateKey, want: stdhttp.StatusNoContent},
+		{name: "non UUID subject", issuedAt: now.Add(-time.Minute), subject: "policy-user", method: jwt.SigningMethodRS256, kid: "rsa-key", privateKey: rsaPrivateKey, want: stdhttp.StatusUnauthorized},
+		{name: "missing subject", issuedAt: now.Add(-time.Minute), method: jwt.SigningMethodRS256, kid: "rsa-key", privateKey: rsaPrivateKey, want: stdhttp.StatusUnauthorized},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			token := jwt.NewWithClaims(test.method, &userClaims{
 				RegisteredClaims: jwt.RegisteredClaims{
 					Issuer:    test.issuer,
-					Subject:   "policy-user",
+					Subject:   test.subject,
 					IssuedAt:  jwt.NewNumericDate(test.issuedAt),
 					ExpiresAt: jwt.NewNumericDate(now.Add(time.Hour)),
 				},
@@ -394,10 +399,11 @@ func TestAuthenticationRefreshesUnknownSigningKey(t *testing.T) {
 	}
 	jwks.Store(fmt.Sprintf(`{"keys":[%s,%s]}`, oldJWK, newJWK))
 
+	subject := "33333333-3333-4333-8333-333333333333"
 	issuedAt := jwt.TimeFunc().Add(-time.Minute).UTC().Truncate(time.Second)
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, &userClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
-			Subject:   "rotated-user",
+			Subject:   subject,
 			IssuedAt:  jwt.NewNumericDate(issuedAt),
 			ExpiresAt: jwt.NewNumericDate(issuedAt.Add(time.Hour)),
 		},
@@ -412,7 +418,7 @@ func TestAuthenticationRefreshesUnknownSigningKey(t *testing.T) {
 	handler := authenticate(stdhttp.HandlerFunc(func(w stdhttp.ResponseWriter, r *stdhttp.Request) {
 		called++
 		user := identity.FromContext(r.Context())
-		if user == nil || user.Subject != "rotated-user" || !user.CreatedAt.Equal(issuedAt) {
+		if user == nil || user.Subject != subject || !user.CreatedAt.Equal(issuedAt) {
 			t.Errorf("unexpected rotated identity: %+v", user)
 		}
 		w.WriteHeader(stdhttp.StatusNoContent)
@@ -452,7 +458,7 @@ func TestAuthenticationRateLimitsUnknownSigningKeyRefresh(t *testing.T) {
 	issuedAt := jwt.TimeFunc().Add(-time.Minute).UTC().Truncate(time.Second)
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, &userClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
-			Subject:   "unknown-user",
+			Subject:   "44444444-4444-4444-8444-444444444444",
 			IssuedAt:  jwt.NewNumericDate(issuedAt),
 			ExpiresAt: jwt.NewNumericDate(issuedAt.Add(time.Hour)),
 		},
@@ -526,7 +532,7 @@ func TestAuthenticationCancelsRefreshWithLifetime(t *testing.T) {
 	issuedAt := jwt.TimeFunc().Add(-time.Minute).UTC().Truncate(time.Second)
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, &userClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
-			Subject:   "canceled-user",
+			Subject:   "55555555-5555-4555-8555-555555555555",
 			IssuedAt:  jwt.NewNumericDate(issuedAt),
 			ExpiresAt: jwt.NewNumericDate(issuedAt.Add(time.Hour)),
 		},

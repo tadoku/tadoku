@@ -29,7 +29,6 @@ func TestImmersionLogTagSuggestions(t *testing.T) {
 		{description: []string{"limit_with_default"}, want: http.StatusOK},
 		{description: []string{"limit_without_default"}, want: http.StatusOK},
 		{description: []string{"default_fill_to_limit"}, want: http.StatusOK},
-		{description: []string{"invalid_signed_subject"}, want: http.StatusUnauthorized},
 		{description: []string{"guest"}, want: http.StatusUnauthorized},
 	}
 	for _, test := range tests {

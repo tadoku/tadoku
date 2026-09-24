@@ -31,7 +31,6 @@ func TestUpsertContestRegistration(t *testing.T) {
 		{description: []string{"soft", "deleted", "registration", "is", "not", "resurrected"}, want: http.StatusInternalServerError},
 		{description: []string{"guest"}, want: http.StatusUnauthorized},
 		{description: []string{"account", "deletion", "in", "progress"}, want: http.StatusConflict},
-		{description: []string{"invalid", "signed", "subject"}, want: http.StatusInternalServerError},
 	}
 
 	for _, test := range tests {

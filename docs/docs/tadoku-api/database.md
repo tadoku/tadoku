@@ -1,6 +1,6 @@
 ---
 title: Database and migrations
-description: How Tadoku API ships migrations, which database features it uses, SQL style, sqlc code generation and application-owned transactions.
+description: How Tadoku API ships migrations, which database features it uses, SQL style, sqlc code generation, application-owned transactions and how PostgreSQL errors map to responses.
 sidebar_position: 4
 ---
 
@@ -100,3 +100,27 @@ return queries.New(db).InsertItem(ctx, params)
 
 The helper's own test setup is described in
 `services/tadoku-api/infra/postgres/README.md`.
+
+## PostgreSQL errors
+
+PostgreSQL and pgx errors are not classified by cause. They reach
+`services/tadoku-api/transport/http/errors.go` without an `errx` kind unless a
+repository operation translates one it expects:
+
+| Error | Response |
+| --- | --- |
+| `pgx.ErrNoRows` checked by the operation | The operation's own error, usually not found |
+| Unique violation checked by the operation with `postgres.IsUniqueViolation` | The operation's already-exists error, `409` |
+| Any other PostgreSQL or pgx error, including other constraint violations, begin and commit failures and a closed or unreachable pool | `500`, logged at Error level |
+
+- `postgres.IsUniqueViolation` in `services/tadoku-api/infra/postgres/errors.go`
+  is the only SQLSTATE check. Check a SQLSTATE only where the operation gives
+  that constraint a meaning.
+- Errors wrapping `context.DeadlineExceeded` return `504`, and errors wrapping
+  `context.Canceled` after the request was canceled return `499`, whatever
+  their source.
+- `503` is reserved for Keto, Kratos and Flipt provider failures. No database
+  error maps to it; only the `/readyz` probe reports a PostgreSQL failure as
+  `503`.
+- Failed transactions are not retried or replayed, and wrapped causes remain
+  available to `errors.Is` and `errors.As`.

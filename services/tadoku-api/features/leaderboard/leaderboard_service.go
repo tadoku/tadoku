@@ -5,11 +5,9 @@ import (
 	"fmt"
 	"log/slog"
 	"strconv"
-	"strings"
 	"sync/atomic"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/activities"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/leaderboardoutbox"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
@@ -18,50 +16,20 @@ import (
 	valkeygo "github.com/valkey-io/valkey-go"
 )
 
-const (
-	contestPrefix = "leaderboard:contest:"
-	yearlyPrefix  = "leaderboard:yearly:"
-	globalKey     = "leaderboard:global"
-)
-
-var rebuildScript = valkeygo.NewLuaScript(`
-if (redis.call('GET', KEYS[3]) or '0') ~= ARGV[1] then
-  return 0
-end
-redis.call('DEL', KEYS[1])
-if #ARGV > 1 then
-  redis.call('ZADD', KEYS[1], unpack(ARGV, 2))
-end
-redis.call('SET', KEYS[2], 'native:' .. ARGV[1])
-return 1
-`)
-
-var invalidateScript = valkeygo.NewLuaScript(`
-redis.call('INCR', KEYS[3])
-redis.call('DEL', KEYS[1], KEYS[2])
-return 1
-`)
-
 type Service struct {
-	repository       *Repository
-	client           valkeygo.Client
-	operationTimeout time.Duration
-	cachePrefix      string
-	cacheReady       atomic.Bool
+	repository *Repository
+	store      *Store
+	cacheReady atomic.Bool
 }
 
 func NewService(repository *Repository, client valkeygo.Client, operationTimeout time.Duration, cachePrefix string) *Service {
 	service := &Service{
-		repository:       repository,
-		client:           client,
-		operationTimeout: operationTimeout,
-		cachePrefix:      cachePrefix,
+		repository: repository,
+		store:      NewStore(client, operationTimeout, cachePrefix),
 	}
 	service.cacheReady.Store(true)
 	return service
 }
-
-func (s *Service) cacheKey(key string) string { return s.cachePrefix + key }
 
 func (s *Service) FetchContest(ctx context.Context, request ContestRequest) (*Result, error) {
 	request.Request = normalize(request.Request)
@@ -75,14 +43,14 @@ func (s *Service) FetchContest(ctx context.Context, request ContestRequest) (*Re
 		return s.fetchContestFromPostgres(ctx, request)
 	}
 
-	key := s.cacheKey(contestPrefix + request.ContestID.String())
-	result, exists, err := s.fetchPage(ctx, key, request.Page, request.PageSize)
+	key := s.store.cacheKey(contestPrefix + request.ContestID.String())
+	result, exists, err := s.store.fetchPage(ctx, key, request.Page, request.PageSize)
 	if err != nil {
 		slog.WarnContext(ctx, "contest leaderboard cache unavailable; falling back to Postgres", "error", err)
 		return s.fetchContestFromPostgres(ctx, request)
 	}
 	if !exists {
-		generation, err := s.generation(ctx, key)
+		generation, err := s.store.generation(ctx, key)
 		if err != nil {
 			slog.WarnContext(ctx, "contest leaderboard cache unavailable; falling back to Postgres", "error", err)
 			return s.fetchContestFromPostgres(ctx, request)
@@ -91,7 +59,7 @@ func (s *Service) FetchContest(ctx context.Context, request ContestRequest) (*Re
 		if err != nil {
 			return nil, fmt.Errorf("failed to fetch all contest scores for rebuild: %w", err)
 		}
-		if _, err := s.rebuild(ctx, key, scores, generation); err != nil {
+		if _, err := s.store.rebuild(ctx, key, scores, generation); err != nil {
 			slog.WarnContext(ctx, "contest leaderboard cache rebuild failed; falling back to Postgres", "error", err)
 		}
 		return s.fetchContestFromPostgres(ctx, request)
@@ -111,14 +79,14 @@ func (s *Service) FetchYearly(ctx context.Context, request YearlyRequest) (*Resu
 		return postgresResult(s.repository.yearly(ctx, request))
 	}
 
-	key := s.cacheKey(yearlyPrefix + strconv.Itoa(int(request.Year)))
-	result, exists, err := s.fetchPage(ctx, key, request.Page, request.PageSize)
+	key := s.store.cacheKey(yearlyPrefix + strconv.Itoa(int(request.Year)))
+	result, exists, err := s.store.fetchPage(ctx, key, request.Page, request.PageSize)
 	if err != nil {
 		slog.WarnContext(ctx, "yearly leaderboard cache unavailable; falling back to Postgres", "error", err)
 		return postgresResult(s.repository.yearly(ctx, request))
 	}
 	if !exists {
-		generation, err := s.generation(ctx, key)
+		generation, err := s.store.generation(ctx, key)
 		if err != nil {
 			slog.WarnContext(ctx, "yearly leaderboard cache unavailable; falling back to Postgres", "error", err)
 			return postgresResult(s.repository.yearly(ctx, request))
@@ -127,7 +95,7 @@ func (s *Service) FetchYearly(ctx context.Context, request YearlyRequest) (*Resu
 		if err != nil {
 			return nil, fmt.Errorf("failed to fetch all yearly scores for rebuild: %w", err)
 		}
-		if _, err := s.rebuild(ctx, key, scores, generation); err != nil {
+		if _, err := s.store.rebuild(ctx, key, scores, generation); err != nil {
 			slog.WarnContext(ctx, "yearly leaderboard cache rebuild failed; falling back to Postgres", "error", err)
 		}
 		return postgresResult(s.repository.yearly(ctx, request))
@@ -147,14 +115,14 @@ func (s *Service) FetchGlobal(ctx context.Context, request Request) (*Result, er
 		return postgresResult(s.repository.global(ctx, request))
 	}
 
-	key := s.cacheKey(globalKey)
-	result, exists, err := s.fetchPage(ctx, key, request.Page, request.PageSize)
+	key := s.store.cacheKey(globalKey)
+	result, exists, err := s.store.fetchPage(ctx, key, request.Page, request.PageSize)
 	if err != nil {
 		slog.WarnContext(ctx, "global leaderboard cache unavailable; falling back to Postgres", "error", err)
 		return postgresResult(s.repository.global(ctx, request))
 	}
 	if !exists {
-		generation, err := s.generation(ctx, key)
+		generation, err := s.store.generation(ctx, key)
 		if err != nil {
 			slog.WarnContext(ctx, "global leaderboard cache unavailable; falling back to Postgres", "error", err)
 			return postgresResult(s.repository.global(ctx, request))
@@ -163,7 +131,7 @@ func (s *Service) FetchGlobal(ctx context.Context, request Request) (*Result, er
 		if err != nil {
 			return nil, fmt.Errorf("failed to fetch all global scores for rebuild: %w", err)
 		}
-		if _, err := s.rebuild(ctx, key, scores, generation); err != nil {
+		if _, err := s.store.rebuild(ctx, key, scores, generation); err != nil {
 			slog.WarnContext(ctx, "global leaderboard cache rebuild failed; falling back to Postgres", "error", err)
 		}
 		return postgresResult(s.repository.global(ctx, request))
@@ -256,185 +224,6 @@ func buildEntries(cached *page) []Entry {
 	return entries
 }
 
-func (s *Service) fetchPage(ctx context.Context, key string, currentPage, pageSize int) (*page, bool, error) {
-	ctx, cancel := context.WithTimeout(ctx, s.operationTimeout)
-	defer cancel()
-	marker, err := s.client.Do(ctx, s.client.B().Get().Key(key+":last_updated").Build()).ToString()
-	if err == valkeygo.Nil {
-		return nil, false, nil
-	}
-	if err != nil {
-		return nil, false, fmt.Errorf("check leaderboard marker %s: %w", key, err)
-	}
-	generation, err := s.generation(ctx, key)
-	if err != nil {
-		return nil, false, err
-	}
-	if generation != "0" && marker != "native:"+generation {
-		return nil, false, nil
-	}
-	total, err := s.client.Do(ctx, s.client.B().Zcard().Key(key).Build()).AsInt64()
-	if err != nil {
-		return nil, false, fmt.Errorf("get leaderboard cardinality %s: %w", key, err)
-	}
-	if total == 0 {
-		current, err := s.cacheCurrent(ctx, key, marker, generation)
-		if err != nil || !current {
-			return nil, false, err
-		}
-		return &page{scores: []score{}, startRank: 1}, true, nil
-	}
-
-	start := int64(currentPage * pageSize)
-	stop := start + int64(pageSize) - 1
-	fetchStart := start
-	if fetchStart > 0 {
-		fetchStart--
-	}
-	values, err := s.client.Do(ctx, s.client.B().Zrange().Key(key).Min(strconv.FormatInt(fetchStart, 10)).Max(strconv.FormatInt(stop+1, 10)).Rev().Withscores().Build()).AsZScores()
-	if err != nil {
-		return nil, false, fmt.Errorf("fetch leaderboard page %s: %w", key, err)
-	}
-	hasPrevious := fetchStart < start && len(values) > 0
-	previous := float64(0)
-	if hasPrevious {
-		previous = values[0].Score
-		values = values[1:]
-	}
-	hasNext := int64(len(values)) > int64(pageSize)
-	next := float64(0)
-	if hasNext {
-		next = values[len(values)-1].Score
-		values = values[:len(values)-1]
-	}
-	scores := make([]score, len(values))
-	for i, value := range values {
-		id, err := uuid.Parse(value.Member)
-		if err != nil {
-			return nil, false, fmt.Errorf("parse leaderboard member %q: %w", value.Member, err)
-		}
-		scores[i] = score{userID: id, value: value.Score}
-	}
-	startRank := int(start) + 1
-	if len(scores) > 0 {
-		higher, err := s.client.Do(ctx, s.client.B().Zcount().Key(key).Min("("+strconv.FormatFloat(scores[0].value, 'f', -1, 64)).Max("+inf").Build()).AsInt64()
-		if err != nil {
-			return nil, false, fmt.Errorf("count higher leaderboard scores %s: %w", key, err)
-		}
-		startRank = int(higher) + 1
-	}
-	current, err := s.cacheCurrent(ctx, key, marker, generation)
-	if err != nil || !current {
-		return nil, false, err
-	}
-	return &page{
-		scores:     scores,
-		totalCount: int(total),
-		startRank:  startRank,
-		hasPrevTie: hasPrevious && len(scores) > 0 && previous == scores[0].value,
-		hasNextTie: hasNext && len(scores) > 0 && next == scores[len(scores)-1].value,
-	}, true, nil
-}
-
-func (s *Service) cacheCurrent(ctx context.Context, key, marker, generation string) (bool, error) {
-	currentMarker, err := s.client.Do(ctx, s.client.B().Get().Key(key+":last_updated").Build()).ToString()
-	if err == valkeygo.Nil {
-		return false, nil
-	}
-	if err != nil {
-		return false, fmt.Errorf("recheck leaderboard marker %s: %w", key, err)
-	}
-	if currentMarker != marker {
-		return false, nil
-	}
-	currentGeneration, err := s.generation(ctx, key)
-	if err != nil {
-		return false, err
-	}
-	return currentGeneration == generation, nil
-}
-
-func (s *Service) generation(ctx context.Context, key string) (string, error) {
-	value, err := s.client.Do(ctx, s.client.B().Get().Key(key+":generation").Build()).ToString()
-	if err == valkeygo.Nil {
-		return "0", nil
-	}
-	if err != nil {
-		return "", fmt.Errorf("read leaderboard generation %s: %w", key, err)
-	}
-	return value, nil
-}
-
-func (s *Service) invalidate(ctx context.Context, key string) error {
-	ctx, cancel := context.WithTimeout(ctx, s.operationTimeout)
-	defer cancel()
-	if err := invalidateScript.Exec(ctx, s.client, []string{key, key + ":last_updated", key + ":generation"}, nil).Error(); err != nil {
-		return fmt.Errorf("invalidate leaderboard %s: %w", key, err)
-	}
-	return nil
-}
-
-func (s *Service) reconcile(ctx context.Context) (int, error) {
-	var cursor uint64
-	count := 0
-	for {
-		commandCtx, cancel := context.WithTimeout(ctx, s.operationTimeout)
-		page, err := s.client.Do(commandCtx, s.client.B().Scan().Cursor(cursor).Match(s.cacheKey("leaderboard:*:last_updated")).Count(100).Build()).AsScanEntry()
-		cancel()
-		if err != nil {
-			return count, fmt.Errorf("scan leaderboard cache markers: %w", err)
-		}
-		for _, marker := range page.Elements {
-			key := strings.TrimSuffix(marker, ":last_updated")
-			if !s.leaderboardCacheKey(key) {
-				continue
-			}
-			if err := s.invalidate(ctx, key); err != nil {
-				return count, err
-			}
-			count++
-		}
-		if page.Cursor == 0 {
-			return count, nil
-		}
-		cursor = page.Cursor
-	}
-}
-
-func (s *Service) leaderboardCacheKey(key string) bool {
-	if !strings.HasPrefix(key, s.cachePrefix) {
-		return false
-	}
-	key = strings.TrimPrefix(key, s.cachePrefix)
-	if key == globalKey {
-		return true
-	}
-	if strings.HasPrefix(key, yearlyPrefix) {
-		_, err := strconv.Atoi(strings.TrimPrefix(key, yearlyPrefix))
-		return err == nil
-	}
-	if strings.HasPrefix(key, contestPrefix) {
-		_, err := uuid.Parse(strings.TrimPrefix(key, contestPrefix))
-		return err == nil
-	}
-	return false
-}
-
-func (s *Service) rebuild(ctx context.Context, key string, scores []score, generation string) (bool, error) {
-	ctx, cancel := context.WithTimeout(ctx, s.operationTimeout)
-	defer cancel()
-	args := make([]string, 0, 1+len(scores)*2)
-	args = append(args, generation)
-	for _, item := range scores {
-		args = append(args, strconv.FormatFloat(item.value, 'f', -1, 64), item.userID.String())
-	}
-	published, err := rebuildScript.Exec(ctx, s.client, []string{key, key + ":last_updated", key + ":generation"}, args).ToInt64()
-	if err != nil {
-		return false, fmt.Errorf("rebuild leaderboard %s: %w", key, err)
-	}
-	return published == 1, nil
-}
-
 // Worker consumes committed leaderboard changes after the legacy worker has stopped.
 type Worker struct {
 	service    *Service
@@ -472,7 +261,7 @@ func (w *Worker) Run(ctx context.Context) {
 // ProcessPending reconciles the cache once, then drains committed outbox rows.
 func (w *Worker) ProcessPending(ctx context.Context) error {
 	if !w.reconciled {
-		count, err := w.service.reconcile(ctx)
+		count, err := w.service.store.reconcile(ctx)
 		if err != nil {
 			return fmt.Errorf("reconcile leaderboard cache: %w", err)
 		}
@@ -520,14 +309,14 @@ func (w *Worker) ProcessBatch(ctx context.Context) (int, error) {
 					w.logger.ErrorContext(ctx, "invalid leaderboard outbox event", "event_id", event.id, "event_type", event.eventType)
 					continue
 				}
-				keys[w.service.cacheKey(contestPrefix+event.contestID.String())] = struct{}{}
+				keys[w.service.store.cacheKey(contestPrefix+event.contestID.String())] = struct{}{}
 			case leaderboardoutbox.RefreshOfficialScores:
 				if event.year == nil {
 					w.logger.ErrorContext(ctx, "invalid leaderboard outbox event", "event_id", event.id, "event_type", event.eventType)
 					continue
 				}
-				keys[w.service.cacheKey(yearlyPrefix+strconv.Itoa(int(*event.year)))] = struct{}{}
-				keys[w.service.cacheKey(globalKey)] = struct{}{}
+				keys[w.service.store.cacheKey(yearlyPrefix+strconv.Itoa(int(*event.year)))] = struct{}{}
+				keys[w.service.store.cacheKey(globalKey)] = struct{}{}
 			default:
 				w.logger.ErrorContext(ctx, "unknown leaderboard outbox event", "event_id", event.id, "event_type", event.eventType)
 			}
@@ -535,7 +324,7 @@ func (w *Worker) ProcessBatch(ctx context.Context) (int, error) {
 
 		// Invalidate while the claimed rows stay locked so no other worker acknowledges them first.
 		for key := range keys {
-			if err := w.service.invalidate(ctx, key); err != nil {
+			if err := w.service.store.invalidate(ctx, key); err != nil {
 				return err
 			}
 		}

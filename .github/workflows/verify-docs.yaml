@@ -1,0 +1,19 @@
+name: verify-docs
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify documentation references
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Check descriptions, repository paths and links
+        run: node --test docs/scripts/docs-check.test.mjs

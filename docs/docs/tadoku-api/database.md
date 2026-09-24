@@ -63,7 +63,7 @@ root:
 
 ## Transactions
 
-`postgres.RunInTransaction(ctx, pool, callback)` in `infra/postgres` owns begin,
+`postgres.RunInTransaction(ctx, pool, callback)` in `services/tadoku-api/infra/postgres/` owns begin,
 commit and rollback. The callback receives a context carrying the transaction.
 Repositories select the database handle with `postgres.Executor(ctx, pool)` for
 each operation and pass it directly to the sqlc queries:

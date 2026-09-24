@@ -90,5 +90,5 @@ Never point tests at shared development or production services.
   run in parallel.
 - Keep the pool-closing failure test isolated. It opens a second pool on the
   shared DSN and closes it, without creating another migrated database.
-- The `infra/postgres` helper tests have their own setup in
+- The `services/tadoku-api/infra/postgres/` helper tests have their own setup in
   `services/tadoku-api/infra/postgres/README.md`.

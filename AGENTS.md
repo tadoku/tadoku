@@ -72,6 +72,8 @@ Migration PRs must remain compatible with the application version currently depl
 
 **Verify import-boundary changes** locally with `bazel run //:gazelle -- -mode=diff`, `./scripts/check-tadoku-api-visibility.sh`, and `bazel build //services/tadoku-api/...` before publishing a PR. The legacy depolicy CI check is temporary and does not define the preferred package structure.
 
+**Verify provider dependencies** with `./tools/ci/check_tadoku_api_provider_deps.sh` before publishing a PR that changes Tadoku API imports. It checks Bazel's direct dependency graph: only leaderboard, infra/valkey, startup and E2E may depend on valkey-go; only internal/permissions, startup and E2E may depend directly on the raw Keto client. Keep shared ban/admin relation lookups in internal/permissions; the dependency check cannot inspect relation string literals inside allowed packages.
+
 **Document durable conventions for the whole application.** State architecture, compatibility and testing rules for all operations. Do not document individual endpoint implementations, enumerate their coverage, or add endpoint-status sections to general documentation. Use generic examples. Keep deferred cleanup notes as checkboxes in `services/tadoku-api/MIGRATION_LOG.md`.
 
 **Keep each runtime slice small and reviewable.** Implement the requested operation without unrelated service identities, audience checks, or authorization features. Keep authentication and shared ban enforcement in separately reviewed changes.

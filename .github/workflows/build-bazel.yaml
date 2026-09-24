@@ -109,6 +109,9 @@ jobs:
       - name: Verify Tadoku API Go library visibility
         run: ./scripts/check-tadoku-api-visibility.sh
 
+      - name: Verify Tadoku API provider dependencies
+        run: ./tools/ci/check_tadoku_api_provider_deps.sh
+
       - name: Verify Tadoku API import policies (including test files)
         run: bazel run --lockfile_mode=error //tools/ci/depolicy
 

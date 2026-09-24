@@ -730,6 +730,13 @@ out-of-service Tadoku API Go library visibility; omitted visibility is
 Bazel-private. Assign a new library its matching scoped visibility after
 running Gazelle, then run `./scripts/check-tadoku-api-visibility.sh` locally.
 
+Run `./tools/ci/check_tadoku_api_provider_deps.sh` locally before publishing
+import changes; CI runs the same Bazel graph check. Direct valkey-go dependencies
+are limited to leaderboard, infra/valkey, startup and E2E. Direct raw Keto client
+dependencies are limited to internal/permissions, startup and E2E. This keeps
+other packages on the shared permission checker, but cannot detect a raw
+`banned`/`admins` relation literal in an allowed package.
+
 Bazel visibility is owned by the imported target, so it currently does not
 restrict Tadoku API imports from public `services/common` packages. A normal
 build also does not inspect Go files excluded by the active build configuration.

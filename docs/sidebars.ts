@@ -64,7 +64,11 @@ const sidebars: SidebarsConfig = {
         type: 'doc',
         id: 'operations/index',
       },
-      items: ['operations/migration-recovery', 'operations/account-deletion'],
+      items: [
+        'operations/development-base',
+        'operations/migration-recovery',
+        'operations/account-deletion',
+      ],
     },
     {
       type: 'category',

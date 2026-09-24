@@ -224,8 +224,9 @@ func (r *ContestsRepository) InsertOfficialScoresRefresh(ctx context.Context, us
 	}
 
 	if err := queries.New(executor).InsertOfficialScoresRefresh(ctx, queries.InsertOfficialScoresRefreshParams{
-		UserID: pgtype.UUID{Bytes: userID, Valid: true},
-		Year:   pgtype.Int2{Int16: year, Valid: true},
+		EventType: string(leaderboardoutbox.RefreshOfficialScores),
+		UserID:    pgtype.UUID{Bytes: userID, Valid: true},
+		Year:      pgtype.Int2{Int16: year, Valid: true},
 	}); err != nil {
 		return fmt.Errorf("insert official scores refresh: %w", err)
 	}

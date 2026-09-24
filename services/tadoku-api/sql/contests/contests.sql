@@ -280,7 +280,7 @@ values (sqlc.arg(event_type), sqlc.arg(user_id), sqlc.arg(contest_id));
 
 -- name: InsertOfficialScoresRefresh :exec
 insert into leaderboard_outbox (event_type, user_id, year)
-values ('refresh_official_scores', sqlc.arg(user_id), sqlc.arg(year));
+values (sqlc.arg(event_type), sqlc.arg(user_id), sqlc.arg(year));
 
 -- name: ListYearlyContestRegistrations :many
 select

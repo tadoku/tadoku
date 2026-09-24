@@ -133,24 +133,6 @@ jobs:
       - name: Run tests
         run: bazel test --lockfile_mode=error --test_output=errors //...
 
-      - name: Race-test Tadoku API and helpers
-        run: >-
-          bazel test --lockfile_mode=error --test_output=errors --@rules_go//go/config:race
-          //services/tadoku-api/internal/permissions:permissions_test
-          //services/tadoku-api/internal/testketo:testketo_test
-          //services/tadoku-api/internal/timex:timex_test
-          //services/tadoku-api/infra/postgres:postgres_test
-          //services/tadoku-api/infra/valkey:valkey_test
-          //services/tadoku-api/features/announcements:announcements_test
-          //services/tadoku-api/features/audit:audit_test
-          //services/tadoku-api/features/authz:authz_test
-          //services/tadoku-api/features/pages:pages_test
-          //services/tadoku-api/features/profile:profile_test
-          //services/tadoku-api/features/posts:posts_test
-          //services/tadoku-api/e2e:e2e_test
-          //services/tadoku-api/cmd/tadoku-api:tadoku-api_test
-          //services/tadoku-api/transport/http:http_test
-
       - name: Load backend images for scanning
         run: bazel run --lockfile_mode=error //:load_images
 
@@ -180,9 +162,70 @@ jobs:
           done <<< "${BACKEND_IMAGES}"
           exit "${scan_status}"
 
+  race:
+    name: Race-test Tadoku API
+    runs-on: ubuntu-latest
+    env:
+      IMMERSION_TEST_POSTGRES_URL: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
+      TADOKU_TEST_POSTGRES_URL: postgres://postgres:postgres@127.0.0.1:5432/postgres?sslmode=disable
+      TADOKU_TEST_VALKEY_URL: redis://127.0.0.1:6379
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      valkey:
+        image: valkey/valkey:9
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "valkey-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # bazel-contrib/setup-bazel 0.19.0
+      - name: Setup Bazel
+        uses: bazel-contrib/setup-bazel@c5acdfb288317d0b5c0bbd7a396a3dc868bb0f86
+        with:
+          bazelisk-cache: true
+          repository-cache: true
+          disk-cache: ${{ github.workflow }}-race
+          cache-save: ${{ github.event_name != 'pull_request' }}
+
+      - name: Race-test Tadoku API and helpers
+        run: >-
+          bazel test --lockfile_mode=error --test_output=errors --@rules_go//go/config:race
+          //services/tadoku-api/internal/permissions:permissions_test
+          //services/tadoku-api/internal/testketo:testketo_test
+          //services/tadoku-api/internal/timex:timex_test
+          //services/tadoku-api/infra/postgres:postgres_test
+          //services/tadoku-api/infra/valkey:valkey_test
+          //services/tadoku-api/features/announcements:announcements_test
+          //services/tadoku-api/features/audit:audit_test
+          //services/tadoku-api/features/authz:authz_test
+          //services/tadoku-api/features/pages:pages_test
+          //services/tadoku-api/features/profile:profile_test
+          //services/tadoku-api/features/posts:posts_test
+          //services/tadoku-api/e2e:e2e_test
+          //services/tadoku-api/cmd/tadoku-api:tadoku-api_test
+          //services/tadoku-api/transport/http:http_test
+
   publish:
     name: Publish Tadoku Images
-    needs: build
+    needs: [build, race]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     permissions:

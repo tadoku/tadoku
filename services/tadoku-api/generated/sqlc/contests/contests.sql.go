@@ -709,33 +709,6 @@ func (q *Queries) ListOngoingContestRegistrations(ctx context.Context, arg ListO
 	return items, nil
 }
 
-const listRegistrationLanguages = `-- name: ListRegistrationLanguages :many
-select code, name
-from languages
-where code = any($1::varchar[])
-order by name asc
-`
-
-func (q *Queries) ListRegistrationLanguages(ctx context.Context, codes []string) ([]Language, error) {
-	rows, err := q.db.Query(ctx, listRegistrationLanguages, codes)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []Language{}
-	for rows.Next() {
-		var i Language
-		if err := rows.Scan(&i.Code, &i.Name); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const listYearlyContestRegistrations = `-- name: ListYearlyContestRegistrations :many
 select
   contest_registrations.id,

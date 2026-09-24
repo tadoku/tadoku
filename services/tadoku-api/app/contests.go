@@ -153,7 +153,12 @@ func (a *Application) FindContestRegistration(ctx context.Context, contestID uui
 		return nil, err
 	}
 
-	return a.contests.FindRegistration(ctx, userID, contestID)
+	languages, err := a.languages.ListLanguages(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return a.contests.FindRegistration(ctx, userID, contestID, languages)
 }
 
 func (a *Application) ListOngoingContestRegistrations(ctx context.Context) (*ContestRegistrationList, error) {
@@ -192,7 +197,12 @@ func (a *Application) UpsertContestRegistration(ctx context.Context, parameters 
 		return err
 	}
 
-	existing, err := a.contests.FindRegistration(ctx, userID, parameters.ContestID)
+	languages, err := a.languages.ListLanguages(ctx)
+	if err != nil {
+		return err
+	}
+
+	existing, err := a.contests.FindRegistration(ctx, userID, parameters.ContestID, languages)
 	if errors.Is(err, contests.ErrRegistrationNotFound) {
 		existing = nil
 	} else if err != nil {

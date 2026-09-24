@@ -223,12 +223,6 @@ where contest_registrations.user_id = sqlc.arg(user_id)
   and contest_registrations.contest_id = sqlc.arg(contest_id)
   and contest_registrations.deleted_at is null;
 
--- name: ListRegistrationLanguages :many
-select code, name
-from languages
-where code = any(sqlc.arg(codes)::varchar[])
-order by name asc;
-
 -- name: ListOngoingContestRegistrations :many
 select
   contest_registrations.id,

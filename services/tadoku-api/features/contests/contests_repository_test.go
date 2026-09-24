@@ -365,14 +365,6 @@ func TestContestsRepositoryRegistrationPersistenceAndTransaction(t *testing.T) {
 		t.Errorf("registration with contest=%+v", withContest)
 	}
 
-	languages, err := repository.ListRegistrationLanguages(t.Context(), registration.LanguageCodes)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !reflect.DeepEqual(languages, []Language{{Code: "eng", Name: "English"}, {Code: "jpn", Name: "Japanese"}}) {
-		t.Errorf("registration languages=%v", languages)
-	}
-
 	ongoing, err := repository.ListOngoingRegistrations(t.Context(), userID, time.Date(2026, 9, 12, 23, 59, 59, 0, time.UTC))
 	if err != nil {
 		t.Fatal(err)

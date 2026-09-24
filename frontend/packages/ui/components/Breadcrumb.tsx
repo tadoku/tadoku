@@ -58,6 +58,7 @@ const BreadcrumbLink = ({
         'text-gray-500 pointer-events-none': isLast,
       },
     )}
+    aria-current={isLast ? 'page' : undefined}
   >
     {IconComponent ? <IconComponent className="w-4 h-4 mr-2" /> : null}
     {label}

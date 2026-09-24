@@ -302,7 +302,22 @@ func newTestRouterWithLeaderboardService(
 	registry := prometheus.NewRegistry()
 	scoringObserver := observability.NewScoringObserver(registry, logger, scoringEngineEnabled)
 	scoringService := scoring.NewService(scoringRepository, scoringEngineEnabled, scoringObserver)
-	application := app.New(announcementsService, auditService, authzService, contestsService, leaderboardService, languagesService, logsService, pagesService, postsService, profileService, scoringService, featureFlagsService, pool, permissionChecker)
+	application := app.New(app.Dependencies{
+		Announcements: announcementsService,
+		Audit:         auditService,
+		Authorization: authzService,
+		Contests:      contestsService,
+		Leaderboard:   leaderboardService,
+		Languages:     languagesService,
+		Logs:          logsService,
+		Pages:         pagesService,
+		Posts:         postsService,
+		Profile:       profileService,
+		Scoring:       scoringService,
+		FeatureFlags:  featureFlagsService,
+		DB:            pool,
+		Permissions:   permissionChecker,
+	})
 	authenticate, err := transport.NewJWTAuthentication(ctx, authenticationJWKS.URL, time.Second, 24*time.Hour, "http://oathkeeper-api/", logger)
 	if err != nil {
 		return nil, nil, nil, err

@@ -95,9 +95,9 @@ from migrations: `make dev-seed` uses the existing marked synthetic identities.
 
 There are no plaintext Secret manifests or private keys in this root. The
 Postgres operator generates the `tadoku`, `kratos` and `keto` credentials in
-`tdk-dev-data`. Tadoku API uses the `tadoku` role and database. Removing the
-old `immersion` declaration does not delete its PostgreSQL databases or role;
-their deletion requires a separately approved, scoped runbook.
+`tdk-dev-data`. Tadoku API uses the `tadoku` role and database. The old
+`immersion` databases, role and credentials were removed under a separately
+approved, scoped development cleanup runbook.
 `scripts/dev/bootstrap-gitops-secrets.sh` copies only required
 credentials into consumer namespaces, generates development-only signing/session
 material once, and preserves existing keys on rerun. Run it only with explicit

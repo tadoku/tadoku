@@ -46,7 +46,7 @@ func TestScoringRepositoryPlatformRuleSetLifecycle(t *testing.T) {
 		}
 	}
 
-	version, err := repository.NextDraftVersion(t.Context(), nil)
+	version, err := repository.NextPlatformDraftVersion(t.Context())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -213,7 +213,7 @@ func TestScoringRepositoryContestRuleSets(t *testing.T) {
 		}
 	}
 
-	version, err := repository.NextDraftVersion(t.Context(), &contestID)
+	version, err := repository.NextContestDraftVersion(t.Context(), contestID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -276,7 +276,7 @@ func TestScoringRepositoryContestRuleSets(t *testing.T) {
 		}
 	}
 
-	version, err = repository.NextDraftVersion(t.Context(), &contestID)
+	version, err = repository.NextContestDraftVersion(t.Context(), contestID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -369,7 +369,7 @@ func TestScoringRepositoryUnitLookups(t *testing.T) {
 	for _, tt := range idTests {
 		t.Run("by id "+tt.name, func(t *testing.T) {
 			key, err := repository.FindUnitKeyByID(t.Context(), tt.id, tt.activityID, tt.languageCode)
-			unit, unitErr := repository.FindLogUnit(t.Context(), &tt.id, nil, tt.activityID, tt.languageCode)
+			unit, unitErr := repository.FindLogUnitByID(t.Context(), tt.id, tt.activityID, tt.languageCode)
 			assertUnitLookup(t, key, err, unit, unitErr, tt.want)
 		})
 	}
@@ -391,14 +391,9 @@ func TestScoringRepositoryUnitLookups(t *testing.T) {
 	for _, tt := range keyTests {
 		t.Run("by key "+tt.name, func(t *testing.T) {
 			key, err := repository.FindUnitKeyByKey(t.Context(), tt.key, tt.activityID, tt.languageCode)
-			unit, unitErr := repository.FindLogUnit(t.Context(), nil, &tt.key, tt.activityID, tt.languageCode)
+			unit, unitErr := repository.FindLogUnitByKey(t.Context(), tt.key, tt.activityID, tt.languageCode)
 			assertUnitLookup(t, key, err, unit, unitErr, tt.want)
 		})
-	}
-
-	unit, err := repository.FindLogUnit(t.Context(), nil, nil, 1, "jpn")
-	if unit != nil || err != nil {
-		t.Errorf("log unit without id or key=%+v err=%v, want nil", unit, err)
 	}
 }
 

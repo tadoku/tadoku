@@ -1,4 +1,5 @@
 ---
+description: Accepted decision to serve global, yearly and contest leaderboards from Redis-compatible sorted sets with a PostgreSQL fallback.
 sidebar_position: 1
 title: "001 - Leaderboard Improvements"
 ---

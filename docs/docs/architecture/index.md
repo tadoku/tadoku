@@ -45,16 +45,16 @@ browser → ingress-nginx → Envoy → webv2 / auth / admin
   it with a signed JWT (`id_token` mutator) and forwards to Tadoku API.
   Tadoku API verifies that JWT against Oathkeeper's JWKS and rejects banned
   users before any operation runs. See
-  [Authorization](./services/authorization.md).
+  [Authorization](./authorization.md).
 - **Service calls** use short-lived service JWTs from the Oathkeeper token
   exchange. Tadoku API uses them to reach Flipt. See
-  [Service-to-service authentication](./services/s2s-auth.md).
+  [Service-to-service authentication](./service-tokens.md).
 - **Operator routes** such as the Flipt UI on `flags.tadoku.dev.lab` require a
   Kratos session, and Oathkeeper asks Tadoku API whether that user is an
   administrator.
 - **Branch routing:** Envoy sends each request to a developer's branch overlay
   when one is selected and healthy, and to the base otherwise. See
-  [Development environment](./local-environment.md).
+  [Development environment](../develop/environment.md).
 
 ## Data
 
@@ -63,12 +63,12 @@ browser → ingress-nginx → Envoy → webv2 / auth / admin
   starts.
 - PostgreSQL is the source of truth for leaderboards. Valkey holds sorted-set
   caches that the leaderboard outbox worker keeps current; see
-  [ADR 001](./adr/001-leaderboard.md).
+  [ADR 001](../adr/001-leaderboard.md).
 - Kratos and Keto keep their own databases in the same PostgreSQL server.
 
 ## Where to go next
 
-- [Tadoku API](./tadoku-api/index.md) for the backend
-- [Frontend overview](./frontend/index.md) for the applications and design systems
-- [Development environment](./local-environment.md) to run and verify a branch
-- [API reference](./api/index.md) for the public HTTP contract
+- [Tadoku API](../tadoku-api/index.md) for the backend
+- [Frontend overview](../frontend/index.md) for the applications and design systems
+- [Development environment](../develop/environment.md) to run and verify a branch
+- [API reference](../api/index.md) for the public HTTP contract

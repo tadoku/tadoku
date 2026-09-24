@@ -132,7 +132,7 @@ const config: Config = {
           title: 'Documentation',
           items: [
             {
-              label: 'Getting Started',
+              label: 'Start here',
               to: '/',
             },
             {

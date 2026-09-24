@@ -39,7 +39,7 @@ pnpm check:paper-boundaries
 
 The Next.js apps have no typecheck script, so use `pnpm --filter <app> exec tsc --noEmit`. The Paper apps have `pnpm --filter <app> typecheck`. Each application page lists its own commands.
 
-To run webv2, auth or admin against the shared development backend, use DevCLI as described in [Local environment](../local-environment.md).
+To run webv2, auth or admin against the shared development backend, use DevCLI as described in [Development environment](../develop/environment.md).
 
 ## Conventions
 

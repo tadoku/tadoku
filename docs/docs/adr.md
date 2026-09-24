@@ -1,9 +1,12 @@
 ---
+description: What architectural decision records are, the index of Tadoku's ADRs and the template for writing a new one.
 sidebar_position: 2
 title: Architectural Decision Records
 ---
 
 # Architectural Decision Records
+
+Read this when you want the reasoning behind a past design choice or need to record a new one.
 
 ## What are these?
 

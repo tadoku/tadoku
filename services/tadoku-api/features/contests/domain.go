@@ -2,7 +2,6 @@
 package contests
 
 import (
-	"errors"
 	"sort"
 	"time"
 	"unicode/utf8"
@@ -18,7 +17,7 @@ var (
 	ErrContestNotFound          = errx.NewNotFoundError("contest not found")
 	ErrContestCreatorNotFound   = errx.NewNotFoundError("contest creator not found")
 	ErrContestCreationForbidden = errx.NewForbiddenError("contest creation forbidden")
-	ErrContestCreatorTooYoung   = errors.New("contest creator account too young")
+	ErrContestCreatorTooYoung   = errx.NewForbiddenError("contest creator account too young")
 	ErrInvalidActivity          = errx.NewInvalidInputError("invalid contest activity")
 	ErrInvalidRegistration      = errx.NewInvalidInputError("invalid contest registration")
 	ErrRegistrationNotFound     = errx.NewNotFoundError("contest registration not found")

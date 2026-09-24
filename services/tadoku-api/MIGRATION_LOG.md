@@ -42,7 +42,6 @@
 - [ ] Fix contests `FindRegistration` language hydration to match list hydrate; delete the app padding loop in `contest_profile`.
 - [ ] Stop loading contest on find-registration when the response omits it; remove app `registration.Contest = nil`.
 - [ ] Centralize the banned Keto relation in `internal/permissions`; cmd/e2e call it; forbid raw banned triples elsewhere.
-- [ ] Change `CheckContestCreatePermission` guest to 401 and too-young to 403; update HTTP goldens and access level.
 - [ ] Align contest scoring rule-set list guest auth with platform (`RequireAuthenticated` + owner/admin); guest 401 golden.
 - [ ] Standardize caller UUID / self-or-admin helpers in app; ban ad-hoc Subject UUID parse outside allowlisted guest paths.
 - [ ] Keep the Flipt management client flag-agnostic; product flag allowlist only in featureflags (no product flag names in infra).

@@ -26,6 +26,9 @@ var ErrAccountDeletionInProgress = profile.ErrAccountDeletionInProgress
 var ErrContestRegistrationNotFound = contests.ErrRegistrationNotFound
 
 func (a *Application) CheckContestCreatePermission(ctx context.Context) error {
+	if err := a.permissions.RequireAuthenticated(ctx); err != nil {
+		return err
+	}
 	if a.permissions.IsAdminOrFalse(ctx) {
 		return nil
 	}

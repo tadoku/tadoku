@@ -4,6 +4,11 @@ Develop **webv2, auth, admin (Next.js/pnpm)** and **native tadoku-api** on the
 Homelab development cluster. The committed `.dev/config.yaml` is the real Homelab
 configuration; no hostname substitution is needed.
 
+For a task-oriented walkthrough, use the checked-in
+[verification skill](../.agents/skills/verify-tadoku/SKILL.md) and
+[feature map](../.agents/skills/verify-tadoku/references/features/README.md).
+This runbook remains authoritative for CLI installation and operation.
+
 The `tdk-dev-*` GitOps base is active on `homelab-dev`. See
 [`k8s/dev/base/README.md`](../k8s/dev/base/README.md) before first use.
 

@@ -162,6 +162,14 @@ bazel build //services/... && bazel test //services/...
 
 ## Dev Environment
 
+For verifying application changes, read the checked-in
+[verify-tadoku skill](.agents/skills/verify-tadoku/SKILL.md), then only the relevant
+[feature-map sections](.agents/skills/verify-tadoku/references/features/README.md).
+This works without a globally installed skill: open those files directly if your
+agent does not discover `.agents/skills`. Update the relevant map in the same PR
+when navigation, prerequisites or observable behavior changes. The map is a
+verification aid, not a second deployment catalog; Bazel owns service discovery.
+
 Use DevCLI for frontend/native API development; `.dev/README.md` owns its workflow.
 The real, non-secret Homelab configuration is committed in `.dev/config.yaml` and
 `k8s/dev/base/`. This is development-only GitOps, not the production deployment.

@@ -35,6 +35,7 @@
 - [ ] Add `RegistrationUpsertParameters.Validate()` with field-specific invalid-input messages; drop the catch-all sentinel for pure registration rules.
 - [ ] Split pages/posts Create+Update into one-SQL repository methods; allocate content IDs in the service under the app transaction; ban `uuid.New` in `*_repository.go`.
 - [ ] Extract leaderboard Valkey cache I/O from `Service` into a Store (mirror immersion `LeaderboardStore`); deny `valkey-go` imports outside Store packages.
+- [ ] Move leaderboard outbox transaction ownership from the repository to a composition layer above it, with the worker run and transaction coordinated there; keep repository methods to one SQL statement each.
 - [ ] Move scoring `unitActivities` into shared `domain/activities`; ban private unit→activity maps elsewhere.
 - [x] Share one profile Kratos traits decoder; remove the dead untagged `Email` field in `FindProfile`.
 - [ ] Make logs `YearlyActivitySplit` reuse `hydrateLogActivity` / typed `ErrInvalidActivity` (not `fmt.Errorf` → 500).

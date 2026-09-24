@@ -65,14 +65,14 @@ the loop to add services. `--no-watch` does not provide live updates.
 ## One Postgres pod, branch databases
 
 The operator-managed `tdk-dev-data/tadoku-dev-db` is the only required
-Postgres cluster. Base `immersion`, `kratos`, and `keto` databases stay shared.
-Each native overlay uses `immersion-<owner-and-branch-route>` on that same server.
+Postgres cluster. Base `tadoku`, `kratos`, and `keto` databases stay shared.
+Each native overlay uses `tadoku-<owner-and-branch-route>` on that same server.
 The route contains a collision-resistant hash. No branch creates another
 Postgres cluster, PVC, or long-running database pod.
 
 A short-lived dependency Job creates the database idempotently; only that Job
 references the existing administrator Secret. API/migration/seed use the existing
-`immersion` role. Credentials remain Secret references. This is cooperative
+`tadoku` role. Credentials remain Secret references. This is cooperative
 development isolation, not a hostile-tenant boundary: the role, Kratos, Keto,
 and Valkey remain shared.
 
@@ -102,8 +102,9 @@ consistent data across services otherwise using base data.
 `dev down` removes only current-owner/branch overlays and disposable Jobs.
 **Branch databases are retained**, also after overlay TTL cleanup. No automatic
 SQL-drop operation exists. Deletion requires inspecting the exact database and
-ownership, then separate authorization. Never drop shared `immersion`,
-`kratos`, or `keto`. `make dev-reset` is disabled; any reset needs an explicitly
+ownership, then separate authorization. Never drop shared `tadoku`, `kratos`,
+or `keto`; retained `immersion` databases also require separate approval.
+`make dev-reset` is disabled; any reset needs an explicitly
 approved, scoped runbook, not the historical Tilt reset script.
 
 ## Shared setup and routing

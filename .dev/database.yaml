@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: immersion-${DEV_ROUTE}
+  name: tadoku-${DEV_ROUTE}
 spec:
   backoffLimit: 0
   activeDeadlineSeconds: 240
@@ -17,9 +17,9 @@ spec:
           args:
             - |
               psql -X --set=ON_ERROR_STOP=1 --set=route="$DEV_ROUTE" <<'SQL'
-              select 'immersion-' || :'route' as database,
+              select 'tadoku-' || :'route' as database,
                      'dev-cli branch database route=' || :'route' as marker,
-                     octet_length('immersion-' || :'route') <= 63
+                     octet_length('tadoku-' || :'route') <= 63
                      and :'route' ~ '^[a-z0-9][a-z0-9-]*-[0-9a-f]{8}$' as valid_name
               \gset
               \if :valid_name
@@ -29,7 +29,7 @@ spec:
               select pg_advisory_lock(hashtextextended(:'database', 0));
               select exists(select from pg_database where datname = :'database') as exists,
                      exists(select from pg_database where datname = :'database'
-                            and pg_get_userbyid(datdba) = 'immersion'
+                            and pg_get_userbyid(datdba) = 'tadoku'
                             and shobj_description(oid, 'pg_database') = :'marker') as owned
               \gset
               \if :exists
@@ -39,7 +39,7 @@ spec:
                   do $$ begin raise exception 'refusing existing database without matching dev-cli ownership'; end $$;
                 \endif
               \else
-                select format('create database %I owner immersion', :'database') \gexec
+                select format('create database %I owner tadoku', :'database') \gexec
                 select format('comment on database %I is %L', :'database', :'marker') \gexec
               \endif
               SQL

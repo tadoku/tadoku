@@ -21,18 +21,18 @@ spec:
             - name: POSTGRES_HOST
               value: tadoku-dev-db.tdk-dev-data
             - name: POSTGRES_DATABASE
-              value: immersion-${DEV_ROUTE}
+              value: tadoku-${DEV_ROUTE}
             - name: POSTGRES_SSLMODE
               value: require
             - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
-                  name: immersion.tadoku-dev-db.credentials.postgresql.acid.zalan.do
+                  name: tadoku.tadoku-dev-db.credentials.postgresql.acid.zalan.do
                   key: username
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: immersion.tadoku-dev-db.credentials.postgresql.acid.zalan.do
+                  name: tadoku.tadoku-dev-db.credentials.postgresql.acid.zalan.do
                   key: password
           resources:
             requests:

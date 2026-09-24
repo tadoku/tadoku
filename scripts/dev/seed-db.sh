@@ -304,13 +304,13 @@ refresh_identity_password "$ADMIN_EMAIL" "$ADMIN_PASSWORD"
 refresh_identity_password "$READER_EMAIL" "$READER_PASSWORD"
 seed_keto_admin "$ADMIN_USER_ID"
 
-wait_for_relation immersion immersion users
-wait_for_relation immersion immersion pages
-wait_for_relation immersion immersion profiles
+wait_for_relation tadoku tadoku users
+wait_for_relation tadoku tadoku pages
+wait_for_relation tadoku tadoku profiles
 
-run_seed_sql immersion immersion "$ROOT/scripts/dev/seed/immersion.sql"
-run_seed_sql immersion immersion "$ROOT/scripts/dev/seed/profile.sql"
-run_seed_sql immersion immersion "$ROOT/scripts/dev/seed/content.sql"
+run_seed_sql tadoku tadoku "$ROOT/scripts/dev/seed/immersion.sql"
+run_seed_sql tadoku tadoku "$ROOT/scripts/dev/seed/profile.sql"
+run_seed_sql tadoku tadoku "$ROOT/scripts/dev/seed/content.sql"
 
 echo "dev seed complete"
 echo "admin: ${ADMIN_EMAIL}"

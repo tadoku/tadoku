@@ -24,14 +24,14 @@ dependencies:
     retention: down
     readiness:
       - resource: job
-        name: immersion-${DEV_ROUTE}
+        name: tadoku-${DEV_ROUTE}
         condition: Complete
         timeout: 300s
 tasks:
   - name: migrate
     namespace: tdk-dev-tadoku-api
     manifest: .dev/migrate.yaml
-    target: tadoku-dev-db.tdk-dev-data/immersion-${DEV_ROUTE}
+    target: tadoku-dev-db.tdk-dev-data/tadoku-${DEV_ROUTE}
     dependencies:
       - database
     timeout: 5m
@@ -41,7 +41,7 @@ tasks:
   - name: seed
     namespace: tdk-dev-tadoku-api
     manifest: .dev/seed.yaml
-    target: tadoku-dev-db.tdk-dev-data/immersion-${DEV_ROUTE}
+    target: tadoku-dev-db.tdk-dev-data/tadoku-${DEV_ROUTE}
     dependencies:
       - database
     timeout: 5m

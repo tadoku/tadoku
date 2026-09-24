@@ -29,7 +29,7 @@ pkg_tar(
 oci_image(
     name = "seed_image",
     base = "@tadoku_dev_postgres_linux_amd64",
-    cmd = ["case \"$PGHOST/$PGDATABASE\" in tadoku-dev-db.tdk-dev-data/immersion-?*) ;; *) echo 'refusing seed outside a branch development database' >&2; exit 1;; esac; exec psql -X --set=ON_ERROR_STOP=1 --file=/seed.sql"],
+    cmd = ["case \"$PGHOST/$PGDATABASE\" in tadoku-dev-db.tdk-dev-data/tadoku-?*) ;; *) echo 'refusing seed outside a branch development database' >&2; exit 1;; esac; exec psql -X --set=ON_ERROR_STOP=1 --file=/seed.sql"],
     entrypoint = [
         "/bin/sh",
         "-ec",

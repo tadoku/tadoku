@@ -35,10 +35,10 @@ func (r *PostsRepository) CreatePost(ctx context.Context, item *Post, contentID 
 		publishedAt = postgres.Timestamp(*item.PublishedAt)
 	}
 	err = queries.New(executor).CreatePost(ctx, queries.CreatePostParams{
-		ID:               pgtype.UUID{Bytes: item.ID, Valid: true},
+		ID:               postgres.UUID(item.ID),
 		Namespace:        item.Namespace,
 		Slug:             item.Slug,
-		CurrentContentID: pgtype.UUID{Bytes: contentID, Valid: true},
+		CurrentContentID: postgres.UUID(contentID),
 		PublishedAt:      publishedAt,
 		CreatedAt:        postgres.Timestamp(*item.CreatedAt),
 		UpdatedAt:        postgres.Timestamp(*item.UpdatedAt),
@@ -60,8 +60,8 @@ func (r *PostsRepository) CreatePostContent(ctx context.Context, postID, content
 	}
 
 	err = queries.New(executor).CreatePostContent(ctx, queries.CreatePostContentParams{
-		ID:        pgtype.UUID{Bytes: contentID, Valid: true},
-		PostID:    pgtype.UUID{Bytes: postID, Valid: true},
+		ID:        postgres.UUID(contentID),
+		PostID:    postgres.UUID(postID),
 		Title:     title,
 		Content:   content,
 		CreatedAt: postgres.Timestamp(createdAt),
@@ -81,7 +81,7 @@ func (r *PostsRepository) DeletePost(ctx context.Context, namespace string, id u
 
 	err = queries.New(executor).DeletePost(ctx, queries.DeletePostParams{
 		Namespace: namespace,
-		ID:        pgtype.UUID{Bytes: id, Valid: true},
+		ID:        postgres.UUID(id),
 		DeletedAt: postgres.Timestamp(deletedAt),
 	})
 	if err != nil {
@@ -118,7 +118,7 @@ func (r *PostsRepository) FindPostByID(ctx context.Context, namespace string, id
 
 	row, err := queries.New(executor).FindPostByID(ctx, queries.FindPostByIDParams{
 		Namespace: namespace,
-		ID:        pgtype.UUID{Bytes: id, Valid: true},
+		ID:        postgres.UUID(id),
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrPostNotFound
@@ -202,7 +202,7 @@ func (r *PostsRepository) UpdatePost(ctx context.Context, item *Post, contentID 
 		publishedAt = postgres.Timestamp(*item.PublishedAt)
 	}
 	_, err = queries.New(executor).UpdatePost(ctx, queries.UpdatePostParams{
-		ID:               pgtype.UUID{Bytes: item.ID, Valid: true},
+		ID:               postgres.UUID(item.ID),
 		Namespace:        item.Namespace,
 		Slug:             item.Slug,
 		CurrentContentID: postgres.NullableUUID(contentID),
@@ -230,8 +230,8 @@ func (r *PostsRepository) GetPostVersion(ctx context.Context, namespace string, 
 
 	row, err := queries.New(executor).GetPostVersion(ctx, queries.GetPostVersionParams{
 		Namespace: namespace,
-		PostID:    pgtype.UUID{Bytes: postID, Valid: true},
-		ContentID: pgtype.UUID{Bytes: contentID, Valid: true},
+		PostID:    postgres.UUID(postID),
+		ContentID: postgres.UUID(contentID),
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrPostNotFound
@@ -257,7 +257,7 @@ func (r *PostsRepository) ListPostVersions(ctx context.Context, namespace string
 
 	rows, err := queries.New(executor).ListPostVersions(ctx, queries.ListPostVersionsParams{
 		Namespace: namespace,
-		PostID:    pgtype.UUID{Bytes: id, Valid: true},
+		PostID:    postgres.UUID(id),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("list post versions: %w", err)

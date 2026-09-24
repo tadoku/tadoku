@@ -181,11 +181,7 @@ func (r *Repository) lockOutbox(ctx context.Context) ([]outboxEvent, error) {
 	}
 	events := make([]outboxEvent, len(rows))
 	for i, row := range rows {
-		events[i] = outboxEvent{id: row.ID, eventType: row.EventType}
-		if row.ContestID.Valid {
-			id := uuid.UUID(row.ContestID.Bytes)
-			events[i].contestID = &id
-		}
+		events[i] = outboxEvent{id: row.ID, eventType: row.EventType, contestID: postgres.UUIDPointer(row.ContestID)}
 		if row.Year.Valid {
 			year := row.Year.Int16
 			events[i].year = &year

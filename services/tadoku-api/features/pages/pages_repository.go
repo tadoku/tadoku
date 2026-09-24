@@ -33,10 +33,10 @@ func (r *PagesRepository) CreatePage(ctx context.Context, item *Page, contentID 
 		publishedAt = postgres.Timestamp(*item.PublishedAt)
 	}
 	err = queries.New(executor).CreatePage(ctx, queries.CreatePageParams{
-		ID:               pgtype.UUID{Bytes: item.ID, Valid: true},
+		ID:               postgres.UUID(item.ID),
 		Namespace:        item.Namespace,
 		Slug:             item.Slug,
-		CurrentContentID: pgtype.UUID{Bytes: contentID, Valid: true},
+		CurrentContentID: postgres.UUID(contentID),
 		PublishedAt:      publishedAt,
 		CreatedAt:        postgres.Timestamp(*item.CreatedAt),
 		UpdatedAt:        postgres.Timestamp(*item.UpdatedAt),
@@ -58,8 +58,8 @@ func (r *PagesRepository) CreatePageContent(ctx context.Context, pageID, content
 	}
 
 	err = queries.New(executor).CreatePageContent(ctx, queries.CreatePageContentParams{
-		ID:        pgtype.UUID{Bytes: contentID, Valid: true},
-		PageID:    pgtype.UUID{Bytes: pageID, Valid: true},
+		ID:        postgres.UUID(contentID),
+		PageID:    postgres.UUID(pageID),
 		Title:     title,
 		Html:      html,
 		CreatedAt: postgres.Timestamp(createdAt),
@@ -79,7 +79,7 @@ func (r *PagesRepository) DeletePage(ctx context.Context, namespace string, id u
 
 	err = queries.New(executor).DeletePage(ctx, queries.DeletePageParams{
 		Namespace: namespace,
-		ID:        pgtype.UUID{Bytes: id, Valid: true},
+		ID:        postgres.UUID(id),
 		DeletedAt: postgres.Timestamp(deletedAt),
 	})
 	if err != nil {
@@ -116,7 +116,7 @@ func (r *PagesRepository) FindPageByID(ctx context.Context, namespace string, id
 
 	row, err := queries.New(executor).FindPageByID(ctx, queries.FindPageByIDParams{
 		Namespace: namespace,
-		ID:        pgtype.UUID{Bytes: id, Valid: true},
+		ID:        postgres.UUID(id),
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrPageNotFound
@@ -198,7 +198,7 @@ func (r *PagesRepository) UpdatePage(ctx context.Context, item *Page, contentID 
 		publishedAt = postgres.Timestamp(*item.PublishedAt)
 	}
 	_, err = queries.New(executor).UpdatePage(ctx, queries.UpdatePageParams{
-		ID:               pgtype.UUID{Bytes: item.ID, Valid: true},
+		ID:               postgres.UUID(item.ID),
 		Namespace:        item.Namespace,
 		Slug:             item.Slug,
 		CurrentContentID: postgres.NullableUUID(contentID),
@@ -226,8 +226,8 @@ func (r *PagesRepository) GetPageVersion(ctx context.Context, namespace string, 
 
 	row, err := queries.New(executor).GetPageVersion(ctx, queries.GetPageVersionParams{
 		Namespace: namespace,
-		PageID:    pgtype.UUID{Bytes: pageID, Valid: true},
-		ContentID: pgtype.UUID{Bytes: contentID, Valid: true},
+		PageID:    postgres.UUID(pageID),
+		ContentID: postgres.UUID(contentID),
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrPageNotFound
@@ -253,7 +253,7 @@ func (r *PagesRepository) ListPageVersions(ctx context.Context, namespace string
 
 	rows, err := queries.New(executor).ListPageVersions(ctx, queries.ListPageVersionsParams{
 		Namespace: namespace,
-		PageID:    pgtype.UUID{Bytes: id, Valid: true},
+		PageID:    postgres.UUID(id),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("list page versions: %w", err)

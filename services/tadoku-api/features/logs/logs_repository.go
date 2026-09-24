@@ -213,11 +213,7 @@ func (r *LogsRepository) OngoingContestIDs(ctx context.Context, id uuid.UUID, no
 	if err != nil {
 		return nil, err
 	}
-	result := make([]uuid.UUID, len(rows))
-	for i, row := range rows {
-		result[i] = row.Bytes
-	}
-	return result, nil
+	return postgres.UUIDs(rows), nil
 }
 
 type logTrackingParams struct {
@@ -260,17 +256,13 @@ func (r *LogsRepository) ListUnits(ctx context.Context) ([]Unit, error) {
 
 	result := make([]Unit, 0, len(rows))
 	for _, row := range rows {
-		var languageCode *string
-		if row.LanguageCode.Valid {
-			languageCode = &row.LanguageCode.String
-		}
 		result = append(result, Unit{
 			ID:            uuid.UUID(row.ID.Bytes),
 			Key:           row.UnitKey,
 			LogActivityID: int(row.LogActivityID),
 			Name:          row.Name,
 			Modifier:      row.Modifier,
-			LanguageCode:  languageCode,
+			LanguageCode:  postgres.TextPointer(row.LanguageCode),
 		})
 	}
 	return result, nil
@@ -536,11 +528,7 @@ func (r *LogsRepository) AttachedContestIDs(ctx context.Context, logID uuid.UUID
 		return nil, err
 	}
 
-	result := make([]uuid.UUID, len(rows))
-	for i, row := range rows {
-		result[i] = row.Bytes
-	}
-	return result, nil
+	return postgres.UUIDs(rows), nil
 }
 
 func (r *LogsRepository) SoftDelete(ctx context.Context, logID uuid.UUID, now time.Time) error {

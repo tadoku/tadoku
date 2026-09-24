@@ -21,7 +21,7 @@ instead; for a map of the components, see
 | Owner | Owns |
 | --- | --- |
 | Argo CD | The always-running base defined in `k8s/dev/base/`, including automatic migration Jobs, base workloads and canonical routing |
-| DevCLI | Branch overlays, routing overrides, short-lived tasks and owner/branch database provisioning |
+| dev-cli | Branch overlays, routing overrides, short-lived tasks and owner/branch database provisioning |
 | Homelab infrastructure | The Argo CD Application and the development Image Updater, not copies of these workload manifests |
 | Platform | The Postgres operator and Envoy Gateway, which must exist before the base syncs |
 
@@ -67,7 +67,7 @@ before starting Next. The public Lab CA is mounted for server-side HTTPS.
 - It is a deployment adapter, not a source-sync server or reusable CLI runtime.
 - It calls a private Next startup API. Reverify it whenever the frontend
   framework version changes.
-- Branch pods use the DevCLI-managed pnpm Next.js dev server, not this adapter.
+- Branch pods use the dev-cli-managed pnpm Next.js dev server, not this adapter.
 
 ## Leaderboard workers
 
@@ -126,7 +126,7 @@ substitute for backward-compatible schema and application releases.
 
 Base seeding is separate from migrations: `make dev-seed` creates the marked
 synthetic identities and base fixtures. Branch databases are migrated and
-seeded by DevCLI tasks; see
+seeded by dev-cli tasks; see
 [Development environment](../develop/environment.md#branch-databases).
 
 ## Credentials
@@ -229,7 +229,7 @@ migration blocking a live rollout, Image Updater commits, ingress and
 authentication, or branch isolation. Those remain mandatory live gates after
 activation: verify the real browser login and leaderboard, two owners,
 independent frontend and API fallback, HMR, Go binary replacement, migration
-failure gating and scoped cleanup. `.dev/acceptance.md` lists the DevCLI gates.
+failure gating and scoped cleanup. `.dev/acceptance.md` lists the dev-cli gates.
 Retain browser traces and screenshots outside source control, and identify the
 exact tested revision and any substituted routing boundary.
 

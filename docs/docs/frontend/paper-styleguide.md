@@ -18,7 +18,7 @@ Together with `paper-ui`, it forms the Paper design system. It must not depend o
 
 ## Development
 
-DevCLI has no overlay for this app, so run it locally from `frontend/`:
+dev-cli has no overlay for this app, so run it locally from `frontend/`:
 
 ```sh
 pnpm paper-styleguide        # builds paper-ui, then serves Vite on port 5173

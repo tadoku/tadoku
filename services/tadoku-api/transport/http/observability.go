@@ -62,7 +62,7 @@ func observe(
 	})
 }
 
-func nativeRouteLabel(request *stdhttp.Request) string {
+func patternRouteLabel(request *stdhttp.Request) string {
 	if request.Pattern == "" {
 		return "unmatched"
 	}

@@ -45,7 +45,7 @@ func auditUnavailableRoleUpdateHandler(t *testing.T) *transport.Router {
 
 	closedPool := openClosedPool(t, api.db.DSN)
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	native, _, _, err := newTestRouterWithLogger(
+	router, _, _, err := newTestRouterWithLogger(
 		t.Context(),
 		api.db.Pool,
 		closedPool,
@@ -57,5 +57,5 @@ func auditUnavailableRoleUpdateHandler(t *testing.T) *transport.Router {
 		t.Fatal(err)
 	}
 
-	return native
+	return router
 }

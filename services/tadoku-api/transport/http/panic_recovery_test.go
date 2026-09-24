@@ -101,7 +101,7 @@ func TestApplicationPanicRecovery(t *testing.T) {
 		}
 	}
 	if !observed {
-		t.Error("native panic histogram sample with status 500 not found")
+		t.Error("panic histogram sample with status 500 not found")
 	}
 	if got := serverErrors.String(); got != "" {
 		t.Errorf("net/http logged recovered panic: %s", got)

@@ -7,8 +7,8 @@ truncate table public.announcements, public.contest_logs, public.contest_registr
   public.moderation_audit_log, public.pages, public.pages_content, public.posts,
   public.posts_content, public.user_roles, public.users restart identity;
 
--- Restore scoring seed data after each native/legacy implementation. Logs must
--- be cleared first because their provenance references scoring rule sets.
+-- Restore scoring seed data on every reset. Logs must be cleared first because
+-- their provenance references scoring rule sets.
 update public.contests set scoring_rule_set_id = null where scoring_rule_set_id is not null;
 delete from public.platform_scoring_config;
 delete from public.scoring_rules;

@@ -21,8 +21,6 @@ func NewService(logs *LogsRepository, scoringEngineEnabled bool) *Service {
 	return &Service{logs: logs, scoringEngineEnabled: scoringEngineEnabled}
 }
 
-func (s *Service) ScoringEngineEnabled() bool { return s.scoringEngineEnabled }
-
 func (s *Service) PlanContestRegistrationUpdate(log *Log, targets []logscore.Target, now time.Time) ([]logscore.Target, []uuid.UUID, error) {
 	desired := make(map[uuid.UUID]struct{}, len(targets))
 	for _, target := range targets {

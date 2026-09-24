@@ -1,17 +1,17 @@
 ---
 name: dev-cli
-description: Run Tadoku branch overlays with DevCLI on homelab-dev. Use for live service edits, branch tasks, links, status, logs and owner-scoped cleanup; use verify-tadoku for browser journeys and PR evidence, not production deployment.
+description: Run Tadoku branch overlays with dev-cli on homelab-dev. Use for live service edits, branch tasks, links, status, logs and owner-scoped cleanup; use verify-tadoku for browser journeys and PR evidence, not production deployment.
 ---
 
-# Develop with DevCLI
+# Develop with dev-cli
 
 Run commands from the repository root. Read [Development environment](../../../docs/docs/develop/environment.md) for installation, configuration, branch databases, routing and cleanup. Read [`.dev/config.yaml`](../../../.dev/config.yaml) before using the shared cluster. This skill does not grant cluster access or authorize changes to the shared base.
 
 ## Start the branch
 
 1. Inspect Git status, branch and revision. Preserve existing work and check for a `dev up` loop belonging to this exact checkout. Fetch `origin/main` when available; record a stale base if fetching fails. Use a stable owner unique to this checkout, consistently with `--owner` or `DEV_OWNER`.
-2. Check `dev version` (v0.4.0 or newer) and `dev doctor`. Doctor checks prerequisites only. Follow the environment guide if DevCLI needs installation; do not expose credentials or kubeconfigs.
-3. Make the intended service edits before `dev up`. DevCLI selects Bazel deployables once at startup from changes against the merge base, including uncommitted edits. Unknown paths select all deployables. If a later edit adds a service, restart the loop. `--service` adds a service; `--no-watch` does not provide live updates.
+2. Check `dev version` (v0.4.0 or newer) and `dev doctor`. Doctor checks prerequisites only. Follow the environment guide if dev-cli needs installation; do not expose credentials or kubeconfigs.
+3. Make the intended service edits before `dev up`. dev-cli selects Bazel deployables once at startup from changes against the merge base, including uncommitted edits. Unknown paths select all deployables. If a later edit adds a service, restart the loop. `--service` adds a service; `--no-watch` does not provide live updates.
 4. Run `dev up --owner <owner>` in a durable terminal. For API work, add `--task migrate --task seed` to prepare the branch database. For frontend work that writes data, add `--service tadoku-api --task migrate --task seed` so writes use a branch database. Frontend-only read-only checks can omit those tasks. The seed task requires shared fixture identities; do not run `make dev-seed` automatically because it changes shared identities and base data.
 
 Keep the loop, owner, checkout and terminal handle together. Do not start another loop for the same checkout and route. Frontend source sync drives HMR; backend edits rebuild the affected Bazel binary and restart its supervised process. Read loop errors, `dev status --owner <owner>` and `dev logs --owner <owner> <service>` before diagnosing a failed update.

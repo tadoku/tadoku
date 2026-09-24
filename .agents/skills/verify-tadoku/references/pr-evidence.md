@@ -1,7 +1,7 @@
 # Publishing PR evidence
 
 Use this when delivering verification on an authorized Tadoku PR. Put one
-evidence block in the PR description. The existing DevCLI/browser workflow
+evidence block in the PR description. The existing dev-cli/browser workflow
 supplies the evidence; GitHub hosts the media. Do not add screenshots, videos
 or one-off capture scripts to source commits, and do not create another upload
 service. Posting evidence does not authorize merging the PR.

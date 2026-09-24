@@ -1,6 +1,6 @@
 ---
 title: Development environment
-description: How to install DevCLI and run, open, seed, verify and clean up your branch of Tadoku on the shared homelab-dev cluster.
+description: How to install dev-cli and run, open, seed, verify and clean up your branch of Tadoku on the shared homelab-dev cluster.
 ---
 
 # Development environment
@@ -8,7 +8,7 @@ description: How to install DevCLI and run, open, seed, verify and clean up your
 Read this when you want to run your branch of webv2, auth, admin or Tadoku API
 on the shared development cluster, or check that a change works there.
 
-DevCLI deploys live branch overlays of webv2, auth, admin and Tadoku API to the
+dev-cli deploys live branch overlays of webv2, auth, admin and Tadoku API to the
 `homelab-dev` Kubernetes cluster. Argo CD keeps a shared base of every service
 running there even when no developer has a loop running; see
 [Development base](../operations/development-base.md). There is no local
@@ -29,7 +29,7 @@ substitution is needed.
 ## Prerequisites
 
 - Git access to Tadoku and to the private `antonve/dev-cli` repository.
-- Go to install DevCLI, Bazelisk or Bazel at the repository's pinned version,
+- Go to install dev-cli, Bazelisk or Bazel at the repository's pinned version,
   and kubectl with authorized access to the `homelab-dev` context.
 - Node and pnpm for frontend tools; Docker for local container-based checks.
 - Lab network and DNS access, and trust in the Lab CA, including for the
@@ -39,9 +39,9 @@ The cluster already supplies Postgres, the shared auth providers and routing.
 Obtain kube access from the operator. Never commit kubeconfigs, credentials or
 private keys.
 
-## Install DevCLI
+## Install dev-cli
 
-Install DevCLI v0.4.0 or newer. Older releases lack the YAML configuration,
+Install dev-cli v0.4.0 or newer. Older releases lack the YAML configuration,
 multi-host routing and dependency/task support this repository uses.
 
 ```sh
@@ -92,7 +92,7 @@ Keep this terminal running.
   replacement (HMR).
 - Go edits rebuild the affected Bazel binary and restart it in the same pod.
   A failed compilation keeps the last working process running.
-- DevCLI builds overlay images on demand, pushes them to the development
+- dev-cli builds overlay images on demand, pushes them to the development
   registry and deploys them by immutable digest.
 - The `migrate` and `seed` tasks prepare your branch database before the API
   starts; see [Branch databases](#branch-databases).
@@ -102,7 +102,7 @@ Use a different owner for each checkout you run at the same time.
 
 ### Which services start
 
-DevCLI asks Bazel which deployables changed relative to the merge base with
+dev-cli asks Bazel which deployables changed relative to the merge base with
 `origin/main`, including uncommitted edits. It starts overlays only for those;
 every other service keeps using the base.
 
@@ -318,7 +318,7 @@ loop with Ctrl-C alone leaves the overlays running.
   container layer.
 - Removing one overlay preserves other owners and the base. Routing
   convergence can briefly serve the base.
-- If an ignored `.dev/config.json` exists next to `.dev/config.yaml`, DevCLI
+- If an ignored `.dev/config.json` exists next to `.dev/config.yaml`, dev-cli
   rejects the ambiguous defaults. Review it and move it into an override file.
 - For a shared-base failure, inspect the Argo CD application and follow
   [Development base](../operations/development-base.md). Do not restart or
@@ -358,4 +358,4 @@ source control.
 
 Merging to `main` can publish new images through the path-filtered CI
 workflows. Development cluster access does not authorize publishing or rolling
-out a release. DevCLI changes land in the DevCLI repository, not here.
+out a release. dev-cli changes land in the dev-cli repository, not here.

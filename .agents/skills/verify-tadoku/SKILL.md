@@ -1,6 +1,6 @@
 ---
 name: verify-tadoku
-description: Verify Tadoku application changes in the shared development environment using DevCLI branch overlays and real browser journeys. Use for frontend/backend live edits, routing checks, screenshots and verification handoffs; not production deployment or environment bootstrap.
+description: Verify Tadoku application changes in the shared development environment using dev-cli branch overlays and real browser journeys. Use for frontend/backend live edits, routing checks, screenshots and verification handoffs; not production deployment or environment bootstrap.
 ---
 
 # Verify Tadoku
@@ -11,7 +11,7 @@ read this file directly. This skill guides verification; it does not grant acces
 authorize unrelated mutations, or replace the repository's `AGENTS.md`.
 
 [Development environment](../../../docs/docs/develop/environment.md) is the
-canonical reference for installing DevCLI, starting, opening and inspecting a
+canonical reference for installing dev-cli, starting, opening and inspecting a
 branch, routing headers, branch databases, fixture accounts and cleanup. This
 skill adds only what verification needs on top of it.
 
@@ -22,7 +22,7 @@ Identify the user action, expected visible result, persistence or downstream
 effect, and the failure/empty/permission state the change could break. For a bug,
 reproduce before changing it. A successful build or HTTP 200 alone is not proof.
 
-Use the existing DevCLI, browser automation, and repository tests. Do not invent
+Use the existing dev-cli, browser automation, and repository tests. Do not invent
 another router, wrapper CLI, fixture service or authentication bypass. Preserve
 the real login → frontend → gateway → API path. Choose meaningful affected
 journeys rather than running the entire inventory for every edit.

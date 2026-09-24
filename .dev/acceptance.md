@@ -40,6 +40,6 @@ overlay calling a Tadoku API overlay on tadoku.dev.lab, visit the CLI links for
 both hosts in the same browser profile. Clearing one host does not clear others.
 Run browsers with Lab CA trust; note any TLS verification bypass separately.
 
-These gates cover the supported DevCLI workflow. Repeat
+These gates cover the supported dev-cli workflow. Repeat
 them for changes to routing or synchronization; publish CLI releases only after
 their live gates pass. Live teardown always requires explicit authorization.

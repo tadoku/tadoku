@@ -29,6 +29,6 @@
 - [ ] Ban private unit→activity maps outside `domain/activities` (lint).
 - [x] Share one profile Kratos traits decoder; remove the dead untagged `Email` field in `FindProfile`.
 - [ ] Forbid raw banned/admins Keto triples outside `internal/permissions` (lint).
-- [ ] Convert `app/contests.go` to `identity.ActorID`, `identity.RequireActorID` and `requireOwnerOrAdmin`, then add a CI check that bans parsing the identity subject in application operations.
+- [ ] Add a CI check that bans parsing the identity subject in application operations.
 - [ ] Decide whether pages/posts should share content-revision primitives or stay intentional twins.
 - [x] Bind the ban-middleware path carve-out to the mux/generated `AuthzRoleGet` pattern, not the magic `"/authz/current-user/role"` string.

@@ -35,7 +35,7 @@ func (a *Application) CheckContestCreatePermission(ctx context.Context) error {
 		return nil
 	}
 
-	userID, err := identity.FromContext(ctx).UUID()
+	userID, err := identity.RequireActorID(ctx)
 	if err != nil {
 		return err
 	}
@@ -150,7 +150,7 @@ func (a *Application) FindContestRegistration(ctx context.Context, contestID uui
 		return nil, err
 	}
 
-	userID, err := identity.FromContext(ctx).UUID()
+	userID, err := identity.RequireActorID(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -168,7 +168,7 @@ func (a *Application) ListOngoingContestRegistrations(ctx context.Context) (*Con
 		return nil, err
 	}
 
-	userID, err := identity.FromContext(ctx).UUID()
+	userID, err := identity.RequireActorID(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -237,14 +237,13 @@ func (a *Application) UpsertContestRegistration(ctx context.Context, parameters 
 }
 
 func (a *Application) ListYearlyContestRegistrations(ctx context.Context, userID uuid.UUID, year int) (*ContestRegistrationList, error) {
-	user := identity.FromContext(ctx)
-	if user == nil {
+	if identity.FromContext(ctx) == nil {
 		return nil, errx.NewUnauthorizedError("unauthorized")
 	}
 
-	// Signed guests have a user identity but no UUID; they receive public history.
-	callerID, err := uuid.Parse(user.Subject)
-	includePrivate := a.permissions.IsAdminOrFalse(ctx) || (err == nil && callerID == userID)
+	// Signed guests have a user identity but no actor ID; they receive public history.
+	actorID, ok := identity.ActorID(ctx)
+	includePrivate := a.permissions.IsAdminOrFalse(ctx) || (ok && actorID == userID)
 
 	languages, err := a.languages.ListLanguages(ctx)
 	if err != nil {

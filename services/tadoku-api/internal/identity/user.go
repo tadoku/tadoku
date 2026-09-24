@@ -29,17 +29,6 @@ func FromContext(ctx context.Context) *User {
 	return user
 }
 
-func (u *User) UUID() (uuid.UUID, error) {
-	if u == nil {
-		return uuid.Nil, errx.NewInternalError("invalid signed user identity")
-	}
-	userID, err := uuid.Parse(u.Subject)
-	if err != nil {
-		return uuid.Nil, errx.NewInternalError("invalid signed user identity")
-	}
-	return userID, nil
-}
-
 // ActorID returns the verified actor's user ID. It reports false for a
 // missing identity, the guest subject and the nil UUID.
 func ActorID(ctx context.Context) (uuid.UUID, bool) {

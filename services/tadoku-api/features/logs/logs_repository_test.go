@@ -304,7 +304,7 @@ func TestLogsRepositoryListUserLogsPaging(t *testing.T) {
 	}
 }
 
-func TestLogsRepositoryListContestLogsPaging(t *testing.T) {
+func TestLogsRepositoryContestLogs(t *testing.T) {
 	t.Parallel()
 	repository, db := newTestLogsRepository(t)
 
@@ -432,6 +432,27 @@ func TestLogsRepositoryListContestLogsPaging(t *testing.T) {
 				t.Errorf("total=%d next=%q, want total=%d next=%q", list.TotalSize, list.NextPageToken, tt.wantTotal, tt.wantNext)
 			}
 		})
+	}
+
+	contestEnd := time.Date(2026, 9, 30, 23, 0, 0, 0, time.UTC)
+	afterContestEnd := time.Date(2026, 10, 1, 0, 0, 0, 0, time.UTC)
+	for _, tt := range []struct {
+		id   uuid.UUID
+		now  time.Time
+		want bool
+	}{
+		{id: oldest, now: contestEnd, want: true},
+		{id: oldest, now: afterContestEnd, want: false},
+		{id: deleted, now: afterContestEnd, want: false},
+		{id: unattached, now: afterContestEnd, want: true},
+	} {
+		got, err := repository.CanDelete(t.Context(), tt.id, tt.now)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got != tt.want {
+			t.Errorf("can delete %s at %s=%t, want %t", tt.id, tt.now, got, tt.want)
+		}
 	}
 }
 

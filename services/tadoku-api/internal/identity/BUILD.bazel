@@ -1,4 +1,4 @@
-load("@rules_go//go:def.bzl", "go_library")
+load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "identity",
@@ -6,6 +6,16 @@ go_library(
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/internal/identity",
     visibility = ["//services/tadoku-api:internal_consumers"],
     deps = [
+        "//services/tadoku-api/internal/errx",
+        "@com_github_google_uuid//:uuid",
+    ],
+)
+
+go_test(
+    name = "identity_test",
+    srcs = ["user_test.go"],
+    deps = [
+        ":identity",
         "//services/tadoku-api/internal/errx",
         "@com_github_google_uuid//:uuid",
     ],

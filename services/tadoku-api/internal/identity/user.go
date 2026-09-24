@@ -39,3 +39,27 @@ func (u *User) UUID() (uuid.UUID, error) {
 	}
 	return userID, nil
 }
+
+// CallerID returns the verified caller's user ID. It reports false for a
+// missing identity, the guest subject and the nil UUID.
+func CallerID(ctx context.Context) (uuid.UUID, bool) {
+	user := FromContext(ctx)
+	if user == nil {
+		return uuid.Nil, false
+	}
+	userID, err := uuid.Parse(user.Subject)
+	if err != nil || userID == uuid.Nil {
+		return uuid.Nil, false
+	}
+	return userID, true
+}
+
+// RequireCallerID returns the verified caller's user ID, or an unauthorized
+// error when CallerID reports none.
+func RequireCallerID(ctx context.Context) (uuid.UUID, error) {
+	userID, ok := CallerID(ctx)
+	if !ok {
+		return uuid.Nil, errx.NewUnauthorizedError("unauthorized")
+	}
+	return userID, nil
+}

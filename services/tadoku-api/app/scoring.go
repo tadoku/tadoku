@@ -42,9 +42,9 @@ func (a *Application) PreviewScore(ctx context.Context, parameters ScorePreviewP
 	if err := a.permissions.RequireAuthenticated(ctx); err != nil {
 		return nil, err
 	}
-	userID, err := identity.FromContext(ctx).UUID()
+	userID, err := identity.RequireCallerID(ctx)
 	if err != nil {
-		return nil, errx.NewUnauthorizedError("unauthorized")
+		return nil, err
 	}
 
 	featureParameters := scoring.PreviewParameters{
@@ -101,8 +101,8 @@ func (a *Application) ListContestScoringRuleSets(ctx context.Context, contestID 
 	if err != nil {
 		return nil, err
 	}
-	callerID, parseErr := uuid.Parse(identity.FromContext(ctx).Subject)
-	if (parseErr != nil || callerID != contest.OwnerUserID) && !a.permissions.IsAdminOrFalse(ctx) {
+	callerID, hasCaller := identity.CallerID(ctx)
+	if (!hasCaller || callerID != contest.OwnerUserID) && !a.permissions.IsAdminOrFalse(ctx) {
 		return nil, errx.NewForbiddenError("forbidden")
 	}
 	return a.scoring.ListContestRuleSets(ctx, contestID)

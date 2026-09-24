@@ -6,7 +6,6 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/activities"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/languages"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/logs"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
 )
 
@@ -23,9 +22,9 @@ func (a *Application) LogConfigurationOptions(ctx context.Context) (*LogConfigur
 		return nil, err
 	}
 
-	userID, err := identity.FromContext(ctx).UUID()
+	userID, err := identity.RequireCallerID(ctx)
 	if err != nil {
-		return nil, errx.NewUnauthorizedError("unauthorized")
+		return nil, err
 	}
 
 	languages, err := a.languages.ListLanguages(ctx)
@@ -51,9 +50,9 @@ func (a *Application) LogTagSuggestions(ctx context.Context, query string) ([]lo
 		return nil, err
 	}
 
-	userID, err := identity.FromContext(ctx).UUID()
+	userID, err := identity.RequireCallerID(ctx)
 	if err != nil {
-		return nil, errx.NewUnauthorizedError("unauthorized")
+		return nil, err
 	}
 
 	return a.logs.TagSuggestions(ctx, userID, query)

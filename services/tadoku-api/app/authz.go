@@ -47,9 +47,9 @@ func (a *Application) UpdateRole(ctx context.Context, parameters RoleUpdateParam
 		return err
 	}
 
-	actorID, err := uuid.Parse(identity.FromContext(ctx).Subject)
+	actorID, err := identity.RequireCallerID(ctx)
 	if err != nil {
-		return errx.NewUnauthorizedError("unauthorized")
+		return err
 	}
 
 	if err := a.authorization.UpdateRole(ctx, parameters); err != nil {

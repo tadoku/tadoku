@@ -1,8 +1,7 @@
 ## Standalone migrations
 
-Every migration ships in its own pull request, without changes outside this
-directory. CI enforces this rule; the `migration-move` label permits mechanical
-relocations and logs a warning.
+Every migration ships in its own pull request; see
+[Database and migrations](../../../docs/docs/tadoku-api/database.md#migrations).
 
 ## Scheduled official contests
 

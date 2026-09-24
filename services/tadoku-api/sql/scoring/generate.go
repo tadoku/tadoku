@@ -1,4 +1,4 @@
-// Package scoring contains the native scoring SQL generation inputs.
+// Package scoring contains the scoring SQL generation inputs.
 package scoring
 
 //go:generate go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.31.1

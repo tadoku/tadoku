@@ -32,8 +32,8 @@ func (a *Application) FindPostBySlug(ctx context.Context, namespace, slug string
 	return a.posts.FindPostByID(ctx, namespace, id)
 }
 
-func (a *Application) ListPosts(ctx context.Context, namespace string, includeDrafts bool, pageSize, page int) (*posts.PostList, error) {
-	if includeDrafts {
+func (a *Application) ListPosts(ctx context.Context, namespace string, includeDrafts *bool, pageSize, page int) (*posts.PostList, error) {
+	if includeDrafts != nil && *includeDrafts {
 		allowed, err := a.permissions.IsAdmin(ctx)
 		if err != nil {
 			return nil, err

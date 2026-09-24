@@ -36,11 +36,10 @@ test('public views cover canonical operations', () => {
   assert.equal(publicOperations, 68);
 });
 
-test('native-owned operations match server generation', () => {
+test('operations match server generation', () => {
   const owned = [];
   for (const item of Object.values(contract.paths)) {
     for (const operation of Object.values(item)) {
-      assert.equal(operation['x-tadoku-owner'], 'native');
       assert.ok(['public', 'internal', 'callback'].includes(operation['x-tadoku-exposure']));
       owned.push(operation.operationId);
     }

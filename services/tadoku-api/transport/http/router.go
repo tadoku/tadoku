@@ -114,7 +114,7 @@ func NewHandler(
 	applicationHandler = authenticate(applicationHandler)
 	applicationHandler = withPanicRecovery(logger, applicationHandler)
 	protectedRoutes.handler = observe(
-		nativeRouteLabel,
+		patternRouteLabel,
 		timeout,
 		applicationHandler,
 		requestDuration,
@@ -129,7 +129,7 @@ func NewHandler(
 	callbackHandler := authenticateCallback(stdhttp.Handler(callbackRoutes))
 	callbackHandler = withPanicRecovery(logger, callbackHandler)
 	callbackRoutes.handler = observe(
-		nativeRouteLabel,
+		patternRouteLabel,
 		timeout,
 		callbackHandler,
 		requestDuration,

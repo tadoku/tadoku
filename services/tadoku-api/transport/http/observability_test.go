@@ -31,7 +31,7 @@ func TestGeneratedCorrelationIDIsUUIDv7(t *testing.T) {
 	}
 }
 
-func TestNativeRequestMetricUsesMatchedPattern(t *testing.T) {
+func TestRequestMetricUsesMatchedPattern(t *testing.T) {
 	registry := prometheus.NewRegistry()
 	var downstreamCorrelationID string
 	authenticate := func(stdhttp.Handler) stdhttp.Handler {
@@ -66,7 +66,7 @@ func TestNativeRequestMetricUsesMatchedPattern(t *testing.T) {
 		t.Error("downstream request has no correlation ID")
 	}
 	if got := response.Header().Get(correlationHeader); got != "" {
-		t.Errorf("native response changed with correlation ID %q", got)
+		t.Errorf("response changed with correlation ID %q", got)
 	}
 	wantLabels := map[string]string{
 		"mode":     "native",
@@ -104,5 +104,5 @@ func TestNativeRequestMetricUsesMatchedPattern(t *testing.T) {
 			return
 		}
 	}
-	t.Fatal("native request histogram sample not found")
+	t.Fatal("request histogram sample not found")
 }

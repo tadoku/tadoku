@@ -19,7 +19,6 @@ go_library(
         "//services/tadoku-api/internal/errx",
         "@com_github_google_uuid//:uuid",
         "@com_github_jackc_pgx_v5//:pgx",
-        "@com_github_jackc_pgx_v5//pgtype",
         "@com_github_jackc_pgx_v5//pgxpool",
     ],
 )

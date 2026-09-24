@@ -70,7 +70,7 @@ func (s *Service) FindPageByID(ctx context.Context, namespace string, id uuid.UU
 	return s.pages.FindPageByID(ctx, namespace, id)
 }
 
-func (s *Service) ListPages(ctx context.Context, namespace string, includeDrafts bool, pageSize, page int) (*PageList, error) {
+func (s *Service) ListPages(ctx context.Context, namespace string, includeDrafts *bool, pageSize, page int) (*PageList, error) {
 	if namespace == "" {
 		return nil, errx.NewInvalidInputError("namespace is required")
 	}
@@ -86,6 +86,10 @@ func (s *Service) ListPages(ctx context.Context, namespace string, includeDrafts
 	if pageSize > 100 {
 		pageSize = 100
 	}
+	drafts := false
+	if includeDrafts != nil {
+		drafts = *includeDrafts
+	}
 
 	offset := int64(page)
 	if page > math.MaxInt64/pageSize {
@@ -94,7 +98,7 @@ func (s *Service) ListPages(ctx context.Context, namespace string, includeDrafts
 		offset *= int64(pageSize)
 	}
 
-	pages, totalSize, err := s.pages.ListPages(ctx, namespace, includeDrafts, int32(pageSize), offset)
+	pages, totalSize, err := s.pages.ListPages(ctx, namespace, drafts, timex.Now(), int32(pageSize), offset)
 	if err != nil {
 		return nil, err
 	}

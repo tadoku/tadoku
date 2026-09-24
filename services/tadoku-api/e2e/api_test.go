@@ -24,7 +24,7 @@ import (
 	featureaudit "github.com/tadoku/tadoku/services/tadoku-api/features/audit"
 	featureauthz "github.com/tadoku/tadoku/services/tadoku-api/features/authz"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/contests"
-	nativefeatureflags "github.com/tadoku/tadoku/services/tadoku-api/features/featureflags"
+	featureflagsservice "github.com/tadoku/tadoku/services/tadoku-api/features/featureflags"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/languages"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/logs"
@@ -172,16 +172,6 @@ func newTestAPI(ctx context.Context, ketoFixture *testketo.Fixture, kratosFixtur
 	return api, nil
 }
 
-func newTestRouter(
-	ctx context.Context,
-	pool *pgxpool.Pool,
-	ketoFixture *testketo.Fixture,
-	kratosFixture *testkratos.Fixture,
-) (*transport.Router, *featureprofile.Service, *commonroles.KetoService, error) {
-	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	return newTestRouterWithLogger(ctx, pool, pool, ketoFixture, kratosFixture, logger)
-}
-
 func newTestRouterWithLogger(
 	ctx context.Context,
 	pool *pgxpool.Pool,
@@ -259,7 +249,7 @@ func newTestRouterWithLeaderboardService(
 	postsService := posts.NewService(postsRepository)
 	profileService := featureprofile.NewService(profileRepository, featureprofile.NewUserCache(identities), roleService, identities)
 	featureFlagEvaluator := featureflags.NewEvaluator(flipt, nil)
-	featureFlagsService := nativefeatureflags.NewService(featureFlagEvaluator, fliptmanagement.NewClient(fliptmanagement.Config{URL: flipt.URL(), Environment: "local"}))
+	featureFlagsService := featureflagsservice.NewService(featureFlagEvaluator, fliptmanagement.NewClient(fliptmanagement.Config{URL: flipt.URL(), Environment: "local"}))
 	registry := prometheus.NewRegistry()
 	scoringObserver := observability.NewScoringObserver(registry, logger, scoringEngineEnabled)
 	scoringService := scoring.NewService(scoringRepository, scoringEngineEnabled, scoringObserver)

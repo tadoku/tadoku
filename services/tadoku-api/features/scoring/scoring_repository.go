@@ -8,7 +8,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	queries "github.com/tadoku/tadoku/services/tadoku-api/generated/sqlc/scoring"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
@@ -241,7 +240,7 @@ func (r *ScoringRepository) CreateDraft(ctx context.Context, draft RuleSet) (*Ru
 		Version:           draft.Version,
 		Mode:              postgres.NullableNonEmptyText(&draft.Mode),
 		FallbackRuleSetID: postgres.NullableUUID(draft.FallbackRuleSetID),
-		CreatedAt:         pgtype.Timestamp{Time: draft.CreatedAt, Valid: true},
+		CreatedAt:         postgres.Timestamp(draft.CreatedAt),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("create scoring rule set: %w", err)
@@ -280,7 +279,7 @@ func (r *ScoringRepository) PublishRuleSet(ctx context.Context, id uuid.UUID, pu
 
 	row, err := q.PublishScoringRuleSet(ctx, queries.PublishScoringRuleSetParams{
 		ID:          postgres.UUID(id),
-		PublishedAt: pgtype.Timestamp{Time: publishedAt, Valid: true},
+		PublishedAt: postgres.Timestamp(publishedAt),
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, errx.NewConflictError("only draft scoring rule sets can be published")
@@ -311,7 +310,7 @@ func (r *ScoringRepository) ActivateContestRuleSet(ctx context.Context, contestI
 
 	if err := q.ActivateContestScoringRuleSet(ctx, queries.ActivateContestScoringRuleSetParams{
 		RuleSetID: postgres.UUID(id),
-		UpdatedAt: pgtype.Timestamp{Time: updatedAt, Valid: true},
+		UpdatedAt: postgres.Timestamp(updatedAt),
 		ContestID: postgres.UUID(contestID),
 	}); err != nil {
 		return fmt.Errorf("activate contest scoring rule set: %w", err)

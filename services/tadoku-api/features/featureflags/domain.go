@@ -9,6 +9,12 @@ import (
 
 const releaseLogEntryV2 = "release-log-entry-v2"
 
+var releaseLogEntryV2Access = fliptmanagement.Segment{
+	Key:         "release-log-entry-v2-access",
+	Name:        "Release log entry v2 access",
+	Description: "Kratos UUIDs explicitly granted access to release log entry v2.",
+}
+
 var ErrUnavailable = errx.NewUnavailableError("feature access unavailable", nil)
 
 type PublicDecisions struct {
@@ -22,12 +28,12 @@ type State struct {
 	Revision    string
 }
 
-func validate(flagKey string, targetUserID uuid.UUID) (fliptmanagement.FeatureFlagKey, error) {
+func validate(flagKey string, targetUserID uuid.UUID) (fliptmanagement.Segment, error) {
 	if targetUserID == uuid.Nil {
-		return "", errx.NewInvalidInputError("target user ID must not be nil")
+		return fliptmanagement.Segment{}, errx.NewInvalidInputError("target user ID must not be nil")
 	}
 	if flagKey != releaseLogEntryV2 {
-		return "", errx.NewInvalidInputError("feature flag is not supported")
+		return fliptmanagement.Segment{}, errx.NewInvalidInputError("feature flag is not supported")
 	}
-	return fliptmanagement.FeatureFlagReleaseLogEntryV2, nil
+	return releaseLogEntryV2Access, nil
 }

@@ -1,12 +1,12 @@
 package posts_test
 
 import (
-	"errors"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/posts"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
 
 func TestCreatePostParametersValidation(t *testing.T) {
@@ -19,24 +19,26 @@ func TestCreatePostParametersValidation(t *testing.T) {
 		Content:   "Content",
 	}
 	for _, test := range []struct {
-		name   string
-		change func(*posts.CreatePostParameters)
+		name    string
+		change  func(*posts.CreatePostParameters)
+		message string
 	}{
-		{name: "ID", change: func(p *posts.CreatePostParameters) { p.ID = uuid.Nil }},
-		{name: "namespace", change: func(p *posts.CreatePostParameters) { p.Namespace = "" }},
-		{name: "slug", change: func(p *posts.CreatePostParameters) { p.Slug = "" }},
-		{name: "one character slug", change: func(p *posts.CreatePostParameters) { p.Slug = "a" }},
-		{name: "one Unicode character slug", change: func(p *posts.CreatePostParameters) { p.Slug = "日" }},
-		{name: "uppercase slug", change: func(p *posts.CreatePostParameters) { p.Slug = "First-post" }},
-		{name: "uppercase Unicode slug", change: func(p *posts.CreatePostParameters) { p.Slug = "Éé" }},
-		{name: "title", change: func(p *posts.CreatePostParameters) { p.Title = "" }},
-		{name: "content", change: func(p *posts.CreatePostParameters) { p.Content = "" }},
+		{name: "ID", change: func(p *posts.CreatePostParameters) { p.ID = uuid.Nil }, message: "id is required"},
+		{name: "namespace", change: func(p *posts.CreatePostParameters) { p.Namespace = "" }, message: "namespace is required"},
+		{name: "slug", change: func(p *posts.CreatePostParameters) { p.Slug = "" }, message: "slug must be at least 2 characters"},
+		{name: "one character slug", change: func(p *posts.CreatePostParameters) { p.Slug = "a" }, message: "slug must be at least 2 characters"},
+		{name: "one Unicode character slug", change: func(p *posts.CreatePostParameters) { p.Slug = "日" }, message: "slug must be at least 2 characters"},
+		{name: "uppercase slug", change: func(p *posts.CreatePostParameters) { p.Slug = "First-post" }, message: "slug must be lowercase"},
+		{name: "uppercase Unicode slug", change: func(p *posts.CreatePostParameters) { p.Slug = "Éé" }, message: "slug must be lowercase"},
+		{name: "title", change: func(p *posts.CreatePostParameters) { p.Title = "" }, message: "title is required"},
+		{name: "content", change: func(p *posts.CreatePostParameters) { p.Content = "" }, message: "content is required"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			parameters := valid
 			test.change(&parameters)
-			if err := parameters.Validate(); !errors.Is(err, posts.ErrInvalidPost) {
-				t.Errorf("error=%v, want invalid post", err)
+			err := parameters.Validate()
+			if errx.KindOf(err) != errx.InvalidInput || err.Error() != test.message {
+				t.Errorf("error=%v, want invalid input %q", err, test.message)
 			}
 		})
 	}

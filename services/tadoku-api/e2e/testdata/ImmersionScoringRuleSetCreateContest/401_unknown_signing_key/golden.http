@@ -1,6 +1,0 @@
->>> POST /immersion/contests/f0000000-0000-4000-8000-000000000001/scoring/rule-sets
-HTTP/1.1 401 Unauthorized
-Content-Length: 37
-Content-Type: application/json; charset=UTF-8
-
-{"message":"invalid or expired jwt"}

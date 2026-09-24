@@ -11,6 +11,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//services/tadoku-api/domain/activities",
+        "//services/tadoku-api/domain/leaderboardoutbox",
         "//services/tadoku-api/domain/logscore",
         "//services/tadoku-api/generated/sqlc/contests",
         "//services/tadoku-api/infra/postgres",

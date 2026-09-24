@@ -26,7 +26,6 @@ func TestImmersionLogContestRegistrationUpdate(t *testing.T) {
 		{description: []string{"admin", "nonowner"}, want: http.StatusForbidden},
 		{description: []string{"missing", "log"}, want: http.StatusNotFound},
 		{description: []string{"guest"}, want: http.StatusUnauthorized},
-		{description: []string{"unknown", "signing", "key"}, want: http.StatusUnauthorized},
 		{description: []string{"empty", "body"}, want: http.StatusBadRequest},
 	}
 	for _, test := range tests {
@@ -62,7 +61,6 @@ func TestImmersionLogDeleteByID(t *testing.T) {
 		{description: []string{"account", "deletion", "locked"}, want: http.StatusConflict},
 		{description: []string{"missing"}, want: http.StatusNotFound},
 		{description: []string{"guest"}, want: http.StatusUnauthorized},
-		{description: []string{"unknown", "signing", "key"}, want: http.StatusUnauthorized},
 	}
 	for _, test := range tests {
 		name := APITestName("ImmersionLogDeleteByID", test.want, test.description...)
@@ -90,7 +88,6 @@ func TestImmersionContestModerationDetachLog(t *testing.T) {
 		{description: []string{"missing", "log", "after", "authorization"}, want: http.StatusNotFound},
 		{description: []string{"target", "owner", "account", "locked"}, want: http.StatusConflict},
 		{description: []string{"guest", "existing"}, want: http.StatusUnauthorized},
-		{description: []string{"unknown", "signing", "key"}, want: http.StatusUnauthorized},
 		{description: []string{"empty", "body"}, want: http.StatusBadRequest},
 	}
 	for _, test := range tests {

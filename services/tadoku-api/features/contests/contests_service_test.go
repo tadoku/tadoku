@@ -60,3 +60,33 @@ func TestCheckContestCreationYearlyLimit(t *testing.T) {
 		})
 	}
 }
+
+func TestRegistrationUpsertParametersValidate(t *testing.T) {
+	tests := []struct {
+		name          string
+		languageCodes []string
+		want          string
+	}{
+		{name: "one language", languageCodes: []string{"jpa"}},
+		{name: "three languages", languageCodes: []string{"jpa", "kor", "zho"}},
+		{name: "no languages", languageCodes: nil, want: "invalid contest registration LanguageCodes: must contain at least one language"},
+		{name: "four languages", languageCodes: []string{"jpa", "kor", "zho", "deu"}, want: "invalid contest registration LanguageCodes: must contain at most three languages"},
+		{name: "duplicate language", languageCodes: []string{"jpa", "jpa"}, want: "invalid contest registration LanguageCodes: must not contain duplicates"},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err := RegistrationUpsertParameters{LanguageCodes: test.languageCodes}.Validate()
+
+			if test.want == "" {
+				if err != nil {
+					t.Errorf("Validate() error = %v, want nil", err)
+				}
+				return
+			}
+			if errx.KindOf(err) != errx.InvalidInput || err.Error() != test.want {
+				t.Errorf("Validate() error = %v, want invalid input %q", err, test.want)
+			}
+		})
+	}
+}

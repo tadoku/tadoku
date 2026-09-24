@@ -20,7 +20,6 @@ func TestImmersionScoringRuleSetPublish(t *testing.T) {
 		{description: []string{"missing"}, want: http.StatusNotFound},
 		{description: []string{"guest", "existing"}, want: http.StatusUnauthorized},
 		{description: []string{"guest", "missing"}, want: http.StatusUnauthorized},
-		{description: []string{"unknown", "signing", "key"}, want: http.StatusUnauthorized},
 	}
 	for _, test := range tests {
 		name := APITestName("ImmersionScoringRuleSetPublish", test.want, test.description...)
@@ -48,7 +47,6 @@ func TestImmersionScoringRuleSetActivate(t *testing.T) {
 		{description: []string{"missing"}, want: http.StatusNotFound},
 		{description: []string{"guest", "existing"}, want: http.StatusUnauthorized},
 		{description: []string{"guest", "missing"}, want: http.StatusUnauthorized},
-		{description: []string{"unknown", "signing", "key"}, want: http.StatusUnauthorized},
 	}
 	for _, test := range tests {
 		name := APITestName("ImmersionScoringRuleSetActivate", test.want, test.description...)

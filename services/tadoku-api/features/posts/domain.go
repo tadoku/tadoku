@@ -22,10 +22,6 @@ type Post struct {
 }
 
 var (
-	ErrInvalidNamespace  = errx.NewInvalidInputError("namespace is required")
-	ErrInvalidPagination = errx.NewInvalidInputError("invalid pagination")
-	ErrInvalidSlug       = errx.NewInvalidInputError("slug is required")
-	ErrInvalidPost       = errx.NewInvalidInputError("invalid post")
 	ErrPostNotFound      = errx.NewNotFoundError("post not found")
 	ErrPostAlreadyExists = errx.NewConflictError("post already exists")
 )
@@ -49,15 +45,26 @@ type CreatePostParameters struct {
 
 func (p CreatePostParameters) Validate() error {
 	if p.ID == uuid.Nil {
-		return ErrInvalidPost
+		return errx.NewInvalidInputError("id is required")
 	}
 	return validatePostFields(p.Namespace, p.Slug, p.Title, p.Content)
 }
 
 func validatePostFields(namespace, slug, title, content string) error {
-	if namespace == "" || title == "" || content == "" ||
-		utf8.RuneCountInString(slug) <= 1 || slug != strings.ToLower(slug) {
-		return ErrInvalidPost
+	if namespace == "" {
+		return errx.NewInvalidInputError("namespace is required")
+	}
+	if utf8.RuneCountInString(slug) <= 1 {
+		return errx.NewInvalidInputError("slug must be at least 2 characters")
+	}
+	if slug != strings.ToLower(slug) {
+		return errx.NewInvalidInputError("slug must be lowercase")
+	}
+	if title == "" {
+		return errx.NewInvalidInputError("title is required")
+	}
+	if content == "" {
+		return errx.NewInvalidInputError("content is required")
 	}
 	return nil
 }

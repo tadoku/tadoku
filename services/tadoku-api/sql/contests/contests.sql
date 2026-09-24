@@ -276,7 +276,7 @@ where contest_id = sqlc.arg(contest_id)
 
 -- name: InsertContestScoreRefresh :exec
 insert into leaderboard_outbox (event_type, user_id, contest_id)
-values ('refresh_contest_score', sqlc.arg(user_id), sqlc.arg(contest_id));
+values (sqlc.arg(event_type), sqlc.arg(user_id), sqlc.arg(contest_id));
 
 -- name: InsertOfficialScoresRefresh :exec
 insert into leaderboard_outbox (event_type, user_id, year)

@@ -19,7 +19,6 @@ var (
 	ErrContestCreationForbidden = errx.NewForbiddenError("contest creation forbidden")
 	ErrContestCreatorTooYoung   = errx.NewForbiddenError("contest creator account too young")
 	ErrInvalidActivity          = errx.NewInvalidInputError("invalid contest activity")
-	ErrInvalidRegistration      = errx.NewInvalidInputError("invalid contest registration")
 	ErrRegistrationNotFound     = errx.NewNotFoundError("contest registration not found")
 )
 
@@ -142,6 +141,23 @@ type RegistrationList struct {
 type RegistrationUpsertParameters struct {
 	ContestID     uuid.UUID
 	LanguageCodes []string
+}
+
+func (p RegistrationUpsertParameters) Validate() error {
+	if len(p.LanguageCodes) < 1 {
+		return errx.NewInvalidInputError("invalid contest registration LanguageCodes: must contain at least one language")
+	}
+	if len(p.LanguageCodes) > 3 {
+		return errx.NewInvalidInputError("invalid contest registration LanguageCodes: must contain at most three languages")
+	}
+	languages := make(map[string]struct{}, len(p.LanguageCodes))
+	for _, code := range p.LanguageCodes {
+		if _, exists := languages[code]; exists {
+			return errx.NewInvalidInputError("invalid contest registration LanguageCodes: must not contain duplicates")
+		}
+		languages[code] = struct{}{}
+	}
+	return nil
 }
 
 type CreateContestParameters struct {

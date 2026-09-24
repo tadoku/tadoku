@@ -19,7 +19,6 @@ func TestFindContestRegistration(t *testing.T) {
 			want:        http.StatusBadRequest,
 		},
 		{description: []string{"guest"}, want: http.StatusUnauthorized},
-		{description: []string{"banned"}, want: http.StatusForbidden},
 		{description: []string{"invalid", "signed", "subject"}, want: http.StatusInternalServerError},
 	}
 

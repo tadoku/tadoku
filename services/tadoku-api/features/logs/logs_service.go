@@ -295,20 +295,9 @@ func (s *Service) ContestActivity(ctx context.Context, userID, contestID uuid.UU
 	return s.logs.ContestActivity(ctx, userID, contestID)
 }
 
-func (s *Service) FindLog(ctx context.Context, id uuid.UUID, includeDeleted bool) (*Log, error) {
-	log, err := s.logs.FindLog(ctx, id, includeDeleted)
-	if err != nil {
-		return nil, err
-	}
-
-	log.Registrations, err = s.logs.AttachedRegistrations(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-	if err := hydrateLogActivity(log); err != nil {
-		return nil, err
-	}
-	return log, nil
+// FindLog returns a log that is not deleted, including its contest registrations.
+func (s *Service) FindLog(ctx context.Context, id uuid.UUID) (*Log, error) {
+	return s.FindLogForViewer(ctx, id, FindForViewerParameters{Viewer: AdminViewer{}})
 }
 
 func (s *Service) FindLogForViewer(ctx context.Context, id uuid.UUID, parameters FindForViewerParameters) (*Log, error) {

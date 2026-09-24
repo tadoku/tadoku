@@ -82,14 +82,14 @@ func (a *Application) CreateLog(ctx context.Context, p LogCreateParameters) (*Lo
 	if err != nil {
 		return nil, err
 	}
-	return a.logs.FindLog(ctx, id, false)
+	return a.logs.FindLog(ctx, id)
 }
 
 func (a *Application) UpdateLog(ctx context.Context, p LogUpdateParameters) (*Log, error) {
 	if err := a.permissions.RequireAuthenticated(ctx); err != nil {
 		return nil, err
 	}
-	existing, err := a.logs.FindLog(ctx, p.ID, false)
+	existing, err := a.logs.FindLog(ctx, p.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -122,5 +122,5 @@ func (a *Application) UpdateLog(ctx context.Context, p LogUpdateParameters) (*Lo
 	if err != nil {
 		return nil, err
 	}
-	return a.logs.FindLog(ctx, p.ID, false)
+	return a.logs.FindLog(ctx, p.ID)
 }

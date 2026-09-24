@@ -16,7 +16,7 @@ func (a *Application) UpdateLogContestRegistrations(ctx context.Context, logID u
 		return nil, err
 	}
 
-	log, err := a.logs.FindLog(ctx, logID, false)
+	log, err := a.logs.FindLog(ctx, logID)
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +57,7 @@ func (a *Application) UpdateLogContestRegistrations(ctx context.Context, logID u
 		}
 
 		var err error
-		updated, err = a.logs.FindLog(ctx, logID, false)
+		updated, err = a.logs.FindLog(ctx, logID)
 		return err
 	})
 	if err != nil {
@@ -72,7 +72,7 @@ func (a *Application) DeleteLog(ctx context.Context, logID uuid.UUID) error {
 		return err
 	}
 
-	log, err := a.logs.FindLog(ctx, logID, false)
+	log, err := a.logs.FindLog(ctx, logID)
 	if err != nil {
 		return err
 	}
@@ -105,7 +105,7 @@ func (a *Application) DetachContestLog(ctx context.Context, contestID, logID uui
 	if err := a.requireOwnerOrAdmin(ctx, contest.OwnerUserID); err != nil {
 		return err
 	}
-	log, err := a.logs.FindLog(ctx, logID, false)
+	log, err := a.logs.FindLog(ctx, logID)
 	if err != nil {
 		return err
 	}

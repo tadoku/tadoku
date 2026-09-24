@@ -377,7 +377,22 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	}))
 	scoringObserver := observability.NewScoringObserver(metrics, logger, cfg.ScoringEngineEnabled)
 	scoringService := scoring.NewService(scoringRepository, cfg.ScoringEngineEnabled, scoringObserver)
-	api := app.New(announcementsService, auditService, authzService, contestsService, leaderboardService, languagesService, logsService, pagesService, postsService, profileService, scoringService, featureFlagService, pool, permissionChecker)
+	api := app.New(app.Dependencies{
+		Announcements: announcementsService,
+		Audit:         auditService,
+		Authorization: authzService,
+		Contests:      contestsService,
+		Leaderboard:   leaderboardService,
+		Languages:     languagesService,
+		Logs:          logsService,
+		Pages:         pagesService,
+		Posts:         postsService,
+		Profile:       profileService,
+		Scoring:       scoringService,
+		FeatureFlags:  featureFlagService,
+		DB:            pool,
+		Permissions:   permissionChecker,
+	})
 	rejectBanned := transporthttp.RejectBannedUsers(permissionChecker.CheckBanned, logger)
 
 	handler, err := transporthttp.NewHandler(api, pool.Ping, cfg.RequestTimeout, metrics, logger, authenticate, rejectBanned, authenticateCallback)

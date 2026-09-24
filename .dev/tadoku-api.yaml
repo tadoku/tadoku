@@ -8,6 +8,8 @@ spec:
           value: "false"
         - name: API_LEADERBOARD_OUTBOX_ENABLED
           value: "true"
+        - name: API_LEADERBOARD_SHARED_READINESS
+          value: "true"
         - name: API_LEADERBOARD_CACHE_PREFIX
           value: "dev:${DEV_ROUTE}:"
         - name: API_PORT

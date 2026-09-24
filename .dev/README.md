@@ -2,7 +2,8 @@
 
 This directory holds Tadoku's dev-cli setup for the `homelab-dev` development
 cluster: `config.yaml` (the real, non-secret configuration), the overlay
-workload manifests (`webv2.yaml`, `auth.yaml`, `admin.yaml`, `tadoku-api.yaml`),
+workload manifests (`webv2.yaml`, `auth.yaml`, `admin.yaml`, `tadoku-api.yaml`,
+`tadoku-worker.yaml`),
 the branch task manifests (`database.yaml`, `migrate.yaml`, `seed.yaml`,
 `seed.sql`) and the Bazel metadata that builds them.
 

@@ -5,10 +5,10 @@ description: How to install dev-cli and run, open, seed, verify and clean up you
 
 # Development environment
 
-Read this when you want to run your branch of webv2, auth, admin or Tadoku API
+Read this when you want to run your branch of webv2, auth, admin, Tadoku API or its worker
 on the shared development cluster, or check that a change works there.
 
-dev-cli deploys live branch overlays of webv2, auth, admin and Tadoku API to the
+dev-cli deploys live branch overlays of webv2, auth, admin, Tadoku API and its worker to the
 `homelab-dev` Kubernetes cluster. Argo CD keeps a shared base of every service
 running there even when no developer has a loop running; see
 [Development base](../operations/development-base.md). There is no local
@@ -41,12 +41,14 @@ private keys.
 
 ## Install dev-cli
 
-Install dev-cli v0.4.0 or newer. Older releases lack the YAML configuration,
-multi-host routing and dependency/task support this repository uses.
+Install a dev-cli release that supports route-free `worker` deployables and
+`selectionGroup` companions. Version 0.4.0 supports the YAML configuration,
+multi-host routing and dependency/task workflow, but does not support the
+worker declaration in this repository.
 
 ```sh
 GOPRIVATE=github.com/antonve/dev-cli go install github.com/antonve/dev-cli/cmd/dev@latest
-dev version  # v0.4.0 or newer
+dev version  # must include worker and selectionGroup support
 ```
 
 Go must be able to authenticate to the private repository. If your Git
@@ -63,7 +65,8 @@ go install github.com/antonve/dev-cli/cmd/dev@latest
   `command -v dev` and `dev version` so you do not run an older installation.
 - To upgrade an existing installation in place, set `GOBIN` to its directory
   on the same command.
-- For a reproducible pin, replace `@latest` with `@v0.4.0`.
+- For a reproducible pin, replace `@latest` with the released version that
+  includes worker and selectionGroup support.
 - Stop only your own running loops before upgrading.
 
 Then check the prerequisites:
@@ -92,6 +95,9 @@ Keep this terminal running.
   replacement (HMR).
 - Go edits rebuild the affected Bazel binary and restart it in the same pod.
   A failed compilation keeps the last working process running.
+- A Tadoku API or worker selection starts both workloads against the same
+  branch database and cache prefix. The unchanged peer keeps its current image;
+  only a changed binary restarts on a live edit.
 - dev-cli builds overlay images on demand, pushes them to the development
   registry and deploys them by immutable digest.
 - The `migrate` and `seed` tasks prepare your branch database before the API
@@ -112,6 +118,8 @@ every other service keeps using the base.
 - `--base <ref>` changes the comparison ref.
 - `--service <name>` adds a deployable to the affected set; it does not filter
   the set.
+- Tadoku API and tadoku-worker form one selection group. Either one starts both
+  workloads; the worker is private and has no browser route.
 - Discovery happens once at startup. Restart the loop to add a service.
 - `--no-watch` does not provide live updates.
 
@@ -146,6 +154,7 @@ dev url --owner alice '/'
 dev url --owner alice --host account.tadoku.dev.lab '/login'
 dev url --owner alice --host admin.tadoku.dev.lab '/'
 dev logs --owner alice tadoku-api
+dev logs --owner alice tadoku-worker
 ```
 
 Flags come before positional paths and service names.

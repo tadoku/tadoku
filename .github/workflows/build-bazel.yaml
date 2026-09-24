@@ -155,6 +155,7 @@ jobs:
           BACKEND_IMAGES: |
             ghcr.io/tadoku/tadoku/image-webhook-gateway:latest
             ghcr.io/tadoku/tadoku/tadoku-api:latest
+            ghcr.io/tadoku/tadoku/tadoku-worker:latest
             ghcr.io/tadoku/tadoku/tadoku-api-migrations:latest
             ghcr.io/tadoku/tadoku/token-reflector:latest
         run: |
@@ -263,3 +264,15 @@ jobs:
 
           # Push images
           bazel run --lockfile_mode=error //:push_images
+
+          # The worker is pinned separately; an API-only release leaves its
+          # registry tag and Kubernetes Pod template unchanged.
+          bazel build --lockfile_mode=error //services/tadoku-api/worker:image
+          worker_digest="$(jq -er '.manifests[0].digest | select(test("^sha256:[0-9a-f]{64}$"))' bazel-bin/services/tadoku-api/worker/image/index.json)"
+          for tag in latest prod; do
+            published_digest="$(docker buildx imagetools inspect "ghcr.io/tadoku/tadoku/tadoku-worker:${tag}" --format '{{json .Manifest}}' 2>/dev/null | jq -er '.digest | select(test("^sha256:[0-9a-f]{64}$"))' 2>/dev/null || true)"
+            if [[ "${worker_digest}" != "${published_digest}" ]]; then
+              bazel run --lockfile_mode=error //services/tadoku-api/worker:push
+              break
+            fi
+          done

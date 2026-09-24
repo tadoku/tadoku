@@ -1,0 +1,54 @@
+spec:
+  automountServiceAccountToken: false
+  terminationGracePeriodSeconds: 60
+  containers:
+    - name: tadoku-worker
+      env:
+        - name: WORKER_PORT
+          value: "8000"
+        - name: WORKER_METRICS_PORT
+          value: "9090"
+        - name: WORKER_POSTGRES_HOST
+          value: tadoku-dev-db.tdk-dev-data
+        - name: WORKER_POSTGRES_DATABASE
+          value: tadoku-${DEV_ROUTE}
+        - name: WORKER_POSTGRES_SSLMODE
+          value: require
+        - name: WORKER_POSTGRES_MAX_CONNECTIONS
+          value: "4"
+        - name: WORKER_POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: tadoku.tadoku-dev-db.credentials.postgresql.acid.zalan.do
+              key: username
+        - name: WORKER_POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: tadoku.tadoku-dev-db.credentials.postgresql.acid.zalan.do
+              key: password
+        - name: WORKER_VALKEY_URL
+          value: redis://valkey.tdk-dev-data:6379
+        - name: WORKER_LEADERBOARD_CACHE_PREFIX
+          value: "dev:${DEV_ROUTE}:"
+      ports:
+        - name: http
+          containerPort: 8000
+        - name: metrics
+          containerPort: 9090
+      readinessProbe:
+        httpGet:
+          path: /readyz
+          port: http
+        periodSeconds: 3
+      livenessProbe:
+        httpGet:
+          path: /livez
+          port: http
+        periodSeconds: 3
+      resources:
+        requests:
+          cpu: 25m
+          memory: 64Mi
+        limits:
+          cpu: 250m
+          memory: 128Mi

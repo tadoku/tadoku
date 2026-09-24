@@ -12,7 +12,7 @@ func TestImmersionScoringRuleSetListPlatform(t *testing.T) {
 	}{
 		{description: []string{"member", "published", "only"}, want: http.StatusOK},
 		{description: []string{"admin", "includes", "draft", "ordered"}, want: http.StatusOK},
-		{description: []string{"missing", "active", "config"}, want: http.StatusInternalServerError},
+		{description: []string{"missing", "active", "config"}, want: http.StatusNotFound},
 		{description: []string{"guest"}, want: http.StatusUnauthorized},
 	}
 	for _, test := range tests {

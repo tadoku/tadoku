@@ -37,7 +37,7 @@ func TestImmersionScoringRuleSetCreateContest(t *testing.T) {
 		{description: []string{"owner", "override", "published", "fallback"}, want: http.StatusOK},
 		{description: []string{"replace", "forbids", "fallback"}, want: http.StatusBadRequest},
 		{description: []string{"override", "requires", "fallback"}, want: http.StatusBadRequest},
-		{description: []string{"missing", "fallback"}, want: http.StatusInternalServerError},
+		{description: []string{"missing", "fallback"}, want: http.StatusNotFound},
 		{description: []string{"draft", "fallback"}, want: http.StatusBadRequest},
 		{description: []string{"contest", "fallback"}, want: http.StatusBadRequest},
 		{description: []string{"invalid", "priority"}, want: http.StatusBadRequest},

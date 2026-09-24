@@ -30,7 +30,7 @@ func TestImmersionScorePreview(t *testing.T) {
 		{description: []string{"invalid", "tags", "before", "unknown", "registration"}, want: http.StatusInternalServerError},
 		{description: []string{"missing", "language", "before", "invalid", "tags"}, want: http.StatusBadRequest},
 		{description: []string{"missing", "language", "before", "missing", "active", "platform"}, want: http.StatusBadRequest},
-		{description: []string{"missing", "active", "platform"}, want: http.StatusInternalServerError},
+		{description: []string{"missing", "active", "platform"}, want: http.StatusNotFound},
 		{description: []string{"guest"}, want: http.StatusUnauthorized},
 	}
 	for _, test := range tests {

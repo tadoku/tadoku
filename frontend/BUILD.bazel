@@ -7,6 +7,18 @@ pkg_tar(
     deps = ["@tadoku_dev_pnpm//:layer"],
 )
 
-frontend_dev(name = "webv2", host = "tadoku.dev.lab")
-frontend_dev(name = "auth", host = "account.tadoku.dev.lab", readiness_path = "/login")
-frontend_dev(name = "admin", host = "admin.tadoku.dev.lab")
+frontend_dev(
+    name = "webv2",
+    host = "tadoku.dev.lab",
+)
+
+frontend_dev(
+    name = "auth",
+    host = "account.tadoku.dev.lab",
+    readiness_path = "/login",
+)
+
+frontend_dev(
+    name = "admin",
+    host = "admin.tadoku.dev.lab",
+)

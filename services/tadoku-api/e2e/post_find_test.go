@@ -22,7 +22,7 @@ func TestFindPostBySlug(t *testing.T) {
 		{description: []string{"admin", "id"}, want: http.StatusOK},
 		{description: []string{"admin", "draft", "id"}, want: http.StatusOK},
 		{description: []string{"admin", "scheduled", "id"}, want: http.StatusOK},
-		{description: []string{"guest", "id"}, want: http.StatusNotFound},
+		{description: []string{"guest", "id"}, want: http.StatusUnauthorized},
 		{description: []string{"non", "admin", "id"}, want: http.StatusForbidden},
 		{description: []string{"missing", "id"}, want: http.StatusNotFound},
 		{description: []string{"wrong", "namespace", "id"}, want: http.StatusNotFound},

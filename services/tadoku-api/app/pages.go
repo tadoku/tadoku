@@ -7,7 +7,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/pages"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
 
 func (a *Application) FindPageBySlug(ctx context.Context, namespace, slug string) (*pages.Page, error) {
@@ -18,7 +17,7 @@ func (a *Application) FindPageBySlug(ctx context.Context, namespace, slug string
 		page.UpdatedAt = nil
 		return page, nil
 	}
-	if !errors.Is(err, pages.ErrPageNotFound) && errx.KindOf(err) != errx.InvalidInput {
+	if !errors.Is(err, pages.ErrPageNotFound) {
 		return nil, err
 	}
 
@@ -30,11 +29,7 @@ func (a *Application) FindPageBySlug(ctx context.Context, namespace, slug string
 		return nil, err
 	}
 
-	page, err = a.pages.FindPageByID(ctx, namespace, id)
-	if err != nil {
-		return nil, pages.ErrPageNotFound
-	}
-	return page, nil
+	return a.pages.FindPageByID(ctx, namespace, id)
 }
 
 func (a *Application) ListPages(ctx context.Context, namespace string, includeDrafts bool, pageSize, page int) (*pages.PageList, error) {

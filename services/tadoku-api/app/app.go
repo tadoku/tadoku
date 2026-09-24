@@ -35,21 +35,39 @@ type Application struct {
 	permissions   *permissions.Checker
 }
 
-func New(announcements *announcements.Service, audit *audit.Service, authorization *authz.Service, contests *contests.Service, leaderboard *leaderboard.Service, languages *languages.Service, logs *logs.Service, pages *pages.Service, posts *posts.Service, profile *profile.Service, scoring *scoring.Service, featureFlags *featureflags.Service, db *pgxpool.Pool, permissions *permissions.Checker) *Application {
+// Dependencies holds the concrete collaborators composed by the application.
+type Dependencies struct {
+	Announcements *announcements.Service
+	Audit         *audit.Service
+	Authorization *authz.Service
+	Contests      *contests.Service
+	Leaderboard   *leaderboard.Service
+	Languages     *languages.Service
+	Logs          *logs.Service
+	Pages         *pages.Service
+	Posts         *posts.Service
+	Profile       *profile.Service
+	Scoring       *scoring.Service
+	FeatureFlags  *featureflags.Service
+	DB            *pgxpool.Pool
+	Permissions   *permissions.Checker
+}
+
+func New(deps Dependencies) *Application {
 	return &Application{
-		announcements: announcements,
-		audit:         audit,
-		authorization: authorization,
-		contests:      contests,
-		leaderboard:   leaderboard,
-		languages:     languages,
-		logs:          logs,
-		pages:         pages,
-		posts:         posts,
-		profile:       profile,
-		scoring:       scoring,
-		featureFlags:  featureFlags,
-		db:            db,
-		permissions:   permissions,
+		announcements: deps.Announcements,
+		audit:         deps.Audit,
+		authorization: deps.Authorization,
+		contests:      deps.Contests,
+		leaderboard:   deps.Leaderboard,
+		languages:     deps.Languages,
+		logs:          deps.Logs,
+		pages:         deps.Pages,
+		posts:         deps.Posts,
+		profile:       deps.Profile,
+		scoring:       deps.Scoring,
+		featureFlags:  deps.FeatureFlags,
+		db:            deps.DB,
+		permissions:   deps.Permissions,
 	}
 }

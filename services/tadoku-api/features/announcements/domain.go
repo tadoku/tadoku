@@ -2,7 +2,6 @@
 package announcements
 
 import (
-	"fmt"
 	"net/url"
 	"strings"
 	"time"
@@ -10,7 +9,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
 
 const announcementHrefMaxLength = 2048
@@ -43,29 +41,19 @@ func isValidAnnouncementStyle(style string) bool {
 	}
 }
 
-func isValidAnnouncementHref(href *string) bool {
-	if href == nil || *href == "" {
-		return true
-	}
-	if utf8.RuneCountInString(*href) > announcementHrefMaxLength {
-		return false
-	}
-
-	parsed, err := url.Parse(*href)
+func isValidAnnouncementHref(href string) bool {
+	parsed, err := url.Parse(href)
 	if err != nil {
 		return false
 	}
 	if parsed.Scheme == "http" || parsed.Scheme == "https" {
 		return true
 	}
-	return parsed.Scheme == "" && strings.HasPrefix(*href, "/") &&
-		!strings.HasPrefix(*href, "//") && !strings.HasPrefix(*href, `/\`)
+	return parsed.Scheme == "" && strings.HasPrefix(href, "/") &&
+		!strings.HasPrefix(href, "//") && !strings.HasPrefix(href, `/\`)
 }
 
 var (
-	ErrInvalidNamespace          = errx.NewInvalidInputError("namespace is required")
-	ErrInvalidPagination         = errx.NewInvalidInputError("invalid pagination")
-	ErrInvalidAnnouncement       = errx.NewInvalidInputError("invalid announcement")
 	ErrAnnouncementNotFound      = errx.NewNotFoundError("announcement not found")
 	ErrAnnouncementAlreadyExists = errx.NewConflictError("announcement already exists")
 )
@@ -86,25 +74,34 @@ type UpdateAnnouncementParameters = announcementParameters
 
 func (p announcementParameters) Validate() error {
 	if p.ID == uuid.Nil {
-		return fmt.Errorf("%w: id is nil", ErrInvalidAnnouncement)
+		return errx.NewInvalidInputError("id is required")
 	}
 	if p.Namespace == "" {
-		return fmt.Errorf("%w: namespace is required", ErrInvalidAnnouncement)
+		return errx.NewInvalidInputError("namespace is required")
 	}
 	if p.Title == "" {
-		return fmt.Errorf("%w: title is required", ErrInvalidAnnouncement)
+		return errx.NewInvalidInputError("title is required")
 	}
 	if p.Content == "" {
-		return fmt.Errorf("%w: content is required", ErrInvalidAnnouncement)
+		return errx.NewInvalidInputError("content is required")
 	}
 	if !isValidAnnouncementStyle(p.Style) {
-		return fmt.Errorf("%w: style is invalid", ErrInvalidAnnouncement)
+		return errx.NewInvalidInputError("style must be one of success, warning, error or info")
 	}
-	if !isValidAnnouncementHref(p.Href) {
-		return fmt.Errorf("%w: href is invalid", ErrInvalidAnnouncement)
+	if p.Href != nil && utf8.RuneCountInString(*p.Href) > announcementHrefMaxLength {
+		return errx.NewInvalidInputError("href must be at most 2048 characters")
 	}
-	if !timex.IsValidRange(p.StartsAt, p.EndsAt) {
-		return fmt.Errorf("%w: date range is invalid", ErrInvalidAnnouncement)
+	if p.Href != nil && *p.Href != "" && !isValidAnnouncementHref(*p.Href) {
+		return errx.NewInvalidInputError("href must be an http(s) URL or a root-relative path")
+	}
+	if p.StartsAt.IsZero() {
+		return errx.NewInvalidInputError("starts_at is required")
+	}
+	if p.EndsAt.IsZero() {
+		return errx.NewInvalidInputError("ends_at is required")
+	}
+	if !p.StartsAt.Before(p.EndsAt) {
+		return errx.NewInvalidInputError("ends_at must be after starts_at")
 	}
 	return nil
 }

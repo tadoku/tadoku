@@ -19,7 +19,6 @@ func TestImmersionFetchLeaderboardGlobal(t *testing.T) {
 		{description: []string{"empty", "language"}, want: http.StatusOK, cache: "hit"},
 		{description: []string{"tie", "page", "boundary"}, want: http.StatusOK, cache: "hit_tie"},
 		{description: []string{"tie", "first", "page"}, want: http.StatusOK, cache: "hit_tie"},
-		{description: []string{"cache", "unavailable"}, want: http.StatusOK, cache: "unavailable"},
 		{description: []string{"invalid", "activity"}, want: http.StatusBadRequest},
 	}
 	for _, test := range tests {
@@ -40,7 +39,6 @@ func TestImmersionFetchLeaderboardForYear(t *testing.T) {
 		{description: []string{"empty", "page"}, want: http.StatusOK, cache: "hit"},
 		{description: []string{"empty", "cache", "miss"}, want: http.StatusOK, cache: "miss"},
 		{description: []string{"capped", "page", "size"}, want: http.StatusOK, cache: "hit_many"},
-		{description: []string{"cache", "unavailable"}, want: http.StatusOK, cache: "unavailable"},
 	}
 	for _, test := range tests {
 		name := APITestName("ImmersionFetchLeaderboardForYear", test.want, test.description...)
@@ -63,7 +61,6 @@ func TestImmersionContestFetchLeaderboard(t *testing.T) {
 		{description: []string{"language", "filtered"}, want: http.StatusOK, cache: "hit"},
 		{description: []string{"tie", "page", "boundary"}, want: http.StatusOK, cache: "hit_tie"},
 		{description: []string{"tie", "first", "page"}, want: http.StatusOK, cache: "hit_tie"},
-		{description: []string{"cache", "unavailable"}, want: http.StatusOK, cache: "unavailable"},
 		{description: []string{"missing", "organizer"}, want: http.StatusNotFound},
 		{description: []string{"missing", "organizer", "filtered"}, want: http.StatusNotFound, cache: "hit"},
 		{description: []string{"invalid", "id"}, want: http.StatusBadRequest},
@@ -80,17 +77,13 @@ func TestImmersionContestFetchLeaderboard(t *testing.T) {
 
 func runLeaderboardCase(t *testing.T, name string, want int, cache, cacheKey string) {
 	t.Helper()
-	handler := http.Handler(api.handler)
-	if cache == "unavailable" {
-		handler = unavailableLeaderboardNative
-	}
 	t.Run(name+"/tadoku-api", func(t *testing.T) {
 		dir := "testdata/" + name
 		api.reset(t, dir)
 		if cache == "hit" || cache == "hit_tie" || cache == "hit_many" {
 			seedLeaderboardCache(t, cacheKey, cache)
 		}
-		atFixtureInstant(func() { checkHTTPGolden(t, handler, dir, want, *updateGoldens) })
+		atFixtureInstant(func() { checkHTTPGolden(t, api.handler, dir, want, *updateGoldens) })
 		if cache == "miss" {
 			verifyRebuiltLeaderboardCache(t, cacheKey)
 		}

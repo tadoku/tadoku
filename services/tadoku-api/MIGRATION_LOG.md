@@ -17,7 +17,7 @@
 - [ ] Support two-step audit recording for external actions: persist the start before calling the external system, then record the correlated completion and outcome. External changes cannot share an atomic PostgreSQL transaction with the audit write.
 - [ ] Consolidate the Flipt management clients.
 - [ ] Revisit leaderboard HTTP test seeding so each case declares only the data it needs instead of relying on the operation-level fixture.
-- [ ] Remove all helper functions from repositories and move them into shared packages, including the remaining helpers in the contests repository.
+- [ ] Move the remaining private pgtype conversion helpers in repositories (non-null UUID and timestamp constructors, nullable float, and pgtype-to-pointer conversions other than text) into `infra/postgres`, and decide where shared row mappers belong.
 - [ ] Introduce generic conversion helpers for repeated slice and type mappings after common conversion patterns stabilize across migrated features.
 - [ ] Review and standardize the role and identity checking patterns used by application operations.
 - [ ] Configure `wsl_v5` as a required CI check for handwritten Tadoku API Go code, excluding generated files; enable `after-block` and `after-decl` checks and provide a local auto-fix command.
@@ -42,4 +42,3 @@
 - [ ] Keep the Flipt management client flag-agnostic; product flag allowlist only in featureflags (no product flag names in infra).
 - [ ] Decide whether pages/posts should share content-revision primitives or stay intentional twins; align list publication policy (pages lack the `published_at` cutoff posts apply when excluding drafts).
 - [x] Bind the ban-middleware path carve-out to the mux/generated `AuthzRoleGet` pattern, not the magic `"/authz/current-user/role"` string.
-- [ ] Replace `Application.New` positional `*Service` args with a `Dependencies` struct (open log/scoring PRs already churn this surface).

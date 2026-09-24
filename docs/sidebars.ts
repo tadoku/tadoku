@@ -20,7 +20,7 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: 'Services',
       items: [
-        'services/content-api',
+        'tadoku-api/index',
         'services/authorization',
         'services/s2s-auth',
       ],
@@ -75,16 +75,15 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: 'Frontend',
       items: [
-        'frontend/auth',
-        'frontend/styleguide',
+        'frontend/index',
         'frontend/webv2',
+        'frontend/auth',
+        'frontend/admin',
+        'frontend/paper-styleguide',
+        'frontend/paper-playground',
+        'frontend/styleguide',
         'frontend/paper-composition',
       ],
-    },
-    {
-      type: 'category',
-      label: 'Jobs',
-      items: ['jobs/postgres-backup'],
     },
     {
       type: 'category',

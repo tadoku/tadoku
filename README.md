@@ -2,11 +2,10 @@
 
 [![Documentation](https://img.shields.io/badge/docs-online-6969FF.svg)](https://tadoku.github.io/tadoku/)
 ![Build Bazel](https://github.com/tadoku/tadoku/actions/workflows/build-bazel.yaml/badge.svg)
-![Build Frontend Web](https://github.com/tadoku/tadoku/actions/workflows/build-frontend-web.yaml/badge.svg)
+![Build Frontend webv2](https://github.com/tadoku/tadoku/actions/workflows/build-frontend-webv2.yaml/badge.svg)
 [![Go Report Card](https://goreportcard.com/badge/github.com/tadoku/tadoku)](https://goreportcard.com/report/github.com/tadoku/tadoku)
 
-Tadoku had a significant rewrite and the documentation hasn't been updated yet to reflect these changes.
-The documentation for this repository can be found at https://tadoku.github.io/tadoku/.
+Developer documentation lives in [`docs/docs`](docs/docs) and is published at https://tadoku.github.io/tadoku/.
 
 ## Dev Environment
 

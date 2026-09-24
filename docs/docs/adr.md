@@ -17,6 +17,7 @@ ref. https://github.com/joelparkerhenderson/architecture-decision-record
 - [002 - Define API contracts through OpenAPI](./adr/002-api-contracts.md)
 - [003 - Zod as a request parser](./adr/003-zod.md)
 - [004 - Automating contest scheduling](./adr/004-scheduling-contests.md)
+- [005 - Scoring rules and metadata ownership](./adr/005-scoring-rules.md)
 
 ## Template
 

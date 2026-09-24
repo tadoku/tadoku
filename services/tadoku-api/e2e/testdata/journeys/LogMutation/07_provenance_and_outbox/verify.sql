@@ -3,6 +3,11 @@ select event_type as kind, user_id::text, coalesce(contest_id::text, '') as refe
 from leaderboard_outbox
 group by event_type, user_id, contest_id, year
 union all
+select task_type, '' as user_id, coalesce(payload->>'contest_id', '') as reference,
+  payload->>'year' as year, '' as rule_ids, '' as rates, state as source, count(*)::text
+from async_outbox
+group by task_type, payload, state
+union all
 select 'log_provenance', user_id::text, coalesce(score_rule_set_id::text, ''),
   extract(year from created_at)::int::text, coalesce(array_to_string(score_rule_ids, ','), ''),
   coalesce(array_to_string(score_rates, ','), ''), coalesce(score_source, ''), ''

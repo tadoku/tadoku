@@ -39,6 +39,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testketo"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testkratos"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
+	"github.com/tadoku/tadoku/services/tadoku-api/storage/postgres/asyncoutbox"
 	transport "github.com/tadoku/tadoku/services/tadoku-api/transport/http"
 	valkeygo "github.com/valkey-io/valkey-go"
 )
@@ -234,6 +235,7 @@ func newTestRouterWithLeaderboardService(
 	auditService := featureaudit.NewService(featureaudit.NewRepository(auditPool))
 	announcementsRepository := announcements.NewAnnouncementsRepository(pool)
 	contestsRepository := contests.NewContestsRepository(pool)
+	outboxRepository := asyncoutbox.NewRepository(pool)
 	languagesRepository := languages.NewLanguagesRepository(pool)
 	logsRepository := logs.NewLogsRepository(pool)
 	pagesRepository := pages.NewPagesRepository(pool)
@@ -241,9 +243,9 @@ func newTestRouterWithLeaderboardService(
 	profileRepository := featureprofile.NewRepository(pool)
 	scoringRepository := scoring.NewScoringRepository(pool)
 	announcementsService := announcements.NewService(announcementsRepository)
-	contestsService := contests.NewService(contestsRepository)
+	contestsService := contests.NewService(contestsRepository, outboxRepository)
 	languagesService := languages.NewService(languagesRepository)
-	logsService := logs.NewService(logsRepository, scoringEngineEnabled)
+	logsService := logs.NewService(logsRepository, outboxRepository, scoringEngineEnabled)
 	pagesService := pages.NewService(pagesRepository)
 	postsService := posts.NewService(postsRepository)
 	profileService := featureprofile.NewService(profileRepository, featureprofile.NewUserCache(identities), roleService, identities)

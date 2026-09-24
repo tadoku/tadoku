@@ -39,9 +39,13 @@ environment variables. Development values are in
   handshake attempt and the established-connection keepalive and I/O interval.
 - `API_LEADERBOARD_OUTBOX_ENABLED` (default `false`) runs the
   [leaderboard outbox worker](#leaderboard-outbox-worker).
+- `API_LEADERBOARD_SHARED_READINESS` (default `false`) makes unfiltered
+  leaderboard reads use PostgreSQL unless the separate worker has published a
+  current readiness key in Valkey. When the embedded worker is also enabled,
+  both its local readiness and the shared key must be ready before a cached read.
 - `API_LEADERBOARD_CACHE_PREFIX` (default empty) prefixes every leaderboard
   cache key and scopes the legacy embedded worker's marker scan to that namespace. A
-  non-empty prefix requires `API_LEADERBOARD_OUTBOX_ENABLED`, must be unique for
+  non-empty prefix requires either leaderboard readiness mode, must be unique for
   each database sharing a Valkey instance, may contain only lowercase letters,
   digits, hyphens and colons, and must end in a colon. Empty uses unprefixed
   keys.
@@ -232,6 +236,16 @@ When `API_LEADERBOARD_OUTBOX_ENABLED` is set:
    succeeds. Failed batches stay pending and are retried. It logs
    `leaderboard outbox batch processed` after each non-empty committed batch
    and `leaderboard outbox ready` once the initial drain completes.
+
+Log and registration writes publish the legacy leaderboard invalidation and a
+typed `async_outbox` task in the same transaction. The embedded worker still
+consumes only `leaderboard_outbox`; the separate worker consumes only
+`async_outbox`. Keep embedded readiness alone while old publishers exist. After
+every publisher writes typed tasks and the separate worker has reconciled the
+cache, enable shared readiness while the embedded worker drains old rows. Keep
+shared readiness enabled when old publication stops; disable the embedded
+worker only after the old backlog reaches zero. An absent or unavailable shared
+key makes reads fall back to PostgreSQL throughout that handoff.
 
 A cache miss rebuilds from PostgreSQL only if its generation has not changed,
 and cached reads recheck that generation before returning. The worker has

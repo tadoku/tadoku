@@ -31,6 +31,7 @@ go_library(
         "//services/tadoku-api/infra/postgres",
         "//services/tadoku-api/infra/valkey",
         "//services/tadoku-api/internal/permissions",
+        "//services/tadoku-api/storage/postgres/asyncoutbox",
         "//services/tadoku-api/transport/http",
         "@com_github_go_playground_validator_v10//:validator",
         "@com_github_jackc_pgx_v5//pgxpool",

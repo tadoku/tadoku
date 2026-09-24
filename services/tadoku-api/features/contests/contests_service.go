@@ -8,17 +8,21 @@ import (
 	"github.com/google/uuid"
 	domainlanguages "github.com/tadoku/tadoku/services/tadoku-api/domain/languages"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/logscore"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/asyncwork"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
+	"github.com/tadoku/tadoku/services/tadoku-api/storage/postgres/asyncoutbox"
 )
 
 type Service struct {
 	contests *ContestsRepository
+	outbox   *asyncoutbox.Repository
 }
 
-func NewService(repository *ContestsRepository) *Service {
+func NewService(repository *ContestsRepository, outbox *asyncoutbox.Repository) *Service {
 	return &Service{
 		contests: repository,
+		outbox:   outbox,
 	}
 }
 
@@ -222,12 +226,28 @@ func (s *Service) ApplyRegistration(
 }
 
 func (s *Service) insertRegistrationLeaderboardOutbox(ctx context.Context, registration Registration, contest Contest) error {
+	contestTask, err := asyncwork.NewContestInvalidation(registration.ContestID)
+	if err != nil {
+		return err
+	}
 	if err := s.contests.InsertContestScoreRefresh(ctx, registration.UserID, registration.ContestID); err != nil {
+		return err
+	}
+	if _, err := s.outbox.Enqueue(ctx, contestTask); err != nil {
 		return err
 	}
 
 	if contest.Official {
-		return s.contests.InsertOfficialScoresRefresh(ctx, registration.UserID, int16(contest.ContestStart.Year()))
+		year := int16(contest.ContestStart.Year())
+		officialTask, err := asyncwork.NewOfficialInvalidation(year)
+		if err != nil {
+			return err
+		}
+		if err := s.contests.InsertOfficialScoresRefresh(ctx, registration.UserID, year); err != nil {
+			return err
+		}
+		_, err = s.outbox.Enqueue(ctx, officialTask)
+		return err
 	}
 
 	return nil

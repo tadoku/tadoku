@@ -122,6 +122,7 @@ go_test(
         "//services/tadoku-api/internal/testpostgres",
         "//services/tadoku-api/internal/testvalkey",
         "//services/tadoku-api/internal/timex",
+        "//services/tadoku-api/storage/postgres/asyncoutbox",
         "//services/tadoku-api/transport/http",
         "@com_github_getkin_kin_openapi//openapi3",
         "@com_github_golang_jwt_jwt_v4//:jwt",

@@ -1,5 +1,6 @@
 ---
 title: Database migration recovery
+description: How to contain and repair a failed Tadoku API migration that left schema_migrations dirty, using the inspect and force recovery commands.
 ---
 
 # Database migration recovery
@@ -43,6 +44,9 @@ It does not support `down`, `drop`, or arbitrary migration steps.
 Do not start another Argo sync while recovery is in progress.
 
 ## 2. Preserve evidence and backup
+
+PlanetScale takes the production database backups and provides the point-in-time
+recovery (PITR) points referenced in this runbook. There is no separate backup job.
 
 Capture:
 

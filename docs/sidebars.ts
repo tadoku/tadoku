@@ -83,11 +83,6 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
-      label: 'Jobs',
-      items: ['jobs/postgres-backup'],
-    },
-    {
-      type: 'category',
       label: 'Administration',
       items: ['account-deletion', 'database-migration-recovery'],
     },

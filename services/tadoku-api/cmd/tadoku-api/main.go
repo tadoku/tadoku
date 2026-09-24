@@ -78,8 +78,6 @@ type config struct {
 	KratosAdminURL string        `validate:"required" envconfig:"kratos_admin_url"`
 	KratosTimeout  time.Duration `validate:"gt=0" envconfig:"kratos_timeout" default:"2s"`
 
-	ImmersionURL string `validate:"required" envconfig:"immersion_url"`
-
 	PostgresMaxConnections int32                 `validate:"gt=0,lte=32" envconfig:"postgres_max_connections" default:"4"`
 	Postgres               postgresconfig.Config `ignored:"true"`
 	ValkeyURL              string                `validate:"required" envconfig:"valkey_url"`
@@ -428,20 +426,6 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 		return nil, err
 	}
 
-	// Temporary legacy routes; the application router stands on its own.
-	upstreams := transporthttp.Upstreams{
-		Immersion: cfg.ImmersionURL,
-	}
-	err = transporthttp.RegisterProxyRoutes(
-		handler,
-		upstreams,
-		transport,
-		cfg.RequestTimeout,
-		logger,
-	)
-	if err != nil {
-		return nil, err
-	}
 	if err := ctx.Err(); err != nil {
 		return nil, fmt.Errorf("start application: %w", err)
 	}

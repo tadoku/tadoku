@@ -6,21 +6,17 @@ info:
   license:
     name: MIT
     url: https://github.com/tadoku/tadoku/blob/main/LICENSE
-  description: Canonical contract for native and proxied Tadoku operations.
-    Internal and callback entries are an inventory, not a gateway exposure
-    change; their existing direct callers keep the upstream URLs recorded in
-    x-tadoku-sources.
+  description: Canonical contract for Tadoku API operations.
+    Callback entries are an inventory, not a gateway exposure change.
 servers:
   - url: https://tadoku.app/api
 x-tadoku-operational-surfaces:
   description: >-
     Manually registered operational endpoints are not business API operations and are excluded
-    from the public documentation projection. Each API exposes GET /livez and GET /readyz on
-    its own HTTP listener, and GET /metrics on its separate metrics listener. Legacy health
-    endpoints retain their optional-auth middleware. No gateway exposure changes are implied.
+    from the public documentation projection. Tadoku API exposes GET /livez and GET /readyz on
+    its HTTP listener, and GET /metrics on its separate metrics listener.
   apis:
     - tadoku-api
-    - immersion-api
   health_paths: [/livez, /readyz]
   metrics_path: /metrics
 x-tadoku-sources:
@@ -90,19 +86,6 @@ x-tadoku-sources:
       version: 1.0.0
     servers:
       - url: http://tadoku-api.tdk-tadoku-api/authz/
-  ImmersionInternal:
-    domain: immersion
-    exposure: internal
-    path: services/immersion-api/http/rest/openapi/internal-api.yaml
-    info:
-      title: immersion-api-internal
-      description: Internal API for service-to-service communication
-      license:
-        name: MIT
-        url: https://github.com/tadoku/tadoku/blob/main/LICENSE
-      version: 1.0.0
-    servers:
-      - url: http://immersion-api:8080/
 paths:
   /authz/current-user/role:
     get:
@@ -2312,24 +2295,6 @@ paths:
       x-tadoku-owner: native
       x-legacy-path: /scoring/rule-sets/{id}/activate
       x-legacy-operation-id: scoringRuleSetActivate
-  /immersion/ping:
-    get:
-      summary: Checks if service is responsive
-      operationId: ImmersionPing
-      tags:
-        - metadata
-      responses:
-        "200":
-          description: successful operation
-          content:
-            text/plain:
-              schema:
-                type: string
-      x-tadoku-source: Immersion
-      x-tadoku-exposure: public
-      x-tadoku-owner: legacy
-      x-legacy-path: /ping
-      x-legacy-operation-id: ping
   /immersion/feature-flags:
     get:
       summary: Returns public feature flag decisions for the current user
@@ -2634,100 +2599,6 @@ paths:
       x-tadoku-owner: native
       x-legacy-path: /internal/v1/proxy/admin-check
       x-legacy-operation-id: proxyAdminCheck
-  /immersion/internal/v1/account-deletion-eligibility:
-    post:
-      summary: Checks whether an account owns a running contest that blocks deletion
-      operationId: ImmersionInternalInternalAccountDeletionEligibility
-      tags:
-        - internal
-      security:
-        - ImmersionInternalserviceAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ImmersionInternalAccountDeletionEligibilityRequest"
-      responses:
-        "204":
-          description: account is currently eligible for deletion
-        "400":
-          description: invalid request
-        "401":
-          description: caller is not a service identity
-        "403":
-          description: caller is not profile-api
-        "409":
-          description: account owns at least one running contest
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ImmersionInternalAccountDeletionEligibilityConflict"
-      x-tadoku-source: ImmersionInternal
-      x-tadoku-exposure: internal
-      x-tadoku-owner: legacy
-      x-legacy-path: /internal/v1/account-deletion-eligibility
-      x-legacy-operation-id: internalAccountDeletionEligibility
-  /immersion/internal/v1/account-deletion-scrubs:
-    post:
-      summary: Idempotently anonymizes and removes immersion data for a locked account
-      operationId: ImmersionInternalInternalAccountDeletionScrub
-      tags:
-        - internal
-      security:
-        - ImmersionInternalserviceAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ImmersionInternalAccountDeletionScrubRequest"
-      responses:
-        "204":
-          description: account data is scrubbed or was already scrubbed
-        "400":
-          description: invalid request
-        "401":
-          description: caller is not a service identity
-        "403":
-          description: caller is not profile-api
-        "409":
-          description: account is not locked or owns a running contest
-      x-tadoku-source: ImmersionInternal
-      x-tadoku-exposure: internal
-      x-tadoku-owner: legacy
-      x-legacy-path: /internal/v1/account-deletion-scrubs
-      x-legacy-operation-id: internalAccountDeletionScrub
-  /immersion/internal/v1/account-deletion-locks:
-    post:
-      summary: Idempotently prevents further mutations for an account
-      operationId: ImmersionInternalInternalAccountDeletionLock
-      tags:
-        - internal
-      security:
-        - ImmersionInternalserviceAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ImmersionInternalAccountDeletionLockRequest"
-      responses:
-        "204":
-          description: account is locked or was already locked
-        "400":
-          description: invalid request
-        "401":
-          description: caller is not a service identity
-        "403":
-          description: caller is not profile-api
-        "409":
-          description: account owns a running contest
-      x-tadoku-source: ImmersionInternal
-      x-tadoku-exposure: internal
-      x-tadoku-owner: legacy
-      x-legacy-path: /internal/v1/account-deletion-locks
-      x-legacy-operation-id: internalAccountDeletionLock
 components:
   schemas:
     AuthzUserRole:
@@ -3844,51 +3715,6 @@ components:
           type: string
           format: uuid
           minLength: 1
-    ImmersionInternalAccountDeletionEligibilityRequest:
-      type: object
-      required:
-        - user_id
-      properties:
-        user_id:
-          type: string
-          format: uuid
-    ImmersionInternalAccountDeletionEligibilityConflict:
-      type: object
-      required:
-        - error
-        - available_after
-      properties:
-        error:
-          type: string
-          enum:
-            - running_contest_owned
-        available_after:
-          type: string
-          format: date-time
-    ImmersionInternalAccountDeletionScrubRequest:
-      type: object
-      required:
-        - user_id
-        - request_id
-      properties:
-        user_id:
-          type: string
-          format: uuid
-        request_id:
-          type: string
-          format: uuid
-    ImmersionInternalAccountDeletionLockRequest:
-      type: object
-      required:
-        - user_id
-        - request_id
-      properties:
-        user_id:
-          type: string
-          format: uuid
-        request_id:
-          type: string
-          format: uuid
   securitySchemes:
     AuthzcookieAuth:
       type: apiKey
@@ -3910,10 +3736,6 @@ components:
       type: http
       scheme: bearer
       description: Shared callback token presented only by Oathkeeper
-    ImmersionInternalserviceAuth:
-      type: http
-      scheme: bearer
-      description: JWT token for service-to-service authentication (ES256)
   responses:
     ImmersionAccountDeletionInProgress:
       description: account deletion is in progress

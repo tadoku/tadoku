@@ -11,7 +11,6 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
-	"sync/atomic"
 	"testing"
 	"time"
 
@@ -191,7 +190,6 @@ type suite struct {
 	handler *transport.Router
 	profile *featureprofile.Service
 	roles   *commonroles.KetoService
-	proxied atomic.Int32
 }
 
 func newTestAPI(ctx context.Context, ketoFixture *testketo.Fixture, kratosFixture *testkratos.Fixture) (_ *suite, err error) {
@@ -219,10 +217,6 @@ func newTestAPI(ctx context.Context, ketoFixture *testketo.Fixture, kratosFixtur
 		profile: profileService,
 		roles:   roleService,
 	}
-	if err := registerSentinelProxy(api); err != nil {
-		return nil, err
-	}
-
 	complete = true
 	return api, nil
 }
@@ -327,27 +321,6 @@ func newTestRouterWithLeaderboard(
 	return handler, profileService, roleService, nil
 }
 
-func registerSentinelProxy(s *suite) error {
-	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	upstreams := transport.Upstreams{
-		Immersion: "http://upstream.test",
-	}
-	if err := transport.RegisterProxyRoutes(s.handler, upstreams, s, time.Second, logger); err != nil {
-		return fmt.Errorf("register proxy routes: %w", err)
-	}
-	return nil
-}
-
-func (s *suite) RoundTrip(request *http.Request) (*http.Response, error) {
-	s.proxied.Add(1)
-	return &http.Response{
-		StatusCode: http.StatusNoContent,
-		Header:     http.Header{"X-Proxied": {"yes"}},
-		Body:       http.NoBody,
-		Request:    request,
-	}, nil
-}
-
 func (s *suite) reset(t *testing.T, caseDir string) {
 	t.Helper()
 	if s.kratos != nil {
@@ -381,7 +354,6 @@ func (s *suite) reset(t *testing.T, caseDir string) {
 	if s.flipt != nil {
 		s.flipt.Reset()
 	}
-	s.proxied.Store(0)
 }
 
 func (s *suite) resetProfileCaches() {
@@ -403,10 +375,6 @@ func fixtureSeeds(caseDir, name string) []string {
 		return []string{caseSeed}
 	}
 	return []string{filepath.Join(filepath.Dir(caseDir), name)}
-}
-
-func (s *suite) resetProxyCount() {
-	s.proxied.Store(0)
 }
 
 func requireKnownCaseFiles(t *testing.T, caseDir string) {

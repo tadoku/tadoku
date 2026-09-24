@@ -13,17 +13,10 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
-func TestRouterWorksWithoutLegacyProxyRoutes(t *testing.T) {
-	// Construct the same application router but do not attach legacy routes.
-	// Normal scenarios continue to use the single suite-level router.
-	handler, _, _, err := newTestRouter(t.Context(), api.db.Pool, keto, api.kratos)
-	if err != nil {
-		t.Fatal(err)
-	}
-
+func TestNativeRouterServesBusinessRoutesAndProbes(t *testing.T) {
 	dir := filepath.Join("testdata", APITestName("ListActiveAnnouncements", http.StatusOK, "guest"))
 	api.reset(t, dir)
-	atFixtureInstant(func() { checkHTTPGolden(t, handler, dir, http.StatusOK, *updateGoldens) })
+	atFixtureInstant(func() { checkHTTPGolden(t, api.handler, dir, http.StatusOK, *updateGoldens) })
 
 	for _, test := range []struct {
 		name   string
@@ -32,13 +25,13 @@ func TestRouterWorksWithoutLegacyProxyRoutes(t *testing.T) {
 		status int
 	}{
 		{
-			name:   "liveness does not need a proxy",
+			name:   "liveness",
 			method: http.MethodGet,
 			path:   "/livez",
 			status: http.StatusOK,
 		},
 		{
-			name:   "readiness does not need a proxy",
+			name:   "readiness",
 			method: http.MethodGet,
 			path:   "/readyz",
 			status: http.StatusOK,
@@ -58,7 +51,7 @@ func TestRouterWorksWithoutLegacyProxyRoutes(t *testing.T) {
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			response := httptest.NewRecorder()
-			handler.ServeHTTP(response, httptest.NewRequest(test.method, test.path, nil))
+			api.handler.ServeHTTP(response, httptest.NewRequest(test.method, test.path, nil))
 			if response.Code != test.status {
 				t.Errorf("status=%d, want %d", response.Code, test.status)
 			}
@@ -91,9 +84,6 @@ func TestContentHeadUsesNativeGetRoute(t *testing.T) {
 	if response.Code != http.StatusOK {
 		t.Errorf("status=%d, want %d", response.Code, http.StatusOK)
 	}
-	if got := api.proxied.Load(); got != 0 {
-		t.Errorf("HEAD request made %d upstream requests", got)
-	}
 }
 
 func TestProfileHeadUsesNativeGetRoute(t *testing.T) {
@@ -109,8 +99,20 @@ func TestProfileHeadUsesNativeGetRoute(t *testing.T) {
 	if response.Code != http.StatusOK {
 		t.Errorf("status=%d, want %d", response.Code, http.StatusOK)
 	}
-	if got := api.proxied.Load(); got != 0 {
-		t.Errorf("HEAD request made %d upstream requests", got)
+}
+
+func TestImmersionHeadUsesNativeGetRoute(t *testing.T) {
+	dir := filepath.Join("testdata", APITestName("ListLanguages", http.StatusOK, "admin", "ordered"))
+	api.reset(t, dir)
+	request := readHTTPRequest(t, dir)
+	defer request.Body.Close()
+	request.Method = http.MethodHead
+	response := httptest.NewRecorder()
+
+	atFixtureInstant(func() { api.handler.ServeHTTP(response, request) })
+
+	if response.Code != http.StatusOK {
+		t.Errorf("status=%d, want %d", response.Code, http.StatusOK)
 	}
 }
 
@@ -127,7 +129,7 @@ func TestContractRouteOwnership(t *testing.T) {
 	for path, pathItem := range contract.Paths.Map() {
 		for method, operation := range pathItem.Operations() {
 			owner, ok := tadokuOwner(operation.Extensions["x-tadoku-owner"])
-			if !ok || (owner != "legacy" && owner != "native") {
+			if !ok || owner != "native" {
 				t.Fatalf("%s %s has invalid x-tadoku-owner %v", method, path, operation.Extensions["x-tadoku-owner"])
 			}
 			requestPath := strings.NewReplacer("{year}", "2026", "{flagKey}", "release-log-entry-v2").Replace(path)
@@ -135,9 +137,8 @@ func TestContractRouteOwnership(t *testing.T) {
 			t.Run(method+" "+requestPath, func(t *testing.T) {
 				response := httptest.NewRecorder()
 				api.handler.ServeHTTP(response, httptest.NewRequest(method, requestPath, nil))
-				proxied := response.Header().Get("X-Proxied") == "yes"
-				if want := owner == "legacy"; proxied != want {
-					t.Errorf("%s %s (x-tadoku-owner: %s): proxied = %t, want %t", method, requestPath, owner, proxied, want)
+				if response.Code == http.StatusNotFound || response.Code == http.StatusMethodNotAllowed {
+					t.Errorf("%s %s is not registered: status=%d", method, requestPath, response.Code)
 				}
 			})
 		}
@@ -178,16 +179,11 @@ func TestRetiredAuthzRoutesAreNotForwarded(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.method+" "+test.path, func(t *testing.T) {
-			api.resetProxyCount()
-
 			response := httptest.NewRecorder()
 			api.handler.ServeHTTP(response, httptest.NewRequest(test.method, test.path, nil))
 
 			if response.Code != test.want {
 				t.Errorf("status=%d, want %d", response.Code, test.want)
-			}
-			if got := api.proxied.Load(); got != 0 {
-				t.Errorf("retired route made %d upstream requests", got)
 			}
 		})
 	}
@@ -206,16 +202,11 @@ func TestRetiredContentProxyRoutesAreNotForwarded(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.method+" "+test.path, func(t *testing.T) {
-			api.resetProxyCount()
-
 			response := httptest.NewRecorder()
 			api.handler.ServeHTTP(response, httptest.NewRequest(test.method, test.path, nil))
 
 			if response.Code != test.want {
 				t.Errorf("status=%d, want %d", response.Code, test.want)
-			}
-			if got := api.proxied.Load(); got != 0 {
-				t.Errorf("retired route made %d upstream requests", got)
 			}
 		})
 	}
@@ -237,17 +228,42 @@ func TestRetiredProfileProxyRoutesAreNotForwarded(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.method+" "+test.path, func(t *testing.T) {
-			api.resetProxyCount()
-
 			response := httptest.NewRecorder()
 			api.handler.ServeHTTP(response, httptest.NewRequest(test.method, test.path, nil))
 
 			if response.Code != test.want {
 				t.Errorf("status=%d, want %d", response.Code, test.want)
 			}
-			if got := api.proxied.Load(); got != 0 {
-				t.Errorf("retired route made %d upstream requests", got)
+		})
+	}
+}
+
+func TestRetiredImmersionRoutesAreNotServed(t *testing.T) {
+	for _, test := range []struct {
+		method string
+		path   string
+	}{
+		{http.MethodGet, "/immersion/ping"},
+		{http.MethodHead, "/immersion/ping"},
+		{http.MethodGet, "/immersion/unknown"},
+		{http.MethodPost, "/immersion/internal/v1/account-deletion-eligibility"},
+		{http.MethodPost, "/immersion/internal/v1/account-deletion-locks"},
+		{http.MethodPost, "/immersion/internal/v1/account-deletion-scrubs"},
+	} {
+		t.Run(test.method+" "+test.path, func(t *testing.T) {
+			response := httptest.NewRecorder()
+			api.handler.ServeHTTP(response, httptest.NewRequest(test.method, test.path, nil))
+			if response.Code != http.StatusNotFound {
+				t.Errorf("status=%d, want %d", response.Code, http.StatusNotFound)
 			}
 		})
+	}
+}
+
+func TestUnsupportedImmersionMethodIsRejected(t *testing.T) {
+	response := httptest.NewRecorder()
+	api.handler.ServeHTTP(response, httptest.NewRequest(http.MethodPatch, "/immersion/languages", nil))
+	if response.Code != http.StatusMethodNotAllowed {
+		t.Errorf("status=%d, want %d", response.Code, http.StatusMethodNotAllowed)
 	}
 }

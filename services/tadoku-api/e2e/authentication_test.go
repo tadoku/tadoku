@@ -171,24 +171,20 @@ func writeIdentityHeaders(header http.Header, subject, displayName, email string
 	header.Set("X-Test-Identity-Created-At", createdAt.UTC().Format(time.RFC3339))
 }
 
-func TestAuthenticationDoesNotChangeProbesOrRemainingProxyRoutes(t *testing.T) {
+func TestAuthenticationDoesNotChangeProbesOrUnknownRoutes(t *testing.T) {
 	for _, test := range []struct {
-		method  string
-		path    string
-		want    int
-		proxied bool
+		method string
+		path   string
+		want   int
 	}{
 		{method: http.MethodGet, path: "/livez", want: http.StatusOK},
 		{method: http.MethodGet, path: "/readyz", want: http.StatusOK},
 		{method: http.MethodGet, path: "/authz/ping", want: http.StatusNotFound},
-		{method: http.MethodGet, path: "/immersion/ping", want: http.StatusNoContent, proxied: true},
-		{method: http.MethodGet, path: "/immersion/unknown", want: http.StatusNoContent, proxied: true},
-		{method: http.MethodHead, path: "/immersion/languages", want: http.StatusNoContent, proxied: true},
-		{method: http.MethodPatch, path: "/immersion/languages", want: http.StatusNoContent, proxied: true},
+		{method: http.MethodGet, path: "/immersion/ping", want: http.StatusNotFound},
+		{method: http.MethodGet, path: "/immersion/unknown", want: http.StatusNotFound},
 	} {
 		t.Run(test.method+" "+test.path, func(t *testing.T) {
 			for _, authorization := range []string{"", "Bearer invalid-token"} {
-				api.resetProxyCount()
 				request := httptest.NewRequest(test.method, test.path, nil)
 				if authorization != "" {
 					request.Header.Set("Authorization", authorization)
@@ -197,9 +193,6 @@ func TestAuthenticationDoesNotChangeProbesOrRemainingProxyRoutes(t *testing.T) {
 				api.handler.ServeHTTP(response, request)
 				if response.Code != test.want {
 					t.Errorf("authorization=%q status=%d, want %d", authorization, response.Code, test.want)
-				}
-				if got := api.proxied.Load(); (got == 1) != test.proxied {
-					t.Errorf("unexpected upstream request count: %d", got)
 				}
 			}
 		})

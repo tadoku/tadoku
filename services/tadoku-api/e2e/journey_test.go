@@ -110,9 +110,6 @@ func runJourneyWithHandler(t *testing.T, s *suite, handler http.Handler, name st
 		}
 	}
 
-	if s.proxied.Load() != 0 {
-		t.Error("handler contacted an upstream")
-	}
 }
 
 // stepDirNames validates every step and returns its numbered directory name.
@@ -258,7 +255,6 @@ func resetJourney(t *testing.T, s *suite, directory string) {
 		}
 	}
 	s.resetProfileCaches()
-	s.proxied.Store(0)
 }
 
 // runRequestStep replays the request as every member in others, checking

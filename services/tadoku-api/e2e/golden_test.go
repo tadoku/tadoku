@@ -90,9 +90,6 @@ func runCaseAt(t *testing.T, s *suite, name string, want int, businessTime time.
 				defer uuid.SetRand(nil)
 				checkHTTPGolden(t, impl.handler, dir, want, record)
 			})
-			if s.proxied.Load() != 0 {
-				t.Error("handler contacted an upstream")
-			}
 		})
 	}
 }

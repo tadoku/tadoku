@@ -21,9 +21,6 @@ func TestDependencyFailures(t *testing.T) {
 		t.Fatal(err)
 	}
 	poolClosed := &suite{keto: keto, handler: handler}
-	if err := registerSentinelProxy(poolClosed); err != nil {
-		t.Fatal(err)
-	}
 
 	canceled := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithCancel(r.Context())

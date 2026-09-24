@@ -1,8 +1,6 @@
 # Tadoku API
 
-Tadoku API replaces the legacy backend services operation by operation. Native
-handlers own migrated operations; operations not yet migrated retain their existing
-proxy ownership. A native failure never falls back to a legacy service.
+Tadoku API serves all retained HTTP operations through native handlers.
 Externally the gateway still adds `/api`.
 
 ## Code ownership
@@ -14,18 +12,14 @@ cmd/tadoku-api constructs and owns the pgx/v5 pool, raw Valkey/Kratos clients an
 ```
 
 `transport/http/router.go` constructs the application router with standard
-method/path registrations, request deadlines and its own health checks. It does
-not depend on upstream URLs, proxy transports or proxy metrics. Startup separately
-calls `RegisterProxyRoutes` to attach the temporary legacy routes. That call and
-`proxy.go` can be removed when the migration is complete without changing the
-application router or migrated handlers.
+method/path registrations, request deadlines and health checks.
 
 The router requires authentication middleware for application business handlers.
 Startup always constructs it from the configured gateway JWKS; there is no opt-out
 or feature flag. Register application routes through the router's `Handle` or
 `HandleFunc` methods during construction; every such route inherits the shared
-request deadline, authentication and ban check. Health probes and temporary proxy
-registrations keep their existing behavior. Verified user claims travel in request
+request deadline, authentication and ban check. Health probes remain outside the
+business authentication boundary. Verified user claims travel in request
 context through `internal/identity`. The shared ban lookup records a confirmed ban
 for role-introspection reads so they can report it; every other business route
 rejects that identity before its handler runs.
@@ -141,11 +135,10 @@ exists yet.
 ## Contract and compatibility
 
 `spec/openapi.yaml` is the one canonical contract for public and retained
-internal/callback operations. Source-prefixed operation IDs and component names
+callback operations. Source-prefixed operation IDs and component names
 avoid collisions. Equivalent Content page/post templates share one canonical
 path; their old parameter names are recorded for compatibility. This changes no
-wire URLs. Original upstream server/path metadata preserves the inventory of
-direct internal callers; the merge does not make those routes public.
+wire URLs. Callback metadata records its direct caller without making that route public.
 
 Run `./scripts/generate-openapi.sh` for the shared DTOs and standard-library
 strict-server bindings. The isolated oapi-codegen tool module under
@@ -173,15 +166,14 @@ Every migrated operation must preserve its existing API inputs, outputs and
 business behavior, including response status, headers, field shapes, nullability,
 empty results, filtering, ordering and limits where applicable. Prove parity by
 running the same request/response golden cases against the native and corresponding
-retained legacy handlers with real authentication and authorization. Native failures must
-not fall back to the proxy. Keep exhaustive authentication and infrastructure
+retained legacy handlers with real authentication and authorization. Keep exhaustive authentication and infrastructure
 failure matrices at their own boundaries instead of duplicating them per endpoint.
 Parity migrations must leave the compared legacy production implementation unchanged;
 native provider clients and adapters belong under Tadoku API ownership.
 
 ## Runtime configuration
 
-In addition to the remaining upstream URL, startup now requires:
+Startup requires:
 
 - Individual `API_POSTGRES_HOST`, `PORT` (default 5432), `DATABASE`, `USER`,
   `PASSWORD`, `SSLMODE` fields. `API_POSTGRES_URL` remains rejected.
@@ -248,9 +240,11 @@ while the handshake or another caller's shared setup finishes. Streaming command
 also retain the upstream client's native cancellation behavior. See
 [`infra/valkey`](infra/valkey/) for the direct command pattern.
 
-The existing proxy metrics and Go process metrics remain on the metrics listener
-(`API_METRICS_PORT`, default 9090). They describe proxy request volume/latency/errors
-and process health. The common feature-flag metrics report bounded provider
+Request and Go process metrics remain on the metrics listener
+(`API_METRICS_PORT`, default 9090). The request duration metric retains its
+existing name, `tadoku_api_proxy_request_duration_seconds`, for dashboard
+compatibility and keeps its existing labels; all observed routes have native mode
+and an empty upstream. The common feature-flag metrics report bounded provider
 initialization, refresh, error, and evaluation labels without user identities.
 Shutdown closes request/metrics listeners, the Flipt polling provider, the pool,
 the Valkey client and idle HTTP connections, including Flipt, Kratos and Keto
@@ -565,7 +559,7 @@ The existing CI E2E and race targets include these comparisons automatically.
 Add future migrated operations explicitly; do not add a general service launcher
 or duplicate per-implementation fixtures.
 
-Pool-failure, cancellation and proxy-routing checks remain separate Go tests;
+Pool-failure, cancellation and routing checks remain separate Go tests;
 they exercise dependency behavior rather than SQL-defined response cases.
 
 Endpoint fixtures contain synthetic signed JWTs and any required Keto relationships.
@@ -699,8 +693,7 @@ The runner resets PostgreSQL and Keto once per journey: cleanup, then the
 shared `journeys/setup.sql` and `journeys/relationships.json`, then the
 journey's own files. There are no per-step seeds. The JWT clock stays at the
 fixture instant for the whole journey while each step's `at` sets its business
-instant through `timex`. The runner stops at the first failing step and, like
-every scenario, fails if a legacy upstream was contacted. Unknown entries in a
+instant through `timex`. The runner stops at the first failing step. Unknown entries in a
 journey or step directory fail the journey.
 
 Cast members are `guest`, `user`, `user2`, `admin` and `banned`, plus the

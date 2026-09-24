@@ -64,7 +64,6 @@ spec:
                   key: token
             - {name: API_KRATOS_ADMIN_URL, value: "http://kratos-admin.tdk-dev-kratos"}
             - {name: API_KRATOS_TIMEOUT, value: "2s"}
-            - {name: API_IMMERSION_URL, value: "http://immersion-api.tdk-dev-immersion-api"}
             - {name: API_POSTGRES_HOST, value: tadoku-dev-db.tdk-dev-data.svc.cluster.local}
             - {name: API_POSTGRES_DATABASE, value: immersion}
             - {name: API_POSTGRES_SSLMODE, value: require}

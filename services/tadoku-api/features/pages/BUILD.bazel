@@ -43,6 +43,7 @@ go_test(
     deps = [
         ":pages",
         "//services/tadoku-api/infra/postgres",
+        "//services/tadoku-api/internal/errx",
         "//services/tadoku-api/internal/testpostgres",
         "@com_github_google_uuid//:uuid",
         "@com_github_jackc_pgerrcode//:pgerrcode",

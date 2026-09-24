@@ -26,7 +26,23 @@ go_library(
 
 go_test(
     name = "scoring_test",
-    srcs = ["scoring_service_test.go"],
+    srcs = [
+        "scoring_repository_test.go",
+        "scoring_service_test.go",
+    ],
+    args = ["-test.parallel=4"],
     embed = [":scoring"],
-    deps = ["@com_github_google_uuid//:uuid"],
+    env_inherit = ["TADOKU_TEST_POSTGRES_URL"],
+    tags = [
+        "no-cache",
+        "no-remote-exec",
+        "requires-network",
+    ],
+    deps = [
+        "//services/tadoku-api/internal/errx",
+        "//services/tadoku-api/internal/testpostgres",
+        "@com_github_google_uuid//:uuid",
+        "@com_github_jackc_pgerrcode//:pgerrcode",
+        "@com_github_jackc_pgx_v5//pgconn",
+    ],
 )

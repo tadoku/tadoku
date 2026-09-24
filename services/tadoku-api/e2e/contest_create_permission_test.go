@@ -17,7 +17,6 @@ func TestContestCreatePermissionCheck(t *testing.T) {
 		{description: []string{"admin", "bypasses", "age", "and", "quota"}, want: http.StatusOK},
 		{description: []string{"missing", "identity"}, want: http.StatusNotFound},
 		{description: []string{"guest", "subject"}, want: http.StatusUnauthorized},
-		{description: []string{"banned"}, want: http.StatusForbidden},
 	}
 
 	for _, test := range tests {

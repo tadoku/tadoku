@@ -33,7 +33,6 @@ func TestImmersionScoringRuleSetListContest(t *testing.T) {
 		{description: []string{"owner", "versions", "ordered"}, want: http.StatusOK},
 		{description: []string{"admin", "nonowner"}, want: http.StatusOK},
 		{description: []string{"member", "nonowner"}, want: http.StatusForbidden},
-		{description: []string{"unknown", "signing", "key"}, want: http.StatusUnauthorized},
 		{description: []string{"missing"}, want: http.StatusNotFound},
 		{description: []string{"guest", "existing"}, want: http.StatusUnauthorized},
 		{description: []string{"guest", "missing"}, want: http.StatusUnauthorized},

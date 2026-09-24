@@ -10,6 +10,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/tadoku/tadoku/services/tadoku-api/domain/leaderboardoutbox"
 	queries "github.com/tadoku/tadoku/services/tadoku-api/generated/sqlc/contests"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 )
@@ -206,6 +207,7 @@ func (r *ContestsRepository) InsertContestScoreRefresh(ctx context.Context, user
 	}
 
 	if err := queries.New(executor).InsertContestScoreRefresh(ctx, queries.InsertContestScoreRefreshParams{
+		EventType: string(leaderboardoutbox.RefreshContestScore),
 		UserID:    pgtype.UUID{Bytes: userID, Valid: true},
 		ContestID: pgtype.UUID{Bytes: contestID, Valid: true},
 	}); err != nil {

@@ -5,7 +5,6 @@ import (
 
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
 	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
 
 func (s *server) ImmersionScorePreview(ctx context.Context, request openapi.ImmersionScorePreviewRequestObject) (openapi.ImmersionScorePreviewResponseObject, error) {
@@ -26,10 +25,7 @@ func (s *server) ImmersionScorePreview(ctx context.Context, request openapi.Imme
 	result, err := s.application.PreviewScore(ctx, parameters)
 	if err != nil {
 		s.logOperationError(ctx, "preview score", err)
-		if scoringHTTPError(err) {
-			return nil, err
-		}
-		return openapi.ImmersionScorePreview500Response{}, nil
+		return nil, err
 	}
 	return openapi.ImmersionScorePreview200JSONResponse(scorePreviewResponse(result)), nil
 }
@@ -38,10 +34,7 @@ func (s *server) ImmersionScoringRuleSetListPlatform(ctx context.Context, _ open
 	sets, err := s.application.ListPlatformScoringRuleSets(ctx)
 	if err != nil {
 		s.logOperationError(ctx, "list platform scoring rule sets", err)
-		if scoringHTTPError(err) {
-			return nil, err
-		}
-		return openapi.ImmersionScoringRuleSetListPlatform500Response{}, nil
+		return nil, err
 	}
 	return openapi.ImmersionScoringRuleSetListPlatform200JSONResponse(scoringRuleSetsResponse(sets)), nil
 }
@@ -50,10 +43,7 @@ func (s *server) ImmersionScoringRuleSetListContest(ctx context.Context, request
 	sets, err := s.application.ListContestScoringRuleSets(ctx, request.Id)
 	if err != nil {
 		s.logOperationError(ctx, "list contest scoring rule sets", err)
-		if scoringHTTPError(err) {
-			return nil, err
-		}
-		return openapi.ImmersionScoringRuleSetListContest500Response{}, nil
+		return nil, err
 	}
 	return openapi.ImmersionScoringRuleSetListContest200JSONResponse(scoringRuleSetsResponse(sets)), nil
 }
@@ -64,10 +54,7 @@ func (s *server) ImmersionScoringRuleSetCreatePlatform(ctx context.Context, requ
 	})
 	if err != nil {
 		s.logOperationError(ctx, "create platform scoring rule set", err)
-		if scoringHTTPError(err) {
-			return nil, err
-		}
-		return openapi.ImmersionScoringRuleSetCreatePlatform500Response{}, nil
+		return nil, err
 	}
 	return openapi.ImmersionScoringRuleSetCreatePlatform200JSONResponse(scoringRuleSetResponse(*created)), nil
 }
@@ -84,10 +71,7 @@ func (s *server) ImmersionScoringRuleSetCreateContest(ctx context.Context, reque
 	created, err := s.application.CreateContestScoringRuleSetDraft(ctx, request.Id, parameters)
 	if err != nil {
 		s.logOperationError(ctx, "create contest scoring rule set", err)
-		if scoringHTTPError(err) {
-			return nil, err
-		}
-		return openapi.ImmersionScoringRuleSetCreateContest500Response{}, nil
+		return nil, err
 	}
 	return openapi.ImmersionScoringRuleSetCreateContest200JSONResponse(scoringRuleSetResponse(*created)), nil
 }
@@ -96,10 +80,7 @@ func (s *server) ImmersionScoringRuleSetPublish(ctx context.Context, request ope
 	published, err := s.application.PublishScoringRuleSet(ctx, request.Id)
 	if err != nil {
 		s.logOperationError(ctx, "publish scoring rule set", err)
-		if scoringHTTPError(err) {
-			return nil, err
-		}
-		return openapi.ImmersionScoringRuleSetPublish500Response{}, nil
+		return nil, err
 	}
 	return openapi.ImmersionScoringRuleSetPublish200JSONResponse(scoringRuleSetResponse(*published)), nil
 }
@@ -107,10 +88,7 @@ func (s *server) ImmersionScoringRuleSetPublish(ctx context.Context, request ope
 func (s *server) ImmersionScoringRuleSetActivate(ctx context.Context, request openapi.ImmersionScoringRuleSetActivateRequestObject) (openapi.ImmersionScoringRuleSetActivateResponseObject, error) {
 	if err := s.application.ActivateScoringRuleSet(ctx, request.Id); err != nil {
 		s.logOperationError(ctx, "activate scoring rule set", err)
-		if scoringHTTPError(err) {
-			return nil, err
-		}
-		return openapi.ImmersionScoringRuleSetActivate500Response{}, nil
+		return nil, err
 	}
 	return openapi.ImmersionScoringRuleSetActivate204Response{}, nil
 }
@@ -162,11 +140,6 @@ func scoreEstimateResponse(estimate app.ScoreEstimate) openapi.ImmersionScoreEst
 		RuleSetId: estimate.RuleSetID,
 		Rules:     rules,
 	}
-}
-
-func scoringHTTPError(err error) bool {
-	kind := errx.KindOf(err)
-	return kind != errx.Unknown && kind != errx.Internal
 }
 
 func scoringRuleSetsResponse(sets []app.ScoringRuleSet) openapi.ImmersionScoringRuleSets {

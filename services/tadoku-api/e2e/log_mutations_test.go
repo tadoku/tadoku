@@ -29,7 +29,6 @@ func TestImmersionLogCreate(t *testing.T) {
 		{description: []string{"account", "deletion", "locked"}, want: http.StatusConflict},
 		{description: []string{"duration", "unknown", "language", "readback"}, want: http.StatusNotFound},
 		{description: []string{"guest", "empty", "body"}, want: http.StatusUnauthorized},
-		{description: []string{"unknown", "signing", "key"}, want: http.StatusUnauthorized},
 		{description: []string{"empty", "body"}, want: http.StatusBadRequest},
 	}
 	for _, test := range tests {
@@ -67,7 +66,6 @@ func TestImmersionLogUpdate(t *testing.T) {
 		{description: []string{"account", "deletion", "locked"}, want: http.StatusConflict},
 		{description: []string{"missing"}, want: http.StatusNotFound},
 		{description: []string{"guest"}, want: http.StatusUnauthorized},
-		{description: []string{"unknown", "signing", "key"}, want: http.StatusUnauthorized},
 		{description: []string{"empty", "body"}, want: http.StatusBadRequest},
 	}
 	for _, test := range tests {

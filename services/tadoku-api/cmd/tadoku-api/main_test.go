@@ -361,7 +361,7 @@ func validApplicationConfig(t *testing.T) config {
 		KratosAdminURL:          upstream.URL,
 		KratosTimeout:           time.Second,
 
-		DialTimeout:           time.Second,
+		DialTimeout:           10 * time.Second,
 		MaxTokenAge:           24 * time.Hour,
 		ResponseHeaderTimeout: time.Second,
 		RequestTimeout:        time.Second,

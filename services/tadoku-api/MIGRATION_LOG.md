@@ -49,5 +49,4 @@
 - [ ] Decide whether pages/posts should share content-revision primitives or stay intentional twins; align list publication policy (pages lack the `published_at` cutoff posts apply when excluding drafts).
 - [x] Bind the ban-middleware path carve-out to the mux/generated `AuthzRoleGet` pattern, not the magic `"/authz/current-user/role"` string.
 - [ ] Replace `Application.New` positional `*Service` args with a `Dependencies` struct (open log/scoring PRs already churn this surface).
-- [ ] Extract an app `mutateThenReadBack` helper for the repeated announcements/pages/posts transaction+find blocks.
 - [ ] Move the pgx pool Prometheus collector from `cmd` into `infra/postgres`.

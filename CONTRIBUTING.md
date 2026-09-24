@@ -28,4 +28,4 @@ If you believe you found a security issue, contact the maintainer privately (Dis
 
 ## For maintainers (internal)
 
-Internal agents and maintainers still use the usual review and merge flow. Architecture notes (Paper boundaries, testing expectations, coding conventions) live with the maintainers; ask on Discord if you need orientation and you have been invited to work on the codebase.
+Internal agents and maintainers still use the usual review and merge flow. Architecture notes, testing expectations and coding conventions live in [`AGENTS.md`](AGENTS.md) and the [developer documentation](https://tadoku.github.io/tadoku/); ask on Discord if you need orientation and you have been invited to work on the codebase.

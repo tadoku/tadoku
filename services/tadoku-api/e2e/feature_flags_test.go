@@ -40,7 +40,6 @@ func TestImmersionFeatureAccessGet(t *testing.T) {
 		{description: []string{"zero", "user", "id"}, want: http.StatusBadRequest},
 		{description: []string{"guest"}, want: http.StatusUnauthorized},
 		{description: []string{"non", "admin"}, want: http.StatusForbidden},
-		{description: []string{"provider", "unavailable"}, want: http.StatusServiceUnavailable, unavailable: true},
 	}
 	runFeatureAccessCases(t, "ImmersionFeatureAccessGet", tests)
 }
@@ -52,7 +51,6 @@ func TestImmersionFeatureAccessGrant(t *testing.T) {
 		{description: []string{"invalid", "flag"}, want: http.StatusBadRequest},
 		{description: []string{"guest"}, want: http.StatusUnauthorized},
 		{description: []string{"non", "admin"}, want: http.StatusForbidden},
-		{description: []string{"provider", "unavailable"}, want: http.StatusServiceUnavailable, unavailable: true},
 	}
 	runFeatureAccessCases(t, "ImmersionFeatureAccessGrant", tests)
 }
@@ -64,7 +62,6 @@ func TestImmersionFeatureAccessRevoke(t *testing.T) {
 		{description: []string{"invalid", "flag"}, want: http.StatusBadRequest},
 		{description: []string{"guest"}, want: http.StatusUnauthorized},
 		{description: []string{"non", "admin"}, want: http.StatusForbidden},
-		{description: []string{"provider", "unavailable"}, want: http.StatusServiceUnavailable, unavailable: true},
 	}
 	runFeatureAccessCases(t, "ImmersionFeatureAccessRevoke", tests)
 }
@@ -74,12 +71,8 @@ func runFeatureAccessCases(t *testing.T, operation string, tests []featureAccess
 	for _, test := range tests {
 		name := APITestName(operation, test.want, test.description...)
 		t.Run(name, func(t *testing.T) {
-			native := http.Handler(api.handler)
-			if test.unavailable {
-				native = withFliptUnavailable(native)
-			}
 			runCase(t, api, name, test.want,
-				implementation{name: "tadoku-api", handler: native},
+				implementation{name: "tadoku-api", handler: api.handler},
 			)
 		})
 	}

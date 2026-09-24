@@ -37,8 +37,8 @@ func (r *Repository) SynchronizeUser(
 		ID:               postgres.UUID(userID),
 		DisplayName:      displayName,
 		SessionCreatedAt: pgtype.Timestamp{Time: sessionCreatedAt, Valid: true},
-		CreatedAt:        pgtype.Timestamp{Time: now, Valid: true},
-		UpdatedAt:        pgtype.Timestamp{Time: now, Valid: true},
+		CreatedAt:        postgres.Timestamp(now),
+		UpdatedAt:        postgres.Timestamp(now),
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
 		return ErrAccountDeletionInProgress

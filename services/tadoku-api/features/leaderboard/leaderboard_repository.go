@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	queries "github.com/tadoku/tadoku/services/tadoku-api/generated/sqlc/leaderboard"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
@@ -201,7 +200,7 @@ func (r *Repository) markOutbox(ctx context.Context, ids []int64, processedAt ti
 		return err
 	}
 	err = queries.New(executor).MarkLeaderboardOutboxProcessed(ctx, queries.MarkLeaderboardOutboxProcessedParams{
-		ProcessedAt: pgtype.Timestamp{Time: processedAt, Valid: true},
+		ProcessedAt: postgres.Timestamp(processedAt),
 		Ids:         ids,
 	})
 	if err != nil {
@@ -215,7 +214,7 @@ func (r *Repository) cleanupOutbox(ctx context.Context, before time.Time) error 
 	if err != nil {
 		return err
 	}
-	err = queries.New(executor).CleanupLeaderboardOutbox(ctx, pgtype.Timestamp{Time: before, Valid: true})
+	err = queries.New(executor).CleanupLeaderboardOutbox(ctx, postgres.Timestamp(before))
 	if err != nil {
 		return fmt.Errorf("cleanup leaderboard outbox: %w", err)
 	}

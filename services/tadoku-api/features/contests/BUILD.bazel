@@ -11,6 +11,7 @@ go_library(
     visibility = ["//services/tadoku-api:feature_consumers"],
     deps = [
         "//services/tadoku-api/domain/activities",
+        "//services/tadoku-api/domain/languages",
         "//services/tadoku-api/domain/leaderboardoutbox",
         "//services/tadoku-api/domain/logscore",
         "//services/tadoku-api/generated/sqlc/contests",

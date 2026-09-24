@@ -184,11 +184,6 @@ left join contests
 where id = sqlc.arg(contest_id)
 order by name asc;
 
--- name: ListLanguages :many
-select code, name
-from languages
-order by name asc;
-
 -- name: FindContestRegistrationForUser :one
 select
   contest_registrations.id,

@@ -235,12 +235,6 @@ func checkContestCreatorAccountAge(accountCreatedAt, now time.Time) error {
 	return nil
 }
 
-type ConfigurationOptions struct {
-	Languages              []Language
-	Activities             []Activity
-	CanCreateOfficialRound bool
-}
-
 type ListParameters struct {
 	UserID         *uuid.UUID
 	Official       bool
@@ -260,10 +254,6 @@ type FindParameters struct {
 }
 
 func (p FindParameters) IncludeDeleted() bool { return p.includeDeleted }
-
-func allActivities() []Activity {
-	return append([]Activity(nil), activities...)
-}
 
 func hydrateActivities(ids []int32) ([]Activity, error) {
 	result, err := hydrateActivitiesInOrder(ids)

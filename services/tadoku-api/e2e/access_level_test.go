@@ -1,8 +1,6 @@
 package e2e_test
 
 import (
-	"fmt"
-	"net/http"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -181,12 +179,12 @@ func TestOperationAccessLevels(t *testing.T) {
 			switch level {
 			case accessPublic:
 			case accessAuthenticated:
-				requireAccessFixture(t, operation, http.StatusUnauthorized)
+				requireAccessFixture(t, operation, "401_guest")
 			case accessAdmin:
-				requireAccessFixture(t, operation, http.StatusUnauthorized)
-				requireAccessFixture(t, operation, http.StatusForbidden)
+				requireAccessFixture(t, operation, "401_")
+				requireAccessFixture(t, operation, "403_")
 			case accessCallback:
-				requireAccessFixture(t, operation, http.StatusUnauthorized)
+				requireAccessFixture(t, operation, "401_")
 			default:
 				t.Errorf("operation %q has unknown access level %d", operation, level)
 			}
@@ -200,7 +198,7 @@ func TestOperationAccessLevels(t *testing.T) {
 	}
 }
 
-func requireAccessFixture(t *testing.T, operation string, status int) {
+func requireAccessFixture(t *testing.T, operation string, prefix string) {
 	t.Helper()
 
 	fixtureOperation, ok := operationFixtures[operation]
@@ -216,7 +214,6 @@ func requireAccessFixture(t *testing.T, operation string, status int) {
 		return
 	}
 
-	prefix := fmt.Sprintf("%d_", status)
 	for _, entry := range entries {
 		if entry.IsDir() && strings.HasPrefix(entry.Name(), prefix) {
 			return

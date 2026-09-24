@@ -17,7 +17,6 @@ go_library(
         "//services/tadoku-api/internal/errx",
         "//services/tadoku-api/internal/timex",
         "@com_github_google_uuid//:uuid",
-        "@com_github_jackc_pgx_v5//:pgx",
         "@com_github_jackc_pgx_v5//pgtype",
         "@com_github_jackc_pgx_v5//pgxpool",
         "@com_github_valkey_io_valkey_go//:valkey-go",

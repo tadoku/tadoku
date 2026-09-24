@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/activities"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/leaderboardoutbox"
+	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 	valkeygo "github.com/valkey-io/valkey-go"
@@ -499,57 +500,57 @@ func (w *Worker) drain(ctx context.Context) error {
 
 // ProcessBatch claims rows through commit, then acknowledges only after Valkey succeeds.
 func (w *Worker) ProcessBatch(ctx context.Context) (int, error) {
-	tx, err := w.service.repository.beginOutbox(ctx)
-	if err != nil {
-		return 0, fmt.Errorf("begin leaderboard outbox: %w", err)
-	}
-	defer func() {
-		rollbackCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
-		defer cancel()
-		_ = tx.Rollback(rollbackCtx)
-	}()
-
-	events, err := w.service.repository.lockOutbox(ctx, tx)
-	if err != nil {
-		return 0, err
-	}
-	if len(events) == 0 {
-		return 0, nil
-	}
-
-	keys := make(map[string]struct{})
-	ids := make([]int64, 0, len(events))
-	for _, event := range events {
-		ids = append(ids, event.id)
-		switch leaderboardoutbox.EventType(event.eventType) {
-		case leaderboardoutbox.RefreshContestScore:
-			if event.contestID == nil {
-				w.logger.ErrorContext(ctx, "invalid leaderboard outbox event", "event_id", event.id, "event_type", event.eventType)
-				continue
-			}
-			keys[w.service.cacheKey(contestPrefix+event.contestID.String())] = struct{}{}
-		case leaderboardoutbox.RefreshOfficialScores:
-			if event.year == nil {
-				w.logger.ErrorContext(ctx, "invalid leaderboard outbox event", "event_id", event.id, "event_type", event.eventType)
-				continue
-			}
-			keys[w.service.cacheKey(yearlyPrefix+strconv.Itoa(int(*event.year)))] = struct{}{}
-			keys[w.service.cacheKey(globalKey)] = struct{}{}
-		default:
-			w.logger.ErrorContext(ctx, "unknown leaderboard outbox event", "event_id", event.id, "event_type", event.eventType)
+	processed := 0
+	err := postgres.RunInTransaction(ctx, w.service.repository.db, func(ctx context.Context) error {
+		events, err := w.service.repository.lockOutbox(ctx)
+		if err != nil {
+			return err
 		}
-	}
-	for key := range keys {
-		if err := w.service.invalidate(ctx, key); err != nil {
-			return 0, err
+		if len(events) == 0 {
+			return nil
 		}
+
+		keys := make(map[string]struct{})
+		ids := make([]int64, 0, len(events))
+		for _, event := range events {
+			ids = append(ids, event.id)
+			switch leaderboardoutbox.EventType(event.eventType) {
+			case leaderboardoutbox.RefreshContestScore:
+				if event.contestID == nil {
+					w.logger.ErrorContext(ctx, "invalid leaderboard outbox event", "event_id", event.id, "event_type", event.eventType)
+					continue
+				}
+				keys[w.service.cacheKey(contestPrefix+event.contestID.String())] = struct{}{}
+			case leaderboardoutbox.RefreshOfficialScores:
+				if event.year == nil {
+					w.logger.ErrorContext(ctx, "invalid leaderboard outbox event", "event_id", event.id, "event_type", event.eventType)
+					continue
+				}
+				keys[w.service.cacheKey(yearlyPrefix+strconv.Itoa(int(*event.year)))] = struct{}{}
+				keys[w.service.cacheKey(globalKey)] = struct{}{}
+			default:
+				w.logger.ErrorContext(ctx, "unknown leaderboard outbox event", "event_id", event.id, "event_type", event.eventType)
+			}
+		}
+
+		// Invalidate while the claimed rows stay locked so no other worker acknowledges them first.
+		for key := range keys {
+			if err := w.service.invalidate(ctx, key); err != nil {
+				return err
+			}
+		}
+
+		if err := w.service.repository.markOutbox(ctx, ids, timex.Now()); err != nil {
+			return err
+		}
+		processed = len(events)
+		return nil
+	})
+	if err != nil {
+		return 0, fmt.Errorf("process leaderboard outbox: %w", err)
 	}
-	if err := w.service.repository.markOutbox(ctx, tx, ids, timex.Now()); err != nil {
-		return 0, err
+	if processed > 0 {
+		w.logger.InfoContext(ctx, "leaderboard outbox batch processed", "processed", processed)
 	}
-	if err := tx.Commit(ctx); err != nil {
-		return 0, fmt.Errorf("commit leaderboard outbox: %w", err)
-	}
-	w.logger.InfoContext(ctx, "leaderboard outbox batch processed", "processed", len(events))
-	return len(events), nil
+	return processed, nil
 }

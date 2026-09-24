@@ -31,7 +31,6 @@
 - [ ] Remove raw Kratos from contests; account-age/schema eligibility belongs with profile (or app over profile). Contests constructor accepts only the repository; CI deny `ory/kratos-client-go` under `features/contests`.
 - [ ] Split pages/posts Create+Update into one-SQL repository methods; allocate content IDs in the service under the app transaction; ban `uuid.New` in `*_repository.go`.
 - [ ] Extract leaderboard Valkey cache I/O from `Service` into a Store (mirror immersion `LeaderboardStore`); deny `valkey-go` imports outside Store packages.
-- [ ] Move leaderboard outbox transaction ownership from the repository to a composition layer above it, with the worker run and transaction coordinated there; keep repository methods to one SQL statement each.
 - [ ] Ban private unit→activity maps outside `domain/activities` (lint).
 - [x] Share one profile Kratos traits decoder; remove the dead untagged `Email` field in `FindProfile`.
 - [ ] Move FindLog registration visibility into the logs feature (explicit deleted vs visibility params); skip attachment SQL when hidden; stop overloading the admin bool as `includeDeleted`.

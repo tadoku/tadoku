@@ -114,6 +114,10 @@ func TestAuthentication(t *testing.T) {
 			description: []string{"service", "token"},
 			want:        http.StatusUnauthorized,
 		},
+		{
+			description: []string{"non", "uuid", "subject"},
+			want:        http.StatusUnauthorized,
+		},
 	}
 	for _, test := range tests {
 		name := APITestName("Authentication", test.want, test.description...)

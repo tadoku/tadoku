@@ -126,8 +126,10 @@ responses. In addition:
 - The identity's `CreatedAt` is the token's issue time, not the account's
   creation time.
 - Anonymous gateway traffic carries a signed token with subject `guest`, which
-  is distinct from a direct request without credentials. Service tokens are
-  never converted into human identities.
+  is distinct from a direct request without credentials. Every other subject
+  must be a UUID, the Kratos identity ID; a token with any other subject is
+  rejected with `401` like any other invalid token. Service tokens are never
+  converted into human identities.
 - The ban gate performs only the ban lookup, so no unrelated administrator
   lookup can discard a successful ban result. Request deadlines bound the Keto
   call. A failed lookup is kept in the request context, so later authenticated

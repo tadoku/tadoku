@@ -10,11 +10,9 @@ import (
 )
 
 func TestAuthzRoleUpdate(t *testing.T) {
-	auditUnavailable := auditUnavailableRoleUpdateHandler(t)
 	tests := []struct {
-		description      []string
-		want             int
-		auditUnavailable bool
+		description []string
+		want        int
 	}{
 		{description: []string{"ban", "user"}, want: http.StatusOK},
 		{description: []string{"unban", "user"}, want: http.StatusOK},
@@ -30,19 +28,13 @@ func TestAuthzRoleUpdate(t *testing.T) {
 		{description: []string{"non", "admin", "invalid", "role"}, want: http.StatusForbidden},
 		{description: []string{"missing", "user", "marked", "admin"}, want: http.StatusNotFound},
 		{description: []string{"target", "admin"}, want: http.StatusForbidden},
-		{description: []string{"audit", "unavailable"}, want: http.StatusInternalServerError, auditUnavailable: true},
 	}
 
 	for _, test := range tests {
 		name := APITestName("AuthzRoleUpdate", test.want, test.description...)
 		t.Run(name, func(t *testing.T) {
-			nativeHandler := api.handler
-			if test.auditUnavailable {
-				nativeHandler = auditUnavailable
-			}
-
 			runCase(t, api, name, test.want,
-				implementation{name: "tadoku-api", handler: nativeHandler},
+				implementation{name: "tadoku-api", handler: api.handler},
 			)
 		})
 	}

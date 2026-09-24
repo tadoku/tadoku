@@ -1,6 +1,0 @@
->>> GET /immersion/contests/ongoing-registrations
-HTTP/1.1 500 Internal Server Error
-Content-Length: 36
-Content-Type: application/json; charset=UTF-8
-
-{"message":"Internal Server Error"}

@@ -14,7 +14,6 @@ func TestListYearlyContestRegistrations(t *testing.T) {
 		{description: []string{"admin", "mixed", "history"}, want: http.StatusOK},
 		{description: []string{"other", "user", "mixed", "history"}, want: http.StatusOK},
 		{description: []string{"guest", "mixed", "history"}, want: http.StatusOK},
-		{description: []string{"invalid", "signed", "subject", "public", "history"}, want: http.StatusOK},
 		{description: []string{"missing", "contest", "owner"}, want: http.StatusOK},
 		{description: []string{"deleted", "user"}, want: http.StatusOK},
 		{description: []string{"empty", "year"}, want: http.StatusOK},

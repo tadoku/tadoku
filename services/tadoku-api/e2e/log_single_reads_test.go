@@ -20,7 +20,6 @@ func TestImmersionLogFindByID(t *testing.T) {
 		{description: []string{"unknown"}, want: http.StatusNotFound},
 		{description: []string{"nil", "id"}, want: http.StatusNotFound},
 		{description: []string{"invalid", "id"}, want: http.StatusBadRequest},
-		{description: []string{"invalid", "signed", "subject"}, want: http.StatusUnauthorized},
 		{description: []string{"invalid", "activity"}, want: http.StatusBadRequest},
 		{description: []string{"missing", "unit"}, want: http.StatusOK},
 		{description: []string{"missing", "language"}, want: http.StatusNotFound},

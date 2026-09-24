@@ -16,7 +16,6 @@ func TestImmersionLogGetConfigurations(t *testing.T) {
 		{description: []string{"populated_disabled"}, want: http.StatusOK, scoringEngineEnabled: false},
 		{description: []string{"populated_enabled"}, want: http.StatusOK, scoringEngineEnabled: true},
 		{description: []string{"other_user_history"}, want: http.StatusOK, scoringEngineEnabled: false},
-		{description: []string{"invalid_signed_subject"}, want: http.StatusUnauthorized},
 		{description: []string{"guest"}, want: http.StatusUnauthorized, scoringEngineEnabled: false},
 	}
 	for _, test := range tests {

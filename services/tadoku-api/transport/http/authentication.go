@@ -11,10 +11,12 @@ import (
 
 	"github.com/MicahParks/keyfunc"
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
 )
 
 // NewJWTAuthentication loads the gateway's signing keys and verifies user JWTs.
+// The subject must be the signed guest subject or a UUID.
 // It performs no role, ban, permission, or service-audience checks.
 func NewJWTAuthentication(lifetime context.Context, jwksURL string, timeout, maxTokenAge time.Duration, issuer string, logger *slog.Logger) (func(stdhttp.Handler) stdhttp.Handler, error) {
 	if lifetime == nil {
@@ -81,7 +83,8 @@ func NewJWTAuthentication(lifetime context.Context, jwksURL string, timeout, max
 					claims.IssuedAt != nil &&
 					!claims.IssuedAt.Time.Add(maxTokenAge).Before(jwt.TimeFunc()) &&
 					(issuer == "" || claims.Issuer == issuer) &&
-					claims.Type != "service" {
+					claims.Type != "service" &&
+					(claims.Subject == "guest" || uuid.Validate(claims.Subject) == nil) {
 					user := &identity.User{
 						Subject:     claims.Subject,
 						DisplayName: claims.Session.Identity.Traits.DisplayName,

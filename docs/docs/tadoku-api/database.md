@@ -46,10 +46,12 @@ Always write SQL keywords in lowercase: `select` and `create table`, not
 
 ## sqlc code generation
 
-Queries live in one package per feature under `services/tadoku-api/sql/<feature>/`:
+Queries live in one package per feature or shared storage repository under `services/tadoku-api/sql/<name>/`:
 the feature's `.sql` query file, a `sqlc.yaml` that writes Go code to
 `services/tadoku-api/generated/sqlc/<feature>/`, and a `generate.go` that pins the
 sqlc version. Add a new package to `SQLC_PACKAGES` in `scripts/generate-sqlc.sh`.
+The shared async outbox uses `sql/asyncoutbox/` and generates
+`generated/sqlc/asyncoutbox/`, visible only to its repository.
 
 Always regenerate after changing a SQL query. The checked-in generated Go files
 must exactly match the query sources. Run the generator from the repository

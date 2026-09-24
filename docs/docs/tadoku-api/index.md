@@ -41,8 +41,9 @@ All paths are relative to `services/tadoku-api/`.
 | `app/` | Application operations: actor authorization, cross-feature locks and transactions, and composition of feature results. |
 | `features/<feature>/` | One feature: a service that owns its business decisions and a repository that queries and maps its rows. |
 | `generated/` | Generated code: sqlc queries per feature (`generated/sqlc/<feature>/`) and HTTP bindings (`generated/openapi/`). |
+| `storage/postgres/asyncoutbox/` | Shared PostgreSQL repository for typed background tasks, lease-fenced claims and terminal outcomes. |
 | `domain/<concept>/` | Business values and pure rules shared by several features. |
-| `internal/` | Technical support: errors (`errx`), request identity (`identity`), actor permissions (`permissions`), business time (`timex`), callback authentication (`callbackauth`) and test fixtures (`test*`). |
+| `internal/` | Technical support: typed background tasks (`asyncwork`), errors (`errx`), request identity (`identity`), actor permissions (`permissions`), business time (`timex`), callback authentication (`callbackauth`) and test fixtures (`test*`). |
 | `infra/` | Infrastructure adapters: the PostgreSQL pool and transactions (`postgres`), the raw Valkey client (`valkey`), the Flipt management client (`fliptmanagement`) and scoring observability (`observability`). |
 | `cmd/tadoku-api/` | The composition root: loads configuration, constructs and owns the pool, provider clients and HTTP resources, and wires them into the application. |
 
@@ -54,6 +55,10 @@ All paths are relative to `services/tadoku-api/`.
   `services/tadoku-api/sql/<feature>/`, and sqlc generates Go code into
   `services/tadoku-api/generated/sqlc/<feature>/`.
 - Valkey holds leaderboard caches only; PostgreSQL remains the source of truth.
+- `async_outbox` stores typed tasks with bounded claims and replay lineage.
+  A producer enqueues through the shared repository inside its business transaction.
+  Claims, renewals and outcomes use one SQL statement each; stale or expired
+  claim tokens cannot acknowledge work.
 
 ## CMS-managed content
 

@@ -127,6 +127,14 @@ The following rules decide where each check belongs.
   `features/<feature>/<feature>_repository.go`. They reach PostgreSQL through
   `postgres.Executor` (`services/tadoku-api/infra/postgres/`) and the feature's generated sqlc
   package, and convert between sqlc rows and feature domain types internally.
+- The cross-feature async outbox has one repository in
+  `services/tadoku-api/storage/postgres/asyncoutbox/`. Producing features pass
+  a typed `internal/asyncwork` task to its `Enqueue` method using the active
+  transaction context; the repository uses `postgres.Executor` so the task
+  commits or rolls back with the business write. Its claims operate per known
+  task type, and acknowledgements require an unexpired lease and matching token.
+  PostgreSQL wall time sets and checks leases; `timex` business time sets task
+  scheduling and audit timestamps.
 - The leaderboard feature's `Store` in
   `services/tadoku-api/features/leaderboard/leaderboard_store.go` encapsulates
   Valkey cache commands. Its service owns cache selection and PostgreSQL fallback.

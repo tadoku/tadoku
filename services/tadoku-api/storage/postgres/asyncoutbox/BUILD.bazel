@@ -1,0 +1,31 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "asyncoutbox",
+    srcs = ["asyncoutbox_repository.go"],
+    importpath = "github.com/tadoku/tadoku/services/tadoku-api/storage/postgres/asyncoutbox",
+    visibility = ["//services/tadoku-api:infrastructure_consumers"],
+    deps = [
+        "//services/tadoku-api/generated/sqlc/asyncoutbox",
+        "//services/tadoku-api/infra/postgres",
+        "//services/tadoku-api/internal/asyncwork",
+        "//services/tadoku-api/internal/timex",
+        "@com_github_google_uuid//:uuid",
+        "@com_github_jackc_pgx_v5//:pgx",
+        "@com_github_jackc_pgx_v5//pgtype",
+        "@com_github_jackc_pgx_v5//pgxpool",
+    ],
+)
+
+go_test(
+    name = "asyncoutbox_test",
+    srcs = ["asyncoutbox_repository_test.go"],
+    embed = [":asyncoutbox"],
+    deps = [
+        "//services/tadoku-api/infra/postgres",
+        "//services/tadoku-api/internal/asyncwork",
+        "//services/tadoku-api/internal/testpostgres",
+        "//services/tadoku-api/internal/timex",
+        "@com_github_google_uuid//:uuid",
+    ],
+)

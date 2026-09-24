@@ -17,7 +17,12 @@ Bazel target `visibility` and the package groups in
 boundaries described in [Code ownership](./index.md#code-ownership).
 
 - Feature libraries are visible only to application, startup and E2E packages.
-- A feature's generated sqlc package is visible only to that feature.
+- A feature's generated sqlc package is visible only to that feature. The
+  shared outbox's generated package is visible only to
+  `storage/postgres/asyncoutbox`.
+- `storage/postgres/asyncoutbox` is a shared infrastructure repository visible
+  to features, applications, startup and E2E packages. It may import only its
+  generated queries, PostgreSQL infrastructure and technical support packages.
 - Tests follow their package's layer policy. Startup (`cmd/tadoku-api`) and E2E
   packages are assembly boundaries.
 - `bazel build //services/tadoku-api/...` checks the boundaries for every Go

@@ -94,7 +94,7 @@ func (s *Service) UpdateContestRegistrations(ctx context.Context, logID uuid.UUI
 	}
 	if before.EligibleOfficial || after.EligibleOfficial {
 		year := before.Year
-		return s.logs.InsertOutbox(ctx, before.UserID, nil, &year, "refresh_official_scores")
+		return s.logs.InsertOutbox(ctx, before.UserID, nil, &year, leaderboardoutbox.RefreshOfficialScores)
 	}
 	return nil
 }
@@ -129,7 +129,7 @@ func (s *Service) Delete(ctx context.Context, logID uuid.UUID, now time.Time) er
 	}
 	if outbox.EligibleOfficial {
 		year := outbox.Year
-		return s.logs.InsertOutbox(ctx, outbox.UserID, nil, &year, "refresh_official_scores")
+		return s.logs.InsertOutbox(ctx, outbox.UserID, nil, &year, leaderboardoutbox.RefreshOfficialScores)
 	}
 	return nil
 }
@@ -147,7 +147,7 @@ func (s *Service) ModerateDetach(ctx context.Context, logID, contestID uuid.UUID
 	}
 	if outbox.EligibleOfficial {
 		year := outbox.Year
-		return s.logs.InsertOutbox(ctx, outbox.UserID, nil, &year, "refresh_official_scores")
+		return s.logs.InsertOutbox(ctx, outbox.UserID, nil, &year, leaderboardoutbox.RefreshOfficialScores)
 	}
 	return nil
 }
@@ -363,7 +363,7 @@ func (s *Service) create(ctx context.Context, mutation logMutation) error {
 	}
 	if mutation.EligibleOfficialLeaderboard {
 		year := mutation.Year
-		return s.logs.InsertOutbox(ctx, mutation.UserID, nil, &year, "refresh_official_scores")
+		return s.logs.InsertOutbox(ctx, mutation.UserID, nil, &year, leaderboardoutbox.RefreshOfficialScores)
 	}
 	return nil
 }
@@ -431,7 +431,7 @@ func (s *Service) update(ctx context.Context, mutation logMutation) error {
 	}
 	if outbox.EligibleOfficial {
 		year := outbox.Year
-		return s.logs.InsertOutbox(ctx, outbox.UserID, nil, &year, "refresh_official_scores")
+		return s.logs.InsertOutbox(ctx, outbox.UserID, nil, &year, leaderboardoutbox.RefreshOfficialScores)
 	}
 	return nil
 }

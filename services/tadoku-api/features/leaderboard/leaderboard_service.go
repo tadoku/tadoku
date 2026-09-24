@@ -522,13 +522,13 @@ func (w *Worker) ProcessBatch(ctx context.Context) (int, error) {
 	for _, event := range events {
 		ids = append(ids, event.id)
 		switch leaderboardoutbox.EventType(event.eventType) {
-		case leaderboardoutbox.RefreshContestScore, leaderboardoutbox.RemoveContestScore:
+		case leaderboardoutbox.RefreshContestScore:
 			if event.contestID == nil {
 				w.logger.ErrorContext(ctx, "invalid leaderboard outbox event", "event_id", event.id, "event_type", event.eventType)
 				continue
 			}
 			keys[w.service.cacheKey(contestPrefix+event.contestID.String())] = struct{}{}
-		case "refresh_official_scores", "remove_official_scores":
+		case leaderboardoutbox.RefreshOfficialScores:
 			if event.year == nil {
 				w.logger.ErrorContext(ctx, "invalid leaderboard outbox event", "event_id", event.id, "event_type", event.eventType)
 				continue

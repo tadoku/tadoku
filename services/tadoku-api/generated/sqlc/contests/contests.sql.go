@@ -375,16 +375,17 @@ func (q *Queries) InsertContestScoreRefresh(ctx context.Context, arg InsertConte
 
 const insertOfficialScoresRefresh = `-- name: InsertOfficialScoresRefresh :exec
 insert into leaderboard_outbox (event_type, user_id, year)
-values ('refresh_official_scores', $1, $2)
+values ($1, $2, $3)
 `
 
 type InsertOfficialScoresRefreshParams struct {
-	UserID pgtype.UUID
-	Year   pgtype.Int2
+	EventType string
+	UserID    pgtype.UUID
+	Year      pgtype.Int2
 }
 
 func (q *Queries) InsertOfficialScoresRefresh(ctx context.Context, arg InsertOfficialScoresRefreshParams) error {
-	_, err := q.db.Exec(ctx, insertOfficialScoresRefresh, arg.UserID, arg.Year)
+	_, err := q.db.Exec(ctx, insertOfficialScoresRefresh, arg.EventType, arg.UserID, arg.Year)
 	return err
 }
 

@@ -311,6 +311,24 @@ func (s *Service) FindLog(ctx context.Context, id uuid.UUID, includeDeleted bool
 	return log, nil
 }
 
+func (s *Service) FindLogForViewer(ctx context.Context, id uuid.UUID, parameters FindForViewerParameters) (*Log, error) {
+	log, err := s.logs.FindLog(ctx, id, parameters.IncludeDeleted)
+	if err != nil {
+		return nil, err
+	}
+
+	if mayViewRegistrations(parameters.Viewer, log.UserID) {
+		log.Registrations, err = s.logs.AttachedRegistrations(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if err := hydrateLogActivity(log); err != nil {
+		return nil, err
+	}
+	return log, nil
+}
+
 func (s *Service) Create(ctx context.Context, userID uuid.UUID, now time.Time, description *string, scored logscore.Result) (uuid.UUID, error) {
 	if err := validateDescription(description); err != nil {
 		return uuid.Nil, err

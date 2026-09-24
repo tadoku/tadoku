@@ -30,7 +30,6 @@
 - [ ] Deny `valkey-go` imports outside Store code.
 - [ ] Ban private unit→activity maps outside `domain/activities` (lint).
 - [x] Share one profile Kratos traits decoder; remove the dead untagged `Email` field in `FindProfile`.
-- [ ] Move FindLog registration visibility into the logs feature (explicit deleted vs visibility params); skip attachment SQL when hidden; stop overloading the admin bool as `includeDeleted`.
 - [ ] Fix contests `FindRegistration` language hydration to match list hydrate; delete the app padding loop in `contest_profile`.
 - [ ] Stop loading contest on find-registration when the response omits it; remove app `registration.Contest = nil`.
 - [ ] Forbid raw banned/admins Keto triples outside `internal/permissions` (lint).

@@ -14,8 +14,6 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
 
-const contestCreationYearlyLimit = 12
-
 type Service struct {
 	contests *ContestsRepository
 	kratos   *kratosapi.APIClient
@@ -45,8 +43,8 @@ func (s *Service) ValidateContestCreation(
 		if err != nil {
 			return err
 		}
-		if count >= contestCreationYearlyLimit {
-			return ErrContestCreationForbidden
+		if err := checkContestCreationYearlyLimit(count); err != nil {
+			return err
 		}
 	}
 	if err := parameters.validate(creatorID, creatorDisplayName, admin, now); err != nil {
@@ -273,10 +271,7 @@ func (s *Service) CheckCreatePermission(ctx context.Context, userID uuid.UUID) e
 	if err != nil {
 		return err
 	}
-	if count >= contestCreationYearlyLimit {
-		return ErrContestCreationForbidden
-	}
-	return nil
+	return checkContestCreationYearlyLimit(count)
 }
 
 func (s *Service) ListContests(ctx context.Context, parameters ListParameters, includePrivate bool) (*ContestList, error) {

@@ -1,6 +1,7 @@
 package contests
 
 import (
+	"errors"
 	"testing"
 	"time"
 
@@ -34,6 +35,27 @@ func TestCreateContestParametersRejectsMissingSignedOwnerFields(t *testing.T) {
 			err := valid.validate(test.ownerID, test.ownerDisplayName, false, now)
 			if errx.KindOf(err) != errx.InvalidInput || err.Error() != test.message {
 				t.Errorf("validate error=%v, want invalid input %q", err, test.message)
+			}
+		})
+	}
+}
+
+func TestCheckContestCreationYearlyLimit(t *testing.T) {
+	tests := []struct {
+		name            string
+		createdThisYear int64
+		want            error
+	}{
+		{name: "below limit", createdThisYear: contestCreationYearlyLimit - 1, want: nil},
+		{name: "at limit", createdThisYear: contestCreationYearlyLimit, want: ErrContestCreationForbidden},
+		{name: "above limit", createdThisYear: contestCreationYearlyLimit + 1, want: ErrContestCreationForbidden},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err := checkContestCreationYearlyLimit(test.createdThisYear)
+			if !errors.Is(err, test.want) {
+				t.Errorf("checkContestCreationYearlyLimit(%d) error=%v, want %v", test.createdThisYear, err, test.want)
 			}
 		})
 	}

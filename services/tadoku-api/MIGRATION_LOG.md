@@ -29,7 +29,6 @@
 - [ ] Ban `Normalize*` functions returning Internal errors (lint).
 - [ ] Stop contests owning the full language catalog (`ListLanguages`); compose `features/languages` in app like log configuration. Depolicy/sqlc: contests SQL must not declare catalog-only `from languages` without a contest join/filter.
 - [ ] Remove raw Kratos from contests; account-age/schema eligibility belongs with profile (or app over profile). Contests constructor accepts only the repository; CI deny `ory/kratos-client-go` under `features/contests`.
-- [ ] Deduplicate the yearly contest-create limit into one helper shared by create validation and permission check; unit-test the helper edges.
 - [ ] Add `RegistrationUpsertParameters.Validate()` with field-specific invalid-input messages; drop the catch-all sentinel for pure registration rules.
 - [ ] Split pages/posts Create+Update into one-SQL repository methods; allocate content IDs in the service under the app transaction; ban `uuid.New` in `*_repository.go`.
 - [ ] Extract leaderboard Valkey cache I/O from `Service` into a Store (mirror immersion `LeaderboardStore`); deny `valkey-go` imports outside Store packages.

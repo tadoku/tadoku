@@ -1,4 +1,3 @@
-// Package announcements owns announcements and their persistence.
 package announcements
 
 import (

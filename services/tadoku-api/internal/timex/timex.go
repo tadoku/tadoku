@@ -1,5 +1,3 @@
-// Package timex provides UTC wall-clock time and a scoped, process-global
-// override for tests. Overrides do not affect timers, deadlines, or database time.
 package timex
 
 import (
@@ -9,8 +7,6 @@ import (
 
 var fixedTime atomic.Pointer[time.Time]
 
-// Now returns the current wall-clock time in UTC, or the instant supplied to an
-// active TheWorld callback.
 func Now() time.Time {
 	if fixed := fixedTime.Load(); fixed != nil {
 		return *fixed

@@ -1,4 +1,3 @@
-// Package identity carries verified user claims across application layers.
 package identity
 
 import (

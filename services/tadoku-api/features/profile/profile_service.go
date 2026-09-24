@@ -168,7 +168,6 @@ func (s *Service) FindProfile(ctx context.Context, userID uuid.UUID) (*PublicPro
 	}, nil
 }
 
-// FetchAccountCreatedAt returns when the user's identity was created.
 func (s *Service) FetchAccountCreatedAt(ctx context.Context, userID uuid.UUID) (time.Time, error) {
 	identity, err := s.identities.FetchIdentity(ctx, userID)
 	if errors.Is(err, kratosclient.ErrNotFound) {

@@ -15,9 +15,8 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
 )
 
-// NewJWTAuthentication loads the gateway's signing keys and verifies user JWTs.
-// The subject must be the signed guest subject or a UUID.
-// It performs no role, ban, permission, or service-audience checks.
+// NewJWTAuthentication accepts only signed guest or UUID subjects. Callers must
+// enforce roles, bans, permissions and service audiences separately.
 func NewJWTAuthentication(lifetime context.Context, jwksURL string, timeout, maxTokenAge time.Duration, issuer string, logger *slog.Logger) (func(stdhttp.Handler) stdhttp.Handler, error) {
 	if lifetime == nil {
 		return nil, fmt.Errorf("authentication lifetime context is required")
@@ -47,7 +46,6 @@ func NewJWTAuthentication(lifetime context.Context, jwksURL string, timeout, max
 	if err != nil {
 		return nil, fmt.Errorf("fetch authentication JWKS: %w", err)
 	}
-	// keyfunc v1.8 replaces Options.Ctx before starting its refresh worker.
 	context.AfterFunc(lifetime, keys.EndBackground)
 
 	return func(next stdhttp.Handler) stdhttp.Handler {
@@ -95,8 +93,6 @@ func NewJWTAuthentication(lifetime context.Context, jwksURL string, timeout, max
 					return
 				}
 
-				// Match Echo's header extractor: stop at the first bearer value at
-				// index 19 or later. Non-bearer values are skipped before this limit.
 				if i >= 19 {
 					break
 				}

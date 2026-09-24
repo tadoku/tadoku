@@ -1,4 +1,3 @@
-// Package callbackauth carries authentication facts for trusted HTTP callbacks.
 package callbackauth
 
 import "context"

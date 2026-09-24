@@ -1,5 +1,3 @@
-// Package testkratos owns disposable Kratos processes with RAM-backed SQLite.
-// It is test-only and never accepts an external provider or database address.
 package testkratos
 
 import (
@@ -30,6 +28,7 @@ const (
 	requestTimeout  = 2 * time.Second
 	shutdownTimeout = 3 * time.Second
 	adminURL        = "http://kratos.test"
+	tmpfsMagic      = 0x01021994
 )
 
 // Fixture is shared only by sequential tests. Its client survives Reset.
@@ -77,7 +76,7 @@ func New(ctx context.Context, seedFile string) (_ *Fixture, resultErr error) {
 	if err := syscall.Statfs("/dev/shm", &filesystem); err != nil {
 		return nil, fmt.Errorf("Kratos fixture requires writable /dev/shm: %w", err)
 	}
-	if filesystem.Type != 0x01021994 { // Linux TMPFS_MAGIC.
+	if filesystem.Type != tmpfsMagic {
 		return nil, errors.New("Kratos fixture requires tmpfs at /dev/shm")
 	}
 	dir, err := os.MkdirTemp("/dev/shm", fmt.Sprintf("tadoku-testkratos-%d-", os.Getpid()))
@@ -121,16 +120,12 @@ func New(ctx context.Context, seedFile string) (_ *Fixture, resultErr error) {
 	return fixture, nil
 }
 
-// Client returns the raw SDK, using the fixture's bounded, private transport.
 func (fixture *Fixture) Client() *kratosapi.APIClient { return fixture.client }
 
-// CursorClient returns the production cursor-pagination client over the same
-// bounded private transport as Client.
 func (fixture *Fixture) CursorClient() *kratosclient.Client {
 	return kratosclient.NewClient(adminURL, kratosclient.WithHTTPClient(fixture.http))
 }
 
-// Err prevents another scenario from using a closed, failed or exited fixture.
 func (fixture *Fixture) Err() error {
 	if fixture.failed != nil {
 		return fixture.failed
@@ -170,7 +165,7 @@ func (fixture *Fixture) Reset(ctx context.Context) (err error) {
 }
 
 func (fixture *Fixture) writeConfig(schema string) error {
-	// Keep watched configuration separate from sockets, databases and logs.
+	// Test safety: Keep watched configuration separate from sockets, databases and logs.
 	directory := filepath.Join(fixture.dir, "config")
 	if err := os.Mkdir(directory, 0o700); err != nil {
 		return err
@@ -343,7 +338,6 @@ func (fixture *Fixture) stop() error {
 	}
 }
 
-// Close closes connections, stops/reaps the process and removes its owned files.
 func (fixture *Fixture) Close() error {
 	fixture.closeOnce.Do(func() {
 		fixture.closed = true

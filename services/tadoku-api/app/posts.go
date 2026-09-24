@@ -62,7 +62,6 @@ func (a *Application) CreatePost(ctx context.Context, parameters CreatePostParam
 		return err
 	})
 	if err != nil {
-		// The readback precedes commit; discard it if the transaction fails.
 		return nil, err
 	}
 	return result, nil
@@ -84,7 +83,6 @@ func (a *Application) UpdatePost(ctx context.Context, parameters UpdatePostParam
 		return err
 	})
 	if err != nil {
-		// The readback precedes commit; discard it if the transaction fails.
 		return nil, err
 	}
 	return result, nil

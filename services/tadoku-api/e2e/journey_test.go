@@ -19,11 +19,9 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
 
-// member names a cast member in testdata/journeys/cast.json.
 type member string
 
 const (
-	// none sends the request without credentials.
 	none   member = "none"
 	guest  member = "guest"
 	user   member = "user"
@@ -50,7 +48,6 @@ type step struct {
 	want   int
 	others cast
 
-	// at is the business instant of the step; zero means fixtureInstant.
 	at time.Time
 }
 
@@ -136,7 +133,6 @@ func runJourneyWithSetup(t *testing.T, s *suite, handler http.Handler, name stri
 
 }
 
-// stepDirNames validates every step and returns its numbered directory name.
 func stepDirNames(steps []step) ([]string, error) {
 	if len(steps) == 0 {
 		return nil, fmt.Errorf("journey has no steps")
@@ -185,8 +181,6 @@ func (current step) dirName(position int) (string, error) {
 	return fmt.Sprintf("%02d_%s", position, name), nil
 }
 
-// checkJourneyFiles rejects unknown entries so stale fixtures cannot linger,
-// and requires every step directory to hold exactly its two files.
 func checkJourneyFiles(directory string, steps []step, names []string) error {
 	entries, err := os.ReadDir(directory)
 	if err != nil {
@@ -285,8 +279,6 @@ func checkStepFiles(directory string, want []string) error {
 	return nil
 }
 
-// loadCast reads the cast tokens and confirms every referenced member has one.
-// none is implicit and never has a token.
 func loadCast(steps []step) (map[member]string, error) {
 	contents, err := os.ReadFile(filepath.Join(journeysDir, "cast.json"))
 	if err != nil {
@@ -317,8 +309,6 @@ func loadCast(steps []step) (map[member]string, error) {
 	return tokens, nil
 }
 
-// resetJourney clears the stores once, seeds the shared cast files, then the
-// journey's own files. Steps never reset again.
 func resetJourney(t *testing.T, s *suite, directory string) {
 	t.Helper()
 
@@ -340,8 +330,6 @@ func resetJourney(t *testing.T, s *suite, directory string) {
 	s.resetProfileCaches()
 }
 
-// runRequestStep replays the request as every member in others, checking
-// status only, then sends it as the step's member and compares the golden.
 func runRequestStep(t *testing.T, s *suite, handler http.Handler, directory string, current step, tokens map[member]string) {
 	t.Helper()
 
@@ -380,8 +368,6 @@ func authorize(request *http.Request, who member, tokens map[member]string) {
 	request.Header.Set("Authorization", "Bearer "+tokens[who])
 }
 
-// checkVerifyGolden runs verify.sql, aggregates its rows into one JSON array
-// in query order and compares the indented result with verify.json.
 func checkVerifyGolden(t *testing.T, s *suite, directory string) {
 	t.Helper()
 

@@ -479,12 +479,10 @@ func (app *application) wait() error {
 		<-app.workerDone
 	}
 
-	// Each server gets the full configured grace period.
 	shutdownContext, cancelShutdown := context.WithTimeout(context.Background(), app.shutdownTimeout)
 	shutdownErr := app.server.Shutdown(shutdownContext)
 	cancelShutdown()
 	if shutdownErr != nil {
-		// Cancel request contexts that outlasted graceful shutdown.
 		_ = app.server.Close()
 	}
 

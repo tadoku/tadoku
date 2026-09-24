@@ -206,7 +206,6 @@ func (s *Service) TagSuggestions(ctx context.Context, userID uuid.UUID, query st
 		return nil, err
 	}
 
-	// Preserve the legacy append limit: thirty history results may gain one default.
 	seen := make(map[string]struct{})
 	for _, s := range suggestions {
 		seen[strings.ToLower(s.Tag)] = struct{}{}
@@ -221,7 +220,6 @@ func (s *Service) TagSuggestions(ctx context.Context, userID uuid.UUID, query st
 		}
 	}
 
-	// Keep NSFW below ordinary suggestions, including frequently used tags.
 	sort.SliceStable(suggestions, func(i, j int) bool {
 		return !strings.EqualFold(suggestions[i].Tag, "nsfw") && strings.EqualFold(suggestions[j].Tag, "nsfw")
 	})

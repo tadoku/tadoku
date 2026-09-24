@@ -67,7 +67,6 @@ func TestApplicationKetoRelationships(t *testing.T) {
 				Relation:  "admins",
 				Subject:   subject,
 			}
-			// Each neighbor differs in exactly one tuple component.
 			tuples := []ketoclient.PermissionCheck{target, target, target, target}
 			tuples[1].Namespace = "User"
 			tuples[2].Object = "other-resource"

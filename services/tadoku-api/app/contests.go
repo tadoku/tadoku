@@ -158,7 +158,6 @@ func (a *Application) FindContestRegistration(ctx context.Context, contestID uui
 		return nil, err
 	}
 
-	// Registration lookup omits the contest; participant statistics includes it.
 	registration.Contest = nil
 	return registration, nil
 }
@@ -234,7 +233,6 @@ func (a *Application) ListYearlyContestRegistrations(ctx context.Context, userID
 		return nil, errx.NewUnauthorizedError("unauthorized")
 	}
 
-	// Signed guests have a user identity but no UUID; they receive public history.
 	callerID, err := uuid.Parse(user.Subject)
 	includePrivate := a.permissions.IsAdminOrFalse(ctx) || (err == nil && callerID == userID)
 

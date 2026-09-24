@@ -1,5 +1,3 @@
-// Package testpostgres assembles disposable, fully migrated test databases.
-// It is test-only in Bazel and never accepts production credentials.
 package testpostgres
 
 import (
@@ -118,8 +116,6 @@ func New(ctx context.Context) (_ *Database, err error) {
 	return db, nil
 }
 
-// Close releases the pool and drops only the database created by New. Cleanup
-// has its own deadline so canceled tests can still release their resources.
 func (d *Database) Close() error {
 	if d.Pool != nil {
 		d.Pool.Close()
@@ -138,10 +134,8 @@ func (d *Database) Close() error {
 //go:embed cleanup.sql
 var cleanupSQL string
 
-// Reset clears the explicitly listed mutable tables and loads existing SQL fixtures.
-// Missing seed files mean no setup is needed; other read and SQL errors fail reset.
-// Setup commits before requests run; it never encloses application transactions.
-// Call only between sequential scenarios, after their database work has finished.
+// Reset must run only between sequential scenarios after their database work
+// finishes; setup commits before the next request runs.
 func (d *Database) Reset(ctx context.Context, seedFiles ...string) (err error) {
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()

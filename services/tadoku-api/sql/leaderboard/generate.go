@@ -1,4 +1,3 @@
-// Package leaderboard contains the native leaderboard SQL generation inputs.
 package leaderboard
 
 //go:generate go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.31.1

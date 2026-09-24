@@ -14,11 +14,6 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
 )
 
-// Every important user journey in the application lives in this file. Replay a
-// request as other cast members only where that adds information: rejected
-// identities on mutating steps, and a second user only to observe limited
-// visibility of a resource.
-
 func TestFeatureAccessJourney(t *testing.T) {
 	runJourney(t, api, "FeatureAccess", []step{
 		{request: "target_initially_disabled", as: admin, want: http.StatusOK},
@@ -349,7 +344,6 @@ func TestContestModerationDetachLogJourney(t *testing.T) {
 }
 
 func TestContestRegistrationJourney(t *testing.T) {
-	// Keep API-created contest and registration IDs stable in the HTTP fixtures.
 	uuid.SetRand(rand.New(rand.NewSource(1)))
 	defer uuid.SetRand(nil)
 
@@ -433,8 +427,6 @@ func TestYearlyContestRegistrationJourney(t *testing.T) {
 }
 
 func TestContestRegistrationDetachJourney(t *testing.T) {
-	// Detachment requires an existing registration and linked logs, so this
-	// journey first exposes the seeded registration through the API.
 	runJourney(t, api, "ContestRegistrationDetach", []step{
 		{
 			request: "existing_registration",
@@ -671,8 +663,6 @@ func TestAnnouncementLifecycleJourney(t *testing.T) {
 }
 
 func TestPageLifecycleJourney(t *testing.T) {
-	// Keep API-created revision IDs stable in the HTTP fixtures. This journey
-	// and its steps must stay sequential while the UUID source is overridden.
 	uuid.SetRand(rand.New(rand.NewSource(1)))
 	defer uuid.SetRand(nil)
 
@@ -853,8 +843,6 @@ func TestPageLifecycleJourney(t *testing.T) {
 }
 
 func TestPostLifecycleJourney(t *testing.T) {
-	// Keep API-created revision IDs stable in the HTTP fixtures. This journey
-	// and its steps must stay sequential while the UUID source is overridden.
 	uuid.SetRand(rand.New(rand.NewSource(1)))
 	defer uuid.SetRand(nil)
 
@@ -1059,8 +1047,6 @@ func TestPostLifecycleJourney(t *testing.T) {
 	})
 }
 
-// An administrator updates the language catalog display name; another user sees
-// that name on existing yearly scores without changing any logs.
 func TestYearlyScoresLanguageNameChangeJourney(t *testing.T) {
 	runJourney(t, api, "YearlyScoresLanguageNameChange", []step{
 		{request: "scores_before", as: user, want: http.StatusOK},

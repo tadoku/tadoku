@@ -1,4 +1,3 @@
-// Package pages owns content pages and their persistence.
 package pages
 
 import (

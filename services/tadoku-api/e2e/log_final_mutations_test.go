@@ -22,7 +22,6 @@ func TestImmersionLogContestRegistrationUpdate(t *testing.T) {
 		{description: []string{"grace", "boundary", "excluded"}, want: http.StatusBadRequest, at: time.Date(2026, 9, 12, 0, 0, 0, 0, time.UTC)},
 		{description: []string{"registration", "language"}, want: http.StatusBadRequest},
 		{description: []string{"registration", "activity"}, want: http.StatusBadRequest},
-		// Registrations are validated against the log owner, so an admin cannot attach their own registration.
 		{description: []string{"admin", "own", "registration"}, want: http.StatusBadRequest},
 		{description: []string{"frozen", "mutation"}, want: http.StatusConflict},
 		{description: []string{"account", "deletion", "locked", "mutation"}, want: http.StatusConflict},

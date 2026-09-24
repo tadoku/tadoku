@@ -7,8 +7,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// Open establishes the one shared runtime pool. Migrations run independently;
-// this constructor neither changes the schema nor requires an administrative role.
+// Open does not migrate the schema or require administrative privileges.
 func Open(ctx context.Context, dsn string, maxConnections int32) (*pgxpool.Pool, error) {
 	if maxConnections < 1 {
 		return nil, fmt.Errorf("postgres max connections must be positive")

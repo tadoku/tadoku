@@ -1,4 +1,3 @@
-// Package errx carries transport-neutral application failure metadata.
 package errx
 
 import "errors"
@@ -46,7 +45,6 @@ func NewConflictError(message string) *Error {
 	return &Error{kind: Conflict, message: message}
 }
 
-// NewUnavailableError preserves the underlying cause, which may be nil.
 func NewUnavailableError(message string, cause error) *Error {
 	return &Error{kind: Unavailable, message: message, cause: cause}
 }
@@ -68,8 +66,6 @@ func (e *Error) Unwrap() error {
 	return e.cause
 }
 
-// KindOf reads the outermost application error's metadata, including through
-// ordinary error wrapping. Unclassified errors and nil return Unknown.
 func KindOf(err error) Kind {
 	var applicationError *Error
 	if errors.As(err, &applicationError) && applicationError != nil {

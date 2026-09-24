@@ -659,9 +659,6 @@ func (r *LogsRepository) ListContestLogs(ctx context.Context, parameters ListPar
 	return result, nil
 }
 
-// Decode PostgreSQL array text at the storage boundary, preserving the legacy
-// handling of escaped quotes and backslashes. Changing the decoded values
-// requires a separate response-contract fix.
 func legacyLogTags(encoded string) []string {
 	result := []string{}
 	if len(encoded) <= 2 {

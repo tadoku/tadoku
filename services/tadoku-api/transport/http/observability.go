@@ -15,7 +15,6 @@ import (
 const correlationHeader = "X-Request-Id"
 
 func newRequestDuration(registerer prometheus.Registerer) (*prometheus.HistogramVec, error) {
-	// Preserve the existing metric contract for dashboards during proxy retirement.
 	duration := prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Name: "tadoku_api_proxy_request_duration_seconds",
 		Help: "Duration of requests handled by Tadoku API.",

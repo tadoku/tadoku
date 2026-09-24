@@ -20,8 +20,6 @@ func (a *Application) ContestProfileScores(ctx context.Context, userID, contestI
 		return nil, err
 	}
 
-	// Legacy registration hydration retains a slot for every stored language code,
-	// even when codes repeat or no longer have a language row.
 	for len(registration.Languages) < len(registration.LanguageCodes) {
 		registration.Languages = append(registration.Languages, contests.Language{})
 	}

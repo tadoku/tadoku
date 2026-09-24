@@ -20,7 +20,6 @@ const (
 	accessCallback
 )
 
-// Every operation on the generated strict server interfaces must declare its access level.
 var operationAccess = map[string]accessLevel{
 	"ImmersionLogFindByID":     accessPublic,
 	"ImmersionProfileListLogs": accessPublic,

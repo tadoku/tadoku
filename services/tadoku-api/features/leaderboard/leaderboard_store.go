@@ -35,7 +35,6 @@ redis.call('DEL', KEYS[1], KEYS[2])
 return 1
 `)
 
-// Store holds the non-authoritative Valkey leaderboard cache.
 type Store struct {
 	client           valkeygo.Client
 	operationTimeout time.Duration

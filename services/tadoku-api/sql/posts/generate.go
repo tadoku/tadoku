@@ -1,4 +1,3 @@
-// Package posts contains the native Posts SQL generation inputs.
 package posts
 
 //go:generate go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.31.1

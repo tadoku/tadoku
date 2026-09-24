@@ -20,7 +20,7 @@ import (
 
 const testDSNVariable = "TADOKU_TEST_POSTGRES_URL"
 
-// Use only a disposable local PostgreSQL instance with synthetic credentials.
+// Test safety: Use only a disposable local PostgreSQL instance with synthetic credentials.
 // An absent DSN is a failure, and remote/application databases are refused.
 func disposableDSN(t *testing.T) string {
 	t.Helper()
@@ -103,9 +103,6 @@ func newFixture(t *testing.T) (context.Context, fixture) {
 	return ctx, fixture{db, schema, bookRepository{db, schema}, noteRepository{db, schema}}
 }
 
-// These independent concrete participants stand in for two feature repositories.
-// Their business methods accept context and business values, with SQL plumbing
-// confined to the repository implementation.
 type bookRepository struct {
 	db     *pgxpool.Pool
 	schema string
@@ -405,7 +402,7 @@ func TestRunInTransactionCancellationBoundsBlockedSQLAndLeavesPoolUsable(t *test
 		})
 	}()
 
-	// Observe the insert waiting on this fixture's table lock before canceling.
+	// Test safety: Observe the insert waiting on this fixture's table lock before canceling.
 	// Starting a short deadline before Begin races with connection setup on CI.
 	waiting, stopWaiting := context.WithTimeout(ctx, 5*time.Second)
 	defer stopWaiting()
@@ -516,9 +513,6 @@ func TestRunInTransactionCancellationAfterWritesCleansUpWithoutReplacingOutcome(
 			if acquired := f.db.Stat().AcquiredConns(); acquired != 0 {
 				t.Errorf("cleanup retained %d acquired connections", acquired)
 			}
-			// No concurrent pool work occurs in this test. Reusing the backend
-			// proves rollback succeeded with a live context: canceled rollback
-			// would make native pgx discard the connection instead.
 			var reusedPID uint32
 			if err := f.db.QueryRow(ctx, "select pg_backend_pid()").Scan(&reusedPID); err != nil {
 				t.Fatalf("query backend after cleanup: %v", err)
@@ -547,7 +541,7 @@ func TestRunInTransactionRejectsNestedAndWrongDatabaseWithoutEscapedWrites(t *te
 	for _, mode := range []string{"nested same pool", "nested other pool", "wrong repository"} {
 		t.Run(mode, func(t *testing.T) {
 			ctx, f := newFixture(t)
-			other := openPool(t) // Same endpoint and schema, deliberately a different handle.
+			other := openPool(t)
 			otherBooks := bookRepository{other, f.schema}
 			nestedCalled := false
 			err := postgres.RunInTransaction(ctx, f.db, func(child context.Context) error {

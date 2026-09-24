@@ -29,7 +29,6 @@ func (s *Service) ListActiveAnnouncements(ctx context.Context, namespace string)
 		return nil, errx.NewInvalidInputError("namespace is required")
 	}
 
-	// Publication policy belongs here; persistence only applies these inputs.
 	return s.announcements.ListActiveAnnouncements(ctx, namespace, timex.Now(), 10)
 }
 

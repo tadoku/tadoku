@@ -1,4 +1,3 @@
-// Package postgres routes concrete repository SQL through an app-owned transaction.
 package postgres
 
 import (
@@ -18,7 +17,6 @@ var (
 	ErrWrongDatabase     = errors.New("postgres: transaction belongs to another database handle")
 )
 
-// DBTX is the native pgx/sqlc execution surface shared by *pgxpool.Pool and pgx.Tx.
 type DBTX interface {
 	Exec(context.Context, string, ...any) (pgconn.CommandTag, error)
 	Query(context.Context, string, ...any) (pgx.Rows, error)
@@ -78,7 +76,6 @@ func RunInTransaction(ctx context.Context, db *pgxpool.Pool, work func(context.C
 	s := &scope{db: db, tx: tx}
 	defer func() {
 		s.done.Store(true)
-		// Native pgx does not roll back when the request context is canceled.
 		cleanup, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
 		defer cancel()
 		_ = tx.Rollback(cleanup)

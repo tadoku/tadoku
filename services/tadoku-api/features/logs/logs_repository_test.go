@@ -506,8 +506,6 @@ func TestLogsRepositoryInsertOutbox(t *testing.T) {
 	}
 }
 
-// Pins the legacy array-text tag decoding, including its known mishandling of
-// escaped quotes and backslashes, until that response contract is reviewed.
 func TestLogsRepositoryLegacyTagDecoding(t *testing.T) {
 	t.Parallel()
 	repository, _ := newTestLogsRepository(t)
@@ -515,7 +513,6 @@ func TestLogsRepositoryLegacyTagDecoding(t *testing.T) {
 	logID := uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1")
 	createDurationLog(t, repository, logID, testUserID, time.Date(2026, 9, 1, 12, 0, 0, 0, time.UTC))
 
-	// Digit prefixes keep array_agg ordering independent of collation.
 	for _, tag := range []string{`1 "quoted"`, `2,comma`, `3\back`, `4plain`, `5a",b`} {
 		if err := repository.InsertTag(t.Context(), logID, testUserID, tag); err != nil {
 			t.Fatal(err)

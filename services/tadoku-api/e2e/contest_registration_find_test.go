@@ -10,7 +10,7 @@ func TestFindContestRegistration(t *testing.T) {
 		description []string
 		want        int
 	}{
-		{description: []string{"existing", "registration", "sorts", "languages"}, want: http.StatusOK},
+		{description: []string{"existing", "registration", "keeps", "language", "order"}, want: http.StatusOK},
 		{description: []string{"deleted", "contest", "registration", "remains", "visible"}, want: http.StatusOK},
 		{description: []string{"other", "user", "has", "no", "registration"}, want: http.StatusNoContent},
 		{description: []string{"orphan", "registration", "is", "missing"}, want: http.StatusNoContent},

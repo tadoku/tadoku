@@ -43,32 +43,26 @@ func (s *Service) ValidateContestCreation(
 			return err
 		}
 	}
-	if err := parameters.validate(creatorID, creatorDisplayName, admin, now); err != nil {
-		return err
-	}
-	if len(parameters.LanguageCodeAllowList) > 0 {
-		exists, err := s.contests.LanguagesExist(ctx, parameters.LanguageCodeAllowList)
-		if err != nil {
-			return err
-		}
-		if !exists {
-			return errx.NewInvalidInputError("invalid contest LanguageCodeAllowList: one or more languages do not exist")
-		}
-	}
-	return nil
+	return parameters.validate(creatorID, creatorDisplayName, admin, now)
 }
 
-func (s *Service) FindRegistration(ctx context.Context, userID, contestID uuid.UUID) (*Registration, error) {
+func (s *Service) FindRegistration(ctx context.Context, userID, contestID uuid.UUID, languages []domainlanguages.Language) (*Registration, error) {
 	registration, err := s.contests.FindRegistrationForUser(ctx, userID, contestID)
 	if err != nil {
 		return nil, err
 	}
 
-	registration.Languages, err = s.contests.ListRegistrationLanguages(ctx, registration.LanguageCodes)
+	registration.Languages = registrationLanguages(registration.LanguageCodes, languageNames(languages))
+	return registration, nil
+}
+
+func (s *Service) FindRegistrationWithContest(ctx context.Context, userID, contestID uuid.UUID, languages []domainlanguages.Language) (*Registration, error) {
+	registration, err := s.contests.FindRegistrationWithContestForUser(ctx, userID, contestID)
 	if err != nil {
 		return nil, err
 	}
 
+	registration.Languages = registrationLanguages(registration.LanguageCodes, languageNames(languages))
 	return registration, nil
 }
 
@@ -119,16 +113,9 @@ func hydrateRegistrations(registrations []Registration, languages []domainlangua
 		return nil, err
 	}
 
-	languageNames := make(map[string]string, len(languages))
-	for _, language := range languages {
-		languageNames[language.Code] = language.Name
-	}
-
+	names := languageNames(languages)
 	for i := range registrations {
-		registrations[i].Languages = make([]Language, 0, len(registrations[i].LanguageCodes))
-		for _, code := range registrations[i].LanguageCodes {
-			registrations[i].Languages = append(registrations[i].Languages, Language{Code: code, Name: languageNames[code]})
-		}
+		registrations[i].Languages = registrationLanguages(registrations[i].LanguageCodes, names)
 	}
 
 	return &RegistrationList{
@@ -136,6 +123,24 @@ func hydrateRegistrations(registrations []Registration, languages []domainlangua
 		TotalSize:     len(registrations),
 		NextPageToken: "",
 	}, nil
+}
+
+func languageNames(languages []domainlanguages.Language) map[string]string {
+	names := make(map[string]string, len(languages))
+	for _, language := range languages {
+		names[language.Code] = language.Name
+	}
+	return names
+}
+
+// registrationLanguages keeps one language per stored code, in stored order.
+// Codes missing from the catalog keep an empty name.
+func registrationLanguages(codes []string, names map[string]string) []Language {
+	languages := make([]Language, 0, len(codes))
+	for _, code := range codes {
+		languages = append(languages, Language{Code: code, Name: names[code]})
+	}
+	return languages
 }
 
 func hydrateRegistrationActivities(registrations []Registration) error {
@@ -160,14 +165,6 @@ func (s *Service) ValidateRegistrationUpsert(
 
 	if err := parameters.Validate(); err != nil {
 		return nil, err
-	}
-
-	exist, err := s.contests.LanguagesExist(ctx, parameters.LanguageCodes)
-	if err != nil {
-		return nil, err
-	}
-	if !exist {
-		return nil, errx.NewInvalidInputError("invalid contest registration LanguageCodes: one or more languages do not exist")
 	}
 
 	if len(allowedLanguages) > 0 {
@@ -263,7 +260,7 @@ func (s *Service) ListContests(ctx context.Context, parameters ListParameters, i
 	if parameters.PageSize == 0 {
 		parameters.PageSize = 10
 	}
-	if parameters.PageSize > 100 || parameters.PageSize == 0 {
+	if parameters.PageSize > 100 {
 		parameters.PageSize = 100
 	}
 	parameters.includePrivate = includePrivate

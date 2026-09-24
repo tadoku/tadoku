@@ -130,3 +130,38 @@ func TestLanguagesRepositoryUpdatesLanguageAndRejectsMissingCode(t *testing.T) {
 		t.Errorf("missing error=%v, want language not found", err)
 	}
 }
+
+func TestLanguagesRepositoryChecksLanguagesExist(t *testing.T) {
+	t.Parallel()
+	db, err := testpostgres.New(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Error(err)
+		}
+	})
+	if err := db.Reset(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+
+	repository := languages.NewLanguagesRepository(db.Pool)
+	for _, test := range []struct {
+		name  string
+		codes []string
+		want  bool
+	}{
+		{name: "known", codes: []string{"jpn", "eng"}, want: true},
+		{name: "duplicate known", codes: []string{"jpn", "jpn"}, want: true},
+		{name: "unknown", codes: []string{"jpn", "missing"}, want: false},
+	} {
+		exist, err := repository.LanguagesExist(t.Context(), test.codes)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if exist != test.want {
+			t.Errorf("%s: exist=%t, want %t", test.name, exist, test.want)
+		}
+	}
+}

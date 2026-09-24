@@ -28,8 +28,6 @@
 - [ ] Deny `valkey-go` imports outside Store code.
 - [ ] Ban private unit→activity maps outside `domain/activities` (lint).
 - [x] Share one profile Kratos traits decoder; remove the dead untagged `Email` field in `FindProfile`.
-- [ ] Fix contests `FindRegistration` language hydration to match list hydrate; delete the app padding loop in `contest_profile`.
-- [ ] Stop loading contest on find-registration when the response omits it; remove app `registration.Contest = nil`.
 - [ ] Forbid raw banned/admins Keto triples outside `internal/permissions` (lint).
 - [ ] Standardize caller UUID / self-or-admin helpers in app; ban ad-hoc Subject UUID parse outside allowlisted guest paths.
 - [ ] Decide whether pages/posts should share content-revision primitives or stay intentional twins.

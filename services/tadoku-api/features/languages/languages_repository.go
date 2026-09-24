@@ -75,3 +75,16 @@ func (r *LanguagesRepository) ListLanguages(ctx context.Context) ([]Language, er
 	}
 	return result, nil
 }
+
+func (r *LanguagesRepository) LanguagesExist(ctx context.Context, codes []string) (bool, error) {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return false, err
+	}
+
+	exist, err := queries.New(executor).LanguagesExist(ctx, codes)
+	if err != nil {
+		return false, fmt.Errorf("check languages exist: %w", err)
+	}
+	return exist, nil
+}

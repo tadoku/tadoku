@@ -17,7 +17,6 @@ import (
 
 var ErrUnavailable = errors.New("feature access unavailable")
 
-// Segment identifies the entity-ID allowlist segment a call operates on.
 type Segment struct {
 	Key         string
 	Name        string

@@ -30,6 +30,9 @@ Valkey 9 instances, passed as `TADOKU_TEST_POSTGRES_URL` and
 `redis://127.0.0.1:6379`. See [Tadoku API testing](../tadoku-api/testing.md).
 
 Format Go code with `gofmt -w services/` before committing.
+Run `bazel run //tools/ci/commentpolicy` to check handwritten Go comments;
+it ignores generated files and accepts tool directives, declaration usage
+notes and marked test fixture safety notes.
 
 ### Gazelle
 
@@ -104,7 +107,7 @@ All workflows live in `.github/workflows/`.
 
 | Workflow | Runs on | Checks |
 | --- | --- | --- |
-| `build-bazel.yaml` | PRs and `main` pushes touching Bazel or Go inputs | Frozen lockfile, Gazelle diff, visibility, provider-dependency and `.depolicy.yaml` import checks, OpenAPI generation diff, build, image target coverage, tests and race tests; scans and publishes backend images from `main` |
+| `build-bazel.yaml` | PRs and `main` pushes touching Bazel or Go inputs | Frozen lockfile, Gazelle diff, visibility, provider-dependency, repository, Go comment and `.depolicy.yaml` import checks, OpenAPI generation diff, build, image target coverage, tests and race tests; scans and publishes backend images from `main` |
 | `verify-sqlc.yaml` | Every PR | Reruns `./scripts/generate-sqlc.sh` and fails on any change |
 | `verify-standalone-migrations.yaml` | Every PR | Fails when migration SQL files change together with other files, unless the PR has the `migration-move` label |
 | `verify-docs.yaml` | Every PR | Runs `docs/scripts/docs-check.test.mjs`, so removing code that the docs still name fails |

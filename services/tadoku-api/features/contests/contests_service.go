@@ -133,8 +133,6 @@ func languageNames(languages []domainlanguages.Language) map[string]string {
 	return names
 }
 
-// registrationLanguages keeps one language per stored code, in stored order.
-// Codes missing from the catalog keep an empty name.
 func registrationLanguages(codes []string, names map[string]string) []Language {
 	languages := make([]Language, 0, len(codes))
 	for _, code := range codes {
@@ -344,8 +342,6 @@ func hydrateContest(item *Contest, languages []Language) (*ContestView, error) {
 	}, nil
 }
 
-// RequireExistingContest checks the stored contest and organizer without hydrating
-// catalogs or introducing visibility rules into public log reads.
 func (s *Service) RequireExistingContest(ctx context.Context, id uuid.UUID) error {
 	_, err := s.contests.FindContestByID(ctx, FindParameters{ID: id})
 	return err

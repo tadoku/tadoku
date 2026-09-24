@@ -27,7 +27,7 @@ the development environment and verified.
 | `scripts/` | Code generation, the Tadoku API visibility check, and development seed and secret bootstrap scripts |
 | `tools/` | CI check scripts and the pinned oapi-codegen module |
 | `.dev/` | DevCLI configuration, deployable definitions and the development runbook |
-| `.agents/` | Repository agent skills, including `verify-tadoku` |
+| `.agents/` | Repository `dev-cli` and `verify-tadoku` agent skills |
 
 ## Where to go
 

@@ -1,4 +1,3 @@
-// Package featureflags evaluates flags and manages allowlisted named-user access.
 package featureflags
 
 import (

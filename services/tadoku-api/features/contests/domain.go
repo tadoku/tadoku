@@ -1,4 +1,3 @@
-// Package contests owns contest discovery and persistence.
 package contests
 
 import (

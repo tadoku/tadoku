@@ -1,4 +1,3 @@
-// Package app composes concrete feature services into application operations.
 package app
 
 import (
@@ -35,7 +34,6 @@ type Application struct {
 	permissions   *permissions.Checker
 }
 
-// Dependencies holds the concrete collaborators composed by the application.
 type Dependencies struct {
 	Announcements *announcements.Service
 	Audit         *audit.Service

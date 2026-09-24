@@ -1,4 +1,3 @@
-// Package audit records application actions.
 package audit
 
 import (

@@ -15,8 +15,6 @@ const (
 	InitializationStatusError    InitializationStatus = "error"
 )
 
-// Metrics exports only registry-owned flag keys and bounded enum labels. User
-// identities and raw provider messages are deliberately absent.
 type Metrics struct {
 	now             func() time.Time
 	evaluations     *prometheus.CounterVec

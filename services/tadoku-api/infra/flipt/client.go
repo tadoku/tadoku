@@ -39,7 +39,6 @@ type sdkClient interface {
 	Close(ctx context.Context) error
 }
 
-// Client adapts the concrete Flipt SDK to Tadoku's vendor-neutral evaluator.
 type Client struct {
 	mu         sync.RWMutex
 	client     sdkClient
@@ -102,8 +101,6 @@ func newClient(ctx context.Context, cfg Config, observer Observer, factory sdkFa
 		client.install(result.client, observer)
 		return client, nil
 	case <-timer.C:
-		// Startup must not wait for Flipt. Keep initialization alive so the
-		// process can move from safe defaults to normal polling after recovery.
 		observeInitialization(observer, featureflags.InitializationStatusFallback)
 		go func() {
 			result := <-results

@@ -1,4 +1,3 @@
-// Package testketo starts isolated, in-memory Keto servers for tests.
 package testketo
 
 import (
@@ -26,7 +25,6 @@ const (
 	shutdownTimeout = 3 * time.Second
 )
 
-// Fixture owns one Keto process and its in-memory relationship store.
 type Fixture struct {
 	command  *exec.Cmd
 	wait     chan struct{}
@@ -40,7 +38,6 @@ type Fixture struct {
 	closeErr  error
 }
 
-// New starts Keto with the repository's production OPL namespaces.
 func New(ctx context.Context) (result *Fixture, resultErr error) {
 	keto, err := runfiles.Rlocation("keto_v25_4_0/keto")
 	if err != nil {
@@ -62,7 +59,7 @@ func New(ctx context.Context) (result *Fixture, resultErr error) {
 		}
 	}()
 
-	// Keto watches the config's parent directory and logs filesystem events.
+	// Test safety: Keto watches the config's parent directory and logs filesystem events.
 	// Keep runtime files outside it so log writes cannot trigger a feedback loop.
 	configDir := filepath.Join(dir, "config")
 	if err := os.Mkdir(configDir, 0o700); err != nil {
@@ -182,8 +179,6 @@ func (fixture *Fixture) waitUntilReady(ctx context.Context, readAddress, writeAd
 	}
 }
 
-// Reset deletes every relationship in every namespace owned by the fixture,
-// then loads any provided JSON arrays of relationship tuples.
 func (fixture *Fixture) Reset(ctx context.Context, seedFiles ...string) error {
 	namespaces, err := fixture.namespaces(ctx)
 	if err != nil {
@@ -272,7 +267,6 @@ func (fixture *Fixture) do(ctx context.Context, method, endpoint string, body []
 	return nil
 }
 
-// Close stops and reaps Keto. It reports a process that exited before cleanup.
 func (fixture *Fixture) Close() error {
 	fixture.closeOnce.Do(func() {
 		defer func() {
@@ -309,10 +303,8 @@ func (fixture *Fixture) Close() error {
 	return fixture.closeErr
 }
 
-// ReadURL returns the read API of the owned Keto process.
 func (fixture *Fixture) ReadURL() string { return fixture.readURL }
 
-// WriteURL returns the write API of the owned Keto process.
 func (fixture *Fixture) WriteURL() string { return fixture.writeURL }
 
 func (fixture *Fixture) unexpectedExit(when string) error {

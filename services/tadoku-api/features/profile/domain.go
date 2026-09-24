@@ -1,4 +1,3 @@
-// Package profile owns user identity and account data.
 package profile
 
 import (

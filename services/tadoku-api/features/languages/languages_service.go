@@ -18,7 +18,6 @@ func (s *Service) ListLanguages(ctx context.Context) ([]Language, error) {
 	return s.languages.ListLanguages(ctx)
 }
 
-// RequireExistingLanguages rejects language codes that are not in the catalog.
 func (s *Service) RequireExistingLanguages(ctx context.Context, codes []string) error {
 	if len(codes) == 0 {
 		return nil

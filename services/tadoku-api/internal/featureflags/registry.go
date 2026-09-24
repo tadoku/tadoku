@@ -1,7 +1,5 @@
 package featureflags
 
-// BooleanFlag identifies a boolean feature flag whose key and safe default are
-// owned by this registry. Call sites cannot supply either value.
 type BooleanFlag uint8
 
 const (
@@ -25,13 +23,10 @@ func (f BooleanFlag) definition() booleanDefinition {
 	}
 }
 
-// Key returns the provider key owned by the registry.
 func (f BooleanFlag) Key() string {
 	return f.definition().key
 }
 
-// SafeDefault returns the behavior-preserving value used whenever a decision
-// cannot be obtained safely.
 func (f BooleanFlag) SafeDefault() bool {
 	return f.definition().safeDefault
 }

@@ -412,7 +412,6 @@ func TestCheckPermissions(t *testing.T) {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
 
-			// Return allowed=true for admins, allowed=false for banned
 			allowed := relation == "admins"
 			json.NewEncoder(w).Encode(map[string]any{"allowed": allowed})
 		}))
@@ -428,7 +427,6 @@ func TestCheckPermissions(t *testing.T) {
 
 		require.Len(t, results, 2)
 
-		// Results should be in the same order as input
 		assert.Equal(t, "admins", results[0].Check.Relation)
 		assert.True(t, results[0].Allowed)
 		require.NoError(t, results[0].Err)
@@ -455,7 +453,6 @@ func TestCheckPermissions(t *testing.T) {
 				w.WriteHeader(http.StatusOK)
 				json.NewEncoder(w).Encode(map[string]any{"allowed": true})
 			} else {
-				// Return an error for the banned check
 				w.WriteHeader(http.StatusInternalServerError)
 				json.NewEncoder(w).Encode(map[string]any{"error": "internal error"})
 			}
@@ -472,11 +469,9 @@ func TestCheckPermissions(t *testing.T) {
 
 		require.Len(t, results, 2)
 
-		// First check should succeed
 		assert.True(t, results[0].Allowed)
 		require.NoError(t, results[0].Err)
 
-		// Second check should have an error
 		assert.False(t, results[1].Allowed)
 		require.Error(t, results[1].Err)
 	})

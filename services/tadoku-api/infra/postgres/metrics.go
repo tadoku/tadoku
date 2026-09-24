@@ -5,7 +5,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-// PoolCollector exports pgx pool acquisition statistics to Prometheus.
 type PoolCollector struct {
 	pool                *pgxpool.Pool
 	acquireCount        *prometheus.Desc

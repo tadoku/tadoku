@@ -18,8 +18,6 @@ func (s *server) ImmersionContestFindRegistration(
 		s.logOperationError(ctx, "find contest registration", err)
 		switch {
 		case errors.Is(err, app.ErrContestRegistrationNotFound):
-			// A missing registration is optional state: the legacy endpoint returns
-			// 204 and the existing client treats that response as no registration.
 			return openapi.ImmersionContestFindRegistration204Response{}, nil
 		default:
 			return nil, err

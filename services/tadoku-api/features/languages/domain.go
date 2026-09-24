@@ -1,4 +1,3 @@
-// Package languages owns immersion languages and their persistence.
 package languages
 
 import (

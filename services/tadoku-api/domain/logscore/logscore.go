@@ -1,4 +1,3 @@
-// Package logscore contains the values exchanged while scoring and saving a log.
 package logscore
 
 import "github.com/google/uuid"

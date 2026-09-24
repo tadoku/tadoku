@@ -1,4 +1,3 @@
-// Package testflipt provides a deterministic, stateful Flipt boundary for integration tests.
 package testflipt
 
 import (
@@ -14,10 +13,6 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/featureflags"
 )
 
-// Fixture simulates Flipt's management HTTP boundary and public boolean
-// provider. Both APIs use the real management client and common evaluator;
-// SDK snapshot polling and caching stay covered by the provider boundary tests.
-// Evaluation reads the same membership state as management.
 type Fixture struct {
 	mu          sync.Mutex
 	members     map[string]struct{}

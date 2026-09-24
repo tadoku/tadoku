@@ -1,4 +1,3 @@
-// Package testvalkey validates the shared disposable Valkey used by tests.
 package testvalkey
 
 import (
@@ -7,7 +6,6 @@ import (
 	"os"
 )
 
-// URL returns a tightly scoped loopback URL suitable for destructive test keys.
 func URL() (string, error) {
 	raw := os.Getenv("TADOKU_TEST_VALKEY_URL")
 	u, err := url.Parse(raw)

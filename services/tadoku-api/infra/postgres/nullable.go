@@ -12,7 +12,6 @@ func NullableText(value *string) pgtype.Text {
 	return pgtype.Text{String: *value, Valid: true}
 }
 
-// NullableNonEmptyText maps nil and empty strings to SQL NULL.
 func NullableNonEmptyText(value *string) pgtype.Text {
 	if value == nil || *value == "" {
 		return pgtype.Text{}
@@ -45,7 +44,6 @@ func NullableUUID(value *uuid.UUID) pgtype.UUID {
 	return pgtype.UUID{Bytes: *value, Valid: true}
 }
 
-// TextPointer maps SQL NULL to nil.
 func TextPointer(value pgtype.Text) *string {
 	if !value.Valid {
 		return nil
@@ -53,7 +51,6 @@ func TextPointer(value pgtype.Text) *string {
 	return &value.String
 }
 
-// Int4Pointer maps SQL NULL to nil.
 func Int4Pointer(value pgtype.Int4) *int32 {
 	if !value.Valid {
 		return nil
@@ -61,7 +58,6 @@ func Int4Pointer(value pgtype.Int4) *int32 {
 	return &value.Int32
 }
 
-// Float4Pointer maps SQL NULL to nil.
 func Float4Pointer(value pgtype.Float4) *float32 {
 	if !value.Valid {
 		return nil
@@ -69,7 +65,6 @@ func Float4Pointer(value pgtype.Float4) *float32 {
 	return &value.Float32
 }
 
-// UUIDPointer maps SQL NULL to nil.
 func UUIDPointer(value pgtype.UUID) *uuid.UUID {
 	if !value.Valid {
 		return nil
@@ -78,7 +73,6 @@ func UUIDPointer(value pgtype.UUID) *uuid.UUID {
 	return &id
 }
 
-// UUIDs converts non-null UUID array elements without checking Valid.
 func UUIDs(values []pgtype.UUID) []uuid.UUID {
 	result := make([]uuid.UUID, len(values))
 	for i, value := range values {

@@ -1,4 +1,3 @@
-// Package permissions evaluates authorization for the verified request identity.
 package permissions
 
 import (
@@ -9,9 +8,6 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
 )
 
-// Checker owns the shared application Keto relations. CheckBanned and CheckAdmin
-// look up a given subject; the other methods evaluate the verified actor.
-// A shared ban gate may record an inconclusive lookup so privileges fail closed.
 type Checker struct {
 	client *ketoclient.Client
 }
@@ -26,24 +22,19 @@ const (
 	banUnknown
 )
 
-// BanState is the outcome of the shared ban lookup. The zero value means not
-// banned; only the unknown state carries the lookup error.
 type BanState struct {
 	status banStatus
 	err    error
 }
 
-// Banned records a confirmed ban for operations that need to report it.
 func Banned() BanState {
 	return BanState{status: banned}
 }
 
-// BanUnknown records a failed shared ban lookup so privileges fail closed.
 func BanUnknown(err error) BanState {
 	return BanState{status: banUnknown, err: err}
 }
 
-// WithBanState records the shared ban lookup outcome for the request.
 func WithBanState(ctx context.Context, state BanState) context.Context {
 	return context.WithValue(ctx, banStateKey{}, state)
 }
@@ -53,7 +44,6 @@ func banStateFromContext(ctx context.Context) BanState {
 	return state
 }
 
-// IsBanned reports whether the shared ban lookup confirmed a ban.
 func IsBanned(ctx context.Context) bool {
 	return banStateFromContext(ctx).status == banned
 }
@@ -66,7 +56,6 @@ func banLookupError(ctx context.Context) error {
 	return state.err
 }
 
-// NewKetoChecker checks the shared application relations in Keto.
 func NewKetoChecker(client *ketoclient.Client) *Checker {
 	return &Checker{client: client}
 }
@@ -80,12 +69,10 @@ func (c *Checker) CheckPermission(ctx context.Context, namespace, object, relati
 	return c.lookup(ctx, namespace, object, relation, user.Subject)
 }
 
-// CheckBanned reports whether the subject holds the shared application ban relation.
 func (c *Checker) CheckBanned(ctx context.Context, subjectID string) (bool, error) {
 	return c.lookup(ctx, "app", "tadoku", "banned", subjectID)
 }
 
-// CheckAdmin reports whether the subject holds the shared application admin relation.
 func (c *Checker) CheckAdmin(ctx context.Context, subjectID string) (bool, error) {
 	return c.lookup(ctx, "app", "tadoku", "admins", subjectID)
 }
@@ -117,8 +104,6 @@ func (c *Checker) IsAdmin(ctx context.Context) (bool, error) {
 	return c.CheckAdmin(ctx, user.Subject)
 }
 
-// IsAdminOrFalse reports administrator access only after a successful lookup.
-// Provider failures return false.
 func (c *Checker) IsAdminOrFalse(ctx context.Context) bool {
 	allowed, err := c.IsAdmin(ctx)
 	return err == nil && allowed
@@ -134,8 +119,7 @@ func (c *Checker) RequireAuthenticated(ctx context.Context) error {
 	return nil
 }
 
-// RequireAuthenticatedAllowingUnknownBan requires a verified user but permits an
-// inconclusive shared ban lookup. It is only safe for read-only operations.
+// RequireAuthenticatedAllowingUnknownBan is safe only for read-only operations.
 func (c *Checker) RequireAuthenticatedAllowingUnknownBan(ctx context.Context) error {
 	user := identity.FromContext(ctx)
 	if user == nil || user.Subject == "" || user.Subject == "guest" {

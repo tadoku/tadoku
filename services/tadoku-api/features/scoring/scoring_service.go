@@ -65,7 +65,7 @@ func (s *Service) ScoreLog(ctx context.Context, operation LogOperation, input lo
 		result.EligibleOfficial = result.EligibleOfficial || target.Official
 	}
 
-	platform, matched, scoringErr := s.ScorePlatform(ctx, parameters)
+	platform, matched, scoringErr := s.scorePlatform(ctx, parameters)
 	mode := "shadow"
 	if s.logScoringEnabled {
 		mode = "authoritative"
@@ -110,7 +110,7 @@ func (s *Service) ScoreLog(ctx context.Context, operation LogOperation, input lo
 
 	result.Tracking = trackingFromEstimate(base, platform)
 	for _, target := range targets {
-		estimate, err := s.ScoreContest(ctx, parameters, target.ContestID, platform)
+		estimate, err := s.scoreContestOrPlatform(ctx, parameters, target.ContestID, platform)
 		if err != nil {
 			return logscore.Result{}, err
 		}
@@ -310,40 +310,24 @@ func (s *Service) Preview(ctx context.Context, parameters PreviewParameters) (*P
 		Contests: make([]ContestEstimate, 0, len(parameters.Contests)),
 	}
 	for _, contest := range parameters.Contests {
-		set, fallback, err := s.findContestRuleSets(ctx, contest.ContestID)
+		estimate, err := s.scoreContest(ctx, input, contest.ContestID)
 		if err != nil {
 			return nil, fmt.Errorf("preview contest score: %w", err)
 		}
-		estimate := platform
-		if set != nil {
-			var matched bool
-			estimate, matched, err = evaluate(input, *set)
-			if err != nil {
-				return nil, fmt.Errorf("preview contest score: %w", err)
-			}
-			if !matched && set.Mode == "override" {
-				if fallback == nil {
-					return nil, errx.NewInternalError("override scoring rule set requires a fallback")
-				}
-				estimate, _, err = evaluate(input, *fallback)
-			}
-			if !matched && set.Mode != "override" && set.Mode != "replace" {
-				return nil, errx.NewInternalError("unknown contest scoring mode")
-			}
-			if err != nil {
-				return nil, fmt.Errorf("preview contest score: %w", err)
-			}
+		contestEstimate := platform
+		if estimate != nil {
+			contestEstimate = *estimate
 		}
 		result.Contests = append(result.Contests, ContestEstimate{
 			RegistrationID: contest.RegistrationID,
 			ContestID:      contest.ContestID,
-			Estimate:       estimate,
+			Estimate:       contestEstimate,
 		})
 	}
 	return result, nil
 }
 
-func (s *Service) ScorePlatform(ctx context.Context, parameters PreviewParameters) (Estimate, bool, error) {
+func (s *Service) scorePlatform(ctx context.Context, parameters PreviewParameters) (Estimate, bool, error) {
 	unitKey, err := s.resolveUnit(ctx, parameters)
 	if err != nil {
 		return Estimate{}, false, err
@@ -367,7 +351,7 @@ func (s *Service) ScorePlatform(ctx context.Context, parameters PreviewParameter
 	return evaluate(input, *set)
 }
 
-func (s *Service) ScoreContest(ctx context.Context, parameters PreviewParameters, contestID uuid.UUID, platform Estimate) (Estimate, error) {
+func (s *Service) scoreContestOrPlatform(ctx context.Context, parameters PreviewParameters, contestID uuid.UUID, platform Estimate) (Estimate, error) {
 	unitKey, err := s.resolveUnit(ctx, parameters)
 	if err != nil {
 		return Estimate{}, err

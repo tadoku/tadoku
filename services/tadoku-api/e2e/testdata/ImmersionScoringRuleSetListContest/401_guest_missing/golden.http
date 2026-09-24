@@ -1,4 +1,4 @@
 >>> GET /immersion/contests/f0000000-0000-4000-8000-999999999999/scoring/rule-sets
-HTTP/1.1 404 Not Found
+HTTP/1.1 401 Unauthorized
 Content-Length: 0
 

@@ -5,7 +5,6 @@ import (
 
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
 	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
 
 func (s *server) ImmersionContestFetchLeaderboard(ctx context.Context, request openapi.ImmersionContestFetchLeaderboardRequestObject) (openapi.ImmersionContestFetchLeaderboardResponseObject, error) {
@@ -15,12 +14,7 @@ func (s *server) ImmersionContestFetchLeaderboard(ctx context.Context, request o
 	})
 	if err != nil {
 		s.logOperationError(ctx, "fetch contest leaderboard", err)
-		switch errx.KindOf(err) {
-		case errx.InvalidInput, errx.NotFound:
-			return nil, err
-		default:
-			return openapi.ImmersionContestFetchLeaderboard500Response{}, nil
-		}
+		return nil, err
 	}
 	return openapi.ImmersionContestFetchLeaderboard200JSONResponse(responseLeaderboard(result)), nil
 }
@@ -32,10 +26,7 @@ func (s *server) ImmersionFetchLeaderboardForYear(ctx context.Context, request o
 	})
 	if err != nil {
 		s.logOperationError(ctx, "fetch yearly leaderboard", err)
-		if errx.KindOf(err) == errx.InvalidInput {
-			return nil, err
-		}
-		return openapi.ImmersionFetchLeaderboardForYear500Response{}, nil
+		return nil, err
 	}
 	return openapi.ImmersionFetchLeaderboardForYear200JSONResponse(responseLeaderboard(result)), nil
 }
@@ -44,10 +35,7 @@ func (s *server) ImmersionFetchLeaderboardGlobal(ctx context.Context, request op
 	result, err := s.application.FetchGlobalLeaderboard(ctx, requestFromParams(request.Params.PageSize, request.Params.Page, request.Params.LanguageCode, request.Params.ActivityId))
 	if err != nil {
 		s.logOperationError(ctx, "fetch global leaderboard", err)
-		if errx.KindOf(err) == errx.InvalidInput {
-			return nil, err
-		}
-		return openapi.ImmersionFetchLeaderboardGlobal500Response{}, nil
+		return nil, err
 	}
 	return openapi.ImmersionFetchLeaderboardGlobal200JSONResponse(responseLeaderboard(result)), nil
 }

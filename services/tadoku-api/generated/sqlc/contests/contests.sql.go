@@ -232,14 +232,7 @@ select
   contest_registrations.language_codes,
   contest_registrations.created_at,
   contest_registrations.updated_at,
-  users.display_name as user_display_name,
-  contests.contest_start,
-  contests.contest_end,
-  contests.registration_end,
-  contests.title,
-  contests.description,
-  contests.private,
-  contests.official
+  users.display_name as user_display_name
 from contest_registrations
 inner join contests on contests.id = contest_registrations.contest_id
 inner join users on users.id = contest_registrations.user_id
@@ -261,6 +254,60 @@ type FindContestRegistrationForUserRow struct {
 	CreatedAt       pgtype.Timestamp
 	UpdatedAt       pgtype.Timestamp
 	UserDisplayName string
+}
+
+func (q *Queries) FindContestRegistrationForUser(ctx context.Context, arg FindContestRegistrationForUserParams) (FindContestRegistrationForUserRow, error) {
+	row := q.db.QueryRow(ctx, findContestRegistrationForUser, arg.UserID, arg.ContestID)
+	var i FindContestRegistrationForUserRow
+	err := row.Scan(
+		&i.ID,
+		&i.ContestID,
+		&i.UserID,
+		&i.LanguageCodes,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.UserDisplayName,
+	)
+	return i, err
+}
+
+const findContestRegistrationWithContestForUser = `-- name: FindContestRegistrationWithContestForUser :one
+select
+  contest_registrations.id,
+  contest_registrations.contest_id,
+  contest_registrations.user_id,
+  contest_registrations.language_codes,
+  contest_registrations.created_at,
+  contest_registrations.updated_at,
+  users.display_name as user_display_name,
+  contests.contest_start,
+  contests.contest_end,
+  contests.registration_end,
+  contests.title,
+  contests.description,
+  contests.private,
+  contests.official
+from contest_registrations
+inner join contests on contests.id = contest_registrations.contest_id
+inner join users on users.id = contest_registrations.user_id
+where contest_registrations.user_id = $1
+  and contest_registrations.contest_id = $2
+  and contest_registrations.deleted_at is null
+`
+
+type FindContestRegistrationWithContestForUserParams struct {
+	UserID    pgtype.UUID
+	ContestID pgtype.UUID
+}
+
+type FindContestRegistrationWithContestForUserRow struct {
+	ID              pgtype.UUID
+	ContestID       pgtype.UUID
+	UserID          pgtype.UUID
+	LanguageCodes   []string
+	CreatedAt       pgtype.Timestamp
+	UpdatedAt       pgtype.Timestamp
+	UserDisplayName string
 	ContestStart    pgtype.Date
 	ContestEnd      pgtype.Date
 	RegistrationEnd pgtype.Date
@@ -270,9 +317,9 @@ type FindContestRegistrationForUserRow struct {
 	Official        bool
 }
 
-func (q *Queries) FindContestRegistrationForUser(ctx context.Context, arg FindContestRegistrationForUserParams) (FindContestRegistrationForUserRow, error) {
-	row := q.db.QueryRow(ctx, findContestRegistrationForUser, arg.UserID, arg.ContestID)
-	var i FindContestRegistrationForUserRow
+func (q *Queries) FindContestRegistrationWithContestForUser(ctx context.Context, arg FindContestRegistrationWithContestForUserParams) (FindContestRegistrationWithContestForUserRow, error) {
+	row := q.db.QueryRow(ctx, findContestRegistrationWithContestForUser, arg.UserID, arg.ContestID)
+	var i FindContestRegistrationWithContestForUserRow
 	err := row.Scan(
 		&i.ID,
 		&i.ContestID,
@@ -387,19 +434,6 @@ type InsertOfficialScoresRefreshParams struct {
 func (q *Queries) InsertOfficialScoresRefresh(ctx context.Context, arg InsertOfficialScoresRefreshParams) error {
 	_, err := q.db.Exec(ctx, insertOfficialScoresRefresh, arg.EventType, arg.UserID, arg.Year)
 	return err
-}
-
-const languagesExist = `-- name: LanguagesExist :one
-select count(distinct languages.code) = count(distinct requested.code)
-from unnest($1::varchar[]) as requested(code)
-left join languages using (code)
-`
-
-func (q *Queries) LanguagesExist(ctx context.Context, codes []string) (bool, error) {
-	row := q.db.QueryRow(ctx, languagesExist, codes)
-	var column_1 bool
-	err := row.Scan(&column_1)
-	return column_1, err
 }
 
 const listContests = `-- name: ListContests :many
@@ -652,33 +686,6 @@ func (q *Queries) ListOngoingContestRegistrations(ctx context.Context, arg ListO
 			&i.OwnerUserID,
 			&i.OwnerUserDisplayName,
 		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listRegistrationLanguages = `-- name: ListRegistrationLanguages :many
-select code, name
-from languages
-where code = any($1::varchar[])
-order by name asc
-`
-
-func (q *Queries) ListRegistrationLanguages(ctx context.Context, codes []string) ([]Language, error) {
-	rows, err := q.db.Query(ctx, listRegistrationLanguages, codes)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []Language{}
-	for rows.Next() {
-		var i Language
-		if err := rows.Scan(&i.Code, &i.Name); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

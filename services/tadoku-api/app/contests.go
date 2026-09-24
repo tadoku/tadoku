@@ -70,6 +70,9 @@ func (a *Application) CreateContest(ctx context.Context, parameters CreateContes
 	if err := a.contests.ValidateContestCreation(ctx, parameters, creatorID, creator.DisplayName, admin, now); err != nil {
 		return nil, err
 	}
+	if err := a.languages.RequireExistingLanguages(ctx, parameters.LanguageCodeAllowList); err != nil {
+		return nil, err
+	}
 	contest := contests.Contest{
 		ID:                      uuid.New(),
 		ContestStart:            parameters.ContestStart,
@@ -97,7 +100,6 @@ func (a *Application) CreateContest(ctx context.Context, parameters CreateContes
 		return createErr
 	})
 	if err != nil {
-		result = nil
 		return nil, err
 	}
 	return result, nil
@@ -153,14 +155,12 @@ func (a *Application) FindContestRegistration(ctx context.Context, contestID uui
 		return nil, err
 	}
 
-	registration, err := a.contests.FindRegistration(ctx, userID, contestID)
+	languages, err := a.languages.ListLanguages(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	// Registration lookup omits the contest; participant statistics includes it.
-	registration.Contest = nil
-	return registration, nil
+	return a.contests.FindRegistration(ctx, userID, contestID, languages)
 }
 
 func (a *Application) ListOngoingContestRegistrations(ctx context.Context) (*ContestRegistrationList, error) {
@@ -198,8 +198,16 @@ func (a *Application) UpsertContestRegistration(ctx context.Context, parameters 
 	if err != nil {
 		return err
 	}
+	if err := a.languages.RequireExistingLanguages(ctx, parameters.LanguageCodes); err != nil {
+		return err
+	}
 
-	existing, err := a.contests.FindRegistration(ctx, userID, parameters.ContestID)
+	languages, err := a.languages.ListLanguages(ctx)
+	if err != nil {
+		return err
+	}
+
+	existing, err := a.contests.FindRegistration(ctx, userID, parameters.ContestID, languages)
 	if errors.Is(err, contests.ErrRegistrationNotFound) {
 		existing = nil
 	} else if err != nil {

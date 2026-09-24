@@ -64,6 +64,34 @@ func (r *ContestsRepository) FindRegistrationForUser(ctx context.Context, userID
 		LanguageCodes:   row.LanguageCodes,
 		CreatedAt:       row.CreatedAt.Time,
 		UpdatedAt:       row.UpdatedAt.Time,
+	}, nil
+}
+
+func (r *ContestsRepository) FindRegistrationWithContestForUser(ctx context.Context, userID, contestID uuid.UUID) (*Registration, error) {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return nil, err
+	}
+
+	row, err := queries.New(executor).FindContestRegistrationWithContestForUser(ctx, queries.FindContestRegistrationWithContestForUserParams{
+		UserID:    postgres.UUID(userID),
+		ContestID: postgres.UUID(contestID),
+	})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, ErrRegistrationNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("find contest registration with contest: %w", err)
+	}
+
+	return &Registration{
+		ID:              uuid.UUID(row.ID.Bytes),
+		ContestID:       uuid.UUID(row.ContestID.Bytes),
+		UserID:          uuid.UUID(row.UserID.Bytes),
+		UserDisplayName: row.UserDisplayName,
+		LanguageCodes:   row.LanguageCodes,
+		CreatedAt:       row.CreatedAt.Time,
+		UpdatedAt:       row.UpdatedAt.Time,
 		Contest: &ContestView{
 			ID:                uuid.UUID(row.ContestID.Bytes),
 			ContestStart:      row.ContestStart.Time,
@@ -77,20 +105,6 @@ func (r *ContestsRepository) FindRegistrationForUser(ctx context.Context, userID
 			AllowedActivities: []Activity{},
 		},
 	}, nil
-}
-
-func (r *ContestsRepository) ListRegistrationLanguages(ctx context.Context, codes []string) ([]Language, error) {
-	executor, err := postgres.Executor(ctx, r.db)
-	if err != nil {
-		return nil, err
-	}
-
-	rows, err := queries.New(executor).ListRegistrationLanguages(ctx, codes)
-	if err != nil {
-		return nil, fmt.Errorf("list registration languages: %w", err)
-	}
-
-	return registrationLanguages(rows), nil
 }
 
 func (r *ContestsRepository) ListOngoingRegistrations(ctx context.Context, userID uuid.UUID, now time.Time) ([]Registration, error) {
@@ -232,27 +246,6 @@ func (r *ContestsRepository) InsertOfficialScoresRefresh(ctx context.Context, us
 	}
 
 	return nil
-}
-
-func registrationLanguages(rows []queries.Language) []Language {
-	result := make([]Language, 0, len(rows))
-	for _, row := range rows {
-		result = append(result, Language{Code: row.Code, Name: row.Name})
-	}
-
-	return result
-}
-
-func (r *ContestsRepository) LanguagesExist(ctx context.Context, codes []string) (bool, error) {
-	executor, err := postgres.Executor(ctx, r.db)
-	if err != nil {
-		return false, err
-	}
-	exists, err := queries.New(executor).LanguagesExist(ctx, codes)
-	if err != nil {
-		return false, fmt.Errorf("check contest languages: %w", err)
-	}
-	return exists, nil
 }
 
 func (r *ContestsRepository) CreateContest(ctx context.Context, contest Contest) error {

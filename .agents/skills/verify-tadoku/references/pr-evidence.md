@@ -52,9 +52,9 @@ Place these references where the media belongs, replacing filenames as needed:
 ![](./workflow.webm)
 ```
 
-The standalone video reference becomes a player. End the comment with the
-repository-required author signature, replacing the model name with the exact
-authoring model. Keep that signature after the media references so it stays last.
+The standalone video reference becomes a player. End the comment with
+`**Posted by MODEL_NAME**` on its own line after a blank line, replacing
+`MODEL_NAME` with the exact authoring model. Keep it after the media references.
 Then post only the files actually captured:
 
 ```sh

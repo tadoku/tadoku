@@ -4,6 +4,7 @@ import { Flash, Loading } from 'ui'
 import { ExclamationCircleIcon } from '@heroicons/react/20/solid'
 import Link from 'next/link'
 import { formatScore } from '@app/common/format'
+import { useSession } from '@app/common/session'
 
 interface Props {
   leaderboard: UseQueryResult<LeaderboardType>
@@ -18,6 +19,8 @@ export const Leaderboard = ({
   embedded = false,
   emptyMessage = 'No partipants yet, be the first to sign up!',
 }: Props) => {
+  const [session] = useSession()
+
   if (leaderboard.isLoading || leaderboard.isIdle) {
     return <Loading className="p-5" />
   }
@@ -57,7 +60,14 @@ export const Leaderboard = ({
           </thead>
           <tbody>
             {leaderboard.data.entries.map(it => (
-              <tr key={it.user_id} className="link font-bold">
+              <tr
+                key={it.user_id}
+                className={`link font-bold ${
+                  it.user_id === session?.identity?.id
+                    ? 'bg-primary/5 hover:bg-primary/10'
+                    : ''
+                }`}
+              >
                 <td className="link w-10">
                   <Link
                     href={urlForRow(it.user_id)}

@@ -13,16 +13,15 @@ func (s *server) ContentAnnouncementUpdate(
 	ctx context.Context,
 	request openapi.ContentAnnouncementUpdateRequestObject,
 ) (openapi.ContentAnnouncementUpdateResponseObject, error) {
-	if request.Body == nil {
-		return openapi.ContentAnnouncementUpdate400Response{}, nil
-	}
-
 	id, err := uuid.Parse(request.Id)
 	if err != nil {
 		return nil, errInvalidUUID
 	}
 
-	body := request.Body
+	var body openapi.ContentAnnouncementUpdateJSONRequestBody
+	if request.Body != nil {
+		body = *request.Body
+	}
 	var href *string
 	if value, err := body.Href.Get(); err == nil {
 		href = &value

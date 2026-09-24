@@ -19,7 +19,6 @@ func TestUpdateAnnouncement(t *testing.T) {
 		{description: []string{"trailing", "json"}, want: http.StatusOK},
 		// Legacy stores timestamp offsets as wall-clock fields instead of UTC instants.
 		{description: []string{"offset", "dates"}, want: http.StatusOK},
-		{description: []string{"whitespace", "body", "guest"}, want: http.StatusBadRequest},
 		{description: []string{"missing", "title"}, want: http.StatusBadRequest},
 		{description: []string{"missing", "content"}, want: http.StatusBadRequest},
 		{description: []string{"invalid", "style"}, want: http.StatusBadRequest},
@@ -39,12 +38,12 @@ func TestUpdateAnnouncement(t *testing.T) {
 		{description: []string{"malformed", "json", "guest"}, want: http.StatusBadRequest},
 		{description: []string{"empty", "body"}, want: http.StatusBadRequest},
 		{description: []string{"null", "body"}, want: http.StatusBadRequest},
-		// The generated JSON decoder no longer receives an injected empty object.
-		{description: []string{"guest", "empty", "body"}, want: http.StatusBadRequest},
-		{description: []string{"non", "admin", "empty", "body"}, want: http.StatusBadRequest},
 		{description: []string{"guest"}, want: http.StatusUnauthorized},
+		{description: []string{"guest", "empty", "body"}, want: http.StatusUnauthorized},
+		{description: []string{"whitespace", "body", "guest"}, want: http.StatusUnauthorized},
 		{description: []string{"non", "admin"}, want: http.StatusForbidden},
 		{description: []string{"non", "admin", "invalid", "fields"}, want: http.StatusForbidden},
+		{description: []string{"non", "admin", "empty", "body"}, want: http.StatusForbidden},
 		{description: []string{"not", "found"}, want: http.StatusNotFound},
 		{description: []string{"wrong", "namespace"}, want: http.StatusNotFound},
 		{description: []string{"deleted"}, want: http.StatusNotFound},

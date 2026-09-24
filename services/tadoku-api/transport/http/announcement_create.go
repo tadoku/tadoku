@@ -13,10 +13,10 @@ func (s *server) ContentAnnouncementCreate(
 	ctx context.Context,
 	request openapi.ContentAnnouncementCreateRequestObject,
 ) (openapi.ContentAnnouncementCreateResponseObject, error) {
-	if request.Body == nil {
-		return openapi.ContentAnnouncementCreate400Response{}, nil
+	var body openapi.ContentAnnouncementCreateJSONRequestBody
+	if request.Body != nil {
+		body = *request.Body
 	}
-	body := *request.Body
 	id := uuid.New()
 	if body.Id != nil {
 		id = *body.Id

@@ -38,12 +38,12 @@ func TestCreateAnnouncement(t *testing.T) {
 		{description: []string{"whitespace", "guest"}, want: http.StatusBadRequest},
 		{description: []string{"empty", "body"}, want: http.StatusBadRequest},
 		{description: []string{"null", "body"}, want: http.StatusBadRequest},
-		{description: []string{"empty", "guest"}, want: http.StatusBadRequest},
-		{description: []string{"empty", "non", "admin"}, want: http.StatusBadRequest},
 		{description: []string{"guest"}, want: http.StatusUnauthorized},
 		{description: []string{"null", "guest"}, want: http.StatusUnauthorized},
+		{description: []string{"empty", "guest"}, want: http.StatusUnauthorized},
 		{description: []string{"non", "admin"}, want: http.StatusForbidden},
 		{description: []string{"invalid", "non", "admin"}, want: http.StatusForbidden},
+		{description: []string{"empty", "non", "admin"}, want: http.StatusForbidden},
 		{description: []string{"duplicate", "id"}, want: http.StatusConflict},
 	}
 

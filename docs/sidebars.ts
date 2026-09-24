@@ -78,6 +78,7 @@ const sidebars: SidebarsConfig = {
         'frontend/auth',
         'frontend/styleguide',
         'frontend/webv2',
+        'frontend/paper-composition',
       ],
     },
     {

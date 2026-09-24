@@ -34,8 +34,6 @@ func NewUserCache(identities *kratosclient.Client) *UserCache {
 	}
 }
 
-// refresh is called with c.mu held. Provider failures retain the previous
-// complete snapshot.
 func (c *UserCache) refresh(ctx context.Context, checkedAt time.Time) error {
 	users, err := c.listUsers(ctx)
 	if err != nil {

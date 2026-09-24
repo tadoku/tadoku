@@ -12,7 +12,6 @@ import (
 	queries "github.com/tadoku/tadoku/services/tadoku-api/infra/postgres/internal/pgxcompat"
 )
 
-// Real sqlc output accepts the same native pool/transaction surface directly.
 var (
 	_ postgres.DBTX = (*pgxpool.Pool)(nil)
 	_ postgres.DBTX = (pgx.Tx)(nil)
@@ -27,8 +26,6 @@ func TestSQLCUsesNativeExecutorWithoutAdapter(t *testing.T) {
 	defer cancel()
 	refused := errors.New("synthetic rollback")
 	for _, rollback := range []bool{false, true} {
-		// A temporary table is scoped to the transaction's connection; no
-		// permanent application table or migration is created by this test.
 		err := postgres.RunInTransaction(ctx, pool, func(ctx context.Context) error {
 			db, err := postgres.Executor(ctx, pool)
 			if err != nil {
@@ -37,7 +34,7 @@ func TestSQLCUsesNativeExecutorWithoutAdapter(t *testing.T) {
 			if _, err := db.Exec(ctx, "create temporary table query_compat_items (id integer primary key, label text not null) on commit drop"); err != nil {
 				return err
 			}
-			q := queries.New(db) // No cast, adapter or generated-source edit.
+			q := queries.New(db)
 			if err := q.InsertItem(ctx, queries.InsertItemParams{ID: 1, Label: "before"}); err != nil {
 				return err
 			}
@@ -70,7 +67,6 @@ func TestSQLCUsesNativeExecutorWithoutAdapter(t *testing.T) {
 			t.Errorf("generated-query commit: %v", err)
 		}
 	}
-	// Pool-based execution also passes directly to generated bindings.
 	db, err := postgres.Executor(ctx, pool)
 	if err != nil {
 		t.Fatal(err)

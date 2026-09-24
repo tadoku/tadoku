@@ -22,8 +22,6 @@ func TestResetClearsWritesAndPreservesStaticData(t *testing.T) {
 		}
 	})
 
-	// Announcements have UUID IDs. Add a test-only owned identity to verify that
-	// the same cleanup statement also restarts sequences for future slices.
 	if _, err := db.Pool.Exec(t.Context(), "alter table announcements add column test_identity bigint generated always as identity"); err != nil {
 		t.Fatal(err)
 	}
@@ -46,7 +44,6 @@ func TestResetClearsWritesAndPreservesStaticData(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// A separate connection must see committed setup and can commit its own work.
 	reader, err := pgx.Connect(t.Context(), db.DSN)
 	if err != nil {
 		t.Fatal(err)

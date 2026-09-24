@@ -18,7 +18,6 @@ import (
 
 func TestClientUsesConfiguredHTTPClientForAllRequests(t *testing.T) {
 	id := uuid.MustParse("00000000-0000-0000-0000-000000000001")
-	// Only the supplied HTTP client trusts this scoped provider's certificate.
 	provider := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		switch r.URL.Path {

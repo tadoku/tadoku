@@ -1,6 +1,3 @@
-// Command depolicy runs the upstream import analyzer over the Tadoku API tree.
-// It intentionally parses every Go file, including tests and inactive build tags;
-// compilation/type checking remains the responsibility of the normal Bazel build.
 package main
 
 import (
@@ -22,7 +19,6 @@ import (
 	"golang.org/x/tools/go/analysis/passes/inspect"
 )
 
-// Set by Bazel. Depolicy uses go/build to distinguish stdlib from external imports.
 var sdkRootFile string
 
 func main() {
@@ -49,7 +45,6 @@ func check(root string, out io.Writer) error {
 		return err
 	}
 	configPath := filepath.Join(root, depolicy.ConfigFileName)
-	// The upstream analyzer skips missing configuration; this gate must not.
 	config, err := depolicy.LoadProjectConfig(configPath)
 	if err != nil {
 		return err
@@ -68,7 +63,6 @@ func check(root string, out io.Writer) error {
 		if entry.IsDir() || !strings.HasSuffix(path, ".go") {
 			return nil
 		}
-		// Reject nested configuration that could change the analyzer's scope.
 		found, err := depolicy.FindConfigFromFiles(path)
 		if err != nil {
 			return err

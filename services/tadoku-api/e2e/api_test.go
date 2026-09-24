@@ -124,7 +124,6 @@ func runTests(m *testing.M) (code int) {
 	return m.Run()
 }
 
-// suite owns the stores a handler reads. Reset only those stores.
 type suite struct {
 	db             *testpostgres.Database
 	keto           *testketo.Fixture
@@ -328,10 +327,6 @@ func (s *suite) resetProfileCaches() {
 	}
 }
 
-// fixtureSeeds resolves the seed file name for a case: a non-empty case file
-// is used as-is, a zero-byte case file opts out of seeding, and a missing case
-// file falls back to the operation-level file (the case's parent directory).
-// The resolved file may not exist; resetting skips missing seed files.
 func fixtureSeeds(caseDir, name string) []string {
 	caseSeed := filepath.Join(caseDir, name)
 	info, err := os.Stat(caseSeed)

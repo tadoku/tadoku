@@ -129,8 +129,6 @@ func TestAuthentication(t *testing.T) {
 	}
 }
 
-// End the middleware chain here so authentication goldens do not exercise a
-// business endpoint. The success handler observes the real downstream context.
 func observeIdentity(w http.ResponseWriter, r *http.Request) {
 	if user := identity.FromContext(r.Context()); user != nil {
 		writeIdentityHeaders(w.Header(), user.Subject, user.DisplayName, user.Email, user.CreatedAt)

@@ -224,7 +224,6 @@ func buildEntries(cached *page) []Entry {
 	return entries
 }
 
-// Worker consumes committed leaderboard changes after the legacy worker has stopped.
 type Worker struct {
 	service    *Service
 	logger     *slog.Logger
@@ -258,7 +257,6 @@ func (w *Worker) Run(ctx context.Context) {
 	}
 }
 
-// ProcessPending reconciles the cache once, then drains committed outbox rows.
 func (w *Worker) ProcessPending(ctx context.Context) error {
 	if !w.reconciled {
 		count, err := w.service.store.reconcile(ctx)
@@ -287,7 +285,6 @@ func (w *Worker) drain(ctx context.Context) error {
 	}
 }
 
-// ProcessBatch claims rows through commit, then acknowledges only after Valkey succeeds.
 func (w *Worker) ProcessBatch(ctx context.Context) (int, error) {
 	processed := 0
 	err := postgres.RunInTransaction(ctx, w.service.repository.db, func(ctx context.Context) error {
@@ -322,7 +319,6 @@ func (w *Worker) ProcessBatch(ctx context.Context) (int, error) {
 			}
 		}
 
-		// Invalidate while the claimed rows stay locked so no other worker acknowledges them first.
 		for key := range keys {
 			if err := w.service.store.invalidate(ctx, key); err != nil {
 				return err

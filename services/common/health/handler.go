@@ -10,13 +10,10 @@ import (
 
 const checkTimeout = 2 * time.Second
 
-// LivezHandler returns 200 OK if the process is alive.
 func LivezHandler(c echo.Context) error {
 	return c.String(http.StatusOK, "ok")
 }
 
-// ReadyzHandler checks all registered HealthCheckers and returns
-// 200 if all pass, 503 if any fail.
 func ReadyzHandler(checkers []HealthChecker) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		ctx, cancel := context.WithTimeout(c.Request().Context(), checkTimeout)

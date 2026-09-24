@@ -204,7 +204,6 @@ func (s *Service) TagSuggestions(ctx context.Context, userID uuid.UUID, query st
 		return nil, err
 	}
 
-	// Preserve the legacy append limit: thirty history results may gain one default.
 	seen := make(map[string]struct{})
 	for _, s := range suggestions {
 		seen[strings.ToLower(s.Tag)] = struct{}{}
@@ -219,7 +218,6 @@ func (s *Service) TagSuggestions(ctx context.Context, userID uuid.UUID, query st
 		}
 	}
 
-	// Keep NSFW below ordinary suggestions, including frequently used tags.
 	sort.SliceStable(suggestions, func(i, j int) bool {
 		return !strings.EqualFold(suggestions[i].Tag, "nsfw") && strings.EqualFold(suggestions[j].Tag, "nsfw")
 	})
@@ -293,8 +291,7 @@ func (s *Service) ContestActivity(ctx context.Context, userID, contestID uuid.UU
 	return s.logs.ContestActivity(ctx, userID, contestID)
 }
 
-// FindLog returns a non-deleted log with its contest registrations. It applies
-// no visibility rules; calling operations authorize the actor.
+// FindLog applies no visibility rules; callers must authorize the actor.
 func (s *Service) FindLog(ctx context.Context, id uuid.UUID) (*Log, error) {
 	log, err := s.logs.FindLog(ctx, id, false)
 	if err != nil {

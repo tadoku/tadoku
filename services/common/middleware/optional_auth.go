@@ -11,9 +11,6 @@ import (
 	"github.com/tadoku/tadoku/services/common/authz/roles"
 )
 
-// OptionalAdminAuth creates middleware that allows unauthenticated requests
-// (e.g. Kubernetes probes) but requires admin authorization when a JWT
-// bearer token is present (e.g. external requests through the API gateway).
 func OptionalAdminAuth(jwksURL string, rolesSvc roles.Service) echo.MiddlewareFunc {
 	jwks, err := keyfunc.Get(jwksURL, keyfunc.Options{})
 	if err != nil {
@@ -38,12 +35,10 @@ func OptionalAdminAuth(jwksURL string, rolesSvc roles.Service) echo.MiddlewareFu
 				return c.NoContent(http.StatusUnauthorized)
 			}
 
-			// Service tokens with valid JWT are allowed (internal service-to-service)
 			if claims.Type == "service" {
 				return next(c)
 			}
 
-			// User tokens must be admin
 			subject := claims.Subject
 			if subject == "" || subject == "guest" {
 				return c.NoContent(http.StatusUnauthorized)

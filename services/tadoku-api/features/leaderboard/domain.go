@@ -1,4 +1,3 @@
-// Package leaderboard owns leaderboard reads and their Valkey cache.
 package leaderboard
 
 import (

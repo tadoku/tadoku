@@ -1,4 +1,3 @@
-// Package authz owns public authorization behavior.
 package authz
 
 import (

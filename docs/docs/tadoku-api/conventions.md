@@ -204,6 +204,18 @@ exported.
 
 ## Readability
 
+- Write Go comments only for information a caller needs but cannot readily
+  infer from the declaration and code, such as lifecycle, concurrency or error
+  constraints. Put them directly on the declaration. Do not write package
+  summaries, symbol-name restatements, implementation narration, or comments
+  that track known defects; record defects as issues. Comments summarizing return
+  values, ownership or constructor defaults add no value when the code shows
+  them, even when attached to a declaration. Preserve `//go:` tool
+  directives. Configure lint rules instead of suppressing them in comments.
+- A test fixture may keep a local comment for a concrete isolation or
+  shared-resource risk. Start that comment group with `// Test safety:` and
+  state the instruction. `bazel run //tools/ci/commentpolicy` checks placement
+  and form in handwritten Go; review still judges whether a comment adds value.
 - Separate setup, execution, error handling and response mapping with
   whitespace. Within a function, put a blank line between coherent phases such
   as authorization, input extraction, persistence and response mapping.

@@ -10,8 +10,6 @@ func TestCreateContest(t *testing.T) {
 		description []string
 		want        int
 	}{
-		// The signed name is older than Stored Reader. The response must use that
-		// newer local name while preserving duplicate language and activity entries.
 		{description: []string{"member", "with", "stale", "signed", "name", "keeps", "newer", "stored", "name", "and", "duplicate", "allow", "lists"}, want: http.StatusOK},
 		{description: []string{"admin", "creates", "official", "past", "contest"}, want: http.StatusOK},
 		{description: []string{"member", "creates", "same", "day", "contest"}, want: http.StatusOK},

@@ -26,7 +26,6 @@ func resetKratosAfter(t *testing.T, s *suite) {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() {
-		// testing cancels t.Context before running cleanup callbacks.
 		ctx, cancel := context.WithTimeout(context.Background(), 45*time.Second)
 		defer cancel()
 		if err := s.kratos.Reset(ctx); err != nil {
@@ -50,8 +49,6 @@ func TestKratosCastMatchesSignedSubjects(t *testing.T) {
 		if who == guest {
 			continue
 		}
-		// These checked-in tokens are verified by the real JWT middleware in
-		// HTTP cases. Here we check that their subjects/traits match the provider.
 		claims := jwt.MapClaims{}
 		if _, _, err := new(jwt.Parser).ParseUnverified(encoded, claims); err != nil {
 			t.Fatal(err)
@@ -101,8 +98,6 @@ func TestKratosResetIsExplicit(t *testing.T) {
 	}
 }
 
-// Use a child test process to exercise t.Fatal without failing this test run.
-// Its post-subtest read verifies cleanup ran after t.Context was cancelled.
 func TestKratosCleanupAfterFailure(t *testing.T) {
 	const childEnv = "TADOKU_KRATOS_CLEANUP_FAILURE_TEST"
 	if os.Getenv(childEnv) == "1" {

@@ -36,7 +36,6 @@ func (m *mockRolesService) ClaimsForSubjects(_ context.Context, ids []string) (m
 	return result, m.err
 }
 
-// jwksJSON builds a minimal JWKS response from an RSA public key.
 func jwksJSON(pub *rsa.PublicKey) []byte {
 	b64 := func(b *big.Int) string {
 		return base64.RawURLEncoding.EncodeToString(b.Bytes())

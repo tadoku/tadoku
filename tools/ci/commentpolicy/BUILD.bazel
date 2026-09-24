@@ -1,0 +1,20 @@
+load("@rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+
+go_library(
+    name = "commentpolicy_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/tadoku/tadoku/tools/ci/commentpolicy",
+    visibility = ["//visibility:private"],
+)
+
+go_binary(
+    name = "commentpolicy",
+    embed = [":commentpolicy_lib"],
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "commentpolicy_test",
+    srcs = ["main_test.go"],
+    embed = [":commentpolicy_lib"],
+)

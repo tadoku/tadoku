@@ -13,8 +13,6 @@ import (
 )
 
 func TestResetSeedsAndClearsEveryNamespace(t *testing.T) {
-	// Hostile parent settings prove the in-memory fixture does not inherit an
-	// external database or listener target.
 	t.Setenv("DSN", "postgres://127.0.0.1:1/unsafe")
 	t.Setenv("SERVE_READ_PORT", "1")
 

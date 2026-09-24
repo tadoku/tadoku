@@ -7,8 +7,7 @@ import (
 	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
 )
 
-// Service evaluates roles for a given subject ID.
-// Subject IDs are expected to be Kratos identity IDs (token "sub").
+// Service expects Kratos identity IDs (token "sub") as subjects.
 type Service interface {
 	ClaimsForSubject(ctx context.Context, subjectID string) (Claims, error)
 	ClaimsForSubjects(ctx context.Context, subjectIDs []string) (map[string]Claims, error)

@@ -1,7 +1,3 @@
-// Command repopolicy enforces the Tadoku API repository conventions on every
-// handwritten *_repository.go file: at most one database statement per
-// function, no ID allocation and no transaction control. It checks syntax only;
-// compilation/type checking remains the responsibility of the normal Bazel build.
 package main
 
 import (
@@ -104,7 +100,6 @@ func check(root string, out io.Writer) error {
 	return nil
 }
 
-// analyze reports repository policy violations in one parsed file.
 func analyze(file *ast.File) []finding {
 	a := fileAnalysis{
 		sqlc:         map[string]bool{},
@@ -128,7 +123,6 @@ func analyze(file *ast.File) []finding {
 		}
 	}
 
-	// Local helpers that return generated queries, such as r.queries(ctx).
 	for _, decl := range file.Decls {
 		fn, ok := decl.(*ast.FuncDecl)
 		if ok && fn.Type.Results != nil && len(fn.Type.Results.List) > 0 && a.isQueriesType(fn.Type.Results.List[0].Type) {
@@ -225,7 +219,6 @@ func (a *fileAnalysis) analyzeFunc(fn *ast.FuncDecl) []finding {
 	return findings
 }
 
-// bind tracks local variables holding generated queries.
 func (a *fileAnalysis) bind(lhs, rhs []ast.Expr) {
 	for i, target := range lhs {
 		ident, ok := target.(*ast.Ident)
@@ -249,7 +242,6 @@ func (a *fileAnalysis) bind(lhs, rhs []ast.Expr) {
 	}
 }
 
-// isQueries reports whether expr evaluates to generated sqlc queries.
 func (a *fileAnalysis) isQueries(expr ast.Expr) bool {
 	switch e := ast.Unparen(expr).(type) {
 	case *ast.Ident:
@@ -285,7 +277,6 @@ func isPackage(expr ast.Expr, names map[string]bool) bool {
 	return ok && names[ident.Name]
 }
 
-// inLoop reports whether the innermost node of stack runs repeatedly in a loop.
 func inLoop(stack []ast.Node) bool {
 	node := stack[len(stack)-1]
 	for _, ancestor := range stack[:len(stack)-1] {

@@ -46,7 +46,6 @@ func (i implementation) uuidReader() io.Reader {
 type repeatingByteReader byte
 
 func (r repeatingByteReader) Read(buffer []byte) (int, error) {
-	// Repeating entropy keeps business IDs stable when observability adds UUID draws.
 	for i := range buffer {
 		buffer[i] = byte(r)
 	}
@@ -80,14 +79,11 @@ func runCaseAt(t *testing.T, s *suite, name string, want int, businessTime time.
 	})
 }
 
-// checkHTTPGolden sends the checked-in HTTP request through the handler and
-// compares or explicitly records its complete response.
 func checkHTTPGolden(t *testing.T, handler http.Handler, directory string, wantStatus int, update bool) {
 	t.Helper()
 	checkHTTPResponseGolden(t, handler, readHTTPRequest(t, directory), directory, wantStatus, update)
 }
 
-// readHTTPRequest parses the directory's request.http with a fresh body.
 func readHTTPRequest(t *testing.T, directory string) *http.Request {
 	t.Helper()
 
@@ -102,8 +98,6 @@ func readHTTPRequest(t *testing.T, directory string) *http.Request {
 	return request
 }
 
-// checkHTTPResponseGolden serves the request and compares or explicitly
-// records the complete response against the directory's golden.http.
 func checkHTTPResponseGolden(t *testing.T, handler http.Handler, request *http.Request, directory string, wantStatus int, update bool) {
 	t.Helper()
 	defer request.Body.Close()
@@ -156,8 +150,6 @@ func reconcileHTTPGolden(path, got string, gotStatus, wantStatus int, update boo
 	return reconcileGolden(path, got, update)
 }
 
-// reconcileGolden compares got with the checked-in golden, or rewrites an
-// existing golden in update mode. It never creates a missing file.
 func reconcileGolden(path, got string, update bool) (bool, error) {
 	want, err := os.ReadFile(path)
 	if err != nil {
@@ -176,8 +168,6 @@ func reconcileGolden(path, got string, update bool) (bool, error) {
 	return false, nil
 }
 
-// formatHTTPGolden completes an unknown response length from the buffered body
-// before serializing the response and normalizing HTTP line endings.
 func formatHTTPGolden(request *http.Request, recorder *httptest.ResponseRecorder) (string, error) {
 	response := recorder.Result()
 	if http.StatusText(response.StatusCode) == "" {

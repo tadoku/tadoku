@@ -15,7 +15,6 @@ import (
 	callbackopenapi "github.com/tadoku/tadoku/services/tadoku-api/generated/openapi/callback"
 )
 
-// Router keeps application routes behind shared middleware and exposes probes.
 type Router struct {
 	rootMux         *stdhttp.ServeMux
 	protectedRoutes *routeRegistrar
@@ -50,12 +49,10 @@ var (
 	_ callbackopenapi.StrictServerInterface = (*server)(nil)
 )
 
-// Handle registers an application route behind the shared middleware.
 func (r *Router) Handle(pattern string, handler stdhttp.Handler) {
 	r.protectedRoutes.Handle(pattern, handler)
 }
 
-// HandleFunc registers an application route behind the shared middleware.
 func (r *Router) HandleFunc(pattern string, handler func(stdhttp.ResponseWriter, *stdhttp.Request)) {
 	r.Handle(pattern, stdhttp.HandlerFunc(handler))
 }
@@ -64,7 +61,6 @@ func (r *Router) ServeHTTP(w stdhttp.ResponseWriter, request *stdhttp.Request) {
 	r.rootMux.ServeHTTP(w, request)
 }
 
-// NewHandler builds the application router.
 func NewHandler(
 	application *app.Application,
 	ready func(context.Context) error,

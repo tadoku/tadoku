@@ -1,4 +1,3 @@
-// Package valkey constructs the raw Valkey client owned by tadoku-api.
 package valkey
 
 import (
@@ -13,8 +12,7 @@ import (
 	valkeygo "github.com/valkey-io/valkey-go"
 )
 
-// Open constructs a standalone client. A non-nil client returned with an error
-// can reconnect on a later command and must still be closed by the caller.
+// Open may return a non-nil client with an error; close it because it can reconnect.
 func Open(ctx context.Context, rawURL string, timeout time.Duration) (valkeygo.Client, error) {
 	option, err := clientOption(rawURL, timeout)
 	if err != nil {
@@ -24,8 +22,6 @@ func Open(ctx context.Context, rawURL string, timeout time.Duration) (valkeygo.C
 		return nil, fmt.Errorf("open valkey: %w", err)
 	}
 
-	// NewClient has no context, so bridge ctx through its initial dial and
-	// handshake. Detaching under the mutex leaves later reconnect contexts intact.
 	var mu sync.Mutex
 	initializing := true
 	var initialConnection net.Conn

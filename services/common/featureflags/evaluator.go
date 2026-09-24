@@ -21,8 +21,6 @@ type ProviderResult struct {
 	Stale   bool
 }
 
-// BooleanProvider is the vendor-neutral boundary used by the typed evaluator.
-// Vendor SDK types stay in the client/infrastructure package.
 type BooleanProvider interface {
 	EvaluateBoolean(ctx context.Context, request EvaluationRequest) (ProviderResult, error)
 }
@@ -69,8 +67,6 @@ type Observer interface {
 	ObserveEvaluation(observation Observation)
 }
 
-// Evaluator resolves typed flags and always falls back to the registry-owned
-// safe default. It never returns provider failures to product code.
 type Evaluator struct {
 	provider BooleanProvider
 	observer Observer

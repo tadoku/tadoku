@@ -31,8 +31,6 @@ func VerifyJWT(jwksURL string) echo.MiddlewareFunc {
 		panic(fmt.Errorf("unable to fetch jwks: %w", err))
 	}
 
-	// Echo v4.10+ moved JWT helpers out of echo/v4/middleware. Keep the v4.9
-	// status mapping (400 missing, 401 invalid) so legacy services stay compatible.
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			if c.Path() == "/ping" {
@@ -90,7 +88,6 @@ func bearerTokens(c echo.Context) ([]string, error) {
 	return result, nil
 }
 
-// UnifiedClaims handles both user and service tokens.
 type UnifiedClaims struct {
 	jwt.RegisteredClaims
 	Type      string `json:"type,omitempty"`
@@ -171,8 +168,6 @@ func RejectBannedUsers() echo.MiddlewareFunc {
 		return func(ctx echo.Context) error {
 			claims := roles.FromContext(ctx.Request().Context())
 			if claims.Authenticated && claims.Err != nil {
-				// Fail-open: allow requests to proceed when authorization evaluation is unavailable.
-				// Admin-only endpoints will still be blocked by roles.RequireAdmin (ErrAuthzUnavailable).
 				ctx.Logger().Errorf(
 					"RejectBannedUsers: authorization unavailable (fail-open): subject=%s err=%v",
 					claims.Subject,

@@ -1,4 +1,3 @@
-// Package posts owns posts and their persistence.
 package posts
 
 import (

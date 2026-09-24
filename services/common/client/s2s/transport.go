@@ -5,14 +5,12 @@ import (
 	"net/http"
 )
 
-// AuthTransport attaches an S2S bearer token to every request.
 type AuthTransport struct {
 	Base          http.RoundTripper
 	Client        *Client
 	TargetService string
 }
 
-// NewAuthTransport returns a RoundTripper that injects S2S auth headers.
 func NewAuthTransport(client *Client, targetService string, base http.RoundTripper) http.RoundTripper {
 	return &AuthTransport{
 		Base:          base,
@@ -21,7 +19,6 @@ func NewAuthTransport(client *Client, targetService string, base http.RoundTripp
 	}
 }
 
-// RoundTrip implements http.RoundTripper.
 func (t *AuthTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	if t.Client == nil {
 		return nil, fmt.Errorf("s2s client is required")

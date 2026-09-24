@@ -55,9 +55,7 @@ func newLeaderboardValkeyFixture(ctx context.Context) (_ *leaderboardValkeyFixtu
 	if err != nil {
 		return nil, fmt.Errorf("parse test Valkey URL: %w", err)
 	}
-	// DB 15 is reserved for this E2E suite and DB 14 for its nested cleanup probe.
-	// A lease and an empty-key check make accidental overlap fail closed without
-	// flushing or rewriting production keys.
+	// Test safety: DB 15 is reserved for this E2E suite and DB 14 for its nested cleanup probe.
 	option.SelectDB = leaderboardValkeyDatabase()
 	option.ForceSingleClient = true
 	option.DisableRetry = true

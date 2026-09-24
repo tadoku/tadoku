@@ -7,8 +7,6 @@ import (
 	commondomain "github.com/tadoku/tadoku/services/common/domain"
 )
 
-// WithUserIdentity attaches a user identity to ctx (or context.Background if ctx is nil).
-// It does not attach any role claims.
 func WithUserIdentity(ctx context.Context, u *commondomain.UserIdentity) context.Context {
 	if ctx == nil {
 		ctx = context.Background()

@@ -241,7 +241,6 @@ func (a *Application) ListYearlyContestRegistrations(ctx context.Context, userID
 		return nil, errx.NewUnauthorizedError("unauthorized")
 	}
 
-	// Signed guests have a user identity but no actor ID; they receive public history.
 	actorID, ok := identity.ActorID(ctx)
 	includePrivate := a.permissions.IsAdminOrFalse(ctx) || (ok && actorID == userID)
 

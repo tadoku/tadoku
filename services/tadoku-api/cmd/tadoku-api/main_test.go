@@ -94,7 +94,6 @@ func TestApplicationStartsAndShutsDown(t *testing.T) {
 	kratos.Start()
 	t.Cleanup(kratos.Close)
 	cfg.KratosAdminURL = kratos.URL
-	// Keep the idle connection alive until shutdown even on a busy test host.
 	cfg.IdleTimeout = time.Minute
 	observer, err := valkeygo.NewClient(valkeygo.MustParseURL(cfg.ValkeyURL))
 	if err != nil {
@@ -154,7 +153,6 @@ func TestApplicationStartsAndShutsDown(t *testing.T) {
 		t.Fatalf("owned Valkey client ID: %v", err)
 	}
 
-	// Verify the application is ready to accept requests.
 	_, port, err := net.SplitHostPort(application.listener.Addr().String())
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -234,7 +232,6 @@ func TestApplicationStartsAndShutsDown(t *testing.T) {
 	if evaluationExchanges.Load() == 0 || managementExchanges.Load() != 1 {
 		t.Errorf("token exchanges: evaluation=%d management=%d", evaluationExchanges.Load(), managementExchanges.Load())
 	}
-	// Exercise the owned SDK directly, without an application consumer.
 	if _, _, err := application.kratos.IdentityApi.GetIdentity(t.Context(), "synthetic").Execute(); err != nil {
 		t.Fatalf("owned Kratos request: %v", err)
 	}
@@ -244,7 +241,6 @@ func TestApplicationStartsAndShutsDown(t *testing.T) {
 	default:
 	}
 
-	// Existing process metrics still use their own listener.
 	_, metricsPort, err := net.SplitHostPort(application.metricsListener.Addr().String())
 	if err != nil {
 		t.Fatal(err)
@@ -273,7 +269,6 @@ func TestApplicationStartsAndShutsDown(t *testing.T) {
 		}
 	}
 
-	// Shutdown closes both listeners, database/Valkey clients and provider connections.
 	cancel()
 	if err := application.wait(); err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -388,8 +383,6 @@ func validApplicationConfig(t *testing.T) config {
 }
 
 func TestLoadConfigUsesValidatedDefaults(t *testing.T) {
-	// A missing or malformed writer setting must fail startup; both explicit
-	// boolean values must survive configuration loading unchanged.
 	t.Setenv("API_SCORING_ENGINE_ENABLED", "false")
 	t.Setenv("API_JWKS", "http://jwks.test")
 	t.Setenv("API_KETO_READ_URL", "http://keto-read.test")
@@ -641,7 +634,6 @@ func TestApplicationBoundsKratosRequests(t *testing.T) {
 		}
 	})
 
-	// The runtime timeout must expire before the caller or transport deadlines.
 	requestContext, cancelRequest := context.WithTimeout(t.Context(), 500*time.Millisecond)
 	t.Cleanup(cancelRequest)
 	_, _, err = application.kratos.IdentityApi.GetIdentity(requestContext, "synthetic").Execute()
@@ -823,7 +815,6 @@ func TestMainLogsConfigErrorsAndExitsOne(t *testing.T) {
 	}
 }
 
-// Close completes locally before Valkey necessarily processes the disconnect.
 func waitForValkeyDisconnect(t *testing.T, observer valkeygo.Client, clientField string) {
 	t.Helper()
 	ctx, cancel := context.WithTimeout(t.Context(), time.Second)

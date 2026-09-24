@@ -6,9 +6,6 @@ import (
 	"github.com/tadoku/tadoku/services/common/domain"
 )
 
-// RolesFromKeto enriches request context with role claims for authenticated users.
-// It does not block the request on evaluation failures; downstream code should use
-// roles.RequireAdmin / roles.IsBanned etc which will surface ErrAuthzUnavailable.
 func RolesFromKeto(svc roles.Service) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(ctx echo.Context) error {

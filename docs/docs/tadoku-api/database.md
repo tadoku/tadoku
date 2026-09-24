@@ -10,6 +10,10 @@ Read this when you write a migration, change a SQL query or open a transaction.
 
 ## Migrations
 
+Migrations live in `services/tadoku-api/migrations/` as numbered pairs,
+`NNNN_<description>.up.sql` and `NNNN_<description>.down.sql`, using the next
+free number. sqlc reads the same directory as its schema.
+
 - Ship every schema or data migration as a standalone change. It lands on
   `main` in its own commit and pull request, separate from application code,
   and is deployed independently before any code that depends on it.
@@ -41,6 +45,11 @@ Always write SQL keywords in lowercase: `select` and `create table`, not
 `SELECT` and `CREATE TABLE`.
 
 ## sqlc code generation
+
+Queries live in one package per feature under `services/tadoku-api/sql/<feature>/`:
+the feature's `.sql` query file, a `sqlc.yaml` that writes Go code to
+`services/tadoku-api/generated/sqlc/<feature>/`, and a `generate.go` that pins the
+sqlc version. Add a new package to `SQLC_PACKAGES` in `scripts/generate-sqlc.sh`.
 
 Always regenerate after changing a SQL query. The checked-in generated Go files
 must exactly match the query sources. Run the generator from the repository

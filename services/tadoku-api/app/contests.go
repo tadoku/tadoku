@@ -100,7 +100,6 @@ func (a *Application) CreateContest(ctx context.Context, parameters CreateContes
 		return createErr
 	})
 	if err != nil {
-		result = nil
 		return nil, err
 	}
 	return result, nil

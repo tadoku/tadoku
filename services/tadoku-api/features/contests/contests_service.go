@@ -260,7 +260,7 @@ func (s *Service) ListContests(ctx context.Context, parameters ListParameters, i
 	if parameters.PageSize == 0 {
 		parameters.PageSize = 10
 	}
-	if parameters.PageSize > 100 || parameters.PageSize == 0 {
+	if parameters.PageSize > 100 {
 		parameters.PageSize = 100
 	}
 	parameters.includePrivate = includePrivate

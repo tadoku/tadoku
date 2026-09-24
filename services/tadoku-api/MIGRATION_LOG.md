@@ -5,7 +5,6 @@
 - [ ] Remove the v1 OpenAPI runtime/types dependency.
 - [ ] After the Tadoku API migration is complete, split all announcement, post, and page routes into separate admin and frontend routes.
 - [ ] Move the announcements timestamp columns to `timestamptz` in a standalone migration.
-- [ ] Add a covering announcements index on (`namespace`, `created_at desc`, `id desc`) where `deleted_at is null`.
 - [ ] Reconsider the announcements primary key as (`namespace`, `id`) so IDs can be scoped to their namespace.
 - [ ] After the Tadoku API migration is complete, make a final documentation pass and delete all references to this migration.
 - [x] Add the job step kind to the journey runner together with the first migrated worker. The outbox journey starts the production `Run` loop, waits for its ready signal and a later poll after an API write, then stops and joins it during cleanup.
@@ -27,10 +26,9 @@
 - [ ] Allow administrators to update another user's log contest registrations; validate requested registrations against the log owner's account and update the authorization HTTP cases.
 
 - [ ] Add a domain-errors lint that not-found sentinels use `errx` (plain `errors.New` maps to Unknown→500).
-- [ ] Make scoring `NormalizeTags` client-limit failures InvalidInput, never Internal (currently 500). Guard with unit + transport golden expecting 400; ban `Normalize*` returning Internal.
+- [ ] Ban `Normalize*` functions returning Internal errors (lint).
 - [ ] Stop contests owning the full language catalog (`ListLanguages`); compose `features/languages` in app like log configuration. Depolicy/sqlc: contests SQL must not declare catalog-only `from languages` without a contest join/filter.
 - [ ] Remove raw Kratos from contests; account-age/schema eligibility belongs with profile (or app over profile). Contests constructor accepts only the repository; CI deny `ory/kratos-client-go` under `features/contests`.
-- [ ] Deduplicate the yearly contest-create limit into one helper shared by create validation and permission check; unit-test the helper edges.
 - [ ] Add `RegistrationUpsertParameters.Validate()` with field-specific invalid-input messages; drop the catch-all sentinel for pure registration rules.
 - [ ] Split pages/posts Create+Update into one-SQL repository methods; allocate content IDs in the service under the app transaction; ban `uuid.New` in `*_repository.go`.
 - [ ] Extract leaderboard Valkey cache I/O from `Service` into a Store (mirror immersion `LeaderboardStore`); deny `valkey-go` imports outside Store packages.
@@ -42,12 +40,8 @@
 - [ ] Fix contests `FindRegistration` language hydration to match list hydrate; delete the app padding loop in `contest_profile`.
 - [ ] Stop loading contest on find-registration when the response omits it; remove app `registration.Contest = nil`.
 - [ ] Forbid raw banned/admins Keto triples outside `internal/permissions` (lint).
-- [ ] Change `CheckContestCreatePermission` guest to 401 and too-young to 403; update HTTP goldens and access level.
-- [ ] Align contest scoring rule-set list guest auth with platform (`RequireAuthenticated` + owner/admin); guest 401 golden.
 - [ ] Standardize caller UUID / self-or-admin helpers in app; ban ad-hoc Subject UUID parse outside allowlisted guest paths.
 - [ ] Keep the Flipt management client flag-agnostic; product flag allowlist only in featureflags (no product flag names in infra).
 - [ ] Decide whether pages/posts should share content-revision primitives or stay intentional twins; align list publication policy (pages lack the `published_at` cutoff posts apply when excluding drafts).
 - [x] Bind the ban-middleware path carve-out to the mux/generated `AuthzRoleGet` pattern, not the magic `"/authz/current-user/role"` string.
 - [ ] Replace `Application.New` positional `*Service` args with a `Dependencies` struct (open log/scoring PRs already churn this surface).
-- [ ] Extract an app `mutateThenReadBack` helper for the repeated announcements/pages/posts transaction+find blocks.
-- [ ] Move the pgx pool Prometheus collector from `cmd` into `infra/postgres`.

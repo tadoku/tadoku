@@ -2,7 +2,6 @@
 package contests
 
 import (
-	"errors"
 	"sort"
 	"time"
 	"unicode/utf8"
@@ -18,7 +17,7 @@ var (
 	ErrContestNotFound          = errx.NewNotFoundError("contest not found")
 	ErrContestCreatorNotFound   = errx.NewNotFoundError("contest creator not found")
 	ErrContestCreationForbidden = errx.NewForbiddenError("contest creation forbidden")
-	ErrContestCreatorTooYoung   = errors.New("contest creator account too young")
+	ErrContestCreatorTooYoung   = errx.NewForbiddenError("contest creator account too young")
 	ErrInvalidActivity          = errx.NewInvalidInputError("invalid contest activity")
 	ErrInvalidRegistration      = errx.NewInvalidInputError("invalid contest registration")
 	ErrRegistrationNotFound     = errx.NewNotFoundError("contest registration not found")
@@ -201,6 +200,15 @@ func (p CreateContestParameters) validate(ownerUserID uuid.UUID, ownerUserDispla
 		if p.ContestEnd.Before(today) {
 			return errx.NewInvalidInputError("invalid contest ContestEnd: non-admin contests must not end in the past")
 		}
+	}
+	return nil
+}
+
+const contestCreationYearlyLimit = 12
+
+func checkContestCreationYearlyLimit(createdThisYear int64) error {
+	if createdThisYear >= contestCreationYearlyLimit {
+		return ErrContestCreationForbidden
 	}
 	return nil
 }

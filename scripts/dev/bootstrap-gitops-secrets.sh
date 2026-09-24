@@ -36,14 +36,11 @@ check_secret() {
 
 # Validate all existing destinations before the first write, including runtime
 # keys we preserve. Namespace ownership alone does not authorize replacing a Secret.
-check_secret tdk-dev-tadoku-api immersion.tadoku-dev-db.credentials.postgresql.acid.zalan.do destination username password
 check_secret tdk-dev-tadoku-api tadoku.tadoku-dev-db.credentials.postgresql.acid.zalan.do destination username password
 check_secret tdk-dev-data tadoku.tadoku-dev-db.credentials.postgresql.acid.zalan.do source username password
-for provider in immersion kratos keto; do
+for provider in kratos keto; do
   check_secret tdk-dev-data "$provider.tadoku-dev-db.credentials.postgresql.acid.zalan.do" source username password
-  if [ "$provider" != immersion ]; then
-    check_secret "tdk-dev-$provider" "$provider.tadoku-dev-db.credentials.postgresql.acid.zalan.do" destination username password
-  fi
+  check_secret "tdk-dev-$provider" "$provider.tadoku-dev-db.credentials.postgresql.acid.zalan.do" destination username password
 done
 check_secret tdk-dev-kratos kratos-runtime destination secret
 check_secret tdk-dev-oathkeeper dev-oathkeeper-jwks destination jwks.json
@@ -58,7 +55,6 @@ copy_secret() {
     kube apply --server-side --field-manager=tadoku-dev-bootstrap -f -
 }
 
-copy_secret tdk-dev-data tdk-dev-tadoku-api immersion.tadoku-dev-db.credentials.postgresql.acid.zalan.do
 copy_secret tdk-dev-data tdk-dev-tadoku-api tadoku.tadoku-dev-db.credentials.postgresql.acid.zalan.do
 for provider in kratos keto; do
   copy_secret tdk-dev-data "tdk-dev-$provider" "$provider.tadoku-dev-db.credentials.postgresql.acid.zalan.do"

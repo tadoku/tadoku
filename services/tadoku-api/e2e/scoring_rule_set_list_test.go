@@ -35,8 +35,8 @@ func TestImmersionScoringRuleSetListContest(t *testing.T) {
 		{description: []string{"member", "nonowner"}, want: http.StatusForbidden},
 		{description: []string{"unknown", "signing", "key"}, want: http.StatusUnauthorized},
 		{description: []string{"missing"}, want: http.StatusNotFound},
-		{description: []string{"guest", "existing"}, want: http.StatusForbidden},
-		{description: []string{"guest", "missing"}, want: http.StatusNotFound},
+		{description: []string{"guest", "existing"}, want: http.StatusUnauthorized},
+		{description: []string{"guest", "missing"}, want: http.StatusUnauthorized},
 	}
 	for _, test := range tests {
 		name := APITestName("ImmersionScoringRuleSetListContest", test.want, test.description...)

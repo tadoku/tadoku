@@ -10,12 +10,10 @@ spec:
   teamId: tadoku
   numberOfInstances: 1
   users:
-    immersion: []
     tadoku: []
     kratos: []
     keto: []
   databases:
-    immersion: immersion
     tadoku: tadoku
     kratos: kratos
     keto: keto

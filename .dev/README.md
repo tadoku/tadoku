@@ -103,9 +103,11 @@ consistent data across services otherwise using base data.
 **Branch databases are retained**, also after overlay TTL cleanup. No automatic
 SQL-drop operation exists. Deletion requires inspecting the exact database and
 ownership, then separate authorization. Never drop shared `tadoku`, `kratos`,
-or `keto`; retained `immersion` databases also require separate approval.
+or `keto`.
 `make dev-reset` is disabled; any reset needs an explicitly
-approved, scoped runbook, not the historical Tilt reset script.
+approved, scoped runbook, not the historical Tilt reset script. The old
+`immersion` databases and role were retired from the shared development
+cluster under a separate approved runbook.
 
 ## Shared setup and routing
 

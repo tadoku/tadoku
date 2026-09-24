@@ -105,7 +105,7 @@ func TestCheckerClassifiesKetoFailures(t *testing.T) {
 	if checker.IsAdminOrFalse(ctx) {
 		t.Error("provider failure granted administrator read visibility")
 	}
-	if checker.IsAdminOrFalse(WithBanLookupError(ctx, errors.New("ban lookup failed"))) {
+	if checker.IsAdminOrFalse(WithBanState(ctx, BanUnknown(errors.New("ban lookup failed")))) {
 		t.Error("unknown ban status granted administrator read visibility")
 	}
 }
@@ -148,7 +148,7 @@ func TestAuthenticationRequirements(t *testing.T) {
 func TestAuthenticationRequirementsHandleUnknownBan(t *testing.T) {
 	providerErr := errors.New("ban lookup failed")
 	ctx := identity.WithUser(t.Context(), &identity.User{Subject: "user"})
-	ctx = WithBanLookupError(ctx, providerErr)
+	ctx = WithBanState(ctx, BanUnknown(providerErr))
 
 	checker := NewKetoChecker(nil)
 	if err := checker.RequireAuthenticated(ctx); errx.KindOf(err) != errx.Unavailable || !errors.Is(err, providerErr) {

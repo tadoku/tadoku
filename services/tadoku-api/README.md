@@ -724,13 +724,18 @@ visible only to application, startup and E2E packages; generated SQL libraries
 are visible only to their matching feature. `bazel build //services/tadoku-api/...`
 checks those boundaries for the Go packages and tests it builds. `rules_go`
 requires direct imports to be declared in `deps`, and Gazelle's diff check
-keeps those declarations aligned with source imports.
+keeps those declarations aligned with source imports. Gazelle preserves existing
+visibility but creates new Go libraries as public. CI rejects public or
+out-of-service Tadoku API Go library visibility; omitted visibility is
+Bazel-private. Assign a new library its matching scoped visibility after
+running Gazelle.
 
 Bazel visibility is owned by the imported target, so it currently does not
 restrict Tadoku API imports from public `services/common` packages. A normal
-build also does not inspect Go files excluded by the active build configuration
-or require a new package to match a policy. These are gaps to close or accept
-before relying on Bazel alone.
+build also does not inspect Go files excluded by the active build configuration.
+The CI guard prevents a new library from being public, but cannot infer whether
+its chosen scope matches its architectural role. These are gaps to close or
+accept before relying on Bazel alone.
 
 The legacy depolicy check still runs in CI as a temporary backstop. It scans
 every Go file, including tests and inactive build-tag files, but its YAML is

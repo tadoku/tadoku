@@ -104,6 +104,16 @@ jobs:
       - name: Verify Gazelle
         run: bazel run --lockfile_mode=error //:gazelle -- -mode=diff
 
+      - name: Verify Tadoku API Go library visibility
+        run: |
+          violations=$(bazel query --lockfile_mode=error \
+            'attr("visibility", "//visibility:public", kind("go_library", //services/tadoku-api/...)) union (kind("go_library", //services/tadoku-api/...) except attr("visibility", "//services/tadoku-api:|//services/tadoku-api/|//visibility:private", kind("go_library", //services/tadoku-api/...)))')
+          if [[ -n "$violations" ]]; then
+            echo "Tadoku API Go libraries must be private or scoped to Tadoku API (Gazelle generates public libraries):" >&2
+            echo "$violations" >&2
+            exit 1
+          fi
+
       - name: Verify Tadoku API import policies (including test files)
         run: bazel run --lockfile_mode=error //tools/ci/depolicy
 

@@ -11,7 +11,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/tadoku/tadoku/services/common/featureflags"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/featureflags"
 )
 
 // Fixture simulates Flipt's management HTTP boundary and public boolean

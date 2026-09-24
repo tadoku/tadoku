@@ -98,9 +98,9 @@ The following rules decide where each check belongs.
   router must provide an equivalent baseline ban policy.
 - A feature service may inspect authorization facts only to expand behavior
   inside an operation the application has already authorized.
-- Feature services read and change facts about other users through the concrete
-  services in `services/common/authz/roles`. Target facts are never actor
-  authorization: the operation still uses the checker for its own access
+- Feature services read and change facts about other users through the target-role
+  services in `services/tadoku-api/internal/permissions/`. Those facts never
+  authorize the actor: the operation still uses `Checker` for its own access
   decision. Batch facts are read for each request, not cached.
 - Public permission checks use a typed, construction-time allowlist keyed by
   namespace and relation; production supplies an empty list. After
@@ -140,11 +140,11 @@ The following rules decide where each check belongs.
   layer boundary with multiple implementations. Never add an interface, including
   a feature or repository interface, solely to inject mocks. Exercise concrete
   providers through their boundary tests and HTTP E2Es.
-- Provider-backed feature services may consume the shared feature-flag
-  evaluator and an application-owned provider client. Keep provider types and
-  identity adaptation inside the owning feature package.
+- Provider-backed feature services may consume the API-local feature-flag
+  evaluator and an application-owned provider client. The evaluator accepts a
+  verified subject; provider types stay in the infrastructure package.
 - Provider-backed read caches:
-  - reuse the common provider client's cursor support, preserve provider order,
+  - reuse the provider client's cursor support, preserve provider order,
     read every cursor page and reject repeated continuation tokens;
   - make no provider request at construction. The first operation that needs
     the cache loads it with its request context; later operations reuse that

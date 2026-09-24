@@ -5,8 +5,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	commonroles "github.com/tadoku/tadoku/services/common/authz/roles"
-	kratosclient "github.com/tadoku/tadoku/services/common/client/kratos"
+	kratosclient "github.com/tadoku/tadoku/services/tadoku-api/infra/kratos"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
@@ -15,16 +14,16 @@ import (
 type Service struct {
 	permissions       *permissions.Checker
 	users             *kratosclient.Client
-	roles             *commonroles.KetoService
-	roleManager       *commonroles.KetoManager
+	roles             *permissions.KetoService
+	roleManager       *permissions.KetoManager
 	publicPermissions PublicPermissionAllowlist
 }
 
 func NewService(
 	permissions *permissions.Checker,
 	users *kratosclient.Client,
-	roles *commonroles.KetoService,
-	roleManager *commonroles.KetoManager,
+	roles *permissions.KetoService,
+	roleManager *permissions.KetoManager,
 	publicPermissions PublicPermissionAllowlist,
 ) *Service {
 	return &Service{
@@ -87,7 +86,7 @@ func (s *Service) UpdateRole(ctx context.Context, parameters RoleUpdateParameter
 		return ErrUserNotFound
 	}
 
-	claims, err := s.roles.ClaimsForSubject(ctx, parameters.UserID.String())
+	claims, err := s.roles.RolesForSubject(ctx, parameters.UserID.String())
 	if err != nil {
 		return errx.NewUnavailableError("fetch target claims", err)
 	}

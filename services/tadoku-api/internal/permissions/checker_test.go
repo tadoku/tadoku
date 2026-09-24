@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
+	ketoclient "github.com/tadoku/tadoku/services/tadoku-api/infra/keto"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testketo"

@@ -66,7 +66,7 @@ var operationAccess = map[string]accessLevel{
 	"ContentPostVersionList":        accessAdmin,
 
 	"ImmersionContestCreate":                   accessAuthenticated,
-	"ImmersionContestCreatePermissionCheck":    accessPublic,
+	"ImmersionContestCreatePermissionCheck":    accessAuthenticated,
 	"ImmersionContestList":                     accessPublic,
 	"ImmersionContestFindByID":                 accessPublic,
 	"ImmersionContestFindOngoingRegistrations": accessAuthenticated,
@@ -126,6 +126,7 @@ var operationFixtures = map[string]string{
 	"ContentPostVersionList":      "ListPostVersions",
 
 	"ImmersionContestCreate":                   "CreateContest",
+	"ImmersionContestCreatePermissionCheck":    "ContestCreatePermissionCheck",
 	"ImmersionContestFindOngoingRegistrations": "FindOngoingContestRegistrations",
 	"ImmersionContestFindRegistration":         "FindContestRegistration",
 	"ImmersionContestRegistrationUpsert":       "UpsertContestRegistration",

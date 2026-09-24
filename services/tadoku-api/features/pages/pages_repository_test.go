@@ -62,25 +62,28 @@ func TestPagesRepositoryReadsCurrentLiveContent(t *testing.T) {
 		}
 	}
 
+	cutoff := time.Date(2026, 9, 12, 12, 0, 1, 0, time.UTC)
 	for _, test := range []struct {
 		name          string
 		includeDrafts bool
+		cutoff        time.Time
 		limit         int32
 		offset        int64
 		wantIDs       []uuid.UUID
 		wantTotal     int
 	}{
-		{name: "all live rows with stable ties", includeDrafts: true, limit: 10, wantIDs: []uuid.UUID{
+		{name: "all live rows with stable ties", includeDrafts: true, cutoff: cutoff.Add(-time.Second), limit: 10, wantIDs: []uuid.UUID{
 			uuid.MustParse("10000000-0000-4000-8000-000000000002"),
 			uuid.MustParse("10000000-0000-4000-8000-000000000001"),
 		}, wantTotal: 2},
-		{name: "scheduled is not a draft", limit: 10, wantIDs: []uuid.UUID{
+		{name: "published by cutoff", cutoff: cutoff, limit: 10, wantIDs: []uuid.UUID{
 			uuid.MustParse("10000000-0000-4000-8000-000000000001"),
 		}, wantTotal: 1},
-		{name: "empty page preserves total", includeDrafts: true, limit: 10, offset: 100, wantIDs: []uuid.UUID{}, wantTotal: 2},
+		{name: "before cutoff", cutoff: cutoff.Add(-time.Second), limit: 10, wantIDs: []uuid.UUID{}, wantTotal: 0},
+		{name: "empty page preserves total", includeDrafts: true, cutoff: cutoff, limit: 10, offset: 100, wantIDs: []uuid.UUID{}, wantTotal: 2},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			items, total, err := repository.ListPages(t.Context(), "main", test.includeDrafts, test.limit, test.offset)
+			items, total, err := repository.ListPages(t.Context(), "main", test.includeDrafts, test.cutoff, test.limit, test.offset)
 			if err != nil {
 				t.Fatal(err)
 			}

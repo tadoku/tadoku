@@ -20,7 +20,7 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: 'Services',
       items: [
-        'services/content-api',
+        'tadoku-api/index',
         'services/authorization',
         'services/s2s-auth',
       ],

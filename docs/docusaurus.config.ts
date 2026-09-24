@@ -6,7 +6,7 @@ import type * as OpenApiPlugin from 'docusaurus-plugin-openapi-docs';
 const config: Config = {
   title: 'Tadoku',
   tagline: 'Tadoku developer documentation',
-  favicon: 'img/favicon.ico',
+  favicon: 'img/favicon.png',
 
   url: 'https://tadoku.github.io',
   baseUrl: '/tadoku/',

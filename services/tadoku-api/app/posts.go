@@ -17,7 +17,7 @@ func (a *Application) FindPostBySlug(ctx context.Context, namespace, slug string
 		post.UpdatedAt = nil
 		return post, nil
 	}
-	if !errors.Is(err, posts.ErrPostNotFound) && errx.KindOf(err) != errx.InvalidInput {
+	if !errors.Is(err, posts.ErrPostNotFound) {
 		return nil, err
 	}
 
@@ -26,17 +26,10 @@ func (a *Application) FindPostBySlug(ctx context.Context, namespace, slug string
 		return nil, posts.ErrPostNotFound
 	}
 	if err := a.permissions.RequireAdmin(ctx); err != nil {
-		if errx.KindOf(err) == errx.Forbidden {
-			return nil, err
-		}
-		return nil, posts.ErrPostNotFound
+		return nil, err
 	}
 
-	post, err = a.posts.FindPostByID(ctx, namespace, id)
-	if err != nil {
-		return nil, posts.ErrPostNotFound
-	}
-	return post, nil
+	return a.posts.FindPostByID(ctx, namespace, id)
 }
 
 func (a *Application) ListPosts(ctx context.Context, namespace string, includeDrafts bool, pageSize, page int) (*posts.PostList, error) {

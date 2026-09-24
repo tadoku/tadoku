@@ -14,15 +14,6 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
 
-const contestCreationYearlyLimit = 12
-
-func checkContestCreationYearlyLimit(createdThisYear int64) error {
-	if createdThisYear >= contestCreationYearlyLimit {
-		return ErrContestCreationForbidden
-	}
-	return nil
-}
-
 type Service struct {
 	contests *ContestsRepository
 	kratos   *kratosapi.APIClient

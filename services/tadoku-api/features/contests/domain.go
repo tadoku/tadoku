@@ -205,6 +205,15 @@ func (p CreateContestParameters) validate(ownerUserID uuid.UUID, ownerUserDispla
 	return nil
 }
 
+const contestCreationYearlyLimit = 12
+
+func checkContestCreationYearlyLimit(createdThisYear int64) error {
+	if createdThisYear >= contestCreationYearlyLimit {
+		return ErrContestCreationForbidden
+	}
+	return nil
+}
+
 type ConfigurationOptions struct {
 	Languages              []Language
 	Activities             []Activity

@@ -45,7 +45,7 @@ func TestRebuildDoesNotPublishSnapshotAfterInvalidation(t *testing.T) {
 		}
 	})
 
-	service := NewService(nil, client, time.Second)
+	service := NewService(nil, client, time.Second, "")
 	before, err := service.generation(t.Context(), key)
 	if err != nil {
 		t.Fatal(err)
@@ -89,7 +89,7 @@ func TestRebuildDoesNotPublishSnapshotAfterInvalidation(t *testing.T) {
 		t.Errorf("marker = %q, want native:%s", marker, after)
 	}
 
-	racing := NewService(nil, &invalidateBeforeZcard{Client: client, key: key, t: t}, time.Second)
+	racing := NewService(nil, &invalidateBeforeZcard{Client: client, key: key, t: t}, time.Second, "")
 	page, cacheExists, err := racing.fetchPage(t.Context(), key, 0, 25)
 	if err != nil {
 		t.Fatal(err)

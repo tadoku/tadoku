@@ -2,30 +2,29 @@
 
 - [ ] Remove all references to the “native” API; use “Tadoku API” instead. The distinction does not make sense long term.
 - [ ] Design service authentication for queue workers when they need API access.
-- [ ] Remove the v1 OpenAPI runtime/types dependency after the legacy services are retired.
+- [ ] Remove the v1 OpenAPI runtime/types dependency.
 - [ ] After the Tadoku API migration is complete, split all announcement, post, and page routes into separate admin and frontend routes.
 - [ ] Move the announcements timestamp columns to `timestamptz` in a standalone migration.
 - [ ] Add a covering announcements index on (`namespace`, `created_at desc`, `id desc`) where `deleted_at is null`.
 - [ ] Reconsider the announcements primary key as (`namespace`, `id`) so IDs can be scoped to their namespace.
-- [ ] After every endpoint owned by a legacy service has migrated, require operational acceptance and evidence that no active caller uses the legacy service, then delete it together with its parity subtests and Bazel dependencies.
 - [ ] After the Tadoku API migration is complete, make a final documentation pass and delete all references to this migration.
 - [x] Add the job step kind to the journey runner together with the first migrated worker. The outbox journey starts the production `Run` loop, waits for its ready signal and a later poll after an API write, then stops and joins it during cleanup.
 - [ ] Maintain the Keto-backed contest-create permission through a background reconciliation job.
 - [ ] Restructure the Tadoku API documentation for progressive disclosure for agents: a short entry point with focused documents behind it instead of one long README.
 - [ ] Rename the standard test identity from `Reader One` to `User One` across Kratos seeds, tests and HTTP goldens; regenerate affected signed JWT fixtures and update the public JWKS together.
-- [ ] Rename `moderation_audit_log` to an audit-owned table in a standalone migration after the legacy authorization service is retired.
+- [ ] Rename `moderation_audit_log` to an audit-owned table in a standalone migration.
 - [ ] Replace `github.com/google/uuid` with the standard-library UUID API when it is available in the adopted Go toolchain.
 - [ ] Introduce a generic paginated request type and convert every existing paginated operation to use it.
 - [ ] Support two-step audit recording for external actions: persist the start before calling the external system, then record the correlated completion and outcome. External changes cannot share an atomic PostgreSQL transaction with the audit write.
-- [ ] Consolidate the Flipt management clients only after the legacy parity reference is retired; parity comparisons must continue exercising the unchanged legacy production client until then.
+- [ ] Consolidate the Flipt management clients.
 - [ ] Revisit leaderboard HTTP test seeding so each case declares only the data it needs instead of relying on the operation-level fixture.
 - [ ] Remove all helper functions from repositories and move them into shared packages, including the remaining helpers in the contests repository.
 - [ ] Introduce generic conversion helpers for repeated slice and type mappings after common conversion patterns stabilize across migrated features.
 - [ ] Review and standardize the role and identity checking patterns used by application operations.
 - [ ] Configure `wsl_v5` as a required CI check for handwritten Tadoku API Go code, excluding generated files; enable `after-block` and `after-decl` checks and provide a local auto-fix command.
 
-- [ ] Review the legacy log tag array-text decoding contract before replacing it with native array decoding; escaped quotes and backslashes currently affect returned tags.
-- [ ] After legacy immersion retirement, allow administrators to update another user's log contest registrations; validate requested registrations against the log owner's account and update the authorization HTTP cases.
+- [ ] Review the log tag array-text decoding contract before replacing it with native array decoding; escaped quotes and backslashes currently affect returned tags.
+- [ ] Allow administrators to update another user's log contest registrations; validate requested registrations against the log owner's account and update the authorization HTTP cases.
 
 - [ ] Make scoring `ErrRuleSetNotFound` an `errx` NotFound (plain `errors.New` maps to Unknown→500). Guard with a KindOf unit test and a domain-errors lint that not-found sentinels use errx.
 - [ ] Make scoring `NormalizeTags` client-limit failures InvalidInput, never Internal (currently 500). Guard with unit + transport golden expecting 400; ban `Normalize*` returning Internal.
@@ -45,10 +44,10 @@
 - [ ] Fix contests `FindRegistration` language hydration to match list hydrate; delete the app padding loop in `contest_profile`.
 - [ ] Stop loading contest on find-registration when the response omits it; remove app `registration.Contest = nil`.
 - [ ] Centralize the banned Keto relation in `internal/permissions`; cmd/e2e call it; forbid raw banned triples elsewhere.
-- [ ] After legacy retirement: `CheckContestCreatePermission` guest→401 and too-young→403 (replace 500 parity goldens); flip access level.
+- [ ] Change `CheckContestCreatePermission` guest to 401 and too-young to 403; update HTTP goldens and access level.
 - [ ] Align contest scoring rule-set list guest auth with platform (`RequireAuthenticated` + owner/admin); guest 401 golden.
 - [ ] Standardize caller UUID / self-or-admin helpers in app; ban ad-hoc Subject UUID parse outside allowlisted guest paths.
-- [ ] Keep the Flipt management client flag-agnostic; product flag allowlist only in featureflags (no product flag names in infra). Distinct from consolidating management clients after legacy retirement.
+- [ ] Keep the Flipt management client flag-agnostic; product flag allowlist only in featureflags (no product flag names in infra).
 - [ ] Decide whether pages/posts should share content-revision primitives or stay intentional twins; align list publication policy (pages lack the `published_at` cutoff posts apply when excluding drafts).
 - [x] Bind the ban-middleware path carve-out to the mux/generated `AuthzRoleGet` pattern, not the magic `"/authz/current-user/role"` string.
 - [ ] Replace `Application.New` positional `*Service` args with a `Dependencies` struct (open log/scoring PRs already churn this surface).

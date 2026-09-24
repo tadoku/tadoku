@@ -1,4 +1,4 @@
-# Canonical Tadoku HTTP contract. Legacy specs are frozen build/compatibility inputs.
+# Canonical Tadoku HTTP contract.
 openapi: 3.0.3
 info:
   title: Tadoku API
@@ -48,7 +48,6 @@ x-tadoku-sources:
   Immersion:
     domain: immersion
     exposure: public
-    path: services/immersion-api/http/rest/openapi/api.yaml
     info:
       title: immersion-api
       license:

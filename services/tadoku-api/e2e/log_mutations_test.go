@@ -36,14 +36,11 @@ func TestImmersionLogCreate(t *testing.T) {
 		name := APITestName("ImmersionLogCreate", test.want, test.description...)
 		t.Run(name, func(t *testing.T) {
 			native := http.Handler(api.handler)
-			legacy := legacyImmersion.handler
 			if test.scoringEngineEnabled {
 				native = scoringEnabledHandler
-				legacy = legacyImmersion.scoringEnabledHandler
 			}
 			runCase(t, api, name, test.want,
 				implementation{name: "tadoku-api", handler: native},
-				implementation{name: "immersion-api", handler: legacy},
 			)
 		})
 	}
@@ -77,10 +74,8 @@ func TestImmersionLogUpdate(t *testing.T) {
 		name := APITestName("ImmersionLogUpdate", test.want, test.description...)
 		t.Run(name, func(t *testing.T) {
 			native := http.Handler(api.handler)
-			legacy := legacyImmersion.handler
 			if test.scoringEngineEnabled {
 				native = scoringEnabledHandler
-				legacy = legacyImmersion.scoringEnabledHandler
 			}
 			at := test.at
 			if at.IsZero() {
@@ -88,7 +83,6 @@ func TestImmersionLogUpdate(t *testing.T) {
 			}
 			runCaseAt(t, api, name, test.want, at,
 				implementation{name: "tadoku-api", handler: native},
-				implementation{name: "immersion-api", handler: legacy},
 			)
 		})
 	}

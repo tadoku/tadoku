@@ -25,19 +25,15 @@ var fixtureInstant = time.Date(2026, 9, 12, 12, 0, 0, 0, time.UTC)
 var updateGoldens = flag.Bool("update-goldens", false, "rewrite golden.http files from actual responses; review the diff before committing")
 
 const goldenSourceRootEnv = "TADOKU_GOLDEN_SOURCE_ROOT"
-const goldenRecorder = "tadoku-api"
 
 func APITestName(operation string, status int, description ...string) string {
 	return fmt.Sprintf("%s/%d_%s", operation, status, strings.Join(description, "_"))
 }
 
 type implementation struct {
-	name    string
-	handler http.Handler
-	skip    string
-
-	resetKratos bool
-	uuidSeed    *int64
+	name     string
+	handler  http.Handler
+	uuidSeed *int64
 }
 
 func (i implementation) uuidReader() io.Reader {
@@ -50,8 +46,7 @@ func (i implementation) uuidReader() io.Reader {
 type repeatingByteReader byte
 
 func (r repeatingByteReader) Read(buffer []byte) (int, error) {
-	// Native observability and legacy handlers consume different UUID counts.
-	// Repeating entropy keeps business IDs equal without coupling draw order.
+	// Repeating entropy keeps business IDs stable when observability adds UUID draws.
 	for i := range buffer {
 		buffer[i] = byte(r)
 	}
@@ -65,33 +60,24 @@ func atFixtureInstant(fn func()) {
 	timex.TheWorld(fixtureInstant, fn)
 }
 
-func runCase(t *testing.T, s *suite, name string, want int, implementations ...implementation) {
-	runCaseAt(t, s, name, want, fixtureInstant, implementations...)
+func runCase(t *testing.T, s *suite, name string, want int, impl implementation) {
+	runCaseAt(t, s, name, want, fixtureInstant, impl)
 }
 
-func runCaseAt(t *testing.T, s *suite, name string, want int, businessTime time.Time, implementations ...implementation) {
+func runCaseAt(t *testing.T, s *suite, name string, want int, businessTime time.Time, impl implementation) {
 	t.Helper()
 	dir := filepath.Join("testdata", name)
-	for _, impl := range implementations {
-		t.Run(impl.name, func(t *testing.T) {
-			if impl.skip != "" {
-				t.Skip(impl.skip)
-			}
-			if impl.resetKratos {
-				resetKratosAfter(t, s)
-			}
-			s.reset(t, dir)
-			record := *updateGoldens && impl.name == goldenRecorder
-			previous := jwt.TimeFunc
-			jwt.TimeFunc = func() time.Time { return fixtureInstant }
-			defer func() { jwt.TimeFunc = previous }()
-			timex.TheWorld(businessTime, func() {
-				uuid.SetRand(impl.uuidReader())
-				defer uuid.SetRand(nil)
-				checkHTTPGolden(t, impl.handler, dir, want, record)
-			})
+	t.Run(impl.name, func(t *testing.T) {
+		s.reset(t, dir)
+		previous := jwt.TimeFunc
+		jwt.TimeFunc = func() time.Time { return fixtureInstant }
+		defer func() { jwt.TimeFunc = previous }()
+		timex.TheWorld(businessTime, func() {
+			uuid.SetRand(impl.uuidReader())
+			defer uuid.SetRand(nil)
+			checkHTTPGolden(t, impl.handler, dir, want, *updateGoldens)
 		})
-	}
+	})
 }
 
 // checkHTTPGolden sends the checked-in HTTP request through the handler and
@@ -362,7 +348,7 @@ func TestReconcileHTTPGolden(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		updated, err := reconcileHTTPGolden(path, "legacy", http.StatusOK, http.StatusOK, false)
+		updated, err := reconcileHTTPGolden(path, "mismatch", http.StatusOK, http.StatusOK, false)
 		if err == nil {
 			t.Fatal("mismatched golden comparison succeeded")
 		}

@@ -9,7 +9,6 @@ func TestUpsertContestRegistration(t *testing.T) {
 	tests := []struct {
 		description []string
 		want        int
-		skipParity  string
 	}{
 		{description: []string{"creates", "for", "private", "ended", "contest"}, want: http.StatusOK},
 		{description: []string{"updates", "existing", "registration"}, want: http.StatusOK},
@@ -17,12 +16,10 @@ func TestUpsertContestRegistration(t *testing.T) {
 		{
 			description: []string{"missing", "body"},
 			want:        http.StatusBadRequest,
-			skipParity:  "the generated decoder rejects an empty body before the legacy application validates it",
 		},
 		{
 			description: []string{"missing", "contest", "with", "missing", "body"},
 			want:        http.StatusBadRequest,
-			skipParity:  "the generated decoder rejects an empty body before the legacy application returns not found",
 		},
 		{description: []string{"no", "languages"}, want: http.StatusBadRequest},
 		{description: []string{"too", "many", "languages"}, want: http.StatusBadRequest},
@@ -44,11 +41,6 @@ func TestUpsertContestRegistration(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			runCase(t, api, name, test.want,
 				implementation{name: "tadoku-api", handler: api.handler},
-				implementation{
-					name:    "immersion-api",
-					handler: legacyImmersion.handler,
-					skip:    test.skipParity,
-				},
 			)
 		})
 	}

@@ -150,26 +150,21 @@ The Bazel binary has no Go module build-info header, so read its pin from the to
 module's `go.mod` rather than the generated header. Generated routes register
 through boundary-specific registrars: business routes use JWT authentication and
 ban checks, while callback routes use callback credentials. Both retain shared
-deadlines and observability. Run `./scripts/generate-sqlc.sh` for SQL output. Legacy
-service OpenAPI output remains frozen on v1.12.4 until those services are retired.
+deadlines and observability. Run `./scripts/generate-sqlc.sh` for SQL output.
 The native query uses sqlc v1.31.1/pgx-v5.
 
 Documentation builds filtered public views from the canonical contract. They
 retain the four existing documentation sections/URLs, not four independent API
-contract sources. Retained legacy specs remain frozen build and contract-comparison
-inputs. The contract tests compare the canonical operations and their
-component/security shapes.
+contract sources. The contract tests verify native operation coverage and published view counts.
 Manually registered health and metrics endpoints are separately inventoried in
 the contract's `x-tadoku-operational-surfaces` metadata, not rendered as product API.
 
-Every migrated operation must preserve its existing API inputs, outputs and
-business behavior, including response status, headers, field shapes, nullability,
-empty results, filtering, ordering and limits where applicable. Prove parity by
-running the same request/response golden cases against the native and corresponding
-retained legacy handlers with real authentication and authorization. Keep exhaustive authentication and infrastructure
-failure matrices at their own boundaries instead of duplicating them per endpoint.
-Parity migrations must leave the compared legacy production implementation unchanged;
-native provider clients and adapters belong under Tadoku API ownership.
+Every operation must preserve the documented API inputs, outputs and business
+behavior, including response status, headers, field shapes, nullability,
+empty results, filtering, ordering and limits. Verify the production router with
+HTTP golden cases using real authentication, authorization and persistence.
+Keep exhaustive authentication and infrastructure failure matrices at their
+own boundaries instead of duplicating them per endpoint.
 
 ## Runtime configuration
 
@@ -184,9 +179,15 @@ Startup requires:
   Unix-socket configurations are rejected.
 - `API_VALKEY_TIMEOUT` (default 1s), the positive bound for each connection and
   handshake attempt and the established-connection keepalive/I/O interval.
-- `API_LEADERBOARD_OUTBOX_ENABLED` (default `false`). Enable only after every
-  legacy Immersion API outbox worker pod and job has stopped. Both workers must
-  never consume the shared queue or update leaderboard cache keys together.
+- `API_LEADERBOARD_OUTBOX_ENABLED` (default `false`). For a database and cache
+  keyspace previously owned by the legacy worker, enable only after every old
+  worker pod and job has stopped. Legacy and native workers must never consume
+  the same queue or update the same leaderboard cache keys together.
+- `API_LEADERBOARD_CACHE_PREFIX` (default empty). Prefixes every leaderboard
+  cache key and scopes startup marker scans to that namespace. A nonempty
+  prefix requires the native outbox worker and must be unique for each database
+  sharing Valkey. Only lowercase letters, digits, hyphens and colons are
+  accepted; the prefix must end in a colon. Empty preserves existing cache keys.
 - `API_JWKS`, the gateway's public signing-key URL.
 - `API_MAX_TOKEN_AGE` (default 24h), the maximum accepted age since `iat`.
 - `API_JWT_ISSUER`, an optional exact issuer match. Empty leaves issuer unchecked
@@ -244,8 +245,9 @@ also retain the upstream client's native cancellation behavior. See
 [`infra/valkey`](infra/valkey/) for the direct command pattern.
 
 When enabled, the native leaderboard worker first scans existing leaderboard
-cache markers with bounded Valkey `SCAN` calls and invalidates each recognized
-global, yearly and contest key through a generation fence. Leaderboard reads
+cache markers in its configured prefix with bounded Valkey `SCAN` calls and
+invalidates each recognized global, yearly and contest key through a generation
+fence. Leaderboard reads
 use PostgreSQL until reconciliation and the initial outbox drain succeed. The
 worker then claims pending rows with `for update skip locked`, invalidates their
 affected cache keys, and marks rows processed in the same PostgreSQL transaction
@@ -290,35 +292,25 @@ other business route, including for administrators. Keto ban read errors are log
 the shared gate to continue, preserving the existing availability policy for
 explicitly opted-in read operations. The failed lookup is kept in the request
 context so authenticated and administrator checks return unavailable without
-another ban query. Unlike legacy role enrichment, this narrow check has no
-unrelated administrator lookup whose failure could discard a successful ban
+another ban query. This narrow check has no unrelated administrator lookup
+whose failure could discard a successful ban
 result. Request deadlines bound the provider call.
 
-Missing or malformed bearer headers return the legacy 400 JSON error; extracted
-but invalid JWTs return its 401 JSON error. Anonymous gateway traffic supplies a
+Missing or malformed bearer headers return a 400 JSON error; extracted
+but invalid JWTs return a 401 JSON error. Anonymous gateway traffic supplies a
 signed user token with subject `guest`, so it is distinct from a direct request
 without credentials. Signed tokens missing `iat` or `exp`, exceeding the configured
-maximum age, or failing the configured issuer check return 401. A missing `iat`
-avoids the legacy identity middleware's panic/500. Service tokens are unsupported
-and return 401; they are never converted into human identities. These cases
-intentionally differ from legacy behavior.
+maximum age, or failing the configured issuer check return 401. Service tokens
+are unsupported and return 401; they are never converted into human identities.
 
-**Production activation is not part of this change.** Provision a dedicated
-runtime credential with only the grants required by the application, not
-a migration/admin DSN. Confirm provider TLS/pooling settings and the coexistence
-connection budget: two native replicas default to eight connections, in addition
-to the still-running legacy pools. Update production secrets/manifests and complete
-the master rollout gate under separate release authorization before deployment.
+Production runtime credentials should have only the grants required by the
+application, separate from migration/admin credentials. Confirm provider TLS,
+pooling and connection limits when changing production configuration.
 
-Shared runtime behavior must use the same configuration in the native reader and
-its legacy writer for the entire coexistence period. Tadoku API requires an
-explicit `API_SCORING_ENGINE_ENABLED` boolean at startup, matching immersion-api's
-setting; it does not derive this value from Flipt. The checked-in development
-manifests set both to `false`. Before activating native routes in another
-environment, configure the native value from the writer's effective setting and
-verify both deployment manifests together. Changes to this setting require
-coordinated reader/writer configuration and restart; do not independently toggle
-one service. Missing or malformed native configuration fails startup.
+Tadoku API requires an explicit `API_SCORING_ENGINE_ENABLED` boolean at startup;
+it does not derive this value from Flipt. The checked-in development manifests
+set it to `false`. Configure this value deliberately for each environment;
+missing or malformed configuration fails startup.
 
 ### Raw Keto relationship primitive
 
@@ -393,8 +385,8 @@ status and headers remain available even with an error. Use `errors.As` to inspe
 `errors.Is` for `context.Canceled` or `context.DeadlineExceeded`.
 
 The raw client returns the SDK's models, response metadata and errors unchanged;
-it does not apply legacy domain mapping, trait policy, account-age rules or the
-legacy helpers' not-found and idempotent-delete translations. Consuming features
+it does not apply domain mapping, trait policy, account-age rules or
+not-found and idempotent-delete translations. Consuming features
 own those decisions and any cache lifecycle. Use the pinned SDK's request builders
 and pagination options directly. The total client timeout and any earlier caller
 deadline bound requests; caller cancellation also interrupts response-body reads.
@@ -447,10 +439,9 @@ bazel test //services/tadoku-api/... --test_output=errors
 ```
 
 `TestMain` creates one disposable database, applies migrations and constructs the
-native production HTTP router and the legacy handlers required by the E2E suite
-once, using real JWT verification, ban checks and Keto-backed permissions. There
-is no second bypass router or injected administrator identity. Handlers and the
-fallback sentinel execute in process, without HTTP listeners.
+production HTTP router once, using real JWT verification, ban checks and
+Keto-backed permissions. There is no second bypass router or injected
+administrator identity. Handlers execute in process, without HTTP listeners.
 The suite also retains the raw Kratos SDK through `api.kratos.Client()` for future
 explicit dependency injection. Construction adds no business consumer or startup
 identity lookup to the running application.
@@ -459,15 +450,14 @@ boundaries. Keep shared dependency-failure and route-ownership checks at their o
 boundaries instead of repeating them for every operation.
 
 New API request bodies use the generated JSON decoder. Do not add XML/form adapters
-or non-JSON request fixtures to reproduce legacy binder behavior.
+or non-JSON request fixtures to work around generated request decoding.
 
-HTTP scenarios run sequentially and call `reset` before each implementation of each
+HTTP scenarios run sequentially and call `reset` before each independent
 scenario, not between dependent requests. **Kratos is seeded once in `TestMain` and
 excluded from that ordinary reset.** Unmarked tests must leave its state unchanged.
-For a case that may mutate Kratos, set `resetKratos: true` on each native/legacy
-`implementation`. For a journey or direct test, call `resetKratosAfter(t, api)` on
-the enclosing test before any mutation. The marker registers `t.Cleanup` to restore
-the full seed after the implementation or whole journey, even after `t.Fatal` or
+For a test that may mutate Kratos, call `resetKratosAfter(t, api)` on
+the enclosing test before any mutation. The helper registers `t.Cleanup` to restore
+the full seed after the test or whole journey, even after `t.Fatal` or
 cancellation. It uses a fresh bounded context because `t.Context()` is cancelled
 before cleanup. Never mark individual journey steps.
 
@@ -544,42 +534,26 @@ TADOKU_GOLDEN_SOURCE_ROOT="$PWD/services/tadoku-api/e2e/testdata" \
 ```
 
 The explicit source root makes the command write checked-in fixtures instead of
-runfiles copies. Only the native Tadoku API response records each existing file;
-the legacy implementation then compares against it and still fails on divergence.
+runfiles copies. The Tadoku API response records each existing file.
 The update path never creates a missing golden or records a response with an
 unexpected status, and it exits before dependency startup when `CI` is set. Review
 every rewritten path and the complete Git diff, then explain the intentional
 contract change in the PR body. Lifecycle tests stay focused on startup/shutdown,
 not a growing list of endpoint assertions.
 
-### Legacy parity
+### HTTP end-to-end goldens
 
-For every operation migrated from a retained legacy service, run each case against
-the native API and its corresponding legacy API in separately named subtests. Both consume the same
-optional `setup.sql` and `relationships.json` plus required `request.http` and
-`golden.http`; each must independently match the
-full response. Use production route registration, handlers, domain operations,
-repositories and generated queries, mounting the legacy routes at the matching
-API prefix. Initialize only the dependencies the tested operations need. Confine
-legacy assembly to test targets; do not add legacy service or framework dependencies
-to the native runtime.
-
-Time-dependent cases give both implementations the same controlled time through
-their ordinary clock dependencies. If legacy behavior reads the database clock,
-introduce an explicit application-clock input rather than rewriting its SQL in a
-test connector. Execute the production queries and row mapping unchanged against
-real PostgreSQL; never shift or ignore fixture timestamps or response fields to
-make a comparison pass. JWT verification, identity propagation, ban checks and endpoint
-permissions run in both implementations. Gateway token issuance/rewriting and
-unrelated infrastructure remain outside these in-process comparisons.
+For every operation, each case uses optional `setup.sql` and
+`relationships.json` plus required `request.http` and `golden.http`. The
+production router must match the complete response using real PostgreSQL,
+JWT verification, ban checks and Keto permissions. Business time is controlled
+through the normal clock dependency; tests never rewrite SQL or response fields.
+Gateway token issuance and unrelated infrastructure remain outside these
+in-process checks.
 
 ```sh
 bazel test //services/tadoku-api/e2e:e2e_test --test_output=errors
 ```
-
-The existing CI E2E and race targets include these comparisons automatically.
-Add future migrated operations explicitly; do not add a general service launcher
-or duplicate per-implementation fixtures.
 
 Pool-failure, cancellation and routing checks remain separate Go tests;
 they exercise dependency behavior rather than SQL-defined response cases.
@@ -590,9 +564,7 @@ guest tokens, as the gateway does. An absent relationship file grants no roles.
 No endpoint test bypasses authentication, injects an administrator claim, or uses
 an always-allow permission checker. Focused authentication
 scenarios register `GET /test/authentication` through the same production `Router`
-with a test-only success handler. The comparison handler uses legacy `VerifyJWT` and
-`Identity`, without authorization or business endpoints. Both consume the same signed
-HTTP requests and goldens. Test-only identity headers prove downstream context
+with a test-only success handler. The authentication cases consume signed HTTP requests and goldens. Test-only identity headers prove downstream context
 propagation. The transport router test proves all registered application routes
 inherit the shared gates. No test endpoint is added to production.
 
@@ -600,11 +572,9 @@ The suite serves a synthetic checked-in public JWKS locally; private keys and li
 identity providers are not needed. The HTTP runner temporarily fixes
 `jwt/v4.TimeFunc` at the signed fixtures' verification instant and restores it on
 return. Business-clock tests may advance `timex` independently of token expiry. These
-scenarios and their parents must not run in parallel. Intentional compatibility
-differences use `skipParity` in the same table and run only against Tadoku API.
-Ban-policy scenarios register `GET /test/banned` on the same production router and
-compare it with legacy `VerifyJWT`, `Identity`,
-`RolesFromKeto` and `RejectBannedUsers` using the same real Keto fixture. Provider
+scenarios and their parents must not run in parallel.
+Ban-policy scenarios register `GET /test/banned` on the same production router
+using the same real Keto fixture. Provider
 fail-open behavior and deadlines are tested at the narrow middleware boundary;
 authentication matrices are not repeated for every operation.
 
@@ -673,8 +643,7 @@ its first step comes from the API itself: write and read paths must agree
 without a handwritten seed between them, business time can move between steps,
 and one user's writes can be observed by another. User journeys exist to keep
 the functionality users expect working, so cover every important user journey
-in the application. They run only against Tadoku API; parity stays per
-operation in the golden-case tables.
+in the application. They run against Tadoku API and keep dependent steps in one scenario.
 
 All user journeys live in `e2e/user_journeys_test.go`, one explicit Go table
 per journey passed to `runJourney`, with fixtures under
@@ -729,11 +698,10 @@ the golden-case tables and covers `verify.json` too. It never creates a missing
 file, so add empty placeholders before recording a new user journey and review the
 complete diff.
 
-Asynchronous work will be covered by running a worker's single synchronous pass
-as a journey step at that step's business instant; tests never start polling
-loops. Migrated workers must expose that single pass as a method returning an
-error and let production `Run` loop over it. The job step kind lands with the
-first migrated worker.
+The leaderboard journey starts the worker's real polling loop as a job step,
+waits for startup reconciliation and an event written after startup, then
+cancels and joins the worker during cleanup. Other job steps can run a worker's
+synchronous pass when that is the behavior under test.
 
 ### Import policies
 

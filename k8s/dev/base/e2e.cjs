@@ -31,6 +31,18 @@ try {
   fs.writeFileSync(path.join(evidence, 'rendered.yaml'), rendered)
   report.renderedSHA256 = require('node:crypto').createHash('sha256').update(rendered).digest('hex')
   const docs = Y.parseAllDocuments(rendered).map(d => d.toJSON())
+  const api = docs.find(d => d.kind === 'Deployment' && d.metadata.namespace === 'tdk-dev-tadoku-api' && d.metadata.name === 'tadoku-api')
+  if (!api) throw new Error('Missing base Tadoku API Deployment')
+  if (docs.some(d => d.kind === 'Deployment' && d.metadata.name === 'immersion-api')) throw new Error('Legacy Immersion Deployment remains in dev base')
+  const baseWorker = api.spec.template.spec.containers[0].env.find(e => e.name === 'API_LEADERBOARD_OUTBOX_ENABLED')?.value
+  const branch = Y.parse(fs.readFileSync(path.join(root, '.dev/tadoku-api.yaml'), 'utf8'))
+  const branchEnv = branch.spec.containers[0].env
+  const branchWorker = branchEnv.find(e => e.name === 'API_LEADERBOARD_OUTBOX_ENABLED')?.value
+  const branchPrefix = branchEnv.find(e => e.name === 'API_LEADERBOARD_CACHE_PREFIX')?.value
+  if (baseWorker !== 'true' || branchWorker !== 'true' || branchPrefix !== 'dev:${DEV_ROUTE}:') {
+    throw new Error('Base and branch leaderboard worker ownership is not configured')
+  }
+  report.leaderboardWorkers = { base: baseWorker, branch: branchWorker, branchPrefix }
   const jobs = docs.filter(d => d.kind === 'Job')
   const frontends = docs.filter(d => d.kind === 'Deployment' && d.metadata.name.startsWith('frontend-'))
   const roles = { 'tadoku-api-migrate': 'immersion', 'kratos-migrate': 'kratos', 'keto-migrate': 'keto' }

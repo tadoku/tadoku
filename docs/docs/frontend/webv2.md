@@ -11,9 +11,7 @@ This is the main frontend of the Tadoku website. It contains all logging & conte
 
 - A [Next.js](https://nextjs.org/) app written using TypeScript
 - Data is fetched through [React Query](https://tanstack.com/query/latest/docs/framework/react/overview) and response is validated with [Zod](https://zod.dev/)
-- Consumes the following APIs:
-  - immersion-api: the main api for logging and contest functionality (specs: `services/immersion-api/http/rest/openapi/api.yaml`)
-  - Tadoku API's `/content` namespace for fetching blog posts and pages (spec: `services/tadoku-api/spec/openapi.yaml`)
+- Consumes Tadoku API for logging, contests and content (spec: `services/tadoku-api/spec/openapi.yaml`)
 - The app uses Tailwind CSS for styling
 - Uses the Tadoku component library "ui" from within the workspace
   - Refer to `frontend/apps/styleguide` for a reference on how to use this component library

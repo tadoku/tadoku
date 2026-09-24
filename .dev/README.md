@@ -74,7 +74,14 @@ A short-lived dependency Job creates the database idempotently; only that Job
 references the existing administrator Secret. API/migration/seed use the existing
 `immersion` role. Credentials remain Secret references. This is cooperative
 development isolation, not a hostile-tenant boundary: the role, Kratos, Keto,
-Valkey and unchanged legacy APIs remain shared.
+and Valkey remain shared.
+
+Each branch API runs its own leaderboard outbox worker against its branch
+database. Its `dev:${DEV_ROUTE}:` cache prefix keeps every leaderboard key and
+startup scan separate from the base and other branches on shared Valkey. The
+base API uses unprefixed keys. Keep this prefix unique when changing overlay
+routing; disabling a branch worker while keeping cache reads active leaves its
+leaderboards stale and its outbox pending.
 
 ```sh
 dev task --owner alice migrate

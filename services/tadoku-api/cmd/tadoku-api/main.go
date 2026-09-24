@@ -83,6 +83,7 @@ type config struct {
 	ValkeyURL                string                `validate:"required" envconfig:"valkey_url"`
 	ValkeyTimeout            time.Duration         `validate:"gt=0" envconfig:"valkey_timeout" default:"1s"`
 	LeaderboardOutboxEnabled bool                  `envconfig:"leaderboard_outbox_enabled" default:"false"`
+	LeaderboardCachePrefix   string                `envconfig:"leaderboard_cache_prefix"`
 
 	DialTimeout           time.Duration `validate:"gt=0" envconfig:"dial_timeout" default:"3s"`
 	MaxTokenAge           time.Duration `validate:"gt=0" envconfig:"max_token_age" default:"24h"`
@@ -100,6 +101,16 @@ func loadConfig() (config, error) {
 
 	if err := validator.New().Struct(cfg); err != nil {
 		return config{}, fmt.Errorf("validate config: %w", err)
+	}
+	if cfg.LeaderboardCachePrefix != "" {
+		if !strings.HasSuffix(cfg.LeaderboardCachePrefix, ":") || strings.IndexFunc(cfg.LeaderboardCachePrefix, func(r rune) bool {
+			return !((r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '-' || r == ':')
+		}) >= 0 {
+			return config{}, fmt.Errorf("validate config: LeaderboardCachePrefix must contain only lowercase letters, digits, hyphens and colons, and end in a colon")
+		}
+		if !cfg.LeaderboardOutboxEnabled {
+			return config{}, fmt.Errorf("validate config: LeaderboardCachePrefix requires LeaderboardOutboxEnabled")
+		}
 	}
 	if cfg.FliptEnabled {
 		if strings.TrimSpace(cfg.FliptEnvironment) == "" {
@@ -408,7 +419,7 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	announcementsService := announcements.NewService(announcementsRepository)
 	contestsService := contests.NewService(contestsRepository, kratos)
 	languagesService := languages.NewService(languagesRepository)
-	leaderboardService := leaderboard.NewService(leaderboardRepository, valkeyClient, cfg.ValkeyTimeout)
+	leaderboardService := leaderboard.NewService(leaderboardRepository, valkeyClient, cfg.ValkeyTimeout, cfg.LeaderboardCachePrefix)
 	logsService := logs.NewService(logsRepository, cfg.ScoringEngineEnabled)
 	pagesService := pages.NewService(pagesRepository)
 	postsService := posts.NewService(postsRepository)

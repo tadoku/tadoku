@@ -12,7 +12,6 @@ func TestImmersionFetchLeaderboardGlobal(t *testing.T) {
 		description []string
 		want        int
 		cache       string
-		skipParity  string
 	}{
 		{description: []string{"cache", "miss"}, want: http.StatusOK, cache: "miss"},
 		{description: []string{"cache", "hit"}, want: http.StatusOK, cache: "hit"},
@@ -25,7 +24,7 @@ func TestImmersionFetchLeaderboardGlobal(t *testing.T) {
 	}
 	for _, test := range tests {
 		name := APITestName("ImmersionFetchLeaderboardGlobal", test.want, test.description...)
-		runLeaderboardCase(t, name, test.want, test.cache, "leaderboard:global", test.skipParity)
+		runLeaderboardCase(t, name, test.want, test.cache, "leaderboard:global")
 	}
 }
 
@@ -34,7 +33,6 @@ func TestImmersionFetchLeaderboardForYear(t *testing.T) {
 		description []string
 		want        int
 		cache       string
-		skipParity  string
 	}{
 		{description: []string{"zero", "score", "cache", "miss"}, want: http.StatusOK, cache: "miss"},
 		{description: []string{"cache", "hit"}, want: http.StatusOK, cache: "hit"},
@@ -50,7 +48,7 @@ func TestImmersionFetchLeaderboardForYear(t *testing.T) {
 		if test.description[0] == "empty" && test.description[1] == "cache" {
 			cacheKey = "leaderboard:yearly:2024"
 		}
-		runLeaderboardCase(t, name, test.want, test.cache, cacheKey, test.skipParity)
+		runLeaderboardCase(t, name, test.want, test.cache, cacheKey)
 	}
 }
 
@@ -59,7 +57,6 @@ func TestImmersionContestFetchLeaderboard(t *testing.T) {
 		description []string
 		want        int
 		cache       string
-		skipParity  string
 	}{
 		{description: []string{"cache", "miss"}, want: http.StatusOK, cache: "miss"},
 		{description: []string{"cache", "hit"}, want: http.StatusOK, cache: "hit"},
@@ -69,7 +66,7 @@ func TestImmersionContestFetchLeaderboard(t *testing.T) {
 		{description: []string{"cache", "unavailable"}, want: http.StatusOK, cache: "unavailable"},
 		{description: []string{"missing", "organizer"}, want: http.StatusNotFound},
 		{description: []string{"missing", "organizer", "filtered"}, want: http.StatusNotFound, cache: "hit"},
-		{description: []string{"invalid", "id"}, want: http.StatusBadRequest, skipParity: "native responses omit parser details and reflected parameter input"},
+		{description: []string{"invalid", "id"}, want: http.StatusBadRequest},
 	}
 	for _, test := range tests {
 		name := APITestName("ImmersionContestFetchLeaderboard", test.want, test.description...)
@@ -77,38 +74,27 @@ func TestImmersionContestFetchLeaderboard(t *testing.T) {
 		if test.description[0] == "missing" {
 			cacheKey = "leaderboard:contest:f2222222-2222-4222-8222-222222222222"
 		}
-		runLeaderboardCase(t, name, test.want, test.cache, cacheKey, test.skipParity)
+		runLeaderboardCase(t, name, test.want, test.cache, cacheKey)
 	}
 }
 
-func runLeaderboardCase(t *testing.T, name string, want int, cache, cacheKey, skipParity string) {
+func runLeaderboardCase(t *testing.T, name string, want int, cache, cacheKey string) {
 	t.Helper()
-	implementations := []implementation{
-		{name: "tadoku-api", handler: api.handler},
-		{name: "immersion-api", handler: legacyImmersion.handler, skip: skipParity},
-	}
+	handler := http.Handler(api.handler)
 	if cache == "unavailable" {
-		implementations[0].handler = unavailableLeaderboardNative
-		implementations[1].handler = unavailableLeaderboardLegacy.handler
+		handler = unavailableLeaderboardNative
 	}
-	for _, impl := range implementations {
-		t.Run(name+"/"+impl.name, func(t *testing.T) {
-			if impl.skip != "" {
-				t.Skip(impl.skip)
-			}
-			dir := "testdata/" + name
-			api.reset(t, dir)
-			if cache == "hit" || cache == "hit_tie" || cache == "hit_many" {
-				seedLeaderboardCache(t, cacheKey, cache)
-			}
-			record := *updateGoldens && impl.name == goldenRecorder
-			atFixtureInstant(func() { checkHTTPGolden(t, impl.handler, dir, want, record) })
-			if cache != "miss" {
-				return
-			}
+	t.Run(name+"/tadoku-api", func(t *testing.T) {
+		dir := "testdata/" + name
+		api.reset(t, dir)
+		if cache == "hit" || cache == "hit_tie" || cache == "hit_many" {
+			seedLeaderboardCache(t, cacheKey, cache)
+		}
+		atFixtureInstant(func() { checkHTTPGolden(t, handler, dir, want, *updateGoldens) })
+		if cache == "miss" {
 			verifyRebuiltLeaderboardCache(t, cacheKey)
-		})
-	}
+		}
+	})
 }
 
 func seedLeaderboardCache(t *testing.T, key, cache string) {

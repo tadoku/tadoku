@@ -32,7 +32,7 @@ func TestAuthTransportCancelsTokenExchangeWithRequest(t *testing.T) {
 		clock:         commondomain.NewMockClock(time.Time{}),
 		tokenCache:    make(map[string]*cachedToken),
 	}
-	transport := NewAuthTransport(client, "flipt-evaluation/immersion-api", http.DefaultTransport)
+	transport := NewAuthTransport(client, "flipt-evaluation/tadoku-api", http.DefaultTransport)
 	ctx, cancel := context.WithCancel(context.Background())
 	request := httptest.NewRequest(http.MethodGet, "http://flipt.test/snapshot", nil).WithContext(ctx)
 
@@ -71,14 +71,14 @@ func TestClientUsesInjectedClockForTokenCacheExpiry(t *testing.T) {
 		tokenCache:    make(map[string]*cachedToken),
 	}
 
-	_, err := client.GetTokenContext(context.Background(), "flipt-evaluation/immersion-api")
+	_, err := client.GetTokenContext(context.Background(), "flipt-evaluation/tadoku-api")
 	require.NoError(t, err)
-	_, err = client.GetTokenContext(context.Background(), "flipt-evaluation/immersion-api")
+	_, err = client.GetTokenContext(context.Background(), "flipt-evaluation/tadoku-api")
 	require.NoError(t, err)
 	assert.EqualValues(t, 1, exchanges.Load())
 
 	clock.SetTime(clock.Now().Add(301 * time.Second))
-	_, err = client.GetTokenContext(context.Background(), "flipt-evaluation/immersion-api")
+	_, err = client.GetTokenContext(context.Background(), "flipt-evaluation/tadoku-api")
 	require.NoError(t, err)
 	assert.EqualValues(t, 2, exchanges.Load())
 }

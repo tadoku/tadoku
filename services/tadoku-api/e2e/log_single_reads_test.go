@@ -9,7 +9,6 @@ func TestImmersionLogFindByID(t *testing.T) {
 	tests := []struct {
 		description []string
 		want        int
-		skipParity  string
 	}{
 		{description: []string{"quoted", "tags"}, want: http.StatusOK},
 		{description: []string{"minimum", "duration"}, want: http.StatusOK},
@@ -20,7 +19,7 @@ func TestImmersionLogFindByID(t *testing.T) {
 		{description: []string{"admin", "populated"}, want: http.StatusOK},
 		{description: []string{"unknown"}, want: http.StatusNotFound},
 		{description: []string{"nil", "id"}, want: http.StatusNotFound},
-		{description: []string{"invalid", "id"}, want: http.StatusBadRequest, skipParity: "native responses omit parser details and reflected parameter input"},
+		{description: []string{"invalid", "id"}, want: http.StatusBadRequest},
 		{description: []string{"invalid", "signed", "subject"}, want: http.StatusUnauthorized},
 		{description: []string{"invalid", "activity"}, want: http.StatusBadRequest},
 		{description: []string{"missing", "unit"}, want: http.StatusOK},
@@ -43,7 +42,7 @@ func TestImmersionLogFindByID(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			runCase(t, api, name, test.want,
 				implementation{name: "tadoku-api", handler: api.handler},
-				implementation{name: "immersion-api", handler: legacyImmersion.handler, skip: test.skipParity})
+			)
 		})
 	}
 }

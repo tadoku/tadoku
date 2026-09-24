@@ -9,7 +9,6 @@ func TestFindContestRegistration(t *testing.T) {
 	tests := []struct {
 		description []string
 		want        int
-		skipParity  string
 	}{
 		{description: []string{"existing", "registration", "sorts", "languages"}, want: http.StatusOK},
 		{description: []string{"deleted", "contest", "registration", "remains", "visible"}, want: http.StatusOK},
@@ -18,7 +17,6 @@ func TestFindContestRegistration(t *testing.T) {
 		{
 			description: []string{"invalid", "contest", "id"},
 			want:        http.StatusBadRequest,
-			skipParity:  "native responses omit parser details and reflected parameter input",
 		},
 		{description: []string{"guest"}, want: http.StatusUnauthorized},
 		{description: []string{"banned"}, want: http.StatusForbidden},
@@ -31,7 +29,6 @@ func TestFindContestRegistration(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			runCase(t, api, name, test.want,
 				implementation{name: "tadoku-api", handler: api.handler},
-				implementation{name: "immersion-api", handler: legacyImmersion.handler, skip: test.skipParity},
 			)
 		})
 	}

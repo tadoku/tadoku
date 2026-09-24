@@ -9,7 +9,6 @@ func TestListYearlyContestRegistrations(t *testing.T) {
 	tests := []struct {
 		description []string
 		want        int
-		skipParity  string
 	}{
 		{description: []string{"owner", "mixed", "history"}, want: http.StatusOK},
 		{description: []string{"admin", "mixed", "history"}, want: http.StatusOK},
@@ -30,9 +29,9 @@ func TestListYearlyContestRegistrations(t *testing.T) {
 		{description: []string{"empty", "stored", "arrays"}, want: http.StatusOK},
 		{description: []string{"invalid", "stored", "activity"}, want: http.StatusBadRequest},
 		{description: []string{"hidden", "invalid", "activity"}, want: http.StatusOK},
-		{description: []string{"invalid", "user", "id"}, want: http.StatusBadRequest, skipParity: "native responses omit parser details and reflected parameter input"},
-		{description: []string{"invalid", "year"}, want: http.StatusBadRequest, skipParity: "native responses omit parser details and reflected parameter input"},
-		{description: []string{"overflowing", "year"}, want: http.StatusBadRequest, skipParity: "native responses omit parser details and reflected parameter input"},
+		{description: []string{"invalid", "user", "id"}, want: http.StatusBadRequest},
+		{description: []string{"invalid", "year"}, want: http.StatusBadRequest},
+		{description: []string{"overflowing", "year"}, want: http.StatusBadRequest},
 	}
 
 	for _, test := range tests {
@@ -40,7 +39,6 @@ func TestListYearlyContestRegistrations(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			runCase(t, api, name, test.want,
 				implementation{name: "tadoku-api", handler: api.handler},
-				implementation{name: "immersion-api", handler: legacyImmersion.handler, skip: test.skipParity},
 			)
 		})
 	}

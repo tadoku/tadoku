@@ -11,7 +11,6 @@ func TestImmersionLogContestRegistrationUpdate(t *testing.T) {
 		description          []string
 		want                 int
 		scoringEngineEnabled bool
-		skipParity           string
 		at                   time.Time
 	}{
 		{description: []string{"disabled", "attach", "stored", "provenance"}, want: http.StatusOK},
@@ -28,16 +27,14 @@ func TestImmersionLogContestRegistrationUpdate(t *testing.T) {
 		{description: []string{"missing", "log"}, want: http.StatusNotFound},
 		{description: []string{"guest"}, want: http.StatusUnauthorized},
 		{description: []string{"unknown", "signing", "key"}, want: http.StatusUnauthorized},
-		{description: []string{"empty", "body"}, want: http.StatusBadRequest, skipParity: "generated native decoder rejects a required empty body while legacy treats it as an empty registration list"},
+		{description: []string{"empty", "body"}, want: http.StatusBadRequest},
 	}
 	for _, test := range tests {
 		name := APITestName("ImmersionLogContestRegistrationUpdate", test.want, test.description...)
 		t.Run(name, func(t *testing.T) {
 			native := http.Handler(api.handler)
-			legacy := legacyImmersion.handler
 			if test.scoringEngineEnabled {
 				native = scoringEnabledHandler
-				legacy = legacyImmersion.scoringEnabledHandler
 			}
 			at := test.at
 			if at.IsZero() {
@@ -45,7 +42,6 @@ func TestImmersionLogContestRegistrationUpdate(t *testing.T) {
 			}
 			runCaseAt(t, api, name, test.want, at,
 				implementation{name: "tadoku-api", handler: native},
-				implementation{name: "immersion-api", handler: legacy, skip: test.skipParity},
 			)
 		})
 	}
@@ -73,7 +69,6 @@ func TestImmersionLogDeleteByID(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			runCase(t, api, name, test.want,
 				implementation{name: "tadoku-api", handler: api.handler},
-				implementation{name: "immersion-api", handler: legacyImmersion.handler},
 			)
 		})
 	}
@@ -83,7 +78,6 @@ func TestImmersionContestModerationDetachLog(t *testing.T) {
 	tests := []struct {
 		description []string
 		want        int
-		skipParity  string
 	}{
 		{description: []string{"contest", "owner", "blank", "reason"}, want: http.StatusOK},
 		{description: []string{"admin", "nonowner", "long", "reason"}, want: http.StatusOK},
@@ -97,14 +91,13 @@ func TestImmersionContestModerationDetachLog(t *testing.T) {
 		{description: []string{"target", "owner", "account", "locked"}, want: http.StatusConflict},
 		{description: []string{"guest", "existing"}, want: http.StatusUnauthorized},
 		{description: []string{"unknown", "signing", "key"}, want: http.StatusUnauthorized},
-		{description: []string{"empty", "body"}, want: http.StatusBadRequest, skipParity: "generated native decoder rejects a required empty body while legacy accepts an empty moderation reason"},
+		{description: []string{"empty", "body"}, want: http.StatusBadRequest},
 	}
 	for _, test := range tests {
 		name := APITestName("ImmersionContestModerationDetachLog", test.want, test.description...)
 		t.Run(name, func(t *testing.T) {
 			runCase(t, api, name, test.want,
 				implementation{name: "tadoku-api", handler: api.handler},
-				implementation{name: "immersion-api", handler: legacyImmersion.handler, skip: test.skipParity},
 			)
 		})
 	}

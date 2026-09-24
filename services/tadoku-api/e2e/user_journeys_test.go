@@ -244,7 +244,7 @@ func TestLogWriteOutboxLeaderboardJourney(t *testing.T) {
 
 	ready := &leaderboardReadyWriter{ready: make(chan struct{})}
 	logger := slog.New(slog.NewTextHandler(ready, nil))
-	leaderboardService := leaderboard.NewService(leaderboard.NewRepository(api.db.Pool), leaderboardValkey.client, time.Second)
+	leaderboardService := leaderboard.NewService(leaderboard.NewRepository(api.db.Pool), leaderboardValkey.client, time.Second, "")
 	handler, profileService, roleService, err := newTestRouterWithLeaderboardService(t.Context(), api.db.Pool, api.db.Pool, api.keto, api.kratos, logger, true, leaderboardService)
 	if err != nil {
 		t.Fatal(err)

@@ -1,7 +1,9 @@
-## Scheduling official contests
+## Scheduled official contests
 
-The following should be ran in the database in which `pg_cron` is installed, which is not the database Tadoku is using.
-This is excluded from the migrations because different credentials are required and typically only needs to be performed once.
+Run the following in the database where `pg_cron` is installed, which is separate
+from the Tadoku application database. These jobs are excluded from application
+migrations because their setup requires different credentials. They call the
+historical `data.create_contest_round` function retained in migration `0004`.
 
 ```sql
 insert into cron.job (schedule, command, nodename, nodeport, database, username)

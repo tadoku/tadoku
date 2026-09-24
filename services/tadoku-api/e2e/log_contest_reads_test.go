@@ -9,7 +9,6 @@ func TestImmersionContestListLogs(t *testing.T) {
 	tests := []struct {
 		description []string
 		want        int
-		skipParity  string
 	}{
 		{description: []string{"quoted", "tags"}, want: http.StatusOK},
 		{description: []string{"minimum", "duration"}, want: http.StatusOK},
@@ -20,7 +19,7 @@ func TestImmersionContestListLogs(t *testing.T) {
 		{description: []string{"admin", "populated"}, want: http.StatusOK},
 		{description: []string{"unknown"}, want: http.StatusInternalServerError},
 		{description: []string{"nil", "id"}, want: http.StatusInternalServerError},
-		{description: []string{"invalid", "id"}, want: http.StatusBadRequest, skipParity: "native responses omit parser details and reflected parameter input"},
+		{description: []string{"invalid", "id"}, want: http.StatusBadRequest},
 		{description: []string{"invalid", "signed", "subject"}, want: http.StatusOK},
 		{description: []string{"invalid", "activity"}, want: http.StatusInternalServerError},
 		{description: []string{"missing", "unit"}, want: http.StatusOK},
@@ -43,14 +42,14 @@ func TestImmersionContestListLogs(t *testing.T) {
 		{description: []string{"negative", "limit"}, want: http.StatusOK},
 		{description: []string{"capped", "limit"}, want: http.StatusOK},
 		{description: []string{"second", "large", "page"}, want: http.StatusOK},
-		{description: []string{"malformed", "page"}, want: http.StatusBadRequest, skipParity: "native responses omit parser details and reflected parameter input"},
-		{description: []string{"malformed", "page", "size"}, want: http.StatusBadRequest, skipParity: "native responses omit parser details and reflected parameter input"},
-		{description: []string{"malformed", "include", "deleted"}, want: http.StatusBadRequest, skipParity: "native responses omit parser details and reflected parameter input"},
-		{description: []string{"malformed", "page", "overflow"}, want: http.StatusBadRequest, skipParity: "native responses omit parser details and reflected parameter input"},
+		{description: []string{"malformed", "page"}, want: http.StatusBadRequest},
+		{description: []string{"malformed", "page", "size"}, want: http.StatusBadRequest},
+		{description: []string{"malformed", "include", "deleted"}, want: http.StatusBadRequest},
+		{description: []string{"malformed", "page", "overflow"}, want: http.StatusBadRequest},
 		{description: []string{"filter", "user"}, want: http.StatusOK},
 		{description: []string{"filter", "other", "user"}, want: http.StatusOK},
 		{description: []string{"filter", "unknown", "user"}, want: http.StatusOK},
-		{description: []string{"malformed", "user", "filter"}, want: http.StatusBadRequest, skipParity: "native responses omit parser details and reflected parameter input"},
+		{description: []string{"malformed", "user", "filter"}, want: http.StatusBadRequest},
 		{description: []string{"private", "guest"}, want: http.StatusOK},
 		{description: []string{"private", "user"}, want: http.StatusOK},
 		{description: []string{"private", "admin"}, want: http.StatusOK},
@@ -64,7 +63,7 @@ func TestImmersionContestListLogs(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			runCase(t, api, name, test.want,
 				implementation{name: "tadoku-api", handler: api.handler},
-				implementation{name: "immersion-api", handler: legacyImmersion.handler, skip: test.skipParity})
+			)
 		})
 	}
 }

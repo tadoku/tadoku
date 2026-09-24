@@ -34,7 +34,6 @@ spec:
             - {name: API_PORT, value: "8000"}
             - {name: API_METRICS_PORT, value: "9090"}
             - {name: API_SERVICE_NAME, value: tadoku-api}
-            # Must match immersion-api while it owns log writes.
             - {name: API_SCORING_ENGINE_ENABLED, value: "false"}
             - {name: API_JWKS, value: "http://oathkeeper-api.default:4456/.well-known/jwks.json"}
             - {name: API_OATHKEEPER_URL, value: "http://oathkeeper-proxy.default:4455"}

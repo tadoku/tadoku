@@ -9,7 +9,6 @@ func TestFindContestByID(t *testing.T) {
 	tests := []struct {
 		description []string
 		want        int
-		skipParity  string
 	}{
 		{description: []string{"guest", "can", "see", "private"}, want: http.StatusOK},
 		{description: []string{"guest", "cannot", "see", "deleted"}, want: http.StatusNotFound},
@@ -19,7 +18,6 @@ func TestFindContestByID(t *testing.T) {
 		{
 			description: []string{"invalid", "path", "id"},
 			want:        http.StatusBadRequest,
-			skipParity:  "native responses omit parser details and reflected parameter input",
 		},
 	}
 
@@ -28,7 +26,6 @@ func TestFindContestByID(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			runCase(t, api, name, test.want,
 				implementation{name: "tadoku-api", handler: api.handler},
-				implementation{name: "immersion-api", handler: legacyImmersion.handler, skip: test.skipParity},
 			)
 		})
 	}

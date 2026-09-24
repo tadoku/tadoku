@@ -1,15 +1,11 @@
 package e2e_test
 
 import (
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 
-	"github.com/labstack/echo/v4"
-	commondomain "github.com/tadoku/tadoku/services/common/domain"
-	"github.com/tadoku/tadoku/services/common/middleware"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
 )
 
@@ -17,7 +13,6 @@ func TestAuthentication(t *testing.T) {
 	tests := []struct {
 		description []string
 		want        int
-		skipParity  string
 	}{
 		{
 			description: []string{"user"},
@@ -34,17 +29,14 @@ func TestAuthentication(t *testing.T) {
 		{
 			description: []string{"without", "exp"},
 			want:        http.StatusUnauthorized,
-			skipParity:  "Tadoku API requires exp but legacy accepts tokens without it",
 		},
 		{
 			description: []string{"old", "iat"},
 			want:        http.StatusUnauthorized,
-			skipParity:  "Tadoku API rejects tokens older than the configured maximum age",
 		},
 		{
 			description: []string{"wrong", "issuer"},
 			want:        http.StatusUnauthorized,
-			skipParity:  "Tadoku API enforces the configured issuer but legacy accepts other issuers",
 		},
 		{
 			description: []string{"lowercase", "bearer"},
@@ -117,12 +109,10 @@ func TestAuthentication(t *testing.T) {
 		{
 			description: []string{"missing", "iat"},
 			want:        http.StatusUnauthorized,
-			skipParity:  "legacy Identity panics when iat is missing",
 		},
 		{
 			description: []string{"service", "token"},
 			want:        http.StatusUnauthorized,
-			skipParity:  "service identities are intentionally unsupported by Tadoku API",
 		},
 	}
 	for _, test := range tests {
@@ -130,33 +120,18 @@ func TestAuthentication(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			runCase(t, api, name, test.want,
 				implementation{name: "tadoku-api", handler: api.handler},
-				implementation{name: "legacy", handler: legacyAuthentication, skip: test.skipParity},
 			)
 		})
 	}
 }
 
 // End the middleware chain here so authentication goldens do not exercise a
-// business endpoint. Both success handlers observe the real downstream context.
+// business endpoint. The success handler observes the real downstream context.
 func observeIdentity(w http.ResponseWriter, r *http.Request) {
 	if user := identity.FromContext(r.Context()); user != nil {
 		writeIdentityHeaders(w.Header(), user.Subject, user.DisplayName, user.Email, user.CreatedAt)
 	}
 	writeAuthenticationSuccess(w)
-}
-
-func newLegacyAuthenticationHandler(jwksURL string) http.Handler {
-	router := echo.New()
-	middleware.RestoreJSONCharset(router)
-	router.Logger.SetOutput(io.Discard)
-	router.GET("/test/authentication", func(c echo.Context) error {
-		if user := commondomain.ParseUserIdentity(c.Request().Context()); user != nil {
-			writeIdentityHeaders(c.Response().Header(), user.Subject, user.DisplayName, user.Email, user.CreatedAt)
-		}
-		writeAuthenticationSuccess(c.Response())
-		return nil
-	}, middleware.VerifyJWT(jwksURL), middleware.Identity())
-	return router
 }
 
 func writeAuthenticationSuccess(w http.ResponseWriter) {

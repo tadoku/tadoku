@@ -19,6 +19,7 @@ oci_image(
     base = "@distroless_base_linux_amd64",
     entrypoint = ["/migrate"],
     tars = [
+        "//services/common/migrate-recovery:layer",
         "//services/common/migrate-runner:layer",
         ":tar",
     ],

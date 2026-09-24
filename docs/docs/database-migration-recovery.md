@@ -4,7 +4,7 @@ title: Database migration recovery
 
 # Database migration recovery
 
-This runbook applies when an API image's Argo CD `PreSync` migration Job fails
+This runbook applies when Tadoku API's Argo CD migration Job fails
 and `schema_migrations.dirty` is `true`.
 
 The normal `/migrate` command deliberately supports only forward `up`
@@ -35,7 +35,7 @@ It does not support `down`, `drop`, or arbitrary migration steps.
 
 1. Terminate the affected Argo CD sync operation.
 2. Disable automated sync and image updates for the affected Application.
-3. Confirm that the failed PreSync Job did not deploy the new API image.
+3. Confirm that the failed migration Job did not deploy the new API image.
 4. Confirm that the previous API Deployment is available and passes basic
    health checks.
 5. Confirm that no migration or recovery Pod is currently running.
@@ -48,7 +48,7 @@ Capture:
 
 - the failed Job YAML and Pod logs;
 - the Application operation result;
-- the API image digest;
+- the migrations image digest;
 - the migration filenames embedded in that image;
 - the current database backup status and PITR recovery point.
 
@@ -57,23 +57,33 @@ the backup can be listed or restored in an isolated environment.
 
 ## 3. Inspect migration metadata
 
-Run the failed release's exact API image with `/migrate-recovery`. Use the same
-database owner Secret and migration source as the PreSync Job:
+The `/migrate-recovery` binary is included in `tadoku-api-migrations` images
+built from the source cleanup revision or later. The image digest pinned by the
+native handoff in PR #186 (`d2cdd6141583e857f8509a3a278f4b316be1fd9edf80148dee275d4454323d0a`)
+predates this change and must not be assumed to contain it. Before running a
+recovery Job, verify that the chosen image contains `/migrate-recovery` and the
+exact SQL migration set for the failed release. Publish and pin a reviewed image
+with both before using this example. Do not substitute an arbitrary newer
+migration image.
+
+Use the same database owner Secret and migration source as the native migration
+Job `tdk-prod-tadoku-api/tadoku-api-migrate`:
 
 ```yaml
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: immersion-api-migration-inspect
-  namespace: tdk-prod-immersion-api
+  name: tadoku-api-migration-inspect
+  namespace: tdk-prod-tadoku-api
 spec:
   backoffLimit: 0
   template:
     spec:
+      automountServiceAccountToken: false
       restartPolicy: Never
       containers:
         - name: inspect
-          image: ghcr.io/tadoku/tadoku/immersion-api@sha256:REPLACE_ME
+          image: ghcr.io/tadoku/tadoku/tadoku-api-migrations:prod@sha256:REPLACE_WITH_VERIFIED_DIGEST
           command: ["/migrate-recovery"]
           args:
             - "-source"
@@ -81,23 +91,35 @@ spec:
             - "inspect"
           env:
             - name: POSTGRES_HOST
-              value: io-postgres.shared.svc.cluster.local
+              valueFrom:
+                secretKeyRef:
+                  name: tadoku-planetscale-admin
+                  key: postgres-host
             - name: POSTGRES_PORT
-              value: "5432"
+              valueFrom:
+                secretKeyRef:
+                  name: tadoku-planetscale-admin
+                  key: postgres-port
             - name: POSTGRES_DATABASE
-              value: tadoku_prod_immersion
+              valueFrom:
+                secretKeyRef:
+                  name: tadoku-planetscale-admin
+                  key: postgres-database
             - name: POSTGRES_SSLMODE
-              value: require
+              valueFrom:
+                secretKeyRef:
+                  name: tadoku-planetscale-admin
+                  key: postgres-sslmode
             - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
-                  name: tadoku-prod-immersion-owner-user.io-postgres.credentials.postgresql.acid.zalan.do
-                  key: username
+                  name: tadoku-planetscale-admin
+                  key: postgres-user
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: tadoku-prod-immersion-owner-user.io-postgres.credentials.postgresql.acid.zalan.do
-                  key: password
+                  name: tadoku-planetscale-admin
+                  key: postgres-password
 ```
 
 Expected dirty output:
@@ -205,10 +227,10 @@ Retain the recovery Job and logs as evidence until the incident is closed.
 2. Add a new forward migration that is safe from the verified database state.
 3. Test first-run, dirty-recovery, forward-fix, and no-op behavior against a
    disposable PostgreSQL database.
-4. Publish a reviewed API image containing the corrected migrations.
+4. Publish a reviewed Tadoku API migrations image containing the corrected migrations.
 5. Manually sync the Application while automated sync remains disabled.
 6. Verify:
-   - the PreSync Job succeeds;
+   - the migration Job succeeds;
    - `schema_migrations.dirty` is `false`;
    - the Deployment rolls out only after migration success;
    - API and data-integrity smoke checks pass;

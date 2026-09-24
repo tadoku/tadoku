@@ -9,14 +9,13 @@ func TestImmersionScoringRuleSetCreatePlatform(t *testing.T) {
 	tests := []struct {
 		description []string
 		want        int
-		skipParity  string
 	}{
 		{description: []string{"admin", "multi", "rule", "normalizes"}, want: http.StatusOK},
 		{description: []string{"admin", "empty", "rules"}, want: http.StatusOK},
 		{description: []string{"admin", "ignores", "contest", "fields"}, want: http.StatusOK},
 		{description: []string{"member"}, want: http.StatusForbidden},
 		{description: []string{"unknown", "signing", "key"}, want: http.StatusUnauthorized},
-		{description: []string{"guest"}, want: http.StatusUnauthorized, skipParity: "Tadoku API consistently requires authentication before administrator authorization; legacy returns forbidden for a signed guest"},
+		{description: []string{"guest"}, want: http.StatusUnauthorized},
 	}
 	seed := int64(1)
 	for _, test := range tests {
@@ -24,7 +23,6 @@ func TestImmersionScoringRuleSetCreatePlatform(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			runCase(t, api, name, test.want,
 				implementation{name: "tadoku-api", handler: api.handler, uuidSeed: &seed},
-				implementation{name: "immersion-api", handler: legacyImmersion.handler, uuidSeed: &seed, skip: test.skipParity},
 			)
 		})
 	}
@@ -34,7 +32,6 @@ func TestImmersionScoringRuleSetCreateContest(t *testing.T) {
 	tests := []struct {
 		description []string
 		want        int
-		skipParity  string
 	}{
 		{description: []string{"owner", "replace", "zero", "rate"}, want: http.StatusOK},
 		{description: []string{"owner", "override", "published", "fallback"}, want: http.StatusOK},
@@ -54,8 +51,8 @@ func TestImmersionScoringRuleSetCreateContest(t *testing.T) {
 		{description: []string{"admin", "nonowner"}, want: http.StatusOK},
 		{description: []string{"already", "started"}, want: http.StatusConflict},
 		{description: []string{"unknown", "signing", "key"}, want: http.StatusUnauthorized},
-		{description: []string{"guest", "existing"}, want: http.StatusUnauthorized, skipParity: "Tadoku API consistently requires authentication before administrator authorization; legacy returns forbidden for a signed guest"},
-		{description: []string{"guest", "missing"}, want: http.StatusUnauthorized, skipParity: "Tadoku API authenticates before loading the contest; legacy returns not found for a missing contest before checking a signed guest"},
+		{description: []string{"guest", "existing"}, want: http.StatusUnauthorized},
+		{description: []string{"guest", "missing"}, want: http.StatusUnauthorized},
 		{description: []string{"member", "missing"}, want: http.StatusNotFound},
 	}
 	seed := int64(1)
@@ -64,7 +61,6 @@ func TestImmersionScoringRuleSetCreateContest(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			runCase(t, api, name, test.want,
 				implementation{name: "tadoku-api", handler: api.handler, uuidSeed: &seed},
-				implementation{name: "immersion-api", handler: legacyImmersion.handler, uuidSeed: &seed, skip: test.skipParity},
 			)
 		})
 	}

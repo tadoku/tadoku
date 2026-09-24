@@ -172,16 +172,6 @@ func newTestAPI(ctx context.Context, ketoFixture *testketo.Fixture, kratosFixtur
 	return api, nil
 }
 
-func newTestRouter(
-	ctx context.Context,
-	pool *pgxpool.Pool,
-	ketoFixture *testketo.Fixture,
-	kratosFixture *testkratos.Fixture,
-) (*transport.Router, *featureprofile.Service, *commonroles.KetoService, error) {
-	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	return newTestRouterWithLogger(ctx, pool, pool, ketoFixture, kratosFixture, logger)
-}
-
 func newTestRouterWithLogger(
 	ctx context.Context,
 	pool *pgxpool.Pool,

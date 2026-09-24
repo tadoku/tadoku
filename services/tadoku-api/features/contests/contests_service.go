@@ -155,15 +155,8 @@ func (s *Service) ValidateRegistrationUpsert(
 		return nil, err
 	}
 
-	if len(parameters.LanguageCodes) < 1 || len(parameters.LanguageCodes) > 3 {
-		return nil, ErrInvalidRegistration
-	}
-	languages := make(map[string]struct{}, len(parameters.LanguageCodes))
-	for _, code := range parameters.LanguageCodes {
-		if _, exists := languages[code]; exists {
-			return nil, ErrInvalidRegistration
-		}
-		languages[code] = struct{}{}
+	if err := parameters.Validate(); err != nil {
+		return nil, err
 	}
 
 	exist, err := s.contests.LanguagesExist(ctx, parameters.LanguageCodes)
@@ -171,7 +164,7 @@ func (s *Service) ValidateRegistrationUpsert(
 		return nil, err
 	}
 	if !exist {
-		return nil, ErrInvalidRegistration
+		return nil, errx.NewInvalidInputError("invalid contest registration LanguageCodes: one or more languages do not exist")
 	}
 
 	if len(allowedLanguages) > 0 {
@@ -181,7 +174,7 @@ func (s *Service) ValidateRegistrationUpsert(
 		}
 		for _, code := range parameters.LanguageCodes {
 			if _, ok := allowed[code]; !ok {
-				return nil, ErrInvalidRegistration
+				return nil, errx.NewInvalidInputError("invalid contest registration LanguageCodes: contains a language not allowed by the contest")
 			}
 		}
 	}

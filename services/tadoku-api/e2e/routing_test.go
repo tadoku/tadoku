@@ -126,7 +126,7 @@ func TestContractRouteOwnership(t *testing.T) {
 	}
 	pathParameters := regexp.MustCompile(`\{[^}]+\}`)
 	for path, pathItem := range contract.Paths.Map() {
-		for method, operation := range pathItem.Operations() {
+		for method := range pathItem.Operations() {
 			requestPath := strings.NewReplacer("{year}", "2026", "{flagKey}", "release-log-entry-v2").Replace(path)
 			requestPath = pathParameters.ReplaceAllString(requestPath, "11111111-1111-4111-8111-111111111111")
 			t.Run(method+" "+requestPath, func(t *testing.T) {

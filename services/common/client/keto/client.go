@@ -9,7 +9,6 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-// Subject requires exactly one of ID or Set.
 type Subject struct {
 	ID  string
 	Set *SubjectSet
@@ -25,7 +24,6 @@ type AuthorizationReader interface {
 	CheckPermission(ctx context.Context, namespace, object, relation string, subject Subject) (bool, error)
 	CheckPermissions(ctx context.Context, checks []PermissionCheck) []PermissionResult
 
-	// ListSubjectIDsForRelation ignores subject sets.
 	ListSubjectIDsForRelation(ctx context.Context, namespace, object, relation string) ([]string, error)
 }
 
@@ -53,7 +51,6 @@ var (
 	_ AuthorizationClient = (*Client)(nil)
 )
 
-// NewClient leaves ownership of a supplied HTTP client and transport with the caller.
 func NewClient(readURL, writeURL string, opts ...Option) *Client {
 	readCfg := keto.NewConfiguration()
 	readCfg.Servers = keto.ServerConfigurations{{URL: readURL}}
@@ -71,7 +68,6 @@ func NewClient(readURL, writeURL string, opts ...Option) *Client {
 	}
 }
 
-// NewReadClient returns an error from relation operations.
 func NewReadClient(readURL string, opts ...Option) *Client {
 	readCfg := keto.NewConfiguration()
 	readCfg.Servers = keto.ServerConfigurations{{URL: readURL}}
@@ -84,8 +80,6 @@ func NewReadClient(readURL string, opts ...Option) *Client {
 	}
 }
 
-// CheckPermission returns (false, nil) for denials, including Keto HTTP 403;
-// provider failures return an error.
 func (c *Client) CheckPermission(ctx context.Context, namespace, object, relation string, subject Subject) (bool, error) {
 	req := c.readClient.PermissionApi.CheckPermission(ctx).
 		Namespace(namespace).
@@ -233,8 +227,6 @@ type PermissionResult struct {
 
 const DefaultMaxConcurrency = 10
 
-// CheckPermissions preserves input order, caps concurrency at DefaultMaxConcurrency,
-// and returns ctx.Err() in canceled results.
 func (c *Client) CheckPermissions(ctx context.Context, checks []PermissionCheck) []PermissionResult {
 	results := make([]PermissionResult, len(checks))
 	if len(checks) == 0 {

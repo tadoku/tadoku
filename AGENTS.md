@@ -32,7 +32,9 @@ files in an area, read its page; those rules are as binding as this file.
 - **Go comments give usage instructions, not code narration.** Keep `//go:`
   directives. Add prose only at a declaration when callers need a non-obvious
   constraint; test fixture safety comments begin `// Test safety:`. Do not use
-  comments to suppress lint, justify a defect or restate code. Run
+  comments to suppress lint, justify a defect or restate code. Summaries of
+  return values, ownership and constructor defaults are restatements when the
+  code already shows them. Run
   `bazel run //tools/ci/commentpolicy` after changing Go comments.
 - **Ship every database migration as a standalone change**: its own commit, pull
   request and deployment, before any code that depends on it.

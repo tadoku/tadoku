@@ -31,10 +31,9 @@ type scope struct {
 	done atomic.Bool
 }
 
-// Executor selects the active transaction for db, or db itself outside a scope.
-// Repositories must resolve it with the operation's context and pass that same
+// Executor must use the operation's context; repositories must pass that same
 // context to SQL calls. Do not retain executors or rows past RunInTransaction.
-// An ended scope returns pgx.ErrTxClosed; it never falls back to the pool.
+// An ended scope never falls back to the pool.
 func Executor(ctx context.Context, db *pgxpool.Pool) (DBTX, error) {
 	s, ok := ctx.Value(scopeKey{}).(*scope)
 	if !ok {
@@ -49,16 +48,12 @@ func Executor(ctx context.Context, db *pgxpool.Pool) (DBTX, error) {
 	return s.tx, nil
 }
 
-// RunInTransaction calls work once with a child context and commits only when it succeeds.
 // All transaction work must finish in the callback. Nested scopes are rejected;
 // cross-feature operations share this one outer context. Keep network, cache,
 // and asynchronous work outside the callback. Independent transactions may run
 // concurrently; SQL within a transaction must not run in parallel.
 //
-// Callback errors retain their identity. Begin and commit failures wrap their
-// causes. Rollback is attempted on every exit, including panic; cleanup cannot
-// replace the primary error or panic. A commit error can have an unknown
-// persistence outcome, so RunInTransaction never retries or replays work.
+// A commit error can leave persistence uncertain; do not retry the callback.
 func RunInTransaction(ctx context.Context, db *pgxpool.Pool, work func(context.Context) error) error {
 	if s, ok := ctx.Value(scopeKey{}).(*scope); ok {
 		if s.done.Load() {

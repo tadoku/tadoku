@@ -150,7 +150,6 @@ func reconcileHTTPGolden(path, got string, gotStatus, wantStatus int, update boo
 	return reconcileGolden(path, got, update)
 }
 
-// reconcileGolden never creates a missing golden file, even in update mode.
 func reconcileGolden(path, got string, update bool) (bool, error) {
 	want, err := os.ReadFile(path)
 	if err != nil {

@@ -30,15 +30,8 @@ const (
 	banned member = "banned"
 )
 
-// cast maps cast members to the status each must receive when replaying a
-// step's request. Replays run before the primary request and must not mutate
-// state.
 type cast map[member]int
 
-// step is one entry of a journey. A request step sends request.http as the
-// named cast member and compares the complete response with golden.http. A
-// verify step runs verify.sql and compares its JSON result with verify.json.
-// A job step runs one synchronous background-work pass.
 type step struct {
 	request string
 	verify  string
@@ -55,9 +48,6 @@ const journeysDir = "testdata/journeys"
 
 var stepNamePattern = regexp.MustCompile(`^[a-z0-9_]+$`)
 
-// runJourney resets the stores once, then runs the steps in order against the
-// production router, so state after the first step comes only from the API.
-// It stops at the first failing step because later steps depend on it.
 func runJourney(t *testing.T, s *suite, name string, steps []step) {
 	runJourneyWithHandler(t, s, s.handler, name, steps)
 }

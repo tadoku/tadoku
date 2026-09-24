@@ -18,7 +18,6 @@ var allowedSSLModes = map[string]bool{
 	"verify-ca": true, "verify-full": true,
 }
 
-// Config omits Password from String and Redact output.
 type Config struct {
 	Host, Database, User, Password, SSLMode string
 	Port                                    uint16

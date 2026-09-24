@@ -7,7 +7,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// Open does not migrate the schema or require administrative privileges.
 func Open(ctx context.Context, dsn string, maxConnections int32) (*pgxpool.Pool, error) {
 	if maxConnections < 1 {
 		return nil, fmt.Errorf("postgres max connections must be positive")

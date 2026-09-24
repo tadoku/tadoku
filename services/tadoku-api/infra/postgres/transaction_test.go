@@ -21,7 +21,6 @@ import (
 const testDSNVariable = "TADOKU_TEST_POSTGRES_URL"
 
 // Test safety: Use only a disposable local PostgreSQL instance with synthetic credentials.
-// An absent DSN is a failure, and remote/application databases are refused.
 func disposableDSN(t *testing.T) string {
 	t.Helper()
 	dsn := os.Getenv(testDSNVariable)

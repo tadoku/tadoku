@@ -15,8 +15,8 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
 )
 
-// NewJWTAuthentication accepts only signed guest or UUID subjects. Callers must
-// enforce roles, bans, permissions and service audiences separately.
+// NewJWTAuthentication requires callers to enforce roles, bans, permissions and
+// service audiences separately.
 func NewJWTAuthentication(lifetime context.Context, jwksURL string, timeout, maxTokenAge time.Duration, issuer string, logger *slog.Logger) (func(stdhttp.Handler) stdhttp.Handler, error) {
 	if lifetime == nil {
 		return nil, fmt.Errorf("authentication lifetime context is required")

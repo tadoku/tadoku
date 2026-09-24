@@ -10,7 +10,6 @@ type PublicDecisions struct {
 	ReleaseLogEntryV2 bool
 }
 
-// EvaluatePublicForSubject uses anonymous safe defaults for empty or guest subjects.
 func (e *Evaluator) EvaluatePublicForSubject(ctx context.Context, subject string) PublicDecisions {
 	if subject == "" || subject == "guest" {
 		return e.EvaluatePublic(ctx, nil)

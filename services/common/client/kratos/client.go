@@ -22,15 +22,12 @@ type Client struct {
 
 type Option func(*kratosapi.Configuration)
 
-// WithHTTPClient leaves ownership of the supplied client and transport with the caller.
 func WithHTTPClient(client *http.Client) Option {
 	return func(cfg *kratosapi.Configuration) {
 		cfg.HTTPClient = client
 	}
 }
 
-// NewAPIClient makes no requests during construction. Without WithHTTPClient,
-// it uses the SDK's default HTTP client.
 func NewAPIClient(kratosURL string, opts ...Option) *kratosapi.APIClient {
 	cfg := kratosapi.NewConfiguration()
 	cfg.Servers = kratosapi.ServerConfigurations{{URL: kratosURL}}
@@ -70,7 +67,6 @@ func (c *Client) UserExists(ctx context.Context, id uuid.UUID) (bool, error) {
 	return true, nil
 }
 
-// ListIdentities returns an empty token after the last page.
 func (c *Client) ListIdentities(ctx context.Context, pageSize int64, pageToken string) ([]kratosapi.Identity, string, error) {
 	requestURL, err := url.Parse(c.listIdentitiesURL)
 	if err != nil {

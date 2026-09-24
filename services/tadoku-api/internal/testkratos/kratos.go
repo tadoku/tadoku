@@ -53,8 +53,6 @@ type Fixture struct {
 	closeErr  error
 }
 
-// New migrates a fresh RAM-backed database, starts Kratos and applies seedFile
-// once. Seeds are trusted repository SQL for the pinned provider's schema.
 func New(ctx context.Context, seedFile string) (_ *Fixture, resultErr error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
@@ -143,8 +141,7 @@ func (fixture *Fixture) Err() error {
 	return nil
 }
 
-// Reset replaces all provider state with the original seed. Call it only after
-// a test explicitly marked as mutating Kratos; ordinary cases share the seed.
+// Call Reset only after a test marked as mutating Kratos; ordinary cases share the seed.
 func (fixture *Fixture) Reset(ctx context.Context) (err error) {
 	if err := fixture.Err(); err != nil {
 		return err

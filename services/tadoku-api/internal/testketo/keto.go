@@ -179,8 +179,6 @@ func (fixture *Fixture) waitUntilReady(ctx context.Context, readAddress, writeAd
 	}
 }
 
-// Reset deletes every relationship in every namespace owned by the fixture,
-// then loads any provided JSON arrays of relationship tuples.
 func (fixture *Fixture) Reset(ctx context.Context, seedFiles ...string) error {
 	namespaces, err := fixture.namespaces(ctx)
 	if err != nil {

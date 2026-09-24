@@ -37,8 +37,6 @@ func IsAuthenticated(ctx context.Context) bool { return FromContext(ctx).Authent
 func IsAdmin(ctx context.Context) bool         { return FromContext(ctx).Admin }
 func IsBanned(ctx context.Context) bool        { return FromContext(ctx).Banned }
 
-// RequireAuthenticated returns commondomain.ErrUnauthorized for anonymous callers
-// and commondomain.ErrAuthzUnavailable when roles cannot be evaluated.
 func RequireAuthenticated(ctx context.Context) error {
 	c := FromContext(ctx)
 	if !c.Authenticated {
@@ -50,7 +48,6 @@ func RequireAuthenticated(ctx context.Context) error {
 	return nil
 }
 
-// RequireAdmin returns commondomain.ErrAuthzUnavailable when roles cannot be evaluated.
 func RequireAdmin(ctx context.Context) error {
 	c := FromContext(ctx)
 	if !c.Authenticated {

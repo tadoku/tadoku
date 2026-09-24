@@ -67,8 +67,6 @@ type Observer interface {
 	ObserveEvaluation(observation Observation)
 }
 
-// Evaluator falls back to registry-owned safe defaults and never returns
-// provider failures to product code.
 type Evaluator struct {
 	provider BooleanProvider
 	observer Observer

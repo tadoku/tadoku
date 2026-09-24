@@ -133,8 +133,6 @@ func languageNames(languages []domainlanguages.Language) map[string]string {
 	return names
 }
 
-// registrationLanguages keeps one language per stored code, in stored order.
-// Codes missing from the catalog keep an empty name.
 func registrationLanguages(codes []string, names map[string]string) []Language {
 	languages := make([]Language, 0, len(codes))
 	for _, code := range codes {

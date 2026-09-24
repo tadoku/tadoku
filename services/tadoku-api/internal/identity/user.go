@@ -28,8 +28,6 @@ func FromContext(ctx context.Context) *User {
 	return user
 }
 
-// ActorID returns the verified actor's user ID. It reports false for a
-// missing identity, the guest subject and the nil UUID.
 func ActorID(ctx context.Context) (uuid.UUID, bool) {
 	user := FromContext(ctx)
 	if user == nil {
@@ -42,8 +40,6 @@ func ActorID(ctx context.Context) (uuid.UUID, bool) {
 	return userID, true
 }
 
-// RequireActorID returns the verified actor's user ID, or an unauthorized
-// error when ActorID reports none.
 func RequireActorID(ctx context.Context) (uuid.UUID, error) {
 	userID, ok := ActorID(ctx)
 	if !ok {

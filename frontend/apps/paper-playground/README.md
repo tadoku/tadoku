@@ -20,4 +20,4 @@ pnpm --filter paper-playground test
 pnpm --filter paper-playground build
 ```
 
-The page and scenario inventory, implementation plan, final report, and browser evidence live in `docs/wip/paper-playground` at the repository root. Do not connect these sample sign-in or administrative flows to live services.
+Do not connect these sample sign-in or administrative flows to live services.

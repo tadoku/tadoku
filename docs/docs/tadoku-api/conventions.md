@@ -120,7 +120,9 @@ The following rules decide where each check belongs.
   counts as one statement and is appropriate when the data needs one database
   snapshot. Compose independent repository reads and writes in the feature
   service or application layer, inside an application-owned transaction when
-  the operation must commit atomically.
+  the operation must commit atomically. `tools/ci/repopolicy` enforces this in
+  CI: handwritten repository functions issue at most one database statement and
+  never allocate IDs or control transactions.
 
 ## Dependencies
 

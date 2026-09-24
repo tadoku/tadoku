@@ -27,6 +27,7 @@ on:
       - ".github/workflows/build-bazel.yaml"
       - "!frontend/**"
   push:
+    branches: [main]
     paths:
       - "services/**"
       - "infra/dev/ory/identity.default.schema.json"

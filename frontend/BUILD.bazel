@@ -1,62 +1,5 @@
-load("@rules_oci//oci:defs.bzl", "oci_image", "oci_push")
-load("@rules_pkg//pkg:mappings.bzl", "pkg_attributes", "pkg_files", "strip_prefix")
 load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
-load("//.dev:deployable.bzl", "dev_deployable")
-
-# Image startup and DevCLI's initial dependency sync may overlap. BusyBox flock
-# serializes writes to node_modules and releases the lock if either process exits.
-_WEBV2_DEV_INSTALL = [
-    "flock",
-    "/tmp/tadoku-pnpm-install.lock",
-    "pnpm",
-    "install",
-    "--frozen-lockfile",
-    "--network-concurrency=4",
-    "--child-concurrency=1",
-]
-
-_WEBV2_DEV_COMMAND = " ".join(_WEBV2_DEV_INSTALL) + " && exec pnpm --filter webv2 dev"
-
-filegroup(
-    name = "webv2_sources",
-    srcs = glob(
-        [
-            "apps/webv2/**",
-            "packages/ui/**",
-            "package.json",
-            "pnpm-lock.yaml",
-            "pnpm-workspace.yaml",
-        ],
-        exclude = [
-            "**/node_modules/**",
-            "**/.next/**",
-            "**/.env*",
-            "**/dist/**",
-            "**/coverage/**",
-            "**/test-results/**",
-            "**/playwright-report/**",
-            "**/*.tsbuildinfo",
-            "**/next-env.d.ts",
-        ],
-    ),
-)
-
-pkg_files(
-    name = "webv2_dev_files",
-    srcs = [":webv2_sources"],
-    attributes = pkg_attributes(
-        gid = 1000,
-        mode = "0644",
-        uid = 1000,
-    ),
-    prefix = "/app",
-    strip_prefix = strip_prefix.from_pkg(),
-)
-
-pkg_tar(
-    name = "webv2_dev_layer",
-    srcs = [":webv2_dev_files"],
-)
+load("//.dev:frontend.bzl", "frontend_dev")
 
 pkg_tar(
     name = "pnpm_dev_layer",
@@ -64,83 +7,18 @@ pkg_tar(
     deps = ["@tadoku_dev_pnpm//:layer"],
 )
 
-oci_image(
-    name = "webv2_dev_image",
-    base = "@tadoku_dev_node_linux_amd64",
-    cmd = [_WEBV2_DEV_COMMAND],
-    entrypoint = [
-        "/bin/sh",
-        "-ec",
-    ],
-    tars = [
-        ":pnpm_dev_layer",
-        ":webv2_dev_layer",
-    ],
-    user = "1000:1000",
-    workdir = "/app",
+frontend_dev(
+    name = "webv2",
+    host = "tadoku.dev.lab",
 )
 
-oci_push(
-    name = "webv2_dev_push",
-    image = ":webv2_dev_image",
+frontend_dev(
+    name = "auth",
+    host = "account.tadoku.dev.lab",
+    readiness_path = "/login",
 )
 
-dev_deployable(
-    name = "webv2_dev",
-    metadata = json.encode({
-        "name": "webv2",
-        "kind": "frontend",
-        "namespace": "tdk-dev-frontend-webv2",
-        "buildTarget": "//frontend:webv2_dev_image",
-        "imageTarget": "//frontend:webv2_dev_image",
-        "imageName": "webv2",
-        "pushTarget": "//frontend:webv2_dev_push",
-        "port": 3000,
-        "readinessPath": "/",
-        "publicPath": "/",
-        "baseService": {
-            "name": "frontend-webv2",
-            "namespace": "tdk-dev-frontend-webv2",
-            "port": 3000,
-        },
-        "devContainer": "webv2",
-        "devCommand": [
-            "/bin/sh",
-            "-ec",
-            _WEBV2_DEV_COMMAND,
-        ],
-        "sourceRoots": [
-            "frontend/apps/webv2",
-            "frontend/packages/ui",
-            "frontend/package.json",
-            "frontend/pnpm-lock.yaml",
-            "frontend/pnpm-workspace.yaml",
-        ],
-        "syncPaths": [
-            "frontend/apps/webv2",
-            "frontend/packages/ui",
-            "frontend/package.json",
-            "frontend/pnpm-lock.yaml",
-            "frontend/pnpm-workspace.yaml",
-        ],
-        "syncRoot": "/app",
-        "syncStripPrefix": "frontend",
-        "syncExcludes": [
-            "*.tsbuildinfo",
-            "next-env.d.ts",
-        ],
-        "dependencyPaths": [
-            "frontend/apps/webv2/package.json",
-            "frontend/packages/ui/package.json",
-            "frontend/package.json",
-            "frontend/pnpm-lock.yaml",
-            "frontend/pnpm-workspace.yaml",
-        ],
-        "dependencyCommand": _WEBV2_DEV_INSTALL,
-    }),
-    workload_template = "//.dev:webv2.yaml",
-    deps = [
-        ":webv2_dev_image",
-        ":webv2_sources",
-    ],
+frontend_dev(
+    name = "admin",
+    host = "admin.tadoku.dev.lab",
 )

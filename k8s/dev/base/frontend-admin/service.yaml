@@ -9,3 +9,18 @@ spec:
     - name: http
       port: 3000
       targetPort: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dev-cli-gateway
+  namespace: tdk-dev-frontend-admin
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  type: ExternalName
+  externalName: dev-cli-playground-gateway.envoy-gateway-system.svc.cluster.local
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80

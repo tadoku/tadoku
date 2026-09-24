@@ -1,7 +1,7 @@
 # Tadoku development with DevCLI
 
-Develop **webv2 (Next.js/pnpm)** and **native tadoku-api** at
-**https://tadoku.dev.lab**. The committed `.dev/config.yaml` is the real Homelab
+Develop **webv2, auth, admin (Next.js/pnpm)** and **native tadoku-api** on the
+Homelab development cluster. The committed `.dev/config.yaml` is the real Homelab
 configuration; no hostname substitution is needed.
 
 The fresh `tdk-dev-*` GitOps base is active on `homelab-dev`. The approved cutover
@@ -42,6 +42,8 @@ In another terminal, in the same checkout:
 ```sh
 dev status --owner alice
 dev url --owner alice '/'
+dev url --owner alice --host account.tadoku.dev.lab '/login'
+dev url --owner alice --host admin.tadoku.dev.lab '/'
 dev logs --owner alice tadoku-api
 dev down --owner alice
 ```
@@ -51,6 +53,16 @@ No application branch menu is needed. Separate browser profiles have independent
 selections; tabs in one profile share it. Clear with
 `dev url --owner alice --clear '/'`. Owner is a stable developer/worktree label,
 not authentication; use different owners for simultaneous checkouts.
+
+Selection is **per hostname**. Open the printed account/admin link to select
+that frontend; when testing an API overlay from admin, also open the main-host
+link in the same profile. Clearing one hostname does not clear the others.
+Kratos stays shared and `/kratos` is never routed to a frontend overlay.
+
+Auth-only or admin-only source edits select only that app through Bazel. Shared
+`packages/ui` edits select all three frontends. Token-reflector is deliberately
+base-only; Paper styleguide live overlays are deferred (its local pnpm command
+still works). See [acceptance.md](acceptance.md) for the live verification gates.
 
 `make dev-up`, `make dev-logs`, and `make dev-down` wrap these commands.
 Set `DEV_OWNER` consistently. Frontend-only work can omit the database tasks:

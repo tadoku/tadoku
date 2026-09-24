@@ -4,10 +4,16 @@ namespaces:
   - tdk-dev-routing
   - tdk-dev-data
   - tdk-dev-frontend-webv2
+  - tdk-dev-frontend-auth
+  - tdk-dev-frontend-admin
   - tdk-dev-oathkeeper
   - tdk-dev-tadoku-api
 registry: registry.dev.lab/tadoku-dev-cli
 ingressHost: tadoku.dev.lab
+publicHosts:
+  - tadoku.dev.lab
+  - account.tadoku.dev.lab
+  - admin.tadoku.dev.lab
 ingressClass: nginx
 gatewayName: dev-cli-playground
 gatewayNamespace: envoy-gateway-system

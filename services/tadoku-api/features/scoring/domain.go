@@ -1,7 +1,6 @@
 package scoring
 
 import (
-	"errors"
 	"math"
 	"sort"
 	"strings"
@@ -14,7 +13,7 @@ import (
 )
 
 var (
-	ErrRuleSetNotFound = errors.New("scoring rule set not found")
+	ErrRuleSetNotFound = errx.NewNotFoundError("scoring rule set not found")
 	ErrContestNotFound = errx.NewNotFoundError("contest not found")
 )
 

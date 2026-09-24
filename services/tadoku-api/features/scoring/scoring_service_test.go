@@ -6,7 +6,14 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
+
+func TestErrRuleSetNotFoundIsNotFound(t *testing.T) {
+	if got := errx.KindOf(ErrRuleSetNotFound); got != errx.NotFound {
+		t.Errorf("errx.KindOf(ErrRuleSetNotFound) = %v, want %v", got, errx.NotFound)
+	}
+}
 
 func TestEvaluateSelectsAndCombinesRules(t *testing.T) {
 	baseFirst := uuid.MustParse("11111111-1111-4111-8111-111111111111")

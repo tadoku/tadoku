@@ -1,4 +1,4 @@
 >>> POST /immersion/logs
-HTTP/1.1 500 Internal Server Error
+HTTP/1.1 404 Not Found
 Content-Length: 0
 

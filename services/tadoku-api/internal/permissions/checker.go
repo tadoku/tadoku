@@ -37,6 +37,11 @@ func IsBanned(ctx context.Context) bool {
 	return banned
 }
 
+// CheckBanned reports whether the subject holds the shared application ban relation.
+func CheckBanned(ctx context.Context, reader ketoclient.AuthorizationReader, subjectID string) (bool, error) {
+	return reader.CheckPermission(ctx, "app", "tadoku", "banned", ketoclient.Subject{ID: subjectID})
+}
+
 // NewKetoChecker checks admin membership using the shared application relation.
 func NewKetoChecker(client *ketoclient.Client) *Checker {
 	return &Checker{client: client}

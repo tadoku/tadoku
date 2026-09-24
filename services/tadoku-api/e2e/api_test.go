@@ -309,7 +309,7 @@ func newTestRouterWithLeaderboardService(
 		return nil, nil, nil, err
 	}
 	rejectBanned := transport.RejectBannedUsers(func(ctx context.Context, subjectID string) (bool, error) {
-		return reader.CheckPermission(ctx, "app", "tadoku", "banned", ketoclient.Subject{ID: subjectID})
+		return permissions.CheckBanned(ctx, reader, subjectID)
 	}, logger)
 	authenticateCallback, err := transport.NewCallbackAuthentication(callbackToken)
 	if err != nil {

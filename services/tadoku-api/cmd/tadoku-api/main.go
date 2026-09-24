@@ -519,7 +519,7 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 
 func newBannedUserMiddleware(keto ketoclient.AuthorizationReader, logger *slog.Logger) func(http.Handler) http.Handler {
 	return transporthttp.RejectBannedUsers(func(ctx context.Context, subjectID string) (bool, error) {
-		return keto.CheckPermission(ctx, "app", "tadoku", "banned", ketoclient.Subject{ID: subjectID})
+		return permissions.CheckBanned(ctx, keto, subjectID)
 	}, logger)
 }
 

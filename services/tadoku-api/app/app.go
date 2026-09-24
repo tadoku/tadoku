@@ -2,8 +2,6 @@
 package app
 
 import (
-	"context"
-
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/announcements"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/audit"
@@ -17,7 +15,6 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/features/posts"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/profile"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/scoring"
-	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
 )
 
@@ -55,24 +52,4 @@ func New(announcements *announcements.Service, audit *audit.Service, authorizati
 		db:            db,
 		permissions:   permissions,
 	}
-}
-
-// mutateThenReadBack runs a write and its readback in one transaction. The
-// readback precedes commit, so it is discarded if the transaction fails.
-func mutateThenReadBack[T any](ctx context.Context, db *pgxpool.Pool, mutate func(context.Context) error, readBack func(context.Context) (T, error)) (T, error) {
-	var result T
-	err := postgres.RunInTransaction(ctx, db, func(ctx context.Context) (err error) {
-		if err := mutate(ctx); err != nil {
-			return err
-		}
-
-		result, err = readBack(ctx)
-		return err
-	})
-	if err != nil {
-		var zero T
-		return zero, err
-	}
-
-	return result, nil
 }

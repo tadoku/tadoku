@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/pages"
+	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 )
 
 func (a *Application) FindPageBySlug(ctx context.Context, namespace, slug string) (*pages.Page, error) {
@@ -46,16 +47,18 @@ func (a *Application) CreatePage(ctx context.Context, parameters CreatePageParam
 		return nil, err
 	}
 
-	return mutateThenReadBack(
-		ctx,
-		a.db,
-		func(ctx context.Context) error {
-			return a.pages.CreatePage(ctx, parameters)
-		},
-		func(ctx context.Context) (*pages.Page, error) {
-			return a.pages.FindPageByID(ctx, parameters.Namespace, parameters.ID)
-		},
-	)
+	var result *pages.Page
+	err := postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) (err error) {
+		if err := a.pages.CreatePage(ctx, parameters); err != nil {
+			return err
+		}
+		result, err = a.pages.FindPageByID(ctx, parameters.Namespace, parameters.ID)
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 type UpdatePageParameters = pages.UpdatePageParameters
@@ -65,16 +68,18 @@ func (a *Application) UpdatePage(ctx context.Context, parameters UpdatePageParam
 		return nil, err
 	}
 
-	return mutateThenReadBack(
-		ctx,
-		a.db,
-		func(ctx context.Context) error {
-			return a.pages.UpdatePage(ctx, parameters)
-		},
-		func(ctx context.Context) (*pages.Page, error) {
-			return a.pages.FindPageByID(ctx, parameters.Namespace, parameters.ID)
-		},
-	)
+	var result *pages.Page
+	err := postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) (err error) {
+		if err := a.pages.UpdatePage(ctx, parameters); err != nil {
+			return err
+		}
+		result, err = a.pages.FindPageByID(ctx, parameters.Namespace, parameters.ID)
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 func (a *Application) DeletePage(ctx context.Context, namespace string, id uuid.UUID) error {

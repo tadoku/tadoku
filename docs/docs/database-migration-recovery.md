@@ -61,16 +61,14 @@ the backup can be listed or restored in an isolated environment.
 
 ## 3. Inspect migration metadata
 
-The `/migrate-recovery` binary is included in `tadoku-api-migrations` images
-built from the source cleanup revision or later. The image digest pinned by the
-native handoff in PR #186 (`d2cdd6141583e857f8509a3a278f4b316be1fd9edf80148dee275d4454323d0a`)
-predates this change and must not be assumed to contain it. Before running a
-recovery Job, verify that the chosen image contains `/migrate-recovery` and the
-exact SQL migration set for the failed release. Publish and pin a reviewed image
+The `/migrate-recovery` binary ships in the `tadoku-api-migrations` image. Older
+pinned digests may not contain it. Before running a recovery Job, verify that the
+chosen image contains `/migrate-recovery` and the exact SQL migration set for the
+failed release. Publish and pin a reviewed image
 with both before using this example. Do not substitute an arbitrary newer
 migration image.
 
-Use the same database owner Secret and migration source as the native migration
+Use the same database owner Secret and migration source as the migration
 Job `tdk-prod-tadoku-api/tadoku-api-migrate`:
 
 ```yaml

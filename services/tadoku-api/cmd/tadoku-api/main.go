@@ -346,7 +346,6 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	roleService := commonroles.NewKetoService(ketoReader, "app", "tadoku")
 	authzService := featureauthz.NewService(
 		permissionChecker,
-		ketoReader,
 		kratosIdentities,
 		roleService,
 		commonroles.NewKetoManager(keto, "app", "tadoku"),
@@ -379,7 +378,7 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	scoringObserver := observability.NewScoringObserver(metrics, logger, cfg.ScoringEngineEnabled)
 	scoringService := scoring.NewService(scoringRepository, cfg.ScoringEngineEnabled, scoringObserver)
 	api := app.New(announcementsService, auditService, authzService, contestsService, leaderboardService, languagesService, logsService, pagesService, postsService, profileService, scoringService, featureFlagService, pool, permissionChecker)
-	rejectBanned := newBannedUserMiddleware(ketoReader, logger)
+	rejectBanned := transporthttp.RejectBannedUsers(permissionChecker.CheckBanned, logger)
 
 	handler, err := transporthttp.NewHandler(api, pool.Ping, cfg.RequestTimeout, metrics, logger, authenticate, rejectBanned, authenticateCallback)
 	if err != nil {
@@ -462,12 +461,6 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	)
 
 	return app, nil
-}
-
-func newBannedUserMiddleware(keto ketoclient.AuthorizationReader, logger *slog.Logger) func(http.Handler) http.Handler {
-	return transporthttp.RejectBannedUsers(func(ctx context.Context, subjectID string) (bool, error) {
-		return keto.CheckPermission(ctx, "app", "tadoku", "banned", ketoclient.Subject{ID: subjectID})
-	}, logger)
 }
 
 func (app *application) wait() error {

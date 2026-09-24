@@ -276,7 +276,6 @@ func newTestRouterWithLeaderboardService(
 	identities := kratosFixture.CursorClient()
 	authzService := featureauthz.NewService(
 		permissionChecker,
-		reader,
 		identities,
 		roleService,
 		commonroles.NewKetoManager(readWriter, "app", "tadoku"),
@@ -308,9 +307,7 @@ func newTestRouterWithLeaderboardService(
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	rejectBanned := transport.RejectBannedUsers(func(ctx context.Context, subjectID string) (bool, error) {
-		return reader.CheckPermission(ctx, "app", "tadoku", "banned", ketoclient.Subject{ID: subjectID})
-	}, logger)
+	rejectBanned := transport.RejectBannedUsers(permissionChecker.CheckBanned, logger)
 	authenticateCallback, err := transport.NewCallbackAuthentication(callbackToken)
 	if err != nil {
 		return nil, nil, nil, err

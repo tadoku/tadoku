@@ -9,6 +9,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/testketo"
 )
 
 // Exercise each shared dependency failure once. Do not add endpoint-specific cases
@@ -29,6 +31,19 @@ func TestDependencyFailures(t *testing.T) {
 	}
 	cacheUnavailable, _, _, err := newTestRouterWithLeaderboard(t.Context(), api.db.Pool, api.db.Pool, keto, api.kratos, logger, false, closedValkey, 25*time.Millisecond)
 	if err != nil {
+		t.Fatal(err)
+	}
+
+	closedKeto, err := testketo.New(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	ketoUnavailable, _, _, err := newTestRouterWithLogger(t.Context(), api.db.Pool, api.db.Pool, closedKeto, api.kratos, logger)
+	if err != nil {
+		_ = closedKeto.Close()
+		t.Fatal(err)
+	}
+	if err := closedKeto.Close(); err != nil {
 		t.Fatal(err)
 	}
 
@@ -114,6 +129,13 @@ func TestDependencyFailures(t *testing.T) {
 			want:        http.StatusServiceUnavailable,
 			suite:       api,
 			handler:     withFliptUnavailable(api.handler),
+		},
+		{
+			operation:   "AuthzProxyProxyAdminCheck",
+			description: []string{"provider", "unavailable"},
+			want:        http.StatusServiceUnavailable,
+			suite:       api,
+			handler:     ketoUnavailable,
 		},
 	}
 

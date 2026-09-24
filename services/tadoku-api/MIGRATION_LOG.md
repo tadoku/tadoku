@@ -9,7 +9,7 @@
 - [ ] Reconsider the announcements primary key as (`namespace`, `id`) so IDs can be scoped to their namespace.
 - [ ] After every endpoint owned by a legacy service has migrated, require operational acceptance and evidence that no active caller uses the legacy service, then delete it together with its parity subtests and Bazel dependencies.
 - [ ] After the Tadoku API migration is complete, make a final documentation pass and delete all references to this migration.
-- [ ] Add the job step kind to the journey runner together with the first migrated worker. Workers expose one synchronous pass as a method returning an error; production `Run` loops over it and tests never start the loop.
+- [x] Add the job step kind to the journey runner together with the first migrated worker. The outbox journey starts the production `Run` loop, waits for its ready signal and a later poll after an API write, then stops and joins it during cleanup.
 - [ ] Maintain the Keto-backed contest-create permission through a background reconciliation job.
 - [ ] Restructure the Tadoku API documentation for progressive disclosure for agents: a short entry point with focused documents behind it instead of one long README.
 - [ ] Rename the standard test identity from `Reader One` to `User One` across Kratos seeds, tests and HTTP goldens; regenerate affected signed JWT fixtures and update the public JWKS together.
@@ -35,6 +35,7 @@
 - [ ] Add `RegistrationUpsertParameters.Validate()` with field-specific invalid-input messages; drop the catch-all sentinel for pure registration rules.
 - [ ] Split pages/posts Create+Update into one-SQL repository methods; allocate content IDs in the service under the app transaction; ban `uuid.New` in `*_repository.go`.
 - [ ] Extract leaderboard Valkey cache I/O from `Service` into a Store (mirror immersion `LeaderboardStore`); deny `valkey-go` imports outside Store packages.
+- [ ] Move leaderboard outbox transaction ownership from the repository to a composition layer above it, with the worker run and transaction coordinated there; keep repository methods to one SQL statement each.
 - [ ] Move scoring `unitActivities` into shared `domain/activities`; ban private unit→activity maps elsewhere.
 - [x] Share one profile Kratos traits decoder; remove the dead untagged `Email` field in `FindProfile`.
 - [ ] Make logs `YearlyActivitySplit` reuse `hydrateLogActivity` / typed `ErrInvalidActivity` (not `fmt.Errorf` → 500).

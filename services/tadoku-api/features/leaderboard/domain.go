@@ -48,6 +48,13 @@ type score struct {
 	value  float64
 }
 
+type outboxEvent struct {
+	id        int64
+	eventType string
+	contestID *uuid.UUID
+	year      *int16
+}
+
 type page struct {
 	scores     []score
 	totalCount int

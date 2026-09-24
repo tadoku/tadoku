@@ -78,10 +78,11 @@ type config struct {
 	KratosAdminURL string        `validate:"required" envconfig:"kratos_admin_url"`
 	KratosTimeout  time.Duration `validate:"gt=0" envconfig:"kratos_timeout" default:"2s"`
 
-	PostgresMaxConnections int32                 `validate:"gt=0,lte=32" envconfig:"postgres_max_connections" default:"4"`
-	Postgres               postgresconfig.Config `ignored:"true"`
-	ValkeyURL              string                `validate:"required" envconfig:"valkey_url"`
-	ValkeyTimeout          time.Duration         `validate:"gt=0" envconfig:"valkey_timeout" default:"1s"`
+	PostgresMaxConnections   int32                 `validate:"gt=0,lte=32" envconfig:"postgres_max_connections" default:"4"`
+	Postgres                 postgresconfig.Config `ignored:"true"`
+	ValkeyURL                string                `validate:"required" envconfig:"valkey_url"`
+	ValkeyTimeout            time.Duration         `validate:"gt=0" envconfig:"valkey_timeout" default:"1s"`
+	LeaderboardOutboxEnabled bool                  `envconfig:"leaderboard_outbox_enabled" default:"false"`
 
 	DialTimeout           time.Duration `validate:"gt=0" envconfig:"dial_timeout" default:"3s"`
 	MaxTokenAge           time.Duration `validate:"gt=0" envconfig:"max_token_age" default:"24h"`
@@ -162,6 +163,7 @@ type application struct {
 	server       *http.Server
 	listener     net.Listener
 	serverErrors chan error
+	workerDone   chan struct{}
 
 	metricsServer   *http.Server
 	metricsListener net.Listener
@@ -474,6 +476,14 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 		fliptEvaluation: fliptEvaluation,
 		fliptManagement: fliptManagement,
 	}
+	if cfg.LeaderboardOutboxEnabled {
+		app.workerDone = make(chan struct{})
+		worker := leaderboard.NewWorker(leaderboardService, logger)
+		go func() {
+			defer close(app.workerDone)
+			worker.Run(ctx)
+		}()
+	}
 
 	go func() {
 		if err := server.Serve(listener); err != nil && !errors.Is(err, http.ErrServerClosed) {
@@ -509,6 +519,9 @@ func (app *application) wait() error {
 	case runErr = <-app.serverErrors:
 	}
 	app.cancel()
+	if app.workerDone != nil {
+		<-app.workerDone
+	}
 
 	// Each server gets the full configured grace period.
 	shutdownContext, cancelShutdown := context.WithTimeout(context.Background(), app.shutdownTimeout)

@@ -29,6 +29,8 @@ import (
 func TestApplicationStartsAndShutsDown(t *testing.T) {
 	cfg := validApplicationConfig(t)
 	cfg.FliptEnabled = true
+	cfg.LeaderboardOutboxEnabled = true
+	cfg.ValkeyURL += "/12"
 	tokenPath := filepath.Join(t.TempDir(), "token")
 	if err := os.WriteFile(tokenPath, []byte("projected-token"), 0o600); err != nil {
 		t.Fatal(err)
@@ -99,11 +101,42 @@ func TestApplicationStartsAndShutsDown(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Cleanup(observer.Close)
+	lease := "tadoku-api:test:outbox-worker-lease"
+	if err := observer.Do(t.Context(), observer.B().Set().Key(lease).Value("owned").Nx().Build()).Error(); err != nil {
+		t.Fatalf("lease worker test Valkey DB: %v", err)
+	}
+	t.Cleanup(func() {
+		if err := observer.Do(context.Background(), observer.B().Del().Key(lease).Build()).Error(); err != nil {
+			t.Error(err)
+		}
+	})
+	var scanCursor uint64
+	for {
+		page, err := observer.Do(t.Context(), observer.B().Scan().Cursor(scanCursor).Match("leaderboard:*:last_updated").Count(100).Build()).AsScanEntry()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(page.Elements) != 0 {
+			t.Fatalf("worker test Valkey DB contains leaderboard markers: %v", page.Elements)
+		}
+		if page.Cursor == 0 {
+			break
+		}
+		scanCursor = page.Cursor
+	}
 
 	ctx, cancel := context.WithCancel(t.Context())
 	application, err := start(ctx, cfg, slog.New(slog.NewTextHandler(io.Discard, nil)))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
+	}
+	if application.workerDone == nil {
+		t.Fatal("enabled outbox worker was not started")
+	}
+	select {
+	case <-application.workerDone:
+		t.Fatal("outbox worker exited before shutdown")
+	default:
 	}
 	stopped := false
 	t.Cleanup(func() {
@@ -246,6 +279,11 @@ func TestApplicationStartsAndShutsDown(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	stopped = true
+	select {
+	case <-application.workerDone:
+	default:
+		t.Error("outbox worker remained active after shutdown")
+	}
 
 	_, err = http.Get("http://" + address + "/livez")
 	if err == nil {
@@ -392,6 +430,15 @@ func TestLoadConfigUsesValidatedDefaults(t *testing.T) {
 	if cfg.ValkeyURL != "redis://valkey:6379" || cfg.ValkeyTimeout != time.Second {
 		t.Errorf("Valkey URL=%q timeout=%v", cfg.ValkeyURL, cfg.ValkeyTimeout)
 	}
+	if cfg.LeaderboardOutboxEnabled {
+		t.Error("leaderboard outbox worker must be disabled by default")
+	}
+	t.Setenv("API_LEADERBOARD_OUTBOX_ENABLED", "true")
+	enabledCfg, err := loadConfig()
+	if err != nil || !enabledCfg.LeaderboardOutboxEnabled {
+		t.Errorf("enable leaderboard outbox worker: enabled=%t error=%v", enabledCfg.LeaderboardOutboxEnabled, err)
+	}
+	t.Setenv("API_LEADERBOARD_OUTBOX_ENABLED", "false")
 	if cfg.JWKS != "http://jwks.test" {
 		t.Errorf("JWKS=%q", cfg.JWKS)
 	}

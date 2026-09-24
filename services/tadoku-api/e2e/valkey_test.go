@@ -17,16 +17,28 @@ const leaderboardValkeyLeaseKey = "tadoku-api:e2e:leaderboard:lease"
 var leaderboardValkeyKeys = []string{
 	"leaderboard:global",
 	"leaderboard:global:last_updated",
+	"leaderboard:global:generation",
 	"leaderboard:yearly:2026",
 	"leaderboard:yearly:2026:last_updated",
+	"leaderboard:yearly:2026:generation",
 	"leaderboard:yearly:2024",
 	"leaderboard:yearly:2024:last_updated",
+	"leaderboard:yearly:2024:generation",
 	"leaderboard:contest:f1111111-1111-4111-8111-111111111111",
 	"leaderboard:contest:f1111111-1111-4111-8111-111111111111:last_updated",
+	"leaderboard:contest:f1111111-1111-4111-8111-111111111111:generation",
 	"leaderboard:contest:f2222222-2222-4222-8222-222222222222",
 	"leaderboard:contest:f2222222-2222-4222-8222-222222222222:last_updated",
+	"leaderboard:contest:f2222222-2222-4222-8222-222222222222:generation",
 	"leaderboard:contest:52fdfc07-2182-454f-963f-5f0f9a621d72",
 	"leaderboard:contest:52fdfc07-2182-454f-963f-5f0f9a621d72:last_updated",
+	"leaderboard:contest:52fdfc07-2182-454f-963f-5f0f9a621d72:generation",
+	"leaderboard:contest:f0000000-0000-4000-8000-000000000001",
+	"leaderboard:contest:f0000000-0000-4000-8000-000000000001:last_updated",
+	"leaderboard:contest:f0000000-0000-4000-8000-000000000001:generation",
+	"leaderboard:contest:f0000000-0000-4000-8000-000000000004",
+	"leaderboard:contest:f0000000-0000-4000-8000-000000000004:last_updated",
+	"leaderboard:contest:f0000000-0000-4000-8000-000000000004:generation",
 }
 
 type leaderboardValkeyFixture struct {

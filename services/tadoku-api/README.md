@@ -184,6 +184,9 @@ Startup requires:
   Unix-socket configurations are rejected.
 - `API_VALKEY_TIMEOUT` (default 1s), the positive bound for each connection and
   handshake attempt and the established-connection keepalive/I/O interval.
+- `API_LEADERBOARD_OUTBOX_ENABLED` (default `false`). Enable only after every
+  legacy Immersion API outbox worker pod and job has stopped. Both workers must
+  never consume the shared queue or update leaderboard cache keys together.
 - `API_JWKS`, the gateway's public signing-key URL.
 - `API_MAX_TOKEN_AGE` (default 24h), the maximum accepted age since `iat`.
 - `API_JWT_ISSUER`, an optional exact issuer match. Empty leaves issuer unchecked
@@ -240,6 +243,21 @@ while the handshake or another caller's shared setup finishes. Streaming command
 also retain the upstream client's native cancellation behavior. See
 [`infra/valkey`](infra/valkey/) for the direct command pattern.
 
+When enabled, the native leaderboard worker first scans existing leaderboard
+cache markers with bounded Valkey `SCAN` calls and invalidates each recognized
+global, yearly and contest key through a generation fence. Leaderboard reads
+use PostgreSQL until reconciliation and the initial outbox drain succeed. The
+worker then claims pending rows with `for update skip locked`, invalidates their
+affected cache keys, and marks rows processed in the same PostgreSQL transaction
+only after Valkey succeeds. Failed batches remain pending and are retried. A
+cache miss rebuilds from PostgreSQL only if its generation has not changed;
+cached reads recheck that generation before returning. The worker logs
+`leaderboard cache reconciled` after startup invalidation,
+`leaderboard outbox batch processed` after each nonempty committed batch, and
+`leaderboard outbox ready` after the initial drain completes. Verify the ready
+log and `select count(*) from leaderboard_outbox where processed_at is null`
+returning zero before treating takeover as complete.
+
 Request and Go process metrics remain on the metrics listener
 (`API_METRICS_PORT`, default 9090). The request duration metric retains its
 existing name, `tadoku_api_proxy_request_duration_seconds`, for dashboard
@@ -251,6 +269,8 @@ the Valkey client and idle HTTP connections, including Flipt, Kratos and Keto
 connections. Startup failure closes
 the same owned transport. Raw clients have no separate close operation. Shutdown
 closes database and provider transport dependencies after request handling stops.
+An enabled leaderboard worker is canceled and joined before the PostgreSQL pool
+and Valkey client close.
 Valkey close follows the upstream client's native per-connection
 close allowance rather than `API_VALKEY_TIMEOUT`. The dev deployment uses the
 existing disposable development DB role;
@@ -416,9 +436,11 @@ Raw Valkey and application lifecycle tests also require
 `TADOKU_TEST_VALKEY_URL` in the exact form `redis://127.0.0.1:<port>` (or
 `localhost`) for a disposable Valkey 9 service. They isolate and delete their own
 keys and never flush the shared instance. HTTP E2Es reserve logical database 15,
-and their nested cleanup probe reserves database 14. Each uses a suite lease,
-refuses to overwrite pre-existing fixture keys and deletes only its explicit
-production-format keys during reset and cleanup.
+their nested cleanup probe reserves database 14, the leaderboard cache fence
+test uses database 13, and the enabled worker lifecycle test uses database 12.
+The E2E and lifecycle fixtures lease their database; the cache fence test uses
+unique scoped keys. They refuse to overwrite pre-existing fixture keys and
+delete only their own keys during cleanup.
 
 ```sh
 bazel test //services/tadoku-api/... --test_output=errors

@@ -30,13 +30,13 @@ func RejectBannedUsers(
 			banned, err := check(r.Context(), user.Subject)
 			if err != nil {
 				logger.Error("banned-user check unavailable; allowing request", "subject", user.Subject, "error", err)
-				ctx := permissions.WithBanLookupError(r.Context(), err)
+				ctx := permissions.WithBanState(r.Context(), permissions.BanUnknown(err))
 				next.ServeHTTP(w, r.WithContext(ctx))
 				return
 			}
 			if banned {
 				if r.Pattern == authzRoleGetPattern {
-					ctx := permissions.WithBanned(r.Context())
+					ctx := permissions.WithBanState(r.Context(), permissions.Banned())
 					next.ServeHTTP(w, r.WithContext(ctx))
 					return
 				}

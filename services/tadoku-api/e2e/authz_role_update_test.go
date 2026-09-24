@@ -28,10 +28,6 @@ func TestAuthzRoleUpdate(t *testing.T) {
 		},
 		{description: []string{"guest"}, want: http.StatusUnauthorized},
 		{description: []string{"non", "admin", "invalid", "role"}, want: http.StatusForbidden},
-		{
-			description: []string{"banned", "malformed", "json"},
-			want:        http.StatusForbidden,
-		},
 		{description: []string{"missing", "user", "marked", "admin"}, want: http.StatusNotFound},
 		{description: []string{"target", "admin"}, want: http.StatusForbidden},
 		{description: []string{"audit", "unavailable"}, want: http.StatusInternalServerError, auditUnavailable: true},

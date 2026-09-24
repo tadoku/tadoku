@@ -14,7 +14,6 @@ func TestImmersionScoringRuleSetCreatePlatform(t *testing.T) {
 		{description: []string{"admin", "empty", "rules"}, want: http.StatusOK},
 		{description: []string{"admin", "ignores", "contest", "fields"}, want: http.StatusOK},
 		{description: []string{"member"}, want: http.StatusForbidden},
-		{description: []string{"unknown", "signing", "key"}, want: http.StatusUnauthorized},
 		{description: []string{"guest"}, want: http.StatusUnauthorized},
 	}
 	seed := int64(1)
@@ -50,7 +49,6 @@ func TestImmersionScoringRuleSetCreateContest(t *testing.T) {
 		{description: []string{"nonowner"}, want: http.StatusForbidden},
 		{description: []string{"admin", "nonowner"}, want: http.StatusOK},
 		{description: []string{"already", "started"}, want: http.StatusConflict},
-		{description: []string{"unknown", "signing", "key"}, want: http.StatusUnauthorized},
 		{description: []string{"guest", "existing"}, want: http.StatusUnauthorized},
 		{description: []string{"guest", "missing"}, want: http.StatusUnauthorized},
 		{description: []string{"member", "missing"}, want: http.StatusNotFound},

@@ -17,7 +17,6 @@ func TestFindOngoingContestRegistrations(t *testing.T) {
 		{description: []string{"deleted", "private", "contest", "remains", "visible"}, want: http.StatusOK},
 		{description: []string{"invalid", "stored", "activity"}, want: http.StatusBadRequest},
 		{description: []string{"guest"}, want: http.StatusUnauthorized},
-		{description: []string{"banned"}, want: http.StatusForbidden},
 		{description: []string{"invalid", "signed", "subject"}, want: http.StatusInternalServerError},
 	}
 

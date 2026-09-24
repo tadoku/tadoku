@@ -293,18 +293,26 @@ func (s *Service) ContestActivity(ctx context.Context, userID, contestID uuid.UU
 	return s.logs.ContestActivity(ctx, userID, contestID)
 }
 
-// FindLog returns a log that is not deleted, including its contest registrations.
+// FindLog returns a log that is not deleted, including its contest
+// registrations. It applies no viewer visibility rules; callers authorize the
+// actor themselves.
 func (s *Service) FindLog(ctx context.Context, id uuid.UUID) (*Log, error) {
-	return s.FindLogForViewer(ctx, id, FindForViewerParameters{Viewer: AdminViewer{}})
+	return s.findLog(ctx, id, false, func(uuid.UUID) bool { return true })
 }
 
 func (s *Service) FindLogForViewer(ctx context.Context, id uuid.UUID, parameters FindForViewerParameters) (*Log, error) {
-	log, err := s.logs.FindLog(ctx, id, parameters.IncludeDeleted)
+	return s.findLog(ctx, id, parameters.IncludeDeleted, func(ownerID uuid.UUID) bool {
+		return mayViewRegistrations(parameters.Viewer, ownerID)
+	})
+}
+
+func (s *Service) findLog(ctx context.Context, id uuid.UUID, includeDeleted bool, withRegistrations func(ownerID uuid.UUID) bool) (*Log, error) {
+	log, err := s.logs.FindLog(ctx, id, includeDeleted)
 	if err != nil {
 		return nil, err
 	}
 
-	if mayViewRegistrations(parameters.Viewer, log.UserID) {
+	if withRegistrations(log.UserID) {
 		log.Registrations, err = s.logs.AttachedRegistrations(ctx, id)
 		if err != nil {
 			return nil, err

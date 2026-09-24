@@ -93,16 +93,15 @@ func (a *Application) ListPlatformScoringRuleSets(ctx context.Context) ([]Scorin
 }
 
 func (a *Application) ListContestScoringRuleSets(ctx context.Context, contestID uuid.UUID) ([]ScoringRuleSet, error) {
-	caller := identity.FromContext(ctx)
-	if caller == nil {
-		return nil, errx.NewUnauthorizedError("unauthorized")
+	if err := a.permissions.RequireAuthenticated(ctx); err != nil {
+		return nil, err
 	}
 
 	contest, err := a.contests.FindContestByID(ctx, contestID, false)
 	if err != nil {
 		return nil, err
 	}
-	callerID, parseErr := uuid.Parse(caller.Subject)
+	callerID, parseErr := uuid.Parse(identity.FromContext(ctx).Subject)
 	if (parseErr != nil || callerID != contest.OwnerUserID) && !a.permissions.IsAdminOrFalse(ctx) {
 		return nil, errx.NewForbiddenError("forbidden")
 	}

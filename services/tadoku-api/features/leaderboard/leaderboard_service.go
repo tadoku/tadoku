@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/activities"
+	"github.com/tadoku/tadoku/services/tadoku-api/domain/leaderboardoutbox"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 	valkeygo "github.com/valkey-io/valkey-go"
@@ -520,8 +521,8 @@ func (w *Worker) ProcessBatch(ctx context.Context) (int, error) {
 	ids := make([]int64, 0, len(events))
 	for _, event := range events {
 		ids = append(ids, event.id)
-		switch event.eventType {
-		case "refresh_contest_score", "remove_contest_score":
+		switch leaderboardoutbox.EventType(event.eventType) {
+		case leaderboardoutbox.RefreshContestScore, leaderboardoutbox.RemoveContestScore:
 			if event.contestID == nil {
 				w.logger.ErrorContext(ctx, "invalid leaderboard outbox event", "event_id", event.id, "event_type", event.eventType)
 				continue

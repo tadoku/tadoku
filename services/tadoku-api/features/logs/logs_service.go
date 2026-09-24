@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/tadoku/tadoku/services/tadoku-api/domain/leaderboardoutbox"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/logscore"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
@@ -87,7 +88,7 @@ func (s *Service) UpdateContestRegistrations(ctx context.Context, logID uuid.UUI
 	}
 	for contestID := range affected {
 		id := contestID
-		if err := s.logs.InsertOutbox(ctx, before.UserID, &id, nil, "refresh_contest_score"); err != nil {
+		if err := s.logs.InsertOutbox(ctx, before.UserID, &id, nil, leaderboardoutbox.RefreshContestScore); err != nil {
 			return err
 		}
 	}
@@ -122,7 +123,7 @@ func (s *Service) Delete(ctx context.Context, logID uuid.UUID, now time.Time) er
 	}
 	for _, contestID := range contestIDs {
 		id := contestID
-		if err := s.logs.InsertOutbox(ctx, outbox.UserID, &id, nil, "refresh_contest_score"); err != nil {
+		if err := s.logs.InsertOutbox(ctx, outbox.UserID, &id, nil, leaderboardoutbox.RefreshContestScore); err != nil {
 			return err
 		}
 	}
@@ -141,7 +142,7 @@ func (s *Service) ModerateDetach(ctx context.Context, logID, contestID uuid.UUID
 	if err := s.logs.DetachContest(ctx, logID, contestID); err != nil {
 		return err
 	}
-	if err := s.logs.InsertOutbox(ctx, outbox.UserID, &contestID, nil, "refresh_contest_score"); err != nil {
+	if err := s.logs.InsertOutbox(ctx, outbox.UserID, &contestID, nil, leaderboardoutbox.RefreshContestScore); err != nil {
 		return err
 	}
 	if outbox.EligibleOfficial {
@@ -352,7 +353,7 @@ func (s *Service) create(ctx context.Context, mutation logMutation) error {
 		}
 		seen[tracking.ContestID] = struct{}{}
 		contestID := tracking.ContestID
-		if err := s.logs.InsertOutbox(ctx, mutation.UserID, &contestID, nil, "refresh_contest_score"); err != nil {
+		if err := s.logs.InsertOutbox(ctx, mutation.UserID, &contestID, nil, leaderboardoutbox.RefreshContestScore); err != nil {
 			return err
 		}
 	}
@@ -416,7 +417,7 @@ func (s *Service) update(ctx context.Context, mutation logMutation) error {
 	}
 	for _, id := range contestIDs {
 		contestID := id
-		if err := s.logs.InsertOutbox(ctx, outbox.UserID, &contestID, nil, "refresh_contest_score"); err != nil {
+		if err := s.logs.InsertOutbox(ctx, outbox.UserID, &contestID, nil, leaderboardoutbox.RefreshContestScore); err != nil {
 			return err
 		}
 	}

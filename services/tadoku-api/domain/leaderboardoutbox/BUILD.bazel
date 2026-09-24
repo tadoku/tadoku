@@ -1,0 +1,8 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "leaderboardoutbox",
+    srcs = ["leaderboardoutbox.go"],
+    importpath = "github.com/tadoku/tadoku/services/tadoku-api/domain/leaderboardoutbox",
+    visibility = ["//visibility:public"],
+)

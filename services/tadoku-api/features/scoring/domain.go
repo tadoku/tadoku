@@ -347,7 +347,7 @@ func NormalizeTags(tags []string) ([]string, error) {
 			continue
 		}
 		if len(tag) > 50 {
-			return nil, errx.NewInternalError("tag exceeds maximum length of 50 characters")
+			return nil, errx.NewInvalidInputError("tag exceeds maximum length of 50 characters")
 		}
 		if _, exists := seen[tag]; exists {
 			continue
@@ -356,7 +356,7 @@ func NormalizeTags(tags []string) ([]string, error) {
 		result = append(result, tag)
 	}
 	if len(result) > 10 {
-		return nil, errx.NewInternalError("more than 10 tags remain after normalization")
+		return nil, errx.NewInvalidInputError("more than 10 tags remain after normalization")
 	}
 	return result, nil
 }

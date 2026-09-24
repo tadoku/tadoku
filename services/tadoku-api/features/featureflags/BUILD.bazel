@@ -7,7 +7,7 @@ go_library(
         "featureflags_service.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/features/featureflags",
-    visibility = ["//visibility:public"],
+    visibility = ["//services/tadoku-api:feature_consumers"],
     deps = [
         "//services/common/featureflags",
         "//services/tadoku-api/infra/fliptmanagement",

@@ -37,7 +37,13 @@ func (a *Application) CheckContestCreatePermission(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	return a.contests.CheckCreatePermission(ctx, userID)
+
+	accountCreatedAt, err := a.profile.FetchAccountCreatedAt(ctx, userID)
+	if err != nil {
+		return err
+	}
+
+	return a.contests.CheckCreatePermission(ctx, userID, accountCreatedAt)
 }
 
 func (a *Application) CreateContest(ctx context.Context, parameters CreateContestParameters) (*Contest, error) {

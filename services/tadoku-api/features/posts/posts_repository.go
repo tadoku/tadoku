@@ -26,7 +26,7 @@ func NewPostsRepository(db *pgxpool.Pool) *PostsRepository {
 	}
 }
 
-func (r *PostsRepository) CreatePost(ctx context.Context, item *Post) error {
+func (r *PostsRepository) CreatePost(ctx context.Context, item *Post, contentID uuid.UUID) error {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return err
@@ -36,9 +36,7 @@ func (r *PostsRepository) CreatePost(ctx context.Context, item *Post) error {
 	if item.PublishedAt != nil {
 		publishedAt = postgres.Timestamp(*item.PublishedAt)
 	}
-	contentID := uuid.New()
-	q := queries.New(executor)
-	err = q.CreatePost(ctx, queries.CreatePostParams{
+	err = queries.New(executor).CreatePost(ctx, queries.CreatePostParams{
 		ID:               pgtype.UUID{Bytes: item.ID, Valid: true},
 		Namespace:        item.Namespace,
 		Slug:             item.Slug,
@@ -55,16 +53,26 @@ func (r *PostsRepository) CreatePost(ctx context.Context, item *Post) error {
 		return fmt.Errorf("create post: %w", err)
 	}
 
-	err = q.CreatePostContent(ctx, queries.CreatePostContentParams{
+	return nil
+}
+
+func (r *PostsRepository) CreatePostContent(ctx context.Context, postID, contentID uuid.UUID, title, content string, createdAt time.Time) error {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return err
+	}
+
+	err = queries.New(executor).CreatePostContent(ctx, queries.CreatePostContentParams{
 		ID:        pgtype.UUID{Bytes: contentID, Valid: true},
-		PostID:    pgtype.UUID{Bytes: item.ID, Valid: true},
-		Title:     item.Title,
-		Content:   item.Content,
-		CreatedAt: postgres.Timestamp(*item.CreatedAt),
+		PostID:    pgtype.UUID{Bytes: postID, Valid: true},
+		Title:     title,
+		Content:   content,
+		CreatedAt: postgres.Timestamp(createdAt),
 	})
 	if err != nil {
 		return fmt.Errorf("create post content: %w", err)
 	}
+
 	return nil
 }
 
@@ -186,29 +194,23 @@ func (r *PostsRepository) ListPosts(ctx context.Context, namespace string, inclu
 	return result, total, nil
 }
 
-func (r *PostsRepository) UpdatePost(ctx context.Context, post *Post, contentChanged bool) error {
+func (r *PostsRepository) UpdatePost(ctx context.Context, item *Post, contentID *uuid.UUID) error {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return err
 	}
 
 	var publishedAt pgtype.Timestamp
-	if post.PublishedAt != nil {
-		publishedAt = postgres.Timestamp(*post.PublishedAt)
+	if item.PublishedAt != nil {
+		publishedAt = postgres.Timestamp(*item.PublishedAt)
 	}
-	var contentID pgtype.UUID
-	if contentChanged {
-		contentID = pgtype.UUID{Bytes: uuid.New(), Valid: true}
-	}
-
-	query := queries.New(executor)
-	_, err = query.UpdatePost(ctx, queries.UpdatePostParams{
-		ID:               pgtype.UUID{Bytes: post.ID, Valid: true},
-		Namespace:        post.Namespace,
-		Slug:             post.Slug,
-		CurrentContentID: contentID,
+	_, err = queries.New(executor).UpdatePost(ctx, queries.UpdatePostParams{
+		ID:               pgtype.UUID{Bytes: item.ID, Valid: true},
+		Namespace:        item.Namespace,
+		Slug:             item.Slug,
+		CurrentContentID: postgres.NullableUUID(contentID),
 		PublishedAt:      publishedAt,
-		UpdatedAt:        postgres.Timestamp(*post.UpdatedAt),
+		UpdatedAt:        postgres.Timestamp(*item.UpdatedAt),
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
 		return ErrPostNotFound
@@ -221,18 +223,6 @@ func (r *PostsRepository) UpdatePost(ctx context.Context, post *Post, contentCha
 		return fmt.Errorf("update post: %w", err)
 	}
 
-	if contentChanged {
-		err = query.CreatePostContent(ctx, queries.CreatePostContentParams{
-			ID:        contentID,
-			PostID:    pgtype.UUID{Bytes: post.ID, Valid: true},
-			Title:     post.Title,
-			Content:   post.Content,
-			CreatedAt: postgres.Timestamp(*post.UpdatedAt),
-		})
-		if err != nil {
-			return fmt.Errorf("create post revision: %w", err)
-		}
-	}
 	return nil
 }
 

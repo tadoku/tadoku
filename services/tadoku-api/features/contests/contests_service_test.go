@@ -61,6 +61,30 @@ func TestCheckContestCreationYearlyLimit(t *testing.T) {
 	}
 }
 
+func TestCheckContestCreatorAccountAge(t *testing.T) {
+	now := time.Date(2026, 3, 31, 12, 0, 0, 0, time.UTC)
+	oneMonthAgo := now.AddDate(0, -1, 0)
+
+	tests := []struct {
+		name             string
+		accountCreatedAt time.Time
+		want             error
+	}{
+		{name: "older than one month", accountCreatedAt: oneMonthAgo.Add(-time.Second), want: nil},
+		{name: "exactly one month", accountCreatedAt: oneMonthAgo, want: nil},
+		{name: "younger than one month", accountCreatedAt: oneMonthAgo.Add(time.Second), want: ErrContestCreatorTooYoung},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err := checkContestCreatorAccountAge(test.accountCreatedAt, now)
+			if !errors.Is(err, test.want) {
+				t.Errorf("checkContestCreatorAccountAge(%v, %v) error=%v, want %v", test.accountCreatedAt, now, err, test.want)
+			}
+		})
+	}
+}
+
 func TestRegistrationUpsertParametersValidate(t *testing.T) {
 	tests := []struct {
 		name          string

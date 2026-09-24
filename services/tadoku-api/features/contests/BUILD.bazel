@@ -8,7 +8,7 @@ go_library(
         "domain.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/features/contests",
-    visibility = ["//visibility:public"],
+    visibility = ["//services/tadoku-api:feature_consumers"],
     deps = [
         "//services/tadoku-api/domain/activities",
         "//services/tadoku-api/domain/leaderboardoutbox",
@@ -21,7 +21,6 @@ go_library(
         "@com_github_jackc_pgx_v5//:pgx",
         "@com_github_jackc_pgx_v5//pgtype",
         "@com_github_jackc_pgx_v5//pgxpool",
-        "@com_github_ory_kratos_client_go//:kratos-client-go",
     ],
 )
 

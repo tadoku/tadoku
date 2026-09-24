@@ -70,7 +70,7 @@ export function Pagination({
           totalPages={total}
         />
       ) : null}
-      <nav className="flex justify-between" aria-label="breadcrumb">
+      <nav className="flex justify-between" aria-label="Pagination">
         <Link
           className={classNames('btn ghost', {
             'pointer-events-none disabled': !canGoPrevious,

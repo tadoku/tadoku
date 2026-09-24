@@ -728,7 +728,7 @@ keeps those declarations aligned with source imports. Gazelle preserves existing
 visibility but creates new Go libraries as public. CI rejects public or
 out-of-service Tadoku API Go library visibility; omitted visibility is
 Bazel-private. Assign a new library its matching scoped visibility after
-running Gazelle.
+running Gazelle, then run `./scripts/check-tadoku-api-visibility.sh` locally.
 
 Bazel visibility is owned by the imported target, so it currently does not
 restrict Tadoku API imports from public `services/common` packages. A normal

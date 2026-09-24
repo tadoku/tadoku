@@ -70,7 +70,7 @@ Migration PRs must remain compatible with the application version currently depl
 
 **Keep new packages inside the architecture.** Gazelle resolves Go imports to Bazel `deps` but generates new libraries as public; replace that default with the narrowest matching visibility. CI rejects public or out-of-service Tadoku API `go_library` visibility; omitted visibility is Bazel-private. A feature's generated sqlc package must be visible only to that feature. When an import boundary intentionally changes, update the relevant target visibility or package group and the architecture guide in the same change; explain the new dependency direction in the PR. Do not widen visibility to `public` merely to make a build pass.
 
-**Verify import-boundary changes** with `bazel run //:gazelle -- -mode=diff` and `bazel build //services/tadoku-api/...`. The legacy depolicy CI check is temporary and does not define the preferred package structure.
+**Verify import-boundary changes** locally with `bazel run //:gazelle -- -mode=diff`, `./scripts/check-tadoku-api-visibility.sh`, and `bazel build //services/tadoku-api/...` before publishing a PR. The legacy depolicy CI check is temporary and does not define the preferred package structure.
 
 **Document durable conventions for the whole application.** State architecture, compatibility and testing rules for all operations. Do not document individual endpoint implementations, enumerate their coverage, or add endpoint-status sections to general documentation. Use generic examples. Keep deferred cleanup notes as checkboxes in `services/tadoku-api/MIGRATION_LOG.md`.
 

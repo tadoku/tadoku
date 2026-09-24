@@ -2,13 +2,10 @@ package contests
 
 import (
 	"context"
-	"fmt"
-	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/google/uuid"
-	kratosapi "github.com/ory/kratos-client-go"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/logscore"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
@@ -16,13 +13,11 @@ import (
 
 type Service struct {
 	contests *ContestsRepository
-	kratos   *kratosapi.APIClient
 }
 
-func NewService(repository *ContestsRepository, kratos *kratosapi.APIClient) *Service {
+func NewService(repository *ContestsRepository) *Service {
 	return &Service{
 		contests: repository,
-		kratos:   kratos,
 	}
 }
 
@@ -243,21 +238,10 @@ func (s *Service) CreateContest(ctx context.Context, contest Contest) (*Contest,
 	return s.contests.FindCreatedContestByID(ctx, contest.ID)
 }
 
-func (s *Service) CheckCreatePermission(ctx context.Context, userID uuid.UUID) error {
-	identity, response, err := s.kratos.IdentityApi.GetIdentity(ctx, userID.String()).Execute()
-	if err != nil {
-		if response != nil && response.StatusCode == http.StatusNotFound {
-			return ErrContestCreatorNotFound
-		}
-		return fmt.Errorf("fetch contest creator: %w", err)
-	}
-	if identity.GetSchemaId() != "user" {
-		return fmt.Errorf("unexpected contest creator schema %s", identity.GetSchemaId())
-	}
-
+func (s *Service) CheckCreatePermission(ctx context.Context, userID uuid.UUID, accountCreatedAt time.Time) error {
 	now := timex.Now()
-	if identity.GetCreatedAt().After(now.AddDate(0, -1, 0)) {
-		return ErrContestCreatorTooYoung
+	if err := checkContestCreatorAccountAge(accountCreatedAt, now); err != nil {
+		return err
 	}
 
 	count, err := s.contests.CountContestsCreatedByUserForYear(ctx, userID, int32(now.Year()))

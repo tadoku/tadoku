@@ -34,7 +34,13 @@ func (s *Service) CreatePage(ctx context.Context, parameters CreatePageParameter
 		CreatedAt:   &now,
 		UpdatedAt:   &now,
 	}
-	return s.pages.CreatePage(ctx, item)
+
+	contentID := uuid.New()
+	if err := s.pages.CreatePage(ctx, item, contentID); err != nil {
+		return err
+	}
+
+	return s.pages.CreatePageContent(ctx, item.ID, contentID, item.Title, item.HTML, *item.CreatedAt)
 }
 
 func (s *Service) DeletePage(ctx context.Context, namespace string, id uuid.UUID) error {
@@ -119,7 +125,16 @@ func (s *Service) UpdatePage(ctx context.Context, parameters UpdatePageParameter
 	now := timex.Now()
 	item.UpdatedAt = &now
 
-	return s.pages.UpdatePage(ctx, item, contentChanged)
+	if !contentChanged {
+		return s.pages.UpdatePage(ctx, item, nil)
+	}
+
+	contentID := uuid.New()
+	if err := s.pages.UpdatePage(ctx, item, &contentID); err != nil {
+		return err
+	}
+
+	return s.pages.CreatePageContent(ctx, item.ID, contentID, item.Title, item.HTML, *item.UpdatedAt)
 }
 
 func (s *Service) GetPageVersion(ctx context.Context, namespace string, pageID, contentID uuid.UUID) (*PageVersion, error) {

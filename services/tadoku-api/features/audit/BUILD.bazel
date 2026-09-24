@@ -8,7 +8,7 @@ go_library(
         "domain.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/features/audit",
-    visibility = ["//visibility:public"],
+    visibility = ["//services/tadoku-api:feature_consumers"],
     deps = [
         "//services/tadoku-api/generated/sqlc/audit",
         "//services/tadoku-api/infra/postgres",

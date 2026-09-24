@@ -38,7 +38,7 @@ func (r *ScoringRepository) ListContestRuleSets(ctx context.Context, contestID u
 		return nil, err
 	}
 
-	rows, err := q.ListContestScoringRuleSets(ctx, postgresUUID(contestID))
+	rows, err := q.ListContestScoringRuleSets(ctx, postgres.UUID(contestID))
 	if err != nil {
 		return nil, fmt.Errorf("list contest scoring rule sets: %w", err)
 	}
@@ -67,7 +67,7 @@ func (r *ScoringRepository) FindContestActiveRuleSetID(ctx context.Context, cont
 		return nil, err
 	}
 
-	id, err := q.FindContestScoringRuleSetID(ctx, postgresUUID(contestID))
+	id, err := q.FindContestScoringRuleSetID(ctx, postgres.UUID(contestID))
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrContestNotFound
 	}
@@ -87,7 +87,7 @@ func (r *ScoringRepository) FindRuleSetByID(ctx context.Context, id uuid.UUID) (
 		return nil, err
 	}
 
-	row, err := q.FindScoringRuleSetByID(ctx, postgresUUID(id))
+	row, err := q.FindScoringRuleSetByID(ctx, postgres.UUID(id))
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrRuleSetNotFound
 	}
@@ -103,7 +103,7 @@ func (r *ScoringRepository) ListRules(ctx context.Context, ruleSetID uuid.UUID) 
 		return nil, err
 	}
 
-	rows, err := q.ListScoringRulesForRuleSet(ctx, postgresUUID(ruleSetID))
+	rows, err := q.ListScoringRulesForRuleSet(ctx, postgres.UUID(ruleSetID))
 	if err != nil {
 		return nil, fmt.Errorf("list scoring rules: %w", err)
 	}
@@ -131,7 +131,7 @@ func (r *ScoringRepository) FindUnitKeyByID(ctx context.Context, id uuid.UUID, a
 	}
 
 	row, err := q.FindUnitForScoringByID(ctx, queries.FindUnitForScoringByIDParams{
-		ID:           postgresUUID(id),
+		ID:           postgres.UUID(id),
 		ActivityID:   int16(activityID),
 		LanguageCode: pgtype.Text{String: languageCode, Valid: true},
 	})
@@ -177,7 +177,7 @@ func (r *ScoringRepository) FindLogUnit(ctx context.Context, id *uuid.UUID, key 
 	}
 	if id != nil {
 		row, err := q.FindUnitForScoringByID(ctx, queries.FindUnitForScoringByIDParams{
-			ID:           postgresUUID(*id),
+			ID:           postgres.UUID(*id),
 			ActivityID:   int16(activityID),
 			LanguageCode: pgtype.Text{String: languageCode, Valid: true},
 		})
@@ -214,7 +214,7 @@ func (r *ScoringRepository) NextDraftVersion(ctx context.Context, contestID *uui
 	if contestID == nil {
 		return q.NextPlatformScoringRuleSetVersion(ctx)
 	}
-	return q.NextContestScoringRuleSetVersion(ctx, postgresUUID(*contestID))
+	return q.NextContestScoringRuleSetVersion(ctx, postgres.UUID(*contestID))
 }
 
 func (r *ScoringRepository) CreateDraft(ctx context.Context, draft RuleSet) (*RuleSet, error) {
@@ -224,7 +224,7 @@ func (r *ScoringRepository) CreateDraft(ctx context.Context, draft RuleSet) (*Ru
 	}
 
 	row, err := q.CreateScoringRuleSet(ctx, queries.CreateScoringRuleSetParams{
-		ID:                postgresUUID(draft.ID),
+		ID:                postgres.UUID(draft.ID),
 		Scope:             draft.Scope,
 		ContestID:         postgres.NullableUUID(draft.ContestID),
 		Version:           draft.Version,
@@ -245,8 +245,8 @@ func (r *ScoringRepository) CreateRule(ctx context.Context, ruleSetID uuid.UUID,
 	}
 
 	if err := q.CreateScoringRule(ctx, queries.CreateScoringRuleParams{
-		ID:           postgresUUID(rule.ID),
-		RuleSetID:    postgresUUID(ruleSetID),
+		ID:           postgres.UUID(rule.ID),
+		RuleSetID:    postgres.UUID(ruleSetID),
 		Priority:     rule.Priority,
 		Stackable:    rule.Stackable,
 		ActivityID:   int16(rule.ActivityID),
@@ -268,7 +268,7 @@ func (r *ScoringRepository) PublishRuleSet(ctx context.Context, id uuid.UUID, pu
 	}
 
 	row, err := q.PublishScoringRuleSet(ctx, queries.PublishScoringRuleSetParams{
-		ID:          postgresUUID(id),
+		ID:          postgres.UUID(id),
 		PublishedAt: pgtype.Timestamp{Time: publishedAt, Valid: true},
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -286,7 +286,7 @@ func (r *ScoringRepository) ActivatePlatformRuleSet(ctx context.Context, id uuid
 		return err
 	}
 
-	if err := q.ActivatePlatformScoringRuleSet(ctx, postgresUUID(id)); err != nil {
+	if err := q.ActivatePlatformScoringRuleSet(ctx, postgres.UUID(id)); err != nil {
 		return fmt.Errorf("activate platform scoring rule set: %w", err)
 	}
 	return nil
@@ -299,9 +299,9 @@ func (r *ScoringRepository) ActivateContestRuleSet(ctx context.Context, contestI
 	}
 
 	if err := q.ActivateContestScoringRuleSet(ctx, queries.ActivateContestScoringRuleSetParams{
-		RuleSetID: postgresUUID(id),
+		RuleSetID: postgres.UUID(id),
 		UpdatedAt: pgtype.Timestamp{Time: updatedAt, Valid: true},
-		ContestID: postgresUUID(contestID),
+		ContestID: postgres.UUID(contestID),
 	}); err != nil {
 		return fmt.Errorf("activate contest scoring rule set: %w", err)
 	}
@@ -348,5 +348,3 @@ func ruleSet(row queries.ScoringRuleSet) *RuleSet {
 	}
 	return result
 }
-
-func postgresUUID(value uuid.UUID) pgtype.UUID { return pgtype.UUID{Bytes: value, Valid: true} }

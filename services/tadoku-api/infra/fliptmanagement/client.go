@@ -17,9 +17,12 @@ import (
 
 var ErrUnavailable = errors.New("feature access unavailable")
 
-type FeatureFlagKey string
-
-const FeatureFlagReleaseLogEntryV2 FeatureFlagKey = "release-log-entry-v2"
+// Segment identifies the entity-ID allowlist segment a call operates on.
+type Segment struct {
+	Key         string
+	Name        string
+	Description string
+}
 
 type State struct {
 	Enabled     bool
@@ -28,12 +31,7 @@ type State struct {
 	Revision    string
 }
 
-const (
-	segmentKey         = "release-log-entry-v2-access"
-	segmentName        = "Release log entry v2 access"
-	segmentDescription = "Kratos UUIDs explicitly granted access to release log entry v2."
-	maxUpdateAttempts  = 2
-)
+const maxUpdateAttempts = 2
 
 type Config struct {
 	URL         string
@@ -93,11 +91,11 @@ func NewClient(cfg Config) *Client {
 	return &Client{baseURL: baseURL, environment: cfg.Environment, httpClient: httpClient}
 }
 
-func (c *Client) GetNamedUserAccess(ctx context.Context, flagKey FeatureFlagKey, targetUserID uuid.UUID) (State, error) {
-	if err := c.validate(flagKey, targetUserID); err != nil {
+func (c *Client) GetNamedUserAccess(ctx context.Context, spec Segment, targetUserID uuid.UUID) (State, error) {
+	if err := c.validate(spec, targetUserID); err != nil {
 		return State{}, err
 	}
-	segment, err := c.getSegment(ctx)
+	segment, err := c.getSegment(ctx, spec)
 	if err != nil {
 		return State{}, err
 	}
@@ -108,13 +106,13 @@ func (c *Client) GetNamedUserAccess(ctx context.Context, flagKey FeatureFlagKey,
 	return c.state(segment, contains(members, targetUserID.String()), false), nil
 }
 
-func (c *Client) SetNamedUserAccess(ctx context.Context, flagKey FeatureFlagKey, targetUserID uuid.UUID, enabled bool) (State, error) {
-	if err := c.validate(flagKey, targetUserID); err != nil {
+func (c *Client) SetNamedUserAccess(ctx context.Context, spec Segment, targetUserID uuid.UUID, enabled bool) (State, error) {
+	if err := c.validate(spec, targetUserID); err != nil {
 		return State{}, err
 	}
 
 	for attempt := 0; attempt < maxUpdateAttempts; attempt++ {
-		segment, err := c.getSegment(ctx)
+		segment, err := c.getSegment(ctx, spec)
 		if err != nil {
 			return State{}, err
 		}
@@ -139,7 +137,7 @@ func (c *Client) SetNamedUserAccess(ctx context.Context, flagKey FeatureFlagKey,
 		}
 		segment.Resource.Payload.Constraints[0].Value = string(encodedMembers)
 
-		updated, conflict, err := c.putSegment(ctx, segment)
+		updated, conflict, err := c.putSegment(ctx, spec, segment)
 		if err != nil {
 			return State{}, err
 		}
@@ -151,21 +149,21 @@ func (c *Client) SetNamedUserAccess(ctx context.Context, flagKey FeatureFlagKey,
 	return State{}, fmt.Errorf("%w: update conflicted", ErrUnavailable)
 }
 
-func (c *Client) validate(flagKey FeatureFlagKey, targetUserID uuid.UUID) error {
+func (c *Client) validate(spec Segment, targetUserID uuid.UUID) error {
 	if c == nil || c.baseURL == nil || c.baseURL.Scheme == "" || c.baseURL.Host == "" {
 		return errors.New("feature access management is not configured")
 	}
 	if c.environment != "local" && c.environment != "production" {
 		return errors.New("feature access environment is invalid")
 	}
-	if flagKey != FeatureFlagReleaseLogEntryV2 || targetUserID == uuid.Nil {
+	if spec.Key == "" || targetUserID == uuid.Nil {
 		return errors.New("feature access request is invalid")
 	}
 	return nil
 }
 
-func (c *Client) getSegment(ctx context.Context) (parsedSegment, error) {
-	endpoint := fmt.Sprintf("%s/api/v2/environments/%s/namespaces/default/resources/flipt.core.Segment/%s", c.baseURL.String(), c.environment, segmentKey)
+func (c *Client) getSegment(ctx context.Context, spec Segment) (parsedSegment, error) {
+	endpoint := fmt.Sprintf("%s/api/v2/environments/%s/namespaces/default/resources/flipt.core.Segment/%s", c.baseURL.String(), c.environment, url.PathEscape(spec.Key))
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return parsedSegment{}, errors.New("create feature access request")
@@ -179,19 +177,19 @@ func (c *Client) getSegment(ctx context.Context) (parsedSegment, error) {
 		drain(resp.Body)
 		return parsedSegment{}, fmt.Errorf("%w: segment returned status %d", ErrUnavailable, resp.StatusCode)
 	}
-	segment, err := decodeSegment(resp.Body)
+	segment, err := decodeSegment(resp.Body, spec)
 	if err != nil {
 		return parsedSegment{}, fmt.Errorf("%w: %v", ErrUnavailable, err)
 	}
 	return segment, nil
 }
 
-func (c *Client) putSegment(ctx context.Context, segment parsedSegment) (parsedSegment, bool, error) {
+func (c *Client) putSegment(ctx context.Context, spec Segment, segment parsedSegment) (parsedSegment, bool, error) {
 	payload := struct {
 		Key      string         `json:"key"`
 		Revision string         `json:"revision"`
 		Payload  segmentPayload `json:"payload"`
-	}{Key: segmentKey, Revision: segment.Revision, Payload: segment.Resource.Payload}
+	}{Key: spec.Key, Revision: segment.Revision, Payload: segment.Resource.Payload}
 	body, err := json.Marshal(payload)
 	if err != nil {
 		return parsedSegment{}, false, errors.New("encode feature access update")
@@ -215,14 +213,14 @@ func (c *Client) putSegment(ctx context.Context, segment parsedSegment) (parsedS
 		drain(resp.Body)
 		return parsedSegment{}, false, fmt.Errorf("%w: update returned status %d", ErrUnavailable, resp.StatusCode)
 	}
-	updated, err := decodeSegment(resp.Body)
+	updated, err := decodeSegment(resp.Body, spec)
 	if err != nil {
 		return parsedSegment{}, false, fmt.Errorf("%w: %v", ErrUnavailable, err)
 	}
 	return updated, false, nil
 }
 
-func decodeSegment(reader io.Reader) (parsedSegment, error) {
+func decodeSegment(reader io.Reader, spec Segment) (parsedSegment, error) {
 	var segment segmentResponse
 	decoder := json.NewDecoder(io.LimitReader(reader, 1<<20))
 	if err := decodeOne(decoder, &segment); err != nil {
@@ -234,9 +232,9 @@ func decodeSegment(reader io.Reader) (parsedSegment, error) {
 	if err := decodeOne(payloadDecoder, &payload); err != nil {
 		return parsedSegment{}, errors.New("unexpected segment schema")
 	}
-	if segment.Resource.NamespaceKey != "default" || segment.Resource.Key != segmentKey ||
-		payload.Type != "flipt.core.Segment" || payload.Key != segmentKey ||
-		payload.Name != segmentName || payload.Description != segmentDescription ||
+	if segment.Resource.NamespaceKey != "default" || segment.Resource.Key != spec.Key ||
+		payload.Type != "flipt.core.Segment" || payload.Key != spec.Key ||
+		payload.Name != spec.Name || payload.Description != spec.Description ||
 		payload.MatchType != "ALL_MATCH_TYPE" || len(payload.Constraints) != 1 {
 		return parsedSegment{}, errors.New("unexpected segment schema")
 	}

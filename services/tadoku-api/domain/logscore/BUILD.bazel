@@ -4,6 +4,6 @@ go_library(
     name = "logscore",
     srcs = ["logscore.go"],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/domain/logscore",
-    visibility = ["//visibility:public"],
+    visibility = ["//services/tadoku-api:domain_consumers"],
     deps = ["@com_github_google_uuid//:uuid"],
 )

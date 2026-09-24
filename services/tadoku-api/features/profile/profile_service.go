@@ -2,6 +2,7 @@ package profile
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"strings"
@@ -165,4 +166,20 @@ func (s *Service) FindProfile(ctx context.Context, userID uuid.UUID) (*PublicPro
 		DisplayName: traits.DisplayName,
 		CreatedAt:   identity.GetCreatedAt(),
 	}, nil
+}
+
+// FetchAccountCreatedAt returns when the user's identity was created.
+func (s *Service) FetchAccountCreatedAt(ctx context.Context, userID uuid.UUID) (time.Time, error) {
+	identity, err := s.identities.FetchIdentity(ctx, userID)
+	if errors.Is(err, kratosclient.ErrNotFound) {
+		return time.Time{}, ErrIdentityNotFound
+	}
+	if err != nil {
+		return time.Time{}, err
+	}
+	if identity.GetSchemaId() != "user" {
+		return time.Time{}, fmt.Errorf("unexpected schema %s", identity.GetSchemaId())
+	}
+
+	return identity.GetCreatedAt(), nil
 }

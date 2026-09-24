@@ -363,7 +363,7 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	scoringRepository := scoring.NewScoringRepository(pool)
 	userCache := profile.NewUserCache(kratosIdentities)
 	announcementsService := announcements.NewService(announcementsRepository)
-	contestsService := contests.NewService(contestsRepository, kratos)
+	contestsService := contests.NewService(contestsRepository)
 	languagesService := languages.NewService(languagesRepository)
 	leaderboardService := leaderboard.NewService(leaderboardRepository, valkeyClient, cfg.ValkeyTimeout, cfg.LeaderboardCachePrefix)
 	logsService := logs.NewService(logsRepository, cfg.ScoringEngineEnabled)

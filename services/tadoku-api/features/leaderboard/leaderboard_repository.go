@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	queries "github.com/tadoku/tadoku/services/tadoku-api/generated/sqlc/leaderboard"
@@ -172,12 +171,12 @@ func (r *Repository) allGlobalScores(ctx context.Context) ([]score, error) {
 	return res, nil
 }
 
-func (r *Repository) beginOutbox(ctx context.Context) (pgx.Tx, error) {
-	return r.db.Begin(ctx)
-}
-
-func (r *Repository) lockOutbox(ctx context.Context, tx pgx.Tx) ([]outboxEvent, error) {
-	rows, err := queries.New(tx).FetchAndLockLeaderboardOutbox(ctx, 100)
+func (r *Repository) lockOutbox(ctx context.Context) ([]outboxEvent, error) {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := queries.New(executor).FetchAndLockLeaderboardOutbox(ctx, 100)
 	if err != nil {
 		return nil, fmt.Errorf("claim leaderboard outbox: %w", err)
 	}
@@ -196,8 +195,12 @@ func (r *Repository) lockOutbox(ctx context.Context, tx pgx.Tx) ([]outboxEvent, 
 	return events, nil
 }
 
-func (r *Repository) markOutbox(ctx context.Context, tx pgx.Tx, ids []int64, processedAt time.Time) error {
-	err := queries.New(tx).MarkLeaderboardOutboxProcessed(ctx, queries.MarkLeaderboardOutboxProcessedParams{
+func (r *Repository) markOutbox(ctx context.Context, ids []int64, processedAt time.Time) error {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return err
+	}
+	err = queries.New(executor).MarkLeaderboardOutboxProcessed(ctx, queries.MarkLeaderboardOutboxProcessedParams{
 		ProcessedAt: pgtype.Timestamp{Time: processedAt, Valid: true},
 		Ids:         ids,
 	})
@@ -208,7 +211,11 @@ func (r *Repository) markOutbox(ctx context.Context, tx pgx.Tx, ids []int64, pro
 }
 
 func (r *Repository) cleanupOutbox(ctx context.Context, before time.Time) error {
-	err := queries.New(r.db).CleanupLeaderboardOutbox(ctx, pgtype.Timestamp{Time: before, Valid: true})
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return err
+	}
+	err = queries.New(executor).CleanupLeaderboardOutbox(ctx, pgtype.Timestamp{Time: before, Valid: true})
 	if err != nil {
 		return fmt.Errorf("cleanup leaderboard outbox: %w", err)
 	}

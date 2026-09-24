@@ -30,12 +30,12 @@ func (s *Service) ValidateRequest(flagKey string, targetUserID uuid.UUID) error 
 }
 
 func (s *Service) GetNamedUserAccess(ctx context.Context, flagKey string, targetUserID uuid.UUID) (State, error) {
-	key, err := validate(flagKey, targetUserID)
+	segment, err := validate(flagKey, targetUserID)
 	if err != nil {
 		return State{}, err
 	}
 
-	state, err := s.client.GetNamedUserAccess(ctx, key, targetUserID)
+	state, err := s.client.GetNamedUserAccess(ctx, segment, targetUserID)
 	if err != nil {
 		if errors.Is(err, fliptmanagement.ErrUnavailable) {
 			return State{}, fmt.Errorf("%w: %v", ErrUnavailable, err)
@@ -54,12 +54,12 @@ func (s *Service) Revoke(ctx context.Context, flagKey string, targetUserID uuid.
 }
 
 func (s *Service) setNamedUserAccess(ctx context.Context, flagKey string, targetUserID uuid.UUID, enabled bool) (State, error) {
-	key, err := validate(flagKey, targetUserID)
+	segment, err := validate(flagKey, targetUserID)
 	if err != nil {
 		return State{}, err
 	}
 
-	state, err := s.client.SetNamedUserAccess(ctx, key, targetUserID, enabled)
+	state, err := s.client.SetNamedUserAccess(ctx, segment, targetUserID, enabled)
 	if err != nil {
 		if errors.Is(err, fliptmanagement.ErrUnavailable) {
 			return State{}, fmt.Errorf("%w: %v", ErrUnavailable, err)

@@ -462,7 +462,7 @@ func TestLogsRepositoryInsertOutbox(t *testing.T) {
 
 	contestID := uuid.MustParse("cccccccc-cccc-4ccc-8ccc-ccccccccccc1")
 	year := int16(2026)
-	if err := repository.InsertOutbox(t.Context(), testUserID, nil, nil, leaderboardoutbox.RemoveContestScore); err != nil {
+	if err := repository.InsertOutbox(t.Context(), testUserID, nil, nil, leaderboardoutbox.RefreshOfficialScores); err != nil {
 		t.Fatal(err)
 	}
 	if err := repository.InsertOutbox(t.Context(), testOtherUserID, &contestID, &year, leaderboardoutbox.RefreshContestScore); err != nil {
@@ -498,7 +498,7 @@ func TestLogsRepositoryInsertOutbox(t *testing.T) {
 	}
 
 	want := []outboxRow{
-		{EventType: "remove_contest_score", UserID: testUserID, Unprocessed: true},
+		{EventType: "refresh_official_scores", UserID: testUserID, Unprocessed: true},
 		{EventType: "refresh_contest_score", UserID: testOtherUserID, ContestID: &contestID, Year: &year, Unprocessed: true},
 	}
 	if !reflect.DeepEqual(got, want) {

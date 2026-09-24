@@ -116,7 +116,7 @@ source commits. Capture trigger and outcome, not merely a loaded page.
 
 For PR verification, follow [Publishing PR evidence](references/pr-evidence.md):
 put one evidence block in the authorized PR description, with a results table,
-visible coverage callout and collapsed media and reproduction details. Attach
+visible coverage warning and collapsed media and reproduction details. Attach
 useful screenshots and workflow recordings directly to that PR. Inspect media
 before uploading and verify the posted attachments. Don't substitute local file
 paths for delivered evidence, or claim an attachment was posted when upload failed.

@@ -64,7 +64,7 @@ publish evidence. In short:
   URLs, the backend identities you observed, the steps, and expected versus
   actual results. Name skipped tests, TLS bypasses and anything unverified.
 - Put one evidence block in the PR description. Lead with a compact results
-  table, then a visible GitHub coverage-limit alert. Put media and reproduction
+  table, then a visible GitHub coverage-limit warning. Put media and reproduction
   detail in collapsed sections. Keep failures and skipped checks visible.
 - Attach screenshots, and a short recording for multi-step workflows, directly
   to the PR description with `gh pr edit --attach`. Inspect the media first and

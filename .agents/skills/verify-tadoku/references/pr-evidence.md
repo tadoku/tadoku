@@ -34,11 +34,10 @@ Keep the result scannable before any section is expanded:
 2. Use a compact table with one row per meaningful check: **Check**, **Result**
    and **Proof**. Link each proof to the relevant attachment, trace or CI run.
    State failures and skipped checks in the table; never turn a skip into a pass.
-3. Put a visible GitHub alert immediately below the table. Use `> [!NOTE]` for
-   coverage limits and `> [!WARNING]` when a gap blocks confidence in the
-   change. Name untested states and viewports, mocks, TLS bypasses and skipped
-   checks with their reasons. Do not hide material limitations in a collapsed
-   section.
+3. Put a visible `> [!WARNING]` GitHub alert immediately below the table for
+   coverage limits. Name untested states and viewports, mocks, TLS bypasses and
+   skipped checks with their reasons. Do not hide material limitations in a
+   collapsed section.
 4. Add a closed `<details>` section for visual evidence. Use a table of states,
    small linked previews and what each image proves. Link the recording with a
    descriptive label instead of leaving a large player in the main reading
@@ -61,7 +60,7 @@ For example, replace the placeholders and omit media that was not captured:
 | Interaction | Pass — downstream state was visible | [Recording](VIDEO_URL) |
 | Local build | Skipped — state the reason | [CI run](CI_URL) |
 
-> [!NOTE]
+> [!WARNING]
 > **Coverage limits:** Name untested states and viewports, skipped checks, mocks
 > or TLS bypasses. State what was actually verified.
 

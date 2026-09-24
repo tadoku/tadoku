@@ -7,7 +7,7 @@ go_library(
         "domain.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/features/authz",
-    visibility = ["//visibility:public"],
+    visibility = ["//services/tadoku-api:feature_consumers"],
     deps = [
         "//services/common/authz/roles",
         "//services/common/client/kratos",

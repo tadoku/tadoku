@@ -5,7 +5,7 @@ go_library(
     testonly = True,
     srcs = ["valkey.go"],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/internal/testvalkey",
-    visibility = ["//services/tadoku-api:__subpackages__"],
+    visibility = ["//services/tadoku-api:internal_consumers"],
 )
 
 go_test(

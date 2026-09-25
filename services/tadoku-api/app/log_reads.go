@@ -31,15 +31,27 @@ func (a *Application) FindLog(ctx context.Context, id uuid.UUID) (*Log, error) {
 }
 
 func (a *Application) ListUserLogs(ctx context.Context, parameters LogListParameters) (*LogList, error) {
-	if parameters.IncludeDeleted && !a.permissions.IsAdminOrFalse(ctx) {
-		return nil, errx.NewForbiddenError("include_deleted requires administrator access")
+	if parameters.IncludeDeleted {
+		allowed, err := a.permissions.IsAdmin(ctx)
+		if err != nil {
+			return nil, err
+		}
+		if !allowed {
+			return nil, errx.NewForbiddenError("include_deleted requires administrator access")
+		}
 	}
 	return a.logs.ListUserLogs(ctx, parameters)
 }
 
 func (a *Application) ListContestLogs(ctx context.Context, parameters LogListParameters) (*LogList, error) {
-	if parameters.IncludeDeleted && !a.permissions.IsAdminOrFalse(ctx) {
-		return nil, errx.NewForbiddenError("include_deleted requires administrator access")
+	if parameters.IncludeDeleted {
+		allowed, err := a.permissions.IsAdmin(ctx)
+		if err != nil {
+			return nil, err
+		}
+		if !allowed {
+			return nil, errx.NewForbiddenError("include_deleted requires administrator access")
+		}
 	}
 
 	if err := a.contests.RequireExistingContest(ctx, parameters.ContestID); err != nil {

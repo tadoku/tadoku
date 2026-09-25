@@ -36,8 +36,15 @@ files in an area, read its page; those rules are as binding as this file.
   return values, ownership and constructor defaults are restatements when the
   code already shows them. Run
   `bazel run //tools/ci/commentpolicy` after changing Go comments.
-- **Ship every database migration as a standalone change**: its own commit, pull
-  request and deployment, before any code that depends on it.
+- **Ship every database migration as a standalone change.** Put it in its own
+  commit and pull request, separate from runtime code, and deploy it
+  independently while it remains compatible with the currently deployed
+  application. Dependent runtime pull requests may be opened in a review stack
+  before the migration is deployed. Before merging or deploying dependent work,
+  the migration must be merged and deployed, and the dependent stack must be
+  rebased onto the updated `main`. Never combine a migration and runtime
+  behavior in one commit, pull request or deployment, including within a
+  stacked series.
 - **Commit atomic diffs.** Split larger refactors into coherent chunks, such as
   one commit per page, service or domain area.
 - **Keep plans, work-in-progress notes and verification evidence out of the

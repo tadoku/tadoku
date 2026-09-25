@@ -371,7 +371,7 @@ func (s *Service) scoreContestOrPlatform(ctx context.Context, parameters Preview
 	return *estimate, nil
 }
 
-func (s *Service) ScoreResolvedContest(ctx context.Context, parameters PreviewParameters, contestID uuid.UUID) (*Estimate, error) {
+func (s *Service) scoreResolvedContest(ctx context.Context, parameters PreviewParameters, contestID uuid.UUID) (*Estimate, error) {
 	input := scoringInput{
 		activityID:      parameters.ActivityID,
 		unitKey:         stringValue(parameters.UnitKey),
@@ -390,7 +390,7 @@ func (s *Service) ScoreLogAttachments(ctx context.Context, log logscore.Input, b
 		tracking := base
 		if s.logScoringEnabled {
 			unitKey := base.UnitKey
-			estimate, err := s.ScoreResolvedContest(ctx, PreviewParameters{
+			estimate, err := s.scoreResolvedContest(ctx, PreviewParameters{
 				UnitKey:         &unitKey,
 				ActivityID:      log.ActivityID,
 				LanguageCode:    log.LanguageCode,

@@ -46,12 +46,13 @@ Always write SQL keywords in lowercase: `select` and `create table`, not
 
 ## sqlc code generation
 
-Queries live in one package per feature or shared storage repository under `services/tadoku-api/sql/<name>/`:
+Queries live in one package per feature under `services/tadoku-api/sql/<name>/`:
 the feature's `.sql` query file, a `sqlc.yaml` that writes Go code to
 `services/tadoku-api/generated/sqlc/<feature>/`, and a `generate.go` that pins the
 sqlc version. Add a new package to `SQLC_PACKAGES` in `scripts/generate-sqlc.sh`.
-The shared async outbox uses `sql/asyncoutbox/` and generates
-`generated/sqlc/asyncoutbox/`, visible only to its repository.
+The jobqueue feature uses `sql/jobqueue/` and generates
+`generated/sqlc/jobqueue/`, visible only to that feature. The persisted table
+remains `async_outbox`.
 
 Always regenerate after changing a SQL query. The checked-in generated Go files
 must exactly match the query sources. Run the generator from the repository
@@ -99,6 +100,10 @@ return queries.New(db).InsertItem(ctx, params)
 - Callback errors and panics keep their identity. Rollback gets an independent
   five-second timeout, so cancellation does not prevent the attempt.
 - A commit transport error can leave the persistence outcome uncertain.
+- Applications enqueue every typed job returned by features before committing.
+  `jobqueue.Enqueue` requires an active transaction, including for an empty
+  batch. Propagate its errors from the callback so business rows and queue rows
+  roll back together; see [Jobs and worker](./jobs.md#publish-atomically).
 
 The helper's own test setup is described in
 `services/tadoku-api/infra/postgres/README.md`.

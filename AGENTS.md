@@ -74,6 +74,7 @@ files in an area, read its page; those rules are as binding as this file.
 | An application operation, feature, repository or domain package | `docs/docs/tadoku-api/conventions.md` |
 | `services/tadoku-api/spec/openapi.yaml` or a request or response shape | `docs/docs/tadoku-api/contract.md` |
 | A migration, SQL query or transaction | `docs/docs/tadoku-api/database.md` |
+| Background jobs, worker handlers, replay or message-version changes | `docs/docs/tadoku-api/jobs.md` |
 | Any Go test | `docs/docs/tadoku-api/testing.md` |
 | HTTP golden cases, fixture tokens or relationships | `docs/docs/tadoku-api/http-e2e.md` |
 | A user journey | `docs/docs/tadoku-api/user-journeys.md` |

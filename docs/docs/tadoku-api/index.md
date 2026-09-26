@@ -41,9 +41,10 @@ All paths are relative to `services/tadoku-api/`.
 | `app/` | Application operations: actor authorization, cross-feature locks and transactions, and composition of feature results. |
 | `features/<feature>/` | One feature: a service that owns its business decisions and a repository that queries and maps its rows. |
 | `generated/` | Generated code: sqlc queries per feature (`generated/sqlc/<feature>/`) and HTTP bindings (`generated/openapi/`). |
-| `storage/postgres/asyncoutbox/` | Shared PostgreSQL repository for typed background tasks, lease-fenced claims and terminal outcomes. |
+| `features/jobqueue/` | Durable queue service and repository: transactional enqueue, lease-fenced claims, terminal outcomes and replay. |
+| `domain/jobs/` | Shared versioned message names, typed payloads and pure validation; no feature imports. |
 | `domain/<concept>/` | Business values and pure rules shared by several features. |
-| `internal/` | Technical support: typed background tasks (`asyncwork`), errors (`errx`), request identity (`identity`), actor permissions (`permissions`), business time (`timex`), callback authentication (`callbackauth`) and test fixtures (`test*`). |
+| `internal/` | Technical support: errors (`errx`), request identity (`identity`), actor permissions (`permissions`), business time (`timex`), callback authentication (`callbackauth`) and test fixtures (`test*`). |
 | `infra/` | Infrastructure adapters: the PostgreSQL pool and transactions (`postgres`), the raw Valkey client (`valkey`), the Flipt management client (`fliptmanagement`) and scoring observability (`observability`). |
 | `cmd/tadoku-api/` | The composition root: loads configuration, constructs and owns the pool, provider clients and HTTP resources, and wires them into the application. |
 
@@ -56,7 +57,9 @@ All paths are relative to `services/tadoku-api/`.
   `services/tadoku-api/generated/sqlc/<feature>/`.
 - Valkey holds leaderboard caches only; PostgreSQL remains the source of truth.
 - `async_outbox` stores typed tasks with bounded claims and replay lineage.
-  A producer enqueues through the shared repository inside its business transaction.
+  A producing feature returns typed jobs; its application passes every job to
+  the queue service inside the same business transaction. See
+  [Jobs and worker](./jobs.md) for publication, registration and version migration.
   Claims, renewals and outcomes use one SQL statement each; stale or expired
   claim tokens cannot acknowledge work.
 
@@ -75,6 +78,8 @@ see [Contributing workflow](../develop/contributing.md#cms-managed-content).
   `spec/openapi.yaml`, a request or response shape, or generated HTTP code.
 - [Database and migrations](./database.md): read before writing a migration,
   changing a SQL query or opening a transaction.
+- [Jobs and worker](./jobs.md): read before adding background work, changing a
+  persisted message version or replaying failed work.
 - [Testing](./testing.md): read before adding or changing any test; covers
   principles, test infrastructure and repository tests.
 - [HTTP end-to-end tests](./http-e2e.md): read before adding or changing an

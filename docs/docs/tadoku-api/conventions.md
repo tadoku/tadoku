@@ -63,7 +63,12 @@ Service orchestration is exercised through HTTP E2Es; see [Testing](./testing.md
 - The application authorizes the actor, coordinates locks and transactions
   across features, and composes their results.
 - A feature service validates or normalizes its own inputs and sequences its
-  own repository calls, including related rows and outbox writes.
+  own repository calls, including related rows. It returns required typed
+  follow-up jobs with its result.
+- The application passes every returned job to `jobqueue.Enqueue` inside that
+  same transaction and propagates errors so business rows and jobs roll back
+  together. Producing features never call the queue feature. See
+  [Jobs and worker](./jobs.md) for the contract and version migration rules.
 - Do not add feature service methods that only pass a repository call through
   so an application operation can assemble that feature's write.
 - When several features take part in a write, the application passes shared
@@ -127,14 +132,15 @@ The following rules decide where each check belongs.
   `features/<feature>/<feature>_repository.go`. They reach PostgreSQL through
   `postgres.Executor` (`services/tadoku-api/infra/postgres/`) and the feature's generated sqlc
   package, and convert between sqlc rows and feature domain types internally.
-- The cross-feature async outbox has one repository in
-  `services/tadoku-api/storage/postgres/asyncoutbox/`. Producing features pass
-  a typed `internal/asyncwork` task to its `Enqueue` method using the active
-  transaction context; the repository uses `postgres.Executor` so the task
-  commits or rolls back with the business write. Its claims operate per known
-  task type, and acknowledgements require an unexpired lease and matching token.
-  PostgreSQL wall time sets and checks leases; `timex` business time sets task
-  scheduling and audit timestamps.
+- The `jobqueue` feature owns the durable `async_outbox` repository under
+  `services/tadoku-api/features/jobqueue/`. Its service accepts typed
+  `domain/jobs` values only inside an active transaction; the application
+  enqueues the jobs returned by producing features. Queue persistence knows
+  names as data and has no business payload catalogue. The worker application's
+  registry supplies supported versions for claiming and replay. Claims and
+  acknowledgments require a live lease and matching token; PostgreSQL wall time
+  sets and checks leases, while `timex` controls business scheduling and audit
+  timestamps.
 - The leaderboard feature's `Store` in
   `services/tadoku-api/features/leaderboard/leaderboard_store.go` encapsulates
   Valkey cache commands. Its service owns cache selection and PostgreSQL fallback.

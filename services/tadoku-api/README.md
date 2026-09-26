@@ -29,6 +29,8 @@ bazel run //:gazelle            # after adding Go files or changing imports
   spec, compatibility rules and code generation.
 - [Database and migrations](../../docs/docs/tadoku-api/database.md): standalone
   migrations, SQL style, sqlc and transactions.
+- [Jobs and worker](../../docs/docs/tadoku-api/jobs.md): typed publication,
+  handler registration, execution, replay and v1-to-v2 migration.
 - [Testing](../../docs/docs/tadoku-api/testing.md): test principles, test
   infrastructure and repository tests.
 - [HTTP end-to-end tests](../../docs/docs/tadoku-api/http-e2e.md): golden

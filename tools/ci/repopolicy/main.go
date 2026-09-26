@@ -104,6 +104,8 @@ func analyze(file *ast.File) []finding {
 	a := fileAnalysis{
 		sqlc:         map[string]bool{},
 		uuid:         map[string]bool{},
+		pgtype:       map[string]bool{},
+		time:         map[string]bool{},
 		constructors: map[string]bool{},
 	}
 	for _, spec := range file.Imports {
@@ -118,6 +120,10 @@ func analyze(file *ast.File) []finding {
 		switch {
 		case strings.HasPrefix(importPath, sqlcImportPrefix):
 			a.sqlc[name] = true
+		case importPath == "github.com/jackc/pgx/v5/pgtype":
+			a.pgtype[name] = true
+		case importPath == "time":
+			a.time[name] = true
 		case path.Base(importPath) == "uuid":
 			a.uuid[name] = true
 		}
@@ -143,6 +149,8 @@ func analyze(file *ast.File) []finding {
 type fileAnalysis struct {
 	sqlc         map[string]bool
 	uuid         map[string]bool
+	pgtype       map[string]bool
+	time         map[string]bool
 	constructors map[string]bool
 	queryVars    map[string]bool
 }
@@ -158,6 +166,13 @@ func (a *fileAnalysis) analyzeFunc(fn *ast.FuncDecl) []finding {
 	}
 
 	var findings []finding
+	if a.isPrimitiveConversion(fn.Type) {
+		findings = append(findings, finding{
+			pos:     fn.Pos(),
+			rule:    "primitive-conversion",
+			message: fmt.Sprintf("%s converts primitive PostgreSQL values; use shared helpers in infra/postgres (%s)", fn.Name.Name, convention),
+		})
+	}
 	var statements []token.Pos
 	var stack []ast.Node
 	ast.Inspect(fn.Body, func(n ast.Node) bool {
@@ -217,6 +232,44 @@ func (a *fileAnalysis) analyzeFunc(fn *ast.FuncDecl) []finding {
 		})
 	}
 	return findings
+}
+
+func (a *fileAnalysis) isPrimitiveConversion(fn *ast.FuncType) bool {
+	if fn.Params.NumFields() == 0 || fn.Results.NumFields() == 0 {
+		return false
+	}
+	postgresValue := false
+	for _, fields := range []*ast.FieldList{fn.Params, fn.Results} {
+		for _, field := range fields.List {
+			primitive, pg := a.primitiveType(field.Type)
+			if !primitive {
+				return false
+			}
+			postgresValue = postgresValue || pg
+		}
+	}
+	return postgresValue
+}
+
+func (a *fileAnalysis) primitiveType(expr ast.Expr) (bool, bool) {
+	switch expr := ast.Unparen(expr).(type) {
+	case *ast.StarExpr:
+		return a.primitiveType(expr.X)
+	case *ast.ArrayType:
+		return a.primitiveType(expr.Elt)
+	case *ast.Ident:
+		switch expr.Name {
+		case "bool", "string", "byte", "rune", "int", "int8", "int16", "int32", "int64", "uint", "uint8", "uint16", "uint32", "uint64", "float32", "float64", "error":
+			return true, false
+		}
+	case *ast.SelectorExpr:
+		if isPackage(expr.X, a.pgtype) {
+			return true, true
+		}
+		return (isPackage(expr.X, a.time) && expr.Sel.Name == "Time") ||
+			(isPackage(expr.X, a.uuid) && expr.Sel.Name == "UUID"), false
+	}
+	return false, false
 }
 
 func (a *fileAnalysis) bind(lhs, rhs []ast.Expr) {

@@ -127,6 +127,11 @@ The following rules decide where each check belongs.
   `features/<feature>/<feature>_repository.go`. They reach PostgreSQL through
   `postgres.Executor` (`services/tadoku-api/infra/postgres/`) and the feature's generated sqlc
   package, and convert between sqlc rows and feature domain types internally.
+- Primitive PostgreSQL conversions, including nullable values, UUIDs and
+  timestamps, belong in `services/tadoku-api/infra/postgres/`. Repository
+  files use those shared helpers; only feature domain and sqlc row mappings
+  stay local. `tools/ci/repopolicy` rejects primitive conversion helper
+  signatures in handwritten repository files.
 - The leaderboard feature's `Store` in
   `services/tadoku-api/features/leaderboard/leaderboard_store.go` encapsulates
   Valkey cache commands. Its service owns cache selection and PostgreSQL fallback.

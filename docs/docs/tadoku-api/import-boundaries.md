@@ -17,14 +17,7 @@ Bazel target `visibility` and the package groups in
 boundaries described in [Code ownership](./index.md#code-ownership).
 
 - Feature libraries are visible only to application, startup and E2E packages.
-- A feature's generated sqlc package is visible only to that feature, including
-  `generated/sqlc/jobqueue` for `features/jobqueue`.
-- `domain/jobs` is shared by producing features and applications. Like other
-  native domain packages, it cannot import features, application, generated,
-  infrastructure, storage or `internal` packages.
-- `features/jobqueue` follows the normal feature boundary: producing features
-  cannot import or call it. Applications enqueue their returned jobs inside
-  the transaction. Handler definitions and registration belong in `app/worker`.
+- A feature's generated sqlc package is visible only to that feature.
 - Tests follow their package's layer policy. Startup (`cmd/tadoku-api`) and E2E
   packages are assembly boundaries.
 - `bazel build //services/tadoku-api/...` checks the boundaries for every Go

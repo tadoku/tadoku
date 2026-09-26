@@ -41,8 +41,6 @@ All paths are relative to `services/tadoku-api/`.
 | `app/` | Application operations: actor authorization, cross-feature locks and transactions, and composition of feature results. |
 | `features/<feature>/` | One feature: a service that owns its business decisions and a repository that queries and maps its rows. |
 | `generated/` | Generated code: sqlc queries per feature (`generated/sqlc/<feature>/`) and HTTP bindings (`generated/openapi/`). |
-| `features/jobqueue/` | Durable queue service and repository: transactional enqueue, lease-fenced claims, terminal outcomes and replay. |
-| `domain/jobs/` | Shared versioned message names, typed payloads and pure validation; no feature imports. |
 | `domain/<concept>/` | Business values and pure rules shared by several features. |
 | `internal/` | Technical support: errors (`errx`), request identity (`identity`), actor permissions (`permissions`), business time (`timex`), callback authentication (`callbackauth`) and test fixtures (`test*`). |
 | `infra/` | Infrastructure adapters: the PostgreSQL pool and transactions (`postgres`), the raw Valkey client (`valkey`), the Flipt management client (`fliptmanagement`) and scoring observability (`observability`). |
@@ -56,12 +54,6 @@ All paths are relative to `services/tadoku-api/`.
   `services/tadoku-api/sql/<feature>/`, and sqlc generates Go code into
   `services/tadoku-api/generated/sqlc/<feature>/`.
 - Valkey holds leaderboard caches only; PostgreSQL remains the source of truth.
-- `async_outbox` stores typed tasks with bounded claims and replay lineage.
-  A producing feature returns typed jobs; its application passes every job to
-  the queue service inside the same business transaction. See
-  [Jobs and worker](./jobs.md) for publication, registration and version migration.
-  Claims, renewals and outcomes use one SQL statement each; stale or expired
-  claim tokens cannot acknowledge work.
 
 ## CMS-managed content
 

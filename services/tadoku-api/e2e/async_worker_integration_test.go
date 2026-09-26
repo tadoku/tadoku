@@ -52,7 +52,7 @@ func TestAPIWriteStandaloneWorkerLeaderboardRead(t *testing.T) {
 	})
 
 	var queued int
-	if err := api.db.Pool.QueryRow(t.Context(), `select count(*) from async_outbox`).Scan(&queued); err != nil {
+	if err := api.db.Pool.QueryRow(t.Context(), `select count(*) from jobs`).Scan(&queued); err != nil {
 		t.Fatal(err)
 	}
 	if queued == 0 {
@@ -92,7 +92,7 @@ func TestAPIWriteStandaloneWorkerLeaderboardRead(t *testing.T) {
 	defer tick.Stop()
 	for {
 		var completed int
-		if err := api.db.Pool.QueryRow(t.Context(), `select count(*) from async_outbox where state = 'completed'`).Scan(&completed); err != nil {
+		if err := api.db.Pool.QueryRow(t.Context(), `select count(*) from jobs where state = 'completed'`).Scan(&completed); err != nil {
 			t.Fatal(err)
 		}
 		ready, err := leaderboardValkey.client.Do(t.Context(), leaderboardValkey.client.B().Exists().Key("leaderboard:ready").Build()).AsInt64()

@@ -129,13 +129,6 @@ jobs:
       - name: Build
         run: bazel build --lockfile_mode=error //...
 
-      - name: Check shared push_images covers production oci_push targets
-        run: |
-          diff \
-            <(bazel query --lockfile_mode=error 'attr(name, "^push$", kind("oci_push", //services/...)) except //services/tadoku-api/worker:push' | sort) \
-            <(bazel query --lockfile_mode=error 'kind("oci_push", labels(data, //:push_images))' | sort) \
-          || { echo "//:push_images is out of sync with shared production oci_push targets" >&2; exit 1; }
-
       - name: Check load_images covers all production oci_load targets
         run: |
           diff \

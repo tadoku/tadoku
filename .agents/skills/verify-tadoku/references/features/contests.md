@@ -15,6 +15,11 @@ Main navigation **Leaderboard** opens `/leaderboard/latest`; also cover
   confirm real participant rows such as Dev Reader. Follow a participant and
   scoring/update tabs. Test a pagination transition if the selected data has
   multiple pages; don't manufacture a pagination pass from a single page.
+- For participant activity charts, check a long contest at phone, tablet and
+  desktop widths. The page and chart card stay within the viewport, score cards
+  remain readable, and horizontal scrolling inside the chart reaches both the
+  first and last contest dates. Resize across the desktop layout breakpoint
+  (1024px) and confirm the score column retains its one-fifth width.
 - For creation/registration changes, use a branch API and uniquely named contest.
   Verify allowed languages/activities, dates and privacy; exercise invalid input,
   save, reload and visibility from another identity. Register an eligible user

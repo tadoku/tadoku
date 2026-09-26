@@ -113,7 +113,7 @@ const Page = () => {
             list={profile.data.scores}
           />
         </div>
-        <div className="mt-4 lg:mt-0 flex-grow flex flex-col card narrow">
+        <div className="mt-4 lg:mt-0 min-w-0 flex-1 flex flex-col card narrow">
           <h3 className="subtitle mb-2">Activity</h3>
           <div className="flex-1 max-h-72 lg:max-h-[28rem]">
             <ActivityChart

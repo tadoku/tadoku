@@ -33,7 +33,6 @@ package_group(
         "//services/tadoku-api/features/...",
         "//services/tadoku-api/infra/...",
         "//services/tadoku-api/spec/...",
-        "//services/tadoku-api/storage/...",
     ],
 )
 
@@ -47,7 +46,6 @@ package_group(
         "//services/tadoku-api/infra/...",
         "//services/tadoku-api/internal/...",
         "//services/tadoku-api/spec/...",
-        "//services/tadoku-api/storage/...",
         "//services/tadoku-api/transport/...",
     ],
 )

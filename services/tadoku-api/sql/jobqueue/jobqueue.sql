@@ -102,7 +102,7 @@ insert into async_outbox (task_type, payload, created_at, next_attempt_at,
 select task_type, payload, sqlc.arg('now')::timestamptz, sqlc.arg('now')::timestamptz,
   id, sqlc.arg('actor')::text, sqlc.arg('reason')::text
 from async_outbox where id = sqlc.arg('failed_id')::bigint and state = 'failed'
-  and task_type in ('leaderboard.invalidate_contest.v1', 'leaderboard.invalidate_official.v1')
+  and task_type = any(sqlc.arg('supported_types')::text[])
 returning id;
 
 -- name: CleanupCompleted :execrows
@@ -129,6 +129,11 @@ select
 from async_outbox where task_type = sqlc.arg('task_type')::text;
 
 -- name: UnsupportedStats :one
-select count(*) as pending, min(next_attempt_at)::timestamptz as oldest_due_at
+select
+  count(*) filter (where state = 'pending') as pending,
+  count(*) filter (where state = 'running') as running,
+  count(*) filter (where state = 'failed') as failed,
+  min(case when state = 'pending' then next_attempt_at
+    when state = 'running' then lease_expires_at end)::timestamptz as oldest_due_at
 from async_outbox
-where state = 'pending' and not (task_type = any(sqlc.arg('known_types')::text[]));
+where state <> 'completed' and not (task_type = any(sqlc.arg('known_types')::text[]));

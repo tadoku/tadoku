@@ -1,14 +1,14 @@
 load("@rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "asyncoutbox",
+    name = "jobqueue",
     srcs = [
-        "asyncoutbox.sql.go",
         "db.go",
+        "jobqueue.sql.go",
         "models.go",
     ],
-    importpath = "github.com/tadoku/tadoku/services/tadoku-api/generated/sqlc/asyncoutbox",
-    visibility = ["//services/tadoku-api/storage/postgres/asyncoutbox:__pkg__"],
+    importpath = "github.com/tadoku/tadoku/services/tadoku-api/generated/sqlc/jobqueue",
+    visibility = ["//services/tadoku-api/features/jobqueue:__pkg__"],
     deps = [
         "@com_github_jackc_pgx_v5//:pgx",
         "@com_github_jackc_pgx_v5//pgconn",

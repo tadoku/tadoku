@@ -1,4 +1,4 @@
-package asyncoutbox
+package jobqueue
 
 import (
 	"context"
@@ -13,50 +13,27 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
-	queries "github.com/tadoku/tadoku/services/tadoku-api/generated/sqlc/asyncoutbox"
+	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
+	queries "github.com/tadoku/tadoku/services/tadoku-api/generated/sqlc/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/asyncwork"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
-
-var ErrNotFailed = errors.New("outbox task is not failed or supported")
 
 type Repository struct{ db *pgxpool.Pool }
 
 func NewRepository(db *pgxpool.Pool) *Repository { return &Repository{db: db} }
 
-type ClaimedTask struct {
-	ID             int64
-	Type           asyncwork.Type
-	Payload        json.RawMessage
-	Attempts       int
-	Token          uuid.UUID
-	LeaseExpiresAt time.Time
-	Reclaimed      bool
-}
-
-type Stats struct {
-	Pending     int64
-	Failed      int64
-	OldestDueAt *time.Time
-}
-
-type UnsupportedStats struct {
-	Pending     int64
-	OldestDueAt *time.Time
-}
-
-func (r *Repository) Enqueue(ctx context.Context, task asyncwork.Task) (int64, error) {
-	if !task.Type().Known() || !json.Valid(task.Payload()) {
+func (r *Repository) Insert(ctx context.Context, typ jobs.Type, payload json.RawMessage) (int64, error) {
+	if typ == "" || !json.Valid(payload) {
 		return 0, errors.New("invalid outbox task")
 	}
-	executor, err := postgres.Executor(ctx, r.db)
+	executor, err := postgres.TransactionExecutor(ctx, r.db)
 	if err != nil {
 		return 0, err
 	}
 	id, err := queries.New(executor).Enqueue(ctx, queries.EnqueueParams{
-		TaskType: string(task.Type()),
-		Payload:  task.Payload(),
+		TaskType: string(typ),
+		Payload:  payload,
 		Now:      timestamp(timex.Now()),
 	})
 	if err != nil {
@@ -65,8 +42,8 @@ func (r *Repository) Enqueue(ctx context.Context, task asyncwork.Task) (int64, e
 	return id, nil
 }
 
-func (r *Repository) Claim(ctx context.Context, typ asyncwork.Type, limit int, lease time.Duration, maxAttempts int) ([]ClaimedTask, error) {
-	if !typ.Known() || limit < 1 || limit > 100 || lease < time.Microsecond || maxAttempts < 1 || maxAttempts > math.MaxInt32 {
+func (r *Repository) Claim(ctx context.Context, typ jobs.Type, limit int, lease time.Duration, maxAttempts int) ([]ClaimedJob, error) {
+	if typ == "" || limit < 1 || limit > 100 || lease < time.Microsecond || maxAttempts < 1 || maxAttempts > math.MaxInt32 {
 		return nil, errors.New("invalid outbox claim parameters")
 	}
 	now := timex.Now()
@@ -84,11 +61,11 @@ func (r *Repository) Claim(ctx context.Context, typ asyncwork.Type, limit int, l
 	if err != nil {
 		return nil, fmt.Errorf("claim outbox tasks: %w", err)
 	}
-	tasks := make([]ClaimedTask, len(rows))
+	tasks := make([]ClaimedJob, len(rows))
 	for i, row := range rows {
-		tasks[i] = ClaimedTask{
+		tasks[i] = ClaimedJob{
 			ID:             row.ID,
-			Type:           asyncwork.Type(row.TaskType),
+			Type:           jobs.Type(row.TaskType),
 			Payload:        row.Payload,
 			Attempts:       int(row.Attempts),
 			Token:          uuid.UUID(row.ClaimToken.Bytes),
@@ -99,7 +76,7 @@ func (r *Repository) Claim(ctx context.Context, typ asyncwork.Type, limit int, l
 	return tasks, nil
 }
 
-func (r *Repository) Renew(ctx context.Context, task ClaimedTask, lease time.Duration) (time.Time, bool, error) {
+func (r *Repository) Renew(ctx context.Context, task ClaimedJob, lease time.Duration) (time.Time, bool, error) {
 	if lease < time.Microsecond {
 		return time.Time{}, false, errors.New("outbox lease must be positive")
 	}
@@ -121,7 +98,7 @@ func (r *Repository) Renew(ctx context.Context, task ClaimedTask, lease time.Dur
 	return expires.Time, true, nil
 }
 
-func (r *Repository) Complete(ctx context.Context, task ClaimedTask) (bool, error) {
+func (r *Repository) Complete(ctx context.Context, task ClaimedJob) (bool, error) {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return false, err
@@ -134,7 +111,7 @@ func (r *Repository) Complete(ctx context.Context, task ClaimedTask) (bool, erro
 	return count == 1, err
 }
 
-func (r *Repository) Retry(ctx context.Context, task ClaimedTask, next time.Time, code string, maxAttempts int) (bool, error) {
+func (r *Repository) Retry(ctx context.Context, task ClaimedJob, next time.Time, code string, maxAttempts int) (bool, error) {
 	now := timex.Now()
 	if err := validateErrorCode(code); err != nil {
 		return false, err
@@ -157,7 +134,7 @@ func (r *Repository) Retry(ctx context.Context, task ClaimedTask, next time.Time
 	return count == 1, err
 }
 
-func (r *Repository) Fail(ctx context.Context, task ClaimedTask, code string) (bool, error) {
+func (r *Repository) Fail(ctx context.Context, task ClaimedJob, code string) (bool, error) {
 	if err := validateErrorCode(code); err != nil {
 		return false, err
 	}
@@ -174,7 +151,7 @@ func (r *Repository) Fail(ctx context.Context, task ClaimedTask, code string) (b
 	return count == 1, err
 }
 
-func (r *Repository) Replay(ctx context.Context, failedID int64, actor, reason string) (int64, error) {
+func (r *Repository) Replay(ctx context.Context, failedID int64, actor, reason string, supported []jobs.Type) (int64, error) {
 	if failedID < 1 || len(strings.TrimSpace(actor)) < 1 || len(strings.TrimSpace(actor)) > 200 ||
 		len(strings.TrimSpace(reason)) < 1 || len(strings.TrimSpace(reason)) > 500 {
 		return 0, errors.New("invalid outbox replay parameters")
@@ -183,11 +160,16 @@ func (r *Repository) Replay(ctx context.Context, failedID int64, actor, reason s
 	if err != nil {
 		return 0, err
 	}
+	names := make([]string, len(supported))
+	for i, typ := range supported {
+		names[i] = string(typ)
+	}
 	id, err := queries.New(executor).Replay(ctx, queries.ReplayParams{
-		Now:      timestamp(timex.Now()),
-		Actor:    actor,
-		Reason:   reason,
-		FailedID: failedID,
+		Now:            timestamp(timex.Now()),
+		Actor:          actor,
+		Reason:         reason,
+		FailedID:       failedID,
+		SupportedTypes: names,
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
 		return 0, ErrNotFailed
@@ -212,8 +194,8 @@ func (r *Repository) CleanupCompleted(ctx context.Context, before time.Time, lim
 	})
 }
 
-func (r *Repository) Outstanding(ctx context.Context, typ asyncwork.Type) (int64, error) {
-	if !typ.Known() {
+func (r *Repository) Outstanding(ctx context.Context, typ jobs.Type) (int64, error) {
+	if typ == "" {
 		return 0, errors.New("unknown outbox task type")
 	}
 	executor, err := postgres.Executor(ctx, r.db)
@@ -223,8 +205,8 @@ func (r *Repository) Outstanding(ctx context.Context, typ asyncwork.Type) (int64
 	return queries.New(executor).Outstanding(ctx, string(typ))
 }
 
-func (r *Repository) Stats(ctx context.Context, typ asyncwork.Type) (Stats, error) {
-	if !typ.Known() {
+func (r *Repository) Stats(ctx context.Context, typ jobs.Type) (Stats, error) {
+	if typ == "" {
 		return Stats{}, errors.New("unknown outbox task type")
 	}
 	executor, err := postgres.Executor(ctx, r.db)
@@ -243,10 +225,10 @@ func (r *Repository) Stats(ctx context.Context, typ asyncwork.Type) (Stats, erro
 	return stats, nil
 }
 
-func (r *Repository) UnsupportedStats(ctx context.Context, known []asyncwork.Type) (UnsupportedStats, error) {
+func (r *Repository) UnsupportedStats(ctx context.Context, known []jobs.Type) (UnsupportedStats, error) {
 	names := make([]string, len(known))
 	for i, typ := range known {
-		if !typ.Known() {
+		if typ == "" {
 			return UnsupportedStats{}, errors.New("unknown registered outbox task type")
 		}
 		names[i] = string(typ)
@@ -259,7 +241,7 @@ func (r *Repository) UnsupportedStats(ctx context.Context, known []asyncwork.Typ
 	if err != nil {
 		return UnsupportedStats{}, err
 	}
-	stats := UnsupportedStats{Pending: row.Pending}
+	stats := UnsupportedStats{Pending: row.Pending, Running: row.Running, Failed: row.Failed}
 	if row.OldestDueAt.Valid {
 		instant := row.OldestDueAt.Time
 		stats.OldestDueAt = &instant

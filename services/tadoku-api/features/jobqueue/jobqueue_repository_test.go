@@ -1,14 +1,15 @@
-package asyncoutbox
+package jobqueue
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/asyncwork"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
@@ -37,10 +38,8 @@ func at(t *testing.T, instant time.Time, work func()) {
 func TestEnqueueSharesBusinessTransaction(t *testing.T) {
 	db := outboxTestDB(t)
 	repo := NewRepository(db.Pool)
-	task, err := asyncwork.NewContestInvalidation(uuid.New())
-	if err != nil {
-		t.Fatal(err)
-	}
+	task := jobs.InvalidateContestLeaderboardV1{ContestID: uuid.New()}
+	var err error
 	if _, err := db.Pool.Exec(t.Context(), `create table business_mutation (id integer primary key)`); err != nil {
 		t.Fatal(err)
 	}
@@ -55,7 +54,7 @@ func TestEnqueueSharesBusinessTransaction(t *testing.T) {
 			if _, err := executor.Exec(ctx, `insert into business_mutation (id) values (1)`); err != nil {
 				return err
 			}
-			if _, err := repo.Enqueue(ctx, task); err != nil {
+			if _, err := insertJob(repo, ctx, task); err != nil {
 				return err
 			}
 			return rollback
@@ -79,17 +78,11 @@ func TestEnqueueSharesBusinessTransaction(t *testing.T) {
 func TestClaimLimitsKnownTypesAndFencesExpiredLeases(t *testing.T) {
 	db := outboxTestDB(t)
 	repo := NewRepository(db.Pool)
-	contest, err := asyncwork.NewContestInvalidation(uuid.New())
-	if err != nil {
-		t.Fatal(err)
-	}
-	official, err := asyncwork.NewOfficialInvalidation(2026)
-	if err != nil {
-		t.Fatal(err)
-	}
+	contest := jobs.InvalidateContestLeaderboardV1{ContestID: uuid.New()}
+	official := jobs.InvalidateOfficialLeaderboardV1{Year: 2026}
 	at(t, outboxTestTime, func() {
-		for _, task := range []asyncwork.Task{contest, contest, official} {
-			if _, err := repo.Enqueue(t.Context(), task); err != nil {
+		for _, task := range []jobs.Job{contest, contest, official} {
+			if _, err := insertJob(repo, t.Context(), task); err != nil {
 				t.Fatal(err)
 			}
 		}
@@ -99,17 +92,17 @@ func TestClaimLimitsKnownTypesAndFencesExpiredLeases(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var first, second, third ClaimedTask
+	var first, second, third ClaimedJob
 	at(t, outboxTestTime, func() {
-		claims, err := repo.Claim(t.Context(), asyncwork.InvalidateContest, 1, time.Minute, 2)
+		claims, err := repo.Claim(t.Context(), jobs.InvalidateContest, 1, time.Minute, 2)
 		if err != nil || len(claims) != 1 {
 			t.Fatalf("first claim = %v, %v", claims, err)
 		}
 		first = claims[0]
-		if first.Attempts != 1 || first.Type != asyncwork.InvalidateContest || first.Reclaimed || first.LeaseExpiresAt.IsZero() {
+		if first.Attempts != 1 || first.Type != jobs.InvalidateContest || first.Reclaimed || first.LeaseExpiresAt.IsZero() {
 			t.Errorf("first claim = %+v", first)
 		}
-		claims, err = repo.Claim(t.Context(), asyncwork.InvalidateContest, 1, time.Minute, 2)
+		claims, err = repo.Claim(t.Context(), jobs.InvalidateContest, 1, time.Minute, 2)
 		if err != nil || len(claims) != 1 {
 			t.Fatalf("second claim = %v, %v", claims, err)
 		}
@@ -117,7 +110,7 @@ func TestClaimLimitsKnownTypesAndFencesExpiredLeases(t *testing.T) {
 		if second.ID == first.ID {
 			t.Error("claim reused active row")
 		}
-		claims, err = repo.Claim(t.Context(), asyncwork.InvalidateOfficial, 1, time.Minute, 2)
+		claims, err = repo.Claim(t.Context(), jobs.InvalidateOfficial, 1, time.Minute, 2)
 		if err != nil || len(claims) != 1 {
 			t.Fatalf("other type claim = %v, %v", claims, err)
 		}
@@ -125,7 +118,7 @@ func TestClaimLimitsKnownTypesAndFencesExpiredLeases(t *testing.T) {
 		if expires, ok, err := repo.Renew(t.Context(), third, 2*time.Minute); err != nil || !ok || !expires.After(third.LeaseExpiresAt) {
 			t.Errorf("renew = %v, %v, %v", expires, ok, err)
 		}
-		if claims, err := repo.Claim(t.Context(), asyncwork.Type("future.task.v1"), 1, time.Minute, 2); err == nil || len(claims) != 0 {
+		if claims, err := repo.Claim(t.Context(), jobs.Type(""), 1, time.Minute, 2); err == nil || len(claims) != 0 {
 			t.Errorf("unsupported claim = %v, %v", claims, err)
 		}
 	})
@@ -144,7 +137,7 @@ func TestClaimLimitsKnownTypesAndFencesExpiredLeases(t *testing.T) {
 		if ok, err := repo.Retry(t.Context(), first, outboxTestTime.Add(2*time.Minute), "temporary", 2); err != nil || ok {
 			t.Errorf("expired retry = %v, %v", ok, err)
 		}
-		claims, err := repo.Claim(t.Context(), asyncwork.InvalidateContest, 1, time.Minute, 2)
+		claims, err := repo.Claim(t.Context(), jobs.InvalidateContest, 1, time.Minute, 2)
 		if err != nil || len(claims) != 1 {
 			t.Fatalf("reclaim = %v, %v", claims, err)
 		}
@@ -161,7 +154,7 @@ func TestClaimLimitsKnownTypesAndFencesExpiredLeases(t *testing.T) {
 	}
 
 	at(t, outboxTestTime.Add(2*time.Minute), func() {
-		if claims, err := repo.Claim(t.Context(), asyncwork.InvalidateContest, 2, time.Minute, 2); err != nil || len(claims) != 1 || claims[0].ID != second.ID || claims[0].Attempts != 2 {
+		if claims, err := repo.Claim(t.Context(), jobs.InvalidateContest, 2, time.Minute, 2); err != nil || len(claims) != 1 || claims[0].ID != second.ID || claims[0].Attempts != 2 {
 			t.Errorf("exhausted crash claims = %v, %v; want only second task", claims, err)
 		}
 		if ok, err := repo.Complete(t.Context(), third); err != nil || ok {
@@ -178,7 +171,7 @@ func TestClaimLimitsKnownTypesAndFencesExpiredLeases(t *testing.T) {
 	if failed != "failed" || unknown != "pending" {
 		t.Errorf("states failed=%q unknown=%q", failed, unknown)
 	}
-	stats, err := repo.UnsupportedStats(t.Context(), []asyncwork.Type{asyncwork.InvalidateContest, asyncwork.InvalidateOfficial})
+	stats, err := repo.UnsupportedStats(t.Context(), []jobs.Type{jobs.InvalidateContest, jobs.InvalidateOfficial})
 	if err != nil || stats.Pending != 1 || stats.OldestDueAt == nil || !stats.OldestDueAt.Equal(outboxTestTime) {
 		t.Errorf("unsupported stats = %+v, %v", stats, err)
 	}
@@ -187,22 +180,19 @@ func TestClaimLimitsKnownTypesAndFencesExpiredLeases(t *testing.T) {
 func TestReducedAttemptLimitFailsDuePendingTask(t *testing.T) {
 	db := outboxTestDB(t)
 	repo := NewRepository(db.Pool)
-	task, err := asyncwork.NewOfficialInvalidation(2026)
-	if err != nil {
-		t.Fatal(err)
-	}
+	task := jobs.InvalidateOfficialLeaderboardV1{Year: 2026}
 	at(t, outboxTestTime, func() {
-		if _, err := repo.Enqueue(t.Context(), task); err != nil {
+		if _, err := insertJob(repo, t.Context(), task); err != nil {
 			t.Fatal(err)
 		}
-		claims, err := repo.Claim(t.Context(), asyncwork.InvalidateOfficial, 1, time.Minute, 2)
+		claims, err := repo.Claim(t.Context(), jobs.InvalidateOfficial, 1, time.Minute, 2)
 		if err != nil || len(claims) != 1 {
 			t.Fatalf("claim = %v, %v", claims, err)
 		}
 		if ok, err := repo.Retry(t.Context(), claims[0], outboxTestTime, "temporary", 2); err != nil || !ok {
 			t.Fatalf("retry = %v, %v", ok, err)
 		}
-		claims, err = repo.Claim(t.Context(), asyncwork.InvalidateOfficial, 1, time.Minute, 1)
+		claims, err = repo.Claim(t.Context(), jobs.InvalidateOfficial, 1, time.Minute, 1)
 		if err != nil || len(claims) != 0 {
 			t.Errorf("reduced limit claim = %v, %v", claims, err)
 		}
@@ -219,18 +209,16 @@ func TestReducedAttemptLimitFailsDuePendingTask(t *testing.T) {
 func TestTransitionsRejectDatabaseExpiredLease(t *testing.T) {
 	db := outboxTestDB(t)
 	repo := NewRepository(db.Pool)
-	task, err := asyncwork.NewOfficialInvalidation(2026)
-	if err != nil {
-		t.Fatal(err)
-	}
-	var claims []ClaimedTask
+	task := jobs.InvalidateOfficialLeaderboardV1{Year: 2026}
+	var err error
+	var claims []ClaimedJob
 	at(t, outboxTestTime, func() {
 		for range 4 {
-			if _, err := repo.Enqueue(t.Context(), task); err != nil {
+			if _, err := insertJob(repo, t.Context(), task); err != nil {
 				t.Fatal(err)
 			}
 		}
-		claims, err = repo.Claim(t.Context(), asyncwork.InvalidateOfficial, 4, time.Minute, 2)
+		claims, err = repo.Claim(t.Context(), jobs.InvalidateOfficial, 4, time.Minute, 2)
 		if err != nil || len(claims) != 4 {
 			t.Fatalf("claim = %v, %v", claims, err)
 		}
@@ -258,16 +246,14 @@ func TestTransitionsRejectDatabaseExpiredLease(t *testing.T) {
 func TestCompleteSkipsLockedClaim(t *testing.T) {
 	db := outboxTestDB(t)
 	repo := NewRepository(db.Pool)
-	task, err := asyncwork.NewOfficialInvalidation(2026)
-	if err != nil {
-		t.Fatal(err)
-	}
-	var claim ClaimedTask
+	task := jobs.InvalidateOfficialLeaderboardV1{Year: 2026}
+	var err error
+	var claim ClaimedJob
 	at(t, outboxTestTime, func() {
-		if _, err := repo.Enqueue(t.Context(), task); err != nil {
+		if _, err := insertJob(repo, t.Context(), task); err != nil {
 			t.Fatal(err)
 		}
-		claims, err := repo.Claim(t.Context(), asyncwork.InvalidateOfficial, 1, time.Minute, 2)
+		claims, err := repo.Claim(t.Context(), jobs.InvalidateOfficial, 1, time.Minute, 2)
 		if err != nil || len(claims) != 1 {
 			t.Fatalf("claim = %v, %v", claims, err)
 		}
@@ -291,17 +277,15 @@ func TestCompleteSkipsLockedClaim(t *testing.T) {
 func TestClaimSkipsLockedRows(t *testing.T) {
 	db := outboxTestDB(t)
 	repo := NewRepository(db.Pool)
-	task, err := asyncwork.NewContestInvalidation(uuid.New())
-	if err != nil {
-		t.Fatal(err)
-	}
+	task := jobs.InvalidateContestLeaderboardV1{ContestID: uuid.New()}
+	var err error
 	var lockedID int64
 	at(t, outboxTestTime, func() {
-		lockedID, err = repo.Enqueue(t.Context(), task)
+		lockedID, err = insertJob(repo, t.Context(), task)
 		if err != nil {
 			t.Fatal(err)
 		}
-		if _, err := repo.Enqueue(t.Context(), task); err != nil {
+		if _, err := insertJob(repo, t.Context(), task); err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -317,7 +301,7 @@ func TestClaimSkipsLockedRows(t *testing.T) {
 	ctx, cancel := context.WithTimeout(t.Context(), time.Second)
 	defer cancel()
 	at(t, outboxTestTime, func() {
-		claims, err := repo.Claim(ctx, asyncwork.InvalidateContest, 2, time.Minute, 2)
+		claims, err := repo.Claim(ctx, jobs.InvalidateContest, 2, time.Minute, 2)
 		if err != nil || len(claims) != 1 || claims[0].ID == lockedID {
 			t.Errorf("skip locked claim = %v, %v", claims, err)
 		}
@@ -327,21 +311,19 @@ func TestClaimSkipsLockedRows(t *testing.T) {
 func TestRetryReplayAndRetention(t *testing.T) {
 	db := outboxTestDB(t)
 	repo := NewRepository(db.Pool)
-	task, err := asyncwork.NewOfficialInvalidation(2026)
-	if err != nil {
-		t.Fatal(err)
-	}
+	task := jobs.InvalidateOfficialLeaderboardV1{Year: 2026}
+	var err error
 	var id int64
-	at(t, outboxTestTime, func() { id, err = repo.Enqueue(t.Context(), task) })
+	at(t, outboxTestTime, func() { id, err = insertJob(repo, t.Context(), task) })
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := repo.Replay(t.Context(), id, "operator", "repair"); !errors.Is(err, ErrNotFailed) {
+	if _, err := repo.Replay(t.Context(), id, "operator", "repair", []jobs.Type{jobs.InvalidateOfficial}); !errors.Is(err, ErrNotFailed) {
 		t.Errorf("replay pending = %v", err)
 	}
-	var claim ClaimedTask
+	var claim ClaimedJob
 	at(t, outboxTestTime, func() {
-		claims, err := repo.Claim(t.Context(), asyncwork.InvalidateOfficial, 1, time.Minute, 2)
+		claims, err := repo.Claim(t.Context(), jobs.InvalidateOfficial, 1, time.Minute, 2)
 		if err != nil || len(claims) != 1 {
 			t.Fatalf("claim = %v, %v", claims, err)
 		}
@@ -349,15 +331,15 @@ func TestRetryReplayAndRetention(t *testing.T) {
 		if ok, err := repo.Retry(t.Context(), claim, outboxTestTime.Add(time.Minute), "temporary", 2); err != nil || !ok {
 			t.Fatalf("retry = %v, %v", ok, err)
 		}
-		if count, err := repo.Outstanding(t.Context(), asyncwork.InvalidateOfficial); err != nil || count != 1 {
+		if count, err := repo.Outstanding(t.Context(), jobs.InvalidateOfficial); err != nil || count != 1 {
 			t.Errorf("outstanding delayed = %d, %v", count, err)
 		}
-		if claims, err := repo.Claim(t.Context(), asyncwork.InvalidateOfficial, 1, time.Minute, 2); err != nil || len(claims) != 0 {
+		if claims, err := repo.Claim(t.Context(), jobs.InvalidateOfficial, 1, time.Minute, 2); err != nil || len(claims) != 0 {
 			t.Errorf("early claim = %v, %v", claims, err)
 		}
 	})
 	at(t, outboxTestTime.Add(time.Minute), func() {
-		claims, err := repo.Claim(t.Context(), asyncwork.InvalidateOfficial, 1, time.Minute, 2)
+		claims, err := repo.Claim(t.Context(), jobs.InvalidateOfficial, 1, time.Minute, 2)
 		if err != nil || len(claims) != 1 || claims[0].Attempts != 2 {
 			t.Fatalf("retry claim = %v, %v", claims, err)
 		}
@@ -367,7 +349,9 @@ func TestRetryReplayAndRetention(t *testing.T) {
 		}
 	})
 	var replayID int64
-	at(t, outboxTestTime.Add(2*time.Minute), func() { replayID, err = repo.Replay(t.Context(), id, "operator", "repair") })
+	at(t, outboxTestTime.Add(2*time.Minute), func() {
+		replayID, err = repo.Replay(t.Context(), id, "operator", "repair", []jobs.Type{jobs.InvalidateOfficial})
+	})
 	if err != nil || replayID == 0 {
 		t.Fatalf("replay = %d, %v", replayID, err)
 	}
@@ -379,7 +363,7 @@ func TestRetryReplayAndRetention(t *testing.T) {
 		t.Errorf("replay source = %d, want %d", replayOf, id)
 	}
 	at(t, outboxTestTime.Add(2*time.Minute), func() {
-		claims, err := repo.Claim(t.Context(), asyncwork.InvalidateOfficial, 1, time.Minute, 2)
+		claims, err := repo.Claim(t.Context(), jobs.InvalidateOfficial, 1, time.Minute, 2)
 		if err != nil || len(claims) != 1 {
 			t.Fatalf("replay claim = %v, %v", claims, err)
 		}
@@ -400,5 +384,151 @@ func TestRetryReplayAndRetention(t *testing.T) {
 	}
 	if retained != 1 {
 		t.Error("cleanup removed replay lineage")
+	}
+}
+
+// insertJob seeds repository tests through the same transaction boundary used by applications.
+func insertJob(repo *Repository, ctx context.Context, job jobs.Job) (int64, error) {
+	payload, err := json.Marshal(job)
+	if err != nil {
+		return 0, err
+	}
+	var id int64
+	insert := func(ctx context.Context) error {
+		id, err = repo.Insert(ctx, job.Type(), payload)
+		return err
+	}
+	if _, txErr := postgres.TransactionExecutor(ctx, repo.db); errors.Is(txErr, postgres.ErrTransactionRequired) {
+		err = postgres.RunInTransaction(ctx, repo.db, insert)
+	} else {
+		err = insert(ctx)
+	}
+	return id, err
+}
+
+func TestEnqueueRequiresApplicationTransaction(t *testing.T) {
+	db := outboxTestDB(t)
+	queue := NewService(NewRepository(db.Pool))
+	job := jobs.InvalidateOfficialLeaderboardV1{Year: 2026}
+	for _, batch := range [][]jobs.Job{nil, {job}} {
+		if err := queue.Enqueue(t.Context(), batch...); !errors.Is(err, postgres.ErrTransactionRequired) {
+			t.Errorf("enqueue without transaction = %v", err)
+		}
+	}
+	var ended context.Context
+	if err := postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
+		ended = ctx
+		return queue.Enqueue(ctx)
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if err := queue.Enqueue(ended, job); err == nil {
+		t.Fatal("accepted ended transaction")
+	}
+	other := outboxTestDB(t)
+	err := postgres.RunInTransaction(t.Context(), other.Pool, func(ctx context.Context) error { return queue.Enqueue(ctx, job) })
+	if !errors.Is(err, postgres.ErrWrongDatabase) {
+		t.Errorf("wrong database = %v", err)
+	}
+}
+
+func TestEnqueueRejectsInvalidBatchBeforeInsertion(t *testing.T) {
+	db := outboxTestDB(t)
+	queue := NewService(NewRepository(db.Pool))
+	valid := jobs.InvalidateOfficialLeaderboardV1{Year: 2026}
+	var typedNil *jobs.InvalidateOfficialLeaderboardV1
+	for _, invalid := range []jobs.Job{nil, typedNil, jobs.InvalidateOfficialLeaderboardV1{}, jobs.InvalidateContestLeaderboardV1{}} {
+		err := postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
+			if err := queue.Enqueue(ctx, valid, invalid); err == nil {
+				t.Fatal("accepted invalid batch")
+			}
+			// Even if the caller mishandles validation errors, no partial batch is written.
+			return nil
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	var count int
+	if err := db.Pool.QueryRow(t.Context(), `select count(*) from async_outbox`).Scan(&count); err != nil {
+		t.Fatal(err)
+	}
+	if count != 0 {
+		t.Errorf("invalid batches persisted %d jobs", count)
+	}
+}
+
+func TestEnqueueFailureRollsBackBusinessWrite(t *testing.T) {
+	db := outboxTestDB(t)
+	queue := NewService(NewRepository(db.Pool))
+	if _, err := db.Pool.Exec(t.Context(), `create table business_mutation (id integer primary key)`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Pool.Exec(t.Context(), `alter table async_outbox add constraint reject_official_for_test check (task_type <> 'leaderboard.invalidate_official.v1')`); err != nil {
+		t.Fatal(err)
+	}
+	err := postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
+		executor, err := postgres.Executor(ctx, db.Pool)
+		if err != nil {
+			return err
+		}
+		if _, err := executor.Exec(ctx, `insert into business_mutation (id) values (1)`); err != nil {
+			return err
+		}
+		return queue.Enqueue(ctx, jobs.InvalidateContestLeaderboardV1{ContestID: uuid.New()}, jobs.InvalidateOfficialLeaderboardV1{Year: 2026})
+	})
+	if err == nil {
+		t.Fatal("expected insertion failure")
+	}
+	var business, queued int
+	if err := db.Pool.QueryRow(t.Context(), `select count(*) from business_mutation`).Scan(&business); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Pool.QueryRow(t.Context(), `select count(*) from async_outbox`).Scan(&queued); err != nil {
+		t.Fatal(err)
+	}
+	if business != 0 || queued != 0 {
+		t.Errorf("failed enqueue left business=%d queued=%d", business, queued)
+	}
+}
+
+func TestUnsupportedStatsIncludesRunningAndFailedVersions(t *testing.T) {
+	db := outboxTestDB(t)
+	repo := NewRepository(db.Pool)
+	_, err := db.Pool.Exec(t.Context(), `insert into async_outbox (task_type, payload, state, claim_token, lease_expires_at, failed_at, completed_at)
+ values ('future.job.v2','{}','pending',null,null,null,null),
+ ('future.job.v2','{}','running',gen_random_uuid(),clock_timestamp()-interval '1 second',null,null),
+ ('future.job.v2','{}','failed',null,null,clock_timestamp(),null),
+ ('future.job.v2','{}','completed',null,null,null,clock_timestamp()),
+ ('leaderboard.invalidate_contest.v1','{}','pending',null,null,null,null)`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	stats, err := repo.UnsupportedStats(t.Context(), []jobs.Type{jobs.InvalidateContest})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if stats.Pending != 1 || stats.Running != 1 || stats.Failed != 1 || stats.OldestDueAt == nil {
+		t.Errorf("unsupported stats = %+v; want pending=1 running=1 failed=1 and due time", stats)
+	}
+}
+
+func TestReplayRequiresRegisteredVersion(t *testing.T) {
+	db := outboxTestDB(t)
+	repo := NewRepository(db.Pool)
+	var id int64
+	if err := db.Pool.QueryRow(t.Context(), `insert into async_outbox (task_type,payload,state,failed_at) values ('future.job.v2','{}','failed',clock_timestamp()) returning id`).Scan(&id); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := repo.Replay(t.Context(), id, "operator", "repair", []jobs.Type{jobs.InvalidateContest}); !errors.Is(err, ErrNotFailed) {
+		t.Fatalf("unregistered replay = %v", err)
+	}
+	replayID, err := repo.Replay(t.Context(), id, "operator", "repair", []jobs.Type{"future.job.v2"})
+	if err != nil || replayID <= id {
+		t.Fatalf("registered replay = %d, %v", replayID, err)
+	}
+	claims, err := repo.Claim(t.Context(), "future.job.v2", 1, time.Minute, 2)
+	if err != nil || len(claims) != 1 || claims[0].ID != replayID {
+		t.Errorf("generic replay claim = %+v, %v", claims, err)
 	}
 }

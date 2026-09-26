@@ -1,9 +1,0 @@
-load("@rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "asyncwork",
-    srcs = ["asyncwork.go"],
-    importpath = "github.com/tadoku/tadoku/services/tadoku-api/internal/asyncwork",
-    visibility = ["//services/tadoku-api:internal_consumers"],
-    deps = ["@com_github_google_uuid//:uuid"],
-)

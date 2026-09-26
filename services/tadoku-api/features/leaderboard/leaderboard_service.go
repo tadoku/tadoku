@@ -8,6 +8,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/activities"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/leaderboardoutbox"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
@@ -29,6 +30,23 @@ func NewService(repository *Repository, client valkeygo.Client, operationTimeout
 	}
 	service.cacheReady.Store(true)
 	return service
+}
+
+func (s *Service) InvalidateContest(ctx context.Context, id uuid.UUID) error {
+	if id == uuid.Nil {
+		return errx.NewInvalidInputError("contest ID is required")
+	}
+	return s.store.invalidate(ctx, s.store.cacheKey(contestPrefix+id.String()))
+}
+
+func (s *Service) InvalidateOfficial(ctx context.Context, year int16) error {
+	if year < 1 {
+		return errx.NewInvalidInputError("year must be positive")
+	}
+	if err := s.store.invalidate(ctx, s.store.cacheKey(yearlyPrefix+strconv.Itoa(int(year)))); err != nil {
+		return err
+	}
+	return s.store.invalidate(ctx, s.store.cacheKey(globalKey))
 }
 
 func (s *Service) FetchContest(ctx context.Context, request ContestRequest) (*Result, error) {

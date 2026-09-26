@@ -161,7 +161,8 @@ Construct and run the application from the entry point:
 
 ```go
 app, err := worker.NewApplication(queue, leaderboard, worker.Config{
-    Concurrency: 4,
+    Concurrency:     cfg.Concurrency,
+    ShutdownTimeout: cfg.ShutdownTimeout,
 })
 if err != nil {
     return err
@@ -169,12 +170,13 @@ if err != nil {
 return app.Run(ctx)
 ```
 
-`Config` also accepts `ShutdownTimeout`, `Logger` and `Metrics`; startup can
-provide the process logger and metric registry. Zero-value concurrency uses
-four slots and zero-value shutdown timeout uses fifteen seconds. Handler
-`Policy` values must be positive. Keep registration and handler signatures in
-the worker application. Startup constructs the application and its external
-resources.
+`cmd/tadoku-worker` loads settings with envconfig and validates them before
+constructing the application. `WORKER_CONCURRENCY` defaults to four slots and
+`WORKER_SHUTDOWN_TIMEOUT` defaults to fifteen seconds; both must be positive.
+Pass those validated values explicitly in `Config`. Startup can also provide
+the process `Logger` and `Metrics`. Handler `Policy` values must be positive.
+Keep registration and handler signatures in the worker application. Startup
+constructs the application and its external resources.
 
 ## Execution and failure guarantees
 
@@ -219,8 +221,7 @@ real PostgreSQL and provider fixtures:
    context; this runs the registered handlers through claiming and dispatch.
 3. Wait with a bounded deadline for the scenario's jobs to reach `completed`.
    Check observable state on a ticker; fail immediately on a terminal failure
-   and report remaining states on timeout. For cache-backed reads, also wait
-   for the provider's readiness condition. A fixed sleep does not prove that
+   and report remaining states on timeout. A fixed sleep does not prove that
    processing finished.
 4. Send the follow-up HTTP request and compare its golden response to prove
    the user-visible effect. Verify effects without a read endpoint through the
@@ -296,17 +297,10 @@ supported producer and worker rollback versions have been identified.
 
 ### Deploy consumers, then switch producers
 
-First ensure every worker that can publish shared cache readiness uses the
-fail-closed readiness protocol: unsupported outstanding work prevents it from
-publishing readiness. Unsupported pending, running and failed records must be
-visible. An older binary that ignores unknown work can otherwise mark stale
-cache data ready while a compatible worker is still handling it.
-
 Deploy v1+v2 support to every serving worker before any producer emits v2;
-verify the actual revisions, including all shared-readiness publishers. Verify
-v2 processing through a controlled workflow. Each worker claims only names in
-its own registry, leaving unknown rows for compatible workers; that claim rule
-alone is insufficient to protect shared cache readiness.
+verify the actual revisions and v2 processing through a controlled workflow.
+Each worker claims only names in its own registry, leaving unknown rows queued
+for compatible workers. Monitor unsupported pending, running and failed records.
 
 After the consumer gate passes, switch producers to v2. Old producer replicas
 may continue writing v1 while the rollout completes. Do not enqueue both
@@ -319,21 +313,20 @@ and unsupported backlog is understood and monitored.
 
 Inspect every non-completed v1 record, including delayed retries, running jobs
 with leases and failed records that could be replayed. Linked replay records
-also retain v1. Drain active work and repair/replay failures with the v1 handler,
-or separately design an explicit archive/disposition workflow. The current
-queue has no retirement flag or conversion command. Successful replay leaves
-the original failed v1 row intact; after unregistering v1 that retained row
-would be unsupported and block cache readiness. Keep the v1 handler while any
-such row remains. A future archive/disposition must remove unsupported queue
-rows while preserving required history and replay lineage, with separate review
-and any required standalone data-migration deployment. An operator note alone
-does not change queue eligibility. Completed history remains available for
-inspection without requiring a handler.
+also retain v1. Drain active work and repair/replay failures with the v1 handler.
+Successful replay leaves the failed original intact; its presence is retained
+history, but replaying it still requires support for its original version.
 
-**Gate:** no pending, running or retryable v1 work requires execution. Keep
-registration while failed v1 records remain in the queue; handler removal must
-wait for a separately implemented and verified archival/disposition process if
-such rows exist.
+Keep the v1 handler while replay remains an operational requirement. Before
+removing it, explicitly review the disposition of retained failures, preserve
+their history and replay lineage, and document how a compatible consumer would
+be restored if replay is needed. The queue has no retirement flag, archive or
+conversion command. Any new archive or data-conversion workflow requires its
+own implementation, review and applicable standalone migration deployment.
+Completed history can be inspected without a handler.
+
+**Gate:** no pending, running or delayed v1 work requires execution, and retained
+failures have an explicit replay-support or reviewed retirement decision.
 
 ### Retire v1 after compatibility gates pass
 
@@ -341,8 +334,9 @@ Remove v1 registration only when all of these conditions hold:
 
 - No current producer can emit v1.
 - No supported producer rollback can emit v1, unless a v1 consumer remains.
-- No pending, running, delayed or failed v1 rows remain in the queue. Replayed
-  failures still count because their original records are retained.
+- No pending, running or delayed v1 rows remain in the queue.
+- Retained failures have a reviewed disposition that accounts for the loss of
+  replay support until a compatible consumer is restored.
 - Every supported worker rollback can execute every version that may be queued.
 - The retention and inspection policy for historical v1 records is preserved.
 
@@ -353,11 +347,10 @@ consumer and reviewed disposition; do not redirect it to v2 automatically.
 ### Rollback and optional fields
 
 After producers start writing v2, reverting every consumer to v1 strands v2
-rows even if producers have already reverted. Every worker rollback must retain v1+v2 support and the fail-closed readiness
-protocol while v2 work exists. Merely leaving one compatible consumer running
-does not protect a shared readiness marker from an incompatible publisher. A producer rollback to v1 is safe
-only while v1 support remains. These are compatibility conditions, not
-permission to perform a rollback.
+rows even if producers have already reverted. Keep a compatible consumer for
+every version that remains queued or may still be published. A producer rollback
+to v1 is safe only while v1 support remains. These are compatibility conditions,
+not permission to perform a rollback.
 
 Strict decoding rejects unknown fields. Adding an apparently optional JSON
 field can therefore break an older worker. Prefer a new version. A same-version

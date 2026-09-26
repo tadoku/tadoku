@@ -1,0 +1,51 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "worker",
+    srcs = [
+        "application.go",
+        "dispatch.go",
+        "metrics.go",
+        "runtime.go",
+    ],
+    importpath = "github.com/tadoku/tadoku/services/tadoku-api/app/worker",
+    visibility = ["//services/tadoku-api:feature_consumers"],
+    deps = [
+        "//services/tadoku-api/domain/jobs",
+        "//services/tadoku-api/features/jobqueue",
+        "//services/tadoku-api/features/leaderboard",
+        "//services/tadoku-api/internal/timex",
+        "@com_github_prometheus_client_golang//prometheus",
+    ],
+)
+
+go_test(
+    name = "worker_test",
+    srcs = [
+        "worker_e2e_test.go",
+        "worker_runtime_e2e_test.go",
+        "worker_test.go",
+    ],
+    embed = [":worker"],
+    env_inherit = [
+        "TADOKU_TEST_POSTGRES_URL",
+        "TADOKU_TEST_VALKEY_URL",
+    ],
+    tags = [
+        "no-cache",
+        "no-remote-exec",
+        "requires-network",
+    ],
+    deps = [
+        "//services/tadoku-api/domain/jobs",
+        "//services/tadoku-api/features/jobqueue",
+        "//services/tadoku-api/features/leaderboard",
+        "//services/tadoku-api/internal/testpostgres",
+        "//services/tadoku-api/internal/testvalkey",
+        "//services/tadoku-api/internal/timex",
+        "@com_github_google_uuid//:uuid",
+        "@com_github_jackc_pgx_v5//pgxpool",
+        "@com_github_prometheus_client_golang//prometheus",
+        "@com_github_valkey_io_valkey_go//:valkey-go",
+    ],
+)

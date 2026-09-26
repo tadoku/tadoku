@@ -1,0 +1,47 @@
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load", "oci_push")
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
+
+pkg_tar(
+    name = "binary_layer",
+    srcs = ["//services/tadoku-api/cmd/tadoku-worker"],
+)
+
+oci_image(
+    name = "image",
+    base = "@distroless_base_linux_amd64",
+    entrypoint = ["/tadoku-worker"],
+    tars = [":binary_layer"],
+)
+
+oci_load(
+    name = "load",
+    image = ":image",
+    repo_tags = ["ghcr.io/tadoku/tadoku/tadoku-worker:latest"],
+    visibility = ["//visibility:public"],
+)
+
+oci_push(
+    name = "push",
+    image = ":image",
+    remote_tags = [
+        "latest",
+        "prod",
+    ],
+    repository = "ghcr.io/tadoku/tadoku/tadoku-worker",
+    visibility = ["//visibility:public"],
+)
+
+oci_image(
+    name = "cli_image",
+    base = "@tadoku_dev_alpine_linux_amd64",
+    entrypoint = ["/tadoku-worker"],
+    tars = [":binary_layer"],
+    user = "65532:65532",
+    visibility = ["//services/tadoku-api:__pkg__"],
+)
+
+oci_push(
+    name = "cli_push",
+    image = ":cli_image",
+    visibility = ["//services/tadoku-api:__pkg__"],
+)

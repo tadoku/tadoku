@@ -104,18 +104,15 @@ func (s *Service) UpdateAnnouncement(ctx context.Context, parameters UpdateAnnou
 		return err
 	}
 
-	announcement, err := s.announcements.FindAnnouncementByID(ctx, parameters.Namespace, parameters.ID)
-	if err != nil {
-		return err
-	}
-
-	announcement.Title = parameters.Title
-	announcement.Content = parameters.Content
-	announcement.Style = parameters.Style
-	announcement.Href = parameters.Href
-	announcement.StartsAt = parameters.StartsAt
-	announcement.EndsAt = parameters.EndsAt
-	announcement.UpdatedAt = timex.Now()
-
-	return s.announcements.UpdateAnnouncement(ctx, announcement)
+	return s.announcements.UpdateAnnouncement(ctx, &Announcement{
+		ID:        parameters.ID,
+		Namespace: parameters.Namespace,
+		Title:     parameters.Title,
+		Content:   parameters.Content,
+		Style:     parameters.Style,
+		Href:      parameters.Href,
+		StartsAt:  parameters.StartsAt,
+		EndsAt:    parameters.EndsAt,
+		UpdatedAt: timex.Now(),
+	})
 }

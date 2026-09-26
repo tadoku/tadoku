@@ -77,13 +77,12 @@ type config struct {
 	KratosAdminURL string        `validate:"required" envconfig:"kratos_admin_url"`
 	KratosTimeout  time.Duration `validate:"gt=0" envconfig:"kratos_timeout" default:"2s"`
 
-	PostgresMaxConnections     int32                 `validate:"gt=0,lte=32" envconfig:"postgres_max_connections" default:"4"`
-	Postgres                   postgresconfig.Config `ignored:"true"`
-	ValkeyURL                  string                `validate:"required" envconfig:"valkey_url"`
-	ValkeyTimeout              time.Duration         `validate:"gt=0" envconfig:"valkey_timeout" default:"1s"`
-	LeaderboardOutboxEnabled   bool                  `envconfig:"leaderboard_outbox_enabled" default:"false"`
-	LeaderboardSharedReadiness bool                  `envconfig:"leaderboard_shared_readiness" default:"false"`
-	LeaderboardCachePrefix     string                `envconfig:"leaderboard_cache_prefix"`
+	PostgresMaxConnections   int32                 `validate:"gt=0,lte=32" envconfig:"postgres_max_connections" default:"4"`
+	Postgres                 postgresconfig.Config `ignored:"true"`
+	ValkeyURL                string                `validate:"required" envconfig:"valkey_url"`
+	ValkeyTimeout            time.Duration         `validate:"gt=0" envconfig:"valkey_timeout" default:"1s"`
+	LeaderboardOutboxEnabled bool                  `envconfig:"leaderboard_outbox_enabled" default:"false"`
+	LeaderboardCachePrefix   string                `envconfig:"leaderboard_cache_prefix"`
 
 	DialTimeout           time.Duration `validate:"gt=0" envconfig:"dial_timeout" default:"3s"`
 	MaxTokenAge           time.Duration `validate:"gt=0" envconfig:"max_token_age" default:"24h"`
@@ -107,9 +106,6 @@ func loadConfig() (config, error) {
 			return !((r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '-' || r == ':')
 		}) >= 0 {
 			return config{}, fmt.Errorf("validate config: LeaderboardCachePrefix must contain only lowercase letters, digits, hyphens and colons, and end in a colon")
-		}
-		if !cfg.LeaderboardOutboxEnabled && !cfg.LeaderboardSharedReadiness {
-			return config{}, fmt.Errorf("validate config: LeaderboardCachePrefix requires a leaderboard readiness authority")
 		}
 	}
 	if cfg.FliptEnabled {
@@ -359,9 +355,6 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	contestsService := contests.NewService(contestsRepository)
 	languagesService := languages.NewService(languagesRepository)
 	leaderboardService := leaderboard.NewService(leaderboardRepository, valkeyClient, cfg.ValkeyTimeout, cfg.LeaderboardCachePrefix)
-	if cfg.LeaderboardSharedReadiness {
-		leaderboardService.EnableSharedReadiness()
-	}
 	logsService := logs.NewService(logsRepository, cfg.ScoringEngineEnabled)
 	pagesService := pages.NewService(pagesRepository)
 	postsService := posts.NewService(postsRepository)

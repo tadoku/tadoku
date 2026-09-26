@@ -426,9 +426,6 @@ func TestLoadConfigUsesValidatedDefaults(t *testing.T) {
 	if cfg.LeaderboardOutboxEnabled {
 		t.Error("leaderboard outbox worker must be disabled by default")
 	}
-	if cfg.LeaderboardSharedReadiness {
-		t.Error("shared leaderboard readiness must be disabled by default")
-	}
 	t.Setenv("API_LEADERBOARD_OUTBOX_ENABLED", "true")
 	enabledCfg, err := loadConfig()
 	if err != nil || !enabledCfg.LeaderboardOutboxEnabled {
@@ -436,21 +433,16 @@ func TestLoadConfigUsesValidatedDefaults(t *testing.T) {
 	}
 	t.Setenv("API_LEADERBOARD_OUTBOX_ENABLED", "false")
 	t.Setenv("API_LEADERBOARD_CACHE_PREFIX", "branch:")
-	if _, err := loadConfig(); err == nil {
-		t.Error("cache prefix accepted without a leaderboard readiness authority")
+	prefixedCfg, err := loadConfig()
+	if err != nil || prefixedCfg.LeaderboardOutboxEnabled || prefixedCfg.LeaderboardCachePrefix != "branch:" {
+		t.Errorf("cache prefix without embedded worker: prefix=%q enabled=%t error=%v", prefixedCfg.LeaderboardCachePrefix, prefixedCfg.LeaderboardOutboxEnabled, err)
 	}
-	t.Setenv("API_LEADERBOARD_SHARED_READINESS", "true")
-	sharedCfg, err := loadConfig()
-	if err != nil || !sharedCfg.LeaderboardSharedReadiness || sharedCfg.LeaderboardCachePrefix != "branch:" {
-		t.Errorf("shared leaderboard readiness configuration: config=%+v error=%v", sharedCfg, err)
+	for _, prefix := range []string{"branch", "Branch:"} {
+		t.Setenv("API_LEADERBOARD_CACHE_PREFIX", prefix)
+		if _, err := loadConfig(); err == nil || !strings.Contains(err.Error(), "LeaderboardCachePrefix") {
+			t.Errorf("invalid cache prefix %q: error=%v", prefix, err)
+		}
 	}
-	t.Setenv("API_LEADERBOARD_OUTBOX_ENABLED", "true")
-	bothCfg, err := loadConfig()
-	if err != nil || !bothCfg.LeaderboardOutboxEnabled || !bothCfg.LeaderboardSharedReadiness {
-		t.Errorf("embedded worker and shared readiness configuration: config=%+v error=%v", bothCfg, err)
-	}
-	t.Setenv("API_LEADERBOARD_OUTBOX_ENABLED", "false")
-	t.Setenv("API_LEADERBOARD_SHARED_READINESS", "false")
 	t.Setenv("API_LEADERBOARD_CACHE_PREFIX", "")
 	if cfg.JWKS != "http://jwks.test" {
 		t.Errorf("JWKS=%q", cfg.JWKS)

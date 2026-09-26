@@ -28,6 +28,11 @@ and the Tadoku API rejects writes and profile synchronisation for users whose
   unqualified table names, like the migrations in
   `services/tadoku-api/migrations/`, so connect with the `search_path` that the
   Tadoku API uses.
+- A running `tadoku-worker` release that registers both
+  `leaderboard.invalidate_contest.v1` and
+  `leaderboard.invalidate_official.v1`, connected to this exact database and
+  its matching Valkey cache prefix. Confirm the deployed release's registration
+  before proceeding; the embedded legacy consumer does not process these jobs.
 - Access to the Kratos admin API and the Keto read and write APIs.
 - The account ID. This is the Kratos identity ID, which is also `users.id`. To
   find it from an email address, run
@@ -37,6 +42,7 @@ Set the ID once for `psql` and once for the shell. The Tadoku API compares
 contest dates with the current UTC date, so set the `psql` session to UTC too:
 
 ```sql
+\set ON_ERROR_STOP on
 \set account_id '<ACCOUNT_ID>'
 set time zone 'UTC';
 ```
@@ -117,32 +123,45 @@ where id = :'account_id';
 ## 3. Delete the data
 
 Run this transaction in the same `psql` session. The statements must run in this
-order: the outbox inserts read the rows that the deletes remove, and the log
+order: the job insert reads the rows that the deletes remove, and the log
 statements treat every log still attached to a contest as finished-contest
-history.
+history. The CTE inserts the existing v1 contracts and captures their exact IDs
+in `deletion_job_ids`, including an empty array when no invalidation is needed.
+
+This direct SQL is part of this manual maintenance transaction. Application
+writes continue to use typed jobs returned by features and transactional
+`jobqueue.Enqueue`; see [Jobs and worker](../tadoku-api/jobs.md). Do not change
+these message names or payloads without the consumer-version preflight.
 
 ```sql
 begin;
 
-insert into leaderboard_outbox (event_type, user_id, contest_id)
-select 'refresh_contest_score', :'account_id'::uuid, contest_id
-from (
+with affected_contests as (
   select contest_id from contest_registrations where user_id = :'account_id'
   union
   select contest_logs.contest_id
   from contest_logs
   join logs on logs.id = contest_logs.log_id
   where logs.user_id = :'account_id'
-) as affected_contests
-where contest_id not in (
-  select id from contests where deleted_at is null and contest_end < current_date
-);
-
-insert into leaderboard_outbox (event_type, user_id, year)
-select distinct 'refresh_official_scores', :'account_id'::uuid, year
-from logs
-where user_id = :'account_id'
-  and eligible_official_leaderboard;
+), queued as (
+  insert into async_outbox (task_type, payload)
+  select 'leaderboard.invalidate_contest.v1',
+         jsonb_build_object('contest_id', contest_id)
+  from affected_contests
+  where contest_id not in (
+    select id from contests where deleted_at is null and contest_end < current_date
+  )
+  union all
+  select distinct 'leaderboard.invalidate_official.v1',
+                  jsonb_build_object('year', year)
+  from logs
+  where user_id = :'account_id'
+    and eligible_official_leaderboard
+  returning id
+)
+select coalesce(array_agg(id order by id), '{}'::bigint[]) as deletion_job_ids
+from queued
+\gset
 
 -- Keep contest logs only for live logs in finished contests.
 delete from contest_logs
@@ -197,7 +216,14 @@ Check the last statement's output. If it printed `UPDATE 1`, commit:
 
 ```sql
 commit;
+\echo :deletion_job_ids
 ```
+
+Record that exact job-ID array with the operation's evidence after the commit
+succeeds, and keep this `psql` session for step 4. If the session is lost, restore
+it with `\set deletion_job_ids '{123,124}'` using the recorded IDs. Keep every
+committed batch's IDs if you rerun the deletion; a later empty batch does not
+prove that an earlier batch completed.
 
 If it printed `UPDATE 0`, the lock is missing. Run `rollback;` and go back to
 step 2.
@@ -207,7 +233,7 @@ account was the moderator and entries where it was the target.
 
 ## 4. Leaderboards
 
-The Tadoku API leaderboard outbox worker processes the rows inserted in step 3.
+The separate `tadoku-worker` processes the `async_outbox` jobs from step 3.
 It invalidates the cached leaderboards of the contests that lose the account's
 registrations or logs, and the yearly and global leaderboards, in Valkey. On the next
 read, each leaderboard is rebuilt from the Tadoku API database. The rebuilt
@@ -218,15 +244,43 @@ leaderboard reads display names from `users` on each request, so finished
 contests show the account as `Deleted participant`. You do not need to change
 the cache by hand.
 
-Wait a few seconds, then run this query. It returns `0` once the worker has
-processed the rows:
+Use the recorded `deletion_job_ids` from the committed transaction to inspect
+these jobs and any linked replay attempts in the same `psql` session:
 
 ```sql
-select count(*)
-from leaderboard_outbox
-where user_id = :'account_id'
-  and processed_at is null;
+with recursive requested as (
+  select unnest(:'deletion_job_ids'::bigint[]) as original_id
+), attempts as (
+  select requested.original_id, task.id, task.state
+  from requested
+  join async_outbox as task on task.id = requested.original_id
+  union all
+  select attempts.original_id, task.id, task.state
+  from attempts
+  join async_outbox as task on task.replay_of_id = attempts.id
+)
+select requested.original_id,
+       coalesce(bool_or(attempts.state = 'completed'), false) as completed,
+       array_agg(attempts.id order by attempts.id)
+         filter (where attempts.state in ('pending', 'running')) as outstanding_ids,
+       array_agg(attempts.id order by attempts.id)
+         filter (where attempts.state = 'failed') as failed_ids,
+       count(attempts.id) = 0 as missing
+from requested
+left join attempts using (original_id)
+group by requested.original_id
+order by requested.original_id;
 ```
+
+A batch with no IDs needs no invalidation. Otherwise every original ID needs
+`completed = true` with `missing = false`; pending or running IDs remain work
+for the worker. For an incomplete effect with failed IDs, inspect the failure
+and repair its cause before using the [worker replay command](../tadoku-api/jobs.md#inspect-and-replay-retained-work).
+Replay creates a linked job and leaves the failed original unchanged. Re-run
+this query to observe the linked completion; do not wait for the original
+failed row to become completed. A missing row is not proof of success: consult
+retained operation evidence, since completed-row retention can remove old
+records.
 
 ## 5. Keto relations and feature access
 

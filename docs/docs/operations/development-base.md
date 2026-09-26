@@ -83,15 +83,13 @@ active tasks and startup reconciliation before treating them as settled.
 
 During the outbox transfer, the API's embedded worker remains enabled and
 consumes only the old `leaderboard_outbox` table. The new worker consumes only
-`async_outbox`. Both readiness flags are enabled, so cache reads use PostgreSQL
-until both consumers are ready; this also protects reads if generic tasks
-become backlogged. Verify both queues and owners independently:
+`async_outbox`. API cache reads retain the embedded worker’s existing readiness
+behavior. Verify both queues and owners independently:
 
 1. Confirm the base `tadoku-worker` is ready and its `/readyz` endpoint remains
    healthy while tasks retry or fail.
 2. Confirm one base API replica has `API_LEADERBOARD_OUTBOX_ENABLED=true` and
-   `API_LEADERBOARD_SHARED_READINESS=true`, and logs `leaderboard outbox ready`
-   for the old table.
+   logs `leaderboard outbox ready` for the old table.
 3. Inspect due and failed `async_outbox` rows and old pending rows; a write
    followed by a leaderboard read must still succeed.
 

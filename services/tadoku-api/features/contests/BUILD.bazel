@@ -13,7 +13,6 @@ go_library(
         "//services/tadoku-api/domain/activities",
         "//services/tadoku-api/domain/jobs",
         "//services/tadoku-api/domain/languages",
-        "//services/tadoku-api/domain/leaderboardoutbox",
         "//services/tadoku-api/domain/logscore",
         "//services/tadoku-api/generated/sqlc/contests",
         "//services/tadoku-api/infra/postgres",

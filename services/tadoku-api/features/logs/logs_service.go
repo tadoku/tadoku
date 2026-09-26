@@ -8,7 +8,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
-	"github.com/tadoku/tadoku/services/tadoku-api/domain/leaderboardoutbox"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/logscore"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
@@ -88,16 +87,10 @@ func (s *Service) UpdateContestRegistrations(ctx context.Context, logID uuid.UUI
 	}
 	for contestID := range affected {
 		id := contestID
-		if err := s.logs.InsertOutbox(ctx, before.UserID, &id, nil, leaderboardoutbox.RefreshContestScore); err != nil {
-			return nil, err
-		}
 		followUp = append(followUp, jobs.InvalidateContestLeaderboardV1{ContestID: id})
 	}
 	if before.EligibleOfficial || after.EligibleOfficial {
 		year := before.Year
-		if err := s.logs.InsertOutbox(ctx, before.UserID, nil, &year, leaderboardoutbox.RefreshOfficialScores); err != nil {
-			return nil, err
-		}
 		followUp = append(followUp, jobs.InvalidateOfficialLeaderboardV1{Year: year})
 	}
 	return followUp, nil
@@ -128,16 +121,10 @@ func (s *Service) Delete(ctx context.Context, logID uuid.UUID, now time.Time) ([
 	}
 	for _, contestID := range contestIDs {
 		id := contestID
-		if err := s.logs.InsertOutbox(ctx, outbox.UserID, &id, nil, leaderboardoutbox.RefreshContestScore); err != nil {
-			return nil, err
-		}
 		followUp = append(followUp, jobs.InvalidateContestLeaderboardV1{ContestID: id})
 	}
 	if outbox.EligibleOfficial {
 		year := outbox.Year
-		if err := s.logs.InsertOutbox(ctx, outbox.UserID, nil, &year, leaderboardoutbox.RefreshOfficialScores); err != nil {
-			return nil, err
-		}
 		followUp = append(followUp, jobs.InvalidateOfficialLeaderboardV1{Year: year})
 	}
 	return followUp, nil
@@ -152,15 +139,9 @@ func (s *Service) ModerateDetach(ctx context.Context, logID, contestID uuid.UUID
 	if err := s.logs.DetachContest(ctx, logID, contestID); err != nil {
 		return nil, err
 	}
-	if err := s.logs.InsertOutbox(ctx, outbox.UserID, &contestID, nil, leaderboardoutbox.RefreshContestScore); err != nil {
-		return nil, err
-	}
 	followUp = append(followUp, jobs.InvalidateContestLeaderboardV1{ContestID: contestID})
 	if outbox.EligibleOfficial {
 		year := outbox.Year
-		if err := s.logs.InsertOutbox(ctx, outbox.UserID, nil, &year, leaderboardoutbox.RefreshOfficialScores); err != nil {
-			return nil, err
-		}
 		followUp = append(followUp, jobs.InvalidateOfficialLeaderboardV1{Year: year})
 	}
 	return followUp, nil
@@ -390,16 +371,10 @@ func (s *Service) create(ctx context.Context, mutation logMutation) ([]jobs.Job,
 		}
 		seen[tracking.ContestID] = struct{}{}
 		contestID := tracking.ContestID
-		if err := s.logs.InsertOutbox(ctx, mutation.UserID, &contestID, nil, leaderboardoutbox.RefreshContestScore); err != nil {
-			return nil, err
-		}
 		followUp = append(followUp, jobs.InvalidateContestLeaderboardV1{ContestID: contestID})
 	}
 	if mutation.EligibleOfficialLeaderboard {
 		year := mutation.Year
-		if err := s.logs.InsertOutbox(ctx, mutation.UserID, nil, &year, leaderboardoutbox.RefreshOfficialScores); err != nil {
-			return nil, err
-		}
 		followUp = append(followUp, jobs.InvalidateOfficialLeaderboardV1{Year: year})
 	}
 	return followUp, nil
@@ -464,16 +439,10 @@ func (s *Service) update(ctx context.Context, mutation logMutation) ([]jobs.Job,
 	}
 	for _, id := range contestIDs {
 		contestID := id
-		if err := s.logs.InsertOutbox(ctx, outbox.UserID, &contestID, nil, leaderboardoutbox.RefreshContestScore); err != nil {
-			return nil, err
-		}
 		followUp = append(followUp, jobs.InvalidateContestLeaderboardV1{ContestID: contestID})
 	}
 	if outbox.EligibleOfficial {
 		year := outbox.Year
-		if err := s.logs.InsertOutbox(ctx, outbox.UserID, nil, &year, leaderboardoutbox.RefreshOfficialScores); err != nil {
-			return nil, err
-		}
 		followUp = append(followUp, jobs.InvalidateOfficialLeaderboardV1{Year: year})
 	}
 	return followUp, nil

@@ -1,7 +1,6 @@
-select event_type as kind, user_id::text, coalesce(contest_id::text, '') as reference,
-  year::text, '' as rule_ids, '' as rates, '' as source, count(*)::text
+select 'legacy_outbox' as kind, '' as user_id, '' as reference,
+  '' as year, '' as rule_ids, '' as rates, '' as source, count(*)::text
 from leaderboard_outbox
-group by event_type, user_id, contest_id, year
 union all
 select task_type, '' as user_id, coalesce(payload->>'contest_id', '') as reference,
   payload->>'year' as year, '' as rule_ids, '' as rates, state as source, count(*)::text

@@ -46,3 +46,5 @@ where unit_key = 'reading_page' and language_code is null;
 
 update contests set contest_end='2027-01-01', official=true where id='f0000000-0000-4000-8000-000000000001';
 update contests set contest_end='2027-01-31' where id='f0000000-0000-4000-8000-000000000004';
+insert into leaderboard_outbox (event_type, user_id, year)
+values ('refresh_official_scores', '11111111-1111-4111-8111-111111111111', 2026);

@@ -274,14 +274,6 @@ where contest_id = sqlc.arg(contest_id)
       and logs.deleted_at is null
   );
 
--- name: InsertContestScoreRefresh :exec
-insert into leaderboard_outbox (event_type, user_id, contest_id)
-values (sqlc.arg(event_type), sqlc.arg(user_id), sqlc.arg(contest_id));
-
--- name: InsertOfficialScoresRefresh :exec
-insert into leaderboard_outbox (event_type, user_id, year)
-values (sqlc.arg(event_type), sqlc.arg(user_id), sqlc.arg(year));
-
 -- name: ListYearlyContestRegistrations :many
 select
   contest_registrations.id,

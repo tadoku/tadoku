@@ -137,7 +137,6 @@ type suite struct {
 	outboxReady    <-chan struct{}
 	outboxContext  context.Context
 	outboxDone     <-chan struct{}
-	outboxBaseline int64
 	roles          *commonroles.KetoService
 }
 

@@ -513,28 +513,6 @@ func (q *Queries) FindLogByID(ctx context.Context, arg FindLogByIDParams) (FindL
 	return i, err
 }
 
-const insertLogLeaderboardOutbox = `-- name: InsertLogLeaderboardOutbox :exec
-insert into leaderboard_outbox (event_type, user_id, contest_id, year)
-values ($1, $2, $3, $4)
-`
-
-type InsertLogLeaderboardOutboxParams struct {
-	EventType string
-	UserID    pgtype.UUID
-	ContestID pgtype.UUID
-	Year      pgtype.Int2
-}
-
-func (q *Queries) InsertLogLeaderboardOutbox(ctx context.Context, arg InsertLogLeaderboardOutboxParams) error {
-	_, err := q.db.Exec(ctx, insertLogLeaderboardOutbox,
-		arg.EventType,
-		arg.UserID,
-		arg.ContestID,
-		arg.Year,
-	)
-	return err
-}
-
 const insertLogTag = `-- name: InsertLogTag :exec
 insert into log_tags (log_id, user_id, tag)
 values ($1, $2, $3)

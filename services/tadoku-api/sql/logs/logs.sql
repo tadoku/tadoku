@@ -278,10 +278,6 @@ insert into contest_logs (
 insert into log_tags (log_id, user_id, tag)
 values (sqlc.arg('log_id'), sqlc.arg('user_id'), sqlc.arg('tag'));
 
--- name: InsertLogLeaderboardOutbox :exec
-insert into leaderboard_outbox (event_type, user_id, contest_id, year)
-values (sqlc.arg('event_type'), sqlc.arg('user_id'), sqlc.arg('contest_id'), sqlc.arg('year'));
-
 -- name: FetchLogOutboxContext :one
 select user_id, year, eligible_official_leaderboard
 from logs where id = sqlc.arg('log_id');

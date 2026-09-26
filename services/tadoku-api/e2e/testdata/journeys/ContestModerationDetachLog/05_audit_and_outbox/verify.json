@@ -12,15 +12,21 @@
     "count": "1"
   },
   {
-    "kind": "refresh_contest_score",
-    "actor": "11111111-1111-4111-8111-111111111111",
+    "kind": "leaderboard.invalidate_contest.v1",
+    "actor": "",
     "value": "f0000000-0000-4000-8000-000000000001",
     "count": "2"
   },
   {
-    "kind": "refresh_official_scores",
-    "actor": "11111111-1111-4111-8111-111111111111",
+    "kind": "leaderboard.invalidate_official.v1",
+    "actor": "",
     "value": "2025",
     "count": "2"
+  },
+  {
+    "kind": "legacy_outbox",
+    "actor": "",
+    "value": "",
+    "count": "0"
   }
 ]

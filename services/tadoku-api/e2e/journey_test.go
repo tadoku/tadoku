@@ -228,26 +228,6 @@ func runJobStep(t *testing.T, s *suite, job string) {
 		case <-time.After(3 * time.Second):
 			t.Fatal("leaderboard outbox did not become ready")
 		}
-		if err := s.db.Pool.QueryRow(t.Context(), `select coalesce(max(id), 0) from leaderboard_outbox`).Scan(&s.outboxBaseline); err != nil {
-			t.Fatal(err)
-		}
-	case "wait_for_leaderboard_outbox_poll":
-		deadline := time.After(3 * time.Second)
-		for {
-			var total, pending int
-			err := s.db.Pool.QueryRow(t.Context(), `select count(*), count(*) filter (where processed_at is null) from leaderboard_outbox where id > $1`, s.outboxBaseline).Scan(&total, &pending)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if total > 0 && pending == 0 {
-				return
-			}
-			select {
-			case <-deadline:
-				t.Fatalf("leaderboard outbox poll did not process new events: total=%d pending=%d", total, pending)
-			case <-time.After(10 * time.Millisecond):
-			}
-		}
 	default:
 		t.Fatalf("unknown journey job %q", job)
 	}

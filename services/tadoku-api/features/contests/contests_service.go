@@ -211,37 +211,23 @@ func (s *Service) ApplyRegistration(
 		); err != nil {
 			return nil, err
 		}
-		pending, err := s.insertRegistrationLeaderboardOutbox(ctx, registration, contest)
-		if err != nil {
-			return nil, err
-		}
-		followUp = append(followUp, pending...)
+		followUp = append(followUp, registrationLeaderboardJobs(registration, contest)...)
 	}
 
 	if err := s.contests.UpsertRegistration(ctx, registration); err != nil {
 		return nil, err
 	}
 
-	pending, err := s.insertRegistrationLeaderboardOutbox(ctx, registration, contest)
-	if err != nil {
-		return nil, err
-	}
-	return append(followUp, pending...), nil
+	return append(followUp, registrationLeaderboardJobs(registration, contest)...), nil
 }
 
-func (s *Service) insertRegistrationLeaderboardOutbox(ctx context.Context, registration Registration, contest Contest) ([]jobs.Job, error) {
-	if err := s.contests.InsertContestScoreRefresh(ctx, registration.UserID, registration.ContestID); err != nil {
-		return nil, err
-	}
+func registrationLeaderboardJobs(registration Registration, contest Contest) []jobs.Job {
 	followUp := []jobs.Job{jobs.InvalidateContestLeaderboardV1{ContestID: registration.ContestID}}
 	if contest.Official {
 		year := int16(contest.ContestStart.Year())
-		if err := s.contests.InsertOfficialScoresRefresh(ctx, registration.UserID, year); err != nil {
-			return nil, err
-		}
 		followUp = append(followUp, jobs.InvalidateOfficialLeaderboardV1{Year: year})
 	}
-	return followUp, nil
+	return followUp
 }
 
 func (s *Service) CreateContest(ctx context.Context, contest Contest) (*Contest, error) {

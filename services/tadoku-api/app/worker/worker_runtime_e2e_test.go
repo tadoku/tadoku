@@ -19,6 +19,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testvalkey"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 	valkeygo "github.com/valkey-io/valkey-go"
 )
 
@@ -166,7 +167,7 @@ func TestWorkerCancelsHandlerAfterLostLeaseAndReclaims(t *testing.T) {
 		t.Fatal("contest handler did not start")
 	}
 	newToken := uuid.New()
-	if _, err := f.db.Exec(t.Context(), `update async_outbox set claim_token = $1, lease_expires_at = now() + interval '1 minute'
+	if _, err := f.db.Exec(t.Context(), `update jobs set claim_token = $1, lease_expires_at = now() + interval '1 minute'
 		where id = $2 and state = 'running'`, newToken, id); err != nil {
 		t.Fatal(err)
 	}
@@ -177,20 +178,20 @@ func TestWorkerCancelsHandlerAfterLostLeaseAndReclaims(t *testing.T) {
 	}
 	var state string
 	var token uuid.UUID
-	if err := f.db.QueryRow(t.Context(), `select state, claim_token from async_outbox where id = $1`, id).Scan(&state, &token); err != nil {
+	if err := f.db.QueryRow(t.Context(), `select state, claim_token from jobs where id = $1`, id).Scan(&state, &token); err != nil {
 		t.Fatal(err)
 	}
 	if state != "running" || token != newToken {
 		t.Fatalf("lost claim was transitioned: state=%s token=%s", state, token)
 	}
 	releaseAll()
-	if _, err := f.db.Exec(t.Context(), `update async_outbox set lease_expires_at = now() - interval '1 second' where id = $1`, id); err != nil {
+	if _, err := f.db.Exec(t.Context(), `update jobs set lease_expires_at = now() - interval '1 second' where id = $1`, id); err != nil {
 		t.Fatal(err)
 	}
 	waitFor(t, func() (bool, error) {
 		var state string
 		var attempts int
-		err := f.db.QueryRow(t.Context(), `select state, attempts from async_outbox where id = $1`, id).Scan(&state, &attempts)
+		err := f.db.QueryRow(t.Context(), `select state, attempts from jobs where id = $1`, id).Scan(&state, &attempts)
 		return state == "completed" && attempts == 2, err
 	})
 }
@@ -209,7 +210,7 @@ func TestWorkerDeadlineExhaustionAndReplay(t *testing.T) {
 	}
 	runner := f.runner(t, blocked, 8*time.Second, 2*time.Second)
 	var id int64
-	err := f.db.QueryRow(t.Context(), `insert into async_outbox (task_type, payload, attempts)
+	err := f.db.QueryRow(t.Context(), `insert into jobs (task_type, payload, attempts)
 		values ($1, $2::jsonb, 4) returning id`, string(jobs.InvalidateContest), fmt.Sprintf(`{"contest_id":%q}`, uuid.NewString())).Scan(&id)
 	if err != nil {
 		t.Fatal(err)
@@ -225,7 +226,7 @@ func TestWorkerDeadlineExhaustionAndReplay(t *testing.T) {
 	}
 	var state, code string
 	var attempts int
-	if err := f.db.QueryRow(t.Context(), `select state, attempts, last_error from async_outbox where id = $1`, id).Scan(&state, &attempts, &code); err != nil {
+	if err := f.db.QueryRow(t.Context(), `select state, attempts, last_error from jobs where id = $1`, id).Scan(&state, &attempts, &code); err != nil {
 		t.Fatal(err)
 	}
 	if state != "failed" || attempts != 5 || code != "deadline_exceeded" {
@@ -239,7 +240,7 @@ func TestWorkerDeadlineExhaustionAndReplay(t *testing.T) {
 	startWorker(t, runner)
 	waitFor(t, func() (bool, error) {
 		var replayState string
-		err := f.db.QueryRow(t.Context(), `select state from async_outbox where id = $1`, replayedID).Scan(&replayState)
+		err := f.db.QueryRow(t.Context(), `select state from jobs where id = $1`, replayedID).Scan(&replayState)
 		return replayState == "completed", err
 	})
 }
@@ -284,7 +285,7 @@ func TestWorkerShutdownCancelsActiveTaskAndRevokesReadiness(t *testing.T) {
 		t.Fatal("worker did not stop after active handler cancellation")
 	}
 	var state string
-	if err := f.db.QueryRow(t.Context(), `select state from async_outbox where id = $1`, id).Scan(&state); err != nil {
+	if err := f.db.QueryRow(t.Context(), `select state from jobs where id = $1`, id).Scan(&state); err != nil {
 		t.Fatal(err)
 	}
 	if state == "completed" {
@@ -323,7 +324,7 @@ func TestWorkerDoesNotDispatchAfterClaimLeaseExpires(t *testing.T) {
 	default:
 	}
 	var state string
-	if err := f.db.QueryRow(t.Context(), `select state from async_outbox where id = $1`, id).Scan(&state); err != nil {
+	if err := f.db.QueryRow(t.Context(), `select state from jobs where id = $1`, id).Scan(&state); err != nil {
 		t.Fatal(err)
 	}
 	if state != "running" {
@@ -397,7 +398,7 @@ func TestWorkerCompletesWhenRenewalIsCanceledByFinishedHandler(t *testing.T) {
 		t.Errorf("renewal did not contend on the held connection: canceled acquires %d -> %d", baseline, got)
 	}
 	var state string
-	if err := f.db.QueryRow(t.Context(), `select state from async_outbox where id = $1`, id).Scan(&state); err != nil {
+	if err := f.db.QueryRow(t.Context(), `select state from jobs where id = $1`, id).Scan(&state); err != nil {
 		t.Fatal(err)
 	}
 	if state != "completed" {
@@ -436,12 +437,12 @@ func TestWorkerFairClaimsWithoutPrefetch(t *testing.T) {
 	}
 	waitFor(t, func() (bool, error) {
 		var state string
-		err := f.db.QueryRow(t.Context(), `select state from async_outbox where id = $1`, officialID).Scan(&state)
+		err := f.db.QueryRow(t.Context(), `select state from jobs where id = $1`, officialID).Scan(&state)
 		return state == "completed", err
 	})
 	var running, pending int
 	if err := f.db.QueryRow(t.Context(), `select count(*) filter (where state = 'running'), count(*) filter (where state = 'pending')
-		from async_outbox where id = any($1)`, contestIDs).Scan(&running, &pending); err != nil {
+		from jobs where id = any($1)`, contestIDs).Scan(&running, &pending); err != nil {
 		t.Fatal(err)
 	}
 	if running != 2 || pending != 1 {
@@ -450,7 +451,7 @@ func TestWorkerFairClaimsWithoutPrefetch(t *testing.T) {
 	releaseAll()
 	waitFor(t, func() (bool, error) {
 		var completed int
-		err := f.db.QueryRow(t.Context(), `select count(*) from async_outbox where id = any($1) and state = 'completed'`, contestIDs).Scan(&completed)
+		err := f.db.QueryRow(t.Context(), `select count(*) from jobs where id = any($1) and state = 'completed'`, contestIDs).Scan(&completed)
 		return completed == 3, err
 	})
 }
@@ -490,7 +491,7 @@ func TestWorkerGlobalLimitLeavesDueRowsUnclaimed(t *testing.T) {
 	}
 	var running, pending int
 	if err := f.db.QueryRow(t.Context(), `select count(*) filter (where state = 'running'), count(*) filter (where state = 'pending')
-		from async_outbox where id = any($1)`, ids).Scan(&running, &pending); err != nil {
+		from jobs where id = any($1)`, ids).Scan(&running, &pending); err != nil {
 		t.Fatal(err)
 	}
 	if running != 3 || pending != 3 {
@@ -499,7 +500,7 @@ func TestWorkerGlobalLimitLeavesDueRowsUnclaimed(t *testing.T) {
 	releaseAll()
 	waitFor(t, func() (bool, error) {
 		var completed int
-		err := f.db.QueryRow(t.Context(), `select count(*) from async_outbox where id = any($1) and state = 'completed'`, ids).Scan(&completed)
+		err := f.db.QueryRow(t.Context(), `select count(*) from jobs where id = any($1) and state = 'completed'`, ids).Scan(&completed)
 		return completed == len(ids), err
 	})
 }
@@ -560,7 +561,7 @@ func TestWorkerRetainsSlotUntilCanceledHandlerReturns(t *testing.T) {
 	case <-time.After(700 * time.Millisecond):
 	}
 	var running, pending int
-	if err := f.db.QueryRow(t.Context(), `select count(*) filter (where state = 'running'), count(*) filter (where state = 'pending') from async_outbox where id = any($1)`, []int64{first, second}).Scan(&running, &pending); err != nil {
+	if err := f.db.QueryRow(t.Context(), `select count(*) filter (where state = 'running'), count(*) filter (where state = 'pending') from jobs where id = any($1)`, []int64{first, second}).Scan(&running, &pending); err != nil {
 		t.Fatal(err)
 	}
 	if running != 1 || pending != 1 {
@@ -569,7 +570,7 @@ func TestWorkerRetainsSlotUntilCanceledHandlerReturns(t *testing.T) {
 	releaseAll()
 	waitFor(t, func() (bool, error) {
 		var failed int
-		err := f.db.QueryRow(t.Context(), `select count(*) from async_outbox where id = any($1) and state = 'failed' and last_error = 'deadline_exceeded'`, []int64{first, second}).Scan(&failed)
+		err := f.db.QueryRow(t.Context(), `select count(*) from jobs where id = any($1) and state = 'failed' and last_error = 'deadline_exceeded'`, []int64{first, second}).Scan(&failed)
 		return failed == 2, err
 	})
 }
@@ -602,10 +603,70 @@ func TestWorkerRenewedDeadlineSchedulesRetry(t *testing.T) {
 	}
 
 	var state, code string
-	if err := f.db.QueryRow(t.Context(), `select state, coalesce(last_error, '') from async_outbox where id = $1`, id).Scan(&state, &code); err != nil {
+	if err := f.db.QueryRow(t.Context(), `select state, coalesce(last_error, '') from jobs where id = $1`, id).Scan(&state, &code); err != nil {
 		t.Fatal(err)
 	}
 	if state != "pending" || code != "deadline_exceeded" {
 		t.Fatalf("renewed deadline did not schedule retry: state=%q code=%q", state, code)
+	}
+}
+
+func TestWorkerCleanupRetainsThreeMonthsAndFailures(t *testing.T) {
+	f := newWorkerFixture(t)
+	runtime := &runner{
+		queue:  jobqueue.NewService(jobqueue.NewRepository(f.db)),
+		logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
+	}
+	now := time.Date(2026, time.May, 31, 12, 0, 0, 0, time.UTC)
+	recent := time.Date(2026, time.April, 30, 12, 0, 0, 0, time.UTC)
+	old := now.AddDate(-1, 0, 0)
+	var recentID, oldID, failedID, replayID, pendingID, runningID int64
+	for _, item := range []struct {
+		id        *int64
+		completed time.Time
+	}{{&recentID, recent}, {&oldID, old}} {
+		if err := f.db.QueryRow(t.Context(), `insert into jobs (task_type, payload, state, created_at, completed_at)
+   values ($1, '{"year":2025}', 'completed', $2, $2) returning id`, string(jobs.InvalidateOfficial), item.completed).Scan(item.id); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := f.db.QueryRow(t.Context(), `insert into jobs (task_type, payload, state, created_at, failed_at)
+  values ($1, '{"year":2025}', 'failed', $2, $2) returning id`, string(jobs.InvalidateOfficial), old).Scan(&failedID); err != nil {
+		t.Fatal(err)
+	}
+	if err := f.db.QueryRow(t.Context(), `insert into jobs (task_type, payload, state, created_at, completed_at, replay_of_id, replay_actor, replay_reason)
+  values ($1, '{"year":2025}', 'completed', $2, $2, $3, 'retention-test', 'repaired') returning id`, string(jobs.InvalidateOfficial), old, failedID).Scan(&replayID); err != nil {
+		t.Fatal(err)
+	}
+	if err := f.db.QueryRow(t.Context(), `insert into jobs (task_type, payload, created_at)
+  values ($1, '{"year":2025}', $2) returning id`, string(jobs.InvalidateOfficial), old).Scan(&pendingID); err != nil {
+		t.Fatal(err)
+	}
+	if err := f.db.QueryRow(t.Context(), `insert into jobs (task_type, payload, state, created_at, claim_token, lease_expires_at)
+  values ($1, '{"year":2025}', 'running', $2, $3, now() + interval '1 hour') returning id`, string(jobs.InvalidateOfficial), old, uuid.New()).Scan(&runningID); err != nil {
+		t.Fatal(err)
+	}
+
+	timex.TheWorld(now, func() { runtime.cleanupCompleted(t.Context()) })
+
+	for _, item := range []struct {
+		name   string
+		id     int64
+		retain bool
+	}{
+		{"one-month-old success", recentID, true},
+		{"expired success", oldID, false},
+		{"failed original", failedID, true},
+		{"expired successful replay", replayID, false},
+		{"pending job", pendingID, true},
+		{"running job", runningID, true},
+	} {
+		var exists bool
+		if err := f.db.QueryRow(t.Context(), `select exists(select 1 from jobs where id = $1)`, item.id).Scan(&exists); err != nil {
+			t.Fatal(err)
+		}
+		if exists != item.retain {
+			t.Errorf("%s retained=%t; want %t", item.name, exists, item.retain)
+		}
 	}
 }

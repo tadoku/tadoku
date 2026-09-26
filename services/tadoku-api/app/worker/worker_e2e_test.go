@@ -97,19 +97,19 @@ func TestWorkerOutboxJourney(t *testing.T) {
 
 	waitFor(t, func() (bool, error) {
 		var completed, failed, reclaimed, unknown string
-		err := db.Pool.QueryRow(t.Context(), `select state from async_outbox where id = $1`, validID).Scan(&completed)
+		err := db.Pool.QueryRow(t.Context(), `select state from jobs where id = $1`, validID).Scan(&completed)
 		if err != nil {
 			return false, err
 		}
-		err = db.Pool.QueryRow(t.Context(), `select state from async_outbox where id = $1`, invalidID).Scan(&failed)
+		err = db.Pool.QueryRow(t.Context(), `select state from jobs where id = $1`, invalidID).Scan(&failed)
 		if err != nil {
 			return false, err
 		}
-		err = db.Pool.QueryRow(t.Context(), `select state from async_outbox where id = $1`, reclaimedID).Scan(&reclaimed)
+		err = db.Pool.QueryRow(t.Context(), `select state from jobs where id = $1`, reclaimedID).Scan(&reclaimed)
 		if err != nil {
 			return false, err
 		}
-		err = db.Pool.QueryRow(t.Context(), `select state from async_outbox where id = $1`, unknownID).Scan(&unknown)
+		err = db.Pool.QueryRow(t.Context(), `select state from jobs where id = $1`, unknownID).Scan(&unknown)
 		return completed == "completed" && failed == "failed" && reclaimed == "completed" && unknown == "pending", err
 	})
 
@@ -120,14 +120,14 @@ func TestWorkerOutboxJourney(t *testing.T) {
 		}
 	}
 	var code string
-	if err := db.Pool.QueryRow(t.Context(), `select last_error from async_outbox where id = $1`, invalidID).Scan(&code); err != nil {
+	if err := db.Pool.QueryRow(t.Context(), `select last_error from jobs where id = $1`, invalidID).Scan(&code); err != nil {
 		t.Fatal(err)
 	}
 	if code != "invalid_payload" {
 		t.Errorf("invalid task failure code = %q", code)
 	}
 	for _, state := range []string{"pending", "running", "failed"} {
-		_, err := db.Pool.Exec(t.Context(), `update async_outbox set state = $1,
+		_, err := db.Pool.Exec(t.Context(), `update jobs set state = $1,
    claim_token = case when $1 = 'running' then $2::uuid else null end,
    lease_expires_at = case when $1 = 'running' then now() + interval '1 minute' else null end,
    failed_at = case when $1 = 'failed' then now() else null end where id = $3`, state, uuid.New(), unknownID)
@@ -145,7 +145,7 @@ func TestWorkerOutboxJourney(t *testing.T) {
 			t.Fatalf("cache readiness published while unsupported future.task.v1 remains %s", state)
 		}
 	}
-	if _, err := db.Pool.Exec(t.Context(), `delete from async_outbox where id = $1`, unknownID); err != nil {
+	if _, err := db.Pool.Exec(t.Context(), `delete from jobs where id = $1`, unknownID); err != nil {
 		t.Fatal(err)
 	}
 	waitFor(t, func() (bool, error) {
@@ -157,14 +157,14 @@ func insertTask(t *testing.T, db *pgxpool.Pool, taskType, payload string, expire
 	t.Helper()
 	var id int64
 	if expired {
-		err := db.QueryRow(t.Context(), `insert into async_outbox (task_type, payload, state, attempts, claim_token, lease_expires_at)
+		err := db.QueryRow(t.Context(), `insert into jobs (task_type, payload, state, attempts, claim_token, lease_expires_at)
 			values ($1, $2::jsonb, 'running', 1, $3, now() - interval '1 second') returning id`, taskType, payload, uuid.New()).Scan(&id)
 		if err != nil {
 			t.Fatal(err)
 		}
 		return id
 	}
-	if err := db.QueryRow(t.Context(), `insert into async_outbox (task_type, payload) values ($1, $2::jsonb) returning id`, taskType, payload).Scan(&id); err != nil {
+	if err := db.QueryRow(t.Context(), `insert into jobs (task_type, payload) values ($1, $2::jsonb) returning id`, taskType, payload).Scan(&id); err != nil {
 		t.Fatal(err)
 	}
 	return id

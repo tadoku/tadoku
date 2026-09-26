@@ -34,7 +34,7 @@ func TestReplayCommandCreatesLinkedTask(t *testing.T) {
 	t.Setenv("WORKER_POSTGRES_SSLMODE", "disable")
 
 	var failedID int64
-	err = db.Pool.QueryRow(t.Context(), `insert into async_outbox (task_type, payload, state, attempts, failed_at, last_error)
+	err = db.Pool.QueryRow(t.Context(), `insert into jobs (task_type, payload, state, attempts, failed_at, last_error)
 		values ('leaderboard.invalidate_official.v1', '{"year":2025}', 'failed', 5, now(), 'handler_error') returning id`).Scan(&failedID)
 	if err != nil {
 		t.Fatal(err)
@@ -45,7 +45,7 @@ func TestReplayCommandCreatesLinkedTask(t *testing.T) {
 	}
 	var originalState, replayState, actor, reason string
 	err = db.Pool.QueryRow(t.Context(), `select original.state, replay.state, replay.replay_actor, replay.replay_reason
-		from async_outbox original join async_outbox replay on replay.replay_of_id = original.id where original.id = $1`, failedID).
+		from jobs original join jobs replay on replay.replay_of_id = original.id where original.id = $1`, failedID).
 		Scan(&originalState, &replayState, &actor, &reason)
 	if err != nil {
 		t.Fatal(err)

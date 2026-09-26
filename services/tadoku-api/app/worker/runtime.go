@@ -134,7 +134,7 @@ func (r *runner) cleanupCompleted(ctx context.Context) {
 	ctx, stop := context.WithTimeout(ctx, 5*time.Second)
 	defer stop()
 	for {
-		count, err := r.queue.CleanupCompleted(ctx, timex.Now().Add(-24*time.Hour), 100)
+		count, err := r.queue.CleanupCompleted(ctx, 100)
 		if err != nil {
 			if ctx.Err() == nil {
 				r.logger.Warn("cleanup completed async tasks", "error", err)

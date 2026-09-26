@@ -93,7 +93,7 @@ func TestWorkerOutboxJourney(t *testing.T) {
 	for _, item := range []struct {
 		key  string
 		want int64
-	}{{keys[1], 0}, {keys[6], 1}} {
+	}{{keys[1], 1}, {keys[6], 1}} {
 		count, err := client.Do(t.Context(), client.B().Exists().Key(item.key).Build()).AsInt64()
 		if err != nil || count != item.want {
 			t.Fatalf("startup marker %s: count=%d error=%v; want %d", item.key, count, err, item.want)
@@ -129,10 +129,13 @@ func TestWorkerOutboxJourney(t *testing.T) {
 		return completed == "completed" && failed == "failed" && reclaimed == "completed" && unknown == "pending", err
 	})
 
-	for _, marker := range []string{keys[1], keys[4]} {
-		count, err := client.Do(t.Context(), client.B().Exists().Key(marker).Build()).AsInt64()
-		if err != nil || count != 0 {
-			t.Errorf("marker %s remains after completed task: count=%d error=%v", marker, count, err)
+	for _, item := range []struct {
+		key  string
+		want int64
+	}{{keys[1], 0}, {keys[4], 0}, {keys[6], 1}} {
+		count, err := client.Do(t.Context(), client.B().Exists().Key(item.key).Build()).AsInt64()
+		if err != nil || count != item.want {
+			t.Errorf("marker %s after completed task: count=%d error=%v; want %d", item.key, count, err, item.want)
 		}
 	}
 	var code string

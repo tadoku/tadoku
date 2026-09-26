@@ -40,7 +40,7 @@ environment variables. Development values are in
 - `API_LEADERBOARD_OUTBOX_ENABLED` (default `false`) runs the
   [leaderboard outbox worker](#leaderboard-outbox-worker).
 - `API_LEADERBOARD_CACHE_PREFIX` (default empty) prefixes every leaderboard
-  cache key and scopes the worker's startup marker scan to that namespace. A
+  cache key and scopes the legacy embedded worker's marker scan to that namespace. A
   non-empty prefix requires `API_LEADERBOARD_OUTBOX_ENABLED`, must be unique for
   each database sharing a Valkey instance, may contain only lowercase letters,
   digits, hyphens and colons, and must end in a colon. Empty uses unprefixed

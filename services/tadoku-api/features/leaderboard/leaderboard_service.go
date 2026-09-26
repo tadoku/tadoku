@@ -32,8 +32,6 @@ func NewService(repository *Repository, client valkeygo.Client, operationTimeout
 	return service
 }
 
-func (s *Service) ReconcileCache(ctx context.Context) (int, error) { return s.store.reconcile(ctx) }
-
 func (s *Service) InvalidateContest(ctx context.Context, id uuid.UUID) error {
 	if id == uuid.Nil {
 		return errx.NewInvalidInputError("contest ID is required")

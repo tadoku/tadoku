@@ -143,6 +143,48 @@ func (c *blockingValkey) Do(ctx context.Context, command valkeygo.Completed) val
 	return c.Client.Do(ctx, command)
 }
 
+func TestWorkerStartsWithoutValkey(t *testing.T) {
+	f := newWorkerFixture(t)
+	rawURL, err := testvalkey.URL()
+	if err != nil {
+		t.Fatal(err)
+	}
+	option, err := valkeygo.ParseURL(rawURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	option.SelectDB = 13
+	option.ForceSingleClient = true
+	option.DisableRetry = true
+	unavailable, err := valkeygo.NewClient(option)
+	if err != nil {
+		t.Fatal(err)
+	}
+	unavailable.Close()
+
+	application := f.runner(t, unavailable, time.Second, time.Second)
+	invalidID := insertTask(t, f.db, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":0}`, false)
+	validID := insertTask(t, f.db, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":2025}`, false)
+	startWorker(t, application)
+	defer func() {
+		if !t.Failed() {
+			return
+		}
+		var pending, attempts int
+		err := f.db.QueryRow(t.Context(), `select count(*) filter (where state = 'pending'), sum(attempts)
+			from jobs where id = any($1)`, []int64{invalidID, validID}).Scan(&pending, &attempts)
+		t.Logf("worker with closed Valkey: ready=%t pending=%d attempts=%d query error=%v", application.Ready(), pending, attempts, err)
+	}()
+
+	waitFor(t, func() (bool, error) {
+		var invalidFailed, validRetried bool
+		err := f.db.QueryRow(t.Context(), `select
+			exists(select 1 from jobs where id = $1 and state = 'failed' and last_error = 'invalid_payload'),
+			exists(select 1 from jobs where id = $2 and attempts > 0 and last_error = 'handler_error')`, invalidID, validID).Scan(&invalidFailed, &validRetried)
+		return application.Ready() && invalidFailed && validRetried, err
+	})
+}
+
 func TestWorkerCancelsHandlerAfterLostLeaseAndReclaims(t *testing.T) {
 	f := newWorkerFixture(t)
 	release := make(chan struct{})

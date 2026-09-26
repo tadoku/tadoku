@@ -69,25 +69,6 @@ func (a *Application) InvalidateOfficialLeaderboard(ctx context.Context, job job
 func (a *Application) Ready() bool { return a.runner.ready.Load() }
 
 func (a *Application) Run(ctx context.Context) error {
-	poll := time.NewTicker(500 * time.Millisecond)
-	defer poll.Stop()
-	for {
-		if ctx.Err() != nil {
-			return nil
-		}
-		count, err := a.leaderboard.ReconcileCache(ctx)
-		if err == nil {
-			a.runner.logger.Info("leaderboard cache reconciled", "invalidated", count)
-			break
-		}
-		a.runner.logger.Error("reconcile leaderboard cache", "error", err)
-		select {
-		case <-ctx.Done():
-			return nil
-		case <-poll.C:
-		}
-	}
-
 	a.runner.run(ctx)
 	return nil
 }

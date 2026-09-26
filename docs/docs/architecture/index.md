@@ -68,6 +68,7 @@ browser → ingress-nginx → Envoy → webv2 / auth / admin
 
 ## Where to go next
 
+- [Module design](./module-design.md) for deep modules and information hiding
 - [Tadoku API](../tadoku-api/index.md) for the backend
 - [Frontend overview](../frontend/index.md) for the applications and design systems
 - [Development environment](../develop/environment.md) to run and verify a branch

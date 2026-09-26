@@ -25,6 +25,7 @@ const sidebars: SidebarsConfig = {
         id: 'architecture/index',
       },
       items: [
+        'architecture/module-design',
         'architecture/authorization',
         'architecture/service-tokens',
         'architecture/feature-flags',

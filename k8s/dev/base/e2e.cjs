@@ -34,15 +34,28 @@ try {
   const api = docs.find(d => d.kind === 'Deployment' && d.metadata.namespace === 'tdk-dev-tadoku-api' && d.metadata.name === 'tadoku-api')
   if (!api) throw new Error('Missing base Tadoku API Deployment')
   if (docs.some(d => d.kind === 'Deployment' && d.metadata.name === 'immersion-api')) throw new Error('Legacy Immersion Deployment remains in dev base')
-  const baseWorker = api.spec.template.spec.containers[0].env.find(e => e.name === 'API_LEADERBOARD_OUTBOX_ENABLED')?.value
-  const branch = Y.parse(fs.readFileSync(path.join(root, '.dev/tadoku-api.yaml'), 'utf8'))
-  const branchEnv = branch.spec.containers[0].env
-  const branchWorker = branchEnv.find(e => e.name === 'API_LEADERBOARD_OUTBOX_ENABLED')?.value
-  const branchPrefix = branchEnv.find(e => e.name === 'API_LEADERBOARD_CACHE_PREFIX')?.value
-  if (baseWorker !== 'true' || branchWorker !== 'true' || branchPrefix !== 'dev:${DEV_ROUTE}:') {
-    throw new Error('Base and branch leaderboard worker ownership is not configured')
-  }
-  report.leaderboardWorkers = { base: baseWorker, branch: branchWorker, branchPrefix }
+  const envValue = (container, name) => container.env.find(e => e.name === name)?.value
+  const worker = docs.find(d => d.kind === 'Deployment' && d.metadata.namespace === 'tdk-dev-tadoku-api' && d.metadata.name === 'tadoku-worker')
+  if (!worker || worker.spec.replicas !== 1 || worker.spec.strategy?.type !== 'Recreate') throw new Error('Base worker must be a single Recreate Deployment')
+  const workerPod = worker.spec.template.spec
+  const workerContainer = workerPod.containers[0]
+  const apiContainer = api.spec.template.spec.containers[0]
+  const branchApi = Y.parse(fs.readFileSync(path.join(root, '.dev/tadoku-api.yaml'), 'utf8')).spec.containers[0]
+  const branchWorker = Y.parse(fs.readFileSync(path.join(root, '.dev/tadoku-worker.yaml'), 'utf8')).spec.containers[0]
+  if (envValue(apiContainer, 'API_LEADERBOARD_OUTBOX_ENABLED') !== 'true' || envValue(branchApi, 'API_LEADERBOARD_OUTBOX_ENABLED') !== 'true') throw new Error('Old outbox owner must remain enabled during transfer')
+  if (envValue(workerContainer, 'WORKER_POSTGRES_DATABASE') !== 'tadoku' || envValue(workerContainer, 'WORKER_LEADERBOARD_CACHE_PREFIX') !== undefined || envValue(apiContainer, 'API_LEADERBOARD_CACHE_PREFIX') !== undefined) throw new Error('Base worker must use the base database and both base processes must use unprefixed cache')
+  if (envValue(branchWorker, 'WORKER_POSTGRES_DATABASE') !== 'tadoku-${DEV_ROUTE}' || envValue(branchWorker, 'WORKER_LEADERBOARD_CACHE_PREFIX') !== 'dev:${DEV_ROUTE}:') throw new Error('Branch worker database/cache isolation is not configured')
+  if (envValue(branchApi, 'API_POSTGRES_DATABASE') !== envValue(branchWorker, 'WORKER_POSTGRES_DATABASE') || envValue(branchApi, 'API_LEADERBOARD_CACHE_PREFIX') !== envValue(branchWorker, 'WORKER_LEADERBOARD_CACHE_PREFIX')) throw new Error('Branch API and worker must use the same database/cache namespace')
+  if (workerPod.automountServiceAccountToken !== false || workerContainer.image === apiContainer.image || !workerContainer.image.startsWith('ghcr.io/tadoku/tadoku/tadoku-worker:latest')) throw new Error('Worker image or private Pod configuration is invalid')
+  if (docs.some(d => d.kind === 'Service' && d.spec?.selector?.app === 'tadoku-worker') || docs.some(d => d.kind === 'HTTPRoute' && JSON.stringify(d.spec).includes('tadoku-worker'))) throw new Error('Worker must have no Service or public route')
+  if (workerContainer.resources?.requests?.cpu !== '25m' || workerContainer.resources?.requests?.memory !== '64Mi' || workerContainer.resources?.limits?.cpu !== '250m' || workerContainer.resources?.limits?.memory !== '128Mi') throw new Error('Worker resource budget changed without measurement')
+  run('bazel', ['build', '//services/tadoku-api:dev', '//services/tadoku-api:worker_dev'])
+  const apiMetadata = JSON.parse(fs.readFileSync(path.join(root, 'bazel-bin/services/tadoku-api/dev.dev.json')))
+  const workerMetadata = JSON.parse(fs.readFileSync(path.join(root, 'bazel-bin/services/tadoku-api/worker_dev.dev.json')))
+  if (apiMetadata.selectionGroup !== 'tadoku-api' || workerMetadata.selectionGroup !== 'tadoku-api' || workerMetadata.kind !== 'worker') throw new Error('Branch API and worker are not selected as one group')
+  if (workerMetadata.imageTarget !== '//services/tadoku-api/worker:cli_image' || workerMetadata.pushTarget !== '//services/tadoku-api/worker:cli_push' || workerMetadata.workloadTemplate !== '.dev/tadoku-worker.yaml') throw new Error('Worker is not an independent DevCLI image/deployable')
+  if (['publicPath', 'internalHost', 'publicProxy', 'baseService', 'servicePort'].some(key => key in workerMetadata)) throw new Error('Worker metadata must not request a route or Service')
+  report.leaderboardWorkers = { oldOutbox: 'API', asyncOutbox: 'tadoku-worker', baseDatabase: 'tadoku', branchDatabase: envValue(branchWorker, 'WORKER_POSTGRES_DATABASE'), branchPrefix: envValue(branchWorker, 'WORKER_LEADERBOARD_CACHE_PREFIX'), image: workerContainer.image }
   const jobs = docs.filter(d => d.kind === 'Job')
   const frontends = docs.filter(d => d.kind === 'Deployment' && d.metadata.name.startsWith('frontend-'))
   const roles = { 'tadoku-api-migrate': 'tadoku', 'kratos-migrate': 'kratos', 'keto-migrate': 'keto' }

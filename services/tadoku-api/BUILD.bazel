@@ -102,6 +102,7 @@ dev_deployable(
     metadata = json.encode({
         "name": "tadoku-api",
         "kind": "backend",
+        "selectionGroup": "tadoku-api",
         "namespace": "tdk-dev-tadoku-api",
         "buildTarget": "//services/tadoku-api/cmd/tadoku-api",
         "imageTarget": "//services/tadoku-api:cli_image",
@@ -133,5 +134,32 @@ dev_deployable(
     deps = [
         ":cli_image",
         "//services/tadoku-api/cmd/tadoku-api",
+    ],
+)
+
+dev_deployable(
+    name = "worker_dev",
+    metadata = json.encode({
+        "name": "tadoku-worker",
+        "kind": "worker",
+        "selectionGroup": "tadoku-api",
+        "namespace": "tdk-dev-tadoku-api",
+        "buildTarget": "//services/tadoku-api/cmd/tadoku-worker:tadoku-worker",
+        "imageTarget": "//services/tadoku-api/worker:cli_image",
+        "imageName": "tadoku-worker",
+        "pushTarget": "//services/tadoku-api/worker:cli_push",
+        "containerPath": "/tadoku-worker",
+        "port": 8000,
+        "readinessPath": "/readyz",
+        "devContainer": "tadoku-worker",
+        "sourceRoots": [
+            "services/tadoku-api",
+            "services/common",
+        ],
+    }),
+    workload_template = "//.dev:tadoku-worker.yaml",
+    deps = [
+        "//services/tadoku-api/cmd/tadoku-worker",
+        "//services/tadoku-api/worker:cli_image",
     ],
 )

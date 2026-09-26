@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    argocd.argoproj.io/sync-wave: "20"
+  name: tadoku-worker
+  namespace: tdk-dev-tadoku-api
+  labels:
+    app: tadoku-worker
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: tadoku-worker
+  template:
+    metadata:
+      labels:
+        app: tadoku-worker
+    spec:
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 60
+      containers:
+        - name: tadoku-worker
+          image: tadoku-worker-image
+          imagePullPolicy: Always
+          resources:
+            requests: {cpu: 25m, memory: 64Mi}
+            limits: {cpu: 250m, memory: 128Mi}
+          ports:
+            - name: http
+              containerPort: 8000
+            - name: metrics
+              containerPort: 9090
+          env:
+            - {name: WORKER_PORT, value: "8000"}
+            - {name: WORKER_METRICS_PORT, value: "9090"}
+            - {name: WORKER_POSTGRES_HOST, value: tadoku-dev-db.tdk-dev-data.svc.cluster.local}
+            - {name: WORKER_POSTGRES_DATABASE, value: tadoku}
+            - {name: WORKER_POSTGRES_SSLMODE, value: require}
+            - {name: WORKER_POSTGRES_MAX_CONNECTIONS, value: "4"}
+            - {name: WORKER_VALKEY_URL, value: "redis://valkey.tdk-dev-data:6379"}
+            - {name: WORKER_VALKEY_TIMEOUT, value: "1s"}
+            - name: WORKER_POSTGRES_USER
+              valueFrom: {secretKeyRef: {name: tadoku.tadoku-dev-db.credentials.postgresql.acid.zalan.do, key: username}}
+            - name: WORKER_POSTGRES_PASSWORD
+              valueFrom: {secretKeyRef: {name: tadoku.tadoku-dev-db.credentials.postgresql.acid.zalan.do, key: password}}
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            initialDelaySeconds: 2
+            periodSeconds: 3
+          livenessProbe:
+            httpGet:
+              path: /livez
+              port: http
+            initialDelaySeconds: 2
+            periodSeconds: 3

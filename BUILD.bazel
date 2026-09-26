@@ -32,9 +32,9 @@ sh_binary(
     ],
 )
 
-# Pushes all service images in one `bazel run //:push_images` invocation.
-# Used by CI (.github/workflows/build-bazel.yaml); add new production oci_push
-# targets to both args and data below.
+# Pushes shared-release service images in one `bazel run //:push_images` invocation.
+# Used by CI (.github/workflows/build-bazel.yaml). The worker push stays
+# separate so its tag changes only when its own image digest changes.
 sh_binary(
     name = "push_images",
     srcs = ["tools/ci/run_bazel_images.sh"],

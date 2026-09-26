@@ -28,8 +28,10 @@ feature has no queue dependency: the application coordinates it with
 business payload catalogue or handler contract. The application registry is
 the source of executable versions, including replay eligibility.
 
-The database table remains `async_outbox`. Package naming does not rename
-persisted message strings, table columns or existing rows.
+The queue persists in the `jobs` table. Deploy the standalone table-rename
+migration before any runtime that queries this name. Persisted message names,
+payloads and replay lineage remain unchanged; this schema change does not
+introduce a new message version. See [Table migration](#table-migration).
 
 ## Define a message
 
@@ -211,6 +213,53 @@ operator and reason. It preserves the original version and payload. Registry
 support is required before replay; neither replay nor package renaming upgrades
 a message. Keep the failed original inspectable.
 
+## Successful-job retention
+
+The worker automatically cleans up successful history in bounded batches.
+`jobqueue.Service.CleanupCompleted(ctx, limit)` owns the retention rule; callers
+do not supply an arbitrary cutoff. The service passes the business clock to a
+single repository statement, which subtracts three calendar months in UTC.
+
+A row is eligible only when `state = 'completed'` and `completed_at` is strictly
+earlier than that cutoff. Exact-boundary completions remain. UTC time of day is
+preserved; the day clamps to the last valid day of the target month. For
+example, May 31 at 10:30 UTC has a February 28 cutoff at 10:30 UTC, or February
+29 in a leap year. This is not a fixed number of days and does not depend on the
+database session's timezone.
+
+Successful replay rows expire under the same rule when no retained child
+references them. The failed original stays indefinitely. The self-referencing
+foreign key and the no-child cleanup condition preserve replay lineage; a row
+still needed by a retained descendant is not removed. Automatic cleanup never
+deletes pending, running or failed records, regardless of age. A successful
+replay does not make its failed original eligible for cleanup.
+
+Record important completion evidence before successful history expires. A
+missing completed row or aged-out successful replay is not proof that an effect
+never ran. Failure inspection and version-retirement decisions still account
+for the retained failed originals.
+
+## Table migration
+
+The standalone rename migration changes `async_outbox` to `jobs`, including
+its sequence, constraints and indexes, without rewriting the already merged
+migration that created the queue. It preserves rows, live claims, replay links
+and sequence state. There is no old-name compatibility view.
+
+Before deploying the rename, positively verify that no producer, worker or
+manual tool still requires the old table name. Current supported mainline
+application code does not use that queue, but an older unmerged worker release
+would be incompatible. If inventory finds an old-name caller, stop the migration
+deployment gate and resolve that compatibility requirement before proceeding.
+Read-only inspection of declared GitOps workloads alone does not prove that no
+external client exists.
+
+Merge and deploy the migration independently, then base dependent runtime on the
+updated `main` before merging or deploying it. Review stacks and isolated
+migration fixtures are not evidence of live deployment. Operator SQL on this
+page and in linked runbooks requires the migrated `jobs` schema. This schema
+sequence is separate from the [v1-to-v2 message rollout](#migrate-v1-to-v2).
+
 ## Add a job
 
 1. Define the value type, constant versioned name and validation in
@@ -330,13 +379,13 @@ due rows; delayed retries use `pending` with a future `next_attempt_at`.
 
 ```sql
 select task_type, state, count(*)
-from async_outbox
+from jobs
 group by task_type, state
 order by task_type, state;
 
 select id, state, attempts, next_attempt_at, lease_expires_at,
        failed_at, last_error, replay_of_id
-from async_outbox
+from jobs
 where task_type = 'leaderboard.invalidate_contest.v1'
   and state <> 'completed'
 order by id;

@@ -294,14 +294,14 @@ func TestLogCreateAtomicFailureJourney(t *testing.T) {
 	defer uuid.SetRand(nil)
 
 	runJourneyWithSetup(t, api, scoringEnabledHandler, "LogCreateAtomicFailure", func(t *testing.T) {
-		_, err := api.db.Pool.Exec(t.Context(), `alter table async_outbox add constraint reject_test_enqueue check (false)`)
+		_, err := api.db.Pool.Exec(t.Context(), `alter table jobs add constraint reject_test_enqueue check (false)`)
 		if err != nil {
 			t.Fatal(err)
 		}
 		t.Cleanup(func() {
 			cleanupCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
-			if _, err := api.db.Pool.Exec(cleanupCtx, `alter table async_outbox drop constraint reject_test_enqueue`); err != nil {
+			if _, err := api.db.Pool.Exec(cleanupCtx, `alter table jobs drop constraint reject_test_enqueue`); err != nil {
 				t.Error(err)
 			}
 		})

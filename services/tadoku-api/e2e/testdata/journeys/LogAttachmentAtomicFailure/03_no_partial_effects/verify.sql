@@ -2,4 +2,4 @@ select 'attachment' as kind, contest_id::text as value from contest_logs where l
 union all
 select 'outbox', count(*)::text from leaderboard_outbox
 union all
-select 'async_outbox', count(*)::text from async_outbox order by 1,2;
+select 'jobs', count(*)::text from jobs order by 1,2;

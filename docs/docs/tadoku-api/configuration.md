@@ -238,9 +238,9 @@ When `API_LEADERBOARD_OUTBOX_ENABLED` is set:
    and `leaderboard outbox ready` once the initial drain completes.
 
 Log and registration writes publish the legacy leaderboard invalidation and a
-typed `async_outbox` task in the same transaction. The embedded worker still
+typed `jobs` task in the same transaction. The embedded worker still
 consumes only `leaderboard_outbox`; the separate worker consumes only
-`async_outbox`. Keep embedded readiness alone while old publishers exist. After
+`jobs`. Keep embedded readiness alone while old publishers exist. After
 every publisher writes typed tasks and the separate worker has reconciled the
 cache, enable shared readiness while the embedded worker drains old rows. Keep
 shared readiness enabled when old publication stops; disable the embedded

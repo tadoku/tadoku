@@ -5,6 +5,6 @@
     "contest_logs": "0",
     "tags": "0",
     "outbox": "0",
-    "async_outbox": "0"
+    "jobs": "0"
   }
 ]

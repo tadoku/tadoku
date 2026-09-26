@@ -7,7 +7,7 @@ select 'outbox' as kind, user_id::text as user_id,
   event_type || ':' || coalesce(contest_id::text, year::text) as reference
 from leaderboard_outbox
 union all
-select 'async_outbox', '' as user_id,
+select 'jobs', '' as user_id,
   task_type || ':' || coalesce(payload->>'contest_id', payload->>'year') as reference
-from async_outbox
+from jobs
 order by kind, user_id, reference;

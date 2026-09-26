@@ -42,14 +42,21 @@ types for registered handlers; a name must never depend on payload fields.
 
 ```go
 // domain/jobs: a concrete payload carries its versioned name.
+const LeaderboardInvalidateContestV1 Type = "leaderboard.invalidate_contest.v1"
+
 type InvalidateContestLeaderboardV1 struct {
     ContestID uuid.UUID `json:"contest_id"`
 }
 
 func (InvalidateContestLeaderboardV1) Type() Type {
-    return "leaderboard.invalidate_contest.v1"
+    return LeaderboardInvalidateContestV1
 }
 ```
+
+Name exported constants after the full persisted name in PascalCase, including
+the version: `LeaderboardInvalidateContestV1` and
+`LeaderboardInvalidateOfficialV1`. Keep the version in payload type names and
+persisted strings too, so multiple contract versions can coexist.
 
 The message contract includes its fields, validation, meaning and side effects.
 Keep each published version stable. A different interpretation of an existing

@@ -94,15 +94,15 @@ func TestClaimLimitsKnownTypesAndFencesExpiredLeases(t *testing.T) {
 
 	var first, second, third ClaimedJob
 	at(t, outboxTestTime, func() {
-		claims, err := repo.Claim(t.Context(), jobs.InvalidateContest, 1, time.Minute, 2)
+		claims, err := repo.Claim(t.Context(), jobs.LeaderboardInvalidateContestV1, 1, time.Minute, 2)
 		if err != nil || len(claims) != 1 {
 			t.Fatalf("first claim = %v, %v", claims, err)
 		}
 		first = claims[0]
-		if first.Attempts != 1 || first.Type != jobs.InvalidateContest || first.Reclaimed || first.LeaseExpiresAt.IsZero() {
+		if first.Attempts != 1 || first.Type != jobs.LeaderboardInvalidateContestV1 || first.Reclaimed || first.LeaseExpiresAt.IsZero() {
 			t.Errorf("first claim = %+v", first)
 		}
-		claims, err = repo.Claim(t.Context(), jobs.InvalidateContest, 1, time.Minute, 2)
+		claims, err = repo.Claim(t.Context(), jobs.LeaderboardInvalidateContestV1, 1, time.Minute, 2)
 		if err != nil || len(claims) != 1 {
 			t.Fatalf("second claim = %v, %v", claims, err)
 		}
@@ -110,7 +110,7 @@ func TestClaimLimitsKnownTypesAndFencesExpiredLeases(t *testing.T) {
 		if second.ID == first.ID {
 			t.Error("claim reused active row")
 		}
-		claims, err = repo.Claim(t.Context(), jobs.InvalidateOfficial, 1, time.Minute, 2)
+		claims, err = repo.Claim(t.Context(), jobs.LeaderboardInvalidateOfficialV1, 1, time.Minute, 2)
 		if err != nil || len(claims) != 1 {
 			t.Fatalf("other type claim = %v, %v", claims, err)
 		}
@@ -137,7 +137,7 @@ func TestClaimLimitsKnownTypesAndFencesExpiredLeases(t *testing.T) {
 		if ok, err := repo.Retry(t.Context(), first, outboxTestTime.Add(2*time.Minute), "temporary", 2); err != nil || ok {
 			t.Errorf("expired retry = %v, %v", ok, err)
 		}
-		claims, err := repo.Claim(t.Context(), jobs.InvalidateContest, 1, time.Minute, 2)
+		claims, err := repo.Claim(t.Context(), jobs.LeaderboardInvalidateContestV1, 1, time.Minute, 2)
 		if err != nil || len(claims) != 1 {
 			t.Fatalf("reclaim = %v, %v", claims, err)
 		}
@@ -154,7 +154,7 @@ func TestClaimLimitsKnownTypesAndFencesExpiredLeases(t *testing.T) {
 	}
 
 	at(t, outboxTestTime.Add(2*time.Minute), func() {
-		if claims, err := repo.Claim(t.Context(), jobs.InvalidateContest, 2, time.Minute, 2); err != nil || len(claims) != 1 || claims[0].ID != second.ID || claims[0].Attempts != 2 {
+		if claims, err := repo.Claim(t.Context(), jobs.LeaderboardInvalidateContestV1, 2, time.Minute, 2); err != nil || len(claims) != 1 || claims[0].ID != second.ID || claims[0].Attempts != 2 {
 			t.Errorf("exhausted crash claims = %v, %v; want only second task", claims, err)
 		}
 		if ok, err := repo.Complete(t.Context(), third); err != nil || ok {
@@ -171,7 +171,7 @@ func TestClaimLimitsKnownTypesAndFencesExpiredLeases(t *testing.T) {
 	if failed != "failed" || unknown != "pending" {
 		t.Errorf("states failed=%q unknown=%q", failed, unknown)
 	}
-	stats, err := repo.UnsupportedStats(t.Context(), []jobs.Type{jobs.InvalidateContest, jobs.InvalidateOfficial})
+	stats, err := repo.UnsupportedStats(t.Context(), []jobs.Type{jobs.LeaderboardInvalidateContestV1, jobs.LeaderboardInvalidateOfficialV1})
 	if err != nil || stats.Pending != 1 || stats.OldestDueAt == nil || !stats.OldestDueAt.Equal(outboxTestTime) {
 		t.Errorf("unsupported stats = %+v, %v", stats, err)
 	}
@@ -185,14 +185,14 @@ func TestReducedAttemptLimitFailsDuePendingTask(t *testing.T) {
 		if _, err := insertJob(repo, t.Context(), task); err != nil {
 			t.Fatal(err)
 		}
-		claims, err := repo.Claim(t.Context(), jobs.InvalidateOfficial, 1, time.Minute, 2)
+		claims, err := repo.Claim(t.Context(), jobs.LeaderboardInvalidateOfficialV1, 1, time.Minute, 2)
 		if err != nil || len(claims) != 1 {
 			t.Fatalf("claim = %v, %v", claims, err)
 		}
 		if ok, err := repo.Retry(t.Context(), claims[0], outboxTestTime, "temporary", 2); err != nil || !ok {
 			t.Fatalf("retry = %v, %v", ok, err)
 		}
-		claims, err = repo.Claim(t.Context(), jobs.InvalidateOfficial, 1, time.Minute, 1)
+		claims, err = repo.Claim(t.Context(), jobs.LeaderboardInvalidateOfficialV1, 1, time.Minute, 1)
 		if err != nil || len(claims) != 0 {
 			t.Errorf("reduced limit claim = %v, %v", claims, err)
 		}
@@ -218,7 +218,7 @@ func TestTransitionsRejectDatabaseExpiredLease(t *testing.T) {
 				t.Fatal(err)
 			}
 		}
-		claims, err = repo.Claim(t.Context(), jobs.InvalidateOfficial, 4, time.Minute, 2)
+		claims, err = repo.Claim(t.Context(), jobs.LeaderboardInvalidateOfficialV1, 4, time.Minute, 2)
 		if err != nil || len(claims) != 4 {
 			t.Fatalf("claim = %v, %v", claims, err)
 		}
@@ -253,7 +253,7 @@ func TestCompleteSkipsLockedClaim(t *testing.T) {
 		if _, err := insertJob(repo, t.Context(), task); err != nil {
 			t.Fatal(err)
 		}
-		claims, err := repo.Claim(t.Context(), jobs.InvalidateOfficial, 1, time.Minute, 2)
+		claims, err := repo.Claim(t.Context(), jobs.LeaderboardInvalidateOfficialV1, 1, time.Minute, 2)
 		if err != nil || len(claims) != 1 {
 			t.Fatalf("claim = %v, %v", claims, err)
 		}
@@ -301,7 +301,7 @@ func TestClaimSkipsLockedRows(t *testing.T) {
 	ctx, cancel := context.WithTimeout(t.Context(), time.Second)
 	defer cancel()
 	at(t, outboxTestTime, func() {
-		claims, err := repo.Claim(ctx, jobs.InvalidateContest, 2, time.Minute, 2)
+		claims, err := repo.Claim(ctx, jobs.LeaderboardInvalidateContestV1, 2, time.Minute, 2)
 		if err != nil || len(claims) != 1 || claims[0].ID == lockedID {
 			t.Errorf("skip locked claim = %v, %v", claims, err)
 		}
@@ -318,12 +318,12 @@ func TestRetryReplayAndRetention(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := repo.Replay(t.Context(), id, "operator", "repair", []jobs.Type{jobs.InvalidateOfficial}); !errors.Is(err, ErrNotFailed) {
+	if _, err := repo.Replay(t.Context(), id, "operator", "repair", []jobs.Type{jobs.LeaderboardInvalidateOfficialV1}); !errors.Is(err, ErrNotFailed) {
 		t.Errorf("replay pending = %v", err)
 	}
 	var claim ClaimedJob
 	at(t, outboxTestTime, func() {
-		claims, err := repo.Claim(t.Context(), jobs.InvalidateOfficial, 1, time.Minute, 2)
+		claims, err := repo.Claim(t.Context(), jobs.LeaderboardInvalidateOfficialV1, 1, time.Minute, 2)
 		if err != nil || len(claims) != 1 {
 			t.Fatalf("claim = %v, %v", claims, err)
 		}
@@ -331,15 +331,15 @@ func TestRetryReplayAndRetention(t *testing.T) {
 		if ok, err := repo.Retry(t.Context(), claim, outboxTestTime.Add(time.Minute), "temporary", 2); err != nil || !ok {
 			t.Fatalf("retry = %v, %v", ok, err)
 		}
-		if count, err := repo.Outstanding(t.Context(), jobs.InvalidateOfficial); err != nil || count != 1 {
+		if count, err := repo.Outstanding(t.Context(), jobs.LeaderboardInvalidateOfficialV1); err != nil || count != 1 {
 			t.Errorf("outstanding delayed = %d, %v", count, err)
 		}
-		if claims, err := repo.Claim(t.Context(), jobs.InvalidateOfficial, 1, time.Minute, 2); err != nil || len(claims) != 0 {
+		if claims, err := repo.Claim(t.Context(), jobs.LeaderboardInvalidateOfficialV1, 1, time.Minute, 2); err != nil || len(claims) != 0 {
 			t.Errorf("early claim = %v, %v", claims, err)
 		}
 	})
 	at(t, outboxTestTime.Add(time.Minute), func() {
-		claims, err := repo.Claim(t.Context(), jobs.InvalidateOfficial, 1, time.Minute, 2)
+		claims, err := repo.Claim(t.Context(), jobs.LeaderboardInvalidateOfficialV1, 1, time.Minute, 2)
 		if err != nil || len(claims) != 1 || claims[0].Attempts != 2 {
 			t.Fatalf("retry claim = %v, %v", claims, err)
 		}
@@ -350,7 +350,7 @@ func TestRetryReplayAndRetention(t *testing.T) {
 	})
 	var replayID int64
 	at(t, outboxTestTime.Add(2*time.Minute), func() {
-		replayID, err = repo.Replay(t.Context(), id, "operator", "repair", []jobs.Type{jobs.InvalidateOfficial})
+		replayID, err = repo.Replay(t.Context(), id, "operator", "repair", []jobs.Type{jobs.LeaderboardInvalidateOfficialV1})
 	})
 	if err != nil || replayID == 0 {
 		t.Fatalf("replay = %d, %v", replayID, err)
@@ -363,7 +363,7 @@ func TestRetryReplayAndRetention(t *testing.T) {
 		t.Errorf("replay source = %d, want %d", replayOf, id)
 	}
 	at(t, outboxTestTime.Add(2*time.Minute), func() {
-		claims, err := repo.Claim(t.Context(), jobs.InvalidateOfficial, 1, time.Minute, 2)
+		claims, err := repo.Claim(t.Context(), jobs.LeaderboardInvalidateOfficialV1, 1, time.Minute, 2)
 		if err != nil || len(claims) != 1 {
 			t.Fatalf("replay claim = %v, %v", claims, err)
 		}
@@ -503,7 +503,7 @@ func TestUnsupportedStatsIncludesRunningAndFailedVersions(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	stats, err := repo.UnsupportedStats(t.Context(), []jobs.Type{jobs.InvalidateContest})
+	stats, err := repo.UnsupportedStats(t.Context(), []jobs.Type{jobs.LeaderboardInvalidateContestV1})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -519,7 +519,7 @@ func TestReplayRequiresRegisteredVersion(t *testing.T) {
 	if err := db.Pool.QueryRow(t.Context(), `insert into jobs (task_type,payload,state,failed_at) values ('future.job.v2','{}','failed',clock_timestamp()) returning id`).Scan(&id); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := repo.Replay(t.Context(), id, "operator", "repair", []jobs.Type{jobs.InvalidateContest}); !errors.Is(err, ErrNotFailed) {
+	if _, err := repo.Replay(t.Context(), id, "operator", "repair", []jobs.Type{jobs.LeaderboardInvalidateContestV1}); !errors.Is(err, ErrNotFailed) {
 		t.Fatalf("unregistered replay = %v", err)
 	}
 	replayID, err := repo.Replay(t.Context(), id, "operator", "repair", []jobs.Type{"future.job.v2"})

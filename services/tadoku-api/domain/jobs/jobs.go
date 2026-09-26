@@ -9,8 +9,8 @@ import (
 type Type string
 
 const (
-	InvalidateContest  Type = "leaderboard.invalidate_contest.v1"
-	InvalidateOfficial Type = "leaderboard.invalidate_official.v1"
+	LeaderboardInvalidateContestV1  Type = "leaderboard.invalidate_contest.v1"
+	LeaderboardInvalidateOfficialV1 Type = "leaderboard.invalidate_official.v1"
 )
 
 // Job is a versioned, JSON-serializable message. Payloads contain domain values,
@@ -25,7 +25,7 @@ type InvalidateContestLeaderboardV1 struct {
 	ContestID uuid.UUID `json:"contest_id"`
 }
 
-func (InvalidateContestLeaderboardV1) Type() Type { return InvalidateContest }
+func (InvalidateContestLeaderboardV1) Type() Type { return LeaderboardInvalidateContestV1 }
 func (InvalidateContestLeaderboardV1) job()       {}
 func (j InvalidateContestLeaderboardV1) Validate() error {
 	if j.ContestID == uuid.Nil {
@@ -38,7 +38,7 @@ type InvalidateOfficialLeaderboardV1 struct {
 	Year int16 `json:"year"`
 }
 
-func (InvalidateOfficialLeaderboardV1) Type() Type { return InvalidateOfficial }
+func (InvalidateOfficialLeaderboardV1) Type() Type { return LeaderboardInvalidateOfficialV1 }
 func (InvalidateOfficialLeaderboardV1) job()       {}
 func (j InvalidateOfficialLeaderboardV1) Validate() error {
 	if j.Year < 1 || j.Year > 9999 {

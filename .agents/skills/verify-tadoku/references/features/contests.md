@@ -17,9 +17,11 @@ Main navigation **Leaderboard** opens `/leaderboard/latest`; also cover
   multiple pages; don't manufacture a pagination pass from a single page.
 - For participant activity charts, check a long contest at phone, tablet and
   desktop widths. The page and chart card stay within the viewport, score cards
-  remain readable, and horizontal scrolling inside the chart reaches both the
-  first and last contest dates. Resize across the desktop layout breakpoint
-  (1024px) and confirm the score column retains its one-fifth width.
+  remain readable, and desktop widths (1024px and above) show the full date range
+  and both score axes without horizontal scrolling. On narrower screens,
+  horizontal scrolling inside the chart reaches both the first and last contest
+  dates. Resize across the desktop layout breakpoint in both directions and
+  confirm the score column retains its one-fifth width on desktop.
 - For creation/registration changes, use a branch API and uniquely named contest.
   Verify allowed languages/activities, dates and privacy; exercise invalid input,
   save, reload and visibility from another identity. Register an eligible user

@@ -22,10 +22,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/tadoku/tadoku/services/common/postgresconfig"
 	"github.com/tadoku/tadoku/services/tadoku-api/app/worker"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 	valkeyinfra "github.com/tadoku/tadoku/services/tadoku-api/infra/valkey"
-	"github.com/tadoku/tadoku/services/tadoku-api/storage/postgres/asyncoutbox"
 )
 
 type config struct {
@@ -89,12 +89,15 @@ func run(ctx context.Context, cfg config, logger *slog.Logger) error {
 	)
 	metrics := worker.NewMetrics(registry)
 	leaderboardService := leaderboard.NewService(leaderboard.NewRepository(pool), client, cfg.ValkeyTimeout, cfg.LeaderboardCachePrefix)
-	runner := worker.NewRunner(asyncoutbox.NewRepository(pool), worker.NewApplication(leaderboardService), leaderboardService, logger, metrics, cfg.ShutdownTimeout)
+	application, err := worker.NewApplication(jobqueue.NewService(jobqueue.NewRepository(pool)), leaderboardService, worker.Config{Logger: logger, Metrics: metrics, ShutdownTimeout: cfg.ShutdownTimeout})
+	if err != nil {
+		return fmt.Errorf("construct worker application: %w", err)
+	}
 
 	privateMux := http.NewServeMux()
 	privateMux.HandleFunc("GET /livez", func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) })
 	privateMux.HandleFunc("GET /readyz", func(w http.ResponseWriter, request *http.Request) {
-		if !runner.Ready() || pool.Ping(request.Context()) != nil {
+		if !application.Ready() || pool.Ping(request.Context()) != nil {
 			w.WriteHeader(http.StatusServiceUnavailable)
 			return
 		}
@@ -114,8 +117,8 @@ func run(ctx context.Context, cfg config, logger *slog.Logger) error {
 	defer metricsListener.Close()
 
 	workCtx, cancelWork := context.WithCancel(ctx)
-	workerDone := make(chan struct{})
-	go func() { defer close(workerDone); runner.Run(workCtx) }()
+	workerDone := make(chan error, 1)
+	go func() { workerDone <- application.Run(workCtx) }()
 	serverErrors := make(chan error, 2)
 	go func() {
 		if err := privateServer.Serve(privateListener); err != nil && !errors.Is(err, http.ErrServerClosed) {
@@ -135,7 +138,7 @@ func run(ctx context.Context, cfg config, logger *slog.Logger) error {
 	case runErr = <-serverErrors:
 	}
 	cancelWork()
-	<-workerDone
+	runErr = errors.Join(runErr, <-workerDone)
 	shutdownCtx, stop := context.WithTimeout(context.Background(), cfg.ShutdownTimeout)
 	defer stop()
 	return errors.Join(runErr, privateServer.Shutdown(shutdownCtx), metricsServer.Shutdown(shutdownCtx))
@@ -164,7 +167,7 @@ func replay(ctx context.Context, args []string, logger *slog.Logger) error {
 		return fmt.Errorf("open replay postgres: %s", postgresConfig.Redact(err))
 	}
 	defer pool.Close()
-	newID, err := asyncoutbox.NewRepository(pool).Replay(ctx, *id, *actor, *reason)
+	newID, err := worker.Replay(ctx, jobqueue.NewService(jobqueue.NewRepository(pool)), *id, *actor, *reason)
 	if err != nil {
 		return fmt.Errorf("replay task %d: %w", *id, err)
 	}

@@ -10,6 +10,8 @@ type Metrics struct {
 	Failed                  *prometheus.GaugeVec
 	OldestDueAge            *prometheus.GaugeVec
 	Unsupported             prometheus.Gauge
+	UnsupportedRunning      prometheus.Gauge
+	UnsupportedFailed       prometheus.Gauge
 	UnsupportedOldestDueAge prometheus.Gauge
 	ExpiredLeases           *prometheus.CounterVec
 }
@@ -45,6 +47,14 @@ func NewMetrics(registry *prometheus.Registry) *Metrics {
 			Name: "tadoku_worker_unsupported_pending_tasks",
 			Help: "Pending tasks with an unsupported type; they remain unclaimed.",
 		}),
+		UnsupportedRunning: prometheus.NewGauge(prometheus.GaugeOpts{
+			Name: "tadoku_worker_unsupported_running_tasks",
+			Help: "Running jobs with a type unsupported by this executable.",
+		}),
+		UnsupportedFailed: prometheus.NewGauge(prometheus.GaugeOpts{
+			Name: "tadoku_worker_unsupported_failed_tasks",
+			Help: "Failed jobs with a type unsupported by this executable.",
+		}),
 		UnsupportedOldestDueAge: prometheus.NewGauge(prometheus.GaugeOpts{
 			Name: "tadoku_worker_unsupported_oldest_due_age_seconds",
 			Help: "Age of the oldest due pending task with an unsupported type.",
@@ -54,16 +64,20 @@ func NewMetrics(registry *prometheus.Registry) *Metrics {
 			Help: "Expired running tasks reclaimed by predefined type.",
 		}, []string{"type"}),
 	}
-	registry.MustRegister(metrics.InFlight, metrics.Attempts, metrics.Duration, metrics.Pending, metrics.Failed, metrics.OldestDueAge, metrics.Unsupported, metrics.UnsupportedOldestDueAge, metrics.ExpiredLeases)
-	for _, spec := range policies {
-		metrics.InFlight.WithLabelValues(string(spec.typeName)).Set(0)
-		metrics.Duration.WithLabelValues(string(spec.typeName))
-		metrics.Pending.WithLabelValues(string(spec.typeName)).Set(0)
-		metrics.Failed.WithLabelValues(string(spec.typeName)).Set(0)
-		metrics.OldestDueAge.WithLabelValues(string(spec.typeName)).Set(0)
-		metrics.ExpiredLeases.WithLabelValues(string(spec.typeName))
-	}
+	registry.MustRegister(metrics.InFlight, metrics.Attempts, metrics.Duration, metrics.Pending, metrics.Failed, metrics.OldestDueAge, metrics.Unsupported, metrics.UnsupportedRunning, metrics.UnsupportedFailed, metrics.UnsupportedOldestDueAge, metrics.ExpiredLeases)
 	metrics.Unsupported.Set(0)
 	metrics.UnsupportedOldestDueAge.Set(0)
 	return metrics
+}
+
+func (m *Metrics) initialize(handlers *registry) {
+	for _, entry := range handlers.ordered {
+		spec := entry.spec
+		m.InFlight.WithLabelValues(string(spec.typeName)).Set(0)
+		m.Duration.WithLabelValues(string(spec.typeName))
+		m.Pending.WithLabelValues(string(spec.typeName)).Set(0)
+		m.Failed.WithLabelValues(string(spec.typeName)).Set(0)
+		m.OldestDueAge.WithLabelValues(string(spec.typeName)).Set(0)
+		m.ExpiredLeases.WithLabelValues(string(spec.typeName))
+	}
 }

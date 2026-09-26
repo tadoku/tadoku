@@ -10,91 +10,67 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/asyncwork"
+	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
-	"github.com/tadoku/tadoku/services/tadoku-api/storage/postgres/asyncoutbox"
 )
 
-const globalLimit = 4
-
 type policy struct {
-	typeName    asyncwork.Type
+	typeName    jobs.Type
 	limit       int
 	timeout     time.Duration
-	maxRuntime  time.Duration
 	lease       time.Duration
 	maxAttempts int
 }
 
-var policies = [...]policy{
-	{asyncwork.InvalidateContest, 2, 20 * time.Second, 30 * time.Second, 10 * time.Second, 5},
-	{asyncwork.InvalidateOfficial, 2, 20 * time.Second, 30 * time.Second, 10 * time.Second, 5},
-}
-
-type Runner struct {
-	repository      *asyncoutbox.Repository
-	application     *Application
-	leaderboard     *leaderboard.Service
+type runner struct {
+	queue           *jobqueue.Service
+	handlers        *registry
 	logger          *slog.Logger
 	metrics         *Metrics
 	shutdownTimeout time.Duration
+	concurrency     int
 	ready           atomic.Bool
 }
 
-func NewRunner(repository *asyncoutbox.Repository, application *Application, leaderboard *leaderboard.Service, logger *slog.Logger, metrics *Metrics, shutdownTimeout time.Duration) *Runner {
-	return &Runner{repository: repository, application: application, leaderboard: leaderboard, logger: logger, metrics: metrics, shutdownTimeout: shutdownTimeout}
-}
-
-func (r *Runner) Ready() bool { return r.ready.Load() }
-
 type result struct {
-	typeName asyncwork.Type
+	typeName jobs.Type
 	err      error
 }
 
-func (r *Runner) Run(ctx context.Context) {
+func (r *runner) run(ctx context.Context, maintain func(context.Context, bool, bool)) {
 	workCtx, cancelWork := context.WithCancel(context.Background())
 	defer cancelWork()
 
-	if err := r.leaderboard.RevokeCacheReadiness(workCtx); err != nil {
-		r.logger.Warn("revoke leaderboard readiness at startup", "error", err)
+	capacity := 0
+	for _, entry := range r.handlers.ordered {
+		capacity += entry.spec.limit
 	}
-
-	results := make(chan result, globalLimit)
-	active := make(map[asyncwork.Type]int, len(policies))
+	results := make(chan result, min(r.concurrency, capacity))
+	active := make(map[jobs.Type]int, len(r.handlers.ordered))
 	var running sync.WaitGroup
 	ticker := time.NewTicker(500 * time.Millisecond)
 	defer ticker.Stop()
 	cleanupTicker := time.NewTicker(time.Hour)
 	defer cleanupTicker.Stop()
 	rotation := 0
-	reconciled := false
 	unsupported := int64(0)
 
 	for {
 		if ctx.Err() != nil {
 			break
 		}
-		if !reconciled && totalActive(active) == 0 {
-			count, err := r.leaderboard.ReconcileCache(ctx)
-			if err != nil {
-				r.logger.Error("reconcile leaderboard cache", "error", err)
-			} else {
-				reconciled = true
-				r.logger.Info("leaderboard cache reconciled", "invalidated", count)
-			}
-		}
+		maintain(ctx, totalActive(active) == 0, false)
 
 		claimHealthy := true
-		for offset := range policies {
-			index := (rotation + offset) % len(policies)
-			spec := policies[index]
-			free := min(globalLimit-totalActive(active), spec.limit-active[spec.typeName])
+		for offset := range r.handlers.ordered {
+			index := (rotation + offset) % len(r.handlers.ordered)
+			spec := r.handlers.ordered[index].spec
+			free := min(r.concurrency-totalActive(active), spec.limit-active[spec.typeName])
 			if free < 1 {
 				continue
 			}
-			tasks, err := r.repository.Claim(ctx, spec.typeName, free, spec.lease, spec.maxAttempts)
+			tasks, err := r.queue.Claim(ctx, spec.typeName, free, spec.lease, spec.maxAttempts)
 			if err != nil {
 				claimHealthy = false
 				r.logger.Error("claim async work", "type", spec.typeName, "error", err)
@@ -114,23 +90,17 @@ func (r *Runner) Run(ctx context.Context) {
 				}()
 			}
 		}
-		rotation = (rotation + 1) % len(policies)
+		rotation = (rotation + 1) % len(r.handlers.ordered)
 		r.ready.Store(claimHealthy)
 
-		if reconciled && totalActive(active) == 0 {
-			if err := r.refreshReadiness(ctx); err != nil {
-				r.logger.Error("refresh leaderboard readiness", "error", err)
-			}
-		} else if err := r.leaderboard.RevokeCacheReadiness(workCtx); err != nil {
-			r.logger.Warn("revoke leaderboard readiness while work is active", "error", err)
-		}
+		maintain(ctx, totalActive(active) == 0, false)
 		count, err := r.updateMetrics(ctx)
 		if err != nil {
 			r.logger.Warn("inspect async work backlog", "error", err)
 		} else if count != unsupported {
 			unsupported = count
 			if count > 0 {
-				r.logger.Error("unsupported async task types remain pending", "count", count)
+				r.logger.Error("unsupported async job types remain outstanding", "count", count)
 			}
 		}
 
@@ -140,10 +110,7 @@ func (r *Runner) Run(ctx context.Context) {
 			active[completed.typeName]--
 			r.metrics.InFlight.WithLabelValues(string(completed.typeName)).Dec()
 			if completed.err != nil {
-				reconciled = false
-				if err := r.leaderboard.RevokeCacheReadiness(workCtx); err != nil {
-					r.logger.Warn("revoke leaderboard readiness after task failure", "error", err)
-				}
+				maintain(ctx, false, true)
 			}
 		case <-ticker.C:
 		case <-cleanupTicker.C:
@@ -152,11 +119,6 @@ func (r *Runner) Run(ctx context.Context) {
 	}
 
 	r.ready.Store(false)
-	shutdownCtx, stop := context.WithTimeout(context.Background(), 5*time.Second)
-	if err := r.leaderboard.RevokeCacheReadiness(shutdownCtx); err != nil {
-		r.logger.Warn("revoke leaderboard readiness at shutdown", "error", err)
-	}
-	stop()
 
 	done := make(chan struct{})
 	go func() { running.Wait(); close(done) }()
@@ -168,11 +130,11 @@ func (r *Runner) Run(ctx context.Context) {
 	}
 }
 
-func (r *Runner) cleanupCompleted(ctx context.Context) {
+func (r *runner) cleanupCompleted(ctx context.Context) {
 	ctx, stop := context.WithTimeout(ctx, 5*time.Second)
 	defer stop()
 	for {
-		count, err := r.repository.CleanupCompleted(ctx, timex.Now().Add(-24*time.Hour), 100)
+		count, err := r.queue.CleanupCompleted(ctx, timex.Now().Add(-24*time.Hour), 100)
 		if err != nil {
 			if ctx.Err() == nil {
 				r.logger.Warn("cleanup completed async tasks", "error", err)
@@ -185,7 +147,7 @@ func (r *Runner) cleanupCompleted(ctx context.Context) {
 	}
 }
 
-func totalActive(active map[asyncwork.Type]int) int {
+func totalActive(active map[jobs.Type]int) int {
 	total := 0
 	for _, count := range active {
 		total += count
@@ -193,25 +155,12 @@ func totalActive(active map[asyncwork.Type]int) int {
 	return total
 }
 
-func (r *Runner) refreshReadiness(ctx context.Context) error {
-	for _, spec := range policies {
-		count, err := r.repository.Outstanding(ctx, spec.typeName)
-		if err != nil {
-			_ = r.leaderboard.RevokeCacheReadiness(ctx)
-			return err
-		}
-		if count > 0 {
-			return r.leaderboard.RevokeCacheReadiness(ctx)
-		}
-	}
-	return r.leaderboard.PublishCacheReadiness(ctx)
-}
-
-func (r *Runner) updateMetrics(ctx context.Context) (int64, error) {
-	known := make([]asyncwork.Type, 0, len(policies))
-	for _, spec := range policies {
+func (r *runner) updateMetrics(ctx context.Context) (int64, error) {
+	known := make([]jobs.Type, 0, len(r.handlers.ordered))
+	for _, entry := range r.handlers.ordered {
+		spec := entry.spec
 		known = append(known, spec.typeName)
-		stats, err := r.repository.Stats(ctx, spec.typeName)
+		stats, err := r.queue.Stats(ctx, spec.typeName)
 		if err != nil {
 			return 0, err
 		}
@@ -223,20 +172,22 @@ func (r *Runner) updateMetrics(ctx context.Context) (int64, error) {
 		}
 		r.metrics.OldestDueAge.WithLabelValues(string(spec.typeName)).Set(age)
 	}
-	stats, err := r.repository.UnsupportedStats(ctx, known)
+	stats, err := r.queue.UnsupportedStats(ctx, known)
 	if err != nil {
 		return 0, err
 	}
 	r.metrics.Unsupported.Set(float64(stats.Pending))
+	r.metrics.UnsupportedRunning.Set(float64(stats.Running))
+	r.metrics.UnsupportedFailed.Set(float64(stats.Failed))
 	age := float64(0)
 	if stats.OldestDueAt != nil {
 		age = max(0, timex.Now().Sub(*stats.OldestDueAt).Seconds())
 	}
 	r.metrics.UnsupportedOldestDueAge.Set(age)
-	return stats.Pending, nil
+	return stats.Pending + stats.Running + stats.Failed, nil
 }
 
-func (r *Runner) process(ctx context.Context, task asyncoutbox.ClaimedTask, spec policy) error {
+func (r *runner) process(ctx context.Context, task jobqueue.ClaimedJob, spec policy) error {
 	margin := spec.lease / 3
 	remainingLease := time.Until(task.LeaseExpiresAt)
 	if remainingLease <= margin {
@@ -244,7 +195,7 @@ func (r *Runner) process(ctx context.Context, task asyncoutbox.ClaimedTask, spec
 	}
 	if remainingLease < 2*margin {
 		renewCtx, stop := context.WithTimeout(ctx, remainingLease-margin)
-		expiry, held, err := r.repository.Renew(renewCtx, task, spec.lease)
+		expiry, held, err := r.queue.Renew(renewCtx, task, spec.lease)
 		stop()
 		if err != nil {
 			return fmt.Errorf("renew claim before dispatch: %w", err)
@@ -254,14 +205,14 @@ func (r *Runner) process(ctx context.Context, task asyncoutbox.ClaimedTask, spec
 		}
 		task.LeaseExpiresAt = expiry
 	}
-	limit := min(spec.timeout, spec.maxRuntime)
+	limit := spec.timeout
 	handlerCtx, cancelHandler := context.WithTimeout(ctx, limit)
 	maximum, _ := handlerCtx.Deadline()
 	renewCtx, cancelRenew := context.WithCancel(handlerCtx)
 	renewed := make(chan error, 1)
 	go func() { renewed <- r.renew(renewCtx, cancelHandler, task, spec, maximum) }()
 
-	handlerErr := r.application.Dispatch(handlerCtx, task)
+	handlerErr := r.handlers.dispatch(handlerCtx, task)
 	if handlerErr == nil && handlerCtx.Err() != nil {
 		handlerErr = handlerCtx.Err()
 	}
@@ -280,14 +231,14 @@ func (r *Runner) process(ctx context.Context, task asyncoutbox.ClaimedTask, spec
 	var held bool
 	var err error
 	if handlerErr == nil {
-		held, err = r.repository.Complete(transitionCtx, task)
+		held, err = r.queue.Complete(transitionCtx, task)
 	} else {
 		code := failureCode(handlerErr)
 		var permanent *PermanentError
 		if errors.As(handlerErr, &permanent) {
-			held, err = r.repository.Fail(transitionCtx, task, code)
+			held, err = r.queue.Fail(transitionCtx, task, code)
 		} else {
-			held, err = r.repository.Retry(transitionCtx, task, retryAt(task.Attempts), code, spec.maxAttempts)
+			held, err = r.queue.Retry(transitionCtx, task, retryAt(task.Attempts), code, spec.maxAttempts)
 		}
 		r.metrics.Attempts.WithLabelValues(string(task.Type), code).Inc()
 	}
@@ -303,7 +254,7 @@ func (r *Runner) process(ctx context.Context, task asyncoutbox.ClaimedTask, spec
 	return handlerErr
 }
 
-func (r *Runner) renew(ctx context.Context, cancelHandler context.CancelFunc, task asyncoutbox.ClaimedTask, spec policy, maximum time.Time) error {
+func (r *runner) renew(ctx context.Context, cancelHandler context.CancelFunc, task jobqueue.ClaimedJob, spec policy, maximum time.Time) error {
 	leaseExpiresAt := task.LeaseExpiresAt
 	for {
 		if ctx.Err() != nil {
@@ -332,7 +283,7 @@ func (r *Runner) renew(ctx context.Context, cancelHandler context.CancelFunc, ta
 				return context.DeadlineExceeded
 			}
 			renewCtx, stop := context.WithTimeout(ctx, renewBudget)
-			updatedExpiry, held, err := r.repository.Renew(renewCtx, task, min(spec.lease, remaining))
+			updatedExpiry, held, err := r.queue.Renew(renewCtx, task, min(spec.lease, remaining))
 			stop()
 			if ctx.Err() != nil {
 				return nil

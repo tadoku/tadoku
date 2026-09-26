@@ -10,11 +10,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/asyncwork"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testvalkey"
-	"github.com/tadoku/tadoku/services/tadoku-api/storage/postgres/asyncoutbox"
 	valkeygo "github.com/valkey-io/valkey-go"
 )
 
@@ -65,7 +65,10 @@ func TestWorkerOutboxJourney(t *testing.T) {
 
 	service := leaderboard.NewService(leaderboard.NewRepository(db.Pool), client, time.Second, prefix)
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	runner := NewRunner(asyncoutbox.NewRepository(db.Pool), NewApplication(service), service, logger, NewMetrics(prometheus.NewRegistry()), 2*time.Second)
+	runner, err := NewApplication(jobqueue.NewService(jobqueue.NewRepository(db.Pool)), service, Config{Logger: logger, Metrics: NewMetrics(prometheus.NewRegistry()), ShutdownTimeout: 2 * time.Second})
+	if err != nil {
+		t.Fatal(err)
+	}
 	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan struct{})
 	go func() { defer close(done); runner.Run(ctx) }()
@@ -87,10 +90,10 @@ func TestWorkerOutboxJourney(t *testing.T) {
 		}
 	}
 
-	validID := insertTask(t, db.Pool, string(asyncwork.InvalidateOfficial), `{"year":2025}`, false)
-	invalidID := insertTask(t, db.Pool, string(asyncwork.InvalidateOfficial), `{"year":0}`, false)
+	validID := insertTask(t, db.Pool, string(jobs.InvalidateOfficial), `{"year":2025}`, false)
+	invalidID := insertTask(t, db.Pool, string(jobs.InvalidateOfficial), `{"year":0}`, false)
 	unknownID := insertTask(t, db.Pool, "future.task.v1", `{}`, false)
-	reclaimedID := insertTask(t, db.Pool, string(asyncwork.InvalidateOfficial), `{"year":2025}`, true)
+	reclaimedID := insertTask(t, db.Pool, string(jobs.InvalidateOfficial), `{"year":2025}`, true)
 
 	waitFor(t, func() (bool, error) {
 		var completed, failed, reclaimed, unknown string
@@ -122,6 +125,28 @@ func TestWorkerOutboxJourney(t *testing.T) {
 	}
 	if code != "invalid_payload" {
 		t.Errorf("invalid task failure code = %q", code)
+	}
+	for _, state := range []string{"pending", "running", "failed"} {
+		_, err := db.Pool.Exec(t.Context(), `update async_outbox set state = $1,
+   claim_token = case when $1 = 'running' then $2::uuid else null end,
+   lease_expires_at = case when $1 = 'running' then now() + interval '1 minute' else null end,
+   failed_at = case when $1 = 'failed' then now() else null end where id = $3`, state, uuid.New(), unknownID)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := runner.refreshReadiness(t.Context()); err != nil {
+			t.Fatal(err)
+		}
+		ready, err := serviceCacheReady(t.Context(), client, keys[0])
+		if err != nil {
+			t.Fatal(err)
+		}
+		if ready {
+			t.Fatalf("cache readiness published while unsupported future.task.v1 remains %s", state)
+		}
+	}
+	if _, err := db.Pool.Exec(t.Context(), `delete from async_outbox where id = $1`, unknownID); err != nil {
+		t.Fatal(err)
 	}
 	waitFor(t, func() (bool, error) {
 		return serviceCacheReady(t.Context(), client, keys[0])

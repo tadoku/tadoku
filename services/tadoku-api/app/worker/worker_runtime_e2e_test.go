@@ -14,11 +14,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/asyncwork"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testvalkey"
-	"github.com/tadoku/tadoku/services/tadoku-api/storage/postgres/asyncoutbox"
 	valkeygo "github.com/valkey-io/valkey-go"
 )
 
@@ -82,13 +82,17 @@ func newWorkerFixture(t *testing.T) workerFixture {
 	return workerFixture{db: database.Pool, dsn: database.DSN, client: client, prefix: prefix}
 }
 
-func (f workerFixture) runner(client valkeygo.Client, providerTimeout, shutdown time.Duration) *Runner {
+func (f workerFixture) runner(t *testing.T, client valkeygo.Client, providerTimeout, shutdown time.Duration) *Application {
 	service := leaderboard.NewService(leaderboard.NewRepository(f.db), client, providerTimeout, f.prefix)
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	return NewRunner(asyncoutbox.NewRepository(f.db), NewApplication(service), service, logger, NewMetrics(prometheus.NewRegistry()), shutdown)
+	application, err := NewApplication(jobqueue.NewService(jobqueue.NewRepository(f.db)), service, Config{Logger: logger, Metrics: NewMetrics(prometheus.NewRegistry()), ShutdownTimeout: shutdown})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return application
 }
 
-func startWorker(t *testing.T, runner *Runner) {
+func startWorker(t *testing.T, runner *Application) {
 	t.Helper()
 	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan struct{})
@@ -151,11 +155,11 @@ func TestWorkerCancelsHandlerAfterLostLeaseAndReclaims(t *testing.T) {
 		release:  release,
 		canceled: make(chan struct{}, 1),
 	}
-	startWorker(t, f.runner(blocked, 8*time.Second, 2*time.Second))
+	startWorker(t, f.runner(t, blocked, 8*time.Second, 2*time.Second))
 	waitFor(t, func() (bool, error) {
 		return serviceCacheReady(t.Context(), f.client, f.prefix+"leaderboard:ready")
 	})
-	id := insertTask(t, f.db, string(asyncwork.InvalidateContest), fmt.Sprintf(`{"contest_id":%q}`, uuid.NewString()), false)
+	id := insertTask(t, f.db, string(jobs.InvalidateContest), fmt.Sprintf(`{"contest_id":%q}`, uuid.NewString()), false)
 	select {
 	case <-blocked.started:
 	case <-time.After(5 * time.Second):
@@ -203,20 +207,20 @@ func TestWorkerDeadlineExhaustionAndReplay(t *testing.T) {
 		started: make(chan struct{}, 1),
 		release: release,
 	}
-	runner := f.runner(blocked, 8*time.Second, 2*time.Second)
+	runner := f.runner(t, blocked, 8*time.Second, 2*time.Second)
 	var id int64
 	err := f.db.QueryRow(t.Context(), `insert into async_outbox (task_type, payload, attempts)
-		values ($1, $2::jsonb, 4) returning id`, string(asyncwork.InvalidateContest), fmt.Sprintf(`{"contest_id":%q}`, uuid.NewString())).Scan(&id)
+		values ($1, $2::jsonb, 4) returning id`, string(jobs.InvalidateContest), fmt.Sprintf(`{"contest_id":%q}`, uuid.NewString())).Scan(&id)
 	if err != nil {
 		t.Fatal(err)
 	}
-	repository := asyncoutbox.NewRepository(f.db)
-	tasks, err := repository.Claim(t.Context(), asyncwork.InvalidateContest, 1, time.Second, 5)
+	repository := jobqueue.NewRepository(f.db)
+	tasks, err := repository.Claim(t.Context(), jobs.InvalidateContest, 1, time.Second, 5)
 	if err != nil || len(tasks) != 1 {
 		t.Fatalf("claim exhausted task: tasks=%d error=%v", len(tasks), err)
 	}
-	spec := policy{typeName: asyncwork.InvalidateContest, limit: 2, timeout: 50 * time.Millisecond, maxRuntime: time.Second, lease: time.Second, maxAttempts: 5}
-	if err := runner.process(t.Context(), tasks[0], spec); !errors.Is(err, context.DeadlineExceeded) {
+	spec := policy{typeName: jobs.InvalidateContest, limit: 2, timeout: 50 * time.Millisecond, lease: time.Second, maxAttempts: 5}
+	if err := runner.runner.process(t.Context(), tasks[0], spec); !errors.Is(err, context.DeadlineExceeded) {
 		t.Errorf("deadline handler error = %v", err)
 	}
 	var state, code string
@@ -227,7 +231,7 @@ func TestWorkerDeadlineExhaustionAndReplay(t *testing.T) {
 	if state != "failed" || attempts != 5 || code != "deadline_exceeded" {
 		t.Fatalf("exhausted task: state=%q attempts=%d code=%q", state, attempts, code)
 	}
-	replayedID, err := repository.Replay(t.Context(), id, "worker-e2e", "deadline repaired")
+	replayedID, err := Replay(t.Context(), jobqueue.NewService(repository), id, "worker-e2e", "deadline repaired")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -252,7 +256,7 @@ func TestWorkerShutdownCancelsActiveTaskAndRevokesReadiness(t *testing.T) {
 		started: make(chan struct{}, 1),
 		release: release,
 	}
-	runner := f.runner(blocked, 8*time.Second, 100*time.Millisecond)
+	runner := f.runner(t, blocked, 8*time.Second, 100*time.Millisecond)
 	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan struct{})
 	go func() { defer close(done); runner.Run(ctx) }()
@@ -267,7 +271,7 @@ func TestWorkerShutdownCancelsActiveTaskAndRevokesReadiness(t *testing.T) {
 	waitFor(t, func() (bool, error) {
 		return serviceCacheReady(t.Context(), f.client, f.prefix+"leaderboard:ready")
 	})
-	id := insertTask(t, f.db, string(asyncwork.InvalidateContest), fmt.Sprintf(`{"contest_id":%q}`, uuid.NewString()), false)
+	id := insertTask(t, f.db, string(jobs.InvalidateContest), fmt.Sprintf(`{"contest_id":%q}`, uuid.NewString()), false)
 	select {
 	case <-blocked.started:
 	case <-time.After(5 * time.Second):
@@ -302,15 +306,15 @@ func TestWorkerDoesNotDispatchAfterClaimLeaseExpires(t *testing.T) {
 		started: make(chan struct{}, 1),
 		release: release,
 	}
-	runner := f.runner(observed, time.Second, time.Second)
-	id := insertTask(t, f.db, string(asyncwork.InvalidateContest), fmt.Sprintf(`{"contest_id":%q}`, uuid.NewString()), false)
-	tasks, err := asyncoutbox.NewRepository(f.db).Claim(t.Context(), asyncwork.InvalidateContest, 1, 50*time.Millisecond, 5)
+	runner := f.runner(t, observed, time.Second, time.Second)
+	id := insertTask(t, f.db, string(jobs.InvalidateContest), fmt.Sprintf(`{"contest_id":%q}`, uuid.NewString()), false)
+	tasks, err := jobqueue.NewRepository(f.db).Claim(t.Context(), jobs.InvalidateContest, 1, 50*time.Millisecond, 5)
 	if err != nil || len(tasks) != 1 {
 		t.Fatalf("claim: tasks=%d error=%v", len(tasks), err)
 	}
 	<-time.After(80 * time.Millisecond)
-	spec := policy{typeName: asyncwork.InvalidateContest, limit: 2, timeout: time.Second, maxRuntime: time.Second, lease: 50 * time.Millisecond, maxAttempts: 5}
-	if err := runner.process(t.Context(), tasks[0], spec); err == nil {
+	spec := policy{typeName: jobs.InvalidateContest, limit: 2, timeout: time.Second, lease: 50 * time.Millisecond, maxAttempts: 5}
+	if err := runner.runner.process(t.Context(), tasks[0], spec); err == nil {
 		t.Error("expired claim was dispatched")
 	}
 	select {
@@ -351,10 +355,13 @@ func TestWorkerCompletesWhenRenewalIsCanceledByFinishedHandler(t *testing.T) {
 	}
 	service := leaderboard.NewService(leaderboard.NewRepository(limitedPool), blocked, 8*time.Second, f.prefix)
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	repository := asyncoutbox.NewRepository(limitedPool)
-	runner := NewRunner(repository, NewApplication(service), service, logger, NewMetrics(prometheus.NewRegistry()), time.Second)
-	id := insertTask(t, f.db, string(asyncwork.InvalidateContest), fmt.Sprintf(`{"contest_id":%q}`, uuid.NewString()), false)
-	tasks, err := repository.Claim(t.Context(), asyncwork.InvalidateContest, 1, 3*time.Second, 5)
+	repository := jobqueue.NewRepository(limitedPool)
+	runner, err := NewApplication(jobqueue.NewService(repository), service, Config{Logger: logger, Metrics: NewMetrics(prometheus.NewRegistry()), ShutdownTimeout: time.Second})
+	if err != nil {
+		t.Fatal(err)
+	}
+	id := insertTask(t, f.db, string(jobs.InvalidateContest), fmt.Sprintf(`{"contest_id":%q}`, uuid.NewString()), false)
+	tasks, err := repository.Claim(t.Context(), jobs.InvalidateContest, 1, 3*time.Second, 5)
 	if err != nil || len(tasks) != 1 {
 		t.Fatalf("claim: tasks=%d error=%v", len(tasks), err)
 	}
@@ -366,9 +373,9 @@ func TestWorkerCompletesWhenRenewalIsCanceledByFinishedHandler(t *testing.T) {
 	returnConn := func() { returned.Do(conn.Release) }
 	defer returnConn()
 	baseline := limitedPool.Stat().CanceledAcquireCount()
-	spec := policy{typeName: asyncwork.InvalidateContest, limit: 2, timeout: 8 * time.Second, maxRuntime: 8 * time.Second, lease: 3 * time.Second, maxAttempts: 5}
+	spec := policy{typeName: jobs.InvalidateContest, limit: 2, timeout: 8 * time.Second, lease: 3 * time.Second, maxAttempts: 5}
 	done := make(chan error, 1)
-	go func() { done <- runner.process(t.Context(), tasks[0], spec) }()
+	go func() { done <- runner.runner.process(t.Context(), tasks[0], spec) }()
 	select {
 	case <-blocked.started:
 	case <-time.After(3 * time.Second):
@@ -410,16 +417,16 @@ func TestWorkerFairClaimsWithoutPrefetch(t *testing.T) {
 		started: make(chan struct{}, 4),
 		release: release,
 	}
-	startWorker(t, f.runner(blocked, 8*time.Second, 2*time.Second))
+	startWorker(t, f.runner(t, blocked, 8*time.Second, 2*time.Second))
 	waitFor(t, func() (bool, error) {
 		return serviceCacheReady(t.Context(), f.client, f.prefix+"leaderboard:ready")
 	})
 
 	contestIDs := make([]int64, 3)
 	for i := range contestIDs {
-		contestIDs[i] = insertTask(t, f.db, string(asyncwork.InvalidateContest), fmt.Sprintf(`{"contest_id":%q}`, uuid.NewString()), false)
+		contestIDs[i] = insertTask(t, f.db, string(jobs.InvalidateContest), fmt.Sprintf(`{"contest_id":%q}`, uuid.NewString()), false)
 	}
-	officialID := insertTask(t, f.db, string(asyncwork.InvalidateOfficial), `{"year":2025}`, false)
+	officialID := insertTask(t, f.db, string(jobs.InvalidateOfficial), `{"year":2025}`, false)
 	for range 2 {
 		select {
 		case <-blocked.started:
@@ -460,20 +467,25 @@ func TestWorkerGlobalLimitLeavesDueRowsUnclaimed(t *testing.T) {
 		started: make(chan struct{}, 6),
 		release: release,
 	}
-	startWorker(t, f.runner(blocked, 8*time.Second, 2*time.Second))
+	service := leaderboard.NewService(leaderboard.NewRepository(f.db), blocked, 8*time.Second, f.prefix)
+	application, err := NewApplication(jobqueue.NewService(jobqueue.NewRepository(f.db)), service, Config{Concurrency: 3, ShutdownTimeout: 2 * time.Second, Logger: slog.New(slog.NewTextHandler(io.Discard, nil))})
+	if err != nil {
+		t.Fatal(err)
+	}
+	startWorker(t, application)
 	waitFor(t, func() (bool, error) {
 		return serviceCacheReady(t.Context(), f.client, f.prefix+"leaderboard:ready")
 	})
 	ids := make([]int64, 0, 6)
 	for range 3 {
-		ids = append(ids, insertTask(t, f.db, string(asyncwork.InvalidateContest), fmt.Sprintf(`{"contest_id":%q}`, uuid.NewString()), false))
-		ids = append(ids, insertTask(t, f.db, string(asyncwork.InvalidateOfficial), `{"year":2025}`, false))
+		ids = append(ids, insertTask(t, f.db, string(jobs.InvalidateContest), fmt.Sprintf(`{"contest_id":%q}`, uuid.NewString()), false))
+		ids = append(ids, insertTask(t, f.db, string(jobs.InvalidateOfficial), `{"year":2025}`, false))
 	}
-	for range 4 {
+	for range 3 {
 		select {
 		case <-blocked.started:
 		case <-time.After(5 * time.Second):
-			t.Fatal("four handlers did not start")
+			t.Fatal("three handlers did not start")
 		}
 	}
 	var running, pending int
@@ -481,13 +493,83 @@ func TestWorkerGlobalLimitLeavesDueRowsUnclaimed(t *testing.T) {
 		from async_outbox where id = any($1)`, ids).Scan(&running, &pending); err != nil {
 		t.Fatal(err)
 	}
-	if running != 4 || pending != 2 {
-		t.Fatalf("global claims: running=%d pending=%d; want 4 running, 2 pending", running, pending)
+	if running != 3 || pending != 3 {
+		t.Fatalf("global claims: running=%d pending=%d; want 3 running, 3 pending", running, pending)
 	}
 	releaseAll()
 	waitFor(t, func() (bool, error) {
 		var completed int
 		err := f.db.QueryRow(t.Context(), `select count(*) from async_outbox where id = any($1) and state = 'completed'`, ids).Scan(&completed)
 		return completed == len(ids), err
+	})
+}
+
+func TestWorkerRetainsSlotUntilCanceledHandlerReturns(t *testing.T) {
+	f := newWorkerFixture(t)
+	started := make(chan struct{}, 2)
+	canceled := make(chan struct{}, 2)
+	release := make(chan struct{})
+	var released sync.Once
+	releaseAll := func() { released.Do(func() { close(release) }) }
+	t.Cleanup(releaseAll)
+	handlers, err := newRegistry(handle(func(ctx context.Context, _ jobs.InvalidateOfficialLeaderboardV1) error {
+		started <- struct{}{}
+		<-ctx.Done()
+		canceled <- struct{}{}
+		<-release
+		return nil
+	}, Policy{Concurrency: 1, Timeout: 50 * time.Millisecond, MaxAttempts: 1}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	runtime := &runner{
+		queue:           jobqueue.NewService(jobqueue.NewRepository(f.db)),
+		handlers:        handlers,
+		concurrency:     1,
+		shutdownTimeout: time.Second,
+		logger:          slog.New(slog.NewTextHandler(io.Discard, nil)),
+		metrics:         NewMetrics(prometheus.NewRegistry()),
+	}
+	first := insertTask(t, f.db, string(jobs.InvalidateOfficial), `{"year":2025}`, false)
+	second := insertTask(t, f.db, string(jobs.InvalidateOfficial), `{"year":2026}`, false)
+	ctx, cancel := context.WithCancel(t.Context())
+	done := make(chan struct{})
+	go func() { defer close(done); runtime.run(ctx, func(context.Context, bool, bool) {}) }()
+	t.Cleanup(func() {
+		releaseAll()
+		cancel()
+		select {
+		case <-done:
+		case <-time.After(5 * time.Second):
+			t.Error("worker did not stop")
+		}
+	})
+	select {
+	case <-canceled:
+	case <-time.After(5 * time.Second):
+		t.Fatal("handler did not receive deadline cancellation")
+	}
+	select {
+	case <-started:
+	default:
+		t.Fatal("first handler did not start")
+	}
+	select {
+	case <-started:
+		t.Fatal("worker reused the canceled handler's occupied slot")
+	case <-time.After(700 * time.Millisecond):
+	}
+	var running, pending int
+	if err := f.db.QueryRow(t.Context(), `select count(*) filter (where state = 'running'), count(*) filter (where state = 'pending') from async_outbox where id = any($1)`, []int64{first, second}).Scan(&running, &pending); err != nil {
+		t.Fatal(err)
+	}
+	if running != 1 || pending != 1 {
+		t.Fatalf("canceled handler claims: running=%d pending=%d", running, pending)
+	}
+	releaseAll()
+	waitFor(t, func() (bool, error) {
+		var failed int
+		err := f.db.QueryRow(t.Context(), `select count(*) from async_outbox where id = any($1) and state = 'failed' and last_error = 'deadline_exceeded'`, []int64{first, second}).Scan(&failed)
+		return failed == 2, err
 	})
 }

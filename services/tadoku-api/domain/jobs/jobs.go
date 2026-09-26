@@ -13,8 +13,6 @@ const (
 	LeaderboardInvalidateOfficialV1 Type = "leaderboard.invalidate_official.v1"
 )
 
-// Job is a versioned, JSON-serializable message. Payloads contain domain values,
-// never feature models. Keep persisted names and payload semantics stable.
 type Job interface {
 	Type() Type
 	Validate() error

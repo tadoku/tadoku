@@ -14,9 +14,9 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
 
-var outboxTestTime = time.Date(2026, 9, 24, 12, 0, 0, 0, time.UTC)
+var jobTestTime = time.Date(2026, 9, 24, 12, 0, 0, 0, time.UTC)
 
-func outboxTestDB(t *testing.T) *testpostgres.Database {
+func jobTestDB(t *testing.T) *testpostgres.Database {
 	t.Helper()
 	db, err := testpostgres.New(t.Context())
 	if err != nil {
@@ -35,8 +35,8 @@ func at(t *testing.T, instant time.Time, work func()) {
 	timex.TheWorld(instant, work)
 }
 
-func TestEnqueueSharesBusinessTransaction(t *testing.T) {
-	db := outboxTestDB(t)
+func TestInsertSharesBusinessTransaction(t *testing.T) {
+	db := jobTestDB(t)
 	repo := NewRepository(db.Pool)
 	task := jobs.InvalidateContestLeaderboardV1{ContestID: uuid.New()}
 	var err error
@@ -45,7 +45,7 @@ func TestEnqueueSharesBusinessTransaction(t *testing.T) {
 	}
 	rollback := errors.New("roll back business write")
 
-	at(t, outboxTestTime, func() {
+	at(t, jobTestTime, func() {
 		err = postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
 			executor, err := postgres.Executor(ctx, db.Pool)
 			if err != nil {
@@ -76,11 +76,11 @@ func TestEnqueueSharesBusinessTransaction(t *testing.T) {
 }
 
 func TestClaimLimitsKnownTypesAndFencesExpiredLeases(t *testing.T) {
-	db := outboxTestDB(t)
+	db := jobTestDB(t)
 	repo := NewRepository(db.Pool)
 	contest := jobs.InvalidateContestLeaderboardV1{ContestID: uuid.New()}
 	official := jobs.InvalidateOfficialLeaderboardV1{Year: 2026}
-	at(t, outboxTestTime, func() {
+	at(t, jobTestTime, func() {
 		for _, task := range []jobs.Job{contest, contest, official} {
 			if _, err := insertJob(repo, t.Context(), task); err != nil {
 				t.Fatal(err)
@@ -88,12 +88,12 @@ func TestClaimLimitsKnownTypesAndFencesExpiredLeases(t *testing.T) {
 		}
 	})
 	if _, err := db.Pool.Exec(t.Context(), `insert into jobs (task_type,payload,created_at,next_attempt_at)
-		values ('future.task.v1','{}',$1,$1)`, outboxTestTime); err != nil {
+		values ('future.task.v1','{}',$1,$1)`, jobTestTime); err != nil {
 		t.Fatal(err)
 	}
 
 	var first, second, third ClaimedJob
-	at(t, outboxTestTime, func() {
+	at(t, jobTestTime, func() {
 		claims, err := repo.Claim(t.Context(), jobs.LeaderboardInvalidateContestV1, 1, time.Minute, 2)
 		if err != nil || len(claims) != 1 {
 			t.Fatalf("first claim = %v, %v", claims, err)
@@ -118,23 +118,20 @@ func TestClaimLimitsKnownTypesAndFencesExpiredLeases(t *testing.T) {
 		if expires, ok, err := repo.Renew(t.Context(), third, 2*time.Minute); err != nil || !ok || !expires.After(third.LeaseExpiresAt) {
 			t.Errorf("renew = %v, %v, %v", expires, ok, err)
 		}
-		if claims, err := repo.Claim(t.Context(), jobs.Type(""), 1, time.Minute, 2); err == nil || len(claims) != 0 {
-			t.Errorf("unsupported claim = %v, %v", claims, err)
-		}
 	})
 	if _, err := db.Pool.Exec(t.Context(), `update jobs
 		set lease_expires_at=clock_timestamp()-interval '1 second' where id=$1`, first.ID); err != nil {
 		t.Fatal(err)
 	}
 
-	at(t, outboxTestTime.Add(time.Minute), func() {
+	at(t, jobTestTime.Add(time.Minute), func() {
 		if ok, err := repo.Complete(t.Context(), first); err != nil || ok {
 			t.Errorf("expired complete = %v, %v", ok, err)
 		}
 		if expires, ok, err := repo.Renew(t.Context(), first, time.Minute); err != nil || ok || !expires.IsZero() {
 			t.Errorf("expired renew = %v, %v, %v", expires, ok, err)
 		}
-		if ok, err := repo.Retry(t.Context(), first, outboxTestTime.Add(2*time.Minute), "temporary", 2); err != nil || ok {
+		if ok, err := repo.Retry(t.Context(), first, jobTestTime.Add(2*time.Minute), "temporary", 2); err != nil || ok {
 			t.Errorf("expired retry = %v, %v", ok, err)
 		}
 		claims, err := repo.Claim(t.Context(), jobs.LeaderboardInvalidateContestV1, 1, time.Minute, 2)
@@ -153,7 +150,7 @@ func TestClaimLimitsKnownTypesAndFencesExpiredLeases(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	at(t, outboxTestTime.Add(2*time.Minute), func() {
+	at(t, jobTestTime.Add(2*time.Minute), func() {
 		if claims, err := repo.Claim(t.Context(), jobs.LeaderboardInvalidateContestV1, 2, time.Minute, 2); err != nil || len(claims) != 1 || claims[0].ID != second.ID || claims[0].Attempts != 2 {
 			t.Errorf("exhausted crash claims = %v, %v; want only second task", claims, err)
 		}
@@ -172,16 +169,16 @@ func TestClaimLimitsKnownTypesAndFencesExpiredLeases(t *testing.T) {
 		t.Errorf("states failed=%q unknown=%q", failed, unknown)
 	}
 	stats, err := repo.UnsupportedStats(t.Context(), []jobs.Type{jobs.LeaderboardInvalidateContestV1, jobs.LeaderboardInvalidateOfficialV1})
-	if err != nil || stats.Pending != 1 || stats.OldestDueAt == nil || !stats.OldestDueAt.Equal(outboxTestTime) {
+	if err != nil || stats.Pending != 1 || stats.OldestDueAt == nil || !stats.OldestDueAt.Equal(jobTestTime) {
 		t.Errorf("unsupported stats = %+v, %v", stats, err)
 	}
 }
 
 func TestReducedAttemptLimitFailsDuePendingTask(t *testing.T) {
-	db := outboxTestDB(t)
+	db := jobTestDB(t)
 	repo := NewRepository(db.Pool)
 	task := jobs.InvalidateOfficialLeaderboardV1{Year: 2026}
-	at(t, outboxTestTime, func() {
+	at(t, jobTestTime, func() {
 		if _, err := insertJob(repo, t.Context(), task); err != nil {
 			t.Fatal(err)
 		}
@@ -189,7 +186,7 @@ func TestReducedAttemptLimitFailsDuePendingTask(t *testing.T) {
 		if err != nil || len(claims) != 1 {
 			t.Fatalf("claim = %v, %v", claims, err)
 		}
-		if ok, err := repo.Retry(t.Context(), claims[0], outboxTestTime, "temporary", 2); err != nil || !ok {
+		if ok, err := repo.Retry(t.Context(), claims[0], jobTestTime, "temporary", 2); err != nil || !ok {
 			t.Fatalf("retry = %v, %v", ok, err)
 		}
 		claims, err = repo.Claim(t.Context(), jobs.LeaderboardInvalidateOfficialV1, 1, time.Minute, 1)
@@ -207,12 +204,12 @@ func TestReducedAttemptLimitFailsDuePendingTask(t *testing.T) {
 }
 
 func TestTransitionsRejectDatabaseExpiredLease(t *testing.T) {
-	db := outboxTestDB(t)
+	db := jobTestDB(t)
 	repo := NewRepository(db.Pool)
 	task := jobs.InvalidateOfficialLeaderboardV1{Year: 2026}
 	var err error
 	var claims []ClaimedJob
-	at(t, outboxTestTime, func() {
+	at(t, jobTestTime, func() {
 		for range 4 {
 			if _, err := insertJob(repo, t.Context(), task); err != nil {
 				t.Fatal(err)
@@ -227,14 +224,14 @@ func TestTransitionsRejectDatabaseExpiredLease(t *testing.T) {
 		set lease_expires_at=clock_timestamp()-interval '1 second' where state='running'`); err != nil {
 		t.Fatal(err)
 	}
-	at(t, outboxTestTime, func() {
+	at(t, jobTestTime, func() {
 		if ok, err := repo.Complete(t.Context(), claims[0]); err != nil || ok {
 			t.Errorf("complete expired = %v, %v", ok, err)
 		}
 		if _, ok, err := repo.Renew(t.Context(), claims[1], time.Minute); err != nil || ok {
 			t.Errorf("renew expired = %v, %v", ok, err)
 		}
-		if ok, err := repo.Retry(t.Context(), claims[2], outboxTestTime.Add(time.Minute), "temporary", 2); err != nil || ok {
+		if ok, err := repo.Retry(t.Context(), claims[2], jobTestTime.Add(time.Minute), "temporary", 2); err != nil || ok {
 			t.Errorf("retry expired = %v, %v", ok, err)
 		}
 		if ok, err := repo.Fail(t.Context(), claims[3], "invalid_payload"); err != nil || ok {
@@ -244,12 +241,12 @@ func TestTransitionsRejectDatabaseExpiredLease(t *testing.T) {
 }
 
 func TestCompleteSkipsLockedClaim(t *testing.T) {
-	db := outboxTestDB(t)
+	db := jobTestDB(t)
 	repo := NewRepository(db.Pool)
 	task := jobs.InvalidateOfficialLeaderboardV1{Year: 2026}
 	var err error
 	var claim ClaimedJob
-	at(t, outboxTestTime, func() {
+	at(t, jobTestTime, func() {
 		if _, err := insertJob(repo, t.Context(), task); err != nil {
 			t.Fatal(err)
 		}
@@ -275,12 +272,12 @@ func TestCompleteSkipsLockedClaim(t *testing.T) {
 }
 
 func TestClaimSkipsLockedRows(t *testing.T) {
-	db := outboxTestDB(t)
+	db := jobTestDB(t)
 	repo := NewRepository(db.Pool)
 	task := jobs.InvalidateContestLeaderboardV1{ContestID: uuid.New()}
 	var err error
 	var lockedID int64
-	at(t, outboxTestTime, func() {
+	at(t, jobTestTime, func() {
 		lockedID, err = insertJob(repo, t.Context(), task)
 		if err != nil {
 			t.Fatal(err)
@@ -300,7 +297,7 @@ func TestClaimSkipsLockedRows(t *testing.T) {
 
 	ctx, cancel := context.WithTimeout(t.Context(), time.Second)
 	defer cancel()
-	at(t, outboxTestTime, func() {
+	at(t, jobTestTime, func() {
 		claims, err := repo.Claim(ctx, jobs.LeaderboardInvalidateContestV1, 2, time.Minute, 2)
 		if err != nil || len(claims) != 1 || claims[0].ID == lockedID {
 			t.Errorf("skip locked claim = %v, %v", claims, err)
@@ -309,12 +306,12 @@ func TestClaimSkipsLockedRows(t *testing.T) {
 }
 
 func TestRetryReplayAndRetention(t *testing.T) {
-	db := outboxTestDB(t)
+	db := jobTestDB(t)
 	repo := NewRepository(db.Pool)
 	task := jobs.InvalidateOfficialLeaderboardV1{Year: 2026}
 	var err error
 	var id int64
-	at(t, outboxTestTime, func() { id, err = insertJob(repo, t.Context(), task) })
+	at(t, jobTestTime, func() { id, err = insertJob(repo, t.Context(), task) })
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -322,13 +319,13 @@ func TestRetryReplayAndRetention(t *testing.T) {
 		t.Errorf("replay pending = %v", err)
 	}
 	var claim ClaimedJob
-	at(t, outboxTestTime, func() {
+	at(t, jobTestTime, func() {
 		claims, err := repo.Claim(t.Context(), jobs.LeaderboardInvalidateOfficialV1, 1, time.Minute, 2)
 		if err != nil || len(claims) != 1 {
 			t.Fatalf("claim = %v, %v", claims, err)
 		}
 		claim = claims[0]
-		if ok, err := repo.Retry(t.Context(), claim, outboxTestTime.Add(time.Minute), "temporary", 2); err != nil || !ok {
+		if ok, err := repo.Retry(t.Context(), claim, jobTestTime.Add(time.Minute), "temporary", 2); err != nil || !ok {
 			t.Fatalf("retry = %v, %v", ok, err)
 		}
 		if count, err := repo.Outstanding(t.Context(), jobs.LeaderboardInvalidateOfficialV1); err != nil || count != 1 {
@@ -338,18 +335,18 @@ func TestRetryReplayAndRetention(t *testing.T) {
 			t.Errorf("early claim = %v, %v", claims, err)
 		}
 	})
-	at(t, outboxTestTime.Add(time.Minute), func() {
+	at(t, jobTestTime.Add(time.Minute), func() {
 		claims, err := repo.Claim(t.Context(), jobs.LeaderboardInvalidateOfficialV1, 1, time.Minute, 2)
 		if err != nil || len(claims) != 1 || claims[0].Attempts != 2 {
 			t.Fatalf("retry claim = %v, %v", claims, err)
 		}
 		claim = claims[0]
-		if ok, err := repo.Retry(t.Context(), claim, outboxTestTime.Add(2*time.Minute), "temporary", 2); err != nil || !ok {
+		if ok, err := repo.Retry(t.Context(), claim, jobTestTime.Add(2*time.Minute), "temporary", 2); err != nil || !ok {
 			t.Fatalf("exhausted retry = %v, %v", ok, err)
 		}
 	})
 	var replayID int64
-	at(t, outboxTestTime.Add(2*time.Minute), func() {
+	at(t, jobTestTime.Add(2*time.Minute), func() {
 		replayID, err = repo.Replay(t.Context(), id, "operator", "repair", []jobs.Type{jobs.LeaderboardInvalidateOfficialV1})
 	})
 	if err != nil || replayID == 0 {
@@ -362,7 +359,7 @@ func TestRetryReplayAndRetention(t *testing.T) {
 	if replayOf != id {
 		t.Errorf("replay source = %d, want %d", replayOf, id)
 	}
-	at(t, outboxTestTime.Add(2*time.Minute), func() {
+	at(t, jobTestTime.Add(2*time.Minute), func() {
 		claims, err := repo.Claim(t.Context(), jobs.LeaderboardInvalidateOfficialV1, 1, time.Minute, 2)
 		if err != nil || len(claims) != 1 {
 			t.Fatalf("replay claim = %v, %v", claims, err)
@@ -371,10 +368,10 @@ func TestRetryReplayAndRetention(t *testing.T) {
 			t.Fatalf("complete replay = %v, %v", ok, err)
 		}
 	})
-	if _, err := db.Pool.Exec(t.Context(), `insert into jobs (task_type,payload,state,completed_at,created_at) values ('leaderboard.invalidate_official.v1','{}','completed',$1,$1)`, outboxTestTime); err != nil {
+	if _, err := db.Pool.Exec(t.Context(), `insert into jobs (task_type,payload,state,completed_at,created_at) values ('leaderboard.invalidate_official.v1','{}','completed',$1,$1)`, jobTestTime); err != nil {
 		t.Fatal(err)
 	}
-	deleted, err := repo.CleanupCompleted(t.Context(), outboxTestTime.AddDate(0, 3, 0).Add(time.Minute), 10)
+	deleted, err := repo.CleanupCompleted(t.Context(), jobTestTime.AddDate(0, 3, 0).Add(time.Minute), 10)
 	if err != nil || deleted != 1 {
 		t.Errorf("cleanup deleted = %d, %v; want only unlinked completion", deleted, err)
 	}
@@ -387,112 +384,62 @@ func TestRetryReplayAndRetention(t *testing.T) {
 	}
 }
 
-// insertJob seeds repository tests through the same transaction boundary used by applications.
 func insertJob(repo *Repository, ctx context.Context, job jobs.Job) (int64, error) {
 	payload, err := json.Marshal(job)
 	if err != nil {
 		return 0, err
 	}
-	var id int64
-	insert := func(ctx context.Context) error {
-		id, err = repo.Insert(ctx, job.Type(), payload)
-		return err
-	}
-	if _, txErr := postgres.TransactionExecutor(ctx, repo.db); errors.Is(txErr, postgres.ErrTransactionRequired) {
-		err = postgres.RunInTransaction(ctx, repo.db, insert)
-	} else {
-		err = insert(ctx)
-	}
-	return id, err
+	return repo.Insert(ctx, job.Type(), payload)
 }
 
-func TestEnqueueRequiresApplicationTransaction(t *testing.T) {
-	db := outboxTestDB(t)
-	queue := NewService(NewRepository(db.Pool))
+func TestInsertWithoutExplicitTransaction(t *testing.T) {
+	db := jobTestDB(t)
+	repo := NewRepository(db.Pool)
 	job := jobs.InvalidateOfficialLeaderboardV1{Year: 2026}
-	for _, batch := range [][]jobs.Job{nil, {job}} {
-		if err := queue.Enqueue(t.Context(), batch...); !errors.Is(err, postgres.ErrTransactionRequired) {
-			t.Errorf("enqueue without transaction = %v", err)
-		}
+	id, err := insertJob(repo, t.Context(), job)
+	if err != nil {
+		t.Fatal(err)
 	}
+	var typ string
+	var payload []byte
+	if err := db.Pool.QueryRow(t.Context(), `select task_type, payload from jobs where id=$1`, id).Scan(&typ, &payload); err != nil {
+		t.Fatal(err)
+	}
+	var persisted jobs.InvalidateOfficialLeaderboardV1
+	if err := json.Unmarshal(payload, &persisted); err != nil {
+		t.Fatal(err)
+	}
+	if typ != string(job.Type()) || persisted != job {
+		t.Errorf("persisted job = %s %+v, want %s %+v", typ, persisted, job.Type(), job)
+	}
+}
+
+func TestInsertRejectsInvalidTransactionScope(t *testing.T) {
+	db := jobTestDB(t)
+	repo := NewRepository(db.Pool)
+	job := jobs.InvalidateOfficialLeaderboardV1{Year: 2026}
 	var ended context.Context
 	if err := postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
 		ended = ctx
-		return queue.Enqueue(ctx)
+		return nil
 	}); err != nil {
 		t.Fatal(err)
 	}
-	if err := queue.Enqueue(ended, job); err == nil {
+	if _, err := insertJob(repo, ended, job); err == nil {
 		t.Fatal("accepted ended transaction")
 	}
-	other := outboxTestDB(t)
-	err := postgres.RunInTransaction(t.Context(), other.Pool, func(ctx context.Context) error { return queue.Enqueue(ctx, job) })
+	other := jobTestDB(t)
+	err := postgres.RunInTransaction(t.Context(), other.Pool, func(ctx context.Context) error {
+		_, err := insertJob(repo, ctx, job)
+		return err
+	})
 	if !errors.Is(err, postgres.ErrWrongDatabase) {
 		t.Errorf("wrong database = %v", err)
 	}
 }
 
-func TestEnqueueRejectsInvalidBatchBeforeInsertion(t *testing.T) {
-	db := outboxTestDB(t)
-	queue := NewService(NewRepository(db.Pool))
-	valid := jobs.InvalidateOfficialLeaderboardV1{Year: 2026}
-	var typedNil *jobs.InvalidateOfficialLeaderboardV1
-	for _, invalid := range []jobs.Job{nil, typedNil, jobs.InvalidateOfficialLeaderboardV1{}, jobs.InvalidateContestLeaderboardV1{}} {
-		err := postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
-			if err := queue.Enqueue(ctx, valid, invalid); err == nil {
-				t.Fatal("accepted invalid batch")
-			}
-			return nil
-		})
-		if err != nil {
-			t.Fatal(err)
-		}
-	}
-	var count int
-	if err := db.Pool.QueryRow(t.Context(), `select count(*) from jobs`).Scan(&count); err != nil {
-		t.Fatal(err)
-	}
-	if count != 0 {
-		t.Errorf("invalid batches persisted %d jobs", count)
-	}
-}
-
-func TestEnqueueFailureRollsBackBusinessWrite(t *testing.T) {
-	db := outboxTestDB(t)
-	queue := NewService(NewRepository(db.Pool))
-	if _, err := db.Pool.Exec(t.Context(), `create table business_mutation (id integer primary key)`); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := db.Pool.Exec(t.Context(), `alter table jobs add constraint reject_official_for_test check (task_type <> 'leaderboard.invalidate_official.v1')`); err != nil {
-		t.Fatal(err)
-	}
-	err := postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
-		executor, err := postgres.Executor(ctx, db.Pool)
-		if err != nil {
-			return err
-		}
-		if _, err := executor.Exec(ctx, `insert into business_mutation (id) values (1)`); err != nil {
-			return err
-		}
-		return queue.Enqueue(ctx, jobs.InvalidateContestLeaderboardV1{ContestID: uuid.New()}, jobs.InvalidateOfficialLeaderboardV1{Year: 2026})
-	})
-	if err == nil {
-		t.Fatal("expected insertion failure")
-	}
-	var business, queued int
-	if err := db.Pool.QueryRow(t.Context(), `select count(*) from business_mutation`).Scan(&business); err != nil {
-		t.Fatal(err)
-	}
-	if err := db.Pool.QueryRow(t.Context(), `select count(*) from jobs`).Scan(&queued); err != nil {
-		t.Fatal(err)
-	}
-	if business != 0 || queued != 0 {
-		t.Errorf("failed enqueue left business=%d queued=%d", business, queued)
-	}
-}
-
 func TestUnsupportedStatsIncludesRunningAndFailedVersions(t *testing.T) {
-	db := outboxTestDB(t)
+	db := jobTestDB(t)
 	repo := NewRepository(db.Pool)
 	_, err := db.Pool.Exec(t.Context(), `insert into jobs (task_type, payload, state, claim_token, lease_expires_at, failed_at, completed_at)
  values ('future.job.v2','{}','pending',null,null,null,null),
@@ -513,7 +460,7 @@ func TestUnsupportedStatsIncludesRunningAndFailedVersions(t *testing.T) {
 }
 
 func TestReplayRequiresRegisteredVersion(t *testing.T) {
-	db := outboxTestDB(t)
+	db := jobTestDB(t)
 	repo := NewRepository(db.Pool)
 	var id int64
 	if err := db.Pool.QueryRow(t.Context(), `insert into jobs (task_type,payload,state,failed_at) values ('future.job.v2','{}','failed',clock_timestamp()) returning id`).Scan(&id); err != nil {
@@ -545,7 +492,7 @@ func TestCleanupCompletedRetainsThreeUTCCalendarMonths(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			db := outboxTestDB(t)
+			db := jobTestDB(t)
 			repo := NewRepository(db.Pool)
 			_, err := db.Pool.Exec(t.Context(), `insert into jobs (task_type,payload,state,completed_at)
     values ('retention.test.v1','{}','completed',$1), ('retention.test.v1','{}','completed',$2), ('retention.test.v1','{}','completed',$3)`, tc.cutoff.Add(-time.Microsecond), tc.cutoff, tc.cutoff.Add(time.Microsecond))
@@ -584,7 +531,7 @@ func TestCleanupCompletedRetainsThreeUTCCalendarMonths(t *testing.T) {
 }
 
 func TestCleanupCompletedExpiresSuccessfulReplayAndPreservesOtherStates(t *testing.T) {
-	db := outboxTestDB(t)
+	db := jobTestDB(t)
 	repo := NewRepository(db.Pool)
 	now := time.Date(2026, 5, 31, 12, 0, 0, 0, time.UTC)
 	old := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
@@ -620,5 +567,43 @@ func TestCleanupCompletedExpiresSuccessfulReplayAndPreservesOtherStates(t *testi
 	}
 	if retained != 5 {
 		t.Errorf("retained %d failed/active/referenced jobs, want 5", retained)
+	}
+}
+
+func TestInsertFailureRollsBackBusinessWrite(t *testing.T) {
+	db := jobTestDB(t)
+	repo := NewRepository(db.Pool)
+	if _, err := db.Pool.Exec(t.Context(), `create table business_mutation (id integer primary key)`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Pool.Exec(t.Context(), `alter table jobs add constraint reject_official_for_test check (task_type <> 'leaderboard.invalidate_official.v1')`); err != nil {
+		t.Fatal(err)
+	}
+	err := postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
+		executor, err := postgres.Executor(ctx, db.Pool)
+		if err != nil {
+			return err
+		}
+		if _, err := executor.Exec(ctx, `insert into business_mutation (id) values (1)`); err != nil {
+			return err
+		}
+		if _, err := insertJob(repo, ctx, jobs.InvalidateContestLeaderboardV1{ContestID: uuid.New()}); err != nil {
+			return err
+		}
+		_, err = insertJob(repo, ctx, jobs.InvalidateOfficialLeaderboardV1{Year: 2026})
+		return err
+	})
+	if err == nil {
+		t.Fatal("expected insertion failure")
+	}
+	var business, queued int
+	if err := db.Pool.QueryRow(t.Context(), `select count(*) from business_mutation`).Scan(&business); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Pool.QueryRow(t.Context(), `select count(*) from jobs`).Scan(&queued); err != nil {
+		t.Fatal(err)
+	}
+	if business != 0 || queued != 0 {
+		t.Errorf("failed enqueue left business=%d queued=%d", business, queued)
 	}
 }

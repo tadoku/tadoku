@@ -13,9 +13,8 @@ import (
 )
 
 var (
-	ErrTransactionRequired = errors.New("postgres: active transaction required")
-	ErrNestedTransaction   = errors.New("postgres: nested transaction")
-	ErrWrongDatabase       = errors.New("postgres: transaction belongs to another database handle")
+	ErrNestedTransaction = errors.New("postgres: nested transaction")
+	ErrWrongDatabase     = errors.New("postgres: transaction belongs to another database handle")
 )
 
 type DBTX interface {
@@ -47,14 +46,6 @@ func Executor(ctx context.Context, db *pgxpool.Pool) (DBTX, error) {
 		return nil, pgx.ErrTxClosed
 	}
 	return s.tx, nil
-}
-
-// TransactionExecutor requires a live transaction for the same database handle.
-func TransactionExecutor(ctx context.Context, db *pgxpool.Pool) (DBTX, error) {
-	if _, ok := ctx.Value(scopeKey{}).(*scope); !ok {
-		return nil, ErrTransactionRequired
-	}
-	return Executor(ctx, db)
 }
 
 // All transaction work must finish in the callback. Nested scopes are rejected;

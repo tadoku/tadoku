@@ -40,8 +40,8 @@ environment variables. Development values are in
 - `API_LEADERBOARD_OUTBOX_ENABLED` (default `false`) runs the
   [legacy drain worker](#legacy-leaderboard-drain).
 - `API_LEADERBOARD_CACHE_PREFIX` (default empty) prefixes every leaderboard
-  cache key and scopes the legacy embedded worker's marker scan to that namespace. A
-  non-empty prefix must be unique for each database sharing a Valkey instance,
+  cache key, isolating cache entries by namespace. A non-empty prefix must be
+  unique for each database sharing a Valkey instance,
   may contain only lowercase letters, digits, hyphens and colons, and must end
   in a colon. Empty uses unprefixed keys.
 
@@ -239,9 +239,9 @@ Private health and metrics listeners default to `WORKER_PORT=8000` and
 the same database and cache prefix, with a unique prefix per database sharing
 Valkey.
 
-The worker reconciles leaderboard cache state at startup and invalidates caches
-through registered jobs. API cache reads use their existing cache and generation
-checks; cache misses and unavailable Valkey fall back to PostgreSQL. Worker Pod
+The worker invalidates leaderboard caches through registered jobs. API cache
+reads use their existing cache and generation checks; cache misses and
+unavailable Valkey fall back to PostgreSQL. Worker Pod
 readiness reports whether the execution loop can operate, independently of
 individual job success. Monitor queued and failed jobs because cached results
 can remain stale while invalidation work is outstanding.

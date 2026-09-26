@@ -83,7 +83,7 @@ The private `tadoku-worker` Deployment consumes `jobs` in the base
 `tadoku` database and uses unprefixed leaderboard cache keys. It has one
 replica, Recreate rollout, a separate image digest, and no Service or public
 route. Its CPU and memory limits are initial values; verify them with four
-active tasks and startup reconciliation before treating them as settled.
+active tasks before treating them as settled.
 
 After the old outbox has drained, the API's embedded worker is disabled. The
 new worker consumes `jobs` and invalidates leaderboard caches. Verify worker

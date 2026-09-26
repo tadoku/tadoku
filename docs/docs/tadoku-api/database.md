@@ -29,6 +29,19 @@ free number. sqlc reads the same directory as its schema.
 - After a migration is merged and deployed, base dependent work on the updated
   `main`.
 
+CI checks changed `.up.sql` files for known migration risk patterns and fails
+when one matches. The checker flags regular index builds, concurrent indexes
+inside transactions, expression defaults on added columns, column type changes,
+immediately validated foreign keys, `SET NOT NULL`, column drops, renames,
+direct unique constraint builds, `TRUNCATE`, `VACUUM FULL` and `CLUSTER`. It
+also rejects SQL that PostgreSQL's parser cannot read. It does not query a
+database or judge table size; a finding needs a migration change before CI can
+pass. Run it with
+`bazel run //tools/ci/migrationsafety/cmd -- services/tadoku-api/migrations/NNNN_name.up.sql`.
+The checker was inspired by
+[Safe / Not Safe](https://github.com/viggy28/safe-not-safe); Tadoku's Go rules
+are independently implemented with `pg_query_go`.
+
 ## Schema design
 
 - Do not create application-defined database functions, stored procedures or

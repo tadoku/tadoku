@@ -1,0 +1,14 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "migrationsafety",
+    srcs = ["check.go"],
+    importpath = "github.com/tadoku/tadoku/tools/ci/migrationsafety",
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "migrationsafety_test",
+    srcs = ["check_test.go"],
+    embed = [":migrationsafety"],
+)

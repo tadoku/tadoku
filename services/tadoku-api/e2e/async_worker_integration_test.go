@@ -14,9 +14,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/tadoku/tadoku/services/tadoku-api/app/worker"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
-	"github.com/tadoku/tadoku/services/tadoku-api/storage/postgres/asyncoutbox"
 )
 
 func TestAPIWriteStandaloneWorkerLeaderboardRead(t *testing.T) {
@@ -60,17 +60,27 @@ func TestAPIWriteStandaloneWorkerLeaderboardRead(t *testing.T) {
 	}
 
 	workerLeaderboard := leaderboard.NewService(leaderboard.NewRepository(api.db.Pool), leaderboardValkey.client, time.Second, "")
-	runner := worker.NewRunner(asyncoutbox.NewRepository(api.db.Pool), worker.NewApplication(workerLeaderboard), workerLeaderboard, logger, worker.NewMetrics(prometheus.NewRegistry()), 2*time.Second)
+	application, err := worker.NewApplication(jobqueue.NewService(jobqueue.NewRepository(api.db.Pool)), workerLeaderboard, worker.Config{
+		Concurrency:     4,
+		ShutdownTimeout: 2 * time.Second,
+		Logger:          logger,
+		Metrics:         worker.NewMetrics(prometheus.NewRegistry()),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
 	workerContext, cancelWorker := context.WithCancel(context.Background())
-	workerDone := make(chan struct{})
+	workerDone := make(chan error, 1)
 	go func() {
-		defer close(workerDone)
-		runner.Run(workerContext)
+		workerDone <- application.Run(workerContext)
 	}()
 	t.Cleanup(func() {
 		cancelWorker()
 		select {
-		case <-workerDone:
+		case err := <-workerDone:
+			if err != nil {
+				t.Errorf("standalone worker shutdown: %v", err)
+			}
 		case <-time.After(10 * time.Second):
 			t.Error("standalone worker did not stop")
 		}

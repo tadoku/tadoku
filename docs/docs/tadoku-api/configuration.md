@@ -41,10 +41,9 @@ environment variables. Development values are in
   [leaderboard outbox worker](#leaderboard-outbox-worker).
 - `API_LEADERBOARD_CACHE_PREFIX` (default empty) prefixes every leaderboard
   cache key and scopes the legacy embedded worker's marker scan to that namespace. A
-  non-empty prefix requires `API_LEADERBOARD_OUTBOX_ENABLED`, must be unique for
-  each database sharing a Valkey instance, may contain only lowercase letters,
-  digits, hyphens and colons, and must end in a colon. Empty uses unprefixed
-  keys.
+  non-empty prefix must be unique for each database sharing a Valkey instance,
+  may contain only lowercase letters, digits, hyphens and colons, and must end
+  in a colon. Empty uses unprefixed keys.
 
 `services/tadoku-api/infra/valkey/README.md` documents which URL options are
 accepted and how commands, timeouts, cancellation and close behave.
@@ -232,6 +231,11 @@ When `API_LEADERBOARD_OUTBOX_ENABLED` is set:
    succeeds. Failed batches stay pending and are retried. It logs
    `leaderboard outbox batch processed` after each non-empty committed batch
    and `leaderboard outbox ready` once the initial drain completes.
+
+Log and registration writes publish the legacy leaderboard invalidation and a
+typed `jobs` task in the same transaction. The embedded worker still
+consumes only `leaderboard_outbox`; the separate worker consumes only
+`jobs`.
 
 A cache miss rebuilds from PostgreSQL only if its generation has not changed,
 and cached reads recheck that generation before returning. The worker has

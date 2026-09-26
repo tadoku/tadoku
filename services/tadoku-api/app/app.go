@@ -7,6 +7,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/features/authz"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/contests"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/featureflags"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/languages"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/logs"
@@ -18,6 +19,7 @@ import (
 )
 
 type Application struct {
+	jobqueue      *jobqueue.Service
 	announcements *announcements.Service
 	audit         *audit.Service
 	authorization *authz.Service
@@ -35,6 +37,7 @@ type Application struct {
 }
 
 type Dependencies struct {
+	JobQueue      *jobqueue.Service
 	Announcements *announcements.Service
 	Audit         *audit.Service
 	Authorization *authz.Service
@@ -53,6 +56,7 @@ type Dependencies struct {
 
 func New(deps Dependencies) *Application {
 	return &Application{
+		jobqueue:      deps.JobQueue,
 		announcements: deps.Announcements,
 		audit:         deps.Audit,
 		authorization: deps.Authorization,

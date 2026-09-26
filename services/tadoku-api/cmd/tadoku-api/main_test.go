@@ -432,6 +432,18 @@ func TestLoadConfigUsesValidatedDefaults(t *testing.T) {
 		t.Errorf("enable leaderboard outbox worker: enabled=%t error=%v", enabledCfg.LeaderboardOutboxEnabled, err)
 	}
 	t.Setenv("API_LEADERBOARD_OUTBOX_ENABLED", "false")
+	t.Setenv("API_LEADERBOARD_CACHE_PREFIX", "branch:")
+	prefixedCfg, err := loadConfig()
+	if err != nil || prefixedCfg.LeaderboardOutboxEnabled || prefixedCfg.LeaderboardCachePrefix != "branch:" {
+		t.Errorf("cache prefix without embedded worker: prefix=%q enabled=%t error=%v", prefixedCfg.LeaderboardCachePrefix, prefixedCfg.LeaderboardOutboxEnabled, err)
+	}
+	for _, prefix := range []string{"branch", "Branch:"} {
+		t.Setenv("API_LEADERBOARD_CACHE_PREFIX", prefix)
+		if _, err := loadConfig(); err == nil || !strings.Contains(err.Error(), "LeaderboardCachePrefix") {
+			t.Errorf("invalid cache prefix %q: error=%v", prefix, err)
+		}
+	}
+	t.Setenv("API_LEADERBOARD_CACHE_PREFIX", "")
 	if cfg.JWKS != "http://jwks.test" {
 		t.Errorf("JWKS=%q", cfg.JWKS)
 	}

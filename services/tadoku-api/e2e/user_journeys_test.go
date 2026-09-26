@@ -2,6 +2,7 @@ package e2e_test
 
 import (
 	"bytes"
+	"context"
 	"log/slog"
 	"math/rand"
 	"net/http"
@@ -292,9 +293,22 @@ func TestLogCreateAtomicFailureJourney(t *testing.T) {
 	uuid.SetRand(rand.New(rand.NewSource(1)))
 	defer uuid.SetRand(nil)
 
-	runJourneyWithHandler(t, api, scoringEnabledHandler, "LogCreateAtomicFailure", []step{
+	runJourneyWithSetup(t, api, scoringEnabledHandler, "LogCreateAtomicFailure", func(t *testing.T) {
+		_, err := api.db.Pool.Exec(t.Context(), `alter table jobs add constraint reject_test_enqueue check (false)`)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() {
+			cleanupCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			if _, err := api.db.Pool.Exec(cleanupCtx, `alter table jobs drop constraint reject_test_enqueue`); err != nil {
+				t.Error(err)
+			}
+		})
+	}, []step{
 		{request: "create_duplicate_registration", as: user, want: http.StatusInternalServerError, others: cast{guest: http.StatusUnauthorized, banned: http.StatusForbidden}},
 		{request: "failed_log_missing", as: user, want: http.StatusNotFound},
+		{request: "async_enqueue_failure", as: user, want: http.StatusInternalServerError},
 		{verify: "rollback_keeps_user_sync"},
 	})
 }

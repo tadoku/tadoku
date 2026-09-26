@@ -25,6 +25,7 @@ import (
 	featureauthz "github.com/tadoku/tadoku/services/tadoku-api/features/authz"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/contests"
 	featureflagsservice "github.com/tadoku/tadoku/services/tadoku-api/features/featureflags"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/languages"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/logs"
@@ -234,6 +235,7 @@ func newTestRouterWithLeaderboardService(
 	auditService := featureaudit.NewService(featureaudit.NewRepository(auditPool))
 	announcementsRepository := announcements.NewAnnouncementsRepository(pool)
 	contestsRepository := contests.NewContestsRepository(pool)
+	jobQueue := jobqueue.NewService(jobqueue.NewRepository(pool))
 	languagesRepository := languages.NewLanguagesRepository(pool)
 	logsRepository := logs.NewLogsRepository(pool)
 	pagesRepository := pages.NewPagesRepository(pool)
@@ -253,6 +255,7 @@ func newTestRouterWithLeaderboardService(
 	scoringObserver := observability.NewScoringObserver(registry, logger, scoringEngineEnabled)
 	scoringService := scoring.NewService(scoringRepository, scoringEngineEnabled, scoringObserver)
 	application := app.New(app.Dependencies{
+		JobQueue:      jobQueue,
 		Announcements: announcementsService,
 		Audit:         auditService,
 		Authorization: authzService,

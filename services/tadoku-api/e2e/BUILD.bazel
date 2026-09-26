@@ -103,6 +103,7 @@ go_test(
         "//services/tadoku-api/features/authz",
         "//services/tadoku-api/features/contests",
         "//services/tadoku-api/features/featureflags",
+        "//services/tadoku-api/features/jobqueue",
         "//services/tadoku-api/features/languages",
         "//services/tadoku-api/features/leaderboard",
         "//services/tadoku-api/features/logs",

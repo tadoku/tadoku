@@ -34,6 +34,7 @@ import (
 	featureauthz "github.com/tadoku/tadoku/services/tadoku-api/features/authz"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/contests"
 	featureflagsservice "github.com/tadoku/tadoku/services/tadoku-api/features/featureflags"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/languages"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/logs"
@@ -105,9 +106,6 @@ func loadConfig() (config, error) {
 			return !((r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '-' || r == ':')
 		}) >= 0 {
 			return config{}, fmt.Errorf("validate config: LeaderboardCachePrefix must contain only lowercase letters, digits, hyphens and colons, and end in a colon")
-		}
-		if !cfg.LeaderboardOutboxEnabled {
-			return config{}, fmt.Errorf("validate config: LeaderboardCachePrefix requires LeaderboardOutboxEnabled")
 		}
 	}
 	if cfg.FliptEnabled {
@@ -344,6 +342,7 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	auditService := featureaudit.NewService(featureaudit.NewRepository(pool))
 	announcementsRepository := announcements.NewAnnouncementsRepository(pool)
 	contestsRepository := contests.NewContestsRepository(pool)
+	jobQueue := jobqueue.NewService(jobqueue.NewRepository(pool))
 	languagesRepository := languages.NewLanguagesRepository(pool)
 	leaderboardRepository := leaderboard.NewRepository(pool)
 	logsRepository := logs.NewLogsRepository(pool)
@@ -368,6 +367,7 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	scoringObserver := observability.NewScoringObserver(metrics, logger, cfg.ScoringEngineEnabled)
 	scoringService := scoring.NewService(scoringRepository, cfg.ScoringEngineEnabled, scoringObserver)
 	api := app.New(app.Dependencies{
+		JobQueue:      jobQueue,
 		Announcements: announcementsService,
 		Audit:         auditService,
 		Authorization: authzService,

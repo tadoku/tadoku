@@ -10,6 +10,7 @@ import (
 
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
 
 type Service struct{ repository *Repository }
@@ -68,8 +69,8 @@ func (s *Service) Replay(ctx context.Context, failedID int64, actor, reason stri
 	return s.repository.Replay(ctx, failedID, actor, reason, supported)
 }
 
-func (s *Service) CleanupCompleted(ctx context.Context, before time.Time, limit int) (int64, error) {
-	return s.repository.CleanupCompleted(ctx, before, limit)
+func (s *Service) CleanupCompleted(ctx context.Context, limit int) (int64, error) {
+	return s.repository.CleanupCompleted(ctx, timex.Now(), limit)
 }
 
 func (s *Service) Outstanding(ctx context.Context, typ jobs.Type) (int64, error) {

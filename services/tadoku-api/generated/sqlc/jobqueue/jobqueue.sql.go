@@ -108,8 +108,8 @@ func (q *Queries) Claim(ctx context.Context, arg ClaimParams) ([]ClaimRow, error
 const cleanupCompleted = `-- name: CleanupCompleted :execrows
 with removable as (
   select parent.id from async_outbox as parent
-  where parent.state = 'completed' and parent.completed_at < $1::timestamptz
-    and parent.replay_of_id is null
+  where parent.state = 'completed'
+    and parent.completed_at < (($1::timestamptz at time zone 'UTC') - interval '3 months') at time zone 'UTC'
     and not exists (select 1 from async_outbox child where child.replay_of_id = parent.id)
   order by parent.completed_at, parent.id
   limit $2::integer
@@ -118,12 +118,12 @@ delete from async_outbox as task using removable where task.id = removable.id
 `
 
 type CleanupCompletedParams struct {
-	Before    pgtype.Timestamptz
+	Now       pgtype.Timestamptz
 	BatchSize int32
 }
 
 func (q *Queries) CleanupCompleted(ctx context.Context, arg CleanupCompletedParams) (int64, error) {
-	result, err := q.db.Exec(ctx, cleanupCompleted, arg.Before, arg.BatchSize)
+	result, err := q.db.Exec(ctx, cleanupCompleted, arg.Now, arg.BatchSize)
 	if err != nil {
 		return 0, err
 	}

@@ -180,8 +180,8 @@ func (r *Repository) Replay(ctx context.Context, failedID int64, actor, reason s
 	return id, nil
 }
 
-func (r *Repository) CleanupCompleted(ctx context.Context, before time.Time, limit int) (int64, error) {
-	if before.IsZero() || limit < 1 || limit > 1000 {
+func (r *Repository) CleanupCompleted(ctx context.Context, now time.Time, limit int) (int64, error) {
+	if now.IsZero() || limit < 1 || limit > 1000 {
 		return 0, errors.New("invalid outbox cleanup parameters")
 	}
 	executor, err := postgres.Executor(ctx, r.db)
@@ -189,7 +189,7 @@ func (r *Repository) CleanupCompleted(ctx context.Context, before time.Time, lim
 		return 0, err
 	}
 	return queries.New(executor).CleanupCompleted(ctx, queries.CleanupCompletedParams{
-		Before:    timestamp(before),
+		Now:       timestamp(now),
 		BatchSize: int32(limit),
 	})
 }

@@ -374,7 +374,7 @@ func TestRetryReplayAndRetention(t *testing.T) {
 	if _, err := db.Pool.Exec(t.Context(), `insert into async_outbox (task_type,payload,state,completed_at,created_at) values ('leaderboard.invalidate_official.v1','{}','completed',$1,$1)`, outboxTestTime); err != nil {
 		t.Fatal(err)
 	}
-	deleted, err := repo.CleanupCompleted(t.Context(), outboxTestTime.Add(3*time.Minute), 10)
+	deleted, err := repo.CleanupCompleted(t.Context(), outboxTestTime.AddDate(0, 3, 0).Add(time.Minute), 10)
 	if err != nil || deleted != 1 {
 		t.Errorf("cleanup deleted = %d, %v; want only unlinked completion", deleted, err)
 	}
@@ -529,5 +529,96 @@ func TestReplayRequiresRegisteredVersion(t *testing.T) {
 	claims, err := repo.Claim(t.Context(), "future.job.v2", 1, time.Minute, 2)
 	if err != nil || len(claims) != 1 || claims[0].ID != replayID {
 		t.Errorf("generic replay claim = %+v, %v", claims, err)
+	}
+}
+
+func TestCleanupCompletedRetainsThreeUTCCalendarMonths(t *testing.T) {
+	cases := []struct {
+		name   string
+		now    time.Time
+		cutoff time.Time
+	}{
+		{"month_end", time.Date(2026, 5, 31, 12, 30, 0, 0, time.UTC), time.Date(2026, 2, 28, 12, 30, 0, 0, time.UTC)},
+		{"leap_year", time.Date(2024, 5, 31, 12, 30, 0, 0, time.UTC), time.Date(2024, 2, 29, 12, 30, 0, 0, time.UTC)},
+		{"year_boundary", time.Date(2026, 1, 31, 12, 30, 0, 0, time.UTC), time.Date(2025, 10, 31, 12, 30, 0, 0, time.UTC)},
+		{"utc_instant", time.Date(2026, 6, 1, 1, 30, 0, 0, time.FixedZone("UTC+13", 13*60*60)), time.Date(2026, 2, 28, 12, 30, 0, 0, time.UTC)},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			db := outboxTestDB(t)
+			repo := NewRepository(db.Pool)
+			_, err := db.Pool.Exec(t.Context(), `insert into async_outbox (task_type,payload,state,completed_at)
+    values ('retention.test.v1','{}','completed',$1), ('retention.test.v1','{}','completed',$2), ('retention.test.v1','{}','completed',$3)`, tc.cutoff.Add(-time.Microsecond), tc.cutoff, tc.cutoff.Add(time.Microsecond))
+			if err != nil {
+				t.Fatal(err)
+			}
+			err = postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
+				executor, err := postgres.Executor(ctx, db.Pool)
+				if err != nil {
+					return err
+				}
+				if _, err := executor.Exec(ctx, `set local time zone 'Pacific/Auckland'`); err != nil {
+					return err
+				}
+				deleted, err := repo.CleanupCompleted(ctx, tc.now, 10)
+				if err != nil {
+					return err
+				}
+				if deleted != 1 {
+					t.Errorf("deleted %d completed jobs, want only the row strictly before %s", deleted, tc.cutoff)
+				}
+				return nil
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			var retained int
+			if err := db.Pool.QueryRow(t.Context(), `select count(*) from async_outbox where completed_at >= $1`, tc.cutoff).Scan(&retained); err != nil {
+				t.Fatal(err)
+			}
+			if retained != 2 {
+				t.Errorf("retained %d boundary/newer completions, want 2", retained)
+			}
+		})
+	}
+}
+
+func TestCleanupCompletedExpiresSuccessfulReplayAndPreservesOtherStates(t *testing.T) {
+	db := outboxTestDB(t)
+	repo := NewRepository(db.Pool)
+	now := time.Date(2026, 5, 31, 12, 0, 0, 0, time.UTC)
+	old := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
+	_, err := db.Pool.Exec(t.Context(), `insert into async_outbox (id,task_type,payload,state,created_at,next_attempt_at,failed_at,claim_token,lease_expires_at,completed_at,replay_of_id,replay_actor,replay_reason) values
+  (1,'retention.test.v1','{}','failed',$1,$1,$1,null,null,null,null,null,null),
+  (2,'retention.test.v1','{}','completed',$1,$1,null,null,null,$1,1,'operator','repaired'),
+  (3,'retention.test.v1','{}','pending',$1,$1,null,null,null,null,null,null,null),
+  (4,'retention.test.v1','{}','running',$1,$1,null,gen_random_uuid(),$1,null,null,null,null),
+  (5,'retention.test.v1','{}','completed',$1,$1,null,null,null,$1,null,null,null),
+  (6,'retention.test.v1','{}','completed',$1,$1,null,null,null,$1,null,null,null),
+  (7,'retention.test.v1','{}','pending',$1,$1,null,null,null,null,6,'operator','linked')`, old)
+	if err != nil {
+		t.Fatal(err)
+	}
+	deleted, err := repo.CleanupCompleted(t.Context(), now, 1)
+	if err != nil || deleted != 1 {
+		t.Fatalf("bounded cleanup = %d, %v", deleted, err)
+	}
+	var replayRetained int
+	if err := db.Pool.QueryRow(t.Context(), `select count(*) from async_outbox where id=2`).Scan(&replayRetained); err != nil {
+		t.Fatal(err)
+	}
+	if replayRetained != 0 {
+		t.Errorf("expired successful replay was retained")
+	}
+	deleted, err = repo.CleanupCompleted(t.Context(), now, 10)
+	if err != nil || deleted != 1 {
+		t.Fatalf("remaining cleanup = %d, %v", deleted, err)
+	}
+	var retained int
+	if err := db.Pool.QueryRow(t.Context(), `select count(*) from async_outbox where id in (1,3,4,6,7)`).Scan(&retained); err != nil {
+		t.Fatal(err)
+	}
+	if retained != 5 {
+		t.Errorf("retained %d failed/active/referenced jobs, want 5", retained)
 	}
 }

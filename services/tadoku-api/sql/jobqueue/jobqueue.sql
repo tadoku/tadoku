@@ -108,8 +108,8 @@ returning id;
 -- name: CleanupCompleted :execrows
 with removable as (
   select parent.id from async_outbox as parent
-  where parent.state = 'completed' and parent.completed_at < sqlc.arg('before')::timestamptz
-    and parent.replay_of_id is null
+  where parent.state = 'completed'
+    and parent.completed_at < ((sqlc.arg('now')::timestamptz at time zone 'UTC') - interval '3 months') at time zone 'UTC'
     and not exists (select 1 from async_outbox child where child.replay_of_id = parent.id)
   order by parent.completed_at, parent.id
   limit sqlc.arg('batch_size')::integer

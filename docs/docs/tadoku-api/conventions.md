@@ -12,6 +12,10 @@ repository, or a shared domain package.
 These rules apply to every operation. The layers themselves are summarized in
 [Code ownership](./index.md#code-ownership).
 
+Apply [Module design](../architecture/module-design.md) when shaping these
+boundaries: a feature operation should hide its own rules and sequencing while
+the application retains actor authorization and cross-feature coordination.
+
 ## Applications and features
 
 - Group feature operations by the business data they own, not by the page or
@@ -123,8 +127,9 @@ The following rules decide where each check belongs.
   `features/<feature>/<feature>_repository.go`. They reach PostgreSQL through
   `postgres.Executor` (`services/tadoku-api/infra/postgres/`) and the feature's generated sqlc
   package, and convert between sqlc rows and feature domain types internally.
-- The leaderboard feature issues its Valkey cache commands directly with the
-  raw client from `services/tadoku-api/infra/valkey/`; no Store type exists yet.
+- The leaderboard feature's `Store` in
+  `services/tadoku-api/features/leaderboard/leaderboard_store.go` encapsulates
+  Valkey cache commands. Its service owns cache selection and PostgreSQL fallback.
 - Keep each repository method to one SQL statement. A coherent join or CTE
   counts as one statement and is appropriate when the data needs one database
   snapshot. Compose independent repository reads and writes in the feature

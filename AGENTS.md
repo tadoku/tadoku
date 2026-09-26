@@ -18,6 +18,12 @@ files in an area, read its page; those rules are as binding as this file.
 
 ## Rules for every change
 
+- **Prefer deep modules over shallow modules.** Give callers a small, coherent
+  interface that hides meaningful complexity. Keep a responsibility's rules
+  and sequencing with its owner instead of making callers assemble them from
+  pass-through helpers. Judge depth by what callers must know, not file or
+  function length. Preserve real authorization, transaction and provider
+  boundaries; see [Module design](docs/docs/architecture/module-design.md).
 - **Make impossible states impossible to represent.** Model data so only valid
   combinations can be constructed: distinct types for different operations and
   explicit variants with required payloads for mutually exclusive states, not
@@ -63,6 +69,7 @@ files in an area, read its page; those rules are as binding as this file.
 
 | Area | Read first |
 | --- | --- |
+| A module boundary, public interface or shared abstraction | `docs/docs/architecture/module-design.md` |
 | Tadoku API code, the first time | `docs/docs/tadoku-api/index.md` |
 | An application operation, feature, repository or domain package | `docs/docs/tadoku-api/conventions.md` |
 | `services/tadoku-api/spec/openapi.yaml` or a request or response shape | `docs/docs/tadoku-api/contract.md` |

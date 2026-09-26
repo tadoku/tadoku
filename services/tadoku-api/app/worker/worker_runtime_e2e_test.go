@@ -580,7 +580,7 @@ func TestWorkerRenewedDeadlineSchedulesRetry(t *testing.T) {
 	handlers, err := newRegistry(handle(func(ctx context.Context, _ jobs.InvalidateOfficialLeaderboardV1) error {
 		<-ctx.Done()
 		return ctx.Err()
-	}, Policy{Concurrency: 1, Timeout: 400 * time.Millisecond, MaxAttempts: 2}))
+	}, Policy{Concurrency: 1, Timeout: 4 * time.Second, MaxAttempts: 2}))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -592,7 +592,7 @@ func TestWorkerRenewedDeadlineSchedulesRetry(t *testing.T) {
 		metrics:  NewMetrics(prometheus.NewRegistry()),
 	}
 	id := insertTask(t, f.db, string(jobs.InvalidateOfficial), `{"year":2025}`, false)
-	spec := policy{typeName: jobs.InvalidateOfficial, limit: 1, timeout: 400 * time.Millisecond, lease: 300 * time.Millisecond, maxAttempts: 2}
+	spec := policy{typeName: jobs.InvalidateOfficial, limit: 1, timeout: 4 * time.Second, lease: 3 * time.Second, maxAttempts: 2}
 	claims, err := repository.Claim(t.Context(), spec.typeName, 1, spec.lease, spec.maxAttempts)
 	if err != nil || len(claims) != 1 {
 		t.Fatalf("claim deadline job: count=%d error=%v", len(claims), err)

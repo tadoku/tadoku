@@ -17,7 +17,8 @@ documented here.
 
 | Component | Role | Defined in |
 | --- | --- | --- |
-| Tadoku API | The only backend. Serves every public HTTP operation and runs the leaderboard outbox worker. | `services/tadoku-api/`, `k8s/dev/base/services/tadoku-api.yaml` |
+| Tadoku API | Serves every public HTTP operation and publishes typed jobs in the business transaction. | `services/tadoku-api/`, `k8s/dev/base/services/tadoku-api.yaml` |
+| Tadoku worker | Executes registered jobs, composes feature operations and invalidates leaderboard caches. | `services/tadoku-api/cmd/tadoku-worker/`, `k8s/dev/base/services/tadoku-worker.yaml` |
 | webv2 | Main site: logging, contests, leaderboards and content | `frontend/apps/webv2/`, `k8s/dev/base/frontend-webv2/` |
 | auth | Account portal built on Kratos self-service flows | `frontend/apps/auth/`, `k8s/dev/base/frontend-auth/` |
 | admin | Administration, moderation and CMS | `frontend/apps/admin/`, `k8s/dev/base/frontend-admin/` |
@@ -62,7 +63,7 @@ browser → ingress-nginx → Envoy → webv2 / auth / admin
   `services/tadoku-api/migrations/` and run as Argo CD sync hooks before the API
   starts.
 - PostgreSQL is the source of truth for leaderboards. Valkey holds sorted-set
-  caches that the leaderboard outbox worker keeps current; see
+  caches that the separate Tadoku worker keeps current; see
   [ADR 001](../adr/001-leaderboard.md).
 - Kratos and Keto keep their own databases in the same PostgreSQL server.
 

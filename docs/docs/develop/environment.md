@@ -280,16 +280,22 @@ consistent data across them.
 
 ### Leaderboards on shared Valkey
 
-Each branch API runs its own leaderboard outbox worker against its branch
-database. `.dev/tadoku-api.yaml` sets `API_LEADERBOARD_CACHE_PREFIX` to
-`dev:${DEV_ROUTE}:`, which keeps every branch cache key and startup scan
-separate from the base and from other branches. The base API uses unprefixed
-keys.
+Each branch API is paired with a private `tadoku-worker` against the same
+branch database. The API writes returned typed jobs to that database's
+`jobs`; the worker claims only that database's work. Both workloads use
+`dev:${DEV_ROUTE}:` as their leaderboard cache prefix, keeping cache keys
+separate from the base and other branches.
+The base pair uses unprefixed keys.
 
-- Keep the prefix unique per route when you change overlay routing.
-- Tadoku API rejects a cache prefix unless the outbox worker is enabled.
-- Do not disable a branch worker while its cache reads stay active: its
-  leaderboards go stale and its outbox stays pending.
+- Keep the prefix unique per route when changing overlay routing.
+- Branch configuration disables the embedded legacy worker. The separate worker
+  invalidates leaderboard caches after processing queued jobs.
+- Stopping a worker leaves recoverable queued work; cached results can remain
+  stale until invalidation resumes. Restarting the paired worker resumes
+  processing queued jobs.
+- Job producers and consumers share versioned contracts. Follow
+  [Jobs and worker](../tadoku-api/jobs.md#migrate-v1-to-v2) before changing a
+  payload; pairing workloads does not make incompatible versions safe.
 
 ## Clean up
 

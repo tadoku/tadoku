@@ -21,12 +21,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	commonroles "github.com/tadoku/tadoku/services/common/authz/roles"
-	fliptclient "github.com/tadoku/tadoku/services/common/client/flipt"
-	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
-	kratosclient "github.com/tadoku/tadoku/services/common/client/kratos"
 	"github.com/tadoku/tadoku/services/common/client/s2s"
-	"github.com/tadoku/tadoku/services/common/featureflags"
 	"github.com/tadoku/tadoku/services/common/postgresconfig"
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/announcements"
@@ -42,10 +37,14 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/features/posts"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/profile"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/scoring"
+	fliptclient "github.com/tadoku/tadoku/services/tadoku-api/infra/flipt"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/fliptmanagement"
+	ketoclient "github.com/tadoku/tadoku/services/tadoku-api/infra/keto"
+	kratosclient "github.com/tadoku/tadoku/services/tadoku-api/infra/kratos"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/observability"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 	valkeyinfra "github.com/tadoku/tadoku/services/tadoku-api/infra/valkey"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/featureflags"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
 	transporthttp "github.com/tadoku/tadoku/services/tadoku-api/transport/http"
 	valkeygo "github.com/valkey-io/valkey-go"
@@ -331,12 +330,12 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	}
 	ketoReader := ketoclient.NewReadClient(cfg.KetoReadURL, ketoclient.WithHTTPClient(ketoHTTP))
 	permissionChecker := permissions.NewKetoChecker(ketoReader)
-	roleService := commonroles.NewKetoService(ketoReader, "app", "tadoku")
+	roleService := permissions.NewKetoService(ketoReader, "app", "tadoku")
 	authzService := featureauthz.NewService(
 		permissionChecker,
 		kratosIdentities,
 		roleService,
-		commonroles.NewKetoManager(keto, "app", "tadoku"),
+		permissions.NewKetoManager(keto, "app", "tadoku"),
 		nil,
 	)
 	auditService := featureaudit.NewService(featureaudit.NewRepository(pool))

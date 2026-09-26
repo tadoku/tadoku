@@ -36,7 +36,7 @@ Example tuples are `app:tadoku#admins@<identity-id>` and
 
 The namespace configuration (OPL) is `k8s/dev/base/keto/namespaces.keto.ts` for
 the development environment and `infra/dev/ory/namespaces.keto.ts` for backend
-test fixtures. Tadoku API calls Keto through `services/common/client/keto/`:
+test fixtures. Tadoku API calls Keto through `services/tadoku-api/infra/keto/`:
 `NewReadClient` for checks and `NewClient` for read/write access. Keto's `403`
 answer to a check means "denied", not an error.
 
@@ -83,8 +83,9 @@ HTTP middleware enforces administrator access. They call the
 Feature services may inspect permissions only to expand behavior inside an
 operation the application has already authorized, and must not repeat the ban
 gate. Facts about other users, such as whether a target user is an administrator,
-come from `services/common/authz/roles/` (`KetoService` for reads, `KetoManager`
-for writes). Target facts are never actor authorization.
+come from `services/tadoku-api/internal/permissions/` (`KetoService` reads
+`TargetRoles`; `KetoManager` writes bans). Target facts are never actor
+authorization.
 
 ## Oathkeeper administrator callback
 

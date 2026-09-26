@@ -2,11 +2,16 @@ load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "permissions",
-    srcs = ["checker.go"],
+    srcs = [
+        "checker.go",
+        "target_role_manager.go",
+        "target_role_values.go",
+        "target_roles.go",
+    ],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/internal/permissions",
     visibility = ["//services/tadoku-api:internal_consumers"],
     deps = [
-        "//services/common/client/keto",
+        "//services/tadoku-api/infra/keto",
         "//services/tadoku-api/internal/errx",
         "//services/tadoku-api/internal/identity",
     ],
@@ -15,7 +20,10 @@ go_library(
 go_test(
     name = "permissions_test",
     size = "medium",
-    srcs = ["checker_test.go"],
+    srcs = [
+        "checker_test.go",
+        "target_roles_test.go",
+    ],
     embed = [":permissions"],
     tags = [
         "no-cache",
@@ -27,9 +35,11 @@ go_test(
         "@platforms//os:linux",
     ],
     deps = [
-        "//services/common/client/keto",
+        "//services/tadoku-api/infra/keto",
         "//services/tadoku-api/internal/errx",
         "//services/tadoku-api/internal/identity",
         "//services/tadoku-api/internal/testketo",
+        "@com_github_stretchr_testify//assert",
+        "@com_github_stretchr_testify//require",
     ],
 )

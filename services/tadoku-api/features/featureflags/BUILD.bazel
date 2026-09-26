@@ -9,9 +9,9 @@ go_library(
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/features/featureflags",
     visibility = ["//services/tadoku-api:feature_consumers"],
     deps = [
-        "//services/common/featureflags",
         "//services/tadoku-api/infra/fliptmanagement",
         "//services/tadoku-api/internal/errx",
+        "//services/tadoku-api/internal/featureflags",
         "@com_github_google_uuid//:uuid",
     ],
 )

@@ -10,20 +10,20 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/sahilm/fuzzy"
-	commonroles "github.com/tadoku/tadoku/services/common/authz/roles"
-	kratosclient "github.com/tadoku/tadoku/services/common/client/kratos"
+	kratosclient "github.com/tadoku/tadoku/services/tadoku-api/infra/kratos"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
 )
 
 type Service struct {
 	repository *Repository
 	cache      *UserCache
-	roles      *commonroles.KetoService
+	roles      *permissions.KetoService
 	identities *kratosclient.Client
 }
 
-func NewService(repository *Repository, cache *UserCache, roles *commonroles.KetoService, identities *kratosclient.Client) *Service {
+func NewService(repository *Repository, cache *UserCache, roles *permissions.KetoService, identities *kratosclient.Client) *Service {
 	return &Service{
 		repository: repository,
 		cache:      cache,
@@ -75,7 +75,7 @@ func (s *Service) ListUsers(ctx context.Context, pageSize, page int, query strin
 	for _, user := range users {
 		subjectIDs = append(subjectIDs, user.ID)
 	}
-	claims, err := s.roles.ClaimsForSubjects(ctx, subjectIDs)
+	claims, err := s.roles.RolesForSubjects(ctx, subjectIDs)
 	if err != nil {
 		return nil, errx.NewUnavailableError("list user roles", err)
 	}

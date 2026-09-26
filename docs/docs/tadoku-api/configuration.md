@@ -137,7 +137,7 @@ responses. In addition:
 ## Raw Keto relationship primitive
 
 - The composition root retains a concrete `*ketoclient.Client` from
-  `services/common/client/keto` on `application.keto`. It feeds the concrete
+  `services/tadoku-api/infra/keto` on `application.keto`. It feeds the concrete
   relationship mutation services.
 - A bounded `NewReadClient` instance, with no write API, feeds shared role
   facts, request ban checks and actor administrator checks.
@@ -185,9 +185,9 @@ err = client.DeleteRelation(ctx, namespace, object, relation, group)
 ## Raw Kratos primitive
 
 - The composition root keeps a concrete `*kratosapi.APIClient` on
-  `application.kratos` and passes it into concrete consumers for identity
-  reads.
-- `services/common/client/kratos.NewAPIClient(baseURL, kratos.WithHTTPClient(httpClient))`
+  `application.kratos` for startup integration checks. Identity features use
+  the `services/tadoku-api/infra/kratos` client for lookups and cursor pagination.
+- `services/tadoku-api/infra/kratos.NewAPIClient(baseURL, kratos.WithHTTPClient(httpClient))`
   constructs the pinned `github.com/ory/kratos-client-go` v0.11.1 SDK. It
   neither validates deployment configuration nor owns the supplied HTTP client.
   Tadoku API validates the configuration and supplies a client with a total
@@ -251,7 +251,7 @@ zero.
   `tadoku_api_proxy_request_duration_seconds`, and its `route`, `upstream`,
   `mode` and `status` labels. Every route reports mode `native` and an empty
   upstream.
-- The common feature-flag metrics report bounded provider initialization,
+- The API feature-flag metrics report bounded provider initialization,
   refresh, error and evaluation labels, without user identities.
 
 ## Shutdown

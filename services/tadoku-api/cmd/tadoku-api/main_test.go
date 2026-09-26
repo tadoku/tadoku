@@ -19,8 +19,8 @@ import (
 	"testing"
 	"time"
 
-	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
 	"github.com/tadoku/tadoku/services/common/postgresconfig"
+	ketoclient "github.com/tadoku/tadoku/services/tadoku-api/infra/keto"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testvalkey"
 	valkeygo "github.com/valkey-io/valkey-go"

@@ -3,6 +3,7 @@ load("@rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "worker",
     srcs = [
+        "application.go",
         "dispatch.go",
         "metrics.go",
         "runtime.go",
@@ -10,10 +11,10 @@ go_library(
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/app/worker",
     visibility = ["//services/tadoku-api:feature_consumers"],
     deps = [
+        "//services/tadoku-api/domain/jobs",
+        "//services/tadoku-api/features/jobqueue",
         "//services/tadoku-api/features/leaderboard",
-        "//services/tadoku-api/internal/asyncwork",
         "//services/tadoku-api/internal/timex",
-        "//services/tadoku-api/storage/postgres/asyncoutbox",
         "@com_github_prometheus_client_golang//prometheus",
     ],
 )
@@ -36,11 +37,11 @@ go_test(
         "requires-network",
     ],
     deps = [
+        "//services/tadoku-api/domain/jobs",
+        "//services/tadoku-api/features/jobqueue",
         "//services/tadoku-api/features/leaderboard",
-        "//services/tadoku-api/internal/asyncwork",
         "//services/tadoku-api/internal/testpostgres",
         "//services/tadoku-api/internal/testvalkey",
-        "//services/tadoku-api/storage/postgres/asyncoutbox",
         "@com_github_google_uuid//:uuid",
         "@com_github_jackc_pgx_v5//pgxpool",
         "@com_github_prometheus_client_golang//prometheus",

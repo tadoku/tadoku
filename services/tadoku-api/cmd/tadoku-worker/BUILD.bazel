@@ -8,10 +8,10 @@ go_library(
     deps = [
         "//services/common/postgresconfig",
         "//services/tadoku-api/app/worker",
+        "//services/tadoku-api/features/jobqueue",
         "//services/tadoku-api/features/leaderboard",
         "//services/tadoku-api/infra/postgres",
         "//services/tadoku-api/infra/valkey",
-        "//services/tadoku-api/storage/postgres/asyncoutbox",
         "@com_github_go_playground_validator_v10//:validator",
         "@com_github_kelseyhightower_envconfig//:envconfig",
         "@com_github_prometheus_client_golang//prometheus",

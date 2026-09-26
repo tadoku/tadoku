@@ -28,6 +28,9 @@ and the Tadoku API rejects writes and profile synchronisation for users whose
   unqualified table names, like the migrations in
   `services/tadoku-api/migrations/`, so connect with the `search_path` that the
   Tadoku API uses.
+- The independently deployed migration 0032 must be complete: the
+  queue is the `jobs` table. Follow the [table migration gate](../tadoku-api/jobs.md#table-migration)
+  before using this runbook; it does not support the old table name.
 - A running `tadoku-worker` release that registers both
   `leaderboard.invalidate_contest.v1` and
   `leaderboard.invalidate_official.v1`, connected to this exact database and
@@ -144,7 +147,7 @@ with affected_contests as (
   join logs on logs.id = contest_logs.log_id
   where logs.user_id = :'account_id'
 ), queued as (
-  insert into async_outbox (task_type, payload)
+  insert into jobs (task_type, payload)
   select 'leaderboard.invalidate_contest.v1',
          jsonb_build_object('contest_id', contest_id)
   from affected_contests
@@ -233,7 +236,7 @@ account was the moderator and entries where it was the target.
 
 ## 4. Leaderboards
 
-The separate `tadoku-worker` processes the `async_outbox` jobs from step 3.
+The separate `tadoku-worker` processes the rows inserted into `jobs` in step 3.
 It invalidates the cached leaderboards of the contests that lose the account's
 registrations or logs, and the yearly and global leaderboards, in Valkey. On the next
 read, each leaderboard is rebuilt from the Tadoku API database. The rebuilt
@@ -253,11 +256,11 @@ with recursive requested as (
 ), attempts as (
   select requested.original_id, task.id, task.state
   from requested
-  join async_outbox as task on task.id = requested.original_id
+  join jobs as task on task.id = requested.original_id
   union all
   select attempts.original_id, task.id, task.state
   from attempts
-  join async_outbox as task on task.replay_of_id = attempts.id
+  join jobs as task on task.replay_of_id = attempts.id
 )
 select requested.original_id,
        coalesce(bool_or(attempts.state = 'completed'), false) as completed,
@@ -279,8 +282,11 @@ and repair its cause before using the [worker replay command](../tadoku-api/jobs
 Replay creates a linked job and leaves the failed original unchanged. Re-run
 this query to observe the linked completion; do not wait for the original
 failed row to become completed. A missing row is not proof of success: consult
-retained operation evidence, since completed-row retention can remove old
-records.
+retained operation evidence, since successful jobs older than three UTC
+calendar months can be removed. Successful replay rows expire too while their
+failed originals remain. If recorded completion has aged out, use that retained
+evidence rather than replaying solely because the query no longer finds a
+completed descendant.
 
 ## 5. Keto relations and feature access
 

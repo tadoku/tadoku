@@ -28,10 +28,7 @@ feature has no queue dependency: the application coordinates it with
 business payload catalogue or handler contract. The application registry is
 the source of executable versions, including replay eligibility.
 
-The queue persists in the `jobs` table. Deploy the standalone table-rename
-migration before any runtime that queries this name. Persisted message names,
-payloads and replay lineage remain unchanged; this schema change does not
-introduce a new message version. See [Table migration](#table-migration).
+The queue persists in the `jobs` table.
 
 ## Define a message
 
@@ -104,17 +101,19 @@ must persist all returned jobs before committing. This applies to worker
 handlers as well as HTTP operations if they compose a feature that returns
 follow-up work.
 
-`Enqueue` requires an active transaction. An empty batch inside that transaction
-succeeds without inserting rows. It validates and serializes the concrete
-values and persists them through the transaction-bound executor; nil jobs,
-invalid payloads and database errors fail the operation. Return errors from the
-transaction callback so both business rows and any inserted queue rows roll
-back. Do not enqueue after commit. Report success only after commit succeeds;
-workers can see jobs only after commit.
+`Enqueue` accepts both standalone calls and calls inside a transaction. An empty
+batch succeeds without inserting rows. It validates and serializes the whole
+batch before inserting any job. Nil jobs, invalid payloads and database errors
+fail the operation. Without a transaction, earlier inserts remain persisted if
+a later insert fails. Use a transaction when the whole batch must be atomic.
 
-An enqueue error does not independently roll back a caller-owned transaction:
-the caller must propagate it. See [Transactions](./database.md#transactions) for
-wrong-pool and ended-context handling and uncertain commit outcomes.
+For jobs accompanying a business write, always enqueue inside that write's
+transaction and propagate errors from the callback so both business rows and
+any inserted jobs roll back. Do not enqueue after commit. Report success only
+after commit succeeds; workers can see transactional jobs only after commit.
+An enqueue error does not independently roll back a caller-owned transaction.
+See [Transactions](./database.md#transactions) for wrong-pool and ended-context
+handling and uncertain commit outcomes.
 
 ## Register typed handlers
 
@@ -202,23 +201,37 @@ exhausted failures remain inspectable. Unknown versions stay unclaimed and
 visible in unsupported backlog reporting. Inspect due age, failures, attempts,
 expired leases and in-flight work without using job IDs as metric labels.
 
-Leaderboard cache readiness is permission for the API to serve cached results.
-The separate worker maintains a short-lived `leaderboard:ready` key in Valkey,
-scoped by the configured cache prefix. If the marker is absent, expired or
-unreadable, API reads use PostgreSQL. This replaces the embedded worker's
-process-local readiness flag as the separate worker is introduced; the staged
-cutover temporarily requires both signals before retaining the shared marker
-alone. It remains necessary because API and worker processes can restart or
-roll out independently. Cache readiness is separate from Kubernetes Pod
-readiness and failure reporting. Unsupported outstanding work blocks cache
-readiness. A known failed leaderboard job remains visible for replay, but a
-successful full cache reconciliation can restore readiness; retained failure
-history alone does not permanently disable the cache.
-
 Replay inserts a new record linked to the failed original and records the
 operator and reason. It preserves the original version and payload. Registry
 support is required before replay; neither replay nor package renaming upgrades
 a message. Keep the failed original inspectable.
+
+## Exercise job effects in end-to-end tests
+
+Trigger publication through an authenticated producer request to the production
+router. After its transaction commits, run the normal worker against the same
+real PostgreSQL and provider fixtures:
+
+1. Reset and seed once, then send the request that produces the jobs. Keep
+   subsequent worker execution and reads in that same scenario.
+2. Construct `worker.NewApplication` with the queue service and real feature
+   services. Start `application.Run(ctx)` in a goroutine with a cancelable
+   context; this runs the registered handlers through claiming and dispatch.
+3. Wait with a bounded deadline for the scenario's jobs to reach `completed`.
+   Check observable state on a ticker; fail immediately on a terminal failure
+   and report remaining states on timeout. For cache-backed reads, also wait
+   for the provider's readiness condition. A fixed sleep does not prove that
+   processing finished.
+4. Send the follow-up HTTP request and compare its golden response to prove
+   the user-visible effect. Verify effects without a read endpoint through the
+   real provider or a journey verify step. Queue completion alone does not
+   prove the expected effect.
+5. Cancel and join the worker during cleanup before resetting shared fixtures.
+
+`Run` is the worker execution entry point; there is no synchronous drain API.
+Calling a handler directly or mocking it skips the publication and execution
+path this test must cover. See [User journeys](./user-journeys.md) for scenario
+steps and fixtures.
 
 ## Successful-job retention
 
@@ -245,27 +258,6 @@ Record important completion evidence before successful history expires. A
 missing completed row or aged-out successful replay is not proof that an effect
 never ran. Failure inspection and version-retirement decisions still account
 for the retained failed originals.
-
-## Table migration
-
-The standalone rename migration changes `async_outbox` to `jobs`, including
-its sequence, constraints and indexes, without rewriting the already merged
-migration that created the queue. It preserves rows, live claims, replay links
-and sequence state. There is no old-name compatibility view.
-
-Before deploying the rename, positively verify that no producer, worker or
-manual tool still requires the old table name. Current supported mainline
-application code does not use that queue, but an older unmerged worker release
-would be incompatible. If inventory finds an old-name caller, stop the migration
-deployment gate and resolve that compatibility requirement before proceeding.
-Read-only inspection of declared GitOps workloads alone does not prove that no
-external client exists.
-
-Merge and deploy the migration independently, then base dependent runtime on the
-updated `main` before merging or deploying it. Review stacks and isolated
-migration fixtures are not evidence of live deployment. Operator SQL on this
-page and in linked runbooks requires the migrated `jobs` schema. This schema
-sequence is separate from the [v1-to-v2 message rollout](#migrate-v1-to-v2).
 
 ## Add a job
 

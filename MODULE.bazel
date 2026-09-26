@@ -40,6 +40,11 @@ use_repo(go_sdk, "tadoku_go_sdk")
 ## Read deps from go.mod
 go_deps = use_extension("@gazelle//:extensions.bzl", "go_deps")
 go_deps.from_file(go_mod = "//:go.mod")
+go_deps.module_override(
+    path = "github.com/pganalyze/pg_query_go/v6",
+    patches = ["//tools/ci/migrationsafety:pg_query_go.bazel.patch"],
+    patch_strip = 1,
+)
 
 ## All *direct* Go dependencies of the module have to be listed explicitly.
 use_repo(
@@ -64,6 +69,7 @@ use_repo(
     "com_github_oapi_codegen_runtime",
     "com_github_ory_keto_client_go",
     "com_github_ory_kratos_client_go",
+    "com_github_pganalyze_pg_query_go_v6",
     "com_github_pkg_errors",
     "com_github_prometheus_client_golang",
     "com_github_sahilm_fuzzy",

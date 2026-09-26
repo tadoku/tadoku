@@ -51,7 +51,7 @@ func TestRegistryValidatesPayloadBeforeCallingTypedHandler(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, raw := range []string{`{"year":0}`, `{"year":2025,"unexpected":true}`, `{"year":2025} {}`, `{"year":`, `null`, `[]`, `"text"`} {
-		err := handlers.dispatch(t.Context(), jobqueue.ClaimedJob{Type: jobs.InvalidateOfficial, Payload: []byte(raw)})
+		err := handlers.dispatch(t.Context(), jobqueue.ClaimedJob{Type: jobs.LeaderboardInvalidateOfficialV1, Payload: []byte(raw)})
 		var permanent *PermanentError
 		if !errors.As(err, &permanent) {
 			t.Errorf("payload %s: got %v; want permanent failure", raw, err)
@@ -62,7 +62,7 @@ func TestRegistryValidatesPayloadBeforeCallingTypedHandler(t *testing.T) {
 	}
 	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
-	if err := handlers.dispatch(ctx, jobqueue.ClaimedJob{Type: jobs.InvalidateOfficial, Payload: []byte(`{"year":2025}`)}); err != nil {
+	if err := handlers.dispatch(ctx, jobqueue.ClaimedJob{Type: jobs.LeaderboardInvalidateOfficialV1, Payload: []byte(`{"year":2025}`)}); err != nil {
 		t.Fatal(err)
 	}
 	if called != 1 || got.Year != 2025 || gotCtx != ctx {

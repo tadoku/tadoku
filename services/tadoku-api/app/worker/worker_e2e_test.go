@@ -90,10 +90,10 @@ func TestWorkerOutboxJourney(t *testing.T) {
 		}
 	}
 
-	validID := insertTask(t, db.Pool, string(jobs.InvalidateOfficial), `{"year":2025}`, false)
-	invalidID := insertTask(t, db.Pool, string(jobs.InvalidateOfficial), `{"year":0}`, false)
+	validID := insertTask(t, db.Pool, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":2025}`, false)
+	invalidID := insertTask(t, db.Pool, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":0}`, false)
 	unknownID := insertTask(t, db.Pool, "future.task.v1", `{}`, false)
-	reclaimedID := insertTask(t, db.Pool, string(jobs.InvalidateOfficial), `{"year":2025}`, true)
+	reclaimedID := insertTask(t, db.Pool, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":2025}`, true)
 
 	waitFor(t, func() (bool, error) {
 		var completed, failed, reclaimed, unknown string

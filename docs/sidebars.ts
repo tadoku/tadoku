@@ -51,6 +51,7 @@ const sidebars: SidebarsConfig = {
         'tadoku-api/conventions',
         'tadoku-api/contract',
         'tadoku-api/database',
+        'tadoku-api/jobs',
         'tadoku-api/testing',
         'tadoku-api/http-e2e',
         'tadoku-api/user-journeys',

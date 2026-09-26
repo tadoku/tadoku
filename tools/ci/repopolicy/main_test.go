@@ -11,6 +11,8 @@ const fixtureHeader = `package pages
 
 import (
 	"context"
+	"time"
+	pg "github.com/jackc/pgx/v5/pgtype"
 
 	guuid "github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -52,6 +54,46 @@ func (r *Repository) List(ctx context.Context, executor postgres.DBTX) ([]string
 	_ = guuid.MustParse("00000000-0000-0000-0000-000000000000")
 	return ids, nil
 }`,
+		},
+		{
+			name: "primitive timestamp conversion",
+			source: `
+func timestamp(value time.Time) pg.Timestamptz {
+	return pg.Timestamptz{Time: value.UTC(), Valid: true}
+}`,
+			want: []string{"primitive-conversion"},
+		},
+		{
+			name: "nullable primitive conversion",
+			source: `
+func text(value pg.Text) *string {
+	if !value.Valid { return nil }
+	return &value.String
+}`,
+			want: []string{"primitive-conversion"},
+		},
+		{
+			name: "UUID slice conversion",
+			source: `
+func ids(values []pg.UUID) []guuid.UUID {
+	result := make([]guuid.UUID, len(values))
+	for i, value := range values { result[i] = value.Bytes }
+	return result
+}`,
+			want: []string{"primitive-conversion"},
+		},
+		{
+			name: "domain row mappings remain local",
+			source: `
+func page(row pagesdb.Page) Page { return Page{ID: row.ID.Bytes} }
+func status(value pg.Text) Status { return Status(value.String) }
+func storedStatus(value Status) pg.Text { return pg.Text{String: string(value), Valid: true} }
+func createdAt(row pagesdb.Page) pg.Timestamptz { return row.CreatedAt }
+`,
+		},
+		{
+			name:   "primitive helper without postgres types",
+			source: `func trimmed(value string) string { return value }`,
 		},
 		{
 			name: "two inline queries",

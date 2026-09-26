@@ -53,7 +53,7 @@ preserve the existing dependency and security rules.
 
 | Area | Hide inside the owner | Keep explicit at the caller |
 | --- | --- | --- |
-| Backend feature | Feature validation, IDs and stored-state construction, related row updates and outbox work | Application actor authorization, composition of independent features and cross-feature locks and transactions |
+| Backend feature | Feature validation, IDs and stored-state construction, and related row updates | Application actor authorization, composition of independent features and cross-feature locks and transactions |
 | Repository or provider adapter | Generated row types, wire formats and provider-specific error translation | Domain inputs, results and meaningful failures |
 | Frontend data hook | Requests, response parsing, query keys and invalidation inherent to its mutation | Screen navigation, messages and other product effects |
 | UI control | Interaction mechanics, accessible structure and visual defaults | Application data, permissions and callbacks |

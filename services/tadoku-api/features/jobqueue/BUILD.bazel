@@ -1,0 +1,45 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "jobqueue",
+    srcs = [
+        "domain.go",
+        "jobqueue_repository.go",
+        "jobqueue_service.go",
+    ],
+    importpath = "github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue",
+    visibility = ["//services/tadoku-api:feature_consumers"],
+    deps = [
+        "//services/tadoku-api/domain/jobs",
+        "//services/tadoku-api/generated/sqlc/jobqueue",
+        "//services/tadoku-api/infra/postgres",
+        "//services/tadoku-api/internal/errx",
+        "//services/tadoku-api/internal/timex",
+        "@com_github_google_uuid//:uuid",
+        "@com_github_jackc_pgx_v5//:pgx",
+        "@com_github_jackc_pgx_v5//pgxpool",
+    ],
+)
+
+go_test(
+    name = "jobqueue_test",
+    srcs = [
+        "jobqueue_repository_test.go",
+        "jobqueue_service_test.go",
+    ],
+    embed = [":jobqueue"],
+    env_inherit = ["TADOKU_TEST_POSTGRES_URL"],
+    tags = [
+        "no-cache",
+        "no-remote-exec",
+        "requires-network",
+    ],
+    deps = [
+        "//services/tadoku-api/domain/jobs",
+        "//services/tadoku-api/infra/postgres",
+        "//services/tadoku-api/internal/errx",
+        "//services/tadoku-api/internal/testpostgres",
+        "//services/tadoku-api/internal/timex",
+        "@com_github_google_uuid//:uuid",
+    ],
+)

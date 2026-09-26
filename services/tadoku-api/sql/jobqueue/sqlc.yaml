@@ -1,0 +1,12 @@
+version: "2"
+sql:
+  - engine: postgresql
+    schema: ../../migrations
+    queries: jobqueue.sql
+    gen:
+      go:
+        package: jobqueue
+        out: ../../generated/sqlc/jobqueue
+        sql_package: pgx/v5
+        emit_empty_slices: true
+        omit_unused_structs: true

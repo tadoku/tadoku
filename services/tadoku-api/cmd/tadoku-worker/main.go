@@ -29,6 +29,7 @@ import (
 )
 
 type config struct {
+	Concurrency            int                   `validate:"gt=0" envconfig:"concurrency" default:"4"`
 	Port                   int                   `validate:"gt=0,lte=65535" default:"8000"`
 	MetricsPort            int                   `validate:"gt=0,lte=65535" envconfig:"metrics_port" default:"9090"`
 	Postgres               postgresconfig.Config `ignored:"true"`
@@ -89,7 +90,12 @@ func run(ctx context.Context, cfg config, logger *slog.Logger) error {
 	)
 	metrics := worker.NewMetrics(registry)
 	leaderboardService := leaderboard.NewService(leaderboard.NewRepository(pool), client, cfg.ValkeyTimeout, cfg.LeaderboardCachePrefix)
-	application, err := worker.NewApplication(jobqueue.NewService(jobqueue.NewRepository(pool)), leaderboardService, worker.Config{Logger: logger, Metrics: metrics, ShutdownTimeout: cfg.ShutdownTimeout})
+	application, err := worker.NewApplication(jobqueue.NewService(jobqueue.NewRepository(pool)), leaderboardService, worker.Config{
+		Concurrency:     cfg.Concurrency,
+		ShutdownTimeout: cfg.ShutdownTimeout,
+		Logger:          logger,
+		Metrics:         metrics,
+	})
 	if err != nil {
 		return fmt.Errorf("construct worker application: %w", err)
 	}

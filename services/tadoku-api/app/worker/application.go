@@ -28,15 +28,6 @@ func NewApplication(queue *jobqueue.Service, leaderboard *leaderboard.Service, c
 	if queue == nil || leaderboard == nil {
 		return nil, errors.New("worker requires queue and leaderboard services")
 	}
-	if config.Concurrency == 0 {
-		config.Concurrency = 4
-	}
-	if config.ShutdownTimeout == 0 {
-		config.ShutdownTimeout = 15 * time.Second
-	}
-	if config.Concurrency < 1 || config.ShutdownTimeout <= 0 {
-		return nil, errors.New("worker concurrency and shutdown timeout must be positive")
-	}
 	if config.Logger == nil {
 		config.Logger = slog.Default()
 	}
@@ -77,8 +68,6 @@ func (a *Application) InvalidateOfficialLeaderboard(ctx context.Context, job job
 
 func (a *Application) Ready() bool { return a.runner.ready.Load() }
 
-// Run must be called once per application. Handlers must respect context cancellation;
-// an occupied execution slot is retained until its handler returns.
 func (a *Application) Run(ctx context.Context) error {
 	if err := a.leaderboard.RevokeCacheReadiness(ctx); err != nil {
 		a.runner.logger.Warn("revoke leaderboard readiness at startup", "error", err)
@@ -137,7 +126,6 @@ func (a *Application) refreshReadiness(ctx context.Context) error {
 	return a.leaderboard.PublishCacheReadiness(ctx)
 }
 
-// Replay uses this executable's registered versions and requires only PostgreSQL.
 func Replay(ctx context.Context, queue *jobqueue.Service, id int64, actor, reason string) (int64, error) {
 	handlers, err := new(Application).registrations()
 	if err != nil {

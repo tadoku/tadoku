@@ -6,7 +6,9 @@ import (
 	"io"
 	"log/slog"
 	"net/url"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
 )
@@ -56,4 +58,65 @@ func TestReplayCommandCreatesLinkedTask(t *testing.T) {
 	if err := replay(context.Background(), []string{"--id", fmt.Sprint(failedID), "--reason", "missing actor"}, logger); err == nil {
 		t.Error("replay accepted a missing actor")
 	}
+}
+
+func TestLoadConfigRejectsInvalidWorkerSettings(t *testing.T) {
+	t.Setenv("WORKER_VALKEY_URL", "redis://127.0.0.1:6379")
+	t.Setenv("WORKER_POSTGRES_HOST", "127.0.0.1")
+	t.Setenv("WORKER_POSTGRES_DATABASE", "postgres")
+	t.Setenv("WORKER_POSTGRES_USER", "postgres")
+	t.Setenv("WORKER_POSTGRES_PASSWORD", "postgres")
+	t.Setenv("WORKER_POSTGRES_SSLMODE", "disable")
+
+	for _, tc := range []struct {
+		name  string
+		key   string
+		value string
+		field string
+	}{
+		{"zero concurrency", "WORKER_CONCURRENCY", "0", "Concurrency"},
+		{"negative concurrency", "WORKER_CONCURRENCY", "-1", "Concurrency"},
+		{"malformed concurrency", "WORKER_CONCURRENCY", "invalid", "WORKER_CONCURRENCY"},
+		{"zero shutdown timeout", "WORKER_SHUTDOWN_TIMEOUT", "0s", "ShutdownTimeout"},
+		{"negative shutdown timeout", "WORKER_SHUTDOWN_TIMEOUT", "-1s", "ShutdownTimeout"},
+		{"malformed shutdown timeout", "WORKER_SHUTDOWN_TIMEOUT", "invalid", "WORKER_SHUTDOWN_TIMEOUT"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Setenv(tc.key, tc.value)
+			_, err := loadConfig()
+			if err == nil || !strings.Contains(err.Error(), tc.field) {
+				t.Fatalf("loadConfig() error = %v, want rejection of %s", err, tc.key)
+			}
+		})
+	}
+}
+
+func TestLoadConfigWorkerSettings(t *testing.T) {
+	t.Setenv("WORKER_VALKEY_URL", "redis://127.0.0.1:6379")
+	t.Setenv("WORKER_POSTGRES_HOST", "127.0.0.1")
+	t.Setenv("WORKER_POSTGRES_DATABASE", "postgres")
+	t.Setenv("WORKER_POSTGRES_USER", "postgres")
+	t.Setenv("WORKER_POSTGRES_PASSWORD", "postgres")
+	t.Setenv("WORKER_POSTGRES_SSLMODE", "disable")
+
+	t.Run("defaults", func(t *testing.T) {
+		cfg, err := loadConfig()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if cfg.Concurrency != 4 || cfg.ShutdownTimeout != 15*time.Second {
+			t.Errorf("worker settings = (%d, %s), want (4, 15s)", cfg.Concurrency, cfg.ShutdownTimeout)
+		}
+	})
+	t.Run("explicit settings", func(t *testing.T) {
+		t.Setenv("WORKER_CONCURRENCY", "7")
+		t.Setenv("WORKER_SHUTDOWN_TIMEOUT", "3s")
+		cfg, err := loadConfig()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if cfg.Concurrency != 7 || cfg.ShutdownTimeout != 3*time.Second {
+			t.Errorf("worker settings = (%d, %s), want (7, 3s)", cfg.Concurrency, cfg.ShutdownTimeout)
+		}
+	})
 }

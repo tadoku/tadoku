@@ -161,7 +161,8 @@ Construct and run the application from the entry point:
 
 ```go
 app, err := worker.NewApplication(queue, leaderboard, worker.Config{
-    Concurrency: 4,
+    Concurrency:     cfg.Concurrency,
+    ShutdownTimeout: cfg.ShutdownTimeout,
 })
 if err != nil {
     return err
@@ -169,12 +170,13 @@ if err != nil {
 return app.Run(ctx)
 ```
 
-`Config` also accepts `ShutdownTimeout`, `Logger` and `Metrics`; startup can
-provide the process logger and metric registry. Zero-value concurrency uses
-four slots and zero-value shutdown timeout uses fifteen seconds. Handler
-`Policy` values must be positive. Keep registration and handler signatures in
-the worker application. Startup constructs the application and its external
-resources.
+`cmd/tadoku-worker` loads settings with envconfig and validates them before
+constructing the application. `WORKER_CONCURRENCY` defaults to four slots and
+`WORKER_SHUTDOWN_TIMEOUT` defaults to fifteen seconds; both must be positive.
+Pass those validated values explicitly in `Config`. Startup can also provide
+the process `Logger` and `Metrics`. Handler `Policy` values must be positive.
+Keep registration and handler signatures in the worker application. Startup
+constructs the application and its external resources.
 
 ## Execution and failure guarantees
 

@@ -86,7 +86,7 @@ func newWorkerFixture(t *testing.T) workerFixture {
 func (f workerFixture) runner(t *testing.T, client valkeygo.Client, providerTimeout, shutdown time.Duration) *Application {
 	service := leaderboard.NewService(leaderboard.NewRepository(f.db), client, providerTimeout, f.prefix)
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	application, err := NewApplication(jobqueue.NewService(jobqueue.NewRepository(f.db)), service, Config{Logger: logger, Metrics: NewMetrics(prometheus.NewRegistry()), ShutdownTimeout: shutdown})
+	application, err := NewApplication(jobqueue.NewService(jobqueue.NewRepository(f.db)), service, Config{Concurrency: 4, Logger: logger, Metrics: NewMetrics(prometheus.NewRegistry()), ShutdownTimeout: shutdown})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -357,7 +357,7 @@ func TestWorkerCompletesWhenRenewalIsCanceledByFinishedHandler(t *testing.T) {
 	service := leaderboard.NewService(leaderboard.NewRepository(limitedPool), blocked, 8*time.Second, f.prefix)
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	repository := jobqueue.NewRepository(limitedPool)
-	runner, err := NewApplication(jobqueue.NewService(repository), service, Config{Logger: logger, Metrics: NewMetrics(prometheus.NewRegistry()), ShutdownTimeout: time.Second})
+	runner, err := NewApplication(jobqueue.NewService(repository), service, Config{Concurrency: 4, Logger: logger, Metrics: NewMetrics(prometheus.NewRegistry()), ShutdownTimeout: time.Second})
 	if err != nil {
 		t.Fatal(err)
 	}

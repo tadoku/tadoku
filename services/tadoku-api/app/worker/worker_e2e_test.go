@@ -65,7 +65,7 @@ func TestWorkerOutboxJourney(t *testing.T) {
 
 	service := leaderboard.NewService(leaderboard.NewRepository(db.Pool), client, time.Second, prefix)
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	runner, err := NewApplication(jobqueue.NewService(jobqueue.NewRepository(db.Pool)), service, Config{Logger: logger, Metrics: NewMetrics(prometheus.NewRegistry()), ShutdownTimeout: 2 * time.Second})
+	runner, err := NewApplication(jobqueue.NewService(jobqueue.NewRepository(db.Pool)), service, Config{Concurrency: 4, Logger: logger, Metrics: NewMetrics(prometheus.NewRegistry()), ShutdownTimeout: 2 * time.Second})
 	if err != nil {
 		t.Fatal(err)
 	}

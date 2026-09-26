@@ -232,7 +232,11 @@ func (a *Application) UpsertContestRegistration(ctx context.Context, parameters 
 			return err
 		}
 
-		return a.contests.ApplyRegistration(ctx, registration, existing, *contest)
+		pending, err := a.contests.ApplyRegistration(ctx, registration, existing, *contest)
+		if err != nil {
+			return err
+		}
+		return a.jobqueue.Enqueue(ctx, pending...)
 	})
 }
 

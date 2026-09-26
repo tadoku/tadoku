@@ -7,45 +7,19 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/leaderboardoutbox"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/logscore"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/asyncwork"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
-	"github.com/tadoku/tadoku/services/tadoku-api/storage/postgres/asyncoutbox"
 )
 
 type Service struct {
 	logs                 *LogsRepository
-	outbox               *asyncoutbox.Repository
 	scoringEngineEnabled bool
 }
 
-func NewService(logs *LogsRepository, outbox *asyncoutbox.Repository, scoringEngineEnabled bool) *Service {
-	return &Service{logs: logs, outbox: outbox, scoringEngineEnabled: scoringEngineEnabled}
-}
-
-func (s *Service) insertContestRefresh(ctx context.Context, userID, contestID uuid.UUID) error {
-	task, err := asyncwork.NewContestInvalidation(contestID)
-	if err != nil {
-		return err
-	}
-	if err := s.logs.InsertOutbox(ctx, userID, &contestID, nil, leaderboardoutbox.RefreshContestScore); err != nil {
-		return err
-	}
-	_, err = s.outbox.Enqueue(ctx, task)
-	return err
-}
-
-func (s *Service) insertOfficialRefresh(ctx context.Context, userID uuid.UUID, year int16) error {
-	task, err := asyncwork.NewOfficialInvalidation(year)
-	if err != nil {
-		return err
-	}
-	if err := s.logs.InsertOutbox(ctx, userID, nil, &year, leaderboardoutbox.RefreshOfficialScores); err != nil {
-		return err
-	}
-	_, err = s.outbox.Enqueue(ctx, task)
-	return err
+func NewService(logs *LogsRepository, scoringEngineEnabled bool) *Service {
+	return &Service{logs: logs, scoringEngineEnabled: scoringEngineEnabled}
 }
 
 func (s *Service) PlanContestRegistrationUpdate(log *Log, targets []logscore.Target, now time.Time) ([]logscore.Target, []uuid.UUID, error) {
@@ -78,30 +52,31 @@ func (s *Service) PlanContestRegistrationUpdate(log *Log, targets []logscore.Tar
 	return toAttach, toDetach, nil
 }
 
-func (s *Service) UpdateContestRegistrations(ctx context.Context, logID uuid.UUID, now time.Time, attachments []ContestTracking, detachments []uuid.UUID) error {
+func (s *Service) UpdateContestRegistrations(ctx context.Context, logID uuid.UUID, now time.Time, attachments []ContestTracking, detachments []uuid.UUID) ([]jobs.Job, error) {
+	var followUp []jobs.Job
 	if err := s.logs.LockLog(ctx, logID); err != nil {
-		return err
+		return nil, err
 	}
 	before, err := s.logs.OutboxContext(ctx, logID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	for _, contestID := range detachments {
 		if err := s.logs.DetachContest(ctx, logID, contestID); err != nil {
-			return err
+			return nil, err
 		}
 	}
 	for _, attachment := range attachments {
 		if err := s.logs.CreateContestLog(ctx, logID, attachment); err != nil {
-			return err
+			return nil, err
 		}
 	}
 	if err := s.logs.RecomputeOfficialEligibility(ctx, logID, now); err != nil {
-		return err
+		return nil, err
 	}
 	after, err := s.logs.OutboxContext(ctx, logID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	affected := make(map[uuid.UUID]struct{}, len(detachments)+len(attachments))
@@ -113,68 +88,82 @@ func (s *Service) UpdateContestRegistrations(ctx context.Context, logID uuid.UUI
 	}
 	for contestID := range affected {
 		id := contestID
-		if err := s.insertContestRefresh(ctx, before.UserID, id); err != nil {
-			return err
+		if err := s.logs.InsertOutbox(ctx, before.UserID, &id, nil, leaderboardoutbox.RefreshContestScore); err != nil {
+			return nil, err
 		}
+		followUp = append(followUp, jobs.InvalidateContestLeaderboardV1{ContestID: id})
 	}
 	if before.EligibleOfficial || after.EligibleOfficial {
 		year := before.Year
-		return s.insertOfficialRefresh(ctx, before.UserID, year)
+		if err := s.logs.InsertOutbox(ctx, before.UserID, nil, &year, leaderboardoutbox.RefreshOfficialScores); err != nil {
+			return nil, err
+		}
+		followUp = append(followUp, jobs.InvalidateOfficialLeaderboardV1{Year: year})
 	}
-	return nil
+	return followUp, nil
 }
 
-func (s *Service) Delete(ctx context.Context, logID uuid.UUID, now time.Time) error {
+func (s *Service) Delete(ctx context.Context, logID uuid.UUID, now time.Time) ([]jobs.Job, error) {
+	var followUp []jobs.Job
 	if err := s.logs.LockLog(ctx, logID); err != nil {
-		return err
+		return nil, err
 	}
 	allowed, err := s.logs.CanDelete(ctx, logID, now)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if !allowed {
-		return errx.NewForbiddenError("forbidden")
+		return nil, errx.NewForbiddenError("forbidden")
 	}
 	outbox, err := s.logs.OutboxContext(ctx, logID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	contestIDs, err := s.logs.AttachedContestIDs(ctx, logID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if err := s.logs.SoftDelete(ctx, logID, now); err != nil {
-		return err
+		return nil, err
 	}
 	for _, contestID := range contestIDs {
 		id := contestID
-		if err := s.insertContestRefresh(ctx, outbox.UserID, id); err != nil {
-			return err
+		if err := s.logs.InsertOutbox(ctx, outbox.UserID, &id, nil, leaderboardoutbox.RefreshContestScore); err != nil {
+			return nil, err
 		}
+		followUp = append(followUp, jobs.InvalidateContestLeaderboardV1{ContestID: id})
 	}
 	if outbox.EligibleOfficial {
 		year := outbox.Year
-		return s.insertOfficialRefresh(ctx, outbox.UserID, year)
+		if err := s.logs.InsertOutbox(ctx, outbox.UserID, nil, &year, leaderboardoutbox.RefreshOfficialScores); err != nil {
+			return nil, err
+		}
+		followUp = append(followUp, jobs.InvalidateOfficialLeaderboardV1{Year: year})
 	}
-	return nil
+	return followUp, nil
 }
 
-func (s *Service) ModerateDetach(ctx context.Context, logID, contestID uuid.UUID) error {
+func (s *Service) ModerateDetach(ctx context.Context, logID, contestID uuid.UUID) ([]jobs.Job, error) {
+	var followUp []jobs.Job
 	outbox, err := s.logs.OutboxContext(ctx, logID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if err := s.logs.DetachContest(ctx, logID, contestID); err != nil {
-		return err
+		return nil, err
 	}
-	if err := s.insertContestRefresh(ctx, outbox.UserID, contestID); err != nil {
-		return err
+	if err := s.logs.InsertOutbox(ctx, outbox.UserID, &contestID, nil, leaderboardoutbox.RefreshContestScore); err != nil {
+		return nil, err
 	}
+	followUp = append(followUp, jobs.InvalidateContestLeaderboardV1{ContestID: contestID})
 	if outbox.EligibleOfficial {
 		year := outbox.Year
-		return s.insertOfficialRefresh(ctx, outbox.UserID, year)
+		if err := s.logs.InsertOutbox(ctx, outbox.UserID, nil, &year, leaderboardoutbox.RefreshOfficialScores); err != nil {
+			return nil, err
+		}
+		followUp = append(followUp, jobs.InvalidateOfficialLeaderboardV1{Year: year})
 	}
-	return nil
+	return followUp, nil
 }
 
 func (s *Service) ConfigurationOptions(ctx context.Context, userID uuid.UUID) (*ConfigurationOptions, error) {
@@ -353,9 +342,9 @@ func (s *Service) FindLogForViewer(ctx context.Context, id uuid.UUID, parameters
 	return log, nil
 }
 
-func (s *Service) Create(ctx context.Context, userID uuid.UUID, now time.Time, description *string, scored logscore.Result) (uuid.UUID, error) {
+func (s *Service) Create(ctx context.Context, userID uuid.UUID, now time.Time, description *string, scored logscore.Result) (CreateResult, error) {
 	if err := validateDescription(description); err != nil {
-		return uuid.Nil, err
+		return CreateResult{}, err
 	}
 
 	mutation := logMutation{
@@ -371,24 +360,26 @@ func (s *Service) Create(ctx context.Context, userID uuid.UUID, now time.Time, d
 		Year:                        int16(now.Year()),
 		Now:                         now,
 	}
-	if err := s.create(ctx, mutation); err != nil {
-		return uuid.Nil, err
+	followUp, err := s.create(ctx, mutation)
+	if err != nil {
+		return CreateResult{}, err
 	}
-	return mutation.ID, nil
+	return CreateResult{ID: mutation.ID, Jobs: followUp}, nil
 }
 
-func (s *Service) create(ctx context.Context, mutation logMutation) error {
+func (s *Service) create(ctx context.Context, mutation logMutation) ([]jobs.Job, error) {
+	var followUp []jobs.Job
 	if err := s.logs.CreateLog(ctx, mutation); err != nil {
-		return err
+		return nil, err
 	}
 	for _, tracking := range mutation.ContestTrackings {
 		if err := s.logs.CreateContestLog(ctx, mutation.ID, tracking); err != nil {
-			return err
+			return nil, err
 		}
 	}
 	for _, tag := range mutation.Tags {
 		if err := s.logs.InsertTag(ctx, mutation.ID, mutation.UserID, tag); err != nil {
-			return err
+			return nil, err
 		}
 	}
 
@@ -399,19 +390,24 @@ func (s *Service) create(ctx context.Context, mutation logMutation) error {
 		}
 		seen[tracking.ContestID] = struct{}{}
 		contestID := tracking.ContestID
-		if err := s.insertContestRefresh(ctx, mutation.UserID, contestID); err != nil {
-			return err
+		if err := s.logs.InsertOutbox(ctx, mutation.UserID, &contestID, nil, leaderboardoutbox.RefreshContestScore); err != nil {
+			return nil, err
 		}
+		followUp = append(followUp, jobs.InvalidateContestLeaderboardV1{ContestID: contestID})
 	}
 	if mutation.EligibleOfficialLeaderboard {
 		year := mutation.Year
-		return s.insertOfficialRefresh(ctx, mutation.UserID, year)
+		if err := s.logs.InsertOutbox(ctx, mutation.UserID, nil, &year, leaderboardoutbox.RefreshOfficialScores); err != nil {
+			return nil, err
+		}
+		followUp = append(followUp, jobs.InvalidateOfficialLeaderboardV1{Year: year})
 	}
-	return nil
+	return followUp, nil
 }
-func (s *Service) Update(ctx context.Context, id, userID uuid.UUID, now time.Time, description *string, scored logscore.Result) error {
+
+func (s *Service) Update(ctx context.Context, id, userID uuid.UUID, now time.Time, description *string, scored logscore.Result) ([]jobs.Job, error) {
 	if err := validateDescription(description); err != nil {
-		return err
+		return nil, err
 	}
 
 	mutation := logMutation{
@@ -426,16 +422,17 @@ func (s *Service) Update(ctx context.Context, id, userID uuid.UUID, now time.Tim
 	return s.update(ctx, mutation)
 }
 
-func (s *Service) update(ctx context.Context, mutation logMutation) error {
+func (s *Service) update(ctx context.Context, mutation logMutation) ([]jobs.Job, error) {
+	var followUp []jobs.Job
 	if err := s.logs.LockLog(ctx, mutation.ID); err != nil {
-		return err
+		return nil, err
 	}
 	outbox, err := s.logs.OutboxContext(ctx, mutation.ID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if err := s.logs.UpdateLog(ctx, mutation); err != nil {
-		return err
+		return nil, err
 	}
 	if len(mutation.ContestTrackings) == 0 {
 		inherited := mutation.Tracking
@@ -444,38 +441,42 @@ func (s *Service) update(ctx context.Context, mutation logMutation) error {
 		inherited.Rates = nil
 		inherited.Source = ""
 		if err := s.logs.UpdateOngoingContestLogs(ctx, mutation.ID, inherited, mutation.Now); err != nil {
-			return err
+			return nil, err
 		}
 	} else {
 		for _, tracking := range mutation.ContestTrackings {
 			if err := s.logs.UpdateContestLog(ctx, mutation.ID, tracking, mutation.Now); err != nil {
-				return err
+				return nil, err
 			}
 		}
 	}
 	if err := s.logs.DeleteTags(ctx, mutation.ID); err != nil {
-		return err
+		return nil, err
 	}
 	for _, tag := range mutation.Tags {
 		if err := s.logs.InsertTag(ctx, mutation.ID, outbox.UserID, tag); err != nil {
-			return err
+			return nil, err
 		}
 	}
 	contestIDs, err := s.logs.OngoingContestIDs(ctx, mutation.ID, mutation.Now)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	for _, id := range contestIDs {
 		contestID := id
-		if err := s.insertContestRefresh(ctx, outbox.UserID, contestID); err != nil {
-			return err
+		if err := s.logs.InsertOutbox(ctx, outbox.UserID, &contestID, nil, leaderboardoutbox.RefreshContestScore); err != nil {
+			return nil, err
 		}
+		followUp = append(followUp, jobs.InvalidateContestLeaderboardV1{ContestID: contestID})
 	}
 	if outbox.EligibleOfficial {
 		year := outbox.Year
-		return s.insertOfficialRefresh(ctx, outbox.UserID, year)
+		if err := s.logs.InsertOutbox(ctx, outbox.UserID, nil, &year, leaderboardoutbox.RefreshOfficialScores); err != nil {
+			return nil, err
+		}
+		followUp = append(followUp, jobs.InvalidateOfficialLeaderboardV1{Year: year})
 	}
-	return nil
+	return followUp, nil
 }
 
 func (s *Service) RegistrationsForRescoring(log *Log, now time.Time) []logscore.Target {

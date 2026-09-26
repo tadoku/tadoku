@@ -6,23 +6,20 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
 	domainlanguages "github.com/tadoku/tadoku/services/tadoku-api/domain/languages"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/logscore"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/asyncwork"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
-	"github.com/tadoku/tadoku/services/tadoku-api/storage/postgres/asyncoutbox"
 )
 
 type Service struct {
 	contests *ContestsRepository
-	outbox   *asyncoutbox.Repository
 }
 
-func NewService(repository *ContestsRepository, outbox *asyncoutbox.Repository) *Service {
+func NewService(repository *ContestsRepository) *Service {
 	return &Service{
 		contests: repository,
-		outbox:   outbox,
 	}
 }
 
@@ -189,7 +186,8 @@ func (s *Service) ApplyRegistration(
 	registration Registration,
 	existing *Registration,
 	contest Contest,
-) error {
+) ([]jobs.Job, error) {
+	var followUp []jobs.Job
 	removedLanguages := []string{}
 	if existing != nil {
 		selectedLanguages := make(map[string]struct{}, len(registration.LanguageCodes))
@@ -211,46 +209,39 @@ func (s *Service) ApplyRegistration(
 			registration.ContestID,
 			removedLanguages,
 		); err != nil {
-			return err
+			return nil, err
 		}
-		if err := s.insertRegistrationLeaderboardOutbox(ctx, registration, contest); err != nil {
-			return err
+		pending, err := s.insertRegistrationLeaderboardOutbox(ctx, registration, contest)
+		if err != nil {
+			return nil, err
 		}
+		followUp = append(followUp, pending...)
 	}
 
 	if err := s.contests.UpsertRegistration(ctx, registration); err != nil {
-		return err
+		return nil, err
 	}
 
-	return s.insertRegistrationLeaderboardOutbox(ctx, registration, contest)
+	pending, err := s.insertRegistrationLeaderboardOutbox(ctx, registration, contest)
+	if err != nil {
+		return nil, err
+	}
+	return append(followUp, pending...), nil
 }
 
-func (s *Service) insertRegistrationLeaderboardOutbox(ctx context.Context, registration Registration, contest Contest) error {
-	contestTask, err := asyncwork.NewContestInvalidation(registration.ContestID)
-	if err != nil {
-		return err
-	}
+func (s *Service) insertRegistrationLeaderboardOutbox(ctx context.Context, registration Registration, contest Contest) ([]jobs.Job, error) {
 	if err := s.contests.InsertContestScoreRefresh(ctx, registration.UserID, registration.ContestID); err != nil {
-		return err
+		return nil, err
 	}
-	if _, err := s.outbox.Enqueue(ctx, contestTask); err != nil {
-		return err
-	}
-
+	followUp := []jobs.Job{jobs.InvalidateContestLeaderboardV1{ContestID: registration.ContestID}}
 	if contest.Official {
 		year := int16(contest.ContestStart.Year())
-		officialTask, err := asyncwork.NewOfficialInvalidation(year)
-		if err != nil {
-			return err
-		}
 		if err := s.contests.InsertOfficialScoresRefresh(ctx, registration.UserID, year); err != nil {
-			return err
+			return nil, err
 		}
-		_, err = s.outbox.Enqueue(ctx, officialTask)
-		return err
+		followUp = append(followUp, jobs.InvalidateOfficialLeaderboardV1{Year: year})
 	}
-
-	return nil
+	return followUp, nil
 }
 
 func (s *Service) CreateContest(ctx context.Context, contest Contest) (*Contest, error) {

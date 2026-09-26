@@ -52,11 +52,15 @@ func (a *Application) UpdateLogContestRegistrations(ctx context.Context, logID u
 		if err := a.profile.LockUser(ctx, log.UserID); err != nil {
 			return err
 		}
-		if err := a.logs.UpdateContestRegistrations(ctx, logID, now, attachments, detachments); err != nil {
+		pending, err := a.logs.UpdateContestRegistrations(ctx, logID, now, attachments, detachments)
+		if err != nil {
 			return err
 		}
 
-		var err error
+		if err := a.jobqueue.Enqueue(ctx, pending...); err != nil {
+			return err
+		}
+
 		updated, err = a.logs.FindLog(ctx, logID)
 		return err
 	})
@@ -85,7 +89,11 @@ func (a *Application) DeleteLog(ctx context.Context, logID uuid.UUID) error {
 		if err := a.profile.LockUser(ctx, log.UserID); err != nil {
 			return err
 		}
-		return a.logs.Delete(ctx, logID, now)
+		pending, err := a.logs.Delete(ctx, logID, now)
+		if err != nil {
+			return err
+		}
+		return a.jobqueue.Enqueue(ctx, pending...)
 	})
 }
 
@@ -125,6 +133,10 @@ func (a *Application) DetachContestLog(ctx context.Context, contestID, logID uui
 		}); err != nil {
 			return err
 		}
-		return a.logs.ModerateDetach(ctx, logID, contestID)
+		pending, err := a.logs.ModerateDetach(ctx, logID, contestID)
+		if err != nil {
+			return err
+		}
+		return a.jobqueue.Enqueue(ctx, pending...)
 	})
 }

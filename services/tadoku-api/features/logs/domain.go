@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/activities"
+	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/logscore"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
@@ -209,4 +210,9 @@ func findActivity(id int32) (activities.Activity, error) {
 		}
 	}
 	return activities.Activity{}, ErrInvalidActivity
+}
+
+type CreateResult struct {
+	ID   uuid.UUID
+	Jobs []jobs.Job
 }

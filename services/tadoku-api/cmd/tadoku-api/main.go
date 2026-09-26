@@ -34,6 +34,7 @@ import (
 	featureauthz "github.com/tadoku/tadoku/services/tadoku-api/features/authz"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/contests"
 	featureflagsservice "github.com/tadoku/tadoku/services/tadoku-api/features/featureflags"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/languages"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/logs"
@@ -46,7 +47,6 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 	valkeyinfra "github.com/tadoku/tadoku/services/tadoku-api/infra/valkey"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
-	"github.com/tadoku/tadoku/services/tadoku-api/storage/postgres/asyncoutbox"
 	transporthttp "github.com/tadoku/tadoku/services/tadoku-api/transport/http"
 	valkeygo "github.com/valkey-io/valkey-go"
 )
@@ -346,7 +346,7 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	auditService := featureaudit.NewService(featureaudit.NewRepository(pool))
 	announcementsRepository := announcements.NewAnnouncementsRepository(pool)
 	contestsRepository := contests.NewContestsRepository(pool)
-	outboxRepository := asyncoutbox.NewRepository(pool)
+	jobQueue := jobqueue.NewService(jobqueue.NewRepository(pool))
 	languagesRepository := languages.NewLanguagesRepository(pool)
 	leaderboardRepository := leaderboard.NewRepository(pool)
 	logsRepository := logs.NewLogsRepository(pool)
@@ -356,13 +356,13 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	scoringRepository := scoring.NewScoringRepository(pool)
 	userCache := profile.NewUserCache(kratosIdentities)
 	announcementsService := announcements.NewService(announcementsRepository)
-	contestsService := contests.NewService(contestsRepository, outboxRepository)
+	contestsService := contests.NewService(contestsRepository)
 	languagesService := languages.NewService(languagesRepository)
 	leaderboardService := leaderboard.NewService(leaderboardRepository, valkeyClient, cfg.ValkeyTimeout, cfg.LeaderboardCachePrefix)
 	if cfg.LeaderboardSharedReadiness {
 		leaderboardService.EnableSharedReadiness()
 	}
-	logsService := logs.NewService(logsRepository, outboxRepository, cfg.ScoringEngineEnabled)
+	logsService := logs.NewService(logsRepository, cfg.ScoringEngineEnabled)
 	pagesService := pages.NewService(pagesRepository)
 	postsService := posts.NewService(postsRepository)
 	profileService := profile.NewService(profileRepository, userCache, roleService, kratosIdentities)
@@ -374,6 +374,7 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	scoringObserver := observability.NewScoringObserver(metrics, logger, cfg.ScoringEngineEnabled)
 	scoringService := scoring.NewService(scoringRepository, cfg.ScoringEngineEnabled, scoringObserver)
 	api := app.New(app.Dependencies{
+		JobQueue:      jobQueue,
 		Announcements: announcementsService,
 		Audit:         auditService,
 		Authorization: authzService,

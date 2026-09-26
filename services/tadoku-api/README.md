@@ -1,8 +1,9 @@
 # Tadoku API
 
 Tadoku API is Tadoku's only backend. It serves every public HTTP operation,
-which the gateway exposes under `/api`, owns the PostgreSQL schema and runs the
-leaderboard outbox worker. Its canonical contract is
+which the gateway exposes under `/api`, and owns the PostgreSQL schema. A
+separate `tadoku-worker` process runs its typed background jobs. Its canonical
+HTTP contract is
 [`spec/openapi.yaml`](spec/openapi.yaml).
 
 ## Commands

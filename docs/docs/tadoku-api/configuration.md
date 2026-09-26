@@ -32,13 +32,13 @@ environment variables. Development values are in
   `API_POSTGRES_SSLMODE`. A single `API_POSTGRES_URL` is rejected.
 - `API_POSTGRES_MAX_CONNECTIONS` (default 4, validated range 1–32).
 
-### Valkey and the leaderboard worker
+### Valkey and leaderboard caches
 
 - `API_VALKEY_URL`, one standalone TCP URL accepted by `valkey-go`.
 - `API_VALKEY_TIMEOUT` (default 1s), the positive bound for each connection and
   handshake attempt and the established-connection keepalive and I/O interval.
 - `API_LEADERBOARD_OUTBOX_ENABLED` (default `false`) runs the
-  [leaderboard outbox worker](#leaderboard-outbox-worker).
+  [legacy drain worker](#legacy-leaderboard-drain).
 - `API_LEADERBOARD_CACHE_PREFIX` (default empty) prefixes every leaderboard
   cache key and scopes the legacy embedded worker's marker scan to that namespace. A
   non-empty prefix must be unique for each database sharing a Valkey instance,
@@ -215,37 +215,65 @@ identity, response, err := kratos.IdentityApi.GetIdentity(ctx, identityID).Execu
 - The total client timeout and any earlier caller deadline bound requests;
   caller cancellation also interrupts response-body reads.
 
-## Leaderboard outbox worker
+## Separate job worker
 
-When `API_LEADERBOARD_OUTBOX_ENABLED` is set:
+Independently deployed migration 0032 must provide the `jobs` table
+before this runtime is deployed. See [Database migrations](./database.md#migrations)
+for the compatibility gate and [Successful-job retention](./jobs.md#successful-job-retention)
+for the automatic three-calendar-month policy. Failed records are retained
+indefinitely.
 
-1. The worker scans existing leaderboard cache markers in its configured prefix
-   with bounded Valkey `SCAN` calls and invalidates each recognized global,
-   yearly and contest key through a generation fence. It then logs
-   `leaderboard cache reconciled`.
-2. Leaderboard reads use PostgreSQL until reconciliation and the initial outbox
-   drain succeed.
-3. The worker claims pending `leaderboard_outbox` rows with
-   `for update skip locked`, invalidates their affected cache keys, and marks
-   the rows processed in the same PostgreSQL transaction only after Valkey
-   succeeds. Failed batches stay pending and are retried. It logs
-   `leaderboard outbox batch processed` after each non-empty committed batch
-   and `leaderboard outbox ready` once the initial drain completes.
+`cmd/tadoku-worker` constructs `app/worker.Application` with the queue and
+business features. Its immutable typed registration drives both claiming and
+dispatch; [Jobs and worker](./jobs.md) describes publication, execution policies,
+replay and consumer-first version migrations.
 
-Log and registration writes publish only typed `jobs` tasks in their
-business transaction. The embedded worker still drains existing
-`leaderboard_outbox` rows; the separate worker consumes `jobs`.
+The worker uses `WORKER_POSTGRES_*` split connection configuration,
+`WORKER_POSTGRES_MAX_CONNECTIONS` (default 4, range 1–32), `WORKER_VALKEY_URL`,
+`WORKER_VALKEY_TIMEOUT` (default 1s), `WORKER_LEADERBOARD_CACHE_PREFIX`,
+`WORKER_DIAL_TIMEOUT` (default 3s), `WORKER_CONCURRENCY` (default 4), and
+`WORKER_SHUTDOWN_TIMEOUT` (default 15s). Concurrency and shutdown timeout must
+be positive; the command loads and validates both before application startup.
+Private health and metrics listeners default to `WORKER_PORT=8000` and
+`WORKER_METRICS_PORT=9090`. It has no public route. The API and worker must use
+the same database and cache prefix, with a unique prefix per database sharing
+Valkey.
 
-For a mixed-version rollout, first run the separate worker and verify typed
-jobs are processed. Confirm every API replica has stopped legacy writes and
-the pending legacy row count reaches zero before disabling the embedded
-worker. Keep the legacy table until a later standalone migration.
+The worker reconciles leaderboard cache state at startup and invalidates caches
+through registered jobs. API cache reads use their existing cache and generation
+checks; cache misses and unavailable Valkey fall back to PostgreSQL. Worker Pod
+readiness reports whether the execution loop can operate, independently of
+individual job success. Monitor queued and failed jobs because cached results
+can remain stale while invalidation work is outstanding.
+
+Global and per-type concurrency are per process. Handler cancellation does not
+release its slot until it returns. On shutdown the application stops claiming,
+drains within its configured bound, then cancels remaining work and joins it
+before provider resources close. A noncooperative handler can delay exit; see
+[Execution and failure guarantees](./jobs.md#execution-and-failure-guarantees).
+
+## Legacy leaderboard drain
+
+`API_LEADERBOARD_OUTBOX_ENABLED` retains the embedded legacy consumer for a
+staged cutover. When enabled, it reconciles existing cache markers, then claims
+pending `leaderboard_outbox` records, invalidates affected cache keys and marks
+rows processed only after Valkey succeeds. Failed batches remain pending.
+Its process-local readiness flag covers only its own legacy work.
+
+Producing features return typed jobs. API applications persist every job into
+`jobs` in the same business transaction; current producers no longer
+write the legacy table. For the staged rollout, first run the separate worker
+and a dual-publishing API version. Verify the separate worker processes jobs
+before deploying generic-only publication. After every replica stops legacy
+publication and the legacy pending count reaches zero, disable the embedded
+worker. The development configuration uses that final mode. Keep the old table
+until a later standalone migration after old code is gone.
 
 A cache miss rebuilds from PostgreSQL only if its generation has not changed,
-and cached reads recheck that generation before returning. The worker has
-caught up when it has logged `leaderboard outbox ready` and
+and cached reads recheck that generation before returning. The legacy drain is
+complete only after every producer has stopped old writes and
 `select count(*) from leaderboard_outbox where processed_at is null` returns
-zero.
+zero. Inspect the separate queue independently for outstanding and failed jobs.
 
 ## Metrics
 

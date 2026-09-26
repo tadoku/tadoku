@@ -174,7 +174,9 @@ return app.Run(ctx)
 constructing the application. `WORKER_CONCURRENCY` defaults to four slots and
 `WORKER_SHUTDOWN_TIMEOUT` defaults to fifteen seconds; both must be positive.
 Pass those validated values explicitly in `Config`. Startup can also provide
-the process `Logger` and `Metrics`. Handler `Policy` values must be positive.
+the process `Logger` and `Metrics`. Handler
+`Policy.Timeout` must be positive, `Policy.Concurrency` must be 1–100 and
+`Policy.MaxAttempts` must be 1–2,147,483,647, matching the queue boundary.
 Keep registration and handler signatures in the worker application. Startup
 constructs the application and its external resources.
 
@@ -191,8 +193,10 @@ Keep the slot occupied until the handler actually returns. Provider calls must
 have bounds and honor cancellation. Adding replicas multiplies the process
 caps; it does not create a distributed global concurrency limit.
 
-Claims and renewals use PostgreSQL wall time. Queue acknowledgments require a
-matching, unexpired claim token. Losing a lease cancels the handler, and expired
+Claims and renewals use PostgreSQL wall time. Renewal stops at the handler
+deadline; full lease renewals preserve a live claim briefly so the worker can
+record a fenced timeout failure or retry afterward. Queue acknowledgments
+require a matching, unexpired claim token. Losing a lease cancels the handler, and expired
 claims can be recovered. Fencing prevents a stale owner from changing queue
 state; it cannot reverse an external side effect. Business scheduling and audit
 time use the normal `timex` conventions.

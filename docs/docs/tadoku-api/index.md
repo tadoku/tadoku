@@ -10,8 +10,9 @@ Read this when you change backend behavior, the public HTTP contract or the
 database schema, and need to know which page covers it.
 
 Tadoku API (`services/tadoku-api/`) is the only backend. It serves every public
-HTTP operation, which the gateway exposes under `/api`, and it runs the
-leaderboard outbox worker that keeps the Valkey leaderboard caches current.
+HTTP operation, which the gateway exposes under `/api`. A separate
+`tadoku-worker` process executes its typed background jobs, beginning with
+leaderboard cache invalidation.
 
 ## Public API domains
 
@@ -41,6 +42,8 @@ All paths are relative to `services/tadoku-api/`.
 | `app/` | Application operations: actor authorization, cross-feature locks and transactions, and composition of feature results. |
 | `features/<feature>/` | One feature: a service that owns its business decisions and a repository that queries and maps its rows. |
 | `generated/` | Generated code: sqlc queries per feature (`generated/sqlc/<feature>/`) and HTTP bindings (`generated/openapi/`). |
+| `app/worker/` | Typed handlers, registration, bounded execution and feature composition. |
+| `cmd/tadoku-worker/` | Worker composition root and private health/metrics lifecycle. |
 | `domain/<concept>/` | Business values and pure rules shared by several features. |
 | `internal/` | Technical support: errors (`errx`), request identity (`identity`), actor permissions (`permissions`), business time (`timex`), callback authentication (`callbackauth`) and test fixtures (`test*`). |
 | `infra/` | Infrastructure adapters: the PostgreSQL pool and transactions (`postgres`), the raw Valkey client (`valkey`), the Flipt management client (`fliptmanagement`) and scoring observability (`observability`). |

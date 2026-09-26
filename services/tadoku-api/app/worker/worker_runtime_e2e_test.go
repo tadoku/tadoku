@@ -573,3 +573,39 @@ func TestWorkerRetainsSlotUntilCanceledHandlerReturns(t *testing.T) {
 		return failed == 2, err
 	})
 }
+
+func TestWorkerRenewedDeadlineSchedulesRetry(t *testing.T) {
+	f := newWorkerFixture(t)
+	handlers, err := newRegistry(handle(func(ctx context.Context, _ jobs.InvalidateOfficialLeaderboardV1) error {
+		<-ctx.Done()
+		return ctx.Err()
+	}, Policy{Concurrency: 1, Timeout: 400 * time.Millisecond, MaxAttempts: 2}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	repository := jobqueue.NewRepository(f.db)
+	runtime := &runner{
+		queue:    jobqueue.NewService(repository),
+		handlers: handlers,
+		logger:   slog.New(slog.NewTextHandler(io.Discard, nil)),
+		metrics:  NewMetrics(prometheus.NewRegistry()),
+	}
+	id := insertTask(t, f.db, string(jobs.InvalidateOfficial), `{"year":2025}`, false)
+	spec := policy{typeName: jobs.InvalidateOfficial, limit: 1, timeout: 400 * time.Millisecond, lease: 300 * time.Millisecond, maxAttempts: 2}
+	claims, err := repository.Claim(t.Context(), spec.typeName, 1, spec.lease, spec.maxAttempts)
+	if err != nil || len(claims) != 1 {
+		t.Fatalf("claim deadline job: count=%d error=%v", len(claims), err)
+	}
+
+	if err := runtime.process(t.Context(), claims[0], spec); !errors.Is(err, context.DeadlineExceeded) {
+		t.Errorf("deadline handler error = %v", err)
+	}
+
+	var state, code string
+	if err := f.db.QueryRow(t.Context(), `select state, coalesce(last_error, '') from async_outbox where id = $1`, id).Scan(&state, &code); err != nil {
+		t.Fatal(err)
+	}
+	if state != "pending" || code != "deadline_exceeded" {
+		t.Fatalf("renewed deadline did not schedule retry: state=%q code=%q", state, code)
+	}
+}

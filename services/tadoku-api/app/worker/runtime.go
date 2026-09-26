@@ -278,12 +278,15 @@ func (r *runner) renew(ctx context.Context, cancelHandler context.CancelFunc, ta
 		case <-timer.C:
 			remaining := time.Until(maximum)
 			renewBudget := time.Until(leaseExpiresAt) - margin
-			if remaining <= 0 || renewBudget <= 0 {
+			if remaining <= 0 {
+				return nil
+			}
+			if renewBudget <= 0 {
 				cancelHandler()
 				return context.DeadlineExceeded
 			}
 			renewCtx, stop := context.WithTimeout(ctx, renewBudget)
-			updatedExpiry, held, err := r.queue.Renew(renewCtx, task, min(spec.lease, remaining))
+			updatedExpiry, held, err := r.queue.Renew(renewCtx, task, spec.lease)
 			stop()
 			if ctx.Err() != nil {
 				return nil

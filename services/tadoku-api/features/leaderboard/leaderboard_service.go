@@ -18,10 +18,9 @@ import (
 )
 
 type Service struct {
-	repository  *Repository
-	store       *Store
-	cacheReady  atomic.Bool
-	sharedReady atomic.Bool
+	repository *Repository
+	store      *Store
+	cacheReady atomic.Bool
 }
 
 func NewService(repository *Repository, client valkeygo.Client, operationTimeout time.Duration, cachePrefix string) *Service {
@@ -31,23 +30,6 @@ func NewService(repository *Repository, client valkeygo.Client, operationTimeout
 	}
 	service.cacheReady.Store(true)
 	return service
-}
-
-func (s *Service) EnableSharedReadiness() { s.sharedReady.Store(true) }
-
-func (s *Service) cacheAvailable(ctx context.Context) bool {
-	if !s.cacheReady.Load() {
-		return false
-	}
-	if !s.sharedReady.Load() {
-		return true
-	}
-	ready, err := s.store.readiness(ctx)
-	if err != nil {
-		slog.WarnContext(ctx, "leaderboard readiness unavailable; falling back to Postgres", "error", err)
-		return false
-	}
-	return ready
 }
 
 func (s *Service) ReconcileCache(ctx context.Context) (int, error) { return s.store.reconcile(ctx) }
@@ -69,14 +51,6 @@ func (s *Service) InvalidateOfficial(ctx context.Context, year int16) error {
 	return s.store.invalidate(ctx, s.store.cacheKey(globalKey))
 }
 
-func (s *Service) PublishCacheReadiness(ctx context.Context) error {
-	return s.store.publishReadiness(ctx)
-}
-
-func (s *Service) RevokeCacheReadiness(ctx context.Context) error {
-	return s.store.revokeReadiness(ctx)
-}
-
 func (s *Service) FetchContest(ctx context.Context, request ContestRequest) (*Result, error) {
 	request.Request = normalize(request.Request)
 	if err := validateActivity(request.ActivityID); err != nil {
@@ -85,7 +59,7 @@ func (s *Service) FetchContest(ctx context.Context, request ContestRequest) (*Re
 	if filtered(request.Request) {
 		return s.fetchContestFromPostgres(ctx, request)
 	}
-	if !s.cacheAvailable(ctx) {
+	if !s.cacheReady.Load() {
 		return s.fetchContestFromPostgres(ctx, request)
 	}
 
@@ -121,7 +95,7 @@ func (s *Service) FetchYearly(ctx context.Context, request YearlyRequest) (*Resu
 	if filtered(request.Request) {
 		return postgresResult(s.repository.yearly(ctx, request))
 	}
-	if !s.cacheAvailable(ctx) {
+	if !s.cacheReady.Load() {
 		return postgresResult(s.repository.yearly(ctx, request))
 	}
 
@@ -157,7 +131,7 @@ func (s *Service) FetchGlobal(ctx context.Context, request Request) (*Result, er
 	if filtered(request) {
 		return postgresResult(s.repository.global(ctx, request))
 	}
-	if !s.cacheAvailable(ctx) {
+	if !s.cacheReady.Load() {
 		return postgresResult(s.repository.global(ctx, request))
 	}
 

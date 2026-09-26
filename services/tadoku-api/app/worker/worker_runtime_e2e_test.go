@@ -156,9 +156,10 @@ func TestWorkerCancelsHandlerAfterLostLeaseAndReclaims(t *testing.T) {
 		release:  release,
 		canceled: make(chan struct{}, 1),
 	}
-	startWorker(t, f.runner(t, blocked, 8*time.Second, 2*time.Second))
+	runner := f.runner(t, blocked, 8*time.Second, 2*time.Second)
+	startWorker(t, runner)
 	waitFor(t, func() (bool, error) {
-		return serviceCacheReady(t.Context(), f.client, f.prefix+"leaderboard:ready")
+		return runner.Ready(), nil
 	})
 	id := insertTask(t, f.db, string(jobs.LeaderboardInvalidateContestV1), fmt.Sprintf(`{"contest_id":%q}`, uuid.NewString()), false)
 	select {
@@ -245,7 +246,7 @@ func TestWorkerDeadlineExhaustionAndReplay(t *testing.T) {
 	})
 }
 
-func TestWorkerShutdownCancelsActiveTaskAndRevokesReadiness(t *testing.T) {
+func TestWorkerShutdownCancelsActiveTask(t *testing.T) {
 	f := newWorkerFixture(t)
 	release := make(chan struct{})
 	var released sync.Once
@@ -270,7 +271,7 @@ func TestWorkerShutdownCancelsActiveTaskAndRevokesReadiness(t *testing.T) {
 		}
 	})
 	waitFor(t, func() (bool, error) {
-		return serviceCacheReady(t.Context(), f.client, f.prefix+"leaderboard:ready")
+		return runner.Ready(), nil
 	})
 	id := insertTask(t, f.db, string(jobs.LeaderboardInvalidateContestV1), fmt.Sprintf(`{"contest_id":%q}`, uuid.NewString()), false)
 	select {
@@ -291,9 +292,8 @@ func TestWorkerShutdownCancelsActiveTaskAndRevokesReadiness(t *testing.T) {
 	if state == "completed" {
 		t.Error("canceled task was completed")
 	}
-	ready, err := serviceCacheReady(t.Context(), f.client, f.prefix+"leaderboard:ready")
-	if err != nil || ready {
-		t.Errorf("cache readiness after shutdown = %t, %v; want false", ready, err)
+	if runner.Ready() {
+		t.Error("worker remains ready after shutdown")
 	}
 }
 
@@ -418,9 +418,10 @@ func TestWorkerFairClaimsWithoutPrefetch(t *testing.T) {
 		started: make(chan struct{}, 4),
 		release: release,
 	}
-	startWorker(t, f.runner(t, blocked, 8*time.Second, 2*time.Second))
+	runner := f.runner(t, blocked, 8*time.Second, 2*time.Second)
+	startWorker(t, runner)
 	waitFor(t, func() (bool, error) {
-		return serviceCacheReady(t.Context(), f.client, f.prefix+"leaderboard:ready")
+		return runner.Ready(), nil
 	})
 
 	contestIDs := make([]int64, 3)
@@ -475,7 +476,7 @@ func TestWorkerGlobalLimitLeavesDueRowsUnclaimed(t *testing.T) {
 	}
 	startWorker(t, application)
 	waitFor(t, func() (bool, error) {
-		return serviceCacheReady(t.Context(), f.client, f.prefix+"leaderboard:ready")
+		return application.Ready(), nil
 	})
 	ids := make([]int64, 0, 6)
 	for range 3 {
@@ -535,7 +536,7 @@ func TestWorkerRetainsSlotUntilCanceledHandlerReturns(t *testing.T) {
 	second := insertTask(t, f.db, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":2026}`, false)
 	ctx, cancel := context.WithCancel(t.Context())
 	done := make(chan struct{})
-	go func() { defer close(done); runtime.run(ctx, func(context.Context, bool, bool) {}) }()
+	go func() { defer close(done); runtime.run(ctx) }()
 	t.Cleanup(func() {
 		releaseAll()
 		cancel()

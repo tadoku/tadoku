@@ -15,7 +15,6 @@ const (
 	contestPrefix = "leaderboard:contest:"
 	yearlyPrefix  = "leaderboard:yearly:"
 	globalKey     = "leaderboard:global"
-	readinessKey  = "leaderboard:ready"
 )
 
 var rebuildScript = valkeygo.NewLuaScript(`
@@ -51,34 +50,6 @@ func NewStore(client valkeygo.Client, operationTimeout time.Duration, cachePrefi
 }
 
 func (s *Store) cacheKey(key string) string { return s.cachePrefix + key }
-
-func (s *Store) readiness(ctx context.Context) (bool, error) {
-	ctx, cancel := context.WithTimeout(ctx, s.operationTimeout)
-	defer cancel()
-	count, err := s.client.Do(ctx, s.client.B().Exists().Key(s.cacheKey(readinessKey)).Build()).AsInt64()
-	if err != nil {
-		return false, fmt.Errorf("check leaderboard cache readiness: %w", err)
-	}
-	return count == 1, nil
-}
-
-func (s *Store) publishReadiness(ctx context.Context) error {
-	ctx, cancel := context.WithTimeout(ctx, s.operationTimeout)
-	defer cancel()
-	if err := s.client.Do(ctx, s.client.B().Arbitrary("SET", s.cacheKey(readinessKey), "1", "EX", "5").Build()).Error(); err != nil {
-		return fmt.Errorf("publish leaderboard cache readiness: %w", err)
-	}
-	return nil
-}
-
-func (s *Store) revokeReadiness(ctx context.Context) error {
-	ctx, cancel := context.WithTimeout(ctx, s.operationTimeout)
-	defer cancel()
-	if err := s.client.Do(ctx, s.client.B().Del().Key(s.cacheKey(readinessKey)).Build()).Error(); err != nil {
-		return fmt.Errorf("revoke leaderboard cache readiness: %w", err)
-	}
-	return nil
-}
 
 func (s *Store) fetchPage(ctx context.Context, key string, currentPage, pageSize int) (*page, bool, error) {
 	ctx, cancel := context.WithTimeout(ctx, s.operationTimeout)

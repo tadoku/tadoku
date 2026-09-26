@@ -33,12 +33,7 @@ type runner struct {
 	ready           atomic.Bool
 }
 
-type result struct {
-	typeName jobs.Type
-	err      error
-}
-
-func (r *runner) run(ctx context.Context, maintain func(context.Context, bool, bool)) {
+func (r *runner) run(ctx context.Context) {
 	workCtx, cancelWork := context.WithCancel(context.Background())
 	defer cancelWork()
 
@@ -46,7 +41,7 @@ func (r *runner) run(ctx context.Context, maintain func(context.Context, bool, b
 	for _, entry := range r.handlers.ordered {
 		capacity += entry.spec.limit
 	}
-	results := make(chan result, min(r.concurrency, capacity))
+	results := make(chan jobs.Type, min(r.concurrency, capacity))
 	active := make(map[jobs.Type]int, len(r.handlers.ordered))
 	var running sync.WaitGroup
 	ticker := time.NewTicker(500 * time.Millisecond)
@@ -60,7 +55,6 @@ func (r *runner) run(ctx context.Context, maintain func(context.Context, bool, b
 		if ctx.Err() != nil {
 			break
 		}
-		maintain(ctx, totalActive(active) == 0, false)
 
 		claimHealthy := true
 		for offset := range r.handlers.ordered {
@@ -85,15 +79,14 @@ func (r *runner) run(ctx context.Context, maintain func(context.Context, bool, b
 				running.Add(1)
 				go func() {
 					defer running.Done()
-					err := r.process(workCtx, task, spec)
-					results <- result{typeName: spec.typeName, err: err}
+					_ = r.process(workCtx, task, spec)
+					results <- spec.typeName
 				}()
 			}
 		}
 		rotation = (rotation + 1) % len(r.handlers.ordered)
 		r.ready.Store(claimHealthy)
 
-		maintain(ctx, totalActive(active) == 0, false)
 		count, err := r.updateMetrics(ctx)
 		if err != nil {
 			r.logger.Warn("inspect async work backlog", "error", err)
@@ -107,11 +100,8 @@ func (r *runner) run(ctx context.Context, maintain func(context.Context, bool, b
 		select {
 		case <-ctx.Done():
 		case completed := <-results:
-			active[completed.typeName]--
-			r.metrics.InFlight.WithLabelValues(string(completed.typeName)).Dec()
-			if completed.err != nil {
-				maintain(ctx, false, true)
-			}
+			active[completed]--
+			r.metrics.InFlight.WithLabelValues(string(completed)).Dec()
 		case <-ticker.C:
 		case <-cleanupTicker.C:
 			r.cleanupCompleted(ctx)

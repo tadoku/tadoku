@@ -69,61 +69,27 @@ func (a *Application) InvalidateOfficialLeaderboard(ctx context.Context, job job
 func (a *Application) Ready() bool { return a.runner.ready.Load() }
 
 func (a *Application) Run(ctx context.Context) error {
-	if err := a.leaderboard.RevokeCacheReadiness(ctx); err != nil {
-		a.runner.logger.Warn("revoke leaderboard readiness at startup", "error", err)
+	poll := time.NewTicker(500 * time.Millisecond)
+	defer poll.Stop()
+	for {
+		if ctx.Err() != nil {
+			return nil
+		}
+		count, err := a.leaderboard.ReconcileCache(ctx)
+		if err == nil {
+			a.runner.logger.Info("leaderboard cache reconciled", "invalidated", count)
+			break
+		}
+		a.runner.logger.Error("reconcile leaderboard cache", "error", err)
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-poll.C:
+		}
 	}
-	defer func() {
-		shutdownCtx, stop := context.WithTimeout(context.Background(), 5*time.Second)
-		defer stop()
-		if err := a.leaderboard.RevokeCacheReadiness(shutdownCtx); err != nil {
-			a.runner.logger.Warn("revoke leaderboard readiness at shutdown", "error", err)
-		}
-	}()
-	reconciled := false
-	a.runner.run(ctx, func(ctx context.Context, idle, failed bool) {
-		if failed {
-			reconciled = false
-		}
-		if idle && !reconciled {
-			count, err := a.leaderboard.ReconcileCache(ctx)
-			if err != nil {
-				a.runner.logger.Error("reconcile leaderboard cache", "error", err)
-			} else {
-				reconciled = true
-				a.runner.logger.Info("leaderboard cache reconciled", "invalidated", count)
-			}
-		}
-		if idle && reconciled {
-			if err := a.refreshReadiness(ctx); err != nil {
-				a.runner.logger.Error("refresh leaderboard readiness", "error", err)
-			}
-		} else if err := a.leaderboard.RevokeCacheReadiness(ctx); err != nil {
-			a.runner.logger.Warn("revoke leaderboard readiness while work is active", "error", err)
-		}
-	})
-	return nil
-}
 
-func (a *Application) refreshReadiness(ctx context.Context) error {
-	unsupported, err := a.runner.queue.UnsupportedStats(ctx, a.runner.handlers.types())
-	if err != nil {
-		_ = a.leaderboard.RevokeCacheReadiness(ctx)
-		return err
-	}
-	if unsupported.Pending+unsupported.Running+unsupported.Failed > 0 {
-		return a.leaderboard.RevokeCacheReadiness(ctx)
-	}
-	for _, name := range a.runner.handlers.types() {
-		count, err := a.runner.queue.Outstanding(ctx, name)
-		if err != nil {
-			_ = a.leaderboard.RevokeCacheReadiness(ctx)
-			return err
-		}
-		if count > 0 {
-			return a.leaderboard.RevokeCacheReadiness(ctx)
-		}
-	}
-	return a.leaderboard.PublishCacheReadiness(ctx)
+	a.runner.run(ctx)
+	return nil
 }
 
 func Replay(ctx context.Context, queue *jobqueue.Service, id int64, actor, reason string) (int64, error) {

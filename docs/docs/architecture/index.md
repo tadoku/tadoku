@@ -18,7 +18,7 @@ documented here.
 | Component | Role | Defined in |
 | --- | --- | --- |
 | Tadoku API | Serves every public HTTP operation and publishes typed jobs in the business transaction. | `services/tadoku-api/`, `k8s/dev/base/services/tadoku-api.yaml` |
-| Tadoku worker | Executes registered jobs, composes feature operations and maintains leaderboard cache readiness. | `services/tadoku-api/cmd/tadoku-worker/`, `k8s/dev/base/services/tadoku-worker.yaml` |
+| Tadoku worker | Executes registered jobs, composes feature operations and invalidates leaderboard caches. | `services/tadoku-api/cmd/tadoku-worker/`, `k8s/dev/base/services/tadoku-worker.yaml` |
 | webv2 | Main site: logging, contests, leaderboards and content | `frontend/apps/webv2/`, `k8s/dev/base/frontend-webv2/` |
 | auth | Account portal built on Kratos self-service flows | `frontend/apps/auth/`, `k8s/dev/base/frontend-auth/` |
 | admin | Administration, moderation and CMS | `frontend/apps/admin/`, `k8s/dev/base/frontend-admin/` |

@@ -283,18 +283,16 @@ consistent data across them.
 Each branch API is paired with a private `tadoku-worker` against the same
 branch database. The API writes returned typed jobs to that database's
 `jobs`; the worker claims only that database's work. Both workloads use
-`dev:${DEV_ROUTE}:` as their leaderboard cache prefix, keeping cache keys,
-readiness markers and startup scans separate from the base and other branches.
+`dev:${DEV_ROUTE}:` as their leaderboard cache prefix, keeping cache keys
+and startup scans separate from the base and other branches.
 The base pair uses unprefixed keys.
 
 - Keep the prefix unique per route when changing overlay routing.
-- Branch configuration disables the embedded legacy worker and enables shared
-  cache readiness. The separate worker publishes the prefix-scoped
-  `leaderboard:ready` marker; missing, expired or unreadable markers make API
-  reads fall back to PostgreSQL.
-- Stopping a worker leaves recoverable queued work and eventually removes cache
-  readiness. Restarting the paired worker restores processing and reconciles
-  caches before cached reads resume.
+- Branch configuration disables the embedded legacy worker. The separate worker
+  invalidates leaderboard caches after processing queued jobs.
+- Stopping a worker leaves recoverable queued work; cached results can remain
+  stale until invalidation resumes. Restarting the paired worker reconciles
+  caches and resumes processing.
 - Job producers and consumers share versioned contracts. Follow
   [Jobs and worker](../tadoku-api/jobs.md#migrate-v1-to-v2) before changing a
   payload; pairing workloads does not make incompatible versions safe.

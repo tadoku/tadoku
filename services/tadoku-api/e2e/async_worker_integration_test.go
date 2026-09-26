@@ -29,7 +29,6 @@ func TestAPIWriteStandaloneWorkerLeaderboardRead(t *testing.T) {
 
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	apiLeaderboard := leaderboard.NewService(leaderboard.NewRepository(api.db.Pool), leaderboardValkey.client, time.Second, "")
-	apiLeaderboard.EnableSharedReadiness()
 	handler, _, _, err := newTestRouterWithLeaderboardService(t.Context(), api.db.Pool, api.db.Pool, api.keto, api.kratos, logger, true, apiLeaderboard)
 	if err != nil {
 		t.Fatal(err)
@@ -91,20 +90,19 @@ func TestAPIWriteStandaloneWorkerLeaderboardRead(t *testing.T) {
 	tick := time.NewTicker(50 * time.Millisecond)
 	defer tick.Stop()
 	for {
-		var completed int
-		if err := api.db.Pool.QueryRow(t.Context(), `select count(*) from jobs where state = 'completed'`).Scan(&completed); err != nil {
+		var completed, failed int
+		if err := api.db.Pool.QueryRow(t.Context(), `select count(*) filter (where state = 'completed'), count(*) filter (where state = 'failed') from jobs`).Scan(&completed, &failed); err != nil {
 			t.Fatal(err)
 		}
-		ready, err := leaderboardValkey.client.Do(t.Context(), leaderboardValkey.client.B().Exists().Key("leaderboard:ready").Build()).AsInt64()
-		if err != nil {
-			t.Fatal(err)
+		if failed != 0 {
+			t.Fatalf("worker failed %d tasks; completed=%d queued=%d", failed, completed, queued)
 		}
-		if completed == queued && ready == 1 {
+		if completed == queued {
 			break
 		}
 		select {
 		case <-deadline.C:
-			t.Fatalf("worker did not complete %d tasks and publish readiness; completed=%d ready=%d", queued, completed, ready)
+			t.Fatalf("worker did not complete %d tasks; completed=%d failed=%d outstanding=%d", queued, completed, failed, queued-completed-failed)
 		case <-tick.C:
 		}
 	}

@@ -29,7 +29,7 @@ and the Tadoku API rejects writes and profile synchronisation for users whose
   `services/tadoku-api/migrations/`, so connect with the `search_path` that the
   Tadoku API uses.
 - The independently deployed migration 0032 must be complete: the
-  queue is the `jobs` table. Follow the [table migration gate](../tadoku-api/jobs.md#table-migration)
+  queue is the `jobs` table. Follow the [migration deployment gate](../tadoku-api/database.md#migrations)
   before using this runbook; it does not support the old table name.
 - A running `tadoku-worker` release that registers both
   `leaderboard.invalidate_contest.v1` and

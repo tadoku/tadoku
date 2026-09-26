@@ -1,4 +1,3 @@
-// Package jobs defines durable messages shared by producers and workers.
 package jobs
 
 import (

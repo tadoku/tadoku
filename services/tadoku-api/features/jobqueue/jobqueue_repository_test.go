@@ -442,7 +442,6 @@ func TestEnqueueRejectsInvalidBatchBeforeInsertion(t *testing.T) {
 			if err := queue.Enqueue(ctx, valid, invalid); err == nil {
 				t.Fatal("accepted invalid batch")
 			}
-			// Even if the caller mishandles validation errors, no partial batch is written.
 			return nil
 		})
 		if err != nil {

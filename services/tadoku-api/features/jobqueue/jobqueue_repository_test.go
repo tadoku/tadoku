@@ -67,7 +67,7 @@ func TestEnqueueSharesBusinessTransaction(t *testing.T) {
 	if err := db.Pool.QueryRow(t.Context(), `select count(*) from business_mutation`).Scan(&business); err != nil {
 		t.Fatal(err)
 	}
-	if err := db.Pool.QueryRow(t.Context(), `select count(*) from async_outbox`).Scan(&queued); err != nil {
+	if err := db.Pool.QueryRow(t.Context(), `select count(*) from jobs`).Scan(&queued); err != nil {
 		t.Fatal(err)
 	}
 	if business != 0 || queued != 0 {
@@ -87,7 +87,7 @@ func TestClaimLimitsKnownTypesAndFencesExpiredLeases(t *testing.T) {
 			}
 		}
 	})
-	if _, err := db.Pool.Exec(t.Context(), `insert into async_outbox (task_type,payload,created_at,next_attempt_at)
+	if _, err := db.Pool.Exec(t.Context(), `insert into jobs (task_type,payload,created_at,next_attempt_at)
 		values ('future.task.v1','{}',$1,$1)`, outboxTestTime); err != nil {
 		t.Fatal(err)
 	}
@@ -122,7 +122,7 @@ func TestClaimLimitsKnownTypesAndFencesExpiredLeases(t *testing.T) {
 			t.Errorf("unsupported claim = %v, %v", claims, err)
 		}
 	})
-	if _, err := db.Pool.Exec(t.Context(), `update async_outbox
+	if _, err := db.Pool.Exec(t.Context(), `update jobs
 		set lease_expires_at=clock_timestamp()-interval '1 second' where id=$1`, first.ID); err != nil {
 		t.Fatal(err)
 	}
@@ -148,7 +148,7 @@ func TestClaimLimitsKnownTypesAndFencesExpiredLeases(t *testing.T) {
 			t.Errorf("stale token complete = %v, %v", ok, err)
 		}
 	})
-	if _, err := db.Pool.Exec(t.Context(), `update async_outbox
+	if _, err := db.Pool.Exec(t.Context(), `update jobs
 		set lease_expires_at=clock_timestamp()-interval '1 second' where state='running'`); err != nil {
 		t.Fatal(err)
 	}
@@ -162,10 +162,10 @@ func TestClaimLimitsKnownTypesAndFencesExpiredLeases(t *testing.T) {
 		}
 	})
 	var failed, unknown string
-	if err := db.Pool.QueryRow(t.Context(), `select state from async_outbox where id=$1`, first.ID).Scan(&failed); err != nil {
+	if err := db.Pool.QueryRow(t.Context(), `select state from jobs where id=$1`, first.ID).Scan(&failed); err != nil {
 		t.Fatal(err)
 	}
-	if err := db.Pool.QueryRow(t.Context(), `select state from async_outbox where task_type='future.task.v1'`).Scan(&unknown); err != nil {
+	if err := db.Pool.QueryRow(t.Context(), `select state from jobs where task_type='future.task.v1'`).Scan(&unknown); err != nil {
 		t.Fatal(err)
 	}
 	if failed != "failed" || unknown != "pending" {
@@ -198,7 +198,7 @@ func TestReducedAttemptLimitFailsDuePendingTask(t *testing.T) {
 		}
 	})
 	var state, code string
-	if err := db.Pool.QueryRow(t.Context(), `select state,last_error from async_outbox`).Scan(&state, &code); err != nil {
+	if err := db.Pool.QueryRow(t.Context(), `select state,last_error from jobs`).Scan(&state, &code); err != nil {
 		t.Fatal(err)
 	}
 	if state != "failed" || code != "attempts_exhausted" {
@@ -223,7 +223,7 @@ func TestTransitionsRejectDatabaseExpiredLease(t *testing.T) {
 			t.Fatalf("claim = %v, %v", claims, err)
 		}
 	})
-	if _, err := db.Pool.Exec(t.Context(), `update async_outbox
+	if _, err := db.Pool.Exec(t.Context(), `update jobs
 		set lease_expires_at=clock_timestamp()-interval '1 second' where state='running'`); err != nil {
 		t.Fatal(err)
 	}
@@ -264,7 +264,7 @@ func TestCompleteSkipsLockedClaim(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer tx.Rollback(t.Context())
-	if _, err := tx.Exec(t.Context(), `select id from async_outbox where id=$1 for update`, claim.ID); err != nil {
+	if _, err := tx.Exec(t.Context(), `select id from jobs where id=$1 for update`, claim.ID); err != nil {
 		t.Fatal(err)
 	}
 	ctx, cancel := context.WithTimeout(t.Context(), time.Second)
@@ -294,7 +294,7 @@ func TestClaimSkipsLockedRows(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer tx.Rollback(t.Context())
-	if _, err := tx.Exec(t.Context(), `select id from async_outbox where id=$1 for update`, lockedID); err != nil {
+	if _, err := tx.Exec(t.Context(), `select id from jobs where id=$1 for update`, lockedID); err != nil {
 		t.Fatal(err)
 	}
 
@@ -356,7 +356,7 @@ func TestRetryReplayAndRetention(t *testing.T) {
 		t.Fatalf("replay = %d, %v", replayID, err)
 	}
 	var replayOf int64
-	if err := db.Pool.QueryRow(t.Context(), `select replay_of_id from async_outbox where id=$1`, replayID).Scan(&replayOf); err != nil {
+	if err := db.Pool.QueryRow(t.Context(), `select replay_of_id from jobs where id=$1`, replayID).Scan(&replayOf); err != nil {
 		t.Fatal(err)
 	}
 	if replayOf != id {
@@ -371,7 +371,7 @@ func TestRetryReplayAndRetention(t *testing.T) {
 			t.Fatalf("complete replay = %v, %v", ok, err)
 		}
 	})
-	if _, err := db.Pool.Exec(t.Context(), `insert into async_outbox (task_type,payload,state,completed_at,created_at) values ('leaderboard.invalidate_official.v1','{}','completed',$1,$1)`, outboxTestTime); err != nil {
+	if _, err := db.Pool.Exec(t.Context(), `insert into jobs (task_type,payload,state,completed_at,created_at) values ('leaderboard.invalidate_official.v1','{}','completed',$1,$1)`, outboxTestTime); err != nil {
 		t.Fatal(err)
 	}
 	deleted, err := repo.CleanupCompleted(t.Context(), outboxTestTime.AddDate(0, 3, 0).Add(time.Minute), 10)
@@ -379,7 +379,7 @@ func TestRetryReplayAndRetention(t *testing.T) {
 		t.Errorf("cleanup deleted = %d, %v; want only unlinked completion", deleted, err)
 	}
 	var retained int
-	if err := db.Pool.QueryRow(t.Context(), `select count(*) from async_outbox where id=$1`, replayID).Scan(&retained); err != nil {
+	if err := db.Pool.QueryRow(t.Context(), `select count(*) from jobs where id=$1`, replayID).Scan(&retained); err != nil {
 		t.Fatal(err)
 	}
 	if retained != 1 {
@@ -449,7 +449,7 @@ func TestEnqueueRejectsInvalidBatchBeforeInsertion(t *testing.T) {
 		}
 	}
 	var count int
-	if err := db.Pool.QueryRow(t.Context(), `select count(*) from async_outbox`).Scan(&count); err != nil {
+	if err := db.Pool.QueryRow(t.Context(), `select count(*) from jobs`).Scan(&count); err != nil {
 		t.Fatal(err)
 	}
 	if count != 0 {
@@ -463,7 +463,7 @@ func TestEnqueueFailureRollsBackBusinessWrite(t *testing.T) {
 	if _, err := db.Pool.Exec(t.Context(), `create table business_mutation (id integer primary key)`); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := db.Pool.Exec(t.Context(), `alter table async_outbox add constraint reject_official_for_test check (task_type <> 'leaderboard.invalidate_official.v1')`); err != nil {
+	if _, err := db.Pool.Exec(t.Context(), `alter table jobs add constraint reject_official_for_test check (task_type <> 'leaderboard.invalidate_official.v1')`); err != nil {
 		t.Fatal(err)
 	}
 	err := postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
@@ -483,7 +483,7 @@ func TestEnqueueFailureRollsBackBusinessWrite(t *testing.T) {
 	if err := db.Pool.QueryRow(t.Context(), `select count(*) from business_mutation`).Scan(&business); err != nil {
 		t.Fatal(err)
 	}
-	if err := db.Pool.QueryRow(t.Context(), `select count(*) from async_outbox`).Scan(&queued); err != nil {
+	if err := db.Pool.QueryRow(t.Context(), `select count(*) from jobs`).Scan(&queued); err != nil {
 		t.Fatal(err)
 	}
 	if business != 0 || queued != 0 {
@@ -494,7 +494,7 @@ func TestEnqueueFailureRollsBackBusinessWrite(t *testing.T) {
 func TestUnsupportedStatsIncludesRunningAndFailedVersions(t *testing.T) {
 	db := outboxTestDB(t)
 	repo := NewRepository(db.Pool)
-	_, err := db.Pool.Exec(t.Context(), `insert into async_outbox (task_type, payload, state, claim_token, lease_expires_at, failed_at, completed_at)
+	_, err := db.Pool.Exec(t.Context(), `insert into jobs (task_type, payload, state, claim_token, lease_expires_at, failed_at, completed_at)
  values ('future.job.v2','{}','pending',null,null,null,null),
  ('future.job.v2','{}','running',gen_random_uuid(),clock_timestamp()-interval '1 second',null,null),
  ('future.job.v2','{}','failed',null,null,clock_timestamp(),null),
@@ -516,7 +516,7 @@ func TestReplayRequiresRegisteredVersion(t *testing.T) {
 	db := outboxTestDB(t)
 	repo := NewRepository(db.Pool)
 	var id int64
-	if err := db.Pool.QueryRow(t.Context(), `insert into async_outbox (task_type,payload,state,failed_at) values ('future.job.v2','{}','failed',clock_timestamp()) returning id`).Scan(&id); err != nil {
+	if err := db.Pool.QueryRow(t.Context(), `insert into jobs (task_type,payload,state,failed_at) values ('future.job.v2','{}','failed',clock_timestamp()) returning id`).Scan(&id); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := repo.Replay(t.Context(), id, "operator", "repair", []jobs.Type{jobs.InvalidateContest}); !errors.Is(err, ErrNotFailed) {
@@ -547,7 +547,7 @@ func TestCleanupCompletedRetainsThreeUTCCalendarMonths(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			db := outboxTestDB(t)
 			repo := NewRepository(db.Pool)
-			_, err := db.Pool.Exec(t.Context(), `insert into async_outbox (task_type,payload,state,completed_at)
+			_, err := db.Pool.Exec(t.Context(), `insert into jobs (task_type,payload,state,completed_at)
     values ('retention.test.v1','{}','completed',$1), ('retention.test.v1','{}','completed',$2), ('retention.test.v1','{}','completed',$3)`, tc.cutoff.Add(-time.Microsecond), tc.cutoff, tc.cutoff.Add(time.Microsecond))
 			if err != nil {
 				t.Fatal(err)
@@ -573,7 +573,7 @@ func TestCleanupCompletedRetainsThreeUTCCalendarMonths(t *testing.T) {
 				t.Fatal(err)
 			}
 			var retained int
-			if err := db.Pool.QueryRow(t.Context(), `select count(*) from async_outbox where completed_at >= $1`, tc.cutoff).Scan(&retained); err != nil {
+			if err := db.Pool.QueryRow(t.Context(), `select count(*) from jobs where completed_at >= $1`, tc.cutoff).Scan(&retained); err != nil {
 				t.Fatal(err)
 			}
 			if retained != 2 {
@@ -588,7 +588,7 @@ func TestCleanupCompletedExpiresSuccessfulReplayAndPreservesOtherStates(t *testi
 	repo := NewRepository(db.Pool)
 	now := time.Date(2026, 5, 31, 12, 0, 0, 0, time.UTC)
 	old := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
-	_, err := db.Pool.Exec(t.Context(), `insert into async_outbox (id,task_type,payload,state,created_at,next_attempt_at,failed_at,claim_token,lease_expires_at,completed_at,replay_of_id,replay_actor,replay_reason) values
+	_, err := db.Pool.Exec(t.Context(), `insert into jobs (id,task_type,payload,state,created_at,next_attempt_at,failed_at,claim_token,lease_expires_at,completed_at,replay_of_id,replay_actor,replay_reason) values
   (1,'retention.test.v1','{}','failed',$1,$1,$1,null,null,null,null,null,null),
   (2,'retention.test.v1','{}','completed',$1,$1,null,null,null,$1,1,'operator','repaired'),
   (3,'retention.test.v1','{}','pending',$1,$1,null,null,null,null,null,null,null),
@@ -604,7 +604,7 @@ func TestCleanupCompletedExpiresSuccessfulReplayAndPreservesOtherStates(t *testi
 		t.Fatalf("bounded cleanup = %d, %v", deleted, err)
 	}
 	var replayRetained int
-	if err := db.Pool.QueryRow(t.Context(), `select count(*) from async_outbox where id=2`).Scan(&replayRetained); err != nil {
+	if err := db.Pool.QueryRow(t.Context(), `select count(*) from jobs where id=2`).Scan(&replayRetained); err != nil {
 		t.Fatal(err)
 	}
 	if replayRetained != 0 {
@@ -615,7 +615,7 @@ func TestCleanupCompletedExpiresSuccessfulReplayAndPreservesOtherStates(t *testi
 		t.Fatalf("remaining cleanup = %d, %v", deleted, err)
 	}
 	var retained int
-	if err := db.Pool.QueryRow(t.Context(), `select count(*) from async_outbox where id in (1,3,4,6,7)`).Scan(&retained); err != nil {
+	if err := db.Pool.QueryRow(t.Context(), `select count(*) from jobs where id in (1,3,4,6,7)`).Scan(&retained); err != nil {
 		t.Fatal(err)
 	}
 	if retained != 5 {

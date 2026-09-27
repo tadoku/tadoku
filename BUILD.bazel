@@ -32,15 +32,16 @@ sh_binary(
     ],
 )
 
-# Pushes shared-release service images in one `bazel run //:push_images` invocation.
-# Used by CI (.github/workflows/build-bazel.yaml). The worker push stays
-# separate so its tag changes only when its own image digest changes.
+# Pushes all service images in one `bazel run //:push_images` invocation.
+# Used by CI (.github/workflows/build-bazel.yaml). Pushing an unchanged image
+# is a no-op, so a tag moves only when that image's own digest changes.
 sh_binary(
     name = "push_images",
     srcs = ["tools/ci/run_bazel_images.sh"],
     args = [
         "$(rlocationpath //services/image-webhook-gateway:push)",
         "$(rlocationpath //services/tadoku-api:push)",
+        "$(rlocationpath //services/tadoku-api/worker:push)",
         "$(rlocationpath //services/tadoku-api/migrations:push)",
         "$(rlocationpath //services/token-reflector:push)",
     ],
@@ -48,6 +49,7 @@ sh_binary(
         "//services/image-webhook-gateway:push",
         "//services/tadoku-api:push",
         "//services/tadoku-api/migrations:push",
+        "//services/tadoku-api/worker:push",
         "//services/token-reflector:push",
         "@bazel_tools//tools/bash/runfiles",
     ],

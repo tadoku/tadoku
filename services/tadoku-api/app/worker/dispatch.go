@@ -41,11 +41,26 @@ func handle[J jobs.Job](fn func(context.Context, J) error, spec Policy) registra
 	}
 	var job J
 	name := job.Type()
-	if name == "" || spec.Concurrency < 1 || spec.Concurrency > 100 || spec.Timeout <= 0 || spec.MaxAttempts < 1 || spec.MaxAttempts > math.MaxInt32 {
-		return registration{err: fmt.Errorf("invalid handler policy for %q", name)}
+	if name == "" {
+		return registration{err: errors.New("job handler type is empty")}
+	}
+	if spec.Concurrency < 1 || spec.Concurrency > 100 {
+		return registration{err: fmt.Errorf("handler %q concurrency must be 1 to 100", name)}
+	}
+	if spec.Timeout <= 0 {
+		return registration{err: fmt.Errorf("handler %q timeout must be positive", name)}
+	}
+	if spec.MaxAttempts < 1 || spec.MaxAttempts > math.MaxInt32 {
+		return registration{err: fmt.Errorf("handler %q max attempts must be 1 to %d", name, math.MaxInt32)}
 	}
 	return registration{
-		spec: policy{typeName: name, limit: spec.Concurrency, timeout: spec.Timeout, lease: 10 * time.Second, maxAttempts: spec.MaxAttempts},
+		spec: policy{
+			typeName:    name,
+			limit:       spec.Concurrency,
+			timeout:     spec.Timeout,
+			lease:       10 * time.Second,
+			maxAttempts: spec.MaxAttempts,
+		},
 		invoke: func(ctx context.Context, raw json.RawMessage) error {
 			var payload J
 			if err := decode(raw, &payload); err != nil {
@@ -63,7 +78,10 @@ func newRegistry(entries ...registration) (*registry, error) {
 	if len(entries) == 0 {
 		return nil, errors.New("worker requires at least one registered handler")
 	}
-	handlers := &registry{ordered: append([]registration(nil), entries...), byType: make(map[jobs.Type]registration, len(entries))}
+	handlers := &registry{
+		ordered: append([]registration(nil), entries...),
+		byType:  make(map[jobs.Type]registration, len(entries)),
+	}
 	for _, entry := range entries {
 		if entry.err != nil {
 			return nil, entry.err

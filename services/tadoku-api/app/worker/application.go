@@ -38,7 +38,7 @@ func NewApplication(queue *jobqueue.Service, leaderboard *leaderboard.Service, c
 		config.Metrics = NewMetrics(prometheus.NewRegistry())
 	}
 	a := &Application{leaderboard: leaderboard}
-	handlers, err := a.registrations()
+	handlers, err := registrations(a.InvalidateContestLeaderboard, a.InvalidateOfficialLeaderboard)
 	if err != nil {
 		return nil, err
 	}
@@ -54,10 +54,18 @@ func NewApplication(queue *jobqueue.Service, leaderboard *leaderboard.Service, c
 	return a, nil
 }
 
-func (a *Application) registrations() (*registry, error) {
+func registrations(
+	invalidateContest func(context.Context, jobs.InvalidateContestLeaderboardV1) error,
+	invalidateOfficial func(context.Context, jobs.InvalidateOfficialLeaderboardV1) error,
+) (*registry, error) {
+	leaderboardPolicy := Policy{
+		Concurrency: 2,
+		Timeout:     20 * time.Second,
+		MaxAttempts: 5,
+	}
 	return newRegistry(
-		handle(a.InvalidateContestLeaderboard, Policy{Concurrency: 2, Timeout: 20 * time.Second, MaxAttempts: 5}),
-		handle(a.InvalidateOfficialLeaderboard, Policy{Concurrency: 2, Timeout: 20 * time.Second, MaxAttempts: 5}),
+		handle(invalidateContest, leaderboardPolicy),
+		handle(invalidateOfficial, leaderboardPolicy),
 	)
 }
 
@@ -77,9 +85,11 @@ func (a *Application) Run(ctx context.Context) error {
 }
 
 func Replay(ctx context.Context, queue *jobqueue.Service, id int64, actor, reason string) (int64, error) {
-	handlers, err := new(Application).registrations()
+	handlers, err := registrations(ignoreJob[jobs.InvalidateContestLeaderboardV1], ignoreJob[jobs.InvalidateOfficialLeaderboardV1])
 	if err != nil {
 		return 0, err
 	}
 	return queue.Replay(ctx, id, actor, reason, handlers.types())
 }
+
+func ignoreJob[J jobs.Job](context.Context, J) error { return nil }

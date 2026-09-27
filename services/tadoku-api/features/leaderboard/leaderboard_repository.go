@@ -55,7 +55,7 @@ func (r *Repository) contest(ctx context.Context, request ContestRequest) (*Lead
 	if len(rows) > 0 {
 		total = int(rows[0].TotalSize)
 	}
-	return result(entries, total, request.Page, request.PageSize), nil
+	return result(entries, total, request.Request), nil
 }
 
 func (r *Repository) yearly(ctx context.Context, request YearlyRequest) (*Leaderboard, error) {
@@ -87,7 +87,7 @@ func (r *Repository) yearly(ctx context.Context, request YearlyRequest) (*Leader
 	if len(rows) > 0 {
 		total = int(rows[0].TotalSize)
 	}
-	return result(entries, total, request.Page, request.PageSize), nil
+	return result(entries, total, request.Request), nil
 }
 
 func (r *Repository) global(ctx context.Context, request Request) (*Leaderboard, error) {
@@ -118,7 +118,7 @@ func (r *Repository) global(ctx context.Context, request Request) (*Leaderboard,
 	if len(rows) > 0 {
 		total = int(rows[0].TotalSize)
 	}
-	return result(entries, total, request.Page, request.PageSize), nil
+	return result(entries, total, request), nil
 }
 
 func (r *Repository) allContestScores(ctx context.Context, id uuid.UUID) ([]score, error) {

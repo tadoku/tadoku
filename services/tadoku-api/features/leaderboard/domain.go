@@ -26,7 +26,7 @@ func (r Request) Validate() error {
 }
 
 func (r Request) offset() int32 {
-	if r.Page > math.MaxInt32/r.PageSize {
+	if r.PageSize > 0 && r.Page > math.MaxInt32/r.PageSize {
 		return math.MaxInt32
 	}
 	return int32(r.Page * r.PageSize)
@@ -74,10 +74,10 @@ type page struct {
 	hasNextTie bool
 }
 
-func result(entries []Entry, total, currentPage, pageSize int) *Leaderboard {
+func result(entries []Entry, total int, request Request) *Leaderboard {
 	next := ""
-	if currentPage*pageSize+pageSize < total {
-		next = fmt.Sprint(currentPage + 1)
+	if int64(request.offset())+int64(request.PageSize) < int64(total) {
+		next = fmt.Sprint(request.Page + 1)
 	}
 	return &Leaderboard{
 		Entries:       entries,

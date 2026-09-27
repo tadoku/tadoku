@@ -258,7 +258,7 @@ func (p ListParameters) Validate() error {
 }
 
 func (p ListParameters) offset() int32 {
-	if p.Page > math.MaxInt32/p.PageSize {
+	if p.PageSize > 0 && p.Page > math.MaxInt32/p.PageSize {
 		return math.MaxInt32
 	}
 	return int32(p.Page * p.PageSize)

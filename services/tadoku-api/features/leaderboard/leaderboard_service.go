@@ -52,7 +52,7 @@ func (s *Service) FetchContest(ctx context.Context, request ContestRequest) (*Re
 	}
 
 	key := s.store.cacheKey(contestPrefix + request.ContestID.String())
-	result, exists, err := s.store.fetchPage(ctx, key, request.Page, request.PageSize)
+	result, exists, err := s.store.fetchPage(ctx, key, int64(request.offset()), request.PageSize)
 	if err != nil {
 		slog.WarnContext(ctx, "contest leaderboard cache unavailable; falling back to Postgres", "error", err)
 		return s.fetchContestFromPostgres(ctx, request)
@@ -72,7 +72,7 @@ func (s *Service) FetchContest(ctx context.Context, request ContestRequest) (*Re
 		}
 		return s.fetchContestFromPostgres(ctx, request)
 	}
-	return cachedResult(result, request.Page, request.PageSize), nil
+	return cachedResult(result, request.Request), nil
 }
 
 func (s *Service) FetchYearly(ctx context.Context, request YearlyRequest) (*Result, error) {
@@ -85,7 +85,7 @@ func (s *Service) FetchYearly(ctx context.Context, request YearlyRequest) (*Resu
 	}
 
 	key := s.store.cacheKey(yearlyPrefix + strconv.Itoa(int(request.Year)))
-	result, exists, err := s.store.fetchPage(ctx, key, request.Page, request.PageSize)
+	result, exists, err := s.store.fetchPage(ctx, key, int64(request.offset()), request.PageSize)
 	if err != nil {
 		slog.WarnContext(ctx, "yearly leaderboard cache unavailable; falling back to Postgres", "error", err)
 		return postgresResult(s.repository.yearly(ctx, request))
@@ -105,7 +105,7 @@ func (s *Service) FetchYearly(ctx context.Context, request YearlyRequest) (*Resu
 		}
 		return postgresResult(s.repository.yearly(ctx, request))
 	}
-	return cachedResult(result, request.Page, request.PageSize), nil
+	return cachedResult(result, request.Request), nil
 }
 
 func (s *Service) FetchGlobal(ctx context.Context, request Request) (*Result, error) {
@@ -118,7 +118,7 @@ func (s *Service) FetchGlobal(ctx context.Context, request Request) (*Result, er
 	}
 
 	key := s.store.cacheKey(globalKey)
-	result, exists, err := s.store.fetchPage(ctx, key, request.Page, request.PageSize)
+	result, exists, err := s.store.fetchPage(ctx, key, int64(request.offset()), request.PageSize)
 	if err != nil {
 		slog.WarnContext(ctx, "global leaderboard cache unavailable; falling back to Postgres", "error", err)
 		return postgresResult(s.repository.global(ctx, request))
@@ -138,7 +138,7 @@ func (s *Service) FetchGlobal(ctx context.Context, request Request) (*Result, er
 		}
 		return postgresResult(s.repository.global(ctx, request))
 	}
-	return cachedResult(result, request.Page, request.PageSize), nil
+	return cachedResult(result, request), nil
 }
 
 func (s *Service) fetchContestFromPostgres(ctx context.Context, request ContestRequest) (*Result, error) {
@@ -188,9 +188,9 @@ func postgresResult(value *Leaderboard, err error) (*Result, error) {
 	return &Result{Leaderboard: value}, nil
 }
 
-func cachedResult(cached *page, currentPage, pageSize int) *Result {
+func cachedResult(cached *page, request Request) *Result {
 	return &Result{
-		Leaderboard:         result(buildEntries(cached), cached.totalCount, currentPage, pageSize),
+		Leaderboard:         result(buildEntries(cached), cached.totalCount, request),
 		HydrateDisplayNames: true,
 	}
 }

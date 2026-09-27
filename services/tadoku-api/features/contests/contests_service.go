@@ -268,7 +268,7 @@ func (s *Service) ListContests(ctx context.Context, parameters ListParameters, i
 	}
 
 	nextPageToken := ""
-	if parameters.Page*parameters.PageSize+parameters.PageSize < total {
+	if int64(parameters.offset())+int64(parameters.PageSize) < int64(total) {
 		nextPageToken = strconv.Itoa(parameters.Page + 1)
 	}
 	return &ContestList{

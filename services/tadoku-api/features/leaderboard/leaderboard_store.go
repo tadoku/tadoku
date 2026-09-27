@@ -50,7 +50,7 @@ func NewStore(client valkeygo.Client, operationTimeout time.Duration, cachePrefi
 
 func (s *Store) cacheKey(key string) string { return s.cachePrefix + key }
 
-func (s *Store) fetchPage(ctx context.Context, key string, currentPage, pageSize int) (*page, bool, error) {
+func (s *Store) fetchPage(ctx context.Context, key string, start int64, pageSize int) (*page, bool, error) {
 	ctx, cancel := context.WithTimeout(ctx, s.operationTimeout)
 	defer cancel()
 	marker, err := s.client.Do(ctx, s.client.B().Get().Key(key+":last_updated").Build()).ToString()
@@ -79,7 +79,6 @@ func (s *Store) fetchPage(ctx context.Context, key string, currentPage, pageSize
 		return &page{scores: []score{}, startRank: 1}, true, nil
 	}
 
-	start := int64(currentPage * pageSize)
 	stop := start + int64(pageSize) - 1
 	fetchStart := start
 	if fetchStart > 0 {

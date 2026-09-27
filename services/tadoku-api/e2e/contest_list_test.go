@@ -27,6 +27,7 @@ func TestListContests(t *testing.T) {
 		{description: []string{"negative", "page"}, want: http.StatusBadRequest},
 		{description: []string{"negative", "page", "size"}, want: http.StatusBadRequest},
 		{description: []string{"offset", "overflow"}, want: http.StatusOK},
+		{description: []string{"maximum", "page"}, want: http.StatusOK},
 		{description: []string{"explicit", "zero", "page", "size"}, want: http.StatusOK},
 	}
 

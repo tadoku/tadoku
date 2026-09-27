@@ -589,7 +589,7 @@ func (r *LogsRepository) ListUserLogs(ctx context.Context, parameters ListParame
 		})
 		result.TotalSize = int(row.TotalSize)
 	}
-	if parameters.Page*parameters.PageSize+parameters.PageSize < result.TotalSize {
+	if int64(parameters.offset())+int64(parameters.PageSize) < int64(result.TotalSize) {
 		result.NextPageToken = fmt.Sprint(parameters.Page + 1)
 	}
 	return result, nil
@@ -635,7 +635,7 @@ func (r *LogsRepository) ListContestLogs(ctx context.Context, parameters ListPar
 		})
 		result.TotalSize = int(row.TotalSize)
 	}
-	if parameters.Page*parameters.PageSize+parameters.PageSize < result.TotalSize {
+	if int64(parameters.offset())+int64(parameters.PageSize) < int64(result.TotalSize) {
 		result.NextPageToken = fmt.Sprint(parameters.Page + 1)
 	}
 	return result, nil

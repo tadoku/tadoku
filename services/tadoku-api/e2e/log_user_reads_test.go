@@ -36,6 +36,8 @@ func TestImmersionProfileListLogs(t *testing.T) {
 		{description: []string{"last", "page"}, want: http.StatusOK},
 		{description: []string{"negative", "page"}, want: http.StatusBadRequest},
 		{description: []string{"offset", "overflow"}, want: http.StatusOK},
+		{description: []string{"wrapped", "offset"}, want: http.StatusOK},
+		{description: []string{"maximum", "page"}, want: http.StatusOK},
 		{description: []string{"default", "limit"}, want: http.StatusOK},
 		{description: []string{"zero", "limit"}, want: http.StatusOK},
 		{description: []string{"negative", "page", "size"}, want: http.StatusBadRequest},

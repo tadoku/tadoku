@@ -146,7 +146,7 @@ func run(ctx context.Context, cfg config, logger *slog.Logger) error {
 func replay(ctx context.Context, args []string, logger *slog.Logger) error {
 	flags := flag.NewFlagSet("replay", flag.ContinueOnError)
 	flags.SetOutput(io.Discard)
-	id := flags.Int64("id", 0, "failed task ID")
+	id := flags.Int64("id", 0, "failed job ID")
 	actor := flags.String("actor", "", "operator identity")
 	reason := flags.String("reason", "", "reason for replay")
 	if err := flags.Parse(args); err != nil {
@@ -168,9 +168,9 @@ func replay(ctx context.Context, args []string, logger *slog.Logger) error {
 	defer pool.Close()
 	newID, err := worker.Replay(ctx, jobqueue.NewService(jobqueue.NewRepository(pool)), *id, *actor, *reason)
 	if err != nil {
-		return fmt.Errorf("replay task %d: %w", *id, err)
+		return fmt.Errorf("replay job %d: %w", *id, err)
 	}
-	logger.Info("async task replayed", "source_id", *id, "task_id", newID)
+	logger.Info("job replayed", "source_job_id", *id, "job_id", newID)
 	return nil
 }
 

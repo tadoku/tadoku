@@ -90,7 +90,7 @@ func TestRegistryValidatesPayloadBeforeCallingTypedHandler(t *testing.T) {
 	if called != 1 || got.Year != 2025 || gotCtx != ctx {
 		t.Errorf("typed invocation: calls=%d job=%+v context preserved=%t", called, got, gotCtx == ctx)
 	}
-	err = handlers.dispatch(ctx, jobqueue.ClaimedJob{Type: "future.task.v1"})
+	err = handlers.dispatch(ctx, jobqueue.ClaimedJob{Type: "future.job.v1"})
 	var unknown *UnknownTypeError
 	if !errors.As(err, &unknown) || called != 1 {
 		t.Errorf("unknown job: error=%v calls=%d", err, called)

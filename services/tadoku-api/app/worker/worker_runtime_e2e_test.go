@@ -163,8 +163,8 @@ func TestWorkerStartsWithoutValkey(t *testing.T) {
 	unavailable.Close()
 
 	application := f.runner(t, unavailable, time.Second, time.Second)
-	invalidID := insertTask(t, f.db, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":0}`, false)
-	validID := insertTask(t, f.db, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":2025}`, false)
+	invalidID := insertJob(t, f.db, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":0}`, false)
+	validID := insertJob(t, f.db, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":2025}`, false)
 	startWorker(t, application)
 	defer func() {
 		if !t.Failed() {
@@ -203,7 +203,7 @@ func TestWorkerCancelsHandlerAfterLostLeaseAndReclaims(t *testing.T) {
 	waitFor(t, func() (bool, error) {
 		return runner.Ready(), nil
 	})
-	id := insertTask(t, f.db, string(jobs.LeaderboardInvalidateContestV1), fmt.Sprintf(`{"contest_id":%q}`, uuid.NewString()), false)
+	id := insertJob(t, f.db, string(jobs.LeaderboardInvalidateContestV1), fmt.Sprintf(`{"contest_id":%q}`, uuid.NewString()), false)
 	select {
 	case <-blocked.started:
 	case <-time.After(5 * time.Second):
@@ -259,12 +259,12 @@ func TestWorkerDeadlineExhaustionAndReplay(t *testing.T) {
 		t.Fatal(err)
 	}
 	repository := jobqueue.NewRepository(f.db)
-	tasks, err := repository.Claim(t.Context(), jobs.LeaderboardInvalidateContestV1, 1, time.Second, 5)
-	if err != nil || len(tasks) != 1 {
-		t.Fatalf("claim exhausted task: tasks=%d error=%v", len(tasks), err)
+	claimed, err := repository.Claim(t.Context(), jobs.LeaderboardInvalidateContestV1, 1, time.Second, 5)
+	if err != nil || len(claimed) != 1 {
+		t.Fatalf("claim exhausted job: jobs=%d error=%v", len(claimed), err)
 	}
 	spec := policy{typeName: jobs.LeaderboardInvalidateContestV1, limit: 2, timeout: 50 * time.Millisecond, lease: time.Second, maxAttempts: 5}
-	if err := runner.runner.process(t.Context(), tasks[0], spec); !errors.Is(err, context.DeadlineExceeded) {
+	if err := runner.runner.process(t.Context(), claimed[0], spec); !errors.Is(err, context.DeadlineExceeded) {
 		t.Errorf("deadline handler error = %v", err)
 	}
 	var state, code string
@@ -273,7 +273,7 @@ func TestWorkerDeadlineExhaustionAndReplay(t *testing.T) {
 		t.Fatal(err)
 	}
 	if state != "failed" || attempts != 5 || code != "deadline_exceeded" {
-		t.Fatalf("exhausted task: state=%q attempts=%d code=%q", state, attempts, code)
+		t.Fatalf("exhausted job: state=%q attempts=%d code=%q", state, attempts, code)
 	}
 	replayedID, err := Replay(t.Context(), jobqueue.NewService(repository), id, "worker-e2e", "deadline repaired")
 	if err != nil {
@@ -288,7 +288,7 @@ func TestWorkerDeadlineExhaustionAndReplay(t *testing.T) {
 	})
 }
 
-func TestWorkerShutdownCancelsActiveTask(t *testing.T) {
+func TestWorkerShutdownCancelsActiveJob(t *testing.T) {
 	f := newWorkerFixture(t)
 	release := make(chan struct{})
 	var released sync.Once
@@ -315,7 +315,7 @@ func TestWorkerShutdownCancelsActiveTask(t *testing.T) {
 	waitFor(t, func() (bool, error) {
 		return runner.Ready(), nil
 	})
-	id := insertTask(t, f.db, string(jobs.LeaderboardInvalidateContestV1), fmt.Sprintf(`{"contest_id":%q}`, uuid.NewString()), false)
+	id := insertJob(t, f.db, string(jobs.LeaderboardInvalidateContestV1), fmt.Sprintf(`{"contest_id":%q}`, uuid.NewString()), false)
 	select {
 	case <-blocked.started:
 	case <-time.After(5 * time.Second):
@@ -332,7 +332,7 @@ func TestWorkerShutdownCancelsActiveTask(t *testing.T) {
 		t.Fatal(err)
 	}
 	if state == "completed" {
-		t.Error("canceled task was completed")
+		t.Error("canceled job was completed")
 	}
 	if runner.Ready() {
 		t.Error("worker remains ready after shutdown")
@@ -350,14 +350,14 @@ func TestWorkerDoesNotDispatchAfterClaimLeaseExpires(t *testing.T) {
 		release: release,
 	}
 	runner := f.runner(t, observed, time.Second, time.Second)
-	id := insertTask(t, f.db, string(jobs.LeaderboardInvalidateContestV1), fmt.Sprintf(`{"contest_id":%q}`, uuid.NewString()), false)
-	tasks, err := jobqueue.NewRepository(f.db).Claim(t.Context(), jobs.LeaderboardInvalidateContestV1, 1, 50*time.Millisecond, 5)
-	if err != nil || len(tasks) != 1 {
-		t.Fatalf("claim: tasks=%d error=%v", len(tasks), err)
+	id := insertJob(t, f.db, string(jobs.LeaderboardInvalidateContestV1), fmt.Sprintf(`{"contest_id":%q}`, uuid.NewString()), false)
+	claimed, err := jobqueue.NewRepository(f.db).Claim(t.Context(), jobs.LeaderboardInvalidateContestV1, 1, 50*time.Millisecond, 5)
+	if err != nil || len(claimed) != 1 {
+		t.Fatalf("claim: jobs=%d error=%v", len(claimed), err)
 	}
 	<-time.After(80 * time.Millisecond)
 	spec := policy{typeName: jobs.LeaderboardInvalidateContestV1, limit: 2, timeout: time.Second, lease: 50 * time.Millisecond, maxAttempts: 5}
-	if err := runner.runner.process(t.Context(), tasks[0], spec); err == nil {
+	if err := runner.runner.process(t.Context(), claimed[0], spec); err == nil {
 		t.Error("expired claim was dispatched")
 	}
 	select {
@@ -403,10 +403,10 @@ func TestWorkerCompletesWhenRenewalIsCanceledByFinishedHandler(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	id := insertTask(t, f.db, string(jobs.LeaderboardInvalidateContestV1), fmt.Sprintf(`{"contest_id":%q}`, uuid.NewString()), false)
-	tasks, err := repository.Claim(t.Context(), jobs.LeaderboardInvalidateContestV1, 1, 3*time.Second, 5)
-	if err != nil || len(tasks) != 1 {
-		t.Fatalf("claim: tasks=%d error=%v", len(tasks), err)
+	id := insertJob(t, f.db, string(jobs.LeaderboardInvalidateContestV1), fmt.Sprintf(`{"contest_id":%q}`, uuid.NewString()), false)
+	claimed, err := repository.Claim(t.Context(), jobs.LeaderboardInvalidateContestV1, 1, 3*time.Second, 5)
+	if err != nil || len(claimed) != 1 {
+		t.Fatalf("claim: jobs=%d error=%v", len(claimed), err)
 	}
 	conn, err := limitedPool.Acquire(t.Context())
 	if err != nil {
@@ -418,7 +418,7 @@ func TestWorkerCompletesWhenRenewalIsCanceledByFinishedHandler(t *testing.T) {
 	baseline := limitedPool.Stat().CanceledAcquireCount()
 	spec := policy{typeName: jobs.LeaderboardInvalidateContestV1, limit: 2, timeout: 8 * time.Second, lease: 3 * time.Second, maxAttempts: 5}
 	done := make(chan error, 1)
-	go func() { done <- runner.runner.process(t.Context(), tasks[0], spec) }()
+	go func() { done <- runner.runner.process(t.Context(), claimed[0], spec) }()
 	select {
 	case <-blocked.started:
 	case <-time.After(3 * time.Second):
@@ -444,7 +444,7 @@ func TestWorkerCompletesWhenRenewalIsCanceledByFinishedHandler(t *testing.T) {
 		t.Fatal(err)
 	}
 	if state != "completed" {
-		t.Errorf("task state = %s; want completed", state)
+		t.Errorf("job state = %s; want completed", state)
 	}
 }
 
@@ -468,9 +468,9 @@ func TestWorkerFairClaimsWithoutPrefetch(t *testing.T) {
 
 	contestIDs := make([]int64, 3)
 	for i := range contestIDs {
-		contestIDs[i] = insertTask(t, f.db, string(jobs.LeaderboardInvalidateContestV1), fmt.Sprintf(`{"contest_id":%q}`, uuid.NewString()), false)
+		contestIDs[i] = insertJob(t, f.db, string(jobs.LeaderboardInvalidateContestV1), fmt.Sprintf(`{"contest_id":%q}`, uuid.NewString()), false)
 	}
-	officialID := insertTask(t, f.db, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":2025}`, false)
+	officialID := insertJob(t, f.db, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":2025}`, false)
 	for range 2 {
 		select {
 		case <-blocked.started:
@@ -522,8 +522,8 @@ func TestWorkerGlobalLimitLeavesDueRowsUnclaimed(t *testing.T) {
 	})
 	ids := make([]int64, 0, 6)
 	for range 3 {
-		ids = append(ids, insertTask(t, f.db, string(jobs.LeaderboardInvalidateContestV1), fmt.Sprintf(`{"contest_id":%q}`, uuid.NewString()), false))
-		ids = append(ids, insertTask(t, f.db, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":2025}`, false))
+		ids = append(ids, insertJob(t, f.db, string(jobs.LeaderboardInvalidateContestV1), fmt.Sprintf(`{"contest_id":%q}`, uuid.NewString()), false))
+		ids = append(ids, insertJob(t, f.db, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":2025}`, false))
 	}
 	for range 3 {
 		select {
@@ -574,8 +574,8 @@ func TestWorkerRetainsSlotUntilCanceledHandlerReturns(t *testing.T) {
 		logger:          slog.New(slog.NewTextHandler(io.Discard, nil)),
 		metrics:         NewMetrics(prometheus.NewRegistry()),
 	}
-	first := insertTask(t, f.db, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":2025}`, false)
-	second := insertTask(t, f.db, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":2026}`, false)
+	first := insertJob(t, f.db, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":2025}`, false)
+	second := insertJob(t, f.db, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":2026}`, false)
 	ctx, cancel := context.WithCancel(t.Context())
 	done := make(chan struct{})
 	go func() { defer close(done); runtime.run(ctx) }()
@@ -634,7 +634,7 @@ func TestWorkerRenewedDeadlineSchedulesRetry(t *testing.T) {
 		logger:   slog.New(slog.NewTextHandler(io.Discard, nil)),
 		metrics:  NewMetrics(prometheus.NewRegistry()),
 	}
-	id := insertTask(t, f.db, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":2025}`, false)
+	id := insertJob(t, f.db, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":2025}`, false)
 	spec := policy{typeName: jobs.LeaderboardInvalidateOfficialV1, limit: 1, timeout: 4 * time.Second, lease: 3 * time.Second, maxAttempts: 2}
 	claims, err := repository.Claim(t.Context(), spec.typeName, 1, spec.lease, spec.maxAttempts)
 	if err != nil || len(claims) != 1 {

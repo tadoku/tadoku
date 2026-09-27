@@ -20,7 +20,7 @@ func NewMetrics(registry *prometheus.Registry) *Metrics {
 	metrics := &Metrics{
 		InFlight: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "tadoku_worker_in_flight",
-			Help: "Active async tasks by predefined type.",
+			Help: "Active jobs by predefined type.",
 		}, []string{"type"}),
 		Attempts: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Name: "tadoku_worker_failed_attempts_total",
@@ -28,40 +28,40 @@ func NewMetrics(registry *prometheus.Registry) *Metrics {
 		}, []string{"type", "code"}),
 		Duration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Name:    "tadoku_worker_handler_duration_seconds",
-			Help:    "Handler and task transition duration by predefined type.",
+			Help:    "Handler execution duration before the job transition by predefined type.",
 			Buckets: []float64{0.01, 0.05, 0.1, 0.5, 1, 5, 15, 30},
 		}, []string{"type"}),
 		Pending: prometheus.NewGaugeVec(prometheus.GaugeOpts{
-			Name: "tadoku_worker_pending_tasks",
-			Help: "Pending async tasks by predefined type.",
+			Name: "tadoku_worker_pending_jobs",
+			Help: "Pending jobs by predefined type.",
 		}, []string{"type"}),
 		Failed: prometheus.NewGaugeVec(prometheus.GaugeOpts{
-			Name: "tadoku_worker_failed_tasks",
-			Help: "Terminally failed async tasks by predefined type.",
+			Name: "tadoku_worker_failed_jobs",
+			Help: "Terminally failed jobs by predefined type.",
 		}, []string{"type"}),
 		OldestDueAge: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "tadoku_worker_oldest_due_age_seconds",
-			Help: "Age of the oldest due or expired async task by predefined type.",
+			Help: "Age of the oldest due or expired job by predefined type.",
 		}, []string{"type"}),
 		Unsupported: prometheus.NewGauge(prometheus.GaugeOpts{
-			Name: "tadoku_worker_unsupported_pending_tasks",
-			Help: "Pending tasks with an unsupported type; they remain unclaimed.",
+			Name: "tadoku_worker_unsupported_pending_jobs",
+			Help: "Pending jobs with an unsupported type; they remain unclaimed.",
 		}),
 		UnsupportedRunning: prometheus.NewGauge(prometheus.GaugeOpts{
-			Name: "tadoku_worker_unsupported_running_tasks",
+			Name: "tadoku_worker_unsupported_running_jobs",
 			Help: "Running jobs with a type unsupported by this executable.",
 		}),
 		UnsupportedFailed: prometheus.NewGauge(prometheus.GaugeOpts{
-			Name: "tadoku_worker_unsupported_failed_tasks",
+			Name: "tadoku_worker_unsupported_failed_jobs",
 			Help: "Failed jobs with a type unsupported by this executable.",
 		}),
 		UnsupportedOldestDueAge: prometheus.NewGauge(prometheus.GaugeOpts{
 			Name: "tadoku_worker_unsupported_oldest_due_age_seconds",
-			Help: "Age of the oldest due pending task with an unsupported type.",
+			Help: "Age of the oldest due pending job with an unsupported type.",
 		}),
 		ExpiredLeases: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Name: "tadoku_worker_expired_leases_total",
-			Help: "Expired running tasks reclaimed by predefined type.",
+			Help: "Expired running jobs reclaimed by predefined type.",
 		}, []string{"type"}),
 	}
 	registry.MustRegister(metrics.InFlight, metrics.Attempts, metrics.Duration, metrics.Pending, metrics.Failed, metrics.OldestDueAge, metrics.Unsupported, metrics.UnsupportedRunning, metrics.UnsupportedFailed, metrics.UnsupportedOldestDueAge, metrics.ExpiredLeases)

@@ -55,11 +55,11 @@ func (r *runner) run(ctx context.Context) {
 	refreshMetrics := func() {
 		count, err := r.updateMetrics(ctx)
 		if err != nil {
-			r.logger.Warn("inspect async work backlog", "error", err)
+			r.logger.Warn("inspect job backlog", "error", err)
 		} else if count != unsupported {
 			unsupported = count
 			if count > 0 {
-				r.logger.Error("unsupported async job types remain outstanding", "count", count)
+				r.logger.Error("unsupported job types remain outstanding", "count", count)
 			}
 		}
 	}
@@ -82,7 +82,7 @@ func (r *runner) run(ctx context.Context) {
 			tasks, err := r.queue.Claim(ctx, spec.typeName, free, spec.lease, spec.maxAttempts)
 			if err != nil {
 				claimHealthy = false
-				r.logger.Error("claim async work", "type", spec.typeName, "error", err)
+				r.logger.Error("claim jobs", "type", spec.typeName, "error", err)
 				continue
 			}
 			for _, task := range tasks {
@@ -134,7 +134,7 @@ func (r *runner) cleanupCompleted(ctx context.Context) {
 		count, err := r.queue.CleanupCompleted(ctx, 100)
 		if err != nil {
 			if ctx.Err() == nil {
-				r.logger.Warn("cleanup completed async tasks", "error", err)
+				r.logger.Warn("cleanup completed jobs", "error", err)
 			}
 			return
 		}
@@ -188,7 +188,7 @@ func (r *runner) process(ctx context.Context, task jobqueue.ClaimedJob, spec pol
 	margin := spec.lease / 3
 	remainingLease := time.Until(task.LeaseExpiresAt)
 	if remainingLease <= margin {
-		return fmt.Errorf("task %d: claim lease expired before dispatch", task.ID)
+		return fmt.Errorf("job %d: claim lease expired before dispatch", task.ID)
 	}
 	if remainingLease < 2*margin {
 		renewCtx, stop := context.WithTimeout(ctx, remainingLease-margin)
@@ -198,7 +198,7 @@ func (r *runner) process(ctx context.Context, task jobqueue.ClaimedJob, spec pol
 			return fmt.Errorf("renew claim before dispatch: %w", err)
 		}
 		if !held {
-			return fmt.Errorf("task %d: claim lease lost before dispatch", task.ID)
+			return fmt.Errorf("job %d: claim lease lost before dispatch", task.ID)
 		}
 		task.LeaseExpiresAt = expiry
 	}
@@ -217,7 +217,7 @@ func (r *runner) process(ctx context.Context, task jobqueue.ClaimedJob, spec pol
 	renewErr := <-renewed
 	cancelHandler()
 	if renewErr != nil {
-		r.logger.Warn("async work lease lost", "task_id", task.ID, "type", task.Type, "error", renewErr)
+		r.logger.Warn("job lease lost", "job_id", task.ID, "type", task.Type, "error", renewErr)
 		return renewErr
 	}
 
@@ -240,13 +240,13 @@ func (r *runner) process(ctx context.Context, task jobqueue.ClaimedJob, spec pol
 		r.metrics.Attempts.WithLabelValues(string(task.Type), code).Inc()
 	}
 	if err != nil {
-		return fmt.Errorf("transition task %d: %w", task.ID, err)
+		return fmt.Errorf("transition job %d: %w", task.ID, err)
 	}
 	if !held {
-		return fmt.Errorf("task %d: lease lost before transition", task.ID)
+		return fmt.Errorf("job %d: lease lost before transition", task.ID)
 	}
 	if handlerErr != nil {
-		r.logger.Error("async work failed", "task_id", task.ID, "type", task.Type, "attempt", task.Attempts, "code", failureCode(handlerErr), "error", handlerErr)
+		r.logger.Error("job failed", "job_id", task.ID, "type", task.Type, "attempt", task.Attempts, "code", failureCode(handlerErr), "error", handlerErr)
 	}
 	return handlerErr
 }

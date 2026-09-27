@@ -108,7 +108,7 @@ func run(args []string, stdout, stderr io.Writer, factory migrationFactory) int 
 	redact := func(value any) string {
 		return postgresConfig.Redact(value)
 	}
-	runner, err := factory(*sourceURL, databaseURL)
+	runner, err := factory(*sourceURL, databaseURL.Reveal())
 	if err != nil {
 		fmt.Fprintf(stderr, "migrate-recovery: initialize: %s\n", redact(err))
 		return 1

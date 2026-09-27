@@ -16,11 +16,20 @@ import (
 )
 
 const (
-	sqlcImportPrefix = "github.com/tadoku/tadoku/services/tadoku-api/generated/sqlc/"
-	convention       = `see docs/docs/tadoku-api/conventions.md "Repositories and stores"`
+	sqlcImportPrefix     = "github.com/tadoku/tadoku/services/tadoku-api/generated/sqlc/"
+	infraImportPrefix    = "github.com/tadoku/tadoku/services/tadoku-api/infra/"
+	postgresImportPrefix = infraImportPrefix + "postgres"
+	valkeyImportPrefix   = "github.com/valkey-io/"
+	convention           = `see docs/docs/tadoku-api/conventions.md "Repositories and stores"`
 )
 
 var (
+	providerImportPrefixes = []string{
+		valkeyImportPrefix,
+		"github.com/ory/",
+		"go.flipt.io/",
+		"github.com/tadoku/tadoku/services/common/client/s2s",
+	}
 	executorMethods = map[string]bool{
 		"CopyFrom":  true,
 		"Exec":      true,
@@ -57,12 +66,19 @@ func check(root string, out io.Writer) error {
 		return fmt.Errorf("run with bazel run //tools/ci/repopolicy")
 	}
 
-	var files, violations int
+	var files, repositories, violations int
 	err := filepath.WalkDir(filepath.Join(root, "services/tadoku-api"), func(filePath string, entry fs.DirEntry, walkErr error) error {
 		if walkErr != nil {
 			return walkErr
 		}
-		if entry.IsDir() || !strings.HasSuffix(filePath, "_repository.go") {
+		rel, err := filepath.Rel(root, filePath)
+		if err != nil {
+			return err
+		}
+		rel = filepath.ToSlash(rel)
+		repository := strings.HasSuffix(rel, "_repository.go")
+		feature := strings.HasPrefix(rel, "services/tadoku-api/features/") && strings.HasSuffix(rel, ".go") && !strings.HasSuffix(rel, "_test.go")
+		if entry.IsDir() || !(repository || feature) {
 			return nil
 		}
 
@@ -75,11 +91,12 @@ func check(root string, out io.Writer) error {
 			return nil
 		}
 
-		rel, err := filepath.Rel(root, filePath)
-		if err != nil {
-			return err
+		findings := analyzeImports(path.Base(rel), file)
+		if repository {
+			findings = append(findings, analyze(file)...)
+			repositories++
 		}
-		for _, f := range analyze(file) {
+		for _, f := range findings {
 			violations++
 			fmt.Fprintf(out, "%s:%d: %s: %s\n", rel, fset.Position(f.pos).Line, f.rule, f.message)
 		}
@@ -90,14 +107,70 @@ func check(root string, out io.Writer) error {
 		return err
 	}
 
-	if files == 0 {
+	if repositories == 0 {
 		return fmt.Errorf("expected Tadoku API repository files under %s", root)
 	}
-	fmt.Fprintf(out, "Repopolicy checked %d repository files; %d violations\n", files, violations)
+	fmt.Fprintf(out, "Repopolicy checked %d files (%d repository files); %d violations\n", files, repositories, violations)
 	if violations != 0 {
 		return fmt.Errorf("Tadoku API repository policy failed")
 	}
 	return nil
+}
+
+func analyzeImports(name string, file *ast.File) []finding {
+	store := strings.HasSuffix(name, "_cache.go") || strings.HasSuffix(name, "_store.go")
+	repository := strings.HasSuffix(name, "_repository.go")
+
+	var findings []finding
+	for _, spec := range file.Imports {
+		importPath, err := strconv.Unquote(spec.Path.Value)
+		if err != nil {
+			continue
+		}
+		switch {
+		case store && isPostgresImport(importPath):
+			findings = append(findings, finding{
+				pos:     spec.Pos(),
+				rule:    "store-postgres-import",
+				message: fmt.Sprintf("cache and store files must not import %s; the feature service rebuilds them from the repository (%s)", importPath, convention),
+			})
+		case repository && isProviderImport(importPath):
+			findings = append(findings, finding{
+				pos:     spec.Pos(),
+				rule:    "repository-provider-import",
+				message: fmt.Sprintf("repository files must not import provider client %s; repositories reach only PostgreSQL (%s)", importPath, convention),
+			})
+		case !store && strings.HasPrefix(importPath, valkeyImportPrefix):
+			findings = append(findings, finding{
+				pos:     spec.Pos(),
+				rule:    "valkey-outside-store",
+				message: fmt.Sprintf("only cache and store files may import %s; construct the cache at the composition root and pass it to the service (%s)", importPath, convention),
+			})
+		}
+	}
+	return findings
+}
+
+func isPostgresImport(importPath string) bool {
+	return strings.HasPrefix(importPath, "github.com/jackc/") ||
+		strings.HasPrefix(importPath, sqlcImportPrefix) ||
+		hasPathPrefix(importPath, postgresImportPrefix)
+}
+
+func isProviderImport(importPath string) bool {
+	if strings.HasPrefix(importPath, infraImportPrefix) {
+		return !hasPathPrefix(importPath, postgresImportPrefix)
+	}
+	for _, prefix := range providerImportPrefixes {
+		if strings.HasPrefix(importPath, prefix) {
+			return true
+		}
+	}
+	return false
+}
+
+func hasPathPrefix(importPath, prefix string) bool {
+	return importPath == prefix || strings.HasPrefix(importPath, prefix+"/")
 }
 
 func analyze(file *ast.File) []finding {

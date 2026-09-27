@@ -143,7 +143,9 @@ The following rules decide where each check belongs.
   composes them and owns the policy between them, such as cache selection,
   rebuilds and fallback to the repository. The composition root constructs the
   cache or store and passes it to the service, so the service never receives a
-  provider client that it would only pass through.
+  provider client that it would only pass through. `tools/ci/repopolicy`
+  checks these import rules by file name; see
+  [Import boundaries](./import-boundaries.md#repository-and-store-files).
 - Primitive PostgreSQL conversions, including nullable values, UUIDs and
   timestamps, belong in `services/tadoku-api/infra/postgres/`. Repository
   files use those shared helpers; only feature domain and sqlc row mappings

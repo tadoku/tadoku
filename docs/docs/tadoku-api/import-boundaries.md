@@ -56,6 +56,24 @@ This keeps other packages on the shared permission checker. Keep shared ban and
 administrator relation lookups in `internal/permissions`; the check cannot
 detect a raw `banned` or `admins` relation literal inside an allowed package.
 
+## Repository and store files
+
+A feature's service, repository and cache or store share one Go package, and
+Bazel visibility, the provider dependency check and depolicy all work per
+package. `bazel run //tools/ci/repopolicy` therefore checks the imports of each
+handwritten, non-test file under `features/` by its file name:
+
+- `*_cache.go` and `*_store.go` may not import PostgreSQL packages:
+  `github.com/jackc/...` (including pgx), generated sqlc packages or
+  `services/tadoku-api/infra/postgres/`.
+- `*_repository.go` may not import provider clients: `valkey-go`, the Ory and
+  Flipt SDKs, the service-token client (`services/common/client/s2s/`), or any
+  package under `services/tadoku-api/infra/` other than `postgres`, which
+  includes the Keto, Kratos, Flipt and Valkey clients.
+- Every other feature file, including the service, may not import `valkey-go`.
+
+The rules follow [Repositories and stores](./conventions.md#repositories-and-stores).
+
 ## Verifying an import change
 
 Before publishing a PR that changes imports, packages or visibility, run from
@@ -65,6 +83,7 @@ the repository root:
 bazel run //:gazelle -- -mode=diff
 ./scripts/check-tadoku-api-visibility.sh
 ./tools/ci/check_tadoku_api_provider_deps.sh
+bazel run //tools/ci/repopolicy
 bazel build //services/tadoku-api/...
 ```
 
@@ -88,5 +107,9 @@ structure.
   its chosen scope matches its architectural role.
 - Import rules do not enforce same-package service and repository
   responsibilities or business signatures; those still need review.
+- The repository and store file check trusts file names and skips test files.
+  A cache or repository in a file with another suffix gets only the `valkey-go`
+  rule, and it cannot tell whether a repository and a cache in one package call
+  each other.
 
 Close or accept these gaps before relying on Bazel alone.

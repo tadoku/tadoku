@@ -37,11 +37,13 @@ func (s *server) ImmersionContestCreate(
 }
 
 func contestResponse(item *app.Contest) openapi.ImmersionContest {
+	deleted := item.Deleted
 	return openapi.ImmersionContest{
 		ActivityTypeIdAllowList: item.ActivityTypeIDAllowList,
 		ContestEnd:              openapiTypes.Date{Time: item.ContestEnd},
 		ContestStart:            openapiTypes.Date{Time: item.ContestStart},
 		CreatedAt:               &item.CreatedAt,
+		Deleted:                 &deleted,
 		Description:             item.Description,
 		Id:                      &item.ID,
 		LanguageCodeAllowList:   item.LanguageCodeAllowList,

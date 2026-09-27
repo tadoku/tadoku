@@ -3,7 +3,6 @@ package http
 import (
 	"context"
 
-	openapiTypes "github.com/oapi-codegen/runtime/types"
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
 	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
 )
@@ -40,25 +39,8 @@ func (s *server) ImmersionContestList(
 		NextPageToken: result.NextPageToken,
 		TotalSize:     result.TotalSize,
 	}
-	for _, item := range result.Contests {
-		deleted := item.Deleted
-		response.Contests = append(response.Contests, openapi.ImmersionContest{
-			ActivityTypeIdAllowList: item.ActivityTypeIDAllowList,
-			ContestEnd:              openapiTypes.Date{Time: item.ContestEnd},
-			ContestStart:            openapiTypes.Date{Time: item.ContestStart},
-			CreatedAt:               &item.CreatedAt,
-			Deleted:                 &deleted,
-			Description:             item.Description,
-			Id:                      &item.ID,
-			LanguageCodeAllowList:   item.LanguageCodeAllowList,
-			Official:                item.Official,
-			OwnerUserDisplayName:    &item.OwnerUserDisplayName,
-			OwnerUserId:             &item.OwnerUserID,
-			Private:                 item.Private,
-			RegistrationEnd:         openapiTypes.Date{Time: item.RegistrationEnd},
-			Title:                   item.Title,
-			UpdatedAt:               &item.UpdatedAt,
-		})
+	for i := range result.Contests {
+		response.Contests = append(response.Contests, contestResponse(&result.Contests[i]))
 	}
 	return response, nil
 }

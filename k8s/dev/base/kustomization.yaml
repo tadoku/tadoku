@@ -97,6 +97,19 @@ configMapGenerator:
 generatorOptions:
   annotations:
     argocd.argoproj.io/sync-wave: "-20"
+replacements:
+  - source:
+      kind: Job
+      name: tadoku-api-migrate
+      fieldPath: spec.template.spec.containers.[name=migrate].image
+    targets:
+      - select:
+          kind: Deployment
+          name: tadoku-api
+        fieldPaths:
+          - metadata.annotations.[tadoku.app/migration-image]
+        options:
+          create: true
 images:
   - name: tadoku-api-migrations-image
     newName: ghcr.io/tadoku/tadoku/tadoku-api-migrations

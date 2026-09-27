@@ -58,6 +58,9 @@ notification configuration.
   An API image update must leave the worker image digest and Pod template intact.
 - Hook migration images need Image Updater's `force-update`, because successful
   Jobs are removed from the live resource list.
+- Kustomize mirrors the migration image digest into a top-level annotation on
+  the Tadoku API Deployment, so a migration-only update triggers a full Argo CD
+  sync without changing the API Pod template.
 - Image Updater write-back commits touch only the Kustomization, so they do not
   match the path filters of the CI image-publication workflows.
 

@@ -390,12 +390,6 @@ func TestLoadConfigUsesValidatedDefaults(t *testing.T) {
 	if err != nil || prefixedCfg.LeaderboardCachePrefix != "branch:" {
 		t.Errorf("cache prefix=%q error=%v", prefixedCfg.LeaderboardCachePrefix, err)
 	}
-	for _, prefix := range []string{"branch", "Branch:"} {
-		t.Setenv("API_LEADERBOARD_CACHE_PREFIX", prefix)
-		if _, err := loadConfig(); err == nil || !strings.Contains(err.Error(), "LeaderboardCachePrefix") {
-			t.Errorf("invalid cache prefix %q: error=%v", prefix, err)
-		}
-	}
 	t.Setenv("API_LEADERBOARD_CACHE_PREFIX", "")
 	if cfg.JWKS != "http://jwks.test" {
 		t.Errorf("JWKS=%q", cfg.JWKS)

@@ -39,9 +39,8 @@ environment variables. Development values are in
   handshake attempt and the established-connection keepalive and I/O interval.
 - `API_LEADERBOARD_CACHE_PREFIX` (default empty) prefixes every leaderboard
   cache key, isolating cache entries by namespace. A non-empty prefix must be
-  unique for each database sharing a Valkey instance,
-  may contain only lowercase letters, digits, hyphens and colons, and must end
-  in a colon. Empty uses unprefixed keys.
+  unique for each database sharing a Valkey instance. Empty uses unprefixed
+  keys.
 
 `services/tadoku-api/infra/valkey/README.md` documents which URL options are
 accepted and how commands, timeouts, cancellation and close behave.

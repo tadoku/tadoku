@@ -100,13 +100,6 @@ func loadConfig() (config, error) {
 	if err := validator.New().Struct(cfg); err != nil {
 		return config{}, fmt.Errorf("validate config: %w", err)
 	}
-	if cfg.LeaderboardCachePrefix != "" {
-		if !strings.HasSuffix(cfg.LeaderboardCachePrefix, ":") || strings.IndexFunc(cfg.LeaderboardCachePrefix, func(r rune) bool {
-			return !((r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '-' || r == ':')
-		}) >= 0 {
-			return config{}, fmt.Errorf("validate config: LeaderboardCachePrefix must contain only lowercase letters, digits, hyphens and colons, and end in a colon")
-		}
-	}
 	if cfg.FliptEnabled {
 		if strings.TrimSpace(cfg.FliptEnvironment) == "" {
 			return config{}, fmt.Errorf("validate config: FliptEnvironment is required")

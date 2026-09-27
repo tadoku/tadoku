@@ -233,7 +233,7 @@ func (s *Service) CreateContest(ctx context.Context, contest Contest) (*Contest,
 		return nil, err
 	}
 
-	return s.contests.FindContestByID(ctx, FindParameters{ID: contest.ID})
+	return s.contests.FindContestByID(ctx, findParameters{ID: contest.ID})
 }
 
 func (s *Service) CheckCreatePermission(ctx context.Context, userID uuid.UUID, accountCreatedAt time.Time) error {
@@ -299,7 +299,7 @@ func (s *Service) FindLatestOfficialContest(ctx context.Context) (*ContestView, 
 }
 
 func (s *Service) findContestWithLanguages(ctx context.Context, id uuid.UUID, includeDeleted bool) (*Contest, []Language, error) {
-	item, err := s.contests.FindContestByID(ctx, FindParameters{ID: id, includeDeleted: includeDeleted})
+	item, err := s.contests.FindContestByID(ctx, findParameters{ID: id, includeDeleted: includeDeleted})
 	if err != nil {
 		return nil, nil, err
 	}
@@ -342,6 +342,6 @@ func hydrateContest(item *Contest, languages []Language) (*ContestView, error) {
 }
 
 func (s *Service) RequireExistingContest(ctx context.Context, id uuid.UUID) error {
-	_, err := s.contests.FindContestByID(ctx, FindParameters{ID: id})
+	_, err := s.contests.FindContestByID(ctx, findParameters{ID: id})
 	return err
 }

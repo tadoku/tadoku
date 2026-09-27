@@ -52,7 +52,7 @@ try {
   const apiMetadata = JSON.parse(fs.readFileSync(path.join(root, 'bazel-bin/services/tadoku-api/dev.dev.json')))
   const workerMetadata = JSON.parse(fs.readFileSync(path.join(root, 'bazel-bin/services/tadoku-api/worker_dev.dev.json')))
   if (apiMetadata.selectionGroup !== 'tadoku-api' || workerMetadata.selectionGroup !== 'tadoku-api' || workerMetadata.kind !== 'worker') throw new Error('Branch API and worker are not selected as one group')
-  if (workerMetadata.imageTarget !== '//services/tadoku-api/worker:cli_image' || workerMetadata.pushTarget !== '//services/tadoku-api/worker:cli_push' || workerMetadata.workloadTemplate !== '.dev/tadoku-worker.yaml') throw new Error('Worker is not an independent DevCLI image/deployable')
+  if (workerMetadata.imageTarget !== '//services/tadoku-api/cmd/tadoku-worker:cli_image' || workerMetadata.pushTarget !== '//services/tadoku-api/cmd/tadoku-worker:cli_push' || workerMetadata.workloadTemplate !== '.dev/tadoku-worker.yaml') throw new Error('Worker is not an independent DevCLI image/deployable')
   if (['publicPath', 'internalHost', 'publicProxy', 'baseService', 'servicePort'].some(key => key in workerMetadata)) throw new Error('Worker metadata must not request a route or Service')
   report.leaderboardWorkers = { asyncOutbox: 'tadoku-worker', baseDatabase: 'tadoku', branchDatabase: envValue(branchWorker, 'WORKER_POSTGRES_DATABASE'), branchPrefix: envValue(branchWorker, 'WORKER_LEADERBOARD_CACHE_PREFIX'), image: workerContainer.image }
   const jobs = docs.filter(d => d.kind === 'Job')

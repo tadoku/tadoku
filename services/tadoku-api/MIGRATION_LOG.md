@@ -6,10 +6,9 @@
 - [ ] Move the announcements timestamp columns to `timestamptz` in a standalone migration.
 - [ ] Reconsider the announcements primary key as (`namespace`, `id`) so IDs can be scoped to their namespace.
 - [ ] After the Tadoku API migration is complete, make a final documentation pass and delete all references to this migration.
-- [x] Add the job step kind to the journey runner together with the first migrated worker. The outbox journey starts the production `Run` loop, waits for its ready signal and a later poll after an API write, then stops and joins it during cleanup.
 - [ ] Maintain the Keto-backed contest-create permission through a background reconciliation job.
-- [ ] Drop `leaderboard_outbox` in a standalone migration once no deployed Tadoku API release reads it and any unprocessed production rows have been accounted for.
-- [ ] Deploy `tadoku-worker` before or together with the Tadoku API in the first production release. The API has no embedded leaderboard consumer, so an API-only release stops leaderboard cache invalidation.
+- [x] Drop `leaderboard_outbox` in standalone migration 0033. The table is absent in development and production.
+- [x] Deploy the typed `tadoku-worker` before the API release that removed the embedded consumer; the production worker image and ReplicaSet were verified before that API rollout.
 - [x] Restructure the Tadoku API documentation for progressive disclosure for agents: a short entry point with focused documents behind it instead of one long README.
 - [ ] Rename the standard test identity from `Reader One` to `User One` across Kratos seeds, tests and HTTP goldens; regenerate affected signed JWT fixtures and update the public JWKS together.
 - [ ] Rename `moderation_audit_log` to an audit-owned table in a standalone migration.

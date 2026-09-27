@@ -1,6 +1,6 @@
 ---
 title: Jobs and worker
-description: Typed background jobs, atomic publication, worker registration, execution guarantees, replay and safe contract-version migration.
+description: Typed background jobs, atomic publication, leaderboard freshness, worker health, replay and safe contract-version migration.
 sidebar_position: 5
 ---
 
@@ -214,6 +214,36 @@ Replay inserts a new record linked to the failed original and records the
 operator and reason. It preserves the original version and payload. Registry
 support is required before replay; neither replay nor package renaming upgrades
 a message. Keep the failed original inspectable.
+
+## Leaderboard freshness and worker health
+
+PostgreSQL is the source of truth, but unfiltered global, yearly and contest
+leaderboards use warm Valkey cache keys. The API does not check worker readiness
+or the queue before serving a warm key. It can therefore serve an outdated
+leaderboard while the worker is down, while that key's invalidation job is
+pending or running, and after the job has failed terminally. A failed
+invalidation leaves the key stale until another write affecting the same
+contest or year publishes a new invalidation, or an operator replays the failed
+job. There is no automatic age limit on a warm key and no startup
+reconciliation of all leaderboard keys.
+
+On a cache miss, the API rebuilds from PostgreSQL behind a generation check so
+an older rebuild cannot overwrite a completed invalidation. Filtered reads use
+PostgreSQL, and Valkey errors fall back to PostgreSQL. Those paths do not make
+an already warm key fresh while its invalidation remains unprocessed.
+
+The worker's private `/readyz` checks its claim loop and PostgreSQL connection.
+It does not check Valkey, assert that any leaderboard is current, or mean that
+every job succeeded.
+Watch the [worker metrics](./configuration.md#worker-metrics): pending jobs and
+oldest due age show delayed invalidations, failed jobs show terminal failures,
+and unsupported-job gauges show work this worker cannot claim. Investigate any
+failed leaderboard invalidation in `jobs`. Inspect its `last_error` and repair
+the cause before using the
+[replay command](#inspect-and-replay-retained-work). Verify the replayed job
+completes and a subsequent leaderboard read reflects PostgreSQL. A later write
+can also publish another invalidation, but do not depend on users making one to
+recover a stale board.
 
 ## Exercise job effects in end-to-end tests
 

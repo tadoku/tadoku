@@ -145,9 +145,9 @@ dev_deployable(
         "selectionGroup": "tadoku-api",
         "namespace": "tdk-dev-tadoku-api",
         "buildTarget": "//services/tadoku-api/cmd/tadoku-worker:tadoku-worker",
-        "imageTarget": "//services/tadoku-api/worker:cli_image",
+        "imageTarget": "//services/tadoku-api/cmd/tadoku-worker:cli_image",
         "imageName": "tadoku-worker",
-        "pushTarget": "//services/tadoku-api/worker:cli_push",
+        "pushTarget": "//services/tadoku-api/cmd/tadoku-worker:cli_push",
         "containerPath": "/tadoku-worker",
         "port": 8000,
         "readinessPath": "/readyz",
@@ -160,6 +160,6 @@ dev_deployable(
     workload_template = "//.dev:tadoku-worker.yaml",
     deps = [
         "//services/tadoku-api/cmd/tadoku-worker",
-        "//services/tadoku-api/worker:cli_image",
+        "//services/tadoku-api/cmd/tadoku-worker:cli_image",
     ],
 )

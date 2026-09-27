@@ -6,7 +6,7 @@ import { ActivityChart } from '@app/immersion/ActivityChart'
 import { useContestLogs, useContestProfileScores } from '@app/immersion/api'
 import LogsList from '@app/immersion/LogsList'
 import { useEffect, useState } from 'react'
-import { getQueryStringIntParameter } from '@app/common/router'
+import { getQueryStringPageParameter } from '@app/common/router'
 import { ScoreList } from '@app/immersion/ScoreList'
 import Head from 'next/head'
 
@@ -20,7 +20,7 @@ const Page = () => {
       userId,
       contestId,
       includeDeleted: false,
-      page: getQueryStringIntParameter(router.query.page, 1),
+      page: getQueryStringPageParameter(router.query.page),
       pageSize: 50,
     }
   }
@@ -30,7 +30,7 @@ const Page = () => {
       userId,
       contestId,
       includeDeleted: false,
-      page: getQueryStringIntParameter(router.query.page, 1),
+      page: getQueryStringPageParameter(router.query.page),
       pageSize: 50,
     })
   }, [router.asPath, userId, contestId, router.query.page])

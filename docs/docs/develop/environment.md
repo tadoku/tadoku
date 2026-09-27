@@ -281,8 +281,8 @@ separate from the base and other branches.
 The base pair uses unprefixed keys.
 
 - Keep the prefix unique per route when changing overlay routing.
-- Branch configuration disables the embedded legacy worker. The separate worker
-  invalidates leaderboard caches after processing queued jobs.
+- The separate worker invalidates leaderboard caches after processing queued
+  jobs.
 - Stopping a worker leaves recoverable queued work; cached results can remain
   stale until invalidation resumes. Restarting the paired worker resumes
   processing queued jobs.

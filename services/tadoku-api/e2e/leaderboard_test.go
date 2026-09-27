@@ -112,6 +112,21 @@ func seedLeaderboardCache(t *testing.T, key, cache string) {
 	}
 }
 
+func cachedLeaderboardScore(t *testing.T, key string) float64 {
+	t.Helper()
+	entries, err := leaderboardValkey.client.Do(t.Context(), leaderboardValkey.client.B().Zrange().Key(key).Min("0").Max("-1").Withscores().Build()).AsZScores()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, entry := range entries {
+		if entry.Member == "11111111-1111-4111-8111-111111111111" {
+			return entry.Score
+		}
+	}
+	t.Fatalf("user score absent from cache %s", key)
+	return 0
+}
+
 func verifyRebuiltLeaderboardCache(t *testing.T, key string) {
 	t.Helper()
 	client := leaderboardValkey.client

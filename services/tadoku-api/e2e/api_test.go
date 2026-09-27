@@ -126,18 +126,14 @@ func runTests(m *testing.M) (code int) {
 }
 
 type suite struct {
-	db             *testpostgres.Database
-	keto           *testketo.Fixture
-	kratos         *testkratos.Fixture
-	flipt          *testflipt.Fixture
-	handler        *transport.Router
-	profile        *featureprofile.Service
-	leaderboard    *leaderboard.Service
-	outbox         *leaderboard.Worker
-	outboxReady    <-chan struct{}
-	outboxContext  context.Context
-	outboxDone     <-chan struct{}
-	roles          *commonroles.KetoService
+	db          *testpostgres.Database
+	keto        *testketo.Fixture
+	kratos      *testkratos.Fixture
+	flipt       *testflipt.Fixture
+	handler     *transport.Router
+	profile     *featureprofile.Service
+	leaderboard *leaderboard.Service
+	roles       *commonroles.KetoService
 }
 
 func newTestAPI(ctx context.Context, ketoFixture *testketo.Fixture, kratosFixture *testkratos.Fixture) (_ *suite, err error) {

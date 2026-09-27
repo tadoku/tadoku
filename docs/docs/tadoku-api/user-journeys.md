@@ -39,7 +39,7 @@ e2e/testdata/journeys/
 ### Steps
 
 - Steps are numbered by their position in the table. Each step is exactly one of
-  a request, verify or job step.
+  a request or verify step.
 - A request step names the cast member that sends `request.http`; the runner
   injects that member's token, and `none` sends no credentials. Do not embed
   tokens in journey `request.http` files.
@@ -57,10 +57,6 @@ e2e/testdata/journeys/
   request or a repository test.
 - Verify queries end with `order by` and select only application-supplied
   columns; database-defaulted IDs and `now()` timestamps are not deterministic.
-- A job step runs background work and has no fixture directory. It can run a
-  worker's synchronous pass when that is the behavior under test, or start the
-  worker's real polling loop, wait for its ready signal and for an event written
-  after startup, and cancel and join the worker during cleanup.
 
 ### Reset and time
 

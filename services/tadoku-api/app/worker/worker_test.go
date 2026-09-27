@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"math"
+	"strings"
 	"testing"
 	"time"
 
@@ -18,22 +19,27 @@ func TestRegistryRejectsInvalidRegistrations(t *testing.T) {
 	for _, tc := range []struct {
 		name    string
 		entries []registration
+		want    string
 	}{
-		{"empty", nil},
-		{"duplicate", []registration{handle(handler, valid), handle(handler, valid)}},
-		{"nil handler", []registration{handle[jobs.InvalidateOfficialLeaderboardV1](nil, valid)}},
-		{"pointer payload", []registration{handle(func(context.Context, *jobs.InvalidateOfficialLeaderboardV1) error { return nil }, valid)}},
-		{"interface payload", []registration{handle(func(context.Context, jobs.Job) error { return nil }, valid)}},
-		{"zero concurrency", []registration{handle(handler, Policy{Timeout: time.Second, MaxAttempts: 5})}},
-		{"negative concurrency", []registration{handle(handler, Policy{Concurrency: -1, Timeout: time.Second, MaxAttempts: 5})}},
-		{"oversized concurrency", []registration{handle(handler, Policy{Concurrency: 101, Timeout: time.Second, MaxAttempts: 5})}},
-		{"oversized attempts", []registration{handle(handler, Policy{Concurrency: 2, Timeout: time.Second, MaxAttempts: math.MaxInt32 + 1})}},
-		{"zero timeout", []registration{handle(handler, Policy{Concurrency: 2, MaxAttempts: 5})}},
-		{"zero attempts", []registration{handle(handler, Policy{Concurrency: 2, Timeout: time.Second})}},
+		{"empty", nil, ""},
+		{"duplicate", []registration{handle(handler, valid), handle(handler, valid)}, ""},
+		{"nil handler", []registration{handle[jobs.InvalidateOfficialLeaderboardV1](nil, valid)}, ""},
+		{"pointer payload", []registration{handle(func(context.Context, *jobs.InvalidateOfficialLeaderboardV1) error { return nil }, valid)}, ""},
+		{"interface payload", []registration{handle(func(context.Context, jobs.Job) error { return nil }, valid)}, ""},
+		{"zero concurrency", []registration{handle(handler, Policy{Timeout: time.Second, MaxAttempts: 5})}, "concurrency"},
+		{"negative concurrency", []registration{handle(handler, Policy{Concurrency: -1, Timeout: time.Second, MaxAttempts: 5})}, "concurrency"},
+		{"oversized concurrency", []registration{handle(handler, Policy{Concurrency: 101, Timeout: time.Second, MaxAttempts: 5})}, "concurrency"},
+		{"oversized attempts", []registration{handle(handler, Policy{Concurrency: 2, Timeout: time.Second, MaxAttempts: math.MaxInt32 + 1})}, "max attempts"},
+		{"zero timeout", []registration{handle(handler, Policy{Concurrency: 2, MaxAttempts: 5})}, "timeout"},
+		{"zero attempts", []registration{handle(handler, Policy{Concurrency: 2, Timeout: time.Second})}, "max attempts"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			if _, err := newRegistry(tc.entries...); err == nil {
+			_, err := newRegistry(tc.entries...)
+			if err == nil {
 				t.Fatal("invalid registration accepted")
+			}
+			if tc.want != "" && !strings.Contains(err.Error(), tc.want) {
+				t.Errorf("got %q, want error naming %q", err, tc.want)
 			}
 		})
 	}
@@ -55,7 +61,10 @@ func TestNewApplicationRejectsInvalidConfig(t *testing.T) {
 			}
 		})
 	}
-	if _, err := NewApplication(new(jobqueue.Service), new(leaderboard.Service), Config{Concurrency: 1, ShutdownTimeout: time.Second}); err != nil {
+	if _, err := NewApplication(new(jobqueue.Service), new(leaderboard.Service), Config{
+		Concurrency:     1,
+		ShutdownTimeout: time.Second,
+	}); err != nil {
 		t.Fatalf("valid config rejected: %v", err)
 	}
 }
@@ -74,7 +83,7 @@ func TestRegistryValidatesPayloadBeforeCallingTypedHandler(t *testing.T) {
 	}
 	for _, raw := range []string{`{"year":0}`, `{"year":2025,"unexpected":true}`, `{"year":2025} {}`, `{"year":`, `null`, `[]`, `"text"`} {
 		err := handlers.dispatch(t.Context(), jobqueue.ClaimedJob{Type: jobs.LeaderboardInvalidateOfficialV1, Payload: []byte(raw)})
-		var permanent *PermanentError
+		var permanent *permanentError
 		if !errors.As(err, &permanent) {
 			t.Errorf("payload %s: got %v; want permanent failure", raw, err)
 		}
@@ -91,7 +100,7 @@ func TestRegistryValidatesPayloadBeforeCallingTypedHandler(t *testing.T) {
 		t.Errorf("typed invocation: calls=%d job=%+v context preserved=%t", called, got, gotCtx == ctx)
 	}
 	err = handlers.dispatch(ctx, jobqueue.ClaimedJob{Type: "future.job.v1"})
-	var unknown *UnknownTypeError
+	var unknown *unknownTypeError
 	if !errors.As(err, &unknown) || called != 1 {
 		t.Errorf("unknown job: error=%v calls=%d", err, called)
 	}

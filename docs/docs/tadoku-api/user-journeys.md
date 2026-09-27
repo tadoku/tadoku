@@ -18,8 +18,9 @@ user can observe another's writes. Journeys keep the functionality users expect
 working, so cover every important user journey in the application.
 
 All journeys live in `e2e/user_journeys_test.go`, one explicit Go step table per
-journey passed to `runJourney`. They run only against Tadoku API and keep
-dependent steps in one scenario. Fixtures live under `e2e/testdata/journeys/`:
+journey passed to `runJourney`. They keep dependent steps in one scenario and
+run the production API router and, where needed, the worker application in
+process. Fixtures live under `e2e/testdata/journeys/`:
 
 ```text
 e2e/testdata/journeys/
@@ -39,7 +40,7 @@ e2e/testdata/journeys/
 ### Steps
 
 - Steps are numbered by their position in the table. Each step is exactly one of
-  a request or verify step.
+  a request, verify or job step.
 - A request step names the cast member that sends `request.http`; the runner
   injects that member's token, and `none` sends no credentials. Do not embed
   tokens in journey `request.http` files.
@@ -57,13 +58,17 @@ e2e/testdata/journeys/
   request or a repository test.
 - Verify queries end with `order by` and select only application-supplied
   columns; database-defaulted IDs and `now()` timestamps are not deterministic.
+- A `run_worker` job step has no fixture directory. It starts the worker against
+  the journey's disposable database and Valkey fixture, waits for queued jobs
+  to complete, and stops it before the next step.
 
 ### Reset and time
 
-- The runner resets PostgreSQL and Keto once per journey: cleanup, then the
-  optional shared `journeys/setup.sql` and the shared
+- The runner resets PostgreSQL, Keto and Valkey once per journey: cleanup, then
+  the optional shared `journeys/setup.sql` and the shared
   `journeys/relationships.json`, then the journey's own files. There are no
-  per-step seeds and no resets between steps.
+  per-step seeds and no resets between steps. A journey may seed an external
+  cache after reset to establish its initial state.
 - The JWT clock stays at the fixture instant for the whole journey, while each
   step's `at` sets its business instant through `timex`.
 - The runner stops at the first failing step. Unknown entries in a journey or

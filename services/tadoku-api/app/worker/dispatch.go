@@ -22,7 +22,7 @@ type Policy struct {
 }
 
 type registration struct {
-	spec   policy
+	spec   handlerSpec
 	invoke func(context.Context, json.RawMessage) error
 	err    error
 }
@@ -41,18 +41,33 @@ func handle[J jobs.Job](fn func(context.Context, J) error, spec Policy) registra
 	}
 	var job J
 	name := job.Type()
-	if name == "" || spec.Concurrency < 1 || spec.Concurrency > 100 || spec.Timeout <= 0 || spec.MaxAttempts < 1 || spec.MaxAttempts > math.MaxInt32 {
-		return registration{err: fmt.Errorf("invalid handler policy for %q", name)}
+	if name == "" {
+		return registration{err: errors.New("job handler type is empty")}
+	}
+	if spec.Concurrency < 1 || spec.Concurrency > 100 {
+		return registration{err: fmt.Errorf("handler %q concurrency must be 1 to 100", name)}
+	}
+	if spec.Timeout <= 0 {
+		return registration{err: fmt.Errorf("handler %q timeout must be positive", name)}
+	}
+	if spec.MaxAttempts < 1 || spec.MaxAttempts > math.MaxInt32 {
+		return registration{err: fmt.Errorf("handler %q max attempts must be 1 to %d", name, math.MaxInt32)}
 	}
 	return registration{
-		spec: policy{typeName: name, limit: spec.Concurrency, timeout: spec.Timeout, lease: 10 * time.Second, maxAttempts: spec.MaxAttempts},
+		spec: handlerSpec{
+			typeName:    name,
+			limit:       spec.Concurrency,
+			timeout:     spec.Timeout,
+			lease:       10 * time.Second,
+			maxAttempts: spec.MaxAttempts,
+		},
 		invoke: func(ctx context.Context, raw json.RawMessage) error {
 			var payload J
 			if err := decode(raw, &payload); err != nil {
-				return &PermanentError{Err: err}
+				return &permanentError{err: err}
 			}
 			if err := payload.Validate(); err != nil {
-				return &PermanentError{Err: err}
+				return &permanentError{err: err}
 			}
 			return fn(ctx, payload)
 		},
@@ -63,7 +78,10 @@ func newRegistry(entries ...registration) (*registry, error) {
 	if len(entries) == 0 {
 		return nil, errors.New("worker requires at least one registered handler")
 	}
-	handlers := &registry{ordered: append([]registration(nil), entries...), byType: make(map[jobs.Type]registration, len(entries))}
+	handlers := &registry{
+		ordered: append([]registration(nil), entries...),
+		byType:  make(map[jobs.Type]registration, len(entries)),
+	}
 	for _, entry := range entries {
 		if entry.err != nil {
 			return nil, entry.err
@@ -90,7 +108,7 @@ func (r *registry) types() []jobs.Type {
 func (r *registry) dispatch(ctx context.Context, job jobqueue.ClaimedJob) error {
 	entry, exists := r.byType[job.Type]
 	if !exists {
-		return &UnknownTypeError{Type: job.Type}
+		return &unknownTypeError{typ: job.Type}
 	}
 	return entry.invoke(ctx, job.Payload)
 }
@@ -111,17 +129,17 @@ func decode(raw json.RawMessage, dst any) error {
 	return nil
 }
 
-type PermanentError struct{ Err error }
+type permanentError struct{ err error }
 
-func (e *PermanentError) Error() string { return e.Err.Error() }
-func (e *PermanentError) Unwrap() error { return e.Err }
+func (e *permanentError) Error() string { return e.err.Error() }
+func (e *permanentError) Unwrap() error { return e.err }
 
-type UnknownTypeError struct{ Type jobs.Type }
+type unknownTypeError struct{ typ jobs.Type }
 
-func (e *UnknownTypeError) Error() string { return fmt.Sprintf("unsupported job type %q", e.Type) }
+func (e *unknownTypeError) Error() string { return fmt.Sprintf("unsupported job type %q", e.typ) }
 
 func failureCode(err error) string {
-	var permanent *PermanentError
+	var permanent *permanentError
 	if errors.As(err, &permanent) {
 		return "invalid_payload"
 	}

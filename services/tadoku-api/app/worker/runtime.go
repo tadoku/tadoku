@@ -15,7 +15,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
 
-type policy struct {
+type handlerSpec struct {
 	typeName    jobs.Type
 	limit       int
 	timeout     time.Duration
@@ -87,10 +87,10 @@ func (r *runner) run(ctx context.Context) {
 			}
 			for _, task := range tasks {
 				if task.Reclaimed {
-					r.metrics.ExpiredLeases.WithLabelValues(string(spec.typeName)).Inc()
+					r.metrics.expiredLeases.WithLabelValues(string(spec.typeName)).Inc()
 				}
 				active[spec.typeName]++
-				r.metrics.InFlight.WithLabelValues(string(spec.typeName)).Inc()
+				r.metrics.inFlight.WithLabelValues(string(spec.typeName)).Inc()
 				running.Add(1)
 				go func() {
 					defer running.Done()
@@ -106,7 +106,7 @@ func (r *runner) run(ctx context.Context) {
 		case <-ctx.Done():
 		case completed := <-results:
 			active[completed]--
-			r.metrics.InFlight.WithLabelValues(string(completed)).Dec()
+			r.metrics.inFlight.WithLabelValues(string(completed)).Dec()
 		case <-ticker.C:
 		case <-metricsTicker.C:
 			refreshMetrics()
@@ -161,30 +161,30 @@ func (r *runner) updateMetrics(ctx context.Context) (int64, error) {
 		if err != nil {
 			return 0, err
 		}
-		r.metrics.Pending.WithLabelValues(string(spec.typeName)).Set(float64(stats.Pending))
-		r.metrics.Failed.WithLabelValues(string(spec.typeName)).Set(float64(stats.Failed))
+		r.metrics.pending.WithLabelValues(string(spec.typeName)).Set(float64(stats.Pending))
+		r.metrics.failed.WithLabelValues(string(spec.typeName)).Set(float64(stats.Failed))
 		age := float64(0)
 		if stats.OldestDueAt != nil {
 			age = max(0, timex.Now().Sub(*stats.OldestDueAt).Seconds())
 		}
-		r.metrics.OldestDueAge.WithLabelValues(string(spec.typeName)).Set(age)
+		r.metrics.oldestDueAge.WithLabelValues(string(spec.typeName)).Set(age)
 	}
 	stats, err := r.queue.UnsupportedStats(ctx, known)
 	if err != nil {
 		return 0, err
 	}
-	r.metrics.Unsupported.Set(float64(stats.Pending))
-	r.metrics.UnsupportedRunning.Set(float64(stats.Running))
-	r.metrics.UnsupportedFailed.Set(float64(stats.Failed))
+	r.metrics.unsupported.Set(float64(stats.Pending))
+	r.metrics.unsupportedRunning.Set(float64(stats.Running))
+	r.metrics.unsupportedFailed.Set(float64(stats.Failed))
 	age := float64(0)
 	if stats.OldestDueAt != nil {
 		age = max(0, timex.Now().Sub(*stats.OldestDueAt).Seconds())
 	}
-	r.metrics.UnsupportedOldestDueAge.Set(age)
+	r.metrics.unsupportedOldestDueAge.Set(age)
 	return stats.Pending + stats.Running + stats.Failed, nil
 }
 
-func (r *runner) process(ctx context.Context, task jobqueue.ClaimedJob, spec policy) error {
+func (r *runner) process(ctx context.Context, task jobqueue.ClaimedJob, spec handlerSpec) error {
 	margin := spec.lease / 3
 	remainingLease := time.Until(task.LeaseExpiresAt)
 	if remainingLease <= margin {
@@ -221,7 +221,7 @@ func (r *runner) process(ctx context.Context, task jobqueue.ClaimedJob, spec pol
 		return renewErr
 	}
 
-	r.metrics.Duration.WithLabelValues(string(task.Type)).Observe(max(0, (limit - time.Until(maximum)).Seconds()))
+	r.metrics.duration.WithLabelValues(string(task.Type)).Observe(max(0, (limit - time.Until(maximum)).Seconds()))
 	transitionCtx, stop := context.WithTimeout(context.Background(), 5*time.Second)
 	defer stop()
 
@@ -231,13 +231,13 @@ func (r *runner) process(ctx context.Context, task jobqueue.ClaimedJob, spec pol
 		held, err = r.queue.Complete(transitionCtx, task)
 	} else {
 		code := failureCode(handlerErr)
-		var permanent *PermanentError
+		var permanent *permanentError
 		if errors.As(handlerErr, &permanent) {
 			held, err = r.queue.Fail(transitionCtx, task, code)
 		} else {
 			held, err = r.queue.Retry(transitionCtx, task, retryAt(task.Attempts), code, spec.maxAttempts)
 		}
-		r.metrics.Attempts.WithLabelValues(string(task.Type), code).Inc()
+		r.metrics.attempts.WithLabelValues(string(task.Type), code).Inc()
 	}
 	if err != nil {
 		return fmt.Errorf("transition job %d: %w", task.ID, err)
@@ -251,7 +251,7 @@ func (r *runner) process(ctx context.Context, task jobqueue.ClaimedJob, spec pol
 	return handlerErr
 }
 
-func (r *runner) renew(ctx context.Context, cancelHandler context.CancelFunc, task jobqueue.ClaimedJob, spec policy, maximum time.Time) error {
+func (r *runner) renew(ctx context.Context, cancelHandler context.CancelFunc, task jobqueue.ClaimedJob, spec handlerSpec, maximum time.Time) error {
 	leaseExpiresAt := task.LeaseExpiresAt
 	for {
 		if ctx.Err() != nil {

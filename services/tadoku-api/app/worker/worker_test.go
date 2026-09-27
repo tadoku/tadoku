@@ -83,7 +83,7 @@ func TestRegistryValidatesPayloadBeforeCallingTypedHandler(t *testing.T) {
 	}
 	for _, raw := range []string{`{"year":0}`, `{"year":2025,"unexpected":true}`, `{"year":2025} {}`, `{"year":`, `null`, `[]`, `"text"`} {
 		err := handlers.dispatch(t.Context(), jobqueue.ClaimedJob{Type: jobs.LeaderboardInvalidateOfficialV1, Payload: []byte(raw)})
-		var permanent *PermanentError
+		var permanent *permanentError
 		if !errors.As(err, &permanent) {
 			t.Errorf("payload %s: got %v; want permanent failure", raw, err)
 		}
@@ -100,7 +100,7 @@ func TestRegistryValidatesPayloadBeforeCallingTypedHandler(t *testing.T) {
 		t.Errorf("typed invocation: calls=%d job=%+v context preserved=%t", called, got, gotCtx == ctx)
 	}
 	err = handlers.dispatch(ctx, jobqueue.ClaimedJob{Type: "future.job.v1"})
-	var unknown *UnknownTypeError
+	var unknown *unknownTypeError
 	if !errors.As(err, &unknown) || called != 1 {
 		t.Errorf("unknown job: error=%v calls=%d", err, called)
 	}

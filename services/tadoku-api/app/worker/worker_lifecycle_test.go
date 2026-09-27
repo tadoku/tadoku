@@ -2,6 +2,7 @@ package worker
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"log/slog"
 	"testing"
@@ -13,39 +14,19 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/testvalkey"
-	valkeygo "github.com/valkey-io/valkey-go"
 )
 
 func TestWorkerJobLifecycle(t *testing.T) {
-	db, err := testpostgres.New(t.Context())
+	f, err := newWorkerFixture(t.Context())
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() {
-		if err := db.Close(); err != nil {
+		if err := f.Close(); err != nil {
 			t.Error(err)
 		}
 	})
-	rawURL, err := testvalkey.URL()
-	if err != nil {
-		t.Fatal(err)
-	}
-	option, err := valkeygo.ParseURL(rawURL)
-	if err != nil {
-		t.Fatal(err)
-	}
-	option.SelectDB = 13
-	option.ForceSingleClient = true
-	option.DisableRetry = true
-	client, err := valkeygo.NewClient(option)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(client.Close)
-
-	prefix := "test:" + uuid.NewString() + ":"
+	db, client, prefix := f.database, f.client, f.prefix
 	keys := []string{
 		prefix + "leaderboard:global",
 		prefix + "leaderboard:global:last_updated",
@@ -58,7 +39,7 @@ func TestWorkerJobLifecycle(t *testing.T) {
 	t.Cleanup(func() {
 		ctx, stop := context.WithTimeout(context.Background(), time.Second)
 		defer stop()
-		if err := client.Do(ctx, client.B().Del().Key(keys...).Build()).Error(); err != nil {
+		if err := client.Do(ctx, client.B().Del().Key(keys[6]).Build()).Error(); err != nil {
 			t.Error(err)
 		}
 	})
@@ -71,7 +52,12 @@ func TestWorkerJobLifecycle(t *testing.T) {
 
 	service := leaderboard.NewService(leaderboard.NewRepository(db.Pool), client, time.Second, prefix)
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	runner, err := NewApplication(jobqueue.NewService(jobqueue.NewRepository(db.Pool)), service, Config{Concurrency: 4, Logger: logger, Metrics: NewMetrics(prometheus.NewRegistry()), ShutdownTimeout: 2 * time.Second})
+	runner, err := NewApplication(jobqueue.NewService(jobqueue.NewRepository(db.Pool)), service, Config{
+		Concurrency:     4,
+		Logger:          logger,
+		Metrics:         NewMetrics(prometheus.NewRegistry()),
+		ShutdownTimeout: 2 * time.Second,
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -87,9 +73,11 @@ func TestWorkerJobLifecycle(t *testing.T) {
 		}
 	})
 
-	waitFor(t, func() (bool, error) {
+	if err := waitFor(t.Context(), func() (bool, error) {
 		return runner.Ready(), nil
-	})
+	}); err != nil {
+		t.Fatal(err)
+	}
 	for _, item := range []struct {
 		key  string
 		want int64
@@ -106,12 +94,24 @@ func TestWorkerJobLifecycle(t *testing.T) {
 		}
 	}
 
-	validID := insertJob(t, db.Pool, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":2025}`, false)
-	invalidID := insertJob(t, db.Pool, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":0}`, false)
-	unknownID := insertJob(t, db.Pool, "future.job.v1", `{}`, false)
-	reclaimedID := insertJob(t, db.Pool, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":2025}`, true)
+	validID, err := insertJob(t.Context(), db.Pool, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":2025}`, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	invalidID, err := insertJob(t.Context(), db.Pool, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":0}`, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	unknownID, err := insertJob(t.Context(), db.Pool, "future.job.v1", `{}`, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	reclaimedID, err := insertJob(t.Context(), db.Pool, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":2025}`, true)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	waitFor(t, func() (bool, error) {
+	if err := waitFor(t.Context(), func() (bool, error) {
 		var completed, failed, reclaimed, unknown string
 		err := db.Pool.QueryRow(t.Context(), `select state from jobs where id = $1`, validID).Scan(&completed)
 		if err != nil {
@@ -127,7 +127,9 @@ func TestWorkerJobLifecycle(t *testing.T) {
 		}
 		err = db.Pool.QueryRow(t.Context(), `select state from jobs where id = $1`, unknownID).Scan(&unknown)
 		return completed == "completed" && failed == "failed" && reclaimed == "completed" && unknown == "pending", err
-	})
+	}); err != nil {
+		t.Fatal(err)
+	}
 
 	for _, item := range []struct {
 		key  string
@@ -147,25 +149,18 @@ func TestWorkerJobLifecycle(t *testing.T) {
 	}
 }
 
-func insertJob(t *testing.T, db *pgxpool.Pool, jobType, payload string, expired bool) int64 {
-	t.Helper()
+func insertJob(ctx context.Context, db *pgxpool.Pool, jobType, payload string, expired bool) (int64, error) {
 	var id int64
 	if expired {
-		err := db.QueryRow(t.Context(), `insert into jobs (task_type, payload, state, attempts, claim_token, lease_expires_at)
+		err := db.QueryRow(ctx, `insert into jobs (task_type, payload, state, attempts, claim_token, lease_expires_at)
 			values ($1, $2::jsonb, 'running', 1, $3, now() - interval '1 second') returning id`, jobType, payload, uuid.New()).Scan(&id)
-		if err != nil {
-			t.Fatal(err)
-		}
-		return id
+		return id, err
 	}
-	if err := db.QueryRow(t.Context(), `insert into jobs (task_type, payload) values ($1, $2::jsonb) returning id`, jobType, payload).Scan(&id); err != nil {
-		t.Fatal(err)
-	}
-	return id
+	err := db.QueryRow(ctx, `insert into jobs (task_type, payload) values ($1, $2::jsonb) returning id`, jobType, payload).Scan(&id)
+	return id, err
 }
 
-func waitFor(t *testing.T, check func() (bool, error)) {
-	t.Helper()
+func waitFor(ctx context.Context, check func() (bool, error)) error {
 	deadline := time.NewTimer(10 * time.Second)
 	defer deadline.Stop()
 	tick := time.NewTicker(50 * time.Millisecond)
@@ -173,14 +168,16 @@ func waitFor(t *testing.T, check func() (bool, error)) {
 	for {
 		ok, err := check()
 		if err != nil {
-			t.Fatal(err)
+			return err
 		}
 		if ok {
-			return
+			return nil
 		}
 		select {
 		case <-deadline.C:
-			t.Fatal("worker result did not converge")
+			return fmt.Errorf("worker result did not converge: %w", context.DeadlineExceeded)
+		case <-ctx.Done():
+			return ctx.Err()
 		case <-tick.C:
 		}
 	}

@@ -129,10 +129,10 @@ func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
 	}
 
 	deletedID := uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa4")
-	if _, err := repository.FindContestByID(t.Context(), FindParameters{ID: deletedID}); !errors.Is(err, ErrContestNotFound) {
+	if _, err := repository.FindContestByID(t.Context(), findParameters{ID: deletedID}); !errors.Is(err, ErrContestNotFound) {
 		t.Errorf("deleted contest error=%v, want not found", err)
 	}
-	deleted, err := repository.FindContestByID(t.Context(), FindParameters{ID: deletedID, includeDeleted: true})
+	deleted, err := repository.FindContestByID(t.Context(), findParameters{ID: deletedID, includeDeleted: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -141,7 +141,7 @@ func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
 	}
 
 	privateID := uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2")
-	private, err := repository.FindContestByID(t.Context(), FindParameters{ID: privateID})
+	private, err := repository.FindContestByID(t.Context(), findParameters{ID: privateID})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -206,7 +206,7 @@ func TestContestsRepositoryCreationTransaction(t *testing.T) {
 			return err
 		}
 		var err error
-		created, err = repository.FindContestByID(ctx, FindParameters{ID: contest.ID})
+		created, err = repository.FindContestByID(ctx, findParameters{ID: contest.ID})
 		return err
 	})
 	if err != nil {
@@ -228,7 +228,7 @@ func TestContestsRepositoryCreationTransaction(t *testing.T) {
 	if !errors.Is(err, rollbackErr) {
 		t.Fatalf("rollback error=%v, want %v", err, rollbackErr)
 	}
-	if _, err := repository.FindContestByID(t.Context(), FindParameters{ID: rolledBack.ID}); !errors.Is(err, ErrContestNotFound) {
+	if _, err := repository.FindContestByID(t.Context(), findParameters{ID: rolledBack.ID}); !errors.Is(err, ErrContestNotFound) {
 		t.Errorf("rolled-back contest error=%v, want contest not found", err)
 	}
 }

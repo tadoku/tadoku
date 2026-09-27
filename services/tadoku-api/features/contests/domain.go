@@ -90,7 +90,7 @@ type Registration struct {
 	Contest   *ContestView
 }
 
-func (r Registration) IsEligibleForScoring(languageCode string, activityID int32) bool {
+func (r Registration) isEligibleForScoring(languageCode string, activityID int32) bool {
 	languageAllowed := false
 	for _, code := range r.LanguageCodes {
 		if code == languageCode {
@@ -122,7 +122,7 @@ func selectRegistrationsForScoring(requested []uuid.UUID, available []Registrati
 		if !exists {
 			return nil, errx.NewInvalidInputError("registration_id is not ongoing for the current user")
 		}
-		if !registration.IsEligibleForScoring(languageCode, activityID) {
+		if !registration.isEligibleForScoring(languageCode, activityID) {
 			return nil, errx.NewInvalidInputError("language_code or activity_id is not allowed for registration_id")
 		}
 		selected = append(selected, registration)
@@ -245,8 +245,6 @@ type ListParameters struct {
 	includePrivate bool
 }
 
-func (p ListParameters) IncludePrivate() bool { return p.includePrivate }
-
 func (p ListParameters) Validate() error {
 	if p.PageSize < 0 {
 		return errx.NewInvalidInputError("page_size must not be negative")
@@ -264,13 +262,11 @@ func (p ListParameters) offset() int32 {
 	return int32(p.Page * p.PageSize)
 }
 
-type FindParameters struct {
+type findParameters struct {
 	ID uuid.UUID
 
 	includeDeleted bool
 }
-
-func (p FindParameters) IncludeDeleted() bool { return p.includeDeleted }
 
 func hydrateActivities(ids []int32) ([]Activity, error) {
 	result, err := hydrateActivitiesInOrder(ids)

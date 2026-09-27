@@ -250,7 +250,7 @@ func (r *ContestsRepository) ListContests(ctx context.Context, parameters ListPa
 		IncludeDeleted: parameters.IncludeDeleted,
 		UserID:         postgres.NullableUUID(parameters.UserID),
 		Official:       parameters.Official,
-		IncludePrivate: parameters.IncludePrivate(),
+		IncludePrivate: parameters.includePrivate,
 		StartFrom:      parameters.offset(),
 		PageSize:       int32(parameters.PageSize),
 	})
@@ -286,7 +286,7 @@ func (r *ContestsRepository) ListContests(ctx context.Context, parameters ListPa
 	return result, total, nil
 }
 
-func (r *ContestsRepository) FindContestByID(ctx context.Context, parameters FindParameters) (*Contest, error) {
+func (r *ContestsRepository) FindContestByID(ctx context.Context, parameters findParameters) (*Contest, error) {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return nil, err
@@ -294,7 +294,7 @@ func (r *ContestsRepository) FindContestByID(ctx context.Context, parameters Fin
 
 	row, err := queries.New(executor).FindContestByID(ctx, queries.FindContestByIDParams{
 		ID:             postgres.UUID(parameters.ID),
-		IncludeDeleted: parameters.IncludeDeleted(),
+		IncludeDeleted: parameters.includeDeleted,
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrContestNotFound

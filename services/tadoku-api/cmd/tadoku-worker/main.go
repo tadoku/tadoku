@@ -49,13 +49,6 @@ func loadConfig() (config, error) {
 	if err := validator.New().Struct(cfg); err != nil {
 		return config{}, fmt.Errorf("validate worker config: %w", err)
 	}
-	if prefix := cfg.LeaderboardCachePrefix; prefix != "" {
-		if !strings.HasSuffix(prefix, ":") || strings.IndexFunc(prefix, func(r rune) bool {
-			return !((r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '-' || r == ':')
-		}) >= 0 {
-			return config{}, errors.New("WORKER_LEADERBOARD_CACHE_PREFIX must contain only lowercase letters, digits, hyphens and colons, and end in a colon")
-		}
-	}
 	var err error
 	cfg.Postgres, err = postgresconfig.Load("WORKER_POSTGRES", "WORKER_POSTGRES_URL")
 	if err != nil {

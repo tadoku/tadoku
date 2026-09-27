@@ -2,7 +2,6 @@ package e2e_test
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -35,7 +34,6 @@ type cast map[member]int
 type step struct {
 	request string
 	verify  string
-	job     string
 
 	as     member
 	want   int
@@ -78,16 +76,6 @@ func runJourneyWithSetup(t *testing.T, s *suite, handler http.Handler, name stri
 	}
 
 	resetJourney(t, s, directory)
-	if s.outbox != nil {
-		workerContext, cancel := context.WithCancel(t.Context())
-		s.outboxContext = workerContext
-		defer func() {
-			cancel()
-			if s.outboxDone != nil {
-				<-s.outboxDone
-			}
-		}()
-	}
 	if afterReset != nil {
 		afterReset(t)
 	}
@@ -107,10 +95,6 @@ func runJourneyWithSetup(t *testing.T, s *suite, handler http.Handler, name stri
 			timex.TheWorld(at, func() {
 				if current.verify != "" {
 					checkVerifyGolden(t, s, stepDir)
-					return
-				}
-				if current.job != "" {
-					runJobStep(t, s, current.job)
 					return
 				}
 				runRequestStep(t, s, handler, stepDir, current, tokens)
@@ -140,14 +124,11 @@ func stepDirNames(steps []step) ([]string, error) {
 }
 
 func (current step) dirName(position int) (string, error) {
-	kinds := 0
-	for _, value := range []string{current.request, current.verify, current.job} {
-		if value != "" {
-			kinds++
-		}
-	}
-	if kinds != 1 {
-		return "", fmt.Errorf("step %d must set exactly one request, verify or job", position)
+	switch {
+	case current.request != "" && current.verify != "":
+		return "", fmt.Errorf("step %d sets both request and verify", position)
+	case current.request == "" && current.verify == "":
+		return "", fmt.Errorf("step %d sets neither request nor verify", position)
 	}
 
 	name := current.request
@@ -155,11 +136,6 @@ func (current step) dirName(position int) (string, error) {
 		name = current.verify
 		if current.as != "" || current.want != 0 || current.others != nil {
 			return "", fmt.Errorf("verify step %d must not set as, want or others", position)
-		}
-	} else if current.job != "" {
-		name = current.job
-		if current.as != "" || current.want != 0 || current.others != nil {
-			return "", fmt.Errorf("job step %d must not set as, want or others", position)
 		}
 	} else if current.as == "" || current.want == 0 {
 		return "", fmt.Errorf("request step %d must set as and want", position)
@@ -178,10 +154,8 @@ func checkJourneyFiles(directory string, steps []step, names []string) error {
 	}
 
 	expected := make(map[string]bool, len(names))
-	for index, name := range names {
-		if steps[index].job == "" {
-			expected[name] = true
-		}
+	for _, name := range names {
+		expected[name] = true
 	}
 	for _, entry := range entries {
 		switch {
@@ -193,9 +167,6 @@ func checkJourneyFiles(directory string, steps []step, names []string) error {
 	}
 
 	for index, name := range names {
-		if steps[index].job != "" {
-			continue
-		}
 		want := []string{"golden.http", "request.http"}
 		if steps[index].verify != "" {
 			want = []string{"verify.json", "verify.sql"}
@@ -205,32 +176,6 @@ func checkJourneyFiles(directory string, steps []step, names []string) error {
 		}
 	}
 	return nil
-}
-
-func runJobStep(t *testing.T, s *suite, job string) {
-	t.Helper()
-	switch job {
-	case "run_leaderboard_outbox":
-		if s.outbox == nil || s.outboxReady == nil || s.outboxContext == nil {
-			t.Fatal("leaderboard outbox worker is not configured")
-		}
-		if s.outboxDone != nil {
-			t.Fatal("leaderboard outbox worker already started")
-		}
-		done := make(chan struct{})
-		s.outboxDone = done
-		go func() {
-			defer close(done)
-			s.outbox.Run(s.outboxContext)
-		}()
-		select {
-		case <-s.outboxReady:
-		case <-time.After(3 * time.Second):
-			t.Fatal("leaderboard outbox did not become ready")
-		}
-	default:
-		t.Fatalf("unknown journey job %q", job)
-	}
 }
 
 func checkStepFiles(directory string, want []string) error {

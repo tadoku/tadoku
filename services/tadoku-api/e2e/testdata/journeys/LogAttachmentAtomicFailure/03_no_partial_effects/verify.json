@@ -10,9 +10,5 @@
   {
     "kind": "jobs",
     "value": "0"
-  },
-  {
-    "kind": "outbox",
-    "value": "0"
   }
 ]

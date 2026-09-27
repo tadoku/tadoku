@@ -85,14 +85,12 @@ replica, Recreate rollout, a separate image digest, and no Service or public
 route. Its CPU and memory limits are initial values; verify them with four
 active tasks before treating them as settled.
 
-After the old outbox has drained, the API's embedded worker is disabled. The
-new worker consumes `jobs` and invalidates leaderboard caches. Verify worker
+The worker consumes `jobs` and invalidates leaderboard caches. Verify worker
 ownership and reads:
 
 1. Confirm the base `tadoku-worker` is ready and its `/readyz` endpoint remains
    healthy while tasks retry or fail.
-2. Confirm the base API replicas have `API_LEADERBOARD_OUTBOX_ENABLED=false`.
-3. Inspect due and failed `jobs` rows; a write followed by a
+2. Inspect due and failed `jobs` rows; a write followed by a
    leaderboard read must still succeed. Keep the legacy table until a later
    standalone cleanup migration.
 

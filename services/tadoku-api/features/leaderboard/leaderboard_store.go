@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -167,52 +166,6 @@ func (s *Store) invalidate(ctx context.Context, key string) error {
 		return fmt.Errorf("invalidate leaderboard %s: %w", key, err)
 	}
 	return nil
-}
-
-func (s *Store) reconcile(ctx context.Context) (int, error) {
-	var cursor uint64
-	count := 0
-	for {
-		commandCtx, cancel := context.WithTimeout(ctx, s.operationTimeout)
-		page, err := s.client.Do(commandCtx, s.client.B().Scan().Cursor(cursor).Match(s.cacheKey("leaderboard:*:last_updated")).Count(100).Build()).AsScanEntry()
-		cancel()
-		if err != nil {
-			return count, fmt.Errorf("scan leaderboard cache markers: %w", err)
-		}
-		for _, marker := range page.Elements {
-			key := strings.TrimSuffix(marker, ":last_updated")
-			if !s.leaderboardCacheKey(key) {
-				continue
-			}
-			if err := s.invalidate(ctx, key); err != nil {
-				return count, err
-			}
-			count++
-		}
-		if page.Cursor == 0 {
-			return count, nil
-		}
-		cursor = page.Cursor
-	}
-}
-
-func (s *Store) leaderboardCacheKey(key string) bool {
-	if !strings.HasPrefix(key, s.cachePrefix) {
-		return false
-	}
-	key = strings.TrimPrefix(key, s.cachePrefix)
-	if key == globalKey {
-		return true
-	}
-	if strings.HasPrefix(key, yearlyPrefix) {
-		_, err := strconv.Atoi(strings.TrimPrefix(key, yearlyPrefix))
-		return err == nil
-	}
-	if strings.HasPrefix(key, contestPrefix) {
-		_, err := uuid.Parse(strings.TrimPrefix(key, contestPrefix))
-		return err == nil
-	}
-	return false
 }
 
 func (s *Store) rebuild(ctx context.Context, key string, scores []score, generation string) (bool, error) {

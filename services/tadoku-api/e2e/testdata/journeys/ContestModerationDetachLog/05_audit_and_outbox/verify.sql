@@ -1,7 +1,5 @@
 select 'audit' as kind, user_id::text as actor, action as value, count(*)::text as count from moderation_audit_log where action='detach_log' group by user_id, action
 union all
-select 'legacy_outbox', '' as actor, '' as value, count(*)::text from leaderboard_outbox
-union all
 select task_type, '' as actor, coalesce(payload->>'contest_id', payload->>'year', ''), count(*)::text
 from jobs group by task_type, payload
 union all

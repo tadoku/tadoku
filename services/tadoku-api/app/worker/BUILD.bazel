@@ -9,7 +9,10 @@ go_library(
         "runtime.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/app/worker",
-    visibility = ["//services/tadoku-api:feature_consumers"],
+    visibility = [
+        "//services/tadoku-api/cmd/tadoku-worker:__pkg__",
+        "//services/tadoku-api/e2e:__pkg__",
+    ],
     deps = [
         "//services/tadoku-api/domain/jobs",
         "//services/tadoku-api/features/jobqueue",

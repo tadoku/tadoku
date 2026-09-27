@@ -17,6 +17,8 @@ Bazel target `visibility` and the package groups in
 boundaries described in [Code ownership](./index.md#code-ownership).
 
 - Feature libraries are visible only to application, startup and E2E packages.
+- The worker application (`app/worker`) is visible only to its binary
+  (`cmd/tadoku-worker`) and E2E.
 - A feature's generated sqlc package is visible only to that feature.
 - Tests follow their package's layer policy. Startup (`cmd/tadoku-api`) and E2E
   packages are assembly boundaries.

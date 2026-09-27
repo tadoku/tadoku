@@ -173,7 +173,8 @@ return app.Run(ctx)
 `cmd/tadoku-worker` loads settings with envconfig and validates them before
 constructing the application. `WORKER_CONCURRENCY` defaults to four slots and
 `WORKER_SHUTDOWN_TIMEOUT` defaults to fifteen seconds; both must be positive.
-Pass those validated values explicitly in `Config`. Startup can also provide
+Pass those validated values explicitly in `Config`; `NewApplication` returns an
+error for a non-positive concurrency or shutdown timeout. Startup can also provide
 the process `Logger` and `Metrics`. Handler
 `Policy.Timeout` must be positive, `Policy.Concurrency` must be 1–100 and
 `Policy.MaxAttempts` must be 1–2,147,483,647, matching the queue boundary.

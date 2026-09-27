@@ -9,6 +9,7 @@ import (
 
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
 )
 
 func TestRegistryRejectsInvalidRegistrations(t *testing.T) {
@@ -35,6 +36,27 @@ func TestRegistryRejectsInvalidRegistrations(t *testing.T) {
 				t.Fatal("invalid registration accepted")
 			}
 		})
+	}
+}
+
+func TestNewApplicationRejectsInvalidConfig(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		config Config
+	}{
+		{"zero concurrency", Config{ShutdownTimeout: time.Second}},
+		{"negative concurrency", Config{Concurrency: -1, ShutdownTimeout: time.Second}},
+		{"zero shutdown timeout", Config{Concurrency: 1}},
+		{"negative shutdown timeout", Config{Concurrency: 1, ShutdownTimeout: -time.Second}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if _, err := NewApplication(new(jobqueue.Service), new(leaderboard.Service), tc.config); err == nil {
+				t.Fatal("invalid config accepted")
+			}
+		})
+	}
+	if _, err := NewApplication(new(jobqueue.Service), new(leaderboard.Service), Config{Concurrency: 1, ShutdownTimeout: time.Second}); err != nil {
+		t.Fatalf("valid config rejected: %v", err)
 	}
 }
 

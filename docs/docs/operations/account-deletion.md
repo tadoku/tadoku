@@ -28,14 +28,11 @@ and the Tadoku API rejects writes and profile synchronisation for users whose
   unqualified table names, like the migrations in
   `services/tadoku-api/migrations/`, so connect with the `search_path` that the
   Tadoku API uses.
-- The independently deployed migration 0032 must be complete: the
-  queue is the `jobs` table. Follow the [migration deployment gate](../tadoku-api/database.md#migrations)
-  before using this runbook; it does not support the old table name.
 - A running `tadoku-worker` release that registers both
   `leaderboard.invalidate_contest.v1` and
   `leaderboard.invalidate_official.v1`, connected to this exact database and
   its matching Valkey cache prefix. Confirm the deployed release's registration
-  before proceeding; the embedded legacy consumer does not process these jobs.
+  before proceeding.
 - Access to the Kratos admin API and the Keto read and write APIs.
 - The account ID. This is the Kratos identity ID, which is also `users.id`. To
   find it from an email address, run

@@ -10,7 +10,6 @@ go_test(
         "announcement_update_test.go",
         "announcements_test.go",
         "api_test.go",
-        "async_worker_integration_test.go",
         "authentication_test.go",
         "authz_permission_check_test.go",
         "authz_proxy_admin_check_test.go",
@@ -72,6 +71,7 @@ go_test(
         "scoring_rule_set_list_test.go",
         "user_journeys_test.go",
         "valkey_test.go",
+        "worker_journey_test.go",
     ],
     data = glob([
         "testdata/**/*.http",
@@ -128,6 +128,7 @@ go_test(
         "@com_github_getkin_kin_openapi//openapi3",
         "@com_github_golang_jwt_jwt_v4//:jwt",
         "@com_github_google_uuid//:uuid",
+        "@com_github_jackc_pgx_v5//pgconn",
         "@com_github_jackc_pgx_v5//pgxpool",
         "@com_github_ory_kratos_client_go//:kratos-client-go",
         "@com_github_prometheus_client_golang//prometheus",

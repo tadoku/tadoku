@@ -34,6 +34,7 @@ type cast map[member]int
 type step struct {
 	request string
 	verify  string
+	job     string
 
 	as     member
 	want   int
@@ -97,6 +98,10 @@ func runJourneyWithSetup(t *testing.T, s *suite, handler http.Handler, name stri
 					checkVerifyGolden(t, s, stepDir)
 					return
 				}
+				if current.job != "" {
+					runJobStep(t, s, current.job)
+					return
+				}
 				runRequestStep(t, s, handler, stepDir, current, tokens)
 			})
 		})
@@ -124,11 +129,14 @@ func stepDirNames(steps []step) ([]string, error) {
 }
 
 func (current step) dirName(position int) (string, error) {
-	switch {
-	case current.request != "" && current.verify != "":
-		return "", fmt.Errorf("step %d sets both request and verify", position)
-	case current.request == "" && current.verify == "":
-		return "", fmt.Errorf("step %d sets neither request nor verify", position)
+	kinds := 0
+	for _, value := range []string{current.request, current.verify, current.job} {
+		if value != "" {
+			kinds++
+		}
+	}
+	if kinds != 1 {
+		return "", fmt.Errorf("step %d must set exactly one request, verify or job", position)
 	}
 
 	name := current.request
@@ -136,6 +144,11 @@ func (current step) dirName(position int) (string, error) {
 		name = current.verify
 		if current.as != "" || current.want != 0 || current.others != nil {
 			return "", fmt.Errorf("verify step %d must not set as, want or others", position)
+		}
+	} else if current.job != "" {
+		name = current.job
+		if current.as != "" || current.want != 0 || current.others != nil {
+			return "", fmt.Errorf("job step %d must not set as, want or others", position)
 		}
 	} else if current.as == "" || current.want == 0 {
 		return "", fmt.Errorf("request step %d must set as and want", position)
@@ -154,8 +167,10 @@ func checkJourneyFiles(directory string, steps []step, names []string) error {
 	}
 
 	expected := make(map[string]bool, len(names))
-	for _, name := range names {
-		expected[name] = true
+	for index, name := range names {
+		if steps[index].job == "" {
+			expected[name] = true
+		}
 	}
 	for _, entry := range entries {
 		switch {
@@ -167,6 +182,9 @@ func checkJourneyFiles(directory string, steps []step, names []string) error {
 	}
 
 	for index, name := range names {
+		if steps[index].job != "" {
+			continue
+		}
 		want := []string{"golden.http", "request.http"}
 		if steps[index].verify != "" {
 			want = []string{"verify.json", "verify.sql"}
@@ -176,6 +194,16 @@ func checkJourneyFiles(directory string, steps []step, names []string) error {
 		}
 	}
 	return nil
+}
+
+func runJobStep(t *testing.T, s *suite, job string) {
+	t.Helper()
+	switch job {
+	case "run_worker":
+		runWorkerStep(t, s)
+	default:
+		t.Fatalf("unknown journey job %q", job)
+	}
 }
 
 func checkStepFiles(directory string, want []string) error {

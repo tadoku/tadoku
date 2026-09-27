@@ -18,7 +18,7 @@ import {
 } from '@heroicons/react/20/solid'
 import { ContestConfiguration } from '@app/immersion/ContestConfiguration'
 import { routes } from '@app/common/routes'
-import { getQueryStringIntParameter } from '@app/common/router'
+import { getQueryStringPageParameter } from '@app/common/router'
 import { Leaderboard } from '@app/immersion/Leaderboard'
 import { formatScore } from '@app/common/format'
 
@@ -32,7 +32,7 @@ export const ContestLeaderboard = ({ id, contest, routeForPage }: Props) => {
   const newFilter = () => {
     return {
       contestId: id,
-      page: getQueryStringIntParameter(router.query.page, 1),
+      page: getQueryStringPageParameter(router.query.page),
       pageSize: 50,
     }
   }
@@ -48,7 +48,7 @@ export const ContestLeaderboard = ({ id, contest, routeForPage }: Props) => {
   useEffect(() => {
     setFilters({
       contestId: id,
-      page: getQueryStringIntParameter(router.query.page, 1),
+      page: getQueryStringPageParameter(router.query.page),
       pageSize: 50,
     })
   }, [router.asPath, id, router.query.page])

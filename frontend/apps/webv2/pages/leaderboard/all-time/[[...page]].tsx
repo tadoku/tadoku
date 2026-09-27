@@ -5,13 +5,13 @@ import Head from 'next/head'
 import { Leaderboard } from '@app/immersion/Leaderboard'
 import { useAllTimeLeaderboard } from '@app/immersion/api'
 import { useEffect, useState } from 'react'
-import { getQueryStringIntParameter } from '@app/common/router'
+import { getQueryStringPageParameter } from '@app/common/router'
 import { useRouter } from 'next/router'
 
 const Page = () => {
   const newFilter = () => {
     return {
-      page: getQueryStringIntParameter(router.query.page, 1),
+      page: getQueryStringPageParameter(router.query.page),
       pageSize: 50,
     }
   }
@@ -22,7 +22,7 @@ const Page = () => {
 
   useEffect(() => {
     setFilters({
-      page: getQueryStringIntParameter(router.query.page, 1),
+      page: getQueryStringPageParameter(router.query.page),
       pageSize: 50,
     })
   }, [router.asPath, router.query.page])

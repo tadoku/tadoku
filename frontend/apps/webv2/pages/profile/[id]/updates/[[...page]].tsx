@@ -3,7 +3,7 @@ import { Breadcrumb, Loading, Pagination, Tabbar } from 'ui'
 import { HomeIcon } from '@heroicons/react/20/solid'
 import { routes } from '@app/common/routes'
 import { useProfileLogs, useUserProfile } from '@app/immersion/api'
-import { getQueryStringIntParameter } from '@app/common/router'
+import { getQueryStringPageParameter } from '@app/common/router'
 import Head from 'next/head'
 import { useEffect, useState } from 'react'
 import LogsList from '@app/immersion/LogsList'
@@ -14,7 +14,7 @@ const Page = () => {
 
   const newFilter = () => {
     return {
-      page: getQueryStringIntParameter(router.query.page, 1),
+      page: getQueryStringPageParameter(router.query.page),
       pageSize: 50,
       includeDeleted: false,
       userId,
@@ -24,7 +24,7 @@ const Page = () => {
   const [filters, setFilters] = useState(() => newFilter())
   useEffect(() => {
     setFilters({
-      page: getQueryStringIntParameter(router.query.page, 1),
+      page: getQueryStringPageParameter(router.query.page),
       pageSize: 50,
       includeDeleted: false,
       userId,

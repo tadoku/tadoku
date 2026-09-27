@@ -63,8 +63,12 @@ browser → ingress-nginx → Envoy → webv2 / auth / admin
   `services/tadoku-api/migrations/` and run as Argo CD sync hooks before the API
   starts.
 - PostgreSQL is the source of truth for leaderboards. Valkey holds sorted-set
-  caches that the separate Tadoku worker keeps current; see
-  [ADR 001](../adr/001-leaderboard.md).
+  caches of the unfiltered leaderboards. The separate Tadoku worker only
+  invalidates those caches, and the next read rebuilds them from PostgreSQL. A
+  cached leaderboard can be stale until its invalidation completes; after a
+  terminal failure it stays stale until the next write to the same contest or
+  year, or a replay. See
+  [Leaderboard freshness and worker health](../tadoku-api/jobs.md#leaderboard-freshness-and-worker-health).
 - Kratos and Keto keep their own databases in the same PostgreSQL server.
 
 ## Where to go next

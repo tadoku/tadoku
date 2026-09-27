@@ -39,6 +39,12 @@ type UpdateLanguageParameters struct {
 }
 
 func (p UpdateLanguageParameters) Validate() error {
+	if len(p.Code) < 1 {
+		return errx.NewInvalidInputError("code is required")
+	}
+	if len(p.Code) > 10 {
+		return errx.NewInvalidInputError("code must be at most 10 bytes")
+	}
 	if len(p.Name) < 1 {
 		return errx.NewInvalidInputError("name is required")
 	}

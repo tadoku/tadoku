@@ -250,6 +250,10 @@ func (s *Service) CheckCreatePermission(ctx context.Context, userID uuid.UUID, a
 }
 
 func (s *Service) ListContests(ctx context.Context, parameters ListParameters, includePrivate bool) (*ContestList, error) {
+	if err := parameters.Validate(); err != nil {
+		return nil, err
+	}
+
 	if parameters.PageSize == 0 {
 		parameters.PageSize = 10
 	}
@@ -264,7 +268,7 @@ func (s *Service) ListContests(ctx context.Context, parameters ListParameters, i
 	}
 
 	nextPageToken := ""
-	if parameters.Page*parameters.PageSize+parameters.PageSize < total {
+	if int64(parameters.offset())+int64(parameters.PageSize) < int64(total) {
 		nextPageToken = strconv.Itoa(parameters.Page + 1)
 	}
 	return &ContestList{

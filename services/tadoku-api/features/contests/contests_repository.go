@@ -251,7 +251,7 @@ func (r *ContestsRepository) ListContests(ctx context.Context, parameters ListPa
 		UserID:         postgres.NullableUUID(parameters.UserID),
 		Official:       parameters.Official,
 		IncludePrivate: parameters.IncludePrivate(),
-		StartFrom:      int32(parameters.Page * parameters.PageSize),
+		StartFrom:      parameters.offset(),
 		PageSize:       int32(parameters.PageSize),
 	})
 	if err != nil {

@@ -1,6 +1,7 @@
 package contests
 
 import (
+	"math"
 	"sort"
 	"time"
 	"unicode/utf8"
@@ -245,6 +246,23 @@ type ListParameters struct {
 }
 
 func (p ListParameters) IncludePrivate() bool { return p.includePrivate }
+
+func (p ListParameters) Validate() error {
+	if p.PageSize < 0 {
+		return errx.NewInvalidInputError("page_size must not be negative")
+	}
+	if p.Page < 0 {
+		return errx.NewInvalidInputError("page must not be negative")
+	}
+	return nil
+}
+
+func (p ListParameters) offset() int32 {
+	if p.PageSize > 0 && p.Page > math.MaxInt32/p.PageSize {
+		return math.MaxInt32
+	}
+	return int32(p.Page * p.PageSize)
+}
 
 type FindParameters struct {
 	ID uuid.UUID

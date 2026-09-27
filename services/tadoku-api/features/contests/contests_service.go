@@ -187,7 +187,6 @@ func (s *Service) ApplyRegistration(
 	existing *Registration,
 	contest Contest,
 ) ([]jobs.Job, error) {
-	var followUp []jobs.Job
 	removedLanguages := []string{}
 	if existing != nil {
 		selectedLanguages := make(map[string]struct{}, len(registration.LanguageCodes))
@@ -211,14 +210,13 @@ func (s *Service) ApplyRegistration(
 		); err != nil {
 			return nil, err
 		}
-		followUp = append(followUp, registrationLeaderboardJobs(registration, contest)...)
 	}
 
 	if err := s.contests.UpsertRegistration(ctx, registration); err != nil {
 		return nil, err
 	}
 
-	return append(followUp, registrationLeaderboardJobs(registration, contest)...), nil
+	return registrationLeaderboardJobs(registration, contest), nil
 }
 
 func registrationLeaderboardJobs(registration Registration, contest Contest) []jobs.Job {

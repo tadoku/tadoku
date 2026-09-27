@@ -5134,20 +5134,12 @@ func (response ImmersionContestFindOngoingRegistrations200JSONResponse) VisitImm
 	return err
 }
 
-type ImmersionContestFindOngoingRegistrations500JSONResponse struct {
-	Message string `json:"message"`
+type ImmersionContestFindOngoingRegistrations401Response struct {
 }
 
-func (response ImmersionContestFindOngoingRegistrations500JSONResponse) VisitImmersionContestFindOngoingRegistrationsResponse(w http.ResponseWriter) error {
-
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
-		return err
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(500)
-	_, err := buf.WriteTo(w)
-	return err
+func (response ImmersionContestFindOngoingRegistrations401Response) VisitImmersionContestFindOngoingRegistrationsResponse(w http.ResponseWriter) error {
+	w.WriteHeader(401)
+	return nil
 }
 
 type ImmersionContestFindByIDRequestObject struct {
@@ -5432,20 +5424,12 @@ func (response ImmersionContestFindRegistration204Response) VisitImmersionContes
 	return nil
 }
 
-type ImmersionContestFindRegistration500JSONResponse struct {
-	Message string `json:"message"`
+type ImmersionContestFindRegistration401Response struct {
 }
 
-func (response ImmersionContestFindRegistration500JSONResponse) VisitImmersionContestFindRegistrationResponse(w http.ResponseWriter) error {
-
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
-		return err
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(500)
-	_, err := buf.WriteTo(w)
-	return err
+func (response ImmersionContestFindRegistration401Response) VisitImmersionContestFindRegistrationResponse(w http.ResponseWriter) error {
+	w.WriteHeader(401)
+	return nil
 }
 
 type ImmersionContestRegistrationUpsertRequestObject struct {
@@ -5470,6 +5454,14 @@ type ImmersionContestRegistrationUpsert400Response struct {
 
 func (response ImmersionContestRegistrationUpsert400Response) VisitImmersionContestRegistrationUpsertResponse(w http.ResponseWriter) error {
 	w.WriteHeader(400)
+	return nil
+}
+
+type ImmersionContestRegistrationUpsert401Response struct {
+}
+
+func (response ImmersionContestRegistrationUpsert401Response) VisitImmersionContestRegistrationUpsertResponse(w http.ResponseWriter) error {
+	w.WriteHeader(401)
 	return nil
 }
 

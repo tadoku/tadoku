@@ -97,7 +97,7 @@ type logMutation struct {
 	Now                         time.Time
 }
 
-type OutboxContext struct {
+type JobContext struct {
 	UserID           uuid.UUID
 	Year             int16
 	EligibleOfficial bool

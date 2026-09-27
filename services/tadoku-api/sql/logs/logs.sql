@@ -278,7 +278,7 @@ insert into contest_logs (
 insert into log_tags (log_id, user_id, tag)
 values (sqlc.arg('log_id'), sqlc.arg('user_id'), sqlc.arg('tag'));
 
--- name: FetchLogOutboxContext :one
+-- name: FetchLogJobContext :one
 select user_id, year, eligible_official_leaderboard
 from logs where id = sqlc.arg('log_id');
 

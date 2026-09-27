@@ -43,10 +43,10 @@ func (s *Service) InvalidateOfficial(ctx context.Context, year int16) error {
 }
 
 func (s *Service) FetchContest(ctx context.Context, request ContestRequest) (*Result, error) {
-	request.Request = normalize(request.Request)
-	if err := validateActivity(request.ActivityID); err != nil {
+	if err := request.Validate(); err != nil {
 		return nil, err
 	}
+	request.Request = normalize(request.Request)
 	if filtered(request.Request) {
 		return s.fetchContestFromPostgres(ctx, request)
 	}
@@ -76,10 +76,10 @@ func (s *Service) FetchContest(ctx context.Context, request ContestRequest) (*Re
 }
 
 func (s *Service) FetchYearly(ctx context.Context, request YearlyRequest) (*Result, error) {
-	request.Request = normalize(request.Request)
-	if err := validateActivity(request.ActivityID); err != nil {
+	if err := request.Validate(); err != nil {
 		return nil, err
 	}
+	request.Request = normalize(request.Request)
 	if filtered(request.Request) {
 		return postgresResult(s.repository.yearly(ctx, request))
 	}
@@ -109,10 +109,10 @@ func (s *Service) FetchYearly(ctx context.Context, request YearlyRequest) (*Resu
 }
 
 func (s *Service) FetchGlobal(ctx context.Context, request Request) (*Result, error) {
-	request = normalize(request)
-	if err := validateActivity(request.ActivityID); err != nil {
+	if err := request.Validate(); err != nil {
 		return nil, err
 	}
+	request = normalize(request)
 	if filtered(request) {
 		return postgresResult(s.repository.global(ctx, request))
 	}

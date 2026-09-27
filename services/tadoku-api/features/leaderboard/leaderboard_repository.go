@@ -35,7 +35,7 @@ func (r *Repository) contest(ctx context.Context, request ContestRequest) (*Lead
 		ContestID:    postgres.UUID(request.ContestID),
 		LanguageCode: postgres.NullableNonEmptyText(request.LanguageCode),
 		ActivityID:   postgres.NullableInt4(request.ActivityID),
-		StartFrom:    int32(request.Page * request.PageSize),
+		StartFrom:    request.offset(),
 		PageSize:     int32(request.PageSize),
 	})
 	if err != nil {
@@ -67,7 +67,7 @@ func (r *Repository) yearly(ctx context.Context, request YearlyRequest) (*Leader
 		Year:         int16(request.Year),
 		LanguageCode: postgres.NullableNonEmptyText(request.LanguageCode),
 		ActivityID:   postgres.NullableInt4(request.ActivityID),
-		StartFrom:    int32(request.Page * request.PageSize),
+		StartFrom:    request.offset(),
 		PageSize:     int32(request.PageSize),
 	})
 	if err != nil {
@@ -98,7 +98,7 @@ func (r *Repository) global(ctx context.Context, request Request) (*Leaderboard,
 	rows, err := queries.New(executor).GlobalLeaderboard(ctx, queries.GlobalLeaderboardParams{
 		LanguageCode: postgres.NullableNonEmptyText(request.LanguageCode),
 		ActivityID:   postgres.NullableInt4(request.ActivityID),
-		StartFrom:    int32(request.Page * request.PageSize),
+		StartFrom:    request.offset(),
 		PageSize:     int32(request.PageSize),
 	})
 	if err != nil {

@@ -2,8 +2,10 @@ package leaderboard
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/google/uuid"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
 
 type Request struct {
@@ -11,6 +13,23 @@ type Request struct {
 	ActivityID   *int32
 	PageSize     int
 	Page         int
+}
+
+func (r Request) Validate() error {
+	if r.PageSize < 0 {
+		return errx.NewInvalidInputError("page_size must not be negative")
+	}
+	if r.Page < 0 {
+		return errx.NewInvalidInputError("page must not be negative")
+	}
+	return validateActivity(r.ActivityID)
+}
+
+func (r Request) offset() int32 {
+	if r.Page > math.MaxInt32/r.PageSize {
+		return math.MaxInt32
+	}
+	return int32(r.Page * r.PageSize)
 }
 
 type ContestRequest struct {

@@ -559,7 +559,7 @@ func (r *LogsRepository) ListUserLogs(ctx context.Context, parameters ListParame
 
 	rows, err := queries.New(executor).ListLogsForUser(ctx, queries.ListLogsForUserParams{
 		UserID:         postgres.NullableUUID(parameters.UserID),
-		StartFrom:      int32(parameters.Page * parameters.PageSize),
+		StartFrom:      parameters.offset(),
 		PageSize:       int32(parameters.PageSize),
 		IncludeDeleted: parameters.IncludeDeleted,
 	})
@@ -603,7 +603,7 @@ func (r *LogsRepository) ListContestLogs(ctx context.Context, parameters ListPar
 
 	rows, err := queries.New(executor).ListLogsForContest(ctx, queries.ListLogsForContestParams{
 		UserID:         postgres.NullableUUID(parameters.UserID),
-		StartFrom:      int32(parameters.Page * parameters.PageSize),
+		StartFrom:      parameters.offset(),
 		PageSize:       int32(parameters.PageSize),
 		IncludeDeleted: parameters.IncludeDeleted,
 		ContestID:      postgres.UUID(parameters.ContestID),

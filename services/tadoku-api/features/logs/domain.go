@@ -1,6 +1,7 @@
 package logs
 
 import (
+	"math"
 	"time"
 	"unicode/utf8"
 
@@ -183,14 +184,31 @@ type LogList struct {
 	NextPageToken string
 }
 
+func (p ListParameters) Validate() error {
+	if p.PageSize < 0 {
+		return errx.NewInvalidInputError("page_size must not be negative")
+	}
+	if p.Page < 0 {
+		return errx.NewInvalidInputError("page must not be negative")
+	}
+	return nil
+}
+
 func (p ListParameters) normalized() ListParameters {
 	if p.PageSize == 0 {
 		p.PageSize = 50
 	}
-	if p.PageSize > 100 || p.PageSize < 0 {
+	if p.PageSize > 100 {
 		p.PageSize = 100
 	}
 	return p
+}
+
+func (p ListParameters) offset() int32 {
+	if p.Page > math.MaxInt32/p.PageSize {
+		return math.MaxInt32
+	}
+	return int32(p.Page * p.PageSize)
 }
 
 func hydrateLogActivity(log *Log) error {

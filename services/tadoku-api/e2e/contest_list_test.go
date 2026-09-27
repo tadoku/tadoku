@@ -24,8 +24,9 @@ func TestListContests(t *testing.T) {
 		{description: []string{"malformed", "page", "omits", "reflected", "input"}, want: http.StatusBadRequest},
 		{description: []string{"empty", "owner", "filter"}, want: http.StatusOK},
 		{description: []string{"page", "beyond", "visible", "rows"}, want: http.StatusOK},
-		{description: []string{"negative", "page"}, want: http.StatusInternalServerError},
-		{description: []string{"negative", "page", "size"}, want: http.StatusInternalServerError},
+		{description: []string{"negative", "page"}, want: http.StatusBadRequest},
+		{description: []string{"negative", "page", "size"}, want: http.StatusBadRequest},
+		{description: []string{"offset", "overflow"}, want: http.StatusOK},
 		{description: []string{"explicit", "zero", "page", "size"}, want: http.StatusOK},
 	}
 

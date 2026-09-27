@@ -20,6 +20,9 @@ func TestImmersionFetchLeaderboardGlobal(t *testing.T) {
 		{description: []string{"tie", "page", "boundary"}, want: http.StatusOK, cache: "hit_tie"},
 		{description: []string{"tie", "first", "page"}, want: http.StatusOK, cache: "hit_tie"},
 		{description: []string{"invalid", "activity"}, want: http.StatusBadRequest},
+		{description: []string{"negative", "page"}, want: http.StatusBadRequest},
+		{description: []string{"negative", "page", "size"}, want: http.StatusBadRequest},
+		{description: []string{"offset", "overflow"}, want: http.StatusOK},
 	}
 	for _, test := range tests {
 		name := APITestName("ImmersionFetchLeaderboardGlobal", test.want, test.description...)
@@ -39,6 +42,8 @@ func TestImmersionFetchLeaderboardForYear(t *testing.T) {
 		{description: []string{"empty", "page"}, want: http.StatusOK, cache: "hit"},
 		{description: []string{"empty", "cache", "miss"}, want: http.StatusOK, cache: "miss"},
 		{description: []string{"capped", "page", "size"}, want: http.StatusOK, cache: "hit_many"},
+		{description: []string{"negative", "page"}, want: http.StatusBadRequest},
+		{description: []string{"offset", "overflow"}, want: http.StatusOK},
 	}
 	for _, test := range tests {
 		name := APITestName("ImmersionFetchLeaderboardForYear", test.want, test.description...)
@@ -64,6 +69,8 @@ func TestImmersionContestFetchLeaderboard(t *testing.T) {
 		{description: []string{"missing", "organizer"}, want: http.StatusNotFound},
 		{description: []string{"missing", "organizer", "filtered"}, want: http.StatusNotFound, cache: "hit"},
 		{description: []string{"invalid", "id"}, want: http.StatusBadRequest},
+		{description: []string{"negative", "page"}, want: http.StatusBadRequest},
+		{description: []string{"offset", "overflow"}, want: http.StatusOK},
 	}
 	for _, test := range tests {
 		name := APITestName("ImmersionContestFetchLeaderboard", test.want, test.description...)

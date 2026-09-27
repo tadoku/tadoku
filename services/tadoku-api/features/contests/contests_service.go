@@ -250,6 +250,10 @@ func (s *Service) CheckCreatePermission(ctx context.Context, userID uuid.UUID, a
 }
 
 func (s *Service) ListContests(ctx context.Context, parameters ListParameters, includePrivate bool) (*ContestList, error) {
+	if err := parameters.Validate(); err != nil {
+		return nil, err
+	}
+
 	if parameters.PageSize == 0 {
 		parameters.PageSize = 10
 	}

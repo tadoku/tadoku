@@ -462,6 +462,10 @@ func (s *Service) RegistrationsForRescoring(log *Log, now time.Time) []logscore.
 }
 
 func (s *Service) ListUserLogs(ctx context.Context, parameters ListParameters) (*LogList, error) {
+	if err := parameters.Validate(); err != nil {
+		return nil, err
+	}
+
 	result, err := s.logs.ListUserLogs(ctx, parameters.normalized())
 	if err != nil {
 		return nil, err
@@ -475,6 +479,10 @@ func (s *Service) ListUserLogs(ctx context.Context, parameters ListParameters) (
 }
 
 func (s *Service) ListContestLogs(ctx context.Context, parameters ListParameters) (*LogList, error) {
+	if err := parameters.Validate(); err != nil {
+		return nil, err
+	}
+
 	result, err := s.logs.ListContestLogs(ctx, parameters.normalized())
 	if err != nil {
 		return nil, err

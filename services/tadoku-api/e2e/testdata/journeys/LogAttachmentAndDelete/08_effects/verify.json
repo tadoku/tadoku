@@ -4,10 +4,6 @@
     "count": "6"
   },
   {
-    "kind": "legacy_outbox",
-    "count": "0"
-  },
-  {
     "kind": "log",
     "count": "1"
   }

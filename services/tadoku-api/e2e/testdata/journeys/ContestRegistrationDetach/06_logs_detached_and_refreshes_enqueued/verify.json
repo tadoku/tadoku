@@ -18,10 +18,5 @@
     "kind": "jobs",
     "user_id": "",
     "reference": "leaderboard.invalidate_official.v1:2025"
-  },
-  {
-    "kind": "legacy_outbox",
-    "user_id": "",
-    "reference": "0"
   }
 ]

@@ -8,7 +8,7 @@
 - [ ] After the Tadoku API migration is complete, make a final documentation pass and delete all references to this migration.
 - [x] Add the job step kind to the journey runner together with the first migrated worker. The outbox journey starts the production `Run` loop, waits for its ready signal and a later poll after an API write, then stops and joins it during cleanup.
 - [ ] Maintain the Keto-backed contest-create permission through a background reconciliation job.
-- [ ] Drop `leaderboard_outbox` in a standalone migration once no deployed Tadoku API release reads it. The same change removes its truncation from `internal/testpostgres/cleanup.sql` and the zero-row legacy outbox checks from the journey verify fixtures.
+- [ ] Drop `leaderboard_outbox` in a standalone migration once no deployed Tadoku API release reads it and any unprocessed production rows have been accounted for.
 - [ ] Deploy `tadoku-worker` before or together with the Tadoku API in the first production release. The API has no embedded leaderboard consumer, so an API-only release stops leaderboard cache invalidation.
 - [x] Restructure the Tadoku API documentation for progressive disclosure for agents: a short entry point with focused documents behind it instead of one long README.
 - [ ] Rename the standard test identity from `Reader One` to `User One` across Kratos seeds, tests and HTTP goldens; regenerate affected signed JWT fixtures and update the public JWKS together.

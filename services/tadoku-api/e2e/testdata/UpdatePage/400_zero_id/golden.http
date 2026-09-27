@@ -1,4 +1,4 @@
 >>> PUT /content/pages/main/00000000-0000-0000-0000-000000000000
-HTTP/1.1 404 Not Found
+HTTP/1.1 400 Bad Request
 Content-Length: 0
 

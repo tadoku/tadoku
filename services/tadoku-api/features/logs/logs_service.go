@@ -56,7 +56,7 @@ func (s *Service) UpdateContestRegistrations(ctx context.Context, logID uuid.UUI
 	if err := s.logs.LockLog(ctx, logID); err != nil {
 		return nil, err
 	}
-	before, err := s.logs.OutboxContext(ctx, logID)
+	before, err := s.logs.JobContext(ctx, logID)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +73,7 @@ func (s *Service) UpdateContestRegistrations(ctx context.Context, logID uuid.UUI
 	if err := s.logs.RecomputeOfficialEligibility(ctx, logID, now); err != nil {
 		return nil, err
 	}
-	after, err := s.logs.OutboxContext(ctx, logID)
+	after, err := s.logs.JobContext(ctx, logID)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +108,7 @@ func (s *Service) Delete(ctx context.Context, logID uuid.UUID, now time.Time) ([
 	if !allowed {
 		return nil, errx.NewForbiddenError("forbidden")
 	}
-	outbox, err := s.logs.OutboxContext(ctx, logID)
+	jobContext, err := s.logs.JobContext(ctx, logID)
 	if err != nil {
 		return nil, err
 	}
@@ -123,8 +123,8 @@ func (s *Service) Delete(ctx context.Context, logID uuid.UUID, now time.Time) ([
 		id := contestID
 		followUp = append(followUp, jobs.InvalidateContestLeaderboardV1{ContestID: id})
 	}
-	if outbox.EligibleOfficial {
-		year := outbox.Year
+	if jobContext.EligibleOfficial {
+		year := jobContext.Year
 		followUp = append(followUp, jobs.InvalidateOfficialLeaderboardV1{Year: year})
 	}
 	return followUp, nil
@@ -132,7 +132,7 @@ func (s *Service) Delete(ctx context.Context, logID uuid.UUID, now time.Time) ([
 
 func (s *Service) ModerateDetach(ctx context.Context, logID, contestID uuid.UUID) ([]jobs.Job, error) {
 	var followUp []jobs.Job
-	outbox, err := s.logs.OutboxContext(ctx, logID)
+	jobContext, err := s.logs.JobContext(ctx, logID)
 	if err != nil {
 		return nil, err
 	}
@@ -140,8 +140,8 @@ func (s *Service) ModerateDetach(ctx context.Context, logID, contestID uuid.UUID
 		return nil, err
 	}
 	followUp = append(followUp, jobs.InvalidateContestLeaderboardV1{ContestID: contestID})
-	if outbox.EligibleOfficial {
-		year := outbox.Year
+	if jobContext.EligibleOfficial {
+		year := jobContext.Year
 		followUp = append(followUp, jobs.InvalidateOfficialLeaderboardV1{Year: year})
 	}
 	return followUp, nil
@@ -402,7 +402,7 @@ func (s *Service) update(ctx context.Context, mutation logMutation) ([]jobs.Job,
 	if err := s.logs.LockLog(ctx, mutation.ID); err != nil {
 		return nil, err
 	}
-	outbox, err := s.logs.OutboxContext(ctx, mutation.ID)
+	jobContext, err := s.logs.JobContext(ctx, mutation.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -429,7 +429,7 @@ func (s *Service) update(ctx context.Context, mutation logMutation) ([]jobs.Job,
 		return nil, err
 	}
 	for _, tag := range mutation.Tags {
-		if err := s.logs.InsertTag(ctx, mutation.ID, outbox.UserID, tag); err != nil {
+		if err := s.logs.InsertTag(ctx, mutation.ID, jobContext.UserID, tag); err != nil {
 			return nil, err
 		}
 	}
@@ -441,8 +441,8 @@ func (s *Service) update(ctx context.Context, mutation logMutation) ([]jobs.Job,
 		contestID := id
 		followUp = append(followUp, jobs.InvalidateContestLeaderboardV1{ContestID: contestID})
 	}
-	if outbox.EligibleOfficial {
-		year := outbox.Year
+	if jobContext.EligibleOfficial {
+		year := jobContext.Year
 		followUp = append(followUp, jobs.InvalidateOfficialLeaderboardV1{Year: year})
 	}
 	return followUp, nil

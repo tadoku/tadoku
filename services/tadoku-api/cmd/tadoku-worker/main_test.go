@@ -13,7 +13,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
 )
 
-func TestReplayCommandCreatesLinkedTask(t *testing.T) {
+func TestReplayCommandCreatesLinkedJob(t *testing.T) {
 	db, err := testpostgres.New(t.Context())
 	if err != nil {
 		t.Fatal(err)

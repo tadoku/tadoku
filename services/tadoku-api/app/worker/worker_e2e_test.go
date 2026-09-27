@@ -18,7 +18,7 @@ import (
 	valkeygo "github.com/valkey-io/valkey-go"
 )
 
-func TestWorkerOutboxJourney(t *testing.T) {
+func TestWorkerJobLifecycle(t *testing.T) {
 	db, err := testpostgres.New(t.Context())
 	if err != nil {
 		t.Fatal(err)
@@ -106,10 +106,10 @@ func TestWorkerOutboxJourney(t *testing.T) {
 		}
 	}
 
-	validID := insertTask(t, db.Pool, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":2025}`, false)
-	invalidID := insertTask(t, db.Pool, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":0}`, false)
-	unknownID := insertTask(t, db.Pool, "future.task.v1", `{}`, false)
-	reclaimedID := insertTask(t, db.Pool, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":2025}`, true)
+	validID := insertJob(t, db.Pool, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":2025}`, false)
+	invalidID := insertJob(t, db.Pool, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":0}`, false)
+	unknownID := insertJob(t, db.Pool, "future.job.v1", `{}`, false)
+	reclaimedID := insertJob(t, db.Pool, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":2025}`, true)
 
 	waitFor(t, func() (bool, error) {
 		var completed, failed, reclaimed, unknown string
@@ -135,7 +135,7 @@ func TestWorkerOutboxJourney(t *testing.T) {
 	}{{keys[1], 0}, {keys[4], 0}, {keys[6], 1}} {
 		count, err := client.Do(t.Context(), client.B().Exists().Key(item.key).Build()).AsInt64()
 		if err != nil || count != item.want {
-			t.Errorf("marker %s after completed task: count=%d error=%v; want %d", item.key, count, err, item.want)
+			t.Errorf("marker %s after completed job: count=%d error=%v; want %d", item.key, count, err, item.want)
 		}
 	}
 	var code string
@@ -143,22 +143,22 @@ func TestWorkerOutboxJourney(t *testing.T) {
 		t.Fatal(err)
 	}
 	if code != "invalid_payload" {
-		t.Errorf("invalid task failure code = %q", code)
+		t.Errorf("invalid job failure code = %q", code)
 	}
 }
 
-func insertTask(t *testing.T, db *pgxpool.Pool, taskType, payload string, expired bool) int64 {
+func insertJob(t *testing.T, db *pgxpool.Pool, jobType, payload string, expired bool) int64 {
 	t.Helper()
 	var id int64
 	if expired {
 		err := db.QueryRow(t.Context(), `insert into jobs (task_type, payload, state, attempts, claim_token, lease_expires_at)
-			values ($1, $2::jsonb, 'running', 1, $3, now() - interval '1 second') returning id`, taskType, payload, uuid.New()).Scan(&id)
+			values ($1, $2::jsonb, 'running', 1, $3, now() - interval '1 second') returning id`, jobType, payload, uuid.New()).Scan(&id)
 		if err != nil {
 			t.Fatal(err)
 		}
 		return id
 	}
-	if err := db.QueryRow(t.Context(), `insert into jobs (task_type, payload) values ($1, $2::jsonb) returning id`, taskType, payload).Scan(&id); err != nil {
+	if err := db.QueryRow(t.Context(), `insert into jobs (task_type, payload) values ($1, $2::jsonb) returning id`, jobType, payload).Scan(&id); err != nil {
 		t.Fatal(err)
 	}
 	return id

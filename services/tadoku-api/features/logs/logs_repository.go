@@ -105,13 +105,13 @@ func (r *LogsRepository) DeleteTags(ctx context.Context, logID uuid.UUID) error 
 	return queries.New(executor).DeleteLogTags(ctx, postgres.UUID(logID))
 }
 
-func (r *LogsRepository) OutboxContext(ctx context.Context, id uuid.UUID) (OutboxContext, error) {
+func (r *LogsRepository) JobContext(ctx context.Context, id uuid.UUID) (JobContext, error) {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
-		return OutboxContext{}, err
+		return JobContext{}, err
 	}
-	row, err := queries.New(executor).FetchLogOutboxContext(ctx, postgres.UUID(id))
-	return OutboxContext{
+	row, err := queries.New(executor).FetchLogJobContext(ctx, postgres.UUID(id))
+	return JobContext{
 		UserID:           row.UserID.Bytes,
 		Year:             row.Year,
 		EligibleOfficial: row.EligibleOfficialLeaderboard,

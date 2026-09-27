@@ -261,6 +261,27 @@ before provider resources close. A noncooperative handler can delay exit; see
 - The common feature-flag metrics report bounded provider initialization,
   refresh, error and evaluation labels, without user identities.
 
+### Worker metrics
+
+The separate worker serves its own metrics on `WORKER_METRICS_PORT`. Its
+backlog gauges refresh at startup and every fifteen seconds. The `type` label
+is a registered job type; unsupported-type gauges aggregate across unknown
+types without an unbounded type label.
+
+| Metric | Labels | Meaning |
+| --- | --- | --- |
+| `tadoku_worker_in_flight` | `type` | Jobs executing in this process. |
+| `tadoku_worker_failed_attempts_total` | `type`, `code` | Failed handler attempts. |
+| `tadoku_worker_handler_duration_seconds` | `type` | Histogram of handler execution duration before the job transition. |
+| `tadoku_worker_pending_jobs` | `type` | Pending jobs for each registered type. |
+| `tadoku_worker_failed_jobs` | `type` | Terminally failed jobs for each registered type. |
+| `tadoku_worker_oldest_due_age_seconds` | `type` | Age of the oldest due or expired job. |
+| `tadoku_worker_unsupported_pending_jobs` | None | Pending jobs with an unsupported type. |
+| `tadoku_worker_unsupported_running_jobs` | None | Running jobs with an unsupported type. |
+| `tadoku_worker_unsupported_failed_jobs` | None | Failed jobs with an unsupported type. |
+| `tadoku_worker_unsupported_oldest_due_age_seconds` | None | Age of the oldest due unsupported job. |
+| `tadoku_worker_expired_leases_total` | `type` | Expired running leases reclaimed. |
+
 ## Shutdown
 
 - Shutdown closes the request and metrics listeners. After request handling

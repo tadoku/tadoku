@@ -23,7 +23,7 @@ func TestAPIWriteStandaloneWorkerLeaderboardRead(t *testing.T) {
 	uuid.SetRand(rand.New(rand.NewSource(1)))
 	defer uuid.SetRand(nil)
 
-	directory := filepath.Join(journeysDir, "LeaderboardOutbox")
+	directory := filepath.Join(journeysDir, "LeaderboardJobs")
 	resetJourney(t, api, directory)
 	seedLeaderboardCache(t, "leaderboard:global", "hit")
 
@@ -95,14 +95,14 @@ func TestAPIWriteStandaloneWorkerLeaderboardRead(t *testing.T) {
 			t.Fatal(err)
 		}
 		if failed != 0 {
-			t.Fatalf("worker failed %d tasks; completed=%d queued=%d", failed, completed, queued)
+			t.Fatalf("worker failed %d jobs; completed=%d queued=%d", failed, completed, queued)
 		}
 		if completed == queued {
 			break
 		}
 		select {
 		case <-deadline.C:
-			t.Fatalf("worker did not complete %d tasks; completed=%d failed=%d outstanding=%d", queued, completed, failed, queued-completed-failed)
+			t.Fatalf("worker did not complete %d jobs; completed=%d failed=%d outstanding=%d", queued, completed, failed, queued-completed-failed)
 		case <-tick.C:
 		}
 	}

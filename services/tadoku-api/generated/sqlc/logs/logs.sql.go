@@ -215,20 +215,20 @@ func (q *Queries) DetachContestLog(ctx context.Context, arg DetachContestLogPara
 	return err
 }
 
-const fetchLogOutboxContext = `-- name: FetchLogOutboxContext :one
+const fetchLogJobContext = `-- name: FetchLogJobContext :one
 select user_id, year, eligible_official_leaderboard
 from logs where id = $1
 `
 
-type FetchLogOutboxContextRow struct {
+type FetchLogJobContextRow struct {
 	UserID                      pgtype.UUID
 	Year                        int16
 	EligibleOfficialLeaderboard bool
 }
 
-func (q *Queries) FetchLogOutboxContext(ctx context.Context, logID pgtype.UUID) (FetchLogOutboxContextRow, error) {
-	row := q.db.QueryRow(ctx, fetchLogOutboxContext, logID)
-	var i FetchLogOutboxContextRow
+func (q *Queries) FetchLogJobContext(ctx context.Context, logID pgtype.UUID) (FetchLogJobContextRow, error) {
+	row := q.db.QueryRow(ctx, fetchLogJobContext, logID)
+	var i FetchLogJobContextRow
 	err := row.Scan(&i.UserID, &i.Year, &i.EligibleOfficialLeaderboard)
 	return i, err
 }

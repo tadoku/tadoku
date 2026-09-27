@@ -226,7 +226,7 @@ func TestLogMutationJourney(t *testing.T) {
 		{request: "read_exact_end_update", as: user, want: http.StatusOK, at: end},
 		{request: "update_after_contest_end", as: admin, want: http.StatusOK, at: end.AddDate(0, 0, 1)},
 		{request: "read_after_end", as: user, want: http.StatusOK, at: end.AddDate(0, 0, 1)},
-		{verify: "provenance_and_outbox"},
+		{verify: "provenance_and_jobs"},
 	})
 }
 
@@ -294,7 +294,7 @@ func TestContestModerationDetachLogJourney(t *testing.T) {
 		{request: "owner_reads_detached", as: user, want: http.StatusOK, at: mutationTime},
 		{request: "repeat_absent_detach", as: user2, want: http.StatusOK, at: mutationTime},
 		{request: "owner_reads_still_detached", as: user, want: http.StatusOK, at: mutationTime},
-		{verify: "audit_and_outbox"},
+		{verify: "audit_and_jobs"},
 	})
 }
 

@@ -207,6 +207,8 @@ Ordinary errors retry with bounded backoff and an attempt limit; permanent and
 exhausted failures remain inspectable. Unknown versions stay unclaimed and
 visible in unsupported backlog reporting. Inspect due age, failures, attempts,
 expired leases and in-flight work without using job IDs as metric labels.
+The worker refreshes its backlog gauges at startup and then every fifteen
+seconds, independently of claiming.
 
 Replay inserts a new record linked to the failed original and records the
 operator and reason. It preserves the original version and payload. Registry

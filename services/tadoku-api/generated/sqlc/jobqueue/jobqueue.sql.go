@@ -325,7 +325,7 @@ select
   count(*) filter (where state = 'failed') as failed,
   min(case when state = 'pending' then next_attempt_at
     when state = 'running' then lease_expires_at end)::timestamptz as oldest_due_at
-from jobs where task_type = $1::text
+from jobs where task_type = $1::text and state <> 'completed'
 `
 
 type StatsRow struct {

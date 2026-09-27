@@ -46,11 +46,26 @@ func (r *runner) run(ctx context.Context) {
 	var running sync.WaitGroup
 	ticker := time.NewTicker(500 * time.Millisecond)
 	defer ticker.Stop()
+	metricsTicker := time.NewTicker(15 * time.Second)
+	defer metricsTicker.Stop()
 	cleanupTicker := time.NewTicker(time.Hour)
 	defer cleanupTicker.Stop()
 	rotation := 0
 	unsupported := int64(0)
+	refreshMetrics := func() {
+		count, err := r.updateMetrics(ctx)
+		if err != nil {
+			r.logger.Warn("inspect async work backlog", "error", err)
+		} else if count != unsupported {
+			unsupported = count
+			if count > 0 {
+				r.logger.Error("unsupported async job types remain outstanding", "count", count)
+			}
+		}
+	}
 
+	r.cleanupCompleted(ctx)
+	refreshMetrics()
 	for {
 		if ctx.Err() != nil {
 			break
@@ -87,22 +102,14 @@ func (r *runner) run(ctx context.Context) {
 		rotation = (rotation + 1) % len(r.handlers.ordered)
 		r.ready.Store(claimHealthy)
 
-		count, err := r.updateMetrics(ctx)
-		if err != nil {
-			r.logger.Warn("inspect async work backlog", "error", err)
-		} else if count != unsupported {
-			unsupported = count
-			if count > 0 {
-				r.logger.Error("unsupported async job types remain outstanding", "count", count)
-			}
-		}
-
 		select {
 		case <-ctx.Done():
 		case completed := <-results:
 			active[completed]--
 			r.metrics.InFlight.WithLabelValues(string(completed)).Dec()
 		case <-ticker.C:
+		case <-metricsTicker.C:
+			refreshMetrics()
 		case <-cleanupTicker.C:
 			r.cleanupCompleted(ctx)
 		}

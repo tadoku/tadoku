@@ -126,7 +126,7 @@ select
   count(*) filter (where state = 'failed') as failed,
   min(case when state = 'pending' then next_attempt_at
     when state = 'running' then lease_expires_at end)::timestamptz as oldest_due_at
-from jobs where task_type = sqlc.arg('task_type')::text;
+from jobs where task_type = sqlc.arg('task_type')::text and state <> 'completed';
 
 -- name: UnsupportedStats :one
 select

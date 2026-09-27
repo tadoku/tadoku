@@ -173,7 +173,8 @@ return app.Run(ctx)
 `cmd/tadoku-worker` loads settings with envconfig and validates them before
 constructing the application. `WORKER_CONCURRENCY` defaults to four slots and
 `WORKER_SHUTDOWN_TIMEOUT` defaults to fifteen seconds; both must be positive.
-Pass those validated values explicitly in `Config`. Startup can also provide
+Pass those validated values explicitly in `Config`; `NewApplication` returns an
+error for a non-positive concurrency or shutdown timeout. Startup can also provide
 the process `Logger` and `Metrics`. Handler
 `Policy.Timeout` must be positive, `Policy.Concurrency` must be 1–100 and
 `Policy.MaxAttempts` must be 1–2,147,483,647, matching the queue boundary.
@@ -206,6 +207,8 @@ Ordinary errors retry with bounded backoff and an attempt limit; permanent and
 exhausted failures remain inspectable. Unknown versions stay unclaimed and
 visible in unsupported backlog reporting. Inspect due age, failures, attempts,
 expired leases and in-flight work without using job IDs as metric labels.
+The worker refreshes its backlog gauges at startup and then every fifteen
+seconds, independently of claiming.
 
 Replay inserts a new record linked to the failed original and records the
 operator and reason. It preserves the original version and payload. Registry
@@ -240,7 +243,8 @@ steps and fixtures.
 
 ## Successful-job retention
 
-The worker automatically cleans up successful history in bounded batches.
+The worker cleans up successful history in bounded batches at startup and then
+hourly.
 `jobqueue.Service.CleanupCompleted(ctx, limit)` owns the retention rule; callers
 do not supply an arbitrary cutoff. The service passes the business clock to a
 single repository statement, which subtracts three calendar months in UTC.

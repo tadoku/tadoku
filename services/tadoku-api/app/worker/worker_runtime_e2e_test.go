@@ -654,6 +654,21 @@ func TestWorkerRenewedDeadlineSchedulesRetry(t *testing.T) {
 	}
 }
 
+func TestWorkerCleansUpExpiredCompletedJobsAtStartup(t *testing.T) {
+	f := newWorkerFixture(t)
+	var id int64
+	if err := f.db.QueryRow(t.Context(), `insert into jobs (task_type, payload, state, created_at, completed_at)
+  values ($1, '{"year":2025}', 'completed', now() - interval '1 year', now() - interval '1 year') returning id`, string(jobs.LeaderboardInvalidateOfficialV1)).Scan(&id); err != nil {
+		t.Fatal(err)
+	}
+	startWorker(t, f.runner(t, f.client, time.Second, time.Second))
+	waitFor(t, func() (bool, error) {
+		var exists bool
+		err := f.db.QueryRow(t.Context(), `select exists(select 1 from jobs where id = $1)`, id).Scan(&exists)
+		return !exists, err
+	})
+}
+
 func TestWorkerCleanupRetainsThreeMonthsAndFailures(t *testing.T) {
 	f := newWorkerFixture(t)
 	runtime := &runner{

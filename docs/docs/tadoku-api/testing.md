@@ -73,11 +73,12 @@ Never point tests at shared development or production services.
   `TADOKU_TEST_VALKEY_URL` in the exact form `redis://127.0.0.1:<port>` (or
   `localhost`) for a disposable Valkey 9 service. They never flush the shared
   instance. Logical databases are reserved per suite: 15 for HTTP E2Es, 14 for
-  their nested cleanup probe and 13 for the leaderboard cache fence test. The
-  E2E fixture leases its database; the cache fence test uses unique scoped
-  keys. Every fixture refuses
-  to overwrite pre-existing fixture keys and deletes only its own keys during
-  cleanup.
+  their nested cleanup probe, and 13 for the leaderboard cache fence and worker
+  tests. The HTTP E2E fixtures lease their database. Tests sharing database 13
+  use UUID-scoped keys: the fence test creates and deletes only its named keys;
+  the worker tests use a unique cache prefix and delete only matching keys.
+  The worker's extra marker outside that prefix also embeds the UUID and is
+  deleted by exact name. No test sharing database 13 flushes it.
 
 ## Repository and package tests
 

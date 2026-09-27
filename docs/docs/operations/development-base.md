@@ -52,10 +52,8 @@ notification configuration.
 - The `images` entries in `k8s/dev/base/kustomization.yaml` select `latest`.
   The development Image Updater uses the **digest** strategy and writes the
   immutable resolutions back to that file.
-- The worker has its own GHCR image and Kustomize image entry. Its first digest
-  must be written by Image Updater after the worker image is published; confirm
-  the external Image Updater tracks the new image before activating the worker.
-  An API image update must leave the worker image digest and Pod template intact.
+- The worker has its own GHCR image and Kustomize image entry. Image Updater
+  tracks its digest independently of the API image.
 - Hook migration images need Image Updater's `force-update`, because successful
   Jobs are removed from the live resource list.
 - Kustomize mirrors the migration image digest into a top-level annotation on
@@ -78,15 +76,11 @@ before starting Next. The public Lab CA is mounted for server-side HTTPS.
 
 ## Asynchronous worker ownership
 
-Standalone migration 0032 must be deployed independently before
-this worker runtime. Positively verify no old-name consumer remains, including
-manual tools; see [Database migrations](../tadoku-api/database.md#migrations).
-
 The private `tadoku-worker` Deployment consumes `jobs` in the base
 `tadoku` database and uses unprefixed leaderboard cache keys. It has one
 replica, Recreate rollout, a separate image digest, and no Service or public
-route. Its CPU and memory limits are initial values; verify them with four
-active tasks before treating them as settled.
+route. Its resource requests and limits are in
+`k8s/dev/base/services/tadoku-worker.yaml`.
 
 The worker consumes `jobs` and invalidates leaderboard caches. Verify worker
 ownership and reads:
@@ -94,8 +88,7 @@ ownership and reads:
 1. Confirm the base `tadoku-worker` is ready and its `/readyz` endpoint remains
    healthy while tasks retry or fail.
 2. Inspect due and failed `jobs` rows; a write followed by a
-   leaderboard read must still succeed. Keep the legacy table until a later
-   standalone cleanup migration.
+   leaderboard read must still succeed.
 
 DevCLI pairs each branch API and worker against `tadoku-${DEV_ROUTE}` and the
 `dev:${DEV_ROUTE}:` Valkey prefix. Selecting either workload starts both;
@@ -116,7 +109,7 @@ Full Argo CD syncs apply these waves:
 | -10 | Tadoku API, Kratos and Keto migration Sync hooks; each waits for authenticated database connectivity |
 | 0 | Auth providers, cache, Flipt, token-reflector and Gateway routes |
 | 10 | Oathkeeper, which publishes its JWKS before the APIs start |
-| 20 | Tadoku API |
+| 20 | Tadoku API and its private worker |
 | 30 | Frontends |
 | 50 | Browser Ingresses |
 

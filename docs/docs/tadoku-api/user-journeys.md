@@ -52,7 +52,7 @@ e2e/testdata/journeys/
   succeed at a write gets its own step.
 - A verify step runs `verify.sql`, aggregates the rows into one JSON array in
   query order and compares the indented result with `verify.json`. Reserve
-  verify steps for effects no endpoint exposes, such as soft deletes, outbox
+  verify steps for effects no endpoint exposes, such as soft deletes, job
   rows and audit entries; API-observable persistence belongs in the next
   request or a repository test.
 - Verify queries end with `order by` and select only application-supplied

@@ -214,11 +214,9 @@ identity, response, err := kratos.IdentityApi.GetIdentity(ctx, identityID).Execu
 
 ## Separate job worker
 
-Independently deployed migration 0032 must provide the `jobs` table
-before this runtime is deployed. See [Database migrations](./database.md#migrations)
-for the compatibility gate and [Successful-job retention](./jobs.md#successful-job-retention)
-for the automatic three-calendar-month policy. Failed records are retained
-indefinitely.
+The queue persists in the `jobs` table. See
+[Successful-job retention](./jobs.md#successful-job-retention) for the automatic
+three-calendar-month policy. Failed records are retained indefinitely.
 
 `cmd/tadoku-worker` constructs `app/worker.Application` with the queue and
 business features. Its immutable typed registration drives both claiming and

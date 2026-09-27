@@ -41,7 +41,9 @@ Main navigation **Leaderboard** opens `/leaderboard/latest`; also cover
 explicit seeded contest ID from the index to diagnose missing data. Time windows,
 language restrictions, activity units, contest eligibility and registrations affect
 scores; don't assume every log counts everywhere. A log may need explicit contest
-submission. Cached scores depend on the outbox worker, not just database writes.
+submission. Cached scores change after the standalone worker completes the
+invalidation job; a warm leaderboard can remain stale while that job is pending
+or failed. See the [freshness contract](../../../../../docs/docs/tadoku-api/jobs.md#leaderboard-freshness-and-worker-health).
 Avoid comparing exact shared seed totals after another test may have edited them.
 
 ## Source anchors

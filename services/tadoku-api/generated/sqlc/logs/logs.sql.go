@@ -441,7 +441,7 @@ select
   coalesce(
     (select array_agg(tag order by tag) from log_tags where log_id = logs.id),
     array[]::text[]
-  )::text as tags
+  )::text[] as tags
 from logs
 inner join languages on (languages.code = logs.language_code)
 left join log_units on (log_units.id = logs.unit_id)
@@ -479,7 +479,7 @@ type FindLogByIDRow struct {
 	CreatedAt                   pgtype.Timestamp
 	UpdatedAt                   pgtype.Timestamp
 	DeletedAt                   pgtype.Timestamp
-	Tags                        string
+	Tags                        []string
 }
 
 func (q *Queries) FindLogByID(ctx context.Context, arg FindLogByIDParams) (FindLogByIDRow, error) {
@@ -606,7 +606,7 @@ with eligible_logs as (
     coalesce(
       (select array_agg(tag order by tag) from log_tags where log_id = logs.id),
       array[]::text[]
-    )::text as tags
+    )::text[] as tags
   from contest_logs
   inner join logs on (logs.id = contest_logs.log_id)
   inner join languages on (languages.code = logs.language_code)
@@ -656,7 +656,7 @@ type ListLogsForContestRow struct {
 	UpdatedAt       pgtype.Timestamp
 	DeletedAt       pgtype.Timestamp
 	UserDisplayName string
-	Tags            string
+	Tags            []string
 	TotalSize       int64
 }
 
@@ -736,7 +736,7 @@ with eligible_logs as (
     coalesce(
       (select array_agg(tag order by tag) from log_tags where log_id = logs.id),
       array[]::text[]
-    )::text as tags
+    )::text[] as tags
   from logs
   inner join languages on (languages.code = logs.language_code)
   left join log_units on (log_units.id = logs.unit_id)
@@ -781,7 +781,7 @@ type ListLogsForUserRow struct {
 	CreatedAt       pgtype.Timestamp
 	UpdatedAt       pgtype.Timestamp
 	DeletedAt       pgtype.Timestamp
-	Tags            string
+	Tags            []string
 	TotalSize       int64
 }
 

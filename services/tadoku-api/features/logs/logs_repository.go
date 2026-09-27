@@ -451,7 +451,7 @@ func (r *LogsRepository) FindLog(ctx context.Context, id uuid.UUID, includeDelet
 		UnitID:          uuid.UUID(row.UnitID.Bytes),
 		UnitKey:         row.UnitKey,
 		UnitName:        row.UnitName,
-		Tags:            legacyLogTags(row.Tags),
+		Tags:            row.Tags,
 		Amount:          row.Amount.Float32,
 		Modifier:        row.Modifier.Float32,
 		Score:           row.Score.Float32,
@@ -579,7 +579,7 @@ func (r *LogsRepository) ListUserLogs(ctx context.Context, parameters ListParame
 			UnitID:          uuid.UUID(row.UnitID.Bytes),
 			UnitKey:         row.UnitKey,
 			UnitName:        row.UnitName,
-			Tags:            legacyLogTags(row.Tags),
+			Tags:            row.Tags,
 			Amount:          row.Amount.Float32,
 			Modifier:        row.Modifier.Float32,
 			Score:           row.Score.Float32,
@@ -624,7 +624,7 @@ func (r *LogsRepository) ListContestLogs(ctx context.Context, parameters ListPar
 			UnitID:          uuid.UUID(row.UnitID.Bytes),
 			UnitKey:         row.UnitKey,
 			UnitName:        row.UnitName,
-			Tags:            legacyLogTags(row.Tags),
+			Tags:            row.Tags,
 			Amount:          row.Amount.Float32,
 			Modifier:        row.Modifier.Float32,
 			Score:           row.Score.Float32,
@@ -639,25 +639,4 @@ func (r *LogsRepository) ListContestLogs(ctx context.Context, parameters ListPar
 		result.NextPageToken = fmt.Sprint(parameters.Page + 1)
 	}
 	return result, nil
-}
-
-func legacyLogTags(encoded string) []string {
-	result := []string{}
-	if len(encoded) <= 2 {
-		return result
-	}
-	var current []byte
-	quoted := false
-	for _, ch := range []byte(encoded[1 : len(encoded)-1]) {
-		switch {
-		case ch == '"':
-			quoted = !quoted
-		case ch == ',' && !quoted:
-			result = append(result, string(current))
-			current = nil
-		default:
-			current = append(current, ch)
-		}
-	}
-	return append(result, string(current))
 }

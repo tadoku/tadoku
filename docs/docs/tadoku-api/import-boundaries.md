@@ -46,7 +46,7 @@ startup here means `cmd/tadoku-api`:
 
 - Only `features/leaderboard`, `services/tadoku-api/infra/valkey`, startup, E2E
   and the `app/worker:worker_test` target may depend directly on `valkey-go`.
-  The worker test needs a raw client because `leaderboard.NewService` takes
+  The worker test needs a raw client because `leaderboard.NewCache` takes
   one; it seeds and inspects cache keys and simulates a blocked or unavailable
   Valkey. The `app/worker` library itself may not.
 - Only `internal/permissions`, startup and E2E may depend directly on the raw

@@ -4,9 +4,9 @@ go_library(
     name = "leaderboard",
     srcs = [
         "domain.go",
+        "leaderboard_cache.go",
         "leaderboard_repository.go",
         "leaderboard_service.go",
-        "leaderboard_store.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard",
     visibility = ["//services/tadoku-api:feature_consumers"],
@@ -23,7 +23,7 @@ go_library(
 
 go_test(
     name = "leaderboard_test",
-    srcs = ["leaderboard_store_test.go"],
+    srcs = ["leaderboard_cache_test.go"],
     embed = [":leaderboard"],
     env_inherit = ["TADOKU_TEST_VALKEY_URL"],
     tags = [

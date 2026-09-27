@@ -24,7 +24,7 @@ func runWorkerStep(t *testing.T, s *suite) {
 	}
 
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	leaderboardService := leaderboard.NewService(leaderboard.NewRepository(s.db.Pool), leaderboardValkey.client, time.Second, "")
+	leaderboardService := leaderboard.NewService(leaderboard.NewRepository(s.db.Pool), leaderboard.NewCache(leaderboardValkey.client, time.Second, ""))
 	application, err := worker.NewApplication(jobqueue.NewService(jobqueue.NewRepository(s.db.Pool)), leaderboardService, worker.Config{
 		Concurrency:     4,
 		ShutdownTimeout: 2 * time.Second,

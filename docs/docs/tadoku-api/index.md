@@ -40,7 +40,7 @@ All paths are relative to `services/tadoku-api/`.
 | --- | --- |
 | `transport/http/` | The router (`router.go`) with standard method/path registrations, request deadlines and health checks; JWT authentication and the ban gate; mapping application errors to HTTP statuses. |
 | `app/` | Application operations: actor authorization, cross-feature locks and transactions, and composition of feature results. |
-| `features/<feature>/` | One feature: a service that owns its business decisions and a repository that queries and maps its rows. |
+| `features/<feature>/` | One feature: a service that owns its business decisions, a repository that queries and maps its rows and, where needed, a cache or store for non-authoritative data. |
 | `generated/` | Generated code: sqlc queries per feature (`generated/sqlc/<feature>/`) and HTTP bindings (`generated/openapi/`). |
 | `app/worker/` | Typed handlers, registration, bounded execution and feature composition. |
 | `cmd/tadoku-worker/` | Worker composition root and private health/metrics lifecycle. |

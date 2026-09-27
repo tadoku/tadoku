@@ -241,7 +241,8 @@ steps and fixtures.
 
 ## Successful-job retention
 
-The worker automatically cleans up successful history in bounded batches.
+The worker cleans up successful history in bounded batches at startup and then
+hourly.
 `jobqueue.Service.CleanupCompleted(ctx, limit)` owns the retention rule; callers
 do not supply an arbitrary cutoff. The service passes the business clock to a
 single repository statement, which subtracts three calendar months in UTC.

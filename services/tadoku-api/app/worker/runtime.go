@@ -51,6 +51,7 @@ func (r *runner) run(ctx context.Context) {
 	rotation := 0
 	unsupported := int64(0)
 
+	r.cleanupCompleted(ctx)
 	for {
 		if ctx.Err() != nil {
 			break

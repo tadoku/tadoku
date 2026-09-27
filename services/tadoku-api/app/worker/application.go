@@ -28,6 +28,9 @@ func NewApplication(queue *jobqueue.Service, leaderboard *leaderboard.Service, c
 	if queue == nil || leaderboard == nil {
 		return nil, errors.New("worker requires queue and leaderboard services")
 	}
+	if config.Concurrency < 1 || config.ShutdownTimeout <= 0 {
+		return nil, errors.New("worker requires positive concurrency and shutdown timeout")
+	}
 	if config.Logger == nil {
 		config.Logger = slog.Default()
 	}

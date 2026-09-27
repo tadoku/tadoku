@@ -12,11 +12,9 @@ go_library(
     visibility = ["//services/tadoku-api:feature_consumers"],
     deps = [
         "//services/tadoku-api/domain/activities",
-        "//services/tadoku-api/domain/leaderboardoutbox",
         "//services/tadoku-api/generated/sqlc/leaderboard",
         "//services/tadoku-api/infra/postgres",
         "//services/tadoku-api/internal/errx",
-        "//services/tadoku-api/internal/timex",
         "@com_github_google_uuid//:uuid",
         "@com_github_jackc_pgx_v5//pgxpool",
         "@com_github_valkey_io_valkey_go//:valkey-go",
@@ -25,22 +23,15 @@ go_library(
 
 go_test(
     name = "leaderboard_test",
-    srcs = [
-        "leaderboard_repository_test.go",
-        "leaderboard_store_test.go",
-    ],
+    srcs = ["leaderboard_store_test.go"],
     embed = [":leaderboard"],
-    env_inherit = [
-        "TADOKU_TEST_POSTGRES_URL",
-        "TADOKU_TEST_VALKEY_URL",
-    ],
+    env_inherit = ["TADOKU_TEST_VALKEY_URL"],
     tags = [
         "no-cache",
         "no-remote-exec",
         "requires-network",
     ],
     deps = [
-        "//services/tadoku-api/internal/testpostgres",
         "//services/tadoku-api/internal/testvalkey",
         "@com_github_google_uuid//:uuid",
         "@com_github_valkey_io_valkey_go//:valkey-go",

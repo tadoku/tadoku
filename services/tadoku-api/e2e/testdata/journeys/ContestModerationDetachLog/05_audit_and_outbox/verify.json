@@ -22,11 +22,5 @@
     "actor": "",
     "value": "2025",
     "count": "2"
-  },
-  {
-    "kind": "legacy_outbox",
-    "actor": "",
-    "value": "",
-    "count": "0"
   }
 ]

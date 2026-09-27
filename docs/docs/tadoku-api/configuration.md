@@ -1,6 +1,6 @@
 ---
 title: Runtime configuration
-description: Tadoku API environment variables, startup and shutdown behavior, authentication wiring, the raw Keto and Kratos clients, the leaderboard outbox worker and metrics.
+description: Tadoku API environment variables, startup and shutdown behavior, authentication wiring, the raw Keto and Kratos clients, the leaderboard worker and metrics.
 sidebar_position: 9
 ---
 
@@ -37,13 +37,10 @@ environment variables. Development values are in
 - `API_VALKEY_URL`, one standalone TCP URL accepted by `valkey-go`.
 - `API_VALKEY_TIMEOUT` (default 1s), the positive bound for each connection and
   handshake attempt and the established-connection keepalive and I/O interval.
-- `API_LEADERBOARD_OUTBOX_ENABLED` (default `false`) runs the
-  [legacy drain worker](#legacy-leaderboard-drain).
 - `API_LEADERBOARD_CACHE_PREFIX` (default empty) prefixes every leaderboard
   cache key, isolating cache entries by namespace. A non-empty prefix must be
-  unique for each database sharing a Valkey instance,
-  may contain only lowercase letters, digits, hyphens and colons, and must end
-  in a colon. Empty uses unprefixed keys.
+  unique for each database sharing a Valkey instance. Empty uses unprefixed
+  keys.
 
 `services/tadoku-api/infra/valkey/README.md` documents which URL options are
 accepted and how commands, timeouts, cancellation and close behave.
@@ -239,9 +236,10 @@ Private health and metrics listeners default to `WORKER_PORT=8000` and
 the same database and cache prefix, with a unique prefix per database sharing
 Valkey.
 
-The worker invalidates leaderboard caches through registered jobs. API cache
-reads use their existing cache and generation checks; cache misses and
-unavailable Valkey fall back to PostgreSQL. Worker Pod
+The worker invalidates leaderboard caches through registered jobs. A cache miss
+rebuilds from PostgreSQL only if its generation has not changed, and cached
+reads recheck that generation before returning; unavailable Valkey falls back
+to PostgreSQL. Worker Pod
 readiness reports whether the execution loop can operate, independently of
 individual job success. Monitor queued and failed jobs because cached results
 can remain stale while invalidation work is outstanding.
@@ -251,29 +249,6 @@ release its slot until it returns. On shutdown the application stops claiming,
 drains within its configured bound, then cancels remaining work and joins it
 before provider resources close. A noncooperative handler can delay exit; see
 [Execution and failure guarantees](./jobs.md#execution-and-failure-guarantees).
-
-## Legacy leaderboard drain
-
-`API_LEADERBOARD_OUTBOX_ENABLED` retains the embedded legacy consumer for a
-staged cutover. When enabled, it reconciles existing cache markers, then claims
-pending `leaderboard_outbox` records, invalidates affected cache keys and marks
-rows processed only after Valkey succeeds. Failed batches remain pending.
-Its process-local readiness flag covers only its own legacy work.
-
-Producing features return typed jobs. API applications persist every job into
-`jobs` in the same business transaction; current producers no longer
-write the legacy table. For the staged rollout, first run the separate worker
-and a dual-publishing API version. Verify the separate worker processes jobs
-before deploying generic-only publication. After every replica stops legacy
-publication and the legacy pending count reaches zero, disable the embedded
-worker. The development configuration uses that final mode. Keep the old table
-until a later standalone migration after old code is gone.
-
-A cache miss rebuilds from PostgreSQL only if its generation has not changed,
-and cached reads recheck that generation before returning. The legacy drain is
-complete only after every producer has stopped old writes and
-`select count(*) from leaderboard_outbox where processed_at is null` returns
-zero. Inspect the separate queue independently for outstanding and failed jobs.
 
 ## Metrics
 
@@ -292,8 +267,6 @@ zero. Inspect the separate queue independently for outstanding and failed jobs.
   stops, it closes the database and provider transport dependencies: the Flipt
   polling provider, the PostgreSQL pool, the Valkey client and idle HTTP
   connections, including Flipt, Kratos and Keto connections.
-- An enabled leaderboard worker is cancelled and joined before the PostgreSQL
-  pool and Valkey client close.
 - A startup failure closes the same owned transport. Raw clients have no
   separate close operation.
 - Valkey close follows the upstream client's per-connection close allowance

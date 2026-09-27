@@ -3,9 +3,6 @@ from contest_logs
 inner join logs on logs.id = contest_logs.log_id
 where contest_logs.contest_id = 'f1111111-1111-4111-8111-111111111111'
 union all
-select 'legacy_outbox' as kind, '' as user_id, count(*)::text as reference
-from leaderboard_outbox
-union all
 select 'jobs', '' as user_id,
   task_type || ':' || coalesce(payload->>'contest_id', payload->>'year') as reference
 from jobs

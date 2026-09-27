@@ -42,7 +42,6 @@ try {
   const apiContainer = api.spec.template.spec.containers[0]
   const branchApi = Y.parse(fs.readFileSync(path.join(root, '.dev/tadoku-api.yaml'), 'utf8')).spec.containers[0]
   const branchWorker = Y.parse(fs.readFileSync(path.join(root, '.dev/tadoku-worker.yaml'), 'utf8')).spec.containers[0]
-  if (envValue(apiContainer, 'API_LEADERBOARD_OUTBOX_ENABLED') !== 'false' || envValue(branchApi, 'API_LEADERBOARD_OUTBOX_ENABLED') !== 'false') throw new Error('Embedded worker must be disabled after legacy drain')
   if (envValue(workerContainer, 'WORKER_POSTGRES_DATABASE') !== 'tadoku' || envValue(workerContainer, 'WORKER_LEADERBOARD_CACHE_PREFIX') !== undefined || envValue(apiContainer, 'API_LEADERBOARD_CACHE_PREFIX') !== undefined) throw new Error('Base worker must use the base database and both base processes must use unprefixed cache')
   if (envValue(branchWorker, 'WORKER_POSTGRES_DATABASE') !== 'tadoku-${DEV_ROUTE}' || envValue(branchWorker, 'WORKER_LEADERBOARD_CACHE_PREFIX') !== 'dev:${DEV_ROUTE}:') throw new Error('Branch worker database/cache isolation is not configured')
   if (envValue(branchApi, 'API_POSTGRES_DATABASE') !== envValue(branchWorker, 'WORKER_POSTGRES_DATABASE') || envValue(branchApi, 'API_LEADERBOARD_CACHE_PREFIX') !== envValue(branchWorker, 'WORKER_LEADERBOARD_CACHE_PREFIX')) throw new Error('Branch API and worker must use the same database/cache namespace')
@@ -55,7 +54,7 @@ try {
   if (apiMetadata.selectionGroup !== 'tadoku-api' || workerMetadata.selectionGroup !== 'tadoku-api' || workerMetadata.kind !== 'worker') throw new Error('Branch API and worker are not selected as one group')
   if (workerMetadata.imageTarget !== '//services/tadoku-api/cmd/tadoku-worker:cli_image' || workerMetadata.pushTarget !== '//services/tadoku-api/cmd/tadoku-worker:cli_push' || workerMetadata.workloadTemplate !== '.dev/tadoku-worker.yaml') throw new Error('Worker is not an independent DevCLI image/deployable')
   if (['publicPath', 'internalHost', 'publicProxy', 'baseService', 'servicePort'].some(key => key in workerMetadata)) throw new Error('Worker metadata must not request a route or Service')
-  report.leaderboardWorkers = { oldOutbox: 'API', asyncOutbox: 'tadoku-worker', baseDatabase: 'tadoku', branchDatabase: envValue(branchWorker, 'WORKER_POSTGRES_DATABASE'), branchPrefix: envValue(branchWorker, 'WORKER_LEADERBOARD_CACHE_PREFIX'), image: workerContainer.image }
+  report.leaderboardWorkers = { asyncOutbox: 'tadoku-worker', baseDatabase: 'tadoku', branchDatabase: envValue(branchWorker, 'WORKER_POSTGRES_DATABASE'), branchPrefix: envValue(branchWorker, 'WORKER_LEADERBOARD_CACHE_PREFIX'), image: workerContainer.image }
   const jobs = docs.filter(d => d.kind === 'Job')
   const frontends = docs.filter(d => d.kind === 'Deployment' && d.metadata.name.startsWith('frontend-'))
   const roles = { 'tadoku-api-migrate': 'tadoku', 'kratos-migrate': 'kratos', 'keto-migrate': 'keto' }

@@ -1,8 +1,4 @@
-select 'legacy_outbox' as kind, '' as user_id, '' as reference,
-  '' as year, '' as rule_ids, '' as rates, '' as source, count(*)::text
-from leaderboard_outbox
-union all
-select task_type, '' as user_id, coalesce(payload->>'contest_id', '') as reference,
+select task_type as kind, '' as user_id, coalesce(payload->>'contest_id', '') as reference,
   payload->>'year' as year, '' as rule_ids, '' as rates, state as source, count(*)::text
 from jobs
 group by task_type, payload, state

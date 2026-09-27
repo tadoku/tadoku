@@ -41,14 +41,9 @@ private keys.
 
 ## Install dev-cli
 
-Install a dev-cli release that supports route-free `worker` deployables and
-`selectionGroup` companions. Version 0.4.0 supports the YAML configuration,
-multi-host routing and dependency/task workflow, but does not support the
-worker declaration in this repository.
-
 ```sh
-GOPRIVATE=github.com/antonve/dev-cli go install github.com/antonve/dev-cli/cmd/dev@latest
-dev version  # must include worker and selectionGroup support
+GOPRIVATE=github.com/antonve/dev-cli go install github.com/antonve/dev-cli/cmd/dev@v0.5.0
+dev version  # must print v0.5.0 or later
 ```
 
 Go must be able to authenticate to the private repository. If your Git
@@ -58,15 +53,13 @@ credential is required:
 ```sh
 GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=url.git@github.com:.insteadOf \
 GIT_CONFIG_VALUE_0=https://github.com/ GOPRIVATE=github.com/antonve/dev-cli \
-go install github.com/antonve/dev-cli/cmd/dev@latest
+go install github.com/antonve/dev-cli/cmd/dev@v0.5.0
 ```
 
 - Put `$(go env GOPATH)/bin`, or your explicit `GOBIN`, on `PATH`. Check
   `command -v dev` and `dev version` so you do not run an older installation.
 - To upgrade an existing installation in place, set `GOBIN` to its directory
   on the same command.
-- For a reproducible pin, replace `@latest` with the released version that
-  includes worker and selectionGroup support.
 - Stop only your own running loops before upgrading.
 
 Then check the prerequisites:

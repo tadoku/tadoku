@@ -86,8 +86,7 @@ func (s *Service) UpdateContestRegistrations(ctx context.Context, logID uuid.UUI
 		affected[attachment.ContestID] = struct{}{}
 	}
 	for contestID := range affected {
-		id := contestID
-		followUp = append(followUp, jobs.InvalidateContestLeaderboardV1{ContestID: id})
+		followUp = append(followUp, jobs.InvalidateContestLeaderboardV1{ContestID: contestID})
 	}
 	if before.EligibleOfficial || after.EligibleOfficial {
 		year := before.Year
@@ -120,8 +119,7 @@ func (s *Service) Delete(ctx context.Context, logID uuid.UUID, now time.Time) ([
 		return nil, err
 	}
 	for _, contestID := range contestIDs {
-		id := contestID
-		followUp = append(followUp, jobs.InvalidateContestLeaderboardV1{ContestID: id})
+		followUp = append(followUp, jobs.InvalidateContestLeaderboardV1{ContestID: contestID})
 	}
 	if jobContext.EligibleOfficial {
 		year := jobContext.Year
@@ -438,8 +436,7 @@ func (s *Service) update(ctx context.Context, mutation logMutation) ([]jobs.Job,
 		return nil, err
 	}
 	for _, id := range contestIDs {
-		contestID := id
-		followUp = append(followUp, jobs.InvalidateContestLeaderboardV1{ContestID: contestID})
+		followUp = append(followUp, jobs.InvalidateContestLeaderboardV1{ContestID: id})
 	}
 	if jobContext.EligibleOfficial {
 		year := jobContext.Year

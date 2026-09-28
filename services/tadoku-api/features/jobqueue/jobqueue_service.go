@@ -100,10 +100,12 @@ func (s *Service) Replay(ctx context.Context, failedID int64, actor, reason stri
 	if failedID < 1 {
 		return 0, errx.NewInvalidInputError("failed job ID must be positive")
 	}
-	if len(strings.TrimSpace(actor)) < 1 || len(strings.TrimSpace(actor)) > 200 {
+	actor = strings.TrimSpace(actor)
+	reason = strings.TrimSpace(reason)
+	if len(actor) < 1 || len(actor) > 200 {
 		return 0, errx.NewInvalidInputError("replay actor must be 1 to 200 characters after trimming whitespace")
 	}
-	if len(strings.TrimSpace(reason)) < 1 || len(strings.TrimSpace(reason)) > 500 {
+	if len(reason) < 1 || len(reason) > 500 {
 		return 0, errx.NewInvalidInputError("replay reason must be 1 to 500 characters after trimming whitespace")
 	}
 

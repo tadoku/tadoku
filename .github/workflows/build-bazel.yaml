@@ -108,10 +108,8 @@ jobs:
       - name: Check changed forward migrations for risky SQL
         if: github.event_name == 'pull_request'
         run: |
-          mapfile -t migrations < <(
-            git diff --name-only --diff-filter=ACMR HEAD^1 HEAD -- services/tadoku-api/migrations/ |
-              sed -n '/\.up\.sql$/p'
-          )
+          git diff --name-only --diff-filter=ACMR HEAD^1 HEAD -- services/tadoku-api/migrations/ > "$RUNNER_TEMP/changed-migrations"
+          mapfile -t migrations < <(sed -n '/\.up\.sql$/p' "$RUNNER_TEMP/changed-migrations")
           if ((${#migrations[@]})); then
             bazel run --lockfile_mode=error //tools/ci/migrationsafety/cmd -- "${migrations[@]}"
           fi

@@ -1,6 +1,6 @@
 --- a/parser/BUILD.bazel
 +++ b/parser/BUILD.bazel
-@@ -1,0 +2,8 @@
+@@ -1,3 +1,11 @@
 +load("@rules_cc//cc:defs.bzl", "cc_library")
 +
 +cc_library(
@@ -9,9 +9,17 @@
 +    textual_hdrs = glob(["include/**/*.c"]),
 +    includes = ["include", "include/postgres"],
 +)
-@@ -93,0 +102 @@
+ load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+ go_library(
+@@ -90,10 +98,16 @@
+         "string_to_bytes.go",
+         "xxhash.c",
+     ],
 +    cdeps = [":headers"],
-@@ -96 +105,6 @@
+     cgo = True,
+     clinkopts = [""],
+     copts = [
 -        "-Iparser/include -Iparser/include/postgres -g -fstack-protector -std=gnu99 -Wno-unknown-warning-option -Wno-typedef-redefinition -DXXH_NAMESPACE=PG_QUERY_",
 +        "-g",
 +        "-fstack-protector",
@@ -19,3 +27,6 @@
 +        "-Wno-unknown-warning-option",
 +        "-Wno-typedef-redefinition",
 +        "-DXXH_NAMESPACE=PG_QUERY_",
+     ] + select({
+         "@io_bazel_rules_go//go/platform:windows": [
+             "-Iparser/include/postgres/port/win32",

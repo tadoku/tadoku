@@ -20,7 +20,7 @@ import (
 	"github.com/bazelbuild/rules_go/go/runfiles"
 	_ "github.com/mattn/go-sqlite3"
 	kratosapi "github.com/ory/kratos-client-go"
-	kratosclient "github.com/tadoku/tadoku/services/common/client/kratos"
+	kratosclient "github.com/tadoku/tadoku/services/tadoku-api/infra/kratos"
 )
 
 const (

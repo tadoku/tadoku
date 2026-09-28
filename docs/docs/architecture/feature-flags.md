@@ -16,22 +16,23 @@ decision, every consumer uses the flag's behavior-preserving safe default.
 | File | Role |
 | --- | --- |
 | `feature-flags.contract.json` | Cross-stack list of flag keys and safe defaults |
-| `services/common/featureflags/registry.go` | Typed Go `BooleanFlag` constants; call sites cannot supply keys or defaults |
+| `services/tadoku-api/internal/featureflags/registry.go` | Typed Go `BooleanFlag` constants; call sites cannot supply keys or defaults |
 | `frontend/apps/webv2/app/feature-flags/registry.ts` | webv2 keys, defaults and response schema |
 | `k8s/dev/base/flipt/features.yaml` | Development Flipt seed: flags, rollouts and segments |
 
-`services/common/featureflags/contract_test.go` and
+`services/tadoku-api/internal/featureflags/contract_test.go` and
 `frontend/apps/webv2/app/feature-flags/registry.test.ts` compare the registries
 with the contract. CI runs only the Go test, and only when Bazel inputs change,
 so run both locally (`bazel test`, `pnpm --filter webv2 test`).
 
 ## Evaluation in Tadoku API
 
-`Evaluator.Boolean` in `services/common/featureflags/` never returns an error to
-product code. Anonymous and guest requests get the safe default without asking
-Flipt; signed-in users are evaluated with their Kratos ID as the entity ID.
+`Evaluator.Boolean` in `services/tadoku-api/internal/featureflags/` accepts a
+verified subject and never returns an error to product code. Anonymous and guest
+requests get the safe default without asking Flipt; signed-in users are evaluated
+with their Kratos ID as the entity ID. The old common `UserIdentity` type is gone.
 
-The provider in `services/common/client/flipt/` wraps the Flipt client SDK in
+The provider in `services/tadoku-api/infra/flipt/` wraps the Flipt client SDK in
 polling mode: it fetches the namespace evaluation snapshot every
 `API_FLIPT_UPDATE_INTERVAL` and evaluates in process. A failed fetch keeps the
 last snapshot and marks results stale. Startup waits at most
@@ -48,7 +49,7 @@ read and managed segment calls. Metrics are named `tadoku_feature_flag_*`.
 
 `GET /immersion/feature-flags` (`ImmersionFeatureFlagDecisions`) returns the
 decisions for the current user or guest with `Cache-Control: private, no-store`. Only flags in
-`PublicDecisions` (`services/common/featureflags/public.go`) are exposed.
+`PublicDecisions` (`services/tadoku-api/internal/featureflags/public.go`) are exposed.
 [webv2](../frontend/webv2.md) fetches them server-side in `frontend/apps/webv2/pages/_app.tsx` and
 after each client-side route change, falling back to defaults on any failure.
 Components use `useFeatureFlag`, or `useLatchedFeatureFlag` to keep the first

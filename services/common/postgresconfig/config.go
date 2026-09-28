@@ -7,8 +7,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-
-	"github.com/jackc/pgx/v4"
 )
 
 const defaultPort = 5432
@@ -73,14 +71,6 @@ func (c Config) URL() string {
 	}
 	u.RawQuery = query.Encode()
 	return u.String()
-}
-
-func (c Config) ConnConfig() (*pgx.ConnConfig, error) {
-	config, err := pgx.ParseConfig(c.URL())
-	if err != nil {
-		return nil, fmt.Errorf("parse postgres configuration: %s", c.Redact(err))
-	}
-	return config, nil
 }
 
 func (c Config) String() string { return "postgres configuration (credentials redacted)" }

@@ -50,7 +50,7 @@ startup here means `cmd/tadoku-api`:
   one; it seeds and inspects cache keys and simulates a blocked or unavailable
   Valkey. The `app/worker` library itself may not.
 - Only `internal/permissions`, startup and E2E may depend directly on the raw
-  Keto client (`services/common/client/keto`).
+  Keto client (`services/tadoku-api/infra/keto`).
 
 This keeps other packages on the shared permission checker. Keep shared ban and
 administrator relation lookups in `internal/permissions`; the check cannot
@@ -81,7 +81,7 @@ structure.
 ## Known gaps
 
 - Visibility is owned by the imported target, so Bazel does not restrict Tadoku
-  API imports from public `services/common` packages.
+  API imports from the retained public `services/common` infrastructure packages.
 - A normal build does not inspect Go files excluded by the active build
   configuration.
 - The CI visibility guard prevents a new public library but cannot tell whether

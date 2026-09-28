@@ -16,9 +16,6 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/prometheus/client_golang/prometheus"
-	commonroles "github.com/tadoku/tadoku/services/common/authz/roles"
-	ketoclient "github.com/tadoku/tadoku/services/common/client/keto"
-	"github.com/tadoku/tadoku/services/common/featureflags"
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/announcements"
 	featureaudit "github.com/tadoku/tadoku/services/tadoku-api/features/audit"
@@ -34,7 +31,9 @@ import (
 	featureprofile "github.com/tadoku/tadoku/services/tadoku-api/features/profile"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/scoring"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/fliptmanagement"
+	ketoclient "github.com/tadoku/tadoku/services/tadoku-api/infra/keto"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/observability"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/featureflags"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testflipt"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testketo"
@@ -133,7 +132,7 @@ type suite struct {
 	handler     *transport.Router
 	profile     *featureprofile.Service
 	leaderboard *leaderboard.Service
-	roles       *commonroles.KetoService
+	roles       *permissions.KetoService
 }
 
 func newTestAPI(ctx context.Context, ketoFixture *testketo.Fixture, kratosFixture *testkratos.Fixture) (_ *suite, err error) {
@@ -174,7 +173,7 @@ func newTestRouterWithLogger(
 	ketoFixture *testketo.Fixture,
 	kratosFixture *testkratos.Fixture,
 	logger *slog.Logger,
-) (*transport.Router, *featureprofile.Service, *commonroles.KetoService, error) {
+) (*transport.Router, *featureprofile.Service, *permissions.KetoService, error) {
 	return newTestRouterWithScoringEngine(ctx, pool, auditPool, ketoFixture, kratosFixture, logger, false)
 }
 
@@ -186,7 +185,7 @@ func newTestRouterWithScoringEngine(
 	kratosFixture *testkratos.Fixture,
 	logger *slog.Logger,
 	scoringEngineEnabled bool,
-) (*transport.Router, *featureprofile.Service, *commonroles.KetoService, error) {
+) (*transport.Router, *featureprofile.Service, *permissions.KetoService, error) {
 	return newTestRouterWithLeaderboard(ctx, pool, auditPool, ketoFixture, kratosFixture, logger, scoringEngineEnabled, leaderboardValkey.client, time.Second)
 }
 
@@ -200,7 +199,7 @@ func newTestRouterWithLeaderboard(
 	scoringEngineEnabled bool,
 	valkeyClient valkeygo.Client,
 	valkeyTimeout time.Duration,
-) (*transport.Router, *featureprofile.Service, *commonroles.KetoService, error) {
+) (*transport.Router, *featureprofile.Service, *permissions.KetoService, error) {
 	leaderboardService := leaderboard.NewService(leaderboard.NewRepository(pool), valkeyClient, valkeyTimeout, "")
 	return newTestRouterWithLeaderboardService(ctx, pool, auditPool, ketoFixture, kratosFixture, logger, scoringEngineEnabled, leaderboardService)
 }
@@ -214,17 +213,17 @@ func newTestRouterWithLeaderboardService(
 	logger *slog.Logger,
 	scoringEngineEnabled bool,
 	leaderboardService *leaderboard.Service,
-) (*transport.Router, *featureprofile.Service, *commonroles.KetoService, error) {
+) (*transport.Router, *featureprofile.Service, *permissions.KetoService, error) {
 	reader := ketoclient.NewReadClient(ketoFixture.ReadURL())
 	readWriter := ketoclient.NewClient(ketoFixture.ReadURL(), ketoFixture.WriteURL())
 	permissionChecker := permissions.NewKetoChecker(reader)
-	roleService := commonroles.NewKetoService(reader, "app", "tadoku")
+	roleService := permissions.NewKetoService(reader, "app", "tadoku")
 	identities := kratosFixture.CursorClient()
 	authzService := featureauthz.NewService(
 		permissionChecker,
 		identities,
 		roleService,
-		commonroles.NewKetoManager(readWriter, "app", "tadoku"),
+		permissions.NewKetoManager(readWriter, "app", "tadoku"),
 		nil,
 	)
 	auditService := featureaudit.NewService(featureaudit.NewRepository(auditPool))

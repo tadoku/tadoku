@@ -6,5 +6,5 @@ go_library(
     srcs = ["fixture.go"],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/internal/testflipt",
     visibility = ["//services/tadoku-api:internal_consumers"],
-    deps = ["//services/common/featureflags"],
+    deps = ["//services/tadoku-api/internal/featureflags"],
 )

@@ -43,10 +43,7 @@ policies:
         - use: language-dependencies
         - id: own-data-and-infrastructure
           allow:
-            - local:services/common/authz/...
-            - local:services/common/client/keto
-            - local:services/common/client/kratos
-            - local:services/common/featureflags
+            - local:services/tadoku-api/internal/featureflags
             - local:services/tadoku-api/features/{feature}/...
             - local:services/tadoku-api/domain/...
             - local:services/tadoku-api/generated/sqlc/{feature}/...
@@ -95,6 +92,7 @@ policies:
   - id: internal
     packages:
       - local:services/tadoku-api/internal/errx/...
+      - local:services/tadoku-api/internal/featureflags/...
       - local:services/tadoku-api/internal/callbackauth/...
       - local:services/tadoku-api/internal/identity/...
       - local:services/tadoku-api/internal/testketo/...
@@ -117,7 +115,7 @@ policies:
         - id: raw-provider-client
           allow:
             - local:services/tadoku-api/internal/testkratos/...
-            - local:services/common/client/kratos
+            - local:services/tadoku-api/infra/kratos
 
   - id: flipt-fixture
     packages: [local:services/tadoku-api/internal/testflipt/...]
@@ -128,7 +126,7 @@ policies:
         - id: provider-contract
           allow:
             - local:services/tadoku-api/internal/testflipt/...
-            - local:services/common/featureflags
+            - local:services/tadoku-api/internal/featureflags
 
   - id: permissions
     packages: [local:services/tadoku-api/internal/permissions/...]
@@ -142,7 +140,7 @@ policies:
             - local:services/tadoku-api/internal/permissions/...
             - local:services/tadoku-api/internal/identity/...
             - local:services/tadoku-api/internal/testketo/...
-            - local:services/common/client/keto
+            - local:services/tadoku-api/infra/keto
 
   - id: construction
     packages: [local:services/tadoku-api/cmd/...]

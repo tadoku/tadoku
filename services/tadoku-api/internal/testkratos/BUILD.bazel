@@ -15,7 +15,7 @@ go_library(
     ],
     visibility = ["//services/tadoku-api:internal_consumers"],
     deps = [
-        "//services/common/client/kratos",
+        "//services/tadoku-api/infra/kratos",
         "@com_github_mattn_go_sqlite3//:go-sqlite3",
         "@com_github_ory_kratos_client_go//:kratos-client-go",
         "@rules_go//go/runfiles",

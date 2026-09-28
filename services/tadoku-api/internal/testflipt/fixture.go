@@ -10,7 +10,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/tadoku/tadoku/services/common/featureflags"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/featureflags"
 )
 
 type Fixture struct {

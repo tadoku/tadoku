@@ -45,8 +45,16 @@ func TestServiceRejectsInvalidInputsBeforePersistence(t *testing.T) {
 		{"replay_id", func() error { _, err := queue.Replay(ctx, 0, "operator", "reason", nil); return err }, "failed job ID must be positive"},
 		{"replay_actor_empty", func() error { _, err := queue.Replay(ctx, 1, " ", "reason", nil); return err }, "replay actor must be 1 to 200 characters after trimming whitespace"},
 		{"replay_actor_long", func() error { _, err := queue.Replay(ctx, 1, strings.Repeat("a", 201), "reason", nil); return err }, "replay actor must be 1 to 200 characters after trimming whitespace"},
+		{"replay_actor_long_padded", func() error {
+			_, err := queue.Replay(ctx, 1, " "+strings.Repeat("a", 201)+" ", "reason", nil)
+			return err
+		}, "replay actor must be 1 to 200 characters after trimming whitespace"},
 		{"replay_reason_empty", func() error { _, err := queue.Replay(ctx, 1, "operator", " ", nil); return err }, "replay reason must be 1 to 500 characters after trimming whitespace"},
 		{"replay_reason_long", func() error { _, err := queue.Replay(ctx, 1, "operator", strings.Repeat("a", 501), nil); return err }, "replay reason must be 1 to 500 characters after trimming whitespace"},
+		{"replay_reason_long_padded", func() error {
+			_, err := queue.Replay(ctx, 1, "operator", " "+strings.Repeat("a", 501)+" ", nil)
+			return err
+		}, "replay reason must be 1 to 500 characters after trimming whitespace"},
 		{"cleanup_limit_zero", func() error { _, err := queue.CleanupCompleted(ctx, 0); return err }, "cleanup limit must be between 1 and 1000"},
 		{"cleanup_limit_high", func() error { _, err := queue.CleanupCompleted(ctx, 1001); return err }, "cleanup limit must be between 1 and 1000"},
 		{"outstanding_type", func() error { _, err := queue.Outstanding(ctx, ""); return err }, "job type must not be empty"},

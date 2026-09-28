@@ -1,4 +1,0 @@
->>> PUT /content/pages/main/00000000-0000-0000-0000-000000000000
-HTTP/1.1 404 Not Found
-Content-Length: 0
-

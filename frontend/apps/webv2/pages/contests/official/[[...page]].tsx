@@ -8,7 +8,7 @@ import {
 } from '@app/immersion/api'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
-import { getQueryStringIntParameter } from '@app/common/router'
+import { getQueryStringPageParameter } from '@app/common/router'
 import { ContestList } from '@app/immersion/ContestList'
 import { useSession } from '@app/common/session'
 import { routes } from '@app/common/routes'
@@ -21,7 +21,7 @@ const Contests: NextPage<Props> = () => {
 
   const newFilter = () => {
     return {
-      page: getQueryStringIntParameter(router.query.page, 1),
+      page: getQueryStringPageParameter(router.query.page),
       pageSize: 25,
       official: true,
       includeDeleted: false,
@@ -30,7 +30,7 @@ const Contests: NextPage<Props> = () => {
   const [filters, setFilters] = useState(() => newFilter())
   useEffect(() => {
     setFilters({
-      page: getQueryStringIntParameter(router.query.page, 1),
+      page: getQueryStringPageParameter(router.query.page),
       pageSize: 25,
       official: true,
       includeDeleted: false,

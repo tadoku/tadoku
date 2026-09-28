@@ -129,10 +129,10 @@ func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
 	}
 
 	deletedID := uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa4")
-	if _, err := repository.FindContestByID(t.Context(), FindParameters{ID: deletedID}); !errors.Is(err, ErrContestNotFound) {
+	if _, err := repository.FindContestByID(t.Context(), findParameters{ID: deletedID}); !errors.Is(err, ErrContestNotFound) {
 		t.Errorf("deleted contest error=%v, want not found", err)
 	}
-	deleted, err := repository.FindContestByID(t.Context(), FindParameters{ID: deletedID, includeDeleted: true})
+	deleted, err := repository.FindContestByID(t.Context(), findParameters{ID: deletedID, includeDeleted: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -141,7 +141,7 @@ func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
 	}
 
 	privateID := uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2")
-	private, err := repository.FindContestByID(t.Context(), FindParameters{ID: privateID})
+	private, err := repository.FindContestByID(t.Context(), findParameters{ID: privateID})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -206,7 +206,7 @@ func TestContestsRepositoryCreationTransaction(t *testing.T) {
 			return err
 		}
 		var err error
-		created, err = repository.FindContestByID(ctx, FindParameters{ID: contest.ID})
+		created, err = repository.FindContestByID(ctx, findParameters{ID: contest.ID})
 		return err
 	})
 	if err != nil {
@@ -228,7 +228,7 @@ func TestContestsRepositoryCreationTransaction(t *testing.T) {
 	if !errors.Is(err, rollbackErr) {
 		t.Fatalf("rollback error=%v, want %v", err, rollbackErr)
 	}
-	if _, err := repository.FindContestByID(t.Context(), FindParameters{ID: rolledBack.ID}); !errors.Is(err, ErrContestNotFound) {
+	if _, err := repository.FindContestByID(t.Context(), findParameters{ID: rolledBack.ID}); !errors.Is(err, ErrContestNotFound) {
 		t.Errorf("rolled-back contest error=%v, want contest not found", err)
 	}
 }
@@ -387,25 +387,13 @@ func TestContestsRepositoryRegistrationPersistenceAndTransaction(t *testing.T) {
 	updatedRegistration.LanguageCodes = []string{"jpn"}
 	updatedRegistration.UpdatedAt = now
 	removedLanguages := []string{"eng"}
-	insertRefreshes := func(ctx context.Context) error {
-		if err := repository.InsertContestScoreRefresh(ctx, userID, contestID); err != nil {
-			return err
-		}
-		return repository.InsertOfficialScoresRefresh(ctx, userID, 2026)
-	}
 
 	rollbackErr := errors.New("force registration rollback")
 	err = postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
 		if err := repository.DetachContestLogsForLanguages(ctx, userID, contestID, removedLanguages); err != nil {
 			return err
 		}
-		if err := insertRefreshes(ctx); err != nil {
-			return err
-		}
 		if err := repository.UpsertRegistration(ctx, updatedRegistration); err != nil {
-			return err
-		}
-		if err := insertRefreshes(ctx); err != nil {
 			return err
 		}
 		return rollbackErr
@@ -414,15 +402,12 @@ func TestContestsRepositoryRegistrationPersistenceAndTransaction(t *testing.T) {
 		t.Fatalf("rollback error=%v", err)
 	}
 
-	var links, events int
+	var links int
 	if err := db.Pool.QueryRow(t.Context(), `select count(*) from contest_logs`).Scan(&links); err != nil {
 		t.Fatal(err)
 	}
-	if err := db.Pool.QueryRow(t.Context(), `select count(*) from leaderboard_outbox`).Scan(&events); err != nil {
-		t.Fatal(err)
-	}
-	if links != 2 || events != 0 {
-		t.Errorf("after rollback links=%d events=%d, want 2 and 0", links, events)
+	if links != 2 {
+		t.Errorf("after rollback links=%d, want 2", links)
 	}
 
 	registration, err = repository.FindRegistrationForUser(t.Context(), userID, contestID)
@@ -437,13 +422,7 @@ func TestContestsRepositoryRegistrationPersistenceAndTransaction(t *testing.T) {
 		if err := repository.DetachContestLogsForLanguages(ctx, userID, contestID, removedLanguages); err != nil {
 			return err
 		}
-		if err := insertRefreshes(ctx); err != nil {
-			return err
-		}
-		if err := repository.UpsertRegistration(ctx, updatedRegistration); err != nil {
-			return err
-		}
-		return insertRefreshes(ctx)
+		return repository.UpsertRegistration(ctx, updatedRegistration)
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -452,11 +431,8 @@ func TestContestsRepositoryRegistrationPersistenceAndTransaction(t *testing.T) {
 	if err := db.Pool.QueryRow(t.Context(), `select count(*) from contest_logs`).Scan(&links); err != nil {
 		t.Fatal(err)
 	}
-	if err := db.Pool.QueryRow(t.Context(), `select count(*) from leaderboard_outbox`).Scan(&events); err != nil {
-		t.Fatal(err)
-	}
-	if links != 1 || events != 4 {
-		t.Errorf("after update links=%d events=%d, want 1 and 4", links, events)
+	if links != 1 {
+		t.Errorf("after update links=%d, want 1", links)
 	}
 
 	registration, err = repository.FindRegistrationForUser(t.Context(), userID, contestID)

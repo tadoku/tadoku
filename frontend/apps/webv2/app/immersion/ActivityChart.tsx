@@ -115,7 +115,7 @@ export function ActivityChart({ userId, registration }: Props) {
   return (
     <div className="overflow-x-auto">
       <div
-        className="relative h-72 lg:h-[28rem]"
+        className="relative h-72 lg:h-[28rem] lg:!min-w-0"
         style={{ minWidth: labels.length * 12 }}
       >
         <Chart

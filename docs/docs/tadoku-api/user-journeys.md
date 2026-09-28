@@ -18,8 +18,9 @@ user can observe another's writes. Journeys keep the functionality users expect
 working, so cover every important user journey in the application.
 
 All journeys live in `e2e/user_journeys_test.go`, one explicit Go step table per
-journey passed to `runJourney`. They run only against Tadoku API and keep
-dependent steps in one scenario. Fixtures live under `e2e/testdata/journeys/`:
+journey passed to `runJourney`. They keep dependent steps in one scenario and
+run the production API router and, where needed, the worker application in
+process. Fixtures live under `e2e/testdata/journeys/`:
 
 ```text
 e2e/testdata/journeys/
@@ -52,22 +53,22 @@ e2e/testdata/journeys/
   succeed at a write gets its own step.
 - A verify step runs `verify.sql`, aggregates the rows into one JSON array in
   query order and compares the indented result with `verify.json`. Reserve
-  verify steps for effects no endpoint exposes, such as soft deletes, outbox
+  verify steps for effects no endpoint exposes, such as soft deletes, job
   rows and audit entries; API-observable persistence belongs in the next
   request or a repository test.
 - Verify queries end with `order by` and select only application-supplied
   columns; database-defaulted IDs and `now()` timestamps are not deterministic.
-- A job step runs background work and has no fixture directory. It can run a
-  worker's synchronous pass when that is the behavior under test, or start the
-  worker's real polling loop, wait for its ready signal and for an event written
-  after startup, and cancel and join the worker during cleanup.
+- A `run_worker` job step has no fixture directory. It starts the worker against
+  the journey's disposable database and Valkey fixture, waits for queued jobs
+  to complete, and stops it before the next step.
 
 ### Reset and time
 
-- The runner resets PostgreSQL and Keto once per journey: cleanup, then the
-  optional shared `journeys/setup.sql` and the shared
+- The runner resets PostgreSQL, Keto and Valkey once per journey: cleanup, then
+  the optional shared `journeys/setup.sql` and the shared
   `journeys/relationships.json`, then the journey's own files. There are no
-  per-step seeds and no resets between steps.
+  per-step seeds and no resets between steps. A journey may seed an external
+  cache after reset to establish its initial state.
 - The JWT clock stays at the fixture instant for the whole journey, while each
   step's `at` sets its business instant through `timex`.
 - The runner stops at the first failing step. Unknown entries in a journey or

@@ -25,6 +25,7 @@ const sidebars: SidebarsConfig = {
         id: 'architecture/index',
       },
       items: [
+        'architecture/module-design',
         'architecture/authorization',
         'architecture/service-tokens',
         'architecture/feature-flags',
@@ -50,6 +51,7 @@ const sidebars: SidebarsConfig = {
         'tadoku-api/conventions',
         'tadoku-api/contract',
         'tadoku-api/database',
+        'tadoku-api/jobs',
         'tadoku-api/testing',
         'tadoku-api/http-e2e',
         'tadoku-api/user-journeys',

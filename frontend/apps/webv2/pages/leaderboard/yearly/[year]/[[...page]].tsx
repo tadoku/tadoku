@@ -5,14 +5,17 @@ import Head from 'next/head'
 import { Leaderboard } from '@app/immersion/Leaderboard'
 import { useYearlyLeaderboard } from '@app/immersion/api'
 import { useEffect, useState } from 'react'
-import { getQueryStringIntParameter } from '@app/common/router'
+import {
+  getQueryStringIntParameter,
+  getQueryStringPageParameter,
+} from '@app/common/router'
 import { useRouter } from 'next/router'
 import { DateTime, Interval } from 'luxon'
 
 const Page = () => {
   const newFilter = () => {
     return {
-      page: getQueryStringIntParameter(router.query.page, 1),
+      page: getQueryStringPageParameter(router.query.page),
       year,
       pageSize: 50,
     }
@@ -28,7 +31,7 @@ const Page = () => {
 
   useEffect(() => {
     setFilters({
-      page: getQueryStringIntParameter(router.query.page, 1),
+      page: getQueryStringPageParameter(router.query.page),
       year,
       pageSize: 50,
     })

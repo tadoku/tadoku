@@ -2,16 +2,15 @@ package e2e_test
 
 import (
 	"bytes"
-	"log/slog"
+	"context"
+	"errors"
 	"math/rand"
 	"net/http"
-	"strings"
-	"sync"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 func TestFeatureAccessJourney(t *testing.T) {
@@ -229,72 +228,55 @@ func TestLogMutationJourney(t *testing.T) {
 		{request: "read_exact_end_update", as: user, want: http.StatusOK, at: end},
 		{request: "update_after_contest_end", as: admin, want: http.StatusOK, at: end.AddDate(0, 0, 1)},
 		{request: "read_after_end", as: user, want: http.StatusOK, at: end.AddDate(0, 0, 1)},
-		{verify: "provenance_and_outbox"},
+		{verify: "provenance_and_jobs"},
 	})
 }
 
-func TestLogWriteOutboxLeaderboardJourney(t *testing.T) {
+func TestStandaloneWorkerLeaderboardJourney(t *testing.T) {
 	uuid.SetRand(rand.New(rand.NewSource(1)))
 	defer uuid.SetRand(nil)
 
-	ready := &leaderboardReadyWriter{ready: make(chan struct{})}
-	logger := slog.New(slog.NewTextHandler(ready, nil))
-	leaderboardService := leaderboard.NewService(leaderboard.NewRepository(api.db.Pool), leaderboardValkey.client, time.Second, "")
-	handler, profileService, roleService, err := newTestRouterWithLeaderboardService(t.Context(), api.db.Pool, api.db.Pool, api.keto, api.kratos, logger, true, leaderboardService)
-	if err != nil {
-		t.Fatal(err)
-	}
-	worker := leaderboard.NewWorker(leaderboardService, logger)
-	journey := &suite{
-		db:          api.db,
-		keto:        api.keto,
-		kratos:      api.kratos,
-		flipt:       api.flipt,
-		handler:     handler,
-		profile:     profileService,
-		leaderboard: leaderboardService,
-		outbox:      worker,
-		outboxReady: ready.ready,
-		roles:       roleService,
-	}
-	runJourneyWithSetup(t, journey, handler, "LeaderboardOutbox", func(t *testing.T) {
+	runJourneyWithSetup(t, api, scoringEnabledHandler, "LeaderboardJobs", func(t *testing.T) {
 		seedLeaderboardCache(t, "leaderboard:global", "hit")
 	}, []step{
 		{request: "create_log", as: user, want: http.StatusOK},
-		{request: "before_worker", as: guest, want: http.StatusOK},
-		{job: "run_leaderboard_outbox"},
+		{request: "before_worker_stale_cache", as: guest, want: http.StatusOK},
+		{job: "run_worker"},
 		{request: "after_worker_cache_miss", as: guest, want: http.StatusOK},
-		{request: "update_log", as: user, want: http.StatusOK},
-		{job: "wait_for_leaderboard_outbox_poll"},
-		{request: "after_poll_cache_miss", as: guest, want: http.StatusOK},
-		{request: "after_poll_cache_hit", as: guest, want: http.StatusOK},
-		{verify: "outbox_processed"},
 	})
-	marker, err := leaderboardValkey.client.Do(t.Context(), leaderboardValkey.client.B().Get().Key("leaderboard:global:last_updated").Build()).ToString()
-	if err != nil || !strings.HasPrefix(marker, "native:") {
-		t.Errorf("leaderboard cache marker after HTTP reads = %q, err = %v", marker, err)
+	if t.Failed() {
+		return
 	}
-}
-
-type leaderboardReadyWriter struct {
-	ready chan struct{}
-	once  sync.Once
-}
-
-func (writer *leaderboardReadyWriter) Write(message []byte) (int, error) {
-	if bytes.Contains(message, []byte("leaderboard outbox ready")) {
-		writer.once.Do(func() { close(writer.ready) })
+	if score := cachedLeaderboardScore(t, "leaderboard:global"); score != 10 {
+		t.Errorf("rebuilt leaderboard cache score = %v, want 10", score)
 	}
-	return len(message), nil
 }
 
 func TestLogCreateAtomicFailureJourney(t *testing.T) {
 	uuid.SetRand(rand.New(rand.NewSource(1)))
 	defer uuid.SetRand(nil)
 
-	runJourneyWithHandler(t, api, scoringEnabledHandler, "LogCreateAtomicFailure", []step{
+	runJourneyWithSetup(t, api, scoringEnabledHandler, "LogCreateAtomicFailure", func(t *testing.T) {
+		t.Cleanup(func() {
+			cleanupCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			if _, err := api.db.Pool.Exec(cleanupCtx, `select setval(pg_get_serial_sequence('jobs', 'id'), greatest(coalesce((select max(id) from jobs), 0), 1), exists(select 1 from jobs))`); err != nil {
+				t.Error(err)
+			}
+		})
+		if _, err := api.db.Pool.Exec(t.Context(), `select setval(pg_get_serial_sequence('jobs', 'id'), 9223372036854775807, true)`); err != nil {
+			t.Fatal(err)
+		}
+		var id int64
+		err := api.db.Pool.QueryRow(t.Context(), `select nextval(pg_get_serial_sequence('jobs', 'id'))`).Scan(&id)
+		var postgresError *pgconn.PgError
+		if !errors.As(err, &postgresError) || postgresError.Code != "2200H" {
+			t.Fatalf("job sequence did not reject next ID: %v", err)
+		}
+	}, []step{
 		{request: "create_duplicate_registration", as: user, want: http.StatusInternalServerError, others: cast{guest: http.StatusUnauthorized, banned: http.StatusForbidden}},
 		{request: "failed_log_missing", as: user, want: http.StatusNotFound},
+		{request: "async_enqueue_failure", as: user, want: http.StatusInternalServerError},
 		{verify: "rollback_keeps_user_sync"},
 	})
 }
@@ -339,7 +321,7 @@ func TestContestModerationDetachLogJourney(t *testing.T) {
 		{request: "owner_reads_detached", as: user, want: http.StatusOK, at: mutationTime},
 		{request: "repeat_absent_detach", as: user2, want: http.StatusOK, at: mutationTime},
 		{request: "owner_reads_still_detached", as: user, want: http.StatusOK, at: mutationTime},
-		{verify: "audit_and_outbox"},
+		{verify: "audit_and_jobs"},
 	})
 }
 

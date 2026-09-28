@@ -84,5 +84,8 @@ type UpdatePageParameters struct {
 }
 
 func (p UpdatePageParameters) Validate() error {
+	if p.ID == uuid.Nil {
+		return errx.NewInvalidInputError("id is required")
+	}
 	return validatePageFields(p.Namespace, p.Slug, p.Title, p.HTML)
 }

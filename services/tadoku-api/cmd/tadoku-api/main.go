@@ -29,6 +29,7 @@ import (
 	featureauthz "github.com/tadoku/tadoku/services/tadoku-api/features/authz"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/contests"
 	featureflagsservice "github.com/tadoku/tadoku/services/tadoku-api/features/featureflags"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/languages"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/logs"
@@ -75,12 +76,11 @@ type config struct {
 	KratosAdminURL string        `validate:"required" envconfig:"kratos_admin_url"`
 	KratosTimeout  time.Duration `validate:"gt=0" envconfig:"kratos_timeout" default:"2s"`
 
-	PostgresMaxConnections   int32                 `validate:"gt=0,lte=32" envconfig:"postgres_max_connections" default:"4"`
-	Postgres                 postgresconfig.Config `ignored:"true"`
-	ValkeyURL                string                `validate:"required" envconfig:"valkey_url"`
-	ValkeyTimeout            time.Duration         `validate:"gt=0" envconfig:"valkey_timeout" default:"1s"`
-	LeaderboardOutboxEnabled bool                  `envconfig:"leaderboard_outbox_enabled" default:"false"`
-	LeaderboardCachePrefix   string                `envconfig:"leaderboard_cache_prefix"`
+	PostgresMaxConnections int32                 `validate:"gt=0,lte=32" envconfig:"postgres_max_connections" default:"4"`
+	Postgres               postgresconfig.Config `ignored:"true"`
+	ValkeyURL              string                `validate:"required" envconfig:"valkey_url"`
+	ValkeyTimeout          time.Duration         `validate:"gt=0" envconfig:"valkey_timeout" default:"1s"`
+	LeaderboardCachePrefix string                `envconfig:"leaderboard_cache_prefix"`
 
 	DialTimeout           time.Duration `validate:"gt=0" envconfig:"dial_timeout" default:"3s"`
 	MaxTokenAge           time.Duration `validate:"gt=0" envconfig:"max_token_age" default:"24h"`
@@ -98,16 +98,6 @@ func loadConfig() (config, error) {
 
 	if err := validator.New().Struct(cfg); err != nil {
 		return config{}, fmt.Errorf("validate config: %w", err)
-	}
-	if cfg.LeaderboardCachePrefix != "" {
-		if !strings.HasSuffix(cfg.LeaderboardCachePrefix, ":") || strings.IndexFunc(cfg.LeaderboardCachePrefix, func(r rune) bool {
-			return !((r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '-' || r == ':')
-		}) >= 0 {
-			return config{}, fmt.Errorf("validate config: LeaderboardCachePrefix must contain only lowercase letters, digits, hyphens and colons, and end in a colon")
-		}
-		if !cfg.LeaderboardOutboxEnabled {
-			return config{}, fmt.Errorf("validate config: LeaderboardCachePrefix requires LeaderboardOutboxEnabled")
-		}
 	}
 	if cfg.FliptEnabled {
 		if strings.TrimSpace(cfg.FliptEnvironment) == "" {
@@ -171,7 +161,6 @@ type application struct {
 	server       *http.Server
 	listener     net.Listener
 	serverErrors chan error
-	workerDone   chan struct{}
 
 	metricsServer   *http.Server
 	metricsListener net.Listener
@@ -343,6 +332,7 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	auditService := featureaudit.NewService(featureaudit.NewRepository(pool))
 	announcementsRepository := announcements.NewAnnouncementsRepository(pool)
 	contestsRepository := contests.NewContestsRepository(pool)
+	jobQueue := jobqueue.NewService(jobqueue.NewRepository(pool))
 	languagesRepository := languages.NewLanguagesRepository(pool)
 	leaderboardRepository := leaderboard.NewRepository(pool)
 	logsRepository := logs.NewLogsRepository(pool)
@@ -367,6 +357,7 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	scoringObserver := observability.NewScoringObserver(metrics, logger, cfg.ScoringEngineEnabled)
 	scoringService := scoring.NewService(scoringRepository, cfg.ScoringEngineEnabled, scoringObserver)
 	api := app.New(app.Dependencies{
+		JobQueue:      jobQueue,
 		Announcements: announcementsService,
 		Audit:         auditService,
 		Authorization: authzService,
@@ -437,14 +428,6 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 		fliptEvaluation: fliptEvaluation,
 		fliptManagement: fliptManagement,
 	}
-	if cfg.LeaderboardOutboxEnabled {
-		app.workerDone = make(chan struct{})
-		worker := leaderboard.NewWorker(leaderboardService, logger)
-		go func() {
-			defer close(app.workerDone)
-			worker.Run(ctx)
-		}()
-	}
 
 	go func() {
 		if err := server.Serve(listener); err != nil && !errors.Is(err, http.ErrServerClosed) {
@@ -474,9 +457,6 @@ func (app *application) wait() error {
 	case runErr = <-app.serverErrors:
 	}
 	app.cancel()
-	if app.workerDone != nil {
-		<-app.workerDone
-	}
 
 	shutdownContext, cancelShutdown := context.WithTimeout(context.Background(), app.shutdownTimeout)
 	shutdownErr := app.server.Shutdown(shutdownContext)

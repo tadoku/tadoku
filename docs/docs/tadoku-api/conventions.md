@@ -12,6 +12,10 @@ repository, or a shared domain package.
 These rules apply to every operation. The layers themselves are summarized in
 [Code ownership](./index.md#code-ownership).
 
+Apply [Module design](../architecture/module-design.md) when shaping these
+boundaries: a feature operation should hide its own rules and sequencing while
+the application retains actor authorization and cross-feature coordination.
+
 ## Applications and features
 
 - Group feature operations by the business data they own, not by the page or
@@ -59,7 +63,7 @@ Service orchestration is exercised through HTTP E2Es; see [Testing](./testing.md
 - The application authorizes the actor, coordinates locks and transactions
   across features, and composes their results.
 - A feature service validates or normalizes its own inputs and sequences its
-  own repository calls, including related rows and outbox writes.
+  own repository calls, including related rows.
 - Do not add feature service methods that only pass a repository call through
   so an application operation can assemble that feature's write.
 - When several features take part in a write, the application passes shared
@@ -123,8 +127,14 @@ The following rules decide where each check belongs.
   `features/<feature>/<feature>_repository.go`. They reach PostgreSQL through
   `postgres.Executor` (`services/tadoku-api/infra/postgres/`) and the feature's generated sqlc
   package, and convert between sqlc rows and feature domain types internally.
-- The leaderboard feature issues its Valkey cache commands directly with the
-  raw client from `services/tadoku-api/infra/valkey/`; no Store type exists yet.
+- Primitive PostgreSQL conversions, including nullable values, UUIDs and
+  timestamps, belong in `services/tadoku-api/infra/postgres/`. Repository
+  files use those shared helpers; only feature domain and sqlc row mappings
+  stay local. `tools/ci/repopolicy` rejects primitive conversion helper
+  signatures in handwritten repository files.
+- The leaderboard feature's `Store` in
+  `services/tadoku-api/features/leaderboard/leaderboard_store.go` encapsulates
+  Valkey cache commands. Its service owns cache selection and PostgreSQL fallback.
 - Keep each repository method to one SQL statement. A coherent join or CTE
   counts as one statement and is appropriate when the data needs one database
   snapshot. Compose independent repository reads and writes in the feature

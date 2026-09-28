@@ -3,7 +3,6 @@ package leaderboard
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -36,7 +35,7 @@ func (r *Repository) contest(ctx context.Context, request ContestRequest) (*Lead
 		ContestID:    postgres.UUID(request.ContestID),
 		LanguageCode: postgres.NullableNonEmptyText(request.LanguageCode),
 		ActivityID:   postgres.NullableInt4(request.ActivityID),
-		StartFrom:    int32(request.Page * request.PageSize),
+		StartFrom:    request.offset(),
 		PageSize:     int32(request.PageSize),
 	})
 	if err != nil {
@@ -56,7 +55,7 @@ func (r *Repository) contest(ctx context.Context, request ContestRequest) (*Lead
 	if len(rows) > 0 {
 		total = int(rows[0].TotalSize)
 	}
-	return result(entries, total, request.Page, request.PageSize), nil
+	return result(entries, total, request.Request), nil
 }
 
 func (r *Repository) yearly(ctx context.Context, request YearlyRequest) (*Leaderboard, error) {
@@ -68,7 +67,7 @@ func (r *Repository) yearly(ctx context.Context, request YearlyRequest) (*Leader
 		Year:         int16(request.Year),
 		LanguageCode: postgres.NullableNonEmptyText(request.LanguageCode),
 		ActivityID:   postgres.NullableInt4(request.ActivityID),
-		StartFrom:    int32(request.Page * request.PageSize),
+		StartFrom:    request.offset(),
 		PageSize:     int32(request.PageSize),
 	})
 	if err != nil {
@@ -88,7 +87,7 @@ func (r *Repository) yearly(ctx context.Context, request YearlyRequest) (*Leader
 	if len(rows) > 0 {
 		total = int(rows[0].TotalSize)
 	}
-	return result(entries, total, request.Page, request.PageSize), nil
+	return result(entries, total, request.Request), nil
 }
 
 func (r *Repository) global(ctx context.Context, request Request) (*Leaderboard, error) {
@@ -99,7 +98,7 @@ func (r *Repository) global(ctx context.Context, request Request) (*Leaderboard,
 	rows, err := queries.New(executor).GlobalLeaderboard(ctx, queries.GlobalLeaderboardParams{
 		LanguageCode: postgres.NullableNonEmptyText(request.LanguageCode),
 		ActivityID:   postgres.NullableInt4(request.ActivityID),
-		StartFrom:    int32(request.Page * request.PageSize),
+		StartFrom:    request.offset(),
 		PageSize:     int32(request.PageSize),
 	})
 	if err != nil {
@@ -119,7 +118,7 @@ func (r *Repository) global(ctx context.Context, request Request) (*Leaderboard,
 	if len(rows) > 0 {
 		total = int(rows[0].TotalSize)
 	}
-	return result(entries, total, request.Page, request.PageSize), nil
+	return result(entries, total, request), nil
 }
 
 func (r *Repository) allContestScores(ctx context.Context, id uuid.UUID) ([]score, error) {
@@ -168,51 +167,4 @@ func (r *Repository) allGlobalScores(ctx context.Context) ([]score, error) {
 		res[i] = score{userID: uuid.UUID(row.UserID.Bytes), value: float64(row.Score)}
 	}
 	return res, nil
-}
-
-func (r *Repository) lockOutbox(ctx context.Context) ([]outboxEvent, error) {
-	executor, err := postgres.Executor(ctx, r.db)
-	if err != nil {
-		return nil, err
-	}
-	rows, err := queries.New(executor).FetchAndLockLeaderboardOutbox(ctx, 100)
-	if err != nil {
-		return nil, fmt.Errorf("claim leaderboard outbox: %w", err)
-	}
-	events := make([]outboxEvent, len(rows))
-	for i, row := range rows {
-		events[i] = outboxEvent{id: row.ID, eventType: row.EventType, contestID: postgres.UUIDPointer(row.ContestID)}
-		if row.Year.Valid {
-			year := row.Year.Int16
-			events[i].year = &year
-		}
-	}
-	return events, nil
-}
-
-func (r *Repository) markOutbox(ctx context.Context, ids []int64, processedAt time.Time) error {
-	executor, err := postgres.Executor(ctx, r.db)
-	if err != nil {
-		return err
-	}
-	err = queries.New(executor).MarkLeaderboardOutboxProcessed(ctx, queries.MarkLeaderboardOutboxProcessedParams{
-		ProcessedAt: postgres.Timestamp(processedAt),
-		Ids:         ids,
-	})
-	if err != nil {
-		return fmt.Errorf("mark leaderboard outbox processed: %w", err)
-	}
-	return nil
-}
-
-func (r *Repository) cleanupOutbox(ctx context.Context, before time.Time) error {
-	executor, err := postgres.Executor(ctx, r.db)
-	if err != nil {
-		return err
-	}
-	err = queries.New(executor).CleanupLeaderboardOutbox(ctx, postgres.Timestamp(before))
-	if err != nil {
-		return fmt.Errorf("cleanup leaderboard outbox: %w", err)
-	}
-	return nil
 }

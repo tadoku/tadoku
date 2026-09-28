@@ -84,5 +84,8 @@ type UpdatePostParameters struct {
 }
 
 func (p UpdatePostParameters) Validate() error {
+	if p.ID == uuid.Nil {
+		return errx.NewInvalidInputError("id is required")
+	}
 	return validatePostFields(p.Namespace, p.Slug, p.Title, p.Content)
 }

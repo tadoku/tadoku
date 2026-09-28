@@ -5,10 +5,10 @@ description: How to install dev-cli and run, open, seed, verify and clean up you
 
 # Development environment
 
-Read this when you want to run your branch of webv2, auth, admin or Tadoku API
+Read this when you want to run your branch of webv2, auth, admin, Tadoku API or its worker
 on the shared development cluster, or check that a change works there.
 
-dev-cli deploys live branch overlays of webv2, auth, admin and Tadoku API to the
+dev-cli deploys live branch overlays of webv2, auth, admin, Tadoku API and its worker to the
 `homelab-dev` Kubernetes cluster. Argo CD keeps a shared base of every service
 running there even when no developer has a loop running; see
 [Development base](../operations/development-base.md). There is no local
@@ -41,12 +41,9 @@ private keys.
 
 ## Install dev-cli
 
-Install dev-cli v0.4.0 or newer. Older releases lack the YAML configuration,
-multi-host routing and dependency/task support this repository uses.
-
 ```sh
-GOPRIVATE=github.com/antonve/dev-cli go install github.com/antonve/dev-cli/cmd/dev@latest
-dev version  # v0.4.0 or newer
+GOPRIVATE=github.com/antonve/dev-cli go install github.com/antonve/dev-cli/cmd/dev@v0.5.0
+dev version  # must print v0.5.0 or later
 ```
 
 Go must be able to authenticate to the private repository. If your Git
@@ -56,14 +53,13 @@ credential is required:
 ```sh
 GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=url.git@github.com:.insteadOf \
 GIT_CONFIG_VALUE_0=https://github.com/ GOPRIVATE=github.com/antonve/dev-cli \
-go install github.com/antonve/dev-cli/cmd/dev@latest
+go install github.com/antonve/dev-cli/cmd/dev@v0.5.0
 ```
 
 - Put `$(go env GOPATH)/bin`, or your explicit `GOBIN`, on `PATH`. Check
   `command -v dev` and `dev version` so you do not run an older installation.
 - To upgrade an existing installation in place, set `GOBIN` to its directory
   on the same command.
-- For a reproducible pin, replace `@latest` with `@v0.4.0`.
 - Stop only your own running loops before upgrading.
 
 Then check the prerequisites:
@@ -92,6 +88,9 @@ Keep this terminal running.
   replacement (HMR).
 - Go edits rebuild the affected Bazel binary and restart it in the same pod.
   A failed compilation keeps the last working process running.
+- A Tadoku API or worker selection starts both workloads against the same
+  branch database and cache prefix. The unchanged peer keeps its current image;
+  only a changed binary restarts on a live edit.
 - dev-cli builds overlay images on demand, pushes them to the development
   registry and deploys them by immutable digest.
 - The `migrate` and `seed` tasks prepare your branch database before the API
@@ -112,6 +111,8 @@ every other service keeps using the base.
 - `--base <ref>` changes the comparison ref.
 - `--service <name>` adds a deployable to the affected set; it does not filter
   the set.
+- Tadoku API and tadoku-worker form one selection group. Either one starts both
+  workloads; the worker is private and has no browser route.
 - Discovery happens once at startup. Restart the loop to add a service.
 - `--no-watch` does not provide live updates.
 
@@ -146,6 +147,7 @@ dev url --owner alice '/'
 dev url --owner alice --host account.tadoku.dev.lab '/login'
 dev url --owner alice --host admin.tadoku.dev.lab '/'
 dev logs --owner alice tadoku-api
+dev logs --owner alice tadoku-worker
 ```
 
 Flags come before positional paths and service names.
@@ -271,16 +273,22 @@ consistent data across them.
 
 ### Leaderboards on shared Valkey
 
-Each branch API runs its own leaderboard outbox worker against its branch
-database. `.dev/tadoku-api.yaml` sets `API_LEADERBOARD_CACHE_PREFIX` to
-`dev:${DEV_ROUTE}:`, which keeps every branch cache key and startup scan
-separate from the base and from other branches. The base API uses unprefixed
-keys.
+Each branch API is paired with a private `tadoku-worker` against the same
+branch database. The API writes returned typed jobs to that database's
+`jobs`; the worker claims only that database's work. Both workloads use
+`dev:${DEV_ROUTE}:` as their leaderboard cache prefix, keeping cache keys
+separate from the base and other branches.
+The base pair uses unprefixed keys.
 
-- Keep the prefix unique per route when you change overlay routing.
-- Tadoku API rejects a cache prefix unless the outbox worker is enabled.
-- Do not disable a branch worker while its cache reads stay active: its
-  leaderboards go stale and its outbox stays pending.
+- Keep the prefix unique per route when changing overlay routing.
+- The separate worker invalidates leaderboard caches after processing queued
+  jobs.
+- Stopping a worker leaves recoverable queued work; cached results can remain
+  stale until invalidation resumes. Restarting the paired worker resumes
+  processing queued jobs.
+- Job producers and consumers share versioned contracts. Follow
+  [Jobs and worker](../tadoku-api/jobs.md#migrate-v1-to-v2) before changing a
+  payload; pairing workloads does not make incompatible versions safe.
 
 ## Clean up
 

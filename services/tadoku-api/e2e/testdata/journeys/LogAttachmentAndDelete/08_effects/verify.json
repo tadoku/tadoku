@@ -1,10 +1,10 @@
 [
   {
-    "kind": "log",
-    "count": "1"
+    "kind": "leaderboard.invalidate_contest.v1",
+    "count": "6"
   },
   {
-    "kind": "refresh_contest_score",
-    "count": "6"
+    "kind": "log",
+    "count": "1"
   }
 ]

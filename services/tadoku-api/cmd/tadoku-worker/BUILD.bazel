@@ -1,0 +1,87 @@
+load("@rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load", "oci_push")
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
+
+go_library(
+    name = "tadoku-worker_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/tadoku/tadoku/services/tadoku-api/cmd/tadoku-worker",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//services/common/postgresconfig",
+        "//services/tadoku-api/app/worker",
+        "//services/tadoku-api/features/jobqueue",
+        "//services/tadoku-api/features/leaderboard",
+        "//services/tadoku-api/infra/postgres",
+        "//services/tadoku-api/infra/valkey",
+        "@com_github_go_playground_validator_v10//:validator",
+        "@com_github_kelseyhightower_envconfig//:envconfig",
+        "@com_github_prometheus_client_golang//prometheus",
+        "@com_github_prometheus_client_golang//prometheus/collectors",
+        "@com_github_prometheus_client_golang//prometheus/promhttp",
+    ],
+)
+
+go_binary(
+    name = "tadoku-worker",
+    embed = [":tadoku-worker_lib"],
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "tadoku-worker_test",
+    srcs = ["main_test.go"],
+    embed = [":tadoku-worker_lib"],
+    env_inherit = ["TADOKU_TEST_POSTGRES_URL"],
+    tags = [
+        "no-cache",
+        "no-remote-exec",
+        "requires-network",
+    ],
+    deps = ["//services/tadoku-api/internal/testpostgres"],
+)
+
+pkg_tar(
+    name = "binary_layer",
+    srcs = [":tadoku-worker"],
+)
+
+oci_image(
+    name = "image",
+    base = "@distroless_base_linux_amd64",
+    entrypoint = ["/tadoku-worker"],
+    tars = [":binary_layer"],
+)
+
+oci_load(
+    name = "load",
+    image = ":image",
+    repo_tags = ["ghcr.io/tadoku/tadoku/tadoku-worker:latest"],
+    visibility = ["//visibility:public"],
+)
+
+oci_push(
+    name = "push",
+    image = ":image",
+    remote_tags = [
+        "latest",
+        "prod",
+    ],
+    repository = "ghcr.io/tadoku/tadoku/tadoku-worker",
+    visibility = ["//visibility:public"],
+)
+
+oci_image(
+    name = "cli_image",
+    base = "@tadoku_dev_alpine_linux_amd64",
+    entrypoint = ["/tadoku-worker"],
+    tars = [":binary_layer"],
+    user = "65532:65532",
+    visibility = ["//services/tadoku-api:__pkg__"],
+)
+
+oci_push(
+    name = "cli_push",
+    image = ":cli_image",
+    visibility = ["//services/tadoku-api:__pkg__"],
+)

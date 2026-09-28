@@ -1,0 +1,9 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "jobs",
+    srcs = ["jobs.go"],
+    importpath = "github.com/tadoku/tadoku/services/tadoku-api/domain/jobs",
+    visibility = ["//services/tadoku-api:domain_consumers"],
+    deps = ["@com_github_google_uuid//:uuid"],
+)

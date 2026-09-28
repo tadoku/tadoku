@@ -22,6 +22,7 @@ import (
 	featureauthz "github.com/tadoku/tadoku/services/tadoku-api/features/authz"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/contests"
 	featureflagsservice "github.com/tadoku/tadoku/services/tadoku-api/features/featureflags"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/languages"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/logs"
@@ -124,19 +125,14 @@ func runTests(m *testing.M) (code int) {
 }
 
 type suite struct {
-	db             *testpostgres.Database
-	keto           *testketo.Fixture
-	kratos         *testkratos.Fixture
-	flipt          *testflipt.Fixture
-	handler        *transport.Router
-	profile        *featureprofile.Service
-	leaderboard    *leaderboard.Service
-	outbox         *leaderboard.Worker
-	outboxReady    <-chan struct{}
-	outboxContext  context.Context
-	outboxDone     <-chan struct{}
-	outboxBaseline int64
-	roles          *permissions.KetoService
+	db          *testpostgres.Database
+	keto        *testketo.Fixture
+	kratos      *testkratos.Fixture
+	flipt       *testflipt.Fixture
+	handler     *transport.Router
+	profile     *featureprofile.Service
+	leaderboard *leaderboard.Service
+	roles       *permissions.KetoService
 }
 
 func newTestAPI(ctx context.Context, ketoFixture *testketo.Fixture, kratosFixture *testkratos.Fixture) (_ *suite, err error) {
@@ -233,6 +229,7 @@ func newTestRouterWithLeaderboardService(
 	auditService := featureaudit.NewService(featureaudit.NewRepository(auditPool))
 	announcementsRepository := announcements.NewAnnouncementsRepository(pool)
 	contestsRepository := contests.NewContestsRepository(pool)
+	jobQueue := jobqueue.NewService(jobqueue.NewRepository(pool))
 	languagesRepository := languages.NewLanguagesRepository(pool)
 	logsRepository := logs.NewLogsRepository(pool)
 	pagesRepository := pages.NewPagesRepository(pool)
@@ -252,6 +249,7 @@ func newTestRouterWithLeaderboardService(
 	scoringObserver := observability.NewScoringObserver(registry, logger, scoringEngineEnabled)
 	scoringService := scoring.NewService(scoringRepository, scoringEngineEnabled, scoringObserver)
 	application := app.New(app.Dependencies{
+		JobQueue:      jobQueue,
 		Announcements: announcementsService,
 		Audit:         auditService,
 		Authorization: authzService,

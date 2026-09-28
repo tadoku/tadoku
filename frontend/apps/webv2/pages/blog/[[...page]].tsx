@@ -4,7 +4,7 @@ import { Breadcrumb, Loading, Pagination } from 'ui'
 import { HomeIcon } from '@heroicons/react/24/outline'
 import { useState } from 'react'
 import Link from 'next/link'
-import { getQueryStringIntParameter } from '@app/common/router'
+import { getQueryStringPageParameter } from '@app/common/router'
 import { routes } from '@app/common/routes'
 import Head from 'next/head'
 import { DateTime } from 'luxon'
@@ -30,7 +30,7 @@ const BlogIndex = () => {
   const router = useRouter()
 
   const [page, setPage] = useState(() => {
-    return getQueryStringIntParameter(router.query.page, 1)
+    return getQueryStringPageParameter(router.query.page)
   })
 
   const pageSize = 10

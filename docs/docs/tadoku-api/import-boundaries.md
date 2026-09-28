@@ -17,6 +17,8 @@ Bazel target `visibility` and the package groups in
 boundaries described in [Code ownership](./index.md#code-ownership).
 
 - Feature libraries are visible only to application, startup and E2E packages.
+- The worker application (`app/worker`) is visible only to its binary
+  (`cmd/tadoku-worker`) and E2E.
 - A feature's generated sqlc package is visible only to that feature.
 - Tests follow their package's layer policy. Startup (`cmd/tadoku-api`) and E2E
   packages are assembly boundaries.
@@ -39,10 +41,14 @@ boundaries described in [Code ownership](./index.md#code-ownership).
 ## Provider dependencies
 
 `./tools/ci/check_tadoku_api_provider_deps.sh` checks Bazel's direct dependency
-graph:
+graph. Each allowed package covers only its own targets, not subpackages, and
+startup here means `cmd/tadoku-api`:
 
-- Only `features/leaderboard`, `services/tadoku-api/infra/valkey/`, startup and E2E may depend
-  directly on `valkey-go`.
+- Only `features/leaderboard`, `services/tadoku-api/infra/valkey`, startup, E2E
+  and the `app/worker:worker_test` target may depend directly on `valkey-go`.
+  The worker test needs a raw client because `leaderboard.NewService` takes
+  one; it seeds and inspects cache keys and simulates a blocked or unavailable
+  Valkey. The `app/worker` library itself may not.
 - Only `internal/permissions`, startup and E2E may depend directly on the raw
   Keto client (`services/tadoku-api/infra/keto`).
 

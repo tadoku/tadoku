@@ -13,3 +13,9 @@ export function getQueryStringIntParameter(
 
   return parsed
 }
+
+export function getQueryStringPageParameter(
+  param: string | string[] | undefined,
+) {
+  return Math.max(1, getQueryStringIntParameter(param, 1))
+}

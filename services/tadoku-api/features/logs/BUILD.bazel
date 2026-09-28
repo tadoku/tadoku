@@ -11,7 +11,7 @@ go_library(
     visibility = ["//services/tadoku-api:feature_consumers"],
     deps = [
         "//services/tadoku-api/domain/activities",
-        "//services/tadoku-api/domain/leaderboardoutbox",
+        "//services/tadoku-api/domain/jobs",
         "//services/tadoku-api/domain/logscore",
         "//services/tadoku-api/generated/sqlc/logs",
         "//services/tadoku-api/infra/postgres",
@@ -36,7 +36,6 @@ go_test(
     ],
     deps = [
         "//services/tadoku-api/domain/activities",
-        "//services/tadoku-api/domain/leaderboardoutbox",
         "//services/tadoku-api/internal/testpostgres",
         "@com_github_google_uuid//:uuid",
     ],

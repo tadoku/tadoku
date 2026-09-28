@@ -19,6 +19,14 @@ func TestEmptyNamespaceIsRejectedBeforeStorage(t *testing.T) {
 	}
 }
 
+func TestUpdateAnnouncementRejectsInvalidInputBeforeStorage(t *testing.T) {
+	service := announcements.NewService(nil)
+	err := service.UpdateAnnouncement(context.Background(), announcements.UpdateAnnouncementParameters{})
+	if errx.KindOf(err) != errx.InvalidInput || err.Error() != "id is required" {
+		t.Errorf("error=%v, want invalid input %q", err, "id is required")
+	}
+}
+
 func TestCreateAnnouncementParametersValidation(t *testing.T) {
 	t.Parallel()
 	valid := announcements.CreateAnnouncementParameters{

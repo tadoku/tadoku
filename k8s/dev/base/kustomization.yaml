@@ -97,15 +97,32 @@ configMapGenerator:
 generatorOptions:
   annotations:
     argocd.argoproj.io/sync-wave: "-20"
+replacements:
+  - source:
+      kind: Job
+      name: tadoku-api-migrate
+      fieldPath: spec.template.spec.containers.[name=migrate].image
+    targets:
+      - select:
+          kind: Deployment
+          name: tadoku-api
+        fieldPaths:
+          - metadata.annotations.[tadoku.app/migration-image]
+        options:
+          create: true
 images:
   - name: tadoku-api-migrations-image
     newName: ghcr.io/tadoku/tadoku/tadoku-api-migrations
     newTag: latest
-    digest: sha256:0f4c11dd3d87f2f6e098f11841a108461de84fff9125d1ee6ae125941e83350e
+    digest: sha256:af2b994dfa4c01e970c227005981ee2c1e9933d3958bbe8c2aa2ea554abea7e1
   - name: tadoku-api-image
     newName: ghcr.io/tadoku/tadoku/tadoku-api
     newTag: latest
-    digest: sha256:cc67fd290b686b07e2eb7bb22d37059c059764a050b42e8e05729b18c3f3e6ed
+    digest: sha256:8d685a906be0f33573446762457dab7e496e84b118366371260b0ec08aabad41
+  - name: tadoku-worker-image
+    newName: ghcr.io/tadoku/tadoku/tadoku-worker
+    newTag: latest
+    digest: sha256:6aca251dd7240f36f4b892f3b8f5c46ff01cb22bf1b85e79c8418b6735266cdc
   - name: token-reflector-image
     newName: ghcr.io/tadoku/tadoku/token-reflector
     newTag: latest
@@ -113,7 +130,7 @@ images:
   - name: ghcr.io/tadoku/tadoku/frontend-webv2
     newTag: latest
     newName: ghcr.io/tadoku/tadoku/frontend-webv2
-    digest: sha256:7f3273c436fd9e759759355fa7a00442984c9fdddc795c06f7c1d739adf4759b
+    digest: sha256:68e9046b974f315d44177384a019d7551324a6362a0e4a41a95755c8268ffcbf
   - name: ghcr.io/tadoku/tadoku/frontend-auth
     newTag: latest
     newName: ghcr.io/tadoku/tadoku/frontend-auth

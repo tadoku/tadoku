@@ -1,6 +1,6 @@
 ---
 title: Runtime configuration
-description: Tadoku API environment variables, startup and shutdown behavior, authentication wiring, the raw Keto and Kratos clients, the leaderboard outbox worker and metrics.
+description: Tadoku API environment variables, startup and shutdown behavior, authentication wiring, the raw Keto and Kratos clients, the leaderboard worker and metrics.
 sidebar_position: 9
 ---
 
@@ -32,18 +32,14 @@ environment variables. Development values are in
   `API_POSTGRES_SSLMODE`. A single `API_POSTGRES_URL` is rejected.
 - `API_POSTGRES_MAX_CONNECTIONS` (default 4, validated range 1–32).
 
-### Valkey and the leaderboard worker
+### Valkey and leaderboard caches
 
 - `API_VALKEY_URL`, one standalone TCP URL accepted by `valkey-go`.
 - `API_VALKEY_TIMEOUT` (default 1s), the positive bound for each connection and
   handshake attempt and the established-connection keepalive and I/O interval.
-- `API_LEADERBOARD_OUTBOX_ENABLED` (default `false`) runs the
-  [leaderboard outbox worker](#leaderboard-outbox-worker).
 - `API_LEADERBOARD_CACHE_PREFIX` (default empty) prefixes every leaderboard
-  cache key and scopes the worker's startup marker scan to that namespace. A
-  non-empty prefix requires `API_LEADERBOARD_OUTBOX_ENABLED`, must be unique for
-  each database sharing a Valkey instance, may contain only lowercase letters,
-  digits, hyphens and colons, and must end in a colon. Empty uses unprefixed
+  cache key, isolating cache entries by namespace. A non-empty prefix must be
+  unique for each database sharing a Valkey instance. Empty uses unprefixed
   keys.
 
 `services/tadoku-api/infra/valkey/README.md` documents which URL options are
@@ -216,28 +212,41 @@ identity, response, err := kratos.IdentityApi.GetIdentity(ctx, identityID).Execu
 - The total client timeout and any earlier caller deadline bound requests;
   caller cancellation also interrupts response-body reads.
 
-## Leaderboard outbox worker
+## Separate job worker
 
-When `API_LEADERBOARD_OUTBOX_ENABLED` is set:
+The queue persists in the `jobs` table. See
+[Successful-job retention](./jobs.md#successful-job-retention) for the automatic
+three-calendar-month policy. Failed records are retained indefinitely.
 
-1. The worker scans existing leaderboard cache markers in its configured prefix
-   with bounded Valkey `SCAN` calls and invalidates each recognized global,
-   yearly and contest key through a generation fence. It then logs
-   `leaderboard cache reconciled`.
-2. Leaderboard reads use PostgreSQL until reconciliation and the initial outbox
-   drain succeed.
-3. The worker claims pending `leaderboard_outbox` rows with
-   `for update skip locked`, invalidates their affected cache keys, and marks
-   the rows processed in the same PostgreSQL transaction only after Valkey
-   succeeds. Failed batches stay pending and are retried. It logs
-   `leaderboard outbox batch processed` after each non-empty committed batch
-   and `leaderboard outbox ready` once the initial drain completes.
+`cmd/tadoku-worker` constructs `app/worker.Application` with the queue and
+business features. Its immutable typed registration drives both claiming and
+dispatch; [Jobs and worker](./jobs.md) describes publication, execution policies,
+replay and consumer-first version migrations.
 
-A cache miss rebuilds from PostgreSQL only if its generation has not changed,
-and cached reads recheck that generation before returning. The worker has
-caught up when it has logged `leaderboard outbox ready` and
-`select count(*) from leaderboard_outbox where processed_at is null` returns
-zero.
+The worker uses `WORKER_POSTGRES_*` split connection configuration,
+`WORKER_POSTGRES_MAX_CONNECTIONS` (default 4, range 1–32), `WORKER_VALKEY_URL`,
+`WORKER_VALKEY_TIMEOUT` (default 1s), `WORKER_LEADERBOARD_CACHE_PREFIX`,
+`WORKER_DIAL_TIMEOUT` (default 3s), `WORKER_CONCURRENCY` (default 4), and
+`WORKER_SHUTDOWN_TIMEOUT` (default 15s). Concurrency and shutdown timeout must
+be positive; the command loads and validates both before application startup.
+Private health and metrics listeners default to `WORKER_PORT=8000` and
+`WORKER_METRICS_PORT=9090`. It has no public route. The API and worker must use
+the same database and cache prefix, with a unique prefix per database sharing
+Valkey.
+
+The worker invalidates leaderboard caches through registered jobs. A cache miss
+rebuilds from PostgreSQL only if its generation has not changed, and cached
+reads recheck that generation before returning; unavailable Valkey falls back
+to PostgreSQL. Worker Pod
+readiness reports whether the execution loop can operate, independently of
+individual job success. Monitor queued and failed jobs because cached results
+can remain stale while invalidation work is outstanding.
+
+Global and per-type concurrency are per process. Handler cancellation does not
+release its slot until it returns. On shutdown the application stops claiming,
+drains within its configured bound, then cancels remaining work and joins it
+before provider resources close. A noncooperative handler can delay exit; see
+[Execution and failure guarantees](./jobs.md#execution-and-failure-guarantees).
 
 ## Metrics
 
@@ -250,14 +259,33 @@ zero.
 - The API feature-flag metrics report bounded provider initialization,
   refresh, error and evaluation labels, without user identities.
 
+### Worker metrics
+
+The separate worker serves its own metrics on `WORKER_METRICS_PORT`. Its
+backlog gauges refresh at startup and every fifteen seconds. The `type` label
+is a registered job type; unsupported-type gauges aggregate across unknown
+types without an unbounded type label.
+
+| Metric | Labels | Meaning |
+| --- | --- | --- |
+| `tadoku_worker_in_flight` | `type` | Jobs executing in this process. |
+| `tadoku_worker_failed_attempts_total` | `type`, `code` | Failed handler attempts. |
+| `tadoku_worker_handler_duration_seconds` | `type` | Histogram of handler execution duration before the job transition. |
+| `tadoku_worker_pending_jobs` | `type` | Pending jobs for each registered type. |
+| `tadoku_worker_failed_jobs` | `type` | Terminally failed jobs for each registered type. |
+| `tadoku_worker_oldest_due_age_seconds` | `type` | Age of the oldest due or expired job. |
+| `tadoku_worker_unsupported_pending_jobs` | None | Pending jobs with an unsupported type. |
+| `tadoku_worker_unsupported_running_jobs` | None | Running jobs with an unsupported type. |
+| `tadoku_worker_unsupported_failed_jobs` | None | Failed jobs with an unsupported type. |
+| `tadoku_worker_unsupported_oldest_due_age_seconds` | None | Age of the oldest due unsupported job. |
+| `tadoku_worker_expired_leases_total` | `type` | Expired running leases reclaimed. |
+
 ## Shutdown
 
 - Shutdown closes the request and metrics listeners. After request handling
   stops, it closes the database and provider transport dependencies: the Flipt
   polling provider, the PostgreSQL pool, the Valkey client and idle HTTP
   connections, including Flipt, Kratos and Keto connections.
-- An enabled leaderboard worker is cancelled and joined before the PostgreSQL
-  pool and Valkey client close.
 - A startup failure closes the same owned transport. Raw clients have no
   separate close operation.
 - Valkey close follows the upstream client's per-connection close allowance

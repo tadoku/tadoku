@@ -76,8 +76,12 @@ func (a *Application) CreateLog(ctx context.Context, p LogCreateParameters) (*Lo
 		if err != nil {
 			return err
 		}
-		id, err = a.logs.Create(ctx, userID, now, p.Description, scored)
-		return err
+		result, err := a.logs.Create(ctx, userID, now, p.Description, scored)
+		if err != nil {
+			return err
+		}
+		id = result.ID
+		return a.jobqueue.Enqueue(ctx, result.Jobs...)
 	})
 	if err != nil {
 		return nil, err
@@ -117,7 +121,11 @@ func (a *Application) UpdateLog(ctx context.Context, p LogUpdateParameters) (*Lo
 		if err != nil {
 			return err
 		}
-		return a.logs.Update(ctx, p.ID, existing.UserID, now, p.Description, scored)
+		pending, err := a.logs.Update(ctx, p.ID, existing.UserID, now, p.Description, scored)
+		if err != nil {
+			return err
+		}
+		return a.jobqueue.Enqueue(ctx, pending...)
 	})
 	if err != nil {
 		return nil, err

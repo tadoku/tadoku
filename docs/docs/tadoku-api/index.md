@@ -10,8 +10,9 @@ Read this when you change backend behavior, the public HTTP contract or the
 database schema, and need to know which page covers it.
 
 Tadoku API (`services/tadoku-api/`) is the only backend. It serves every public
-HTTP operation, which the gateway exposes under `/api`, and it runs the
-leaderboard outbox worker that keeps the Valkey leaderboard caches current.
+HTTP operation, which the gateway exposes under `/api`. A separate
+`tadoku-worker` process executes its typed background jobs, beginning with
+leaderboard cache invalidation.
 
 ## Public API domains
 
@@ -41,6 +42,8 @@ All paths are relative to `services/tadoku-api/`.
 | `app/` | Application operations: actor authorization, cross-feature locks and transactions, and composition of feature results. |
 | `features/<feature>/` | One feature: a service that owns its business decisions and a repository that queries and maps its rows. |
 | `generated/` | Generated code: sqlc queries per feature (`generated/sqlc/<feature>/`) and HTTP bindings (`generated/openapi/`). |
+| `app/worker/` | Typed handlers, registration, bounded execution and feature composition. |
+| `cmd/tadoku-worker/` | Worker composition root and private health/metrics lifecycle. |
 | `domain/<concept>/` | Business values and pure rules shared by several features. |
 | `internal/` | Technical support: errors (`errx`), request identity (`identity`), actor and target-role permissions (`permissions`), feature-flag evaluation (`featureflags`), business time (`timex`), callback authentication (`callbackauth`) and test fixtures (`test*`). |
 | `infra/` | Infrastructure adapters: PostgreSQL (`postgres`), Valkey (`valkey`), Keto (`keto`), Kratos (`kratos`), Flipt evaluation and management (`flipt`, `fliptmanagement`), and scoring observability (`observability`). |
@@ -73,6 +76,8 @@ see [Contributing workflow](../develop/contributing.md#cms-managed-content).
   `spec/openapi.yaml`, a request or response shape, or generated HTTP code.
 - [Database and migrations](./database.md): read before writing a migration,
   changing a SQL query or opening a transaction.
+- [Jobs and worker](./jobs.md): read before adding background work, changing a
+  persisted message version or replaying failed work.
 - [Testing](./testing.md): read before adding or changing any test; covers
   principles, test infrastructure and repository tests.
 - [HTTP end-to-end tests](./http-e2e.md): read before adding or changing an

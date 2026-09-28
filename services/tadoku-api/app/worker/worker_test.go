@@ -1,0 +1,107 @@
+package worker
+
+import (
+	"context"
+	"errors"
+	"math"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
+)
+
+func TestRegistryRejectsInvalidRegistrations(t *testing.T) {
+	valid := Policy{Concurrency: 2, Timeout: time.Second, MaxAttempts: 5}
+	handler := func(context.Context, jobs.InvalidateOfficialLeaderboardV1) error { return nil }
+	for _, tc := range []struct {
+		name    string
+		entries []registration
+		want    string
+	}{
+		{"empty", nil, ""},
+		{"duplicate", []registration{handle(handler, valid), handle(handler, valid)}, ""},
+		{"nil handler", []registration{handle[jobs.InvalidateOfficialLeaderboardV1](nil, valid)}, ""},
+		{"pointer payload", []registration{handle(func(context.Context, *jobs.InvalidateOfficialLeaderboardV1) error { return nil }, valid)}, ""},
+		{"interface payload", []registration{handle(func(context.Context, jobs.Job) error { return nil }, valid)}, ""},
+		{"zero concurrency", []registration{handle(handler, Policy{Timeout: time.Second, MaxAttempts: 5})}, "concurrency"},
+		{"negative concurrency", []registration{handle(handler, Policy{Concurrency: -1, Timeout: time.Second, MaxAttempts: 5})}, "concurrency"},
+		{"oversized concurrency", []registration{handle(handler, Policy{Concurrency: 101, Timeout: time.Second, MaxAttempts: 5})}, "concurrency"},
+		{"oversized attempts", []registration{handle(handler, Policy{Concurrency: 2, Timeout: time.Second, MaxAttempts: math.MaxInt32 + 1})}, "max attempts"},
+		{"zero timeout", []registration{handle(handler, Policy{Concurrency: 2, MaxAttempts: 5})}, "timeout"},
+		{"zero attempts", []registration{handle(handler, Policy{Concurrency: 2, Timeout: time.Second})}, "max attempts"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := newRegistry(tc.entries...)
+			if err == nil {
+				t.Fatal("invalid registration accepted")
+			}
+			if tc.want != "" && !strings.Contains(err.Error(), tc.want) {
+				t.Errorf("got %q, want error naming %q", err, tc.want)
+			}
+		})
+	}
+}
+
+func TestNewApplicationRejectsInvalidConfig(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		config Config
+	}{
+		{"zero concurrency", Config{ShutdownTimeout: time.Second}},
+		{"negative concurrency", Config{Concurrency: -1, ShutdownTimeout: time.Second}},
+		{"zero shutdown timeout", Config{Concurrency: 1}},
+		{"negative shutdown timeout", Config{Concurrency: 1, ShutdownTimeout: -time.Second}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if _, err := NewApplication(new(jobqueue.Service), new(leaderboard.Service), tc.config); err == nil {
+				t.Fatal("invalid config accepted")
+			}
+		})
+	}
+	if _, err := NewApplication(new(jobqueue.Service), new(leaderboard.Service), Config{
+		Concurrency:     1,
+		ShutdownTimeout: time.Second,
+	}); err != nil {
+		t.Fatalf("valid config rejected: %v", err)
+	}
+}
+
+func TestRegistryValidatesPayloadBeforeCallingTypedHandler(t *testing.T) {
+	called := 0
+	var got jobs.InvalidateOfficialLeaderboardV1
+	var gotCtx context.Context
+	handlers, err := newRegistry(handle(func(ctx context.Context, job jobs.InvalidateOfficialLeaderboardV1) error {
+		called++
+		got, gotCtx = job, ctx
+		return nil
+	}, Policy{Concurrency: 1, Timeout: time.Second, MaxAttempts: 1}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, raw := range []string{`{"year":0}`, `{"year":2025,"unexpected":true}`, `{"year":2025} {}`, `{"year":`, `null`, `[]`, `"text"`} {
+		err := handlers.dispatch(t.Context(), jobqueue.ClaimedJob{Type: jobs.LeaderboardInvalidateOfficialV1, Payload: []byte(raw)})
+		var permanent *permanentError
+		if !errors.As(err, &permanent) {
+			t.Errorf("payload %s: got %v; want permanent failure", raw, err)
+		}
+	}
+	if called != 0 {
+		t.Fatalf("invalid payload reached handler %d times", called)
+	}
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+	if err := handlers.dispatch(ctx, jobqueue.ClaimedJob{Type: jobs.LeaderboardInvalidateOfficialV1, Payload: []byte(`{"year":2025}`)}); err != nil {
+		t.Fatal(err)
+	}
+	if called != 1 || got.Year != 2025 || gotCtx != ctx {
+		t.Errorf("typed invocation: calls=%d job=%+v context preserved=%t", called, got, gotCtx == ctx)
+	}
+	err = handlers.dispatch(ctx, jobqueue.ClaimedJob{Type: "future.job.v1"})
+	var unknown *unknownTypeError
+	if !errors.As(err, &unknown) || called != 1 {
+		t.Errorf("unknown job: error=%v calls=%d", err, called)
+	}
+}

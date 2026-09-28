@@ -17,7 +17,8 @@ documented here.
 
 | Component | Role | Defined in |
 | --- | --- | --- |
-| Tadoku API | The only backend. Serves every public HTTP operation and runs the leaderboard outbox worker. | `services/tadoku-api/`, `k8s/dev/base/services/tadoku-api.yaml` |
+| Tadoku API | Serves every public HTTP operation and publishes typed jobs in the business transaction. | `services/tadoku-api/`, `k8s/dev/base/services/tadoku-api.yaml` |
+| Tadoku worker | Executes registered jobs, composes feature operations and invalidates leaderboard caches. | `services/tadoku-api/cmd/tadoku-worker/`, `k8s/dev/base/services/tadoku-worker.yaml` |
 | webv2 | Main site: logging, contests, leaderboards and content | `frontend/apps/webv2/`, `k8s/dev/base/frontend-webv2/` |
 | auth | Account portal built on Kratos self-service flows | `frontend/apps/auth/`, `k8s/dev/base/frontend-auth/` |
 | admin | Administration, moderation and CMS | `frontend/apps/admin/`, `k8s/dev/base/frontend-admin/` |
@@ -62,12 +63,17 @@ browser → ingress-nginx → Envoy → webv2 / auth / admin
   `services/tadoku-api/migrations/` and run as Argo CD sync hooks before the API
   starts.
 - PostgreSQL is the source of truth for leaderboards. Valkey holds sorted-set
-  caches that the leaderboard outbox worker keeps current; see
-  [ADR 001](../adr/001-leaderboard.md).
+  caches of the unfiltered leaderboards. The separate Tadoku worker only
+  invalidates those caches, and the next read rebuilds them from PostgreSQL. A
+  cached leaderboard can be stale until its invalidation completes; after a
+  terminal failure it stays stale until the next write to the same contest or
+  year, or a replay. See
+  [Leaderboard freshness and worker health](../tadoku-api/jobs.md#leaderboard-freshness-and-worker-health).
 - Kratos and Keto keep their own databases in the same PostgreSQL server.
 
 ## Where to go next
 
+- [Module design](./module-design.md) for deep modules and information hiding
 - [Tadoku API](../tadoku-api/index.md) for the backend
 - [Frontend overview](../frontend/index.md) for the applications and design systems
 - [Development environment](../develop/environment.md) to run and verify a branch

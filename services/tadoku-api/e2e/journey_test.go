@@ -2,7 +2,6 @@ package e2e_test
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -78,16 +77,6 @@ func runJourneyWithSetup(t *testing.T, s *suite, handler http.Handler, name stri
 	}
 
 	resetJourney(t, s, directory)
-	if s.outbox != nil {
-		workerContext, cancel := context.WithCancel(t.Context())
-		s.outboxContext = workerContext
-		defer func() {
-			cancel()
-			if s.outboxDone != nil {
-				<-s.outboxDone
-			}
-		}()
-	}
 	if afterReset != nil {
 		afterReset(t)
 	}
@@ -210,44 +199,8 @@ func checkJourneyFiles(directory string, steps []step, names []string) error {
 func runJobStep(t *testing.T, s *suite, job string) {
 	t.Helper()
 	switch job {
-	case "run_leaderboard_outbox":
-		if s.outbox == nil || s.outboxReady == nil || s.outboxContext == nil {
-			t.Fatal("leaderboard outbox worker is not configured")
-		}
-		if s.outboxDone != nil {
-			t.Fatal("leaderboard outbox worker already started")
-		}
-		done := make(chan struct{})
-		s.outboxDone = done
-		go func() {
-			defer close(done)
-			s.outbox.Run(s.outboxContext)
-		}()
-		select {
-		case <-s.outboxReady:
-		case <-time.After(3 * time.Second):
-			t.Fatal("leaderboard outbox did not become ready")
-		}
-		if err := s.db.Pool.QueryRow(t.Context(), `select coalesce(max(id), 0) from leaderboard_outbox`).Scan(&s.outboxBaseline); err != nil {
-			t.Fatal(err)
-		}
-	case "wait_for_leaderboard_outbox_poll":
-		deadline := time.After(3 * time.Second)
-		for {
-			var total, pending int
-			err := s.db.Pool.QueryRow(t.Context(), `select count(*), count(*) filter (where processed_at is null) from leaderboard_outbox where id > $1`, s.outboxBaseline).Scan(&total, &pending)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if total > 0 && pending == 0 {
-				return
-			}
-			select {
-			case <-deadline:
-				t.Fatalf("leaderboard outbox poll did not process new events: total=%d pending=%d", total, pending)
-			case <-time.After(10 * time.Millisecond):
-			}
-		}
+	case "run_worker":
+		runWorkerStep(t, s)
 	default:
 		t.Fatalf("unknown journey job %q", job)
 	}

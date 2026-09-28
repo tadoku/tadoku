@@ -7,6 +7,10 @@ description: The binding rules for frontend code in Tadoku, covering pnpm, the l
 
 Read this before you change code in `frontend/`.
 
+Apply [Module design](../architecture/module-design.md) to components and hooks.
+Hide interaction mechanics in controls and request, parsing and cache mechanics
+in data hooks; screens own product state and effects.
+
 ## Tooling
 
 Always use `pnpm`, never `npm`. Run commands from `frontend/`.

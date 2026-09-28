@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
 	domainlanguages "github.com/tadoku/tadoku/services/tadoku-api/domain/languages"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/logscore"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
@@ -185,7 +186,7 @@ func (s *Service) ApplyRegistration(
 	registration Registration,
 	existing *Registration,
 	contest Contest,
-) error {
+) ([]jobs.Job, error) {
 	removedLanguages := []string{}
 	if existing != nil {
 		selectedLanguages := make(map[string]struct{}, len(registration.LanguageCodes))
@@ -207,30 +208,24 @@ func (s *Service) ApplyRegistration(
 			registration.ContestID,
 			removedLanguages,
 		); err != nil {
-			return err
-		}
-		if err := s.insertRegistrationLeaderboardOutbox(ctx, registration, contest); err != nil {
-			return err
+			return nil, err
 		}
 	}
 
 	if err := s.contests.UpsertRegistration(ctx, registration); err != nil {
-		return err
+		return nil, err
 	}
 
-	return s.insertRegistrationLeaderboardOutbox(ctx, registration, contest)
+	return registrationLeaderboardJobs(registration, contest), nil
 }
 
-func (s *Service) insertRegistrationLeaderboardOutbox(ctx context.Context, registration Registration, contest Contest) error {
-	if err := s.contests.InsertContestScoreRefresh(ctx, registration.UserID, registration.ContestID); err != nil {
-		return err
-	}
-
+func registrationLeaderboardJobs(registration Registration, contest Contest) []jobs.Job {
+	followUp := []jobs.Job{jobs.InvalidateContestLeaderboardV1{ContestID: registration.ContestID}}
 	if contest.Official {
-		return s.contests.InsertOfficialScoresRefresh(ctx, registration.UserID, int16(contest.ContestStart.Year()))
+		year := int16(contest.ContestStart.Year())
+		followUp = append(followUp, jobs.InvalidateOfficialLeaderboardV1{Year: year})
 	}
-
-	return nil
+	return followUp
 }
 
 func (s *Service) CreateContest(ctx context.Context, contest Contest) (*Contest, error) {
@@ -238,7 +233,7 @@ func (s *Service) CreateContest(ctx context.Context, contest Contest) (*Contest,
 		return nil, err
 	}
 
-	return s.contests.FindContestByID(ctx, FindParameters{ID: contest.ID})
+	return s.contests.FindContestByID(ctx, findParameters{ID: contest.ID})
 }
 
 func (s *Service) CheckCreatePermission(ctx context.Context, userID uuid.UUID, accountCreatedAt time.Time) error {
@@ -255,6 +250,10 @@ func (s *Service) CheckCreatePermission(ctx context.Context, userID uuid.UUID, a
 }
 
 func (s *Service) ListContests(ctx context.Context, parameters ListParameters, includePrivate bool) (*ContestList, error) {
+	if err := parameters.Validate(); err != nil {
+		return nil, err
+	}
+
 	if parameters.PageSize == 0 {
 		parameters.PageSize = 10
 	}
@@ -269,7 +268,7 @@ func (s *Service) ListContests(ctx context.Context, parameters ListParameters, i
 	}
 
 	nextPageToken := ""
-	if parameters.Page*parameters.PageSize+parameters.PageSize < total {
+	if int64(parameters.offset())+int64(parameters.PageSize) < int64(total) {
 		nextPageToken = strconv.Itoa(parameters.Page + 1)
 	}
 	return &ContestList{
@@ -300,7 +299,7 @@ func (s *Service) FindLatestOfficialContest(ctx context.Context) (*ContestView, 
 }
 
 func (s *Service) findContestWithLanguages(ctx context.Context, id uuid.UUID, includeDeleted bool) (*Contest, []Language, error) {
-	item, err := s.contests.FindContestByID(ctx, FindParameters{ID: id, includeDeleted: includeDeleted})
+	item, err := s.contests.FindContestByID(ctx, findParameters{ID: id, includeDeleted: includeDeleted})
 	if err != nil {
 		return nil, nil, err
 	}
@@ -343,6 +342,6 @@ func hydrateContest(item *Contest, languages []Language) (*ContestView, error) {
 }
 
 func (s *Service) RequireExistingContest(ctx context.Context, id uuid.UUID) error {
-	_, err := s.contests.FindContestByID(ctx, FindParameters{ID: id})
+	_, err := s.contests.FindContestByID(ctx, findParameters{ID: id})
 	return err
 }

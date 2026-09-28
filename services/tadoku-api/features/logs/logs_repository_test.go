@@ -8,7 +8,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/activities"
-	"github.com/tadoku/tadoku/services/tadoku-api/domain/leaderboardoutbox"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
 )
 
@@ -453,56 +452,6 @@ func TestLogsRepositoryContestLogs(t *testing.T) {
 		if got != tt.want {
 			t.Errorf("can delete %s at %s=%t, want %t", tt.id, tt.now, got, tt.want)
 		}
-	}
-}
-
-func TestLogsRepositoryInsertOutbox(t *testing.T) {
-	t.Parallel()
-	repository, db := newTestLogsRepository(t)
-
-	contestID := uuid.MustParse("cccccccc-cccc-4ccc-8ccc-ccccccccccc1")
-	year := int16(2026)
-	if err := repository.InsertOutbox(t.Context(), testUserID, nil, nil, leaderboardoutbox.RefreshOfficialScores); err != nil {
-		t.Fatal(err)
-	}
-	if err := repository.InsertOutbox(t.Context(), testOtherUserID, &contestID, &year, leaderboardoutbox.RefreshContestScore); err != nil {
-		t.Fatal(err)
-	}
-
-	type outboxRow struct {
-		EventType   string
-		UserID      uuid.UUID
-		ContestID   *uuid.UUID
-		Year        *int16
-		Unprocessed bool
-	}
-	rows, err := db.Pool.Query(t.Context(), `
-		select event_type, user_id, contest_id, year, processed_at is null
-		from leaderboard_outbox
-		order by id`)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer rows.Close()
-
-	var got []outboxRow
-	for rows.Next() {
-		var row outboxRow
-		if err := rows.Scan(&row.EventType, &row.UserID, &row.ContestID, &row.Year, &row.Unprocessed); err != nil {
-			t.Fatal(err)
-		}
-		got = append(got, row)
-	}
-	if err := rows.Err(); err != nil {
-		t.Fatal(err)
-	}
-
-	want := []outboxRow{
-		{EventType: "refresh_official_scores", UserID: testUserID, Unprocessed: true},
-		{EventType: "refresh_contest_score", UserID: testOtherUserID, ContestID: &contestID, Year: &year, Unprocessed: true},
-	}
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("outbox rows=%+v, want %+v", got, want)
 	}
 }
 

@@ -32,7 +32,7 @@ Each component runs in its own `tdk-dev-*` namespace:
 | Namespace | Contents |
 | --- | --- |
 | `tdk-dev-frontend-webv2`, `tdk-dev-frontend-auth`, `tdk-dev-frontend-admin` | The three frontends |
-| `tdk-dev-tadoku-api` | Tadoku API |
+| `tdk-dev-tadoku-api` | Tadoku API and the private asynchronous worker |
 | `tdk-dev-kratos`, `tdk-dev-keto`, `tdk-dev-oathkeeper` | Auth providers |
 | `tdk-dev-flipt` | Feature flags |
 | `tdk-dev-token-reflector` | Token-reflector |
@@ -52,8 +52,13 @@ notification configuration.
 - The `images` entries in `k8s/dev/base/kustomization.yaml` select `latest`.
   The development Image Updater uses the **digest** strategy and writes the
   immutable resolutions back to that file.
+- The worker has its own GHCR image and Kustomize image entry. Image Updater
+  tracks its digest independently of the API image.
 - Hook migration images need Image Updater's `force-update`, because successful
   Jobs are removed from the live resource list.
+- Kustomize mirrors the migration image digest into a top-level annotation on
+  the Tadoku API Deployment, so a migration-only update triggers a full Argo CD
+  sync without changing the API Pod template.
 - Image Updater write-back commits touch only the Kustomization, so they do not
   match the path filters of the CI image-publication workflows.
 
@@ -69,28 +74,29 @@ before starting Next. The public Lab CA is mounted for server-side HTTPS.
   framework version changes.
 - Branch pods use the dev-cli-managed pnpm Next.js dev server, not this adapter.
 
-## Leaderboard workers
+## Asynchronous worker ownership
 
-The base `tadoku` database and the unprefixed leaderboard cache keys have one
-outbox owner: the worker in the base Tadoku API Deployment. To verify it:
+The private `tadoku-worker` Deployment consumes `jobs` in the base
+`tadoku` database and uses unprefixed leaderboard cache keys. It has one
+replica, Recreate rollout, a separate image digest, and no Service or public
+route. Its resource requests and limits are in
+`k8s/dev/base/services/tadoku-worker.yaml`.
 
-1. Confirm one ready base replica has `API_LEADERBOARD_OUTBOX_ENABLED=true`
-   and its logs contain `leaderboard outbox ready`.
-2. Confirm no other workload processes the base outbox.
-3. Check that the base `tadoku` database has no pending rows:
-   `select count(*) from leaderboard_outbox where processed_at is null` returns
-   zero.
-4. Exercise a log write and a leaderboard read.
+The worker consumes `jobs` and invalidates leaderboard caches. Verify worker
+ownership and reads:
 
-Each branch overlay runs its own worker against its `tadoku-${DEV_ROUTE}`
-database with the `dev:${DEV_ROUTE}:` cache prefix on shared Valkey. Verify a
-branch write and read separately; its cache keys must not change the base cache.
-Enable a branch worker only in an overlay image built with cache-prefix
-support.
+1. Confirm the base `tadoku-worker` is ready and its `/readyz` endpoint remains
+   healthy while tasks retry or fail.
+2. Inspect due and failed `jobs` rows; a write followed by a
+   leaderboard read must still succeed.
 
-The offline E2E (see [Verification](#verification)) checks the rendered worker
-ownership. Tadoku API's backend E2Es check separate PostgreSQL databases with
-shared Valkey cache namespaces.
+DevCLI pairs each branch API and worker against `tadoku-${DEV_ROUTE}` and the
+`dev:${DEV_ROUTE}:` Valkey prefix. Selecting either workload starts both;
+unchanged peers use their current image. Verify branch writes, worker
+completion, and leaderboard reads without changing base or another branch.
+The offline E2E (see [Verification](#verification)) checks rendered ownership,
+isolation, image separation and lack of worker routing. Tadoku API's backend
+E2Es check separate PostgreSQL databases with shared Valkey cache namespaces.
 
 ## Automatic migrations
 
@@ -103,7 +109,7 @@ Full Argo CD syncs apply these waves:
 | -10 | Tadoku API, Kratos and Keto migration Sync hooks; each waits for authenticated database connectivity |
 | 0 | Auth providers, cache, Flipt, token-reflector and Gateway routes |
 | 10 | Oathkeeper, which publishes its JWKS before the APIs start |
-| 20 | Tadoku API |
+| 20 | Tadoku API and its private worker |
 | 30 | Frontends |
 | 50 | Browser Ingresses |
 
@@ -241,7 +247,7 @@ exact tested revision and any substituted routing boundary.
 | The initial sync waits at the auth-provider wave | Run the bootstrap script once the namespaces and operator Secrets exist. |
 | Consumers fail after operator credentials rotated | Rerun the bootstrap script, then perform an explicitly approved consumer restart. |
 | Resources are healthy but a host serves another workload | Look for competing Ingresses or HTTPRoutes on the canonical hosts. |
-| Leaderboards are stale | Run the [leaderboard worker checks](#leaderboard-workers). |
+| Leaderboards are stale | Run the [asynchronous worker checks](#asynchronous-worker-ownership). |
 
 Do not restart shared services or delete databases as a troubleshooting
 shortcut, and do not delete old resources or data without explicit approval.

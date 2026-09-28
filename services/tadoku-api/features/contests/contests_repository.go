@@ -10,7 +10,6 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/tadoku/tadoku/services/tadoku-api/domain/leaderboardoutbox"
 	queries "github.com/tadoku/tadoku/services/tadoku-api/generated/sqlc/contests"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 )
@@ -214,40 +213,6 @@ func (r *ContestsRepository) UpsertRegistration(ctx context.Context, registratio
 	return nil
 }
 
-func (r *ContestsRepository) InsertContestScoreRefresh(ctx context.Context, userID, contestID uuid.UUID) error {
-	executor, err := postgres.Executor(ctx, r.db)
-	if err != nil {
-		return err
-	}
-
-	if err := queries.New(executor).InsertContestScoreRefresh(ctx, queries.InsertContestScoreRefreshParams{
-		EventType: string(leaderboardoutbox.RefreshContestScore),
-		UserID:    postgres.UUID(userID),
-		ContestID: postgres.UUID(contestID),
-	}); err != nil {
-		return fmt.Errorf("insert contest score refresh: %w", err)
-	}
-
-	return nil
-}
-
-func (r *ContestsRepository) InsertOfficialScoresRefresh(ctx context.Context, userID uuid.UUID, year int16) error {
-	executor, err := postgres.Executor(ctx, r.db)
-	if err != nil {
-		return err
-	}
-
-	if err := queries.New(executor).InsertOfficialScoresRefresh(ctx, queries.InsertOfficialScoresRefreshParams{
-		EventType: string(leaderboardoutbox.RefreshOfficialScores),
-		UserID:    postgres.UUID(userID),
-		Year:      pgtype.Int2{Int16: year, Valid: true},
-	}); err != nil {
-		return fmt.Errorf("insert official scores refresh: %w", err)
-	}
-
-	return nil
-}
-
 func (r *ContestsRepository) CreateContest(ctx context.Context, contest Contest) error {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
@@ -285,8 +250,8 @@ func (r *ContestsRepository) ListContests(ctx context.Context, parameters ListPa
 		IncludeDeleted: parameters.IncludeDeleted,
 		UserID:         postgres.NullableUUID(parameters.UserID),
 		Official:       parameters.Official,
-		IncludePrivate: parameters.IncludePrivate(),
-		StartFrom:      int32(parameters.Page * parameters.PageSize),
+		IncludePrivate: parameters.includePrivate,
+		StartFrom:      parameters.offset(),
 		PageSize:       int32(parameters.PageSize),
 	})
 	if err != nil {
@@ -321,7 +286,7 @@ func (r *ContestsRepository) ListContests(ctx context.Context, parameters ListPa
 	return result, total, nil
 }
 
-func (r *ContestsRepository) FindContestByID(ctx context.Context, parameters FindParameters) (*Contest, error) {
+func (r *ContestsRepository) FindContestByID(ctx context.Context, parameters findParameters) (*Contest, error) {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return nil, err
@@ -329,7 +294,7 @@ func (r *ContestsRepository) FindContestByID(ctx context.Context, parameters Fin
 
 	row, err := queries.New(executor).FindContestByID(ctx, queries.FindContestByIDParams{
 		ID:             postgres.UUID(parameters.ID),
-		IncludeDeleted: parameters.IncludeDeleted(),
+		IncludeDeleted: parameters.includeDeleted,
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrContestNotFound

@@ -1,11 +1,13 @@
 package logs
 
 import (
+	"math"
 	"time"
 	"unicode/utf8"
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/activities"
+	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/logscore"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
@@ -96,7 +98,7 @@ type logMutation struct {
 	Now                         time.Time
 }
 
-type OutboxContext struct {
+type JobContext struct {
 	UserID           uuid.UUID
 	Year             int16
 	EligibleOfficial bool
@@ -182,14 +184,31 @@ type LogList struct {
 	NextPageToken string
 }
 
+func (p ListParameters) Validate() error {
+	if p.PageSize < 0 {
+		return errx.NewInvalidInputError("page_size must not be negative")
+	}
+	if p.Page < 0 {
+		return errx.NewInvalidInputError("page must not be negative")
+	}
+	return nil
+}
+
 func (p ListParameters) normalized() ListParameters {
 	if p.PageSize == 0 {
 		p.PageSize = 50
 	}
-	if p.PageSize > 100 || p.PageSize < 0 {
+	if p.PageSize > 100 {
 		p.PageSize = 100
 	}
 	return p
+}
+
+func (p ListParameters) offset() int32 {
+	if p.PageSize > 0 && p.Page > math.MaxInt32/p.PageSize {
+		return math.MaxInt32
+	}
+	return int32(p.Page * p.PageSize)
 }
 
 func hydrateLogActivity(log *Log) error {
@@ -209,4 +228,9 @@ func findActivity(id int32) (activities.Activity, error) {
 		}
 	}
 	return activities.Activity{}, ErrInvalidActivity
+}
+
+type CreateResult struct {
+	ID   uuid.UUID
+	Jobs []jobs.Job
 }

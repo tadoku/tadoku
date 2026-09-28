@@ -62,3 +62,39 @@ func TestCreatePostParametersValidation(t *testing.T) {
 		}
 	}
 }
+
+func TestUpdatePostParametersValidation(t *testing.T) {
+	t.Parallel()
+	valid := posts.UpdatePostParameters{
+		ID:        uuid.MustParse("11111111-1111-4111-8111-111111111111"),
+		Namespace: "main",
+		Slug:      "first-post",
+		Title:     "Title",
+		Content:   "Content",
+	}
+	for _, test := range []struct {
+		name    string
+		change  func(*posts.UpdatePostParameters)
+		message string
+	}{
+		{name: "ID", change: func(p *posts.UpdatePostParameters) { p.ID = uuid.Nil }, message: "id is required"},
+		{name: "namespace", change: func(p *posts.UpdatePostParameters) { p.Namespace = "" }, message: "namespace is required"},
+		{name: "slug", change: func(p *posts.UpdatePostParameters) { p.Slug = "" }, message: "slug must be at least 2 characters"},
+		{name: "uppercase slug", change: func(p *posts.UpdatePostParameters) { p.Slug = "First-post" }, message: "slug must be lowercase"},
+		{name: "title", change: func(p *posts.UpdatePostParameters) { p.Title = "" }, message: "title is required"},
+		{name: "content", change: func(p *posts.UpdatePostParameters) { p.Content = "" }, message: "content is required"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			parameters := valid
+			test.change(&parameters)
+			err := parameters.Validate()
+			if errx.KindOf(err) != errx.InvalidInput || err.Error() != test.message {
+				t.Errorf("error=%v, want invalid input %q", err, test.message)
+			}
+		})
+	}
+
+	if err := valid.Validate(); err != nil {
+		t.Errorf("valid parameters rejected: %v", err)
+	}
+}

@@ -1,6 +1,6 @@
 # Supported development acceptance (development cluster only)
 
-Scope: webv2, auth, admin and tadoku-api. Token-reflector is base-only.
+Scope: webv2, auth, admin, tadoku-api and tadoku-worker. Token-reflector is base-only.
 Paper styleguide is deferred; its local pnpm workflow is independent.
 
 Record the source/CLI revision, exact command, route, Pod UID/image, timing,
@@ -34,6 +34,12 @@ browser screenshot and result outside Git. Do not include credentials or cookies
 8. `dev status`, service-filtered `dev logs`, then `dev down` must stop the loop
    and remove only that owner/branch in ≤30s. Branch DB retention is intentional.
    Deleted selections fall back to base and base remains available.
+9. Selecting either Tadoku API or tadoku-worker must start both under one owner,
+   with the same branch database and Valkey prefix. A worker-only source edit
+   must refresh only its process; an API-only edit must leave the worker Pod UID
+   and process unchanged. `dev status` and `dev logs tadoku-worker` must work,
+   but no worker route or URL may be created. Teardown removes both owned
+   workloads and keeps the branch database and other owners untouched.
 
 Branch selection is per hostname, not an authentication cookie. For an admin
 overlay calling a Tadoku API overlay on tadoku.dev.lab, visit the CLI links for

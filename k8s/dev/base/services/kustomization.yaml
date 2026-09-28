@@ -2,4 +2,5 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - tadoku-api.yaml
+  - tadoku-worker.yaml
   - token-reflector.yaml

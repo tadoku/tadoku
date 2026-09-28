@@ -7,7 +7,6 @@ import (
 	ketoclient "github.com/tadoku/tadoku/services/tadoku-api/infra/keto"
 )
 
-// KetoService expects Kratos identity IDs (token "sub") as subjects.
 type KetoService struct {
 	keto      ketoclient.AuthorizationReader
 	namespace string

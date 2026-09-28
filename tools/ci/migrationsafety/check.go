@@ -62,29 +62,33 @@ func checkAlter(cmd *pg_query.AlterTableCmd, add func(string, string)) {
 	switch cmd.GetSubtype() {
 	case pg_query.AlterTableType_AT_AddColumn:
 		for _, node := range cmd.GetDef().GetColumnDef().GetConstraints() {
-			constraint := node.GetConstraint()
-			if constraint.GetContype() == pg_query.ConstrType_CONSTR_DEFAULT && !literal(constraint.GetRawExpr()) {
-				add("add-column-expression-default", "ADD COLUMN with an expression default can rewrite existing rows")
-			}
+			checkConstraint(node.GetConstraint(), add)
 		}
 	case pg_query.AlterTableType_AT_AlterColumnType:
 		add("alter-column-type", "ALTER COLUMN TYPE can rewrite the table")
 	case pg_query.AlterTableType_AT_AddConstraint:
-		constraint := cmd.GetDef().GetConstraint()
-		switch constraint.GetContype() {
-		case pg_query.ConstrType_CONSTR_FOREIGN:
-			if !constraint.GetSkipValidation() {
-				add("foreign-key-validates-immediately", "adding a foreign key without NOT VALID scans existing rows")
-			}
-		case pg_query.ConstrType_CONSTR_UNIQUE:
-			if constraint.GetIndexname() == "" {
-				add("unique-constraint", "adding UNIQUE directly builds a backing index")
-			}
-		}
+		checkConstraint(cmd.GetDef().GetConstraint(), add)
 	case pg_query.AlterTableType_AT_SetNotNull:
 		add("set-not-null", "SET NOT NULL can scan the table")
 	case pg_query.AlterTableType_AT_DropColumn:
 		add("drop-column", "DROP COLUMN can break code using the old column")
+	}
+}
+
+func checkConstraint(constraint *pg_query.Constraint, add func(string, string)) {
+	switch constraint.GetContype() {
+	case pg_query.ConstrType_CONSTR_DEFAULT:
+		if !literal(constraint.GetRawExpr()) {
+			add("add-column-expression-default", "ADD COLUMN with an expression default can rewrite existing rows")
+		}
+	case pg_query.ConstrType_CONSTR_FOREIGN:
+		if !constraint.GetSkipValidation() {
+			add("foreign-key-validates-immediately", "adding a foreign key without NOT VALID scans existing rows")
+		}
+	case pg_query.ConstrType_CONSTR_UNIQUE:
+		if constraint.GetIndexname() == "" {
+			add("unique-constraint", "adding UNIQUE directly builds a backing index")
+		}
 	}
 }
 

@@ -26,6 +26,8 @@ func TestCheck(t *testing.T) {
 		{"drop column", `alter table logs drop column old_value;`, []string{"drop-column"}},
 		{"rename", `alter table logs rename to activity_logs;`, []string{"rename"}},
 		{"unique constraint", `alter table users add constraint users_email_unique unique (email);`, []string{"unique-constraint"}},
+		{"inline unique column", `alter table users add column email text unique;`, []string{"unique-constraint"}},
+		{"inline foreign key column", `alter table logs add column user_id bigint references users(id);`, []string{"foreign-key-validates-immediately"}},
 		{"unique using index", `alter table users add constraint users_email_unique unique using index users_email_idx;`, nil},
 		{"truncate", `truncate table logs;`, []string{"truncate"}},
 		{"vacuum full", `vacuum full logs;`, []string{"rewrite-command"}},

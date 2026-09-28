@@ -24,11 +24,6 @@ func (s *Service) EvaluatePublic(ctx context.Context, subject string) PublicDeci
 	return PublicDecisions{ReleaseLogEntryV2: decisions.ReleaseLogEntryV2}
 }
 
-func (s *Service) ValidateRequest(flagKey string, targetUserID uuid.UUID) error {
-	_, err := validate(flagKey, targetUserID)
-	return err
-}
-
 func (s *Service) GetNamedUserAccess(ctx context.Context, flagKey string, targetUserID uuid.UUID) (State, error) {
 	segment, err := validate(flagKey, targetUserID)
 	if err != nil {

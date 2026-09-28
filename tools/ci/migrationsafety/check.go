@@ -113,15 +113,19 @@ func literal(node *pg_query.Node) bool {
 }
 
 func vacuumFull(stmt *pg_query.VacuumStmt) bool {
-	if stmt == nil {
-		return false
-	}
 	for _, node := range stmt.GetOptions() {
 		option := node.GetDefElem()
-		if option.GetDefname() == "full" {
-			value := option.GetArg().GetAConst()
-			return value == nil || value.GetBoolval().GetBoolval()
+		if option.GetDefname() != "full" {
+			continue
 		}
+		arg := option.GetArg()
+		if value := arg.GetString_(); value != nil {
+			return !strings.EqualFold(value.GetSval(), "false") && !strings.EqualFold(value.GetSval(), "off")
+		}
+		if value := arg.GetInteger(); value != nil {
+			return value.GetIval() != 0
+		}
+		return true
 	}
 	return false
 }

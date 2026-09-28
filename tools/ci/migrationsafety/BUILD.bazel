@@ -1,0 +1,17 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+exports_files(["pg_query_go.bazel.patch"])
+
+go_library(
+    name = "migrationsafety",
+    srcs = ["check.go"],
+    importpath = "github.com/tadoku/tadoku/tools/ci/migrationsafety",
+    visibility = ["//visibility:public"],
+    deps = ["@com_github_pganalyze_pg_query_go_v6//:pg_query_go"],
+)
+
+go_test(
+    name = "migrationsafety_test",
+    srcs = ["check_test.go"],
+    embed = [":migrationsafety"],
+)

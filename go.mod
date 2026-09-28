@@ -23,6 +23,7 @@ require (
 	github.com/oapi-codegen/runtime v1.6.0
 	github.com/ory/keto-client-go v0.11.0-alpha.0
 	github.com/ory/kratos-client-go v0.11.1
+	github.com/pganalyze/pg_query_go/v6 v6.2.2
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.24.1
 	github.com/sahilm/fuzzy v0.1.3

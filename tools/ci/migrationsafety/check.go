@@ -20,7 +20,6 @@ func Check(sql string) ([]Finding, error) {
 		return nil, fmt.Errorf("parse migration: %w", err)
 	}
 	var findings []Finding
-	inTransaction := false
 	for _, raw := range parsed.Stmts {
 		start := min(int(raw.StmtLocation), len(sql))
 		for start < len(sql) && strings.ContainsRune(" \r\n\t", rune(sql[start])) {
@@ -31,17 +30,9 @@ func Check(sql string) ([]Finding, error) {
 			findings = append(findings, Finding{Rule: rule, Line: line, Message: message})
 		}
 		stmt := raw.Stmt
-		if transaction := stmt.GetTransactionStmt(); transaction != nil {
-			switch transaction.GetKind() {
-			case pg_query.TransactionStmtKind_TRANS_STMT_BEGIN, pg_query.TransactionStmtKind_TRANS_STMT_START:
-				inTransaction = true
-			case pg_query.TransactionStmtKind_TRANS_STMT_COMMIT, pg_query.TransactionStmtKind_TRANS_STMT_ROLLBACK:
-				inTransaction = false
-			}
-		}
 		if index := stmt.GetIndexStmt(); index != nil {
-			if index.GetConcurrent() && inTransaction {
-				add("concurrently-inside-transaction", "CREATE INDEX CONCURRENTLY cannot run inside BEGIN/COMMIT")
+			if index.GetConcurrent() && len(parsed.Stmts) > 1 {
+				add("concurrently-inside-transaction", "CREATE INDEX CONCURRENTLY must be the only statement in its migration file")
 			} else if !index.GetConcurrent() {
 				add("create-index-without-concurrently", "CREATE INDEX without CONCURRENTLY blocks writes")
 			}

@@ -31,10 +31,13 @@ free number. sqlc reads the same directory as its schema.
 
 CI checks changed `.up.sql` files for known migration risk patterns and fails
 when one matches. The checker flags regular index builds, concurrent indexes
-inside transactions, expression defaults on added columns, column type changes,
-immediately validated foreign keys, `SET NOT NULL`, column drops, renames,
-direct unique constraint builds, `TRUNCATE`, `VACUUM FULL` and `CLUSTER`. It
-also rejects SQL that PostgreSQL's parser cannot read. It does not query a
+that share a migration file with other statements, expression defaults on added
+columns, column type changes, immediately validated foreign keys, `SET NOT NULL`,
+column drops, renames, direct unique constraint builds, `TRUNCATE`,
+`VACUUM FULL` and `CLUSTER`. It also rejects SQL that PostgreSQL's parser cannot
+read. The migration runner sends each file as one query, which PostgreSQL runs
+in an implicit transaction when it has several statements, so put each
+`create index concurrently` in its own single-statement migration. It does not query a
 database or judge table size; a finding needs a migration change before CI can
 pass. Run it with
 `bazel run //tools/ci/migrationsafety/cmd -- services/tadoku-api/migrations/NNNN_name.up.sql`.

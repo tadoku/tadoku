@@ -30,16 +30,26 @@ free number. sqlc reads the same directory as its schema.
   `main`.
 
 CI checks changed `.up.sql` files for known migration risk patterns and fails
-when one matches. The checker flags regular index builds, concurrent indexes
-that share a migration file with other statements, expression defaults on added
-columns, column type changes, immediately validated foreign keys, `SET NOT NULL`,
-column drops, renames, direct unique constraint builds, `TRUNCATE`,
-`VACUUM FULL` and `CLUSTER`. It also rejects SQL that PostgreSQL's parser cannot
-read. The migration runner sends each file as one query, which PostgreSQL runs
-in an implicit transaction when it has several statements, so put each
-`create index concurrently` in its own single-statement migration. It does not query a
-database or judge table size; a finding needs a migration change before CI can
-pass. Run it with
+when one matches. It also rejects SQL that PostgreSQL's parser cannot read. The
+checker flags:
+
+- regular index builds;
+- `create index concurrently` in a file with other statements. The migration
+  runner sends each file as one query, which PostgreSQL runs in an implicit
+  transaction when it has several statements, so put each concurrent index in
+  its own single-statement migration;
+- added columns with an expression default;
+- added `not null` or primary key columns without a default, identity,
+  generated expression or serial type, whatever the table size, because
+  application versions that omit the column fail their inserts;
+- column type changes;
+- immediately validated foreign keys and direct unique constraint builds,
+  including inline constraints on added columns;
+- `SET NOT NULL`, column drops and renames;
+- `TRUNCATE`, `VACUUM FULL` and `CLUSTER`.
+
+The checker does not query a database or judge table size; a finding needs a
+migration change before CI can pass. Run it with
 `bazel run //tools/ci/migrationsafety/cmd -- services/tadoku-api/migrations/NNNN_name.up.sql`.
 The checker was inspired by
 [Safe / Not Safe](https://github.com/viggy28/safe-not-safe); Tadoku's Go rules

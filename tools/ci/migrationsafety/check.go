@@ -2,6 +2,7 @@ package migrationsafety
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	pg_query "github.com/pganalyze/pg_query_go/v6"
@@ -71,8 +72,20 @@ func checkAlter(cmd *pg_query.AlterTableCmd, add func(string, string)) {
 	}
 	switch cmd.GetSubtype() {
 	case pg_query.AlterTableType_AT_AddColumn:
-		for _, node := range cmd.GetDef().GetColumnDef().GetConstraints() {
-			checkConstraint(node.GetConstraint(), add)
+		column := cmd.GetDef().GetColumnDef()
+		notNull, filled := false, serial(column.GetTypeName())
+		for _, node := range column.GetConstraints() {
+			constraint := node.GetConstraint()
+			switch constraint.GetContype() {
+			case pg_query.ConstrType_CONSTR_NOTNULL, pg_query.ConstrType_CONSTR_PRIMARY:
+				notNull = true
+			case pg_query.ConstrType_CONSTR_DEFAULT, pg_query.ConstrType_CONSTR_IDENTITY, pg_query.ConstrType_CONSTR_GENERATED:
+				filled = true
+			}
+			checkConstraint(constraint, add)
+		}
+		if notNull && !filled {
+			add("add-column-not-null-without-default", "ADD COLUMN NOT NULL without a default breaks inserts from application versions that omit the column")
 		}
 	case pg_query.AlterTableType_AT_AlterColumnType:
 		add("alter-column-type", "ALTER COLUMN TYPE can rewrite the table")
@@ -100,6 +113,11 @@ func checkConstraint(constraint *pg_query.Constraint, add func(string, string)) 
 			add("unique-constraint", "adding UNIQUE directly builds a backing index")
 		}
 	}
+}
+
+func serial(typeName *pg_query.TypeName) bool {
+	names := typeName.GetNames()
+	return len(names) == 1 && slices.Contains([]string{"smallserial", "serial", "bigserial", "serial2", "serial4", "serial8"}, names[0].GetString_().GetSval())
 }
 
 func literal(node *pg_query.Node) bool {

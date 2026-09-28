@@ -19,11 +19,21 @@ func Check(sql string) ([]Finding, error) {
 	if err != nil {
 		return nil, fmt.Errorf("parse migration: %w", err)
 	}
+	scanned, err := pg_query.Scan(sql)
+	if err != nil {
+		return nil, fmt.Errorf("scan migration: %w", err)
+	}
+	tokens := scanned.GetTokens()
+	next := 0
 	var findings []Finding
 	for _, raw := range parsed.Stmts {
-		start := min(int(raw.StmtLocation), len(sql))
-		for start < len(sql) && strings.ContainsRune(" \r\n\t", rune(sql[start])) {
-			start++
+		for next < len(tokens) && (tokens[next].GetStart() < raw.GetStmtLocation() ||
+			tokens[next].GetToken() == pg_query.Token_SQL_COMMENT || tokens[next].GetToken() == pg_query.Token_C_COMMENT) {
+			next++
+		}
+		start := len(sql)
+		if next < len(tokens) {
+			start = int(tokens[next].GetStart())
 		}
 		line := 1 + strings.Count(sql[:start], "\n")
 		add := func(rule, message string) {

@@ -54,9 +54,15 @@ func TestCheck(t *testing.T) {
 }
 
 func TestCheckReportsLineAndParseError(t *testing.T) {
-	findings, err := Check("select 1;\ncreate index users_email on users(email);")
-	if err != nil || len(findings) != 1 || findings[0].Line != 2 {
-		t.Fatalf("findings=%v, err=%v; want one finding on line 2", findings, err)
+	for sql, want := range map[string]int{
+		"select 1;\ncreate index users_email on users(email);":                       2,
+		"select 1;\n-- add an index\n\ncreate index users_email on users(email);":    4,
+		"-- header\n/* block\ncomment */\ncreate index users_email on users(email);": 4,
+	} {
+		findings, err := Check(sql)
+		if err != nil || len(findings) != 1 || findings[0].Line != want {
+			t.Errorf("%q: findings=%v, err=%v; want one finding on line %d", sql, findings, err, want)
+		}
 	}
 	if _, err := Check("alter table users add"); err == nil || !strings.Contains(err.Error(), "syntax error") {
 		t.Fatalf("parse error=%v, want syntax error", err)

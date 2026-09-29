@@ -225,7 +225,7 @@ type PermissionResult struct {
 	Err     error
 }
 
-const DefaultMaxConcurrency = 10
+const defaultMaxConcurrency = 10
 
 func (c *Client) CheckPermissions(ctx context.Context, checks []PermissionCheck) []PermissionResult {
 	results := make([]PermissionResult, len(checks))
@@ -234,10 +234,9 @@ func (c *Client) CheckPermissions(ctx context.Context, checks []PermissionCheck)
 	}
 
 	g, ctx := errgroup.WithContext(ctx)
-	g.SetLimit(DefaultMaxConcurrency)
+	g.SetLimit(defaultMaxConcurrency)
 
 	for i, check := range checks {
-		i, check := i, check
 		g.Go(func() error {
 			allowed, err := c.CheckPermission(ctx, check.Namespace, check.Object, check.Relation, check.Subject)
 			results[i] = PermissionResult{

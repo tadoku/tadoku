@@ -8,53 +8,32 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
 
-func TestCreateLanguageParametersValidateByteLengths(t *testing.T) {
+func TestLanguageParametersValidateByteLengths(t *testing.T) {
 	t.Parallel()
 	for _, test := range []struct {
-		name       string
-		parameters languages.CreateLanguageParameters
-		wantError  bool
+		name      string
+		code      string
+		langName  string
+		wantError bool
 	}{
-		{name: "minimum", parameters: languages.CreateLanguageParameters{Code: "x", Name: "x"}},
-		{name: "maximum", parameters: languages.CreateLanguageParameters{Code: strings.Repeat("x", 10), Name: strings.Repeat("x", 100)}},
-		{name: "whitespace retained", parameters: languages.CreateLanguageParameters{Code: " x ", Name: " x "}},
-		{name: "empty code", parameters: languages.CreateLanguageParameters{Name: "x"}, wantError: true},
-		{name: "empty name", parameters: languages.CreateLanguageParameters{Code: "x"}, wantError: true},
-		{name: "long code", parameters: languages.CreateLanguageParameters{Code: strings.Repeat("x", 11), Name: "x"}, wantError: true},
-		{name: "long name", parameters: languages.CreateLanguageParameters{Code: "x", Name: strings.Repeat("x", 101)}, wantError: true},
-		{name: "unicode code bytes", parameters: languages.CreateLanguageParameters{Code: "日本語語", Name: "x"}, wantError: true},
-		{name: "unicode name bytes", parameters: languages.CreateLanguageParameters{Code: "x", Name: strings.Repeat("語", 34)}, wantError: true},
+		{name: "minimum", code: "x", langName: "x"},
+		{name: "maximum", code: strings.Repeat("x", 10), langName: strings.Repeat("x", 100)},
+		{name: "whitespace retained", code: " x ", langName: " x "},
+		{name: "empty code", langName: "x", wantError: true},
+		{name: "empty name", code: "x", wantError: true},
+		{name: "long code", code: strings.Repeat("x", 11), langName: "x", wantError: true},
+		{name: "long name", code: "x", langName: strings.Repeat("x", 101), wantError: true},
+		{name: "unicode code bytes", code: "日本語語", langName: "x", wantError: true},
+		{name: "unicode name bytes", code: "x", langName: strings.Repeat("語", 34), wantError: true},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			err := test.parameters.Validate()
-			if got := errx.KindOf(err) == errx.InvalidInput; got != test.wantError {
-				t.Errorf("invalid error=%v, want %t", err, test.wantError)
+			createErr := languages.CreateLanguageParameters{Code: test.code, Name: test.langName}.Validate()
+			if got := errx.KindOf(createErr) == errx.InvalidInput; got != test.wantError {
+				t.Errorf("CreateLanguageParameters: invalid error=%v, want %t", createErr, test.wantError)
 			}
-		})
-	}
-}
-
-func TestUpdateLanguageParametersValidateByteLengths(t *testing.T) {
-	t.Parallel()
-	for _, test := range []struct {
-		name       string
-		parameters languages.UpdateLanguageParameters
-		wantError  bool
-	}{
-		{name: "minimum", parameters: languages.UpdateLanguageParameters{Code: "x", Name: "x"}},
-		{name: "maximum", parameters: languages.UpdateLanguageParameters{Code: strings.Repeat("x", 10), Name: strings.Repeat("x", 100)}},
-		{name: "whitespace retained", parameters: languages.UpdateLanguageParameters{Code: " x ", Name: " x "}},
-		{name: "empty code", parameters: languages.UpdateLanguageParameters{Name: "x"}, wantError: true},
-		{name: "empty name", parameters: languages.UpdateLanguageParameters{Code: "x"}, wantError: true},
-		{name: "long code", parameters: languages.UpdateLanguageParameters{Code: strings.Repeat("x", 11), Name: "x"}, wantError: true},
-		{name: "long name", parameters: languages.UpdateLanguageParameters{Code: "x", Name: strings.Repeat("x", 101)}, wantError: true},
-		{name: "unicode code bytes", parameters: languages.UpdateLanguageParameters{Code: "日本語語", Name: "x"}, wantError: true},
-		{name: "unicode name bytes", parameters: languages.UpdateLanguageParameters{Code: "x", Name: strings.Repeat("語", 34)}, wantError: true},
-	} {
-		t.Run(test.name, func(t *testing.T) {
-			err := test.parameters.Validate()
-			if got := errx.KindOf(err) == errx.InvalidInput; got != test.wantError {
-				t.Errorf("invalid error=%v, want %t", err, test.wantError)
+			updateErr := languages.UpdateLanguageParameters{Code: test.code, Name: test.langName}.Validate()
+			if got := errx.KindOf(updateErr) == errx.InvalidInput; got != test.wantError {
+				t.Errorf("UpdateLanguageParameters: invalid error=%v, want %t", updateErr, test.wantError)
 			}
 		})
 	}

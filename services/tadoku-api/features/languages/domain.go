@@ -18,19 +18,7 @@ type CreateLanguageParameters struct {
 }
 
 func (p CreateLanguageParameters) Validate() error {
-	if len(p.Code) < 1 {
-		return errx.NewInvalidInputError("code is required")
-	}
-	if len(p.Code) > 10 {
-		return errx.NewInvalidInputError("code must be at most 10 bytes")
-	}
-	if len(p.Name) < 1 {
-		return errx.NewInvalidInputError("name is required")
-	}
-	if len(p.Name) > 100 {
-		return errx.NewInvalidInputError("name must be at most 100 bytes")
-	}
-	return nil
+	return validateCodeName(p.Code, p.Name)
 }
 
 type UpdateLanguageParameters struct {
@@ -39,16 +27,20 @@ type UpdateLanguageParameters struct {
 }
 
 func (p UpdateLanguageParameters) Validate() error {
-	if len(p.Code) < 1 {
+	return validateCodeName(p.Code, p.Name)
+}
+
+func validateCodeName(code, name string) error {
+	if len(code) < 1 {
 		return errx.NewInvalidInputError("code is required")
 	}
-	if len(p.Code) > 10 {
+	if len(code) > 10 {
 		return errx.NewInvalidInputError("code must be at most 10 bytes")
 	}
-	if len(p.Name) < 1 {
+	if len(name) < 1 {
 		return errx.NewInvalidInputError("name is required")
 	}
-	if len(p.Name) > 100 {
+	if len(name) > 100 {
 		return errx.NewInvalidInputError("name must be at most 100 bytes")
 	}
 	return nil

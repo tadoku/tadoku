@@ -116,10 +116,6 @@ with removable as (
 )
 delete from jobs as task using removable where task.id = removable.id;
 
--- name: Outstanding :one
-select count(*) from jobs
-where task_type = sqlc.arg('task_type')::text and state in ('pending', 'running');
-
 -- name: Stats :one
 select
   count(*) filter (where state = 'pending') as pending,

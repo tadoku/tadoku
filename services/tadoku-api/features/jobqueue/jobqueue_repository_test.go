@@ -328,9 +328,6 @@ func TestRetryReplayAndRetention(t *testing.T) {
 		if ok, err := repo.Retry(t.Context(), claim, jobTestTime.Add(time.Minute), "temporary", 2); err != nil || !ok {
 			t.Fatalf("retry = %v, %v", ok, err)
 		}
-		if count, err := repo.Outstanding(t.Context(), jobs.LeaderboardInvalidateOfficialV1); err != nil || count != 1 {
-			t.Errorf("outstanding delayed = %d, %v", count, err)
-		}
 		if claims, err := repo.Claim(t.Context(), jobs.LeaderboardInvalidateOfficialV1, 1, time.Minute, 2); err != nil || len(claims) != 0 {
 			t.Errorf("early claim = %v, %v", claims, err)
 		}

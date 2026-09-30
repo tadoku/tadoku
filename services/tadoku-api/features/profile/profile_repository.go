@@ -49,19 +49,19 @@ func (r *Repository) SynchronizeUser(
 	return nil
 }
 
-func (r *Repository) LockUser(ctx context.Context, userID uuid.UUID) (UserDeletionState, error) {
+func (r *Repository) LockUser(ctx context.Context, userID uuid.UUID) (userDeletionState, error) {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
-		return UserDeletionState{}, err
+		return userDeletionState{}, err
 	}
 	user, err := queries.New(executor).LockUser(ctx, postgres.UUID(userID))
 	if errors.Is(err, pgx.ErrNoRows) {
-		return UserDeletionState{}, ErrLocalUserNotFound
+		return userDeletionState{}, ErrLocalUserNotFound
 	}
 	if err != nil {
-		return UserDeletionState{}, fmt.Errorf("lock local user: %w", err)
+		return userDeletionState{}, fmt.Errorf("lock local user: %w", err)
 	}
-	return UserDeletionState{
+	return userDeletionState{
 		DeletionLocked: user.DeletionLockedAt.Valid,
 		Deleted:        user.DeletedAt.Valid,
 	}, nil

@@ -57,7 +57,6 @@ func TestServiceRejectsInvalidInputsBeforePersistence(t *testing.T) {
 		}, "replay reason must be 1 to 500 characters after trimming whitespace"},
 		{"cleanup_limit_zero", func() error { _, err := queue.CleanupCompleted(ctx, 0); return err }, "cleanup limit must be between 1 and 1000"},
 		{"cleanup_limit_high", func() error { _, err := queue.CleanupCompleted(ctx, 1001); return err }, "cleanup limit must be between 1 and 1000"},
-		{"outstanding_type", func() error { _, err := queue.Outstanding(ctx, ""); return err }, "job type must not be empty"},
 		{"stats_type", func() error { _, err := queue.Stats(ctx, ""); return err }, "job type must not be empty"},
 		{"unsupported_type", func() error { _, err := queue.UnsupportedStats(ctx, []jobs.Type{valid.Type(), ""}); return err }, "registered job type must not be empty"},
 	}

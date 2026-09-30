@@ -124,14 +124,6 @@ func (s *Service) CleanupCompleted(ctx context.Context, limit int) (int64, error
 	return s.repository.CleanupCompleted(ctx, now, limit)
 }
 
-func (s *Service) Outstanding(ctx context.Context, typ jobs.Type) (int64, error) {
-	if typ == "" {
-		return 0, errx.NewInvalidInputError("job type must not be empty")
-	}
-
-	return s.repository.Outstanding(ctx, typ)
-}
-
 func (s *Service) Stats(ctx context.Context, typ jobs.Type) (Stats, error) {
 	if typ == "" {
 		return Stats{}, errx.NewInvalidInputError("job type must not be empty")

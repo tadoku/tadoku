@@ -166,14 +166,6 @@ func (r *Repository) CleanupCompleted(ctx context.Context, now time.Time, limit 
 	})
 }
 
-func (r *Repository) Outstanding(ctx context.Context, typ jobs.Type) (int64, error) {
-	executor, err := postgres.Executor(ctx, r.db)
-	if err != nil {
-		return 0, err
-	}
-	return queries.New(executor).Outstanding(ctx, string(typ))
-}
-
 func (r *Repository) Stats(ctx context.Context, typ jobs.Type) (Stats, error) {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {

@@ -209,18 +209,6 @@ func (q *Queries) Fail(ctx context.Context, arg FailParams) (int64, error) {
 	return result.RowsAffected(), nil
 }
 
-const outstanding = `-- name: Outstanding :one
-select count(*) from jobs
-where task_type = $1::text and state in ('pending', 'running')
-`
-
-func (q *Queries) Outstanding(ctx context.Context, taskType string) (int64, error) {
-	row := q.db.QueryRow(ctx, outstanding, taskType)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
-}
-
 const renew = `-- name: Renew :one
 with locked as materialized (
   select id, lease_expires_at from jobs

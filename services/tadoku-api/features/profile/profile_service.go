@@ -113,7 +113,7 @@ func normalizeUserPage(pageSize, page int) (int, int) {
 	return pageSize, page
 }
 
-type userSearchSource []CachedUser
+type userSearchSource []cachedUser
 
 func (s userSearchSource) String(i int) string {
 	return strings.ToLower(s[i].DisplayName + " " + s[i].Email)
@@ -123,24 +123,24 @@ func (s userSearchSource) Len() int {
 	return len(s)
 }
 
-func searchUsers(users []CachedUser, query string) []CachedUser {
+func searchUsers(users []cachedUser, query string) []cachedUser {
 	matches := fuzzy.FindFrom(strings.ToLower(query), userSearchSource(users))
 
-	result := make([]CachedUser, 0, len(matches))
+	result := make([]cachedUser, 0, len(matches))
 	for _, match := range matches {
 		result = append(result, users[match.Index])
 	}
 	return result
 }
 
-func userPage(users []CachedUser, pageSize, page int) []CachedUser {
+func userPage(users []cachedUser, pageSize, page int) []cachedUser {
 	offset := int64(page)
 	if offset > math.MaxInt64/int64(pageSize) {
-		return []CachedUser{}
+		return []cachedUser{}
 	}
 	offset *= int64(pageSize)
 	if offset >= int64(len(users)) {
-		return []CachedUser{}
+		return []cachedUser{}
 	}
 
 	start := int(offset)

@@ -12,12 +12,12 @@ var (
 	ErrAccountDeletionInProgress = errx.NewConflictError("account deletion in progress")
 )
 
-type UserDeletionState struct {
+type userDeletionState struct {
 	DeletionLocked bool
 	Deleted        bool
 }
 
-type CachedUser struct {
+type cachedUser struct {
 	ID          string
 	DisplayName string
 	Email       string

@@ -25,7 +25,7 @@ func TestUserCacheUsesRealKratosAcrossPagesAndRetainsSnapshotOnFailure(t *testin
 	cache := NewUserCache(fixture.CursorClient())
 	instant := time.Date(2026, 9, 12, 12, 0, 0, 0, time.UTC)
 	const readers = 8
-	results := make(chan []CachedUser, readers)
+	results := make(chan []cachedUser, readers)
 	var ready sync.WaitGroup
 	var done sync.WaitGroup
 	start := make(chan struct{})
@@ -69,7 +69,7 @@ func TestUserCacheUsesRealKratosAcrossPagesAndRetainsSnapshotOnFailure(t *testin
 		t.Fatal(err)
 	}
 
-	var fresh []CachedUser
+	var fresh []cachedUser
 	timex.TheWorld(instant.Add(userCacheRefreshInterval-time.Second), func() {
 		fresh, err = cache.Users(t.Context())
 		if err != nil {
@@ -89,7 +89,7 @@ func TestUserCacheUsesRealKratosAcrossPagesAndRetainsSnapshotOnFailure(t *testin
 		fresh = second
 	})
 
-	var refreshed []CachedUser
+	var refreshed []cachedUser
 	timex.TheWorld(instant.Add(userCacheRefreshInterval), func() {
 		refreshed, err = cache.Users(t.Context())
 		if err != nil {
@@ -119,12 +119,12 @@ func TestUserCacheUsesRealKratosAcrossPagesAndRetainsSnapshotOnFailure(t *testin
 	}
 }
 
-func TestCachedUserFiltersAndFormatsProviderIdentities(t *testing.T) {
+func TestFromIdentityFiltersAndFormatsProviderIdentities(t *testing.T) {
 	createdAt := time.Date(2026, 9, 12, 13, 14, 15, 0, time.FixedZone("test", 2*60*60))
 	tests := []struct {
 		name     string
 		identity kratosapi.Identity
-		want     CachedUser
+		want     cachedUser
 		wantOK   bool
 	}{
 		{
@@ -135,7 +135,7 @@ func TestCachedUserFiltersAndFormatsProviderIdentities(t *testing.T) {
 				Traits:    map[string]any{"display_name": "Reader", "email": "reader@example.test"},
 				CreatedAt: &createdAt,
 			},
-			want: CachedUser{
+			want: cachedUser{
 				ID:          "user-id",
 				DisplayName: "Reader",
 				Email:       "reader@example.test",
@@ -149,9 +149,9 @@ func TestCachedUserFiltersAndFormatsProviderIdentities(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got, ok := cachedUser(test.identity)
+			got, ok := fromIdentity(test.identity)
 			if ok != test.wantOK || !reflect.DeepEqual(got, test.want) {
-				t.Errorf("cachedUser()=(%+v, %t), want (%+v, %t)", got, ok, test.want, test.wantOK)
+				t.Errorf("fromIdentity()=(%+v, %t), want (%+v, %t)", got, ok, test.want, test.wantOK)
 			}
 		})
 	}

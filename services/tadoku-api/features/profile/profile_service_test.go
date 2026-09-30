@@ -7,9 +7,9 @@ import (
 )
 
 func TestUserPagePreservesProviderOrder(t *testing.T) {
-	users := make([]CachedUser, 105)
+	users := make([]cachedUser, 105)
 	for i := range users {
-		users[i] = CachedUser{ID: fmt.Sprintf("user-%03d", i), DisplayName: fmt.Sprintf("User %03d", i)}
+		users[i] = cachedUser{ID: fmt.Sprintf("user-%03d", i), DisplayName: fmt.Sprintf("User %03d", i)}
 	}
 
 	for _, test := range []struct {
@@ -40,7 +40,7 @@ func TestUserPagePreservesProviderOrder(t *testing.T) {
 }
 
 func TestSearchUsersRanksCaseInsensitiveMatches(t *testing.T) {
-	users := []CachedUser{
+	users := []cachedUser{
 		{ID: "bobby", DisplayName: "Bobby", Email: "first@example.test"},
 		{ID: "bob", DisplayName: "Bob", Email: "second@example.test"},
 		{ID: "bob-user", DisplayName: "Bob User", Email: "user@example.test"},
@@ -51,7 +51,7 @@ func TestSearchUsersRanksCaseInsensitiveMatches(t *testing.T) {
 	if len(matches) != 3 {
 		t.Fatalf("search total = %d, want 3", len(matches))
 	}
-	want := []CachedUser{users[1], users[0], users[2]}
+	want := []cachedUser{users[1], users[0], users[2]}
 	if !reflect.DeepEqual(matches, want) {
 		t.Errorf("matches = %+v, want %+v", matches, want)
 	}

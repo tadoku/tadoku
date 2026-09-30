@@ -21,7 +21,7 @@ const (
 
 type UserCache struct {
 	mu         sync.Mutex
-	users      []CachedUser
+	users      []cachedUser
 	loaded     bool
 	checkedAt  time.Time
 	identities *kratosclient.Client
@@ -29,7 +29,7 @@ type UserCache struct {
 
 func NewUserCache(identities *kratosclient.Client) *UserCache {
 	return &UserCache{
-		users:      []CachedUser{},
+		users:      []cachedUser{},
 		identities: identities,
 	}
 }
@@ -51,8 +51,8 @@ func (c *UserCache) refresh(ctx context.Context, checkedAt time.Time) error {
 	return nil
 }
 
-func (c *UserCache) listUsers(ctx context.Context) ([]CachedUser, error) {
-	users := make([]CachedUser, 0)
+func (c *UserCache) listUsers(ctx context.Context) ([]cachedUser, error) {
+	users := make([]cachedUser, 0)
 	seenIdentityIDs := make(map[string]struct{})
 	seenPageTokens := make(map[string]struct{})
 	pageToken := ""
@@ -64,7 +64,7 @@ func (c *UserCache) listUsers(ctx context.Context) ([]CachedUser, error) {
 		}
 
 		for _, identity := range identities {
-			user, ok := cachedUser(identity)
+			user, ok := fromIdentity(identity)
 			if !ok {
 				continue
 			}
@@ -103,21 +103,21 @@ func decodeIdentityTraits(traits any) (identityTraits, error) {
 	return decoded, nil
 }
 
-func cachedUser(identity kratosapi.Identity) (CachedUser, bool) {
+func fromIdentity(identity kratosapi.Identity) (cachedUser, bool) {
 	if identity.GetSchemaId() != "user" {
-		return CachedUser{}, false
+		return cachedUser{}, false
 	}
 
 	traits, err := decodeIdentityTraits(identity.GetTraits())
 	if err != nil {
-		return CachedUser{}, false
+		return cachedUser{}, false
 	}
 
 	createdAt := ""
 	if identity.CreatedAt != nil {
 		createdAt = identity.GetCreatedAt().Format(identityCreatedAtLayout)
 	}
-	return CachedUser{
+	return cachedUser{
 		ID:          identity.GetId(),
 		DisplayName: traits.DisplayName,
 		Email:       traits.Email,
@@ -125,7 +125,7 @@ func cachedUser(identity kratosapi.Identity) (CachedUser, bool) {
 	}, true
 }
 
-func (c *UserCache) Users(ctx context.Context) ([]CachedUser, error) {
+func (c *UserCache) Users(ctx context.Context) ([]cachedUser, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if err := ctx.Err(); err != nil {
@@ -133,7 +133,7 @@ func (c *UserCache) Users(ctx context.Context) ([]CachedUser, error) {
 	}
 	now := timex.Now()
 	if c.loaded && now.Before(c.checkedAt.Add(userCacheRefreshInterval)) {
-		return append([]CachedUser{}, c.users...), nil
+		return append([]cachedUser{}, c.users...), nil
 	}
 
 	err := c.refresh(ctx, now)
@@ -146,5 +146,5 @@ func (c *UserCache) Users(ctx context.Context) ([]CachedUser, error) {
 		}
 		slog.ErrorContext(ctx, "user cache refresh failed; serving current snapshot", "error", err)
 	}
-	return append([]CachedUser{}, c.users...), nil
+	return append([]cachedUser{}, c.users...), nil
 }

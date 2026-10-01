@@ -226,7 +226,7 @@ func TestScoringRepositoryContestRuleSets(t *testing.T) {
 		Scope:     "contest",
 		ContestID: &contestID,
 		Version:   1,
-		Mode:      string(ModeReplace),
+		Mode:      string(modeReplace),
 		CreatedAt: createdAt,
 	})
 	if err != nil {
@@ -237,7 +237,7 @@ func TestScoringRepositoryContestRuleSets(t *testing.T) {
 		Scope:             "contest",
 		ContestID:         &contestID,
 		Version:           2,
-		Mode:              string(ModeOverride),
+		Mode:              string(modeOverride),
 		FallbackRuleSetID: &replace.ID,
 		CreatedAt:         createdAt,
 	})
@@ -250,7 +250,7 @@ func TestScoringRepositoryContestRuleSets(t *testing.T) {
 		Scope:     "contest",
 		ContestID: &contestID,
 		Version:   3,
-		Mode:      string(ModeOverride),
+		Mode:      string(modeOverride),
 		CreatedAt: createdAt,
 	})
 	assertConstraintViolation(t, err, pgerrcode.CheckViolation, "scoring_rule_sets_ownership_valid")
@@ -262,7 +262,7 @@ func TestScoringRepositoryContestRuleSets(t *testing.T) {
 	if want := []RuleSet{*override, *replace}; !reflect.DeepEqual(list, want) {
 		t.Errorf("contest rule sets=%+v, want %+v", list, want)
 	}
-	if override.FallbackRuleSetID == nil || *override.FallbackRuleSetID != replace.ID || override.Mode != string(ModeOverride) {
+	if override.FallbackRuleSetID == nil || *override.FallbackRuleSetID != replace.ID || override.Mode != string(modeOverride) {
 		t.Errorf("override=%+v, want fallback %s", override, replace.ID)
 	}
 

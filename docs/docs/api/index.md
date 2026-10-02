@@ -13,10 +13,10 @@ views of that one contract, grouped by domain, and reflect `main`.
 
 | Domain | Version | Production base URL | Reference |
 | --- | --- | --- | --- |
-| Immersion | 2.0.0 | `https://tadoku.app/api/immersion/` | [Browse endpoints](./immersion/immersion-api) |
-| Content | 1.0.0 | `https://tadoku.app/api/content/` | [Browse endpoints](./content/content-api) |
-| Profile | 1.0.0 | `https://tadoku.app/api/profile/` | [Browse endpoints](./profile/profile-api) |
-| Authorization | 1.0.0 | `https://tadoku.app/api/authz/` | [Browse endpoints](./authorization/authz-api) |
+| Immersion | 2.0.0 | `https://tadoku.app/api/internal/immersion/` | [Browse endpoints](./immersion/immersion-api) |
+| Content | 1.0.0 | `https://tadoku.app/api/internal/content/` | [Browse endpoints](./content/content-api) |
+| Profile | 1.0.0 | `https://tadoku.app/api/internal/profile/` | [Browse endpoints](./profile/profile-api) |
+| Authorization | 1.0.0 | `https://tadoku.app/api/internal/authz/` | [Browse endpoints](./authorization/authz-api) |
 
 ## Authentication
 

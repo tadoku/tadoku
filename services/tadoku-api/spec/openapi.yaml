@@ -9,7 +9,7 @@ info:
   description: Canonical contract for Tadoku API operations.
     Callback entries are an inventory, not a gateway exposure change.
 servers:
-  - url: https://tadoku.app/api
+  - url: https://tadoku.app/api/internal
 x-tadoku-operational-surfaces:
   description: >-
     Manually registered operational endpoints are not business API operations and are excluded
@@ -30,7 +30,7 @@ x-tadoku-sources:
         url: https://github.com/tadoku/tadoku/blob/main/LICENSE
       version: 1.0.0
     servers:
-      - url: https://tadoku.app/api/authz/
+      - url: https://tadoku.app/api/internal/authz/
   Content:
     domain: content
     exposure: public
@@ -41,7 +41,7 @@ x-tadoku-sources:
         url: https://github.com/tadoku/tadoku/blob/main/LICENSE
       version: 1.0.0
     servers:
-      - url: https://tadoku.app/api/content/
+      - url: https://tadoku.app/api/internal/content/
     externalDocs:
       description: Find out more about Tadoku
       url: https://tadoku.github.io/tadoku/
@@ -55,7 +55,7 @@ x-tadoku-sources:
         url: https://github.com/tadoku/tadoku/blob/main/LICENSE
       version: 2.0.0
     servers:
-      - url: https://tadoku.app/api/immersion/
+      - url: https://tadoku.app/api/internal/immersion/
     externalDocs:
       description: Find out more about Tadoku
       url: https://tadoku.github.io/tadoku/
@@ -69,7 +69,7 @@ x-tadoku-sources:
         url: https://github.com/tadoku/tadoku/blob/main/LICENSE
       version: 1.0.0
     servers:
-      - url: https://tadoku.app/api/profile/
+      - url: https://tadoku.app/api/internal/profile/
     externalDocs:
       description: Find out more about Tadoku
       url: https://tadoku.github.io/tadoku/

@@ -62,6 +62,14 @@ Never point tests at shared development or production services.
   port, database `postgres`, credentials `postgres:postgres` and exactly
   `sslmode=disable`. Fixtures create random disposable databases and apply the
   complete migration history.
+- **PgBouncer:** PostgreSQL transport tests require
+  `TADOKU_TEST_PGBOUNCER_URL` with the same loopback, synthetic credential and
+  database guard. Run PgBouncer 1.25.2 in transaction mode, with a wildcard
+  database mapping to the disposable PostgreSQL instance, SCRAM authentication
+  and nonzero `max_prepared_statements`. The dedicated target exercises 300
+  goroutines, 12,000 tenant reads and 6,000 writes. Its test-only session-setting
+  negative control must observe cross-client leaks. Normal and race CI jobs
+  print both workload and negative-control results.
 - **Keto:** relationship scenarios start a pinned, official Linux x86-64 Keto
   v25.4.0 SQLite-enabled executable under Bazel. Each helper owns an in-memory,
   loopback-only process using `infra/dev/ory/namespaces.keto.ts` and never

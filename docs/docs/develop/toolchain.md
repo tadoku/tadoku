@@ -23,11 +23,13 @@ bazel test //services/tadoku-api/e2e:e2e_test    # one target
 bazel test //services/tadoku-api/e2e:e2e_test --test_filter=TestAuthentication
 ```
 
-Tadoku API integration tests need disposable loopback PostgreSQL 17 and
-Valkey 9 instances, passed as `TADOKU_TEST_POSTGRES_URL` and
+Tadoku API integration tests need disposable loopback PostgreSQL 17,
+PgBouncer 1.25.2 in transaction mode and Valkey 9 instances, passed as
+`TADOKU_TEST_POSTGRES_URL`, `TADOKU_TEST_PGBOUNCER_URL` and
 `TADOKU_TEST_VALKEY_URL`. CI uses
 `postgres://postgres:postgres@127.0.0.1:5432/postgres?sslmode=disable` and
-`redis://127.0.0.1:6379`. See [Tadoku API testing](../tadoku-api/testing.md).
+the same URL on port 6432 for PgBouncer, plus `redis://127.0.0.1:6379` for
+Valkey. See [Tadoku API testing](../tadoku-api/testing.md).
 
 Format Go code with `gofmt -w services/` before committing.
 Run `bazel run //tools/ci/commentpolicy` to check handwritten Go comments;

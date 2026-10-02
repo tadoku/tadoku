@@ -28,6 +28,7 @@ go_library(
 go_test(
     name = "pgbouncer_test",
     srcs = ["pgbouncer_test.go"],
+    args = ["-test.v"],
     env_inherit = [
         "TADOKU_TEST_PGBOUNCER_URL",
         "TADOKU_TEST_POSTGRES_URL",

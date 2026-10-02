@@ -63,6 +63,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TADOKU_TEST_POSTGRES_URL: postgres://postgres:postgres@127.0.0.1:5432/postgres?sslmode=disable
+      TADOKU_TEST_PGBOUNCER_URL: postgres://postgres:postgres@127.0.0.1:6432/postgres?sslmode=disable
       TADOKU_TEST_VALKEY_URL: redis://127.0.0.1:6379
     services:
       postgres:
@@ -75,6 +76,26 @@ jobs:
           - 5432:5432
         options: >-
           --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      pgbouncer:
+        image: edoburu/pgbouncer:v1.25.2-p0@sha256:7d7a27d9e90985cab5cf42256f5c13a3120baa4b055b69df37beb272b89b2340
+        env:
+          DB_HOST: postgres
+          DB_PORT: 5432
+          DB_USER: postgres
+          DB_PASSWORD: postgres
+          AUTH_TYPE: scram-sha-256
+          POOL_MODE: transaction
+          LISTEN_PORT: 6432
+          MAX_CLIENT_CONN: 1000
+          DEFAULT_POOL_SIZE: 5
+          MAX_PREPARED_STATEMENTS: 200
+        ports:
+          - 6432:6432
+        options: >-
+          --health-cmd "pg_isready -h 127.0.0.1 -p 6432 -U postgres"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -157,6 +178,9 @@ jobs:
       - name: Run tests
         run: bazel test --lockfile_mode=error --test_output=errors //...
 
+      - name: Show PgBouncer regression evidence
+        run: cat bazel-testlogs/services/tadoku-api/infra/postgres/pgbouncer_test/test.log
+
       - name: Load backend images for scanning
         if: github.event_name != 'pull_request'
         run: bazel run --lockfile_mode=error //:load_images
@@ -195,6 +219,7 @@ jobs:
     env:
       IMMERSION_TEST_POSTGRES_URL: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
       TADOKU_TEST_POSTGRES_URL: postgres://postgres:postgres@127.0.0.1:5432/postgres?sslmode=disable
+      TADOKU_TEST_PGBOUNCER_URL: postgres://postgres:postgres@127.0.0.1:6432/postgres?sslmode=disable
       TADOKU_TEST_VALKEY_URL: redis://127.0.0.1:6379
     services:
       postgres:
@@ -207,6 +232,26 @@ jobs:
           - 5432:5432
         options: >-
           --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      pgbouncer:
+        image: edoburu/pgbouncer:v1.25.2-p0@sha256:7d7a27d9e90985cab5cf42256f5c13a3120baa4b055b69df37beb272b89b2340
+        env:
+          DB_HOST: postgres
+          DB_PORT: 5432
+          DB_USER: postgres
+          DB_PASSWORD: postgres
+          AUTH_TYPE: scram-sha-256
+          POOL_MODE: transaction
+          LISTEN_PORT: 6432
+          MAX_CLIENT_CONN: 1000
+          DEFAULT_POOL_SIZE: 5
+          MAX_PREPARED_STATEMENTS: 200
+        ports:
+          - 6432:6432
+        options: >-
+          --health-cmd "pg_isready -h 127.0.0.1 -p 6432 -U postgres"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -239,6 +284,7 @@ jobs:
           //services/tadoku-api/internal/testketo:testketo_test
           //services/tadoku-api/internal/timex:timex_test
           //services/tadoku-api/infra/postgres:postgres_test
+          //services/tadoku-api/infra/postgres:pgbouncer_test
           //services/tadoku-api/infra/valkey:valkey_test
           //services/tadoku-api/features/announcements:announcements_test
           //services/tadoku-api/features/audit:audit_test
@@ -249,6 +295,9 @@ jobs:
           //services/tadoku-api/e2e:e2e_test
           //services/tadoku-api/cmd/tadoku-api:tadoku-api_test
           //services/tadoku-api/transport/http:http_test
+
+      - name: Show PgBouncer regression evidence
+        run: cat bazel-testlogs/services/tadoku-api/infra/postgres/pgbouncer_test/test.log
 
   publish:
     name: Publish Tadoku Images

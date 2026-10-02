@@ -46,9 +46,6 @@ func TestKratosCastMatchesSignedSubjects(t *testing.T) {
 		t.Fatal(err)
 	}
 	for who, encoded := range cast {
-		if who == guest {
-			continue
-		}
 		claims := jwt.MapClaims{}
 		if _, _, err := new(jwt.Parser).ParseUnverified(encoded, claims); err != nil {
 			t.Fatal(err)
@@ -57,6 +54,10 @@ func TestKratosCastMatchesSignedSubjects(t *testing.T) {
 		if !ok {
 			t.Fatalf("%s has no subject", who)
 		}
+		if subject == "guest" {
+			continue
+		}
+
 		identity, _, err := api.kratos.Client().IdentityApi.GetIdentity(t.Context(), subject).Execute()
 		if err != nil {
 			t.Fatalf("%s: %v", who, err)

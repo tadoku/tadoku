@@ -315,6 +315,7 @@ func validApplicationConfig(t *testing.T) config {
 		ServiceAccountTokenPath: "/var/run/secrets/tokens/token",
 		FliptURL:                upstream.URL + "/flipt",
 		FliptEnvironment:        "local",
+		FliptTestEnvironment:    "test",
 		FliptNamespace:          "default",
 		FliptUpdateInterval:     time.Minute,
 		FliptRequestTimeout:     time.Second,
@@ -410,7 +411,7 @@ func TestLoadConfigUsesValidatedDefaults(t *testing.T) {
 		t.Errorf("service account token path=%q", cfg.ServiceAccountTokenPath)
 	}
 	if cfg.FliptEnabled || cfg.FliptURL != "http://oathkeeper-proxy.default:4455/flipt" || cfg.FliptEnvironment != "local" ||
-		cfg.FliptNamespace != "default" || cfg.FliptUpdateInterval != 30*time.Second || cfg.FliptRequestTimeout != 5*time.Second ||
+		cfg.FliptNamespace != "default" || cfg.FliptTestEnvironment != "test" || cfg.FliptUpdateInterval != 30*time.Second || cfg.FliptRequestTimeout != 5*time.Second ||
 		cfg.FliptStartupTimeout != 3*time.Second || cfg.FliptManagementURL != "http://oathkeeper-proxy.default:4455/flipt-management" {
 		t.Errorf("unexpected Flipt defaults: %+v", cfg)
 	}
@@ -449,6 +450,13 @@ func TestLoadConfigUsesValidatedDefaults(t *testing.T) {
 		}
 		t.Setenv(variable, "default")
 	}
+	for _, value := range []string{"", "   ", "default"} {
+		t.Setenv("API_FLIPT_TEST_ENVIRONMENT", value)
+		if _, err := loadConfig(); err == nil || !strings.Contains(err.Error(), "FliptTestEnvironment") {
+			t.Errorf("unsafe Flipt test environment %q error=%v", value, err)
+		}
+	}
+	t.Setenv("API_FLIPT_TEST_ENVIRONMENT", "test")
 	t.Setenv("API_FLIPT_ENABLED", "false")
 	t.Setenv("API_OATHKEEPER_URL", "")
 	t.Setenv("API_FLIPT_URL", "")

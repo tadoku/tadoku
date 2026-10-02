@@ -11,7 +11,63 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
+
+func TestTenantIsolationJourney(t *testing.T) {
+	uuid.SetRand(rand.New(rand.NewSource(1)))
+	defer uuid.SetRand(nil)
+
+	const key = "e2e/alpha-0000000a"
+	t.Cleanup(func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		_, err := api.db.Pool.Exec(ctx, "delete from tenants where key = $1 and kind = 'test'", key)
+		if err != nil {
+			t.Error(err)
+		}
+	})
+
+	runJourneyWithSetup(t, api, scoringEnabledHandler, "TenantIsolation", func(t *testing.T) {
+		parsed, err := tenant.Parse(key)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := api.flipt.SeedTenant(parsed); err != nil {
+			t.Fatal(err)
+		}
+	}, []step{
+		{request: "test_guest_denied", as: alphaGuest, want: http.StatusForbidden},
+		{
+			request: "test_member_denied",
+			as:      alphaUser,
+			want:    http.StatusForbidden,
+			others:  cast{alphaBanned: http.StatusForbidden},
+		},
+		{request: "test_inherited_admin", as: alphaAdmin, want: http.StatusOK},
+		{request: "test_explicit_tester", as: alphaTester, want: http.StatusOK},
+		{request: "create_test_log", as: alphaTester, want: http.StatusOK},
+		{request: "create_production_log", as: user, want: http.StatusOK},
+		{request: "production_leaderboard", as: user, want: http.StatusOK},
+		{request: "test_leaderboard", as: alphaTester, want: http.StatusOK},
+		{valkey: "separate_cache_keys"},
+		{job: "run_worker"},
+		{verify: "production_complete_test_paused"},
+		{valkey: "base_keeps_test_cache"},
+		{job: "run_branch_worker", forTenant: key},
+		{verify: "both_tenants_complete"},
+		{request: "grant_test_feature", as: alphaAdmin, want: http.StatusOK},
+		{request: "test_feature_enabled", as: alphaTester, want: http.StatusOK},
+		{request: "production_feature_unchanged", as: user2, want: http.StatusOK},
+		{request: "ban_test_tester", as: alphaAdmin, want: http.StatusOK},
+		{request: "test_ban_enforced", as: alphaTester, want: http.StatusForbidden},
+		{request: "production_tester_unaffected", as: user2, want: http.StatusOK},
+		{request: "production_user_logs", as: user, want: http.StatusOK},
+		{request: "production_admin_contest_logs", as: admin, want: http.StatusOK},
+		{verify: "separate_log_rows"},
+	})
+}
 
 func TestFeatureAccessJourney(t *testing.T) {
 	runJourney(t, api, "FeatureAccess", []step{

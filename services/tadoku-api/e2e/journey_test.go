@@ -27,6 +27,12 @@ const (
 	user2  member = "user2"
 	admin  member = "admin"
 	banned member = "banned"
+
+	alphaAdmin  member = "alpha_admin"
+	alphaTester member = "alpha_tester"
+	alphaUser   member = "alpha_user"
+	alphaBanned member = "alpha_banned"
+	alphaGuest  member = "alpha_guest"
 )
 
 type cast map[member]int
@@ -369,6 +375,35 @@ func TestStepDirNames(t *testing.T) {
 		{name: "request without status", steps: []step{{request: "a", as: guest}}},
 		{name: "verify with others", steps: []step{{verify: "a", others: cast{guest: http.StatusOK}}}},
 		{name: "uppercase name", steps: []step{{request: "Create", as: admin, want: http.StatusCreated}}},
+		{
+			name:  "cache snapshot",
+			steps: []step{{valkey: "separate_keys"}},
+			want:  []string{"01_separate_keys"},
+		},
+		{
+			name:  "scoped worker",
+			steps: []step{{job: "run_branch_worker", forTenant: "e2e/alpha-0000000a"}},
+			want:  []string{"01_run_branch_worker"},
+		},
+		{name: "branch worker missing tenant", steps: []step{{job: "run_branch_worker"}}},
+		{
+			name:  "branch worker invalid tenant",
+			steps: []step{{job: "run_branch_worker", forTenant: "invalid"}},
+		},
+		{
+			name:  "branch worker canonical tenant",
+			steps: []step{{job: "run_branch_worker", forTenant: "tadoku/prod"}},
+		},
+		{
+			name:  "base worker tenant",
+			steps: []step{{job: "run_worker", forTenant: "e2e/alpha-0000000a"}},
+		},
+		{
+			name:  "request with worker tenant",
+			steps: []step{{request: "read", as: admin, want: http.StatusOK, forTenant: "e2e/alpha-0000000a"}},
+		},
+		{name: "cache snapshot with request", steps: []step{{valkey: "keys", request: "read"}}},
+		{name: "cache snapshot with actor", steps: []step{{valkey: "keys", as: admin}}},
 	}
 
 	for _, test := range tests {

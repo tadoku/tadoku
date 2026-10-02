@@ -87,6 +87,14 @@
       "alg": "RS256",
       "n": "s9tr0N5-VTu-CCKiC2g8OVyaKxq3GqkO89O2ctDPIyPVwc_7zw-bWd3qScYywZx9Uijy30By4lfrSF6wLYCSJnKalEDrCyMvv8gViVa3W50jNej6PrvpOHnUWy8UMxHctIZAljZsmOb0oj3x_sWW2KxShxsOkhyp9YDS6LD4Dj0OJptPf6QEqsXOea_NWwHMyDCtP3-oSXHIELAQEwXnevrzOW7yE5QMMosPP1WETerMoYvgF4iRqt4lC7j-rRDJoeeU6FhWRkocJtJQrkZfTu0vPkoWCj20_7UTvMu4L9JL14zQHeyeiQfAtF1aNY9umbGAGRQTsNH1YKqXw_PtLw",
       "e": "AQAB"
+    },
+    {
+      "kty": "RSA",
+      "n": "8sHj6uQ0YJ13zrBNoAz6bAiWGgsWjmzhgycLLOW8GKiNXkyNBwJwpv2hbo5Ra-MljH172VQwnGNBQkYidpB-rSPamapGt8tErXEEAJkDwHVtWlHtHOlheZcGJys67gzZ5C2IKOGNuA9RHMsYUQ7XfWeOVinpq4c_UsHSAbXXooh1sXt4EtfZGqWct6LyGLhc0WZmnHEQiy1_gELceHVjhRqZRVXzzLzXuaqkXGVg1wecaoTm6jJyzBJvVTk68FvEWBWHzaNT51B_Tbwghq9wTV0hEz1yhh02KBEJanRsBBNzPC6Zyt93d0L0laCv1j-Dz9RpVDUrng9GyhLr5A7oaw",
+      "e": "AQAB",
+      "kid": "tadoku-isolation-journey-cf909639-980b-4cc5-a6c7-5af4b82f6576",
+      "use": "sig",
+      "alg": "RS256"
     }
   ]
 }

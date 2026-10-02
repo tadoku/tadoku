@@ -7,16 +7,26 @@ begin;
 select set_config('tadoku.tenant', :'tenant', true);
 
 select
-  case when :'tenant' = 'tadoku/prod' then '00000000-0000-4000-8000-000000000401'::uuid
-       else uuid_generate_v5('00000000-0000-4000-8000-000000000401'::uuid, :'tenant') end as page_id,
-  case when :'tenant' = 'tadoku/prod' then '00000000-0000-4000-8000-000000000402'::uuid
-       else uuid_generate_v5('00000000-0000-4000-8000-000000000402'::uuid, :'tenant') end as page_content_id,
-  case when :'tenant' = 'tadoku/prod' then '00000000-0000-4000-8000-000000000501'::uuid
-       else uuid_generate_v5('00000000-0000-4000-8000-000000000501'::uuid, :'tenant') end as post_id,
-  case when :'tenant' = 'tadoku/prod' then '00000000-0000-4000-8000-000000000502'::uuid
-       else uuid_generate_v5('00000000-0000-4000-8000-000000000502'::uuid, :'tenant') end as post_content_id,
-  case when :'tenant' = 'tadoku/prod' then '00000000-0000-4000-8000-000000000601'::uuid
-       else uuid_generate_v5('00000000-0000-4000-8000-000000000601'::uuid, :'tenant') end as announcement_id
+  case
+    when :'tenant' = 'tadoku/prod' then '00000000-0000-4000-8000-000000000401'::uuid
+    else uuid_generate_v5('00000000-0000-4000-8000-000000000401'::uuid, :'tenant')
+  end as page_id,
+  case
+    when :'tenant' = 'tadoku/prod' then '00000000-0000-4000-8000-000000000402'::uuid
+    else uuid_generate_v5('00000000-0000-4000-8000-000000000402'::uuid, :'tenant')
+  end as page_content_id,
+  case
+    when :'tenant' = 'tadoku/prod' then '00000000-0000-4000-8000-000000000501'::uuid
+    else uuid_generate_v5('00000000-0000-4000-8000-000000000501'::uuid, :'tenant')
+  end as post_id,
+  case
+    when :'tenant' = 'tadoku/prod' then '00000000-0000-4000-8000-000000000502'::uuid
+    else uuid_generate_v5('00000000-0000-4000-8000-000000000502'::uuid, :'tenant')
+  end as post_content_id,
+  case
+    when :'tenant' = 'tadoku/prod' then '00000000-0000-4000-8000-000000000601'::uuid
+    else uuid_generate_v5('00000000-0000-4000-8000-000000000601'::uuid, :'tenant')
+  end as announcement_id
 \gset
 
 insert into pages (

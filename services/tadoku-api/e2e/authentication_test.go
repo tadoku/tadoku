@@ -17,9 +17,18 @@ func TestAuthentication(t *testing.T) {
 		description []string
 		want        int
 	}{
-		{description: []string{"missing", "tenant"}, want: http.StatusUnauthorized},
-		{description: []string{"malformed", "tenant"}, want: http.StatusUnauthorized},
-		{description: []string{"bare", "tenant"}, want: http.StatusUnauthorized},
+		{
+			description: []string{"missing", "tenant"},
+			want:        http.StatusUnauthorized,
+		},
+		{
+			description: []string{"malformed", "tenant"},
+			want:        http.StatusUnauthorized,
+		},
+		{
+			description: []string{"bare", "tenant"},
+			want:        http.StatusUnauthorized,
+		},
 		{
 			description: []string{"user"},
 			want:        http.StatusOK,
@@ -125,6 +134,7 @@ func TestAuthentication(t *testing.T) {
 			want:        http.StatusUnauthorized,
 		},
 	}
+
 	for _, test := range tests {
 		name := APITestName("Authentication", test.want, test.description...)
 		t.Run(name, func(t *testing.T) {
@@ -190,10 +200,22 @@ func TestAuthenticationBranch(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	handler, _, _, err := newTestRouterWithLeaderboardService(t.Context(), api.db.AppPool, api.db.AppPool, api.keto, api.kratos, slog.New(slog.NewTextHandler(io.Discard, nil)), false, api.leaderboard, deployment)
+
+	handler, _, _, err := newTestRouterWithLeaderboardService(
+		t.Context(),
+		api.db.AppPool,
+		api.db.AppPool,
+		api.keto,
+		api.kratos,
+		slog.New(slog.NewTextHandler(io.Discard, nil)),
+		false,
+		api.leaderboard,
+		deployment,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	for _, test := range []struct {
 		description []string
 		want        int

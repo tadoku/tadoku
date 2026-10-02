@@ -18,8 +18,8 @@ var (
 )
 
 func newTestLogsRepository(t *testing.T) (*LogsRepository, *testpostgres.Database) {
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Helper()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 
 	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
@@ -44,8 +44,8 @@ func newTestLogsRepository(t *testing.T) (*LogsRepository, *testpostgres.Databas
 }
 
 func createDurationLog(t *testing.T, repository *LogsRepository, id, userID uuid.UUID, createdAt time.Time) {
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Helper()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 
 	duration := int32(600)
 	err := repository.CreateLog(tenantCtx, logMutation{
@@ -66,8 +66,8 @@ func createDurationLog(t *testing.T, repository *LogsRepository, id, userID uuid
 }
 
 func TestLogsRepositoryFindLogMapsRows(t *testing.T) {
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	repository, db := newTestLogsRepository(t)
 
 	units, err := repository.ListUnits(tenantCtx)
@@ -97,6 +97,7 @@ func TestLogsRepositoryFindLogMapsRows(t *testing.T) {
 	amount := float32(12.5)
 	modifier := unit.Modifier
 	ruleID := uuid.MustParse("bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1")
+
 	tracking := Tracking{
 		UnitID:    &unit.ID,
 		UnitKey:   unit.Key,
@@ -122,6 +123,7 @@ func TestLogsRepositoryFindLogMapsRows(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	for _, tag := range []string{"book", "fiction"} {
 		if err := repository.InsertTag(tenantCtx, amountLogID, testUserID, tag); err != nil {
 			t.Fatal(err)
@@ -133,6 +135,7 @@ func TestLogsRepositoryFindLogMapsRows(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	displayName := "Reader"
 	want := &Log{
 		ID:              amountLogID,
@@ -152,6 +155,7 @@ func TestLogsRepositoryFindLogMapsRows(t *testing.T) {
 		CreatedAt:       found.CreatedAt,
 		Tracking:        tracking,
 	}
+
 	if !found.CreatedAt.Equal(createdAt) {
 		t.Errorf("created_at=%s, want %s", found.CreatedAt, createdAt)
 	}
@@ -163,6 +167,7 @@ func TestLogsRepositoryFindLogMapsRows(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	duration := int32(600)
 	want = &Log{
 		ID:              durationLogID,
@@ -191,8 +196,8 @@ func TestLogsRepositoryFindLogMapsRows(t *testing.T) {
 }
 
 func TestLogsRepositorySoftDeleteVisibility(t *testing.T) {
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	repository, db := newTestLogsRepository(t)
 
 	logID := uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1")
@@ -243,8 +248,8 @@ func TestLogsRepositorySoftDeleteVisibility(t *testing.T) {
 }
 
 func TestLogsRepositoryListUserLogsPaging(t *testing.T) {
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	repository, _ := newTestLogsRepository(t)
 
 	oldest := uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1")
@@ -299,6 +304,7 @@ func TestLogsRepositoryListUserLogsPaging(t *testing.T) {
 					t.Errorf("log %s deleted=%t", log.ID, log.Deleted)
 				}
 			}
+
 			if !reflect.DeepEqual(ids, tt.wantIDs) {
 				t.Errorf("ids=%v, want %v", ids, tt.wantIDs)
 			}
@@ -310,8 +316,8 @@ func TestLogsRepositoryListUserLogsPaging(t *testing.T) {
 }
 
 func TestLogsRepositoryContestLogs(t *testing.T) {
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	repository, db := newTestLogsRepository(t)
 
 	_, err := db.Pool.Exec(tenantCtx, `
@@ -364,6 +370,7 @@ func TestLogsRepositoryContestLogs(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
+
 	for _, log := range []struct {
 		id           uuid.UUID
 		userID       uuid.UUID
@@ -380,6 +387,7 @@ func TestLogsRepositoryContestLogs(t *testing.T) {
 		createDurationLog(t, repository, log.id, log.userID, day(log.day))
 		attach(log.id, log.registration)
 	}
+
 	createDurationLog(t, repository, unattached, testUserID, day(7))
 	if err := repository.SoftDelete(tenantCtx, deleted, day(8)); err != nil {
 		t.Fatal(err)
@@ -431,6 +439,7 @@ func TestLogsRepositoryContestLogs(t *testing.T) {
 					t.Errorf("log %s display name=%v, want %q", log.ID, log.UserDisplayName, wantName)
 				}
 			}
+
 			if !reflect.DeepEqual(ids, tt.wantIDs) {
 				t.Errorf("ids=%v, want %v", ids, tt.wantIDs)
 			}
@@ -463,8 +472,8 @@ func TestLogsRepositoryContestLogs(t *testing.T) {
 }
 
 func TestLogsRepositoryLegacyTagDecoding(t *testing.T) {
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	repository, _ := newTestLogsRepository(t)
 
 	logID := uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1")

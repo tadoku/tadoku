@@ -10,8 +10,8 @@ import (
 )
 
 func TestLanguagesRepositoryListsByName(t *testing.T) {
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
@@ -58,8 +58,8 @@ func TestLanguagesRepositoryListsByName(t *testing.T) {
 }
 
 func TestLanguagesRepositoryCreatesLanguageAndRejectsDuplicateCode(t *testing.T) {
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
@@ -86,6 +86,7 @@ func TestLanguagesRepositoryCreatesLanguageAndRejectsDuplicateCode(t *testing.T)
 	if name != parameters.Name {
 		t.Errorf("name=%q, want exact %q", name, parameters.Name)
 	}
+
 	duplicate := parameters
 	duplicate.Name = "Replacement"
 	if err := repository.CreateLanguage(tenantCtx, duplicate); !errors.Is(err, languages.ErrLanguageAlreadyExists) {
@@ -100,8 +101,8 @@ func TestLanguagesRepositoryCreatesLanguageAndRejectsDuplicateCode(t *testing.T)
 }
 
 func TestLanguagesRepositoryUpdatesLanguageAndRejectsMissingCode(t *testing.T) {
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
@@ -136,8 +137,8 @@ func TestLanguagesRepositoryUpdatesLanguageAndRejectsMissingCode(t *testing.T) {
 }
 
 func TestLanguagesRepositoryChecksLanguagesExist(t *testing.T) {
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)

@@ -38,12 +38,16 @@ sequential. Tests using `timex.TheWorld` remain sequential in their own package.
 Coverage includes cross-repository commit/rollback, panic, cancellation before
 and after writes, deferred-constraint commit failure, pool reuse, nested/wrong
 pool/ended context rejection, concurrent independent transactions, and direct
-sqlc compatibility. Tenant coverage uses a one-connection pool: local settings
-end at commit or standalone statement completion; all SQL methods see the
-context tenant; streaming/scan/commit errors release their batch; missing,
-changed and conflicting scopes fail closed; 1,000 interleaved statements for
-three tenants see the correct key; canceled batches leave the pool reusable.
-Secondary cleanup transport failures are not simulated.
+sqlc compatibility. Secondary cleanup transport failures are not simulated.
+
+Tenant coverage uses a one-connection pool:
+
+- Local settings end at commit or standalone statement completion.
+- All SQL methods see the context tenant.
+- Streaming, scan and commit errors release their batch.
+- Missing, changed and conflicting scopes fail closed.
+- 1,000 interleaved statements for three tenants see the correct key.
+- Canceled batches leave the pool reusable.
 
 ## PgBouncer transaction pooling
 
@@ -82,10 +86,11 @@ docker stop tadoku-helper-pgbouncer
 
 The pinned image generates a wildcard database mapping when `DB_NAME` is unset.
 Prepared statement tracking remains enabled for pgx's normal protocol. The test
-uses 300 goroutines for three tenants, verifies all 12,000 reads and 6,000 writes,
-then proves the unsafe session-setting control leaks between separate clients
-that share a backend. Session settings occur only inside that disposable test
-control, never application code. CI prints the normal and race test logs.
+uses 300 goroutines for three tenants, verifies all 12,000 reads and 6,000
+writes, then proves the unsafe session-setting control leaks between separate
+clients that share a backend. Session settings occur only inside that
+disposable test control, never application code. CI prints the normal and race
+test logs.
 
 `testdata/sqlc` contains only synthetic query-generation inputs, not application
 migrations. `internal/pgxcompat` is generated and Bazel-test-only. Regenerate with

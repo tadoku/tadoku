@@ -130,16 +130,19 @@ func loadConfig() (config, error) {
 			return config{}, validationErr
 		}
 	}
+
 	ketoURL, err := url.ParseRequestURI(cfg.KetoReadURL)
 	if err != nil || ketoURL.Host == "" || (ketoURL.Scheme != "http" && ketoURL.Scheme != "https") {
 		return config{}, fmt.Errorf("validate config: KetoReadURL must be an HTTP(S) URL")
 	}
+
 	ketoWriteURL, err := url.Parse(cfg.KetoWriteURL)
 	if err != nil || ketoWriteURL.Hostname() == "" || (ketoWriteURL.Scheme != "http" && ketoWriteURL.Scheme != "https") ||
 		ketoWriteURL.User != nil || ketoWriteURL.RawQuery != "" || ketoWriteURL.ForceQuery || strings.Contains(cfg.KetoWriteURL, "#") {
 		return config{}, fmt.Errorf("validate config: KetoWriteURL must be an HTTP(S) URL without credentials, query or fragment")
 	}
 	cfg.KetoWriteURL = strings.TrimRight(cfg.KetoWriteURL, "/")
+
 	kratosURL, err := url.Parse(cfg.KratosAdminURL)
 	if err != nil || kratosURL.Hostname() == "" || (kratosURL.Scheme != "http" && kratosURL.Scheme != "https") ||
 		kratosURL.User != nil || kratosURL.RawQuery != "" || kratosURL.ForceQuery || strings.Contains(cfg.KratosAdminURL, "#") {
@@ -195,6 +198,7 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 			cancel()
 		}
 	}()
+
 	if err := ctx.Err(); err != nil {
 		return nil, fmt.Errorf("start application: %w", err)
 	}
@@ -207,6 +211,7 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	if err := ctx.Err(); err != nil {
 		return nil, fmt.Errorf("start application: %w", err)
 	}
+
 	authenticateCallback, err := transporthttp.NewCallbackAuthentication(cfg.OathkeeperAuthzToken)
 	if err != nil {
 		return nil, err
@@ -241,6 +246,7 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 		s2s.WithHTTPClient(exchangeHTTP),
 		s2s.WithTokenPath(cfg.ServiceAccountTokenPath),
 	)
+
 	fliptEvaluation := &http.Client{
 		Transport:     s2s.NewAuthTransport(s2sClient, "flipt-evaluation/tadoku-api", transport),
 		Timeout:       cfg.FliptRequestTimeout,
@@ -314,6 +320,7 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	if valkeyErr != nil {
 		logger.Warn("valkey unavailable at startup; starting in degraded mode", "error", valkeyErr)
 	}
+
 	if err := ctx.Err(); err != nil {
 		return nil, fmt.Errorf("start application: %w", err)
 	}
@@ -331,6 +338,7 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	ketoReader := ketoclient.NewReadClient(cfg.KetoReadURL, ketoclient.WithHTTPClient(ketoHTTP))
 	permissionChecker := permissions.NewKetoChecker(ketoReader)
 	roleService := permissions.NewKetoService(ketoReader, "app", "tadoku")
+
 	authzService := featureauthz.NewService(
 		permissionChecker,
 		kratosIdentities,
@@ -338,6 +346,7 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 		permissions.NewKetoManager(keto, "app", "tadoku"),
 		nil,
 	)
+
 	auditService := featureaudit.NewService(featureaudit.NewRepository(pool))
 	announcementsRepository := announcements.NewAnnouncementsRepository(pool)
 	contestsRepository := contests.NewContestsRepository(pool)
@@ -350,6 +359,7 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	profileRepository := profile.NewRepository(pool)
 	scoringRepository := scoring.NewScoringRepository(pool)
 	userCache := profile.NewUserCache(kratosIdentities)
+
 	announcementsService := announcements.NewService(announcementsRepository)
 	contestsService := contests.NewService(contestsRepository)
 	languagesService := languages.NewService(languagesRepository)
@@ -363,8 +373,10 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 		Environment: cfg.FliptEnvironment,
 		HTTPClient:  fliptManagement,
 	}))
+
 	scoringObserver := observability.NewScoringObserver(metrics, logger, cfg.ScoringEngineEnabled)
 	scoringService := scoring.NewService(scoringRepository, cfg.ScoringEngineEnabled, scoringObserver)
+
 	api := app.New(app.Dependencies{
 		JobQueue:      jobQueue,
 		Announcements: announcementsService,

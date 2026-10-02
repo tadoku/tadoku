@@ -16,8 +16,8 @@ import (
 )
 
 func TestScoringRepositoryPlatformRuleSetLifecycle(t *testing.T) {
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
@@ -36,6 +36,7 @@ func TestScoringRepositoryPlatformRuleSetLifecycle(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	seeded, err := repository.ListPlatformRuleSets(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
@@ -66,6 +67,7 @@ func TestScoringRepositoryPlatformRuleSetLifecycle(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	wantDraft := &RuleSet{
 		ID:      uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1"),
 		Scope:   "platform",
@@ -87,7 +89,10 @@ func TestScoringRepositoryPlatformRuleSetLifecycle(t *testing.T) {
 		Version:   version,
 		CreatedAt: createdAt,
 	})
-	assertConstraintViolation(t, err, pgerrcode.UniqueViolation, "scoring_rule_sets_platform_version", "scoring_rule_sets_tenant_platform_version")
+	assertConstraintViolation(
+		t, err, pgerrcode.UniqueViolation,
+		"scoring_rule_sets_platform_version", "scoring_rule_sets_tenant_platform_version",
+	)
 
 	specific := Rule{
 		ID:           uuid.MustParse("bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1"),
@@ -107,6 +112,7 @@ func TestScoringRepositoryPlatformRuleSetLifecycle(t *testing.T) {
 		Source:     SourceDurationMinutes,
 		Rate:       0.25,
 	}
+
 	for _, rule := range []Rule{specific, general} {
 		if err := repository.CreateRule(tenantCtx, draft.ID, rule); err != nil {
 			t.Fatal(err)
@@ -116,7 +122,10 @@ func TestScoringRepositoryPlatformRuleSetLifecycle(t *testing.T) {
 	duplicate := general
 	duplicate.ID = uuid.New()
 	err = repository.CreateRule(tenantCtx, draft.ID, duplicate)
-	assertConstraintViolation(t, err, pgerrcode.UniqueViolation, "scoring_rules_rule_set_priority", "scoring_rules_tenant_rule_set_priority")
+	assertConstraintViolation(
+		t, err, pgerrcode.UniqueViolation,
+		"scoring_rules_rule_set_priority", "scoring_rules_tenant_rule_set_priority",
+	)
 
 	mismatchedUnit := general
 	mismatchedUnit.ID = uuid.New()
@@ -173,8 +182,8 @@ func TestScoringRepositoryPlatformRuleSetLifecycle(t *testing.T) {
 }
 
 func TestScoringRepositoryContestRuleSets(t *testing.T) {
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
@@ -236,6 +245,7 @@ func TestScoringRepositoryContestRuleSets(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	override, err := repository.CreateDraft(tenantCtx, RuleSet{
 		ID:                uuid.MustParse("dddddddd-dddd-4ddd-8ddd-ddddddddddd2"),
 		Scope:             "contest",
@@ -324,8 +334,8 @@ func TestScoringRepositoryContestRuleSets(t *testing.T) {
 }
 
 func TestScoringRepositoryUnitLookups(t *testing.T) {
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
@@ -350,6 +360,7 @@ func TestScoringRepositoryUnitLookups(t *testing.T) {
 		}
 		return unit
 	}
+
 	jpn := "jpn"
 	fallback := seededUnit("reading_character", nil)
 	japanese := seededUnit("reading_character", &jpn)

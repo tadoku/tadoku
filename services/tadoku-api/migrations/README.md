@@ -6,21 +6,22 @@ Every migration ships in its own pull request; see
 ## Scheduled official contests
 
 Production runs `pg_cron` 1.6 in the `tadoku` application database. These jobs
-are configured separately from application migrations because their setup requires
-administrative credentials. They call the historical `data.create_contest_round`
-function retained in migration `0004`.
-Both statements in each command run in one implicit transaction, so the tenant
-setting lasts through contest creation and resets afterward.
+are configured separately from application migrations because their setup
+requires administrative credentials. They call the historical
+`data.create_contest_round` function retained in migration `0004`.
 
-Use the direct PostgreSQL port 5432 for administrative and migration work; runtime
-connections use PgBouncer on port 6432. Production cron executes as `postgres`,
-with background workers and GMT schedules. Keep each existing job’s schedule,
-database, username and active state when updating its command.
+Use the direct PostgreSQL port 5432 for administrative and migration work;
+runtime connections use PgBouncer on port 6432. Production cron executes as
+`postgres`, with background workers and GMT schedules. Keep each existing job's
+schedule, database, username and active state when updating its command.
 
-`create_official_contest` catches insert errors and returns null. A successful cron
-run therefore does not prove that a round exists: verify the expected official
-contest row and its `tenant = 'tadoku/prod'`. Manual round creation must also set
-the transaction-local tenant before calling the function.
+`create_official_contest` catches insert errors and returns null. A successful
+cron run therefore does not prove that a round exists: verify the expected
+official contest row and its `tenant = 'tadoku/prod'`. Manual round creation
+must also set the transaction-local tenant before calling the function.
+
+Both statements in each command below run in one implicit transaction, so the
+tenant setting lasts through contest creation and resets afterward.
 
 ```sql
 insert into cron.job (schedule, command, nodename, nodeport, database, username)

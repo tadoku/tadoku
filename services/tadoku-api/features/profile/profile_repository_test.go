@@ -13,8 +13,8 @@ import (
 )
 
 func TestRepositorySynchronizesAndLocksLocalUsers(t *testing.T) {
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
@@ -82,6 +82,7 @@ func TestRepositorySynchronizesAndLocksLocalUsers(t *testing.T) {
 	if err := repository.SynchronizeUser(tenantCtx, userID, displayName, sessionCreatedAt, now); !errors.Is(err, ErrAccountDeletionInProgress) {
 		t.Errorf("synchronize locked user error=%v, want account deletion conflict", err)
 	}
+
 	if err := postgres.RunInTransaction(tenantCtx, db.Pool, func(ctx context.Context) error {
 		state, err := repository.LockUser(ctx, userID)
 		if err != nil {

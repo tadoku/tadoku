@@ -16,8 +16,8 @@ import (
 )
 
 func TestAnnouncementsRepositoryUsesSuppliedPolicyAndTransaction(t *testing.T) {
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
@@ -27,19 +27,24 @@ func TestAnnouncementsRepositoryUsesSuppliedPolicyAndTransaction(t *testing.T) {
 			t.Error(err)
 		}
 	})
+
 	cutoff := time.Date(2026, 9, 12, 0, 0, 0, 0, time.UTC)
 	id := "11111111-1111-4111-8111-111111111111"
 	if err := db.Reset(tenantCtx, "testdata/announcements.sql"); err != nil {
 		t.Fatal(err)
 	}
+
 	repository := announcements.NewAnnouncementsRepository(db.Pool)
-	items, err := repository.ListActiveAnnouncements(tenant.WithKey(context.Background(), tenant.Production()), "main", cutoff, 1)
+	items, err := repository.ListActiveAnnouncements(
+		tenant.WithKey(context.Background(), tenant.Production()), "main", cutoff, 1,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(items) != 1 || items[0].Title != "newer" {
 		t.Fatalf("explicit limit/order: %+v", items)
 	}
+
 	wantRollback := errors.New("stop after read")
 	err = postgres.RunInTransaction(tenant.WithKey(context.Background(), tenant.Production()), db.Pool, func(ctx context.Context) error {
 		executor, err := postgres.Executor(ctx, db.Pool)
@@ -49,6 +54,7 @@ func TestAnnouncementsRepositoryUsesSuppliedPolicyAndTransaction(t *testing.T) {
 		if _, err := executor.Exec(ctx, "update announcements set title = 'uncommitted' where id = $1", id); err != nil {
 			return err
 		}
+
 		items, err := repository.ListActiveAnnouncements(ctx, "main", cutoff.Add(-time.Minute), 2)
 		if err != nil {
 			return err
@@ -56,6 +62,7 @@ func TestAnnouncementsRepositoryUsesSuppliedPolicyAndTransaction(t *testing.T) {
 		if len(items) != 1 || items[0].Title != "uncommitted" {
 			t.Errorf("transaction read: %+v", items)
 		}
+
 		item, err := repository.FindAnnouncementByID(ctx, "main", uuid.MustParse(id))
 		if err != nil {
 			return err
@@ -63,18 +70,23 @@ func TestAnnouncementsRepositoryUsesSuppliedPolicyAndTransaction(t *testing.T) {
 		if item.Title != "uncommitted" {
 			t.Errorf("transaction lookup: %+v", item)
 		}
+
 		return wantRollback
 	})
 	if !errors.Is(err, wantRollback) {
 		t.Fatalf("transaction error=%v", err)
 	}
-	items, err = repository.ListActiveAnnouncements(tenant.WithKey(context.Background(), tenant.Production()), "main", cutoff.Add(-time.Minute), 2)
+
+	items, err = repository.ListActiveAnnouncements(
+		tenant.WithKey(context.Background(), tenant.Production()), "main", cutoff.Add(-time.Minute), 2,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(items) != 1 || items[0].Title != "older" {
 		t.Errorf("rolled back read: %+v", items)
 	}
+
 	item, err := repository.FindAnnouncementByID(tenantCtx, "main", uuid.MustParse(id))
 	if err != nil {
 		t.Fatal(err)
@@ -82,6 +94,7 @@ func TestAnnouncementsRepositoryUsesSuppliedPolicyAndTransaction(t *testing.T) {
 	if item.Title != "older" {
 		t.Errorf("rolled back lookup: %+v", item)
 	}
+
 	_, err = repository.FindAnnouncementByID(tenantCtx, "other", uuid.MustParse(id))
 	if !errors.Is(err, announcements.ErrAnnouncementNotFound) {
 		t.Errorf("wrong namespace error=%v, want announcement not found", err)
@@ -89,8 +102,8 @@ func TestAnnouncementsRepositoryUsesSuppliedPolicyAndTransaction(t *testing.T) {
 }
 
 func TestAnnouncementsRepositoryListAnnouncementsBreaksCreatedAtTiesByID(t *testing.T) {
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
@@ -105,11 +118,16 @@ func TestAnnouncementsRepositoryListAnnouncementsBreaksCreatedAtTiesByID(t *test
 	}
 
 	_, err = db.Pool.Exec(tenantCtx, `
-		insert into announcements (tenant, id, namespace, title, content, starts_at, ends_at, created_at, updated_at)
+		insert into announcements (
+			tenant, id, namespace, title, content, starts_at, ends_at, created_at, updated_at
+		)
 		values
-			('tadoku/prod', '10000000-0000-4000-8000-000000000001', 'main', 'one', 'one', '2026-09-12 10:00:00', '2026-09-12 14:00:00', '2026-09-12 11:00:00', '2026-09-12 11:00:00'),
-			('tadoku/prod', '10000000-0000-4000-8000-000000000002', 'main', 'two', 'two', '2026-09-12 10:00:00', '2026-09-12 14:00:00', '2026-09-12 11:00:00', '2026-09-12 11:00:00'),
-			('tadoku/prod', '10000000-0000-4000-8000-000000000003', 'main', 'three', 'three', '2026-09-12 10:00:00', '2026-09-12 14:00:00', '2026-09-12 11:00:00', '2026-09-12 11:00:00')`)
+			('tadoku/prod', '10000000-0000-4000-8000-000000000001', 'main', 'one', 'one',
+			 '2026-09-12 10:00:00', '2026-09-12 14:00:00', '2026-09-12 11:00:00', '2026-09-12 11:00:00'),
+			('tadoku/prod', '10000000-0000-4000-8000-000000000002', 'main', 'two', 'two',
+			 '2026-09-12 10:00:00', '2026-09-12 14:00:00', '2026-09-12 11:00:00', '2026-09-12 11:00:00'),
+			('tadoku/prod', '10000000-0000-4000-8000-000000000003', 'main', 'three', 'three',
+			 '2026-09-12 10:00:00', '2026-09-12 14:00:00', '2026-09-12 11:00:00', '2026-09-12 11:00:00')`)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -137,8 +155,8 @@ func TestAnnouncementsRepositoryListAnnouncementsBreaksCreatedAtTiesByID(t *test
 }
 
 func TestAnnouncementsRepositoryDeleteAnnouncement(t *testing.T) {
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
@@ -155,6 +173,7 @@ func TestAnnouncementsRepositoryDeleteAnnouncement(t *testing.T) {
 	id := uuid.MustParse("11111111-1111-4111-8111-111111111111")
 	deletedAt := time.Date(2026, 9, 12, 12, 0, 0, 0, time.UTC)
 	repository := announcements.NewAnnouncementsRepository(db.Pool)
+
 	const snapshotSQL = `select (to_jsonb(announcements) - 'deleted_at')::text, deleted_at
 		from announcements where id = $1`
 	var before string
@@ -190,6 +209,7 @@ func TestAnnouncementsRepositoryDeleteAnnouncement(t *testing.T) {
 	if !gotDeletedAt.Equal(deletedAt) {
 		t.Errorf("deleted_at=%v, want original timestamp %v", gotDeletedAt, deletedAt)
 	}
+
 	otherID := uuid.MustParse("22222222-2222-4222-8222-222222222222")
 	if _, err := repository.FindAnnouncementByID(tenantCtx, "main", otherID); err != nil {
 		t.Errorf("other announcements must remain visible: %v", err)
@@ -197,8 +217,8 @@ func TestAnnouncementsRepositoryDeleteAnnouncement(t *testing.T) {
 }
 
 func TestAnnouncementsRepositoryListAnnouncementsReturnsTotalForEmptyPage(t *testing.T) {
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
@@ -226,8 +246,8 @@ func TestAnnouncementsRepositoryListAnnouncementsReturnsTotalForEmptyPage(t *tes
 }
 
 func TestAnnouncementsRepositoryCreateAnnouncement(t *testing.T) {
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
@@ -237,6 +257,7 @@ func TestAnnouncementsRepositoryCreateAnnouncement(t *testing.T) {
 			t.Error(err)
 		}
 	})
+
 	repository := announcements.NewAnnouncementsRepository(db.Pool)
 	instant := timex.Now()
 	emptyHref, href := "", "https://example.test/announcement"
@@ -264,6 +285,7 @@ func TestAnnouncementsRepositoryCreateAnnouncement(t *testing.T) {
 			if err := repository.CreateAnnouncement(tenantCtx, item); err != nil {
 				t.Fatal(err)
 			}
+
 			got, err := repository.FindAnnouncementByID(tenantCtx, item.Namespace, item.ID)
 			if err != nil {
 				t.Fatal(err)
@@ -271,11 +293,13 @@ func TestAnnouncementsRepositoryCreateAnnouncement(t *testing.T) {
 			if !reflect.DeepEqual(got, item) {
 				t.Errorf("persisted=%+v, want %+v", got, item)
 			}
+
 			duplicate := *item
 			duplicate.Title = "must not replace the original"
 			if err := repository.CreateAnnouncement(tenantCtx, &duplicate); err == nil {
 				t.Fatal("duplicate ID was accepted")
 			}
+
 			got, err = repository.FindAnnouncementByID(tenantCtx, item.Namespace, item.ID)
 			if err != nil {
 				t.Fatal(err)
@@ -288,8 +312,8 @@ func TestAnnouncementsRepositoryCreateAnnouncement(t *testing.T) {
 }
 
 func TestAnnouncementsRepositoryPreservesTimestampInstants(t *testing.T) {
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
@@ -313,6 +337,7 @@ func TestAnnouncementsRepositoryPreservesTimestampInstants(t *testing.T) {
 		CreatedAt: startsAt.Add(-2 * time.Hour),
 		UpdatedAt: startsAt.Add(-time.Hour),
 	}
+
 	repository := announcements.NewAnnouncementsRepository(db.Pool)
 	if err := repository.CreateAnnouncement(tenantCtx, item); err != nil {
 		t.Fatal(err)
@@ -335,8 +360,8 @@ func TestAnnouncementsRepositoryPreservesTimestampInstants(t *testing.T) {
 }
 
 func TestAnnouncementUpdateRepositoryTransaction(t *testing.T) {
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
@@ -348,6 +373,7 @@ func TestAnnouncementUpdateRepositoryTransaction(t *testing.T) {
 	})
 	if err := db.Reset(tenantCtx, "testdata/announcements.sql"); err != nil {
 		t.Fatal(err)
+
 	}
 	repository := announcements.NewAnnouncementsRepository(db.Pool)
 	id := uuid.MustParse("11111111-1111-4111-8111-111111111111")
@@ -365,12 +391,14 @@ func TestAnnouncementUpdateRepositoryTransaction(t *testing.T) {
 	updated.StartsAt = original.StartsAt.Add(time.Hour)
 	updated.EndsAt = original.EndsAt.Add(time.Hour)
 	updated.UpdatedAt = original.UpdatedAt.Add(time.Hour)
+
 	stop := errors.New("roll back updated announcement")
 	for _, rollback := range []bool{true, false} {
 		err := postgres.RunInTransaction(tenantCtx, db.Pool, func(ctx context.Context) error {
 			if err := repository.UpdateAnnouncement(ctx, &updated); err != nil {
 				return err
 			}
+
 			got, err := repository.FindAnnouncementByID(ctx, "main", id)
 			if err != nil {
 				return err
@@ -378,6 +406,7 @@ func TestAnnouncementUpdateRepositoryTransaction(t *testing.T) {
 			if !reflect.DeepEqual(got, &updated) {
 				t.Errorf("read within transaction=%+v, want %+v", got, updated)
 			}
+
 			outside, err := repository.FindAnnouncementByID(tenantCtx, "main", id)
 			if err != nil {
 				return err
@@ -385,11 +414,13 @@ func TestAnnouncementUpdateRepositoryTransaction(t *testing.T) {
 			if !reflect.DeepEqual(outside, original) {
 				t.Errorf("uncommitted update escaped transaction: %+v", outside)
 			}
+
 			if rollback {
 				return stop
 			}
 			return nil
 		})
+
 		want := &updated
 		if rollback {
 			want = original
@@ -399,6 +430,7 @@ func TestAnnouncementUpdateRepositoryTransaction(t *testing.T) {
 		} else if err != nil {
 			t.Fatal(err)
 		}
+
 		got, err := repository.FindAnnouncementByID(tenantCtx, "main", id)
 		if err != nil {
 			t.Fatal(err)
@@ -412,6 +444,7 @@ func TestAnnouncementUpdateRepositoryTransaction(t *testing.T) {
 	if err := repository.UpdateAnnouncement(tenantCtx, &updated); !errors.Is(err, announcements.ErrAnnouncementNotFound) {
 		t.Errorf("wrong namespace error=%v, want not found", err)
 	}
+
 	updated.Namespace = "main"
 	if _, err := db.Pool.Exec(tenantCtx, "update announcements set deleted_at = $1 where id = $2", updated.UpdatedAt, id); err != nil {
 		t.Fatal(err)

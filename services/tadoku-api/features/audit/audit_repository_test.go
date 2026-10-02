@@ -12,8 +12,8 @@ import (
 )
 
 func TestRepositoryPersistsAudit(t *testing.T) {
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 
 	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
@@ -59,6 +59,7 @@ func TestRepositoryPersistsAudit(t *testing.T) {
 	if err := json.Unmarshal(metadataRaw, &metadata); err != nil {
 		t.Fatal(err)
 	}
+
 	if actorID != event.ActorID {
 		t.Errorf("actor ID = %s, want %s", actorID, event.ActorID)
 	}

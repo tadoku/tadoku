@@ -14,8 +14,8 @@ import (
 )
 
 func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
@@ -168,8 +168,8 @@ func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
 }
 
 func TestContestsRepositoryCreationTransaction(t *testing.T) {
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
@@ -197,6 +197,7 @@ func TestContestsRepositoryCreationTransaction(t *testing.T) {
 		CreatedAt:               now,
 		UpdatedAt:               now,
 	}
+
 	if _, err := db.Pool.Exec(tenantCtx, `
 		insert into users (tenant, id, display_name, created_at, updated_at)
 		values ('tadoku/prod', $1, $2, $3, $3)`, contest.OwnerUserID, contest.OwnerUserDisplayName, now); err != nil {
@@ -237,8 +238,8 @@ func TestContestsRepositoryCreationTransaction(t *testing.T) {
 }
 
 func TestContestsRepositoryCountsEveryContestCreatedByUserInYear(t *testing.T) {
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
@@ -295,8 +296,8 @@ func TestContestsRepositoryCountsEveryContestCreatedByUserInYear(t *testing.T) {
 }
 
 func TestContestsRepositoryRegistrationPersistenceAndTransaction(t *testing.T) {
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 
 	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
@@ -322,7 +323,9 @@ func TestContestsRepositoryRegistrationPersistenceAndTransaction(t *testing.T) {
 			'2026-09-01', '2026-09-12', '2026-08-31', 'Registration fixture', '{2,1}', true,
 			'2026-01-01', '2026-01-01'
 		);
-		insert into contest_registrations (tenant, id, contest_id, user_id, language_codes, created_at, updated_at)
+		insert into contest_registrations (
+			tenant, id, contest_id, user_id, language_codes, created_at, updated_at
+		)
 		values (
 			'tadoku/prod', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
 			'11111111-1111-4111-8111-111111111111', '{jpn,eng}', '2026-01-01', '2026-01-01'
@@ -331,8 +334,10 @@ func TestContestsRepositoryRegistrationPersistenceAndTransaction(t *testing.T) {
 			tenant, id, user_id, language_code, log_activity_id, duration_seconds, computed_score,
 			eligible_official_leaderboard, created_at, updated_at
 		) values
-			('tadoku/prod', 'cccccccc-cccc-4ccc-8ccc-ccccccccccc1', '11111111-1111-4111-8111-111111111111', 'eng', 1, 60, 1, true, '2026-09-01', '2026-09-01'),
-			('tadoku/prod', 'cccccccc-cccc-4ccc-8ccc-ccccccccccc2', '11111111-1111-4111-8111-111111111111', 'jpn', 1, 60, 1, true, '2026-09-01', '2026-09-01');
+			('tadoku/prod', 'cccccccc-cccc-4ccc-8ccc-ccccccccccc1',
+			 '11111111-1111-4111-8111-111111111111', 'eng', 1, 60, 1, true, '2026-09-01', '2026-09-01'),
+			('tadoku/prod', 'cccccccc-cccc-4ccc-8ccc-ccccccccccc2',
+			 '11111111-1111-4111-8111-111111111111', 'jpn', 1, 60, 1, true, '2026-09-01', '2026-09-01');
 		insert into contest_logs (tenant, contest_id, log_id, duration_seconds, computed_score)
 		values
 			('tadoku/prod', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'cccccccc-cccc-4ccc-8ccc-ccccccccccc1', 60, 1),

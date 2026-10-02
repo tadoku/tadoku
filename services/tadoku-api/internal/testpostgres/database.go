@@ -104,6 +104,7 @@ func New(ctx context.Context) (_ *Database, err error) {
 	if err := db.Pool.Ping(ctx); err != nil {
 		return nil, fmt.Errorf("ping test pool: %w", err)
 	}
+
 	role := name + "_app"
 	roleSQL := pgx.Identifier{role}.Sanitize()
 	password = uuid.NewString()
@@ -111,12 +112,15 @@ func New(ctx context.Context) (_ *Database, err error) {
 		return nil, fmt.Errorf("create test application role: %w", err)
 	}
 	db.appRole = role
-	if _, err := db.Pool.Exec(ctx, "grant usage on schema public to "+roleSQL+";"+
-		"grant select, insert, update, delete on all tables in schema public to "+roleSQL+";"+
-		"grant usage, select on all sequences in schema public to "+roleSQL+";"+
-		"revoke insert, update, delete on schema_migrations from "+roleSQL); err != nil {
+
+	grants := "grant usage on schema public to " + roleSQL + ";" +
+		"grant select, insert, update, delete on all tables in schema public to " + roleSQL + ";" +
+		"grant usage, select on all sequences in schema public to " + roleSQL + ";" +
+		"revoke insert, update, delete on schema_migrations from " + roleSQL
+	if _, err := db.Pool.Exec(ctx, grants); err != nil {
 		return nil, fmt.Errorf("grant test application privileges: %w", err)
 	}
+
 	appCfg := cfg.Copy()
 	appCfg.ConnConfig.User = role
 	appCfg.ConnConfig.Password = password
@@ -127,6 +131,7 @@ func New(ctx context.Context) (_ *Database, err error) {
 	if err := db.AppPool.Ping(ctx); err != nil {
 		return nil, fmt.Errorf("ping test application pool: %w", err)
 	}
+
 	if _, err := db.Pool.Exec(ctx, "create table tadoku_test_language_baseline as select code, name from languages"); err != nil {
 		return nil, fmt.Errorf("snapshot language baseline: %w", err)
 	}
@@ -139,6 +144,7 @@ func New(ctx context.Context) (_ *Database, err error) {
 	if _, err := db.Pool.Exec(ctx, "create table tadoku_test_platform_scoring_config_baseline as select * from platform_scoring_config"); err != nil {
 		return nil, fmt.Errorf("snapshot platform scoring config baseline: %w", err)
 	}
+
 	return db, nil
 }
 
@@ -149,9 +155,11 @@ func (d *Database) Close() error {
 	if d.Pool != nil {
 		d.Pool.Close()
 	}
+
 	defer d.admin.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
+
 	var cleanupErr error
 	if d.name != "" {
 		if _, err := d.admin.Exec(ctx, "drop database "+pgx.Identifier{d.name}.Sanitize()+" with (force)"); err != nil {
@@ -193,6 +201,7 @@ func (d *Database) Reset(ctx context.Context, seedFiles ...string) (err error) {
 	if _, err := tx.Exec(ctx, cleanupSQL); err != nil {
 		return fmt.Errorf("execute cleanup.sql: %w", err)
 	}
+
 	for _, path := range seedFiles {
 		seed, err := os.ReadFile(path)
 		if errors.Is(err, os.ErrNotExist) {
@@ -205,6 +214,7 @@ func (d *Database) Reset(ctx context.Context, seedFiles ...string) (err error) {
 			return fmt.Errorf("execute seed %s: %w", path, err)
 		}
 	}
+
 	if err := tx.Commit(ctx); err != nil {
 		return fmt.Errorf("commit test reset: %w", err)
 	}

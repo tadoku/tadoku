@@ -45,6 +45,7 @@ the development environment and verified.
 | Read past design decisions | [Decisions](./adr.md) |
 | Change backend behavior | [Tadoku API](./tadoku-api/index.md) |
 | Change the database schema or a query | [Tadoku API database](./tadoku-api/database.md) |
+| Write or lay out Go code | [Go style](./tadoku-api/go-style.md) |
 | Write backend tests | [Tadoku API testing](./tadoku-api/testing.md) |
 | Change a frontend application | [Frontend overview](./frontend/index.md) |
 | Build a Paper screen | [Paper composition](./frontend/paper-composition.md) |

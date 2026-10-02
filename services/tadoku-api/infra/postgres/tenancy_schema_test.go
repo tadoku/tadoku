@@ -11,11 +11,13 @@ func TestTenancySchemaGuard(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	t.Cleanup(func() {
 		if err := db.Close(); err != nil {
 			t.Error(err)
 		}
 	})
+
 	var violations []string
 	err = db.Pool.QueryRow(t.Context(), `
 		with ordinary as (

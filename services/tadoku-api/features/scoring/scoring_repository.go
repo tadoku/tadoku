@@ -344,6 +344,7 @@ func ruleSet(row queries.FindScoringRuleSetByIDRow) *RuleSet {
 		Rules:     []Rule{},
 		CreatedAt: row.CreatedAt.Time,
 	}
+
 	if row.ContestID.Valid {
 		id := uuid.UUID(row.ContestID.Bytes)
 		result.ContestID = &id

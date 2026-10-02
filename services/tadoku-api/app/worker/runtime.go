@@ -39,6 +39,7 @@ type runner struct {
 func (r *runner) run(ctx context.Context) {
 	workCtx, cancelWork := context.WithCancel(context.WithoutCancel(ctx))
 	defer cancelWork()
+
 	var queueCtx context.Context
 	if key, branch := r.scope.Key(); branch {
 		queueCtx = tenant.WithKey(ctx, key)
@@ -50,15 +51,18 @@ func (r *runner) run(ctx context.Context) {
 	for _, entry := range r.handlers.ordered {
 		capacity += entry.spec.limit
 	}
+
 	results := make(chan jobs.Type, min(r.concurrency, capacity))
 	active := make(map[jobs.Type]int, len(r.handlers.ordered))
 	var running sync.WaitGroup
+
 	ticker := time.NewTicker(500 * time.Millisecond)
 	defer ticker.Stop()
 	metricsTicker := time.NewTicker(15 * time.Second)
 	defer metricsTicker.Stop()
 	cleanupTicker := time.NewTicker(time.Hour)
 	defer cleanupTicker.Stop()
+
 	rotation := 0
 	unsupported := int64(0)
 	refreshMetrics := func() {
@@ -75,6 +79,7 @@ func (r *runner) run(ctx context.Context) {
 
 	r.cleanupCompleted(queueCtx)
 	refreshMetrics()
+
 	for {
 		if ctx.Err() != nil {
 			break
@@ -88,12 +93,14 @@ func (r *runner) run(ctx context.Context) {
 			if free < 1 {
 				continue
 			}
+
 			tasks, err := r.queue.Claim(queueCtx, spec.typeName, free, spec.lease, spec.maxAttempts)
 			if err != nil {
 				claimHealthy = false
 				r.logger.Error("claim jobs", "type", spec.typeName, "error", err)
 				continue
 			}
+
 			for _, task := range tasks {
 				if task.Reclaimed {
 					r.metrics.expiredLeases.WithLabelValues(string(spec.typeName)).Inc()
@@ -108,6 +115,7 @@ func (r *runner) run(ctx context.Context) {
 				}()
 			}
 		}
+
 		rotation = (rotation + 1) % len(r.handlers.ordered)
 		r.ready.Store(claimHealthy)
 
@@ -195,11 +203,13 @@ func (r *runner) updateMetrics(ctx context.Context) (int64, error) {
 
 func (r *runner) process(ctx context.Context, task jobqueue.ClaimedJob, spec handlerSpec) error {
 	ctx = tenant.WithKey(ctx, task.Tenant)
+
 	margin := spec.lease / 3
 	remainingLease := time.Until(task.LeaseExpiresAt)
 	if remainingLease <= margin {
 		return fmt.Errorf("job %d: claim lease expired before dispatch", task.ID)
 	}
+
 	if remainingLease < 2*margin {
 		renewCtx, stop := context.WithTimeout(ctx, remainingLease-margin)
 		expiry, held, err := r.queue.Renew(renewCtx, task, spec.lease)
@@ -212,6 +222,7 @@ func (r *runner) process(ctx context.Context, task jobqueue.ClaimedJob, spec han
 		}
 		task.LeaseExpiresAt = expiry
 	}
+
 	limit := spec.timeout
 	handlerCtx, cancelHandler := context.WithTimeout(ctx, limit)
 	maximum, _ := handlerCtx.Deadline()
@@ -223,6 +234,7 @@ func (r *runner) process(ctx context.Context, task jobqueue.ClaimedJob, spec han
 	if handlerErr == nil && handlerCtx.Err() != nil {
 		handlerErr = handlerCtx.Err()
 	}
+
 	cancelRenew()
 	renewErr := <-renewed
 	cancelHandler()
@@ -249,12 +261,14 @@ func (r *runner) process(ctx context.Context, task jobqueue.ClaimedJob, spec han
 		}
 		r.metrics.attempts.WithLabelValues(string(task.Type), code).Inc()
 	}
+
 	if err != nil {
 		return fmt.Errorf("transition job %d: %w", task.ID, err)
 	}
 	if !held {
 		return fmt.Errorf("job %d: lease lost before transition", task.ID)
 	}
+
 	if handlerErr != nil {
 		r.logger.Error("job failed", "job_id", task.ID, "type", task.Type, "attempt", task.Attempts, "code", failureCode(handlerErr), "error", handlerErr)
 	}

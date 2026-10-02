@@ -16,6 +16,7 @@ func TestApplicationPoolPrivilegesAndCleanup(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	closed := false
 	t.Cleanup(func() {
 		if !closed {
@@ -24,6 +25,7 @@ func TestApplicationPoolPrivilegesAndCleanup(t *testing.T) {
 			}
 		}
 	})
+
 	pool := db.AppPool
 	var role string
 	var superuser, bypass, metadataSelect, metadataWrite, dml, sequenceUsage bool
@@ -41,9 +43,14 @@ func TestApplicationPoolPrivilegesAndCleanup(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if superuser || bypass || owned != 0 || memberships != 0 || !metadataSelect || metadataWrite || !dml || !sequenceUsage {
-		t.Fatalf("unsafe application pool: superuser=%t bypass=%t owned=%d memberships=%d metadata=%t/%t DML=%t sequence=%t", superuser, bypass, owned, memberships, metadataSelect, metadataWrite, dml, sequenceUsage)
+		t.Fatalf(
+			"unsafe application pool: superuser=%t bypass=%t owned=%d memberships=%d metadata=%t/%t DML=%t sequence=%t",
+			superuser, bypass, owned, memberships, metadataSelect, metadataWrite, dml, sequenceUsage,
+		)
 	}
+
 	if _, err := pool.Exec(t.Context(), "update schema_migrations set version = version"); err == nil {
 		t.Fatal("application pool can write migration metadata")
 	} else {
@@ -52,20 +59,24 @@ func TestApplicationPoolPrivilegesAndCleanup(t *testing.T) {
 			t.Fatalf("metadata denial=%v, want PostgreSQL42501", err)
 		}
 	}
+
 	if err := db.Reset(t.Context(), "testdata/announcements.sql"); err != nil {
 		t.Fatal(err)
 	}
+
 	connection, err := pool.Acquire(t.Context())
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer connection.Release()
+
 	var count int
 	err = connection.QueryRow(t.Context(), "select count(*) from announcements").Scan(&count)
 	var pgError *pgconn.PgError
 	if !errors.As(err, &pgError) || pgError.Code != "42704" {
 		t.Fatalf("fresh unscoped read=%v, want PostgreSQL42704", err)
 	}
+
 	tx, err := connection.Begin(t.Context())
 	if err != nil {
 		t.Fatal(err)
@@ -74,23 +85,31 @@ func TestApplicationPoolPrivilegesAndCleanup(t *testing.T) {
 	if _, err := tx.Exec(t.Context(), "select set_config('tadoku.tenant', 'tadoku/prod', true)"); err != nil {
 		t.Fatal(err)
 	}
+
 	if err := tx.QueryRow(t.Context(), "select count(*) from announcements").Scan(&count); err != nil || count != 2 {
 		t.Fatalf("scoped committed fixture count=%d error=%v", count, err)
 	}
 	if err := tx.Commit(t.Context()); err != nil {
 		t.Fatal(err)
 	}
+
 	if err := connection.QueryRow(t.Context(), "select count(*) from announcements").Scan(&count); err != nil || count != 0 {
 		t.Fatalf("reused unscoped read count=%d error=%v", count, err)
 	}
-	_, err = connection.Exec(t.Context(), "insert into announcements (id, namespace, title, content, starts_at, ends_at) values (gen_random_uuid(), 'main', 'unscoped', '', now(), now())")
+
+	_, err = connection.Exec(t.Context(), `insert into announcements (id, namespace, title, content, starts_at, ends_at)
+		values (gen_random_uuid(), 'main', 'unscoped', '', now(), now())`)
 	connection.Release()
-	if !errors.As(err, &pgError) || (pgError.Code != "42501" && (pgError.Code != "23503" || pgError.ConstraintName != "announcements_tenant_fkey")) {
+	if !errors.As(err, &pgError) ||
+		(pgError.Code != "42501" &&
+			(pgError.Code != "23503" || pgError.ConstraintName != "announcements_tenant_fkey")) {
 		t.Fatalf("reused unscoped write=%v, want policy denial or exact tenant foreign-key denial", err)
 	}
+
 	if err := db.Pool.QueryRow(t.Context(), "select count(*) from announcements where title = 'unscoped'").Scan(&count); err != nil || count != 0 {
 		t.Fatalf("unscoped write persisted: rows=%d error=%v", count, err)
 	}
+
 	observer, err := pgx.Connect(t.Context(), db.admin.Config().ConnString())
 	if err != nil {
 		t.Fatal(err)
@@ -100,11 +119,16 @@ func TestApplicationPoolPrivilegesAndCleanup(t *testing.T) {
 			t.Error(err)
 		}
 	}()
+
 	if err := db.Close(); err != nil {
 		t.Fatal(err)
 	}
 	closed = true
-	if err := observer.QueryRow(t.Context(), "select (select count(*) from pg_roles where rolname = $1) + (select count(*) from pg_database where datname = $2)", role, db.name).Scan(&count); err != nil || count != 0 {
+
+	err = observer.QueryRow(t.Context(), `select
+		(select count(*) from pg_roles where rolname = $1) +
+		(select count(*) from pg_database where datname = $2)`, role, db.name).Scan(&count)
+	if err != nil || count != 0 {
 		t.Fatalf("owned role/database remain: count=%d error=%v", count, err)
 	}
 }
@@ -114,26 +138,32 @@ func TestCloseCleansPartialApplicationRoleSetup(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	t.Cleanup(func() {
 		if err := complete.Close(); err != nil {
 			t.Error(err)
 		}
 	})
+
 	admin, err := pgxpool.New(t.Context(), complete.admin.Config().ConnString())
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	role := "tadoku_test_partial_" + uuid.NewString()[:8]
 	if _, err := admin.Exec(t.Context(), "create role "+pgx.Identifier{role}.Sanitize()+" login nosuperuser nobypassrls"); err != nil {
 		admin.Close()
 		t.Fatal(err)
 	}
+
 	partial := &Database{admin: admin, appRole: role}
 	if err := partial.Close(); err != nil {
 		t.Fatal(err)
 	}
+
 	var remaining int
-	if err := complete.admin.QueryRow(t.Context(), "select count(*) from pg_roles where rolname = $1", role).Scan(&remaining); err != nil || remaining != 0 {
+	err = complete.admin.QueryRow(t.Context(), "select count(*) from pg_roles where rolname = $1", role).Scan(&remaining)
+	if err != nil || remaining != 0 {
 		t.Fatalf("partial setup role remains: count=%d error=%v", remaining, err)
 	}
 }

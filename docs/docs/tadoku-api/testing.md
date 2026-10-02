@@ -99,6 +99,13 @@ Never point tests at shared development or production services.
   `tenant.WithKey(ctx, tenant.Production())` context. HTTP E2Es receive the tenant
   through their signed fixture tokens. Fixture reset sets the canonical tenant
   transaction-locally before cleanup and seed inserts.
+- Raw owner-pool fixture inserts name the tenant column explicitly, including
+  every row and `INSERT ... SELECT` projection. Canonical fixtures use
+  `tadoku/prod`; parent and child rows use the same tenant. A context value alone
+  does not scope raw pool SQL. Reads through a restricted application role use
+  the PostgreSQL executor with an explicit tenant context, preserving the same
+  transaction-local scope as application calls. Never supply a session, role,
+  database or pool startup tenant setting to make fixtures pass.
 - Repository and transaction tests keep their own independent databases and may
   run in parallel. If local test targets contend with the provider fixtures,
   use `--local_test_jobs=1` to serialize targets while retaining all assertions.

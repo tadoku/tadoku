@@ -30,19 +30,19 @@ func TestPagesRepositoryReadsCurrentLiveContent(t *testing.T) {
 	})
 
 	_, err = db.Pool.Exec(tenantCtx, `
-		insert into pages (id, namespace, slug, current_content_id, published_at, created_at, updated_at, deleted_at)
+		insert into pages (tenant, id, namespace, slug, current_content_id, published_at, created_at, updated_at, deleted_at)
 		values
-			('10000000-0000-4000-8000-000000000001', 'main', 'first-page', '20000000-0000-4000-8000-000000000002', '2026-09-12 12:00:01', '2026-09-12 11:00:00', '2026-09-12 11:30:00', null),
-			('10000000-0000-4000-8000-000000000002', 'main', 'draft-page', '20000000-0000-4000-8000-000000000003', null, '2026-09-12 11:00:00', '2026-09-12 11:00:00', null),
-			('10000000-0000-4000-8000-000000000003', 'other', 'other-page', '20000000-0000-4000-8000-000000000004', '2026-09-12 10:00:00', '2026-09-12 11:00:00', '2026-09-12 11:00:00', null),
-			('10000000-0000-4000-8000-000000000004', 'main', 'deleted-page', '20000000-0000-4000-8000-000000000005', '2026-09-12 10:00:00', '2026-09-12 12:00:00', '2026-09-12 12:00:00', '2026-09-12 12:30:00');
-		insert into pages_content (id, page_id, title, html, created_at)
+			('tadoku/prod', '10000000-0000-4000-8000-000000000001', 'main', 'first-page', '20000000-0000-4000-8000-000000000002', '2026-09-12 12:00:01', '2026-09-12 11:00:00', '2026-09-12 11:30:00', null),
+			('tadoku/prod', '10000000-0000-4000-8000-000000000002', 'main', 'draft-page', '20000000-0000-4000-8000-000000000003', null, '2026-09-12 11:00:00', '2026-09-12 11:00:00', null),
+			('tadoku/prod', '10000000-0000-4000-8000-000000000003', 'other', 'other-page', '20000000-0000-4000-8000-000000000004', '2026-09-12 10:00:00', '2026-09-12 11:00:00', '2026-09-12 11:00:00', null),
+			('tadoku/prod', '10000000-0000-4000-8000-000000000004', 'main', 'deleted-page', '20000000-0000-4000-8000-000000000005', '2026-09-12 10:00:00', '2026-09-12 12:00:00', '2026-09-12 12:00:00', '2026-09-12 12:30:00');
+		insert into pages_content (tenant, id, page_id, title, html, created_at)
 		values
-			('20000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001', 'Old title', '<p>Old</p>', '2026-09-12 10:00:00'),
-			('20000000-0000-4000-8000-000000000002', '10000000-0000-4000-8000-000000000001', 'Current title', '<p>Current</p>', '2026-09-12 11:30:00'),
-			('20000000-0000-4000-8000-000000000003', '10000000-0000-4000-8000-000000000002', 'Draft', '<p>Draft</p>', '2026-09-12 11:00:00'),
-			('20000000-0000-4000-8000-000000000004', '10000000-0000-4000-8000-000000000003', 'Other', '<p>Other</p>', '2026-09-12 11:00:00'),
-			('20000000-0000-4000-8000-000000000005', '10000000-0000-4000-8000-000000000004', 'Deleted', '<p>Deleted</p>', '2026-09-12 12:00:00')`)
+			('tadoku/prod', '20000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001', 'Old title', '<p>Old</p>', '2026-09-12 10:00:00'),
+			('tadoku/prod', '20000000-0000-4000-8000-000000000002', '10000000-0000-4000-8000-000000000001', 'Current title', '<p>Current</p>', '2026-09-12 11:30:00'),
+			('tadoku/prod', '20000000-0000-4000-8000-000000000003', '10000000-0000-4000-8000-000000000002', 'Draft', '<p>Draft</p>', '2026-09-12 11:00:00'),
+			('tadoku/prod', '20000000-0000-4000-8000-000000000004', '10000000-0000-4000-8000-000000000003', 'Other', '<p>Other</p>', '2026-09-12 11:00:00'),
+			('tadoku/prod', '20000000-0000-4000-8000-000000000005', '10000000-0000-4000-8000-000000000004', 'Deleted', '<p>Deleted</p>', '2026-09-12 12:00:00')`)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -234,15 +234,15 @@ func TestPagesRepositoryDeletePage(t *testing.T) {
 	})
 
 	_, err = db.Pool.Exec(tenantCtx, `
-		insert into pages (id, namespace, slug, current_content_id, published_at, created_at, updated_at)
+		insert into pages (tenant, id, namespace, slug, current_content_id, published_at, created_at, updated_at)
 		values
-			('11111111-1111-4111-8111-111111111111', 'main', 'first-page', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2', '2026-09-11 12:00:00', '2026-09-10 12:00:00', '2026-09-11 12:00:00'),
-			('22222222-2222-4222-8222-222222222222', 'main', 'second-page', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1', null, '2026-09-10 13:00:00', '2026-09-10 13:00:00');
-		insert into pages_content (id, page_id, title, html, created_at)
+			('tadoku/prod', '11111111-1111-4111-8111-111111111111', 'main', 'first-page', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2', '2026-09-11 12:00:00', '2026-09-10 12:00:00', '2026-09-11 12:00:00'),
+			('tadoku/prod', '22222222-2222-4222-8222-222222222222', 'main', 'second-page', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1', null, '2026-09-10 13:00:00', '2026-09-10 13:00:00');
+		insert into pages_content (tenant, id, page_id, title, html, created_at)
 		values
-			('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1', '11111111-1111-4111-8111-111111111111', 'Original title', 'Original html', '2026-09-10 12:00:00'),
-			('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2', '11111111-1111-4111-8111-111111111111', 'Revised title', 'Revised html', '2026-09-11 12:00:00'),
-			('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1', '22222222-2222-4222-8222-222222222222', 'Other page', 'Other html', '2026-09-10 13:00:00');`)
+			('tadoku/prod', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1', '11111111-1111-4111-8111-111111111111', 'Original title', 'Original html', '2026-09-10 12:00:00'),
+			('tadoku/prod', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2', '11111111-1111-4111-8111-111111111111', 'Revised title', 'Revised html', '2026-09-11 12:00:00'),
+			('tadoku/prod', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1', '22222222-2222-4222-8222-222222222222', 'Other page', 'Other html', '2026-09-10 13:00:00');`)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -325,14 +325,14 @@ func TestPagesRepositoryUpdatePage(t *testing.T) {
 	})
 
 	_, err = db.Pool.Exec(tenantCtx, `
-		insert into pages (id, namespace, slug, current_content_id, published_at, created_at, updated_at)
+		insert into pages (tenant, id, namespace, slug, current_content_id, published_at, created_at, updated_at)
 		values
-			('11111111-1111-4111-8111-111111111111', 'main', 'original-page', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', null, '2026-09-10 12:00:00', '2026-09-10 12:00:00'),
-			('22222222-2222-4222-8222-222222222222', 'main', 'other-page', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', null, '2026-09-10 13:00:00', '2026-09-10 13:00:00');
-		insert into pages_content (id, page_id, title, html, created_at)
+			('tadoku/prod', '11111111-1111-4111-8111-111111111111', 'main', 'original-page', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', null, '2026-09-10 12:00:00', '2026-09-10 12:00:00'),
+			('tadoku/prod', '22222222-2222-4222-8222-222222222222', 'main', 'other-page', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', null, '2026-09-10 13:00:00', '2026-09-10 13:00:00');
+		insert into pages_content (tenant, id, page_id, title, html, created_at)
 		values
-			('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '11111111-1111-4111-8111-111111111111', 'Original title', 'Original html', '2026-09-10 12:00:00'),
-			('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', '22222222-2222-4222-8222-222222222222', 'Other title', 'Other html', '2026-09-10 13:00:00');
+			('tadoku/prod', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '11111111-1111-4111-8111-111111111111', 'Original title', 'Original html', '2026-09-10 12:00:00'),
+			('tadoku/prod', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', '22222222-2222-4222-8222-222222222222', 'Other title', 'Other html', '2026-09-10 13:00:00');
 		alter table pages_content add constraint reject_update_title check (title <> 'rejected revision');`)
 	if err != nil {
 		t.Fatal(err)
@@ -539,19 +539,19 @@ func TestPagesRepositoryGetPageVersion(t *testing.T) {
 	})
 
 	_, err = db.Pool.Exec(tenantCtx, `
-		insert into pages (id, namespace, slug, current_content_id, published_at, created_at, updated_at, deleted_at)
+		insert into pages (tenant, id, namespace, slug, current_content_id, published_at, created_at, updated_at, deleted_at)
 		values
-			('11111111-1111-4111-8111-111111111111', 'main', 'published-post', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3', '2026-09-11 12:00:00', '2026-09-10 12:00:00', '2026-09-11 12:00:00', null),
-			('22222222-2222-4222-8222-222222222222', 'main', 'draft-post', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1', null, '2026-09-10 13:00:00', '2026-09-10 13:00:00', null),
-			('33333333-3333-4333-8333-333333333333', 'main', 'deleted-post', 'cccccccc-cccc-4ccc-8ccc-ccccccccccc1', null, '2026-09-10 13:00:00', '2026-09-10 13:00:00', '2026-09-11 12:00:00');
-		insert into pages_content (id, page_id, title, html, created_at)
+			('tadoku/prod', '11111111-1111-4111-8111-111111111111', 'main', 'published-post', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3', '2026-09-11 12:00:00', '2026-09-10 12:00:00', '2026-09-11 12:00:00', null),
+			('tadoku/prod', '22222222-2222-4222-8222-222222222222', 'main', 'draft-post', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1', null, '2026-09-10 13:00:00', '2026-09-10 13:00:00', null),
+			('tadoku/prod', '33333333-3333-4333-8333-333333333333', 'main', 'deleted-post', 'cccccccc-cccc-4ccc-8ccc-ccccccccccc1', null, '2026-09-10 13:00:00', '2026-09-10 13:00:00', '2026-09-11 12:00:00');
+		insert into pages_content (tenant, id, page_id, title, html, created_at)
 		values
-			('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3', '11111111-1111-4111-8111-111111111111', 'Latest title', 'Latest content', '2026-09-11 12:00:00'),
-			('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2', '11111111-1111-4111-8111-111111111111', 'Tied title', 'Tied content', '2026-09-10 12:00:00'),
-			('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1', '11111111-1111-4111-8111-111111111111', 'Original title', 'Original content', '2026-09-10 12:00:00'),
-			('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1', '22222222-2222-4222-8222-222222222222', 'Draft title', 'Draft content', '2026-09-10 13:00:00'),
-			('cccccccc-cccc-4ccc-8ccc-ccccccccccc1', '33333333-3333-4333-8333-333333333333', 'Deleted title', 'Deleted content', '2026-09-10 13:00:00'),
-			('dddddddd-dddd-4ddd-8ddd-ddddddddddd1', '44444444-4444-4444-8444-444444444444', 'Orphan title', 'Orphan content', '2026-09-10 13:00:00');`)
+			('tadoku/prod', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3', '11111111-1111-4111-8111-111111111111', 'Latest title', 'Latest content', '2026-09-11 12:00:00'),
+			('tadoku/prod', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2', '11111111-1111-4111-8111-111111111111', 'Tied title', 'Tied content', '2026-09-10 12:00:00'),
+			('tadoku/prod', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1', '11111111-1111-4111-8111-111111111111', 'Original title', 'Original content', '2026-09-10 12:00:00'),
+			('tadoku/prod', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1', '22222222-2222-4222-8222-222222222222', 'Draft title', 'Draft content', '2026-09-10 13:00:00'),
+			('tadoku/prod', 'cccccccc-cccc-4ccc-8ccc-ccccccccccc1', '33333333-3333-4333-8333-333333333333', 'Deleted title', 'Deleted content', '2026-09-10 13:00:00'),
+			('tadoku/prod', 'dddddddd-dddd-4ddd-8ddd-ddddddddddd1', '44444444-4444-4444-8444-444444444444', 'Orphan title', 'Orphan content', '2026-09-10 13:00:00');`)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -616,17 +616,17 @@ func TestPagesRepositoryListPageVersions(t *testing.T) {
 	})
 
 	_, err = db.Pool.Exec(tenantCtx, `
-		insert into pages (id, namespace, slug, current_content_id, published_at, created_at, updated_at, deleted_at)
+		insert into pages (tenant, id, namespace, slug, current_content_id, published_at, created_at, updated_at, deleted_at)
 		values
-			('11111111-1111-4111-8111-111111111111', 'main', 'scheduled', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3', '2026-09-14 12:00:00', '2026-09-10 12:00:00', '2026-09-11 12:00:00', null),
-			('22222222-2222-4222-8222-222222222222', 'main', 'deleted', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1', null, '2026-09-10 12:00:00', '2026-09-11 12:00:00', '2026-09-12 12:00:00');
-		insert into pages_content (id, page_id, title, html, created_at)
+			('tadoku/prod', '11111111-1111-4111-8111-111111111111', 'main', 'scheduled', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3', '2026-09-14 12:00:00', '2026-09-10 12:00:00', '2026-09-11 12:00:00', null),
+			('tadoku/prod', '22222222-2222-4222-8222-222222222222', 'main', 'deleted', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1', null, '2026-09-10 12:00:00', '2026-09-11 12:00:00', '2026-09-12 12:00:00');
+		insert into pages_content (tenant, id, page_id, title, html, created_at)
 		values
-			('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3', '11111111-1111-4111-8111-111111111111', 'Third', 'Third body', '2026-09-11 12:00:00'),
-			('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2', '11111111-1111-4111-8111-111111111111', 'Second', 'Second body', '2026-09-10 12:00:00'),
-			('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1', '11111111-1111-4111-8111-111111111111', 'First', 'First body', '2026-09-10 12:00:00'),
-			('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1', '22222222-2222-4222-8222-222222222222', 'Deleted', 'Deleted body', '2026-09-10 12:00:00'),
-			('cccccccc-cccc-4ccc-8ccc-ccccccccccc1', '33333333-3333-4333-8333-333333333333', 'Orphan', 'Orphan body', '2026-09-10 12:00:00');`)
+			('tadoku/prod', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3', '11111111-1111-4111-8111-111111111111', 'Third', 'Third body', '2026-09-11 12:00:00'),
+			('tadoku/prod', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2', '11111111-1111-4111-8111-111111111111', 'Second', 'Second body', '2026-09-10 12:00:00'),
+			('tadoku/prod', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1', '11111111-1111-4111-8111-111111111111', 'First', 'First body', '2026-09-10 12:00:00'),
+			('tadoku/prod', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1', '22222222-2222-4222-8222-222222222222', 'Deleted', 'Deleted body', '2026-09-10 12:00:00'),
+			('tadoku/prod', 'cccccccc-cccc-4ccc-8ccc-ccccccccccc1', '33333333-3333-4333-8333-333333333333', 'Orphan', 'Orphan body', '2026-09-10 12:00:00');`)
 	if err != nil {
 		t.Fatal(err)
 	}

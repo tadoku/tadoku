@@ -32,10 +32,10 @@ func newTestLogsRepository(t *testing.T) (*LogsRepository, *testpostgres.Databas
 	})
 
 	_, err = db.Pool.Exec(tenantCtx, `
-		insert into users (id, display_name)
+		insert into users (tenant, id, display_name)
 		values
-			('11111111-1111-4111-8111-111111111111', 'Reader'),
-			('22222222-2222-4222-8222-222222222222', 'Other')`)
+			('tadoku/prod', '11111111-1111-4111-8111-111111111111', 'Reader'),
+			('tadoku/prod', '22222222-2222-4222-8222-222222222222', 'Other')`)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -316,21 +316,21 @@ func TestLogsRepositoryContestLogs(t *testing.T) {
 
 	_, err := db.Pool.Exec(tenantCtx, `
 		insert into contests (
-			id, owner_user_id, owner_user_display_name, "private", contest_start, contest_end,
+			tenant, id, owner_user_id, owner_user_display_name, "private", contest_start, contest_end,
 			registration_end, title, activity_type_id_allow_list, official, created_at, updated_at
 		)
 		values
-			('cccccccc-cccc-4ccc-8ccc-ccccccccccc1', '99999999-9999-4999-8999-999999999999', 'Owner', false,
+			('tadoku/prod', 'cccccccc-cccc-4ccc-8ccc-ccccccccccc1', '99999999-9999-4999-8999-999999999999', 'Owner', false,
 			 '2026-09-01', '2026-09-30', '2026-09-15', 'Listed', '{2}', false, '2026-08-01', '2026-08-01'),
-			('cccccccc-cccc-4ccc-8ccc-ccccccccccc2', '99999999-9999-4999-8999-999999999999', 'Owner', false,
+			('tadoku/prod', 'cccccccc-cccc-4ccc-8ccc-ccccccccccc2', '99999999-9999-4999-8999-999999999999', 'Owner', false,
 			 '2026-09-01', '2026-09-30', '2026-09-15', 'Other', '{2}', false, '2026-08-01', '2026-08-01');
-		insert into contest_registrations (id, contest_id, user_id, language_codes)
+		insert into contest_registrations (tenant, id, contest_id, user_id, language_codes)
 		values
-			('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1', 'cccccccc-cccc-4ccc-8ccc-ccccccccccc1',
+			('tadoku/prod', 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1', 'cccccccc-cccc-4ccc-8ccc-ccccccccccc1',
 			 '11111111-1111-4111-8111-111111111111', '{jpn}'),
-			('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee2', 'cccccccc-cccc-4ccc-8ccc-ccccccccccc1',
+			('tadoku/prod', 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee2', 'cccccccc-cccc-4ccc-8ccc-ccccccccccc1',
 			 '22222222-2222-4222-8222-222222222222', '{jpn}'),
-			('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee3', 'cccccccc-cccc-4ccc-8ccc-ccccccccccc2',
+			('tadoku/prod', 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee3', 'cccccccc-cccc-4ccc-8ccc-ccccccccccc2',
 			 '11111111-1111-4111-8111-111111111111', '{jpn}')`)
 	if err != nil {
 		t.Fatal(err)

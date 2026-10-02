@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
 )
 
@@ -79,12 +80,18 @@ func TestPoolWorksWithOnlyAnnouncementReadGrants(t *testing.T) {
 		t.Errorf("max connections=%d", pool.Config().MaxConns)
 	}
 
-	var count int
-	if err := pool.QueryRow(ctx, "select count(*) from announcements").Scan(&count); err != nil {
+	ctx = tenant.WithKey(ctx, tenant.Production())
+	executor, err := postgres.Executor(ctx, pool)
+	if err != nil {
 		t.Fatal(err)
 	}
 
-	_, err = pool.Exec(ctx, "delete from announcements")
+	var count int
+	if err := executor.QueryRow(ctx, "select count(*) from announcements").Scan(&count); err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = executor.Exec(ctx, "delete from announcements")
 	var postgresError *pgconn.PgError
 	if !errors.As(err, &postgresError) || postgresError.Code != "42501" {
 		t.Errorf("reader mutation error=%v, want permission denied", err)

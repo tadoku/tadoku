@@ -36,8 +36,8 @@ func TestReplayCommandCreatesLinkedJob(t *testing.T) {
 	t.Setenv("WORKER_POSTGRES_SSLMODE", "disable")
 
 	var failedID int64
-	err = db.Pool.QueryRow(t.Context(), `insert into jobs (task_type, payload, state, attempts, failed_at, last_error)
-		values ('leaderboard.invalidate_official.v1', '{"year":2025}', 'failed', 5, now(), 'handler_error') returning id`).Scan(&failedID)
+	err = db.Pool.QueryRow(t.Context(), `insert into jobs (tenant, task_type, payload, state, attempts, failed_at, last_error)
+		values ('tadoku/prod', 'leaderboard.invalidate_official.v1', '{"year":2025}', 'failed', 5, now(), 'handler_error') returning id`).Scan(&failedID)
 	if err != nil {
 		t.Fatal(err)
 	}

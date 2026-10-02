@@ -67,7 +67,7 @@ jobs:
       TADOKU_TEST_VALKEY_URL: redis://127.0.0.1:6379
     services:
       postgres:
-        image: postgres:17
+        image: postgres:17@sha256:d74eeac9a635390a49bc21bd49fccd973de707e2a53a76ac49b552b8712ec46f
         env:
           POSTGRES_DB: postgres
           POSTGRES_PASSWORD: postgres
@@ -100,7 +100,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
       valkey:
-        image: valkey/valkey:9
+        image: valkey/valkey:9@sha256:418652cfb58ef879d4978c33553735d7147016032d5aefaa14c828e611eb9dfd
         ports:
           - 6379:6379
         options: >-
@@ -110,7 +110,7 @@ jobs:
           --health-retries 5
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 2
 
@@ -223,7 +223,7 @@ jobs:
       TADOKU_TEST_VALKEY_URL: redis://127.0.0.1:6379
     services:
       postgres:
-        image: postgres:17
+        image: postgres:17@sha256:d74eeac9a635390a49bc21bd49fccd973de707e2a53a76ac49b552b8712ec46f
         env:
           POSTGRES_DB: postgres
           POSTGRES_PASSWORD: postgres
@@ -256,7 +256,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
       valkey:
-        image: valkey/valkey:9
+        image: valkey/valkey:9@sha256:418652cfb58ef879d4978c33553735d7147016032d5aefaa14c828e611eb9dfd
         ports:
           - 6379:6379
         options: >-
@@ -266,7 +266,7 @@ jobs:
           --health-retries 5
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       # bazel-contrib/setup-bazel 0.19.0
       - name: Setup Bazel
@@ -309,7 +309,7 @@ jobs:
       packages: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       # bazel-contrib/setup-bazel 0.19.0
       - name: Setup Bazel

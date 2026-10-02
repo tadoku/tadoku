@@ -109,10 +109,10 @@ importers:
         specifier: 14.6.7
         version: 14.6.7(@testing-library/dom@10.4.2)
       '@types/dompurify':
-        specifier: ^3.2.0
+        specifier: 3.2.0
         version: 3.2.0
       '@types/luxon':
-        specifier: ^3.7.1
+        specifier: 3.7.6
         version: 3.7.6
       '@types/node':
         specifier: 18.7.18
@@ -124,10 +124,10 @@ importers:
         specifier: 18.3.7
         version: 18.3.7(@types/react@18.3.31)
       '@types/uuid':
-        specifier: ^9.0.0
+        specifier: 9.0.8
         version: 9.0.8
       autoprefixer:
-        specifier: ^10.6.1
+        specifier: 10.6.1
         version: 10.6.1(postcss@8.5.28)
       eslint:
         specifier: 8.29.0
@@ -139,10 +139,10 @@ importers:
         specifier: 27.0.1
         version: 27.0.1
       postcss:
-        specifier: ^8.5.23
+        specifier: 8.5.28
         version: 8.5.28
       tailwindcss:
-        specifier: ^3.2.4
+        specifier: 3.4.19
         version: 3.4.19(yaml@2.7.1)
       vitest:
         specifier: 4.1.11
@@ -203,7 +203,7 @@ importers:
         specifier: 18.3.7
         version: 18.3.7(@types/react@18.3.31)
       autoprefixer:
-        specifier: ^10.6.1
+        specifier: 10.6.1
         version: 10.6.1(postcss@8.5.28)
       eslint:
         specifier: 8.29.0
@@ -212,10 +212,10 @@ importers:
         specifier: ^13.1.1
         version: 13.5.11(eslint@8.29.0)(typescript@4.9.3)
       postcss:
-        specifier: ^8.5.23
+        specifier: 8.5.28
         version: 8.5.28
       tailwindcss:
-        specifier: ^3.2.4
+        specifier: 3.4.19
         version: 3.4.19(yaml@2.7.1)
 
   apps/paper-playground:
@@ -340,7 +340,7 @@ importers:
         specifier: 20.19.43
         version: 20.19.43
       '@types/prismjs':
-        specifier: ^1.26.6
+        specifier: 1.26.6
         version: 1.26.6
       '@types/react':
         specifier: 18.3.31
@@ -455,13 +455,13 @@ importers:
         version: 3.25.76
     devDependencies:
       '@types/luxon':
-        specifier: ^3.7.1
+        specifier: 3.7.6
         version: 3.7.6
       '@types/react-syntax-highlighter':
-        specifier: ^15.5.5
+        specifier: 15.5.13
         version: 15.5.13
       autoprefixer:
-        specifier: ^10.6.1
+        specifier: 10.6.1
         version: 10.6.1(postcss@8.5.28)
       eslint:
         specifier: 8.29.0
@@ -470,10 +470,10 @@ importers:
         specifier: ^13.1.1
         version: 13.5.11(eslint@8.29.0)(typescript@4.9.3)
       postcss:
-        specifier: ^8.5.23
+        specifier: 8.5.28
         version: 8.5.28
       tailwindcss:
-        specifier: ^3.2.4
+        specifier: 3.4.19
         version: 3.4.19(yaml@2.7.1)
 
   apps/webv2:
@@ -561,10 +561,10 @@ importers:
         specifier: 16.3.3
         version: 16.3.3(@testing-library/dom@10.4.2)(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
       '@types/dompurify':
-        specifier: ^3.2.0
+        specifier: 3.2.0
         version: 3.2.0
       '@types/luxon':
-        specifier: ^3.7.1
+        specifier: 3.7.6
         version: 3.7.6
       '@types/node':
         specifier: 18.7.18
@@ -576,7 +576,7 @@ importers:
         specifier: 18.3.7
         version: 18.3.7(@types/react@18.3.31)
       autoprefixer:
-        specifier: ^10.6.1
+        specifier: 10.6.1
         version: 10.6.1(postcss@8.5.28)
       eslint:
         specifier: 8.29.0
@@ -588,10 +588,10 @@ importers:
         specifier: 27.0.1
         version: 27.0.1
       postcss:
-        specifier: ^8.5.23
+        specifier: 8.5.28
         version: 8.5.28
       tailwindcss:
-        specifier: ^3.2.4
+        specifier: 3.4.19
         version: 3.4.19(yaml@2.7.1)
       vitest:
         specifier: 4.1.11
@@ -625,7 +625,7 @@ importers:
         specifier: 14.6.7
         version: 14.6.7(@testing-library/dom@10.4.2)
       '@types/luxon':
-        specifier: ^3.7.1
+        specifier: 3.7.6
         version: 3.7.6
       '@types/node':
         specifier: 20.19.43
@@ -719,16 +719,16 @@ importers:
         version: 4.9.3
     devDependencies:
       '@types/luxon':
-        specifier: ^3.7.1
+        specifier: 3.7.6
         version: 3.7.6
       autoprefixer:
-        specifier: ^10.6.1
+        specifier: 10.6.1
         version: 10.6.1(postcss@8.5.28)
       postcss:
-        specifier: ^8.5.23
+        specifier: 8.5.28
         version: 8.5.28
       tailwindcss:
-        specifier: ^3.2.4
+        specifier: 3.4.19
         version: 3.4.19(yaml@2.7.1)
 
 packages:
@@ -1449,10 +1449,6 @@ packages:
   '@jridgewell/gen-mapping@0.3.13':
     resolution: {integrity: sha512-2kkt/7niJ6MgEPxF0bYdQ6etZaA+fQvDcLKckhy1yIQOzaoKjBBjSj63/aLVjYE3qhRt5dvM+uUyfCg6UKCBbA==}
 
-  '@jridgewell/gen-mapping@0.3.8':
-    resolution: {integrity: sha512-imAbBGkb+ebQyxKgzv5Hu2nmROxoDOXHh80evxdoXNOrvAnVx7zimzc1Oo5h9RlfV4vPXaE2iM5pOFbvOCClWA==}
-    engines: {node: '>=6.0.0'}
-
   '@jridgewell/remapping@2.3.5':
     resolution: {integrity: sha512-LI9u/+laYG4Ds1TDKSJW2YPrIlcVYOwi2fUC6xB43lueCjgxV4lffOCZCtYFiH6TNOX+tQKXx97T4IKHbhyHEQ==}
 
@@ -1460,15 +1456,8 @@ packages:
     resolution: {integrity: sha512-bRISgCIjP20/tbWSPWMEi54QVPRZExkuD9lJL+UIxUKtwVJA8wW1Trb1jMs1RFXo1CBTNZ/5hpC9QvmKWdopKw==}
     engines: {node: '>=6.0.0'}
 
-  '@jridgewell/set-array@1.2.1':
-    resolution: {integrity: sha512-R8gLRTZeyp03ymzP/6Lil/28tGeGEzhx1q2k703KGWRAI1VdvPIXdG70VJc2pAMw3NA6JKL5hhFu1sJX0Mnn/A==}
-    engines: {node: '>=6.0.0'}
-
   '@jridgewell/sourcemap-codec@1.5.5':
     resolution: {integrity: sha512-cYQ9310grqxueWbl+WuIUIaiUaDcj7WOq5fVhEljNVgRfOUhY9fy2zTvfoqWsnebh8Sl70VScFbICvJnLKB0Og==}
-
-  '@jridgewell/trace-mapping@0.3.25':
-    resolution: {integrity: sha512-vNk6aEwybGtawWmy/PzwnGDOjCkLWSD2wqvjGGAgOAwCGWySYXfYoxt00IJkTF+8Lb57DwOb3Aa0o9CApepiYQ==}
 
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
@@ -5763,12 +5752,6 @@ snapshots:
       '@jridgewell/sourcemap-codec': 1.5.5
       '@jridgewell/trace-mapping': 0.3.31
 
-  '@jridgewell/gen-mapping@0.3.8':
-    dependencies:
-      '@jridgewell/set-array': 1.2.1
-      '@jridgewell/sourcemap-codec': 1.5.5
-      '@jridgewell/trace-mapping': 0.3.25
-
   '@jridgewell/remapping@2.3.5':
     dependencies:
       '@jridgewell/gen-mapping': 0.3.13
@@ -5776,14 +5759,7 @@ snapshots:
 
   '@jridgewell/resolve-uri@3.1.2': {}
 
-  '@jridgewell/set-array@1.2.1': {}
-
   '@jridgewell/sourcemap-codec@1.5.5': {}
-
-  '@jridgewell/trace-mapping@0.3.25':
-    dependencies:
-      '@jridgewell/resolve-uri': 3.1.2
-      '@jridgewell/sourcemap-codec': 1.5.5
 
   '@jridgewell/trace-mapping@0.3.31':
     dependencies:
@@ -9215,7 +9191,7 @@ snapshots:
 
   sucrase@3.35.0:
     dependencies:
-      '@jridgewell/gen-mapping': 0.3.8
+      '@jridgewell/gen-mapping': 0.3.13
       commander: 4.1.1
       glob: 10.4.5
       lines-and-columns: 1.2.4

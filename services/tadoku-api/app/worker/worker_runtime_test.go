@@ -18,7 +18,9 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
+	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant/alltenants"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testvalkey"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
@@ -31,6 +33,242 @@ type workerFixture struct {
 	dsn      string
 	client   valkeygo.Client
 	prefix   string
+}
+
+type workerQueryScope struct {
+	key tenant.Key
+	all bool
+}
+
+type workerScopeTracer struct {
+	mu      sync.Mutex
+	queries map[string][]workerQueryScope
+}
+
+func (tracer *workerScopeTracer) TraceQueryStart(ctx context.Context, _ *pgx.Conn, data pgx.TraceQueryStartData) context.Context {
+	tracer.record(ctx, data.SQL)
+	return ctx
+}
+
+func (*workerScopeTracer) TraceQueryEnd(context.Context, *pgx.Conn, pgx.TraceQueryEndData) {}
+
+func (*workerScopeTracer) TraceBatchStart(ctx context.Context, _ *pgx.Conn, _ pgx.TraceBatchStartData) context.Context {
+	return ctx
+}
+
+func (tracer *workerScopeTracer) TraceBatchQuery(ctx context.Context, _ *pgx.Conn, data pgx.TraceBatchQueryData) {
+	tracer.record(ctx, data.SQL)
+}
+
+func (*workerScopeTracer) TraceBatchEnd(context.Context, *pgx.Conn, pgx.TraceBatchEndData) {}
+
+func (tracer *workerScopeTracer) record(ctx context.Context, sql string) {
+	for _, name := range []string{"Claim", "Complete", "Retry", "Fail", "Renew", "CleanupCompleted", "Stats", "UnsupportedStats"} {
+		if !strings.HasPrefix(sql, "-- name: "+name+" :") {
+			continue
+		}
+		key, _ := tenant.FromContext(ctx)
+		tracer.mu.Lock()
+		tracer.queries[name] = append(tracer.queries[name], workerQueryScope{key: key, all: alltenants.Enabled(ctx)})
+		tracer.mu.Unlock()
+		break
+	}
+}
+
+func (tracer *workerScopeTracer) scopes(name string) []workerQueryScope {
+	tracer.mu.Lock()
+	defer tracer.mu.Unlock()
+	return append([]workerQueryScope(nil), tracer.queries[name]...)
+}
+
+func tracedWorkerPool(t *testing.T, dsn string) (*pgxpool.Pool, *workerScopeTracer) {
+	t.Helper()
+	config, err := pgxpool.ParseConfig(dsn)
+	if err != nil {
+		t.Fatal(err)
+	}
+	tracer := &workerScopeTracer{queries: make(map[string][]workerQueryScope)}
+	config.ConnConfig.Tracer = tracer
+	pool, err := pgxpool.NewWithConfig(t.Context(), config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(pool.Close)
+	return pool, tracer
+}
+
+func TestWorkerProcessUsesPersistedTenant(t *testing.T) {
+	f, err := newWorkerFixture(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := f.Close(); err != nil {
+			t.Error(err)
+		}
+	})
+	key, err := tenant.Parse("e2e/worker-0123abcd")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.db.Exec(t.Context(), `insert into tenants (key, kind) values ($1, 'test')`, key.String()); err != nil {
+		t.Fatal(err)
+	}
+	pool, tracer := tracedWorkerPool(t, f.dsn)
+	repository := jobqueue.NewRepository(pool)
+	for _, test := range []struct {
+		name       string
+		handlerErr error
+		state      string
+		transition string
+	}{
+		{"complete", nil, "completed", "Complete"},
+		{"retry", errors.New("temporary fixture error"), "pending", "Retry"},
+		{"fail", &permanentError{err: errors.New("permanent fixture error")}, "failed", "Fail"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			var id int64
+			if err := f.db.QueryRow(t.Context(), `insert into jobs (tenant, task_type, payload)
+				values ($1, $2, '{"year":2026}') returning id`, key.String(), string(jobs.LeaderboardInvalidateOfficialV1)).Scan(&id); err != nil {
+				t.Fatal(err)
+			}
+			t.Cleanup(func() {
+				ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+				defer cancel()
+				if _, err := f.db.Exec(ctx, `delete from jobs where id=$1`, id); err != nil {
+					t.Error(err)
+				}
+			})
+			claimed, err := repository.Claim(alltenants.With(t.Context()), jobs.LeaderboardInvalidateOfficialV1, 1, 30*time.Second, 3)
+			if err != nil || len(claimed) != 1 || claimed[0].ID != id {
+				t.Fatalf("claim fixture job: count=%d error=%v", len(claimed), err)
+			}
+			var observedKey tenant.Key
+			var observedAll bool
+			var storedTenant, storedAll string
+			handlers, err := newRegistry(handle(func(ctx context.Context, _ jobs.InvalidateOfficialLeaderboardV1) error {
+				observedKey, _ = tenant.FromContext(ctx)
+				observedAll = alltenants.Enabled(ctx)
+				executor, err := postgres.Executor(ctx, pool)
+				if err != nil {
+					return err
+				}
+				if err := executor.QueryRow(ctx, `select current_setting('tadoku.tenant'), coalesce(current_setting('tadoku.all_tenants', true), '')`).Scan(&storedTenant, &storedAll); err != nil {
+					return err
+				}
+				return test.handlerErr
+			}, Policy{Concurrency: 1, Timeout: time.Second, MaxAttempts: 3}))
+			if err != nil {
+				t.Fatal(err)
+			}
+			runtime := &runner{
+				queue:    jobqueue.NewService(repository),
+				handlers: handlers,
+				logger:   slog.New(slog.NewTextHandler(io.Discard, nil)),
+				metrics:  NewMetrics(prometheus.NewRegistry()),
+			}
+			spec := handlers.ordered[0].spec
+			spec.lease = time.Minute
+			renewals := len(tracer.scopes("Renew"))
+			err = runtime.process(tenant.WithKey(t.Context(), tenant.Production()), claimed[0], spec)
+			if !errors.Is(err, test.handlerErr) {
+				t.Errorf("handler result = %v; want %v", err, test.handlerErr)
+			}
+			if observedKey != key || observedAll || storedTenant != key.String() || storedAll == "on" {
+				t.Errorf("handler context tenant=%s all=%t; database tenant=%s all=%s; want tenant=%s without all-tenants", observedKey, observedAll, storedTenant, storedAll, key)
+			}
+			var state string
+			if err := f.db.QueryRow(t.Context(), `select state from jobs where id=$1`, id).Scan(&state); err != nil {
+				t.Fatal(err)
+			}
+			if state != test.state {
+				t.Errorf("job state = %s; want %s", state, test.state)
+			}
+			observed := tracer.scopes(test.transition)
+			if len(observed) != 1 || observed[0].key != key || observed[0].all {
+				t.Errorf("%s query contexts = %+v; want job tenant without all-tenants", test.transition, observed)
+			}
+			observed = tracer.scopes("Renew")[renewals:]
+			if len(observed) != 1 || observed[0].key != key || observed[0].all {
+				t.Errorf("pre-dispatch renewal contexts = %+v; want job tenant without all-tenants", observed)
+			}
+		})
+	}
+}
+
+func TestBaseWorkerHousekeepingUsesAllTenants(t *testing.T) {
+	f, err := newWorkerFixture(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := f.Close(); err != nil {
+			t.Error(err)
+		}
+	})
+	if _, err := f.db.Exec(t.Context(), `insert into tenants (key, kind) values ('e2e/worker-0123abcd', 'test');
+		insert into jobs (tenant, task_type, payload, state, created_at, completed_at)
+		select key, 'leaderboard.invalidate_official.v1', '{"year":2026}'::jsonb, 'completed', now()-interval '1 year', now()-interval '1 year' from tenants;
+		insert into jobs (tenant, task_type, payload, state, failed_at)
+		select key, 'leaderboard.invalidate_official.v1', '{"year":2026}'::jsonb, 'failed', now() from tenants;
+		insert into jobs (tenant, task_type, payload)
+		select key, 'future.worker.v1', '{}'::jsonb from tenants;`); err != nil {
+		t.Fatal(err)
+	}
+	pool, tracer := tracedWorkerPool(t, f.dsn)
+	registry := prometheus.NewRegistry()
+	handlers, err := newRegistry(handle(func(context.Context, jobs.InvalidateOfficialLeaderboardV1) error { return nil }, Policy{Concurrency: 1, Timeout: time.Second, MaxAttempts: 3}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	application := &Application{runner: &runner{
+		queue:           jobqueue.NewService(jobqueue.NewRepository(pool)),
+		handlers:        handlers,
+		logger:          slog.New(slog.NewTextHandler(io.Discard, nil)),
+		metrics:         NewMetrics(registry),
+		concurrency:     1,
+		shutdownTimeout: time.Second,
+	}}
+	startWorker(t, application)
+	if err := waitFor(t.Context(), func() (bool, error) { return application.Ready(), nil }); err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"Claim", "CleanupCompleted", "Stats", "UnsupportedStats"} {
+		observed := tracer.scopes(name)
+		if len(observed) == 0 {
+			t.Errorf("%s did not reach PostgreSQL", name)
+		}
+		for _, scope := range observed {
+			if scope.key != (tenant.Key{}) || !scope.all {
+				t.Errorf("%s scope = %+v; want only all-tenants", name, scope)
+			}
+		}
+	}
+	var completed int
+	if err := f.db.QueryRow(t.Context(), `select count(*) from jobs where state='completed'`).Scan(&completed); err != nil {
+		t.Fatal(err)
+	}
+	if completed != 0 {
+		t.Errorf("expired completed jobs remaining = %d; want 0 across both tenants", completed)
+	}
+	families, err := registry.Gather()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"tadoku_worker_failed_jobs", "tadoku_worker_unsupported_pending_jobs"} {
+		found := false
+		for _, family := range families {
+			if family.GetName() == name {
+				found = true
+				if len(family.Metric) != 1 || family.Metric[0].GetGauge().GetValue() != 2 {
+					t.Errorf("%s = %v; want 2 across both tenants", name, family.Metric)
+				}
+			}
+		}
+		if !found {
+			t.Errorf("missing metric %s", name)
+		}
+	}
 }
 
 func newWorkerFixture(ctx context.Context) (_ workerFixture, err error) {
@@ -105,7 +343,7 @@ func (f workerFixture) runner(t *testing.T, client valkeygo.Client, providerTime
 
 func startWorker(t *testing.T, runner *Application) {
 	t.Helper()
-	ctx, cancel := context.WithCancel(tenant.WithKey(context.Background(), tenant.Production()))
+	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan struct{})
 	go func() { defer close(done); runner.Run(ctx) }()
 	t.Cleanup(func() {
@@ -386,7 +624,7 @@ func TestWorkerShutdownCancelsActiveJob(t *testing.T) {
 		release: release,
 	}
 	runner := f.runner(t, blocked, 8*time.Second, 100*time.Millisecond)
-	ctx, cancel := context.WithCancel(tenant.WithKey(context.Background(), tenant.Production()))
+	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan struct{})
 	go func() { defer close(done); runner.Run(ctx) }()
 	t.Cleanup(func() {
@@ -784,7 +1022,7 @@ func TestWorkerRetainsSlotUntilCanceledHandlerReturns(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	ctx, cancel := context.WithCancel(tenantCtx)
+	ctx, cancel := context.WithCancel(t.Context())
 	done := make(chan struct{})
 	go func() { defer close(done); runtime.run(ctx) }()
 	t.Cleanup(func() {

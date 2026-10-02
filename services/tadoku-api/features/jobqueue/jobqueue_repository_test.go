@@ -17,6 +17,54 @@ import (
 
 var jobTestTime = time.Date(2026, 9, 24, 12, 0, 0, 0, time.UTC)
 
+func TestClaimReturnsTenantForFencedTransitions(t *testing.T) {
+	db := jobTestDB(t)
+	key, err := tenant.Parse("e2e/worker-0123abcd")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Pool.Exec(t.Context(), `insert into tenants (key, kind) values ($1, 'test')`, key.String()); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Pool.Exec(t.Context(), `insert into jobs (tenant, task_type, payload)
+		select $1, $2, '{"year":2026}'::jsonb from generate_series(1, 4)`, key.String(), string(jobs.LeaderboardInvalidateOfficialV1)); err != nil {
+		t.Fatal(err)
+	}
+	repo := NewRepository(db.Pool)
+	claimed, err := repo.Claim(tenant.WithKey(t.Context(), key), jobs.LeaderboardInvalidateOfficialV1, 4, time.Minute, 3)
+	if err != nil || len(claimed) != 4 {
+		t.Fatalf("claim test-tenant jobs: count=%d error=%v", len(claimed), err)
+	}
+	for _, task := range claimed {
+		if task.Tenant != key {
+			t.Errorf("job %d tenant = %s; want %s", task.ID, task.Tenant, key)
+		}
+	}
+	ctx := tenant.WithKey(t.Context(), key)
+	if ok, err := repo.Complete(ctx, claimed[0]); err != nil || !ok {
+		t.Fatalf("complete test-tenant job: held=%t error=%v", ok, err)
+	}
+	expires, held, err := repo.Renew(ctx, claimed[1], 2*time.Minute)
+	if err != nil || !held || !expires.After(claimed[1].LeaseExpiresAt) {
+		t.Fatalf("renew test-tenant job: expires=%s held=%t error=%v", expires, held, err)
+	}
+	if ok, err := repo.Retry(ctx, claimed[2], timex.Now().Add(time.Minute), "temporary", 3); err != nil || !ok {
+		t.Fatalf("retry test-tenant job: held=%t error=%v", ok, err)
+	}
+	if ok, err := repo.Fail(ctx, claimed[3], "invalid_payload"); err != nil || !ok {
+		t.Fatalf("fail test-tenant job: held=%t error=%v", ok, err)
+	}
+	for i, want := range []string{"completed", "running", "pending", "failed"} {
+		var state, stored string
+		if err := db.Pool.QueryRow(t.Context(), `select state, tenant from jobs where id=$1`, claimed[i].ID).Scan(&state, &stored); err != nil {
+			t.Fatal(err)
+		}
+		if state != want || stored != key.String() {
+			t.Errorf("job %d state=%s tenant=%s; want %s tenant=%s", claimed[i].ID, state, stored, want, key)
+		}
+	}
+}
+
 func jobTestDB(t *testing.T) *testpostgres.Database {
 	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Helper()

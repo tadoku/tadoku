@@ -51,8 +51,8 @@ func TestWorkerRetainsTenantAcrossGracefulShutdown(t *testing.T) {
 		t.Fatal(err)
 	}
 	application.runner.handlers = handlers
-	ctx := tenant.WithKey(context.WithValue(t.Context(), requestKey{}, "worker-context"), tenant.Production())
-	id, err := insertJob(ctx, f.db, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":2025}`, false)
+	ctx := context.WithValue(t.Context(), requestKey{}, "worker-context")
+	id, err := insertJob(tenant.WithKey(ctx, tenant.Production()), f.db, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":2025}`, false)
 	if err != nil {
 		t.Fatal(err)
 	}

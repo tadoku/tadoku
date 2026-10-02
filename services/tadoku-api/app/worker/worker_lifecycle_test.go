@@ -63,7 +63,7 @@ func TestWorkerJobLifecycle(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	ctx, cancel := context.WithCancel(tenant.WithKey(context.Background(), tenant.Production()))
+	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan struct{})
 	go func() { defer close(done); runner.Run(ctx) }()
 	t.Cleanup(func() {

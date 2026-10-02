@@ -61,6 +61,7 @@ func TestReplayCommandCreatesLinkedJob(t *testing.T) {
 }
 
 func TestLoadConfigRejectsInvalidWorkerSettings(t *testing.T) {
+	t.Setenv("WORKER_BRANCH", "")
 	t.Setenv("WORKER_VALKEY_URL", "redis://127.0.0.1:6379")
 	t.Setenv("WORKER_POSTGRES_HOST", "127.0.0.1")
 	t.Setenv("WORKER_POSTGRES_DATABASE", "postgres")
@@ -80,6 +81,9 @@ func TestLoadConfigRejectsInvalidWorkerSettings(t *testing.T) {
 		{"zero shutdown timeout", "WORKER_SHUTDOWN_TIMEOUT", "0s", "ShutdownTimeout"},
 		{"negative shutdown timeout", "WORKER_SHUTDOWN_TIMEOUT", "-1s", "ShutdownTimeout"},
 		{"malformed shutdown timeout", "WORKER_SHUTDOWN_TIMEOUT", "invalid", "WORKER_SHUTDOWN_TIMEOUT"},
+		{"invalid branch", "WORKER_BRANCH", "INVALID", "WORKER_BRANCH"},
+		{"unqualified branch", "WORKER_BRANCH", "tadoku", "WORKER_BRANCH"},
+		{"production branch", "WORKER_BRANCH", "tadoku/prod", "WORKER_BRANCH"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Setenv(tc.key, tc.value)
@@ -92,6 +96,7 @@ func TestLoadConfigRejectsInvalidWorkerSettings(t *testing.T) {
 }
 
 func TestLoadConfigWorkerSettings(t *testing.T) {
+	t.Setenv("WORKER_BRANCH", "")
 	t.Setenv("WORKER_VALKEY_URL", "redis://127.0.0.1:6379")
 	t.Setenv("WORKER_POSTGRES_HOST", "127.0.0.1")
 	t.Setenv("WORKER_POSTGRES_DATABASE", "postgres")
@@ -117,6 +122,12 @@ func TestLoadConfigWorkerSettings(t *testing.T) {
 		}
 		if cfg.Concurrency != 7 || cfg.ShutdownTimeout != 3*time.Second {
 			t.Errorf("worker settings = (%d, %s), want (7, 3s)", cfg.Concurrency, cfg.ShutdownTimeout)
+		}
+	})
+	t.Run("valid branch", func(t *testing.T) {
+		t.Setenv("WORKER_BRANCH", "e2e/worker-0123abcd")
+		if _, err := loadConfig(); err != nil {
+			t.Fatalf("loadConfig rejected a valid branch: %v", err)
 		}
 	})
 }

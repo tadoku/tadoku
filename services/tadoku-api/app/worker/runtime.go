@@ -12,6 +12,8 @@ import (
 
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant/alltenants"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
 
@@ -24,6 +26,7 @@ type handlerSpec struct {
 }
 
 type runner struct {
+	scope           tenant.Deployment
 	queue           *jobqueue.Service
 	handlers        *registry
 	logger          *slog.Logger
@@ -36,6 +39,12 @@ type runner struct {
 func (r *runner) run(ctx context.Context) {
 	workCtx, cancelWork := context.WithCancel(context.WithoutCancel(ctx))
 	defer cancelWork()
+	var queueCtx context.Context
+	if key, branch := r.scope.Key(); branch {
+		queueCtx = tenant.WithKey(ctx, key)
+	} else {
+		queueCtx = alltenants.With(ctx)
+	}
 
 	capacity := 0
 	for _, entry := range r.handlers.ordered {
@@ -53,7 +62,7 @@ func (r *runner) run(ctx context.Context) {
 	rotation := 0
 	unsupported := int64(0)
 	refreshMetrics := func() {
-		count, err := r.updateMetrics(ctx)
+		count, err := r.updateMetrics(queueCtx)
 		if err != nil {
 			r.logger.Warn("inspect job backlog", "error", err)
 		} else if count != unsupported {
@@ -64,7 +73,7 @@ func (r *runner) run(ctx context.Context) {
 		}
 	}
 
-	r.cleanupCompleted(ctx)
+	r.cleanupCompleted(queueCtx)
 	refreshMetrics()
 	for {
 		if ctx.Err() != nil {
@@ -79,7 +88,7 @@ func (r *runner) run(ctx context.Context) {
 			if free < 1 {
 				continue
 			}
-			tasks, err := r.queue.Claim(ctx, spec.typeName, free, spec.lease, spec.maxAttempts)
+			tasks, err := r.queue.Claim(queueCtx, spec.typeName, free, spec.lease, spec.maxAttempts)
 			if err != nil {
 				claimHealthy = false
 				r.logger.Error("claim jobs", "type", spec.typeName, "error", err)
@@ -111,7 +120,7 @@ func (r *runner) run(ctx context.Context) {
 		case <-metricsTicker.C:
 			refreshMetrics()
 		case <-cleanupTicker.C:
-			r.cleanupCompleted(ctx)
+			r.cleanupCompleted(queueCtx)
 		}
 	}
 
@@ -185,6 +194,7 @@ func (r *runner) updateMetrics(ctx context.Context) (int64, error) {
 }
 
 func (r *runner) process(ctx context.Context, task jobqueue.ClaimedJob, spec handlerSpec) error {
+	ctx = tenant.WithKey(ctx, task.Tenant)
 	margin := spec.lease / 3
 	remainingLease := time.Until(task.LeaseExpiresAt)
 	if remainingLease <= margin {
@@ -222,7 +232,7 @@ func (r *runner) process(ctx context.Context, task jobqueue.ClaimedJob, spec han
 	}
 
 	r.metrics.duration.WithLabelValues(string(task.Type)).Observe(max(0, (limit - time.Until(maximum)).Seconds()))
-	transitionCtx, stop := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
+	transitionCtx, stop := context.WithTimeout(tenant.WithKey(context.Background(), task.Tenant), 5*time.Second)
 	defer stop()
 
 	var held bool

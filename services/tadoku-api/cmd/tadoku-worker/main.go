@@ -30,6 +30,8 @@ import (
 )
 
 type config struct {
+	Branch                 string `envconfig:"branch"`
+	deployment             tenant.Deployment
 	Concurrency            int                   `validate:"gt=0" envconfig:"concurrency" default:"4"`
 	Port                   int                   `validate:"gt=0,lte=65535" default:"8000"`
 	MetricsPort            int                   `validate:"gt=0,lte=65535" envconfig:"metrics_port" default:"9090"`
@@ -47,10 +49,14 @@ func loadConfig() (config, error) {
 	if err := envconfig.Process("WORKER", &cfg); err != nil {
 		return config{}, fmt.Errorf("load worker config: %w", err)
 	}
+	deployment, err := tenant.ParseDeployment(cfg.Branch)
+	if err != nil {
+		return config{}, fmt.Errorf("validate worker config: WORKER_BRANCH: %w", err)
+	}
+	cfg.deployment = deployment
 	if err := validator.New().Struct(cfg); err != nil {
 		return config{}, fmt.Errorf("validate worker config: %w", err)
 	}
-	var err error
 	cfg.Postgres, err = postgresconfig.Load("WORKER_POSTGRES", "WORKER_POSTGRES_URL")
 	if err != nil {
 		return config{}, err
@@ -59,7 +65,6 @@ func loadConfig() (config, error) {
 }
 
 func run(ctx context.Context, cfg config, logger *slog.Logger) error {
-	ctx = tenant.WithKey(ctx, tenant.Production())
 	startupCtx, cancelStartup := context.WithTimeout(ctx, cfg.DialTimeout)
 	pool, err := postgres.Open(startupCtx, cfg.Postgres.WithApplicationName("tadoku-worker").URL(), cfg.PostgresMaxConnections)
 	cancelStartup()
@@ -86,6 +91,7 @@ func run(ctx context.Context, cfg config, logger *slog.Logger) error {
 	metrics := worker.NewMetrics(registry)
 	leaderboardService := leaderboard.NewService(leaderboard.NewRepository(pool), client, cfg.ValkeyTimeout, cfg.LeaderboardCachePrefix)
 	application, err := worker.NewApplication(jobqueue.NewService(jobqueue.NewRepository(pool)), leaderboardService, worker.Config{
+		Scope:           cfg.deployment,
 		Concurrency:     cfg.Concurrency,
 		ShutdownTimeout: cfg.ShutdownTimeout,
 		Logger:          logger,

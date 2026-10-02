@@ -252,6 +252,11 @@ The worker uses `WORKER_POSTGRES_*` split connection configuration,
 `WORKER_DIAL_TIMEOUT` (default 3s), `WORKER_CONCURRENCY` (default 4), and
 `WORKER_SHUTDOWN_TIMEOUT` (default 15s). Concurrency and shutdown timeout must
 be positive; the command loads and validates both before application startup.
+`WORKER_BRANCH` defaults to empty, selecting the base worker's all-tenants queue
+scope. A non-empty value must be a valid `<name>/<id>` tenant key other than
+`tadoku/prod`. Branch queue isolation requires the `jobs` row-level security
+policy, so keep this variable unset when that policy is absent. Every handler
+and lease transition still uses the tenant persisted on its claimed job.
 Private health and metrics listeners default to `WORKER_PORT=8000` and
 `WORKER_METRICS_PORT=9090`. It has no public route. The API and worker must use
 the same database and cache prefix, with a unique prefix per database sharing

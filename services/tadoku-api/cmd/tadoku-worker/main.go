@@ -98,7 +98,10 @@ func run(ctx context.Context, cfg config, logger *slog.Logger) error {
 	)
 
 	metrics := worker.NewMetrics(registry)
-	leaderboardService := leaderboard.NewService(leaderboard.NewRepository(pool), client, cfg.ValkeyTimeout, cfg.LeaderboardCachePrefix)
+	leaderboardService := leaderboard.NewService(
+		leaderboard.NewRepository(pool),
+		leaderboard.NewCache(client, cfg.ValkeyTimeout, cfg.LeaderboardCachePrefix),
+	)
 	application, err := worker.NewApplication(jobqueue.NewService(jobqueue.NewRepository(pool)), leaderboardService, worker.Config{
 		Scope:           cfg.deployment,
 		Concurrency:     cfg.Concurrency,

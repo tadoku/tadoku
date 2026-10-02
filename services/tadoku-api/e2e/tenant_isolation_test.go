@@ -278,7 +278,10 @@ func isolationOwnedRows(t *testing.T, key string) map[string]string {
 func runIsolationWorker(t *testing.T, scope tenant.Deployment, production, test int) {
 	t.Helper()
 	provider := &isolationValkey{Client: leaderboardValkey.client, tenants: make(map[string]int)}
-	service := leaderboard.NewService(leaderboard.NewRepository(api.db.AppPool), provider, time.Second, "")
+	service := leaderboard.NewService(
+		leaderboard.NewRepository(api.db.AppPool),
+		leaderboard.NewCache(provider, time.Second, ""),
+	)
 	application, err := worker.NewApplication(jobqueue.NewService(jobqueue.NewRepository(api.db.AppPool)), service, worker.Config{
 		Scope:           scope,
 		Concurrency:     4,

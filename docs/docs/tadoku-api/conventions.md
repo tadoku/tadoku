@@ -55,6 +55,7 @@ Group a feature's operations by responsibility, not one file per operation:
 | `<feature>_service_test.go` | Service and validation tests, always database-free. |
 | `<feature>_repository.go` | The repository struct, its constructor and the queries. |
 | `<feature>_repository_test.go` | The feature's only database tests, which exercise the repository directly. |
+| `<feature>_cache.go` or `<feature>_store.go` | Optional. The cache or store struct, its constructor and its provider commands; see [Repositories and stores](#repositories-and-stores). |
 
 Service orchestration is exercised through HTTP E2Es; see [Testing](./testing.md).
 
@@ -119,22 +120,37 @@ The following rules decide where each check belongs.
 
 ## Repositories and stores
 
-- Name a type that reads or writes authoritative data in PostgreSQL a
-  *Repository*. Name a type that accesses auxiliary, non-authoritative storage,
-  such as Valkey caches, derived data, pub/sub or coordination state, a
-  *Store*.
+- A *Repository* reads and writes authoritative data in PostgreSQL. A *Store*
+  holds non-authoritative data, such as a cache, derived data or coordination
+  state. Everything in a Store can be discarded and rebuilt from its
+  authoritative source: a Repository, or the provider for a provider-backed
+  read cache.
+- "Store" is the umbrella term. Name the type after its specific role, such as
+  `Cache`, `Lock` or `Queue`, and use `Store` as a type name only when no more
+  specific role fits.
 - Repositories are concrete structs in
   `features/<feature>/<feature>_repository.go`. They reach PostgreSQL through
   `postgres.Executor` (`services/tadoku-api/infra/postgres/`) and the feature's generated sqlc
   package, and convert between sqlc rows and feature domain types internally.
+  They never import a provider client.
+- Caches and stores are concrete structs in the same feature package, in
+  `<feature>_cache.go` or `<feature>_store.go`. They reach only their own
+  provider, such as Valkey, and never import PostgreSQL, pgx or sqlc packages.
+  For example, the leaderboard feature's `Cache` in
+  `services/tadoku-api/features/leaderboard/leaderboard_cache.go` holds the
+  Valkey leaderboard caches.
+- A repository and a cache or store never call each other. The feature service
+  composes them and owns the policy between them, such as cache selection,
+  rebuilds and fallback to the repository. The composition root constructs the
+  cache or store and passes it to the service, so the service never receives a
+  provider client that it would only pass through. `tools/ci/repopolicy`
+  checks these import rules by file name; see
+  [Import boundaries](./import-boundaries.md#repository-and-store-files).
 - Primitive PostgreSQL conversions, including nullable values, UUIDs and
   timestamps, belong in `services/tadoku-api/infra/postgres/`. Repository
   files use those shared helpers; only feature domain and sqlc row mappings
   stay local. `tools/ci/repopolicy` rejects primitive conversion helper
   signatures in handwritten repository files.
-- The leaderboard feature's `Store` in
-  `services/tadoku-api/features/leaderboard/leaderboard_store.go` encapsulates
-  Valkey cache commands. Its service owns cache selection and PostgreSQL fallback.
 - Keep each repository method to one SQL statement. A coherent join or CTE
   counts as one statement and is appropriate when the data needs one database
   snapshot. Compose independent repository reads and writes in the feature

@@ -45,16 +45,16 @@ func TestRebuildDoesNotPublishSnapshotAfterInvalidation(t *testing.T) {
 		}
 	})
 
-	store := NewStore(client, time.Second, "")
-	before, err := store.generation(t.Context(), key)
+	cache := NewCache(client, time.Second, "")
+	before, err := cache.generation(t.Context(), key)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := store.invalidate(t.Context(), key); err != nil {
+	if err := cache.invalidate(t.Context(), key); err != nil {
 		t.Fatal(err)
 	}
 	stale := []score{{userID: uuid.MustParse("11111111-1111-4111-8111-111111111111"), value: 10}}
-	published, err := store.rebuild(t.Context(), key, stale, before)
+	published, err := cache.rebuild(t.Context(), key, stale, before)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -69,12 +69,12 @@ func TestRebuildDoesNotPublishSnapshotAfterInvalidation(t *testing.T) {
 		t.Errorf("stale marker exists after rejected rebuild")
 	}
 
-	after, err := store.generation(t.Context(), key)
+	after, err := cache.generation(t.Context(), key)
 	if err != nil {
 		t.Fatal(err)
 	}
 	fresh := []score{{userID: stale[0].userID, value: 20}}
-	published, err = store.rebuild(t.Context(), key, fresh, after)
+	published, err = cache.rebuild(t.Context(), key, fresh, after)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -89,7 +89,7 @@ func TestRebuildDoesNotPublishSnapshotAfterInvalidation(t *testing.T) {
 		t.Errorf("marker = %q, want native:%s", marker, after)
 	}
 
-	racing := NewStore(&invalidateBeforeZcard{Client: client, key: key, t: t}, time.Second, "")
+	racing := NewCache(&invalidateBeforeZcard{Client: client, key: key, t: t}, time.Second, "")
 	page, cacheExists, err := racing.fetchPage(t.Context(), key, 0, 25)
 	if err != nil {
 		t.Fatal(err)

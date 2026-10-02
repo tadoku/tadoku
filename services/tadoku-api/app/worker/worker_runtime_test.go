@@ -386,7 +386,10 @@ func (f workerFixture) Close() error {
 }
 
 func (f workerFixture) runner(t *testing.T, client valkeygo.Client, providerTimeout, shutdown time.Duration) *Application {
-	service := leaderboard.NewService(leaderboard.NewRepository(f.db), client, providerTimeout, f.prefix)
+	service := leaderboard.NewService(
+		leaderboard.NewRepository(f.db),
+		leaderboard.NewCache(client, providerTimeout, f.prefix),
+	)
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	application, err := NewApplication(jobqueue.NewService(jobqueue.NewRepository(f.db)), service, Config{
 		Concurrency:     4,
@@ -847,7 +850,10 @@ func TestWorkerCompletesWhenRenewalIsCanceledByFinishedHandler(t *testing.T) {
 		release: release,
 	}
 
-	service := leaderboard.NewService(leaderboard.NewRepository(limitedPool), blocked, 8*time.Second, f.prefix)
+	service := leaderboard.NewService(
+		leaderboard.NewRepository(limitedPool),
+		leaderboard.NewCache(blocked, 8*time.Second, f.prefix),
+	)
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	repository := jobqueue.NewRepository(limitedPool)
 	runner, err := NewApplication(jobqueue.NewService(repository), service, Config{
@@ -1035,7 +1041,10 @@ func TestWorkerGlobalLimitLeavesDueRowsUnclaimed(t *testing.T) {
 		release: release,
 	}
 
-	service := leaderboard.NewService(leaderboard.NewRepository(f.db), blocked, 8*time.Second, f.prefix)
+	service := leaderboard.NewService(
+		leaderboard.NewRepository(f.db),
+		leaderboard.NewCache(blocked, 8*time.Second, f.prefix),
+	)
 	application, err := NewApplication(jobqueue.NewService(jobqueue.NewRepository(f.db)), service, Config{
 		Concurrency:     3,
 		ShutdownTimeout: 2 * time.Second,

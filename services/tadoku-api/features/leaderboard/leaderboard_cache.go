@@ -34,45 +34,45 @@ redis.call('DEL', KEYS[1], KEYS[2])
 return 1
 `)
 
-type Store struct {
+type Cache struct {
 	client           valkeygo.Client
 	operationTimeout time.Duration
 	cachePrefix      string
 }
 
-func NewStore(client valkeygo.Client, operationTimeout time.Duration, cachePrefix string) *Store {
-	return &Store{
+func NewCache(client valkeygo.Client, operationTimeout time.Duration, cachePrefix string) *Cache {
+	return &Cache{
 		client:           client,
 		operationTimeout: operationTimeout,
 		cachePrefix:      cachePrefix,
 	}
 }
 
-func (s *Store) cacheKey(key string) string { return s.cachePrefix + key }
+func (c *Cache) cacheKey(key string) string { return c.cachePrefix + key }
 
-func (s *Store) fetchPage(ctx context.Context, key string, start int64, pageSize int) (*page, bool, error) {
-	ctx, cancel := context.WithTimeout(ctx, s.operationTimeout)
+func (c *Cache) fetchPage(ctx context.Context, key string, start int64, pageSize int) (*page, bool, error) {
+	ctx, cancel := context.WithTimeout(ctx, c.operationTimeout)
 	defer cancel()
-	marker, err := s.client.Do(ctx, s.client.B().Get().Key(key+":last_updated").Build()).ToString()
+	marker, err := c.client.Do(ctx, c.client.B().Get().Key(key+":last_updated").Build()).ToString()
 	if err == valkeygo.Nil {
 		return nil, false, nil
 	}
 	if err != nil {
 		return nil, false, fmt.Errorf("check leaderboard marker %s: %w", key, err)
 	}
-	generation, err := s.generation(ctx, key)
+	generation, err := c.generation(ctx, key)
 	if err != nil {
 		return nil, false, err
 	}
 	if generation != "0" && marker != "native:"+generation {
 		return nil, false, nil
 	}
-	total, err := s.client.Do(ctx, s.client.B().Zcard().Key(key).Build()).AsInt64()
+	total, err := c.client.Do(ctx, c.client.B().Zcard().Key(key).Build()).AsInt64()
 	if err != nil {
 		return nil, false, fmt.Errorf("get leaderboard cardinality %s: %w", key, err)
 	}
 	if total == 0 {
-		current, err := s.cacheCurrent(ctx, key, marker, generation)
+		current, err := c.cacheCurrent(ctx, key, marker, generation)
 		if err != nil || !current {
 			return nil, false, err
 		}
@@ -84,7 +84,7 @@ func (s *Store) fetchPage(ctx context.Context, key string, start int64, pageSize
 	if fetchStart > 0 {
 		fetchStart--
 	}
-	values, err := s.client.Do(ctx, s.client.B().Zrange().Key(key).Min(strconv.FormatInt(fetchStart, 10)).Max(strconv.FormatInt(stop+1, 10)).Rev().Withscores().Build()).AsZScores()
+	values, err := c.client.Do(ctx, c.client.B().Zrange().Key(key).Min(strconv.FormatInt(fetchStart, 10)).Max(strconv.FormatInt(stop+1, 10)).Rev().Withscores().Build()).AsZScores()
 	if err != nil {
 		return nil, false, fmt.Errorf("fetch leaderboard page %s: %w", key, err)
 	}
@@ -110,13 +110,13 @@ func (s *Store) fetchPage(ctx context.Context, key string, start int64, pageSize
 	}
 	startRank := int(start) + 1
 	if len(scores) > 0 {
-		higher, err := s.client.Do(ctx, s.client.B().Zcount().Key(key).Min("("+strconv.FormatFloat(scores[0].value, 'f', -1, 64)).Max("+inf").Build()).AsInt64()
+		higher, err := c.client.Do(ctx, c.client.B().Zcount().Key(key).Min("("+strconv.FormatFloat(scores[0].value, 'f', -1, 64)).Max("+inf").Build()).AsInt64()
 		if err != nil {
 			return nil, false, fmt.Errorf("count higher leaderboard scores %s: %w", key, err)
 		}
 		startRank = int(higher) + 1
 	}
-	current, err := s.cacheCurrent(ctx, key, marker, generation)
+	current, err := c.cacheCurrent(ctx, key, marker, generation)
 	if err != nil || !current {
 		return nil, false, err
 	}
@@ -129,8 +129,8 @@ func (s *Store) fetchPage(ctx context.Context, key string, start int64, pageSize
 	}, true, nil
 }
 
-func (s *Store) cacheCurrent(ctx context.Context, key, marker, generation string) (bool, error) {
-	currentMarker, err := s.client.Do(ctx, s.client.B().Get().Key(key+":last_updated").Build()).ToString()
+func (c *Cache) cacheCurrent(ctx context.Context, key, marker, generation string) (bool, error) {
+	currentMarker, err := c.client.Do(ctx, c.client.B().Get().Key(key+":last_updated").Build()).ToString()
 	if err == valkeygo.Nil {
 		return false, nil
 	}
@@ -140,15 +140,15 @@ func (s *Store) cacheCurrent(ctx context.Context, key, marker, generation string
 	if currentMarker != marker {
 		return false, nil
 	}
-	currentGeneration, err := s.generation(ctx, key)
+	currentGeneration, err := c.generation(ctx, key)
 	if err != nil {
 		return false, err
 	}
 	return currentGeneration == generation, nil
 }
 
-func (s *Store) generation(ctx context.Context, key string) (string, error) {
-	value, err := s.client.Do(ctx, s.client.B().Get().Key(key+":generation").Build()).ToString()
+func (c *Cache) generation(ctx context.Context, key string) (string, error) {
+	value, err := c.client.Do(ctx, c.client.B().Get().Key(key+":generation").Build()).ToString()
 	if err == valkeygo.Nil {
 		return "0", nil
 	}
@@ -158,24 +158,24 @@ func (s *Store) generation(ctx context.Context, key string) (string, error) {
 	return value, nil
 }
 
-func (s *Store) invalidate(ctx context.Context, key string) error {
-	ctx, cancel := context.WithTimeout(ctx, s.operationTimeout)
+func (c *Cache) invalidate(ctx context.Context, key string) error {
+	ctx, cancel := context.WithTimeout(ctx, c.operationTimeout)
 	defer cancel()
-	if err := invalidateScript.Exec(ctx, s.client, []string{key, key + ":last_updated", key + ":generation"}, nil).Error(); err != nil {
+	if err := invalidateScript.Exec(ctx, c.client, []string{key, key + ":last_updated", key + ":generation"}, nil).Error(); err != nil {
 		return fmt.Errorf("invalidate leaderboard %s: %w", key, err)
 	}
 	return nil
 }
 
-func (s *Store) rebuild(ctx context.Context, key string, scores []score, generation string) (bool, error) {
-	ctx, cancel := context.WithTimeout(ctx, s.operationTimeout)
+func (c *Cache) rebuild(ctx context.Context, key string, scores []score, generation string) (bool, error) {
+	ctx, cancel := context.WithTimeout(ctx, c.operationTimeout)
 	defer cancel()
 	args := make([]string, 0, 1+len(scores)*2)
 	args = append(args, generation)
 	for _, item := range scores {
 		args = append(args, strconv.FormatFloat(item.value, 'f', -1, 64), item.userID.String())
 	}
-	published, err := rebuildScript.Exec(ctx, s.client, []string{key, key + ":last_updated", key + ":generation"}, args).ToInt64()
+	published, err := rebuildScript.Exec(ctx, c.client, []string{key, key + ":last_updated", key + ":generation"}, args).ToInt64()
 	if err != nil {
 		return false, fmt.Errorf("rebuild leaderboard %s: %w", key, err)
 	}

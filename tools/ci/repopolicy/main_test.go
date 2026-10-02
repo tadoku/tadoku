@@ -248,3 +248,50 @@ func (r *Repository) Create(ctx context.Context) error {
 		})
 	}
 }
+
+func TestAnalyzeImports(t *testing.T) {
+	const source = `package leaderboard
+
+import (
+	"context"
+
+	"github.com/jackc/pgx/v5/pgxpool"
+	kratos "github.com/ory/kratos-client-go"
+	"github.com/tadoku/tadoku/services/common/client/s2s"
+	queries "github.com/tadoku/tadoku/services/tadoku-api/generated/sqlc/leaderboard"
+	"github.com/tadoku/tadoku/services/tadoku-api/infra/keto"
+	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
+	valkeyinfra "github.com/tadoku/tadoku/services/tadoku-api/infra/valkey"
+	valkeygo "github.com/valkey-io/valkey-go"
+)
+`
+	postgres := slices.Repeat([]string{"store-postgres-import"}, 3)
+	provider := slices.Repeat([]string{"repository-provider-import"}, 5)
+	cases := []struct {
+		name string
+		want []string
+	}{
+		{name: "leaderboard_cache.go", want: postgres},
+		{name: "leaderboard_store.go", want: postgres},
+		{name: "leaderboard_repository.go", want: provider},
+		{name: "leaderboard_service.go", want: []string{"valkey-outside-store"}},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			file, err := parser.ParseFile(token.NewFileSet(), tc.name, source, parser.ImportsOnly)
+			if err != nil {
+				t.Fatalf("parse fixture: %v", err)
+			}
+
+			var got []string
+			for _, f := range analyzeImports(tc.name, file) {
+				got = append(got, f.rule)
+			}
+
+			if !slices.Equal(got, tc.want) {
+				t.Errorf("rules = %q, want %q", got, tc.want)
+			}
+		})
+	}
+}

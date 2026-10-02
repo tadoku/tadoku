@@ -54,7 +54,10 @@ func TestWorkerJobLifecycle(t *testing.T) {
 		}
 	}
 
-	service := leaderboard.NewService(leaderboard.NewRepository(db.Pool), client, time.Second, prefix)
+	service := leaderboard.NewService(
+		leaderboard.NewRepository(db.Pool),
+		leaderboard.NewCache(client, time.Second, prefix),
+	)
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	runner, err := NewApplication(jobqueue.NewService(jobqueue.NewRepository(db.Pool)), service, Config{
 		Concurrency:     4,

@@ -49,7 +49,7 @@ explains each command.
 | Changed | Run |
 | --- | --- |
 | Go code | `gofmt -w services/`, `bazel run //:gazelle`, `bazel run //tools/ci/commentpolicy`, then `bazel build //services/... && bazel test //services/...` |
-| Go imports or packages | `bazel run //:gazelle -- -mode=diff`, `./scripts/check-tadoku-api-visibility.sh`, `./tools/ci/check_tadoku_api_provider_deps.sh`, `bazel build //services/tadoku-api/...` |
+| Go imports or packages | `bazel run //:gazelle -- -mode=diff`, `./scripts/check-tadoku-api-visibility.sh`, `./tools/ci/check_tadoku_api_provider_deps.sh`, `bazel run //tools/ci/repopolicy`, `bazel build //services/tadoku-api/...` |
 | SQL queries | `./scripts/generate-sqlc.sh` and commit the full output |
 | OpenAPI contract | `./scripts/generate-openapi.sh` and `pnpm api:generate` in `docs/`; commit both outputs |
 | Frontend | In `frontend/`: `pnpm --filter <app> exec tsc --noEmit`, `pnpm --filter <app> lint`, then `pnpm build` |

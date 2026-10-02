@@ -54,7 +54,7 @@ func TestWorkerRetainsTenantAcrossGracefulShutdown(t *testing.T) {
 		case <-ctx.Done():
 			return ctx.Err()
 		}
-	}, Policy{Concurrency: 1, Timeout: 5 * time.Second, MaxAttempts: 1}))
+	}, policy{Concurrency: 1, Timeout: 5 * time.Second, MaxAttempts: 1}))
 	if err != nil {
 		t.Fatal(err)
 	}

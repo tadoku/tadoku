@@ -15,7 +15,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 )
 
-type Policy struct {
+type policy struct {
 	Concurrency int
 	Timeout     time.Duration
 	MaxAttempts int
@@ -32,7 +32,7 @@ type registry struct {
 	byType  map[jobs.Type]registration
 }
 
-func handle[J jobs.Job](fn func(context.Context, J) error, spec Policy) registration {
+func handle[J jobs.Job](fn func(context.Context, J) error, spec policy) registration {
 	if reflect.TypeFor[J]().Kind() != reflect.Struct {
 		return registration{err: errors.New("job handler requires a concrete value payload")}
 	}

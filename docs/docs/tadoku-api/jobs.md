@@ -151,7 +151,7 @@ The private generic adapter belongs to `app/worker`:
 ```go
 func handle[J jobs.Job](
     fn func(context.Context, J) error,
-    policy Policy,
+    spec policy,
 ) registration
 ```
 
@@ -160,7 +160,7 @@ from the method, so the registration cannot pair a separate name string with
 the wrong payload type.
 
 ```go
-handle(a.InvalidateContestLeaderboard, Policy{
+handle(a.InvalidateContestLeaderboard, policy{
     Concurrency: 2,
     Timeout:     20 * time.Second,
     MaxAttempts: 5,
@@ -194,8 +194,8 @@ constructing the application. `WORKER_CONCURRENCY` defaults to four slots and
 Pass those validated values explicitly in `Config`; `NewApplication` returns an
 error for a non-positive concurrency or shutdown timeout. Startup can also provide
 the process `Logger` and `Metrics`. Handler
-`Policy.Timeout` must be positive, `Policy.Concurrency` must be 1–100 and
-`Policy.MaxAttempts` must be 1–2,147,483,647, matching the queue boundary.
+`policy.Timeout` must be positive, `policy.Concurrency` must be 1–100 and
+`policy.MaxAttempts` must be 1–2,147,483,647, matching the queue boundary.
 Keep registration and handler signatures in the worker application. Startup
 constructs the application and its external resources.
 

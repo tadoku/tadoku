@@ -64,7 +64,7 @@ func registrations(
 	invalidateContest func(context.Context, jobs.InvalidateContestLeaderboardV1) error,
 	invalidateOfficial func(context.Context, jobs.InvalidateOfficialLeaderboardV1) error,
 ) (*registry, error) {
-	leaderboardPolicy := Policy{
+	leaderboardPolicy := policy{
 		Concurrency: 2,
 		Timeout:     20 * time.Second,
 		MaxAttempts: 5,

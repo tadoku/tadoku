@@ -16,11 +16,14 @@ from pg_database where datname = current_database()
 \endif
 
 \connect tadoku
+\set tenant tadoku/prod
+begin;
+select set_config('tadoku.tenant', :'tenant', true);
 select count(*) = 1 as admin_found, min(id::text) as admin_user_id
-from users where display_name = 'Dev Admin'
+from users where tenant = :'tenant' and display_name = 'Dev Admin'
 \gset
 select count(*) = 1 as reader_found, min(id::text) as reader_user_id
-from users where display_name = 'Dev Reader'
+from users where tenant = :'tenant' and display_name = 'Dev Reader'
 \gset
 \if :admin_found
 \else
@@ -30,6 +33,8 @@ from users where display_name = 'Dev Reader'
 \else
   do $$ begin raise exception 'expected one shared Dev Reader fixture; run make dev-seed first'; end $$;
 \endif
+
+commit;
 
 \connect :branch_database
 \ir /seed/immersion.sql

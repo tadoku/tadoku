@@ -137,10 +137,13 @@ Follow the repository's migration-first release contract: schema changes land
 and deploy on their own before dependent runtime code. Digest tracking is not a
 substitute for backward-compatible schema and application releases.
 
-Base seeding is separate from migrations. `make dev-seed` creates the marked
-synthetic identities and base fixtures, but its script still refuses the Talos
-context. Use the existing base fixtures until that guard has been updated; do
-not redirect it to the retired cluster. Branch databases are migrated and
+Base seeding is separate from migrations: `make dev-seed` creates the marked
+synthetic identities and base fixtures on `homelab-talos-dev` for tenant
+`tadoku/prod`. SQL seeds require
+the supplied tenant, set it for each transaction and write that tenant explicitly.
+The canonical tenant retains the fixture UUIDs; other tenants derive fixture UUIDs
+from their tenant key. Caller-supplied identity UUIDs are unchanged.
+Branch databases are migrated and
 seeded by dev-cli tasks; see
 [Development environment](../develop/environment.md#branch-databases).
 

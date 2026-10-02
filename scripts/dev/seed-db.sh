@@ -4,14 +4,14 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 DB_NAME="tadoku-dev-db"
 DB_NAMESPACE="${TADOKU_DEV_NAMESPACE:-tdk-dev-data}"
-KUBE_CONTEXT="${TADOKU_DEV_CONTEXT:-homelab-dev}"
+KUBE_CONTEXT="${TADOKU_DEV_CONTEXT:-homelab-talos-dev}"
 ADMIN_EMAIL="${TADOKU_DEV_ADMIN_EMAIL:-dev@tadoku.app}"
 ADMIN_PASSWORD="${TADOKU_DEV_ADMIN_PASSWORD:-tadoku}"
 READER_EMAIL="${TADOKU_DEV_READER_EMAIL:-reader@tadoku.app}"
 READER_PASSWORD="${TADOKU_DEV_READER_PASSWORD:-tadoku}"
 
-if [ "$KUBE_CONTEXT" != "homelab-dev" ]; then
-  echo "refusing to seed: only the homelab-dev Kubernetes context is supported" >&2
+if [ "$KUBE_CONTEXT" != "homelab-talos-dev" ]; then
+  echo "refusing to seed: only the homelab-talos-dev Kubernetes context is supported" >&2
   exit 1
 fi
 
@@ -288,12 +288,18 @@ run_seed_sql() {
   kubectl --context "$KUBE_CONTEXT" -n "$DB_NAMESPACE" exec -i "$pod" -- env PGPASSWORD="$database_password_value" PGSSLMODE=require \
     psql -X \
       -v ON_ERROR_STOP=1 \
+      -v tenant=tadoku/prod \
       -v "admin_user_id=${ADMIN_USER_ID}" \
       -v "reader_user_id=${READER_USER_ID}" \
       -h "${DB_NAME}.${DB_NAMESPACE}" -U "$user" -d "$database" < "$file"
 }
 
 require_cmd kubectl
+cluster_server="$(kubectl --context "$KUBE_CONTEXT" config view --minify --output=jsonpath='{.clusters[0].cluster.server}')"
+if [ "$cluster_server" != "https://omni.lab:8100" ]; then
+  echo "refusing to seed: homelab-talos-dev must point to https://omni.lab:8100" >&2
+  exit 1
+fi
 wait_for_db
 
 echo "seeding kratos identities..."

@@ -220,20 +220,22 @@ release. Kratos and Keto are shared by the base and every branch.
 
 ### Seed data
 
-`make dev-seed` runs `scripts/dev/seed-db.sh` against the shared base. The script
-still permits only the retired `homelab-dev` context and cannot currently run
-on Talos. Reuse the existing shared fixtures until its guard is updated; do not
-run it against the retired cluster. Its seed behavior is:
+`make dev-seed` runs `scripts/dev/seed-db.sh` against the shared base with tenant
+`tadoku/prod`. It:
 
-- runs only against the `homelab-dev` context and waits for Postgres and the
-  base migrations;
+- runs only against the `homelab-talos-dev` context at `https://omni.lab:8100`
+  and waits for Postgres and the base migrations;
 - creates the two fixture identities in Kratos, marked as owned by the seed,
   and refuses to touch an existing identity with the same email but no marker;
 - resets the fixture passwords to the configured values on every run;
 - grants the administrator role in Keto;
 - loads the fixtures in `scripts/dev/seed/` into the base `tadoku` database.
 
-It is safe to rerun, but it changes shared identities and base data. See
+The SQL fixtures require a `tenant` psql variable, set it transaction-locally and
+write that tenant explicitly. The canonical tenant keeps the fixed fixture UUIDs;
+other tenants derive those UUIDs from their tenant key. Caller-supplied identity
+UUIDs remain unchanged. It is safe to rerun for the same tenant, but it changes
+shared identities and base data. See
 [Authorization](../architecture/authorization.md#seeding-an-administrator-in-development)
 for the role details.
 
@@ -271,7 +273,8 @@ Postgres cluster, PVC or long-running database pod.
 - `dev up --task migrate --task seed` creates the database first; a task
   failure prevents overlay startup. Plain `dev up` runs no tasks.
 - The branch `seed` task reuses the shared fixture identities and fails until
-  `make dev-seed` has created them. It writes only into an owned branch database.
+  `make dev-seed` has created them. It writes only into an owned branch database, using the same canonical
+  `tadoku/prod` tenant as the shared base.
 
 Rerun the tasks explicitly with:
 

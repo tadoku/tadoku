@@ -39,7 +39,7 @@ insert into platform_scoring_config (
   true,
   $1
 )
-on conflict (singleton) do update
+on conflict (tenant, singleton) do update
 set active_rule_set_id = excluded.active_rule_set_id
 `
 

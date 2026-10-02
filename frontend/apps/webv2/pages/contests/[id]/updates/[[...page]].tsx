@@ -115,20 +115,20 @@ const Page = () => {
                 label: 'Join contest',
                 IconComponent: PlusIcon,
                 style: 'primary',
-                visible: !hasEnded && registration.data === undefined,
+                visible: !hasEnded && !registration.data,
               },
               {
                 href: routes.contestJoin(id),
                 label: 'Update registration',
                 style: 'secondary',
-                visible: !hasEnded && registration.data !== undefined,
+                visible: !hasEnded && !!registration.data,
               },
               {
                 href: routes.logCreate(),
                 label: 'Log update',
                 IconComponent: PencilSquareIcon,
                 style: 'primary',
-                visible: isOngoing && registration.data !== undefined,
+                visible: isOngoing && !!registration.data,
               },
               {
                 href: routes.contestScoring(id),

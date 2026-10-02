@@ -70,13 +70,13 @@ export const useContestSummary = (
 ) =>
   useQuery(
     ['contest', 'findContestSummary', id],
-    async (): Promise<ContestSummary | undefined> => {
+    async (): Promise<ContestSummary | null> => {
       const response = await fetch(`${root}/contests/${id}/summary`, {
         credentials: 'include',
       })
 
       if (response.status === 404) {
-        return undefined
+        return null
       }
 
       if (response.status !== 200) {

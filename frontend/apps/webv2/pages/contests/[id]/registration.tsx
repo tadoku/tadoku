@@ -84,7 +84,7 @@ const Page = () => {
       ) : (
         <ContestRegistrationForm
           contest={contest.data}
-          data={registration.data}
+          data={registration.data ?? undefined}
           isClosed={registrationClosed}
         />
       )}

@@ -69,7 +69,14 @@ func Load(prefix, legacyName string) (Config, error) {
 	if !allowedSSLModes[values["SSLMODE"]] {
 		return Config{}, fmt.Errorf("%s_SSLMODE is invalid", prefix)
 	}
-	return Config{Host: values["HOST"], Port: uint16(port), Database: values["DATABASE"], User: values["USER"], Password: NewSecret(values["PASSWORD"]), SSLMode: values["SSLMODE"]}, nil
+	return Config{
+		Host:     values["HOST"],
+		Port:     uint16(port),
+		Database: values["DATABASE"],
+		User:     values["USER"],
+		Password: NewSecret(values["PASSWORD"]),
+		SSLMode:  values["SSLMODE"],
+	}, nil
 }
 
 // WithApplicationName must use the process identity, not an environment value.
@@ -79,7 +86,12 @@ func (c Config) WithApplicationName(name string) Config {
 }
 
 func (c Config) URL() Secret {
-	u := &url.URL{Scheme: "postgres", User: url.UserPassword(c.User, c.Password.Reveal()), Host: net.JoinHostPort(c.Host, strconv.Itoa(int(c.Port))), Path: "/" + c.Database}
+	u := &url.URL{
+		Scheme: "postgres",
+		User:   url.UserPassword(c.User, c.Password.Reveal()),
+		Host:   net.JoinHostPort(c.Host, strconv.Itoa(int(c.Port))),
+		Path:   "/" + c.Database,
+	}
 	query := u.Query()
 	query.Set("sslmode", c.SSLMode)
 	if c.ApplicationName != "" {

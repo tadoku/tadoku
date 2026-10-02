@@ -70,7 +70,11 @@ func loadConfig() (config, error) {
 
 func run(ctx context.Context, cfg config, logger *slog.Logger) error {
 	startupCtx, cancelStartup := context.WithTimeout(ctx, cfg.DialTimeout)
-	pool, err := postgres.Open(startupCtx, cfg.Postgres.WithApplicationName("tadoku-worker").URL().Reveal(), cfg.PostgresMaxConnections)
+	pool, err := postgres.Open(
+		startupCtx,
+		cfg.Postgres.WithApplicationName("tadoku-worker").URL().Reveal(),
+		cfg.PostgresMaxConnections,
+	)
 	cancelStartup()
 	if err != nil {
 		return fmt.Errorf("open worker postgres: %s", cfg.Postgres.Redact(err))

@@ -31,7 +31,7 @@ the [API reference](../api/index.md).
 ```text
 transport/http -> app -> features/<feature> -> generated/sqlc/<feature>
 app and features/<feature> -> domain/<concept>
-cmd/tadoku-api constructs and owns the pgx/v5 pool, the raw Valkey, Kratos and Keto clients and the HTTP resources
+cmd/tadoku-api constructs and owns the pgx/v5 pool, the Valkey, read-only Kratos and Keto clients and the HTTP resources
 ```
 
 All paths are relative to `services/tadoku-api/`.
@@ -46,7 +46,7 @@ All paths are relative to `services/tadoku-api/`.
 | `cmd/tadoku-worker/` | Worker composition root and private health/metrics lifecycle. |
 | `domain/<concept>/` | Business values and pure rules shared by several features. |
 | `internal/` | Technical support: errors (`errx`), request identity (`identity`), actor and target-role permissions (`permissions`), feature-flag evaluation (`featureflags`), business time (`timex`), callback authentication (`callbackauth`) and test fixtures (`test*`). |
-| `infra/` | Infrastructure adapters: PostgreSQL (`postgres`), Valkey (`valkey`), Keto (`keto`), Kratos (`kratos`), Flipt evaluation and management (`flipt`, `fliptmanagement`), and scoring observability (`observability`). |
+| `infra/` | Infrastructure adapters: PostgreSQL (`postgres`), Valkey (`valkey`), Keto (`keto`), Kratos reads and guarded writes (`kratos`, `kratosidentity`), Flipt evaluation and management (`flipt`, `fliptmanagement`), and scoring observability (`observability`). |
 | `cmd/tadoku-api/` | The composition root: loads configuration, constructs and owns the pool, provider clients and HTTP resources, and wires them into the application. |
 
 The service-token exchange client and PostgreSQL migration commands remain in

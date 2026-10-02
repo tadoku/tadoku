@@ -24,9 +24,16 @@ type Writer struct {
 	logger *slog.Logger
 }
 
-// Supply an SDK client whose HTTP transport has bounded request timeouts.
-func NewWriter(client *kratosapi.APIClient, logger *slog.Logger) *Writer {
-	return &Writer{client: client, logger: logger}
+// Supply an HTTP client with a positive total timeout.
+func NewWriter(adminURL string, httpClient *http.Client, logger *slog.Logger) *Writer {
+	cfg := kratosapi.NewConfiguration()
+	cfg.Servers = kratosapi.ServerConfigurations{{URL: adminURL}}
+	cfg.HTTPClient = httpClient
+
+	return &Writer{
+		client: kratosapi.NewAPIClient(cfg),
+		logger: logger,
+	}
 }
 
 func (writer *Writer) Deactivate(ctx context.Context, id uuid.UUID) (Outcome, error) {

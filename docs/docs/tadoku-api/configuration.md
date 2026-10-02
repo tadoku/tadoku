@@ -246,8 +246,10 @@ identity, err := kratosIdentities.FetchIdentity(ctx, identityID)
   caller cancellation also interrupts response-body reads.
 
 `Writer` in `services/tadoku-api/infra/kratosidentity/` owns application identity
-writes. It accepts an owned raw SDK client and logger, checks the tenant before
-every mutation and remains unwired until an account-deletion flow exists. See
+writes. `NewWriter(adminURL, httpClient, logger)` constructs its SDK internally
+from the admin URL and a caller-owned HTTP client with a positive total timeout.
+It checks the tenant before every mutation and remains unwired until an
+account-deletion flow exists. See
 [Kratos identity writes](../architecture/authorization.md#kratos-identity-writes)
 for its applied, skipped and missing-tenant outcomes.
 

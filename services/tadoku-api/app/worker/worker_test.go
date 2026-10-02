@@ -62,6 +62,7 @@ func TestNewApplicationRejectsInvalidConfig(t *testing.T) {
 		})
 	}
 	if _, err := NewApplication(new(jobqueue.Service), new(leaderboard.Service), Config{
+		Scope:           baseWorkerScope(t),
 		Concurrency:     1,
 		ShutdownTimeout: time.Second,
 	}); err != nil {
@@ -114,4 +115,13 @@ func TestNewApplicationRejectsZeroScope(t *testing.T) {
 	if err == nil {
 		t.Fatal("worker accepted zero scope")
 	}
+}
+
+func baseWorkerScope(t *testing.T) jobqueue.Scope {
+	t.Helper()
+	scope, err := jobqueue.AllTenantsExcept("tadoku-worker")
+	if err != nil {
+		t.Fatal(err)
+	}
+	return scope
 }

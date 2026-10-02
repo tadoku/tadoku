@@ -22,9 +22,10 @@ boundaries described in [Code ownership](./index.md#code-ownership).
   standard library.
 - `internal/tenant/alltenants` exposes the restricted cross-tenant context
   marker. Its library is visible only to `services/tadoku-api/app/worker`,
-  `services/tadoku-api/infra/postgres` and `services/tadoku-api/e2e` in their
-  exact Bazel packages. Features and the API transport cannot request this
-  scope. A database context must carry either this marker or one tenant, never
+  `services/tadoku-api/features/jobqueue`, `services/tadoku-api/infra/postgres`
+  and `services/tadoku-api/e2e` in their exact Bazel packages. The queue owner
+  maps its validated base scope to this marker; other features and the API
+  transport cannot request it. A database context must carry either this marker or one tenant, never
   both.
 - The worker application (`app/worker`) is visible only to its binary
   (`cmd/tadoku-worker`) and E2E.

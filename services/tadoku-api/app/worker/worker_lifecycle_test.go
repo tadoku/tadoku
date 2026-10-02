@@ -60,12 +60,17 @@ func TestWorkerJobLifecycle(t *testing.T) {
 		leaderboard.NewCache(client, time.Second, ""),
 	)
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	runner, err := NewApplication(jobqueue.NewService(jobqueue.NewRepository(db.Pool)), service, Config{
-		Concurrency:     4,
-		Logger:          logger,
-		Metrics:         NewMetrics(prometheus.NewRegistry()),
-		ShutdownTimeout: 2 * time.Second,
-	})
+	runner, err := NewApplication(
+		jobqueue.NewService(jobqueue.NewRepository(db.Pool)),
+		service,
+		Config{
+			Scope:           baseWorkerScope(t),
+			Concurrency:     4,
+			Logger:          logger,
+			Metrics:         NewMetrics(prometheus.NewRegistry()),
+			ShutdownTimeout: 2 * time.Second,
+		},
+	)
 	if err != nil {
 		t.Fatal(err)
 	}

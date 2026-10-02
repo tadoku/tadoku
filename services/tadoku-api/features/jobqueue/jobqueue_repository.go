@@ -46,6 +46,7 @@ func (r *Repository) Claim(ctx context.Context, typ jobs.Type, limit int, lease 
 
 	rows, err := queries.New(executor).Claim(ctx, queries.ClaimParams{
 		TaskType:    string(typ),
+		Component:   postgres.NullableText(componentFromContext(ctx)),
 		Now:         postgres.Timestamptz(now),
 		MaxAttempts: int32(maxAttempts),
 		BatchSize:   int32(limit),
@@ -179,7 +180,10 @@ func (r *Repository) Stats(ctx context.Context, typ jobs.Type) (Stats, error) {
 	if err != nil {
 		return Stats{}, err
 	}
-	row, err := queries.New(executor).Stats(ctx, string(typ))
+	row, err := queries.New(executor).Stats(ctx, queries.StatsParams{
+		TaskType:  string(typ),
+		Component: postgres.NullableText(componentFromContext(ctx)),
+	})
 	if err != nil {
 		return Stats{}, err
 	}
@@ -200,7 +204,10 @@ func (r *Repository) UnsupportedStats(ctx context.Context, known []jobs.Type) (U
 	if err != nil {
 		return UnsupportedStats{}, err
 	}
-	row, err := queries.New(executor).UnsupportedStats(ctx, names)
+	row, err := queries.New(executor).UnsupportedStats(ctx, queries.UnsupportedStatsParams{
+		KnownTypes: names,
+		Component:  postgres.NullableText(componentFromContext(ctx)),
+	})
 	if err != nil {
 		return UnsupportedStats{}, err
 	}

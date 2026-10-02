@@ -1,14 +1,17 @@
 package jobqueue
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
+	"regexp"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant/alltenants"
 )
 
 var (
@@ -49,4 +52,50 @@ func validateErrorCode(code string) error {
 		}
 	}
 	return nil
+}
+
+var componentPattern = regexp.MustCompile(`^[a-z][a-z0-9-]*$`)
+
+type Scope struct {
+	key       tenant.Key
+	component string
+}
+
+func AllTenantsExcept(component string) (Scope, error) {
+	if !componentPattern.MatchString(component) {
+		return Scope{}, errors.New(
+			"worker component must contain lowercase letters, digits or hyphens and start with a letter",
+		)
+	}
+	return Scope{component: component}, nil
+}
+
+func OnlyTenant(key tenant.Key) (Scope, error) {
+	if key == (tenant.Key{}) || key == tenant.Production() {
+		return Scope{}, errors.New("branch worker requires a parsed non-production tenant")
+	}
+	return Scope{key: key}, nil
+}
+
+type queueScopeKey struct{}
+
+// Context scopes queue claims, backlog and retention; handlers need the claimed job's tenant instead.
+func (scope Scope) Context(ctx context.Context) (context.Context, error) {
+	if scope == (Scope{}) {
+		return nil, errors.New("worker requires a queue scope")
+	}
+
+	ctx = context.WithValue(ctx, queueScopeKey{}, scope)
+	if scope.key != (tenant.Key{}) {
+		return tenant.WithKey(ctx, scope.key), nil
+	}
+	return alltenants.With(ctx), nil
+}
+
+func componentFromContext(ctx context.Context) *string {
+	scope, _ := ctx.Value(queueScopeKey{}).(Scope)
+	if scope.component == "" {
+		return nil
+	}
+	return &scope.component
 }

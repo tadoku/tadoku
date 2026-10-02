@@ -30,7 +30,7 @@ the source of executable versions, including replay eligibility.
 
 The queue persists in the `jobs` table.
 
-## Tenants
+## Tenants and tenant overrides
 
 Each job row stores its tenant in `jobs.tenant`, supplied by the database column
 default when it is enqueued. Claim parses that persisted value into a validated
@@ -38,15 +38,32 @@ tenant key before dispatch. A handler runs with that job's tenant, and lease
 renewals, completion, retry and failure transitions use the same key. Terminal
 transitions keep their tenant during bounded shutdown cleanup.
 
-The base worker claims across all tenants. Its completed-job cleanup and backlog
-metrics also use the all-tenants queue scope. Handler contexts are derived
-separately from the worker context, so application repositories receive only
-the individual job's tenant.
+A base deployment uses `jobqueue.AllTenantsExcept(component)`. It claims across
+all tenants except those with a matching `(tenant, component)` row in
+`tenant_overrides`. The same filter applies to supported and unsupported backlog
+metrics, and prevents the base from failing exhausted jobs for a listed tenant.
+An override for another component does not affect this worker.
 
-`WORKER_BRANCH` defaults to empty for the base worker. A non-empty value selects
-one validated, non-production tenant for queue operations. Branch isolation
-requires the `jobs` row-level security policy; leave `WORKER_BRANCH` unset when
-that policy is absent. Configuration rejects malformed keys and `tadoku/prod`.
+A branch deployment uses `jobqueue.OnlyTenant(key)` with a parsed, non-production
+tenant. It claims and reports only that tenant, regardless of overrides. Both
+constructors validate their inputs, and `worker.NewApplication` rejects a zero
+`Config.Scope`. `Scope.Context` applies the queue scope through the existing
+transaction-local PostgreSQL executor; handlers receive the claimed job's tenant
+separately.
+
+`WORKER_BRANCH` defaults to empty for a base deployment. A non-empty value must
+be a valid `<name>/<id>` key other than `tadoku/prod`. `WORKER_COMPONENT` defaults
+to `tadoku-worker`; component names start with a lowercase letter and contain
+lowercase letters, digits or hyphens. Production needs neither setting changed.
+
+Listing a tenant without running a branch worker pauses its work. Jobs already
+claimed before the override appears finish on the base worker. Provisioning must
+insert the override before starting the branch worker, stop that worker before
+deleting the override, and let the base resume remaining work afterward.
+
+Completed-job cleanup remains global in the base scope, including listed
+tenants. Branch cleanup removes only its own tenant's completed jobs. The normal
+retention and replay-lineage rules still apply.
 
 ## Define a message
 
@@ -178,7 +195,13 @@ added.
 Construct and run the application from the entry point:
 
 ```go
+scope, err := jobqueue.AllTenantsExcept("tadoku-worker")
+if err != nil {
+    return err
+}
+
 app, err := worker.NewApplication(queue, leaderboard, worker.Config{
+    Scope:           scope,
     Concurrency:     cfg.Concurrency,
     ShutdownTimeout: cfg.ShutdownTimeout,
 })

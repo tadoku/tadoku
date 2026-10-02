@@ -6,6 +6,7 @@ import (
 	"io"
 	"log/slog"
 	"net/url"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -116,9 +117,17 @@ func TestLoadConfigWorkerSettings(t *testing.T) {
 	t.Setenv("WORKER_POSTGRES_SSLMODE", "disable")
 
 	t.Run("defaults", func(t *testing.T) {
+		t.Setenv("WORKER_COMPONENT", "")
+		if err := os.Unsetenv("WORKER_COMPONENT"); err != nil {
+			t.Fatal(err)
+		}
+
 		cfg, err := loadConfig()
 		if err != nil {
 			t.Fatal(err)
+		}
+		if cfg.Component != "tadoku-worker" {
+			t.Errorf("default component=%q; want tadoku-worker", cfg.Component)
 		}
 		if cfg.Concurrency != 4 || cfg.ShutdownTimeout != 15*time.Second {
 			t.Errorf("worker settings = (%d, %s), want (4, 15s)", cfg.Concurrency, cfg.ShutdownTimeout)
@@ -126,11 +135,15 @@ func TestLoadConfigWorkerSettings(t *testing.T) {
 	})
 
 	t.Run("explicit settings", func(t *testing.T) {
+		t.Setenv("WORKER_COMPONENT", "leaderboard-worker")
 		t.Setenv("WORKER_CONCURRENCY", "7")
 		t.Setenv("WORKER_SHUTDOWN_TIMEOUT", "3s")
 		cfg, err := loadConfig()
 		if err != nil {
 			t.Fatal(err)
+		}
+		if cfg.Component != "leaderboard-worker" {
+			t.Errorf("explicit component=%q; want leaderboard-worker", cfg.Component)
 		}
 		if cfg.Concurrency != 7 || cfg.ShutdownTimeout != 3*time.Second {
 			t.Errorf("worker settings = (%d, %s), want (7, 3s)", cfg.Concurrency, cfg.ShutdownTimeout)
@@ -139,8 +152,12 @@ func TestLoadConfigWorkerSettings(t *testing.T) {
 
 	t.Run("valid branch", func(t *testing.T) {
 		t.Setenv("WORKER_BRANCH", "e2e/worker-0123abcd")
-		if _, err := loadConfig(); err != nil {
+		cfg, err := loadConfig()
+		if err != nil {
 			t.Fatalf("loadConfig rejected a valid branch: %v", err)
+		}
+		if _, err := cfg.scope.Context(t.Context()); err != nil {
+			t.Fatalf("valid branch scope rejected: %v", err)
 		}
 	})
 }

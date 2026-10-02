@@ -9,6 +9,7 @@ import (
 
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
 
@@ -85,4 +86,20 @@ func TestCleanupRejectsZeroBusinessTime(t *testing.T) {
 			t.Errorf("cleanup error = %v", err)
 		}
 	})
+}
+
+func TestQueueScopeRejectsInvalidInputs(t *testing.T) {
+	for _, component := range []string{"", "Bad", "bad/component", "-bad", "bad component"} {
+		if _, err := AllTenantsExcept(component); err == nil {
+			t.Errorf("scope accepted invalid component %q", component)
+		}
+	}
+	for _, key := range []tenant.Key{{}, tenant.Production()} {
+		if _, err := OnlyTenant(key); err == nil {
+			t.Errorf("branch scope accepted tenant %q", key.String())
+		}
+	}
+	if _, err := (Scope{}).Context(t.Context()); err == nil {
+		t.Error("zero scope granted a context")
+	}
 }

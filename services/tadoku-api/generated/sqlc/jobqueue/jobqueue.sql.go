@@ -15,8 +15,13 @@ const claim = `-- name: Claim :many
 with exhausted as (
   select id from jobs
   where task_type = $1::text
-    and attempts >= $2::integer
-    and ((state = 'pending' and next_attempt_at <= $3::timestamptz)
+    and ($2::text is null or not exists (
+      select 1 from tenant_overrides as o
+      where o.tenant = jobs.tenant
+        and o.component = $2::text
+    ))
+    and attempts >= $3::integer
+    and ((state = 'pending' and next_attempt_at <= $4::timestamptz)
       or (state = 'running' and lease_expires_at <= clock_timestamp()))
   order by next_attempt_at, id
   for update skip locked
@@ -24,7 +29,7 @@ with exhausted as (
 ), failed as (
   update jobs as task
   set state = 'failed', claim_token = null, lease_expires_at = null,
-    failed_at = $3::timestamptz,
+    failed_at = $4::timestamptz,
     last_error = case when task.state = 'running' then 'lease_expired' else 'attempts_exhausted' end
   from exhausted
   where task.id = exhausted.id
@@ -32,17 +37,22 @@ with exhausted as (
 ), picked as (
   select id, (state = 'running') as reclaimed from jobs
   where task_type = $1::text
-    and attempts < $2::integer
-    and ((state = 'pending' and next_attempt_at <= $3::timestamptz)
+    and ($2::text is null or not exists (
+      select 1 from tenant_overrides as o
+      where o.tenant = jobs.tenant
+        and o.component = $2::text
+    ))
+    and attempts < $3::integer
+    and ((state = 'pending' and next_attempt_at <= $4::timestamptz)
       or (state = 'running' and lease_expires_at <= clock_timestamp()))
   order by next_attempt_at, id
   for update skip locked
-  limit $4::integer
+  limit $5::integer
 ), claimed as (
   update jobs as task
   set state = 'running', attempts = task.attempts + 1,
     claim_token = gen_random_uuid(),
-    lease_expires_at = clock_timestamp() + $5::bigint * interval '1 microsecond'
+    lease_expires_at = clock_timestamp() + $6::bigint * interval '1 microsecond'
   from picked
   where task.id = picked.id
   returning task.id, task.tenant, task.task_type, task.payload, task.attempts,
@@ -55,6 +65,7 @@ from claimed inner join picked using (id) order by claimed.id
 
 type ClaimParams struct {
 	TaskType    string
+	Component   pgtype.Text
 	MaxAttempts int32
 	Now         pgtype.Timestamptz
 	BatchSize   int32
@@ -75,6 +86,7 @@ type ClaimRow struct {
 func (q *Queries) Claim(ctx context.Context, arg ClaimParams) ([]ClaimRow, error) {
 	rows, err := q.db.Query(ctx, claim,
 		arg.TaskType,
+		arg.Component,
 		arg.MaxAttempts,
 		arg.Now,
 		arg.BatchSize,
@@ -315,8 +327,20 @@ select
   count(*) filter (where state = 'failed') as failed,
   min(case when state = 'pending' then next_attempt_at
     when state = 'running' then lease_expires_at end)::timestamptz as oldest_due_at
-from jobs where task_type = $1::text and state <> 'completed'
+from jobs
+where task_type = $1::text
+  and state <> 'completed'
+  and ($2::text is null or not exists (
+    select 1 from tenant_overrides as o
+    where o.tenant = jobs.tenant
+      and o.component = $2::text
+  ))
 `
+
+type StatsParams struct {
+	TaskType  string
+	Component pgtype.Text
+}
 
 type StatsRow struct {
 	Pending     int64
@@ -324,8 +348,8 @@ type StatsRow struct {
 	OldestDueAt pgtype.Timestamptz
 }
 
-func (q *Queries) Stats(ctx context.Context, taskType string) (StatsRow, error) {
-	row := q.db.QueryRow(ctx, stats, taskType)
+func (q *Queries) Stats(ctx context.Context, arg StatsParams) (StatsRow, error) {
+	row := q.db.QueryRow(ctx, stats, arg.TaskType, arg.Component)
 	var i StatsRow
 	err := row.Scan(&i.Pending, &i.Failed, &i.OldestDueAt)
 	return i, err
@@ -339,8 +363,19 @@ select
   min(case when state = 'pending' then next_attempt_at
     when state = 'running' then lease_expires_at end)::timestamptz as oldest_due_at
 from jobs
-where state <> 'completed' and not (task_type = any($1::text[]))
+where state <> 'completed'
+  and not (task_type = any($1::text[]))
+  and ($2::text is null or not exists (
+    select 1 from tenant_overrides as o
+    where o.tenant = jobs.tenant
+      and o.component = $2::text
+  ))
 `
+
+type UnsupportedStatsParams struct {
+	KnownTypes []string
+	Component  pgtype.Text
+}
 
 type UnsupportedStatsRow struct {
 	Pending     int64
@@ -349,8 +384,8 @@ type UnsupportedStatsRow struct {
 	OldestDueAt pgtype.Timestamptz
 }
 
-func (q *Queries) UnsupportedStats(ctx context.Context, knownTypes []string) (UnsupportedStatsRow, error) {
-	row := q.db.QueryRow(ctx, unsupportedStats, knownTypes)
+func (q *Queries) UnsupportedStats(ctx context.Context, arg UnsupportedStatsParams) (UnsupportedStatsRow, error) {
+	row := q.db.QueryRow(ctx, unsupportedStats, arg.KnownTypes, arg.Component)
 	var i UnsupportedStatsRow
 	err := row.Scan(
 		&i.Pending,

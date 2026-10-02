@@ -11,7 +11,6 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant/alltenants"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
@@ -790,7 +789,15 @@ func overrideTestDB(t *testing.T) (*testpostgres.Database, *Repository) {
 
 func baseQueueContext(t *testing.T) context.Context {
 	t.Helper()
-	return alltenants.With(t.Context())
+	scope, err := AllTenantsExcept("tadoku-worker")
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, err := scope.Context(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	return ctx
 }
 
 func branchQueueContext(t *testing.T) context.Context {
@@ -799,7 +806,15 @@ func branchQueueContext(t *testing.T) context.Context {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return tenant.WithKey(t.Context(), key)
+	scope, err := OnlyTenant(key)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, err := scope.Context(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	return ctx
 }
 
 func seedDueJobs(t *testing.T, db *testpostgres.Database, keys ...string) {

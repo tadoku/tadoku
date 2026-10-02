@@ -31,7 +31,8 @@ import (
 
 type config struct {
 	Branch                 string `envconfig:"branch"`
-	deployment             tenant.Deployment
+	Component              string `envconfig:"component" default:"tadoku-worker"`
+	scope                  jobqueue.Scope
 	Concurrency            int                   `validate:"gt=0" envconfig:"concurrency" default:"4"`
 	Port                   int                   `validate:"gt=0,lte=65535" default:"8000"`
 	MetricsPort            int                   `validate:"gt=0,lte=65535" envconfig:"metrics_port" default:"9090"`
@@ -54,7 +55,16 @@ func loadConfig() (config, error) {
 	if err != nil {
 		return config{}, fmt.Errorf("validate worker config: WORKER_BRANCH: %w", err)
 	}
-	cfg.deployment = deployment
+	cfg.scope, err = jobqueue.AllTenantsExcept(cfg.Component)
+	if err != nil {
+		return config{}, fmt.Errorf("validate worker config: WORKER_COMPONENT: %w", err)
+	}
+	if key, branch := deployment.Key(); branch {
+		cfg.scope, err = jobqueue.OnlyTenant(key)
+		if err != nil {
+			return config{}, fmt.Errorf("validate worker config: WORKER_BRANCH: %w", err)
+		}
+	}
 
 	if err := validator.New().Struct(cfg); err != nil {
 		return config{}, fmt.Errorf("validate worker config: %w", err)
@@ -102,13 +112,17 @@ func run(ctx context.Context, cfg config, logger *slog.Logger) error {
 		leaderboard.NewRepository(pool),
 		leaderboard.NewCache(client, cfg.ValkeyTimeout, cfg.LeaderboardCachePrefix),
 	)
-	application, err := worker.NewApplication(jobqueue.NewService(jobqueue.NewRepository(pool)), leaderboardService, worker.Config{
-		Scope:           cfg.deployment,
-		Concurrency:     cfg.Concurrency,
-		ShutdownTimeout: cfg.ShutdownTimeout,
-		Logger:          logger,
-		Metrics:         metrics,
-	})
+	application, err := worker.NewApplication(
+		jobqueue.NewService(jobqueue.NewRepository(pool)),
+		leaderboardService,
+		worker.Config{
+			Scope:           cfg.scope,
+			Concurrency:     cfg.Concurrency,
+			ShutdownTimeout: cfg.ShutdownTimeout,
+			Logger:          logger,
+			Metrics:         metrics,
+		},
+	)
 	if err != nil {
 		return fmt.Errorf("construct worker application: %w", err)
 	}

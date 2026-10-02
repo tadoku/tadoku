@@ -8,6 +8,11 @@ returning id;
 with exhausted as (
   select id from jobs
   where task_type = sqlc.arg('task_type')::text
+    and (sqlc.narg('component')::text is null or not exists (
+      select 1 from tenant_overrides as o
+      where o.tenant = jobs.tenant
+        and o.component = sqlc.narg('component')::text
+    ))
     and attempts >= sqlc.arg('max_attempts')::integer
     and ((state = 'pending' and next_attempt_at <= sqlc.arg('now')::timestamptz)
       or (state = 'running' and lease_expires_at <= clock_timestamp()))
@@ -25,6 +30,11 @@ with exhausted as (
 ), picked as (
   select id, (state = 'running') as reclaimed from jobs
   where task_type = sqlc.arg('task_type')::text
+    and (sqlc.narg('component')::text is null or not exists (
+      select 1 from tenant_overrides as o
+      where o.tenant = jobs.tenant
+        and o.component = sqlc.narg('component')::text
+    ))
     and attempts < sqlc.arg('max_attempts')::integer
     and ((state = 'pending' and next_attempt_at <= sqlc.arg('now')::timestamptz)
       or (state = 'running' and lease_expires_at <= clock_timestamp()))
@@ -122,7 +132,14 @@ select
   count(*) filter (where state = 'failed') as failed,
   min(case when state = 'pending' then next_attempt_at
     when state = 'running' then lease_expires_at end)::timestamptz as oldest_due_at
-from jobs where task_type = sqlc.arg('task_type')::text and state <> 'completed';
+from jobs
+where task_type = sqlc.arg('task_type')::text
+  and state <> 'completed'
+  and (sqlc.narg('component')::text is null or not exists (
+    select 1 from tenant_overrides as o
+    where o.tenant = jobs.tenant
+      and o.component = sqlc.narg('component')::text
+  ));
 
 -- name: UnsupportedStats :one
 select
@@ -132,4 +149,10 @@ select
   min(case when state = 'pending' then next_attempt_at
     when state = 'running' then lease_expires_at end)::timestamptz as oldest_due_at
 from jobs
-where state <> 'completed' and not (task_type = any(sqlc.arg('known_types')::text[]));
+where state <> 'completed'
+  and not (task_type = any(sqlc.arg('known_types')::text[]))
+  and (sqlc.narg('component')::text is null or not exists (
+    select 1 from tenant_overrides as o
+    where o.tenant = jobs.tenant
+      and o.component = sqlc.narg('component')::text
+  ));

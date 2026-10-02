@@ -1,0 +1,12 @@
+[
+  {
+    "namespace": "app",
+    "object": "e2e/alpha-0000000a",
+    "relation": "parents",
+    "subject_set": {
+      "namespace": "app",
+      "object": "tadoku",
+      "relation": ""
+    }
+  }
+]

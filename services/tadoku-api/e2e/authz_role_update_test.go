@@ -28,6 +28,7 @@ func TestAuthzRoleUpdate(t *testing.T) {
 		{description: []string{"non", "admin", "invalid", "role"}, want: http.StatusForbidden},
 		{description: []string{"missing", "user", "marked", "admin"}, want: http.StatusNotFound},
 		{description: []string{"target", "admin"}, want: http.StatusForbidden},
+		{description: []string{"test", "inherited", "target", "admin"}, want: http.StatusForbidden},
 	}
 
 	for _, test := range tests {

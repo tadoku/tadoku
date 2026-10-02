@@ -1,0 +1,11 @@
+>>> GET /test/banned
+HTTP/1.1 200 OK
+Content-Length: 21
+Content-Type: application/json; charset=UTF-8
+X-Test-Identity-Created-At: 2026-09-12T11:59:00Z
+X-Test-Identity-Display-Name: User Two
+X-Test-Identity-Email: user2@example.test
+X-Test-Identity-Subject: 44444444-4444-4444-8444-444444444444
+X-Test-Tenant: tadoku/prod
+
+{"status":"success"}

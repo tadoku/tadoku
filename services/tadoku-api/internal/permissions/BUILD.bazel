@@ -39,6 +39,7 @@ go_test(
         "//services/tadoku-api/infra/keto",
         "//services/tadoku-api/internal/errx",
         "//services/tadoku-api/internal/identity",
+        "//services/tadoku-api/internal/tenant",
         "//services/tadoku-api/internal/testketo",
         "@com_github_stretchr_testify//assert",
         "@com_github_stretchr_testify//require",

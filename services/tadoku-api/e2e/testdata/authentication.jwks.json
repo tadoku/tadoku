@@ -55,6 +55,14 @@
       "kid": "tadoku-isolation-fixture-0123abcd",
       "use": "sig",
       "alg": "RS256"
+    },
+    {
+      "kty": "RSA",
+      "n": "o5rSdH_KCLk7ZvAfmrsUivgkB2TiWfkV2gSsp31iUgXL2WqaOA3Gs3ni9hYpQIo8C057Gj6tsXqQaG8BRP3NVOMNcgqOmXzYObq0H4cAf4tRInezeeiU6r2L2ccENqcjDwqqSdRr76aOS8qxoBgd3GAuyl-qPYdT0rZyHZzFWspM1tI17JV5zwj5Pyh45nLpl0YpU3q-WG22f72Ss3ui47kcPFDzym1vdgmIq8sOhRUI3JYyK_ts_0JX6Q791zkVAoF-WNVEcil3yFqgBFFG0uICUXAceSak-5xe8A-tUO33-o6SZxfmJHNKVW80UN7FlxNL1W2ToAMjmwQXaUp3Nw",
+      "e": "AQAB",
+      "kid": "tadoku-admission-fixture-alpha",
+      "use": "sig",
+      "alg": "RS256"
     }
   ]
 }

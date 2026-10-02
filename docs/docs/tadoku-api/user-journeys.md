@@ -40,7 +40,7 @@ e2e/testdata/journeys/
 ### Steps
 
 - Steps are numbered by their position in the table. Each step is exactly one of
-  a request, verify or job step.
+  a request, verify, Valkey snapshot or job step.
 - A request step names the cast member that sends `request.http`; the runner
   injects that member's token, and `none` sends no credentials. Do not embed
   tokens in journey `request.http` files.
@@ -60,7 +60,15 @@ e2e/testdata/journeys/
   columns; database-defaulted IDs and `now()` timestamps are not deterministic.
 - A `run_worker` job step has no fixture directory. It starts the worker against
   the journey's disposable database and Valkey fixture, waits for queued jobs
-  to complete, and stops it before the next step.
+  eligible for the base worker to complete, and stops it before the next step.
+  Tenants overridden for `tadoku-worker` remain pending. A `run_branch_worker`
+  job step requires `forTenant` with a parsed non-production key and completes
+  only that tenant's jobs.
+- A Valkey snapshot step uses `valkey: "<name>"` and a directory containing only
+  `verify.json`. It checks ownership of the suite's leased Valkey database,
+  scans leaderboard keys, removes duplicate scan results and compares the
+  sorted names with the golden. Snapshots include tenant prefixes, cache
+  markers and invalidation generations; they exclude the lease key.
 
 ### Reset and time
 
@@ -78,11 +86,28 @@ e2e/testdata/journeys/
 
 - Cast members are `guest`, `user`, `user2`, `admin` and `banned`, plus the
   implicit `none`. `admin` and `banned` hold their `app:tadoku` tuples through
-  the shared `relationships.json`.
+  the shared `relationships.json`. Tenant variants use the same subjects in
+  signed tokens with a different tenant claim; they still require real Keto
+  parent and tester grants to enter that tenant.
 - To add a member, sign a token with the
   [fixture recipe](./http-e2e.md#signing-a-new-fixture-token), append its public key when you
   use a new signing key, and add the token to `cast.json` and any tuple to
   `relationships.json`.
+
+### Tenant isolation
+
+`TestTenantIsolationJourney` uses the restricted PostgreSQL application role,
+real Valkey and real Keto. Its requests create one log in each tenant, then
+check separate leaderboards, cache keys, scoped worker outcomes, feature grants
+and bans. The canonical tenant remains `tadoku/prod`; test-tenant objects in
+Keto use their full parsed key and inherit from the existing `app:tadoku`
+object.
+
+Flipt evaluation and management use the suite's tenant-aware protocol fixture.
+This journey therefore verifies application routing and independent flag
+state, not the Flipt server's storage or SDK snapshot behavior. Those boundaries
+require separate real-provider verification. There is no identity-write HTTP
+operation; the Kratos writer's owned-provider tests verify its tenant guard.
 
 ### Regenerating journey goldens
 

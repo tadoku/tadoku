@@ -14,5 +14,11 @@
     "object": "e2e/alpha-0000000a",
     "relation": "testers",
     "subject_id": "44444444-4444-4444-8444-444444444444"
+  },
+  {
+    "namespace": "app",
+    "object": "e2e/alpha-0000000a",
+    "relation": "testers",
+    "subject_id": "33333333-3333-4333-8333-333333333333"
   }
 ]

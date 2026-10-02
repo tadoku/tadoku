@@ -38,14 +38,19 @@ func TestTenantIsolationJourney(t *testing.T) {
 			t.Fatal(err)
 		}
 	}, []step{
-		{request: "test_guest_denied", as: alphaGuest, want: http.StatusForbidden},
 		{
-			request: "test_member_denied",
-			as:      alphaUser,
+			request: "test_guest_denied",
+			as:      alphaGuest,
 			want:    http.StatusForbidden,
 			others:  cast{alphaBanned: http.StatusForbidden},
 		},
-		{request: "test_inherited_admin", as: alphaAdmin, want: http.StatusOK},
+		{request: "test_member_denied", as: alphaUser, want: http.StatusForbidden},
+		{
+			request: "test_inherited_admin",
+			as:      alphaAdmin,
+			want:    http.StatusOK,
+			others:  cast{alphaBanned: http.StatusOK},
+		},
 		{request: "test_explicit_tester", as: alphaTester, want: http.StatusOK},
 		{request: "create_test_log", as: alphaTester, want: http.StatusOK},
 		{request: "create_production_log", as: user, want: http.StatusOK},

@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
 
@@ -41,6 +42,9 @@ type step struct {
 	request string
 	verify  string
 	job     string
+	valkey  string
+
+	forTenant string
 
 	as     member
 	want   int
@@ -104,8 +108,12 @@ func runJourneyWithSetup(t *testing.T, s *suite, handler http.Handler, name stri
 					checkVerifyGolden(t, s, stepDir)
 					return
 				}
+				if current.valkey != "" {
+					checkValkeyGolden(t, stepDir)
+					return
+				}
 				if current.job != "" {
-					runJobStep(t, s, current.job)
+					runJobStep(t, s, current)
 					return
 				}
 				runRequestStep(t, s, handler, stepDir, current, tokens)
@@ -136,29 +144,39 @@ func stepDirNames(steps []step) ([]string, error) {
 
 func (current step) dirName(position int) (string, error) {
 	kinds := 0
-	for _, value := range []string{current.request, current.verify, current.job} {
+	for _, value := range []string{current.request, current.verify, current.job, current.valkey} {
 		if value != "" {
 			kinds++
 		}
 	}
 	if kinds != 1 {
-		return "", fmt.Errorf("step %d must set exactly one request, verify or job", position)
+		return "", fmt.Errorf("step %d must set exactly one request, verify, job or valkey", position)
 	}
 
 	name := current.request
+	if current.request == "" && (current.as != "" || current.want != 0 || current.others != nil) {
+		return "", fmt.Errorf("non-request step %d must not set as, want or others", position)
+	}
+
 	if current.verify != "" {
 		name = current.verify
-		if current.as != "" || current.want != 0 || current.others != nil {
-			return "", fmt.Errorf("verify step %d must not set as, want or others", position)
-		}
+	} else if current.valkey != "" {
+		name = current.valkey
 	} else if current.job != "" {
 		name = current.job
-		if current.as != "" || current.want != 0 || current.others != nil {
-			return "", fmt.Errorf("job step %d must not set as, want or others", position)
-		}
 	} else if current.as == "" || current.want == 0 {
 		return "", fmt.Errorf("request step %d must set as and want", position)
 	}
+
+	if current.job == "run_branch_worker" {
+		key, err := tenant.Parse(current.forTenant)
+		if err != nil || key == tenant.Production() {
+			return "", fmt.Errorf("branch worker step %d requires a non-production tenant", position)
+		}
+	} else if current.forTenant != "" {
+		return "", fmt.Errorf("step %d sets forTenant without a branch worker", position)
+	}
+
 	if !stepNamePattern.MatchString(name) {
 		return "", fmt.Errorf("step %d name %q must match %s", position, name, stepNamePattern)
 	}
@@ -194,6 +212,8 @@ func checkJourneyFiles(directory string, steps []step, names []string) error {
 		want := []string{"golden.http", "request.http"}
 		if steps[index].verify != "" {
 			want = []string{"verify.json", "verify.sql"}
+		} else if steps[index].valkey != "" {
+			want = []string{"verify.json"}
 		}
 		if err := checkStepFiles(filepath.Join(directory, name), want); err != nil {
 			return err
@@ -202,13 +222,13 @@ func checkJourneyFiles(directory string, steps []step, names []string) error {
 	return nil
 }
 
-func runJobStep(t *testing.T, s *suite, job string) {
+func runJobStep(t *testing.T, s *suite, current step) {
 	t.Helper()
-	switch job {
-	case "run_worker":
-		runWorkerStep(t, s)
+	switch current.job {
+	case "run_worker", "run_branch_worker":
+		runWorkerStep(t, s, current.forTenant)
 	default:
-		t.Fatalf("unknown journey job %q", job)
+		t.Fatalf("unknown journey job %q", current.job)
 	}
 }
 
@@ -329,8 +349,30 @@ func checkVerifyGolden(t *testing.T, s *suite, directory string) {
 	if err := s.db.Pool.QueryRow(t.Context(), wrapVerifyQuery(string(query))).Scan(&rows); err != nil {
 		t.Fatalf("run verify query: %v", err)
 	}
+	checkJSONGolden(t, directory, []byte(rows))
+}
+
+func checkValkeyGolden(t *testing.T, directory string) {
+	t.Helper()
+	if err := leaderboardValkey.ownsLease(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	keys, err := leaderboardValkey.cacheKeys(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	slices.Sort(keys)
+	encoded, err := json.Marshal(slices.Compact(keys))
+	if err != nil {
+		t.Fatal(err)
+	}
+	checkJSONGolden(t, directory, encoded)
+}
+
+func checkJSONGolden(t *testing.T, directory string, value []byte) {
+	t.Helper()
 	var got bytes.Buffer
-	if err := json.Indent(&got, []byte(rows), "", "  "); err != nil {
+	if err := json.Indent(&got, value, "", "  "); err != nil {
 		t.Fatalf("indent verify result: %v", err)
 	}
 	got.WriteByte('\n')

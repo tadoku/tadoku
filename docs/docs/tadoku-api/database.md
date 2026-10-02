@@ -88,6 +88,12 @@ root:
 - The script downloads and runs the sqlc version pinned in each active package's
   `generate.go` (v1.31.1, generating pgx/v5 code), so `go` does not need to be
   installed or on `PATH`.
+- Queries must return explicit result columns rather than whole table rows.
+  sqlc reuses a table model for `select *`, `table.*`, `returning *`, and an
+  equivalent complete list in table order. Adding a column then changes the
+  generated code, which a standalone migration PR cannot contain. Select only
+  the fields needed, or reorder the complete list so sqlc emits a query row
+  type. Keep equivalent results in the same order for shared row mapping.
 - Never edit sqlc-generated files by hand. Never delete, revert or selectively
   omit changes produced by the generator; commit the complete generated diff,
   even when it reveals previously stale output.

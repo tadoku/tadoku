@@ -13,11 +13,12 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
 // NewJWTAuthentication requires callers to enforce roles, bans, permissions and
 // service audiences separately.
-func NewJWTAuthentication(lifetime context.Context, jwksURL string, timeout, maxTokenAge time.Duration, issuer string, logger *slog.Logger) (func(stdhttp.Handler) stdhttp.Handler, error) {
+func NewJWTAuthentication(lifetime context.Context, jwksURL string, timeout, maxTokenAge time.Duration, issuer string, deployment tenant.Deployment, logger *slog.Logger) (func(stdhttp.Handler) stdhttp.Handler, error) {
 	if lifetime == nil {
 		return nil, fmt.Errorf("authentication lifetime context is required")
 	}
@@ -75,7 +76,9 @@ func NewJWTAuthentication(lifetime context.Context, jwksURL string, timeout, max
 
 				claims := &userClaims{}
 				token, err := jwt.ParseWithClaims(header[len("Bearer "):], claims, keyForToken, jwt.WithValidMethods([]string{"RS256"}))
+				key, tenantErr := tenant.Parse(claims.Tenant)
 				if err == nil &&
+					tenantErr == nil &&
 					token.Valid &&
 					claims.ExpiresAt != nil &&
 					claims.IssuedAt != nil &&
@@ -83,13 +86,20 @@ func NewJWTAuthentication(lifetime context.Context, jwksURL string, timeout, max
 					(issuer == "" || claims.Issuer == issuer) &&
 					claims.Type != "service" &&
 					(claims.Subject == "guest" || uuid.Validate(claims.Subject) == nil) {
+					if !deployment.Serves(key) {
+						logger.Warn("tenant not served by deployment", "tenant", key.String())
+						writeJSON(w, stdhttp.StatusMisdirectedRequest, struct {
+							Message string `json:"message"`
+						}{Message: "tenant not served by this deployment"})
+						return
+					}
 					user := &identity.User{
 						Subject:     claims.Subject,
 						DisplayName: claims.Session.Identity.Traits.DisplayName,
 						Email:       claims.Session.Identity.Traits.Email,
 						CreatedAt:   claims.IssuedAt.Time,
 					}
-					next.ServeHTTP(w, r.WithContext(identity.WithUser(r.Context(), user)))
+					next.ServeHTTP(w, r.WithContext(tenant.WithKey(identity.WithUser(r.Context(), user), key)))
 					return
 				}
 
@@ -112,6 +122,7 @@ func NewJWTAuthentication(lifetime context.Context, jwksURL string, timeout, max
 type userClaims struct {
 	jwt.RegisteredClaims
 	Type    string `json:"type,omitempty"`
+	Tenant  string `json:"tenant"`
 	Session struct {
 		Identity struct {
 			Traits struct {

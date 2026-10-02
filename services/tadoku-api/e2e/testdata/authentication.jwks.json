@@ -39,6 +39,14 @@
       "kid": "registration-invalid-subject-fixture",
       "use": "sig",
       "alg": "RS256"
+    },
+    {
+      "kty": "RSA",
+      "n": "3gtUYgTa6LhPXz1m7W9hIFKQmEYa60Mp18fERhTCrk0hm2Xwt0HlustrlxfXHBkHemhkhGATqQOxs4oKR18HykQySYHEoz-TKM_-JQr_V5j1B4wFV55LAgGJIiwrl6oaRCiRMKiaSTq85r9QEvRuKwuNUozn277Pilcq2kCnME_2DkHqc-Bm2OkFxQlbTG3QGOVZQpTT48AskovGpLpvKjXx6FB7TyUOOv3J5xLRfUUGXTMqXommFB2Z27vdt9_RdnCTfGoodKLgu-wiziDZ42uRHu1ybeKqmTBGWrbVHsfixrUBX9RCGj-Hs1jImhtFCgVyVnX1kI6bEflxiv5ruw",
+      "e": "AQAB",
+      "kid": "tadoku-tenant-fixture-7cb0c53b-cb86-4814-b4e5-009d352bee9e",
+      "use": "sig",
+      "alg": "RS256"
     }
   ]
 }

@@ -17,10 +17,10 @@ its source is `services/tadoku-api/spec/openapi.yaml`.
   Oathkeeper with a Kratos session cookie or no credentials. Oathkeeper's
   `id_token` mutator replaces them with an RS256 JWT whose `sub` is the Kratos
   identity ID, or `guest` for anonymous requests. Session traits travel in the
-  `session` claim; `type` is `user`. API tokens carry the constant `tenant`
-  claim `tadoku/prod` for both anonymous and signed-in requests. Client branch
-  headers do not select the tenant. Service-token exchanges use their own
-  claims.
+  `session` claim; `type` is `user`. API tokens carry the signed constant
+  `tenant` claim `tadoku/prod` for both anonymous and signed-in requests in
+  the development base and production. Client branch headers do not select the
+  tenant. Service-token exchanges use their own claims.
 - **Ory Keto** owns authorization facts: who is an administrator and who is
   banned. Tadoku API reads them from Keto on every request that needs them. Roles
   are not stored in PostgreSQL or in the token, and results are not cached.
@@ -60,7 +60,12 @@ passes two shared middlewares before its handler. Health probes (`/livez`,
    `API_MAX_TOKEN_AGE` (default 24h) and, when `API_JWT_ISSUER` is set, match that
    issuer. Tokens with `type: service` are rejected. The verified subject, email
    and display name are placed on the request context as `identity.User`
-   (`services/tadoku-api/internal/identity/`). This step checks no roles.
+   (`services/tadoku-api/internal/identity/`). The signed `tenant` must match
+   `^[a-z0-9][a-z0-9-]{0,55}/[a-z0-9][a-z0-9-]{0,55}$`. Authentication parses it
+   into `internal/tenant.Key` and puts it on the context beside the identity.
+   Missing or malformed tenant claims are invalid credentials. A scoped
+   `API_BRANCH` deployment rejects a different valid tenant with `421`; the
+   unscoped base accepts every parsed tenant. This step checks no roles.
 2. **Ban gate** (`services/tadoku-api/transport/http/banned_users.go`) looks up
    `app:tadoku#banned` once for every subject except an empty one or `guest`.
 
@@ -108,7 +113,8 @@ Application errors are `services/tadoku-api/internal/errx/` kinds, mapped in
 | Cause | Status |
 | --- | --- |
 | Missing or malformed `Authorization: Bearer` header | `400`, JSON `missing or malformed jwt` |
-| Invalid, expired, too old or service JWT | `401`, JSON `invalid or expired jwt` |
+| Invalid, expired, too old, service JWT or invalid tenant claim | `401`, JSON `invalid or expired jwt` |
+| Valid tenant not served by this deployment | `421`, JSON `tenant not served by this deployment` |
 | Confirmed ban | `403`, empty body |
 | Invalid or missing callback credential | `401`, empty body |
 | `errx.Unauthorized` (no user or `guest`) | `401` |

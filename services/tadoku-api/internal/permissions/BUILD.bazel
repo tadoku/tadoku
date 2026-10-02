@@ -24,6 +24,7 @@ go_test(
         "checker_test.go",
         "target_roles_test.go",
     ],
+    data = ["testdata/tenant_relationships.json"],
     embed = [":permissions"],
     tags = [
         "no-cache",

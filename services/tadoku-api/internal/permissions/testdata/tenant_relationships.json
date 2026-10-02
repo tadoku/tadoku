@@ -1,0 +1,46 @@
+[
+  {
+    "namespace": "app",
+    "object": "tadoku",
+    "relation": "admins",
+    "subject_id": "production-admin"
+  },
+  {
+    "namespace": "app",
+    "object": "tadoku",
+    "relation": "banned",
+    "subject_id": "production-banned"
+  },
+  {
+    "namespace": "app",
+    "object": "e2e/alpha-0000000a",
+    "relation": "parents",
+    "subject_set": {
+      "namespace": "app",
+      "object": "tadoku",
+      "relation": ""
+    }
+  },
+  {
+    "namespace": "app",
+    "object": "e2e/beta-0000000b",
+    "relation": "parents",
+    "subject_set": {
+      "namespace": "app",
+      "object": "tadoku",
+      "relation": ""
+    }
+  },
+  {
+    "namespace": "app",
+    "object": "e2e/alpha-0000000a",
+    "relation": "testers",
+    "subject_id": "tester"
+  },
+  {
+    "namespace": "app",
+    "object": "e2e/alpha-0000000a",
+    "relation": "admins",
+    "subject_id": "branch-admin"
+  }
+]

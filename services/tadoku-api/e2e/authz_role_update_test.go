@@ -43,11 +43,11 @@ func TestAuthzRoleUpdate(t *testing.T) {
 func auditUnavailableRoleUpdateHandler(t *testing.T) *transport.Router {
 	t.Helper()
 
-	closedPool := openClosedPool(t, api.db.DSN)
+	closedPool := openClosedPool(t, api.db.AppPool.Config().ConnString())
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	router, _, _, err := newTestRouterWithLogger(
 		t.Context(),
-		api.db.Pool,
+		api.db.AppPool,
 		closedPool,
 		keto,
 		api.kratos,

@@ -54,6 +54,7 @@ go_test(
         "errors_test.go",
         "pool_test.go",
         "sqlc_compat_test.go",
+        "tenancy_schema_test.go",
         "tenant_test.go",
         "timestamp_test.go",
         "transaction_test.go",

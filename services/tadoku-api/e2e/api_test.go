@@ -116,7 +116,7 @@ func runTests(m *testing.M) (code int) {
 	}
 	defer func() { cleanupErr = errors.Join(cleanupErr, api.db.Close()) }()
 
-	scoringEnabledHandler, _, _, err = newTestRouterWithLeaderboardService(ctx, api.db.Pool, api.db.Pool, keto, kratos, slog.New(slog.NewTextHandler(io.Discard, nil)), true, api.leaderboard, tenant.Deployment{})
+	scoringEnabledHandler, _, _, err = newTestRouterWithLeaderboardService(ctx, api.db.AppPool, api.db.AppPool, keto, kratos, slog.New(slog.NewTextHandler(io.Discard, nil)), true, api.leaderboard, tenant.Deployment{})
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
@@ -148,8 +148,8 @@ func newTestAPI(ctx context.Context, ketoFixture *testketo.Fixture, kratosFixtur
 		}
 	}()
 
-	leaderboardService := leaderboard.NewService(leaderboard.NewRepository(db.Pool), leaderboardValkey.client, time.Second, "")
-	handler, profileService, roleService, err := newTestRouterWithLeaderboardService(ctx, db.Pool, db.Pool, ketoFixture, kratosFixture, slog.New(slog.NewTextHandler(io.Discard, nil)), false, leaderboardService, tenant.Deployment{})
+	leaderboardService := leaderboard.NewService(leaderboard.NewRepository(db.AppPool), leaderboardValkey.client, time.Second, "")
+	handler, profileService, roleService, err := newTestRouterWithLeaderboardService(ctx, db.AppPool, db.AppPool, ketoFixture, kratosFixture, slog.New(slog.NewTextHandler(io.Discard, nil)), false, leaderboardService, tenant.Deployment{})
 	if err != nil {
 		return nil, err
 	}
@@ -322,7 +322,7 @@ func (s *suite) reset(t *testing.T, caseDir string) {
 
 func (s *suite) resetProfileCaches() {
 	if s.profile != nil {
-		*s.profile = *featureprofile.NewService(featureprofile.NewRepository(s.db.Pool), featureprofile.NewUserCache(s.kratos.CursorClient()), s.roles, s.kratos.CursorClient())
+		*s.profile = *featureprofile.NewService(featureprofile.NewRepository(s.db.AppPool), featureprofile.NewUserCache(s.kratos.CursorClient()), s.roles, s.kratos.CursorClient())
 	}
 }
 

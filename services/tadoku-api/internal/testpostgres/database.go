@@ -22,11 +22,13 @@ import (
 )
 
 type Database struct {
-	Pool *pgxpool.Pool
-	DSN  string
+	Pool    *pgxpool.Pool
+	AppPool *pgxpool.Pool
+	DSN     string
 
-	admin *pgxpool.Pool
-	name  string
+	admin   *pgxpool.Pool
+	name    string
+	appRole string
 }
 
 func New(ctx context.Context) (_ *Database, err error) {
@@ -102,6 +104,29 @@ func New(ctx context.Context) (_ *Database, err error) {
 	if err := db.Pool.Ping(ctx); err != nil {
 		return nil, fmt.Errorf("ping test pool: %w", err)
 	}
+	role := name + "_app"
+	roleSQL := pgx.Identifier{role}.Sanitize()
+	password = uuid.NewString()
+	if _, err := admin.Exec(ctx, "create role "+roleSQL+" login nosuperuser nobypassrls password '"+password+"'"); err != nil {
+		return nil, fmt.Errorf("create test application role: %w", err)
+	}
+	db.appRole = role
+	if _, err := db.Pool.Exec(ctx, "grant usage on schema public to "+roleSQL+";"+
+		"grant select, insert, update, delete on all tables in schema public to "+roleSQL+";"+
+		"grant usage, select on all sequences in schema public to "+roleSQL+";"+
+		"revoke insert, update, delete on schema_migrations from "+roleSQL); err != nil {
+		return nil, fmt.Errorf("grant test application privileges: %w", err)
+	}
+	appCfg := cfg.Copy()
+	appCfg.ConnConfig.User = role
+	appCfg.ConnConfig.Password = password
+	db.AppPool, err = pgxpool.NewWithConfig(ctx, appCfg)
+	if err != nil {
+		return nil, fmt.Errorf("open test application pool: %w", err)
+	}
+	if err := db.AppPool.Ping(ctx); err != nil {
+		return nil, fmt.Errorf("ping test application pool: %w", err)
+	}
 	if _, err := db.Pool.Exec(ctx, "create table tadoku_test_language_baseline as select code, name from languages"); err != nil {
 		return nil, fmt.Errorf("snapshot language baseline: %w", err)
 	}
@@ -118,18 +143,27 @@ func New(ctx context.Context) (_ *Database, err error) {
 }
 
 func (d *Database) Close() error {
+	if d.AppPool != nil {
+		d.AppPool.Close()
+	}
 	if d.Pool != nil {
 		d.Pool.Close()
 	}
 	defer d.admin.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	var cleanupErr error
 	if d.name != "" {
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-		if _, err := d.admin.Exec(ctx, `drop database "`+d.name+`" with (force)`); err != nil {
-			return fmt.Errorf("drop disposable database: %w", err)
+		if _, err := d.admin.Exec(ctx, "drop database "+pgx.Identifier{d.name}.Sanitize()+" with (force)"); err != nil {
+			cleanupErr = errors.Join(cleanupErr, fmt.Errorf("drop disposable database: %w", err))
 		}
 	}
-	return nil
+	if d.appRole != "" {
+		if _, err := d.admin.Exec(ctx, "drop role "+pgx.Identifier{d.appRole}.Sanitize()); err != nil {
+			cleanupErr = errors.Join(cleanupErr, fmt.Errorf("drop test application role: %w", err))
+		}
+	}
+	return cleanupErr
 }
 
 //go:embed cleanup.sql

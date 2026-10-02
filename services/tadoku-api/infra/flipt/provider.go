@@ -10,7 +10,6 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/featureflags"
 )
 
-// ponytail: Keep at most 16 test clients; increase only when active-tenant measurements require it.
 const maxTestClients = 16
 
 type clientFactory func(context.Context, Config, Observer) (*Client, error)
@@ -20,6 +19,8 @@ type tenantClient struct {
 	client *Client
 }
 
+// ponytail: Beyond 16 active test tenants, evaluations may use safe defaults while clients restart.
+// Increase the bound only when active-tenant measurements require it.
 type Provider struct {
 	mu         sync.Mutex
 	ctx        context.Context

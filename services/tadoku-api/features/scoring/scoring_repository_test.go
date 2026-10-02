@@ -91,7 +91,7 @@ func TestScoringRepositoryPlatformRuleSetLifecycle(t *testing.T) {
 	})
 	assertConstraintViolation(
 		t, err, pgerrcode.UniqueViolation,
-		"scoring_rule_sets_platform_version", "scoring_rule_sets_tenant_platform_version",
+		"scoring_rule_sets_tenant_platform_version",
 	)
 
 	specific := Rule{
@@ -124,7 +124,7 @@ func TestScoringRepositoryPlatformRuleSetLifecycle(t *testing.T) {
 	err = repository.CreateRule(tenantCtx, draft.ID, duplicate)
 	assertConstraintViolation(
 		t, err, pgerrcode.UniqueViolation,
-		"scoring_rules_rule_set_priority", "scoring_rules_tenant_rule_set_priority",
+		"scoring_rules_tenant_rule_set_priority",
 	)
 
 	mismatchedUnit := general

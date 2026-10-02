@@ -87,7 +87,8 @@ try {
       : role === 'tadoku_owner'
         ? { POSTGRES_HOST: db, POSTGRES_USER: migrationRole, POSTGRES_PASSWORD: 'disposable-test-only', POSTGRES_DATABASE: fail ? 'missing_fixture_database' : target, POSTGRES_SSLMODE: 'disable' }
         : { DSN: `postgres://${role}@${db}:5432/${role}?sslmode=disable`, PGPASSWORD: 'disposable-test-only' }
-    run('docker', ['create', '--name', name, '--network', prefix, '--label', `tadoku.dev/test=${prefix}`, '--cpus', '0.5', '--memory', '256m', ...Object.entries(env).flatMap(([k,v]) => ['-e', `${k}=${v}`]), ...(container.command ? ['--entrypoint', container.command[0]] : []), container.image, ...(container.command?.slice(1) || []), ...container.args])
+    const args = container.args.map(arg => arg.replaceAll('$$', '$'))
+    run('docker', ['create', '--name', name, '--network', prefix, '--label', `tadoku.dev/test=${prefix}`, '--cpus', '0.5', '--memory', '256m', ...Object.entries(env).flatMap(([k,v]) => ['-e', `${k}=${v}`]), ...(container.command ? ['--entrypoint', container.command[0]] : []), container.image, ...(container.command?.slice(1) || []), ...args])
     containers.push(name)
     // docker cp works with the T3 DinD sidecar; host bind mounts do not.
     for (const volume of spec.volumes || []) {
@@ -165,7 +166,7 @@ try {
     migrate(ownership, `${branch}-existing`)
     const provision = Y.parse(fs.readFileSync(path.join(root, '.dev/database.yaml'), 'utf8')).spec.template.spec.containers[0]
     function prepareBranch() {
-      run('docker', ['exec', '-i', '-e', `DEV_ROUTE=${branch}`, '-e', 'PGUSER=postgres', '-e', 'PGDATABASE=postgres', db, ...provision.command, ...provision.args])
+      run('docker', ['exec', '-i', '-e', `DEV_ROUTE=${branch}`, '-e', 'PGUSER=postgres', '-e', 'PGDATABASE=postgres', db, ...provision.command, ...provision.args.map(arg => arg.replaceAll('$$', '$'))])
     }
     prepareBranch()
     const branchMigrate = Y.parse(fs.readFileSync(path.join(root, '.dev/migrate.yaml'), 'utf8'))
@@ -235,6 +236,11 @@ try {
     run('docker', ['rm', '-f', name])
     containers.pop()
   }
+  const removedFixture = containers.find(name => name !== db)
+  const fixtureOwner = run('docker', ['inspect', removedFixture, '--format', '{{index .Config.Labels "tadoku.dev/test"}}'])
+  if (fixtureOwner !== prefix) throw new Error('Refusing removal of cleanup control fixture')
+  run('docker', ['rm', removedFixture])
+  report.cleanupControl = { removedFixture, expected: 'already absent owned fixture is clean' }
   report.result = 'passed'
 } catch (error) {
   report.result = 'failed'
@@ -243,9 +249,14 @@ try {
 } finally {
   for (const name of containers.reverse()) {
     try {
-      const owner = run('docker', ['inspect', name, '--format', '{{index .Config.Labels "tadoku.dev/test"}}'])
-      if (owner !== prefix) throw new Error(`Refusing cleanup of ${name}`)
-      run('docker', ['rm', '-f', name])
+      const fixture = run('docker', ['ps', '-a', '--no-trunc', '--filter', `name=^/${name}$`, '--format', '{{.ID}}|{{.Label "tadoku.dev/test"}}'])
+      if (!fixture) {
+        if (name === report.cleanupControl?.removedFixture) report.cleanupControl.result = 'passed'
+        continue
+      }
+      const [id, owner] = fixture.split('|')
+      if (owner !== prefix || !/^[0-9a-f]{64}$/.test(id)) throw new Error(`Refusing cleanup of ${name}`)
+      run('docker', ['rm', '-f', id])
     } catch (error) { report.cleanupError = error.message; process.exitCode = 1 }
   }
   if (networkCreated) {

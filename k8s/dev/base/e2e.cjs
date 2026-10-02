@@ -71,12 +71,19 @@ try {
   containers.push(db)
   run('docker', ['start', db])
   run('docker', ['exec', db, 'sh', '-ec', 'for i in $(seq 1 60); do pg_isready -h 127.0.0.1 -U postgres && exit 0; sleep 1; done; exit 1'])
-  run('docker', ['exec', '-i', db, 'psql', '-U', 'postgres', '-v', 'ON_ERROR_STOP=1'], `create role tadoku login password 'disposable-test-only';\n` + Object.values(roles).map(r => `create role ${r} login password 'disposable-test-only';\ncreate database ${database[r]} owner ${postgres.spec.databases[database[r]]};`).join('\n'))
+  const roleSetup = Object.values(roles)
+    .map(r => `create role ${r} login password 'disposable-test-only';\ncreate database ${database[r]} owner ${postgres.spec.databases[database[r]]};`)
+    .join('\n')
+  run('docker', ['exec', '-i', db, 'psql', '-U', 'postgres', '-v', 'ON_ERROR_STOP=1'], `create role tadoku login password 'disposable-test-only';\n` + roleSetup)
 
   function migrate(job, suffix, fail = false, target = 'tadoku', selectedContainer) {
     const spec = job.spec.template.spec
     const container = selectedContainer || spec.containers[0]
-    const role = roles[job.metadata.name] || (job === ownership || job === grants ? 'postgres' : job.metadata.name === 'migrate' ? 'tadoku_owner' : undefined)
+    const role = roles[job.metadata.name] || (
+      job === ownership || job === grants ? 'postgres'
+        : job.metadata.name === 'migrate' ? 'tadoku_owner'
+        : undefined
+    )
     if (!role) throw new Error(`Unexpected migration Job: ${job.metadata.name}`)
     const name = `${prefix}-${job.metadata.name}-${suffix}`
     const isPsql = container.env.some(e => e.name === 'PGUSER')
@@ -88,7 +95,14 @@ try {
         ? { POSTGRES_HOST: db, POSTGRES_USER: migrationRole, POSTGRES_PASSWORD: 'disposable-test-only', POSTGRES_DATABASE: fail ? 'missing_fixture_database' : target, POSTGRES_SSLMODE: 'disable' }
         : { DSN: `postgres://${role}@${db}:5432/${role}?sslmode=disable`, PGPASSWORD: 'disposable-test-only' }
     const args = container.args.map(arg => arg.replaceAll('$$', '$'))
-    run('docker', ['create', '--name', name, '--network', prefix, '--label', `tadoku.dev/test=${prefix}`, '--cpus', '0.5', '--memory', '256m', ...Object.entries(env).flatMap(([k,v]) => ['-e', `${k}=${v}`]), ...(container.command ? ['--entrypoint', container.command[0]] : []), container.image, ...(container.command?.slice(1) || []), ...args])
+    run('docker', [
+      'create', '--name', name, '--network', prefix, '--label', `tadoku.dev/test=${prefix}`, '--cpus', '0.5', '--memory', '256m',
+      ...Object.entries(env).flatMap(([k,v]) => ['-e', `${k}=${v}`]),
+      ...(container.command ? ['--entrypoint', container.command[0]] : []),
+      container.image,
+      ...(container.command?.slice(1) || []),
+      ...args,
+    ])
     containers.push(name)
     // docker cp works with the T3 DinD sidecar; host bind mounts do not.
     for (const volume of spec.volumes || []) {
@@ -105,7 +119,8 @@ try {
     const exit = run('docker', ['inspect', name, '--format', '{{.State.ExitCode}}'])
     if (fail ? exit === '0' : exit !== '0') throw new Error(`Migration ${name} exited ${exit}`)
   }
-  const orderedJobs = [...jobs].sort((a, b) => Number(a.metadata.annotations['argocd.argoproj.io/sync-wave']) - Number(b.metadata.annotations['argocd.argoproj.io/sync-wave']))
+  const syncWave = job => Number(job.metadata.annotations['argocd.argoproj.io/sync-wave'])
+  const orderedJobs = [...jobs].sort((a, b) => syncWave(a) - syncWave(b))
   for (const job of orderedJobs) migrate(job, 'fresh')
   for (const job of orderedJobs) migrate(job, 'noop')
   const application = jobs.find(j => j.metadata.name === 'tadoku-api-migrate')
@@ -115,7 +130,6 @@ try {
     const count = Number(run('docker', ['exec', db, 'psql', '-U', 'postgres', '-d', database[role], '-Atc', "select count(*) from information_schema.tables where table_schema='public'"]))
     if (count < 1) throw new Error(`${role} schema is empty`)
   }
-
 
   function assertRuntime(target) {
     const owners = run('docker', ['exec', db, 'psql', '-X', '-U', 'postgres', '-d', target, '-Atc', "select distinct tableowner from pg_tables where schemaname='public'"])
@@ -141,7 +155,14 @@ try {
       delete from owner_split_proof;
       select * from schema_migrations;
     `)
-    for (const sql of ['create table forbidden_owner_split_proof()', 'insert into schema_migrations select * from schema_migrations where false', 'update schema_migrations set dirty=dirty where false', 'delete from schema_migrations where false', 'truncate schema_migrations']) {
+    const forbidden = [
+      'create table forbidden_owner_split_proof()',
+      'insert into schema_migrations select * from schema_migrations where false',
+      'update schema_migrations set dirty=dirty where false',
+      'delete from schema_migrations where false',
+      'truncate schema_migrations',
+    ]
+    for (const sql of forbidden) {
       const output = run('docker', ['exec', db, 'psql', '-X', '-U', 'tadoku', '-d', target, '-v', 'ON_ERROR_STOP=1', '-c', sql], undefined, true)
       const log = fs.readFileSync(path.join(evidence, report.steps.at(-1).log), 'utf8')
       if (!log.includes('permission denied')) throw new Error(`Expected permission denial for ${sql}: ${output}`)
@@ -166,7 +187,11 @@ try {
     migrate(ownership, `${branch}-existing`)
     const provision = Y.parse(fs.readFileSync(path.join(root, '.dev/database.yaml'), 'utf8')).spec.template.spec.containers[0]
     function prepareBranch() {
-      run('docker', ['exec', '-i', '-e', `DEV_ROUTE=${branch}`, '-e', 'PGUSER=postgres', '-e', 'PGDATABASE=postgres', db, ...provision.command, ...provision.args.map(arg => arg.replaceAll('$$', '$'))])
+      run('docker', [
+        'exec', '-i', '-e', `DEV_ROUTE=${branch}`, '-e', 'PGUSER=postgres', '-e', 'PGDATABASE=postgres', db,
+        ...provision.command,
+        ...provision.args.map(arg => arg.replaceAll('$$', '$')),
+      ])
     }
     prepareBranch()
     const branchMigrate = Y.parse(fs.readFileSync(path.join(root, '.dev/migrate.yaml'), 'utf8'))

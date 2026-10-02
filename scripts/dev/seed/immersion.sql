@@ -7,22 +7,38 @@ begin;
 select set_config('tadoku.tenant', :'tenant', true);
 
 select
-  case when :'tenant' = 'tadoku/prod' then '00000000-0000-4000-8000-000000000101'::uuid
-       else uuid_generate_v5('00000000-0000-4000-8000-000000000101'::uuid, :'tenant') end as public_contest_id,
-  case when :'tenant' = 'tadoku/prod' then '00000000-0000-4000-8000-000000000102'::uuid
-       else uuid_generate_v5('00000000-0000-4000-8000-000000000102'::uuid, :'tenant') end as private_contest_id,
-  case when :'tenant' = 'tadoku/prod' then '00000000-0000-4000-8000-000000000201'::uuid
-       else uuid_generate_v5('00000000-0000-4000-8000-000000000201'::uuid, :'tenant') end as admin_registration_id,
-  case when :'tenant' = 'tadoku/prod' then '00000000-0000-4000-8000-000000000202'::uuid
-       else uuid_generate_v5('00000000-0000-4000-8000-000000000202'::uuid, :'tenant') end as reader_registration_id,
-  case when :'tenant' = 'tadoku/prod' then '00000000-0000-4000-8000-000000000203'::uuid
-       else uuid_generate_v5('00000000-0000-4000-8000-000000000203'::uuid, :'tenant') end as private_registration_id,
-  case when :'tenant' = 'tadoku/prod' then '00000000-0000-4000-8000-000000000301'::uuid
-       else uuid_generate_v5('00000000-0000-4000-8000-000000000301'::uuid, :'tenant') end as reading_log_id,
-  case when :'tenant' = 'tadoku/prod' then '00000000-0000-4000-8000-000000000302'::uuid
-       else uuid_generate_v5('00000000-0000-4000-8000-000000000302'::uuid, :'tenant') end as listening_log_id,
-  case when :'tenant' = 'tadoku/prod' then '00000000-0000-4000-8000-000000000303'::uuid
-       else uuid_generate_v5('00000000-0000-4000-8000-000000000303'::uuid, :'tenant') end as spanish_log_id
+  case
+    when :'tenant' = 'tadoku/prod' then '00000000-0000-4000-8000-000000000101'::uuid
+    else uuid_generate_v5('00000000-0000-4000-8000-000000000101'::uuid, :'tenant')
+  end as public_contest_id,
+  case
+    when :'tenant' = 'tadoku/prod' then '00000000-0000-4000-8000-000000000102'::uuid
+    else uuid_generate_v5('00000000-0000-4000-8000-000000000102'::uuid, :'tenant')
+  end as private_contest_id,
+  case
+    when :'tenant' = 'tadoku/prod' then '00000000-0000-4000-8000-000000000201'::uuid
+    else uuid_generate_v5('00000000-0000-4000-8000-000000000201'::uuid, :'tenant')
+  end as admin_registration_id,
+  case
+    when :'tenant' = 'tadoku/prod' then '00000000-0000-4000-8000-000000000202'::uuid
+    else uuid_generate_v5('00000000-0000-4000-8000-000000000202'::uuid, :'tenant')
+  end as reader_registration_id,
+  case
+    when :'tenant' = 'tadoku/prod' then '00000000-0000-4000-8000-000000000203'::uuid
+    else uuid_generate_v5('00000000-0000-4000-8000-000000000203'::uuid, :'tenant')
+  end as private_registration_id,
+  case
+    when :'tenant' = 'tadoku/prod' then '00000000-0000-4000-8000-000000000301'::uuid
+    else uuid_generate_v5('00000000-0000-4000-8000-000000000301'::uuid, :'tenant')
+  end as reading_log_id,
+  case
+    when :'tenant' = 'tadoku/prod' then '00000000-0000-4000-8000-000000000302'::uuid
+    else uuid_generate_v5('00000000-0000-4000-8000-000000000302'::uuid, :'tenant')
+  end as listening_log_id,
+  case
+    when :'tenant' = 'tadoku/prod' then '00000000-0000-4000-8000-000000000303'::uuid
+    else uuid_generate_v5('00000000-0000-4000-8000-000000000303'::uuid, :'tenant')
+  end as spanish_log_id
 \gset
 
 insert into users (tenant, id, display_name, created_at, updated_at)
@@ -114,9 +130,11 @@ set
 -- identities, so the fixed ids below never collide on the primary key
 delete from contest_registrations
 where tenant = :'tenant'
-  and ((id = :'admin_registration_id'::uuid and user_id <> :'admin_user_id'::uuid)
-   or (id = :'reader_registration_id'::uuid and user_id <> :'reader_user_id'::uuid)
-   or (id = :'private_registration_id'::uuid and user_id <> :'reader_user_id'::uuid));
+  and (
+    (id = :'admin_registration_id'::uuid and user_id <> :'admin_user_id'::uuid)
+    or (id = :'reader_registration_id'::uuid and user_id <> :'reader_user_id'::uuid)
+    or (id = :'private_registration_id'::uuid and user_id <> :'reader_user_id'::uuid)
+  );
 
 insert into contest_registrations (
   tenant,

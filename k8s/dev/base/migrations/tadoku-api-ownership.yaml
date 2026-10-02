@@ -28,10 +28,12 @@ data:
       and not has_schema_privilege('tadoku', 'public', 'create')
       and exists (
         select from pg_database
-        where datname = current_database() and pg_get_userbyid(datdba) = 'tadoku_owner'
+        where datname = current_database()
+          and pg_get_userbyid(datdba) = 'tadoku_owner'
       )
       and exists (
-        select from pg_roles where rolname = 'tadoku' and not rolsuper and not rolbypassrls
+        select from pg_roles
+        where rolname = 'tadoku' and not rolsuper and not rolbypassrls
       )
       and not pg_has_role('tadoku', 'tadoku_owner', 'member')
       and not exists (
@@ -41,7 +43,8 @@ data:
       and not exists (
         select from pg_tables
         cross join unnest(array['select', 'insert', 'update', 'delete']) as privilege
-        where schemaname = 'public' and tablename <> 'schema_migrations'
+        where schemaname = 'public'
+          and tablename <> 'schema_migrations'
           and not has_table_privilege('tadoku', format('%I.%I', schemaname, tablename), privilege)
       )
       and not exists (
@@ -50,9 +53,10 @@ data:
         where schemaname = 'public'
           and not has_sequence_privilege('tadoku', format('%I.%I', schemaname, sequencename), privilege)
       )
-      and case when to_regclass('public.schema_migrations') is null then true else
-        has_table_privilege('tadoku', 'public.schema_migrations', 'select')
-        and not has_table_privilege('tadoku', 'public.schema_migrations', 'insert,update,delete,truncate')
+      and case
+        when to_regclass('public.schema_migrations') is null then true
+        else has_table_privilege('tadoku', 'public.schema_migrations', 'select')
+          and not has_table_privilege('tadoku', 'public.schema_migrations', 'insert,update,delete,truncate')
       end
     ) as grants_valid \gset
 

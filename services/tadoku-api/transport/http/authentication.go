@@ -18,7 +18,14 @@ import (
 
 // NewJWTAuthentication requires callers to enforce roles, bans, permissions and
 // service audiences separately.
-func NewJWTAuthentication(lifetime context.Context, jwksURL string, timeout, maxTokenAge time.Duration, issuer string, deployment tenant.Deployment, logger *slog.Logger) (func(stdhttp.Handler) stdhttp.Handler, error) {
+func NewJWTAuthentication(
+	lifetime context.Context,
+	jwksURL string,
+	timeout, maxTokenAge time.Duration,
+	issuer string,
+	deployment tenant.Deployment,
+	logger *slog.Logger,
+) (func(stdhttp.Handler) stdhttp.Handler, error) {
 	if lifetime == nil {
 		return nil, fmt.Errorf("authentication lifetime context is required")
 	}

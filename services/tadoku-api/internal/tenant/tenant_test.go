@@ -9,7 +9,13 @@ import (
 )
 
 func TestParse(t *testing.T) {
-	for _, raw := range []string{"tadoku/prod", "tadoku/dev", "e2e/run-1a2b3c4d", "a/0", strings.Repeat("a", 56) + "/" + strings.Repeat("b", 56)} {
+	for _, raw := range []string{
+		"tadoku/prod",
+		"tadoku/dev",
+		"e2e/run-1a2b3c4d",
+		"a/0",
+		strings.Repeat("a", 56) + "/" + strings.Repeat("b", 56),
+	} {
 		t.Run(raw, func(t *testing.T) {
 			key, err := tenant.Parse(raw)
 			if err != nil || key.String() != raw {
@@ -17,7 +23,23 @@ func TestParse(t *testing.T) {
 			}
 		})
 	}
-	for _, raw := range []string{"", "tadoku", "TADOKU/prod", "tadoku/PROD", "-x/id", "x/-id", "a_b/id", "x/a_b", "tadoku/prod ", "e2e/", "/run", "e2e/run/id", strings.Repeat("a", 57) + "/id", "x/" + strings.Repeat("a", 57), "é/id"} {
+	for _, raw := range []string{
+		"",
+		"tadoku",
+		"TADOKU/prod",
+		"tadoku/PROD",
+		"-x/id",
+		"x/-id",
+		"a_b/id",
+		"x/a_b",
+		"tadoku/prod ",
+		"e2e/",
+		"/run",
+		"e2e/run/id",
+		strings.Repeat("a", 57) + "/id",
+		"x/" + strings.Repeat("a", 57),
+		"é/id",
+	} {
 		t.Run(raw, func(t *testing.T) {
 			if _, err := tenant.Parse(raw); err == nil {
 				t.Fatalf("accepted invalid key %q", raw)

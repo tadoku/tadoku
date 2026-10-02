@@ -16,6 +16,8 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant/alltenants"
 )
 
+const currentTenantSQL = "select coalesce(current_setting('tadoku.tenant', true), '')"
+
 func oneConnectionPool(t *testing.T, tracer pgx.QueryTracer) *pgxpool.Pool {
 	t.Helper()
 	config, err := pgxpool.ParseConfig(disposableDSN(t))
@@ -42,6 +44,7 @@ func TestTransactionTenantEndsAtCommit(t *testing.T) {
 		t.Fatal(err)
 	}
 	ctx := tenant.WithKey(t.Context(), key)
+	const tenantAndBackendSQL = "select coalesce(current_setting('tadoku.tenant', true), ''), pg_backend_pid()"
 	var before, during, after uint32
 	if err := pool.QueryRow(ctx, "select pg_backend_pid()").Scan(&before); err != nil {
 		t.Fatal(err)
@@ -52,7 +55,7 @@ func TestTransactionTenantEndsAtCommit(t *testing.T) {
 			return err
 		}
 		var actual string
-		if err := executor.QueryRow(child, "select coalesce(current_setting('tadoku.tenant', true), ''), pg_backend_pid()").Scan(&actual, &during); err != nil {
+		if err := executor.QueryRow(child, tenantAndBackendSQL).Scan(&actual, &during); err != nil {
 			return err
 		}
 		if actual != key.String() {
@@ -64,7 +67,7 @@ func TestTransactionTenantEndsAtCommit(t *testing.T) {
 		t.Fatal(err)
 	}
 	var remaining string
-	if err := pool.QueryRow(ctx, "select coalesce(current_setting('tadoku.tenant', true), ''), pg_backend_pid()").Scan(&remaining, &after); err != nil {
+	if err := pool.QueryRow(ctx, tenantAndBackendSQL).Scan(&remaining, &after); err != nil {
 		t.Fatal(err)
 	}
 	if remaining != "" || before != during || during != after {
@@ -133,10 +136,11 @@ func TestExecutorTenantStatementLifecycle(t *testing.T) {
 	if err := executor.QueryRow(ctx, "select 1 where false").Scan(&count); !errors.Is(err, pgx.ErrNoRows) {
 		t.Errorf("empty QueryRow error=%v, want pgx.ErrNoRows", err)
 	}
-	if err := executor.QueryRow(ctx, "select coalesce(current_setting('tadoku.tenant', true), '')").Scan(&current); err != nil || current != tenant.Production().String() {
+	err = executor.QueryRow(ctx, currentTenantSQL).Scan(&current)
+	if err != nil || current != tenant.Production().String() {
 		t.Errorf("QueryRow tenant=%q error=%v", current, err)
 	}
-	if err := pool.QueryRow(ctx, "select coalesce(current_setting('tadoku.tenant', true), '')").Scan(&current); err != nil || current != "" {
+	if err := pool.QueryRow(ctx, currentTenantSQL).Scan(&current); err != nil || current != "" {
 		t.Errorf("after standalone statements tenant=%q error=%v", current, err)
 	}
 	if err := executor.QueryRow(ctx, "select 1").Scan(new(time.Time)); err == nil {
@@ -197,13 +201,15 @@ func TestTransactionRejectsTenantChange(t *testing.T) {
 func TestAllTenantsScope(t *testing.T) {
 	pool := oneConnectionPool(t, nil)
 	ctx := alltenants.With(t.Context())
+	const scopeSQL = `select coalesce(current_setting('tadoku.tenant', true), ''),
+		coalesce(current_setting('tadoku.all_tenants', true), '')`
 	check := func(ctx context.Context) error {
 		executor, err := postgres.Executor(ctx, pool)
 		if err != nil {
 			return err
 		}
 		var key, marker string
-		if err := executor.QueryRow(ctx, "select coalesce(current_setting('tadoku.tenant', true), ''), coalesce(current_setting('tadoku.all_tenants', true), '')").Scan(&key, &marker); err != nil {
+		if err := executor.QueryRow(ctx, scopeSQL).Scan(&key, &marker); err != nil {
 			return err
 		}
 		if key != "" || marker != "on" {
@@ -225,7 +231,8 @@ func TestAllTenantsScope(t *testing.T) {
 		t.Error("transaction accepted both tenant and all-tenants marker")
 	}
 	var key, marker string
-	if err := pool.QueryRow(ctx, "select coalesce(current_setting('tadoku.tenant', true), ''), coalesce(current_setting('tadoku.all_tenants', true), '')").Scan(&key, &marker); err != nil || key != "" || marker != "" {
+	err := pool.QueryRow(ctx, scopeSQL).Scan(&key, &marker)
+	if err != nil || key != "" || marker != "" {
 		t.Errorf("after all-tenants statements tenant=%q marker=%q error=%v", key, marker, err)
 	}
 }
@@ -250,7 +257,7 @@ func TestExecutorInterleavedTenantsOnOneConnection(t *testing.T) {
 			}
 			for iteration := index; iteration < 1000; iteration += 3 {
 				var actual string
-				err := executor.QueryRow(ctx, "select coalesce(current_setting('tadoku.tenant', true), '')").Scan(&actual)
+				err := executor.QueryRow(ctx, currentTenantSQL).Scan(&actual)
 				if err != nil || actual != raw {
 					errorsFound <- fmt.Errorf("statement %d tenant=%q want=%q error=%v", iteration, actual, raw, err)
 				}
@@ -287,7 +294,8 @@ func TestCanceledTenantBatchLeavesPoolUsable(t *testing.T) {
 	reuse, stop := context.WithTimeout(ctx, 5*time.Second)
 	defer stop()
 	var actual string
-	if err := executor.QueryRow(reuse, "select coalesce(current_setting('tadoku.tenant', true), '')").Scan(&actual); err != nil || actual != tenant.Production().String() {
+	err = executor.QueryRow(reuse, currentTenantSQL).Scan(&actual)
+	if err != nil || actual != tenant.Production().String() {
 		t.Errorf("pool reuse tenant=%q error=%v", actual, err)
 	}
 }
@@ -337,7 +345,11 @@ func TestExecutorRejectsContextScopeChanges(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, changed := range []context.Context{t.Context(), tenant.WithKey(t.Context(), other), alltenants.With(t.Context())} {
+	for _, changed := range []context.Context{
+		t.Context(),
+		tenant.WithKey(t.Context(), other),
+		alltenants.With(t.Context()),
+	} {
 		if _, err := executor.Exec(changed, "select 1"); err == nil {
 			t.Error("Exec accepted a changed scope")
 		}

@@ -111,10 +111,11 @@ func New(ctx context.Context) (_ *Database, err error) {
 		return nil, fmt.Errorf("create test application role: %w", err)
 	}
 	db.appRole = role
-	if _, err := db.Pool.Exec(ctx, "grant usage on schema public to "+roleSQL+";"+
-		"grant select, insert, update, delete on all tables in schema public to "+roleSQL+";"+
-		"grant usage, select on all sequences in schema public to "+roleSQL+";"+
-		"revoke insert, update, delete on schema_migrations from "+roleSQL); err != nil {
+	grants := "grant usage on schema public to " + roleSQL + ";" +
+		"grant select, insert, update, delete on all tables in schema public to " + roleSQL + ";" +
+		"grant usage, select on all sequences in schema public to " + roleSQL + ";" +
+		"revoke insert, update, delete on schema_migrations from " + roleSQL
+	if _, err := db.Pool.Exec(ctx, grants); err != nil {
 		return nil, fmt.Errorf("grant test application privileges: %w", err)
 	}
 	appCfg := cfg.Copy()

@@ -27,7 +27,8 @@ func TestPgBouncerTransactionTenantIsolation(t *testing.T) {
 		u.Port() == "" || u.Path != "/postgres" || u.RawPath != "" || u.Opaque != "" ||
 		u.User.Username() != "postgres" || password != "postgres" ||
 		u.RawQuery != "sslmode=disable" || u.Fragment != "" {
-		t.Fatal("TADOKU_TEST_PGBOUNCER_URL must use postgres:postgres on loopback with an explicit port, /postgres and sslmode=disable")
+		t.Fatal("TADOKU_TEST_PGBOUNCER_URL must use postgres:postgres on loopback with an explicit port, " +
+			"/postgres and sslmode=disable")
 	}
 
 	ctx, cancel := context.WithTimeout(t.Context(), 2*time.Minute)
@@ -66,6 +67,7 @@ func TestPgBouncerTransactionTenantIsolation(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	const currentTenantSQL = "select coalesce(current_setting('tadoku.tenant', true), '')"
 	keys := make([]tenant.Key, 3)
 	for index, raw := range []string{"e2e/pgbouncer-one", "e2e/pgbouncer-two", "e2e/pgbouncer-three"} {
 		keys[index], err = tenant.Parse(raw)
@@ -91,7 +93,7 @@ func TestPgBouncerTransactionTenantIsolation(t *testing.T) {
 			}
 			for iteration := range 20 {
 				var actual string
-				if err := executor.QueryRow(tenantCtx, "select coalesce(current_setting('tadoku.tenant', true), '')").Scan(&actual); err != nil {
+				if err := executor.QueryRow(tenantCtx, currentTenantSQL).Scan(&actual); err != nil {
 					errors <- err
 					return
 				}
@@ -104,7 +106,7 @@ func TestPgBouncerTransactionTenantIsolation(t *testing.T) {
 					if err != nil {
 						return err
 					}
-					if err := tx.QueryRow(child, "select coalesce(current_setting('tadoku.tenant', true), '')").Scan(&actual); err != nil {
+					if err := tx.QueryRow(child, currentTenantSQL).Scan(&actual); err != nil {
 						return err
 					}
 					reads.Add(1)
@@ -152,11 +154,21 @@ func TestPgBouncerTransactionTenantIsolation(t *testing.T) {
 		}
 	}
 	var stored, misfiled int64
-	if err := db.Pool.QueryRow(ctx, "select count(*), count(*) filter (where actual <> expected) from tenant_transport_rows").Scan(&stored, &misfiled); err != nil {
+	err = db.Pool.QueryRow(ctx, `select count(*), count(*) filter (where actual <> expected)
+		from tenant_transport_rows`).Scan(&stored, &misfiled)
+	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("goroutines=300 tenants=3 reads=%d writes=%d stored=%d wrong-tenant reads=%d misfiled writes=%d failed workers=%d", reads.Load(), writes.Load(), stored, wrongReads.Load(), misfiled, failed)
-	if failed != 0 || reads.Load() != 12000 || writes.Load() != 6000 || stored != 6000 || wrongReads.Load() != 0 || misfiled != 0 {
+	t.Logf(
+		"goroutines=300 tenants=3 reads=%d writes=%d stored=%d wrong-tenant reads=%d misfiled writes=%d failed workers=%d",
+		reads.Load(), writes.Load(), stored, wrongReads.Load(), misfiled, failed,
+	)
+	if failed != 0 ||
+		reads.Load() != 12000 ||
+		writes.Load() != 6000 ||
+		stored != 6000 ||
+		wrongReads.Load() != 0 ||
+		misfiled != 0 {
 		t.Fatal("PgBouncer transaction workload did not preserve every tenant read and write")
 	}
 
@@ -170,20 +182,25 @@ func TestPgBouncerTransactionTenantIsolation(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer second.Release()
+	const (
+		setSessionTenantSQL           = "select set_config('tadoku.tenant', $1, false)"
+		setSessionTenantAndBackendSQL = "select set_config('tadoku.tenant', $1, false), pg_backend_pid()"
+		tenantAndBackendSQL           = "select coalesce(current_setting('tadoku.tenant', true), ''), pg_backend_pid()"
+	)
 	leaks := 0
 	for range 100 {
 		var actual string
 		var backend int64
 		// Test safety: session settings are confined to this disposable database's
 		// negative control, with two distinct PgBouncer clients sharing backends.
-		if err := first.QueryRow(ctx, "select set_config('tadoku.tenant', $1, false)", keys[0].String()).Scan(&actual); err != nil {
+		if err := first.QueryRow(ctx, setSessionTenantSQL, keys[0].String()).Scan(&actual); err != nil {
 			t.Fatal(err)
 		}
-		if err := second.QueryRow(ctx, "select set_config('tadoku.tenant', $1, false), pg_backend_pid()", keys[1].String()).Scan(&actual, &backend); err != nil {
+		if err := second.QueryRow(ctx, setSessionTenantAndBackendSQL, keys[1].String()).Scan(&actual, &backend); err != nil {
 			t.Fatal(err)
 		}
 		var observedBackend int64
-		if err := first.QueryRow(ctx, "select coalesce(current_setting('tadoku.tenant', true), ''), pg_backend_pid()").Scan(&actual, &observedBackend); err != nil {
+		if err := first.QueryRow(ctx, tenantAndBackendSQL).Scan(&actual, &observedBackend); err != nil {
 			t.Fatal(err)
 		}
 		if actual == keys[1].String() && observedBackend == backend {

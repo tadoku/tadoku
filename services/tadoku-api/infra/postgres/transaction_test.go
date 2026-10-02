@@ -352,8 +352,9 @@ func TestRunInTransactionFailedBeginNeverCallsWork(t *testing.T) {
 	t.Run("closed pool", func(t *testing.T) {
 		db := openPool(t)
 		db.Close()
+		ctx := tenant.WithKey(context.Background(), tenant.Production())
 		called := false
-		err := postgres.RunInTransaction(tenant.WithKey(context.Background(), tenant.Production()), db, func(context.Context) error { called = true; return nil })
+		err := postgres.RunInTransaction(ctx, db, func(context.Context) error { called = true; return nil })
 		if err == nil || called {
 			t.Errorf("closed-pool begin: error=%v, called=%v", err, called)
 		}

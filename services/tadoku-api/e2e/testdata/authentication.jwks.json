@@ -47,6 +47,14 @@
       "kid": "tadoku-tenant-fixture-7cb0c53b-cb86-4814-b4e5-009d352bee9e",
       "use": "sig",
       "alg": "RS256"
+    },
+    {
+      "kty": "RSA",
+      "n": "sKf6svTZElzynStQA-Kvyz1Qfojx73wvsdTAtu9Cw46fFq4jRDl50JhqkPgS_0scirTO7yuqIbYRKU3wfMHhegJ2-5na_hQGVq1OuMUtfnlSn2K8feG1uYK8fxtOLSHElWDr9e0Fyc_7NEgz0j33Gsy_FyVqamZc-UmAazcvq23Ps6cganm4n_i4CtpNQGBjAbd0Yqn1iFpNgTvoHXzNMQ44Gj-H9USz55tdrEtaTLhOPU7nl3XX5UO6H6X0oOCm85olLwwmwsiUfg5TLXK0nMNBcrychF29KHQ0bV5HesfDGRKP21jhc2x-_nsD0wX0pll8rzKCeIdx-qay6SkLBw",
+      "e": "AQAB",
+      "kid": "tadoku-isolation-fixture-0123abcd",
+      "use": "sig",
+      "alg": "RS256"
     }
   ]
 }

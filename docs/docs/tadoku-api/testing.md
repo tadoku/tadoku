@@ -62,6 +62,13 @@ Never point tests at shared development or production services.
   port, database `postgres`, credentials `postgres:postgres` and exactly
   `sslmode=disable`. Fixtures create random disposable databases and apply the
   complete migration history.
+  `testpostgres.Database.Pool` is the owner pool for fixture reset and
+  verification SQL. `AppPool` uses a separate randomly named per-database
+  login with no superuser, `bypassrls`, ownership or role memberships. It has
+  application DML, sequence usage and read-only migration metadata access.
+  Owner-only baseline snapshots are not granted to it. Application-pool
+  shutdown precedes database and role cleanup; partial setup also cleans up
+  the owned role and reports cleanup failures.
 - **PgBouncer:** PostgreSQL transport tests require
   `TADOKU_TEST_PGBOUNCER_URL` with the same loopback, synthetic credential and
   database guard. Run PgBouncer 1.25.2 in transaction mode, with a wildcard
@@ -113,3 +120,30 @@ Never point tests at shared development or production services.
   shared DSN and closes it, without creating another migrated database.
 - The `services/tadoku-api/infra/postgres/` helper tests have their own setup in
   `services/tadoku-api/infra/postgres/README.md`.
+
+## Tenancy guard and isolation
+
+`services/tadoku-api/infra/postgres/tenancy_schema_test.go` migrates a disposable
+database and checks every ordinary table for RLS, a non-null tenant column,
+the strict transaction tenant default and its canonical policy. Registry,
+shared reference, migration metadata and the helper's baseline tables have
+their explicit exceptions. The guard checks shared reference policies and
+rejects database/role startup tenant settings. A new table therefore fails
+the guard until it has the required protections.
+
+All HTTP E2E application repositories and the real journey worker use
+`AppPool`; reset, fixture mutations and `verify.sql` keep `Pool`.
+`services/tadoku-api/e2e/tenant_isolation_test.go` runs signed requests through
+the production JWT/Keto router and real PostgreSQL and Valkey. It covers
+two-way log visibility, duplicate page slugs and synchronized identities,
+shared-table write denial, base and branch job claims, actual delegated
+provider tenant contexts, and test-tenant deletion including a replay chain
+without changing canonical rows. Pool tests also prove fresh and reused
+unscoped connections fail closed. These checks cover database/context
+isolation; they do not prove cache-key partitioning.
+
+Development seed SQL requires `psql` variables including `tenant`. Exercise
+the three files in `scripts/dev/seed/` against a disposable migrated database,
+with canonical and test keys, and retain the command and row/ID comparison.
+If the test runner does not provide `psql`, attach that bounded manual run
+as verification evidence rather than skipping it silently.

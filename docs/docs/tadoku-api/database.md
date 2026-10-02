@@ -70,6 +70,71 @@ are independently implemented with `pg_query_go`.
 Always write SQL keywords in lowercase: `select` and `create table`, not
 `SELECT` and `CREATE TABLE`.
 
+## Tenancy
+
+The canonical tenant is `tadoku/prod`, in both production and development.
+Test tenants use parsed keys such as `e2e/isolation-0123abcd` and registry kind
+`test`. A key has exactly two slash-separated components; each starts with a
+lowercase letter or digit and contains at most 56 lowercase letters, digits
+or hyphens. Physical database names and database roles are independent of keys.
+
+Every application transaction or standalone statement carries its tenant
+through the PostgreSQL executor. The 19 tenant-owned tables include users,
+profiles, content, contests, logs, scoring configuration, audit records,
+account-deletion requests and jobs. All have a non-null tenant column with
+the strict `current_setting('tadoku.tenant')` default. Ordinary
+`tenant_isolation` policies permit only that tenant's rows. The jobs policy
+also admits the restricted all-tenants worker scope; jobs still require a
+non-null, registered tenant.
+
+`languages` and `log_units` are shared reference tables. Everyone can read
+them, but only `tadoku/prod` can insert, update or delete their rows. The
+`tenants` and `tenant_overrides` registry policies permit test-tenant
+management while protecting the canonical production entry. Deleting a test
+entry cascades to its tenant-owned rows, including replayed jobs.
+
+For each new tenant-owned table:
+
+- Add a non-null `tenant` column with the transaction tenant default and a
+  foreign key to `tenants(key)` with `on delete cascade`.
+- Enable row-level security and the canonical `tenant_isolation` policy for
+  both reads and writes.
+- Prefix primary and business-unique keys with `tenant`, and include tenant
+  in foreign keys that need to prevent references across tenants.
+- Follow the migration safety rules, including `not valid` foreign keys and
+  explicit validation, and run the schema guard.
+
+The owner role applies migrations and owns relations. It bypasses their
+row-level policies and is not the application credential. The runtime role
+has no superuser, `bypassrls` or owner membership, owns no relations, and has
+application DML and sequence privileges. It can read `schema_migrations`
+but cannot change it. Tests preserve this distinction with separate fixture
+and application pools.
+
+Data migrations and operator SQL must set the intended tenant explicitly
+inside their transaction:
+
+```sql
+begin;
+select set_config('tadoku.tenant', 'tadoku/prod', true);
+-- The intended scoped statements go here.
+commit;
+```
+
+Never set the tenant per session, in pool startup parameters, on a role or
+on a database. Transaction pooling can give another client the same server
+session. A genuinely fresh direct connection without the setting fails
+with `42704`; a previously scoped connection can retain an empty custom-GUC
+placeholder. That connection reads no ordinary tenant rows and cannot
+persist an unscoped write. Application calls also fail before SQL when their
+context has no parsed tenant.
+
+Every `pg_cron` command for tenant-owned work sends the local `tadoku/prod`
+setting first and its scheduled work in the same command batch. The multiple
+statements execute in one job transaction. Keep this prefix with the complete
+command; connection/session defaults cannot replace it. Operator tools that
+submit statements separately must use an explicit transaction.
+
 ## sqlc code generation
 
 Queries live in one package per feature under `services/tadoku-api/sql/<feature>/`:

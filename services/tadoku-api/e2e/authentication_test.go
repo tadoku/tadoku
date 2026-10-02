@@ -190,7 +190,7 @@ func TestAuthenticationBranch(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	handler, _, _, err := newTestRouterWithLeaderboardService(t.Context(), api.db.Pool, api.db.Pool, api.keto, api.kratos, slog.New(slog.NewTextHandler(io.Discard, nil)), false, api.leaderboard, deployment)
+	handler, _, _, err := newTestRouterWithLeaderboardService(t.Context(), api.db.AppPool, api.db.AppPool, api.keto, api.kratos, slog.New(slog.NewTextHandler(io.Discard, nil)), false, api.leaderboard, deployment)
 	if err != nil {
 		t.Fatal(err)
 	}

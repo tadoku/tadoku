@@ -76,6 +76,7 @@ func (tracer *workerScopeTracer) record(ctx context.Context, sql string) {
 		if !strings.HasPrefix(sql, "-- name: "+name+" :") {
 			continue
 		}
+
 		key, _ := tenant.FromContext(ctx)
 		tracer.mu.Lock()
 		tracer.queries[name] = append(tracer.queries[name], workerQueryScope{key: key, all: alltenants.Enabled(ctx)})
@@ -116,6 +117,7 @@ func TestWorkerProcessUsesPersistedTenant(t *testing.T) {
 			t.Error(err)
 		}
 	})
+
 	key, err := tenant.Parse("e2e/worker-0123abcd")
 	if err != nil {
 		t.Fatal(err)
@@ -123,8 +125,10 @@ func TestWorkerProcessUsesPersistedTenant(t *testing.T) {
 	if _, err := f.db.Exec(t.Context(), `insert into tenants (key, kind) values ($1, 'test')`, key.String()); err != nil {
 		t.Fatal(err)
 	}
+
 	pool, tracer := tracedWorkerPool(t, f.dsn)
 	repository := jobqueue.NewRepository(pool)
+
 	for _, test := range []struct {
 		name       string
 		handlerErr error
@@ -152,6 +156,7 @@ func TestWorkerProcessUsesPersistedTenant(t *testing.T) {
 					t.Error(err)
 				}
 			})
+
 			claimed, err := repository.Claim(
 				alltenants.With(t.Context()),
 				jobs.LeaderboardInvalidateOfficialV1,
@@ -162,6 +167,7 @@ func TestWorkerProcessUsesPersistedTenant(t *testing.T) {
 			if err != nil || len(claimed) != 1 || claimed[0].ID != id {
 				t.Fatalf("claim fixture job: count=%d error=%v", len(claimed), err)
 			}
+
 			var observedKey tenant.Key
 			var observedAll bool
 			var storedTenant, storedAll string
@@ -184,12 +190,14 @@ func TestWorkerProcessUsesPersistedTenant(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
+
 			runtime := &runner{
 				queue:    jobqueue.NewService(repository),
 				handlers: handlers,
 				logger:   slog.New(slog.NewTextHandler(io.Discard, nil)),
 				metrics:  NewMetrics(prometheus.NewRegistry()),
 			}
+
 			spec := handlers.ordered[0].spec
 			spec.lease = time.Minute
 			renewals := len(tracer.scopes("Renew"))
@@ -197,12 +205,14 @@ func TestWorkerProcessUsesPersistedTenant(t *testing.T) {
 			if !errors.Is(err, test.handlerErr) {
 				t.Errorf("handler result = %v; want %v", err, test.handlerErr)
 			}
+
 			if observedKey != key || observedAll || storedTenant != key.String() || storedAll == "on" {
 				t.Errorf(
 					"handler context tenant=%s all=%t; database tenant=%s all=%s; want tenant=%s without all-tenants",
 					observedKey, observedAll, storedTenant, storedAll, key,
 				)
 			}
+
 			var state string
 			if err := f.db.QueryRow(t.Context(), `select state from jobs where id=$1`, id).Scan(&state); err != nil {
 				t.Fatal(err)
@@ -210,10 +220,12 @@ func TestWorkerProcessUsesPersistedTenant(t *testing.T) {
 			if state != test.state {
 				t.Errorf("job state = %s; want %s", state, test.state)
 			}
+
 			observed := tracer.scopes(test.transition)
 			if len(observed) != 1 || observed[0].key != key || observed[0].all {
 				t.Errorf("%s query contexts = %+v; want job tenant without all-tenants", test.transition, observed)
 			}
+
 			observed = tracer.scopes("Renew")[renewals:]
 			if len(observed) != 1 || observed[0].key != key || observed[0].all {
 				t.Errorf("pre-dispatch renewal contexts = %+v; want job tenant without all-tenants", observed)
@@ -232,6 +244,7 @@ func TestBaseWorkerHousekeepingUsesAllTenants(t *testing.T) {
 			t.Error(err)
 		}
 	})
+
 	if _, err := f.db.Exec(t.Context(), `
 		insert into tenants (key, kind) values ('e2e/worker-0123abcd', 'test');
 
@@ -250,6 +263,7 @@ func TestBaseWorkerHousekeepingUsesAllTenants(t *testing.T) {
 		from tenants;`); err != nil {
 		t.Fatal(err)
 	}
+
 	pool, tracer := tracedWorkerPool(t, f.dsn)
 	registry := prometheus.NewRegistry()
 	handlers, err := newRegistry(handle(
@@ -259,6 +273,7 @@ func TestBaseWorkerHousekeepingUsesAllTenants(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	application := &Application{runner: &runner{
 		queue:           jobqueue.NewService(jobqueue.NewRepository(pool)),
 		handlers:        handlers,
@@ -267,10 +282,12 @@ func TestBaseWorkerHousekeepingUsesAllTenants(t *testing.T) {
 		concurrency:     1,
 		shutdownTimeout: time.Second,
 	}}
+
 	startWorker(t, application)
 	if err := waitFor(t.Context(), func() (bool, error) { return application.Ready(), nil }); err != nil {
 		t.Fatal(err)
 	}
+
 	for _, name := range []string{"Claim", "CleanupCompleted", "Stats", "UnsupportedStats"} {
 		observed := tracer.scopes(name)
 		if len(observed) == 0 {
@@ -282,6 +299,7 @@ func TestBaseWorkerHousekeepingUsesAllTenants(t *testing.T) {
 			}
 		}
 	}
+
 	var completed int
 	if err := f.db.QueryRow(t.Context(), `select count(*) from jobs where state='completed'`).Scan(&completed); err != nil {
 		t.Fatal(err)
@@ -289,6 +307,7 @@ func TestBaseWorkerHousekeepingUsesAllTenants(t *testing.T) {
 	if completed != 0 {
 		t.Errorf("expired completed jobs remaining = %d; want 0 across both tenants", completed)
 	}
+
 	families, err := registry.Gather()
 	if err != nil {
 		t.Fatal(err)
@@ -341,6 +360,7 @@ func newWorkerFixture(ctx context.Context) (_ workerFixture, err error) {
 func (f workerFixture) Close() error {
 	ctx, stop := context.WithTimeout(tenant.WithKey(context.Background(), tenant.Production()), time.Second)
 	defer stop()
+
 	var cleanupErr error
 	var cursor uint64
 	for {
@@ -360,6 +380,7 @@ func (f workerFixture) Close() error {
 		}
 		cursor = page.Cursor
 	}
+
 	f.client.Close()
 	return errors.Join(cleanupErr, f.database.Close())
 }
@@ -456,6 +477,7 @@ func TestWorkerStartsWithoutValkey(t *testing.T) {
 			t.Error(err)
 		}
 	})
+
 	rawURL, err := testvalkey.URL()
 	if err != nil {
 		t.Fatal(err)
@@ -482,6 +504,7 @@ func TestWorkerStartsWithoutValkey(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	startWorker(t, application)
 	defer func() {
 		if !t.Failed() {
@@ -515,6 +538,7 @@ func TestWorkerCancelsHandlerAfterLostLeaseAndReclaims(t *testing.T) {
 			t.Error(err)
 		}
 	})
+
 	release := make(chan struct{})
 	var released sync.Once
 	releaseAll := func() { released.Do(func() { close(release) }) }
@@ -527,12 +551,14 @@ func TestWorkerCancelsHandlerAfterLostLeaseAndReclaims(t *testing.T) {
 		canceled: make(chan struct{}, 1),
 	}
 	runner := f.runner(t, blocked, 8*time.Second, 2*time.Second)
+
 	startWorker(t, runner)
 	if err := waitFor(tenantCtx, func() (bool, error) {
 		return runner.Ready(), nil
 	}); err != nil {
 		t.Fatal(err)
 	}
+
 	id, err := insertJob(tenantCtx, f.db, string(jobs.LeaderboardInvalidateContestV1), fmt.Sprintf(`{"contest_id":%q}`, uuid.NewString()), false)
 	if err != nil {
 		t.Fatal(err)
@@ -542,6 +568,7 @@ func TestWorkerCancelsHandlerAfterLostLeaseAndReclaims(t *testing.T) {
 	case <-time.After(5 * time.Second):
 		t.Fatal("contest handler did not start")
 	}
+
 	newToken := uuid.New()
 	if _, err := f.db.Exec(tenantCtx, `update jobs set claim_token = $1, lease_expires_at = now() + interval '1 minute'
 		where id = $2 and state = 'running'`, newToken, id); err != nil {
@@ -552,6 +579,7 @@ func TestWorkerCancelsHandlerAfterLostLeaseAndReclaims(t *testing.T) {
 	case <-time.After(6 * time.Second):
 		t.Fatal("handler was not canceled after losing lease")
 	}
+
 	var state string
 	var token uuid.UUID
 	if err := f.db.QueryRow(tenantCtx, `select state, claim_token from jobs where id = $1`, id).Scan(&state, &token); err != nil {
@@ -560,6 +588,7 @@ func TestWorkerCancelsHandlerAfterLostLeaseAndReclaims(t *testing.T) {
 	if state != "running" || token != newToken {
 		t.Fatalf("lost claim was transitioned: state=%s token=%s", state, token)
 	}
+
 	releaseAll()
 	if _, err := f.db.Exec(tenantCtx, `update jobs set lease_expires_at = now() - interval '1 second' where id = $1`, id); err != nil {
 		t.Fatal(err)
@@ -585,6 +614,7 @@ func TestWorkerDeadlineExhaustionAndReplay(t *testing.T) {
 			t.Error(err)
 		}
 	})
+
 	release := make(chan struct{})
 	var released sync.Once
 	releaseAll := func() { released.Do(func() { close(release) }) }
@@ -596,6 +626,7 @@ func TestWorkerDeadlineExhaustionAndReplay(t *testing.T) {
 		release: release,
 	}
 	runner := f.runner(t, blocked, 8*time.Second, 2*time.Second)
+
 	var id int64
 	err := f.db.QueryRow(tenantCtx, `
 		insert into jobs (tenant, task_type, payload, attempts)
@@ -606,11 +637,13 @@ func TestWorkerDeadlineExhaustionAndReplay(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	repository := jobqueue.NewRepository(f.db)
 	claimed, err := repository.Claim(tenantCtx, jobs.LeaderboardInvalidateContestV1, 1, time.Second, 5)
 	if err != nil || len(claimed) != 1 {
 		t.Fatalf("claim exhausted job: jobs=%d error=%v", len(claimed), err)
 	}
+
 	spec := handlerSpec{
 		typeName:    jobs.LeaderboardInvalidateContestV1,
 		limit:       2,
@@ -621,6 +654,7 @@ func TestWorkerDeadlineExhaustionAndReplay(t *testing.T) {
 	if err := runner.runner.process(tenantCtx, claimed[0], spec); !errors.Is(err, context.DeadlineExceeded) {
 		t.Errorf("deadline handler error = %v", err)
 	}
+
 	var state, code string
 	var attempts int
 	if err := f.db.QueryRow(tenantCtx, `select state, attempts, last_error from jobs where id = $1`, id).Scan(&state, &attempts, &code); err != nil {
@@ -629,10 +663,12 @@ func TestWorkerDeadlineExhaustionAndReplay(t *testing.T) {
 	if state != "failed" || attempts != 5 || code != "deadline_exceeded" {
 		t.Fatalf("exhausted job: state=%q attempts=%d code=%q", state, attempts, code)
 	}
+
 	replayedID, err := Replay(tenantCtx, jobqueue.NewService(repository), id, "worker-e2e", "deadline repaired")
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	releaseAll()
 	startWorker(t, runner)
 	if err := waitFor(tenantCtx, func() (bool, error) {
@@ -655,6 +691,7 @@ func TestWorkerShutdownCancelsActiveJob(t *testing.T) {
 			t.Error(err)
 		}
 	})
+
 	release := make(chan struct{})
 	var released sync.Once
 	releaseAll := func() { released.Do(func() { close(release) }) }
@@ -666,6 +703,7 @@ func TestWorkerShutdownCancelsActiveJob(t *testing.T) {
 		release: release,
 	}
 	runner := f.runner(t, blocked, 8*time.Second, 100*time.Millisecond)
+
 	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan struct{})
 	go func() { defer close(done); runner.Run(ctx) }()
@@ -677,11 +715,13 @@ func TestWorkerShutdownCancelsActiveJob(t *testing.T) {
 			t.Error("worker did not stop during cleanup")
 		}
 	})
+
 	if err := waitFor(tenantCtx, func() (bool, error) {
 		return runner.Ready(), nil
 	}); err != nil {
 		t.Fatal(err)
 	}
+
 	id, err := insertJob(tenantCtx, f.db, string(jobs.LeaderboardInvalidateContestV1), fmt.Sprintf(`{"contest_id":%q}`, uuid.NewString()), false)
 	if err != nil {
 		t.Fatal(err)
@@ -691,12 +731,14 @@ func TestWorkerShutdownCancelsActiveJob(t *testing.T) {
 	case <-time.After(5 * time.Second):
 		t.Fatal("contest handler did not start")
 	}
+
 	cancel()
 	select {
 	case <-done:
 	case <-time.After(5 * time.Second):
 		t.Fatal("worker did not stop after active handler cancellation")
 	}
+
 	var state string
 	if err := f.db.QueryRow(tenantCtx, `select state from jobs where id = $1`, id).Scan(&state); err != nil {
 		t.Fatal(err)
@@ -720,6 +762,7 @@ func TestWorkerDoesNotDispatchAfterClaimLeaseExpires(t *testing.T) {
 			t.Error(err)
 		}
 	})
+
 	release := make(chan struct{})
 	close(release)
 	observed := &blockingValkey{
@@ -729,6 +772,7 @@ func TestWorkerDoesNotDispatchAfterClaimLeaseExpires(t *testing.T) {
 		release: release,
 	}
 	runner := f.runner(t, observed, time.Second, time.Second)
+
 	id, err := insertJob(tenantCtx, f.db, string(jobs.LeaderboardInvalidateContestV1), fmt.Sprintf(`{"contest_id":%q}`, uuid.NewString()), false)
 	if err != nil {
 		t.Fatal(err)
@@ -740,6 +784,7 @@ func TestWorkerDoesNotDispatchAfterClaimLeaseExpires(t *testing.T) {
 	if err := waitFor(tenantCtx, func() (bool, error) { return time.Until(claimed[0].LeaseExpiresAt) <= 0, nil }); err != nil {
 		t.Fatal(err)
 	}
+
 	spec := handlerSpec{
 		typeName:    jobs.LeaderboardInvalidateContestV1,
 		limit:       2,
@@ -750,11 +795,13 @@ func TestWorkerDoesNotDispatchAfterClaimLeaseExpires(t *testing.T) {
 	if err := runner.runner.process(tenantCtx, claimed[0], spec); err == nil {
 		t.Error("expired claim was dispatched")
 	}
+
 	select {
 	case <-observed.started:
 		t.Error("Valkey invalidation began after lease expiry")
 	default:
 	}
+
 	var state string
 	if err := f.db.QueryRow(tenantCtx, `select state from jobs where id = $1`, id).Scan(&state); err != nil {
 		t.Fatal(err)
@@ -775,6 +822,7 @@ func TestWorkerCompletesWhenRenewalIsCanceledByFinishedHandler(t *testing.T) {
 			t.Error(err)
 		}
 	})
+
 	poolConfig, err := pgxpool.ParseConfig(f.dsn)
 	if err != nil {
 		t.Fatal(err)
@@ -787,6 +835,7 @@ func TestWorkerCompletesWhenRenewalIsCanceledByFinishedHandler(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Cleanup(limitedPool.Close)
+
 	release := make(chan struct{})
 	var released sync.Once
 	releaseAll := func() { released.Do(func() { close(release) }) }
@@ -797,6 +846,7 @@ func TestWorkerCompletesWhenRenewalIsCanceledByFinishedHandler(t *testing.T) {
 		started: make(chan struct{}, 1),
 		release: release,
 	}
+
 	service := leaderboard.NewService(leaderboard.NewRepository(limitedPool), blocked, 8*time.Second, f.prefix)
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	repository := jobqueue.NewRepository(limitedPool)
@@ -809,6 +859,7 @@ func TestWorkerCompletesWhenRenewalIsCanceledByFinishedHandler(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	id, err := insertJob(tenantCtx, f.db, string(jobs.LeaderboardInvalidateContestV1), fmt.Sprintf(`{"contest_id":%q}`, uuid.NewString()), false)
 	if err != nil {
 		t.Fatal(err)
@@ -817,6 +868,7 @@ func TestWorkerCompletesWhenRenewalIsCanceledByFinishedHandler(t *testing.T) {
 	if err != nil || len(claimed) != 1 {
 		t.Fatalf("claim: jobs=%d error=%v", len(claimed), err)
 	}
+
 	conn, err := limitedPool.Acquire(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
@@ -829,6 +881,7 @@ func TestWorkerCompletesWhenRenewalIsCanceledByFinishedHandler(t *testing.T) {
 	case <-tracer.starts:
 	default:
 	}
+
 	spec := handlerSpec{
 		typeName:    jobs.LeaderboardInvalidateContestV1,
 		limit:       2,
@@ -838,6 +891,7 @@ func TestWorkerCompletesWhenRenewalIsCanceledByFinishedHandler(t *testing.T) {
 	}
 	done := make(chan error, 1)
 	go func() { done <- runner.runner.process(tenantCtx, claimed[0], spec) }()
+
 	select {
 	case <-blocked.started:
 	case <-time.After(3 * time.Second):
@@ -848,12 +902,14 @@ func TestWorkerCompletesWhenRenewalIsCanceledByFinishedHandler(t *testing.T) {
 	case <-time.After(3 * time.Second):
 		t.Fatal("lease renewal did not request the held pool connection")
 	}
+
 	releaseAll()
 	if err := waitFor(tenantCtx, func() (bool, error) {
 		return limitedPool.Stat().CanceledAcquireCount() > baseline, nil
 	}); err != nil {
 		t.Fatal(err)
 	}
+
 	returnConn()
 	select {
 	case err := <-done:
@@ -863,9 +919,11 @@ func TestWorkerCompletesWhenRenewalIsCanceledByFinishedHandler(t *testing.T) {
 	case <-time.After(3 * time.Second):
 		t.Fatal("handler did not complete")
 	}
+
 	if got := limitedPool.Stat().CanceledAcquireCount(); got <= baseline {
 		t.Errorf("renewal did not contend on the held connection: canceled acquires %d -> %d", baseline, got)
 	}
+
 	var state string
 	if err := f.db.QueryRow(tenantCtx, `select state from jobs where id = $1`, id).Scan(&state); err != nil {
 		t.Fatal(err)
@@ -886,6 +944,7 @@ func TestWorkerFairClaimsWithoutPrefetch(t *testing.T) {
 			t.Error(err)
 		}
 	})
+
 	release := make(chan struct{})
 	var released sync.Once
 	releaseAll := func() { released.Do(func() { close(release) }) }
@@ -897,6 +956,7 @@ func TestWorkerFairClaimsWithoutPrefetch(t *testing.T) {
 		release: release,
 	}
 	runner := f.runner(t, blocked, 8*time.Second, 2*time.Second)
+
 	startWorker(t, runner)
 	if err := waitFor(tenantCtx, func() (bool, error) {
 		return runner.Ready(), nil
@@ -916,6 +976,7 @@ func TestWorkerFairClaimsWithoutPrefetch(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	for range 2 {
 		select {
 		case <-blocked.started:
@@ -923,6 +984,7 @@ func TestWorkerFairClaimsWithoutPrefetch(t *testing.T) {
 			t.Fatal("two contest handlers did not start")
 		}
 	}
+
 	if err := waitFor(tenantCtx, func() (bool, error) {
 		var state string
 		err := f.db.QueryRow(tenantCtx, `select state from jobs where id = $1`, officialID).Scan(&state)
@@ -930,6 +992,7 @@ func TestWorkerFairClaimsWithoutPrefetch(t *testing.T) {
 	}); err != nil {
 		t.Fatal(err)
 	}
+
 	var running, pending int
 	if err := f.db.QueryRow(tenantCtx, `select count(*) filter (where state = 'running'), count(*) filter (where state = 'pending')
 		from jobs where id = any($1)`, contestIDs).Scan(&running, &pending); err != nil {
@@ -938,6 +1001,7 @@ func TestWorkerFairClaimsWithoutPrefetch(t *testing.T) {
 	if running != 2 || pending != 1 {
 		t.Fatalf("contest claims: running=%d pending=%d; want 2 running, 1 pending", running, pending)
 	}
+
 	releaseAll()
 	if err := waitFor(tenantCtx, func() (bool, error) {
 		var completed int
@@ -959,6 +1023,7 @@ func TestWorkerGlobalLimitLeavesDueRowsUnclaimed(t *testing.T) {
 			t.Error(err)
 		}
 	})
+
 	release := make(chan struct{})
 	var released sync.Once
 	releaseAll := func() { released.Do(func() { close(release) }) }
@@ -969,6 +1034,7 @@ func TestWorkerGlobalLimitLeavesDueRowsUnclaimed(t *testing.T) {
 		started: make(chan struct{}, 6),
 		release: release,
 	}
+
 	service := leaderboard.NewService(leaderboard.NewRepository(f.db), blocked, 8*time.Second, f.prefix)
 	application, err := NewApplication(jobqueue.NewService(jobqueue.NewRepository(f.db)), service, Config{
 		Concurrency:     3,
@@ -978,12 +1044,14 @@ func TestWorkerGlobalLimitLeavesDueRowsUnclaimed(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	startWorker(t, application)
 	if err := waitFor(tenantCtx, func() (bool, error) {
 		return application.Ready(), nil
 	}); err != nil {
 		t.Fatal(err)
 	}
+
 	ids := make([]int64, 0, 6)
 	for range 3 {
 		contestID, err := insertJob(tenantCtx, f.db, string(jobs.LeaderboardInvalidateContestV1), fmt.Sprintf(`{"contest_id":%q}`, uuid.NewString()), false)
@@ -996,6 +1064,7 @@ func TestWorkerGlobalLimitLeavesDueRowsUnclaimed(t *testing.T) {
 		}
 		ids = append(ids, contestID, officialID)
 	}
+
 	for range 3 {
 		select {
 		case <-blocked.started:
@@ -1003,6 +1072,7 @@ func TestWorkerGlobalLimitLeavesDueRowsUnclaimed(t *testing.T) {
 			t.Fatal("three handlers did not start")
 		}
 	}
+
 	var running, pending int
 	if err := f.db.QueryRow(tenantCtx, `select count(*) filter (where state = 'running'), count(*) filter (where state = 'pending')
 		from jobs where id = any($1)`, ids).Scan(&running, &pending); err != nil {
@@ -1011,6 +1081,7 @@ func TestWorkerGlobalLimitLeavesDueRowsUnclaimed(t *testing.T) {
 	if running != 3 || pending != 3 {
 		t.Fatalf("global claims: running=%d pending=%d; want 3 running, 3 pending", running, pending)
 	}
+
 	releaseAll()
 	if err := waitFor(tenantCtx, func() (bool, error) {
 		var completed int
@@ -1032,12 +1103,14 @@ func TestWorkerRetainsSlotUntilCanceledHandlerReturns(t *testing.T) {
 			t.Error(err)
 		}
 	})
+
 	started := make(chan struct{}, 2)
 	canceled := make(chan struct{}, 2)
 	release := make(chan struct{})
 	var released sync.Once
 	releaseAll := func() { released.Do(func() { close(release) }) }
 	t.Cleanup(releaseAll)
+
 	handlers, err := newRegistry(handle(func(ctx context.Context, _ jobs.InvalidateOfficialLeaderboardV1) error {
 		started <- struct{}{}
 		<-ctx.Done()
@@ -1048,6 +1121,7 @@ func TestWorkerRetainsSlotUntilCanceledHandlerReturns(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	runtime := &runner{
 		queue:           jobqueue.NewService(jobqueue.NewRepository(f.db)),
 		handlers:        handlers,
@@ -1056,6 +1130,7 @@ func TestWorkerRetainsSlotUntilCanceledHandlerReturns(t *testing.T) {
 		logger:          slog.New(slog.NewTextHandler(io.Discard, nil)),
 		metrics:         NewMetrics(prometheus.NewRegistry()),
 	}
+
 	first, err := insertJob(tenantCtx, f.db, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":2025}`, false)
 	if err != nil {
 		t.Fatal(err)
@@ -1064,6 +1139,7 @@ func TestWorkerRetainsSlotUntilCanceledHandlerReturns(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	ctx, cancel := context.WithCancel(t.Context())
 	done := make(chan struct{})
 	go func() { defer close(done); runtime.run(ctx) }()
@@ -1076,6 +1152,7 @@ func TestWorkerRetainsSlotUntilCanceledHandlerReturns(t *testing.T) {
 			t.Error("worker did not stop")
 		}
 	})
+
 	select {
 	case <-canceled:
 	case <-time.After(5 * time.Second):
@@ -1086,6 +1163,7 @@ func TestWorkerRetainsSlotUntilCanceledHandlerReturns(t *testing.T) {
 	default:
 		t.Fatal("first handler did not start")
 	}
+
 	runtime.ready.Store(false)
 	if err := waitFor(tenantCtx, func() (bool, error) { return runtime.ready.Load(), nil }); err != nil {
 		t.Fatal(err)
@@ -1095,6 +1173,7 @@ func TestWorkerRetainsSlotUntilCanceledHandlerReturns(t *testing.T) {
 		t.Fatal("worker reused the canceled handler's occupied slot")
 	default:
 	}
+
 	var running, pending int
 	if err := f.db.QueryRow(tenantCtx, `select count(*) filter (where state = 'running'), count(*) filter (where state = 'pending') from jobs where id = any($1)`, []int64{first, second}).Scan(&running, &pending); err != nil {
 		t.Fatal(err)
@@ -1102,6 +1181,7 @@ func TestWorkerRetainsSlotUntilCanceledHandlerReturns(t *testing.T) {
 	if running != 1 || pending != 1 {
 		t.Fatalf("canceled handler claims: running=%d pending=%d", running, pending)
 	}
+
 	releaseAll()
 	if err := waitFor(tenantCtx, func() (bool, error) {
 		var failed int
@@ -1123,6 +1203,7 @@ func TestWorkerRenewedDeadlineSchedulesRetry(t *testing.T) {
 			t.Error(err)
 		}
 	})
+
 	handlers, err := newRegistry(handle(func(ctx context.Context, _ jobs.InvalidateOfficialLeaderboardV1) error {
 		<-ctx.Done()
 		return ctx.Err()
@@ -1130,6 +1211,7 @@ func TestWorkerRenewedDeadlineSchedulesRetry(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	repository := jobqueue.NewRepository(f.db)
 	runtime := &runner{
 		queue:    jobqueue.NewService(repository),
@@ -1137,10 +1219,12 @@ func TestWorkerRenewedDeadlineSchedulesRetry(t *testing.T) {
 		logger:   slog.New(slog.NewTextHandler(io.Discard, nil)),
 		metrics:  NewMetrics(prometheus.NewRegistry()),
 	}
+
 	id, err := insertJob(tenantCtx, f.db, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":2025}`, false)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	spec := handlerSpec{
 		typeName:    jobs.LeaderboardInvalidateOfficialV1,
 		limit:       1,
@@ -1177,6 +1261,7 @@ func TestWorkerCleansUpExpiredCompletedJobsAtStartup(t *testing.T) {
 			t.Error(err)
 		}
 	})
+
 	var id int64
 	if err := f.db.QueryRow(tenantCtx, `
 		insert into jobs (tenant, task_type, payload, state, created_at, completed_at)
@@ -1186,6 +1271,7 @@ func TestWorkerCleansUpExpiredCompletedJobsAtStartup(t *testing.T) {
 	).Scan(&id); err != nil {
 		t.Fatal(err)
 	}
+
 	startWorker(t, f.runner(t, f.client, time.Second, time.Second))
 	if err := waitFor(tenantCtx, func() (bool, error) {
 		var exists bool
@@ -1207,14 +1293,17 @@ func TestWorkerCleanupRetainsThreeMonthsAndFailures(t *testing.T) {
 			t.Error(err)
 		}
 	})
+
 	runtime := &runner{
 		queue:  jobqueue.NewService(jobqueue.NewRepository(f.db)),
 		logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
 	}
+
 	now := time.Date(2026, time.May, 31, 12, 0, 0, 0, time.UTC)
 	recent := time.Date(2026, time.April, 30, 12, 0, 0, 0, time.UTC)
 	old := now.AddDate(-1, 0, 0)
 	var recentID, oldID, failedID, replayID, pendingID, runningID int64
+
 	for _, item := range []struct {
 		id        *int64
 		completed time.Time
@@ -1228,6 +1317,7 @@ func TestWorkerCleanupRetainsThreeMonthsAndFailures(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
+
 	if err := f.db.QueryRow(tenantCtx, `
 		insert into jobs (tenant, task_type, payload, state, created_at, failed_at)
 		values ('tadoku/prod', $1, '{"year":2025}', 'failed', $2, $2)
@@ -1236,6 +1326,7 @@ func TestWorkerCleanupRetainsThreeMonthsAndFailures(t *testing.T) {
 	).Scan(&failedID); err != nil {
 		t.Fatal(err)
 	}
+
 	if err := f.db.QueryRow(tenantCtx, `
 		insert into jobs (
 			tenant, task_type, payload, state, created_at, completed_at,
@@ -1247,6 +1338,7 @@ func TestWorkerCleanupRetainsThreeMonthsAndFailures(t *testing.T) {
 	).Scan(&replayID); err != nil {
 		t.Fatal(err)
 	}
+
 	if _, err := f.db.Exec(tenantCtx, `
 		insert into jobs (tenant, task_type, payload, state, created_at, completed_at)
 		select 'tadoku/prod', $1, '{"year":2025}'::jsonb, 'completed', $2, $2
@@ -1255,6 +1347,7 @@ func TestWorkerCleanupRetainsThreeMonthsAndFailures(t *testing.T) {
 	); err != nil {
 		t.Fatal(err)
 	}
+
 	if err := f.db.QueryRow(tenantCtx, `
 		insert into jobs (tenant, task_type, payload, created_at)
 		values ('tadoku/prod', $1, '{"year":2025}', $2)
@@ -1263,6 +1356,7 @@ func TestWorkerCleanupRetainsThreeMonthsAndFailures(t *testing.T) {
 	).Scan(&pendingID); err != nil {
 		t.Fatal(err)
 	}
+
 	if err := f.db.QueryRow(tenantCtx, `
 		insert into jobs (tenant, task_type, payload, state, created_at, claim_token, lease_expires_at)
 		values ('tadoku/prod', $1, '{"year":2025}', 'running', $2, $3, now() + interval '1 hour')
@@ -1273,6 +1367,7 @@ func TestWorkerCleanupRetainsThreeMonthsAndFailures(t *testing.T) {
 	}
 
 	timex.TheWorld(now, func() { runtime.cleanupCompleted(tenantCtx) })
+
 	var expired int
 	if err := f.db.QueryRow(tenantCtx, `select count(*) from jobs where state = 'completed' and completed_at = $1`, old).Scan(&expired); err != nil {
 		t.Fatal(err)

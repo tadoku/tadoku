@@ -27,6 +27,7 @@ func TestDependencyFailures(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	cacheUnavailable, _, _, err := newTestRouterWithLeaderboard(
 		t.Context(),
 		api.db.AppPool,

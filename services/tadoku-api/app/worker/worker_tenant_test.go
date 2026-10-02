@@ -21,6 +21,7 @@ func TestWorkerRetainsTenantAcrossGracefulShutdown(t *testing.T) {
 			t.Error(err)
 		}
 	})
+
 	application := f.runner(t, f.client, time.Second, 2*time.Second)
 	release := make(chan struct{})
 	observed := make(chan error, 1)
@@ -46,6 +47,7 @@ func TestWorkerRetainsTenantAcrossGracefulShutdown(t *testing.T) {
 			}
 			observed <- err
 		}
+
 		select {
 		case <-release:
 			return nil
@@ -69,12 +71,14 @@ func TestWorkerRetainsTenantAcrossGracefulShutdown(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	ctx, cancel := context.WithCancel(ctx)
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
 		_ = application.Run(ctx)
 	}()
+
 	select {
 	case err := <-observed:
 		if err != nil {
@@ -86,6 +90,7 @@ func TestWorkerRetainsTenantAcrossGracefulShutdown(t *testing.T) {
 		<-done
 		t.Fatal("worker did not dispatch the due job")
 	}
+
 	cancel()
 	close(release)
 	select {

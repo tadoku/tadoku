@@ -28,6 +28,7 @@ func TestWorkerJobLifecycle(t *testing.T) {
 			t.Error(err)
 		}
 	})
+
 	db, client, prefix := f.database, f.client, f.prefix
 	keys := []string{
 		prefix + "leaderboard:global",
@@ -38,6 +39,7 @@ func TestWorkerJobLifecycle(t *testing.T) {
 		prefix + "leaderboard:yearly:2025:generation",
 		"other:" + prefix + "leaderboard:global:last_updated",
 	}
+
 	t.Cleanup(func() {
 		ctx, stop := context.WithTimeout(tenant.WithKey(context.Background(), tenant.Production()), time.Second)
 		defer stop()
@@ -63,6 +65,7 @@ func TestWorkerJobLifecycle(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan struct{})
 	go func() { defer close(done); runner.Run(ctx) }()
@@ -80,6 +83,7 @@ func TestWorkerJobLifecycle(t *testing.T) {
 	}); err != nil {
 		t.Fatal(err)
 	}
+
 	for _, item := range []struct {
 		key  string
 		want int64
@@ -142,6 +146,7 @@ func TestWorkerJobLifecycle(t *testing.T) {
 			t.Errorf("marker %s after completed job: count=%d error=%v; want %d", item.key, count, err, item.want)
 		}
 	}
+
 	var code string
 	if err := db.Pool.QueryRow(tenantCtx, `select last_error from jobs where id = $1`, invalidID).Scan(&code); err != nil {
 		t.Fatal(err)
@@ -162,6 +167,7 @@ func insertJob(ctx context.Context, db *pgxpool.Pool, jobType, payload string, e
 		).Scan(&id)
 		return id, err
 	}
+
 	err := db.QueryRow(ctx, `
 		insert into jobs (tenant, task_type, payload)
 		values ('tadoku/prod', $1, $2::jsonb)

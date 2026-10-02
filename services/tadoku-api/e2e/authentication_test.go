@@ -134,6 +134,7 @@ func TestAuthentication(t *testing.T) {
 			want:        http.StatusUnauthorized,
 		},
 	}
+
 	for _, test := range tests {
 		name := APITestName("Authentication", test.want, test.description...)
 		t.Run(name, func(t *testing.T) {
@@ -199,6 +200,7 @@ func TestAuthenticationBranch(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	handler, _, _, err := newTestRouterWithLeaderboardService(
 		t.Context(),
 		api.db.AppPool,
@@ -213,6 +215,7 @@ func TestAuthenticationBranch(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	for _, test := range []struct {
 		description []string
 		want        int

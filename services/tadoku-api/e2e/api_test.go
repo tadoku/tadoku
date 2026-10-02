@@ -173,6 +173,7 @@ func newTestAPI(ctx context.Context, ketoFixture *testketo.Fixture, kratosFixtur
 	if err != nil {
 		return nil, err
 	}
+
 	api := &suite{
 		db:          db,
 		keto:        ketoFixture,
@@ -251,6 +252,7 @@ func newTestRouterWithLeaderboardService(
 	permissionChecker := permissions.NewKetoChecker(reader)
 	roleService := permissions.NewKetoService(reader, "app", "tadoku")
 	identities := kratosFixture.CursorClient()
+
 	authzService := featureauthz.NewService(
 		permissionChecker,
 		identities,
@@ -259,6 +261,7 @@ func newTestRouterWithLeaderboardService(
 		nil,
 	)
 	auditService := featureaudit.NewService(featureaudit.NewRepository(auditPool))
+
 	announcementsRepository := announcements.NewAnnouncementsRepository(pool)
 	contestsRepository := contests.NewContestsRepository(pool)
 	jobQueue := jobqueue.NewService(jobqueue.NewRepository(pool))
@@ -268,6 +271,7 @@ func newTestRouterWithLeaderboardService(
 	postsRepository := posts.NewPostsRepository(pool)
 	profileRepository := featureprofile.NewRepository(pool)
 	scoringRepository := scoring.NewScoringRepository(pool)
+
 	announcementsService := announcements.NewService(announcementsRepository)
 	contestsService := contests.NewService(contestsRepository)
 	languagesService := languages.NewService(languagesRepository)
@@ -277,9 +281,11 @@ func newTestRouterWithLeaderboardService(
 	profileService := featureprofile.NewService(profileRepository, featureprofile.NewUserCache(identities), roleService, identities)
 	featureFlagEvaluator := featureflags.NewEvaluator(flipt, nil)
 	featureFlagsService := featureflagsservice.NewService(featureFlagEvaluator, fliptmanagement.NewClient(fliptmanagement.Config{URL: flipt.URL(), Environment: "local"}))
+
 	registry := prometheus.NewRegistry()
 	scoringObserver := observability.NewScoringObserver(registry, logger, scoringEngineEnabled)
 	scoringService := scoring.NewService(scoringRepository, scoringEngineEnabled, scoringObserver)
+
 	application := app.New(app.Dependencies{
 		JobQueue:      jobQueue,
 		Announcements: announcementsService,
@@ -297,6 +303,7 @@ func newTestRouterWithLeaderboardService(
 		DB:            pool,
 		Permissions:   permissionChecker,
 	})
+
 	authenticate, err := transport.NewJWTAuthentication(
 		ctx,
 		authenticationJWKS.URL,
@@ -309,11 +316,13 @@ func newTestRouterWithLeaderboardService(
 	if err != nil {
 		return nil, nil, nil, err
 	}
+
 	rejectBanned := transport.RejectBannedUsers(permissionChecker.CheckBanned, logger)
 	authenticateCallback, err := transport.NewCallbackAuthentication(callbackToken)
 	if err != nil {
 		return nil, nil, nil, err
 	}
+
 	handler, err := transport.NewHandler(application, pool.Ping, time.Second, registry, logger, authenticate, rejectBanned, authenticateCallback)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("create API handler: %w", err)

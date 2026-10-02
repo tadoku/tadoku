@@ -91,10 +91,14 @@ Never point tests at shared development or production services.
   instance. Logical databases are reserved per suite: 15 for HTTP E2Es, 14 for
   their nested cleanup probe, and 13 for the leaderboard cache fence and worker
   tests. The HTTP E2E fixtures lease their database. Tests sharing database 13
-  use UUID-scoped keys: the fence test creates and deletes only its named keys;
-  the worker tests use a unique cache prefix and delete only matching keys.
-  The worker's extra marker outside that prefix also embeds the UUID and is
-  deleted by exact name. No test sharing database 13 flushes it.
+  use unique parsed `e2e/<id>` tenants: the fence and cross-tenant tests create
+  and delete only their named tenant keys; worker cache tests register a unique
+  test tenant, persist it on jobs and delete only that tenant's matching keys.
+  The worker's extra marker outside its tenant prefix also embeds the unique
+  key and is deleted by exact name. No test sharing database 13 flushes it.
+  The leased HTTP E2E database refuses pre-existing leaderboard keys and resets
+  only legacy and tenant-derived leaderboard patterns while holding its lease,
+  including keys created by arbitrary test-tenant jobs.
 
 ## Repository and package tests
 
@@ -144,7 +148,9 @@ shared-table write denial, base and branch job claims, actual delegated
 provider tenant contexts, and test-tenant deletion including a replay chain
 without changing canonical rows. Pool tests also prove fresh and reused
 unscoped connections fail closed. These checks cover database/context
-isolation; they do not prove cache-key partitioning.
+isolation. The leaderboard Valkey tests also prove that invalidating one tenant
+keeps the other tenant's warm page and that missing-tenant invalidation writes
+no key.
 
 Development seed SQL requires `psql` variables including `tenant`. Exercise
 the three files in `scripts/dev/seed/` against a disposable migrated database,

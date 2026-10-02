@@ -236,7 +236,12 @@ a message. Keep the failed original inspectable.
 ## Leaderboard freshness and worker health
 
 PostgreSQL is the source of truth, but unfiltered global, yearly and contest
-leaderboards use warm Valkey cache keys. The API does not check worker readiness
+leaderboards use warm Valkey cache keys derived from the request or persisted
+job tenant, in the form `tenant:<name>/<id>:leaderboard:…`. Invalidation changes
+only that tenant's keys. Private development databases sharing `tadoku/prod`
+retain their route prefix as described in
+[Valkey configuration](./configuration.md#valkey-and-leaderboard-caches).
+The API does not check worker readiness
 or the queue before serving a warm key. It can therefore serve an outdated
 leaderboard while the worker is down, while that key's invalidation job is
 pending or running, and after the job has failed terminally. A failed

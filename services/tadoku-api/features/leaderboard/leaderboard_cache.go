@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	valkeygo "github.com/valkey-io/valkey-go"
 )
 
@@ -48,7 +49,14 @@ func NewCache(client valkeygo.Client, operationTimeout time.Duration, cachePrefi
 	}
 }
 
-func (c *Cache) cacheKey(key string) string { return c.cachePrefix + key }
+func (c *Cache) cacheKey(ctx context.Context, key string) (string, error) {
+	tenantKey, ok := tenant.FromContext(ctx)
+	if !ok {
+		return "", fmt.Errorf("leaderboard cache requires a tenant")
+	}
+
+	return c.cachePrefix + "tenant:" + tenantKey.String() + ":" + key, nil
+}
 
 func (c *Cache) fetchPage(ctx context.Context, key string, start int64, pageSize int) (*page, bool, error) {
 	ctx, cancel := context.WithTimeout(ctx, c.operationTimeout)

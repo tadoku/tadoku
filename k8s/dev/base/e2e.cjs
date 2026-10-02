@@ -42,14 +42,14 @@ try {
   const apiContainer = api.spec.template.spec.containers[0]
   const branchApi = Y.parse(fs.readFileSync(path.join(root, '.dev/tadoku-api.yaml'), 'utf8')).spec.containers[0]
   const branchWorker = Y.parse(fs.readFileSync(path.join(root, '.dev/tadoku-worker.yaml'), 'utf8')).spec.containers[0]
-  if (envValue(workerContainer, 'WORKER_POSTGRES_DATABASE') !== 'tadoku' || envValue(workerContainer, 'WORKER_LEADERBOARD_CACHE_PREFIX') !== undefined || envValue(apiContainer, 'API_LEADERBOARD_CACHE_PREFIX') !== undefined) throw new Error('Base worker must use the base database and both base processes must use unprefixed cache')
+  if (envValue(workerContainer, 'WORKER_POSTGRES_DATABASE') !== 'tadoku' || envValue(workerContainer, 'WORKER_LEADERBOARD_CACHE_PREFIX') !== undefined || envValue(apiContainer, 'API_LEADERBOARD_CACHE_PREFIX') !== undefined) throw new Error('Base worker must use the base database and both base processes must use tenant-derived cache without a private-database prefix')
   if (envValue(branchWorker, 'WORKER_POSTGRES_DATABASE') !== 'tadoku-${DEV_ROUTE}' || envValue(branchWorker, 'WORKER_LEADERBOARD_CACHE_PREFIX') !== 'dev:${DEV_ROUTE}:') throw new Error('Branch worker database/cache isolation is not configured')
   if (envValue(branchApi, 'API_POSTGRES_DATABASE') !== envValue(branchWorker, 'WORKER_POSTGRES_DATABASE') || envValue(branchApi, 'API_LEADERBOARD_CACHE_PREFIX') !== envValue(branchWorker, 'WORKER_LEADERBOARD_CACHE_PREFIX')) throw new Error('Branch API and worker must use the same database/cache namespace')
   if (workerPod.automountServiceAccountToken !== false || workerContainer.image === apiContainer.image || !workerContainer.image.startsWith('ghcr.io/tadoku/tadoku/tadoku-worker:latest')) throw new Error('Worker image or private Pod configuration is invalid')
   if (docs.some(d => d.kind === 'Service' && d.spec?.selector?.app === 'tadoku-worker') || docs.some(d => d.kind === 'HTTPRoute' && JSON.stringify(d.spec).includes('tadoku-worker'))) throw new Error('Worker must have no Service or public route')
   const resources = workerContainer.resources
   if (!resources?.requests?.cpu || !resources.requests.memory || !resources.limits?.cpu || !resources.limits.memory) throw new Error('Worker must declare CPU and memory requests and limits')
-  report.leaderboardWorkers = { asyncJobs: 'tadoku-worker', baseDatabase: 'tadoku', branchDatabase: envValue(branchWorker, 'WORKER_POSTGRES_DATABASE'), branchPrefix: envValue(branchWorker, 'WORKER_LEADERBOARD_CACHE_PREFIX'), image: workerContainer.image }
+  report.leaderboardWorkers = { asyncJobs: 'tadoku-worker', baseDatabase: 'tadoku', branchDatabase: envValue(branchWorker, 'WORKER_POSTGRES_DATABASE'), branchPrefix: envValue(branchWorker, 'WORKER_LEADERBOARD_CACHE_PREFIX'), baseKeyPattern: 'tenant:tadoku/prod:leaderboard:*', branchKeyPattern: 'dev:${DEV_ROUTE}:tenant:tadoku/prod:leaderboard:*', image: workerContainer.image }
   const jobs = docs.filter(d => d.kind === 'Job')
   const frontends = docs.filter(d => d.kind === 'Deployment' && d.metadata.name.startsWith('frontend-'))
   const roles = { 'tadoku-api-migrate': 'tadoku_owner', 'kratos-migrate': 'kratos', 'keto-migrate': 'keto' }

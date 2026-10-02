@@ -104,6 +104,7 @@ func runLeaderboardCase(t *testing.T, name string, want int, cache, cacheKey str
 
 func seedLeaderboardCache(t *testing.T, key, cache string) {
 	t.Helper()
+	key = "tenant:tadoku/prod:" + key
 	client := leaderboardValkey.client
 	builder := client.B().Zadd().Key(key).ScoreMember().ScoreMember(77, "11111111-1111-4111-8111-111111111111")
 	if cache == "hit_many" {
@@ -126,6 +127,7 @@ func seedLeaderboardCache(t *testing.T, key, cache string) {
 
 func cachedLeaderboardScore(t *testing.T, key string) float64 {
 	t.Helper()
+	key = "tenant:tadoku/prod:" + key
 	entries, err := leaderboardValkey.client.Do(t.Context(), leaderboardValkey.client.B().Zrange().Key(key).Min("0").Max("-1").Withscores().Build()).AsZScores()
 	if err != nil {
 		t.Fatal(err)
@@ -141,12 +143,16 @@ func cachedLeaderboardScore(t *testing.T, key string) float64 {
 
 func verifyRebuiltLeaderboardCache(t *testing.T, key string) {
 	t.Helper()
+	cacheKey := "tenant:tadoku/prod:" + key
 	client := leaderboardValkey.client
-	marker, err := client.Do(t.Context(), client.B().Get().Key(key+":last_updated").Build()).ToString()
+	marker, err := client.Do(t.Context(), client.B().Get().Key(cacheKey+":last_updated").Build()).ToString()
 	if err != nil || marker == "" {
 		t.Fatalf("leaderboard rebuild marker = %q, err = %v", marker, err)
 	}
-	entries, err := client.Do(t.Context(), client.B().Zrange().Key(key).Min("0").Max("-1").Withscores().Build()).AsZScores()
+	entries, err := client.Do(
+		t.Context(),
+		client.B().Zrange().Key(cacheKey).Min("0").Max("-1").Withscores().Build(),
+	).AsZScores()
 	if err != nil {
 		t.Fatal(err)
 	}

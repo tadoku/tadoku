@@ -23,6 +23,7 @@ func TestWorkerJobLifecycle(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	tenantCtx = tenant.WithKey(t.Context(), f.key)
 	t.Cleanup(func() {
 		if err := f.Close(); err != nil {
 			t.Error(err)
@@ -56,7 +57,7 @@ func TestWorkerJobLifecycle(t *testing.T) {
 
 	service := leaderboard.NewService(
 		leaderboard.NewRepository(db.Pool),
-		leaderboard.NewCache(client, time.Second, prefix),
+		leaderboard.NewCache(client, time.Second, ""),
 	)
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	runner, err := NewApplication(jobqueue.NewService(jobqueue.NewRepository(db.Pool)), service, Config{
@@ -160,22 +161,27 @@ func TestWorkerJobLifecycle(t *testing.T) {
 }
 
 func insertJob(ctx context.Context, db *pgxpool.Pool, jobType, payload string, expired bool) (int64, error) {
+	key, ok := tenant.FromContext(ctx)
+	if !ok {
+		return 0, fmt.Errorf("worker fixture job requires a tenant")
+	}
+
 	var id int64
 	if expired {
 		err := db.QueryRow(ctx, `
 			insert into jobs (tenant, task_type, payload, state, attempts, claim_token, lease_expires_at)
-			values ('tadoku/prod', $1, $2::jsonb, 'running', 1, $3, now() - interval '1 second')
+			values ($4, $1, $2::jsonb, 'running', 1, $3, now() - interval '1 second')
 			returning id`,
-			jobType, payload, uuid.New(),
+			jobType, payload, uuid.New(), key.String(),
 		).Scan(&id)
 		return id, err
 	}
 
 	err := db.QueryRow(ctx, `
 		insert into jobs (tenant, task_type, payload)
-		values ('tadoku/prod', $1, $2::jsonb)
+		values ($3, $1, $2::jsonb)
 		returning id`,
-		jobType, payload,
+		jobType, payload, key.String(),
 	).Scan(&id)
 	return id, err
 }

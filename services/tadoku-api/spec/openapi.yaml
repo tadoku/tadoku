@@ -345,6 +345,7 @@ paths:
           allowEmptyValue: true
           schema:
             type: boolean
+            default: false
       responses:
         "200":
           description: successful operation
@@ -596,6 +597,7 @@ paths:
           allowEmptyValue: true
           schema:
             type: boolean
+            default: false
       responses:
         "200":
           description: successful operation
@@ -1066,17 +1068,8 @@ paths:
                 $ref: "#/components/schemas/ImmersionContestRegistration"
         "204":
           description: registration does not exist
-        "500":
-          description: Invalid authenticated identity
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - message
-                properties:
-                  message:
-                    type: string
+        "401":
+          description: unauthorized
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
       x-legacy-path: /contests/{id}/registration
@@ -1113,6 +1106,8 @@ paths:
           description: successful operation
         "400":
           description: language combination is invalid
+        "401":
+          description: unauthorized
         "404":
           description: contest not found
         "409":
@@ -1392,17 +1387,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ImmersionContestRegistrations"
-        "500":
-          description: Invalid authenticated identity
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - message
-                properties:
-                  message:
-                    type: string
+        "401":
+          description: unauthorized
       x-tadoku-source: Immersion
       x-tadoku-exposure: public
       x-legacy-path: /contests/ongoing-registrations
@@ -1720,7 +1706,7 @@ paths:
         "401":
           description: unauthorized
         "403":
-          description: forbidden (not log owner)
+          description: forbidden (neither log owner nor administrator)
         "404":
           description: log not found
         "409":

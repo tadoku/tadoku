@@ -258,9 +258,16 @@ The worker uses `WORKER_POSTGRES_*` split connection configuration,
 be positive; the command loads and validates both before application startup.
 
 `WORKER_BRANCH` defaults to empty, selecting the base worker's all-tenants queue
-scope. A non-empty value must be a valid `<name>/<id>` tenant key other than
-`tadoku/prod`. Branch queue isolation requires the `jobs` row-level security
-policy, so keep this variable unset when that policy is absent. Every handler
+scope, excluding tenants listed in `tenant_overrides` for `WORKER_COMPONENT`.
+`WORKER_COMPONENT` defaults to `tadoku-worker`; its name must start with a
+lowercase letter and contain only lowercase letters, digits or hyphens. An
+explicit empty component is invalid.
+
+A non-empty `WORKER_BRANCH` must be a valid `<name>/<id>` tenant key other than
+`tadoku/prod`. Its scope claims only that tenant, including when an override is
+present. Only base backlog metrics exclude overridden tenants. Base completed-job
+cleanup stays global; branch cleanup stays tenant-local. Branch queue isolation
+requires the `jobs` row-level security policy, so keep this variable unset when that policy is absent. Every handler
 and lease transition still uses the tenant persisted on its claimed job.
 
 Private health and metrics listeners default to `WORKER_PORT=8000` and
@@ -285,11 +292,11 @@ before provider resources close. A noncooperative handler can delay exit; see
 
 ### Worker tenant scope
 
-The current worker binary supplies the canonical `tadoku/prod` context for its
-run and replay composition boundaries. Detached handler and completion contexts
-retain that explicit scope while preserving graceful shutdown. Database helpers
-never supply a default tenant. This is the intermediate worker behavior until
-persisted job tenants and separate cross-tenant queue scopes are supported.
+The worker separates queue scope from handler scope. Queue claims, backlog
+metrics and completed-job cleanup receive the required `jobqueue.Scope`; each
+handler and fenced transition receives only its persisted job tenant. Database
+helpers never supply a default tenant. The replay command uses the explicit
+canonical `tadoku/prod` context.
 
 ## Metrics
 

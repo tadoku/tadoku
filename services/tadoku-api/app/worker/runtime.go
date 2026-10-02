@@ -13,7 +13,6 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant/alltenants"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
 
@@ -26,7 +25,7 @@ type handlerSpec struct {
 }
 
 type runner struct {
-	scope           tenant.Deployment
+	scope           jobqueue.Scope
 	queue           *jobqueue.Service
 	handlers        *registry
 	logger          *slog.Logger
@@ -40,11 +39,10 @@ func (r *runner) run(ctx context.Context) {
 	workCtx, cancelWork := context.WithCancel(context.WithoutCancel(ctx))
 	defer cancelWork()
 
-	var queueCtx context.Context
-	if key, branch := r.scope.Key(); branch {
-		queueCtx = tenant.WithKey(ctx, key)
-	} else {
-		queueCtx = alltenants.With(ctx)
+	queueCtx, err := r.scope.Context(ctx)
+	if err != nil {
+		r.logger.Error("scope worker queue", "error", err)
+		return
 	}
 
 	capacity := 0

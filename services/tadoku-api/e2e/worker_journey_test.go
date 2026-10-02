@@ -15,8 +15,18 @@ import (
 
 func runWorkerStep(t *testing.T, s *suite) {
 	t.Helper()
+	scope, err := jobqueue.AllTenantsExcept("tadoku-worker")
+	if err != nil {
+		t.Fatal(err)
+	}
+	const eligibleSQL = `from jobs
+		where not exists (
+			select 1 from tenant_overrides as o
+			where o.tenant = jobs.tenant and o.component = 'tadoku-worker'
+		)`
+
 	var queued int
-	if err := s.db.Pool.QueryRow(t.Context(), `select count(*) from jobs`).Scan(&queued); err != nil {
+	if err := s.db.Pool.QueryRow(t.Context(), "select count(*) "+eligibleSQL).Scan(&queued); err != nil {
 		t.Fatal(err)
 	}
 	if queued == 0 {
@@ -28,12 +38,17 @@ func runWorkerStep(t *testing.T, s *suite) {
 		leaderboard.NewRepository(s.db.AppPool),
 		leaderboard.NewCache(leaderboardValkey.client, time.Second, ""),
 	)
-	application, err := worker.NewApplication(jobqueue.NewService(jobqueue.NewRepository(s.db.AppPool)), leaderboardService, worker.Config{
-		Concurrency:     4,
-		ShutdownTimeout: 2 * time.Second,
-		Logger:          logger,
-		Metrics:         worker.NewMetrics(prometheus.NewRegistry()),
-	})
+	application, err := worker.NewApplication(
+		jobqueue.NewService(jobqueue.NewRepository(s.db.AppPool)),
+		leaderboardService,
+		worker.Config{
+			Scope:           scope,
+			Concurrency:     4,
+			ShutdownTimeout: 2 * time.Second,
+			Logger:          logger,
+			Metrics:         worker.NewMetrics(prometheus.NewRegistry()),
+		},
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -60,7 +75,11 @@ func runWorkerStep(t *testing.T, s *suite) {
 
 	for {
 		var completed, failed int
-		if err := s.db.Pool.QueryRow(t.Context(), `select count(*) filter (where state = 'completed'), count(*) filter (where state = 'failed') from jobs`).Scan(&completed, &failed); err != nil {
+		err := s.db.Pool.QueryRow(t.Context(), `select
+			count(*) filter (where state = 'completed'),
+			count(*) filter (where state = 'failed') `+eligibleSQL,
+		).Scan(&completed, &failed)
+		if err != nil {
 			t.Fatal(err)
 		}
 		if failed != 0 {
@@ -71,7 +90,13 @@ func runWorkerStep(t *testing.T, s *suite) {
 		}
 		select {
 		case <-deadline.C:
-			t.Fatalf("worker did not complete %d jobs; completed=%d failed=%d outstanding=%d", queued, completed, failed, queued-completed-failed)
+			t.Fatalf(
+				"worker did not complete %d jobs; completed=%d failed=%d outstanding=%d",
+				queued,
+				completed,
+				failed,
+				queued-completed-failed,
+			)
 		case <-tick.C:
 		}
 	}

@@ -10,11 +10,10 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
 type Config struct {
-	Scope           tenant.Deployment
+	Scope           jobqueue.Scope
 	Concurrency     int
 	ShutdownTimeout time.Duration
 	Logger          *slog.Logger
@@ -32,6 +31,10 @@ func NewApplication(queue *jobqueue.Service, leaderboard *leaderboard.Service, c
 	}
 	if config.Concurrency < 1 || config.ShutdownTimeout <= 0 {
 		return nil, errors.New("worker requires positive concurrency and shutdown timeout")
+	}
+
+	if _, err := config.Scope.Context(context.Background()); err != nil {
+		return nil, err
 	}
 
 	if config.Logger == nil {

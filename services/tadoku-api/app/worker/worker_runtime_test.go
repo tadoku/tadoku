@@ -193,6 +193,7 @@ func TestWorkerProcessUsesPersistedTenant(t *testing.T) {
 			}
 
 			runtime := &runner{
+				scope:    baseWorkerScope(t),
 				queue:    jobqueue.NewService(repository),
 				handlers: handlers,
 				logger:   slog.New(slog.NewTextHandler(io.Discard, nil)),
@@ -279,6 +280,7 @@ func TestBaseWorkerHousekeepingUsesAllTenants(t *testing.T) {
 	}
 
 	application := &Application{runner: &runner{
+		scope:           baseWorkerScope(t),
 		queue:           jobqueue.NewService(jobqueue.NewRepository(pool)),
 		handlers:        handlers,
 		logger:          slog.New(slog.NewTextHandler(io.Discard, nil)),
@@ -410,12 +412,17 @@ func (f workerFixture) runner(t *testing.T, client valkeygo.Client, providerTime
 		leaderboard.NewCache(client, providerTimeout, ""),
 	)
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	application, err := NewApplication(jobqueue.NewService(jobqueue.NewRepository(f.db)), service, Config{
-		Concurrency:     4,
-		Logger:          logger,
-		Metrics:         NewMetrics(prometheus.NewRegistry()),
-		ShutdownTimeout: shutdown,
-	})
+	application, err := NewApplication(
+		jobqueue.NewService(jobqueue.NewRepository(f.db)),
+		service,
+		Config{
+			Scope:           baseWorkerScope(t),
+			Concurrency:     4,
+			Logger:          logger,
+			Metrics:         NewMetrics(prometheus.NewRegistry()),
+			ShutdownTimeout: shutdown,
+		},
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -883,12 +890,17 @@ func TestWorkerCompletesWhenRenewalIsCanceledByFinishedHandler(t *testing.T) {
 	)
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	repository := jobqueue.NewRepository(limitedPool)
-	runner, err := NewApplication(jobqueue.NewService(repository), service, Config{
-		Concurrency:     4,
-		Logger:          logger,
-		Metrics:         NewMetrics(prometheus.NewRegistry()),
-		ShutdownTimeout: time.Second,
-	})
+	runner, err := NewApplication(
+		jobqueue.NewService(repository),
+		service,
+		Config{
+			Scope:           baseWorkerScope(t),
+			Concurrency:     4,
+			Logger:          logger,
+			Metrics:         NewMetrics(prometheus.NewRegistry()),
+			ShutdownTimeout: time.Second,
+		},
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1074,11 +1086,16 @@ func TestWorkerGlobalLimitLeavesDueRowsUnclaimed(t *testing.T) {
 		leaderboard.NewRepository(f.db),
 		leaderboard.NewCache(blocked, 8*time.Second, ""),
 	)
-	application, err := NewApplication(jobqueue.NewService(jobqueue.NewRepository(f.db)), service, Config{
-		Concurrency:     3,
-		ShutdownTimeout: 2 * time.Second,
-		Logger:          slog.New(slog.NewTextHandler(io.Discard, nil)),
-	})
+	application, err := NewApplication(
+		jobqueue.NewService(jobqueue.NewRepository(f.db)),
+		service,
+		Config{
+			Scope:           baseWorkerScope(t),
+			Concurrency:     3,
+			ShutdownTimeout: 2 * time.Second,
+			Logger:          slog.New(slog.NewTextHandler(io.Discard, nil)),
+		},
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1161,6 +1178,7 @@ func TestWorkerRetainsSlotUntilCanceledHandlerReturns(t *testing.T) {
 	}
 
 	runtime := &runner{
+		scope:           baseWorkerScope(t),
 		queue:           jobqueue.NewService(jobqueue.NewRepository(f.db)),
 		handlers:        handlers,
 		concurrency:     1,
@@ -1252,6 +1270,7 @@ func TestWorkerRenewedDeadlineSchedulesRetry(t *testing.T) {
 
 	repository := jobqueue.NewRepository(f.db)
 	runtime := &runner{
+		scope:    baseWorkerScope(t),
 		queue:    jobqueue.NewService(repository),
 		handlers: handlers,
 		logger:   slog.New(slog.NewTextHandler(io.Discard, nil)),
@@ -1333,6 +1352,7 @@ func TestWorkerCleanupRetainsThreeMonthsAndFailures(t *testing.T) {
 	})
 
 	runtime := &runner{
+		scope:  baseWorkerScope(t),
 		queue:  jobqueue.NewService(jobqueue.NewRepository(f.db)),
 		logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
 	}

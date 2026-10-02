@@ -62,6 +62,7 @@ func TestNewApplicationRejectsInvalidConfig(t *testing.T) {
 		})
 	}
 	if _, err := NewApplication(new(jobqueue.Service), new(leaderboard.Service), Config{
+		Scope:           baseWorkerScope(t),
 		Concurrency:     1,
 		ShutdownTimeout: time.Second,
 	}); err != nil {
@@ -104,4 +105,23 @@ func TestRegistryValidatesPayloadBeforeCallingTypedHandler(t *testing.T) {
 	if !errors.As(err, &unknown) || called != 1 {
 		t.Errorf("unknown job: error=%v calls=%d", err, called)
 	}
+}
+
+func TestNewApplicationRejectsZeroScope(t *testing.T) {
+	_, err := NewApplication(new(jobqueue.Service), new(leaderboard.Service), Config{
+		Concurrency:     1,
+		ShutdownTimeout: time.Second,
+	})
+	if err == nil {
+		t.Fatal("worker accepted zero scope")
+	}
+}
+
+func baseWorkerScope(t *testing.T) jobqueue.Scope {
+	t.Helper()
+	scope, err := jobqueue.AllTenantsExcept("tadoku-worker")
+	if err != nil {
+		t.Fatal(err)
+	}
+	return scope
 }

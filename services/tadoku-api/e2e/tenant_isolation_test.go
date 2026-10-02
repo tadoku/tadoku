@@ -157,7 +157,7 @@ func TestTenantIsolation(t *testing.T) {
 		t.Fatalf("both tenant queues: production=%d test=%d error=%v", productionJobs, testJobs, err)
 	}
 
-	branch, err := tenant.ParseDeployment(isolationTenant)
+	branch, err := jobqueue.OnlyTenant(key)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -167,7 +167,11 @@ func TestTenantIsolation(t *testing.T) {
 		t.Fatal(err)
 	}
 	testJobs++
-	runIsolationWorker(t, tenant.Deployment{}, productionJobs, testJobs)
+	base, err := jobqueue.AllTenantsExcept("tadoku-worker")
+	if err != nil {
+		t.Fatal(err)
+	}
+	runIsolationWorker(t, base, productionJobs, testJobs)
 
 	if err := queue.Enqueue(ctx, jobs.InvalidateOfficialLeaderboardV1{Year: 2026}); err != nil {
 		t.Fatal(err)
@@ -275,20 +279,30 @@ func isolationOwnedRows(t *testing.T, key string) map[string]string {
 	return values
 }
 
-func runIsolationWorker(t *testing.T, scope tenant.Deployment, production, test int) {
+func runIsolationWorker(t *testing.T, scope jobqueue.Scope, production, test int) {
 	t.Helper()
+	queueCtx, err := scope.Context(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, branch := tenant.FromContext(queueCtx)
+
 	provider := &isolationValkey{Client: leaderboardValkey.client, tenants: make(map[string]int)}
 	service := leaderboard.NewService(
 		leaderboard.NewRepository(api.db.AppPool),
 		leaderboard.NewCache(provider, time.Second, ""),
 	)
-	application, err := worker.NewApplication(jobqueue.NewService(jobqueue.NewRepository(api.db.AppPool)), service, worker.Config{
-		Scope:           scope,
-		Concurrency:     4,
-		ShutdownTimeout: 2 * time.Second,
-		Logger:          slog.New(slog.NewTextHandler(io.Discard, nil)),
-		Metrics:         worker.NewMetrics(prometheus.NewRegistry()),
-	})
+	application, err := worker.NewApplication(
+		jobqueue.NewService(jobqueue.NewRepository(api.db.AppPool)),
+		service,
+		worker.Config{
+			Scope:           scope,
+			Concurrency:     4,
+			ShutdownTimeout: 2 * time.Second,
+			Logger:          slog.New(slog.NewTextHandler(io.Discard, nil)),
+			Metrics:         worker.NewMetrics(prometheus.NewRegistry()),
+		},
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -327,7 +341,7 @@ func runIsolationWorker(t *testing.T, scope tenant.Deployment, production, test 
 		if err != nil || failed != 0 {
 			t.Fatalf("worker outcomes: failed=%d error=%v", failed, err)
 		}
-		if _, branch := scope.Key(); branch && canonicalClaimed != 0 {
+		if branch && canonicalClaimed != 0 {
 			t.Fatalf("branch worker claimed canonical jobs=%d", canonicalClaimed)
 		}
 
@@ -337,7 +351,7 @@ func runIsolationWorker(t *testing.T, scope tenant.Deployment, production, test 
 			if provider.tenants[isolationTenant] == 0 || provider.tenants[""] != 0 {
 				t.Fatalf("real Valkey handler scope=%v", provider.tenants)
 			}
-			if _, branch := scope.Key(); branch {
+			if branch {
 				if len(provider.tenants) != 1 {
 					t.Fatalf("branch handler leaked scope=%v", provider.tenants)
 				}

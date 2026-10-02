@@ -71,6 +71,14 @@
       "kid": "tadoku-admitted-branch-fixture",
       "use": "sig",
       "alg": "RS256"
+    },
+    {
+      "kty": "RSA",
+      "n": "xBHpYLBxc9h-7XBmYKS_ugt4mXTkcbOKOkxUpg-zNILrDsPTnJlbBBkkiZiqG0QiQ0-NMOnbwUrfyPvBwbAdEReBlUwaAX13DRyOr2bDAfsP-Bq6Tzkk53552qSg9TfJ90W4pk3hgzpzmBej4vUjEhzWVOUDQLI9ssltw-9VDrI9b5L6XTaKVcvOOgHOsAB3_SeeW8s1X55b6XUMutqMrTjgCnJWrSaGsxZcvIWgk1a2lbrXyXhphhVZx0EvkG17tb6AuOt6k1_hMrUD1DZ5_ALSR5J-yU7uL4v0ieVv83ML207zqBqM-PQbRjvV7mky9L4ZWbHP3OrxUs6Xg4U23Q",
+      "e": "AQAB",
+      "kid": "tadoku-banned-access-fixture",
+      "use": "sig",
+      "alg": "RS256"
     }
   ]
 }

@@ -57,7 +57,7 @@ func (r *ScoringRepository) FindActivePlatformRuleSet(ctx context.Context) (*Rul
 	if err != nil {
 		return nil, fmt.Errorf("find active platform scoring rule set: %w", err)
 	}
-	return ruleSet(row), nil
+	return ruleSet(queries.FindScoringRuleSetByIDRow(row)), nil
 }
 
 func (r *ScoringRepository) FindContestActiveRuleSetID(ctx context.Context, contestID uuid.UUID) (*uuid.UUID, error) {
@@ -245,7 +245,7 @@ func (r *ScoringRepository) CreateDraft(ctx context.Context, draft RuleSet) (*Ru
 	if err != nil {
 		return nil, fmt.Errorf("create scoring rule set: %w", err)
 	}
-	return ruleSet(row), nil
+	return ruleSet(queries.FindScoringRuleSetByIDRow(row)), nil
 }
 
 func (r *ScoringRepository) CreateRule(ctx context.Context, ruleSetID uuid.UUID, rule Rule) error {
@@ -287,7 +287,7 @@ func (r *ScoringRepository) PublishRuleSet(ctx context.Context, id uuid.UUID, pu
 	if err != nil {
 		return nil, fmt.Errorf("publish scoring rule set: %w", err)
 	}
-	return ruleSet(row), nil
+	return ruleSet(queries.FindScoringRuleSetByIDRow(row)), nil
 }
 
 func (r *ScoringRepository) ActivatePlatformRuleSet(ctx context.Context, id uuid.UUID) error {
@@ -326,15 +326,15 @@ func (r *ScoringRepository) queries(ctx context.Context) (*queries.Queries, erro
 	return queries.New(executor), nil
 }
 
-func ruleSets(rows []queries.ScoringRuleSet) []RuleSet {
+func ruleSets[T queries.ListPlatformScoringRuleSetsRow | queries.ListContestScoringRuleSetsRow](rows []T) []RuleSet {
 	result := make([]RuleSet, len(rows))
 	for i, row := range rows {
-		result[i] = *ruleSet(row)
+		result[i] = *ruleSet(queries.FindScoringRuleSetByIDRow(row))
 	}
 	return result
 }
 
-func ruleSet(row queries.ScoringRuleSet) *RuleSet {
+func ruleSet(row queries.FindScoringRuleSetByIDRow) *RuleSet {
 	result := &RuleSet{
 		ID:        row.ID.Bytes,
 		Scope:     row.Scope,

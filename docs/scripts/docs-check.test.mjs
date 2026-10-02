@@ -10,7 +10,7 @@ const markdown = execFileSync('git', ['ls-files', '--cached', '--others', '--exc
   .filter(file => file && existsSync(join(repo, file)));
 const generatedApi = /^docs\/docs\/api\/(immersion|content|profile|authorization)\//;
 const pages = markdown.filter(file => file.startsWith('docs/docs/') && !generatedApi.test(file));
-const repoPath = /^(services|frontend|docs|k8s|infra|jobs|scripts|tools|\.dev|\.agents|\.github)\/[\w.\-/]*$/;
+const repoPath = /^(services|frontend|docs|k8s|infra|scripts|tools|\.dev|\.agents|\.github)\/[\w.\-/]*$/;
 
 const read = file => readFileSync(join(repo, file), 'utf8');
 const ignored = path => {

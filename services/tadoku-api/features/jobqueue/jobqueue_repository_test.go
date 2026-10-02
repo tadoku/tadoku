@@ -939,11 +939,7 @@ func TestQueueCleanupIncludesOverriddenTenants(t *testing.T) {
 		insert into jobs (tenant, task_type, payload, state, created_at, completed_at)
 		select key, 'leaderboard.invalidate_official.v1', '{"year":2026}'::jsonb, 'completed',
 			$1::timestamptz - interval '1 year', $1::timestamptz - interval '1 year'
-		from tenants;
-
-		insert into jobs (tenant, task_type, payload, state, created_at, completed_at)
-		values ('e2e/worker-0123abcd', 'leaderboard.invalidate_official.v1', '{"year":2026}', 'completed',
-			$1::timestamptz - interval '1 year', $1::timestamptz - interval '1 year')`,
+		from (select key from tenants union all select 'e2e/worker-0123abcd') as retained`,
 		jobTestTime,
 	)
 	if err != nil {

@@ -31,6 +31,7 @@ go_test(
         "contest_summary_test.go",
         "dependency_failure_test.go",
         "feature_flags_test.go",
+        "flipt_tenant_test.go",
         "golden_test.go",
         "journey_test.go",
         "kratos_test.go",

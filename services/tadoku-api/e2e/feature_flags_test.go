@@ -14,6 +14,7 @@ type featureAccessCase struct {
 func TestImmersionFeatureFlagDecisions(t *testing.T) {
 	tests := []featureAccessCase{
 		{description: []string{"named", "user", "enabled"}, want: http.StatusOK},
+		{description: []string{"test", "tenant", "disabled"}, want: http.StatusOK},
 		{description: []string{"guest", "safe", "default"}, want: http.StatusOK},
 		{description: []string{"provider", "unavailable", "safe", "default"}, want: http.StatusOK, unavailable: true},
 	}
@@ -35,6 +36,7 @@ func TestImmersionFeatureFlagDecisions(t *testing.T) {
 func TestImmersionFeatureAccessGet(t *testing.T) {
 	tests := []featureAccessCase{
 		{description: []string{"enabled"}, want: http.StatusOK},
+		{description: []string{"test", "tenant", "disabled"}, want: http.StatusOK},
 		{description: []string{"invalid", "flag"}, want: http.StatusBadRequest},
 		{description: []string{"invalid", "user", "id"}, want: http.StatusBadRequest},
 		{description: []string{"zero", "user", "id"}, want: http.StatusBadRequest},
@@ -48,6 +50,7 @@ func TestImmersionFeatureAccessGrant(t *testing.T) {
 	tests := []featureAccessCase{
 		{description: []string{"disabled", "user"}, want: http.StatusOK},
 		{description: []string{"already", "enabled"}, want: http.StatusOK},
+		{description: []string{"test", "tenant"}, want: http.StatusOK},
 		{description: []string{"invalid", "flag"}, want: http.StatusBadRequest},
 		{description: []string{"guest"}, want: http.StatusUnauthorized},
 		{description: []string{"non", "admin"}, want: http.StatusForbidden},

@@ -3,6 +3,7 @@ package scoring
 import (
 	"errors"
 	"reflect"
+	"slices"
 	"testing"
 	"time"
 
@@ -86,7 +87,7 @@ func TestScoringRepositoryPlatformRuleSetLifecycle(t *testing.T) {
 		Version:   version,
 		CreatedAt: createdAt,
 	})
-	assertConstraintViolation(t, err, pgerrcode.UniqueViolation, "scoring_rule_sets_platform_version")
+	assertConstraintViolation(t, err, pgerrcode.UniqueViolation, "scoring_rule_sets_platform_version", "scoring_rule_sets_tenant_platform_version")
 
 	specific := Rule{
 		ID:           uuid.MustParse("bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1"),
@@ -115,7 +116,7 @@ func TestScoringRepositoryPlatformRuleSetLifecycle(t *testing.T) {
 	duplicate := general
 	duplicate.ID = uuid.New()
 	err = repository.CreateRule(tenantCtx, draft.ID, duplicate)
-	assertConstraintViolation(t, err, pgerrcode.UniqueViolation, "scoring_rules_rule_set_priority")
+	assertConstraintViolation(t, err, pgerrcode.UniqueViolation, "scoring_rules_rule_set_priority", "scoring_rules_tenant_rule_set_priority")
 
 	mismatchedUnit := general
 	mismatchedUnit.ID = uuid.New()
@@ -422,11 +423,11 @@ func assertUnitLookup(t *testing.T, key string, keyErr error, unit *logUnit, uni
 	}
 }
 
-func assertConstraintViolation(t *testing.T, err error, code, constraint string) {
+func assertConstraintViolation(t *testing.T, err error, code string, constraints ...string) {
 	t.Helper()
 
 	var pgError *pgconn.PgError
-	if !errors.As(err, &pgError) || pgError.Code != code || pgError.ConstraintName != constraint {
-		t.Errorf("error=%v, want %s violation of %s", err, code, constraint)
+	if !errors.As(err, &pgError) || pgError.Code != code || !slices.Contains(constraints, pgError.ConstraintName) {
+		t.Errorf("error=%v, want %s violation of %v", err, code, constraints)
 	}
 }

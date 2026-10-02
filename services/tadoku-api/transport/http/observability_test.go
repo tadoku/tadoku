@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/rsa"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log/slog"
@@ -65,14 +66,17 @@ func TestRequestObservationUsesVerifiedTenant(t *testing.T) {
 		name       string
 		tenant     string
 		expired    bool
+		omitToken  bool
 		wantStatus int
 		wantKind   string
 		wantTenant string
 	}{
-		{"production", "tadoku/prod", false, stdhttp.StatusNoContent, "production", "tadoku/prod"},
-		{"test", "e2e/observability-0123abcd", false, stdhttp.StatusNoContent, "test", "e2e/observability-0123abcd"},
-		{"expired", "tadoku/prod", true, stdhttp.StatusUnauthorized, "unknown", ""},
-		{"malformed tenant", "not-a-tenant", false, stdhttp.StatusUnauthorized, "unknown", ""},
+		{"production", "tadoku/prod", false, false, stdhttp.StatusNoContent, "production", "tadoku/prod"},
+		{"test", "e2e/observability-0123abcd", false, false, stdhttp.StatusNoContent, "test", "e2e/observability-0123abcd"},
+		{"expired", "tadoku/prod", true, false, stdhttp.StatusUnauthorized, "unknown", ""},
+		{"malformed tenant", "not-a-tenant", false, false, stdhttp.StatusUnauthorized, "unknown", ""},
+		{"missing tenant", "", false, false, stdhttp.StatusUnauthorized, "unknown", ""},
+		{"missing JWT", "", false, true, stdhttp.StatusBadRequest, "unknown", ""},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			var logs bytes.Buffer
@@ -122,7 +126,9 @@ func TestRequestObservationUsesVerifiedTenant(t *testing.T) {
 				t.Fatal(err)
 			}
 			request := httptest.NewRequest(stdhttp.MethodGet, "/observation", nil)
-			request.Header.Set("Authorization", "Bearer "+signed)
+			if !test.omitToken {
+				request.Header.Set("Authorization", "Bearer "+signed)
+			}
 			response := httptest.NewRecorder()
 			router.ServeHTTP(response, request)
 
@@ -131,6 +137,18 @@ func TestRequestObservationUsesVerifiedTenant(t *testing.T) {
 			}
 			if captured.key.String() != test.wantTenant || captured.ok != (test.wantTenant != "") {
 				t.Errorf("completion context tenant=%q known=%t, want %q", captured.key.String(), captured.ok, test.wantTenant)
+			}
+			if test.wantTenant == "" {
+				var event map[string]any
+				if err := json.Unmarshal(logs.Bytes(), &event); err != nil {
+					t.Fatal(err)
+				}
+				if event["msg"] != "request completed" || event["tenant"] != "unknown" {
+					t.Errorf("pre-auth completion event=%v, want tenant=unknown", event)
+				}
+				if count := bytes.Count(logs.Bytes(), []byte(`"tenant"`)); count != 1 {
+					t.Errorf("pre-auth completion has %d tenant attributes, want exactly one", count)
+				}
 			}
 			families, err := registry.Gather()
 			if err != nil {

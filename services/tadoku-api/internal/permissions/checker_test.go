@@ -80,7 +80,11 @@ func TestCheckerClassifiesKetoFailures(t *testing.T) {
 		}},
 	}
 
-	canceledCtx, cancel := context.WithCancel(identity.WithUser(tenant.WithKey(t.Context(), tenant.Production()), &identity.User{Subject: "admin"}))
+	userCtx := identity.WithUser(
+		tenant.WithKey(t.Context(), tenant.Production()),
+		&identity.User{Subject: "admin"},
+	)
+	canceledCtx, cancel := context.WithCancel(userCtx)
 	cancel()
 	for _, check := range checks {
 		t.Run(check.name+" canceled", func(t *testing.T) {

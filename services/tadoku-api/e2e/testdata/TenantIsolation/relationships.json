@@ -1,0 +1,12 @@
+[
+  {
+    "namespace": "app",
+    "object": "e2e/isolation-0123abcd",
+    "relation": "parents",
+    "subject_set": {
+      "namespace": "app",
+      "object": "tadoku",
+      "relation": ""
+    }
+  }
+]

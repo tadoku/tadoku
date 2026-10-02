@@ -51,7 +51,11 @@ func TestTenantIsolation(t *testing.T) {
 		}
 	})
 
-	if err := api.keto.Reset(t.Context(), "testdata/CreatePage/relationships.json"); err != nil {
+	if err := api.keto.Reset(
+		t.Context(),
+		"testdata/CreatePage/relationships.json",
+		"testdata/TenantIsolation/relationships.json",
+	); err != nil {
 		t.Fatal(err)
 	}
 	contents, err := os.ReadFile("testdata/TenantIsolation/tokens.json")

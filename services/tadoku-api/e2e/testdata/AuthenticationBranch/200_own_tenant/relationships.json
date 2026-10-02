@@ -1,0 +1,18 @@
+[
+  {
+    "namespace": "app",
+    "object": "tadoku",
+    "relation": "admins",
+    "subject_id": "22222222-2222-4222-8222-222222222222"
+  },
+  {
+    "namespace": "app",
+    "object": "e2e/branch-golden",
+    "relation": "parents",
+    "subject_set": {
+      "namespace": "app",
+      "object": "tadoku",
+      "relation": ""
+    }
+  }
+]

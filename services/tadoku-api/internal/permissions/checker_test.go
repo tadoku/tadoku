@@ -8,6 +8,7 @@ import (
 	ketoclient "github.com/tadoku/tadoku/services/tadoku-api/infra/keto"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testketo"
 )
 
@@ -23,7 +24,7 @@ func TestIsAdminSkipsKetoWithoutAuthenticatedUser(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			ctx := t.Context()
+			ctx := tenant.WithKey(t.Context(), tenant.Production())
 			if test.user != nil {
 				ctx = identity.WithUser(ctx, test.user)
 			}
@@ -40,7 +41,7 @@ func TestIsAdminSkipsKetoWithoutAuthenticatedUser(t *testing.T) {
 }
 
 func TestIsAdminFailsClosedWithoutKeto(t *testing.T) {
-	ctx := identity.WithUser(t.Context(), &identity.User{Subject: "admin"})
+	ctx := identity.WithUser(tenant.WithKey(t.Context(), tenant.Production()), &identity.User{Subject: "admin"})
 	for _, test := range []struct {
 		name    string
 		checker *Checker
@@ -79,7 +80,7 @@ func TestCheckerClassifiesKetoFailures(t *testing.T) {
 		}},
 	}
 
-	canceledCtx, cancel := context.WithCancel(identity.WithUser(t.Context(), &identity.User{Subject: "admin"}))
+	canceledCtx, cancel := context.WithCancel(identity.WithUser(tenant.WithKey(t.Context(), tenant.Production()), &identity.User{Subject: "admin"}))
 	cancel()
 	for _, check := range checks {
 		t.Run(check.name+" canceled", func(t *testing.T) {
@@ -93,7 +94,7 @@ func TestCheckerClassifiesKetoFailures(t *testing.T) {
 	if err := fixture.Close(); err != nil {
 		t.Fatal(err)
 	}
-	ctx := identity.WithUser(t.Context(), &identity.User{Subject: "admin"})
+	ctx := identity.WithUser(tenant.WithKey(t.Context(), tenant.Production()), &identity.User{Subject: "admin"})
 	for _, check := range checks {
 		t.Run(check.name+" provider down", func(t *testing.T) {
 			allowed, err := check.check(ctx)
@@ -126,7 +127,7 @@ func TestAuthenticationRequirements(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			ctx := t.Context()
+			ctx := tenant.WithKey(t.Context(), tenant.Production())
 			if test.user != nil {
 				ctx = identity.WithUser(ctx, test.user)
 			}
@@ -147,7 +148,7 @@ func TestAuthenticationRequirements(t *testing.T) {
 
 func TestAuthenticationRequirementsHandleUnknownBan(t *testing.T) {
 	providerErr := errors.New("ban lookup failed")
-	ctx := identity.WithUser(t.Context(), &identity.User{Subject: "user"})
+	ctx := identity.WithUser(tenant.WithKey(t.Context(), tenant.Production()), &identity.User{Subject: "user"})
 	ctx = WithBanState(ctx, BanUnknown(providerErr))
 
 	checker := NewKetoChecker(nil)

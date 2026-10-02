@@ -47,8 +47,8 @@ func (f *fakeKeto) ListSubjectIDsForRelation(ctx context.Context, namespace, obj
 }
 
 func TestKetoService_RolesForSubject_Guest(t *testing.T) {
-	svc := NewKetoService(&fakeKeto{}, "app", "tadoku")
-	claims, err := svc.RolesForSubject(context.Background(), "guest")
+	svc := NewKetoService(&fakeKeto{})
+	claims, err := svc.RolesForSubject(tenant.WithKey(t.Context(), tenant.Production()), "guest")
 	require.NoError(t, err)
 	assert.Equal(t, TargetRoles{}, claims)
 }
@@ -56,12 +56,12 @@ func TestKetoService_RolesForSubject_Guest(t *testing.T) {
 func TestKetoService_RolesForSubject_Admin(t *testing.T) {
 	svc := NewKetoService(&fakeKeto{
 		results: map[string]ketoclient.PermissionResult{
-			"admins": {Allowed: true},
-			"banned": {Allowed: false},
+			"admin":     {Allowed: true},
+			"is_banned": {Allowed: false},
 		},
-	}, "app", "tadoku")
+	})
 
-	claims, err := svc.RolesForSubject(context.Background(), "kratos-id")
+	claims, err := svc.RolesForSubject(tenant.WithKey(t.Context(), tenant.Production()), "kratos-id")
 	require.NoError(t, err)
 	assert.True(t, claims.Admin)
 	assert.False(t, claims.Banned)
@@ -70,12 +70,12 @@ func TestKetoService_RolesForSubject_Admin(t *testing.T) {
 func TestKetoService_RolesForSubject_Banned(t *testing.T) {
 	svc := NewKetoService(&fakeKeto{
 		results: map[string]ketoclient.PermissionResult{
-			"admins": {Allowed: false},
-			"banned": {Allowed: true},
+			"admin":     {Allowed: false},
+			"is_banned": {Allowed: true},
 		},
-	}, "app", "tadoku")
+	})
 
-	claims, err := svc.RolesForSubject(context.Background(), "kratos-id")
+	claims, err := svc.RolesForSubject(tenant.WithKey(t.Context(), tenant.Production()), "kratos-id")
 	require.NoError(t, err)
 	assert.False(t, claims.Admin)
 	assert.True(t, claims.Banned)
@@ -84,12 +84,12 @@ func TestKetoService_RolesForSubject_Banned(t *testing.T) {
 func TestKetoService_RolesForSubject_Error(t *testing.T) {
 	svc := NewKetoService(&fakeKeto{
 		results: map[string]ketoclient.PermissionResult{
-			"admins": {Allowed: false, Err: errors.New("boom")},
-			"banned": {Allowed: false},
+			"admin":     {Allowed: false, Err: errors.New("boom")},
+			"is_banned": {Allowed: false},
 		},
-	}, "app", "tadoku")
+	})
 
-	_, err := svc.RolesForSubject(context.Background(), "kratos-id")
+	_, err := svc.RolesForSubject(tenant.WithKey(t.Context(), tenant.Production()), "kratos-id")
 	require.Error(t, err)
 }
 
@@ -99,9 +99,9 @@ func TestKetoService_RolesForSubjects(t *testing.T) {
 			"admins": {"a"},
 			"banned": {"b"},
 		},
-	}, "app", "tadoku")
+	})
 
-	claimsBySubject, err := svc.RolesForSubjects(context.Background(), []string{"a", "b", "c", "guest", ""})
+	claimsBySubject, err := svc.RolesForSubjects(tenant.WithKey(t.Context(), tenant.Production()), []string{"a", "b", "c", "guest", ""})
 	require.NoError(t, err)
 
 	assert.True(t, claimsBySubject["a"].Admin)
@@ -138,8 +138,8 @@ func TestTargetRolesFollowTenant(t *testing.T) {
 	ctx := tenant.WithKey(t.Context(), key)
 	productionCtx := tenant.WithKey(t.Context(), tenant.Production())
 	client := ketoclient.NewClient(fixture.ReadURL(), fixture.WriteURL())
-	service := NewKetoService(client, "app", "tadoku")
-	manager := NewKetoManager(client, "app", "tadoku")
+	service := NewKetoService(client)
+	manager := NewKetoManager(client)
 
 	for _, test := range []struct {
 		name    string
@@ -214,8 +214,8 @@ func TestRoleLookupsRequireTenant(t *testing.T) {
 
 	client := ketoclient.NewClient(fixture.ReadURL(), fixture.WriteURL())
 	checker := NewKetoChecker(client)
-	service := NewKetoService(client, "app", "tadoku")
-	manager := NewKetoManager(client, "app", "tadoku")
+	service := NewKetoService(client)
+	manager := NewKetoManager(client)
 	for _, ctx := range []context.Context{t.Context(), tenant.WithKey(t.Context(), tenant.Key{})} {
 		if allowed, err := checker.CheckAdmin(ctx, "production-admin"); allowed || err == nil {
 			t.Errorf("unscoped administrator lookup=(%t, %v)", allowed, err)

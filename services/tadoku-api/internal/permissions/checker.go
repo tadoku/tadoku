@@ -6,6 +6,7 @@ import (
 	ketoclient "github.com/tadoku/tadoku/services/tadoku-api/infra/keto"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
 type Checker struct {
@@ -27,7 +28,7 @@ type BanState struct {
 	err    error
 }
 
-func Banned() BanState {
+func ConfirmedBan() BanState {
 	return BanState{status: banned}
 }
 
@@ -69,12 +70,35 @@ func (c *Checker) CheckPermission(ctx context.Context, namespace, object, relati
 	return c.lookup(ctx, namespace, object, relation, user.Subject)
 }
 
+func rolesObject(ctx context.Context) (string, error) {
+	key, ok := tenant.FromContext(ctx)
+	if !ok {
+		return "", errx.NewUnavailableError("permissions require a tenant", nil)
+	}
+	if key == tenant.Production() {
+		return "tadoku", nil
+	}
+	return key.String(), nil
+}
+
 func (c *Checker) CheckBanned(ctx context.Context, subjectID string) (bool, error) {
-	return c.lookup(ctx, "app", "tadoku", "banned", subjectID)
+	object, err := rolesObject(ctx)
+	if err != nil {
+		return false, err
+	}
+	return c.lookup(ctx, "app", object, "is_banned", subjectID)
 }
 
 func (c *Checker) CheckAdmin(ctx context.Context, subjectID string) (bool, error) {
-	return c.lookup(ctx, "app", "tadoku", "admins", subjectID)
+	object, err := rolesObject(ctx)
+	if err != nil {
+		return false, err
+	}
+	return c.lookup(ctx, "app", object, "admin", subjectID)
+}
+
+func (c *Checker) IsProductionAdmin(ctx context.Context, subjectID string) (bool, error) {
+	return c.lookup(ctx, "app", "tadoku", "admin", subjectID)
 }
 
 func (c *Checker) lookup(ctx context.Context, namespace, object, relation, subjectID string) (bool, error) {

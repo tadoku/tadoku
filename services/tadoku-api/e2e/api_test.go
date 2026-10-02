@@ -256,14 +256,14 @@ func newTestRouterWithLeaderboardService(
 	reader := ketoclient.NewReadClient(ketoFixture.ReadURL())
 	readWriter := ketoclient.NewClient(ketoFixture.ReadURL(), ketoFixture.WriteURL())
 	permissionChecker := permissions.NewKetoChecker(reader)
-	roleService := permissions.NewKetoService(reader, "app", "tadoku")
+	roleService := permissions.NewKetoService(reader)
 	identities := kratosFixture.CursorClient()
 
 	authzService := featureauthz.NewService(
 		permissionChecker,
 		identities,
 		roleService,
-		permissions.NewKetoManager(readWriter, "app", "tadoku"),
+		permissions.NewKetoManager(readWriter),
 		nil,
 	)
 	auditService := featureaudit.NewService(featureaudit.NewRepository(auditPool))
@@ -323,7 +323,7 @@ func newTestRouterWithLeaderboardService(
 		return nil, nil, nil, err
 	}
 
-	rejectBanned := transport.RejectBannedUsers(permissionChecker.CheckBanned, logger)
+	rejectBanned := transport.RejectBannedUsers(permissionChecker.Admit, logger)
 	authenticateCallback, err := transport.NewCallbackAuthentication(callbackToken)
 	if err != nil {
 		return nil, nil, nil, err

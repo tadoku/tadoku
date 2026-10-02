@@ -10,11 +10,12 @@ spec:
   teamId: tadoku
   numberOfInstances: 1
   users:
+    tadoku_owner: []
     tadoku: []
     kratos: []
     keto: []
   databases:
-    tadoku: tadoku
+    tadoku: tadoku_owner
     kratos: kratos
     keto: keto
   postgresql:

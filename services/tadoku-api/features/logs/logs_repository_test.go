@@ -471,7 +471,7 @@ func TestLogsRepositoryContestLogs(t *testing.T) {
 	}
 }
 
-func TestLogsRepositoryLegacyTagDecoding(t *testing.T) {
+func TestLogsRepositoryTagRoundTrip(t *testing.T) {
 	t.Parallel()
 	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	repository, _ := newTestLogsRepository(t)
@@ -479,7 +479,8 @@ func TestLogsRepositoryLegacyTagDecoding(t *testing.T) {
 	logID := uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1")
 	createDurationLog(t, repository, logID, testUserID, time.Date(2026, 9, 1, 12, 0, 0, 0, time.UTC))
 
-	for _, tag := range []string{`1 "quoted"`, `2,comma`, `3\back`, `4plain`, `5a",b`} {
+	want := []string{`1 "quoted"`, `2,comma`, `3\back`, `4plain`, `5a",b`}
+	for _, tag := range want {
 		if err := repository.InsertTag(tenantCtx, logID, testUserID, tag); err != nil {
 			t.Fatal(err)
 		}
@@ -489,7 +490,6 @@ func TestLogsRepositoryLegacyTagDecoding(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := []string{`1 \quoted\`, `2,comma`, `3\\back`, `4plain`, `5a\`, `b`}
 	if !reflect.DeepEqual(found.Tags, want) {
 		t.Errorf("tags=%q, want %q", found.Tags, want)
 	}

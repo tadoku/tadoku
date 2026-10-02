@@ -41,7 +41,7 @@ const BlogIndex = () => {
     await router.push(routes.blogList(page))
   }
 
-  if (list.isLoading || list.isIdle) {
+  if (list.isLoading) {
     return <Loading />
   }
 

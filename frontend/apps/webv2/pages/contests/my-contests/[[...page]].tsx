@@ -101,7 +101,7 @@ const Contests: NextPage<Props> = () => {
         ]}
       />
       <div className="mt-2 md:mt-8">
-        {list.isLoading || options.isLoading ? <Loading /> : null}
+        {list.isInitialLoading || options.isInitialLoading ? <Loading /> : null}
         {list.isError || options.isError ? (
           <span className="flash error">
             Could not load page, please try again later.

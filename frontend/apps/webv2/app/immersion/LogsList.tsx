@@ -14,7 +14,7 @@ import {
   useDetachLogFromContest,
   getContestLogsQueryKey,
 } from '@app/immersion/api'
-import { UseQueryResult, useQueryClient } from 'react-query'
+import { UseQueryResult, useQueryClient } from '@tanstack/react-query'
 import {
   colorForActivity,
   formatScore,
@@ -85,7 +85,7 @@ const LogsList = ({ logs, showUsername = false, contestId }: Props) => {
     detachMutation.mutate({ contestId, logId: selectedLog.id, reason })
   }
 
-  if (logs.isLoading || logs.isIdle) {
+  if (logs.isLoading) {
     return <Loading className="pb-4" />
   }
 

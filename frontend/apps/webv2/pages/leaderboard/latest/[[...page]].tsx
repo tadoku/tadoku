@@ -22,7 +22,7 @@ const Page = () => {
     enabled: !!session && !!contest.data,
   })
 
-  if (contest.isLoading || contest.isIdle) {
+  if (contest.isLoading) {
     return <Loading />
   }
 
@@ -71,14 +71,14 @@ const Page = () => {
                 label: 'Join contest',
                 IconComponent: PlusIcon,
                 style: 'primary',
-                visible: !hasEnded && registration.data === undefined,
+                visible: !hasEnded && !registration.data,
               },
               {
                 href: routes.logCreate(),
                 label: 'Log update',
                 IconComponent: PencilSquareIcon,
                 style: 'secondary',
-                visible: isOngoing && registration.data !== undefined,
+                visible: isOngoing && !!registration.data,
               },
             ]}
             orientation="right"

@@ -16,7 +16,7 @@ const Page = () => {
 
   useSessionOrRedirect()
 
-  if (log.isLoading || log.isIdle || registrations.isLoading || registrations.isIdle) {
+  if (log.isLoading || registrations.isLoading) {
     return <Loading />
   }
 

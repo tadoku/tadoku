@@ -12,7 +12,7 @@ interface Props {
 export const Page = ({ slug }: Props) => {
   const page = usePage(slug)
 
-  if (page.isLoading || page.isIdle) {
+  if (page.isLoading) {
     return <Loading />
   }
 

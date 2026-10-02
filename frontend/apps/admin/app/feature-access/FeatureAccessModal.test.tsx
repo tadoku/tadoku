@@ -25,7 +25,7 @@ describe('FeatureAccessModal', () => {
         environment: 'production',
         revision: 'a'.repeat(40),
       },
-      isLoading: false,
+      isInitialLoading: false,
       isError: false,
     } as ReturnType<typeof useFeatureAccess>)
     vi.mocked(useUpdateFeatureAccess).mockReturnValue({

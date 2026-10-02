@@ -5,7 +5,7 @@ import { ContentConfig } from './types'
 import { useContentCreate, useContentFindById, useContentUpdate } from './api'
 import { useNamespace } from './NamespaceSelector'
 import { useRouter } from 'next/router'
-import { useQueryClient } from 'react-query'
+import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
 import { v4 as uuidv4 } from 'uuid'
 import { toUtcISOStringFromLocal } from '@app/common/datetime'
@@ -141,7 +141,7 @@ export function ContentEditor({ config, id }: Props) {
     }
   })
 
-  if (!isNew && existing.isLoading) {
+  if (!isNew && existing.isInitialLoading) {
     return <Loading />
   }
 

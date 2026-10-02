@@ -34,7 +34,7 @@ const Page = () => {
   const profile = useUserProfile({ userId })
   const logs = useProfileLogs(filters)
 
-  if (profile.isLoading || profile.isIdle) {
+  if (profile.isLoading) {
     return <Loading />
   }
 

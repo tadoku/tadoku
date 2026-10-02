@@ -59,7 +59,7 @@ const Page: NextPage<Props> = () => {
         </>
       ) : (
         <>
-          {options.isLoading || registrations.isLoading ? <Loading /> : null}
+          {options.isLoading || registrations.isInitialLoading ? <Loading /> : null}
           {options.isError || registrations.isError ? (
             <span className="flash error">
               Could not load page, please try again later.

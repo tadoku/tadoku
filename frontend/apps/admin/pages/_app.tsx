@@ -12,7 +12,7 @@ import {
 import { Session } from '@ory/kratos-client'
 import { ToastContainer } from 'ui/components/toasts'
 import 'ui/styles/globals.css'
-import { QueryCache, QueryClient, QueryClientProvider } from 'react-query'
+import { QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import Head from 'next/head'
 import { Settings } from 'luxon'
 import AccessDenied from '@app/ui/AccessDenied'

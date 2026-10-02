@@ -138,8 +138,8 @@ func analyzeImports(name string, file *ast.File) []finding {
 		switch {
 		case store && isPostgresImport(importPath):
 			findings = append(findings, finding{
-				pos:     spec.Pos(),
-				rule:    "store-postgres-import",
+				pos:  spec.Pos(),
+				rule: "store-postgres-import",
 				message: fmt.Sprintf(
 					"cache and store files must not import %s; the feature service rebuilds them from the repository (%s)",
 					importPath,
@@ -148,8 +148,8 @@ func analyzeImports(name string, file *ast.File) []finding {
 			})
 		case repository && isProviderImport(importPath):
 			findings = append(findings, finding{
-				pos:     spec.Pos(),
-				rule:    "repository-provider-import",
+				pos:  spec.Pos(),
+				rule: "repository-provider-import",
 				message: fmt.Sprintf(
 					"repository files must not import provider client %s; repositories reach only PostgreSQL (%s)",
 					importPath,
@@ -158,8 +158,8 @@ func analyzeImports(name string, file *ast.File) []finding {
 			})
 		case !store && strings.HasPrefix(importPath, valkeyImportPrefix):
 			findings = append(findings, finding{
-				pos:     spec.Pos(),
-				rule:    "valkey-outside-store",
+				pos:  spec.Pos(),
+				rule: "valkey-outside-store",
 				message: fmt.Sprintf(
 					"only cache and store files may import %s; construct the cache at the composition root and pass it to the service (%s)",
 					importPath,

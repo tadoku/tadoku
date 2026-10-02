@@ -18,7 +18,11 @@ type fakeKeto struct {
 	listSubjectsErr error
 }
 
-func (f *fakeKeto) CheckPermission(ctx context.Context, namespace, object, relation string, subject ketoclient.Subject) (bool, error) {
+func (f *fakeKeto) CheckPermission(
+	ctx context.Context,
+	namespace, object, relation string,
+	subject ketoclient.Subject,
+) (bool, error) {
 	r, ok := f.results[relation]
 	if !ok {
 		return false, errors.New("missing relation in fake")
@@ -31,7 +35,11 @@ func (f *fakeKeto) CheckPermissions(ctx context.Context, checks []ketoclient.Per
 	for _, c := range checks {
 		r, ok := f.results[c.Relation]
 		if !ok {
-			out = append(out, ketoclient.PermissionResult{Check: c, Allowed: false, Err: errors.New("missing relation in fake")})
+			out = append(out, ketoclient.PermissionResult{
+				Check:   c,
+				Allowed: false,
+				Err:     errors.New("missing relation in fake"),
+			})
 			continue
 		}
 		out = append(out, ketoclient.PermissionResult{Check: c, Allowed: r.Allowed, Err: r.Err})
@@ -101,7 +109,10 @@ func TestKetoService_RolesForSubjects(t *testing.T) {
 		},
 	})
 
-	claimsBySubject, err := svc.RolesForSubjects(tenant.WithKey(t.Context(), tenant.Production()), []string{"a", "b", "c", "guest", ""})
+	claimsBySubject, err := svc.RolesForSubjects(
+		tenant.WithKey(t.Context(), tenant.Production()),
+		[]string{"a", "b", "c", "guest", ""},
+	)
 	require.NoError(t, err)
 
 	assert.True(t, claimsBySubject["a"].Admin)

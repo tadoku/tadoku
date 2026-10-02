@@ -85,11 +85,11 @@ func (c *Checker) Admit(ctx context.Context) Admission {
 		}
 	}
 
-	if results[0].Allowed {
-		return Banned{}
-	}
 	if !results[1].Allowed {
 		return NoAccess{}
+	}
+	if results[0].Allowed {
+		return Banned{}
 	}
 	return Admitted{}
 }

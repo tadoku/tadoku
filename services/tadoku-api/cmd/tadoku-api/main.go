@@ -67,14 +67,15 @@ type config struct {
 	OathkeeperURL           string        `envconfig:"oathkeeper_url" default:"http://oathkeeper-proxy.default:4455"`
 	ServiceAccountTokenPath string        `validate:"required" envconfig:"service_account_token_path" default:"/var/run/secrets/tokens/token"`
 
-	FliptEnabled        bool          `envconfig:"flipt_enabled" default:"false"`
-	FliptURL            string        `envconfig:"flipt_url" default:"http://oathkeeper-proxy.default:4455/flipt"`
-	FliptEnvironment    string        `envconfig:"flipt_environment" default:"local"`
-	FliptNamespace      string        `envconfig:"flipt_namespace" default:"default"`
-	FliptUpdateInterval time.Duration `validate:"gte=1s" envconfig:"flipt_update_interval" default:"30s"`
-	FliptRequestTimeout time.Duration `validate:"gte=1s" envconfig:"flipt_request_timeout" default:"5s"`
-	FliptStartupTimeout time.Duration `validate:"gt=0" envconfig:"flipt_startup_timeout" default:"3s"`
-	FliptManagementURL  string        `envconfig:"flipt_management_url" default:"http://oathkeeper-proxy.default:4455/flipt-management"`
+	FliptEnabled         bool          `envconfig:"flipt_enabled" default:"false"`
+	FliptURL             string        `envconfig:"flipt_url" default:"http://oathkeeper-proxy.default:4455/flipt"`
+	FliptEnvironment     string        `envconfig:"flipt_environment" default:"local"`
+	FliptTestEnvironment string        `envconfig:"flipt_test_environment" default:"test"`
+	FliptNamespace       string        `envconfig:"flipt_namespace" default:"default"`
+	FliptUpdateInterval  time.Duration `validate:"gte=1s" envconfig:"flipt_update_interval" default:"30s"`
+	FliptRequestTimeout  time.Duration `validate:"gte=1s" envconfig:"flipt_request_timeout" default:"5s"`
+	FliptStartupTimeout  time.Duration `validate:"gt=0" envconfig:"flipt_startup_timeout" default:"3s"`
+	FliptManagementURL   string        `envconfig:"flipt_management_url" default:"http://oathkeeper-proxy.default:4455/flipt-management"`
 
 	KratosAdminURL string        `validate:"required" envconfig:"kratos_admin_url"`
 	KratosTimeout  time.Duration `validate:"gt=0" envconfig:"kratos_timeout" default:"2s"`
@@ -114,6 +115,10 @@ func loadConfig() (config, error) {
 		}
 		if strings.TrimSpace(cfg.FliptNamespace) == "" {
 			return config{}, fmt.Errorf("validate config: FliptNamespace is required")
+		}
+
+		if _, err := fliptclient.NewTargets(cfg.FliptEnvironment, cfg.FliptNamespace, cfg.FliptTestEnvironment); err != nil {
+			return config{}, fmt.Errorf("validate config: FliptTestEnvironment: %w", err)
 		}
 
 		var validationErr error
@@ -183,7 +188,7 @@ type application struct {
 	valkey          valkeygo.Client
 	kratos          *kratosapi.APIClient
 	keto            *ketoclient.Client
-	flipt           *fliptclient.Client
+	flipt           *fliptclient.Provider
 	fliptEvaluation *http.Client
 	fliptManagement *http.Client
 }
@@ -259,9 +264,13 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	}
 
 	featureFlagMetrics := featureflags.NewMetrics(metrics)
-	var fliptProvider *fliptclient.Client
+	targets, err := fliptclient.NewTargets(cfg.FliptEnvironment, cfg.FliptNamespace, cfg.FliptTestEnvironment)
+	if err != nil && cfg.FliptEnabled {
+		return nil, err
+	}
+	var fliptProvider *fliptclient.Provider
 	if cfg.FliptEnabled {
-		fliptProvider, err = fliptclient.New(ctx, fliptclient.Config{
+		fliptProvider, err = fliptclient.NewProvider(ctx, fliptclient.Config{
 			URL:            cfg.FliptURL,
 			Environment:    cfg.FliptEnvironment,
 			Namespace:      cfg.FliptNamespace,
@@ -269,7 +278,7 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 			RequestTimeout: cfg.FliptRequestTimeout,
 			StartupTimeout: cfg.FliptStartupTimeout,
 			HTTPClient:     fliptEvaluation,
-		}, featureFlagMetrics)
+		}, targets, featureFlagMetrics)
 		if err != nil {
 			logger.Warn("feature flag provider unavailable; using safe defaults", "error", err)
 			fliptProvider = nil
@@ -375,11 +384,14 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	pagesService := pages.NewService(pagesRepository)
 	postsService := posts.NewService(postsRepository)
 	profileService := profile.NewService(profileRepository, userCache, roleService, kratosIdentities)
-	featureFlagService := featureflagsservice.NewService(featureflags.NewEvaluator(fliptProvider, featureFlagMetrics), fliptmanagement.NewClient(fliptmanagement.Config{
-		URL:         cfg.FliptManagementURL,
-		Environment: cfg.FliptEnvironment,
-		HTTPClient:  fliptManagement,
-	}))
+	featureFlagService := featureflagsservice.NewService(
+		featureflags.NewEvaluator(fliptProvider, featureFlagMetrics),
+		fliptmanagement.NewClient(fliptmanagement.Config{
+			URL:        cfg.FliptManagementURL,
+			Targets:    targets,
+			HTTPClient: fliptManagement,
+		}),
+	)
 
 	scoringObserver := observability.NewScoringObserver(metrics, logger, cfg.ScoringEngineEnabled)
 	scoringService := scoring.NewService(scoringRepository, cfg.ScoringEngineEnabled, scoringObserver)

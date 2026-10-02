@@ -128,6 +128,8 @@ policies:
           allow:
             - local:services/tadoku-api/internal/testflipt/...
             - local:services/tadoku-api/internal/featureflags
+            - local:services/tadoku-api/internal/tenant
+            - local:services/tadoku-api/infra/flipt
 
   - id: permissions
     packages: [local:services/tadoku-api/internal/permissions/...]

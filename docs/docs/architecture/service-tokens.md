@@ -90,6 +90,12 @@ authenticator against Oathkeeper's own JWKS
 the matching `target_audience`, and strips the prefix before forwarding to
 `flipt.tdk-dev-flipt:8080`.
 
+Evaluation permits snapshot reads for any namespace, with the environment in
+`x-flipt-environment`. Named-user management permits the configured canonical
+namespace and namespaces in the separate `test` environment, only for the
+managed segment GET and resource PUT methods. These service credentials cannot
+create or delete a namespace; provisioning needs its own authorized route.
+
 Tadoku API itself rejects service JWTs with `401`; they are valid only on
 Oathkeeper-guarded internal routes.
 

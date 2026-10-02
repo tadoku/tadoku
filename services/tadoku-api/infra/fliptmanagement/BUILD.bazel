@@ -1,9 +1,23 @@
-load("@rules_go//go:def.bzl", "go_library")
+load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "fliptmanagement",
     srcs = ["client.go"],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/infra/fliptmanagement",
     visibility = ["//services/tadoku-api:infrastructure_consumers"],
-    deps = ["@com_github_google_uuid//:uuid"],
+    deps = [
+        "//services/tadoku-api/infra/flipt",
+        "@com_github_google_uuid//:uuid",
+    ],
+)
+
+go_test(
+    name = "fliptmanagement_test",
+    srcs = ["client_test.go"],
+    embed = [":fliptmanagement"],
+    deps = [
+        "//services/tadoku-api/infra/flipt",
+        "//services/tadoku-api/internal/tenant",
+        "@com_github_google_uuid//:uuid",
+    ],
 )

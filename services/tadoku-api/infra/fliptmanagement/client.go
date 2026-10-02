@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/tadoku/tadoku/services/tadoku-api/infra/flipt"
 )
 
 var ErrUnavailable = errors.New("feature access unavailable")
@@ -33,15 +34,15 @@ type State struct {
 const maxUpdateAttempts = 2
 
 type Config struct {
-	URL         string
-	Environment string
-	HTTPClient  *http.Client
+	URL        string
+	Targets    flipt.Targets
+	HTTPClient *http.Client
 }
 
 type Client struct {
-	baseURL     *url.URL
-	environment string
-	httpClient  *http.Client
+	baseURL    *url.URL
+	targets    flipt.Targets
+	httpClient *http.Client
 }
 
 type segmentConstraint struct {
@@ -87,14 +88,18 @@ func NewClient(cfg Config) *Client {
 	if httpClient == nil {
 		httpClient = http.DefaultClient
 	}
-	return &Client{baseURL: baseURL, environment: cfg.Environment, httpClient: httpClient}
+	return &Client{baseURL: baseURL, targets: cfg.Targets, httpClient: httpClient}
 }
 
 func (c *Client) GetNamedUserAccess(ctx context.Context, spec Segment, targetUserID uuid.UUID) (State, error) {
 	if err := c.validate(spec, targetUserID); err != nil {
 		return State{}, err
 	}
-	segment, err := c.getSegment(ctx, spec)
+	target, err := c.targets.Resolve(ctx)
+	if err != nil {
+		return State{}, err
+	}
+	segment, err := c.getSegment(ctx, target, spec)
 	if err != nil {
 		return State{}, err
 	}
@@ -102,16 +107,26 @@ func (c *Client) GetNamedUserAccess(ctx context.Context, spec Segment, targetUse
 	if err != nil {
 		return State{}, err
 	}
-	return c.state(segment, contains(members, targetUserID.String()), false), nil
+	return state(target, segment, contains(members, targetUserID.String()), false), nil
 }
 
-func (c *Client) SetNamedUserAccess(ctx context.Context, spec Segment, targetUserID uuid.UUID, enabled bool) (State, error) {
+func (c *Client) SetNamedUserAccess(
+	ctx context.Context,
+	spec Segment,
+	targetUserID uuid.UUID,
+	enabled bool,
+) (State, error) {
 	if err := c.validate(spec, targetUserID); err != nil {
 		return State{}, err
 	}
 
+	target, err := c.targets.Resolve(ctx)
+	if err != nil {
+		return State{}, err
+	}
+
 	for attempt := 0; attempt < maxUpdateAttempts; attempt++ {
-		segment, err := c.getSegment(ctx, spec)
+		segment, err := c.getSegment(ctx, target, spec)
 		if err != nil {
 			return State{}, err
 		}
@@ -121,7 +136,7 @@ func (c *Client) SetNamedUserAccess(ctx context.Context, spec Segment, targetUse
 		}
 		currentlyEnabled := contains(members, targetUserID.String())
 		if currentlyEnabled == enabled {
-			return c.state(segment, enabled, false), nil
+			return state(target, segment, enabled, false), nil
 		}
 
 		if enabled {
@@ -136,14 +151,14 @@ func (c *Client) SetNamedUserAccess(ctx context.Context, spec Segment, targetUse
 		}
 		segment.Resource.Payload.Constraints[0].Value = string(encodedMembers)
 
-		updated, conflict, err := c.putSegment(ctx, spec, segment)
+		updated, conflict, err := c.putSegment(ctx, target, spec, segment)
 		if err != nil {
 			return State{}, err
 		}
 		if conflict {
 			continue
 		}
-		return c.state(updated, enabled, true), nil
+		return state(target, updated, enabled, true), nil
 	}
 	return State{}, fmt.Errorf("%w: update conflicted", ErrUnavailable)
 }
@@ -152,17 +167,20 @@ func (c *Client) validate(spec Segment, targetUserID uuid.UUID) error {
 	if c == nil || c.baseURL == nil || c.baseURL.Scheme == "" || c.baseURL.Host == "" {
 		return errors.New("feature access management is not configured")
 	}
-	if c.environment != "local" && c.environment != "production" {
-		return errors.New("feature access environment is invalid")
-	}
 	if spec.Key == "" || targetUserID == uuid.Nil {
 		return errors.New("feature access request is invalid")
 	}
 	return nil
 }
 
-func (c *Client) getSegment(ctx context.Context, spec Segment) (parsedSegment, error) {
-	endpoint := fmt.Sprintf("%s/api/v2/environments/%s/namespaces/default/resources/flipt.core.Segment/%s", c.baseURL.String(), c.environment, url.PathEscape(spec.Key))
+func (c *Client) getSegment(ctx context.Context, target flipt.Target, spec Segment) (parsedSegment, error) {
+	endpoint := fmt.Sprintf(
+		"%s/api/v2/environments/%s/namespaces/%s/resources/flipt.core.Segment/%s",
+		c.baseURL.String(),
+		url.PathEscape(target.Environment),
+		url.PathEscape(target.Namespace),
+		url.PathEscape(spec.Key),
+	)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return parsedSegment{}, errors.New("create feature access request")
@@ -176,14 +194,19 @@ func (c *Client) getSegment(ctx context.Context, spec Segment) (parsedSegment, e
 		drain(resp.Body)
 		return parsedSegment{}, fmt.Errorf("%w: segment returned status %d", ErrUnavailable, resp.StatusCode)
 	}
-	segment, err := decodeSegment(resp.Body, spec)
+	segment, err := decodeSegment(resp.Body, target.Namespace, spec)
 	if err != nil {
 		return parsedSegment{}, fmt.Errorf("%w: %v", ErrUnavailable, err)
 	}
 	return segment, nil
 }
 
-func (c *Client) putSegment(ctx context.Context, spec Segment, segment parsedSegment) (parsedSegment, bool, error) {
+func (c *Client) putSegment(
+	ctx context.Context,
+	target flipt.Target,
+	spec Segment,
+	segment parsedSegment,
+) (parsedSegment, bool, error) {
 	payload := struct {
 		Key      string         `json:"key"`
 		Revision string         `json:"revision"`
@@ -193,7 +216,12 @@ func (c *Client) putSegment(ctx context.Context, spec Segment, segment parsedSeg
 	if err != nil {
 		return parsedSegment{}, false, errors.New("encode feature access update")
 	}
-	endpoint := fmt.Sprintf("%s/api/v2/environments/%s/namespaces/default/resources", c.baseURL.String(), c.environment)
+	endpoint := fmt.Sprintf(
+		"%s/api/v2/environments/%s/namespaces/%s/resources",
+		c.baseURL.String(),
+		url.PathEscape(target.Environment),
+		url.PathEscape(target.Namespace),
+	)
 	req, err := http.NewRequestWithContext(ctx, http.MethodPut, endpoint, bytes.NewReader(body))
 	if err != nil {
 		return parsedSegment{}, false, errors.New("create feature access update")
@@ -212,14 +240,14 @@ func (c *Client) putSegment(ctx context.Context, spec Segment, segment parsedSeg
 		drain(resp.Body)
 		return parsedSegment{}, false, fmt.Errorf("%w: update returned status %d", ErrUnavailable, resp.StatusCode)
 	}
-	updated, err := decodeSegment(resp.Body, spec)
+	updated, err := decodeSegment(resp.Body, target.Namespace, spec)
 	if err != nil {
 		return parsedSegment{}, false, fmt.Errorf("%w: %v", ErrUnavailable, err)
 	}
 	return updated, false, nil
 }
 
-func decodeSegment(reader io.Reader, spec Segment) (parsedSegment, error) {
+func decodeSegment(reader io.Reader, namespace string, spec Segment) (parsedSegment, error) {
 	var segment segmentResponse
 	decoder := json.NewDecoder(io.LimitReader(reader, 1<<20))
 	if err := decodeOne(decoder, &segment); err != nil {
@@ -231,7 +259,7 @@ func decodeSegment(reader io.Reader, spec Segment) (parsedSegment, error) {
 	if err := decodeOne(payloadDecoder, &payload); err != nil {
 		return parsedSegment{}, errors.New("unexpected segment schema")
 	}
-	if segment.Resource.NamespaceKey != "default" || segment.Resource.Key != spec.Key ||
+	if segment.Resource.NamespaceKey != namespace || segment.Resource.Key != spec.Key ||
 		payload.Type != "flipt.core.Segment" || payload.Key != spec.Key ||
 		payload.Name != spec.Name || payload.Description != spec.Description ||
 		payload.MatchType != "ALL_MATCH_TYPE" || len(payload.Constraints) != 1 {
@@ -267,8 +295,8 @@ func parseMembers(value string) ([]string, error) {
 	return uniqueSorted(members), nil
 }
 
-func (c *Client) state(segment parsedSegment, enabled, changed bool) State {
-	return State{Enabled: enabled, Changed: changed, Environment: c.environment, Revision: segment.Revision}
+func state(target flipt.Target, segment parsedSegment, enabled, changed bool) State {
+	return State{Enabled: enabled, Changed: changed, Environment: target.Environment, Revision: segment.Revision}
 }
 
 func decodeOne(decoder *json.Decoder, target any) error {

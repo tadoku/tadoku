@@ -114,6 +114,7 @@ go_test(
         "//services/tadoku-api/features/scoring",
         "//services/tadoku-api/generated/openapi",
         "//services/tadoku-api/generated/openapi/callback",
+        "//services/tadoku-api/infra/flipt",
         "//services/tadoku-api/infra/fliptmanagement",
         "//services/tadoku-api/infra/keto",
         "//services/tadoku-api/infra/observability",

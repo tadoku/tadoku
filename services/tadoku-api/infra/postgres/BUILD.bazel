@@ -1,5 +1,7 @@
 load("@rules_go//go:def.bzl", "go_library", "go_test")
 
+# gazelle:exclude pgbouncer_test.go
+
 go_library(
     name = "postgres",
     srcs = [
@@ -22,6 +24,27 @@ go_library(
         "@com_github_jackc_pgx_v5//pgtype",
         "@com_github_jackc_pgx_v5//pgxpool",
         "@com_github_prometheus_client_golang//prometheus",
+    ],
+)
+
+go_test(
+    name = "pgbouncer_test",
+    srcs = ["pgbouncer_test.go"],
+    args = ["-test.v"],
+    env_inherit = [
+        "TADOKU_TEST_PGBOUNCER_URL",
+        "TADOKU_TEST_POSTGRES_URL",
+    ],
+    tags = [
+        "no-cache",
+        "no-remote-exec",
+        "requires-network",
+    ],
+    deps = [
+        ":postgres",
+        "//services/tadoku-api/internal/tenant",
+        "//services/tadoku-api/internal/testpostgres",
+        "@com_github_jackc_pgx_v5//pgxpool",
     ],
 )
 

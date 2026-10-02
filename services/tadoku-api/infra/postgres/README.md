@@ -45,6 +45,48 @@ changed and conflicting scopes fail closed; 1,000 interleaved statements for
 three tenants see the correct key; canceled batches leave the pool reusable.
 Secondary cleanup transport failures are not simulated.
 
+## PgBouncer transaction pooling
+
+The `pgbouncer_test` target requires `TADOKU_TEST_POSTGRES_URL` and
+`TADOKU_TEST_PGBOUNCER_URL`; missing or unsafe configuration fails. Both URLs
+accept only loopback, an explicit port, the `postgres` database, synthetic
+`postgres:postgres` credentials and exactly `sslmode=disable`. The fixture
+creates and drops its own migrated database through the direct PostgreSQL URL.
+Gazelle excludes this source from its default test grouping; maintain the
+dedicated target's dependencies when its imports change.
+
+With the disposable PostgreSQL instance above running, start PgBouncer on a
+Linux host:
+
+```sh
+docker run --rm -d --name tadoku-helper-pgbouncer --network host \
+  -e DB_HOST=127.0.0.1 -e DB_PORT=15432 \
+  -e DB_USER=postgres -e DB_PASSWORD=postgres \
+  -e AUTH_TYPE=scram-sha-256 -e POOL_MODE=transaction \
+  -e LISTEN_ADDR=127.0.0.1 -e LISTEN_PORT=6432 \
+  -e MAX_CLIENT_CONN=1000 -e DEFAULT_POOL_SIZE=5 \
+  -e MAX_PREPARED_STATEMENTS=200 \
+  edoburu/pgbouncer:v1.25.2-p0@sha256:7d7a27d9e90985cab5cf42256f5c13a3120baa4b055b69df37beb272b89b2340
+docker exec tadoku-helper-pgbouncer pg_isready -h 127.0.0.1 -p 6432 -U postgres
+```
+
+After readiness succeeds:
+
+```sh
+export TADOKU_TEST_PGBOUNCER_URL='postgres://postgres:postgres@127.0.0.1:6432/postgres?sslmode=disable'
+bazel test --test_output=all //services/tadoku-api/infra/postgres:pgbouncer_test
+bazel test --test_output=all --@rules_go//go/config:race \
+  //services/tadoku-api/infra/postgres:pgbouncer_test
+docker stop tadoku-helper-pgbouncer
+```
+
+The pinned image generates a wildcard database mapping when `DB_NAME` is unset.
+Prepared statement tracking remains enabled for pgx's normal protocol. The test
+uses 300 goroutines for three tenants, verifies all 12,000 reads and 6,000 writes,
+then proves the unsafe session-setting control leaks between separate clients
+that share a backend. Session settings occur only inside that disposable test
+control, never application code. CI prints the normal and race test logs.
+
 `testdata/sqlc` contains only synthetic query-generation inputs, not application
 migrations. `internal/pgxcompat` is generated and Bazel-test-only. Regenerate with
 `./scripts/generate-sqlc.sh`; it uses this fixture's separate sqlc v1.31.1 pin. Never edit generated Go by hand.

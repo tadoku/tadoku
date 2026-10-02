@@ -14,10 +14,12 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
 func TestWorkerJobLifecycle(t *testing.T) {
-	f, err := newWorkerFixture(t.Context())
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
+	f, err := newWorkerFixture(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -37,7 +39,7 @@ func TestWorkerJobLifecycle(t *testing.T) {
 		"other:" + prefix + "leaderboard:global:last_updated",
 	}
 	t.Cleanup(func() {
-		ctx, stop := context.WithTimeout(context.Background(), time.Second)
+		ctx, stop := context.WithTimeout(tenant.WithKey(context.Background(), tenant.Production()), time.Second)
 		defer stop()
 		if err := client.Do(ctx, client.B().Del().Key(keys[6]).Build()).Error(); err != nil {
 			t.Error(err)
@@ -45,7 +47,7 @@ func TestWorkerJobLifecycle(t *testing.T) {
 	})
 
 	for _, marker := range []string{keys[1], keys[6]} {
-		if err := client.Do(t.Context(), client.B().Set().Key(marker).Value("native:0").Build()).Error(); err != nil {
+		if err := client.Do(tenantCtx, client.B().Set().Key(marker).Value("native:0").Build()).Error(); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -61,7 +63,7 @@ func TestWorkerJobLifecycle(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(tenant.WithKey(context.Background(), tenant.Production()))
 	done := make(chan struct{})
 	go func() { defer close(done); runner.Run(ctx) }()
 	t.Cleanup(func() {
@@ -73,7 +75,7 @@ func TestWorkerJobLifecycle(t *testing.T) {
 		}
 	})
 
-	if err := waitFor(t.Context(), func() (bool, error) {
+	if err := waitFor(tenantCtx, func() (bool, error) {
 		return runner.Ready(), nil
 	}); err != nil {
 		t.Fatal(err)
@@ -82,50 +84,50 @@ func TestWorkerJobLifecycle(t *testing.T) {
 		key  string
 		want int64
 	}{{keys[1], 1}, {keys[6], 1}} {
-		count, err := client.Do(t.Context(), client.B().Exists().Key(item.key).Build()).AsInt64()
+		count, err := client.Do(tenantCtx, client.B().Exists().Key(item.key).Build()).AsInt64()
 		if err != nil || count != item.want {
 			t.Fatalf("startup marker %s: count=%d error=%v; want %d", item.key, count, err, item.want)
 		}
 	}
 
 	for _, marker := range []string{keys[1], keys[4]} {
-		if err := client.Do(t.Context(), client.B().Set().Key(marker).Value("native:0").Build()).Error(); err != nil {
+		if err := client.Do(tenantCtx, client.B().Set().Key(marker).Value("native:0").Build()).Error(); err != nil {
 			t.Fatal(err)
 		}
 	}
 
-	validID, err := insertJob(t.Context(), db.Pool, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":2025}`, false)
+	validID, err := insertJob(tenantCtx, db.Pool, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":2025}`, false)
 	if err != nil {
 		t.Fatal(err)
 	}
-	invalidID, err := insertJob(t.Context(), db.Pool, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":0}`, false)
+	invalidID, err := insertJob(tenantCtx, db.Pool, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":0}`, false)
 	if err != nil {
 		t.Fatal(err)
 	}
-	unknownID, err := insertJob(t.Context(), db.Pool, "future.job.v1", `{}`, false)
+	unknownID, err := insertJob(tenantCtx, db.Pool, "future.job.v1", `{}`, false)
 	if err != nil {
 		t.Fatal(err)
 	}
-	reclaimedID, err := insertJob(t.Context(), db.Pool, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":2025}`, true)
+	reclaimedID, err := insertJob(tenantCtx, db.Pool, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":2025}`, true)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if err := waitFor(t.Context(), func() (bool, error) {
+	if err := waitFor(tenantCtx, func() (bool, error) {
 		var completed, failed, reclaimed, unknown string
-		err := db.Pool.QueryRow(t.Context(), `select state from jobs where id = $1`, validID).Scan(&completed)
+		err := db.Pool.QueryRow(tenantCtx, `select state from jobs where id = $1`, validID).Scan(&completed)
 		if err != nil {
 			return false, err
 		}
-		err = db.Pool.QueryRow(t.Context(), `select state from jobs where id = $1`, invalidID).Scan(&failed)
+		err = db.Pool.QueryRow(tenantCtx, `select state from jobs where id = $1`, invalidID).Scan(&failed)
 		if err != nil {
 			return false, err
 		}
-		err = db.Pool.QueryRow(t.Context(), `select state from jobs where id = $1`, reclaimedID).Scan(&reclaimed)
+		err = db.Pool.QueryRow(tenantCtx, `select state from jobs where id = $1`, reclaimedID).Scan(&reclaimed)
 		if err != nil {
 			return false, err
 		}
-		err = db.Pool.QueryRow(t.Context(), `select state from jobs where id = $1`, unknownID).Scan(&unknown)
+		err = db.Pool.QueryRow(tenantCtx, `select state from jobs where id = $1`, unknownID).Scan(&unknown)
 		return completed == "completed" && failed == "failed" && reclaimed == "completed" && unknown == "pending", err
 	}); err != nil {
 		t.Fatal(err)
@@ -135,13 +137,13 @@ func TestWorkerJobLifecycle(t *testing.T) {
 		key  string
 		want int64
 	}{{keys[1], 0}, {keys[4], 0}, {keys[6], 1}} {
-		count, err := client.Do(t.Context(), client.B().Exists().Key(item.key).Build()).AsInt64()
+		count, err := client.Do(tenantCtx, client.B().Exists().Key(item.key).Build()).AsInt64()
 		if err != nil || count != item.want {
 			t.Errorf("marker %s after completed job: count=%d error=%v; want %d", item.key, count, err, item.want)
 		}
 	}
 	var code string
-	if err := db.Pool.QueryRow(t.Context(), `select last_error from jobs where id = $1`, invalidID).Scan(&code); err != nil {
+	if err := db.Pool.QueryRow(tenantCtx, `select last_error from jobs where id = $1`, invalidID).Scan(&code); err != nil {
 		t.Fatal(err)
 	}
 	if code != "invalid_payload" {

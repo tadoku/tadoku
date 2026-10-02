@@ -18,6 +18,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
 type Database struct {
@@ -152,6 +153,9 @@ func (d *Database) Reset(ctx context.Context, seedFiles ...string) (err error) {
 		}
 	}()
 
+	if _, err := tx.Exec(ctx, "select set_config('tadoku.tenant', $1, true)", tenant.Production().String()); err != nil {
+		return fmt.Errorf("set test reset tenant: %w", err)
+	}
 	if _, err := tx.Exec(ctx, cleanupSQL); err != nil {
 		return fmt.Errorf("execute cleanup.sql: %w", err)
 	}

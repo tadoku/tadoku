@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/activities"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
 )
 
@@ -17,9 +18,10 @@ var (
 )
 
 func newTestLogsRepository(t *testing.T) (*LogsRepository, *testpostgres.Database) {
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Helper()
 
-	db, err := testpostgres.New(t.Context())
+	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -29,7 +31,7 @@ func newTestLogsRepository(t *testing.T) (*LogsRepository, *testpostgres.Databas
 		}
 	})
 
-	_, err = db.Pool.Exec(t.Context(), `
+	_, err = db.Pool.Exec(tenantCtx, `
 		insert into users (id, display_name)
 		values
 			('11111111-1111-4111-8111-111111111111', 'Reader'),
@@ -42,10 +44,11 @@ func newTestLogsRepository(t *testing.T) (*LogsRepository, *testpostgres.Databas
 }
 
 func createDurationLog(t *testing.T, repository *LogsRepository, id, userID uuid.UUID, createdAt time.Time) {
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Helper()
 
 	duration := int32(600)
-	err := repository.CreateLog(t.Context(), logMutation{
+	err := repository.CreateLog(tenantCtx, logMutation{
 		ID:           id,
 		UserID:       userID,
 		LanguageCode: "jpn",
@@ -63,10 +66,11 @@ func createDurationLog(t *testing.T, repository *LogsRepository, id, userID uuid
 }
 
 func TestLogsRepositoryFindLogMapsRows(t *testing.T) {
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
 	repository, db := newTestLogsRepository(t)
 
-	units, err := repository.ListUnits(t.Context())
+	units, err := repository.ListUnits(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -82,7 +86,7 @@ func TestLogsRepositoryFindLogMapsRows(t *testing.T) {
 	}
 
 	var ruleSetID uuid.UUID
-	if err := db.Pool.QueryRow(t.Context(), `select id from scoring_rule_sets limit 1`).Scan(&ruleSetID); err != nil {
+	if err := db.Pool.QueryRow(tenantCtx, `select id from scoring_rule_sets limit 1`).Scan(&ruleSetID); err != nil {
 		t.Fatal(err)
 	}
 
@@ -105,7 +109,7 @@ func TestLogsRepositoryFindLogMapsRows(t *testing.T) {
 		Source:    "amount",
 	}
 
-	err = repository.CreateLog(t.Context(), logMutation{
+	err = repository.CreateLog(tenantCtx, logMutation{
 		ID:           amountLogID,
 		UserID:       testUserID,
 		LanguageCode: "jpn",
@@ -119,13 +123,13 @@ func TestLogsRepositoryFindLogMapsRows(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, tag := range []string{"book", "fiction"} {
-		if err := repository.InsertTag(t.Context(), amountLogID, testUserID, tag); err != nil {
+		if err := repository.InsertTag(tenantCtx, amountLogID, testUserID, tag); err != nil {
 			t.Fatal(err)
 		}
 	}
 	createDurationLog(t, repository, durationLogID, testUserID, createdAt)
 
-	found, err := repository.FindLog(t.Context(), amountLogID, false)
+	found, err := repository.FindLog(tenantCtx, amountLogID, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -155,7 +159,7 @@ func TestLogsRepositoryFindLogMapsRows(t *testing.T) {
 		t.Errorf("amount log=%+v, want %+v", found, want)
 	}
 
-	found, err = repository.FindLog(t.Context(), durationLogID, false)
+	found, err = repository.FindLog(tenantCtx, durationLogID, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -181,12 +185,13 @@ func TestLogsRepositoryFindLogMapsRows(t *testing.T) {
 		t.Errorf("duration log=%+v, want %+v", found, want)
 	}
 
-	if _, err := repository.FindLog(t.Context(), uuid.New(), true); !errors.Is(err, ErrLogNotFound) {
+	if _, err := repository.FindLog(tenantCtx, uuid.New(), true); !errors.Is(err, ErrLogNotFound) {
 		t.Errorf("missing log error=%v, want not found", err)
 	}
 }
 
 func TestLogsRepositorySoftDeleteVisibility(t *testing.T) {
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
 	repository, db := newTestLogsRepository(t)
 
@@ -197,30 +202,30 @@ func TestLogsRepositorySoftDeleteVisibility(t *testing.T) {
 	createDurationLog(t, repository, logID, testUserID, createdAt)
 	createDurationLog(t, repository, frozenLogID, testUserID, createdAt)
 
-	if _, err := db.Pool.Exec(t.Context(), `update logs set frozen_at = '2026-09-01 13:00' where id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2'`); err != nil {
+	if _, err := db.Pool.Exec(tenantCtx, `update logs set frozen_at = '2026-09-01 13:00' where id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2'`); err != nil {
 		t.Fatal(err)
 	}
 
-	if err := repository.LockLog(t.Context(), logID); err != nil {
+	if err := repository.LockLog(tenantCtx, logID); err != nil {
 		t.Errorf("lock live log error=%v, want nil", err)
 	}
-	if err := repository.LockLog(t.Context(), frozenLogID); !errors.Is(err, ErrLogFrozen) {
+	if err := repository.LockLog(tenantCtx, frozenLogID); !errors.Is(err, ErrLogFrozen) {
 		t.Errorf("lock frozen log error=%v, want frozen", err)
 	}
 
 	for _, id := range []uuid.UUID{logID, frozenLogID} {
-		if err := repository.SoftDelete(t.Context(), id, deletedAt); err != nil {
+		if err := repository.SoftDelete(tenantCtx, id, deletedAt); err != nil {
 			t.Fatal(err)
 		}
 	}
 
-	if _, err := repository.FindLog(t.Context(), logID, false); !errors.Is(err, ErrLogNotFound) {
+	if _, err := repository.FindLog(tenantCtx, logID, false); !errors.Is(err, ErrLogNotFound) {
 		t.Errorf("deleted log without deleted rows error=%v, want not found", err)
 	}
-	if err := repository.LockLog(t.Context(), logID); !errors.Is(err, ErrLogNotFound) {
+	if err := repository.LockLog(tenantCtx, logID); !errors.Is(err, ErrLogNotFound) {
 		t.Errorf("lock deleted log error=%v, want not found", err)
 	}
-	found, err := repository.FindLog(t.Context(), logID, true)
+	found, err := repository.FindLog(tenantCtx, logID, true)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -228,7 +233,7 @@ func TestLogsRepositorySoftDeleteVisibility(t *testing.T) {
 		t.Errorf("deleted log=%+v, want deleted", found)
 	}
 
-	frozen, err := repository.FindLog(t.Context(), frozenLogID, false)
+	frozen, err := repository.FindLog(tenantCtx, frozenLogID, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -238,6 +243,7 @@ func TestLogsRepositorySoftDeleteVisibility(t *testing.T) {
 }
 
 func TestLogsRepositoryListUserLogsPaging(t *testing.T) {
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
 	repository, _ := newTestLogsRepository(t)
 
@@ -253,7 +259,7 @@ func TestLogsRepositoryListUserLogsPaging(t *testing.T) {
 	createDurationLog(t, repository, newest, testUserID, day(3))
 	createDurationLog(t, repository, deleted, testUserID, day(4))
 	createDurationLog(t, repository, otherUser, testOtherUserID, day(5))
-	if err := repository.SoftDelete(t.Context(), deleted, day(6)); err != nil {
+	if err := repository.SoftDelete(tenantCtx, deleted, day(6)); err != nil {
 		t.Fatal(err)
 	}
 
@@ -273,7 +279,7 @@ func TestLogsRepositoryListUserLogsPaging(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			list, err := repository.ListUserLogs(t.Context(), ListParameters{
+			list, err := repository.ListUserLogs(tenantCtx, ListParameters{
 				UserID:         &userID,
 				IncludeDeleted: tt.includeDeleted,
 				PageSize:       2,
@@ -304,10 +310,11 @@ func TestLogsRepositoryListUserLogsPaging(t *testing.T) {
 }
 
 func TestLogsRepositoryContestLogs(t *testing.T) {
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
 	repository, db := newTestLogsRepository(t)
 
-	_, err := db.Pool.Exec(t.Context(), `
+	_, err := db.Pool.Exec(tenantCtx, `
 		insert into contests (
 			id, owner_user_id, owner_user_display_name, "private", contest_start, contest_end,
 			registration_end, title, activity_type_id_allow_list, official, created_at, updated_at
@@ -346,7 +353,7 @@ func TestLogsRepositoryContestLogs(t *testing.T) {
 	attach := func(logID, registrationID uuid.UUID) {
 		t.Helper()
 
-		err := repository.CreateContestLog(t.Context(), logID, ContestTracking{
+		err := repository.CreateContestLog(tenantCtx, logID, ContestTracking{
 			RegistrationID: registrationID,
 			Tracking: Tracking{
 				DurationSeconds: &duration,
@@ -374,7 +381,7 @@ func TestLogsRepositoryContestLogs(t *testing.T) {
 		attach(log.id, log.registration)
 	}
 	createDurationLog(t, repository, unattached, testUserID, day(7))
-	if err := repository.SoftDelete(t.Context(), deleted, day(8)); err != nil {
+	if err := repository.SoftDelete(tenantCtx, deleted, day(8)); err != nil {
 		t.Fatal(err)
 	}
 
@@ -396,7 +403,7 @@ func TestLogsRepositoryContestLogs(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			list, err := repository.ListContestLogs(t.Context(), ListParameters{
+			list, err := repository.ListContestLogs(tenantCtx, ListParameters{
 				UserID:         tt.userID,
 				ContestID:      contestID,
 				IncludeDeleted: tt.includeDeleted,
@@ -445,7 +452,7 @@ func TestLogsRepositoryContestLogs(t *testing.T) {
 		{id: deleted, now: afterContestEnd, want: false},
 		{id: unattached, now: afterContestEnd, want: true},
 	} {
-		got, err := repository.CanDelete(t.Context(), tt.id, tt.now)
+		got, err := repository.CanDelete(tenantCtx, tt.id, tt.now)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -456,6 +463,7 @@ func TestLogsRepositoryContestLogs(t *testing.T) {
 }
 
 func TestLogsRepositoryLegacyTagDecoding(t *testing.T) {
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
 	repository, _ := newTestLogsRepository(t)
 
@@ -463,12 +471,12 @@ func TestLogsRepositoryLegacyTagDecoding(t *testing.T) {
 	createDurationLog(t, repository, logID, testUserID, time.Date(2026, 9, 1, 12, 0, 0, 0, time.UTC))
 
 	for _, tag := range []string{`1 "quoted"`, `2,comma`, `3\back`, `4plain`, `5a",b`} {
-		if err := repository.InsertTag(t.Context(), logID, testUserID, tag); err != nil {
+		if err := repository.InsertTag(tenantCtx, logID, testUserID, tag); err != nil {
 			t.Fatal(err)
 		}
 	}
 
-	found, err := repository.FindLog(t.Context(), logID, false)
+	found, err := repository.FindLog(tenantCtx, logID, false)
 	if err != nil {
 		t.Fatal(err)
 	}

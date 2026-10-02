@@ -49,6 +49,7 @@ go_test(
     ],
     deps = [
         "//services/tadoku-api/infra/postgres",
+        "//services/tadoku-api/internal/tenant",
         "//services/tadoku-api/internal/testkratos",
         "//services/tadoku-api/internal/testpostgres",
         "//services/tadoku-api/internal/timex",

@@ -26,6 +26,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 	valkeyinfra "github.com/tadoku/tadoku/services/tadoku-api/infra/valkey"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
 type config struct {
@@ -58,6 +59,7 @@ func loadConfig() (config, error) {
 }
 
 func run(ctx context.Context, cfg config, logger *slog.Logger) error {
+	ctx = tenant.WithKey(ctx, tenant.Production())
 	startupCtx, cancelStartup := context.WithTimeout(ctx, cfg.DialTimeout)
 	pool, err := postgres.Open(startupCtx, cfg.Postgres.WithApplicationName("tadoku-worker").URL(), cfg.PostgresMaxConnections)
 	cancelStartup()
@@ -144,6 +146,7 @@ func run(ctx context.Context, cfg config, logger *slog.Logger) error {
 }
 
 func replay(ctx context.Context, args []string, logger *slog.Logger) error {
+	ctx = tenant.WithKey(ctx, tenant.Production())
 	flags := flag.NewFlagSet("replay", flag.ContinueOnError)
 	flags.SetOutput(io.Discard)
 	id := flags.Int64("id", 0, "failed job ID")

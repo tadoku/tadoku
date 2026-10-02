@@ -63,7 +63,8 @@ func (scope tenantScope) setting() (string, string) {
 
 // Executor must use the operation's context; repositories must pass that same
 // context to SQL calls. Do not retain executors or rows past RunInTransaction.
-// An ended scope never falls back to the pool.
+// Supply exactly one tenant or an all-tenants scope. An ended transaction scope
+// never falls back to the pool.
 func Executor(ctx context.Context, db *pgxpool.Pool) (DBTX, error) {
 	requested, err := tenantFromContext(ctx)
 	if err != nil {
@@ -131,8 +132,11 @@ func (executor poolExecutor) Query(ctx context.Context, query string, args ...an
 }
 
 func (executor poolExecutor) QueryRow(ctx context.Context, query string, args ...any) pgx.Row {
-	rows, err := executor.Query(ctx, query, args...)
-	return batchRow{rows: rows, err: err}
+	results, err := executor.batch(ctx, query, args...)
+	if err != nil {
+		return batchRow{err: err}
+	}
+	return batchRow{Row: results.QueryRow(), results: results}
 }
 
 type batchRows struct {
@@ -172,25 +176,20 @@ func (rows *batchRows) Err() error {
 }
 
 type batchRow struct {
-	rows pgx.Rows
-	err  error
+	pgx.Row
+	results pgx.BatchResults
+	err     error
 }
 
-func (row batchRow) Scan(dest ...any) (err error) {
+func (row batchRow) Scan(dest ...any) error {
 	if row.err != nil {
 		return row.err
 	}
-	defer func() {
-		row.rows.Close()
-		err = errors.Join(err, row.rows.Err())
-	}()
-	if !row.rows.Next() {
-		if err := row.rows.Err(); err != nil {
-			return err
-		}
-		return pgx.ErrNoRows
+	err := row.Row.Scan(dest...)
+	if closeErr := row.results.Close(); closeErr != nil {
+		return errors.Join(err, closeErr)
 	}
-	return row.rows.Scan(dest...)
+	return err
 }
 
 // All transaction work must finish in the callback. Nested scopes are rejected;

@@ -18,8 +18,8 @@ import (
 )
 
 func TestPostsRepositoryCreatePost(t *testing.T) {
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
@@ -119,8 +119,8 @@ func TestPostsRepositoryCreatePost(t *testing.T) {
 }
 
 func TestPostsRepositoryCreatePostConflictsPreserveData(t *testing.T) {
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
@@ -213,8 +213,8 @@ func TestPostsRepositoryCreatePostConflictsPreserveData(t *testing.T) {
 }
 
 func TestPostsRepositoryCreatePostRollsBackWhenRevisionFails(t *testing.T) {
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
@@ -262,8 +262,8 @@ func TestPostsRepositoryCreatePostRollsBackWhenRevisionFails(t *testing.T) {
 }
 
 func TestPostsRepositoryDeletePost(t *testing.T) {
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
@@ -275,15 +275,24 @@ func TestPostsRepositoryDeletePost(t *testing.T) {
 	})
 
 	_, err = db.Pool.Exec(tenantCtx, `
-		insert into posts (tenant, id, namespace, slug, current_content_id, published_at, created_at, updated_at)
+		insert into posts (
+			tenant, id, namespace, slug, current_content_id, published_at, created_at, updated_at
+		)
 		values
-			('tadoku/prod', '11111111-1111-4111-8111-111111111111', 'main', 'first-post', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2', '2026-09-11 12:00:00', '2026-09-10 12:00:00', '2026-09-11 12:00:00'),
-			('tadoku/prod', '22222222-2222-4222-8222-222222222222', 'main', 'second-post', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1', null, '2026-09-10 13:00:00', '2026-09-10 13:00:00');
+			('tadoku/prod', '11111111-1111-4111-8111-111111111111',
+			 'main', 'first-post', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2',
+			 '2026-09-11 12:00:00', '2026-09-10 12:00:00', '2026-09-11 12:00:00'),
+			('tadoku/prod', '22222222-2222-4222-8222-222222222222',
+			 'main', 'second-post', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1',
+			 null, '2026-09-10 13:00:00', '2026-09-10 13:00:00');
 		insert into posts_content (tenant, id, post_id, title, content, created_at)
 		values
-			('tadoku/prod', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1', '11111111-1111-4111-8111-111111111111', 'Original title', 'Original content', '2026-09-10 12:00:00'),
-			('tadoku/prod', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2', '11111111-1111-4111-8111-111111111111', 'Revised title', 'Revised content', '2026-09-11 12:00:00'),
-			('tadoku/prod', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1', '22222222-2222-4222-8222-222222222222', 'Other post', 'Other content', '2026-09-10 13:00:00');`)
+			('tadoku/prod', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1', '11111111-1111-4111-8111-111111111111',
+			 'Original title', 'Original content', '2026-09-10 12:00:00'),
+			('tadoku/prod', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2', '11111111-1111-4111-8111-111111111111',
+			 'Revised title', 'Revised content', '2026-09-11 12:00:00'),
+			('tadoku/prod', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1', '22222222-2222-4222-8222-222222222222',
+			 'Other post', 'Other content', '2026-09-10 13:00:00');`)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -353,8 +362,8 @@ func TestPostsRepositoryDeletePost(t *testing.T) {
 }
 
 func TestPostsRepositoryFindUsesCurrentContentAndNamespace(t *testing.T) {
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
@@ -365,15 +374,24 @@ func TestPostsRepositoryFindUsesCurrentContentAndNamespace(t *testing.T) {
 		}
 	})
 	_, err = db.Pool.Exec(tenantCtx, `
-		insert into posts (tenant, id, namespace, slug, current_content_id, published_at, created_at, updated_at)
+		insert into posts (
+			tenant, id, namespace, slug, current_content_id, published_at, created_at, updated_at
+		)
 		values
-			('tadoku/prod', '11111111-1111-4111-8111-111111111111', 'main', 'welcome', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '2026-09-11 10:00:00', '2026-09-10 08:00:00', '2026-09-11 09:30:00'),
-			('tadoku/prod', '22222222-2222-4222-8222-222222222222', 'other', 'welcome', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', null, '2026-09-10 08:00:00', '2026-09-11 09:30:00');
+			('tadoku/prod', '11111111-1111-4111-8111-111111111111',
+			 'main', 'welcome', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+			 '2026-09-11 10:00:00', '2026-09-10 08:00:00', '2026-09-11 09:30:00'),
+			('tadoku/prod', '22222222-2222-4222-8222-222222222222',
+			 'other', 'welcome', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+			 null, '2026-09-10 08:00:00', '2026-09-11 09:30:00');
 		insert into posts_content (tenant, id, post_id, title, content, created_at)
 		values
-			('tadoku/prod', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '11111111-1111-4111-8111-111111111111', 'Current title', 'Current content', '2026-09-11 09:30:00'),
-			('tadoku/prod', 'cccccccc-cccc-4ccc-8ccc-cccccccccccc', '11111111-1111-4111-8111-111111111111', 'Old title', 'Old content', '2026-09-10 08:00:00'),
-			('tadoku/prod', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', '22222222-2222-4222-8222-222222222222', 'Other title', 'Other content', '2026-09-11 09:30:00')`)
+			('tadoku/prod', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '11111111-1111-4111-8111-111111111111',
+			 'Current title', 'Current content', '2026-09-11 09:30:00'),
+			('tadoku/prod', 'cccccccc-cccc-4ccc-8ccc-cccccccccccc', '11111111-1111-4111-8111-111111111111',
+			 'Old title', 'Old content', '2026-09-10 08:00:00'),
+			('tadoku/prod', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', '22222222-2222-4222-8222-222222222222',
+			 'Other title', 'Other content', '2026-09-11 09:30:00')`)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -464,8 +482,8 @@ func TestPostsRepositoryFindUsesCurrentContentAndNamespace(t *testing.T) {
 }
 
 func TestPostsRepositoryListPosts(t *testing.T) {
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
@@ -477,25 +495,49 @@ func TestPostsRepositoryListPosts(t *testing.T) {
 	})
 
 	_, err = db.Pool.Exec(tenantCtx, `
-		insert into posts (tenant, id, namespace, slug, current_content_id, published_at, created_at, updated_at, deleted_at)
+		insert into posts (
+			tenant, id, namespace, slug, current_content_id, published_at, created_at, updated_at, deleted_at
+		)
 		values
-			('tadoku/prod', '10000000-0000-4000-8000-000000000001', 'main', 'older', '20000000-0000-4000-8000-000000000001', '2026-09-11 12:00:00', '2026-09-10 10:00:00', '2026-09-11 12:00:00', null),
-			('tadoku/prod', '10000000-0000-4000-8000-000000000002', 'main', 'boundary', '20000000-0000-4000-8000-000000000002', '2026-09-12 12:00:00', '2026-09-11 10:00:00', '2026-09-12 11:00:00', null),
-			('tadoku/prod', '10000000-0000-4000-8000-000000000003', 'main', 'scheduled', '20000000-0000-4000-8000-000000000003', '2026-09-12 12:00:01', '2026-09-11 11:00:00', '2026-09-12 11:00:00', null),
-			('tadoku/prod', '10000000-0000-4000-8000-000000000004', 'main', 'draft', '20000000-0000-4000-8000-000000000004', null, '2026-09-11 12:00:00', '2026-09-12 11:00:00', null),
-			('tadoku/prod', '10000000-0000-4000-8000-000000000005', 'main', 'deleted', '20000000-0000-4000-8000-000000000005', '2026-09-11 12:00:00', '2026-09-11 13:00:00', '2026-09-12 11:00:00', '2026-09-12 11:00:00'),
-			('tadoku/prod', '10000000-0000-4000-8000-000000000006', 'other', 'other', '20000000-0000-4000-8000-000000000006', '2026-09-11 12:00:00', '2026-09-11 14:00:00', '2026-09-12 11:00:00', null),
-			('tadoku/prod', '10000000-0000-4000-8000-000000000007', 'main', 'tied', '20000000-0000-4000-8000-000000000007', '2026-09-12 12:00:00', '2026-09-11 10:00:00', '2026-09-12 11:00:00', null);
+			('tadoku/prod', '10000000-0000-4000-8000-000000000001', 'main',
+			 'older', '20000000-0000-4000-8000-000000000001', '2026-09-11 12:00:00',
+			 '2026-09-10 10:00:00', '2026-09-11 12:00:00', null),
+			('tadoku/prod', '10000000-0000-4000-8000-000000000002', 'main',
+			 'boundary', '20000000-0000-4000-8000-000000000002', '2026-09-12 12:00:00',
+			 '2026-09-11 10:00:00', '2026-09-12 11:00:00', null),
+			('tadoku/prod', '10000000-0000-4000-8000-000000000003', 'main',
+			 'scheduled', '20000000-0000-4000-8000-000000000003', '2026-09-12 12:00:01',
+			 '2026-09-11 11:00:00', '2026-09-12 11:00:00', null),
+			('tadoku/prod', '10000000-0000-4000-8000-000000000004', 'main',
+			 'draft', '20000000-0000-4000-8000-000000000004', null,
+			 '2026-09-11 12:00:00', '2026-09-12 11:00:00', null),
+			('tadoku/prod', '10000000-0000-4000-8000-000000000005', 'main',
+			 'deleted', '20000000-0000-4000-8000-000000000005', '2026-09-11 12:00:00',
+			 '2026-09-11 13:00:00', '2026-09-12 11:00:00', '2026-09-12 11:00:00'),
+			('tadoku/prod', '10000000-0000-4000-8000-000000000006', 'other',
+			 'other', '20000000-0000-4000-8000-000000000006', '2026-09-11 12:00:00',
+			 '2026-09-11 14:00:00', '2026-09-12 11:00:00', null),
+			('tadoku/prod', '10000000-0000-4000-8000-000000000007', 'main',
+			 'tied', '20000000-0000-4000-8000-000000000007', '2026-09-12 12:00:00',
+			 '2026-09-11 10:00:00', '2026-09-12 11:00:00', null);
 		insert into posts_content (tenant, id, post_id, title, content, created_at)
 		values
-			('tadoku/prod', '20000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001', 'Older', 'Older content', '2026-09-10 10:00:00'),
-			('tadoku/prod', '20000000-0000-4000-8000-000000000002', '10000000-0000-4000-8000-000000000002', 'Boundary', 'Boundary content', '2026-09-11 10:00:00'),
-			('tadoku/prod', '20000000-0000-4000-8000-000000000003', '10000000-0000-4000-8000-000000000003', 'Scheduled', 'Scheduled content', '2026-09-11 11:00:00'),
-			('tadoku/prod', '20000000-0000-4000-8000-000000000004', '10000000-0000-4000-8000-000000000004', 'Draft', 'Draft content', '2026-09-11 12:00:00'),
-			('tadoku/prod', '20000000-0000-4000-8000-000000000005', '10000000-0000-4000-8000-000000000005', 'Deleted', 'Deleted content', '2026-09-11 13:00:00'),
-			('tadoku/prod', '20000000-0000-4000-8000-000000000006', '10000000-0000-4000-8000-000000000006', 'Other', 'Other content', '2026-09-11 14:00:00'),
-			('tadoku/prod', '20000000-0000-4000-8000-000000000007', '10000000-0000-4000-8000-000000000007', 'Current title', 'Current content', '2026-09-12 11:00:00'),
-			('tadoku/prod', '20000000-0000-4000-8000-000000000008', '10000000-0000-4000-8000-000000000007', 'Old title', 'Old content', '2026-09-11 10:00:00');`)
+			('tadoku/prod', '20000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001',
+			 'Older', 'Older content', '2026-09-10 10:00:00'),
+			('tadoku/prod', '20000000-0000-4000-8000-000000000002', '10000000-0000-4000-8000-000000000002',
+			 'Boundary', 'Boundary content', '2026-09-11 10:00:00'),
+			('tadoku/prod', '20000000-0000-4000-8000-000000000003', '10000000-0000-4000-8000-000000000003',
+			 'Scheduled', 'Scheduled content', '2026-09-11 11:00:00'),
+			('tadoku/prod', '20000000-0000-4000-8000-000000000004', '10000000-0000-4000-8000-000000000004',
+			 'Draft', 'Draft content', '2026-09-11 12:00:00'),
+			('tadoku/prod', '20000000-0000-4000-8000-000000000005', '10000000-0000-4000-8000-000000000005',
+			 'Deleted', 'Deleted content', '2026-09-11 13:00:00'),
+			('tadoku/prod', '20000000-0000-4000-8000-000000000006', '10000000-0000-4000-8000-000000000006',
+			 'Other', 'Other content', '2026-09-11 14:00:00'),
+			('tadoku/prod', '20000000-0000-4000-8000-000000000007', '10000000-0000-4000-8000-000000000007',
+			 'Current title', 'Current content', '2026-09-12 11:00:00'),
+			('tadoku/prod', '20000000-0000-4000-8000-000000000008', '10000000-0000-4000-8000-000000000007',
+			 'Old title', 'Old content', '2026-09-11 10:00:00');`)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -572,8 +614,8 @@ func TestPostsRepositoryListPosts(t *testing.T) {
 }
 
 func TestPostsRepositoryUpdatePost(t *testing.T) {
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
@@ -585,14 +627,20 @@ func TestPostsRepositoryUpdatePost(t *testing.T) {
 	})
 
 	_, err = db.Pool.Exec(tenantCtx, `
-		insert into posts (tenant, id, namespace, slug, current_content_id, published_at, created_at, updated_at)
+		insert into posts (
+			tenant, id, namespace, slug, current_content_id, published_at, created_at, updated_at
+		)
 		values
-			('tadoku/prod', '11111111-1111-4111-8111-111111111111', 'main', 'original-post', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', null, '2026-09-10 12:00:00', '2026-09-10 12:00:00'),
-			('tadoku/prod', '22222222-2222-4222-8222-222222222222', 'main', 'other-post', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', null, '2026-09-10 13:00:00', '2026-09-10 13:00:00');
+			('tadoku/prod', '11111111-1111-4111-8111-111111111111', 'main', 'original-post',
+			 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', null, '2026-09-10 12:00:00', '2026-09-10 12:00:00'),
+			('tadoku/prod', '22222222-2222-4222-8222-222222222222', 'main', 'other-post',
+			 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', null, '2026-09-10 13:00:00', '2026-09-10 13:00:00');
 		insert into posts_content (tenant, id, post_id, title, content, created_at)
 		values
-			('tadoku/prod', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '11111111-1111-4111-8111-111111111111', 'Original title', 'Original content', '2026-09-10 12:00:00'),
-			('tadoku/prod', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', '22222222-2222-4222-8222-222222222222', 'Other title', 'Other content', '2026-09-10 13:00:00');
+			('tadoku/prod', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '11111111-1111-4111-8111-111111111111',
+			 'Original title', 'Original content', '2026-09-10 12:00:00'),
+			('tadoku/prod', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', '22222222-2222-4222-8222-222222222222',
+			 'Other title', 'Other content', '2026-09-10 13:00:00');
 		alter table posts_content add constraint reject_update_title check (title <> 'rejected revision');`)
 	if err != nil {
 		t.Fatal(err)
@@ -625,7 +673,9 @@ func TestPostsRepositoryUpdatePost(t *testing.T) {
 	}
 	var contentID uuid.UUID
 	var count int
-	if err := db.Pool.QueryRow(tenantCtx, `select current_content_id, (select count(*) from posts_content where post_id = $1) from posts where id = $1`, id).Scan(&contentID, &count); err != nil {
+	if err := db.Pool.QueryRow(tenantCtx, `
+		select current_content_id, (select count(*) from posts_content where post_id = $1)
+		from posts where id = $1`, id).Scan(&contentID, &count); err != nil {
 		t.Fatal(err)
 	}
 	if contentID != uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa") || count != 1 {
@@ -695,13 +745,18 @@ func TestPostsRepositoryUpdatePost(t *testing.T) {
 
 	var title, body string
 	var createdAt time.Time
-	if err := db.Pool.QueryRow(tenantCtx, `select title, content, created_at from posts_content where id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'`).Scan(&title, &body, &createdAt); err != nil {
+	if err := db.Pool.QueryRow(tenantCtx, `
+		select title, content, created_at from posts_content
+		where id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'`).Scan(&title, &body, &createdAt); err != nil {
 		t.Fatal(err)
 	}
 	if title != original.Title || body != original.Content || !createdAt.Equal(*original.CreatedAt) {
 		t.Errorf("original revision changed: title=%q, content=%q, created_at=%v", title, body, createdAt)
 	}
-	if err := db.Pool.QueryRow(tenantCtx, `select posts_content.created_at from posts join posts_content on posts_content.id = posts.current_content_id where posts.id = $1`, id).Scan(&createdAt); err != nil {
+	if err := db.Pool.QueryRow(tenantCtx, `
+		select posts_content.created_at
+		from posts join posts_content on posts_content.id = posts.current_content_id
+		where posts.id = $1`, id).Scan(&createdAt); err != nil {
 		t.Fatal(err)
 	}
 	if !createdAt.Equal(*updated.UpdatedAt) {
@@ -788,8 +843,8 @@ func TestPostsRepositoryUpdatePost(t *testing.T) {
 }
 
 func TestPostsRepositoryGetPostVersion(t *testing.T) {
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
@@ -801,19 +856,33 @@ func TestPostsRepositoryGetPostVersion(t *testing.T) {
 	})
 
 	_, err = db.Pool.Exec(tenantCtx, `
-		insert into posts (tenant, id, namespace, slug, current_content_id, published_at, created_at, updated_at, deleted_at)
+		insert into posts (
+			tenant, id, namespace, slug, current_content_id, published_at, created_at, updated_at, deleted_at
+		)
 		values
-			('tadoku/prod', '11111111-1111-4111-8111-111111111111', 'main', 'published-post', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3', '2026-09-11 12:00:00', '2026-09-10 12:00:00', '2026-09-11 12:00:00', null),
-			('tadoku/prod', '22222222-2222-4222-8222-222222222222', 'main', 'draft-post', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1', null, '2026-09-10 13:00:00', '2026-09-10 13:00:00', null),
-			('tadoku/prod', '33333333-3333-4333-8333-333333333333', 'main', 'deleted-post', 'cccccccc-cccc-4ccc-8ccc-ccccccccccc1', null, '2026-09-10 13:00:00', '2026-09-10 13:00:00', '2026-09-11 12:00:00');
+			('tadoku/prod', '11111111-1111-4111-8111-111111111111', 'main',
+			 'published-post', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3', '2026-09-11 12:00:00',
+			 '2026-09-10 12:00:00', '2026-09-11 12:00:00', null),
+			('tadoku/prod', '22222222-2222-4222-8222-222222222222', 'main',
+			 'draft-post', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1', null,
+			 '2026-09-10 13:00:00', '2026-09-10 13:00:00', null),
+			('tadoku/prod', '33333333-3333-4333-8333-333333333333', 'main',
+			 'deleted-post', 'cccccccc-cccc-4ccc-8ccc-ccccccccccc1', null,
+			 '2026-09-10 13:00:00', '2026-09-10 13:00:00', '2026-09-11 12:00:00');
 		insert into posts_content (tenant, id, post_id, title, content, created_at)
 		values
-			('tadoku/prod', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3', '11111111-1111-4111-8111-111111111111', 'Latest title', 'Latest content', '2026-09-11 12:00:00'),
-			('tadoku/prod', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2', '11111111-1111-4111-8111-111111111111', 'Tied title', 'Tied content', '2026-09-10 12:00:00'),
-			('tadoku/prod', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1', '11111111-1111-4111-8111-111111111111', 'Original title', 'Original content', '2026-09-10 12:00:00'),
-			('tadoku/prod', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1', '22222222-2222-4222-8222-222222222222', 'Draft title', 'Draft content', '2026-09-10 13:00:00'),
-			('tadoku/prod', 'cccccccc-cccc-4ccc-8ccc-ccccccccccc1', '33333333-3333-4333-8333-333333333333', 'Deleted title', 'Deleted content', '2026-09-10 13:00:00'),
-			('tadoku/prod', 'dddddddd-dddd-4ddd-8ddd-ddddddddddd1', '44444444-4444-4444-8444-444444444444', 'Orphan title', 'Orphan content', '2026-09-10 13:00:00');`)
+			('tadoku/prod', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3', '11111111-1111-4111-8111-111111111111',
+			 'Latest title', 'Latest content', '2026-09-11 12:00:00'),
+			('tadoku/prod', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2', '11111111-1111-4111-8111-111111111111',
+			 'Tied title', 'Tied content', '2026-09-10 12:00:00'),
+			('tadoku/prod', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1', '11111111-1111-4111-8111-111111111111',
+			 'Original title', 'Original content', '2026-09-10 12:00:00'),
+			('tadoku/prod', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1', '22222222-2222-4222-8222-222222222222',
+			 'Draft title', 'Draft content', '2026-09-10 13:00:00'),
+			('tadoku/prod', 'cccccccc-cccc-4ccc-8ccc-ccccccccccc1', '33333333-3333-4333-8333-333333333333',
+			 'Deleted title', 'Deleted content', '2026-09-10 13:00:00'),
+			('tadoku/prod', 'dddddddd-dddd-4ddd-8ddd-ddddddddddd1', '44444444-4444-4444-8444-444444444444',
+			 'Orphan title', 'Orphan content', '2026-09-10 13:00:00');`)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -865,8 +934,8 @@ func TestPostsRepositoryGetPostVersion(t *testing.T) {
 }
 
 func TestPostsRepositoryListPostVersions(t *testing.T) {
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
@@ -878,17 +947,28 @@ func TestPostsRepositoryListPostVersions(t *testing.T) {
 	})
 
 	_, err = db.Pool.Exec(tenantCtx, `
-		insert into posts (tenant, id, namespace, slug, current_content_id, published_at, created_at, updated_at, deleted_at)
+		insert into posts (
+			tenant, id, namespace, slug, current_content_id, published_at, created_at, updated_at, deleted_at
+		)
 		values
-			('tadoku/prod', '11111111-1111-4111-8111-111111111111', 'main', 'scheduled', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3', '2026-09-14 12:00:00', '2026-09-10 12:00:00', '2026-09-11 12:00:00', null),
-			('tadoku/prod', '22222222-2222-4222-8222-222222222222', 'main', 'deleted', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1', null, '2026-09-10 12:00:00', '2026-09-11 12:00:00', '2026-09-12 12:00:00');
+			('tadoku/prod', '11111111-1111-4111-8111-111111111111', 'main',
+			 'scheduled', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3', '2026-09-14 12:00:00',
+			 '2026-09-10 12:00:00', '2026-09-11 12:00:00', null),
+			('tadoku/prod', '22222222-2222-4222-8222-222222222222', 'main',
+			 'deleted', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1', null,
+			 '2026-09-10 12:00:00', '2026-09-11 12:00:00', '2026-09-12 12:00:00');
 		insert into posts_content (tenant, id, post_id, title, content, created_at)
 		values
-			('tadoku/prod', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3', '11111111-1111-4111-8111-111111111111', 'Third', 'Third body', '2026-09-11 12:00:00'),
-			('tadoku/prod', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2', '11111111-1111-4111-8111-111111111111', 'Second', 'Second body', '2026-09-10 12:00:00'),
-			('tadoku/prod', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1', '11111111-1111-4111-8111-111111111111', 'First', 'First body', '2026-09-10 12:00:00'),
-			('tadoku/prod', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1', '22222222-2222-4222-8222-222222222222', 'Deleted', 'Deleted body', '2026-09-10 12:00:00'),
-			('tadoku/prod', 'cccccccc-cccc-4ccc-8ccc-ccccccccccc1', '33333333-3333-4333-8333-333333333333', 'Orphan', 'Orphan body', '2026-09-10 12:00:00');`)
+			('tadoku/prod', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3',
+			 '11111111-1111-4111-8111-111111111111', 'Third', 'Third body', '2026-09-11 12:00:00'),
+			('tadoku/prod', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2',
+			 '11111111-1111-4111-8111-111111111111', 'Second', 'Second body', '2026-09-10 12:00:00'),
+			('tadoku/prod', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1',
+			 '11111111-1111-4111-8111-111111111111', 'First', 'First body', '2026-09-10 12:00:00'),
+			('tadoku/prod', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1',
+			 '22222222-2222-4222-8222-222222222222', 'Deleted', 'Deleted body', '2026-09-10 12:00:00'),
+			('tadoku/prod', 'cccccccc-cccc-4ccc-8ccc-ccccccccccc1',
+			 '33333333-3333-4333-8333-333333333333', 'Orphan', 'Orphan body', '2026-09-10 12:00:00');`)
 	if err != nil {
 		t.Fatal(err)
 	}

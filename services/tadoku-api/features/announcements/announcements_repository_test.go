@@ -16,8 +16,8 @@ import (
 )
 
 func TestAnnouncementsRepositoryUsesSuppliedPolicyAndTransaction(t *testing.T) {
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
@@ -33,7 +33,9 @@ func TestAnnouncementsRepositoryUsesSuppliedPolicyAndTransaction(t *testing.T) {
 		t.Fatal(err)
 	}
 	repository := announcements.NewAnnouncementsRepository(db.Pool)
-	items, err := repository.ListActiveAnnouncements(tenant.WithKey(context.Background(), tenant.Production()), "main", cutoff, 1)
+	items, err := repository.ListActiveAnnouncements(
+		tenant.WithKey(context.Background(), tenant.Production()), "main", cutoff, 1,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -68,7 +70,9 @@ func TestAnnouncementsRepositoryUsesSuppliedPolicyAndTransaction(t *testing.T) {
 	if !errors.Is(err, wantRollback) {
 		t.Fatalf("transaction error=%v", err)
 	}
-	items, err = repository.ListActiveAnnouncements(tenant.WithKey(context.Background(), tenant.Production()), "main", cutoff.Add(-time.Minute), 2)
+	items, err = repository.ListActiveAnnouncements(
+		tenant.WithKey(context.Background(), tenant.Production()), "main", cutoff.Add(-time.Minute), 2,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -89,8 +93,8 @@ func TestAnnouncementsRepositoryUsesSuppliedPolicyAndTransaction(t *testing.T) {
 }
 
 func TestAnnouncementsRepositoryListAnnouncementsBreaksCreatedAtTiesByID(t *testing.T) {
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
@@ -105,11 +109,16 @@ func TestAnnouncementsRepositoryListAnnouncementsBreaksCreatedAtTiesByID(t *test
 	}
 
 	_, err = db.Pool.Exec(tenantCtx, `
-		insert into announcements (tenant, id, namespace, title, content, starts_at, ends_at, created_at, updated_at)
+		insert into announcements (
+			tenant, id, namespace, title, content, starts_at, ends_at, created_at, updated_at
+		)
 		values
-			('tadoku/prod', '10000000-0000-4000-8000-000000000001', 'main', 'one', 'one', '2026-09-12 10:00:00', '2026-09-12 14:00:00', '2026-09-12 11:00:00', '2026-09-12 11:00:00'),
-			('tadoku/prod', '10000000-0000-4000-8000-000000000002', 'main', 'two', 'two', '2026-09-12 10:00:00', '2026-09-12 14:00:00', '2026-09-12 11:00:00', '2026-09-12 11:00:00'),
-			('tadoku/prod', '10000000-0000-4000-8000-000000000003', 'main', 'three', 'three', '2026-09-12 10:00:00', '2026-09-12 14:00:00', '2026-09-12 11:00:00', '2026-09-12 11:00:00')`)
+			('tadoku/prod', '10000000-0000-4000-8000-000000000001', 'main', 'one', 'one',
+			 '2026-09-12 10:00:00', '2026-09-12 14:00:00', '2026-09-12 11:00:00', '2026-09-12 11:00:00'),
+			('tadoku/prod', '10000000-0000-4000-8000-000000000002', 'main', 'two', 'two',
+			 '2026-09-12 10:00:00', '2026-09-12 14:00:00', '2026-09-12 11:00:00', '2026-09-12 11:00:00'),
+			('tadoku/prod', '10000000-0000-4000-8000-000000000003', 'main', 'three', 'three',
+			 '2026-09-12 10:00:00', '2026-09-12 14:00:00', '2026-09-12 11:00:00', '2026-09-12 11:00:00')`)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -137,8 +146,8 @@ func TestAnnouncementsRepositoryListAnnouncementsBreaksCreatedAtTiesByID(t *test
 }
 
 func TestAnnouncementsRepositoryDeleteAnnouncement(t *testing.T) {
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
@@ -197,8 +206,8 @@ func TestAnnouncementsRepositoryDeleteAnnouncement(t *testing.T) {
 }
 
 func TestAnnouncementsRepositoryListAnnouncementsReturnsTotalForEmptyPage(t *testing.T) {
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
@@ -226,8 +235,8 @@ func TestAnnouncementsRepositoryListAnnouncementsReturnsTotalForEmptyPage(t *tes
 }
 
 func TestAnnouncementsRepositoryCreateAnnouncement(t *testing.T) {
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
@@ -288,8 +297,8 @@ func TestAnnouncementsRepositoryCreateAnnouncement(t *testing.T) {
 }
 
 func TestAnnouncementsRepositoryPreservesTimestampInstants(t *testing.T) {
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
@@ -335,8 +344,8 @@ func TestAnnouncementsRepositoryPreservesTimestampInstants(t *testing.T) {
 }
 
 func TestAnnouncementUpdateRepositoryTransaction(t *testing.T) {
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)

@@ -18,8 +18,8 @@ var (
 )
 
 func newTestLogsRepository(t *testing.T) (*LogsRepository, *testpostgres.Database) {
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Helper()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 
 	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
@@ -44,8 +44,8 @@ func newTestLogsRepository(t *testing.T) (*LogsRepository, *testpostgres.Databas
 }
 
 func createDurationLog(t *testing.T, repository *LogsRepository, id, userID uuid.UUID, createdAt time.Time) {
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Helper()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 
 	duration := int32(600)
 	err := repository.CreateLog(tenantCtx, logMutation{
@@ -66,8 +66,8 @@ func createDurationLog(t *testing.T, repository *LogsRepository, id, userID uuid
 }
 
 func TestLogsRepositoryFindLogMapsRows(t *testing.T) {
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	repository, db := newTestLogsRepository(t)
 
 	units, err := repository.ListUnits(tenantCtx)
@@ -191,8 +191,8 @@ func TestLogsRepositoryFindLogMapsRows(t *testing.T) {
 }
 
 func TestLogsRepositorySoftDeleteVisibility(t *testing.T) {
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	repository, db := newTestLogsRepository(t)
 
 	logID := uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1")
@@ -243,8 +243,8 @@ func TestLogsRepositorySoftDeleteVisibility(t *testing.T) {
 }
 
 func TestLogsRepositoryListUserLogsPaging(t *testing.T) {
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	repository, _ := newTestLogsRepository(t)
 
 	oldest := uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1")
@@ -310,8 +310,8 @@ func TestLogsRepositoryListUserLogsPaging(t *testing.T) {
 }
 
 func TestLogsRepositoryContestLogs(t *testing.T) {
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	repository, db := newTestLogsRepository(t)
 
 	_, err := db.Pool.Exec(tenantCtx, `
@@ -463,8 +463,8 @@ func TestLogsRepositoryContestLogs(t *testing.T) {
 }
 
 func TestLogsRepositoryLegacyTagDecoding(t *testing.T) {
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	repository, _ := newTestLogsRepository(t)
 
 	logID := uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1")

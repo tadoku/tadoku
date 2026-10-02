@@ -26,8 +26,11 @@ func TestClaimReturnsTenantForFencedTransitions(t *testing.T) {
 	if _, err := db.Pool.Exec(t.Context(), `insert into tenants (key, kind) values ($1, 'test')`, key.String()); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := db.Pool.Exec(t.Context(), `insert into jobs (tenant, task_type, payload)
-		select $1, $2, '{"year":2026}'::jsonb from generate_series(1, 4)`, key.String(), string(jobs.LeaderboardInvalidateOfficialV1)); err != nil {
+	if _, err := db.Pool.Exec(t.Context(), `
+		insert into jobs (tenant, task_type, payload)
+		select $1, $2, '{"year":2026}'::jsonb from generate_series(1, 4)`,
+		key.String(), string(jobs.LeaderboardInvalidateOfficialV1),
+	); err != nil {
 		t.Fatal(err)
 	}
 	repo := NewRepository(db.Pool)
@@ -66,8 +69,8 @@ func TestClaimReturnsTenantForFencedTransitions(t *testing.T) {
 }
 
 func jobTestDB(t *testing.T) *testpostgres.Database {
-	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Helper()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
@@ -139,8 +142,9 @@ func TestClaimLimitsKnownTypesAndFencesExpiredLeases(t *testing.T) {
 			}
 		}
 	})
-	if _, err := db.Pool.Exec(tenantCtx, `insert into jobs (tenant, task_type,payload,created_at,next_attempt_at)
-		values ('tadoku/prod', 'future.task.v1','{}',$1,$1)`, jobTestTime); err != nil {
+	if _, err := db.Pool.Exec(tenantCtx, `
+		insert into jobs (tenant, task_type, payload, created_at, next_attempt_at)
+		values ('tadoku/prod', 'future.task.v1', '{}', $1, $1)`, jobTestTime); err != nil {
 		t.Fatal(err)
 	}
 
@@ -422,7 +426,9 @@ func TestRetryReplayAndRetention(t *testing.T) {
 			t.Fatalf("complete replay = %v, %v", ok, err)
 		}
 	})
-	if _, err := db.Pool.Exec(tenantCtx, `insert into jobs (tenant, task_type,payload,state,completed_at,created_at) values ('tadoku/prod', 'leaderboard.invalidate_official.v1','{}','completed',$1,$1)`, jobTestTime); err != nil {
+	if _, err := db.Pool.Exec(tenantCtx, `
+		insert into jobs (tenant, task_type, payload, state, completed_at, created_at)
+		values ('tadoku/prod', 'leaderboard.invalidate_official.v1', '{}', 'completed', $1, $1)`, jobTestTime); err != nil {
 		t.Fatal(err)
 	}
 	deleted, err := repo.CleanupCompleted(tenantCtx, jobTestTime.AddDate(0, 3, 0).Add(time.Minute), 10)
@@ -498,12 +504,17 @@ func TestUnsupportedStatsIncludesRunningAndFailedVersions(t *testing.T) {
 	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	db := jobTestDB(t)
 	repo := NewRepository(db.Pool)
-	_, err := db.Pool.Exec(tenantCtx, `insert into jobs (tenant, task_type, payload, state, claim_token, lease_expires_at, failed_at, completed_at)
- values ('tadoku/prod', 'future.job.v2','{}','pending',null,null,null,null),
- ('tadoku/prod', 'future.job.v2','{}','running',gen_random_uuid(),clock_timestamp()-interval '1 second',null,null),
- ('tadoku/prod', 'future.job.v2','{}','failed',null,null,clock_timestamp(),null),
- ('tadoku/prod', 'future.job.v2','{}','completed',null,null,null,clock_timestamp()),
- ('tadoku/prod', 'leaderboard.invalidate_contest.v1','{}','pending',null,null,null,null)`)
+	_, err := db.Pool.Exec(tenantCtx, `
+		insert into jobs (
+			tenant, task_type, payload, state, claim_token, lease_expires_at, failed_at, completed_at
+		)
+		values
+			('tadoku/prod', 'future.job.v2', '{}', 'pending', null, null, null, null),
+			('tadoku/prod', 'future.job.v2', '{}', 'running',
+			 gen_random_uuid(), clock_timestamp()-interval '1 second', null, null),
+			('tadoku/prod', 'future.job.v2', '{}', 'failed', null, null, clock_timestamp(), null),
+			('tadoku/prod', 'future.job.v2', '{}', 'completed', null, null, null, clock_timestamp()),
+			('tadoku/prod', 'leaderboard.invalidate_contest.v1', '{}', 'pending', null, null, null, null)`)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -521,7 +532,10 @@ func TestReplayRequiresRegisteredVersion(t *testing.T) {
 	db := jobTestDB(t)
 	repo := NewRepository(db.Pool)
 	var id int64
-	if err := db.Pool.QueryRow(tenantCtx, `insert into jobs (tenant, task_type,payload,state,failed_at) values ('tadoku/prod', 'future.job.v2','{}','failed',clock_timestamp()) returning id`).Scan(&id); err != nil {
+	if err := db.Pool.QueryRow(tenantCtx, `
+		insert into jobs (tenant, task_type, payload, state, failed_at)
+		values ('tadoku/prod', 'future.job.v2', '{}', 'failed', clock_timestamp())
+		returning id`).Scan(&id); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := repo.Replay(tenantCtx, id, "operator", "repair", []jobs.Type{jobs.LeaderboardInvalidateContestV1}); !errors.Is(err, ErrNotFailed) {
@@ -553,8 +567,14 @@ func TestCleanupCompletedRetainsThreeUTCCalendarMonths(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			db := jobTestDB(t)
 			repo := NewRepository(db.Pool)
-			_, err := db.Pool.Exec(tenantCtx, `insert into jobs (tenant, task_type,payload,state,completed_at)
-    values ('tadoku/prod', 'retention.test.v1','{}','completed',$1), ('tadoku/prod', 'retention.test.v1','{}','completed',$2), ('tadoku/prod', 'retention.test.v1','{}','completed',$3)`, tc.cutoff.Add(-time.Microsecond), tc.cutoff, tc.cutoff.Add(time.Microsecond))
+			_, err := db.Pool.Exec(tenantCtx, `
+				insert into jobs (tenant, task_type, payload, state, completed_at)
+				values
+					('tadoku/prod', 'retention.test.v1', '{}', 'completed', $1),
+					('tadoku/prod', 'retention.test.v1', '{}', 'completed', $2),
+					('tadoku/prod', 'retention.test.v1', '{}', 'completed', $3)`,
+				tc.cutoff.Add(-time.Microsecond), tc.cutoff, tc.cutoff.Add(time.Microsecond),
+			)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -595,14 +615,26 @@ func TestCleanupCompletedExpiresSuccessfulReplayAndPreservesOtherStates(t *testi
 	repo := NewRepository(db.Pool)
 	now := time.Date(2026, 5, 31, 12, 0, 0, 0, time.UTC)
 	old := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
-	_, err := db.Pool.Exec(tenantCtx, `insert into jobs (tenant, id,task_type,payload,state,created_at,next_attempt_at,failed_at,claim_token,lease_expires_at,completed_at,replay_of_id,replay_actor,replay_reason) values
-  ('tadoku/prod', 1,'retention.test.v1','{}','failed',$1,$1,$1,null,null,null,null,null,null),
-  ('tadoku/prod', 2,'retention.test.v1','{}','completed',$1,$1,null,null,null,$1,1,'operator','repaired'),
-  ('tadoku/prod', 3,'retention.test.v1','{}','pending',$1,$1,null,null,null,null,null,null,null),
-  ('tadoku/prod', 4,'retention.test.v1','{}','running',$1,$1,null,gen_random_uuid(),$1,null,null,null,null),
-  ('tadoku/prod', 5,'retention.test.v1','{}','completed',$1,$1,null,null,null,$1,null,null,null),
-  ('tadoku/prod', 6,'retention.test.v1','{}','completed',$1,$1,null,null,null,$1,null,null,null),
-  ('tadoku/prod', 7,'retention.test.v1','{}','pending',$1,$1,null,null,null,null,6,'operator','linked')`, old)
+	_, err := db.Pool.Exec(tenantCtx, `
+		insert into jobs (
+			tenant, id, task_type, payload, state, created_at, next_attempt_at, failed_at, claim_token,
+			lease_expires_at, completed_at, replay_of_id, replay_actor, replay_reason
+		)
+		values
+			('tadoku/prod', 1, 'retention.test.v1', '{}', 'failed', $1, $1, $1, null,
+			 null, null, null, null, null),
+			('tadoku/prod', 2, 'retention.test.v1', '{}', 'completed', $1, $1, null, null,
+			 null, $1, 1, 'operator', 'repaired'),
+			('tadoku/prod', 3, 'retention.test.v1', '{}', 'pending', $1, $1, null, null,
+			 null, null, null, null, null),
+			('tadoku/prod', 4, 'retention.test.v1', '{}', 'running', $1, $1, null, gen_random_uuid(),
+			 $1, null, null, null, null),
+			('tadoku/prod', 5, 'retention.test.v1', '{}', 'completed', $1, $1, null, null,
+			 null, $1, null, null, null),
+			('tadoku/prod', 6, 'retention.test.v1', '{}', 'completed', $1, $1, null, null,
+			 null, $1, null, null, null),
+			('tadoku/prod', 7, 'retention.test.v1', '{}', 'pending', $1, $1, null, null,
+			 null, null, 6, 'operator', 'linked')`, old)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -637,7 +669,9 @@ func TestInsertFailureRollsBackBusinessWrite(t *testing.T) {
 	if _, err := db.Pool.Exec(tenantCtx, `create table business_mutation (id integer primary key)`); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := db.Pool.Exec(tenantCtx, `alter table jobs add constraint reject_official_for_test check (task_type <> 'leaderboard.invalidate_official.v1')`); err != nil {
+	if _, err := db.Pool.Exec(tenantCtx, `
+		alter table jobs add constraint reject_official_for_test
+		check (task_type <> 'leaderboard.invalidate_official.v1')`); err != nil {
 		t.Fatal(err)
 	}
 	err := postgres.RunInTransaction(tenantCtx, db.Pool, func(ctx context.Context) error {

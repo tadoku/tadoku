@@ -34,7 +34,10 @@ func TestTenantHandlerPreservesContextAcrossDerivedLoggers(t *testing.T) {
 		t.Errorf("scoped event=%v", scoped)
 	}
 	detail, ok := grouped["detail"].(map[string]any)
-	if !ok || detail["tenant"] != key.String() || detail["operation"] != "invalidate" || grouped["component"] != "worker" {
+	if !ok ||
+		detail["tenant"] != key.String() ||
+		detail["operation"] != "invalidate" ||
+		grouped["component"] != "worker" {
 		t.Errorf("derived grouped event=%v", grouped)
 	}
 	if _, exists := unscoped["tenant"]; exists {

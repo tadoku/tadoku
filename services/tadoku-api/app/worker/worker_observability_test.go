@@ -103,7 +103,12 @@ func TestWorkerObservationUsesPersistedTenant(t *testing.T) {
 				t.Fatalf("process failure=%v, want fixture failure", err)
 			}
 			if !captured.ok || captured.key != test.key {
-				t.Errorf("job failure context tenant=%q known=%t, want %q", captured.key.String(), captured.ok, test.key)
+				t.Errorf(
+					"job failure context tenant=%q known=%t, want %q",
+					captured.key.String(),
+					captured.ok,
+					test.key,
+				)
 			}
 			var event map[string]any
 			if err := json.Unmarshal(logs.Bytes(), &event); err != nil {
@@ -133,15 +138,27 @@ func TestWorkerObservationUsesPersistedTenant(t *testing.T) {
 					for _, label := range metric.GetLabel() {
 						labels[label.GetName()] = label.GetValue()
 					}
-					if labels["type"] != string(jobs.LeaderboardInvalidateOfficialV1) || labels["tenant_kind"] != test.kind {
-						t.Errorf("%s labels=%v, want persisted tenant_kind=%q and existing type", name, labels, test.kind)
+					if labels["type"] != string(jobs.LeaderboardInvalidateOfficialV1) ||
+						labels["tenant_kind"] != test.kind {
+						t.Errorf(
+							"%s labels=%v, want persisted tenant_kind=%q and existing type",
+							name,
+							labels,
+							test.kind,
+						)
 					}
 					if name == "tadoku_worker_failed_attempts_total" {
-						if labels["code"] != failureCode(failure) || len(labels) != 3 || metric.GetCounter().GetValue() != 1 {
+						if labels["code"] != failureCode(failure) ||
+							len(labels) != 3 ||
+							metric.GetCounter().GetValue() != 1 {
 							t.Errorf("failed-attempt sample labels=%v count=%v", labels, metric.GetCounter().GetValue())
 						}
 					} else if len(labels) != 2 || metric.GetHistogram().GetSampleCount() != 1 {
-						t.Errorf("handler-duration sample labels=%v count=%d", labels, metric.GetHistogram().GetSampleCount())
+						t.Errorf(
+							"handler-duration sample labels=%v count=%d",
+							labels,
+							metric.GetHistogram().GetSampleCount(),
+						)
 					}
 					observed++
 				}

@@ -62,7 +62,13 @@ func observe(
 		if _, known := tenant.FromContext(ctx); !known {
 			completionLogger = logger.With("tenant", "unknown")
 		}
-		duration.WithLabelValues(route, "", "native", strconv.Itoa(status), tenant.MetricKind(ctx)).Observe(elapsed.Seconds())
+		duration.WithLabelValues(
+			route,
+			"",
+			"native",
+			strconv.Itoa(status),
+			tenant.MetricKind(ctx),
+		).Observe(elapsed.Seconds())
 		completionLogger.InfoContext(ctx, "request completed",
 			"correlation_id", correlationID(request),
 			"method", request.Method,

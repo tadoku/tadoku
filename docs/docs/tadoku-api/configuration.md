@@ -334,8 +334,9 @@ accepted and routes without tenant authentication report `unknown`.
 The API and worker's context-aware structured logs carry the full `tenant` key.
 Use the caller or job context when logging tenant work; context-free startup
 logs have no tenant attribute. Request completion logs use `tenant="unknown"`
-when authentication has not established a tenant. Full tenant keys are never metric labels, so
-creating or deleting test tenants cannot create an unbounded set of series.
+when authentication has not established a tenant. Full tenant keys are never
+metric labels, so creating or deleting test tenants cannot create an unbounded
+set of series.
 
 ### Worker metrics
 

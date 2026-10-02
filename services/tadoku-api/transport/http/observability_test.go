@@ -136,7 +136,12 @@ func TestRequestObservationUsesVerifiedTenant(t *testing.T) {
 				t.Fatalf("status=%d, want %d", response.Code, test.wantStatus)
 			}
 			if captured.key.String() != test.wantTenant || captured.ok != (test.wantTenant != "") {
-				t.Errorf("completion context tenant=%q known=%t, want %q", captured.key.String(), captured.ok, test.wantTenant)
+				t.Errorf(
+					"completion context tenant=%q known=%t, want %q",
+					captured.key.String(),
+					captured.ok,
+					test.wantTenant,
+				)
 			}
 			if test.wantTenant == "" {
 				var event map[string]any
@@ -169,7 +174,11 @@ func TestRequestObservationUsesVerifiedTenant(t *testing.T) {
 					}
 					found = true
 					if labels["tenant_kind"] != test.wantKind || len(labels) != 5 {
-						t.Errorf("histogram labels=%v, want bounded tenant_kind=%q and existing four labels", labels, test.wantKind)
+						t.Errorf(
+							"histogram labels=%v, want bounded tenant_kind=%q and existing four labels",
+							labels,
+							test.wantKind,
+						)
 					}
 					if metric.GetHistogram().GetSampleCount() != 1 {
 						t.Errorf("histogram sample count=%d, want 1", metric.GetHistogram().GetSampleCount())

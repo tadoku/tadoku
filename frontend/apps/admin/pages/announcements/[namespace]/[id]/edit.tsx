@@ -9,7 +9,7 @@ import { useAnnouncementDelete, useAnnouncementFind } from '@app/announcements/a
 import { useNamespace } from '@app/content/NamespaceSelector'
 import { useRouter } from 'next/router'
 import { useState } from 'react'
-import { useQueryClient } from 'react-query'
+import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
 
 const Page: NextPageWithLayout = () => {

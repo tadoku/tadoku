@@ -6,7 +6,7 @@ import { StatusBadge } from './StatusBadge'
 import { DateTime } from 'luxon'
 import Link from 'next/link'
 import { ArrowUturnLeftIcon, PencilIcon } from '@heroicons/react/20/solid'
-import { useQueryClient } from 'react-query'
+import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
 import { useState } from 'react'
 
@@ -187,7 +187,7 @@ export function ContentPreview({ config, id }: Props) {
     })
   }
 
-  if (item.isLoading || item.isIdle) {
+  if (item.isLoading) {
     return <Loading />
   }
 
@@ -260,7 +260,7 @@ export function ContentPreview({ config, id }: Props) {
         {/* Content preview */}
         <div className="flex-1 min-w-0">
           <div className={`card ${isViewingVersion ? 'bg-amber-50' : ''}`}>
-            {selectedVersion.isLoading ? (
+            {selectedVersion.isInitialLoading ? (
               <Loading />
             ) : (
               <>

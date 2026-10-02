@@ -1,0 +1,12 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "alltenants",
+    srcs = ["alltenants.go"],
+    importpath = "github.com/tadoku/tadoku/services/tadoku-api/internal/tenant/alltenants",
+    visibility = [
+        "//services/tadoku-api/app/worker:__pkg__",
+        "//services/tadoku-api/e2e:__pkg__",
+        "//services/tadoku-api/infra/postgres:__pkg__",
+    ],
+)

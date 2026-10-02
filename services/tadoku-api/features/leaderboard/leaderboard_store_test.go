@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testvalkey"
 	valkeygo "github.com/valkey-io/valkey-go"
 )
@@ -114,4 +115,111 @@ func (client *invalidateBeforeZcard) Do(ctx context.Context, command valkeygo.Co
 		}
 	}
 	return client.Client.Do(ctx, command)
+}
+
+func TestTenantLeaderboardInvalidationKeepsOtherTenantWarm(t *testing.T) {
+	client := newLeaderboardTestClient(t)
+	store := NewStore(client, time.Second, "")
+	service := NewService(nil, client, time.Second, "")
+	contestID := uuid.New()
+	keyA, err := tenant.Parse("e2e/cache-a-" + uuid.NewString())
+	if err != nil {
+		t.Fatal(err)
+	}
+	keyB, err := tenant.Parse("e2e/cache-b-" + uuid.NewString())
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctxA := tenant.WithKey(t.Context(), keyA)
+	ctxB := tenant.WithKey(t.Context(), keyB)
+
+	cacheA := store.cacheKey(contestPrefix + contestID.String())
+	cacheB := store.cacheKey(contestPrefix + contestID.String())
+	cleanupLeaderboardKeys(t, client, cacheA, cacheB)
+	userA, userB := uuid.New(), uuid.New()
+	published, err := store.rebuild(ctxA, cacheA, []score{{userID: userA, value: 10}}, "0")
+	if err != nil || !published {
+		t.Fatalf("warm tenant A: published=%t error=%v", published, err)
+	}
+	published, err = store.rebuild(ctxB, cacheB, []score{{userID: userB, value: 20}}, "0")
+	if err != nil || !published {
+		t.Fatalf("warm tenant B: published=%t error=%v", published, err)
+	}
+
+	if err := service.InvalidateContest(ctxA, contestID); err != nil {
+		t.Fatal(err)
+	}
+
+	page, exists, err := store.fetchPage(ctxB, cacheB, 0, 25)
+	if err != nil || !exists || page == nil {
+		t.Fatalf("tenant B warm cache after A invalidation: page=%+v exists=%t error=%v", page, exists, err)
+	}
+	if len(page.scores) != 1 || page.scores[0].userID != userB || page.scores[0].value != 20 {
+		t.Errorf("tenant B warm scores=%+v; want its own score", page.scores)
+	}
+	page, exists, err = store.fetchPage(ctxA, cacheA, 0, 25)
+	if err != nil || exists || page != nil {
+		t.Errorf("tenant A cache after invalidation: page=%+v exists=%t error=%v", page, exists, err)
+	}
+}
+
+func TestLeaderboardWithoutTenantDoesNotWriteCache(t *testing.T) {
+	client := newLeaderboardTestClient(t)
+	service := NewService(nil, client, time.Second, "")
+	contestID := uuid.New()
+	key := contestPrefix + contestID.String()
+	cleanupLeaderboardKeys(t, client, key)
+
+	err := service.InvalidateContest(t.Context(), contestID)
+	if err == nil {
+		t.Error("missing tenant allowed leaderboard invalidation")
+	}
+
+	count, err := client.Do(
+		t.Context(),
+		client.B().Exists().Key(key, key+":last_updated", key+":generation").Build(),
+	).AsInt64()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if count != 0 {
+		t.Errorf("missing tenant wrote %d cache keys", count)
+	}
+}
+
+func newLeaderboardTestClient(t *testing.T) valkeygo.Client {
+	t.Helper()
+	rawURL, err := testvalkey.URL()
+	if err != nil {
+		t.Fatal(err)
+	}
+	option, err := valkeygo.ParseURL(rawURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	option.SelectDB = 13
+	option.ForceSingleClient = true
+	option.DisableRetry = true
+
+	client, err := valkeygo.NewClient(option)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(client.Close)
+	return client
+}
+
+func cleanupLeaderboardKeys(t *testing.T, client valkeygo.Client, keys ...string) {
+	t.Helper()
+	t.Cleanup(func() {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+
+		for _, key := range keys {
+			err := client.Do(ctx, client.B().Del().Key(key, key+":last_updated", key+":generation").Build()).Error()
+			if err != nil {
+				t.Error(err)
+			}
+		}
+	})
 }

@@ -1,9 +1,10 @@
 package worker
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
-	"io"
 	"log/slog"
 	"testing"
 	"time"
@@ -11,6 +12,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
+	"github.com/tadoku/tadoku/services/tadoku-api/infra/observability"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
@@ -87,7 +89,8 @@ func TestWorkerObservationUsesPersistedTenant(t *testing.T) {
 				t.Fatal(err)
 			}
 			registry := prometheus.NewRegistry()
-			captured := &jobTenantHandler{Handler: slog.NewJSONHandler(io.Discard, nil)}
+			var logs bytes.Buffer
+			captured := &jobTenantHandler{Handler: observability.NewTenantHandler(slog.NewJSONHandler(&logs, nil))}
 			runtime := &runner{
 				queue:    queue,
 				handlers: handlers,
@@ -101,6 +104,13 @@ func TestWorkerObservationUsesPersistedTenant(t *testing.T) {
 			}
 			if !captured.ok || captured.key != test.key {
 				t.Errorf("job failure context tenant=%q known=%t, want %q", captured.key.String(), captured.ok, test.key)
+			}
+			var event map[string]any
+			if err := json.Unmarshal(logs.Bytes(), &event); err != nil {
+				t.Fatal(err)
+			}
+			if event["msg"] != "job failed" || event["tenant"] != test.key.String() {
+				t.Errorf("job failure event=%v, want persisted tenant %q", event, test.key)
 			}
 			var state string
 			err = fixture.db.QueryRow(t.Context(), `select state from jobs where id = $1`, id).Scan(&state)

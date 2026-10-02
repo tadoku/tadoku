@@ -108,6 +108,9 @@ func NewJWTAuthentication(
 						Email:       claims.Session.Identity.Traits.Email,
 						CreatedAt:   claims.IssuedAt.Time,
 					}
+					if observed, ok := r.Context().Value(observedTenantKey{}).(*requestTenant); ok {
+						observed.key = key
+					}
 					next.ServeHTTP(w, r.WithContext(tenant.WithKey(identity.WithUser(r.Context(), user), key)))
 					return
 				}

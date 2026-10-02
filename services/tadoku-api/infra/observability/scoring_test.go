@@ -136,6 +136,7 @@ func TestScoringObserverRecordsBoundedOutcomesAndGauge(t *testing.T) {
 				"mode":         test.comparison.Mode,
 				"activity_id":  strconv.FormatInt(int64(test.comparison.ActivityID), 10),
 				"score_source": test.comparison.ScoreSource,
+				"tenant_kind":  "unknown",
 			})
 			if got != 1 {
 				t.Errorf("comparison count = %v, want 1", got)
@@ -320,6 +321,7 @@ func TestScoringObserverToleranceAndZeroDelta(t *testing.T) {
 				"mode":         "shadow",
 				"activity_id":  "1",
 				"score_source": "amount",
+				"tenant_kind":  "unknown",
 			})
 			if got != 1 {
 				t.Errorf("comparison count = %v, want 1 for %q", got, test.wantOutcome)

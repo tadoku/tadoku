@@ -66,11 +66,11 @@ func (r *runner) run(ctx context.Context) {
 	refreshMetrics := func() {
 		count, err := r.updateMetrics(queueCtx)
 		if err != nil {
-			r.logger.Warn("inspect job backlog", "error", err)
+			r.logger.WarnContext(queueCtx, "inspect job backlog", "error", err)
 		} else if count != unsupported {
 			unsupported = count
 			if count > 0 {
-				r.logger.Error("unsupported job types remain outstanding", "count", count)
+				r.logger.ErrorContext(queueCtx, "unsupported job types remain outstanding", "count", count)
 			}
 		}
 	}
@@ -95,7 +95,7 @@ func (r *runner) run(ctx context.Context) {
 			tasks, err := r.queue.Claim(queueCtx, spec.typeName, free, spec.lease, spec.maxAttempts)
 			if err != nil {
 				claimHealthy = false
-				r.logger.Error("claim jobs", "type", spec.typeName, "error", err)
+				r.logger.ErrorContext(queueCtx, "claim jobs", "type", spec.typeName, "error", err)
 				continue
 			}
 
@@ -149,7 +149,7 @@ func (r *runner) cleanupCompleted(ctx context.Context) {
 		count, err := r.queue.CleanupCompleted(ctx, 100)
 		if err != nil {
 			if ctx.Err() == nil {
-				r.logger.Warn("cleanup completed jobs", "error", err)
+				r.logger.WarnContext(ctx, "cleanup completed jobs", "error", err)
 			}
 			return
 		}
@@ -237,11 +237,13 @@ func (r *runner) process(ctx context.Context, task jobqueue.ClaimedJob, spec han
 	renewErr := <-renewed
 	cancelHandler()
 	if renewErr != nil {
-		r.logger.Warn("job lease lost", "job_id", task.ID, "type", task.Type, "error", renewErr)
+		r.logger.WarnContext(ctx, "job lease lost", "job_id", task.ID, "type", task.Type, "error", renewErr)
 		return renewErr
 	}
 
-	r.metrics.duration.WithLabelValues(string(task.Type)).Observe(max(0, (limit - time.Until(maximum)).Seconds()))
+	r.metrics.duration.WithLabelValues(string(task.Type), tenant.MetricKind(ctx)).Observe(
+		max(0, (limit - time.Until(maximum)).Seconds()),
+	)
 	transitionCtx, stop := context.WithTimeout(tenant.WithKey(context.Background(), task.Tenant), 5*time.Second)
 	defer stop()
 
@@ -257,7 +259,7 @@ func (r *runner) process(ctx context.Context, task jobqueue.ClaimedJob, spec han
 		} else {
 			held, err = r.queue.Retry(transitionCtx, task, retryAt(task.Attempts), code, spec.maxAttempts)
 		}
-		r.metrics.attempts.WithLabelValues(string(task.Type), code).Inc()
+		r.metrics.attempts.WithLabelValues(string(task.Type), code, tenant.MetricKind(ctx)).Inc()
 	}
 
 	if err != nil {
@@ -268,7 +270,15 @@ func (r *runner) process(ctx context.Context, task jobqueue.ClaimedJob, spec han
 	}
 
 	if handlerErr != nil {
-		r.logger.Error("job failed", "job_id", task.ID, "type", task.Type, "attempt", task.Attempts, "code", failureCode(handlerErr), "error", handlerErr)
+		r.logger.ErrorContext(
+			ctx,
+			"job failed",
+			"job_id", task.ID,
+			"type", task.Type,
+			"attempt", task.Attempts,
+			"code", failureCode(handlerErr),
+			"error", handlerErr,
+		)
 	}
 	return handlerErr
 }

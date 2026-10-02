@@ -46,6 +46,7 @@ go_test(
         "//services/tadoku-api/domain/jobs",
         "//services/tadoku-api/features/jobqueue",
         "//services/tadoku-api/features/leaderboard",
+        "//services/tadoku-api/infra/observability",
         "//services/tadoku-api/infra/postgres",
         "//services/tadoku-api/internal/tenant",
         "//services/tadoku-api/internal/tenant/alltenants",

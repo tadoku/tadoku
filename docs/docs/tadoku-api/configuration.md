@@ -318,10 +318,23 @@ canonical `tadoku/prod` context.
   (`API_METRICS_PORT`).
 - The request duration metric keeps its dashboard-compatible name,
   `tadoku_api_proxy_request_duration_seconds`, and its `route`, `upstream`,
-  `mode` and `status` labels. Every route reports mode `native` and an empty
-  upstream.
+  `mode` and `status` labels, with the additional `tenant_kind` label. Every
+  route reports mode `native` and an empty upstream.
+- `tadoku_scoring_shadow_comparisons_total` also carries `tenant_kind`, alongside
+  its existing scoring outcome, operation, mode, activity and source labels.
 - The API feature-flag metrics report bounded provider initialization,
   refresh, error and evaluation labels, without user identities.
+
+`tenant_kind` has only three values: `production` for `tadoku/prod`, `test` for
+every other validated tenant key, and `unknown` when the context has no tenant.
+Request observations use the tenant from the verified JWT, including the outer
+completion log after authentication returns. Rejections before a token is
+accepted and routes without tenant authentication report `unknown`.
+
+The API and worker's context-aware structured logs carry the full `tenant` key.
+Use the caller or job context when logging tenant work; context-free startup
+logs have no tenant attribute. Full tenant keys are never metric labels, so
+creating or deleting test tenants cannot create an unbounded set of series.
 
 ### Worker metrics
 
@@ -333,8 +346,8 @@ types without an unbounded type label.
 | Metric | Labels | Meaning |
 | --- | --- | --- |
 | `tadoku_worker_in_flight` | `type` | Jobs executing in this process. |
-| `tadoku_worker_failed_attempts_total` | `type`, `code` | Failed handler attempts. |
-| `tadoku_worker_handler_duration_seconds` | `type` | Histogram of handler execution duration before the job transition. |
+| `tadoku_worker_failed_attempts_total` | `type`, `code`, `tenant_kind` | Failed handler attempts for the persisted job tenant. |
+| `tadoku_worker_handler_duration_seconds` | `type`, `tenant_kind` | Histogram of handler execution duration before the job transition. |
 | `tadoku_worker_pending_jobs` | `type` | Pending jobs for each registered type. |
 | `tadoku_worker_failed_jobs` | `type` | Terminally failed jobs for each registered type. |
 | `tadoku_worker_oldest_due_age_seconds` | `type` | Age of the oldest due or expired job. |

@@ -30,23 +30,57 @@ its source is `services/tadoku-api/spec/openapi.yaml`.
 | Field | Value |
 | --- | --- |
 | namespace | `app` |
-| object | `tadoku` |
-| relations | `admins`, `banned` |
+| canonical tenant | `tadoku/prod`, using the existing object `tadoku` |
+| test object | The full tenant key, such as `e2e/alpha-0000000a` |
+| relations | `admins`, `banned`, `parents`, `testers` |
+| permits | `admin`, `is_banned`, `access` |
 | subject | direct `subject_id`: the Kratos identity ID from the JWT `sub`, never an email |
 
-Example tuples are `app:tadoku#admins@<identity-id>` and
-`app:tadoku#banned@<identity-id>`. A regular user holds neither relation.
+The canonical tenant keeps `app:tadoku` and its existing administrator and ban
+relations. Tenant keys use `name/id`; the provider object for this existing
+canonical tenant remains `tadoku`, without copying or rewriting its tuples.
+A regular production user holds neither `admins` nor `banned`.
+
+A test object inherits administrators and bans from its `parents` objects.
+Its own administrator or ban tuples apply only to that object. The `access`
+permit allows administrators or direct members of `testers`; a tester on one
+object has no access to another object without its own grant.
+
+Provision a test object's parent with this JSON tuple. Keto v25.4.0 accepts
+the empty parent relation and traverses the parent's permits:
+
+```json
+{
+  "namespace": "app",
+  "object": "e2e/alpha-0000000a",
+  "relation": "parents",
+  "subject_set": {
+    "namespace": "app",
+    "object": "tadoku",
+    "relation": ""
+  }
+}
+```
+
+Add a direct tester tuple as
+`app:e2e/alpha-0000000a#testers@<identity-id>`. Raw `admins` and `banned`
+relations do not include inherited memberships: an administrator inherited
+from `app:tadoku` has the child's `admin` and `access` permits but no local
+`admins` tuple. Removing a branch ban does not remove an inherited production
+ban.
 
 The namespace configuration (OPL) is `k8s/dev/base/keto/namespaces.keto.ts` for
 the development environment and `infra/dev/ory/namespaces.keto.ts` for backend
-test fixtures. Tadoku API calls Keto through `services/tadoku-api/infra/keto/`:
-`NewReadClient` for checks and `NewClient` for read/write access. Keto's `403`
-answer to a check means "denied", not an error.
+test fixtures. These files stay byte-identical. Development runs Keto v26.2.0;
+production and the real Bazel fixture run v25.4.0. Tadoku API calls Keto through
+`services/tadoku-api/infra/keto/`: `NewReadClient` for checks and `NewClient`
+for read/write access. Keto's `403` answer to a check means "denied", not an
+error.
 
 Administrators can toggle only the `banned` relation through the API
-(`PUT /authz/users/{id}/role`), and cannot change another administrator's role. No API
-grants `admins`; that tuple is written directly through the Keto write API, as
-the development seed does.
+(`PUT /authz/users/{id}/role`), and cannot change another administrator's role.
+No API grants `admins`; that tuple is written directly through the Keto write
+API, as the development seed does.
 
 ## Request pipeline
 
@@ -126,7 +160,7 @@ Application errors are `services/tadoku-api/internal/errx/` kinds, mapped in
 ## Seeding an administrator in development
 
 Run `make dev-seed` (`scripts/dev/seed-db.sh`) once Kratos and Keto are ready. It
-only runs against the `homelab-dev` Kubernetes context and is safe to re-run.
+only runs against the `homelab-talos-dev` Kubernetes context and is safe to re-run.
 
 - Creates or refreshes two Kratos identities marked with
   `metadata_admin.seeded_by=tadoku-dev-seed`: an administrator

@@ -31,7 +31,8 @@ PgBouncer 1.25.2 in transaction mode and Valkey 9 instances, passed as
 the same URL on port 6432 for PgBouncer, plus `redis://127.0.0.1:6379` for
 Valkey. See [Tadoku API testing](../tadoku-api/testing.md).
 
-Format Go code with `gofmt -w services/` before committing.
+Format Go code with `gofmt -w services/` before committing. `gofmt` does not
+cover layout; follow [Go style](../tadoku-api/go-style.md) as well.
 Run `bazel run //tools/ci/commentpolicy` to check handwritten Go comments;
 it ignores generated files and accepts tool directives, declaration usage
 notes and marked test fixture safety notes.

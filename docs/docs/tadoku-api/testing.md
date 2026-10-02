@@ -98,6 +98,8 @@ Never point tests at shared development or production services.
 
 ## Repository and package tests
 
+- Test code follows [Go style](./go-style.md), including arrange, act and
+  assert grouping and one test case per table entry.
 - Database tests in feature packages follow the
   [feature package layout](./conventions.md#feature-package-layout).
 - Database helpers take contexts and return errors, with explicit `Close`

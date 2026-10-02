@@ -70,6 +70,17 @@ are independently implemented with `pg_query_go`.
 Always write SQL keywords in lowercase: `select` and `create table`, not
 `SELECT` and `CREATE TABLE`.
 
+Layout applies to migrations, sqlc queries, seed scripts and SQL embedded in
+Go:
+
+- A statement that does not fit on one line puts each clause (`select`,
+  `from`, `where`, `order by` and so on) on its own line. A `where` with
+  several conditions puts one condition per line, with `and` or `or` leading.
+- Write `case` expressions over several lines: `case`, each `when ... then`,
+  `else` and `end` on their own lines.
+- Separate items in column and value lists with `, `.
+- An `insert` with several rows puts one row per line.
+
 ## Tenancy
 
 The canonical tenant is `tadoku/prod`, in both production and development.

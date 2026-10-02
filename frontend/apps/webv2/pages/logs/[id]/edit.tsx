@@ -17,11 +17,7 @@ const Page = () => {
 
   useSessionOrRedirect()
 
-  if (
-    log.isLoading ||
-    log.isIdle ||
-    options.isLoading
-  ) {
+  if (log.isLoading || options.isLoading) {
     return <Loading />
   }
 

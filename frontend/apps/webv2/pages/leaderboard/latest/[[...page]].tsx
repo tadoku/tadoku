@@ -22,7 +22,7 @@ const Page = () => {
     enabled: !!session && !!contest.data,
   })
 
-  if (contest.isLoading || contest.isIdle) {
+  if (contest.isLoading) {
     return <Loading />
   }
 

@@ -6,7 +6,7 @@ vi.mock('next/config', () => ({
   default: () => ({ publicRuntimeConfig: { apiEndpoint: '' } }),
 }))
 
-vi.mock('react-query', () => ({
+vi.mock('@tanstack/react-query', () => ({
   useMutation: vi.fn(),
   useQuery,
   useQueryClient: vi.fn(),

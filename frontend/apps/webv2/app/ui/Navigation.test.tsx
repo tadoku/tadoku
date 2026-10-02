@@ -30,7 +30,7 @@ vi.mock('@app/common/session', () => ({
   useLogoutHandler: () => vi.fn(),
 }))
 vi.mock('@app/common/hooks', () => ({ useCurrentLocation: () => '/' }))
-vi.mock('react-query', () => ({ useIsFetching: () => 0 }))
+vi.mock('@tanstack/react-query', () => ({ useIsFetching: () => 0 }))
 vi.mock('next/config', () => ({
   default: () => ({ publicRuntimeConfig: { authUiUrl: '/account' } }),
 }))

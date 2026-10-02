@@ -52,7 +52,7 @@ const Page = () => {
   const role = useUserRole()
   const registration = useContestRegistration(id, { enabled: !!session })
 
-  if (contest.isLoading || contest.isIdle) {
+  if (contest.isLoading) {
     return <Loading />
   }
 

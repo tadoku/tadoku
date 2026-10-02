@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import getConfig from 'next/config'
-import { useMutation, useQuery, useQueryClient } from 'react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ContestFormSchema } from '@app/immersion/ContestForm'
 import { ContestRegistrationFormSchema } from '@app/immersion/ContestRegistration'
 import { NewLogAPISchema } from '@app/immersion/NewLogForm/domain'

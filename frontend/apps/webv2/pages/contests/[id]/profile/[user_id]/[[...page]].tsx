@@ -38,7 +38,7 @@ const Page = () => {
   const profile = useContestProfileScores({ userId, contestId })
   const logs = useContestLogs(logListParams)
 
-  if (profile.isLoading || profile.isIdle) {
+  if (profile.isLoading) {
     return <Loading />
   }
 

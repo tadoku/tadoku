@@ -38,12 +38,7 @@ const Page = () => {
       <span className="flash error">This feature is not yet available.</span>
     )
   }
-  if (
-    contest.isLoading ||
-    contest.isIdle ||
-    options.isLoading ||
-    options.isIdle
-  ) {
+  if (contest.isLoading || options.isLoading) {
     return <Loading />
   }
   if (
@@ -60,12 +55,7 @@ const Page = () => {
       </span>
     )
   }
-  if (
-    contestRuleSets.isLoading ||
-    contestRuleSets.isIdle ||
-    platformRuleSets.isLoading ||
-    platformRuleSets.isIdle
-  ) {
+  if (contestRuleSets.isLoading || platformRuleSets.isLoading) {
     return <Loading />
   }
 

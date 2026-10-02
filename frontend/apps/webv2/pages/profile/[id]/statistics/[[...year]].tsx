@@ -46,7 +46,7 @@ const Page = () => {
   const registrations = useYearlyContestRegistrations({ userId, year })
   const activitySplit = useUserYearlyActivitySplit({ userId, year })
 
-  if (profile.isLoading || profile.isIdle) {
+  if (profile.isLoading) {
     return <Loading />
   }
 

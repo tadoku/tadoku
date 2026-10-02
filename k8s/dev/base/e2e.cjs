@@ -236,6 +236,11 @@ try {
     run('docker', ['rm', '-f', name])
     containers.pop()
   }
+  const removedFixture = containers.find(name => name !== db)
+  const fixtureOwner = run('docker', ['inspect', removedFixture, '--format', '{{index .Config.Labels "tadoku.dev/test"}}'])
+  if (fixtureOwner !== prefix) throw new Error('Refusing removal of cleanup control fixture')
+  run('docker', ['rm', removedFixture])
+  report.cleanupControl = { removedFixture, expected: 'already absent owned fixture is clean' }
   report.result = 'passed'
 } catch (error) {
   report.result = 'failed'
@@ -244,9 +249,14 @@ try {
 } finally {
   for (const name of containers.reverse()) {
     try {
-      const owner = run('docker', ['inspect', name, '--format', '{{index .Config.Labels "tadoku.dev/test"}}'])
-      if (owner !== prefix) throw new Error(`Refusing cleanup of ${name}`)
-      run('docker', ['rm', '-f', name])
+      const fixture = run('docker', ['ps', '-a', '--no-trunc', '--filter', `name=^/${name}$`, '--format', '{{.ID}}|{{.Label "tadoku.dev/test"}}'])
+      if (!fixture) {
+        if (name === report.cleanupControl?.removedFixture) report.cleanupControl.result = 'passed'
+        continue
+      }
+      const [id, owner] = fixture.split('|')
+      if (owner !== prefix || !/^[0-9a-f]{64}$/.test(id)) throw new Error(`Refusing cleanup of ${name}`)
+      run('docker', ['rm', '-f', id])
     } catch (error) { report.cleanupError = error.message; process.exitCode = 1 }
   }
   if (networkCreated) {

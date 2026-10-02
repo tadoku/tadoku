@@ -14,33 +14,6 @@ import (
 
 const leaderboardValkeyLeaseKey = "tadoku-api:e2e:leaderboard:lease"
 
-var leaderboardValkeyKeys = []string{
-	"leaderboard:global",
-	"leaderboard:global:last_updated",
-	"leaderboard:global:generation",
-	"leaderboard:yearly:2026",
-	"leaderboard:yearly:2026:last_updated",
-	"leaderboard:yearly:2026:generation",
-	"leaderboard:yearly:2024",
-	"leaderboard:yearly:2024:last_updated",
-	"leaderboard:yearly:2024:generation",
-	"leaderboard:contest:f1111111-1111-4111-8111-111111111111",
-	"leaderboard:contest:f1111111-1111-4111-8111-111111111111:last_updated",
-	"leaderboard:contest:f1111111-1111-4111-8111-111111111111:generation",
-	"leaderboard:contest:f2222222-2222-4222-8222-222222222222",
-	"leaderboard:contest:f2222222-2222-4222-8222-222222222222:last_updated",
-	"leaderboard:contest:f2222222-2222-4222-8222-222222222222:generation",
-	"leaderboard:contest:52fdfc07-2182-454f-963f-5f0f9a621d72",
-	"leaderboard:contest:52fdfc07-2182-454f-963f-5f0f9a621d72:last_updated",
-	"leaderboard:contest:52fdfc07-2182-454f-963f-5f0f9a621d72:generation",
-	"leaderboard:contest:f0000000-0000-4000-8000-000000000001",
-	"leaderboard:contest:f0000000-0000-4000-8000-000000000001:last_updated",
-	"leaderboard:contest:f0000000-0000-4000-8000-000000000001:generation",
-	"leaderboard:contest:f0000000-0000-4000-8000-000000000004",
-	"leaderboard:contest:f0000000-0000-4000-8000-000000000004:last_updated",
-	"leaderboard:contest:f0000000-0000-4000-8000-000000000004:generation",
-}
-
 type leaderboardValkeyFixture struct {
 	client valkeygo.Client
 	token  string
@@ -88,11 +61,11 @@ func newLeaderboardValkeyFixture(ctx context.Context) (_ *leaderboardValkeyFixtu
 		}
 	}()
 
-	exists, err := client.Do(ctx, client.B().Exists().Key(leaderboardValkeyKeys...).Build()).ToInt64()
+	keys, err := fixture.cacheKeys(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("inspect test leaderboard keys: %w", err)
 	}
-	if exists != 0 {
+	if len(keys) != 0 {
 		return nil, fmt.Errorf("test Valkey DB %d contains leaderboard keys; refusing to overwrite them", leaderboardValkeyDatabase())
 	}
 
@@ -132,7 +105,33 @@ func (f *leaderboardValkeyFixture) reset(ctx context.Context) error {
 	if err := f.ownsLease(ctx); err != nil {
 		return err
 	}
-	return f.client.Do(ctx, f.client.B().Del().Key(leaderboardValkeyKeys...).Build()).Error()
+	keys, err := f.cacheKeys(ctx)
+	if err != nil || len(keys) == 0 {
+		return err
+	}
+	return f.client.Do(ctx, f.client.B().Del().Key(keys...).Build()).Error()
+}
+
+func (f *leaderboardValkeyFixture) cacheKeys(ctx context.Context) ([]string, error) {
+	var keys []string
+	for _, pattern := range []string{"leaderboard:*", "tenant:*:leaderboard:*"} {
+		var cursor uint64
+		for {
+			page, err := f.client.Do(
+				ctx,
+				f.client.B().Scan().Cursor(cursor).Match(pattern).Count(100).Build(),
+			).AsScanEntry()
+			if err != nil {
+				return nil, err
+			}
+			keys = append(keys, page.Elements...)
+			if page.Cursor == 0 {
+				break
+			}
+			cursor = page.Cursor
+		}
+	}
+	return keys, nil
 }
 
 func (f *leaderboardValkeyFixture) close() error {

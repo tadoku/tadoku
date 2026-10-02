@@ -41,10 +41,18 @@ environment variables. Development values are in
 - `API_VALKEY_URL`, one standalone TCP URL accepted by `valkey-go`.
 - `API_VALKEY_TIMEOUT` (default 1s), the positive bound for each connection and
   handshake attempt and the established-connection keepalive and I/O interval.
-- `API_LEADERBOARD_CACHE_PREFIX` (default empty) prefixes every leaderboard
-  cache key, isolating cache entries by namespace. A non-empty prefix must be
-  unique for each database sharing a Valkey instance. Empty uses unprefixed
-  keys.
+Leaderboard keys come from the parsed request or job tenant:
+`tenant:<name>/<id>:leaderboard:…`. The API and worker use the same key format;
+a missing context tenant fails before any cache operation.
+
+`API_LEADERBOARD_CACHE_PREFIX` and `WORKER_LEADERBOARD_CACHE_PREFIX` default to
+empty and remain only for development overlays with private databases whose
+requests and jobs still carry `tadoku/prod`. Those overlays set the same
+`dev:${DEV_ROUTE}:` prefix, producing
+`dev:${DEV_ROUTE}:tenant:tadoku/prod:leaderboard:…`. Keep it unique per database.
+Production, the development base and real test tenants leave these settings
+unset. Remove both compatibility settings when every private-database overlay
+has a distinct signed request tenant and persists that tenant on its jobs.
 
 `services/tadoku-api/infra/valkey/README.md` documents which URL options are
 accepted and how commands, timeouts, cancellation and close behave.
@@ -257,8 +265,9 @@ and lease transition still uses the tenant persisted on its claimed job.
 
 Private health and metrics listeners default to `WORKER_PORT=8000` and
 `WORKER_METRICS_PORT=9090`. It has no public route. The API and worker must use
-the same database and cache prefix, with a unique prefix per database sharing
-Valkey.
+the same database and tenant-derived cache keys. Private development databases
+that still use `tadoku/prod` also require the matching compatibility prefix
+[described above](#valkey-and-leaderboard-caches).
 
 The worker invalidates leaderboard caches through registered jobs. A cache miss
 rebuilds from PostgreSQL only if its generation has not changed, and cached

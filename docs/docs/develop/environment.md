@@ -298,12 +298,25 @@ consistent data across them.
 
 Each branch API is paired with a private `tadoku-worker` against the same
 branch database. The API writes returned typed jobs to that database's
-`jobs`; the worker claims only that database's work. Both workloads use
-`dev:${DEV_ROUTE}:` as their leaderboard cache prefix, keeping cache keys
-separate from the base and other branches.
-The base pair uses unprefixed keys.
+`jobs`; the worker claims only that database's work. Leaderboard keys follow the request or persisted job tenant:
+`tenant:<name>/<id>:leaderboard:…`. A missing tenant is an error before Valkey
+access. The base pair uses `tenant:tadoku/prod:leaderboard:…`.
 
-- Keep the prefix unique per route when changing overlay routing.
+Private-database overlays still receive signed `tadoku/prod` requests and store
+that tenant on their jobs. They therefore retain the existing matching
+`API_LEADERBOARD_CACHE_PREFIX` and `WORKER_LEADERBOARD_CACHE_PREFIX` values
+`dev:${DEV_ROUTE}:`, producing
+`dev:${DEV_ROUTE}:tenant:tadoku/prod:leaderboard:…`. Removing that prefix while
+those overlays share the canonical tenant would collide with base caches and
+other private databases. Real test tenants without a compatibility prefix use
+only their own `tenant:<name>/<id>:leaderboard:…` keys.
+
+- Keep the compatibility prefix unique per route when changing overlay routing.
+- Remove both prefix settings and their runtime configuration together only
+  after overlay requests and persisted jobs carry distinct parsed branch
+  tenants. At that boundary, the base and overlay checks must require no
+  `LEADERBOARD_CACHE_PREFIX` setting, and `git grep -n LEADERBOARD_CACHE_PREFIX`
+  must return nothing.
 - The separate worker invalidates leaderboard caches after processing queued
   jobs.
 - Stopping a worker leaves recoverable queued work; cached results can remain

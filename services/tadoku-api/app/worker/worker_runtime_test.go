@@ -32,6 +32,7 @@ type workerFixture struct {
 	db       *pgxpool.Pool
 	dsn      string
 	client   valkeygo.Client
+	key      tenant.Key
 	prefix   string
 }
 
@@ -252,15 +253,18 @@ func TestBaseWorkerHousekeepingUsesAllTenants(t *testing.T) {
 		select
 			key, 'leaderboard.invalidate_official.v1', '{"year":2026}'::jsonb, 'completed',
 			now()-interval '1 year', now()-interval '1 year'
-		from tenants;
+		from tenants
+		where key in ('tadoku/prod', 'e2e/worker-0123abcd');
 
 		insert into jobs (tenant, task_type, payload, state, failed_at)
 		select key, 'leaderboard.invalidate_official.v1', '{"year":2026}'::jsonb, 'failed', now()
-		from tenants;
+		from tenants
+		where key in ('tadoku/prod', 'e2e/worker-0123abcd');
 
 		insert into jobs (tenant, task_type, payload)
 		select key, 'future.worker.v1', '{}'::jsonb
-		from tenants;`); err != nil {
+		from tenants
+		where key in ('tadoku/prod', 'e2e/worker-0123abcd');`); err != nil {
 		t.Fatal(err)
 	}
 
@@ -338,6 +342,15 @@ func newWorkerFixture(ctx context.Context) (_ workerFixture, err error) {
 			err = errors.Join(err, database.Close())
 		}
 	}()
+	key, err := tenant.Parse("e2e/worker-" + uuid.NewString())
+	if err != nil {
+		return workerFixture{}, err
+	}
+	_, err = database.Pool.Exec(ctx, `insert into tenants (key, kind) values ($1, 'test')`, key.String())
+	if err != nil {
+		return workerFixture{}, err
+	}
+
 	rawURL, err := testvalkey.URL()
 	if err != nil {
 		return workerFixture{}, err
@@ -353,8 +366,14 @@ func newWorkerFixture(ctx context.Context) (_ workerFixture, err error) {
 	if err != nil {
 		return workerFixture{}, err
 	}
-	prefix := "test:" + uuid.NewString() + ":"
-	return workerFixture{database: database, db: database.Pool, dsn: database.DSN, client: client, prefix: prefix}, nil
+	return workerFixture{
+		database: database,
+		db:       database.Pool,
+		dsn:      database.DSN,
+		client:   client,
+		key:      key,
+		prefix:   "tenant:" + key.String() + ":",
+	}, nil
 }
 
 func (f workerFixture) Close() error {
@@ -386,7 +405,7 @@ func (f workerFixture) Close() error {
 }
 
 func (f workerFixture) runner(t *testing.T, client valkeygo.Client, providerTimeout, shutdown time.Duration) *Application {
-	service := leaderboard.NewService(leaderboard.NewRepository(f.db), client, providerTimeout, f.prefix)
+	service := leaderboard.NewService(leaderboard.NewRepository(f.db), client, providerTimeout, "")
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	application, err := NewApplication(jobqueue.NewService(jobqueue.NewRepository(f.db)), service, Config{
 		Concurrency:     4,
@@ -472,6 +491,7 @@ func TestWorkerStartsWithoutValkey(t *testing.T) {
 	if fixtureErr != nil {
 		t.Fatal(fixtureErr)
 	}
+	tenantCtx = tenant.WithKey(t.Context(), f.key)
 	t.Cleanup(func() {
 		if err := f.Close(); err != nil {
 			t.Error(err)
@@ -533,6 +553,7 @@ func TestWorkerCancelsHandlerAfterLostLeaseAndReclaims(t *testing.T) {
 	if fixtureErr != nil {
 		t.Fatal(fixtureErr)
 	}
+	tenantCtx = tenant.WithKey(t.Context(), f.key)
 	t.Cleanup(func() {
 		if err := f.Close(); err != nil {
 			t.Error(err)
@@ -609,6 +630,7 @@ func TestWorkerDeadlineExhaustionAndReplay(t *testing.T) {
 	if fixtureErr != nil {
 		t.Fatal(fixtureErr)
 	}
+	tenantCtx = tenant.WithKey(t.Context(), f.key)
 	t.Cleanup(func() {
 		if err := f.Close(); err != nil {
 			t.Error(err)
@@ -630,9 +652,11 @@ func TestWorkerDeadlineExhaustionAndReplay(t *testing.T) {
 	var id int64
 	err := f.db.QueryRow(tenantCtx, `
 		insert into jobs (tenant, task_type, payload, attempts)
-		values ('tadoku/prod', $1, $2::jsonb, 4)
+		values ($3, $1, $2::jsonb, 4)
 		returning id`,
-		string(jobs.LeaderboardInvalidateContestV1), fmt.Sprintf(`{"contest_id":%q}`, uuid.NewString()),
+		string(jobs.LeaderboardInvalidateContestV1),
+		fmt.Sprintf(`{"contest_id":%q}`, uuid.NewString()),
+		f.key.String(),
 	).Scan(&id)
 	if err != nil {
 		t.Fatal(err)
@@ -686,6 +710,7 @@ func TestWorkerShutdownCancelsActiveJob(t *testing.T) {
 	if fixtureErr != nil {
 		t.Fatal(fixtureErr)
 	}
+	tenantCtx = tenant.WithKey(t.Context(), f.key)
 	t.Cleanup(func() {
 		if err := f.Close(); err != nil {
 			t.Error(err)
@@ -757,6 +782,7 @@ func TestWorkerDoesNotDispatchAfterClaimLeaseExpires(t *testing.T) {
 	if fixtureErr != nil {
 		t.Fatal(fixtureErr)
 	}
+	tenantCtx = tenant.WithKey(t.Context(), f.key)
 	t.Cleanup(func() {
 		if err := f.Close(); err != nil {
 			t.Error(err)
@@ -817,6 +843,7 @@ func TestWorkerCompletesWhenRenewalIsCanceledByFinishedHandler(t *testing.T) {
 	if fixtureErr != nil {
 		t.Fatal(fixtureErr)
 	}
+	tenantCtx = tenant.WithKey(t.Context(), f.key)
 	t.Cleanup(func() {
 		if err := f.Close(); err != nil {
 			t.Error(err)
@@ -847,7 +874,7 @@ func TestWorkerCompletesWhenRenewalIsCanceledByFinishedHandler(t *testing.T) {
 		release: release,
 	}
 
-	service := leaderboard.NewService(leaderboard.NewRepository(limitedPool), blocked, 8*time.Second, f.prefix)
+	service := leaderboard.NewService(leaderboard.NewRepository(limitedPool), blocked, 8*time.Second, "")
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	repository := jobqueue.NewRepository(limitedPool)
 	runner, err := NewApplication(jobqueue.NewService(repository), service, Config{
@@ -939,6 +966,7 @@ func TestWorkerFairClaimsWithoutPrefetch(t *testing.T) {
 	if fixtureErr != nil {
 		t.Fatal(fixtureErr)
 	}
+	tenantCtx = tenant.WithKey(t.Context(), f.key)
 	t.Cleanup(func() {
 		if err := f.Close(); err != nil {
 			t.Error(err)
@@ -1018,6 +1046,7 @@ func TestWorkerGlobalLimitLeavesDueRowsUnclaimed(t *testing.T) {
 	if fixtureErr != nil {
 		t.Fatal(fixtureErr)
 	}
+	tenantCtx = tenant.WithKey(t.Context(), f.key)
 	t.Cleanup(func() {
 		if err := f.Close(); err != nil {
 			t.Error(err)
@@ -1035,7 +1064,7 @@ func TestWorkerGlobalLimitLeavesDueRowsUnclaimed(t *testing.T) {
 		release: release,
 	}
 
-	service := leaderboard.NewService(leaderboard.NewRepository(f.db), blocked, 8*time.Second, f.prefix)
+	service := leaderboard.NewService(leaderboard.NewRepository(f.db), blocked, 8*time.Second, "")
 	application, err := NewApplication(jobqueue.NewService(jobqueue.NewRepository(f.db)), service, Config{
 		Concurrency:     3,
 		ShutdownTimeout: 2 * time.Second,

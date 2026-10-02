@@ -30,9 +30,18 @@ func TestRebuildDoesNotPublishSnapshotAfterInvalidation(t *testing.T) {
 	}
 	t.Cleanup(client.Close)
 
-	key := "leaderboard:global:test:" + uuid.NewString()
+	tenantKey, err := tenant.Parse("e2e/fence-" + uuid.NewString())
+	if err != nil {
+		t.Fatal(err)
+	}
+	tenantCtx := tenant.WithKey(t.Context(), tenantKey)
+	store := NewStore(client, time.Second, "")
+	key, err := store.cacheKey(tenantCtx, globalKey)
+	if err != nil {
+		t.Fatal(err)
+	}
 	lease := key + ":lease"
-	if err := client.Do(t.Context(), client.B().Set().Key(lease).Value("test").Nx().Build()).Error(); err != nil {
+	if err := client.Do(tenantCtx, client.B().Set().Key(lease).Value("test").Nx().Build()).Error(); err != nil {
 		if errors.Is(err, valkeygo.Nil) {
 			t.Fatal("test key is leased")
 		}
@@ -46,23 +55,22 @@ func TestRebuildDoesNotPublishSnapshotAfterInvalidation(t *testing.T) {
 		}
 	})
 
-	store := NewStore(client, time.Second, "")
-	before, err := store.generation(t.Context(), key)
+	before, err := store.generation(tenantCtx, key)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := store.invalidate(t.Context(), key); err != nil {
+	if err := store.invalidate(tenantCtx, key); err != nil {
 		t.Fatal(err)
 	}
 	stale := []score{{userID: uuid.MustParse("11111111-1111-4111-8111-111111111111"), value: 10}}
-	published, err := store.rebuild(t.Context(), key, stale, before)
+	published, err := store.rebuild(tenantCtx, key, stale, before)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if published {
 		t.Error("stale snapshot was published after invalidation")
 	}
-	exists, err := client.Do(t.Context(), client.B().Exists().Key(key+":last_updated").Build()).AsInt64()
+	exists, err := client.Do(tenantCtx, client.B().Exists().Key(key+":last_updated").Build()).AsInt64()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -70,19 +78,19 @@ func TestRebuildDoesNotPublishSnapshotAfterInvalidation(t *testing.T) {
 		t.Errorf("stale marker exists after rejected rebuild")
 	}
 
-	after, err := store.generation(t.Context(), key)
+	after, err := store.generation(tenantCtx, key)
 	if err != nil {
 		t.Fatal(err)
 	}
 	fresh := []score{{userID: stale[0].userID, value: 20}}
-	published, err = store.rebuild(t.Context(), key, fresh, after)
+	published, err = store.rebuild(tenantCtx, key, fresh, after)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !published {
 		t.Error("fresh snapshot was rejected")
 	}
-	marker, err := client.Do(t.Context(), client.B().Get().Key(key+":last_updated").Build()).ToString()
+	marker, err := client.Do(tenantCtx, client.B().Get().Key(key+":last_updated").Build()).ToString()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -91,7 +99,7 @@ func TestRebuildDoesNotPublishSnapshotAfterInvalidation(t *testing.T) {
 	}
 
 	racing := NewStore(&invalidateBeforeZcard{Client: client, key: key, t: t}, time.Second, "")
-	page, cacheExists, err := racing.fetchPage(t.Context(), key, 0, 25)
+	page, cacheExists, err := racing.fetchPage(tenantCtx, key, 0, 25)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -133,9 +141,20 @@ func TestTenantLeaderboardInvalidationKeepsOtherTenantWarm(t *testing.T) {
 	ctxA := tenant.WithKey(t.Context(), keyA)
 	ctxB := tenant.WithKey(t.Context(), keyB)
 
-	cacheA := store.cacheKey(contestPrefix + contestID.String())
-	cacheB := store.cacheKey(contestPrefix + contestID.String())
+	cacheA, err := store.cacheKey(ctxA, contestPrefix+contestID.String())
+	if err != nil {
+		t.Fatal(err)
+	}
+	cacheB, err := store.cacheKey(ctxB, contestPrefix+contestID.String())
+	if err != nil {
+		t.Fatal(err)
+	}
 	cleanupLeaderboardKeys(t, client, cacheA, cacheB)
+	if cacheA != "tenant:"+keyA.String()+":"+contestPrefix+contestID.String() ||
+		cacheB != "tenant:"+keyB.String()+":"+contestPrefix+contestID.String() {
+		t.Fatalf("tenant leaderboard keys: A=%q B=%q", cacheA, cacheB)
+	}
+
 	userA, userB := uuid.New(), uuid.New()
 	published, err := store.rebuild(ctxA, cacheA, []score{{userID: userA, value: 10}}, "0")
 	if err != nil || !published {

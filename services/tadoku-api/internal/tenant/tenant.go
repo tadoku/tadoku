@@ -47,6 +47,7 @@ func ParseDeployment(raw string) (Deployment, error) {
 	if raw == "" {
 		return Deployment{}, nil
 	}
+
 	key, err := Parse(raw)
 	if err != nil {
 		return Deployment{}, err

@@ -821,6 +821,7 @@ func TestLoadConfigRejectsInvalidBranch(t *testing.T) {
 	} {
 		t.Setenv(key, value)
 	}
+
 	for _, raw := range []string{
 		"tadoku/prod",
 		"tadoku",

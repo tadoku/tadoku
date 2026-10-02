@@ -33,6 +33,7 @@ func TestPgBouncerTransactionTenantIsolation(t *testing.T) {
 
 	ctx, cancel := context.WithTimeout(t.Context(), 2*time.Minute)
 	defer cancel()
+
 	db, err := testpostgres.New(ctx)
 	if err != nil {
 		t.Fatal(err)
@@ -42,12 +43,14 @@ func TestPgBouncerTransactionTenantIsolation(t *testing.T) {
 			t.Error(err)
 		}
 	})
+
 	if _, err := db.Pool.Exec(ctx, `create table tenant_transport_rows (
 		expected text not null,
 		actual text not null default coalesce(current_setting('tadoku.tenant', true), '')
 	)`); err != nil {
 		t.Fatal(err)
 	}
+
 	disposable, err := url.Parse(db.DSN)
 	if err != nil {
 		t.Fatal(err)
@@ -58,6 +61,7 @@ func TestPgBouncerTransactionTenantIsolation(t *testing.T) {
 		t.Fatal(err)
 	}
 	config.MaxConns = 30
+
 	pool, err := pgxpool.NewWithConfig(ctx, config)
 	if err != nil {
 		t.Fatal(err)
@@ -75,6 +79,7 @@ func TestPgBouncerTransactionTenantIsolation(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
+
 	var reads, writes, wrongReads atomic.Int64
 	errors := make(chan error, 300)
 	start := make(chan struct{})
@@ -84,6 +89,7 @@ func TestPgBouncerTransactionTenantIsolation(t *testing.T) {
 		go func() {
 			defer workers.Done()
 			<-start
+
 			key := keys[worker%len(keys)]
 			tenantCtx := tenant.WithKey(ctx, key)
 			executor, err := postgres.Executor(tenantCtx, pool)
@@ -91,6 +97,7 @@ func TestPgBouncerTransactionTenantIsolation(t *testing.T) {
 				errors <- err
 				return
 			}
+
 			for iteration := range 20 {
 				var actual string
 				if err := executor.QueryRow(tenantCtx, currentTenantSQL).Scan(&actual); err != nil {
@@ -101,6 +108,7 @@ func TestPgBouncerTransactionTenantIsolation(t *testing.T) {
 				if actual != key.String() {
 					wrongReads.Add(1)
 				}
+
 				err := postgres.RunInTransaction(tenantCtx, pool, func(child context.Context) error {
 					tx, err := postgres.Executor(child, pool)
 					if err != nil {
@@ -113,6 +121,7 @@ func TestPgBouncerTransactionTenantIsolation(t *testing.T) {
 					if actual != key.String() {
 						wrongReads.Add(1)
 					}
+
 					if iteration%2 == 1 {
 						tag, err := tx.Exec(child, "insert into tenant_transport_rows (expected) values ($1)", key.String())
 						if err != nil {
@@ -128,6 +137,7 @@ func TestPgBouncerTransactionTenantIsolation(t *testing.T) {
 					errors <- err
 					return
 				}
+
 				if iteration%2 == 0 {
 					tag, err := executor.Exec(tenantCtx, "insert into tenant_transport_rows (expected) values ($1)", key.String())
 					if err != nil {
@@ -143,9 +153,11 @@ func TestPgBouncerTransactionTenantIsolation(t *testing.T) {
 			}
 		}()
 	}
+
 	close(start)
 	workers.Wait()
 	close(errors)
+
 	failed := 0
 	for err := range errors {
 		failed++
@@ -153,12 +165,14 @@ func TestPgBouncerTransactionTenantIsolation(t *testing.T) {
 			t.Error(err)
 		}
 	}
+
 	var stored, misfiled int64
 	err = db.Pool.QueryRow(ctx, `select count(*), count(*) filter (where actual <> expected)
 		from tenant_transport_rows`).Scan(&stored, &misfiled)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	t.Logf(
 		"goroutines=300 tenants=3 reads=%d writes=%d stored=%d wrong-tenant reads=%d misfiled writes=%d failed workers=%d",
 		reads.Load(), writes.Load(), stored, wrongReads.Load(), misfiled, failed,
@@ -177,16 +191,19 @@ func TestPgBouncerTransactionTenantIsolation(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer first.Release()
+
 	second, err := pool.Acquire(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer second.Release()
+
 	const (
 		setSessionTenantSQL           = "select set_config('tadoku.tenant', $1, false)"
 		setSessionTenantAndBackendSQL = "select set_config('tadoku.tenant', $1, false), pg_backend_pid()"
 		tenantAndBackendSQL           = "select coalesce(current_setting('tadoku.tenant', true), ''), pg_backend_pid()"
 	)
+
 	leaks := 0
 	for range 100 {
 		var actual string
@@ -199,6 +216,7 @@ func TestPgBouncerTransactionTenantIsolation(t *testing.T) {
 		if err := second.QueryRow(ctx, setSessionTenantAndBackendSQL, keys[1].String()).Scan(&actual, &backend); err != nil {
 			t.Fatal(err)
 		}
+
 		var observedBackend int64
 		if err := first.QueryRow(ctx, tenantAndBackendSQL).Scan(&actual, &observedBackend); err != nil {
 			t.Fatal(err)
@@ -207,6 +225,7 @@ func TestPgBouncerTransactionTenantIsolation(t *testing.T) {
 			leaks++
 		}
 	}
+
 	t.Logf("negative control: 100 reads through separate clients; verified cross-client session leaks=%d", leaks)
 	if leaks == 0 {
 		t.Fatal("session-level negative control detected no cross-client leak")

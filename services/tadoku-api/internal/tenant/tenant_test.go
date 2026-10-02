@@ -23,6 +23,7 @@ func TestParse(t *testing.T) {
 			}
 		})
 	}
+
 	for _, raw := range []string{
 		"",
 		"tadoku",
@@ -53,6 +54,7 @@ func TestDeployment(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	base, err := tenant.ParseDeployment("")
 	if err != nil || !base.Serves(tenant.Production()) || !base.Serves(other) {
 		t.Fatalf("base deployment does not serve valid tenants: %v", err)
@@ -61,11 +63,13 @@ func TestDeployment(t *testing.T) {
 	if err != nil || !branch.Serves(other) || branch.Serves(tenant.Production()) {
 		t.Fatalf("branch deployment does not isolate its tenant: %v", err)
 	}
+
 	for _, raw := range []string{"tadoku/prod", "tadoku", "e2e/", "invalid_key/id"} {
 		if _, err := tenant.ParseDeployment(raw); err == nil {
 			t.Errorf("accepted branch deployment %q", raw)
 		}
 	}
+
 	if base.Serves(tenant.Key{}) || branch.Serves(tenant.Key{}) {
 		t.Error("deployment served a zero key")
 	}
@@ -78,10 +82,12 @@ func TestContext(t *testing.T) {
 	if _, ok := tenant.FromContext(tenant.WithKey(context.Background(), tenant.Key{})); ok {
 		t.Fatal("zero key became a valid context tenant")
 	}
+
 	key, err := tenant.Parse("e2e/context")
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	ctx, cancel := context.WithCancel(tenant.WithKey(context.Background(), key))
 	cancel()
 	got, ok := tenant.FromContext(ctx)

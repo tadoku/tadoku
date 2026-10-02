@@ -68,6 +68,7 @@ func NewJWTAuthentication(
 				stopLifetimeCancellation := context.AfterFunc(lifetime, cancelRefresh)
 				defer stopLifetimeCancellation()
 				defer cancelRefresh()
+
 				if err := keys.Refresh(refreshContext, keyfunc.RefreshOptions{}); err != nil {
 					return nil, err
 				}
@@ -100,6 +101,7 @@ func NewJWTAuthentication(
 						}{Message: "tenant not served by this deployment"})
 						return
 					}
+
 					user := &identity.User{
 						Subject:     claims.Subject,
 						DisplayName: claims.Session.Identity.Traits.DisplayName,

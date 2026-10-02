@@ -70,10 +70,12 @@ func Executor(ctx context.Context, db *pgxpool.Pool) (DBTX, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	s, ok := ctx.Value(scopeKey{}).(*scope)
 	if !ok {
 		return poolExecutor{db: db, tenant: requested}, nil
 	}
+
 	if s.db != db {
 		return nil, ErrWrongDatabase
 	}
@@ -99,10 +101,12 @@ func (executor poolExecutor) batch(ctx context.Context, query string, args ...an
 	if requested != executor.tenant {
 		return nil, ErrTenantMismatch
 	}
+
 	name, value := requested.setting()
 	batch := new(pgx.Batch)
 	batch.Queue("select set_config($1, $2, true)", name, value)
 	batch.Queue(query, args...)
+
 	results := executor.db.SendBatch(ctx, batch)
 	if _, err := results.Exec(); err != nil {
 		return nil, errors.Join(err, results.Close())
@@ -205,6 +209,7 @@ func RunInTransaction(ctx context.Context, db *pgxpool.Pool, work func(context.C
 		}
 		return ErrNestedTransaction
 	}
+
 	if err := ctx.Err(); err != nil {
 		return err
 	}
@@ -212,6 +217,7 @@ func RunInTransaction(ctx context.Context, db *pgxpool.Pool, work func(context.C
 	if err != nil {
 		return err
 	}
+
 	tx, err := db.Begin(ctx)
 	if err != nil {
 		return fmt.Errorf("postgres: begin: %w", err)
@@ -223,6 +229,7 @@ func RunInTransaction(ctx context.Context, db *pgxpool.Pool, work func(context.C
 		defer cancel()
 		_ = tx.Rollback(cleanup)
 	}()
+
 	if err := ctx.Err(); err != nil {
 		return err
 	}
@@ -230,9 +237,11 @@ func RunInTransaction(ctx context.Context, db *pgxpool.Pool, work func(context.C
 	if _, err := tx.Exec(ctx, "select set_config($1, $2, true)", name, value); err != nil {
 		return fmt.Errorf("postgres: set transaction scope: %w", err)
 	}
+
 	if err := work(context.WithValue(ctx, scopeKey{}, s)); err != nil {
 		return err
 	}
+
 	if err := ctx.Err(); err != nil {
 		return err
 	}

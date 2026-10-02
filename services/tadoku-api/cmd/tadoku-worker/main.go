@@ -49,18 +49,22 @@ func loadConfig() (config, error) {
 	if err := envconfig.Process("WORKER", &cfg); err != nil {
 		return config{}, fmt.Errorf("load worker config: %w", err)
 	}
+
 	deployment, err := tenant.ParseDeployment(cfg.Branch)
 	if err != nil {
 		return config{}, fmt.Errorf("validate worker config: WORKER_BRANCH: %w", err)
 	}
 	cfg.deployment = deployment
+
 	if err := validator.New().Struct(cfg); err != nil {
 		return config{}, fmt.Errorf("validate worker config: %w", err)
 	}
+
 	cfg.Postgres, err = postgresconfig.Load("WORKER_POSTGRES", "WORKER_POSTGRES_URL")
 	if err != nil {
 		return config{}, err
 	}
+
 	return cfg, nil
 }
 
@@ -88,6 +92,7 @@ func run(ctx context.Context, cfg config, logger *slog.Logger) error {
 		collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
 		postgres.NewPoolCollector(pool),
 	)
+
 	metrics := worker.NewMetrics(registry)
 	leaderboardService := leaderboard.NewService(leaderboard.NewRepository(pool), client, cfg.ValkeyTimeout, cfg.LeaderboardCachePrefix)
 	application, err := worker.NewApplication(jobqueue.NewService(jobqueue.NewRepository(pool)), leaderboardService, worker.Config{
@@ -112,6 +117,7 @@ func run(ctx context.Context, cfg config, logger *slog.Logger) error {
 	})
 	privateServer := &http.Server{Handler: privateMux, ReadHeaderTimeout: 5 * time.Second}
 	metricsServer := &http.Server{Handler: promhttp.HandlerFor(registry, promhttp.HandlerOpts{}), ReadHeaderTimeout: 5 * time.Second}
+
 	privateListener, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", cfg.Port))
 	if err != nil {
 		return fmt.Errorf("listen for worker health: %w", err)
@@ -126,6 +132,7 @@ func run(ctx context.Context, cfg config, logger *slog.Logger) error {
 	workCtx, cancelWork := context.WithCancel(ctx)
 	workerDone := make(chan error, 1)
 	go func() { workerDone <- application.Run(workCtx) }()
+
 	serverErrors := make(chan error, 2)
 	go func() {
 		if err := privateServer.Serve(privateListener); err != nil && !errors.Is(err, http.ErrServerClosed) {
@@ -137,6 +144,7 @@ func run(ctx context.Context, cfg config, logger *slog.Logger) error {
 			serverErrors <- fmt.Errorf("worker metrics server: %w", err)
 		}
 	}()
+
 	logger.Info("tadoku-worker started", "address", privateListener.Addr(), "postgres_max_connections", cfg.PostgresMaxConnections)
 
 	var runErr error
@@ -144,8 +152,10 @@ func run(ctx context.Context, cfg config, logger *slog.Logger) error {
 	case <-ctx.Done():
 	case runErr = <-serverErrors:
 	}
+
 	cancelWork()
 	runErr = errors.Join(runErr, <-workerDone)
+
 	shutdownCtx, stop := context.WithTimeout(context.Background(), cfg.ShutdownTimeout)
 	defer stop()
 	return errors.Join(runErr, privateServer.Shutdown(shutdownCtx), metricsServer.Shutdown(shutdownCtx))
@@ -153,21 +163,25 @@ func run(ctx context.Context, cfg config, logger *slog.Logger) error {
 
 func replay(ctx context.Context, args []string, logger *slog.Logger) error {
 	ctx = tenant.WithKey(ctx, tenant.Production())
+
 	flags := flag.NewFlagSet("replay", flag.ContinueOnError)
 	flags.SetOutput(io.Discard)
 	id := flags.Int64("id", 0, "failed job ID")
 	actor := flags.String("actor", "", "operator identity")
 	reason := flags.String("reason", "", "reason for replay")
+
 	if err := flags.Parse(args); err != nil {
 		return fmt.Errorf("parse replay flags: %w", err)
 	}
 	if flags.NArg() != 0 || *id < 1 || strings.TrimSpace(*actor) == "" || strings.TrimSpace(*reason) == "" {
 		return errors.New("usage: tadoku-worker replay --id <failed-id> --actor <actor> --reason <reason>")
 	}
+
 	postgresConfig, err := postgresconfig.Load("WORKER_POSTGRES", "WORKER_POSTGRES_URL")
 	if err != nil {
 		return err
 	}
+
 	openCtx, stop := context.WithTimeout(ctx, 3*time.Second)
 	pool, err := postgres.Open(openCtx, postgresConfig.WithApplicationName("tadoku-worker-replay").URL(), 1)
 	stop()
@@ -175,6 +189,7 @@ func replay(ctx context.Context, args []string, logger *slog.Logger) error {
 		return fmt.Errorf("open replay postgres: %s", postgresConfig.Redact(err))
 	}
 	defer pool.Close()
+
 	newID, err := worker.Replay(ctx, jobqueue.NewService(jobqueue.NewRepository(pool)), *id, *actor, *reason)
 	if err != nil {
 		return fmt.Errorf("replay job %d: %w", *id, err)

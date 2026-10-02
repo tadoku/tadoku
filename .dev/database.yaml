@@ -24,24 +24,28 @@ spec:
               \gset
               \if :valid_name
               \else
-                do $$ begin raise exception 'refusing invalid or overlong branch database name'; end $$;
+                \echo 'refusing invalid or overlong branch database name'
+                \quit 1
               \endif
               select pg_advisory_lock(hashtextextended(:'database', 0));
               select exists(select from pg_database where datname = :'database') as exists,
                      exists(select from pg_database where datname = :'database'
-                            and pg_get_userbyid(datdba) = 'tadoku'
+                            and pg_get_userbyid(datdba) = 'tadoku_owner'
                             and shobj_description(oid, 'pg_database') = :'marker') as owned
               \gset
               \if :exists
                 \if :owned
                   \echo 'branch database already provisioned'
                 \else
-                  do $$ begin raise exception 'refusing existing database without matching dev-cli ownership'; end $$;
+                  \echo 'refusing existing database without matching dev-cli ownership'
+                  \quit 1
                 \endif
               \else
-                select format('create database %I owner tadoku', :'database') \gexec
+                select format('create database %I owner tadoku_owner', :'database') \gexec
                 select format('comment on database %I is %L', :'database', :'marker') \gexec
               \endif
+              \connect :"database"
+              \i /config/ownership.sql
               SQL
           env:
             - name: DEV_ROUTE
@@ -64,6 +68,10 @@ spec:
                 secretKeyRef:
                   name: postgres.tadoku-dev-db.credentials.postgresql.acid.zalan.do
                   key: password
+          volumeMounts:
+            - name: ownership
+              mountPath: /config
+              readOnly: true
           securityContext:
             runAsNonRoot: true
             runAsUser: 65532
@@ -77,3 +85,8 @@ spec:
             limits:
               cpu: "1"
               memory: 128Mi
+
+      volumes:
+        - name: ownership
+          configMap:
+            name: tadoku-api-ownership

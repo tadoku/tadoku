@@ -1,5 +1,7 @@
 load("@rules_go//go:def.bzl", "go_library", "go_test")
 
+# gazelle:exclude pgbouncer_test.go
+
 go_library(
     name = "postgres",
     srcs = [
@@ -13,6 +15,8 @@ go_library(
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/infra/postgres",
     visibility = ["//services/tadoku-api:infrastructure_consumers"],
     deps = [
+        "//services/tadoku-api/internal/tenant",
+        "//services/tadoku-api/internal/tenant/alltenants",
         "@com_github_google_uuid//:uuid",
         "@com_github_jackc_pgerrcode//:pgerrcode",
         "@com_github_jackc_pgx_v5//:pgx",
@@ -24,11 +28,34 @@ go_library(
 )
 
 go_test(
+    name = "pgbouncer_test",
+    srcs = ["pgbouncer_test.go"],
+    args = ["-test.v"],
+    env_inherit = [
+        "TADOKU_TEST_PGBOUNCER_URL",
+        "TADOKU_TEST_POSTGRES_URL",
+    ],
+    tags = [
+        "no-cache",
+        "no-remote-exec",
+        "requires-network",
+    ],
+    deps = [
+        ":postgres",
+        "//services/tadoku-api/internal/tenant",
+        "//services/tadoku-api/internal/testpostgres",
+        "@com_github_jackc_pgx_v5//pgxpool",
+    ],
+)
+
+go_test(
     name = "postgres_test",
     srcs = [
         "errors_test.go",
         "pool_test.go",
         "sqlc_compat_test.go",
+        "tenancy_schema_test.go",
+        "tenant_test.go",
         "timestamp_test.go",
         "transaction_test.go",
     ],
@@ -43,6 +70,8 @@ go_test(
         ":postgres",
         "//services/tadoku-api/infra/postgres/internal/pgxcompat",
         "//services/tadoku-api/internal/errx",
+        "//services/tadoku-api/internal/tenant",
+        "//services/tadoku-api/internal/tenant/alltenants",
         "//services/tadoku-api/internal/testpostgres",
         "@com_github_google_uuid//:uuid",
         "@com_github_jackc_pgerrcode//:pgerrcode",

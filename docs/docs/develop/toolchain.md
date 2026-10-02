@@ -23,13 +23,16 @@ bazel test //services/tadoku-api/e2e:e2e_test    # one target
 bazel test //services/tadoku-api/e2e:e2e_test --test_filter=TestAuthentication
 ```
 
-Tadoku API integration tests need disposable loopback PostgreSQL 17 and
-Valkey 9 instances, passed as `TADOKU_TEST_POSTGRES_URL` and
+Tadoku API integration tests need disposable loopback PostgreSQL 17,
+PgBouncer 1.25.2 in transaction mode and Valkey 9 instances, passed as
+`TADOKU_TEST_POSTGRES_URL`, `TADOKU_TEST_PGBOUNCER_URL` and
 `TADOKU_TEST_VALKEY_URL`. CI uses
 `postgres://postgres:postgres@127.0.0.1:5432/postgres?sslmode=disable` and
-`redis://127.0.0.1:6379`. See [Tadoku API testing](../tadoku-api/testing.md).
+the same URL on port 6432 for PgBouncer, plus `redis://127.0.0.1:6379` for
+Valkey. See [Tadoku API testing](../tadoku-api/testing.md).
 
-Format Go code with `gofmt -w services/` before committing.
+Format Go code with `gofmt -w services/` before committing. `gofmt` does not
+cover layout; follow [Go style](../tadoku-api/go-style.md) as well.
 Run `bazel run //tools/ci/commentpolicy` to check handwritten Go comments;
 it ignores generated files and accepts tool directives, declaration usage
 notes and marked test fixture safety notes.
@@ -119,4 +122,3 @@ All workflows live in `.github/workflows/`.
 | `build-frontend-paper-styleguide.yaml` | PRs and `main` pushes touching Paper | Paper boundaries, `paper-ui` and `paper-styleguide` lint, typecheck, test and build, package checks, image smoke test; publishes from `main` |
 | `check-paper-playground.yaml` | PRs and `main` pushes touching the playground or `paper-ui` | Paper boundaries and `paper-playground` lint, typecheck, test and build; never published |
 | `deploy-docs.yaml` | PRs and `main` pushes touching `docs/` or the API spec | `pnpm api:check`, typecheck, build and the public API boundary (fixed page counts, no internal paths); deploys GitHub Pages from `main` |
-| `build-postgres-backup-job.yaml` | Pushes touching `jobs/postgres-backup/` | Builds and pushes that container job image |

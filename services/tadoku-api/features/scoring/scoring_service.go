@@ -130,7 +130,7 @@ func (s *Service) NormalizeLogInput(input logscore.Input) (logscore.Input, error
 	if input.LanguageCode == "" {
 		return logscore.Input{}, errx.NewInvalidInputError("language_code is required")
 	}
-	tags, err := NormalizeTags(input.Tags)
+	tags, err := normalizeTags(input.Tags)
 	if err != nil {
 		return logscore.Input{}, err
 	}
@@ -278,7 +278,7 @@ func (s *Service) Preview(ctx context.Context, parameters PreviewParameters) (*P
 	if err != nil {
 		return nil, err
 	}
-	tags, err := NormalizeTags(parameters.Tags)
+	tags, err := normalizeTags(parameters.Tags)
 	if err != nil {
 		return nil, err
 	}
@@ -586,9 +586,9 @@ func (s *Service) CreateContestDraft(ctx context.Context, parameters ContestDraf
 	}
 	switch configuration := parameters.Configuration.(type) {
 	case Replace:
-		draft.Mode = string(ModeReplace)
+		draft.Mode = string(modeReplace)
 	case Override:
-		draft.Mode = string(ModeOverride)
+		draft.Mode = string(modeOverride)
 		draft.FallbackRuleSetID = &configuration.FallbackRuleSetID
 	default:
 		return nil, errx.NewInternalError("invalid contest draft configuration")

@@ -16,6 +16,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
 const testDSNVariable = "TADOKU_TEST_POSTGRES_URL"
@@ -43,17 +44,20 @@ func disposableDSN(t *testing.T) string {
 
 func openPool(t *testing.T) *pgxpool.Pool {
 	t.Helper()
+
 	config, err := pgxpool.ParseConfig(disposableDSN(t))
 	if err != nil {
 		t.Fatalf("parse disposable PostgreSQL: %v", err)
 	}
 	config.MaxConns = 6
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+
+	ctx, cancel := context.WithTimeout(tenant.WithKey(context.Background(), tenant.Production()), 5*time.Second)
 	defer cancel()
 	db, err := pgxpool.NewWithConfig(ctx, config)
 	if err != nil {
 		t.Fatalf("open disposable PostgreSQL: %v", err)
 	}
+
 	t.Cleanup(db.Close)
 	if err := db.Ping(ctx); err != nil {
 		t.Fatalf("ping disposable PostgreSQL: %v", err)
@@ -71,23 +75,27 @@ type fixture struct {
 func newFixture(t *testing.T) (context.Context, fixture) {
 	t.Helper()
 	db := openPool(t)
+
 	var random [8]byte
 	if _, err := rand.Read(random[:]); err != nil {
 		t.Fatalf("random schema suffix: %v", err)
 	}
 	schema := "tadoku_tx_test_" + hex.EncodeToString(random[:])
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+
+	ctx, cancel := context.WithTimeout(tenant.WithKey(context.Background(), tenant.Production()), 15*time.Second)
 	t.Cleanup(cancel)
+
 	if _, err := db.Exec(ctx, "create schema "+schema); err != nil {
 		t.Fatalf("create synthetic schema: %v", err)
 	}
 	t.Cleanup(func() {
-		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 5*time.Second)
+		cleanupCtx, cleanupCancel := context.WithTimeout(tenant.WithKey(context.Background(), tenant.Production()), 5*time.Second)
 		defer cleanupCancel()
 		if _, err := db.Exec(cleanupCtx, "drop schema "+schema+" cascade"); err != nil {
 			t.Errorf("drop synthetic schema: %v", err)
 		}
 	})
+
 	_, err := db.Exec(ctx, "create table "+schema+`.book (
 		id integer primary key,
 		title text not null
@@ -99,6 +107,7 @@ func newFixture(t *testing.T) (context.Context, fixture) {
 	if err != nil {
 		t.Fatalf("create synthetic tables: %v", err)
 	}
+
 	return ctx, fixture{db, schema, bookRepository{db, schema}, noteRepository{db, schema}}
 }
 
@@ -338,21 +347,26 @@ func TestRunInTransactionDeferredConstraintFailsAtCommitWithoutReplay(t *testing
 
 func TestRunInTransactionFailedBeginNeverCallsWork(t *testing.T) {
 	t.Parallel()
+
 	t.Run("already canceled", func(t *testing.T) {
 		db := openPool(t)
-		ctx, cancel := context.WithCancel(context.Background())
+		ctx, cancel := context.WithCancel(tenant.WithKey(context.Background(), tenant.Production()))
 		cancel()
+
 		called := false
 		err := postgres.RunInTransaction(ctx, db, func(context.Context) error { called = true; return nil })
 		if !errors.Is(err, context.Canceled) || called {
 			t.Errorf("canceled begin: error=%v, called=%v", err, called)
 		}
 	})
+
 	t.Run("closed pool", func(t *testing.T) {
 		db := openPool(t)
 		db.Close()
+		ctx := tenant.WithKey(context.Background(), tenant.Production())
+
 		called := false
-		err := postgres.RunInTransaction(context.Background(), db, func(context.Context) error { called = true; return nil })
+		err := postgres.RunInTransaction(ctx, db, func(context.Context) error { called = true; return nil })
 		if err == nil || called {
 			t.Errorf("closed-pool begin: error=%v, called=%v", err, called)
 		}
@@ -360,10 +374,12 @@ func TestRunInTransactionFailedBeginNeverCallsWork(t *testing.T) {
 			t.Errorf("closed-pool begin kind=%v, want unknown", got)
 		}
 	})
+
 	t.Run("waiting for pool connection", func(t *testing.T) {
 		db := openPool(t)
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		ctx, cancel := context.WithTimeout(tenant.WithKey(context.Background(), tenant.Production()), 5*time.Second)
 		defer cancel()
+
 		for range db.Config().MaxConns {
 			connection, err := db.Acquire(ctx)
 			if err != nil {
@@ -371,8 +387,10 @@ func TestRunInTransactionFailedBeginNeverCallsWork(t *testing.T) {
 			}
 			defer connection.Release()
 		}
+
 		blocked, stop := context.WithTimeout(ctx, 150*time.Millisecond)
 		defer stop()
+
 		called := false
 		err := postgres.RunInTransaction(blocked, db, func(context.Context) error { called = true; return nil })
 		if !errors.Is(err, context.DeadlineExceeded) || called {
@@ -584,9 +602,6 @@ func TestExecutorSupportsPoolAndTransactionSQLSurface(t *testing.T) {
 			if err != nil {
 				return err
 			}
-			if !transactional && q != f.db {
-				return errors.New("ordinary executor is not the native pool")
-			}
 			if transactional {
 				if _, ok := q.(pgx.Tx); !ok {
 					return errors.New("transaction executor is not a native transaction")
@@ -634,8 +649,9 @@ func TestExecutorSupportsPoolAndTransactionSQLSurface(t *testing.T) {
 func TestExecutorForwardsCancellationForEveryOperation(t *testing.T) {
 	t.Parallel()
 	db := openPool(t)
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(tenant.WithKey(context.Background(), tenant.Production()), 5*time.Second)
 	defer cancel()
+
 	for _, transactional := range []bool{false, true} {
 		for _, operation := range []string{"exec", "query", "query row"} {
 			work := func(ctx context.Context) error {
@@ -643,6 +659,7 @@ func TestExecutorForwardsCancellationForEveryOperation(t *testing.T) {
 				if err != nil {
 					return err
 				}
+
 				canceled, stop := context.WithCancel(ctx)
 				stop()
 				switch operation {
@@ -660,12 +677,14 @@ func TestExecutorForwardsCancellationForEveryOperation(t *testing.T) {
 				}
 				return err
 			}
+
 			var err error
 			if transactional {
 				err = postgres.RunInTransaction(ctx, db, work)
 			} else {
 				err = work(ctx)
 			}
+
 			if !errors.Is(err, context.Canceled) {
 				t.Errorf("%s transactional=%v: error=%v, want context.Canceled", operation, transactional, err)
 			}

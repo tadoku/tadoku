@@ -35,6 +35,11 @@ files in an area, read its page; those rules are as binding as this file.
   hardcode the copy, write a migration or SQL rewrite, or invent a workaround.
   Report that the edit belongs in the admin CMS.
 - **Use `pnpm`, never `npm`. Use `bazel`, never `go`.**
+- **Lay out Go for readers, not just `gofmt`.** Group function bodies into
+  cohesive blocks separated by blank lines, wrap lines past about 120 columns
+  one parameter, argument or clause per line, and put table entries and SQL
+  rows one per line. Follow [Go style](docs/docs/tadoku-api/go-style.md) for
+  all new and changed Go, including tests.
 - **Go comments give usage instructions, not code narration.** Keep `//go:`
   directives. Add prose only at a declaration when callers need a non-obvious
   constraint; test fixture safety comments begin `// Test safety:`. Do not use
@@ -71,6 +76,7 @@ files in an area, read its page; those rules are as binding as this file.
 | --- | --- |
 | A module boundary, public interface or shared abstraction | `docs/docs/architecture/module-design.md` |
 | Tadoku API code, the first time | `docs/docs/tadoku-api/index.md` |
+| Any handwritten Go, including tests | `docs/docs/tadoku-api/go-style.md` |
 | An application operation, feature, repository or domain package | `docs/docs/tadoku-api/conventions.md` |
 | `services/tadoku-api/spec/openapi.yaml` or a request or response shape | `docs/docs/tadoku-api/contract.md` |
 | A migration, SQL query or transaction | `docs/docs/tadoku-api/database.md` |

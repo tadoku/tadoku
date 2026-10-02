@@ -24,11 +24,11 @@ const (
 	SourceDurationMinutes Source = "duration_minutes"
 )
 
-type Mode string
+type mode string
 
 const (
-	ModeReplace  Mode = "replace"
-	ModeOverride Mode = "override"
+	modeReplace  mode = "replace"
+	modeOverride mode = "override"
 )
 
 type Rule struct {
@@ -88,14 +88,14 @@ type Override struct {
 func (Override) isContestDraftConfiguration() {}
 
 func NewContestDraftConfiguration(rawMode string, fallbackRuleSetID *uuid.UUID) (ContestDraftConfiguration, error) {
-	switch Mode(rawMode) {
-	case ModeReplace:
+	switch mode(rawMode) {
+	case modeReplace:
 		if fallbackRuleSetID != nil {
 			return nil, errx.NewInvalidInputError("replace rule sets cannot have a fallback")
 		}
 
 		return Replace{}, nil
-	case ModeOverride:
+	case modeOverride:
 		if fallbackRuleSetID == nil {
 			return nil, errx.NewInvalidInputError("override rule sets require a fallback")
 		}
@@ -141,7 +141,7 @@ func (p *DraftRules) normalize(languages []domainlanguages.Language) error {
 			}
 		}
 		if rule.Tag != "" {
-			tags, err := NormalizeTags([]string{rule.Tag})
+			tags, err := normalizeTags([]string{rule.Tag})
 			if err != nil || len(tags) != 1 {
 				return errx.NewInvalidInputError("rule tag is invalid")
 			}
@@ -213,7 +213,7 @@ func ValidatePreview(parameters PreviewParameters) error {
 		return errx.NewInvalidInputError("language_code is required")
 	}
 
-	_, err := NormalizeTags(parameters.Tags)
+	_, err := normalizeTags(parameters.Tags)
 	if err != nil {
 		return err
 	}
@@ -338,7 +338,7 @@ func validActivity(id int32) bool {
 
 func finite(value float32) bool { return !math.IsNaN(float64(value)) && !math.IsInf(float64(value), 0) }
 
-func NormalizeTags(tags []string) ([]string, error) {
+func normalizeTags(tags []string) ([]string, error) {
 	seen := make(map[string]struct{}, len(tags))
 	result := make([]string, 0, len(tags))
 	for _, tag := range tags {

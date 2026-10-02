@@ -45,6 +45,9 @@ results, filtering, ordering and limits. Prove it with HTTP golden cases
 against the production router, using real authentication, authorization and
 persistence; see [HTTP golden cases](./http-e2e.md#http-golden-cases).
 
+Profile and contest-profile language scores are ordered by score descending,
+then language code ascending when scores are equal.
+
 ## Request decoding
 
 - Request bodies use the generated JSON decoder.

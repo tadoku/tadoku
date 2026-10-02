@@ -48,7 +48,7 @@ where
   and year = sqlc.arg('year')
   and logs.deleted_at is null
 group by language_code, languages.name
-order by score desc;
+order by score desc, language_code asc;
 
 -- name: YearlyActivitySplitForUser :many
 select
@@ -74,7 +74,7 @@ where
   and logs.user_id = sqlc.arg('user_id')
   and logs.deleted_at is null
 group by logs.language_code
-order by 2 desc;
+order by 2 desc, logs.language_code asc;
 
 -- name: ActivityPerLanguageForContestProfile :many
 with eligible_logs as (

@@ -1,6 +1,6 @@
 ---
 title: Conventions
-description: Layering, feature package, write workflow, actor authorization, dependency, error, validation, business-time and readability rules for Tadoku API code.
+description: Layering, feature package, write workflow, actor authorization, dependency, error, validation, business-time and comment rules for Tadoku API code.
 sidebar_position: 2
 ---
 
@@ -226,10 +226,8 @@ exported.
   shared-resource risk. Start that comment group with `// Test safety:` and
   state the instruction. `bazel run //tools/ci/commentpolicy` checks placement
   and form in handwritten Go; review still judges whether a comment adds value.
-- Separate setup, execution, error handling and response mapping with
-  whitespace. Within a function, put a blank line between coherent phases such
-  as authorization, input extraction, persistence and response mapping.
-- Put unrelated struct fields and composite-literal entries on separate lines.
+- Follow [Go style](./go-style.md) for line length, wrapping, blank-line
+  grouping and composite literals.
 - Split application and transport operations into files by functionality, and
   give operations descriptive names.
 - Keep constructors and resource lifecycle code visibly separate from endpoint

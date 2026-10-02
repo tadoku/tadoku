@@ -17,6 +17,15 @@ Bazel target `visibility` and the package groups in
 boundaries described in [Code ownership](./index.md#code-ownership).
 
 - Feature libraries are visible only to application, startup and E2E packages.
+- `internal/tenant` owns parsed tenant keys, context propagation and
+  deployment scoping. It uses `:internal_consumers` and depends only on the
+  standard library.
+- `internal/tenant/alltenants` exposes the restricted cross-tenant context
+  marker. Its library is visible only to `services/tadoku-api/app/worker`,
+  `services/tadoku-api/infra/postgres` and `services/tadoku-api/e2e` in their
+  exact Bazel packages. Features and the API transport cannot request this
+  scope. A database context must carry either this marker or one tenant, never
+  both.
 - The worker application (`app/worker`) is visible only to its binary
   (`cmd/tadoku-worker`) and E2E.
 - A feature's generated sqlc package is visible only to that feature.
@@ -65,6 +74,7 @@ the repository root:
 bazel run //:gazelle -- -mode=diff
 ./scripts/check-tadoku-api-visibility.sh
 ./tools/ci/check_tadoku_api_provider_deps.sh
+bazel run //tools/ci/depolicy
 bazel build //services/tadoku-api/...
 ```
 
@@ -76,7 +86,8 @@ The depolicy check (`bazel run //tools/ci/depolicy`, configured in
 `.depolicy.yaml`) runs in CI as a temporary backstop. It scans every Go file,
 including tests and inactive build-tag files. Its YAML is not the source of
 truth for new package boundaries and does not define the preferred package
-structure.
+structure. New internal packages must also be listed in its internal policy
+so their source and tests are covered.
 
 ## Known gaps
 

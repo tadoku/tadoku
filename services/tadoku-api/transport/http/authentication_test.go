@@ -22,6 +22,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
 type writerFunc func([]byte) (int, error)
@@ -54,7 +55,7 @@ func TestAuthenticationRequiresConfiguration(t *testing.T) {
 		{name: "missing logger", lifetime: t.Context(), url: "http://jwks.test", timeout: time.Second, maxAge: 24 * time.Hour, wantError: "logger is required"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			_, err := NewJWTAuthentication(test.lifetime, test.url, test.timeout, test.maxAge, "", test.logger)
+			_, err := NewJWTAuthentication(test.lifetime, test.url, test.timeout, test.maxAge, "", tenant.Deployment{}, test.logger)
 			if err == nil || err.Error() != test.wantError {
 				t.Errorf("error=%v, want %q", err, test.wantError)
 			}
@@ -66,10 +67,12 @@ func TestAuthenticationRequiresConfiguration(t *testing.T) {
 	if err == nil {
 		t.Error("router accepted missing authentication middleware")
 	}
+
 	_, err = NewHandler(app.New(app.Dependencies{}), func(context.Context) error { return nil }, time.Second, prometheus.NewRegistry(), slog.Default(), passthrough, nil, passthrough)
 	if err == nil {
 		t.Error("router accepted missing banned-user middleware")
 	}
+
 	_, err = NewHandler(app.New(app.Dependencies{}), func(context.Context) error { return nil }, time.Second, prometheus.NewRegistry(), slog.Default(), passthrough, passthrough, nil)
 	if err == nil {
 		t.Error("router accepted missing callback authentication middleware")
@@ -86,10 +89,12 @@ func TestAuthenticationTokenPolicy(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	edPublicKey, edPrivateKey, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	jwks := fmt.Sprintf(`{"keys":[%s,{"kty":"OKP","crv":"Ed25519","kid":"ed-key","alg":"EdDSA","use":"sig","x":%q}]}`,
 		rsaJWK("rsa-key", &rsaPrivateKey.PublicKey), base64.RawURLEncoding.EncodeToString(edPublicKey))
 	server := httptest.NewServer(stdhttp.HandlerFunc(func(w stdhttp.ResponseWriter, _ *stdhttp.Request) {
@@ -97,10 +102,11 @@ func TestAuthenticationTokenPolicy(t *testing.T) {
 	}))
 	t.Cleanup(server.Close)
 
-	authenticate, err := NewJWTAuthentication(t.Context(), server.URL, time.Second, 24*time.Hour, "", slog.Default())
+	authenticate, err := NewJWTAuthentication(t.Context(), server.URL, time.Second, 24*time.Hour, "", tenant.Deployment{}, slog.Default())
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	handler := authenticate(stdhttp.HandlerFunc(func(w stdhttp.ResponseWriter, _ *stdhttp.Request) {
 		w.WriteHeader(stdhttp.StatusNoContent)
 	}))
@@ -127,6 +133,7 @@ func TestAuthenticationTokenPolicy(t *testing.T) {
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			token := jwt.NewWithClaims(test.method, &userClaims{
+				Tenant: "tadoku/prod",
 				RegisteredClaims: jwt.RegisteredClaims{
 					Issuer:    test.issuer,
 					Subject:   test.subject,
@@ -304,7 +311,7 @@ func TestAuthenticationRejectsFailedJWKSFetch(t *testing.T) {
 			}))
 			t.Cleanup(server.Close)
 
-			_, err := NewJWTAuthentication(t.Context(), server.URL, time.Second, 24*time.Hour, "", slog.Default())
+			_, err := NewJWTAuthentication(t.Context(), server.URL, time.Second, 24*time.Hour, "", tenant.Deployment{}, slog.Default())
 			if err == nil {
 				t.Fatal("failed JWKS fetch accepted")
 			}
@@ -328,7 +335,7 @@ func TestAuthenticationBoundsJWKSFetch(t *testing.T) {
 	}))
 	t.Cleanup(server.Close)
 
-	_, err := NewJWTAuthentication(t.Context(), server.URL, 20*time.Millisecond, 24*time.Hour, "", slog.Default())
+	_, err := NewJWTAuthentication(t.Context(), server.URL, 20*time.Millisecond, 24*time.Hour, "", tenant.Deployment{}, slog.Default())
 	if !errors.Is(err, context.DeadlineExceeded) {
 		t.Fatalf("JWKS fetch error=%v, want deadline exceeded", err)
 	}
@@ -347,7 +354,7 @@ func TestAuthenticationCancelsInitialJWKSFetchWithLifetime(t *testing.T) {
 	lifetime, cancelLifetime := context.WithCancel(t.Context())
 	result := make(chan error, 1)
 	go func() {
-		_, err := NewJWTAuthentication(lifetime, server.URL, time.Minute, 24*time.Hour, "", slog.Default())
+		_, err := NewJWTAuthentication(lifetime, server.URL, time.Minute, 24*time.Hour, "", tenant.Deployment{}, slog.Default())
 		result <- err
 	}()
 
@@ -356,12 +363,14 @@ func TestAuthenticationCancelsInitialJWKSFetchWithLifetime(t *testing.T) {
 	case <-time.After(time.Second):
 		t.Fatal("initial JWKS fetch did not start")
 	}
+
 	cancelLifetime()
 	select {
 	case <-fetchCanceled:
 	case <-time.After(time.Second):
 		t.Error("canceling authentication lifetime did not cancel the initial JWKS fetch")
 	}
+
 	select {
 	case err := <-result:
 		if !errors.Is(err, context.Canceled) {
@@ -393,7 +402,7 @@ func TestAuthenticationRefreshesUnknownSigningKey(t *testing.T) {
 	}))
 	t.Cleanup(server.Close)
 
-	authenticate, err := NewJWTAuthentication(t.Context(), server.URL, time.Second, 24*time.Hour, "", slog.Default())
+	authenticate, err := NewJWTAuthentication(t.Context(), server.URL, time.Second, 24*time.Hour, "", tenant.Deployment{}, slog.Default())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -402,6 +411,7 @@ func TestAuthenticationRefreshesUnknownSigningKey(t *testing.T) {
 	subject := "33333333-3333-4333-8333-333333333333"
 	issuedAt := jwt.TimeFunc().Add(-time.Minute).UTC().Truncate(time.Second)
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, &userClaims{
+		Tenant: "tadoku/prod",
 		RegisteredClaims: jwt.RegisteredClaims{
 			Subject:   subject,
 			IssuedAt:  jwt.NewNumericDate(issuedAt),
@@ -428,6 +438,7 @@ func TestAuthenticationRefreshesUnknownSigningKey(t *testing.T) {
 	request.Header.Set("Authorization", "Bearer "+signed)
 	response := httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
+
 	if response.Code != stdhttp.StatusNoContent {
 		t.Errorf("status=%d, want %d", response.Code, stdhttp.StatusNoContent)
 	}
@@ -447,16 +458,19 @@ func TestAuthenticationRateLimitsUnknownSigningKeyRefresh(t *testing.T) {
 	}))
 	t.Cleanup(server.Close)
 
-	authenticate, err := NewJWTAuthentication(t.Context(), server.URL, time.Second, 24*time.Hour, "", slog.Default())
+	authenticate, err := NewJWTAuthentication(t.Context(), server.URL, time.Second, 24*time.Hour, "", tenant.Deployment{}, slog.Default())
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	issuedAt := jwt.TimeFunc().Add(-time.Minute).UTC().Truncate(time.Second)
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, &userClaims{
+		Tenant: "tadoku/prod",
 		RegisteredClaims: jwt.RegisteredClaims{
 			Subject:   "44444444-4444-4444-8444-444444444444",
 			IssuedAt:  jwt.NewNumericDate(issuedAt),
@@ -468,6 +482,7 @@ func TestAuthenticationRateLimitsUnknownSigningKeyRefresh(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	handler := authenticate(stdhttp.HandlerFunc(func(stdhttp.ResponseWriter, *stdhttp.Request) {
 		t.Error("unknown signing key reached downstream handler")
 	}))
@@ -481,6 +496,7 @@ func TestAuthenticationRateLimitsUnknownSigningKeyRefresh(t *testing.T) {
 			t.Errorf("status=%d, want %d", response.Code, stdhttp.StatusUnauthorized)
 		}
 	}
+
 	if got := fetches.Load(); got != 2 {
 		t.Errorf("JWKS fetched %d times, want one startup and one rate-limited refresh", got)
 	}
@@ -494,6 +510,7 @@ func TestAuthenticationCancelsRefreshWithLifetime(t *testing.T) {
 	releaseRefreshFailure := make(chan struct{})
 	var logRefreshFailure sync.Once
 	var fetches atomic.Int32
+
 	server := httptest.NewServer(stdhttp.HandlerFunc(func(w stdhttp.ResponseWriter, r *stdhttp.Request) {
 		if fetches.Add(1) == 1 {
 			_, _ = w.Write([]byte(`{"keys":[]}`))
@@ -511,6 +528,7 @@ func TestAuthenticationCancelsRefreshWithLifetime(t *testing.T) {
 		close(releaseRefresh)
 		server.Close()
 	})
+
 	logger := slog.New(slog.NewTextHandler(writerFunc(func(p []byte) (int, error) {
 		logRefreshFailure.Do(func() {
 			close(refreshFailed)
@@ -521,16 +539,19 @@ func TestAuthenticationCancelsRefreshWithLifetime(t *testing.T) {
 	t.Cleanup(func() { close(releaseRefreshFailure) })
 
 	lifetime, cancelLifetime := context.WithCancel(t.Context())
-	authenticate, err := NewJWTAuthentication(lifetime, server.URL, time.Minute, 24*time.Hour, "", logger)
+	authenticate, err := NewJWTAuthentication(lifetime, server.URL, time.Minute, 24*time.Hour, "", tenant.Deployment{}, logger)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	issuedAt := jwt.TimeFunc().Add(-time.Minute).UTC().Truncate(time.Second)
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, &userClaims{
+		Tenant: "tadoku/prod",
 		RegisteredClaims: jwt.RegisteredClaims{
 			Subject:   "55555555-5555-4555-8555-555555555555",
 			IssuedAt:  jwt.NewNumericDate(issuedAt),
@@ -542,9 +563,11 @@ func TestAuthenticationCancelsRefreshWithLifetime(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	handler := authenticate(stdhttp.HandlerFunc(func(stdhttp.ResponseWriter, *stdhttp.Request) {
 		t.Error("unknown signing key reached downstream handler")
 	}))
+
 	serve := func(ctx context.Context) <-chan struct{} {
 		done := make(chan struct{})
 		request := httptest.NewRequest(stdhttp.MethodGet, "/", nil).WithContext(ctx)
@@ -555,6 +578,7 @@ func TestAuthenticationCancelsRefreshWithLifetime(t *testing.T) {
 		}()
 		return done
 	}
+
 	requestContext, cancelRequest := context.WithCancel(t.Context())
 	handlerDone := serve(requestContext)
 
@@ -563,6 +587,7 @@ func TestAuthenticationCancelsRefreshWithLifetime(t *testing.T) {
 	case <-time.After(time.Second):
 		t.Fatal("unknown signing key did not start a JWKS refresh")
 	}
+
 	cancelRequest()
 	select {
 	case <-handlerDone:
@@ -588,5 +613,77 @@ func TestAuthenticationCancelsRefreshWithLifetime(t *testing.T) {
 	case <-serve(stoppedRequestContext):
 	case <-time.After(time.Second):
 		t.Error("authentication kept waiting after its lifetime ended")
+	}
+}
+
+func TestAuthenticationTenantClaims(t *testing.T) {
+	now := time.Now()
+	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	server := httptest.NewServer(stdhttp.HandlerFunc(func(w stdhttp.ResponseWriter, _ *stdhttp.Request) {
+		_, _ = fmt.Fprintf(w, `{"keys":[%s]}`, rsaJWK("tenant-key", &privateKey.PublicKey))
+	}))
+	t.Cleanup(server.Close)
+
+	authenticate, err := NewJWTAuthentication(t.Context(), server.URL, time.Second, 24*time.Hour, "", tenant.Deployment{}, slog.Default())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	handler := authenticate(stdhttp.HandlerFunc(func(w stdhttp.ResponseWriter, r *stdhttp.Request) {
+		key, ok := tenant.FromContext(r.Context())
+		if !ok {
+			t.Error("verified handler has no tenant")
+		}
+		w.Header().Set("X-Test-Tenant", key.String())
+		w.WriteHeader(stdhttp.StatusNoContent)
+	}))
+
+	for _, test := range []struct {
+		name    string
+		value   any
+		present bool
+		want    int
+	}{
+		{name: "missing", want: stdhttp.StatusUnauthorized},
+		{name: "empty", present: true, value: "", want: stdhttp.StatusUnauthorized},
+		{name: "bare", present: true, value: "tadoku", want: stdhttp.StatusUnauthorized},
+		{name: "uppercase", present: true, value: "TADOKU/prod", want: stdhttp.StatusUnauthorized},
+		{name: "extra slash", present: true, value: "e2e/run/id", want: stdhttp.StatusUnauthorized},
+		{name: "non-string", present: true, value: []string{"tadoku/prod"}, want: stdhttp.StatusUnauthorized},
+		{name: "production", present: true, value: "tadoku/prod", want: stdhttp.StatusNoContent},
+		{name: "test", present: true, value: "e2e/tenant-claim", want: stdhttp.StatusNoContent},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			claims := jwt.MapClaims{"sub": "guest", "iat": now.Unix(), "exp": now.Add(time.Hour).Unix()}
+			if test.present {
+				claims["tenant"] = test.value
+			}
+
+			token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
+			token.Header["kid"] = "tenant-key"
+			signed, err := token.SignedString(privateKey)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			request := httptest.NewRequest(stdhttp.MethodGet, "/", nil)
+			request.Header.Set("Authorization", "Bearer "+signed)
+			response := httptest.NewRecorder()
+			handler.ServeHTTP(response, request)
+
+			if test.want == stdhttp.StatusNoContent && response.Header().Get("X-Test-Tenant") != test.value {
+				t.Errorf("context tenant=%q, want %q", response.Header().Get("X-Test-Tenant"), test.value)
+			}
+			if response.Code != test.want {
+				t.Errorf("status=%d, want %d", response.Code, test.want)
+			}
+			if test.want == stdhttp.StatusUnauthorized && response.Body.String() != "{\"message\":\"invalid or expired jwt\"}\n" {
+				t.Errorf("body=%q", response.Body.String())
+			}
+		})
 	}
 }

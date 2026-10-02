@@ -23,7 +23,6 @@ the development environment and verified.
 | `docs/` | This Docusaurus site; pages live in `docs/docs/` |
 | `k8s/` | Development-only GitOps base for Argo CD in `k8s/dev/base/` |
 | `infra/` | Kratos identity schema and Keto namespace fixtures for backend tests (`infra/dev/ory/`) and a development kubeconfig helper |
-| `jobs/` | Container jobs |
 | `scripts/` | Code generation, the Tadoku API visibility check, and development seed and secret bootstrap scripts |
 | `tools/` | CI check scripts and the pinned oapi-codegen module |
 | `.dev/` | dev-cli configuration, deployable definitions and the development runbook |
@@ -45,6 +44,7 @@ the development environment and verified.
 | Read past design decisions | [Decisions](./adr.md) |
 | Change backend behavior | [Tadoku API](./tadoku-api/index.md) |
 | Change the database schema or a query | [Tadoku API database](./tadoku-api/database.md) |
+| Write or lay out Go code | [Go style](./tadoku-api/go-style.md) |
 | Write backend tests | [Tadoku API testing](./tadoku-api/testing.md) |
 | Change a frontend application | [Frontend overview](./frontend/index.md) |
 | Build a Paper screen | [Paper composition](./frontend/paper-composition.md) |

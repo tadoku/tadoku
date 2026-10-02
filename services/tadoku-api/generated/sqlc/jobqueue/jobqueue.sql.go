@@ -45,10 +45,10 @@ with exhausted as (
     lease_expires_at = clock_timestamp() + $5::bigint * interval '1 microsecond'
   from picked
   where task.id = picked.id
-  returning task.id, task.task_type, task.payload, task.attempts,
+  returning task.id, task.tenant, task.task_type, task.payload, task.attempts,
     task.claim_token, task.lease_expires_at
 )
-select claimed.id, claimed.task_type, claimed.payload, claimed.attempts,
+select claimed.id, claimed.tenant, claimed.task_type, claimed.payload, claimed.attempts,
   claimed.claim_token, claimed.lease_expires_at, picked.reclaimed
 from claimed inner join picked using (id) order by claimed.id
 `
@@ -63,6 +63,7 @@ type ClaimParams struct {
 
 type ClaimRow struct {
 	ID             int64
+	Tenant         string
 	TaskType       string
 	Payload        []byte
 	Attempts       int32
@@ -88,6 +89,7 @@ func (q *Queries) Claim(ctx context.Context, arg ClaimParams) ([]ClaimRow, error
 		var i ClaimRow
 		if err := rows.Scan(
 			&i.ID,
+			&i.Tenant,
 			&i.TaskType,
 			&i.Payload,
 			&i.Attempts,

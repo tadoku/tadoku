@@ -105,3 +105,13 @@ func TestRegistryValidatesPayloadBeforeCallingTypedHandler(t *testing.T) {
 		t.Errorf("unknown job: error=%v calls=%d", err, called)
 	}
 }
+
+func TestNewApplicationRejectsZeroScope(t *testing.T) {
+	_, err := NewApplication(new(jobqueue.Service), new(leaderboard.Service), Config{
+		Concurrency:     1,
+		ShutdownTimeout: time.Second,
+	})
+	if err == nil {
+		t.Fatal("worker accepted zero scope")
+	}
+}

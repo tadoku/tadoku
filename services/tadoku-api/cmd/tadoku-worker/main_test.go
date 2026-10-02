@@ -69,6 +69,7 @@ func TestReplayCommandCreatesLinkedJob(t *testing.T) {
 
 func TestLoadConfigRejectsInvalidWorkerSettings(t *testing.T) {
 	t.Setenv("WORKER_BRANCH", "")
+	t.Setenv("WORKER_COMPONENT", "tadoku-worker")
 	t.Setenv("WORKER_VALKEY_URL", "redis://127.0.0.1:6379")
 	t.Setenv("WORKER_POSTGRES_HOST", "127.0.0.1")
 	t.Setenv("WORKER_POSTGRES_DATABASE", "postgres")
@@ -88,6 +89,8 @@ func TestLoadConfigRejectsInvalidWorkerSettings(t *testing.T) {
 		{"zero shutdown timeout", "WORKER_SHUTDOWN_TIMEOUT", "0s", "ShutdownTimeout"},
 		{"negative shutdown timeout", "WORKER_SHUTDOWN_TIMEOUT", "-1s", "ShutdownTimeout"},
 		{"malformed shutdown timeout", "WORKER_SHUTDOWN_TIMEOUT", "invalid", "WORKER_SHUTDOWN_TIMEOUT"},
+		{"invalid component", "WORKER_COMPONENT", "bad/component", "WORKER_COMPONENT"},
+		{"empty component", "WORKER_COMPONENT", "", "WORKER_COMPONENT"},
 		{"invalid branch", "WORKER_BRANCH", "INVALID", "WORKER_BRANCH"},
 		{"unqualified branch", "WORKER_BRANCH", "tadoku", "WORKER_BRANCH"},
 		{"production branch", "WORKER_BRANCH", "tadoku/prod", "WORKER_BRANCH"},
@@ -104,6 +107,7 @@ func TestLoadConfigRejectsInvalidWorkerSettings(t *testing.T) {
 
 func TestLoadConfigWorkerSettings(t *testing.T) {
 	t.Setenv("WORKER_BRANCH", "")
+	t.Setenv("WORKER_COMPONENT", "tadoku-worker")
 	t.Setenv("WORKER_VALKEY_URL", "redis://127.0.0.1:6379")
 	t.Setenv("WORKER_POSTGRES_HOST", "127.0.0.1")
 	t.Setenv("WORKER_POSTGRES_DATABASE", "postgres")

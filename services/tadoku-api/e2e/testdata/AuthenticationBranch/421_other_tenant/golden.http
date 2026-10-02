@@ -1,0 +1,6 @@
+>>> GET /test/authentication
+HTTP/1.1 421 Misdirected Request
+Content-Length: 51
+Content-Type: application/json; charset=UTF-8
+
+{"message":"tenant not served by this deployment"}

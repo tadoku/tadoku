@@ -6,5 +6,6 @@ X-Test-Identity-Created-At: 2026-09-12T11:59:00Z
 X-Test-Identity-Display-Name: 
 X-Test-Identity-Email: 
 X-Test-Identity-Subject: guest
+X-Test-Tenant: tadoku/prod
 
 {"status":"success"}

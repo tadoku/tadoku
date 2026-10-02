@@ -35,6 +35,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/observability"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/featureflags"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testflipt"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testketo"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testkratos"
@@ -115,7 +116,17 @@ func runTests(m *testing.M) (code int) {
 	}
 	defer func() { cleanupErr = errors.Join(cleanupErr, api.db.Close()) }()
 
-	scoringEnabledHandler, _, _, err = newTestRouterWithLeaderboardService(ctx, api.db.Pool, api.db.Pool, keto, kratos, slog.New(slog.NewTextHandler(io.Discard, nil)), true, api.leaderboard)
+	scoringEnabledHandler, _, _, err = newTestRouterWithLeaderboardService(
+		ctx,
+		api.db.AppPool,
+		api.db.AppPool,
+		keto,
+		kratos,
+		slog.New(slog.NewTextHandler(io.Discard, nil)),
+		true,
+		api.leaderboard,
+		tenant.Deployment{},
+	)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
@@ -147,11 +158,25 @@ func newTestAPI(ctx context.Context, ketoFixture *testketo.Fixture, kratosFixtur
 		}
 	}()
 
-	leaderboardService := leaderboard.NewService(leaderboard.NewRepository(db.Pool), leaderboard.NewCache(leaderboardValkey.client, time.Second, ""))
-	handler, profileService, roleService, err := newTestRouterWithLeaderboardService(ctx, db.Pool, db.Pool, ketoFixture, kratosFixture, slog.New(slog.NewTextHandler(io.Discard, nil)), false, leaderboardService)
+	leaderboardService := leaderboard.NewService(
+		leaderboard.NewRepository(db.AppPool),
+		leaderboard.NewCache(leaderboardValkey.client, time.Second, ""),
+	)
+	handler, profileService, roleService, err := newTestRouterWithLeaderboardService(
+		ctx,
+		db.AppPool,
+		db.AppPool,
+		ketoFixture,
+		kratosFixture,
+		slog.New(slog.NewTextHandler(io.Discard, nil)),
+		false,
+		leaderboardService,
+		tenant.Deployment{},
+	)
 	if err != nil {
 		return nil, err
 	}
+
 	api := &suite{
 		db:          db,
 		keto:        ketoFixture,
@@ -200,8 +225,21 @@ func newTestRouterWithLeaderboard(
 	valkeyClient valkeygo.Client,
 	valkeyTimeout time.Duration,
 ) (*transport.Router, *featureprofile.Service, *permissions.KetoService, error) {
-	leaderboardService := leaderboard.NewService(leaderboard.NewRepository(pool), leaderboard.NewCache(valkeyClient, valkeyTimeout, ""))
-	return newTestRouterWithLeaderboardService(ctx, pool, auditPool, ketoFixture, kratosFixture, logger, scoringEngineEnabled, leaderboardService)
+	leaderboardService := leaderboard.NewService(
+		leaderboard.NewRepository(pool),
+		leaderboard.NewCache(valkeyClient, valkeyTimeout, ""),
+	)
+	return newTestRouterWithLeaderboardService(
+		ctx,
+		pool,
+		auditPool,
+		ketoFixture,
+		kratosFixture,
+		logger,
+		scoringEngineEnabled,
+		leaderboardService,
+		tenant.Deployment{},
+	)
 }
 
 func newTestRouterWithLeaderboardService(
@@ -213,12 +251,14 @@ func newTestRouterWithLeaderboardService(
 	logger *slog.Logger,
 	scoringEngineEnabled bool,
 	leaderboardService *leaderboard.Service,
+	deployment tenant.Deployment,
 ) (*transport.Router, *featureprofile.Service, *permissions.KetoService, error) {
 	reader := ketoclient.NewReadClient(ketoFixture.ReadURL())
 	readWriter := ketoclient.NewClient(ketoFixture.ReadURL(), ketoFixture.WriteURL())
 	permissionChecker := permissions.NewKetoChecker(reader)
 	roleService := permissions.NewKetoService(reader, "app", "tadoku")
 	identities := kratosFixture.CursorClient()
+
 	authzService := featureauthz.NewService(
 		permissionChecker,
 		identities,
@@ -227,6 +267,7 @@ func newTestRouterWithLeaderboardService(
 		nil,
 	)
 	auditService := featureaudit.NewService(featureaudit.NewRepository(auditPool))
+
 	announcementsRepository := announcements.NewAnnouncementsRepository(pool)
 	contestsRepository := contests.NewContestsRepository(pool)
 	jobQueue := jobqueue.NewService(jobqueue.NewRepository(pool))
@@ -236,6 +277,7 @@ func newTestRouterWithLeaderboardService(
 	postsRepository := posts.NewPostsRepository(pool)
 	profileRepository := featureprofile.NewRepository(pool)
 	scoringRepository := scoring.NewScoringRepository(pool)
+
 	announcementsService := announcements.NewService(announcementsRepository)
 	contestsService := contests.NewService(contestsRepository)
 	languagesService := languages.NewService(languagesRepository)
@@ -245,9 +287,11 @@ func newTestRouterWithLeaderboardService(
 	profileService := featureprofile.NewService(profileRepository, featureprofile.NewUserCache(identities), roleService, identities)
 	featureFlagEvaluator := featureflags.NewEvaluator(flipt, nil)
 	featureFlagsService := featureflagsservice.NewService(featureFlagEvaluator, fliptmanagement.NewClient(fliptmanagement.Config{URL: flipt.URL(), Environment: "local"}))
+
 	registry := prometheus.NewRegistry()
 	scoringObserver := observability.NewScoringObserver(registry, logger, scoringEngineEnabled)
 	scoringService := scoring.NewService(scoringRepository, scoringEngineEnabled, scoringObserver)
+
 	application := app.New(app.Dependencies{
 		JobQueue:      jobQueue,
 		Announcements: announcementsService,
@@ -265,15 +309,26 @@ func newTestRouterWithLeaderboardService(
 		DB:            pool,
 		Permissions:   permissionChecker,
 	})
-	authenticate, err := transport.NewJWTAuthentication(ctx, authenticationJWKS.URL, time.Second, 24*time.Hour, "http://oathkeeper-api/", logger)
+
+	authenticate, err := transport.NewJWTAuthentication(
+		ctx,
+		authenticationJWKS.URL,
+		time.Second,
+		24*time.Hour,
+		"http://oathkeeper-api/",
+		deployment,
+		logger,
+	)
 	if err != nil {
 		return nil, nil, nil, err
 	}
+
 	rejectBanned := transport.RejectBannedUsers(permissionChecker.CheckBanned, logger)
 	authenticateCallback, err := transport.NewCallbackAuthentication(callbackToken)
 	if err != nil {
 		return nil, nil, nil, err
 	}
+
 	handler, err := transport.NewHandler(application, pool.Ping, time.Second, registry, logger, authenticate, rejectBanned, authenticateCallback)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("create API handler: %w", err)
@@ -320,7 +375,12 @@ func (s *suite) reset(t *testing.T, caseDir string) {
 
 func (s *suite) resetProfileCaches() {
 	if s.profile != nil {
-		*s.profile = *featureprofile.NewService(featureprofile.NewRepository(s.db.Pool), featureprofile.NewUserCache(s.kratos.CursorClient()), s.roles, s.kratos.CursorClient())
+		*s.profile = *featureprofile.NewService(
+			featureprofile.NewRepository(s.db.AppPool),
+			featureprofile.NewUserCache(s.kratos.CursorClient()),
+			s.roles,
+			s.kratos.CursorClient(),
+		)
 	}
 }
 

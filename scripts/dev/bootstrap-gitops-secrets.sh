@@ -4,8 +4,8 @@
 set -euo pipefail
 set +x
 
-kube() { kubectl --context homelab-dev "$@"; }
-test "$(kube config view --minify -o jsonpath='{.clusters[0].cluster.server}')" = https://192.168.1.190:6443
+kube() { kubectl --context homelab-talos-dev "$@"; }
+test "$(kube config view --minify -o jsonpath='{.clusters[0].cluster.server}')" = https://omni.lab:8100
 
 for namespace in tdk-dev-data tdk-dev-kratos tdk-dev-keto tdk-dev-oathkeeper tdk-dev-tadoku-api; do
   test "$(kube get namespace "$namespace" -o jsonpath='{.metadata.labels.app\.kubernetes\.io/part-of}')" = tadoku-dev
@@ -38,6 +38,8 @@ check_secret() {
 # keys we preserve. Namespace ownership alone does not authorize replacing a Secret.
 check_secret tdk-dev-tadoku-api tadoku.tadoku-dev-db.credentials.postgresql.acid.zalan.do destination username password
 check_secret tdk-dev-data tadoku.tadoku-dev-db.credentials.postgresql.acid.zalan.do source username password
+check_secret tdk-dev-data tadoku-owner.tadoku-dev-db.credentials.postgresql.acid.zalan.do source username password
+check_secret tdk-dev-tadoku-api tadoku-owner.tadoku-dev-db.credentials.postgresql.acid.zalan.do destination username password
 for provider in kratos keto; do
   check_secret tdk-dev-data "$provider.tadoku-dev-db.credentials.postgresql.acid.zalan.do" source username password
   check_secret "tdk-dev-$provider" "$provider.tadoku-dev-db.credentials.postgresql.acid.zalan.do" destination username password
@@ -56,6 +58,7 @@ copy_secret() {
 }
 
 copy_secret tdk-dev-data tdk-dev-tadoku-api tadoku.tadoku-dev-db.credentials.postgresql.acid.zalan.do
+copy_secret tdk-dev-data tdk-dev-tadoku-api tadoku-owner.tadoku-dev-db.credentials.postgresql.acid.zalan.do
 for provider in kratos keto; do
   copy_secret tdk-dev-data "tdk-dev-$provider" "$provider.tadoku-dev-db.credentials.postgresql.acid.zalan.do"
 done

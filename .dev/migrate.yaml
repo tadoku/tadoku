@@ -11,6 +11,61 @@ spec:
       automountServiceAccountToken: false
       restartPolicy: Never
       containers:
+        - name: grants
+          image: docker.io/library/postgres@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
+          command:
+            - /bin/sh
+            - -ec
+          args:
+            - |
+              psql -X --set=ON_ERROR_STOP=1 <<'SQL'
+              begin;
+              revoke insert, update, delete, truncate on public.schema_migrations from tadoku;
+              select has_table_privilege('tadoku', 'public.schema_migrations', 'select')
+                     and not has_table_privilege('tadoku', 'public.schema_migrations', 'insert,update,delete,truncate')
+                     as grants_valid
+              \gset
+              \if :grants_valid
+              \else
+                \echo 'runtime migration-table grants are invalid'
+                \quit 1
+              \endif
+              commit;
+              SQL
+          env:
+            - name: PGHOST
+              value: tadoku-dev-db.tdk-dev-data
+            - name: PGDATABASE
+              value: tadoku-${DEV_ROUTE}
+            - name: PGSSLMODE
+              value: require
+            - name: PGUSER
+              valueFrom:
+                secretKeyRef:
+                  name: tadoku-owner.tadoku-dev-db.credentials.postgresql.acid.zalan.do
+                  key: username
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: tadoku-owner.tadoku-dev-db.credentials.postgresql.acid.zalan.do
+                  key: password
+            - name: PGCONNECT_TIMEOUT
+              value: "10"
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65532
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              cpu: "1"
+              memory: 128Mi
+      initContainers:
         - name: migrate
           image: invalid.example/replace-through-dev-task
           args:
@@ -27,12 +82,12 @@ spec:
             - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
-                  name: tadoku.tadoku-dev-db.credentials.postgresql.acid.zalan.do
+                  name: tadoku-owner.tadoku-dev-db.credentials.postgresql.acid.zalan.do
                   key: username
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: tadoku.tadoku-dev-db.credentials.postgresql.acid.zalan.do
+                  name: tadoku-owner.tadoku-dev-db.credentials.postgresql.acid.zalan.do
                   key: password
           resources:
             requests:

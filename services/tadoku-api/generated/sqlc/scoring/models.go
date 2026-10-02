@@ -3,32 +3,3 @@
 //   sqlc v1.31.1
 
 package scoring
-
-import (
-	"github.com/jackc/pgx/v5/pgtype"
-)
-
-type ScoringRule struct {
-	ID           pgtype.UUID
-	RuleSetID    pgtype.UUID
-	Priority     int32
-	Stackable    bool
-	ActivityID   int16
-	UnitKey      pgtype.Text
-	LanguageCode pgtype.Text
-	Tag          pgtype.Text
-	ScoreSource  string
-	Rate         float32
-}
-
-type ScoringRuleSet struct {
-	ID                pgtype.UUID
-	Scope             string
-	ContestID         pgtype.UUID
-	Version           int32
-	Status            string
-	Mode              pgtype.Text
-	FallbackRuleSetID pgtype.UUID
-	CreatedAt         pgtype.Timestamp
-	PublishedAt       pgtype.Timestamp
-}

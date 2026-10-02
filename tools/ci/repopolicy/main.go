@@ -77,7 +77,9 @@ func check(root string, out io.Writer) error {
 		}
 		rel = filepath.ToSlash(rel)
 		repository := strings.HasSuffix(rel, "_repository.go")
-		feature := strings.HasPrefix(rel, "services/tadoku-api/features/") && strings.HasSuffix(rel, ".go") && !strings.HasSuffix(rel, "_test.go")
+		feature := strings.HasPrefix(rel, "services/tadoku-api/features/") &&
+			strings.HasSuffix(rel, ".go") &&
+			!strings.HasSuffix(rel, "_test.go")
 		if entry.IsDir() || !(repository || feature) {
 			return nil
 		}
@@ -110,7 +112,13 @@ func check(root string, out io.Writer) error {
 	if repositories == 0 {
 		return fmt.Errorf("expected Tadoku API repository files under %s", root)
 	}
-	fmt.Fprintf(out, "Repopolicy checked %d files (%d repository files); %d violations\n", files, repositories, violations)
+	fmt.Fprintf(
+		out,
+		"Repopolicy checked %d files (%d repository files); %d violations\n",
+		files,
+		repositories,
+		violations,
+	)
 	if violations != 0 {
 		return fmt.Errorf("Tadoku API repository policy failed")
 	}
@@ -132,19 +140,31 @@ func analyzeImports(name string, file *ast.File) []finding {
 			findings = append(findings, finding{
 				pos:     spec.Pos(),
 				rule:    "store-postgres-import",
-				message: fmt.Sprintf("cache and store files must not import %s; the feature service rebuilds them from the repository (%s)", importPath, convention),
+				message: fmt.Sprintf(
+					"cache and store files must not import %s; the feature service rebuilds them from the repository (%s)",
+					importPath,
+					convention,
+				),
 			})
 		case repository && isProviderImport(importPath):
 			findings = append(findings, finding{
 				pos:     spec.Pos(),
 				rule:    "repository-provider-import",
-				message: fmt.Sprintf("repository files must not import provider client %s; repositories reach only PostgreSQL (%s)", importPath, convention),
+				message: fmt.Sprintf(
+					"repository files must not import provider client %s; repositories reach only PostgreSQL (%s)",
+					importPath,
+					convention,
+				),
 			})
 		case !store && strings.HasPrefix(importPath, valkeyImportPrefix):
 			findings = append(findings, finding{
 				pos:     spec.Pos(),
 				rule:    "valkey-outside-store",
-				message: fmt.Sprintf("only cache and store files may import %s; construct the cache at the composition root and pass it to the service (%s)", importPath, convention),
+				message: fmt.Sprintf(
+					"only cache and store files may import %s; construct the cache at the composition root and pass it to the service (%s)",
+					importPath,
+					convention,
+				),
 			})
 		}
 	}

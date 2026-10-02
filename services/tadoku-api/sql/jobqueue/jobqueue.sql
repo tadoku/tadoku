@@ -38,10 +38,10 @@ with exhausted as (
     lease_expires_at = clock_timestamp() + sqlc.arg('lease_micros')::bigint * interval '1 microsecond'
   from picked
   where task.id = picked.id
-  returning task.id, task.task_type, task.payload, task.attempts,
+  returning task.id, task.tenant, task.task_type, task.payload, task.attempts,
     task.claim_token, task.lease_expires_at
 )
-select claimed.id, claimed.task_type, claimed.payload, claimed.attempts,
+select claimed.id, claimed.tenant, claimed.task_type, claimed.payload, claimed.attempts,
   claimed.claim_token, claimed.lease_expires_at, picked.reclaimed
 from claimed inner join picked using (id) order by claimed.id;
 

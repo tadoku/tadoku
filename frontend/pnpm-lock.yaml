@@ -46,7 +46,7 @@ importers:
         version: 6.0.2
       dompurify:
         specifier: ^3.4.13
-        version: 3.4.15
+        version: 3.4.16
       jotai:
         specifier: ^1.8.3
         version: 1.13.1(@babel/core@7.29.7)(@babel/template@7.29.7)(react@18.2.0)
@@ -109,11 +109,11 @@ importers:
         specifier: 14.6.7
         version: 14.6.7(@testing-library/dom@10.4.2)
       '@types/dompurify':
-        specifier: ^3.2.0
+        specifier: 3.2.0
         version: 3.2.0
       '@types/luxon':
-        specifier: ^3.7.1
-        version: 3.7.5
+        specifier: 3.7.6
+        version: 3.7.6
       '@types/node':
         specifier: 18.7.18
         version: 18.7.18
@@ -124,10 +124,10 @@ importers:
         specifier: 18.3.7
         version: 18.3.7(@types/react@18.3.31)
       '@types/uuid':
-        specifier: ^9.0.0
+        specifier: 9.0.8
         version: 9.0.8
       autoprefixer:
-        specifier: ^10.6.1
+        specifier: 10.6.1
         version: 10.6.1(postcss@8.5.28)
       eslint:
         specifier: 8.29.0
@@ -139,10 +139,10 @@ importers:
         specifier: 27.0.1
         version: 27.0.1
       postcss:
-        specifier: ^8.5.23
+        specifier: 8.5.28
         version: 8.5.28
       tailwindcss:
-        specifier: ^3.2.4
+        specifier: 3.4.19
         version: 3.4.19(yaml@2.7.1)
       vitest:
         specifier: 4.1.11
@@ -203,7 +203,7 @@ importers:
         specifier: 18.3.7
         version: 18.3.7(@types/react@18.3.31)
       autoprefixer:
-        specifier: ^10.6.1
+        specifier: 10.6.1
         version: 10.6.1(postcss@8.5.28)
       eslint:
         specifier: 8.29.0
@@ -212,10 +212,10 @@ importers:
         specifier: ^13.1.1
         version: 13.5.11(eslint@8.29.0)(typescript@4.9.3)
       postcss:
-        specifier: ^8.5.23
+        specifier: 8.5.28
         version: 8.5.28
       tailwindcss:
-        specifier: ^3.2.4
+        specifier: 3.4.19
         version: 3.4.19(yaml@2.7.1)
 
   apps/paper-playground:
@@ -252,8 +252,8 @@ importers:
         specifier: 14.6.7
         version: 14.6.7(@testing-library/dom@10.4.2)
       '@types/node':
-        specifier: 20.19.25
-        version: 20.19.25
+        specifier: 20.19.43
+        version: 20.19.43
       '@types/react':
         specifier: 18.3.31
         version: 18.3.31
@@ -265,7 +265,7 @@ importers:
         version: typescript@7.0.2
       '@vitejs/plugin-react':
         specifier: 4.7.0
-        version: 4.7.0(vite@6.4.3(@types/node@20.19.25)(jiti@1.21.7)(yaml@2.7.1))
+        version: 4.7.0(vite@6.4.3(@types/node@20.19.43)(jiti@1.21.7)(yaml@2.7.1))
       autoprefixer:
         specifier: 10.6.1
         version: 10.6.1(postcss@8.5.28)
@@ -295,10 +295,10 @@ importers:
         version: 8.66.0(@typescript/typescript6@6.0.2)(eslint@9.39.2(jiti@1.21.7))
       vite:
         specifier: 6.4.3
-        version: 6.4.3(@types/node@20.19.25)(jiti@1.21.7)(yaml@2.7.1)
+        version: 6.4.3(@types/node@20.19.43)(jiti@1.21.7)(yaml@2.7.1)
       vitest:
         specifier: 4.1.11
-        version: 4.1.11(@types/node@20.19.25)(jsdom@27.0.1)(vite@6.4.3(@types/node@20.19.25)(jiti@1.21.7)(yaml@2.7.1))
+        version: 4.1.11(@types/node@20.19.43)(jsdom@27.0.1)(vite@6.4.3(@types/node@20.19.43)(jiti@1.21.7)(yaml@2.7.1))
 
   apps/paper-styleguide:
     dependencies:
@@ -337,10 +337,10 @@ importers:
         specifier: 14.6.7
         version: 14.6.7(@testing-library/dom@10.4.2)
       '@types/node':
-        specifier: 20.19.25
-        version: 20.19.25
+        specifier: 20.19.43
+        version: 20.19.43
       '@types/prismjs':
-        specifier: ^1.26.6
+        specifier: 1.26.6
         version: 1.26.6
       '@types/react':
         specifier: 18.3.31
@@ -353,7 +353,7 @@ importers:
         version: typescript@7.0.2
       '@vitejs/plugin-react':
         specifier: 4.7.0
-        version: 4.7.0(vite@6.4.3(@types/node@20.19.25)(jiti@1.21.7)(yaml@2.7.1))
+        version: 4.7.0(vite@6.4.3(@types/node@20.19.43)(jiti@1.21.7)(yaml@2.7.1))
       autoprefixer:
         specifier: 10.6.1
         version: 10.6.1(postcss@8.5.28)
@@ -383,10 +383,10 @@ importers:
         version: 8.66.0(@typescript/typescript6@6.0.2)(eslint@9.39.2(jiti@1.21.7))
       vite:
         specifier: 6.4.3
-        version: 6.4.3(@types/node@20.19.25)(jiti@1.21.7)(yaml@2.7.1)
+        version: 6.4.3(@types/node@20.19.43)(jiti@1.21.7)(yaml@2.7.1)
       vitest:
         specifier: 4.1.11
-        version: 4.1.11(@types/node@20.19.25)(jsdom@27.0.1)(vite@6.4.3(@types/node@20.19.25)(jiti@1.21.7)(yaml@2.7.1))
+        version: 4.1.11(@types/node@20.19.43)(jsdom@27.0.1)(vite@6.4.3(@types/node@20.19.43)(jiti@1.21.7)(yaml@2.7.1))
 
   apps/styleguide:
     dependencies:
@@ -455,13 +455,13 @@ importers:
         version: 3.25.76
     devDependencies:
       '@types/luxon':
-        specifier: ^3.7.1
-        version: 3.7.5
+        specifier: 3.7.6
+        version: 3.7.6
       '@types/react-syntax-highlighter':
-        specifier: ^15.5.5
+        specifier: 15.5.13
         version: 15.5.13
       autoprefixer:
-        specifier: ^10.6.1
+        specifier: 10.6.1
         version: 10.6.1(postcss@8.5.28)
       eslint:
         specifier: 8.29.0
@@ -470,10 +470,10 @@ importers:
         specifier: ^13.1.1
         version: 13.5.11(eslint@8.29.0)(typescript@4.9.3)
       postcss:
-        specifier: ^8.5.23
+        specifier: 8.5.28
         version: 8.5.28
       tailwindcss:
-        specifier: ^3.2.4
+        specifier: 3.4.19
         version: 3.4.19(yaml@2.7.1)
 
   apps/webv2:
@@ -501,7 +501,7 @@ importers:
         version: 1.3.1(chart.js@4.5.1)(luxon@3.7.2)
       dompurify:
         specifier: ^3.4.13
-        version: 3.4.15
+        version: 3.4.16
       jotai:
         specifier: ^1.8.3
         version: 1.13.1(@babel/core@7.29.7)(@babel/template@7.29.7)(react@18.2.0)
@@ -561,11 +561,11 @@ importers:
         specifier: 16.3.3
         version: 16.3.3(@testing-library/dom@10.4.2)(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
       '@types/dompurify':
-        specifier: ^3.2.0
+        specifier: 3.2.0
         version: 3.2.0
       '@types/luxon':
-        specifier: ^3.7.1
-        version: 3.7.5
+        specifier: 3.7.6
+        version: 3.7.6
       '@types/node':
         specifier: 18.7.18
         version: 18.7.18
@@ -576,7 +576,7 @@ importers:
         specifier: 18.3.7
         version: 18.3.7(@types/react@18.3.31)
       autoprefixer:
-        specifier: ^10.6.1
+        specifier: 10.6.1
         version: 10.6.1(postcss@8.5.28)
       eslint:
         specifier: 8.29.0
@@ -588,10 +588,10 @@ importers:
         specifier: 27.0.1
         version: 27.0.1
       postcss:
-        specifier: ^8.5.23
+        specifier: 8.5.28
         version: 8.5.28
       tailwindcss:
-        specifier: ^3.2.4
+        specifier: 3.4.19
         version: 3.4.19(yaml@2.7.1)
       vitest:
         specifier: 4.1.11
@@ -625,11 +625,11 @@ importers:
         specifier: 14.6.7
         version: 14.6.7(@testing-library/dom@10.4.2)
       '@types/luxon':
-        specifier: ^3.7.1
-        version: 3.7.5
+        specifier: 3.7.6
+        version: 3.7.6
       '@types/node':
-        specifier: 20.19.25
-        version: 20.19.25
+        specifier: 20.19.43
+        version: 20.19.43
       '@types/react':
         specifier: 18.3.31
         version: 18.3.31
@@ -671,7 +671,7 @@ importers:
         version: 8.66.0(@typescript/typescript6@6.0.2)(eslint@9.39.2(jiti@1.21.7))
       vitest:
         specifier: 4.1.11
-        version: 4.1.11(@types/node@20.19.25)(jsdom@27.0.1)(vite@6.4.3(@types/node@20.19.25)(jiti@1.21.7)(yaml@2.7.1))
+        version: 4.1.11(@types/node@20.19.43)(jsdom@27.0.1)(vite@6.4.3(@types/node@20.19.43)(jiti@1.21.7)(yaml@2.7.1))
 
   packages/ui:
     dependencies:
@@ -719,16 +719,16 @@ importers:
         version: 4.9.3
     devDependencies:
       '@types/luxon':
-        specifier: ^3.7.1
-        version: 3.7.5
+        specifier: 3.7.6
+        version: 3.7.6
       autoprefixer:
-        specifier: ^10.6.1
+        specifier: 10.6.1
         version: 10.6.1(postcss@8.5.28)
       postcss:
-        specifier: ^8.5.23
+        specifier: 8.5.28
         version: 8.5.28
       tailwindcss:
-        specifier: ^3.2.4
+        specifier: 3.4.19
         version: 3.4.19(yaml@2.7.1)
 
 packages:
@@ -1449,10 +1449,6 @@ packages:
   '@jridgewell/gen-mapping@0.3.13':
     resolution: {integrity: sha512-2kkt/7niJ6MgEPxF0bYdQ6etZaA+fQvDcLKckhy1yIQOzaoKjBBjSj63/aLVjYE3qhRt5dvM+uUyfCg6UKCBbA==}
 
-  '@jridgewell/gen-mapping@0.3.8':
-    resolution: {integrity: sha512-imAbBGkb+ebQyxKgzv5Hu2nmROxoDOXHh80evxdoXNOrvAnVx7zimzc1Oo5h9RlfV4vPXaE2iM5pOFbvOCClWA==}
-    engines: {node: '>=6.0.0'}
-
   '@jridgewell/remapping@2.3.5':
     resolution: {integrity: sha512-LI9u/+laYG4Ds1TDKSJW2YPrIlcVYOwi2fUC6xB43lueCjgxV4lffOCZCtYFiH6TNOX+tQKXx97T4IKHbhyHEQ==}
 
@@ -1460,15 +1456,8 @@ packages:
     resolution: {integrity: sha512-bRISgCIjP20/tbWSPWMEi54QVPRZExkuD9lJL+UIxUKtwVJA8wW1Trb1jMs1RFXo1CBTNZ/5hpC9QvmKWdopKw==}
     engines: {node: '>=6.0.0'}
 
-  '@jridgewell/set-array@1.2.1':
-    resolution: {integrity: sha512-R8gLRTZeyp03ymzP/6Lil/28tGeGEzhx1q2k703KGWRAI1VdvPIXdG70VJc2pAMw3NA6JKL5hhFu1sJX0Mnn/A==}
-    engines: {node: '>=6.0.0'}
-
   '@jridgewell/sourcemap-codec@1.5.5':
     resolution: {integrity: sha512-cYQ9310grqxueWbl+WuIUIaiUaDcj7WOq5fVhEljNVgRfOUhY9fy2zTvfoqWsnebh8Sl70VScFbICvJnLKB0Og==}
-
-  '@jridgewell/trace-mapping@0.3.25':
-    resolution: {integrity: sha512-vNk6aEwybGtawWmy/PzwnGDOjCkLWSD2wqvjGGAgOAwCGWySYXfYoxt00IJkTF+8Lb57DwOb3Aa0o9CApepiYQ==}
 
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
@@ -1988,8 +1977,8 @@ packages:
   '@types/json5@0.0.29':
     resolution: {integrity: sha512-dRLjCWHYg4oaA77cxO64oO+7JwCwnIzkZPdrrC71jQmQtlhM556pwKo5bUzqvZndkVbeFLIIi+9TC40JNF5hNQ==}
 
-  '@types/luxon@3.7.5':
-    resolution: {integrity: sha512-jJ41Q4z6ZVO260MNDdHfW7+7a5iMiX8Mr6ZJHcmgrvhZha6dz5704o/lF2kKl6URjH6ivEL97w9xS/MgpJEphg==}
+  '@types/luxon@3.7.6':
+    resolution: {integrity: sha512-6KSjliQAXK8ZLgFQO4B7iE4Rpf/B3rItzCFuXezBY/XIAGxOdLd7vRNK9/StRPwiS/yJsVbB7HKpW46B8tcEuQ==}
 
   '@types/mdast@3.0.15':
     resolution: {integrity: sha512-LnwD+mUEfxWMa1QpDraczIn6k0Ee3SMicuYSSzS6ZYl2gKS09EClnJYGd8Du6rfc5r/GZEk5o1mRb8TaTj03sQ==}
@@ -2003,8 +1992,8 @@ packages:
   '@types/node@18.7.18':
     resolution: {integrity: sha512-m+6nTEOadJZuTPkKR/SYK3A2d7FZrgElol9UP1Kae90VVU4a6mxnPuLiIW1m4Cq4gZ/nWb9GrdVXJCoCazDAbg==}
 
-  '@types/node@20.19.25':
-    resolution: {integrity: sha512-ZsJzA5thDQMSQO788d7IocwwQbI8B5OPzmqNvpf3NY/+MHDAS759Wo0gd2WQeXYt5AAAQjzcrTVC6SKCuYgoCQ==}
+  '@types/node@20.19.43':
+    resolution: {integrity: sha512-6oYBAi5ikg4Pl+kGsoYtawUMBT2zZMCvPNF7pVLnHZfd1zf38DRiWn/gT01RYCdUqkv7Fhr+C9ot4/tb+2sVvA==}
 
   '@types/prismjs@1.26.6':
     resolution: {integrity: sha512-vqlvI7qlMvcCBbVe0AKAb4f97//Hy0EBTaiW8AalRnG/xAN5zOiWWyrNqNXeq8+KAuvRewjCVY1+IPxk4RdNYw==}
@@ -2828,8 +2817,8 @@ packages:
   dom-accessibility-api@0.6.3:
     resolution: {integrity: sha512-7ZgogeTnjuHbo+ct10G9Ffp0mif17idi0IyWNVA/wcwcm7NPOD/WEHVP3n7n3MhXqxoIYm8d6MuZohYWIZ4T3w==}
 
-  dompurify@3.4.15:
-    resolution: {integrity: sha512-EUBjM+B+lkDE41iE82DDSCfkoPGfXx8IxFxPMjNzm/Uk4xDet77rTN9wqlxlVg71kK7XGuUMv6wUxJUwwv+Xyw==}
+  dompurify@3.4.16:
+    resolution: {integrity: sha512-sqo+pNp3qRhCIpbgRi1y8Tgk27Bo2Ry7w0dC1NBeNTdZChWjz9Xb/KOoZbRP/R6pQZ80Qw8YhXw13hWWBbMRnQ==}
 
   dunder-proto@1.0.1:
     resolution: {integrity: sha512-KIN/nDJBQRcXw0MLVhZE9iQHmG68qAVIBg9CqmUYjmQIhgij9U5MFvrqkUL5FbtyyzZuOeOt0zdeRe4UY7ct+A==}
@@ -5763,12 +5752,6 @@ snapshots:
       '@jridgewell/sourcemap-codec': 1.5.5
       '@jridgewell/trace-mapping': 0.3.31
 
-  '@jridgewell/gen-mapping@0.3.8':
-    dependencies:
-      '@jridgewell/set-array': 1.2.1
-      '@jridgewell/sourcemap-codec': 1.5.5
-      '@jridgewell/trace-mapping': 0.3.25
-
   '@jridgewell/remapping@2.3.5':
     dependencies:
       '@jridgewell/gen-mapping': 0.3.13
@@ -5776,14 +5759,7 @@ snapshots:
 
   '@jridgewell/resolve-uri@3.1.2': {}
 
-  '@jridgewell/set-array@1.2.1': {}
-
   '@jridgewell/sourcemap-codec@1.5.5': {}
-
-  '@jridgewell/trace-mapping@0.3.25':
-    dependencies:
-      '@jridgewell/resolve-uri': 3.1.2
-      '@jridgewell/sourcemap-codec': 1.5.5
 
   '@jridgewell/trace-mapping@0.3.31':
     dependencies:
@@ -6235,7 +6211,7 @@ snapshots:
 
   '@types/dompurify@3.2.0':
     dependencies:
-      dompurify: 3.4.15
+      dompurify: 3.4.16
 
   '@types/estree@1.0.9': {}
 
@@ -6251,7 +6227,7 @@ snapshots:
 
   '@types/json5@0.0.29': {}
 
-  '@types/luxon@3.7.5': {}
+  '@types/luxon@3.7.6': {}
 
   '@types/mdast@3.0.15':
     dependencies:
@@ -6263,7 +6239,7 @@ snapshots:
 
   '@types/node@18.7.18': {}
 
-  '@types/node@20.19.25':
+  '@types/node@20.19.43':
     dependencies:
       undici-types: 6.21.0
 
@@ -6545,7 +6521,7 @@ snapshots:
   '@unrs/resolver-binding-win32-x64-msvc@1.7.2':
     optional: true
 
-  '@vitejs/plugin-react@4.7.0(vite@6.4.3(@types/node@20.19.25)(jiti@1.21.7)(yaml@2.7.1))':
+  '@vitejs/plugin-react@4.7.0(vite@6.4.3(@types/node@20.19.43)(jiti@1.21.7)(yaml@2.7.1))':
     dependencies:
       '@babel/core': 7.29.7
       '@babel/plugin-transform-react-jsx-self': 7.29.7(@babel/core@7.29.7)
@@ -6553,7 +6529,7 @@ snapshots:
       '@rolldown/pluginutils': 1.0.0-beta.27
       '@types/babel__core': 7.20.5
       react-refresh: 0.17.0
-      vite: 6.4.3(@types/node@20.19.25)(jiti@1.21.7)(yaml@2.7.1)
+      vite: 6.4.3(@types/node@20.19.43)(jiti@1.21.7)(yaml@2.7.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -6574,13 +6550,13 @@ snapshots:
     optionalDependencies:
       vite: 6.4.3(@types/node@18.7.18)(jiti@1.21.7)(yaml@2.7.1)
 
-  '@vitest/mocker@4.1.11(vite@6.4.3(@types/node@20.19.25)(jiti@1.21.7)(yaml@2.7.1))':
+  '@vitest/mocker@4.1.11(vite@6.4.3(@types/node@20.19.43)(jiti@1.21.7)(yaml@2.7.1))':
     dependencies:
       '@vitest/spy': 4.1.11
       estree-walker: 3.0.3
       magic-string: 0.30.21
     optionalDependencies:
-      vite: 6.4.3(@types/node@20.19.25)(jiti@1.21.7)(yaml@2.7.1)
+      vite: 6.4.3(@types/node@20.19.43)(jiti@1.21.7)(yaml@2.7.1)
 
   '@vitest/pretty-format@4.1.11':
     dependencies:
@@ -7056,7 +7032,7 @@ snapshots:
 
   dom-accessibility-api@0.6.3: {}
 
-  dompurify@3.4.15:
+  dompurify@3.4.16:
     optionalDependencies:
       '@types/trusted-types': 2.0.7
 
@@ -9215,7 +9191,7 @@ snapshots:
 
   sucrase@3.35.0:
     dependencies:
-      '@jridgewell/gen-mapping': 0.3.8
+      '@jridgewell/gen-mapping': 0.3.13
       commander: 4.1.1
       glob: 10.4.5
       lines-and-columns: 1.2.4
@@ -9569,7 +9545,7 @@ snapshots:
       jiti: 1.21.7
       yaml: 2.7.1
 
-  vite@6.4.3(@types/node@20.19.25)(jiti@1.21.7)(yaml@2.7.1):
+  vite@6.4.3(@types/node@20.19.43)(jiti@1.21.7)(yaml@2.7.1):
     dependencies:
       esbuild: 0.25.12
       fdir: 6.5.0(picomatch@4.0.5)
@@ -9578,7 +9554,7 @@ snapshots:
       rollup: 4.62.4
       tinyglobby: 0.2.17
     optionalDependencies:
-      '@types/node': 20.19.25
+      '@types/node': 20.19.43
       fsevents: 2.3.3
       jiti: 1.21.7
       yaml: 2.7.1
@@ -9611,10 +9587,10 @@ snapshots:
     transitivePeerDependencies:
       - msw
 
-  vitest@4.1.11(@types/node@20.19.25)(jsdom@27.0.1)(vite@6.4.3(@types/node@20.19.25)(jiti@1.21.7)(yaml@2.7.1)):
+  vitest@4.1.11(@types/node@20.19.43)(jsdom@27.0.1)(vite@6.4.3(@types/node@20.19.43)(jiti@1.21.7)(yaml@2.7.1)):
     dependencies:
       '@vitest/expect': 4.1.11
-      '@vitest/mocker': 4.1.11(vite@6.4.3(@types/node@20.19.25)(jiti@1.21.7)(yaml@2.7.1))
+      '@vitest/mocker': 4.1.11(vite@6.4.3(@types/node@20.19.43)(jiti@1.21.7)(yaml@2.7.1))
       '@vitest/pretty-format': 4.1.11
       '@vitest/runner': 4.1.11
       '@vitest/snapshot': 4.1.11
@@ -9631,10 +9607,10 @@ snapshots:
       tinyexec: 1.3.0
       tinyglobby: 0.2.17
       tinyrainbow: 3.1.1
-      vite: 6.4.3(@types/node@20.19.25)(jiti@1.21.7)(yaml@2.7.1)
+      vite: 6.4.3(@types/node@20.19.43)(jiti@1.21.7)(yaml@2.7.1)
       why-is-node-running: 2.3.0
     optionalDependencies:
-      '@types/node': 20.19.25
+      '@types/node': 20.19.43
       jsdom: 27.0.1
     transitivePeerDependencies:
       - msw

@@ -265,8 +265,8 @@ import (
 	valkeygo "github.com/valkey-io/valkey-go"
 )
 `
-	postgres := []string{"store-postgres-import", "store-postgres-import", "store-postgres-import"}
-	provider := []string{"repository-provider-import", "repository-provider-import", "repository-provider-import", "repository-provider-import", "repository-provider-import"}
+	postgres := slices.Repeat([]string{"store-postgres-import"}, 3)
+	provider := slices.Repeat([]string{"repository-provider-import"}, 5)
 	cases := []struct {
 		name string
 		want []string

@@ -10,6 +10,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 	queries "github.com/tadoku/tadoku/services/tadoku-api/infra/postgres/internal/pgxcompat"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
 var (
@@ -21,9 +22,11 @@ var (
 
 func TestSQLCUsesNativeExecutorWithoutAdapter(t *testing.T) {
 	t.Parallel()
+
 	pool := openPool(t)
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(tenant.WithKey(context.Background(), tenant.Production()), 10*time.Second)
 	defer cancel()
+
 	refused := errors.New("synthetic rollback")
 	for _, rollback := range []bool{false, true} {
 		err := postgres.RunInTransaction(ctx, pool, func(ctx context.Context) error {
@@ -31,9 +34,11 @@ func TestSQLCUsesNativeExecutorWithoutAdapter(t *testing.T) {
 			if err != nil {
 				return err
 			}
+
 			if _, err := db.Exec(ctx, "create temporary table query_compat_items (id integer primary key, label text not null) on commit drop"); err != nil {
 				return err
 			}
+
 			q := queries.New(db)
 			if err := q.InsertItem(ctx, queries.InsertItemParams{ID: 1, Label: "before"}); err != nil {
 				return err
@@ -41,6 +46,7 @@ func TestSQLCUsesNativeExecutorWithoutAdapter(t *testing.T) {
 			if err := q.RenameItem(ctx, queries.RenameItemParams{ID: 1, Label: "after"}); err != nil {
 				return err
 			}
+
 			item, err := q.GetItem(ctx, 1)
 			if err != nil {
 				return err
@@ -48,6 +54,7 @@ func TestSQLCUsesNativeExecutorWithoutAdapter(t *testing.T) {
 			if item.Label != "after" {
 				t.Errorf("composed generated queries returned label=%q, want after", item.Label)
 			}
+
 			items, err := q.ListItems(ctx)
 			if err != nil {
 				return err
@@ -55,11 +62,13 @@ func TestSQLCUsesNativeExecutorWithoutAdapter(t *testing.T) {
 			if len(items) != 1 || items[0] != item {
 				t.Errorf("generated multi-row query returned %v, want [%v]", items, item)
 			}
+
 			if rollback {
 				return refused
 			}
 			return nil
 		})
+
 		if rollback && !errors.Is(err, refused) {
 			t.Errorf("generated-query rollback error=%v, want synthetic refusal", err)
 		}
@@ -67,6 +76,7 @@ func TestSQLCUsesNativeExecutorWithoutAdapter(t *testing.T) {
 			t.Errorf("generated-query commit: %v", err)
 		}
 	}
+
 	db, err := postgres.Executor(ctx, pool)
 	if err != nil {
 		t.Fatal(err)

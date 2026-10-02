@@ -5,12 +5,14 @@ import (
 	"testing"
 
 	"github.com/tadoku/tadoku/services/tadoku-api/features/languages"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
 )
 
 func TestLanguagesRepositoryListsByName(t *testing.T) {
 	t.Parallel()
-	db, err := testpostgres.New(t.Context())
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
+	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -19,17 +21,17 @@ func TestLanguagesRepositoryListsByName(t *testing.T) {
 			t.Error(err)
 		}
 	})
-	if err := db.Reset(t.Context()); err != nil {
+	if err := db.Reset(tenantCtx); err != nil {
 		t.Fatal(err)
 	}
 
-	if _, err := db.Pool.Exec(t.Context(), `
+	if _, err := db.Pool.Exec(tenantCtx, `
 		insert into languages (code, name)
 		values ('test-z', 'Zulu test'), ('test-a', 'Ainu test')`); err != nil {
 		t.Fatal(err)
 	}
 
-	items, err := languages.NewLanguagesRepository(db.Pool).ListLanguages(t.Context())
+	items, err := languages.NewLanguagesRepository(db.Pool).ListLanguages(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -43,10 +45,10 @@ func TestLanguagesRepositoryListsByName(t *testing.T) {
 		t.Errorf("last language=%+v, want Zulu test", got)
 	}
 
-	if _, err := db.Pool.Exec(t.Context(), "delete from scoring_rules; delete from languages"); err != nil {
+	if _, err := db.Pool.Exec(tenantCtx, "delete from scoring_rules; delete from languages"); err != nil {
 		t.Fatal(err)
 	}
-	items, err = languages.NewLanguagesRepository(db.Pool).ListLanguages(t.Context())
+	items, err = languages.NewLanguagesRepository(db.Pool).ListLanguages(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -57,7 +59,8 @@ func TestLanguagesRepositoryListsByName(t *testing.T) {
 
 func TestLanguagesRepositoryCreatesLanguageAndRejectsDuplicateCode(t *testing.T) {
 	t.Parallel()
-	db, err := testpostgres.New(t.Context())
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
+	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -66,29 +69,30 @@ func TestLanguagesRepositoryCreatesLanguageAndRejectsDuplicateCode(t *testing.T)
 			t.Error(err)
 		}
 	})
-	if err := db.Reset(t.Context()); err != nil {
+	if err := db.Reset(tenantCtx); err != nil {
 		t.Fatal(err)
 	}
 
 	repository := languages.NewLanguagesRepository(db.Pool)
 	parameters := languages.CreateLanguageParameters{Code: "test-new", Name: "  Test language  "}
-	if err := repository.CreateLanguage(t.Context(), parameters); err != nil {
+	if err := repository.CreateLanguage(tenantCtx, parameters); err != nil {
 		t.Fatal(err)
 	}
 
 	var name string
-	if err := db.Pool.QueryRow(t.Context(), "select name from languages where code = $1", parameters.Code).Scan(&name); err != nil {
+	if err := db.Pool.QueryRow(tenantCtx, "select name from languages where code = $1", parameters.Code).Scan(&name); err != nil {
 		t.Fatal(err)
 	}
 	if name != parameters.Name {
 		t.Errorf("name=%q, want exact %q", name, parameters.Name)
 	}
+
 	duplicate := parameters
 	duplicate.Name = "Replacement"
-	if err := repository.CreateLanguage(t.Context(), duplicate); !errors.Is(err, languages.ErrLanguageAlreadyExists) {
+	if err := repository.CreateLanguage(tenantCtx, duplicate); !errors.Is(err, languages.ErrLanguageAlreadyExists) {
 		t.Errorf("duplicate error=%v, want language already exists", err)
 	}
-	if err := db.Pool.QueryRow(t.Context(), "select name from languages where code = $1", parameters.Code).Scan(&name); err != nil {
+	if err := db.Pool.QueryRow(tenantCtx, "select name from languages where code = $1", parameters.Code).Scan(&name); err != nil {
 		t.Fatal(err)
 	}
 	if name != parameters.Name {
@@ -98,7 +102,8 @@ func TestLanguagesRepositoryCreatesLanguageAndRejectsDuplicateCode(t *testing.T)
 
 func TestLanguagesRepositoryUpdatesLanguageAndRejectsMissingCode(t *testing.T) {
 	t.Parallel()
-	db, err := testpostgres.New(t.Context())
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
+	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -107,18 +112,18 @@ func TestLanguagesRepositoryUpdatesLanguageAndRejectsMissingCode(t *testing.T) {
 			t.Error(err)
 		}
 	})
-	if err := db.Reset(t.Context()); err != nil {
+	if err := db.Reset(tenantCtx); err != nil {
 		t.Fatal(err)
 	}
 
 	repository := languages.NewLanguagesRepository(db.Pool)
 	parameters := languages.UpdateLanguageParameters{Code: "jpn", Name: "  Updated Japanese  "}
-	if err := repository.UpdateLanguage(t.Context(), parameters); err != nil {
+	if err := repository.UpdateLanguage(tenantCtx, parameters); err != nil {
 		t.Fatal(err)
 	}
 
 	var name string
-	if err := db.Pool.QueryRow(t.Context(), "select name from languages where code = $1", parameters.Code).Scan(&name); err != nil {
+	if err := db.Pool.QueryRow(tenantCtx, "select name from languages where code = $1", parameters.Code).Scan(&name); err != nil {
 		t.Fatal(err)
 	}
 	if name != parameters.Name {
@@ -126,14 +131,15 @@ func TestLanguagesRepositoryUpdatesLanguageAndRejectsMissingCode(t *testing.T) {
 	}
 
 	missing := languages.UpdateLanguageParameters{Code: "missing", Name: "Unknown"}
-	if err := repository.UpdateLanguage(t.Context(), missing); !errors.Is(err, languages.ErrLanguageNotFound) {
+	if err := repository.UpdateLanguage(tenantCtx, missing); !errors.Is(err, languages.ErrLanguageNotFound) {
 		t.Errorf("missing error=%v, want language not found", err)
 	}
 }
 
 func TestLanguagesRepositoryChecksLanguagesExist(t *testing.T) {
 	t.Parallel()
-	db, err := testpostgres.New(t.Context())
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
+	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -142,7 +148,7 @@ func TestLanguagesRepositoryChecksLanguagesExist(t *testing.T) {
 			t.Error(err)
 		}
 	})
-	if err := db.Reset(t.Context()); err != nil {
+	if err := db.Reset(tenantCtx); err != nil {
 		t.Fatal(err)
 	}
 
@@ -156,7 +162,7 @@ func TestLanguagesRepositoryChecksLanguagesExist(t *testing.T) {
 		{name: "duplicate known", codes: []string{"jpn", "jpn"}, want: true},
 		{name: "unknown", codes: []string{"jpn", "missing"}, want: false},
 	} {
-		exist, err := repository.LanguagesExist(t.Context(), test.codes)
+		exist, err := repository.LanguagesExist(tenantCtx, test.codes)
 		if err != nil {
 			t.Fatal(err)
 		}

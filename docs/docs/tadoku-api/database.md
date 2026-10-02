@@ -70,6 +70,82 @@ are independently implemented with `pg_query_go`.
 Always write SQL keywords in lowercase: `select` and `create table`, not
 `SELECT` and `CREATE TABLE`.
 
+Layout applies to migrations, sqlc queries, seed scripts and SQL embedded in
+Go:
+
+- A statement that does not fit on one line puts each clause (`select`,
+  `from`, `where`, `order by` and so on) on its own line. A `where` with
+  several conditions puts one condition per line, with `and` or `or` leading.
+- Write `case` expressions over several lines: `case`, each `when ... then`,
+  `else` and `end` on their own lines.
+- Separate items in column and value lists with `, `.
+- An `insert` with several rows puts one row per line.
+
+## Tenancy
+
+The canonical tenant is `tadoku/prod`, in both production and development.
+Test tenants use parsed keys such as `e2e/isolation-0123abcd` and registry kind
+`test`. A key has exactly two slash-separated components; each starts with a
+lowercase letter or digit and contains at most 56 lowercase letters, digits
+or hyphens. Physical database names and database roles are independent of keys.
+
+Every application transaction or standalone statement carries its tenant
+through the PostgreSQL executor. The 19 tenant-owned tables include users,
+profiles, content, contests, logs, scoring configuration, audit records,
+account-deletion requests and jobs. All have a non-null tenant column with
+the strict `current_setting('tadoku.tenant')` default. Ordinary
+`tenant_isolation` policies permit only that tenant's rows. The jobs policy
+also admits the restricted all-tenants worker scope; jobs still require a
+non-null, registered tenant.
+
+`languages` and `log_units` are shared reference tables. Everyone can read
+them, but only `tadoku/prod` can insert, update or delete their rows. The
+`tenants` and `tenant_overrides` registry policies permit test-tenant
+management while protecting the canonical production entry. Deleting a test
+entry cascades to its tenant-owned rows, including replayed jobs.
+
+For each new tenant-owned table:
+
+- Add a non-null `tenant` column with the transaction tenant default and a
+  foreign key to `tenants(key)` with `on delete cascade`.
+- Enable row-level security and the canonical `tenant_isolation` policy for
+  both reads and writes.
+- Prefix primary and business-unique keys with `tenant`, and include tenant
+  in foreign keys that need to prevent references across tenants.
+- Follow the migration safety rules, including `not valid` foreign keys and
+  explicit validation, and run the schema guard.
+
+The owner role applies migrations and owns relations. It bypasses their
+row-level policies and is not the application credential. The runtime role
+has no superuser, `bypassrls` or owner membership, owns no relations, and has
+application DML and sequence privileges. It can read `schema_migrations`
+but cannot change it. Tests preserve this distinction with separate fixture
+and application pools.
+
+Data migrations and operator SQL must set the intended tenant explicitly
+inside their transaction:
+
+```sql
+begin;
+select set_config('tadoku.tenant', 'tadoku/prod', true);
+-- The intended scoped statements go here.
+commit;
+```
+
+Never set the tenant per session, in pool startup parameters, on a role or
+on a database. Transaction pooling can give another client the same server
+session. A genuinely fresh direct connection without the setting fails
+with `42704`; a previously scoped connection can retain an empty custom-GUC
+placeholder. That connection reads no ordinary tenant rows and cannot
+persist an unscoped write. Application calls also fail before SQL when their
+context has no parsed tenant.
+
+Every `pg_cron` command for tenant-owned work sends the local `tadoku/prod`
+setting first and its scheduled work in the same command batch. The multiple
+statements execute in one job transaction. Keep this prefix with the complete
+command; connection/session defaults cannot replace it. Operator tools that
+submit statements separately must use an explicit transaction.
+
 ## sqlc code generation
 
 Queries live in one package per feature under `services/tadoku-api/sql/<feature>/`:
@@ -88,6 +164,12 @@ root:
 - The script downloads and runs the sqlc version pinned in each active package's
   `generate.go` (v1.31.1, generating pgx/v5 code), so `go` does not need to be
   installed or on `PATH`.
+- Queries must return explicit result columns rather than whole table rows.
+  sqlc reuses a table model for `select *`, `table.*`, `returning *`, and an
+  equivalent complete list in table order. Adding a column then changes the
+  generated code, which a standalone migration PR cannot contain. Select only
+  the fields needed, or reorder the complete list so sqlc emits a query row
+  type. Keep equivalent results in the same order for shared row mapping.
 - Never edit sqlc-generated files by hand. Never delete, revert or selectively
   omit changes produced by the generator; commit the complete generated diff,
   even when it reveals previously stale output.
@@ -113,8 +195,22 @@ return queries.New(db).InsertItem(ctx, params)
 
 - The application owns transactions. Open one only when the operation needs
   one.
-- Outside a transaction, `Executor` returns the pool; inside one, it returns the
-  active transaction.
+- Every operation needs a parsed tenant on its context. Missing or zero tenants
+  return `postgres.ErrNoTenant` before SQL. `RunInTransaction` sets the tenant
+  locally as its first statement; the callback retains it for the transaction.
+- Outside a transaction, `Executor` returns a scoped handle that sends the
+  local tenant setting and actual statement as one pgx batch in an implicit
+  transaction. Inside one, it returns the active transaction. Pass the same
+  operation context to every SQL call.
+- Changing the tenant within a transaction or on a standalone handle returns
+  `postgres.ErrTenantMismatch`. A context containing both a tenant and the
+  restricted all-tenants marker also fails closed.
+- Never set `tadoku.tenant` for a whole session. PgBouncer transaction pooling
+  hands server sessions to other clients; only transaction-local settings end
+  before the next client uses the session.
+- `Query` rows retain their batch connection until `Close` or exhaustion. Finish
+  iteration, close rows and check `Err`; it includes batch-close errors.
+  `QueryRow` releases its batch after `Scan` and preserves `pgx.ErrNoRows`.
 - Wrong-pool, nested and ended transaction scopes fail. An ended context never
   falls back to the pool. There are no retries or savepoints.
 - Finish all work and row iteration before the callback returns. Do not run

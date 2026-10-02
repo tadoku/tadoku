@@ -803,3 +803,38 @@ func waitForValkeyDisconnect(t *testing.T, observer valkeygo.Client, clientField
 		}
 	}
 }
+
+func TestLoadConfigRejectsInvalidBranch(t *testing.T) {
+	for key, value := range map[string]string{
+		"API_SCORING_ENGINE_ENABLED": "false",
+		"API_JWKS":                   "http://jwks.test",
+		"API_KETO_READ_URL":          "http://keto-read.test",
+		"API_KETO_WRITE_URL":         "http://keto-write.test",
+		"API_OATHKEEPER_AUTHZ_TOKEN": "callback-token",
+		"API_KRATOS_ADMIN_URL":       "http://kratos-admin.test",
+		"API_VALKEY_URL":             "redis://valkey:6379",
+		"API_POSTGRES_HOST":          "localhost",
+		"API_POSTGRES_DATABASE":      "tadoku",
+		"API_POSTGRES_USER":          "tadoku",
+		"API_POSTGRES_PASSWORD":      "synthetic",
+		"API_POSTGRES_SSLMODE":       "disable",
+	} {
+		t.Setenv(key, value)
+	}
+
+	for _, raw := range []string{
+		"tadoku/prod",
+		"tadoku",
+		"bad_key/id",
+		"e2e/",
+		"/test",
+		"TADOKU/prod",
+	} {
+		t.Run(raw, func(t *testing.T) {
+			t.Setenv("API_BRANCH", raw)
+			if _, err := loadConfig(); err == nil || !strings.Contains(err.Error(), "API_BRANCH") {
+				t.Errorf("API_BRANCH %q: error=%v", raw, err)
+			}
+		})
+	}
+}

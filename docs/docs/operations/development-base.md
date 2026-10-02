@@ -1,6 +1,6 @@
 ---
 title: Development base
-description: How Argo CD runs the always-on Tadoku development base on homelab-dev, and how operators bootstrap, migrate, verify and recover it.
+description: How Argo CD runs the always-on Tadoku development base on homelab-talos-dev, and how operators bootstrap, migrate, verify and recover it.
 ---
 
 # Development base
@@ -9,7 +9,7 @@ Read this when you operate the Argo CD development base in `k8s/dev/base/`:
 first activation, credentials, migrations, image updates, worker ownership or
 recovery.
 
-`k8s/dev/base/` is exclusively for the `homelab-dev` cluster (node `ct190`).
+`k8s/dev/base/` is exclusively for the `homelab-talos-dev` cluster.
 **Never apply it to another Kubernetes context.** Production is deployed from a
 private repository and is not affected by these manifests. To run and verify
 your own branch, use [Development environment](../develop/environment.md)
@@ -24,6 +24,11 @@ instead; for a map of the components, see
 | dev-cli | Branch overlays, routing overrides, short-lived tasks and owner/branch database provisioning |
 | Homelab infrastructure | The Argo CD Application and the development Image Updater, not copies of these workload manifests |
 | Platform | The Postgres operator and Envoy Gateway, which must exist before the base syncs |
+
+The `tadoku_owner` role owns the base and branch databases and their public
+tables. Migrations use that owner role. API, worker and seed processes use
+`tadoku`, a non-owner without `bypassrls`, with table DML and sequence grants.
+The runtime role cannot create tables or write `schema_migrations`.
 
 ## Topology
 
@@ -106,7 +111,9 @@ Full Argo CD syncs apply these waves:
 | --- | --- |
 | -30 | Development namespaces |
 | -20 | Postgres custom resource and generated configuration |
-| -10 | Tadoku API, Kratos and Keto migration Sync hooks; each waits for authenticated database connectivity |
+| -15 | Transfer existing Tadoku objects to `tadoku_owner` and establish runtime grants |
+| -10 | Tadoku API migrations as `tadoku_owner`; Kratos and Keto migration Sync hooks; each waits for authenticated database connectivity |
+| -5 | Reapply runtime grants and revoke writes to the newly created `schema_migrations` table |
 | 0 | Auth providers, cache, Flipt, token-reflector and Gateway routes |
 | 10 | Oathkeeper, which publishes its JWKS before the APIs start |
 | 20 | Tadoku API and its private worker |
@@ -131,25 +138,34 @@ and deploy on their own before dependent runtime code. Digest tracking is not a
 substitute for backward-compatible schema and application releases.
 
 Base seeding is separate from migrations: `make dev-seed` creates the marked
-synthetic identities and base fixtures. Branch databases are migrated and
-seeded by dev-cli tasks; see
+synthetic identities and base fixtures on `homelab-talos-dev` for tenant
+`tadoku/prod`. SQL seeds require the supplied tenant, set it for each
+transaction and write that tenant explicitly. The canonical tenant retains the
+fixture UUIDs; other tenants derive fixture UUIDs from their tenant key.
+Caller-supplied identity UUIDs are unchanged.
+
+Branch databases are migrated and seeded by dev-cli tasks; see
 [Development environment](../develop/environment.md#branch-databases).
 
 ## Credentials
 
 There are no plaintext Secret manifests or private keys in `k8s/dev/base/`.
 
-- The Postgres operator generates the `tadoku`, `kratos` and `keto` credentials
-  in `tdk-dev-data`. Tadoku API uses the `tadoku` role and database.
-- The Postgres administrator Secret stays in `tdk-dev-data`. Only the
-  short-lived branch database creation Job uses it; application pods and tasks
-  use the `tadoku` role. This is cooperative isolation, not hostile
-  multi-tenancy.
+- The Postgres operator generates `tadoku_owner`, `tadoku`, `kratos` and `keto`
+  credentials in `tdk-dev-data`. The owner Secret is named
+  `tadoku-owner.tadoku-dev-db.credentials.postgresql.acid.zalan.do`; the
+  operator replaces underscores in Secret names. The base Tadoku migrations
+  use this owner Secret. API and worker keep the `tadoku` credentials.
+- The Postgres administrator Secret stays in `tdk-dev-data`. The ownership
+  hooks and short-lived branch database creation Job use it. Branch migration
+  tasks use `tadoku_owner`; API, worker and seed processes use `tadoku`. This
+  is cooperative isolation, not hostile multi-tenancy.
 - `scripts/dev/bootstrap-gitops-secrets.sh` copies only the required
-  credentials into consumer namespaces. It generates the development-only
-  Kratos runtime secret, Oathkeeper JWKS and Oathkeeper authorization token
-  once, and preserves existing keys on rerun. It needs `kubectl`, `jq` and
-  `node`.
+  credentials, including the owner credential for branch migrations, into
+  consumer namespaces. It targets only `homelab-talos-dev` at
+  `https://omni.lab:8100`. It generates the development-only Kratos runtime
+  secret, Oathkeeper JWKS and Oathkeeper authorization token once, and
+  preserves existing keys on rerun. It needs `kubectl`, `jq` and `node`.
 - The script fails closed on another API server, on namespaces not labeled as
   part of the development base, and on Secrets with unexpected ownership. It
   never reads credentials from outside the development GitOps base.
@@ -211,7 +227,7 @@ After activation, run the live acceptance gates listed under
 Offline checks:
 
 ```sh
-kubectl --context homelab-dev kustomize k8s/dev/base |
+kubectl --context homelab-talos-dev kustomize k8s/dev/base |
   kubeconform -strict -summary -ignore-missing-schemas
 node k8s/dev/base/e2e.cjs /tmp/tadoku-base-evidence
 ```
@@ -223,10 +239,12 @@ isolated, resource-bounded Docker containers, not a nested Kubernetes cluster.
 - It records the source revision, worktree status, rendered-manifest hash,
   exact image digests, commands and results in `report.json`, with individual
   logs.
-- It proves fresh migrations, no-op reruns, an intentional connection failure
-  and recovery, plus HTTP readiness, development runtime URLs and compiled
-  assets in all three published frontend images with external networking
-  disabled. It also checks the rendered leaderboard worker ownership.
+- It proves fresh and existing ownership transfer, runtime DML and sequence
+  access, denied DDL and migration-table writes, and branch provisioning.
+- It also proves fresh migrations, no-op reruns, an intentional connection
+  failure and recovery, plus HTTP readiness, development runtime URLs and
+  compiled assets in all three published frontend images with external
+  networking disabled. It also checks the rendered leaderboard worker ownership.
 - It cleans up only its labeled fixtures. Synthetic credentials in its fixture
   logs are not live credentials.
 

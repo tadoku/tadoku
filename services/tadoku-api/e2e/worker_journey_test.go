@@ -24,8 +24,11 @@ func runWorkerStep(t *testing.T, s *suite) {
 	}
 
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	leaderboardService := leaderboard.NewService(leaderboard.NewRepository(s.db.Pool), leaderboard.NewCache(leaderboardValkey.client, time.Second, ""))
-	application, err := worker.NewApplication(jobqueue.NewService(jobqueue.NewRepository(s.db.Pool)), leaderboardService, worker.Config{
+	leaderboardService := leaderboard.NewService(
+		leaderboard.NewRepository(s.db.AppPool),
+		leaderboard.NewCache(leaderboardValkey.client, time.Second, ""),
+	)
+	application, err := worker.NewApplication(jobqueue.NewService(jobqueue.NewRepository(s.db.AppPool)), leaderboardService, worker.Config{
 		Concurrency:     4,
 		ShutdownTimeout: 2 * time.Second,
 		Logger:          logger,
@@ -34,6 +37,7 @@ func runWorkerStep(t *testing.T, s *suite) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	workerContext, cancelWorker := context.WithCancel(t.Context())
 	workerDone := make(chan error, 1)
 	go func() { workerDone <- application.Run(workerContext) }()
@@ -53,6 +57,7 @@ func runWorkerStep(t *testing.T, s *suite) {
 	defer deadline.Stop()
 	tick := time.NewTicker(50 * time.Millisecond)
 	defer tick.Stop()
+
 	for {
 		var completed, failed int
 		if err := s.db.Pool.QueryRow(t.Context(), `select count(*) filter (where state = 'completed'), count(*) filter (where state = 'failed') from jobs`).Scan(&completed, &failed); err != nil {

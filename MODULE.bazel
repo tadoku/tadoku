@@ -49,9 +49,7 @@ go_deps.module_override(
 ## All *direct* Go dependencies of the module have to be listed explicitly.
 use_repo(
     go_deps,
-    "com_github_bwmarrin_discordgo",
     "com_github_getkin_kin_openapi",
-    "com_github_getsentry_sentry_go",
     "com_github_go_playground_validator_v10",
     "com_github_golang_jwt_jwt_v4",
     "com_github_golang_migrate_migrate_v4",
@@ -59,7 +57,6 @@ use_repo(
     "com_github_jackc_pgerrcode",
     "com_github_jackc_pgx_v5",
     "com_github_kelseyhightower_envconfig",
-    "com_github_lib_pq",
     "com_github_mattn_go_sqlite3",
     "com_github_micahparks_keyfunc",
     "com_github_oapi_codegen_nullable",
@@ -67,7 +64,6 @@ use_repo(
     "com_github_ory_keto_client_go",
     "com_github_ory_kratos_client_go",
     "com_github_pganalyze_pg_query_go_v6",
-    "com_github_pkg_errors",
     "com_github_prometheus_client_golang",
     "com_github_sahilm_fuzzy",
     "com_github_satorunooshie_depolicy",
@@ -110,7 +106,7 @@ oci.pull(
 )
 oci.pull(
     name = "tadoku_dev_node",
-    digest = "sha256:fa271c47a5d81dc321f4a45be01362f5b3de7559edc7e76b8c4089be1e50d866",
+    digest = "sha256:a723b54c35a76e947095a20a67d39585bb09c862e6b1adeb8a9f518f95e34fb0",
     image = "index.docker.io/library/node",
     platforms = ["linux/amd64"],
 )
@@ -118,7 +114,7 @@ use_repo(oci, "tadoku_dev_alpine", "tadoku_dev_alpine_linux_amd64", "tadoku_dev_
 
 oci.pull(
     name = "tadoku_dev_postgres",
-    digest = "sha256:86c951e05bf56c93d95d397747fb8820ac76cc3bedb78f43abd83eedbe3666ae",
+    digest = "sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722",
     image = "index.docker.io/library/postgres",
     platforms = ["linux/amd64"],
 )

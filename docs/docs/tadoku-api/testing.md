@@ -62,6 +62,22 @@ Never point tests at shared development or production services.
   port, database `postgres`, credentials `postgres:postgres` and exactly
   `sslmode=disable`. Fixtures create random disposable databases and apply the
   complete migration history.
+
+  `testpostgres.Database.Pool` is the owner pool for fixture reset and
+  verification SQL. `AppPool` uses a separate randomly named per-database
+  login with no superuser, `bypassrls`, ownership or role memberships. It has
+  application DML, sequence usage and read-only migration metadata access.
+  Owner-only baseline snapshots are not granted to it. Application-pool
+  shutdown precedes database and role cleanup; partial setup also cleans up
+  the owned role and reports cleanup failures.
+- **PgBouncer:** PostgreSQL transport tests require
+  `TADOKU_TEST_PGBOUNCER_URL` with the same loopback, synthetic credential and
+  database guard. Run PgBouncer 1.25.2 in transaction mode, with a wildcard
+  database mapping to the disposable PostgreSQL instance, SCRAM authentication
+  and nonzero `max_prepared_statements`. The dedicated target exercises 300
+  goroutines, 12,000 tenant reads and 6,000 writes. Its test-only
+  session-setting negative control must observe cross-client leaks. Normal and race CI jobs
+  print both workload and negative-control results.
 - **Keto:** relationship scenarios start a pinned, official Linux x86-64 Keto
   v25.4.0 SQLite-enabled executable under Bazel. Each helper owns an in-memory,
   loopback-only process using `infra/dev/ory/namespaces.keto.ts` and never
@@ -82,14 +98,56 @@ Never point tests at shared development or production services.
 
 ## Repository and package tests
 
+- Test code follows [Go style](./go-style.md), including arrange, act and
+  assert grouping and one test case per table entry.
 - Database tests in feature packages follow the
   [feature package layout](./conventions.md#feature-package-layout).
 - Database helpers take contexts and return errors, with explicit `Close`
   cleanup instead of depending on `testing.TB`. Suite teardown preserves test
   failures and reports cleanup failures; partial setup also cleans up.
+- Direct repository, service and worker tests pass an explicit
+  `tenant.WithKey(ctx, tenant.Production())` context. HTTP E2Es receive the
+  tenant through their signed fixture tokens. Fixture reset sets the canonical tenant
+  transaction-locally before cleanup and seed inserts.
+- Raw owner-pool fixture inserts name the tenant column explicitly, including
+  every row and `insert ... select` projection. Canonical fixtures use
+  `tadoku/prod`; parent and child rows use the same tenant. A context value
+  alone does not scope raw pool SQL. Reads through a restricted application role use
+  the PostgreSQL executor with an explicit tenant context, preserving the same
+  transaction-local scope as application calls. Never supply a session, role,
+  database or pool startup tenant setting to make fixtures pass.
 - Repository and transaction tests keep their own independent databases and may
-  run in parallel.
+  run in parallel. If local test targets contend with the provider fixtures,
+  use `--local_test_jobs=1` to serialize targets while retaining all assertions.
 - Keep the pool-closing failure test isolated. It opens a second pool on the
   shared DSN and closes it, without creating another migrated database.
 - The `services/tadoku-api/infra/postgres/` helper tests have their own setup in
   `services/tadoku-api/infra/postgres/README.md`.
+
+## Tenancy guard and isolation
+
+`services/tadoku-api/infra/postgres/tenancy_schema_test.go` migrates a
+disposable database and checks every ordinary table for RLS, a non-null tenant
+column, the strict transaction tenant default and its canonical policy.
+Registry, shared reference, migration metadata and the helper's baseline tables
+have their explicit exceptions. The guard checks shared reference policies and
+rejects database/role startup tenant settings. A new table therefore fails the
+guard until it has the required protections.
+
+All HTTP E2E application repositories and the real journey worker use
+`AppPool`; reset, fixture mutations and `verify.sql` keep `Pool`.
+
+`services/tadoku-api/e2e/tenant_isolation_test.go` runs signed requests through
+the production JWT/Keto router and real PostgreSQL and Valkey. It covers
+two-way log visibility, duplicate page slugs and synchronized identities,
+shared-table write denial, base and branch job claims, actual delegated
+provider tenant contexts, and test-tenant deletion including a replay chain
+without changing canonical rows. Pool tests also prove fresh and reused
+unscoped connections fail closed. These checks cover database/context
+isolation; they do not prove cache-key partitioning.
+
+Development seed SQL requires `psql` variables including `tenant`. Exercise
+the three files in `scripts/dev/seed/` against a disposable migrated database,
+with canonical and test keys, and retain the command and row/ID comparison.
+If the test runner does not provide `psql`, attach that bounded manual run
+as verification evidence rather than skipping it silently.

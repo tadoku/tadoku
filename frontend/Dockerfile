@@ -1,5 +1,5 @@
 # Builder image
-FROM docker.io/node:20-alpine AS build
+FROM docker.io/node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293 AS build
 
 ARG PROJECT_NAME
 
@@ -22,7 +22,7 @@ RUN pnpm install --prod --frozen-lockfile --offline --shamefully-hoist --ignore-
 # END WORKAROUND
 
 # Runtime image
-FROM docker.io/node:20-alpine AS release
+FROM docker.io/node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293 AS release
 
 ARG PROJECT_NAME
 

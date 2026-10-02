@@ -62,7 +62,7 @@ func (q *Queries) LockUser(ctx context.Context, id pgtype.UUID) (LockUserRow, er
 const synchronizeUser = `-- name: SynchronizeUser :one
 insert into users (id, display_name, created_at, updated_at)
 values ($1, $2, $3, $4)
-on conflict (id) do update set
+on conflict (tenant, id) do update set
   display_name = case
     when users.updated_at < $5 then $2
     else users.display_name

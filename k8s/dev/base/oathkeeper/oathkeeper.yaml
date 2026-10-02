@@ -90,5 +90,6 @@ mutators:
       claims: |
         {
           "type": "user",
+          "tenant": "tadoku/prod",
           "session": {{ .Extra | toJson }}
         }

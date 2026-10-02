@@ -48,7 +48,7 @@ where
   and year = sqlc.arg('year')
   and logs.deleted_at is null
 group by language_code, languages.name
-order by score desc;
+order by score desc, language_code asc;
 
 -- name: YearlyActivitySplitForUser :many
 select
@@ -74,7 +74,7 @@ where
   and logs.user_id = sqlc.arg('user_id')
   and logs.deleted_at is null
 group by logs.language_code
-order by 2 desc;
+order by 2 desc, logs.language_code asc;
 
 -- name: ActivityPerLanguageForContestProfile :many
 with eligible_logs as (
@@ -125,7 +125,7 @@ with eligible_logs as (
     coalesce(
       (select array_agg(tag order by tag) from log_tags where log_id = logs.id),
       array[]::text[]
-    )::text as tags
+    )::text[] as tags
   from contest_logs
   inner join logs on (logs.id = contest_logs.log_id)
   inner join languages on (languages.code = logs.language_code)
@@ -170,7 +170,7 @@ with eligible_logs as (
     coalesce(
       (select array_agg(tag order by tag) from log_tags where log_id = logs.id),
       array[]::text[]
-    )::text as tags
+    )::text[] as tags
   from logs
   inner join languages on (languages.code = logs.language_code)
   left join log_units on (log_units.id = logs.unit_id)
@@ -213,7 +213,7 @@ select
   coalesce(
     (select array_agg(tag order by tag) from log_tags where log_id = logs.id),
     array[]::text[]
-  )::text as tags
+  )::text[] as tags
 from logs
 inner join languages on (languages.code = logs.language_code)
 left join log_units on (log_units.id = logs.unit_id)

@@ -9,12 +9,14 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
 )
 
 func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
 	t.Parallel()
-	db, err := testpostgres.New(t.Context())
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
+	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -24,31 +26,31 @@ func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
 		}
 	})
 
-	_, err = db.Pool.Exec(t.Context(), `
-		insert into users (id, display_name, created_at, updated_at, deleted_at)
+	_, err = db.Pool.Exec(tenantCtx, `
+		insert into users (tenant, id, display_name, created_at, updated_at, deleted_at)
 		values
-			('11111111-1111-4111-8111-111111111111', 'Owner One', '2026-01-01', '2026-01-01', null),
-			('22222222-2222-4222-8222-222222222222', 'Owner Two', '2026-01-01', '2026-01-01', '2026-09-01');
+			('tadoku/prod', '11111111-1111-4111-8111-111111111111', 'Owner One', '2026-01-01', '2026-01-01', null),
+			('tadoku/prod', '22222222-2222-4222-8222-222222222222', 'Owner Two', '2026-01-01', '2026-01-01', '2026-09-01');
 
 		insert into contests (
-			id, owner_user_id, owner_user_display_name, "private", contest_start, contest_end,
+			tenant, id, owner_user_id, owner_user_display_name, "private", contest_start, contest_end,
 			registration_end, title, "description", language_code_allow_list,
 			activity_type_id_allow_list, official, created_at, updated_at, deleted_at
 		)
 		values
-			('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1', '11111111-1111-4111-8111-111111111111', 'stale', false,
+			('tadoku/prod', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1', '11111111-1111-4111-8111-111111111111', 'stale', false,
 			 '2026-01-01', '2026-01-31', '2026-01-15', 'Public official', null, null, '{1}', true,
 			 '2026-01-01', '2026-01-01', null),
-			('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2', '22222222-2222-4222-8222-222222222222', 'stale', true,
+			('tadoku/prod', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2', '22222222-2222-4222-8222-222222222222', 'stale', true,
 			 '2026-02-01', '2026-02-28', '2026-02-15', 'Private official', 'private', '{jpn,eng}', '{2,1}', true,
 			 '2026-02-01', '2026-02-01', null),
-			('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3', '11111111-1111-4111-8111-111111111111', 'stale', true,
+			('tadoku/prod', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3', '11111111-1111-4111-8111-111111111111', 'stale', true,
 			 '2026-03-01', '2026-03-31', '2026-03-15', 'Private unofficial', null, '{}', '{3}', false,
 			 '2026-03-01', '2026-03-01', null),
-			('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa4', '22222222-2222-4222-8222-222222222222', 'stale', false,
+			('tadoku/prod', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa4', '22222222-2222-4222-8222-222222222222', 'stale', false,
 			 '2027-01-01', '2027-01-31', '2026-12-15', 'Deleted future official', null, '{eng}', '{5}', true,
 			 '2026-04-01', '2026-04-01', '2026-04-02'),
-			('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa5', '33333333-3333-4333-8333-333333333333', 'missing', false,
+			('tadoku/prod', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa5', '33333333-3333-4333-8333-333333333333', 'missing', false,
 			 '2026-02-15', '2026-02-28', '2026-02-01', 'Orphan official', null, null, '{1}', true,
 			 '2026-02-15', '2026-02-15', null)`)
 	if err != nil {
@@ -60,7 +62,7 @@ func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
 		Official: true,
 		PageSize: 10,
 	}
-	items, total, err := repository.ListContests(t.Context(), parameters)
+	items, total, err := repository.ListContests(tenantCtx, parameters)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -69,7 +71,7 @@ func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
 	}
 
 	parameters.Page = 1
-	items, total, err = repository.ListContests(t.Context(), parameters)
+	items, total, err = repository.ListContests(tenantCtx, parameters)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -77,7 +79,7 @@ func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
 		t.Errorf("out-of-range list=%+v total=%d, want empty page with three matches", items, total)
 	}
 
-	items, total, err = repository.ListContests(t.Context(), ListParameters{
+	items, total, err = repository.ListContests(tenantCtx, ListParameters{
 		Official: false,
 		PageSize: 10,
 	})
@@ -89,7 +91,7 @@ func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
 	}
 
 	orphanOwnerID := uuid.MustParse("33333333-3333-4333-8333-333333333333")
-	items, total, err = repository.ListContests(t.Context(), ListParameters{
+	items, total, err = repository.ListContests(tenantCtx, ListParameters{
 		UserID:   &orphanOwnerID,
 		Official: true,
 		PageSize: 10,
@@ -107,7 +109,7 @@ func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
 		Official: false,
 		PageSize: 10,
 	}
-	items, total, err = repository.ListContests(t.Context(), parameters)
+	items, total, err = repository.ListContests(tenantCtx, parameters)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -116,7 +118,7 @@ func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
 	}
 
 	missingOwnerID := uuid.MustParse("44444444-4444-4444-8444-444444444444")
-	items, total, err = repository.ListContests(t.Context(), ListParameters{
+	items, total, err = repository.ListContests(tenantCtx, ListParameters{
 		UserID:   &missingOwnerID,
 		Official: false,
 		PageSize: 10,
@@ -129,10 +131,10 @@ func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
 	}
 
 	deletedID := uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa4")
-	if _, err := repository.FindContestByID(t.Context(), findParameters{ID: deletedID}); !errors.Is(err, ErrContestNotFound) {
+	if _, err := repository.FindContestByID(tenantCtx, findParameters{ID: deletedID}); !errors.Is(err, ErrContestNotFound) {
 		t.Errorf("deleted contest error=%v, want not found", err)
 	}
-	deleted, err := repository.FindContestByID(t.Context(), findParameters{ID: deletedID, includeDeleted: true})
+	deleted, err := repository.FindContestByID(tenantCtx, findParameters{ID: deletedID, includeDeleted: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -141,11 +143,11 @@ func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
 	}
 
 	privateID := uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2")
-	private, err := repository.FindContestByID(t.Context(), findParameters{ID: privateID})
+	private, err := repository.FindContestByID(tenantCtx, findParameters{ID: privateID})
 	if err != nil {
 		t.Fatal(err)
 	}
-	languages, err := repository.ListLanguagesForContest(t.Context(), private.ID)
+	languages, err := repository.ListLanguagesForContest(tenantCtx, private.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -156,7 +158,7 @@ func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
 		t.Errorf("language names=%v", got)
 	}
 
-	latest, err := repository.FindLatestOfficialContest(t.Context())
+	latest, err := repository.FindLatestOfficialContest(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -167,7 +169,8 @@ func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
 
 func TestContestsRepositoryCreationTransaction(t *testing.T) {
 	t.Parallel()
-	db, err := testpostgres.New(t.Context())
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
+	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -194,14 +197,15 @@ func TestContestsRepositoryCreationTransaction(t *testing.T) {
 		CreatedAt:               now,
 		UpdatedAt:               now,
 	}
-	if _, err := db.Pool.Exec(t.Context(), `
-		insert into users (id, display_name, created_at, updated_at)
-		values ($1, $2, $3, $3)`, contest.OwnerUserID, contest.OwnerUserDisplayName, now); err != nil {
+
+	if _, err := db.Pool.Exec(tenantCtx, `
+		insert into users (tenant, id, display_name, created_at, updated_at)
+		values ('tadoku/prod', $1, $2, $3, $3)`, contest.OwnerUserID, contest.OwnerUserDisplayName, now); err != nil {
 		t.Fatal(err)
 	}
 
 	var created *Contest
-	err = postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
+	err = postgres.RunInTransaction(tenantCtx, db.Pool, func(ctx context.Context) error {
 		if err := repository.CreateContest(ctx, contest); err != nil {
 			return err
 		}
@@ -219,7 +223,7 @@ func TestContestsRepositoryCreationTransaction(t *testing.T) {
 	rolledBack := contest
 	rolledBack.ID = uuid.MustParse("88888888-8888-4888-8888-888888888888")
 	rollbackErr := errors.New("force rollback")
-	err = postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
+	err = postgres.RunInTransaction(tenantCtx, db.Pool, func(ctx context.Context) error {
 		if err := repository.CreateContest(ctx, rolledBack); err != nil {
 			return err
 		}
@@ -228,14 +232,15 @@ func TestContestsRepositoryCreationTransaction(t *testing.T) {
 	if !errors.Is(err, rollbackErr) {
 		t.Fatalf("rollback error=%v, want %v", err, rollbackErr)
 	}
-	if _, err := repository.FindContestByID(t.Context(), findParameters{ID: rolledBack.ID}); !errors.Is(err, ErrContestNotFound) {
+	if _, err := repository.FindContestByID(tenantCtx, findParameters{ID: rolledBack.ID}); !errors.Is(err, ErrContestNotFound) {
 		t.Errorf("rolled-back contest error=%v, want contest not found", err)
 	}
 }
 
 func TestContestsRepositoryCountsEveryContestCreatedByUserInYear(t *testing.T) {
 	t.Parallel()
-	db, err := testpostgres.New(t.Context())
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
+	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -245,13 +250,13 @@ func TestContestsRepositoryCountsEveryContestCreatedByUserInYear(t *testing.T) {
 		}
 	})
 
-	_, err = db.Pool.Exec(t.Context(), `
+	_, err = db.Pool.Exec(tenantCtx, `
 		insert into contests (
-			id, owner_user_id, owner_user_display_name, "private", contest_start, contest_end,
+			tenant, id, owner_user_id, owner_user_display_name, "private", contest_start, contest_end,
 			registration_end, title, activity_type_id_allow_list, official, created_at, updated_at, deleted_at
 		)
 		select
-			('10000000-0000-4000-8000-' || lpad(n::text, 12, '0'))::uuid,
+			'tadoku/prod', ('10000000-0000-4000-8000-' || lpad(n::text, 12, '0'))::uuid,
 			'11111111-1111-4111-8111-111111111111', 'Owner One', n % 2 = 0,
 			'2025-01-01', '2025-01-31', '2025-01-01', 'Current year ' || n, '{}', n % 2 = 1,
 			'2026-01-01'::timestamp + n * interval '1 day', '2026-01-01',
@@ -259,13 +264,13 @@ func TestContestsRepositoryCountsEveryContestCreatedByUserInYear(t *testing.T) {
 		from generate_series(1, 12) as n;
 
 		insert into contests (
-			id, owner_user_id, owner_user_display_name, "private", contest_start, contest_end,
+			tenant, id, owner_user_id, owner_user_display_name, "private", contest_start, contest_end,
 			registration_end, title, activity_type_id_allow_list, official, created_at, updated_at
 		)
 		values
-			('20000000-0000-4000-8000-000000000001', '11111111-1111-4111-8111-111111111111', 'Owner One', false,
+			('tadoku/prod', '20000000-0000-4000-8000-000000000001', '11111111-1111-4111-8111-111111111111', 'Owner One', false,
 			 '2026-01-01', '2026-01-31', '2026-01-01', 'Prior year', '{}', true, '2025-12-31', '2025-12-31'),
-			('20000000-0000-4000-8000-000000000002', '22222222-2222-4222-8222-222222222222', 'Owner Two', false,
+			('tadoku/prod', '20000000-0000-4000-8000-000000000002', '22222222-2222-4222-8222-222222222222', 'Owner Two', false,
 			 '2026-01-01', '2026-01-31', '2026-01-01', 'Other owner', '{}', true, '2026-01-01', '2026-01-01')`)
 	if err != nil {
 		t.Fatal(err)
@@ -273,7 +278,7 @@ func TestContestsRepositoryCountsEveryContestCreatedByUserInYear(t *testing.T) {
 
 	repository := NewContestsRepository(db.Pool)
 	ownerID := uuid.MustParse("11111111-1111-4111-8111-111111111111")
-	count, err := repository.CountContestsCreatedByUserForYear(t.Context(), ownerID, 2026)
+	count, err := repository.CountContestsCreatedByUserForYear(tenantCtx, ownerID, 2026)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -281,7 +286,7 @@ func TestContestsRepositoryCountsEveryContestCreatedByUserInYear(t *testing.T) {
 		t.Errorf("2026 count = %d, want 12 including private, unofficial, and deleted contests", count)
 	}
 
-	count, err = repository.CountContestsCreatedByUserForYear(t.Context(), ownerID, 2025)
+	count, err = repository.CountContestsCreatedByUserForYear(tenantCtx, ownerID, 2025)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -292,8 +297,9 @@ func TestContestsRepositoryCountsEveryContestCreatedByUserInYear(t *testing.T) {
 
 func TestContestsRepositoryRegistrationPersistenceAndTransaction(t *testing.T) {
 	t.Parallel()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 
-	db, err := testpostgres.New(t.Context())
+	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -304,34 +310,38 @@ func TestContestsRepositoryRegistrationPersistenceAndTransaction(t *testing.T) {
 		}
 	})
 
-	_, err = db.Pool.Exec(t.Context(), `
-		insert into users (id, display_name, created_at, updated_at)
+	_, err = db.Pool.Exec(tenantCtx, `
+		insert into users (tenant, id, display_name, created_at, updated_at)
 		values
-			('11111111-1111-4111-8111-111111111111', 'Reader', '2026-01-01', '2026-01-01'),
-			('99999999-9999-4999-8999-999999999999', 'Owner', '2026-01-01', '2026-01-01');
+			('tadoku/prod', '11111111-1111-4111-8111-111111111111', 'Reader', '2026-01-01', '2026-01-01'),
+			('tadoku/prod', '99999999-9999-4999-8999-999999999999', 'Owner', '2026-01-01', '2026-01-01');
 		insert into contests (
-			id, owner_user_id, owner_user_display_name, "private", contest_start, contest_end,
+			tenant, id, owner_user_id, owner_user_display_name, "private", contest_start, contest_end,
 			registration_end, title, activity_type_id_allow_list, official, created_at, updated_at
 		) values (
-			'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '99999999-9999-4999-8999-999999999999', 'stale', true,
+			'tadoku/prod', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '99999999-9999-4999-8999-999999999999', 'stale', true,
 			'2026-09-01', '2026-09-12', '2026-08-31', 'Registration fixture', '{2,1}', true,
 			'2026-01-01', '2026-01-01'
 		);
-		insert into contest_registrations (id, contest_id, user_id, language_codes, created_at, updated_at)
+		insert into contest_registrations (
+			tenant, id, contest_id, user_id, language_codes, created_at, updated_at
+		)
 		values (
-			'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+			'tadoku/prod', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
 			'11111111-1111-4111-8111-111111111111', '{jpn,eng}', '2026-01-01', '2026-01-01'
 		);
 		insert into logs (
-			id, user_id, language_code, log_activity_id, duration_seconds, computed_score,
+			tenant, id, user_id, language_code, log_activity_id, duration_seconds, computed_score,
 			eligible_official_leaderboard, created_at, updated_at
 		) values
-			('cccccccc-cccc-4ccc-8ccc-ccccccccccc1', '11111111-1111-4111-8111-111111111111', 'eng', 1, 60, 1, true, '2026-09-01', '2026-09-01'),
-			('cccccccc-cccc-4ccc-8ccc-ccccccccccc2', '11111111-1111-4111-8111-111111111111', 'jpn', 1, 60, 1, true, '2026-09-01', '2026-09-01');
-		insert into contest_logs (contest_id, log_id, duration_seconds, computed_score)
+			('tadoku/prod', 'cccccccc-cccc-4ccc-8ccc-ccccccccccc1',
+			 '11111111-1111-4111-8111-111111111111', 'eng', 1, 60, 1, true, '2026-09-01', '2026-09-01'),
+			('tadoku/prod', 'cccccccc-cccc-4ccc-8ccc-ccccccccccc2',
+			 '11111111-1111-4111-8111-111111111111', 'jpn', 1, 60, 1, true, '2026-09-01', '2026-09-01');
+		insert into contest_logs (tenant, contest_id, log_id, duration_seconds, computed_score)
 		values
-			('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'cccccccc-cccc-4ccc-8ccc-ccccccccccc1', 60, 1),
-			('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'cccccccc-cccc-4ccc-8ccc-ccccccccccc2', 60, 1);
+			('tadoku/prod', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'cccccccc-cccc-4ccc-8ccc-ccccccccccc1', 60, 1),
+			('tadoku/prod', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'cccccccc-cccc-4ccc-8ccc-ccccccccccc2', 60, 1);
 	`)
 	if err != nil {
 		t.Fatal(err)
@@ -340,7 +350,7 @@ func TestContestsRepositoryRegistrationPersistenceAndTransaction(t *testing.T) {
 	repository := NewContestsRepository(db.Pool)
 	userID := uuid.MustParse("11111111-1111-4111-8111-111111111111")
 	contestID := uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")
-	registration, err := repository.FindRegistrationForUser(t.Context(), userID, contestID)
+	registration, err := repository.FindRegistrationForUser(tenantCtx, userID, contestID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -356,7 +366,7 @@ func TestContestsRepositoryRegistrationPersistenceAndTransaction(t *testing.T) {
 		t.Errorf("registration contest=%+v, want nil", registration.Contest)
 	}
 
-	withContest, err := repository.FindRegistrationWithContestForUser(t.Context(), userID, contestID)
+	withContest, err := repository.FindRegistrationWithContestForUser(tenantCtx, userID, contestID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -365,7 +375,7 @@ func TestContestsRepositoryRegistrationPersistenceAndTransaction(t *testing.T) {
 		t.Errorf("registration with contest=%+v", withContest)
 	}
 
-	ongoing, err := repository.ListOngoingRegistrations(t.Context(), userID, time.Date(2026, 9, 12, 23, 59, 59, 0, time.UTC))
+	ongoing, err := repository.ListOngoingRegistrations(tenantCtx, userID, time.Date(2026, 9, 12, 23, 59, 59, 0, time.UTC))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -374,7 +384,7 @@ func TestContestsRepositoryRegistrationPersistenceAndTransaction(t *testing.T) {
 		t.Errorf("ongoing registration=%+v", ongoing)
 	}
 
-	ongoing, err = repository.ListOngoingRegistrations(t.Context(), userID, time.Date(2026, 9, 13, 0, 0, 0, 0, time.UTC))
+	ongoing, err = repository.ListOngoingRegistrations(tenantCtx, userID, time.Date(2026, 9, 13, 0, 0, 0, 0, time.UTC))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -389,7 +399,7 @@ func TestContestsRepositoryRegistrationPersistenceAndTransaction(t *testing.T) {
 	removedLanguages := []string{"eng"}
 
 	rollbackErr := errors.New("force registration rollback")
-	err = postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
+	err = postgres.RunInTransaction(tenantCtx, db.Pool, func(ctx context.Context) error {
 		if err := repository.DetachContestLogsForLanguages(ctx, userID, contestID, removedLanguages); err != nil {
 			return err
 		}
@@ -403,14 +413,14 @@ func TestContestsRepositoryRegistrationPersistenceAndTransaction(t *testing.T) {
 	}
 
 	var links int
-	if err := db.Pool.QueryRow(t.Context(), `select count(*) from contest_logs`).Scan(&links); err != nil {
+	if err := db.Pool.QueryRow(tenantCtx, `select count(*) from contest_logs`).Scan(&links); err != nil {
 		t.Fatal(err)
 	}
 	if links != 2 {
 		t.Errorf("after rollback links=%d, want 2", links)
 	}
 
-	registration, err = repository.FindRegistrationForUser(t.Context(), userID, contestID)
+	registration, err = repository.FindRegistrationForUser(tenantCtx, userID, contestID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -418,7 +428,7 @@ func TestContestsRepositoryRegistrationPersistenceAndTransaction(t *testing.T) {
 		t.Errorf("rolled-back language codes=%+v", registration.LanguageCodes)
 	}
 
-	err = postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
+	err = postgres.RunInTransaction(tenantCtx, db.Pool, func(ctx context.Context) error {
 		if err := repository.DetachContestLogsForLanguages(ctx, userID, contestID, removedLanguages); err != nil {
 			return err
 		}
@@ -428,14 +438,14 @@ func TestContestsRepositoryRegistrationPersistenceAndTransaction(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := db.Pool.QueryRow(t.Context(), `select count(*) from contest_logs`).Scan(&links); err != nil {
+	if err := db.Pool.QueryRow(tenantCtx, `select count(*) from contest_logs`).Scan(&links); err != nil {
 		t.Fatal(err)
 	}
 	if links != 1 {
 		t.Errorf("after update links=%d, want 1", links)
 	}
 
-	registration, err = repository.FindRegistrationForUser(t.Context(), userID, contestID)
+	registration, err = repository.FindRegistrationForUser(tenantCtx, userID, contestID)
 	if err != nil {
 		t.Fatal(err)
 	}

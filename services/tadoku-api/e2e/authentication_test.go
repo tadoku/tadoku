@@ -1,12 +1,15 @@
 package e2e_test
 
 import (
+	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
 func TestAuthentication(t *testing.T) {
@@ -14,6 +17,18 @@ func TestAuthentication(t *testing.T) {
 		description []string
 		want        int
 	}{
+		{
+			description: []string{"missing", "tenant"},
+			want:        http.StatusUnauthorized,
+		},
+		{
+			description: []string{"malformed", "tenant"},
+			want:        http.StatusUnauthorized,
+		},
+		{
+			description: []string{"bare", "tenant"},
+			want:        http.StatusUnauthorized,
+		},
 		{
 			description: []string{"user"},
 			want:        http.StatusOK,
@@ -119,6 +134,7 @@ func TestAuthentication(t *testing.T) {
 			want:        http.StatusUnauthorized,
 		},
 	}
+
 	for _, test := range tests {
 		name := APITestName("Authentication", test.want, test.description...)
 		t.Run(name, func(t *testing.T) {
@@ -130,6 +146,9 @@ func TestAuthentication(t *testing.T) {
 }
 
 func observeIdentity(w http.ResponseWriter, r *http.Request) {
+	if key, ok := tenant.FromContext(r.Context()); ok {
+		w.Header().Set("X-Test-Tenant", key.String())
+	}
 	if user := identity.FromContext(r.Context()); user != nil {
 		writeIdentityHeaders(w.Header(), user.Subject, user.DisplayName, user.Email, user.CreatedAt)
 	}
@@ -172,6 +191,41 @@ func TestAuthenticationDoesNotChangeProbesOrUnknownRoutes(t *testing.T) {
 					t.Errorf("authorization=%q status=%d, want %d", authorization, response.Code, test.want)
 				}
 			}
+		})
+	}
+}
+
+func TestAuthenticationBranch(t *testing.T) {
+	deployment, err := tenant.ParseDeployment("e2e/branch-golden")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	handler, _, _, err := newTestRouterWithLeaderboardService(
+		t.Context(),
+		api.db.AppPool,
+		api.db.AppPool,
+		api.keto,
+		api.kratos,
+		slog.New(slog.NewTextHandler(io.Discard, nil)),
+		false,
+		api.leaderboard,
+		deployment,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, test := range []struct {
+		description []string
+		want        int
+	}{
+		{description: []string{"other", "tenant"}, want: http.StatusMisdirectedRequest},
+		{description: []string{"own", "tenant"}, want: http.StatusOK},
+	} {
+		name := APITestName("AuthenticationBranch", test.want, test.description...)
+		t.Run(name, func(t *testing.T) {
+			runCase(t, api, name, test.want, implementation{name: "tadoku-api", handler: handler})
 		})
 	}
 }

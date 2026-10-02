@@ -1,23 +1,49 @@
-begin;
+\if :{?tenant}
+\else
+  do $$ begin raise exception 'tenant psql variable is required'; end $$;
+\endif
 
-insert into users (id, display_name, created_at, updated_at)
+begin;
+select set_config('tadoku.tenant', :'tenant', true);
+
+select
+  case when :'tenant' = 'tadoku/prod' then '00000000-0000-4000-8000-000000000101'::uuid
+       else uuid_generate_v5('00000000-0000-4000-8000-000000000101'::uuid, :'tenant') end as public_contest_id,
+  case when :'tenant' = 'tadoku/prod' then '00000000-0000-4000-8000-000000000102'::uuid
+       else uuid_generate_v5('00000000-0000-4000-8000-000000000102'::uuid, :'tenant') end as private_contest_id,
+  case when :'tenant' = 'tadoku/prod' then '00000000-0000-4000-8000-000000000201'::uuid
+       else uuid_generate_v5('00000000-0000-4000-8000-000000000201'::uuid, :'tenant') end as admin_registration_id,
+  case when :'tenant' = 'tadoku/prod' then '00000000-0000-4000-8000-000000000202'::uuid
+       else uuid_generate_v5('00000000-0000-4000-8000-000000000202'::uuid, :'tenant') end as reader_registration_id,
+  case when :'tenant' = 'tadoku/prod' then '00000000-0000-4000-8000-000000000203'::uuid
+       else uuid_generate_v5('00000000-0000-4000-8000-000000000203'::uuid, :'tenant') end as private_registration_id,
+  case when :'tenant' = 'tadoku/prod' then '00000000-0000-4000-8000-000000000301'::uuid
+       else uuid_generate_v5('00000000-0000-4000-8000-000000000301'::uuid, :'tenant') end as reading_log_id,
+  case when :'tenant' = 'tadoku/prod' then '00000000-0000-4000-8000-000000000302'::uuid
+       else uuid_generate_v5('00000000-0000-4000-8000-000000000302'::uuid, :'tenant') end as listening_log_id,
+  case when :'tenant' = 'tadoku/prod' then '00000000-0000-4000-8000-000000000303'::uuid
+       else uuid_generate_v5('00000000-0000-4000-8000-000000000303'::uuid, :'tenant') end as spanish_log_id
+\gset
+
+insert into users (tenant, id, display_name, created_at, updated_at)
 values
-  (:'admin_user_id'::uuid, 'Dev Admin', now(), now()),
-  (:'reader_user_id'::uuid, 'Dev Reader', now(), now())
-on conflict (id) do update
+  (:'tenant', :'admin_user_id'::uuid, 'Dev Admin', now(), now()),
+  (:'tenant', :'reader_user_id'::uuid, 'Dev Reader', now(), now())
+on conflict (tenant, id) do update
 set
   display_name = excluded.display_name,
   updated_at = now();
 
-insert into user_roles (user_id, role, updated_at)
+insert into user_roles (tenant, user_id, role, updated_at)
 values
-  (:'admin_user_id'::uuid, 'admin', now())
-on conflict (user_id) do update
+  (:'tenant', :'admin_user_id'::uuid, 'admin', now())
+on conflict (tenant, user_id) do update
 set
   role = excluded.role,
   updated_at = now();
 
 insert into contests (
+  tenant,
   id,
   owner_user_id,
   owner_user_display_name,
@@ -35,7 +61,8 @@ insert into contests (
 )
 values
   (
-    '00000000-0000-4000-8000-000000000101',
+    :'tenant',
+    :'public_contest_id'::uuid,
     :'admin_user_id'::uuid,
     'Dev Admin',
     false,
@@ -51,7 +78,8 @@ values
     now()
   ),
   (
-    '00000000-0000-4000-8000-000000000102',
+    :'tenant',
+    :'private_contest_id'::uuid,
     :'reader_user_id'::uuid,
     'Dev Reader',
     true,
@@ -85,11 +113,13 @@ set
 -- remove stale seed registrations left over from runs with different seed
 -- identities, so the fixed ids below never collide on the primary key
 delete from contest_registrations
-where (id = '00000000-0000-4000-8000-000000000201' and user_id <> :'admin_user_id'::uuid)
-   or (id = '00000000-0000-4000-8000-000000000202' and user_id <> :'reader_user_id'::uuid)
-   or (id = '00000000-0000-4000-8000-000000000203' and user_id <> :'reader_user_id'::uuid);
+where tenant = :'tenant'
+  and ((id = :'admin_registration_id'::uuid and user_id <> :'admin_user_id'::uuid)
+   or (id = :'reader_registration_id'::uuid and user_id <> :'reader_user_id'::uuid)
+   or (id = :'private_registration_id'::uuid and user_id <> :'reader_user_id'::uuid));
 
 insert into contest_registrations (
+  tenant,
   id,
   contest_id,
   user_id,
@@ -99,36 +129,40 @@ insert into contest_registrations (
 )
 values
   (
-    '00000000-0000-4000-8000-000000000201',
-    '00000000-0000-4000-8000-000000000101',
+    :'tenant',
+    :'admin_registration_id'::uuid,
+    :'public_contest_id'::uuid,
     :'admin_user_id'::uuid,
     array['jpn', 'spa']::varchar(10)[],
     now(),
     now()
   ),
   (
-    '00000000-0000-4000-8000-000000000202',
-    '00000000-0000-4000-8000-000000000101',
+    :'tenant',
+    :'reader_registration_id'::uuid,
+    :'public_contest_id'::uuid,
     :'reader_user_id'::uuid,
     array['jpn', 'spa']::varchar(10)[],
     now(),
     now()
   ),
   (
-    '00000000-0000-4000-8000-000000000203',
-    '00000000-0000-4000-8000-000000000102',
+    :'tenant',
+    :'private_registration_id'::uuid,
+    :'private_contest_id'::uuid,
     :'reader_user_id'::uuid,
     array['jpn']::varchar(10)[],
     now(),
     now()
   )
-on conflict (user_id, contest_id) do update
+on conflict (tenant, user_id, contest_id) do update
 set
   language_codes = excluded.language_codes,
   updated_at = now(),
   deleted_at = null;
 
 insert into logs (
+  tenant,
   id,
   user_id,
   language_code,
@@ -146,7 +180,8 @@ insert into logs (
 )
 values
   (
-    '00000000-0000-4000-8000-000000000301',
+    :'tenant',
+    :'reading_log_id'::uuid,
     :'admin_user_id'::uuid,
     'jpn',
     1,
@@ -162,7 +197,8 @@ values
     now()
   ),
   (
-    '00000000-0000-4000-8000-000000000302',
+    :'tenant',
+    :'listening_log_id'::uuid,
     :'reader_user_id'::uuid,
     'jpn',
     2,
@@ -178,7 +214,8 @@ values
     now()
   ),
   (
-    '00000000-0000-4000-8000-000000000303',
+    :'tenant',
+    :'spanish_log_id'::uuid,
     :'reader_user_id'::uuid,
     'spa',
     1,
@@ -210,6 +247,7 @@ set
   deleted_at = null;
 
 insert into contest_logs (
+  tenant,
   contest_id,
   log_id,
   unit_key,
@@ -220,33 +258,36 @@ insert into contest_logs (
 )
 values
   (
-    '00000000-0000-4000-8000-000000000101',
-    '00000000-0000-4000-8000-000000000301',
-    (select unit_key from logs where id = '00000000-0000-4000-8000-000000000301'),
+    :'tenant',
+    :'public_contest_id'::uuid,
+    :'reading_log_id'::uuid,
+    (select unit_key from logs where tenant = :'tenant' and id = :'reading_log_id'::uuid),
     42,
     1,
     null,
     42
   ),
   (
-    '00000000-0000-4000-8000-000000000101',
-    '00000000-0000-4000-8000-000000000302',
-    (select unit_key from logs where id = '00000000-0000-4000-8000-000000000302'),
+    :'tenant',
+    :'public_contest_id'::uuid,
+    :'listening_log_id'::uuid,
+    (select unit_key from logs where tenant = :'tenant' and id = :'listening_log_id'::uuid),
     null,
     null,
     3600,
     30
   ),
   (
-    '00000000-0000-4000-8000-000000000101',
-    '00000000-0000-4000-8000-000000000303',
-    (select unit_key from logs where id = '00000000-0000-4000-8000-000000000303'),
+    :'tenant',
+    :'public_contest_id'::uuid,
+    :'spanish_log_id'::uuid,
+    (select unit_key from logs where tenant = :'tenant' and id = :'spanish_log_id'::uuid),
     18,
     1,
     null,
     18
   )
-on conflict (contest_id, log_id) do update
+on conflict (tenant, contest_id, log_id) do update
 set
   unit_key = excluded.unit_key,
   amount = excluded.amount,
@@ -254,12 +295,12 @@ set
   duration_seconds = excluded.duration_seconds,
   computed_score = excluded.computed_score;
 
-insert into log_tags (log_id, user_id, tag, created_at)
+insert into log_tags (tenant, log_id, user_id, tag, created_at)
 values
-  ('00000000-0000-4000-8000-000000000301', :'admin_user_id'::uuid, 'book', now()),
-  ('00000000-0000-4000-8000-000000000302', :'reader_user_id'::uuid, 'podcast', now()),
-  ('00000000-0000-4000-8000-000000000303', :'reader_user_id'::uuid, 'fiction', now())
-on conflict (log_id, tag) do update
+  (:'tenant', :'reading_log_id'::uuid, :'admin_user_id'::uuid, 'book', now()),
+  (:'tenant', :'listening_log_id'::uuid, :'reader_user_id'::uuid, 'podcast', now()),
+  (:'tenant', :'spanish_log_id'::uuid, :'reader_user_id'::uuid, 'fiction', now())
+on conflict (tenant, log_id, tag) do update
 set user_id = excluded.user_id;
 
 commit;

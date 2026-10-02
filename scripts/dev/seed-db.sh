@@ -288,6 +288,7 @@ run_seed_sql() {
   kubectl --context "$KUBE_CONTEXT" -n "$DB_NAMESPACE" exec -i "$pod" -- env PGPASSWORD="$database_password_value" PGSSLMODE=require \
     psql -X \
       -v ON_ERROR_STOP=1 \
+      -v tenant=tadoku/prod \
       -v "admin_user_id=${ADMIN_USER_ID}" \
       -v "reader_user_id=${READER_USER_ID}" \
       -h "${DB_NAME}.${DB_NAMESPACE}" -U "$user" -d "$database" < "$file"

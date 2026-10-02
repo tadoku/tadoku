@@ -1,7 +1,7 @@
 -- name: SynchronizeUser :one
 insert into users (id, display_name, created_at, updated_at)
 values (sqlc.arg(id), sqlc.arg(display_name), sqlc.arg(created_at), sqlc.arg(updated_at))
-on conflict (id) do update set
+on conflict (tenant, id) do update set
   display_name = case
     when users.updated_at < sqlc.arg(session_created_at) then sqlc.arg(display_name)
     else users.display_name

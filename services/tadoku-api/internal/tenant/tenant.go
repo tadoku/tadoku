@@ -60,3 +60,7 @@ func ParseDeployment(raw string) (Deployment, error) {
 func (deployment Deployment) Serves(key Key) bool {
 	return key.value != "" && (deployment.key.value == "" || deployment.key == key)
 }
+
+func (deployment Deployment) Key() (Key, bool) {
+	return deployment.key, deployment.key.value != ""
+}

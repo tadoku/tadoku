@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
 var (
@@ -16,6 +17,7 @@ var (
 
 type ClaimedJob struct {
 	ID             int64
+	Tenant         tenant.Key
 	Type           jobs.Type
 	Payload        json.RawMessage
 	Attempts       int

@@ -10,9 +10,11 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
 type Config struct {
+	Scope           tenant.Deployment
 	Concurrency     int
 	ShutdownTimeout time.Duration
 	Logger          *slog.Logger
@@ -43,6 +45,7 @@ func NewApplication(queue *jobqueue.Service, leaderboard *leaderboard.Service, c
 		return nil, err
 	}
 	a.runner = &runner{
+		scope:           config.Scope,
 		queue:           queue,
 		handlers:        handlers,
 		logger:          config.Logger,

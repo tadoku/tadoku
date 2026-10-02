@@ -52,6 +52,8 @@ The `pgbouncer_test` target requires `TADOKU_TEST_POSTGRES_URL` and
 accept only loopback, an explicit port, the `postgres` database, synthetic
 `postgres:postgres` credentials and exactly `sslmode=disable`. The fixture
 creates and drops its own migrated database through the direct PostgreSQL URL.
+Gazelle excludes this source from its default test grouping; maintain the
+dedicated target's dependencies when its imports change.
 
 With the disposable PostgreSQL instance above running, start PgBouncer on a
 Linux host:

@@ -105,14 +105,6 @@ prefixes are supported and trailing slashes are removed.
 Flipt. Missing or malformed values fail startup. Configure it deliberately for
 each environment; the development manifests set it to `false`.
 
-## Worker tenant scope
-
-The current worker binary supplies the canonical `tadoku/prod` context for its
-run and replay composition boundaries. Detached handler and completion contexts
-retain that explicit scope while preserving graceful shutdown. Database helpers
-never supply a default tenant. This is the intermediate worker behavior until
-persisted job tenants and separate cross-tenant queue scopes are supported.
-
 ## Startup
 
 - Business route registration requires authentication middleware. Startup
@@ -252,11 +244,13 @@ The worker uses `WORKER_POSTGRES_*` split connection configuration,
 `WORKER_DIAL_TIMEOUT` (default 3s), `WORKER_CONCURRENCY` (default 4), and
 `WORKER_SHUTDOWN_TIMEOUT` (default 15s). Concurrency and shutdown timeout must
 be positive; the command loads and validates both before application startup.
+
 `WORKER_BRANCH` defaults to empty, selecting the base worker's all-tenants queue
 scope. A non-empty value must be a valid `<name>/<id>` tenant key other than
 `tadoku/prod`. Branch queue isolation requires the `jobs` row-level security
 policy, so keep this variable unset when that policy is absent. Every handler
 and lease transition still uses the tenant persisted on its claimed job.
+
 Private health and metrics listeners default to `WORKER_PORT=8000` and
 `WORKER_METRICS_PORT=9090`. It has no public route. The API and worker must use
 the same database and cache prefix, with a unique prefix per database sharing
@@ -265,16 +259,24 @@ Valkey.
 The worker invalidates leaderboard caches through registered jobs. A cache miss
 rebuilds from PostgreSQL only if its generation has not changed, and cached
 reads recheck that generation before returning; unavailable Valkey falls back
-to PostgreSQL. Worker Pod
-readiness reports whether the execution loop can operate, independently of
-individual job success. Monitor queued and failed jobs because cached results
-can remain stale while invalidation work is outstanding.
+to PostgreSQL. Worker Pod readiness reports whether the execution loop can
+operate, independently of individual job success. Monitor queued and failed
+jobs because cached results can remain stale while invalidation work is
+outstanding.
 
 Global and per-type concurrency are per process. Handler cancellation does not
 release its slot until it returns. On shutdown the application stops claiming,
 drains within its configured bound, then cancels remaining work and joins it
 before provider resources close. A noncooperative handler can delay exit; see
 [Execution and failure guarantees](./jobs.md#execution-and-failure-guarantees).
+
+### Worker tenant scope
+
+The current worker binary supplies the canonical `tadoku/prod` context for its
+run and replay composition boundaries. Detached handler and completion contexts
+retain that explicit scope while preserving graceful shutdown. Database helpers
+never supply a default tenant. This is the intermediate worker behavior until
+persisted job tenants and separate cross-tenant queue scopes are supported.
 
 ## Metrics
 

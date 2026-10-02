@@ -139,12 +139,12 @@ substitute for backward-compatible schema and application releases.
 
 Base seeding is separate from migrations: `make dev-seed` creates the marked
 synthetic identities and base fixtures on `homelab-talos-dev` for tenant
-`tadoku/prod`. SQL seeds require
-the supplied tenant, set it for each transaction and write that tenant explicitly.
-The canonical tenant retains the fixture UUIDs; other tenants derive fixture UUIDs
-from their tenant key. Caller-supplied identity UUIDs are unchanged.
-Branch databases are migrated and
-seeded by dev-cli tasks; see
+`tadoku/prod`. SQL seeds require the supplied tenant, set it for each
+transaction and write that tenant explicitly. The canonical tenant retains the
+fixture UUIDs; other tenants derive fixture UUIDs from their tenant key.
+Caller-supplied identity UUIDs are unchanged.
+
+Branch databases are migrated and seeded by dev-cli tasks; see
 [Development environment](../develop/environment.md#branch-databases).
 
 ## Credentials
@@ -157,17 +157,15 @@ There are no plaintext Secret manifests or private keys in `k8s/dev/base/`.
   operator replaces underscores in Secret names. The base Tadoku migrations
   use this owner Secret. API and worker keep the `tadoku` credentials.
 - The Postgres administrator Secret stays in `tdk-dev-data`. The ownership
-  hooks and
-  short-lived branch database creation Job use it. Branch migration tasks use
-  `tadoku_owner`; API, worker and seed processes use `tadoku`. This is cooperative isolation,
-  not hostile multi-tenancy.
+  hooks and short-lived branch database creation Job use it. Branch migration
+  tasks use `tadoku_owner`; API, worker and seed processes use `tadoku`. This
+  is cooperative isolation, not hostile multi-tenancy.
 - `scripts/dev/bootstrap-gitops-secrets.sh` copies only the required
   credentials, including the owner credential for branch migrations, into
   consumer namespaces. It targets only `homelab-talos-dev` at
-  `https://omni.lab:8100`. It generates the development-only
-  Kratos runtime secret, Oathkeeper JWKS and Oathkeeper authorization token
-  once, and preserves existing keys on rerun. It needs `kubectl`, `jq` and
-  `node`.
+  `https://omni.lab:8100`. It generates the development-only Kratos runtime
+  secret, Oathkeeper JWKS and Oathkeeper authorization token once, and
+  preserves existing keys on rerun. It needs `kubectl`, `jq` and `node`.
 - The script fails closed on another API server, on namespaces not labeled as
   part of the development base, and on Secrets with unexpected ownership. It
   never reads credentials from outside the development GitOps base.
@@ -243,10 +241,10 @@ isolated, resource-bounded Docker containers, not a nested Kubernetes cluster.
   logs.
 - It proves fresh and existing ownership transfer, runtime DML and sequence
   access, denied DDL and migration-table writes, and branch provisioning.
-  It also proves fresh migrations, no-op reruns, an intentional connection failure
-  and recovery, plus HTTP readiness, development runtime URLs and compiled
-  assets in all three published frontend images with external networking
-  disabled. It also checks the rendered leaderboard worker ownership.
+- It also proves fresh migrations, no-op reruns, an intentional connection
+  failure and recovery, plus HTTP readiness, development runtime URLs and
+  compiled assets in all three published frontend images with external
+  networking disabled. It also checks the rendered leaderboard worker ownership.
 - It cleans up only its labeled fixtures. Synthetic credentials in its fixture
   logs are not live credentials.
 

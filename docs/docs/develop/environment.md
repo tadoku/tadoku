@@ -8,13 +8,13 @@ description: How to install dev-cli and run, open, seed, verify and clean up you
 Read this when you want to run your branch of webv2, auth, admin, Tadoku API or its worker
 on the shared development cluster, or check that a change works there.
 
-dev-cli deploys live branch overlays of webv2, auth, admin, Tadoku API and its worker to the
-`homelab-talos-dev` Kubernetes cluster. Argo CD keeps a shared base of every service
-running there even when no developer has a loop running; see
-[Development base](../operations/development-base.md). There is no local
+dev-cli deploys live branch overlays of webv2, auth, admin, Tadoku API and its
+worker to the `homelab-talos-dev` Kubernetes cluster. Argo CD keeps a shared
+base of every service running there even when no developer has a loop running;
+see [Development base](../operations/development-base.md). There is no local
 Kubernetes cluster or Helm bootstrap to run. For a map of the components, see
-[System architecture](../architecture/index.md). Production is deployed from a private
-repository and is not covered here.
+[System architecture](../architecture/index.md). Production is deployed from a
+private repository and is not covered here.
 
 `.dev/config.yaml` is the committed non-secret configuration. It still names
 the retired `homelab-dev` context; the current environment runs on
@@ -220,8 +220,8 @@ release. Kratos and Keto are shared by the base and every branch.
 
 ### Seed data
 
-`make dev-seed` runs `scripts/dev/seed-db.sh` against the shared base with tenant
-`tadoku/prod`. It:
+`make dev-seed` runs `scripts/dev/seed-db.sh` against the shared base with
+tenant `tadoku/prod`. It:
 
 - runs only against the `homelab-talos-dev` context at `https://omni.lab:8100`
   and waits for Postgres and the base migrations;
@@ -231,11 +231,13 @@ release. Kratos and Keto are shared by the base and every branch.
 - grants the administrator role in Keto;
 - loads the fixtures in `scripts/dev/seed/` into the base `tadoku` database.
 
-The SQL fixtures require a `tenant` psql variable, set it transaction-locally and
-write that tenant explicitly. The canonical tenant keeps the fixed fixture UUIDs;
-other tenants derive those UUIDs from their tenant key. Caller-supplied identity
-UUIDs remain unchanged. It is safe to rerun for the same tenant, but it changes
-shared identities and base data. See
+The SQL fixtures require a `tenant` psql variable; they set it
+transaction-locally and write that tenant explicitly. The canonical tenant keeps
+the fixed fixture UUIDs; other tenants derive those UUIDs from their tenant key.
+Caller-supplied identity UUIDs remain unchanged.
+
+It is safe to rerun for the same tenant, but it changes shared identities and
+base data. See
 [Authorization](../architecture/authorization.md#seeding-an-administrator-in-development)
 for the role details.
 
@@ -266,15 +268,15 @@ Postgres cluster, PVC or long-running database pod.
 - `migrate` runs as `tadoku_owner`; its migration init container must finish
   before a pinned Postgres client revokes runtime writes to `schema_migrations`.
   It validates grants with psql conditionals. Inline task arguments avoid
-  dollar-quoted SQL because Kubernetes reduces `$$` to `$`.
-  This requires dev-cli v0.5.1 or newer.
+  dollar-quoted SQL because Kubernetes reduces `$$` to `$`. This requires
+  dev-cli v0.5.1 or newer.
 - The API, worker and `seed` use the non-owner `tadoku` role with DML grants.
   Credentials stay Secret references.
 - `dev up --task migrate --task seed` creates the database first; a task
   failure prevents overlay startup. Plain `dev up` runs no tasks.
 - The branch `seed` task reuses the shared fixture identities and fails until
-  `make dev-seed` has created them. It writes only into an owned branch database, using the same canonical
-  `tadoku/prod` tenant as the shared base.
+  `make dev-seed` has created them. It writes only into an owned branch
+  database, using the same canonical `tadoku/prod` tenant as the shared base.
 
 Rerun the tasks explicitly with:
 

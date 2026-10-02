@@ -62,6 +62,7 @@ Never point tests at shared development or production services.
   port, database `postgres`, credentials `postgres:postgres` and exactly
   `sslmode=disable`. Fixtures create random disposable databases and apply the
   complete migration history.
+
   `testpostgres.Database.Pool` is the owner pool for fixture reset and
   verification SQL. `AppPool` uses a separate randomly named per-database
   login with no superuser, `bypassrls`, ownership or role memberships. It has
@@ -74,8 +75,8 @@ Never point tests at shared development or production services.
   database guard. Run PgBouncer 1.25.2 in transaction mode, with a wildcard
   database mapping to the disposable PostgreSQL instance, SCRAM authentication
   and nonzero `max_prepared_statements`. The dedicated target exercises 300
-  goroutines, 12,000 tenant reads and 6,000 writes. Its test-only session-setting
-  negative control must observe cross-client leaks. Normal and race CI jobs
+  goroutines, 12,000 tenant reads and 6,000 writes. Its test-only
+  session-setting negative control must observe cross-client leaks. Normal and race CI jobs
   print both workload and negative-control results.
 - **Keto:** relationship scenarios start a pinned, official Linux x86-64 Keto
   v25.4.0 SQLite-enabled executable under Bazel. Each helper owns an in-memory,
@@ -103,13 +104,13 @@ Never point tests at shared development or production services.
   cleanup instead of depending on `testing.TB`. Suite teardown preserves test
   failures and reports cleanup failures; partial setup also cleans up.
 - Direct repository, service and worker tests pass an explicit
-  `tenant.WithKey(ctx, tenant.Production())` context. HTTP E2Es receive the tenant
-  through their signed fixture tokens. Fixture reset sets the canonical tenant
+  `tenant.WithKey(ctx, tenant.Production())` context. HTTP E2Es receive the
+  tenant through their signed fixture tokens. Fixture reset sets the canonical tenant
   transaction-locally before cleanup and seed inserts.
 - Raw owner-pool fixture inserts name the tenant column explicitly, including
-  every row and `INSERT ... SELECT` projection. Canonical fixtures use
-  `tadoku/prod`; parent and child rows use the same tenant. A context value alone
-  does not scope raw pool SQL. Reads through a restricted application role use
+  every row and `insert ... select` projection. Canonical fixtures use
+  `tadoku/prod`; parent and child rows use the same tenant. A context value
+  alone does not scope raw pool SQL. Reads through a restricted application role use
   the PostgreSQL executor with an explicit tenant context, preserving the same
   transaction-local scope as application calls. Never supply a session, role,
   database or pool startup tenant setting to make fixtures pass.
@@ -123,16 +124,17 @@ Never point tests at shared development or production services.
 
 ## Tenancy guard and isolation
 
-`services/tadoku-api/infra/postgres/tenancy_schema_test.go` migrates a disposable
-database and checks every ordinary table for RLS, a non-null tenant column,
-the strict transaction tenant default and its canonical policy. Registry,
-shared reference, migration metadata and the helper's baseline tables have
-their explicit exceptions. The guard checks shared reference policies and
-rejects database/role startup tenant settings. A new table therefore fails
-the guard until it has the required protections.
+`services/tadoku-api/infra/postgres/tenancy_schema_test.go` migrates a
+disposable database and checks every ordinary table for RLS, a non-null tenant
+column, the strict transaction tenant default and its canonical policy.
+Registry, shared reference, migration metadata and the helper's baseline tables
+have their explicit exceptions. The guard checks shared reference policies and
+rejects database/role startup tenant settings. A new table therefore fails the
+guard until it has the required protections.
 
 All HTTP E2E application repositories and the real journey worker use
 `AppPool`; reset, fixture mutations and `verify.sql` keep `Pool`.
+
 `services/tadoku-api/e2e/tenant_isolation_test.go` runs signed requests through
 the production JWT/Keto router and real PostgreSQL and Valkey. It covers
 two-way log visibility, duplicate page slugs and synchronized identities,

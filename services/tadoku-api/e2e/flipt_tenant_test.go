@@ -8,7 +8,10 @@ import (
 )
 
 func TestFliptTenantIsolation(t *testing.T) {
-	api.reset(t, "testdata/FliptTenantIsolation")
+	api.reset(t, "")
+	if err := api.db.Reset(t.Context(), "testdata/FliptTenantIsolation/setup.sql"); err != nil {
+		t.Fatal(err)
+	}
 	if err := api.keto.Reset(t.Context(), "testdata/ImmersionFeatureAccessGrant/relationships.json"); err != nil {
 		t.Fatal(err)
 	}

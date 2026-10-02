@@ -10,6 +10,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 	queries "github.com/tadoku/tadoku/services/tadoku-api/infra/postgres/internal/pgxcompat"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
 var (
@@ -22,7 +23,7 @@ var (
 func TestSQLCUsesNativeExecutorWithoutAdapter(t *testing.T) {
 	t.Parallel()
 	pool := openPool(t)
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(tenant.WithKey(context.Background(), tenant.Production()), 10*time.Second)
 	defer cancel()
 	refused := errors.New("synthetic rollback")
 	for _, rollback := range []bool{false, true} {

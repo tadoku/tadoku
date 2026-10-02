@@ -12,12 +12,14 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/pages"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
 )
 
 func TestPagesRepositoryReadsCurrentLiveContent(t *testing.T) {
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
-	db, err := testpostgres.New(t.Context())
+	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -27,7 +29,7 @@ func TestPagesRepositoryReadsCurrentLiveContent(t *testing.T) {
 		}
 	})
 
-	_, err = db.Pool.Exec(t.Context(), `
+	_, err = db.Pool.Exec(tenantCtx, `
 		insert into pages (id, namespace, slug, current_content_id, published_at, created_at, updated_at, deleted_at)
 		values
 			('10000000-0000-4000-8000-000000000001', 'main', 'first-page', '20000000-0000-4000-8000-000000000002', '2026-09-12 12:00:01', '2026-09-12 11:00:00', '2026-09-12 11:30:00', null),
@@ -46,7 +48,7 @@ func TestPagesRepositoryReadsCurrentLiveContent(t *testing.T) {
 	}
 
 	repository := pages.NewPagesRepository(db.Pool)
-	page, err := repository.FindPageBySlug(t.Context(), "main", "first-page")
+	page, err := repository.FindPageBySlug(tenantCtx, "main", "first-page")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -57,7 +59,7 @@ func TestPagesRepositoryReadsCurrentLiveContent(t *testing.T) {
 		{namespace: "other", slug: "first-page"},
 		{namespace: "main", slug: "deleted-page"},
 	} {
-		if _, err := repository.FindPageBySlug(t.Context(), lookup.namespace, lookup.slug); !errors.Is(err, pages.ErrPageNotFound) {
+		if _, err := repository.FindPageBySlug(tenantCtx, lookup.namespace, lookup.slug); !errors.Is(err, pages.ErrPageNotFound) {
 			t.Errorf("find %s/%s error=%v, want not found", lookup.namespace, lookup.slug, err)
 		}
 	}
@@ -83,7 +85,7 @@ func TestPagesRepositoryReadsCurrentLiveContent(t *testing.T) {
 		{name: "empty page preserves total", includeDrafts: true, cutoff: cutoff, limit: 10, offset: 100, wantIDs: []uuid.UUID{}, wantTotal: 2},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			items, total, err := repository.ListPages(t.Context(), "main", test.includeDrafts, test.cutoff, test.limit, test.offset)
+			items, total, err := repository.ListPages(tenantCtx, "main", test.includeDrafts, test.cutoff, test.limit, test.offset)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -99,8 +101,9 @@ func TestPagesRepositoryReadsCurrentLiveContent(t *testing.T) {
 }
 
 func TestPagesRepositoryCreatePageIsAtomic(t *testing.T) {
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
-	db, err := testpostgres.New(t.Context())
+	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -122,7 +125,7 @@ func TestPagesRepositoryCreatePageIsAtomic(t *testing.T) {
 		UpdatedAt:   &instant,
 	}
 	repository := pages.NewPagesRepository(db.Pool)
-	if err := postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
+	if err := postgres.RunInTransaction(tenantCtx, db.Pool, func(ctx context.Context) error {
 		contentID := uuid.New()
 		if err := repository.CreatePage(ctx, item, contentID); err != nil {
 			return err
@@ -152,7 +155,7 @@ func TestPagesRepositoryCreatePageIsAtomic(t *testing.T) {
 	}
 
 	var pagesCount, versions int
-	if err := db.Pool.QueryRow(t.Context(), "select (select count(*) from pages), (select count(*) from pages_content)").Scan(&pagesCount, &versions); err != nil {
+	if err := db.Pool.QueryRow(tenantCtx, "select (select count(*) from pages), (select count(*) from pages_content)").Scan(&pagesCount, &versions); err != nil {
 		t.Fatal(err)
 	}
 	if pagesCount != 1 || versions != 1 {
@@ -161,7 +164,7 @@ func TestPagesRepositoryCreatePageIsAtomic(t *testing.T) {
 
 	duplicate := *item
 	duplicate.ID = uuid.New()
-	err = postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
+	err = postgres.RunInTransaction(tenantCtx, db.Pool, func(ctx context.Context) error {
 		return repository.CreatePage(ctx, &duplicate, uuid.New())
 	})
 	if !errors.Is(err, pages.ErrPageAlreadyExists) {
@@ -170,8 +173,9 @@ func TestPagesRepositoryCreatePageIsAtomic(t *testing.T) {
 }
 
 func TestPagesRepositoryCreatePageRollsBackWhenContentFails(t *testing.T) {
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
-	db, err := testpostgres.New(t.Context())
+	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -180,7 +184,7 @@ func TestPagesRepositoryCreatePageRollsBackWhenContentFails(t *testing.T) {
 			t.Error(err)
 		}
 	})
-	if _, err := db.Pool.Exec(t.Context(), "alter table pages_content add constraint reject_page_title check (title <> 'Rejected')"); err != nil {
+	if _, err := db.Pool.Exec(tenantCtx, "alter table pages_content add constraint reject_page_title check (title <> 'Rejected')"); err != nil {
 		t.Fatal(err)
 	}
 
@@ -195,7 +199,7 @@ func TestPagesRepositoryCreatePageRollsBackWhenContentFails(t *testing.T) {
 		UpdatedAt: &instant,
 	}
 	repository := pages.NewPagesRepository(db.Pool)
-	err = postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
+	err = postgres.RunInTransaction(tenantCtx, db.Pool, func(ctx context.Context) error {
 		contentID := uuid.New()
 		if err := repository.CreatePage(ctx, item, contentID); err != nil {
 			return err
@@ -208,7 +212,7 @@ func TestPagesRepositoryCreatePageRollsBackWhenContentFails(t *testing.T) {
 	}
 
 	var pagesCount, versions int
-	if err := db.Pool.QueryRow(t.Context(), "select (select count(*) from pages), (select count(*) from pages_content)").Scan(&pagesCount, &versions); err != nil {
+	if err := db.Pool.QueryRow(tenantCtx, "select (select count(*) from pages), (select count(*) from pages_content)").Scan(&pagesCount, &versions); err != nil {
 		t.Fatal(err)
 	}
 	if pagesCount != 0 || versions != 0 {
@@ -217,8 +221,9 @@ func TestPagesRepositoryCreatePageRollsBackWhenContentFails(t *testing.T) {
 }
 
 func TestPagesRepositoryDeletePage(t *testing.T) {
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
-	db, err := testpostgres.New(t.Context())
+	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -228,7 +233,7 @@ func TestPagesRepositoryDeletePage(t *testing.T) {
 		}
 	})
 
-	_, err = db.Pool.Exec(t.Context(), `
+	_, err = db.Pool.Exec(tenantCtx, `
 		insert into pages (id, namespace, slug, current_content_id, published_at, created_at, updated_at)
 		values
 			('11111111-1111-4111-8111-111111111111', 'main', 'first-page', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2', '2026-09-11 12:00:00', '2026-09-10 12:00:00', '2026-09-11 12:00:00'),
@@ -250,39 +255,39 @@ func TestPagesRepositoryDeletePage(t *testing.T) {
 	const versionsSnapshotSQL = `select jsonb_agg(to_jsonb(pages_content) order by id)::text from pages_content`
 	var before, versionsBefore string
 	var initialDeletedAt *time.Time
-	if err := db.Pool.QueryRow(t.Context(), postSnapshotSQL, id).Scan(&before, &initialDeletedAt); err != nil {
+	if err := db.Pool.QueryRow(tenantCtx, postSnapshotSQL, id).Scan(&before, &initialDeletedAt); err != nil {
 		t.Fatal(err)
 	}
 	if initialDeletedAt != nil {
 		t.Fatal("seed page is already deleted")
 	}
-	if err := db.Pool.QueryRow(t.Context(), versionsSnapshotSQL).Scan(&versionsBefore); err != nil {
+	if err := db.Pool.QueryRow(tenantCtx, versionsSnapshotSQL).Scan(&versionsBefore); err != nil {
 		t.Fatal(err)
 	}
 
-	if err := repository.DeletePage(t.Context(), "other", id, deletedAt); err != nil {
+	if err := repository.DeletePage(tenantCtx, "other", id, deletedAt); err != nil {
 		t.Fatal(err)
 	}
 	var wrongNamespaceDeletedAt *time.Time
-	if err := db.Pool.QueryRow(t.Context(), "select deleted_at from pages where id = $1", id).Scan(&wrongNamespaceDeletedAt); err != nil {
+	if err := db.Pool.QueryRow(tenantCtx, "select deleted_at from pages where id = $1", id).Scan(&wrongNamespaceDeletedAt); err != nil {
 		t.Fatal(err)
 	}
 	if wrongNamespaceDeletedAt != nil {
 		t.Fatal("wrong namespace deleted the page")
 	}
-	if err := repository.DeletePage(t.Context(), "main", uuid.MustParse("99999999-9999-4999-8999-999999999999"), deletedAt); err != nil {
+	if err := repository.DeletePage(tenantCtx, "main", uuid.MustParse("99999999-9999-4999-8999-999999999999"), deletedAt); err != nil {
 		t.Fatalf("missing page must be an idempotent success: %v", err)
 	}
-	if err := repository.DeletePage(t.Context(), "main", id, deletedAt); err != nil {
+	if err := repository.DeletePage(tenantCtx, "main", id, deletedAt); err != nil {
 		t.Fatal(err)
 	}
-	if err := repository.DeletePage(t.Context(), "main", id, deletedAt.Add(time.Hour)); err != nil {
+	if err := repository.DeletePage(tenantCtx, "main", id, deletedAt.Add(time.Hour)); err != nil {
 		t.Fatal(err)
 	}
 
 	var after, versionsAfter string
 	var gotDeletedAt time.Time
-	if err := db.Pool.QueryRow(t.Context(), postSnapshotSQL, id).Scan(&after, &gotDeletedAt); err != nil {
+	if err := db.Pool.QueryRow(tenantCtx, postSnapshotSQL, id).Scan(&after, &gotDeletedAt); err != nil {
 		t.Fatalf("soft-deleted row must still exist: %v", err)
 	}
 	if after != before {
@@ -291,14 +296,14 @@ func TestPagesRepositoryDeletePage(t *testing.T) {
 	if !gotDeletedAt.Equal(deletedAt) {
 		t.Errorf("deleted_at=%v, want original timestamp %v", gotDeletedAt, deletedAt)
 	}
-	if err := db.Pool.QueryRow(t.Context(), versionsSnapshotSQL).Scan(&versionsAfter); err != nil {
+	if err := db.Pool.QueryRow(tenantCtx, versionsSnapshotSQL).Scan(&versionsAfter); err != nil {
 		t.Fatal(err)
 	}
 	if versionsAfter != versionsBefore {
 		t.Errorf("deletion changed html versions:\nbefore %s\nafter %s", versionsBefore, versionsAfter)
 	}
 	var otherDeletedAt *time.Time
-	if err := db.Pool.QueryRow(t.Context(), "select deleted_at from pages where id = $1", "22222222-2222-4222-8222-222222222222").Scan(&otherDeletedAt); err != nil {
+	if err := db.Pool.QueryRow(tenantCtx, "select deleted_at from pages where id = $1", "22222222-2222-4222-8222-222222222222").Scan(&otherDeletedAt); err != nil {
 		t.Fatalf("other page must remain present: %v", err)
 	}
 	if otherDeletedAt != nil {
@@ -307,8 +312,9 @@ func TestPagesRepositoryDeletePage(t *testing.T) {
 }
 
 func TestPagesRepositoryUpdatePage(t *testing.T) {
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
-	db, err := testpostgres.New(t.Context())
+	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -318,7 +324,7 @@ func TestPagesRepositoryUpdatePage(t *testing.T) {
 		}
 	})
 
-	_, err = db.Pool.Exec(t.Context(), `
+	_, err = db.Pool.Exec(tenantCtx, `
 		insert into pages (id, namespace, slug, current_content_id, published_at, created_at, updated_at)
 		values
 			('11111111-1111-4111-8111-111111111111', 'main', 'original-page', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', null, '2026-09-10 12:00:00', '2026-09-10 12:00:00'),
@@ -334,7 +340,7 @@ func TestPagesRepositoryUpdatePage(t *testing.T) {
 
 	repository := pages.NewPagesRepository(db.Pool)
 	id := uuid.MustParse("11111111-1111-4111-8111-111111111111")
-	original, err := repository.FindPageByID(t.Context(), "main", id)
+	original, err := repository.FindPageByID(tenantCtx, "main", id)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -344,13 +350,13 @@ func TestPagesRepositoryUpdatePage(t *testing.T) {
 	publishedAt := time.Date(2026, 9, 11, 12, 0, 0, 0, time.UTC)
 	metadata.PublishedAt = &publishedAt
 	metadata.UpdatedAt = &publishedAt
-	err = postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
+	err = postgres.RunInTransaction(tenantCtx, db.Pool, func(ctx context.Context) error {
 		return repository.UpdatePage(ctx, &metadata, nil)
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	got, err := repository.FindPageByID(t.Context(), "main", id)
+	got, err := repository.FindPageByID(tenantCtx, "main", id)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -359,7 +365,7 @@ func TestPagesRepositoryUpdatePage(t *testing.T) {
 	}
 	var contentID uuid.UUID
 	var count int
-	if err := db.Pool.QueryRow(t.Context(), `select current_content_id, (select count(*) from pages_content where page_id = $1) from pages where id = $1`, id).Scan(&contentID, &count); err != nil {
+	if err := db.Pool.QueryRow(tenantCtx, `select current_content_id, (select count(*) from pages_content where page_id = $1) from pages where id = $1`, id).Scan(&contentID, &count); err != nil {
 		t.Fatal(err)
 	}
 	if contentID != uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa") || count != 1 {
@@ -374,7 +380,7 @@ func TestPagesRepositoryUpdatePage(t *testing.T) {
 	updated.UpdatedAt = &updatedAt
 	stop := errors.New("roll back revised page")
 	for _, rollback := range []bool{true, false} {
-		err := postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
+		err := postgres.RunInTransaction(tenantCtx, db.Pool, func(ctx context.Context) error {
 			contentID := uuid.New()
 			if err := repository.UpdatePage(ctx, &updated, &contentID); err != nil {
 				return err
@@ -389,7 +395,7 @@ func TestPagesRepositoryUpdatePage(t *testing.T) {
 			if !reflect.DeepEqual(got, &updated) {
 				t.Errorf("read within transaction=%+v, want %+v", got, updated)
 			}
-			outside, err := repository.FindPageByID(t.Context(), "main", id)
+			outside, err := repository.FindPageByID(tenantCtx, "main", id)
 			if err != nil {
 				return err
 			}
@@ -412,14 +418,14 @@ func TestPagesRepositoryUpdatePage(t *testing.T) {
 		} else if err != nil {
 			t.Fatal(err)
 		}
-		got, err := repository.FindPageByID(t.Context(), "main", id)
+		got, err := repository.FindPageByID(tenantCtx, "main", id)
 		if err != nil {
 			t.Fatal(err)
 		}
 		if !reflect.DeepEqual(got, want) {
 			t.Errorf("rollback=%t: persisted page=%+v, want %+v", rollback, got, want)
 		}
-		if err := db.Pool.QueryRow(t.Context(), "select count(*) from pages_content where page_id = $1", id).Scan(&count); err != nil {
+		if err := db.Pool.QueryRow(tenantCtx, "select count(*) from pages_content where page_id = $1", id).Scan(&count); err != nil {
 			t.Fatal(err)
 		}
 		if count != wantCount {
@@ -429,13 +435,13 @@ func TestPagesRepositoryUpdatePage(t *testing.T) {
 
 	var title, body string
 	var createdAt time.Time
-	if err := db.Pool.QueryRow(t.Context(), `select title, html, created_at from pages_content where id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'`).Scan(&title, &body, &createdAt); err != nil {
+	if err := db.Pool.QueryRow(tenantCtx, `select title, html, created_at from pages_content where id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'`).Scan(&title, &body, &createdAt); err != nil {
 		t.Fatal(err)
 	}
 	if title != original.Title || body != original.HTML || !createdAt.Equal(*original.CreatedAt) {
 		t.Errorf("original revision changed: title=%q, html=%q, created_at=%v", title, body, createdAt)
 	}
-	if err := db.Pool.QueryRow(t.Context(), `select pages_content.created_at from pages join pages_content on pages_content.id = pages.current_content_id where pages.id = $1`, id).Scan(&createdAt); err != nil {
+	if err := db.Pool.QueryRow(tenantCtx, `select pages_content.created_at from pages join pages_content on pages_content.id = pages.current_content_id where pages.id = $1`, id).Scan(&createdAt); err != nil {
 		t.Fatal(err)
 	}
 	if !createdAt.Equal(*updated.UpdatedAt) {
@@ -463,12 +469,12 @@ func TestPagesRepositoryUpdatePage(t *testing.T) {
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			var before, after string
-			if err := db.Pool.QueryRow(t.Context(), snapshotSQL).Scan(&before); err != nil {
+			if err := db.Pool.QueryRow(tenantCtx, snapshotSQL).Scan(&before); err != nil {
 				t.Fatal(err)
 			}
 			attempt := updated
 			test.change(&attempt)
-			err := postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
+			err := postgres.RunInTransaction(tenantCtx, db.Pool, func(ctx context.Context) error {
 				contentID := uuid.New()
 				if err := repository.UpdatePage(ctx, &attempt, &contentID); err != nil {
 					return err
@@ -485,7 +491,7 @@ func TestPagesRepositoryUpdatePage(t *testing.T) {
 					t.Fatalf("error=%v, want revision constraint failure", err)
 				}
 			}
-			if err := db.Pool.QueryRow(t.Context(), snapshotSQL).Scan(&after); err != nil {
+			if err := db.Pool.QueryRow(tenantCtx, snapshotSQL).Scan(&after); err != nil {
 				t.Fatal(err)
 			}
 			if before != after {
@@ -494,14 +500,14 @@ func TestPagesRepositoryUpdatePage(t *testing.T) {
 		})
 	}
 
-	if _, err := db.Pool.Exec(t.Context(), "update pages set deleted_at = $1 where id = $2", *updated.UpdatedAt, id); err != nil {
+	if _, err := db.Pool.Exec(tenantCtx, "update pages set deleted_at = $1 where id = $2", *updated.UpdatedAt, id); err != nil {
 		t.Fatal(err)
 	}
 	var before, after string
-	if err := db.Pool.QueryRow(t.Context(), snapshotSQL).Scan(&before); err != nil {
+	if err := db.Pool.QueryRow(tenantCtx, snapshotSQL).Scan(&before); err != nil {
 		t.Fatal(err)
 	}
-	err = postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
+	err = postgres.RunInTransaction(tenantCtx, db.Pool, func(ctx context.Context) error {
 		contentID := uuid.New()
 		if err := repository.UpdatePage(ctx, &updated, &contentID); err != nil {
 			return err
@@ -511,7 +517,7 @@ func TestPagesRepositoryUpdatePage(t *testing.T) {
 	if !errors.Is(err, pages.ErrPageNotFound) {
 		t.Errorf("deleted page error=%v, want not found", err)
 	}
-	if err := db.Pool.QueryRow(t.Context(), snapshotSQL).Scan(&after); err != nil {
+	if err := db.Pool.QueryRow(tenantCtx, snapshotSQL).Scan(&after); err != nil {
 		t.Fatal(err)
 	}
 	if before != after {
@@ -520,8 +526,9 @@ func TestPagesRepositoryUpdatePage(t *testing.T) {
 }
 
 func TestPagesRepositoryGetPageVersion(t *testing.T) {
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
-	db, err := testpostgres.New(t.Context())
+	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -531,7 +538,7 @@ func TestPagesRepositoryGetPageVersion(t *testing.T) {
 		}
 	})
 
-	_, err = db.Pool.Exec(t.Context(), `
+	_, err = db.Pool.Exec(tenantCtx, `
 		insert into pages (id, namespace, slug, current_content_id, published_at, created_at, updated_at, deleted_at)
 		values
 			('11111111-1111-4111-8111-111111111111', 'main', 'published-post', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3', '2026-09-11 12:00:00', '2026-09-10 12:00:00', '2026-09-11 12:00:00', null),
@@ -564,7 +571,7 @@ func TestPagesRepositoryGetPageVersion(t *testing.T) {
 	} {
 		t.Run(test.title, func(t *testing.T) {
 			id := uuid.MustParse(test.id)
-			got, err := repository.GetPageVersion(t.Context(), "main", pageID, id)
+			got, err := repository.GetPageVersion(tenantCtx, "main", pageID, id)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -587,7 +594,7 @@ func TestPagesRepositoryGetPageVersion(t *testing.T) {
 		{"missing parent", "main", "44444444-4444-4444-8444-444444444444", "dddddddd-dddd-4ddd-8ddd-ddddddddddd1"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			_, err := repository.GetPageVersion(t.Context(), test.namespace, uuid.MustParse(test.pageID), uuid.MustParse(test.contentID))
+			_, err := repository.GetPageVersion(tenantCtx, test.namespace, uuid.MustParse(test.pageID), uuid.MustParse(test.contentID))
 			if !errors.Is(err, pages.ErrPageNotFound) {
 				t.Errorf("error=%v, want page not found", err)
 			}
@@ -596,8 +603,9 @@ func TestPagesRepositoryGetPageVersion(t *testing.T) {
 }
 
 func TestPagesRepositoryListPageVersions(t *testing.T) {
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
-	db, err := testpostgres.New(t.Context())
+	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -607,7 +615,7 @@ func TestPagesRepositoryListPageVersions(t *testing.T) {
 		}
 	})
 
-	_, err = db.Pool.Exec(t.Context(), `
+	_, err = db.Pool.Exec(tenantCtx, `
 		insert into pages (id, namespace, slug, current_content_id, published_at, created_at, updated_at, deleted_at)
 		values
 			('11111111-1111-4111-8111-111111111111', 'main', 'scheduled', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3', '2026-09-14 12:00:00', '2026-09-10 12:00:00', '2026-09-11 12:00:00', null),
@@ -646,7 +654,7 @@ func TestPagesRepositoryListPageVersions(t *testing.T) {
 		},
 	}
 	repository := pages.NewPagesRepository(db.Pool)
-	versions, err := repository.ListPageVersions(t.Context(), "main", id)
+	versions, err := repository.ListPageVersions(tenantCtx, "main", id)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -665,7 +673,7 @@ func TestPagesRepositoryListPageVersions(t *testing.T) {
 		{name: "missing", namespace: "main", id: uuid.MustParse("44444444-4444-4444-8444-444444444444")},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			versions, err := repository.ListPageVersions(t.Context(), test.namespace, test.id)
+			versions, err := repository.ListPageVersions(tenantCtx, test.namespace, test.id)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -676,7 +684,7 @@ func TestPagesRepositoryListPageVersions(t *testing.T) {
 	}
 
 	wantRollback := errors.New("rollback history edit")
-	err = postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
+	err = postgres.RunInTransaction(tenantCtx, db.Pool, func(ctx context.Context) error {
 		executor, err := postgres.Executor(ctx, db.Pool)
 		if err != nil {
 			return err
@@ -697,7 +705,7 @@ func TestPagesRepositoryListPageVersions(t *testing.T) {
 	if !errors.Is(err, wantRollback) {
 		t.Fatalf("transaction error=%v, want rollback", err)
 	}
-	versions, err = repository.ListPageVersions(t.Context(), "main", id)
+	versions, err = repository.ListPageVersions(tenantCtx, "main", id)
 	if err != nil {
 		t.Fatal(err)
 	}

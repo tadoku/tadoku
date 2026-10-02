@@ -34,7 +34,7 @@ type runner struct {
 }
 
 func (r *runner) run(ctx context.Context) {
-	workCtx, cancelWork := context.WithCancel(context.Background())
+	workCtx, cancelWork := context.WithCancel(context.WithoutCancel(ctx))
 	defer cancelWork()
 
 	capacity := 0
@@ -222,7 +222,7 @@ func (r *runner) process(ctx context.Context, task jobqueue.ClaimedJob, spec han
 	}
 
 	r.metrics.duration.WithLabelValues(string(task.Type)).Observe(max(0, (limit - time.Until(maximum)).Seconds()))
-	transitionCtx, stop := context.WithTimeout(context.Background(), 5*time.Second)
+	transitionCtx, stop := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
 	defer stop()
 
 	var held bool

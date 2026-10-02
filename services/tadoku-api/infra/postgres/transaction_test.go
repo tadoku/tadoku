@@ -16,6 +16,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
 const testDSNVariable = "TADOKU_TEST_POSTGRES_URL"
@@ -48,7 +49,7 @@ func openPool(t *testing.T) *pgxpool.Pool {
 		t.Fatalf("parse disposable PostgreSQL: %v", err)
 	}
 	config.MaxConns = 6
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(tenant.WithKey(context.Background(), tenant.Production()), 5*time.Second)
 	defer cancel()
 	db, err := pgxpool.NewWithConfig(ctx, config)
 	if err != nil {
@@ -76,13 +77,13 @@ func newFixture(t *testing.T) (context.Context, fixture) {
 		t.Fatalf("random schema suffix: %v", err)
 	}
 	schema := "tadoku_tx_test_" + hex.EncodeToString(random[:])
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	ctx, cancel := context.WithTimeout(tenant.WithKey(context.Background(), tenant.Production()), 15*time.Second)
 	t.Cleanup(cancel)
 	if _, err := db.Exec(ctx, "create schema "+schema); err != nil {
 		t.Fatalf("create synthetic schema: %v", err)
 	}
 	t.Cleanup(func() {
-		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 5*time.Second)
+		cleanupCtx, cleanupCancel := context.WithTimeout(tenant.WithKey(context.Background(), tenant.Production()), 5*time.Second)
 		defer cleanupCancel()
 		if _, err := db.Exec(cleanupCtx, "drop schema "+schema+" cascade"); err != nil {
 			t.Errorf("drop synthetic schema: %v", err)
@@ -340,7 +341,7 @@ func TestRunInTransactionFailedBeginNeverCallsWork(t *testing.T) {
 	t.Parallel()
 	t.Run("already canceled", func(t *testing.T) {
 		db := openPool(t)
-		ctx, cancel := context.WithCancel(context.Background())
+		ctx, cancel := context.WithCancel(tenant.WithKey(context.Background(), tenant.Production()))
 		cancel()
 		called := false
 		err := postgres.RunInTransaction(ctx, db, func(context.Context) error { called = true; return nil })
@@ -352,7 +353,7 @@ func TestRunInTransactionFailedBeginNeverCallsWork(t *testing.T) {
 		db := openPool(t)
 		db.Close()
 		called := false
-		err := postgres.RunInTransaction(context.Background(), db, func(context.Context) error { called = true; return nil })
+		err := postgres.RunInTransaction(tenant.WithKey(context.Background(), tenant.Production()), db, func(context.Context) error { called = true; return nil })
 		if err == nil || called {
 			t.Errorf("closed-pool begin: error=%v, called=%v", err, called)
 		}
@@ -362,7 +363,7 @@ func TestRunInTransactionFailedBeginNeverCallsWork(t *testing.T) {
 	})
 	t.Run("waiting for pool connection", func(t *testing.T) {
 		db := openPool(t)
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		ctx, cancel := context.WithTimeout(tenant.WithKey(context.Background(), tenant.Production()), 5*time.Second)
 		defer cancel()
 		for range db.Config().MaxConns {
 			connection, err := db.Acquire(ctx)
@@ -584,9 +585,6 @@ func TestExecutorSupportsPoolAndTransactionSQLSurface(t *testing.T) {
 			if err != nil {
 				return err
 			}
-			if !transactional && q != f.db {
-				return errors.New("ordinary executor is not the native pool")
-			}
 			if transactional {
 				if _, ok := q.(pgx.Tx); !ok {
 					return errors.New("transaction executor is not a native transaction")
@@ -634,7 +632,7 @@ func TestExecutorSupportsPoolAndTransactionSQLSurface(t *testing.T) {
 func TestExecutorForwardsCancellationForEveryOperation(t *testing.T) {
 	t.Parallel()
 	db := openPool(t)
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(tenant.WithKey(context.Background(), tenant.Production()), 5*time.Second)
 	defer cancel()
 	for _, transactional := range []bool{false, true} {
 		for _, operation := range []string{"exec", "query", "query row"} {

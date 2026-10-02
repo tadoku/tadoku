@@ -27,6 +27,7 @@ go_test(
     srcs = [
         "worker_lifecycle_test.go",
         "worker_runtime_test.go",
+        "worker_tenant_test.go",
         "worker_test.go",
     ],
     embed = [":worker"],
@@ -43,6 +44,8 @@ go_test(
         "//services/tadoku-api/domain/jobs",
         "//services/tadoku-api/features/jobqueue",
         "//services/tadoku-api/features/leaderboard",
+        "//services/tadoku-api/infra/postgres",
+        "//services/tadoku-api/internal/tenant",
         "//services/tadoku-api/internal/testpostgres",
         "//services/tadoku-api/internal/testvalkey",
         "//services/tadoku-api/internal/timex",

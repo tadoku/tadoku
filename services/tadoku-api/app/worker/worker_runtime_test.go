@@ -18,6 +18,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testvalkey"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
@@ -62,7 +63,7 @@ func newWorkerFixture(ctx context.Context) (_ workerFixture, err error) {
 }
 
 func (f workerFixture) Close() error {
-	ctx, stop := context.WithTimeout(context.Background(), time.Second)
+	ctx, stop := context.WithTimeout(tenant.WithKey(context.Background(), tenant.Production()), time.Second)
 	defer stop()
 	var cleanupErr error
 	var cursor uint64
@@ -104,7 +105,7 @@ func (f workerFixture) runner(t *testing.T, client valkeygo.Client, providerTime
 
 func startWorker(t *testing.T, runner *Application) {
 	t.Helper()
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(tenant.WithKey(context.Background(), tenant.Production()))
 	done := make(chan struct{})
 	go func() { defer close(done); runner.Run(ctx) }()
 	t.Cleanup(func() {
@@ -169,7 +170,8 @@ func (c *blockingValkey) Do(ctx context.Context, command valkeygo.Completed) val
 }
 
 func TestWorkerStartsWithoutValkey(t *testing.T) {
-	f, fixtureErr := newWorkerFixture(t.Context())
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
+	f, fixtureErr := newWorkerFixture(tenantCtx)
 	if fixtureErr != nil {
 		t.Fatal(fixtureErr)
 	}
@@ -196,11 +198,11 @@ func TestWorkerStartsWithoutValkey(t *testing.T) {
 	unavailable.Close()
 
 	application := f.runner(t, unavailable, time.Second, time.Second)
-	invalidID, err := insertJob(t.Context(), f.db, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":0}`, false)
+	invalidID, err := insertJob(tenantCtx, f.db, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":0}`, false)
 	if err != nil {
 		t.Fatal(err)
 	}
-	validID, err := insertJob(t.Context(), f.db, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":2025}`, false)
+	validID, err := insertJob(tenantCtx, f.db, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":2025}`, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -210,14 +212,14 @@ func TestWorkerStartsWithoutValkey(t *testing.T) {
 			return
 		}
 		var pending, attempts int
-		err := f.db.QueryRow(t.Context(), `select count(*) filter (where state = 'pending'), sum(attempts)
+		err := f.db.QueryRow(tenantCtx, `select count(*) filter (where state = 'pending'), sum(attempts)
 			from jobs where id = any($1)`, []int64{invalidID, validID}).Scan(&pending, &attempts)
 		t.Logf("worker with closed Valkey: ready=%t pending=%d attempts=%d query error=%v", application.Ready(), pending, attempts, err)
 	}()
 
-	if err := waitFor(t.Context(), func() (bool, error) {
+	if err := waitFor(tenantCtx, func() (bool, error) {
 		var invalidFailed, validRetried bool
-		err := f.db.QueryRow(t.Context(), `select
+		err := f.db.QueryRow(tenantCtx, `select
 			exists(select 1 from jobs where id = $1 and state = 'failed' and last_error = 'invalid_payload'),
 			exists(select 1 from jobs where id = $2 and attempts > 0 and last_error = 'handler_error')`, invalidID, validID).Scan(&invalidFailed, &validRetried)
 		return application.Ready() && invalidFailed && validRetried, err
@@ -227,7 +229,8 @@ func TestWorkerStartsWithoutValkey(t *testing.T) {
 }
 
 func TestWorkerCancelsHandlerAfterLostLeaseAndReclaims(t *testing.T) {
-	f, fixtureErr := newWorkerFixture(t.Context())
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
+	f, fixtureErr := newWorkerFixture(tenantCtx)
 	if fixtureErr != nil {
 		t.Fatal(fixtureErr)
 	}
@@ -249,12 +252,12 @@ func TestWorkerCancelsHandlerAfterLostLeaseAndReclaims(t *testing.T) {
 	}
 	runner := f.runner(t, blocked, 8*time.Second, 2*time.Second)
 	startWorker(t, runner)
-	if err := waitFor(t.Context(), func() (bool, error) {
+	if err := waitFor(tenantCtx, func() (bool, error) {
 		return runner.Ready(), nil
 	}); err != nil {
 		t.Fatal(err)
 	}
-	id, err := insertJob(t.Context(), f.db, string(jobs.LeaderboardInvalidateContestV1), fmt.Sprintf(`{"contest_id":%q}`, uuid.NewString()), false)
+	id, err := insertJob(tenantCtx, f.db, string(jobs.LeaderboardInvalidateContestV1), fmt.Sprintf(`{"contest_id":%q}`, uuid.NewString()), false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -264,7 +267,7 @@ func TestWorkerCancelsHandlerAfterLostLeaseAndReclaims(t *testing.T) {
 		t.Fatal("contest handler did not start")
 	}
 	newToken := uuid.New()
-	if _, err := f.db.Exec(t.Context(), `update jobs set claim_token = $1, lease_expires_at = now() + interval '1 minute'
+	if _, err := f.db.Exec(tenantCtx, `update jobs set claim_token = $1, lease_expires_at = now() + interval '1 minute'
 		where id = $2 and state = 'running'`, newToken, id); err != nil {
 		t.Fatal(err)
 	}
@@ -275,20 +278,20 @@ func TestWorkerCancelsHandlerAfterLostLeaseAndReclaims(t *testing.T) {
 	}
 	var state string
 	var token uuid.UUID
-	if err := f.db.QueryRow(t.Context(), `select state, claim_token from jobs where id = $1`, id).Scan(&state, &token); err != nil {
+	if err := f.db.QueryRow(tenantCtx, `select state, claim_token from jobs where id = $1`, id).Scan(&state, &token); err != nil {
 		t.Fatal(err)
 	}
 	if state != "running" || token != newToken {
 		t.Fatalf("lost claim was transitioned: state=%s token=%s", state, token)
 	}
 	releaseAll()
-	if _, err := f.db.Exec(t.Context(), `update jobs set lease_expires_at = now() - interval '1 second' where id = $1`, id); err != nil {
+	if _, err := f.db.Exec(tenantCtx, `update jobs set lease_expires_at = now() - interval '1 second' where id = $1`, id); err != nil {
 		t.Fatal(err)
 	}
-	if err := waitFor(t.Context(), func() (bool, error) {
+	if err := waitFor(tenantCtx, func() (bool, error) {
 		var state string
 		var attempts int
-		err := f.db.QueryRow(t.Context(), `select state, attempts from jobs where id = $1`, id).Scan(&state, &attempts)
+		err := f.db.QueryRow(tenantCtx, `select state, attempts from jobs where id = $1`, id).Scan(&state, &attempts)
 		return state == "completed" && attempts == 2, err
 	}); err != nil {
 		t.Fatal(err)
@@ -296,7 +299,8 @@ func TestWorkerCancelsHandlerAfterLostLeaseAndReclaims(t *testing.T) {
 }
 
 func TestWorkerDeadlineExhaustionAndReplay(t *testing.T) {
-	f, fixtureErr := newWorkerFixture(t.Context())
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
+	f, fixtureErr := newWorkerFixture(tenantCtx)
 	if fixtureErr != nil {
 		t.Fatal(fixtureErr)
 	}
@@ -317,13 +321,13 @@ func TestWorkerDeadlineExhaustionAndReplay(t *testing.T) {
 	}
 	runner := f.runner(t, blocked, 8*time.Second, 2*time.Second)
 	var id int64
-	err := f.db.QueryRow(t.Context(), `insert into jobs (task_type, payload, attempts)
+	err := f.db.QueryRow(tenantCtx, `insert into jobs (task_type, payload, attempts)
 		values ($1, $2::jsonb, 4) returning id`, string(jobs.LeaderboardInvalidateContestV1), fmt.Sprintf(`{"contest_id":%q}`, uuid.NewString())).Scan(&id)
 	if err != nil {
 		t.Fatal(err)
 	}
 	repository := jobqueue.NewRepository(f.db)
-	claimed, err := repository.Claim(t.Context(), jobs.LeaderboardInvalidateContestV1, 1, time.Second, 5)
+	claimed, err := repository.Claim(tenantCtx, jobs.LeaderboardInvalidateContestV1, 1, time.Second, 5)
 	if err != nil || len(claimed) != 1 {
 		t.Fatalf("claim exhausted job: jobs=%d error=%v", len(claimed), err)
 	}
@@ -334,26 +338,26 @@ func TestWorkerDeadlineExhaustionAndReplay(t *testing.T) {
 		lease:       time.Second,
 		maxAttempts: 5,
 	}
-	if err := runner.runner.process(t.Context(), claimed[0], spec); !errors.Is(err, context.DeadlineExceeded) {
+	if err := runner.runner.process(tenantCtx, claimed[0], spec); !errors.Is(err, context.DeadlineExceeded) {
 		t.Errorf("deadline handler error = %v", err)
 	}
 	var state, code string
 	var attempts int
-	if err := f.db.QueryRow(t.Context(), `select state, attempts, last_error from jobs where id = $1`, id).Scan(&state, &attempts, &code); err != nil {
+	if err := f.db.QueryRow(tenantCtx, `select state, attempts, last_error from jobs where id = $1`, id).Scan(&state, &attempts, &code); err != nil {
 		t.Fatal(err)
 	}
 	if state != "failed" || attempts != 5 || code != "deadline_exceeded" {
 		t.Fatalf("exhausted job: state=%q attempts=%d code=%q", state, attempts, code)
 	}
-	replayedID, err := Replay(t.Context(), jobqueue.NewService(repository), id, "worker-e2e", "deadline repaired")
+	replayedID, err := Replay(tenantCtx, jobqueue.NewService(repository), id, "worker-e2e", "deadline repaired")
 	if err != nil {
 		t.Fatal(err)
 	}
 	releaseAll()
 	startWorker(t, runner)
-	if err := waitFor(t.Context(), func() (bool, error) {
+	if err := waitFor(tenantCtx, func() (bool, error) {
 		var replayState string
-		err := f.db.QueryRow(t.Context(), `select state from jobs where id = $1`, replayedID).Scan(&replayState)
+		err := f.db.QueryRow(tenantCtx, `select state from jobs where id = $1`, replayedID).Scan(&replayState)
 		return replayState == "completed", err
 	}); err != nil {
 		t.Fatal(err)
@@ -361,7 +365,8 @@ func TestWorkerDeadlineExhaustionAndReplay(t *testing.T) {
 }
 
 func TestWorkerShutdownCancelsActiveJob(t *testing.T) {
-	f, fixtureErr := newWorkerFixture(t.Context())
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
+	f, fixtureErr := newWorkerFixture(tenantCtx)
 	if fixtureErr != nil {
 		t.Fatal(fixtureErr)
 	}
@@ -381,7 +386,7 @@ func TestWorkerShutdownCancelsActiveJob(t *testing.T) {
 		release: release,
 	}
 	runner := f.runner(t, blocked, 8*time.Second, 100*time.Millisecond)
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(tenant.WithKey(context.Background(), tenant.Production()))
 	done := make(chan struct{})
 	go func() { defer close(done); runner.Run(ctx) }()
 	t.Cleanup(func() {
@@ -392,12 +397,12 @@ func TestWorkerShutdownCancelsActiveJob(t *testing.T) {
 			t.Error("worker did not stop during cleanup")
 		}
 	})
-	if err := waitFor(t.Context(), func() (bool, error) {
+	if err := waitFor(tenantCtx, func() (bool, error) {
 		return runner.Ready(), nil
 	}); err != nil {
 		t.Fatal(err)
 	}
-	id, err := insertJob(t.Context(), f.db, string(jobs.LeaderboardInvalidateContestV1), fmt.Sprintf(`{"contest_id":%q}`, uuid.NewString()), false)
+	id, err := insertJob(tenantCtx, f.db, string(jobs.LeaderboardInvalidateContestV1), fmt.Sprintf(`{"contest_id":%q}`, uuid.NewString()), false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -413,7 +418,7 @@ func TestWorkerShutdownCancelsActiveJob(t *testing.T) {
 		t.Fatal("worker did not stop after active handler cancellation")
 	}
 	var state string
-	if err := f.db.QueryRow(t.Context(), `select state from jobs where id = $1`, id).Scan(&state); err != nil {
+	if err := f.db.QueryRow(tenantCtx, `select state from jobs where id = $1`, id).Scan(&state); err != nil {
 		t.Fatal(err)
 	}
 	if state == "completed" {
@@ -425,7 +430,8 @@ func TestWorkerShutdownCancelsActiveJob(t *testing.T) {
 }
 
 func TestWorkerDoesNotDispatchAfterClaimLeaseExpires(t *testing.T) {
-	f, fixtureErr := newWorkerFixture(t.Context())
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
+	f, fixtureErr := newWorkerFixture(tenantCtx)
 	if fixtureErr != nil {
 		t.Fatal(fixtureErr)
 	}
@@ -443,15 +449,15 @@ func TestWorkerDoesNotDispatchAfterClaimLeaseExpires(t *testing.T) {
 		release: release,
 	}
 	runner := f.runner(t, observed, time.Second, time.Second)
-	id, err := insertJob(t.Context(), f.db, string(jobs.LeaderboardInvalidateContestV1), fmt.Sprintf(`{"contest_id":%q}`, uuid.NewString()), false)
+	id, err := insertJob(tenantCtx, f.db, string(jobs.LeaderboardInvalidateContestV1), fmt.Sprintf(`{"contest_id":%q}`, uuid.NewString()), false)
 	if err != nil {
 		t.Fatal(err)
 	}
-	claimed, err := jobqueue.NewRepository(f.db).Claim(t.Context(), jobs.LeaderboardInvalidateContestV1, 1, 50*time.Millisecond, 5)
+	claimed, err := jobqueue.NewRepository(f.db).Claim(tenantCtx, jobs.LeaderboardInvalidateContestV1, 1, 50*time.Millisecond, 5)
 	if err != nil || len(claimed) != 1 {
 		t.Fatalf("claim: jobs=%d error=%v", len(claimed), err)
 	}
-	if err := waitFor(t.Context(), func() (bool, error) { return time.Until(claimed[0].LeaseExpiresAt) <= 0, nil }); err != nil {
+	if err := waitFor(tenantCtx, func() (bool, error) { return time.Until(claimed[0].LeaseExpiresAt) <= 0, nil }); err != nil {
 		t.Fatal(err)
 	}
 	spec := handlerSpec{
@@ -461,7 +467,7 @@ func TestWorkerDoesNotDispatchAfterClaimLeaseExpires(t *testing.T) {
 		lease:       50 * time.Millisecond,
 		maxAttempts: 5,
 	}
-	if err := runner.runner.process(t.Context(), claimed[0], spec); err == nil {
+	if err := runner.runner.process(tenantCtx, claimed[0], spec); err == nil {
 		t.Error("expired claim was dispatched")
 	}
 	select {
@@ -470,7 +476,7 @@ func TestWorkerDoesNotDispatchAfterClaimLeaseExpires(t *testing.T) {
 	default:
 	}
 	var state string
-	if err := f.db.QueryRow(t.Context(), `select state from jobs where id = $1`, id).Scan(&state); err != nil {
+	if err := f.db.QueryRow(tenantCtx, `select state from jobs where id = $1`, id).Scan(&state); err != nil {
 		t.Fatal(err)
 	}
 	if state != "running" {
@@ -479,7 +485,8 @@ func TestWorkerDoesNotDispatchAfterClaimLeaseExpires(t *testing.T) {
 }
 
 func TestWorkerCompletesWhenRenewalIsCanceledByFinishedHandler(t *testing.T) {
-	f, fixtureErr := newWorkerFixture(t.Context())
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
+	f, fixtureErr := newWorkerFixture(tenantCtx)
 	if fixtureErr != nil {
 		t.Fatal(fixtureErr)
 	}
@@ -495,7 +502,7 @@ func TestWorkerCompletesWhenRenewalIsCanceledByFinishedHandler(t *testing.T) {
 	poolConfig.MaxConns = 1
 	tracer := &acquireStartTracer{starts: make(chan struct{}, 1)}
 	poolConfig.ConnConfig.Tracer = tracer
-	limitedPool, err := pgxpool.NewWithConfig(t.Context(), poolConfig)
+	limitedPool, err := pgxpool.NewWithConfig(tenantCtx, poolConfig)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -522,15 +529,15 @@ func TestWorkerCompletesWhenRenewalIsCanceledByFinishedHandler(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	id, err := insertJob(t.Context(), f.db, string(jobs.LeaderboardInvalidateContestV1), fmt.Sprintf(`{"contest_id":%q}`, uuid.NewString()), false)
+	id, err := insertJob(tenantCtx, f.db, string(jobs.LeaderboardInvalidateContestV1), fmt.Sprintf(`{"contest_id":%q}`, uuid.NewString()), false)
 	if err != nil {
 		t.Fatal(err)
 	}
-	claimed, err := repository.Claim(t.Context(), jobs.LeaderboardInvalidateContestV1, 1, 3*time.Second, 5)
+	claimed, err := repository.Claim(tenantCtx, jobs.LeaderboardInvalidateContestV1, 1, 3*time.Second, 5)
 	if err != nil || len(claimed) != 1 {
 		t.Fatalf("claim: jobs=%d error=%v", len(claimed), err)
 	}
-	conn, err := limitedPool.Acquire(t.Context())
+	conn, err := limitedPool.Acquire(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -550,7 +557,7 @@ func TestWorkerCompletesWhenRenewalIsCanceledByFinishedHandler(t *testing.T) {
 		maxAttempts: 5,
 	}
 	done := make(chan error, 1)
-	go func() { done <- runner.runner.process(t.Context(), claimed[0], spec) }()
+	go func() { done <- runner.runner.process(tenantCtx, claimed[0], spec) }()
 	select {
 	case <-blocked.started:
 	case <-time.After(3 * time.Second):
@@ -562,7 +569,7 @@ func TestWorkerCompletesWhenRenewalIsCanceledByFinishedHandler(t *testing.T) {
 		t.Fatal("lease renewal did not request the held pool connection")
 	}
 	releaseAll()
-	if err := waitFor(t.Context(), func() (bool, error) {
+	if err := waitFor(tenantCtx, func() (bool, error) {
 		return limitedPool.Stat().CanceledAcquireCount() > baseline, nil
 	}); err != nil {
 		t.Fatal(err)
@@ -580,7 +587,7 @@ func TestWorkerCompletesWhenRenewalIsCanceledByFinishedHandler(t *testing.T) {
 		t.Errorf("renewal did not contend on the held connection: canceled acquires %d -> %d", baseline, got)
 	}
 	var state string
-	if err := f.db.QueryRow(t.Context(), `select state from jobs where id = $1`, id).Scan(&state); err != nil {
+	if err := f.db.QueryRow(tenantCtx, `select state from jobs where id = $1`, id).Scan(&state); err != nil {
 		t.Fatal(err)
 	}
 	if state != "completed" {
@@ -589,7 +596,8 @@ func TestWorkerCompletesWhenRenewalIsCanceledByFinishedHandler(t *testing.T) {
 }
 
 func TestWorkerFairClaimsWithoutPrefetch(t *testing.T) {
-	f, fixtureErr := newWorkerFixture(t.Context())
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
+	f, fixtureErr := newWorkerFixture(tenantCtx)
 	if fixtureErr != nil {
 		t.Fatal(fixtureErr)
 	}
@@ -610,7 +618,7 @@ func TestWorkerFairClaimsWithoutPrefetch(t *testing.T) {
 	}
 	runner := f.runner(t, blocked, 8*time.Second, 2*time.Second)
 	startWorker(t, runner)
-	if err := waitFor(t.Context(), func() (bool, error) {
+	if err := waitFor(tenantCtx, func() (bool, error) {
 		return runner.Ready(), nil
 	}); err != nil {
 		t.Fatal(err)
@@ -618,13 +626,13 @@ func TestWorkerFairClaimsWithoutPrefetch(t *testing.T) {
 
 	contestIDs := make([]int64, 3)
 	for i := range contestIDs {
-		id, err := insertJob(t.Context(), f.db, string(jobs.LeaderboardInvalidateContestV1), fmt.Sprintf(`{"contest_id":%q}`, uuid.NewString()), false)
+		id, err := insertJob(tenantCtx, f.db, string(jobs.LeaderboardInvalidateContestV1), fmt.Sprintf(`{"contest_id":%q}`, uuid.NewString()), false)
 		if err != nil {
 			t.Fatal(err)
 		}
 		contestIDs[i] = id
 	}
-	officialID, err := insertJob(t.Context(), f.db, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":2025}`, false)
+	officialID, err := insertJob(tenantCtx, f.db, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":2025}`, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -635,15 +643,15 @@ func TestWorkerFairClaimsWithoutPrefetch(t *testing.T) {
 			t.Fatal("two contest handlers did not start")
 		}
 	}
-	if err := waitFor(t.Context(), func() (bool, error) {
+	if err := waitFor(tenantCtx, func() (bool, error) {
 		var state string
-		err := f.db.QueryRow(t.Context(), `select state from jobs where id = $1`, officialID).Scan(&state)
+		err := f.db.QueryRow(tenantCtx, `select state from jobs where id = $1`, officialID).Scan(&state)
 		return state == "completed", err
 	}); err != nil {
 		t.Fatal(err)
 	}
 	var running, pending int
-	if err := f.db.QueryRow(t.Context(), `select count(*) filter (where state = 'running'), count(*) filter (where state = 'pending')
+	if err := f.db.QueryRow(tenantCtx, `select count(*) filter (where state = 'running'), count(*) filter (where state = 'pending')
 		from jobs where id = any($1)`, contestIDs).Scan(&running, &pending); err != nil {
 		t.Fatal(err)
 	}
@@ -651,9 +659,9 @@ func TestWorkerFairClaimsWithoutPrefetch(t *testing.T) {
 		t.Fatalf("contest claims: running=%d pending=%d; want 2 running, 1 pending", running, pending)
 	}
 	releaseAll()
-	if err := waitFor(t.Context(), func() (bool, error) {
+	if err := waitFor(tenantCtx, func() (bool, error) {
 		var completed int
-		err := f.db.QueryRow(t.Context(), `select count(*) from jobs where id = any($1) and state = 'completed'`, contestIDs).Scan(&completed)
+		err := f.db.QueryRow(tenantCtx, `select count(*) from jobs where id = any($1) and state = 'completed'`, contestIDs).Scan(&completed)
 		return completed == 3, err
 	}); err != nil {
 		t.Fatal(err)
@@ -661,7 +669,8 @@ func TestWorkerFairClaimsWithoutPrefetch(t *testing.T) {
 }
 
 func TestWorkerGlobalLimitLeavesDueRowsUnclaimed(t *testing.T) {
-	f, fixtureErr := newWorkerFixture(t.Context())
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
+	f, fixtureErr := newWorkerFixture(tenantCtx)
 	if fixtureErr != nil {
 		t.Fatal(fixtureErr)
 	}
@@ -690,18 +699,18 @@ func TestWorkerGlobalLimitLeavesDueRowsUnclaimed(t *testing.T) {
 		t.Fatal(err)
 	}
 	startWorker(t, application)
-	if err := waitFor(t.Context(), func() (bool, error) {
+	if err := waitFor(tenantCtx, func() (bool, error) {
 		return application.Ready(), nil
 	}); err != nil {
 		t.Fatal(err)
 	}
 	ids := make([]int64, 0, 6)
 	for range 3 {
-		contestID, err := insertJob(t.Context(), f.db, string(jobs.LeaderboardInvalidateContestV1), fmt.Sprintf(`{"contest_id":%q}`, uuid.NewString()), false)
+		contestID, err := insertJob(tenantCtx, f.db, string(jobs.LeaderboardInvalidateContestV1), fmt.Sprintf(`{"contest_id":%q}`, uuid.NewString()), false)
 		if err != nil {
 			t.Fatal(err)
 		}
-		officialID, err := insertJob(t.Context(), f.db, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":2025}`, false)
+		officialID, err := insertJob(tenantCtx, f.db, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":2025}`, false)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -715,7 +724,7 @@ func TestWorkerGlobalLimitLeavesDueRowsUnclaimed(t *testing.T) {
 		}
 	}
 	var running, pending int
-	if err := f.db.QueryRow(t.Context(), `select count(*) filter (where state = 'running'), count(*) filter (where state = 'pending')
+	if err := f.db.QueryRow(tenantCtx, `select count(*) filter (where state = 'running'), count(*) filter (where state = 'pending')
 		from jobs where id = any($1)`, ids).Scan(&running, &pending); err != nil {
 		t.Fatal(err)
 	}
@@ -723,9 +732,9 @@ func TestWorkerGlobalLimitLeavesDueRowsUnclaimed(t *testing.T) {
 		t.Fatalf("global claims: running=%d pending=%d; want 3 running, 3 pending", running, pending)
 	}
 	releaseAll()
-	if err := waitFor(t.Context(), func() (bool, error) {
+	if err := waitFor(tenantCtx, func() (bool, error) {
 		var completed int
-		err := f.db.QueryRow(t.Context(), `select count(*) from jobs where id = any($1) and state = 'completed'`, ids).Scan(&completed)
+		err := f.db.QueryRow(tenantCtx, `select count(*) from jobs where id = any($1) and state = 'completed'`, ids).Scan(&completed)
 		return completed == len(ids), err
 	}); err != nil {
 		t.Fatal(err)
@@ -733,7 +742,8 @@ func TestWorkerGlobalLimitLeavesDueRowsUnclaimed(t *testing.T) {
 }
 
 func TestWorkerRetainsSlotUntilCanceledHandlerReturns(t *testing.T) {
-	f, fixtureErr := newWorkerFixture(t.Context())
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
+	f, fixtureErr := newWorkerFixture(tenantCtx)
 	if fixtureErr != nil {
 		t.Fatal(fixtureErr)
 	}
@@ -766,15 +776,15 @@ func TestWorkerRetainsSlotUntilCanceledHandlerReturns(t *testing.T) {
 		logger:          slog.New(slog.NewTextHandler(io.Discard, nil)),
 		metrics:         NewMetrics(prometheus.NewRegistry()),
 	}
-	first, err := insertJob(t.Context(), f.db, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":2025}`, false)
+	first, err := insertJob(tenantCtx, f.db, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":2025}`, false)
 	if err != nil {
 		t.Fatal(err)
 	}
-	second, err := insertJob(t.Context(), f.db, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":2026}`, false)
+	second, err := insertJob(tenantCtx, f.db, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":2026}`, false)
 	if err != nil {
 		t.Fatal(err)
 	}
-	ctx, cancel := context.WithCancel(t.Context())
+	ctx, cancel := context.WithCancel(tenantCtx)
 	done := make(chan struct{})
 	go func() { defer close(done); runtime.run(ctx) }()
 	t.Cleanup(func() {
@@ -797,7 +807,7 @@ func TestWorkerRetainsSlotUntilCanceledHandlerReturns(t *testing.T) {
 		t.Fatal("first handler did not start")
 	}
 	runtime.ready.Store(false)
-	if err := waitFor(t.Context(), func() (bool, error) { return runtime.ready.Load(), nil }); err != nil {
+	if err := waitFor(tenantCtx, func() (bool, error) { return runtime.ready.Load(), nil }); err != nil {
 		t.Fatal(err)
 	}
 	select {
@@ -806,16 +816,16 @@ func TestWorkerRetainsSlotUntilCanceledHandlerReturns(t *testing.T) {
 	default:
 	}
 	var running, pending int
-	if err := f.db.QueryRow(t.Context(), `select count(*) filter (where state = 'running'), count(*) filter (where state = 'pending') from jobs where id = any($1)`, []int64{first, second}).Scan(&running, &pending); err != nil {
+	if err := f.db.QueryRow(tenantCtx, `select count(*) filter (where state = 'running'), count(*) filter (where state = 'pending') from jobs where id = any($1)`, []int64{first, second}).Scan(&running, &pending); err != nil {
 		t.Fatal(err)
 	}
 	if running != 1 || pending != 1 {
 		t.Fatalf("canceled handler claims: running=%d pending=%d", running, pending)
 	}
 	releaseAll()
-	if err := waitFor(t.Context(), func() (bool, error) {
+	if err := waitFor(tenantCtx, func() (bool, error) {
 		var failed int
-		err := f.db.QueryRow(t.Context(), `select count(*) from jobs where id = any($1) and state = 'failed' and last_error = 'deadline_exceeded'`, []int64{first, second}).Scan(&failed)
+		err := f.db.QueryRow(tenantCtx, `select count(*) from jobs where id = any($1) and state = 'failed' and last_error = 'deadline_exceeded'`, []int64{first, second}).Scan(&failed)
 		return failed == 2, err
 	}); err != nil {
 		t.Fatal(err)
@@ -823,7 +833,8 @@ func TestWorkerRetainsSlotUntilCanceledHandlerReturns(t *testing.T) {
 }
 
 func TestWorkerRenewedDeadlineSchedulesRetry(t *testing.T) {
-	f, fixtureErr := newWorkerFixture(t.Context())
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
+	f, fixtureErr := newWorkerFixture(tenantCtx)
 	if fixtureErr != nil {
 		t.Fatal(fixtureErr)
 	}
@@ -846,7 +857,7 @@ func TestWorkerRenewedDeadlineSchedulesRetry(t *testing.T) {
 		logger:   slog.New(slog.NewTextHandler(io.Discard, nil)),
 		metrics:  NewMetrics(prometheus.NewRegistry()),
 	}
-	id, err := insertJob(t.Context(), f.db, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":2025}`, false)
+	id, err := insertJob(tenantCtx, f.db, string(jobs.LeaderboardInvalidateOfficialV1), `{"year":2025}`, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -857,17 +868,17 @@ func TestWorkerRenewedDeadlineSchedulesRetry(t *testing.T) {
 		lease:       3 * time.Second,
 		maxAttempts: 2,
 	}
-	claims, err := repository.Claim(t.Context(), spec.typeName, 1, spec.lease, spec.maxAttempts)
+	claims, err := repository.Claim(tenantCtx, spec.typeName, 1, spec.lease, spec.maxAttempts)
 	if err != nil || len(claims) != 1 {
 		t.Fatalf("claim deadline job: count=%d error=%v", len(claims), err)
 	}
 
-	if err := runtime.process(t.Context(), claims[0], spec); !errors.Is(err, context.DeadlineExceeded) {
+	if err := runtime.process(tenantCtx, claims[0], spec); !errors.Is(err, context.DeadlineExceeded) {
 		t.Errorf("deadline handler error = %v", err)
 	}
 
 	var state, code string
-	if err := f.db.QueryRow(t.Context(), `select state, coalesce(last_error, '') from jobs where id = $1`, id).Scan(&state, &code); err != nil {
+	if err := f.db.QueryRow(tenantCtx, `select state, coalesce(last_error, '') from jobs where id = $1`, id).Scan(&state, &code); err != nil {
 		t.Fatal(err)
 	}
 	if state != "pending" || code != "deadline_exceeded" {
@@ -876,7 +887,8 @@ func TestWorkerRenewedDeadlineSchedulesRetry(t *testing.T) {
 }
 
 func TestWorkerCleansUpExpiredCompletedJobsAtStartup(t *testing.T) {
-	f, fixtureErr := newWorkerFixture(t.Context())
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
+	f, fixtureErr := newWorkerFixture(tenantCtx)
 	if fixtureErr != nil {
 		t.Fatal(fixtureErr)
 	}
@@ -886,14 +898,14 @@ func TestWorkerCleansUpExpiredCompletedJobsAtStartup(t *testing.T) {
 		}
 	})
 	var id int64
-	if err := f.db.QueryRow(t.Context(), `insert into jobs (task_type, payload, state, created_at, completed_at)
+	if err := f.db.QueryRow(tenantCtx, `insert into jobs (task_type, payload, state, created_at, completed_at)
   values ($1, '{"year":2025}', 'completed', now() - interval '1 year', now() - interval '1 year') returning id`, string(jobs.LeaderboardInvalidateOfficialV1)).Scan(&id); err != nil {
 		t.Fatal(err)
 	}
 	startWorker(t, f.runner(t, f.client, time.Second, time.Second))
-	if err := waitFor(t.Context(), func() (bool, error) {
+	if err := waitFor(tenantCtx, func() (bool, error) {
 		var exists bool
-		err := f.db.QueryRow(t.Context(), `select exists(select 1 from jobs where id = $1)`, id).Scan(&exists)
+		err := f.db.QueryRow(tenantCtx, `select exists(select 1 from jobs where id = $1)`, id).Scan(&exists)
 		return !exists, err
 	}); err != nil {
 		t.Fatal(err)
@@ -901,7 +913,8 @@ func TestWorkerCleansUpExpiredCompletedJobsAtStartup(t *testing.T) {
 }
 
 func TestWorkerCleanupRetainsThreeMonthsAndFailures(t *testing.T) {
-	f, fixtureErr := newWorkerFixture(t.Context())
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
+	f, fixtureErr := newWorkerFixture(tenantCtx)
 	if fixtureErr != nil {
 		t.Fatal(fixtureErr)
 	}
@@ -922,35 +935,35 @@ func TestWorkerCleanupRetainsThreeMonthsAndFailures(t *testing.T) {
 		id        *int64
 		completed time.Time
 	}{{&recentID, recent}, {&oldID, old}} {
-		if err := f.db.QueryRow(t.Context(), `insert into jobs (task_type, payload, state, created_at, completed_at)
+		if err := f.db.QueryRow(tenantCtx, `insert into jobs (task_type, payload, state, created_at, completed_at)
    values ($1, '{"year":2025}', 'completed', $2, $2) returning id`, string(jobs.LeaderboardInvalidateOfficialV1), item.completed).Scan(item.id); err != nil {
 			t.Fatal(err)
 		}
 	}
-	if err := f.db.QueryRow(t.Context(), `insert into jobs (task_type, payload, state, created_at, failed_at)
+	if err := f.db.QueryRow(tenantCtx, `insert into jobs (task_type, payload, state, created_at, failed_at)
   values ($1, '{"year":2025}', 'failed', $2, $2) returning id`, string(jobs.LeaderboardInvalidateOfficialV1), old).Scan(&failedID); err != nil {
 		t.Fatal(err)
 	}
-	if err := f.db.QueryRow(t.Context(), `insert into jobs (task_type, payload, state, created_at, completed_at, replay_of_id, replay_actor, replay_reason)
+	if err := f.db.QueryRow(tenantCtx, `insert into jobs (task_type, payload, state, created_at, completed_at, replay_of_id, replay_actor, replay_reason)
   values ($1, '{"year":2025}', 'completed', $2, $2, $3, 'retention-test', 'repaired') returning id`, string(jobs.LeaderboardInvalidateOfficialV1), old, failedID).Scan(&replayID); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := f.db.Exec(t.Context(), `insert into jobs (task_type, payload, state, created_at, completed_at)
+	if _, err := f.db.Exec(tenantCtx, `insert into jobs (task_type, payload, state, created_at, completed_at)
   select $1, '{"year":2025}'::jsonb, 'completed', $2, $2 from generate_series(1, 101)`, string(jobs.LeaderboardInvalidateOfficialV1), old); err != nil {
 		t.Fatal(err)
 	}
-	if err := f.db.QueryRow(t.Context(), `insert into jobs (task_type, payload, created_at)
+	if err := f.db.QueryRow(tenantCtx, `insert into jobs (task_type, payload, created_at)
   values ($1, '{"year":2025}', $2) returning id`, string(jobs.LeaderboardInvalidateOfficialV1), old).Scan(&pendingID); err != nil {
 		t.Fatal(err)
 	}
-	if err := f.db.QueryRow(t.Context(), `insert into jobs (task_type, payload, state, created_at, claim_token, lease_expires_at)
+	if err := f.db.QueryRow(tenantCtx, `insert into jobs (task_type, payload, state, created_at, claim_token, lease_expires_at)
   values ($1, '{"year":2025}', 'running', $2, $3, now() + interval '1 hour') returning id`, string(jobs.LeaderboardInvalidateOfficialV1), old, uuid.New()).Scan(&runningID); err != nil {
 		t.Fatal(err)
 	}
 
-	timex.TheWorld(now, func() { runtime.cleanupCompleted(t.Context()) })
+	timex.TheWorld(now, func() { runtime.cleanupCompleted(tenantCtx) })
 	var expired int
-	if err := f.db.QueryRow(t.Context(), `select count(*) from jobs where state = 'completed' and completed_at = $1`, old).Scan(&expired); err != nil {
+	if err := f.db.QueryRow(tenantCtx, `select count(*) from jobs where state = 'completed' and completed_at = $1`, old).Scan(&expired); err != nil {
 		t.Fatal(err)
 	}
 	if expired != 0 {
@@ -970,7 +983,7 @@ func TestWorkerCleanupRetainsThreeMonthsAndFailures(t *testing.T) {
 		{"running job", runningID, true},
 	} {
 		var exists bool
-		if err := f.db.QueryRow(t.Context(), `select exists(select 1 from jobs where id = $1)`, item.id).Scan(&exists); err != nil {
+		if err := f.db.QueryRow(tenantCtx, `select exists(select 1 from jobs where id = $1)`, item.id).Scan(&exists); err != nil {
 			t.Fatal(err)
 		}
 		if exists != item.retain {

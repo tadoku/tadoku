@@ -105,6 +105,14 @@ prefixes are supported and trailing slashes are removed.
 Flipt. Missing or malformed values fail startup. Configure it deliberately for
 each environment; the development manifests set it to `false`.
 
+## Worker tenant scope
+
+The current worker binary supplies the canonical `tadoku/prod` context for its
+run and replay composition boundaries. Detached handler and completion contexts
+retain that explicit scope while preserving graceful shutdown. Database helpers
+never supply a default tenant. This is the intermediate worker behavior until
+persisted job tenants and separate cross-tenant queue scopes are supported.
+
 ## Startup
 
 - Business route registration requires authentication middleware. Startup

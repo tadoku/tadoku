@@ -38,7 +38,12 @@ sequential. Tests using `timex.TheWorld` remain sequential in their own package.
 Coverage includes cross-repository commit/rollback, panic, cancellation before
 and after writes, deferred-constraint commit failure, pool reuse, nested/wrong
 pool/ended context rejection, concurrent independent transactions, and direct
-sqlc compatibility. Secondary cleanup transport failures are not simulated.
+sqlc compatibility. Tenant coverage uses a one-connection pool: local settings
+end at commit or standalone statement completion; all SQL methods see the
+context tenant; streaming/scan/commit errors release their batch; missing,
+changed and conflicting scopes fail closed; 1,000 interleaved statements for
+three tenants see the correct key; canceled batches leave the pool reusable.
+Secondary cleanup transport failures are not simulated.
 
 `testdata/sqlc` contains only synthetic query-generation inputs, not application
 migrations. `internal/pgxcompat` is generated and Bazel-test-only. Regenerate with

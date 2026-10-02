@@ -9,6 +9,7 @@ go_library(
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres",
     visibility = ["//services/tadoku-api:internal_consumers"],
     deps = [
+        "//services/tadoku-api/internal/tenant",
         "@com_github_golang_migrate_migrate_v4//:migrate",
         "@com_github_golang_migrate_migrate_v4//database/postgres",
         "@com_github_golang_migrate_migrate_v4//source/file",

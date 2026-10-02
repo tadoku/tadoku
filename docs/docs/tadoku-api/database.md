@@ -119,8 +119,22 @@ return queries.New(db).InsertItem(ctx, params)
 
 - The application owns transactions. Open one only when the operation needs
   one.
-- Outside a transaction, `Executor` returns the pool; inside one, it returns the
-  active transaction.
+- Every operation needs a parsed tenant on its context. Missing or zero tenants
+  return `postgres.ErrNoTenant` before SQL. `RunInTransaction` sets the tenant
+  locally as its first statement; the callback retains it for the transaction.
+- Outside a transaction, `Executor` returns a scoped handle that sends the
+  local tenant setting and actual statement as one pgx batch in an implicit
+  transaction. Inside one, it returns the active transaction. Pass the same
+  operation context to every SQL call.
+- Changing the tenant within a transaction or on a standalone handle returns
+  `postgres.ErrTenantMismatch`. A context containing both a tenant and the
+  restricted all-tenants marker also fails closed.
+- Never set `tadoku.tenant` for a whole session. PgBouncer transaction pooling
+  hands server sessions to other clients; only transaction-local settings end
+  before the next client uses the session.
+- `Query` rows retain their batch connection until `Close` or exhaustion. Finish
+  iteration, close rows and check `Err`; it includes batch-close errors.
+  `QueryRow` releases its batch after `Scan` and preserves `pgx.ErrNoRows`.
 - Wrong-pool, nested and ended transaction scopes fail. An ended context never
   falls back to the pool. There are no retries or savepoints.
 - Finish all work and row iteration before the callback returns. Do not run

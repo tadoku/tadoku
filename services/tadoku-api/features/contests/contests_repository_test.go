@@ -9,12 +9,14 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
 )
 
 func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
-	db, err := testpostgres.New(t.Context())
+	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -24,7 +26,7 @@ func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
 		}
 	})
 
-	_, err = db.Pool.Exec(t.Context(), `
+	_, err = db.Pool.Exec(tenantCtx, `
 		insert into users (id, display_name, created_at, updated_at, deleted_at)
 		values
 			('11111111-1111-4111-8111-111111111111', 'Owner One', '2026-01-01', '2026-01-01', null),
@@ -60,7 +62,7 @@ func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
 		Official: true,
 		PageSize: 10,
 	}
-	items, total, err := repository.ListContests(t.Context(), parameters)
+	items, total, err := repository.ListContests(tenantCtx, parameters)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -69,7 +71,7 @@ func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
 	}
 
 	parameters.Page = 1
-	items, total, err = repository.ListContests(t.Context(), parameters)
+	items, total, err = repository.ListContests(tenantCtx, parameters)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -77,7 +79,7 @@ func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
 		t.Errorf("out-of-range list=%+v total=%d, want empty page with three matches", items, total)
 	}
 
-	items, total, err = repository.ListContests(t.Context(), ListParameters{
+	items, total, err = repository.ListContests(tenantCtx, ListParameters{
 		Official: false,
 		PageSize: 10,
 	})
@@ -89,7 +91,7 @@ func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
 	}
 
 	orphanOwnerID := uuid.MustParse("33333333-3333-4333-8333-333333333333")
-	items, total, err = repository.ListContests(t.Context(), ListParameters{
+	items, total, err = repository.ListContests(tenantCtx, ListParameters{
 		UserID:   &orphanOwnerID,
 		Official: true,
 		PageSize: 10,
@@ -107,7 +109,7 @@ func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
 		Official: false,
 		PageSize: 10,
 	}
-	items, total, err = repository.ListContests(t.Context(), parameters)
+	items, total, err = repository.ListContests(tenantCtx, parameters)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -116,7 +118,7 @@ func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
 	}
 
 	missingOwnerID := uuid.MustParse("44444444-4444-4444-8444-444444444444")
-	items, total, err = repository.ListContests(t.Context(), ListParameters{
+	items, total, err = repository.ListContests(tenantCtx, ListParameters{
 		UserID:   &missingOwnerID,
 		Official: false,
 		PageSize: 10,
@@ -129,10 +131,10 @@ func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
 	}
 
 	deletedID := uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa4")
-	if _, err := repository.FindContestByID(t.Context(), findParameters{ID: deletedID}); !errors.Is(err, ErrContestNotFound) {
+	if _, err := repository.FindContestByID(tenantCtx, findParameters{ID: deletedID}); !errors.Is(err, ErrContestNotFound) {
 		t.Errorf("deleted contest error=%v, want not found", err)
 	}
-	deleted, err := repository.FindContestByID(t.Context(), findParameters{ID: deletedID, includeDeleted: true})
+	deleted, err := repository.FindContestByID(tenantCtx, findParameters{ID: deletedID, includeDeleted: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -141,11 +143,11 @@ func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
 	}
 
 	privateID := uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2")
-	private, err := repository.FindContestByID(t.Context(), findParameters{ID: privateID})
+	private, err := repository.FindContestByID(tenantCtx, findParameters{ID: privateID})
 	if err != nil {
 		t.Fatal(err)
 	}
-	languages, err := repository.ListLanguagesForContest(t.Context(), private.ID)
+	languages, err := repository.ListLanguagesForContest(tenantCtx, private.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -156,7 +158,7 @@ func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
 		t.Errorf("language names=%v", got)
 	}
 
-	latest, err := repository.FindLatestOfficialContest(t.Context())
+	latest, err := repository.FindLatestOfficialContest(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -166,8 +168,9 @@ func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
 }
 
 func TestContestsRepositoryCreationTransaction(t *testing.T) {
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
-	db, err := testpostgres.New(t.Context())
+	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -194,14 +197,14 @@ func TestContestsRepositoryCreationTransaction(t *testing.T) {
 		CreatedAt:               now,
 		UpdatedAt:               now,
 	}
-	if _, err := db.Pool.Exec(t.Context(), `
+	if _, err := db.Pool.Exec(tenantCtx, `
 		insert into users (id, display_name, created_at, updated_at)
 		values ($1, $2, $3, $3)`, contest.OwnerUserID, contest.OwnerUserDisplayName, now); err != nil {
 		t.Fatal(err)
 	}
 
 	var created *Contest
-	err = postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
+	err = postgres.RunInTransaction(tenantCtx, db.Pool, func(ctx context.Context) error {
 		if err := repository.CreateContest(ctx, contest); err != nil {
 			return err
 		}
@@ -219,7 +222,7 @@ func TestContestsRepositoryCreationTransaction(t *testing.T) {
 	rolledBack := contest
 	rolledBack.ID = uuid.MustParse("88888888-8888-4888-8888-888888888888")
 	rollbackErr := errors.New("force rollback")
-	err = postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
+	err = postgres.RunInTransaction(tenantCtx, db.Pool, func(ctx context.Context) error {
 		if err := repository.CreateContest(ctx, rolledBack); err != nil {
 			return err
 		}
@@ -228,14 +231,15 @@ func TestContestsRepositoryCreationTransaction(t *testing.T) {
 	if !errors.Is(err, rollbackErr) {
 		t.Fatalf("rollback error=%v, want %v", err, rollbackErr)
 	}
-	if _, err := repository.FindContestByID(t.Context(), findParameters{ID: rolledBack.ID}); !errors.Is(err, ErrContestNotFound) {
+	if _, err := repository.FindContestByID(tenantCtx, findParameters{ID: rolledBack.ID}); !errors.Is(err, ErrContestNotFound) {
 		t.Errorf("rolled-back contest error=%v, want contest not found", err)
 	}
 }
 
 func TestContestsRepositoryCountsEveryContestCreatedByUserInYear(t *testing.T) {
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
-	db, err := testpostgres.New(t.Context())
+	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -245,7 +249,7 @@ func TestContestsRepositoryCountsEveryContestCreatedByUserInYear(t *testing.T) {
 		}
 	})
 
-	_, err = db.Pool.Exec(t.Context(), `
+	_, err = db.Pool.Exec(tenantCtx, `
 		insert into contests (
 			id, owner_user_id, owner_user_display_name, "private", contest_start, contest_end,
 			registration_end, title, activity_type_id_allow_list, official, created_at, updated_at, deleted_at
@@ -273,7 +277,7 @@ func TestContestsRepositoryCountsEveryContestCreatedByUserInYear(t *testing.T) {
 
 	repository := NewContestsRepository(db.Pool)
 	ownerID := uuid.MustParse("11111111-1111-4111-8111-111111111111")
-	count, err := repository.CountContestsCreatedByUserForYear(t.Context(), ownerID, 2026)
+	count, err := repository.CountContestsCreatedByUserForYear(tenantCtx, ownerID, 2026)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -281,7 +285,7 @@ func TestContestsRepositoryCountsEveryContestCreatedByUserInYear(t *testing.T) {
 		t.Errorf("2026 count = %d, want 12 including private, unofficial, and deleted contests", count)
 	}
 
-	count, err = repository.CountContestsCreatedByUserForYear(t.Context(), ownerID, 2025)
+	count, err = repository.CountContestsCreatedByUserForYear(tenantCtx, ownerID, 2025)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -291,9 +295,10 @@ func TestContestsRepositoryCountsEveryContestCreatedByUserInYear(t *testing.T) {
 }
 
 func TestContestsRepositoryRegistrationPersistenceAndTransaction(t *testing.T) {
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	t.Parallel()
 
-	db, err := testpostgres.New(t.Context())
+	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -304,7 +309,7 @@ func TestContestsRepositoryRegistrationPersistenceAndTransaction(t *testing.T) {
 		}
 	})
 
-	_, err = db.Pool.Exec(t.Context(), `
+	_, err = db.Pool.Exec(tenantCtx, `
 		insert into users (id, display_name, created_at, updated_at)
 		values
 			('11111111-1111-4111-8111-111111111111', 'Reader', '2026-01-01', '2026-01-01'),
@@ -340,7 +345,7 @@ func TestContestsRepositoryRegistrationPersistenceAndTransaction(t *testing.T) {
 	repository := NewContestsRepository(db.Pool)
 	userID := uuid.MustParse("11111111-1111-4111-8111-111111111111")
 	contestID := uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")
-	registration, err := repository.FindRegistrationForUser(t.Context(), userID, contestID)
+	registration, err := repository.FindRegistrationForUser(tenantCtx, userID, contestID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -356,7 +361,7 @@ func TestContestsRepositoryRegistrationPersistenceAndTransaction(t *testing.T) {
 		t.Errorf("registration contest=%+v, want nil", registration.Contest)
 	}
 
-	withContest, err := repository.FindRegistrationWithContestForUser(t.Context(), userID, contestID)
+	withContest, err := repository.FindRegistrationWithContestForUser(tenantCtx, userID, contestID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -365,7 +370,7 @@ func TestContestsRepositoryRegistrationPersistenceAndTransaction(t *testing.T) {
 		t.Errorf("registration with contest=%+v", withContest)
 	}
 
-	ongoing, err := repository.ListOngoingRegistrations(t.Context(), userID, time.Date(2026, 9, 12, 23, 59, 59, 0, time.UTC))
+	ongoing, err := repository.ListOngoingRegistrations(tenantCtx, userID, time.Date(2026, 9, 12, 23, 59, 59, 0, time.UTC))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -374,7 +379,7 @@ func TestContestsRepositoryRegistrationPersistenceAndTransaction(t *testing.T) {
 		t.Errorf("ongoing registration=%+v", ongoing)
 	}
 
-	ongoing, err = repository.ListOngoingRegistrations(t.Context(), userID, time.Date(2026, 9, 13, 0, 0, 0, 0, time.UTC))
+	ongoing, err = repository.ListOngoingRegistrations(tenantCtx, userID, time.Date(2026, 9, 13, 0, 0, 0, 0, time.UTC))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -389,7 +394,7 @@ func TestContestsRepositoryRegistrationPersistenceAndTransaction(t *testing.T) {
 	removedLanguages := []string{"eng"}
 
 	rollbackErr := errors.New("force registration rollback")
-	err = postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
+	err = postgres.RunInTransaction(tenantCtx, db.Pool, func(ctx context.Context) error {
 		if err := repository.DetachContestLogsForLanguages(ctx, userID, contestID, removedLanguages); err != nil {
 			return err
 		}
@@ -403,14 +408,14 @@ func TestContestsRepositoryRegistrationPersistenceAndTransaction(t *testing.T) {
 	}
 
 	var links int
-	if err := db.Pool.QueryRow(t.Context(), `select count(*) from contest_logs`).Scan(&links); err != nil {
+	if err := db.Pool.QueryRow(tenantCtx, `select count(*) from contest_logs`).Scan(&links); err != nil {
 		t.Fatal(err)
 	}
 	if links != 2 {
 		t.Errorf("after rollback links=%d, want 2", links)
 	}
 
-	registration, err = repository.FindRegistrationForUser(t.Context(), userID, contestID)
+	registration, err = repository.FindRegistrationForUser(tenantCtx, userID, contestID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -418,7 +423,7 @@ func TestContestsRepositoryRegistrationPersistenceAndTransaction(t *testing.T) {
 		t.Errorf("rolled-back language codes=%+v", registration.LanguageCodes)
 	}
 
-	err = postgres.RunInTransaction(t.Context(), db.Pool, func(ctx context.Context) error {
+	err = postgres.RunInTransaction(tenantCtx, db.Pool, func(ctx context.Context) error {
 		if err := repository.DetachContestLogsForLanguages(ctx, userID, contestID, removedLanguages); err != nil {
 			return err
 		}
@@ -428,14 +433,14 @@ func TestContestsRepositoryRegistrationPersistenceAndTransaction(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := db.Pool.QueryRow(t.Context(), `select count(*) from contest_logs`).Scan(&links); err != nil {
+	if err := db.Pool.QueryRow(tenantCtx, `select count(*) from contest_logs`).Scan(&links); err != nil {
 		t.Fatal(err)
 	}
 	if links != 1 {
 		t.Errorf("after update links=%d, want 1", links)
 	}
 
-	registration, err = repository.FindRegistrationForUser(t.Context(), userID, contestID)
+	registration, err = repository.FindRegistrationForUser(tenantCtx, userID, contestID)
 	if err != nil {
 		t.Fatal(err)
 	}

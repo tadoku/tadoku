@@ -87,8 +87,13 @@ Never point tests at shared development or production services.
 - Database helpers take contexts and return errors, with explicit `Close`
   cleanup instead of depending on `testing.TB`. Suite teardown preserves test
   failures and reports cleanup failures; partial setup also cleans up.
+- Direct repository, service and worker tests pass an explicit
+  `tenant.WithKey(ctx, tenant.Production())` context. HTTP E2Es receive the tenant
+  through their signed fixture tokens. Fixture reset sets the canonical tenant
+  transaction-locally before cleanup and seed inserts.
 - Repository and transaction tests keep their own independent databases and may
-  run in parallel.
+  run in parallel. If local test targets contend with the provider fixtures,
+  use `--local_test_jobs=1` to serialize targets while retaining all assertions.
 - Keep the pool-closing failure test isolated. It opens a second pool on the
   shared DSN and closes it, without creating another migrated database.
 - The `services/tadoku-api/infra/postgres/` helper tests have their own setup in

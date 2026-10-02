@@ -21,12 +21,15 @@ spec:
               psql -X --set=ON_ERROR_STOP=1 <<'SQL'
               begin;
               revoke insert, update, delete, truncate on public.schema_migrations from tadoku;
-              do $$ begin
-                if not has_table_privilege('tadoku', 'public.schema_migrations', 'select')
-                  or has_table_privilege('tadoku', 'public.schema_migrations', 'insert,update,delete,truncate') then
-                  raise exception 'runtime migration-table grants are invalid';
-                end if;
-              end $$;
+              select has_table_privilege('tadoku', 'public.schema_migrations', 'select')
+                     and not has_table_privilege('tadoku', 'public.schema_migrations', 'insert,update,delete,truncate')
+                     as grants_valid
+              \gset
+              \if :grants_valid
+              \else
+                \echo 'runtime migration-table grants are invalid'
+                \quit 1
+              \endif
               commit;
               SQL
           env:

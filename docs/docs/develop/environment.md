@@ -263,6 +263,8 @@ Postgres cluster, PVC or long-running database pod.
   transferred from `tadoku` to `tadoku_owner`.
 - `migrate` runs as `tadoku_owner`; its migration init container must finish
   before a pinned Postgres client revokes runtime writes to `schema_migrations`.
+  It validates grants with psql conditionals. Inline task arguments avoid
+  dollar-quoted SQL because Kubernetes reduces `$$` to `$`.
   This requires dev-cli v0.5.1 or newer.
 - The API, worker and `seed` use the non-owner `tadoku` role with DML grants.
   Credentials stay Secret references.

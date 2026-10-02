@@ -87,7 +87,8 @@ try {
       : role === 'tadoku_owner'
         ? { POSTGRES_HOST: db, POSTGRES_USER: migrationRole, POSTGRES_PASSWORD: 'disposable-test-only', POSTGRES_DATABASE: fail ? 'missing_fixture_database' : target, POSTGRES_SSLMODE: 'disable' }
         : { DSN: `postgres://${role}@${db}:5432/${role}?sslmode=disable`, PGPASSWORD: 'disposable-test-only' }
-    run('docker', ['create', '--name', name, '--network', prefix, '--label', `tadoku.dev/test=${prefix}`, '--cpus', '0.5', '--memory', '256m', ...Object.entries(env).flatMap(([k,v]) => ['-e', `${k}=${v}`]), ...(container.command ? ['--entrypoint', container.command[0]] : []), container.image, ...(container.command?.slice(1) || []), ...container.args])
+    const args = container.args.map(arg => arg.replaceAll('$$', '$'))
+    run('docker', ['create', '--name', name, '--network', prefix, '--label', `tadoku.dev/test=${prefix}`, '--cpus', '0.5', '--memory', '256m', ...Object.entries(env).flatMap(([k,v]) => ['-e', `${k}=${v}`]), ...(container.command ? ['--entrypoint', container.command[0]] : []), container.image, ...(container.command?.slice(1) || []), ...args])
     containers.push(name)
     // docker cp works with the T3 DinD sidecar; host bind mounts do not.
     for (const volume of spec.volumes || []) {
@@ -165,7 +166,7 @@ try {
     migrate(ownership, `${branch}-existing`)
     const provision = Y.parse(fs.readFileSync(path.join(root, '.dev/database.yaml'), 'utf8')).spec.template.spec.containers[0]
     function prepareBranch() {
-      run('docker', ['exec', '-i', '-e', `DEV_ROUTE=${branch}`, '-e', 'PGUSER=postgres', '-e', 'PGDATABASE=postgres', db, ...provision.command, ...provision.args])
+      run('docker', ['exec', '-i', '-e', `DEV_ROUTE=${branch}`, '-e', 'PGUSER=postgres', '-e', 'PGDATABASE=postgres', db, ...provision.command, ...provision.args.map(arg => arg.replaceAll('$$', '$'))])
     }
     prepareBranch()
     const branchMigrate = Y.parse(fs.readFileSync(path.join(root, '.dev/migrate.yaml'), 'utf8'))

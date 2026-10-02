@@ -24,7 +24,8 @@ spec:
               \gset
               \if :valid_name
               \else
-                do $$ begin raise exception 'refusing invalid or overlong branch database name'; end $$;
+                \echo 'refusing invalid or overlong branch database name'
+                \quit 1
               \endif
               select pg_advisory_lock(hashtextextended(:'database', 0));
               select exists(select from pg_database where datname = :'database') as exists,
@@ -36,7 +37,8 @@ spec:
                 \if :owned
                   \echo 'branch database already provisioned'
                 \else
-                  do $$ begin raise exception 'refusing existing database without matching dev-cli ownership'; end $$;
+                  \echo 'refusing existing database without matching dev-cli ownership'
+                  \quit 1
                 \endif
               \else
                 select format('create database %I owner tadoku_owner', :'database') \gexec

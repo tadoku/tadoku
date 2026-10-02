@@ -7,7 +7,7 @@
   "prConcurrentLimit": 5,
   "dependencyDashboard": true,
   "automerge": false,
-  "rebaseWhen": "behind-base-branch",
+  "rebaseWhen": "conflicted",
   "labels": ["dependencies"],
   // Pin Renovate's artifact pnpm to the same version CI uses
   // (.github/workflows/build-frontend-*.yaml → 10.10.0). Without this,

@@ -223,8 +223,8 @@ release. Kratos and Keto are shared by the base and every branch.
 `make dev-seed` runs `scripts/dev/seed-db.sh` against the shared base with tenant
 `tadoku/prod`. It:
 
-- runs only against the `homelab-dev` context and waits for Postgres and the
-  base migrations;
+- runs only against the `homelab-talos-dev` context at `https://omni.lab:8100`
+  and waits for Postgres and the base migrations;
 - creates the two fixture identities in Kratos, marked as owned by the seed,
   and refuses to touch an existing identity with the same email but no marker;
 - resets the fixture passwords to the configured values on every run;

@@ -276,7 +276,7 @@ where
   and logs.user_id = $2
   and logs.deleted_at is null
 group by logs.language_code
-order by 2 desc
+order by 2 desc, logs.language_code asc
 `
 
 type FetchScoresForContestProfileParams struct {
@@ -321,7 +321,7 @@ where
   and year = $2
   and logs.deleted_at is null
 group by language_code, languages.name
-order by score desc
+order by score desc, language_code asc
 `
 
 type FetchScoresForProfileParams struct {

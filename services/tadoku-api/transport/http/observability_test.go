@@ -1,7 +1,11 @@
 package http
 
 import (
+	"bytes"
 	"context"
+	"crypto/rand"
+	"crypto/rsa"
+	"fmt"
 	"io"
 	"log/slog"
 	stdhttp "net/http"
@@ -9,9 +13,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
 func TestGeneratedCorrelationIDIsUUIDv7(t *testing.T) {
@@ -28,6 +34,134 @@ func TestGeneratedCorrelationIDIsUUIDv7(t *testing.T) {
 	}
 	if got := id.Version(); got != uuid.Version(7) {
 		t.Errorf("version = %d, want 7", got)
+	}
+}
+
+type requestTenantHandler struct {
+	slog.Handler
+	key tenant.Key
+	ok  bool
+}
+
+func (handler *requestTenantHandler) Handle(ctx context.Context, record slog.Record) error {
+	if record.Message == "request completed" {
+		handler.key, handler.ok = tenant.FromContext(ctx)
+	}
+	return handler.Handler.Handle(ctx, record)
+}
+
+func TestRequestObservationUsesVerifiedTenant(t *testing.T) {
+	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatal(err)
+	}
+	jwks := fmt.Sprintf(`{"keys":[%s]}`, rsaJWK("observability", &privateKey.PublicKey))
+	keys := httptest.NewServer(stdhttp.HandlerFunc(func(w stdhttp.ResponseWriter, _ *stdhttp.Request) {
+		_, _ = w.Write([]byte(jwks))
+	}))
+	t.Cleanup(keys.Close)
+
+	for _, test := range []struct {
+		name       string
+		tenant     string
+		expired    bool
+		wantStatus int
+		wantKind   string
+		wantTenant string
+	}{
+		{"production", "tadoku/prod", false, stdhttp.StatusNoContent, "production", "tadoku/prod"},
+		{"test", "e2e/observability-0123abcd", false, stdhttp.StatusNoContent, "test", "e2e/observability-0123abcd"},
+		{"expired", "tadoku/prod", true, stdhttp.StatusUnauthorized, "unknown", ""},
+		{"malformed tenant", "not-a-tenant", false, stdhttp.StatusUnauthorized, "unknown", ""},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			var logs bytes.Buffer
+			captured := &requestTenantHandler{Handler: slog.NewJSONHandler(&logs, nil)}
+			logger := slog.New(captured)
+			authenticate, err := NewJWTAuthentication(
+				t.Context(), keys.URL, time.Second, 24*time.Hour, "", tenant.Deployment{}, logger,
+			)
+			if err != nil {
+				t.Fatal(err)
+			}
+			passthrough := func(next stdhttp.Handler) stdhttp.Handler { return next }
+			registry := prometheus.NewRegistry()
+			router, err := NewHandler(
+				app.New(app.Dependencies{}),
+				func(context.Context) error { return nil },
+				time.Second,
+				registry,
+				logger,
+				authenticate,
+				passthrough,
+				passthrough,
+			)
+			if err != nil {
+				t.Fatal(err)
+			}
+			router.HandleFunc("GET /observation", func(w stdhttp.ResponseWriter, _ *stdhttp.Request) {
+				w.WriteHeader(stdhttp.StatusNoContent)
+			})
+
+			now := time.Now()
+			expiresAt := now.Add(time.Hour)
+			if test.expired {
+				expiresAt = now.Add(-time.Minute)
+			}
+			token := jwt.NewWithClaims(jwt.SigningMethodRS256, &userClaims{
+				Tenant: test.tenant,
+				RegisteredClaims: jwt.RegisteredClaims{
+					Subject:   "guest",
+					IssuedAt:  jwt.NewNumericDate(now.Add(-time.Hour)),
+					ExpiresAt: jwt.NewNumericDate(expiresAt),
+				},
+			})
+			token.Header["kid"] = "observability"
+			signed, err := token.SignedString(privateKey)
+			if err != nil {
+				t.Fatal(err)
+			}
+			request := httptest.NewRequest(stdhttp.MethodGet, "/observation", nil)
+			request.Header.Set("Authorization", "Bearer "+signed)
+			response := httptest.NewRecorder()
+			router.ServeHTTP(response, request)
+
+			if response.Code != test.wantStatus {
+				t.Fatalf("status=%d, want %d", response.Code, test.wantStatus)
+			}
+			if captured.key.String() != test.wantTenant || captured.ok != (test.wantTenant != "") {
+				t.Errorf("completion context tenant=%q known=%t, want %q", captured.key.String(), captured.ok, test.wantTenant)
+			}
+			families, err := registry.Gather()
+			if err != nil {
+				t.Fatal(err)
+			}
+			found := false
+			for _, family := range families {
+				if family.GetName() != "tadoku_api_proxy_request_duration_seconds" {
+					continue
+				}
+				for _, metric := range family.GetMetric() {
+					labels := make(map[string]string)
+					for _, label := range metric.GetLabel() {
+						labels[label.GetName()] = label.GetValue()
+					}
+					if labels["route"] != "GET /observation" {
+						continue
+					}
+					found = true
+					if labels["tenant_kind"] != test.wantKind || len(labels) != 5 {
+						t.Errorf("histogram labels=%v, want bounded tenant_kind=%q and existing four labels", labels, test.wantKind)
+					}
+					if metric.GetHistogram().GetSampleCount() != 1 {
+						t.Errorf("histogram sample count=%d, want 1", metric.GetHistogram().GetSampleCount())
+					}
+				}
+			}
+			if !found {
+				t.Error("request histogram sample not found")
+			}
+		})
 	}
 }
 

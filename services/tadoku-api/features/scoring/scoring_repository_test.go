@@ -186,14 +186,14 @@ func TestScoringRepositoryContestRuleSets(t *testing.T) {
 
 	_, err = db.Pool.Exec(tenantCtx, `
 		insert into contests (
-			id, owner_user_id, owner_user_display_name, "private", contest_start, contest_end,
+			tenant, id, owner_user_id, owner_user_display_name, "private", contest_start, contest_end,
 			registration_end, title, activity_type_id_allow_list, official, created_at, updated_at, deleted_at
 		)
 		values
-			('cccccccc-cccc-4ccc-8ccc-ccccccccccc1', '11111111-1111-4111-8111-111111111111', 'Owner', false,
+			('tadoku/prod', 'cccccccc-cccc-4ccc-8ccc-ccccccccccc1', '11111111-1111-4111-8111-111111111111', 'Owner', false,
 			 '2026-10-01', '2026-10-31', '2026-10-15', 'Live', '{1}', false,
 			 '2026-09-01', '2026-09-01', null),
-			('cccccccc-cccc-4ccc-8ccc-ccccccccccc2', '11111111-1111-4111-8111-111111111111', 'Owner', false,
+			('tadoku/prod', 'cccccccc-cccc-4ccc-8ccc-ccccccccccc2', '11111111-1111-4111-8111-111111111111', 'Owner', false,
 			 '2026-10-01', '2026-10-31', '2026-10-15', 'Deleted', '{1}', false,
 			 '2026-09-01', '2026-09-01', '2026-09-02')`)
 	if err != nil {

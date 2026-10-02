@@ -27,30 +27,30 @@ func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
 	})
 
 	_, err = db.Pool.Exec(tenantCtx, `
-		insert into users (id, display_name, created_at, updated_at, deleted_at)
+		insert into users (tenant, id, display_name, created_at, updated_at, deleted_at)
 		values
-			('11111111-1111-4111-8111-111111111111', 'Owner One', '2026-01-01', '2026-01-01', null),
-			('22222222-2222-4222-8222-222222222222', 'Owner Two', '2026-01-01', '2026-01-01', '2026-09-01');
+			('tadoku/prod', '11111111-1111-4111-8111-111111111111', 'Owner One', '2026-01-01', '2026-01-01', null),
+			('tadoku/prod', '22222222-2222-4222-8222-222222222222', 'Owner Two', '2026-01-01', '2026-01-01', '2026-09-01');
 
 		insert into contests (
-			id, owner_user_id, owner_user_display_name, "private", contest_start, contest_end,
+			tenant, id, owner_user_id, owner_user_display_name, "private", contest_start, contest_end,
 			registration_end, title, "description", language_code_allow_list,
 			activity_type_id_allow_list, official, created_at, updated_at, deleted_at
 		)
 		values
-			('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1', '11111111-1111-4111-8111-111111111111', 'stale', false,
+			('tadoku/prod', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1', '11111111-1111-4111-8111-111111111111', 'stale', false,
 			 '2026-01-01', '2026-01-31', '2026-01-15', 'Public official', null, null, '{1}', true,
 			 '2026-01-01', '2026-01-01', null),
-			('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2', '22222222-2222-4222-8222-222222222222', 'stale', true,
+			('tadoku/prod', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2', '22222222-2222-4222-8222-222222222222', 'stale', true,
 			 '2026-02-01', '2026-02-28', '2026-02-15', 'Private official', 'private', '{jpn,eng}', '{2,1}', true,
 			 '2026-02-01', '2026-02-01', null),
-			('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3', '11111111-1111-4111-8111-111111111111', 'stale', true,
+			('tadoku/prod', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3', '11111111-1111-4111-8111-111111111111', 'stale', true,
 			 '2026-03-01', '2026-03-31', '2026-03-15', 'Private unofficial', null, '{}', '{3}', false,
 			 '2026-03-01', '2026-03-01', null),
-			('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa4', '22222222-2222-4222-8222-222222222222', 'stale', false,
+			('tadoku/prod', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa4', '22222222-2222-4222-8222-222222222222', 'stale', false,
 			 '2027-01-01', '2027-01-31', '2026-12-15', 'Deleted future official', null, '{eng}', '{5}', true,
 			 '2026-04-01', '2026-04-01', '2026-04-02'),
-			('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa5', '33333333-3333-4333-8333-333333333333', 'missing', false,
+			('tadoku/prod', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa5', '33333333-3333-4333-8333-333333333333', 'missing', false,
 			 '2026-02-15', '2026-02-28', '2026-02-01', 'Orphan official', null, null, '{1}', true,
 			 '2026-02-15', '2026-02-15', null)`)
 	if err != nil {
@@ -198,8 +198,8 @@ func TestContestsRepositoryCreationTransaction(t *testing.T) {
 		UpdatedAt:               now,
 	}
 	if _, err := db.Pool.Exec(tenantCtx, `
-		insert into users (id, display_name, created_at, updated_at)
-		values ($1, $2, $3, $3)`, contest.OwnerUserID, contest.OwnerUserDisplayName, now); err != nil {
+		insert into users (tenant, id, display_name, created_at, updated_at)
+		values ('tadoku/prod', $1, $2, $3, $3)`, contest.OwnerUserID, contest.OwnerUserDisplayName, now); err != nil {
 		t.Fatal(err)
 	}
 
@@ -251,11 +251,11 @@ func TestContestsRepositoryCountsEveryContestCreatedByUserInYear(t *testing.T) {
 
 	_, err = db.Pool.Exec(tenantCtx, `
 		insert into contests (
-			id, owner_user_id, owner_user_display_name, "private", contest_start, contest_end,
+			tenant, id, owner_user_id, owner_user_display_name, "private", contest_start, contest_end,
 			registration_end, title, activity_type_id_allow_list, official, created_at, updated_at, deleted_at
 		)
 		select
-			('10000000-0000-4000-8000-' || lpad(n::text, 12, '0'))::uuid,
+			'tadoku/prod', ('10000000-0000-4000-8000-' || lpad(n::text, 12, '0'))::uuid,
 			'11111111-1111-4111-8111-111111111111', 'Owner One', n % 2 = 0,
 			'2025-01-01', '2025-01-31', '2025-01-01', 'Current year ' || n, '{}', n % 2 = 1,
 			'2026-01-01'::timestamp + n * interval '1 day', '2026-01-01',
@@ -263,13 +263,13 @@ func TestContestsRepositoryCountsEveryContestCreatedByUserInYear(t *testing.T) {
 		from generate_series(1, 12) as n;
 
 		insert into contests (
-			id, owner_user_id, owner_user_display_name, "private", contest_start, contest_end,
+			tenant, id, owner_user_id, owner_user_display_name, "private", contest_start, contest_end,
 			registration_end, title, activity_type_id_allow_list, official, created_at, updated_at
 		)
 		values
-			('20000000-0000-4000-8000-000000000001', '11111111-1111-4111-8111-111111111111', 'Owner One', false,
+			('tadoku/prod', '20000000-0000-4000-8000-000000000001', '11111111-1111-4111-8111-111111111111', 'Owner One', false,
 			 '2026-01-01', '2026-01-31', '2026-01-01', 'Prior year', '{}', true, '2025-12-31', '2025-12-31'),
-			('20000000-0000-4000-8000-000000000002', '22222222-2222-4222-8222-222222222222', 'Owner Two', false,
+			('tadoku/prod', '20000000-0000-4000-8000-000000000002', '22222222-2222-4222-8222-222222222222', 'Owner Two', false,
 			 '2026-01-01', '2026-01-31', '2026-01-01', 'Other owner', '{}', true, '2026-01-01', '2026-01-01')`)
 	if err != nil {
 		t.Fatal(err)
@@ -310,33 +310,33 @@ func TestContestsRepositoryRegistrationPersistenceAndTransaction(t *testing.T) {
 	})
 
 	_, err = db.Pool.Exec(tenantCtx, `
-		insert into users (id, display_name, created_at, updated_at)
+		insert into users (tenant, id, display_name, created_at, updated_at)
 		values
-			('11111111-1111-4111-8111-111111111111', 'Reader', '2026-01-01', '2026-01-01'),
-			('99999999-9999-4999-8999-999999999999', 'Owner', '2026-01-01', '2026-01-01');
+			('tadoku/prod', '11111111-1111-4111-8111-111111111111', 'Reader', '2026-01-01', '2026-01-01'),
+			('tadoku/prod', '99999999-9999-4999-8999-999999999999', 'Owner', '2026-01-01', '2026-01-01');
 		insert into contests (
-			id, owner_user_id, owner_user_display_name, "private", contest_start, contest_end,
+			tenant, id, owner_user_id, owner_user_display_name, "private", contest_start, contest_end,
 			registration_end, title, activity_type_id_allow_list, official, created_at, updated_at
 		) values (
-			'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '99999999-9999-4999-8999-999999999999', 'stale', true,
+			'tadoku/prod', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '99999999-9999-4999-8999-999999999999', 'stale', true,
 			'2026-09-01', '2026-09-12', '2026-08-31', 'Registration fixture', '{2,1}', true,
 			'2026-01-01', '2026-01-01'
 		);
-		insert into contest_registrations (id, contest_id, user_id, language_codes, created_at, updated_at)
+		insert into contest_registrations (tenant, id, contest_id, user_id, language_codes, created_at, updated_at)
 		values (
-			'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+			'tadoku/prod', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
 			'11111111-1111-4111-8111-111111111111', '{jpn,eng}', '2026-01-01', '2026-01-01'
 		);
 		insert into logs (
-			id, user_id, language_code, log_activity_id, duration_seconds, computed_score,
+			tenant, id, user_id, language_code, log_activity_id, duration_seconds, computed_score,
 			eligible_official_leaderboard, created_at, updated_at
 		) values
-			('cccccccc-cccc-4ccc-8ccc-ccccccccccc1', '11111111-1111-4111-8111-111111111111', 'eng', 1, 60, 1, true, '2026-09-01', '2026-09-01'),
-			('cccccccc-cccc-4ccc-8ccc-ccccccccccc2', '11111111-1111-4111-8111-111111111111', 'jpn', 1, 60, 1, true, '2026-09-01', '2026-09-01');
-		insert into contest_logs (contest_id, log_id, duration_seconds, computed_score)
+			('tadoku/prod', 'cccccccc-cccc-4ccc-8ccc-ccccccccccc1', '11111111-1111-4111-8111-111111111111', 'eng', 1, 60, 1, true, '2026-09-01', '2026-09-01'),
+			('tadoku/prod', 'cccccccc-cccc-4ccc-8ccc-ccccccccccc2', '11111111-1111-4111-8111-111111111111', 'jpn', 1, 60, 1, true, '2026-09-01', '2026-09-01');
+		insert into contest_logs (tenant, contest_id, log_id, duration_seconds, computed_score)
 		values
-			('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'cccccccc-cccc-4ccc-8ccc-ccccccccccc1', 60, 1),
-			('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'cccccccc-cccc-4ccc-8ccc-ccccccccccc2', 60, 1);
+			('tadoku/prod', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'cccccccc-cccc-4ccc-8ccc-ccccccccccc1', 60, 1),
+			('tadoku/prod', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'cccccccc-cccc-4ccc-8ccc-ccccccccccc2', 60, 1);
 	`)
 	if err != nil {
 		t.Fatal(err)

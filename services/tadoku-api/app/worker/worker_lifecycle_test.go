@@ -154,11 +154,11 @@ func TestWorkerJobLifecycle(t *testing.T) {
 func insertJob(ctx context.Context, db *pgxpool.Pool, jobType, payload string, expired bool) (int64, error) {
 	var id int64
 	if expired {
-		err := db.QueryRow(ctx, `insert into jobs (task_type, payload, state, attempts, claim_token, lease_expires_at)
-			values ($1, $2::jsonb, 'running', 1, $3, now() - interval '1 second') returning id`, jobType, payload, uuid.New()).Scan(&id)
+		err := db.QueryRow(ctx, `insert into jobs (tenant, task_type, payload, state, attempts, claim_token, lease_expires_at)
+			values ('tadoku/prod', $1, $2::jsonb, 'running', 1, $3, now() - interval '1 second') returning id`, jobType, payload, uuid.New()).Scan(&id)
 		return id, err
 	}
-	err := db.QueryRow(ctx, `insert into jobs (task_type, payload) values ($1, $2::jsonb) returning id`, jobType, payload).Scan(&id)
+	err := db.QueryRow(ctx, `insert into jobs (tenant, task_type, payload) values ('tadoku/prod', $1, $2::jsonb) returning id`, jobType, payload).Scan(&id)
 	return id, err
 }
 

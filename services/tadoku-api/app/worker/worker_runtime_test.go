@@ -559,8 +559,8 @@ func TestWorkerDeadlineExhaustionAndReplay(t *testing.T) {
 	}
 	runner := f.runner(t, blocked, 8*time.Second, 2*time.Second)
 	var id int64
-	err := f.db.QueryRow(tenantCtx, `insert into jobs (task_type, payload, attempts)
-		values ($1, $2::jsonb, 4) returning id`, string(jobs.LeaderboardInvalidateContestV1), fmt.Sprintf(`{"contest_id":%q}`, uuid.NewString())).Scan(&id)
+	err := f.db.QueryRow(tenantCtx, `insert into jobs (tenant, task_type, payload, attempts)
+		values ('tadoku/prod', $1, $2::jsonb, 4) returning id`, string(jobs.LeaderboardInvalidateContestV1), fmt.Sprintf(`{"contest_id":%q}`, uuid.NewString())).Scan(&id)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1136,8 +1136,8 @@ func TestWorkerCleansUpExpiredCompletedJobsAtStartup(t *testing.T) {
 		}
 	})
 	var id int64
-	if err := f.db.QueryRow(tenantCtx, `insert into jobs (task_type, payload, state, created_at, completed_at)
-  values ($1, '{"year":2025}', 'completed', now() - interval '1 year', now() - interval '1 year') returning id`, string(jobs.LeaderboardInvalidateOfficialV1)).Scan(&id); err != nil {
+	if err := f.db.QueryRow(tenantCtx, `insert into jobs (tenant, task_type, payload, state, created_at, completed_at)
+  values ('tadoku/prod', $1, '{"year":2025}', 'completed', now() - interval '1 year', now() - interval '1 year') returning id`, string(jobs.LeaderboardInvalidateOfficialV1)).Scan(&id); err != nil {
 		t.Fatal(err)
 	}
 	startWorker(t, f.runner(t, f.client, time.Second, time.Second))
@@ -1173,29 +1173,29 @@ func TestWorkerCleanupRetainsThreeMonthsAndFailures(t *testing.T) {
 		id        *int64
 		completed time.Time
 	}{{&recentID, recent}, {&oldID, old}} {
-		if err := f.db.QueryRow(tenantCtx, `insert into jobs (task_type, payload, state, created_at, completed_at)
-   values ($1, '{"year":2025}', 'completed', $2, $2) returning id`, string(jobs.LeaderboardInvalidateOfficialV1), item.completed).Scan(item.id); err != nil {
+		if err := f.db.QueryRow(tenantCtx, `insert into jobs (tenant, task_type, payload, state, created_at, completed_at)
+   values ('tadoku/prod', $1, '{"year":2025}', 'completed', $2, $2) returning id`, string(jobs.LeaderboardInvalidateOfficialV1), item.completed).Scan(item.id); err != nil {
 			t.Fatal(err)
 		}
 	}
-	if err := f.db.QueryRow(tenantCtx, `insert into jobs (task_type, payload, state, created_at, failed_at)
-  values ($1, '{"year":2025}', 'failed', $2, $2) returning id`, string(jobs.LeaderboardInvalidateOfficialV1), old).Scan(&failedID); err != nil {
+	if err := f.db.QueryRow(tenantCtx, `insert into jobs (tenant, task_type, payload, state, created_at, failed_at)
+  values ('tadoku/prod', $1, '{"year":2025}', 'failed', $2, $2) returning id`, string(jobs.LeaderboardInvalidateOfficialV1), old).Scan(&failedID); err != nil {
 		t.Fatal(err)
 	}
-	if err := f.db.QueryRow(tenantCtx, `insert into jobs (task_type, payload, state, created_at, completed_at, replay_of_id, replay_actor, replay_reason)
-  values ($1, '{"year":2025}', 'completed', $2, $2, $3, 'retention-test', 'repaired') returning id`, string(jobs.LeaderboardInvalidateOfficialV1), old, failedID).Scan(&replayID); err != nil {
+	if err := f.db.QueryRow(tenantCtx, `insert into jobs (tenant, task_type, payload, state, created_at, completed_at, replay_of_id, replay_actor, replay_reason)
+  values ('tadoku/prod', $1, '{"year":2025}', 'completed', $2, $2, $3, 'retention-test', 'repaired') returning id`, string(jobs.LeaderboardInvalidateOfficialV1), old, failedID).Scan(&replayID); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := f.db.Exec(tenantCtx, `insert into jobs (task_type, payload, state, created_at, completed_at)
-  select $1, '{"year":2025}'::jsonb, 'completed', $2, $2 from generate_series(1, 101)`, string(jobs.LeaderboardInvalidateOfficialV1), old); err != nil {
+	if _, err := f.db.Exec(tenantCtx, `insert into jobs (tenant, task_type, payload, state, created_at, completed_at)
+  select 'tadoku/prod', $1, '{"year":2025}'::jsonb, 'completed', $2, $2 from generate_series(1, 101)`, string(jobs.LeaderboardInvalidateOfficialV1), old); err != nil {
 		t.Fatal(err)
 	}
-	if err := f.db.QueryRow(tenantCtx, `insert into jobs (task_type, payload, created_at)
-  values ($1, '{"year":2025}', $2) returning id`, string(jobs.LeaderboardInvalidateOfficialV1), old).Scan(&pendingID); err != nil {
+	if err := f.db.QueryRow(tenantCtx, `insert into jobs (tenant, task_type, payload, created_at)
+  values ('tadoku/prod', $1, '{"year":2025}', $2) returning id`, string(jobs.LeaderboardInvalidateOfficialV1), old).Scan(&pendingID); err != nil {
 		t.Fatal(err)
 	}
-	if err := f.db.QueryRow(tenantCtx, `insert into jobs (task_type, payload, state, created_at, claim_token, lease_expires_at)
-  values ($1, '{"year":2025}', 'running', $2, $3, now() + interval '1 hour') returning id`, string(jobs.LeaderboardInvalidateOfficialV1), old, uuid.New()).Scan(&runningID); err != nil {
+	if err := f.db.QueryRow(tenantCtx, `insert into jobs (tenant, task_type, payload, state, created_at, claim_token, lease_expires_at)
+  values ('tadoku/prod', $1, '{"year":2025}', 'running', $2, $3, now() + interval '1 hour') returning id`, string(jobs.LeaderboardInvalidateOfficialV1), old, uuid.New()).Scan(&runningID); err != nil {
 		t.Fatal(err)
 	}
 

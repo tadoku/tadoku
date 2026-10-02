@@ -63,8 +63,8 @@ func TestResetClearsWritesAndPreservesStaticData(t *testing.T) {
 	if _, err := reader.Exec(t.Context(), `
 		update announcements set title = 'changed';
 		delete from announcements where namespace = 'other';
-		insert into announcements (id, namespace, title, content, starts_at, ends_at)
-		values ('33333333-3333-4333-8333-333333333333', 'extra', 'inserted', '', '2026-09-12', '2026-09-13');
+		insert into announcements (tenant, id, namespace, title, content, starts_at, ends_at)
+		values ('tadoku/prod', '33333333-3333-4333-8333-333333333333', 'extra', 'inserted', '', '2026-09-12', '2026-09-13');
 	`); err != nil {
 		t.Fatal(err)
 	}

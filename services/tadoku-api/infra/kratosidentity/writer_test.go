@@ -43,7 +43,12 @@ func TestWriterTenantBoundaries(t *testing.T) {
 	}
 
 	var logs bytes.Buffer
-	writer := kratosidentity.NewWriter(fixture.Client(), slog.New(slog.NewTextHandler(&logs, nil)))
+	providerConfig := fixture.Client().GetConfig()
+	writer := kratosidentity.NewWriter(
+		providerConfig.Servers[0].URL,
+		providerConfig.HTTPClient,
+		slog.New(slog.NewTextHandler(&logs, nil)),
+	)
 	operations := []struct {
 		name string
 		call func(context.Context, uuid.UUID) (kratosidentity.Outcome, error)

@@ -28,7 +28,7 @@ const Page = () => {
     }
   }, [session, currentUrl, router])
 
-  if (!session || contest.isLoading || contest.isIdle) {
+  if (!session || contest.isLoading) {
     return <Loading />
   }
 
@@ -79,12 +79,12 @@ const Page = () => {
         Unfortunately, registrations for this contest have ended.
       </Flash>
 
-      {registration.isLoading || registration.isIdle ? (
+      {registration.isLoading ? (
         <Loading />
       ) : (
         <ContestRegistrationForm
           contest={contest.data}
-          data={registration.data}
+          data={registration.data ?? undefined}
           isClosed={registrationClosed}
         />
       )}

@@ -142,7 +142,6 @@ describe('release-log-entry-v2 pages', () => {
     useLog.mockReturnValue({
       data: log,
       isError: false,
-      isIdle: false,
       isLoading: false,
     })
   })

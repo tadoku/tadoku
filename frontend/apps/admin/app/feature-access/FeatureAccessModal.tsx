@@ -74,7 +74,7 @@ export const FeatureAccessModal = ({ isOpen, setIsOpen, user }: Props) => {
               values={flagOptions}
             />
 
-            {access.isLoading ? (
+            {access.isInitialLoading ? (
               <p className="text-sm text-slate-500">Checking access…</p>
             ) : access.isError ? (
               <span className="flash error">

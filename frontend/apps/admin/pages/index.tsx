@@ -92,7 +92,7 @@ const CurrentContestCard = () => {
             <LeaderboardList entries={leaderboard.data.entries} />
           )}
 
-        {leaderboard.isLoading && (
+        {leaderboard.isInitialLoading && (
           <div className="mt-4">
             <Loading />
           </div>

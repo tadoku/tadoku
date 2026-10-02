@@ -44,7 +44,7 @@ export function ActivityChart({ userId, registration }: Props) {
     contestId: registration.contest_id,
   })
 
-  if (activity.isLoading || activity.isIdle) {
+  if (activity.isLoading) {
     return <Loading className="h-full" />
   }
 

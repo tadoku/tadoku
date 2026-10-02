@@ -29,7 +29,7 @@ const Page = () => {
   const log = useLog(id)
   const useV2 = useLatchedFeatureFlag('release-log-entry-v2')
 
-  if (log.isLoading || log.isIdle) {
+  if (log.isLoading) {
     return <Loading />
   }
 

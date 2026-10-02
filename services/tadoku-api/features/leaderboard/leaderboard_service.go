@@ -5,23 +5,21 @@ import (
 	"fmt"
 	"log/slog"
 	"strconv"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/activities"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
-	valkeygo "github.com/valkey-io/valkey-go"
 )
 
 type Service struct {
 	repository *Repository
-	store      *Store
+	cache      *Cache
 }
 
-func NewService(repository *Repository, client valkeygo.Client, operationTimeout time.Duration, cachePrefix string) *Service {
+func NewService(repository *Repository, cache *Cache) *Service {
 	return &Service{
 		repository: repository,
-		store:      NewStore(client, operationTimeout, cachePrefix),
+		cache:      cache,
 	}
 }
 
@@ -29,31 +27,31 @@ func (s *Service) InvalidateContest(ctx context.Context, id uuid.UUID) error {
 	if id == uuid.Nil {
 		return errx.NewInvalidInputError("contest ID is required")
 	}
-	key, err := s.store.cacheKey(ctx, contestPrefix+id.String())
+	key, err := s.cache.cacheKey(ctx, contestPrefix+id.String())
 	if err != nil {
 		return err
 	}
 
-	return s.store.invalidate(ctx, key)
+	return s.cache.invalidate(ctx, key)
 }
 
 func (s *Service) InvalidateOfficial(ctx context.Context, year int16) error {
 	if year < 1 {
 		return errx.NewInvalidInputError("year must be positive")
 	}
-	yearlyKey, err := s.store.cacheKey(ctx, yearlyPrefix+strconv.Itoa(int(year)))
+	yearlyKey, err := s.cache.cacheKey(ctx, yearlyPrefix+strconv.Itoa(int(year)))
 	if err != nil {
 		return err
 	}
-	globalCacheKey, err := s.store.cacheKey(ctx, globalKey)
+	globalCacheKey, err := s.cache.cacheKey(ctx, globalKey)
 	if err != nil {
 		return err
 	}
 
-	if err := s.store.invalidate(ctx, yearlyKey); err != nil {
+	if err := s.cache.invalidate(ctx, yearlyKey); err != nil {
 		return err
 	}
-	return s.store.invalidate(ctx, globalCacheKey)
+	return s.cache.invalidate(ctx, globalCacheKey)
 }
 
 func (s *Service) FetchContest(ctx context.Context, request ContestRequest) (*Result, error) {
@@ -65,17 +63,17 @@ func (s *Service) FetchContest(ctx context.Context, request ContestRequest) (*Re
 		return s.fetchContestFromPostgres(ctx, request)
 	}
 
-	key, err := s.store.cacheKey(ctx, contestPrefix+request.ContestID.String())
+	key, err := s.cache.cacheKey(ctx, contestPrefix+request.ContestID.String())
 	if err != nil {
 		return nil, err
 	}
-	result, exists, err := s.store.fetchPage(ctx, key, int64(request.offset()), request.PageSize)
+	result, exists, err := s.cache.fetchPage(ctx, key, int64(request.offset()), request.PageSize)
 	if err != nil {
 		slog.WarnContext(ctx, "contest leaderboard cache unavailable; falling back to Postgres", "error", err)
 		return s.fetchContestFromPostgres(ctx, request)
 	}
 	if !exists {
-		generation, err := s.store.generation(ctx, key)
+		generation, err := s.cache.generation(ctx, key)
 		if err != nil {
 			slog.WarnContext(ctx, "contest leaderboard cache unavailable; falling back to Postgres", "error", err)
 			return s.fetchContestFromPostgres(ctx, request)
@@ -84,7 +82,7 @@ func (s *Service) FetchContest(ctx context.Context, request ContestRequest) (*Re
 		if err != nil {
 			return nil, fmt.Errorf("failed to fetch all contest scores for rebuild: %w", err)
 		}
-		if _, err := s.store.rebuild(ctx, key, scores, generation); err != nil {
+		if _, err := s.cache.rebuild(ctx, key, scores, generation); err != nil {
 			slog.WarnContext(ctx, "contest leaderboard cache rebuild failed; falling back to Postgres", "error", err)
 		}
 		return s.fetchContestFromPostgres(ctx, request)
@@ -101,17 +99,17 @@ func (s *Service) FetchYearly(ctx context.Context, request YearlyRequest) (*Resu
 		return postgresResult(s.repository.yearly(ctx, request))
 	}
 
-	key, err := s.store.cacheKey(ctx, yearlyPrefix+strconv.Itoa(int(request.Year)))
+	key, err := s.cache.cacheKey(ctx, yearlyPrefix+strconv.Itoa(int(request.Year)))
 	if err != nil {
 		return nil, err
 	}
-	result, exists, err := s.store.fetchPage(ctx, key, int64(request.offset()), request.PageSize)
+	result, exists, err := s.cache.fetchPage(ctx, key, int64(request.offset()), request.PageSize)
 	if err != nil {
 		slog.WarnContext(ctx, "yearly leaderboard cache unavailable; falling back to Postgres", "error", err)
 		return postgresResult(s.repository.yearly(ctx, request))
 	}
 	if !exists {
-		generation, err := s.store.generation(ctx, key)
+		generation, err := s.cache.generation(ctx, key)
 		if err != nil {
 			slog.WarnContext(ctx, "yearly leaderboard cache unavailable; falling back to Postgres", "error", err)
 			return postgresResult(s.repository.yearly(ctx, request))
@@ -120,7 +118,7 @@ func (s *Service) FetchYearly(ctx context.Context, request YearlyRequest) (*Resu
 		if err != nil {
 			return nil, fmt.Errorf("failed to fetch all yearly scores for rebuild: %w", err)
 		}
-		if _, err := s.store.rebuild(ctx, key, scores, generation); err != nil {
+		if _, err := s.cache.rebuild(ctx, key, scores, generation); err != nil {
 			slog.WarnContext(ctx, "yearly leaderboard cache rebuild failed; falling back to Postgres", "error", err)
 		}
 		return postgresResult(s.repository.yearly(ctx, request))
@@ -137,17 +135,17 @@ func (s *Service) FetchGlobal(ctx context.Context, request Request) (*Result, er
 		return postgresResult(s.repository.global(ctx, request))
 	}
 
-	key, err := s.store.cacheKey(ctx, globalKey)
+	key, err := s.cache.cacheKey(ctx, globalKey)
 	if err != nil {
 		return nil, err
 	}
-	result, exists, err := s.store.fetchPage(ctx, key, int64(request.offset()), request.PageSize)
+	result, exists, err := s.cache.fetchPage(ctx, key, int64(request.offset()), request.PageSize)
 	if err != nil {
 		slog.WarnContext(ctx, "global leaderboard cache unavailable; falling back to Postgres", "error", err)
 		return postgresResult(s.repository.global(ctx, request))
 	}
 	if !exists {
-		generation, err := s.store.generation(ctx, key)
+		generation, err := s.cache.generation(ctx, key)
 		if err != nil {
 			slog.WarnContext(ctx, "global leaderboard cache unavailable; falling back to Postgres", "error", err)
 			return postgresResult(s.repository.global(ctx, request))
@@ -156,7 +154,7 @@ func (s *Service) FetchGlobal(ctx context.Context, request Request) (*Result, er
 		if err != nil {
 			return nil, fmt.Errorf("failed to fetch all global scores for rebuild: %w", err)
 		}
-		if _, err := s.store.rebuild(ctx, key, scores, generation); err != nil {
+		if _, err := s.cache.rebuild(ctx, key, scores, generation); err != nil {
 			slog.WarnContext(ctx, "global leaderboard cache rebuild failed; falling back to Postgres", "error", err)
 		}
 		return postgresResult(s.repository.global(ctx, request))

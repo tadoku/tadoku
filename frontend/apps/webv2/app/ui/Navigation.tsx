@@ -13,7 +13,7 @@ import {
 import { useLogoutHandler, useSession, useUserRole } from '@app/common/session'
 import { useCurrentLocation } from '@app/common/hooks'
 import { routes } from '@app/common/routes'
-import { useIsFetching } from 'react-query'
+import { useIsFetching } from '@tanstack/react-query'
 
 export default function Navigation() {
   const isFetching = useIsFetching()

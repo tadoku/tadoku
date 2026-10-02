@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import getConfig from 'next/config'
-import { useMutation, useQuery } from 'react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { ContentConfig, ContentItem, ContentListResponse } from './types'
 
 const { publicRuntimeConfig } = getConfig()

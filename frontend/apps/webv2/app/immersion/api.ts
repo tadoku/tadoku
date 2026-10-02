@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import getConfig from 'next/config'
-import { useMutation, useQuery, useQueryClient } from 'react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ContestFormSchema } from '@app/immersion/ContestForm'
 import { ContestRegistrationFormSchema } from '@app/immersion/ContestRegistration'
 import { NewLogAPISchema } from '@app/immersion/NewLogForm/domain'
@@ -93,12 +93,14 @@ export const useContestCreatePermissionCheck = (options?: {
 }) =>
   useQuery(
     ['contest', 'createPermissionCheck'],
-    async (): Promise<void | undefined> => {
+    async (): Promise<true> => {
       const response = await fetch(`${root}/contests/create-permissions`)
 
       if (response.status !== 200) {
         throw new Error(response.status.toString())
       }
+
+      return true
     },
     { ...options, retry: false },
   )
@@ -230,11 +232,11 @@ export const useContestRegistration = (
 ) =>
   useQuery(
     ['contest', 'findContestRegistrationForUser', id],
-    async (): Promise<ContestRegistrationView | undefined> => {
+    async (): Promise<ContestRegistrationView | null> => {
       const response = await fetch(`${root}/contests/${id}/registration`)
 
       if (response.status === 204) {
-        return undefined
+        return null
       }
 
       if (response.status !== 200) {
@@ -260,11 +262,11 @@ export const useContestSummary = (
 ) =>
   useQuery(
     ['contest', 'findContestSummary', id],
-    async (): Promise<ContestSummary | undefined> => {
+    async (): Promise<ContestSummary | null> => {
       const response = await fetch(`${root}/contests/${id}/summary`)
 
       if (response.status === 404) {
-        return undefined
+        return null
       }
 
       if (response.status !== 200) {

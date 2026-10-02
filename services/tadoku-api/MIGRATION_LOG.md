@@ -26,7 +26,7 @@
 - [ ] Ban `Normalize*` functions returning Internal errors (lint).
 - [ ] Depolicy/sqlc lint: contests SQL must not declare catalog-only `from languages` without a contest join/filter.
 - [ ] CI deny `ory/kratos-client-go` imports outside `features/profile`.
-- [ ] Deny `valkey-go` imports outside Store code.
+- [x] Deny `valkey-go` imports outside cache and store files in feature packages (`tools/ci/repopolicy`).
 - [ ] Ban private unit→activity maps outside `domain/activities` (lint).
 - [x] Share one profile Kratos traits decoder; remove the dead untagged `Email` field in `FindProfile`.
 - [ ] Forbid raw banned/admins Keto triples outside `internal/permissions` (lint).

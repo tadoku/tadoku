@@ -8,7 +8,7 @@ import { useContentDelete, useContentFindById } from './api'
 import { useNamespace } from './NamespaceSelector'
 import { useRouter } from 'next/router'
 import { useState } from 'react'
-import { useQueryClient } from 'react-query'
+import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
 
 interface Props {

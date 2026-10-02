@@ -35,8 +35,8 @@ func TestRebuildDoesNotPublishSnapshotAfterInvalidation(t *testing.T) {
 		t.Fatal(err)
 	}
 	tenantCtx := tenant.WithKey(t.Context(), tenantKey)
-	store := NewStore(client, time.Second, "")
-	key, err := store.cacheKey(tenantCtx, globalKey)
+	cache := NewCache(client, time.Second, "")
+	key, err := cache.cacheKey(tenantCtx, globalKey)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -55,15 +55,15 @@ func TestRebuildDoesNotPublishSnapshotAfterInvalidation(t *testing.T) {
 		}
 	})
 
-	before, err := store.generation(tenantCtx, key)
+	before, err := cache.generation(tenantCtx, key)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := store.invalidate(tenantCtx, key); err != nil {
+	if err := cache.invalidate(tenantCtx, key); err != nil {
 		t.Fatal(err)
 	}
 	stale := []score{{userID: uuid.MustParse("11111111-1111-4111-8111-111111111111"), value: 10}}
-	published, err := store.rebuild(tenantCtx, key, stale, before)
+	published, err := cache.rebuild(tenantCtx, key, stale, before)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -78,12 +78,12 @@ func TestRebuildDoesNotPublishSnapshotAfterInvalidation(t *testing.T) {
 		t.Errorf("stale marker exists after rejected rebuild")
 	}
 
-	after, err := store.generation(tenantCtx, key)
+	after, err := cache.generation(tenantCtx, key)
 	if err != nil {
 		t.Fatal(err)
 	}
 	fresh := []score{{userID: stale[0].userID, value: 20}}
-	published, err = store.rebuild(tenantCtx, key, fresh, after)
+	published, err = cache.rebuild(tenantCtx, key, fresh, after)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -98,7 +98,7 @@ func TestRebuildDoesNotPublishSnapshotAfterInvalidation(t *testing.T) {
 		t.Errorf("marker = %q, want native:%s", marker, after)
 	}
 
-	racing := NewStore(&invalidateBeforeZcard{Client: client, key: key, t: t}, time.Second, "")
+	racing := NewCache(&invalidateBeforeZcard{Client: client, key: key, t: t}, time.Second, "")
 	page, cacheExists, err := racing.fetchPage(tenantCtx, key, 0, 25)
 	if err != nil {
 		t.Fatal(err)
@@ -127,8 +127,8 @@ func (client *invalidateBeforeZcard) Do(ctx context.Context, command valkeygo.Co
 
 func TestTenantLeaderboardInvalidationKeepsOtherTenantWarm(t *testing.T) {
 	client := newLeaderboardTestClient(t)
-	store := NewStore(client, time.Second, "")
-	service := NewService(nil, client, time.Second, "")
+	cache := NewCache(client, time.Second, "")
+	service := NewService(nil, cache)
 	contestID := uuid.New()
 	keyA, err := tenant.Parse("e2e/cache-a-" + uuid.NewString())
 	if err != nil {
@@ -141,11 +141,11 @@ func TestTenantLeaderboardInvalidationKeepsOtherTenantWarm(t *testing.T) {
 	ctxA := tenant.WithKey(t.Context(), keyA)
 	ctxB := tenant.WithKey(t.Context(), keyB)
 
-	cacheA, err := store.cacheKey(ctxA, contestPrefix+contestID.String())
+	cacheA, err := cache.cacheKey(ctxA, contestPrefix+contestID.String())
 	if err != nil {
 		t.Fatal(err)
 	}
-	cacheB, err := store.cacheKey(ctxB, contestPrefix+contestID.String())
+	cacheB, err := cache.cacheKey(ctxB, contestPrefix+contestID.String())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -156,11 +156,11 @@ func TestTenantLeaderboardInvalidationKeepsOtherTenantWarm(t *testing.T) {
 	}
 
 	userA, userB := uuid.New(), uuid.New()
-	published, err := store.rebuild(ctxA, cacheA, []score{{userID: userA, value: 10}}, "0")
+	published, err := cache.rebuild(ctxA, cacheA, []score{{userID: userA, value: 10}}, "0")
 	if err != nil || !published {
 		t.Fatalf("warm tenant A: published=%t error=%v", published, err)
 	}
-	published, err = store.rebuild(ctxB, cacheB, []score{{userID: userB, value: 20}}, "0")
+	published, err = cache.rebuild(ctxB, cacheB, []score{{userID: userB, value: 20}}, "0")
 	if err != nil || !published {
 		t.Fatalf("warm tenant B: published=%t error=%v", published, err)
 	}
@@ -169,14 +169,14 @@ func TestTenantLeaderboardInvalidationKeepsOtherTenantWarm(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	page, exists, err := store.fetchPage(ctxB, cacheB, 0, 25)
+	page, exists, err := cache.fetchPage(ctxB, cacheB, 0, 25)
 	if err != nil || !exists || page == nil {
 		t.Fatalf("tenant B warm cache after A invalidation: page=%+v exists=%t error=%v", page, exists, err)
 	}
 	if len(page.scores) != 1 || page.scores[0].userID != userB || page.scores[0].value != 20 {
 		t.Errorf("tenant B warm scores=%+v; want its own score", page.scores)
 	}
-	page, exists, err = store.fetchPage(ctxA, cacheA, 0, 25)
+	page, exists, err = cache.fetchPage(ctxA, cacheA, 0, 25)
 	if err != nil || exists || page != nil {
 		t.Errorf("tenant A cache after invalidation: page=%+v exists=%t error=%v", page, exists, err)
 	}
@@ -184,7 +184,7 @@ func TestTenantLeaderboardInvalidationKeepsOtherTenantWarm(t *testing.T) {
 
 func TestLeaderboardWithoutTenantDoesNotWriteCache(t *testing.T) {
 	client := newLeaderboardTestClient(t)
-	service := NewService(nil, client, time.Second, "")
+	service := NewService(nil, NewCache(client, time.Second, ""))
 	contestID := uuid.New()
 	key := contestPrefix + contestID.String()
 	cleanupLeaderboardKeys(t, client, key)

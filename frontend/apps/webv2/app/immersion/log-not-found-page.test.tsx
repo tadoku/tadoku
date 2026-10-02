@@ -40,7 +40,6 @@ describe('log details errors', () => {
     useLog.mockReturnValue({
       error: new Error('404'),
       isError: true,
-      isIdle: false,
       isLoading: false,
     })
 
@@ -63,7 +62,6 @@ describe('log details errors', () => {
     useLog.mockReturnValue({
       error: new Error('500'),
       isError: true,
-      isIdle: false,
       isLoading: false,
     })
 
@@ -77,7 +75,6 @@ describe('log details errors', () => {
     useLog.mockReturnValue({
       error: new Error('404'),
       isError: true,
-      isIdle: false,
       isLoading: false,
     })
 

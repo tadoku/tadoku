@@ -17,7 +17,7 @@ import {
 import { iso639_3 } from '@app/languages/iso639-3'
 import { Dispatch, SetStateAction, useState, useMemo, useEffect } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
-import { useQueryClient } from 'react-query'
+import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
 
 function WikipediaLink({ code }: { code: string }) {

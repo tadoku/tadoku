@@ -367,7 +367,10 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	announcementsService := announcements.NewService(announcementsRepository)
 	contestsService := contests.NewService(contestsRepository)
 	languagesService := languages.NewService(languagesRepository)
-	leaderboardService := leaderboard.NewService(leaderboardRepository, valkeyClient, cfg.ValkeyTimeout, cfg.LeaderboardCachePrefix)
+	leaderboardService := leaderboard.NewService(
+		leaderboardRepository,
+		leaderboard.NewCache(valkeyClient, cfg.ValkeyTimeout, cfg.LeaderboardCachePrefix),
+	)
 	logsService := logs.NewService(logsRepository, cfg.ScoringEngineEnabled)
 	pagesService := pages.NewService(pagesRepository)
 	postsService := posts.NewService(postsRepository)

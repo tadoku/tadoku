@@ -8,7 +8,7 @@ import {
 } from './api'
 import { useNamespace } from '@app/content/NamespaceSelector'
 import { useRouter } from 'next/router'
-import { useQueryClient } from 'react-query'
+import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
 import { v4 as uuidv4 } from 'uuid'
 import { routes } from '@app/common/routes'
@@ -122,7 +122,7 @@ export function AnnouncementEditor({ id }: Props) {
     }
   })
 
-  if (!isNew && existing.isLoading) {
+  if (!isNew && existing.isInitialLoading) {
     return <Loading />
   }
 

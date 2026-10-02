@@ -410,9 +410,15 @@ func TestLoadConfigUsesValidatedDefaults(t *testing.T) {
 	if cfg.ServiceAccountTokenPath != "/var/run/secrets/tokens/token" {
 		t.Errorf("service account token path=%q", cfg.ServiceAccountTokenPath)
 	}
-	if cfg.FliptEnabled || cfg.FliptURL != "http://oathkeeper-proxy.default:4455/flipt" || cfg.FliptEnvironment != "local" ||
-		cfg.FliptNamespace != "default" || cfg.FliptTestEnvironment != "test" || cfg.FliptUpdateInterval != 30*time.Second || cfg.FliptRequestTimeout != 5*time.Second ||
-		cfg.FliptStartupTimeout != 3*time.Second || cfg.FliptManagementURL != "http://oathkeeper-proxy.default:4455/flipt-management" {
+	if cfg.FliptEnabled ||
+		cfg.FliptURL != "http://oathkeeper-proxy.default:4455/flipt" ||
+		cfg.FliptEnvironment != "local" ||
+		cfg.FliptNamespace != "default" ||
+		cfg.FliptTestEnvironment != "test" ||
+		cfg.FliptUpdateInterval != 30*time.Second ||
+		cfg.FliptRequestTimeout != 5*time.Second ||
+		cfg.FliptStartupTimeout != 3*time.Second ||
+		cfg.FliptManagementURL != "http://oathkeeper-proxy.default:4455/flipt-management" {
 		t.Errorf("unexpected Flipt defaults: %+v", cfg)
 	}
 	t.Setenv("API_FLIPT_ENABLED", "true")

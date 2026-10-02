@@ -117,8 +117,13 @@ func loadConfig() (config, error) {
 			return config{}, fmt.Errorf("validate config: FliptNamespace is required")
 		}
 
-		if _, err := fliptclient.NewTargets(cfg.FliptEnvironment, cfg.FliptNamespace, cfg.FliptTestEnvironment); err != nil {
-			return config{}, fmt.Errorf("validate config: FliptTestEnvironment: %w", err)
+		_, targetsErr := fliptclient.NewTargets(
+			cfg.FliptEnvironment,
+			cfg.FliptNamespace,
+			cfg.FliptTestEnvironment,
+		)
+		if targetsErr != nil {
+			return config{}, fmt.Errorf("validate config: FliptTestEnvironment: %w", targetsErr)
 		}
 
 		var validationErr error

@@ -122,4 +122,3 @@ All workflows live in `.github/workflows/`.
 | `build-frontend-paper-styleguide.yaml` | PRs and `main` pushes touching Paper | Paper boundaries, `paper-ui` and `paper-styleguide` lint, typecheck, test and build, package checks, image smoke test; publishes from `main` |
 | `check-paper-playground.yaml` | PRs and `main` pushes touching the playground or `paper-ui` | Paper boundaries and `paper-playground` lint, typecheck, test and build; never published |
 | `deploy-docs.yaml` | PRs and `main` pushes touching `docs/` or the API spec | `pnpm api:check`, typecheck, build and the public API boundary (fixed page counts, no internal paths); deploys GitHub Pages from `main` |
-| `build-postgres-backup-job.yaml` | Pushes touching `jobs/postgres-backup/` | Builds and pushes that container job image |

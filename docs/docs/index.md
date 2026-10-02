@@ -23,7 +23,6 @@ the development environment and verified.
 | `docs/` | This Docusaurus site; pages live in `docs/docs/` |
 | `k8s/` | Development-only GitOps base for Argo CD in `k8s/dev/base/` |
 | `infra/` | Kratos identity schema and Keto namespace fixtures for backend tests (`infra/dev/ory/`) and a development kubeconfig helper |
-| `jobs/` | Container jobs |
 | `scripts/` | Code generation, the Tadoku API visibility check, and development seed and secret bootstrap scripts |
 | `tools/` | CI check scripts and the pinned oapi-codegen module |
 | `.dev/` | dev-cli configuration, deployable definitions and the development runbook |

@@ -1,6 +1,6 @@
 ---
 title: Development environment
-description: How to install dev-cli and run, open, seed, verify and clean up your branch of Tadoku on the shared homelab-dev cluster.
+description: How to install dev-cli and run, open, seed, verify and clean up your branch of Tadoku on the shared Talos development cluster.
 ---
 
 # Development environment
@@ -9,19 +9,26 @@ Read this when you want to run your branch of webv2, auth, admin, Tadoku API or 
 on the shared development cluster, or check that a change works there.
 
 dev-cli deploys live branch overlays of webv2, auth, admin, Tadoku API and its worker to the
-`homelab-dev` Kubernetes cluster. Argo CD keeps a shared base of every service
+`homelab-talos-dev` Kubernetes cluster. Argo CD keeps a shared base of every service
 running there even when no developer has a loop running; see
 [Development base](../operations/development-base.md). There is no local
 Kubernetes cluster or Helm bootstrap to run. For a map of the components, see
 [System architecture](../architecture/index.md). Production is deployed from a private
 repository and is not covered here.
 
-`.dev/config.yaml` is the real, committed, non-secret configuration; no hostname
-substitution is needed.
+`.dev/config.yaml` is the committed non-secret configuration. It still names
+the retired `homelab-dev` context; the current environment runs on
+`homelab-talos-dev`. Create an override outside Git and pass
+`--config /tmp/tadoku-dev-cli.yaml` on each `dev` command below:
+
+```sh
+sed 's/^kubeContext: homelab-dev$/kubeContext: homelab-talos-dev/' \
+  .dev/config.yaml > /tmp/tadoku-dev-cli.yaml
+```
 
 | Setting | Value |
 | --- | --- |
-| Kubernetes context | `homelab-dev` |
+| Kubernetes context | `homelab-talos-dev` via the override |
 | Hosts | `tadoku.dev.lab`, `account.tadoku.dev.lab`, `admin.tadoku.dev.lab` |
 | Overlay image registry | `registry.dev.lab/tadoku-dev-cli` |
 | Overlay TTL | 8 hours |
@@ -30,7 +37,7 @@ substitution is needed.
 
 - Git access to Tadoku and to the private `antonve/dev-cli` repository.
 - Go to install dev-cli, Bazelisk or Bazel at the repository's pinned version,
-  and kubectl with authorized access to the `homelab-dev` context.
+  and kubectl with authorized access to the `homelab-talos-dev` context.
 - Node and pnpm for frontend tools; Docker for local container-based checks.
 - Lab network and DNS access, and trust in the Lab CA, including for the
   development registry at `registry.dev.lab`.
@@ -213,7 +220,10 @@ release. Kratos and Keto are shared by the base and every branch.
 
 ### Seed data
 
-`make dev-seed` runs `scripts/dev/seed-db.sh` against the shared base. It:
+`make dev-seed` runs `scripts/dev/seed-db.sh` against the shared base. The script
+still permits only the retired `homelab-dev` context and cannot currently run
+on Talos. Reuse the existing shared fixtures until its guard is updated; do not
+run it against the retired cluster. Its seed behavior is:
 
 - runs only against the `homelab-dev` context and waits for Postgres and the
   base migrations;
@@ -245,11 +255,17 @@ the owner and branch plus a collision-resistant hash. No branch creates another
 Postgres cluster, PVC or long-running database pod.
 
 - A short-lived dependency Job creates the database idempotently, owned by the
-  `tadoku` role and marked with its route. It refuses to adopt an existing
+  `tadoku_owner` role and marked with its route. It refuses to adopt an existing
   database without that marker. Only this Job references the Postgres
   administrator Secret.
-- The API, `migrate` and `seed` use the existing `tadoku` role. Credentials
-  stay Secret references.
+- The dependency applies the base ownership SQL ConfigMap in each branch
+  database, including owner default privileges. Existing branch objects are
+  transferred from `tadoku` to `tadoku_owner`.
+- `migrate` runs as `tadoku_owner`; its migration init container must finish
+  before a pinned Postgres client revokes runtime writes to `schema_migrations`.
+  This requires dev-cli v0.5.1 or newer.
+- The API, worker and `seed` use the non-owner `tadoku` role with DML grants.
+  Credentials stay Secret references.
 - `dev up --task migrate --task seed` creates the database first; a task
   failure prevents overlay startup. Plain `dev up` runs no tasks.
 - The branch `seed` task reuses the shared fixture identities and fails until

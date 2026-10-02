@@ -2,7 +2,7 @@
 \getenv branch_database PGDATABASE
 select current_database() = :'branch_database'
        and current_user = 'tadoku'
-       and pg_get_userbyid(datdba) = 'tadoku'
+       and pg_get_userbyid(datdba) = 'tadoku_owner'
        and octet_length(:'branch_database') <= 63
        and :'branch_database' ~ '^tadoku-[a-z0-9][a-z0-9-]*-[0-9a-f]{8}$'
        and shobj_description(oid, 'pg_database') =

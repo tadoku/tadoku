@@ -1,0 +1,22 @@
+[
+  {
+    "tenant": "e2e/alpha-0000000a",
+    "task_type": "leaderboard.invalidate_contest.v1",
+    "state": "pending"
+  },
+  {
+    "tenant": "e2e/alpha-0000000a",
+    "task_type": "leaderboard.invalidate_official.v1",
+    "state": "pending"
+  },
+  {
+    "tenant": "tadoku/prod",
+    "task_type": "leaderboard.invalidate_contest.v1",
+    "state": "completed"
+  },
+  {
+    "tenant": "tadoku/prod",
+    "task_type": "leaderboard.invalidate_official.v1",
+    "state": "completed"
+  }
+]

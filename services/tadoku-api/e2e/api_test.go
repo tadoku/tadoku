@@ -116,7 +116,17 @@ func runTests(m *testing.M) (code int) {
 	}
 	defer func() { cleanupErr = errors.Join(cleanupErr, api.db.Close()) }()
 
-	scoringEnabledHandler, _, _, err = newTestRouterWithLeaderboardService(ctx, api.db.AppPool, api.db.AppPool, keto, kratos, slog.New(slog.NewTextHandler(io.Discard, nil)), true, api.leaderboard, tenant.Deployment{})
+	scoringEnabledHandler, _, _, err = newTestRouterWithLeaderboardService(
+		ctx,
+		api.db.AppPool,
+		api.db.AppPool,
+		keto,
+		kratos,
+		slog.New(slog.NewTextHandler(io.Discard, nil)),
+		true,
+		api.leaderboard,
+		tenant.Deployment{},
+	)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
@@ -149,7 +159,17 @@ func newTestAPI(ctx context.Context, ketoFixture *testketo.Fixture, kratosFixtur
 	}()
 
 	leaderboardService := leaderboard.NewService(leaderboard.NewRepository(db.AppPool), leaderboardValkey.client, time.Second, "")
-	handler, profileService, roleService, err := newTestRouterWithLeaderboardService(ctx, db.AppPool, db.AppPool, ketoFixture, kratosFixture, slog.New(slog.NewTextHandler(io.Discard, nil)), false, leaderboardService, tenant.Deployment{})
+	handler, profileService, roleService, err := newTestRouterWithLeaderboardService(
+		ctx,
+		db.AppPool,
+		db.AppPool,
+		ketoFixture,
+		kratosFixture,
+		slog.New(slog.NewTextHandler(io.Discard, nil)),
+		false,
+		leaderboardService,
+		tenant.Deployment{},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -202,7 +222,17 @@ func newTestRouterWithLeaderboard(
 	valkeyTimeout time.Duration,
 ) (*transport.Router, *featureprofile.Service, *permissions.KetoService, error) {
 	leaderboardService := leaderboard.NewService(leaderboard.NewRepository(pool), valkeyClient, valkeyTimeout, "")
-	return newTestRouterWithLeaderboardService(ctx, pool, auditPool, ketoFixture, kratosFixture, logger, scoringEngineEnabled, leaderboardService, tenant.Deployment{})
+	return newTestRouterWithLeaderboardService(
+		ctx,
+		pool,
+		auditPool,
+		ketoFixture,
+		kratosFixture,
+		logger,
+		scoringEngineEnabled,
+		leaderboardService,
+		tenant.Deployment{},
+	)
 }
 
 func newTestRouterWithLeaderboardService(
@@ -267,7 +297,15 @@ func newTestRouterWithLeaderboardService(
 		DB:            pool,
 		Permissions:   permissionChecker,
 	})
-	authenticate, err := transport.NewJWTAuthentication(ctx, authenticationJWKS.URL, time.Second, 24*time.Hour, "http://oathkeeper-api/", deployment, logger)
+	authenticate, err := transport.NewJWTAuthentication(
+		ctx,
+		authenticationJWKS.URL,
+		time.Second,
+		24*time.Hour,
+		"http://oathkeeper-api/",
+		deployment,
+		logger,
+	)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -322,7 +360,12 @@ func (s *suite) reset(t *testing.T, caseDir string) {
 
 func (s *suite) resetProfileCaches() {
 	if s.profile != nil {
-		*s.profile = *featureprofile.NewService(featureprofile.NewRepository(s.db.AppPool), featureprofile.NewUserCache(s.kratos.CursorClient()), s.roles, s.kratos.CursorClient())
+		*s.profile = *featureprofile.NewService(
+			featureprofile.NewRepository(s.db.AppPool),
+			featureprofile.NewUserCache(s.kratos.CursorClient()),
+			s.roles,
+			s.kratos.CursorClient(),
+		)
 	}
 }
 

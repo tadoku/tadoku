@@ -41,7 +41,11 @@ func TestTenantIsolation(t *testing.T) {
 	t.Cleanup(func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
-		if _, err := api.db.Pool.Exec(ctx, "delete from tenants where key = $1 and kind = 'test'", isolationTenant); err != nil {
+		if _, err := api.db.Pool.Exec(
+			ctx,
+			"delete from tenants where key = $1 and kind = 'test'",
+			isolationTenant,
+		); err != nil {
 			t.Error(err)
 		}
 	})
@@ -59,14 +63,23 @@ func TestTenantIsolation(t *testing.T) {
 	previous := jwt.TimeFunc
 	jwt.TimeFunc = func() time.Time { return fixtureInstant }
 	defer func() { jwt.TimeFunc = previous }()
+
 	key, err := tenant.Parse(isolationTenant)
 	if err != nil {
 		t.Fatal(err)
 	}
 	ctx := tenant.WithKey(t.Context(), key)
+
 	var logIDs [2]string
 	for index, who := range []string{"production", "test"} {
-		body := isolationRequest(t, tokens[who], http.MethodPost, "/immersion/logs", `{"language_code":"eng","activity_id":1,"amount":10,"unit_key":"reading_page","description":"`+who+`"}`, http.StatusOK)
+		body := isolationRequest(
+			t,
+			tokens[who],
+			http.MethodPost,
+			"/immersion/logs",
+			`{"language_code":"eng","activity_id":1,"amount":10,"unit_key":"reading_page","description":"`+who+`"}`,
+			http.StatusOK,
+		)
 		var log struct{ ID string }
 		if err := json.Unmarshal(body, &log); err != nil || log.ID == "" {
 			t.Fatalf("created log: id=%q error=%v", log.ID, err)
@@ -77,16 +90,30 @@ func TestTenantIsolation(t *testing.T) {
 		isolationRequest(t, tokens[who], http.MethodGet, "/immersion/logs/"+logIDs[index], "", http.StatusOK)
 		isolationRequest(t, tokens[who], http.MethodGet, "/immersion/logs/"+logIDs[1-index], "", http.StatusNotFound)
 		pageID := fmt.Sprintf("c0000000-0000-4000-8000-%012d", index+1)
-		isolationRequest(t, tokens[who], http.MethodPost, "/content/pages/main", `{"id":"`+pageID+`","slug":"isolation-page","title":"`+who+`","html":"<p>`+who+`</p>","published_at":"2026-09-11T12:00:00Z"}`, http.StatusCreated)
+		isolationRequest(
+			t,
+			tokens[who],
+			http.MethodPost,
+			"/content/pages/main",
+			`{"id":"`+pageID+`","slug":"isolation-page","title":"`+who+`","html":"<p>`+who+`</p>","published_at":"2026-09-11T12:00:00Z"}`,
+			http.StatusCreated,
+		)
 		body := isolationRequest(t, tokens[who], http.MethodGet, "/content/pages/main/isolation-page", "", http.StatusOK)
-		if !strings.Contains(string(body), "<p>"+who+"</p>") && !strings.Contains(string(body), `\u003cp\u003e`+who+`\u003c/p\u003e`) {
+		if !strings.Contains(string(body), "<p>"+who+"</p>") &&
+			!strings.Contains(string(body), `\u003cp\u003e`+who+`\u003c/p\u003e`) {
 			t.Fatalf("page leaked another tenant: %s", body)
 		}
 	}
+
 	var synchronized int
-	if err := api.db.Pool.QueryRow(t.Context(), "select count(*) from users where id = '11111111-1111-4111-8111-111111111111' and tenant in ('tadoku/prod', $1)", isolationTenant).Scan(&synchronized); err != nil || synchronized != 2 {
+	if err := api.db.Pool.QueryRow(t.Context(), `
+		select count(*) from users
+		where id = '11111111-1111-4111-8111-111111111111' and tenant in ('tadoku/prod', $1)`,
+		isolationTenant,
+	).Scan(&synchronized); err != nil || synchronized != 2 {
 		t.Fatalf("same synchronized identity across tenants: rows=%d error=%v", synchronized, err)
 	}
+
 	executor, err := postgres.Executor(ctx, api.db.AppPool)
 	if err != nil {
 		t.Fatal(err)
@@ -100,14 +127,25 @@ func TestTenantIsolation(t *testing.T) {
 	if err != nil || tag.RowsAffected() != 0 {
 		t.Fatalf("test-tenant shared update=%s error=%v", tag, err)
 	}
+
 	queue := jobqueue.NewService(jobqueue.NewRepository(api.db.AppPool))
 	for _, queueContext := range []context.Context{tenant.WithKey(t.Context(), tenant.Production()), ctx} {
-		if err := queue.Enqueue(queueContext, jobs.InvalidateContestLeaderboardV1{ContestID: uuid.New()}, jobs.InvalidateOfficialLeaderboardV1{Year: 2026}); err != nil {
+		if err := queue.Enqueue(
+			queueContext,
+			jobs.InvalidateContestLeaderboardV1{ContestID: uuid.New()},
+			jobs.InvalidateOfficialLeaderboardV1{Year: 2026},
+		); err != nil {
 			t.Fatal(err)
 		}
 	}
 	var productionJobs, testJobs int
-	if err := api.db.Pool.QueryRow(t.Context(), "select count(*) filter (where tenant = 'tadoku/prod'), count(*) filter (where tenant = $1) from jobs", isolationTenant).Scan(&productionJobs, &testJobs); err != nil || productionJobs == 0 || testJobs == 0 {
+	if err := api.db.Pool.QueryRow(t.Context(), `
+		select
+			count(*) filter (where tenant = 'tadoku/prod'),
+			count(*) filter (where tenant = $1)
+		from jobs`,
+		isolationTenant,
+	).Scan(&productionJobs, &testJobs); err != nil || productionJobs == 0 || testJobs == 0 {
 		t.Fatalf("both tenant queues: production=%d test=%d error=%v", productionJobs, testJobs, err)
 	}
 	branch, err := tenant.ParseDeployment(isolationTenant)
@@ -120,6 +158,7 @@ func TestTenantIsolation(t *testing.T) {
 	}
 	testJobs++
 	runIsolationWorker(t, tenant.Deployment{}, productionJobs, testJobs)
+
 	if err := queue.Enqueue(ctx, jobs.InvalidateOfficialLeaderboardV1{Year: 2026}); err != nil {
 		t.Fatal(err)
 	}
@@ -134,6 +173,7 @@ func TestTenantIsolation(t *testing.T) {
 	if err != nil || replayed <= claimed[0].ID {
 		t.Fatalf("replay chain: old=%d new=%d error=%v", claimed[0].ID, replayed, err)
 	}
+
 	before := isolationOwnedRows(t, "tadoku/prod")
 	tag, err = executor.Exec(ctx, "delete from tenants where key = $1 and kind = 'test'", isolationTenant)
 	if err != nil || tag.RowsAffected() != 1 {
@@ -152,11 +192,19 @@ func TestTenantIsolation(t *testing.T) {
 		t.Fatalf("production tenant delete: %s error=%v", tag, err)
 	}
 	var chain int
-	if err := api.db.Pool.QueryRow(t.Context(), "select count(*) from jobs where id in ($1, $2)", claimed[0].ID, replayed).Scan(&chain); err != nil || chain != 0 {
+	if err := api.db.Pool.QueryRow(
+		t.Context(),
+		"select count(*) from jobs where id in ($1, $2)",
+		claimed[0].ID,
+		replayed,
+	).Scan(&chain); err != nil || chain != 0 {
 		t.Fatalf("replayed job chain remains: count=%d error=%v", chain, err)
 	}
 	var registry int
-	if err := api.db.Pool.QueryRow(t.Context(), "select count(*) from tenants where key = 'tadoku/prod' and kind = 'production'").Scan(&registry); err != nil || registry != 1 {
+	if err := api.db.Pool.QueryRow(
+		t.Context(),
+		"select count(*) from tenants where key = 'tadoku/prod' and kind = 'production'",
+	).Scan(&registry); err != nil || registry != 1 {
 		t.Fatalf("canonical registry: rows=%d error=%v", registry, err)
 	}
 }
@@ -176,11 +224,16 @@ func isolationRequest(t *testing.T, token, method, path, body string, want int) 
 
 func isolationOwnedRows(t *testing.T, key string) map[string]string {
 	t.Helper()
-	rows, err := api.db.Pool.Query(t.Context(), `select c.relname from pg_class c
+	rows, err := api.db.Pool.Query(t.Context(), `
+		select c.relname
+		from pg_class c
 		join pg_namespace n on n.oid = c.relnamespace
 		join pg_attribute a on a.attrelid = c.oid and a.attname = 'tenant' and not a.attisdropped
-		where n.nspname = current_schema() and c.relkind in ('r', 'p')
-			and c.relname <> 'tenant_overrides' and not starts_with(c.relname, 'tadoku_test_') order by c.relname`)
+		where n.nspname = current_schema()
+			and c.relkind in ('r', 'p')
+			and c.relname <> 'tenant_overrides'
+			and not starts_with(c.relname, 'tadoku_test_')
+		order by c.relname`)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -194,7 +247,9 @@ func isolationOwnedRows(t *testing.T, key string) map[string]string {
 	values := make(map[string]string, len(tables))
 	for _, table := range tables {
 		var rows string
-		if err := api.db.Pool.QueryRow(t.Context(), "select coalesce(jsonb_agg(to_jsonb(row) order by to_jsonb(row)::text), '[]'::jsonb)::text from "+pgx.Identifier{table}.Sanitize()+" row where tenant = $1", key).Scan(&rows); err != nil {
+		query := "select coalesce(jsonb_agg(to_jsonb(row) order by to_jsonb(row)::text), '[]'::jsonb)::text" +
+			" from " + pgx.Identifier{table}.Sanitize() + " row where tenant = $1"
+		if err := api.db.Pool.QueryRow(t.Context(), query, key).Scan(&rows); err != nil {
 			t.Fatal(err)
 		}
 		values[table] = rows
@@ -208,8 +263,11 @@ func runIsolationWorker(t *testing.T, scope tenant.Deployment, production, test 
 	provider := &isolationValkey{Client: leaderboardValkey.client, tenants: make(map[string]int)}
 	service := leaderboard.NewService(leaderboard.NewRepository(api.db.AppPool), provider, time.Second, "")
 	application, err := worker.NewApplication(jobqueue.NewService(jobqueue.NewRepository(api.db.AppPool)), service, worker.Config{
-		Scope: scope, Concurrency: 4, ShutdownTimeout: 2 * time.Second,
-		Logger: slog.New(slog.NewTextHandler(io.Discard, nil)), Metrics: worker.NewMetrics(prometheus.NewRegistry()),
+		Scope:           scope,
+		Concurrency:     4,
+		ShutdownTimeout: 2 * time.Second,
+		Logger:          slog.New(slog.NewTextHandler(io.Discard, nil)),
+		Metrics:         worker.NewMetrics(prometheus.NewRegistry()),
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -234,12 +292,15 @@ func runIsolationWorker(t *testing.T, scope tenant.Deployment, production, test 
 	defer tick.Stop()
 	for {
 		var canonicalCompleted, testCompleted, failed, canonicalClaimed int
-		err := api.db.Pool.QueryRow(t.Context(), `select
-			count(*) filter (where tenant = 'tadoku/prod' and state = 'completed'),
-			count(*) filter (where tenant = $1 and state = 'completed'),
-			count(*) filter (where state = 'failed'),
-			count(*) filter (where tenant = 'tadoku/prod' and attempts > 0)
-			from jobs`, isolationTenant).Scan(&canonicalCompleted, &testCompleted, &failed, &canonicalClaimed)
+		err := api.db.Pool.QueryRow(t.Context(), `
+			select
+				count(*) filter (where tenant = 'tadoku/prod' and state = 'completed'),
+				count(*) filter (where tenant = $1 and state = 'completed'),
+				count(*) filter (where state = 'failed'),
+				count(*) filter (where tenant = 'tadoku/prod' and attempts > 0)
+			from jobs`,
+			isolationTenant,
+		).Scan(&canonicalCompleted, &testCompleted, &failed, &canonicalClaimed)
 		if err != nil || failed != 0 {
 			t.Fatalf("worker outcomes: failed=%d error=%v", failed, err)
 		}
@@ -264,7 +325,10 @@ func runIsolationWorker(t *testing.T, scope tenant.Deployment, production, test 
 		}
 		select {
 		case <-deadline.C:
-			t.Fatalf("worker completed production=%d/%d test=%d/%d", canonicalCompleted, production, testCompleted, test)
+			t.Fatalf(
+				"worker completed production=%d/%d test=%d/%d",
+				canonicalCompleted, production, testCompleted, test,
+			)
 		case <-tick.C:
 		}
 	}

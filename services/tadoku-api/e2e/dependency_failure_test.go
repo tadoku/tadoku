@@ -27,7 +27,17 @@ func TestDependencyFailures(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	cacheUnavailable, _, _, err := newTestRouterWithLeaderboard(t.Context(), api.db.AppPool, api.db.AppPool, keto, api.kratos, logger, false, closedValkey, 25*time.Millisecond)
+	cacheUnavailable, _, _, err := newTestRouterWithLeaderboard(
+		t.Context(),
+		api.db.AppPool,
+		api.db.AppPool,
+		keto,
+		api.kratos,
+		logger,
+		false,
+		closedValkey,
+		25*time.Millisecond,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}

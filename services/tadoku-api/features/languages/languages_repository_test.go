@@ -86,6 +86,7 @@ func TestLanguagesRepositoryCreatesLanguageAndRejectsDuplicateCode(t *testing.T)
 	if name != parameters.Name {
 		t.Errorf("name=%q, want exact %q", name, parameters.Name)
 	}
+
 	duplicate := parameters
 	duplicate.Name = "Replacement"
 	if err := repository.CreateLanguage(tenantCtx, duplicate); !errors.Is(err, languages.ErrLanguageAlreadyExists) {

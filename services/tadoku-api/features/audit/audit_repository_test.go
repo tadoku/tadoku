@@ -59,6 +59,7 @@ func TestRepositoryPersistsAudit(t *testing.T) {
 	if err := json.Unmarshal(metadataRaw, &metadata); err != nil {
 		t.Fatal(err)
 	}
+
 	if actorID != event.ActorID {
 		t.Errorf("actor ID = %s, want %s", actorID, event.ActorID)
 	}

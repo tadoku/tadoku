@@ -36,6 +36,7 @@ func TestScoringRepositoryPlatformRuleSetLifecycle(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	seeded, err := repository.ListPlatformRuleSets(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
@@ -66,6 +67,7 @@ func TestScoringRepositoryPlatformRuleSetLifecycle(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	wantDraft := &RuleSet{
 		ID:      uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1"),
 		Scope:   "platform",
@@ -110,6 +112,7 @@ func TestScoringRepositoryPlatformRuleSetLifecycle(t *testing.T) {
 		Source:     SourceDurationMinutes,
 		Rate:       0.25,
 	}
+
 	for _, rule := range []Rule{specific, general} {
 		if err := repository.CreateRule(tenantCtx, draft.ID, rule); err != nil {
 			t.Fatal(err)
@@ -242,6 +245,7 @@ func TestScoringRepositoryContestRuleSets(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	override, err := repository.CreateDraft(tenantCtx, RuleSet{
 		ID:                uuid.MustParse("dddddddd-dddd-4ddd-8ddd-ddddddddddd2"),
 		Scope:             "contest",
@@ -356,6 +360,7 @@ func TestScoringRepositoryUnitLookups(t *testing.T) {
 		}
 		return unit
 	}
+
 	jpn := "jpn"
 	fallback := seededUnit("reading_character", nil)
 	japanese := seededUnit("reading_character", &jpn)

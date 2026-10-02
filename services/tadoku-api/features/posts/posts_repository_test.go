@@ -32,6 +32,7 @@ func TestPostsRepositoryCreatePost(t *testing.T) {
 
 	instant := time.Date(2026, 9, 12, 21, 0, 0, 0, time.FixedZone("UTC+9", 9*60*60))
 	repository := posts.NewPostsRepository(db.Pool)
+
 	for _, test := range []struct {
 		name        string
 		publishedAt *time.Time
@@ -42,6 +43,7 @@ func TestPostsRepositoryCreatePost(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			createdAt := instant.Add(-2 * time.Hour)
 			updatedAt := instant.Add(-time.Hour)
+
 			item := &posts.Post{
 				ID:          uuid.New(),
 				Namespace:   "main",
@@ -52,6 +54,7 @@ func TestPostsRepositoryCreatePost(t *testing.T) {
 				CreatedAt:   &createdAt,
 				UpdatedAt:   &updatedAt,
 			}
+
 			want := *item
 			createdAtUTC := want.CreatedAt.UTC()
 			updatedAtUTC := want.UpdatedAt.UTC()
@@ -70,6 +73,7 @@ func TestPostsRepositoryCreatePost(t *testing.T) {
 				if err := repository.CreatePostContent(ctx, item.ID, contentID, item.Title, item.Content, *item.CreatedAt); err != nil {
 					return err
 				}
+
 				got, err := repository.FindPostByID(ctx, item.Namespace, item.ID)
 				if err != nil {
 					return err
@@ -101,12 +105,14 @@ func TestPostsRepositoryCreatePost(t *testing.T) {
 			).Scan(&contentID, &contentCreatedAt); err != nil {
 				t.Fatal(err)
 			}
+
 			if contentID == uuid.Nil {
 				t.Error("first revision has a zero ID")
 			}
 			if !contentCreatedAt.Equal(*item.CreatedAt) {
 				t.Errorf("revision timestamp=%v, want %v", contentCreatedAt, item.CreatedAt)
 			}
+
 			var revisions int
 			if err := db.Pool.QueryRow(tenantCtx, "select count(*) from posts_content where post_id = $1", item.ID).Scan(&revisions); err != nil {
 				t.Fatal(err)
@@ -142,6 +148,7 @@ func TestPostsRepositoryCreatePostConflictsPreserveData(t *testing.T) {
 		CreatedAt: &instant,
 		UpdatedAt: &instant,
 	}
+
 	if err := postgres.RunInTransaction(tenantCtx, db.Pool, func(ctx context.Context) error {
 		contentID := uuid.New()
 		if err := repository.CreatePost(ctx, original, contentID); err != nil {
@@ -168,6 +175,7 @@ func TestPostsRepositoryCreatePostConflictsPreserveData(t *testing.T) {
 			duplicate.Namespace = test.namespace
 			duplicate.Slug = test.slug
 			duplicate.Title = "Must not replace the original"
+
 			err := postgres.RunInTransaction(tenantCtx, db.Pool, func(ctx context.Context) error {
 				contentID := uuid.New()
 				if err := repository.CreatePost(ctx, &duplicate, contentID); err != nil {
@@ -187,6 +195,7 @@ func TestPostsRepositoryCreatePostConflictsPreserveData(t *testing.T) {
 			if !reflect.DeepEqual(got, original) {
 				t.Errorf("duplicate changed original: %+v", got)
 			}
+
 			var posts, revisions int
 			if err := db.Pool.QueryRow(tenantCtx, "select (select count(*) from posts), (select count(*) from posts_content)").Scan(&posts, &revisions); err != nil {
 				t.Fatal(err)
@@ -239,6 +248,7 @@ func TestPostsRepositoryCreatePostRollsBackWhenRevisionFails(t *testing.T) {
 		CreatedAt: &instant,
 		UpdatedAt: &instant,
 	}
+
 	err = postgres.RunInTransaction(tenantCtx, db.Pool, func(ctx context.Context) error {
 		contentID := uuid.New()
 		if err := repository.CreatePost(ctx, item, contentID); err != nil {
@@ -300,9 +310,11 @@ func TestPostsRepositoryDeletePost(t *testing.T) {
 	id := uuid.MustParse("11111111-1111-4111-8111-111111111111")
 	deletedAt := time.Date(2026, 9, 12, 21, 0, 0, 0, time.FixedZone("UTC+9", 9*60*60))
 	repository := posts.NewPostsRepository(db.Pool)
+
 	const postSnapshotSQL = `select (to_jsonb(posts) - 'deleted_at')::text, deleted_at
 		from posts where id = $1`
 	const versionsSnapshotSQL = `select jsonb_agg(to_jsonb(posts_content) order by id)::text from posts_content`
+
 	var before, versionsBefore string
 	var initialDeletedAt *time.Time
 	if err := db.Pool.QueryRow(tenantCtx, postSnapshotSQL, id).Scan(&before, &initialDeletedAt); err != nil {
@@ -325,9 +337,11 @@ func TestPostsRepositoryDeletePost(t *testing.T) {
 	if wrongNamespaceDeletedAt != nil {
 		t.Fatal("wrong namespace deleted the post")
 	}
+
 	if err := repository.DeletePost(tenantCtx, "main", uuid.MustParse("99999999-9999-4999-8999-999999999999"), deletedAt); err != nil {
 		t.Fatalf("missing post must be an idempotent success: %v", err)
 	}
+
 	if err := repository.DeletePost(tenantCtx, "main", id, deletedAt); err != nil {
 		t.Fatal(err)
 	}
@@ -346,12 +360,14 @@ func TestPostsRepositoryDeletePost(t *testing.T) {
 	if !gotDeletedAt.Equal(deletedAt) {
 		t.Errorf("deleted_at=%v, want original timestamp %v", gotDeletedAt, deletedAt)
 	}
+
 	if err := db.Pool.QueryRow(tenantCtx, versionsSnapshotSQL).Scan(&versionsAfter); err != nil {
 		t.Fatal(err)
 	}
 	if versionsAfter != versionsBefore {
 		t.Errorf("deletion changed content versions:\nbefore %s\nafter %s", versionsBefore, versionsAfter)
 	}
+
 	var otherDeletedAt *time.Time
 	if err := db.Pool.QueryRow(tenantCtx, "select deleted_at from posts where id = $1", "22222222-2222-4222-8222-222222222222").Scan(&otherDeletedAt); err != nil {
 		t.Fatalf("other post must remain present: %v", err)
@@ -373,6 +389,7 @@ func TestPostsRepositoryFindUsesCurrentContentAndNamespace(t *testing.T) {
 			t.Error(err)
 		}
 	})
+
 	_, err = db.Pool.Exec(tenantCtx, `
 		insert into posts (
 			tenant, id, namespace, slug, current_content_id, published_at, created_at, updated_at
@@ -398,6 +415,7 @@ func TestPostsRepositoryFindUsesCurrentContentAndNamespace(t *testing.T) {
 
 	repository := posts.NewPostsRepository(db.Pool)
 	id := uuid.MustParse("11111111-1111-4111-8111-111111111111")
+
 	publishedAt := time.Date(2026, 9, 11, 10, 0, 0, 0, time.UTC)
 	createdAt := time.Date(2026, 9, 10, 8, 0, 0, 0, time.UTC)
 	updatedAt := time.Date(2026, 9, 11, 9, 30, 0, 0, time.UTC)
@@ -411,6 +429,7 @@ func TestPostsRepositoryFindUsesCurrentContentAndNamespace(t *testing.T) {
 		CreatedAt:   &createdAt,
 		UpdatedAt:   &updatedAt,
 	}
+
 	for name, find := range map[string]func() (*posts.Post, error){
 		"slug": func() (*posts.Post, error) { return repository.FindPostBySlug(tenantCtx, "main", "welcome") },
 		"ID":   func() (*posts.Post, error) { return repository.FindPostByID(tenantCtx, "main", id) },
@@ -423,6 +442,7 @@ func TestPostsRepositoryFindUsesCurrentContentAndNamespace(t *testing.T) {
 			t.Errorf("%s lookup=%+v, want %+v", name, got, want)
 		}
 	}
+
 	other, err := repository.FindPostBySlug(tenantCtx, "other", "welcome")
 	if err != nil {
 		t.Fatal(err)
@@ -443,6 +463,7 @@ func TestPostsRepositoryFindUsesCurrentContentAndNamespace(t *testing.T) {
 		if _, err := executor.Exec(ctx, "update posts set current_content_id = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc' where id = $1", id); err != nil {
 			return err
 		}
+
 		post, err := repository.FindPostBySlug(ctx, "main", "welcome")
 		if err != nil {
 			return err
@@ -450,6 +471,7 @@ func TestPostsRepositoryFindUsesCurrentContentAndNamespace(t *testing.T) {
 		if post.Title != "Old title" {
 			t.Errorf("slug lookup did not use transaction: %+v", post)
 		}
+
 		post, err = repository.FindPostByID(ctx, "main", id)
 		if err != nil {
 			return err
@@ -462,6 +484,7 @@ func TestPostsRepositoryFindUsesCurrentContentAndNamespace(t *testing.T) {
 	if !errors.Is(err, wantRollback) {
 		t.Fatal(err)
 	}
+
 	got, err := repository.FindPostByID(tenantCtx, "main", id)
 	if err != nil {
 		t.Fatal(err)
@@ -544,6 +567,7 @@ func TestPostsRepositoryListPosts(t *testing.T) {
 
 	cutoff := time.Date(2026, 9, 12, 21, 0, 0, 0, time.FixedZone("UTC+9", 9*60*60))
 	repository := posts.NewPostsRepository(db.Pool)
+
 	tests := []struct {
 		name          string
 		namespace     string
@@ -563,6 +587,7 @@ func TestPostsRepositoryListPosts(t *testing.T) {
 		{name: "second tied page", namespace: "main", cutoff: cutoff, limit: 1, offset: 1, wantIDs: []byte{2}, wantTotal: 3},
 		{name: "empty page preserves total", namespace: "main", cutoff: cutoff, limit: 10, offset: math.MaxInt64, wantIDs: []byte{}, wantTotal: 3},
 	}
+
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			items, total, err := repository.ListPosts(tenantCtx, test.namespace, test.includeDrafts, test.cutoff, test.limit, test.offset)
@@ -572,12 +597,14 @@ func TestPostsRepositoryListPosts(t *testing.T) {
 			if total != test.wantTotal {
 				t.Errorf("total=%d, want %d", total, test.wantTotal)
 			}
+
 			wantIDs := make([]uuid.UUID, 0, len(test.wantIDs))
 			for _, suffix := range test.wantIDs {
 				id := uuid.MustParse("10000000-0000-4000-8000-000000000000")
 				id[15] = suffix
 				wantIDs = append(wantIDs, id)
 			}
+
 			gotIDs := make([]uuid.UUID, 0, len(items))
 			for _, item := range items {
 				gotIDs = append(gotIDs, item.ID)
@@ -585,6 +612,7 @@ func TestPostsRepositoryListPosts(t *testing.T) {
 			if !reflect.DeepEqual(gotIDs, wantIDs) {
 				t.Fatalf("IDs=%v, want %v", gotIDs, wantIDs)
 			}
+
 			for _, item := range items {
 				if item.ID[15] == 4 && item.PublishedAt != nil {
 					t.Errorf("draft publication=%v, want nil", item.PublishedAt)
@@ -592,6 +620,7 @@ func TestPostsRepositoryListPosts(t *testing.T) {
 				if item.ID[15] != 7 {
 					continue
 				}
+
 				publishedAt := cutoff.UTC()
 				createdAt := time.Date(2026, 9, 11, 10, 0, 0, 0, time.UTC)
 				updatedAt := time.Date(2026, 9, 12, 11, 0, 0, 0, time.UTC)
@@ -605,6 +634,7 @@ func TestPostsRepositoryListPosts(t *testing.T) {
 					CreatedAt:   &createdAt,
 					UpdatedAt:   &updatedAt,
 				}
+
 				if !reflect.DeepEqual(item, want) {
 					t.Errorf("post=%+v, want %+v", item, want)
 				}
@@ -664,6 +694,7 @@ func TestPostsRepositoryUpdatePost(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	got, err := repository.FindPostByID(tenantCtx, "main", id)
 	if err != nil {
 		t.Fatal(err)
@@ -671,6 +702,7 @@ func TestPostsRepositoryUpdatePost(t *testing.T) {
 	if !reflect.DeepEqual(got, &metadata) {
 		t.Errorf("metadata update=%+v, want %+v", got, metadata)
 	}
+
 	var contentID uuid.UUID
 	var count int
 	if err := db.Pool.QueryRow(tenantCtx, `
@@ -688,6 +720,7 @@ func TestPostsRepositoryUpdatePost(t *testing.T) {
 	updated.PublishedAt = nil
 	updatedAt := publishedAt.Add(time.Hour)
 	updated.UpdatedAt = &updatedAt
+
 	stop := errors.New("roll back revised post")
 	for _, rollback := range []bool{true, false} {
 		err := postgres.RunInTransaction(tenantCtx, db.Pool, func(ctx context.Context) error {
@@ -698,6 +731,7 @@ func TestPostsRepositoryUpdatePost(t *testing.T) {
 			if err := repository.CreatePostContent(ctx, updated.ID, contentID, updated.Title, updated.Content, *updated.UpdatedAt); err != nil {
 				return err
 			}
+
 			got, err := repository.FindPostByID(ctx, "main", id)
 			if err != nil {
 				return err
@@ -705,6 +739,7 @@ func TestPostsRepositoryUpdatePost(t *testing.T) {
 			if !reflect.DeepEqual(got, &updated) {
 				t.Errorf("read within transaction=%+v, want %+v", got, updated)
 			}
+
 			outside, err := repository.FindPostByID(tenantCtx, "main", id)
 			if err != nil {
 				return err
@@ -712,11 +747,13 @@ func TestPostsRepositoryUpdatePost(t *testing.T) {
 			if !reflect.DeepEqual(outside, &metadata) {
 				t.Errorf("uncommitted revision escaped transaction: %+v", outside)
 			}
+
 			if rollback {
 				return stop
 			}
 			return nil
 		})
+
 		want := &updated
 		wantCount := 2
 		if rollback {
@@ -728,6 +765,7 @@ func TestPostsRepositoryUpdatePost(t *testing.T) {
 		} else if err != nil {
 			t.Fatal(err)
 		}
+
 		got, err := repository.FindPostByID(tenantCtx, "main", id)
 		if err != nil {
 			t.Fatal(err)
@@ -735,6 +773,7 @@ func TestPostsRepositoryUpdatePost(t *testing.T) {
 		if !reflect.DeepEqual(got, want) {
 			t.Errorf("rollback=%t: persisted post=%+v, want %+v", rollback, got, want)
 		}
+
 		if err := db.Pool.QueryRow(tenantCtx, "select count(*) from posts_content where post_id = $1", id).Scan(&count); err != nil {
 			t.Fatal(err)
 		}
@@ -753,6 +792,7 @@ func TestPostsRepositoryUpdatePost(t *testing.T) {
 	if title != original.Title || body != original.Content || !createdAt.Equal(*original.CreatedAt) {
 		t.Errorf("original revision changed: title=%q, content=%q, created_at=%v", title, body, createdAt)
 	}
+
 	if err := db.Pool.QueryRow(tenantCtx, `
 		select posts_content.created_at
 		from posts join posts_content on posts_content.id = posts.current_content_id
@@ -767,6 +807,7 @@ func TestPostsRepositoryUpdatePost(t *testing.T) {
 		'posts', (select jsonb_agg(to_jsonb(p) order by id) from posts p),
 		'content', (select jsonb_agg(to_jsonb(c) order by id) from posts_content c)
 	)::text`
+
 	for _, test := range []struct {
 		name   string
 		change func(*posts.Post)
@@ -787,8 +828,10 @@ func TestPostsRepositoryUpdatePost(t *testing.T) {
 			if err := db.Pool.QueryRow(tenantCtx, snapshotSQL).Scan(&before); err != nil {
 				t.Fatal(err)
 			}
+
 			attempt := updated
 			test.change(&attempt)
+
 			err := postgres.RunInTransaction(tenantCtx, db.Pool, func(ctx context.Context) error {
 				contentID := uuid.New()
 				if err := repository.UpdatePost(ctx, &attempt, &contentID); err != nil {
@@ -807,6 +850,7 @@ func TestPostsRepositoryUpdatePost(t *testing.T) {
 					t.Fatalf("error=%v, want revision constraint failure", err)
 				}
 			}
+
 			if err := db.Pool.QueryRow(tenantCtx, snapshotSQL).Scan(&after); err != nil {
 				t.Fatal(err)
 			}
@@ -889,6 +933,7 @@ func TestPostsRepositoryGetPostVersion(t *testing.T) {
 
 	repository := posts.NewPostsRepository(db.Pool)
 	postID := uuid.MustParse("11111111-1111-4111-8111-111111111111")
+
 	for _, test := range []struct {
 		id        string
 		version   int
@@ -995,6 +1040,7 @@ func TestPostsRepositoryListPostVersions(t *testing.T) {
 			CreatedAt: firstCreatedAt.Add(24 * time.Hour),
 		},
 	}
+
 	repository := posts.NewPostsRepository(db.Pool)
 	versions, err := repository.ListPostVersions(tenantCtx, "main", id)
 	if err != nil {
@@ -1047,6 +1093,7 @@ func TestPostsRepositoryListPostVersions(t *testing.T) {
 	if !errors.Is(err, wantRollback) {
 		t.Fatalf("transaction error=%v, want rollback", err)
 	}
+
 	versions, err = repository.ListPostVersions(tenantCtx, "main", id)
 	if err != nil {
 		t.Fatal(err)

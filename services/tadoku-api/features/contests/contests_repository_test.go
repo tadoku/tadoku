@@ -197,6 +197,7 @@ func TestContestsRepositoryCreationTransaction(t *testing.T) {
 		CreatedAt:               now,
 		UpdatedAt:               now,
 	}
+
 	if _, err := db.Pool.Exec(tenantCtx, `
 		insert into users (tenant, id, display_name, created_at, updated_at)
 		values ('tadoku/prod', $1, $2, $3, $3)`, contest.OwnerUserID, contest.OwnerUserDisplayName, now); err != nil {

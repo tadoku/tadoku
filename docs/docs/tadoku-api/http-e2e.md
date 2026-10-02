@@ -155,8 +155,11 @@ TADOKU_GOLDEN_SOURCE_ROOT="$PWD/services/tadoku-api/e2e/testdata" \
 - Test authentication goldens at the middleware boundary, not on a business
   endpoint. They register `GET /test/authentication` on the same production
   router with a test-only success handler, and test-only identity headers prove
-  downstream identity propagation. Ban-policy scenarios register
-  `GET /test/banned` the same way, using the same real Keto fixture. Provider
+  downstream identity propagation. `X-Test-Tenant` proves the parsed signed
+  tenant also reached the handler. `AuthenticationBranch` goldens construct the
+  same production router with an exact `e2e/branch-golden` deployment and prove
+  the own-tenant success and other-tenant `421` boundary. Ban-policy scenarios
+  register `GET /test/banned` the same way, using the same real Keto fixture. Provider
   fail-open behavior and deadlines are tested at that boundary. No test
   endpoint is added to production.
 - The transport router test proves that every registered application route
@@ -207,6 +210,7 @@ const claims = {
   nbf: 1789214400,
   exp: 1789218000,
   type: "user",
+  tenant: "tadoku/prod",
   session: {
     identity: {
       traits: {

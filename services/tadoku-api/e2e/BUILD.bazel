@@ -117,6 +117,7 @@ go_test(
         "//services/tadoku-api/internal/featureflags",
         "//services/tadoku-api/internal/identity",
         "//services/tadoku-api/internal/permissions",
+        "//services/tadoku-api/internal/tenant",
         "//services/tadoku-api/internal/testflipt",
         "//services/tadoku-api/internal/testketo",
         "//services/tadoku-api/internal/testkratos",

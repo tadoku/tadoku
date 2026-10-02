@@ -35,6 +35,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/observability"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/featureflags"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testflipt"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testketo"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testkratos"
@@ -115,7 +116,7 @@ func runTests(m *testing.M) (code int) {
 	}
 	defer func() { cleanupErr = errors.Join(cleanupErr, api.db.Close()) }()
 
-	scoringEnabledHandler, _, _, err = newTestRouterWithLeaderboardService(ctx, api.db.Pool, api.db.Pool, keto, kratos, slog.New(slog.NewTextHandler(io.Discard, nil)), true, api.leaderboard)
+	scoringEnabledHandler, _, _, err = newTestRouterWithLeaderboardService(ctx, api.db.Pool, api.db.Pool, keto, kratos, slog.New(slog.NewTextHandler(io.Discard, nil)), true, api.leaderboard, tenant.Deployment{})
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
@@ -148,7 +149,7 @@ func newTestAPI(ctx context.Context, ketoFixture *testketo.Fixture, kratosFixtur
 	}()
 
 	leaderboardService := leaderboard.NewService(leaderboard.NewRepository(db.Pool), leaderboardValkey.client, time.Second, "")
-	handler, profileService, roleService, err := newTestRouterWithLeaderboardService(ctx, db.Pool, db.Pool, ketoFixture, kratosFixture, slog.New(slog.NewTextHandler(io.Discard, nil)), false, leaderboardService)
+	handler, profileService, roleService, err := newTestRouterWithLeaderboardService(ctx, db.Pool, db.Pool, ketoFixture, kratosFixture, slog.New(slog.NewTextHandler(io.Discard, nil)), false, leaderboardService, tenant.Deployment{})
 	if err != nil {
 		return nil, err
 	}
@@ -201,7 +202,7 @@ func newTestRouterWithLeaderboard(
 	valkeyTimeout time.Duration,
 ) (*transport.Router, *featureprofile.Service, *permissions.KetoService, error) {
 	leaderboardService := leaderboard.NewService(leaderboard.NewRepository(pool), valkeyClient, valkeyTimeout, "")
-	return newTestRouterWithLeaderboardService(ctx, pool, auditPool, ketoFixture, kratosFixture, logger, scoringEngineEnabled, leaderboardService)
+	return newTestRouterWithLeaderboardService(ctx, pool, auditPool, ketoFixture, kratosFixture, logger, scoringEngineEnabled, leaderboardService, tenant.Deployment{})
 }
 
 func newTestRouterWithLeaderboardService(
@@ -213,6 +214,7 @@ func newTestRouterWithLeaderboardService(
 	logger *slog.Logger,
 	scoringEngineEnabled bool,
 	leaderboardService *leaderboard.Service,
+	deployment tenant.Deployment,
 ) (*transport.Router, *featureprofile.Service, *permissions.KetoService, error) {
 	reader := ketoclient.NewReadClient(ketoFixture.ReadURL())
 	readWriter := ketoclient.NewClient(ketoFixture.ReadURL(), ketoFixture.WriteURL())
@@ -265,7 +267,7 @@ func newTestRouterWithLeaderboardService(
 		DB:            pool,
 		Permissions:   permissionChecker,
 	})
-	authenticate, err := transport.NewJWTAuthentication(ctx, authenticationJWKS.URL, time.Second, 24*time.Hour, "http://oathkeeper-api/", logger)
+	authenticate, err := transport.NewJWTAuthentication(ctx, authenticationJWKS.URL, time.Second, 24*time.Hour, "http://oathkeeper-api/", deployment, logger)
 	if err != nil {
 		return nil, nil, nil, err
 	}

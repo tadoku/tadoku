@@ -45,6 +45,21 @@ environment variables. Development values are in
 `services/tadoku-api/infra/valkey/README.md` documents which URL options are
 accepted and how commands, timeouts, cancellation and close behave.
 
+### Tenant deployment
+
+`API_BRANCH` is optional and defaults to empty. The base deployment serves every
+valid signed tenant. A configured deployment serves only its exact parsed
+`<name>/<id>` key and rejects another tenant with `421`. Each segment starts
+with a lowercase letter or digit and contains at most 56 lowercase letters,
+digits or hyphens. Bare names, malformed keys and `tadoku/prod` are invalid
+branch settings and fail startup. The key is not a DNS slug.
+
+`services/tadoku-api/internal/tenant` owns parsing, context propagation and
+deployment scoping. Obtain keys through `Parse` or `Production()`; the canonical
+production key is `tadoku/prod`, also used by the development base. The Go zero
+value is not a tenant and context lookup rejects it. Development and production
+base deployments leave `API_BRANCH` unset.
+
 ### Authentication
 
 - `API_JWKS`, the gateway's public signing-key URL.

@@ -46,11 +46,14 @@ import (
 	valkeyinfra "github.com/tadoku/tadoku/services/tadoku-api/infra/valkey"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/featureflags"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	transporthttp "github.com/tadoku/tadoku/services/tadoku-api/transport/http"
 	valkeygo "github.com/valkey-io/valkey-go"
 )
 
 type config struct {
+	Branch                  string `envconfig:"branch"`
+	deployment              tenant.Deployment
 	ScoringEngineEnabled    bool          `envconfig:"scoring_engine_enabled" required:"true"`
 	Port                    int           `validate:"gt=0,lte=65535" default:"8000"`
 	MetricsPort             int           `validate:"gt=0,lte=65535" envconfig:"metrics_port" default:"9090"`
@@ -95,6 +98,12 @@ func loadConfig() (config, error) {
 	if err := envconfig.Process("API", &cfg); err != nil {
 		return config{}, fmt.Errorf("load config: %w", err)
 	}
+
+	deployment, err := tenant.ParseDeployment(cfg.Branch)
+	if err != nil {
+		return config{}, fmt.Errorf("validate config: API_BRANCH: %w", err)
+	}
+	cfg.deployment = deployment
 
 	if err := validator.New().Struct(cfg); err != nil {
 		return config{}, fmt.Errorf("validate config: %w", err)
@@ -191,7 +200,7 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	}
 
 	logger = logger.With("service", cfg.ServiceName)
-	authenticate, err := transporthttp.NewJWTAuthentication(ctx, cfg.JWKS, cfg.DialTimeout, cfg.MaxTokenAge, cfg.JWTIssuer, logger)
+	authenticate, err := transporthttp.NewJWTAuthentication(ctx, cfg.JWKS, cfg.DialTimeout, cfg.MaxTokenAge, cfg.JWTIssuer, cfg.deployment, logger)
 	if err != nil {
 		return nil, err
 	}

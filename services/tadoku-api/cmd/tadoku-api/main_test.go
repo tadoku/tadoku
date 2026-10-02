@@ -336,7 +336,7 @@ func validApplicationConfig(t *testing.T) config {
 			Port:     uint16(databasePort),
 			Database: databaseURL.Path[1:],
 			User:     "postgres",
-			Password: "postgres",
+			Password: postgresconfig.NewSecret("postgres"),
 			SSLMode:  "disable",
 		},
 		ValkeyURL:     valkeyURL,

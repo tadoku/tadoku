@@ -297,7 +297,11 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	startupContext, cancelStartup := context.WithTimeout(ctx, cfg.DialTimeout)
 	defer cancelStartup()
 
-	pool, err := postgres.Open(startupContext, cfg.Postgres.WithApplicationName(cfg.ServiceName).URL(), cfg.PostgresMaxConnections)
+	pool, err := postgres.Open(
+		startupContext,
+		cfg.Postgres.WithApplicationName(cfg.ServiceName).URL().Reveal(),
+		cfg.PostgresMaxConnections,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("open postgres: %s", cfg.Postgres.Redact(err))
 	}

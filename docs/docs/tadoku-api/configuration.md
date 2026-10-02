@@ -30,6 +30,10 @@ environment variables. Development values are in
 - `API_POSTGRES_HOST`, `API_POSTGRES_PORT` (default 5432),
   `API_POSTGRES_DATABASE`, `API_POSTGRES_USER`, `API_POSTGRES_PASSWORD` and
   `API_POSTGRES_SSLMODE`. A single `API_POSTGRES_URL` is rejected.
+- `services/common/postgresconfig` holds the password and the connection URL
+  built from these fields as `Secret` values. Formatting and `log/slog` print
+  `[REDACTED]`, and JSON encoding omits them. Call `Reveal` only where the
+  value is passed to the PostgreSQL pool or the migration tool.
 - `API_POSTGRES_MAX_CONNECTIONS` (default 4, validated range 1–32).
 
 ### Valkey and leaderboard caches

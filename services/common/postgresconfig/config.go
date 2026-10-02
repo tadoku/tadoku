@@ -2,6 +2,7 @@ package postgresconfig
 
 import (
 	"fmt"
+	"log/slog"
 	"net"
 	"net/url"
 	"os"
@@ -17,10 +18,25 @@ var allowedSSLModes = map[string]bool{
 }
 
 type Config struct {
-	Host, Database, User, Password, SSLMode string
-	Port                                    uint16
-	ApplicationName                         string
+	Host, Database, User string
+	Password             Secret
+	SSLMode              string
+	Port                 uint16
+	ApplicationName      string
 }
+
+type Secret struct{ value string }
+
+func NewSecret(value string) Secret { return Secret{value: value} }
+
+// Reveal is only for handing the value to a database driver or migration tool.
+func (s Secret) Reveal() string { return s.value }
+
+func (Secret) String() string { return "[REDACTED]" }
+
+func (s Secret) Format(f fmt.State, verb rune) { fmt.Fprintf(f, fmt.FormatString(f, verb), s.String()) }
+
+func (s Secret) LogValue() slog.Value { return slog.StringValue(s.String()) }
 
 func Load(prefix, legacyName string) (Config, error) {
 	keys := []string{"HOST", "PORT", "DATABASE", "USER", "PASSWORD", "SSLMODE"}
@@ -53,7 +69,14 @@ func Load(prefix, legacyName string) (Config, error) {
 	if !allowedSSLModes[values["SSLMODE"]] {
 		return Config{}, fmt.Errorf("%s_SSLMODE is invalid", prefix)
 	}
-	return Config{Host: values["HOST"], Port: uint16(port), Database: values["DATABASE"], User: values["USER"], Password: values["PASSWORD"], SSLMode: values["SSLMODE"]}, nil
+	return Config{
+		Host:     values["HOST"],
+		Port:     uint16(port),
+		Database: values["DATABASE"],
+		User:     values["USER"],
+		Password: NewSecret(values["PASSWORD"]),
+		SSLMode:  values["SSLMODE"],
+	}, nil
 }
 
 // WithApplicationName must use the process identity, not an environment value.
@@ -62,22 +85,25 @@ func (c Config) WithApplicationName(name string) Config {
 	return c
 }
 
-func (c Config) URL() string {
-	u := &url.URL{Scheme: "postgres", User: url.UserPassword(c.User, c.Password), Host: net.JoinHostPort(c.Host, strconv.Itoa(int(c.Port))), Path: "/" + c.Database}
+func (c Config) URL() Secret {
+	u := &url.URL{
+		Scheme: "postgres",
+		User:   url.UserPassword(c.User, c.Password.Reveal()),
+		Host:   net.JoinHostPort(c.Host, strconv.Itoa(int(c.Port))),
+		Path:   "/" + c.Database,
+	}
 	query := u.Query()
 	query.Set("sslmode", c.SSLMode)
 	if c.ApplicationName != "" {
 		query.Set("application_name", c.ApplicationName)
 	}
 	u.RawQuery = query.Encode()
-	return u.String()
+	return NewSecret(u.String())
 }
-
-func (c Config) String() string { return "postgres configuration (credentials redacted)" }
 
 func (c Config) Redact(value any) string {
 	result := fmt.Sprint(value)
-	for _, secret := range []string{c.Password} {
+	for _, secret := range []string{c.Password.Reveal()} {
 		if secret != "" {
 			result = strings.ReplaceAll(result, secret, "[REDACTED]")
 		}

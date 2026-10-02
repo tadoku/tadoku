@@ -70,7 +70,11 @@ func loadConfig() (config, error) {
 
 func run(ctx context.Context, cfg config, logger *slog.Logger) error {
 	startupCtx, cancelStartup := context.WithTimeout(ctx, cfg.DialTimeout)
-	pool, err := postgres.Open(startupCtx, cfg.Postgres.WithApplicationName("tadoku-worker").URL(), cfg.PostgresMaxConnections)
+	pool, err := postgres.Open(
+		startupCtx,
+		cfg.Postgres.WithApplicationName("tadoku-worker").URL().Reveal(),
+		cfg.PostgresMaxConnections,
+	)
 	cancelStartup()
 	if err != nil {
 		return fmt.Errorf("open worker postgres: %s", cfg.Postgres.Redact(err))
@@ -183,7 +187,7 @@ func replay(ctx context.Context, args []string, logger *slog.Logger) error {
 	}
 
 	openCtx, stop := context.WithTimeout(ctx, 3*time.Second)
-	pool, err := postgres.Open(openCtx, postgresConfig.WithApplicationName("tadoku-worker-replay").URL(), 1)
+	pool, err := postgres.Open(openCtx, postgresConfig.WithApplicationName("tadoku-worker-replay").URL().Reveal(), 1)
 	stop()
 	if err != nil {
 		return fmt.Errorf("open replay postgres: %s", postgresConfig.Redact(err))

@@ -1,8 +1,14 @@
 package postgresconfig
 
 import (
+	"bytes"
+	"encoding/hex"
+	"encoding/json"
 	"fmt"
+	"io"
+	"log/slog"
 	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -23,7 +29,7 @@ func TestLoadIndividualAndURL(t *testing.T) {
 	cfg, err := Load("TEST", "TEST_URL")
 	require.NoError(t, err)
 	assert.Equal(t, uint16(5432), cfg.Port)
-	parsed, err := url.Parse(cfg.URL())
+	parsed, err := url.Parse(cfg.URL().Reveal())
 	require.NoError(t, err)
 	assert.Equal(t, "2001:db8::1", parsed.Hostname())
 	password, ok := parsed.User.Password()
@@ -41,10 +47,10 @@ func TestWithApplicationNameLabelsConnections(t *testing.T) {
 	labeled := cfg.WithApplicationName(" tadoku-api ")
 	assert.Empty(t, cfg.ApplicationName)
 	assert.Equal(t, "tadoku-api", labeled.ApplicationName)
-	assert.Contains(t, labeled.URL(), "application_name=tadoku-api")
-	assert.NotContains(t, cfg.URL(), "application_name=")
+	assert.Contains(t, labeled.URL().Reveal(), "application_name=tadoku-api")
+	assert.NotContains(t, cfg.URL().Reveal(), "application_name=")
 
-	parsed, err := url.Parse(labeled.URL())
+	parsed, err := url.Parse(labeled.URL().Reveal())
 	require.NoError(t, err)
 	assert.Equal(t, "tadoku-api", parsed.Query().Get("application_name"))
 }
@@ -73,6 +79,48 @@ func TestLoadRejectsPartialMixedAndInvalid(t *testing.T) {
 		_, err := Load("TEST", "TEST_URL")
 		assert.ErrorContains(t, err, "SSLMODE is invalid")
 	})
+}
+
+func TestSecretsAreRedactedWhenFormattedOrLogged(t *testing.T) {
+	const sentinel = "sentinel-password"
+	setIndividual(t)
+	t.Setenv("TEST_PASSWORD", sentinel)
+	cfg, err := Load("TEST", "TEST_URL")
+	if err != nil {
+		t.Fatal(err)
+	}
+	exposes := func(output string) bool {
+		return strings.Contains(output, sentinel) || strings.Contains(output, hex.EncodeToString([]byte(sentinel)))
+	}
+
+	values := []struct {
+		name  string
+		value any
+	}{{"config", cfg}, {"password", cfg.Password}, {"dsn", cfg.URL()}}
+	for _, value := range values {
+		for _, verb := range []string{"%v", "%+v", "%#v", "%s", "%q", "%x", "%d"} {
+			if output := fmt.Sprintf(verb, value.value); exposes(output) {
+				t.Errorf("%s formatted with %s exposed the secret: %s", value.name, verb, output)
+			}
+		}
+		encoded, err := json.Marshal(value.value)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if exposes(string(encoded)) {
+			t.Errorf("%s marshaled to JSON exposed the secret: %s", value.name, encoded)
+		}
+		for _, handler := range []func(io.Writer) slog.Handler{
+			func(w io.Writer) slog.Handler { return slog.NewTextHandler(w, nil) },
+			func(w io.Writer) slog.Handler { return slog.NewJSONHandler(w, nil) },
+		} {
+			var logs bytes.Buffer
+			slog.New(handler(&logs)).Info("postgres", value.name, value.value)
+			if exposes(logs.String()) {
+				t.Errorf("%s logged exposed the secret: %s", value.name, logs.String())
+			}
+		}
+	}
 }
 
 func TestLegacyIsRejected(t *testing.T) {

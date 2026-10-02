@@ -63,7 +63,7 @@ startup here means `cmd/tadoku-api`:
   Keto client (`services/tadoku-api/infra/keto`).
 
 This keeps other packages on the shared permission checker. Keep shared ban and
-administrator relation lookups in `internal/permissions`; the check cannot
+administrator permit lookups in `internal/permissions`; the check cannot
 detect a raw `banned` or `admins` relation literal inside an allowed package.
 
 ## Repository and store files

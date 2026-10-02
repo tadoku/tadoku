@@ -162,7 +162,9 @@ TADOKU_GOLDEN_SOURCE_ROOT="$PWD/services/tadoku-api/e2e/testdata" \
   downstream identity propagation. `X-Test-Tenant` proves the parsed signed
   tenant also reached the handler. `AuthenticationBranch` goldens construct the
   same production router with an exact `e2e/branch-golden` deployment and prove
-  the own-tenant success and other-tenant `421` boundary. Ban-policy scenarios
+  the own-tenant success and other-tenant `421` boundary. The successful case
+  grants its signed actor access through a parent object and production admin
+  tuple; test-tenant guests are rejected by the admission gate. Ban-policy scenarios
   register `GET /test/banned` the same way, using the same real Keto fixture.
   Provider fail-open behavior and deadlines are tested at that boundary. No test
   endpoint is added to production.
@@ -191,8 +193,9 @@ TADOKU_GOLDEN_SOURCE_ROOT="$PWD/services/tadoku-api/e2e/testdata" \
 `e2e/testdata/TenantIsolation/` contains synthetic signed canonical and
 `e2e/isolation-0123abcd` tokens for the same seeded Kratos subject. Its test
 registry entry exists only in the suite's disposable database. Reuse the
-subject's real Keto tuples; changing a tenant never grants an administrator
-identity or bypasses the JWT gates. Seed rows name their tenant explicitly,
+subject's real Keto tuples and explicitly provision the test object's parent
+or tester grants; changing a tenant never grants an administrator identity or
+bypasses the JWT and access gates. Seed rows name their tenant explicitly,
 and owner teardown removes only the fixture's test entry. Do not insert test
 tenants in the shared development base or production database.
 

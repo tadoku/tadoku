@@ -95,9 +95,10 @@ The following rules decide where each check belongs.
   application's `requireOwnerOrAdmin` with the owner's user ID after
   `RequireAuthenticated`. It passes when the actor is the owner and otherwise
   requires administrator access.
-- Construction binds the checker to the request-scoped `app:tadoku#admins` Keto
-  lookup. The checker derives its subject from the verified `internal/identity`
-  context and does not cache results.
+- The checker resolves the request tenant's Keto object and `admin` permit
+  for each check. The canonical tenant retains `app:tadoku`. The checker derives
+  its subject from the verified `internal/identity` context and does not cache
+  results.
 - Do not duplicate the shared ban gate in application operations or feature
   services. Code that invokes an application operation outside the application
   router must provide an equivalent baseline ban policy.

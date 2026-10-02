@@ -1,7 +1,7 @@
 ---
 sidebar_position: 3
 title: Authentication and authorization
-description: How Tadoku API authenticates Kratos users from gateway JWTs and authorizes them with Keto administrator and ban relations.
+description: How Tadoku API authenticates gateway JWTs and checks tenant-scoped Keto administrator, ban and access permits.
 ---
 
 # Authentication and authorization
@@ -100,14 +100,28 @@ passes two shared middlewares before its handler. Health probes (`/livez`,
    Missing or malformed tenant claims are invalid credentials. A scoped
    `API_BRANCH` deployment rejects a different valid tenant with `421`; the
    unscoped base accepts every parsed tenant. This step checks no roles.
-2. **Ban gate** (`services/tadoku-api/transport/http/banned_users.go`) looks up
-   `app:tadoku#banned` once for every subject except an empty one or `guest`.
+2. **Tenant admission and ban gate**
+   (`services/tadoku-api/transport/http/banned_users.go`) calls the shared
+   permission checker's `Admit`. The checker resolves the verified tenant to
+   its Keto object; missing or zero tenant contexts fail with unavailable.
+   Canonical requests keep `app:tadoku`, including private development
+   databases using `tadoku/prod`. Every other tenant uses its full `name/id`
+   key as the object.
 
-| Ban lookup | Result |
+| Tenant and lookup | Result |
 | --- | --- |
-| Not banned | The request continues. |
-| Banned | Empty `403`, including for administrators. Only `GET /authz/current-user/role` continues, and reports the role `banned`. |
-| Keto error | Logged; the request continues with the ban state recorded as unknown. Strict checks then return `503`. |
+| Canonical guest or empty subject | Continues without a Keto call. |
+| Canonical signed-in user, not banned | One `is_banned` permit lookup; continues. No `access` lookup is added. |
+| Canonical Keto error | Logged; continues with the ban state recorded as unknown. Strict checks then return `503`. |
+| Test guest or empty subject | Empty `403`, without a Keto call. |
+| Test signed-in user | `is_banned` and `access` are checked together through `CheckPermissions`. Both must complete successfully. |
+| Test user without `access` | Empty `403`, including on the current-user-role route. |
+| Test Keto error | Empty `503`; no fail-open path. |
+| Admitted user with confirmed ban | Empty `403`, including for administrators. Only `GET /authz/current-user/role` continues and reports `banned`. |
+
+An administrator or tester on a test object passes its access gate. The
+current-user-role exception allows an admitted banned user to discover its
+ban; it never grants access to an otherwise inaccessible test tenant.
 
 ## Checks in application operations
 
@@ -119,7 +133,7 @@ HTTP middleware enforces administrator access. They call the
 | --- | --- | --- |
 | `RequireAuthenticated` | An actor is present (a signed-in, non-guest user) and the ban lookup succeeded. | `401` for no user or `guest`; `503` if the ban state is unknown. |
 | `RequireAuthenticatedAllowingUnknownBan` | An actor is present (a signed-in, non-guest user). | `401`. Read-only operations only; mutations must never use it. |
-| `RequireAdmin` | `RequireAuthenticated` passes and the actor holds `admins`. | As above, `403` for non-administrators, `503` on Keto errors. |
+| `RequireAdmin` | `RequireAuthenticated` passes and the actor holds the tenant object's `admin` permit. | As above, `403` for non-administrators, `503` on Keto errors. |
 | `IsAdmin`, `IsAdminOrFalse` | Report administrator status to expand behavior inside an already-authorized operation. | `IsAdmin` returns unavailable on errors; `IsAdminOrFalse` returns `false`. |
 
 Feature services may inspect permissions only to expand behavior inside an
@@ -127,7 +141,15 @@ operation the application has already authorized, and must not repeat the ban
 gate. Facts about other users, such as whether a target user is an administrator,
 come from `services/tadoku-api/internal/permissions/` (`KetoService` reads
 `TargetRoles`; `KetoManager` writes bans). Target facts are never actor
-authorization.
+authorization. Both resolve the tenant object for each operation. Individual
+facts check the `admin` and `is_banned` permits, so inherited administrators
+remain protected from role changes.
+
+The administrator user list reads raw `admins` and `banned` relations on the
+resolved object. A test tenant's list therefore shows only its own grants,
+while its access and role checks still inherit the parent permits. Unbanning
+a user on a test tenant removes only that object's direct ban; an inherited
+production ban continues to apply.
 
 ## Oathkeeper administrator callback
 
@@ -136,8 +158,10 @@ session. Oathkeeper's `remote_json` authorizer then posts the session subject to
 `POST /authz/internal/v1/proxy/admin-check`. This callback route bypasses the JWT
 and ban pipeline and never creates a user identity. It accepts only the shared
 bearer `API_OATHKEEPER_AUTHZ_TOKEN` (development Secret `dev-oathkeeper-authz`,
-also mounted into Oathkeeper), checks only the subject's `admins` relation, and
-returns `200` for administrators and `403` otherwise.
+also mounted into Oathkeeper), checks only the subject's `admin` permit on `app:tadoku` through
+`IsProductionAdmin`, and returns `200` for production administrators and
+`403` otherwise. The callback does not need a request tenant; a branch-only
+administrator cannot authorize the operator UI.
 
 ## Error to HTTP status mapping
 
@@ -149,11 +173,11 @@ Application errors are `services/tadoku-api/internal/errx/` kinds, mapped in
 | Missing or malformed `Authorization: Bearer` header | `400`, JSON `missing or malformed jwt` |
 | Invalid, expired, too old, service JWT or invalid tenant claim | `401`, JSON `invalid or expired jwt` |
 | Valid tenant not served by this deployment | `421`, JSON `tenant not served by this deployment` |
-| Confirmed ban | `403`, empty body |
+| Confirmed ban or missing test-tenant access | `403`, empty body |
 | Invalid or missing callback credential | `401`, empty body |
 | `errx.Unauthorized` (no user or `guest`) | `401` |
 | `errx.Forbidden` (not an administrator) | `403` |
-| `errx.Unavailable` (Keto error, unknown ban state) | `503` |
+| `errx.Unavailable` (Keto error, missing tenant, unknown ban state) | `503` |
 | `errx.InvalidInput` | `400` |
 | Request deadline exceeded | `504` |
 

@@ -33,9 +33,9 @@ func TestBanLookupFailureBlocksPrivilegeChecks(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			banChecks := 0
 			checker := permissions.NewKetoChecker(nil)
-			rejectBanned := RejectBannedUsers(func(context.Context, string) (bool, error) {
+			rejectBanned := RejectBannedUsers(func(context.Context) permissions.Admission {
 				banChecks++
-				return false, providerErr
+				return permissions.AdmittedBanUnknown{Err: providerErr}
 			}, slog.New(slog.NewTextHandler(io.Discard, nil)))
 			handler := rejectBanned(stdhttp.HandlerFunc(func(w stdhttp.ResponseWriter, r *stdhttp.Request) {
 				allowed, err := test.check(checker, r.Context())
@@ -59,58 +59,6 @@ func TestBanLookupFailureBlocksPrivilegeChecks(t *testing.T) {
 			}
 			if banChecks != 1 {
 				t.Errorf("ban checks=%d, want 1", banChecks)
-			}
-		})
-	}
-}
-
-func TestRejectBannedUsersIdentityGuardsAndProviderErrors(t *testing.T) {
-	providerErr := errors.New("provider unavailable")
-	for _, test := range []struct {
-		name        string
-		user        *identity.User
-		banned      bool
-		checkErr    error
-		wantChecks  int
-		wantSubject string
-	}{
-		{name: "missing identity skips check"},
-		{name: "empty subject skips check", user: &identity.User{}},
-		{name: "provider error wins over banned result", user: &identity.User{Subject: "uncertain"}, banned: true, checkErr: providerErr, wantChecks: 1, wantSubject: "uncertain"},
-		{name: "provider failure fails open", user: &identity.User{Subject: "outage"}, checkErr: providerErr, wantChecks: 1, wantSubject: "outage"},
-	} {
-		t.Run(test.name, func(t *testing.T) {
-			checks := 0
-			var subject string
-			middleware := RejectBannedUsers(func(_ context.Context, got string) (bool, error) {
-				checks++
-				subject = got
-				return test.banned, test.checkErr
-			}, slog.New(slog.NewTextHandler(io.Discard, nil)))
-			downstreamCalls := 0
-			handler := middleware(stdhttp.HandlerFunc(func(w stdhttp.ResponseWriter, _ *stdhttp.Request) {
-				downstreamCalls++
-				w.WriteHeader(stdhttp.StatusNoContent)
-			}))
-			request := httptest.NewRequest(stdhttp.MethodGet, "/", nil)
-			if test.user != nil {
-				request = request.WithContext(identity.WithUser(request.Context(), test.user))
-			}
-			response := httptest.NewRecorder()
-
-			handler.ServeHTTP(response, request)
-
-			if response.Code != stdhttp.StatusNoContent {
-				t.Errorf("status=%d, want %d", response.Code, stdhttp.StatusNoContent)
-			}
-			if checks != test.wantChecks || subject != test.wantSubject {
-				t.Errorf("checks=%d subject=%q, want %d %q", checks, subject, test.wantChecks, test.wantSubject)
-			}
-			if downstreamCalls != 1 {
-				t.Errorf("downstream calls=%d, want 1", downstreamCalls)
-			}
-			if response.Body.Len() != 0 {
-				t.Errorf("response body=%q, want empty", response.Body.String())
 			}
 		})
 	}
@@ -165,8 +113,8 @@ func TestRejectBannedUsersAllowsOnlyRoleIntrospection(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			called := false
-			middleware := RejectBannedUsers(func(context.Context, string) (bool, error) {
-				return true, nil
+			middleware := RejectBannedUsers(func(context.Context) permissions.Admission {
+				return permissions.Banned{}
 			}, slog.New(slog.NewTextHandler(io.Discard, nil)))
 			handler := middleware(stdhttp.HandlerFunc(func(w stdhttp.ResponseWriter, r *stdhttp.Request) {
 				called = true
@@ -194,9 +142,9 @@ func TestRejectBannedUsersAllowsOnlyRoleIntrospection(t *testing.T) {
 
 func TestRejectBannedUsersUsesRequestContext(t *testing.T) {
 	var checkedContext context.Context
-	rejectBanned := RejectBannedUsers(func(ctx context.Context, _ string) (bool, error) {
+	rejectBanned := RejectBannedUsers(func(ctx context.Context) permissions.Admission {
 		checkedContext = ctx
-		return false, nil
+		return permissions.Admitted{}
 	}, slog.New(slog.NewTextHandler(io.Discard, nil)))
 	handler := withRequestTimeout(100*time.Millisecond, rejectBanned(stdhttp.HandlerFunc(func(w stdhttp.ResponseWriter, _ *stdhttp.Request) {
 		w.WriteHeader(stdhttp.StatusNoContent)
@@ -221,8 +169,8 @@ func TestRejectBannedUsersUsesRequestContext(t *testing.T) {
 func TestRejectBannedUsersLogsAndAllowsProviderTimeout(t *testing.T) {
 	var logs strings.Builder
 	providerErr := context.DeadlineExceeded
-	rejectBanned := RejectBannedUsers(func(context.Context, string) (bool, error) {
-		return false, providerErr
+	rejectBanned := RejectBannedUsers(func(context.Context) permissions.Admission {
+		return permissions.AdmittedBanUnknown{Err: providerErr}
 	}, slog.New(slog.NewTextHandler(&logs, nil)))
 	request := httptest.NewRequest(stdhttp.MethodGet, "/", nil)
 	request = request.WithContext(identity.WithUser(request.Context(), &identity.User{Subject: "timed-out-user"}))

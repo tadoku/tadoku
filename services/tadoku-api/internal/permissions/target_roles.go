@@ -8,35 +8,34 @@ import (
 )
 
 type KetoService struct {
-	keto      ketoclient.AuthorizationReader
-	namespace string
-	object    string
+	keto ketoclient.AuthorizationReader
 }
 
-func NewKetoService(keto ketoclient.AuthorizationReader, namespace, object string) *KetoService {
-	return &KetoService{
-		keto:      keto,
-		namespace: namespace,
-		object:    object,
-	}
+func NewKetoService(keto ketoclient.AuthorizationReader) *KetoService {
+	return &KetoService{keto: keto}
 }
 
 func (s *KetoService) RolesForSubject(ctx context.Context, subjectID string) (TargetRoles, error) {
+	object, err := rolesObject(ctx)
+	if err != nil {
+		return TargetRoles{}, err
+	}
+
 	if subjectID == "" || subjectID == "guest" {
 		return TargetRoles{}, nil
 	}
 
 	checks := []ketoclient.PermissionCheck{
 		{
-			Namespace: s.namespace,
-			Object:    s.object,
-			Relation:  "admins",
+			Namespace: "app",
+			Object:    object,
+			Relation:  "admin",
 			Subject:   ketoclient.Subject{ID: subjectID},
 		},
 		{
-			Namespace: s.namespace,
-			Object:    s.object,
-			Relation:  "banned",
+			Namespace: "app",
+			Object:    object,
+			Relation:  "is_banned",
 			Subject:   ketoclient.Subject{ID: subjectID},
 		},
 	}
@@ -57,9 +56,9 @@ func (s *KetoService) RolesForSubject(ctx context.Context, subjectID string) (Ta
 			return TargetRoles{}, err
 		}
 		switch r.Check.Relation {
-		case "admins":
+		case "admin":
 			adminAllowed = r.Allowed
-		case "banned":
+		case "is_banned":
 			bannedAllowed = r.Allowed
 		}
 	}
@@ -68,6 +67,11 @@ func (s *KetoService) RolesForSubject(ctx context.Context, subjectID string) (Ta
 }
 
 func (s *KetoService) RolesForSubjects(ctx context.Context, subjectIDs []string) (map[string]TargetRoles, error) {
+	object, err := rolesObject(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	out := make(map[string]TargetRoles, len(subjectIDs))
 	unique := make(map[string]struct{}, len(subjectIDs))
 
@@ -82,11 +86,11 @@ func (s *KetoService) RolesForSubjects(ctx context.Context, subjectIDs []string)
 		return out, nil
 	}
 
-	adminIDs, err := s.keto.ListSubjectIDsForRelation(ctx, s.namespace, s.object, "admins")
+	adminIDs, err := s.keto.ListSubjectIDsForRelation(ctx, "app", object, "admins")
 	if err != nil {
 		return nil, fmt.Errorf("keto list admins failed: %w", err)
 	}
-	bannedIDs, err := s.keto.ListSubjectIDsForRelation(ctx, s.namespace, s.object, "banned")
+	bannedIDs, err := s.keto.ListSubjectIDsForRelation(ctx, "app", object, "banned")
 	if err != nil {
 		return nil, fmt.Errorf("keto list banned failed: %w", err)
 	}

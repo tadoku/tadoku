@@ -15,6 +15,12 @@ func TestAuthzRoleGet(t *testing.T) {
 		{description: []string{"admin"}, want: http.StatusOK},
 		{description: []string{"banned"}, want: http.StatusOK},
 		{description: []string{"admin", "banned"}, want: http.StatusOK},
+		{description: []string{"test", "inherited", "admin"}, want: http.StatusOK},
+		{description: []string{"production", "branch", "admin"}, want: http.StatusOK},
+		{description: []string{"test", "branch", "admin"}, want: http.StatusOK},
+		{description: []string{"test", "banned"}, want: http.StatusOK},
+		{description: []string{"test", "production", "banned", "without", "access"}, want: http.StatusForbidden},
+		{description: []string{"test", "local", "banned", "without", "access"}, want: http.StatusForbidden},
 	}
 
 	for _, test := range tests {

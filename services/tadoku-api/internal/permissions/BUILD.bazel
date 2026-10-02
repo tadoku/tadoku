@@ -3,6 +3,7 @@ load("@rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "permissions",
     srcs = [
+        "admission.go",
         "checker.go",
         "target_role_manager.go",
         "target_role_values.go",
@@ -14,6 +15,7 @@ go_library(
         "//services/tadoku-api/infra/keto",
         "//services/tadoku-api/internal/errx",
         "//services/tadoku-api/internal/identity",
+        "//services/tadoku-api/internal/tenant",
     ],
 )
 
@@ -39,6 +41,7 @@ go_test(
         "//services/tadoku-api/infra/keto",
         "//services/tadoku-api/internal/errx",
         "//services/tadoku-api/internal/identity",
+        "//services/tadoku-api/internal/tenant",
         "//services/tadoku-api/internal/testketo",
         "@com_github_stretchr_testify//assert",
         "@com_github_stretchr_testify//require",

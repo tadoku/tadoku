@@ -1,0 +1,11 @@
+>>> GET /test/banned
+HTTP/1.1 200 OK
+Content-Length: 21
+Content-Type: application/json; charset=UTF-8
+X-Test-Identity-Created-At: 2026-09-12T11:59:00Z
+X-Test-Identity-Display-Name: Admin One
+X-Test-Identity-Email: admin@example.test
+X-Test-Identity-Subject: 22222222-2222-4222-8222-222222222222
+X-Test-Tenant: e2e/alpha-0000000a
+
+{"status":"success"}

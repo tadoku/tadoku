@@ -341,13 +341,13 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	}
 	ketoReader := ketoclient.NewReadClient(cfg.KetoReadURL, ketoclient.WithHTTPClient(ketoHTTP))
 	permissionChecker := permissions.NewKetoChecker(ketoReader)
-	roleService := permissions.NewKetoService(ketoReader, "app", "tadoku")
+	roleService := permissions.NewKetoService(ketoReader)
 
 	authzService := featureauthz.NewService(
 		permissionChecker,
 		kratosIdentities,
 		roleService,
-		permissions.NewKetoManager(keto, "app", "tadoku"),
+		permissions.NewKetoManager(keto),
 		nil,
 	)
 
@@ -401,7 +401,7 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 		DB:            pool,
 		Permissions:   permissionChecker,
 	})
-	rejectBanned := transporthttp.RejectBannedUsers(permissionChecker.CheckBanned, logger)
+	rejectBanned := transporthttp.RejectBannedUsers(permissionChecker.Admit, logger)
 
 	handler, err := transporthttp.NewHandler(api, pool.Ping, cfg.RequestTimeout, metrics, logger, authenticate, rejectBanned, authenticateCallback)
 	if err != nil {

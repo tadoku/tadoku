@@ -7,22 +7,21 @@ import (
 )
 
 type KetoManager struct {
-	keto      ketoclient.AuthorizationClient
-	namespace string
-	object    string
+	keto ketoclient.AuthorizationClient
 }
 
-func NewKetoManager(keto ketoclient.AuthorizationClient, namespace, object string) *KetoManager {
-	return &KetoManager{
-		keto:      keto,
-		namespace: namespace,
-		object:    object,
-	}
+func NewKetoManager(keto ketoclient.AuthorizationClient) *KetoManager {
+	return &KetoManager{keto: keto}
 }
 
 func (m *KetoManager) SetBanned(ctx context.Context, subjectID string, enabled bool) error {
-	if enabled {
-		return m.keto.AddRelation(ctx, m.namespace, m.object, "banned", ketoclient.Subject{ID: subjectID})
+	object, err := rolesObject(ctx)
+	if err != nil {
+		return err
 	}
-	return m.keto.DeleteRelation(ctx, m.namespace, m.object, "banned", ketoclient.Subject{ID: subjectID})
+
+	if enabled {
+		return m.keto.AddRelation(ctx, "app", object, "banned", ketoclient.Subject{ID: subjectID})
+	}
+	return m.keto.DeleteRelation(ctx, "app", object, "banned", ketoclient.Subject{ID: subjectID})
 }

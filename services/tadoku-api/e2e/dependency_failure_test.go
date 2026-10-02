@@ -140,6 +140,20 @@ func TestDependencyFailures(t *testing.T) {
 			handler:     withFliptUnavailable(api.handler),
 		},
 		{
+			operation:   "BannedUsers",
+			description: []string{"production", "provider", "unavailable"},
+			want:        http.StatusOK,
+			suite:       api,
+			handler:     ketoUnavailable,
+		},
+		{
+			operation:   "BannedUsers",
+			description: []string{"test", "provider", "unavailable"},
+			want:        http.StatusServiceUnavailable,
+			suite:       api,
+			handler:     ketoUnavailable,
+		},
+		{
 			operation:   "AuthzProxyProxyAdminCheck",
 			description: []string{"provider", "unavailable"},
 			want:        http.StatusServiceUnavailable,

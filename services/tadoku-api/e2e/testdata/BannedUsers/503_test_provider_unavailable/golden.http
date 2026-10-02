@@ -1,0 +1,4 @@
+>>> GET /test/banned
+HTTP/1.1 503 Service Unavailable
+Content-Length: 0
+

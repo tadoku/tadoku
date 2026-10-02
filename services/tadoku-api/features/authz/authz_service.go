@@ -40,7 +40,7 @@ func (s *Service) ProxyAdminCheck(ctx context.Context, subject uuid.UUID) (bool,
 		return false, errx.NewInvalidInputError("subject must be a UUID")
 	}
 
-	return s.permissions.CheckAdmin(ctx, subject.String())
+	return s.permissions.IsProductionAdmin(ctx, subject.String())
 }
 
 func (s *Service) CurrentUserRole(ctx context.Context) (Role, error) {

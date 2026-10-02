@@ -12,31 +12,36 @@ import (
 const authzRoleGetPattern = "GET /authz/current-user/role"
 
 func RejectBannedUsers(
-	check func(context.Context, string) (bool, error),
+	admit func(context.Context) permissions.Admission,
 	logger *slog.Logger,
 ) func(stdhttp.Handler) stdhttp.Handler {
 	return func(next stdhttp.Handler) stdhttp.Handler {
 		return stdhttp.HandlerFunc(func(w stdhttp.ResponseWriter, r *stdhttp.Request) {
-			user := identity.FromContext(r.Context())
-			if user == nil || user.Subject == "" || user.Subject == "guest" {
-				next.ServeHTTP(w, r)
-				return
-			}
-
-			banned, err := check(r.Context(), user.Subject)
-			if err != nil {
-				logger.Error("banned-user check unavailable; allowing request", "subject", user.Subject, "error", err)
-				ctx := permissions.WithBanState(r.Context(), permissions.BanUnknown(err))
-				next.ServeHTTP(w, r.WithContext(ctx))
-				return
-			}
-			if banned {
-				if r.Pattern == authzRoleGetPattern {
-					ctx := permissions.WithBanState(r.Context(), permissions.Banned())
-					next.ServeHTTP(w, r.WithContext(ctx))
+			switch admission := admit(r.Context()).(type) {
+			case permissions.Admitted:
+			case permissions.AdmittedBanUnknown:
+				user := identity.FromContext(r.Context())
+				logger.ErrorContext(r.Context(), "banned-user check unavailable; allowing request",
+					"subject", user.Subject, "error", admission.Err,
+				)
+				ctx := permissions.WithBanState(r.Context(), permissions.BanUnknown(admission.Err))
+				r = r.WithContext(ctx)
+			case permissions.Banned:
+				if r.Pattern != authzRoleGetPattern {
+					w.WriteHeader(stdhttp.StatusForbidden)
 					return
 				}
+				ctx := permissions.WithBanState(r.Context(), permissions.ConfirmedBan())
+				r = r.WithContext(ctx)
+			case permissions.NoAccess:
 				w.WriteHeader(stdhttp.StatusForbidden)
+				return
+			case permissions.Unavailable:
+				logger.ErrorContext(r.Context(), "tenant admission unavailable", "error", admission.Err)
+				w.WriteHeader(stdhttp.StatusServiceUnavailable)
+				return
+			default:
+				w.WriteHeader(stdhttp.StatusServiceUnavailable)
 				return
 			}
 

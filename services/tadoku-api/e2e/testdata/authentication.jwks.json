@@ -55,6 +55,30 @@
       "kid": "tadoku-isolation-fixture-0123abcd",
       "use": "sig",
       "alg": "RS256"
+    },
+    {
+      "kty": "RSA",
+      "n": "o5rSdH_KCLk7ZvAfmrsUivgkB2TiWfkV2gSsp31iUgXL2WqaOA3Gs3ni9hYpQIo8C057Gj6tsXqQaG8BRP3NVOMNcgqOmXzYObq0H4cAf4tRInezeeiU6r2L2ccENqcjDwqqSdRr76aOS8qxoBgd3GAuyl-qPYdT0rZyHZzFWspM1tI17JV5zwj5Pyh45nLpl0YpU3q-WG22f72Ss3ui47kcPFDzym1vdgmIq8sOhRUI3JYyK_ts_0JX6Q791zkVAoF-WNVEcil3yFqgBFFG0uICUXAceSak-5xe8A-tUO33-o6SZxfmJHNKVW80UN7FlxNL1W2ToAMjmwQXaUp3Nw",
+      "e": "AQAB",
+      "kid": "tadoku-admission-fixture-alpha",
+      "use": "sig",
+      "alg": "RS256"
+    },
+    {
+      "kty": "RSA",
+      "n": "tUYA4fKTD7NfKE4BnW6oWDV2w7k7018arnKZn5_hGA0YW4jPHk-rx6Vud-r0BfPRdgbGHr_wfj6OxFd2yGnxdw1Kf-hHRg20-1sAkNRRae4mYPKoyjOoTk1UbOfaYVgiAX_elY4DSqFL90s53rsgzT3hqRC1b9biUtmw44yxRjHNaHOOG18I7lRjhprPc37KSpO2C9RBP-J_4QQmVJKnfR2uZCcbHZE3UpWriySHkvmdEM6_YPXc0ungkZ9nNjkvxhVc9HEbQdBOWH1ynpOwpv-wDB9iRGwCKXkafM_zl4Ee7uVVKYjUyWXma4PoGEwx7asBiu86WtgvGRGMMxGQLw",
+      "e": "AQAB",
+      "kid": "tadoku-admitted-branch-fixture",
+      "use": "sig",
+      "alg": "RS256"
+    },
+    {
+      "kty": "RSA",
+      "n": "xBHpYLBxc9h-7XBmYKS_ugt4mXTkcbOKOkxUpg-zNILrDsPTnJlbBBkkiZiqG0QiQ0-NMOnbwUrfyPvBwbAdEReBlUwaAX13DRyOr2bDAfsP-Bq6Tzkk53552qSg9TfJ90W4pk3hgzpzmBej4vUjEhzWVOUDQLI9ssltw-9VDrI9b5L6XTaKVcvOOgHOsAB3_SeeW8s1X55b6XUMutqMrTjgCnJWrSaGsxZcvIWgk1a2lbrXyXhphhVZx0EvkG17tb6AuOt6k1_hMrUD1DZ5_ALSR5J-yU7uL4v0ieVv83ML207zqBqM-PQbRjvV7mky9L4ZWbHP3OrxUs6Xg4U23Q",
+      "e": "AQAB",
+      "kid": "tadoku-banned-access-fixture",
+      "use": "sig",
+      "alg": "RS256"
     }
   ]
 }

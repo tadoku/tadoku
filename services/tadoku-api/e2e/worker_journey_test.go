@@ -11,7 +11,6 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/app/worker"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
 func runWorkerStep(t *testing.T, s *suite) {
@@ -35,7 +34,7 @@ func runWorkerStep(t *testing.T, s *suite) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	workerContext, cancelWorker := context.WithCancel(tenant.WithKey(t.Context(), tenant.Production()))
+	workerContext, cancelWorker := context.WithCancel(t.Context())
 	workerDone := make(chan error, 1)
 	go func() { workerDone <- application.Run(workerContext) }()
 	defer func() {

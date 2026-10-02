@@ -44,8 +44,10 @@ go_test(
         "//services/tadoku-api/domain/jobs",
         "//services/tadoku-api/features/jobqueue",
         "//services/tadoku-api/features/leaderboard",
+
         "//services/tadoku-api/infra/postgres",
         "//services/tadoku-api/internal/tenant",
+        "//services/tadoku-api/internal/tenant/alltenants",
         "//services/tadoku-api/internal/testpostgres",
         "//services/tadoku-api/internal/testvalkey",
         "//services/tadoku-api/internal/timex",

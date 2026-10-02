@@ -71,16 +71,14 @@ export function Pagination({
         />
       ) : null}
       <nav className="flex justify-between" aria-label="Pagination">
-        <Link
-          className={classNames('btn ghost', {
-            'pointer-events-none disabled': !canGoPrevious,
-          })}
-          href={getHref?.(current - 1) ?? '#'}
-          onClick={clickHandler?.(current - 1)}
+        <Step
+          page={canGoPrevious ? current - 1 : undefined}
+          getHref={getHref}
+          clickHandler={clickHandler}
         >
           <ChevronLeftIcon className="w-5 h-5 mr-2" />
           Previous
-        </Link>
+        </Step>
 
         <div className="md:hidden flex align-middle">
           <Spacer onClick={() => setIsNavigationModalOpen(true)} />
@@ -147,20 +145,43 @@ export function Pagination({
           ) : null}
         </ol>
 
-        <Link
-          className={classNames('btn ghost', {
-            'pointer-events-none disabled': !canGoNext,
-          })}
-          href={getHref?.(current + 1) ?? '#'}
-          onClick={clickHandler?.(current + 1)}
+        <Step
+          page={canGoNext ? current + 1 : undefined}
+          getHref={getHref}
+          clickHandler={clickHandler}
         >
           Next
           <ChevronRightIcon className="w-5 h-5 ml-2" />
-        </Link>
+        </Step>
       </nav>
     </>
   )
 }
+
+const Step = ({
+  page,
+  getHref,
+  clickHandler,
+  children,
+}: {
+  page: number | undefined
+  getHref?: (page: number) => string
+  clickHandler?: (page: number) => React.MouseEventHandler<HTMLAnchorElement>
+  children: React.ReactNode
+}) =>
+  page === undefined ? (
+    <a className="btn ghost disabled" role="link" aria-disabled="true">
+      {children}
+    </a>
+  ) : (
+    <Link
+      className="btn ghost"
+      href={getHref?.(page) ?? '#'}
+      onClick={clickHandler?.(page)}
+    >
+      {children}
+    </Link>
+  )
 
 const Page = ({
   href,

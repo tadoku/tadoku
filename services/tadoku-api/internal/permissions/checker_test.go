@@ -164,3 +164,61 @@ func TestAuthenticationRequirementsHandleUnknownBan(t *testing.T) {
 		t.Errorf("RequireAuthenticatedAllowingUnknownBan error=%v, want nil", err)
 	}
 }
+
+func TestPermissionModelInheritsFromProduction(t *testing.T) {
+	fixture, err := testketo.New(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := fixture.Close(); err != nil {
+			t.Error(err)
+		}
+	})
+
+	err = fixture.Reset(t.Context(), "testdata/tenant_relationships.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	client := ketoclient.NewReadClient(fixture.ReadURL())
+
+	tests := []struct {
+		name     string
+		subject  string
+		object   string
+		relation string
+		allowed  bool
+	}{
+		{"inherited administrator", "production-admin", "e2e/alpha-0000000a", "admin", true},
+		{"administrator branch access", "production-admin", "e2e/alpha-0000000a", "access", true},
+		{"administrator other branch access", "production-admin", "e2e/beta-0000000b", "access", true},
+		{"branch administrator stays local", "branch-admin", "tadoku", "admin", false},
+		{"inherited production ban", "production-banned", "e2e/alpha-0000000a", "is_banned", true},
+		{"provisioned tester access", "tester", "e2e/alpha-0000000a", "access", true},
+		{"tester does not access other branch", "tester", "e2e/beta-0000000b", "access", false},
+		{"unprovisioned user denied", "user", "e2e/alpha-0000000a", "access", false},
+		{"inherited administrator has no local tuple", "production-admin", "e2e/alpha-0000000a", "admins", false},
+		{"legacy production administrator", "production-admin", "tadoku", "admin", true},
+		{"legacy production administrator access", "production-admin", "tadoku", "access", true},
+		{"legacy production ban", "production-banned", "tadoku", "is_banned", true},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			allowed, err := client.CheckPermission(
+				t.Context(),
+				"app",
+				test.object,
+				test.relation,
+				ketoclient.Subject{ID: test.subject},
+			)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if allowed != test.allowed {
+				t.Errorf("%s#%s@%s allowed=%t, want %t", test.object, test.relation, test.subject, allowed, test.allowed)
+			}
+		})
+	}
+}

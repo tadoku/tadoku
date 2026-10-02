@@ -17,7 +17,6 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/kelseyhightower/envconfig"
-	kratosapi "github.com/ory/kratos-client-go"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -191,7 +190,7 @@ type application struct {
 	transport       *http.Transport
 	pool            *pgxpool.Pool
 	valkey          valkeygo.Client
-	kratos          *kratosapi.APIClient
+	kratosRead      *kratosclient.Client
 	keto            *ketoclient.Client
 	flipt           *fliptclient.Provider
 	fliptEvaluation *http.Client
@@ -301,7 +300,6 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 		Transport: transport,
 		Timeout:   cfg.KratosTimeout,
 	}
-	kratos := kratosclient.NewAPIClient(cfg.KratosAdminURL, kratosclient.WithHTTPClient(kratosHTTP))
 	kratosIdentities := kratosclient.NewClient(cfg.KratosAdminURL, kratosclient.WithHTTPClient(kratosHTTP))
 	keto := ketoclient.NewClient(cfg.KetoReadURL, cfg.KetoWriteURL, ketoclient.WithHTTPClient(&http.Client{
 		Transport: transport,
@@ -467,7 +465,7 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 		transport:       transport,
 		pool:            pool,
 		valkey:          valkeyClient,
-		kratos:          kratos,
+		kratosRead:      kratosIdentities,
 		keto:            keto,
 		flipt:           fliptProvider,
 		fliptEvaluation: fliptEvaluation,

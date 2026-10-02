@@ -138,7 +138,7 @@ each environment; the development manifests set it to `false`.
 - Startup always constructs and owns the raw Valkey client. Invalid Valkey
   configuration or cancelled setup aborts startup. An unavailable server logs a
   warning and starts in degraded mode; the client reconnects on a later command.
-- Startup constructs and retains the raw Kratos SDK client and the shared Keto
+- Startup constructs and retains the read-only Kratos client and the shared Keto
   read and read/write clients. Constructing them makes no provider request, and
   provider-backed caches stay cold until a request needs them.
 - Provider availability and cache refresh completion are not startup or
@@ -215,38 +215,41 @@ err = client.DeleteRelation(ctx, namespace, object, relation, group)
   ordering feature work around these primitives. Audit services own recording
   details such as business timestamps and persistence.
 
-## Raw Kratos primitive
+## Kratos reads and guarded identity writes
 
-- The composition root keeps a concrete `*kratosapi.APIClient` on
-  `application.kratos` for startup integration checks. Identity features use
-  the `services/tadoku-api/infra/kratos` client for lookups and cursor pagination.
-- `services/tadoku-api/infra/kratos.NewAPIClient(baseURL, kratos.WithHTTPClient(httpClient))`
-  constructs the pinned `github.com/ory/kratos-client-go` v0.11.1 SDK. It
-  neither validates deployment configuration nor owns the supplied HTTP client.
-  Tadoku API validates the configuration and supplies a client with a total
-  timeout on its owned transport.
+- The composition root keeps a concrete `*kratos.Client` on
+  `application.kratosRead`. Identity features use this same read client
+  for lookups and cursor pagination.
 - `NewClient(baseURL, kratos.WithHTTPClient(httpClient))` uses the same client
-  for SDK operations and cursor pagination. Without the option, both
-  constructors use the SDK's default HTTP client.
+  for SDK reads and cursor pagination. It constructs the pinned
+  `github.com/ory/kratos-client-go` v0.11.1 SDK internally and exposes no raw
+  SDK constructor. Tadoku API validates the configuration and supplies a
+  client with a total timeout on its owned transport; the read client does not
+  own that HTTP client. Without the option, it uses the SDK's default client.
 
-Call the SDK directly with the operation's caller context:
+Call the read client with the operation's caller context:
 
 ```go
-identity, response, err := kratos.IdentityApi.GetIdentity(ctx, identityID).Execute()
+identity, err := kratosIdentities.FetchIdentity(ctx, identityID)
 ```
 
-- `response` can be nil for transport and cancellation failures. When present,
-  its status and headers remain available even with an error.
+- `FetchIdentity` maps provider HTTP 404 to `kratos.ErrNotFound` and returns
+  other provider failures as wrapped errors. `UserExists` translates that
+  sentinel to `false`.
 - Use `errors.As` to inspect `*kratosapi.GenericOpenAPIError`, including its
   `Body()` and `Model()`, and `errors.Is` for `context.Canceled` or
   `context.DeadlineExceeded`.
-- The raw client returns the SDK's models, response metadata and errors
-  unchanged. It applies no domain mapping, trait policy, account-age rules, or
-  not-found and idempotent-delete translations; consuming features own those
-  decisions and any cache lifecycle.
-- Use the pinned SDK's request builders and pagination options directly.
+- Reads return the SDK identity models. Features own domain mapping, trait
+  policy, account-age rules and any cache lifecycle. `ListIdentities` fetches
+  one requested cursor page and returns its next page token.
 - The total client timeout and any earlier caller deadline bound requests;
   caller cancellation also interrupts response-body reads.
+
+`Writer` in `services/tadoku-api/infra/kratosidentity/` owns application identity
+writes. It accepts an owned raw SDK client and logger, checks the tenant before
+every mutation and remains unwired until an account-deletion flow exists. See
+[Kratos identity writes](../architecture/authorization.md#kratos-identity-writes)
+for its applied, skipped and missing-tenant outcomes.
 
 ## Separate job worker
 

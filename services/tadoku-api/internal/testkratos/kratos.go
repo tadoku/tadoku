@@ -107,7 +107,10 @@ func New(ctx context.Context, seedFile string) (_ *Fixture, resultErr error) {
 		Transport: fixture.transport,
 		Timeout:   requestTimeout,
 	}
-	fixture.client = kratosclient.NewAPIClient(adminURL, kratosclient.WithHTTPClient(fixture.http))
+	cfg := kratosapi.NewConfiguration()
+	cfg.Servers = kratosapi.ServerConfigurations{{URL: adminURL}}
+	cfg.HTTPClient = fixture.http
+	fixture.client = kratosapi.NewAPIClient(cfg)
 
 	if err := fixture.writeConfig(schema); err != nil {
 		return nil, err

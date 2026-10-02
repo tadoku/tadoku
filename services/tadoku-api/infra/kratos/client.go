@@ -28,18 +28,14 @@ func WithHTTPClient(client *http.Client) Option {
 	}
 }
 
-func NewAPIClient(kratosURL string, opts ...Option) *kratosapi.APIClient {
+func NewClient(kratosURL string, opts ...Option) *Client {
 	cfg := kratosapi.NewConfiguration()
 	cfg.Servers = kratosapi.ServerConfigurations{{URL: kratosURL}}
 	for _, opt := range opts {
 		opt(cfg)
 	}
-	return kratosapi.NewAPIClient(cfg)
-}
-
-func NewClient(kratosURL string, opts ...Option) *Client {
 	return &Client{
-		client:            NewAPIClient(kratosURL, opts...),
+		client:            kratosapi.NewAPIClient(cfg),
 		listIdentitiesURL: strings.TrimRight(kratosURL, "/") + "/admin/identities",
 	}
 }

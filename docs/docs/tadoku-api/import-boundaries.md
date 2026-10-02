@@ -65,6 +65,14 @@ startup here means `cmd/tadoku-api`:
   Valkey. The `app/worker` library itself may not.
 - Only `internal/permissions`, startup and E2E may depend directly on the raw
   Keto client (`services/tadoku-api/infra/keto`).
+- Only `services/tadoku-api/infra/kratos`,
+  `services/tadoku-api/infra/kratosidentity`,
+  `services/tadoku-api/features/profile`,
+  `services/tadoku-api/internal/testkratos` and E2E may depend directly on the Kratos SDK.
+  The read adapter exposes identity reads without a raw SDK constructor;
+  profile uses its identity models. The writer owns identity writes
+  and requires the explicit canonical tenant before calling the provider.
+  Test fixtures own their disposable provider and may arrange its state directly.
 
 This keeps other packages on the shared permission checker. Keep shared ban and
 administrator permit lookups in `internal/permissions`; the check cannot

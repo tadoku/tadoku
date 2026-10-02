@@ -19,6 +19,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/common/postgresconfig"
 	ketoclient "github.com/tadoku/tadoku/services/tadoku-api/infra/keto"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
@@ -153,8 +154,8 @@ func TestApplicationStartsAndShutsDown(t *testing.T) {
 		t.Fatal("Keto connection was not kept idle until shutdown")
 	default:
 	}
-	if application.kratos == nil {
-		t.Fatal("startup did not retain the raw Kratos client")
+	if application.kratosRead == nil {
+		t.Fatal("startup did not retain the read-only Kratos client")
 	}
 	if application.flipt == nil {
 		t.Fatal("Flipt outage did not preserve the fallback provider")
@@ -199,7 +200,7 @@ func TestApplicationStartsAndShutsDown(t *testing.T) {
 	if evaluationExchanges.Load() == 0 || managementExchanges.Load() != 1 {
 		t.Errorf("token exchanges: evaluation=%d management=%d", evaluationExchanges.Load(), managementExchanges.Load())
 	}
-	if _, _, err := application.kratos.IdentityApi.GetIdentity(t.Context(), "synthetic").Execute(); err != nil {
+	if _, err := application.kratosRead.FetchIdentity(t.Context(), uuid.Nil); err != nil {
 		t.Fatalf("owned Kratos request: %v", err)
 	}
 	select {
@@ -609,7 +610,7 @@ func TestApplicationBoundsKratosRequests(t *testing.T) {
 
 	requestContext, cancelRequest := context.WithTimeout(t.Context(), 500*time.Millisecond)
 	t.Cleanup(cancelRequest)
-	_, _, err = application.kratos.IdentityApi.GetIdentity(requestContext, "synthetic").Execute()
+	_, err = application.kratosRead.FetchIdentity(requestContext, uuid.Nil)
 	if !errors.Is(err, context.DeadlineExceeded) || requestContext.Err() != nil {
 		t.Errorf("Kratos request error=%v, caller error=%v", err, requestContext.Err())
 	}

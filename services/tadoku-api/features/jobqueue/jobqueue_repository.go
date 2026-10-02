@@ -13,6 +13,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
 	queries "github.com/tadoku/tadoku/services/tadoku-api/generated/sqlc/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
 
@@ -42,6 +43,7 @@ func (r *Repository) Claim(ctx context.Context, typ jobs.Type, limit int, lease 
 	if err != nil {
 		return nil, err
 	}
+
 	rows, err := queries.New(executor).Claim(ctx, queries.ClaimParams{
 		TaskType:    string(typ),
 		Now:         postgres.Timestamptz(now),
@@ -52,10 +54,16 @@ func (r *Repository) Claim(ctx context.Context, typ jobs.Type, limit int, lease 
 	if err != nil {
 		return nil, fmt.Errorf("claim jobs: %w", err)
 	}
+
 	tasks := make([]ClaimedJob, len(rows))
 	for i, row := range rows {
+		key, err := tenant.Parse(row.Tenant)
+		if err != nil {
+			return nil, fmt.Errorf("claim job %d tenant: %w", row.ID, err)
+		}
 		tasks[i] = ClaimedJob{
 			ID:             row.ID,
+			Tenant:         key,
 			Type:           jobs.Type(row.TaskType),
 			Payload:        row.Payload,
 			Attempts:       int(row.Attempts),

@@ -10,9 +10,11 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
 type Config struct {
+	Scope           tenant.Deployment
 	Concurrency     int
 	ShutdownTimeout time.Duration
 	Logger          *slog.Logger
@@ -31,18 +33,22 @@ func NewApplication(queue *jobqueue.Service, leaderboard *leaderboard.Service, c
 	if config.Concurrency < 1 || config.ShutdownTimeout <= 0 {
 		return nil, errors.New("worker requires positive concurrency and shutdown timeout")
 	}
+
 	if config.Logger == nil {
 		config.Logger = slog.Default()
 	}
 	if config.Metrics == nil {
 		config.Metrics = NewMetrics(prometheus.NewRegistry())
 	}
+
 	a := &Application{leaderboard: leaderboard}
 	handlers, err := registrations(a.InvalidateContestLeaderboard, a.InvalidateOfficialLeaderboard)
 	if err != nil {
 		return nil, err
 	}
+
 	a.runner = &runner{
+		scope:           config.Scope,
 		queue:           queue,
 		handlers:        handlers,
 		logger:          config.Logger,

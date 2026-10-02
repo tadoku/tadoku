@@ -30,6 +30,24 @@ the source of executable versions, including replay eligibility.
 
 The queue persists in the `jobs` table.
 
+## Tenants
+
+Each job row stores its tenant in `jobs.tenant`, supplied by the database column
+default when it is enqueued. Claim parses that persisted value into a validated
+tenant key before dispatch. A handler runs with that job's tenant, and lease
+renewals, completion, retry and failure transitions use the same key. Terminal
+transitions keep their tenant during bounded shutdown cleanup.
+
+The base worker claims across all tenants. Its completed-job cleanup and backlog
+metrics also use the all-tenants queue scope. Handler contexts are derived
+separately from the worker context, so application repositories receive only
+the individual job's tenant.
+
+`WORKER_BRANCH` defaults to empty for the base worker. A non-empty value selects
+one validated, non-production tenant for queue operations. Branch isolation
+requires the `jobs` row-level security policy; leave `WORKER_BRANCH` unset when
+that policy is absent. Configuration rejects malformed keys and `tadoku/prod`.
+
 ## Define a message
 
 `jobs.Job` is sealed to the predefined domain catalogue. Each concrete value

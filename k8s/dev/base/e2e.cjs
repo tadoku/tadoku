@@ -27,7 +27,7 @@ function run(cmd, args, input, expectFailure = false) {
 try {
   report.revision = run('git', ['rev-parse', 'HEAD'])
   report.worktree = run('git', ['status', '--short'])
-  const rendered = run('kubectl', ['--context', 'homelab-dev', 'kustomize', 'k8s/dev/base'])
+  const rendered = run('kubectl', ['--context', 'homelab-talos-dev', 'kustomize', 'k8s/dev/base'])
   fs.writeFileSync(path.join(evidence, 'rendered.yaml'), rendered)
   report.renderedSHA256 = require('node:crypto').createHash('sha256').update(rendered).digest('hex')
   const docs = Y.parseAllDocuments(rendered).map(d => d.toJSON())
@@ -49,17 +49,15 @@ try {
   if (docs.some(d => d.kind === 'Service' && d.spec?.selector?.app === 'tadoku-worker') || docs.some(d => d.kind === 'HTTPRoute' && JSON.stringify(d.spec).includes('tadoku-worker'))) throw new Error('Worker must have no Service or public route')
   const resources = workerContainer.resources
   if (!resources?.requests?.cpu || !resources.requests.memory || !resources.limits?.cpu || !resources.limits.memory) throw new Error('Worker must declare CPU and memory requests and limits')
-  run('bazel', ['build', '//services/tadoku-api:dev', '//services/tadoku-api:worker_dev'])
-  const apiMetadata = JSON.parse(fs.readFileSync(path.join(root, 'bazel-bin/services/tadoku-api/dev.dev.json')))
-  const workerMetadata = JSON.parse(fs.readFileSync(path.join(root, 'bazel-bin/services/tadoku-api/worker_dev.dev.json')))
-  if (apiMetadata.selectionGroup !== 'tadoku-api' || workerMetadata.selectionGroup !== 'tadoku-api' || workerMetadata.kind !== 'worker') throw new Error('Branch API and worker are not selected as one group')
-  if (workerMetadata.imageTarget !== '//services/tadoku-api/cmd/tadoku-worker:cli_image' || workerMetadata.pushTarget !== '//services/tadoku-api/cmd/tadoku-worker:cli_push' || workerMetadata.workloadTemplate !== '.dev/tadoku-worker.yaml') throw new Error('Worker is not an independent DevCLI image/deployable')
-  if (['publicPath', 'internalHost', 'publicProxy', 'baseService', 'servicePort'].some(key => key in workerMetadata)) throw new Error('Worker metadata must not request a route or Service')
   report.leaderboardWorkers = { asyncJobs: 'tadoku-worker', baseDatabase: 'tadoku', branchDatabase: envValue(branchWorker, 'WORKER_POSTGRES_DATABASE'), branchPrefix: envValue(branchWorker, 'WORKER_LEADERBOARD_CACHE_PREFIX'), image: workerContainer.image }
   const jobs = docs.filter(d => d.kind === 'Job')
   const frontends = docs.filter(d => d.kind === 'Deployment' && d.metadata.name.startsWith('frontend-'))
-  const roles = { 'tadoku-api-migrate': 'tadoku', 'kratos-migrate': 'kratos', 'keto-migrate': 'keto' }
-  for (const image of ['postgres:17', ...jobs.concat(frontends).map(j => j.spec.template.spec.containers[0].image)]) {
+  const roles = { 'tadoku-api-migrate': 'tadoku_owner', 'kratos-migrate': 'kratos', 'keto-migrate': 'keto' }
+  const database = { tadoku_owner: 'tadoku', kratos: 'kratos', keto: 'keto' }
+  const postgres = docs.find(d => d.kind === 'postgresql' && d.metadata.name === 'tadoku-dev-db')
+  const ownership = jobs.find(j => j.metadata.name === 'tadoku-api-ownership')
+  const grants = jobs.find(j => j.metadata.name === 'tadoku-api-grants')
+  for (const image of ['postgres:17', ...jobs.map(j => j.spec.template.spec.containers[0].image)]) {
     // Use an existing resolved artifact; avoid an unnecessary large base pull
     // on the shared T3 disk. Missing images still use the normal registry path.
     const cached = spawnSync('docker', ['image', 'inspect', image], { stdio: 'ignore', timeout: 30000 })
@@ -72,19 +70,39 @@ try {
   run('docker', ['create', '--name', db, '--network', prefix, '--label', `tadoku.dev/test=${prefix}`, '--cpus', '0.5', '--memory', '512m', '--tmpfs', '/var/lib/postgresql/data:rw', '-e', 'POSTGRES_PASSWORD=disposable-test-only', 'postgres:17'])
   containers.push(db)
   run('docker', ['start', db])
-  run('docker', ['exec', db, 'sh', '-ec', 'for i in $(seq 1 60); do pg_isready -U postgres && exit 0; sleep 1; done; exit 1'])
-  run('docker', ['exec', '-i', db, 'psql', '-U', 'postgres', '-v', 'ON_ERROR_STOP=1'], Object.values(roles).map(r => `create role ${r} login password 'disposable-test-only';\ncreate database ${r} owner ${r};`).join('\n'))
+  run('docker', ['exec', db, 'sh', '-ec', 'for i in $(seq 1 60); do pg_isready -h 127.0.0.1 -U postgres && exit 0; sleep 1; done; exit 1'])
+  const roleSetup = Object.values(roles)
+    .map(r => `create role ${r} login password 'disposable-test-only';\ncreate database ${database[r]} owner ${postgres.spec.databases[database[r]]};`)
+    .join('\n')
+  run('docker', ['exec', '-i', db, 'psql', '-U', 'postgres', '-v', 'ON_ERROR_STOP=1'], `create role tadoku login password 'disposable-test-only';\n` + roleSetup)
 
-  function migrate(job, suffix, fail = false) {
+  function migrate(job, suffix, fail = false, target = 'tadoku', selectedContainer) {
     const spec = job.spec.template.spec
-    const container = spec.containers[0]
-    const role = roles[job.metadata.name]
+    const container = selectedContainer || spec.containers[0]
+    const role = roles[job.metadata.name] || (
+      job === ownership || job === grants ? 'postgres'
+        : job.metadata.name === 'migrate' ? 'tadoku_owner'
+        : undefined
+    )
     if (!role) throw new Error(`Unexpected migration Job: ${job.metadata.name}`)
-    const name = `${prefix}-${role}-${suffix}`
-    const env = role === 'tadoku'
-      ? { POSTGRES_HOST: db, POSTGRES_USER: role, POSTGRES_PASSWORD: 'disposable-test-only', POSTGRES_DATABASE: fail ? 'missing_fixture_database' : role, POSTGRES_SSLMODE: 'disable' }
-      : { DSN: `postgres://${role}@${db}:5432/${role}?sslmode=disable`, PGPASSWORD: 'disposable-test-only' }
-    run('docker', ['create', '--name', name, '--network', prefix, '--label', `tadoku.dev/test=${prefix}`, '--cpus', '0.5', '--memory', '256m', ...Object.entries(env).flatMap(([k,v]) => ['-e', `${k}=${v}`]), '--entrypoint', container.command[0], container.image, ...container.command.slice(1), ...container.args])
+    const name = `${prefix}-${job.metadata.name}-${suffix}`
+    const isPsql = container.env.some(e => e.name === 'PGUSER')
+    const userSecret = container.env.find(e => e.name === 'POSTGRES_USER' || e.name === 'PGUSER')?.valueFrom.secretKeyRef.name
+    const migrationRole = userSecret?.startsWith('tadoku-owner.') ? 'tadoku_owner' : 'tadoku'
+    const env = isPsql
+      ? { PGHOST: db, PGUSER: role === 'postgres' ? role : migrationRole, PGPASSWORD: 'disposable-test-only', PGDATABASE: target, PGSSLMODE: 'disable' }
+      : role === 'tadoku_owner'
+        ? { POSTGRES_HOST: db, POSTGRES_USER: migrationRole, POSTGRES_PASSWORD: 'disposable-test-only', POSTGRES_DATABASE: fail ? 'missing_fixture_database' : target, POSTGRES_SSLMODE: 'disable' }
+        : { DSN: `postgres://${role}@${db}:5432/${role}?sslmode=disable`, PGPASSWORD: 'disposable-test-only' }
+    const args = container.args.map(arg => arg.replaceAll('$$', '$'))
+    run('docker', [
+      'create', '--name', name, '--network', prefix, '--label', `tadoku.dev/test=${prefix}`, '--cpus', '0.5', '--memory', '256m',
+      ...Object.entries(env).flatMap(([k,v]) => ['-e', `${k}=${v}`]),
+      ...(container.command ? ['--entrypoint', container.command[0]] : []),
+      container.image,
+      ...(container.command?.slice(1) || []),
+      ...args,
+    ])
     containers.push(name)
     // docker cp works with the T3 DinD sidecar; host bind mounts do not.
     for (const volume of spec.volumes || []) {
@@ -101,19 +119,105 @@ try {
     const exit = run('docker', ['inspect', name, '--format', '{{.State.ExitCode}}'])
     if (fail ? exit === '0' : exit !== '0') throw new Error(`Migration ${name} exited ${exit}`)
   }
-  for (const job of jobs) migrate(job, 'fresh')
-  for (const job of jobs) migrate(job, 'noop')
+  const syncWave = job => Number(job.metadata.annotations['argocd.argoproj.io/sync-wave'])
+  const orderedJobs = [...jobs].sort((a, b) => syncWave(a) - syncWave(b))
+  for (const job of orderedJobs) migrate(job, 'fresh')
+  for (const job of orderedJobs) migrate(job, 'noop')
   const application = jobs.find(j => j.metadata.name === 'tadoku-api-migrate')
   migrate(application, 'failure', true)
   migrate(application, 'recovery')
   for (const role of Object.values(roles)) {
-    const count = Number(run('docker', ['exec', db, 'psql', '-U', role, '-d', role, '-Atc', "select count(*) from information_schema.tables where table_schema='public'"]))
+    const count = Number(run('docker', ['exec', db, 'psql', '-U', 'postgres', '-d', database[role], '-Atc', "select count(*) from information_schema.tables where table_schema='public'"]))
     if (count < 1) throw new Error(`${role} schema is empty`)
   }
+
+  function assertRuntime(target) {
+    const owners = run('docker', ['exec', db, 'psql', '-X', '-U', 'postgres', '-d', target, '-Atc', "select distinct tableowner from pg_tables where schemaname='public'"])
+    if (owners !== 'tadoku_owner') throw new Error(`Public tables must be owned only by tadoku_owner; found ${owners}`)
+    run('docker', ['exec', '-i', db, 'psql', '-X', '-U', 'postgres', '-d', target, '-v', 'ON_ERROR_STOP=1'], `
+      do $$ begin
+        if not exists(select from pg_roles where rolname='tadoku' and not rolbypassrls and not rolsuper)
+          or pg_has_role('tadoku', 'tadoku_owner', 'member') then
+          raise exception 'runtime must not bypass RLS or inherit ownership';
+        end if;
+        if exists(select from pg_tables where schemaname='public' and tablename<>'schema_migrations'
+          and not has_table_privilege('tadoku', format('%I.%I', schemaname, tablename), 'select,insert,update,delete')) then
+          raise exception 'missing runtime DML';
+        end if;
+      end $$;
+      set role tadoku_owner;
+      create table owner_split_proof(id bigserial primary key, value text not null);
+    `)
+    run('docker', ['exec', '-i', db, 'psql', '-X', '-U', 'tadoku', '-d', target, '-v', 'ON_ERROR_STOP=1'], `
+      insert into owner_split_proof(value) values('runtime');
+      update owner_split_proof set value='updated';
+      select * from owner_split_proof;
+      delete from owner_split_proof;
+      select * from schema_migrations;
+    `)
+    const forbidden = [
+      'create table forbidden_owner_split_proof()',
+      'insert into schema_migrations select * from schema_migrations where false',
+      'update schema_migrations set dirty=dirty where false',
+      'delete from schema_migrations where false',
+      'truncate schema_migrations',
+    ]
+    for (const sql of forbidden) {
+      const output = run('docker', ['exec', db, 'psql', '-X', '-U', 'tadoku', '-d', target, '-v', 'ON_ERROR_STOP=1', '-c', sql], undefined, true)
+      const log = fs.readFileSync(path.join(evidence, report.steps.at(-1).log), 'utf8')
+      if (!log.includes('permission denied')) throw new Error(`Expected permission denial for ${sql}: ${output}`)
+    }
+    run('docker', ['exec', db, 'psql', '-X', '-U', 'tadoku_owner', '-d', target, '-c', 'drop table owner_split_proof'])
+  }
+  assertRuntime('tadoku')
+  if (!ownership || !grants) throw new Error('Both pre-migration ownership and post-migration grants hooks are required')
+  const branchConfig = docs.find(d => d.kind === 'ConfigMap' && d.metadata.namespace === 'tdk-dev-data' && d.metadata.name === 'tadoku-api-ownership')
+  const branchConfigDir = path.join(evidence, 'branch-ownership')
+  fs.mkdirSync(branchConfigDir)
+  for (const [file, content] of Object.entries(branchConfig.data)) fs.writeFileSync(path.join(branchConfigDir, file), content)
+  run('docker', ['cp', branchConfigDir, `${db}:/config`])
+  for (const branch of ['owner-split-existing-0123abcd', 'owner-split-fresh-0123abcd']) {
+    if (branch.includes('existing')) run('docker', ['exec', '-i', db, 'psql', '-X', '-U', 'postgres', '-v', 'ON_ERROR_STOP=1'], `
+      create database "tadoku-${branch}" owner tadoku;
+      comment on database "tadoku-${branch}" is 'dev-cli branch database route=${branch}';
+      \\connect "tadoku-${branch}"
+      set role tadoku;
+      create table legacy_owner_split_proof(id bigint);
+    `)
+    migrate(ownership, `${branch}-existing`)
+    const provision = Y.parse(fs.readFileSync(path.join(root, '.dev/database.yaml'), 'utf8')).spec.template.spec.containers[0]
+    function prepareBranch() {
+      run('docker', [
+        'exec', '-i', '-e', `DEV_ROUTE=${branch}`, '-e', 'PGUSER=postgres', '-e', 'PGDATABASE=postgres', db,
+        ...provision.command,
+        ...provision.args.map(arg => arg.replaceAll('$$', '$')),
+      ])
+    }
+    prepareBranch()
+    const branchMigrate = Y.parse(fs.readFileSync(path.join(root, '.dev/migrate.yaml'), 'utf8'))
+    const migrationInit = branchMigrate.spec.template.spec.initContainers?.find(c => c.name === 'migrate')
+    if (!migrationInit) throw new Error('Branch migration must complete before the runtime-grant post-step')
+    migrationInit.image = application.spec.template.spec.containers[0].image
+    migrate(branchMigrate, `${branch}-init`, false, `tadoku-${branch}`, migrationInit)
+    migrate(branchMigrate, `${branch}-grants`, false, `tadoku-${branch}`)
+    assertRuntime(`tadoku-${branch}`)
+    prepareBranch()
+  }
+  report.ownerSplit = { fresh: 'passed', existing: 'passed', repeated: 'passed', branch: 'passed', runtime: 'tadoku', owner: 'tadoku_owner' }
+
+  run('bazel', ['build', '//services/tadoku-api:dev', '//services/tadoku-api:worker_dev'])
+  const apiMetadata = JSON.parse(fs.readFileSync(path.join(root, 'bazel-bin/services/tadoku-api/dev.dev.json')))
+  const workerMetadata = JSON.parse(fs.readFileSync(path.join(root, 'bazel-bin/services/tadoku-api/worker_dev.dev.json')))
+  if (apiMetadata.selectionGroup !== 'tadoku-api' || workerMetadata.selectionGroup !== 'tadoku-api' || workerMetadata.kind !== 'worker') throw new Error('Branch API and worker are not selected as one group')
+  if (workerMetadata.imageTarget !== '//services/tadoku-api/cmd/tadoku-worker:cli_image' || workerMetadata.pushTarget !== '//services/tadoku-api/cmd/tadoku-worker:cli_push' || workerMetadata.workloadTemplate !== '.dev/tadoku-worker.yaml') throw new Error('Worker is not an independent DevCLI image/deployable')
+  if (['publicPath', 'internalHost', 'publicProxy', 'baseService', 'servicePort'].some(key => key in workerMetadata)) throw new Error('Worker metadata must not request a route or Service')
 
   for (const deployment of frontends) {
     const spec = deployment.spec.template.spec
     const container = spec.containers[0]
+    const cached = spawnSync('docker', ['image', 'inspect', container.image], { stdio: 'ignore', timeout: 30000 })
+    if (cached.status !== 0) run('docker', ['pull', container.image])
+    report.images[container.image] = JSON.parse(run('docker', ['image', 'inspect', container.image, '--format', '{{json .RepoDigests}}']))
     const name = `${prefix}-${deployment.metadata.name}`
     const volume = spec.volumes.find(v => v.name === 'startup')
     const config = docs.find(d => d.kind === 'ConfigMap' && d.metadata.namespace === deployment.metadata.namespace && d.metadata.name === volume.configMap.name)
@@ -157,6 +261,11 @@ try {
     run('docker', ['rm', '-f', name])
     containers.pop()
   }
+  const removedFixture = containers.find(name => name !== db)
+  const fixtureOwner = run('docker', ['inspect', removedFixture, '--format', '{{index .Config.Labels "tadoku.dev/test"}}'])
+  if (fixtureOwner !== prefix) throw new Error('Refusing removal of cleanup control fixture')
+  run('docker', ['rm', removedFixture])
+  report.cleanupControl = { removedFixture, expected: 'already absent owned fixture is clean' }
   report.result = 'passed'
 } catch (error) {
   report.result = 'failed'
@@ -165,9 +274,14 @@ try {
 } finally {
   for (const name of containers.reverse()) {
     try {
-      const owner = run('docker', ['inspect', name, '--format', '{{index .Config.Labels "tadoku.dev/test"}}'])
-      if (owner !== prefix) throw new Error(`Refusing cleanup of ${name}`)
-      run('docker', ['rm', '-f', name])
+      const fixture = run('docker', ['ps', '-a', '--no-trunc', '--filter', `name=^/${name}$`, '--format', '{{.ID}}|{{.Label "tadoku.dev/test"}}'])
+      if (!fixture) {
+        if (name === report.cleanupControl?.removedFixture) report.cleanupControl.result = 'passed'
+        continue
+      }
+      const [id, owner] = fixture.split('|')
+      if (owner !== prefix || !/^[0-9a-f]{64}$/.test(id)) throw new Error(`Refusing cleanup of ${name}`)
+      run('docker', ['rm', '-f', id])
     } catch (error) { report.cleanupError = error.message; process.exitCode = 1 }
   }
   if (networkCreated) {

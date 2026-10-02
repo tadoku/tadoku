@@ -7,13 +7,15 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
 )
 
 func TestRepositoryPersistsAudit(t *testing.T) {
 	t.Parallel()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 
-	db, err := testpostgres.New(t.Context())
+	db, err := testpostgres.New(tenantCtx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -34,7 +36,7 @@ func TestRepositoryPersistsAudit(t *testing.T) {
 		recordedAt:  time.Date(2026, 9, 19, 12, 34, 56, 0, time.UTC),
 	}
 	repository := NewRepository(db.Pool)
-	if err := repository.Create(t.Context(), event); err != nil {
+	if err := repository.Create(tenantCtx, event); err != nil {
 		t.Fatal(err)
 	}
 
@@ -45,7 +47,7 @@ func TestRepositoryPersistsAudit(t *testing.T) {
 		description string
 		recordedAt  time.Time
 	)
-	err = db.Pool.QueryRow(t.Context(), `
+	err = db.Pool.QueryRow(tenantCtx, `
 		select user_id, action, metadata, description, created_at
 		from moderation_audit_log
 	`).Scan(&actorID, &action, &metadataRaw, &description, &recordedAt)
@@ -57,6 +59,7 @@ func TestRepositoryPersistsAudit(t *testing.T) {
 	if err := json.Unmarshal(metadataRaw, &metadata); err != nil {
 		t.Fatal(err)
 	}
+
 	if actorID != event.ActorID {
 		t.Errorf("actor ID = %s, want %s", actorID, event.ActorID)
 	}

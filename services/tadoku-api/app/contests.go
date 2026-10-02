@@ -10,7 +10,6 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/features/languages"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/profile"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
@@ -241,10 +240,6 @@ func (a *Application) UpsertContestRegistration(ctx context.Context, parameters 
 }
 
 func (a *Application) ListYearlyContestRegistrations(ctx context.Context, userID uuid.UUID, year int) (*ContestRegistrationList, error) {
-	if identity.FromContext(ctx) == nil {
-		return nil, errx.NewUnauthorizedError("unauthorized")
-	}
-
 	actorID, ok := identity.ActorID(ctx)
 	includePrivate := a.permissions.IsAdminOrFalse(ctx) || (ok && actorID == userID)
 

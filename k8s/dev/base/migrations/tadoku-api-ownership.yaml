@@ -1,0 +1,170 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tadoku-api-ownership
+  namespace: tdk-dev-data
+  annotations:
+    argocd.argoproj.io/sync-wave: "-20"
+data:
+  ownership.sql: |
+    begin;
+
+    reassign owned by tadoku to tadoku_owner;
+    grant usage on schema public to tadoku;
+    grant select, insert, update, delete on all tables in schema public to tadoku;
+    grant usage, select, update on all sequences in schema public to tadoku;
+    select to_regclass('public.schema_migrations') is not null as migration_table_exists \gset
+    \if :migration_table_exists
+      revoke insert, update, delete, truncate on public.schema_migrations from tadoku;
+    \endif
+    alter default privileges for role tadoku_owner in schema public
+      grant select, insert, update, delete on tables to tadoku;
+    alter default privileges for role tadoku_owner in schema public
+      grant usage, select, update on sequences to tadoku;
+
+    select (
+      has_database_privilege('tadoku', current_database(), 'connect')
+      and has_schema_privilege('tadoku', 'public', 'usage')
+      and not has_schema_privilege('tadoku', 'public', 'create')
+      and exists (
+        select from pg_database
+        where datname = current_database()
+          and pg_get_userbyid(datdba) = 'tadoku_owner'
+      )
+      and exists (
+        select from pg_roles
+        where rolname = 'tadoku' and not rolsuper and not rolbypassrls
+      )
+      and not pg_has_role('tadoku', 'tadoku_owner', 'member')
+      and not exists (
+        select from pg_tables
+        where schemaname = 'public' and tableowner <> 'tadoku_owner'
+      )
+      and not exists (
+        select from pg_tables
+        cross join unnest(array['select', 'insert', 'update', 'delete']) as privilege
+        where schemaname = 'public'
+          and tablename <> 'schema_migrations'
+          and not has_table_privilege('tadoku', format('%I.%I', schemaname, tablename), privilege)
+      )
+      and not exists (
+        select from pg_sequences
+        cross join unnest(array['usage', 'select', 'update']) as privilege
+        where schemaname = 'public'
+          and not has_sequence_privilege('tadoku', format('%I.%I', schemaname, sequencename), privilege)
+      )
+      and case
+        when to_regclass('public.schema_migrations') is null then true
+        else has_table_privilege('tadoku', 'public.schema_migrations', 'select')
+          and not has_table_privilege('tadoku', 'public.schema_migrations', 'insert,update,delete,truncate')
+      end
+    ) as grants_valid \gset
+
+    \if :grants_valid
+      \echo 'database ownership and runtime grants validated'
+    \else
+      \echo 'database ownership or runtime grant validation failed'
+      \quit 1
+    \endif
+
+    commit;
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: tadoku-api-ownership
+  namespace: tdk-dev-data
+  annotations:
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/sync-wave: "-15"
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
+spec:
+  activeDeadlineSeconds: 600
+  backoffLimit: 0
+  template:
+    spec:
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      containers:
+        - name: ownership
+          image: docker.io/library/postgres@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
+          command: ["/bin/sh", "-ec"]
+          args:
+            - |
+              until test "$(psql -X -Atqc "select exists(select from pg_roles where rolname = 'tadoku_owner')" 2>/dev/null)" = t; do
+                echo "Waiting for the development owner role"
+                sleep 2
+              done
+              psql -X --set=ON_ERROR_STOP=1 --file=/config/ownership.sql
+          env:
+            - {name: PGHOST, value: tadoku-dev-db.tdk-dev-data.svc.cluster.local}
+            - {name: PGDATABASE, value: tadoku}
+            - {name: PGSSLMODE, value: require}
+            - {name: PGCONNECT_TIMEOUT, value: "5"}
+            - name: PGUSER
+              valueFrom: {secretKeyRef: {name: postgres.tadoku-dev-db.credentials.postgresql.acid.zalan.do, key: username}}
+            - name: PGPASSWORD
+              valueFrom: {secretKeyRef: {name: postgres.tadoku-dev-db.credentials.postgresql.acid.zalan.do, key: password}}
+          volumeMounts:
+            - {name: ownership, mountPath: /config, readOnly: true}
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65532
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+          resources:
+            requests: {cpu: 25m, memory: 32Mi}
+            limits: {cpu: "1", memory: 128Mi}
+      volumes:
+        - name: ownership
+          configMap: {name: tadoku-api-ownership}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: tadoku-api-grants
+  namespace: tdk-dev-data
+  annotations:
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/sync-wave: "-5"
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
+spec:
+  activeDeadlineSeconds: 600
+  backoffLimit: 0
+  template:
+    spec:
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      containers:
+        - name: ownership
+          image: docker.io/library/postgres@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
+          command: ["/bin/sh", "-ec"]
+          args:
+            - |
+              until test "$(psql -X -Atqc "select exists(select from pg_roles where rolname = 'tadoku_owner')" 2>/dev/null)" = t; do
+                echo "Waiting for the development owner role"
+                sleep 2
+              done
+              psql -X --set=ON_ERROR_STOP=1 --file=/config/ownership.sql
+          env:
+            - {name: PGHOST, value: tadoku-dev-db.tdk-dev-data.svc.cluster.local}
+            - {name: PGDATABASE, value: tadoku}
+            - {name: PGSSLMODE, value: require}
+            - {name: PGCONNECT_TIMEOUT, value: "5"}
+            - name: PGUSER
+              valueFrom: {secretKeyRef: {name: postgres.tadoku-dev-db.credentials.postgresql.acid.zalan.do, key: username}}
+            - name: PGPASSWORD
+              valueFrom: {secretKeyRef: {name: postgres.tadoku-dev-db.credentials.postgresql.acid.zalan.do, key: password}}
+          volumeMounts:
+            - {name: ownership, mountPath: /config, readOnly: true}
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65532
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+          resources:
+            requests: {cpu: 25m, memory: 32Mi}
+            limits: {cpu: "1", memory: 128Mi}
+      volumes:
+        - name: ownership
+          configMap: {name: tadoku-api-ownership}

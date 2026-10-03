@@ -58,6 +58,38 @@ func (c *Cache) cacheKey(ctx context.Context, key string) (string, error) {
 	return c.cachePrefix + "tenant:" + tenantKey.String() + ":" + key, nil
 }
 
+func (c *Cache) DeleteTestTenant(ctx context.Context, key tenant.TestKey) error {
+	if key.String() == "" {
+		return fmt.Errorf("leaderboard deletion requires a test tenant")
+	}
+	prefix, err := c.cacheKey(tenant.WithKey(ctx, key.Key()), "")
+	if err != nil {
+		return err
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, c.operationTimeout)
+	defer cancel()
+	var cursor uint64
+	for {
+		page, err := c.client.Do(ctx, c.client.B().Scan().Cursor(cursor).Match(prefix+"*").Count(500).Build()).AsScanEntry()
+		if err != nil {
+			return fmt.Errorf("scan tenant leaderboard keys: %w", err)
+		}
+
+		for start := 0; start < len(page.Elements); start += 500 {
+			end := min(start+500, len(page.Elements))
+			err := c.client.Do(ctx, c.client.B().Unlink().Key(page.Elements[start:end]...).Build()).Error()
+			if err != nil {
+				return fmt.Errorf("unlink tenant leaderboard keys: %w", err)
+			}
+		}
+		if page.Cursor == 0 {
+			return nil
+		}
+		cursor = page.Cursor
+	}
+}
+
 func (c *Cache) fetchPage(ctx context.Context, key string, start int64, pageSize int) (*page, bool, error) {
 	ctx, cancel := context.WithTimeout(ctx, c.operationTimeout)
 	defer cancel()

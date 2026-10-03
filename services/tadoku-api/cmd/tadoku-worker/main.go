@@ -32,7 +32,7 @@ import (
 
 type config struct {
 	Branch                 string `envconfig:"branch"`
-	Component              string `envconfig:"component" default:"tadoku-worker"`
+	Component              string `envconfig:"component"`
 	scope                  jobqueue.Scope
 	Concurrency            int                   `validate:"gt=0" envconfig:"concurrency" default:"4"`
 	Port                   int                   `validate:"gt=0,lte=65535" default:"8000"`
@@ -47,7 +47,7 @@ type config struct {
 }
 
 func loadConfig() (config, error) {
-	cfg := config{}
+	cfg := config{Component: jobqueue.WorkerComponent}
 	if err := envconfig.Process("WORKER", &cfg); err != nil {
 		return config{}, fmt.Errorf("load worker config: %w", err)
 	}

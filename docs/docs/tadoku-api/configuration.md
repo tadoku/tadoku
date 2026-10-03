@@ -370,6 +370,50 @@ types without an unbounded type label.
 - Valkey close follows the upstream client's per-connection close allowance
   rather than `API_VALKEY_TIMEOUT`.
 
+## Tenant lifecycle command
+
+`services/tadoku-api/cmd/tadoku-tenant` provides owner-only provisioning,
+teardown and worker overrides. Its tenant argument is a full parsed key, such
+as `tadoku/branch-0123abcd`; the id must end in a hyphen and eight lowercase
+hexadecimal digits. Bare route ids, `tadoku/prod` and production registry rows
+are refused before provider writes.
+
+```sh
+bazel run //services/tadoku-api/cmd/tadoku-tenant -- provision \
+  --tenant tadoku/branch-0123abcd --flipt-features k8s/dev/base/flipt/features.yaml \
+  --tester 11111111-1111-4111-8111-111111111111
+bazel run //services/tadoku-api/cmd/tadoku-tenant -- override set \
+  --tenant tadoku/branch-0123abcd --component tadoku-worker
+bazel run //services/tadoku-api/cmd/tadoku-tenant -- override clear \
+  --tenant tadoku/branch-0123abcd --component tadoku-worker
+bazel run //services/tadoku-api/cmd/tadoku-tenant -- teardown \
+  --tenant tadoku/branch-0123abcd
+```
+
+All commands verify ownership of the tenant registry and use owner credentials in `TENANT_POSTGRES_HOST`,
+`TENANT_POSTGRES_PORT` (default 5432), `TENANT_POSTGRES_DATABASE`,
+`TENANT_POSTGRES_USER`, `TENANT_POSTGRES_PASSWORD` and `TENANT_POSTGRES_SSLMODE`.
+`TENANT_POSTGRES_URL` is rejected. Provision and teardown additionally require
+`TENANT_KETO_READ_URL`, `TENANT_KETO_WRITE_URL`, `TENANT_VALKEY_URL` and
+`TENANT_FLIPT_MANAGEMENT_URL`; `TENANT_FLIPT_ENVIRONMENT` defaults to `test` and
+must differ from `production`. Use the direct provisioning-authorized Flipt
+endpoint, rather than the API's restricted service-token route. Override
+commands need only PostgreSQL. The only registered override component is
+`jobqueue.WorkerComponent`, currently `tadoku-worker`.
+
+Provision commits an idempotent test registry row under a transaction-local
+advisory lock, grants the canonical Keto parent and repeated `--tester` UUIDs,
+then creates only missing Flipt resources from the strict boolean seed format.
+Keto grants are checked by their complete tuple before creating them because
+the provider accepts duplicate relationship writes.
+Reruns preserve existing grants and flag values. Teardown deletes the tenant's
+Keto relationships, cache keys and Flipt namespace before deleting the registry
+row and its cascading data. Failure leaves the row for a retry; cleanup still
+runs when a prior attempt already removed that row. Commands sharing a tenant
+must be serialized by the caller's route lease. Provider HTTP calls have a
+30-second timeout; the command has a five-minute deadline and observes shutdown
+signals. Secrets are supplied through environment variables and never printed.
+
 ## Production credentials
 
 Production runtime credentials have only the grants the application requires,

@@ -1,0 +1,43 @@
+[
+  {
+    "key": "release-log-entry-v2-access",
+    "payload": {
+      "@type": "flipt.core.Segment",
+      "key": "release-log-entry-v2-access",
+      "name": "Release log entry v2 access",
+      "description": "Kratos UUIDs explicitly granted access to release log entry v2.",
+      "matchType": "ALL_MATCH_TYPE",
+      "constraints": [
+        {
+          "type": "ENTITY_ID_COMPARISON_TYPE",
+          "property": "entityId",
+          "operator": "isoneof",
+          "value": "[]",
+          "description": ""
+        }
+      ]
+    }
+  },
+  {
+    "key": "release-log-entry-v2",
+    "payload": {
+      "@type": "flipt.core.Flag",
+      "key": "release-log-entry-v2",
+      "name": "Release log entry v2",
+      "type": "BOOLEAN_FLAG_TYPE",
+      "description": "Use the second-generation log entry flow.",
+      "enabled": false,
+      "rollouts": [
+        {
+          "type": "SEGMENT_ROLLOUT_TYPE",
+          "description": "Enabled for explicitly granted users.",
+          "segment": {
+            "segments": ["release-log-entry-v2-access"],
+            "segmentOperator": "OR_SEGMENT_OPERATOR",
+            "value": true
+          }
+        }
+      ]
+    }
+  }
+]

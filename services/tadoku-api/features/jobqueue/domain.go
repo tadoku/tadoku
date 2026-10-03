@@ -18,6 +18,8 @@ var (
 	ErrNotFailed = errors.New("job is not failed or supported")
 )
 
+const WorkerComponent = "tadoku-worker"
+
 type ClaimedJob struct {
 	ID             int64
 	Tenant         tenant.Key

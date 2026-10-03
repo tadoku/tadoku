@@ -2,13 +2,19 @@ load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "tenant",
-    srcs = ["tenant.go"],
+    srcs = [
+        "tenant.go",
+        "test_tenant.go",
+    ],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/internal/tenant",
     visibility = ["//services/tadoku-api:internal_consumers"],
 )
 
 go_test(
     name = "tenant_test",
-    srcs = ["tenant_test.go"],
+    srcs = [
+        "tenant_test.go",
+        "test_tenant_test.go",
+    ],
     deps = [":tenant"],
 )

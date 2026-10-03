@@ -29,6 +29,10 @@ boundaries described in [Code ownership](./index.md#code-ownership).
   both.
 - The worker application (`app/worker`) is visible only to its binary
   (`cmd/tadoku-worker`) and E2E.
+- The owner-only lifecycle application (`app/tenantlifecycle`) is visible only
+  to `cmd/tadoku-tenant` and E2E. Its generated sqlc package is visible only to
+  that application; lifecycle SQL targets the tenant registry rather than an
+  ordinary feature's business data.
 - A feature's generated sqlc package is visible only to that feature.
 - `services/tadoku-api/infra/flipt` owns the shared tenant-to-provider target
   mapping. Its ordinary consumers use `:infrastructure_consumers`; the exact test-only
@@ -56,15 +60,18 @@ boundaries described in [Code ownership](./index.md#code-ownership).
 
 `./tools/ci/check_tadoku_api_provider_deps.sh` checks Bazel's direct dependency
 graph. Each allowed package covers only its own targets, not subpackages, and
-startup here means `cmd/tadoku-api`:
+  startup here means `cmd/tadoku-api` and `cmd/tadoku-tenant`:
 
 - Only `features/leaderboard`, `services/tadoku-api/infra/valkey`, startup, E2E
-  and the `app/worker:worker_test` target may depend directly on `valkey-go`.
+  and the `app/worker:worker_test` and
+  `app/tenantlifecycle:tenantlifecycle_test` targets may depend directly on `valkey-go`.
   The worker test needs a raw client because `leaderboard.NewCache` takes
   one; it seeds and inspects cache keys and simulates a blocked or unavailable
   Valkey. The `app/worker` library itself may not.
 - Only `internal/permissions`, startup and E2E may depend directly on the raw
-  Keto client (`services/tadoku-api/infra/keto`).
+  Keto client (`services/tadoku-api/infra/keto`). The exact
+  `app/tenantlifecycle:tenantlifecycle_test` target may also construct its owned
+  provider fixture. Lifecycle application code uses `permissions.TenantManager`.
 - Only `services/tadoku-api/infra/kratos`,
   `services/tadoku-api/infra/kratosidentity`,
   `services/tadoku-api/features/profile`,

@@ -39,6 +39,12 @@ notes and marked test fixture safety notes.
 
 ### Gazelle
 
+Direct Go dependencies belong in the first `require` block of `go.mod` and in
+the `go_deps` `use_repo` list in `MODULE.bazel`. Promoting an existing indirect
+dependency preserves its pinned version and checksum; rerun Gazelle to wire its
+Bazel target. The Flipt seed converter uses the existing `go.yaml.in/yaml/v3`
+dependency with strict known-field decoding.
+
 Gazelle generates `BUILD.bazel` files from Go imports. Run it after adding or
 removing Go files or changing imports:
 

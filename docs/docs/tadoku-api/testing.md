@@ -130,6 +130,15 @@ Never point tests at shared development or production services.
 
 ## Tenancy guard and isolation
 
+`services/tadoku-api/app/tenantlifecycle/` tests the owner command's orchestration
+against disposable PostgreSQL, Valkey and the pinned Keto process. Its complete
+tenant-column inventory includes registry overrides; every ordinary owned table
+has a nonempty teardown fixture. Canonical and another test tenant's complete
+row snapshots remain unchanged. The Flipt HTTP fixture records resource
+creation, while an injected outage verifies that the registry remains retryable.
+Use `TADOKU_TEST_POSTGRES_URL` and `TADOKU_TEST_VALKEY_URL` for this suite, with
+the same loopback guards as the API tests.
+
 `services/tadoku-api/infra/postgres/tenancy_schema_test.go` migrates a
 disposable database and checks every ordinary table for RLS, a non-null tenant
 column, the strict transaction tenant default and its canonical policy.

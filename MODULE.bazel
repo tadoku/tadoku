@@ -70,6 +70,7 @@ use_repo(
     "com_github_stretchr_testify",
     "com_github_valkey_io_valkey_go",
     "io_flipt_go_flipt_client",
+    "in_yaml_go_yaml_v3",
     "org_golang_x_sync",
     "org_golang_x_tools",
 )

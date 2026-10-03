@@ -93,8 +93,9 @@ Keep this terminal running.
   replacement (HMR).
 - Go edits rebuild the affected Bazel binary and restart it in the same pod.
   A failed compilation keeps the last working process running.
-- A Tadoku API or worker selection starts both workloads against the shared
-  `tadoku` database, scoped to the same branch tenant. The unchanged peer keeps
+- A Tadoku API or worker selection starts both workloads against the profile's
+  database, scoped to the same branch tenant. Ordinary branches use shared
+  `tadoku`; migration branches use an isolated database. The unchanged peer keeps
   its current image; only a changed binary restarts on a live edit.
 - dev-cli builds overlay images on demand, pushes them to the development
   registry and deploys them by immutable digest.
@@ -299,16 +300,50 @@ or canonical roles for a branch test. Use the branch's own data, Keto object and
 Flipt namespace. This is cooperative development isolation: provider processes
 and runtime credentials are shared.
 
-### Schema changes
+### Migration branches
 
 Schema changes follow the standalone migration release contract in
 [Database](../tadoku-api/database.md). Ordinary tenant branches use the base
-schema and must not run experimental migrations against it. The retained
-database dependency and `migrate` task are for an explicitly configured isolated
-database workflow; ordinary `dev up` invokes neither. Database creation refuses
-unmarked databases, migrations use `tadoku_owner`, and the runtime role remains
-unable to create tables or write `schema_migrations`. Never point a branch
-migration task at the shared base as a shortcut.
+schema. A changed path under `services/tadoku-api/migrations/`, including an
+uncommitted scratch migration, automatically selects profile
+`isolated-database`. Startup prints `profile=isolated-database` and resolves
+`DATABASE` to `tadoku-<route>` while keeping the same `tadoku/<route>` test tenant.
+Its `beforeUp` hooks run `migrate`, then `tenant`; provider lifecycle and worker
+ownership hooks are unchanged. Ordinary `dev up` creates no database.
+
+A migration-only change selects no deployable: migration files are not in any
+`dev_deployable`'s Bazel dependencies. Add the API explicitly, which also selects
+its private worker:
+
+```sh
+dev up --owner alice --service tadoku-api
+```
+
+Both use the isolated database and the branch tenant. The bounded migration
+task runs in `tdk-dev-data` beside its owner Secret. Its database name is the
+literal `tadoku-${DEV_ROUTE}`, independent of configuration variables, so it
+cannot migrate shared `tadoku`. Database creation requires the route-shaped
+name, length limit, owner `tadoku_owner` and matching dev-cli marker, and
+serializes with an advisory lock. It applies the base's runtime DML and sequence
+default privileges. Migrations use `tadoku_owner`; API, worker and fixtures use
+non-owner `tadoku`, with RLS and no DDL or migration-table writes.
+
+A retained database owned by legacy role `tadoku`, or without the expected
+marker, fails closed. Inspect it using
+[Development base data safety](../operations/development-base.md#data-safety)
+and obtain exact-name removal approval; do not transfer ownership, reset it or
+drop it to make startup pass. For a dirty branch migration, follow
+[Migration recovery](../operations/migration-recovery.md#development-migration-branches).
+
+After the migration merges and deploys to the shared base, rebase onto updated
+`main`, run `dev down --owner alice`, then `dev up --owner alice`. A live route
+cannot switch profile or resolved variables: rerunning up after removing the
+scratch migration or rebasing refuses with `run dev down first`, before new
+hooks or overlays. Down uses the recorded isolated database even if current
+changes now select `default`. It removes that tenant and provider state while
+retaining the marked branch database. The next ordinary up returns to `tadoku`.
+Database deletion always requires separate exact-name approval. Migration
+overlays are development-only and never deploy to production.
 
 ### Leaderboards on shared Valkey
 
@@ -353,8 +388,9 @@ It does not stop the Argo CD base. Ctrl-C alone leaves overlays running.
   Rerun `dev down`, or `dev cleanup` for expired routes. A missing recorded task
   causes cleanup to skip that route; use compatible configuration rather than
   deleting its marker. Do not force removal of a failed teardown's marker.
-- Ordinary branches leave no database to drop. **Previously retained branch
-  databases remain retained** after down and TTL cleanup. Deleting one requires
+- Ordinary branches leave no database to drop. **Migration branch databases
+  and previously retained databases remain retained** after down and TTL cleanup.
+  Deleting one requires
   inspecting its exact name, marker, owner and active connections, then separate
   authorization.
 - Never drop the shared `tadoku`, `kratos` or `keto` databases, and never

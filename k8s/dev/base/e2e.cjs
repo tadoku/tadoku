@@ -51,6 +51,23 @@ try {
   if (devConfig.kubeContext !== 'homelab-talos-dev' || devConfig.variables?.DATABASE !== 'tadoku' || devConfig.variables?.TENANT !== 'tadoku/${DEV_ROUTE}') throw new Error('Normal branch provisioning must resolve a tenant on the Talos base database')
   if (!hooks.length || hooks.some(name => !taskNames.has(name)) || taskNames.has('seed')) throw new Error('Tenant lifecycle hooks must name declared tasks and replace the private-database seed task')
   if (devConfig.hooks.beforeUp.join(',') !== 'tenant' || devConfig.hooks.afterDown.join(',') !== 'tenant-teardown' || devConfig.hooks.deployables['tadoku-worker']?.beforeStart?.join(',') !== 'worker-override-set' || devConfig.hooks.deployables['tadoku-worker']?.afterStop?.join(',') !== 'worker-override-clear') throw new Error('Tenant and worker ownership hooks must bracket the correct lifecycle operations')
+  const migrationProfile = devConfig.profiles?.find(profile => profile.name === 'isolated-database')
+  if (migrationProfile?.whenChanged?.join(',') !== 'services/tadoku-api/migrations/' || migrationProfile.variables?.DATABASE !== 'tadoku-${DEV_ROUTE}' || migrationProfile.hooks?.beforeUp?.join(',') !== 'migrate,tenant' || migrationProfile.hooks?.afterDown !== undefined) throw new Error('Migration branches must automatically select an isolated database, migrate before tenant provisioning and inherit tenant teardown')
+  for (const profile of devConfig.profiles) {
+    if (Object.keys(profile.variables || {}).some(name => !(name in devConfig.variables))) throw new Error(`Profile ${profile.name} names undeclared variables`)
+    const profileHooks = [profile.hooks?.beforeUp, profile.hooks?.afterDown, ...Object.values(profile.hooks?.deployables || {}).flatMap(deployable => [deployable.beforeStart, deployable.afterStop])].flat().filter(Boolean)
+    if (profileHooks.some(name => !taskNames.has(name))) throw new Error(`Profile ${profile.name} names undeclared lifecycle tasks`)
+  }
+  const migrationTask = devConfig.tasks.find(task => task.name === 'migrate')
+  if (migrationTask?.namespace !== 'tdk-dev-data' || migrationTask.dependencies?.join(',') !== 'database' || migrationTask.target !== 'tadoku-dev-db.tdk-dev-data/tadoku-${DEV_ROUTE}') throw new Error('Branch migration must run with its database dependency and owner Secret in the data namespace')
+  const branchMigration = Y.parse(fs.readFileSync(path.join(root, migrationTask.manifest), 'utf8'))
+  for (const container of [...branchMigration.spec.template.spec.containers, ...branchMigration.spec.template.spec.initContainers]) {
+    const databaseName = container.name === 'migrate' ? 'POSTGRES_DATABASE' : 'PGDATABASE'
+    const userName = container.name === 'migrate' ? 'POSTGRES_USER' : 'PGUSER'
+    const passwordName = container.name === 'migrate' ? 'POSTGRES_PASSWORD' : 'PGPASSWORD'
+    if (envValue(container, databaseName) !== 'tadoku-${DEV_ROUTE}' || [userName, passwordName].some(name => container.env.find(env => env.name === name)?.valueFrom?.secretKeyRef?.name !== 'tadoku-owner.tadoku-dev-db.credentials.postgresql.acid.zalan.do')) throw new Error('Branch migrations and grants must use the literal branch database with owner credentials, never the base or a resolved database variable')
+  }
+  report.migrationProfile = { name: migrationProfile.name, whenChanged: migrationProfile.whenChanged, database: migrationProfile.variables.DATABASE, beforeUp: migrationProfile.hooks.beforeUp, afterDown: devConfig.hooks.afterDown, namespace: migrationTask.namespace }
   for (const name of ['tenant', 'tenant-teardown', 'worker-override-set', 'worker-override-clear']) {
     const task = devConfig.tasks.find(task => task.name === name)
     if (!task || task.namespace !== 'tdk-dev-data' || task.dependencies?.length || task.target !== 'tadoku-dev-db.tdk-dev-data/tadoku-${DEV_ROUTE}') throw new Error(`Lifecycle task ${name} must serialize by route without a database dependency`)
@@ -195,6 +212,26 @@ try {
   fs.mkdirSync(branchConfigDir)
   for (const [file, content] of Object.entries(branchConfig.data)) fs.writeFileSync(path.join(branchConfigDir, file), content)
   run('docker', ['cp', branchConfigDir, `${db}:/config`])
+  const provision = Y.parse(fs.readFileSync(path.join(root, '.dev/database.yaml'), 'utf8')).spec.template.spec.containers[0]
+  function prepareBranch(branch, expectFailure = false) {
+    run('docker', [
+      'exec', '-i', '-e', `DEV_ROUTE=${branch}`, '-e', 'PGUSER=postgres', '-e', 'PGDATABASE=postgres', db,
+      ...provision.command,
+      ...provision.args.map(arg => arg.replaceAll('$$', '$')),
+    ], undefined, expectFailure)
+  }
+  for (const invalidRoute of ['invalid/route', `${'a'.repeat(56)}-0123abcd`]) {
+    prepareBranch(invalidRoute, true)
+    const refusal = fs.readFileSync(path.join(evidence, report.steps.at(-1).log), 'utf8')
+    if (!refusal.includes('refusing invalid or overlong branch database name')) throw new Error('Invalid names must fail before database creation')
+    const created = run('docker', ['exec', db, 'psql', '-X', '-U', 'postgres', '-Atc', `select exists(select from pg_database where datname = 'tadoku-${invalidRoute}')`])
+    if (created !== 'f') throw new Error('Invalid branch provisioning created a database')
+  }
+  const unmarkedRoute = 'owner-split-unmarked-0123abcd'
+  run('docker', ['exec', db, 'psql', '-X', '-U', 'postgres', '-v', 'ON_ERROR_STOP=1', '-c', `create database "tadoku-${unmarkedRoute}" owner tadoku_owner`])
+  prepareBranch(unmarkedRoute, true)
+  const unmarkedOwner = run('docker', ['exec', db, 'psql', '-X', '-U', 'postgres', '-Atc', `select pg_get_userbyid(datdba) || '|' || coalesce(shobj_description(oid, 'pg_database'), '') from pg_database where datname = 'tadoku-${unmarkedRoute}'`])
+  if (unmarkedOwner !== 'tadoku_owner|') throw new Error('Refused provisioning changed an unmarked database')
   for (const branch of ['owner-split-existing-0123abcd', 'owner-split-fresh-0123abcd']) {
     if (branch.includes('existing')) run('docker', ['exec', '-i', db, 'psql', '-X', '-U', 'postgres', '-v', 'ON_ERROR_STOP=1'], `
       create database "tadoku-${branch}" owner tadoku;
@@ -203,16 +240,15 @@ try {
       set role tadoku;
       create table legacy_owner_split_proof(id bigint);
     `)
-    migrate(ownership, `${branch}-existing`)
-    const provision = Y.parse(fs.readFileSync(path.join(root, '.dev/database.yaml'), 'utf8')).spec.template.spec.containers[0]
-    function prepareBranch() {
-      run('docker', [
-        'exec', '-i', '-e', `DEV_ROUTE=${branch}`, '-e', 'PGUSER=postgres', '-e', 'PGDATABASE=postgres', db,
-        ...provision.command,
-        ...provision.args.map(arg => arg.replaceAll('$$', '$')),
-      ])
+    if (branch.includes('existing')) {
+      prepareBranch(branch, true)
+      const refusal = fs.readFileSync(path.join(evidence, report.steps.at(-1).log), 'utf8')
+      if (!refusal.includes('phase 4.6')) throw new Error('Legacy-owned retained databases must fail closed and point to approved phase 4.6 removal')
+      const unchangedOwner = run('docker', ['exec', db, 'psql', '-X', '-U', 'postgres', '-Atc', `select pg_get_userbyid(datdba) from pg_database where datname = 'tadoku-${branch}'`])
+      if (unchangedOwner !== 'tadoku') throw new Error('Refused branch provisioning must preserve legacy database ownership')
     }
-    prepareBranch()
+    migrate(ownership, `${branch}-existing`)
+    prepareBranch(branch)
     const branchMigrate = Y.parse(fs.readFileSync(path.join(root, '.dev/migrate.yaml'), 'utf8'))
     const migrationInit = branchMigrate.spec.template.spec.initContainers?.find(c => c.name === 'migrate')
     if (!migrationInit) throw new Error('Branch migration must complete before the runtime-grant post-step')
@@ -220,9 +256,15 @@ try {
     migrate(branchMigrate, `${branch}-init`, false, `tadoku-${branch}`, migrationInit)
     migrate(branchMigrate, `${branch}-grants`, false, `tadoku-${branch}`)
     assertRuntime(`tadoku-${branch}`)
-    prepareBranch()
+    if (branch.includes('fresh')) {
+      run('docker', ['exec', db, 'psql', '-X', '-U', 'postgres', '-d', `tadoku-${branch}`, '-v', 'ON_ERROR_STOP=1', '-c', 'revoke select on schema_migrations from tadoku'])
+      migrate(branchMigrate, `${branch}-invalid-grants`, true, `tadoku-${branch}`)
+      const invalidGrants = report.steps.find(step => step.command.includes(`${prefix}-migrate-${branch}-invalid-grants`) && step.command.includes('start'))
+      if (!fs.readFileSync(path.join(evidence, invalidGrants.log), 'utf8').includes('runtime migration-table grants are invalid')) throw new Error('Invalid runtime grants must fail the branch migration task')
+    }
+    prepareBranch(branch)
   }
-  report.ownerSplit = { fresh: 'passed', existing: 'passed', repeated: 'passed', branch: 'passed', runtime: 'tadoku', owner: 'tadoku_owner' }
+  report.ownerSplit = { fresh: 'passed', existing: 'passed', repeated: 'passed', branch: 'passed', invalidNames: 'refused', unmarkedDatabase: 'refused unchanged', legacyOwner: 'refused unchanged', invalidMigrationGrants: 'refused', runtime: 'tadoku', owner: 'tadoku_owner' }
 
   run('bazel', ['build', '//services/tadoku-api:dev', '//services/tadoku-api:worker_dev'])
   const apiMetadata = JSON.parse(fs.readFileSync(path.join(root, 'bazel-bin/services/tadoku-api/dev.dev.json')))

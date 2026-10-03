@@ -1,0 +1,67 @@
+name: verify-dev-base
+
+on:
+  pull_request:
+    paths:
+      - ".dev/**"
+      - "k8s/dev/base/**"
+      - "services/tadoku-api/migrations/**"
+      - "services/tadoku-api/BUILD.bazel"
+      - "frontend/pnpm-lock.yaml"
+      - ".github/workflows/verify-dev-base.yaml"
+  push:
+    branches: [main]
+    paths:
+      - ".dev/**"
+      - "k8s/dev/base/**"
+      - "services/tadoku-api/migrations/**"
+      - "services/tadoku-api/BUILD.bazel"
+      - "frontend/pnpm-lock.yaml"
+      - ".github/workflows/verify-dev-base.yaml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-dev-base-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Verify development base E2E
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
+        with:
+          version: 10.10.0
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - uses: bazel-contrib/setup-bazel@c5acdfb288317d0b5c0bbd7a396a3dc868bb0f86 # v0.19.0
+        with:
+          bazelisk-cache: true
+          repository-cache: true
+          disk-cache: ${{ github.workflow }}
+          cache-save: ${{ github.event_name != 'pull_request' }}
+
+      - name: Install locked YAML parser dependencies
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Run real-image migration, ownership and frontend E2E
+        run: node k8s/dev/base/e2e.cjs "$RUNNER_TEMP/tadoku-base-evidence"
+
+      - name: Retain inspectable verification evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: development-base-evidence
+          path: ${{ runner.temp }}/tadoku-base-evidence
+          if-no-files-found: error

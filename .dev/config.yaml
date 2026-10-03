@@ -29,6 +29,13 @@ hooks:
     tadoku-worker:
       beforeStart: [worker-override-set]
       afterStop: [worker-override-clear]
+profiles:
+  - name: isolated-database
+    whenChanged: [services/tadoku-api/migrations/]
+    variables:
+      DATABASE: tadoku-${DEV_ROUTE}
+    hooks:
+      beforeUp: [migrate, tenant]
 bazelArgs:
   - --platforms=@rules_go//go/toolchain:linux_amd64
   - --@rules_go//go/config:pure
@@ -45,7 +52,7 @@ dependencies:
         timeout: 300s
 tasks:
   - name: migrate
-    namespace: tdk-dev-tadoku-api
+    namespace: tdk-dev-data
     manifest: .dev/migrate.yaml
     target: tadoku-dev-db.tdk-dev-data/tadoku-${DEV_ROUTE}
     dependencies:

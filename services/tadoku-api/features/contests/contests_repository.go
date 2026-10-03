@@ -122,51 +122,57 @@ func (r *ContestsRepository) ListOngoingRegistrations(ctx context.Context, userI
 
 	result := make([]Registration, 0, len(rows))
 	for _, row := range rows {
-		registration := registrationFromRow(queries.ListYearlyContestRegistrationsRow{
-			ID:                      row.ID,
-			ContestID:               row.ContestID,
-			UserID:                  row.UserID,
-			LanguageCodes:           row.LanguageCodes,
-			UserDisplayName:         row.UserDisplayName,
-			ActivityTypeIDAllowList: row.ActivityTypeIDAllowList,
-			RegistrationEnd:         row.RegistrationEnd,
-			ContestStart:            row.ContestStart,
-			ContestEnd:              row.ContestEnd,
-			Private:                 row.Private,
-			Official:                row.Official,
-			Title:                   row.Title,
-			Description:             row.Description,
-		})
-		registration.Contest.OwnerUserID = uuid.UUID(row.OwnerUserID.Bytes)
-		registration.Contest.OwnerUserDisplayName = row.OwnerUserDisplayName
-
-		result = append(result, registration)
+		result = append(result, registrationFromRow(row))
 	}
 
 	return result, nil
 }
 
-func (r *ContestsRepository) ListYearlyRegistrations(ctx context.Context, userID uuid.UUID, year int32, includePrivate bool) ([]Registration, error) {
+func (r *ContestsRepository) ListYearlyRegistrations(
+	ctx context.Context,
+	parameters YearlyRegistrationsParameters,
+) ([]Registration, int, error) {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	rows, err := queries.New(executor).ListYearlyContestRegistrations(ctx, queries.ListYearlyContestRegistrationsParams{
-		UserID:         postgres.UUID(userID),
-		Year:           year,
-		IncludePrivate: includePrivate,
+		UserID:         postgres.UUID(parameters.UserID),
+		Year:           int32(parameters.Year),
+		IncludePrivate: parameters.includePrivate,
+		StartFrom:      parameters.offset(),
+		PageSize:       int32(parameters.PageSize),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("list yearly contest registrations: %w", err)
+		return nil, 0, fmt.Errorf("list yearly contest registrations: %w", err)
 	}
 
 	result := make([]Registration, 0, len(rows))
+	var total int
 	for _, row := range rows {
-		result = append(result, registrationFromRow(row))
+		total = int(row.TotalSize)
+		if !row.ID.Valid {
+			continue
+		}
+		result = append(result, registrationFromRow(queries.ListOngoingContestRegistrationsRow{
+			ID:                      row.ID,
+			ContestID:               row.ContestID,
+			UserID:                  row.UserID,
+			LanguageCodes:           row.LanguageCodes,
+			UserDisplayName:         row.UserDisplayName.String,
+			ActivityTypeIDAllowList: row.ActivityTypeIDAllowList,
+			RegistrationEnd:         row.RegistrationEnd,
+			ContestStart:            row.ContestStart,
+			ContestEnd:              row.ContestEnd,
+			Private:                 row.Private.Bool,
+			Official:                row.Official.Bool,
+			Title:                   row.Title.String,
+			Description:             row.Description,
+		}))
 	}
 
-	return result, nil
+	return result, total, nil
 }
 
 func (r *ContestsRepository) DetachContestLogsForLanguages(
@@ -360,7 +366,7 @@ func (r *ContestsRepository) ListLanguagesForContest(ctx context.Context, contes
 	return result, nil
 }
 
-func registrationFromRow(row queries.ListYearlyContestRegistrationsRow) Registration {
+func registrationFromRow(row queries.ListOngoingContestRegistrationsRow) Registration {
 	return Registration{
 		ID:              uuid.UUID(row.ID.Bytes),
 		ContestID:       uuid.UUID(row.ContestID.Bytes),
@@ -368,17 +374,19 @@ func registrationFromRow(row queries.ListYearlyContestRegistrationsRow) Registra
 		UserDisplayName: row.UserDisplayName,
 		LanguageCodes:   row.LanguageCodes,
 		Contest: &ContestView{
-			ID:                 uuid.UUID(row.ContestID.Bytes),
-			ContestStart:       row.ContestStart.Time,
-			ContestEnd:         row.ContestEnd.Time,
-			RegistrationEnd:    row.RegistrationEnd.Time,
-			Title:              row.Title,
-			Description:        postgres.TextPointer(row.Description),
-			Official:           row.Official,
-			Private:            row.Private,
-			AllowedLanguages:   []Language{},
-			AllowedActivities:  make([]Activity, 0, len(row.ActivityTypeIDAllowList)),
-			allowedActivityIDs: row.ActivityTypeIDAllowList,
+			ID:                   uuid.UUID(row.ContestID.Bytes),
+			ContestStart:         row.ContestStart.Time,
+			ContestEnd:           row.ContestEnd.Time,
+			RegistrationEnd:      row.RegistrationEnd.Time,
+			Title:                row.Title,
+			Description:          postgres.TextPointer(row.Description),
+			OwnerUserID:          uuid.UUID(row.OwnerUserID.Bytes),
+			OwnerUserDisplayName: row.OwnerUserDisplayName,
+			Official:             row.Official,
+			Private:              row.Private,
+			AllowedLanguages:     []Language{},
+			AllowedActivities:    make([]Activity, 0, len(row.ActivityTypeIDAllowList)),
+			allowedActivityIDs:   row.ActivityTypeIDAllowList,
 		},
 	}
 }

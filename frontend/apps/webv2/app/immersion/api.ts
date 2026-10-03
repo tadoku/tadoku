@@ -1170,16 +1170,30 @@ export const useYearlyContestRegistrations = (
   opts: {
     userId: string
     year: string | number
+    pageSize: number
+    page: number
   },
   options?: {
     enabled?: boolean
   },
 ) =>
   useQuery(
-    ['users', opts.userId, 'contest-registrations', opts.year],
+    [
+      'users',
+      opts.userId,
+      'contest-registrations',
+      opts.year,
+      { pageSize: opts.pageSize, page: opts.page },
+    ],
     async (): Promise<ContestRegistrationsView> => {
+      const params = {
+        page_size: opts.pageSize.toString(),
+        page: (opts.page - 1).toString(),
+      }
       const response = await fetch(
-        `${root}/users/${opts.userId}/contest-registrations/${opts.year}`,
+        `${root}/users/${opts.userId}/contest-registrations/${
+          opts.year
+        }?${new URLSearchParams(params)}`,
       )
 
       if (response.status !== 200) {

@@ -1117,6 +1117,12 @@ type ImmersionLogContestRegistrationUpdateJSONBody struct {
 	RegistrationIds []openapi_types.UUID `json:"registration_ids"`
 }
 
+// ImmersionProfileYearlyContestRegistrationsByUserIDParams defines parameters for ImmersionProfileYearlyContestRegistrationsByUserID.
+type ImmersionProfileYearlyContestRegistrationsByUserIDParams struct {
+	PageSize *int `form:"page_size,omitempty" json:"page_size,omitempty"`
+	Page     *int `form:"page,omitempty" json:"page,omitempty"`
+}
+
 // ImmersionProfileListLogsParams defines parameters for ImmersionProfileListLogs.
 type ImmersionProfileListLogsParams struct {
 	IncludeDeleted *bool `form:"include_deleted,omitempty" json:"include_deleted,omitempty"`
@@ -1383,7 +1389,7 @@ type ServerInterface interface {
 	ImmersionProfileYearlyActivityByUserID(w http.ResponseWriter, r *http.Request, userId openapi_types.UUID, year int)
 	// ImmersionProfileYearlyContestRegistrationsByUserID Fetches the contest registrations of a user for a given year
 	// (GET /immersion/users/{userId}/contest-registrations/{year})
-	ImmersionProfileYearlyContestRegistrationsByUserID(w http.ResponseWriter, r *http.Request, userId openapi_types.UUID, year int)
+	ImmersionProfileYearlyContestRegistrationsByUserID(w http.ResponseWriter, r *http.Request, userId openapi_types.UUID, year int, params ImmersionProfileYearlyContestRegistrationsByUserIDParams)
 	// ImmersionProfileFindByUserID Fetches a profile of a user
 	// (GET /immersion/users/{userId}/profile)
 	ImmersionProfileFindByUserID(w http.ResponseWriter, r *http.Request, userId openapi_types.UUID)
@@ -3486,8 +3492,37 @@ func (siw *ServerInterfaceWrapper) ImmersionProfileYearlyContestRegistrationsByU
 		return
 	}
 
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ImmersionProfileYearlyContestRegistrationsByUserIDParams
+
+	// ------------- Optional query parameter "page_size" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page_size", r.URL.Query(), &params.PageSize, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page_size"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page_size", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ImmersionProfileYearlyContestRegistrationsByUserID(w, r, userId, year)
+		siw.Handler.ImmersionProfileYearlyContestRegistrationsByUserID(w, r, userId, year, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -6427,6 +6462,7 @@ func (response ImmersionProfileYearlyActivityByUserID500Response) VisitImmersion
 type ImmersionProfileYearlyContestRegistrationsByUserIDRequestObject struct {
 	UserId openapi_types.UUID `json:"userId"`
 	Year   int                `json:"year"`
+	Params ImmersionProfileYearlyContestRegistrationsByUserIDParams
 }
 
 type ImmersionProfileYearlyContestRegistrationsByUserIDResponseObject interface {
@@ -8652,11 +8688,12 @@ func (sh *strictHandler) ImmersionProfileYearlyActivityByUserID(w http.ResponseW
 }
 
 // ImmersionProfileYearlyContestRegistrationsByUserID operation middleware
-func (sh *strictHandler) ImmersionProfileYearlyContestRegistrationsByUserID(w http.ResponseWriter, r *http.Request, userId openapi_types.UUID, year int) {
+func (sh *strictHandler) ImmersionProfileYearlyContestRegistrationsByUserID(w http.ResponseWriter, r *http.Request, userId openapi_types.UUID, year int, params ImmersionProfileYearlyContestRegistrationsByUserIDParams) {
 	var request ImmersionProfileYearlyContestRegistrationsByUserIDRequestObject
 
 	request.UserId = userId
 	request.Year = year
+	request.Params = params
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.ImmersionProfileYearlyContestRegistrationsByUserID(ctx, request.(ImmersionProfileYearlyContestRegistrationsByUserIDRequestObject))

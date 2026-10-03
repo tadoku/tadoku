@@ -3,6 +3,7 @@ package contests
 import (
 	"math"
 	"sort"
+	"strconv"
 	"time"
 	"unicode/utf8"
 
@@ -246,20 +247,54 @@ type ListParameters struct {
 }
 
 func (p ListParameters) Validate() error {
-	if p.PageSize < 0 {
+	return validatePage(p.PageSize, p.Page)
+}
+
+func (p ListParameters) offset() int32 {
+	return pageOffset(p.PageSize, p.Page)
+}
+
+const yearlyRegistrationsMaxPageSize = 50
+
+type YearlyRegistrationsParameters struct {
+	UserID   uuid.UUID
+	Year     int
+	PageSize int
+	Page     int
+
+	includePrivate bool
+}
+
+func (p YearlyRegistrationsParameters) Validate() error {
+	return validatePage(p.PageSize, p.Page)
+}
+
+func (p YearlyRegistrationsParameters) offset() int32 {
+	return pageOffset(p.PageSize, p.Page)
+}
+
+func validatePage(pageSize, page int) error {
+	if pageSize < 0 {
 		return errx.NewInvalidInputError("page_size must not be negative")
 	}
-	if p.Page < 0 {
+	if page < 0 {
 		return errx.NewInvalidInputError("page must not be negative")
 	}
 	return nil
 }
 
-func (p ListParameters) offset() int32 {
-	if p.PageSize > 0 && p.Page > math.MaxInt32/p.PageSize {
+func pageOffset(pageSize, page int) int32 {
+	if pageSize > 0 && page > math.MaxInt32/pageSize {
 		return math.MaxInt32
 	}
-	return int32(p.Page * p.PageSize)
+	return int32(page * pageSize)
+}
+
+func nextPageToken(pageSize, page, total int) string {
+	if int64(pageOffset(pageSize, page))+int64(pageSize) < int64(total) {
+		return strconv.Itoa(page + 1)
+	}
+	return ""
 }
 
 type findParameters struct {

@@ -15,6 +15,7 @@ import (
 )
 
 type ListContestsParameters = contests.ListParameters
+type ListYearlyContestRegistrationsParameters = contests.YearlyRegistrationsParameters
 type ContestView = contests.ContestView
 type Contest = contests.Contest
 type ContestSummary = contests.ContestSummary
@@ -239,14 +240,17 @@ func (a *Application) UpsertContestRegistration(ctx context.Context, parameters 
 	})
 }
 
-func (a *Application) ListYearlyContestRegistrations(ctx context.Context, userID uuid.UUID, year int) (*ContestRegistrationList, error) {
+func (a *Application) ListYearlyContestRegistrations(
+	ctx context.Context,
+	parameters ListYearlyContestRegistrationsParameters,
+) (*ContestRegistrationList, error) {
 	actorID, ok := identity.ActorID(ctx)
-	includePrivate := a.permissions.IsAdminOrFalse(ctx) || (ok && actorID == userID)
+	includePrivate := a.permissions.IsAdminOrFalse(ctx) || (ok && actorID == parameters.UserID)
 
 	languages, err := a.languages.ListLanguages(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return a.contests.ListYearlyRegistrations(ctx, userID, year, includePrivate, languages)
+	return a.contests.ListYearlyRegistrations(ctx, parameters, includePrivate, languages)
 }

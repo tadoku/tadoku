@@ -1,10 +1,12 @@
 import { useRouter } from 'next/router'
+import { useState } from 'react'
 import {
   ActionMenu,
   Breadcrumb,
   Flash,
   HeatmapChart,
   Loading,
+  Pagination,
   Tabbar,
   VerticalTabbar,
 } from 'ui'
@@ -32,6 +34,8 @@ import { formatScore } from '@app/common/format'
 import { ActivitySplitChart } from '@app/immersion/ActivitySplitChart'
 import Head from 'next/head'
 
+const registrationsPageSize = 50
+
 const Page = () => {
   const router = useRouter()
   const userId = router.query['id']?.toString() ?? ''
@@ -43,7 +47,19 @@ const Page = () => {
   const profile = useUserProfile({ userId })
   const activitySummary = useUserYearlyActivity({ userId, year })
   const scores = useProfileScores({ userId, year })
-  const registrations = useYearlyContestRegistrations({ userId, year })
+  const registrationsKey = `${userId}/${year}`
+  const [registrationsPage, setRegistrationsPage] = useState({
+    key: registrationsKey,
+    page: 1,
+  })
+  const page =
+    registrationsPage.key === registrationsKey ? registrationsPage.page : 1
+  const registrations = useYearlyContestRegistrations({
+    userId,
+    year,
+    pageSize: registrationsPageSize,
+    page,
+  })
   const activitySplit = useUserYearlyActivitySplit({ userId, year })
 
   if (profile.isLoading) {
@@ -225,6 +241,20 @@ const Page = () => {
                   Hasn&apos;t participated in any contests
                 </Flash>
               </ul>
+              {registrations.data &&
+              registrations.data.total_size > registrationsPageSize ? (
+                <div className="p-4">
+                  <Pagination
+                    currentPage={page}
+                    totalPages={Math.ceil(
+                      registrations.data.total_size / registrationsPageSize,
+                    )}
+                    onClick={it =>
+                      setRegistrationsPage({ key: registrationsKey, page: it })
+                    }
+                  />
+                </div>
+              ) : null}
             </div>
             <div className="card narrow w-full">
               <h3 className="subtitle mb-4">Activities</h3>

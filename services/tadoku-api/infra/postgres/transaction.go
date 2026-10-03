@@ -109,7 +109,7 @@ func (executor poolExecutor) batch(ctx context.Context, query string, args ...an
 
 	results := executor.db.SendBatch(ctx, batch)
 	if _, err := results.Exec(); err != nil {
-		return nil, errors.Join(err, results.Close())
+		return nil, classify(errors.Join(err, results.Close()))
 	}
 	return results, nil
 }
@@ -120,7 +120,7 @@ func (executor poolExecutor) Exec(ctx context.Context, query string, args ...any
 		return pgconn.CommandTag{}, err
 	}
 	tag, err := results.Exec()
-	return tag, errors.Join(err, results.Close())
+	return tag, classify(errors.Join(err, results.Close()))
 }
 
 func (executor poolExecutor) Query(ctx context.Context, query string, args ...any) (pgx.Rows, error) {
@@ -130,7 +130,7 @@ func (executor poolExecutor) Query(ctx context.Context, query string, args ...an
 	}
 	rows, err := results.Query()
 	if err != nil {
-		return nil, errors.Join(err, results.Close())
+		return nil, classify(errors.Join(err, results.Close()))
 	}
 	return &batchRows{Rows: rows, results: results}, nil
 }
@@ -172,11 +172,11 @@ func (rows *batchRows) Scan(dest ...any) error {
 	if err != nil {
 		rows.Close()
 	}
-	return errors.Join(err, rows.closeErr)
+	return classify(errors.Join(err, rows.closeErr))
 }
 
 func (rows *batchRows) Err() error {
-	return errors.Join(rows.Rows.Err(), rows.closeErr)
+	return classify(errors.Join(rows.Rows.Err(), rows.closeErr))
 }
 
 type batchRow struct {
@@ -191,9 +191,9 @@ func (row batchRow) Scan(dest ...any) error {
 	}
 	err := row.Row.Scan(dest...)
 	if closeErr := row.results.Close(); closeErr != nil {
-		return errors.Join(err, closeErr)
+		return classify(errors.Join(err, closeErr))
 	}
-	return err
+	return classify(err)
 }
 
 // All transaction work must finish in the callback. Nested scopes are rejected;
@@ -202,7 +202,9 @@ func (row batchRow) Scan(dest ...any) error {
 // concurrently; SQL within a transaction must not run in parallel.
 //
 // A commit error can leave persistence uncertain; do not retry the callback.
-func RunInTransaction(ctx context.Context, db *pgxpool.Pool, work func(context.Context) error) error {
+func RunInTransaction(ctx context.Context, db *pgxpool.Pool, work func(context.Context) error) (err error) {
+	defer func() { err = classify(err) }()
+
 	if s, ok := ctx.Value(scopeKey{}).(*scope); ok {
 		if s.done.Load() {
 			return pgx.ErrTxClosed

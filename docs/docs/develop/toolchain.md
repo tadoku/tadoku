@@ -132,5 +132,8 @@ All workflows live in `.github/workflows/`.
 
 Frontend application images from `dev/` branches publish only their immutable commit tag.
 They never update `latest` or `prod`. Development manifests can pin those images
-without merging frontend runtime changes into `main`; main publication still updates
-all three tags. This applies to webv2, auth and admin.
+without a production release. Main publication updates the commit tag and `latest`
+for development. All five frontend workflows update `prod` only through a manual
+workflow dispatch on `main` with `publish_production: true`, after the owner approves
+production. This also lets frontend source land on main for future branch overlays
+while production remains on its previous image.

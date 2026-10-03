@@ -1,6 +1,13 @@
 name: build-frontend-paper-styleguide
 
 on:
+  workflow_dispatch:
+    inputs:
+      publish_production:
+        description: Publish the production image after owner approval
+        type: boolean
+        default: false
+        required: true
   pull_request:
     paths:
       - "frontend/apps/paper-styleguide/**"
@@ -112,7 +119,7 @@ jobs:
 
   publish:
     name: paper / publish
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     needs: [boundaries, quality, static-image]
     runs-on: ubuntu-latest
     timeout-minutes: 25
@@ -137,8 +144,12 @@ jobs:
           push: true
           tags: |
             ghcr.io/tadoku/tadoku/frontend-paper-styleguide:${{ github.sha }}
-            ghcr.io/tadoku/tadoku/frontend-paper-styleguide:prod
             ghcr.io/tadoku/tadoku/frontend-paper-styleguide:latest
+      - name: Publish production tag after approval
+        if: github.event_name == 'workflow_dispatch' && inputs.publish_production
+        run: |
+          docker buildx imagetools create --tag ghcr.io/tadoku/tadoku/frontend-paper-styleguide:prod \
+            ghcr.io/tadoku/tadoku/frontend-paper-styleguide@${{ steps.image.outputs.digest }}
       - name: Record release identity
         run: |
           echo "### Tadoku Paper image" >> "$GITHUB_STEP_SUMMARY"

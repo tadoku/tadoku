@@ -4,7 +4,7 @@
     url: http://tadoku-cli-api.tdk-dev-oathkeeper.svc.cluster.local
     strip_path: /api/internal
   match:
-    url: http://tadoku.dev.lab/api/internal/content/<**>
+    url: http://<{tadoku.dev.lab,*.tadoku.dev.lab}>/api/internal/content/<**>
     methods:
       - GET
       - POST
@@ -24,7 +24,7 @@
     url: http://tadoku-cli-api.tdk-dev-oathkeeper.svc.cluster.local
     strip_path: /api/internal
   match:
-    url: http://tadoku.dev.lab/api/internal/immersion/<**>
+    url: http://<{tadoku.dev.lab,*.tadoku.dev.lab}>/api/internal/immersion/<**>
     methods:
       - GET
       - POST
@@ -59,7 +59,7 @@
     url: http://tadoku-cli-api.tdk-dev-oathkeeper.svc.cluster.local
     strip_path: /api/internal
   match:
-    url: http://tadoku.dev.lab/api/internal/authz/<**>
+    url: http://<{tadoku.dev.lab,*.tadoku.dev.lab}>/api/internal/authz/<**>
     methods:
       - GET
       - POST
@@ -79,7 +79,7 @@
     url: http://tadoku-cli-api.tdk-dev-oathkeeper.svc.cluster.local
     strip_path: /api/internal
   match:
-    url: http://tadoku.dev.lab/api/internal/profile/<**>
+    url: http://<{tadoku.dev.lab,*.tadoku.dev.lab}>/api/internal/profile/<**>
     methods:
       - GET
       - POST

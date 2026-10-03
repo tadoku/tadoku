@@ -211,8 +211,8 @@ browser → ingress-nginx → Envoy → webv2 / auth / admin
 - Base and branch frontends send server-side rendering requests through the
   same gateway with Lab CA trust, so an API-only selection also applies to
   server-rendered pages.
-- Kratos already allows the development hostnames; no temporary auth allowlist
-  is needed.
+- Kratos and Oathkeeper allow the development hosts and every
+  `*.tadoku.dev.lab` branch host; no temporary auth allowlist is needed.
 
 ## Databases, migrations and seed data
 

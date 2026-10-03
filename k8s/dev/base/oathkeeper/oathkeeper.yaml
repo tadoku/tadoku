@@ -11,6 +11,7 @@ serve:
         - https://tadoku.dev.lab
         - https://account.tadoku.dev.lab
         - https://admin.tadoku.dev.lab
+        - https://*.tadoku.dev.lab
       allowed_methods:
         - POST
         - GET

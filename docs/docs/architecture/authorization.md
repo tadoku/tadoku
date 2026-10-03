@@ -25,6 +25,22 @@ its source is `services/tadoku-api/spec/openapi.yaml`.
   banned. Tadoku API reads them from Keto on every request that needs them. Roles
   are not stored in PostgreSQL or in the token, and results are not cached.
 
+## Kratos identity writes
+
+Kratos identities and sessions are shared across tenants. Test tenants never
+modify them. `Writer` in `services/tadoku-api/infra/kratosidentity/` is the only
+application path for deactivating an identity, deleting its sessions or deleting
+the identity itself. It requires a tenant context: `tadoku/prod` applies the
+operation, every other parsed tenant returns `SkippedForTestTenant` and logs
+the tenant and identity ID, and a missing tenant returns an error before making
+a provider request. Repeating an operation against a missing identity succeeds.
+
+The identity read client in `services/tadoku-api/infra/kratos` exposes only
+`FetchIdentity`, `UserExists` and `ListIdentities`. The writer has no HTTP entry
+point and is not wired into account deletion. When that flow is added, it must
+use the writer and handle the skipped outcome after deleting the tenant's own
+application data.
+
 ## Keto data model
 
 | Field | Value |

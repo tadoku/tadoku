@@ -14,7 +14,7 @@ import (
 	kratosclient "github.com/tadoku/tadoku/services/tadoku-api/infra/kratos"
 )
 
-func TestRawAPIClientPreservesProviderResponses(t *testing.T) {
+func TestFetchIdentityPreservesProviderErrors(t *testing.T) {
 	id := uuid.MustParse("00000000-0000-0000-0000-000000000001")
 	for _, status := range []int{http.StatusOK, http.StatusNotFound, http.StatusTooManyRequests, http.StatusInternalServerError} {
 		t.Run(http.StatusText(status), func(t *testing.T) {
@@ -29,12 +29,7 @@ func TestRawAPIClientPreservesProviderResponses(t *testing.T) {
 				if r.Header.Get("Accept") != "application/json" {
 					t.Errorf("Accept=%q", r.Header.Get("Accept"))
 				}
-				if r.URL.Query().Get("include_credential") != "oidc" {
-					t.Errorf("query=%s", r.URL.RawQuery)
-				}
 				w.Header().Set("Content-Type", "application/json")
-				w.Header().Set("X-Request-Id", "provider-request")
-				w.Header().Set("Retry-After", "7")
 				w.WriteHeader(status)
 				_, _ = w.Write([]byte(body))
 			}))
@@ -42,15 +37,14 @@ func TestRawAPIClientPreservesProviderResponses(t *testing.T) {
 			httpClient := provider.Client()
 			httpClient.Timeout = time.Second
 			t.Cleanup(httpClient.CloseIdleConnections)
-			client := kratosclient.NewAPIClient(provider.URL+"/provider", kratosclient.WithHTTPClient(httpClient))
+			client := kratosclient.NewClient(provider.URL+"/provider", kratosclient.WithHTTPClient(httpClient))
 
-			identity, response, err := client.IdentityApi.GetIdentity(t.Context(), id.String()).IncludeCredential([]string{"oidc"}).Execute()
-			if response == nil {
-				t.Fatalf("response missing: %v", err)
-			}
-			t.Cleanup(func() { _ = response.Body.Close() })
-			if response.StatusCode != status || response.Header.Get("X-Request-Id") != "provider-request" || response.Header.Get("Retry-After") != "7" {
-				t.Errorf("provider response changed: %v", response)
+			identity, err := client.FetchIdentity(t.Context(), id)
+			if status == http.StatusNotFound {
+				if !errors.Is(err, kratosclient.ErrNotFound) {
+					t.Errorf("missing identity error=%v", err)
+				}
+				return
 			}
 			if status != http.StatusOK {
 				var providerErr *kratosapi.GenericOpenAPIError
@@ -61,11 +55,12 @@ func TestRawAPIClientPreservesProviderResponses(t *testing.T) {
 					t.Errorf("error body=%s, want %s", providerErr.Body(), body)
 				}
 				model, ok := providerErr.Model().(kratosapi.ErrorGeneric)
-				if !ok || model.Error.GetReason() != "provider detail" || model.Error.GetCode() != int64(status) {
+				if !ok || model.Error.GetReason() != "provider detail" ||
+					model.Error.GetCode() != int64(status) {
 					t.Errorf("provider error model changed: %v", providerErr.Model())
 				}
 				if errors.Is(err, kratosclient.ErrNotFound) {
-					t.Error("raw client translated the provider error to a legacy sentinel")
+					t.Error("read client translated a provider failure into not-found")
 				}
 				return
 			}
@@ -87,7 +82,7 @@ func TestRawAPIClientPreservesProviderResponses(t *testing.T) {
 	}
 }
 
-func TestRawAPIClientPreservesCancellation(t *testing.T) {
+func TestFetchIdentityPreservesCancellation(t *testing.T) {
 	for _, stage := range []string{"headers", "body"} {
 		for _, cause := range []string{"caller cancel", "caller deadline", "client timeout"} {
 			t.Run(stage+"/"+cause, func(t *testing.T) {
@@ -109,7 +104,7 @@ func TestRawAPIClientPreservesCancellation(t *testing.T) {
 					Timeout:   time.Second,
 				}
 				t.Cleanup(httpClient.CloseIdleConnections)
-				client := kratosclient.NewAPIClient(provider.URL, kratosclient.WithHTTPClient(httpClient))
+				client := kratosclient.NewClient(provider.URL, kratosclient.WithHTTPClient(httpClient))
 				timeout := 3 * time.Second
 				if cause == "caller deadline" {
 					timeout = 100 * time.Millisecond
@@ -122,7 +117,7 @@ func TestRawAPIClientPreservesCancellation(t *testing.T) {
 
 				result := make(chan error, 1)
 				go func() {
-					_, _, err := client.IdentityApi.GetIdentity(ctx, "synthetic").Execute()
+					_, err := client.FetchIdentity(ctx, uuid.Nil)
 					result <- err
 				}()
 				select {

@@ -152,6 +152,8 @@ jobs:
             ghcr.io/tadoku/tadoku/frontend-paper-styleguide@${{ steps.image.outputs.digest }}
       - name: Record release identity
         run: |
-          echo "### Tadoku Paper image" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Source: \`${GITHUB_SHA}\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Digest: \`${{ steps.image.outputs.digest }}\`" >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "### Tadoku Paper image"
+            echo "- Source: \`${GITHUB_SHA}\`"
+            echo "- Digest: \`${{ steps.image.outputs.digest }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"

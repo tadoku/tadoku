@@ -47,7 +47,7 @@ jobs:
         id: pnpm-cache
         shell: bash
         run: |
-          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+          echo "STORE_PATH=$(pnpm store path)" >> "$GITHUB_OUTPUT"
 
       - uses: actions/cache@6f8efc29b200d32929f49075959781ed54ec270c # v3
         name: Setup pnpm cache
@@ -82,7 +82,7 @@ jobs:
         run: |
           docker build \
             --build-arg PROJECT_NAME=admin \
-            -t ghcr.io/tadoku/tadoku/frontend-admin:${GITHUB_SHA} \
+            -t "ghcr.io/tadoku/tadoku/frontend-admin:${GITHUB_SHA}" \
             .
 
       - name: Push images

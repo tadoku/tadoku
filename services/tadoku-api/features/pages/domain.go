@@ -33,7 +33,7 @@ var (
 	ErrPageAlreadyExists = errx.NewConflictError("page already exists")
 )
 
-type CreatePageParameters struct {
+type pageParameters struct {
 	ID          uuid.UUID
 	Namespace   string
 	Slug        string
@@ -42,7 +42,10 @@ type CreatePageParameters struct {
 	PublishedAt *time.Time
 }
 
-func (p CreatePageParameters) Validate() error {
+type CreatePageParameters = pageParameters
+type UpdatePageParameters = pageParameters
+
+func (p pageParameters) Validate() error {
 	if p.ID == uuid.Nil {
 		return errx.NewInvalidInputError("id is required")
 	}
@@ -72,20 +75,4 @@ type PageList struct {
 	Pages         []Page
 	TotalSize     int
 	NextPageToken string
-}
-
-type UpdatePageParameters struct {
-	ID          uuid.UUID
-	Namespace   string
-	Slug        string
-	Title       string
-	HTML        string
-	PublishedAt *time.Time
-}
-
-func (p UpdatePageParameters) Validate() error {
-	if p.ID == uuid.Nil {
-		return errx.NewInvalidInputError("id is required")
-	}
-	return validatePageFields(p.Namespace, p.Slug, p.Title, p.HTML)
 }

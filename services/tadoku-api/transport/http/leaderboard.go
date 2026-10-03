@@ -40,17 +40,13 @@ func (s *server) ImmersionFetchLeaderboardGlobal(ctx context.Context, request op
 	return openapi.ImmersionFetchLeaderboardGlobal200JSONResponse(responseLeaderboard(result)), nil
 }
 
-func requestFromParams(pageSize, page *int, languageCode *string, activityID *int) app.LeaderboardRequest {
-	request := app.LeaderboardRequest{LanguageCode: languageCode}
+func requestFromParams(pageSize, page *int, languageCode *string, activityID *int32) app.LeaderboardRequest {
+	request := app.LeaderboardRequest{LanguageCode: languageCode, ActivityID: activityID}
 	if pageSize != nil {
 		request.PageSize = *pageSize
 	}
 	if page != nil {
 		request.Page = *page
-	}
-	if activityID != nil {
-		narrowed := int32(*activityID)
-		request.ActivityID = &narrowed
 	}
 	return request
 }

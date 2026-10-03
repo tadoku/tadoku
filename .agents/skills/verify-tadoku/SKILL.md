@@ -34,7 +34,7 @@ journeys rather than running the entire inventory for every edit.
    fetching fails. Use a task branch and a unique stable owner for this checkout.
    Check for an existing `dev up` loop belonging to this exact checkout before
    starting another; reuse only your own matching loop.
-2. Run `dev version` (v0.8.0 or newer) and `dev doctor`. Installation, prerequisites and overrides
+2. Run `dev version` (v0.9.0 or newer) and `dev doctor`. Installation, prerequisites and overrides
    are in [Development environment](../../../docs/docs/develop/environment.md).
    Lab networking, DNS, CA trust and existing cluster credentials must already
    work. Doctor is a read-only prerequisite check, not an E2E.

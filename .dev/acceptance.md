@@ -3,7 +3,7 @@
 Scope: webv2, auth, admin, tadoku-api and tadoku-worker. Token-reflector is base-only.
 Paper styleguide is deferred; its local pnpm workflow is independent.
 
-Use dev-cli v0.8.0 or newer and only the `homelab-talos-dev` context. Record
+Use dev-cli v0.9.0 or newer and only the `homelab-talos-dev` context. Record
 the source/CLI revision, exact command, owner, route and full tenant key, Pod
 UID/image, browser screenshot and result outside Git. Retain commands and
 sanitized output with the PR report. Do not include credentials or cookies.

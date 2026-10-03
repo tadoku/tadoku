@@ -1,4 +1,4 @@
-kubeContext: homelab-dev
+kubeContext: homelab-talos-dev
 namespace: tdk-dev-routing
 namespaces:
   - tdk-dev-routing
@@ -19,6 +19,16 @@ gatewayName: dev-cli-playground
 gatewayNamespace: envoy-gateway-system
 internalGateway: http://dev-cli-gateway.tdk-dev-routing.svc.cluster.local
 ttl: 8h
+variables:
+  DATABASE: tadoku
+  TENANT: tadoku/${DEV_ROUTE}
+hooks:
+  beforeUp: [tenant]
+  afterDown: [tenant-teardown]
+  deployables:
+    tadoku-worker:
+      beforeStart: [worker-override-set]
+      afterStop: [worker-override-clear]
 bazelArgs:
   - --platforms=@rules_go//go/toolchain:linux_amd64
   - --@rules_go//go/config:pure
@@ -44,13 +54,35 @@ tasks:
     imageName: migrate
     pushTarget: //services/tadoku-api/migrations:dev_push
     container: migrate
-  - name: seed
-    namespace: tdk-dev-tadoku-api
-    manifest: .dev/seed.yaml
+  - name: tenant
+    namespace: tdk-dev-data
+    manifest: .dev/tenant.yaml
     target: tadoku-dev-db.tdk-dev-data/tadoku-${DEV_ROUTE}
-    dependencies:
-      - database
     timeout: 5m
-    imageName: seed
-    pushTarget: //.dev:seed_push
-    container: seed
+    imageName: tenant
+    pushTarget: //.dev:tenant_push
+    container: tenant
+  - name: tenant-teardown
+    namespace: tdk-dev-data
+    manifest: .dev/tenant-teardown.yaml
+    target: tadoku-dev-db.tdk-dev-data/tadoku-${DEV_ROUTE}
+    timeout: 5m
+    imageName: tenant
+    pushTarget: //.dev:tenant_push
+    container: tenant
+  - name: worker-override-set
+    namespace: tdk-dev-data
+    manifest: .dev/worker-override-set.yaml
+    target: tadoku-dev-db.tdk-dev-data/tadoku-${DEV_ROUTE}
+    timeout: 5m
+    imageName: tenant
+    pushTarget: //.dev:tenant_push
+    container: tenant
+  - name: worker-override-clear
+    namespace: tdk-dev-data
+    manifest: .dev/worker-override-clear.yaml
+    target: tadoku-dev-db.tdk-dev-data/tadoku-${DEV_ROUTE}
+    timeout: 5m
+    imageName: tenant
+    pushTarget: //.dev:tenant_push
+    container: tenant

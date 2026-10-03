@@ -1,0 +1,86 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: worker-override-set
+  namespace: tdk-dev-data
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 240
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: tadoku-tenant
+    spec:
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      containers:
+        - name: tenant
+          image: invalid.example/replace-through-dev-task
+          command: ["/tadoku-tenant"]
+          args: ["override", "set", "--tenant", "${DEV_VAR_TENANT}", "--component", "tadoku-worker"]
+          env:
+            - name: DEV_ROUTE
+              value: ${DEV_ROUTE}
+            - name: DEV_TENANT
+              value: ${DEV_VAR_TENANT}
+            - name: PGHOST
+              value: tadoku-dev-db.tdk-dev-data
+            - name: PGDATABASE
+              value: ${DEV_VAR_DATABASE}
+            - name: PGSSLMODE
+              value: require
+            - name: PGCONNECT_TIMEOUT
+              value: "10"
+            - name: PGUSER
+              valueFrom:
+                secretKeyRef:
+                  name: tadoku.tadoku-dev-db.credentials.postgresql.acid.zalan.do
+                  key: username
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: tadoku.tadoku-dev-db.credentials.postgresql.acid.zalan.do
+                  key: password
+            - name: TENANT_POSTGRES_HOST
+              value: tadoku-dev-db.tdk-dev-data
+            - name: TENANT_POSTGRES_DATABASE
+              value: ${DEV_VAR_DATABASE}
+            - name: TENANT_POSTGRES_SSLMODE
+              value: require
+            - name: TENANT_POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: tadoku-owner.tadoku-dev-db.credentials.postgresql.acid.zalan.do
+                  key: username
+            - name: TENANT_POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: tadoku-owner.tadoku-dev-db.credentials.postgresql.acid.zalan.do
+                  key: password
+            - name: TENANT_KETO_WRITE_URL
+              value: http://keto-write.tdk-dev-keto:4467
+            - name: TENANT_KETO_READ_URL
+              value: http://keto-read.tdk-dev-keto:4466
+            - name: TENANT_VALKEY_URL
+              value: redis://valkey.tdk-dev-data:6379
+            - name: TENANT_FLIPT_MANAGEMENT_URL
+              value: http://flipt.tdk-dev-flipt.svc.cluster.local:8080
+            - name: TENANT_FLIPT_ENVIRONMENT
+              value: test
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65532
+            runAsGroup: 65532
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+            seccompProfile:
+              type: RuntimeDefault
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: "1"
+              memory: 256Mi

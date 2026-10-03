@@ -1,42 +1,20 @@
--- Reuse the shared development users, but write fixtures only into this branch.
-\getenv branch_database PGDATABASE
-select current_database() = :'branch_database'
-       and current_user = 'tadoku'
-       and pg_get_userbyid(datdba) = 'tadoku_owner'
-       and octet_length(:'branch_database') <= 63
-       and :'branch_database' ~ '^tadoku-[a-z0-9][a-z0-9-]*-[0-9a-f]{8}$'
-       and shobj_description(oid, 'pg_database') =
-           'dev-cli branch database route=' || substring(:'branch_database' from 8)
-       as owned
-from pg_database where datname = current_database()
-\gset
-\if :owned
+\if :{?tenant}
 \else
-  do $$ begin raise exception 'refusing seed outside an owned branch database'; end $$;
+  do $$ begin raise exception 'tenant psql variable is required'; end $$;
 \endif
 
-\connect tadoku
-\set tenant tadoku/prod
 begin;
 select set_config('tadoku.tenant', :'tenant', true);
-select count(*) = 1 as admin_found, min(id::text) as admin_user_id
-from users where tenant = :'tenant' and display_name = 'Dev Admin'
+select current_user = 'tadoku'
+       and :'tenant' ~ '^tadoku/[a-z0-9][a-z0-9-]*-[0-9a-f]{8}$'
+       and exists(select from tenants where key = :'tenant' and kind = 'test') as allowed
 \gset
-select count(*) = 1 as reader_found, min(id::text) as reader_user_id
-from users where tenant = :'tenant' and display_name = 'Dev Reader'
-\gset
-\if :admin_found
+\if :allowed
 \else
-  do $$ begin raise exception 'expected one shared Dev Admin fixture; run make dev-seed first'; end $$;
+  do $$ begin raise exception 'refusing seed outside a registered branch tenant with the runtime role'; end $$;
 \endif
-\if :reader_found
-\else
-  do $$ begin raise exception 'expected one shared Dev Reader fixture; run make dev-seed first'; end $$;
-\endif
-
 commit;
 
-\connect :branch_database
 \ir /seed/immersion.sql
 \ir /seed/profile.sql
 \ir /seed/content.sql

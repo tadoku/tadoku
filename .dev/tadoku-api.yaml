@@ -6,8 +6,8 @@ spec:
       env:
         - name: API_SCORING_ENGINE_ENABLED
           value: "false"
-        - name: API_LEADERBOARD_CACHE_PREFIX
-          value: "dev:${DEV_ROUTE}:"
+        - name: API_BRANCH
+          value: ${DEV_VAR_TENANT}
         - name: API_PORT
           value: "8000"
         - name: API_METRICS_PORT
@@ -48,7 +48,7 @@ spec:
         - name: API_POSTGRES_HOST
           value: tadoku-dev-db.tdk-dev-data
         - name: API_POSTGRES_DATABASE
-          value: tadoku-${DEV_ROUTE}
+          value: ${DEV_VAR_DATABASE}
         - name: API_POSTGRES_SSLMODE
           value: require
         - name: API_POSTGRES_MAX_CONNECTIONS

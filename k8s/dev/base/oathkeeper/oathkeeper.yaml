@@ -90,6 +90,6 @@ mutators:
       claims: |
         {
           "type": "user",
-          "tenant": "tadoku/prod",
+          "tenant": {{ if .MatchContext.Header.Get "X-Dev-Branch" }}{{ printf "tadoku/%s" (.MatchContext.Header.Get "X-Dev-Branch") | toJson }}{{ else }}"tadoku/prod"{{ end }},
           "session": {{ .Extra | toJson }}
         }

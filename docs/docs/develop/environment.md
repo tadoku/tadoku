@@ -16,19 +16,13 @@ Kubernetes cluster or Helm bootstrap to run. For a map of the components, see
 [System architecture](../architecture/index.md). Production is deployed from a
 private repository and is not covered here.
 
-`.dev/config.yaml` is the committed non-secret configuration. It still names
-the retired `homelab-dev` context; the current environment runs on
-`homelab-talos-dev`. Create an override outside Git and pass
-`--config /tmp/tadoku-dev-cli.yaml` on each `dev` command below:
-
-```sh
-sed 's/^kubeContext: homelab-dev$/kubeContext: homelab-talos-dev/' \
-  .dev/config.yaml > /tmp/tadoku-dev-cli.yaml
-```
+`.dev/config.yaml` is the committed non-secret configuration and targets
+`homelab-talos-dev` directly. Always use that context for development kubectl
+commands.
 
 | Setting | Value |
 | --- | --- |
-| Kubernetes context | `homelab-talos-dev` via the override |
+| Kubernetes context | `homelab-talos-dev` |
 | Hosts | `tadoku.dev.lab`, `account.tadoku.dev.lab`, `admin.tadoku.dev.lab` |
 | Overlay image registry | `registry.dev.lab/tadoku-dev-cli` |
 | Overlay TTL | 8 hours |
@@ -49,8 +43,8 @@ private keys.
 ## Install dev-cli
 
 ```sh
-GOPRIVATE=github.com/antonve/dev-cli go install github.com/antonve/dev-cli/cmd/dev@v0.5.0
-dev version  # must print v0.5.0 or later
+GOPRIVATE=github.com/antonve/dev-cli go install github.com/antonve/dev-cli/cmd/dev@v0.7.0
+dev version  # must print v0.7.0 or later
 ```
 
 Go must be able to authenticate to the private repository. If your Git
@@ -60,7 +54,7 @@ credential is required:
 ```sh
 GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=url.git@github.com:.insteadOf \
 GIT_CONFIG_VALUE_0=https://github.com/ GOPRIVATE=github.com/antonve/dev-cli \
-go install github.com/antonve/dev-cli/cmd/dev@v0.5.0
+go install github.com/antonve/dev-cli/cmd/dev@v0.7.0
 ```
 
 - Put `$(go env GOPATH)/bin`, or your explicit `GOBIN`, on `PATH`. Check
@@ -68,6 +62,10 @@ go install github.com/antonve/dev-cli/cmd/dev@v0.5.0
 - To upgrade an existing installation in place, set `GOBIN` to its directory
   on the same command.
 - Stop only your own running loops before upgrading.
+
+The minimum version supports lifecycle hooks and resolved configuration
+variables. An older CLI must not start these overlays without provisioning their
+tenant.
 
 Then check the prerequisites:
 
@@ -86,7 +84,7 @@ If the shared fixture accounts are missing, run `make dev-seed` first (see
 [Seed data](#seed-data)).
 
 ```sh
-dev up --owner alice --task migrate --task seed
+dev up --owner alice
 ```
 
 Keep this terminal running.
@@ -95,13 +93,14 @@ Keep this terminal running.
   replacement (HMR).
 - Go edits rebuild the affected Bazel binary and restart it in the same pod.
   A failed compilation keeps the last working process running.
-- A Tadoku API or worker selection starts both workloads against the same
-  branch database and cache prefix. The unchanged peer keeps its current image;
-  only a changed binary restarts on a live edit.
+- A Tadoku API or worker selection starts both workloads against the shared
+  `tadoku` database, scoped to the same branch tenant. The unchanged peer keeps
+  its current image; only a changed binary restarts on a live edit.
 - dev-cli builds overlay images on demand, pushes them to the development
   registry and deploys them by immutable digest.
-- The `migrate` and `seed` tasks prepare your branch database before the API
-  starts; see [Branch databases](#branch-databases).
+- The `tenant` lifecycle hook provisions and seeds the branch before any
+  overlay starts, including a frontend-only branch; see
+  [Branch tenants](#branch-tenants). No explicit task flags are needed.
 
 **Owner** is a stable label for a developer or worktree, not authentication.
 Use a different owner for each checkout you run at the same time.
@@ -123,10 +122,10 @@ every other service keeps using the base.
 - Discovery happens once at startup. Restart the loop to add a service.
 - `--no-watch` does not provide live updates.
 
-Frontend-only work can omit the tasks: `dev up --owner alice`. A frontend-only
-overlay reads and writes base data through the base API. To keep writes in a
-branch database, add the API:
-`dev up --owner alice --service tadoku-api --task migrate --task seed`.
+A frontend-only overlay reads and writes its branch tenant through the base
+API. Add `--service tadoku-api` when you need to run changed API code, rather
+than to isolate frontend writes. Select the main hostname before any API write,
+including one initiated by auth or admin.
 
 Token-reflector is base-only. Paper styleguide has no live overlay; run it
 locally with `cd frontend && pnpm paper-styleguide`.
@@ -135,7 +134,7 @@ locally with `cd frontend && pnpm paper-styleguide`.
 
 | Target | Runs |
 | --- | --- |
-| `make dev-up` | `dev up --task migrate --task seed` |
+| `make dev-up` | `dev up` |
 | `make dev-logs` | `dev logs` |
 | `make dev-down` | `dev down` |
 | `make dev-seed` | `scripts/dev/seed-db.sh` |
@@ -166,8 +165,9 @@ an older cookie. A printed link does not create an overlay or prove that it is
 ready.
 
 - **Selection is per hostname.** Open the printed link for each host your test
-  uses. To test an API overlay from admin, open both the admin link and the
-  main-host link in the same browser profile.
+  uses. Before admin or auth writes to the API, open both that host's link and
+  the main-host link in the same browser profile. Otherwise those API calls can
+  use canonical base data. Check `X-Dev-Selected` on the actual API response.
 - Tabs in one browser profile share the selection; separate profiles have
   independent selections.
 - Clear a selection with `dev url --owner alice --clear '/'`, adding `--host`
@@ -190,7 +190,10 @@ Selected routes report their routing in response headers:
 
 Unselected static base routes need not emit these headers. Check
 `X-Dev-Backend` before testing overlay behavior: cold-start DNS and health
-convergence can serve the base for a while after `dev up` prints a link.
+convergence can serve the base for a while after `dev up` prints a link. A
+frontend-only branch intentionally uses the base API with a selected branch
+tenant; a base backend header alone does not mean it uses canonical data. For
+writes, verify `X-Dev-Selected` and the persisted tenant as well.
 
 ### How requests reach your overlay
 
@@ -202,7 +205,8 @@ browser → ingress-nginx → Envoy → webv2 / auth / admin
 - The browser cookie wins over any routing header a client supplies.
 - Envoy normalizes the branch selection into an internal header. The
   development Oathkeeper, which uses development-only signing credentials and
-  auth providers, propagates it to the API hop.
+  auth providers, signs tenant `tadoku/<route>` from that trusted selection.
+  Unselected requests carry `tadoku/prod`.
 - Base and branch frontends send server-side rendering requests through the
   same gateway with Lab CA trust, so an API-only selection also applies to
   server-rendered pages.
@@ -250,78 +254,81 @@ The development fixture password is `tadoku`. Override the emails and passwords
 outside Git with `TADOKU_DEV_ADMIN_EMAIL`, `TADOKU_DEV_ADMIN_PASSWORD`,
 `TADOKU_DEV_READER_EMAIL` and `TADOKU_DEV_READER_PASSWORD`.
 
-### Branch databases
+### Branch tenants
 
 The operator-managed `tdk-dev-data/tadoku-dev-db` is the only Postgres server.
-Its `tadoku`, `kratos` and `keto` databases are shared. Each Tadoku API overlay
-uses its own `tadoku-<route>` database on the same server. The route contains
-the owner and branch plus a collision-resistant hash. No branch creates another
-Postgres cluster, PVC or long-running database pod.
+Its `tadoku`, `kratos` and `keto` databases are shared. Ordinary branches use
+the base `tadoku` database and a separate test tenant. The tenant key is
+`tadoku/<route>`; the route contains the owner, branch and a collision-resistant
+hash. Different owners of the same branch get different tenants. Normal
+startup creates no database, Postgres cluster, PVC or database dependency Job.
 
-- A short-lived dependency Job creates the database idempotently, owned by the
-  `tadoku_owner` role and marked with its route. It refuses to adopt an existing
-  database without that marker. Only this Job references the Postgres
-  administrator Secret.
-- The dependency applies the base ownership SQL ConfigMap in each branch
-  database, including owner default privileges. Existing branch objects are
-  transferred from `tadoku` to `tadoku_owner`.
-- `migrate` runs as `tadoku_owner`; its migration init container must finish
-  before a pinned Postgres client revokes runtime writes to `schema_migrations`.
-  It validates grants with psql conditionals. Inline task arguments avoid
-  dollar-quoted SQL because Kubernetes reduces `$$` to `$`. This requires
-  dev-cli v0.5.1 or newer.
-- The API, worker and `seed` use the non-owner `tadoku` role with DML grants.
-  Credentials stay Secret references.
-- `dev up --task migrate --task seed` creates the database first; a task
-  failure prevents overlay startup. Plain `dev up` runs no tasks.
-- The branch `seed` task reuses the shared fixture identities and fails until
-  `make dev-seed` has created them. It writes only into an owned branch
-  database, using the same canonical `tadoku/prod` tenant as the shared base.
+- Before startup, a lifecycle marker records the owner, hooks and resolved
+  variables. The `tenant` hook runs a bounded Job in `tdk-dev-data`.
+- The Job reads Dev Admin and Dev Reader IDs from the canonical `tadoku/prod`
+  fixture user rows in `users`. It fails with a request to run
+  `make dev-seed` if they are missing; it never creates or changes identities.
+- Provisioning uses `tadoku_owner` to create the test tenant, grants its Keto
+  object a parent of `app:tadoku`, and grants Dev Reader direct `testers`
+  membership. Dev Admin inherits administrator and access permits.
+- Flipt uses environment `test` and namespace `tadoku_<route>`, with display
+  name `tadoku/<route>`. Provisioning adds missing resources from this branch's
+  `k8s/dev/base/flipt/features.yaml` and preserves existing grants.
+- SQL fixtures use the non-owner `tadoku` role so row-level security checks
+  every write. The guard requires the route-shaped test tenant, the expected
+  role and development database host. It refuses canonical seeding through
+  the branch task. Credentials stay Secret references.
+- `.dev/config.yaml` resolves `DATABASE` to `tadoku` and `TENANT` to
+  `tadoku/${DEV_ROUTE}`. API and worker use `${DEV_VAR_DATABASE}` and their
+  `API_BRANCH` / `WORKER_BRANCH` settings use `${DEV_VAR_TENANT}`.
+- Provisioning or seeding failure prevents overlay startup. Retrying is safe;
+  normal startup and teardown serialize tasks using one Lease per route.
 
-Rerun the tasks explicitly with:
+Reseed your branch tenant explicitly with:
 
 ```sh
-dev task --owner alice migrate
-dev task --owner alice seed
+dev task --owner alice tenant
 ```
 
-Tasks publish their Bazel images and serialize against the exact branch
-database. They never reset a database. Never delete a task Lease to force a
-retry; first prove that the abandoned holder has stopped.
+This reseeds the selected tenant and repairs missing provider resources; it
+does not reset a database or overwrite existing Flipt grants. Never delete a
+task Lease to force a retry; first prove that the abandoned holder has stopped.
 
-This is cooperative development isolation, not a hostile-tenant boundary: the
-`tadoku` role, Kratos, Keto and Valkey are shared. Services without an overlay
-keep using base data, so deploy related services together when a test needs
-consistent data across them.
+Kratos accounts remain shared. Do not change shared fixture passwords, profiles
+or canonical roles for a branch test. Use the branch's own data, Keto object and
+Flipt namespace. This is cooperative development isolation: provider processes
+and runtime credentials are shared.
+
+### Schema changes
+
+Schema changes follow the standalone migration release contract in
+[Database](../tadoku-api/database.md). Ordinary tenant branches use the base
+schema and must not run experimental migrations against it. The retained
+database dependency and `migrate` task are for an explicitly configured isolated
+database workflow; ordinary `dev up` invokes neither. Database creation refuses
+unmarked databases, migrations use `tadoku_owner`, and the runtime role remains
+unable to create tables or write `schema_migrations`. Never point a branch
+migration task at the shared base as a shortcut.
 
 ### Leaderboards on shared Valkey
 
-Each branch API is paired with a private `tadoku-worker` against the same
-branch database. The API writes returned typed jobs to that database's
-`jobs`; the worker claims only that database's work. Leaderboard keys follow the request or persisted job tenant:
+Leaderboard keys follow the parsed request or persisted job tenant:
 `tenant:<name>/<id>:leaderboard:…`. A missing tenant is an error before Valkey
 access. The base pair uses `tenant:tadoku/prod:leaderboard:…`.
 
-Private-database overlays still receive signed `tadoku/prod` requests and store
-that tenant on their jobs. They therefore retain the existing matching
-`API_LEADERBOARD_CACHE_PREFIX` and `WORKER_LEADERBOARD_CACHE_PREFIX` values
-`dev:${DEV_ROUTE}:`, producing
-`dev:${DEV_ROUTE}:tenant:tadoku/prod:leaderboard:…`. Removing that prefix while
-those overlays share the canonical tenant would collide with base caches and
-other private databases. Real test tenants without a compatibility prefix use
-only their own `tenant:<name>/<id>:leaderboard:…` keys.
+The API persists `tadoku/<route>` on branch jobs, and caches use
+`tenant:tadoku/<route>:leaderboard:…` without a separate branch prefix.
 
-- Keep the compatibility prefix unique per route when changing overlay routing.
-- Remove both prefix settings and their runtime configuration together only
-  after overlay requests and persisted jobs carry distinct parsed branch
-  tenants. At that boundary, the base and overlay checks must require no
-  `LEADERBOARD_CACHE_PREFIX` setting, and `git grep -n LEADERBOARD_CACHE_PREFIX`
-  must return nothing.
-- The separate worker invalidates leaderboard caches after processing queued
-  jobs.
-- Stopping a worker leaves recoverable queued work; cached results can remain
-  stale until invalidation resumes. Restarting the paired worker resumes
-  processing queued jobs.
+- A frontend-only branch uses the base API and base worker, both operating on
+  its selected tenant. The base worker claims all tenants without a matching
+  component override.
+- Selecting a branch API or worker starts both. Before the private worker
+  starts, `worker-override-set` inserts its tenant's `tadoku-worker` override;
+  the branch worker claims only that tenant and invalidates its caches.
+- Teardown waits for the branch worker and its pods to stop, then runs
+  `worker-override-clear`. The base can resume remaining branch jobs before
+  tenant teardown. Jobs already claimed by the base before an override may
+  finish there; compare job tenant and worker evidence when verifying ownership.
 - Job producers and consumers share versioned contracts. Follow
   [Jobs and worker](../tadoku-api/jobs.md#migrate-v1-to-v2) before changing a
   payload; pairing workloads does not make incompatible versions safe.
@@ -333,15 +340,23 @@ dev down --owner alice
 ```
 
 `dev down` stops the local loop and removes only the current owner and branch's
-overlays and disposable Jobs. It does not stop the Argo CD base. Stopping the
-loop with Ctrl-C alone leaves the overlays running.
+overlays. It waits for their pods to stop, clears worker overrides, then runs
+`tenant-teardown`: Keto object tuples, tenant Valkey keys, the test Flipt
+namespace, and finally the PostgreSQL tenant row with its cascading data.
+Disposable Jobs and the lifecycle marker are removed after successful teardown.
+It does not stop the Argo CD base. Ctrl-C alone leaves overlays running.
 
-- Overlays expire after their TTL. `dev cleanup` removes expired overlays for
-  every owner, not only yours; `dev status` and `dev up` can also maintain
-  expired overlays.
-- **Branch databases are retained** after `dev down` and after TTL cleanup.
-  No automatic drop exists. Deleting one requires inspecting the exact database
-  and its ownership, then separate authorization.
+- `dev cleanup` and startup clean up expired environments across owners,
+  replaying their recorded hooks and variables. `dev status` does not run
+  lifecycle hooks; it reports marked expired routes as `teardownPending`.
+- If teardown fails, its marker and tenant row remain for diagnosis and retry.
+  Rerun `dev down`, or `dev cleanup` for expired routes. A missing recorded task
+  causes cleanup to skip that route; use compatible configuration rather than
+  deleting its marker. Do not force removal of a failed teardown's marker.
+- Ordinary branches leave no database to drop. **Previously retained branch
+  databases remain retained** after down and TTL cleanup. Deleting one requires
+  inspecting its exact name, marker, owner and active connections, then separate
+  authorization.
 - Never drop the shared `tadoku`, `kratos` or `keto` databases, and never
   run namespace-wide deletion or cleanup.
 - `make dev-reset` is disabled. Any reset needs an explicitly approved, scoped
@@ -384,7 +399,7 @@ bazel run //:gazelle -- -mode=diff
 bazel build //services/...
 # Tests use disposable local databases, never shared development data.
 bazel test //services/...
-bazel build //frontend:webv2_dev_image //frontend:webv2_dev //services/tadoku-api:dev //.dev:seed_image
+bazel build //frontend:webv2_dev_image //frontend:webv2_dev //services/tadoku-api:dev //services/tadoku-api:worker_dev //.dev:tenant_image
 cd frontend
 pnpm install --frozen-lockfile
 pnpm --filter webv2 exec tsc --noEmit

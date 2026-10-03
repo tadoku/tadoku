@@ -340,6 +340,29 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
+  name: allow-tenant-lifecycle-ingress
+  namespace: tdk-dev-flipt
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: flipt
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: tdk-dev-data
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: tadoku-tenant
+      ports:
+        - port: 8080
+          protocol: TCP
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
   name: allow-monitoring-ingress
   namespace: tdk-dev-flipt
 spec:

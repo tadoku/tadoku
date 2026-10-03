@@ -35,7 +35,7 @@ func TestRebuildDoesNotPublishSnapshotAfterInvalidation(t *testing.T) {
 		t.Fatal(err)
 	}
 	tenantCtx := tenant.WithKey(t.Context(), tenantKey)
-	cache := NewCache(client, time.Second, "")
+	cache := NewCache(client, time.Second)
 	key, err := cache.cacheKey(tenantCtx, globalKey)
 	if err != nil {
 		t.Fatal(err)
@@ -98,7 +98,7 @@ func TestRebuildDoesNotPublishSnapshotAfterInvalidation(t *testing.T) {
 		t.Errorf("marker = %q, want native:%s", marker, after)
 	}
 
-	racing := NewCache(&invalidateBeforeZcard{Client: client, key: key, t: t}, time.Second, "")
+	racing := NewCache(&invalidateBeforeZcard{Client: client, key: key, t: t}, time.Second)
 	page, cacheExists, err := racing.fetchPage(tenantCtx, key, 0, 25)
 	if err != nil {
 		t.Fatal(err)
@@ -127,7 +127,7 @@ func (client *invalidateBeforeZcard) Do(ctx context.Context, command valkeygo.Co
 
 func TestTenantLeaderboardInvalidationKeepsOtherTenantWarm(t *testing.T) {
 	client := newLeaderboardTestClient(t)
-	cache := NewCache(client, time.Second, "")
+	cache := NewCache(client, time.Second)
 	service := NewService(nil, cache)
 	contestID := uuid.New()
 	keyA, err := tenant.Parse("e2e/cache-a-" + uuid.NewString())
@@ -184,7 +184,7 @@ func TestTenantLeaderboardInvalidationKeepsOtherTenantWarm(t *testing.T) {
 
 func TestLeaderboardWithoutTenantDoesNotWriteCache(t *testing.T) {
 	client := newLeaderboardTestClient(t)
-	service := NewService(nil, NewCache(client, time.Second, ""))
+	service := NewService(nil, NewCache(client, time.Second))
 	contestID := uuid.New()
 	key := contestPrefix + contestID.String()
 	cleanupLeaderboardKeys(t, client, key)

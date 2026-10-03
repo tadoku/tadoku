@@ -9,8 +9,8 @@ Developer documentation lives in [`docs/docs`](docs/docs) and is published at ht
 
 ## Dev Environment
 
-Branches run on the shared `homelab-dev` cluster with dev-cli. Installation,
-branch databases, seed accounts, routing and cleanup are in
+Branches run on the shared `homelab-talos-dev` cluster with dev-cli. Installation,
+branch tenants, seed accounts, routing and cleanup are in
 [Development environment](docs/docs/develop/environment.md).
 For agent-driven live edits, use the [dev-cli skill](.agents/skills/dev-cli/SKILL.md)
 (`$dev-cli` where repository skill discovery is supported).

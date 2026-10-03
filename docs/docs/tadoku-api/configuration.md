@@ -45,14 +45,10 @@ Leaderboard keys come from the parsed request or job tenant:
 `tenant:<name>/<id>:leaderboard:…`. The API and worker use the same key format;
 a missing context tenant fails before any cache operation.
 
-`API_LEADERBOARD_CACHE_PREFIX` and `WORKER_LEADERBOARD_CACHE_PREFIX` default to
-empty and remain only for development overlays with private databases whose
-requests and jobs still carry `tadoku/prod`. Those overlays set the same
-`dev:${DEV_ROUTE}:` prefix, producing
-`dev:${DEV_ROUTE}:tenant:tadoku/prod:leaderboard:…`. Keep it unique per database.
-Production, the development base and real test tenants leave these settings
-unset. Remove both compatibility settings when every private-database overlay
-has a distinct signed request tenant and persists that tenant on its jobs.
+Development branches receive their own signed tenant and persist it on every
+job. The cache key is identical for a tenant served by the base or a branch
+process, including branches with an isolated migration database. No separate
+cache prefix is configured.
 
 `services/tadoku-api/infra/valkey/README.md` documents which URL options are
 accepted and how commands, timeouts, cancellation and close behave.
@@ -266,7 +262,7 @@ replay and consumer-first version migrations.
 
 The worker uses `WORKER_POSTGRES_*` split connection configuration,
 `WORKER_POSTGRES_MAX_CONNECTIONS` (default 4, range 1–32), `WORKER_VALKEY_URL`,
-`WORKER_VALKEY_TIMEOUT` (default 1s), `WORKER_LEADERBOARD_CACHE_PREFIX`,
+`WORKER_VALKEY_TIMEOUT` (default 1s),
 `WORKER_DIAL_TIMEOUT` (default 3s), `WORKER_CONCURRENCY` (default 4), and
 `WORKER_SHUTDOWN_TIMEOUT` (default 15s). Concurrency and shutdown timeout must
 be positive; the command loads and validates both before application startup.
@@ -286,9 +282,9 @@ and lease transition still uses the tenant persisted on its claimed job.
 
 Private health and metrics listeners default to `WORKER_PORT=8000` and
 `WORKER_METRICS_PORT=9090`. It has no public route. The API and worker must use
-the same database and tenant-derived cache keys. Private development databases
-that still use `tadoku/prod` also require the matching compatibility prefix
-[described above](#valkey-and-leaderboard-caches).
+the same database and tenant-derived cache keys. Development branches use
+their route's full tenant key even when a migration profile selects a private
+database.
 
 The worker invalidates leaderboard caches through registered jobs. A cache miss
 rebuilds from PostgreSQL only if its generation has not changed, and cached

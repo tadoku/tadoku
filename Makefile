@@ -1,7 +1,7 @@
 .PHONY: dev-up dev-down dev-reset dev-seed dev-logs
 
 dev-up:
-	dev up --task migrate --task seed
+	dev up
 
 dev-down:
 	dev down

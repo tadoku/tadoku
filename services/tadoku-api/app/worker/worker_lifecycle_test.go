@@ -57,7 +57,7 @@ func TestWorkerJobLifecycle(t *testing.T) {
 
 	service := leaderboard.NewService(
 		leaderboard.NewRepository(db.Pool),
-		leaderboard.NewCache(client, time.Second, ""),
+		leaderboard.NewCache(client, time.Second),
 	)
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	runner, err := NewApplication(

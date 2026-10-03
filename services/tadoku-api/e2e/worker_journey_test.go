@@ -51,7 +51,7 @@ func runWorkerStep(t *testing.T, s *suite, forTenant string) {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	leaderboardService := leaderboard.NewService(
 		leaderboard.NewRepository(s.db.AppPool),
-		leaderboard.NewCache(leaderboardValkey.client, time.Second, ""),
+		leaderboard.NewCache(leaderboardValkey.client, time.Second),
 	)
 	application, err := worker.NewApplication(
 		jobqueue.NewService(jobqueue.NewRepository(s.db.AppPool)),

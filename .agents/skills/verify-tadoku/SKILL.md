@@ -12,7 +12,7 @@ authorize unrelated mutations, or replace the repository's `AGENTS.md`.
 
 [Development environment](../../../docs/docs/develop/environment.md) is the
 canonical reference for installing dev-cli, starting, opening and inspecting a
-branch, routing headers, branch databases, fixture accounts and cleanup. This
+branch, routing headers, branch tenants, fixture accounts and cleanup. This
 skill adds only what verification needs on top of it.
 
 ## Choose the proof
@@ -34,13 +34,12 @@ journeys rather than running the entire inventory for every edit.
    fetching fails. Use a task branch and a unique stable owner for this checkout.
    Check for an existing `dev up` loop belonging to this exact checkout before
    starting another; reuse only your own matching loop.
-2. Run `dev version` and `dev doctor`. Installation, prerequisites and overrides
+2. Run `dev version` (v0.7.0 or newer) and `dev doctor`. Installation, prerequisites and overrides
    are in [Development environment](../../../docs/docs/develop/environment.md).
    Lab networking, DNS, CA trust and existing cluster credentials must already
    work. Doctor is a read-only prerequisite check, not an E2E.
-3. Read [`.dev/config.yaml`](../../../.dev/config.yaml). It targets `homelab-dev`
-   (`https://192.168.1.190:6443`, node `ct190`), not production. Always specify
-   `--context homelab-dev` on kubectl commands. If access or the base is broken,
+3. Read [`.dev/config.yaml`](../../../.dev/config.yaml). It targets `homelab-talos-dev`.
+   Always specify `--context homelab-talos-dev` on kubectl commands. If access or the base is broken,
    report the failing check; do not bootstrap credentials, restart shared services,
    change Argo resources, or substitute production. Operators have a separate
    [Development base](../../../docs/docs/operations/development-base.md) runbook.
@@ -57,10 +56,10 @@ an owner such as `agent-my-task` consistently, including in other terminals.
 
 - Keep the loop running in a durable terminal/session; record its handle and
   working directory.
-- For frontend-only **read-only** checks, omit the `migrate`/`seed` tasks. For
-  writes, run a branch API even if only frontend code changed
-  (`--service tadoku-api --task migrate --task seed`), so writes land in your
-  branch database rather than base.
+- Run `dev up --owner <owner>` without migration or seed task flags. Its
+  lifecycle hook provisions and seeds `tadoku/<route>`, including frontend-only
+  branches. Frontend-only writes use that tenant through the base API. Add an
+  API overlay only when the changed API code is part of the proof.
 - Discovery happens once at startup: restart your loop when edits introduce
   another service. Do not use `--no-watch` for live-update verification. Do not
   hand-maintain a service catalog from the feature map.
@@ -74,19 +73,24 @@ different things.
 
 ## Drive and observe
 
-- Open the selected link with a browser tool or Playwright. Use labels/roles and
+- Open the selected link with the product's browser tool where available. Use labels/roles and
   visible navigation. Inspect the rendered page and relevant network responses;
   do not invoke internal React handlers or mock the API to claim an E2E pass.
-- Before writes, confirm the API response's `X-Dev-Backend` identifies your overlay,
-  not base. `X-Dev-Selected` is only intent; `X-Dev-Proxy-Backend` can describe outer
+- Before writes, confirm `X-Dev-Selected` on the API response identifies your
+  route, and select the main hostname even for auth or admin work. Require an
+  overlay `X-Dev-Backend` when verifying changed API code; a frontend-only branch
+  intentionally uses the base API. `X-Dev-Selected` alone does not prove persisted
+  isolation: verify the result's tenant when testing routing. `X-Dev-Proxy-Backend` can describe outer
   Oathkeeper rather than the final API. Check the document response for frontend
   changes and actual API responses for backend changes. Unselected base routes
   need not emit these headers. Cold-start convergence may briefly serve base.
 - Exercise the relevant feature-map steps, including a reload or a second view
-  for persisted changes. Frontend-only overlays still use base data unless an API
-  overlay is also selected. Keep writes in your branch DB. Kratos, Keto and feature
-  providers remain shared: use owned disposable identities for account/role tests,
-  never change another developer's account or shared flag policy for convenience.
+  for persisted changes. Keep writes in your branch tenant. Kratos identities
+  remain shared: use fixture accounts or owned disposable identities for
+  account/role tests without changing shared credentials or canonical roles.
+  Restrict Keto and Flipt changes to your tenant object and
+  `test/tadoku_<route>` namespace. Discover branch fixture IDs from its UI or
+  API; canonical fixture UUIDs do not identify branch contests or logs.
 - For live frontend edits, keep the page mounted, edit again and prove HMR without
   navigation; record unchanged Pod UID/image. For Go edits, observe rebuild,
   supervised restart and readiness, then exercise the changed behavior. Compile
@@ -125,8 +129,10 @@ When finished, from the same branch/checkout/owner, run `dev down` and clear the
 selection on every host you selected, as described in
 [Clean up](../../../docs/docs/develop/environment.md#clean-up). Visit the clear
 links if keeping that browser context; don't revisit stale selected links.
-Confirm owned overlay removal and base availability. Ctrl-C alone leaves
-overlays. Don't drop databases/PVCs or run namespace-wide deletion/cleanup;
+Confirm owned overlay removal, tenant/provider cleanup and base availability.
+Down stops pods, clears worker overrides and removes branch data through the
+recorded lifecycle hooks. If it fails, retain its marker, inspect the task logs
+and retry. Ctrl-C alone leaves overlays. Don't drop databases/PVCs or run namespace-wide deletion/cleanup;
 `dev cleanup` is broader than the current owner. Stop only port-forwards/browser
 processes you started.
 

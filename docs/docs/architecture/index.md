@@ -9,7 +9,7 @@ description: The components of the Tadoku development environment, how browser a
 Read this when you need a map of the running system before changing a service,
 a route, a frontend or the development environment.
 
-This page describes the development environment on `homelab-dev`, defined in
+This page describes the development environment on `homelab-talos-dev`, defined in
 `k8s/dev/base/`. Production is deployed from a private repository and is not
 documented here.
 

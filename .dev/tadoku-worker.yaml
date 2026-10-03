@@ -11,7 +11,9 @@ spec:
         - name: WORKER_POSTGRES_HOST
           value: tadoku-dev-db.tdk-dev-data
         - name: WORKER_POSTGRES_DATABASE
-          value: tadoku-${DEV_ROUTE}
+          value: ${DEV_VAR_DATABASE}
+        - name: WORKER_BRANCH
+          value: ${DEV_VAR_TENANT}
         - name: WORKER_POSTGRES_SSLMODE
           value: require
         - name: WORKER_POSTGRES_MAX_CONNECTIONS
@@ -28,8 +30,6 @@ spec:
               key: password
         - name: WORKER_VALKEY_URL
           value: redis://valkey.tdk-dev-data:6379
-        - name: WORKER_LEADERBOARD_CACHE_PREFIX
-          value: "dev:${DEV_ROUTE}:"
       ports:
         - name: http
           containerPort: 8000

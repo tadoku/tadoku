@@ -161,7 +161,7 @@ func newTestAPI(ctx context.Context, ketoFixture *testketo.Fixture, kratosFixtur
 
 	leaderboardService := leaderboard.NewService(
 		leaderboard.NewRepository(db.AppPool),
-		leaderboard.NewCache(leaderboardValkey.client, time.Second, ""),
+		leaderboard.NewCache(leaderboardValkey.client, time.Second),
 	)
 	handler, profileService, roleService, err := newTestRouterWithLeaderboardService(
 		ctx,
@@ -228,7 +228,7 @@ func newTestRouterWithLeaderboard(
 ) (*transport.Router, *featureprofile.Service, *permissions.KetoService, error) {
 	leaderboardService := leaderboard.NewService(
 		leaderboard.NewRepository(pool),
-		leaderboard.NewCache(valkeyClient, valkeyTimeout, ""),
+		leaderboard.NewCache(valkeyClient, valkeyTimeout),
 	)
 	return newTestRouterWithLeaderboardService(
 		ctx,

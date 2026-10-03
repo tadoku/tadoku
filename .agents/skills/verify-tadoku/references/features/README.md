@@ -29,20 +29,30 @@ accounts Dev Reader and Dev Admin from the
 `@tadoku.app` email strings are **not** test destination hosts. Don't change their
 credentials/profile/roles for an unrelated test.
 
-Branch `migrate`/`seed` tasks reuse those identities and populate branch-local data.
+The automatic `tenant` hook reuses those identities and populates branch-local
+data in `tadoku/<route>`. Frontend-only branches use the base API with that
+selected tenant. Select the main hostname before auth or admin API writes and
+check the API response's `X-Dev-Selected`.
 Missing shared identities require authorized setup, not invented IDs or auth
 bypasses. User IDs are generated; obtain them from the profile link or your
-authenticated session, not a hardcoded UUID.
+authenticated session, not a hardcoded UUID. The same Kratos identity ID is
+used by its profiles in canonical and branch tenants.
 
 Useful fixtures from [the seed sources](../../../../../scripts/dev/seed/):
 
-- Official contest `00000000-0000-4000-8000-000000000101`, “Dev Tadoku Round”.
-- Private contest `00000000-0000-4000-8000-000000000102`, owned by Dev Reader.
+- Official contest “Dev Tadoku Round”; discover its ID through the selected
+  branch's contest list or UI. Only canonical `tadoku/prod` uses
+  `00000000-0000-4000-8000-000000000101`.
+- Private contest owned by Dev Reader; discover its ID in that branch. Only
+  canonical `tadoku/prod` uses `00000000-0000-4000-8000-000000000102`.
 - Public page `/pages/dev-welcome`, post `/blog/posts/dev-round-open`.
 - Reader/admin logs with reading/listening examples; discover them through profiles.
 
 Seeds use current dates and reruns update records. Don't assert fixed scores,
 timestamps, registration windows or ordering against a shared/previously used DB.
+Branch contest, registration and log UUIDs are derived from the full tenant key
+with UUIDv5. A canonical fixed UUID will return 404 on a branch; obtain the
+branch's own IDs before opening a deep link.
 Record starting values; create uniquely named records in your selected branch when
 testing writes. Re-seeding is not a reset. Account providers remain shared.
 

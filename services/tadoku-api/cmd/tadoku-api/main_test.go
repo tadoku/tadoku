@@ -387,12 +387,6 @@ func TestLoadConfigUsesValidatedDefaults(t *testing.T) {
 	if cfg.ValkeyURL != "redis://valkey:6379" || cfg.ValkeyTimeout != time.Second {
 		t.Errorf("Valkey URL=%q timeout=%v", cfg.ValkeyURL, cfg.ValkeyTimeout)
 	}
-	t.Setenv("API_LEADERBOARD_CACHE_PREFIX", "branch:")
-	prefixedCfg, err := loadConfig()
-	if err != nil || prefixedCfg.LeaderboardCachePrefix != "branch:" {
-		t.Errorf("cache prefix=%q error=%v", prefixedCfg.LeaderboardCachePrefix, err)
-	}
-	t.Setenv("API_LEADERBOARD_CACHE_PREFIX", "")
 	if cfg.JWKS != "http://jwks.test" {
 		t.Errorf("JWKS=%q", cfg.JWKS)
 	}

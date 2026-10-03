@@ -10,8 +10,11 @@ list links to `/logs/<id>`; owner actions lead to `/logs/<id>/edit` and
 
 ## Verify
 
-Use a selected branch API and a synthetic identity. Record the starting profile
-and leaderboard values; don't edit seed logs or another run's records.
+Use a selected branch tenant and a synthetic identity. Frontend-only work can
+use the base API; add an API overlay when changed API code is part of the proof.
+Check the actual API response's `X-Dev-Selected` before writing, and verify the
+persisted tenant when proving isolation. Record the starting profile and
+leaderboard values; don't edit seed logs or another run's records.
 
 1. Create an owned log with a unique description, language and activity. Exercise
    the applicable amount/unit or time fields, tags and contest selection. Check

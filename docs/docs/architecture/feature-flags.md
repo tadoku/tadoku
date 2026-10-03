@@ -94,6 +94,19 @@ committed or pushed to the canonical feature-flags repository. The operator UI a
 Kratos session of an administrator, checked by Oathkeeper through Tadoku API.
 Flipt is shared: do not change flag policy for other developers. HTTP E2Es use `services/tadoku-api/internal/testflipt/` instead.
 
+Every dev-cli branch, including frontend-only work, provisions its own
+`test/tadoku_<route>` namespace with display name `tadoku/<route>`. The `tenant`
+hook publishes the branch's own `features.yaml` in its tenant image, converts
+the seed to Flipt v2 resources and creates missing segments and flags. Repeating
+the task preserves existing resources and named-user grants. Evaluation and
+admin grant changes use that namespace when the main hostname is selected;
+canonical development requests still use `local/default`.
+
+`dev down` and expired-route cleanup delete the owned test namespace. After a
+Flipt restart, rerun `dev task --owner <owner> tenant` to restore missing
+resources. Do not edit canonical flags to repair a branch or copy another
+tenant's members.
+
 
 ## Provisioning a test namespace
 

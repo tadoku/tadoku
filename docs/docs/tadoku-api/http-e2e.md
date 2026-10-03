@@ -41,6 +41,19 @@ The general test principles are in [Testing](./testing.md).
 - Gateway token issuance and unrelated infrastructure stay outside these
   in-process tests.
 
+## Tenant feature-flag isolation
+
+`services/tadoku-api/e2e/flipt_tenant_test.go` compares a complete sequence of
+HTTP responses under `testdata/FliptTenantIsolation/`: separate initial
+canonical/test decisions, a test grant, a canonical revoke and a test revoke.
+It freezes the normal fixture clock, uses signed tenant JWTs, real Keto and the
+non-owner application pool, and preserves the opposite tenant's decisions.
+The Flipt fixture is an explicit provider simulation: it stores independent
+members and revisions per environment/namespace and uses the production
+`Targets` mapping. `SeedTenant` provisions another parsed test tenant for a
+journey after reset. Separate Flipt SDK integration and operator verification
+exercise the provider HTTP boundary.
+
 ## HTTP golden cases
 
 For every operation, each golden case runs SQL and relationship setup plus a

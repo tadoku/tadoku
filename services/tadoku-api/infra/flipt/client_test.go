@@ -608,3 +608,44 @@ func TestCloseReleasesSDK(t *testing.T) {
 	require.NoError(t, client.Close(context.Background()))
 	assert.True(t, sdk.closed)
 }
+
+func TestSDKUsesMappedTenantNamespaceAndTestEnvironment(t *testing.T) {
+	const namespace = "e2e_flipt-0123abcd"
+	server := httptest.NewServer(http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
+		if request.URL.Path != "/internal/v1/evaluation/snapshot/namespace/"+namespace ||
+			request.Header.Get("x-flipt-environment") != "test" {
+			t.Errorf("SDK target path=%q environment=%q", request.URL.Path, request.Header.Get("x-flipt-environment"))
+			http.NotFound(response, request)
+			return
+		}
+		snapshot := strings.Replace(booleanSnapshot(nil), `"key": "default"`, `"key": "`+namespace+`"`, 1)
+		snapshot = strings.Replace(snapshot, `"enabled": false`, `"enabled": true`, 1)
+		_, _ = response.Write([]byte(snapshot))
+	}))
+	t.Cleanup(server.Close)
+
+	client, err := New(t.Context(), Config{
+		URL:            server.URL,
+		Environment:    "test",
+		Namespace:      namespace,
+		UpdateInterval: time.Minute,
+		RequestTimeout: time.Second,
+		StartupTimeout: time.Second,
+	}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := client.Close(context.Background()); err != nil {
+			t.Error(err)
+		}
+	})
+
+	result, err := client.EvaluateBoolean(t.Context(), featureflags.EvaluationRequest{
+		FlagKey:  "release-log-entry-v2",
+		EntityID: "11111111-1111-4111-8111-111111111111",
+	})
+	if err != nil || !result.Enabled || result.Stale {
+		t.Fatalf("mapped SDK evaluation result=%+v error=%v", result, err)
+	}
+}

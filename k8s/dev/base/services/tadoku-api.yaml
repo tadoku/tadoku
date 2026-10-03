@@ -50,6 +50,7 @@ spec:
             - {name: API_FLIPT_ENABLED, value: "true"}
             - {name: API_FLIPT_ENVIRONMENT, value: "local"}
             - {name: API_FLIPT_NAMESPACE, value: "default"}
+            - {name: API_FLIPT_TEST_ENVIRONMENT, value: "test"}
             - {name: API_FLIPT_UPDATE_INTERVAL, value: "30s"}
             - {name: API_FLIPT_REQUEST_TIMEOUT, value: "5s"}
             - {name: API_FLIPT_STARTUP_TIMEOUT, value: "3s"}

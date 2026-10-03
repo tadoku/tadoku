@@ -79,6 +79,14 @@
       "kid": "tadoku-banned-access-fixture",
       "use": "sig",
       "alg": "RS256"
+    },
+    {
+      "kty": "RSA",
+      "kid": "tadoku-plan3-flipt-fixture",
+      "use": "sig",
+      "alg": "RS256",
+      "n": "s9tr0N5-VTu-CCKiC2g8OVyaKxq3GqkO89O2ctDPIyPVwc_7zw-bWd3qScYywZx9Uijy30By4lfrSF6wLYCSJnKalEDrCyMvv8gViVa3W50jNej6PrvpOHnUWy8UMxHctIZAljZsmOb0oj3x_sWW2KxShxsOkhyp9YDS6LD4Dj0OJptPf6QEqsXOea_NWwHMyDCtP3-oSXHIELAQEwXnevrzOW7yE5QMMosPP1WETerMoYvgF4iRqt4lC7j-rRDJoeeU6FhWRkocJtJQrkZfTu0vPkoWCj20_7UTvMu4L9JL14zQHeyeiQfAtF1aNY9umbGAGRQTsNH1YKqXw_PtLw",
+      "e": "AQAB"
     }
   ]
 }

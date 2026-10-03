@@ -30,6 +30,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/features/posts"
 	featureprofile "github.com/tadoku/tadoku/services/tadoku-api/features/profile"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/scoring"
+	fliptclient "github.com/tadoku/tadoku/services/tadoku-api/infra/flipt"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/fliptmanagement"
 	ketoclient "github.com/tadoku/tadoku/services/tadoku-api/infra/keto"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/observability"
@@ -285,8 +286,18 @@ func newTestRouterWithLeaderboardService(
 	pagesService := pages.NewService(pagesRepository)
 	postsService := posts.NewService(postsRepository)
 	profileService := featureprofile.NewService(profileRepository, featureprofile.NewUserCache(identities), roleService, identities)
+	fliptTargets, err := fliptclient.NewTargets("local", "default", "test")
+	if err != nil {
+		return nil, nil, nil, err
+	}
 	featureFlagEvaluator := featureflags.NewEvaluator(flipt, nil)
-	featureFlagsService := featureflagsservice.NewService(featureFlagEvaluator, fliptmanagement.NewClient(fliptmanagement.Config{URL: flipt.URL(), Environment: "local"}))
+	featureFlagsService := featureflagsservice.NewService(
+		featureFlagEvaluator,
+		fliptmanagement.NewClient(fliptmanagement.Config{
+			URL:     flipt.URL(),
+			Targets: fliptTargets,
+		}),
+	)
 
 	registry := prometheus.NewRegistry()
 	scoringObserver := observability.NewScoringObserver(registry, logger, scoringEngineEnabled)

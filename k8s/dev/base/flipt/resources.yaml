@@ -48,11 +48,19 @@ data:
         backend:
           type: local
           path: /var/lib/flipt
+      test:
+        name: test
+        branch: main
+        backend:
+          type: memory
     environments:
       local:
         name: local
         default: true
         storage: local
+      test:
+        name: test
+        storage: test
     metrics:
       enabled: true
       exporter: prometheus
@@ -86,6 +94,8 @@ spec:
       app.kubernetes.io/name: flipt
   template:
     metadata:
+      annotations:
+        tadoku.app/flipt-config-generation: "2"
       labels:
         app.kubernetes.io/name: flipt
         app.kubernetes.io/part-of: tadoku

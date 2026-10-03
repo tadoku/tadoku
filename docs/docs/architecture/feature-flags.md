@@ -32,12 +32,27 @@ verified subject and never returns an error to product code. Anonymous and guest
 requests get the safe default without asking Flipt; signed-in users are evaluated
 with their Kratos ID as the entity ID. The old common `UserIdentity` type is gone.
 
-The provider in `services/tadoku-api/infra/flipt/` wraps the Flipt client SDK in
-polling mode: it fetches the namespace evaluation snapshot every
+The provider in `services/tadoku-api/infra/flipt/` resolves the verified tenant
+before evaluating a flag. `tadoku/prod` keeps the configured canonical target:
+`production/default` in production and `local/default` in development. Other
+tenants use `API_FLIPT_TEST_ENVIRONMENT` (default `test`) and their own namespace.
+The single `Targets` mapping replaces the tenant's `/` with `_` for the Flipt
+namespace key; `e2e/run-1` becomes `e2e_run-1`. Tenant segments cannot contain
+underscores, so distinct tenant keys cannot collide. Keep the original
+`<name>/<id>` as the namespace's display name. Do not create a literal slash
+namespace: Flipt v2.11 accepts that management write but its feature schema
+rejects the key, breaking evaluation snapshots for the environment.
+
+The provider wraps the Flipt client SDK in polling mode: it fetches the resolved
+namespace evaluation snapshot every
 `API_FLIPT_UPDATE_INTERVAL` and evaluates in process. A failed fetch keeps the
 last snapshot and marks results stale. Startup waits at most
-`API_FLIPT_STARTUP_TIMEOUT` before serving safe defaults. See
-[Configuration](../tadoku-api/configuration.md) for the `API_FLIPT_*` settings.
+`API_FLIPT_STARTUP_TIMEOUT` before serving safe defaults. The canonical client is
+created at startup. Test clients are created on first evaluation, retained in a
+16-client LRU cache and closed on eviction or shutdown. A missing tenant never
+falls back to canonical flags. Test clients have no provider-lifecycle observer,
+so `tadoku_feature_flag_config_age_seconds` continues to describe canonical
+configuration freshness. See [Configuration](../tadoku-api/configuration.md) for the `API_FLIPT_*` settings.
 
 Flipt calls pass through Oathkeeper with service JWTs that
 `services/common/client/s2s/` exchanges for the `flipt-evaluation` or
@@ -63,16 +78,58 @@ Administrators grant or revoke a flag for one user from the admin users page
 an administrator, accepts only the managed flags in
 `services/tadoku-api/features/featureflags/domain.go`, updates the flag's
 allowlist segment through the Flipt management API
-(`services/tadoku-api/infra/fliptmanagement/`), which rejects a segment that
+(`services/tadoku-api/infra/fliptmanagement/`) at the same tenant target used for
+evaluation. A test grant or revoke does not change the canonical allowlist. The
+client rejects a provider response from another namespace, or a segment that
 differs from the Go definition, and audits each change.
 
 ## Development Flipt
 
 Flipt runs in `tdk-dev-flipt` from `k8s/dev/base/flipt/` and loads
 `features.yaml` into in-memory storage when the pod starts; recreating the pod
-discards changes. The operator UI at `https://flags.tadoku.dev.lab` requires a
+discards changes. The separate `test` environment uses in-memory storage with
+no Git remote; its namespaces also disappear when the pod restarts. Production
+uses the same separate memory-only test environment, so test flags are never
+committed or pushed to the canonical feature-flags repository. The operator UI at `https://flags.tadoku.dev.lab` requires a
 Kratos session of an administrator, checked by Oathkeeper through Tadoku API.
 Flipt is shared: do not change flag policy for other developers. HTTP E2Es use `services/tadoku-api/internal/testflipt/` instead.
+
+
+## Provisioning a test namespace
+
+Provisioners use Flipt's management API directly with their own authorized
+operator or provisioning credentials. Tadoku API's Oathkeeper service-token rules
+permit evaluation snapshots and the managed segment GET/PUT operations; they do
+not permit namespace creation or deletion.
+
+1. Parse the tenant key and use `Targets` to obtain the test environment and
+   mapped namespace key. The test environment must differ from the canonical
+   environment. For `e2e/run-1`, create the namespace with
+   `POST /api/v2/environments/test/namespaces` and body
+   `{"key":"e2e_run-1","name":"e2e/run-1"}`. Creation returns `409` when it
+   already exists.
+2. Create each segment and flag from the branch's
+   `k8s/dev/base/flipt/features.yaml` using
+   `POST /api/v2/environments/test/namespaces/e2e_run-1/resources`. Send the
+   resource key and typed `payload`, such as
+   `{"key":"release-log-entry-v2-access","payload":{"@type":"flipt.core.Segment",...}}`.
+   Translate the seed into Flipt's v2 resource schema: a segment rollout needs
+   `type: "SEGMENT_ROLLOUT_TYPE"`, `segment.segments` and
+   `segment.segmentOperator`. Raw seed YAML field names are not the v2 JSON
+   contract. `PUT` updates existing resources; creating a resource under a
+   missing namespace returns `500`.
+3. Verify
+   `GET /internal/v1/evaluation/snapshot/namespace/e2e_run-1` with header
+   `x-flipt-environment: test`. An unprovisioned namespace returns `404` and
+   evaluation uses safe defaults. Test namespaces never share canonical members
+   or revisions.
+4. Delete only the owned namespace with
+   `DELETE /api/v2/environments/test/namespaces/e2e_run-1` during teardown.
+   Provision it again after a Flipt restart.
+
+These calls do not write the production flags repository or modify canonical
+flags. Test environment namespaces are visible to administrators in the shared
+operator UI.
 
 ## Adding a flag
 

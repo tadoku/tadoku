@@ -103,13 +103,22 @@ prefixes are supported and trailing slashes are removed.
   for outgoing service-token exchange. `API_SERVICE_ACCOUNT_TOKEN_PATH`
   defaults to the projected credential at `/var/run/secrets/tokens/token`.
 - `API_FLIPT_ENABLED`, `API_FLIPT_URL`, `API_FLIPT_ENVIRONMENT`,
-  `API_FLIPT_NAMESPACE`, `API_FLIPT_UPDATE_INTERVAL`,
+  `API_FLIPT_NAMESPACE`, `API_FLIPT_TEST_ENVIRONMENT`, `API_FLIPT_UPDATE_INTERVAL`,
   `API_FLIPT_REQUEST_TIMEOUT`, `API_FLIPT_STARTUP_TIMEOUT` and
   `API_FLIPT_MANAGEMENT_URL` configure the feature-flag evaluation provider and
   the management client. Evaluation and management exchange separate
   credentials for `flipt-evaluation/tadoku-api` and
   `flipt-management/tadoku-api`. Provider outages keep safe defaults active and
   do not fail startup; later polling recovers without a restart.
+- `API_FLIPT_TEST_ENVIRONMENT` defaults to `test`. When Flipt is enabled, it
+  must be nonempty and different from `API_FLIPT_ENVIRONMENT`; an invalid value
+  fails startup. The canonical tenant `tadoku/prod` keeps the configured
+  environment and namespace. Other tenants use the test environment and the
+  tenant key with `/` mapped to `_`, because Flipt namespace keys cannot contain
+  slashes. Evaluation and named-user management use this same mapping. Test
+  clients are lazy and bounded to 16; missing namespaces or missing tenant
+  contexts use safe evaluation defaults. Disabled Flipt serves safe defaults
+  for every tenant. See [Feature flags](../architecture/feature-flags.md).
 
 ### Scoring engine
 

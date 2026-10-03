@@ -30,6 +30,10 @@ boundaries described in [Code ownership](./index.md#code-ownership).
 - The worker application (`app/worker`) is visible only to its binary
   (`cmd/tadoku-worker`) and E2E.
 - A feature's generated sqlc package is visible only to that feature.
+- `services/tadoku-api/infra/flipt` owns the shared tenant-to-provider target
+  mapping. Its ordinary consumers use `:infrastructure_consumers`; the exact test-only
+  `internal/testflipt` fixture package may also depend on it so HTTP evaluation
+  and management fixtures use that same mapping.
 - Tests follow their package's layer policy. Startup (`cmd/tadoku-api`) and E2E
   packages are assembly boundaries.
 - `bazel build //services/tadoku-api/...` checks the boundaries for every Go

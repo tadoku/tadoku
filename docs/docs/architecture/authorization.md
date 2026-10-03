@@ -193,7 +193,7 @@ Application errors are `services/tadoku-api/internal/errx/` kinds, mapped in
 | Invalid or missing callback credential | `401`, empty body |
 | `errx.Unauthorized` (no user or `guest`) | `401` |
 | `errx.Forbidden` (not an administrator) | `403` |
-| `errx.Unavailable` (Keto error, missing tenant, unknown ban state) | `503` |
+| `errx.Unavailable` (Keto error, missing tenant, unknown ban state, [PostgreSQL outage](../tadoku-api/database.md#postgresql-errors)) | `503` |
 | `errx.InvalidInput` | `400` |
 | Request deadline exceeded | `504` |
 

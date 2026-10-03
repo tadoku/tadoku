@@ -34,7 +34,7 @@ journeys rather than running the entire inventory for every edit.
    fetching fails. Use a task branch and a unique stable owner for this checkout.
    Check for an existing `dev up` loop belonging to this exact checkout before
    starting another; reuse only your own matching loop.
-2. Run `dev version` (v0.7.0 or newer) and `dev doctor`. Installation, prerequisites and overrides
+2. Run `dev version` (v0.8.0 or newer) and `dev doctor`. Installation, prerequisites and overrides
    are in [Development environment](../../../docs/docs/develop/environment.md).
    Lab networking, DNS, CA trust and existing cluster credentials must already
    work. Doctor is a read-only prerequisite check, not an E2E.
@@ -71,11 +71,10 @@ an owner such as `agent-my-task` consistently, including in other terminals.
   Keep the retained database; no removal approval is implied by verification.
 
 Use the **printed `dev url` links**, including for deep links; a printed link does
-not create an overlay or prove it is ready. Select every host the journey uses in
-the **same browser context**. In particular, admin → API needs both the admin
-link and the main-host link. Tabs share cookies; use separate contexts/profiles
-for base and other owners. Authentication cookies and branch selection are
-different things.
+not create an overlay or prove it is ready. The branch hostname keeps navigation
+and API calls on that route without selection cookies. Two owners can share one
+browser context. Use separate contexts when testing different identities;
+authentication remains shared across branches.
 
 ## Drive and observe
 
@@ -83,7 +82,7 @@ different things.
   visible navigation. Inspect the rendered page and relevant network responses;
   do not invoke internal React handlers or mock the API to claim an E2E pass.
 - Before writes, confirm `X-Dev-Selected` on the API response identifies your
-  route, and select the main hostname even for auth or admin work. Require an
+  route. Use the matching branch hostname for auth or admin work. Require an
   overlay `X-Dev-Backend` when verifying changed API code; a frontend-only branch
   intentionally uses the base API. `X-Dev-Selected` alone does not prove persisted
   isolation: verify the result's tenant when testing routing. `X-Dev-Proxy-Backend` can describe outer
@@ -131,10 +130,9 @@ useful screenshots and workflow recordings directly to that PR. Inspect media
 before uploading and verify the posted attachments. Don't substitute local file
 paths for delivered evidence, or claim an attachment was posted when upload failed.
 
-When finished, from the same branch/checkout/owner, run `dev down` and clear the
-selection on every host you selected, as described in
-[Clean up](../../../docs/docs/develop/environment.md#clean-up). Visit the clear
-links if keeping that browser context; don't revisit stale selected links.
+When finished, from the same branch/checkout/owner, run `dev down` as described in
+[Clean up](../../../docs/docs/develop/environment.md#clean-up). Branch hosts need
+no clearing; require 404 and no owned Ingress, Certificate or TLS Secret.
 Confirm owned overlay removal, tenant/provider cleanup and base availability.
 Down stops pods, clears worker overrides and removes branch data through the
 recorded lifecycle hooks. If it fails, retain its marker, inspect the task logs

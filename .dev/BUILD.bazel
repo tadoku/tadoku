@@ -31,7 +31,7 @@ pkg_tar(
 
 pkg_tar(
     name = "tenant_binary_layer",
-    srcs = ["//services/tadoku-api/cmd/tadoku-tenant:tadoku-tenant"],
+    srcs = ["//services/tadoku-api/cmd/tadoku-tenant"],
     mode = "0755",
 )
 

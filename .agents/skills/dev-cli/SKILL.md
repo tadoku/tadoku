@@ -10,7 +10,7 @@ Run commands from the repository root. Read [Development environment](../../../d
 ## Start the branch
 
 1. Inspect Git status, branch and revision. Preserve existing work and check for a `dev up` loop belonging to this exact checkout. Fetch `origin/main` when available; record a stale base if fetching fails. Use a stable owner unique to this checkout, consistently with `--owner` or `DEV_OWNER`.
-2. Check `dev version` (v0.8.0 or newer for branch hosts, lifecycle hooks and configuration variables) and `dev doctor`. Doctor checks prerequisites only. Follow the environment guide if dev-cli needs installation; do not expose credentials or kubeconfigs.
+2. Check `dev version` (v0.9.0 or newer for branch hosts, lifecycle hooks and configuration variables) and `dev doctor`. Doctor checks prerequisites only. Follow the environment guide if dev-cli needs installation; do not expose credentials or kubeconfigs.
 3. Make the intended service edits before `dev up`. dev-cli selects Bazel deployables once at startup from changes against the merge base, including uncommitted edits. Unknown paths select all deployables. If a later edit adds a service, restart the loop. `--service` adds a service; `--no-watch` does not provide live updates.
 4. Run `dev up --owner <owner>` in a durable terminal without migration or seed task flags. The `tenant` hook provisions and seeds `tadoku/<route>` before startup; frontend-only writes use that tenant through the base API. Add `--service tadoku-api` only when changed API code needs an overlay. Shared fixture identities must already exist; do not run `make dev-seed` automatically because it changes shared identities and base data.
 
@@ -27,7 +27,7 @@ Keep the loop, owner, checkout and terminal handle together. Do not start anothe
 
 ## Open and inspect
 
-Use the actual links printed by `dev up` or `dev url --owner <owner> '/desired/path'`. Add `--host account.tadoku.dev.lab` or `--host admin.tadoku.dev.lab` for those hosts. Quote paths containing `?`, `&` or `#`; flags precede positional paths. The printed branch hostname keeps app, account and admin on the same route. Different owners can share one profile; authentication remains shared. Cookie links from `dev url --cookie` are a compatibility fallback.
+Use the actual links printed by `dev up` or `dev url --owner <owner> '/desired/path'`. Add `--host account.tadoku.dev.lab` or `--host admin.tadoku.dev.lab` for those hosts. Quote paths containing `?`, `&` or `#`; flags precede positional paths. The printed branch hostname keeps app, account and admin on the same route. Different owners can share one profile; authentication remains shared.
 
 A printed URL does not prove the overlay is ready. Check status, then confirm actual frontend and API responses. `X-Dev-Selected` describes intent; `X-Dev-Backend` identifies the upstream that served the request. Cold-start convergence can briefly serve base. For browser journeys, persisted results and PR evidence, follow [verify-tadoku](../verify-tadoku/SKILL.md) and its feature map. Do not claim HMR from a source transfer or backend identity from an HTTP 200 alone.
 

@@ -45,8 +45,8 @@ private keys.
 ## Install dev-cli
 
 ```sh
-GOPRIVATE=github.com/antonve/dev-cli go install github.com/antonve/dev-cli/cmd/dev@v0.8.0
-dev version  # must print v0.8.0 or later
+GOPRIVATE=github.com/antonve/dev-cli go install github.com/antonve/dev-cli/cmd/dev@v0.9.0
+dev version  # must print v0.9.0 or later
 ```
 
 Go must be able to authenticate to the private repository. If your Git
@@ -56,7 +56,7 @@ credential is required:
 ```sh
 GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=url.git@github.com:.insteadOf \
 GIT_CONFIG_VALUE_0=https://github.com/ GOPRIVATE=github.com/antonve/dev-cli \
-go install github.com/antonve/dev-cli/cmd/dev@v0.8.0
+go install github.com/antonve/dev-cli/cmd/dev@v0.9.0
 ```
 
 - Put `$(go env GOPATH)/bin`, or your explicit `GOBIN`, on `PATH`. Check
@@ -171,9 +171,6 @@ leaking across tabs. A printed link does not create an overlay or prove readines
 - Each service independently uses its healthy overlay or the base fallback.
 - Authentication is shared between base and branches. Kratos remains at
   `https://account.tadoku.dev.lab/kratos`; it is never routed to a frontend overlay.
-- Compatibility cookie links remain available through `dev url --cookie`.
-  Those links require selecting every app/API hostname used in the journey;
-  `dev url --clear` clears only the chosen hostname. Branch hosts need neither.
 
 ### Routing headers
 
@@ -397,7 +394,7 @@ It does not stop the Argo CD base. Ctrl-C alone leaves overlays running.
 
 ## Troubleshooting
 
-- For TLS issuance failures, inspect `kubectl --context homelab-talos-dev -n tdk-dev-routing describe certificate <name>`. v0.8 warns and retains cookie fallback links.
+- For TLS issuance failures, inspect `kubectl --context homelab-talos-dev -n tdk-dev-routing describe certificate <name>`. Certificate readiness is required; fix issuance before retrying `dev up`.
 - A branch hostname returning 404 means its environment is not running; check owner, route and status.
 
 - Doctor checks prerequisites, not end-to-end routing. Inspect `dev status`,

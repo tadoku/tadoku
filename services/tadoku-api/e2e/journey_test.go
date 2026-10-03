@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
 
@@ -27,6 +28,12 @@ const (
 	user2  member = "user2"
 	admin  member = "admin"
 	banned member = "banned"
+
+	alphaAdmin  member = "alpha_admin"
+	alphaTester member = "alpha_tester"
+	alphaUser   member = "alpha_user"
+	alphaBanned member = "alpha_banned"
+	alphaGuest  member = "alpha_guest"
 )
 
 type cast map[member]int
@@ -35,6 +42,9 @@ type step struct {
 	request string
 	verify  string
 	job     string
+	valkey  string
+
+	forTenant string
 
 	as     member
 	want   int
@@ -98,8 +108,12 @@ func runJourneyWithSetup(t *testing.T, s *suite, handler http.Handler, name stri
 					checkVerifyGolden(t, s, stepDir)
 					return
 				}
+				if current.valkey != "" {
+					checkValkeyGolden(t, stepDir)
+					return
+				}
 				if current.job != "" {
-					runJobStep(t, s, current.job)
+					runJobStep(t, s, current)
 					return
 				}
 				runRequestStep(t, s, handler, stepDir, current, tokens)
@@ -130,29 +144,39 @@ func stepDirNames(steps []step) ([]string, error) {
 
 func (current step) dirName(position int) (string, error) {
 	kinds := 0
-	for _, value := range []string{current.request, current.verify, current.job} {
+	for _, value := range []string{current.request, current.verify, current.job, current.valkey} {
 		if value != "" {
 			kinds++
 		}
 	}
 	if kinds != 1 {
-		return "", fmt.Errorf("step %d must set exactly one request, verify or job", position)
+		return "", fmt.Errorf("step %d must set exactly one request, verify, job or valkey", position)
 	}
 
 	name := current.request
+	if current.request == "" && (current.as != "" || current.want != 0 || current.others != nil) {
+		return "", fmt.Errorf("non-request step %d must not set as, want or others", position)
+	}
+
 	if current.verify != "" {
 		name = current.verify
-		if current.as != "" || current.want != 0 || current.others != nil {
-			return "", fmt.Errorf("verify step %d must not set as, want or others", position)
-		}
+	} else if current.valkey != "" {
+		name = current.valkey
 	} else if current.job != "" {
 		name = current.job
-		if current.as != "" || current.want != 0 || current.others != nil {
-			return "", fmt.Errorf("job step %d must not set as, want or others", position)
-		}
 	} else if current.as == "" || current.want == 0 {
 		return "", fmt.Errorf("request step %d must set as and want", position)
 	}
+
+	if current.job == "run_branch_worker" {
+		key, err := tenant.Parse(current.forTenant)
+		if err != nil || key == tenant.Production() {
+			return "", fmt.Errorf("branch worker step %d requires a non-production tenant", position)
+		}
+	} else if current.forTenant != "" {
+		return "", fmt.Errorf("step %d sets forTenant without a branch worker", position)
+	}
+
 	if !stepNamePattern.MatchString(name) {
 		return "", fmt.Errorf("step %d name %q must match %s", position, name, stepNamePattern)
 	}
@@ -188,6 +212,8 @@ func checkJourneyFiles(directory string, steps []step, names []string) error {
 		want := []string{"golden.http", "request.http"}
 		if steps[index].verify != "" {
 			want = []string{"verify.json", "verify.sql"}
+		} else if steps[index].valkey != "" {
+			want = []string{"verify.json"}
 		}
 		if err := checkStepFiles(filepath.Join(directory, name), want); err != nil {
 			return err
@@ -196,13 +222,13 @@ func checkJourneyFiles(directory string, steps []step, names []string) error {
 	return nil
 }
 
-func runJobStep(t *testing.T, s *suite, job string) {
+func runJobStep(t *testing.T, s *suite, current step) {
 	t.Helper()
-	switch job {
-	case "run_worker":
-		runWorkerStep(t, s)
+	switch current.job {
+	case "run_worker", "run_branch_worker":
+		runWorkerStep(t, s, current.forTenant)
 	default:
-		t.Fatalf("unknown journey job %q", job)
+		t.Fatalf("unknown journey job %q", current.job)
 	}
 }
 
@@ -323,8 +349,30 @@ func checkVerifyGolden(t *testing.T, s *suite, directory string) {
 	if err := s.db.Pool.QueryRow(t.Context(), wrapVerifyQuery(string(query))).Scan(&rows); err != nil {
 		t.Fatalf("run verify query: %v", err)
 	}
+	checkJSONGolden(t, directory, []byte(rows))
+}
+
+func checkValkeyGolden(t *testing.T, directory string) {
+	t.Helper()
+	if err := leaderboardValkey.ownsLease(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	keys, err := leaderboardValkey.cacheKeys(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	slices.Sort(keys)
+	encoded, err := json.Marshal(slices.Compact(keys))
+	if err != nil {
+		t.Fatal(err)
+	}
+	checkJSONGolden(t, directory, encoded)
+}
+
+func checkJSONGolden(t *testing.T, directory string, value []byte) {
+	t.Helper()
 	var got bytes.Buffer
-	if err := json.Indent(&got, []byte(rows), "", "  "); err != nil {
+	if err := json.Indent(&got, value, "", "  "); err != nil {
 		t.Fatalf("indent verify result: %v", err)
 	}
 	got.WriteByte('\n')
@@ -369,6 +417,35 @@ func TestStepDirNames(t *testing.T) {
 		{name: "request without status", steps: []step{{request: "a", as: guest}}},
 		{name: "verify with others", steps: []step{{verify: "a", others: cast{guest: http.StatusOK}}}},
 		{name: "uppercase name", steps: []step{{request: "Create", as: admin, want: http.StatusCreated}}},
+		{
+			name:  "cache snapshot",
+			steps: []step{{valkey: "separate_keys"}},
+			want:  []string{"01_separate_keys"},
+		},
+		{
+			name:  "scoped worker",
+			steps: []step{{job: "run_branch_worker", forTenant: "e2e/alpha-0000000a"}},
+			want:  []string{"01_run_branch_worker"},
+		},
+		{name: "branch worker missing tenant", steps: []step{{job: "run_branch_worker"}}},
+		{
+			name:  "branch worker invalid tenant",
+			steps: []step{{job: "run_branch_worker", forTenant: "invalid"}},
+		},
+		{
+			name:  "branch worker canonical tenant",
+			steps: []step{{job: "run_branch_worker", forTenant: "tadoku/prod"}},
+		},
+		{
+			name:  "base worker tenant",
+			steps: []step{{job: "run_worker", forTenant: "e2e/alpha-0000000a"}},
+		},
+		{
+			name:  "request with worker tenant",
+			steps: []step{{request: "read", as: admin, want: http.StatusOK, forTenant: "e2e/alpha-0000000a"}},
+		},
+		{name: "cache snapshot with request", steps: []step{{valkey: "keys", request: "read"}}},
+		{name: "cache snapshot with actor", steps: []step{{valkey: "keys", as: admin}}},
 	}
 
 	for _, test := range tests {

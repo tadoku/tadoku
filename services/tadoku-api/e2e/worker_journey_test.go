@@ -11,22 +11,37 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/app/worker"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
-func runWorkerStep(t *testing.T, s *suite) {
+func runWorkerStep(t *testing.T, s *suite, forTenant string) {
 	t.Helper()
 	scope, err := jobqueue.AllTenantsExcept("tadoku-worker")
 	if err != nil {
 		t.Fatal(err)
 	}
-	const eligibleSQL = `from jobs
+	eligibleSQL := `from jobs
 		where not exists (
 			select 1 from tenant_overrides as o
 			where o.tenant = jobs.tenant and o.component = 'tadoku-worker'
 		)`
+	var arguments []any
+	if forTenant != "" {
+		key, err := tenant.Parse(forTenant)
+		if err != nil {
+			t.Fatal(err)
+		}
+		scope, err = jobqueue.OnlyTenant(key)
+		if err != nil {
+			t.Fatal(err)
+		}
+		eligibleSQL = "from jobs where tenant = $1"
+		arguments = []any{forTenant}
+	}
 
 	var queued int
-	if err := s.db.Pool.QueryRow(t.Context(), "select count(*) "+eligibleSQL).Scan(&queued); err != nil {
+	err = s.db.Pool.QueryRow(t.Context(), "select count(*) "+eligibleSQL, arguments...).Scan(&queued)
+	if err != nil {
 		t.Fatal(err)
 	}
 	if queued == 0 {
@@ -78,6 +93,7 @@ func runWorkerStep(t *testing.T, s *suite) {
 		err := s.db.Pool.QueryRow(t.Context(), `select
 			count(*) filter (where state = 'completed'),
 			count(*) filter (where state = 'failed') `+eligibleSQL,
+			arguments...,
 		).Scan(&completed, &failed)
 		if err != nil {
 			t.Fatal(err)

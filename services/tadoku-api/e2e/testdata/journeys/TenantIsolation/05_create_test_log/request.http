@@ -1,0 +1,6 @@
+POST /immersion/logs HTTP/1.1
+Host: api.test
+Content-Type: application/json
+Content-Length: 167
+
+{"registration_ids":["eeeeeeee-eeee-4eee-8eee-000000000002"],"language_code":"eng","activity_id":1,"amount":20,"unit_key":"reading_page","description":"test-only log"}

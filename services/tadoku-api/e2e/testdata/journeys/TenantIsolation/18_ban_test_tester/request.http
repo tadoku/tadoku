@@ -1,0 +1,6 @@
+PUT /authz/users/44444444-4444-4444-8444-444444444444/role HTTP/1.1
+Host: api.test
+Content-Type: application/json
+Content-Length: 52
+
+{"role":"banned","reason":"owned isolation journey"}

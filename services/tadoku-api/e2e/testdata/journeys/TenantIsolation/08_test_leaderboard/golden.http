@@ -1,0 +1,6 @@
+>>> GET /immersion/leaderboard/global
+HTTP/1.1 200 OK
+Content-Length: 167
+Content-Type: application/json; charset=UTF-8
+
+{"entries":[{"is_tie":false,"rank":1,"score":40,"user_display_name":"User Two","user_id":"44444444-4444-4444-8444-444444444444"}],"next_page_token":"","total_size":1}

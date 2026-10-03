@@ -1,0 +1,10 @@
+[
+  {
+    "tenant": "e2e/alpha-0000000a",
+    "count": 1
+  },
+  {
+    "tenant": "tadoku/prod",
+    "count": 1
+  }
+]

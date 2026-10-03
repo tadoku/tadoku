@@ -1,0 +1,6 @@
+>>> POST /immersion/logs
+HTTP/1.1 200 OK
+Content-Length: 701
+Content-Type: application/json; charset=UTF-8
+
+{"activity":{"id":1,"input_type":"amount_primary","name":"Reading"},"amount":20,"created_at":"2026-09-12T12:00:00Z","deleted":false,"description":"test-only log","id":"680b4e7c-8b76-4a1b-9d49-d4955c848621","language":{"code":"eng","name":"English"},"modifier":1,"registrations":[{"contest_end":"2026-09-30","contest_id":"f0000000-0000-4000-8000-000000000002","official":true,"owner_user_display_name":"User Two","registration_id":"eeeeeeee-eeee-4eee-8eee-000000000002","score":40,"title":"Test contest"}],"score":40,"tags":[],"unit_id":"026e644b-ec51-61cd-a392-55231a6ab4a0","unit_key":"reading_page","unit_name":"Page","user_display_name":"User Two","user_id":"44444444-4444-4444-8444-444444444444"}

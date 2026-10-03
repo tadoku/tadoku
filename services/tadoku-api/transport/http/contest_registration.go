@@ -37,7 +37,9 @@ func (s *server) ImmersionContestFindOngoingRegistrations(
 		return nil, err
 	}
 
-	return openapi.ImmersionContestFindOngoingRegistrations200JSONResponse(registrationListResponse(registrations)), nil
+	return openapi.ImmersionContestFindOngoingRegistrations200JSONResponse(
+		openapi.ImmersionContestOngoingRegistrations(registrationListResponse(registrations)),
+	), nil
 }
 
 func (s *server) ImmersionProfileYearlyContestRegistrationsByUserID(

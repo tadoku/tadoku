@@ -1386,7 +1386,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ImmersionContestRegistrations"
+                $ref: "#/components/schemas/ImmersionContestOngoingRegistrations"
         "401":
           description: unauthorized
       x-tadoku-source: Immersion
@@ -3203,6 +3203,17 @@ components:
             registrations:
               type: array
               maxItems: 50
+              items:
+                $ref: "#/components/schemas/ImmersionContestRegistration"
+    ImmersionContestOngoingRegistrations:
+      allOf:
+        - $ref: "#/components/schemas/ImmersionPaginatedList"
+        - type: object
+          required:
+            - registrations
+          properties:
+            registrations:
+              type: array
               items:
                 $ref: "#/components/schemas/ImmersionContestRegistration"
     ImmersionContestRegistrationReference:

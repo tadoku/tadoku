@@ -578,6 +578,18 @@ type ImmersionContestConfigurationOptions struct {
 	Languages              []ImmersionLanguage `json:"languages"`
 }
 
+// ImmersionContestOngoingRegistrations defines model for ImmersionContestOngoingRegistrations.
+type ImmersionContestOngoingRegistrations struct {
+	// NextPageToken is empty if there's no next page
+	//
+	// Example: 3
+	NextPageToken string                         `json:"next_page_token"`
+	Registrations []ImmersionContestRegistration `json:"registrations"`
+
+	// TotalSize Example: 100
+	TotalSize int `json:"total_size"`
+}
+
 // ImmersionContestProfileActivity defines model for ImmersionContestProfileActivity.
 type ImmersionContestProfileActivity struct {
 	Rows []ImmersionContestProfileActivityRow `json:"rows"`
@@ -5120,7 +5132,7 @@ type ImmersionContestFindOngoingRegistrationsResponseObject interface {
 	VisitImmersionContestFindOngoingRegistrationsResponse(w http.ResponseWriter) error
 }
 
-type ImmersionContestFindOngoingRegistrations200JSONResponse ImmersionContestRegistrations
+type ImmersionContestFindOngoingRegistrations200JSONResponse ImmersionContestOngoingRegistrations
 
 func (response ImmersionContestFindOngoingRegistrations200JSONResponse) VisitImmersionContestFindOngoingRegistrationsResponse(w http.ResponseWriter) error {
 

@@ -187,7 +187,7 @@ func TestWorkerProcessUsesPersistedTenant(t *testing.T) {
 					return err
 				}
 				return test.handlerErr
-			}, Policy{Concurrency: 1, Timeout: time.Second, MaxAttempts: 3}))
+			}, policy{Concurrency: 1, Timeout: time.Second, MaxAttempts: 3}))
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -273,7 +273,7 @@ func TestBaseWorkerHousekeepingUsesAllTenants(t *testing.T) {
 	registry := prometheus.NewRegistry()
 	handlers, err := newRegistry(handle(
 		func(context.Context, jobs.InvalidateOfficialLeaderboardV1) error { return nil },
-		Policy{Concurrency: 1, Timeout: time.Second, MaxAttempts: 3},
+		policy{Concurrency: 1, Timeout: time.Second, MaxAttempts: 3},
 	))
 	if err != nil {
 		t.Fatal(err)
@@ -1172,7 +1172,7 @@ func TestWorkerRetainsSlotUntilCanceledHandlerReturns(t *testing.T) {
 		canceled <- struct{}{}
 		<-release
 		return nil
-	}, Policy{Concurrency: 1, Timeout: 50 * time.Millisecond, MaxAttempts: 1}))
+	}, policy{Concurrency: 1, Timeout: 50 * time.Millisecond, MaxAttempts: 1}))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1263,7 +1263,7 @@ func TestWorkerRenewedDeadlineSchedulesRetry(t *testing.T) {
 	handlers, err := newRegistry(handle(func(ctx context.Context, _ jobs.InvalidateOfficialLeaderboardV1) error {
 		<-ctx.Done()
 		return ctx.Err()
-	}, Policy{Concurrency: 1, Timeout: 4 * time.Second, MaxAttempts: 2}))
+	}, policy{Concurrency: 1, Timeout: 4 * time.Second, MaxAttempts: 2}))
 	if err != nil {
 		t.Fatal(err)
 	}

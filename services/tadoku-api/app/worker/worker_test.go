@@ -14,7 +14,7 @@ import (
 )
 
 func TestRegistryRejectsInvalidRegistrations(t *testing.T) {
-	valid := Policy{Concurrency: 2, Timeout: time.Second, MaxAttempts: 5}
+	valid := policy{Concurrency: 2, Timeout: time.Second, MaxAttempts: 5}
 	handler := func(context.Context, jobs.InvalidateOfficialLeaderboardV1) error { return nil }
 	for _, tc := range []struct {
 		name    string
@@ -26,12 +26,12 @@ func TestRegistryRejectsInvalidRegistrations(t *testing.T) {
 		{"nil handler", []registration{handle[jobs.InvalidateOfficialLeaderboardV1](nil, valid)}, ""},
 		{"pointer payload", []registration{handle(func(context.Context, *jobs.InvalidateOfficialLeaderboardV1) error { return nil }, valid)}, ""},
 		{"interface payload", []registration{handle(func(context.Context, jobs.Job) error { return nil }, valid)}, ""},
-		{"zero concurrency", []registration{handle(handler, Policy{Timeout: time.Second, MaxAttempts: 5})}, "concurrency"},
-		{"negative concurrency", []registration{handle(handler, Policy{Concurrency: -1, Timeout: time.Second, MaxAttempts: 5})}, "concurrency"},
-		{"oversized concurrency", []registration{handle(handler, Policy{Concurrency: 101, Timeout: time.Second, MaxAttempts: 5})}, "concurrency"},
-		{"oversized attempts", []registration{handle(handler, Policy{Concurrency: 2, Timeout: time.Second, MaxAttempts: math.MaxInt32 + 1})}, "max attempts"},
-		{"zero timeout", []registration{handle(handler, Policy{Concurrency: 2, MaxAttempts: 5})}, "timeout"},
-		{"zero attempts", []registration{handle(handler, Policy{Concurrency: 2, Timeout: time.Second})}, "max attempts"},
+		{"zero concurrency", []registration{handle(handler, policy{Timeout: time.Second, MaxAttempts: 5})}, "concurrency"},
+		{"negative concurrency", []registration{handle(handler, policy{Concurrency: -1, Timeout: time.Second, MaxAttempts: 5})}, "concurrency"},
+		{"oversized concurrency", []registration{handle(handler, policy{Concurrency: 101, Timeout: time.Second, MaxAttempts: 5})}, "concurrency"},
+		{"oversized attempts", []registration{handle(handler, policy{Concurrency: 2, Timeout: time.Second, MaxAttempts: math.MaxInt32 + 1})}, "max attempts"},
+		{"zero timeout", []registration{handle(handler, policy{Concurrency: 2, MaxAttempts: 5})}, "timeout"},
+		{"zero attempts", []registration{handle(handler, policy{Concurrency: 2, Timeout: time.Second})}, "max attempts"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			_, err := newRegistry(tc.entries...)
@@ -78,7 +78,7 @@ func TestRegistryValidatesPayloadBeforeCallingTypedHandler(t *testing.T) {
 		called++
 		got, gotCtx = job, ctx
 		return nil
-	}, Policy{Concurrency: 1, Timeout: time.Second, MaxAttempts: 1}))
+	}, policy{Concurrency: 1, Timeout: time.Second, MaxAttempts: 1}))
 	if err != nil {
 		t.Fatal(err)
 	}

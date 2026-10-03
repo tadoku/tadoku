@@ -24,6 +24,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/app/worker"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
+	"github.com/tadoku/tadoku/services/tadoku-api/infra/observability"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 	valkeyinfra "github.com/tadoku/tadoku/services/tadoku-api/infra/valkey"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
@@ -215,12 +216,12 @@ func replay(ctx context.Context, args []string, logger *slog.Logger) error {
 	if err != nil {
 		return fmt.Errorf("replay job %d: %w", *id, err)
 	}
-	logger.Info("job replayed", "source_job_id", *id, "job_id", newID)
+	logger.InfoContext(ctx, "job replayed", "source_job_id", *id, "job_id", newID)
 	return nil
 }
 
 func main() {
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	logger := slog.New(observability.NewTenantHandler(slog.NewJSONHandler(os.Stdout, nil)))
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 	if len(os.Args) > 1 {

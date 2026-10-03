@@ -13,7 +13,53 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
+
+func TestScoringObservationUsesBoundedTenantKinds(t *testing.T) {
+	registry := prometheus.NewRegistry()
+	observer := NewScoringObserver(registry, nil, false)
+
+	for _, test := range []struct {
+		tenant string
+		kind   string
+	}{
+		{"tadoku/prod", "production"},
+		{"e2e/observation-0123abcd", "test"},
+		{"other/environment", "test"},
+		{"", "unknown"},
+	} {
+		ctx := t.Context()
+		if test.tenant != "" {
+			key, err := tenant.Parse(test.tenant)
+			if err != nil {
+				t.Fatal(err)
+			}
+			ctx = tenant.WithKey(ctx, key)
+		}
+		observer.Observe(ctx, ScoringComparison{
+			Operation:   "create",
+			Mode:        "shadow",
+			ActivityID:  1,
+			ScoreSource: "amount",
+			ErrorType:   "evaluation_failed",
+		})
+	}
+
+	for kind, want := range map[string]float64{"production": 1, "test": 2, "unknown": 1} {
+		got := metricValue(t, registry, "tadoku_scoring_shadow_comparisons_total", map[string]string{
+			"outcome":      "error",
+			"operation":    "create",
+			"mode":         "shadow",
+			"activity_id":  "1",
+			"score_source": "amount",
+			"tenant_kind":  kind,
+		})
+		if got != want {
+			t.Errorf("%s scoring comparison count=%v, want %v", kind, got, want)
+		}
+	}
+}
 
 func TestScoringObserverRecordsBoundedOutcomesAndGauge(t *testing.T) {
 	tests := []struct {
@@ -90,6 +136,7 @@ func TestScoringObserverRecordsBoundedOutcomesAndGauge(t *testing.T) {
 				"mode":         test.comparison.Mode,
 				"activity_id":  strconv.FormatInt(int64(test.comparison.ActivityID), 10),
 				"score_source": test.comparison.ScoreSource,
+				"tenant_kind":  "unknown",
 			})
 			if got != 1 {
 				t.Errorf("comparison count = %v, want 1", got)
@@ -274,6 +321,7 @@ func TestScoringObserverToleranceAndZeroDelta(t *testing.T) {
 				"mode":         "shadow",
 				"activity_id":  "1",
 				"score_source": "amount",
+				"tenant_kind":  "unknown",
 			})
 			if got != 1 {
 				t.Errorf("comparison count = %v, want 1 for %q", got, test.wantOutcome)

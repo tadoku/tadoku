@@ -10,15 +10,22 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
 const correlationHeader = "X-Request-Id"
+
+type observedTenantKey struct{}
+
+type requestTenant struct {
+	key tenant.Key
+}
 
 func newRequestDuration(registerer prometheus.Registerer) (*prometheus.HistogramVec, error) {
 	duration := prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Name: "tadoku_api_proxy_request_duration_seconds",
 		Help: "Duration of requests handled by Tadoku API.",
-	}, []string{"route", "upstream", "mode", "status"})
+	}, []string{"route", "upstream", "mode", "status", "tenant_kind"})
 	if err := registerer.Register(duration); err != nil {
 		return nil, fmt.Errorf("register request metrics: %w", err)
 	}
@@ -37,6 +44,8 @@ func observe(
 		ctx, cancel := context.WithTimeout(request.Context(), timeout)
 		defer cancel()
 
+		observedTenant := &requestTenant{}
+		ctx = context.WithValue(ctx, observedTenantKey{}, observedTenant)
 		request = request.WithContext(withCorrelationID(ctx, request.Header.Get(correlationHeader)))
 		request.Header.Set(correlationHeader, correlationID(request))
 		recorder := &statusRecorder{ResponseWriter: response}
@@ -48,8 +57,19 @@ func observe(
 		}
 		elapsed := time.Since(started)
 		route := routeLabel(request)
-		duration.WithLabelValues(route, "", "native", strconv.Itoa(status)).Observe(elapsed.Seconds())
-		logger.InfoContext(request.Context(), "request completed",
+		ctx = tenant.WithKey(request.Context(), observedTenant.key)
+		completionLogger := logger
+		if _, known := tenant.FromContext(ctx); !known {
+			completionLogger = logger.With("tenant", "unknown")
+		}
+		duration.WithLabelValues(
+			route,
+			"",
+			"native",
+			strconv.Itoa(status),
+			tenant.MetricKind(ctx),
+		).Observe(elapsed.Seconds())
+		completionLogger.InfoContext(ctx, "request completed",
 			"correlation_id", correlationID(request),
 			"method", request.Method,
 			"route", route,

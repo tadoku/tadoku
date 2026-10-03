@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
 const maxAppliedRuleIDs = 10
@@ -37,7 +38,7 @@ func NewScoringObserver(registry *prometheus.Registry, logger *slog.Logger, enab
 	comparisons := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Name: "tadoku_scoring_shadow_comparisons_total",
 		Help: "Legacy-to-engine scoring comparisons.",
-	}, []string{"outcome", "operation", "mode", "activity_id", "score_source"})
+	}, []string{"outcome", "operation", "mode", "activity_id", "score_source", "tenant_kind"})
 	engineEnabled := prometheus.NewGauge(prometheus.GaugeOpts{
 		Name: "tadoku_scoring_engine_enabled",
 		Help: "Whether the scoring engine is authoritative.",
@@ -62,6 +63,7 @@ func (o *ScoringObserver) Observe(ctx context.Context, comparison ScoringCompari
 		comparison.Mode,
 		strconv.FormatInt(int64(comparison.ActivityID), 10),
 		comparison.ScoreSource,
+		tenant.MetricKind(ctx),
 	).Inc()
 	if outcome == "match" || o.logger == nil {
 		return

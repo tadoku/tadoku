@@ -39,6 +39,17 @@ func FromContext(ctx context.Context) (Key, bool) {
 	return key, ok && key.value != ""
 }
 
+func MetricKind(ctx context.Context) string {
+	key, ok := FromContext(ctx)
+	if !ok {
+		return "unknown"
+	}
+	if key == Production() {
+		return "production"
+	}
+	return "test"
+}
+
 type Deployment struct {
 	key Key
 }

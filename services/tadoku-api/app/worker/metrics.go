@@ -25,12 +25,12 @@ func NewMetrics(registry *prometheus.Registry) *Metrics {
 		attempts: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Name: "tadoku_worker_failed_attempts_total",
 			Help: "Failed handler attempts by predefined type and failure code.",
-		}, []string{"type", "code"}),
+		}, []string{"type", "code", "tenant_kind"}),
 		duration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Name:    "tadoku_worker_handler_duration_seconds",
 			Help:    "Handler execution duration before the job transition by predefined type.",
 			Buckets: []float64{0.01, 0.05, 0.1, 0.5, 1, 5, 15, 30},
-		}, []string{"type"}),
+		}, []string{"type", "tenant_kind"}),
 		pending: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "tadoku_worker_pending_jobs",
 			Help: "Pending jobs by predefined type.",
@@ -86,7 +86,9 @@ func (m *Metrics) initialize(handlers *registry) {
 	for _, entry := range handlers.ordered {
 		spec := entry.spec
 		m.inFlight.WithLabelValues(string(spec.typeName)).Set(0)
-		m.duration.WithLabelValues(string(spec.typeName))
+		for _, kind := range []string{"production", "test", "unknown"} {
+			m.duration.WithLabelValues(string(spec.typeName), kind)
+		}
 		m.pending.WithLabelValues(string(spec.typeName)).Set(0)
 		m.failed.WithLabelValues(string(spec.typeName)).Set(0)
 		m.oldestDueAge.WithLabelValues(string(spec.typeName)).Set(0)

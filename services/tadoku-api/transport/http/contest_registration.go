@@ -44,7 +44,18 @@ func (s *server) ImmersionProfileYearlyContestRegistrationsByUserID(
 	ctx context.Context,
 	request openapi.ImmersionProfileYearlyContestRegistrationsByUserIDRequestObject,
 ) (openapi.ImmersionProfileYearlyContestRegistrationsByUserIDResponseObject, error) {
-	registrations, err := s.application.ListYearlyContestRegistrations(ctx, request.UserId, request.Year)
+	parameters := app.ListYearlyContestRegistrationsParameters{
+		UserID: request.UserId,
+		Year:   request.Year,
+	}
+	if request.Params.PageSize != nil {
+		parameters.PageSize = *request.Params.PageSize
+	}
+	if request.Params.Page != nil {
+		parameters.Page = *request.Params.Page
+	}
+
+	registrations, err := s.application.ListYearlyContestRegistrations(ctx, parameters)
 	if err != nil {
 		s.logOperationError(ctx, "list yearly contest registrations", err)
 		return nil, err

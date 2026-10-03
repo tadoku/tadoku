@@ -665,37 +665,82 @@ func (q *Queries) ListOngoingContestRegistrations(ctx context.Context, arg ListO
 }
 
 const listYearlyContestRegistrations = `-- name: ListYearlyContestRegistrations :many
+with matches as materialized (
+  select
+    contest_registrations.id,
+    contest_registrations.contest_id,
+    contest_registrations.user_id,
+    contest_registrations.language_codes,
+    contest_registrations.created_at,
+    users.display_name as user_display_name,
+    contests.activity_type_id_allow_list,
+    contests.registration_end,
+    contests.contest_start,
+    contests.contest_end,
+    contests.private,
+    contests.official,
+    contests.title,
+    contests.description
+  from contest_registrations
+  inner join contests
+    on contests.id = contest_registrations.contest_id
+  inner join users
+    on users.id = contest_registrations.user_id
+  where
+    user_id = $1
+    and (contests.private != true or $2::boolean)
+    and extract(year from contests.contest_start) = $3::integer
+    and contest_registrations.deleted_at is null
+), page as (
+  select
+    matches.id,
+    matches.contest_id,
+    matches.user_id,
+    matches.language_codes,
+    matches.created_at,
+    matches.user_display_name,
+    matches.activity_type_id_allow_list,
+    matches.registration_end,
+    matches.contest_start,
+    matches.contest_end,
+    matches.private,
+    matches.official,
+    matches.title,
+    matches.description
+  from matches
+  order by matches.created_at asc, matches.id
+  limit $5
+  offset $4
+), total as (
+  select count(*) as total_size
+  from matches
+)
 select
-  contest_registrations.id,
-  contest_registrations.contest_id,
-  contest_registrations.user_id,
-  contest_registrations.language_codes,
-  users.display_name as user_display_name,
-  contests.activity_type_id_allow_list,
-  contests.registration_end,
-  contests.contest_start,
-  contests.contest_end,
-  contests.private,
-  contests.official,
-  contests.title,
-  contests.description
-from contest_registrations
-inner join contests
-  on contests.id = contest_registrations.contest_id
-inner join users
-  on users.id = contest_registrations.user_id
-where
-  user_id = $1
-  and (contests.private != true or $2::boolean)
-  and extract(year from contests.contest_start) = $3::integer
-  and contest_registrations.deleted_at is null
-order by contest_registrations.created_at asc, contest_registrations.id
+  page.id,
+  page.contest_id,
+  page.user_id,
+  page.language_codes,
+  page.user_display_name,
+  page.activity_type_id_allow_list,
+  page.registration_end,
+  page.contest_start,
+  page.contest_end,
+  page.private,
+  page.official,
+  page.title,
+  page.description,
+  total.total_size
+from total
+left join page on true
+order by page.created_at asc, page.id
 `
 
 type ListYearlyContestRegistrationsParams struct {
 	UserID         pgtype.UUID
 	IncludePrivate bool
 	Year           int32
+	StartFrom      int32
+	PageSize       int32
 }
 
 type ListYearlyContestRegistrationsRow struct {
@@ -703,19 +748,26 @@ type ListYearlyContestRegistrationsRow struct {
 	ContestID               pgtype.UUID
 	UserID                  pgtype.UUID
 	LanguageCodes           []string
-	UserDisplayName         string
+	UserDisplayName         pgtype.Text
 	ActivityTypeIDAllowList []int32
 	RegistrationEnd         pgtype.Date
 	ContestStart            pgtype.Date
 	ContestEnd              pgtype.Date
-	Private                 bool
-	Official                bool
-	Title                   string
+	Private                 pgtype.Bool
+	Official                pgtype.Bool
+	Title                   pgtype.Text
 	Description             pgtype.Text
+	TotalSize               int64
 }
 
 func (q *Queries) ListYearlyContestRegistrations(ctx context.Context, arg ListYearlyContestRegistrationsParams) ([]ListYearlyContestRegistrationsRow, error) {
-	rows, err := q.db.Query(ctx, listYearlyContestRegistrations, arg.UserID, arg.IncludePrivate, arg.Year)
+	rows, err := q.db.Query(ctx, listYearlyContestRegistrations,
+		arg.UserID,
+		arg.IncludePrivate,
+		arg.Year,
+		arg.StartFrom,
+		arg.PageSize,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -737,6 +789,7 @@ func (q *Queries) ListYearlyContestRegistrations(ctx context.Context, arg ListYe
 			&i.Official,
 			&i.Title,
 			&i.Description,
+			&i.TotalSize,
 		); err != nil {
 			return nil, err
 		}

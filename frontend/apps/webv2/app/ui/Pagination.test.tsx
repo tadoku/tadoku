@@ -28,7 +28,6 @@ const expectInert = (name: 'Previous' | 'Next') => {
   expect(element.getAttribute('aria-disabled')).toBe('true')
   expect(element.hasAttribute('href')).toBe(false)
 
-  // An unfocusable control cannot be activated with Enter.
   element.focus()
   expect(document.activeElement).not.toBe(element)
 }

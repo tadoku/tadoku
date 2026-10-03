@@ -38,14 +38,12 @@ return 1
 type Cache struct {
 	client           valkeygo.Client
 	operationTimeout time.Duration
-	cachePrefix      string
 }
 
-func NewCache(client valkeygo.Client, operationTimeout time.Duration, cachePrefix string) *Cache {
+func NewCache(client valkeygo.Client, operationTimeout time.Duration) *Cache {
 	return &Cache{
 		client:           client,
 		operationTimeout: operationTimeout,
-		cachePrefix:      cachePrefix,
 	}
 }
 
@@ -55,7 +53,7 @@ func (c *Cache) cacheKey(ctx context.Context, key string) (string, error) {
 		return "", fmt.Errorf("leaderboard cache requires a tenant")
 	}
 
-	return c.cachePrefix + "tenant:" + tenantKey.String() + ":" + key, nil
+	return "tenant:" + tenantKey.String() + ":" + key, nil
 }
 
 func (c *Cache) DeleteTestTenant(ctx context.Context, key tenant.TestKey) error {

@@ -409,7 +409,7 @@ func (f workerFixture) Close() error {
 func (f workerFixture) runner(t *testing.T, client valkeygo.Client, providerTimeout, shutdown time.Duration) *Application {
 	service := leaderboard.NewService(
 		leaderboard.NewRepository(f.db),
-		leaderboard.NewCache(client, providerTimeout, ""),
+		leaderboard.NewCache(client, providerTimeout),
 	)
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	application, err := NewApplication(
@@ -886,7 +886,7 @@ func TestWorkerCompletesWhenRenewalIsCanceledByFinishedHandler(t *testing.T) {
 
 	service := leaderboard.NewService(
 		leaderboard.NewRepository(limitedPool),
-		leaderboard.NewCache(blocked, 8*time.Second, ""),
+		leaderboard.NewCache(blocked, 8*time.Second),
 	)
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	repository := jobqueue.NewRepository(limitedPool)
@@ -1084,7 +1084,7 @@ func TestWorkerGlobalLimitLeavesDueRowsUnclaimed(t *testing.T) {
 
 	service := leaderboard.NewService(
 		leaderboard.NewRepository(f.db),
-		leaderboard.NewCache(blocked, 8*time.Second, ""),
+		leaderboard.NewCache(blocked, 8*time.Second),
 	)
 	application, err := NewApplication(
 		jobqueue.NewService(jobqueue.NewRepository(f.db)),

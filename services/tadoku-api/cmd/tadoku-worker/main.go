@@ -41,7 +41,6 @@ type config struct {
 	PostgresMaxConnections int32                 `validate:"gt=0,lte=32" envconfig:"postgres_max_connections" default:"4"`
 	ValkeyURL              string                `validate:"required" envconfig:"valkey_url"`
 	ValkeyTimeout          time.Duration         `validate:"gt=0" envconfig:"valkey_timeout" default:"1s"`
-	LeaderboardCachePrefix string                `envconfig:"leaderboard_cache_prefix"`
 	DialTimeout            time.Duration         `validate:"gt=0" envconfig:"dial_timeout" default:"3s"`
 	ShutdownTimeout        time.Duration         `validate:"gt=0" envconfig:"shutdown_timeout" default:"15s"`
 }
@@ -111,7 +110,7 @@ func run(ctx context.Context, cfg config, logger *slog.Logger) error {
 	metrics := worker.NewMetrics(registry)
 	leaderboardService := leaderboard.NewService(
 		leaderboard.NewRepository(pool),
-		leaderboard.NewCache(client, cfg.ValkeyTimeout, cfg.LeaderboardCachePrefix),
+		leaderboard.NewCache(client, cfg.ValkeyTimeout),
 	)
 	application, err := worker.NewApplication(
 		jobqueue.NewService(jobqueue.NewRepository(pool)),

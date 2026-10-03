@@ -83,7 +83,6 @@ type config struct {
 	Postgres               postgresconfig.Config `ignored:"true"`
 	ValkeyURL              string                `validate:"required" envconfig:"valkey_url"`
 	ValkeyTimeout          time.Duration         `validate:"gt=0" envconfig:"valkey_timeout" default:"1s"`
-	LeaderboardCachePrefix string                `envconfig:"leaderboard_cache_prefix"`
 
 	DialTimeout           time.Duration `validate:"gt=0" envconfig:"dial_timeout" default:"3s"`
 	MaxTokenAge           time.Duration `validate:"gt=0" envconfig:"max_token_age" default:"24h"`
@@ -381,7 +380,7 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	languagesService := languages.NewService(languagesRepository)
 	leaderboardService := leaderboard.NewService(
 		leaderboardRepository,
-		leaderboard.NewCache(valkeyClient, cfg.ValkeyTimeout, cfg.LeaderboardCachePrefix),
+		leaderboard.NewCache(valkeyClient, cfg.ValkeyTimeout),
 	)
 	logsService := logs.NewService(logsRepository, cfg.ScoringEngineEnabled)
 	pagesService := pages.NewService(pagesRepository)

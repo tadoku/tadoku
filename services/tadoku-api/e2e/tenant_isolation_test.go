@@ -294,7 +294,7 @@ func runIsolationWorker(t *testing.T, scope jobqueue.Scope, production, test int
 	provider := &isolationValkey{Client: leaderboardValkey.client, tenants: make(map[string]int)}
 	service := leaderboard.NewService(
 		leaderboard.NewRepository(api.db.AppPool),
-		leaderboard.NewCache(provider, time.Second, ""),
+		leaderboard.NewCache(provider, time.Second),
 	)
 	application, err := worker.NewApplication(
 		jobqueue.NewService(jobqueue.NewRepository(api.db.AppPool)),

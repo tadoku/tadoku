@@ -168,7 +168,7 @@ func run(ctx context.Context, args []string) error {
 	application = tenantlifecycle.NewApplication(
 		pool,
 		permissions.NewTenantManager(keto.NewClient(cfg.KetoReadURL, cfg.KetoWriteURL, keto.WithHTTPClient(httpClient))),
-		leaderboard.NewCache(client, time.Second, ""),
+		leaderboard.NewCache(client, time.Second),
 		fliptmanagement.NewClient(fliptmanagement.Config{
 			URL: cfg.FliptManagementURL, Targets: targets, HTTPClient: httpClient,
 		}),

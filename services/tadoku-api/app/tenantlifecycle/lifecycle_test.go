@@ -66,7 +66,7 @@ func TestTenantLifecycle(t *testing.T) {
 	application := tenantlifecycle.NewApplication(
 		db.Pool,
 		permissions.NewTenantManager(ketoClient),
-		leaderboard.NewCache(client, time.Second, ""),
+		leaderboard.NewCache(client, time.Second),
 		fliptmanagement.NewClient(fliptmanagement.Config{URL: fliptFixture.URL(), Targets: targets}),
 	)
 	key := lifecycleKey(t, "removed")
@@ -224,7 +224,7 @@ segments: []
 	}
 	requestsBefore := fliptFixture.RequestCount()
 	runtimeApplication := tenantlifecycle.NewApplication(db.AppPool, permissions.NewTenantManager(ketoClient),
-		leaderboard.NewCache(client, time.Second, ""),
+		leaderboard.NewCache(client, time.Second),
 		fliptmanagement.NewClient(fliptmanagement.Config{URL: fliptFixture.URL(), Targets: targets}))
 	if err := runtimeApplication.Provision(t.Context(), other, []uuid.UUID{reader}, features); err == nil {
 		t.Fatal("runtime credentials were accepted for provisioning")

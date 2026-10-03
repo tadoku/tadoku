@@ -8,12 +8,12 @@ import {
   ArrowRightOnRectangleIcon,
   Cog8ToothIcon,
 } from '@heroicons/react/20/solid'
-import getConfig from 'next/config'
+import { useAppUrls } from 'ui/app-urls'
 import { useLogoutHandler, useSession } from './session'
 
-const { publicRuntimeConfig } = getConfig()
 
 export default function Navigation() {
+  const { homeUrl } = useAppUrls()
   const [session] = useSession()
   const onLogout = useLogoutHandler([session])
 
@@ -55,7 +55,7 @@ export default function Navigation() {
         {
           type: 'link',
           label: 'Home',
-          href: publicRuntimeConfig.homeUrl,
+          href: homeUrl,
           current: false,
         },
         ...userNavigation,

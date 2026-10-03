@@ -34,7 +34,7 @@ vi.mock('next/router', () => ({
 
 vi.mock('next/config', () => ({
   default: () => ({
-    publicRuntimeConfig: { apiEndpoint: 'https://tadoku.test/api/internal' },
+    publicRuntimeConfig: { homeUrl: 'https://tadoku.test', authUiUrl: 'https://account.tadoku.test', adminUrl: 'https://admin.tadoku.test', apiEndpoint: 'https://tadoku.test/api/internal' },
   }),
 }))
 

@@ -1,10 +1,9 @@
 import { z } from 'zod'
-import getConfig from 'next/config'
+import { browserAppUrls } from 'ui/app-urls'
 import { useQuery } from '@tanstack/react-query'
 
-const { publicRuntimeConfig } = getConfig()
 
-const root = `${publicRuntimeConfig.apiEndpoint}/immersion`
+const root = () => `${browserAppUrls().apiEndpoint}/immersion`
 
 export const Language = z.object({
   code: z.string(),
@@ -43,7 +42,7 @@ export const useLatestOfficialContest = (options?: { enabled?: boolean }) =>
   useQuery(
     ['contest', 'findLatestOfficial'],
     async (): Promise<ContestView> => {
-      const response = await fetch(`${root}/contests/latest-official`, {
+      const response = await fetch(`${root()}/contests/latest-official`, {
         credentials: 'include',
       })
 
@@ -71,7 +70,7 @@ export const useContestSummary = (
   useQuery(
     ['contest', 'findContestSummary', id],
     async (): Promise<ContestSummary | null> => {
-      const response = await fetch(`${root}/contests/${id}/summary`, {
+      const response = await fetch(`${root()}/contests/${id}/summary`, {
         credentials: 'include',
       })
 
@@ -122,7 +121,7 @@ export const useContestLeaderboard = (
         page: (opts.page - 1).toString(),
       }
       const response = await fetch(
-        `${root}/contests/${opts.contestId}/leaderboard?${new URLSearchParams(
+        `${root()}/contests/${opts.contestId}/leaderboard?${new URLSearchParams(
           params,
         )}`,
         { credentials: 'include' },
@@ -153,7 +152,7 @@ export const useYearlyLeaderboard = (
         page: (opts.page - 1).toString(),
       }
       const response = await fetch(
-        `${root}/leaderboard/yearly/${opts.year}?${new URLSearchParams(
+        `${root()}/leaderboard/yearly/${opts.year}?${new URLSearchParams(
           params,
         )}`,
         { credentials: 'include' },

@@ -1,9 +1,5 @@
 import { DateTime } from 'luxon'
-import getConfig from 'next/config'
-
-const { publicRuntimeConfig } = getConfig()
-const kratos = publicRuntimeConfig.authUiUrl
-const adminUrl = publicRuntimeConfig.adminUrl
+import { useAppUrls } from 'ui/app-urls'
 
 type Page = string | number
 
@@ -46,19 +42,21 @@ export const routes = {
   userProfileUpdates: (id: string, page?: Page) =>
     `/profile/${id}/updates/${page ?? '1'}`,
 
-  authSettings: (return_url?: string) =>
-    `${kratos}/?return_to=${return_url ?? ''}`,
-  authLogin: (return_url?: string) =>
-    `${kratos}/login?return_to=${return_url ?? ''}`,
-  authSignup: (return_url?: string) =>
-    `${kratos}/register?return_to=${return_url ?? ''}`,
-
   // External
-
-  admin: () => adminUrl,
 
   personalWebsite: () => `https://antonve.be`,
   twitter: () => `https://twitter.com/tadoku_app`,
   github: () => `https://github.com/tadoku`,
   discord: () => `https://discord.gg/AsC9vZs2Ex`,
+}
+
+export function useRoutes() {
+  const { authUiUrl, adminUrl } = useAppUrls()
+  return {
+    ...routes,
+    authSettings: (returnUrl = '') => `${authUiUrl}/?return_to=${returnUrl}`,
+    authLogin: (returnUrl = '') => `${authUiUrl}/login?return_to=${returnUrl}`,
+    authSignup: (returnUrl = '') => `${authUiUrl}/register?return_to=${returnUrl}`,
+    admin: () => adminUrl,
+  }
 }

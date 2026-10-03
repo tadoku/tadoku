@@ -17,12 +17,13 @@ import Head from 'next/head'
 import { Settings } from 'luxon'
 import AccessDenied from '@app/ui/AccessDenied'
 import LoadingScreen from '@app/ui/LoadingScreen'
-import { routes } from '@app/common/routes'
+import { AppUrls, AppUrlsProvider, appUrlsForHost, useAppUrls } from 'ui/app-urls'
 
 // Default timezone for app
 Settings.defaultZone = 'utc'
 
 interface Props {
+  appUrls: AppUrls
   session: Session | undefined
 }
 
@@ -54,11 +55,12 @@ const createInitialValues = () => {
 }
 
 const RedirectToLogin = () => {
+  const { authUiUrl } = useAppUrls()
   const currentUrl = useCurrentLocation()
 
   useEffect(() => {
-    window.location.href = routes.authLogin(currentUrl)
-  }, [currentUrl])
+    window.location.href = `${authUiUrl}/login?return_to=${currentUrl}`
+  }, [currentUrl, authUiUrl])
 
   return <LoadingScreen />
 }
@@ -104,27 +106,29 @@ const MyApp = ({ Component, pageProps }: AppPropsWithLayout) => {
   const getLayout = Component.getLayout ?? (page => page)
 
   return (
-    <Provider initialValues={getInitialValues()}>
-      <QueryClientProvider client={queryClient}>
-        <Head>
-          <title>Admin - Tadoku</title>
-          <link
-            href="/favicon.png"
-            rel="shortcut icon"
-            media="(prefers-color-scheme: light)"
-          />
-          <link
-            href="/favicon-dark.png"
-            rel="shortcut icon"
-            media="(prefers-color-scheme: dark)"
-          />
-        </Head>
-        <AppContent>
-          {getLayout(<Component {...pageProps} />)}
-          <ToastContainer />
-        </AppContent>
-      </QueryClientProvider>
-    </Provider>
+    <AppUrlsProvider urls={pageProps.appUrls}>
+      <Provider initialValues={getInitialValues()}>
+        <QueryClientProvider client={queryClient}>
+          <Head>
+            <title>Admin - Tadoku</title>
+            <link
+              href="/favicon.png"
+              rel="shortcut icon"
+              media="(prefers-color-scheme: light)"
+            />
+            <link
+              href="/favicon-dark.png"
+              rel="shortcut icon"
+              media="(prefers-color-scheme: dark)"
+            />
+          </Head>
+          <AppContent>
+            {getLayout(<Component {...pageProps} />)}
+            <ToastContainer />
+          </AppContent>
+        </QueryClientProvider>
+      </Provider>
+    </AppUrlsProvider>
   )
 }
 
@@ -148,6 +152,7 @@ MyApp.getInitialProps = async (ctx: AppContextWithSession) => {
 
   const initialAppProps = await App.getInitialProps(ctx)
   initialAppProps.pageProps.session = ctx.ctx.session
+  initialAppProps.pageProps.appUrls = appUrlsForHost(ctx.ctx.req?.headers.host ?? (typeof window === 'undefined' ? undefined : window.location.host))
 
   return { ...props, ...initialAppProps }
 }

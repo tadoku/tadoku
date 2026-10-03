@@ -1,7 +1,7 @@
 'use client'
 
 import { ReactElement, useState } from 'react'
-import { routes } from '@app/common/routes'
+import { routes, useRoutes } from '@app/common/routes'
 import { useNamespace } from '@app/content/NamespaceSelector'
 import {
   DocumentDuplicateIcon,
@@ -73,6 +73,7 @@ const sidebarSections = (ns: string, activeLink?: ActiveLink) => [
 ]
 
 export function DashboardLayout({ children, activeLink }: Props) {
+  const routes = useRoutes()
   const ns = useNamespace()
   const [sidebarOpen, setSidebarOpen] = useState(false)
 

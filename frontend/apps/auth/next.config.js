@@ -12,6 +12,9 @@ const nextConfig = {
       process.env.NEXT_PUBLIC_KRATOS_INTERNAL_ENDPOINT ??
       'http://kratos-public',
     homeUrl: process.env.NEXT_PUBLIC_HOME_URL ?? 'https://tadoku.app',
+    authUiUrl: process.env.NEXT_PUBLIC_AUTH_UI_URL ?? 'https://account.tadoku.app',
+    adminUrl: process.env.NEXT_PUBLIC_ADMIN_URL ?? 'https://admin.tadoku.app',
+    apiEndpoint: process.env.NEXT_PUBLIC_API_ENDPOINT ?? 'https://tadoku.app/api/internal',
     cookieDomain: process.env.NEXT_PUBLIC_COOKIE_DOMAIN ?? '.tadoku.app',
     cookieSecure: process.env.NEXT_PUBLIC_COOKIE_SECURE !== 'false',
   },

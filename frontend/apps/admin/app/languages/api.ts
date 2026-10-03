@@ -1,10 +1,9 @@
 import { z } from 'zod'
-import getConfig from 'next/config'
+import { browserAppUrls } from 'ui/app-urls'
 import { useMutation, useQuery } from '@tanstack/react-query'
 
-const { publicRuntimeConfig } = getConfig()
 
-const root = `${publicRuntimeConfig.apiEndpoint}/immersion`
+const root = () => `${browserAppUrls().apiEndpoint}/immersion`
 
 const Language = z.object({
   code: z.string(),
@@ -23,7 +22,7 @@ export const useLanguageList = (options?: { enabled?: boolean }) =>
   useQuery(
     ['languages', 'list'],
     async (): Promise<LanguageList> => {
-      const response = await fetch(`${root}/languages`, {
+      const response = await fetch(`${root()}/languages`, {
         credentials: 'include',
       })
 
@@ -42,7 +41,7 @@ export const useLanguageCreate = (
 ) =>
   useMutation({
     mutationFn: async ({ code, name }: { code: string; name: string }) => {
-      const response = await fetch(`${root}/languages`, {
+      const response = await fetch(`${root()}/languages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code, name }),
@@ -61,7 +60,7 @@ export const useLanguageUpdate = (
 ) =>
   useMutation({
     mutationFn: async ({ code, name }: { code: string; name: string }) => {
-      const response = await fetch(`${root}/languages/${code}`, {
+      const response = await fetch(`${root()}/languages/${code}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name }),

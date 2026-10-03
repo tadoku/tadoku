@@ -1,4 +1,4 @@
-import { routes } from '@app/common/routes'
+import { routes, useRoutes } from '@app/common/routes'
 import { useSession } from '@app/common/session'
 import { usePostList } from '@app/content/api'
 import { PostBody } from '@app/content/Post'
@@ -42,6 +42,7 @@ const Index: NextPage<Props> = () => (
 )
 
 function AboutSection() {
+  const routes = useRoutes()
   const [session] = useSession()
 
   return (

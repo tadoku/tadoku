@@ -39,7 +39,16 @@ Always use `react-hook-form`; never keep form fields in plain `useState`.
 - Use `methods.watch()` for reactive values such as live previews, and
   `methods.reset()` to load existing data.
 
-## API data
+## Cross-app URLs
+
+Use `useAppUrls()`, `browserAppUrls()` or `appUrlsForHost()` from
+`frontend/packages/ui/app-urls.tsx` for home, account, admin and browser API
+URLs. Resolve them per request or browser call so branch hosts retain their
+sibling origins. Supply `AppUrlsProvider` from each application's request
+properties for consistent SSR and hydration. Kratos stays on the base account
+host. Avoid module-level runtime URL constants.
+
+## API response parsing
 
 webv2 and admin call Tadoku API with React Query hooks and parse every response
 with Zod before using it ([ADR 003](../adr/003-zod.md)). The contract is

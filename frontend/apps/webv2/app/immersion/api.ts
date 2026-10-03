@@ -1,14 +1,13 @@
 import { z } from 'zod'
-import getConfig from 'next/config'
+import { browserAppUrls } from 'ui/app-urls'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ContestFormSchema } from '@app/immersion/ContestForm'
 import { ContestRegistrationFormSchema } from '@app/immersion/ContestRegistration'
 import { NewLogAPISchema } from '@app/immersion/NewLogForm/domain'
 
-const { publicRuntimeConfig } = getConfig()
 
-const root = `${publicRuntimeConfig.apiEndpoint}/immersion`
-const authzRoot = `${publicRuntimeConfig.apiEndpoint}/authz`
+const root = () => `${browserAppUrls().apiEndpoint}/immersion`
+const authzRoot = () => `${browserAppUrls().apiEndpoint}/authz`
 
 export const Language = z.object({
   code: z.string(),
@@ -46,7 +45,7 @@ export const useContestConfigurationOptions = (options?: {
   useQuery(
     ['contest', 'configuration-options'],
     async (): Promise<ContestConfigurationOptions> => {
-      const response = await fetch(`${root}/contests/configuration-options`)
+      const response = await fetch(`${root()}/contests/configuration-options`)
 
       if (response.status !== 200) {
         throw new Error(response.status.toString())
@@ -70,7 +69,7 @@ export const useCreateContest = (onSuccess: (id: string) => void) =>
         ),
       }
 
-      const response = await fetch(`${root}/contests`, {
+      const response = await fetch(`${root()}/contests`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -94,7 +93,7 @@ export const useContestCreatePermissionCheck = (options?: {
   useQuery(
     ['contest', 'createPermissionCheck'],
     async (): Promise<true> => {
-      const response = await fetch(`${root}/contests/create-permissions`)
+      const response = await fetch(`${root()}/contests/create-permissions`)
 
       if (response.status !== 200) {
         throw new Error(response.status.toString())
@@ -150,7 +149,7 @@ export const useContestList = (
         ...(opts.userId ? { user_id: opts.userId.toString() } : {}),
       }
       const response = await fetch(
-        `${root}/contests?${new URLSearchParams(params)}`,
+        `${root()}/contests?${new URLSearchParams(params)}`,
       )
 
       if (response.status !== 200) {
@@ -184,7 +183,7 @@ export const useContest = (id: string, options?: { enabled?: boolean }) =>
   useQuery(
     ['contest', 'findByID', id],
     async (): Promise<ContestView> => {
-      const response = await fetch(`${root}/contests/${id}`)
+      const response = await fetch(`${root()}/contests/${id}`)
 
       if (response.status !== 200) {
         throw new Error(response.status.toString())
@@ -199,7 +198,7 @@ export const useLatestOfficialContest = (options?: { enabled?: boolean }) =>
   useQuery(
     ['contest', 'findLatestOfficial'],
     async (): Promise<ContestView> => {
-      const response = await fetch(`${root}/contests/latest-official`)
+      const response = await fetch(`${root()}/contests/latest-official`)
 
       if (response.status !== 200) {
         throw new Error(response.status.toString())
@@ -233,7 +232,7 @@ export const useContestRegistration = (
   useQuery(
     ['contest', 'findContestRegistrationForUser', id],
     async (): Promise<ContestRegistrationView | null> => {
-      const response = await fetch(`${root}/contests/${id}/registration`)
+      const response = await fetch(`${root()}/contests/${id}/registration`)
 
       if (response.status === 204) {
         return null
@@ -263,7 +262,7 @@ export const useContestSummary = (
   useQuery(
     ['contest', 'findContestSummary', id],
     async (): Promise<ContestSummary | null> => {
-      const response = await fetch(`${root}/contests/${id}/summary`)
+      const response = await fetch(`${root()}/contests/${id}/summary`)
 
       if (response.status === 404) {
         return null
@@ -283,7 +282,7 @@ export const useContestRegistrationUpdate = (onSuccess: () => void) => {
   return useMutation({
     mutationFn: async (registration: ContestRegistrationFormSchema) => {
       const response = await fetch(
-        `${root}/contests/${registration.contest_id}/registration`,
+        `${root()}/contests/${registration.contest_id}/registration`,
         {
           method: 'POST',
           headers: {
@@ -347,7 +346,7 @@ export const useContestLeaderboard = (
         ...(opts.activityId ? { activity_id: opts.activityId.toString() } : {}),
       }
       const response = await fetch(
-        `${root}/contests/${opts.contestId}/leaderboard?${new URLSearchParams(
+        `${root()}/contests/${opts.contestId}/leaderboard?${new URLSearchParams(
           params,
         )}`,
       )
@@ -381,7 +380,7 @@ export const useYearlyLeaderboard = (
         ...(opts.activityId ? { activity_id: opts.activityId.toString() } : {}),
       }
       const response = await fetch(
-        `${root}/leaderboard/yearly/${opts.year}?${new URLSearchParams(
+        `${root()}/leaderboard/yearly/${opts.year}?${new URLSearchParams(
           params,
         )}`,
       )
@@ -414,7 +413,7 @@ export const useAllTimeLeaderboard = (
         ...(opts.activityId ? { activity_id: opts.activityId.toString() } : {}),
       }
       const response = await fetch(
-        `${root}/leaderboard/global?${new URLSearchParams(params)}`,
+        `${root()}/leaderboard/global?${new URLSearchParams(params)}`,
       )
 
       if (response.status !== 200) {
@@ -440,7 +439,7 @@ export const useOngoingContestRegistrations = (options?: {
   useQuery(
     ['contest', 'ongoing-contest-registrations'],
     async (): Promise<ContestRegistrationsView> => {
-      const response = await fetch(`${root}/contests/ongoing-registrations`)
+      const response = await fetch(`${root()}/contests/ongoing-registrations`)
 
       if (response.status !== 200) {
         throw new Error(response.status.toString())
@@ -478,7 +477,7 @@ export const useContestProfileScores = (
     ['contest', opts.contestId, 'profile', opts.userId, 'scores'],
     async (): Promise<ContestProfileScores> => {
       const response = await fetch(
-        `${root}/contests/${opts.contestId}/profile/${opts.userId}/scores`,
+        `${root()}/contests/${opts.contestId}/profile/${opts.userId}/scores`,
       )
 
       if (response.status !== 200) {
@@ -513,7 +512,7 @@ export const useContestProfileActivity = (
     ['contest', opts.contestId, 'profile', opts.userId, 'readingActivity'],
     async (): Promise<ContestProfileActivity> => {
       const response = await fetch(
-        `${root}/contests/${opts.contestId}/profile/${opts.userId}/activity`,
+        `${root()}/contests/${opts.contestId}/profile/${opts.userId}/activity`,
       )
 
       if (response.status !== 200) {
@@ -606,7 +605,7 @@ export const useContestLogs = (
         ...(opts.userId ? { user_id: opts.userId } : {}),
       }
       const response = await fetch(
-        `${root}/contests/${opts.contestId}/logs?${new URLSearchParams(
+        `${root()}/contests/${opts.contestId}/logs?${new URLSearchParams(
           params,
         )}`,
       )
@@ -645,7 +644,7 @@ export const useProfileLogs = (
         include_deleted: opts.includeDeleted.toString(),
       }
       const response = await fetch(
-        `${root}/users/${opts.userId}/logs?${new URLSearchParams(params)}`,
+        `${root()}/users/${opts.userId}/logs?${new URLSearchParams(params)}`,
       )
 
       if (response.status !== 200) {
@@ -674,7 +673,7 @@ export const useUserProfile = (
   useQuery(
     ['users', opts.userId, 'profile'],
     async (): Promise<UserProfile> => {
-      const response = await fetch(`${root}/users/${opts.userId}/profile`)
+      const response = await fetch(`${root()}/users/${opts.userId}/profile`)
 
       if (response.status !== 200) {
         throw new Error(response.status.toString())
@@ -710,7 +709,7 @@ export const useLogConfigurationOptions = (options?: { enabled?: boolean }) =>
   useQuery(
     ['contest', 'log', 'configuration-options'],
     async (): Promise<LogConfigurationOptions> => {
-      const response = await fetch(`${root}/logs/configuration-options`)
+      const response = await fetch(`${root()}/logs/configuration-options`)
 
       if (response.status !== 200) {
         throw new Error(response.status.toString())
@@ -764,7 +763,7 @@ export const useScorePreview = (
   useQuery(
     ['log', 'score-preview', payload],
     async (): Promise<ScorePreview> => {
-      const response = await fetch(`${root}/logs/score-preview`, {
+      const response = await fetch(`${root()}/logs/score-preview`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -827,7 +826,7 @@ export const usePlatformScoringRuleSets = (options?: { enabled?: boolean }) =>
   useQuery(
     ['scoring', 'rule-sets', 'platform'],
     async (): Promise<ScoringRuleSet[]> => {
-      const response = await fetch(`${root}/scoring/rule-sets`)
+      const response = await fetch(`${root()}/scoring/rule-sets`)
       if (response.status !== 200) {
         throw new Error(response.status.toString())
       }
@@ -844,7 +843,7 @@ export const useContestScoringRuleSets = (
     ['scoring', 'rule-sets', 'contest', contestId],
     async (): Promise<ScoringRuleSet[]> => {
       const response = await fetch(
-        `${root}/contests/${contestId}/scoring/rule-sets`,
+        `${root()}/contests/${contestId}/scoring/rule-sets`,
       )
       if (response.status !== 200) {
         throw new Error(response.status.toString())
@@ -859,7 +858,7 @@ export const useCreateContestScoringRuleSet = (contestId: string) => {
   return useMutation({
     mutationFn: async (payload: ScoringRuleSetDraftPayload) => {
       const response = await fetch(
-        `${root}/contests/${contestId}/scoring/rule-sets`,
+        `${root()}/contests/${contestId}/scoring/rule-sets`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -887,7 +886,7 @@ export const usePublishScoringRuleSet = (contestId: string) => {
   return useMutation({
     mutationFn: async (ruleSetId: string) => {
       const response = await fetch(
-        `${root}/scoring/rule-sets/${ruleSetId}/publish`,
+        `${root()}/scoring/rule-sets/${ruleSetId}/publish`,
         { method: 'POST' },
       )
       if (response.status !== 200) {
@@ -911,7 +910,7 @@ export const useActivateScoringRuleSet = (contestId: string) => {
   return useMutation({
     mutationFn: async (ruleSetId: string) => {
       const response = await fetch(
-        `${root}/scoring/rule-sets/${ruleSetId}/activate`,
+        `${root()}/scoring/rule-sets/${ruleSetId}/activate`,
         { method: 'POST' },
       )
       if (response.status !== 204) {
@@ -944,7 +943,7 @@ export const fetchTagSuggestions = async (
   query: string,
 ): Promise<TagSuggestion[]> => {
   const response = await fetch(
-    `${root}/logs/tag-suggestions?query=${encodeURIComponent(query)}`,
+    `${root()}/logs/tag-suggestions?query=${encodeURIComponent(query)}`,
   )
   if (!response.ok) return []
   const data = TagSuggestions.parse(await response.json())
@@ -954,7 +953,7 @@ export const fetchTagSuggestions = async (
 export const useCreateLog = (onSuccess: (id: string) => void) =>
   useMutation({
     mutationFn: async (contest: NewLogAPISchema) => {
-      const response = await fetch(`${root}/logs`, {
+      const response = await fetch(`${root()}/logs`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -986,7 +985,7 @@ export type CreateLogV2Payload = {
 export const useCreateLogV2 = (onSuccess: (log: Log) => void) =>
   useMutation({
     mutationFn: async (payload: CreateLogV2Payload) => {
-      const response = await fetch(`${root}/logs`, {
+      const response = await fetch(`${root()}/logs`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1023,7 +1022,7 @@ export const useUpdateLog = (onSuccess: (log: Log) => void) => {
       logId: string
       payload: UpdateLogPayload
     }) => {
-      const response = await fetch(`${root}/logs/${logId}`, {
+      const response = await fetch(`${root()}/logs/${logId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -1056,7 +1055,7 @@ export const useUpdateLogContestRegistrations = (
       registrationIds: string[]
     }) => {
       const response = await fetch(
-        `${root}/logs/${logId}/contest-registrations`,
+        `${root()}/logs/${logId}/contest-registrations`,
         {
           method: 'PUT',
           headers: {
@@ -1082,7 +1081,7 @@ export const useLog = (id: string, options?: { enabled?: boolean }) =>
   useQuery(
     ['log', 'findByID', id],
     async (): Promise<Log> => {
-      const response = await fetch(`${root}/logs/${id}`)
+      const response = await fetch(`${root()}/logs/${id}`)
 
       if (response.status !== 200) {
         throw new Error(response.status.toString())
@@ -1124,7 +1123,7 @@ export const useUserYearlyActivity = (
     ['users', opts.userId, 'yearly-activity', opts.year],
     async (): Promise<UserActivity> => {
       const response = await fetch(
-        `${root}/users/${opts.userId}/activity/${opts.year}`,
+        `${root()}/users/${opts.userId}/activity/${opts.year}`,
       )
 
       if (response.status !== 200) {
@@ -1154,7 +1153,7 @@ export const useProfileScores = (
     ['users', opts.userId, 'scores', opts.year],
     async (): Promise<ProfileScores> => {
       const response = await fetch(
-        `${root}/users/${opts.userId}/scores/${opts.year}`,
+        `${root()}/users/${opts.userId}/scores/${opts.year}`,
       )
 
       if (response.status !== 200) {
@@ -1179,7 +1178,7 @@ export const useYearlyContestRegistrations = (
     ['users', opts.userId, 'contest-registrations', opts.year],
     async (): Promise<ContestRegistrationsView> => {
       const response = await fetch(
-        `${root}/users/${opts.userId}/contest-registrations/${opts.year}`,
+        `${root()}/users/${opts.userId}/contest-registrations/${opts.year}`,
       )
 
       if (response.status !== 200) {
@@ -1216,7 +1215,7 @@ export const useUserYearlyActivitySplit = (
     ['users', opts.userId, 'activity-split', opts.year],
     async (): Promise<ActivitySplit> => {
       const response = await fetch(
-        `${root}/users/${opts.userId}/activity-split/${opts.year}`,
+        `${root()}/users/${opts.userId}/activity-split/${opts.year}`,
       )
 
       if (response.status !== 200) {
@@ -1231,7 +1230,7 @@ export const useUserYearlyActivitySplit = (
 export const useDeleteLog = (onSuccess: () => void, onError: () => void) =>
   useMutation({
     mutationFn: async (id: string) => {
-      const response = await fetch(`${root}/logs/${id}`, {
+      const response = await fetch(`${root()}/logs/${id}`, {
         method: 'DELETE',
       })
       if (response.status !== 200) {
@@ -1261,7 +1260,7 @@ export const useDetachLogFromContest = (
       reason: string
     }) => {
       const response = await fetch(
-        `${root}/contests/${contestId}/moderation/detach/${logId}`,
+        `${root()}/contests/${contestId}/moderation/detach/${logId}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1314,7 +1313,7 @@ export const useUserList = (
         params.query = opts.query
       }
       const response = await fetch(
-        `${root}/users?${new URLSearchParams(params)}`,
+        `${root()}/users?${new URLSearchParams(params)}`,
       )
 
       if (response.status === 401) {
@@ -1343,7 +1342,7 @@ export const useUpdateUserRole = (onSuccess: () => void, onError: () => void) =>
       role: 'user' | 'banned'
       reason: string
     }) => {
-      const response = await fetch(`${authzRoot}/users/${userId}/role`, {
+      const response = await fetch(`${authzRoot()}/users/${userId}/role`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ role, reason }),

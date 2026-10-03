@@ -1,5 +1,14 @@
 # Kratos browser checks
 
+For the branch-host journey, set `BRANCH_APP_URL`, `BRANCH_AUTH_URL` and
+`BRANCH_ADMIN_URL` to the three branch origins printed by dev-cli, without a
+trailing slash. Also set `E2E_ADMIN_EMAIL` and `E2E_ADMIN_PASSWORD` for the
+development administrator. Run `pnpm --filter auth exec playwright test
+e2e/branch-hosts.spec.ts --trace on --reporter=html` from `frontend/`.
+Missing variables skip the journey. Keep authenticated traces private because
+they contain session material; report TLS trust separately from this config's
+HTTPS-error bypass. Kratos remains on the base account host.
+
 Run against the development GitOps base with Kratos and MailHog ready. The account
 journey creates a unique `@example.com` test identity, changes its password and
 profile, and sends recovery mail to MailHog. It does not reset the database or

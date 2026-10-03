@@ -1,13 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import getConfig from 'next/config'
+import { browserAppUrls } from 'ui/app-urls'
 import {
   FeatureAccessResult,
   FeatureFlagKey,
   featureAccessResultSchema,
 } from './contracts'
 
-const { publicRuntimeConfig } = getConfig()
-const immersionRoot = `${publicRuntimeConfig.apiEndpoint}/immersion`
+const immersionRoot = () => `${browserAppUrls().apiEndpoint}/immersion`
 
 interface FeatureAccessVariables {
   targetUserId: string
@@ -22,7 +21,7 @@ const featureAccessEndpoint = ({
   targetUserId,
   flagKey,
 }: FeatureAccessVariables) =>
-  `${immersionRoot}/admin/feature-flags/${encodeURIComponent(
+  `${immersionRoot()}/admin/feature-flags/${encodeURIComponent(
     flagKey,
   )}/users/${encodeURIComponent(targetUserId)}`
 

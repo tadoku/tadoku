@@ -27,11 +27,13 @@ import {
   featureFlagDecisionsAtom,
 } from '@app/feature-flags/client'
 import { bootstrapFeatureFlagDecisions } from '@app/feature-flags/bootstrap'
+import { AppUrls, AppUrlsProvider, appUrlsForHost, serverApiEndpointForHost } from 'ui/app-urls'
 
 // Default timezone for app
 Settings.defaultZone = 'utc'
 
 interface Props {
+  appUrls: AppUrls
   session: Session | undefined
   featureFlags: FeatureFlagDecisions
 }
@@ -86,36 +88,38 @@ const MyApp = ({ Component, pageProps }: AppPropsWithLayout) => {
   const getLayout = Component.getLayout ?? (page => page)
 
   return (
-    <Provider initialValues={getInitialValues()}>
-      <QueryClientProvider client={queryClient}>
-        <Head>
-          <title>Tadoku</title>
-          <link
-            href="/favicon.png"
-            rel="shortcut icon"
-            media="(prefers-color-scheme: light)"
-          />
-          <link
-            href="/favicon-dark.png"
-            rel="shortcut icon"
-            media="(prefers-color-scheme: dark)"
-          />
-        </Head>
-        <FeatureFlagRefresh>
-          <AppContent>
-            <div className="min-h-screen flex flex-col">
-              <Navigation />
-              <div className="p-4 md:px-8 md:pb-8 md:pt-4 mx-auto w-full max-w-7xl mb-auto">
-                <AnnouncementBanner />
-                {getLayout(<Component {...pageProps} />)}
+    <AppUrlsProvider urls={pageProps.appUrls}>
+      <Provider initialValues={getInitialValues()}>
+        <QueryClientProvider client={queryClient}>
+          <Head>
+            <title>Tadoku</title>
+            <link
+              href="/favicon.png"
+              rel="shortcut icon"
+              media="(prefers-color-scheme: light)"
+            />
+            <link
+              href="/favicon-dark.png"
+              rel="shortcut icon"
+              media="(prefers-color-scheme: dark)"
+            />
+          </Head>
+          <FeatureFlagRefresh>
+            <AppContent>
+              <div className="min-h-screen flex flex-col">
+                <Navigation />
+                <div className="p-4 md:px-8 md:pb-8 md:pt-4 mx-auto w-full max-w-7xl mb-auto">
+                  <AnnouncementBanner />
+                  {getLayout(<Component {...pageProps} />)}
+                </div>
+                <Footer />
+                <ToastContainer />
               </div>
-              <Footer />
-              <ToastContainer />
-            </div>
-          </AppContent>
-        </FeatureFlagRefresh>
-      </QueryClientProvider>
-    </Provider>
+            </AppContent>
+          </FeatureFlagRefresh>
+        </QueryClientProvider>
+      </Provider>
+    </AppUrlsProvider>
   )
 }
 
@@ -140,11 +144,17 @@ MyApp.getInitialProps = async (ctx: AppContextWithSession) => {
 
   const initialAppProps = await App.getInitialProps(ctx)
   initialAppProps.pageProps.session = ctx.ctx.session
+  const host = ctx.ctx.req?.headers.host ?? (typeof window === 'undefined' ? undefined : window.location.host)
+  initialAppProps.pageProps.appUrls = appUrlsForHost(host)
   initialAppProps.pageProps.featureFlags = { ...defaultFeatureFlagDecisions }
 
   initialAppProps.pageProps.featureFlags = await bootstrapFeatureFlagDecisions(
     ctx.ctx.session,
     cookie,
+    typeof window === 'undefined',
+    fetch,
+    3_000,
+    serverApiEndpointForHost(host),
   )
 
   return { ...props, ...initialAppProps }

@@ -1,7 +1,8 @@
 import { ShieldExclamationIcon } from '@heroicons/react/24/outline'
-import { routes } from '@app/common/routes'
+import { useRoutes } from '@app/common/routes'
 
 export default function AccessDenied() {
+  const routes = useRoutes()
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50">
       <div className="text-center">

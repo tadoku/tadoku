@@ -1,11 +1,10 @@
 import { z } from 'zod'
-import getConfig from 'next/config'
+import { browserAppUrls } from 'ui/app-urls'
 import { useMutation, useQuery } from '@tanstack/react-query'
 
-const { publicRuntimeConfig } = getConfig()
 
-const profileRoot = `${publicRuntimeConfig.apiEndpoint}/profile`
-const authzRoot = `${publicRuntimeConfig.apiEndpoint}/authz`
+const profileRoot = () => `${browserAppUrls().apiEndpoint}/profile`
+const authzRoot = () => `${browserAppUrls().apiEndpoint}/authz`
 
 // Admin API
 
@@ -45,7 +44,7 @@ export const useUserList = (
         params.query = opts.query
       }
       const response = await fetch(
-        `${profileRoot}/users?${new URLSearchParams(params)}`,
+        `${profileRoot()}/users?${new URLSearchParams(params)}`,
         { credentials: 'include' },
       )
 
@@ -78,7 +77,7 @@ export const useUpdateUserRole = (
       role: 'user' | 'banned'
       reason: string
     }) => {
-      const response = await fetch(`${authzRoot}/users/${userId}/role`, {
+      const response = await fetch(`${authzRoot()}/users/${userId}/role`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ role, reason }),

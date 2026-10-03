@@ -1,10 +1,11 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import getConfig from 'next/config'
+import { appUrlsForHost } from 'ui/app-urls'
 
 const { publicRuntimeConfig } = getConfig()
 
 export default function handler(
-  _: NextApiRequest,
+  req: NextApiRequest,
   res: NextApiResponse<unknown>,
 ) {
   const cookieAttributes = [
@@ -20,5 +21,5 @@ export default function handler(
   }
 
   res.setHeader('Set-Cookie', cookieAttributes.join('; '))
-  res.status(200).redirect(publicRuntimeConfig.authUiUrl)
+  res.status(200).redirect(appUrlsForHost(req.headers.host).authUiUrl)
 }

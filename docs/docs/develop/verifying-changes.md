@@ -31,10 +31,14 @@ Start a dev-cli branch overlay as described in
 real browser through the printed `dev url` links. Keep the real login,
 frontend, gateway and API path: no mocked API, injected identity or auth bypass.
 
-- Before a write, check that the API response's `X-Dev-Backend` header names
-  your overlay rather than the base.
-- Kratos, Keto and Flipt are shared. Use disposable identities you own and do not
-  change shared accounts, roles or flag policy.
+- Before a write, check `X-Dev-Selected` on the API response for your route.
+  A frontend-only branch uses the base API with its branch tenant; require an
+  overlay `X-Dev-Backend` only when verifying changed API code. Confirm the
+  persisted tenant when proving isolation. Select the main hostname before auth
+  or admin writes as well as the frontend hostname.
+- Kratos identities are shared. Use the fixture accounts or disposable
+  identities you own without changing shared credentials or canonical roles.
+  Change only your tenant's Keto object and Flipt namespace.
 - Finish with `dev down` for your owner and clear the selected links.
 
 Changes to dev-cli routing or synchronization must also pass the gates in
@@ -54,6 +58,18 @@ explains each command.
 | OpenAPI contract | `./scripts/generate-openapi.sh` and `pnpm api:generate` in `docs/`; commit both outputs |
 | Frontend | In `frontend/`: `pnpm --filter <app> exec tsc --noEmit`, `pnpm --filter <app> lint`, then `pnpm build` |
 | Docs | In `docs/`: `pnpm build` and `pnpm docs:check` |
+
+For tenant image, overlay or lifecycle changes, also run:
+
+```sh
+bazel build //.dev:tenant_image //services/tadoku-api:dev //services/tadoku-api:worker_dev
+kubectl --context homelab-talos-dev kustomize k8s/dev/base |
+  kubeconform -strict -summary -ignore-missing-schemas
+node k8s/dev/base/e2e.cjs /tmp/tadoku-base-evidence
+```
+
+Keep the report outside Git and complete the applicable live gates in
+`.dev/acceptance.md`.
 
 ## Evidence on the pull request
 

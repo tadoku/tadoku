@@ -21,7 +21,7 @@ instead; for a map of the components, see
 | Owner | Owns |
 | --- | --- |
 | Argo CD | The always-running base defined in `k8s/dev/base/`, including automatic migration Jobs, base workloads and canonical routing |
-| dev-cli | Branch overlays, routing overrides, short-lived tasks and owner/branch database provisioning |
+| dev-cli | Branch overlays, routing overrides, lifecycle markers and short-lived tenant provisioning, worker-override and teardown tasks |
 | Homelab infrastructure | The Argo CD Application and the development Image Updater, not copies of these workload manifests |
 | Platform | The Postgres operator and Envoy Gateway, which must exist before the base syncs |
 
@@ -45,8 +45,11 @@ Each component runs in its own `tdk-dev-*` namespace:
 | `tdk-dev-routing` | Application routes attached to the platform Envoy Gateway |
 
 The Postgres server holds the base `tadoku`, `kratos` and `keto` databases and
-every `tadoku-<route>` branch database. It is provisioned with the Zalando
-`postgresql` custom resource; do not add hand-rolled Postgres Deployments or Helm
+previously retained `tadoku-<route>` branch databases. Ordinary branches use
+their own test tenant, `tadoku/<route>`, in `tadoku`; canonical base data uses
+`tadoku/prod`. Row-level security and transaction-local tenant context isolate
+their application rows. No ordinary branch database is created. The server is
+provisioned with the Zalando `postgresql` custom resource; do not add hand-rolled Postgres Deployments or Helm
 releases. Styleguides and optional admin tools are not deployed. The base holds no production data, external backups or
 notification configuration.
 
@@ -82,7 +85,8 @@ before starting Next. The public Lab CA is mounted for server-side HTTPS.
 ## Asynchronous worker ownership
 
 The private `tadoku-worker` Deployment consumes `jobs` in the base
-`tadoku` database and uses unprefixed leaderboard cache keys. It has one
+`tadoku` database across tenants without a matching `tadoku-worker` override.
+It derives leaderboard keys from each persisted job tenant. It has one
 replica, Recreate rollout, a separate image digest, and no Service or public
 route. Its resource requests and limits are in
 `k8s/dev/base/services/tadoku-worker.yaml`.
@@ -95,13 +99,18 @@ ownership and reads:
 2. Inspect due and failed `jobs` rows; a write followed by a
    leaderboard read must still succeed.
 
-DevCLI pairs each branch API and worker against `tadoku-${DEV_ROUTE}` and the
-`dev:${DEV_ROUTE}:` Valkey prefix. Selecting either workload starts both;
-unchanged peers use their current image. Verify branch writes, worker
-completion, and leaderboard reads without changing base or another branch.
+dev-cli pairs each branch API and worker against the shared database with
+`API_BRANCH` and `WORKER_BRANCH` set to `tadoku/<route>`. Selecting either
+workload starts both; unchanged peers use their current image. The
+`worker-override-set` hook runs before its Deployment starts. After the worker
+and its pods stop, `worker-override-clear` removes that override so the base
+can resume remaining jobs. A frontend-only branch needs no worker overlay:
+the base API and worker serve its selected test tenant. Both paths use
+`tenant:tadoku/<route>:leaderboard:…` keys. Verify branch writes, worker
+completion, and leaderboard reads without changing canonical or another tenant.
 The offline E2E (see [Verification](#verification)) checks rendered ownership,
 isolation, image separation and lack of worker routing. Tadoku API's backend
-E2Es check separate PostgreSQL databases with shared Valkey cache namespaces.
+E2Es check tenant-scoped PostgreSQL work with shared Valkey.
 
 ## Automatic migrations
 
@@ -144,8 +153,13 @@ transaction and write that tenant explicitly. The canonical tenant retains the
 fixture UUIDs; other tenants derive fixture UUIDs from their tenant key.
 Caller-supplied identity UUIDs are unchanged.
 
-Branch databases are migrated and seeded by dev-cli tasks; see
-[Development environment](../develop/environment.md#branch-databases).
+Branch startup uses the `tenant` hook to provision and seed its test tenant;
+see [Development environment](../develop/environment.md#branch-tenants).
+The Job reuses the marked shared identities, grants the Keto object a canonical
+parent and Dev Reader tester, and provisions missing Flipt resources in
+`test/tadoku_<route>`. It runs in `tdk-dev-data`; Flipt's ingress policy admits
+only labeled tenant-lifecycle pods from that namespace for these direct
+management calls.
 
 ## Credentials
 
@@ -155,10 +169,12 @@ There are no plaintext Secret manifests or private keys in `k8s/dev/base/`.
   credentials in `tdk-dev-data`. The owner Secret is named
   `tadoku-owner.tadoku-dev-db.credentials.postgresql.acid.zalan.do`; the
   operator replaces underscores in Secret names. The base Tadoku migrations
-  use this owner Secret. API and worker keep the `tadoku` credentials.
+  use this owner Secret. Tenant lifecycle Jobs use it for tenant and override
+  writes. API, worker and SQL fixture writes keep the `tadoku` credentials.
 - The Postgres administrator Secret stays in `tdk-dev-data`. The ownership
   hooks and short-lived branch database creation Job use it. Branch migration
-  tasks use `tadoku_owner`; API, worker and seed processes use `tadoku`. This
+  tasks use `tadoku_owner`; ordinary tenant tasks do not use administrator
+  credentials. API, worker and fixture seeding use `tadoku`. This
   is cooperative isolation, not hostile multi-tenancy.
 - `scripts/dev/bootstrap-gitops-secrets.sh` copies only the required
   credentials, including the owner credential for branch migrations, into
@@ -209,8 +225,20 @@ After activation, run the live acceptance gates listed under
 - The Postgres custom resource and the `tdk-dev-data` namespace have
   `Prune=false,Delete=false`. Ordinary Argo CD pruning or removing the
   Application must not destroy data.
-- Branch databases are retained on `dev down` and TTL cleanup. Deleting one
-  requires exact ownership checks and permission.
+- `dev down` and TTL cleanup remove the selected test tenant's Keto tuples,
+  Valkey keys and Flipt namespace before deleting its PostgreSQL tenant row and
+  cascading application rows. They stop branch pods and clear their worker
+  overrides first. Canonical `tadoku/prod` is refused by the lifecycle tool.
+- Teardown failures retain the lifecycle marker for retry. The tenant row is
+  deleted last so an external-provider failure preserves an inventory of the
+  remaining tenant. Do not delete its marker or task Lease to bypass a failure.
+- Previously retained branch databases remain retained on down and TTL
+  cleanup. Deleting one requires an exact-name inventory and explicit approval:
+  require the `tadoku-<route>` name, matching
+  `dev-cli branch database route=<route>` database marker, owner `tadoku` or
+  `tadoku_owner`, no active connections, and no live
+  API/worker route or lifecycle marker using that database. Report every
+  mismatch and leave it alone. Never use a forced database drop.
 - Database or namespace deletion is never an implicit setup or cleanup step.
   Inspect the exact resources and obtain explicit approval for any destructive
   operation. Never run namespace-wide deletion.
@@ -254,6 +282,12 @@ authentication, or branch isolation. Those remain mandatory live gates after
 activation: verify the real browser login and leaderboard, two owners,
 independent frontend and API fallback, HMR, Go binary replacement, migration
 failure gating and scoped cleanup. `.dev/acceptance.md` lists the dev-cli gates.
+
+For tenant lifecycle changes, also prove frontend-only writes, separate owners,
+base and branch worker ownership, access permits, in-flight teardown, complete
+provider cleanup and TTL cleanup with unchanged canonical row counts and
+database names.
+
 Retain browser traces and screenshots outside source control, and identify the
 exact tested revision and any substituted routing boundary.
 

@@ -22,7 +22,9 @@ Main navigation **Leaderboard** opens `/leaderboard/latest`; also cover
   horizontal scrolling inside the chart reaches both the first and last contest
   dates. Resize across the desktop layout breakpoint in both directions and
   confirm the score column retains its one-fifth width on desktop.
-- For creation/registration changes, use a branch API and uniquely named contest.
+- For creation/registration changes, select your branch tenant and use a uniquely
+  named contest. Frontend-only work can use the base API; add an API overlay
+  when changed API code is part of the proof.
   Verify allowed languages/activities, dates and privacy; exercise invalid input,
   save, reload and visibility from another identity. Register an eligible user
   and verify the registration state and My contests list. Cover closed/ineligible
@@ -37,8 +39,11 @@ Main navigation **Leaderboard** opens `/leaderboard/latest`; also cover
 
 ## Traps
 
-“Latest” depends on current contest dates and is not a stable fixture ID. Use the
-explicit seeded contest ID from the index to diagnose missing data. Time windows,
+“Latest” depends on current contest dates and is not a stable fixture ID. Find
+“Dev Tadoku Round” in the selected tenant's contest list and use its returned ID
+to diagnose missing data. Branch contest, registration and log UUIDs are derived
+from the full tenant key; the fixed IDs in the index belong only to canonical
+`tadoku/prod` and return 404 on a branch. Time windows,
 language restrictions, activity units, contest eligibility and registrations affect
 scores; don't assume every log counts everywhere. A log may need explicit contest
 submission. Cached scores change after the standalone worker completes the

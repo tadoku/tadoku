@@ -12,8 +12,10 @@ contain Feature access and, for non-admin users, Ban/Unban User.
 ## Verify
 
 - First select **both admin and main host links** in the same context and prove
-  the API response reaches your branch before any write. Loading the admin
-  overlay does not isolate API data. Check real administrator access; a reader
+  the API response's `X-Dev-Selected` names your route before any write. A
+  frontend-only branch uses the base API with its branch tenant; require an API
+  overlay only for changed API code. Loading the admin overlay alone does not
+  select the main hostname. Check real administrator access; a reader
   and anonymous session must not gain management rights through a visible button.
 - Content: create an owned draft with a unique slug/title, preview, edit, save
   and reload. Exercise publish/unpublish/delete only when in task scope, and
@@ -33,9 +35,11 @@ contain Feature access and, for non-admin users, Ban/Unban User.
 ## Traps
 
 Content namespace and environment selection are different. Changing namespace
-doesn't switch branches. Account/permission/feature providers may be shared even
-when application records use a branch DB; don't assume all admin actions are
-isolated. Feature access is distinct from global Flipt flag policy. Don't modify
+doesn't switch branches. Kratos identities and account settings remain shared.
+Application records, Keto grants and named-user Flipt access use the selected
+branch tenant, its Keto object and its `test/tadoku_<route>` namespace. Do not
+change shared credentials or canonical roles through a branch test. Feature
+access is distinct from global Flipt flag policy. Don't modify
 global flags or expose its administration interface to make a UI test pass.
 CMS copy-only requests are not application-code tasks; obey `AGENTS.md` rather
 than checking those edits into Git. Record retained test records instead of

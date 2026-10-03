@@ -265,8 +265,8 @@ startup creates no database, Postgres cluster, PVC or database dependency Job.
 
 - Before startup, a lifecycle marker records the owner, hooks and resolved
   variables. The `tenant` hook runs a bounded Job in `tdk-dev-data`.
-- The Job reads the marked Dev Admin and Dev Reader identities from the
-  canonical `tadoku/prod` fixtures. It fails with a request to run
+- The Job reads Dev Admin and Dev Reader IDs from the canonical `tadoku/prod`
+  fixture profiles. It fails with a request to run
   `make dev-seed` if they are missing; it never creates or changes identities.
 - Provisioning uses `tadoku_owner` to create the test tenant, grants its Keto
   object a parent of `app:tadoku`, and grants Dev Reader direct `testers`

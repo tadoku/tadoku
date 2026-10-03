@@ -83,7 +83,7 @@ func TestWorkerObservationUsesPersistedTenant(t *testing.T) {
 			failure := &permanentError{err: errors.New("observation fixture failure")}
 			handlers, err := newRegistry(handle(
 				func(context.Context, jobs.InvalidateOfficialLeaderboardV1) error { return failure },
-				Policy{Concurrency: 1, Timeout: time.Second, MaxAttempts: 1},
+				policy{Concurrency: 1, Timeout: time.Second, MaxAttempts: 1},
 			))
 			if err != nil {
 				t.Fatal(err)

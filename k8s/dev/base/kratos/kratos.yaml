@@ -12,6 +12,7 @@ selfservice:
     - https://tadoku.dev.lab/
     - https://account.tadoku.dev.lab/
     - https://admin.tadoku.dev.lab/
+    - https://*.tadoku.dev.lab/
   methods:
     link: {enabled: true}
     password:
@@ -53,6 +54,7 @@ serve:
         - https://tadoku.dev.lab
         - https://account.tadoku.dev.lab
         - https://admin.tadoku.dev.lab
+        - https://*.tadoku.dev.lab
       allowed_methods: [POST, GET, PUT, PATCH, DELETE]
       allowed_headers: [Authorization, Cookie, Content-Type]
       exposed_headers: [Content-Type, Set-Cookie]

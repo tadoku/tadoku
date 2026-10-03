@@ -31,6 +31,7 @@ func TestListYearlyContestRegistrations(t *testing.T) {
 		{description: []string{"first", "page", "has", "next", "page", "token"}, want: http.StatusOK},
 		{description: []string{"last", "page", "omits", "next", "page", "token"}, want: http.StatusOK},
 		{description: []string{"page", "beyond", "registrations"}, want: http.StatusOK},
+		{description: []string{"no", "parameters", "returns", "first", "page"}, want: http.StatusOK},
 		{description: []string{"default", "page", "size", "caps", "at", "50"}, want: http.StatusOK},
 		{description: []string{"page", "size", "above", "maximum", "capped"}, want: http.StatusOK},
 		{description: []string{"negative", "page", "size"}, want: http.StatusBadRequest},

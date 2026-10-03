@@ -16,9 +16,14 @@ export const useSession = () => {
 // Returns a function which will log the user out
 // TODO: cache result as this is now triggering four logout flows at once
 export const useLogoutHandler = (deps?: DependencyList) => {
+  const [session] = useSession()
   const [logoutToken, setLogoutToken] = useState<string>('')
 
   useEffect(() => {
+    if (!session) {
+      return
+    }
+
     ory
       .createBrowserLogoutFlow()
       .then(({ data }) => {
@@ -35,7 +40,7 @@ export const useLogoutHandler = (deps?: DependencyList) => {
         return Promise.reject(err)
       })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps)
+  }, [session, ...(deps ?? [])])
 
   return () => {
     if (logoutToken) {

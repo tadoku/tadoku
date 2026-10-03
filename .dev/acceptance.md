@@ -3,7 +3,7 @@
 Scope: webv2, auth, admin, tadoku-api and tadoku-worker. Token-reflector is base-only.
 Paper styleguide is deferred; its local pnpm workflow is independent.
 
-Use dev-cli v0.7.0 or newer and only the `homelab-talos-dev` context. Record
+Use dev-cli v0.8.0 or newer and only the `homelab-talos-dev` context. Record
 the source/CLI revision, exact command, owner, route and full tenant key, Pod
 UID/image, browser screenshot and result outside Git. Retain commands and
 sanitized output with the PR report. Do not include credentials or cookies.
@@ -22,8 +22,10 @@ sanitized output with the PR report. Do not include credentials or cookies.
 4. From a fresh branch with a source-only change, run `dev doctor`, then
    `dev up --owner <unique-owner>`. Confirm only the affected app starts.
    Open `dev url --host account.tadoku.dev.lab /login` or the admin equivalent.
-   Verify selected backend headers, host-only cookie and an unselected context
-   still seeing base. Keep real authentication: no mocked auth or bypass.
+   Verify selected backend headers with no selection cookies, and a base host
+   still seeing base. Open both owners’ branch hosts in one profile; each must
+   select its own backend. Admin must call the matching branch app API host.
+   Keep real authentication: no mocked auth or bypass.
 5. Change a visible application string again while the same loop runs. Verify
    browser HMR without navigation/state loss and unchanged Pod UID/image.
    Check source deletion/dependency sync where applicable; surface sync errors.
@@ -111,8 +113,8 @@ this run. Keep unrelated canonical writes outside the count boundary.
    ```
 
    Confirm disposable Jobs and the lifecycle marker are removed last, another
-   owner's route remains available, deleted selections fall back to base, and
-   canonical providers remain unchanged. Keep tuple lists, key scans and status
+   owner's route remains available, deleted branch hosts return 404 and the base
+   host stays available with canonical providers unchanged. Keep tuple lists, key scans and status
    codes in the report; do not replace them with a summary assertion.
 7. **Expiry cleanup.** Use an external override configuration with `ttl: 2m`
    and a new owner. Run `dev up --no-watch`, record its expiry, and let that
@@ -172,10 +174,10 @@ migration target, owner/runtime grants and legacy-owner refusal checks. Keep
 its report and the live commands, database owner/marker/version, persisted log,
 refusal output and cleanup scans outside Git with the PR evidence.
 
-Branch selection is per hostname, not an authentication cookie. For an admin
-or auth overlay making API writes, visit both its CLI link and the main-host
-link in the same browser profile. Check `X-Dev-Selected` on the API response.
-Clearing one host does not clear others.
+Branch selection comes from the branch hostname. Open the links printed by
+`dev up`; no selection cookie is needed for app, account or admin. Check
+`X-Dev-Selected` on actual API responses and verify two owners in one profile.
+After down, require 404 and no owned Ingress, Certificate or TLS Secret.
 Run browsers with Lab CA trust; note any TLS verification bypass separately.
 
 These gates cover the supported dev-cli workflow. Repeat

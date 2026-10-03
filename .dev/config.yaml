@@ -15,6 +15,7 @@ publicHosts:
   - account.tadoku.dev.lab
   - admin.tadoku.dev.lab
 ingressClass: nginx
+clusterIssuer: lab-ca-acme
 gatewayName: dev-cli-playground
 gatewayNamespace: envoy-gateway-system
 internalGateway: http://dev-cli-gateway.tdk-dev-routing.svc.cluster.local

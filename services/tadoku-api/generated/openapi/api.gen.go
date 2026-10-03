@@ -6433,7 +6433,16 @@ type ImmersionProfileYearlyContestRegistrationsByUserIDResponseObject interface 
 	VisitImmersionProfileYearlyContestRegistrationsByUserIDResponse(w http.ResponseWriter) error
 }
 
-type ImmersionProfileYearlyContestRegistrationsByUserID200JSONResponse ImmersionContestRegistrations
+type ImmersionProfileYearlyContestRegistrationsByUserID200JSONResponse struct {
+	// NextPageToken is empty if there's no next page
+	//
+	// Example: 3
+	NextPageToken string                         `json:"next_page_token"`
+	Registrations []ImmersionContestRegistration `json:"registrations"`
+
+	// TotalSize Example: 100
+	TotalSize int `json:"total_size"`
+}
 
 func (response ImmersionProfileYearlyContestRegistrationsByUserID200JSONResponse) VisitImmersionProfileYearlyContestRegistrationsByUserIDResponse(w http.ResponseWriter) error {
 

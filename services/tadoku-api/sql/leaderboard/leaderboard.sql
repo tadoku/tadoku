@@ -24,17 +24,47 @@ with leaderboard as (
     registrations.user_id,
     registrations.user_display_name,
     coalesce(ranked_leaderboard.score, 0)::real as score,
-    (select count(registrations.user_id) from registrations) as total_size
+    registrations.created_at as registered_at
   from registrations
   left join ranked_leaderboard using(user_id)
-  order by score desc, registrations.created_at asc, registrations.user_id desc
+), tied_leaderboard as (
+  select
+    enriched_leaderboard."rank",
+    enriched_leaderboard.user_id,
+    enriched_leaderboard.user_display_name,
+    enriched_leaderboard.score,
+    enriched_leaderboard.registered_at,
+    coalesce((
+      "rank" = lag("rank", 1, -1::bigint) over (order by "rank")
+      or "rank" = lead("rank", 1, -1::bigint) over (order by "rank")
+    ), false)::boolean as is_tie
+  from enriched_leaderboard
+), page as (
+  select
+    tied_leaderboard."rank",
+    tied_leaderboard.user_id,
+    tied_leaderboard.user_display_name,
+    tied_leaderboard.score,
+    tied_leaderboard.registered_at,
+    tied_leaderboard.is_tie
+  from tied_leaderboard
+  order by tied_leaderboard.score desc, tied_leaderboard.registered_at asc, tied_leaderboard.user_id desc
+  limit sqlc.arg('page_size')
+  offset sqlc.arg('start_from')
+), total as (
+  select count(*) as total_size
+  from tied_leaderboard
 )
-select *, coalesce((
-  "rank" = lag("rank", 1, -1::bigint) over (order by "rank")
-  or "rank" = lead("rank", 1, -1::bigint) over (order by "rank")
-), false)::boolean as is_tie
-from enriched_leaderboard
-limit sqlc.arg('page_size') offset sqlc.arg('start_from');
+select
+  page."rank",
+  page.user_id,
+  page.user_display_name,
+  page.score,
+  page.is_tie,
+  total.total_size
+from total
+left join page on true
+order by page.score desc, page.registered_at asc, page.user_id desc;
 
 -- name: ContestExists :one
 select exists(
@@ -65,15 +95,42 @@ with leaderboard as (
     coalesce(ranked_leaderboard.score, 0)::real as score
   from ranked_leaderboard
   inner join users on users.id = ranked_leaderboard.user_id
-  order by score desc, user_display_name asc
+), tied_leaderboard as (
+  select
+    enriched_leaderboard."rank",
+    enriched_leaderboard.user_id,
+    enriched_leaderboard.user_display_name,
+    enriched_leaderboard.score,
+    coalesce((
+      "rank" = lag("rank", 1, -1::bigint) over (order by "rank")
+      or "rank" = lead("rank", 1, -1::bigint) over (order by "rank")
+    ), false)::boolean as is_tie
+  from enriched_leaderboard
+), page as (
+  select
+    tied_leaderboard."rank",
+    tied_leaderboard.user_id,
+    tied_leaderboard.user_display_name,
+    tied_leaderboard.score,
+    tied_leaderboard.is_tie
+  from tied_leaderboard
+  order by tied_leaderboard.score desc, tied_leaderboard.user_display_name asc
+  limit sqlc.arg('page_size')
+  offset sqlc.arg('start_from')
+), total as (
+  select count(*) as total_size
+  from tied_leaderboard
 )
-select *, coalesce((
-  "rank" = lag("rank", 1, -1::bigint) over (order by "rank")
-  or "rank" = lead("rank", 1, -1::bigint) over (order by "rank")
-), false)::boolean as is_tie,
-(select count(user_id) from enriched_leaderboard) as total_size
-from enriched_leaderboard
-limit sqlc.arg('page_size') offset sqlc.arg('start_from');
+select
+  page."rank",
+  page.user_id,
+  page.user_display_name,
+  page.score,
+  page.is_tie,
+  total.total_size
+from total
+left join page on true
+order by page.score desc, page.user_display_name asc;
 
 -- name: GlobalLeaderboard :many
 with leaderboard as (
@@ -95,15 +152,42 @@ with leaderboard as (
     coalesce(ranked_leaderboard.score, 0)::real as score
   from ranked_leaderboard
   inner join users on users.id = ranked_leaderboard.user_id
-  order by score desc, user_display_name asc
+), tied_leaderboard as (
+  select
+    enriched_leaderboard."rank",
+    enriched_leaderboard.user_id,
+    enriched_leaderboard.user_display_name,
+    enriched_leaderboard.score,
+    coalesce((
+      "rank" = lag("rank", 1, -1::bigint) over (order by "rank")
+      or "rank" = lead("rank", 1, -1::bigint) over (order by "rank")
+    ), false)::boolean as is_tie
+  from enriched_leaderboard
+), page as (
+  select
+    tied_leaderboard."rank",
+    tied_leaderboard.user_id,
+    tied_leaderboard.user_display_name,
+    tied_leaderboard.score,
+    tied_leaderboard.is_tie
+  from tied_leaderboard
+  order by tied_leaderboard.score desc, tied_leaderboard.user_display_name asc
+  limit sqlc.arg('page_size')
+  offset sqlc.arg('start_from')
+), total as (
+  select count(*) as total_size
+  from tied_leaderboard
 )
-select *, coalesce((
-  "rank" = lag("rank", 1, -1::bigint) over (order by "rank")
-  or "rank" = lead("rank", 1, -1::bigint) over (order by "rank")
-), false)::boolean as is_tie,
-(select count(user_id) from enriched_leaderboard) as total_size
-from enriched_leaderboard
-limit sqlc.arg('page_size') offset sqlc.arg('start_from');
+select
+  page."rank",
+  page.user_id,
+  page.user_display_name,
+  page.score,
+  page.is_tie,
+  total.total_size
+from total
+left join page on true
+order by page.score desc, page.user_display_name asc;
 
 -- name: ContestLeaderboardAllScores :many
 select cr.user_id, coalesce(scores.score, 0)::real as score

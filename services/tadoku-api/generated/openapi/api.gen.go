@@ -578,18 +578,6 @@ type ImmersionContestConfigurationOptions struct {
 	Languages              []ImmersionLanguage `json:"languages"`
 }
 
-// ImmersionContestOngoingRegistrations defines model for ImmersionContestOngoingRegistrations.
-type ImmersionContestOngoingRegistrations struct {
-	// NextPageToken is empty if there's no next page
-	//
-	// Example: 3
-	NextPageToken string                         `json:"next_page_token"`
-	Registrations []ImmersionContestRegistration `json:"registrations"`
-
-	// TotalSize Example: 100
-	TotalSize int `json:"total_size"`
-}
-
 // ImmersionContestProfileActivity defines model for ImmersionContestProfileActivity.
 type ImmersionContestProfileActivity struct {
 	Rows []ImmersionContestProfileActivityRow `json:"rows"`
@@ -5132,7 +5120,7 @@ type ImmersionContestFindOngoingRegistrationsResponseObject interface {
 	VisitImmersionContestFindOngoingRegistrationsResponse(w http.ResponseWriter) error
 }
 
-type ImmersionContestFindOngoingRegistrations200JSONResponse ImmersionContestOngoingRegistrations
+type ImmersionContestFindOngoingRegistrations200JSONResponse ImmersionContestRegistrations
 
 func (response ImmersionContestFindOngoingRegistrations200JSONResponse) VisitImmersionContestFindOngoingRegistrationsResponse(w http.ResponseWriter) error {
 
@@ -6445,7 +6433,16 @@ type ImmersionProfileYearlyContestRegistrationsByUserIDResponseObject interface 
 	VisitImmersionProfileYearlyContestRegistrationsByUserIDResponse(w http.ResponseWriter) error
 }
 
-type ImmersionProfileYearlyContestRegistrationsByUserID200JSONResponse ImmersionContestRegistrations
+type ImmersionProfileYearlyContestRegistrationsByUserID200JSONResponse struct {
+	// NextPageToken is empty if there's no next page
+	//
+	// Example: 3
+	NextPageToken string                         `json:"next_page_token"`
+	Registrations []ImmersionContestRegistration `json:"registrations"`
+
+	// TotalSize Example: 100
+	TotalSize int `json:"total_size"`
+}
 
 func (response ImmersionProfileYearlyContestRegistrationsByUserID200JSONResponse) VisitImmersionProfileYearlyContestRegistrationsByUserIDResponse(w http.ResponseWriter) error {
 

@@ -143,6 +143,35 @@ func (c *Client) ListSubjectIDsForRelation(ctx context.Context, namespace, objec
 	}
 }
 
+func (c *Client) HasRelation(ctx context.Context, namespace, object, relation string, subject Subject) (bool, error) {
+	if namespace == "" || object == "" || relation == "" {
+		return false, fmt.Errorf("namespace, object and relation are required for relation lookup")
+	}
+	req := c.readClient.RelationshipApi.GetRelationships(ctx).
+		Namespace(namespace).
+		Object(object).
+		Relation(relation).
+		PageSize(1)
+
+	switch {
+	case subject.ID != "":
+		req = req.SubjectId(subject.ID)
+	case subject.Set != nil:
+		req = req.
+			SubjectSetNamespace(subject.Set.Namespace).
+			SubjectSetObject(subject.Set.Object).
+			SubjectSetRelation(subject.Set.Relation)
+	default:
+		return false, fmt.Errorf("subject must set either ID or Set")
+	}
+
+	result, _, err := c.readClient.RelationshipApi.GetRelationshipsExecute(req)
+	if err != nil {
+		return false, fmt.Errorf("failed to look up relation: %w", err)
+	}
+	return len(result.GetRelationTuples()) != 0, nil
+}
+
 func (c *Client) AddRelation(ctx context.Context, namespace, object, relation string, subject Subject) error {
 	if c.writeClient == nil {
 		return fmt.Errorf("keto write client not configured")
@@ -209,6 +238,27 @@ func (c *Client) DeleteRelation(ctx context.Context, namespace, object, relation
 		return fmt.Errorf("failed to delete relation: %w", err)
 	}
 
+	return nil
+}
+
+func (c *Client) DeleteObjectRelations(ctx context.Context, namespace, object string) error {
+	if c.writeClient == nil {
+		return fmt.Errorf("keto write client not configured")
+	}
+	if namespace == "" || object == "" {
+		return fmt.Errorf("namespace and object are required for relation deletion")
+	}
+
+	req := c.writeClient.RelationshipApi.DeleteRelationships(ctx).
+		Namespace(namespace).
+		Object(object)
+	res, err := c.writeClient.RelationshipApi.DeleteRelationshipsExecute(req)
+	if err != nil {
+		if res != nil && res.StatusCode == http.StatusNotFound {
+			return nil
+		}
+		return fmt.Errorf("failed to delete object relations: %w", err)
+	}
 	return nil
 }
 

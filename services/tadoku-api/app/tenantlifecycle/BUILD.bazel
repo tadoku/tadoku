@@ -1,0 +1,55 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "tenantlifecycle",
+    srcs = ["lifecycle.go"],
+    importpath = "github.com/tadoku/tadoku/services/tadoku-api/app/tenantlifecycle",
+    visibility = [
+        "//services/tadoku-api/cmd/tadoku-tenant:__pkg__",
+        "//services/tadoku-api/e2e:__pkg__",
+    ],
+    deps = [
+        "//services/tadoku-api/features/jobqueue",
+        "//services/tadoku-api/features/leaderboard",
+        "//services/tadoku-api/generated/sqlc/tenantlifecycle",
+        "//services/tadoku-api/infra/fliptmanagement",
+        "//services/tadoku-api/infra/postgres",
+        "//services/tadoku-api/internal/permissions",
+        "//services/tadoku-api/internal/tenant",
+        "@com_github_google_uuid//:uuid",
+        "@com_github_jackc_pgx_v5//:pgx",
+        "@com_github_jackc_pgx_v5//pgxpool",
+    ],
+)
+
+go_test(
+    name = "tenantlifecycle_test",
+    srcs = ["lifecycle_test.go"],
+    env_inherit = [
+        "TADOKU_TEST_POSTGRES_URL",
+        "TADOKU_TEST_VALKEY_URL",
+    ],
+    tags = [
+        "no-cache",
+        "no-remote-exec",
+        "requires-network",
+    ],
+    deps = [
+        ":tenantlifecycle",
+        "//services/tadoku-api/features/jobqueue",
+        "//services/tadoku-api/features/leaderboard",
+        "//services/tadoku-api/infra/flipt",
+        "//services/tadoku-api/infra/fliptmanagement",
+        "//services/tadoku-api/infra/keto",
+        "//services/tadoku-api/infra/valkey",
+        "//services/tadoku-api/internal/permissions",
+        "//services/tadoku-api/internal/tenant",
+        "//services/tadoku-api/internal/testflipt",
+        "//services/tadoku-api/internal/testketo",
+        "//services/tadoku-api/internal/testpostgres",
+        "//services/tadoku-api/internal/testvalkey",
+        "@com_github_google_uuid//:uuid",
+        "@com_github_jackc_pgx_v5//:pgx",
+        "@com_github_valkey_io_valkey_go//:valkey-go",
+    ],
+)

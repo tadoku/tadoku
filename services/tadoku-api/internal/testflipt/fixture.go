@@ -16,8 +16,9 @@ import (
 )
 
 type namespaceState struct {
-	members  map[string]struct{}
-	revision uint64
+	members   map[string]struct{}
+	revision  uint64
+	resources map[string]json.RawMessage
 }
 
 type Fixture struct {
@@ -25,6 +26,8 @@ type Fixture struct {
 	targets     flipt.Targets
 	namespaces  map[flipt.Target]*namespaceState
 	unavailable bool
+	requests    int
+	creates     map[flipt.Target]CreateCounts
 	server      *httptest.Server
 }
 
@@ -45,15 +48,19 @@ func (f *Fixture) Reset() {
 	defer f.mu.Unlock()
 	f.namespaces = map[flipt.Target]*namespaceState{
 		{Environment: "local", Namespace: "default"}: {
-			members:  map[string]struct{}{"11111111-1111-4111-8111-111111111111": {}},
-			revision: 1,
+			members:   map[string]struct{}{"11111111-1111-4111-8111-111111111111": {}},
+			revision:  1,
+			resources: seededResources(),
 		},
 		{Environment: "test", Namespace: "e2e_flipt-0123abcd"}: {
-			members:  make(map[string]struct{}),
-			revision: 1,
+			members:   make(map[string]struct{}),
+			revision:  1,
+			resources: seededResources(),
 		},
 	}
 	f.unavailable = false
+	f.requests = 0
+	f.creates = make(map[flipt.Target]CreateCounts)
 }
 
 func (f *Fixture) SeedTenant(key tenant.Key) error {
@@ -64,7 +71,7 @@ func (f *Fixture) SeedTenant(key tenant.Key) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.namespaces[target] == nil {
-		f.namespaces[target] = &namespaceState{members: make(map[string]struct{}), revision: 1}
+		f.namespaces[target] = &namespaceState{members: make(map[string]struct{}), revision: 1, resources: seededResources()}
 	}
 	return nil
 }
@@ -105,12 +112,16 @@ func (f *Fixture) EvaluateBoolean(
 func (f *Fixture) serveHTTP(response http.ResponseWriter, request *http.Request) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
+	f.requests++
 	if f.unavailable {
 		http.Error(response, "unavailable", http.StatusServiceUnavailable)
 		return
 	}
 
 	parts := strings.Split(strings.TrimPrefix(request.URL.Path, "/"), "/")
+	if f.serveLifecycle(response, request, parts) {
+		return
+	}
 	if len(parts) < 7 || parts[0] != "api" || parts[1] != "v2" || parts[2] != "environments" ||
 		parts[4] != "namespaces" || parts[6] != "resources" {
 		http.NotFound(response, request)

@@ -1,0 +1,13 @@
+version: "2"
+sql:
+  - engine: postgresql
+    schema: ../../migrations
+    queries:
+      - tenantlifecycle.sql
+    gen:
+      go:
+        package: tenantlifecycle
+        out: ../../generated/sqlc/tenantlifecycle
+        sql_package: pgx/v5
+        emit_empty_slices: true
+        omit_unused_structs: true

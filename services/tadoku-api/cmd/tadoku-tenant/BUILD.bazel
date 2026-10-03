@@ -1,0 +1,35 @@
+load("@rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+
+go_library(
+    name = "tadoku-tenant_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/tadoku/tadoku/services/tadoku-api/cmd/tadoku-tenant",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//services/common/postgresconfig",
+        "//services/tadoku-api/app/tenantlifecycle",
+        "//services/tadoku-api/features/jobqueue",
+        "//services/tadoku-api/features/leaderboard",
+        "//services/tadoku-api/infra/flipt",
+        "//services/tadoku-api/infra/fliptmanagement",
+        "//services/tadoku-api/infra/keto",
+        "//services/tadoku-api/infra/postgres",
+        "//services/tadoku-api/infra/valkey",
+        "//services/tadoku-api/internal/permissions",
+        "//services/tadoku-api/internal/tenant",
+        "@com_github_google_uuid//:uuid",
+        "@com_github_kelseyhightower_envconfig//:envconfig",
+    ],
+)
+
+go_binary(
+    name = "tadoku-tenant",
+    embed = [":tadoku-tenant_lib"],
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "tadoku-tenant_test",
+    srcs = ["main_test.go"],
+    embed = [":tadoku-tenant_lib"],
+)

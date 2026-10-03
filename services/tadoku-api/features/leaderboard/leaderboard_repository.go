@@ -41,19 +41,20 @@ func (r *Repository) contest(ctx context.Context, request ContestRequest) (*Lead
 	if err != nil {
 		return nil, fmt.Errorf("fetch contest leaderboard: %w", err)
 	}
-	entries := make([]Entry, len(rows))
-	for i, row := range rows {
-		entries[i] = Entry{
-			Rank:            int(row.Rank),
-			UserID:          uuid.UUID(row.UserID.Bytes),
-			UserDisplayName: row.UserDisplayName,
-			Score:           row.Score,
-			IsTie:           row.IsTie,
-		}
-	}
+	entries := make([]Entry, 0, len(rows))
 	total := 0
-	if len(rows) > 0 {
-		total = int(rows[0].TotalSize)
+	for _, row := range rows {
+		total = int(row.TotalSize)
+		if !row.UserID.Valid {
+			continue
+		}
+		entries = append(entries, Entry{
+			Rank:            int(row.Rank.Int64),
+			UserID:          uuid.UUID(row.UserID.Bytes),
+			UserDisplayName: row.UserDisplayName.String,
+			Score:           row.Score.Float32,
+			IsTie:           row.IsTie.Bool,
+		})
 	}
 	return result(entries, total, request.Request), nil
 }
@@ -73,19 +74,20 @@ func (r *Repository) yearly(ctx context.Context, request YearlyRequest) (*Leader
 	if err != nil {
 		return nil, fmt.Errorf("fetch yearly leaderboard: %w", err)
 	}
-	entries := make([]Entry, len(rows))
-	for i, row := range rows {
-		entries[i] = Entry{
-			Rank:            int(row.Rank),
-			UserID:          uuid.UUID(row.UserID.Bytes),
-			UserDisplayName: row.UserDisplayName,
-			Score:           row.Score,
-			IsTie:           row.IsTie,
-		}
-	}
+	entries := make([]Entry, 0, len(rows))
 	total := 0
-	if len(rows) > 0 {
-		total = int(rows[0].TotalSize)
+	for _, row := range rows {
+		total = int(row.TotalSize)
+		if !row.UserID.Valid {
+			continue
+		}
+		entries = append(entries, Entry{
+			Rank:            int(row.Rank.Int64),
+			UserID:          uuid.UUID(row.UserID.Bytes),
+			UserDisplayName: row.UserDisplayName.String,
+			Score:           row.Score.Float32,
+			IsTie:           row.IsTie.Bool,
+		})
 	}
 	return result(entries, total, request.Request), nil
 }
@@ -104,19 +106,20 @@ func (r *Repository) global(ctx context.Context, request Request) (*Leaderboard,
 	if err != nil {
 		return nil, fmt.Errorf("fetch global leaderboard: %w", err)
 	}
-	entries := make([]Entry, len(rows))
-	for i, row := range rows {
-		entries[i] = Entry{
-			Rank:            int(row.Rank),
-			UserID:          uuid.UUID(row.UserID.Bytes),
-			UserDisplayName: row.UserDisplayName,
-			Score:           row.Score,
-			IsTie:           row.IsTie,
-		}
-	}
+	entries := make([]Entry, 0, len(rows))
 	total := 0
-	if len(rows) > 0 {
-		total = int(rows[0].TotalSize)
+	for _, row := range rows {
+		total = int(row.TotalSize)
+		if !row.UserID.Valid {
+			continue
+		}
+		entries = append(entries, Entry{
+			Rank:            int(row.Rank.Int64),
+			UserID:          uuid.UUID(row.UserID.Bytes),
+			UserDisplayName: row.UserDisplayName.String,
+			Score:           row.Score.Float32,
+			IsTie:           row.IsTie.Bool,
+		})
 	}
 	return result(entries, total, request), nil
 }

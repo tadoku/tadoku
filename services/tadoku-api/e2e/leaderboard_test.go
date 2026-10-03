@@ -14,6 +14,7 @@ func TestImmersionFetchLeaderboardGlobal(t *testing.T) {
 		cache       string
 	}{
 		{description: []string{"cache", "miss"}, want: http.StatusOK, cache: "miss"},
+		{description: []string{"cache", "miss", "past", "end"}, want: http.StatusOK, cache: "miss"},
 		{description: []string{"cache", "hit"}, want: http.StatusOK, cache: "hit"},
 		{description: []string{"language", "filtered"}, want: http.StatusOK, cache: "hit"},
 		{description: []string{"empty", "language"}, want: http.StatusOK, cache: "hit"},
@@ -40,6 +41,7 @@ func TestImmersionFetchLeaderboardForYear(t *testing.T) {
 		cache       string
 	}{
 		{description: []string{"zero", "score", "cache", "miss"}, want: http.StatusOK, cache: "miss"},
+		{description: []string{"cache", "miss", "past", "end"}, want: http.StatusOK, cache: "miss"},
 		{description: []string{"cache", "hit"}, want: http.StatusOK, cache: "hit"},
 		{description: []string{"activity", "filtered"}, want: http.StatusOK, cache: "hit"},
 		{description: []string{"empty", "page"}, want: http.StatusOK, cache: "hit"},
@@ -66,6 +68,7 @@ func TestImmersionContestFetchLeaderboard(t *testing.T) {
 		cache       string
 	}{
 		{description: []string{"cache", "miss"}, want: http.StatusOK, cache: "miss"},
+		{description: []string{"cache", "miss", "past", "end"}, want: http.StatusOK, cache: "miss"},
 		{description: []string{"cache", "hit"}, want: http.StatusOK, cache: "hit"},
 		{description: []string{"language", "filtered"}, want: http.StatusOK, cache: "hit"},
 		{description: []string{"tie", "page", "boundary"}, want: http.StatusOK, cache: "hit_tie"},

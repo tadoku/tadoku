@@ -279,7 +279,7 @@ func TestLogsRepositoryListUserLogsPaging(t *testing.T) {
 	}{
 		{name: "first page", page: 0, wantIDs: []uuid.UUID{newest, middle}, wantTotal: 3, wantNext: "1"},
 		{name: "last page", page: 1, wantIDs: []uuid.UUID{oldest}, wantTotal: 3},
-		{name: "past end", page: 2, wantIDs: nil},
+		{name: "past end", page: 2, wantIDs: nil, wantTotal: 3},
 		{name: "with deleted", page: 0, includeDeleted: true, wantIDs: []uuid.UUID{deleted, newest}, wantTotal: 4, wantNext: "1"},
 	}
 	for _, tt := range tests {
@@ -405,7 +405,7 @@ func TestLogsRepositoryContestLogs(t *testing.T) {
 	}{
 		{name: "all users first page", page: 0, wantIDs: []uuid.UUID{otherUser, newest}, wantTotal: 4, wantNext: "1"},
 		{name: "all users last page", page: 1, wantIDs: []uuid.UUID{middle, oldest}, wantTotal: 4},
-		{name: "past end", page: 2, wantIDs: nil},
+		{name: "past end", page: 2, wantIDs: nil, wantTotal: 4},
 		{name: "one user", userID: &userID, page: 0, wantIDs: []uuid.UUID{newest, middle}, wantTotal: 3, wantNext: "1"},
 		{name: "one user with deleted", userID: &userID, page: 0, includeDeleted: true, wantIDs: []uuid.UUID{deleted, newest}, wantTotal: 4, wantNext: "1"},
 	}

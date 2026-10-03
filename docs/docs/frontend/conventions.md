@@ -48,6 +48,13 @@ sibling origins. Supply `AppUrlsProvider` from each application's request
 properties for consistent SSR and hydration. Kratos stays on the base account
 host. Avoid module-level runtime URL constants.
 
+## Authentication flows
+
+The auth application’s shared logout hook creates a Kratos logout flow only
+when `useSession()` has an authenticated session. Anonymous login pages must
+not create logout flows: their CSRF cookies can race the login flow. Session
+changes enable logout without requiring callers to reload the page.
+
 ## API response parsing
 
 webv2 and admin call Tadoku API with React Query hooks and parse every response

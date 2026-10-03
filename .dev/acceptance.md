@@ -133,6 +133,45 @@ fails, retain the marker and tenant row, inspect the recorded task output and
 retry. Never force-delete a lifecycle marker, task Lease or database to make
 cleanup appear complete.
 
+## Migration branch gates
+
+Use an uncommitted scratch migration on an owned local branch; never merge it
+or run it against the shared base. Record the base migration version and
+database-name inventory before startup.
+
+1. Run `dev up --owner <owner> --service tadoku-api`. A migration-only change
+   needs that service flag because migration files select no deployable.
+   Require `profile=isolated-database`, the paired API/worker and the same
+   resolved `tadoku-<route>` database and `tadoku/<route>` tenant. The database
+   dependency, migration and tenant hooks must complete before startup.
+2. Query the isolated database through an authorized owner connection. Require
+   owner `tadoku_owner`, marker `dev-cli branch database route=<route>`, clean
+   `schema_migrations` at the scratch version, and its registered test tenant.
+   Prove non-owner runtime DML/sequence access and denied DDL/migration-table
+   writes. Create and reload a browser log; verify its tenant and ID exist in
+   this database and not in the base. Shared schema/version and canonical
+   per-table counts must remain unchanged.
+3. Remove only the owned scratch file while the route remains active. Rerun up;
+   require the profile-switch refusal and `run dev down first`, with no new
+   lifecycle task or overlay mutations. The marker must retain its original
+   profile and resolved database.
+4. With the scratch file still absent, run `dev down --owner <owner>`. It must
+   use the recorded isolated database, remove its tenant/override and cascading
+   rows, clear Keto tuples and Valkey keys, return Flipt namespace 404, and
+   remove owned overlays and marker. Reuse tenant gate 6's exact commands with
+   the count query connected to the isolated database. The marked database and
+   scratch schema remain retained; never drop it as verification cleanup.
+5. Run ordinary up for the same owner and require `profile=default` with
+   `DATABASE=tadoku`, then normal down. The retained database must remain,
+   canonical rows/schema/providers must match baseline, and the base API/worker
+   must remain Ready. Include the retained name in any later removal inventory;
+   that requires separate exact-name approval.
+
+The offline E2E must also pass its profile/hook declarations, branch-only
+migration target, owner/runtime grants and legacy-owner refusal checks. Keep
+its report and the live commands, database owner/marker/version, persisted log,
+refusal output and cleanup scans outside Git with the PR evidence.
+
 Branch selection is per hostname, not an authentication cookie. For an admin
 or auth overlay making API writes, visit both its CLI link and the main-host
 link in the same browser profile. Check `X-Dev-Selected` on the API response.

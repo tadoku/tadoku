@@ -45,10 +45,16 @@ Each component runs in its own `tdk-dev-*` namespace:
 | `tdk-dev-routing` | Application routes attached to the platform Envoy Gateway |
 
 The Postgres server holds the base `tadoku`, `kratos` and `keto` databases and
-previously retained `tadoku-<route>` branch databases. Ordinary branches use
+retained `tadoku-<route>` migration branch databases. Ordinary branches use
 their own test tenant, `tadoku/<route>`, in `tadoku`; canonical base data uses
 `tadoku/prod`. Row-level security and transaction-local tenant context isolate
-their application rows. No ordinary branch database is created. The server is
+their application rows. No ordinary branch database is created. Changed
+`services/tadoku-api/migrations/` paths automatically select the
+`isolated-database` profile: a bounded creation Job establishes the owner and
+default runtime privileges, then migration and tenant Jobs run in `tdk-dev-data`.
+The paired branch API/worker use that database and the same test tenant; the
+base worker does not consume jobs from a branch database. See
+[Migration branches](../develop/environment.md#migration-branches). The server is
 provisioned with the Zalando `postgresql` custom resource; do not add hand-rolled Postgres Deployments or Helm
 releases. Styleguides and optional admin tools are not deployed. The base holds no production data, external backups or
 notification configuration.
@@ -99,7 +105,7 @@ ownership and reads:
 2. Inspect due and failed `jobs` rows; a write followed by a
    leaderboard read must still succeed.
 
-dev-cli pairs each branch API and worker against the shared database with
+dev-cli pairs each branch API and worker against the profile's database with
 `API_BRANCH` and `WORKER_BRANCH` set to `tadoku/<route>`. Selecting either
 workload starts both; unchanged peers use their current image. The
 `worker-override-set` hook runs before its Deployment starts. After the worker
@@ -232,8 +238,12 @@ After activation, run the live acceptance gates listed under
 - Teardown failures retain the lifecycle marker for retry. The tenant row is
   deleted last so an external-provider failure preserves an inventory of the
   remaining tenant. Do not delete its marker or task Lease to bypass a failure.
-- Previously retained branch databases remain retained on down and TTL
-  cleanup. Deleting one requires an exact-name inventory and explicit approval:
+- Migration branch databases remain retained on down and TTL cleanup, along
+  with previously retained databases. Teardown uses the lifecycle marker's
+  recorded database even after a rebase changes the selected profile. Startup
+  reuses only databases owned by `tadoku_owner` with the matching marker;
+  legacy `tadoku` ownership fails closed without an implicit ownership transfer.
+  Deleting a retained database requires an exact-name inventory and explicit approval:
   require the `tadoku-<route>` name, matching
   `dev-cli branch database route=<route>` database marker, owner `tadoku` or
   `tadoku_owner`, no active connections, and no live
@@ -263,12 +273,17 @@ node k8s/dev/base/e2e.cjs /tmp/tadoku-base-evidence
 Install the frontend's locked pnpm dependencies first; the E2E harness reuses
 its YAML parser. The harness runs the real published migration images in
 isolated, resource-bounded Docker containers, not a nested Kubernetes cluster.
+The `verify-dev-base` workflow runs the same harness for changes to development
+manifests and migration inputs, retaining `development-base-evidence` even on
+failure. It needs no cluster credentials.
 
 - It records the source revision, worktree status, rendered-manifest hash,
   exact image digests, commands and results in `report.json`, with individual
   logs.
 - It proves fresh and existing ownership transfer, runtime DML and sequence
-  access, denied DDL and migration-table writes, and branch provisioning.
+  access, denied DDL and migration-table writes, and branch provisioning. It
+  checks the automatic migration profile, declared variables and hooks, literal
+  branch-only migration targets, and refusal to provision legacy-owned databases.
 - It also proves fresh migrations, no-op reruns, an intentional connection
   failure and recovery, plus HTTP readiness, development runtime URLs and
   compiled assets in all three published frontend images with external
@@ -287,6 +302,11 @@ For tenant lifecycle changes, also prove frontend-only writes, separate owners,
 base and branch worker ownership, access permits, in-flight teardown, complete
 provider cleanup and TTL cleanup with unchanged canonical row counts and
 database names.
+
+For the isolated migration profile, prove the scratch migration version, owner
+and marker, tenant-scoped API persistence, refusal to switch a live profile,
+recorded-database teardown, provider cleanup and retained database, as listed
+in `.dev/acceptance.md`.
 
 Retain browser traces and screenshots outside source control, and identify the
 exact tested revision and any substituted routing boundary.

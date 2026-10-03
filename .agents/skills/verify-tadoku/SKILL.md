@@ -63,6 +63,12 @@ an owner such as `agent-my-task` consistently, including in other terminals.
 - Discovery happens once at startup: restart your loop when edits introduce
   another service. Do not use `--no-watch` for live-update verification. Do not
   hand-maintain a service catalog from the feature map.
+- Migration paths automatically select `isolated-database` and its migrated
+  `tadoku-<route>` database. For migration-only changes add `--service tadoku-api`
+  to select the paired API/worker. Follow the migration gates in `.dev/acceptance.md`:
+  prove the scratch version, owner/marker, API persistence in that database,
+  refusal to switch an active profile and down using its recorded database.
+  Keep the retained database; no removal approval is implied by verification.
 
 Use the **printed `dev url` links**, including for deep links; a printed link does
 not create an overlay or prove it is ready. Select every host the journey uses in

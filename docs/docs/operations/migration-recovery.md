@@ -16,6 +16,24 @@ migrations. The separate `/migrate-recovery` command supports:
 
 It does not support `down`, `drop`, or arbitrary migration steps.
 
+## Development migration branches
+
+Migration branch overlays use the automatically selected `isolated-database`
+profile described in [Development environment](../develop/environment.md#migration-branches).
+Their migration task runs in `tdk-dev-data`, uses the generated `tadoku_owner`
+Secret, and targets literal `tadoku-<route>`. A failed task prevents overlay
+startup; retain its output, database owner/marker and migration metadata before
+diagnosis. Stop the owning loop and confirm no migration or recovery process
+is active for that database. Fix forward; `force` still requires the physical
+schema assessment and human review described below.
+
+Do not point the branch task or a recovery Job at shared `tadoku`, copy
+production credentials, run down migrations, or erase the retained database as
+a retry shortcut. `dev down` replays the recorded branch database to remove
+tenant/provider state and retains the database. Any removal requires the
+exact-name inventory and approval in
+[Development base data safety](./development-base.md#data-safety).
+
 ## Safety rules
 
 1. Never use `force` to make an error disappear. It changes only

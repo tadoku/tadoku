@@ -27,8 +27,7 @@ spec:
               \gset
               \if :grants_valid
               \else
-                \echo 'runtime migration-table grants are invalid'
-                \quit 1
+                do $guard$ begin raise exception 'runtime migration-table grants are invalid'; end $guard$;
               \endif
               commit;
               SQL

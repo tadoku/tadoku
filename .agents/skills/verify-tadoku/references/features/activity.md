@@ -3,7 +3,7 @@
 ## Find it
 
 After login, **Log activity** opens main-host `/logs/new`. A profile's Updates
-list links to `/logs/<id>`; owner actions lead to `/logs/<id>/edit` and
+list links to `/logs/<id>`; owner and admin actions lead to `/logs/<id>/edit` and
 `/logs/<id>/contests`. The user menu's Profile opens
 `/profile/<user-id>/statistics/<year>`; its Updates tab opens
 `/profile/<user-id>/updates`. A leaderboard participant is another route to a profile.

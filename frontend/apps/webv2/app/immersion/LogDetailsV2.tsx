@@ -14,7 +14,7 @@ import {
   formatUnit,
   hasTrackedAmount,
 } from '@app/common/format'
-import { useSession } from '@app/common/session'
+import { useSession, useUserRole } from '@app/common/session'
 import { useRouter } from 'next/router'
 import { useState } from 'react'
 import { Modal } from 'ui'
@@ -27,6 +27,9 @@ interface Props {
 }
 
 export const LogDetailsV2 = ({ log }: Props) => {
+  const [session] = useSession()
+  const role = useUserRole()
+  const canEdit = log.user_id === session?.identity?.id || role === 'admin'
   const logColor = colorForActivity(log.activity.id)
   const tags = log.tags
   const hasAmount = hasTrackedAmount(log)
@@ -58,13 +61,15 @@ export const LogDetailsV2 = ({ log }: Props) => {
               <span>&middot;</span>
               <span>{log.activity.name}</span>
             </div>
-            <Link
-              href={routes.logEdit(log.id)}
-              className="btn ghost text-sm -my-4 -mr-4 md:-mr-7"
-            >
-              <PencilSquareIcon className="w-4 h-4 mr-2" />
-              Edit
-            </Link>
+            {canEdit ? (
+              <Link
+                href={routes.logEdit(log.id)}
+                className="btn ghost text-sm -my-4 -mr-4 md:-mr-7"
+              >
+                <PencilSquareIcon className="w-4 h-4 mr-2" />
+                Edit
+              </Link>
+            ) : null}
           </div>
           {log.description ? (
             <div className="mb-4">
@@ -124,13 +129,15 @@ export const LogDetailsV2 = ({ log }: Props) => {
         <div className="card p-0 w-full lg:w-2/5 self-start">
           <div className="flex items-center justify-between px-4 py-3">
             <h3 className="subtitle text-sm">Submitted to contests</h3>
-            <Link
-              href={routes.logContests(log.id)}
-              className="btn ghost text-sm -my-4 -mr-4"
-            >
-              <PencilSquareIcon className="w-4 h-4 mr-2" />
-              Edit
-            </Link>
+            {canEdit ? (
+              <Link
+                href={routes.logContests(log.id)}
+                className="btn ghost text-sm -my-4 -mr-4"
+              >
+                <PencilSquareIcon className="w-4 h-4 mr-2" />
+                Edit
+              </Link>
+            ) : null}
           </div>
           <ul
             className={`divide-y-2 divide-slate-500/5 ${

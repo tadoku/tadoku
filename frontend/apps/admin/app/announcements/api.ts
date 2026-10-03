@@ -1,9 +1,8 @@
 import { z } from 'zod'
-import getConfig from 'next/config'
+import { browserAppUrls } from 'ui/app-urls'
 import { useMutation, useQuery } from '@tanstack/react-query'
 
-const { publicRuntimeConfig } = getConfig()
-const root = `${publicRuntimeConfig.apiEndpoint}/content`
+const root = () => `${browserAppUrls().apiEndpoint}/content`
 
 const AnnouncementSchema = z.object({
   id: z.string(),
@@ -47,7 +46,7 @@ export function useAnnouncementList(
         page: opts.page.toString(),
       })
       const response = await fetch(
-        `${root}/announcements/${namespace}?${params}`,
+        `${root()}/announcements/${namespace}?${params}`,
         { credentials: 'include' },
       )
       const data = await handleResponse(response)
@@ -66,7 +65,7 @@ export function useAnnouncementFind(
     ['announcements', 'find', namespace, id],
     async (): Promise<Announcement> => {
       const response = await fetch(
-        `${root}/announcements/${namespace}/${id}`,
+        `${root()}/announcements/${namespace}/${id}`,
         { credentials: 'include' },
       )
       const data = await handleResponse(response)
@@ -92,7 +91,7 @@ export function useAnnouncementCreate(
       ends_at: string
     }) => {
       const response = await fetch(
-        `${root}/announcements/${namespace}`,
+        `${root()}/announcements/${namespace}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -124,7 +123,7 @@ export function useAnnouncementUpdate(
       ends_at: string
     }) => {
       const response = await fetch(
-        `${root}/announcements/${namespace}/${input.id}`,
+        `${root()}/announcements/${namespace}/${input.id}`,
         {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -148,7 +147,7 @@ export function useAnnouncementDelete(
   return useMutation({
     mutationFn: async (id: string) => {
       const response = await fetch(
-        `${root}/announcements/${namespace}/${id}`,
+        `${root()}/announcements/${namespace}/${id}`,
         {
           method: 'DELETE',
           credentials: 'include',

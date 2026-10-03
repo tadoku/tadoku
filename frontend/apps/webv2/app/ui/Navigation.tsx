@@ -12,10 +12,11 @@ import {
 } from '@heroicons/react/20/solid'
 import { useLogoutHandler, useSession, useUserRole } from '@app/common/session'
 import { useCurrentLocation } from '@app/common/hooks'
-import { routes } from '@app/common/routes'
+import { useRoutes } from '@app/common/routes'
 import { useIsFetching } from '@tanstack/react-query'
 
 export default function Navigation() {
+  const routes = useRoutes()
   const isFetching = useIsFetching()
 
   const [session] = useSession()

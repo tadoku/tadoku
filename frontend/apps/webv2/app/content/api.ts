@@ -1,10 +1,9 @@
 import { z } from 'zod'
-import getConfig from 'next/config'
+import { browserAppUrls } from 'ui/app-urls'
 import { useQuery } from '@tanstack/react-query'
 
-const { publicRuntimeConfig } = getConfig()
 
-const root = `${publicRuntimeConfig.apiEndpoint}/content`
+const root = () => `${browserAppUrls().apiEndpoint}/content`
 
 const Page = z.object({
   id: z.string(),
@@ -18,7 +17,7 @@ export type Page = z.infer<typeof Page>
 export const usePage = (slug: string) =>
   useQuery(['content_page', slug], async ({ queryKey }): Promise<Page> => {
     const [_, slug] = queryKey
-    const response = await fetch(`${root}/pages/tadoku/${slug}`)
+    const response = await fetch(`${root()}/pages/tadoku/${slug}`)
 
     if (response.status !== 200) {
       throw new Error(response.status.toString())
@@ -40,7 +39,7 @@ export type Post = z.infer<typeof Post>
 export const usePost = (slug: string) =>
   useQuery(['content_post', slug], async ({ queryKey }): Promise<Post> => {
     const [_, slug] = queryKey
-    const response = await fetch(`${root}/posts/tadoku/${slug}`)
+    const response = await fetch(`${root()}/posts/tadoku/${slug}`)
 
     if (response.status !== 200) {
       throw new Error(response.status.toString())
@@ -77,7 +76,7 @@ export const useActiveAnnouncements = () =>
   useQuery(
     ['content_announcements', 'active'],
     async (): Promise<ActiveAnnouncement[]> => {
-      const response = await fetch(`${root}/announcements/tadoku/active`)
+      const response = await fetch(`${root()}/announcements/tadoku/active`)
 
       if (response.status !== 200) {
         return []
@@ -104,7 +103,7 @@ export const usePostList = ({
     async ({ queryKey }): Promise<PostList> => {
       const page = queryKey[2]
       const response = await fetch(
-        `${root}/posts/tadoku?page_size=${pageSize}&page=${page}`,
+        `${root()}/posts/tadoku?page_size=${pageSize}&page=${page}`,
       )
 
       if (response.status !== 200) {

@@ -32,12 +32,12 @@ vi.mock('@app/common/session', () => ({
 vi.mock('@app/common/hooks', () => ({ useCurrentLocation: () => '/' }))
 vi.mock('@tanstack/react-query', () => ({ useIsFetching: () => 0 }))
 vi.mock('next/config', () => ({
-  default: () => ({ publicRuntimeConfig: { authUiUrl: '/account' } }),
+  default: () => ({ publicRuntimeConfig: { homeUrl: 'https://tadoku.test', authUiUrl: 'https://account.tadoku.test', adminUrl: 'https://admin.tadoku.test', apiEndpoint: 'https://tadoku.test/api/internal' } }),
 }))
-vi.mock('ui/node_modules/next/router', () => ({
+vi.mock('next/router', () => ({
   useRouter: () => ({ pathname: state.pathname }),
 }))
-vi.mock('ui/node_modules/next/link', () => ({
+vi.mock('next/link', () => ({
   default: React.forwardRef<HTMLAnchorElement, React.ComponentProps<'a'>>(
     function Link({ onClick, ...props }, ref) {
       return (

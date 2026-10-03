@@ -18,6 +18,7 @@ export const bootstrapFeatureFlagDecisions = async (
   isServer = typeof window === 'undefined',
   request: typeof fetch = fetch,
   timeoutMilliseconds = 3_000,
+  apiEndpoint?: string,
 ): Promise<FeatureFlagDecisions> => {
   const subject = session?.identity?.id
   if (
@@ -34,7 +35,7 @@ export const bootstrapFeatureFlagDecisions = async (
     const timeout = setTimeout(() => controller.abort(), timeoutMilliseconds)
 
     try {
-      const response = await request(featureFlagEndpoint, {
+      const response = await request(apiEndpoint ? `${apiEndpoint}/immersion/feature-flags` : featureFlagEndpoint, {
         cache: 'no-store',
         headers: { cookie },
         signal: controller.signal,

@@ -1,10 +1,9 @@
 import { z } from 'zod'
-import getConfig from 'next/config'
+import { browserAppUrls } from 'ui/app-urls'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { ContentConfig, ContentItem, ContentListResponse } from './types'
 
-const { publicRuntimeConfig } = getConfig()
-const root = `${publicRuntimeConfig.apiEndpoint}/content`
+const root = () => `${browserAppUrls().apiEndpoint}/content`
 
 // Zod schemas for validation
 const ContentItemSchema = z.object({
@@ -60,7 +59,7 @@ export function useContentList(
         include_drafts: 'true',
       })
       const response = await fetch(
-        `${root}/${config.type}/${namespace}?${params}`,
+        `${root()}/${config.type}/${namespace}?${params}`,
         { credentials: 'include' },
       )
       const data = await handleResponse(response)
@@ -87,7 +86,7 @@ export function useContentFind(
     [config.type, 'find', namespace, slug],
     async (): Promise<ContentItem> => {
       const response = await fetch(
-        `${root}/${config.type}/${namespace}/${slug}`,
+        `${root()}/${config.type}/${namespace}/${slug}`,
         { credentials: 'include' },
       )
       const data = await handleResponse(response)
@@ -123,7 +122,7 @@ export function useContentCreate(
       }
 
       const response = await fetch(
-        `${root}/${config.type}/${namespace}`,
+        `${root()}/${config.type}/${namespace}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -164,7 +163,7 @@ export function useContentUpdate(
       }
 
       const response = await fetch(
-        `${root}/${config.type}/${namespace}/${input.id}`,
+        `${root()}/${config.type}/${namespace}/${input.id}`,
         {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -190,7 +189,7 @@ export function useContentDelete(
   return useMutation({
     mutationFn: async (id: string) => {
       const response = await fetch(
-        `${root}/${config.type}/${namespace}/${id}`,
+        `${root()}/${config.type}/${namespace}/${id}`,
         {
           method: 'DELETE',
           credentials: 'include',
@@ -228,7 +227,7 @@ export function useContentVersionList(
     [config.type, 'versions', namespace, id],
     async (): Promise<ContentVersion[]> => {
       const response = await fetch(
-        `${root}/${config.type}/${namespace}/${id}/versions`,
+        `${root()}/${config.type}/${namespace}/${id}/versions`,
         { credentials: 'include' },
       )
       const data = await handleResponse(response)
@@ -258,7 +257,7 @@ export function useContentVersionGet(
     [config.type, 'version', namespace, id, contentId],
     async (): Promise<ContentVersionDetail> => {
       const response = await fetch(
-        `${root}/${config.type}/${namespace}/${id}/versions/${contentId}`,
+        `${root()}/${config.type}/${namespace}/${id}/versions/${contentId}`,
         { credentials: 'include' },
       )
       const data = await handleResponse(response)
@@ -295,7 +294,7 @@ export function useContentFindById(
     [config.type, 'findById', namespace, id],
     async (): Promise<ContentItem> => {
       const response = await fetch(
-        `${root}/${config.type}/${namespace}/${id}`,
+        `${root()}/${config.type}/${namespace}/${id}`,
         { credentials: 'include' },
       )
       const data = await handleResponse(response)

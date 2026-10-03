@@ -1,5 +1,5 @@
 import { useCurrentDateTime, useCurrentLocation } from '@app/common/hooks'
-import { routes } from '@app/common/routes'
+import { useRoutes } from '@app/common/routes'
 import { useSession } from '@app/common/session'
 import { useContest, useContestRegistration } from '@app/immersion/api'
 import { ContestRegistrationForm } from '@app/immersion/ContestRegistration'
@@ -11,6 +11,7 @@ import { Breadcrumb, Flash, Loading } from 'ui'
 import { useEffect } from 'react'
 
 const Page = () => {
+  const routes = useRoutes()
   const router = useRouter()
   const id = router.query['id']?.toString() ?? ''
 
@@ -19,14 +20,15 @@ const Page = () => {
   const contest = useContest(id)
   const [session] = useSession()
   const currentUrl = useCurrentLocation()
+  const loginUrl = routes.authLogin(currentUrl)
 
   const registration = useContestRegistration(id, { enabled: !!session })
 
   useEffect(() => {
     if (!session) {
-      router.push(routes.authLogin(currentUrl))
+      router.push(loginUrl)
     }
-  }, [session, currentUrl, router])
+  }, [session, loginUrl, router])
 
   if (!session || contest.isLoading) {
     return <Loading />

@@ -1,5 +1,12 @@
 name: build-frontend-webv2
 on:
+  workflow_dispatch:
+    inputs:
+      publish_production:
+        description: Publish the production image after owner approval
+        type: boolean
+        default: false
+        required: true
   schedule:
     # monthly at 10th of every month
     - cron: "0 0 10 * *"
@@ -40,7 +47,7 @@ jobs:
         id: pnpm-cache
         shell: bash
         run: |
-          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+          echo "STORE_PATH=$(pnpm store path)" >> "$GITHUB_OUTPUT"
 
       - uses: actions/cache@6f8efc29b200d32929f49075959781ed54ec270c # v3
         name: Setup pnpm cache
@@ -60,7 +67,7 @@ jobs:
     name: Publish Image
     needs: build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/dev/')
     defaults:
       run:
         working-directory: frontend
@@ -72,17 +79,22 @@ jobs:
         run: |
           docker build \
             --build-arg PROJECT_NAME=webv2 \
-            -t ghcr.io/tadoku/tadoku/frontend-webv2:latest \
+            -t "ghcr.io/tadoku/tadoku/frontend-webv2:${GITHUB_SHA}" \
             .
 
       - name: Push images
         env:
+          PUBLISH_PRODUCTION: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_production }}
           IMAGE_NAME: ghcr.io/tadoku/tadoku/frontend-webv2
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" |
             docker login ghcr.io -u tadoku --password-stdin
-          docker tag "${IMAGE_NAME}:latest" "${IMAGE_NAME}:${GITHUB_SHA}"
-          docker tag "${IMAGE_NAME}:latest" "${IMAGE_NAME}:prod"
-          docker push "${IMAGE_NAME}:latest"
           docker push "${IMAGE_NAME}:${GITHUB_SHA}"
-          docker push "${IMAGE_NAME}:prod"
+          if [ "$GITHUB_REF" = refs/heads/main ]; then
+            docker tag "${IMAGE_NAME}:${GITHUB_SHA}" "${IMAGE_NAME}:latest"
+            docker push "${IMAGE_NAME}:latest"
+          fi
+          if [ "$GITHUB_REF" = refs/heads/main ] && [ "$PUBLISH_PRODUCTION" = true ]; then
+            docker tag "${IMAGE_NAME}:${GITHUB_SHA}" "${IMAGE_NAME}:prod"
+            docker push "${IMAGE_NAME}:prod"
+          fi

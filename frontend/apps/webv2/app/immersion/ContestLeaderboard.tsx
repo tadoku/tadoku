@@ -17,7 +17,7 @@ import {
   InformationCircleIcon,
 } from '@heroicons/react/20/solid'
 import { ContestConfiguration } from '@app/immersion/ContestConfiguration'
-import { routes } from '@app/common/routes'
+import { useRoutes } from '@app/common/routes'
 import { getQueryStringPageParameter } from '@app/common/router'
 import { Leaderboard } from '@app/immersion/Leaderboard'
 import { formatScore } from '@app/common/format'
@@ -29,6 +29,7 @@ interface Props {
 }
 
 export const ContestLeaderboard = ({ id, contest, routeForPage }: Props) => {
+  const routes = useRoutes()
   const newFilter = () => {
     return {
       contestId: id,

@@ -129,3 +129,11 @@ All workflows live in `.github/workflows/`.
 | `build-frontend-paper-styleguide.yaml` | PRs and `main` pushes touching Paper | Paper boundaries, `paper-ui` and `paper-styleguide` lint, typecheck, test and build, package checks, image smoke test; publishes from `main` |
 | `check-paper-playground.yaml` | PRs and `main` pushes touching the playground or `paper-ui` | Paper boundaries and `paper-playground` lint, typecheck, test and build; never published |
 | `deploy-docs.yaml` | PRs and `main` pushes touching `docs/` or the API spec | `pnpm api:check`, typecheck, build and the public API boundary (fixed page counts, no internal paths); deploys GitHub Pages from `main` |
+
+Frontend application images from `dev/` branches publish only their immutable commit tag.
+They never update `latest` or `prod`. Development manifests can pin those images
+without a production release. Main publication updates the commit tag and `latest`
+for development. All five frontend workflows update `prod` only through a manual
+workflow dispatch on `main` with `publish_production: true`, after the owner approves
+production. This also lets frontend source land on main for future branch overlays
+while production remains on its previous image.

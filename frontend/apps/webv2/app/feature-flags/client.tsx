@@ -1,5 +1,5 @@
 import { atom, useAtomValue, useSetAtom } from 'jotai'
-import getConfig from 'next/config'
+import { browserAppUrls } from 'ui/app-urls'
 import { useRouter } from 'next/router'
 import React, { useEffect, useRef } from 'react'
 import type { ReactNode } from 'react'
@@ -9,8 +9,7 @@ import {
 } from './registry'
 import type { FeatureFlagDecisions, FeatureFlagKey } from './registry'
 
-const { publicRuntimeConfig } = getConfig()
-const featureFlagEndpoint = `${publicRuntimeConfig.apiEndpoint}/immersion/feature-flags`
+const featureFlagEndpoint = () => `${browserAppUrls().apiEndpoint}/immersion/feature-flags`
 
 export const featureFlagDecisionsAtom = atom<FeatureFlagDecisions>({
   ...defaultFeatureFlagDecisions,
@@ -55,7 +54,7 @@ export const FeatureFlagRefresh = ({
         timeoutMilliseconds,
       )
 
-      void fetch(featureFlagEndpoint, {
+      void fetch(featureFlagEndpoint(), {
         credentials: 'include',
         cache: 'no-store',
         signal: currentController.signal,

@@ -27,6 +27,11 @@ webv2 covers logging, official and user-created contests (including registration
 
 `next.config.js` maps the `NEXT_PUBLIC_*` variables to `publicRuntimeConfig`. These cover the API endpoint, the Kratos endpoints, the auth, admin and home URLs, and cookie settings. `NEXT_SERVER_API_ENDPOINT` overrides the API endpoint for server-side requests. The defaults point at the public tadoku.app hosts, and the development stack sets them for `*.tadoku.dev.lab`.
 
+`frontend/packages/ui/app-urls.tsx` resolves sibling URLs and the public API
+endpoint per host. SSR supplies those URLs through its provider; browser API
+calls resolve them at call time. Internal server API endpoints and the shared
+Kratos endpoint remain on their configured hosts.
+
 ## Commands
 
 From `frontend/`:

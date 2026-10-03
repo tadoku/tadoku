@@ -1,12 +1,11 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import getConfig from 'next/config'
-
-const { publicRuntimeConfig } = getConfig()
+import { appUrlsForHost } from 'ui/app-urls'
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
-  const returnTo = req.headers.referer || publicRuntimeConfig.adminUrl
+  const urls = appUrlsForHost(req.headers.host)
+  const returnTo = req.headers.referer || urls.adminUrl
   const loginUrl = `${
-    publicRuntimeConfig.authUiUrl
+    urls.authUiUrl
   }/login?return_to=${encodeURIComponent(returnTo)}`
   res.redirect(302, loginUrl)
 }

@@ -4,15 +4,14 @@ import { useRouter } from 'next/router'
 import { useEffect, useRef, DependencyList } from 'react'
 import { AxiosError } from 'axios'
 import { z } from 'zod'
-import getConfig from 'next/config'
+import { browserAppUrls } from 'ui/app-urls'
 import ory from '@app/common/ory'
 import { AppContext } from 'next/app'
 import { NextPageContext } from 'next'
 import { useCurrentLocation } from '@app/common/hooks'
-import { routes } from './routes'
+import { useRoutes } from './routes'
 
-const { publicRuntimeConfig } = getConfig()
-const root = `${publicRuntimeConfig.apiEndpoint}/authz`
+const root = () => `${browserAppUrls().apiEndpoint}/authz`
 
 export type Role = 'admin' | 'user' | 'guest' | 'banned'
 
@@ -28,6 +27,7 @@ export const useSession = () => {
 }
 
 export const useSessionOrRedirect = () => {
+  const routes = useRoutes()
   const result = useAtom(sessionAtom)
   const currentUrl = useCurrentLocation()
   const router = useRouter()
@@ -47,6 +47,7 @@ export const logoutTokenAtom = atom(undefined as undefined | string)
 
 // Returns a function which will log the user out
 export const useLogoutHandler = (deps?: DependencyList) => {
+  const routes = useRoutes()
   const [logoutToken, setLogoutToken] = useAtom(logoutTokenAtom)
   const [session] = useSession()
 
@@ -102,7 +103,7 @@ export const useUserRole = () => {
 
     prevUserIdRef.current = userId
 
-    fetch(`${root}/current-user/role`)
+    fetch(`${root()}/current-user/role`)
       .then(async response => {
         if (response.status !== 200) {
           throw new Error(response.status.toString())

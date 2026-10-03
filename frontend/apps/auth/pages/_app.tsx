@@ -8,10 +8,12 @@ import 'ui/styles/globals.css'
 import Navigation from '../src/Navigation'
 import Head from 'next/head'
 import getConfig from 'next/config'
+import { AppUrls, AppUrlsProvider, appUrlsForHost } from 'ui/app-urls'
 
 const { publicRuntimeConfig } = getConfig()
 
 interface Props {
+  appUrls: AppUrls
   session: Session | undefined
 }
 
@@ -31,28 +33,30 @@ const MyApp = ({ Component, pageProps }: AppProps<Props>) => {
   setInitialValues(sessionAtom, initialState.session)
 
   return (
-    <Provider initialValues={getInitialValues()}>
-      <Head>
-        <title>Tadoku</title>
-        <link
-          href="/favicon.png"
-          rel="shortcut icon"
-          media="(prefers-color-scheme: light)"
-        />
-        <link
-          href="/favicon-dark.png"
-          rel="shortcut icon"
-          media="(prefers-color-scheme: dark)"
-        />
-      </Head>
-      <div>
-        <Navigation />
-        <div className="p-8 mx-auto max-w-xl">
-          <Component {...pageProps} />
+    <AppUrlsProvider urls={pageProps.appUrls}>
+      <Provider initialValues={getInitialValues()}>
+        <Head>
+          <title>Tadoku</title>
+          <link
+            href="/favicon.png"
+            rel="shortcut icon"
+            media="(prefers-color-scheme: light)"
+          />
+          <link
+            href="/favicon-dark.png"
+            rel="shortcut icon"
+            media="(prefers-color-scheme: dark)"
+          />
+        </Head>
+        <div>
+          <Navigation />
+          <div className="p-8 mx-auto max-w-xl">
+            <Component {...pageProps} />
+          </div>
+          <ToastContainer />
         </div>
-        <ToastContainer />
-      </div>
-    </Provider>
+      </Provider>
+    </AppUrlsProvider>
   )
 }
 
@@ -88,6 +92,7 @@ MyApp.getInitialProps = async (ctx: AppContextWithSession) => {
 
   const initialAppProps = await App.getInitialProps(ctx)
   initialAppProps.pageProps.session = ctx.ctx.session
+  initialAppProps.pageProps.appUrls = appUrlsForHost(ctx.ctx.req?.headers.host ?? (typeof window === 'undefined' ? undefined : window.location.host))
 
   return { ...props, ...initialAppProps }
 }

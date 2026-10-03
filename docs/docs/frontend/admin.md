@@ -24,6 +24,10 @@ Source: `frontend/apps/admin`. Development host: `admin.tadoku.dev.lab`.
 - Next.js 13 Pages Router, with feature code in `app/` imported as `@app/*`, Tailwind CSS and the legacy `ui` components.
 - React Query 3 hooks call Tadoku API (`immersion`, `content`, `authz` and `profile`) with `fetch`, and Zod parses the responses. There is no generated client. See the [API reference](../api/index.md).
 - The app also uses react-hook-form, Luxon, Jotai for the session, and `@ory/kratos-client`.
+- `frontend/packages/ui/app-urls.tsx` derives account, home and browser API URLs
+  from the current branch host. SSR passes them through its provider; browser
+  API calls resolve their endpoint at call time. Kratos remains on the base
+  account host.
 - Tests run on Vitest with jsdom and Testing Library.
 - The `next.config.js` `NEXT_PUBLIC_*` variables work as they do in [webv2](webv2.md).
 

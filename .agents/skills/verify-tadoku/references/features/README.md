@@ -9,7 +9,7 @@ safety; [Development environment](../../../../../docs/docs/develop/environment.m
 covers hosts, branch selection and fixture accounts. Read only the area your task
 affects. These are **development** URLs and user journeys, not deployment metadata
 or an assertion that every check has passed. Generate selected links with `dev url`;
-bare links below use your browser's current cookie (base in a fresh context).
+bare links below target the base; branch links carry the route in their hostname.
 Never use production `tadoku.app` for these checks.
 
 | User goal | Entry point | Read |
@@ -31,7 +31,7 @@ credentials/profile/roles for an unrelated test.
 
 The automatic `tenant` hook reuses those identities and populates branch-local
 data in `tadoku/<route>`. Frontend-only branches use the base API with that
-selected tenant. Select the main hostname before auth or admin API writes and
+selected tenant. Use branch-host links for auth or admin API writes and
 check the API response's `X-Dev-Selected`.
 Missing shared identities require authorized setup, not invented IDs or auth
 bypasses. User IDs are generated; obtain them from the profile link or your

@@ -24,6 +24,8 @@ commands.
 | --- | --- |
 | Kubernetes context | `homelab-talos-dev` |
 | Hosts | `tadoku.dev.lab`, `account.tadoku.dev.lab`, `admin.tadoku.dev.lab` |
+| Branch hosts | `<route>.tadoku.dev.lab`, `<route>.account.tadoku.dev.lab`, `<route>.admin.tadoku.dev.lab` |
+| Certificate issuer | `lab-ca-acme` |
 | Overlay image registry | `registry.dev.lab/tadoku-dev-cli` |
 | Overlay TTL | 8 hours |
 
@@ -43,8 +45,8 @@ private keys.
 ## Install dev-cli
 
 ```sh
-GOPRIVATE=github.com/antonve/dev-cli go install github.com/antonve/dev-cli/cmd/dev@v0.7.0
-dev version  # must print v0.7.0 or later
+GOPRIVATE=github.com/antonve/dev-cli go install github.com/antonve/dev-cli/cmd/dev@v0.8.0
+dev version  # must print v0.8.0 or later
 ```
 
 Go must be able to authenticate to the private repository. If your Git
@@ -54,7 +56,7 @@ credential is required:
 ```sh
 GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=url.git@github.com:.insteadOf \
 GIT_CONFIG_VALUE_0=https://github.com/ GOPRIVATE=github.com/antonve/dev-cli \
-go install github.com/antonve/dev-cli/cmd/dev@v0.7.0
+go install github.com/antonve/dev-cli/cmd/dev@v0.8.0
 ```
 
 - Put `$(go env GOPATH)/bin`, or your explicit `GOBIN`, on `PATH`. Check
@@ -125,8 +127,8 @@ every other service keeps using the base.
 
 A frontend-only overlay reads and writes its branch tenant through the base
 API. Add `--service tadoku-api` when you need to run changed API code, rather
-than to isolate frontend writes. Select the main hostname before any API write,
-including one initiated by auth or admin.
+than to isolate frontend writes. Branch-host links select the same route across
+apps, including API writes initiated by auth or admin.
 
 Token-reflector is base-only. Paper styleguide has no live overlay; run it
 locally with `cd frontend && pnpm paper-styleguide`.
@@ -159,25 +161,19 @@ dev logs --owner alice tadoku-worker
 
 Flags come before positional paths and service names.
 
-Open the printed link, including for deep links. Its `dev-branch` query
-parameter makes Envoy set a host-only branch cookie; no application branch menu
-or copied branch string is needed. The parameter stays in the URL and wins over
-an older cookie. A printed link does not create an overlay or prove that it is
-ready.
+Open the printed branch-host link, including for deep links. One link keeps
+navigation across app, account and admin on the same branch. Each branch has
+its own origin, so two owners can use one browser profile without selection
+leaking across tabs. A printed link does not create an overlay or prove readiness.
 
-- **Selection is per hostname.** Open the printed link for each host your test
-  uses. Before admin or auth writes to the API, open both that host's link and
-  the main-host link in the same browser profile. Otherwise those API calls can
-  use canonical base data. Check `X-Dev-Selected` on the actual API response.
-- Tabs in one browser profile share the selection; separate profiles have
-  independent selections.
-- Clear a selection with `dev url --owner alice --clear '/'`, adding `--host`
-  for the account or admin host. Clearing one hostname does not clear others.
-- Without a selection, browsers use the base at `https://tadoku.dev.lab`,
-  `https://account.tadoku.dev.lab` and `https://admin.tadoku.dev.lab`.
-- Each service independently uses your overlay when it is selected and
-  healthy, and the base otherwise.
-- Kratos stays shared. `/kratos` is never routed to a frontend overlay.
+- Base URLs are `https://tadoku.dev.lab`, `https://account.tadoku.dev.lab` and
+  `https://admin.tadoku.dev.lab`.
+- Each service independently uses its healthy overlay or the base fallback.
+- Authentication is shared between base and branches. Kratos remains at
+  `https://account.tadoku.dev.lab/kratos`; it is never routed to a frontend overlay.
+- Compatibility cookie links remain available through `dev url --cookie`.
+  Those links require selecting every app/API hostname used in the journey;
+  `dev url --clear` clears only the chosen hostname. Branch hosts need neither.
 
 ### Routing headers
 
@@ -203,14 +199,15 @@ browser → ingress-nginx → Envoy → webv2 / auth / admin
                              → Oathkeeper → Envoy → Tadoku API
 ```
 
-- The browser cookie wins over any routing header a client supplies.
+- An owner-scoped Ingress and Lab CA certificate in `tdk-dev-routing` expose
+  the branch hosts. The hostname wins over any routing header a client supplies.
 - Envoy normalizes the branch selection into an internal header. The
   development Oathkeeper, which uses development-only signing credentials and
   auth providers, signs tenant `tadoku/<route>` from that trusted selection.
   Unselected requests carry `tadoku/prod`.
 - Base and branch frontends send server-side rendering requests through the
-  same gateway with Lab CA trust, so an API-only selection also applies to
-  server-rendered pages.
+  same public branch host and gateway with Lab CA trust, so an API-only
+  selection also applies to server-rendered pages.
 - Kratos and Oathkeeper allow the development hosts and every
   `*.tadoku.dev.lab` branch host; no temporary auth allowlist is needed.
 
@@ -400,6 +397,9 @@ It does not stop the Argo CD base. Ctrl-C alone leaves overlays running.
 
 ## Troubleshooting
 
+- For TLS issuance failures, inspect `kubectl --context homelab-talos-dev -n tdk-dev-routing describe certificate <name>`. v0.8 warns and retains cookie fallback links.
+- A branch hostname returning 404 means its environment is not running; check owner, route and status.
+
 - Doctor checks prerequisites, not end-to-end routing. Inspect `dev status`,
   task logs, route admission and real responses; use service-filtered
   `dev logs` for sync and build errors.
@@ -447,7 +447,7 @@ For browser verification on your branch, follow the verification skill in
 `.agents/skills/verify-tadoku/SKILL.md`. Changes to routing or synchronization
 must also pass the live gates in `.dev/acceptance.md`: frontend HMR without
 navigation, backend live edits, separate owners and browser profiles, API-only
-frontend fallback, switching and clearing, spoofed headers, a real Navbar login
+frontend fallback, branch-host isolation, spoofed headers, a real Navbar login
 and a rendered leaderboard. Keep one-off browser verification programs outside
 source control.
 

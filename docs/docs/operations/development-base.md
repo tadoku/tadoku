@@ -318,7 +318,7 @@ exact tested revision and any substituted routing boundary.
 | A migration Job failed and later waves did not start | Diagnose the retained Job, fix forward and run another full sync. For a dirty Tadoku API schema, follow [Database migration recovery](./migration-recovery.md). |
 | The initial sync waits at the auth-provider wave | Run the bootstrap script once the namespaces and operator Secrets exist. |
 | Consumers fail after operator credentials rotated | Rerun the bootstrap script, then perform an explicitly approved consumer restart. |
-| Resources are healthy but a host serves another workload | Look for competing Ingresses or HTTPRoutes on the canonical hosts. |
+| Resources are healthy but a host serves another workload | Look for competing Ingresses or HTTPRoutes on the canonical hosts. Owner-scoped dev-cli branch Ingresses labelled `dev-cli.io/managed-by=dev-cli` in `tdk-dev-routing` are expected. |
 | Leaderboards are stale | Run the [asynchronous worker checks](#asynchronous-worker-ownership). |
 
 Do not restart shared services or delete databases as a troubleshooting

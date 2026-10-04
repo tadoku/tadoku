@@ -61,6 +61,9 @@ type RoleUpdateParameters struct {
 }
 
 func (p RoleUpdateParameters) Validate() error {
+	if p.UserID == uuid.Nil {
+		return errx.NewInvalidInputError("user id is required")
+	}
 	if p.Role != RoleUser && p.Role != RoleBanned {
 		return errx.NewInvalidInputError("role must be 'user' or 'banned'")
 	}

@@ -134,6 +134,16 @@ func TestFixturesAreIsolated(t *testing.T) {
 }
 
 func TestFailedStartupCleansOwnedDirectory(t *testing.T) {
+	foreignDirectory, err := os.MkdirTemp("/dev/shm", fmt.Sprintf("tadoku-testkratos-%d-", os.Getpid()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := os.RemoveAll(foreignDirectory); err != nil {
+			t.Error(err)
+		}
+	})
+
 	badSeed := filepath.Join(t.TempDir(), "bad.sql")
 	if err := os.WriteFile(badSeed, []byte("insert into absent_table values (1);"), 0o600); err != nil {
 		t.Fatal(err)
@@ -145,9 +155,12 @@ func TestFailedStartupCleansOwnedDirectory(t *testing.T) {
 		}
 		t.Fatalf("bad seed: fixture = %v, error = %v", fixture, err)
 	}
-	matches, err := filepath.Glob(fmt.Sprintf("/dev/shm/tadoku-testkratos-%d-*", os.Getpid()))
+	matches, err := filepath.Glob(filepath.Join("/dev/shm", directoryPrefix+"*"))
 	if err != nil || len(matches) != 0 {
 		t.Errorf("failed constructor left directories: %v, %v", matches, err)
+	}
+	if _, err := os.Stat(foreignDirectory); err != nil {
+		t.Errorf("failed constructor changed a foreign directory: %v", err)
 	}
 }
 

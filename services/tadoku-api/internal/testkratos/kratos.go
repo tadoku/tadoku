@@ -2,6 +2,7 @@ package testkratos
 
 import (
 	"context"
+	"crypto/rand"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -30,6 +31,8 @@ const (
 	adminURL        = "http://kratos.test"
 	tmpfsMagic      = 0x01021994
 )
+
+var directoryPrefix = "tadoku-testkratos-" + rand.Text() + "-"
 
 // Fixture is shared only by sequential tests. Its client survives Reset.
 // A failed reset makes the fixture unusable until Close.
@@ -77,7 +80,7 @@ func New(ctx context.Context, seedFile string) (_ *Fixture, resultErr error) {
 	if filesystem.Type != tmpfsMagic {
 		return nil, errors.New("Kratos fixture requires tmpfs at /dev/shm")
 	}
-	dir, err := os.MkdirTemp("/dev/shm", fmt.Sprintf("tadoku-testkratos-%d-", os.Getpid()))
+	dir, err := os.MkdirTemp("/dev/shm", directoryPrefix)
 	if err != nil {
 		return nil, fmt.Errorf("create Kratos RAM-backed directory: %w", err)
 	}

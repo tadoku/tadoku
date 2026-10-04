@@ -33,7 +33,7 @@ type PostVersion struct {
 	CreatedAt time.Time
 }
 
-type CreatePostParameters struct {
+type postParameters struct {
 	ID          uuid.UUID
 	Namespace   string
 	Slug        string
@@ -42,7 +42,10 @@ type CreatePostParameters struct {
 	PublishedAt *time.Time
 }
 
-func (p CreatePostParameters) Validate() error {
+type CreatePostParameters = postParameters
+type UpdatePostParameters = postParameters
+
+func (p postParameters) Validate() error {
 	if p.ID == uuid.Nil {
 		return errx.NewInvalidInputError("id is required")
 	}
@@ -72,20 +75,4 @@ type PostList struct {
 	Posts         []Post
 	TotalSize     int
 	NextPageToken string
-}
-
-type UpdatePostParameters struct {
-	ID          uuid.UUID
-	Namespace   string
-	Slug        string
-	Title       string
-	Content     string
-	PublishedAt *time.Time
-}
-
-func (p UpdatePostParameters) Validate() error {
-	if p.ID == uuid.Nil {
-		return errx.NewInvalidInputError("id is required")
-	}
-	return validatePostFields(p.Namespace, p.Slug, p.Title, p.Content)
 }

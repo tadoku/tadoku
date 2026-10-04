@@ -48,6 +48,13 @@ sibling origins. Supply `AppUrlsProvider` from each application's request
 properties for consistent SSR and hydration. Kratos stays on the base account
 host. Avoid module-level runtime URL constants.
 
+Production branch hosts use `<branch>.preview.tadoku.app`,
+`<branch>.account.preview.tadoku.app` and
+`<branch>.admin.preview.tadoku.app`. The resolver accepts one DNS label beneath
+these reserved roots and preserves paths, ports and private server API endpoints.
+Other production subdomains do not select a branch. Development keeps the
+branch label directly beneath each configured development app host.
+
 ## Authentication flows
 
 The auth application’s shared logout hook creates a Kratos logout flow only

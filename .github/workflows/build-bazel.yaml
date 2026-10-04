@@ -161,6 +161,15 @@ jobs:
       - name: Build
         run: bazel build --lockfile_mode=error //...
 
+      - name: Print release image digests
+        run: |
+          targets='set(//services/tadoku-api:image //services/tadoku-api/cmd/tadoku-worker:image)'
+          bazel build --lockfile_mode=error --config=release //services/tadoku-api:image //services/tadoku-api/cmd/tadoku-worker:image
+          while read -r image; do
+            printf '%s ' "$image"
+            jq -r '.manifests[0].digest' "$image/index.json"
+          done < <(bazel cquery --lockfile_mode=error --config=release --output=files "$targets")
+
       - name: Check load_images covers all production oci_load targets
         run: |
           diff \
@@ -183,7 +192,7 @@ jobs:
 
       - name: Load backend images for scanning
         if: github.event_name != 'pull_request'
-        run: bazel run --lockfile_mode=error //:load_images
+        run: bazel run --lockfile_mode=error --config=release //:load_images
 
       - name: Install Trivy
         if: github.event_name != 'pull_request'
@@ -331,4 +340,4 @@ jobs:
           cp /home/runner/.docker/config.json /tmp/docker/config.json
 
           # Push images
-          bazel run --lockfile_mode=error //:push_images
+          bazel run --lockfile_mode=error --config=release //:push_images

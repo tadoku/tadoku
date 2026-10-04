@@ -37,6 +37,38 @@ Run `bazel run //tools/ci/commentpolicy` to check handwritten Go comments;
 it ignores generated files and accepts tool directives, declaration usage
 notes and marked test fixture safety notes.
 
+### Release and branch image entrypoints
+
+`bazel build --config=release` pins Linux amd64 and pure Go. CI uses this
+configuration for backend image scanning and publication, and prints the API
+and worker image digests for comparison with a local build of the same commit.
+
+The API and worker provide separate `branch_push` targets alongside their
+fixed release targets. Branch targets have no fixed repository or tags:
+
+```sh
+bazel run --config=release //services/tadoku-api:branch_push -- \
+  --repository localhost:5000/check/tadoku-api --tag check-0123456789ab
+```
+
+Frontend workflows and the `//frontend:webv2_branch_push`,
+`//frontend:auth_branch_push` and `//frontend:admin_branch_push` targets use
+`frontend/scripts/publish-image.sh`. It builds `HEAD:frontend` with `git archive`,
+so ignored local environment files and uncommitted edits do not enter images.
+The script publishes only explicitly requested tags, on Linux amd64:
+
+```sh
+frontend/scripts/publish-image.sh webv2 \
+  --repository localhost:5000/check/frontend-webv2 --tag check-0123456789ab
+python3 frontend/scripts/check-publish-image.py
+```
+
+The check requires Docker. It creates a disposable loopback registry and Git
+fixture, rejects invalid arguments, proves ignored secrets and uncommitted
+edits are excluded, then pulls and runs the published image. It does not build
+the full application; normal frontend builds cover that boundary. Webv2 CI
+runs this publication check. Production tag approval remains manual.
+
 ### Gazelle
 
 Direct Go dependencies belong in the first `require` block of `go.mod` and in

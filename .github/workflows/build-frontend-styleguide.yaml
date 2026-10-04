@@ -18,6 +18,8 @@ on:
       - ".github/workflows/build-frontend-styleguide.yaml"
       - "frontend/pnpm-lock.yaml"
       - "frontend/Dockerfile"
+      - "frontend/scripts/publish-image.sh"
+      - "frontend/scripts/check-publish-image.py"
       - "frontend/.npmrc"
 jobs:
   build:
@@ -75,24 +77,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - name: Build image
-        run: |
-          docker build \
-            --build-arg PROJECT_NAME=styleguide \
-            -t "ghcr.io/tadoku/tadoku/frontend-styleguide:${GITHUB_SHA}" \
-            .
-
-      - name: Push images
+      - name: Publish images
         env:
           PUBLISH_PRODUCTION: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_production }}
           IMAGE_NAME: ghcr.io/tadoku/tadoku/frontend-styleguide
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" |
             docker login ghcr.io -u tadoku --password-stdin
-          docker push "${IMAGE_NAME}:${GITHUB_SHA}"
-          docker tag "${IMAGE_NAME}:${GITHUB_SHA}" "${IMAGE_NAME}:latest"
-          docker push "${IMAGE_NAME}:latest"
-          if [ "$GITHUB_REF" = refs/heads/main ] && [ "$PUBLISH_PRODUCTION" = true ]; then
-            docker tag "${IMAGE_NAME}:${GITHUB_SHA}" "${IMAGE_NAME}:prod"
-            docker push "${IMAGE_NAME}:prod"
+          tags=(--tag "$GITHUB_SHA")
+          if [ "$GITHUB_REF" = refs/heads/main ]; then
+            tags+=(--tag latest)
           fi
+          if [ "$GITHUB_REF" = refs/heads/main ] && [ "$PUBLISH_PRODUCTION" = true ]; then
+            tags+=(--tag prod)
+          fi
+          ./scripts/publish-image.sh styleguide --repository "$IMAGE_NAME" "${tags[@]}"

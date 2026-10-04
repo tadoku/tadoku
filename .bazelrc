@@ -1,0 +1,2 @@
+build:release --platforms=@rules_go//go/toolchain:linux_amd64
+build:release --@rules_go//go/config:pure

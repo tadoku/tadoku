@@ -53,6 +53,7 @@ oci_image(
     base = "@distroless_base_linux_amd64",
     entrypoint = ["/tadoku-worker"],
     tars = [":binary_layer"],
+    visibility = ["//services/tadoku-api:__pkg__"],
 )
 
 oci_load(
@@ -85,5 +86,11 @@ oci_image(
 oci_push(
     name = "cli_push",
     image = ":cli_image",
+    visibility = ["//services/tadoku-api:__pkg__"],
+)
+
+oci_push(
+    name = "branch_push",
+    image = ":image",
     visibility = ["//services/tadoku-api:__pkg__"],
 )

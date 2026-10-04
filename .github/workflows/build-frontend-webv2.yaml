@@ -18,6 +18,8 @@ on:
       - ".github/workflows/build-frontend-webv2.yaml"
       - "frontend/pnpm-lock.yaml"
       - "frontend/Dockerfile"
+      - "frontend/scripts/publish-image.sh"
+      - "frontend/scripts/check-publish-image.py"
       - "frontend/.npmrc"
 jobs:
   build:
@@ -30,6 +32,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3
+
+      - name: Check committed-tree image publication
+        run: python3 scripts/check-publish-image.py
 
       - name: Install Node.js
         uses: actions/setup-node@3235b876344d2a9aa001b8d1453c930bba69e610 # v3
@@ -75,26 +80,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - name: Build image
-        run: |
-          docker build \
-            --build-arg PROJECT_NAME=webv2 \
-            -t "ghcr.io/tadoku/tadoku/frontend-webv2:${GITHUB_SHA}" \
-            .
-
-      - name: Push images
+      - name: Publish images
         env:
           PUBLISH_PRODUCTION: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_production }}
           IMAGE_NAME: ghcr.io/tadoku/tadoku/frontend-webv2
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" |
             docker login ghcr.io -u tadoku --password-stdin
-          docker push "${IMAGE_NAME}:${GITHUB_SHA}"
+          tags=(--tag "$GITHUB_SHA")
           if [ "$GITHUB_REF" = refs/heads/main ]; then
-            docker tag "${IMAGE_NAME}:${GITHUB_SHA}" "${IMAGE_NAME}:latest"
-            docker push "${IMAGE_NAME}:latest"
+            tags+=(--tag latest)
           fi
           if [ "$GITHUB_REF" = refs/heads/main ] && [ "$PUBLISH_PRODUCTION" = true ]; then
-            docker tag "${IMAGE_NAME}:${GITHUB_SHA}" "${IMAGE_NAME}:prod"
-            docker push "${IMAGE_NAME}:prod"
+            tags+=(--tag prod)
           fi
+          ./scripts/publish-image.sh webv2 --repository "$IMAGE_NAME" "${tags[@]}"

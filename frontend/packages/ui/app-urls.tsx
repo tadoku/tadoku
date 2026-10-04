@@ -22,9 +22,14 @@ export function resolveAppUrls(config: Record<string, unknown>, host?: string): 
   if (typeof config.apiEndpoint !== 'string') throw new Error('Missing apiEndpoint')
   const hostname = host?.toLowerCase().replace(/:\d+$/, '')
   const baseHosts = bases.map(key => urls[key].hostname)
+  const branchHosts = baseHosts.map(base =>
+    ['tadoku.app', 'account.tadoku.app', 'admin.tadoku.app'].includes(base)
+      ? base.replace('tadoku.app', 'preview.tadoku.app')
+      : base,
+  )
   let branch: string | undefined
   if (hostname && !baseHosts.includes(hostname)) {
-    for (const base of baseHosts) {
+    for (const base of branchHosts) {
       if (!hostname.endsWith(`.${base}`)) continue
       const label = hostname.slice(0, -(base.length + 1))
       if (labelPattern.test(label)) {
@@ -36,8 +41,9 @@ export function resolveAppUrls(config: Record<string, unknown>, host?: string): 
   const prefix = (value: string) => {
     if (!branch || value.startsWith('/')) return value
     const url = new URL(value)
-    if (!baseHosts.includes(url.hostname)) return value
-    url.hostname = `${branch}.${url.hostname}`
+    const index = baseHosts.indexOf(url.hostname)
+    if (index === -1) return value
+    url.hostname = `${branch}.${branchHosts[index]}`
     return url.toString().replace(/\/$/, value.endsWith('/') ? '/' : '')
   }
   return {

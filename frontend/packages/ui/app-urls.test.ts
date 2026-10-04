@@ -27,9 +27,24 @@ describe('branch URLs', () => {
       expect(resolveAppUrls({ ...config, apiEndpoint }, 'alice.tadoku.dev.lab').apiEndpoint).toBe(apiEndpoint)
     }
   })
-  it('recognizes production hosts', () => {
-    const prod = Object.fromEntries(Object.entries(config).map(([key, value]) => [key, value.replace('tadoku.dev.lab', 'tadoku.app')]))
-    expect(resolveAppUrls(prod, 'alice.account.tadoku.app').homeUrl).toBe('https://alice.tadoku.app')
+  const prod = Object.fromEntries(Object.entries(config).map(([key, value]) => [key, value.replace('tadoku.dev.lab', 'tadoku.app')]))
+  it.each(['alice.preview.tadoku.app', 'alice.account.preview.tadoku.app', 'ALICE.admin.preview.tadoku.app:443'])('uses the reserved production namespace for %s', host => {
+    expect(resolveAppUrls(prod, host)).toEqual({
+      branch: 'alice',
+      homeUrl: 'https://alice.preview.tadoku.app',
+      authUiUrl: 'https://alice.account.preview.tadoku.app',
+      adminUrl: 'https://alice.admin.preview.tadoku.app',
+      apiEndpoint: 'https://alice.preview.tadoku.app/api/internal',
+    })
+  })
+  it.each(['tadoku.app', 'account.tadoku.app', 'admin.tadoku.app', 'alice.tadoku.app', 'alice.account.tadoku.app', 'alice.admin.tadoku.app', 'alice.preview.tadoku.app.evil.example', 'alice.account.preview.tadoku.app.evil.example', 'a.b.preview.tadoku.app', '-alice.preview.tadoku.app', 'alice-.preview.tadoku.app'])('keeps production base URLs for %s', host => {
+    expect(resolveAppUrls(prod, host)).toEqual(prod)
+  })
+  it('preserves paths, ports and private API origins on previews', () => {
+    const configured = { ...prod, authUiUrl: 'https://account.tadoku.app:8443/login/', apiEndpoint: 'http://oathkeeper-proxy.tdk-prod-oathkeeper:4455/api/internal' }
+    const urls = resolveAppUrls(configured, 'alice.preview.tadoku.app')
+    expect(urls.authUiUrl).toBe('https://alice.account.preview.tadoku.app:8443/login/')
+    expect(urls.apiEndpoint).toBe(configured.apiEndpoint)
   })
   it('requires all sibling base hosts', () => {
     expect(() => resolveAppUrls({ ...config, adminUrl: undefined }, 'account.tadoku.dev.lab')).toThrow()

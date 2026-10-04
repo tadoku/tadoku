@@ -99,6 +99,13 @@ func TestRoleUpdateParametersValidation(t *testing.T) {
 		want   string
 	}{
 		{
+			name: "nil user id",
+			change: func(parameters *RoleUpdateParameters) {
+				parameters.UserID = uuid.Nil
+			},
+			want: "user id is required",
+		},
+		{
 			name: "unsupported role",
 			change: func(parameters *RoleUpdateParameters) {
 				parameters.Role = RoleAdmin

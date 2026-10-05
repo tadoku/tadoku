@@ -1,4 +1,6 @@
 load("@rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_push")
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
 
 go_library(
     name = "tadoku-tenant_lib",
@@ -32,4 +34,35 @@ go_test(
     name = "tadoku-tenant_test",
     srcs = ["main_test.go"],
     embed = [":tadoku-tenant_lib"],
+)
+
+pkg_tar(
+    name = "binary_layer",
+    srcs = [":tadoku-tenant"],
+)
+
+pkg_tar(
+    name = "flipt_layer",
+    srcs = ["//k8s/dev/base/flipt:features.yaml"],
+    mode = "0644",
+    package_dir = "/flipt",
+)
+
+# Branch provisioning outside development: the distroless base carries the CA
+# bundle verify-full PostgreSQL connections need, and /flipt/features.yaml
+# seeds the branch's Flipt namespace.
+oci_image(
+    name = "image",
+    base = "@distroless_base_linux_amd64",
+    entrypoint = ["/tadoku-tenant"],
+    tars = [
+        ":binary_layer",
+        ":flipt_layer",
+    ],
+)
+
+oci_push(
+    name = "branch_push",
+    image = ":image",
+    visibility = ["//visibility:public"],
 )

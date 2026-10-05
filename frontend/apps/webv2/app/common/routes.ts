@@ -39,8 +39,8 @@ export const routes = {
 
   userProfileStatistics: (id: string, year?: Page) =>
     `/profile/${id}/statistics/${year ?? DateTime.now().year}`,
-  userProfileUpdates: (id: string, page?: Page) =>
-    `/profile/${id}/updates/${page ?? '1'}`,
+  userProfileUpdates: (id: string, page?: Page, date?: string) =>
+    `/profile/${id}/updates/${page ?? '1'}${date ? `?date=${date}` : ''}`,
 
   // External
 

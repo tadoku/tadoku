@@ -43,6 +43,7 @@ func TestImmersionFetchLeaderboardForYear(t *testing.T) {
 		cache       string
 	}{
 		{description: []string{"zero", "score", "cache", "miss"}, want: http.StatusOK, cache: "miss"},
+		{description: []string{"zero", "score", "cache", "hit"}, want: http.StatusOK, cache: "miss_then_hit"},
 		{description: []string{"cache", "miss", "past", "end"}, want: http.StatusOK, cache: "miss"},
 		{description: []string{"cache", "hit"}, want: http.StatusOK, cache: "hit"},
 		{description: []string{"activity", "filtered"}, want: http.StatusOK, cache: "hit"},
@@ -105,8 +106,11 @@ func runLeaderboardCase(t *testing.T, name string, want int, cache, cacheKey str
 			seedLeaderboardCache(t, cacheKey, cache)
 		}
 		atFixtureInstant(func() { checkHTTPGolden(t, api.handler, dir, want, *updateGoldens) })
-		if cache == "miss" {
+		if cache == "miss" || cache == "miss_then_hit" {
 			verifyRebuiltLeaderboardCache(t, cacheKey)
+		}
+		if cache == "miss_then_hit" {
+			atFixtureInstant(func() { checkHTTPGolden(t, api.handler, dir, want, *updateGoldens) })
 		}
 	})
 }

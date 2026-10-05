@@ -86,7 +86,7 @@ with leaderboard as (
     and (logs.log_activity_id = sqlc.narg('activity_id')::integer or sqlc.narg('activity_id') is null)
   group by logs.user_id
 ), ranked_leaderboard as (
-  select user_id, score, rank() over(order by score desc) as "rank" from leaderboard
+  select user_id, score, rank() over(order by score desc) as "rank" from leaderboard where score > 0
 ), enriched_leaderboard as (
   select
     rank() over(order by coalesce(ranked_leaderboard.score, 0) desc) as "rank",

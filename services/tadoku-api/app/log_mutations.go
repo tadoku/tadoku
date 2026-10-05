@@ -121,7 +121,7 @@ func (a *Application) UpdateLog(ctx context.Context, p LogUpdateParameters) (*Lo
 		if err != nil {
 			return err
 		}
-		pending, err := a.logs.Update(ctx, p.ID, existing.UserID, now, p.Description, scored)
+		pending, err := a.logs.Update(ctx, p.ID, now, p.Description, scored)
 		if err != nil {
 			return err
 		}

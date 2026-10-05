@@ -378,14 +378,13 @@ func (s *Service) create(ctx context.Context, mutation logMutation) ([]jobs.Job,
 	return followUp, nil
 }
 
-func (s *Service) Update(ctx context.Context, id, userID uuid.UUID, now time.Time, description *string, scored logscore.Result) ([]jobs.Job, error) {
+func (s *Service) Update(ctx context.Context, id uuid.UUID, now time.Time, description *string, scored logscore.Result) ([]jobs.Job, error) {
 	if err := validateDescription(description); err != nil {
 		return nil, err
 	}
 
 	mutation := logMutation{
 		ID:               id,
-		UserID:           userID,
 		Description:      description,
 		Tags:             scored.Tags,
 		Tracking:         scored.Tracking,

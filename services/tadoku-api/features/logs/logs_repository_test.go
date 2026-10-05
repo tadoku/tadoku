@@ -290,7 +290,7 @@ func TestLogsRepositoryListUserLogsPaging(t *testing.T) {
 				IncludeDeleted: tt.includeDeleted,
 				PageSize:       2,
 				Page:           tt.page,
-			})
+			}, nil)
 			if err != nil {
 				t.Fatal(err)
 			}

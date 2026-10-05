@@ -794,6 +794,7 @@ with eligible_logs as (
   where
     ($1::boolean or logs.deleted_at is null)
     and logs.user_id = $2
+    and ($3::date is null or logs.created_at::date = $3::date)
 ), page as (
   select
     eligible_logs.id,
@@ -819,8 +820,8 @@ with eligible_logs as (
     eligible_logs.tags
   from eligible_logs
   order by eligible_logs.created_at desc
-  limit $4
-  offset $3
+  limit $5
+  offset $4
 ), total as (
   select count(*) as total_size
   from eligible_logs
@@ -856,6 +857,7 @@ order by page.created_at desc
 type ListLogsForUserParams struct {
 	IncludeDeleted bool
 	UserID         pgtype.UUID
+	CreatedOn      pgtype.Date
 	StartFrom      int32
 	PageSize       int32
 }
@@ -889,6 +891,7 @@ func (q *Queries) ListLogsForUser(ctx context.Context, arg ListLogsForUserParams
 	rows, err := q.db.Query(ctx, listLogsForUser,
 		arg.IncludeDeleted,
 		arg.UserID,
+		arg.CreatedOn,
 		arg.StartFrom,
 		arg.PageSize,
 	)

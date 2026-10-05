@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/logs"
@@ -30,11 +31,15 @@ func (a *Application) FindLog(ctx context.Context, id uuid.UUID) (*Log, error) {
 	})
 }
 
-func (a *Application) ListUserLogs(ctx context.Context, parameters LogListParameters) (*LogList, error) {
+func (a *Application) ListUserLogs(
+	ctx context.Context,
+	parameters LogListParameters,
+	createdOn *time.Time,
+) (*LogList, error) {
 	if parameters.IncludeDeleted && !a.permissions.IsAdminOrFalse(ctx) {
 		return nil, errx.NewForbiddenError("include_deleted requires administrator access")
 	}
-	return a.logs.ListUserLogs(ctx, parameters)
+	return a.logs.ListUserLogs(ctx, parameters, createdOn)
 }
 
 func (a *Application) ListContestLogs(ctx context.Context, parameters LogListParameters) (*LogList, error) {

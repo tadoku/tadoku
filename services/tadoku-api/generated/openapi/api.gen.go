@@ -1122,6 +1122,9 @@ type ImmersionProfileListLogsParams struct {
 	IncludeDeleted *bool `form:"include_deleted,omitempty" json:"include_deleted,omitempty"`
 	PageSize       *int  `form:"page_size,omitempty" json:"page_size,omitempty"`
 	Page           *int  `form:"page,omitempty" json:"page,omitempty"`
+
+	// Date Only logs created on this UTC calendar day, the day buckets of the yearly activity heatmap.
+	Date *openapi_types.Date `form:"date,omitempty" json:"date,omitempty"`
 }
 
 // ProfileUsersListParams defines parameters for ProfileUsersList.
@@ -3611,6 +3614,19 @@ func (siw *ServerInterfaceWrapper) ImmersionProfileListLogs(w http.ResponseWrite
 			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
 		} else {
 			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "date" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "date", r.URL.Query(), &params.Date, runtime.BindQueryParameterOptions{Type: "string", Format: "date"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "date"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "date", Err: err})
 		}
 		return
 	}

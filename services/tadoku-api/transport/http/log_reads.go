@@ -2,6 +2,7 @@ package http
 
 import (
 	"context"
+	"time"
 
 	openapiTypes "github.com/oapi-codegen/runtime/types"
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
@@ -53,8 +54,12 @@ func (s *server) ImmersionProfileListLogs(ctx context.Context, request openapi.I
 	if request.Params.IncludeDeleted != nil {
 		parameters.IncludeDeleted = *request.Params.IncludeDeleted
 	}
+	var createdOn *time.Time
+	if request.Params.Date != nil {
+		createdOn = &request.Params.Date.Time
+	}
 
-	result, err := s.application.ListUserLogs(ctx, parameters)
+	result, err := s.application.ListUserLogs(ctx, parameters, createdOn)
 	if err != nil {
 		s.logOperationError(ctx, "list user logs", err)
 		return nil, err

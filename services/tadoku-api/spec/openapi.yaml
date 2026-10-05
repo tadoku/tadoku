@@ -1890,6 +1890,13 @@ paths:
           required: false
           schema:
             type: integer
+        - name: date
+          in: query
+          description: Only logs created on this UTC calendar day, the day buckets of the yearly activity heatmap.
+          required: false
+          schema:
+            type: string
+            format: date
       responses:
         "200":
           description: successful operation

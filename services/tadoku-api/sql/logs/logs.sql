@@ -228,6 +228,7 @@ with eligible_logs as (
   where
     (sqlc.arg('include_deleted')::boolean or logs.deleted_at is null)
     and logs.user_id = sqlc.arg('user_id')
+    and (sqlc.narg('created_on')::date is null or logs.created_at::date = sqlc.narg('created_on')::date)
 ), page as (
   select
     eligible_logs.id,

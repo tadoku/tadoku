@@ -460,12 +460,12 @@ func (s *Service) RegistrationsForRescoring(log *Log, now time.Time) []logscore.
 	return selected
 }
 
-func (s *Service) ListUserLogs(ctx context.Context, parameters ListParameters) (*LogList, error) {
+func (s *Service) ListUserLogs(ctx context.Context, parameters ListParameters, createdOn *time.Time) (*LogList, error) {
 	if err := parameters.Validate(); err != nil {
 		return nil, err
 	}
 
-	result, err := s.logs.ListUserLogs(ctx, parameters.normalized())
+	result, err := s.logs.ListUserLogs(ctx, parameters.normalized(), createdOn)
 	if err != nil {
 		return nil, err
 	}

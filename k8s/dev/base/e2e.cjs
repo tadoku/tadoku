@@ -267,8 +267,9 @@ try {
   report.ownerSplit = { fresh: 'passed', existing: 'passed', repeated: 'passed', branch: 'passed', invalidNames: 'refused', unmarkedDatabase: 'refused unchanged', legacyOwner: 'refused unchanged', invalidMigrationGrants: 'refused', runtime: 'tadoku', owner: 'tadoku_owner' }
 
   run('bazel', ['build', '//services/tadoku-api:dev', '//services/tadoku-api:worker_dev'])
-  const apiMetadata = JSON.parse(fs.readFileSync(path.join(root, 'bazel-bin/services/tadoku-api/dev.dev.json')))
-  const workerMetadata = JSON.parse(fs.readFileSync(path.join(root, 'bazel-bin/services/tadoku-api/worker_dev.dev.json')))
+  const bazelBin = run('bazel', ['info', 'bazel-bin'])
+  const apiMetadata = JSON.parse(fs.readFileSync(path.join(bazelBin, 'services/tadoku-api/dev.dev.json')))
+  const workerMetadata = JSON.parse(fs.readFileSync(path.join(bazelBin, 'services/tadoku-api/worker_dev.dev.json')))
   if (apiMetadata.selectionGroup !== 'tadoku-api' || workerMetadata.selectionGroup !== 'tadoku-api' || workerMetadata.kind !== 'worker') throw new Error('Branch API and worker are not selected as one group')
   if (workerMetadata.imageTarget !== '//services/tadoku-api/cmd/tadoku-worker:cli_image' || workerMetadata.pushTarget !== '//services/tadoku-api/cmd/tadoku-worker:cli_push' || workerMetadata.workloadTemplate !== '.dev/tadoku-worker.yaml') throw new Error('Worker is not an independent DevCLI image/deployable')
   if (['publicPath', 'internalHost', 'publicProxy', 'baseService', 'servicePort'].some(key => key in workerMetadata)) throw new Error('Worker metadata must not request a route or Service')

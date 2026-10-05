@@ -135,14 +135,65 @@ with eligible_logs as (
     (sqlc.arg('include_deleted')::boolean or logs.deleted_at is null)
     and (logs.user_id = sqlc.narg('user_id') or sqlc.narg('user_id') is null)
     and contest_logs.contest_id = sqlc.arg('contest_id')
+), page as (
+  select
+    eligible_logs.id,
+    eligible_logs.user_id,
+    eligible_logs.language_code,
+    eligible_logs.language_name,
+    eligible_logs.activity_id,
+    eligible_logs.unit_id,
+    eligible_logs.unit_key,
+    eligible_logs.unit_name,
+    eligible_logs.description,
+    eligible_logs.amount,
+    eligible_logs.modifier,
+    eligible_logs.duration_seconds,
+    eligible_logs.score,
+    eligible_logs.score_rule_set_id,
+    eligible_logs.score_rule_ids,
+    eligible_logs.score_rates,
+    eligible_logs.score_source,
+    eligible_logs.created_at,
+    eligible_logs.updated_at,
+    eligible_logs.deleted_at,
+    eligible_logs.user_display_name,
+    eligible_logs.tags
+  from eligible_logs
+  order by eligible_logs.created_at desc
+  limit sqlc.arg('page_size')
+  offset sqlc.arg('start_from')
+), total as (
+  select count(*) as total_size
+  from eligible_logs
 )
 select
-  *,
-  (select count(eligible_logs.id) from eligible_logs) as total_size
-from eligible_logs
-order by created_at desc
-limit sqlc.arg('page_size')
-offset sqlc.arg('start_from');
+  page.id,
+  page.user_id,
+  page.language_code,
+  page.language_name,
+  page.activity_id,
+  page.unit_id,
+  page.unit_key,
+  page.unit_name,
+  page.description,
+  page.amount,
+  page.modifier,
+  page.duration_seconds,
+  page.score,
+  page.score_rule_set_id,
+  page.score_rule_ids,
+  page.score_rates,
+  page.score_source,
+  page.created_at,
+  page.updated_at,
+  page.deleted_at,
+  page.user_display_name,
+  page.tags,
+  total.total_size
+from total
+left join page on true
+order by page.created_at desc;
 
 -- name: ListLogsForUser :many
 with eligible_logs as (
@@ -177,14 +228,63 @@ with eligible_logs as (
   where
     (sqlc.arg('include_deleted')::boolean or logs.deleted_at is null)
     and logs.user_id = sqlc.arg('user_id')
+), page as (
+  select
+    eligible_logs.id,
+    eligible_logs.user_id,
+    eligible_logs.language_code,
+    eligible_logs.language_name,
+    eligible_logs.activity_id,
+    eligible_logs.unit_id,
+    eligible_logs.unit_key,
+    eligible_logs.unit_name,
+    eligible_logs.description,
+    eligible_logs.amount,
+    eligible_logs.modifier,
+    eligible_logs.duration_seconds,
+    eligible_logs.score,
+    eligible_logs.score_rule_set_id,
+    eligible_logs.score_rule_ids,
+    eligible_logs.score_rates,
+    eligible_logs.score_source,
+    eligible_logs.created_at,
+    eligible_logs.updated_at,
+    eligible_logs.deleted_at,
+    eligible_logs.tags
+  from eligible_logs
+  order by eligible_logs.created_at desc
+  limit sqlc.arg('page_size')
+  offset sqlc.arg('start_from')
+), total as (
+  select count(*) as total_size
+  from eligible_logs
 )
 select
-  *,
-  (select count(eligible_logs.id) from eligible_logs) as total_size
-from eligible_logs
-order by created_at desc
-limit sqlc.arg('page_size')
-offset sqlc.arg('start_from');
+  page.id,
+  page.user_id,
+  page.language_code,
+  page.language_name,
+  page.activity_id,
+  page.unit_id,
+  page.unit_key,
+  page.unit_name,
+  page.description,
+  page.amount,
+  page.modifier,
+  page.duration_seconds,
+  page.score,
+  page.score_rule_set_id,
+  page.score_rule_ids,
+  page.score_rates,
+  page.score_source,
+  page.created_at,
+  page.updated_at,
+  page.deleted_at,
+  page.tags,
+  total.total_size
+from total
+left join page on true
+order by page.created_at desc;
 
 -- name: FindLogByID :one
 select

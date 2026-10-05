@@ -613,36 +613,87 @@ with eligible_logs as (
   left join log_units on (log_units.id = logs.unit_id)
   inner join users on (users.id = logs.user_id)
   where
-    ($3::boolean or logs.deleted_at is null)
-    and (logs.user_id = $4 or $4 is null)
-    and contest_logs.contest_id = $5
+    ($1::boolean or logs.deleted_at is null)
+    and (logs.user_id = $2 or $2 is null)
+    and contest_logs.contest_id = $3
+), page as (
+  select
+    eligible_logs.id,
+    eligible_logs.user_id,
+    eligible_logs.language_code,
+    eligible_logs.language_name,
+    eligible_logs.activity_id,
+    eligible_logs.unit_id,
+    eligible_logs.unit_key,
+    eligible_logs.unit_name,
+    eligible_logs.description,
+    eligible_logs.amount,
+    eligible_logs.modifier,
+    eligible_logs.duration_seconds,
+    eligible_logs.score,
+    eligible_logs.score_rule_set_id,
+    eligible_logs.score_rule_ids,
+    eligible_logs.score_rates,
+    eligible_logs.score_source,
+    eligible_logs.created_at,
+    eligible_logs.updated_at,
+    eligible_logs.deleted_at,
+    eligible_logs.user_display_name,
+    eligible_logs.tags
+  from eligible_logs
+  order by eligible_logs.created_at desc
+  limit $5
+  offset $4
+), total as (
+  select count(*) as total_size
+  from eligible_logs
 )
 select
-  id, user_id, language_code, language_name, activity_id, unit_id, unit_key, unit_name, description, amount, modifier, duration_seconds, score, score_rule_set_id, score_rule_ids, score_rates, score_source, created_at, updated_at, deleted_at, user_display_name, tags,
-  (select count(eligible_logs.id) from eligible_logs) as total_size
-from eligible_logs
-order by created_at desc
-limit $2
-offset $1
+  page.id,
+  page.user_id,
+  page.language_code,
+  page.language_name,
+  page.activity_id,
+  page.unit_id,
+  page.unit_key,
+  page.unit_name,
+  page.description,
+  page.amount,
+  page.modifier,
+  page.duration_seconds,
+  page.score,
+  page.score_rule_set_id,
+  page.score_rule_ids,
+  page.score_rates,
+  page.score_source,
+  page.created_at,
+  page.updated_at,
+  page.deleted_at,
+  page.user_display_name,
+  page.tags,
+  total.total_size
+from total
+left join page on true
+order by page.created_at desc
 `
 
 type ListLogsForContestParams struct {
-	StartFrom      int32
-	PageSize       int32
 	IncludeDeleted bool
 	UserID         pgtype.UUID
 	ContestID      pgtype.UUID
+	StartFrom      int32
+	PageSize       int32
 }
 
 type ListLogsForContestRow struct {
 	ID              pgtype.UUID
 	UserID          pgtype.UUID
-	LanguageCode    string
-	LanguageName    string
-	ActivityID      int16
+	LanguageCode    pgtype.Text
+	LanguageName    pgtype.Text
+	ActivityID      pgtype.Int2
 	UnitID          pgtype.UUID
-	UnitKey         string
-	UnitName        string
+	UnitKey         pgtype.Text
+	UnitName        pgtype.Text
 	Description     pgtype.Text
 	Amount          pgtype.Float4
 	Modifier        pgtype.Float4
@@ -655,18 +706,18 @@ type ListLogsForContestRow struct {
 	CreatedAt       pgtype.Timestamp
 	UpdatedAt       pgtype.Timestamp
 	DeletedAt       pgtype.Timestamp
-	UserDisplayName string
+	UserDisplayName pgtype.Text
 	Tags            []string
 	TotalSize       int64
 }
 
 func (q *Queries) ListLogsForContest(ctx context.Context, arg ListLogsForContestParams) ([]ListLogsForContestRow, error) {
 	rows, err := q.db.Query(ctx, listLogsForContest,
-		arg.StartFrom,
-		arg.PageSize,
 		arg.IncludeDeleted,
 		arg.UserID,
 		arg.ContestID,
+		arg.StartFrom,
+		arg.PageSize,
 	)
 	if err != nil {
 		return nil, err
@@ -741,34 +792,83 @@ with eligible_logs as (
   inner join languages on (languages.code = logs.language_code)
   left join log_units on (log_units.id = logs.unit_id)
   where
-    ($3::boolean or logs.deleted_at is null)
-    and logs.user_id = $4
+    ($1::boolean or logs.deleted_at is null)
+    and logs.user_id = $2
+), page as (
+  select
+    eligible_logs.id,
+    eligible_logs.user_id,
+    eligible_logs.language_code,
+    eligible_logs.language_name,
+    eligible_logs.activity_id,
+    eligible_logs.unit_id,
+    eligible_logs.unit_key,
+    eligible_logs.unit_name,
+    eligible_logs.description,
+    eligible_logs.amount,
+    eligible_logs.modifier,
+    eligible_logs.duration_seconds,
+    eligible_logs.score,
+    eligible_logs.score_rule_set_id,
+    eligible_logs.score_rule_ids,
+    eligible_logs.score_rates,
+    eligible_logs.score_source,
+    eligible_logs.created_at,
+    eligible_logs.updated_at,
+    eligible_logs.deleted_at,
+    eligible_logs.tags
+  from eligible_logs
+  order by eligible_logs.created_at desc
+  limit $4
+  offset $3
+), total as (
+  select count(*) as total_size
+  from eligible_logs
 )
 select
-  id, user_id, language_code, language_name, activity_id, unit_id, unit_key, unit_name, description, amount, modifier, duration_seconds, score, score_rule_set_id, score_rule_ids, score_rates, score_source, created_at, updated_at, deleted_at, tags,
-  (select count(eligible_logs.id) from eligible_logs) as total_size
-from eligible_logs
-order by created_at desc
-limit $2
-offset $1
+  page.id,
+  page.user_id,
+  page.language_code,
+  page.language_name,
+  page.activity_id,
+  page.unit_id,
+  page.unit_key,
+  page.unit_name,
+  page.description,
+  page.amount,
+  page.modifier,
+  page.duration_seconds,
+  page.score,
+  page.score_rule_set_id,
+  page.score_rule_ids,
+  page.score_rates,
+  page.score_source,
+  page.created_at,
+  page.updated_at,
+  page.deleted_at,
+  page.tags,
+  total.total_size
+from total
+left join page on true
+order by page.created_at desc
 `
 
 type ListLogsForUserParams struct {
-	StartFrom      int32
-	PageSize       int32
 	IncludeDeleted bool
 	UserID         pgtype.UUID
+	StartFrom      int32
+	PageSize       int32
 }
 
 type ListLogsForUserRow struct {
 	ID              pgtype.UUID
 	UserID          pgtype.UUID
-	LanguageCode    string
-	LanguageName    string
-	ActivityID      int16
+	LanguageCode    pgtype.Text
+	LanguageName    pgtype.Text
+	ActivityID      pgtype.Int2
 	UnitID          pgtype.UUID
-	UnitKey         string
-	UnitName        string
+	UnitKey         pgtype.Text
+	UnitName        pgtype.Text
 	Description     pgtype.Text
 	Amount          pgtype.Float4
 	Modifier        pgtype.Float4
@@ -787,10 +887,10 @@ type ListLogsForUserRow struct {
 
 func (q *Queries) ListLogsForUser(ctx context.Context, arg ListLogsForUserParams) ([]ListLogsForUserRow, error) {
 	rows, err := q.db.Query(ctx, listLogsForUser,
-		arg.StartFrom,
-		arg.PageSize,
 		arg.IncludeDeleted,
 		arg.UserID,
+		arg.StartFrom,
+		arg.PageSize,
 	)
 	if err != nil {
 		return nil, err

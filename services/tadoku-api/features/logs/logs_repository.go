@@ -569,16 +569,20 @@ func (r *LogsRepository) ListUserLogs(ctx context.Context, parameters ListParame
 
 	result := &LogList{Logs: make([]Log, 0, len(rows))}
 	for _, row := range rows {
+		result.TotalSize = int(row.TotalSize)
+		if !row.ID.Valid {
+			continue
+		}
 		result.Logs = append(result.Logs, Log{
 			ID:              uuid.UUID(row.ID.Bytes),
 			UserID:          uuid.UUID(row.UserID.Bytes),
 			Description:     postgres.TextPointer(row.Description),
-			LanguageCode:    row.LanguageCode,
-			LanguageName:    row.LanguageName,
-			Activity:        activities.Activity{ID: int32(row.ActivityID)},
+			LanguageCode:    row.LanguageCode.String,
+			LanguageName:    row.LanguageName.String,
+			Activity:        activities.Activity{ID: int32(row.ActivityID.Int16)},
 			UnitID:          uuid.UUID(row.UnitID.Bytes),
-			UnitKey:         row.UnitKey,
-			UnitName:        row.UnitName,
+			UnitKey:         row.UnitKey.String,
+			UnitName:        row.UnitName.String,
 			Tags:            row.Tags,
 			Amount:          row.Amount.Float32,
 			Modifier:        row.Modifier.Float32,
@@ -587,7 +591,6 @@ func (r *LogsRepository) ListUserLogs(ctx context.Context, parameters ListParame
 			CreatedAt:       row.CreatedAt.Time,
 			Deleted:         row.DeletedAt.Valid,
 		})
-		result.TotalSize = int(row.TotalSize)
 	}
 	if int64(parameters.offset())+int64(parameters.PageSize) < int64(result.TotalSize) {
 		result.NextPageToken = fmt.Sprint(parameters.Page + 1)
@@ -614,16 +617,20 @@ func (r *LogsRepository) ListContestLogs(ctx context.Context, parameters ListPar
 
 	result := &LogList{Logs: make([]Log, 0, len(rows))}
 	for _, row := range rows {
+		result.TotalSize = int(row.TotalSize)
+		if !row.ID.Valid {
+			continue
+		}
 		result.Logs = append(result.Logs, Log{
 			ID:              uuid.UUID(row.ID.Bytes),
 			UserID:          uuid.UUID(row.UserID.Bytes),
 			Description:     postgres.TextPointer(row.Description),
-			LanguageCode:    row.LanguageCode,
-			LanguageName:    row.LanguageName,
-			Activity:        activities.Activity{ID: int32(row.ActivityID)},
+			LanguageCode:    row.LanguageCode.String,
+			LanguageName:    row.LanguageName.String,
+			Activity:        activities.Activity{ID: int32(row.ActivityID.Int16)},
 			UnitID:          uuid.UUID(row.UnitID.Bytes),
-			UnitKey:         row.UnitKey,
-			UnitName:        row.UnitName,
+			UnitKey:         row.UnitKey.String,
+			UnitName:        row.UnitName.String,
 			Tags:            row.Tags,
 			Amount:          row.Amount.Float32,
 			Modifier:        row.Modifier.Float32,
@@ -631,9 +638,8 @@ func (r *LogsRepository) ListContestLogs(ctx context.Context, parameters ListPar
 			DurationSeconds: postgres.Int4Pointer(row.DurationSeconds),
 			CreatedAt:       row.CreatedAt.Time,
 			Deleted:         row.DeletedAt.Valid,
-			UserDisplayName: &row.UserDisplayName,
+			UserDisplayName: &row.UserDisplayName.String,
 		})
-		result.TotalSize = int(row.TotalSize)
 	}
 	if int64(parameters.offset())+int64(parameters.PageSize) < int64(result.TotalSize) {
 		result.NextPageToken = fmt.Sprint(parameters.Page + 1)

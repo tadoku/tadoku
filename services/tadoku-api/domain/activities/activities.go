@@ -1,25 +1,25 @@
 package activities
 
-type ActivityInputType string
+type activityInputType string
 
 const (
-	ActivityInputTypeAmountPrimary ActivityInputType = "amount_primary"
-	ActivityInputTypeTimePrimary   ActivityInputType = "time_primary"
+	activityInputTypeAmountPrimary activityInputType = "amount_primary"
+	activityInputTypeTimePrimary   activityInputType = "time_primary"
 )
 
 var catalog = []Activity{
-	{ID: 1, Name: "Reading", Default: true, InputType: ActivityInputTypeAmountPrimary, legacyDurationRate: .2},
-	{ID: 2, Name: "Listening", Default: true, InputType: ActivityInputTypeTimePrimary, legacyDurationRate: .4},
-	{ID: 3, Name: "Writing", Default: false, InputType: ActivityInputTypeAmountPrimary, legacyDurationRate: .2},
-	{ID: 4, Name: "Speaking", Default: false, InputType: ActivityInputTypeTimePrimary, legacyDurationRate: .5},
-	{ID: 5, Name: "Study", Default: false, InputType: ActivityInputTypeTimePrimary, legacyDurationRate: .5},
+	{ID: 1, Name: "Reading", Default: true, InputType: activityInputTypeAmountPrimary, legacyDurationRate: .2},
+	{ID: 2, Name: "Listening", Default: true, InputType: activityInputTypeTimePrimary, legacyDurationRate: .4},
+	{ID: 3, Name: "Writing", Default: false, InputType: activityInputTypeAmountPrimary, legacyDurationRate: .2},
+	{ID: 4, Name: "Speaking", Default: false, InputType: activityInputTypeTimePrimary, legacyDurationRate: .5},
+	{ID: 5, Name: "Study", Default: false, InputType: activityInputTypeTimePrimary, legacyDurationRate: .5},
 }
 
 type Activity struct {
 	ID                 int32
 	Name               string
 	Default            bool
-	InputType          ActivityInputType
+	InputType          activityInputType
 	legacyDurationRate float32
 }
 

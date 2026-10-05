@@ -26,6 +26,8 @@ func TestImmersionFetchLeaderboardGlobal(t *testing.T) {
 		{description: []string{"cache", "hit", "negative", "page"}, want: http.StatusBadRequest, cache: "hit"},
 		{description: []string{"cache", "hit", "offset", "overflow"}, want: http.StatusOK, cache: "hit"},
 		{description: []string{"cache", "hit", "maximum", "page"}, want: http.StatusOK, cache: "hit"},
+		{description: []string{"overflowing", "activity"}, want: http.StatusBadRequest},
+		{description: []string{"negative", "overflowing", "activity"}, want: http.StatusBadRequest},
 	}
 	for _, test := range tests {
 		name := APITestName("ImmersionFetchLeaderboardGlobal", test.want, test.description...)
@@ -48,6 +50,8 @@ func TestImmersionFetchLeaderboardForYear(t *testing.T) {
 		{description: []string{"negative", "page"}, want: http.StatusBadRequest},
 		{description: []string{"offset", "overflow"}, want: http.StatusOK},
 		{description: []string{"cache", "hit", "offset", "overflow"}, want: http.StatusOK, cache: "hit"},
+		{description: []string{"overflowing", "activity"}, want: http.StatusBadRequest},
+		{description: []string{"negative", "overflowing", "activity"}, want: http.StatusBadRequest},
 	}
 	for _, test := range tests {
 		name := APITestName("ImmersionFetchLeaderboardForYear", test.want, test.description...)
@@ -76,6 +80,8 @@ func TestImmersionContestFetchLeaderboard(t *testing.T) {
 		{description: []string{"negative", "page"}, want: http.StatusBadRequest},
 		{description: []string{"offset", "overflow"}, want: http.StatusOK},
 		{description: []string{"cache", "hit", "offset", "overflow"}, want: http.StatusOK, cache: "hit"},
+		{description: []string{"overflowing", "activity"}, want: http.StatusBadRequest},
+		{description: []string{"negative", "overflowing", "activity"}, want: http.StatusBadRequest},
 	}
 	for _, test := range tests {
 		name := APITestName("ImmersionContestFetchLeaderboard", test.want, test.description...)

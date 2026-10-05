@@ -1022,7 +1022,7 @@ type ImmersionContestFetchLeaderboardParams struct {
 	PageSize     *int    `form:"page_size,omitempty" json:"page_size,omitempty"`
 	Page         *int    `form:"page,omitempty" json:"page,omitempty"`
 	LanguageCode *string `form:"language_code,omitempty" json:"language_code,omitempty"`
-	ActivityId   *int    `form:"activity_id,omitempty" json:"activity_id,omitempty"`
+	ActivityId   *int32  `form:"activity_id,omitempty" json:"activity_id,omitempty"`
 }
 
 // ImmersionContestListLogsParams defines parameters for ImmersionContestListLogs.
@@ -1053,7 +1053,7 @@ type ImmersionFetchLeaderboardGlobalParams struct {
 	PageSize     *int    `form:"page_size,omitempty" json:"page_size,omitempty"`
 	Page         *int    `form:"page,omitempty" json:"page,omitempty"`
 	LanguageCode *string `form:"language_code,omitempty" json:"language_code,omitempty"`
-	ActivityId   *int    `form:"activity_id,omitempty" json:"activity_id,omitempty"`
+	ActivityId   *int32  `form:"activity_id,omitempty" json:"activity_id,omitempty"`
 }
 
 // ImmersionFetchLeaderboardForYearParams defines parameters for ImmersionFetchLeaderboardForYear.
@@ -1061,7 +1061,7 @@ type ImmersionFetchLeaderboardForYearParams struct {
 	PageSize     *int    `form:"page_size,omitempty" json:"page_size,omitempty"`
 	Page         *int    `form:"page,omitempty" json:"page,omitempty"`
 	LanguageCode *string `form:"language_code,omitempty" json:"language_code,omitempty"`
-	ActivityId   *int    `form:"activity_id,omitempty" json:"activity_id,omitempty"`
+	ActivityId   *int32  `form:"activity_id,omitempty" json:"activity_id,omitempty"`
 }
 
 // ImmersionLogCreateJSONBody defines parameters for ImmersionLogCreate.
@@ -2574,7 +2574,7 @@ func (siw *ServerInterfaceWrapper) ImmersionContestFetchLeaderboard(w http.Respo
 
 	// ------------- Optional query parameter "activity_id" -------------
 
-	err = runtime.BindQueryParameterWithOptions("form", true, false, "activity_id", r.URL.Query(), &params.ActivityId, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "activity_id", r.URL.Query(), &params.ActivityId, runtime.BindQueryParameterOptions{Type: "integer", Format: "int32"})
 	if err != nil {
 		var requiredError *runtime.RequiredParameterError
 		if errors.As(err, &requiredError) {
@@ -3030,7 +3030,7 @@ func (siw *ServerInterfaceWrapper) ImmersionFetchLeaderboardGlobal(w http.Respon
 
 	// ------------- Optional query parameter "activity_id" -------------
 
-	err = runtime.BindQueryParameterWithOptions("form", true, false, "activity_id", r.URL.Query(), &params.ActivityId, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "activity_id", r.URL.Query(), &params.ActivityId, runtime.BindQueryParameterOptions{Type: "integer", Format: "int32"})
 	if err != nil {
 		var requiredError *runtime.RequiredParameterError
 		if errors.As(err, &requiredError) {
@@ -3111,7 +3111,7 @@ func (siw *ServerInterfaceWrapper) ImmersionFetchLeaderboardForYear(w http.Respo
 
 	// ------------- Optional query parameter "activity_id" -------------
 
-	err = runtime.BindQueryParameterWithOptions("form", true, false, "activity_id", r.URL.Query(), &params.ActivityId, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "activity_id", r.URL.Query(), &params.ActivityId, runtime.BindQueryParameterOptions{Type: "integer", Format: "int32"})
 	if err != nil {
 		var requiredError *runtime.RequiredParameterError
 		if errors.As(err, &requiredError) {

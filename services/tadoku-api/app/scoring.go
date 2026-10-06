@@ -161,9 +161,6 @@ func (a *Application) CreateContestScoringRuleSetDraft(ctx context.Context, cont
 			Rules: parameters.Rules,
 		},
 	}
-	if err := a.scoring.ValidateContestDraftConfiguration(ctx, &draft); err != nil {
-		return nil, err
-	}
 	if err := a.normalizeScoringDraftRules(ctx, &draft.DraftRules); err != nil {
 		return nil, err
 	}

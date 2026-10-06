@@ -543,7 +543,7 @@ func (s *Service) findContestRuleSets(ctx context.Context, contestID uuid.UUID) 
 	return set, fallback, err
 }
 
-func (s *Service) ValidateContestDraftConfiguration(ctx context.Context, parameters *ContestDraftParameters) error {
+func (s *Service) validateContestDraftConfiguration(ctx context.Context, parameters *ContestDraftParameters) error {
 	var fallbackID uuid.UUID
 	switch configuration := parameters.Configuration.(type) {
 	case Replace:
@@ -578,6 +578,10 @@ func (s *Service) CreatePlatformDraft(ctx context.Context, parameters PlatformDr
 }
 
 func (s *Service) CreateContestDraft(ctx context.Context, parameters ContestDraftParameters) (*RuleSet, error) {
+	if err := s.validateContestDraftConfiguration(ctx, &parameters); err != nil {
+		return nil, err
+	}
+
 	draft := RuleSet{
 		Scope:     "contest",
 		ContestID: &parameters.ContestID,

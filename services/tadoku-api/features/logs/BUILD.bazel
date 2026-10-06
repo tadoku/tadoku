@@ -36,6 +36,7 @@ go_test(
     ],
     deps = [
         "//services/tadoku-api/domain/activities",
+        "//services/tadoku-api/domain/logscore",
         "//services/tadoku-api/internal/tenant",
         "//services/tadoku-api/internal/testpostgres",
         "@com_github_google_uuid//:uuid",

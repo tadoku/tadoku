@@ -51,7 +51,7 @@ func (s *Service) PlanContestRegistrationUpdate(log *Log, targets []logscore.Tar
 	return toAttach, toDetach, nil
 }
 
-func (s *Service) UpdateContestRegistrations(ctx context.Context, logID uuid.UUID, now time.Time, attachments []ContestTracking, detachments []uuid.UUID) ([]jobs.Job, error) {
+func (s *Service) UpdateContestRegistrations(ctx context.Context, logID uuid.UUID, now time.Time, attachments []logscore.ContestTracking, detachments []uuid.UUID) ([]jobs.Job, error) {
 	var followUp []jobs.Job
 	if err := s.logs.LockLog(ctx, logID); err != nil {
 		return nil, err

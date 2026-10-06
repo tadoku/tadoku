@@ -81,9 +81,6 @@ func validateDescription(description *string) error {
 	return nil
 }
 
-type Tracking = logscore.Tracking
-type ContestTracking = logscore.ContestTracking
-
 type logMutation struct {
 	ID                          uuid.UUID
 	UserID                      uuid.UUID
@@ -91,8 +88,8 @@ type logMutation struct {
 	ActivityID                  int32
 	Description                 *string
 	Tags                        []string
-	Tracking                    Tracking
-	ContestTrackings            []ContestTracking
+	Tracking                    logscore.Tracking
+	ContestTrackings            []logscore.ContestTracking
 	EligibleOfficialLeaderboard bool
 	Year                        int16
 	Now                         time.Time
@@ -123,7 +120,7 @@ type Log struct {
 	CreatedAt       time.Time
 	Deleted         bool
 	Registrations   []RegistrationReference
-	Tracking        Tracking
+	Tracking        logscore.Tracking
 }
 
 type RegistrationReference struct {

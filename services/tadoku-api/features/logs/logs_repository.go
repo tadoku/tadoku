@@ -11,6 +11,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/activities"
+	"github.com/tadoku/tadoku/services/tadoku-api/domain/logscore"
 	queries "github.com/tadoku/tadoku/services/tadoku-api/generated/sqlc/logs"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 )
@@ -65,7 +66,7 @@ func (r *LogsRepository) CreateLog(ctx context.Context, mutation logMutation) er
 	})
 }
 
-func (r *LogsRepository) CreateContestLog(ctx context.Context, logID uuid.UUID, tracking ContestTracking) error {
+func (r *LogsRepository) CreateContestLog(ctx context.Context, logID uuid.UUID, tracking logscore.ContestTracking) error {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return err
@@ -140,7 +141,7 @@ func (r *LogsRepository) UpdateLog(ctx context.Context, mutation logMutation) er
 		LogID:           postgres.UUID(mutation.ID),
 	})
 }
-func (r *LogsRepository) UpdateContestLog(ctx context.Context, logID uuid.UUID, tracking ContestTracking, now time.Time) error {
+func (r *LogsRepository) UpdateContestLog(ctx context.Context, logID uuid.UUID, tracking logscore.ContestTracking, now time.Time) error {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return err
@@ -162,7 +163,7 @@ func (r *LogsRepository) UpdateContestLog(ctx context.Context, logID uuid.UUID, 
 	})
 }
 
-func (r *LogsRepository) UpdateOngoingContestLogs(ctx context.Context, logID uuid.UUID, tracking Tracking, now time.Time) error {
+func (r *LogsRepository) UpdateOngoingContestLogs(ctx context.Context, logID uuid.UUID, tracking logscore.Tracking, now time.Time) error {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return err
@@ -209,7 +210,7 @@ type logTrackingParams struct {
 	source    pgtype.Text
 }
 
-func trackingParams(t Tracking) logTrackingParams {
+func trackingParams(t logscore.Tracking) logTrackingParams {
 	p := logTrackingParams{
 		unitKey:   postgres.NullableNonEmptyText(&t.UnitKey),
 		amount:    postgres.NullableFloat4(t.Amount),
@@ -424,7 +425,7 @@ func (r *LogsRepository) FindLog(ctx context.Context, id uuid.UUID, includeDelet
 		return nil, fmt.Errorf("find log: %w", err)
 	}
 
-	tracking := Tracking{
+	tracking := logscore.Tracking{
 		DurationSeconds: postgres.Int4Pointer(row.DurationSeconds),
 		Score:           row.Score.Float32,
 		RuleSetID:       postgres.UUIDPointer(row.ScoreRuleSetID),

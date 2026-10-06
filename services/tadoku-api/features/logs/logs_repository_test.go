@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/activities"
+	"github.com/tadoku/tadoku/services/tadoku-api/domain/logscore"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
 )
@@ -53,7 +54,7 @@ func createDurationLog(t *testing.T, repository *LogsRepository, id, userID uuid
 		UserID:       userID,
 		LanguageCode: "jpn",
 		ActivityID:   2,
-		Tracking: Tracking{
+		Tracking: logscore.Tracking{
 			DurationSeconds: &duration,
 			Score:           4,
 		},
@@ -98,7 +99,7 @@ func TestLogsRepositoryFindLogMapsRows(t *testing.T) {
 	modifier := unit.Modifier
 	ruleID := uuid.MustParse("bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1")
 
-	tracking := Tracking{
+	tracking := logscore.Tracking{
 		UnitID:    &unit.ID,
 		UnitKey:   unit.Key,
 		Amount:    &amount,
@@ -180,7 +181,7 @@ func TestLogsRepositoryFindLogMapsRows(t *testing.T) {
 		Score:           4,
 		DurationSeconds: &duration,
 		CreatedAt:       found.CreatedAt,
-		Tracking: Tracking{
+		Tracking: logscore.Tracking{
 			DurationSeconds: &duration,
 			Score:           4,
 			RuleIDs:         []uuid.UUID{},
@@ -359,9 +360,9 @@ func TestLogsRepositoryContestLogs(t *testing.T) {
 	attach := func(logID, registrationID uuid.UUID) {
 		t.Helper()
 
-		err := repository.CreateContestLog(tenantCtx, logID, ContestTracking{
+		err := repository.CreateContestLog(tenantCtx, logID, logscore.ContestTracking{
 			RegistrationID: registrationID,
-			Tracking: Tracking{
+			Tracking: logscore.Tracking{
 				DurationSeconds: &duration,
 				Score:           7,
 			},

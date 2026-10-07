@@ -554,11 +554,23 @@ func TestLoadConfigUsesValidatedDefaults(t *testing.T) {
 		t.Errorf("missing Oathkeeper callback credential error=%v", err)
 	}
 	t.Setenv("API_OATHKEEPER_AUTHZ_TOKEN", "callback-token")
-	for _, ketoURL := range []string{"", "not-a-url", "ftp://keto-read.test"} {
-		t.Setenv("API_KETO_READ_URL", ketoURL)
+	for _, rawURL := range []string{
+		"", "not-a-url", "/relative", "ftp://keto-read.test", "http://:4466", "http://keto-read.test:bad",
+		"http://user:secret@keto-read.test", "http://keto-read.test?query=1", "http://keto-read.test?",
+		"http://keto-read.test#fragment", "http://keto-read.test#",
+	} {
+		t.Setenv("API_KETO_READ_URL", rawURL)
 		if _, err := loadConfig(); err == nil || !strings.Contains(err.Error(), "KetoReadURL") {
-			t.Errorf("Keto read URL %q error=%v", ketoURL, err)
+			t.Errorf("Keto read URL %q error=%v", rawURL, err)
 		}
+	}
+	t.Setenv("API_KETO_READ_URL", "https://keto-read.test:4466/provider/")
+	ketoReadConfig, err := loadConfig()
+	if err != nil {
+		t.Fatalf("load explicit Keto read configuration: %v", err)
+	}
+	if ketoReadConfig.KetoReadURL != "https://keto-read.test:4466/provider" {
+		t.Errorf("Keto read URL=%q", ketoReadConfig.KetoReadURL)
 	}
 	t.Setenv("API_KETO_READ_URL", "http://keto-read.test")
 	t.Setenv("API_JWT_ISSUER", "https://issuer.example.test/")

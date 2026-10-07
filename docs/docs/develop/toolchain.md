@@ -72,7 +72,8 @@ generated diff and never edit generated files by hand.
 `./scripts/generate-sqlc.sh` downloads the sqlc version pinned in each query
 package's `generate.go`, so it needs only `curl` and `tar`. New query packages
 must be added to `SQLC_PACKAGES` in the script. `./scripts/generate-openapi.sh`
-runs oapi-codegen through Bazel from `tools/oapi-codegen/`. See
+runs oapi-codegen through Bazel from `tools/oapi-codegen/`, which pins the same
+Bazel version as the repo root via `tools/oapi-codegen/.bazelversion`. See
 [Tadoku API contract](../tadoku-api/contract.md).
 
 ## pnpm workspaces

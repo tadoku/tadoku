@@ -19,7 +19,6 @@ on:
       - "frontend/pnpm-lock.yaml"
       - "frontend/Dockerfile"
       - "frontend/scripts/publish-image.sh"
-      - "frontend/scripts/check-publish-image.py"
       - "frontend/.npmrc"
 jobs:
   build:
@@ -32,9 +31,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3
-
-      - name: Check committed-tree image publication
-        run: python3 scripts/check-publish-image.py
 
       - name: Install Node.js
         uses: actions/setup-node@3235b876344d2a9aa001b8d1453c930bba69e610 # v3

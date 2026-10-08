@@ -19,7 +19,6 @@ on:
       - "frontend/pnpm-lock.yaml"
       - "frontend/Dockerfile"
       - "frontend/scripts/publish-image.sh"
-      - "frontend/scripts/check-publish-image.py"
       - "frontend/.npmrc"
 jobs:
   build:

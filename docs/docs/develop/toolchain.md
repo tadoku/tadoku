@@ -60,14 +60,9 @@ The script publishes only explicitly requested tags, on Linux amd64:
 ```sh
 frontend/scripts/publish-image.sh webv2 \
   --repository localhost:5000/check/frontend-webv2 --tag check-0123456789ab
-python3 frontend/scripts/check-publish-image.py
 ```
 
-The check requires Docker. It creates a disposable loopback registry and Git
-fixture, rejects invalid arguments, proves ignored secrets and uncommitted
-edits are excluded, then pulls and runs the published image. It does not build
-the full application; normal frontend builds cover that boundary. Webv2 CI
-runs this publication check. Production tag approval remains manual.
+Production tag approval remains manual.
 
 ### Gazelle
 

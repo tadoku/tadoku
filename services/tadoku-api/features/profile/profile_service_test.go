@@ -1,9 +1,12 @@
 package profile
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"testing"
+
+	kratosclient "github.com/tadoku/tadoku/services/tadoku-api/infra/kratos"
 )
 
 func TestUserPagePreservesProviderOrder(t *testing.T) {
@@ -67,5 +70,23 @@ func TestDecodeIdentityTraitsRoundTripsDisplayNameWithoutEmail(t *testing.T) {
 	}
 	if traits.Email != "" {
 		t.Errorf("Email = %q, want empty when absent from traits", traits.Email)
+	}
+}
+
+func TestMapIdentityFetchErrorMapsKratosNotFound(t *testing.T) {
+	t.Parallel()
+
+	if err := mapIdentityFetchError(kratosclient.ErrNotFound); !errors.Is(err, ErrIdentityNotFound) {
+		t.Errorf("mapIdentityFetchError(ErrNotFound) = %v, want ErrIdentityNotFound", err)
+	}
+
+	wrapped := fmt.Errorf("fetch: %w", kratosclient.ErrNotFound)
+	if err := mapIdentityFetchError(wrapped); !errors.Is(err, ErrIdentityNotFound) {
+		t.Errorf("mapIdentityFetchError(wrapped ErrNotFound) = %v, want ErrIdentityNotFound", err)
+	}
+
+	other := errors.New("provider unavailable")
+	if err := mapIdentityFetchError(other); !errors.Is(err, other) {
+		t.Errorf("mapIdentityFetchError(other) = %v, want %v", err, other)
 	}
 }

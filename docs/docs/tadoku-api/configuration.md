@@ -397,6 +397,13 @@ endpoint, rather than the API's restricted service-token route. Override
 commands need only PostgreSQL. The only registered override component is
 `jobqueue.WorkerComponent`, currently `tadoku-worker`.
 
+`//services/tadoku-api/cmd/tadoku-tenant:image` packages the command for
+branch provisioning outside development: a distroless base with the CA bundle
+`verify-full` connections need, `/tadoku-tenant` as its entrypoint and the
+repository's flag definitions at `/flipt/features.yaml`. Its `branch_push`
+target sets no repository or tags; the caller supplies both. The development
+`//.dev:tenant_push` image has no CA bundle.
+
 Provision commits an idempotent test registry row under a transaction-local
 advisory lock, grants the canonical Keto parent and repeated `--tester` UUIDs,
 then creates only missing Flipt resources from the strict boolean seed format.

@@ -1,9 +1,18 @@
 -- name: LockTenant :exec
 select pg_advisory_xact_lock(hashtextextended('tadoku-tenant:' || sqlc.arg('key')::text, 0));
 
--- name: OwnsTenantRegistry :one
-select pg_has_role(current_user, relowner, 'USAGE')::boolean as owns_registry
-from pg_catalog.pg_class where oid = 'tenants'::regclass;
+-- name: MayManageTenantRegistry :one
+select (
+  pg_has_role(current_user, relowner, 'USAGE')
+  or exists (
+    select
+    from pg_catalog.pg_roles
+    where rolname = 'tadoku_tenant_lifecycle'
+      and pg_has_role(current_user, oid, 'USAGE')
+  )
+)::boolean as may_manage_registry
+from pg_catalog.pg_class
+where oid = 'tenants'::regclass;
 
 -- name: TenantKind :one
 select kind from tenants where key = $1;

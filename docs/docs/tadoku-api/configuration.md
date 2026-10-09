@@ -368,8 +368,8 @@ types without an unbounded type label.
 
 ## Tenant lifecycle command
 
-`services/tadoku-api/cmd/tadoku-tenant` provides owner-only provisioning,
-teardown and worker overrides. Its tenant argument is a full parsed key, such
+`services/tadoku-api/cmd/tadoku-tenant` provides provisioning, teardown and
+worker overrides. Its tenant argument is a full parsed key, such
 as `tadoku/branch-0123abcd`; the id must end in a hyphen and eight lowercase
 hexadecimal digits. Bare route ids, `tadoku/prod` and production registry rows
 are refused before provider writes.
@@ -386,7 +386,12 @@ bazel run //services/tadoku-api/cmd/tadoku-tenant -- teardown \
   --tenant tadoku/branch-0123abcd
 ```
 
-All commands verify ownership of the tenant registry and use owner credentials in `TENANT_POSTGRES_HOST`,
+All commands refuse credentials that neither own the tenant registry nor
+belong to the `tadoku_tenant_lifecycle` role. That role needs only schema usage
+and `select`, `insert` and `delete` on `tenants` and `tenant_overrides`;
+registry policies limit its writes to test rows, and deleting a row cascades
+through the owner's foreign keys. Production branch Jobs use it, and
+development uses the owner. Credentials come from `TENANT_POSTGRES_HOST`,
 `TENANT_POSTGRES_PORT` (default 5432), `TENANT_POSTGRES_DATABASE`,
 `TENANT_POSTGRES_USER`, `TENANT_POSTGRES_PASSWORD` and `TENANT_POSTGRES_SSLMODE`.
 `TENANT_POSTGRES_URL` is rejected. Provision and teardown additionally require

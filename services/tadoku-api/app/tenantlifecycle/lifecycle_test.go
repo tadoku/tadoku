@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/tadoku/tadoku/services/tadoku-api/app/tenantlifecycle"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
@@ -64,7 +65,7 @@ func TestTenantLifecycle(t *testing.T) {
 	ketoClient := keto.NewClient(ketoFixture.ReadURL(), ketoFixture.WriteURL(),
 		keto.WithHTTPClient(&http.Client{Timeout: 2 * time.Second}))
 	application := tenantlifecycle.NewApplication(
-		db.Pool,
+		lifecyclePool(t, db),
 		permissions.NewTenantManager(ketoClient),
 		leaderboard.NewCache(client, time.Second),
 		fliptmanagement.NewClient(fliptmanagement.Config{URL: fliptFixture.URL(), Targets: targets}),
@@ -241,6 +242,12 @@ segments: []
 	if fliptFixture.RequestCount() != requestsBefore {
 		t.Fatal("runtime credentials reached the provider")
 	}
+	ownerApplication := tenantlifecycle.NewApplication(db.Pool, permissions.NewTenantManager(ketoClient),
+		leaderboard.NewCache(client, time.Second),
+		fliptmanagement.NewClient(fliptmanagement.Config{URL: fliptFixture.URL(), Targets: targets}))
+	if err := ownerApplication.Teardown(t.Context(), other); err != nil {
+		t.Fatalf("owner credentials were refused for teardown: %v", err)
+	}
 
 	// Test safety: only this disposable database loses its production-key check to simulate a corrupted registry.
 	if _, err := db.Pool.Exec(t.Context(), "alter table tenants drop constraint tenants_single_production"); err != nil {
@@ -272,6 +279,49 @@ func lifecycleKey(t *testing.T, name string) tenant.TestKey {
 		t.Fatal(err)
 	}
 	return key
+}
+
+// lifecyclePool connects as a login whose only grants are the production tadoku_tenant_lifecycle role's.
+func lifecyclePool(t *testing.T, db *testpostgres.Database) *pgxpool.Pool {
+	t.Helper()
+	role := "tadoku_test_lifecycle_" + strings.ReplaceAll(uuid.NewString(), "-", "")
+	password := uuid.NewString()
+	roleSQL := pgx.Identifier{role}.Sanitize()
+	setup := `
+		do $$
+		begin
+			create role tadoku_tenant_lifecycle nologin;
+		exception when duplicate_object or unique_violation then
+			null;
+		end
+		$$;
+		grant usage on schema public to tadoku_tenant_lifecycle;
+		grant select, insert, delete on tenants, tenant_overrides to tadoku_tenant_lifecycle;
+		create role ` + roleSQL + ` login nosuperuser nobypassrls in role tadoku_tenant_lifecycle password '` + password + `'`
+	if _, err := db.Pool.Exec(t.Context(), setup); err != nil {
+		t.Fatal(err)
+	}
+
+	cfg, err := pgxpool.ParseConfig(db.DSN)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cfg.ConnConfig.User = role
+	cfg.ConnConfig.Password = password
+	cfg.MaxConns = 2
+	pool, err := pgxpool.NewWithConfig(t.Context(), cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		pool.Close()
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+		if _, err := db.Pool.Exec(ctx, "drop role "+roleSQL); err != nil {
+			t.Error(err)
+		}
+	})
+	return pool
 }
 
 func ownedRows(t *testing.T, db *testpostgres.Database, key string) map[string]string {

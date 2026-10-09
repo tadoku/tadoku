@@ -97,6 +97,11 @@ oci_push(
     image = ":cli_image",
 )
 
+oci_push(
+    name = "branch_push",
+    image = ":image",
+)
+
 dev_deployable(
     name = "dev",
     metadata = json.encode({
@@ -108,6 +113,10 @@ dev_deployable(
         "imageTarget": "//services/tadoku-api:cli_image",
         "imageName": "tadoku-api",
         "pushTarget": "//services/tadoku-api:cli_push",
+        "release": {
+            "imageName": "tadoku-api",
+            "pushTarget": "//services/tadoku-api:branch_push",
+        },
         "containerPath": "/tadoku-api",
         "port": 8000,
         "servicePort": 80,
@@ -133,6 +142,7 @@ dev_deployable(
     workload_template = "//.dev:tadoku-api.yaml",
     deps = [
         ":cli_image",
+        ":image",
         "//services/tadoku-api/cmd/tadoku-api",
     ],
 )
@@ -148,6 +158,10 @@ dev_deployable(
         "imageTarget": "//services/tadoku-api/cmd/tadoku-worker:cli_image",
         "imageName": "tadoku-worker",
         "pushTarget": "//services/tadoku-api/cmd/tadoku-worker:cli_push",
+        "release": {
+            "imageName": "tadoku-worker",
+            "pushTarget": "//services/tadoku-api/cmd/tadoku-worker:branch_push",
+        },
         "containerPath": "/tadoku-worker",
         "port": 8000,
         "readinessPath": "/readyz",
@@ -161,5 +175,6 @@ dev_deployable(
     deps = [
         "//services/tadoku-api/cmd/tadoku-worker",
         "//services/tadoku-api/cmd/tadoku-worker:cli_image",
+        "//services/tadoku-api/cmd/tadoku-worker:image",
     ],
 )

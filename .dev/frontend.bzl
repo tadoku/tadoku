@@ -1,6 +1,7 @@
 load("@rules_oci//oci:defs.bzl", "oci_image", "oci_push")
 load("@rules_pkg//pkg:mappings.bzl", "pkg_attributes", "pkg_files", "strip_prefix")
 load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
+load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 load("//.dev:deployable.bzl", "dev_deployable")
 
 # Image startup and dev-cli's initial dependency sync may overlap. BusyBox flock
@@ -81,6 +82,12 @@ def frontend_dev(name, host, readiness_path = "/"):
         image = ":%s_dev_image" % name,
     )
 
+    sh_binary(
+        name = "%s_branch_push" % name,
+        srcs = ["scripts/publish-image.sh"],
+        args = [name],
+    )
+
     dev_deployable(
         name = "%s_dev" % name,
         metadata = json.encode({
@@ -91,6 +98,10 @@ def frontend_dev(name, host, readiness_path = "/"):
             "imageTarget": "//frontend:%s_dev_image" % name,
             "imageName": "%s" % name,
             "pushTarget": "//frontend:%s_dev_push" % name,
+            "release": {
+                "imageName": "frontend-%s" % name,
+                "pushTarget": "//frontend:%s_branch_push" % name,
+            },
             "port": 3000,
             "readinessPath": readiness_path,
             "publicPath": "/",

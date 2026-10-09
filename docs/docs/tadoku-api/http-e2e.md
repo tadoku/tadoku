@@ -295,6 +295,9 @@ jq -r .token "$fixture_output"
   failed reset fails the test, and later cases reject the unusable fixture.
 - Startup and reset are bounded. Failure or shutdown closes connections, reaps
   the child process and removes the owned database, journals and sockets.
+  Each test process uses a random directory prefix because Bazel PID namespaces
+  can reuse process IDs while sharing `/dev/shm`; cleanup checks inspect only
+  that process's directories.
 - Tests sharing the provider stay sequential. Mutations are not detected
   automatically and response UUIDs are not normalized; goldens remain exact
   comparisons.

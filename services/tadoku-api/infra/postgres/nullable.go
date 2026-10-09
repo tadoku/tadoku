@@ -1,6 +1,8 @@
 package postgres
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -31,6 +33,13 @@ func NullableFloat4(value *float32) pgtype.Float4 {
 		return pgtype.Float4{}
 	}
 	return pgtype.Float4{Float32: *value, Valid: true}
+}
+
+func NullableDate(value *time.Time) pgtype.Date {
+	if value == nil {
+		return pgtype.Date{}
+	}
+	return pgtype.Date{Time: *value, Valid: true}
 }
 
 func UUID(value uuid.UUID) pgtype.UUID {

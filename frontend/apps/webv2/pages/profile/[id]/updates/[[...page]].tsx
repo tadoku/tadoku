@@ -1,16 +1,22 @@
 import { useRouter } from 'next/router'
-import { Breadcrumb, Loading, Pagination, Tabbar } from 'ui'
-import { HomeIcon } from '@heroicons/react/20/solid'
+import { Breadcrumb, Flash, Loading, Pagination, Tabbar } from 'ui'
+import { HomeIcon, InformationCircleIcon } from '@heroicons/react/20/solid'
 import { routes } from '@app/common/routes'
 import { useProfileLogs, useUserProfile } from '@app/immersion/api'
-import { getQueryStringPageParameter } from '@app/common/router'
+import {
+  getQueryStringDateParameter,
+  getQueryStringPageParameter,
+} from '@app/common/router'
 import Head from 'next/head'
+import Link from 'next/link'
+import { DateTime } from 'luxon'
 import { useEffect, useState } from 'react'
 import LogsList from '@app/immersion/LogsList'
 
 const Page = () => {
   const router = useRouter()
   const userId = router.query['id']?.toString() ?? ''
+  const date = getQueryStringDateParameter(router.query.date)
 
   const newFilter = () => {
     return {
@@ -18,6 +24,7 @@ const Page = () => {
       pageSize: 50,
       includeDeleted: false,
       userId,
+      date,
     }
   }
 
@@ -28,8 +35,9 @@ const Page = () => {
       pageSize: 50,
       includeDeleted: false,
       userId,
+      date,
     })
-  }, [router.asPath, userId, router.query.page])
+  }, [router.asPath, userId, router.query.page, date])
 
   const profile = useUserProfile({ userId })
   const logs = useProfileLogs(filters)
@@ -88,6 +96,23 @@ const Page = () => {
         ]}
       />
 
+      {date ? (
+        <Flash
+          style="info"
+          IconComponent={InformationCircleIcon}
+          className="mt-4"
+        >
+          Showing updates on{' '}
+          {DateTime.fromISO(date).toLocaleString(DateTime.DATE_MED)}
+          <Link
+            href={routes.userProfileUpdates(userId)}
+            className="ml-auto underline"
+          >
+            Show all updates
+          </Link>
+        </Flash>
+      ) : null}
+
       <div className="card p-0 mt-4">
         <LogsList logs={logs} />
       </div>
@@ -97,7 +122,7 @@ const Page = () => {
           <Pagination
             currentPage={filters.page}
             totalPages={logsTotalPages}
-            getHref={page => routes.userProfileUpdates(userId, page)}
+            getHref={page => routes.userProfileUpdates(userId, page, date)}
           />
         </div>
       ) : null}

@@ -149,6 +149,7 @@ const Page = () => {
                 <HeatmapChart
                   id={`heatmap-${year}-${userId}`}
                   year={year}
+                  getHref={date => routes.userProfileUpdates(userId, 1, date)}
                   data={
                     activitySummary.data
                       ? activitySummary.data.scores.map(it => ({

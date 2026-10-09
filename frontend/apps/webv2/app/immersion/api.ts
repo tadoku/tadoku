@@ -625,6 +625,7 @@ export const useProfileLogs = (
     page: number
     includeDeleted: boolean
     userId: string
+    date?: string
   },
   options?: { enabled?: boolean },
 ) =>
@@ -636,15 +637,19 @@ export const useProfileLogs = (
       opts.pageSize,
       opts.page,
       opts.includeDeleted,
+      opts.date,
     ],
     async (): Promise<Logs> => {
-      const params = {
+      const params = new URLSearchParams({
         page_size: opts.pageSize.toString(),
         page: (opts.page - 1).toString(),
         include_deleted: opts.includeDeleted.toString(),
+      })
+      if (opts.date) {
+        params.set('date', opts.date)
       }
       const response = await fetch(
-        `${root()}/users/${opts.userId}/logs?${new URLSearchParams(params)}`,
+        `${root()}/users/${opts.userId}/logs?${params}`,
       )
 
       if (response.status !== 200) {

@@ -47,6 +47,15 @@ func TestImmersionProfileListLogs(t *testing.T) {
 		{description: []string{"malformed", "page", "size"}, want: http.StatusBadRequest},
 		{description: []string{"malformed", "include", "deleted"}, want: http.StatusBadRequest},
 		{description: []string{"malformed", "page", "overflow"}, want: http.StatusBadRequest},
+		{description: []string{"date", "filter"}, want: http.StatusOK},
+		{description: []string{"date", "midday"}, want: http.StatusOK},
+		{description: []string{"date", "other", "user"}, want: http.StatusOK},
+		{description: []string{"date", "deleted"}, want: http.StatusOK},
+		{description: []string{"date", "include", "deleted", "admin"}, want: http.StatusOK},
+		{description: []string{"date", "out", "of", "range"}, want: http.StatusOK},
+		{description: []string{"malformed", "date"}, want: http.StatusBadRequest},
+		{description: []string{"impossible", "date"}, want: http.StatusBadRequest},
+		{description: []string{"date", "time"}, want: http.StatusBadRequest},
 	}
 	for _, test := range tests {
 		name := APITestName("ImmersionProfileListLogs", test.want, test.description...)

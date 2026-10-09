@@ -552,7 +552,11 @@ func (r *LogsRepository) AttachedRegistrations(ctx context.Context, id uuid.UUID
 	return result, nil
 }
 
-func (r *LogsRepository) ListUserLogs(ctx context.Context, parameters ListParameters) (*LogList, error) {
+func (r *LogsRepository) ListUserLogs(
+	ctx context.Context,
+	parameters ListParameters,
+	createdOn *time.Time,
+) (*LogList, error) {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return nil, err
@@ -563,6 +567,7 @@ func (r *LogsRepository) ListUserLogs(ctx context.Context, parameters ListParame
 		StartFrom:      parameters.offset(),
 		PageSize:       int32(parameters.PageSize),
 		IncludeDeleted: parameters.IncludeDeleted,
+		CreatedOn:      postgres.NullableDate(createdOn),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("list logs: %w", err)

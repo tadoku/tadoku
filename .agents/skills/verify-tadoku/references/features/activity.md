@@ -6,7 +6,9 @@ After login, **Log activity** opens main-host `/logs/new`. A profile's Updates
 list links to `/logs/<id>`; owner and admin actions lead to `/logs/<id>/edit` and
 `/logs/<id>/contests`. The user menu's Profile opens
 `/profile/<user-id>/statistics/<year>`; its Updates tab opens
-`/profile/<user-id>/updates`. A leaderboard participant is another route to a profile.
+`/profile/<user-id>/updates`. On Statistics, clicking a non-empty heatmap day
+opens `/profile/<user-id>/updates/1?date=<YYYY-MM-DD>`, which lists only that
+UTC day's updates. A leaderboard participant is another route to a profile.
 
 ## Verify
 
@@ -44,6 +46,9 @@ Leaderboard updates are asynchronous and branch-cache scoped. A healthy API pod
 does not prove the worker processed the write. Keep selected headers and actual
 before/after data as evidence. Years, dates and eligible contests affect where a
 log appears. An empty list and an API failure are different states.
+
+Heatmap days and the `?date=` filter use UTC days, so a filtered Updates list
+can show rows with the neighbouring local date.
 
 ## Source anchors
 

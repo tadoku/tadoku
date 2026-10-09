@@ -1,9 +1,10 @@
 import { DateTime, Interval } from 'luxon'
+import Link from 'next/link'
 import { useRef, useEffect, useState, MutableRefObject } from 'react'
 import { createPortal } from 'react-dom'
 
 interface Cell {
-  x: DateTime
+  x: DateTime<true>
   y: number
   value: number
   tooltip?: string
@@ -13,6 +14,7 @@ interface Props {
   data: { date: string; value: number; tooltip?: string }[]
   year: number
   id: string
+  getHref?: (date: string) => string
 }
 
 const colWidth = 10
@@ -23,7 +25,7 @@ const offset = {
   y: 15,
 }
 
-export function HeatmapChart({ id, data, year }: Props) {
+export function HeatmapChart({ id, data, year, getHref }: Props) {
   const start = DateTime.fromObject({ year, month: 1, day: 1 })
   const end = DateTime.fromObject({ year, month: 12, day: 31 })
 
@@ -139,6 +141,10 @@ export function HeatmapChart({ id, data, year }: Props) {
             col={col}
             row={row}
             tooltip={cell?.tooltip}
+            href={
+              cell && cell.value > 0 ? getHref?.(cell.x.toISODate()) : undefined
+            }
+            label={cell?.tooltip ?? cell?.x.toISODate()}
             parentHeight={height}
             parentWidth={width}
           />
@@ -154,6 +160,8 @@ function Cell({
   tooltipId,
   maxValue,
   tooltip,
+  href,
+  label,
   row,
   col,
   parentWidth,
@@ -162,6 +170,8 @@ function Cell({
   tooltipId: string
   maxValue: number
   tooltip?: string
+  href?: string
+  label?: string
   row: number
   col: number
   parentWidth: number
@@ -188,6 +198,14 @@ function Cell({
     ></rect>
   )
 
+  const cell = href ? (
+    <Link href={href} aria-label={label}>
+      {rect}
+    </Link>
+  ) : (
+    rect
+  )
+
   useEffect(() => {
     setMounted(true)
 
@@ -195,14 +213,14 @@ function Cell({
   }, [])
 
   if (!mounted || value === undefined || value === 0) {
-    return rect
+    return cell
   }
 
   const target = mounted ? document.getElementById(tooltipId) : null
 
   return (
     <>
-      {rect}
+      {cell}
       {target &&
         tooltip &&
         createPortal(

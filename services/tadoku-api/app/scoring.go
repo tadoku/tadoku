@@ -101,9 +101,8 @@ func (a *Application) ListContestScoringRuleSets(ctx context.Context, contestID 
 	if err != nil {
 		return nil, err
 	}
-	actorID, hasActor := identity.ActorID(ctx)
-	if (!hasActor || actorID != contest.OwnerUserID) && !a.permissions.IsAdminOrFalse(ctx) {
-		return nil, errx.NewForbiddenError("forbidden")
+	if err := a.requireOwnerOrAdmin(ctx, contest.OwnerUserID); err != nil {
+		return nil, err
 	}
 	return a.scoring.ListContestRuleSets(ctx, contestID)
 }

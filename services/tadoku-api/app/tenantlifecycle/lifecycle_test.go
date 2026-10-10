@@ -17,6 +17,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/app/tenantlifecycle"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/pages"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/scoring"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/flipt"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/fliptmanagement"
@@ -92,6 +93,7 @@ segments: []
 	}
 
 	seedEveryTenantTable(t, db, tenant.Production().String())
+	seedProductionPages(t, db)
 	productionBeforeProvision := ownedRows(t, db, tenant.Production().String())
 	for _, target := range []tenant.TestKey{key, key, other} {
 		if err := application.Provision(t.Context(), target, []uuid.UUID{reader}, features); err != nil {
@@ -99,16 +101,20 @@ segments: []
 		}
 	}
 	assertCopiedPlatformScoring(t, db, key)
+	assertCopiedPublishedPages(t, db, key)
 	if after := ownedRows(t, db, tenant.Production().String()); !reflect.DeepEqual(productionBeforeProvision, after) {
 		t.Errorf("provisioning changed canonical rows: before=%v after=%v", productionBeforeProvision, after)
 	}
-	if _, err := lifecycle.Exec(t.Context(), copyScoringSQL, tenant.Production().String()); err == nil {
-		t.Error("lifecycle credentials copied scoring into the canonical tenant")
-	}
-	_, err = db.AppPool.Exec(t.Context(), copyScoringSQL, other.String())
-	var pgError *pgconn.PgError
-	if !errors.As(err, &pgError) || pgError.Code != "42501" {
-		t.Errorf("runtime scoring copy=%v, want PostgreSQL42501", err)
+	for _, copySQL := range []string{copyScoringSQL, copyPagesSQL} {
+		if _, err := lifecycle.Exec(t.Context(), copySQL, tenant.Production().String()); err == nil {
+			t.Errorf("lifecycle credentials ran %q for the canonical tenant", copySQL)
+		}
+
+		_, err = db.AppPool.Exec(t.Context(), copySQL, other.String())
+		var pgError *pgconn.PgError
+		if !errors.As(err, &pgError) || pgError.Code != "42501" {
+			t.Errorf("runtime %q=%v, want PostgreSQL42501", copySQL, err)
+		}
 	}
 	var registry int
 	if err := db.Pool.QueryRow(t.Context(), "select count(*) from tenants where key = $1", key.String()).
@@ -290,7 +296,76 @@ segments: []
 	t.Log("lifecycle workflow passed: idempotent provision, all-table cascade, preserved canonical/other rows, retry and refusals")
 }
 
-const copyScoringSQL = "select copy_production_platform_scoring($1)"
+const (
+	copyScoringSQL = "select copy_production_platform_scoring($1)"
+	copyPagesSQL   = "select copy_production_published_pages($1)"
+)
+
+func seedProductionPages(t *testing.T, db *testpostgres.Database) {
+	t.Helper()
+
+	_, err := db.Pool.Exec(t.Context(), `with seeded_pages as (
+			insert into pages (tenant, id, namespace, slug, current_content_id, published_at, deleted_at)
+			values
+				('tadoku/prod', uuid_generate_v5(uuid_nil(), 'about'), 'tadoku', 'about',
+					uuid_generate_v5(uuid_nil(), 'about/2'), now() at time zone 'utc' - interval '1 day', null),
+				('tadoku/prod', uuid_generate_v5(uuid_nil(), 'draft'), 'tadoku', 'draft',
+					uuid_generate_v5(uuid_nil(), 'draft/1'), null, null),
+				('tadoku/prod', uuid_generate_v5(uuid_nil(), 'scheduled'), 'tadoku', 'scheduled',
+					uuid_generate_v5(uuid_nil(), 'scheduled/1'), now() at time zone 'utc' + interval '1 day', null),
+				('tadoku/prod', uuid_generate_v5(uuid_nil(), 'deleted'), 'tadoku', 'deleted',
+					uuid_generate_v5(uuid_nil(), 'deleted/1'), now() at time zone 'utc' - interval '1 day', now())
+		)
+		insert into pages_content (tenant, id, page_id, title, html, created_at)
+		values
+			('tadoku/prod', uuid_generate_v5(uuid_nil(), 'about/1'), uuid_generate_v5(uuid_nil(), 'about'),
+				'Old about', '<p>Old</p>', now() - interval '2 days'),
+			('tadoku/prod', uuid_generate_v5(uuid_nil(), 'about/2'), uuid_generate_v5(uuid_nil(), 'about'),
+				'About', '<p>Current</p>', now() - interval '1 day'),
+			('tadoku/prod', uuid_generate_v5(uuid_nil(), 'draft/1'), uuid_generate_v5(uuid_nil(), 'draft'),
+				'Draft', '<p>Draft</p>', now()),
+			('tadoku/prod', uuid_generate_v5(uuid_nil(), 'scheduled/1'), uuid_generate_v5(uuid_nil(), 'scheduled'),
+				'Scheduled', '<p>Scheduled</p>', now()),
+			('tadoku/prod', uuid_generate_v5(uuid_nil(), 'deleted/1'), uuid_generate_v5(uuid_nil(), 'deleted'),
+				'Deleted', '<p>Deleted</p>', now())`)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func assertCopiedPublishedPages(t *testing.T, db *testpostgres.Database, key tenant.TestKey) {
+	t.Helper()
+	ctx := tenant.WithKey(t.Context(), key.Key())
+
+	service := pages.NewService(pages.NewPagesRepository(db.AppPool))
+	page, err := service.FindPageBySlug(ctx, "tadoku", "about")
+	if err != nil || page.Title != "About" || page.HTML != "<p>Current</p>" {
+		t.Fatalf("about page in provisioned tenant: page=%+v error=%v", page, err)
+	}
+
+	var production uuid.UUID
+	var copiedPages, copiedContents int
+	err = db.Pool.QueryRow(
+		t.Context(),
+		`select
+			uuid_generate_v5(uuid_nil(), 'about'),
+			(select count(*) from pages where tenant = $1),
+			(select count(*) from pages_content where tenant = $1)`,
+		key.String(),
+	).Scan(&production, &copiedPages, &copiedContents)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if page.ID == production || copiedPages != 1 || copiedContents != 1 {
+		t.Errorf(
+			"copied pages: about=%s production=%s pages=%d contents=%d, want one page and its current revision",
+			page.ID,
+			production,
+			copiedPages,
+			copiedContents,
+		)
+	}
+}
 
 func assertCopiedPlatformScoring(t *testing.T, db *testpostgres.Database, key tenant.TestKey) {
 	t.Helper()
@@ -379,6 +454,7 @@ func lifecyclePool(t *testing.T, db *testpostgres.Database) *pgxpool.Pool {
 		grant usage on schema public to tadoku_tenant_lifecycle;
 		grant select, insert, delete on tenants, tenant_overrides to tadoku_tenant_lifecycle;
 		grant execute on function copy_production_platform_scoring(text) to tadoku_tenant_lifecycle;
+		grant execute on function copy_production_published_pages(text) to tadoku_tenant_lifecycle;
 		create role ` + roleSQL + ` login nosuperuser nobypassrls in role tadoku_tenant_lifecycle password '` + password + `'`
 	if _, err := db.Pool.Exec(t.Context(), setup); err != nil {
 		t.Fatal(err)

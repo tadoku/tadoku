@@ -32,6 +32,15 @@ func (q *Queries) CopyProductionPlatformScoring(ctx context.Context, tenant stri
 	return err
 }
 
+const copyProductionPublishedPages = `-- name: CopyProductionPublishedPages :exec
+select copy_production_published_pages($1::text)
+`
+
+func (q *Queries) CopyProductionPublishedPages(ctx context.Context, tenant string) error {
+	_, err := q.db.Exec(ctx, copyProductionPublishedPages, tenant)
+	return err
+}
+
 const deleteTestTenant = `-- name: DeleteTestTenant :exec
 delete from tenants where key = $1 and kind = 'test'
 `

@@ -114,10 +114,11 @@ serves the request under the branch tenant.
 dev-cli's lifecycle hooks run `tadoku-tenant` as Jobs before startup and after
 teardown, connecting as the scoped `tadoku_tenant_lifecycle` database role
 rather than the owner. Provisioning creates the test tenant's registry row,
-copies production's active platform scoring rule set into it, gives its Keto
-object `app:tadoku/<route>` the canonical parent and creates its Flipt namespace
-`tadoku_<route>` in the `test` environment. Selecting the worker sets a worker
-override so only the branch worker claims the tenant's jobs. [Configuration](../tadoku-api/configuration.md#tenant-lifecycle-command)
+copies production's active platform scoring rule set and published CMS pages
+into it, gives its Keto object `app:tadoku/<route>` the canonical parent and
+creates its Flipt namespace `tadoku_<route>` in the `test` environment.
+Selecting the worker sets a worker override so only the branch worker claims
+the tenant's jobs. [Configuration](../tadoku-api/configuration.md#tenant-lifecycle-command)
 documents the command, the role and its refusals of `tadoku/prod`.
 
 ## Who can use a branch

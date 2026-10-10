@@ -63,8 +63,7 @@ data:
     \if :grants_valid
       \echo 'database ownership and runtime grants validated'
     \else
-      \echo 'database ownership or runtime grant validation failed'
-      \quit 1
+      do $$ begin raise exception 'database ownership or runtime grant validation failed'; end $$;
     \endif
 
     commit;

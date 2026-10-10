@@ -14,8 +14,8 @@ func TestImmersionProfileFindByUserID(t *testing.T) {
 		{description: []string{"user", "populated"}, want: http.StatusOK},
 		{description: []string{"user2", "populated"}, want: http.StatusOK},
 		{description: []string{"admin", "populated"}, want: http.StatusOK},
-		{description: []string{"unknown", "user"}, want: http.StatusInternalServerError},
-		{description: []string{"nil", "user"}, want: http.StatusInternalServerError},
+		{description: []string{"unknown", "user"}, want: http.StatusNotFound},
+		{description: []string{"nil", "user"}, want: http.StatusNotFound},
 		{description: []string{"invalid", "user"}, want: http.StatusBadRequest},
 	}
 	for _, test := range tests {

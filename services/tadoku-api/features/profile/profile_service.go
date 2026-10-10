@@ -151,7 +151,7 @@ func userPage(users []cachedUser, pageSize, page int) []cachedUser {
 func (s *Service) FindProfile(ctx context.Context, userID uuid.UUID) (*PublicProfile, error) {
 	identity, err := s.identities.FetchIdentity(ctx, userID)
 	if err != nil {
-		return nil, err
+		return nil, mapIdentityFetchError(err)
 	}
 	if identity.GetSchemaId() != "user" {
 		return nil, fmt.Errorf("unexpected schema %s", identity.GetSchemaId())
@@ -170,15 +170,19 @@ func (s *Service) FindProfile(ctx context.Context, userID uuid.UUID) (*PublicPro
 
 func (s *Service) FetchAccountCreatedAt(ctx context.Context, userID uuid.UUID) (time.Time, error) {
 	identity, err := s.identities.FetchIdentity(ctx, userID)
-	if errors.Is(err, kratosclient.ErrNotFound) {
-		return time.Time{}, ErrIdentityNotFound
-	}
 	if err != nil {
-		return time.Time{}, err
+		return time.Time{}, mapIdentityFetchError(err)
 	}
 	if identity.GetSchemaId() != "user" {
 		return time.Time{}, fmt.Errorf("unexpected schema %s", identity.GetSchemaId())
 	}
 
 	return identity.GetCreatedAt(), nil
+}
+
+func mapIdentityFetchError(err error) error {
+	if errors.Is(err, kratosclient.ErrNotFound) {
+		return ErrIdentityNotFound
+	}
+	return err
 }

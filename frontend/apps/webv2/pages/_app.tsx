@@ -155,6 +155,7 @@ MyApp.getInitialProps = async (ctx: AppContextWithSession) => {
     fetch,
     3_000,
     serverApiEndpointForHost(host),
+    ctx.ctx.req?.headers['x-dev-branch'],
   )
 
   return { ...props, ...initialAppProps }

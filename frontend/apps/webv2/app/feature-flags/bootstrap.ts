@@ -19,6 +19,7 @@ export const bootstrapFeatureFlagDecisions = async (
   request: typeof fetch = fetch,
   timeoutMilliseconds = 3_000,
   apiEndpoint?: string,
+  branch?: string | string[],
 ): Promise<FeatureFlagDecisions> => {
   const subject = session?.identity?.id
   if (
@@ -37,7 +38,10 @@ export const bootstrapFeatureFlagDecisions = async (
     try {
       const response = await request(apiEndpoint ? `${apiEndpoint}/immersion/feature-flags` : featureFlagEndpoint, {
         cache: 'no-store',
-        headers: { cookie },
+        headers: {
+          cookie,
+          ...(typeof branch === 'string' ? { 'x-dev-branch': branch } : {}),
+        },
         signal: controller.signal,
       })
       if (!response.ok) {

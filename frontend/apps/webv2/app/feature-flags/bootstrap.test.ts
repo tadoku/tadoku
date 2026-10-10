@@ -44,6 +44,28 @@ describe('bootstrapFeatureFlagDecisions', () => {
     )
   })
 
+  it('forwards the incoming branch so a branch host gets its own tenant', async () => {
+    const request = vi
+      .fn()
+      .mockResolvedValue(new Response(JSON.stringify({ decisions: {} }), { status: 200 }))
+
+    await bootstrapFeatureFlagDecisions(
+      session,
+      'ory_kratos_session=secret',
+      true,
+      request,
+      3_000,
+      'http://oathkeeper-proxy:4455/api/internal',
+      'alice-0123abcd',
+    )
+    expect(request).toHaveBeenCalledWith(
+      'http://oathkeeper-proxy:4455/api/internal/immersion/feature-flags',
+      expect.objectContaining({
+        headers: { cookie: 'ory_kratos_session=secret', 'x-dev-branch': 'alice-0123abcd' },
+      }),
+    )
+  })
+
   it('uses the registry default without loading Flipt when there is no session', async () => {
     const request = vi.fn()
 

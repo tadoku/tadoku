@@ -55,6 +55,11 @@ these reserved roots and preserves paths, ports and private server API endpoints
 Other production subdomains do not select a branch. Development keeps the
 branch label directly beneath each configured development app host.
 
+Server-side API calls use the private endpoint from
+`serverApiEndpointForHost()` and forward the incoming `x-dev-branch` header,
+which branch host routes set and production edge routes remove, so the
+gateway signs the branch tenant.
+
 ## Authentication flows
 
 The auth application’s shared logout hook creates a Kratos logout flow only

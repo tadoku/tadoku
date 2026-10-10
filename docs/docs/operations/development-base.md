@@ -281,7 +281,8 @@ failure. It needs no cluster credentials.
   exact image digests, commands and results in `report.json`, with individual
   logs.
 - It proves fresh and existing ownership transfer, runtime DML and sequence
-  access, denied DDL and migration-table writes, and branch provisioning. It
+  access, denied DDL and migration-table writes, failure of the ownership hook
+  when its validation fails, and branch provisioning. It
   checks the automatic migration profile, declared variables and hooks, literal
   branch-only migration targets, and refusal to provision legacy-owned databases.
 - It also proves fresh migrations, no-op reruns, an intentional connection

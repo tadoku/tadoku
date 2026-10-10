@@ -1,6 +1,6 @@
 ---
 name: verify-tadoku
-description: Verify Tadoku application changes in the shared development environment using dev-cli branch overlays and real browser journeys. Use for frontend/backend live edits, routing checks, screenshots and verification handoffs; not production deployment or environment bootstrap.
+description: Verify Tadoku application changes in the shared development environment using dev-cli branch overlays and real browser journeys, and on production branch hosts when the maintainer has deployed a branch and asks for verification. Use for frontend/backend live edits, routing checks, screenshots and verification handoffs; not production deployment or environment bootstrap.
 ---
 
 # Verify Tadoku
@@ -112,6 +112,30 @@ authentication remains shared across branches.
 If the wrong backend, auth failure, missing data or sync error blocks proof,
 capture status and scoped logs first. Fix within the assigned change or report the
 exact unmet prerequisite; don't broaden access or erase data to make a check pass.
+
+## Production branch hosts
+
+Verify on production branch hosts only when the maintainer has deployed the
+branch and asks for verification. [Production branches](../../../docs/docs/develop/production-branches.md)
+describes the hosts, tenant and accounts. Never run `dev up`, `task`, `down`
+or `cleanup` with the production configuration yourself.
+
+- Use the `<route>.preview.tadoku.app`, `<route>.account.preview.tadoku.app`
+  and `<route>.admin.preview.tadoku.app` URLs printed by `dev status` that
+  the maintainer shares. There is no live editing; a code change needs a new
+  pushed commit that the maintainer deploys.
+- Log in only with the reader, admin and outsider test accounts provisioned
+  for that route, from the maintainer's local accounts file. Never automate
+  with a production administrator account, and never register new accounts.
+- Before claiming an overlay result, prove it through `X-Dev-Backend` on the
+  relevant document or API response. A base backend means production served
+  the request.
+- Write only as a test account, and only to the branch tenant: a request
+  served by the branch API overlay, which rejects every other tenant. A branch
+  without an API overlay calls the production API; do not write through it.
+- Evidence contains no cookies, passwords, session tokens or production user
+  data. Crop or omit anything that shows a real user. Cleanup is the
+  maintainer's `dev down`; report residual data instead of removing it.
 
 ## Evidence and cleanup
 

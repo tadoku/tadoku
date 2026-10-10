@@ -14,6 +14,7 @@ const sidebars: SidebarsConfig = {
         'develop/toolchain',
         'develop/environment',
         'develop/verifying-changes',
+        'develop/production-branches',
         'develop/contributing',
       ],
     },

@@ -14,7 +14,8 @@ base of every service running there even when no developer has a loop running;
 see [Development base](../operations/development-base.md). There is no local
 Kubernetes cluster or Helm bootstrap to run. For a map of the components, see
 [System architecture](../architecture/index.md). Production is deployed from a
-private repository and is not covered here.
+private repository; running a branch beside production is covered in
+[Production branches](./production-branches.md).
 
 `.dev/config.yaml` is the committed non-secret configuration and targets
 `homelab-talos-dev` directly. Always use that context for development kubectl

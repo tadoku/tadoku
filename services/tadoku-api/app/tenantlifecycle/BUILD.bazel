@@ -50,6 +50,7 @@ go_test(
         "//services/tadoku-api/internal/testvalkey",
         "@com_github_google_uuid//:uuid",
         "@com_github_jackc_pgx_v5//:pgx",
+        "@com_github_jackc_pgx_v5//pgxpool",
         "@com_github_valkey_io_valkey_go//:valkey-go",
     ],
 )

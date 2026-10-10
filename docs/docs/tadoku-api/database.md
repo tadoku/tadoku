@@ -120,7 +120,9 @@ row-level policies and is not the application credential. The runtime role
 has no superuser, `bypassrls` or owner membership, owns no relations, and has
 application DML and sequence privileges. It can read `schema_migrations`
 but cannot change it. Tests preserve this distinction with separate fixture
-and application pools.
+and application pools. The `tadoku_tenant_lifecycle` role manages test tenants
+with only `select`, `insert` and `delete` on `tenants` and `tenant_overrides`;
+see the [tenant lifecycle command](configuration.md#tenant-lifecycle-command).
 
 Data migrations and operator SQL must set the intended tenant explicitly
 inside their transaction:

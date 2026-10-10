@@ -111,12 +111,12 @@ func (app *Application) registry(
 			return err
 		}
 		q := queries.New(executor)
-		owner, err := q.OwnsTenantRegistry(ctx)
+		allowed, err := q.MayManageTenantRegistry(ctx)
 		if err != nil {
 			return err
 		}
-		if !owner {
-			return errors.New("tenant lifecycle requires database owner credentials")
+		if !allowed {
+			return errors.New("tenant lifecycle requires the registry owner or a tadoku_tenant_lifecycle member")
 		}
 		if err := q.LockTenant(ctx, key.String()); err != nil {
 			return err

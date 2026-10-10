@@ -50,16 +50,25 @@ func (q *Queries) LockTenant(ctx context.Context, key string) error {
 	return err
 }
 
-const ownsTenantRegistry = `-- name: OwnsTenantRegistry :one
-select pg_has_role(current_user, relowner, 'USAGE')::boolean as owns_registry
-from pg_catalog.pg_class where oid = 'tenants'::regclass
+const mayManageTenantRegistry = `-- name: MayManageTenantRegistry :one
+select (
+  pg_has_role(current_user, relowner, 'USAGE')
+  or exists (
+    select
+    from pg_catalog.pg_roles
+    where rolname = 'tadoku_tenant_lifecycle'
+      and pg_has_role(current_user, oid, 'USAGE')
+  )
+)::boolean as may_manage_registry
+from pg_catalog.pg_class
+where oid = 'tenants'::regclass
 `
 
-func (q *Queries) OwnsTenantRegistry(ctx context.Context) (bool, error) {
-	row := q.db.QueryRow(ctx, ownsTenantRegistry)
-	var owns_registry bool
-	err := row.Scan(&owns_registry)
-	return owns_registry, err
+func (q *Queries) MayManageTenantRegistry(ctx context.Context) (bool, error) {
+	row := q.db.QueryRow(ctx, mayManageTenantRegistry)
+	var may_manage_registry bool
+	err := row.Scan(&may_manage_registry)
+	return may_manage_registry, err
 }
 
 const setOverride = `-- name: SetOverride :exec

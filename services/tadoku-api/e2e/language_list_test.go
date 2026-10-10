@@ -11,6 +11,7 @@ func TestListLanguages(t *testing.T) {
 		want        int
 	}{
 		{description: []string{"admin", "ordered"}, want: http.StatusOK},
+		{description: []string{"test", "tenant", "admin"}, want: http.StatusOK},
 		{description: []string{"guest"}, want: http.StatusUnauthorized},
 		{description: []string{"non", "admin"}, want: http.StatusForbidden},
 	}

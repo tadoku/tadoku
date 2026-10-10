@@ -139,9 +139,9 @@ func loadConfig() (config, error) {
 		}
 	}
 
-	ketoURL, err := url.ParseRequestURI(cfg.KetoReadURL)
-	if err != nil || ketoURL.Host == "" || (ketoURL.Scheme != "http" && ketoURL.Scheme != "https") {
-		return config{}, fmt.Errorf("validate config: KetoReadURL must be an HTTP(S) URL")
+	cfg.KetoReadURL, err = providerBaseURL("KetoReadURL", cfg.KetoReadURL)
+	if err != nil {
+		return config{}, err
 	}
 
 	ketoWriteURL, err := url.Parse(cfg.KetoWriteURL)

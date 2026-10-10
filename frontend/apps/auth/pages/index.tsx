@@ -3,6 +3,7 @@ import type { NextPage } from 'next'
 import { useEffect, useState } from 'react'
 import Flow from '../src/ui/Flow'
 import ory from '../src/ory'
+import { flowReturnTo, forwardBranchFlow } from '../src/branch'
 import { AxiosError } from 'axios'
 import { useSession } from '../src/session'
 import { useRouter } from 'next/router'
@@ -33,6 +34,7 @@ const Settings: NextPage<Props> = () => {
       ory
         .getSettingsFlow({ id: String(flowId) })
         .then(({ data }) => {
+          if (forwardBranchFlow(data)) return
           setFlow(data)
         })
         .catch(handleFlowError(router, 'settings', setFlow))
@@ -41,7 +43,7 @@ const Settings: NextPage<Props> = () => {
 
     ory
       .createBrowserSettingsFlow({
-        returnTo: returnTo ? String(returnTo) : undefined,
+        returnTo: flowReturnTo(returnTo),
       })
       .then(({ data }) => {
         setFlow(data)

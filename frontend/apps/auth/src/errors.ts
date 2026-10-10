@@ -2,6 +2,7 @@ import axios, { AxiosError } from 'axios'
 import { NextRouter } from 'next/router'
 import { Dispatch, SetStateAction } from 'react'
 import { toast } from 'react-toastify'
+import { followKratosUrl } from './branch'
 
 function flowTypeToRoute(
   flowType: 'login' | 'registration' | 'settings' | 'recovery' | 'verification',
@@ -35,7 +36,7 @@ export function handleGetFlowError<S>(
         switch (errorCode) {
           case 'session_aal2_required':
             // 2FA is enabled and enforced, but user did not perform 2fa yet!
-            window.location.href = err.response?.data.redirect_browser_to
+            followKratosUrl(err.response?.data.redirect_browser_to)
             return
           case 'session_already_available':
             // User is already signed in, let's redirect them home!
@@ -43,7 +44,7 @@ export function handleGetFlowError<S>(
             return
           case 'session_refresh_required':
             // We need to re-authenticate to perform this action
-            window.location.href = err.response?.data.redirect_browser_to
+            followKratosUrl(err.response?.data.redirect_browser_to)
             return
           case 'self_service_flow_return_to_forbidden':
             // The flow expired, let's request a new one.
@@ -74,7 +75,7 @@ export function handleGetFlowError<S>(
             return
           case 'browser_location_change_required':
             // Ory Kratos asked us to point the user to this URL.
-            window.location.href = err.response!.data.redirect_browser_to
+            followKratosUrl(err.response!.data.redirect_browser_to)
             return
         }
       }

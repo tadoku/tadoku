@@ -389,7 +389,8 @@ bazel run //services/tadoku-api/cmd/tadoku-tenant -- teardown \
 All commands refuse credentials that neither own the tenant registry nor
 belong to the `tadoku_tenant_lifecycle` role. That role needs only schema usage,
 `select`, `insert` and `delete` on `tenants` and `tenant_overrides`, and
-`execute` on `copy_production_platform_scoring(text)`; registry policies limit
+`execute` on `copy_production_platform_scoring(text)` and
+`copy_production_published_pages(text)`; registry policies limit
 its writes to test rows, and deleting a row cascades through the owner's
 foreign keys. Production branch Jobs use it, and development uses the owner.
 Credentials come from `TENANT_POSTGRES_HOST`,
@@ -414,11 +415,14 @@ Provision commits an idempotent test registry row under a transaction-local
 advisory lock. In the same transaction it copies `tadoku/prod`'s active
 platform scoring rule set and its rules into the tenant, with new ids and a
 `platform_scoring_config` row pointing at the copy, so logs can be scored.
-The copy is skipped when the tenant already has platform scoring config, so
-reruns keep the tenant's own scoring changes; contest rule sets and user data
-are never copied. It then grants the canonical Keto parent and repeated
-`--tester` UUIDs, then creates only missing Flipt resources from the strict
-boolean seed format.
+It then copies `tadoku/prod`'s published, undeleted CMS pages, each with only
+the content revision it displays, keeping namespaces, slugs, titles and
+timestamps under new ids. Drafts, scheduled and deleted pages, earlier
+revisions and posts are not copied. Each copy is skipped when the tenant
+already has platform scoring config or any page, so reruns keep the tenant's
+own changes; contest rule sets and user data are never copied. It then grants
+the canonical Keto parent and repeated `--tester` UUIDs, then creates only
+missing Flipt resources from the strict boolean seed format.
 Keto grants are checked by their complete tuple before creating them because
 the provider accepts duplicate relationship writes.
 Reruns preserve existing grants and flag values. Teardown deletes the tenant's

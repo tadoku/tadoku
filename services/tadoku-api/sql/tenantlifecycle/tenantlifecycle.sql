@@ -23,6 +23,9 @@ insert into tenants (key, kind) values ($1, 'test') on conflict do nothing;
 -- name: CopyProductionPlatformScoring :exec
 select copy_production_platform_scoring(sqlc.arg('tenant')::text);
 
+-- name: CopyProductionPublishedPages :exec
+select copy_production_published_pages(sqlc.arg('tenant')::text);
+
 -- name: DeleteTestTenant :exec
 delete from tenants where key = $1 and kind = 'test';
 

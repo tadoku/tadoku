@@ -52,6 +52,9 @@ func (app *Application) Provision(
 		if err := q.CopyProductionPlatformScoring(ctx, key.String()); err != nil {
 			return fmt.Errorf("copy production platform scoring: %w", err)
 		}
+		if err := q.CopyProductionPublishedPages(ctx, key.String()); err != nil {
+			return fmt.Errorf("copy production published pages: %w", err)
+		}
 		return nil
 	}); err != nil {
 		return err

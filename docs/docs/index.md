@@ -35,6 +35,7 @@ the development environment and verified.
 | Install tools, build, test and run code generators | [Toolchain and repository](./develop/toolchain.md) |
 | Run your branch against the shared development environment | [Development environment](./develop/environment.md) |
 | Prove a change works and publish evidence | [Verifying changes](./develop/verifying-changes.md) |
+| Deploy or verify a branch beside production | [Production branches](./develop/production-branches.md) |
 | Commit, open a pull request, ship a migration or report a bug | [Contributing workflow](./develop/contributing.md) |
 | Understand the running system and request paths | [System overview](./architecture/index.md) |
 | Design or review a module boundary or shared abstraction | [Module design](./architecture/module-design.md) |

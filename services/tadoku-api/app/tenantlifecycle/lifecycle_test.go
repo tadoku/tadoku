@@ -3,6 +3,7 @@ package tenantlifecycle_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"reflect"
 	"strings"
@@ -11,10 +12,12 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/tadoku/tadoku/services/tadoku-api/app/tenantlifecycle"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/scoring"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/flipt"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/fliptmanagement"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/keto"
@@ -64,8 +67,9 @@ func TestTenantLifecycle(t *testing.T) {
 	}
 	ketoClient := keto.NewClient(ketoFixture.ReadURL(), ketoFixture.WriteURL(),
 		keto.WithHTTPClient(&http.Client{Timeout: 2 * time.Second}))
+	lifecycle := lifecyclePool(t, db)
 	application := tenantlifecycle.NewApplication(
-		lifecyclePool(t, db),
+		lifecycle,
 		permissions.NewTenantManager(ketoClient),
 		leaderboard.NewCache(client, time.Second),
 		fliptmanagement.NewClient(fliptmanagement.Config{URL: fliptFixture.URL(), Targets: targets}),
@@ -87,10 +91,24 @@ segments: []
 		t.Fatal(err)
 	}
 
+	seedEveryTenantTable(t, db, tenant.Production().String())
+	productionBeforeProvision := ownedRows(t, db, tenant.Production().String())
 	for _, target := range []tenant.TestKey{key, key, other} {
 		if err := application.Provision(t.Context(), target, []uuid.UUID{reader}, features); err != nil {
 			t.Fatal(err)
 		}
+	}
+	assertCopiedPlatformScoring(t, db, key)
+	if after := ownedRows(t, db, tenant.Production().String()); !reflect.DeepEqual(productionBeforeProvision, after) {
+		t.Errorf("provisioning changed canonical rows: before=%v after=%v", productionBeforeProvision, after)
+	}
+	if _, err := lifecycle.Exec(t.Context(), copyScoringSQL, tenant.Production().String()); err == nil {
+		t.Error("lifecycle credentials copied scoring into the canonical tenant")
+	}
+	_, err = db.AppPool.Exec(t.Context(), copyScoringSQL, other.String())
+	var pgError *pgconn.PgError
+	if !errors.As(err, &pgError) || pgError.Code != "42501" {
+		t.Errorf("runtime scoring copy=%v, want PostgreSQL42501", err)
 	}
 	var registry int
 	if err := db.Pool.QueryRow(t.Context(), "select count(*) from tenants where key = $1", key.String()).
@@ -126,7 +144,7 @@ segments: []
 		t.Fatal(err)
 	}
 
-	for _, target := range []string{tenant.Production().String(), key.String(), other.String()} {
+	for _, target := range []string{key.String(), other.String()} {
 		seedEveryTenantTable(t, db, target)
 	}
 	beforeProduction := ownedRows(t, db, tenant.Production().String())
@@ -272,6 +290,69 @@ segments: []
 	t.Log("lifecycle workflow passed: idempotent provision, all-table cascade, preserved canonical/other rows, retry and refusals")
 }
 
+const copyScoringSQL = "select copy_production_platform_scoring($1)"
+
+func assertCopiedPlatformScoring(t *testing.T, db *testpostgres.Database, key tenant.TestKey) {
+	t.Helper()
+	ctx := tenant.WithKey(t.Context(), key.Key())
+
+	service := scoring.NewService(scoring.NewScoringRepository(db.AppPool), true, nil)
+	unit := "reading_page"
+	amount := float32(10)
+	estimate, eligible, err := service.ScorePlatform(ctx, scoring.PreviewParameters{
+		UnitKey:      &unit,
+		ActivityID:   1,
+		LanguageCode: "jpn",
+		Amount:       &amount,
+	})
+	if err != nil || !eligible || estimate.Score != 10 || estimate.RuleSetID == nil {
+		t.Fatalf("score in provisioned tenant: estimate=%+v eligible=%t error=%v", estimate, eligible, err)
+	}
+
+	var production uuid.UUID
+	var sets, platformSets, differing int
+	err = db.Pool.QueryRow(t.Context(), `with copied as (
+			select active_rule_set_id as id from platform_scoring_config where tenant = $1
+		),
+		canonical as (
+			select active_rule_set_id as id from platform_scoring_config where tenant = 'tadoku/prod'
+		),
+		copied_rules as (
+			select priority, stackable, activity_id, unit_key, language_code, tag, score_source, rate
+			from scoring_rules
+			where rule_set_id = (select id from copied)
+				and tenant = $1
+		),
+		canonical_rules as (
+			select priority, stackable, activity_id, unit_key, language_code, tag, score_source, rate
+			from scoring_rules
+			where rule_set_id = (select id from canonical)
+		)
+		select
+			(select id from canonical),
+			(select count(*) from scoring_rule_sets where tenant = $1),
+			(select count(*) from scoring_rule_sets where tenant = $1 and scope = 'platform'),
+			(select count(*) from (
+				(table copied_rules except all table canonical_rules)
+				union all (table canonical_rules except all table copied_rules)
+			) difference)`,
+		key.String(),
+	).Scan(&production, &sets, &platformSets, &differing)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if *estimate.RuleSetID == production || sets != 1 || platformSets != 1 || differing != 0 {
+		t.Errorf(
+			"copied scoring: rule set=%s production=%s sets=%d platform=%d differing rules=%d",
+			*estimate.RuleSetID,
+			production,
+			sets,
+			platformSets,
+			differing,
+		)
+	}
+}
+
 func lifecycleKey(t *testing.T, name string) tenant.TestKey {
 	t.Helper()
 	key, err := tenant.ParseTestTenant("e2e/" + name + "-" + strings.ReplaceAll(uuid.NewString(), "-", "")[:8])
@@ -297,6 +378,7 @@ func lifecyclePool(t *testing.T, db *testpostgres.Database) *pgxpool.Pool {
 		$$;
 		grant usage on schema public to tadoku_tenant_lifecycle;
 		grant select, insert, delete on tenants, tenant_overrides to tadoku_tenant_lifecycle;
+		grant execute on function copy_production_platform_scoring(text) to tadoku_tenant_lifecycle;
 		create role ` + roleSQL + ` login nosuperuser nobypassrls in role tadoku_tenant_lifecycle password '` + password + `'`
 	if _, err := db.Pool.Exec(t.Context(), setup); err != nil {
 		t.Fatal(err)
@@ -404,6 +486,9 @@ func seedEveryTenantTable(t *testing.T, db *testpostgres.Database, key string) {
 		values ($1, uuid_generate_v5(uuid_nil(), $1 || '/rule-set'), 'platform', 999, 'draft');
 		insert into scoring_rules (tenant, rule_set_id, priority, stackable, activity_id, score_source, rate)
 		values ($1, uuid_generate_v5(uuid_nil(), $1 || '/rule-set'), 1, false, 1, 'amount', 1);
+		insert into scoring_rule_sets (tenant, id, scope, contest_id, version, status, mode)
+		values ($1, uuid_generate_v5(uuid_nil(), $1 || '/contest-rule-set'), 'contest',
+			uuid_generate_v5(uuid_nil(), $1 || '/contest'), 1, 'draft', 'replace');
 		insert into platform_scoring_config (tenant, singleton, active_rule_set_id)
 		values ($1, true, uuid_generate_v5(uuid_nil(), $1 || '/rule-set'))
 		on conflict (tenant, singleton) do nothing;

@@ -46,7 +46,13 @@ func (app *Application) Provision(
 		}
 	}
 	if err := app.registry(ctx, key, true, func(ctx context.Context, q *queries.Queries) error {
-		return q.InsertTestTenant(ctx, key.String())
+		if err := q.InsertTestTenant(ctx, key.String()); err != nil {
+			return err
+		}
+		if err := q.CopyProductionPlatformScoring(ctx, key.String()); err != nil {
+			return fmt.Errorf("copy production platform scoring: %w", err)
+		}
+		return nil
 	}); err != nil {
 		return err
 	}

@@ -23,6 +23,15 @@ func (q *Queries) ClearOverride(ctx context.Context, arg ClearOverrideParams) er
 	return err
 }
 
+const copyProductionPlatformScoring = `-- name: CopyProductionPlatformScoring :exec
+select copy_production_platform_scoring($1::text)
+`
+
+func (q *Queries) CopyProductionPlatformScoring(ctx context.Context, tenant string) error {
+	_, err := q.db.Exec(ctx, copyProductionPlatformScoring, tenant)
+	return err
+}
+
 const deleteTestTenant = `-- name: DeleteTestTenant :exec
 delete from tenants where key = $1 and kind = 'test'
 `

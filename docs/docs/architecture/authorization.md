@@ -1,7 +1,7 @@
 ---
 sidebar_position: 3
 title: Authentication and authorization
-description: How Tadoku API authenticates gateway JWTs and checks tenant-scoped Keto administrator, ban and access permits.
+description: How Tadoku API authenticates gateway JWTs, checks tenant-scoped Keto administrator, ban and access permits and restricts shared-data writes to production.
 ---
 
 # Authentication and authorization
@@ -153,6 +153,7 @@ HTTP middleware enforces administrator access. They call the
 | `RequireAuthenticated` | An actor is present (a signed-in, non-guest user) and the ban lookup succeeded. | `401` for no user or `guest`; `503` if the ban state is unknown. |
 | `RequireAuthenticatedAllowingUnknownBan` | An actor is present (a signed-in, non-guest user). | `401`. Read-only operations only; mutations must never use it. |
 | `RequireAdmin` | `RequireAuthenticated` passes and the actor holds the tenant object's `admin` permit. | As above, `403` for non-administrators, `503` on Keto errors. |
+| `RequireProductionAdmin` | `RequireAdmin` passes and the request tenant is `tadoku/prod`. | As `RequireAdmin`, and `403` for every other tenant. |
 | `IsAdmin`, `IsAdminOrFalse` | Report administrator status to expand behavior inside an already-authorized operation. | `IsAdmin` returns unavailable on errors; `IsAdminOrFalse` returns `false`. |
 
 Feature services may inspect permissions only to expand behavior inside an
@@ -169,6 +170,17 @@ resolved object. A test tenant's list therefore shows only its own grants,
 while its access and role checks still inherit the parent permits. Unbanning
 a user on a test tenant removes only that object's direct ban; an inherited
 production ban continues to apply.
+
+## Shared data
+
+`languages` and `log_units` have no tenant column: every tenant, including
+production, reads the same rows. The `tenants` and `tenant_overrides`
+registry is also shared, but only the owner `tadoku-tenant` command writes
+it. Any tenant may read shared data. Application operations that write it
+call `RequireProductionAdmin`, so an administrator acting through a test
+tenant, whether granted on the branch object or inherited from production,
+receives `403` and cannot change data production uses. Row-level security
+policies on the shared tables also reject writes from any other tenant.
 
 ## Oathkeeper administrator callback
 

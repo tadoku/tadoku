@@ -166,3 +166,16 @@ func (c *Checker) RequireAdmin(ctx context.Context) error {
 	}
 	return nil
 }
+
+// RequireProductionAdmin guards writes to data shared by every tenant, such as languages and log units.
+func (c *Checker) RequireProductionAdmin(ctx context.Context) error {
+	if err := c.RequireAdmin(ctx); err != nil {
+		return err
+	}
+
+	key, _ := tenant.FromContext(ctx)
+	if key != tenant.Production() {
+		return errx.NewForbiddenError("shared data is writable only from the production tenant")
+	}
+	return nil
+}

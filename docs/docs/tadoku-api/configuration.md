@@ -387,11 +387,12 @@ bazel run //services/tadoku-api/cmd/tadoku-tenant -- teardown \
 ```
 
 All commands refuse credentials that neither own the tenant registry nor
-belong to the `tadoku_tenant_lifecycle` role. That role needs only schema usage
-and `select`, `insert` and `delete` on `tenants` and `tenant_overrides`;
-registry policies limit its writes to test rows, and deleting a row cascades
-through the owner's foreign keys. Production branch Jobs use it, and
-development uses the owner. Credentials come from `TENANT_POSTGRES_HOST`,
+belong to the `tadoku_tenant_lifecycle` role. That role needs only schema usage,
+`select`, `insert` and `delete` on `tenants` and `tenant_overrides`, and
+`execute` on `copy_production_platform_scoring(text)`; registry policies limit
+its writes to test rows, and deleting a row cascades through the owner's
+foreign keys. Production branch Jobs use it, and development uses the owner.
+Credentials come from `TENANT_POSTGRES_HOST`,
 `TENANT_POSTGRES_PORT` (default 5432), `TENANT_POSTGRES_DATABASE`,
 `TENANT_POSTGRES_USER`, `TENANT_POSTGRES_PASSWORD` and `TENANT_POSTGRES_SSLMODE`.
 `TENANT_POSTGRES_URL` is rejected. Provision and teardown additionally require
@@ -410,8 +411,14 @@ target sets no repository or tags; the caller supplies both. The development
 `//.dev:tenant_push` image has no CA bundle.
 
 Provision commits an idempotent test registry row under a transaction-local
-advisory lock, grants the canonical Keto parent and repeated `--tester` UUIDs,
-then creates only missing Flipt resources from the strict boolean seed format.
+advisory lock. In the same transaction it copies `tadoku/prod`'s active
+platform scoring rule set and its rules into the tenant, with new ids and a
+`platform_scoring_config` row pointing at the copy, so logs can be scored.
+The copy is skipped when the tenant already has platform scoring config, so
+reruns keep the tenant's own scoring changes; contest rule sets and user data
+are never copied. It then grants the canonical Keto parent and repeated
+`--tester` UUIDs, then creates only missing Flipt resources from the strict
+boolean seed format.
 Keto grants are checked by their complete tuple before creating them because
 the provider accepts duplicate relationship writes.
 Reruns preserve existing grants and flag values. Teardown deletes the tenant's

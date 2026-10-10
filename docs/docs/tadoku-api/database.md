@@ -64,6 +64,12 @@ are independently implemented with `pg_query_go`.
 - The existing `data.create_contest_round` function, called by the scheduled
   contest jobs described in `services/tadoku-api/migrations/README.md`, predates
   this rule.
+- `copy_production_platform_scoring(text)` is the one privilege-boundary
+  exception. It is `security definer`, pins `search_path` to the migration
+  schema and `pg_temp`, and has `execute` revoked from `PUBLIC`. It copies
+  `tadoku/prod`'s active platform scoring rule set into a registered `test`
+  tenant without platform scoring config, so the lifecycle role needs no
+  scoring-table grants.
 
 ## SQL style
 
@@ -121,8 +127,10 @@ has no superuser, `bypassrls` or owner membership, owns no relations, and has
 application DML and sequence privileges. It can read `schema_migrations`
 but cannot change it. Tests preserve this distinction with separate fixture
 and application pools. The `tadoku_tenant_lifecycle` role manages test tenants
-with only `select`, `insert` and `delete` on `tenants` and `tenant_overrides`;
-see the [tenant lifecycle command](configuration.md#tenant-lifecycle-command).
+with only `select`, `insert` and `delete` on `tenants` and `tenant_overrides`,
+plus `execute` on `copy_production_platform_scoring(text)`. Migrations grant
+nothing to it; the production infrastructure hook does. See the
+[tenant lifecycle command](configuration.md#tenant-lifecycle-command).
 
 Data migrations and operator SQL must set the intended tenant explicitly
 inside their transaction:

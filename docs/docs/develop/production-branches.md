@@ -102,10 +102,12 @@ describe how the frontends resolve sibling branch hosts.
 
 The branch API and worker run with `API_BRANCH` and `WORKER_BRANCH` set to the
 branch tenant. The API rejects a request signed for any other tenant with HTTP
-421, and the worker claims only that tenant's jobs. The gateway signs the
-tenant a request carries; see
-[Authorization](../architecture/authorization.md#request-pipeline). A branch
-without an API overlay calls the production API.
+421, and the worker claims only that tenant's jobs. Each branch host route
+sets `x-dev-branch` to the route, and Oathkeeper signs `tadoku/<route>` from
+it; requests on production hosts, whose routes remove the header, carry
+`tadoku/prod`. See
+[Authorization](../architecture/authorization.md#request-pipeline). A branch without an API overlay calls the production API deployment, which
+serves the request under the branch tenant.
 
 ### Tenant lifecycle
 

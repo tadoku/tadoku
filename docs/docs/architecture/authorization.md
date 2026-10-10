@@ -17,10 +17,13 @@ its source is `services/tadoku-api/spec/openapi.yaml`.
   Oathkeeper with a Kratos session cookie or no credentials. Oathkeeper's
   `id_token` mutator replaces them with an RS256 JWT whose `sub` is the Kratos
   identity ID, or `guest` for anonymous requests. Session traits travel in the
-  `session` claim; `type` is `user`. API tokens carry the signed constant
-  `tenant` claim `tadoku/prod` for both anonymous and signed-in requests in
-  the development base and production. Client branch headers do not select the
-  tenant. Service-token exchanges use their own claims.
+  `session` claim; `type` is `user`. API tokens carry a signed `tenant`
+  claim for both anonymous and signed-in requests: `tadoku/prod`, or
+  `tadoku/<route>` when a trusted branch selection reaches Oathkeeper. The
+  edge removes client branch headers, so only branch hosts and in-cluster
+  callers forwarding the selection choose a test tenant; production Oathkeeper
+  signs an empty, rejected tenant for a malformed route. Service-token
+  exchanges use their own claims.
 - **Ory Keto** owns authorization facts: who is an administrator and who is
   banned. Tadoku API reads them from Keto on every request that needs them. Roles
   are not stored in PostgreSQL or in the token, and results are not cached.

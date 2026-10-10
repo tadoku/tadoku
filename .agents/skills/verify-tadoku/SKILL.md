@@ -132,7 +132,8 @@ or `cleanup` with the production configuration yourself.
   the request.
 - Write only as a test account, and only to the branch tenant: a request
   served by the branch API overlay, which rejects every other tenant. A branch
-  without an API overlay calls the production API; do not write through it.
+  without an API overlay calls the production API deployment, under the branch
+  tenant; do not write through it.
 - Evidence contains no cookies, passwords, session tokens or production user
   data. Crop or omit anything that shows a real user. Cleanup is the
   maintainer's `dev down`; report residual data instead of removing it.

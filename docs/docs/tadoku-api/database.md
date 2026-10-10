@@ -227,24 +227,30 @@ The helper's own test setup is described in
 
 ## PostgreSQL errors
 
-PostgreSQL and pgx errors are not classified by cause. They reach
-`services/tadoku-api/transport/http/errors.go` without an `errx` kind unless a
-repository operation translates one it expects:
+`services/tadoku-api/infra/postgres/` classifies PostgreSQL and pgx errors by
+cause before they leave `RunInTransaction` or a standalone `Executor`
+statement. It marks only identified outages and capacity exhaustion as
+`errx.Unavailable`; every other error keeps no kind unless a repository
+operation translates one it expects. Classification uses SQLSTATEs and pgx
+error types, never message text.
+`services/tadoku-api/transport/http/errors.go` then maps the kind:
 
 | Error | Response |
 | --- | --- |
 | `pgx.ErrNoRows` checked by the operation | The operation's own error, usually not found |
 | Unique violation checked by the operation with `postgres.IsUniqueViolation` | The operation's already-exists error, `409` |
-| Any other PostgreSQL or pgx error, including other constraint violations, begin and commit failures and a closed or unreachable pool | `500`, logged at Error level |
+| A `pgconn.ConnectError` caused by a network error, such as an unreachable server | `503`, logged at Error level |
+| SQLSTATE class `08` except `08P01`, class `53` except `53400`, and `57P01`, `57P02` and `57P03` | `503`, logged at Error level |
+| Any other PostgreSQL or pgx error, including constraint, syntax, permission, data-conversion and transaction-state errors, class `40` rollbacks, `57014`, a closed pool and a connection lost after a statement or `COMMIT` was sent | `500`, logged at Error level |
 
-- `postgres.IsUniqueViolation` in `services/tadoku-api/infra/postgres/errors.go`
-  is the only SQLSTATE check. Check a SQLSTATE only where the operation gives
-  that constraint a meaning.
+- Check a SQLSTATE in a repository only where the operation gives that
+  constraint a meaning. Other constraint violations are not client conflicts.
 - Errors wrapping `context.DeadlineExceeded` return `504`, and errors wrapping
   `context.Canceled` after the request was canceled return `499`, whatever
-  their source.
-- `503` is reserved for Keto, Kratos and Flipt provider failures. No database
-  error maps to it; only the `/readyz` probe reports a PostgreSQL failure as
-  `503`.
-- Failed transactions are not retried or replayed, and wrapped causes remain
+  their source. Context errors are never classified as unavailable.
+- A PostgreSQL error reported for `COMMIT`, such as a deferred constraint
+  failure or `57P01`, means the transaction was aborted. A transport failure
+  after `COMMIT` was sent leaves the outcome unknown and stays `500`.
+- `503` does not make a replay safe. Failed transactions are not retried or
+  replayed, and the classification wraps the original cause, so it remains
   available to `errors.Is` and `errors.As`.

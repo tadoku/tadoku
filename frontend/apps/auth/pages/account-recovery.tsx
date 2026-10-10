@@ -3,6 +3,7 @@ import type { NextPage } from 'next'
 import { useEffect, useState } from 'react'
 import Flow from '../src/ui/Flow'
 import ory from '../src/ory'
+import { flowReturnTo, forwardBranchFlow } from '../src/branch'
 import { AxiosError } from 'axios'
 import { useSession } from '../src/session'
 import { useRouter } from 'next/router'
@@ -35,6 +36,7 @@ const AccountRecovery: NextPage<Props> = () => {
       ory
         .getRecoveryFlow({ id: String(flowId) })
         .then(({ data }) => {
+          if (forwardBranchFlow(data)) return
           setFlow(data)
         })
         .catch(handleFlowError(router, 'recovery', setFlow))
@@ -43,7 +45,7 @@ const AccountRecovery: NextPage<Props> = () => {
 
     ory
       .createBrowserRecoveryFlow({
-        returnTo: returnTo ? String(returnTo) : undefined,
+        returnTo: flowReturnTo(returnTo),
       })
       .then(({ data }) => {
         setFlow(data)

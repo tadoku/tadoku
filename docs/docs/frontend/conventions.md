@@ -60,6 +60,20 @@ Server-side API calls use the private endpoint from
 which branch host routes set and production edge routes remove, so the
 gateway signs the branch tenant.
 
+Kratos builds redirects and email links from its production `ui_url`s, so the
+auth application routes them through `frontend/apps/auth/src/branch.ts`:
+
+- `followKratosUrl()` follows `redirect_browser_to` and Kratos UI anchors.
+  On a branch host, `branchUrl()` moves production app URLs to the sibling
+  branch host; URLs under the Kratos public endpoint stay on the base host.
+- `flowReturnTo()` defaults a new flow's `return_to` to the branch account host
+  on branch hosts, so Kratos remembers the branch for later email links.
+- `forwardBranchFlow()` runs on every flow fetched by id. When the flow's
+  `return_to`, or the `return_to` in its `request_url`, is on a branch host
+  that `resolveAppUrls()` recognises, `branchFlowUrl()` sends the browser to
+  the same page and query on that branch's account host. Pages already on that
+  branch, production flows and foreign hosts stay where they are.
+
 ## Authentication flows
 
 The auth application’s shared logout hook creates a Kratos logout flow only

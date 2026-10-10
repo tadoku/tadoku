@@ -11,7 +11,7 @@ export interface AppUrls {
 
 const labelPattern = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/
 
-export function resolveAppUrls(config: Record<string, unknown>, host?: string): AppUrls {
+function branchMapper(config: Record<string, unknown>, host?: string) {
   const bases = ['homeUrl', 'authUiUrl', 'adminUrl'] as const
   const urls = Object.fromEntries(bases.map(key => {
     if (typeof config[key] !== 'string') throw new Error(`Missing ${key}`)
@@ -19,7 +19,6 @@ export function resolveAppUrls(config: Record<string, unknown>, host?: string): 
     if (!['https:', 'http:'].includes(url.protocol)) throw new Error(`Invalid ${key}`)
     return [key, url]
   })) as Record<typeof bases[number], URL>
-  if (typeof config.apiEndpoint !== 'string') throw new Error('Missing apiEndpoint')
   const hostname = host?.toLowerCase().replace(/:\d+$/, '')
   const baseHosts = bases.map(key => urls[key].hostname)
   const branchHosts = baseHosts.map(base =>
@@ -46,6 +45,12 @@ export function resolveAppUrls(config: Record<string, unknown>, host?: string): 
     url.hostname = `${branch}.${branchHosts[index]}`
     return url.toString().replace(/\/$/, value.endsWith('/') ? '/' : '')
   }
+  return { branch, prefix }
+}
+
+export function resolveAppUrls(config: Record<string, unknown>, host?: string): AppUrls {
+  const { branch, prefix } = branchMapper(config, host)
+  if (typeof config.apiEndpoint !== 'string') throw new Error('Missing apiEndpoint')
   return {
     ...(branch ? { branch } : {}),
     homeUrl: prefix(config.homeUrl as string),
@@ -53,6 +58,41 @@ export function resolveAppUrls(config: Record<string, unknown>, host?: string): 
     adminUrl: prefix(config.adminUrl as string),
     apiEndpoint: prefix(config.apiEndpoint),
   }
+}
+
+// Maps an absolute production app URL, such as a Kratos redirect_browser_to, to the sibling branch host of `host`.
+// URLs under config.kratosPublicEndpoint stay on the shared Kratos host.
+export function branchUrl(config: Record<string, unknown>, host: string | undefined, url: string): string {
+  const kratos = config.kratosPublicEndpoint
+  if (typeof kratos === 'string' && (url === kratos || url.startsWith(`${kratos.replace(/\/$/, '')}/`))) return url
+  return branchMapper(config, host).prefix(url)
+}
+
+// Returns the same page on the flow's branch account host when a Kratos flow fetched on `currentUrl` was started
+// from a different branch, as identified by its return_to or the return_to in its request_url. Only branch hosts of
+// the configured apps qualify, and a page already on the flow's branch returns undefined.
+export function branchFlowUrl(
+  config: Record<string, unknown>,
+  currentUrl: string,
+  flow: { return_to?: string; request_url?: string },
+): string | undefined {
+  const parse = (value?: string | null) => {
+    try {
+      return value ? new URL(value) : undefined
+    } catch {
+      return undefined
+    }
+  }
+
+  const returnTo = parse(flow.return_to) ?? parse(parse(flow.request_url)?.searchParams.get('return_to'))
+  const target = returnTo && resolveAppUrls(config, returnTo.host)
+  const current = new URL(currentUrl)
+  if (!target?.branch || target.branch === resolveAppUrls(config, current.host).branch) return undefined
+
+  const account = new URL(target.authUiUrl)
+  current.protocol = account.protocol
+  current.host = account.host
+  return current.toString()
 }
 
 export function appUrlsForHost(host?: string): AppUrls {

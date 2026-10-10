@@ -6,6 +6,7 @@ import type { NextPage } from 'next'
 import { useEffect, useState } from 'react'
 import Flow from '../src/ui/Flow'
 import ory from '../src/ory'
+import { flowReturnTo, forwardBranchFlow } from '../src/branch'
 import { useRouter } from 'next/router'
 import { handleFlowError } from '../src/errors'
 import { AxiosError } from 'axios'
@@ -29,6 +30,7 @@ const Verification: NextPage<Props> = () => {
       ory
         .getVerificationFlow({ id: String(flowId) })
         .then(({ data }) => {
+          if (forwardBranchFlow(data)) return
           // We received the flow - let's use its data and render the form!
           setFlow(data)
         })
@@ -49,7 +51,7 @@ const Verification: NextPage<Props> = () => {
     // Otherwise we initialize it
     ory
       .createBrowserVerificationFlow({
-        returnTo: returnTo ? String(returnTo) : undefined,
+        returnTo: flowReturnTo(returnTo),
       })
       .then(({ data }) => {
         setFlow(data)

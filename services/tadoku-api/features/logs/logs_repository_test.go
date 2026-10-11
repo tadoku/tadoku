@@ -495,3 +495,13 @@ func TestLogsRepositoryTagRoundTrip(t *testing.T) {
 		t.Errorf("tags=%q, want %q", found.Tags, want)
 	}
 }
+
+func TestLogsRepositoryJobContextMissingLog(t *testing.T) {
+	t.Parallel()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
+	repository, _ := newTestLogsRepository(t)
+
+	if _, err := repository.JobContext(tenantCtx, uuid.New()); !errors.Is(err, ErrLogNotFound) {
+		t.Errorf("missing log error=%v, want not found", err)
+	}
+}

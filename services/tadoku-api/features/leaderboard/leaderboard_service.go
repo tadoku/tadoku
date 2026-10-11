@@ -78,6 +78,13 @@ func (s *Service) FetchContest(ctx context.Context, request ContestRequest) (*Re
 			slog.WarnContext(ctx, "contest leaderboard cache unavailable; falling back to Postgres", "error", err)
 			return s.fetchContestFromPostgres(ctx, request)
 		}
+		found, err := s.repository.contestExists(ctx, request.ContestID)
+		if err != nil {
+			return nil, err
+		}
+		if !found {
+			return nil, errx.NewNotFoundError("contest not found")
+		}
 		scores, err := s.repository.allContestScores(ctx, request.ContestID)
 		if err != nil {
 			return nil, fmt.Errorf("failed to fetch all contest scores for rebuild: %w", err)

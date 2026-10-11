@@ -80,6 +80,7 @@ func TestImmersionContestFetchLeaderboard(t *testing.T) {
 		{description: []string{"tie", "first", "page"}, want: http.StatusOK, cache: "hit_tie"},
 		{description: []string{"missing", "organizer"}, want: http.StatusNotFound},
 		{description: []string{"missing", "organizer", "filtered"}, want: http.StatusNotFound, cache: "hit"},
+		{description: []string{"missing", "contest", "cache", "miss"}, want: http.StatusNotFound, cache: "miss_then_miss"},
 		{description: []string{"invalid", "id"}, want: http.StatusBadRequest},
 		{description: []string{"negative", "page"}, want: http.StatusBadRequest},
 		{description: []string{"offset", "overflow"}, want: http.StatusOK},
@@ -92,6 +93,9 @@ func TestImmersionContestFetchLeaderboard(t *testing.T) {
 		cacheKey := "leaderboard:contest:f1111111-1111-4111-8111-111111111111"
 		if test.description[0] == "missing" {
 			cacheKey = "leaderboard:contest:f2222222-2222-4222-8222-222222222222"
+			if len(test.description) > 1 && test.description[1] == "contest" {
+				cacheKey = "leaderboard:contest:f9999999-9999-4999-8999-999999999999"
+			}
 		}
 		runLeaderboardCase(t, name, test.want, test.cache, cacheKey)
 	}
@@ -109,7 +113,7 @@ func runLeaderboardCase(t *testing.T, name string, want int, cache, cacheKey str
 		if cache == "miss" || cache == "miss_then_hit" {
 			verifyRebuiltLeaderboardCache(t, cacheKey)
 		}
-		if cache == "miss_then_hit" {
+		if cache == "miss_then_hit" || cache == "miss_then_miss" {
 			atFixtureInstant(func() { checkHTTPGolden(t, api.handler, dir, want, *updateGoldens) })
 		}
 	})

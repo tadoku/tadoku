@@ -112,11 +112,17 @@ func (r *LogsRepository) JobContext(ctx context.Context, id uuid.UUID) (JobConte
 		return JobContext{}, err
 	}
 	row, err := queries.New(executor).FetchLogJobContext(ctx, postgres.UUID(id))
+	if errors.Is(err, pgx.ErrNoRows) {
+		return JobContext{}, ErrLogNotFound
+	}
+	if err != nil {
+		return JobContext{}, err
+	}
 	return JobContext{
 		UserID:           row.UserID.Bytes,
 		Year:             row.Year,
 		EligibleOfficial: row.EligibleOfficialLeaderboard,
-	}, err
+	}, nil
 }
 
 func (r *LogsRepository) UpdateLog(ctx context.Context, mutation logMutation) error {

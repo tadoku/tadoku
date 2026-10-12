@@ -133,7 +133,7 @@ func (a *Application) DetachContestLog(ctx context.Context, contestID, logID uui
 		}); err != nil {
 			return err
 		}
-		pending, err := a.logs.ModerateDetach(ctx, logID, contestID)
+		pending, err := a.logs.ModerateDetach(ctx, logID, contestID, timex.Now())
 		if err != nil {
 			return err
 		}

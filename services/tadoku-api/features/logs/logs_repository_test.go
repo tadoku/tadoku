@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/activities"
+	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/logscore"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
@@ -503,5 +504,92 @@ func TestLogsRepositoryJobContextMissingLog(t *testing.T) {
 
 	if _, err := repository.JobContext(tenantCtx, uuid.New()); !errors.Is(err, ErrLogNotFound) {
 		t.Errorf("missing log error=%v, want not found", err)
+	}
+}
+
+func TestLogsRepositoryModerateDetachClearsOfficialEligibility(t *testing.T) {
+	t.Parallel()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
+	repository, db := newTestLogsRepository(t)
+
+	_, err := db.Pool.Exec(tenantCtx, `
+		insert into contests (
+			tenant, id, owner_user_id, owner_user_display_name, "private", contest_start, contest_end,
+			registration_end, title, activity_type_id_allow_list, official, created_at, updated_at
+		)
+		values (
+			'tadoku/prod', 'cccccccc-cccc-4ccc-8ccc-ccccccccccc1', '99999999-9999-4999-8999-999999999999', 'Owner', false,
+			'2026-09-01', '2026-09-30', '2026-09-15', 'Official', '{2}', true, '2026-08-01', '2026-08-01'
+		);
+		insert into contest_registrations (tenant, id, contest_id, user_id, language_codes)
+		values (
+			'tadoku/prod', 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1', 'cccccccc-cccc-4ccc-8ccc-ccccccccccc1',
+			'11111111-1111-4111-8111-111111111111', '{jpn}'
+		)`)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	logID := uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1")
+	contestID := uuid.MustParse("cccccccc-cccc-4ccc-8ccc-ccccccccccc1")
+	registrationID := uuid.MustParse("eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1")
+	createdAt := time.Date(2026, 9, 1, 12, 0, 0, 0, time.UTC)
+	duration := int32(600)
+
+	err = repository.CreateLog(tenantCtx, logMutation{
+		ID:           logID,
+		UserID:       testUserID,
+		LanguageCode: "jpn",
+		ActivityID:   2,
+		Tracking: logscore.Tracking{
+			DurationSeconds: &duration,
+			Score:           4,
+		},
+		EligibleOfficialLeaderboard: true,
+		Year:                        2026,
+		Now:                         createdAt,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = repository.CreateContestLog(tenantCtx, logID, logscore.ContestTracking{
+		RegistrationID: registrationID,
+		ContestID:      contestID,
+		Tracking: logscore.Tracking{
+			DurationSeconds: &duration,
+			Score:           4,
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	before, err := repository.JobContext(tenantCtx, logID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !before.EligibleOfficial {
+		t.Fatalf("eligible_official_leaderboard=%t, want true before detach", before.EligibleOfficial)
+	}
+
+	now := time.Date(2026, 9, 2, 12, 0, 0, 0, time.UTC)
+	service := NewService(repository, false)
+	followUp, err := service.ModerateDetach(tenantCtx, logID, contestID, now)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	after, err := repository.JobContext(tenantCtx, logID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if after.EligibleOfficial {
+		t.Errorf("eligible_official_leaderboard=%t, want false after official-only moderate detach", after.EligibleOfficial)
+	}
+
+	wantContest := jobs.InvalidateContestLeaderboardV1{ContestID: contestID}
+	wantOfficial := jobs.InvalidateOfficialLeaderboardV1{Year: 2026}
+	if len(followUp) != 2 || followUp[0] != wantContest || followUp[1] != wantOfficial {
+		t.Errorf("followUp=%v, want [%v %v]", followUp, wantContest, wantOfficial)
 	}
 }

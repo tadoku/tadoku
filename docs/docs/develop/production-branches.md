@@ -276,8 +276,9 @@ public HTTPS. The runner set is defined in the homelab repository.
 
 Its steps, in order:
 
-1. Install `kubectl` and `gh` at pinned versions, each verified against its
-   SHA-256; the runner image does not include them.
+1. Install `kubectl`, `gh` and bazelisk as `bazel` at pinned versions, each
+   verified against its SHA-256; the runner image does not include them.
+   Bazelisk runs the Bazel release pinned in `.bazelversion`.
 2. Re-check the role of `github.triggering_actor`, before any secret is
    referenced, so an ineligible collaborator who re-runs only this job fails
    here.

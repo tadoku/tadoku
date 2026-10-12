@@ -67,6 +67,15 @@ export {
   type ToastUpdateOptions,
 } from './components/feedback'
 export {
+  EmptyState,
+  type EmptyStateProps,
+} from './components/feedback/EmptyState'
+export {
+  StatusTag,
+  type StatusTagProps,
+  type StatusTagTone,
+} from './components/feedback/StatusTag'
+export {
   PageHeader,
   type PageHeaderProps,
 } from './components/page-structure/PageHeader'

@@ -1,0 +1,42 @@
+@layer paper-recipes {
+  .paper-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--paper-space-3);
+    min-inline-size: 0;
+  }
+
+  .paper-empty-state--surface {
+    padding: var(--paper-space-8) var(--paper-space-6);
+    border: var(--paper-border-static-width) solid var(--paper-color-rule-default);
+    background: var(--paper-color-surface-paper);
+  }
+
+  .paper-empty-state--plain {
+    padding-block: var(--paper-space-6);
+  }
+
+  .paper-empty-state__title {
+    max-inline-size: 100%;
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .paper-empty-state__title[tabindex="-1"]:focus {
+    outline: none;
+  }
+
+  .paper-empty-state__description {
+    max-inline-size: 58ch;
+    margin: 0;
+  }
+
+  .paper-empty-state__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--paper-inline-gap);
+    margin-block-start: var(--paper-space-2);
+  }
+}

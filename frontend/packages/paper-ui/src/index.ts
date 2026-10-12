@@ -67,6 +67,10 @@ export {
   type ToastUpdateOptions,
 } from './components/feedback'
 export {
+  AppliedFilters,
+  type AppliedFiltersProps,
+} from './components/forms/AppliedFilters'
+export {
   EmptyState,
   type EmptyStateProps,
 } from './components/feedback/EmptyState'

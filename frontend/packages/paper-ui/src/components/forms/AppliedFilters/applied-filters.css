@@ -1,0 +1,22 @@
+@layer paper-recipes {
+  .paper-applied-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--paper-space-2) var(--paper-space-4);
+    min-inline-size: 0;
+    font-size: 0.8125rem;
+    line-height: 1.5;
+  }
+
+  .paper-applied-filters__list {
+    min-inline-size: 0;
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .paper-applied-filters > .paper-button {
+    flex: none;
+    font-size: inherit;
+  }
+}

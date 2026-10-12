@@ -1,0 +1,220 @@
+name: pr-branch
+
+# Authorizes pull-request branch deploys beside production. The deploy and
+# teardown jobs are placeholders that only report their decision. See
+# docs/docs/develop/production-branches.md.
+#
+# pull_request_target always runs this file from main. Event values reach shell
+# scripts only through env:; never put an expression in a run: line, and never
+# read the branch name or title.
+
+on:
+  pull_request_target:
+    types: [labeled, unlabeled, synchronize, reopened, closed]
+    branches: [main]
+
+permissions: {}
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  authorize:
+    name: Authorize
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      issues: write
+    outputs:
+      action: ${{ steps.decide.outputs.action }}
+      sha: ${{ steps.decide.outputs.sha }}
+      pr: ${{ steps.decide.outputs.pr }}
+    steps:
+      - name: Decide, update the label and comment
+        id: decide
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          ACTION: ${{ github.event.action }}
+          LABEL: ${{ github.event.label.name }}
+          LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
+          PR: ${{ github.event.pull_request.number }}
+          PR_STATE: ${{ github.event.pull_request.state }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          SENDER: ${{ github.event.sender.login }}
+          TRIGGERING_ACTOR: ${{ github.triggering_actor }}
+        run: |
+          marker='<!-- tadoku-pr-branch -->'
+          migrations=services/tadoku-api/migrations/
+          sha_shown=none
+          if [[ $HEAD_SHA =~ ^[0-9a-f]{40}$ ]]; then
+            sha_shown=$HEAD_SHA
+          fi
+
+          # Writes the outputs and, unless STATE is empty, the sticky comment, then exits.
+          finish() {
+            local action=$1 state=$2 reason=$3 sha=""
+            if [[ $action == deploy ]]; then
+              sha=$HEAD_SHA
+            fi
+            printf 'action=%s\nsha=%s\npr=%s\n' "$action" "$sha" "$PR" >>"$GITHUB_OUTPUT"
+            echo "Decision: $action. $reason"
+
+            if [[ -n $state ]]; then
+              sticky "$marker
+          **Production branch: $state**
+
+          Commit: \`$sha_shown\`
+
+          $reason
+
+          Authorization only: the deploy and teardown jobs are placeholders that change nothing yet.
+          [Workflow run]($GITHUB_SERVER_URL/$REPO/actions/runs/$GITHUB_RUN_ID)" ||
+                echo "::warning::Could not post or update the pull request comment."
+            fi
+            exit 0
+          }
+
+          # Edits the bot's comment that starts with the marker, or posts it.
+          sticky() {
+            local ids
+            ids="$(gh api --paginate "repos/$REPO/issues/$PR/comments?per_page=100" \
+              --jq ".[] | select(.user.login == \"github-actions[bot]\" and (.body | startswith(\"$marker\"))) | .id")" ||
+              return 1
+            if [[ -n $ids ]]; then
+              gh api -X PATCH "repos/$REPO/issues/comments/${ids%%$'\n'*}" -f body="$1" >/dev/null
+            else
+              gh api -X POST "repos/$REPO/issues/$PR/comments" -f body="$1" >/dev/null
+            fi
+          }
+
+          # A refusal removes the label. A same-repository push or reopen also
+          # tears down, because the pull request may have a live deployment.
+          refuse() {
+            local action=none state=refused
+            if [[ $HEAD_REPO == "$REPO" && ($ACTION == synchronize || $ACTION == reopened) ]]; then
+              action=teardown
+              state="refused, tearing down"
+            fi
+            gh api -X DELETE "repos/$REPO/issues/$PR/labels/deploy" >/dev/null ||
+              echo "::warning::Could not remove the deploy label."
+            finish "$action" "$state" "$1 The \`deploy\` label was removed."
+          }
+
+          # Only the admin and maintain roles are eligible. Any API error,
+          # including 404 for bots and unknown users, is ineligible.
+          eligible() {
+            local role
+            [[ -n $1 ]] || return 1
+            role="$(gh api "repos/$REPO/collaborators/$1/permission" --jq .role_name)" || return 1
+            [[ $role == admin || $role == maintain ]]
+          }
+
+          labelled() {
+            jq -e 'any(.[]; . == "deploy")' <<<"$LABELS" >/dev/null
+          }
+
+          # Events that do not concern the deploy label exit before any check.
+          # Teardown is always allowed: it runs only main's code.
+          case $ACTION in
+            labeled)
+              [[ $LABEL == deploy ]] || finish none "" "The event does not concern the deploy label."
+              ;;
+            unlabeled)
+              [[ $LABEL == deploy ]] || finish none "" "The event does not concern the deploy label."
+              finish teardown "tearing down" "The \`deploy\` label was removed."
+              ;;
+            closed)
+              labelled || finish none "" "The pull request has no deploy label."
+              finish teardown "tearing down" "The pull request was closed."
+              ;;
+            synchronize | reopened)
+              labelled || finish none "" "The pull request has no deploy label."
+              ;;
+            *)
+              finish none "" "The event does not concern the deploy label."
+              ;;
+          esac
+
+          [[ $HEAD_REPO == "$REPO" ]] || refuse "Pull requests from forks are never deployed."
+          [[ $PR_STATE == open ]] || refuse "The pull request is closed."
+          [[ $sha_shown != none ]] || refuse "The head commit is not a 40-character lowercase hexadecimal SHA."
+          eligible "$PR_AUTHOR" || refuse "The author \`$PR_AUTHOR\` is not an admin or maintainer."
+          eligible "$SENDER" || refuse "The sender \`$SENDER\` is not an admin or maintainer."
+          eligible "$TRIGGERING_ACTOR" ||
+            refuse "The triggering actor \`$TRIGGERING_ACTOR\` is not an admin or maintainer."
+
+          # The files API lists the current head's files, so a head that moved
+          # since this event leaves the decision to the newer push's run.
+          touched="$(gh api --paginate "repos/$REPO/pulls/$PR/files?per_page=100" \
+            --jq ".[] | [.filename, .previous_filename // empty] | any(startswith(\"$migrations\"))")" ||
+            refuse "The changed files could not be listed."
+          current="$(gh api "repos/$REPO/pulls/$PR" --jq '"\(.head.sha) \(.changed_files)"')" ||
+            refuse "The pull request could not be read."
+          read -r head_now changed <<<"$current"
+          [[ $head_now == "$HEAD_SHA" ]] || finish none "" "Superseded: the head moved to $head_now."
+
+          [[ $changed =~ ^[0-9]+$ ]] || refuse "The changed files could not be verified: no file count."
+          ((changed <= 3000)) ||
+            refuse "It changes $changed files, more than the 3000 the API lists, so migrations could not be checked."
+          listed="$(grep -c . <<<"$touched" || true)"
+          [[ $listed == "$changed" ]] ||
+            refuse "The changed files could not be verified: the API listed $listed of $changed."
+          if grep -qx true <<<"$touched"; then
+            refuse "It changes \`$migrations\`; migrations ship through the normal release first."
+          fi
+
+          finish deploy deploying "Every actor is an admin or maintainer and no migration changed."
+
+  deploy:
+    name: Deploy (placeholder)
+    needs: authorize
+    if: needs.authorize.outputs.action == 'deploy'
+    runs-on: ubuntu-latest
+    environment: prod-branch
+    steps:
+      - name: Re-check the triggering actor
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          TRIGGERING_ACTOR: ${{ github.triggering_actor }}
+        run: |
+          role="$(gh api "repos/$REPO/collaborators/$TRIGGERING_ACTOR/permission" --jq .role_name)"
+          if [[ $role != admin && $role != maintain ]]; then
+            echo "::error::The triggering actor $TRIGGERING_ACTOR is not an admin or maintainer."
+            exit 1
+          fi
+
+      - name: Report the decision
+        env:
+          PR: ${{ needs.authorize.outputs.pr }}
+          SHA: ${{ needs.authorize.outputs.sha }}
+        run: echo "Would deploy pull request $PR at $SHA. Deploying is not implemented yet."
+
+  teardown:
+    name: Tear down (placeholder)
+    needs: authorize
+    if: needs.authorize.outputs.action == 'teardown'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Re-check the triggering actor of a re-run
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          TRIGGERING_ACTOR: ${{ github.triggering_actor }}
+        run: |
+          if ((GITHUB_RUN_ATTEMPT > 1)); then
+            role="$(gh api "repos/$REPO/collaborators/$TRIGGERING_ACTOR/permission" --jq .role_name)"
+            if [[ $role != admin && $role != maintain ]]; then
+              echo "::error::The re-run's triggering actor $TRIGGERING_ACTOR is not an admin or maintainer."
+              exit 1
+            fi
+          fi
+
+      - name: Report the decision
+        env:
+          PR: ${{ needs.authorize.outputs.pr }}
+        run: echo "Would tear down pull request $PR. Tearing down is not implemented yet."

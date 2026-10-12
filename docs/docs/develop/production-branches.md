@@ -1,6 +1,6 @@
 ---
 title: Production branches
-description: How the maintainer deploys a runtime branch beside production with dev-cli production mode, which images and hosts it uses, who can use it and how it is torn down.
+description: How the maintainer deploys a runtime branch beside production with dev-cli production mode, which images and hosts it uses, who can use it, how it is torn down and how the deploy label authorizes pull-request deploys.
 ---
 
 # Production branches
@@ -182,3 +182,79 @@ A branch expires 4 hours after its last `dev up`. A cluster CronJob scales the
 Deployments of expired branches to zero, so an abandoned branch stops serving
 traffic. It deletes nothing: the tenant data, routes and test identities
 remain until the maintainer runs `dev down`.
+
+## Pull-request deploys
+
+**Not deploying yet.** `.github/workflows/pr-branch.yaml` only authorizes.
+Its deploy and teardown jobs are placeholders that re-check the actor and print
+their decision. They hold no secrets and change nothing in the cluster.
+
+The `deploy` label asks for a pull request to be deployed beside production.
+The workflow runs on `pull_request_target` for pull requests into `main`, so
+GitHub always runs the copy on `main`; a pull request that edits the workflow
+does not change how it is judged. Pull requests into other branches never
+deploy. Its `authorize` job has no checkout, no cache and no action, and its
+token has only `pull-requests: write` and `issues: write`. Event values reach
+its script only through `env:`, and it never reads the branch name or title.
+It outputs `action` (`deploy`, `teardown` or `none`), the pinned `sha` and the
+pull request number `pr`.
+
+### Who is eligible
+
+An actor is eligible when the `role_name` returned by
+`GET repos/tadoku/tadoku/collaborators/<login>/permission` is `admin` or
+`maintain`. Write, triage and read are not, and any API error, including the
+404 returned for bots and unknown users, counts as ineligible. A deploy needs
+three eligible actors: the pull request's author, the event's sender (who added
+the label, pushed or reopened) and `github.triggering_actor`, who differs from
+the sender when someone re-runs the workflow.
+
+### Decisions
+
+| Event | Result |
+| --- | --- |
+| `deploy` added | Deploy, if every check below passes; otherwise refuse |
+| Push to, or reopen of, a pull request with `deploy` | Redeploy, if every check passes; otherwise refuse and tear down |
+| `deploy` removed, or a pull request with `deploy` closed or merged | Tear down, with no checks |
+| Any other label change, push, reopen or close | Nothing, and no comment |
+
+A deploy is refused when:
+
+- the head is in a fork, or its repository was deleted;
+- the pull request is closed;
+- the head SHA is not 40 lowercase hexadecimal characters;
+- the author, sender or triggering actor is not eligible;
+- a changed file, or the old path of a renamed file, is under
+  `services/tadoku-api/migrations/`. Ship the migration through the normal
+  release first;
+- the changed files cannot be checked: the files API fails, the pull request
+  changes more than the 3000 files that API lists, or the listed files do not
+  add up to the pull request's changed-file count.
+
+Every refusal removes the `deploy` label. A refused push or reopen of a
+same-repository pull request also tears down, because an earlier commit may be
+live; label changes made by the workflow's token start no new run, so the
+teardown happens in the same run. A refused label, and any refusal on a fork,
+does nothing else. Teardown is always allowed, because it runs only `main`'s
+code.
+
+A deploy pins `pull_request.head.sha` from the event, never the branch tip.
+If the head has moved by the time the job checks the changed files, the run
+does nothing and leaves the decision to the newer push's run.
+
+### The pull-request comment
+
+The workflow keeps one comment per pull request. It begins with
+`<!-- tadoku-pr-branch -->` and is edited in place, never reposted. It shows the
+state (`deploying`, `tearing down`, `refused` or `refused, tearing down`), the
+commit, the reason and a link to the run. Events that do nothing leave it
+unchanged.
+
+### Placeholder jobs
+
+The `deploy` job runs only when `action` is `deploy`, in the `prod-branch`
+environment, which only `main` can use and which has no reviewers. Its first
+step re-checks the role of `github.triggering_actor`, so an ineligible
+collaborator who re-runs only that job fails there. The `teardown` job runs
+when `action` is `teardown` and needs no environment; on a re-run it re-checks
+the triggering actor the same way. Neither job references a secret.

@@ -103,7 +103,7 @@ export function LeaderboardPage() {
   const roundAction = scope === 'contest' && contest ? status === 'live' && joined ? <Link className={buttonClassName({ variant: 'outline' })} to={`/logs/new?contest=${contest.id}&asOf=${asOf}`}>Log activity</Link> : registrationOpen ? <Link className={buttonClassName()} to={viewer === 'guest' ? signInHref : registrationHref}>{viewer === 'guest' ? 'Sign in to join' : joined ? 'Update registration' : 'Join this round'}</Link> : <Link className={buttonClassName({ variant: 'outline' })} to="/contests/official">Browse contests</Link> : null
 
   return <>
-    <PageHeader title="Leaderboard" actions={roundAction} />
+    <PageHeader className="standings-header" title="Leaderboard" actions={roundAction} />
     <Tabbar label="Leaderboard period" links={[
       { id: 'contest', label: 'Latest official', href: boardHref('/leaderboard/latest'), current: scope === 'contest' && !contestId },
       ...(contestId ? [{ id: 'selected', label: contest?.title ?? 'Selected contest', href: boardHref(`/contests/${contestId}/leaderboard`), current: true }] : []),

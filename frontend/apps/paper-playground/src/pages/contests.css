@@ -42,9 +42,12 @@
 .standings-workspace { display: grid; grid-template-columns: minmax(0,1fr) 256px; align-items: start; gap: 32px; margin-top: 20px; }
 .standings-main { min-width: 0; }
 .standings-sheet { min-width: 0; background: var(--paper-color-surface-paper); border: 1px solid var(--paper-color-rule-default); }
-.standings-context { margin: 0; padding: 20px; }
+.standings-header { margin-block-end: 20px; }
+.standings-context { margin: 0; padding: 20px; row-gap: 0; }
+.standings-context h2 { font-size: 1.375rem; }
+.standings-context > .paper-section-heading__actions { margin-inline-start: auto; }
 .standings-applied-filters { padding: 0 20px 12px; }
-.standings-empty { padding-inline: 20px; }
+.standings-empty { padding-inline: 20px; border-block-start: 1px solid var(--paper-color-rule-default); }
 .standings-filters { display: grid; grid-template-columns: 1fr 1fr minmax(180px,1.25fr); gap: 12px; padding: 0 20px 20px; }
 .standings-filters--yearly { grid-template-columns: minmax(88px,.6fr) 1fr 1fr minmax(180px,1.25fr); }
 .standings-personal { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 4px 12px 4px 20px; border-top: 1px solid var(--paper-color-rule-default); }
@@ -100,6 +103,7 @@
   .contest-eligibility { grid-template-columns: 1fr; gap: 16px; }
   .standings-workspace { margin-top: 20px; }
   .standings-context { padding: 20px 16px 16px; }
+  .standings-context h2 { font-size: 1.125rem; }
   .standings-applied-filters, .standings-empty { padding-inline: 16px; }
   .standings-filters { padding: 0 16px 16px; }
   .standings-personal { padding: 6px 8px 6px 16px; }

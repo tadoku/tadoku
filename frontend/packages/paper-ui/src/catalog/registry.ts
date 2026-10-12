@@ -29,6 +29,11 @@ import {
   publishedPrimitiveDocuments,
   publishedPrimitiveFixtures,
 } from "./published-primitives";
+import {
+  pageCompositionDocuments,
+  pageCompositionFixtures,
+  pageCompositionPatternDocuments,
+} from "./page-composition";
 
 export const foundationDocuments = phaseThreeFoundationDocuments;
 export const governanceDocuments = phaseThreeGovernanceDocuments;
@@ -52,7 +57,9 @@ export const catalogRegistry = createCatalogRegistry({
     ...phaseThreeNavigationDocuments,
     ...publishedPrimitiveDocuments,
     ...phaseThreeDataLayoutDocuments,
+    ...pageCompositionDocuments,
     ...phaseThreePatternDocuments,
+    ...pageCompositionPatternDocuments,
     ...phaseThreeExperimentDocuments,
     ...governanceDocuments,
   ],
@@ -63,6 +70,7 @@ export const catalogRegistry = createCatalogRegistry({
     ...publishedPrimitiveFixtures,
     ...phaseThreeDataLayoutFixtures,
     ...phaseThreeContentFixtures,
+    ...pageCompositionFixtures,
   ],
   redirects: legacyStyleguideRedirects,
 });

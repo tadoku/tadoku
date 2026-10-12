@@ -25,6 +25,22 @@ A catalogue pattern describes a product convention; it does not require a React 
 
 Put a component in its own file when its API, examples, tests, or consumers warrant it. Small related helpers can share a file. Folder structure should follow responsibility and stay easy to navigate as the application grows.
 
+## Page structure controls
+
+`paper-ui` provides the parts that every Paper screen repeats, so screens compose them instead of restyling headings, facts and states:
+
+| Need | Control |
+| --- | --- |
+| The page title, with an optional back link, lead, status and page actions | `PageHeader`, the page's only `h1`. Pass `renderLink` to render the back link with the application router |
+| A region heading with an optional description, status and actions | `SectionHeading` with an explicit `level` from 2 to 6. Pass `id` and label the section with `aria-labelledby` |
+| The current state of a contest, record or service | `StatusTag`, which requires visible text and maps its tone to the status colours |
+| An empty, filtered, failed or not-found state | `EmptyState` with an explicit `headingLevel`; `surface` stands alone and `plain` sits inside a container |
+| Headline figures | `StatGrid` |
+| Facts about one subject | `DescriptionList`, `stacked` or `inline` |
+| A summary of collapsed filters with one reset action | `AppliedFilters` |
+
+These controls are Experimental; paper-playground is their only consumer. They own semantics, spacing and type roles, not page layout: screens keep page grids, columns, breakpoints, a main column beside an aside, and page-specific typography, and pass `className` for them. The Filter bar catalogue pattern shows how a screen composes a Filters toggle, the filter panel, `AppliedFilters`, a result count and `EmptyState` while owning the filter state.
+
 ## Documenting a pattern
 
 For each catalogue pattern, record:

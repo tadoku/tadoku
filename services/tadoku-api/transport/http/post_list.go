@@ -17,8 +17,12 @@ func (s *server) ContentPostList(
 	if request.Params.Page != nil {
 		page = *request.Params.Page
 	}
+	includeDrafts := false
+	if request.Params.IncludeDrafts != nil {
+		includeDrafts = *request.Params.IncludeDrafts
+	}
 
-	result, err := s.application.ListPosts(ctx, request.Namespace, request.Params.IncludeDrafts, pageSize, page)
+	result, err := s.application.ListPosts(ctx, request.Namespace, includeDrafts, pageSize, page)
 	if err != nil {
 		s.logOperationError(ctx, "list posts", err)
 		return nil, err

@@ -11,7 +11,7 @@
 
   .paper-section-heading__text {
     display: flex;
-    flex: 1 1 12rem;
+    flex: 1 1 auto;
     flex-direction: column;
     gap: var(--paper-space-2);
     min-inline-size: 0;

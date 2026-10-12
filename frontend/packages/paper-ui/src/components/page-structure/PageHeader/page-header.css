@@ -30,7 +30,7 @@
 
   .paper-page-header__text {
     display: flex;
-    flex: 1 1 20rem;
+    flex: 1 1 auto;
     flex-direction: column;
     gap: var(--paper-space-2);
     min-inline-size: 0;

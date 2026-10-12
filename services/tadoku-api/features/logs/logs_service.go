@@ -128,18 +128,26 @@ func (s *Service) Delete(ctx context.Context, logID uuid.UUID, now time.Time) ([
 	return followUp, nil
 }
 
-func (s *Service) ModerateDetach(ctx context.Context, logID, contestID uuid.UUID) ([]jobs.Job, error) {
+func (s *Service) ModerateDetach(ctx context.Context, logID, contestID uuid.UUID, now time.Time) ([]jobs.Job, error) {
 	var followUp []jobs.Job
-	jobContext, err := s.logs.JobContext(ctx, logID)
+	before, err := s.logs.JobContext(ctx, logID)
 	if err != nil {
 		return nil, err
 	}
 	if err := s.logs.DetachContest(ctx, logID, contestID); err != nil {
 		return nil, err
 	}
+	if err := s.logs.RecomputeOfficialEligibility(ctx, logID, now); err != nil {
+		return nil, err
+	}
+	after, err := s.logs.JobContext(ctx, logID)
+	if err != nil {
+		return nil, err
+	}
+
 	followUp = append(followUp, jobs.InvalidateContestLeaderboardV1{ContestID: contestID})
-	if jobContext.EligibleOfficial {
-		year := jobContext.Year
+	if before.EligibleOfficial || after.EligibleOfficial {
+		year := before.Year
 		followUp = append(followUp, jobs.InvalidateOfficialLeaderboardV1{Year: year})
 	}
 	return followUp, nil

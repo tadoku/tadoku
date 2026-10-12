@@ -1,36 +1,20 @@
 .records-profile-header,
 .records-identity,
 .records-year-control { display: flex; align-items: center; gap: 1rem; }
-.records-profile-header { justify-content: space-between; flex-wrap: wrap; margin-block-start: 1.5rem; }
-.records-activity .records-section-heading > div { flex: 1 1 10rem; }
+.records-profile-header { justify-content: space-between; flex-wrap: wrap; margin-block: 1.5rem 2rem; }
 .records-identity { min-width: 0; gap: 1.25rem; }
 .records-identity > div { min-width: 0; }
-.records-identity h1, .records-entry-title, .records-log-title h1, .records-admin-record h2 { overflow-wrap: anywhere; }
+.records-identity h1, .records-entry-title, .records-admin-record h2 { overflow-wrap: anywhere; }
 .records-identity h1 { margin-block-end: .5rem; }
 .records-identity p { margin: 0; font-size: .9375rem; }
 .records-avatar { display: grid; place-items: center; flex: 0 0 4rem; block-size: 4rem; border: 1px solid var(--paper-color-rule-default); color: var(--paper-color-text-ink); background: var(--paper-color-surface-paper); font: 700 1.4rem var(--paper-font-display); }
-.records-section-heading { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: .75rem 1.5rem; }
-.records-section-heading h2 { margin: 0; }
-.records-section-heading p { margin: .5rem 0 0; font-size: .875rem; line-height: 1.6; }
-.records-section-heading > .text-link { font-size: .875rem; }
 .records-profile-context { max-inline-size: 68ch; margin-block: -1rem 1.5rem; font-size: .875rem; color: var(--paper-color-text-muted); }
 .records-year { padding: 2rem; border: 1px solid var(--paper-color-rule-default); background: var(--paper-color-surface-paper); }
-.records-year-heading { align-items: center; }
 .records-year-control { gap: .25rem; }
 .records-year-control strong { min-inline-size: 4rem; text-align: center; font-variant-numeric: tabular-nums; }
-.records-profile-stats { gap: 1.5rem; margin-block: 1.75rem 2rem; }
-.records-profile-stats .stat { padding-inline-start: 1.5rem; }
-.records-profile-stats .stat:first-child { padding-inline-start: 0; border-inline-start: 0; }
-.records-profile-stats dt { color: var(--paper-color-text-muted); font-size: .875rem; }
-.records-profile-stats dd { margin: .5rem 0 0; font-size: 1.75rem; line-height: 1.3; font-weight: 700; font-variant-numeric: tabular-nums; }
-.records-profile-stats small { display: block; margin-block-start: .375rem; color: var(--paper-color-text-muted); font-size: .8125rem; font-weight: 400; line-height: 1.6; }
+.records-profile-stats { margin-block: 1.75rem 2rem; }
 .records-rhythm { border-block-start: 1px solid var(--paper-color-rule-default); padding-block-start: 1.5rem; }
-.records-calendar-heading { display: flex; justify-content: space-between; gap: .5rem 1rem; flex-wrap: wrap; align-items: baseline; }
-.records-calendar-heading h3 { margin: 0; font: 600 .9375rem var(--paper-font-body); }
-.records-calendar-heading a { font-size: .8125rem; }
-.records-empty-year { padding-block-start: 1.5rem; border-block-start: 1px solid var(--paper-color-rule-default); }
-.records-empty-year h3 { margin: 0; font: 600 1.125rem/1.5 var(--paper-font-body); }
-.records-empty-year p { max-inline-size: 58ch; margin-block: .75rem 1.5rem; color: var(--paper-color-text-muted); font-size: .9375rem; line-height: 1.75; }
+.records-empty-year { border-block-start: 1px solid var(--paper-color-rule-default); }
 .records-heatmap-scroll { max-inline-size: 100%; overflow-x: auto; padding-block: 1.5rem .75rem; }
 .records-heatmap-scroll .paper-heatmap { display: block; inline-size: 100%; min-inline-size: 44rem; block-size: auto; }
 .records-chart-caption { display: flex; justify-content: space-between; gap: .5rem 1.5rem; flex-wrap: wrap; margin: .5rem 0 0; color: var(--paper-color-text-muted); font-size: .8125rem; }
@@ -50,10 +34,6 @@
 .records-contest-history p { margin: .375rem 0 0; font-size: .8125rem; }
 .records-contest-history strong { text-align: end; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .records-contest-history strong small { display: block; color: var(--paper-color-text-muted); font-size: .75rem; font-weight: 400; }
-.records-activity-mix { margin: 0; }
-.records-activity-mix > div { display: flex; justify-content: space-between; gap: 1rem; padding-block: .875rem; border-block-end: 1px solid var(--paper-color-rule-default); font-size: .9375rem; }
-.records-activity-mix > div:first-child { padding-block-start: 0; }
-.records-activity-mix dd { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; }
 .records-entries > li { display: grid; grid-template-columns: 7rem minmax(0, 1fr) 4rem; gap: 1.5rem; align-items: start; padding-block: 1.5rem; border-block-end: 1px solid var(--paper-color-rule-default); }
 .records-entry-date { padding-block-start: .1875rem; color: var(--paper-color-text-muted); font-size: .8125rem; }
 .records-entry-title { font-weight: 600; line-height: 1.5; text-decoration-thickness: 1px; text-underline-offset: .2em; }
@@ -65,23 +45,12 @@
 .records-entries--compact > li:first-child { padding-block-start: 0; }
 .records-entries--compact .records-entry-date { grid-column: 1 / -1; padding: 0; }
 .records-entries--compact .records-entry-title { font-size: .9375rem; }
-.records-activity .records-section-heading > .records-activity-actions { display: flex; flex: 0 1 auto; align-items: center; flex-wrap: wrap; gap: .5rem; }
-.records-filter-toggle { white-space: nowrap; }
-.records-filter-toggle[aria-expanded="true"] svg { transform: rotate(180deg); }
 .records-filter-panel { display: grid; grid-template-columns: minmax(88px,.6fr) 1fr 1fr minmax(180px,1.25fr); gap: .75rem; padding-block-end: 1.25rem; }
 .records-filter-summary { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .5rem 1rem; padding-block-end: 1rem; border-block-end: 1px solid var(--paper-color-rule-default); }
-.records-applied-filters { display: flex; align-items: center; gap: .5rem 1rem; min-inline-size: 0; }
-.records-applied-filters p { margin: 0; font-size: .8125rem; overflow-wrap: anywhere; }
-.records-applied-filters .paper-button { flex-shrink: 0; }
 .records-result-count { margin: 0; color: var(--paper-color-text-muted); font-size: .8125rem; }
 .records-log-notice { margin-block: 1.5rem; }
 .records-log-sheet { margin-block-start: 1.5rem; }
-.records-log-header { padding-block-end: 2rem; border-block-end: 1px solid var(--paper-color-rule-default); }
-.records-log-title { display: flex; justify-content: space-between; align-items: start; gap: 1.5rem; margin-block-start: 1rem; }
-.records-log-title > div { min-width: 0; }
-.records-log-title h1 { max-inline-size: 32ch; margin: 0; font-size: clamp(1.75rem, 2.5vw, 2.5rem); line-height: 1.4; }
-.records-log-title > .paper-button { flex-shrink: 0; }
-.records-log-title p { margin: 1rem 0 0; font-size: .875rem; }
+.records-log-header { margin-block: 1rem 0; padding-block-end: 2rem; border-block-end: 1px solid var(--paper-color-rule-default); }
 .records-log-body { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(17rem, 1fr); gap: 3rem; align-items: start; padding-block-start: 2rem; }
 .records-log-body > * { min-width: 0; }
 .records-log-entry { padding: 2rem; }
@@ -119,23 +88,15 @@
 .records-maintenance { flex-shrink: 0; text-align: end; }
 .records-maintenance summary { cursor: pointer; padding-block: .5rem; }
 .records-log-result { margin-block-start: 1.5rem; }
-.records-log-result h1:focus { outline: none; }
 .records-submission-choices { display: grid; gap: 1.25rem; }
-.records-submission-empty { margin-block: 1.5rem; }
 .records-admin-layout { display: grid; grid-template-columns: 11rem minmax(0, 1fr); gap: 3rem; align-items: start; }
 .records-admin-sidebar { position: sticky; top: 2rem; padding-inline-end: 1rem; }
 .records-admin-return { display: inline-block; margin-block-start: 2rem; font-size: .8125rem; }
 .records-admin-main { min-width: 0; }
 .records-admin-mobile { display: none; }
-.records-admin-heading { display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 1rem 1.5rem; margin-block-start: 1.5rem; }
-.records-admin-heading > div { flex: 1 1 20rem; }
-.records-admin-heading .page-lead { font-size: .9375rem; margin-block-end: 0; }
+.records-admin-heading { margin-block-start: 1.5rem; }
 .records-admin-notice { margin-block: 1.5rem; }
-.records-admin-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.5rem; padding-block: 1.25rem; margin-block: 0 2rem; border-block: 1px solid var(--paper-color-rule-default); }
-.records-admin-stats .stat { border: 0; padding: 0; }
-.records-admin-stats .stat > span { display: block; color: var(--paper-color-text-muted); font-size: .8125rem; margin-block-end: .375rem; }
-.records-admin-stats .stat > strong { font-size: 1.375rem; }
-.records-admin-stats .stat > small { display: block; margin-block-start: .375rem; font-size: .75rem; }
+.records-admin-stats { padding-block: 1.25rem; margin-block: 0 2rem; border-block: 1px solid var(--paper-color-rule-default); }
 .records-admin-attention { padding: 1.75rem; border: 1px solid var(--paper-color-rule-default); background: var(--paper-color-surface-paper); }
 .records-admin-queue { margin: 0; padding: 0; list-style: none; }
 .records-admin-queue > li { display: flex; justify-content: space-between; gap: 1.5rem; align-items: start; padding-block: 1.25rem; border-block-start: 1px solid var(--paper-color-rule-default); }
@@ -144,22 +105,13 @@
 .records-admin-queue strong { font-size: .9375rem; }
 .records-admin-queue p { margin: .5rem 0 0; max-inline-size: 60ch; font-size: .875rem; line-height: 1.7; color: var(--paper-color-text-muted); }
 .records-admin-bottom { display: grid; grid-template-columns: 1.25fr 1fr; gap: 2.5rem; }
-.records-admin-contest { margin: 0; }
-.records-admin-contest > div { display: flex; justify-content: space-between; gap: 1rem; font-size: .875rem; padding-block: .875rem; border-block-end: 1px solid var(--paper-color-rule-default); }
-.records-admin-contest > div:first-child { padding-block-start: 0; }
-.records-admin-contest dd { margin: 0; font-weight: 600; text-align: end; }
 .records-admin-quick { display: flex; flex-wrap: wrap; gap: .75rem; }
 .records-admin-status { border-block-start: 1px solid var(--paper-color-rule-default); padding-block-start: 1.5rem; }
-.records-admin-status h2 { margin: 0; font: 600 .9375rem var(--paper-font-body); }
-.records-admin-status p { margin-block: .5rem 1rem; font-size: .8125rem; }
-.records-admin-status dl { display: flex; flex-wrap: wrap; gap: 1rem 2rem; margin: 0; }
-.records-admin-status dl > div { display: flex; gap: .75rem; font-size: .75rem; }
-.records-admin-status dd { margin: 0; color: var(--paper-color-status-success); }
 .records-admin-count { margin-block: 0 .875rem; color: var(--paper-color-text-muted); font-size: .8125rem; }
 .records-admin-records { margin: 0; padding: 0 1.5rem; list-style: none; background: var(--paper-color-surface-paper); border: 1px solid var(--paper-color-rule-default); }
 .records-admin-records > li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: start; gap: 1.5rem; padding-block: 1.5rem; }
 .records-admin-records > li + li { border-block-start: 1px solid var(--paper-color-rule-default); }
-.records-admin-records .status-tag { margin-block-start: .5rem; }
+.records-admin-records .paper-status-tag { margin-block-start: .5rem; }
 .records-admin-record h2 { margin: 0; font: 600 1rem/1.6 var(--paper-font-body); }
 .records-admin-record p { margin: .5rem 0 0; max-inline-size: 58ch; color: var(--paper-color-text-muted); font-size: .875rem; line-height: 1.7; font-weight: 400; }
 .records-admin-table .paper-table__cell { padding-block: 1.25rem; }
@@ -169,12 +121,10 @@
   .records-admin-records > li { gap: 1rem; }
   .records-admin-record { grid-column: 1 / -1; }
   .records-admin-records > li { grid-template-columns: minmax(0, 1fr) auto; }
-  .records-admin-records .status-tag { justify-self: start; }
+  .records-admin-records .paper-status-tag { justify-self: start; }
 }
 @media (max-width: 48rem) {
   .records-year { padding: 1.5rem; }
-  .records-profile-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem 2rem; }
-  .records-profile-stats .stat { padding: 0; border: 0; }
   .records-overview-columns { grid-template-columns: minmax(0, 1fr); gap: 0; }
   .records-filter-panel { grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
   .records-log-body { grid-template-columns: minmax(0, 1fr); }
@@ -187,19 +137,13 @@
 }
 @media (max-width: 32rem) {
   .records-year { padding: 1.25rem; }
-  .records-profile-stats { gap: 1.5rem 1rem; }
-  .records-profile-stats dd { font-size: 1.5rem; }
-  .records-profile-stats small { font-size: .75rem; }
   .records-entries > li { grid-template-columns: minmax(0, 1fr) 3rem; gap: .375rem 1rem; }
   .records-entry-date { grid-column: 1 / -1; padding: 0; }
   .records-filter-panel { grid-template-columns: minmax(0, 1fr); }
-  .records-profile-header { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; }
   .records-identity { gap: 1rem; }
   .records-identity p { font-size: .8125rem; }
   .records-avatar { display: none; }
   .records-log-entry { padding: 1.25rem; }
-  .records-log-title { flex-wrap: wrap; }
-  .records-log-title h1 { font-size: 1.75rem; }
   .records-log-header { padding-block-end: 1.5rem; }
   .records-log-body { padding-block-start: 1.5rem; gap: 1.5rem; }
   .records-log-measure { margin-block-end: 1.5rem; }
@@ -207,10 +151,6 @@
   .records-log-score-grid > section + section { padding-block-start: 1.5rem; border-block-start: 1px solid var(--paper-color-rule-default); }
   .records-log-footer { flex-direction: column; }
   .records-maintenance { text-align: start; }
-  .records-admin-stats { grid-template-columns: minmax(0, 1fr); gap: .5rem; padding-block: .875rem; }
-  .records-admin-stats .stat { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .25rem 1rem; }
-  .records-admin-stats .stat > span { margin: 0; align-self: center; }
-  .records-admin-stats .stat > small { grid-column: 1 / -1; margin: 0; }
   .records-admin-queue > li { flex-direction: column; gap: 1rem; }
   .records-admin-attention { padding: 1.25rem; }
   .records-admin-records { padding-inline: 1.25rem; }

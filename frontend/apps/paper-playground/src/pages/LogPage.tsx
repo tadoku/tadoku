@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
-import { Breadcrumb, Button, Checkbox, Flash, Modal, Surface, buttonClassName, type NavigationLinkProps } from 'paper-ui'
+import { Breadcrumb, Button, Checkbox, EmptyState, Flash, Modal, PageHeader, Surface, buttonClassName } from 'paper-ui'
 import { PencilSquareIcon, TrashIcon } from 'paper-ui/icons'
 import { contestStatus, formatDate, formatNumber, personalScoreExplanation, sampleToday, scoreLog, scoreSubmission, users, type SampleContest, type SampleLog, type Submission } from '../data'
 import { contestEnd, contestStart, formatDateRange } from '../dates'
+import { renderLink } from '../routerLink'
 import { usePlayground, useScenario } from '../state'
 import './records.css'
 
-const renderLink = ({ href, ...props }: NavigationLinkProps) => <Link className="text-link" to={href} {...props} />
 const scenarioLogs: Record<string, string> = { reading: 'reading-konbini', listening: 'listening-teppei', visitor: 'reading-mei', personal: 'personal-reading', ended: 'ended-reading' }
 
 export function submissionEligibility(log: SampleLog, contest: SampleContest, joined: readonly string[], registrations: Record<string, string[]> = {}, asOf = sampleToday) {
@@ -51,7 +51,7 @@ function SubmissionManager({ log, asOf, onSaved }: { log: SampleLog; asOf: strin
           const reason = submissionEligibility(log, contest, joinedContests, registrations, asOf)
           return <div key={contest.id}><Checkbox name={`selected.${contest.id}`} label={contest.title} disabled={Boolean(reason)} hint={reason ?? `${formatDateRange(contestStart(contest.start), contestEnd(contest.end))} · Eligible`} /></div>
         })}</div> : null}
-        {!available.length ? <div className="records-submission-empty"><h3 className="paper-type-component">No eligible contests</h3><p>Check the activity date, language, and your registrations. This activity already counts in your personal history.</p><Link className="text-link" to={`/contests/official?asOf=${asOf}`} onClick={() => setOpen(false)}>Find a contest to join</Link></div> : <p className="muted text-sm">Removing a selection removes that contest contribution. Your personal record stays the same.</p>}
+        {!available.length ? <EmptyState variant="plain" headingLevel={3} title="No eligible contests" description="Check the activity date, language, and your registrations. This activity already counts in your personal history." actions={<Link className="text-link" to={`/contests/official?asOf=${asOf}`} onClick={() => setOpen(false)}>Find a contest to join</Link>} /> : <p className="muted text-sm">Removing a selection removes that contest contribution. Your personal record stays the same.</p>}
         <div className="app-form__actions"><Button type="submit" disabled={!available.length}>Save submissions</Button><Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button></div>
       </form>
     </FormProvider>
@@ -91,10 +91,10 @@ function LogRecord({ id, scenario, onRetry }: { id?: string; scenario: string; o
     return submission.closed || contest && contestStatus(contest, asOf) === 'ended'
   }) ?? false
 
-  if (deleted) return <section className="empty-state records-log-result"><h1 className="paper-type-page" ref={resultRef} tabIndex={-1}>Log deleted</h1><p>The sample entry was removed from your local activity and contest submissions.</p><div className="app-form__actions"><Link className={buttonClassName()} to={`/users/${deleted.userId}/activity`}>View your activity</Link><Button variant="outline" onClick={() => { restoreLog(deleted); setDeleted(null) }}>Restore sample</Button></div></section>
+  if (deleted) return <EmptyState className="records-log-result" headingLevel={1} headingRef={resultRef} title="Log deleted" description="The sample entry was removed from your local activity and contest submissions." actions={<><Link className={buttonClassName()} to={`/users/${deleted.userId}/activity`}>View your activity</Link><Button variant="outline" onClick={() => { restoreLog(deleted); setDeleted(null) }}>Restore sample</Button></>} />
   if (!log || scenario === 'missing' || scenario === 'unavailable') {
     const unavailable = scenario === 'unavailable'
-    return <><Breadcrumb items={[{ id: 'activity', label: 'Activity', href: `/users/${userId}/activity` }, { id: 'log', label: 'Log details' }]} renderLink={renderLink} /><section className="empty-state records-log-result"><h1 className="paper-type-page">{unavailable ? 'This log couldn’t be loaded' : 'Log not found'}</h1><p>{unavailable ? 'There was a problem loading this record. Try again, or return to your activity.' : 'The link may be incorrect, or the log may have been removed. Return to the activity record to find another entry.'}</p><div className="app-form__actions">{unavailable ? <Button onClick={onRetry}>Try again</Button> : null}<Link className={buttonClassName({ variant: unavailable ? 'outline' : 'default' })} to={`/users/${userId}/activity`}>View activity</Link></div></section></>
+    return <><Breadcrumb items={[{ id: 'activity', label: 'Activity', href: `/users/${userId}/activity` }, { id: 'log', label: 'Log details' }]} renderLink={renderLink} /><EmptyState className="records-log-result" headingLevel={1} title={unavailable ? 'This log couldn’t be loaded' : 'Log not found'} description={unavailable ? 'There was a problem loading this record. Try again, or return to your activity.' : 'The link may be incorrect, or the log may have been removed. Return to the activity record to find another entry.'} actions={<>{unavailable ? <Button onClick={onRetry}>Try again</Button> : null}<Link className={buttonClassName({ variant: unavailable ? 'outline' : 'default' })} to={`/users/${userId}/activity`}>View activity</Link></>} /></>
   }
 
   return <>
@@ -102,10 +102,13 @@ function LogRecord({ id, scenario, onRetry }: { id?: string; scenario: string; o
     {ended ? <Flash className="records-log-notice" title="The contests are finished">You can still edit your personal record. Their saved points stay unchanged.</Flash> : null}
     {saved ? <Flash variant="success" className="records-log-notice">Contest submissions saved.</Flash> : null}
     <article className="records-log-sheet">
-      <header className="records-log-header">
-        <div className="meta-row"><strong>{log.language}</strong><span>{log.activity}</span><span>{log.media}</span></div>
-        <div className="records-log-title"><div><h1 className="paper-type-page">{log.title || `${log.language} ${log.activity.toLocaleLowerCase()}`}</h1><p className="muted">Logged by <Link className="text-link" to={`/users/${log.userId}`}>{name}</Link> on <time dateTime={log.date}>{formatDate(log.date)}</time></p></div>{owner ? <Link className={buttonClassName({ variant: 'outline' })} to={`/logs/${log.id}/edit?asOf=${asOf}`}><PencilSquareIcon className="paper-icon-default" aria-hidden="true" />Edit log</Link> : null}</div>
-      </header>
+      <div className="meta-row"><strong>{log.language}</strong><span>{log.activity}</span><span>{log.media}</span></div>
+      <PageHeader
+        className="records-log-header"
+        title={log.title || `${log.language} ${log.activity.toLocaleLowerCase()}`}
+        lead={<>Logged by <Link className="text-link" to={`/users/${log.userId}`}>{name}</Link> on <time dateTime={log.date}>{formatDate(log.date)}</time></>}
+        actions={owner ? <Link className={buttonClassName({ variant: 'outline' })} to={`/logs/${log.id}/edit?asOf=${asOf}`}><PencilSquareIcon className="paper-icon-default" aria-hidden="true" />Edit log</Link> : null}
+      />
       <div className="records-log-body"><Surface as="section" className="records-log-entry" aria-label="Recorded activity">
       <div className="records-log-measure"><p><strong>{formatNumber(log.amount)}</strong><span>{log.unit} {log.activity === 'Reading' ? 'read' : 'listened'}</span></p>{log.activity === 'Reading' ? <p className="records-log-time">{log.minutes === undefined ? 'Time not recorded' : <><strong>{formatNumber(log.minutes)} min</strong><span>time spent</span></>}</p> : null}</div>
       {log.note ? <p className="records-log-note">{log.note}</p> : null}

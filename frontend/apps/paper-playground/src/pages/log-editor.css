@@ -1,7 +1,6 @@
 .log-editor { width: 100%; max-width: 700px; margin-inline: auto; }
 .log-editor__layout { min-width: 0; }
 .log-editor__aside { display: none; }
-.log-editor__header { margin-bottom: 24px; }
 .log-editor__step { margin: 0; color: var(--paper-color-text-muted); font-size: .875rem; }
 .log-editor__form { display: grid; gap: 20px; min-width: 0; }
 .log-editor__step-content:not([hidden]) { display: grid; gap: 20px; min-width: 0; }

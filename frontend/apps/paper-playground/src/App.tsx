@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { Link, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { FormProvider, useForm } from 'react-hook-form'
-import { ActionMenu, Button, Drawer, Loading, Navbar, Select, ToastContainer, buttonClassName, type NavbarItem } from 'paper-ui'
+import { ActionMenu, Button, Drawer, EmptyState, Loading, Navbar, Select, ToastContainer, buttonClassName, type NavbarItem } from 'paper-ui'
 import wordmark from 'paper-ui/assets/brand/wordmark-accent.svg?no-inline'
 import reversedWordmark from 'paper-ui/assets/brand/wordmark-reversed.svg?no-inline'
 import { scenarioGroup, scenarios, usePlayground, useScenario, type GuideIA, type Viewer } from './state'
@@ -92,7 +92,7 @@ export function App() {
       <Route path="/admin" element={<AdminPage/>}/><Route path="/admin/:section" element={<AdminPage/>}/>
       <Route path="/sign-in" element={<SignInPage/>}/><Route path="/settings" element={<SettingsPage/>}/><Route path="/account/settings" element={<Navigate to="/settings" replace/>}/><Route path="/contact" element={<ContactPage/>}/>
       {Object.entries({about:'/about',manual:'/guide',rules:'/guide/scoring',faq:'/guide/questions'}).map(([slug,to])=><Route key={slug} path={`/pages/${slug}`} element={<Navigate to={to} replace/>}/>)}
-      <Route path="*" element={<section className="empty-state"><h1 className="paper-type-page">Page not found</h1><p>This address doesn’t match a Tadoku page.</p><Link to="/" className="text-link">Return home</Link></section>}/>
+      <Route path="*" element={<EmptyState headingLevel={1} title="Page not found" description="This address doesn’t match a Tadoku page." actions={<Link to="/" className="text-link">Return home</Link>}/>}/>
     </Routes></Suspense></main>
     <footer className="app-footer"><div className="app-footer__inner"><nav aria-label="Footer"><Link className="text-link" to="/about">About Tadoku</Link><Link className="text-link" to="/guide/questions">Questions &amp; help</Link><a className="text-link" href="https://github.com/tadoku/tadoku" target="_blank" rel="noreferrer">GitHub</a></nav><div className="flex flex-wrap items-center gap-2"><small className="muted">Sample data</small><ReviewControls key={scenarioGroup(location.pathname)}/></div></div></footer>
     <ToastContainer />

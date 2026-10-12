@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { FormProvider, useForm, useWatch } from 'react-hook-form'
-import { Button, Checkbox, Flash, Input, Select, TagsInput, TextArea, ToggleSelect, buttonClassName, useToast } from 'paper-ui'
+import { Button, Checkbox, EmptyState, Flash, Input, PageHeader, Select, TagsInput, TextArea, ToggleSelect, buttonClassName, useToast } from 'paper-ui'
 import { ChevronDownIcon } from 'paper-ui/icons'
 import { compatibleModifiers, contestStatus, formatNumber, modifierRates, personalScoreExplanation, sampleToday, scoreLog, scoreSubmission, supportedLanguages, type Activity, type LogModifier, type LogUnit, type SampleLog } from '../data'
+import { renderLink } from '../routerLink'
 import { usePlayground } from '../state'
 import { RecentLogPicker } from './RecentLogPicker'
 import './log-editor.css'
@@ -28,8 +29,8 @@ export function LogEditorPage() {
   const app = usePlayground()
   const existing = app.logs.find(log => log.id === logId)
   if (app.viewer === 'guest') return <Navigate replace to={`/sign-in?next=${encodeURIComponent(logId ? `/logs/${logId}/edit` : '/logs/new')}`} />
-  if (logId && !existing) return <section className="empty-state"><h1 className="paper-type-page">Log not found</h1><Link className="text-link" to="/users/anton/activity">View your activity</Link></section>
-  if (existing && existing.userId !== app.userId) return <section className="empty-state"><h1 className="paper-type-page">This is someone else’s record</h1><Link className="text-link" to={`/logs/${existing.id}`}>View the log</Link></section>
+  if (logId && !existing) return <EmptyState headingLevel={1} title="Log not found" actions={<Link className="text-link" to="/users/anton/activity">View your activity</Link>} />
+  if (existing && existing.userId !== app.userId) return <EmptyState headingLevel={1} title="This is someone else’s record" actions={<Link className="text-link" to={`/logs/${existing.id}`}>View the log</Link>} />
   return <LogForm key={logId || 'new'} existing={existing} />
 }
 
@@ -120,11 +121,9 @@ function LogForm({ existing }: { existing?: SampleLog }) {
   const estimate = Number.isFinite(amount) && amount > 0 ? `${formatNumber(scoreLog({ activity, language, amount, unit, modifiers }))} points` : 'Enter an amount'
 
   return <section className="log-editor">
-    <header className="page-header log-editor__header">
-      <Link className="text-link page-back-link" to={detailHref}>{existing ? 'Back to log' : 'Your activity log'}</Link>
-      <h1 className="paper-type-page">{existing ? 'Edit activity' : 'Log activity'}</h1>
+    <PageHeader backLink={{ href: detailHref, label: existing ? 'Back to log' : 'Your activity log' }} renderLink={renderLink} title={existing ? 'Edit activity' : 'Log activity'}>
       <p className="log-editor__step" ref={stepHeading} tabIndex={-1}>{step === 1 ? 'Log details' : 'Choose contests'} · {step} of 2</p>
-    </header>
+    </PageHeader>
     <div className="log-editor__layout">
     <FormProvider {...methods}><form className="log-editor__form" noValidate onSubmit={methods.handleSubmit(saveLog, errors => {
       const field = Object.keys(errors)[0] as keyof LogFields

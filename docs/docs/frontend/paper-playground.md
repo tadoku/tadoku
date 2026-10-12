@@ -14,6 +14,8 @@ paper-playground is a Vite and React Router app that composes `paper-ui` into fu
 
 All data is sample fixtures (`src/data.ts`), and every action changes only browser-local state (`src/state.tsx`, persisted in `localStorage`). There is no API connection, deployment image or publishing workflow. Do not connect its sample sign-in or administrative flows to live services.
 
+Page headers, section headings, status tags, empty states, figures, facts and applied-filter summaries come from the `paper-ui` page structure controls described in [Paper composition](paper-composition.md#page-structure-controls). The stylesheets in `frontend/apps/paper-playground/src/pages` hold only page-specific layout.
+
 The screens illustrate composition; they are not a shared implementation. A production screen still owns its data, routing and permissions, as described in [Paper composition](paper-composition.md).
 
 The footer's **Playground controls** switch between pages, sample scenarios, the sample account, theme and density. **Reset sample changes** restores the fixtures. The sample date is fixed at 5 September 2026.

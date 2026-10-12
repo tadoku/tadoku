@@ -79,8 +79,9 @@ base deployments leave `API_BRANCH` unset.
 
 ### Keto and Kratos
 
-- `API_KETO_READ_URL`, the Keto read API URL. Ban and administrator checks use
-  a separate read-only client with a 2s total request timeout.
+- `API_KETO_READ_URL`, an absolute HTTP(S) base URL for the Keto read
+  service. Ban and administrator checks use a separate read-only client with a
+  2s total request timeout.
 - `API_KETO_WRITE_URL`, an absolute HTTP(S) base URL for the Keto write
   service.
 - `API_KETO_WRITE_TIMEOUT` (default 2s), a positive total request timeout for
@@ -90,8 +91,8 @@ base deployments leave `API_BRANCH` unset.
 - `API_KRATOS_TIMEOUT` (default 2s), a positive total request timeout, including
   reading the response body.
 
-For both base URLs, credentials, query strings and fragments are rejected; path
-prefixes are supported and trailing slashes are removed.
+For the Keto and Kratos base URLs, credentials, query strings and fragments are
+rejected; path prefixes are supported and trailing slashes are removed.
 
 ### Service tokens and feature flags
 

@@ -66,6 +66,14 @@ export {
   type ToastProviderProps,
   type ToastUpdateOptions,
 } from './components/feedback'
+export {
+  PageHeader,
+  type PageHeaderProps,
+} from './components/page-structure/PageHeader'
+export {
+  SectionHeading,
+  type SectionHeadingProps,
+} from './components/page-structure/SectionHeading'
 export { Modal, type ModalProps } from './components/overlays/Modal'
 export {
   DRAWER_PLACEMENTS,

@@ -1,0 +1,50 @@
+@layer paper-recipes {
+  .paper-section-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--paper-space-3) var(--paper-space-6);
+    min-inline-size: 0;
+    margin-block: 0 var(--paper-space-4);
+  }
+
+  .paper-section-heading__text {
+    display: flex;
+    flex: 1 1 12rem;
+    flex-direction: column;
+    gap: var(--paper-space-2);
+    min-inline-size: 0;
+  }
+
+  .paper-section-heading__heading,
+  .paper-section-heading__status,
+  .paper-section-heading__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .paper-section-heading__heading {
+    gap: var(--paper-space-2) var(--paper-space-3);
+  }
+
+  .paper-section-heading__status,
+  .paper-section-heading__actions {
+    gap: var(--paper-inline-gap);
+  }
+
+  .paper-section-heading__title {
+    min-inline-size: 0;
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .paper-section-heading__description {
+    max-inline-size: 65ch;
+    margin: 0;
+    color: var(--paper-color-text-muted);
+    font-size: 0.875rem;
+    line-height: 1.6;
+  }
+}

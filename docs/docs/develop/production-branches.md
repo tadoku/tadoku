@@ -286,8 +286,10 @@ Its steps, in order:
    writes only its job summary and leaves the comment and status to the run of
    the later event.
 4. Check out the pinned commit with full history into `tadoku/` as the local
-   branch `pr-<number>`, and `main` of the private infrastructure repository
-   into `argocd/`. Neither checkout keeps its credentials.
+   branch `pr-<number>`, and clone `main` of the private infrastructure
+   repository into `argocd/` with its deploy key, over GitHub's SSH endpoint on
+   port 443 because the runner allows only HTTPS out. Neither checkout keeps
+   its credentials.
 5. Install dev-cli with `go install` at the `DEV_CLI_VERSION` release tag.
 6. Set up Bazel with the bazelisk, repository and `build-bazel` disk caches
    restored only. Caches saved from

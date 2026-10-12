@@ -282,15 +282,20 @@ jobs:
           git rev-parse --verify --quiet refs/remotes/origin/main >/dev/null ||
             git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
 
+      # The runner allows only HTTPS out, so the deploy key clones through
+      # GitHub's SSH endpoint on port 443, pinned to GitHub's published host key.
       - name: Check out the production configuration
         if: steps.pr.outputs.current == 'true'
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          repository: antonve/tadoku-argocd
-          ref: main
-          path: argocd
-          ssh-key: ${{ secrets.ARGOCD_DEPLOY_KEY }}
-          persist-credentials: false
+        env:
+          ARGOCD_DEPLOY_KEY: ${{ secrets.ARGOCD_DEPLOY_KEY }}
+        run: |
+          ssh_dir="$(mktemp -d)"
+          trap 'rm -rf "$ssh_dir"' EXIT
+          (umask 077 && printf '%s\n' "$ARGOCD_DEPLOY_KEY" >"$ssh_dir/key")
+          echo '[ssh.github.com]:443 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl' \
+            >"$ssh_dir/known_hosts"
+          GIT_SSH_COMMAND="ssh -i $ssh_dir/key -o IdentitiesOnly=yes -o UserKnownHostsFile=$ssh_dir/known_hosts" \
+            git clone --depth 1 --branch main ssh://git@ssh.github.com:443/antonve/tadoku-argocd.git argocd
 
       - name: Set up Go
         if: steps.pr.outputs.current == 'true'

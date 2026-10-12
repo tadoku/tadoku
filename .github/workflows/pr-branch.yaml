@@ -411,7 +411,9 @@ jobs:
 
       - name: Compare isolation with the baseline
         id: compare
-        if: always() && (steps.baseline.outputs.code == '0' || steps.baseline.outputs.code == '2')
+        if: >-
+          always() && steps.baseline.outcome == 'success' &&
+          (steps.baseline.outputs.code == '0' || steps.baseline.outputs.code == '2')
         env:
           GH_TOKEN: ${{ secrets.FEATURE_FLAGS_TOKEN }}
           ROUTE: ${{ steps.route.outputs.route }}

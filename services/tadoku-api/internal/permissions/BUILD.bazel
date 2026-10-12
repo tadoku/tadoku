@@ -25,6 +25,7 @@ go_test(
     name = "permissions_test",
     size = "medium",
     srcs = [
+        "admission_test.go",
         "checker_test.go",
         "target_roles_test.go",
         "tenant_lifecycle_test.go",

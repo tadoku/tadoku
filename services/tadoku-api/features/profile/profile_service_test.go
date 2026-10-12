@@ -3,9 +3,13 @@ package profile
 import (
 	"errors"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"reflect"
 	"testing"
+	"time"
 
+	"github.com/google/uuid"
 	kratosclient "github.com/tadoku/tadoku/services/tadoku-api/infra/kratos"
 )
 
@@ -88,5 +92,37 @@ func TestMapIdentityFetchErrorMapsKratosNotFound(t *testing.T) {
 	other := errors.New("provider unavailable")
 	if err := mapIdentityFetchError(other); !errors.Is(err, other) {
 		t.Errorf("mapIdentityFetchError(other) = %v, want %v", err, other)
+	}
+}
+
+func TestFindProfileAndFetchAccountCreatedAtTreatNonUserSchemaAsNotFound(t *testing.T) {
+	t.Parallel()
+
+	id := uuid.MustParse("00000000-0000-0000-0000-0000000000aa")
+	provider := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet || r.URL.Path != "/admin/identities/"+id.String() {
+			t.Errorf("request=%s %s", r.Method, r.URL.String())
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{
+			"id":"` + id.String() + `",
+			"schema_id":"service",
+			"schema_url":"http://kratos/schemas/service",
+			"state":"active",
+			"traits":{}
+		}`))
+	}))
+	t.Cleanup(provider.Close)
+
+	httpClient := provider.Client()
+	httpClient.Timeout = time.Second
+	t.Cleanup(httpClient.CloseIdleConnections)
+	service := NewService(nil, nil, nil, kratosclient.NewClient(provider.URL, kratosclient.WithHTTPClient(httpClient)))
+
+	if _, err := service.FindProfile(t.Context(), id); !errors.Is(err, ErrIdentityNotFound) {
+		t.Errorf("FindProfile() error = %v, want ErrIdentityNotFound", err)
+	}
+	if _, err := service.FetchAccountCreatedAt(t.Context(), id); !errors.Is(err, ErrIdentityNotFound) {
+		t.Errorf("FetchAccountCreatedAt() error = %v, want ErrIdentityNotFound", err)
 	}
 }

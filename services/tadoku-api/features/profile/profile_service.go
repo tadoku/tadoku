@@ -3,7 +3,6 @@ package profile
 import (
 	"context"
 	"errors"
-	"fmt"
 	"math"
 	"strings"
 	"time"
@@ -154,7 +153,7 @@ func (s *Service) FindProfile(ctx context.Context, userID uuid.UUID) (*PublicPro
 		return nil, mapIdentityFetchError(err)
 	}
 	if identity.GetSchemaId() != "user" {
-		return nil, fmt.Errorf("unexpected schema %s", identity.GetSchemaId())
+		return nil, ErrIdentityNotFound
 	}
 
 	traits, err := decodeIdentityTraits(identity.GetTraits())
@@ -174,7 +173,7 @@ func (s *Service) FetchAccountCreatedAt(ctx context.Context, userID uuid.UUID) (
 		return time.Time{}, mapIdentityFetchError(err)
 	}
 	if identity.GetSchemaId() != "user" {
-		return time.Time{}, fmt.Errorf("unexpected schema %s", identity.GetSchemaId())
+		return time.Time{}, ErrIdentityNotFound
 	}
 
 	return identity.GetCreatedAt(), nil

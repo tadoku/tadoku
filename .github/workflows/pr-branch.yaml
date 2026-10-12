@@ -196,8 +196,9 @@ jobs:
       DEV_CONFIG: ${{ github.workspace }}/argocd/dev-cli/production/config.yaml
       ISOLATION_CHECK: ${{ github.workspace }}/argocd/scripts/branch-isolation-check.sh
     steps:
-      # The runner image lacks the tools GitHub's images preinstall.
-      - name: Install kubectl, gh and Bazel
+      # The runner image lacks the tools GitHub's images preinstall, and the
+      # runner can reach only HTTPS, so apt fetches Ubuntu's archive over HTTPS.
+      - name: Install the build tools
         env:
           KUBECTL_VERSION: v1.36.5
           KUBECTL_SHA256: 33bc88a24c3b09cf55bfd59e6ca977881b61fc3f25ab65bc80c65b430248648e
@@ -206,6 +207,10 @@ jobs:
           BAZELISK_VERSION: v1.29.0
           BAZELISK_SHA256: 5a408715e932c0250d28bd84555f12edbf70117de42f9181691c736eacc4a992
         run: |
+          sudo sed -i 's|http://|https://|' /etc/apt/sources.list.d/ubuntu.sources
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends gcc g++
+
           cd "$(mktemp -d)"
           curl -fsSLo kubectl "https://dl.k8s.io/release/$KUBECTL_VERSION/bin/linux/amd64/kubectl"
           curl -fsSLo gh.tar.gz \

@@ -285,7 +285,12 @@ Its steps, in order:
    saves one, and it uploads no artifact. Frontend images build inside Docker
    through `frontend/scripts/publish-image.sh`, so the runner needs no Node or
    pnpm.
-6. Write a private kubeconfig whose context is `lke20948-ctx`, and stop unless
+6. Join the maintainer's tailnet as an ephemeral `tag:tadoku-ci` node that
+   accepts subnet routes but not tailnet DNS. The cluster API server accepts
+   only allowlisted addresses, and a subnet router whose address is allowlisted
+   carries the route to it. The tailnet policy grants the tag only TCP 443 on
+   the API server. Then write a private kubeconfig whose context is
+   `lke20948-ctx`, and stop unless
    the token authenticates as
    `system:serviceaccount:tdk-prod-branches:pr-branch-deployer`. Log in to
    `ghcr.io` with the job token, which has `packages: write`.
@@ -345,7 +350,9 @@ reaches only the steps that need it.
 | `KUBE_TOKEN` | Secret | The `pr-branch-deployer` ServiceAccount token | Kubeconfig step |
 | `ARGOCD_DEPLOY_KEY` | Secret | The private half of a read-only SSH deploy key for the infrastructure repository | Its checkout |
 | `FEATURE_FLAGS_TOKEN` | Secret | A fine-grained token with read access to the contents of `tadoku/feature-flags` | The isolation checks, as `GH_TOKEN` |
+| `TS_OAUTH_CLIENT_ID`, `TS_OAUTH_SECRET` | Secret | A Tailscale OAuth client with the writable `auth_keys` scope, limited to `tag:tadoku-ci` | Tailnet step |
 | `DEV_CLI_VERSION` | Variable | A dev-cli release tag, such as `v0.11.1` | `go install` |
 
 The ServiceAccount, its permissions and token rotation are documented in the
-infrastructure repository's production runbook.
+infrastructure repository's production runbook. The tailnet tag, its grant and
+the subnet route are configured in the maintainer's tailnet.

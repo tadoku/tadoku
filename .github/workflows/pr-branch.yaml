@@ -312,6 +312,20 @@ jobs:
           cache-save: false
           token: ""
 
+      # The cluster API server accepts only allowlisted addresses, so the job
+      # reaches it through a tailnet subnet router as an ephemeral tag:tadoku-ci
+      # node, whose grants cover only the API server. DNS stays on the runner,
+      # and the action saves no cache.
+      - name: Join the tailnet
+        if: steps.pr.outputs.current == 'true'
+        uses: tailscale/github-action@d1b6cd204f8dceda5b3eaad7f1f767be390056cd # v4.2.0
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:tadoku-ci
+          args: --accept-routes --accept-dns=false
+          use-cache: "false"
+
       # Refuses any credential other than the scoped ServiceAccount, and
       # records its identity as evidence.
       - name: Write the kubeconfig

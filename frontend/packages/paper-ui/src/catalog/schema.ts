@@ -21,6 +21,7 @@ export const COMPONENT_CATEGORIES = [
   "feedback",
   "overlays",
   "data-display",
+  "page-structure",
 ] as const;
 
 export const CATALOG_CATEGORIES = [

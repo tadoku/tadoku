@@ -1,4 +1,4 @@
-import { Button, Surface, Table, buttonClassName } from 'paper-ui'
+import { Button, SectionHeading, StatGrid, Surface, Table, buttonClassName } from 'paper-ui'
 import { Link } from 'react-router-dom'
 import { formatNumber, initialContests, initialLogs, leaderboardPeople, users } from '../data'
 import { contestEnd, contestStart, formatDate, formatDateRange, formatDateTime } from '../dates'
@@ -117,13 +117,14 @@ export function HomePage() {
         </div>
 
         <Surface as="section" elevation="showcase" accent className="home-ledger p-0" aria-labelledby="home-board-title">
-          <header className="home-ledger-header">
-            <div>
-              <h2 id="home-board-title">{upcoming ? '2026 Round 6' : between ? '2026 Round 5 recap' : unavailable ? 'Current contest' : '2026 Round 5'}</h2>
-              <p>{unavailable ? 'Standings temporarily unavailable' : <>{period}{between ? ' · Final results' : upcoming ? '' : ' · Day 5 of 30'}</>}</p>
-            </div>
-            {!unavailable && <Link to={`/contests/${selectedContest}${upcoming ? '' : '/leaderboard'}${between ? '?scenario=ended' : ''}`} className="text-link">{upcoming ? 'Contest details' : between ? 'See final board' : 'Full leaderboard'}</Link>}
-          </header>
+          <SectionHeading
+            level={2}
+            id="home-board-title"
+            className="home-ledger-header"
+            title={upcoming ? '2026 Round 6' : between ? '2026 Round 5 recap' : unavailable ? 'Current contest' : '2026 Round 5'}
+            description={unavailable ? 'Standings temporarily unavailable' : <>{period}{between ? ' · Final results' : upcoming ? '' : ' · Day 5 of 30'}</>}
+            actions={unavailable ? null : <Link to={`/contests/${selectedContest}${upcoming ? '' : '/leaderboard'}${between ? '?scenario=ended' : ''}`} className="text-link">{upcoming ? 'Contest details' : between ? 'See final board' : 'Full leaderboard'}</Link>}
+          />
           {unavailable ? (
             <div className="home-ledger-message" role="status">
               <h3>The board could not be loaded</h3>
@@ -132,10 +133,7 @@ export function HomePage() {
             </div>
           ) : upcoming ? (
             <>
-              <dl className="home-ledger-stats">
-                <div><dt>Length</dt><dd>2 weeks</dd></div>
-                <div><dt>Activities</dt><dd>Reading & listening</dd></div>
-              </dl>
+              <StatGrid className="home-ledger-stats" stats={[{ label: 'Length', value: '2 weeks' }, { label: 'Activities', value: 'Reading & listening' }]} />
               <div className="home-ledger-message">
                 <p className="home-start-date"><span>Starts</span><strong>{formatDate(contestStart(contest.start))}</strong></p>
                 <h3>Make space for immersion</h3>
@@ -145,11 +143,7 @@ export function HomePage() {
             </>
           ) : (
             <>
-              <dl className="home-ledger-stats">
-                <div><dt>Participants</dt><dd>{ranked.length}</dd></div>
-                <div><dt>Languages</dt><dd>{languageCount}</dd></div>
-                <div><dt>Points logged</dt><dd>{formatNumber(points)}</dd></div>
-              </dl>
+              <StatGrid className="home-ledger-stats" stats={[{ label: 'Participants', value: ranked.length }, { label: 'Languages', value: languageCount }, { label: 'Points logged', value: formatNumber(points) }]} />
               {between && <p className="home-round-leader">Round leader <Link to={`/users/${ranked[0]?.userId}?contest=round5`} className="text-link">{users.find(person => person.id === ranked[0]?.userId)?.name}</Link></p>}
               <Table
                 caption={`${between ? 'Final' : 'Current'} Round 5 top ${between ? 'three' : 'five'}`}

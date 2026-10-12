@@ -1,4 +1,4 @@
-import { Button, Input, Table, buttonClassName } from 'paper-ui'
+import { Button, EmptyState, Input, PageHeader, Table, buttonClassName } from 'paper-ui'
 import { FormProvider, useForm, useWatch } from 'react-hook-form'
 import { Link } from 'react-router-dom'
 import { usePlayground } from '../state'
@@ -246,10 +246,7 @@ function Questions() {
         ))}
       </div>
       {visible.length === 0 && (
-        <div className="empty-state">
-          <h2>No questions match that search.</h2>
-          <p>Try a broader term or clear the search.</p>
-        </div>
+        <EmptyState headingLevel={2} title="No questions match that search." description="Try a broader term or clear the search." />
       )}
       <section className="guide-section" id="contact">
         <h2>Still looking for an answer?</h2>
@@ -276,11 +273,9 @@ export function GuidePage({ page }: { page: GuideSection }) {
         {pageOrder.map(key => <Link key={key} to={routes[key]} className="text-link" aria-current={key === page ? 'page' : undefined}>{currentLabels[key]}</Link>)}
       </nav>
       <article className="guide-article">
-        <header className="guide-header">
-          <h1>{headings[page].title}</h1>
-          <p className="page-lead">{headings[page].description}</p>
+        <PageHeader className="guide-header" title={headings[page].title} lead={headings[page].description}>
           {inPageLinks[page] && <nav className="guide-contents" aria-label="On this page">{inPageLinks[page]?.map(link => <a key={link.id} href={`#${link.id}`} className="text-link">{link.label}</a>)}</nav>}
-        </header>
+        </PageHeader>
         {page === 'about' && <About />}
         {page === 'manual' && <Manual />}
         {page === 'rules' && <Rules />}

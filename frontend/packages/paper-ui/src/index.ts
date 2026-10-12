@@ -66,6 +66,37 @@ export {
   type ToastProviderProps,
   type ToastUpdateOptions,
 } from './components/feedback'
+export {
+  AppliedFilters,
+  type AppliedFiltersProps,
+} from './components/forms/AppliedFilters'
+export {
+  EmptyState,
+  type EmptyStateProps,
+} from './components/feedback/EmptyState'
+export {
+  StatusTag,
+  type StatusTagProps,
+  type StatusTagTone,
+} from './components/feedback/StatusTag'
+export {
+  PageHeader,
+  type PageHeaderProps,
+} from './components/page-structure/PageHeader'
+export {
+  SectionHeading,
+  type SectionHeadingProps,
+} from './components/page-structure/SectionHeading'
+export {
+  DescriptionList,
+  type DescriptionListItem,
+  type DescriptionListProps,
+} from './components/data-display/DescriptionList'
+export {
+  StatGrid,
+  type StatGridItem,
+  type StatGridProps,
+} from './components/data-display/StatGrid'
 export { Modal, type ModalProps } from './components/overlays/Modal'
 export {
   DRAWER_PLACEMENTS,

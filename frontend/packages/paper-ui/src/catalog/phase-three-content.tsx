@@ -236,7 +236,7 @@ export const phaseThreeGovernanceDocuments = [
     summary: "Meaningful package, component, documentation, deployment, and migration changes.",
     keywords: ["changelog", "release", "version", "migration"], sourcePath: "src/catalog/phase-three-content.tsx",
     whenToUse: ["Consult before upgrading Paper or changing an application integration."],
-    content: ["0.1.0 establishes semantic foundations, the complete catalogue contract, static delivery at paper.tadoku.app, framework-neutral components, and TypeScript 4.9-compatible built declarations.", "Current review (unreleased) adds usable foundation examples, a spacing scale and layout utilities, and corrects accent-rail perimeter alignment. Documentation coverage is not an application migration or release approval."],
+    content: ["0.1.0 establishes semantic foundations, the complete catalogue contract, static delivery at paper.tadoku.app, framework-neutral components, and TypeScript 4.9-compatible built declarations.", "Current review (unreleased) adds usable foundation examples, a spacing scale and layout utilities, corrects accent-rail perimeter alignment, and adds Experimental page-composition controls (PageHeader, SectionHeading, StatusTag, EmptyState, StatGrid, DescriptionList and AppliedFilters) with the Filter bar pattern. Documentation coverage is not an application migration or release approval."],
     requirements: ["Record behavior, accessibility, API, or migration consequences instead of listing filenames alone."],
     publicContract: ["Release identity is the merged Tadoku commit plus immutable container digest recorded at each deployment gate."],
   }),

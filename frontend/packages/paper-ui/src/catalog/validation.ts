@@ -104,7 +104,7 @@ function expectedRoutePattern(document: CatalogDocument): RegExp {
     case "foundation":
       return /^\/foundations\/[a-z0-9]+(?:-[a-z0-9]+)*$/;
     case "component":
-      return /^\/components\/(?:actions|forms|navigation|feedback|overlays|data-display)\/[a-z0-9]+(?:-[a-z0-9]+)*$/;
+      return /^\/components\/(?:actions|forms|navigation|feedback|overlays|data-display|page-structure)\/[a-z0-9]+(?:-[a-z0-9]+)*$/;
     case "pattern":
       return /^\/patterns\/[a-z0-9]+(?:-[a-z0-9]+)*$/;
     case "experiment":

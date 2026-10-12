@@ -1,0 +1,35 @@
+@layer paper-recipes {
+  .paper-status-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem var(--paper-space-2);
+    border: var(--paper-border-static-width) solid var(--paper-status-tag-rule, currentColor);
+    color: var(--paper-status-tag-color);
+    font-family: var(--paper-font-body);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.5;
+    white-space: nowrap;
+  }
+
+  .paper-status-tag--neutral {
+    --paper-status-tag-color: var(--paper-color-text-ink);
+    --paper-status-tag-rule: var(--paper-color-rule-default);
+  }
+
+  .paper-status-tag--information {
+    --paper-status-tag-color: var(--paper-color-status-information);
+  }
+
+  .paper-status-tag--success {
+    --paper-status-tag-color: var(--paper-color-status-success);
+  }
+
+  .paper-status-tag--warning {
+    --paper-status-tag-color: var(--paper-color-status-warning);
+  }
+
+  .paper-status-tag--danger {
+    --paper-status-tag-color: var(--paper-color-status-danger);
+  }
+}

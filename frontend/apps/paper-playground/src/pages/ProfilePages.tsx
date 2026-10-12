@@ -1,14 +1,14 @@
 import { useRef, useState } from 'react'
 import { FormProvider, useForm, useWatch } from 'react-hook-form'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
-import { AutocompleteMultiInput, Breadcrumb, Button, HeatmapChart, Input, Select, Tabbar, buttonClassName, chartPalette, type NavigationLinkProps } from 'paper-ui'
+import { AppliedFilters, AutocompleteMultiInput, Breadcrumb, Button, DescriptionList, EmptyState, HeatmapChart, Input, SectionHeading, Select, StatGrid, Tabbar, buttonClassName, chartPalette } from 'paper-ui'
 import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, PlusIcon } from 'paper-ui/icons'
 import { formatDate, formatNumber, scoreLog, users, type SampleLog } from '../data'
 import { contestEnd, contestStart, formatDateRange } from '../dates'
+import { renderLink } from '../routerLink'
 import { usePlayground, useScenario } from '../state'
 import './records.css'
 
-const renderLink = ({ href, ...props }: NavigationLinkProps) => <Link className="text-link" to={href} {...props} />
 const years = [2026, 2025, 2024, 2023]
 
 type ActivityFilters = { period: string; languages: string[]; activities: string[]; query: string }
@@ -87,10 +87,7 @@ function ActivityLog({ logs, owner }: { logs: readonly SampleLog[]; owner: boole
   }
 
   return <section className="page-section records-activity" aria-labelledby="activity-heading">
-    <div className="section-heading records-section-heading">
-      <div><h2 className="paper-type-section" id="activity-heading">Activity log</h2></div>
-      {logs.length ? <div className="records-activity-actions"><Button ref={filtersToggle} variant="ghost" className="records-filter-toggle" aria-expanded={filtersOpen} aria-controls="activity-filters" onClick={() => setFiltersOpen(!filtersOpen)} trailingIcon={<ChevronDownIcon className="paper-icon-compact" />}>Filters{appliedFilters.length ? ` (${appliedFilters.length})` : ''}</Button>{owner ? <Link className={buttonClassName()} to="/logs/new"><PlusIcon className="paper-icon-default" aria-hidden="true" />Log activity</Link> : null}</div> : null}
-    </div>
+    <SectionHeading level={2} id="activity-heading" title="Activity log" actions={logs.length ? <><Button ref={filtersToggle} variant="ghost" aria-expanded={filtersOpen} aria-controls="activity-filters" onClick={() => setFiltersOpen(!filtersOpen)} trailingIcon={<ChevronDownIcon className={`paper-icon-compact${filtersOpen ? ' rotate-180' : ''}`} />}>Filters{appliedFilters.length ? ` (${appliedFilters.length})` : ''}</Button>{owner ? <Link className={buttonClassName()} to="/logs/new"><PlusIcon className="paper-icon-default" aria-hidden="true" />Log activity</Link> : null}</> : null} />
     {logs.length ? <>
     <div id="activity-filters" hidden={!filtersOpen}><FormProvider {...methods}>
       <form onSubmit={event => event.preventDefault()} className="records-filter-panel">
@@ -100,13 +97,10 @@ function ActivityLog({ logs, owner }: { logs: readonly SampleLog[]; owner: boole
         <Input name="query" label="Search activity" type="search" placeholder="Title, note or tag" />
       </form>
     </FormProvider></div>
-    <div className="records-filter-summary">{appliedFilters.length ? <div className="records-applied-filters" aria-label="Applied filters">
-      <p>{appliedFilters.join(' · ')}</p>
-      <Button variant="link" onClick={reset}>Clear all</Button>
-    </div> : null}
+    <div className="records-filter-summary"><AppliedFilters filters={appliedFilters} onClear={reset} />
     <p className="records-result-count" role="status">{filtered.length} of {logs.length} entries</p></div>
-    {filtered.length ? <ActivityRows logs={filtered} /> : <div className="empty-state"><h3 className="paper-type-component">No activity matches these filters.</h3><p>Try another title or include more dates and languages.</p><Button variant="outline" onClick={reset}>Clear search and filters</Button></div>}
-    </> : <div className="empty-state"><h3 className="paper-type-component">No activity yet</h3><p>{owner ? 'Start with what you read or listened to today. A title and a few pages or minutes are enough.' : 'Reading and listening entries will appear here once they have been recorded.'}</p>{owner ? <Link className={buttonClassName()} to="/logs/new">Log activity</Link> : null}</div>}
+    {filtered.length ? <ActivityRows logs={filtered} /> : <EmptyState headingLevel={3} title="No activity matches these filters." description="Try another title or include more dates and languages." actions={<Button variant="outline" onClick={reset}>Clear search and filters</Button>} />}
+    </> : <EmptyState headingLevel={3} title="No activity yet" description={owner ? 'Start with what you read or listened to today. A title and a few pages or minutes are enough.' : 'Reading and listening entries will appear here once they have been recorded.'} actions={owner ? <Link className={buttonClassName()} to="/logs/new">Log activity</Link> : null} />}
   </section>
 }
 
@@ -131,11 +125,11 @@ export function ProfilePage({ activity = false }: { activity?: boolean }) {
   const yearIndex = years.indexOf(year)
   const changeYear = (next: number) => { const values = new URLSearchParams(params); values.set('year', String(next)); setParams(values) }
 
-  if (!profile) return <section className="empty-state"><h1 className="paper-type-page">Profile not found</h1><p>This account is not in the playground’s sample community.</p><Link className={buttonClassName()} to="/leaderboard/latest">Explore the leaderboard</Link></section>
+  if (!profile) return <EmptyState headingLevel={1} title="Profile not found" description="This account is not in the playground’s sample community." actions={<Link className={buttonClassName()} to="/leaderboard/latest">Explore the leaderboard</Link>} />
 
   return <>
     <Breadcrumb items={[{ id: 'home', label: 'Home', href: '/' }, { id: 'profile', label: profile.name }]} renderLink={renderLink} />
-    <header className="page-header records-profile-header">
+    <header className="records-profile-header">
       <div className="records-identity"><span className="records-avatar" aria-hidden="true">{profile.name.slice(0, 2).toLocaleUpperCase()}</span><div><h1 className="paper-type-page">{profile.name}</h1><p className="muted">Tracking since {String(profile.joined).slice(0, 4)}</p></div></div>
       {owner ? <Link className={buttonClassName({ variant: 'outline' })} to="/settings">Edit profile</Link> : null}
     </header>
@@ -143,24 +137,27 @@ export function ProfilePage({ activity = false }: { activity?: boolean }) {
     <Tabbar label="Profile views" renderLink={renderLink} links={[{ id: 'overview', label: 'Overview', href: `/users/${profile.id}${viewQuery}`, current: !activity }, { id: 'activity', label: 'Activity log', href: `/users/${profile.id}/activity${viewQuery}`, current: activity }]} />
     {activity ? <ActivityLog key={profile.id} logs={ownLogs} owner={owner} /> : <>
       <section className="page-section records-year" aria-labelledby="profile-year-heading">
-        <div className="section-heading records-section-heading records-year-heading"><div><h2 className="paper-type-section" id="profile-year-heading">{profile.name}’s activity</h2></div>
-          <div className="records-year-control" aria-label="Profile year"><Button variant="ghost" aria-label="Previous year" disabled={yearIndex === years.length - 1} onClick={() => changeYear(years[yearIndex + 1])}><ChevronLeftIcon className="paper-icon-default" /></Button><strong aria-live="polite">{year}</strong><Button variant="ghost" aria-label="Next year" disabled={yearIndex === 0} onClick={() => changeYear(years[yearIndex - 1])}><ChevronRightIcon className="paper-icon-default" /></Button></div>
-        </div>
-        {summary.entries ? <><dl className="stat-grid records-profile-stats"><div className="stat"><dt>Personal score</dt><dd>{formatNumber(summary.total)}</dd></div><div className="stat"><dt>Entries</dt><dd>{summary.entries}<small>{summary.days} active days</small></dd></div><div className="stat"><dt>Languages</dt><dd>{summary.languages.length}<small>{summary.languages[0] ? `${summary.languages[0][0]} leads` : 'A new language awaits'}</small></dd></div><div className="stat"><dt>Contests</dt><dd>{summary.contestIds.length}</dd></div></dl>
+        <SectionHeading level={2} id="profile-year-heading" title={`${profile.name}’s activity`} actions={<div className="records-year-control" aria-label="Profile year"><Button variant="ghost" aria-label="Previous year" disabled={yearIndex === years.length - 1} onClick={() => changeYear(years[yearIndex + 1])}><ChevronLeftIcon className="paper-icon-default" /></Button><strong aria-live="polite">{year}</strong><Button variant="ghost" aria-label="Next year" disabled={yearIndex === 0} onClick={() => changeYear(years[yearIndex - 1])}><ChevronRightIcon className="paper-icon-default" /></Button></div>} />
+        {summary.entries ? <><StatGrid className="records-profile-stats" stats={[
+          { label: 'Personal score', value: formatNumber(summary.total) },
+          { label: 'Entries', value: summary.entries, detail: `${summary.days} active days` },
+          { label: 'Languages', value: summary.languages.length, detail: summary.languages[0] ? `${summary.languages[0][0]} leads` : 'A new language awaits' },
+          { label: 'Contests', value: summary.contestIds.length },
+        ]} />
       <div className="records-rhythm" aria-labelledby="rhythm-heading">
-        <div className="records-calendar-heading"><h3 id="rhythm-heading">Immersion rhythm</h3><Link className="text-link" to="/guide/scoring">How scoring works</Link></div>
+        <SectionHeading level={3} id="rhythm-heading" title="Immersion rhythm" actions={<Link className="text-link" to="/guide/scoring">How scoring works</Link>} />
         <div className="records-heatmap-scroll paper-focus-ring" role="region" aria-label={`Daily immersion calendar for ${year}; scroll for all months`} tabIndex={0}><HeatmapChart id={`profile-${profile.id}-${year}`} year={year} data={summary.daily} /></div>
         <p className="records-chart-caption">{summary.days} active days · Longest streak: {summary.longestStreak} {summary.longestStreak === 1 ? 'day' : 'days'}<span>Stronger color means more activity.</span></p>
-      </div></> : <div className="records-empty-year"><h3>No activity recorded in {year}</h3><p>{owner ? 'A few pages or minutes are a good place to start. Your personal record grows with every entry, whether you join a contest or read on your own.' : 'Personal scores, the activity calendar and contest history will appear after the first entry for this year.'}</p>{owner ? <Link className={buttonClassName()} to="/logs/new">Log activity</Link> : null}</div>}</section>
+      </div></> : <EmptyState variant="plain" className="records-empty-year" headingLevel={3} title={`No activity recorded in ${year}`} description={owner ? 'A few pages or minutes are a good place to start. Your personal record grows with every entry, whether you join a contest or read on your own.' : 'Personal scores, the activity calendar and contest history will appear after the first entry for this year.'} actions={owner ? <Link className={buttonClassName()} to="/logs/new">Log activity</Link> : null} />}</section>
       {summary.entries ? <div className="records-overview-columns">
-          <section className="page-section" aria-labelledby="language-heading"><div className="section-heading records-section-heading"><div><h2 className="paper-type-section" id="language-heading">Score by language</h2></div></div>
+          <section className="page-section" aria-labelledby="language-heading"><SectionHeading level={2} id="language-heading" title="Score by language" />
             {summary.languages.length ? <ol className="records-breakdown">{summary.languages.map(([language, score], index) => <li key={language}><div><span>{language}</span><strong>{formatNumber(score)} <small>points</small></strong></div><span className="records-bar-track" aria-hidden="true"><span style={{ width: `${summary.total ? score / summary.total * 100 : 0}%`, backgroundColor: chartPalette[index % chartPalette.length] }} /></span></li>)}</ol> : <p className="muted">No activity recorded in {year}.</p>}
           </section>
-          <section className="page-section records-mix" aria-labelledby="mix-heading"><div className="section-heading records-section-heading"><div><h2 className="paper-type-section" id="mix-heading">Score by activity</h2></div></div><dl className="records-activity-mix">{summary.activities.map(([name, score]) => <div key={name}><dt>{name}</dt><dd>{summary.total ? Math.round(score / summary.total * 100) : 0}%</dd></div>)}</dl>{!summary.entries ? <p className="muted">Reading and listening will appear after a first log.</p> : null}</section>
-          <section className="page-section records-history" aria-labelledby="history-heading"><div className="section-heading records-section-heading"><div><h2 className="paper-type-section" id="history-heading">Contest history</h2></div><Link className="text-link" to="/contests/official">All contests</Link></div>
+          <section className="page-section records-mix" aria-labelledby="mix-heading"><SectionHeading level={2} id="mix-heading" title="Score by activity" /><DescriptionList layout="inline" items={summary.activities.map(([name, score]) => ({ label: name, value: `${summary.total ? Math.round(score / summary.total * 100) : 0}%` }))} />{!summary.entries ? <p className="muted">Reading and listening will appear after a first log.</p> : null}</section>
+          <section className="page-section records-history" aria-labelledby="history-heading"><SectionHeading level={2} id="history-heading" title="Contest history" actions={<Link className="text-link" to="/contests/official">All contests</Link>} />
             {summary.contestIds.length ? <ul className="records-contest-history">{summary.contestIds.map(id => { const contest = contests.find(item => item.id === id); const score = yearLogs.flatMap(log => log.submissions).filter(submission => submission.contestId === id).reduce((sum, item) => sum + item.score, 0); return <li key={id}><div><Link className="text-link" to={`/contests/${id}`}>{contest?.title ?? 'Contest'}</Link><p className="muted">{contest ? formatDateRange(contestStart(contest.start), contestEnd(contest.end)) : 'Submitted activity'}</p></div><strong>{formatNumber(score)}<small>contest points</small></strong></li> })}</ul> : <p className="muted">No contest submissions in {year}. Personal activity still counts here.</p>}
           </section>
-          <section className="page-section" aria-labelledby="recent-heading"><div className="section-heading records-section-heading"><div><h2 className="paper-type-section" id="recent-heading">Recent activity</h2></div><Link className="text-link" to={`/users/${profile.id}/activity${viewQuery}`}>View all</Link></div>{yearLogs.length ? <ActivityRows logs={yearLogs.slice(0, 3)} compact /> : <p className="muted">No entries for this year.</p>}</section>
+          <section className="page-section" aria-labelledby="recent-heading"><SectionHeading level={2} id="recent-heading" title="Recent activity" actions={<Link className="text-link" to={`/users/${profile.id}/activity${viewQuery}`}>View all</Link>} />{yearLogs.length ? <ActivityRows logs={yearLogs.slice(0, 3)} compact /> : <p className="muted">No entries for this year.</p>}</section>
       </div> : null}
     </>}
   </>

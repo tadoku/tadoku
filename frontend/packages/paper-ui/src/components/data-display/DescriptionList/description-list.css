@@ -1,0 +1,53 @@
+@layer paper-recipes {
+  .paper-description-list {
+    min-inline-size: 0;
+    margin: 0;
+    font-size: 0.875rem;
+    line-height: 1.55;
+  }
+
+  .paper-description-list__item {
+    min-inline-size: 0;
+  }
+
+  .paper-description-list__label,
+  .paper-description-list__value {
+    overflow-wrap: anywhere;
+  }
+
+  .paper-description-list__value {
+    margin: 0;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .paper-description-list--stacked {
+    display: grid;
+    gap: var(--paper-space-4);
+  }
+
+  .paper-description-list--stacked .paper-description-list__label {
+    margin-block-end: var(--paper-space-1);
+    color: var(--paper-color-text-muted);
+    font-size: 0.8125rem;
+    line-height: 1.4;
+  }
+
+  .paper-description-list--inline .paper-description-list__item {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--paper-space-1) var(--paper-space-4);
+    padding-block: var(--paper-space-3);
+    border-block-end: var(--paper-border-static-width) solid var(--paper-color-rule-default);
+  }
+
+  .paper-description-list--inline .paper-description-list__item:first-child {
+    padding-block-start: 0;
+  }
+
+  .paper-description-list--inline .paper-description-list__value {
+    font-weight: 600;
+    text-align: end;
+  }
+}

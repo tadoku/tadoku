@@ -83,6 +83,16 @@ export {
   SectionHeading,
   type SectionHeadingProps,
 } from './components/page-structure/SectionHeading'
+export {
+  DescriptionList,
+  type DescriptionListItem,
+  type DescriptionListProps,
+} from './components/data-display/DescriptionList'
+export {
+  StatGrid,
+  type StatGridItem,
+  type StatGridProps,
+} from './components/data-display/StatGrid'
 export { Modal, type ModalProps } from './components/overlays/Modal'
 export {
   DRAWER_PLACEMENTS,

@@ -5,7 +5,10 @@ import { DiscordIcon, GitHubIcon, TwitterIcon } from './Icons'
 
 export default function Footer() {
   return (
-    <div className="w-full md:bg-[url('/img/footer.png')] bg-no-repeat bg-top bg-[#1A1A1A]">
+    <div
+      className="w-full md:bg-[url('/img/footer.png')] bg-no-repeat bg-top bg-[#1A1A1A]"
+      data-plan7-p2="a-1"
+    >
       <div className="max-w-7xl mx-auto p-8 flex flex-col-reverse md:flex-row space-y-8 space-y-reverse md:space-y-0 justify-between h-full">
         <div className="flex flex-col-reverse md:flex-col md:space-y-8 text-center items-center md:items-start">
           <LogoInverted className="hidden md:block" />

@@ -102,7 +102,9 @@
   .contest-filters > .paper-button { align-self: end; }
   .contest-eligibility { grid-template-columns: 1fr; gap: 16px; }
   .standings-workspace { margin-top: 20px; }
-  .standings-context { padding: 20px 16px 16px; }
+  .standings-context { padding: 20px 16px 16px; column-gap: 8px; }
+  .standings-context .paper-section-heading__heading { column-gap: 8px; }
+  .standings-context .paper-button { padding-inline: 4px; }
   .standings-context h2 { font-size: 1.125rem; }
   .standings-applied-filters, .standings-empty { padding-inline: 16px; }
   .standings-filters { padding: 0 16px 16px; }

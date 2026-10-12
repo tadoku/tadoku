@@ -23,6 +23,20 @@ func TestDependencyFailures(t *testing.T) {
 	}
 	poolClosed := &suite{keto: keto, handler: handler}
 
+	unreachablePool := openUnreachablePool(t, api.db.AppPool.Config().ConnString())
+	handler, _, _, err = newTestRouterWithLogger(
+		t.Context(),
+		unreachablePool,
+		unreachablePool,
+		keto,
+		api.kratos,
+		logger,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	databaseUnavailable := &suite{keto: keto, handler: handler}
+
 	closedValkey, err := newClosedLeaderboardValkeyClient()
 	if err != nil {
 		t.Fatal(err)
@@ -105,6 +119,15 @@ func TestDependencyFailures(t *testing.T) {
 			want:        http.StatusInternalServerError,
 			suite:       poolClosed,
 			handler:     poolClosed.handler,
+			logMessage:  "list active announcements failed",
+			logLevel:    slog.LevelError,
+		},
+		{
+			operation:   "ListActiveAnnouncements",
+			description: []string{"database", "unavailable"},
+			want:        http.StatusServiceUnavailable,
+			suite:       databaseUnavailable,
+			handler:     databaseUnavailable.handler,
 			logMessage:  "list active announcements failed",
 			logLevel:    slog.LevelError,
 		},

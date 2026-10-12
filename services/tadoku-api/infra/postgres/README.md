@@ -37,8 +37,9 @@ test creates its own pool and fixture before issuing SQL; subtests remain
 sequential. Tests using `timex.TheWorld` remain sequential in their own package.
 Coverage includes cross-repository commit/rollback, panic, cancellation before
 and after writes, deferred-constraint commit failure, pool reuse, nested/wrong
-pool/ended context rejection, concurrent independent transactions, and direct
-sqlc compatibility. Secondary cleanup transport failures are not simulated.
+pool/ended context rejection, concurrent independent transactions, error
+classification (unreachable server, terminated backend and SQLSTATEs), and
+direct sqlc compatibility. Secondary cleanup transport failures are not simulated.
 
 Tenant coverage uses a one-connection pool:
 

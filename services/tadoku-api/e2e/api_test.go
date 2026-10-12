@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -545,5 +546,32 @@ func openClosedPool(t *testing.T, dsn string) *pgxpool.Pool {
 		t.Fatal(err)
 	}
 	pool.Close()
+	return pool
+}
+
+func openUnreachablePool(t *testing.T, dsn string) *pgxpool.Pool {
+	t.Helper()
+	config, err := pgxpool.ParseConfig(dsn)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	address := listener.Addr().(*net.TCPAddr)
+	if err := listener.Close(); err != nil {
+		t.Fatal(err)
+	}
+	config.ConnConfig.Host = address.IP.String()
+	config.ConnConfig.Port = uint16(address.Port)
+	config.ConnConfig.Fallbacks = nil
+
+	pool, err := pgxpool.NewWithConfig(t.Context(), config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(pool.Close)
 	return pool
 }

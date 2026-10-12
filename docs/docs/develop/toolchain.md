@@ -156,7 +156,7 @@ All workflows live in `.github/workflows/`.
 | `build-frontend-styleguide.yaml` | Pushes touching styleguide, `ui` or the lockfile | Builds the `ui` styleguide; publishes its image from `main` |
 | `build-frontend-paper-styleguide.yaml` | PRs and `main` pushes touching Paper | Paper boundaries, `paper-ui` and `paper-styleguide` lint, typecheck, test and build, package checks, image smoke test; publishes from `main` |
 | `check-paper-playground.yaml` | PRs and `main` pushes touching the playground or `paper-ui` | Paper boundaries and `paper-playground` lint, typecheck, test and build; never published |
-| `pr-branch.yaml` | `pull_request_target` label, push, reopen and close events | Authorizes pull-request deploys beside production; its deploy and teardown jobs are placeholders. See [Production branches](./production-branches.md#pull-request-deploys) |
+| `pr-branch.yaml` | `pull_request_target` label, push, reopen and close events | Authorizes the `deploy` label and deploys the pinned commit beside production with dev-cli; its teardown job is a placeholder. See [Production branches](./production-branches.md#pull-request-deploys) |
 | `clean-branch-images.yaml` | Daily, and manual dispatch as a dry run by default | Deletes old production-branch image versions; see [Production branches](./production-branches.md#branch-image-cleanup) |
 | `deploy-docs.yaml` | PRs and `main` pushes touching `docs/` or the API spec | `pnpm api:check`, typecheck, build and the public API boundary (fixed page counts, no internal paths); deploys GitHub Pages from `main` |
 

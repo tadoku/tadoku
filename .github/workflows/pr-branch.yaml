@@ -1,12 +1,14 @@
 name: pr-branch
 
-# Authorizes pull-request branch deploys beside production. The deploy and
-# teardown jobs are placeholders that only report their decision. See
+# Authorizes and deploys pull-request branches beside production. The teardown
+# job is a placeholder that only reports its decision. See
 # docs/docs/develop/production-branches.md.
 #
 # pull_request_target always runs this file from main. Event values reach shell
 # scripts only through env:; never put an expression in a run: line, and never
-# read the branch name or title.
+# read the branch name or title. The deploy job runs the pull request's code
+# with production credentials: give each secret only to the steps that need
+# it, and never save a cache or upload an artifact.
 
 on:
   pull_request_target:
@@ -71,7 +73,7 @@ jobs:
 
           $reason
 
-          Authorization only: the deploy and teardown jobs are placeholders that change nothing yet.
+          Teardown is not implemented yet: a deployment keeps running until it expires, 4 hours after its last deploy.
           [Workflow run]($GITHUB_SERVER_URL/$REPO/actions/runs/$GITHUB_RUN_ID)" ||
                 echo "::warning::Could not post or update the pull request comment."
             fi
@@ -170,11 +172,26 @@ jobs:
           finish deploy deploying "Every actor is an admin or maintainer and no migration changed."
 
   deploy:
-    name: Deploy (placeholder)
+    name: Deploy
     needs: authorize
     if: needs.authorize.outputs.action == 'deploy'
     runs-on: ubuntu-latest
     environment: prod-branch
+    timeout-minutes: 90
+    concurrency:
+      group: pr-branch-${{ needs.authorize.outputs.pr }}
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      packages: write
+      pull-requests: write
+      issues: write
+      statuses: write
+    env:
+      PR: ${{ needs.authorize.outputs.pr }}
+      SHA: ${{ needs.authorize.outputs.sha }}
+      DEV_CONFIG: ${{ github.workspace }}/argocd/dev-cli/production/config.yaml
+      ISOLATION_CHECK: ${{ github.workspace }}/argocd/scripts/branch-isolation-check.sh
     steps:
       - name: Re-check the triggering actor
         env:
@@ -188,17 +205,409 @@ jobs:
             exit 1
           fi
 
-      - name: Report the decision
+      # Every later step runs only when current is true. A superseded run
+      # succeeds without touching the comment or status; the newer run owns them.
+      - name: Stop unless the pull request is open, labelled and at the pinned commit
+        id: pr
         env:
-          PR: ${{ needs.authorize.outputs.pr }}
-          SHA: ${{ needs.authorize.outputs.sha }}
-        run: echo "Would deploy pull request $PR at $SHA. Deploying is not implemented yet."
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          if [[ ! $PR =~ ^[0-9]+$ || ! $SHA =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::authorize passed no pull request number or pinned commit."
+            exit 1
+          fi
+          current="$(gh api "repos/$REPO/pulls/$PR" \
+            --jq '"\(.state) \(.head.sha) \(any(.labels[]; .name == "deploy"))"')"
+          read -r state head labelled <<<"$current"
+
+          reason=""
+          if [[ $state != open ]]; then
+            reason="the pull request is $state"
+          elif [[ $labelled != true ]]; then
+            reason="the deploy label was removed"
+          elif [[ $head != "$SHA" ]]; then
+            reason="its head moved to $head"
+          fi
+          if [[ -z $reason ]]; then
+            echo "current=true" >>"$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "current=false" >>"$GITHUB_OUTPUT"
+          echo "::notice::Superseded: $reason. Nothing was deployed."
+          {
+            echo '### Production branch: superseded'
+            echo
+            echo "Pull request #$PR was not deployed at \`$SHA\`: $reason. The run for the later event decides what happens next."
+          } >>"$GITHUB_STEP_SUMMARY"
+
+      - name: Check out the pinned commit
+        if: steps.pr.outputs.current == 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.authorize.outputs.sha }}
+          path: tadoku
+          fetch-depth: 0
+          persist-credentials: false
+
+      # dev-cli derives the route from the owner and the local branch name and
+      # refuses a detached HEAD, so the branch is always pr-<number>.
+      - name: Name the local branch after the pull request
+        if: steps.pr.outputs.current == 'true'
+        working-directory: tadoku
+        run: |
+          git switch -C "pr-$PR" "$SHA"
+          git rev-parse --verify --quiet refs/remotes/origin/main >/dev/null ||
+            git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
+
+      - name: Check out the production configuration
+        if: steps.pr.outputs.current == 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: antonve/tadoku-argocd
+          ref: main
+          path: argocd
+          ssh-key: ${{ secrets.ARGOCD_DEPLOY_KEY }}
+          persist-credentials: false
+
+      - name: Set up Go
+        if: steps.pr.outputs.current == 'true'
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+        with:
+          go-version: stable
+          cache: false
+
+      - name: Install dev-cli
+        if: steps.pr.outputs.current == 'true'
+        env:
+          DEV_CLI_VERSION: ${{ vars.DEV_CLI_VERSION }}
+        run: |
+          if [[ ! $DEV_CLI_VERSION =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Set the prod-branch variable DEV_CLI_VERSION to a dev-cli release tag, such as v0.11.1."
+            exit 1
+          fi
+          go install "github.com/antonve/dev-cli/cmd/dev@$DEV_CLI_VERSION"
+          dev version
+
+      # Release builds of the Go images and up to three Next.js images share
+      # the runner's disk with the restored Bazel caches.
+      - name: Free disk space
+        if: steps.pr.outputs.current == 'true'
+        run: |
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL
+          df -h /
+
+      # Caches saved here would be restored by main's release builds, so this
+      # job only restores them. An empty token keeps the job token out of the
+      # environment of every later step.
+      - name: Set up Bazel
+        if: steps.pr.outputs.current == 'true'
+        uses: bazel-contrib/setup-bazel@c5acdfb288317d0b5c0bbd7a396a3dc868bb0f86 # v0.19.0
+        with:
+          module-root: tadoku
+          bazelisk-cache: true
+          repository-cache: true
+          disk-cache: build-bazel
+          cache-save: false
+          token: ""
+
+      # Refuses any credential other than the scoped ServiceAccount, and
+      # records its identity as evidence.
+      - name: Write the kubeconfig
+        id: kubeconfig
+        if: steps.pr.outputs.current == 'true'
+        env:
+          KUBE_SERVER: ${{ secrets.KUBE_SERVER }}
+          KUBE_CA: ${{ secrets.KUBE_CA }}
+          KUBE_TOKEN: ${{ secrets.KUBE_TOKEN }}
+        run: |
+          if [[ $KUBE_SERVER != https://* || -z $KUBE_TOKEN ]] ||
+            ! base64 -d <<<"${KUBE_CA//[[:space:]]/}" 2>/dev/null | grep 'BEGIN CERTIFICATE' >/dev/null; then
+            echo "::error::Set the prod-branch secrets KUBE_SERVER (https URL), KUBE_CA (base64 PEM) and KUBE_TOKEN."
+            exit 1
+          fi
+
+          # jq reads the secrets from its environment, so they never appear in
+          # a command line. The context name is the one the configuration uses.
+          kubeconfig="$RUNNER_TEMP/kubeconfig"
+          umask 077
+          jq -n '{
+            apiVersion: "v1",
+            kind: "Config",
+            clusters: [{
+              name: "lke20948",
+              cluster: {server: env.KUBE_SERVER, "certificate-authority-data": (env.KUBE_CA | gsub("\\s"; ""))}
+            }],
+            users: [{name: "pr-branch-deployer", user: {token: (env.KUBE_TOKEN | gsub("\\s"; ""))}}],
+            contexts: [{name: "lke20948-ctx", context: {cluster: "lke20948", user: "pr-branch-deployer"}}],
+            "current-context": "lke20948-ctx"
+          }' >"$kubeconfig"
+          echo "KUBECONFIG=$kubeconfig" >>"$GITHUB_ENV"
+          export KUBECONFIG=$kubeconfig
+
+          expected=system:serviceaccount:tdk-prod-branches:pr-branch-deployer
+          identity="$(kubectl auth whoami -o jsonpath='{.status.userInfo.username}')"
+          if [[ $identity != "$expected" ]]; then
+            echo "::error::KUBE_TOKEN authenticates as '$identity', not $expected."
+            exit 1
+          fi
+          echo "identity=$identity" >>"$GITHUB_OUTPUT"
+          echo "Cluster identity: $identity"
+          kubectl get namespace tdk-prod-branches -o name
+
+      - name: Log in to ghcr.io
+        if: steps.pr.outputs.current == 'true'
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Derive the route and branch URLs
+        id: route
+        if: steps.pr.outputs.current == 'true'
+        working-directory: tadoku
+        run: |
+          app="$(dev url --owner gh --config "$DEV_CONFIG" | tail -n 1)"
+          if [[ ! $app =~ ^https://([a-z0-9][a-z0-9-]*-[0-9a-f]{8})\.preview\.tadoku\.app/$ ]]; then
+            echo "::error::dev url printed '$app', not a branch URL."
+            exit 1
+          fi
+          route=${BASH_REMATCH[1]}
+          account="$(dev url --owner gh --config "$DEV_CONFIG" --host account.preview.tadoku.app | tail -n 1)"
+          admin="$(dev url --owner gh --config "$DEV_CONFIG" --host admin.preview.tadoku.app | tail -n 1)"
+          printf 'route=%s\napp=%s\naccount=%s\nadmin=%s\n' "$route" "$app" "$account" "$admin" >>"$GITHUB_OUTPUT"
+          echo "Route $route"
+
+      - name: Record the isolation baseline
+        id: baseline
+        if: steps.pr.outputs.current == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.FEATURE_FLAGS_TOKEN }}
+          ROUTE: ${{ steps.route.outputs.route }}
+        run: |
+          code=0
+          XDG_STATE_HOME="$RUNNER_TEMP/state" "$ISOLATION_CHECK" baseline "$ROUTE" 2>&1 |
+            tee "$RUNNER_TEMP/isolation-baseline.log" || code=$?
+          echo "code=$code" >>"$GITHUB_OUTPUT"
+
+      # dev doctor is not run: it checks create rights this ServiceAccount
+      # deliberately lacks, and dev up runs its own preflight. A baseline FAIL
+      # means isolation cannot be verified, so nothing is deployed.
+      - name: Deploy with dev up
+        id: up
+        if: >-
+          steps.pr.outputs.current == 'true' &&
+          (steps.baseline.outputs.code == '0' || steps.baseline.outputs.code == '2')
+        working-directory: tadoku
+        run: |
+          code=0
+          dev up --owner gh --config "$DEV_CONFIG" 2>&1 | tee "$RUNNER_TEMP/dev-up.log" || code=$?
+          echo "code=$code" >>"$GITHUB_OUTPUT"
+          if ((code != 0)); then
+            echo "::error::dev up exited $code."
+          fi
+
+      - name: Compare isolation with the baseline
+        id: compare
+        if: always() && (steps.baseline.outputs.code == '0' || steps.baseline.outputs.code == '2')
+        env:
+          GH_TOKEN: ${{ secrets.FEATURE_FLAGS_TOKEN }}
+          ROUTE: ${{ steps.route.outputs.route }}
+        run: |
+          code=0
+          XDG_STATE_HOME="$RUNNER_TEMP/state" "$ISOLATION_CHECK" compare "$ROUTE" 2>&1 |
+            tee "$RUNNER_TEMP/isolation-compare.log" || code=$?
+          echo "code=$code" >>"$GITHUB_OUTPUT"
+
+      # Containment: an isolation FAIL is the only failure that tears down. A
+      # failed dev up leaves the branch until the next run or expiry.
+      - name: Contain the isolation failure with dev down
+        id: down
+        if: always() && steps.compare.outputs.code == '1'
+        working-directory: tadoku
+        run: |
+          code=0
+          dev down --owner gh --config "$DEV_CONFIG" 2>&1 | tee "$RUNNER_TEMP/dev-down.log" || code=$?
+          echo "code=$code" >>"$GITHUB_OUTPUT"
+
+      - name: Check isolation after the containment teardown
+        id: after
+        if: always() && steps.compare.outputs.code == '1'
+        env:
+          GH_TOKEN: ${{ secrets.FEATURE_FLAGS_TOKEN }}
+          ROUTE: ${{ steps.route.outputs.route }}
+        run: |
+          code=0
+          XDG_STATE_HOME="$RUNNER_TEMP/state" "$ISOLATION_CHECK" after-teardown "$ROUTE" 2>&1 |
+            tee "$RUNNER_TEMP/isolation-after-teardown.log" || code=$?
+          echo "code=$code" >>"$GITHUB_OUTPUT"
+
+      - name: Report on the pull request
+        if: always() && steps.pr.outputs.current == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          DEV_CLI_VERSION: ${{ vars.DEV_CLI_VERSION }}
+          IDENTITY: ${{ steps.kubeconfig.outputs.identity }}
+          ROUTE: ${{ steps.route.outputs.route }}
+          APP_URL: ${{ steps.route.outputs.app }}
+          ACCOUNT_URL: ${{ steps.route.outputs.account }}
+          ADMIN_URL: ${{ steps.route.outputs.admin }}
+          BASELINE: ${{ steps.baseline.outputs.code }}
+          UP: ${{ steps.up.outputs.code }}
+          COMPARE: ${{ steps.compare.outputs.code }}
+          DOWN: ${{ steps.down.outputs.code }}
+          AFTER: ${{ steps.after.outputs.code }}
+        run: |
+          marker='<!-- tadoku-pr-branch -->'
+          logs=$RUNNER_TEMP
+          # The comment and summary are not masked like the log, so hide the
+          # API server that kubectl errors print.
+          cluster="$(jq -r '.clusters[0].cluster.server // empty' "${KUBECONFIG:-/dev/null}" 2>/dev/null || true)"
+          cluster=${cluster#https://}
+          cluster=${cluster%%[:/]*}
+          run_url="$GITHUB_SERVER_URL/$REPO/actions/runs/$GITHUB_RUN_ID"
+
+          # A run passes when dev up succeeded and the compare found no FAIL;
+          # UNVERIFIED checks are a warning.
+          ok=false
+          if [[ $UP == 0 && ($COMPARE == 0 || $COMPARE == 2) ]]; then
+            ok=true
+          fi
+          if [[ $COMPARE == 1 ]]; then
+            state="torn down by containment"
+            gh api -X DELETE "repos/$REPO/issues/$PR/labels/deploy" >/dev/null ||
+              echo "::warning::Could not remove the deploy label."
+          elif [[ $ok != true ]]; then
+            state=failed
+          elif grep -qx 'no affected deployables' "$logs/dev-up.log"; then
+            state="nothing to deploy"
+          else
+            state=live
+          fi
+
+          verdict() {
+            case $1 in
+              0) echo PASS ;;
+              1) echo FAIL ;;
+              2) echo UNVERIFIED ;;
+              *) echo "ERROR (exit $1)" ;;
+            esac
+          }
+
+          # Prints the last lines of a log, shortened, as a fenced block.
+          block() {
+            if [[ -s $1 ]]; then
+              echo '~~~text'
+              if [[ -n $cluster ]]; then
+                tail -n 40 "$1" | cut -c1-200 | sed "s|${cluster//./\\.}|<cluster>|g"
+              else
+                tail -n 40 "$1" | cut -c1-200
+              fi
+              echo '~~~'
+            fi
+          }
+
+          section() {
+            if [[ -n $2 ]]; then
+              echo "**Isolation $1: $(verdict "$2")**"
+              block "$3"
+              echo
+            fi
+          }
+
+          grep -E '^(branch=|route=|resolved |reusing |publishing |completed task |waiting for the gateway |Open environment|no affected deployables|warning: )' \
+            "$logs/dev-up.log" >"$logs/dev-up-summary.log" 2>/dev/null || true
+
+          body="$(
+            echo "$marker"
+            echo "**Production branch: $state**"
+            echo
+            if [[ $COMPARE == 1 ]]; then
+              echo '> [!CAUTION]'
+              echo "> The isolation compare reported FAIL. This run tore the branch down with \`dev down\` (exit ${DOWN:-not run})"
+              echo "> and removed the \`deploy\` label. Read the reports below before adding the label again."
+              echo
+            fi
+            echo "Commit: [\`$SHA\`]($GITHUB_SERVER_URL/$REPO/commit/$SHA)" \
+              "([compare with main]($GITHUB_SERVER_URL/$REPO/compare/main...$SHA))"
+            echo
+            if [[ -n $IDENTITY ]]; then
+              echo "dev-cli \`$DEV_CLI_VERSION\` as \`$IDENTITY\`, route \`${ROUTE:-unknown}\`"
+              echo
+            fi
+            if [[ -n $APP_URL ]]; then
+              echo "- App: $APP_URL"
+              echo "- Account: $ACCOUNT_URL"
+              echo "- Admin: $ADMIN_URL"
+              echo
+            fi
+            if [[ -n $UP ]]; then
+              echo "**dev up: exit $UP**"
+              block "$logs/dev-up-summary.log"
+              if [[ $UP != 0 ]]; then
+                echo
+                echo 'Error output:'
+                block "$logs/dev-up.log"
+              fi
+            elif [[ $BASELINE == 1 || ($BASELINE != '' && $BASELINE != 0 && $BASELINE != 2) ]]; then
+              echo '**dev up: not run.** The isolation baseline did not pass, so isolation could not be verified.'
+            else
+              echo '**dev up: not run.** An earlier step failed; see the workflow run.'
+            fi
+            echo
+            section baseline "$BASELINE" "$logs/isolation-baseline.log"
+            section compare "$COMPARE" "$logs/isolation-compare.log"
+            if [[ -n $DOWN ]]; then
+              echo "**Containment dev down: exit $DOWN**"
+              block "$logs/dev-down.log"
+              echo
+            fi
+            section "after teardown" "$AFTER" "$logs/isolation-after-teardown.log"
+            echo "[Workflow run]($run_url)"
+          )"
+          printf '%s\n' "$body" >>"$GITHUB_STEP_SUMMARY"
+
+          # Edits the bot's comment that starts with the marker, or posts it.
+          sticky() {
+            local ids
+            ids="$(gh api --paginate "repos/$REPO/issues/$PR/comments?per_page=100" \
+              --jq ".[] | select(.user.login == \"github-actions[bot]\" and (.body | startswith(\"$marker\"))) | .id")" ||
+              return 1
+            if [[ -n $ids ]]; then
+              gh api -X PATCH "repos/$REPO/issues/comments/${ids%%$'\n'*}" -f body="$1" >/dev/null
+            else
+              gh api -X POST "repos/$REPO/issues/$PR/comments" -f body="$1" >/dev/null
+            fi
+          }
+          sticky "$body" || echo "::warning::Could not post or update the pull request comment."
+
+          status=failure
+          if [[ $ok == true ]]; then
+            status=success
+          fi
+          gh api -X POST "repos/$REPO/statuses/$SHA" -f state="$status" -f context=prod-branch/deploy \
+            -f description="Production branch: $state" -f target_url="$run_url" >/dev/null ||
+            echo "::warning::Could not set the prod-branch/deploy commit status."
+
+          if [[ $ok != true ]]; then
+            echo "::error::Production branch: $state."
+            exit 1
+          fi
+          if [[ $COMPARE == 2 ]]; then
+            echo "::warning::The isolation compare left checks UNVERIFIED."
+          fi
 
   teardown:
     name: Tear down (placeholder)
     needs: authorize
     if: needs.authorize.outputs.action == 'teardown'
     runs-on: ubuntu-latest
+    concurrency:
+      group: pr-branch-${{ needs.authorize.outputs.pr }}
+      cancel-in-progress: false
     steps:
       - name: Re-check the triggering actor of a re-run
         env:

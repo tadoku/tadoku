@@ -1,6 +1,6 @@
 ---
 title: Production branches
-description: How the maintainer deploys a runtime branch beside production with dev-cli production mode, which images and hosts it uses, who can use it, how it is torn down and how the deploy label authorizes pull-request deploys.
+description: How the maintainer deploys a runtime branch beside production with dev-cli production mode, which images and hosts it uses, who can use it, how it is torn down and how the deploy label deploys a pull request from GitHub Actions.
 ---
 
 # Production branches
@@ -10,11 +10,12 @@ production, or asks you to verify one.
 
 dev-cli's production mode runs a pushed branch commit beside the production
 workloads, on its own hosts and its own test tenant. Production users and data
-stay on the base deployments. Only the maintainer deploys, and only branches
-that change runtime code. Agents never run production mode without an explicit
-instruction from the maintainer for that branch and command; they may verify a
-deployed branch when asked, following
-`.agents/skills/verify-tadoku/SKILL.md`.
+stay on the base deployments. Only the maintainer deploys, by hand or with the
+`deploy` label on a pull request (see
+[Pull-request deploys](#pull-request-deploys)), and only branches that change
+runtime code. Agents never run production mode without an explicit instruction
+from the maintainer for that branch and command; they may verify a deployed
+branch when asked, following `.agents/skills/verify-tadoku/SKILL.md`.
 
 The production configuration, its workload templates and the operator runbook
 live in the maintainer's private infrastructure repository. This page covers
@@ -185,11 +186,19 @@ remain until the maintainer runs `dev down`.
 
 ## Pull-request deploys
 
-**Not deploying yet.** `.github/workflows/pr-branch.yaml` only authorizes.
-Its deploy and teardown jobs are placeholders that re-check the actor and print
-their decision. They hold no secrets and change nothing in the cluster.
-
 The `deploy` label asks for a pull request to be deployed beside production.
+`.github/workflows/pr-branch.yaml` authorizes the request, then deploys the
+pinned commit with dev-cli on a GitHub-hosted runner.
+
+**Teardown is not implemented yet.** Removing the label, closing or merging
+the pull request does not remove its deployment: the `teardown` job is a
+placeholder that re-checks the actor of a re-run and prints its decision. A
+pull-request branch keeps running until it expires 4 hours after its last
+deploy, when the expiry CronJob scales it to zero. Its routes, tenant data and
+lifecycle marker remain until a later production `dev up`, which first removes
+expired routes of every owner, or a `dev down --owner gh` from a checkout on
+branch `pr-<number>`.
+
 The workflow runs on `pull_request_target` for pull requests into `main`, so
 GitHub always runs the copy on `main`; a pull request that edits the workflow
 does not change how it is judged. Pull requests into other branches never
@@ -245,16 +254,98 @@ does nothing and leaves the decision to the newer push's run.
 ### The pull-request comment
 
 The workflow keeps one comment per pull request. It begins with
-`<!-- tadoku-pr-branch -->` and is edited in place, never reposted. It shows the
-state (`deploying`, `tearing down`, `refused` or `refused, tearing down`), the
-commit, the reason and a link to the run. Events that do nothing leave it
-unchanged.
+`<!-- tadoku-pr-branch -->` and is edited in place, never reposted. The
+`authorize` job sets the state `deploying`, `tearing down`, `refused` or
+`refused, tearing down`, with the commit, the reason and a link to the run.
+The `deploy` job then replaces it with its result. Events that do nothing, and
+superseded deploy runs, leave it unchanged.
 
-### Placeholder jobs
+### The deploy job
 
 The `deploy` job runs only when `action` is `deploy`, in the `prod-branch`
-environment, which only `main` can use and which has no reviewers. Its first
-step re-checks the role of `github.triggering_actor`, so an ineligible
-collaborator who re-runs only that job fails there. The `teardown` job runs
-when `action` is `teardown` and needs no environment; on a re-run it re-checks
-the triggering actor the same way. Neither job references a secret.
+environment, which only `main` can use and which has no reviewers. It shares
+the concurrency group `pr-branch-<number>` with the `teardown` job and never
+cancels a running job; GitHub keeps only the newest pending run of a group.
+Its steps, in order:
+
+1. Re-check the role of `github.triggering_actor`, before any secret is
+   referenced, so an ineligible collaborator who re-runs only this job fails
+   here.
+2. Read the pull request. Unless it is open, still has `deploy` and its head is
+   still the pinned commit, the run stops as **superseded**: it succeeds,
+   writes only its job summary and leaves the comment and status to the run of
+   the later event.
+3. Check out the pinned commit with full history into `tadoku/` as the local
+   branch `pr-<number>`, and `main` of the private infrastructure repository
+   into `argocd/`. Neither checkout keeps its credentials.
+4. Install dev-cli with `go install` at the `DEV_CLI_VERSION` release tag.
+5. Free disk space, then set up Bazel with the bazelisk, repository and
+   `build-bazel` disk caches restored only. Caches saved from
+   `pull_request_target` would be restored by `main`, so the workflow never
+   saves one, and it uploads no artifact. Frontend images build inside Docker
+   through `frontend/scripts/publish-image.sh`, so the runner needs no Node or
+   pnpm.
+6. Write a private kubeconfig whose context is `lke20948-ctx`, and stop unless
+   the token authenticates as
+   `system:serviceaccount:tdk-prod-branches:pr-branch-deployer`. Log in to
+   `ghcr.io` with the job token, which has `packages: write`.
+7. Derive the route with `dev url --owner gh`. The owner is always `gh` and the
+   branch `pr-<number>`, so the route `gh-pr-<number>-<8 hex>` stays the same
+   across pushes and contains nothing from the pull request.
+8. Record the isolation baseline with the infrastructure repository's
+   isolation check, `argocd/scripts/branch-isolation-check.sh`. When the
+   baseline reports FAIL, isolation cannot be verified, so the job deploys
+   nothing and reports `failed`.
+9. Run `dev up --owner gh --config argocd/dev-cli/production/config.yaml` from
+   `tadoku/`. As for the maintainer, it first removes expired routes of every
+   owner. `dev doctor` is not run: it checks create rights the ServiceAccount
+   deliberately lacks, and `dev up` runs its own preflight.
+10. Run the isolation `compare` against the baseline, even when `dev up`
+    failed.
+11. When the compare reports FAIL, contain it: `dev down --owner gh`, the
+    `after-teardown` check and removal of the `deploy` label.
+12. Update the comment, set the commit status `prod-branch/deploy` on the
+    pinned commit with a link to the run, and write the job summary.
+
+| Outcome | State | Status | What remains |
+| --- | --- | --- | --- |
+| `dev up` succeeds and the compare reports PASS or only UNVERIFIED checks | `live` | success | The deployment, until the next run or expiry |
+| `dev up` finds no affected deployable | `nothing to deploy` | success | Whatever was already deployed |
+| `dev up`, the isolation baseline or an earlier step fails | `failed` | failure | The label and anything already applied, Pending pods included, until the next run or expiry |
+| The compare reports FAIL | `torn down by containment` | failure | Nothing; the comment opens with a caution |
+
+A failed `dev up` tears nothing down: a build, push, hook, rollout or route
+wait error, including a pod that cannot be scheduled, leaves the branch as it
+is. Push a fix or relabel to retry. An isolation FAIL is the only failure that
+tears down. UNVERIFIED checks are a warning.
+
+The comment and the job summary show the state, the pinned commit with a
+compare link, the dev-cli version, the cluster identity and the route, the
+three branch URLs, the `dev up` lines with the route, commit, affected
+overlays, image digests, gateway checks and expiry (and the end of its output
+when it failed), every isolation verdict with its report lines and a link to
+the run. The cluster's API server address is replaced with `<cluster>` in
+both, because unlike the run log they are not masked.
+
+The job holds production credentials and runs the pull request's own Bazel
+files and build scripts, which is why only admins and maintainers can start
+it. Its job token can push to any package the repository can write, release
+packages included; the isolation `images` check reports a changed `:prod`
+digest.
+
+### Environment secrets and variables
+
+The `prod-branch` environment holds every credential the job uses. Each secret
+reaches only the steps that need it.
+
+| Name | Kind | Value | Used by |
+| --- | --- | --- | --- |
+| `KUBE_SERVER` | Secret | The cluster API server's `https://` URL | Kubeconfig step |
+| `KUBE_CA` | Secret | The cluster CA as base64-encoded PEM: the `ca.crt` data of the ServiceAccount's token Secret, as stored | Kubeconfig step |
+| `KUBE_TOKEN` | Secret | The `pr-branch-deployer` ServiceAccount token | Kubeconfig step |
+| `ARGOCD_DEPLOY_KEY` | Secret | The private half of a read-only SSH deploy key for the infrastructure repository | Its checkout |
+| `FEATURE_FLAGS_TOKEN` | Secret | A fine-grained token with read access to the contents of `tadoku/feature-flags` | The isolation checks, as `GH_TOKEN` |
+| `DEV_CLI_VERSION` | Variable | A dev-cli release tag, such as `v0.11.1` | `go install` |
+
+The ServiceAccount, its permissions and token rotation are documented in the
+infrastructure repository's production runbook.

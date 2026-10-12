@@ -187,8 +187,9 @@ remain until the maintainer runs `dev down`.
 ## Pull-request deploys
 
 The `deploy` label asks for a pull request to be deployed beside production.
-`.github/workflows/pr-branch.yaml` authorizes the request, then deploys the
-pinned commit with dev-cli on a GitHub-hosted runner.
+`.github/workflows/pr-branch.yaml` authorizes the request on a GitHub-hosted
+runner, then deploys the pinned commit with dev-cli on the maintainer's homelab
+runner.
 
 **Teardown is not implemented yet.** Removing the label, closing or merging
 the pull request does not remove its deployment: the `teardown` job is a
@@ -266,50 +267,56 @@ The `deploy` job runs only when `action` is `deploy`, in the `prod-branch`
 environment, which only `main` can use and which has no reviewers. It shares
 the concurrency group `pr-branch-<number>` with the `teardown` job and never
 cancels a running job; GitHub keeps only the newest pending run of a group.
+
+It runs on `tadoku-prod-branch`, an ephemeral self-hosted runner set in the
+maintainer's homelab, because the cluster API server accepts only allowlisted
+addresses and the homelab's is one of them. The runner refuses every job that
+does not come from this workflow on `main`, and its network allows only DNS and
+public HTTPS. The runner set is defined in the homelab repository.
+
 Its steps, in order:
 
-1. Re-check the role of `github.triggering_actor`, before any secret is
+1. Install `kubectl` and `gh` at pinned versions, each verified against its
+   SHA-256; the runner image does not include them.
+2. Re-check the role of `github.triggering_actor`, before any secret is
    referenced, so an ineligible collaborator who re-runs only this job fails
    here.
-2. Read the pull request. Unless it is open, still has `deploy` and its head is
+3. Read the pull request. Unless it is open, still has `deploy` and its head is
    still the pinned commit, the run stops as **superseded**: it succeeds,
    writes only its job summary and leaves the comment and status to the run of
    the later event.
-3. Check out the pinned commit with full history into `tadoku/` as the local
-   branch `pr-<number>`, and `main` of the private infrastructure repository
-   into `argocd/`. Neither checkout keeps its credentials.
-4. Install dev-cli with `go install` at the `DEV_CLI_VERSION` release tag.
-5. Free disk space, then set up Bazel with the bazelisk, repository and
-   `build-bazel` disk caches restored only. Caches saved from
+4. Check out the pinned commit with full history into `tadoku/` as the local
+   branch `pr-<number>`, and clone `main` of the private infrastructure
+   repository into `argocd/` with its deploy key, over GitHub's SSH endpoint on
+   port 443 because the runner allows only HTTPS out. Neither checkout keeps
+   its credentials.
+5. Install dev-cli with `go install` at the `DEV_CLI_VERSION` release tag.
+6. Set up Bazel with the bazelisk, repository and `build-bazel` disk caches
+   restored only. Caches saved from
    `pull_request_target` would be restored by `main`, so the workflow never
    saves one, and it uploads no artifact. Frontend images build inside Docker
    through `frontend/scripts/publish-image.sh`, so the runner needs no Node or
    pnpm.
-6. Join the maintainer's tailnet as an ephemeral `tag:tadoku-ci` node that
-   accepts subnet routes but not tailnet DNS. The cluster API server accepts
-   only allowlisted addresses, and a subnet router whose address is allowlisted
-   carries the route to it. The tailnet policy grants the tag only TCP 443 on
-   the API server. Then write a private kubeconfig whose context is
-   `lke20948-ctx`, and stop unless
+7. Write a private kubeconfig whose context is `lke20948-ctx`, and stop unless
    the token authenticates as
    `system:serviceaccount:tdk-prod-branches:pr-branch-deployer`. Log in to
    `ghcr.io` with the job token, which has `packages: write`.
-7. Derive the route with `dev url --owner gh`. The owner is always `gh` and the
+8. Derive the route with `dev url --owner gh`. The owner is always `gh` and the
    branch `pr-<number>`, so the route `gh-pr-<number>-<8 hex>` stays the same
    across pushes and contains nothing from the pull request.
-8. Record the isolation baseline with the infrastructure repository's
+9. Record the isolation baseline with the infrastructure repository's
    isolation check, `argocd/scripts/branch-isolation-check.sh`. When the
    baseline reports FAIL, isolation cannot be verified, so the job deploys
    nothing and reports `failed`.
-9. Run `dev up --owner gh --config argocd/dev-cli/production/config.yaml` from
-   `tadoku/`. As for the maintainer, it first removes expired routes of every
-   owner. `dev doctor` is not run: it checks create rights the ServiceAccount
-   deliberately lacks, and `dev up` runs its own preflight.
-10. Run the isolation `compare` against the baseline, even when `dev up`
+10. Run `dev up --owner gh --config argocd/dev-cli/production/config.yaml` from
+    `tadoku/`. As for the maintainer, it first removes expired routes of every
+    owner. `dev doctor` is not run: it checks create rights the ServiceAccount
+    deliberately lacks, and `dev up` runs its own preflight.
+11. Run the isolation `compare` against the baseline, even when `dev up`
     failed.
-11. When the compare reports FAIL, contain it: `dev down --owner gh`, the
+12. When the compare reports FAIL, contain it: `dev down --owner gh`, the
     `after-teardown` check and removal of the `deploy` label.
-12. Update the comment, set the commit status `prod-branch/deploy` on the
+13. Update the comment, set the commit status `prod-branch/deploy` on the
     pinned commit with a link to the run, and write the job summary.
 
 | Outcome | State | Status | What remains |
@@ -350,9 +357,7 @@ reaches only the steps that need it.
 | `KUBE_TOKEN` | Secret | The `pr-branch-deployer` ServiceAccount token | Kubeconfig step |
 | `ARGOCD_DEPLOY_KEY` | Secret | The private half of a read-only SSH deploy key for the infrastructure repository | Its checkout |
 | `FEATURE_FLAGS_TOKEN` | Secret | A fine-grained token with read access to the contents of `tadoku/feature-flags` | The isolation checks, as `GH_TOKEN` |
-| `TS_OAUTH_CLIENT_ID`, `TS_OAUTH_SECRET` | Secret | A Tailscale OAuth client with the writable `auth_keys` scope, limited to `tag:tadoku-ci` | Tailnet step |
 | `DEV_CLI_VERSION` | Variable | A dev-cli release tag, such as `v0.11.1` | `go install` |
 
 The ServiceAccount, its permissions and token rotation are documented in the
-infrastructure repository's production runbook. The tailnet tag, its grant and
-the subnet route are configured in the maintainer's tailnet.
+infrastructure repository's production runbook.

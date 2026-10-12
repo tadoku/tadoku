@@ -175,7 +175,10 @@ jobs:
     name: Deploy
     needs: authorize
     if: needs.authorize.outputs.action == 'deploy'
-    runs-on: ubuntu-latest
+    # The cluster API server accepts only allowlisted addresses, so the deploy
+    # runs on the maintainer's homelab runner set, whose egress address is
+    # allowlisted. That runner accepts only this workflow from main.
+    runs-on: tadoku-prod-branch
     environment: prod-branch
     timeout-minutes: 90
     concurrency:
@@ -193,6 +196,24 @@ jobs:
       DEV_CONFIG: ${{ github.workspace }}/argocd/dev-cli/production/config.yaml
       ISOLATION_CHECK: ${{ github.workspace }}/argocd/scripts/branch-isolation-check.sh
     steps:
+      # The runner image lacks the tools GitHub's images preinstall.
+      - name: Install kubectl and gh
+        env:
+          KUBECTL_VERSION: v1.36.5
+          KUBECTL_SHA256: 33bc88a24c3b09cf55bfd59e6ca977881b61fc3f25ab65bc80c65b430248648e
+          GH_VERSION: 2.102.0
+          GH_SHA256: bb766f710eef8ede859c18578c72c327597cd4c8a85b06001b1f3843c6019386
+        run: |
+          cd "$(mktemp -d)"
+          curl -fsSLo kubectl "https://dl.k8s.io/release/$KUBECTL_VERSION/bin/linux/amd64/kubectl"
+          curl -fsSLo gh.tar.gz \
+            "https://github.com/cli/cli/releases/download/v$GH_VERSION/gh_${GH_VERSION}_linux_amd64.tar.gz"
+          printf '%s  kubectl\n%s  gh.tar.gz\n' "$KUBECTL_SHA256" "$GH_SHA256" | sha256sum -c -
+          tar -xzf gh.tar.gz --strip-components=2 "gh_${GH_VERSION}_linux_amd64/bin/gh"
+          sudo install -m 0755 kubectl gh /usr/local/bin/
+          kubectl version --client
+          gh --version
+
       - name: Re-check the triggering actor
         env:
           GH_TOKEN: ${{ github.token }}
@@ -290,14 +311,6 @@ jobs:
           go install "github.com/antonve/dev-cli/cmd/dev@$DEV_CLI_VERSION"
           dev version
 
-      # Release builds of the Go images and up to three Next.js images share
-      # the runner's disk with the restored Bazel caches.
-      - name: Free disk space
-        if: steps.pr.outputs.current == 'true'
-        run: |
-          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL
-          df -h /
-
       # Caches saved here would be restored by main's release builds, so this
       # job only restores them. An empty token keeps the job token out of the
       # environment of every later step.
@@ -311,20 +324,6 @@ jobs:
           disk-cache: build-bazel
           cache-save: false
           token: ""
-
-      # The cluster API server accepts only allowlisted addresses, so the job
-      # reaches it through a tailnet subnet router as an ephemeral tag:tadoku-ci
-      # node, whose grants cover only the API server. DNS stays on the runner,
-      # and the action saves no cache.
-      - name: Join the tailnet
-        if: steps.pr.outputs.current == 'true'
-        uses: tailscale/github-action@d1b6cd204f8dceda5b3eaad7f1f767be390056cd # v4.2.0
-        with:
-          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
-          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
-          tags: tag:tadoku-ci
-          args: --accept-routes --accept-dns=false
-          use-cache: "false"
 
       # Refuses any credential other than the scoped ServiceAccount, and
       # records its identity as evidence.

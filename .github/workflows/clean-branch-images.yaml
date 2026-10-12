@@ -1,0 +1,33 @@
+name: clean-branch-images
+
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: List the versions that would be deleted without deleting them
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: clean-branch-images
+
+jobs:
+  clean:
+    name: Delete old branch image versions
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Delete old versions under ghcr.io/tadoku/tadoku/branches/
+        env:
+          GH_TOKEN: ${{ github.token }}
+          # Scheduled runs delete; manual runs delete only when dry_run is unchecked.
+          DRY_RUN: ${{ inputs.dry_run || 'false' }}
+        run: ./scripts/clean-branch-images.sh

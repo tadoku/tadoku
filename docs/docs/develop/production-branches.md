@@ -67,6 +67,32 @@ because it names a clean, pushed commit. Workloads are deployed by digest.
 The branch packages are public. After each push dev-cli resolves the digest
 anonymously, which proves the cluster can pull it without an image pull Secret.
 
+### Branch image cleanup
+
+`.github/workflows/clean-branch-images.yaml` runs
+`scripts/clean-branch-images.sh` daily to delete old versions of the six branch
+packages. It names only packages under `branches/`; release images are never
+touched. A version is deleted when all of these hold:
+
+- it was last updated more than 14 days ago;
+- its package has received no push in the last 24 hours, because tagging an
+  existing digest for a new route updates only the package's timestamp, not the
+  version's;
+- it is not the package's newest tagged version, nor a platform or attestation
+  manifest of a version that is kept.
+
+Branches expire 4 hours after their last `dev up`, so these windows leave a
+wide margin. Reusing an existing tag pushes nothing, though: a `dev up` that
+reuses a version close to 14 days old can see it deleted while the branch is
+live. Rerun `dev up`; dev-cli pushes a deleted tag again whenever it needs
+one.
+
+A manual run of the workflow only lists what it would delete unless `dry_run`
+is unchecked. Locally, `./scripts/clean-branch-images.sh` lists the same with
+your `gh` credentials and deletes only with `DRY_RUN=false`. Deleting from the
+workflow needs the `tadoku/tadoku` repository to hold the Admin role in each
+branch package's Manage Actions access settings.
+
 ### Why `latest` and `prod` are never pushed
 
 Production rolls out images tagged `prod`, and development follows `latest`.

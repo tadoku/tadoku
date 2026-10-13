@@ -184,10 +184,13 @@ identities and base deployments are untouched.
 
 A branch expires 4 hours after its last `dev up`. A cluster CronJob scales the
 Deployments of expired branches to zero, so an abandoned branch stops serving
-traffic. It deletes nothing: the tenant data, routes and test identities
-remain until `dev down` runs, by the maintainer or from a pull request's
-[teardown](#the-teardown-job), or until a later production `dev up`, which
-first tears down expired routes of every owner.
+traffic. It deletes nothing. A maintainer branch keeps its tenant data, routes
+and test identities until the maintainer runs `dev down`, or until a later
+production `dev up`, which first tears down expired routes of every owner. A
+pull-request branch is torn down in full by the first
+[reconciler](#the-reconciler) run after it expires, normally within 15
+minutes; GitHub can start a scheduled run late, and a run waits while the
+runner is busy.
 
 ## Pull-request deploys
 
@@ -196,6 +199,9 @@ The `deploy` label asks for a pull request to be deployed beside production.
 runner, then deploys the pinned commit, or tears the branch down, with dev-cli
 on the maintainer's homelab runner. Removing the label, or closing or merging
 the pull request, tears the branch down.
+`.github/workflows/pr-branch-reconcile.yaml` tears down every pull-request
+branch that is left behind: one whose pull request is closed or has no
+`deploy` label, and one that expired.
 
 The workflow runs on `pull_request_target` for pull requests into `main`, so
 GitHub always runs the copy on `main`; a pull request that edits the workflow
@@ -242,8 +248,9 @@ Every refusal removes the `deploy` label. A refused push or reopen of a
 same-repository pull request also tears down, because an earlier commit may be
 live; label changes made by the workflow's token start no new run, so the
 teardown happens in the same run. A refused label, and any refusal on a fork,
-does nothing else. Teardown is always allowed, because it runs only `main`'s
-code.
+does nothing else; if an earlier deploy of the pull request is still live, the
+reconciler tears it down because the label is gone. Teardown is always
+allowed, because it runs only `main`'s code.
 
 A deploy pins `pull_request.head.sha` from the event, never the branch tip.
 If the head has moved by the time the job checks the changed files, the run
@@ -255,8 +262,9 @@ The workflows keep one comment per pull request. It begins with
 `<!-- tadoku-pr-branch -->` and is edited in place, never reposted. The
 `authorize` job sets the state `deploying`, `tearing down`, `refused` or
 `refused, tearing down`, with the commit, the reason and a link to the run.
-The `deploy` and `teardown` jobs then replace it with their result. Events
-that do nothing, and superseded deploy runs, leave it unchanged.
+The `deploy` job then replaces it with its result, and the `teardown` job and
+the reconciler with theirs. Events that do nothing, and superseded deploy
+runs, leave it unchanged.
 
 ### The deploy job
 
@@ -268,9 +276,10 @@ cancels a running job; GitHub keeps only the newest pending run of a group.
 It runs on `tadoku-prod-branch`, an ephemeral self-hosted runner set in the
 maintainer's homelab, because the cluster API server accepts only allowlisted
 addresses and the homelab's is one of them. The runner refuses every job that
-does not come from this workflow on `main`, and it runs one job at a time.
-Its network allows only DNS, public HTTPS and public TCP/6379, the port of
-production's Valkey that the isolation check reads. The runner set and its image, which provides Bazel through bazelisk,
+does not come from `pr-branch.yaml` or `pr-branch-reconcile.yaml` on `main`,
+and it runs one job at a time. Its network allows only DNS, public HTTPS and
+public TCP/6379, the port of production's Valkey that the isolation check
+reads. The runner set and its image, which provides Bazel through bazelisk,
 `kubectl`, `gh`, `gcc` and `g++`, are defined in the homelab repository.
 
 Its steps, in order:
@@ -387,13 +396,49 @@ Its steps, in order:
 | `dev down` succeeds and `after-teardown` reports PASS or only UNVERIFIED checks | `torn down` | success | Succeeds; UNVERIFIED checks are a warning |
 | `dev down` fails, `after-teardown` reports FAIL, or an earlier step fails | `teardown failed` | failure | Fails |
 
-A failed teardown keeps its lifecycle marker, so re-running the job retries
-it.
+A failed teardown keeps its lifecycle marker, and the pull request is closed
+or unlabelled by then, so the reconciler retries it on its next run.
 
 The comment and job summary show the state, the reason from `authorize`, the
 route and deployed commit, the end of the `dev down` output, the
 `after-teardown` verdict with its report lines and a link to the run, with the
 cluster's API server address replaced by `<cluster>`.
+
+### The reconciler
+
+`.github/workflows/pr-branch-reconcile.yaml` runs every 15 minutes and on
+manual dispatch, from `main`, on the `tadoku-prod-branch` runner set in the
+`prod-branch` environment. It sets `deployment: false`, so its runs add no
+records to the environment's deployment history. Its concurrency group queues
+a run behind the previous one and never cancels it, and because the runner set
+runs one job at a time, it never overlaps a deploy or teardown. Its token has
+the same permissions as the `teardown` job's.
+
+It lists the lifecycle markers labelled `dev-cli.io/owner=gh` whose
+`dev-cli.io/owner-original` annotation is `gh` and whose branch is
+`pr-<number>`. It never touches a marker of any other owner, the maintainer's
+branches included. It reads each marker's pull request and decides:
+
+| Pull request | Result |
+| --- | --- |
+| Closed or merged | Torn down |
+| Open, without `deploy` | Torn down |
+| Open, with `deploy`, and the marker's `dev-cli.io/expires-at` has passed | Torn down |
+| Open, with `deploy`, and not expired | Kept |
+| Does not exist | Torn down, with no comment or status |
+| Cannot be read | Kept until the next run, with a warning |
+
+When no marker exists, or every branch is kept, the run stops before it checks
+anything out or sets up a tool. Otherwise it first removes the `deploy` label
+from each pull request that still has it, so a label added during the run
+starts a deploy that runs after the teardown. Then, for each branch, it
+follows the `teardown` job's steps 4 to 7 on `main` checked out as
+`pr-<number>`: the route check, `dev down`, `after-teardown`, the comment
+with the reason, and the status. A failed teardown does not stop the others;
+the run fails at the end, and the next run retries it.
+
+The reconciler never runs `dev cleanup`, which tears down expired routes of
+every owner.
 
 ### Environment secrets and variables
 

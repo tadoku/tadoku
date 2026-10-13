@@ -5,17 +5,18 @@ description: How the maintainer deploys a runtime branch beside production with 
 
 # Production branches
 
-Read this when the maintainer has deployed, or plans to deploy, a branch beside
-production, or asks you to verify one.
+Read this when a branch is, or will be, deployed beside production, by hand or
+with a pull request's `deploy` label, or when you are asked to verify one.
 
 dev-cli's production mode runs a pushed branch commit beside the production
 workloads, on its own hosts and its own test tenant. Production users and data
-stay on the base deployments. Only the maintainer deploys, by hand or with the
-`deploy` label on a pull request (see
-[Pull-request deploys](#pull-request-deploys)), and only branches that change
-runtime code. Agents never run production mode without an explicit instruction
-from the maintainer for that branch and command; they may verify a deployed
-branch when asked, following `.agents/skills/verify-tadoku/SKILL.md`.
+stay on the base deployments. Only the maintainer deploys a branch by hand;
+a repository admin or maintainer deploys a pull request by adding the `deploy`
+label (see [Pull-request deploys](#pull-request-deploys)). Only branches that
+change runtime code are deployed. Agents never run production mode without an
+explicit instruction from the maintainer for that branch and command; they may
+verify a deployed branch when asked, following
+`.agents/skills/verify-tadoku/SKILL.md`.
 
 The production configuration, its workload templates and the operator runbook
 live in the maintainer's private infrastructure repository. This page covers
@@ -150,15 +151,18 @@ documents the command, the role and its refusals of `tadoku/prod`.
 
 ## Who can use a branch
 
-Anyone can use a branch: its API admits anonymous visitors and every
-signed-in user, with no grant on its Keto object. Only a ban refuses a
-signed-in user, whether inherited from production or set on the branch.
+Anyone can use a branch. Its pages load for anonymous visitors, and its API
+admits guests and every signed-in user, with no grant on its Keto object.
+Pages that need a session, such as `/logs/new`, redirect to the branch's login
+page on its account host. Only a ban refuses a signed-in user, whether
+inherited from production or set on the branch.
 [Authorization](../architecture/authorization.md#request-pipeline) lists the
 admission rules.
 
 - **Production administrators** inherit administrator permits on the branch
   through the canonical parent of its Keto object.
-- **Provisioned test accounts.** The maintainer's private tooling creates
+- **Test accounts.** Pull-request deploys create none. For a branch the
+  maintainer deploys by hand, the maintainer's private tooling creates
   three Kratos identities per route, marked with the route, using plus-aliased
   addresses of the project mailbox:
 
@@ -178,9 +182,9 @@ admission rules.
 The maintainer runs `dev down` to remove a branch. It removes the branch's
 routes and workloads and waits for their pods to stop; the worker override is
 cleared once the branch worker has stopped. Its teardown hooks then delete the
-route's test identities and the tenant's Keto relationships, cache keys, Flipt
-namespace and registry row with its cascading data. Production data,
-identities and base deployments are untouched.
+route's test identities, if any, and the tenant's Keto relationships, cache
+keys, Flipt namespace and registry row with its cascading data. Production
+data, identities and base deployments are untouched.
 
 A branch expires 4 hours after its last `dev up`. A cluster CronJob scales the
 Deployments of expired branches to zero, so an abandoned branch stops serving
@@ -202,6 +206,13 @@ the pull request, tears the branch down.
 `.github/workflows/pr-branch-reconcile.yaml` tears down every pull-request
 branch that is left behind: one whose pull request is closed or has no
 `deploy` label, and one that expired.
+
+Every push by an eligible actor to a labelled pull request redeploys it with no
+manual step, and every deploy renews the 4-hour expiry. To renew a live branch
+without a new commit, re-run the pull request's newest deploy run: `dev up`
+reuses the same images, so pods that did not change keep running. Removing the
+label and adding it again tears the branch down first, then deploys it with a
+newly provisioned tenant.
 
 The workflow runs on `pull_request_target` for pull requests into `main`, so
 GitHub always runs the copy on `main`; a pull request that edits the workflow
@@ -333,10 +344,11 @@ Its steps, in order:
 | `dev up`, the isolation baseline or an earlier step fails | `failed` | failure | The label and anything already applied, Pending pods included, until the next run or expiry |
 | The compare reports FAIL | `torn down by containment` | failure | Nothing; the comment opens with a caution |
 
-A failed `dev up` tears nothing down: a build, push, hook, rollout or route
-wait error, including a pod that cannot be scheduled, leaves the branch as it
-is. Push a fix or relabel to retry. An isolation FAIL is the only failure that
-tears down. UNVERIFIED checks are a warning.
+There is no fixed limit on how many branches run at once; the cluster's free
+capacity is the limit. A failed `dev up` tears nothing down: a build, push,
+hook, rollout or route wait error, including a pod that cannot be scheduled,
+leaves the branch as it is. Push a fix or relabel to retry. An isolation FAIL
+is the only failure that tears down. UNVERIFIED checks are a warning.
 
 The comment and the job summary show the state, the pinned commit with a
 compare link, the dev-cli version, the cluster identity and the route, the

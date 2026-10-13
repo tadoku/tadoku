@@ -1,6 +1,6 @@
 ---
 title: Production branches
-description: How the maintainer deploys a runtime branch beside production with dev-cli production mode, which images and hosts it uses, who can use it, how it is torn down and how the deploy label deploys a pull request from GitHub Actions.
+description: How the maintainer deploys a runtime branch beside production with dev-cli production mode, which images and hosts it uses, who can use it, how it is torn down and how the deploy label deploys and tears down a pull request from GitHub Actions.
 ---
 
 # Production branches
@@ -184,24 +184,24 @@ identities and base deployments are untouched.
 
 A branch expires 4 hours after its last `dev up`. A cluster CronJob scales the
 Deployments of expired branches to zero, so an abandoned branch stops serving
-traffic. It deletes nothing: the tenant data, routes and test identities
-remain until the maintainer runs `dev down`.
+traffic. It deletes nothing. A maintainer branch keeps its tenant data, routes
+and test identities until the maintainer runs `dev down`, or until a later
+production `dev up`, which first tears down expired routes of every owner. A
+pull-request branch is torn down in full by the first
+[reconciler](#the-reconciler) run after it expires, normally within 15
+minutes; GitHub can start a scheduled run late, and a run waits while the
+runner is busy.
 
 ## Pull-request deploys
 
 The `deploy` label asks for a pull request to be deployed beside production.
 `.github/workflows/pr-branch.yaml` authorizes the request on a GitHub-hosted
-runner, then deploys the pinned commit with dev-cli on the maintainer's homelab
-runner.
-
-**Teardown is not implemented yet.** Removing the label, closing or merging
-the pull request does not remove its deployment: the `teardown` job is a
-placeholder that re-checks the actor of a re-run and prints its decision. A
-pull-request branch keeps running until it expires 4 hours after its last
-deploy, when the expiry CronJob scales it to zero. Its routes, tenant data and
-lifecycle marker remain until a later production `dev up`, which first removes
-expired routes of every owner, or a `dev down --owner gh` from a checkout on
-branch `pr-<number>`.
+runner, then deploys the pinned commit, or tears the branch down, with dev-cli
+on the maintainer's homelab runner. Removing the label, or closing or merging
+the pull request, tears the branch down.
+`.github/workflows/pr-branch-reconcile.yaml` tears down every pull-request
+branch that is left behind: one whose pull request is closed or has no
+`deploy` label, and one that expired.
 
 The workflow runs on `pull_request_target` for pull requests into `main`, so
 GitHub always runs the copy on `main`; a pull request that edits the workflow
@@ -248,8 +248,9 @@ Every refusal removes the `deploy` label. A refused push or reopen of a
 same-repository pull request also tears down, because an earlier commit may be
 live; label changes made by the workflow's token start no new run, so the
 teardown happens in the same run. A refused label, and any refusal on a fork,
-does nothing else. Teardown is always allowed, because it runs only `main`'s
-code.
+does nothing else; if an earlier deploy of the pull request is still live, the
+reconciler tears it down because the label is gone. Teardown is always
+allowed, because it runs only `main`'s code.
 
 A deploy pins `pull_request.head.sha` from the event, never the branch tip.
 If the head has moved by the time the job checks the changed files, the run
@@ -257,12 +258,13 @@ does nothing and leaves the decision to the newer push's run.
 
 ### The pull-request comment
 
-The workflow keeps one comment per pull request. It begins with
+The workflows keep one comment per pull request. It begins with
 `<!-- tadoku-pr-branch -->` and is edited in place, never reposted. The
 `authorize` job sets the state `deploying`, `tearing down`, `refused` or
 `refused, tearing down`, with the commit, the reason and a link to the run.
-The `deploy` job then replaces it with its result. Events that do nothing, and
-superseded deploy runs, leave it unchanged.
+The `deploy` job then replaces it with its result, and the `teardown` job and
+the reconciler with theirs. Events that do nothing, and superseded deploy
+runs, leave it unchanged.
 
 ### The deploy job
 
@@ -274,11 +276,11 @@ cancels a running job; GitHub keeps only the newest pending run of a group.
 It runs on `tadoku-prod-branch`, an ephemeral self-hosted runner set in the
 maintainer's homelab, because the cluster API server accepts only allowlisted
 addresses and the homelab's is one of them. The runner refuses every job that
-does not come from this workflow on `main`, and its network allows only DNS,
-public HTTPS and public TCP/6379, the port of production's Valkey that the
-isolation check reads. The runner set and its image, which provides Bazel
-through bazelisk, `kubectl`, `gh`, `gcc` and `g++`, are defined in the homelab
-repository.
+does not come from `pr-branch.yaml` or `pr-branch-reconcile.yaml` on `main`,
+and it runs one job at a time. Its network allows only DNS, public HTTPS and
+public TCP/6379, the port of production's Valkey that the isolation check
+reads. The runner set and its image, which provides Bazel through bazelisk,
+`kubectl`, `gh`, `gcc` and `g++`, are defined in the homelab repository.
 
 Its steps, in order:
 
@@ -349,18 +351,107 @@ it. Its job token can push to any package the repository can write, release
 packages included; the isolation `images` check reports a changed `:prod`
 digest.
 
+### The teardown job
+
+The `teardown` job runs only when `action` is `teardown`, in the same
+environment, runner set and concurrency group as the `deploy` job. It runs
+only `main`'s code and never checks out the pull request. Its token has
+`contents: read` and `pull-requests`, `issues` and `statuses` write; it cannot
+write packages.
+
+Its steps, in order:
+
+1. On a re-run, re-check the role of `github.triggering_actor`. A first
+   attempt needs no eligible actor, because teardown is always allowed.
+2. Write the kubeconfig and check its identity, as the `deploy` job does.
+3. Find the branch's lifecycle marker: the ConfigMap in `tdk-prod-branches`
+   labelled `dev-cli.io/lifecycle-marker=true` and `dev-cli.io/owner=gh` whose
+   `dev-cli.io/owner-original` annotation is `gh` and whose
+   `dev-cli.io/branch-original` annotation is `pr-<number>`. dev-cli writes the
+   marker before it deploys anything and deletes it last, so without one there
+   is nothing to remove: the job reports `nothing to tear down` and succeeds
+   without setting up any tool.
+4. Check out `main` into `tadoku/` as the local branch `pr-<number>`. dev-cli
+   derives the route from the owner and the branch name, so this checkout
+   addresses the same route as the deploy. Clone the infrastructure
+   repository, install dev-cli and set up Bazel with restored caches, as the
+   `deploy` job does. `dev down` queries the tenant Jobs' Bazel push target
+   before it reuses the tenant image the deploy published. The job never logs
+   in to a registry, so when that image is gone the teardown fails rather than
+   publishing `main`'s tenant code under the pull request's tag.
+5. Check that `dev url` prints the marker's route, then run
+   `dev down --owner gh --config argocd/dev-cli/production/config.yaml` from
+   `tadoku/`. It removes the routes and workloads and runs the teardown hooks
+   described in [Teardown and expiry](#teardown-and-expiry).
+6. Run the isolation check's `after-teardown` mode, which checks that no
+   object, Keto tuple, Valkey key, Flipt namespace or test identity remains for
+   the route.
+7. Update the comment, set the `prod-branch/deploy` status on the deployed
+   commit, which the marker's `dev-cli.io/source-revision` annotation names,
+   and write the job summary.
+
+| Outcome | State | Status | Job |
+| --- | --- | --- | --- |
+| No lifecycle marker | `nothing to tear down` | Unchanged | Succeeds |
+| `dev down` succeeds and `after-teardown` reports PASS or only UNVERIFIED checks | `torn down` | success | Succeeds; UNVERIFIED checks are a warning |
+| `dev down` fails, `after-teardown` reports FAIL, or an earlier step fails | `teardown failed` | failure | Fails |
+
+A failed teardown keeps its lifecycle marker, and the pull request is closed
+or unlabelled by then, so the reconciler retries it on its next run.
+
+The comment and job summary show the state, the reason from `authorize`, the
+route and deployed commit, the end of the `dev down` output, the
+`after-teardown` verdict with its report lines and a link to the run, with the
+cluster's API server address replaced by `<cluster>`.
+
+### The reconciler
+
+`.github/workflows/pr-branch-reconcile.yaml` runs every 15 minutes and on
+manual dispatch, from `main`, on the `tadoku-prod-branch` runner set in the
+`prod-branch` environment. It sets `deployment: false`, so its runs add no
+records to the environment's deployment history. Its concurrency group queues
+a run behind the previous one and never cancels it, and because the runner set
+runs one job at a time, it never overlaps a deploy or teardown. Its token has
+the same permissions as the `teardown` job's.
+
+It lists the lifecycle markers labelled `dev-cli.io/owner=gh` whose
+`dev-cli.io/owner-original` annotation is `gh` and whose branch is
+`pr-<number>`. It never touches a marker of any other owner, the maintainer's
+branches included. It reads each marker's pull request and decides:
+
+| Pull request | Result |
+| --- | --- |
+| Closed or merged | Torn down |
+| Open, without `deploy` | Torn down |
+| Open, with `deploy`, and the marker's `dev-cli.io/expires-at` has passed | Torn down |
+| Open, with `deploy`, and not expired | Kept |
+| Does not exist | Torn down, with no comment or status |
+| Cannot be read | Kept until the next run, with a warning |
+
+When no marker exists, or every branch is kept, the run stops before it checks
+anything out or sets up a tool. Otherwise it first removes the `deploy` label
+from each pull request that still has it, so a label added during the run
+starts a deploy that runs after the teardown. Then, for each branch, it
+follows the `teardown` job's steps 4 to 7 on `main` checked out as
+`pr-<number>`: the route check, `dev down`, `after-teardown`, the comment
+with the reason, and the status. A failed teardown does not stop the others;
+the run fails at the end, and the next run retries it.
+
+The reconciler never runs `dev cleanup`, which tears down expired routes of
+every owner.
+
 ### Environment secrets and variables
 
-The `prod-branch` environment holds every credential the job uses. Each secret
+The `prod-branch` environment holds every credential the jobs use. Each secret
 reaches only the steps that need it.
 
 | Name | Kind | Value | Used by |
 | --- | --- | --- | --- |
-| `KUBE_SERVER` | Secret | The cluster API server's `https://` URL | Kubeconfig step |
-| `KUBE_CA` | Secret | The cluster CA as base64-encoded PEM: the `ca.crt` data of the ServiceAccount's token Secret, as stored | Kubeconfig step |
-| `KUBE_TOKEN` | Secret | The `pr-branch-deployer` ServiceAccount token | Kubeconfig step |
-| `ARGOCD_DEPLOY_KEY` | Secret | The private half of a read-only SSH deploy key for the infrastructure repository | Its checkout |
-| `FEATURE_FLAGS_TOKEN` | Secret | A fine-grained token with read access to the contents of `tadoku/feature-flags` | The isolation checks, as `GH_TOKEN` |
+| `KUBE_SERVER` | Secret | The cluster API server's `https://` URL | Kubeconfig steps |
+| `KUBE_CA` | Secret | The cluster CA as base64-encoded PEM: the `ca.crt` data of the ServiceAccount's token Secret, as stored | Kubeconfig steps |
+| `KUBE_TOKEN` | Secret | The `pr-branch-deployer` ServiceAccount token | Kubeconfig steps |
+| `ARGOCD_DEPLOY_KEY` | Secret | The private half of a read-only SSH deploy key for the infrastructure repository | Its checkouts |
+| `FEATURE_FLAGS_TOKEN` | Secret | A fine-grained token with read access to the contents of `tadoku/feature-flags` | The `deploy` job's isolation checks, as `GH_TOKEN` |
 | `DEV_CLI_VERSION` | Variable | A dev-cli release tag, such as `v0.11.1` | `go install` |
 
 The ServiceAccount, its permissions and token rotation are documented in the

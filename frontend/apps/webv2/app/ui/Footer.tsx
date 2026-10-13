@@ -37,7 +37,7 @@ export default function Footer() {
               rel="noopener noreferrer"
               className="reset text-white hover:text-primary border-b-2 border-primary transition-all"
             >
-              antonve
+              Preview of pull request #1448 {{{ deliberately broken
             </a>
           </div>
 

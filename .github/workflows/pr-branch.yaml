@@ -67,7 +67,7 @@ jobs:
               >>"$GITHUB_OUTPUT"
             echo "Decision: $action. $reason"
 
-            if [[ $action == teardown ]] && reports_teardown; then
+            if [[ $state == "tearing down" ]] && reports_teardown; then
               echo "::notice::The comment on #$PR already reports a teardown; it was kept."
             elif [[ -n $state ]]; then
               sticky "$marker
@@ -97,7 +97,8 @@ jobs:
           }
 
           # Any deploy since a teardown replaced its report, and the teardown
-          # job still reports a branch it finds, so a teardown keeps the report.
+          # job still reports a branch it finds, so a plain teardown keeps the
+          # report. A refusal still writes its reason.
           reports_teardown() {
             local reported
             reported="$(gh api --paginate "repos/$REPO/issues/$PR/comments?per_page=100" \

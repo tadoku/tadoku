@@ -6,6 +6,7 @@
     "admin": "legacy",
     "auth": "legacy",
     "webv2": "legacy",
-    "paper-playground": "paper"
+    "paper-playground": "paper",
+    "webv3": "paper"
   }
 }

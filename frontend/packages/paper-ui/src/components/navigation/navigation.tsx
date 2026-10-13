@@ -5,6 +5,7 @@ import {
   cloneElement,
   useRef,
   useState,
+  useSyncExternalStore,
   type AnchorHTMLAttributes,
   type KeyboardEvent,
   type Key,
@@ -42,6 +43,10 @@ function renderNavigationLink(
 ) {
   const element = (renderLink ?? defaultRenderLink)(props);
   return key === undefined ? element : cloneElement(element, { key });
+}
+
+function noSubscription() {
+  return () => {};
 }
 
 function disabledLinkClick(event: MouseEvent<HTMLAnchorElement>) {
@@ -176,6 +181,8 @@ export function Navbar({
 }: NavbarProps) {
   const menuId = `paper-navbar-${useId().replace(/:/gu, "")}`;
   const [mobileOpen, setMobileOpen] = useState(false);
+  // False in server HTML and while hydrating it, where React would drop the trigger's clicks; true for client renders.
+  const hydrated = useSyncExternalStore(noSubscription, () => true, () => false);
   const mobileTriggerRef = useRef<HTMLButtonElement>(null);
 
   const closeMobile = () => setMobileOpen(false);
@@ -223,6 +230,7 @@ export function Navbar({
             aria-controls={menuId}
             aria-expanded={mobileOpen}
             aria-label={mobileOpen ? `Close ${menuLabel.toLocaleLowerCase()}` : `Open ${menuLabel.toLocaleLowerCase()}`}
+            disabled={!hydrated}
             onClick={() => setMobileOpen((open) => !open)}
           >
             {mobileOpen ? (

@@ -13,6 +13,7 @@ Read this when you start frontend work and need to find the right application, p
 | Application | Purpose | Stack | Design system |
 | --- | --- | --- | --- |
 | [webv2](webv2.md) | Main site: logs, contests, leaderboards, profiles, blog and CMS pages | Next.js 13 | `ui` (legacy) |
+| [webv3](webv3.md) | Unpublished homepage foundation with read-only development data and a local immersion goal | TanStack Start, Router, Query and Form | `paper-ui` (Paper) |
 | [auth](auth.md) | Account portal for Ory Kratos | Next.js 13 | `ui` (legacy) |
 | [admin](admin.md) | Administration: CMS content, users, languages, feature access | Next.js 13 | `ui` (legacy) |
 | [paper-styleguide](paper-styleguide.md) | Catalogue for `paper-ui` | Vite, React Router | `paper-ui` (Paper) |
@@ -30,7 +31,7 @@ Always use pnpm, never npm. From `frontend/`:
 
 ```sh
 pnpm install --frozen-lockfile
-pnpm webv2                     # also auth, admin, styleguide, paper-styleguide, paper-playground
+pnpm webv2                     # also webv3, auth, admin, styleguide, paper-styleguide, paper-playground
 pnpm --filter <app> lint
 pnpm --filter <app> test       # when the app defines it
 pnpm build                     # runs build in every workspace package that defines it

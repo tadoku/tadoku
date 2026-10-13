@@ -28,7 +28,7 @@ button or form styles:
 
 ## Forms
 
-Always use `react-hook-form`; never keep form fields in plain `useState`.
+Existing applications use `react-hook-form`; Webv3 uses TanStack Form as described below. Never keep form fields in plain `useState`.
 
 - Set up form context with `useForm()` and `<FormProvider>`.
 - Use `<Input>`, `<Select>` and `<TextArea>` from `ui`; they read the form
@@ -89,10 +89,17 @@ with Zod before using it ([ADR 003](../adr/003-zod.md)). The contract is
 
 ## Paper applications
 
-paper-styleguide, paper-playground and `paper-ui` follow
+webv3, paper-styleguide, paper-playground and `paper-ui` follow
 [Paper composition](paper-composition.md). Keep application services and
 routers out of `paper-ui`. `pnpm check:paper-boundaries` rejects `paper-ui` in
 legacy applications and `ui`, Next.js or Headless UI in Paper code.
+
+Webv3 uses TanStack Start, Router and Query with request-scoped server rendering,
+Zod response validation and TanStack Form. Its native form controls reuse Paper's
+CSS recipes; the existing `paper-ui` form components still require React Hook
+Form context. Keep the Webv3 form state and validation in TanStack Form rather
+than bridging both form libraries. Its data source and local development commands
+are documented in [Webv3](webv3.md).
 
 ## Checks
 

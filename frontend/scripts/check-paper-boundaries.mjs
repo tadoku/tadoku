@@ -6,7 +6,7 @@ const root = new URL('..', import.meta.url)
 const config = JSON.parse(await readFile(new URL('../paper-boundaries.json', import.meta.url), 'utf8'))
 if (config.schemaVersion !== 1) throw new Error(`Unsupported Paper boundary schema: ${config.schemaVersion}`)
 const sourceExtensions = new Set(['.js', '.jsx', '.mjs', '.cjs', '.ts', '.tsx', '.css'])
-const ignoredDirectories = new Set(['.next', 'dist', 'node_modules', 'coverage'])
+const ignoredDirectories = new Set(['.next', '.output', '.tanstack', 'dist', 'node_modules', 'coverage'])
 const legacyOnlyClasses = new Set([
   'auto-format',
   'h-stack',

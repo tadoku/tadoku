@@ -138,6 +138,7 @@
   }
 
   .paper-navbar__dropdown-item[data-disabled],
+  .paper-navbar__mobile-trigger:disabled,
   [aria-disabled="true"].paper-navbar__link,
   [aria-disabled="true"].paper-navbar__mobile-link {
     opacity: 0.5;

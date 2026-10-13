@@ -274,9 +274,12 @@ The workflows keep one comment per pull request. It begins with
 `authorize` job sets the state `deploying`, `tearing down`, `refused` or
 `refused, tearing down`, with the commit, the reason and a link to the run.
 The `deploy` job then replaces it with its result, and the `teardown` job and
-the reconciler with theirs. Events that do nothing, superseded deploy runs
-and a `teardown` job that finds no branch when the comment already reports
-`torn down` or `torn down by containment` leave it unchanged.
+the reconciler with theirs. Events that do nothing and superseded deploy runs
+leave it unchanged. A comment that already reports `torn down` or
+`torn down by containment` is kept by a `tearing down` decision and by a
+`teardown` job that finds no branch, because any deploy since that teardown
+would have replaced it. A `refused, tearing down` decision still replaces it
+with the refusal's reason.
 
 ### The deploy job
 

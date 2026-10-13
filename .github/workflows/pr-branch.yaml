@@ -67,7 +67,9 @@ jobs:
               >>"$GITHUB_OUTPUT"
             echo "Decision: $action. $reason"
 
-            if [[ -n $state ]]; then
+            if [[ $state == "tearing down" ]] && reports_teardown; then
+              echo "::notice::The comment on #$PR already reports a teardown; it was kept."
+            elif [[ -n $state ]]; then
               sticky "$marker
           **Production branch: $state**
 
@@ -92,6 +94,18 @@ jobs:
             else
               gh api -X POST "repos/$REPO/issues/$PR/comments" -f body="$1" >/dev/null
             fi
+          }
+
+          # Any deploy since a teardown replaced its report, and the teardown
+          # job still reports a branch it finds, so a plain teardown keeps the
+          # report. A refusal still writes its reason.
+          reports_teardown() {
+            local reported
+            reported="$(gh api --paginate "repos/$REPO/issues/$PR/comments?per_page=100" \
+              --jq ".[] | select(.user.login == \"github-actions[bot]\" and (.body | startswith(\"$marker\")))
+                | .body | split(\"\n\")[1]" | sed -n 1p)" || return 1
+            [[ $reported == '**Production branch: torn down**' ||
+              $reported == '**Production branch: torn down by containment**' ]]
           }
 
           # A refusal removes the label. A same-repository push or reopen also

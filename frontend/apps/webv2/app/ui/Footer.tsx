@@ -37,7 +37,7 @@ export default function Footer() {
               antonve
             </a>
             <p className="mt-2 text-sm text-white/70" data-plan7-p2="a-2">
-              Preview of pull request #1447 {{{ deliberately broken
+              Preview of pull request #1447 (fixed)
             </p>
           </div>
 

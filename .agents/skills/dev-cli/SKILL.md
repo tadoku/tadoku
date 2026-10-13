@@ -7,7 +7,7 @@ description: Run Tadoku branch overlays with dev-cli on homelab-talos-dev. Use f
 
 Run commands from the repository root. Read [Development environment](../../../docs/docs/develop/environment.md) for installation, configuration, branch tenants, routing and cleanup. Read [`.dev/config.yaml`](../../../.dev/config.yaml) before using the shared cluster. Use `--context homelab-talos-dev` on kubectl commands. This skill does not grant cluster access or authorize changes to the shared base.
 
-Never run dev-cli in production mode without an explicit instruction from the maintainer for that branch and command. Production branches are deployed only by the maintainer, as described in [Production branches](../../../docs/docs/develop/production-branches.md); reading `dev status` or `dev doctor` output the maintainer shares is fine.
+Never run dev-cli in production mode without an explicit instruction from the maintainer for that branch and command. Production branches are deployed only by the maintainer, by hand or with a pull request's `deploy` label, as described in [Production branches](../../../docs/docs/develop/production-branches.md); reading `dev status` or `dev doctor` output the maintainer shares is fine.
 
 ## Start the branch
 

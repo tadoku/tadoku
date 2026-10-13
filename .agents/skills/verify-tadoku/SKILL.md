@@ -1,6 +1,6 @@
 ---
 name: verify-tadoku
-description: Verify Tadoku application changes in the shared development environment using dev-cli branch overlays and real browser journeys, and on production branch hosts when the maintainer has deployed a branch and asks for verification. Use for frontend/backend live edits, routing checks, screenshots and verification handoffs; not production deployment or environment bootstrap.
+description: Verify Tadoku application changes in the shared development environment using dev-cli branch overlays and real browser journeys, and on production branch hosts, including pull requests deployed with the deploy label, when asked to verify one. Use for frontend/backend live edits, routing checks, screenshots and verification handoffs; not production deployment or environment bootstrap.
 ---
 
 # Verify Tadoku
@@ -115,18 +115,32 @@ exact unmet prerequisite; don't broaden access or erase data to make a check pas
 
 ## Production branch hosts
 
-Verify on production branch hosts only when the maintainer has deployed the
-branch and asks for verification. [Production branches](../../../docs/docs/develop/production-branches.md)
-describes the hosts, tenant and accounts. Never run `dev up`, `task`, `down`
-or `cleanup` with the production configuration yourself.
+Verify on production branch hosts only when asked to verify a branch the
+maintainer deployed by hand or a pull request deployed with the `deploy` label.
+[Production branches](../../../docs/docs/develop/production-branches.md)
+describes the hosts, tenant, access and pull-request deploys. Never run
+`dev up`, `task`, `down` or `cleanup` with the production configuration
+yourself, and never add or remove the `deploy` label unless told to.
 
-- Use the `<route>.preview.tadoku.app`, `<route>.account.preview.tadoku.app`
-  and `<route>.admin.preview.tadoku.app` URLs printed by `dev status` that
-  the maintainer shares. There is no live editing; a code change needs a new
-  pushed commit that the maintainer deploys.
-- Log in only with the reader, admin and outsider test accounts provisioned
-  for that route, from the maintainer's local accounts file. Never automate
-  with a production administrator account, and never register new accounts.
+- For a pull request, read the branch from its sticky comment, which begins
+  with `<!-- tadoku-pr-branch -->` (`gh pr view <number> --comments`): the
+  state, the deployed commit, the route, the App, Account and Admin URLs, the
+  `dev up` and isolation results and the run link. Verify only when the state
+  is `live` for the commit you are proving; the `prod-branch/deploy` commit
+  status agrees with it. For a hand deploy, use the
+  `<route>.preview.tadoku.app`, `<route>.account.preview.tadoku.app` and
+  `<route>.admin.preview.tadoku.app` URLs the maintainer shares. There is no
+  live editing: a code change needs a new pushed commit, which a labelled pull
+  request redeploys automatically.
+- Branch pages are public. Open them anonymously; the branch API admits
+  guests and signed-in users without any grant.
+- Pull-request branches have no test accounts. Unless the maintainer provides
+  accounts, verify only unauthenticated behavior: `X-Dev-Selected` and
+  `X-Dev-Backend` on document and API responses, pages loading anonymously,
+  and session-only pages such as `/logs/new` redirecting to the branch's login
+  page. Report signed-in journeys as unverified. Log in only with test
+  accounts the maintainer provides for that route. Never automate with a
+  production administrator account, and never register new accounts.
 - Before claiming an overlay result, prove it through `X-Dev-Backend` on the
   relevant document or API response. A base backend means production served
   the request.
@@ -136,7 +150,9 @@ or `cleanup` with the production configuration yourself.
   tenant; do not write through it.
 - Evidence contains no cookies, passwords, session tokens or production user
   data. Crop or omit anything that shows a real user. Cleanup is the
-  maintainer's `dev down`; report residual data instead of removing it.
+  maintainer's `dev down` or, for a pull request, its teardown when the label
+  is removed, the pull request closes or the branch expires; report residual
+  data instead of removing it.
 
 ## Evidence and cleanup
 

@@ -102,7 +102,7 @@ export const ContestList = ({ list, options }: Props) => {
                 colSpan={options ? 5 : 3}
                 className="default h-32 font-bold text-center text-xl text-slate-400"
               >
-                No contests founds
+                No contests found
               </td>
             </tr>
           ) : null}

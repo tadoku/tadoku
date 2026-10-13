@@ -899,7 +899,21 @@ jobs:
               gh api -X POST "repos/$REPO/issues/$PR/comments" -f body="$1" >/dev/null
             fi
           }
-          sticky "$body" || echo "::warning::Could not post or update the pull request comment."
+          # The reconciler or a deploy's containment may have torn the branch
+          # down before this job ran, so finding no branch keeps the comment's
+          # report of that teardown.
+          reported=""
+          if [[ $FOUND == false ]]; then
+            reported="$(gh api --paginate "repos/$REPO/issues/$PR/comments?per_page=100" \
+              --jq ".[] | select(.user.login == \"github-actions[bot]\" and (.body | startswith(\"$marker\")))
+                | .body | split(\"\n\")[1]" | sed -n 1p)" || true
+          fi
+          if [[ $reported == '**Production branch: torn down**' ||
+            $reported == '**Production branch: torn down by containment**' ]]; then
+            echo "::notice::No branch is deployed for #$PR, and its comment already reports the teardown; it was kept."
+          else
+            sticky "$body" || echo "::warning::Could not post or update the pull request comment."
+          fi
 
           # The status belongs to the deployed commit, which may no longer be the head.
           if [[ -n $REVISION ]]; then

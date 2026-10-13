@@ -122,3 +122,4 @@ export default function Footer() {
     </div>
   )
 }
+// Refusal probe from a fork. Do not merge.

@@ -87,8 +87,9 @@ e2e/testdata/journeys/
 - Cast members are `guest`, `user`, `user2`, `admin` and `banned`, plus the
   implicit `none`. `admin` and `banned` hold their `app:tadoku` tuples through
   the shared `relationships.json`. Tenant variants use the same subjects in
-  signed tokens with a different tenant claim; they still require real Keto
-  parent and tester grants to enter that tenant.
+  signed tokens with a different tenant claim. Any of them may enter that
+  tenant; they inherit `app:tadoku` administrators and bans only through a
+  real Keto parent grant.
 - To add a member, sign a token with the
   [fixture recipe](./http-e2e.md#signing-a-new-fixture-token), append its public key when you
   use a new signing key, and add the token to `cast.json` and any tuple to

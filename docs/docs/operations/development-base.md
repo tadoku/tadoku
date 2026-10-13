@@ -300,7 +300,7 @@ independent frontend and API fallback, HMR, Go binary replacement, migration
 failure gating and scoped cleanup. `.dev/acceptance.md` lists the dev-cli gates.
 
 For tenant lifecycle changes, also prove frontend-only writes, separate owners,
-base and branch worker ownership, access permits, in-flight teardown, complete
+base and branch worker ownership, open admission, in-flight teardown, complete
 provider cleanup and TTL cleanup with unchanged canonical row counts and
 database names.
 

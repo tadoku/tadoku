@@ -150,25 +150,28 @@ documents the command, the role and its refusals of `tadoku/prod`.
 
 ## Who can use a branch
 
-A test tenant admits only users with `access` on its Keto object; everyone
-else, including anonymous visitors, receives an empty 403 from its API.
+Anyone can use a branch: its API admits anonymous visitors and every
+signed-in user, with no grant on its Keto object. Only a ban refuses a
+signed-in user, whether inherited from production or set on the branch.
 [Authorization](../architecture/authorization.md#request-pipeline) lists the
 admission rules.
 
-- **Production administrators** inherit administrator and access permits on
-  the branch through the canonical parent of its Keto object.
+- **Production administrators** inherit administrator permits on the branch
+  through the canonical parent of its Keto object.
 - **Provisioned test accounts.** The maintainer's private tooling creates
   three Kratos identities per route, marked with the route, using plus-aliased
   addresses of the project mailbox:
 
-  | Account | Branch permits |
+  | Account | Grants on the branch object |
   | --- | --- |
   | reader | `testers` |
   | admin | `testers` and `admins` |
-  | outsider | None; used to check that access is refused |
+  | outsider | None |
 
-  Their passwords exist only in the maintainer's local accounts file. Nobody
-  registers new accounts on a branch.
+  Only `admins` changes what an account can do, so the reader and the
+  outsider both use the branch as ordinary signed-in users. Their passwords
+  exist only in the maintainer's local accounts file. Nobody registers new
+  accounts on a branch.
 
 ## Teardown and expiry
 

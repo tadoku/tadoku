@@ -89,11 +89,11 @@ this run. Keep unrelated canonical writes outside the count boundary.
    canonical job completes on the base worker and that branch processing does
    not invalidate canonical caches. Frontend-only A has no override and its
    jobs complete on the base worker.
-4. **Access permits.** With the main hostname selected for the branch, the
-   same readable API operation must return 403 anonymously and 200 for Dev
+4. **Open admission.** With the main hostname selected for the branch, the
+   same readable API operation must return 200 anonymously and for Dev
    Reader and Dev Admin. Record `X-Dev-Selected` on each actual API response.
-   Reader's access comes from its direct tester tuple; Admin inherits the
-   canonical parent's permits. Do not inject identities or bypass login.
+   Admin inherits the canonical parent's administrator permit. Do not inject
+   identities or bypass login.
 5. **In-flight teardown.** Queue jobs through frontend-only A, then immediately
    run `dev down --owner <owner-a>` while work is due or in flight. Prove the
    base API/worker remain Ready and the base worker remains healthy after the

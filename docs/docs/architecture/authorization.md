@@ -1,7 +1,7 @@
 ---
 sidebar_position: 3
 title: Authentication and authorization
-description: How Tadoku API authenticates gateway JWTs, checks tenant-scoped Keto administrator, ban and access permits and restricts shared-data writes to production.
+description: How Tadoku API authenticates gateway JWTs, admits requests on every tenant, checks tenant-scoped Keto administrator and ban permits and restricts shared-data writes to production.
 ---
 
 # Authentication and authorization
@@ -63,7 +63,8 @@ A regular production user holds neither `admins` nor `banned`.
 A test object inherits administrators and bans from its `parents` objects.
 Its own administrator or ban tuples apply only to that object. The `access`
 permit allows administrators or direct members of `testers`; a tester on one
-object has no access to another object without its own grant.
+object has no access to another object without its own grant. Request
+admission does not check `access`: anyone may use a test tenant.
 
 Provision a test object's parent with this JSON tuple. Keto v25.4.0 accepts
 the empty parent relation and traverses the parent's permits:
@@ -127,20 +128,19 @@ passes two shared middlewares before its handler. Health probes (`/livez`,
    databases using `tadoku/prod`. Every other tenant uses its full `name/id`
    key as the object.
 
-| Tenant and lookup | Result |
-| --- | --- |
-| Canonical guest or empty subject | Continues without a Keto call. |
-| Canonical signed-in user, not banned | One `is_banned` permit lookup; continues. No `access` lookup is added. |
-| Canonical Keto error | Logged; continues with the ban state recorded as unknown. Strict checks then return `503`. |
-| Test guest or empty subject | Empty `403`, without a Keto call. |
-| Test signed-in user | `is_banned` and `access` are checked together through `CheckPermissions`. Both must complete successfully. |
-| Test user without `access` | Empty `403`, including on the current-user-role route. |
-| Test Keto error | Empty `503`; no fail-open path. |
-| Admitted user with confirmed ban | Empty `403`, including for administrators. Only `GET /authz/current-user/role` continues and reports `banned`. |
+Every tenant admits requests by the same rules, so test tenants are open to
+anonymous visitors and to signed-in users without any grant on their object:
 
-An administrator or tester on a test object passes its access gate. The
-current-user-role exception allows an admitted banned user to discover its
-ban; it never grants access to an otherwise inaccessible test tenant.
+| Request | Result |
+| --- | --- |
+| Guest or empty subject | Continues without a Keto call. |
+| Signed-in user, not banned | One `is_banned` permit lookup on the tenant's object; continues. |
+| Keto error | Logged; continues with the ban state recorded as unknown. Strict checks then return `503`. |
+| Signed-in user with confirmed ban | Empty `403`, including for administrators. Only `GET /authz/current-user/role` continues and reports `banned`. |
+
+A test object's `is_banned` permit includes bans inherited from its parents,
+while a ban on the test object applies only to that tenant. The
+current-user-role exception lets a banned user discover its ban.
 
 ## Checks in application operations
 
@@ -167,9 +167,9 @@ remain protected from role changes.
 
 The administrator user list reads raw `admins` and `banned` relations on the
 resolved object. A test tenant's list therefore shows only its own grants,
-while its access and role checks still inherit the parent permits. Unbanning
-a user on a test tenant removes only that object's direct ban; an inherited
-production ban continues to apply.
+while its administrator and ban checks still inherit the parent permits.
+Unbanning a user on a test tenant removes only that object's direct ban; an
+inherited production ban continues to apply.
 
 ## Shared data
 
@@ -204,7 +204,7 @@ Application errors are `services/tadoku-api/internal/errx/` kinds, mapped in
 | Missing or malformed `Authorization: Bearer` header | `400`, JSON `missing or malformed jwt` |
 | Invalid, expired, too old, service JWT or invalid tenant claim | `401`, JSON `invalid or expired jwt` |
 | Valid tenant not served by this deployment | `421`, JSON `tenant not served by this deployment` |
-| Confirmed ban or missing test-tenant access | `403`, empty body |
+| Confirmed ban | `403`, empty body |
 | Invalid or missing callback credential | `401`, empty body |
 | `errx.Unauthorized` (no user or `guest`) | `401` |
 | `errx.Forbidden` (not an administrator) | `403` |

@@ -265,7 +265,7 @@ The workflows keep one comment per pull request. It begins with
 The `deploy` job then replaces it with its result, and the `teardown` job and
 the reconciler with theirs. Events that do nothing, superseded deploy runs
 and a `teardown` job that finds no branch when the comment already reports
-`torn down` leave it unchanged.
+`torn down` or `torn down by containment` leave it unchanged.
 
 ### The deploy job
 
@@ -394,7 +394,7 @@ Its steps, in order:
 | Outcome | State | Status | Job |
 | --- | --- | --- | --- |
 | No lifecycle marker | `nothing to tear down` | Unchanged | Succeeds |
-| No lifecycle marker, and the comment already reports `torn down` | Comment kept, with a notice in the log | Unchanged | Succeeds |
+| No lifecycle marker, and the comment already reports `torn down` or `torn down by containment` | Comment kept, with a notice in the log | Unchanged | Succeeds |
 | `dev down` succeeds and `after-teardown` reports PASS or only UNVERIFIED checks | `torn down` | success | Succeeds; UNVERIFIED checks are a warning |
 | `dev down` fails, `after-teardown` reports FAIL, or an earlier step fails | `teardown failed` | failure | Fails |
 

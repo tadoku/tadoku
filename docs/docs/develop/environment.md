@@ -266,7 +266,7 @@ startup creates no database, Postgres cluster, PVC or database dependency Job.
   `make dev-seed` if they are missing; it never creates or changes identities.
 - Provisioning uses `tadoku_owner` to create the test tenant, grants its Keto
   object a parent of `app:tadoku`, and grants Dev Reader direct `testers`
-  membership. Dev Admin inherits administrator and access permits.
+  membership. Dev Admin inherits administrator permits.
 - Flipt uses environment `test` and namespace `tadoku_<route>`, with display
   name `tadoku/<route>`. Provisioning adds missing resources from this branch's
   `k8s/dev/base/flipt/features.yaml` and preserves existing grants.

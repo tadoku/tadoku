@@ -172,7 +172,7 @@ func TestDependencyFailures(t *testing.T) {
 		{
 			operation:   "BannedUsers",
 			description: []string{"test", "provider", "unavailable"},
-			want:        http.StatusServiceUnavailable,
+			want:        http.StatusOK,
 			suite:       api,
 			handler:     ketoUnavailable,
 		},

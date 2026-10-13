@@ -33,9 +33,6 @@ func RejectBannedUsers(
 				}
 				ctx := permissions.WithBanState(r.Context(), permissions.ConfirmedBan())
 				r = r.WithContext(ctx)
-			case permissions.NoAccess:
-				w.WriteHeader(stdhttp.StatusForbidden)
-				return
 			case permissions.Unavailable:
 				logger.ErrorContext(r.Context(), "tenant admission unavailable", "error", admission.Err)
 				w.WriteHeader(stdhttp.StatusServiceUnavailable)

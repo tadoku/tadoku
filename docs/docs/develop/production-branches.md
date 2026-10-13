@@ -1,6 +1,6 @@
 ---
 title: Production branches
-description: How the maintainer deploys a runtime branch beside production with dev-cli production mode, which images and hosts it uses, who can use it, how it is torn down and how the deploy label deploys a pull request from GitHub Actions.
+description: How the maintainer deploys a runtime branch beside production with dev-cli production mode, which images and hosts it uses, who can use it, how it is torn down and how the deploy label deploys and tears down a pull request from GitHub Actions.
 ---
 
 # Production branches
@@ -185,23 +185,17 @@ identities and base deployments are untouched.
 A branch expires 4 hours after its last `dev up`. A cluster CronJob scales the
 Deployments of expired branches to zero, so an abandoned branch stops serving
 traffic. It deletes nothing: the tenant data, routes and test identities
-remain until the maintainer runs `dev down`.
+remain until `dev down` runs, by the maintainer or from a pull request's
+[teardown](#the-teardown-job), or until a later production `dev up`, which
+first tears down expired routes of every owner.
 
 ## Pull-request deploys
 
 The `deploy` label asks for a pull request to be deployed beside production.
 `.github/workflows/pr-branch.yaml` authorizes the request on a GitHub-hosted
-runner, then deploys the pinned commit with dev-cli on the maintainer's homelab
-runner.
-
-**Teardown is not implemented yet.** Removing the label, closing or merging
-the pull request does not remove its deployment: the `teardown` job is a
-placeholder that re-checks the actor of a re-run and prints its decision. A
-pull-request branch keeps running until it expires 4 hours after its last
-deploy, when the expiry CronJob scales it to zero. Its routes, tenant data and
-lifecycle marker remain until a later production `dev up`, which first removes
-expired routes of every owner, or a `dev down --owner gh` from a checkout on
-branch `pr-<number>`.
+runner, then deploys the pinned commit, or tears the branch down, with dev-cli
+on the maintainer's homelab runner. Removing the label, or closing or merging
+the pull request, tears the branch down.
 
 The workflow runs on `pull_request_target` for pull requests into `main`, so
 GitHub always runs the copy on `main`; a pull request that edits the workflow
@@ -257,12 +251,12 @@ does nothing and leaves the decision to the newer push's run.
 
 ### The pull-request comment
 
-The workflow keeps one comment per pull request. It begins with
+The workflows keep one comment per pull request. It begins with
 `<!-- tadoku-pr-branch -->` and is edited in place, never reposted. The
 `authorize` job sets the state `deploying`, `tearing down`, `refused` or
 `refused, tearing down`, with the commit, the reason and a link to the run.
-The `deploy` job then replaces it with its result. Events that do nothing, and
-superseded deploy runs, leave it unchanged.
+The `deploy` and `teardown` jobs then replace it with their result. Events
+that do nothing, and superseded deploy runs, leave it unchanged.
 
 ### The deploy job
 
@@ -274,11 +268,10 @@ cancels a running job; GitHub keeps only the newest pending run of a group.
 It runs on `tadoku-prod-branch`, an ephemeral self-hosted runner set in the
 maintainer's homelab, because the cluster API server accepts only allowlisted
 addresses and the homelab's is one of them. The runner refuses every job that
-does not come from this workflow on `main`, and its network allows only DNS,
-public HTTPS and public TCP/6379, the port of production's Valkey that the
-isolation check reads. The runner set and its image, which provides Bazel
-through bazelisk, `kubectl`, `gh`, `gcc` and `g++`, are defined in the homelab
-repository.
+does not come from this workflow on `main`, and it runs one job at a time.
+Its network allows only DNS, public HTTPS and public TCP/6379, the port of
+production's Valkey that the isolation check reads. The runner set and its image, which provides Bazel through bazelisk,
+`kubectl`, `gh`, `gcc` and `g++`, are defined in the homelab repository.
 
 Its steps, in order:
 
@@ -349,18 +342,71 @@ it. Its job token can push to any package the repository can write, release
 packages included; the isolation `images` check reports a changed `:prod`
 digest.
 
+### The teardown job
+
+The `teardown` job runs only when `action` is `teardown`, in the same
+environment, runner set and concurrency group as the `deploy` job. It runs
+only `main`'s code and never checks out the pull request. Its token has
+`contents: read` and `pull-requests`, `issues` and `statuses` write; it cannot
+write packages.
+
+Its steps, in order:
+
+1. On a re-run, re-check the role of `github.triggering_actor`. A first
+   attempt needs no eligible actor, because teardown is always allowed.
+2. Write the kubeconfig and check its identity, as the `deploy` job does.
+3. Find the branch's lifecycle marker: the ConfigMap in `tdk-prod-branches`
+   labelled `dev-cli.io/lifecycle-marker=true` and `dev-cli.io/owner=gh` whose
+   `dev-cli.io/owner-original` annotation is `gh` and whose
+   `dev-cli.io/branch-original` annotation is `pr-<number>`. dev-cli writes the
+   marker before it deploys anything and deletes it last, so without one there
+   is nothing to remove: the job reports `nothing to tear down` and succeeds
+   without setting up any tool.
+4. Check out `main` into `tadoku/` as the local branch `pr-<number>`. dev-cli
+   derives the route from the owner and the branch name, so this checkout
+   addresses the same route as the deploy. Clone the infrastructure
+   repository, install dev-cli and set up Bazel with restored caches, as the
+   `deploy` job does. `dev down` queries the tenant Jobs' Bazel push target
+   before it reuses the tenant image the deploy published. The job never logs
+   in to a registry, so when that image is gone the teardown fails rather than
+   publishing `main`'s tenant code under the pull request's tag.
+5. Check that `dev url` prints the marker's route, then run
+   `dev down --owner gh --config argocd/dev-cli/production/config.yaml` from
+   `tadoku/`. It removes the routes and workloads and runs the teardown hooks
+   described in [Teardown and expiry](#teardown-and-expiry).
+6. Run the isolation check's `after-teardown` mode, which checks that no
+   object, Keto tuple, Valkey key, Flipt namespace or test identity remains for
+   the route.
+7. Update the comment, set the `prod-branch/deploy` status on the deployed
+   commit, which the marker's `dev-cli.io/source-revision` annotation names,
+   and write the job summary.
+
+| Outcome | State | Status | Job |
+| --- | --- | --- | --- |
+| No lifecycle marker | `nothing to tear down` | Unchanged | Succeeds |
+| `dev down` succeeds and `after-teardown` reports PASS or only UNVERIFIED checks | `torn down` | success | Succeeds; UNVERIFIED checks are a warning |
+| `dev down` fails, `after-teardown` reports FAIL, or an earlier step fails | `teardown failed` | failure | Fails |
+
+A failed teardown keeps its lifecycle marker, so re-running the job retries
+it.
+
+The comment and job summary show the state, the reason from `authorize`, the
+route and deployed commit, the end of the `dev down` output, the
+`after-teardown` verdict with its report lines and a link to the run, with the
+cluster's API server address replaced by `<cluster>`.
+
 ### Environment secrets and variables
 
-The `prod-branch` environment holds every credential the job uses. Each secret
+The `prod-branch` environment holds every credential the jobs use. Each secret
 reaches only the steps that need it.
 
 | Name | Kind | Value | Used by |
 | --- | --- | --- | --- |
-| `KUBE_SERVER` | Secret | The cluster API server's `https://` URL | Kubeconfig step |
-| `KUBE_CA` | Secret | The cluster CA as base64-encoded PEM: the `ca.crt` data of the ServiceAccount's token Secret, as stored | Kubeconfig step |
-| `KUBE_TOKEN` | Secret | The `pr-branch-deployer` ServiceAccount token | Kubeconfig step |
-| `ARGOCD_DEPLOY_KEY` | Secret | The private half of a read-only SSH deploy key for the infrastructure repository | Its checkout |
-| `FEATURE_FLAGS_TOKEN` | Secret | A fine-grained token with read access to the contents of `tadoku/feature-flags` | The isolation checks, as `GH_TOKEN` |
+| `KUBE_SERVER` | Secret | The cluster API server's `https://` URL | Kubeconfig steps |
+| `KUBE_CA` | Secret | The cluster CA as base64-encoded PEM: the `ca.crt` data of the ServiceAccount's token Secret, as stored | Kubeconfig steps |
+| `KUBE_TOKEN` | Secret | The `pr-branch-deployer` ServiceAccount token | Kubeconfig steps |
+| `ARGOCD_DEPLOY_KEY` | Secret | The private half of a read-only SSH deploy key for the infrastructure repository | Its checkouts |
+| `FEATURE_FLAGS_TOKEN` | Secret | A fine-grained token with read access to the contents of `tadoku/feature-flags` | The `deploy` job's isolation checks, as `GH_TOKEN` |
 | `DEV_CLI_VERSION` | Variable | A dev-cli release tag, such as `v0.11.1` | `go install` |
 
 The ServiceAccount, its permissions and token rotation are documented in the

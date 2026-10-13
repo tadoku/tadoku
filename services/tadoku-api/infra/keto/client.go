@@ -119,6 +119,7 @@ func (c *Client) ListSubjectIDsForRelation(ctx context.Context, namespace, objec
 		PageSize(defaultRelationshipPageSize)
 
 	subjectIDs := make([]string, 0, 16)
+	seenPageTokens := make(map[string]struct{})
 	pageToken := ""
 	for {
 		if pageToken != "" {
@@ -136,10 +137,15 @@ func (c *Client) ListSubjectIDsForRelation(ctx context.Context, namespace, objec
 			}
 		}
 
-		pageToken = rels.GetNextPageToken()
-		if pageToken == "" {
+		nextPageToken := rels.GetNextPageToken()
+		if nextPageToken == "" {
 			return subjectIDs, nil
 		}
+		if _, repeated := seenPageTokens[nextPageToken]; repeated {
+			return nil, fmt.Errorf("list relationships: repeated next page token")
+		}
+		seenPageTokens[nextPageToken] = struct{}{}
+		pageToken = nextPageToken
 	}
 }
 

@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -131,6 +132,44 @@ func TestNewReadClientUsesHTTPClientConnectionPool(t *testing.T) {
 
 	if got := connections.Load(); got != concurrentChecks {
 		t.Errorf("new connections=%d, want %d", got, concurrentChecks)
+	}
+}
+
+func TestListSubjectIDsForRelationRejectsRepeatedPageToken(t *testing.T) {
+	requests := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests++
+		if r.URL.Path != "/relation-tuples" {
+			t.Errorf("path=%s, want /relation-tuples", r.URL.Path)
+		}
+		switch r.URL.Query().Get("page_token") {
+		case "":
+		case "stuck":
+		default:
+			t.Errorf("unexpected page token %q", r.URL.Query().Get("page_token"))
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(
+			`{"relation_tuples":[{"namespace":"app","object":"global","relation":"admins","subject_id":"user-1"}],"next_page_token":"stuck"}`,
+		))
+	}))
+	t.Cleanup(server.Close)
+
+	ids, err := NewClient(server.URL, server.URL).ListSubjectIDsForRelation(
+		context.Background(),
+		"app",
+		"global",
+		"admins",
+	)
+	if err == nil || !strings.Contains(err.Error(), "repeated next page token") {
+		t.Fatalf("error=%v, want repeated next page token", err)
+	}
+	if ids != nil {
+		t.Fatalf("ids=%v, want nil on repeated page token", ids)
+	}
+	if requests != 2 {
+		t.Fatalf("requests=%d, want 2 (first page and one repeated token)", requests)
 	}
 }
 

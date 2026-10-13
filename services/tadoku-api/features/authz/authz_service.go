@@ -2,7 +2,6 @@ package authz
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/google/uuid"
 	kratosclient "github.com/tadoku/tadoku/services/tadoku-api/infra/kratos"
@@ -80,7 +79,7 @@ func (s *Service) UpdateRole(ctx context.Context, parameters RoleUpdateParameter
 
 	exists, err := s.users.UserExists(ctx, parameters.UserID)
 	if err != nil {
-		return fmt.Errorf("check whether target user exists: %w", err)
+		return errx.NewUnavailableError("check whether target user exists", err)
 	}
 	if !exists {
 		return ErrUserNotFound

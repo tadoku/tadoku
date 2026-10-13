@@ -22,6 +22,7 @@ go_test(
     srcs = ["authz_service_test.go"],
     embed = [":authz"],
     deps = [
+        "//services/tadoku-api/infra/kratos",
         "//services/tadoku-api/internal/errx",
         "//services/tadoku-api/internal/identity",
         "//services/tadoku-api/internal/permissions",

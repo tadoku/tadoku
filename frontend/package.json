@@ -20,5 +20,8 @@
     "check:paper-boundaries": "node scripts/check-paper-boundaries.mjs",
     "paper-playground": "pnpm --filter paper-playground dev",
     "webv3": "pnpm --filter webv3 dev"
+  },
+  "devDependencies": {
+    "vite": "6.4.3"
   }
 }

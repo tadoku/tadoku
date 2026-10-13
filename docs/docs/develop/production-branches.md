@@ -271,56 +271,53 @@ cancels a running job; GitHub keeps only the newest pending run of a group.
 It runs on `tadoku-prod-branch`, an ephemeral self-hosted runner set in the
 maintainer's homelab, because the cluster API server accepts only allowlisted
 addresses and the homelab's is one of them. The runner refuses every job that
-does not come from this workflow on `main`, and its network allows only DNS and
-public HTTPS. The runner set is defined in the homelab repository.
+does not come from this workflow on `main`, and its network allows only DNS,
+public HTTPS and public TCP/6379, the port of production's Valkey that the
+isolation check reads. The runner set and its image, which provides Bazel
+through bazelisk, `kubectl`, `gh`, `gcc` and `g++`, are defined in the homelab
+repository.
 
 Its steps, in order:
 
-1. Install the build tools the runner image does not include. `apt` installs
-   `gcc` and `g++`, which Bazel's C++ toolchain autoconfiguration requires,
-   from Ubuntu's archive over HTTPS because the runner allows only HTTPS out.
-   `kubectl`, `gh` and bazelisk as `bazel` are installed at pinned versions,
-   each verified against its SHA-256. Bazelisk runs the Bazel release pinned in
-   `.bazelversion`.
-2. Re-check the role of `github.triggering_actor`, before any secret is
+1. Re-check the role of `github.triggering_actor`, before any secret is
    referenced, so an ineligible collaborator who re-runs only this job fails
    here.
-3. Read the pull request. Unless it is open, still has `deploy` and its head is
+2. Read the pull request. Unless it is open, still has `deploy` and its head is
    still the pinned commit, the run stops as **superseded**: it succeeds,
    writes only its job summary and leaves the comment and status to the run of
    the later event.
-4. Check out the pinned commit with full history into `tadoku/` as the local
+3. Check out the pinned commit with full history into `tadoku/` as the local
    branch `pr-<number>`, and clone `main` of the private infrastructure
    repository into `argocd/` with its deploy key, over GitHub's SSH endpoint on
-   port 443 because the runner allows only HTTPS out. Neither checkout keeps
+   port 443 because the runner cannot reach port 22. Neither checkout keeps
    its credentials.
-5. Install dev-cli with `go install` at the `DEV_CLI_VERSION` release tag.
-6. Set up Bazel with the bazelisk, repository and `build-bazel` disk caches
+4. Install dev-cli with `go install` at the `DEV_CLI_VERSION` release tag.
+5. Set up Bazel with the bazelisk, repository and `build-bazel` disk caches
    restored only. Caches saved from
    `pull_request_target` would be restored by `main`, so the workflow never
    saves one, and it uploads no artifact. Frontend images build inside Docker
    through `frontend/scripts/publish-image.sh`, so the runner needs no Node or
    pnpm.
-7. Write a private kubeconfig whose context is `lke20948-ctx`, and stop unless
+6. Write a private kubeconfig whose context is `lke20948-ctx`, and stop unless
    the token authenticates as
    `system:serviceaccount:tdk-prod-branches:pr-branch-deployer`. Log in to
    `ghcr.io` with the job token, which has `packages: write`.
-8. Derive the route with `dev url --owner gh`. The owner is always `gh` and the
+7. Derive the route with `dev url --owner gh`. The owner is always `gh` and the
    branch `pr-<number>`, so the route `gh-pr-<number>-<8 hex>` stays the same
    across pushes and contains nothing from the pull request.
-9. Record the isolation baseline with the infrastructure repository's
+8. Record the isolation baseline with the infrastructure repository's
    isolation check, `argocd/scripts/branch-isolation-check.sh`. When the
    baseline reports FAIL, isolation cannot be verified, so the job deploys
    nothing and reports `failed`.
-10. Run `dev up --owner gh --config argocd/dev-cli/production/config.yaml` from
+9. Run `dev up --owner gh --config argocd/dev-cli/production/config.yaml` from
     `tadoku/`. As for the maintainer, it first removes expired routes of every
     owner. `dev doctor` is not run: it checks create rights the ServiceAccount
     deliberately lacks, and `dev up` runs its own preflight.
-11. Run the isolation `compare` against the baseline, even when `dev up`
+10. Run the isolation `compare` against the baseline, even when `dev up`
     failed.
-12. When the compare reports FAIL, contain it: `dev down --owner gh`, the
+11. When the compare reports FAIL, contain it: `dev down --owner gh`, the
     `after-teardown` check and removal of the `deploy` label.
-13. Update the comment, set the commit status `prod-branch/deploy` on the
+12. Update the comment, set the commit status `prod-branch/deploy` on the
     pinned commit with a link to the run, and write the job summary.
 
 | Outcome | State | Status | What remains |

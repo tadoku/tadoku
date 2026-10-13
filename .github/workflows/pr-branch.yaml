@@ -196,34 +196,6 @@ jobs:
       DEV_CONFIG: ${{ github.workspace }}/argocd/dev-cli/production/config.yaml
       ISOLATION_CHECK: ${{ github.workspace }}/argocd/scripts/branch-isolation-check.sh
     steps:
-      # The runner image lacks the tools GitHub's images preinstall, and the
-      # runner can reach only HTTPS, so apt fetches Ubuntu's archive over HTTPS.
-      - name: Install the build tools
-        env:
-          KUBECTL_VERSION: v1.36.5
-          KUBECTL_SHA256: 33bc88a24c3b09cf55bfd59e6ca977881b61fc3f25ab65bc80c65b430248648e
-          GH_VERSION: 2.102.0
-          GH_SHA256: bb766f710eef8ede859c18578c72c327597cd4c8a85b06001b1f3843c6019386
-          BAZELISK_VERSION: v1.29.0
-          BAZELISK_SHA256: 5a408715e932c0250d28bd84555f12edbf70117de42f9181691c736eacc4a992
-        run: |
-          sudo sed -i 's|http://|https://|' /etc/apt/sources.list.d/ubuntu.sources
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends gcc g++
-
-          cd "$(mktemp -d)"
-          curl -fsSLo kubectl "https://dl.k8s.io/release/$KUBECTL_VERSION/bin/linux/amd64/kubectl"
-          curl -fsSLo gh.tar.gz \
-            "https://github.com/cli/cli/releases/download/v$GH_VERSION/gh_${GH_VERSION}_linux_amd64.tar.gz"
-          curl -fsSLo bazel \
-            "https://github.com/bazelbuild/bazelisk/releases/download/$BAZELISK_VERSION/bazelisk-linux-amd64"
-          printf '%s  kubectl\n%s  gh.tar.gz\n%s  bazel\n' "$KUBECTL_SHA256" "$GH_SHA256" "$BAZELISK_SHA256" |
-            sha256sum -c -
-          tar -xzf gh.tar.gz --strip-components=2 "gh_${GH_VERSION}_linux_amd64/bin/gh"
-          sudo install -m 0755 kubectl gh bazel /usr/local/bin/
-          kubectl version --client
-          gh --version
-
       - name: Re-check the triggering actor
         env:
           GH_TOKEN: ${{ github.token }}
@@ -292,7 +264,7 @@ jobs:
           git rev-parse --verify --quiet refs/remotes/origin/main >/dev/null ||
             git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
 
-      # The runner allows only HTTPS out, so the deploy key clones through
+      # The runner cannot reach port 22, so the deploy key clones through
       # GitHub's SSH endpoint on port 443, pinned to GitHub's published host key.
       - name: Check out the production configuration
         if: steps.pr.outputs.current == 'true'

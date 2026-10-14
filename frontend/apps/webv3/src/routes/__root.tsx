@@ -8,7 +8,8 @@ import 'paper-ui/styles.css'
 import '../styles.css'
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  beforeLoad: async () => ({ webUrl: await getWebUrl() }),
+  loader: async () => ({ webUrl: await getWebUrl() }),
+  staleTime: Infinity,
   notFoundComponent: NotFoundView,
   errorComponent: ErrorView,
   pendingComponent: PendingView,

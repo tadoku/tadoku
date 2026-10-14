@@ -90,8 +90,9 @@ back to its base deployment. The resolver accepts one valid DNS label beneath
 the trusted branch root and rejects malformed or nested branch hosts. Incoming
 forwarded-host or branch headers cannot choose an upstream URL.
 
-The root route resolves the product-link origin per request and retains it in
-its route context for SSR and hydration. Links are resolved when a screen renders;
+The root route loader resolves the product-link origin once per request, and SSR
+serializes that loader data for hydration. Client navigation and intent preloads
+reuse it without another server call. Links are resolved when a screen renders;
 they are never frozen into a production build or shared across requests. Opening
 Log activity reaches the matching Webv2 branch, whose login flow keeps the same
 tenant selection. Canonical `next.tadoku.app` uses production data and the

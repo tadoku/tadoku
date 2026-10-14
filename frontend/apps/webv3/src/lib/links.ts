@@ -1,5 +1,6 @@
-import { useRouteContext } from '@tanstack/react-router'
+import { rootRouteId, useLoaderData } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
+import { useMemo } from 'react'
 
 export const getWebUrl = createServerFn({ method: 'GET' }).handler(async () => {
   const { requestUrls } = await import('./urls.server')
@@ -7,9 +8,8 @@ export const getWebUrl = createServerFn({ method: 'GET' }).handler(async () => {
 })
 
 export function useLinks() {
-  const { webUrl } = useRouteContext({ strict: false }) as { webUrl?: string }
-  if (!webUrl) throw new Error('Missing Webv3 request URLs')
-  return createLinks(webUrl)
+  const { webUrl } = useLoaderData({ from: rootRouteId })
+  return useMemo(() => createLinks(webUrl), [webUrl])
 }
 
 function createLinks(base: string) {

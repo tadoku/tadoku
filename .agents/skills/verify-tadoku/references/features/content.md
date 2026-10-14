@@ -24,6 +24,23 @@ those pages while their display window is active.
   visible update without navigation and with the same Pod UID/image. Don't use
   CMS copy edits as a source-sync demonstration.
 
+## Webv3 preview
+
+Generate its selected link with `dev url --owner <owner> --host next.tadoku.dev.lab '/'`.
+The homepage reads its branch's official contest and standings through the matching
+Webv2 API gateway; `/plan` saves only a local browser goal. Check product anchors in
+the server HTML and after hydration, then follow Daily goal and verify the links
+still use `<route>.tadoku.dev.lab`. Log activity must reach that same Webv2 branch,
+including its account login redirect. Compare two branch hosts in one browser
+profile to detect selection leaks; do not change shared identities or credentials.
+
+Check the unavailable-data state and `/healthz` when its configured API fails.
+The container smoke suite proves runtime URL overrides and concurrent Host isolation
+with synthetic read-only data; live ingress, tenant selection and login require
+separate development verification. Production canonical `next.tadoku.app` uses
+`tadoku.app` links, while `<route>.next.preview.tadoku.app` uses
+`<route>.preview.tadoku.app` links.
+
 ## Traps
 
 About, Contact and similar generic page bodies are CMS-owned. For copy-only

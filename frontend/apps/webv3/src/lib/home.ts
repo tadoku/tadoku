@@ -19,12 +19,12 @@ const contestBase = z.object({
 })
 
 export const contestSchema = contestBase.extend({
-  language_code_allow_list: z.array(z.string()),
+  language_code_allow_list: z.array(z.string()).nullable().transform(value => value ?? []),
   activity_type_id_allow_list: z.array(z.int()),
 })
 
 export const contestViewSchema = contestBase.extend({
-  allowed_languages: z.array(z.object({ code: z.string(), name: z.string() })),
+  allowed_languages: z.array(z.object({ code: z.string(), name: z.string() })).nullable().transform(value => value ?? []),
   allowed_activities: z.array(z.object({
     id: z.int(),
     name: z.string(),

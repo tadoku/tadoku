@@ -1,0 +1,118 @@
+name: build-frontend-webv3
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "frontend/apps/webv3/**"
+      - "frontend/packages/paper-ui/**"
+      - "frontend/scripts/check-paper-boundaries.mjs"
+      - "frontend/scripts/check-paper-boundaries.test.mjs"
+      - "frontend/scripts/smoke-webv3-image.mjs"
+      - "frontend/paper-boundaries.json"
+      - "frontend/package.json"
+      - "frontend/pnpm-workspace.yaml"
+      - "frontend/pnpm-lock.yaml"
+      - "frontend/.npmrc"
+      - "frontend/.dockerignore"
+      - ".github/workflows/build-frontend-webv3.yaml"
+  push:
+    branches: [main]
+    paths:
+      - "frontend/apps/webv3/**"
+      - "frontend/packages/paper-ui/**"
+      - "frontend/scripts/check-paper-boundaries.mjs"
+      - "frontend/scripts/check-paper-boundaries.test.mjs"
+      - "frontend/scripts/smoke-webv3-image.mjs"
+      - "frontend/paper-boundaries.json"
+      - "frontend/package.json"
+      - "frontend/pnpm-workspace.yaml"
+      - "frontend/pnpm-lock.yaml"
+      - "frontend/.npmrc"
+      - "frontend/.dockerignore"
+      - ".github/workflows/build-frontend-webv3.yaml"
+
+concurrency:
+  group: webv3-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: webv3 / container journeys
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 10.10.0
+          run_install: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile --filter webv3...
+        working-directory: frontend
+      - run: pnpm check:paper-boundaries
+        working-directory: frontend
+      - run: pnpm --filter paper-ui build
+        working-directory: frontend
+      - run: pnpm --filter webv3 typecheck && pnpm --filter webv3 lint
+        working-directory: frontend
+      - run: pnpm --filter webv3 exec playwright install --with-deps chromium
+        working-directory: frontend
+      - run: docker build --platform linux/amd64 -f apps/webv3/Dockerfile -t webv3:ci .
+        working-directory: frontend
+      - run: node scripts/smoke-webv3-image.mjs webv3:ci
+        working-directory: frontend
+        env:
+          PLAYWRIGHT_OUTPUT_DIR: ${{ runner.temp }}/webv3-evidence
+      - run: node scripts/smoke-webv3-image.mjs webv3:ci
+        working-directory: frontend
+        env:
+          WEBV3_LANGUAGE_FIXTURE: array
+          PLAYWRIGHT_OUTPUT_DIR: ${{ runner.temp }}/webv3-evidence/array
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: webv3-container-journeys
+          path: ${{ runner.temp }}/webv3-evidence
+  publish:
+    name: webv3 / publish
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and publish immutable Webv3 image
+        id: image
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: frontend
+          file: frontend/apps/webv3/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ghcr.io/tadoku/tadoku/frontend-webv3:${{ github.sha }}
+            ghcr.io/tadoku/tadoku/frontend-webv3:latest
+      - name: Record release identity
+        run: |
+          {
+            echo "### Tadoku Webv3 image"
+            echo "- Source: \`${GITHUB_SHA}\`"
+            echo "- Digest: \`${{ steps.image.outputs.digest }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"

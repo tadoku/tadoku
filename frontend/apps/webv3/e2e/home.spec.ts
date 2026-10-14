@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-test('renders the development contest and standings before JavaScript runs', async ({ browser, request }, testInfo) => {
+test('renders the configured read-only contest and standings before JavaScript runs', async ({ browser, request }, testInfo) => {
   const api = process.env.TADOKU_API_URL || 'https://tadoku.dev.lab/api/internal'
   const latestResponse = await request.get(`${api}/immersion/contests/latest-official`)
   expect(latestResponse.ok()).toBeTruthy()
@@ -15,7 +15,7 @@ test('renders the development contest and standings before JavaScript runs', asy
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
   await expect(page.getByRole('heading', { name: latest.title, exact: true })).toBeVisible()
   for (const entry of standings.entries) {
-    await expect(page.getByRole('row').filter({ hasText: entry.user_display_name })).toContainText(String(entry.score))
+    await expect(page.getByRole('row').filter({ hasText: entry.user_display_name })).toContainText(new Intl.NumberFormat('en-GB', { maximumFractionDigits: 1 }).format(entry.score))
   }
   await page.screenshot({ path: testInfo.outputPath('homepage-ssr.png'), fullPage: true })
   await context.close()

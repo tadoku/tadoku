@@ -31,14 +31,15 @@ export const useSessionOrRedirect = () => {
   const result = useAtom(sessionAtom)
   const currentUrl = useCurrentLocation()
   const router = useRouter()
+  const loginUrl = currentUrl ? routes.authLogin(currentUrl) : undefined
 
   const [session] = result
 
   useEffect(() => {
-    if (!session) {
-      router.push(routes.authLogin(currentUrl))
+    if (!session && router.isReady && loginUrl) {
+      router.push(loginUrl)
     }
-  })
+  }, [session, router, loginUrl])
 
   return result
 }

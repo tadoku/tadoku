@@ -76,6 +76,12 @@ auth application routes them through `frontend/apps/auth/src/branch.ts`:
 
 ## Authentication flows
 
+Webv2 protected pages use `useSessionOrRedirect()` from
+`frontend/apps/webv2/app/common/session.ts`. It waits for the client router and
+the complete current location before sending an anonymous visitor to login.
+The shared auth route helpers encode `return_to` so queries and fragments remain
+part of the original destination. Registration uses the same protected-page hook.
+
 The auth application’s shared logout hook creates a Kratos logout flow only
 when `useSession()` has an authenticated session. Anonymous login pages must
 not create logout flows: their CSRF cookies can race the login flow. Session

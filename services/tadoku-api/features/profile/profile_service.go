@@ -183,5 +183,5 @@ func mapIdentityFetchError(err error) error {
 	if errors.Is(err, kratosclient.ErrNotFound) {
 		return ErrIdentityNotFound
 	}
-	return err
+	return errx.NewUnavailableError("fetch identity", err)
 }

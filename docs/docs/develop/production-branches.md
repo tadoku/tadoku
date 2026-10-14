@@ -193,8 +193,7 @@ and test identities until the maintainer runs `dev down`, or until a later
 production `dev up`, which first tears down expired routes of every owner. A
 pull-request branch is torn down in full by the first
 [reconciler](#the-reconciler) run after it expires, normally within 15
-minutes; GitHub can start a scheduled run late, and a run waits while the
-runner is busy.
+minutes; a run waits while the runner is busy.
 
 ## Pull-request deploys
 
@@ -423,8 +422,11 @@ cluster's API server address replaced by `<cluster>`.
 
 ### The reconciler
 
-`.github/workflows/pr-branch-reconcile.yaml` runs every 15 minutes and on
-manual dispatch, from `main`, on the `tadoku-prod-branch` runner set in the
+`.github/workflows/pr-branch-reconcile.yaml` has no GitHub schedule, because
+GitHub runs this repository's scheduled workflows hours late. The homelab
+`tadoku-pr-branch-reconcile` CronJob starts it through `workflow_dispatch`
+every 15 minutes, and a maintainer can dispatch it by hand. It runs from
+`main`, on the `tadoku-prod-branch` runner set in the
 `prod-branch` environment. It sets `deployment: false`, so its runs add no
 records to the environment's deployment history. Its concurrency group queues
 a run behind the previous one and never cancels it, and because the runner set

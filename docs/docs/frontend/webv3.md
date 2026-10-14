@@ -147,6 +147,11 @@ The smoke command starts its own labeled container and synthetic GET-only API,
 uses nullable language lists by default (`WEBV3_LANGUAGE_FIXTURE=array` selects
 nonempty lists), checks server rendering, built assets, non-root/read-only operation and the
 existing browser journeys, then disconnects the API and checks health again.
+It also requests `/plan` concurrently with canonical and branch Host headers
+in production and development runtime modes, checking that product links stay
+with their matching origins and that forwarded-host or branch headers cannot
+override the request Host. A second container verifies development runtime
+overrides against the same production-built image.
 It retains a browser report, container log and result with source revision and
 fixture boundary. This proves container behavior; it does not verify real API,
 authentication, DNS, ingress or deployment. Docker on Linux, Node22 and installed pnpm

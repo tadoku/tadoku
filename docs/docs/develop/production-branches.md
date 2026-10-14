@@ -49,7 +49,7 @@ Branch images are built the same way as release images, so a branch runs what
 | --- | --- | --- |
 | Tadoku API | `//services/tadoku-api:branch_push` | `--config=release` |
 | Tadoku worker | `//services/tadoku-api/cmd/tadoku-worker:branch_push` | `--config=release` |
-| webv2, auth, admin | `//frontend:webv2_branch_push`, `//frontend:auth_branch_push`, `//frontend:admin_branch_push` | `frontend/scripts/publish-image.sh` from `HEAD:frontend` |
+| webv2, webv3, auth, admin | `//frontend:webv2_branch_push`, `//frontend:webv3_branch_push`, `//frontend:auth_branch_push`, `//frontend:admin_branch_push` | `frontend/scripts/publish-image.sh` from `HEAD:frontend` |
 | Tenant lifecycle Jobs | `//services/tadoku-api/cmd/tadoku-tenant:branch_push` | `--config=release` |
 
 Each deployable's `dev_deployable` metadata names its `release.imageName` and
@@ -62,7 +62,7 @@ describes the targets and how to run them against a local registry.
 
 Images are pushed to `ghcr.io/tadoku/tadoku/branches/<image>`, where `<image>`
 is `tadoku-api`, `tadoku-worker`, `frontend-webv2`, `frontend-auth`,
-`frontend-admin` or `tenant`. The tag is `<route>-<commit12>`, the route
+`frontend-admin`, `frontend-webv3` or `tenant`. The tag is `<route>-<commit12>`, the route
 followed by the first 12 characters of the commit. An existing tag is reused
 because it names a clean, pushed commit. Workloads are deployed by digest.
 
@@ -72,7 +72,7 @@ anonymously, which proves the cluster can pull it without an image pull Secret.
 ### Branch image cleanup
 
 `.github/workflows/clean-branch-images.yaml` runs
-`scripts/clean-branch-images.sh` daily to delete old versions of the six branch
+`scripts/clean-branch-images.sh` daily to delete old versions of the seven branch
 packages. It names only packages under `branches/`; release images are never
 touched. A version is deleted when all of these hold:
 
@@ -115,6 +115,7 @@ A route identifies one branch deployment. It has the form
 | Test tenant | `tadoku/<route>`, for example `tadoku/974796-anton-prod-dry-run-c66ea12d` |
 | Production tenant | `tadoku/prod`, never used by a branch's lifecycle Jobs |
 | App host | `<route>.preview.tadoku.app` |
+| Webv3 host | `<route>.next.preview.tadoku.app` |
 | Account host | `<route>.account.preview.tadoku.app` |
 | Admin host | `<route>.admin.preview.tadoku.app` |
 | API | The branch host's `/api/internal` path |

@@ -1,0 +1,28 @@
+spec:
+  automountServiceAccountToken: false
+  containers:
+    - name: webv3
+      workingDir: /app
+      volumeMounts:
+        - name: development-ca
+          mountPath: /etc/dev-ca
+          readOnly: true
+      envFrom:
+        - configMapRef:
+            name: tadoku-cli-webv3
+      env:
+        - name: HOST
+          value: "0.0.0.0"
+        - name: PORT
+          value: "3000"
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: "2"
+          memory: 1536Mi
+  volumes:
+    - name: development-ca
+      configMap:
+        name: tadoku-cli-ca

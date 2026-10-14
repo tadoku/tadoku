@@ -1,6 +1,6 @@
 # Supported development acceptance (development cluster only)
 
-Scope: webv2, auth, admin, tadoku-api and tadoku-worker. Token-reflector is base-only.
+Scope: webv2, webv3, auth, admin, tadoku-api and tadoku-worker. Token-reflector is base-only.
 Paper styleguide is deferred; its local pnpm workflow is independent.
 
 Use dev-cli v0.9.0 or newer and only the `homelab-talos-dev` context. Record
@@ -12,7 +12,9 @@ sanitized output with the PR report. Do not include credentials or cookies.
 
 1. Bazel discovery must not select unrelated apps: query reverse dependencies
    for an auth-only file, an admin-only file and shared `packages/ui` code.
-   Expect auth only, admin only, and all three frontends respectively.
+   Expect auth only, admin only, and the three legacy frontends respectively.
+   A Webv3 file or shared `packages/paper-ui` file selects only Webv3. Its
+   overlay must use Node22, port 3000 and the Paper build watcher.
 2. Render `kubectl --context homelab-talos-dev kustomize k8s/dev/base`. Validate with
    kubeconform. Auth/admin ingress must use Envoy, retain TLS and hostnames,
    and preserve the more-specific `/kratos` route to shared Kratos.

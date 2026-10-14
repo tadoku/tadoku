@@ -18,14 +18,19 @@ _DEV_INSTALL = [
 
 def frontend_dev(name, host, readiness_path = "/"):
     """One app source graph, OCI runtime and dev-cli contract."""
+    paper = name == "webv3"
+    shared_package = "paper-ui" if paper else "ui"
     command = " ".join(_DEV_INSTALL) + " && exec pnpm --filter " + name + " dev"
+    if paper:
+        command = " ".join(_DEV_INSTALL) + " && pnpm --filter paper-ui build && { pnpm --filter paper-ui exec tsup --watch src --watch styles --watch scripts --onSuccess 'node scripts/build-assets.mjs' & exec pnpm --filter webv3 exec vite; }"
 
     native.filegroup(
         name = "%s_sources" % name,
         srcs = native.glob(
             [
                 "apps/%s/**" % name,
-                "packages/ui/**",
+                "packages/%s/**" % shared_package,
+                ".npmrc",
                 "package.json",
                 "pnpm-lock.yaml",
                 "pnpm-workspace.yaml",
@@ -33,6 +38,8 @@ def frontend_dev(name, host, readiness_path = "/"):
             exclude = [
                 "**/node_modules/**",
                 "**/.next/**",
+                "**/.output/**",
+                "**/.tanstack/**",
                 "**/.env*",
                 "**/dist/**",
                 "**/coverage/**",
@@ -63,7 +70,7 @@ def frontend_dev(name, host, readiness_path = "/"):
 
     oci_image(
         name = "%s_dev_image" % name,
-        base = "@tadoku_dev_node_linux_amd64",
+        base = "@tadoku_dev_node22_linux_amd64" if paper else "@tadoku_dev_node_linux_amd64",
         cmd = [command],
         entrypoint = [
             "/bin/sh",
@@ -119,14 +126,16 @@ def frontend_dev(name, host, readiness_path = "/"):
             ],
             "sourceRoots": [
                 "frontend/apps/%s" % name,
-                "frontend/packages/ui",
+                "frontend/packages/%s" % shared_package,
+                "frontend/.npmrc",
                 "frontend/package.json",
                 "frontend/pnpm-lock.yaml",
                 "frontend/pnpm-workspace.yaml",
             ],
             "syncPaths": [
                 "frontend/apps/%s" % name,
-                "frontend/packages/ui",
+                "frontend/packages/%s" % shared_package,
+                "frontend/.npmrc",
                 "frontend/package.json",
                 "frontend/pnpm-lock.yaml",
                 "frontend/pnpm-workspace.yaml",
@@ -136,10 +145,13 @@ def frontend_dev(name, host, readiness_path = "/"):
             "syncExcludes": [
                 "*.tsbuildinfo",
                 "next-env.d.ts",
+                "frontend/apps/%s/.output/*" % name,
+                "frontend/apps/%s/.tanstack/*" % name,
             ],
             "dependencyPaths": [
                 "frontend/apps/%s/package.json" % name,
-                "frontend/packages/ui/package.json",
+                "frontend/packages/%s/package.json" % shared_package,
+                "frontend/.npmrc",
                 "frontend/package.json",
                 "frontend/pnpm-lock.yaml",
                 "frontend/pnpm-workspace.yaml",

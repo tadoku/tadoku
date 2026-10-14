@@ -1,6 +1,6 @@
 ---
 title: Webv3
-description: The TanStack Start homepage foundation, production API, local goal form, container and automatic preview deployment workflow.
+description: The TanStack Start homepage, request-scoped API and sibling links, local goal form, dev-cli overlays, container and preview deployment workflow.
 sidebar_position: 3
 ---
 
@@ -62,7 +62,7 @@ verification.
 | Variable | Local default | Purpose |
 | --- | --- | --- |
 | `TADOKU_API_URL` | `https://tadoku.dev.lab/api/internal` | Server-only Tadoku API root |
-| `VITE_TADOKU_WEB_URL` | `https://tadoku.dev.lab` | Existing Webv2 origin for product links |
+| `TADOKU_WEB_URL` | `https://tadoku.dev.lab` | Runtime Webv2 origin for product links |
 | `HOST` | `0.0.0.0` | Local development listener |
 | `PORT` | `5183` | Local development port |
 
@@ -70,6 +70,32 @@ The TanStack server function performs upstream reads, so the browser does not
 need cross-origin API cookies or a CORS exception. The app has no account session or
 API mutation. Local runs default to development API data and Webv2 links; the
 production image defaults both origins to `https://tadoku.app`.
+
+## Branch routing
+
+The development base is `https://next.tadoku.dev.lab`; a dev-cli branch uses
+`https://<route>.next.tadoku.dev.lab`. Run `dev up --owner <owner>` from the
+repository root, then `dev url --owner <owner> --host next.tadoku.dev.lab '/'`.
+The overlay uses Node22 and Vite on port 3000, builds `paper-ui` initially and
+watches its source, styles and assets while Vite provides HMR. Generated
+`.output`, `.tanstack` and `dist` files do not enter source synchronization.
+
+`frontend/apps/webv3/src/lib/urls.server.ts` resolves URLs from the configured
+runtime origins and the request Host. Development branch reads go through
+`https://<route>.tadoku.dev.lab/api/internal`; product links use that same branch's
+Webv2 origin. Production branches at `<route>.next.preview.tadoku.app` use
+`https://<route>.preview.tadoku.app/api/internal` and the matching Webv2 links.
+These public gateways select the branch tenant even when the API itself falls
+back to its base deployment. The resolver accepts one valid DNS label beneath
+the trusted branch root and rejects malformed or nested branch hosts. Incoming
+forwarded-host or branch headers cannot choose an upstream URL.
+
+The root route resolves the product-link origin per request and retains it in
+its route context for SSR and hydration. Links are resolved when a screen renders;
+they are never frozen into a production build or shared across requests. Opening
+Log activity reaches the matching Webv2 branch, whose login flow keeps the same
+tenant selection. Canonical `next.tadoku.app` uses production data and the
+canonical `tadoku.app` product links.
 
 ## Checks
 
@@ -103,8 +129,8 @@ amd64, including traced runtime dependencies. It runs as UID/GID 1000 on port
 calling the API; use it for readiness and liveness rather than the homepage.
 `TADOKU_API_URL` is read at runtime and defaults in the image to
 `https://tadoku.app/api/internal`; a runtime environment override selects another
-Tadoku API. `VITE_TADOKU_WEB_URL` is a public build
-argument, defaulting to `https://tadoku.app`; development defaults remain unchanged.
+Tadoku API. `TADOKU_WEB_URL` is also read at runtime and defaults in the image to
+`https://tadoku.app`. Development deployments override both variables.
 Never pass credentials as build arguments. Supply any private CA certificate and
 `NODE_EXTRA_CA_CERTS` at runtime when the upstream requires it.
 

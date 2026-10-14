@@ -11,6 +11,8 @@ spec:
         - configMapRef:
             name: tadoku-cli-webv3
       env:
+        - name: NODE_OPTIONS
+          value: "--max-old-space-size=768"
         - name: HOST
           value: "0.0.0.0"
         - name: PORT

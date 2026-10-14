@@ -79,8 +79,12 @@ repository root, then `dev url --owner <owner> --host next.tadoku.dev.lab '/'`.
 The overlay uses Node22 and Vite on port 3000, builds `paper-ui` initially and
 watches its source, styles and assets while Vite provides HMR. Generated
 `.output`, `.tanstack` and `dist` files do not enter source synchronization.
-The overlay sets `NODE_OPTIONS=--max-old-space-size=768` for the Paper declaration
-build and watcher, within its 1536 MiB pod limit. The production Nitro runtime
+The overlay sets `NODE_OPTIONS=--max-old-space-size=768` for the initial Paper declaration
+build, within its 1536 MiB pod limit. Its watcher rebuilds JavaScript, styles and
+assets without declaration generation or output cleaning, preserving the initial
+declaration files and avoiding a declaration worker alongside Vite. Run
+`pnpm --filter paper-ui build` after changing a Paper component's public types.
+The production Nitro runtime
 retains its separately configured heap limit.
 
 `frontend/apps/webv3/src/lib/urls.server.ts` resolves URLs from the configured

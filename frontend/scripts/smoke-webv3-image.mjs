@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { spawn, execFileSync } from 'node:child_process'
-import { createServer } from 'node:http'
+import { createServer, get } from 'node:http'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 
@@ -50,12 +50,23 @@ async function waitForHealth(base) {
 
 async function checkRuntimeLinks(base, cases) {
   return Promise.all([...cases, ...cases].map(async ([host, origin]) => {
-    const response = await fetch(`${base}/plan`, {
-      headers: { Host: host, 'X-Forwarded-Host': 'attacker.invalid', 'X-Dev-Branch': 'attacker' },
-      signal: AbortSignal.timeout(15_000),
+    const response = await new Promise((resolve, reject) => {
+      const request = get(`${base}/plan`, {
+        headers: { Host: host, 'X-Forwarded-Host': 'attacker.invalid', 'X-Dev-Branch': 'attacker' },
+        timeout: 15_000,
+      }, response => {
+        let html = ''
+        response.setEncoding('utf8')
+        response.on('data', chunk => { html += chunk })
+        response.on('end', () => resolve({ status: response.statusCode, html }))
+        response.on('error', reject)
+      })
+      request.on('timeout', () => request.destroy(new Error(`Goal SSR timed out for ${host}`)))
+      request.on('error', reject)
     })
     assert.equal(response.status, 200, `Goal SSR failed for ${host}`)
-    const html = await response.text()
+    const html = response.html
+    await writeFile(`${artifacts}/links-${host}.html`, html)
     assert(html.includes(`href="${origin}/logs/new"`), `Wrong activity link for ${host}`)
     assert(html.includes(`href="${origin}/pages/manual"`), `Wrong guide link for ${host}`)
     for (const [, href] of html.matchAll(/href="(https:\/\/[^" ]+)"/g)) {
@@ -64,7 +75,6 @@ async function checkRuntimeLinks(base, cases) {
         assert.equal(url.origin, origin, `Cross-request product URL leaked on ${host}`)
       }
     }
-    await writeFile(`${artifacts}/links-${host}.html`, html)
     return { host, origin, outcome: 'passed' }
   }))
 }

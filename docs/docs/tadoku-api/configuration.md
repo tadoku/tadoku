@@ -400,10 +400,12 @@ Credentials come from `TENANT_POSTGRES_HOST`,
 `TENANT_POSTGRES_URL` is rejected. Provision and teardown additionally require
 `TENANT_KETO_READ_URL`, `TENANT_KETO_WRITE_URL`, `TENANT_VALKEY_URL` and
 `TENANT_FLIPT_MANAGEMENT_URL`; `TENANT_FLIPT_ENVIRONMENT` defaults to `test` and
-must differ from `production`. Use the direct provisioning-authorized Flipt
-endpoint, rather than the API's restricted service-token route. Override
-commands need only PostgreSQL. The only registered override component is
-`jobqueue.WorkerComponent`, currently `tadoku-worker`.
+must differ from `production`. The Keto and Flipt management URLs must be
+absolute HTTP(S) without credentials, query or fragment; trailing slashes are
+removed. Use the direct provisioning-authorized Flipt endpoint, rather than the
+API's restricted service-token route. Override commands need only PostgreSQL.
+The only registered override component is `jobqueue.WorkerComponent`, currently
+`tadoku-worker`.
 
 `//services/tadoku-api/cmd/tadoku-tenant:image` packages the command for
 branch provisioning outside development: a distroless base with the CA bundle

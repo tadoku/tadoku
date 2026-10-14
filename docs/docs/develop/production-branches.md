@@ -355,7 +355,7 @@ is the only failure that tears down. UNVERIFIED checks are a warning.
 
 The comment and the job summary show the state, the pinned commit with a
 compare link, the dev-cli version, the cluster identity and the route, the
-three branch URLs, the `dev up` lines with the route, commit, affected
+Webv2, Webv3, Account and Admin branch URLs, the `dev up` lines with the route, commit, affected
 overlays, image digests, gateway checks and expiry (and the end of its output
 when it failed), every isolation verdict with its report lines and a link to
 the run. The cluster's API server address is replaced with `<cluster>` in

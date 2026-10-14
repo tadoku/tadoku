@@ -7,10 +7,10 @@ import { Pagination } from 'ui/components/Pagination'
 
 Reflect.set(globalThis, 'React', React)
 
-vi.mock('ui/node_modules/next/router', () => ({
+vi.mock('next/router', () => ({
   useRouter: () => ({ push: vi.fn() }),
 }))
-vi.mock('ui/node_modules/next/link', () => ({
+vi.mock('next/link', () => ({
   default: React.forwardRef<HTMLAnchorElement, React.ComponentProps<'a'>>(
     function Link(props, ref) {
       return <a {...props} ref={ref} />

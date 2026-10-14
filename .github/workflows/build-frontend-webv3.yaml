@@ -2,12 +2,6 @@ name: build-frontend-webv3
 
 on:
   workflow_dispatch:
-    inputs:
-      publish_production:
-        description: Publish the production image after owner approval
-        type: boolean
-        default: false
-        required: true
   pull_request:
     paths:
       - "frontend/apps/webv3/**"
@@ -115,11 +109,6 @@ jobs:
           tags: |
             ghcr.io/tadoku/tadoku/frontend-webv3:${{ github.sha }}
             ghcr.io/tadoku/tadoku/frontend-webv3:latest
-      - name: Publish production tag after approval
-        if: github.event_name == 'workflow_dispatch' && inputs.publish_production
-        run: |
-          docker buildx imagetools create --tag ghcr.io/tadoku/tadoku/frontend-webv3:prod \
-            ghcr.io/tadoku/tadoku/frontend-webv3@${{ steps.image.outputs.digest }}
       - name: Record release identity
         run: |
           {

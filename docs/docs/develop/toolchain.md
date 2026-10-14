@@ -155,7 +155,7 @@ All workflows live in `.github/workflows/`.
 | `build-frontend-admin.yaml` | Pushes touching admin, `ui` or the lockfile | Tests and builds admin; publishes its image from `main` |
 | `build-frontend-styleguide.yaml` | Pushes touching styleguide, `ui` or the lockfile | Builds the `ui` styleguide; publishes its image from `main` |
 | `build-frontend-paper-styleguide.yaml` | PRs and `main` pushes touching Paper | Paper boundaries, `paper-ui` and `paper-styleguide` lint, typecheck, test and build, package checks, image smoke test; publishes from `main` |
-| `build-frontend-webv3.yaml` | PRs and main pushes touching Webv3 or Paper inputs | Node22 lint, typecheck, boundaries, standalone container and synthetic read-only browser journeys; publishes main commit/latest and manually approved prod tags |
+| `build-frontend-webv3.yaml` | PRs and `main` pushes touching Webv3 or Paper inputs | Node 22 lint, typecheck, boundaries, standalone container and synthetic read-only browser journeys; publishes commit/`latest` for automatic Webv3 preview updates |
 | `check-paper-playground.yaml` | PRs and `main` pushes touching the playground or `paper-ui` | Paper boundaries and `paper-playground` lint, typecheck, test and build; never published |
 | `pr-branch.yaml` | `pull_request_target` label, push, reopen and close events | Authorizes the `deploy` label, deploys the pinned commit beside production with dev-cli and tears the branch down when the label is removed or the pull request closes. See [Production branches](./production-branches.md#pull-request-deploys) |
 | `pr-branch-reconcile.yaml` | Every 15 minutes, and manual dispatch | Tears down pull-request branches whose pull request is closed or unlabelled, or whose branch expired; never runs `dev cleanup`. See [Production branches](./production-branches.md#the-reconciler) |
@@ -165,7 +165,8 @@ All workflows live in `.github/workflows/`.
 Frontend application images from `dev/` branches publish only their immutable commit tag.
 They never update `latest` or `prod`. Development manifests can pin those images
 without a production release. Main publication updates the commit tag and `latest`
-for development. Frontend workflows update `prod` only through a manual
+for development and automatic Webv3 preview updates. The existing production
+frontend workflows update `prod` only through a manual
 workflow dispatch on `main` with `publish_production: true`, after the owner approves
 production. This also lets frontend source land on main for future branch overlays
 while production remains on its previous image.

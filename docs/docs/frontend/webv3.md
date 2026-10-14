@@ -1,6 +1,6 @@
 ---
 title: Webv3
-description: The TanStack Start homepage foundation, read-only API, local goal form, production container and verification workflow.
+description: The TanStack Start homepage foundation, production API, local goal form, container and automatic preview deployment workflow.
 sidebar_position: 3
 ---
 
@@ -10,7 +10,7 @@ Read this when you run or extend `frontend/apps/webv3`.
 
 Webv3 is a small application foundation. Its homepage follows the
 Paper playground composition and reads the current official contest, summary,
-standings and next scheduled round from the configured read-only API. `/plan`
+standings and next scheduled round from the configured Tadoku API. `/plan`
 demonstrates a validated immersion goal kept in the current browser. It does not
 create logs or change a Tadoku account.
 
@@ -61,7 +61,7 @@ verification.
 
 | Variable | Local default | Purpose |
 | --- | --- | --- |
-| `TADOKU_API_URL` | `https://tadoku.dev.lab/api/internal` | Server-only public API root |
+| `TADOKU_API_URL` | `https://tadoku.dev.lab/api/internal` | Server-only Tadoku API root |
 | `VITE_TADOKU_WEB_URL` | `https://tadoku.dev.lab` | Existing Webv2 origin for product links |
 | `HOST` | `0.0.0.0` | Local development listener |
 | `PORT` | `5183` | Local development port |
@@ -103,7 +103,7 @@ amd64, including traced runtime dependencies. It runs as UID/GID 1000 on port
 calling the API; use it for readiness and liveness rather than the homepage.
 `TADOKU_API_URL` is read at runtime and defaults in the image to
 `https://tadoku.app/api/internal`; a runtime environment override selects another
-read-only API. `VITE_TADOKU_WEB_URL` is a public build
+Tadoku API. `VITE_TADOKU_WEB_URL` is a public build
 argument, defaulting to `https://tadoku.app`; development defaults remain unchanged.
 Never pass credentials as build arguments. Supply any private CA certificate and
 `NODE_EXTRA_CA_CERTS` at runtime when the upstream requires it.
@@ -127,10 +127,15 @@ are required. The command removes only its own container.
 
 `.github/workflows/build-frontend-webv3.yaml` runs checks and container journeys
 on pull requests. Main publishes immutable commit and `latest` tags to
-`ghcr.io/tadoku/tadoku/frontend-webv3`. An owner-approved manual dispatch on main
-with `publish_production: true` also promotes the image built from that verified commit to `prod`. The publication
-job rebuilds the image; its digest can differ from the smoke-checked image.
-No pull request publishes an image. Publication does not deploy it.
+`ghcr.io/tadoku/tadoku/frontend-webv3`. The publication job rebuilds the image;
+its digest can differ from the smoke-checked image. No pull request publishes an
+image.
+
+Once the separate GitOps configuration is activated, `next.tadoku.app` follows
+the `latest` digest automatically through Image Updater and Argo CD. No manual
+production tag promotion is required for Webv3. Webv3 uses the same production
+backend as Webv2; the current homepage reads public data and its activity links
+open production Webv2 for account operations.
 
 Before the first deployment, the package owner must confirm GHCR package
 visibility and cluster pull access. Newly created packages may be private;

@@ -52,10 +52,11 @@ bazel run --config=release //services/tadoku-api:branch_push -- \
 ```
 
 Frontend workflows and the `//frontend:webv2_branch_push`,
-`//frontend:auth_branch_push` and `//frontend:admin_branch_push` targets use
+`//frontend:webv3_branch_push`, `//frontend:auth_branch_push` and `//frontend:admin_branch_push` targets use
 `frontend/scripts/publish-image.sh`. It builds `HEAD:frontend` with `git archive`,
 so ignored local environment files and uncommitted edits do not enter images.
-The script publishes only explicitly requested tags, on Linux amd64:
+Webv3 uses its standalone `frontend/apps/webv3/Dockerfile`; the other apps use
+`frontend/Dockerfile`. The script publishes only explicitly requested tags, on Linux amd64:
 
 ```sh
 frontend/scripts/publish-image.sh webv2 \

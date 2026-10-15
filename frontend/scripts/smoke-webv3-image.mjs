@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { spawn, execFileSync } from 'node:child_process'
-import { createServer } from 'node:http'
+import { createServer, get } from 'node:http'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 
@@ -38,7 +38,50 @@ const fixture = createServer((request, response) => {
 await new Promise(resolve => fixture.listen(0, '0.0.0.0', resolve))
 const apiPort = fixture.address().port
 const docker = (...args) => execFileSync('docker', args, { encoding: 'utf8' }).trim()
+async function waitForHealth(base) {
+  for (let attempt = 0; attempt < 60; attempt++) {
+    try {
+      if ((await fetch(`${base}/healthz`, { signal: AbortSignal.timeout(2_000) })).ok) return
+    } catch {}
+    await new Promise(resolve => setTimeout(resolve, 500))
+  }
+  assert.fail('Standalone container did not become healthy')
+}
+
+async function checkRuntimeLinks(base, cases) {
+  return Promise.all([...cases, ...cases].map(async ([host, origin]) => {
+    const response = await new Promise((resolve, reject) => {
+      const request = get(`${base}/plan`, {
+        headers: { Host: host, 'X-Forwarded-Host': 'attacker.invalid', 'X-Dev-Branch': 'attacker' },
+        timeout: 15_000,
+      }, response => {
+        let html = ''
+        response.setEncoding('utf8')
+        response.on('data', chunk => { html += chunk })
+        response.on('end', () => resolve({ status: response.statusCode, html }))
+        response.on('error', reject)
+      })
+      request.on('timeout', () => request.destroy(new Error(`Goal SSR timed out for ${host}`)))
+      request.on('error', reject)
+    })
+    assert.equal(response.status, 200, `Goal SSR failed for ${host}`)
+    const html = response.html
+    await writeFile(`${artifacts}/links-${host}.html`, html)
+    assert(html.includes(`href="${origin}/logs/new"`), `Wrong activity link for ${host}`)
+    assert(html.includes(`href="${origin}/pages/manual"`), `Wrong guide link for ${host}`)
+    for (const [, href] of html.matchAll(/href="(https:\/\/[^" ]+)"/g)) {
+      const url = new URL(href)
+      if (url.hostname.endsWith('.tadoku.app') || url.hostname === 'tadoku.app' || url.hostname.endsWith('.dev.lab')) {
+        assert.equal(url.origin, origin, `Cross-request product URL leaked on ${host}`)
+      }
+    }
+    return { host, origin, outcome: 'passed' }
+  }))
+}
+
 let container
+let developmentContainer
+const runtimeLinks = []
 let outcome = 'failed'
 try {
   container = docker('run', '-d', '--read-only', '--cap-drop=ALL', '--security-opt=no-new-privileges',
@@ -48,13 +91,24 @@ try {
   assert.deepEqual(JSON.parse(docker('exec', container, 'node', '-e',
     'console.log(JSON.stringify([process.getuid(), process.getgid()]))')), [1000, 1000])
   const base = `http://127.0.0.1:${info.NetworkSettings.Ports['3000/tcp'][0].HostPort}`
-  let healthy = false
-  for (let attempt = 0; attempt < 60; attempt++) {
-    try { healthy = (await fetch(`${base}/healthz`, { signal: AbortSignal.timeout(2_000) })).ok } catch {}
-    if (healthy) break
-    await new Promise(resolve => setTimeout(resolve, 500))
-  }
-  assert(healthy, 'Standalone container did not become healthy')
+  await waitForHealth(base)
+  runtimeLinks.push(...await checkRuntimeLinks(base, [
+    ['next.tadoku.app', 'https://tadoku.app'],
+    ['alice.next.preview.tadoku.app', 'https://alice.preview.tadoku.app'],
+    ['bob.next.preview.tadoku.app', 'https://bob.preview.tadoku.app'],
+  ]))
+
+  developmentContainer = docker('run', '-d', '--read-only', '--cap-drop=ALL', '--security-opt=no-new-privileges',
+    '--label', 'tadoku.check=webv3-runtime-links', '-p', '127.0.0.1::3000',
+    '-e', 'TADOKU_WEB_URL=https://tadoku.dev.lab', '-e', 'TADOKU_API_URL=https://tadoku.dev.lab/api/internal', image)
+  const developmentInfo = JSON.parse(docker('inspect', developmentContainer))[0]
+  const developmentBase = `http://127.0.0.1:${developmentInfo.NetworkSettings.Ports['3000/tcp'][0].HostPort}`
+  await waitForHealth(developmentBase)
+  runtimeLinks.push(...await checkRuntimeLinks(developmentBase, [
+    ['next.tadoku.dev.lab', 'https://tadoku.dev.lab'],
+    ['alice.next.tadoku.dev.lab', 'https://alice.tadoku.dev.lab'],
+    ['bob.next.tadoku.dev.lab', 'https://bob.tadoku.dev.lab'],
+  ]))
   const html = await (await fetch(base, { signal: AbortSignal.timeout(15_000) })).text()
   assert(html.includes(contest.title), 'Runtime API override or SSR failed')
   assert(html.includes('https://tadoku.app'), 'Production product links missing')
@@ -77,6 +131,10 @@ try {
   assert.equal(await health.text(), 'ok\n')
   outcome = 'passed'
 } finally {
+  if (developmentContainer) {
+    await writeFile(`${artifacts}/development-container.log`, docker('logs', developmentContainer))
+    docker('rm', '-f', developmentContainer)
+  }
   if (container) {
     await writeFile(`${artifacts}/container.log`, docker('logs', container))
     docker('rm', '-f', container)
@@ -85,5 +143,5 @@ try {
   await writeFile(`${artifacts}/result.json`, JSON.stringify({ outcome, image, nodeVersion: process.version,
     revision: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
     fixture: `Synthetic local read-only contest API (${process.env.WEBV3_LANGUAGE_FIXTURE === 'array' ? 'array' : 'null'} language lists); real API/auth/deployment unverified`,
-    command: `node scripts/smoke-webv3-image.mjs ${image}`, writes }, null, 2))
+    command: `node scripts/smoke-webv3-image.mjs ${image}`, writes, runtimeLinks }, null, 2))
 }

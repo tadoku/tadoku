@@ -1,4 +1,4 @@
-# DEVELOPMENT ONLY: homelab-dev. Never use this root for production.
+# DEVELOPMENT ONLY: homelab-talos-dev. Never use this root for production.
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 labels:
@@ -14,6 +14,7 @@ resources:
   - oathkeeper
   - flipt
   - frontend-webv2
+  - frontend-webv3
   - frontend-auth
   - frontend-admin
   - routing
@@ -31,6 +32,20 @@ configMapGenerator:
   - name: frontend-runtime
     namespace: tdk-dev-frontend-admin
     files: [frontend-start.cjs, ca.crt=lab-root-ca.crt]
+  - name: tadoku-cli-ca
+    namespace: tdk-dev-frontend-webv3
+    options:
+      disableNameSuffixHash: true
+    files: [ca.crt=lab-root-ca.crt]
+  - name: tadoku-cli-webv3
+    namespace: tdk-dev-frontend-webv3
+    options:
+      disableNameSuffixHash: true
+    literals:
+      - TADOKU_WEB_URL=https://tadoku.dev.lab
+      - TADOKU_API_URL=https://tadoku.dev.lab/api/internal
+      - NODE_EXTRA_CA_CERTS=/etc/dev-ca/ca.crt
+      - NODE_OPTIONS=--max-old-space-size=384
   - name: tadoku-cli-ca
     namespace: tdk-dev-frontend-webv2
     options:
@@ -131,6 +146,10 @@ images:
     newTag: 4463805d7b2cf143100844b5007bd94ba5f27fe2
     newName: ghcr.io/tadoku/tadoku/frontend-webv2
     digest: sha256:8ba229bb088ffb489736febcf9b0c3bd529e5ad0e81471ddf214b13dee98e7de
+  - name: ghcr.io/tadoku/tadoku/frontend-webv3
+    newName: ghcr.io/tadoku/tadoku/frontend-webv3
+    newTag: latest
+    digest: sha256:6d9e25b545a571c06c6022f841fb1b8a59259bfea3e996b452893739407ee90a
   - name: ghcr.io/tadoku/tadoku/frontend-auth
     newTag: 261cba31de11e05274668aac3dc9daf981daab7b
     newName: ghcr.io/tadoku/tadoku/frontend-auth

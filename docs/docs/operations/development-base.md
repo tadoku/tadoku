@@ -63,9 +63,10 @@ notification configuration.
 
 - The repository's existing CI publishes the GHCR runtime and migration images.
   Do not add another build or push pipeline.
-- The `images` entries in `k8s/dev/base/kustomization.yaml` select `latest`.
-  The development Image Updater uses the **digest** strategy and writes the
-  immutable resolutions back to that file.
+- Backend images and Webv3 select `latest` in
+  `k8s/dev/base/kustomization.yaml`; Webv2, auth and admin select reviewed
+  immutable commit tags. The development Image Updater uses the **digest**
+  strategy and writes the immutable resolutions back to that file.
 - The worker has its own GHCR image and Kustomize image entry. Image Updater
   tracks its digest independently of the API image.
 - Webv3 tracks its published `latest` digest independently at

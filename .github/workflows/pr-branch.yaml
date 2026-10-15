@@ -392,7 +392,8 @@ jobs:
           route=${BASH_REMATCH[1]}
           account="$(dev url --owner gh --config "$DEV_CONFIG" --host account.preview.tadoku.app | tail -n 1)"
           admin="$(dev url --owner gh --config "$DEV_CONFIG" --host admin.preview.tadoku.app | tail -n 1)"
-          printf 'route=%s\napp=%s\naccount=%s\nadmin=%s\n' "$route" "$app" "$account" "$admin" >>"$GITHUB_OUTPUT"
+          webv3="$(dev url --owner gh --config "$DEV_CONFIG" --host next.preview.tadoku.app | tail -n 1)"
+          printf 'route=%s\napp=%s\naccount=%s\nadmin=%s\nwebv3=%s\n' "$route" "$app" "$account" "$admin" "$webv3" >>"$GITHUB_OUTPUT"
           echo "Route $route"
 
       - name: Record the isolation baseline
@@ -472,6 +473,7 @@ jobs:
           APP_URL: ${{ steps.route.outputs.app }}
           ACCOUNT_URL: ${{ steps.route.outputs.account }}
           ADMIN_URL: ${{ steps.route.outputs.admin }}
+          WEBV3_URL: ${{ steps.route.outputs.webv3 }}
           BASELINE: ${{ steps.baseline.outputs.code }}
           UP: ${{ steps.up.outputs.code }}
           COMPARE: ${{ steps.compare.outputs.code }}
@@ -557,6 +559,7 @@ jobs:
             fi
             if [[ -n $APP_URL ]]; then
               echo "- App: $APP_URL"
+              echo "- Webv3: $WEBV3_URL"
               echo "- Account: $ACCOUNT_URL"
               echo "- Admin: $ADMIN_URL"
               echo

@@ -182,6 +182,32 @@ func TestTenantLeaderboardInvalidationKeepsOtherTenantWarm(t *testing.T) {
 	}
 }
 
+func TestGenerationRespectsOperationTimeout(t *testing.T) {
+	timeout := 20 * time.Millisecond
+	cache := NewCache(&hangingValkey{Client: newLeaderboardTestClient(t)}, timeout)
+	started := time.Now()
+	_, err := cache.generation(context.Background(), "leaderboard:global")
+	elapsed := time.Since(started)
+	if !errors.Is(err, context.DeadlineExceeded) {
+		t.Fatalf("generation error = %v, want context.DeadlineExceeded", err)
+	}
+	if elapsed < timeout {
+		t.Errorf("generation returned after %v; want at least %v", elapsed, timeout)
+	}
+	if elapsed > time.Second {
+		t.Errorf("generation hung for %v; want operationTimeout to bound it", elapsed)
+	}
+}
+
+type hangingValkey struct {
+	valkeygo.Client
+}
+
+func (hangingValkey) Do(ctx context.Context, _ valkeygo.Completed) valkeygo.ValkeyResult {
+	<-ctx.Done()
+	return valkeygo.NewErrorResult(ctx.Err())
+}
+
 func TestLeaderboardWithoutTenantDoesNotWriteCache(t *testing.T) {
 	client := newLeaderboardTestClient(t)
 	service := NewService(nil, NewCache(client, time.Second))

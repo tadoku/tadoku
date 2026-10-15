@@ -186,6 +186,8 @@ func (c *Cache) cacheCurrent(ctx context.Context, key, marker, generation string
 }
 
 func (c *Cache) generation(ctx context.Context, key string) (string, error) {
+	ctx, cancel := context.WithTimeout(ctx, c.operationTimeout)
+	defer cancel()
 	value, err := c.client.Do(ctx, c.client.B().Get().Key(key+":generation").Build()).ToString()
 	if err == valkeygo.Nil {
 		return "0", nil

@@ -1,6 +1,6 @@
 # Tadoku development base
 
-**Development only.** This Kustomize root is exclusively for the `homelab-dev`
+**Development only.** This Kustomize root is exclusively for the `homelab-talos-dev`
 cluster. Never apply it to another Kubernetes context; it is not the production
 deployment.
 

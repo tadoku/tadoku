@@ -28,6 +28,33 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
+  name: tadoku-webv3
+  namespace: tdk-dev-routing
+  annotations:
+    argocd.argoproj.io/sync-wave: "50"
+    cert-manager.io/cluster-issuer: lab-ca-acme
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts: [next.tadoku.dev.lab]
+      secretName: tadoku-webv3-tls
+  rules:
+    - host: next.tadoku.dev.lab
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: dev-cli-gateway
+                port: {number: 80}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
   name: tadoku-auth
   namespace: tdk-dev-frontend-auth
   annotations:

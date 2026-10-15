@@ -61,6 +61,7 @@ spec:
       namespace: envoy-gateway-system
   hostnames:
     - tadoku.dev.lab
+    - next.tadoku.dev.lab
   rules:
     - backendRefs:
         - group: gateway.envoyproxy.io
@@ -82,6 +83,53 @@ spec:
               - name: Cache-Control
                 value: no-store
 
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: Backend
+metadata:
+  name: tadoku-cli-webv3
+  namespace: tdk-dev-routing
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  endpoints:
+    - fqdn:
+        hostname: frontend-webv3.tdk-dev-frontend-webv3.svc.cluster.local
+        port: 3000
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: tadoku-cli-webv3-base
+  namespace: tdk-dev-routing
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  parentRefs:
+    - name: dev-cli-playground
+      namespace: envoy-gateway-system
+  hostnames:
+    - next.tadoku.dev.lab
+  rules:
+    - backendRefs:
+        - group: gateway.envoyproxy.io
+          kind: Backend
+          name: tadoku-cli-webv3
+          port: 3000
+      matches:
+        - path:
+            type: PathPrefix
+            value: /
+      filters:
+        - type: RequestHeaderModifier
+          requestHeaderModifier:
+            remove:
+              - x-dev-branch
+        - type: ResponseHeaderModifier
+          responseHeaderModifier:
+            set:
+              - name: Cache-Control
+                value: no-store
 ---
 apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: Backend

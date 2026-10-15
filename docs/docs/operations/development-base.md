@@ -36,7 +36,7 @@ Each component runs in its own `tdk-dev-*` namespace:
 
 | Namespace | Contents |
 | --- | --- |
-| `tdk-dev-frontend-webv2`, `tdk-dev-frontend-auth`, `tdk-dev-frontend-admin` | The three frontends |
+| `tdk-dev-frontend-webv2`, `tdk-dev-frontend-webv3`, `tdk-dev-frontend-auth`, `tdk-dev-frontend-admin` | Webv2, Webv3, account and admin frontends |
 | `tdk-dev-tadoku-api` | Tadoku API and the private asynchronous worker |
 | `tdk-dev-kratos`, `tdk-dev-keto`, `tdk-dev-oathkeeper` | Auth providers |
 | `tdk-dev-flipt` | Feature flags |
@@ -68,6 +68,9 @@ notification configuration.
   immutable resolutions back to that file.
 - The worker has its own GHCR image and Kustomize image entry. Image Updater
   tracks its digest independently of the API image.
+- Webv3 tracks its published `latest` digest independently at
+  `https://next.tadoku.dev.lab`. Its deployment keeps the canonical Webv2 host
+  available for product journeys linked from the preview.
 - Hook migration images need Image Updater's `force-update`, because successful
   Jobs are removed from the live resource list.
 - Kustomize mirrors the migration image digest into a top-level annotation on
@@ -87,6 +90,20 @@ before starting Next. The public Lab CA is mounted for server-side HTTPS.
 - It calls a private Next startup API. Reverify it whenever the frontend
   framework version changes.
 - Branch pods use the dev-cli-managed pnpm Next.js dev server, not this adapter.
+
+Webv3 runs its published Node 22 Nitro server directly, with a non-root identity
+and read-only root filesystem. Its `/healthz` readiness and liveness probes do
+not depend on API availability. The stable `tadoku-cli-webv3` ConfigMap supplies
+`TADOKU_WEB_URL=https://tadoku.dev.lab` and
+`TADOKU_API_URL=https://tadoku.dev.lab/api/internal`; `tadoku-cli-ca` mounts the
+public Lab CA at `/etc/dev-ca/ca.crt` for server-side HTTPS. Branch pods reuse
+those ConfigMaps and run the source-synced Vite server. Per-request hostname
+resolution keeps Webv3's product links on its matching Webv2 branch host.
+
+Canonical Webv3 requests use the shared Envoy Gateway through a Lab CA
+ingress. `/api/internal` uses Oathkeeper before the API, while page and asset
+requests use Webv3. Existing Tadoku subdomain admission and shared account
+cookies cover the preview and branch hosts.
 
 ## Asynchronous worker ownership
 
@@ -287,8 +304,11 @@ failure. It needs no cluster credentials.
   branch-only migration targets, and refusal to provision legacy-owned databases.
 - It also proves fresh migrations, no-op reruns, an intentional connection
   failure and recovery, plus HTTP readiness, development runtime URLs and
-  compiled assets in all three published frontend images with external
-  networking disabled. It also checks the rendered leaderboard worker ownership.
+  compiled assets in the three Next.js frontend images and Webv3 with external
+  networking disabled. Webv3 additionally proves non-root, read-only Nitro
+  startup, Lab CA loading, SSR and compiled assets on canonical and branch
+  hosts, development product links and healthy probes during an API outage.
+  It also checks the rendered leaderboard worker ownership.
 - It cleans up only its labeled fixtures. Synthetic credentials in its fixture
   logs are not live credentials.
 

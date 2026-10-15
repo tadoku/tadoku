@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -145,12 +146,12 @@ func run(ctx context.Context, args []string) error {
 	if err := envconfig.Process("TENANT", &cfg); err != nil {
 		return err
 	}
-	for _, raw := range []string{cfg.KetoReadURL, cfg.KetoWriteURL, cfg.FliptManagementURL} {
-		parsed, err := url.Parse(raw)
-		if err != nil || parsed.Host == "" || (parsed.Scheme != "http" && parsed.Scheme != "https") ||
-			parsed.User != nil || parsed.RawQuery != "" || parsed.Fragment != "" {
-			return errors.New("tenant provider URL must be absolute HTTP(S) without credentials, query or fragment")
+	for _, field := range []*string{&cfg.KetoReadURL, &cfg.KetoWriteURL, &cfg.FliptManagementURL} {
+		normalized, err := providerURL(*field)
+		if err != nil {
+			return err
 		}
+		*field = normalized
 	}
 	targets, err := flipt.NewTargets("production", "default", cfg.FliptEnvironment)
 	if err != nil {
@@ -177,6 +178,15 @@ func run(ctx context.Context, args []string) error {
 		return application.Provision(ctx, command.key, command.testers, features)
 	}
 	return application.Teardown(ctx, command.key)
+}
+
+func providerURL(raw string) (string, error) {
+	parsed, err := url.Parse(raw)
+	if err != nil || parsed.Hostname() == "" || (parsed.Scheme != "http" && parsed.Scheme != "https") ||
+		parsed.User != nil || parsed.RawQuery != "" || parsed.ForceQuery || strings.Contains(raw, "#") {
+		return "", errors.New("tenant provider URL must be absolute HTTP(S) without credentials, query or fragment")
+	}
+	return strings.TrimRight(raw, "/"), nil
 }
 
 func main() {

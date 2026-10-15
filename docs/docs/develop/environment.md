@@ -5,10 +5,10 @@ description: How to install dev-cli and run, open, seed, verify and clean up you
 
 # Development environment
 
-Read this when you want to run your branch of webv2, auth, admin, Tadoku API or its worker
+Read this when you want to run your branch of webv2, webv3, auth, admin, Tadoku API or its worker
 on the shared development cluster, or check that a change works there.
 
-dev-cli deploys live branch overlays of webv2, auth, admin, Tadoku API and its
+dev-cli deploys live branch overlays of webv2, webv3, auth, admin, Tadoku API and its
 worker to the `homelab-talos-dev` Kubernetes cluster. Argo CD keeps a shared
 base of every service running there even when no developer has a loop running;
 see [Development base](../operations/development-base.md). There is no local
@@ -24,8 +24,8 @@ commands.
 | Setting | Value |
 | --- | --- |
 | Kubernetes context | `homelab-talos-dev` |
-| Hosts | `tadoku.dev.lab`, `account.tadoku.dev.lab`, `admin.tadoku.dev.lab` |
-| Branch hosts | `<route>.tadoku.dev.lab`, `<route>.account.tadoku.dev.lab`, `<route>.admin.tadoku.dev.lab` |
+| Hosts | `tadoku.dev.lab`, `next.tadoku.dev.lab`, `account.tadoku.dev.lab`, `admin.tadoku.dev.lab` |
+| Branch hosts | `<route>.tadoku.dev.lab`, `<route>.next.tadoku.dev.lab`, `<route>.account.tadoku.dev.lab`, `<route>.admin.tadoku.dev.lab` |
 | Certificate issuer | `lab-ca-acme` |
 | Overlay image registry | `registry.dev.lab/tadoku-dev-cli` |
 | Overlay TTL | 8 hours |
@@ -92,8 +92,9 @@ dev up --owner alice
 
 Keep this terminal running.
 
-- Frontend sources sync into a pnpm-managed Next.js dev server with hot module
-  replacement (HMR).
+- Frontend sources sync into pnpm-managed dev servers with hot module
+  replacement (HMR). Webv2, auth and admin use Next.js; Webv3 uses Node22 and
+  Vite, with a `paper-ui` build watcher.
 - Go edits rebuild the affected Bazel binary and restart it in the same pod.
   A failed compilation keeps the last working process running.
 - A Tadoku API or worker selection starts both workloads against the profile's
@@ -116,7 +117,8 @@ dev-cli asks Bazel which deployables changed relative to the merge base with
 every other service keeps using the base.
 
 - Auth-only or admin-only edits select only that app. Shared `packages/ui`
-  edits select all three frontends.
+  edits select the three legacy frontends. Webv3-only or shared `packages/paper-ui`
+  edits select Webv3.
 - Unknown paths conservatively select every deployable.
 - `--base <ref>` changes the comparison ref.
 - `--service <name>` adds a deployable to the affected set; it does not filter
@@ -154,6 +156,7 @@ In another terminal, in the same checkout:
 ```sh
 dev status --owner alice
 dev url --owner alice '/'
+dev url --owner alice --host next.tadoku.dev.lab '/'
 dev url --owner alice --host account.tadoku.dev.lab '/login'
 dev url --owner alice --host admin.tadoku.dev.lab '/'
 dev logs --owner alice tadoku-api
@@ -167,7 +170,7 @@ navigation across app, account and admin on the same branch. Each branch has
 its own origin, so two owners can use one browser profile without selection
 leaking across tabs. A printed link does not create an overlay or prove readiness.
 
-- Base URLs are `https://tadoku.dev.lab`, `https://account.tadoku.dev.lab` and
+- Base URLs are `https://tadoku.dev.lab`, `https://next.tadoku.dev.lab`, `https://account.tadoku.dev.lab` and
   `https://admin.tadoku.dev.lab`.
 - Each service independently uses its healthy overlay or the base fallback.
 - Authentication is shared between base and branches. Kratos remains at
@@ -193,7 +196,7 @@ writes, verify `X-Dev-Selected` and the persisted tenant as well.
 ### How requests reach your overlay
 
 ```text
-browser → ingress-nginx → Envoy → webv2 / auth / admin
+browser → ingress-nginx → Envoy → webv2 / webv3 / auth / admin
                              → Oathkeeper → Envoy → Tadoku API
 ```
 

@@ -6,9 +6,10 @@ import {
   leaderboardSchema,
 } from './home'
 import type { Contest, HomeData } from './home'
+import { requestUrls } from './urls.server'
 
 async function readResponse<T>(path: string, schema: z.ZodType<T>): Promise<T | null> {
-  const endpoint = process.env.TADOKU_API_URL || 'https://tadoku.dev.lab/api/internal'
+  const endpoint = requestUrls().apiUrl
   const response = await fetch(`${endpoint.replace(/\/$/, '')}/immersion/${path}`, {
     method: 'GET',
     credentials: 'omit',

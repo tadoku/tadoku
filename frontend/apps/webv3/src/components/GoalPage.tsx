@@ -3,7 +3,7 @@ import { Button, PageHeader, Surface, buttonClassName } from 'paper-ui'
 import { CheckIcon, iconClassName } from 'paper-ui/icons'
 import { useMemo, useState, useSyncExternalStore, type ChangeEvent } from 'react'
 import { z } from 'zod'
-import { links } from '../lib/links'
+import { useLinks } from '../lib/links'
 
 const storageKey = 'tadoku-daily-goal'
 
@@ -67,6 +67,7 @@ function formatMinutes(total: number) {
 }
 
 export function GoalPage() {
+  const links = useLinks()
   // Controls stay disabled until hydration, so nothing typed into the server-rendered form is lost.
   const hydrated = useSyncExternalStore(subscribeToNothing, () => true, () => false)
   const storedGoal = useSyncExternalStore(subscribeToStorage, readStoredGoal, () => null)
@@ -181,6 +182,7 @@ export function GoalPage() {
 }
 
 function GoalSummary({ goal }: { goal: Goal }) {
+  const links = useLinks()
   const phrase = activities.find(activity => activity.value === goal.activity)?.phrase
   return (
     <Surface as="section" elevation="floating" accent className="goal-summary" aria-labelledby="goal-summary-title">

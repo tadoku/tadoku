@@ -1,5 +1,15 @@
 # Kratos browser checks
 
+To verify Webv2 protected-page login returns, set `BRANCH_APP_URL`,
+`BRANCH_AUTH_URL`, `E2E_READER_EMAIL` and `E2E_READER_PASSWORD` for an existing
+synthetic development reader. Run `pnpm --filter auth exec playwright test
+e2e/login-return.spec.ts --output <evidence-directory>` from `frontend/`.
+This journey checks complete query/fragment returns for activity and contest
+registration pages, without submitting either form. It requires trusted Lab CA
+certificates, overrides the suite's TLS bypass, and disables traces and video so
+credentials and session material stay out of evidence. Each test uses a fresh
+browser context; it does not change the shared reader identity.
+
 For the branch-host journey, set `BRANCH_APP_URL`, `BRANCH_AUTH_URL` and
 `BRANCH_ADMIN_URL` to the three branch origins printed by dev-cli, without a
 trailing slash. Also set `E2E_ADMIN_EMAIL` and `E2E_ADMIN_PASSWORD` for the

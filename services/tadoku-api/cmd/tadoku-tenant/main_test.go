@@ -5,6 +5,31 @@ import (
 	"testing"
 )
 
+func TestProviderURL(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		raw  string
+		want string
+		ok   bool
+	}{
+		{raw: "http://:4455"},
+		{raw: "http://host?"},
+		{raw: "http://host#"},
+		{raw: "http://host/", want: "http://host", ok: true},
+	} {
+		got, err := providerURL(tc.raw)
+		if tc.ok {
+			if err != nil || got != tc.want {
+				t.Errorf("providerURL(%q)=%q, %v; want %q, nil", tc.raw, got, err, tc.want)
+			}
+			continue
+		}
+		if err == nil {
+			t.Errorf("providerURL(%q) accepted", tc.raw)
+		}
+	}
+}
+
 func TestCommandRefusalsBeforeConfiguration(t *testing.T) {
 	for _, args := range [][]string{
 		{}, {"unknown"}, {"provision", "--tenant", "tadoku/prod", "--flipt-features", "/absent"},

@@ -1,6 +1,6 @@
-import { useCurrentDateTime, useCurrentLocation } from '@app/common/hooks'
+import { useCurrentDateTime } from '@app/common/hooks'
 import { useRoutes } from '@app/common/routes'
-import { useSession } from '@app/common/session'
+import { useSessionOrRedirect } from '@app/common/session'
 import { useContest, useContestRegistration } from '@app/immersion/api'
 import { ContestRegistrationForm } from '@app/immersion/ContestRegistration'
 import { ExclamationCircleIcon, HomeIcon } from '@heroicons/react/20/solid'
@@ -8,7 +8,6 @@ import { DateTime, Interval } from 'luxon'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 import { Breadcrumb, Flash, Loading } from 'ui'
-import { useEffect } from 'react'
 
 const Page = () => {
   const routes = useRoutes()
@@ -18,17 +17,9 @@ const Page = () => {
   const now = useCurrentDateTime()
 
   const contest = useContest(id)
-  const [session] = useSession()
-  const currentUrl = useCurrentLocation()
-  const loginUrl = routes.authLogin(currentUrl)
+  const [session] = useSessionOrRedirect()
 
   const registration = useContestRegistration(id, { enabled: !!session })
-
-  useEffect(() => {
-    if (!session) {
-      router.push(loginUrl)
-    }
-  }, [session, loginUrl, router])
 
   if (!session || contest.isLoading) {
     return <Loading />

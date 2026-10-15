@@ -3,10 +3,13 @@ import type { QueryClient } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 import { AppShell, themeBootScript } from '../components/AppShell'
 import { ErrorView, NotFoundView, PendingView } from '../components/StatusViews'
+import { getWebUrl } from '../lib/links'
 import 'paper-ui/styles.css'
 import '../styles.css'
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+  loader: async () => ({ webUrl: await getWebUrl() }),
+  staleTime: Infinity,
   notFoundComponent: NotFoundView,
   errorComponent: ErrorView,
   pendingComponent: PendingView,

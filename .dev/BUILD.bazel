@@ -9,6 +9,7 @@ exports_files([
     "tadoku-api.yaml",
     "tadoku-worker.yaml",
     "webv2.yaml",
+    "webv3.yaml",
 ])
 
 pkg_tar(

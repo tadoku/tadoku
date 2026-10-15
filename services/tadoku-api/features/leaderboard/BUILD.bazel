@@ -27,6 +27,7 @@ go_test(
     srcs = [
         "leaderboard_cache_test.go",
         "leaderboard_lifecycle_test.go",
+        "leaderboard_service_test.go",
     ],
     embed = [":leaderboard"],
     env_inherit = ["TADOKU_TEST_VALKEY_URL"],
@@ -36,6 +37,7 @@ go_test(
         "requires-network",
     ],
     deps = [
+        "//services/tadoku-api/internal/errx",
         "//services/tadoku-api/internal/tenant",
         "//services/tadoku-api/internal/testvalkey",
         "@com_github_google_uuid//:uuid",

@@ -36,8 +36,8 @@ func (s *Service) InvalidateContest(ctx context.Context, id uuid.UUID) error {
 }
 
 func (s *Service) InvalidateOfficial(ctx context.Context, year int16) error {
-	if year < 1 {
-		return errx.NewInvalidInputError("year must be positive")
+	if year < 1 || year > 9999 {
+		return errx.NewInvalidInputError("year must be between 1 and 9999")
 	}
 	yearlyKey, err := s.cache.cacheKey(ctx, yearlyPrefix+strconv.Itoa(int(year)))
 	if err != nil {

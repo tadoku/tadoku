@@ -42,6 +42,16 @@ type YearlyRequest struct {
 	Year int32
 }
 
+func (r YearlyRequest) Validate() error {
+	if err := r.Request.Validate(); err != nil {
+		return err
+	}
+	if r.Year < 1 || r.Year > 9999 {
+		return errx.NewInvalidInputError("year must be between 1 and 9999")
+	}
+	return nil
+}
+
 type Leaderboard struct {
 	Entries       []Entry
 	TotalSize     int

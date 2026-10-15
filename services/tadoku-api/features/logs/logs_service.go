@@ -244,6 +244,10 @@ func matchingDefaultTags(query string) []string {
 }
 
 func (s *Service) YearlyActivity(ctx context.Context, userID uuid.UUID, year int) (*YearlyActivity, error) {
+	if err := validateYear(year); err != nil {
+		return nil, err
+	}
+
 	scores, err := s.logs.YearlyActivity(ctx, userID, int16(year))
 	if err != nil {
 		return nil, err
@@ -258,6 +262,10 @@ func (s *Service) YearlyActivity(ctx context.Context, userID uuid.UUID, year int
 }
 
 func (s *Service) YearlyScores(ctx context.Context, userID uuid.UUID, year int) (*YearlyScores, error) {
+	if err := validateYear(year); err != nil {
+		return nil, err
+	}
+
 	scores, err := s.logs.YearlyScores(ctx, userID, int16(year))
 	if err != nil {
 		return nil, err
@@ -272,6 +280,10 @@ func (s *Service) YearlyScores(ctx context.Context, userID uuid.UUID, year int) 
 }
 
 func (s *Service) YearlyActivitySplit(ctx context.Context, userID uuid.UUID, year int) ([]ActivitySplitScore, error) {
+	if err := validateYear(year); err != nil {
+		return nil, err
+	}
+
 	scores, err := s.logs.YearlyActivitySplit(ctx, userID, int16(year))
 	if err != nil {
 		return nil, err

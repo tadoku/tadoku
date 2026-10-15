@@ -81,6 +81,13 @@ func validateDescription(description *string) error {
 	return nil
 }
 
+func validateYear(year int) error {
+	if year < 1 || year > 9999 {
+		return errx.NewInvalidInputError("year must be between 1 and 9999")
+	}
+	return nil
+}
+
 type logMutation struct {
 	ID                          uuid.UUID
 	UserID                      uuid.UUID

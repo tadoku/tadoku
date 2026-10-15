@@ -13,6 +13,12 @@ Admin appears for administrators. Use a separate browser context for each identi
   and verify the return URL, logged-in navigation and an authenticated API result.
   Reload: session and role-dependent controls should remain correct. Account and
   main links must retain the same branch hostname.
+- Open `/logs/new` and a branch contest's registration page anonymously with
+  multiple query parameters and a fragment. Their login URL must carry the full
+  original URL in `return_to`; after fixture login and reload, the browser must
+  show that same protected page and URL. The auth suite's `login-return.spec.ts`
+  uses an existing development reader and verifies TLS without recording traces
+  or changing the identity or submitting activity/registration writes.
 - For registration/settings/recovery changes, use a new uniquely named disposable
   identity. Exercise validation, successful submission, profile/password settings,
   forced reauthentication, logout and recovery mail. Confirm logout also removes

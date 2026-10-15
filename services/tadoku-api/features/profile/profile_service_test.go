@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/uuid"
 	kratosclient "github.com/tadoku/tadoku/services/tadoku-api/infra/kratos"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
 
 func TestUserPagePreservesProviderOrder(t *testing.T) {
@@ -90,8 +91,8 @@ func TestMapIdentityFetchErrorMapsKratosNotFound(t *testing.T) {
 	}
 
 	other := errors.New("provider unavailable")
-	if err := mapIdentityFetchError(other); !errors.Is(err, other) {
-		t.Errorf("mapIdentityFetchError(other) = %v, want %v", err, other)
+	if err := mapIdentityFetchError(other); errx.KindOf(err) != errx.Unavailable || !errors.Is(err, other) {
+		t.Errorf("mapIdentityFetchError(other) = %v, want Unavailable wrapping %v", err, other)
 	}
 }
 

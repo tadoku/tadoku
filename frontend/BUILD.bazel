@@ -13,6 +13,12 @@ frontend_dev(
 )
 
 frontend_dev(
+    name = "webv3",
+    host = "next.tadoku.dev.lab",
+    readiness_path = "/healthz",
+)
+
+frontend_dev(
     name = "auth",
     host = "account.tadoku.dev.lab",
     readiness_path = "/login",

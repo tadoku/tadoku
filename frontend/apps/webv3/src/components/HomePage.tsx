@@ -3,7 +3,7 @@ import { Link } from '@tanstack/react-router'
 import { Button, EmptyState, Loading, SectionHeading, StatGrid, Surface, Table, buttonClassName } from 'paper-ui'
 import type { ReactNode } from 'react'
 import { homeQueryOptions, type Contest, type HomeData } from '../lib/home'
-import { links } from '../lib/links'
+import { useLinks } from '../lib/links'
 
 // Contest dates are UTC calendar days. Formatting them by hand keeps server (Node ICU) and browser markup identical.
 const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec']
@@ -39,6 +39,7 @@ const promise: Record<Phase, { headline: ReactNode; lead: string }> = {
 }
 
 export function HomePage() {
+  const links = useLinks()
   const { data, dataUpdatedAt, isError, refetch, isFetching } = useQuery(homeQueryOptions())
   // The fetch time travels with the dehydrated data, so server and client agree on the contest day.
   const today = new Date(dataUpdatedAt).toISOString().slice(0, 10)
@@ -114,6 +115,7 @@ function ContestBoard({ data, phase, today, retrying, retry }: {
   retrying: boolean
   retry: () => void
 }) {
+  const links = useLinks()
   if (phase === 'loading') {
     return <>
       <SectionHeading level={2} id="home-board-title" className="home-ledger-header" title="Current contest" />

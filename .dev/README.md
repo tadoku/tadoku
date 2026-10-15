@@ -2,7 +2,7 @@
 
 This directory holds Tadoku's dev-cli setup for the `homelab-talos-dev` development
 cluster: `config.yaml` (the real, non-secret configuration), the overlay
-workload manifests (`webv2.yaml`, `auth.yaml`, `admin.yaml`, `tadoku-api.yaml`,
+workload manifests (`webv2.yaml`, `webv3.yaml`, `auth.yaml`, `admin.yaml`, `tadoku-api.yaml`,
 `tadoku-worker.yaml`),
 the tenant lifecycle task manifests (`tenant.yaml`, `tenant-teardown.yaml`,
 `worker-override-set.yaml`, `worker-override-clear.yaml`), the fixture loader

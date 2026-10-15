@@ -49,7 +49,7 @@ Branch images are built the same way as release images, so a branch runs what
 | --- | --- | --- |
 | Tadoku API | `//services/tadoku-api:branch_push` | `--config=release` |
 | Tadoku worker | `//services/tadoku-api/cmd/tadoku-worker:branch_push` | `--config=release` |
-| webv2, auth, admin | `//frontend:webv2_branch_push`, `//frontend:auth_branch_push`, `//frontend:admin_branch_push` | `frontend/scripts/publish-image.sh` from `HEAD:frontend` |
+| webv2, webv3, auth, admin | `//frontend:webv2_branch_push`, `//frontend:webv3_branch_push`, `//frontend:auth_branch_push`, `//frontend:admin_branch_push` | `frontend/scripts/publish-image.sh` from `HEAD:frontend` |
 | Tenant lifecycle Jobs | `//services/tadoku-api/cmd/tadoku-tenant:branch_push` | `--config=release` |
 
 Each deployable's `dev_deployable` metadata names its `release.imageName` and
@@ -62,7 +62,7 @@ describes the targets and how to run them against a local registry.
 
 Images are pushed to `ghcr.io/tadoku/tadoku/branches/<image>`, where `<image>`
 is `tadoku-api`, `tadoku-worker`, `frontend-webv2`, `frontend-auth`,
-`frontend-admin` or `tenant`. The tag is `<route>-<commit12>`, the route
+`frontend-admin`, `frontend-webv3` or `tenant`. The tag is `<route>-<commit12>`, the route
 followed by the first 12 characters of the commit. An existing tag is reused
 because it names a clean, pushed commit. Workloads are deployed by digest.
 
@@ -72,7 +72,7 @@ anonymously, which proves the cluster can pull it without an image pull Secret.
 ### Branch image cleanup
 
 `.github/workflows/clean-branch-images.yaml` runs
-`scripts/clean-branch-images.sh` daily to delete old versions of the six branch
+`scripts/clean-branch-images.sh` daily to delete old versions of the seven branch
 packages. It names only packages under `branches/`; release images are never
 touched. A version is deleted when all of these hold:
 
@@ -115,6 +115,7 @@ A route identifies one branch deployment. It has the form
 | Test tenant | `tadoku/<route>`, for example `tadoku/974796-anton-prod-dry-run-c66ea12d` |
 | Production tenant | `tadoku/prod`, never used by a branch's lifecycle Jobs |
 | App host | `<route>.preview.tadoku.app` |
+| Webv3 host | `<route>.next.preview.tadoku.app` |
 | Account host | `<route>.account.preview.tadoku.app` |
 | Admin host | `<route>.admin.preview.tadoku.app` |
 | API | The branch host's `/api/internal` path |
@@ -193,8 +194,7 @@ and test identities until the maintainer runs `dev down`, or until a later
 production `dev up`, which first tears down expired routes of every owner. A
 pull-request branch is torn down in full by the first
 [reconciler](#the-reconciler) run after it expires, normally within 15
-minutes; GitHub can start a scheduled run late, and a run waits while the
-runner is busy.
+minutes; a run waits while the runner is busy.
 
 ## Pull-request deploys
 
@@ -354,8 +354,8 @@ leaves the branch as it is. Push a fix or relabel to retry. An isolation FAIL
 is the only failure that tears down. UNVERIFIED checks are a warning.
 
 The comment and the job summary show the state, the pinned commit with a
-compare link, the dev-cli version, the cluster identity and the route, the
-three branch URLs, the `dev up` lines with the route, commit, affected
+compare link, the dev-cli version, the cluster identity and the route,
+the App, Webv3, Account and Admin branch URLs, the `dev up` lines with the route, commit, affected
 overlays, image digests, gateway checks and expiry (and the end of its output
 when it failed), every isolation verdict with its report lines and a link to
 the run. The cluster's API server address is replaced with `<cluster>` in
@@ -423,8 +423,11 @@ cluster's API server address replaced by `<cluster>`.
 
 ### The reconciler
 
-`.github/workflows/pr-branch-reconcile.yaml` runs every 15 minutes and on
-manual dispatch, from `main`, on the `tadoku-prod-branch` runner set in the
+`.github/workflows/pr-branch-reconcile.yaml` has no GitHub schedule, because
+GitHub runs this repository's scheduled workflows hours late. The homelab
+`tadoku-pr-branch-reconcile` CronJob starts it through `workflow_dispatch`
+every 15 minutes, and a maintainer can dispatch it by hand. It runs from
+`main`, on the `tadoku-prod-branch` runner set in the
 `prod-branch` environment. It sets `deployment: false`, so its runs add no
 records to the environment's deployment history. Its concurrency group queues
 a run behind the previous one and never cancels it, and because the runner set

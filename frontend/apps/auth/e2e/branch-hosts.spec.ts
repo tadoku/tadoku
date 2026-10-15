@@ -19,7 +19,7 @@ test('branch hosts retain navigation and authenticated API selection', async ({ 
   page.on('request', r => requests.push(r.url()))
   await page.goto(app!)
   const login = page.getByRole('link', { name: 'Log in', exact: true })
-  await expect(login).toHaveAttribute('href', `${auth}/login?return_to=${app}/`)
+  await expect.poll(async () => new URL((await login.getAttribute('href'))!).searchParams.get('return_to')).toBe(`${app}/`)
   await login.click()
   await page.locator('input[name="identifier"]').fill(email!)
   await page.locator('input[name="password"]').fill(password!)

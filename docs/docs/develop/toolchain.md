@@ -52,10 +52,11 @@ bazel run --config=release //services/tadoku-api:branch_push -- \
 ```
 
 Frontend workflows and the `//frontend:webv2_branch_push`,
-`//frontend:auth_branch_push` and `//frontend:admin_branch_push` targets use
+`//frontend:webv3_branch_push`, `//frontend:auth_branch_push` and `//frontend:admin_branch_push` targets use
 `frontend/scripts/publish-image.sh`. It builds `HEAD:frontend` with `git archive`,
 so ignored local environment files and uncommitted edits do not enter images.
-The script publishes only explicitly requested tags, on Linux amd64:
+Webv3 uses its standalone `frontend/apps/webv3/Dockerfile`; the other apps use
+`frontend/Dockerfile`. The script publishes only explicitly requested tags, on Linux amd64:
 
 ```sh
 frontend/scripts/publish-image.sh webv2 \
@@ -158,7 +159,7 @@ All workflows live in `.github/workflows/`.
 | `build-frontend-webv3.yaml` | PRs and `main` pushes touching Webv3 or Paper inputs | Node 22 lint, typecheck, boundaries, standalone container and synthetic read-only browser journeys; publishes commit/`latest` for automatic Webv3 preview updates |
 | `check-paper-playground.yaml` | PRs and `main` pushes touching the playground or `paper-ui` | Paper boundaries and `paper-playground` lint, typecheck, test and build; never published |
 | `pr-branch.yaml` | `pull_request_target` label, push, reopen and close events | Authorizes the `deploy` label, deploys the pinned commit beside production with dev-cli and tears the branch down when the label is removed or the pull request closes. See [Production branches](./production-branches.md#pull-request-deploys) |
-| `pr-branch-reconcile.yaml` | Every 15 minutes, and manual dispatch | Tears down pull-request branches whose pull request is closed or unlabelled, or whose branch expired; never runs `dev cleanup`. See [Production branches](./production-branches.md#the-reconciler) |
+| `pr-branch-reconcile.yaml` | Manual dispatch, started every 15 minutes by a homelab CronJob | Tears down pull-request branches whose pull request is closed or unlabelled, or whose branch expired; never runs `dev cleanup`. See [Production branches](./production-branches.md#the-reconciler) |
 | `clean-branch-images.yaml` | Daily, and manual dispatch as a dry run by default | Deletes old production-branch image versions; see [Production branches](./production-branches.md#branch-image-cleanup) |
 | `deploy-docs.yaml` | PRs and `main` pushes touching `docs/` or the API spec | `pnpm api:check`, typecheck, build and the public API boundary (fixed page counts, no internal paths); deploys GitHub Pages from `main` |
 

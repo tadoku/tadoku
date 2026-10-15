@@ -50,6 +50,7 @@ go_test(
     deps = [
         "//services/tadoku-api/infra/kratos",
         "//services/tadoku-api/infra/postgres",
+        "//services/tadoku-api/internal/errx",
         "//services/tadoku-api/internal/tenant",
         "//services/tadoku-api/internal/testkratos",
         "//services/tadoku-api/internal/testpostgres",

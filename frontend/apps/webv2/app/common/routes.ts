@@ -54,9 +54,9 @@ export function useRoutes() {
   const { authUiUrl, adminUrl } = useAppUrls()
   return {
     ...routes,
-    authSettings: (returnUrl = '') => `${authUiUrl}/?return_to=${returnUrl}`,
-    authLogin: (returnUrl = '') => `${authUiUrl}/login?return_to=${returnUrl}`,
-    authSignup: (returnUrl = '') => `${authUiUrl}/register?return_to=${returnUrl}`,
+    authSettings: (returnUrl = '') => `${authUiUrl}/?return_to=${encodeURIComponent(returnUrl)}`,
+    authLogin: (returnUrl = '') => `${authUiUrl}/login?return_to=${encodeURIComponent(returnUrl)}`,
+    authSignup: (returnUrl = '') => `${authUiUrl}/register?return_to=${encodeURIComponent(returnUrl)}`,
     admin: () => adminUrl,
   }
 }

@@ -36,6 +36,10 @@ The general test principles are in [Testing](./testing.md).
   transaction, and tests do not change `RunInTransaction`.
 - Pool-failure, cancellation and routing checks are separate Go tests; they
   exercise dependency behavior rather than response cases.
+- Request-body byte limits are proved the same way, in
+  `services/tadoku-api/e2e/request_body_limit_test.go`. It builds oversized and
+  allowed bodies in code against existing fixture tokens, so no oversized
+  request fixture is checked in.
 - Lifecycle tests stay focused on startup and shutdown; keep endpoint
   assertions out of them.
 - Gateway token issuance and unrelated infrastructure stay outside these

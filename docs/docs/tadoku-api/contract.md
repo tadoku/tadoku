@@ -51,11 +51,21 @@ then language code ascending when scores are equal.
 ## Request decoding
 
 - Request bodies use the generated JSON decoder.
+- A shared limit caps every request body at 64 KiB before the decoder reads it,
+  so an oversized body cannot consume decoder memory ahead of the operation's
+  actor authorization. A body over the limit returns 413 with an empty body.
+  Like the 401 from authentication, 413 is a boundary response the contract does
+  not document per operation.
+- CMS page and post routes allow 1 MiB because they carry a whole hand-authored
+  HTML or Markdown document on every save. Every other payload is bounded by
+  `maxLength` and `maxItems`; the largest is a platform scoring rule set of about
+  8 KB.
 - Handlers pass an absent optional body to the application as zero values
   instead of returning a literal 400 response. The operation authorizes first,
   and feature validation turns missing required fields into a 400 response.
 - Do not add endpoint-specific middleware, replace request bodies or otherwise
-  bypass the generated decoder, for example to alter empty-body behavior.
+  bypass the generated decoder, for example to alter empty-body behavior. The
+  shared byte cap is the only wrapper around a request body.
 - Do not add XML or form adapters to work around generated request decoding.
 
 ## Code generation

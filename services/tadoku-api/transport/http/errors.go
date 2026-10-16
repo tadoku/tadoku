@@ -33,6 +33,16 @@ func writeResponseError(w stdhttp.ResponseWriter, request *stdhttp.Request, err 
 	}
 }
 
+func writeRequestError(w stdhttp.ResponseWriter, err error) {
+	var tooLarge *stdhttp.MaxBytesError
+	if errors.As(err, &tooLarge) {
+		w.WriteHeader(stdhttp.StatusRequestEntityTooLarge)
+		return
+	}
+
+	w.WriteHeader(stdhttp.StatusBadRequest)
+}
+
 func errorStatus(ctx context.Context, err error) int {
 	switch {
 	case errors.Is(err, context.DeadlineExceeded):

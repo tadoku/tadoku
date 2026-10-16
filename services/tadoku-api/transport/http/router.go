@@ -109,13 +109,13 @@ func NewHandler(
 	applicationHandler = rejectBanned(applicationHandler)
 	applicationHandler = authenticate(applicationHandler)
 	applicationHandler = withPanicRecovery(logger, applicationHandler)
-	protectedRoutes.handler = observe(
+	protectedRoutes.handler = withRequestBodyLimit(observe(
 		patternRouteLabel,
 		timeout,
 		applicationHandler,
 		requestDuration,
 		logger,
-	)
+	))
 	router.protectedRoutes = protectedRoutes
 
 	callbackRoutes := &routeRegistrar{
@@ -124,13 +124,13 @@ func NewHandler(
 	}
 	callbackHandler := authenticateCallback(stdhttp.Handler(callbackRoutes))
 	callbackHandler = withPanicRecovery(logger, callbackHandler)
-	callbackRoutes.handler = observe(
+	callbackRoutes.handler = withRequestBodyLimit(observe(
 		patternRouteLabel,
 		timeout,
 		callbackHandler,
 		requestDuration,
 		logger,
-	)
+	))
 	router.rootMux.HandleFunc("GET /livez", func(w stdhttp.ResponseWriter, _ *stdhttp.Request) {
 		_, _ = w.Write([]byte("ok"))
 	})
@@ -144,8 +144,8 @@ func NewHandler(
 		apiServer,
 		nil,
 		openapi.StrictHTTPServerOptions{
-			RequestErrorHandlerFunc: func(w stdhttp.ResponseWriter, _ *stdhttp.Request, _ error) {
-				w.WriteHeader(stdhttp.StatusBadRequest)
+			RequestErrorHandlerFunc: func(w stdhttp.ResponseWriter, _ *stdhttp.Request, err error) {
+				writeRequestError(w, err)
 			},
 			ResponseErrorHandlerFunc: func(w stdhttp.ResponseWriter, request *stdhttp.Request, err error) {
 				writeResponseError(w, request, err)
@@ -170,8 +170,8 @@ func NewHandler(
 		apiServer,
 		nil,
 		callbackopenapi.StrictHTTPServerOptions{
-			RequestErrorHandlerFunc: func(w stdhttp.ResponseWriter, _ *stdhttp.Request, _ error) {
-				w.WriteHeader(stdhttp.StatusBadRequest)
+			RequestErrorHandlerFunc: func(w stdhttp.ResponseWriter, _ *stdhttp.Request, err error) {
+				writeRequestError(w, err)
 			},
 			ResponseErrorHandlerFunc: func(w stdhttp.ResponseWriter, request *stdhttp.Request, err error) {
 				writeResponseError(w, request, err)

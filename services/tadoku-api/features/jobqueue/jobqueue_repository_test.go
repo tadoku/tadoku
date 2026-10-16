@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
@@ -407,8 +408,9 @@ func TestRetryReplayAndRetention(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := repo.Replay(tenantCtx, id, "operator", "repair", []jobs.Type{jobs.LeaderboardInvalidateOfficialV1}); !errors.Is(err, ErrNotFailed) {
-		t.Errorf("replay pending = %v", err)
+	_, err = repo.Replay(tenantCtx, id, "operator", "repair", []jobs.Type{jobs.LeaderboardInvalidateOfficialV1})
+	if !errors.Is(err, ErrNotFailed) || errx.KindOf(err) != errx.Conflict {
+		t.Errorf("replay pending = %v, kind=%v", err, errx.KindOf(err))
 	}
 
 	var claim ClaimedJob

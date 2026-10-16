@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	ErrNotFailed = errors.New("job is not failed or supported")
+	ErrNotFailed = errx.NewConflictError("job is not failed or supported")
 )
 
 const WorkerComponent = "tadoku-worker"

@@ -98,15 +98,21 @@ rejected; path prefixes are supported and trailing slashes are removed.
 
 - `API_OATHKEEPER_URL` (default `http://oathkeeper-proxy.default:4455`), used
   for outgoing service-token exchange. `API_SERVICE_ACCOUNT_TOKEN_PATH`
-  defaults to the projected credential at `/var/run/secrets/tokens/token`.
+  defaults to the projected credential at `/var/run/secrets/tokens/token`. A
+  non-empty value must be an HTTP(S) base URL without credentials, query or
+  fragment; trailing slashes are removed. Empty is allowed when Flipt is
+  disabled.
 - `API_FLIPT_ENABLED`, `API_FLIPT_URL`, `API_FLIPT_ENVIRONMENT`,
   `API_FLIPT_NAMESPACE`, `API_FLIPT_TEST_ENVIRONMENT`, `API_FLIPT_UPDATE_INTERVAL`,
   `API_FLIPT_REQUEST_TIMEOUT`, `API_FLIPT_STARTUP_TIMEOUT` and
   `API_FLIPT_MANAGEMENT_URL` configure the feature-flag evaluation provider and
   the management client. Evaluation and management exchange separate
   credentials for `flipt-evaluation/tadoku-api` and
-  `flipt-management/tadoku-api`. Provider outages keep safe defaults active and
-  do not fail startup; later polling recovers without a restart.
+  `flipt-management/tadoku-api`. A non-empty `API_FLIPT_MANAGEMENT_URL` must be
+  an HTTP(S) base URL without credentials, query or fragment even when Flipt is
+  disabled; empty is allowed when Flipt is disabled. `API_FLIPT_URL` is
+  validated only when Flipt is enabled. Provider outages keep safe defaults
+  active and do not fail startup; later polling recovers without a restart.
 - `API_FLIPT_TEST_ENVIRONMENT` defaults to `test`. When Flipt is enabled, it
   must be nonempty and different from `API_FLIPT_ENVIRONMENT`; an invalid value
   fails startup. The canonical tenant `tadoku/prod` keeps the configured

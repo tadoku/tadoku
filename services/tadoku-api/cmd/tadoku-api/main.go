@@ -124,18 +124,22 @@ func loadConfig() (config, error) {
 			return config{}, fmt.Errorf("validate config: FliptTestEnvironment: %w", targetsErr)
 		}
 
-		var validationErr error
-		cfg.OathkeeperURL, validationErr = providerBaseURL("OathkeeperURL", cfg.OathkeeperURL)
-		if validationErr != nil {
-			return config{}, validationErr
+		cfg.FliptURL, err = providerBaseURL("FliptURL", cfg.FliptURL)
+		if err != nil {
+			return config{}, err
 		}
-		cfg.FliptURL, validationErr = providerBaseURL("FliptURL", cfg.FliptURL)
-		if validationErr != nil {
-			return config{}, validationErr
+	}
+
+	if cfg.OathkeeperURL != "" {
+		cfg.OathkeeperURL, err = providerBaseURL("OathkeeperURL", cfg.OathkeeperURL)
+		if err != nil {
+			return config{}, err
 		}
-		cfg.FliptManagementURL, validationErr = providerBaseURL("FliptManagementURL", cfg.FliptManagementURL)
-		if validationErr != nil {
-			return config{}, validationErr
+	}
+	if cfg.FliptManagementURL != "" {
+		cfg.FliptManagementURL, err = providerBaseURL("FliptManagementURL", cfg.FliptManagementURL)
+		if err != nil {
+			return config{}, err
 		}
 	}
 

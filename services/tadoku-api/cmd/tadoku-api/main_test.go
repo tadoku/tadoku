@@ -467,6 +467,23 @@ func TestLoadConfigUsesValidatedDefaults(t *testing.T) {
 	if _, err := loadConfig(); err != nil {
 		t.Errorf("disabled Flipt rejected dormant provider configuration: %v", err)
 	}
+	for variable, field := range map[string]string{
+		"API_OATHKEEPER_URL":       "OathkeeperURL",
+		"API_FLIPT_MANAGEMENT_URL": "FliptManagementURL",
+	} {
+		for _, invalidURL := range []string{
+			"http://user:secret@gateway.test",
+			"http://gateway.test?route=1",
+			"http://gateway.test#fragment",
+			"http://:4455",
+		} {
+			t.Setenv(variable, invalidURL)
+			if _, err := loadConfig(); err == nil || !strings.Contains(err.Error(), field) {
+				t.Errorf("disabled Flipt invalid %s=%q error=%v", variable, invalidURL, err)
+			}
+		}
+		t.Setenv(variable, "")
+	}
 	t.Setenv("API_OATHKEEPER_URL", "http://oathkeeper.test")
 	t.Setenv("API_FLIPT_URL", "http://flipt.test/evaluation")
 	t.Setenv("API_FLIPT_MANAGEMENT_URL", "http://flipt.test/management")

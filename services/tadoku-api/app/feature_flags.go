@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/audit"
@@ -28,7 +27,11 @@ func (a *Application) FeatureAccessGet(ctx context.Context, flagKey string, targ
 	return a.featureFlags.GetNamedUserAccess(ctx, flagKey, targetUserID)
 }
 
-func (a *Application) FeatureAccessGrant(ctx context.Context, flagKey string, targetUserID uuid.UUID) (FeatureAccessState, error) {
+func (a *Application) FeatureAccessGrant(
+	ctx context.Context,
+	flagKey string,
+	targetUserID uuid.UUID,
+) (state FeatureAccessState, err error) {
 	if err := a.permissions.RequireAdmin(ctx); err != nil {
 		return featureflags.State{}, err
 	}
@@ -37,29 +40,19 @@ func (a *Application) FeatureAccessGrant(ctx context.Context, flagKey string, ta
 		return featureflags.State{}, err
 	}
 
-	result, err := a.featureFlags.Grant(ctx, flagKey, targetUserID)
-	if err != nil {
-		return featureflags.State{}, err
-	}
+	defer func() {
+		event := featureAccessEvent("feature_access_grant", actorID, flagKey, targetUserID, state, err)
+		a.audit.RecordOutcome(ctx, event, err)
+	}()
 
-	if err := a.audit.Record(ctx, audit.Event{
-		ActorID: actorID,
-		Action:  "feature_access_grant",
-		Metadata: map[string]any{
-			"target_user_id":     targetUserID.String(),
-			"flag_key":           flagKey,
-			"environment":        result.Environment,
-			"changed":            result.Changed,
-			"resulting_revision": result.Revision,
-		},
-	}); err != nil {
-		return featureflags.State{}, fmt.Errorf("create audit: %w", err)
-	}
-
-	return result, nil
+	return a.featureFlags.Grant(ctx, flagKey, targetUserID)
 }
 
-func (a *Application) FeatureAccessRevoke(ctx context.Context, flagKey string, targetUserID uuid.UUID) (FeatureAccessState, error) {
+func (a *Application) FeatureAccessRevoke(
+	ctx context.Context,
+	flagKey string,
+	targetUserID uuid.UUID,
+) (state FeatureAccessState, err error) {
 	if err := a.permissions.RequireAdmin(ctx); err != nil {
 		return featureflags.State{}, err
 	}
@@ -68,24 +61,35 @@ func (a *Application) FeatureAccessRevoke(ctx context.Context, flagKey string, t
 		return featureflags.State{}, err
 	}
 
-	result, err := a.featureFlags.Revoke(ctx, flagKey, targetUserID)
-	if err != nil {
-		return featureflags.State{}, err
+	defer func() {
+		event := featureAccessEvent("feature_access_revoke", actorID, flagKey, targetUserID, state, err)
+		a.audit.RecordOutcome(ctx, event, err)
+	}()
+
+	return a.featureFlags.Revoke(ctx, flagKey, targetUserID)
+}
+
+func featureAccessEvent(
+	action string,
+	actorID uuid.UUID,
+	flagKey string,
+	targetUserID uuid.UUID,
+	state FeatureAccessState,
+	err error,
+) audit.Event {
+	metadata := map[string]any{
+		"target_user_id": targetUserID.String(),
+		"flag_key":       flagKey,
+	}
+	if err == nil {
+		metadata["environment"] = state.Environment
+		metadata["changed"] = state.Changed
+		metadata["resulting_revision"] = state.Revision
 	}
 
-	if err := a.audit.Record(ctx, audit.Event{
-		ActorID: actorID,
-		Action:  "feature_access_revoke",
-		Metadata: map[string]any{
-			"target_user_id":     targetUserID.String(),
-			"flag_key":           flagKey,
-			"environment":        result.Environment,
-			"changed":            result.Changed,
-			"resulting_revision": result.Revision,
-		},
-	}); err != nil {
-		return featureflags.State{}, fmt.Errorf("create audit: %w", err)
+	return audit.Event{
+		ActorID:  actorID,
+		Action:   action,
+		Metadata: metadata,
 	}
-
-	return result, nil
 }

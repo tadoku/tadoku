@@ -227,7 +227,7 @@ func (a *Application) authorizeScoringRuleSetChange(ctx context.Context, ruleSet
 		return a.permissions.RequireAdmin(ctx)
 	case "contest":
 		if ruleSet.ContestID == nil {
-			return errx.NewInvalidInputError("contest scoring rule set requires contest_id")
+			return errx.NewInternalError("contest scoring rule set requires contest_id")
 		}
 		contest, err := a.contests.FindContestByID(ctx, *ruleSet.ContestID, false)
 		if err != nil {
@@ -241,6 +241,6 @@ func (a *Application) authorizeScoringRuleSetChange(ctx context.Context, ruleSet
 		}
 		return nil
 	default:
-		return errx.NewInvalidInputError("scoring rule set scope is invalid")
+		return errx.NewInternalError("scoring rule set scope is invalid")
 	}
 }

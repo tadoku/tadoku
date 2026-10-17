@@ -14,8 +14,6 @@ var releaseLogEntryV2Access = fliptmanagement.Segment{
 	Description: "Kratos UUIDs explicitly granted access to release log entry v2.",
 }
 
-var ErrUnavailable = errx.NewUnavailableError("feature access unavailable", nil)
-
 type PublicDecisions struct {
 	ReleaseLogEntryV2 bool
 }

@@ -2,11 +2,10 @@ package featureflags
 
 import (
 	"context"
-	"errors"
-	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/fliptmanagement"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	commonflags "github.com/tadoku/tadoku/services/tadoku-api/internal/featureflags"
 )
 
@@ -32,10 +31,7 @@ func (s *Service) GetNamedUserAccess(ctx context.Context, flagKey string, target
 
 	state, err := s.client.GetNamedUserAccess(ctx, segment, targetUserID)
 	if err != nil {
-		if errors.Is(err, fliptmanagement.ErrUnavailable) {
-			return State{}, fmt.Errorf("%w: %v", ErrUnavailable, err)
-		}
-		return State{}, fmt.Errorf("fetch feature access: %w", err)
+		return State{}, errx.NewUnavailableError("fetch feature access", err)
 	}
 	return fromClient(state), nil
 }
@@ -56,10 +52,7 @@ func (s *Service) setNamedUserAccess(ctx context.Context, flagKey string, target
 
 	state, err := s.client.SetNamedUserAccess(ctx, segment, targetUserID, enabled)
 	if err != nil {
-		if errors.Is(err, fliptmanagement.ErrUnavailable) {
-			return State{}, fmt.Errorf("%w: %v", ErrUnavailable, err)
-		}
-		return State{}, fmt.Errorf("update feature access: %w", err)
+		return State{}, errx.NewUnavailableError("update feature access", err)
 	}
 	return fromClient(state), nil
 }

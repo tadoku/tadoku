@@ -102,6 +102,12 @@ Administrators can toggle only the `banned` relation through the API
 No API grants `admins`; that tuple is written directly through the Keto write
 API, as the development seed does.
 
+Every role update that reaches Keto is recorded in `moderation_audit_log`:
+`ban_user` or `unban_user` when the relation changed, and `ban_user_failed` or
+`unban_user_failed` with the provider error when it did not. The entry is
+written after the Keto write and never changes the response; see
+[Auditing a provider change](../tadoku-api/conventions.md#auditing-a-provider-change).
+
 ## Request pipeline
 
 Every business route registered through `services/tadoku-api/transport/http/router.go`

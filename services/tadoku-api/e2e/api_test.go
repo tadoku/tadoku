@@ -200,8 +200,9 @@ func newTestRouterWithLogger(
 	ketoFixture *testketo.Fixture,
 	kratosFixture *testkratos.Fixture,
 	logger *slog.Logger,
+	options ...routerOption,
 ) (*transport.Router, *featureprofile.Service, *permissions.KetoService, error) {
-	return newTestRouterWithScoringEngine(ctx, pool, auditPool, ketoFixture, kratosFixture, logger, false)
+	return newTestRouterWithScoringEngine(ctx, pool, auditPool, ketoFixture, kratosFixture, logger, false, options...)
 }
 
 func newTestRouterWithScoringEngine(
@@ -212,8 +213,20 @@ func newTestRouterWithScoringEngine(
 	kratosFixture *testkratos.Fixture,
 	logger *slog.Logger,
 	scoringEngineEnabled bool,
+	options ...routerOption,
 ) (*transport.Router, *featureprofile.Service, *permissions.KetoService, error) {
-	return newTestRouterWithLeaderboard(ctx, pool, auditPool, ketoFixture, kratosFixture, logger, scoringEngineEnabled, leaderboardValkey.client, time.Second)
+	return newTestRouterWithLeaderboard(
+		ctx,
+		pool,
+		auditPool,
+		ketoFixture,
+		kratosFixture,
+		logger,
+		scoringEngineEnabled,
+		leaderboardValkey.client,
+		time.Second,
+		options...,
+	)
 }
 
 func newTestRouterWithLeaderboard(
@@ -226,6 +239,7 @@ func newTestRouterWithLeaderboard(
 	scoringEngineEnabled bool,
 	valkeyClient valkeygo.Client,
 	valkeyTimeout time.Duration,
+	options ...routerOption,
 ) (*transport.Router, *featureprofile.Service, *permissions.KetoService, error) {
 	leaderboardService := leaderboard.NewService(
 		leaderboard.NewRepository(pool),
@@ -241,7 +255,19 @@ func newTestRouterWithLeaderboard(
 		scoringEngineEnabled,
 		leaderboardService,
 		tenant.Deployment{},
+		options...,
 	)
+}
+
+// routerOption replaces a dependency endpoint the fixtures normally supply.
+type routerOption func(*routerEndpoints)
+
+type routerEndpoints struct {
+	ketoWrite string
+}
+
+func withKetoWriteURL(url string) routerOption {
+	return func(endpoints *routerEndpoints) { endpoints.ketoWrite = url }
 }
 
 func newTestRouterWithLeaderboardService(
@@ -254,9 +280,15 @@ func newTestRouterWithLeaderboardService(
 	scoringEngineEnabled bool,
 	leaderboardService *leaderboard.Service,
 	deployment tenant.Deployment,
+	options ...routerOption,
 ) (*transport.Router, *featureprofile.Service, *permissions.KetoService, error) {
+	endpoints := routerEndpoints{ketoWrite: ketoFixture.WriteURL()}
+	for _, option := range options {
+		option(&endpoints)
+	}
+
 	reader := ketoclient.NewReadClient(ketoFixture.ReadURL())
-	readWriter := ketoclient.NewClient(ketoFixture.ReadURL(), ketoFixture.WriteURL())
+	readWriter := ketoclient.NewClient(ketoFixture.ReadURL(), endpoints.ketoWrite)
 	permissionChecker := permissions.NewKetoChecker(reader)
 	roleService := permissions.NewKetoService(reader)
 	identities := kratosFixture.CursorClient()

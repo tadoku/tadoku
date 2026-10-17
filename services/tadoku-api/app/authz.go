@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/audit"
@@ -42,7 +41,7 @@ func (a *Application) CheckPermission(ctx context.Context, parameters Permission
 
 type RoleUpdateParameters = authz.RoleUpdateParameters
 
-func (a *Application) UpdateRole(ctx context.Context, parameters RoleUpdateParameters) error {
+func (a *Application) UpdateRole(ctx context.Context, parameters RoleUpdateParameters) (err error) {
 	if err := a.permissions.RequireAdmin(ctx); err != nil {
 		return err
 	}
@@ -52,16 +51,11 @@ func (a *Application) UpdateRole(ctx context.Context, parameters RoleUpdateParam
 		return err
 	}
 
-	if err := a.authorization.UpdateRole(ctx, parameters); err != nil {
-		return err
-	}
-
 	action := "unban_user"
 	if parameters.Role == authz.RoleBanned {
 		action = "ban_user"
 	}
-
-	if err := a.audit.Record(ctx, audit.Event{
+	event := audit.Event{
 		ActorID: actorID,
 		Action:  action,
 		Metadata: map[string]any{
@@ -69,9 +63,8 @@ func (a *Application) UpdateRole(ctx context.Context, parameters RoleUpdateParam
 			"new_role":       string(parameters.Role),
 		},
 		Description: parameters.Reason,
-	}); err != nil {
-		return fmt.Errorf("create audit: %w", err)
 	}
+	defer func() { a.audit.RecordOutcome(ctx, event, err) }()
 
-	return nil
+	return a.authorization.UpdateRole(ctx, parameters)
 }

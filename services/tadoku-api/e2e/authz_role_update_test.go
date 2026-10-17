@@ -60,3 +60,23 @@ func auditUnavailableRoleUpdateHandler(t *testing.T) *transport.Router {
 
 	return router
 }
+
+func ketoWriteFailureRoleUpdateHandler(t *testing.T) *transport.Router {
+	t.Helper()
+
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	router, _, _, err := newTestRouterWithLogger(
+		t.Context(),
+		api.db.AppPool,
+		api.db.AppPool,
+		keto,
+		api.kratos,
+		logger,
+		withKetoWriteURL("http://127.0.0.1:1"),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return router
+}

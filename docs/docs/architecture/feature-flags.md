@@ -81,7 +81,15 @@ allowlist segment through the Flipt management API
 (`services/tadoku-api/infra/fliptmanagement/`) at the same tenant target used for
 evaluation. A test grant or revoke does not change the canonical allowlist. The
 client rejects a provider response from another namespace, or a segment that
-differs from the Go definition, and audits each change.
+differs from the Go definition.
+
+Each attempt that reaches Flipt is recorded in `moderation_audit_log`:
+`feature_access_grant` or `feature_access_revoke` with the resulting
+environment, revision and whether the allowlist changed, and
+`feature_access_grant_failed` or `feature_access_revoke_failed` with the
+provider error when the write did not apply. The entry is written after the
+Flipt write and never changes the response; see
+[Auditing a provider change](../tadoku-api/conventions.md#auditing-a-provider-change).
 
 ## Development Flipt
 

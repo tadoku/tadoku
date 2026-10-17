@@ -73,6 +73,29 @@ Service orchestration is exercised through HTTP E2Es; see [Testing](./testing.md
   service that owns the data translates that result into its stored rows.
 - Transaction mechanics are in [Transactions](./database.md#transactions).
 
+### Auditing a provider change
+
+A change to Keto or Flipt cannot share a transaction with its audit entry, so
+the application applies the change first and then records one entry for what
+happened.
+
+- Call `audit.Service.RecordOutcome` with the operation's error, or nil when it
+  applied, from a `defer` in the application operation, so both outcomes take
+  the same path. The entry keeps the operation's action when the change applied
+  and becomes `<action>_failed`, with the error in its metadata, when it did
+  not.
+- A request the operation refused changed nothing and is not recorded: invalid
+  input, an unauthorized or forbidden actor, a missing target or a conflict.
+- Recording is best effort. It outlives the request's cancellation so a
+  finished change is still recorded, and a storage failure is reported to the
+  log as `privileged change not audited` instead of to the caller. An applied
+  ban or grant is never undone to match the audit log, and a response never
+  reports a change as failed because its entry could not be stored. That log
+  line is the only record of such a change, so alert on it.
+- An audit entry is never updated after it is written. Use
+  `audit.Service.Record` for an entry that belongs to a PostgreSQL write, inside
+  that write's transaction.
+
 ## Routes and actor authorization
 
 [Authorization](../architecture/authorization.md) documents the shared JWT and ban

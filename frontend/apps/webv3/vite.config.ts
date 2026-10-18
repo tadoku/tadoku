@@ -4,7 +4,7 @@ import { nitro } from 'nitro/vite'
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-  plugins: [tanstackStart(), nitro({ serverDir: './server', preset: 'node-server' }), react()],
+  plugins: [tanstackStart({ serverFns: { disableCsrfMiddlewareWarning: true } }), nitro({ serverDir: './server', preset: 'node-server' }), react()],
   resolve: {
     dedupe: ['react', 'react-dom', '@tanstack/react-query'],
   },

@@ -87,6 +87,12 @@ when `useSession()` has an authenticated session. Anonymous login pages must
 not create logout flows: their CSRF cookies can race the login flow. Session
 changes enable logout without requiring callers to reload the page.
 
+Webv3 resolves Kratos identity and tenant role on the server and forwards only
+the session cookie. Its login link upgrades the SSR path and search to the full
+browser URL after hydration; without JavaScript fragments cannot be preserved.
+Logout is an ordinary POST form. Its mutation boundary requires the same Origin
+and same-origin Fetch Metadata, and personalized responses disable shared caching.
+
 ## API response parsing
 
 webv2 and admin call Tadoku API with React Query hooks and parse every response

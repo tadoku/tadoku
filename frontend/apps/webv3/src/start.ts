@@ -3,7 +3,6 @@ import { getRequest, setResponseHeader } from '@tanstack/react-start/server'
 
 const privateResponses = createMiddleware().server(async ({ next }) => {
   setResponseHeader('Cache-Control', 'private, no-store')
-  setResponseHeader('Vary', 'Cookie')
   const result = await next()
   result.response.headers.set('Cache-Control', 'private, no-store')
   result.response.headers.append('Vary', 'Cookie')

@@ -16,17 +16,22 @@ export async function readViewer(): Promise<Viewer> {
       headers: { Accept: 'application/json', Cookie: cookie },
       redirect: 'error' as const, signal: AbortSignal.timeout(10_000),
     }
-    const [session, role] = await Promise.all([
-      fetch(`${kratosUrl}/sessions/whoami`, options),
-      fetch(`${apiUrl}/authz/current-user/role`, options),
-    ])
-    if (session.status === 401) return { status: 'anonymous' }
-    if (!session.ok || !role.ok) return { status: 'unavailable' }
+    const session = await fetch(`${kratosUrl}/sessions/whoami`, options)
+    if (!session.ok) {
+      void session.body?.cancel()
+      return { status: session.status === 401 ? 'anonymous' : 'unavailable' }
+    }
+    const sessionData = await session.json()
+    const role = await fetch(`${apiUrl}/authz/current-user/role`, options)
+    if (!role.ok) {
+      void role.body?.cancel()
+      return { status: 'unavailable' }
+    }
     const parsedRole = z.object({ role: z.enum(['guest', 'user', 'admin', 'banned']) }).parse(await role.json()).role
     if (parsedRole === 'guest') return { status: 'anonymous' }
     const { identity } = z.object({ identity: z.object({
       id: z.uuid(), traits: z.object({ display_name: z.string() }),
-    }) }).parse(await session.json())
+    }) }).parse(sessionData)
     const user = { userId: identity.id, displayName: identity.traits.display_name }
     return parsedRole === 'banned' ? { status: 'banned', ...user } : { status: 'signed-in', ...user, role: parsedRole }
   } catch {

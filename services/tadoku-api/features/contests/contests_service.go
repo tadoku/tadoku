@@ -2,7 +2,6 @@ package contests
 
 import (
 	"context"
-	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -100,13 +99,34 @@ func (s *Service) SelectRegistrationsForScoring(ctx context.Context, userID uuid
 	return targets, nil
 }
 
-func (s *Service) ListYearlyRegistrations(ctx context.Context, userID uuid.UUID, year int, includePrivate bool, languages []domainlanguages.Language) (*RegistrationList, error) {
-	registrations, err := s.contests.ListYearlyRegistrations(ctx, userID, int32(year), includePrivate)
+func (s *Service) ListYearlyRegistrations(
+	ctx context.Context,
+	parameters YearlyRegistrationsParameters,
+	includePrivate bool,
+	languages []domainlanguages.Language,
+) (*RegistrationList, error) {
+	if err := parameters.Validate(); err != nil {
+		return nil, err
+	}
+
+	if parameters.PageSize == 0 || parameters.PageSize > yearlyRegistrationsMaxPageSize {
+		parameters.PageSize = yearlyRegistrationsMaxPageSize
+	}
+	parameters.includePrivate = includePrivate
+
+	registrations, total, err := s.contests.ListYearlyRegistrations(ctx, parameters)
 	if err != nil {
 		return nil, err
 	}
 
-	return hydrateRegistrations(registrations, languages)
+	result, err := hydrateRegistrations(registrations, languages)
+	if err != nil {
+		return nil, err
+	}
+	result.TotalSize = total
+	result.NextPageToken = nextPageToken(parameters.PageSize, parameters.Page, total)
+
+	return result, nil
 }
 
 func hydrateRegistrations(registrations []Registration, languages []domainlanguages.Language) (*RegistrationList, error) {
@@ -267,14 +287,10 @@ func (s *Service) ListContests(ctx context.Context, parameters ListParameters, i
 		return nil, err
 	}
 
-	nextPageToken := ""
-	if int64(parameters.offset())+int64(parameters.PageSize) < int64(total) {
-		nextPageToken = strconv.Itoa(parameters.Page + 1)
-	}
 	return &ContestList{
 		Contests:      items,
 		TotalSize:     total,
-		NextPageToken: nextPageToken,
+		NextPageToken: nextPageToken(parameters.PageSize, parameters.Page, total),
 	}, nil
 }
 

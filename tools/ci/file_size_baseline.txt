@@ -3,7 +3,6 @@
 frontend/apps/paper-playground/src/pages/ContestsPage.tsx
 frontend/apps/paper-styleguide/src/documentation/FoundationSpecimen.tsx
 frontend/packages/paper-ui/src/catalog/phase-three-content.tsx
-frontend/packages/paper-ui/src/catalog/phase-three-navigation.tsx
 frontend/packages/paper-ui/src/catalog/validation.ts
 frontend/packages/paper-ui/src/components/forms/controls.tsx
 frontend/packages/paper-ui/src/components/navigation/navigation.tsx

@@ -4,7 +4,9 @@ go_library(
     name = "scoring",
     srcs = [
         "domain.go",
+        "scoring_estimate_service.go",
         "scoring_repository.go",
+        "scoring_rule_sets_service.go",
         "scoring_service.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/features/scoring",

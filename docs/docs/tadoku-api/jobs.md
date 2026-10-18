@@ -54,7 +54,7 @@ constructors validate their inputs, and `worker.NewApplication` rejects a zero
 `Config.Scope`. `Scope.Context` applies the queue scope through the existing
 transaction-local PostgreSQL executor; handlers receive the claimed job's tenant
 separately. `WORKER_BRANCH` and `WORKER_COMPONENT` select the scope; see
-[Separate job worker](./configuration.md#separate-job-worker).
+[Job worker configuration](./worker-configuration.md).
 
 Listing a tenant without running a branch worker pauses its work. Jobs already
 claimed before the override appears finish on the base worker. Provisioning must
@@ -213,7 +213,7 @@ return application.Run(ctx)
 
 The command loads and validates its settings before construction, and
 `NewApplication` rejects a non-positive concurrency or shutdown timeout. See
-[Separate job worker](./configuration.md#separate-job-worker) for the settings
+[Job worker configuration](./worker-configuration.md) for the settings
 and their defaults.
 
 ## Execution and failure guarantees

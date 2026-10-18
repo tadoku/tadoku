@@ -135,7 +135,7 @@ with only `select`, `insert` and `delete` on `tenants` and `tenant_overrides`,
 plus `execute` on `copy_production_platform_scoring(text)` and
 `copy_production_published_pages(text)`. Migrations grant nothing to it; the
 production infrastructure hook does. See the
-[tenant lifecycle command](configuration.md#tenant-lifecycle-command).
+[tenant lifecycle command](./tenant-lifecycle.md).
 
 Data migrations and operator SQL must set the intended tenant explicitly
 inside their transaction:

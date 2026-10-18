@@ -61,6 +61,8 @@ const sidebars: SidebarsConfig = {
         'tadoku-api/user-journeys',
         'tadoku-api/import-boundaries',
         'tadoku-api/configuration',
+        'tadoku-api/worker-configuration',
+        'tadoku-api/tenant-lifecycle',
       ],
     },
     {

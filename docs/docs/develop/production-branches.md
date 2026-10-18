@@ -147,7 +147,7 @@ copies production's active platform scoring rule set and published CMS pages
 into it, gives its Keto object `app:tadoku/<route>` the canonical parent and
 creates its Flipt namespace `tadoku_<route>` in the `test` environment.
 Selecting the worker sets a worker override so only the branch worker claims
-the tenant's jobs. [Configuration](../tadoku-api/configuration.md#tenant-lifecycle-command)
+the tenant's jobs. [Tenant lifecycle command](../tadoku-api/tenant-lifecycle.md)
 documents the command, the role and its refusals of `tadoku/prod`.
 
 ## Who can use a branch

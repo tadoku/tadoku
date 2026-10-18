@@ -93,8 +93,11 @@ see [Contributing workflow](../develop/contributing.md#cms-managed-content).
 - [Import boundaries](./import-boundaries.md): read before adding an import, a
   package or a feature, or changing Bazel visibility.
 - [Runtime configuration](./configuration.md): read before changing startup,
-  environment variables, authentication wiring, provider clients or the
-  leaderboard worker.
+  environment variables, authentication wiring or provider clients.
+- [Job worker configuration](./worker-configuration.md): read before changing
+  the leaderboard worker's settings, tenant scope or metrics.
+- [Tenant lifecycle command](./tenant-lifecycle.md): read before changing test
+  tenant provisioning, teardown or worker overrides.
 
 Access rules for operations are documented in
 [Authorization](../architecture/authorization.md).

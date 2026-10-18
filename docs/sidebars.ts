@@ -15,6 +15,7 @@ const sidebars: SidebarsConfig = {
         'develop/environment',
         'develop/verifying-changes',
         'develop/production-branches',
+        'develop/pull-request-deploys',
         'develop/contributing',
       ],
     },

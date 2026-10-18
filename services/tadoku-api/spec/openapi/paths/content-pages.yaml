@@ -1,0 +1,255 @@
+paths:
+  "/content/pages/{namespace}/{slug}":
+    get:
+      summary: Returns page content for a given slug
+      operationId: ContentPageFindBySlug
+      tags:
+        - pages
+      parameters:
+        - name: slug
+          in: path
+          description: Slug of page to return
+          required: true
+          schema:
+            type: string
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContentPage"
+        "404":
+          description: Page not found or not published
+      x-tadoku-source: Content
+      x-tadoku-exposure: public
+      x-legacy-path: /pages/{namespace}/{slug}
+      x-legacy-operation-id: pageFindBySlug
+    put:
+      summary: Updates an existing page
+      operationId: ContentPageUpdate
+      tags:
+        - pages
+      security:
+        - ContentcookieAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContentPage"
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: slug
+          in: path
+          description: ID of page
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContentPage"
+        "400":
+          description: Invalid page
+        "409":
+          description: Page already exists
+        "404":
+          description: Page does not exist and cannot be updated
+      x-tadoku-source: Content
+      x-tadoku-exposure: public
+      x-legacy-path: /pages/{namespace}/{id}
+      x-legacy-operation-id: pageUpdate
+    delete:
+      summary: Deletes an existing page
+      operationId: ContentPageDelete
+      tags:
+        - pages
+      security:
+        - ContentcookieAuth: []
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: slug
+          in: path
+          description: ID of page
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: successful operation
+        "403":
+          description: Not allowed
+        "404":
+          description: Page not found
+      x-tadoku-source: Content
+      x-tadoku-exposure: public
+      x-legacy-path: /pages/{namespace}/{id}
+      x-legacy-operation-id: pageDelete
+  "/content/pages/{namespace}":
+    post:
+      summary: Creates a new page
+      operationId: ContentPageCreate
+      tags:
+        - pages
+      security:
+        - ContentcookieAuth: []
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContentPage"
+      responses:
+        "201":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContentPage"
+        "400":
+          description: Invalid page
+        "409":
+          description: Page ID or slug already exists
+      x-tadoku-source: Content
+      x-tadoku-exposure: public
+      x-legacy-path: /pages/{namespace}
+      x-legacy-operation-id: pageCreate
+    get:
+      summary: lists all pages
+      operationId: ContentPageList
+      tags:
+        - pages
+      security:
+        - ContentcookieAuth: []
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: page_size
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: include_drafts
+          in: query
+          required: false
+          allowEmptyValue: true
+          schema:
+            type: boolean
+            default: false
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContentPages"
+      x-tadoku-source: Content
+      x-tadoku-exposure: public
+      x-legacy-path: /pages/{namespace}
+      x-legacy-operation-id: pageList
+  "/content/pages/{namespace}/{id}/versions":
+    get:
+      summary: Lists all versions of a page
+      operationId: ContentPageVersionList
+      tags:
+        - pages
+      security:
+        - ContentcookieAuth: []
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          description: ID of page
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContentPageVersions"
+        "403":
+          description: Not allowed
+        "404":
+          description: Page not found
+      x-tadoku-source: Content
+      x-tadoku-exposure: public
+      x-legacy-path: /pages/{namespace}/{id}/versions
+      x-legacy-operation-id: pageVersionList
+  "/content/pages/{namespace}/{id}/versions/{contentId}":
+    get:
+      summary: Gets a specific version of a page
+      operationId: ContentPageVersionGet
+      tags:
+        - pages
+      security:
+        - ContentcookieAuth: []
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          description: ID of page
+          required: true
+          schema:
+            type: string
+        - name: contentId
+          in: path
+          description: Content ID of the version
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContentPageVersion"
+        "403":
+          description: Not allowed
+        "404":
+          description: Page or version not found
+      x-tadoku-source: Content
+      x-tadoku-exposure: public
+      x-legacy-path: /pages/{namespace}/{id}/versions/{contentId}
+      x-legacy-operation-id: pageVersionGet

@@ -1,0 +1,31 @@
+paths:
+  /authz/internal/v1/proxy/admin-check:
+    post:
+      summary: Authorizes a Kratos subject as a Tadoku administrator
+      operationId: AuthzProxyProxyAdminCheck
+      tags:
+        - proxy
+      security:
+        - AuthzProxyoathkeeperCallbackAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthzProxyProxyAdminCheckRequest"
+      responses:
+        "200":
+          description: subject is a Tadoku administrator; the empty response is required
+            by Oathkeeper remote_json
+        "400":
+          description: invalid request
+        "401":
+          description: missing or invalid Oathkeeper callback credential
+        "403":
+          description: subject is not a Tadoku administrator
+        "503":
+          description: authorization unavailable
+      x-tadoku-source: AuthzProxy
+      x-tadoku-exposure: callback
+      x-legacy-path: /internal/v1/proxy/admin-check
+      x-legacy-operation-id: proxyAdminCheck

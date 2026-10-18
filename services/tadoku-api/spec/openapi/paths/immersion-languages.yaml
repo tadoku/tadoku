@@ -1,0 +1,94 @@
+paths:
+  /immersion/languages:
+    get:
+      summary: Lists all languages (admin only)
+      operationId: ImmersionLanguageList
+      tags:
+        - admin
+      security:
+        - ImmersioncookieAuth: []
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionLanguages"
+        "401":
+          description: unauthorized
+        "403":
+          description: forbidden (not admin)
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-legacy-path: /languages
+      x-legacy-operation-id: languageList
+    post:
+      summary: Creates a new language (admin only)
+      operationId: ImmersionLanguageCreate
+      tags:
+        - admin
+      security:
+        - ImmersioncookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ImmersionLanguage"
+      responses:
+        "200":
+          description: successful operation
+        "400":
+          description: invalid request
+        "401":
+          description: unauthorized
+        "403":
+          description: forbidden (not admin, or request tenant is not production)
+        "409":
+          description: language with this code already exists
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-legacy-path: /languages
+      x-legacy-operation-id: languageCreate
+  "/immersion/languages/{code}":
+    put:
+      summary: Updates an existing language (admin only)
+      operationId: ImmersionLanguageUpdate
+      tags:
+        - admin
+      security:
+        - ImmersioncookieAuth: []
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 100
+      responses:
+        "200":
+          description: successful operation
+        "400":
+          description: invalid request
+        "401":
+          description: unauthorized
+        "403":
+          description: forbidden (not admin, or request tenant is not production)
+        "404":
+          description: language not found
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-legacy-path: /languages/{code}
+      x-legacy-operation-id: languageUpdate

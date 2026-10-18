@@ -1,0 +1,168 @@
+components:
+  schemas:
+    ImmersionLog:
+      type: object
+      required:
+        - id
+        - user_id
+        - language
+        - activity
+        - unit_id
+        - unit_name
+        - tags
+        - amount
+        - modifier
+        - score
+        - created_at
+        - deleted
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        user_display_name:
+          type: string
+        description:
+          type: string
+        language:
+          $ref: "#/components/schemas/ImmersionLanguage"
+        activity:
+          $ref: "#/components/schemas/ImmersionActivity"
+        unit_id:
+          type: string
+          format: uuid
+        unit_key:
+          type: string
+          example: reading_page
+        unit_name:
+          type: string
+          example: page
+        tags:
+          type: array
+          items:
+            type: string
+          example:
+            - Book
+            - Fiction
+        amount:
+          type: number
+          format: float
+        modifier:
+          type: number
+          format: float
+        score:
+          type: number
+          format: float
+        duration_seconds:
+          type: integer
+          format: int32
+        registrations:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImmersionContestRegistrationReference"
+        created_at:
+          type: string
+          format: date-time
+        deleted:
+          type: boolean
+    ImmersionLogExport:
+      type: object
+      required:
+        - logs
+      properties:
+        logs:
+          description: Active logs ordered by created_at and id, oldest first.
+          type: array
+          items:
+            $ref: "#/components/schemas/ImmersionLogExportEntry"
+    ImmersionLogExportEntry:
+      type: object
+      description: CSV columns follow the property order listed here.
+      required:
+        - id
+        - created_at
+        - language_code
+        - language_name
+        - activity_id
+        - activity_name
+        - amount
+        - unit_name
+        - duration_seconds
+        - score
+        - tags
+        - description
+      properties:
+        id:
+          description: Log identifier.
+          type: string
+          format: uuid
+        created_at:
+          description: Creation timestamp as RFC 3339 in UTC, including fractional seconds when present.
+          type: string
+          format: date-time
+        language_code:
+          description: Language code.
+          type: string
+        language_name:
+          description: Language display name.
+          type: string
+        activity_id:
+          description: Activity identifier.
+          type: integer
+          format: int32
+        activity_name:
+          description: Activity display name.
+          type: string
+        amount:
+          description: Recorded amount; null for time-only logs.
+          type: number
+          format: float
+          nullable: true
+        unit_name:
+          description: Amount unit display name; null when there is no amount.
+          type: string
+          nullable: true
+        duration_seconds:
+          description: Recorded duration in seconds, or null when absent.
+          type: integer
+          format: int32
+          nullable: true
+        score:
+          description: Computed score when present, otherwise the legacy score.
+          type: number
+          format: float
+        tags:
+          description: Alphabetically sorted tags; CSV joins these with comma and space.
+          type: array
+          items:
+            type: string
+        description:
+          description: Log description, or null when absent.
+          type: string
+          nullable: true
+    ImmersionLogs:
+      allOf:
+        - $ref: "#/components/schemas/ImmersionPaginatedList"
+        - type: object
+          required:
+            - logs
+          properties:
+            logs:
+              type: array
+              items:
+                $ref: "#/components/schemas/ImmersionLog"
+    ImmersionPaginatedList:
+      type: object
+      required:
+        - next_page_token
+        - total_size
+      properties:
+        total_size:
+          type: integer
+          example: 100
+        next_page_token:
+          type: string
+          description: is empty if there's no next page
+          example: "3"

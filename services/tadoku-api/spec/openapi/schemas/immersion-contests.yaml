@@ -1,0 +1,213 @@
+components:
+  schemas:
+    ImmersionContestBase:
+      type: object
+      required:
+        - contest_start
+        - contest_end
+        - registration_end
+        - title
+        - private
+        - official
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          example: 2023 Round 1
+        description:
+          type: string
+        contest_start:
+          type: string
+          format: date
+        contest_end:
+          type: string
+          format: date
+        registration_end:
+          type: string
+          format: date
+        private:
+          type: boolean
+        official:
+          type: boolean
+          example: false
+        owner_user_id:
+          type: string
+          format: uuid
+        owner_user_display_name:
+          type: string
+          example: john
+        created_at:
+          type: string
+          format: date-time
+          example: 2022-12-14T19:48:00Z
+        updated_at:
+          type: string
+          format: date-time
+          example: 2022-12-14T19:48:00Z
+        deleted:
+          type: boolean
+    ImmersionContest:
+      allOf:
+        - $ref: "#/components/schemas/ImmersionContestBase"
+        - type: object
+          required:
+            - language_code_allow_list
+            - activity_type_id_allow_list
+          properties:
+            language_code_allow_list:
+              type: array
+              items:
+                type: string
+              example:
+                - jpa
+                - zho
+                - kor
+            activity_type_id_allow_list:
+              type: array
+              items:
+                type: integer
+                format: int32
+              example:
+                - 1
+                - 2
+    ImmersionContestView:
+      allOf:
+        - $ref: "#/components/schemas/ImmersionContestBase"
+        - type: object
+          required:
+            - allowed_languages
+            - allowed_activities
+          properties:
+            allowed_languages:
+              type: array
+              items:
+                $ref: "#/components/schemas/ImmersionLanguage"
+            allowed_activities:
+              type: array
+              items:
+                $ref: "#/components/schemas/ImmersionActivity"
+    ImmersionContests:
+      allOf:
+        - $ref: "#/components/schemas/ImmersionPaginatedList"
+        - type: object
+          required:
+            - contests
+          properties:
+            contests:
+              type: array
+              maxItems: 50
+              items:
+                $ref: "#/components/schemas/ImmersionContest"
+    ImmersionContestSummary:
+      type: object
+      required:
+        - participant_count
+        - language_count
+        - total_score
+      properties:
+        participant_count:
+          type: integer
+        language_count:
+          type: integer
+        total_score:
+          type: number
+          format: float
+    ImmersionContestRegistration:
+      type: object
+      required:
+        - contest_id
+        - user_id
+        - user_display_name
+        - languages
+      properties:
+        id:
+          type: string
+          format: uuid
+        contest_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        user_display_name:
+          type: string
+          example: john
+        languages:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImmersionLanguage"
+        contest:
+          $ref: "#/components/schemas/ImmersionContestView"
+    ImmersionContestRegistrations:
+      allOf:
+        - $ref: "#/components/schemas/ImmersionPaginatedList"
+        - type: object
+          required:
+            - registrations
+          properties:
+            registrations:
+              type: array
+              items:
+                $ref: "#/components/schemas/ImmersionContestRegistration"
+    ImmersionContestRegistrationReference:
+      type: object
+      required:
+        - contest_id
+        - contest_end
+        - registration_id
+        - title
+      properties:
+        registration_id:
+          type: string
+          format: uuid
+        contest_id:
+          type: string
+          format: uuid
+        contest_end:
+          type: string
+          format: date
+        title:
+          type: string
+          example: January 2026
+        owner_user_display_name:
+          type: string
+        official:
+          type: boolean
+        score:
+          type: number
+          format: float
+    ImmersionLeaderboardEntry:
+      type: object
+      required:
+        - rank
+        - user_id
+        - user_display_name
+        - score
+        - is_tie
+      properties:
+        rank:
+          type: integer
+        user_id:
+          type: string
+          format: uuid
+        user_display_name:
+          type: string
+          example: john
+        score:
+          type: number
+          format: float
+        is_tie:
+          type: boolean
+    ImmersionLeaderboard:
+      allOf:
+        - $ref: "#/components/schemas/ImmersionPaginatedList"
+        - type: object
+          required:
+            - entries
+          properties:
+            entries:
+              type: array
+              items:
+                $ref: "#/components/schemas/ImmersionLeaderboardEntry"

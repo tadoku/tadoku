@@ -1,0 +1,237 @@
+components:
+  schemas:
+    ImmersionScore:
+      type: object
+      required:
+        - language_code
+        - score
+      properties:
+        language_code:
+          type: string
+          example: zho
+        language_name:
+          type: string
+          example: Chinese
+        score:
+          type: number
+          format: float
+    ImmersionAppliedScoringRule:
+      type: object
+      required:
+        - rule_id
+        - rate
+      properties:
+        rule_id:
+          type: string
+          format: uuid
+        rate:
+          type: number
+          format: float
+    ImmersionScoreEstimate:
+      type: object
+      required:
+        - score
+        - source
+        - rules
+      properties:
+        score:
+          type: number
+          format: float
+        source:
+          type: string
+          enum:
+            - amount
+            - duration_minutes
+        rule_set_id:
+          type: string
+          format: uuid
+        rules:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImmersionAppliedScoringRule"
+    ImmersionContestScoreEstimate:
+      type: object
+      required:
+        - registration_id
+        - contest_id
+        - estimate
+      properties:
+        registration_id:
+          type: string
+          format: uuid
+        contest_id:
+          type: string
+          format: uuid
+        estimate:
+          $ref: "#/components/schemas/ImmersionScoreEstimate"
+    ImmersionScorePreview:
+      type: object
+      required:
+        - platform
+        - contests
+      properties:
+        platform:
+          $ref: "#/components/schemas/ImmersionScoreEstimate"
+        contests:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImmersionContestScoreEstimate"
+    ImmersionScoringRule:
+      type: object
+      required:
+        - priority
+        - stackable
+        - activity_id
+        - score_source
+        - rate
+      properties:
+        id:
+          type: string
+          format: uuid
+        priority:
+          type: integer
+          format: int32
+        stackable:
+          type: boolean
+        activity_id:
+          type: integer
+          format: int32
+        unit_key:
+          type: string
+        language_code:
+          type: string
+        tag:
+          type: string
+        score_source:
+          type: string
+          enum:
+            - amount
+            - duration_minutes
+        rate:
+          type: number
+          format: float
+    ImmersionScoringRuleSetDraft:
+      type: object
+      required:
+        - rules
+      properties:
+        mode:
+          type: string
+          enum:
+            - override
+            - replace
+        fallback_rule_set_id:
+          type: string
+          format: uuid
+        rules:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImmersionScoringRule"
+    ImmersionScoringRuleSet:
+      type: object
+      required:
+        - id
+        - scope
+        - version
+        - status
+        - active
+        - rules
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        scope:
+          type: string
+          enum:
+            - platform
+            - contest
+        contest_id:
+          type: string
+          format: uuid
+        version:
+          type: integer
+          format: int32
+        status:
+          type: string
+          enum:
+            - draft
+            - published
+        active:
+          type: boolean
+        mode:
+          type: string
+          enum:
+            - override
+            - replace
+        fallback_rule_set_id:
+          type: string
+          format: uuid
+        rules:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImmersionScoringRule"
+        created_at:
+          type: string
+          format: date-time
+        published_at:
+          type: string
+          format: date-time
+    ImmersionScoringRuleSets:
+      type: object
+      required:
+        - rule_sets
+      properties:
+        rule_sets:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImmersionScoringRuleSet"
+    ImmersionScores:
+      type: array
+      items:
+        $ref: "#/components/schemas/ImmersionScore"
+    ImmersionProfileScores:
+      type: object
+      required:
+        - overall_score
+        - scores
+      properties:
+        overall_score:
+          type: number
+          format: float
+        scores:
+          $ref: "#/components/schemas/ImmersionScores"
+    ImmersionContestProfileScores:
+      allOf:
+        - $ref: "#/components/schemas/ImmersionProfileScores"
+        - type: object
+          required:
+            - registration
+          properties:
+            registration:
+              $ref: "#/components/schemas/ImmersionContestRegistration"
+    ImmersionContestProfileActivity:
+      type: object
+      required:
+        - rows
+      properties:
+        rows:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImmersionContestProfileActivityRow"
+    ImmersionContestProfileActivityRow:
+      type: object
+      required:
+        - date
+        - language_code
+        - score
+      properties:
+        date:
+          type: string
+          format: date
+        language_code:
+          type: string
+          example: zho
+        score:
+          type: number
+          format: float

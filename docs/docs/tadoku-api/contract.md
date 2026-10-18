@@ -6,13 +6,18 @@ sidebar_position: 3
 
 # Contract and OpenAPI
 
-Read this when you change `services/tadoku-api/spec/openapi.yaml`, a request or
-response shape, or generated HTTP code.
+Read this when you change the OpenAPI contract in
+`services/tadoku-api/spec/openapi/`, a request or response shape, or generated
+HTTP code.
 
 ## Canonical contract
 
 - `services/tadoku-api/spec/openapi.yaml` is the one canonical contract for
-  public and callback operations.
+  public and callback operations. Code generation, the contract tests and the
+  documentation build read it.
+- It is generated from the fragments in `services/tadoku-api/spec/openapi/`.
+  Edit the fragments, never `openapi.yaml`; see
+  [Contract fragments](#contract-fragments).
 - Each operation records its documentation source (`x-tadoku-source`) and its
   exposure (`x-tadoku-exposure`, `public` or `callback`). Callback metadata
   records the route's direct caller without making the route public.
@@ -22,6 +27,27 @@ response shape, or generated HTTP code.
   documented path and operation ID in `x-legacy-path` and
   `x-legacy-operation-id`, so the documentation views keep their original
   parameter names. Wire URLs do not change.
+
+## Contract fragments
+
+Each fragment holds one part of the contract and stays at or under about 16 KB:
+
+| Fragment in `services/tadoku-api/spec/openapi/` | Holds | Starts with |
+| --- | --- | --- |
+| `root.yaml` | `openapi`, `info`, `servers`, `x-tadoku-operational-surfaces` and `x-tadoku-sources` | No section header |
+| `paths/<source>-<area>.yaml` | The path items of one API area, such as `services/tadoku-api/spec/openapi/paths/immersion-logs.yaml` | `paths:` |
+| `schemas/<source>[-<area>].yaml` | The component schemas of one source or area | `components:` with `schemas:` under it |
+| `components.yaml` | Security schemes and shared responses | `components:` |
+
+- A fragment is a partial OpenAPI document. `$ref` values keep the canonical
+  `#/components/...` form and resolve in the generated `openapi.yaml`.
+- `./scripts/generate-openapi.sh` writes `openapi.yaml` by concatenating the
+  fragments in the order of its `PATH_FRAGMENTS` and `SCHEMA_FRAGMENTS` lists,
+  without each fragment's section header lines. That order is the contract
+  order and sets the operation order of the documentation views.
+- Add a new fragment to those lists in contract order. The script fails when a
+  fragment is not listed or does not start with its section header.
+- When a fragment grows past about 16 KB, split it along its API areas.
 
 ## Documentation views
 
@@ -70,15 +96,18 @@ then language code ascending when scores are equal.
 
 ## Code generation
 
-After changing the contract, run from the repository root:
+After changing a contract fragment, run from the repository root:
 
 ```sh
 ./scripts/generate-openapi.sh
 ```
 
-- It runs oapi-codegen through Bazel and writes checked-in shared DTOs and
+- It bundles the fragments into `services/tadoku-api/spec/openapi.yaml`, then
+  runs oapi-codegen through Bazel and writes checked-in shared DTOs and
   standard-library strict-server bindings to
-  `services/tadoku-api/generated/openapi/`. CI fails if the output is stale.
+  `services/tadoku-api/generated/openapi/`. CI fails if the bundle or the
+  generated code is stale.
+- Then run `pnpm api:generate` in `docs/` to regenerate the API reference.
 - The isolated oapi-codegen module under `tools/oapi-codegen` generates every
   canonical component schema. The server codegen configs
   (`spec/server-codegen.yaml` and `spec/callback-server-codegen.yaml`) limit

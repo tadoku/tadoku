@@ -1,0 +1,95 @@
+paths:
+  /authz/current-user/role:
+    get:
+      summary: Fetches the role of the current user
+      operationId: AuthzRoleGet
+      tags:
+        - role
+      security:
+        - AuthzcookieAuth: []
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthzUserRole"
+        "401":
+          description: unauthorized
+        "503":
+          description: authorization unavailable
+      x-tadoku-source: Authz
+      x-tadoku-exposure: public
+      x-legacy-path: /current-user/role
+      x-legacy-operation-id: roleGet
+  "/authz/users/{id}/role":
+    put:
+      summary: Update user role (admin only)
+      operationId: AuthzRoleUpdate
+      tags:
+        - admin
+      security:
+        - AuthzcookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthzRoleUpdateRequest"
+      responses:
+        "200":
+          description: successful operation
+        "400":
+          description: invalid request
+        "401":
+          description: unauthorized
+        "403":
+          description: forbidden (not admin, or target is admin)
+        "404":
+          description: user not found
+        "503":
+          description: authorization unavailable
+      x-tadoku-source: Authz
+      x-tadoku-exposure: public
+      x-legacy-path: /users/{id}/role
+      x-legacy-operation-id: roleUpdate
+  /authz/permission/check:
+    post:
+      summary: Checks if the current user has a specific permission
+      operationId: AuthzPermissionCheck
+      tags:
+        - permissions
+      security:
+        - AuthzcookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthzPermissionCheckRequest"
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthzPermissionCheckResponse"
+        "400":
+          description: invalid request
+        "401":
+          description: unauthorized
+        "403":
+          description: forbidden (not allowlisted)
+        "503":
+          description: authorization unavailable
+      x-tadoku-source: Authz
+      x-tadoku-exposure: public
+      x-legacy-path: /permission/check
+      x-legacy-operation-id: permissionCheck

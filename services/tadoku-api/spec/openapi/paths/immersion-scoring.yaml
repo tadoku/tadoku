@@ -1,0 +1,161 @@
+paths:
+  /immersion/scoring/rule-sets:
+    get:
+      summary: Lists platform scoring rule-set versions
+      operationId: ImmersionScoringRuleSetListPlatform
+      tags:
+        - scoring
+      security:
+        - ImmersioncookieAuth: []
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionScoringRuleSets"
+        "500":
+          description: internal server error
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-legacy-path: /scoring/rule-sets
+      x-legacy-operation-id: scoringRuleSetListPlatform
+    post:
+      summary: Creates a draft platform scoring rule-set version
+      operationId: ImmersionScoringRuleSetCreatePlatform
+      tags:
+        - scoring
+      security:
+        - ImmersioncookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ImmersionScoringRuleSetDraft"
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionScoringRuleSet"
+        "500":
+          description: internal server error
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-legacy-path: /scoring/rule-sets
+      x-legacy-operation-id: scoringRuleSetCreatePlatform
+  "/immersion/contests/{id}/scoring/rule-sets":
+    get:
+      summary: Lists scoring rule-set versions owned by a contest
+      operationId: ImmersionScoringRuleSetListContest
+      tags:
+        - scoring
+      security:
+        - ImmersioncookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionScoringRuleSets"
+        "500":
+          description: internal server error
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-legacy-path: /contests/{id}/scoring/rule-sets
+      x-legacy-operation-id: scoringRuleSetListContest
+    post:
+      summary: Creates a draft contest scoring rule-set version
+      operationId: ImmersionScoringRuleSetCreateContest
+      tags:
+        - scoring
+      security:
+        - ImmersioncookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ImmersionScoringRuleSetDraft"
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionScoringRuleSet"
+        "500":
+          description: internal server error
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-legacy-path: /contests/{id}/scoring/rule-sets
+      x-legacy-operation-id: scoringRuleSetCreateContest
+  "/immersion/scoring/rule-sets/{id}/publish":
+    post:
+      summary: Publishes an immutable scoring rule-set version
+      operationId: ImmersionScoringRuleSetPublish
+      tags:
+        - scoring
+      security:
+        - ImmersioncookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionScoringRuleSet"
+        "500":
+          description: internal server error
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-legacy-path: /scoring/rule-sets/{id}/publish
+      x-legacy-operation-id: scoringRuleSetPublish
+  "/immersion/scoring/rule-sets/{id}/activate":
+    post:
+      summary: Activates a published scoring rule-set version
+      operationId: ImmersionScoringRuleSetActivate
+      tags:
+        - scoring
+      security:
+        - ImmersioncookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: activated
+        "500":
+          description: internal server error
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-legacy-path: /scoring/rule-sets/{id}/activate
+      x-legacy-operation-id: scoringRuleSetActivate

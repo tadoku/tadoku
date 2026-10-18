@@ -156,7 +156,7 @@ jobs:
       - name: Verify Tadoku API OpenAPI generation
         run: |
           ./scripts/generate-openapi.sh
-          git diff --exit-code -- services/tadoku-api/generated/openapi
+          git diff --exit-code -- services/tadoku-api/spec/openapi.yaml services/tadoku-api/generated/openapi
 
       - name: Build
         run: bazel build --lockfile_mode=error //...

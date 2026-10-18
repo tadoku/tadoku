@@ -55,7 +55,7 @@ explains each command.
 | Go code | `gofmt -w services/`, `bazel run //:gazelle`, `bazel run //tools/ci/commentpolicy`, then `bazel build //services/... && bazel test //services/...` |
 | Go imports or packages | `bazel run //:gazelle -- -mode=diff`, `./scripts/check-tadoku-api-visibility.sh`, `./tools/ci/check_tadoku_api_provider_deps.sh`, `bazel run //tools/ci/repopolicy`, `bazel build //services/tadoku-api/...` |
 | SQL queries | `./scripts/generate-sqlc.sh` and commit the full output |
-| OpenAPI contract | `./scripts/generate-openapi.sh` and `pnpm api:generate` in `docs/`; commit both outputs |
+| OpenAPI contract | Edit the fragments in `services/tadoku-api/spec/openapi/`, run `./scripts/generate-openapi.sh`, then `pnpm api:generate` in `docs/`; commit the bundled `openapi.yaml` and both generated outputs |
 | Frontend | In `frontend/`: `pnpm --filter <app> exec tsc --noEmit`, `pnpm --filter <app> lint`, then `pnpm build` |
 | Docs | In `docs/`: `pnpm build` and `pnpm docs:check` |
 | Any file | `./tools/ci/check_file_sizes.sh`; see [Splitting a long file](../architecture/module-design.md#splitting-a-long-file) |

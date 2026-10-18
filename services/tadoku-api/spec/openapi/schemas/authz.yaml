@@ -1,0 +1,52 @@
+components:
+  schemas:
+    AuthzUserRole:
+      type: object
+      required:
+        - role
+      properties:
+        role:
+          type: string
+          enum:
+            - admin
+            - user
+            - guest
+            - banned
+    AuthzRoleUpdateRequest:
+      type: object
+      required:
+        - role
+        - reason
+      properties:
+        role:
+          type: string
+          enum:
+            - user
+            - banned
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 1000
+    AuthzPermissionCheckRequest:
+      type: object
+      required:
+        - namespace
+        - object
+        - relation
+      properties:
+        namespace:
+          type: string
+          minLength: 1
+        object:
+          type: string
+          minLength: 1
+        relation:
+          type: string
+          minLength: 1
+    AuthzPermissionCheckResponse:
+      type: object
+      required:
+        - allowed
+      properties:
+        allowed:
+          type: boolean

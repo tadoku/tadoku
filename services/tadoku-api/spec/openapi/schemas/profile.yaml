@@ -1,0 +1,32 @@
+components:
+  schemas:
+    ProfileUserList:
+      type: object
+      required:
+        - users
+        - total_size
+      properties:
+        users:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProfileUserListEntry"
+        total_size:
+          type: integer
+    ProfileUserListEntry:
+      type: object
+      required:
+        - id
+        - display_name
+        - email
+        - created_at
+      properties:
+        id:
+          type: string
+        display_name:
+          type: string
+        email:
+          type: string
+        created_at:
+          type: string
+        role:
+          type: string

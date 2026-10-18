@@ -78,7 +78,7 @@ files in an area, read its page; those rules are as binding as this file.
 | Tadoku API code, the first time | `docs/docs/tadoku-api/index.md` |
 | Any handwritten Go, including tests | `docs/docs/tadoku-api/go-style.md` |
 | An application operation, feature, repository or domain package | `docs/docs/tadoku-api/conventions.md` |
-| `services/tadoku-api/spec/openapi.yaml` or a request or response shape | `docs/docs/tadoku-api/contract.md` |
+| The OpenAPI contract in `services/tadoku-api/spec/openapi/` or a request or response shape | `docs/docs/tadoku-api/contract.md` |
 | A migration, SQL query or transaction | `docs/docs/tadoku-api/database.md` |
 | Background jobs, worker handlers, replay or message-version changes | `docs/docs/tadoku-api/jobs.md` |
 | Any Go test | `docs/docs/tadoku-api/testing.md` |

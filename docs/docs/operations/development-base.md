@@ -54,7 +54,7 @@ their application rows. No ordinary branch database is created. Changed
 default runtime privileges, then migration and tenant Jobs run in `tdk-dev-data`.
 The paired branch API/worker use that database and the same test tenant; the
 base worker does not consume jobs from a branch database. See
-[Migration branches](../develop/environment.md#migration-branches). The server is
+[Migration branches](../develop/development-data.md#migration-branches). The server is
 provisioned with the Zalando `postgresql` custom resource; do not add hand-rolled Postgres Deployments or Helm
 releases. Styleguides and optional admin tools are not deployed. The base holds no production data, external backups or
 notification configuration.
@@ -173,7 +173,7 @@ fixture UUIDs; other tenants derive fixture UUIDs from their tenant key.
 Caller-supplied identity UUIDs are unchanged.
 
 Branch startup uses the `tenant` hook to provision and seed its test tenant;
-see [Development environment](../develop/environment.md#branch-tenants).
+see [Branch tenants](../develop/development-data.md#branch-tenants).
 The Job reuses the marked shared identities, grants the Keto object a canonical
 parent and Dev Reader tester, and provisions missing Flipt resources in
 `test/tadoku_<route>`. It runs in `tdk-dev-data`; Flipt's ingress policy admits

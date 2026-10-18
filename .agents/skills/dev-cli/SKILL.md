@@ -5,7 +5,7 @@ description: Run Tadoku branch overlays with dev-cli on homelab-talos-dev. Use f
 
 # Develop with dev-cli
 
-Run commands from the repository root. Read [Development environment](../../../docs/docs/develop/environment.md) for installation, configuration, branch tenants, routing and cleanup. Read [`.dev/config.yaml`](../../../.dev/config.yaml) before using the shared cluster. Use `--context homelab-talos-dev` on kubectl commands. This skill does not grant cluster access or authorize changes to the shared base.
+Run commands from the repository root. Read [Development environment](../../../docs/docs/develop/environment.md) for installation, configuration, routing and cleanup, and [Development data](../../../docs/docs/develop/development-data.md) for branch tenants. Read [`.dev/config.yaml`](../../../.dev/config.yaml) before using the shared cluster. Use `--context homelab-talos-dev` on kubectl commands. This skill does not grant cluster access or authorize changes to the shared base.
 
 Never run dev-cli in production mode without an explicit instruction from the maintainer for that branch and command. Production branches are deployed only by the maintainer, by hand or with a pull request's `deploy` label, as described in [Production branches](../../../docs/docs/develop/production-branches.md); reading `dev status` or `dev doctor` output the maintainer shares is fine.
 
@@ -20,7 +20,7 @@ Changes under `services/tadoku-api/migrations/` automatically select
 `isolated-database`, which runs migrate before tenant provisioning against
 `tadoku-<route>`. A migration-only change selects no deployable; run
 `dev up --owner <owner> --service tadoku-api` to start its paired API/worker.
-Follow [Migration branches](../../../docs/docs/develop/environment.md#migration-branches).
+Follow [Migration branches](../../../docs/docs/develop/development-data.md#migration-branches).
 A live profile switch is refused until down; after rebase, down still uses the
 recorded isolated database, removes its tenant and retains the marked database.
 Legacy-owned retained databases fail closed and require approved inventory/removal.

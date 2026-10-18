@@ -19,7 +19,8 @@ It does not support `down`, `drop`, or arbitrary migration steps.
 ## Development migration branches
 
 Migration branch overlays use the automatically selected `isolated-database`
-profile described in [Development environment](../develop/environment.md#migration-branches).
+profile described in
+[Migration branches](../develop/development-data.md#migration-branches).
 Their migration task runs in `tdk-dev-data`, uses the generated `tadoku_owner`
 Secret, and targets literal `tadoku-<route>`. A failed task prevents overlay
 startup; retain its output, database owner/marker and migration metadata before

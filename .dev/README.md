@@ -16,7 +16,9 @@ the main hostname before admin or auth API writes. `dev down` and expired-route
 cleanup stop overlays and remove that tenant's application and provider data.
 
 - [Development environment](../docs/docs/develop/environment.md): install dev-cli,
-  run, open, seed and clean up a branch.
+  run, open and clean up a branch.
+- [Development data](../docs/docs/develop/development-data.md): seed data,
+  branch tenants and migration branches.
 - [Development base](../docs/docs/operations/development-base.md): the Argo CD
   base these overlays route around.
 - [Acceptance gates](acceptance.md): live checks for routing and sync changes.

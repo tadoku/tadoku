@@ -24,6 +24,7 @@ func TestUserCacheUsesRealKratosAcrossPagesAndRetainsSnapshotOnFailure(t *testin
 
 	cache := NewUserCache(fixture.CursorClient())
 	instant := time.Date(2026, 9, 12, 12, 0, 0, 0, time.UTC)
+	cache.now = func() time.Time { return instant }
 	const readers = 8
 	results := make(chan []cachedUser, readers)
 	var ready sync.WaitGroup
@@ -32,24 +33,22 @@ func TestUserCacheUsesRealKratosAcrossPagesAndRetainsSnapshotOnFailure(t *testin
 	ready.Add(readers)
 	done.Add(readers)
 
-	timex.TheWorld(instant, func() {
-		for range readers {
-			go func() {
-				defer done.Done()
-				ready.Done()
-				<-start
-				users, err := cache.Users(t.Context())
-				if err != nil {
-					t.Error(err)
-					return
-				}
-				results <- users
-			}()
-		}
-		ready.Wait()
-		close(start)
-		done.Wait()
-	})
+	for range readers {
+		go func() {
+			defer done.Done()
+			ready.Done()
+			<-start
+			users, err := cache.Users(t.Context())
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			results <- users
+		}()
+	}
+	ready.Wait()
+	close(start)
+	done.Wait()
 	close(results)
 
 	for users := range results {
@@ -69,53 +68,95 @@ func TestUserCacheUsesRealKratosAcrossPagesAndRetainsSnapshotOnFailure(t *testin
 		t.Fatal(err)
 	}
 
-	var fresh []cachedUser
-	timex.TheWorld(instant.Add(userCacheRefreshInterval-time.Second), func() {
-		fresh, err = cache.Users(t.Context())
-		if err != nil {
-			t.Fatal(err)
-		}
-		if len(fresh) != 501 {
-			t.Fatalf("fresh users=%d, want cached 501", len(fresh))
-		}
-		fresh[0].DisplayName = "mutated"
-		second, err := cache.Users(t.Context())
-		if err != nil {
-			t.Fatal(err)
-		}
-		if second[0].DisplayName == "mutated" {
-			t.Error("Users returned the mutable cache snapshot")
-		}
-		fresh = second
-	})
+	cache.now = func() time.Time { return instant.Add(userCacheRefreshInterval - time.Second) }
+	fresh, err := cache.Users(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(fresh) != 501 {
+		t.Fatalf("fresh users=%d, want cached 501", len(fresh))
+	}
+	fresh[0].DisplayName = "mutated"
+	second, err := cache.Users(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if second[0].DisplayName == "mutated" {
+		t.Error("Users returned the mutable cache snapshot")
+	}
 
-	var refreshed []cachedUser
-	timex.TheWorld(instant.Add(userCacheRefreshInterval), func() {
-		refreshed, err = cache.Users(t.Context())
-		if err != nil {
-			t.Fatal(err)
-		}
-		if len(refreshed) != 500 {
-			t.Fatalf("refreshed users=%d, want provider deletion reflected", len(refreshed))
-		}
-	})
+	cache.now = func() time.Time { return instant.Add(userCacheRefreshInterval) }
+	refreshed, err := cache.Users(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(refreshed) != 500 {
+		t.Fatalf("refreshed users=%d, want provider deletion reflected", len(refreshed))
+	}
 
 	if err := fixture.Close(); err != nil {
 		t.Fatal(err)
 	}
-	timex.TheWorld(instant.Add(2*userCacheRefreshInterval), func() {
-		stale, err := cache.Users(t.Context())
-		if err != nil {
-			t.Fatal(err)
-		}
-		if !reflect.DeepEqual(stale, refreshed) {
-			t.Errorf("failed refresh snapshot=%+v, want %+v", stale, refreshed)
-		}
-	})
+	cache.now = func() time.Time { return instant.Add(2 * userCacheRefreshInterval) }
+	stale, err := cache.Users(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(stale, refreshed) {
+		t.Errorf("failed refresh snapshot=%+v, want %+v", stale, refreshed)
+	}
 
 	cold := NewUserCache(fixture.CursorClient())
 	if _, err := cold.Users(t.Context()); err == nil {
 		t.Fatal("cold cache accepted an unavailable identity provider")
+	}
+}
+
+func TestUserCacheTTLUsesInjectedRealClockIndependentOfBusinessTime(t *testing.T) {
+	fixture, err := testkratos.New(t.Context(), "testdata/kratos.sql")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := fixture.Close(); err != nil {
+			t.Error(err)
+		}
+	})
+
+	cache := NewUserCache(fixture.CursorClient())
+	instant := time.Date(2026, 9, 12, 12, 0, 0, 0, time.UTC)
+	cache.now = func() time.Time { return instant }
+
+	first, err := cache.Users(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(first) != 501 {
+		t.Fatalf("users=%d, want 501", len(first))
+	}
+
+	deletedID := "10000000-0000-4000-8000-000000000501"
+	if _, err := fixture.Client().IdentityApi.DeleteIdentity(t.Context(), deletedID).Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	timex.TheWorld(instant.Add(userCacheRefreshInterval+time.Minute), func() {
+		cached, err := cache.Users(t.Context())
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(cached) != 501 {
+			t.Fatalf("business-time travel users=%d, want cached 501", len(cached))
+		}
+	})
+
+	cache.now = func() time.Time { return instant.Add(userCacheRefreshInterval) }
+	refreshed, err := cache.Users(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(refreshed) != 500 {
+		t.Fatalf("real-time refresh users=%d, want provider deletion reflected", len(refreshed))
 	}
 }
 

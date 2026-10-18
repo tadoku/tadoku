@@ -12,6 +12,5 @@ frontend/packages/paper-ui/src/components/forms/controls.tsx
 frontend/packages/paper-ui/src/components/navigation/navigation.tsx
 frontend/packages/paper-ui/tests/forms-feedback.test.tsx
 services/tadoku-api/app/tenantlifecycle/lifecycle_test.go
-services/tadoku-api/app/worker/worker_runtime_test.go
 services/tadoku-api/e2e/user_journeys_test.go
 services/tadoku-api/spec/openapi.yaml

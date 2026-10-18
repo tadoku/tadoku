@@ -12,7 +12,9 @@ authorize unrelated mutations, or replace the repository's `AGENTS.md`.
 
 [Development environment](../../../docs/docs/develop/environment.md) is the
 canonical reference for installing dev-cli, starting, opening and inspecting a
-branch, routing headers, branch tenants, fixture accounts and cleanup. This
+branch, routing headers and cleanup, and
+[Development data](../../../docs/docs/develop/development-data.md) for branch
+tenants and fixture accounts. This
 skill adds only what verification needs on top of it.
 
 ## Choose the proof

@@ -13,6 +13,7 @@ const sidebars: SidebarsConfig = {
       items: [
         'develop/toolchain',
         'develop/environment',
+        'develop/development-data',
         'develop/verifying-changes',
         'develop/production-branches',
         'develop/pull-request-deploys',

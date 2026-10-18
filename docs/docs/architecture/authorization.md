@@ -233,5 +233,5 @@ only runs against the `homelab-talos-dev` Kubernetes context and is safe to re-r
   API (`http://keto-write.tdk-dev-keto:4467`).
 - Loads the application seed data from `scripts/dev/seed/`.
 
-See [Development environment](../develop/environment.md) for branch seeding and
-cleanup.
+See [Development data](../develop/development-data.md) for branch seeding and
+[Development environment](../develop/environment.md#clean-up) for cleanup.

@@ -6,7 +6,9 @@ contests and leaderboards. The main site is `webv2`; `auth` handles accounts and
 
 Start with [the verification skill](../../SKILL.md) for environment selection and
 safety; [Development environment](../../../../../docs/docs/develop/environment.md)
-covers hosts, branch selection and fixture accounts. Read only the area your task
+covers hosts and branch selection, and
+[Development data](../../../../../docs/docs/develop/development-data.md#seed-data)
+covers fixture accounts. Read only the area your task
 affects. These are **development** URLs and user journeys, not deployment metadata
 or an assertion that every check has passed. Generate selected links with `dev url`;
 bare links below target the base; branch links carry the route in their hostname.
@@ -25,7 +27,7 @@ Never use production `tadoku.app` for these checks.
 “Main”, “account” and “admin” host below mean `tadoku.dev.lab`,
 `account.tadoku.dev.lab` and `admin.tadoku.dev.lab`. Use the shared synthetic
 accounts Dev Reader and Dev Admin from the
-[fixture accounts](../../../../../docs/docs/develop/environment.md#seed-data). Their
+[fixture accounts](../../../../../docs/docs/develop/development-data.md#seed-data). Their
 `@tadoku.app` email strings are **not** test destination hosts. Don't change their
 credentials/profile/roles for an unrelated test.
 

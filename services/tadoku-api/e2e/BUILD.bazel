@@ -4,6 +4,7 @@ go_test(
     name = "e2e_test",
     size = "medium",
     srcs = [
+        "access_journeys_test.go",
         "access_level_test.go",
         "announcement_create_test.go",
         "announcement_delete_test.go",
@@ -16,6 +17,7 @@ go_test(
         "authz_role_get_test.go",
         "authz_role_update_test.go",
         "banned_users_test.go",
+        "content_journeys_test.go",
         "contest_configuration_test.go",
         "contest_create_permission_test.go",
         "contest_create_test.go",
@@ -43,6 +45,7 @@ go_test(
         "log_contest_reads_test.go",
         "log_export_test.go",
         "log_final_mutations_test.go",
+        "log_journeys_test.go",
         "log_mutations_test.go",
         "log_single_reads_test.go",
         "log_tag_suggestions_test.go",

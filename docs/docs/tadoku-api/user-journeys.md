@@ -6,7 +6,7 @@ sidebar_position: 7
 
 # User journeys
 
-Read this when you add or change a step in `services/tadoku-api/e2e/user_journeys_test.go`
+Read this when you add or change a journey step in `services/tadoku-api/e2e/`
 or its fixtures under `services/tadoku-api/e2e/testdata/journeys/`. The general
 test principles are in [Testing](./testing.md), and single-request golden cases
 are in [HTTP end-to-end tests](./http-e2e.md).
@@ -17,10 +17,19 @@ handwritten seed between them, business time can move between steps, and one
 user can observe another's writes. Journeys keep the functionality users expect
 working, so cover every important user journey in the application.
 
-All journeys live in `e2e/user_journeys_test.go`, one explicit Go step table per
-journey passed to `runJourney`. They keep dependent steps in one scenario and
-run the production API router and, where needed, the worker application in
-process. Fixtures live under `e2e/testdata/journeys/`:
+Journeys are grouped by domain, one explicit Go step table per journey passed
+to `runJourney`:
+
+| File | Journeys |
+| --- | --- |
+| `services/tadoku-api/e2e/user_journeys_test.go` | Tenant isolation, languages, contests, registrations and scoring rule sets |
+| `services/tadoku-api/e2e/log_journeys_test.go` | Logs and leaderboard jobs |
+| `services/tadoku-api/e2e/access_journeys_test.go` | Roles, bans, feature access and the user list |
+| `services/tadoku-api/e2e/content_journeys_test.go` | Announcements, pages and posts |
+
+Journeys keep dependent steps in one scenario and run the production API router
+and, where needed, the worker application in process. Fixtures live under
+`e2e/testdata/journeys/`:
 
 ```text
 e2e/testdata/journeys/

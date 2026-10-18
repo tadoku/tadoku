@@ -82,4 +82,4 @@ null for absent amount, unit, duration and description values.
 [export menu](../../../../../frontend/apps/webv2/app/immersion/LogExportMenu.tsx),
 [export transport](../../../../../services/tadoku-api/transport/http/log_export.go),
 [export HTTP cases](../../../../../services/tadoku-api/e2e/log_export_test.go),
-[backend user journeys](../../../../../services/tadoku-api/e2e/user_journeys_test.go).
+[backend log journeys](../../../../../services/tadoku-api/e2e/log_journeys_test.go).

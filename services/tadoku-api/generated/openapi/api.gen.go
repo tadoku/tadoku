@@ -260,6 +260,24 @@ func (e ImmersionScoringRuleSetDraftMode) Valid() bool {
 	}
 }
 
+// Defines values for ImmersionLogExportParamsFormat.
+const (
+	Csv  ImmersionLogExportParamsFormat = "csv"
+	Json ImmersionLogExportParamsFormat = "json"
+)
+
+// Valid indicates whether the value is a known member of the ImmersionLogExportParamsFormat enum.
+func (e ImmersionLogExportParamsFormat) Valid() bool {
+	switch e {
+	case Csv:
+		return true
+	case Json:
+		return true
+	default:
+		return false
+	}
+}
+
 // AuthzPermissionCheckRequest defines model for AuthzPermissionCheckRequest.
 type AuthzPermissionCheckRequest struct {
 	Namespace string `json:"namespace"`
@@ -797,6 +815,51 @@ type ImmersionLogConfigurationOptions struct {
 	UserLanguageCodes    *[]string           `json:"user_language_codes,omitempty"`
 }
 
+// ImmersionLogExport defines model for ImmersionLogExport.
+type ImmersionLogExport struct {
+	// Logs Active logs ordered by created_at and id, oldest first.
+	Logs []ImmersionLogExportEntry `json:"logs"`
+}
+
+// ImmersionLogExportEntry CSV columns follow the property order listed here.
+type ImmersionLogExportEntry struct {
+	// ActivityId Activity identifier.
+	ActivityId int32 `json:"activity_id"`
+
+	// ActivityName Activity display name.
+	ActivityName string `json:"activity_name"`
+
+	// Amount Recorded amount; null for time-only logs.
+	Amount nullable.Nullable[float32] `json:"amount"`
+
+	// CreatedAt Creation timestamp as RFC 3339 in UTC, including fractional seconds when present.
+	CreatedAt time.Time `json:"created_at"`
+
+	// Description Log description, or null when absent.
+	Description nullable.Nullable[string] `json:"description"`
+
+	// DurationSeconds Recorded duration in seconds, or null when absent.
+	DurationSeconds nullable.Nullable[int32] `json:"duration_seconds"`
+
+	// Id Log identifier.
+	Id openapi_types.UUID `json:"id"`
+
+	// LanguageCode Language code.
+	LanguageCode string `json:"language_code"`
+
+	// LanguageName Language display name.
+	LanguageName string `json:"language_name"`
+
+	// Score Computed score when present, otherwise the legacy score.
+	Score float32 `json:"score"`
+
+	// Tags Alphabetically sorted tags; CSV joins these with comma and space.
+	Tags []string `json:"tags"`
+
+	// UnitName Amount unit display name; null when there is no amount.
+	UnitName nullable.Nullable[string] `json:"unit_name"`
+}
+
 // ImmersionLogs defines model for ImmersionLogs.
 type ImmersionLogs struct {
 	Logs []ImmersionLog `json:"logs"`
@@ -1081,6 +1144,15 @@ type ImmersionLogCreateJSONBody struct {
 	UnitKey *string             `json:"unit_key,omitempty"`
 }
 
+// ImmersionLogExportParams defines parameters for ImmersionLogExport.
+type ImmersionLogExportParams struct {
+	// Format Attachment format.
+	Format ImmersionLogExportParamsFormat `form:"format" json:"format"`
+}
+
+// ImmersionLogExportParamsFormat defines parameters for ImmersionLogExport.
+type ImmersionLogExportParamsFormat string
+
 // ImmersionScorePreviewJSONBody defines parameters for ImmersionScorePreview.
 type ImmersionScorePreviewJSONBody struct {
 	ActivityId      int32    `json:"activity_id"`
@@ -1354,6 +1426,9 @@ type ServerInterface interface {
 	// ImmersionLogGetConfigurations Fetches the configuration options for a log
 	// (GET /immersion/logs/configuration-options)
 	ImmersionLogGetConfigurations(w http.ResponseWriter, r *http.Request)
+	// ImmersionLogExport Exports your activity logs
+	// (GET /immersion/logs/export)
+	ImmersionLogExport(w http.ResponseWriter, r *http.Request, params ImmersionLogExportParams)
 	// ImmersionScorePreview Previews platform and contest scores without creating a log
 	// (POST /immersion/logs/score-preview)
 	ImmersionScorePreview(w http.ResponseWriter, r *http.Request)
@@ -3170,6 +3245,39 @@ func (siw *ServerInterfaceWrapper) ImmersionLogGetConfigurations(w http.Response
 	handler.ServeHTTP(w, r)
 }
 
+// ImmersionLogExport operation middleware
+func (siw *ServerInterfaceWrapper) ImmersionLogExport(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ImmersionLogExportParams
+
+	// ------------- Required query parameter "format" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "format", r.URL.Query(), &params.Format, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "format"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "format", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ImmersionLogExport(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ImmersionScorePreview operation middleware
 func (siw *ServerInterfaceWrapper) ImmersionScorePreview(w http.ResponseWriter, r *http.Request) {
 
@@ -3895,6 +4003,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/ongoing-registrations", wrapper.ImmersionContestFindOngoingRegistrations)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/configuration-options", wrapper.ImmersionContestGetConfigurations)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/immersion/logs", wrapper.ImmersionLogCreate)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/logs/export", wrapper.ImmersionLogExport)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/immersion/logs/score-preview", wrapper.ImmersionScorePreview)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/immersion/logs/{id}", wrapper.ImmersionLogDeleteByID)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/logs/{id}", wrapper.ImmersionLogFindByID)
@@ -5964,6 +6073,86 @@ func (response ImmersionLogGetConfigurations200JSONResponse) VisitImmersionLogGe
 	return err
 }
 
+type ImmersionLogExportRequestObject struct {
+	Params ImmersionLogExportParams
+}
+
+type ImmersionLogExportResponseObject interface {
+	VisitImmersionLogExportResponse(w http.ResponseWriter) error
+}
+
+type ImmersionLogExport200ResponseHeaders struct {
+	ContentDisposition *string
+}
+
+type ImmersionLogExport200JSONResponse struct {
+	Body    ImmersionLogExport
+	Headers ImmersionLogExport200ResponseHeaders
+}
+
+func (response ImmersionLogExport200JSONResponse) VisitImmersionLogExportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.ContentDisposition != nil {
+		w.Header().Set("Content-Disposition", fmt.Sprint(*response.Headers.ContentDisposition))
+	}
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImmersionLogExport200TextcsvResponse struct {
+	Body          io.Reader
+	Headers       ImmersionLogExport200ResponseHeaders
+	ContentLength int64
+}
+
+func (response ImmersionLogExport200TextcsvResponse) VisitImmersionLogExportResponse(w http.ResponseWriter) error {
+
+	w.Header().Set("Content-Type", "text/csv")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	if response.Headers.ContentDisposition != nil {
+		w.Header().Set("Content-Disposition", fmt.Sprint(*response.Headers.ContentDisposition))
+	}
+	w.WriteHeader(200)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type ImmersionLogExport400Response struct {
+}
+
+func (response ImmersionLogExport400Response) VisitImmersionLogExportResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
+type ImmersionLogExport401Response struct {
+}
+
+func (response ImmersionLogExport401Response) VisitImmersionLogExportResponse(w http.ResponseWriter) error {
+	w.WriteHeader(401)
+	return nil
+}
+
+type ImmersionLogExport500Response struct {
+}
+
+func (response ImmersionLogExport500Response) VisitImmersionLogExportResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
 type ImmersionScorePreviewRequestObject struct {
 	Body *ImmersionScorePreviewJSONRequestBody
 }
@@ -6817,6 +7006,9 @@ type StrictServerInterface interface {
 	// ImmersionLogGetConfigurations Fetches the configuration options for a log
 	// (GET /immersion/logs/configuration-options)
 	ImmersionLogGetConfigurations(ctx context.Context, request ImmersionLogGetConfigurationsRequestObject) (ImmersionLogGetConfigurationsResponseObject, error)
+	// ImmersionLogExport Exports your activity logs
+	// (GET /immersion/logs/export)
+	ImmersionLogExport(ctx context.Context, request ImmersionLogExportRequestObject) (ImmersionLogExportResponseObject, error)
 	// ImmersionScorePreview Previews platform and contest scores without creating a log
 	// (POST /immersion/logs/score-preview)
 	ImmersionScorePreview(ctx context.Context, request ImmersionScorePreviewRequestObject) (ImmersionScorePreviewResponseObject, error)
@@ -8360,6 +8552,32 @@ func (sh *strictHandler) ImmersionLogGetConfigurations(w http.ResponseWriter, r 
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ImmersionLogGetConfigurationsResponseObject); ok {
 		if err := validResponse.VisitImmersionLogGetConfigurationsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ImmersionLogExport operation middleware
+func (sh *strictHandler) ImmersionLogExport(w http.ResponseWriter, r *http.Request, params ImmersionLogExportParams) {
+	var request ImmersionLogExportRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ImmersionLogExport(ctx, request.(ImmersionLogExportRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ImmersionLogExport")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ImmersionLogExportResponseObject); ok {
+		if err := validResponse.VisitImmersionLogExportResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

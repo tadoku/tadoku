@@ -1,0 +1,7 @@
+>>> GET /immersion/logs/export?format=json
+HTTP/1.1 200 OK
+Content-Length: 12
+Content-Disposition: attachment; filename="tadoku-logs.json"
+Content-Type: application/json; charset=UTF-8
+
+{"logs":[]}

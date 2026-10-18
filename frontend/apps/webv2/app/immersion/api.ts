@@ -9,6 +9,9 @@ import { NewLogAPISchema } from '@app/immersion/NewLogForm/domain'
 const root = () => `${browserAppUrls().apiEndpoint}/immersion`
 const authzRoot = () => `${browserAppUrls().apiEndpoint}/authz`
 
+export const logExportUrl = (format: 'csv' | 'json') =>
+  `${root()}/logs/export?format=${format}`
+
 export const Language = z.object({
   code: z.string(),
   name: z.string(),

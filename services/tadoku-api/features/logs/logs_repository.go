@@ -658,3 +658,49 @@ func (r *LogsRepository) ListContestLogs(ctx context.Context, parameters ListPar
 	}
 	return result, nil
 }
+
+func (r *LogsRepository) ListActiveUserLogsAfter(
+	ctx context.Context,
+	userID uuid.UUID,
+	after *exportCursor,
+	limit int32,
+) ([]ExportedLog, error) {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return nil, err
+	}
+
+	parameters := queries.ListActiveLogsForUserAfterParams{
+		UserID:    postgres.UUID(userID),
+		BatchSize: limit,
+	}
+	if after != nil {
+		parameters.AfterCreatedAt = postgres.Timestamp(after.createdAt)
+		parameters.AfterID = postgres.UUID(after.id)
+	}
+
+	rows, err := queries.New(executor).ListActiveLogsForUserAfter(ctx, parameters)
+	if err != nil {
+		return nil, fmt.Errorf("list active logs for export: %w", err)
+	}
+
+	result := make([]ExportedLog, 0, len(rows))
+	for _, row := range rows {
+		log := ExportedLog{
+			ID:              uuid.UUID(row.ID.Bytes),
+			CreatedAt:       row.CreatedAt.Time,
+			LanguageCode:    row.LanguageCode,
+			LanguageName:    row.LanguageName,
+			Activity:        activities.Activity{ID: int32(row.LogActivityID)},
+			DurationSeconds: postgres.Int4Pointer(row.DurationSeconds),
+			Score:           row.Score.Float32,
+			Tags:            row.Tags,
+			Description:     postgres.TextPointer(row.Description),
+		}
+		if row.Amount.Valid {
+			log.Amount = &ExportedAmount{Value: row.Amount.Float32, UnitName: row.UnitName.String}
+		}
+		result = append(result, log)
+	}
+	return result, nil
+}

@@ -41,6 +41,7 @@ output-options:
     - ImmersionContestGetConfigurations
     - ImmersionContestFetchSummary
     - ImmersionLogGetConfigurations
+    - ImmersionLogExport
     - ImmersionLogTagSuggestions
     - ImmersionLanguageList
     - ImmersionLanguageCreate

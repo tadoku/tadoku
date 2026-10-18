@@ -41,6 +41,7 @@ go_test(
         "leaderboard_test.go",
         "log_configuration_test.go",
         "log_contest_reads_test.go",
+        "log_export_test.go",
         "log_final_mutations_test.go",
         "log_mutations_test.go",
         "log_single_reads_test.go",

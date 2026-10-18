@@ -31,6 +31,7 @@ go_library(
         "leaderboard.go",
         "log_attachments.go",
         "log_configuration.go",
+        "log_export.go",
         "log_mutations.go",
         "log_reads.go",
         "log_tag_suggestions.go",

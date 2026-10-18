@@ -1,0 +1,7 @@
+>>> GET /immersion/logs/export?format=csv
+HTTP/1.1 200 OK
+Content-Length: 128
+Content-Disposition: attachment; filename="tadoku-logs.csv"
+Content-Type: text/csv
+
+﻿id,created_at,language_code,language_name,activity_id,activity_name,amount,unit_name,duration_seconds,score,tags,description

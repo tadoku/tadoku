@@ -1,0 +1,16 @@
+>>> GET /immersion/logs/export?format=csv
+HTTP/1.1 200 OK
+Content-Length: 996
+Content-Disposition: attachment; filename="tadoku-logs.csv"
+Content-Type: text/csv
+
+﻿id,created_at,language_code,language_name,activity_id,activity_name,amount,unit_name,duration_seconds,score,tags,description
+d0000000-0000-4000-8000-000000000001,2026-09-01T01:02:03.123456Z,jpn,Japanese,1,Reading,10.5,Page,,21,"'=formula, alpha, comma, tag, zeta","Comma, ""quote""
+日本語"
+d0000000-0000-4000-8000-000000000002,2026-09-01T01:02:03.123456Z,eng,English,2,Listening,,,60,0,,
+d0000000-0000-4000-8000-000000000003,2026-09-02T00:00:00Z,jpn,Japanese,1,Reading,2.5,Page,90,7.25,'@tag,'=SUM(A1)
+d0000000-0000-4000-8000-000000000004,2026-09-03T00:00:00Z,eng,English,2,Listening,,,1,0.5,,'+text
+d0000000-0000-4000-8000-000000000005,2026-09-04T00:00:00Z,eng,English,2,Listening,,,30,2,,'-text
+d0000000-0000-4000-8000-000000000006,2026-09-05T00:00:00Z,eng,English,2,Listening,,,30,2,,'@text
+d0000000-0000-4000-8000-000000000007,2026-09-06T00:00:00Z,eng,English,2,Listening,,,30,2,,'	text
+d0000000-0000-4000-8000-000000000008,2026-09-07T00:00:00Z,eng,English,2,Listening,,,30,2,,"'text"

@@ -513,3 +513,30 @@ func (s *Service) ListContestLogs(ctx context.Context, parameters ListParameters
 	}
 	return result, nil
 }
+
+const exportBatchSize = 500
+
+func (s *Service) ExportUserLogs(ctx context.Context, userID uuid.UUID) ([]ExportedLog, error) {
+	result := make([]ExportedLog, 0)
+	var after *exportCursor
+	for {
+		batch, err := s.logs.ListActiveUserLogsAfter(ctx, userID, after, exportBatchSize)
+		if err != nil {
+			return nil, err
+		}
+
+		for i := range batch {
+			batch[i].Activity, err = findActivity(batch[i].Activity.ID)
+			if err != nil {
+				return nil, err
+			}
+		}
+		result = append(result, batch...)
+		if len(batch) < exportBatchSize {
+			return result, nil
+		}
+
+		last := batch[len(batch)-1]
+		after = &exportCursor{createdAt: last.CreatedAt, id: last.ID}
+	}
+}

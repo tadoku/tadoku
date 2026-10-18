@@ -1,0 +1,1 @@
+{"parameters":[{"name":"format","in":"query","required":true,"description":"Attachment format.","schema":{"type":"string","enum":["csv","json"]}}]}

@@ -453,3 +453,34 @@ select contest_id from contest_logs where log_id = sqlc.arg('log_id');
 -- name: SoftDeleteLog :exec
 update logs set deleted_at = sqlc.arg('deleted_at')
 where id = sqlc.arg('log_id') and deleted_at is null and frozen_at is null;
+
+-- name: ListActiveLogsForUserAfter :many
+select
+  logs.id,
+  logs.created_at,
+  logs.language_code,
+  languages.name as language_name,
+  logs.log_activity_id,
+  logs.amount,
+  log_units.name as unit_name,
+  logs.duration_seconds,
+  coalesce(logs.computed_score, logs.score) as score,
+  coalesce(
+    (select array_agg(tag order by tag collate "C") from log_tags where log_id = logs.id),
+    array[]::text[]
+  )::text[] as tags,
+  logs.description
+from logs
+inner join languages on languages.code = logs.language_code
+left join log_units on log_units.id = logs.unit_id
+where logs.user_id = sqlc.arg('user_id')
+  and logs.deleted_at is null
+  and (
+    sqlc.narg('after_created_at')::timestamp is null
+    or (logs.created_at, logs.id) > (
+      sqlc.narg('after_created_at')::timestamp,
+      sqlc.narg('after_id')::uuid
+    )
+  )
+order by logs.created_at, logs.id
+limit sqlc.arg('batch_size');

@@ -22,4 +22,3 @@ services/tadoku-api/features/scoring/scoring_service.go
 services/tadoku-api/infra/flipt/client_test.go
 services/tadoku-api/infra/postgres/transaction_test.go
 services/tadoku-api/spec/openapi.yaml
-services/tadoku-api/transport/http/authentication_test.go

@@ -55,6 +55,8 @@ go_binary(
 go_test(
     name = "tadoku-api_test",
     srcs = [
+        "config_test.go",
+        "fixtures_test.go",
         "keto_test.go",
         "main_test.go",
     ],

@@ -11,7 +11,6 @@ frontend/packages/paper-ui/src/catalog/validation.ts
 frontend/packages/paper-ui/src/components/forms/controls.tsx
 frontend/packages/paper-ui/src/components/navigation/navigation.tsx
 frontend/packages/paper-ui/tests/forms-feedback.test.tsx
-k8s/dev/base/e2e.cjs
 services/tadoku-api/app/tenantlifecycle/lifecycle_test.go
 services/tadoku-api/app/worker/worker_runtime_test.go
 services/tadoku-api/cmd/tadoku-api/main.go

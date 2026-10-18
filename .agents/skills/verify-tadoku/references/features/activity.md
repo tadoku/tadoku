@@ -9,6 +9,9 @@ list links to `/logs/<id>`; owner and admin actions lead to `/logs/<id>/edit` an
 `/profile/<user-id>/updates`. On Statistics, clicking a non-empty heatmap day
 opens `/profile/<user-id>/updates/1?date=<YYYY-MM-DD>`, which lists only that
 UTC day's updates. A leaderboard participant is another route to a profile.
+On your own profile, the header's **Export** menu offers **Download CSV** and
+**Download JSON** on both Updates and Statistics. Other profiles and anonymous
+visitors do not show this menu.
 
 ## Verify
 
@@ -32,6 +35,14 @@ leaderboard values; don't edit seed logs or another run's records.
    task covers deletion, delete only this run's log through the supported UI and
    verify its removal from the relevant lists/score. Otherwise record retained IDs.
 
+5. On your own profile, download both formats through **Export**. Compare the
+   exported log count with the unfiltered Updates total across all pages. Check
+   the first and last records, amount-only and time-only entries, tags and text.
+   Repeat from Statistics; its year selection does not restrict the export.
+   Visit another profile and sign out to confirm the menu is absent. Direct
+   export requests by guests must return 401; administrators export only their
+   own records.
+
 ## Traps
 
 `release-log-entry-v2` selects between two forms. Its default is false, and the
@@ -50,10 +61,20 @@ log appears. An empty list and an API failure are different states.
 Heatmap days and the `?date=` filter use UTC days, so a filtered Updates list
 can show rows with the neighbouring local date.
 
+Exports use native attachment downloads; inspect the downloaded file rather
+than expecting a rendered page. Deleted logs and contest attachments are
+excluded. CSV starts with a UTF-8 BOM and prefixes formula-like text cells with
+an apostrophe. Tags are sorted and joined with comma and space, so tags containing
+commas require JSON for a lossless representation. JSON preserves text and uses
+null for absent amount, unit, duration and description values.
+
 ## Source anchors
 
 [Log routes](../../../../../frontend/apps/webv2/pages/logs/),
 [forms and API hooks](../../../../../frontend/apps/webv2/app/immersion/),
 [profile routes](../../../../../frontend/apps/webv2/pages/profile/),
 [flag registry](../../../../../frontend/apps/webv2/app/feature-flags/registry.ts),
+[export menu](../../../../../frontend/apps/webv2/app/immersion/LogExportMenu.tsx),
+[export transport](../../../../../services/tadoku-api/transport/http/log_export.go),
+[export HTTP cases](../../../../../services/tadoku-api/e2e/log_export_test.go),
 [backend user journeys](../../../../../services/tadoku-api/e2e/user_journeys_test.go).

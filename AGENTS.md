@@ -100,6 +100,8 @@ files in an area, read its page; those rules are as binding as this file.
 
 ## Checks before a pull request
 
+- Every change: `./tools/ci/check_file_sizes.sh`. A handwritten file over
+  20,000 bytes fails; split it as its error message describes.
 - Backend: `gofmt -w services/`, `bazel run //:gazelle`,
   `bazel run //tools/ci/commentpolicy`, then
   `bazel build //services/... && bazel test //services/...`.

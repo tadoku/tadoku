@@ -1,6 +1,6 @@
 ---
 title: Module design
-description: How to prefer deep modules, hide implementation decisions, preserve meaningful boundaries and review the knowledge an interface requires of its callers.
+description: How to prefer deep modules, hide implementation decisions, preserve meaningful boundaries, review the knowledge an interface requires of its callers and split a file over the size limit.
 ---
 
 # Module design
@@ -88,4 +88,27 @@ combine a module. Ask:
 A useful improvement removes an internal detail or required step from callers
 while preserving observable behavior and ownership. Verify affected workflows
 using [Verifying changes](../develop/verifying-changes.md). Do not use quotas
-for function size, exported methods or files as a substitute for this review.
+for function size or exported methods as a substitute for this review. The file
+size limit below prompts a split; it does not choose the boundary.
+
+## Splitting a long file
+
+`./tools/ci/check_file_sizes.sh` fails when a handwritten text file is over
+20,000 bytes, about 5,000 tokens. Agents and reviewers read a file whole, so a
+long file costs them context before they reach the part they need.
+
+- Split along responsibilities the file already has: a component with its
+  documentation and fixtures, a domain's schemas and hooks, the tests for one
+  behavior, or a self-contained docs topic.
+- Keep the interface. A package keeps its public exports, a Go package keeps
+  its name and visibility, and a docs page keeps its URL. Inside an
+  application, import from the new module instead of adding a re-export file.
+- Keep each operation readable in one place. Do not split by line count or
+  alphabetically, and do not add pass-through files.
+- In Go, move declarations or tests into another file in the same package. Put
+  test fixtures shared by several test files in a `_test.go` helper file.
+
+Generated files and lockfiles are exempt when `.gitattributes` marks them
+`linguist-generated=true`. `tools/ci/file_size_baseline.txt` lists the files
+that were over the limit when the check was added; delete an entry in the
+change that splits its file.

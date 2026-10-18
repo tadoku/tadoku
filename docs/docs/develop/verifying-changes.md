@@ -58,6 +58,7 @@ explains each command.
 | OpenAPI contract | `./scripts/generate-openapi.sh` and `pnpm api:generate` in `docs/`; commit both outputs |
 | Frontend | In `frontend/`: `pnpm --filter <app> exec tsc --noEmit`, `pnpm --filter <app> lint`, then `pnpm build` |
 | Docs | In `docs/`: `pnpm build` and `pnpm docs:check` |
+| Any file | `./tools/ci/check_file_sizes.sh`; see [Splitting a long file](../architecture/module-design.md#splitting-a-long-file) |
 
 For tenant image, overlay or lifecycle changes, also run:
 

@@ -16,6 +16,7 @@ export interface NavigationDocSpec {
   readonly name: string;
   readonly summary: string;
   readonly fixtureId: string;
+  readonly sourcePath: string;
   readonly react: readonly string[];
   readonly types: readonly string[];
   readonly css: readonly string[];
@@ -68,7 +69,7 @@ function navigationDocument(spec: NavigationDocSpec): CatalogDocument {
     keywords: [spec.name.toLocaleLowerCase(), "navigation", "router neutral", "paper"],
     lifecycle: "Stable",
     reviewDate: REVIEW_DATE,
-    sourcePath: "src/components/navigation/navigation.tsx",
+    sourcePath: spec.sourcePath,
     packageVersion: "0.1.0",
     guidance: {
       whenToUse: [spec.when],

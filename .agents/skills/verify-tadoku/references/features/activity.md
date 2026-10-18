@@ -99,7 +99,10 @@ Run the Webv3 `logging.spec.ts` with the documented fixture environment and Lab
 CA. It verifies invalid-field focus, real amount/time writes, contest selection,
 reload, duplicate-submit prevention, keyboard layouts and expired-session draft
 recovery, server-function CSRF refusal, non-owner mutation refusal and cross-tenant
-isolation. The two-identity suspension case uses only the selected branch tenant
+isolation. Switch accounts in another tab before saving: the old draft must
+remain visible, report that nothing was saved, update the account header and
+create no record for either identity. Public detail must also load with an
+expired cookie. The two-identity suspension case uses only the selected branch tenant
 and restores its Reader role. Delay/abort tests intercept only the browser transport; identify this
 boundary in evidence. An ambiguous save must offer checking existing activity,
 never claim success or retry automatically. Keep authenticated traces/videos off.

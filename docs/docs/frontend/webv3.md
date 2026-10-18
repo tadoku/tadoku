@@ -257,12 +257,14 @@ legacy log-entry feature flag or calculate a provisional score.
 
 A successful save navigates to `/logs/$logId` using the returned ID and displays
 the persisted language, measure, tags, score and contests. Reload reads that
-record again. Public detail omits private contest submissions; only the owner
+record again. An expired session cookie retries a public detail read anonymously. Public detail omits private contest submissions; only the owner
 gets the contest management link to Webv2. History, edit, delete and score preview
 remain Webv2 journeys.
 
 Invalid input focuses the first invalid control. A pending save disables controls
-and repeated submits. Rejected saves keep the draft. An expired session offers
+and repeated submits. Rejected saves keep the draft. Each save checks the current session against the
+account that started the draft; an account switch is refused before the API
+write, updates the header and offers an explicit new draft for the new account. An expired session offers
 login in a new tab so the original form survives. An ambiguous transport failure
 asks the user to check their activity before retrying; the API has no idempotency
 key, so retrying an ambiguous save can create another record. Drafts are held in

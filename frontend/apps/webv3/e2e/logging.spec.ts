@@ -53,10 +53,7 @@ for (const [activity, field, quantity] of [['Reading', 'Amount', '17'], ['Listen
       }
       await route.continue()
     })
-    await save.click()
-    await page.keyboard.press('Enter')
-    await page.keyboard.press('Enter')
-    await page.keyboard.press('Enter')
+    await page.evaluate(() => { const form = document.querySelector<HTMLFormElement>('form[aria-busy]')!; form.requestSubmit(); form.requestSubmit() })
     await expect(page).toHaveURL(/\/logs\/[a-f0-9-]{36}$/)
     expect(posts).toBe(1)
     const id = new URL(page.url()).pathname.split('/').pop()!
@@ -304,4 +301,48 @@ test('branch-only suspension rejects an open draft and renders the suspended acc
     }
     await adminContext.close()
   }
+})
+
+test('a draft cannot be saved under an account switched in another tab', async ({ page, context }, testInfo) => {
+  const adminEmail = process.env.E2E_SECOND_EMAIL
+  const adminPassword = process.env.E2E_SECOND_PASSWORD
+  test.skip(!base || !api || !email || !password || !adminEmail || !adminPassword, 'Set both development fixture identities')
+  await signIn(page)
+  const reader = await (await context.request.get('https://account.tadoku.dev.lab/kratos/sessions/whoami')).json()
+  const description = `account-switch-${Date.now()}`
+  await page.getByLabel('Amount', { exact: true }).fill('11')
+  await page.getByLabel('Description', { exact: true }).fill(description)
+  for (const checkbox of await page.getByRole('group', { name: 'Contests', exact: true }).getByRole('checkbox').all()) await checkbox.uncheck()
+  const other = await context.newPage()
+  await other.goto(`${base}/plan`)
+  await other.getByRole('button', { name: 'Log out', exact: true }).click()
+  await signIn(other, adminEmail!, adminPassword!)
+  const admin = await (await context.request.get('https://account.tadoku.dev.lab/kratos/sessions/whoami')).json()
+  await page.bringToFront()
+  await page.getByRole('button', { name: 'Save activity', exact: true }).click()
+  await expect(page.getByRole('alert')).toContainText('different account. Nothing was saved')
+  await expect(page.getByLabel('Description', { exact: true })).toHaveValue(description)
+  await expect(page.getByLabel('Amount', { exact: true })).toHaveValue('11')
+  await expect(page.getByRole('navigation', { name: 'Main navigation' }).getByText('Dev Admin', { exact: true })).toBeVisible()
+  for (const userId of [reader.identity.id, admin.identity.id]) {
+    const list = await context.request.get(`${api}/immersion/users/${userId}/logs?page_size=100&page=0`)
+    expect((await list.json()).logs.filter((log: { description?: string }) => log.description === description)).toHaveLength(0)
+  }
+  await page.screenshot({ path: testInfo.outputPath('account-switch-blocked.png'), fullPage: true })
+})
+
+test('public activity detail still loads with an expired session cookie and has a title', async ({ page, context }) => {
+  test.skip(!base || !api || !email || !password, 'Set development fixture credentials')
+  await signIn(page)
+  await page.getByLabel('Amount', { exact: true }).fill('2')
+  await page.getByLabel('Description', { exact: true }).fill(`public-expired-${Date.now()}`)
+  await page.getByRole('button', { name: 'Save activity', exact: true }).click()
+  await expect(page).toHaveURL(/\/logs\/[a-f0-9-]{36}$/)
+  const id = new URL(page.url()).pathname.split('/').pop()!
+  const cookie = (await context.cookies()).find(cookie => cookie.name === 'ory_kratos_session')!
+  await context.addCookies([{ ...cookie, value: 'expired' }])
+  await page.reload()
+  await expect(page.getByText(id, { exact: true })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Manage contest submissions' })).toHaveCount(0)
+  await expect(page).toHaveTitle('Activity · Tadoku')
 })

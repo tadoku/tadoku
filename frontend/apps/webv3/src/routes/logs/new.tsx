@@ -20,7 +20,7 @@ function NewLog() {
   const viewer = viewerQuery.data
   const loginUrl = useLoginUrl()
   const { viewerId } = Route.useLoaderData()
-  if (viewerId && (viewer?.status === 'anonymous' || viewer?.status === 'unavailable')) return <SignedInLog key={viewerId} viewerId={viewerId} />
+  if (viewerId) return <SignedInLog key={viewerId} viewerId={viewerId} />
   if (viewer?.status === 'signed-in') return <SignedInLog key={viewer.userId} viewerId={viewer.userId} />
   if (viewer?.status === 'anonymous') return <EmptyState headingLevel={1} title="Sign in to log activity" description="Log in to keep your learning record and submit activity to your contests." actions={<a className={buttonClassName()} href={loginUrl}>Log in</a>} />
   if (viewer?.status === 'banned') return <EmptyState headingLevel={1} title="Your account is suspended" description="Activity cannot be saved for this account." />

@@ -92,6 +92,7 @@ async function checkRuntimeLinks(base, cases) {
 let container
 let developmentContainer
 const runtimeLinks = []
+const mutationProtection = []
 let outcome = 'failed'
 try {
   container = docker('run', '-d', '--read-only', '--cap-drop=ALL', '--security-opt=no-new-privileges',
@@ -127,6 +128,21 @@ try {
   assert.equal(outage.status, 200)
   assert(outageHtml.includes('Account service unavailable'), 'Identity outage did not render the unavailable account state')
   assert(!outageHtml.includes('>Log in<'), 'Identity outage rendered a guest')
+  const createPath = docker('exec', container, 'node', '--input-type=module', '-e', String.raw`
+    import { readdirSync, readFileSync } from 'node:fs';
+    const source = readdirSync('/app/server/_ssr').filter(name => name.endsWith('.mjs'))
+      .map(name => readFileSync('/app/server/_ssr/' + name, 'utf8')).join('\n');
+    const id = source.match(/id:\s*"([a-f0-9]+)",\s*name:\s*"createLog"/)[1];
+    console.log('/_serverFn/' + id);
+  `)
+  for (const headers of [{ Origin: 'https://evil.tadoku.app', 'Sec-Fetch-Site': 'same-site' }, {}]) {
+    const response = await fetch(base + createPath, {
+      method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', ...headers },
+      body: new URLSearchParams({}), redirect: 'manual',
+    })
+    assert.equal(response.status, 403, 'Built createLog did not reject an unsafe request')
+    mutationProtection.push({ path: createPath, origin: headers.Origin || 'absent', status: response.status })
+  }
   const html = await (await fetch(base, { signal: AbortSignal.timeout(15_000) })).text()
   assert(html.includes(contest.title), 'Runtime API override or SSR failed')
   assert(html.includes('https://tadoku.app'), 'Production product links missing')
@@ -164,5 +180,5 @@ try {
   await writeFile(`${artifacts}/result.json`, JSON.stringify({ outcome, image, nodeVersion: process.version,
     revision: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
     fixture: `Synthetic local read-only contest API (${process.env.WEBV3_LANGUAGE_FIXTURE === 'array' ? 'array' : 'null'} language lists); real API/auth/deployment unverified`,
-    command: `node scripts/smoke-webv3-image.mjs ${image}`, writes, runtimeLinks }, null, 2))
+    command: `node scripts/smoke-webv3-image.mjs ${image}`, writes, runtimeLinks, mutationProtection }, null, 2))
 }

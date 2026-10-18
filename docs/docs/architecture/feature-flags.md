@@ -161,7 +161,7 @@ operator UI.
 5. To gate backend behavior, evaluate it in the application layer via the `featureflags` feature service.
 6. To expose it to the browser, add it to both `PublicDecisions` types and the
    service mapping, the `ImmersionFeatureFlagDecisions` schema in
-   `services/tadoku-api/spec/openapi.yaml` and `services/tadoku-api/transport/http/feature_flags.go`.
+   `services/tadoku-api/spec/openapi/schemas/immersion.yaml` and `services/tadoku-api/transport/http/feature_flags.go`.
    Run `./scripts/generate-openapi.sh` and `pnpm api:generate`, and update the
    `ImmersionFeatureFlagDecisions` goldens.
 7. For named-user access, add a segment and rollout to `features.yaml`, the key

@@ -75,7 +75,7 @@ see [Contributing workflow](../develop/contributing.md#cms-managed-content).
 - [Go style](./go-style.md): read before writing or changing any handwritten
   Go, including tests; covers wrapping, blank-line grouping and SQL in Go.
 - [Contract and OpenAPI](./contract.md): read before changing
-  `spec/openapi.yaml`, a request or response shape, or generated HTTP code.
+  the OpenAPI contract, a request or response shape, or generated HTTP code.
 - [Database and migrations](./database.md): read before writing a migration,
   changing a SQL query or opening a transaction.
 - [Jobs and worker](./jobs.md): read before adding background work or changing

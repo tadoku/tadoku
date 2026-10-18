@@ -1,0 +1,196 @@
+paths:
+  "/content/announcements/{namespace}/active":
+    get:
+      summary: Lists currently active announcements
+      operationId: ContentAnnouncementListActive
+      tags:
+        - announcements
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContentAnnouncements"
+      x-tadoku-source: Content
+      x-tadoku-exposure: public
+      x-legacy-path: /announcements/{namespace}/active
+      x-legacy-operation-id: announcementListActive
+  "/content/announcements/{namespace}":
+    post:
+      summary: Creates a new announcement
+      operationId: ContentAnnouncementCreate
+      tags:
+        - announcements
+      security:
+        - ContentcookieAuth: []
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContentAnnouncement"
+      responses:
+        "201":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContentAnnouncement"
+        "400":
+          description: Invalid announcement
+        "409":
+          description: Announcement already exists
+      x-tadoku-source: Content
+      x-tadoku-exposure: public
+      x-legacy-path: /announcements/{namespace}
+      x-legacy-operation-id: announcementCreate
+    get:
+      summary: Lists all announcements
+      operationId: ContentAnnouncementList
+      tags:
+        - announcements
+      security:
+        - ContentcookieAuth: []
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: page_size
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContentAnnouncementList"
+      x-tadoku-source: Content
+      x-tadoku-exposure: public
+      x-legacy-path: /announcements/{namespace}
+      x-legacy-operation-id: announcementList
+  "/content/announcements/{namespace}/{id}":
+    get:
+      summary: Gets an announcement by ID
+      operationId: ContentAnnouncementFindByID
+      tags:
+        - announcements
+      security:
+        - ContentcookieAuth: []
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          description: ID of announcement
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContentAnnouncement"
+        "403":
+          description: Not allowed
+        "404":
+          description: Announcement not found
+      x-tadoku-source: Content
+      x-tadoku-exposure: public
+      x-legacy-path: /announcements/{namespace}/{id}
+      x-legacy-operation-id: announcementFindByID
+    put:
+      summary: Updates an existing announcement
+      operationId: ContentAnnouncementUpdate
+      tags:
+        - announcements
+      security:
+        - ContentcookieAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContentAnnouncement"
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          description: ID of announcement
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContentAnnouncement"
+        "400":
+          description: Invalid announcement
+        "404":
+          description: Announcement does not exist and cannot be updated
+      x-tadoku-source: Content
+      x-tadoku-exposure: public
+      x-legacy-path: /announcements/{namespace}/{id}
+      x-legacy-operation-id: announcementUpdate
+    delete:
+      summary: Deletes an existing announcement
+      operationId: ContentAnnouncementDelete
+      tags:
+        - announcements
+      security:
+        - ContentcookieAuth: []
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          description: ID of announcement
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: successful operation
+        "403":
+          description: Not allowed
+        "404":
+          description: Announcement not found
+      x-tadoku-source: Content
+      x-tadoku-exposure: public
+      x-legacy-path: /announcements/{namespace}/{id}
+      x-legacy-operation-id: announcementDelete

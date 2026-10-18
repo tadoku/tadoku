@@ -1,0 +1,92 @@
+paths:
+  "/immersion/leaderboard/yearly/{year}":
+    get:
+      summary: Fetches the leaderboard for a given year
+      operationId: ImmersionFetchLeaderboardForYear
+      tags:
+        - leaderboard
+      parameters:
+        - name: year
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: page_size
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: language_code
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: activity_id
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionLeaderboard"
+        "404":
+          description: not found
+        "500":
+          description: leaderboard read failed
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-legacy-path: /leaderboard/yearly/{year}
+      x-legacy-operation-id: fetchLeaderboardForYear
+  /immersion/leaderboard/global:
+    get:
+      summary: Fetches the global leaderboard
+      operationId: ImmersionFetchLeaderboardGlobal
+      tags:
+        - leaderboard
+      parameters:
+        - name: page_size
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: language_code
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: activity_id
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionLeaderboard"
+        "404":
+          description: not found
+        "500":
+          description: leaderboard read failed
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-legacy-path: /leaderboard/global
+      x-legacy-operation-id: fetchLeaderboardGlobal

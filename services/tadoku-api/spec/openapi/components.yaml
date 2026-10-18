@@ -1,0 +1,29 @@
+components:
+  securitySchemes:
+    AuthzcookieAuth:
+      type: apiKey
+      in: cookie
+      name: ory_kratos_session
+    ContentcookieAuth:
+      type: apiKey
+      in: cookie
+      name: ory_kratos_session
+    ImmersioncookieAuth:
+      type: apiKey
+      in: cookie
+      name: ory_kratos_session
+    ProfilecookieAuth:
+      type: apiKey
+      in: cookie
+      name: ory_kratos_session
+    AuthzProxyoathkeeperCallbackAuth:
+      type: http
+      scheme: bearer
+      description: Shared callback token presented only by Oathkeeper
+  responses:
+    ImmersionAccountDeletionInProgress:
+      description: account deletion is in progress
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ImmersionErrorResponse"

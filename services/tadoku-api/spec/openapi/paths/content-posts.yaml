@@ -1,0 +1,253 @@
+paths:
+  "/content/posts/{namespace}/{slug}":
+    get:
+      summary: Returns page content for a given slug
+      operationId: ContentPostFindBySlug
+      tags:
+        - posts
+      parameters:
+        - name: slug
+          in: path
+          description: Slug of post to return
+          required: true
+          schema:
+            type: string
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContentPost"
+        "404":
+          description: Post not found or not published
+      x-tadoku-source: Content
+      x-tadoku-exposure: public
+      x-legacy-path: /posts/{namespace}/{slug}
+      x-legacy-operation-id: postFindBySlug
+    put:
+      summary: Updates an existing post
+      operationId: ContentPostUpdate
+      tags:
+        - posts
+      security:
+        - ContentcookieAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContentPost"
+      parameters:
+        - name: slug
+          in: path
+          description: ID of post
+          required: true
+          schema:
+            type: string
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContentPost"
+        "400":
+          description: Invalid post
+        "404":
+          description: Post does not exist and cannot be updated
+        "409":
+          description: Post slug already exists
+      x-tadoku-source: Content
+      x-tadoku-exposure: public
+      x-legacy-path: /posts/{namespace}/{id}
+      x-legacy-operation-id: postUpdate
+    delete:
+      summary: Deletes an existing post
+      operationId: ContentPostDelete
+      tags:
+        - posts
+      security:
+        - ContentcookieAuth: []
+      parameters:
+        - name: slug
+          in: path
+          description: ID of post
+          required: true
+          schema:
+            type: string
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: successful operation
+        "403":
+          description: Not allowed
+        "404":
+          description: Post not found
+      x-tadoku-source: Content
+      x-tadoku-exposure: public
+      x-legacy-path: /posts/{namespace}/{id}
+      x-legacy-operation-id: postDelete
+  "/content/posts/{namespace}":
+    post:
+      summary: Creates a new post
+      operationId: ContentPostCreate
+      tags:
+        - posts
+      security:
+        - ContentcookieAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContentPost"
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "201":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContentPost"
+        "400":
+          description: Invalid post
+        "409":
+          description: Post ID or slug already exists
+      x-tadoku-source: Content
+      x-tadoku-exposure: public
+      x-legacy-path: /posts/{namespace}
+      x-legacy-operation-id: postCreate
+    get:
+      summary: lists all posts
+      operationId: ContentPostList
+      tags:
+        - posts
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: page_size
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: include_drafts
+          in: query
+          required: false
+          allowEmptyValue: true
+          schema:
+            type: boolean
+            default: false
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContentPosts"
+      x-tadoku-source: Content
+      x-tadoku-exposure: public
+      x-legacy-path: /posts/{namespace}
+      x-legacy-operation-id: postList
+  "/content/posts/{namespace}/{id}/versions":
+    get:
+      summary: Lists all versions of a post
+      operationId: ContentPostVersionList
+      tags:
+        - posts
+      security:
+        - ContentcookieAuth: []
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          description: ID of post
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContentPostVersions"
+        "403":
+          description: Not allowed
+        "404":
+          description: Post not found
+      x-tadoku-source: Content
+      x-tadoku-exposure: public
+      x-legacy-path: /posts/{namespace}/{id}/versions
+      x-legacy-operation-id: postVersionList
+  "/content/posts/{namespace}/{id}/versions/{contentId}":
+    get:
+      summary: Gets a specific version of a post
+      operationId: ContentPostVersionGet
+      tags:
+        - posts
+      security:
+        - ContentcookieAuth: []
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          description: ID of post
+          required: true
+          schema:
+            type: string
+        - name: contentId
+          in: path
+          description: Content ID of the version
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContentPostVersion"
+        "403":
+          description: Not allowed
+        "404":
+          description: Post or version not found
+      x-tadoku-source: Content
+      x-tadoku-exposure: public
+      x-legacy-path: /posts/{namespace}/{id}/versions/{contentId}
+      x-legacy-operation-id: postVersionGet

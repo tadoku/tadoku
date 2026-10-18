@@ -1,0 +1,401 @@
+paths:
+  /immersion/logs:
+    post:
+      summary: Submits a new log
+      operationId: ImmersionLogCreate
+      tags:
+        - logs
+      security:
+        - ImmersioncookieAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - language_code
+                - activity_id
+                - tags
+              properties:
+                registration_ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                language_code:
+                  type: string
+                  example: zho
+                activity_id:
+                  format: int32
+                  type: integer
+                amount:
+                  type: number
+                  format: float
+                unit_id:
+                  type: string
+                  format: uuid
+                unit_key:
+                  type: string
+                duration_seconds:
+                  type: integer
+                  format: int32
+                tags:
+                  type: array
+                  items:
+                    type: string
+                  example:
+                    - book
+                    - fiction
+                description:
+                  type: string
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionLog"
+        "400":
+          description: invalid submission
+        "409":
+          $ref: "#/components/responses/ImmersionAccountDeletionInProgress"
+        "500":
+          description: internal server error
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-legacy-path: /logs
+      x-legacy-operation-id: logCreate
+  /immersion/logs/export:
+    get:
+      summary: Exports your activity logs
+      description: >-
+        Downloads every active log belonging to the authenticated user, oldest first
+        by created_at then id. Deleted logs, other users' logs and contest attachments
+        are excluded, including for administrators. JSON contains a logs array.
+        CSV uses the same twelve fields in the documented column order, UTF-8 with
+        a BOM, and LF line endings. Nullable CSV values are empty cells. Text cells
+        beginning with =, +, -, @, tab or carriage return are prefixed with an
+        apostrophe to prevent spreadsheet formulas; JSON text is unchanged.
+        Tags are sorted alphabetically and joined with ", " in CSV. Tags containing
+        commas are ambiguous in CSV; use JSON for a lossless export.
+      operationId: ImmersionLogExport
+      tags:
+        - logs
+      security:
+        - ImmersioncookieAuth: []
+      parameters:
+        - name: format
+          in: query
+          required: true
+          description: Attachment format.
+          schema:
+            type: string
+            enum: [csv, json]
+      responses:
+        "200":
+          description: Your active logs as a downloadable attachment.
+          headers:
+            Content-Disposition:
+              description: Attachment with filename tadoku-logs.csv or tadoku-logs.json.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionLogExport"
+            text/csv:
+              schema:
+                type: string
+        "400":
+          description: Missing or unsupported format.
+        "401":
+          description: Authentication required.
+        "500":
+          description: Internal server error.
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-legacy-path: /logs/export
+      x-legacy-operation-id: logExport
+  /immersion/logs/score-preview:
+    post:
+      summary: Previews platform and contest scores without creating a log
+      operationId: ImmersionScorePreview
+      tags:
+        - logs
+      security:
+        - ImmersioncookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - language_code
+                - activity_id
+                - tags
+              properties:
+                registration_ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                language_code:
+                  type: string
+                  example: jpn
+                activity_id:
+                  format: int32
+                  type: integer
+                amount:
+                  type: number
+                  format: float
+                unit_id:
+                  type: string
+                  format: uuid
+                unit_key:
+                  type: string
+                duration_seconds:
+                  type: integer
+                  format: int32
+                tags:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionScorePreview"
+        "400":
+          description: invalid preview input
+        "500":
+          description: internal server error
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-legacy-path: /logs/score-preview
+      x-legacy-operation-id: scorePreview
+  "/immersion/logs/{id}":
+    get:
+      summary: Fetches a log by id
+      operationId: ImmersionLogFindByID
+      tags:
+        - logs
+      parameters:
+        - name: id
+          in: path
+          description: ID of log to return
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionLog"
+        "404":
+          description: not found
+        "500":
+          description: log could not be fetched
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-legacy-path: /logs/{id}
+      x-legacy-operation-id: logFindByID
+    delete:
+      summary: Deletes a log by id
+      operationId: ImmersionLogDeleteByID
+      tags:
+        - logs
+      parameters:
+        - name: id
+          in: path
+          description: ID of log to delete
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: successful operation
+        "401":
+          description: unauthorized
+        "403":
+          description: forbidden
+        "404":
+          description: not found
+        "409":
+          $ref: "#/components/responses/ImmersionAccountDeletionInProgress"
+        "500":
+          description: internal server error
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-legacy-path: /logs/{id}
+      x-legacy-operation-id: logDeleteByID
+    put:
+      summary: Updates an existing log
+      operationId: ImmersionLogUpdate
+      tags:
+        - logs
+      security:
+        - ImmersioncookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: ID of log to update
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - tags
+              properties:
+                amount:
+                  type: number
+                  format: float
+                unit_id:
+                  type: string
+                  format: uuid
+                unit_key:
+                  type: string
+                duration_seconds:
+                  type: integer
+                  format: int32
+                tags:
+                  type: array
+                  items:
+                    type: string
+                  example:
+                    - book
+                    - fiction
+                description:
+                  type: string
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionLog"
+        "400":
+          description: invalid request
+        "401":
+          description: unauthorized
+        "403":
+          description: forbidden
+        "404":
+          description: not found
+        "409":
+          $ref: "#/components/responses/ImmersionAccountDeletionInProgress"
+        "500":
+          description: internal server error
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-legacy-path: /logs/{id}
+      x-legacy-operation-id: logUpdate
+  "/immersion/logs/{id}/contest-registrations":
+    put:
+      summary: Updates the contest registrations for a log
+      operationId: ImmersionLogContestRegistrationUpdate
+      tags:
+        - logs
+      security:
+        - ImmersioncookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: ID of log
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - registration_ids
+              properties:
+                registration_ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionLog"
+        "400":
+          description: invalid registration selection
+        "401":
+          description: unauthorized
+        "403":
+          description: forbidden (neither log owner nor administrator)
+        "404":
+          description: log not found
+        "409":
+          $ref: "#/components/responses/ImmersionAccountDeletionInProgress"
+        "500":
+          description: internal server error
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-legacy-path: /logs/{id}/contest-registrations
+      x-legacy-operation-id: logContestRegistrationUpdate
+  /immersion/logs/configuration-options:
+    get:
+      summary: Fetches the configuration options for a log
+      operationId: ImmersionLogGetConfigurations
+      tags:
+        - logs
+      security:
+        - ImmersioncookieAuth: []
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionLogConfigurationOptions"
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-legacy-path: /logs/configuration-options
+      x-legacy-operation-id: logGetConfigurations
+  /immersion/logs/tag-suggestions:
+    get:
+      summary: Fetches tag suggestions for autocomplete
+      operationId: ImmersionLogTagSuggestions
+      tags:
+        - logs
+      security:
+        - ImmersioncookieAuth: []
+      parameters:
+        - name: query
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionTagSuggestions"
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-legacy-path: /logs/tag-suggestions
+      x-legacy-operation-id: logTagSuggestions

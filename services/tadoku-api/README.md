@@ -4,7 +4,8 @@ Tadoku API is Tadoku's only backend. It serves every public HTTP operation,
 which the gateway exposes under `/api`, and owns the PostgreSQL schema. A
 separate `tadoku-worker` process runs its typed background jobs. Its canonical
 HTTP contract is
-[`spec/openapi.yaml`](spec/openapi.yaml).
+[`spec/openapi.yaml`](spec/openapi.yaml), generated from the fragments in
+[`spec/openapi/`](spec/openapi/).
 
 ## Commands
 
@@ -17,7 +18,7 @@ bazel test //services/tadoku-api/... --test_output=errors
 bazel test //services/tadoku-api/e2e:e2e_test --test_output=errors  # one target
 bazel run //:gazelle            # after adding Go files or changing imports
 ./scripts/generate-sqlc.sh      # after changing a SQL query
-./scripts/generate-openapi.sh   # after changing spec/openapi.yaml
+./scripts/generate-openapi.sh   # after changing a contract fragment in spec/openapi/
 ```
 
 ## Documentation

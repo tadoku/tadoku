@@ -1,0 +1,247 @@
+components:
+  schemas:
+    ImmersionErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          enum:
+            - account_deletion_in_progress
+    ImmersionFeatureFlagDecisions:
+      type: object
+      additionalProperties: false
+      required:
+        - release-log-entry-v2
+      properties:
+        release-log-entry-v2:
+          type: boolean
+    ImmersionFeatureFlagDecisionsResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - decisions
+      properties:
+        decisions:
+          $ref: "#/components/schemas/ImmersionFeatureFlagDecisions"
+    ImmersionManagedFeatureFlagKey:
+      type: string
+      enum:
+        - release-log-entry-v2
+    ImmersionFeatureAccessResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - enabled
+        - changed
+        - environment
+        - revision
+      properties:
+        enabled:
+          type: boolean
+        changed:
+          type: boolean
+        environment:
+          type: string
+          enum:
+            - local
+            - production
+        revision:
+          type: string
+          pattern: ^[0-9a-f]{40}$
+    ImmersionUserProfile:
+      type: object
+      required:
+        - id
+        - display_name
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        display_name:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          example: 2022-12-14T19:48:00Z
+    ImmersionUserActivityScore:
+      type: object
+      required:
+        - date
+        - score
+      properties:
+        date:
+          type: string
+          format: date
+          example: "2022-12-14"
+        score:
+          type: number
+          format: float
+    ImmersionUserActivity:
+      type: object
+      required:
+        - total_updates
+        - scores
+      properties:
+        total_updates:
+          type: integer
+        scores:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImmersionUserActivityScore"
+    ImmersionActivitySplitScore:
+      type: object
+      required:
+        - activity_id
+        - activity_name
+        - score
+      properties:
+        activity_id:
+          type: integer
+        activity_name:
+          type: string
+        score:
+          type: number
+          format: float
+    ImmersionActivitySplit:
+      type: object
+      required:
+        - activities
+      properties:
+        activities:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImmersionActivitySplitScore"
+    ImmersionLogConfigurationOptions:
+      allOf:
+        - $ref: "#/components/schemas/ImmersionLanguages"
+        - $ref: "#/components/schemas/ImmersionActivities"
+        - $ref: "#/components/schemas/ImmersionUnits"
+        - type: object
+          required:
+            - scoring_engine_enabled
+          properties:
+            user_language_codes:
+              type: array
+              items:
+                type: string
+            scoring_engine_enabled:
+              type: boolean
+    ImmersionUnit:
+      type: object
+      required:
+        - id
+        - unit_key
+        - log_activity_id
+        - name
+        - modifier
+      properties:
+        id:
+          type: string
+          format: uuid
+        unit_key:
+          type: string
+          example: reading_page
+        log_activity_id:
+          type: integer
+        name:
+          type: string
+          example: Page
+        modifier:
+          type: number
+          example: 3.14
+        language_code:
+          type: string
+          example: jpa
+    ImmersionUnits:
+      type: object
+      required:
+        - units
+      properties:
+        units:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImmersionUnit"
+    ImmersionTagSuggestion:
+      type: object
+      required:
+        - tag
+        - count
+      properties:
+        tag:
+          type: string
+        count:
+          type: integer
+    ImmersionTagSuggestions:
+      type: object
+      required:
+        - suggestions
+      properties:
+        suggestions:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImmersionTagSuggestion"
+    ImmersionContestConfigurationOptions:
+      allOf:
+        - $ref: "#/components/schemas/ImmersionLanguages"
+        - $ref: "#/components/schemas/ImmersionActivities"
+        - type: object
+          required:
+            - can_create_official_round
+          properties:
+            can_create_official_round:
+              type: boolean
+    ImmersionLanguage:
+      type: object
+      required:
+        - code
+        - name
+      properties:
+        code:
+          type: string
+          example: jpa
+          description: In ISO-639-3
+            https://en.wikipedia.org/wiki/Wikipedia:WikiProject_Languages/List_of_ISO_639-3_language_codes_(2019)
+        name:
+          type: string
+          example: Japanese
+    ImmersionLanguages:
+      type: object
+      required:
+        - languages
+      properties:
+        languages:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImmersionLanguage"
+    ImmersionActivity:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          format: int32
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Reading
+        default:
+          type: boolean
+        input_type:
+          type: string
+          enum:
+            - amount_primary
+            - time_primary
+    ImmersionActivities:
+      type: object
+      required:
+        - activities
+      properties:
+        activities:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImmersionActivity"

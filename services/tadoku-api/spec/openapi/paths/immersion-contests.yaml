@@ -1,0 +1,533 @@
+paths:
+  /immersion/contests:
+    post:
+      summary: Creates a new contest
+      operationId: ImmersionContestCreate
+      tags:
+        - contests
+      security:
+        - ImmersioncookieAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ImmersionContest"
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionContest"
+        "400":
+          description: Invalid contest
+        "403":
+          description: Not allowed to create this contest
+        "409":
+          $ref: "#/components/responses/ImmersionAccountDeletionInProgress"
+        "500":
+          description: Invalid authenticated identity
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - message
+                properties:
+                  message:
+                    type: string
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-legacy-path: /contests
+      x-legacy-operation-id: contestCreate
+    get:
+      summary: Lists all the contests, paginated
+      operationId: ImmersionContestList
+      tags:
+        - contests
+      parameters:
+        - name: page_size
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: include_deleted
+          in: query
+          required: false
+          allowEmptyValue: true
+          schema:
+            type: boolean
+        - name: official
+          in: query
+          required: false
+          allowEmptyValue: true
+          schema:
+            type: boolean
+        - name: user_id
+          in: query
+          required: false
+          allowEmptyValue: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionContests"
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-legacy-path: /contests
+      x-legacy-operation-id: contestList
+  /immersion/contests/create-permissions:
+    get:
+      summary: Check if user has permission to create a new contest
+      operationId: ImmersionContestCreatePermissionCheck
+      tags:
+        - contests
+      security:
+        - ImmersioncookieAuth: []
+      responses:
+        "200":
+          description: Allowed to create a contest
+        "403":
+          description: Not allowed to create a contest
+        "404":
+          description: User identity not found
+        "500":
+          description: Permission check failed
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - message
+                properties:
+                  message:
+                    type: string
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-legacy-path: /contests/create-permissions
+      x-legacy-operation-id: contestCreatePermissionCheck
+  "/immersion/contests/{id}":
+    get:
+      summary: Fetches a contest by id
+      operationId: ImmersionContestFindByID
+      tags:
+        - contests
+      parameters:
+        - name: id
+          in: path
+          description: ID of contest to return
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionContestView"
+        "404":
+          description: not found
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-legacy-path: /contests/{id}
+      x-legacy-operation-id: contestFindByID
+  /immersion/contests/latest-official:
+    get:
+      summary: Fetches the latest official contest
+      operationId: ImmersionContestFindLatestOfficial
+      tags:
+        - contests
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionContestView"
+        "404":
+          description: not found
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-legacy-path: /contests/latest-official
+      x-legacy-operation-id: contestFindLatestOfficial
+  "/immersion/contests/{id}/registration":
+    get:
+      summary: Fetches a contest registration if it exists
+      operationId: ImmersionContestFindRegistration
+      tags:
+        - contests
+      security:
+        - ImmersioncookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionContestRegistration"
+        "204":
+          description: registration does not exist
+        "401":
+          description: unauthorized
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-legacy-path: /contests/{id}/registration
+      x-legacy-operation-id: contestFindRegistration
+    post:
+      summary: Creates or updates a registration for a contest
+      operationId: ImmersionContestRegistrationUpsert
+      tags:
+        - contests
+      security:
+        - ImmersioncookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - language_codes
+              properties:
+                language_codes:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        "200":
+          description: successful operation
+        "400":
+          description: language combination is invalid
+        "401":
+          description: unauthorized
+        "404":
+          description: contest not found
+        "409":
+          $ref: "#/components/responses/ImmersionAccountDeletionInProgress"
+        "500":
+          description: Invalid authenticated identity or persistence failure
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - message
+                properties:
+                  message:
+                    type: string
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-legacy-path: /contests/{id}/registration
+      x-legacy-operation-id: contestRegistrationUpsert
+  "/immersion/contests/{id}/leaderboard":
+    get:
+      summary: Fetches the leaderboard for a contest
+      operationId: ImmersionContestFetchLeaderboard
+      tags:
+        - contests
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: page_size
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: language_code
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: activity_id
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionLeaderboard"
+        "404":
+          description: not found
+        "500":
+          description: leaderboard read failed
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-legacy-path: /contests/{id}/leaderboard
+      x-legacy-operation-id: contestFetchLeaderboard
+  "/immersion/contests/{id}/summary":
+    get:
+      summary: Fetches the summary for a contest
+      operationId: ImmersionContestFetchSummary
+      tags:
+        - contests
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionContestSummary"
+        "404":
+          description: not found
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-legacy-path: /contests/{id}/summary
+      x-legacy-operation-id: contestFetchSummary
+  "/immersion/contests/{id}/logs":
+    get:
+      summary: Lists the logs attached to a contest
+      operationId: ImmersionContestListLogs
+      tags:
+        - contests
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: include_deleted
+          in: query
+          required: false
+          allowEmptyValue: true
+          schema:
+            type: boolean
+        - name: page_size
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: user_id
+          in: query
+          required: false
+          allowEmptyValue: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionLogs"
+        "404":
+          description: not found
+        "500":
+          description: log list could not be fetched
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-legacy-path: /contests/{id}/logs
+      x-legacy-operation-id: contestListLogs
+  "/immersion/contests/{id}/moderation/detach/{log_id}":
+    post:
+      summary: Detaches a log from a contest (moderation action)
+      operationId: ImmersionContestModerationDetachLog
+      tags:
+        - contests
+      security:
+        - ImmersioncookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: log_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - reason
+              properties:
+                reason:
+                  type: string
+                  minLength: 1
+                  maxLength: 1000
+      responses:
+        "200":
+          description: successful operation
+        "401":
+          description: unauthorized
+        "403":
+          description: forbidden (not contest admin or site admin)
+        "404":
+          description: contest or log not found
+        "409":
+          $ref: "#/components/responses/ImmersionAccountDeletionInProgress"
+        "500":
+          description: internal server error
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-legacy-path: /contests/{id}/moderation/detach/{log_id}
+      x-legacy-operation-id: contestModerationDetachLog
+  "/immersion/contests/{id}/profile/{user_id}/scores":
+    get:
+      summary: Fetches the scores of a user profile in a contest
+      operationId: ImmersionContestProfileFetchScores
+      tags:
+        - contests_profile
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionContestProfileScores"
+        "404":
+          description: not found
+        "500":
+          description: participant statistics could not be fetched
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-legacy-path: /contests/{id}/profile/{user_id}/scores
+      x-legacy-operation-id: contestProfileFetchScores
+  "/immersion/contests/{id}/profile/{user_id}/activity":
+    get:
+      summary: Fetches the activity of a user profile in a contest
+      operationId: ImmersionContestProfileFetchActivity
+      tags:
+        - contests_profile
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionContestProfileActivity"
+        "404":
+          description: not found
+        "500":
+          description: participant statistics could not be fetched
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-legacy-path: /contests/{id}/profile/{user_id}/activity
+      x-legacy-operation-id: contestProfileFetchActivity
+  /immersion/contests/ongoing-registrations:
+    get:
+      summary: Fetches all the ongoing contest registrations of the logged in user,
+        always in a single page
+      operationId: ImmersionContestFindOngoingRegistrations
+      tags:
+        - contests
+      security:
+        - ImmersioncookieAuth: []
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionContestRegistrations"
+        "401":
+          description: unauthorized
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-legacy-path: /contests/ongoing-registrations
+      x-legacy-operation-id: contestFindOngoingRegistrations
+  /immersion/contests/configuration-options:
+    get:
+      summary: Fetches the configuration options for a new contest
+      operationId: ImmersionContestGetConfigurations
+      tags:
+        - contests
+      security:
+        - ImmersioncookieAuth: []
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionContestConfigurationOptions"
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-legacy-path: /contests/configuration-options
+      x-legacy-operation-id: contestGetConfigurations

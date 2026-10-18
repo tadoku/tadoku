@@ -1,0 +1,12 @@
+components:
+  schemas:
+    AuthzProxyProxyAdminCheckRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - subject
+      properties:
+        subject:
+          type: string
+          format: uuid
+          minLength: 1

@@ -1,0 +1,87 @@
+# Canonical Tadoku HTTP contract.
+openapi: 3.0.3
+info:
+  title: Tadoku API
+  version: 1.0.0
+  license:
+    name: MIT
+    url: https://github.com/tadoku/tadoku/blob/main/LICENSE
+  description: Canonical contract for Tadoku API operations.
+    Callback entries are an inventory, not a gateway exposure change.
+servers:
+  - url: https://tadoku.app/api/internal
+x-tadoku-operational-surfaces:
+  description: >-
+    Manually registered operational endpoints are not business API operations and are excluded
+    from the public documentation projection. Tadoku API exposes GET /livez and GET /readyz on
+    its HTTP listener, and GET /metrics on its separate metrics listener.
+  apis:
+    - tadoku-api
+  health_paths: [/livez, /readyz]
+  metrics_path: /metrics
+x-tadoku-sources:
+  Authz:
+    domain: authz
+    exposure: public
+    info:
+      title: authz-api
+      license:
+        name: MIT
+        url: https://github.com/tadoku/tadoku/blob/main/LICENSE
+      version: 1.0.0
+    servers:
+      - url: https://tadoku.app/api/internal/authz/
+  Content:
+    domain: content
+    exposure: public
+    info:
+      title: content-api
+      license:
+        name: MIT
+        url: https://github.com/tadoku/tadoku/blob/main/LICENSE
+      version: 1.0.0
+    servers:
+      - url: https://tadoku.app/api/internal/content/
+    externalDocs:
+      description: Find out more about Tadoku
+      url: https://tadoku.github.io/tadoku/
+  Immersion:
+    domain: immersion
+    exposure: public
+    info:
+      title: immersion-api
+      license:
+        name: MIT
+        url: https://github.com/tadoku/tadoku/blob/main/LICENSE
+      version: 2.0.0
+    servers:
+      - url: https://tadoku.app/api/internal/immersion/
+    externalDocs:
+      description: Find out more about Tadoku
+      url: https://tadoku.github.io/tadoku/
+  Profile:
+    domain: profile
+    exposure: public
+    info:
+      title: profile-api
+      license:
+        name: MIT
+        url: https://github.com/tadoku/tadoku/blob/main/LICENSE
+      version: 1.0.0
+    servers:
+      - url: https://tadoku.app/api/internal/profile/
+    externalDocs:
+      description: Find out more about Tadoku
+      url: https://tadoku.github.io/tadoku/
+  AuthzProxy:
+    domain: authz
+    exposure: callback
+    info:
+      title: tadoku-api-oathkeeper-callback
+      description: Internal callback API used only by Oathkeeper authorization rules
+      license:
+        name: MIT
+        url: https://github.com/tadoku/tadoku/blob/main/LICENSE
+      version: 1.0.0
+    servers:
+      - url: http://tadoku-api.tdk-tadoku-api/authz/

@@ -3,8 +3,11 @@ load("@rules_go//go:def.bzl", "go_library", "go_test")
 go_test(
     name = "posts_test",
     srcs = [
+        "posts_read_repository_test.go",
         "posts_repository_test.go",
         "posts_service_test.go",
+        "posts_update_repository_test.go",
+        "posts_versions_repository_test.go",
     ],
     args = ["-test.parallel=4"],
     env_inherit = ["TADOKU_TEST_POSTGRES_URL"],

@@ -57,6 +57,11 @@ Group a feature's operations by responsibility, not one file per operation:
 | `<feature>_repository_test.go` | The feature's only database tests, which exercise the repository directly. |
 | `<feature>_cache.go` or `<feature>_store.go` | Optional. The cache or store struct, its constructor and its provider commands; see [Repositories and stores](#repositories-and-stores). |
 
+When one of these files grows too long, move a group of its methods or tests
+into a `<feature>_<topic>_` file that keeps the same suffix, such as
+`<feature>_<topic>_repository.go` or `<feature>_<topic>_repository_test.go`.
+`tools/ci/repopolicy` selects repository and store files by that suffix.
+
 Service orchestration is exercised through HTTP E2Es; see [Testing](./testing.md).
 
 ## Write workflows

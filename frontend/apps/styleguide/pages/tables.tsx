@@ -7,6 +7,9 @@ import exampleCode from '@examples/tables/example.tsx?raw'
 import TableWithActionMenu from '@examples/tables/with-action-menu'
 import withActionMenuCode from '@examples/tables/with-action-menu.tsx?raw'
 
+import ScrollingTable from '@examples/tables/scrolling'
+import scrollingCode from '@examples/tables/scrolling.tsx?raw'
+
 export default function Page() {
   return (
     <>
@@ -18,8 +21,17 @@ export default function Page() {
 
       <Separator />
 
-      <Showcase title="Clickable Rows with ActionMenu" code={withActionMenuCode}>
+      <Showcase
+        title="Clickable Rows with ActionMenu"
+        code={withActionMenuCode}
+      >
         <TableWithActionMenu />
+      </Showcase>
+
+      <Separator />
+
+      <Showcase title="Horizontal scrolling" code={scrollingCode}>
+        <ScrollingTable />
       </Showcase>
     </>
   )

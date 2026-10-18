@@ -4,8 +4,10 @@ go_library(
     name = "logs",
     srcs = [
         "domain.go",
+        "logs_read_repository.go",
         "logs_repository.go",
         "logs_service.go",
+        "logs_statistics_repository.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/features/logs",
     visibility = ["//services/tadoku-api:feature_consumers"],

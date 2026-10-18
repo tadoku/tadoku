@@ -30,7 +30,6 @@ type ScoringComparison struct {
 
 type ScoringObserver struct {
 	comparisons *prometheus.CounterVec
-	enabled     prometheus.Gauge
 	logger      *slog.Logger
 }
 
@@ -48,7 +47,7 @@ func NewScoringObserver(registry *prometheus.Registry, logger *slog.Logger, enab
 	}
 	registry.MustRegister(comparisons, engineEnabled)
 
-	return &ScoringObserver{comparisons: comparisons, enabled: engineEnabled, logger: logger}
+	return &ScoringObserver{comparisons: comparisons, logger: logger}
 }
 
 func (o *ScoringObserver) Observe(ctx context.Context, comparison ScoringComparison) {

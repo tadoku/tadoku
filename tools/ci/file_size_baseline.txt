@@ -1,3 +1,2 @@
 # Files over the size limit when tools/ci/check_file_sizes.sh was added. Delete an entry in the change that splits its file.
-.github/workflows/pr-branch.yaml
 services/tadoku-api/spec/openapi.yaml

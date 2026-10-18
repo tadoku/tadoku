@@ -1,6 +1,7 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { Button, EmptyState, buttonClassName } from 'paper-ui'
+import { useEffect, useState } from 'react'
 import { LogForm } from '../../components/LogForm'
 import { formQueryOptions } from '../../lib/logs'
 import { useLoginUrl, viewerQueryOptions } from '../../lib/session'
@@ -20,8 +21,18 @@ function NewLog() {
   const viewer = viewerQuery.data
   const loginUrl = useLoginUrl()
   const { viewerId } = Route.useLoaderData()
-  if (viewerId) return <SignedInLog key={viewerId} viewerId={viewerId} />
-  if (viewer?.status === 'signed-in') return <SignedInLog key={viewer.userId} viewerId={viewer.userId} />
+  const signedInViewerId = viewer?.status === 'signed-in' ? viewer.userId : null
+  const queryClient = useQueryClient()
+  const [anchor, setAnchor] = useState(viewerId ?? signedInViewerId)
+  useEffect(() => {
+    if (anchor) return
+    return queryClient.getQueryCache().subscribe(() => {
+      const current = queryClient.getQueryData(viewerQueryOptions().queryKey)
+      if (current?.status === 'signed-in') setAnchor(previous => previous ?? current.userId)
+    })
+  }, [anchor, queryClient])
+  const draftViewerId = anchor ?? signedInViewerId
+  if (draftViewerId) return <SignedInLog key={draftViewerId} viewerId={draftViewerId} />
   if (viewer?.status === 'anonymous') return <EmptyState headingLevel={1} title="Sign in to log activity" description="Log in to keep your learning record and submit activity to your contests." actions={<a className={buttonClassName()} href={loginUrl}>Log in</a>} />
   if (viewer?.status === 'banned') return <EmptyState headingLevel={1} title="Your account is suspended" description="Activity cannot be saved for this account." />
   return <EmptyState headingLevel={1} title="Account service unavailable" description="We could not check your session. Try again." actions={<Button onClick={() => void viewerQuery.refetch()}>Try again</Button>} />

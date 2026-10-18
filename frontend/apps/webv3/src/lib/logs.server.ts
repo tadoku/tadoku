@@ -49,7 +49,7 @@ export async function readLog(id: string) {
 export async function saveLog(value: LogFormValue & { viewerId: string }): Promise<Result<ImmersionLog>> {
   const viewer = await readViewer()
   if (viewer.status === 'anonymous') return { ok: false, reason: 'signed-out' }
-  if (viewer.status === 'unavailable') return { ok: false, reason: 'unavailable' }
+  if (viewer.status === 'unavailable') return { ok: false, reason: 'account-unavailable' }
   if (viewer.status === 'banned') return { ok: false, reason: 'forbidden' }
   if (viewer.userId !== value.viewerId) return { ok: false, reason: 'switched' }
   return api('logs', logSchema, {

@@ -36,7 +36,7 @@ export const logForm = z.object({
   registrationIds: z.array(z.uuid()),
 })
 export type LogFormValue = z.infer<typeof logForm>
-export type Failure = 'invalid' | 'signed-out' | 'forbidden' | 'deleting' | 'unavailable' | 'not-found' | 'switched'
+export type Failure = 'invalid' | 'signed-out' | 'forbidden' | 'deleting' | 'unavailable' | 'not-found' | 'switched' | 'account-unavailable'
 export type Result<T> = { ok: true; data: T } | { ok: false; reason: Failure }
 
 export const getLogFormData = createServerFn({ method: 'GET' }).handler(async () => {

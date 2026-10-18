@@ -13,7 +13,8 @@ async function signIn(page: Page, identifier = email!, secret = password!) {
   await page.locator('input[name="identifier"]').fill(identifier)
   await page.locator('input[name="password"]').fill(secret)
   await page.locator('button[type="submit"]').click()
-  await expect(page.getByRole('button', { name: 'Save activity', exact: true })).toBeEnabled()
+  await page.waitForURL(`${base}/logs/new`)
+  await expect(page.getByRole('button', { name: 'Save activity', exact: true })).toBeEnabled({ timeout: 15_000 })
 }
 
 test('native activity link opens an anonymous sign-in prompt', async ({ page }) => {
@@ -346,3 +347,43 @@ test('public activity detail still loads with an expired session cookie and has 
   await expect(page.getByRole('link', { name: 'Manage contest submissions' })).toHaveCount(0)
   await expect(page).toHaveTitle('Activity · Tadoku')
 })
+
+for (const change of ['expiry', 'account switch']) {
+  test(`an anonymously opened form keeps its first signed-in draft after ${change}`, async ({ page, context }, testInfo) => {
+    const adminEmail = process.env.E2E_SECOND_EMAIL
+    const adminPassword = process.env.E2E_SECOND_PASSWORD
+    test.skip(!base || !api || !email || !password || !adminEmail || !adminPassword, 'Set both development fixture identities')
+    await page.clock.install()
+    await page.goto('/logs/new')
+    await expect(page.getByRole('heading', { name: 'Sign in to log activity' })).toBeVisible()
+    const other = await context.newPage()
+    await signIn(other)
+    await page.clock.fastForward(31_000)
+    await page.bringToFront()
+    await page.evaluate(() => window.dispatchEvent(new Event('visibilitychange')))
+    await expect(page.getByRole('button', { name: 'Save activity', exact: true })).toBeEnabled()
+    const description = `anonymous-entry-${change}-${Date.now()}`
+    await page.getByLabel('Amount', { exact: true }).fill('13')
+    await page.getByLabel('Description', { exact: true }).fill(description)
+    await other.bringToFront()
+    await other.getByRole('button', { name: 'Log out', exact: true }).click()
+    if (change === 'account switch') await signIn(other, adminEmail!, adminPassword!)
+    await page.bringToFront()
+    if (change === 'expiry') {
+      await page.clock.fastForward(31_000)
+      await page.evaluate(() => window.dispatchEvent(new Event('visibilitychange')))
+      await expect(page.getByRole('link', { name: 'Log in', exact: true }).first()).toBeVisible()
+    }
+    await expect(page.getByLabel('Amount', { exact: true })).toHaveValue('13')
+    await expect(page.getByLabel('Description', { exact: true })).toHaveValue(description)
+    await page.getByRole('button', { name: 'Save activity', exact: true }).click()
+    await expect(page.getByRole('alert')).toContainText(change === 'expiry' ? 'Your session ended' : 'different account. Nothing was saved')
+    await expect(page.getByLabel('Amount', { exact: true })).toHaveValue('13')
+    await expect(page.getByLabel('Description', { exact: true })).toHaveValue(description)
+    if (change === 'account switch') {
+      await expect(page.getByRole('navigation', { name: 'Main navigation' }).getByText('Dev Admin', { exact: true })).toBeVisible()
+      await expect(page.getByRole('link', { name: 'Start a new activity for this account' })).toBeVisible()
+    }
+    await page.screenshot({ path: testInfo.outputPath(`anonymous-entry-${change.replace(' ', '-')}.png`), fullPage: true })
+  })
+}

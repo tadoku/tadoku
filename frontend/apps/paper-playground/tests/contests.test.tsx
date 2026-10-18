@@ -4,7 +4,10 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { PlaygroundProvider } from '../src/state'
 import { LeaderboardPage } from '../src/pages/LeaderboardPage'
-import { ContestDetailPage, ContestEditorPage, ContestRegistrationPage, ContestsPage } from '../src/pages/ContestsPage'
+import { ContestDetailPage } from '../src/pages/ContestDetailPage'
+import { ContestEditorPage } from '../src/pages/ContestEditorPage'
+import { ContestRegistrationPage } from '../src/pages/ContestRegistrationPage'
+import { ContestsPage } from '../src/pages/ContestsPage'
 
 beforeEach(() => localStorage.clear())
 

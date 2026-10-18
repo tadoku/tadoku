@@ -1,6 +1,6 @@
 import { useCurrentDateTime } from '@app/common/hooks'
 import { useSession, useUserRole } from '@app/common/session'
-import { useContest, useContestRegistration } from '@app/immersion/api'
+import { useContest, useContestRegistration } from '@app/immersion/contest-api'
 import { useRouter } from 'next/router'
 import { Breadcrumb, ButtonGroup, Loading, Tabbar } from 'ui'
 import { DateTime, Interval } from 'luxon'

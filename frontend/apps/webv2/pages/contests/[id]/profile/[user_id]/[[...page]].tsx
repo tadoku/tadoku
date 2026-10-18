@@ -3,7 +3,10 @@ import { Breadcrumb, ButtonGroup, Loading, Pagination } from 'ui'
 import { HomeIcon, UserIcon } from '@heroicons/react/20/solid'
 import { routes } from '@app/common/routes'
 import { ActivityChart } from '@app/immersion/ActivityChart'
-import { useContestLogs, useContestProfileScores } from '@app/immersion/api'
+import {
+  useContestLogs,
+  useContestProfileScores,
+} from '@app/immersion/contest-api'
 import LogsList from '@app/immersion/LogsList'
 import { useEffect, useState } from 'react'
 import { getQueryStringPageParameter } from '@app/common/router'

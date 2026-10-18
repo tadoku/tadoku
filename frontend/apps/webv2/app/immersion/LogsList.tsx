@@ -7,13 +7,12 @@ import {
 import { routes } from '@app/common/routes'
 import { DateTime } from 'luxon'
 import Link from 'next/link'
+import { Logs, Log } from '@app/immersion/api'
 import {
-  Logs,
-  Log,
   useContest,
   useDetachLogFromContest,
   getContestLogsQueryKey,
-} from '@app/immersion/api'
+} from '@app/immersion/contest-api'
 import { UseQueryResult, useQueryClient } from '@tanstack/react-query'
 import {
   colorForActivity,

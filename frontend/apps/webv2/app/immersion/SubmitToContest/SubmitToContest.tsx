@@ -1,11 +1,8 @@
 import { LogDescription } from '@app/immersion/components/LogDescription'
 import { CheckIcon, CheckBadgeIcon } from '@heroicons/react/20/solid'
 import { FormProvider, useForm } from 'react-hook-form'
-import {
-  ContestRegistrationView,
-  Log,
-  useUpdateLogContestRegistrations,
-} from '@app/immersion/api'
+import { Log, useUpdateLogContestRegistrations } from '@app/immersion/api'
+import { ContestRegistrationView } from '@app/immersion/contest-api'
 import { useRouter } from 'next/router'
 import { routes } from '@app/common/routes'
 import { formatScore, formatTracking } from '@app/common/format'

@@ -3,7 +3,7 @@ import { useSession } from '@app/common/session'
 import {
   useContestRegistration,
   useLatestOfficialContest,
-} from '@app/immersion/api'
+} from '@app/immersion/contest-api'
 import { Breadcrumb, ButtonGroup, Loading, Tabbar } from 'ui'
 import { DateTime, Interval } from 'luxon'
 import { HomeIcon } from '@heroicons/react/20/solid'

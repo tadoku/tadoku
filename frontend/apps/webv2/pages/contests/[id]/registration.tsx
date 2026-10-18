@@ -1,7 +1,7 @@
 import { useCurrentDateTime } from '@app/common/hooks'
 import { useRoutes } from '@app/common/routes'
 import { useSessionOrRedirect } from '@app/common/session'
-import { useContest, useContestRegistration } from '@app/immersion/api'
+import { useContest, useContestRegistration } from '@app/immersion/contest-api'
 import { ContestRegistrationForm } from '@app/immersion/ContestRegistration'
 import { ExclamationCircleIcon, HomeIcon } from '@heroicons/react/20/solid'
 import { DateTime, Interval } from 'luxon'

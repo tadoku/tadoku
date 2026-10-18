@@ -2,7 +2,7 @@ import type { NextPage } from 'next'
 import { Breadcrumb, Loading } from 'ui'
 import { HomeIcon } from '@heroicons/react/20/solid'
 import { ContestForm } from '@app/immersion/ContestForm'
-import { useContestConfigurationOptions } from '@app/immersion/api'
+import { useContestConfigurationOptions } from '@app/immersion/contest-api'
 import { routes } from '@app/common/routes'
 import Head from 'next/head'
 

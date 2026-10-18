@@ -1,8 +1,6 @@
 import { formatScore } from '@app/common/format'
-import {
-  ContestRegistrationView,
-  ScorePreview,
-} from '@app/immersion/api'
+import { ContestRegistrationView } from '@app/immersion/contest-api'
+import { ScorePreview } from '@app/immersion/scoring-api'
 
 interface Props {
   preview?: ScorePreview

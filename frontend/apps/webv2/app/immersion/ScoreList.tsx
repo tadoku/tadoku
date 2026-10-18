@@ -1,4 +1,5 @@
-import { Language, Score } from '@app/immersion/api'
+import { Language } from '@app/immersion/api'
+import { Score } from '@app/immersion/scoring-api'
 import { formatScore } from '@app/common/format'
 import { DateTime } from 'luxon'
 

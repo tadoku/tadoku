@@ -42,6 +42,9 @@ vi.mock('@app/immersion/api', () => ({
   useDeleteLog: () => ({ mutate: vi.fn() }),
   useLog,
   useLogConfigurationOptions,
+}))
+
+vi.mock('@app/immersion/contest-api', () => ({
   useOngoingContestRegistrations,
 }))
 

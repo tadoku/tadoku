@@ -17,7 +17,7 @@ import 'chartjs-adapter-luxon'
 import {
   ContestRegistrationView,
   useContestProfileActivity,
-} from '@app/immersion/api'
+} from '@app/immersion/contest-api'
 import { DateTime, Duration, Interval } from 'luxon'
 
 ChartJS.register(

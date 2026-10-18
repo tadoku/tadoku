@@ -4,7 +4,8 @@ import React from 'react'
 import { cleanup, render, screen } from '@testing-library/react'
 import { Settings } from 'luxon'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { Language, Score } from '@app/immersion/api'
+import type { Language } from '@app/immersion/api'
+import type { Score } from '@app/immersion/scoring-api'
 import { ScoreList } from './ScoreList'
 
 Reflect.set(globalThis, 'React', React)

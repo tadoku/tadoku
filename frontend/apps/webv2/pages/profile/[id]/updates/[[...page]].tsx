@@ -2,7 +2,7 @@ import { useRouter } from 'next/router'
 import { Breadcrumb, Flash, Loading, Pagination, Tabbar } from 'ui'
 import { HomeIcon, InformationCircleIcon } from '@heroicons/react/20/solid'
 import { routes } from '@app/common/routes'
-import { useProfileLogs, useUserProfile } from '@app/immersion/api'
+import { useProfileLogs, useUserProfile } from '@app/immersion/profile-api'
 import {
   getQueryStringDateParameter,
   getQueryStringPageParameter,

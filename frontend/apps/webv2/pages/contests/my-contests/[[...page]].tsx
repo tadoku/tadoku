@@ -6,7 +6,7 @@ import {
   useContestConfigurationOptions,
   useContestCreatePermissionCheck,
   useContestList,
-} from '@app/immersion/api'
+} from '@app/immersion/contest-api'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import { getQueryStringPageParameter } from '@app/common/router'

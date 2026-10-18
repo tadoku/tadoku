@@ -1,4 +1,4 @@
-import { ContestView } from '@app/immersion/api'
+import { ContestView } from '@app/immersion/contest-api'
 import { CheckBadgeIcon } from '@heroicons/react/20/solid'
 import { ArrowRightIcon } from '@heroicons/react/24/outline'
 import Link from 'next/link'

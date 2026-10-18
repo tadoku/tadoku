@@ -12,7 +12,7 @@ wiring or a provider client.
 worker, and [Tenant lifecycle command](./tenant-lifecycle.md) covers
 `tadoku-tenant`.
 
-`services/tadoku-api/cmd/tadoku-api/main.go` loads the configuration from
+`services/tadoku-api/cmd/tadoku-api/config.go` loads the configuration from
 environment variables. Development values are in
 `k8s/dev/base/services/tadoku-api.yaml`.
 

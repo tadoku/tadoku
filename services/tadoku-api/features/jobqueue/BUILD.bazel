@@ -26,7 +26,10 @@ go_library(
 go_test(
     name = "jobqueue_test",
     srcs = [
+        "jobqueue_fixtures_test.go",
+        "jobqueue_overrides_repository_test.go",
         "jobqueue_repository_test.go",
+        "jobqueue_retention_repository_test.go",
         "jobqueue_service_test.go",
     ],
     embed = [":jobqueue"],

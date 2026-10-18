@@ -205,3 +205,17 @@ Authv2 uses `/` for Settings, `/login`, `/register` and `/recovery` on `account.
   unchanged unrelated-route denial using synthetic HTTP fixtures. Until the
   changed shared Oathkeeper and identity backend are deployed, that combined
   live boundary remains unverified; a frontend overlay does not replace it.
+
+## Webv3 account bridge
+
+Use `dev url --owner <owner> --host next.tadoku.dev.lab '/plan?source=next#entry'`.
+Anonymous HTML shows Log in with path and search; hydration adds the fragment.
+Sign in through the sibling account host, confirm the exact return and display
+name, reload, then POST Log out and verify home is anonymous and the old session
+is invalid. Check a foreign-origin logout returns 403 without ending the session.
+
+Use Reader, Admin and anonymous contexts for thirty interleaved SSR reads. Each
+response must show only its viewer and disable caching. The application emits
+private, no-store; development ingress replaces it with no-store. Keep traces,
+videos and storage dumps off for authenticated runs. Canonical production and
+branch preview login-return acceptance are separate release gates.

@@ -104,6 +104,12 @@ retain the current UI session until revocation succeeds. A fresh session read
 on each navigation keeps session expiry current without sharing a snapshot
 between tenants.
 
+Webv3 resolves Kratos identity and tenant role on the server and forwards only
+the session cookie. Its login link upgrades the SSR path and search to the full
+browser URL after hydration; without JavaScript fragments cannot be preserved.
+Logout is an ordinary POST form. Its mutation boundary requires the same Origin
+and same-origin Fetch Metadata, and personalized responses disable shared caching.
+
 ## Calling Tadoku API
 
 Every frontend calls Tadoku API through the client generated from

@@ -74,8 +74,8 @@ verification.
 | `PORT` | `5183` | Local development port |
 
 The TanStack server function performs upstream reads, so the browser does not
-need cross-origin API cookies or a CORS exception. The app has no account session or
-API mutation. Local runs default to development API data and Webv2 links; the
+need cross-origin API cookies or a CORS exception. Account sessions are resolved server-side
+using Kratos and the tenant role endpoint; public homepage reads remain anonymous. Local runs default to development API data and Webv2 links; the
 production image defaults both origins to `https://tadoku.app`.
 
 ## Branch routing
@@ -192,3 +192,28 @@ Before the first deployment, the package owner must confirm GHCR package
 visibility and cluster pull access. Newly created packages may be private;
 public unauthenticated pulls require making this package public, otherwise the
 cluster needs an authorized image pull credential.
+
+## Account sessions
+
+The root loader prefetches the viewer into the request's QueryClient. Viewer data
+is separate from the indefinitely fresh sibling URL loader and refetches after
+30 seconds or window focus. No cookie means no upstream session lookup. Only
+`ory_kratos_session` is forwarded to Kratos and the selected API gateway.
+Anonymous, signed-in, banned and unavailable states are distinct.
+
+Account and Kratos origins derive from the runtime Webv2 origin. Branch login
+links target the sibling account host; Kratos stays canonical. Log in preserves
+the router path and search during SSR and adds the current fragment after
+hydration. Without JavaScript the server cannot preserve a fragment.
+
+Log out uses a plain POST form, creates a Kratos browser logout flow on demand,
+and returns home after Kratos invalidates the session. Logout and all non-GET
+server functions require an exact Origin and reject non-same-origin Fetch
+Metadata. Personalized documents and server-function responses emit
+`Cache-Control: private, no-store` and `Vary: Cookie`; development ingress
+replaces Cache-Control with its own `no-store` policy. Health keeps its own headers.
+
+The account E2E uses two existing synthetic identities and anonymous requests,
+including thirty interleaved SSR reads. Authenticated tests disable traces and
+videos and retain no browser storage. Production login return allow-lists must
+accept canonical and branch Webv3 hosts before releasing session support.

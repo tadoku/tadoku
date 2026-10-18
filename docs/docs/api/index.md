@@ -1,10 +1,12 @@
 ---
 title: API Reference
-description: Public HTTP API contracts for Tadoku services
+description: Public HTTP API contracts for Tadoku services, their URLs, and which credentials the gateway accepts, including for third-party clients.
 slug: /api/
 ---
 
 # API Reference
+
+Read this when you call the Tadoku API or build a client for it.
 
 Tadoku's public HTTP APIs are documented from the single
 [Tadoku API contract](https://github.com/tadoku/tadoku/blob/main/services/tadoku-api/spec/openapi.yaml).
@@ -18,16 +20,46 @@ views of that one contract, grouped by domain, and reflect `main`.
 | Profile | 1.0.0 | `https://tadoku.app/api/internal/profile/` | [Browse endpoints](./profile/profile-api) |
 | Authorization | 1.0.0 | `https://tadoku.app/api/internal/authz/` | [Browse endpoints](./authorization/authz-api) |
 
+## URLs
+
+Append an operation's path to its domain's base URL. For example, `POST /logs`
+in the Immersion reference is `POST https://tadoku.app/api/internal/immersion/logs`.
+These are the routes the Tadoku website calls, and `/api/internal` is the only
+API prefix. A path such as `/api/immersion/logs` is not an API route: the
+website answers it with its HTML `404` page.
+
 ## Authentication
 
-Some read operations are available anonymously. Operations marked with
-`cookieAuth` require a valid `ory_kratos_session` cookie and may also require an
-administrator role. The response definitions on each endpoint describe the
-expected authorization failures.
+The gateway in front of Tadoku API authenticates a request in one of two ways:
+
+| Request | Result |
+| --- | --- |
+| No credentials | Runs as an anonymous guest. Operations without `cookieAuth` work. Operations that need a signed-in user return `401`. |
+| `ory_kratos_session` cookie | Runs as that user. Kratos sets the cookie when the user signs in on the Tadoku website. Some operations also require the administrator role. |
+
+The gateway reads no other credential. It ignores a Kratos session token sent
+as `X-Session-Token`, so the request runs as a guest. It rejects a request that
+has an `Authorization` header and no session cookie with `401`. The response
+definitions on each endpoint describe the expected authorization failures.
 
 This documentation displays request schemas and generated code examples, but
 does not send requests from the browser. Interactive requests from the GitHub
 Pages origin need a separately reviewed cross-origin authentication policy.
+
+### Third-party clients
+
+Tadoku has no supported authentication for third-party clients, such as
+e-reader plugins and scripts. There are no API keys, personal access tokens or
+OAuth clients, and the gateway does not accept the session tokens that Kratos
+issues to native apps. Operations that need a signed-in user, such as
+submitting a log, accept only the session cookie from signing in on the Tadoku
+website.
+
+Anonymous read operations need no credentials:
+
+```sh
+curl https://tadoku.app/api/internal/immersion/contests/latest-official
+```
 
 ## Scope
 

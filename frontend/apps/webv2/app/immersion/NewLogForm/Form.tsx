@@ -8,12 +8,12 @@ import { TagsSidebar } from '@app/immersion/components/TagsSidebar'
 import { FormProvider, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
-  ContestRegistrationsView,
   fetchTagSuggestions,
   LogConfigurationOptions,
   useCreateLog,
-  useScorePreview,
 } from '@app/immersion/api'
+import { ContestRegistrationsView } from '@app/immersion/contest-api'
+import { useScorePreview } from '@app/immersion/scoring-api'
 import { useRouter } from 'next/router'
 import { routes } from '@app/common/routes'
 import {

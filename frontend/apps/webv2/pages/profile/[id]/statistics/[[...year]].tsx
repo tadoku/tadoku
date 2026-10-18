@@ -27,7 +27,7 @@ import {
   useUserYearlyActivity,
   useUserYearlyActivitySplit,
   useYearlyContestRegistrations,
-} from '@app/immersion/api'
+} from '@app/immersion/profile-api'
 import { getQueryStringIntParameter } from '@app/common/router'
 import { DateTime, Interval } from 'luxon'
 import { formatScore } from '@app/common/format'

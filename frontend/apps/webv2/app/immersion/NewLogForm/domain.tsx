@@ -1,12 +1,10 @@
 import { z } from 'zod'
+import { Activity, Language, Unit } from '@app/immersion/api'
 import {
-  Activity,
   ContestRegistrationsView,
   ContestRegistrationView,
   ContestView,
-  Language,
-  Unit,
-} from '@app/immersion/api'
+} from '@app/immersion/contest-api'
 import {
   AdjustmentsHorizontalIcon,
   LinkIcon,

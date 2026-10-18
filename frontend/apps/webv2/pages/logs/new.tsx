@@ -1,10 +1,8 @@
 import type { NextPage } from 'next'
 import { Breadcrumb, Loading } from 'ui'
 import { HomeIcon } from '@heroicons/react/20/solid'
-import {
-  useLogConfigurationOptions,
-  useOngoingContestRegistrations,
-} from '@app/immersion/api'
+import { useLogConfigurationOptions } from '@app/immersion/api'
+import { useOngoingContestRegistrations } from '@app/immersion/contest-api'
 import { routes } from '@app/common/routes'
 import { LogForm } from '@app/immersion/NewLogForm/Form'
 import { LogFormV2 } from '@app/immersion/NewLogFormV2/Form'

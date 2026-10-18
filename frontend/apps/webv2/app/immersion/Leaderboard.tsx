@@ -1,5 +1,5 @@
 import { UseQueryResult } from '@tanstack/react-query'
-import { Leaderboard as LeaderboardType } from '@app/immersion/api'
+import { Leaderboard as LeaderboardType } from '@app/immersion/leaderboard-api'
 import { Flash, Loading } from 'ui'
 import { ExclamationCircleIcon } from '@heroicons/react/20/solid'
 import Link from 'next/link'

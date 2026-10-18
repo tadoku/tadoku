@@ -6,9 +6,9 @@ import {
   fetchTagSuggestions,
   LogConfigurationOptions,
   useCreateLogV2,
-  useOngoingContestRegistrations,
-  useScorePreview,
 } from '@app/immersion/api'
+import { useOngoingContestRegistrations } from '@app/immersion/contest-api'
+import { useScorePreview } from '@app/immersion/scoring-api'
 import { useRouter } from 'next/router'
 import { routes } from '@app/common/routes'
 import {

@@ -1,12 +1,12 @@
 import { zodResolver } from '@hookform/resolvers/zod'
+import { LogConfigurationOptions } from '@app/immersion/api'
 import {
-  LogConfigurationOptions,
   ScoringRuleSet,
   ScoringRuleSetDraftPayload,
   useActivateScoringRuleSet,
   useCreateContestScoringRuleSet,
   usePublishScoringRuleSet,
-} from '@app/immersion/api'
+} from '@app/immersion/scoring-api'
 import { FormProvider, useFieldArray, useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { Checkbox, Flash, Input, Select } from 'ui'

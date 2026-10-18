@@ -1,6 +1,7 @@
 import { Breadcrumb, Loading } from 'ui'
 import { HomeIcon } from '@heroicons/react/20/solid'
-import { useLog, useOngoingContestRegistrations } from '@app/immersion/api'
+import { useLog } from '@app/immersion/api'
+import { useOngoingContestRegistrations } from '@app/immersion/contest-api'
 import { routes } from '@app/common/routes'
 import { SubmitToContest } from '@app/immersion/SubmitToContest/SubmitToContest'
 import { useRouter } from 'next/router'

@@ -11,7 +11,7 @@ import {
   useContest,
   useContestLogs,
   useContestRegistration,
-} from '@app/immersion/api'
+} from '@app/immersion/contest-api'
 import { getQueryStringPageParameter } from '@app/common/router'
 import Head from 'next/head'
 import { useEffect, useState } from 'react'

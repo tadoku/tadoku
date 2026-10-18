@@ -1,11 +1,11 @@
 import { useCurrentDateTime, useCurrentLocation } from '@app/common/hooks'
 import { useSession } from '@app/common/session'
 import {
-  useContestLeaderboard,
   ContestView,
   useContestSummary,
   useContestLogs,
-} from '@app/immersion/api'
+} from '@app/immersion/contest-api'
+import { useContestLeaderboard } from '@app/immersion/leaderboard-api'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { Flash, Pagination } from 'ui'

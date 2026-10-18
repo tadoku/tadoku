@@ -4,12 +4,12 @@ import {
   useSession,
   useUserRole,
 } from '@app/common/session'
+import { useLogConfigurationOptions } from '@app/immersion/api'
+import { useContest } from '@app/immersion/contest-api'
 import {
-  useContest,
   useContestScoringRuleSets,
-  useLogConfigurationOptions,
   usePlatformScoringRuleSets,
-} from '@app/immersion/api'
+} from '@app/immersion/scoring-api'
 import { ContestScoringRules } from '@app/immersion/ContestScoringRules'
 import { HomeIcon } from '@heroicons/react/20/solid'
 import { DateTime } from 'luxon'

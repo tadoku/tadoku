@@ -1,4 +1,5 @@
-import { ContestRegistrationView, Log } from '@app/immersion/api'
+import { Log } from '@app/immersion/api'
+import { ContestRegistrationView } from '@app/immersion/contest-api'
 import { DateTime, Interval } from 'luxon'
 
 export interface ContestOption {

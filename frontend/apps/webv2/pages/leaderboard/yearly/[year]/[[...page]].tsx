@@ -3,7 +3,7 @@ import { HomeIcon } from '@heroicons/react/20/solid'
 import { routes } from '@app/common/routes'
 import Head from 'next/head'
 import { Leaderboard } from '@app/immersion/Leaderboard'
-import { useYearlyLeaderboard } from '@app/immersion/api'
+import { useYearlyLeaderboard } from '@app/immersion/leaderboard-api'
 import { useEffect, useState } from 'react'
 import {
   getQueryStringIntParameter,

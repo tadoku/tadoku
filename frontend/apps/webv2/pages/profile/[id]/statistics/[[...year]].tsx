@@ -33,6 +33,7 @@ import { DateTime, Interval } from 'luxon'
 import { formatScore } from '@app/common/format'
 import { ActivitySplitChart } from '@app/immersion/ActivitySplitChart'
 import Head from 'next/head'
+import { LogExportMenu } from '@app/immersion/LogExportMenu'
 
 const registrationsPageSize = 50
 
@@ -109,7 +110,8 @@ const Page = () => {
           <h1 className="title">Profile</h1>
           <h2 className="subtitle">{profile.data.display_name}</h2>
         </div>
-        <div>
+        <div className="h-stack gap-2 items-center">
+          <LogExportMenu userId={userId} />
           <div className="block lg:hidden">
             <ActionMenu links={yearLinks} orientation="right">
               {year}

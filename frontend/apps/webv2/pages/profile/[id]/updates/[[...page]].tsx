@@ -12,6 +12,7 @@ import Link from 'next/link'
 import { DateTime } from 'luxon'
 import { useEffect, useState } from 'react'
 import LogsList from '@app/immersion/LogsList'
+import { LogExportMenu } from '@app/immersion/LogExportMenu'
 
 const Page = () => {
   const router = useRouter()
@@ -79,7 +80,7 @@ const Page = () => {
           <h1 className="title">Profile</h1>
           <h2 className="subtitle">{profile.data.display_name}</h2>
         </div>
-        <div></div>
+        <LogExportMenu userId={userId} />
       </div>
       <Tabbar
         links={[

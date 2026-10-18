@@ -26,6 +26,8 @@ go_test(
     srcs = [
         "pages_repository_test.go",
         "pages_service_test.go",
+        "pages_update_repository_test.go",
+        "pages_versions_repository_test.go",
     ],
     args = ["-test.parallel=4"],
     env_inherit = ["TADOKU_TEST_POSTGRES_URL"],

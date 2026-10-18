@@ -283,6 +283,20 @@
 
   .table-container {
     @apply overflow-x-auto w-full shadow shadow-slate-500/10;
+    background:
+      linear-gradient(to right, theme('colors.white') 30%, rgb(255 255 255 / 0)) left / 2.5rem 100% no-repeat local,
+      linear-gradient(to left, theme('colors.white') 30%, rgb(255 255 255 / 0)) right / 2.5rem 100% no-repeat local,
+      linear-gradient(to right, rgb(15 23 42 / 0.16), rgb(15 23 42 / 0)) left / 0.75rem 100% no-repeat scroll,
+      linear-gradient(to left, rgb(15 23 42 / 0.16), rgb(15 23 42 / 0)) right / 0.75rem 100% no-repeat scroll,
+      theme('colors.white');
+  }
+
+  .table-container > table {
+    @apply bg-transparent;
+  }
+
+  .table-container:focus-visible {
+    @apply outline outline-2 -outline-offset-2 outline-primary;
   }
 
   .tag {

@@ -79,60 +79,63 @@ export default function TableWithActionMenu() {
   })
 
   return (
-    <table className="default w-full border-collapse">
-      <thead>
-        {table.getHeaderGroups().map(headerGroup => (
-          <tr key={headerGroup.id}>
-            {headerGroup.headers.map(header => (
-              <th
-                key={header.id}
-                style={{
-                  width: header.getSize() !== 0 ? header.getSize() : undefined,
-                }}
-                className={`default ${header.column.columnDef.meta?.className}`}
-              >
-                {header.isPlaceholder
-                  ? null
-                  : flexRender(
-                      header.column.columnDef.header,
-                      header.getContext(),
+    <div className="table-container">
+      <table className="default w-full border-collapse">
+        <thead>
+          {table.getHeaderGroups().map(headerGroup => (
+            <tr key={headerGroup.id}>
+              {headerGroup.headers.map(header => (
+                <th
+                  key={header.id}
+                  style={{
+                    width:
+                      header.getSize() !== 0 ? header.getSize() : undefined,
+                  }}
+                  className={`default ${header.column.columnDef.meta?.className}`}
+                >
+                  {header.isPlaceholder
+                    ? null
+                    : flexRender(
+                        header.column.columnDef.header,
+                        header.getContext(),
+                      )}
+                </th>
+              ))}
+            </tr>
+          ))}
+        </thead>
+        <tbody>
+          {table.getRowModel().rows.map(row => (
+            <tr key={row.id} className="link">
+              {row.getVisibleCells().map(cell => {
+                const isActionColumn = cell.column.id === 'actions'
+                return (
+                  <td key={cell.id} className="font-bold link">
+                    {isActionColumn ? (
+                      <div className="h-14 px-4 flex items-center justify-end">
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
+                      </div>
+                    ) : (
+                      <a
+                        href={`#${row.renderValue('rank')}`}
+                        className={`reset ${cell.column.columnDef.meta?.className}`}
+                      >
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
+                      </a>
                     )}
-              </th>
-            ))}
-          </tr>
-        ))}
-      </thead>
-      <tbody>
-        {table.getRowModel().rows.map(row => (
-          <tr key={row.id} className="link">
-            {row.getVisibleCells().map(cell => {
-              const isActionColumn = cell.column.id === 'actions'
-              return (
-                <td key={cell.id} className="font-bold link">
-                  {isActionColumn ? (
-                    <div className="h-14 px-4 flex items-center justify-end">
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </div>
-                  ) : (
-                    <a
-                      href={`#${row.renderValue('rank')}`}
-                      className={`reset ${cell.column.columnDef.meta?.className}`}
-                    >
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </a>
-                  )}
-                </td>
-              )
-            })}
-          </tr>
-        ))}
-      </tbody>
-    </table>
+                  </td>
+                )
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   )
 }

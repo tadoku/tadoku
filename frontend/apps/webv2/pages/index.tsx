@@ -192,44 +192,56 @@ function ContestSchedule() {
 
   return (
     <div className="card p-0">
-      <h2 className="title text-xl p-4 pb-2 lg:p-7 lg:pb-4">
+      <h2
+        id="contest-schedule-title"
+        className="title text-xl p-4 pb-2 lg:p-7 lg:pb-4"
+      >
         Contest Schedule for {year}
       </h2>
-      <table className="default w-full shadow-none">
-        <thead>
-          <tr>
-            <th className="default !pl-4">Round</th>
-            <th className="default">Start</th>
-            <th className="default">End</th>
-            <th className="default">Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {scheduledContests.map(c => {
-            const start = DateTime.utc(year, c.startMonth, 1)
-            const end = DateTime.utc(year, c.startMonth, c.endDay).endOf('day')
-            const interval = Interval.fromDateTimes(start, end)
-            return (
-              <tr key={c.name}>
-                <td className="default !pl-7">
-                  <strong>{c.name}</strong>
-                </td>
-                <td className="default">{start.toFormat('MMM d')}</td>
-                <td className="default">{end.toFormat('MMM d')}</td>
-                <td className="default">
-                  {interval.isAfter(now) ? (
-                    <span>Scheduled</span>
-                  ) : interval.contains(now) ? (
-                    <strong className="text-lime-700">Ongoing</strong>
-                  ) : (
-                    <span className="text-red-700">Ended</span>
-                  )}
-                </td>
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
+      <div
+        className="table-container shadow-transparent"
+        role="region"
+        tabIndex={0}
+        aria-labelledby="contest-schedule-title"
+      >
+        <table className="default w-full shadow-none">
+          <thead>
+            <tr>
+              <th className="default !pl-4">Round</th>
+              <th className="default">Start</th>
+              <th className="default">End</th>
+              <th className="default">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {scheduledContests.map(c => {
+              const start = DateTime.utc(year, c.startMonth, 1)
+              const end = DateTime.utc(year, c.startMonth, c.endDay).endOf(
+                'day',
+              )
+              const interval = Interval.fromDateTimes(start, end)
+              return (
+                <tr key={c.name}>
+                  <td className="default !pl-7">
+                    <strong>{c.name}</strong>
+                  </td>
+                  <td className="default">{start.toFormat('MMM d')}</td>
+                  <td className="default">{end.toFormat('MMM d')}</td>
+                  <td className="default">
+                    {interval.isAfter(now) ? (
+                      <span>Scheduled</span>
+                    ) : interval.contains(now) ? (
+                      <strong className="text-lime-700">Ongoing</strong>
+                    ) : (
+                      <span className="text-red-700">Ended</span>
+                    )}
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }

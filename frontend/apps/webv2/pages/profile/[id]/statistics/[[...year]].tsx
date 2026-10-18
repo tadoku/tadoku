@@ -154,7 +154,7 @@ const Page = () => {
                 ? `${activitySummary.data.total_updates} updates in ${year}`
                 : 'Updates'}
             </h3>
-            <div className="w-full max-h-28 mt-4">
+            <div className="w-full mt-4">
               <Flash
                 style="error"
                 IconComponent={ExclamationCircleIcon}

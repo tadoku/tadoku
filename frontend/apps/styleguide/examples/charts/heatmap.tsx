@@ -10,7 +10,7 @@ export default function HeatmapExample() {
     .splitBy({ day: 1 })
     .map(it => it.start)
     .map(date => {
-      const value = Math.random() < 0.3 ? 0 : Math.random() * 100
+      const value = Math.random() < 0.3 ? 0 : Math.random() * 400
       return {
         date: date?.toISODate() ?? 'unknown',
         value,

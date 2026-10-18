@@ -9,6 +9,7 @@ list links to `/logs/<id>`; owner and admin actions lead to `/logs/<id>/edit` an
 `/profile/<user-id>/updates`. On Statistics, clicking a non-empty heatmap day
 opens `/profile/<user-id>/updates/1?date=<YYYY-MM-DD>`, which lists only that
 UTC day's updates. A leaderboard participant is another route to a profile.
+The heatmap colours days by fixed points-per-day bins shown in its legend.
 On your own profile, the header's **Export** menu offers **Download CSV** and
 **Download JSON** on both Updates and Statistics. Other profiles and anonymous
 visitors do not show this menu.

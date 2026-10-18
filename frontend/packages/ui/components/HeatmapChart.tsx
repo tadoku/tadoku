@@ -25,6 +25,15 @@ const offset = {
   y: 15,
 }
 
+// Fixed bins keep record days from recolouring earlier activity.
+const emptyLevel = { label: '0', fillClass: 'fill-stone-200' }
+const pointLevels = [
+  { lowerBound: 0, label: '< 30', fillClass: 'fill-teal-400' },
+  { lowerBound: 30, label: '30+', fillClass: 'fill-teal-600' },
+  { lowerBound: 100, label: '100+', fillClass: 'fill-teal-800' },
+  { lowerBound: 300, label: '300+', fillClass: 'fill-teal-950' },
+]
+
 export function HeatmapChart({ id, data, year, getHref }: Props) {
   const start = DateTime.fromObject({ year, month: 1, day: 1 })
   const end = DateTime.fromObject({ year, month: 12, day: 31 })
@@ -65,9 +74,6 @@ export function HeatmapChart({ id, data, year, getHref }: Props) {
     }
   }
 
-  const allValues = cols.flatMap(it => it.map(it => it?.value ?? 0))
-  const maxValue = Math.max(...allValues)
-
   const weekdays = ['Mon', undefined, 'Wed', undefined, 'Fri', undefined, 'Sun']
 
   let lastMonth = 0
@@ -89,76 +95,96 @@ export function HeatmapChart({ id, data, year, getHref }: Props) {
   const height = 7 * rowHeight + 6 * padding + offset.y
 
   return (
-    <svg
-      width={width}
-      height={height}
-      viewBox={`0 0 ${width} ${height}`}
-      className="overflow-visible"
-    >
-      {weekdays.map((label, row) => {
-        if (!label) {
-          return null
-        }
+    <>
+      <svg
+        width={width}
+        height={height}
+        viewBox={`0 0 ${width} ${height}`}
+        className="overflow-visible"
+      >
+        {weekdays.map((label, row) => {
+          if (!label) {
+            return null
+          }
 
-        return (
-          <text
-            textAnchor="end"
-            x={offset.x - padding * 2}
-            y={offset.y + rowHeight * row + padding * row}
-            key={label}
-            dominantBaseline="hanging"
-            style={{ fontSize: 10 }}
-          >
-            {label}
-          </text>
-        )
-      })}
-      {months.map((label, col) => {
-        if (!label) {
-          return null
-        }
+          return (
+            <text
+              textAnchor="end"
+              x={offset.x - padding * 2}
+              y={offset.y + rowHeight * row + padding * row}
+              key={label}
+              dominantBaseline="hanging"
+              style={{ fontSize: 10 }}
+            >
+              {label}
+            </text>
+          )
+        })}
+        {months.map((label, col) => {
+          if (!label) {
+            return null
+          }
 
-        return (
-          <text
-            textAnchor="start"
-            x={offset.x + colWidth * col + padding * col}
-            y={0}
-            key={label}
-            dominantBaseline="hanging"
-            style={{ fontSize: 10 }}
-          >
-            {label}
-          </text>
-        )
-      })}
-      {cols.map((rows, col) =>
-        rows.map((cell, row) => (
-          <Cell
-            key={`${cell}-${row}`}
-            value={cell?.value}
-            tooltipId={tooltipId}
-            maxValue={maxValue}
-            col={col}
-            row={row}
-            tooltip={cell?.tooltip}
-            href={
-              cell && cell.value > 0 ? getHref?.(cell.x.toISODate()) : undefined
-            }
-            label={cell?.tooltip ?? cell?.x.toISODate()}
-            parentHeight={height}
-            parentWidth={width}
-          />
-        )),
-      )}
-      <g id={tooltipId} className="outline-none"></g>
-    </svg>
+          return (
+            <text
+              textAnchor="start"
+              x={offset.x + colWidth * col + padding * col}
+              y={0}
+              key={label}
+              dominantBaseline="hanging"
+              style={{ fontSize: 10 }}
+            >
+              {label}
+            </text>
+          )
+        })}
+        {cols.map((rows, col) =>
+          rows.map((cell, row) => (
+            <Cell
+              key={`${cell}-${row}`}
+              value={cell?.value}
+              tooltipId={tooltipId}
+              col={col}
+              row={row}
+              tooltip={cell?.tooltip}
+              href={
+                cell && cell.value > 0
+                  ? getHref?.(cell.x.toISODate())
+                  : undefined
+              }
+              label={cell?.tooltip ?? cell?.x.toISODate()}
+              parentHeight={height}
+              parentWidth={width}
+            />
+          )),
+        )}
+        <g id={tooltipId} className="outline-none"></g>
+      </svg>
+      <div
+        className="flex items-center justify-end gap-3 mt-2 text-xs text-slate-500"
+        style={{ width }}
+      >
+        <span>Points per day</span>
+        {[emptyLevel, ...pointLevels].map(level => (
+          <span key={level.label} className="inline-flex items-center gap-1">
+            <svg width={colWidth} height={rowHeight} aria-hidden="true">
+              <rect
+                width={colWidth}
+                height={rowHeight}
+                className={level.fillClass}
+              />
+            </svg>
+            <span>{level.label}</span>
+          </span>
+        ))}
+      </div>
+    </>
   )
 }
 
 function Cell({
   value,
   tooltipId,
-  maxValue,
   tooltip,
   href,
   label,
@@ -168,7 +194,6 @@ function Cell({
 }: {
   value: number | undefined
   tooltipId: string
-  maxValue: number
   tooltip?: string
   href?: string
   label?: string
@@ -190,9 +215,7 @@ function Cell({
       x={x}
       y={y}
       fill={'transparent'}
-      className={`${
-        mounted ? getCellDepthClass(maxValue, value) : 'fill-stone-200'
-      }`}
+      className={mounted ? getCellDepthClass(value) : emptyLevel.fillClass}
       strokeWidth={0}
       ref={hoverRef}
     ></rect>
@@ -363,26 +386,22 @@ function pointsForRect({
   return `${left},${top} ${right},${top} ${middle},${bottom}`
 }
 
-function getCellDepthClass(max: number, value: number | undefined) {
+function getCellDepthClass(value: number | undefined) {
   if (value === undefined) {
     return ''
   }
 
-  if (value === 0) {
-    return 'fill-stone-200'
+  // Bins match the one-decimal precision used to display scores.
+  const roundedValue = Math.round(value * 10) / 10
+  if (roundedValue === 0) {
+    return emptyLevel.fillClass
   }
 
-  const ratio = value / max
-
-  if (ratio < 0.25) {
-    return 'fill-teal-300'
-  }
-  if (ratio < 0.5) {
-    return 'fill-teal-500'
-  }
-  if (ratio < 0.75) {
-    return 'fill-teal-700'
+  for (let i = pointLevels.length - 1; i >= 0; i--) {
+    if (roundedValue >= pointLevels[i].lowerBound) {
+      return pointLevels[i].fillClass
+    }
   }
 
-  return 'fill-teal-900'
+  return emptyLevel.fillClass
 }

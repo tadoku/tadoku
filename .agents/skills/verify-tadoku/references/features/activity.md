@@ -61,6 +61,10 @@ log appears. An empty list and an API failure are different states.
 Heatmap days and the `?date=` filter use UTC days, so a filtered Updates list
 can show rows with the neighbouring local date.
 
+The Statistics overall score card's per-day average divides the year's total by
+UTC calendar days, including idle days: every day of a past year, or Jan 1 through
+today for the current year. It is hidden for future years and zero totals.
+
 Exports use native attachment downloads; inspect the downloaded file rather
 than expecting a rendered page. Deleted logs and contest attachments are
 excluded. CSV starts with a UTF-8 BOM and prefixes formula-like text cells with

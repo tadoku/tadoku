@@ -137,6 +137,7 @@ const Page = () => {
       <div className="lg:h-stack v-stack mt-4 spaced">
         <div className="lg:w-1/5">
           <ScoreList
+            year={year}
             languages={
               scores.data?.scores.map(it => ({
                 code: it.language_code,

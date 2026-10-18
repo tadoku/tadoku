@@ -2,6 +2,5 @@
 .github/workflows/pr-branch.yaml
 frontend/apps/paper-playground/src/pages/ContestsPage.tsx
 frontend/apps/paper-styleguide/src/documentation/FoundationSpecimen.tsx
-frontend/packages/paper-ui/src/components/navigation/navigation.tsx
 frontend/packages/paper-ui/tests/forms-feedback.test.tsx
 services/tadoku-api/spec/openapi.yaml

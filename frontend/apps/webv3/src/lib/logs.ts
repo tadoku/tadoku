@@ -36,7 +36,7 @@ export const logForm = z.object({
   registrationIds: z.array(z.uuid()),
 })
 export type LogFormValue = z.infer<typeof logForm>
-export type Failure = 'invalid' | 'signed-out' | 'forbidden' | 'deleting' | 'unavailable' | 'not-found'
+export type Failure = 'invalid' | 'signed-out' | 'forbidden' | 'deleting' | 'unavailable' | 'not-found' | 'switched'
 export type Result<T> = { ok: true; data: T } | { ok: false; reason: Failure }
 
 export const getLogFormData = createServerFn({ method: 'GET' }).handler(async () => {
@@ -47,12 +47,12 @@ export const getLog = createServerFn({ method: 'GET' }).inputValidator(z.uuid())
   const { readLog } = await import('./logs.server')
   return readLog(data)
 })
-export const createLog = createServerFn({ method: 'POST' }).inputValidator(logForm).handler(async ({ data }) => {
+export const createLog = createServerFn({ method: 'POST' }).inputValidator(logForm.extend({ viewerId: z.uuid() })).handler(async ({ data }) => {
   const { saveLog } = await import('./logs.server')
   return saveLog(data)
 })
 export const formQueryOptions = (viewerId: string) => queryOptions({ queryKey: ['log-form', viewerId], queryFn: () => getLogFormData(), retry: false, staleTime: Infinity })
-export const logQueryOptions = (id: string, viewerId: string) => queryOptions({ queryKey: ['log', id, viewerId], queryFn: () => getLog({ data: id }), retry: false })
+export const logQueryOptions = (id: string, viewerId: string) => queryOptions({ queryKey: ['log', id, viewerId], queryFn: () => getLog({ data: id }), retry: false, staleTime: 30_000 })
 
 export function unitsFor(configuration: Configuration, activityId: number, languageCode: string) {
   const units = configuration.units.filter(unit => unit.log_activity_id === activityId && !['reading_two_column_page', 'reading_comic_page'].includes(unit.unit_key))

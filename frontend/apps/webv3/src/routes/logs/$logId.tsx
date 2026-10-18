@@ -8,6 +8,7 @@ import { viewerQueryOptions } from '../../lib/session'
 import { useLinks } from '../../lib/links'
 
 export const Route = createFileRoute('/logs/$logId')({
+  head: () => ({ meta: [{ title: 'Activity · Tadoku' }] }),
   loader: async ({ context, params }) => {
     if (!z.uuid().safeParse(params.logId).success) throw notFound()
     const viewer = await context.queryClient.ensureQueryData(viewerQueryOptions())

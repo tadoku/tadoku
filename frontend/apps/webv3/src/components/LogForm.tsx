@@ -7,9 +7,10 @@ import { z } from 'zod'
 import { createLog, eligibleRegistrations, logForm, logQueryOptions, unitsFor } from '../lib/logs'
 import type { Configuration, Failure, LogFormValue, Registration } from '../lib/logs'
 import { useLinks } from '../lib/links'
-import { useLoginUrl } from '../lib/session'
+import { useLoginUrl, viewerQueryOptions } from '../lib/session'
 
 const messages: Record<Failure, string> = {
+  switched: 'You are now signed in as a different account. Nothing was saved. This draft is kept for the account that started it.',
   invalid: 'The activity was not saved. Check the amount, unit and contests, then try again.',
   'signed-out': 'Your session ended. Log in in a new tab, return here and save again. Your entries are kept here.',
   forbidden: 'Your account cannot save activity. Your entries are kept here.',
@@ -58,8 +59,12 @@ export function LogForm({ configuration, registrations, viewerId }: { configurat
     onSubmit: async ({ value }) => {
       setFailure(null)
       try {
-        const result = await createLog({ data: logForm.parse(toValue(value)) })
-        if (!result.ok) { setFailure(result.reason); return }
+        const result = await createLog({ data: { ...logForm.parse(toValue(value)), viewerId } })
+        if (!result.ok) {
+          setFailure(result.reason)
+          if (result.reason === 'switched') await queryClient.invalidateQueries({ queryKey: viewerQueryOptions().queryKey })
+          return
+        }
         queryClient.setQueryData(logQueryOptions(result.data.id, viewerId).queryKey, result)
         await navigate({ to: '/logs/$logId', params: { logId: result.data.id } })
         document.querySelector<HTMLElement>('h1')?.focus()
@@ -82,7 +87,7 @@ export function LogForm({ configuration, registrations, viewerId }: { configurat
   return <div className="goal-page">
     <PageHeader title="Log activity" lead="Keep a record of what you read, listen to or practise." />
     <Surface className="log-surface">
-      <form className="goal-form" noValidate aria-busy={pending} onSubmit={event => { event.preventDefault(); if (!pending) void form.handleSubmit() }}>
+      <form className="goal-form" noValidate aria-busy={pending} onSubmit={event => { event.preventDefault(); if (!form.state.isSubmitting) void form.handleSubmit() }}>
         <fieldset className="goal-form__controls" disabled={!hydrated || pending}>
           <form.Field name="languageCode">{field => <div className="paper-field">
             <label className="paper-field__label" htmlFor="log-language">Language</label>
@@ -109,10 +114,10 @@ export function LogForm({ configuration, registrations, viewerId }: { configurat
             </Field>}</form.Field> : null}
           </div>
           <form.Field name="description">{field => <Field id="log-description" label="Description" error={submitted ? errorText(field.state.meta.errors) : undefined}>
-            <textarea className="paper-input" id="log-description" rows={3} value={field.state.value} aria-invalid={submitted && field.state.meta.errors.length > 0} aria-describedby="log-description-error" onBlur={field.handleBlur} onChange={event => field.handleChange(event.target.value)} />
+            <textarea className="paper-input" id="log-description" rows={3} value={field.state.value} aria-invalid={submitted && field.state.meta.errors.length > 0} aria-describedby={submitted && field.state.meta.errors.length ? 'log-description-error' : undefined} onBlur={field.handleBlur} onChange={event => field.handleChange(event.target.value)} />
           </Field>}</form.Field>
           <form.Field name="tagsText">{field => <Field id="log-tags" label="Tags" error={submitted ? errorText(field.state.meta.errors) : undefined}>
-            <input className="paper-input" id="log-tags" value={field.state.value} aria-invalid={submitted && field.state.meta.errors.length > 0} aria-describedby="log-tags-hint log-tags-error" onBlur={field.handleBlur} onChange={event => field.handleChange(event.target.value)} />
+            <input className="paper-input" id="log-tags" value={field.state.value} aria-invalid={submitted && field.state.meta.errors.length > 0} aria-describedby={submitted && field.state.meta.errors.length ? 'log-tags-hint log-tags-error' : 'log-tags-hint'} onBlur={field.handleBlur} onChange={event => field.handleChange(event.target.value)} />
             <p className="paper-field__hint" id="log-tags-hint">Separate tags with commas. Up to 10 tags.</p>
           </Field>}</form.Field>
           <form.Field name="registrationIds">{field => <fieldset className="paper-choice-field">
@@ -122,7 +127,7 @@ export function LogForm({ configuration, registrations, viewerId }: { configurat
             </label>) : <p>Saved to your personal record only.</p>}
           </fieldset>}</form.Field>
         </fieldset>
-        {failure ? <div role="alert"><p>{messages[failure]}</p>{failure === 'signed-out' ? <a className="text-link" href={loginUrl} target="_blank" rel="noopener noreferrer">Log in in a new tab</a> : failure === 'unavailable' ? <a className="text-link" href={links.legacyUrl(`/profile/${viewerId}/updates`)} target="_blank" rel="noopener noreferrer">Check your activity</a> : null}</div> : null}
+        {failure ? <div role="alert"><p>{messages[failure]}</p>{failure === 'switched' ? <a className="text-link" href="/logs/new">Start a new activity for this account</a> : failure === 'signed-out' ? <a className="text-link" href={loginUrl} target="_blank" rel="noopener noreferrer">Log in in a new tab</a> : failure === 'unavailable' ? <a className="text-link" href={links.legacyUrl(`/profile/${viewerId}/updates`)} target="_blank" rel="noopener noreferrer">Check your activity</a> : null}</div> : null}
         <Button type="submit" disabled={!hydrated || pending}>{pending ? 'Saving…' : 'Save activity'}</Button>
       </form>
     </Surface>

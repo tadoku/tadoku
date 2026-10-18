@@ -1,11 +1,10 @@
 import { z } from 'zod'
 import { configurationSchema, logSchema, registrationsSchema } from './logs'
 import type { Configuration, ImmersionLog, LogFormValue, Registration, Result } from './logs'
-import { sessionCookie } from './session.server'
+import { readViewer, sessionCookie } from './session.server'
 import { requestUrls } from './urls.server'
 
-async function api<T>(path: string, schema: z.ZodType<T>, body?: unknown): Promise<Result<T>> {
-  const cookie = sessionCookie()
+async function api<T>(path: string, schema: z.ZodType<T>, body?: unknown, cookie = sessionCookie()): Promise<Result<T>> {
   if (body && !cookie) return { ok: false, reason: 'signed-out' }
   try {
     const response = await fetch(`${requestUrls().apiUrl}/immersion/${path}`, {
@@ -40,9 +39,19 @@ export async function readLogFormData(): Promise<Result<{ configuration: Configu
   return { ok: true, data: { configuration: configuration.data, registrations: registrations.data.registrations } }
 }
 
-export const readLog = (id: string) => api(`logs/${id}`, logSchema)
+export async function readLog(id: string) {
+  const result = await api(`logs/${id}`, logSchema)
+  return !result.ok && result.reason === 'signed-out' && sessionCookie()
+    ? api(`logs/${id}`, logSchema, undefined, '')
+    : result
+}
 
-export function saveLog(value: LogFormValue): Promise<Result<ImmersionLog>> {
+export async function saveLog(value: LogFormValue & { viewerId: string }): Promise<Result<ImmersionLog>> {
+  const viewer = await readViewer()
+  if (viewer.status === 'anonymous') return { ok: false, reason: 'signed-out' }
+  if (viewer.status === 'unavailable') return { ok: false, reason: 'unavailable' }
+  if (viewer.status === 'banned') return { ok: false, reason: 'forbidden' }
+  if (viewer.userId !== value.viewerId) return { ok: false, reason: 'switched' }
   return api('logs', logSchema, {
     language_code: value.languageCode, activity_id: value.activityId,
     tags: value.tags, description: value.description, registration_ids: value.registrationIds,

@@ -115,13 +115,8 @@ replica, Recreate rollout, a separate image digest, and no Service or public
 route. Its resource requests and limits are in
 `k8s/dev/base/services/tadoku-worker.yaml`.
 
-The worker consumes `jobs` and invalidates leaderboard caches. Verify worker
-ownership and reads:
-
-1. Confirm the base `tadoku-worker` is ready and its `/readyz` endpoint remains
-   healthy while tasks retry or fail.
-2. Inspect due and failed `jobs` rows; a write followed by a
-   leaderboard read must still succeed.
+[Jobs and worker](../tadoku-api/jobs.md#leaderboard-freshness-and-worker-health)
+describes its readiness, metrics, failures and replay.
 
 dev-cli pairs each branch API and worker against the profile's database with
 `API_BRANCH` and `WORKER_BRANCH` set to `tadoku/<route>`. Selecting either

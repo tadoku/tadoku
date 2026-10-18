@@ -1,49 +1,16 @@
 import { FormProvider, useForm, useWatch } from 'react-hook-form'
-import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { AutocompleteMultiInput, Button, Checkbox, DescriptionList, EmptyState, Flash, Input, PageHeader, SectionHeading, Select, StatusTag, Surface, Tabbar, TextArea, buttonClassName } from 'paper-ui'
-import { contestStatus, supportedLanguages, type Activity, type SampleContest } from '../data'
+import { Link, useLocation } from 'react-router-dom'
+import { Button, EmptyState, Input, PageHeader, SectionHeading, Select, StatusTag, Surface, Tabbar, buttonClassName } from 'paper-ui'
+import { contestStatus, type SampleContest } from '../data'
 import { contestEnd, contestStart, formatDateRange, formatDateTime } from '../dates'
-import { renderLink } from '../routerLink'
 import { usePlayground, useScenario } from '../state'
+import { ContestFacts, ContestPrimaryAction, ContestStatus } from './contestParts'
+import { contestPath, registrationIsOpen, useContestDate } from './contestRound'
 import './contests.css'
 
-const statusLabels = { live: 'Live now', upcoming: 'Upcoming', ended: 'Ended' }
-const statusTones = { live: 'success', upcoming: 'information', ended: 'neutral' } as const
 const scopeLabels = { official: 'Official', community: 'Community', participating: 'Participating', managed: 'Managed by me' }
 type ContestCollection = keyof typeof scopeLabels
 
-function useContestDate() {
-  const [scenario] = useScenario('contests')
-  const [params] = useSearchParams()
-  const requested = params.get('asOf') ?? ''
-  return /^\d{4}-\d{2}-\d{2}$/.test(requested) ? requested : scenario === 'between' ? '2026-10-01' : '2026-09-05'
-}
-function registrationIsOpen(contest: SampleContest, asOf: string) {
-  return contestStatus(contest, asOf) !== 'ended' && asOf <= contest.registrationDeadline
-}
-function contestPath(contest: SampleContest, asOf: string, suffix = '') {
-  return `/contests/${contest.id}${suffix}?asOf=${asOf}`
-}
-function ContestStatus({ contest, asOf }: { contest: SampleContest; asOf: string }) {
-  const status = contestStatus(contest, asOf)
-  return <StatusTag tone={statusTones[status]}>{statusLabels[status]}</StatusTag>
-}
-function ContestPrimaryAction({ contest, asOf, prominent = false }: { contest: SampleContest; asOf: string; prominent?: boolean }) {
-  const { viewer, joinedContests } = usePlayground()
-  const joined = viewer !== 'guest' && joinedContests.includes(contest.id)
-  const live = contestStatus(contest, asOf) === 'live'
-  const registration = contestPath(contest, asOf, '/registration')
-  const target = live && joined ? `/logs/new?contest=${contest.id}&asOf=${asOf}` : registrationIsOpen(contest, asOf) ? viewer === 'guest' ? `/sign-in?next=${encodeURIComponent(registration)}` : registration : contestPath(contest, asOf, '/leaderboard')
-  const label = live && joined ? 'Log activity' : registrationIsOpen(contest, asOf) ? viewer === 'guest' ? 'Sign in to join' : joined ? 'Update registration' : 'Join contest' : contestStatus(contest, asOf) === 'ended' ? 'View results' : 'View standings'
-  return <Link className={buttonClassName({ variant: prominent ? 'default' : 'outline' })} to={target}>{label}</Link>
-}
-function ContestFacts({ contest, asOf }: { contest: SampleContest; asOf: string }) {
-  return <DescriptionList className="contest-facts" items={[
-    { label: 'Round begins', value: formatDateTime(contestStart(contest.start)) },
-    { label: 'Round ends', value: formatDateTime(contestEnd(contest.end)) },
-    { label: 'Joining this round', value: registrationIsOpen(contest, asOf) ? `Open until ${formatDateTime(contestEnd(contest.registrationDeadline))}` : 'Registration closed' },
-  ]} />
-}
 function ContestFeature({ contest, asOf }: { contest: SampleContest; asOf: string }) {
   const { viewer, joinedContests } = usePlayground()
   return <Surface as="article" className="contest-feature">
@@ -108,91 +75,3 @@ export function ContestsPage() {
   </>
 }
 
-function ContestNotFound() {
-  return <EmptyState headingLevel={1} title="Contest not found" description="This link does not match a contest in the collection." actions={<Link className={buttonClassName()} to="/contests/official">Browse contests</Link>} />
-}
-
-export function ContestDetailPage() {
-  const { contestId } = useParams()
-  const { contests, viewer, userId, joinedContests, registrations } = usePlayground()
-  const asOf = useContestDate()
-  const [params] = useSearchParams()
-  const contest = contests.find(item => item.id === contestId)
-  if (!contest) return <ContestNotFound />
-  const joined = viewer !== 'guest' && joinedContests.includes(contest.id)
-  const canManage = ['organizer', 'admin'].includes(viewer) && contest.ownerId === userId
-  const managedBack = contest.unlisted && contest.ownerId === userId && viewer !== 'guest'
-  return <>
-    <PageHeader
-      backLink={managedBack ? { href: '/contests/managed', label: 'Back to managed contests' } : { href: `/contests/${contest.scope}`, label: `Back to ${contest.scope} contests` }}
-      renderLink={renderLink}
-      title={contest.title}
-      status={<><ContestStatus contest={contest} asOf={asOf} />{contest.unlisted ? <StatusTag>Unlisted</StatusTag> : null}</>}
-      lead={contest.description}
-    />
-    {params.has('registered') && joined ? <Flash variant="success" title="Registration saved">You’re registered for {contest.title}. Choose a registered language when you log activity.</Flash> : null}
-    {params.has('saved') ? <Flash variant="success" title="Contest saved">Your contest details have been updated.</Flash> : null}
-    <div className="page-columns contest-detail-layout"><section className="contest-detail-body">
-      <SectionHeading level={2} title="Taking part" /><p>Join this contest, then submit your reading or listening as you go. Choose a registered language and one of the activities below when you log.</p>
-      <DescriptionList className="contest-eligibility" items={[{ label: 'Languages', value: contest.languages.join(', ') }, { label: 'Activities', value: contest.activities.join(' and ') }]} />
-      {contest.unlisted ? <Flash variant="information" title="Accessible with the link">Anyone with this link can view and join while registration is open. This contest is excluded from public discovery; it is not a private space.</Flash> : null}
-      {joined ? <p><strong>You are registered.</strong>{registrations[contest.id]?.length ? ` Your languages: ${registrations[contest.id].join(', ')}.` : ''}</p> : null}
-      <div className="flex flex-wrap gap-3 my-6"><ContestPrimaryAction contest={contest} asOf={asOf} prominent /><Link className={buttonClassName({ variant: 'outline' })} to={contestPath(contest, asOf, '/leaderboard')}>View standings</Link>{canManage ? <Link className={buttonClassName({ variant: 'ghost' })} to={contestPath(contest, asOf, '/edit')}>Manage contest</Link> : null}</div>
-      {joined && registrationIsOpen(contest, asOf) && contestStatus(contest, asOf) === 'live' ? <p><Link className="text-link" to={contestPath(contest, asOf, '/registration')}>Update your registered languages</Link></p> : null}
-      <p className="muted">Personal tracking stays available outside contest rounds. A contest’s eligibility and saved score can differ from your personal total.</p><Link className="text-link" to="/guide/scoring">Understand scores and eligibility</Link>
-    </section><aside className="contest-detail-timeline"><h2 className="paper-type-component">Dates &amp; registration</h2><ContestFacts contest={contest} asOf={asOf} /><p className="muted">Times are shown in your local time zone. Registration can close before a live round ends; registered participants can continue logging until the end.</p></aside></div>
-  </>
-}
-
-export function ContestRegistrationPage() {
-  const { contestId } = useParams()
-  const { contests, viewer, registrations, joinContest } = usePlayground()
-  const navigate = useNavigate()
-  const asOf = useContestDate()
-  const contest = contests.find(item => item.id === contestId)
-  const methods = useForm<{ languages: string[] }>({ defaultValues: { languages: registrations[contestId ?? ''] ?? [] } })
-  if (!contest) return <ContestNotFound />
-  const allowed = contest.languages.includes('All languages') ? supportedLanguages : contest.languages
-  const submit = methods.handleSubmit(values => { joinContest(contest.id, values.languages); navigate(`${contestPath(contest, asOf)}&registered=1`) })
-  return <>
-    <PageHeader backLink={{ href: contestPath(contest, asOf), label: `Back to ${contest.title}` }} renderLink={renderLink} title={`Join ${contest.title}`} lead="Choose the languages you’ll read or listen in. You can register up to three." />
-    <div className="page-columns contest-registration-layout"><section>
-      {!registrationIsOpen(contest, asOf) ? <EmptyState headingLevel={2} title="Registration is closed." description={contestStatus(contest, asOf) === 'live' ? 'This round is still running. Participants who already registered can continue logging.' : 'Browse another round to join, or explore the results from this one.'} actions={<ContestPrimaryAction contest={contest} asOf={asOf} />} /> : viewer === 'guest' ? <EmptyState headingLevel={2} title="Sign in to choose your languages." description="You’ll return to this registration after signing in." actions={<Link className={buttonClassName()} to={`/sign-in?next=${encodeURIComponent(contestPath(contest, asOf, '/registration'))}`}>Sign in to join</Link>} /> : <FormProvider {...methods}><form onSubmit={submit} className="app-form" noValidate><div className="app-form__fields"><AutocompleteMultiInput name="languages" label="Your languages" hint="Choose one to three languages. Remove a language to make room for another." options={allowed} format={value => value} getId={value => value} required maxSelections={3} rules={{ validate: value => Array.isArray(value) && value.length >= 1 && value.length <= 3 && value.every(language => allowed.includes(language)) || 'Choose one to three of the available languages.' }} /><p className="muted">Allowed activities: {contest.activities.join(' and ')}. After joining, choose which eligible logs to submit; joining does not submit past activity automatically.</p></div><div className="app-form__actions"><Button type="submit">Save registration</Button><Link className={buttonClassName({ variant: 'outline' })} to={contestPath(contest, asOf)}>Cancel</Link></div></form></FormProvider>}
-    </section><aside className="contest-detail-timeline"><h2 className="paper-type-component">Your round</h2><ContestFacts contest={contest} asOf={asOf} /></aside></div>
-  </>
-}
-
-interface ContestFields { title: string; description: string; start: string; end: string; registrationDeadline: string; allLanguages: boolean; languages: string[]; reading: boolean; listening: boolean; unlisted: boolean }
-export function ContestEditorPage() {
-  const { contestId } = useParams()
-  const { contests, viewer, userId, saveContest } = usePlayground()
-  const navigate = useNavigate()
-  const asOf = useContestDate()
-  const contest = contests.find(item => item.id === contestId)
-  const methods = useForm<ContestFields>({ defaultValues: { title: contest?.title ?? '', description: contest?.description ?? '', start: contest?.start ?? '2026-10-01', end: contest?.end ?? '2026-10-31', registrationDeadline: contest?.registrationDeadline ?? '2026-10-05', allLanguages: !contest || contest.languages.includes('All languages'), languages: contest?.languages.filter(language => language !== 'All languages') ?? [], reading: contest?.activities.includes('Reading') ?? true, listening: contest?.activities.includes('Listening') ?? true, unlisted: contest?.unlisted ?? false } })
-  const allLanguages = useWatch({ control: methods.control, name: 'allLanguages' })
-  const [start, end, registrationDeadline] = useWatch({ control: methods.control, name: ['start', 'end', 'registrationDeadline'] })
-  const canManage = ['organizer', 'admin'].includes(viewer) && (!contestId || contest?.ownerId === userId)
-  if (contestId && !contest) return <ContestNotFound />
-  if (!canManage) return <EmptyState headingLevel={1} title="Organizer access required" description="Creating contests requires organizer permission. You can manage only the contests you organize." actions={<Link className={buttonClassName({ variant: 'outline' })} to="/contests/official">Browse contests</Link>} />
-  const save = methods.handleSubmit(values => {
-    const activities: Activity[] = []
-    if (values.reading) activities.push('Reading')
-    if (values.listening) activities.push('Listening')
-    const next: SampleContest = { id: contest?.id ?? `contest-${crypto.randomUUID()}`, title: values.title.trim(), description: values.description.trim(), start: values.start, end: values.end, registrationDeadline: values.registrationDeadline, languages: values.allLanguages ? ['All languages'] : values.languages, activities, unlisted: values.unlisted, scope: contest?.scope ?? 'community', ownerId: userId, moderatorIds: contest ? contest.moderatorIds : [userId] }
-    saveContest(next)
-    navigate(`${contestPath(next, asOf)}&saved=1`)
-  })
-  return <>
-    <PageHeader backLink={contest ? { href: contestPath(contest, asOf), label: `Back to ${contest.title}` } : { href: '/contests/managed', label: 'Back to contests' }} renderLink={renderLink} title={contest ? 'Manage contest' : 'Create a community contest'} lead="Set a shared window for immersion, with clear dates and eligibility." />
-    <FormProvider {...methods}><form onSubmit={save} noValidate className="app-form contest-editor-form"><div className="app-form__fields">
-      <Input name="title" label="Contest title" required maxLength={100} rules={{ validate: value => Boolean(value?.trim()) || 'Enter a contest title.' }} />
-      <TextArea name="description" label="What is this contest about?" rows={3} required rules={{ validate: value => Boolean(value?.trim()) || 'Describe what participants will do.' }} />
-      <div className="app-form__row"><Input name="start" label="Begins (UTC)" type="date" required hint={start ? `Your time: ${formatDateTime(contestStart(start))}` : undefined} /><Input name="end" label="Ends (UTC)" type="date" required hint={end ? `Your time: ${formatDateTime(contestEnd(end))}` : undefined} rules={{ validate: value => value >= methods.getValues('start') || 'The end date must be on or after the start date.' }} /></div>
-      <Input name="registrationDeadline" label="Registration closes (UTC)" type="date" required hint={registrationDeadline ? `Your time: ${formatDateTime(contestEnd(registrationDeadline))}. Must close on or before the round ends.` : 'Must close on or before the round ends.'} rules={{ validate: value => value <= methods.getValues('end') || 'Registration must close on or before the round ends.' }} />
-      <fieldset className="contest-form-group"><legend className="paper-type-component">Languages</legend><Checkbox name="allLanguages" label="Allow all languages" />{!allLanguages ? <AutocompleteMultiInput name="languages" label="Allowed languages" options={supportedLanguages} format={value => value} getId={value => value} required rules={{ validate: value => methods.getValues('allLanguages') || Array.isArray(value) && value.length > 0 || 'Choose at least one allowed language.' }} /> : <p className="muted">Participants choose up to three languages when registering.</p>}</fieldset>
-      <fieldset className="contest-form-group"><legend className="paper-type-component">Activities</legend><Checkbox name="reading" label="Reading" rules={{ validate: () => methods.getValues('reading') || methods.getValues('listening') || 'Choose at least one activity.' }} /><Checkbox name="listening" label="Listening" /></fieldset>
-      <fieldset className="contest-form-group"><legend className="paper-type-component">Discovery</legend><Checkbox name="unlisted" label="Unlisted — accessible with the link" hint="Unlisted contests are accessible to anyone with the link. They appear in Managed by me and in each participant’s joined contests, but not in public discovery." /></fieldset>
-    </div><div className="app-form__actions"><Button type="submit">{contest ? 'Save changes' : 'Create contest'}</Button><Link className={buttonClassName({ variant: 'outline' })} to={contest ? contestPath(contest, asOf) : '/contests/managed'}>Cancel</Link></div></form></FormProvider>
-  </>
-}

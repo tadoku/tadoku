@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { initialContests, type SampleContest } from '../src/data'
 import { PlaygroundProvider, usePlayground } from '../src/state'
-import { ContestEditorPage } from '../src/pages/ContestsPage'
+import { ContestEditorPage } from '../src/pages/ContestEditorPage'
 
 const storageKey = 'tadoku-paper-playground-v1'
 beforeEach(() => localStorage.clear())

@@ -149,7 +149,7 @@ images:
   - name: ghcr.io/tadoku/tadoku/frontend-webv3
     newName: ghcr.io/tadoku/tadoku/frontend-webv3
     newTag: latest
-    digest: sha256:f4963a102dc23e9b0919fd9f982ebeea428d8858491885cc716377de1c63db64
+    digest: sha256:0a74958d0d54021abf24885bbf1edf9a61dc194f1fdf270dd7fc169a69859888
   - name: ghcr.io/tadoku/tadoku/frontend-auth
     newTag: 261cba31de11e05274668aac3dc9daf981daab7b
     newName: ghcr.io/tadoku/tadoku/frontend-auth

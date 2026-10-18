@@ -26,9 +26,12 @@ go_library(
 go_test(
     name = "worker_test",
     srcs = [
+        "worker_fixture_test.go",
+        "worker_housekeeping_test.go",
         "worker_lifecycle_test.go",
         "worker_observability_test.go",
         "worker_runtime_test.go",
+        "worker_shutdown_capacity_test.go",
         "worker_tenant_test.go",
         "worker_test.go",
     ],

@@ -3,7 +3,6 @@
 docs/docs/develop/environment.md
 docs/docs/develop/production-branches.md
 docs/docs/tadoku-api/configuration.md
-docs/docs/tadoku-api/jobs.md
 frontend/apps/paper-playground/src/pages/ContestsPage.tsx
 frontend/apps/paper-styleguide/src/documentation/FoundationSpecimen.tsx
 frontend/apps/webv2/app/immersion/api.ts

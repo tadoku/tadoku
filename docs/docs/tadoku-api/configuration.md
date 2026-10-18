@@ -259,7 +259,7 @@ for its applied, skipped and missing-tenant outcomes.
 ## Separate job worker
 
 The queue persists in the `jobs` table. See
-[Successful-job retention](./jobs.md#successful-job-retention) for the automatic
+[Successful-job retention](./jobs-operations.md#successful-job-retention) for the automatic
 three-calendar-month policy. Failed records are retained indefinitely.
 
 `cmd/tadoku-worker` constructs `app/worker.Application` with the queue and

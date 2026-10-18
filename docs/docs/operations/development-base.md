@@ -115,7 +115,7 @@ replica, Recreate rollout, a separate image digest, and no Service or public
 route. Its resource requests and limits are in
 `k8s/dev/base/services/tadoku-worker.yaml`.
 
-[Jobs and worker](../tadoku-api/jobs.md#leaderboard-freshness-and-worker-health)
+[Operate jobs and the worker](../tadoku-api/jobs-operations.md#leaderboard-freshness-and-worker-health)
 describes its readiness, metrics, failures and replay.
 
 dev-cli pairs each branch API and worker against the profile's database with

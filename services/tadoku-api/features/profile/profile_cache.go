@@ -10,7 +10,6 @@ import (
 
 	kratosapi "github.com/ory/kratos-client-go"
 	kratosclient "github.com/tadoku/tadoku/services/tadoku-api/infra/kratos"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
 
 const (
@@ -25,12 +24,14 @@ type UserCache struct {
 	loaded     bool
 	checkedAt  time.Time
 	identities *kratosclient.Client
+	now        func() time.Time
 }
 
 func NewUserCache(identities *kratosclient.Client) *UserCache {
 	return &UserCache{
 		users:      []cachedUser{},
 		identities: identities,
+		now:        time.Now,
 	}
 }
 
@@ -131,7 +132,7 @@ func (c *UserCache) Users(ctx context.Context) ([]cachedUser, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
-	now := timex.Now()
+	now := c.now()
 	if c.loaded && now.Before(c.checkedAt.Add(userCacheRefreshInterval)) {
 		return append([]cachedUser{}, c.users...), nil
 	}

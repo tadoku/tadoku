@@ -23,7 +23,9 @@ go_test(
     name = "flipt_test",
     srcs = [
         "client_test.go",
+        "fixtures_test.go",
         "provider_test.go",
+        "snapshot_refresh_test.go",
     ],
     embed = [":flipt"],
     deps = [

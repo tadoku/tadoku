@@ -1,7 +1,7 @@
 import { useId } from "react";
 import { useController, type FieldValues, type RegisterOptions } from "react-hook-form";
 import { CheckIcon } from "../../icons";
-import type { Option } from "./controls";
+import type { Option } from "./field";
 
 export interface ToggleSelectProps {
   readonly name: string;

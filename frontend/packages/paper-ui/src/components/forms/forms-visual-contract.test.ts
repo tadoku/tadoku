@@ -112,7 +112,7 @@ describe("choice and multi-value control action hug", () => {
 
   it("shares the multi-value chip surface between MultiAutocomplete and TagsInput", () => {
     const controlsSource = readFileSync(
-      resolve("src/components/forms/controls.tsx"),
+      resolve("src/components/forms/autocomplete-controls.tsx"),
       "utf8",
     );
 

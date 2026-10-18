@@ -24,7 +24,11 @@ go_library(
 
 go_test(
     name = "tenantlifecycle_test",
-    srcs = ["lifecycle_test.go"],
+    srcs = [
+        "copy_production_test.go",
+        "lifecycle_test.go",
+        "tenant_rows_test.go",
+    ],
     env_inherit = [
         "TADOKU_TEST_POSTGRES_URL",
         "TADOKU_TEST_VALKEY_URL",

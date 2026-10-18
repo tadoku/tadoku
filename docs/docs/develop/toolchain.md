@@ -150,6 +150,7 @@ All workflows live in `.github/workflows/`.
 | `verify-standalone-migrations.yaml` | Every PR | Fails when migration SQL files change together with other files, unless the PR has the `migration-move` label |
 | `verify-docs.yaml` | Every PR | Runs `docs/scripts/docs-check.test.mjs`, so removing code that the docs still name fails |
 | `verify-dev-base.yaml` | PRs and `main` pushes touching development manifests, migration inputs or its workflow | Runs `k8s/dev/base/e2e.cjs` against real published images with disposable Docker fixtures, checks profiles and owner/runtime separation, and uploads its report and logs |
+| `verify-file-sizes.yaml` | Every PR | Runs `./tools/ci/check_file_sizes.sh`, which fails when a handwritten text file is over 20,000 bytes and is not listed in `tools/ci/file_size_baseline.txt`; see [Splitting a long file](../architecture/module-design.md#splitting-a-long-file) |
 | `verify-http-error-mapping.yaml` | Every PR | Rejects literal 5xx responses in `services/tadoku-api/transport/http/`; `services/tadoku-api/transport/http/errors.go` maps errors to statuses |
 | `build-frontend-webv2.yaml` | Pushes touching webv2, `ui` or the lockfile | Builds webv2; publishes its image from `main` |
 | `build-frontend-auth.yaml` | Pushes touching auth, `ui` or the lockfile | Builds auth; publishes its image from `main` |

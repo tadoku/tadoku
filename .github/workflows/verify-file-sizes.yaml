@@ -1,0 +1,19 @@
+name: verify-file-sizes
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify handwritten files stay under 20,000 bytes
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Reject handwritten files over the size limit
+        run: ./tools/ci/check_file_sizes.sh

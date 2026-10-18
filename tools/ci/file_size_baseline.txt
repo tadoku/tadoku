@@ -19,6 +19,5 @@ services/tadoku-api/features/logs/logs_repository.go
 services/tadoku-api/features/pages/pages_repository_test.go
 services/tadoku-api/features/posts/posts_repository_test.go
 services/tadoku-api/features/scoring/scoring_service.go
-services/tadoku-api/infra/flipt/client_test.go
 services/tadoku-api/infra/postgres/transaction_test.go
 services/tadoku-api/spec/openapi.yaml

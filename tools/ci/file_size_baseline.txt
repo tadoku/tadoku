@@ -16,5 +16,4 @@ services/tadoku-api/app/worker/worker_runtime_test.go
 services/tadoku-api/e2e/user_journeys_test.go
 services/tadoku-api/features/logs/logs_repository.go
 services/tadoku-api/features/scoring/scoring_service.go
-services/tadoku-api/infra/postgres/transaction_test.go
 services/tadoku-api/spec/openapi.yaml

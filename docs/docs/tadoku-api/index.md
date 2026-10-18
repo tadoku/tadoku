@@ -10,7 +10,7 @@ Read this when you change backend behavior, the public HTTP contract or the
 database schema, and need to know which page covers it.
 
 Tadoku API (`services/tadoku-api/`) is the only backend. It serves every public
-HTTP operation, which the gateway exposes under `/api`. A separate
+HTTP operation, which the gateway exposes under `/api/internal`. A separate
 `tadoku-worker` process executes its typed background jobs, beginning with
 leaderboard cache invalidation.
 

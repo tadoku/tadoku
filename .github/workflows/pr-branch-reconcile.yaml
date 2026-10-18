@@ -2,8 +2,8 @@ name: pr-branch-reconcile
 
 # Tears down pull-request branches whose pull request is closed or has no
 # deploy label, or whose branch expired, with the same dev down and isolation
-# check as pr-branch.yaml's teardown job. It runs only main's code. See
-# docs/docs/develop/pull-request-deploys.md.
+# check as pr-branch.yaml's teardown job, pr-branch-called-teardown.yaml. It
+# runs only main's code. See docs/docs/develop/pull-request-deploys.md.
 #
 # It touches only lifecycle markers of dev-cli owner gh on branches
 # pr-<number>, and never runs dev cleanup, which removes expired routes of
@@ -29,8 +29,8 @@ jobs:
   reconcile:
     name: Reconcile
     # The cluster API server accepts only allowlisted addresses; see
-    # pr-branch.yaml. The runner set runs one job at a time, so this job never
-    # overlaps a deploy or teardown.
+    # pr-branch-called-deploy.yaml. The runner set runs one job at a time, so
+    # this job never overlaps a deploy or teardown.
     runs-on: tadoku-prod-branch
     # A run every 15 minutes would otherwise fill the environment's
     # deployment history.
@@ -197,7 +197,7 @@ jobs:
           go install "github.com/antonve/dev-cli/cmd/dev@$DEV_CLI_VERSION"
           dev version
 
-      # As in pr-branch.yaml's teardown job: dev down queries the tenant Jobs'
+      # As in pr-branch-called-teardown.yaml: dev down queries the tenant Jobs'
       # push target, and without a registry login it cannot publish main's
       # code under a pull request's tag.
       - name: Set up Bazel

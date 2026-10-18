@@ -29,7 +29,10 @@ newly provisioned tenant.
 
 The workflow runs on `pull_request_target` for pull requests into `main`, so
 GitHub always runs the copy on `main`; a pull request that edits the workflow
-does not change how it is judged. Pull requests into other branches never
+does not change how it is judged. Its `deploy` and `teardown` jobs are defined
+in the reusable workflows `.github/workflows/pr-branch-called-deploy.yaml` and
+`.github/workflows/pr-branch-called-teardown.yaml`, which GitHub reads from the
+same `main` commit. Pull requests into other branches never
 deploy. Its `authorize` job has no checkout, no cache and no action, and its
 token has only `pull-requests: write` and `issues: write`. Event values reach
 its script only through `env:`, and it never reads the branch name or title.

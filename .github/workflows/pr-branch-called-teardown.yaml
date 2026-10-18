@@ -1,0 +1,359 @@
+name: pr-branch-called-teardown
+
+# The teardown job of pr-branch.yaml, its only caller; it is never triggered
+# directly. The rules at the top of pr-branch.yaml apply here.
+
+on:
+  workflow_call:
+    inputs:
+      pr:
+        type: string
+        required: true
+      reason:
+        type: string
+        required: true
+    secrets:
+      KUBE_SERVER:
+        required: true
+      KUBE_CA:
+        required: true
+      KUBE_TOKEN:
+        required: true
+      ARGOCD_DEPLOY_KEY:
+        required: true
+
+permissions: {}
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  # Runs only main's code: it checks out main, never the pull request, so
+  # teardown needs no eligibility check beyond the re-run re-check.
+  teardown:
+    name: Tear down
+    runs-on: tadoku-prod-branch
+    environment: prod-branch
+    timeout-minutes: 60
+    concurrency:
+      group: pr-branch-${{ inputs.pr }}
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+      statuses: write
+    env:
+      PR: ${{ inputs.pr }}
+      DEV_CONFIG: ${{ github.workspace }}/argocd/dev-cli/production/config.yaml
+      ISOLATION_CHECK: ${{ github.workspace }}/argocd/scripts/branch-isolation-check.sh
+    steps:
+      - name: Re-check the triggering actor of a re-run
+        id: actor
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          TRIGGERING_ACTOR: ${{ github.triggering_actor }}
+        run: |
+          if ((GITHUB_RUN_ATTEMPT > 1)); then
+            role="$(gh api "repos/$REPO/collaborators/$TRIGGERING_ACTOR/permission" --jq .role_name)"
+            if [[ $role != admin && $role != maintain ]]; then
+              echo "::error::The re-run's triggering actor $TRIGGERING_ACTOR is not an admin or maintainer."
+              exit 1
+            fi
+          fi
+
+      - name: Write the kubeconfig
+        id: kubeconfig
+        env:
+          KUBE_SERVER: ${{ secrets.KUBE_SERVER }}
+          KUBE_CA: ${{ secrets.KUBE_CA }}
+          KUBE_TOKEN: ${{ secrets.KUBE_TOKEN }}
+        run: |
+          if [[ $KUBE_SERVER != https://* || -z $KUBE_TOKEN ]] ||
+            ! base64 -d <<<"${KUBE_CA//[[:space:]]/}" 2>/dev/null | grep 'BEGIN CERTIFICATE' >/dev/null; then
+            echo "::error::Set the prod-branch secrets KUBE_SERVER (https URL), KUBE_CA (base64 PEM) and KUBE_TOKEN."
+            exit 1
+          fi
+
+          kubeconfig="$RUNNER_TEMP/kubeconfig"
+          umask 077
+          jq -n '{
+            apiVersion: "v1",
+            kind: "Config",
+            clusters: [{
+              name: "lke20948",
+              cluster: {server: env.KUBE_SERVER, "certificate-authority-data": (env.KUBE_CA | gsub("\\s"; ""))}
+            }],
+            users: [{name: "pr-branch-deployer", user: {token: (env.KUBE_TOKEN | gsub("\\s"; ""))}}],
+            contexts: [{name: "lke20948-ctx", context: {cluster: "lke20948", user: "pr-branch-deployer"}}],
+            "current-context": "lke20948-ctx"
+          }' >"$kubeconfig"
+          echo "KUBECONFIG=$kubeconfig" >>"$GITHUB_ENV"
+          export KUBECONFIG=$kubeconfig
+
+          expected=system:serviceaccount:tdk-prod-branches:pr-branch-deployer
+          identity="$(kubectl auth whoami -o jsonpath='{.status.userInfo.username}')"
+          if [[ $identity != "$expected" ]]; then
+            echo "::error::KUBE_TOKEN authenticates as '$identity', not $expected."
+            exit 1
+          fi
+          echo "Cluster identity: $identity"
+
+      # dev-cli writes a lifecycle marker before it deploys anything and
+      # deletes it last, so a pull request without one has nothing to remove.
+      - name: Find the pull request's branch
+        id: branch
+        run: |
+          if [[ ! $PR =~ ^[1-9][0-9]*$ ]]; then
+            echo "::error::authorize passed no pull request number."
+            exit 1
+          fi
+          markers="$(kubectl -n tdk-prod-branches get configmap -o json \
+            -l dev-cli.io/managed-by=dev-cli,dev-cli.io/lifecycle-marker=true,dev-cli.io/owner=gh)"
+          found="$(jq -r --arg branch "pr-$PR" 'first(.items[].metadata
+            | select(.annotations["dev-cli.io/owner-original"] == "gh"
+              and .annotations["dev-cli.io/branch-original"] == $branch)
+            | "\(.labels["dev-cli.io/route"]) \(.annotations["dev-cli.io/source-revision"] // "")") // empty' \
+            <<<"$markers")"
+          if [[ -z $found ]]; then
+            echo "found=false" >>"$GITHUB_OUTPUT"
+            echo "No branch is deployed for pull request #$PR."
+            exit 0
+          fi
+
+          read -r route revision <<<"$found"
+          if [[ ! $route =~ ^gh-pr-$PR-[0-9a-f]{8}$ ]]; then
+            echo "::error::The lifecycle marker of pr-$PR names the route '$route'."
+            exit 1
+          fi
+          if [[ ! $revision =~ ^[0-9a-f]{40}$ ]]; then
+            revision=""
+          fi
+          printf 'found=true\nroute=%s\nrevision=%s\n' "$route" "$revision" >>"$GITHUB_OUTPUT"
+          echo "Route $route, deployed from ${revision:-an unknown commit}"
+
+      - name: Check out main
+        if: steps.branch.outputs.found == 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          path: tadoku
+          persist-credentials: false
+
+      # dev-cli derives the route from the owner and the local branch name, so
+      # main checked out as pr-<number> addresses the pull request's route.
+      - name: Name the local branch after the pull request
+        if: steps.branch.outputs.found == 'true'
+        working-directory: tadoku
+        run: git switch -c "pr-$PR"
+
+      - name: Check out the production configuration
+        if: steps.branch.outputs.found == 'true'
+        env:
+          ARGOCD_DEPLOY_KEY: ${{ secrets.ARGOCD_DEPLOY_KEY }}
+        run: |
+          ssh_dir="$(mktemp -d)"
+          trap 'rm -rf "$ssh_dir"' EXIT
+          (umask 077 && printf '%s\n' "$ARGOCD_DEPLOY_KEY" >"$ssh_dir/key")
+          echo '[ssh.github.com]:443 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl' \
+            >"$ssh_dir/known_hosts"
+          GIT_SSH_COMMAND="ssh -i $ssh_dir/key -o IdentitiesOnly=yes -o UserKnownHostsFile=$ssh_dir/known_hosts" \
+            git clone --depth 1 --branch main ssh://git@ssh.github.com:443/antonve/tadoku-argocd.git argocd
+
+      - name: Set up Go
+        if: steps.branch.outputs.found == 'true'
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+        with:
+          go-version: stable
+          cache: false
+
+      - name: Install dev-cli
+        if: steps.branch.outputs.found == 'true'
+        env:
+          DEV_CLI_VERSION: ${{ vars.DEV_CLI_VERSION }}
+        run: |
+          if [[ ! $DEV_CLI_VERSION =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Set the prod-branch variable DEV_CLI_VERSION to a dev-cli release tag, such as v0.11.1."
+            exit 1
+          fi
+          go install "github.com/antonve/dev-cli/cmd/dev@$DEV_CLI_VERSION"
+          dev version
+
+      # dev down queries the tenant Jobs' Bazel push target before it reuses
+      # the deployed tenant image. The job never logs in to a registry, so a
+      # missing image fails the teardown instead of publishing main's code
+      # under the pull request's tag.
+      - name: Set up Bazel
+        if: steps.branch.outputs.found == 'true'
+        uses: bazel-contrib/setup-bazel@c5acdfb288317d0b5c0bbd7a396a3dc868bb0f86 # v0.19.0
+        with:
+          module-root: tadoku
+          bazelisk-cache: true
+          repository-cache: true
+          cache-save: false
+          token: ""
+
+      - name: Tear down with dev down
+        id: down
+        if: steps.branch.outputs.found == 'true'
+        working-directory: tadoku
+        env:
+          ROUTE: ${{ steps.branch.outputs.route }}
+        run: |
+          app="$(dev url --owner gh --config "$DEV_CONFIG" | tail -n 1)"
+          if [[ $app != "https://$ROUTE.preview.tadoku.app/" ]]; then
+            echo "::error::dev url printed '$app', not the route $ROUTE of the lifecycle marker."
+            exit 1
+          fi
+          code=0
+          dev down --owner gh --config "$DEV_CONFIG" 2>&1 | tee "$RUNNER_TEMP/dev-down.log" || code=$?
+          echo "code=$code" >>"$GITHUB_OUTPUT"
+          if ((code != 0)); then
+            echo "::error::dev down exited $code."
+          fi
+
+      - name: Check isolation after the teardown
+        id: after
+        if: always() && steps.down.outputs.code != ''
+        env:
+          ROUTE: ${{ steps.branch.outputs.route }}
+        run: |
+          code=0
+          XDG_STATE_HOME="$RUNNER_TEMP/state" "$ISOLATION_CHECK" after-teardown "$ROUTE" 2>&1 |
+            tee "$RUNNER_TEMP/isolation-after-teardown.log" || code=$?
+          echo "code=$code" >>"$GITHUB_OUTPUT"
+
+      - name: Report on the pull request
+        if: always() && steps.actor.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          REASON: ${{ inputs.reason }}
+          FOUND: ${{ steps.branch.outputs.found }}
+          ROUTE: ${{ steps.branch.outputs.route }}
+          REVISION: ${{ steps.branch.outputs.revision }}
+          DOWN: ${{ steps.down.outputs.code }}
+          AFTER: ${{ steps.after.outputs.code }}
+        run: |
+          if [[ ! $PR =~ ^[1-9][0-9]*$ ]]; then
+            exit 1
+          fi
+          marker='<!-- tadoku-pr-branch -->'
+          logs=$RUNNER_TEMP
+          # The comment and summary are not masked like the log, so hide the
+          # API server that kubectl errors print.
+          cluster="$(jq -r '.clusters[0].cluster.server // empty' "${KUBECONFIG:-/dev/null}" 2>/dev/null || true)"
+          cluster=${cluster#https://}
+          cluster=${cluster%%[:/]*}
+          run_url="$GITHUB_SERVER_URL/$REPO/actions/runs/$GITHUB_RUN_ID"
+
+          # UNVERIFIED checks after the teardown are a warning.
+          if [[ $FOUND == false ]]; then
+            state="nothing to tear down"
+          elif [[ $DOWN == 0 && ($AFTER == 0 || $AFTER == 2) ]]; then
+            state="torn down"
+          else
+            state="teardown failed"
+          fi
+
+          verdict() {
+            case $1 in
+              0) echo PASS ;;
+              1) echo FAIL ;;
+              2) echo UNVERIFIED ;;
+              *) echo "ERROR (exit $1)" ;;
+            esac
+          }
+
+          # Prints the last lines of a log, shortened, as a fenced block.
+          block() {
+            if [[ -s $1 ]]; then
+              echo '~~~text'
+              if [[ -n $cluster ]]; then
+                tail -n 40 "$1" | cut -c1-200 | sed "s|${cluster//./\\.}|<cluster>|g"
+              else
+                tail -n 40 "$1" | cut -c1-200
+              fi
+              echo '~~~'
+            fi
+          }
+
+          body="$(
+            echo "$marker"
+            echo "**Production branch: $state**"
+            echo
+            echo "$REASON"
+            echo
+            if [[ $FOUND == false ]]; then
+              echo 'No branch is deployed for this pull request, so nothing was removed.'
+              echo
+            else
+              if [[ -n $ROUTE ]]; then
+                echo "Route \`$ROUTE\`, deployed from commit \`${REVISION:-unknown}\`"
+                echo
+              fi
+              if [[ -n $DOWN ]]; then
+                echo "**dev down: exit $DOWN**"
+                block "$logs/dev-down.log"
+              else
+                echo '**dev down: not run.** An earlier step failed; see the workflow run.'
+              fi
+              echo
+              if [[ -n $AFTER ]]; then
+                echo "**Isolation after teardown: $(verdict "$AFTER")**"
+                block "$logs/isolation-after-teardown.log"
+                echo
+              fi
+            fi
+            echo "[Workflow run]($run_url)"
+          )"
+          printf '%s\n' "$body" >>"$GITHUB_STEP_SUMMARY"
+
+          # Edits the bot's comment that starts with the marker, or posts it.
+          sticky() {
+            local ids
+            ids="$(gh api --paginate "repos/$REPO/issues/$PR/comments?per_page=100" \
+              --jq ".[] | select(.user.login == \"github-actions[bot]\" and (.body | startswith(\"$marker\"))) | .id")" ||
+              return 1
+            if [[ -n $ids ]]; then
+              gh api -X PATCH "repos/$REPO/issues/comments/${ids%%$'\n'*}" -f body="$1" >/dev/null
+            else
+              gh api -X POST "repos/$REPO/issues/$PR/comments" -f body="$1" >/dev/null
+            fi
+          }
+          # The reconciler or a deploy's containment may have torn the branch
+          # down before this job ran, so finding no branch keeps the comment's
+          # report of that teardown.
+          reported=""
+          if [[ $FOUND == false ]]; then
+            reported="$(gh api --paginate "repos/$REPO/issues/$PR/comments?per_page=100" \
+              --jq ".[] | select(.user.login == \"github-actions[bot]\" and (.body | startswith(\"$marker\")))
+                | .body | split(\"\n\")[1]" | sed -n 1p)" || true
+          fi
+          if [[ $reported == '**Production branch: torn down**' ||
+            $reported == '**Production branch: torn down by containment**' ]]; then
+            echo "::notice::No branch is deployed for #$PR, and its comment already reports the teardown; it was kept."
+          else
+            sticky "$body" || echo "::warning::Could not post or update the pull request comment."
+          fi
+
+          # The status belongs to the deployed commit, which may no longer be the head.
+          if [[ -n $REVISION ]]; then
+            status=failure
+            if [[ $state == "torn down" ]]; then
+              status=success
+            fi
+            gh api -X POST "repos/$REPO/statuses/$REVISION" -f state="$status" -f context=prod-branch/deploy \
+              -f description="Production branch: $state" -f target_url="$run_url" >/dev/null ||
+              echo "::warning::Could not set the prod-branch/deploy commit status."
+          fi
+
+          if [[ $state == "teardown failed" ]]; then
+            echo "::error::Production branch: teardown failed."
+            exit 1
+          fi
+          if [[ $AFTER == 2 ]]; then
+            echo "::warning::The isolation check after the teardown left checks UNVERIFIED."
+          fi

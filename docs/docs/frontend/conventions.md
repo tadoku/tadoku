@@ -25,6 +25,11 @@ button or form styles:
 - Form inputs such as `Input`, `Select` and `Checkbox` come from
   `ui/components/Form`.
 - Shared components such as `Modal`, `Flash` and `Navbar` come from `ui`.
+- Wrap every table in `.table-container`. It scrolls horizontally and shows edge
+  shadows while content is off-screen in that direction. Keep the table and its
+  rows transparent (translucent tints are fine) so the shadows show. When the table
+  has no focusable content, give the wrapper `role="region"`, `tabIndex={0}` and
+  `aria-labelledby` (or `aria-label`) so keyboard users can scroll it.
 
 ## Forms
 

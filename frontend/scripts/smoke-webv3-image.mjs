@@ -76,7 +76,7 @@ async function checkRuntimeLinks(base, cases) {
     const html = response.html
     assert(html.includes(`href="${login}"`), `Wrong login return for ${host}`)
     await writeFile(`${artifacts}/links-${host}.html`, html)
-    assert(html.includes(`href="${origin}/logs/new"`), `Wrong activity link for ${host}`)
+    assert(html.includes(`href="/logs/new"`), `Wrong activity link for ${host}`)
     assert(html.includes(`href="${origin}/pages/manual"`), `Wrong guide link for ${host}`)
     for (const [, href] of html.matchAll(/href="(https:\/\/[^" ]+)"/g)) {
       const url = new URL(href)
@@ -135,6 +135,9 @@ try {
     child.once('exit', resolve)
   })
   assert.equal(exitCode, 0, 'Browser journeys failed')
+  const newLog = await fetch(`${base}/logs/new`)
+  assert.equal(newLog.status, 200)
+  assert((await newLog.text()).includes('Sign in to log activity'), 'Anonymous native logging prompt missing')
   assert.deepEqual(writes, [], 'Application attempted upstream writes')
   await new Promise(resolve => fixture.close(resolve))
   const health = await fetch(`${base}/healthz`, { signal: AbortSignal.timeout(2_000) })

@@ -1,7 +1,7 @@
 # Tadoku feature map
 
 Tadoku lets language learners log activities, track progress and participate in
-contests and leaderboards. The main site is `webv2`; `auth` handles accounts and
+contests and leaderboards. The legacy main site is `webv2`; Webv3 provides a public homepage, local goal and native activity logging; `auth` handles accounts and
 `admin` manages content and moderation. They use the Tadoku API backend.
 
 Start with [the verification skill](../../SKILL.md) for environment selection and

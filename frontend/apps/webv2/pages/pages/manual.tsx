@@ -73,8 +73,13 @@ const Page: NextPage<Props> = () => (
         activity and unit configurations per language in the table below.
       </p>
 
-      <h4>Reading</h4>
-      <div className="table-container">
+      <h4 id="units-reading">Reading</h4>
+      <div
+        className="table-container"
+        role="region"
+        tabIndex={0}
+        aria-labelledby="units-reading"
+      >
         <table>
           <thead>
             <tr>
@@ -146,8 +151,13 @@ const Page: NextPage<Props> = () => (
         </li>
       </ol>
 
-      <h4>Writing</h4>
-      <div className="table-container">
+      <h4 id="units-writing">Writing</h4>
+      <div
+        className="table-container"
+        role="region"
+        tabIndex={0}
+        aria-labelledby="units-writing"
+      >
         <table>
           <thead>
             <tr>
@@ -186,7 +196,7 @@ const Page: NextPage<Props> = () => (
         </table>
       </div>
 
-      <h4>Listening</h4>
+      <h4 id="units-listening">Listening</h4>
 
       <p>
         While listening make sure that it&apos;s comprehensible. Passive
@@ -196,7 +206,12 @@ const Page: NextPage<Props> = () => (
         &quot;listening&quot; to while sleeping would not count.
       </p>
 
-      <div className="table-container">
+      <div
+        className="table-container"
+        role="region"
+        tabIndex={0}
+        aria-labelledby="units-listening"
+      >
         <table>
           <thead>
             <tr>
@@ -226,8 +241,13 @@ const Page: NextPage<Props> = () => (
         <li>Media such as audiobooks which have few breaks</li>
       </ol>
 
-      <h4>Speaking</h4>
-      <div className="table-container">
+      <h4 id="units-speaking">Speaking</h4>
+      <div
+        className="table-container"
+        role="region"
+        tabIndex={0}
+        aria-labelledby="units-speaking"
+      >
         <table>
           <thead>
             <tr>
@@ -260,8 +280,13 @@ const Page: NextPage<Props> = () => (
         </li>
       </ol>
 
-      <h4>Study</h4>
-      <div className="table-container">
+      <h4 id="units-study">Study</h4>
+      <div
+        className="table-container"
+        role="region"
+        tabIndex={0}
+        aria-labelledby="units-study"
+      >
         <table>
           <thead>
             <tr>

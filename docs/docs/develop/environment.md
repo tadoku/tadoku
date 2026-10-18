@@ -363,10 +363,11 @@ The API persists `tadoku/<route>` on branch jobs, and caches use
   tenant teardown. Jobs already claimed by the base before an override may
   finish there; compare job tenant and worker evidence when verifying ownership.
 - Job producers and consumers share versioned contracts. Follow
-  [Jobs and worker](../tadoku-api/jobs.md#migrate-v1-to-v2) before changing a
-  payload; pairing workloads does not make incompatible versions safe.
+  [Migrate a job contract from v1 to v2](../tadoku-api/jobs-versioning.md)
+  before changing a payload; pairing workloads does not make incompatible
+  versions safe.
 - To check your worker's readiness, metrics and job rows, follow
-  [Run jobs on your development branch](../tadoku-api/jobs.md#run-jobs-on-your-development-branch).
+  [Run jobs on your development branch](../tadoku-api/jobs-operations.md#run-jobs-on-your-development-branch).
 
 ## Clean up
 

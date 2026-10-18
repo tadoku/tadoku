@@ -78,8 +78,12 @@ see [Contributing workflow](../develop/contributing.md#cms-managed-content).
   `spec/openapi.yaml`, a request or response shape, or generated HTTP code.
 - [Database and migrations](./database.md): read before writing a migration,
   changing a SQL query or opening a transaction.
-- [Jobs and worker](./jobs.md): read before adding background work, changing a
-  persisted message version or replaying failed work.
+- [Jobs and worker](./jobs.md): read before adding background work or changing
+  how a job is defined, published or handled.
+- [Operate jobs and the worker](./jobs-operations.md): read before checking
+  worker health, running jobs on a branch or replaying failed work.
+- [Migrate a job contract from v1 to v2](./jobs-versioning.md): read before
+  changing a persisted message version.
 - [Testing](./testing.md): read before adding or changing any test; covers
   principles, test infrastructure and repository tests.
 - [HTTP end-to-end tests](./http-e2e.md): read before adding or changing an

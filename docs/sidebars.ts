@@ -53,6 +53,8 @@ const sidebars: SidebarsConfig = {
         'tadoku-api/contract',
         'tadoku-api/database',
         'tadoku-api/jobs',
+        'tadoku-api/jobs-operations',
+        'tadoku-api/jobs-versioning',
         'tadoku-api/testing',
         'tadoku-api/http-e2e',
         'tadoku-api/user-journeys',

@@ -275,7 +275,7 @@ order by requested.original_id;
 A batch with no IDs needs no invalidation. Otherwise every original ID needs
 `completed = true` with `missing = false`; pending or running IDs remain work
 for the worker. For an incomplete effect with failed IDs, inspect the failure
-and repair its cause before using the [worker replay command](../tadoku-api/jobs.md#inspect-and-replay-retained-work).
+and repair its cause before using the [worker replay command](../tadoku-api/jobs-operations.md#inspect-and-replay-retained-work).
 Replay creates a linked job and leaves the failed original unchanged. Re-run
 this query to observe the linked completion; do not wait for the original
 failed row to become completed. A missing row is not proof of success: consult

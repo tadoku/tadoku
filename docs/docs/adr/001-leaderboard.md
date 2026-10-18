@@ -6,7 +6,7 @@ title: "001 - Leaderboard Improvements"
 
 # [001] Leaderboard Improvements
 
-* Status: superseded by the [current jobs and worker contract](../tadoku-api/jobs.md#leaderboard-freshness-and-worker-health)
+* Status: superseded by the [current jobs and worker contract](../tadoku-api/jobs-operations.md#leaderboard-freshness-and-worker-health)
 * Author: @antonve
 * Date: 2022-04-23
 
@@ -137,4 +137,4 @@ This design also seems to lay the foundation for private contests between users 
 ## Outcome
 
 This records the original sorted-set decision. For the current invalidation,
-fallback and freshness behavior, see [Jobs and worker](../tadoku-api/jobs.md#leaderboard-freshness-and-worker-health).
+fallback and freshness behavior, see [Operate jobs and the worker](../tadoku-api/jobs-operations.md#leaderboard-freshness-and-worker-health).

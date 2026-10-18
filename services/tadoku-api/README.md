@@ -31,7 +31,11 @@ bazel run //:gazelle            # after adding Go files or changing imports
 - [Database and migrations](../../docs/docs/tadoku-api/database.md): standalone
   migrations, SQL style, sqlc and transactions.
 - [Jobs and worker](../../docs/docs/tadoku-api/jobs.md): typed publication,
-  handler registration, execution, replay and v1-to-v2 migration.
+  handler registration and execution guarantees.
+- [Operate jobs and the worker](../../docs/docs/tadoku-api/jobs-operations.md):
+  worker health, branch runs, retention and replay.
+- [Migrate a job contract from v1 to v2](../../docs/docs/tadoku-api/jobs-versioning.md):
+  contract-version changes.
 - [Testing](../../docs/docs/tadoku-api/testing.md): test principles, test
   infrastructure and repository tests.
 - [HTTP end-to-end tests](../../docs/docs/tadoku-api/http-e2e.md): golden

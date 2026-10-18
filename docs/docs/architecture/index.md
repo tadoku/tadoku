@@ -68,7 +68,7 @@ browser → ingress-nginx → Envoy → webv2 / auth / admin
   cached leaderboard can be stale until its invalidation completes; after a
   terminal failure it stays stale until the next write to the same contest or
   year, or a replay. See
-  [Leaderboard freshness and worker health](../tadoku-api/jobs.md#leaderboard-freshness-and-worker-health).
+  [Leaderboard freshness and worker health](../tadoku-api/jobs-operations.md#leaderboard-freshness-and-worker-health).
 - Kratos and Keto keep their own databases in the same PostgreSQL server.
 
 ## Where to go next

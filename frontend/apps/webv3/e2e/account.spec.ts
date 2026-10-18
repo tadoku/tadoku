@@ -22,10 +22,13 @@ test('anonymous login return is SSR stable and includes the fragment after hydra
   const response = await ssr.goto(destination)
   expect(response?.headers()['cache-control']).toContain('no-store')
   const link = ssr.getByRole('link', { name: 'Log in', exact: true })
-  expect(new URL((await link.getAttribute('href'))!).searchParams.get('return_to')).toBe(destination.split('#')[0])
+  expect(new URL((await link.getAttribute('href'))!).searchParams.get('return_to')).toBe(destination.replace(/^http:\/\//, 'https://').split('#')[0])
   await context.close()
   await page.goto(destination)
   await expect.poll(async () => new URL((await page.getByRole('link', { name: 'Log in', exact: true }).getAttribute('href'))!).searchParams.get('return_to')).toBe(destination)
+  await page.getByRole('link', { name: 'Skip to content' }).focus()
+  await page.keyboard.press('Enter')
+  await expect.poll(async () => new URL((await page.getByRole('link', { name: 'Log in', exact: true }).getAttribute('href'))!).searchParams.get('return_to')).toBe(`${destination.split('#')[0]}#main-content`)
 })
 
 test('login, exact return, SSR reload, foreign-origin refusal and logout invalidate the session', async ({ page, context }, testInfo) => {
@@ -41,6 +44,8 @@ test('login, exact return, SSR reload, foreign-origin refusal and logout invalid
   await expect(page.getByRole('navigation', { name: 'Main navigation' }).getByText('Dev Reader', { exact: true })).toBeVisible()
   const rejected = await context.request.post(`${base}/logout`, { headers: { Origin: 'https://evil.tadoku.dev.lab', 'Sec-Fetch-Site': 'same-site' } })
   expect(rejected.status()).toBe(403)
+  await page.reload()
+  await expect(page.getByRole('navigation', { name: 'Main navigation' }).getByText('Dev Reader', { exact: true })).toBeVisible()
   await page.screenshot({ path: testInfo.outputPath('signed-in.png'), fullPage: true })
   const oldCookie = (await context.cookies()).find(cookie => cookie.name === 'ory_kratos_session')!
   await page.getByRole('button', { name: 'Log out', exact: true }).click()

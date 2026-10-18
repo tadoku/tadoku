@@ -1,5 +1,5 @@
 import { queryOptions } from '@tanstack/react-query'
-import { rootRouteId, useHydrated, useLoaderData } from '@tanstack/react-router'
+import { rootRouteId, useHydrated, useLoaderData, useRouterState } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { z } from 'zod'
 
@@ -22,6 +22,8 @@ export const viewerQueryOptions = () => queryOptions({
 
 export function useLoginUrl() {
   const { authUrl, appOrigin, requestPath } = useLoaderData({ from: rootRouteId })
+  useRouterState({ select: state => state.location.href })
   const hydrated = useHydrated()
+
   return `${authUrl}/login?return_to=${encodeURIComponent(hydrated ? window.location.href : appOrigin + requestPath)}`
 }

@@ -30,8 +30,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const loginUrl = useLoginUrl()
   const account = viewer?.status === 'anonymous'
     ? <a href={loginUrl} className="text-link">Log in</a>
-    : viewer?.status === 'signed-in' || viewer?.status === 'banned'
-      ? <><span>{viewer.status === 'banned' ? 'Your account is suspended' : viewer.displayName}</span>
+    : viewer?.status === 'signed-in' || viewer?.status === 'banned' || viewer?.status === 'unavailable'
+      ? <><span>{viewer.status === 'unavailable' ? 'Account service unavailable' : viewer.status === 'banned' ? 'Your account is suspended' : viewer.displayName}</span>
         <form method="post" action="/logout"><Button type="submit" variant="link">Log out</Button></form></>
       : null
   const navigation: NavbarItem[] = [

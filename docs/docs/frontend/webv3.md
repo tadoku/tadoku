@@ -62,6 +62,12 @@ core into server rendering so the shared workspace builds consistently after
 adding authv2. It affects the published build; the development runner option
 does not.
 
+Local loopback runs cannot use the account cookie scoped to `tadoku.dev.lab`.
+The server uses the scheme of `TADOKU_WEB_URL` for return URLs and mutation
+origin checks, so an HTTP loopback run with the default HTTPS configuration
+supports anonymous reads only. Use an owned HTTPS branch host for authenticated
+journeys and mutations.
+
 The Lab CA path above is specific to Lab hosts. On another machine, supply its
 trusted Lab CA certificate through `NODE_EXTRA_CA_CERTS`; do not disable TLS
 verification.

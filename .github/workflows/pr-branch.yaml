@@ -2,7 +2,7 @@ name: pr-branch
 
 # Authorizes, deploys and tears down pull-request branches beside production.
 # pr-branch-reconcile.yaml tears down the branches this workflow leaves behind.
-# See docs/docs/develop/production-branches.md.
+# See docs/docs/develop/pull-request-deploys.md.
 #
 # pull_request_target always runs this file from main. Event values reach shell
 # scripts only through env:; never put an expression in a run: line, and never

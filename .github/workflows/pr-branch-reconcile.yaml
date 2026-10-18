@@ -3,7 +3,7 @@ name: pr-branch-reconcile
 # Tears down pull-request branches whose pull request is closed or has no
 # deploy label, or whose branch expired, with the same dev down and isolation
 # check as pr-branch.yaml's teardown job. It runs only main's code. See
-# docs/docs/develop/production-branches.md.
+# docs/docs/develop/pull-request-deploys.md.
 #
 # It touches only lifecycle markers of dev-cli owner gh on branches
 # pr-<number>, and never runs dev cleanup, which removes expired routes of

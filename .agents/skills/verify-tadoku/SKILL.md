@@ -118,7 +118,9 @@ exact unmet prerequisite; don't broaden access or erase data to make a check pas
 Verify on production branch hosts only when asked to verify a branch the
 maintainer deployed by hand or a pull request deployed with the `deploy` label.
 [Production branches](../../../docs/docs/develop/production-branches.md)
-describes the hosts, tenant, access and pull-request deploys. Never run
+describes the hosts, tenant and access, and
+[Pull-request deploys](../../../docs/docs/develop/pull-request-deploys.md)
+describes the `deploy` label. Never run
 `dev up`, `task`, `down` or `cleanup` with the production configuration
 yourself, and never add or remove the `deploy` label unless told to.
 

@@ -133,7 +133,7 @@ images:
   - name: tadoku-api-image
     newName: ghcr.io/tadoku/tadoku/tadoku-api
     newTag: latest
-    digest: sha256:9040bb664681e01218e98a7a3e15142ae8558932a543e085384e7e8846803aac
+    digest: sha256:a5e8e9dfc241de5283dbf534390b3cd4c0020e4f2914c8ecbb16448e9da88c90
   - name: tadoku-worker-image
     newName: ghcr.io/tadoku/tadoku/tadoku-worker
     newTag: latest

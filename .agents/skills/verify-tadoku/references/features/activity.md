@@ -84,3 +84,23 @@ null for absent amount, unit, duration and description values.
 [export transport](../../../../../services/tadoku-api/transport/http/log_export.go),
 [export HTTP cases](../../../../../services/tadoku-api/e2e/log_export_test.go),
 [backend log journeys](../../../../../services/tadoku-api/e2e/log_journeys_test.go).
+
+## Webv3 native activity
+
+Open the printed next-host branch URL at `/logs/new`. Anonymous visitors see a
+sign-in prompt; login returns through the existing account UI. As Dev Reader,
+choose a language/activity, enter an amount and unit or minutes, optional tags
+and description, and review selected eligible contests. Save once, record the
+returned ID and values, then reload the detail and compare a fresh API read.
+Confirm `X-Dev-Selected` and that the canonical tenant cannot read the branch ID.
+Public detail is readable; contest submissions and management remain owner-only.
+
+Run the Webv3 `logging.spec.ts` with the documented fixture environment and Lab
+CA. It verifies invalid-field focus, real amount/time writes, contest selection,
+reload, duplicate-submit prevention, keyboard layouts and expired-session draft
+recovery, server-function CSRF refusal, non-owner mutation refusal and cross-tenant
+isolation. The two-identity suspension case uses only the selected branch tenant
+and restores its Reader role. Delay/abort tests intercept only the browser transport; identify this
+boundary in evidence. An ambiguous save must offer checking existing activity,
+never claim success or retry automatically. Keep authenticated traces/videos off.
+Do not reload a draft when testing session recovery: it is intentionally in-memory.

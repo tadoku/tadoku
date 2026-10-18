@@ -12,7 +12,7 @@ Webv3 is a small application foundation. Its homepage follows the
 Paper playground composition and reads the current official contest, summary,
 standings and next scheduled round from the configured Tadoku API. `/plan`
 demonstrates a validated immersion goal kept in the current browser. It does not
-create logs or change a Tadoku account.
+sync the goal to a Tadoku account. Native activity logging uses the existing account session and API.
 
 ## Stack and ownership
 
@@ -187,8 +187,8 @@ image.
 The active production GitOps configuration makes `next.tadoku.app` follow
 the `latest` digest automatically through Image Updater and Argo CD. No manual
 production tag promotion is required for Webv3. Webv3 uses the same production
-backend as Webv2; the current homepage reads public data and its activity links
-open production Webv2 for account operations.
+backend as Webv2; the current homepage reads public data and native logging uses its existing account and activity API. Unfinished journeys
+continue to open production Webv2.
 Merging source that matches the Webv3 workflow's paths, including the shared
 lockfile, therefore republishes `latest` and rolls this production preview through
 Image Updater's periodic digest reconciliation and Argo CD's automatic sync.
@@ -240,3 +240,39 @@ account to remain signed in. After logout it checks that the API no longer
 accepts the old session cookie. Set
 `TADOKU_API_URL` to the branch's public API root for that check. Authenticated
 tests disable traces and videos and retain no browser storage.
+
+## Native activity logging
+
+`/logs/new` prompts anonymous visitors to sign in through the existing account
+application, then loads configuration and ongoing contest registrations from the
+selected tenant. TanStack Form owns the draft. Language and activity determine
+the available unit or duration input and eligible contests. Eligible contests are
+selected initially; a user can uncheck them to save a personal record.
+
+`frontend/apps/webv3/src/lib/logs.ts` validates responses and form values with
+Zod. Its server counterpart forwards only the session cookie to the existing
+configuration, registrations, create and detail endpoints. The API owns scoring,
+contest eligibility, authorization and persistence; Webv3 does not read the
+legacy log-entry feature flag or calculate a provisional score.
+
+A successful save navigates to `/logs/$logId` using the returned ID and displays
+the persisted language, measure, tags, score and contests. Reload reads that
+record again. Public detail omits private contest submissions; only the owner
+gets the contest management link to Webv2. History, edit, delete and score preview
+remain Webv2 journeys.
+
+Invalid input focuses the first invalid control. A pending save disables controls
+and repeated submits. Rejected saves keep the draft. An expired session offers
+login in a new tab so the original form survives. An ambiguous transport failure
+asks the user to check their activity before retrying; the API has no idempotency
+key, so retrying an ambiguous save can create another record. Drafts are held in
+memory and are lost when the form is reloaded or closed.
+
+Run `logging.spec.ts` with `WEBV3_BASE_URL`, `TADOKU_API_URL`,
+`E2E_READER_EMAIL` and `E2E_READER_PASSWORD` for the documented development
+fixture. Ownership and branch-only suspension cases also use
+`E2E_SECOND_EMAIL` and `E2E_SECOND_PASSWORD` for Dev Admin; the suspension case
+restores the Reader role in the same branch tenant. Set `NODE_EXTRA_CA_CERTS` to the trusted Lab CA and
+`PLAYWRIGHT_OUTPUT_DIR` outside the checkout. Authenticated runs disable traces
+and videos; browser-boundary delay and abort cases cover repeated submits and
+transport errors without mocking the API's successful writes.

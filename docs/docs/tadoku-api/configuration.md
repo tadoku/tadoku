@@ -1,13 +1,16 @@
 ---
 title: Runtime configuration
-description: Tadoku API environment variables, startup and shutdown behavior, authentication wiring, the raw Keto and Kratos clients, the leaderboard worker and metrics.
+description: Tadoku API environment variables, startup and shutdown behavior, authentication wiring, the raw Keto and Kratos clients, metrics and production credentials.
 sidebar_position: 9
 ---
 
 # Runtime configuration
 
 Read this when you change startup, an environment variable, authentication
-wiring, a provider client or the leaderboard worker.
+wiring or a provider client.
+[Job worker configuration](./worker-configuration.md) covers the leaderboard
+worker, and [Tenant lifecycle command](./tenant-lifecycle.md) covers
+`tadoku-tenant`.
 
 `services/tadoku-api/cmd/tadoku-api/main.go` loads the configuration from
 environment variables. Development values are in
@@ -256,65 +259,6 @@ account-deletion flow exists. See
 [Kratos identity writes](../architecture/authorization.md#kratos-identity-writes)
 for its applied, skipped and missing-tenant outcomes.
 
-## Separate job worker
-
-The queue persists in the `jobs` table. See
-[Successful-job retention](./jobs-operations.md#successful-job-retention) for the automatic
-three-calendar-month policy. Failed records are retained indefinitely.
-
-`cmd/tadoku-worker` constructs `app/worker.Application` with the queue and
-business features. Its immutable typed registration drives both claiming and
-dispatch; [Jobs and worker](./jobs.md) describes publication, execution policies,
-replay and consumer-first version migrations.
-
-The worker uses `WORKER_POSTGRES_*` split connection configuration,
-`WORKER_POSTGRES_MAX_CONNECTIONS` (default 4, range 1–32), `WORKER_VALKEY_URL`,
-`WORKER_VALKEY_TIMEOUT` (default 1s),
-`WORKER_DIAL_TIMEOUT` (default 3s), `WORKER_CONCURRENCY` (default 4), and
-`WORKER_SHUTDOWN_TIMEOUT` (default 15s). Concurrency and shutdown timeout must
-be positive; the command loads and validates both before application startup.
-
-`WORKER_BRANCH` defaults to empty, selecting the base worker's all-tenants queue
-scope, excluding tenants listed in `tenant_overrides` for `WORKER_COMPONENT`.
-`WORKER_COMPONENT` defaults to `tadoku-worker`; its name must start with a
-lowercase letter and contain only lowercase letters, digits or hyphens. An
-explicit empty component is invalid.
-
-A non-empty `WORKER_BRANCH` must be a valid `<name>/<id>` tenant key other than
-`tadoku/prod`. Its scope claims only that tenant, including when an override is
-present. Only base backlog metrics exclude overridden tenants. Base completed-job
-cleanup stays global; branch cleanup stays tenant-local. Branch queue isolation
-requires the `jobs` row-level security policy, so keep this variable unset when that policy is absent. Every handler
-and lease transition still uses the tenant persisted on its claimed job.
-
-Private health and metrics listeners default to `WORKER_PORT=8000` and
-`WORKER_METRICS_PORT=9090`. It has no public route. The API and worker must use
-the same database and tenant-derived cache keys. Development branches use
-their route's full tenant key even when a migration profile selects a private
-database.
-
-The worker invalidates leaderboard caches through registered jobs. A cache miss
-rebuilds from PostgreSQL only if its generation has not changed, and cached
-reads recheck that generation before returning; unavailable Valkey falls back
-to PostgreSQL. Worker Pod readiness reports whether the execution loop can
-operate, independently of individual job success. Monitor queued and failed
-jobs because cached results can remain stale while invalidation work is
-outstanding.
-
-Global and per-type concurrency are per process. Handler cancellation does not
-release its slot until it returns. On shutdown the application stops claiming,
-drains within its configured bound, then cancels remaining work and joins it
-before provider resources close. A noncooperative handler can delay exit; see
-[Execution and failure guarantees](./jobs.md#execution-and-failure-guarantees).
-
-### Worker tenant scope
-
-The worker separates queue scope from handler scope. Queue claims, backlog
-metrics and completed-job cleanup receive the required `jobqueue.Scope`; each
-handler and fenced transition receives only its persisted job tenant. Database
-helpers never supply a default tenant. The replay command uses the explicit
-canonical `tadoku/prod` context.
-
 ## Metrics
 
 - Request and Go process metrics are served on the metrics listener
@@ -341,27 +285,6 @@ when authentication has not established a tenant. Full tenant keys are never
 metric labels, so creating or deleting test tenants cannot create an unbounded
 set of series.
 
-### Worker metrics
-
-The separate worker serves its own metrics on `WORKER_METRICS_PORT`. Its
-backlog gauges refresh at startup and every fifteen seconds. The `type` label
-is a registered job type; unsupported-type gauges aggregate across unknown
-types without an unbounded type label.
-
-| Metric | Labels | Meaning |
-| --- | --- | --- |
-| `tadoku_worker_in_flight` | `type` | Jobs executing in this process. |
-| `tadoku_worker_failed_attempts_total` | `type`, `code`, `tenant_kind` | Failed handler attempts for the persisted job tenant. |
-| `tadoku_worker_handler_duration_seconds` | `type`, `tenant_kind` | Histogram of handler execution duration before the job transition. |
-| `tadoku_worker_pending_jobs` | `type` | Pending jobs for each registered type. |
-| `tadoku_worker_failed_jobs` | `type` | Terminally failed jobs for each registered type. |
-| `tadoku_worker_oldest_due_age_seconds` | `type` | Age of the oldest due or expired job. |
-| `tadoku_worker_unsupported_pending_jobs` | None | Pending jobs with an unsupported type. |
-| `tadoku_worker_unsupported_running_jobs` | None | Running jobs with an unsupported type. |
-| `tadoku_worker_unsupported_failed_jobs` | None | Failed jobs with an unsupported type. |
-| `tadoku_worker_unsupported_oldest_due_age_seconds` | None | Age of the oldest due unsupported job. |
-| `tadoku_worker_expired_leases_total` | `type` | Expired running leases reclaimed. |
-
 ## Shutdown
 
 - Shutdown closes the request and metrics listeners. After request handling
@@ -372,75 +295,6 @@ types without an unbounded type label.
   separate close operation.
 - Valkey close follows the upstream client's per-connection close allowance
   rather than `API_VALKEY_TIMEOUT`.
-
-## Tenant lifecycle command
-
-`services/tadoku-api/cmd/tadoku-tenant` provides provisioning, teardown and
-worker overrides. Its tenant argument is a full parsed key, such
-as `tadoku/branch-0123abcd`; the id must end in a hyphen and eight lowercase
-hexadecimal digits. Bare route ids, `tadoku/prod` and production registry rows
-are refused before provider writes.
-
-```sh
-bazel run //services/tadoku-api/cmd/tadoku-tenant -- provision \
-  --tenant tadoku/branch-0123abcd --flipt-features k8s/dev/base/flipt/features.yaml \
-  --tester 11111111-1111-4111-8111-111111111111
-bazel run //services/tadoku-api/cmd/tadoku-tenant -- override set \
-  --tenant tadoku/branch-0123abcd --component tadoku-worker
-bazel run //services/tadoku-api/cmd/tadoku-tenant -- override clear \
-  --tenant tadoku/branch-0123abcd --component tadoku-worker
-bazel run //services/tadoku-api/cmd/tadoku-tenant -- teardown \
-  --tenant tadoku/branch-0123abcd
-```
-
-All commands refuse credentials that neither own the tenant registry nor
-belong to the `tadoku_tenant_lifecycle` role. That role needs only schema usage,
-`select`, `insert` and `delete` on `tenants` and `tenant_overrides`, and
-`execute` on `copy_production_platform_scoring(text)` and
-`copy_production_published_pages(text)`; registry policies limit
-its writes to test rows, and deleting a row cascades through the owner's
-foreign keys. Production branch Jobs use it, and development uses the owner.
-Credentials come from `TENANT_POSTGRES_HOST`,
-`TENANT_POSTGRES_PORT` (default 5432), `TENANT_POSTGRES_DATABASE`,
-`TENANT_POSTGRES_USER`, `TENANT_POSTGRES_PASSWORD` and `TENANT_POSTGRES_SSLMODE`.
-`TENANT_POSTGRES_URL` is rejected. Provision and teardown additionally require
-`TENANT_KETO_READ_URL`, `TENANT_KETO_WRITE_URL`, `TENANT_VALKEY_URL` and
-`TENANT_FLIPT_MANAGEMENT_URL`; `TENANT_FLIPT_ENVIRONMENT` defaults to `test` and
-must differ from `production`. The Keto and Flipt management URLs must be
-absolute HTTP(S) without credentials, query or fragment; trailing slashes are
-removed. Use the direct provisioning-authorized Flipt endpoint, rather than the
-API's restricted service-token route. Override commands need only PostgreSQL.
-The only registered override component is `jobqueue.WorkerComponent`, currently
-`tadoku-worker`.
-
-`//services/tadoku-api/cmd/tadoku-tenant:image` packages the command for
-branch provisioning outside development: a distroless base with the CA bundle
-`verify-full` connections need, `/tadoku-tenant` as its entrypoint and the
-repository's flag definitions at `/flipt/features.yaml`. Its `branch_push`
-target sets no repository or tags; the caller supplies both. The development
-`//.dev:tenant_push` image has no CA bundle.
-
-Provision commits an idempotent test registry row under a transaction-local
-advisory lock. In the same transaction it copies `tadoku/prod`'s active
-platform scoring rule set and its rules into the tenant, with new ids and a
-`platform_scoring_config` row pointing at the copy, so logs can be scored.
-It then copies `tadoku/prod`'s published, undeleted CMS pages, each with only
-the content revision it displays, keeping namespaces, slugs, titles and
-timestamps under new ids. Drafts, scheduled and deleted pages, earlier
-revisions and posts are not copied. Each copy is skipped when the tenant
-already has platform scoring config or any page, so reruns keep the tenant's
-own changes; contest rule sets and user data are never copied. It then grants
-the canonical Keto parent and repeated `--tester` UUIDs, then creates only
-missing Flipt resources from the strict boolean seed format.
-Keto grants are checked by their complete tuple before creating them because
-the provider accepts duplicate relationship writes.
-Reruns preserve existing grants and flag values. Teardown deletes the tenant's
-Keto relationships, cache keys and Flipt namespace before deleting the registry
-row and its cascading data. Failure leaves the row for a retry; cleanup still
-runs when a prior attempt already removed that row. Commands sharing a tenant
-must be serialized by the caller's route lease. Provider HTTP calls have a
-30-second timeout; the command has a five-minute deadline and observes shutdown
-signals. Secrets are supplied through environment variables and never printed.
 
 ## Production credentials
 

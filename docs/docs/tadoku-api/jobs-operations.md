@@ -37,7 +37,7 @@ The worker's private `/livez` answers while the process serves. `/readyz`
 succeeds only when the last claim pass succeeded for every registered name and
 PostgreSQL answers a ping. It does not check Valkey, assert that any
 leaderboard is current, or mean that every job succeeded.
-Watch the [worker metrics](./configuration.md#worker-metrics): pending jobs and
+Watch the [worker metrics](./worker-configuration.md#worker-metrics): pending jobs and
 oldest due age show delayed invalidations, failed jobs show terminal failures,
 and unsupported-job gauges show work this worker cannot claim. The backlog
 gauges refresh at startup and every fifteen seconds. Investigate any failed

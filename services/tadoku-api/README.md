@@ -45,7 +45,11 @@ bazel run //:gazelle            # after adding Go files or changing imports
 - [Import boundaries](../../docs/docs/tadoku-api/import-boundaries.md): Bazel
   visibility and dependency checks.
 - [Runtime configuration](../../docs/docs/tadoku-api/configuration.md):
-  environment variables, startup, provider clients and the leaderboard worker.
+  environment variables, startup and provider clients.
+- [Job worker configuration](../../docs/docs/tadoku-api/worker-configuration.md):
+  the leaderboard worker's settings, scope and metrics.
+- [Tenant lifecycle command](../../docs/docs/tadoku-api/tenant-lifecycle.md):
+  test tenant provisioning, teardown and worker overrides.
 - [Authorization](../../docs/docs/architecture/authorization.md): JWT verification,
   the ban gate and access checks.
 - [Migration log](MIGRATION_LOG.md): deferred cleanup.

@@ -529,6 +529,96 @@ func (q *Queries) InsertLogTag(ctx context.Context, arg InsertLogTagParams) erro
 	return err
 }
 
+const listActiveLogsForUserAfter = `-- name: ListActiveLogsForUserAfter :many
+select
+  logs.id,
+  logs.created_at,
+  logs.language_code,
+  languages.name as language_name,
+  logs.log_activity_id,
+  logs.amount,
+  log_units.name as unit_name,
+  logs.duration_seconds,
+  coalesce(logs.computed_score, logs.score) as score,
+  coalesce(
+    (select array_agg(tag order by tag collate "C") from log_tags where log_id = logs.id),
+    array[]::text[]
+  )::text[] as tags,
+  logs.description
+from logs
+inner join languages on languages.code = logs.language_code
+left join log_units on log_units.id = logs.unit_id
+where logs.user_id = $1
+  and logs.deleted_at is null
+  and (
+    $2::timestamp is null
+    or (logs.created_at, logs.id) > (
+      $2::timestamp,
+      $3::uuid
+    )
+  )
+order by logs.created_at, logs.id
+limit $4
+`
+
+type ListActiveLogsForUserAfterParams struct {
+	UserID         pgtype.UUID
+	AfterCreatedAt pgtype.Timestamp
+	AfterID        pgtype.UUID
+	BatchSize      int32
+}
+
+type ListActiveLogsForUserAfterRow struct {
+	ID              pgtype.UUID
+	CreatedAt       pgtype.Timestamp
+	LanguageCode    string
+	LanguageName    string
+	LogActivityID   int16
+	Amount          pgtype.Float4
+	UnitName        pgtype.Text
+	DurationSeconds pgtype.Int4
+	Score           pgtype.Float4
+	Tags            []string
+	Description     pgtype.Text
+}
+
+func (q *Queries) ListActiveLogsForUserAfter(ctx context.Context, arg ListActiveLogsForUserAfterParams) ([]ListActiveLogsForUserAfterRow, error) {
+	rows, err := q.db.Query(ctx, listActiveLogsForUserAfter,
+		arg.UserID,
+		arg.AfterCreatedAt,
+		arg.AfterID,
+		arg.BatchSize,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListActiveLogsForUserAfterRow{}
+	for rows.Next() {
+		var i ListActiveLogsForUserAfterRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.LanguageCode,
+			&i.LanguageName,
+			&i.LogActivityID,
+			&i.Amount,
+			&i.UnitName,
+			&i.DurationSeconds,
+			&i.Score,
+			&i.Tags,
+			&i.Description,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listAttachedContestIDs = `-- name: ListAttachedContestIDs :many
 select contest_id from contest_logs where log_id = $1
 `

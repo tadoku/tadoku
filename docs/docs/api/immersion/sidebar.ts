@@ -120,6 +120,12 @@ const sidebar: SidebarsConfig = {
         },
         {
           type: "doc",
+          id: "api/immersion/log-export",
+          label: "Exports your activity logs",
+          className: "api-method get",
+        },
+        {
+          type: "doc",
           id: "api/immersion/score-preview",
           label: "Previews platform and contest scores without creating a log",
           className: "api-method post",

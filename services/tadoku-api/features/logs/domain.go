@@ -238,3 +238,26 @@ type CreateResult struct {
 	ID   uuid.UUID
 	Jobs []jobs.Job
 }
+
+type ExportedLog struct {
+	ID              uuid.UUID
+	CreatedAt       time.Time
+	LanguageCode    string
+	LanguageName    string
+	Activity        activities.Activity
+	Amount          *ExportedAmount
+	DurationSeconds *int32
+	Score           float32
+	Tags            []string
+	Description     *string
+}
+
+type ExportedAmount struct {
+	Value    float32
+	UnitName string
+}
+
+type exportCursor struct {
+	createdAt time.Time
+	id        uuid.UUID
+}

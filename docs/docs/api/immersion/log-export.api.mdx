@@ -1,0 +1,70 @@
+---
+id: log-export
+title: "Exports your activity logs"
+description: "Downloads every active log belonging to the authenticated user, oldest first by created_at then id. Deleted logs, other users' logs and contest attachments are excluded, including for administrators. JSON contains a logs array. CSV uses the same twelve fields in the documented column order, UTF-8 with a BOM, and LF line endings. Nullable CSV values are empty cells. Text cells beginning with =, +, -, @, tab or carriage return are prefixed with an apostrophe to prevent spreadsheet formulas; JSON text is unchanged. Tags are sorted alphabetically and joined with ', ' in CSV. Tags containing commas are ambiguous in CSV; use JSON for a lossless export."
+sidebar_label: "Exports your activity logs"
+hide_title: true
+hide_table_of_contents: true
+api: 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
+sidebar_class_name: "get api-method"
+info_path: api/immersion/immersion-api
+custom_edit_url: null
+hide_send_button: true
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+import Translate from "@docusaurus/Translate";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Exports your activity logs"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/logs/export"}
+  context={"endpoint"}
+>
+  
+</MethodEndpoint>
+
+
+
+Downloads every active log belonging to the authenticated user, oldest first by created_at then id. Deleted logs, other users' logs and contest attachments are excluded, including for administrators. JSON contains a logs array. CSV uses the same twelve fields in the documented column order, UTF-8 with a BOM, and LF line endings. Nullable CSV values are empty cells. Text cells beginning with =, +, -, @, tab or carriage return are prefixed with an apostrophe to prevent spreadsheet formulas; JSON text is unchanged. Tags are sorted alphabetically and joined with ", " in CSV. Tags containing commas are ambiguous in CSV; use JSON for a lossless export.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+>
+  <Translate id="theme.openapi.request.title">Request</Translate>
+</Heading>
+
+<ParamsDetails
+  {...require("./log-export.ParamsDetails.json")}
+>
+  
+</ParamsDetails>
+
+<RequestSchema
+  {...require("./log-export.RequestSchema.json")}
+>
+  
+</RequestSchema>
+
+<StatusCodes
+  {...require("./log-export.StatusCodes.json")}
+>
+  
+</StatusCodes>
+
+
+      

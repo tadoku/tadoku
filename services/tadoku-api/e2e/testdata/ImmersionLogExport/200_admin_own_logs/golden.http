@@ -1,0 +1,7 @@
+>>> GET /immersion/logs/export?format=json
+HTTP/1.1 200 OK
+Content-Length: 284
+Content-Disposition: attachment; filename="tadoku-logs.json"
+Content-Type: application/json; charset=UTF-8
+
+{"logs":[{"activity_id":2,"activity_name":"Listening","amount":null,"created_at":"2026-09-01T00:00:00Z","description":"Admin log","duration_seconds":60,"id":"a0000000-0000-4000-8000-000000000001","language_code":"eng","language_name":"English","score":3,"tags":[],"unit_name":null}]}

@@ -32,8 +32,8 @@ test('public views cover canonical operations', () => {
       if (operation['x-tadoku-exposure'] === 'public') publicOperations++;
     }
   }
-  assert.equal(operations, 69);
-  assert.equal(publicOperations, 68);
+  assert.equal(operations, 70);
+  assert.equal(publicOperations, 69);
 });
 
 test('operations match server generation', () => {

@@ -75,6 +75,7 @@ var operationAccess = map[string]accessLevel{
 
 	"ImmersionProfileYearlyContestRegistrationsByUserID": accessPublic,
 	"ImmersionLogGetConfigurations":                      accessAuthenticated,
+	"ImmersionLogExport":                                 accessAuthenticated,
 	"ImmersionLogTagSuggestions":                         accessAuthenticated,
 	"ImmersionLogCreate":                                 accessAuthenticated,
 	"ImmersionLogUpdate":                                 accessAuthenticated,
@@ -129,6 +130,7 @@ var operationFixtures = map[string]string{
 	"ImmersionContestRegistrationUpsert":       "UpsertContestRegistration",
 
 	"ImmersionLogGetConfigurations":         "ImmersionLogGetConfigurations",
+	"ImmersionLogExport":                    "ImmersionLogExport",
 	"ImmersionLogTagSuggestions":            "ImmersionLogTagSuggestions",
 	"ImmersionLogCreate":                    "ImmersionLogCreate",
 	"ImmersionLogUpdate":                    "ImmersionLogUpdate",

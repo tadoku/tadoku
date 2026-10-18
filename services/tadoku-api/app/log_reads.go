@@ -13,6 +13,7 @@ import (
 type Log = logs.Log
 type LogList = logs.LogList
 type LogListParameters = logs.ListParameters
+type ExportedLog = logs.ExportedLog
 
 func (a *Application) FindLog(ctx context.Context, id uuid.UUID) (*Log, error) {
 	actorID, hasActor := identity.ActorID(ctx)
@@ -51,4 +52,17 @@ func (a *Application) ListContestLogs(ctx context.Context, parameters LogListPar
 		return nil, err
 	}
 	return a.logs.ListContestLogs(ctx, parameters)
+}
+
+func (a *Application) ExportOwnLogs(ctx context.Context) ([]ExportedLog, error) {
+	if err := a.permissions.RequireAuthenticated(ctx); err != nil {
+		return nil, err
+	}
+
+	actorID, err := identity.RequireActorID(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return a.logs.ExportUserLogs(ctx, actorID)
 }

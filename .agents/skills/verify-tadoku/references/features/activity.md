@@ -75,7 +75,9 @@ recovery, server-function CSRF refusal, non-owner mutation refusal and cross-ten
 isolation. Switch accounts in another tab before saving: the old draft must
 remain visible, report that nothing was saved, update the account header and
 create no record for either identity. Public detail must also load with an
-expired cookie. The two-identity suspension case uses only the selected branch tenant
+expired cookie. Repeat draft retention after opening the form anonymously and
+logging in in another tab; advance the browser clock past viewer freshness and
+refocus to exercise the real session refetch without reloading the draft. The two-identity suspension case uses only the selected branch tenant
 and restores its Reader role. Delay/abort tests intercept only the browser transport; identify this
 boundary in evidence. An ambiguous save must offer checking existing activity,
 never claim success or retry automatically. Keep authenticated traces/videos off.

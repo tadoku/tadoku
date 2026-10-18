@@ -10,6 +10,7 @@ import { useLinks } from '../lib/links'
 import { useLoginUrl, viewerQueryOptions } from '../lib/session'
 
 const messages: Record<Failure, string> = {
+  'account-unavailable': 'Account service unavailable. Nothing was saved. Your entries are kept here; try again when the service recovers.',
   switched: 'You are now signed in as a different account. Nothing was saved. This draft is kept for the account that started it.',
   invalid: 'The activity was not saved. Check the amount, unit and contests, then try again.',
   'signed-out': 'Your session ended. Log in in a new tab, return here and save again. Your entries are kept here.',

@@ -217,8 +217,8 @@ accept canonical and branch Webv3 hosts before releasing session support.
 `/logs/new` prompts anonymous visitors to sign in through the existing account
 application, then loads configuration and ongoing contest registrations from the
 selected tenant. TanStack Form owns the draft. Language and activity determine
-the available unit or duration input and eligible contests. Eligible contests are
-selected initially; a user can uncheck them to save a personal record.
+the available unit or duration input and eligible contests. Eligible contests
+are selected initially; a user can uncheck them to save a personal record.
 
 `frontend/apps/webv3/src/lib/logs.ts` validates responses and form values with
 Zod. Its server counterpart forwards only the session cookie to the existing
@@ -228,24 +228,28 @@ legacy log-entry feature flag or calculate a provisional score.
 
 A successful save navigates to `/logs/$logId` using the returned ID and displays
 the persisted language, measure, tags, score and contests. Reload reads that
-record again. An expired session cookie retries a public detail read anonymously. Public detail omits private contest submissions; only the owner
-gets the contest management link to Webv2. History, edit, delete and score preview
-remain Webv2 journeys.
+record again. An expired session cookie retries a public detail read
+anonymously. Public detail omits private contest submissions; only the owner
+gets the contest management link to Webv2. History, edit, delete and score
+preview remain Webv2 journeys.
 
-Invalid input focuses the first invalid control. A pending save disables controls
-and repeated submits. Rejected saves keep the draft. Each save checks the current session against the
-account that started the draft; an account switch is refused before the API
-write, updates the header and offers an explicit new draft for the new account. An expired session offers
-login in a new tab so the original form survives. An ambiguous transport failure
-asks the user to check their activity before retrying; the API has no idempotency
-key, so retrying an ambiguous save can create another record. Drafts are held in
-memory and are lost when the form is reloaded or closed.
+Invalid input focuses the first invalid control. A pending save disables
+controls and repeated submits. Rejected saves keep the draft. Each save checks
+the current session against the account that started the draft; an account
+switch is refused before the API write, updates the header and offers an
+explicit new draft for the new account. The first signed-in account anchors the
+draft even when the page started anonymously and login happened in another tab.
+An unavailable account check reports that nothing was saved. An expired session
+offers login in a new tab so the original form survives. An ambiguous transport
+failure asks the user to check their activity before retrying; the API has no
+idempotency key, so retrying an ambiguous save can create another record. Drafts
+are held in memory and are lost when the form is reloaded or closed.
 
 Run `logging.spec.ts` with `WEBV3_BASE_URL`, `TADOKU_API_URL`,
 `E2E_READER_EMAIL` and `E2E_READER_PASSWORD` for the documented development
-fixture. Ownership and branch-only suspension cases also use
-`E2E_SECOND_EMAIL` and `E2E_SECOND_PASSWORD` for Dev Admin; the suspension case
-restores the Reader role in the same branch tenant. Set `NODE_EXTRA_CA_CERTS` to the trusted Lab CA and
-`PLAYWRIGHT_OUTPUT_DIR` outside the checkout. Authenticated runs disable traces
-and videos; browser-boundary delay and abort cases cover repeated submits and
-transport errors without mocking the API's successful writes.
+fixture. Ownership and branch-only suspension cases also use `E2E_SECOND_EMAIL`
+and `E2E_SECOND_PASSWORD` for Dev Admin; the suspension case restores the Reader
+role in the same branch tenant. Set `NODE_EXTRA_CA_CERTS` to the trusted Lab CA
+and `PLAYWRIGHT_OUTPUT_DIR` outside the checkout. Authenticated runs disable
+traces and videos; browser-boundary delay and abort cases cover repeated submits
+and transport errors without mocking the API's successful writes.

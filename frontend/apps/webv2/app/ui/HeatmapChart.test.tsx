@@ -87,6 +87,26 @@ describe('Heatmap daily point scale', () => {
     ).toBe(swatchClass('0'))
   })
 
+  it.each([
+    [0.04, '0'],
+    [29.96, '30+'],
+    [99.95, '100+'],
+    [299.96, '300+'],
+  ])(
+    'colours %s points with the %s swatch at tooltip precision',
+    (value, label) => {
+      render(
+        <HeatmapChart
+          id="precision"
+          year={2023}
+          data={[day('2023-01-02', value)]}
+          getHref={getHref}
+        />,
+      )
+      expect(cellClass('2023-01-02', value)).toBe(swatchClass(label))
+    },
+  )
+
   it('shows the zero legend colour for every day in empty and all-zero years', () => {
     for (const year of [2023, 2024]) {
       for (const data of [[], [day(`${year}-01-02`, 0)]]) {
@@ -123,6 +143,5 @@ describe('Heatmap daily point scale', () => {
       />,
     )
     expect(cellClass('2023-01-02', 40)).toBe(swatchClass('30+'))
-    expect(cellClass('2023-01-02', 40)).not.toBe(swatchClass('300+'))
   })
 })

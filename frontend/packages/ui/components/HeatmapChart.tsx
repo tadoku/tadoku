@@ -391,12 +391,14 @@ function getCellDepthClass(value: number | undefined) {
     return ''
   }
 
-  if (value === 0) {
+  // Bins match the one-decimal precision used to display scores.
+  const roundedValue = Math.round(value * 10) / 10
+  if (roundedValue === 0) {
     return emptyLevel.fillClass
   }
 
   for (let i = pointLevels.length - 1; i >= 0; i--) {
-    if (value >= pointLevels[i].lowerBound) {
+    if (roundedValue >= pointLevels[i].lowerBound) {
       return pointLevels[i].fillClass
     }
   }

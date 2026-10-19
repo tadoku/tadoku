@@ -338,7 +338,7 @@ func newTestRouterWithLeaderboardService(
 	scoringService := scoring.NewService(scoringRepository, scoringEngineEnabled, scoringObserver)
 
 	application := app.New(app.Dependencies{
-		Email:         email.NewPersistentService(email.NewRepository(pool), nil),
+		Email:         email.NewService(email.NewRepository(pool), nil),
 		JobQueue:      jobQueue,
 		Announcements: announcementsService,
 		Audit:         auditService,

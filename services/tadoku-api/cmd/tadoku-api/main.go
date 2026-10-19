@@ -269,7 +269,7 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	scoringService := scoring.NewService(scoringRepository, cfg.ScoringEngineEnabled, scoringObserver)
 
 	api := app.New(app.Dependencies{
-		Email:         email.NewPersistentService(email.NewRepository(pool), nil),
+		Email:         email.NewService(email.NewRepository(pool), nil),
 		JobQueue:      jobQueue,
 		Announcements: announcementsService,
 		Audit:         auditService,

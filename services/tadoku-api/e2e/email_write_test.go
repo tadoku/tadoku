@@ -23,7 +23,7 @@ func recoveryMail() mail.Message {
 }
 
 func emailService() *email.Service {
-	return email.NewPersistentService(email.NewRepository(api.db.AppPool), nil)
+	return email.NewService(email.NewRepository(api.db.AppPool), nil)
 }
 
 func writeEmail(t *testing.T, ctx context.Context, service *email.Service, message mail.Message) uuid.UUID {

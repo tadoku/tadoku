@@ -30,10 +30,8 @@ var (
 	_ Reader = (*Service)(nil)
 )
 
-func NewService() *Service { return &Service{} }
-
 // A nil sender holds every email. Supply a sender only in deployments that enable delivery.
-func NewPersistentService(repository *Repository, sender Sender) *Service {
+func NewService(repository *Repository, sender Sender) *Service {
 	return &Service{repository: repository, sender: sender}
 }
 
@@ -41,9 +39,6 @@ func (s *Service) Write(ctx context.Context, message mail.Message) (WriteResult,
 	subject, body, err := render(message)
 	if err != nil {
 		return WriteResult{}, err
-	}
-	if s.repository == nil {
-		return WriteResult{}, ErrNotImplemented
 	}
 
 	row := Email{
@@ -96,9 +91,6 @@ func (s *Service) List(ctx context.Context, filter Filter) (Page, error) {
 		}
 		before = &value
 	}
-	if s.repository == nil {
-		return Page{}, ErrNotImplemented
-	}
 
 	rows, err := s.repository.list(ctx, filter, before)
 	if err != nil {
@@ -119,9 +111,6 @@ func (s *Service) List(ctx context.Context, filter Filter) (Page, error) {
 }
 
 func (s *Service) Find(ctx context.Context, id uuid.UUID) (Email, error) {
-	if s.repository == nil {
-		return Email{}, ErrNotImplemented
-	}
 	return s.repository.find(ctx, id)
 }
 
@@ -160,9 +149,6 @@ func (s *Service) SendAttempt(ctx context.Context, id uuid.UUID, final bool) err
 }
 
 func (s *Service) Retain(ctx context.Context) error {
-	if s.repository == nil {
-		return ErrNotImplemented
-	}
 	return s.repository.retain(ctx, timex.Now())
 }
 

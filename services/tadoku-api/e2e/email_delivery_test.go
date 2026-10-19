@@ -141,7 +141,7 @@ func TestEmailWorkerDelivery(t *testing.T) {
 					t.Fatal(err)
 				}
 			}
-			service := email.NewPersistentService(email.NewRepository(api.db.AppPool), sender)
+			service := email.NewService(email.NewRepository(api.db.AppPool), sender)
 			key := tenant.Production()
 			if !tc.production {
 				key, _ = tenant.Parse("e2e/email-worker")
@@ -266,7 +266,7 @@ func TestEmailGuessedJobTenant(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	service := email.NewPersistentService(email.NewRepository(api.db.AppPool), sender)
+	service := email.NewService(email.NewRepository(api.db.AppPool), sender)
 	productionCtx := tenant.WithKey(t.Context(), tenant.Production())
 	id := writeEmail(t, productionCtx, service, recoveryMail())
 	key, _ := tenant.Parse("e2e/email-guess")

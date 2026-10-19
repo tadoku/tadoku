@@ -32,8 +32,17 @@ go_binary(
 
 go_test(
     name = "tadoku-tenant_test",
-    srcs = ["main_test.go"],
+    env_inherit = ["TADOKU_TEST_POSTGRES_URL"],
+    tags = ["no-cache", "no-remote-exec", "requires-network"],
+    srcs = [
+        "access_token_test.go",
+        "main_test.go",
+    ],
     embed = [":tadoku-tenant_lib"],
+    deps = [
+        "//services/tadoku-api/internal/testpostgres",
+        "@com_github_google_uuid//:uuid",
+    ],
 )
 
 pkg_tar(

@@ -2,12 +2,151 @@ package contests
 
 import (
 	"errors"
+	"reflect"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
 )
+
+func TestApplyRegistrationDetachesUsingLanguageCodes(t *testing.T) {
+	t.Parallel()
+
+	userID := uuid.MustParse("11111111-1111-4111-8111-111111111111")
+	contestID := uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")
+	registrationID := uuid.MustParse("bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb")
+	createdAt := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	now := time.Date(2026, 9, 12, 12, 0, 0, 0, time.UTC)
+	contest := Contest{ID: contestID, Official: false}
+
+	tests := []struct {
+		name            string
+		existingCodes   []string
+		updatedCodes    []string
+		wantEngLinks    int
+		wantJpnLinks    int
+		wantStoredCodes []string
+	}{
+		{
+			name:            "drops unselected language codes without Languages hydration",
+			existingCodes:   []string{"jpn", "eng"},
+			updatedCodes:    []string{"jpn"},
+			wantEngLinks:    0,
+			wantJpnLinks:    1,
+			wantStoredCodes: []string{"jpn"},
+		},
+		{
+			name:            "does not detach when language codes are unchanged",
+			existingCodes:   []string{"jpn", "eng"},
+			updatedCodes:    []string{"jpn", "eng"},
+			wantEngLinks:    1,
+			wantJpnLinks:    1,
+			wantStoredCodes: []string{"jpn", "eng"},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
+
+			db, err := testpostgres.New(tenantCtx)
+			if err != nil {
+				t.Fatal(err)
+			}
+			t.Cleanup(func() {
+				if err := db.Close(); err != nil {
+					t.Error(err)
+				}
+			})
+
+			_, err = db.Pool.Exec(tenantCtx, `
+				insert into users (tenant, id, display_name, created_at, updated_at)
+				values
+					('tadoku/prod', '11111111-1111-4111-8111-111111111111', 'Reader', '2026-01-01', '2026-01-01'),
+					('tadoku/prod', '99999999-9999-4999-8999-999999999999', 'Owner', '2026-01-01', '2026-01-01');
+				insert into contests (
+					tenant, id, owner_user_id, owner_user_display_name, "private", contest_start, contest_end,
+					registration_end, title, activity_type_id_allow_list, official, created_at, updated_at
+				) values (
+					'tadoku/prod', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '99999999-9999-4999-8999-999999999999', 'Owner', true,
+					'2026-09-01', '2026-09-12', '2026-08-31', 'Registration fixture', '{1}', false,
+					'2026-01-01', '2026-01-01'
+				);
+				insert into contest_registrations (
+					tenant, id, contest_id, user_id, language_codes, created_at, updated_at
+				)
+				values (
+					'tadoku/prod', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+					'11111111-1111-4111-8111-111111111111', '{jpn,eng}', '2026-01-01', '2026-01-01'
+				);
+				insert into logs (
+					tenant, id, user_id, language_code, log_activity_id, duration_seconds, computed_score,
+					eligible_official_leaderboard, created_at, updated_at
+				) values
+					('tadoku/prod', 'cccccccc-cccc-4ccc-8ccc-ccccccccccc1',
+					 '11111111-1111-4111-8111-111111111111', 'eng', 1, 60, 1, true, '2026-09-01', '2026-09-01'),
+					('tadoku/prod', 'cccccccc-cccc-4ccc-8ccc-ccccccccccc2',
+					 '11111111-1111-4111-8111-111111111111', 'jpn', 1, 60, 1, true, '2026-09-01', '2026-09-01');
+				insert into contest_logs (tenant, contest_id, log_id, duration_seconds, computed_score)
+				values
+					('tadoku/prod', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'cccccccc-cccc-4ccc-8ccc-ccccccccccc1', 60, 1),
+					('tadoku/prod', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'cccccccc-cccc-4ccc-8ccc-ccccccccccc2', 60, 1);
+			`)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			service := NewService(NewContestsRepository(db.Pool))
+			existing := &Registration{
+				ID:            registrationID,
+				ContestID:     contestID,
+				UserID:        userID,
+				LanguageCodes: test.existingCodes,
+			}
+			updated := Registration{
+				ID:            registrationID,
+				ContestID:     contestID,
+				UserID:        userID,
+				LanguageCodes: test.updatedCodes,
+				CreatedAt:     createdAt,
+				UpdatedAt:     now,
+			}
+
+			if _, err := service.ApplyRegistration(tenantCtx, updated, existing, contest); err != nil {
+				t.Fatal(err)
+			}
+
+			var engLinks, jpnLinks int
+			if err := db.Pool.QueryRow(tenantCtx, `
+				select
+					(select count(*) from contest_logs cl
+					 join logs l on l.id = cl.log_id
+					 where l.language_code = 'eng'),
+					(select count(*) from contest_logs cl
+					 join logs l on l.id = cl.log_id
+					 where l.language_code = 'jpn')
+			`).Scan(&engLinks, &jpnLinks); err != nil {
+				t.Fatal(err)
+			}
+			if engLinks != test.wantEngLinks || jpnLinks != test.wantJpnLinks {
+				t.Errorf("contest log links eng=%d jpn=%d, want eng=%d jpn=%d",
+					engLinks, jpnLinks, test.wantEngLinks, test.wantJpnLinks)
+			}
+
+			stored, err := service.contests.FindRegistrationForUser(tenantCtx, userID, contestID)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !reflect.DeepEqual(stored.LanguageCodes, test.wantStoredCodes) {
+				t.Errorf("stored language codes=%v, want %v", stored.LanguageCodes, test.wantStoredCodes)
+			}
+		})
+	}
+}
 
 func TestCreateContestParametersRejectsMissingSignedOwnerFields(t *testing.T) {
 	now := time.Date(2026, time.September, 12, 12, 0, 0, 0, time.UTC)

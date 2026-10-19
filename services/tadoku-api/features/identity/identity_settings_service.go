@@ -66,43 +66,103 @@ func (s *Service) UpdateProfile(
 	return ProfileResult{Account: account, Emails: messages}, nil
 }
 
-// UpdatePassword requires the application's transaction through credential change and revocation.
-func (s *Service) UpdatePassword(ctx context.Context, header CookieHeader, raw string) error {
-	session, err := s.lockSettingsSession(ctx, header)
+type PasswordUpdate struct {
+	header   CookieHeader
+	password Password
+	hash     string
+}
+
+// HashPasswordUpdate must run before opening the application's business transaction.
+func (s *Service) HashPasswordUpdate(ctx context.Context, header CookieHeader, raw string) (PasswordUpdate, error) {
+	session, err := s.settingsSession(ctx, header)
+	if err != nil {
+		return PasswordUpdate{}, err
+	}
+	if err := recentSession(session); err != nil {
+		return PasswordUpdate{}, err
+	}
+	password, err := ParsePassword(raw, session.Account.Email)
+	if err != nil {
+		return PasswordUpdate{}, err
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(password.value), 12)
+	if err != nil {
+		return PasswordUpdate{}, err
+	}
+	return PasswordUpdate{header: header, password: password, hash: string(hash)}, nil
+}
+
+// ApplyPasswordUpdate requires the application's transaction through credential change and revocation.
+func (s *Service) ApplyPasswordUpdate(ctx context.Context, update PasswordUpdate) error {
+	session, err := s.lockSettingsSession(ctx, update.header)
 	if err != nil {
 		return err
 	}
 	if err := recentSession(session); err != nil {
 		return err
 	}
-	password, err := ParsePassword(raw, session.Account.Email)
-	if err != nil {
+	if _, err := ParsePassword(update.password.value, session.Account.Email); err != nil {
 		return err
 	}
-	hash, err := bcrypt.GenerateFromPassword([]byte(password.value), 12)
-	if err != nil {
-		return err
+	if update.hash == "" {
+		return errx.NewInvalidInputError("password update must be hashed before applying")
 	}
-	if err := s.repository.updatePassword(ctx, session.Account.ID, string(hash), timex.Now()); err != nil {
+
+	if err := s.repository.updatePassword(ctx, session.Account.ID, update.hash, timex.Now()); err != nil {
 		return err
 	}
 	if err := s.repository.invalidateRecoveryTokens(ctx, session.Account.ID, timex.Now()); err != nil {
 		return err
 	}
-	return s.repository.revokeOtherSessions(ctx, session.Account.ID, hashToken(cookieValue(header, s.cookie(ctx).Name)))
+	return s.repository.revokeOtherSessions(
+		ctx,
+		session.Account.ID,
+		hashToken(cookieValue(update.header, s.cookie(ctx).Name)),
+	)
 }
 
-func (s *Service) lockSettingsSession(ctx context.Context, header CookieHeader) (AuthenticatedSession, error) {
-	result, err := s.Session(ctx, header)
+// UpdatePassword requires the application's transaction through credential change and revocation.
+// HTTP callers hash with HashPasswordUpdate before the transaction and use ApplyPasswordUpdate inside it.
+func (s *Service) UpdatePassword(ctx context.Context, header CookieHeader, raw string) error {
+	update, err := s.HashPasswordUpdate(ctx, header, raw)
+	if err != nil {
+		return err
+	}
+	return s.ApplyPasswordUpdate(ctx, update)
+}
+
+func (s *Service) ValidateSettingsSession(ctx context.Context, header CookieHeader) error {
+	_, err := s.settingsSession(ctx, header)
+	return err
+}
+
+func (s *Service) settingsSession(ctx context.Context, header CookieHeader) (AuthenticatedSession, error) {
+	app, err := s.accountApp(ctx)
 	if err != nil {
 		return AuthenticatedSession{}, err
 	}
-	if result.AccountApp == V1 {
+	if app == V1 {
 		return AuthenticatedSession{}, ErrNotImplemented
 	}
-	session, ok := result.Session.(AuthenticatedSession)
+	current := Session(GuestSession{})
+	if value := cookieValue(header, s.cookie(ctx).Name); validSessionToken(value) {
+		current, err = s.repository.session(ctx, hashToken(value), timex.Now())
+		if err != nil {
+			return AuthenticatedSession{}, err
+		}
+	}
+	session, ok := current.(AuthenticatedSession)
 	if !ok {
 		return AuthenticatedSession{}, errx.NewUnauthorizedError("a valid session is required")
+	}
+	return session, nil
+}
+
+func (s *Service) lockSettingsSession(ctx context.Context, header CookieHeader) (AuthenticatedSession, error) {
+	session, err := s.settingsSession(ctx, header)
+	if err != nil {
+		return AuthenticatedSession{}, err
 	}
 	if _, err := s.repository.lockAccount(ctx, session.Account.ID); err != nil {
 		if errors.Is(err, errAccountNotFound) {
@@ -115,7 +175,7 @@ func (s *Service) lockSettingsSession(ctx context.Context, header CookieHeader) 
 	if err != nil {
 		return AuthenticatedSession{}, err
 	}
-	session, ok = current.(AuthenticatedSession)
+	session, ok := current.(AuthenticatedSession)
 	if !ok {
 		return AuthenticatedSession{}, errx.NewUnauthorizedError("a valid session is required")
 	}

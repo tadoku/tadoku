@@ -11,13 +11,17 @@ import (
 )
 
 var (
-	ErrStaleSession         = &Error{"stale_session", errx.NewUnauthorizedError("log in again to change email or password")}
-	ErrInvalidRecoveryToken = &Error{"invalid_recovery_token", errx.NewInvalidInputError("invalid or expired recovery token")}
-	ErrNotImplemented       = errx.NewNotImplementedError()
-	ErrWrongPassword        = &Error{"wrong_password", errx.NewUnauthorizedError("invalid email or password")}
-	ErrEmailTaken           = &Error{"email_taken", errx.NewConflictError("email is already registered")}
-	ErrThrottled            = &Error{"throttled", errx.NewThrottledError("too many login attempts; try again later")}
-	errAccountNotFound      = errors.New("identity account not found")
+	ErrStaleSession = &Error{
+		"stale_session", errx.NewUnauthorizedError("log in again to change email or password"),
+	}
+	ErrInvalidRecoveryToken = &Error{
+		"invalid_recovery_token", errx.NewInvalidInputError("invalid or expired recovery token"),
+	}
+	ErrNotImplemented  = errx.NewNotImplementedError()
+	ErrWrongPassword   = &Error{"wrong_password", errx.NewUnauthorizedError("invalid email or password")}
+	ErrEmailTaken      = &Error{"email_taken", errx.NewConflictError("email is already registered")}
+	ErrThrottled       = &Error{"throttled", errx.NewThrottledError("too many login attempts; try again later")}
+	errAccountNotFound = errors.New("identity account not found")
 )
 
 type AccountApp string

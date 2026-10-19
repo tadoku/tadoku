@@ -51,7 +51,8 @@ func TestIdentitySettingsEmailNoticeAndPersistence(t *testing.T) {
 	response = identityRequest(t, api.handler, identityBranchA, "GET", "/identity/session", "", cookie, nil)
 	view := identityView(t, response)
 	if account.Email != "changed@example.test" || !account.AuthenticatedAt.Equal(fixtureInstant) ||
-		view.Account == nil || view.Account.Email != "changed@example.test" || view.Account.DisplayName != "Changed Reader" {
+		view.Account == nil || view.Account.Email != "changed@example.test" ||
+		view.Account.DisplayName != "Changed Reader" {
 		t.Fatal("settings response/session did not persist normalized email and display name")
 	}
 	var recipient, template, newEmail, changedAt string
@@ -95,7 +96,10 @@ func TestIdentitySettingsValidationAndTenantIsolation(t *testing.T) {
 		{"PATCH", "/identity/settings/profile", `{"email":"invalid"}`, identityBranchA, cookie, 400},
 		{"PUT", "/identity/settings/password", `{"password":"short"}`, identityBranchA, cookie, 400},
 		{"PUT", "/identity/settings/password", `{"password":"reader@example.test!"}`, identityBranchA, cookie, 400},
-		{"PUT", "/identity/settings/password", `{"password":"` + strings.Repeat("界", 25) + `"}`, identityBranchA, cookie, 400},
+		{
+			"PUT", "/identity/settings/password", `{"password":"` + strings.Repeat("界", 25) + `"}`,
+			identityBranchA, cookie, 400,
+		},
 		{"PUT", "/identity/settings/password", `{"password":"Replacement-839!"}`, identityBranchB, cookie, 401},
 		{"PATCH", "/identity/settings/profile", `{"display_name":"New Reader"}`, identityBranchA, "", 401},
 	} {
@@ -133,7 +137,8 @@ func TestIdentityRecoveryAndEmailSettingsRollbackOnQueueFailure(t *testing.T) {
 			t.Cleanup(func() {
 				ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 				defer cancel()
-				if _, err := api.db.Pool.Exec(ctx, "alter table jobs drop constraint identity_d_reject_email"); err != nil {
+				_, err := api.db.Pool.Exec(ctx, "alter table jobs drop constraint identity_d_reject_email")
+				if err != nil {
 					t.Error(err)
 				}
 			})
@@ -151,7 +156,8 @@ func TestIdentityRecoveryAndEmailSettingsRollbackOnQueueFailure(t *testing.T) {
 				(select count(*) from recovery_tokens where tenant = $1)
 				from accounts where tenant = $1`, identityBranchA).Scan(&email, &writes)
 			if err != nil || email != "reader@example.test" || writes != 0 {
-				t.Fatalf("failed enqueue committed identity/email writes: email=%q writes=%d err=%v", email, writes, err)
+				t.Fatalf("failed enqueue committed identity/email writes: email=%q writes=%d err=%v",
+					email, writes, err)
 			}
 		})
 	}
@@ -182,7 +188,9 @@ func TestIdentityPasswordChangeFencesInFlightLogin(t *testing.T) {
 			t.Fatal(err)
 		}
 		request.Method, request.URL.Path = "POST", "/identity/login"
-		request.Body = io.NopCloser(strings.NewReader(`{"email":"reader@example.test","password":"Fixture-login-482!"}`))
+		request.Body = io.NopCloser(strings.NewReader(
+			`{"email":"reader@example.test","password":"Fixture-login-482!"}`,
+		))
 		request.Header.Set("Content-Type", "application/json")
 		request.Header.Set("Origin", "https://tadoku.dev.lab")
 		request.Header.Set("Authorization", "Bearer "+tokens[identityBranchA])
@@ -232,7 +240,8 @@ func TestIdentitySettingsEmailUniqueness(t *testing.T) {
 		t.Run(otherTenant, func(t *testing.T) {
 			resetIdentity(t)
 			response := identityRequest(t, api.handler, otherTenant, "POST", "/identity/registration",
-				`{"email":"occupied@example.test","display_name":"Other Reader","password":"Independent-653!"}`, "", nil)
+				`{"email":"occupied@example.test","display_name":"Other Reader","password":"Independent-653!"}`,
+				"", nil)
 			requireIdentityStatus(t, response, http.StatusCreated)
 			cookie := identityLoginCookie(t)
 			seedRecoveryToken(t, 'a', fixtureInstant.Add(time.Hour), nil)

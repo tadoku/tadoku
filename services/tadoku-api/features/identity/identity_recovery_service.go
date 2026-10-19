@@ -28,7 +28,7 @@ func (s *Service) RequestRecovery(ctx context.Context, recovery Recovery) (Recov
 	if err != nil {
 		return RecoveryResult{}, err
 	}
-	if err := ValidateReturnTo(recovery.ReturnTo); err != nil {
+	if _, err := s.RecoverySettingsURL(ctx, &recovery.ReturnTo); err != nil {
 		return RecoveryResult{}, err
 	}
 	secret := make([]byte, 32)
@@ -105,6 +105,23 @@ func (s *Service) ConsumeRecovery(ctx context.Context, raw RecoveryToken) (Recov
 		return RecoveryLogin{}, err
 	}
 	return RecoveryLogin{Login: login, RedirectTo: s.appURL(ctx, "authv2")}, nil
+}
+
+func (s *Service) RecoverySettingsURL(ctx context.Context, returnTo *string) (string, error) {
+	location := s.appURL(ctx, "authv2")
+	if returnTo != nil {
+		if err := ValidateReturnTo(*returnTo); err != nil {
+			return "", err
+		}
+		location += "?return_to=" + url.QueryEscape(*returnTo)
+	}
+	if err := ValidateReturnTo(location); err != nil {
+		return "", &Error{
+			"invalid_return_to",
+			errx.NewInvalidInputError("return_to makes the Settings URL invalid or exceed 2048 bytes"),
+		}
+	}
+	return location, nil
 }
 
 func (s *Service) appURL(ctx context.Context, app string) string {

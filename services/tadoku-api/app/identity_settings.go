@@ -35,20 +35,17 @@ func (a *Application) IdentityConsumeRecovery(
 	token identity.RecoveryToken,
 	returnTo *string,
 ) (identity.RecoveryLogin, error) {
-	if returnTo != nil {
-		if err := identity.ValidateReturnTo(*returnTo); err != nil {
-			return identity.RecoveryLogin{}, err
-		}
+	redirect, err := a.identity.RecoverySettingsURL(ctx, returnTo)
+	if err != nil {
+		return identity.RecoveryLogin{}, err
 	}
 	var result identity.RecoveryLogin
-	err := postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) error {
+	err = postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) error {
 		var err error
 		result, err = a.identity.ConsumeRecovery(ctx, token)
 		return err
 	})
-	if returnTo != nil {
-		result.RedirectTo = *returnTo
-	}
+	result.RedirectTo = redirect
 	return result, err
 }
 
@@ -57,6 +54,10 @@ func (a *Application) IdentityUpdateProfile(
 	header identity.CookieHeader,
 	settings identity.ProfileSettings,
 ) (identity.AuthenticatedSession, error) {
+	if err := a.identity.ValidateSettingsSession(ctx, header); err != nil {
+		return identity.AuthenticatedSession{}, err
+	}
+
 	var session identity.AuthenticatedSession
 	err := postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) error {
 		result, err := a.identity.UpdateProfile(ctx, header, settings)
@@ -81,8 +82,13 @@ func (a *Application) IdentityUpdateProfile(
 }
 
 func (a *Application) IdentityUpdatePassword(ctx context.Context, header identity.CookieHeader, password string) error {
+	update, err := a.identity.HashPasswordUpdate(ctx, header, password)
+	if err != nil {
+		return err
+	}
+
 	return postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) error {
-		return a.identity.UpdatePassword(ctx, header, password)
+		return a.identity.ApplyPasswordUpdate(ctx, update)
 	})
 }
 

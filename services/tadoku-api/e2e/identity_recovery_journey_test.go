@@ -164,7 +164,9 @@ func TestIdentityRecoverySettingsLocationBounds(t *testing.T) {
 		token := seedRecoveryToken(t, 'a', fixtureInstant.Add(time.Hour), nil)
 		for _, email := range []string{"reader@example.test", "unknown@example.test"} {
 			body, _ := json.Marshal(map[string]string{"email": email, "return_to": destination})
-			response := identityRequest(t, api.handler, identityBranchA, "POST", "/identity/recovery", string(body), "", nil)
+			response := identityRequest(
+				t, api.handler, identityBranchA, "POST", "/identity/recovery", string(body), "", nil,
+			)
 			requireIdentityStatus(t, response, http.StatusBadRequest)
 		}
 		response := identityRequest(t, api.handler, identityBranchA, "GET",

@@ -131,7 +131,8 @@ func TestIdentityRecoveryConsumeRevokesAndSetsPassword(t *testing.T) {
 	response := identityRequest(t, api.handler, identityBranchA, "GET",
 		"/identity/recovery/"+first+"?return_to="+url.QueryEscape(recoverySettingsURL), "", "", nil)
 	requireIdentityStatus(t, response, http.StatusSeeOther)
-	if response.Header().Get("Location") != recoverySettingsURL {
+	if response.Header().Get("Location") != "https://identity-a-0123abcd.authv2.tadoku.dev.lab/?return_to="+
+		url.QueryEscape(recoverySettingsURL) {
 		t.Fatal("recovery lost its validated return destination")
 	}
 	cookie := response.Result().Cookies()[0]
@@ -216,13 +217,14 @@ func TestIdentityRecoveryRejectsRedirectBeforeConsuming(t *testing.T) {
 	}
 }
 
-func TestIdentityRecoveryAcceptsFullLengthReturnTo(t *testing.T) {
+func TestIdentityRecoveryRejectsUnrepresentableReturnTo(t *testing.T) {
 	prefix := "https://authv2.tadoku.dev.lab/?q="
 	for _, tc := range []struct {
 		name, email, character string
 		want                   int
 	}{
-		{"full destination", "reader@example.test", "a", http.StatusAccepted},
+		{"full destination known", "reader@example.test", "a", http.StatusBadRequest},
+		{"full destination unknown", "unknown@example.test", "a", http.StatusBadRequest},
 		{"expanded link known", "reader@example.test", "&", http.StatusBadRequest},
 		{"expanded link unknown", "unknown@example.test", "&", http.StatusBadRequest},
 	} {

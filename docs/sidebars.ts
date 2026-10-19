@@ -80,6 +80,7 @@ const sidebars: SidebarsConfig = {
         'frontend/conventions',
         'frontend/webv2',
         'frontend/auth',
+        'frontend/authv2',
         'frontend/admin',
         'frontend/paper-styleguide',
         'frontend/paper-playground',

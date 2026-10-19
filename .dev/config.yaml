@@ -15,6 +15,7 @@ publicHosts:
   - tadoku.dev.lab
   - next.tadoku.dev.lab
   - account.tadoku.dev.lab
+  - authv2.tadoku.dev.lab
   - admin.tadoku.dev.lab
 ingressClass: nginx
 clusterIssuer: lab-ca-acme

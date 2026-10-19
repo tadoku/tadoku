@@ -55,8 +55,14 @@ jobs:
         working-directory: frontend
         run: pnpm install --frozen-lockfile --ignore-scripts
 
+      - name: Build authv2 from the tested revision for isolated E2E
+        run: docker build --platform linux/amd64 -f apps/authv2/Dockerfile -t tadoku-authv2:base-check .
+        working-directory: frontend
+
       - name: Run real-image migration, ownership and frontend E2E
         run: node k8s/dev/base/e2e.cjs "$RUNNER_TEMP/tadoku-base-evidence"
+        env:
+          TADOKU_BASE_AUTHV2_IMAGE: tadoku-authv2:base-check
 
       - name: Retain inspectable verification evidence
         if: always()

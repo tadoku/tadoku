@@ -16,14 +16,14 @@ _DEV_INSTALL = [
     "--child-concurrency=1",
 ]
 
-def frontend_dev(name, host, readiness_path = "/"):
+def frontend_dev(name, host, readiness_path = "/", paper = False, namespace = None):
     """One app source graph, OCI runtime and dev-cli contract."""
-    paper = name == "webv3"
+    namespace = namespace or "tdk-dev-frontend-%s" % name
     shared_package = "paper-ui" if paper else "ui"
     command = " ".join(_DEV_INSTALL) + " && exec pnpm --filter " + name + " dev"
     if paper:
         # ponytail: watcher retains initial declarations; rebuild paper-ui after public type changes.
-        command = " ".join(_DEV_INSTALL) + " && pnpm --filter paper-ui build && { pnpm --filter paper-ui exec tsup --no-dts --no-clean --watch src --watch styles --watch scripts --onSuccess 'node scripts/build-assets.mjs' & exec pnpm --filter webv3 exec vite; }"
+        command = " ".join(_DEV_INSTALL) + " && pnpm --filter paper-ui build && { pnpm --filter paper-ui exec tsup --no-dts --no-clean --watch src --watch styles --watch scripts --onSuccess 'node scripts/build-assets.mjs' & exec pnpm --filter %s exec vite; }" % name
 
     native.filegroup(
         name = "%s_sources" % name,
@@ -101,7 +101,7 @@ def frontend_dev(name, host, readiness_path = "/"):
         metadata = json.encode({
             "name": "%s" % name,
             "kind": "frontend",
-            "namespace": "tdk-dev-frontend-%s" % name,
+            "namespace": namespace,
             "buildTarget": "//frontend:%s_dev_image" % name,
             "imageTarget": "//frontend:%s_dev_image" % name,
             "imageName": "%s" % name,
@@ -116,7 +116,7 @@ def frontend_dev(name, host, readiness_path = "/"):
             "publicHost": host,
             "baseService": {
                 "name": "frontend-%s" % name,
-                "namespace": "tdk-dev-frontend-%s" % name,
+                "namespace": namespace,
                 "port": 3000,
             },
             "devContainer": "%s" % name,

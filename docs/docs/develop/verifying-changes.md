@@ -66,8 +66,13 @@ For tenant image, overlay or lifecycle changes, also run:
 bazel build //.dev:tenant_image //services/tadoku-api:dev //services/tadoku-api:worker_dev
 kubectl --context homelab-talos-dev kustomize k8s/dev/base |
   kubeconform -strict -summary -ignore-missing-schemas
-node k8s/dev/base/e2e.cjs /tmp/tadoku-base-evidence
+docker build --platform linux/amd64 -f frontend/apps/authv2/Dockerfile -t tadoku-authv2:base-check frontend
+TADOKU_BASE_AUTHV2_IMAGE=tadoku-authv2:base-check node k8s/dev/base/e2e.cjs /tmp/tadoku-base-evidence
 ```
+
+The optional `TADOKU_BASE_AUTHV2_IMAGE` selects a locally built authv2 image
+for the disposable Docker proof before its first publication; the report
+records this boundary. It does not change any manifests or shared deployment.
 
 Keep the report outside Git and complete the applicable live gates in
 `.dev/acceptance.md`.

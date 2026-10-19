@@ -7,7 +7,7 @@ set -euo pipefail
 RETENTION_DAYS="${RETENTION_DAYS:-14}"
 QUIET_HOURS="${QUIET_HOURS:-24}"
 DRY_RUN="${DRY_RUN:-true}"
-IMAGES=(tadoku-api tadoku-worker frontend-webv2 frontend-webv3 frontend-auth frontend-admin tenant)
+IMAGES=(tadoku-api tadoku-worker frontend-webv2 frontend-webv3 frontend-auth frontend-authv2 frontend-admin tenant)
 MANIFEST_TYPES="application/vnd.oci.image.index.v1+json,application/vnd.docker.distribution.manifest.list.v2+json,\
 application/vnd.oci.image.manifest.v1+json,application/vnd.docker.distribution.manifest.v2+json"
 

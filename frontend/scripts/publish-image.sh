@@ -2,12 +2,12 @@
 set -euo pipefail
 
 usage() {
-  echo 'Usage: publish-image.sh <webv2|webv3|auth|admin|styleguide> --repository <repo> --tag <tag> [--tag <tag> ...]' >&2
+  echo 'Usage: publish-image.sh <webv2|webv3|authv2|auth|admin|styleguide> --repository <repo> --tag <tag> [--tag <tag> ...]' >&2
   exit 2
 }
 
 app=${1:-}
-case "$app" in webv2|webv3|auth|admin|styleguide) ;; *) usage ;; esac
+case "$app" in webv2|webv3|authv2|auth|admin|styleguide) ;; *) usage ;; esac
 shift
 repository=
 tags=()
@@ -27,7 +27,7 @@ done
 root=${BUILD_WORKSPACE_DIRECTORY:-$(git rev-parse --show-toplevel)}
 image="$repository:${tags[0]}"
 dockerfile=Dockerfile
-if [[ "$app" == webv3 ]]; then dockerfile=apps/webv3/Dockerfile; fi
+if [[ "$app" == webv3 || "$app" == authv2 ]]; then dockerfile=apps/$app/Dockerfile; fi
 git -C "$root" archive --format=tar HEAD:frontend |
   docker build --platform linux/amd64 --file "$dockerfile" --build-arg "PROJECT_NAME=$app" -t "$image" -
 for tag in "${tags[@]}"; do

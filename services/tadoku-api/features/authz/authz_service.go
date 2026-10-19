@@ -12,7 +12,7 @@ import (
 
 type Service struct {
 	permissions       *permissions.Checker
-	users             identity.LegacyReader
+	users             identity.Reader
 	roles             *permissions.KetoService
 	roleManager       *permissions.KetoManager
 	publicPermissions PublicPermissionAllowlist
@@ -20,7 +20,7 @@ type Service struct {
 
 func NewService(
 	permissions *permissions.Checker,
-	users identity.LegacyReader,
+	users identity.Reader,
 	roles *permissions.KetoService,
 	roleManager *permissions.KetoManager,
 	publicPermissions PublicPermissionAllowlist,

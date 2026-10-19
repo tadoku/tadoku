@@ -24,6 +24,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/features/contests"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/email"
 	featureflagsservice "github.com/tadoku/tadoku/services/tadoku-api/features/featureflags"
+	accountidentity "github.com/tadoku/tadoku/services/tadoku-api/features/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/languages"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
@@ -292,7 +293,7 @@ func newTestRouterWithLeaderboardService(
 	readWriter := ketoclient.NewClient(ketoFixture.ReadURL(), endpoints.ketoWrite)
 	permissionChecker := permissions.NewKetoChecker(reader)
 	roleService := permissions.NewKetoService(reader)
-	identities := kratosFixture.CursorClient()
+	identities := accountidentity.NewReader(pool, kratosFixture.CursorClient(), featureflags.NewEvaluator(flipt, nil))
 
 	authzService := featureauthz.NewService(
 		permissionChecker,
@@ -319,7 +320,7 @@ func newTestRouterWithLeaderboardService(
 	logsService := logs.NewService(logsRepository, scoringEngineEnabled)
 	pagesService := pages.NewService(pagesRepository)
 	postsService := posts.NewService(postsRepository)
-	profileService := featureprofile.NewService(profileRepository, featureprofile.NewUserCache(identities), roleService, identities)
+	profileService := featureprofile.NewService(profileRepository, roleService, identities)
 	fliptTargets, err := fliptclient.NewTargets("local", "default", "test")
 	if err != nil {
 		return nil, nil, nil, err
@@ -423,9 +424,8 @@ func (s *suite) resetProfileCaches() {
 	if s.profile != nil {
 		*s.profile = *featureprofile.NewService(
 			featureprofile.NewRepository(s.db.AppPool),
-			featureprofile.NewUserCache(s.kratos.CursorClient()),
 			s.roles,
-			s.kratos.CursorClient(),
+			accountidentity.NewReader(s.db.AppPool, s.kratos.CursorClient(), featureflags.NewEvaluator(flipt, nil)),
 		)
 	}
 }

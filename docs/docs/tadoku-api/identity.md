@@ -8,10 +8,12 @@ description: Identity, email and tenant access-token service contracts, their st
 Read this before implementing account, recovery, email or tenant access-token
 operations, or moving a caller to the identity entry point.
 
-The identity, email and token services are skeletons: new operations return
+The identity command/session, email and token services are skeletons: new operations return
 `errx.NotImplemented`, mapped to `501` with `{"message":"not implemented"}`.
 No account, cookie, recovery token, email or access token is created or changed.
-Existing v1 callers retain their behavior through `identity.LegacyReader`.
+Profile and moderation callers use `identity.Reader`, constructed by
+`identity.NewReader`. It selects tenant-local reads or the v1 adapter from the
+tenant flag; callers never select the provider.
 
 ## Routes
 
@@ -40,7 +42,7 @@ has `identity.id` equal to `guest`.
 
 | Owner | Contract |
 | --- | --- |
-| `services/tadoku-api/features/identity/` | `Reader` owns account lookup, existence and search; `Accounts` adds registration, login, logout, session resolution, recovery, settings and deletion. `Service` implements the stubs. |
+| `services/tadoku-api/features/identity/` | `Reader` owns account lookup, existence and search; `Accounts` adds registration, login, logout, session resolution, recovery, settings and deletion. `ReadService` implements reads; `Service` implements the command/session stubs. |
 | `services/tadoku-api/features/email/` | `Writer.Write(ctx, mail.Message)` renders and writes within the caller's transaction and returns every required job. `Reader` owns filtered listing and lookup. `Service.Send` and `Retain` are worker operation stubs. |
 | `services/tadoku-api/features/authz/tokens/` | `Verifier.Verify` accepts the raw token and deployment scope; `Manager` owns create, list and revoke. Results expose a parsed tenant, ID and scopes, never stored hashes. |
 | `services/tadoku-api/domain/mail/` | `Message` is the application-composed template request shared by identity and email. Templates are `account.recovery` (`recovery_url`) and `account.email_changed` (`new_email`, `changed_at`). |
@@ -83,7 +85,21 @@ flag does not change the existing public decisions response or golden fixtures.
 
 `identity.NewLegacyReader` constructs the unchanged read-only Kratos adapter
 behind `LegacyReader`. Its raw implementation and provider tests live in
-`services/tadoku-api/features/identity/kratos/`. Existing profile/authz callers
-and the owned Kratos fixture use this temporary interface; their caching,
-pagination, trait mapping and provider errors remain unchanged. New account
-callers use `Reader`, whose implementation is currently a stub.
+`services/tadoku-api/features/identity/kratos/`. Only identity ownership and the owned Kratos fixture consume this temporary
+interface. Profile and authz receive provider-free `Reader` values. The unused
+guarded Kratos writer and the profile user cache have been removed.
+
+V1 reads retain the user-schema filter, trait mapping, provider order and fuzzy
+search ranking. Listing reads the provider's complete cursor sequence per call,
+deduplicates IDs and rejects repeated continuation tokens; no stale snapshot is
+served after an outage. V2 reads join active accounts to undeleted users under
+the transaction-local tenant. Each reader page uses one SQL statement, orders by
+user UUID and searches display name or email with a literal case-insensitive
+substring. Cursors bind the tenant, search and last UUID. No password or token
+hash is selected.
+
+The administrator HTTP list retains numbered pages and `total_size` for
+compatibility. Its adapter walks reader pages to count matches and select the
+requested numbered page, then resolves roles only for that page. This can read
+multiple keyset pages for a large result set; the public response shape is
+unchanged.

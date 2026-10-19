@@ -85,9 +85,9 @@ uses the connection peer unless it belongs to an explicitly configured
 valid `X-Real-IP`; the trusted edge must overwrite that header. Empty proxy
 configuration trusts no forwarded address. The development base and overlays
 configure the cluster pod prefix; production must configure its own trusted
-ingress boundary before activation. Untrusted peers cannot evade the IP budget with forged
-forwarding headers. With no trusted proxy configured, clients behind the same
-proxy share its peer-IP throttle bucket. This fallback prevents header spoofing
+ingress boundary before activation. Untrusted peers cannot evade the IP budget
+with forged forwarding headers. With no trusted proxy configured, clients behind
+the same proxy share its peer-IP throttle bucket. This fallback prevents header spoofing
 but can throttle unrelated clients together.
 
 Registration does not use the login counters. It still performs cost-12 bcrypt

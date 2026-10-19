@@ -27,7 +27,7 @@ function llmsTxt(): Plugin {
     allContentLoaded({allContent}) {
       const content = allContent['docusaurus-plugin-content-docs'].default as LoadedContent;
       docs = content.loadedVersions[0].docs.filter(
-        doc => !/^api\/(immersion|content|profile|authorization)\//.test(doc.id),
+        doc => !/^api\/(immersion|content|profile|authorization|identity|email)\//.test(doc.id),
       );
     },
     async postBuild({outDir, siteConfig}) {
@@ -125,6 +125,20 @@ const config: Config = {
               groupPathsBy: 'tag',
               categoryLinkSource: 'tag',
             },
+          } satisfies OpenApiPlugin.Options,
+          identity: {
+            specPath: '.generated/api/identity.yaml',
+            outputDir: 'docs/api/identity',
+            label: 'Identity API',
+            hideSendButton: true,
+            sidebarOptions: {groupPathsBy: 'tag', categoryLinkSource: 'tag'},
+          } satisfies OpenApiPlugin.Options,
+          email: {
+            specPath: '.generated/api/email.yaml',
+            outputDir: 'docs/api/email',
+            label: 'Email API',
+            hideSendButton: true,
+            sidebarOptions: {groupPathsBy: 'tag', categoryLinkSource: 'tag'},
           } satisfies OpenApiPlugin.Options,
           authorization: {
             specPath: '.generated/api/authz.yaml',

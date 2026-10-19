@@ -24,8 +24,10 @@ func TestRegistryMatchesCrossStackContract(t *testing.T) {
 
 	var fixture contractFixture
 	require.NoError(t, json.Unmarshal(contents, &fixture))
-	require.Len(t, fixture.BooleanFlags, 1)
-	definition, ok := fixture.BooleanFlags[ReleaseLogEntryV2.Key()]
-	require.True(t, ok)
-	assert.Equal(t, ReleaseLogEntryV2.SafeDefault(), definition.SafeDefault)
+	require.Len(t, fixture.BooleanFlags, 2)
+	for _, flag := range []BooleanFlag{ReleaseLogEntryV2, IdentityV2} {
+		definition, ok := fixture.BooleanFlags[flag.Key()]
+		require.True(t, ok)
+		assert.Equal(t, flag.SafeDefault(), definition.SafeDefault)
+	}
 }

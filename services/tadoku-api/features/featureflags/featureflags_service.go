@@ -44,7 +44,13 @@ func (s *Service) Revoke(ctx context.Context, flagKey string, targetUserID uuid.
 	return s.setNamedUserAccess(ctx, flagKey, targetUserID, false)
 }
 
-func (s *Service) setNamedUserAccess(ctx context.Context, flagKey string, targetUserID uuid.UUID, enabled bool) (State, error) {
+func (s *Service) setNamedUserAccess(
+	ctx context.Context,
+	flagKey string,
+	targetUserID uuid.UUID,
+	enabled bool) (State,
+	error,
+) {
 	segment, err := validate(flagKey, targetUserID)
 	if err != nil {
 		return State{}, err
@@ -64,4 +70,8 @@ func fromClient(state fliptmanagement.State) State {
 		Environment: state.Environment,
 		Revision:    state.Revision,
 	}
+}
+
+func (s *Service) IdentityV2(ctx context.Context) bool {
+	return s.evaluator.TenantBoolean(ctx, commonflags.IdentityV2)
 }

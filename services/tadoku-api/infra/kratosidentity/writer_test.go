@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	kratosclient "github.com/tadoku/tadoku/services/tadoku-api/infra/kratos"
+	kratosclient "github.com/tadoku/tadoku/services/tadoku-api/features/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/kratosidentity"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testkratos"
@@ -106,7 +106,7 @@ func TestWriterTenantBoundaries(t *testing.T) {
 							)
 						}
 					case "delete":
-						if !errors.Is(readErr, kratosclient.ErrNotFound) {
+						if !errors.Is(readErr, kratosclient.ErrLegacyNotFound) {
 							t.Errorf("deleted identity read: identity=%v error=%v", after, readErr)
 						}
 					}

@@ -1,0 +1,70 @@
+---
+id: email-get
+title: "Read a retained tenant email including parameters"
+description: "Requires a tenant administrator, or outside the production deployment an email:read tenant access token. Production email reads are audited. Retention is 3 days for tadoku/prod, 14 days otherwise."
+sidebar_label: "Read a retained tenant email including parameters"
+hide_title: true
+hide_table_of_contents: true
+api: eJztWFFv2zYQ/ivEPW2AEtuJG2DqUzBkRbEtKNLsKTCEi3ixWUukSp7cGob++3CkbCuJW+dhLwvyYkvkkffdfXcU+G3ANeSRjbMfNeRwVaOpPhBDBozzAPkdkAwFmGUQqGy94TXkdxsonVsaumx5AfndrMs2gGVJIdy6Jdnd8CwDTaH0phEXkMMNfW2Np6BQMVm0rFDXxprAHtn5TDmvXMvBaFK8INV4p9tSFitNTeXWNckaqyKs3BPq3UbRv2IBcKo+7RdGUyWmQaEnha02TPpU3RCTjSYmqHOlcR3Ug/OKUbtlOxLfmZpM04TjBflvJtApZOApNM4GCpBv4Gw8lr/HgX5uIxzIoHRW3IgJNk1lypju0ZcgdhsI5YJqlCdeNwQ5uPsvVAoDjRdy2CQvRg9sAntj55BBjd//IjuXdJ9fZPDgfI0MObSt0dBlkHJzZOVkch5N66ZCpmPG43EnCShNY+jo1udn4wGqyITACm0K8qgr8XXv9PqI5dnF2WQ67TJo0GMdDmUTtTaSeKw+PcrrT3adjn+76AQtI7cHjcm2tTRJQ1ankSA5yWBBlYYMHtBUpGHWpYkCD4a8y49GphM2NUEGtq0qvK8IcvYtdbEcVkaTL2oKAedUHK0Iyd+Bjch7518Q+oGlpSdk0i+Po4u1EnteS6KMZKUvykHJDQtqXx099TtWd0zss3k4LdsYHwGeZcCGJRj4O5lC1wm+6aH+lYOKAitPAoX0f9fIPc6X1X7p9DHLi+m+Dr95Z+dFgyF8cz6meuEdcxXxx+4rGJdkUyorKgKFIAFnYOwKK6MLbUJT4bqwGMtwO5xad/8+8LEd8lS6Ffl1EY/gwYTzZm7sI0tuvS3YSZ07LkzdVCQne8TZWlyhSYU3e1pA2+wN2LwSrm/6E3nH6eSN01fH6fkbp6+O0+kbp6+N07O3s/e1cfru0Pf02rF67OqN0v8TpW+f09fF6fb+S0w+RJXGCKcN8kI8SmR5uoHtt5aLXfacxBcKDCLw1MQLJ+LRPOpG0VsOo6QbjTZGd/G+5ldbUK2vIIcFcxPy0SiJLafYNCNszMhYJm+xgm6gOH0WeKmMhrrTDi025k9ax0xD3pvsI04edpx32XOpareToII+H/J+T+hJLpLp4Y9t+KyXBXJxe3V9eX1bfL76/ebqFp6KXbdJmBpIVUON6r2ytCIfxxomre7XSWRSl58+Ku9aphDvz8Y+uAixJz7ud4KNeebwhhiNJX2yl7yUtK/HksN75WluApMnrcKSKmJng0KrEx61Im8e+vZWqVbVu/FE9C7hLrmYnI5Px5LDxgWuMR4BfZ5vYoSyMoLY6nIJi7Fl1YpGogYl+gT/Zn/WvBahsC8rpu88aio0sfxiA2z6TtkprBnkRkuDL1xgGd9s7jHQP77qOhn+2pIX7XWWwQq9SbrM3Qa0CfKsIX/AKtBPcvpLn1T9q/oRtG1DWemmFVatvEEGS1qns6MTLWtBqMlH72niMtbwYMmzL8Wjk+JDbBZ81sTL2MT9g+x+EM6Tft6Ck1/RoQ+u2WzSGdF1O/s09cMVfYy70CWEruv+BZLVHp8=
+sidebar_class_name: "get api-method"
+info_path: api/email/email-api
+custom_edit_url: null
+hide_send_button: true
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+import Translate from "@docusaurus/Translate";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Read a retained tenant email including parameters"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/emails/{id}"}
+  context={"endpoint"}
+>
+  
+</MethodEndpoint>
+
+
+
+Requires a tenant administrator, or outside the production deployment an email:read tenant access token. Production email reads are audited. Retention is 3 days for tadoku/prod, 14 days otherwise.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+>
+  <Translate id="theme.openapi.request.title">Request</Translate>
+</Heading>
+
+<ParamsDetails
+  {...require("./email-get.ParamsDetails.json")}
+>
+  
+</ParamsDetails>
+
+<RequestSchema
+  {...require("./email-get.RequestSchema.json")}
+>
+  
+</RequestSchema>
+
+<StatusCodes
+  {...require("./email-get.StatusCodes.json")}
+>
+  
+</StatusCodes>
+
+
+      

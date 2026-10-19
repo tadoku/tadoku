@@ -51,7 +51,7 @@ const LatchedFlagValue = () => {
     <>
       <button
         type="button"
-        onClick={() => setDecisions({ 'release-log-entry-v2': false })}
+        onClick={() => setDecisions({ 'release-log-entry-v2': false, 'identity-v2': false })}
       >
         Disable
       </button>
@@ -76,7 +76,7 @@ const Wrapper = ({
 }) => (
   <Provider
     initialValues={[
-      [featureFlagDecisionsAtom, { 'release-log-entry-v2': enabled }],
+      [featureFlagDecisionsAtom, { 'release-log-entry-v2': enabled, 'identity-v2': false }],
     ]}
   >
     {children}
@@ -176,7 +176,7 @@ describe('feature flag browser state', () => {
 
     resolveRefresh(
       new Response(
-        JSON.stringify({ decisions: { 'release-log-entry-v2': true } }),
+        JSON.stringify({ decisions: { 'release-log-entry-v2': true, 'identity-v2': false } }),
         { status: 200, headers: { 'Content-Type': 'application/json' } },
       ),
     )

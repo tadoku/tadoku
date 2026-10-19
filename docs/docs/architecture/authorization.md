@@ -38,7 +38,7 @@ operation, every other parsed tenant returns `SkippedForTestTenant` and logs
 the tenant and identity ID, and a missing tenant returns an error before making
 a provider request. Repeating an operation against a missing identity succeeds.
 
-The identity read client in `services/tadoku-api/infra/kratos` exposes only
+The identity read client in `services/tadoku-api/features/identity/kratos` exposes only
 `FetchIdentity`, `UserExists` and `ListIdentities`. The writer has no HTTP entry
 point and is not wired into account deletion. When that flow is added, it must
 use the writer and handle the skipped outcome after deleting the tenant's own

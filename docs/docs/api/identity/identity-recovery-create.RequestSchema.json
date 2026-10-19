@@ -1,0 +1,1 @@
+{"title":"Body","body":{"required":true,"content":{"application/json":{"schema":{"type":"object","properties":{"email":{"type":"string","maxLength":320,"format":"email"},"return_to":{"type":"string","maxLength":2048,"format":"uri","description":"Must use an allowed Tadoku app host."}},"required":["email","return_to"],"title":"Recovery"}}}}}

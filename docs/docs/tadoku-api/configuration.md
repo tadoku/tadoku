@@ -223,10 +223,10 @@ err = client.DeleteRelation(ctx, namespace, object, relation, group)
 
 ## Kratos reads and guarded identity writes
 
-- The composition root keeps a concrete `*kratos.Client` on
+- The composition root keeps a concrete `identity.LegacyReader` on
   `application.kratosRead`. Identity features use this same read client
   for lookups and cursor pagination.
-- `NewClient(baseURL, kratos.WithHTTPClient(httpClient))` uses the same client
+- `identity.NewLegacyReader(baseURL, identity.WithHTTPClient(httpClient))` uses the same client
   for SDK reads and cursor pagination. It constructs the pinned
   `github.com/ory/kratos-client-go` v0.11.1 SDK internally and exposes no raw
   SDK constructor. Tadoku API validates the configuration and supplies a

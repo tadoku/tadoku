@@ -1,0 +1,172 @@
+paths:
+  /emails:
+    get:
+      operationId: EmailList
+      summary: List retained tenant emails, newest first
+      tags:
+      - emails
+      security:
+      - EmailcookieAuth: []
+      - EmailaccessTokenAuth: []
+      description: Requires a tenant administrator, or outside the production deployment an email:read
+        tenant access token. Production email reads are audited. Retention is 3 days for tadoku/prod,
+        14 days otherwise.
+      x-tadoku-source: Email
+      x-tadoku-exposure: public
+      x-legacy-path: /emails
+      x-legacy-operation-id: EmailList
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailList'
+        '400':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailErrorResponse'
+        '401':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailErrorResponse'
+        '403':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailErrorResponse'
+        '404':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailErrorResponse'
+        '421':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailErrorResponse'
+        '501':
+          description: Not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailErrorResponse'
+        '503':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailErrorResponse'
+      parameters:
+      - in: query
+        name: recipient
+        schema:
+          type: string
+          maxLength: 320
+          format: email
+      - in: query
+        name: template
+        schema:
+          type: string
+          maxLength: 100
+      - in: query
+        name: status
+        schema:
+          $ref: '#/components/schemas/EmailStatus'
+      - in: query
+        name: since
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: limit
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 100
+      - in: query
+        name: cursor
+        schema:
+          type: string
+          maxLength: 2048
+  /emails/{id}:
+    get:
+      operationId: EmailGet
+      summary: Read a retained tenant email including parameters
+      tags:
+      - emails
+      security:
+      - EmailcookieAuth: []
+      - EmailaccessTokenAuth: []
+      description: Requires a tenant administrator, or outside the production deployment an email:read
+        tenant access token. Production email reads are audited. Retention is 3 days for tadoku/prod,
+        14 days otherwise.
+      x-tadoku-source: Email
+      x-tadoku-exposure: public
+      x-legacy-path: /emails/{id}
+      x-legacy-operation-id: EmailGet
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailMessage'
+        '400':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailErrorResponse'
+        '401':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailErrorResponse'
+        '403':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailErrorResponse'
+        '404':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailErrorResponse'
+        '421':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailErrorResponse'
+        '501':
+          description: Not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailErrorResponse'
+        '503':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailErrorResponse'
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          maxLength: 36
+          format: uuid

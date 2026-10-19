@@ -86,6 +86,231 @@ func (e ContentAnnouncementStyle) Valid() bool {
 	}
 }
 
+// Defines values for EmailErrorResponseCode.
+const (
+	EmailErrorResponseCodeEmailTaken           EmailErrorResponseCode = "email_taken"
+	EmailErrorResponseCodeInvalidDisplayName   EmailErrorResponseCode = "invalid_display_name"
+	EmailErrorResponseCodeInvalidEmail         EmailErrorResponseCode = "invalid_email"
+	EmailErrorResponseCodeInvalidOrigin        EmailErrorResponseCode = "invalid_origin"
+	EmailErrorResponseCodeInvalidPassword      EmailErrorResponseCode = "invalid_password"
+	EmailErrorResponseCodeInvalidRecoveryToken EmailErrorResponseCode = "invalid_recovery_token"
+	EmailErrorResponseCodeInvalidReturnTo      EmailErrorResponseCode = "invalid_return_to"
+	EmailErrorResponseCodeNotImplemented       EmailErrorResponseCode = "not_implemented"
+	EmailErrorResponseCodeStaleSession         EmailErrorResponseCode = "stale_session"
+	EmailErrorResponseCodeThrottled            EmailErrorResponseCode = "throttled"
+	EmailErrorResponseCodeUnavailable          EmailErrorResponseCode = "unavailable"
+	EmailErrorResponseCodeWrongPassword        EmailErrorResponseCode = "wrong_password"
+)
+
+// Valid indicates whether the value is a known member of the EmailErrorResponseCode enum.
+func (e EmailErrorResponseCode) Valid() bool {
+	switch e {
+	case EmailErrorResponseCodeEmailTaken:
+		return true
+	case EmailErrorResponseCodeInvalidDisplayName:
+		return true
+	case EmailErrorResponseCodeInvalidEmail:
+		return true
+	case EmailErrorResponseCodeInvalidOrigin:
+		return true
+	case EmailErrorResponseCodeInvalidPassword:
+		return true
+	case EmailErrorResponseCodeInvalidRecoveryToken:
+		return true
+	case EmailErrorResponseCodeInvalidReturnTo:
+		return true
+	case EmailErrorResponseCodeNotImplemented:
+		return true
+	case EmailErrorResponseCodeStaleSession:
+		return true
+	case EmailErrorResponseCodeThrottled:
+		return true
+	case EmailErrorResponseCodeUnavailable:
+		return true
+	case EmailErrorResponseCodeWrongPassword:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for EmailMessageStatus.
+const (
+	EmailMessageStatusFailed  EmailMessageStatus = "failed"
+	EmailMessageStatusHeld    EmailMessageStatus = "held"
+	EmailMessageStatusPending EmailMessageStatus = "pending"
+	EmailMessageStatusSent    EmailMessageStatus = "sent"
+)
+
+// Valid indicates whether the value is a known member of the EmailMessageStatus enum.
+func (e EmailMessageStatus) Valid() bool {
+	switch e {
+	case EmailMessageStatusFailed:
+		return true
+	case EmailMessageStatusHeld:
+		return true
+	case EmailMessageStatusPending:
+		return true
+	case EmailMessageStatusSent:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for EmailStatus.
+const (
+	EmailStatusFailed  EmailStatus = "failed"
+	EmailStatusHeld    EmailStatus = "held"
+	EmailStatusPending EmailStatus = "pending"
+	EmailStatusSent    EmailStatus = "sent"
+)
+
+// Valid indicates whether the value is a known member of the EmailStatus enum.
+func (e EmailStatus) Valid() bool {
+	switch e {
+	case EmailStatusFailed:
+		return true
+	case EmailStatusHeld:
+		return true
+	case EmailStatusPending:
+		return true
+	case EmailStatusSent:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for IdentityErrorResponseCode.
+const (
+	IdentityErrorResponseCodeEmailTaken           IdentityErrorResponseCode = "email_taken"
+	IdentityErrorResponseCodeInvalidDisplayName   IdentityErrorResponseCode = "invalid_display_name"
+	IdentityErrorResponseCodeInvalidEmail         IdentityErrorResponseCode = "invalid_email"
+	IdentityErrorResponseCodeInvalidOrigin        IdentityErrorResponseCode = "invalid_origin"
+	IdentityErrorResponseCodeInvalidPassword      IdentityErrorResponseCode = "invalid_password"
+	IdentityErrorResponseCodeInvalidRecoveryToken IdentityErrorResponseCode = "invalid_recovery_token"
+	IdentityErrorResponseCodeInvalidReturnTo      IdentityErrorResponseCode = "invalid_return_to"
+	IdentityErrorResponseCodeNotImplemented       IdentityErrorResponseCode = "not_implemented"
+	IdentityErrorResponseCodeStaleSession         IdentityErrorResponseCode = "stale_session"
+	IdentityErrorResponseCodeThrottled            IdentityErrorResponseCode = "throttled"
+	IdentityErrorResponseCodeUnavailable          IdentityErrorResponseCode = "unavailable"
+	IdentityErrorResponseCodeWrongPassword        IdentityErrorResponseCode = "wrong_password"
+)
+
+// Valid indicates whether the value is a known member of the IdentityErrorResponseCode enum.
+func (e IdentityErrorResponseCode) Valid() bool {
+	switch e {
+	case IdentityErrorResponseCodeEmailTaken:
+		return true
+	case IdentityErrorResponseCodeInvalidDisplayName:
+		return true
+	case IdentityErrorResponseCodeInvalidEmail:
+		return true
+	case IdentityErrorResponseCodeInvalidOrigin:
+		return true
+	case IdentityErrorResponseCodeInvalidPassword:
+		return true
+	case IdentityErrorResponseCodeInvalidRecoveryToken:
+		return true
+	case IdentityErrorResponseCodeInvalidReturnTo:
+		return true
+	case IdentityErrorResponseCodeNotImplemented:
+		return true
+	case IdentityErrorResponseCodeStaleSession:
+		return true
+	case IdentityErrorResponseCodeThrottled:
+		return true
+	case IdentityErrorResponseCodeUnavailable:
+		return true
+	case IdentityErrorResponseCodeWrongPassword:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for IdentityProxyErrorResponseCode.
+const (
+	IdentityProxyErrorResponseCodeEmailTaken           IdentityProxyErrorResponseCode = "email_taken"
+	IdentityProxyErrorResponseCodeInvalidDisplayName   IdentityProxyErrorResponseCode = "invalid_display_name"
+	IdentityProxyErrorResponseCodeInvalidEmail         IdentityProxyErrorResponseCode = "invalid_email"
+	IdentityProxyErrorResponseCodeInvalidOrigin        IdentityProxyErrorResponseCode = "invalid_origin"
+	IdentityProxyErrorResponseCodeInvalidPassword      IdentityProxyErrorResponseCode = "invalid_password"
+	IdentityProxyErrorResponseCodeInvalidRecoveryToken IdentityProxyErrorResponseCode = "invalid_recovery_token"
+	IdentityProxyErrorResponseCodeInvalidReturnTo      IdentityProxyErrorResponseCode = "invalid_return_to"
+	IdentityProxyErrorResponseCodeNotImplemented       IdentityProxyErrorResponseCode = "not_implemented"
+	IdentityProxyErrorResponseCodeStaleSession         IdentityProxyErrorResponseCode = "stale_session"
+	IdentityProxyErrorResponseCodeThrottled            IdentityProxyErrorResponseCode = "throttled"
+	IdentityProxyErrorResponseCodeUnavailable          IdentityProxyErrorResponseCode = "unavailable"
+	IdentityProxyErrorResponseCodeWrongPassword        IdentityProxyErrorResponseCode = "wrong_password"
+)
+
+// Valid indicates whether the value is a known member of the IdentityProxyErrorResponseCode enum.
+func (e IdentityProxyErrorResponseCode) Valid() bool {
+	switch e {
+	case IdentityProxyErrorResponseCodeEmailTaken:
+		return true
+	case IdentityProxyErrorResponseCodeInvalidDisplayName:
+		return true
+	case IdentityProxyErrorResponseCodeInvalidEmail:
+		return true
+	case IdentityProxyErrorResponseCodeInvalidOrigin:
+		return true
+	case IdentityProxyErrorResponseCodeInvalidPassword:
+		return true
+	case IdentityProxyErrorResponseCodeInvalidRecoveryToken:
+		return true
+	case IdentityProxyErrorResponseCodeInvalidReturnTo:
+		return true
+	case IdentityProxyErrorResponseCodeNotImplemented:
+		return true
+	case IdentityProxyErrorResponseCodeStaleSession:
+		return true
+	case IdentityProxyErrorResponseCodeThrottled:
+		return true
+	case IdentityProxyErrorResponseCodeUnavailable:
+		return true
+	case IdentityProxyErrorResponseCodeWrongPassword:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for IdentityProxyGuestIdentityId.
+const (
+	IdentityProxyGuestIdentityIdGuest IdentityProxyGuestIdentityId = "guest"
+)
+
+// Valid indicates whether the value is a known member of the IdentityProxyGuestIdentityId enum.
+func (e IdentityProxyGuestIdentityId) Valid() bool {
+	switch e {
+	case IdentityProxyGuestIdentityIdGuest:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for IdentitySessionAccountApp.
+const (
+	V1 IdentitySessionAccountApp = "v1"
+	V2 IdentitySessionAccountApp = "v2"
+)
+
+// Valid indicates whether the value is a known member of the IdentitySessionAccountApp enum.
+func (e IdentitySessionAccountApp) Valid() bool {
+	switch e {
+	case V1:
+		return true
+	case V2:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ImmersionActivityInputType.
 const (
 	AmountPrimary ImmersionActivityInputType = "amount_primary"
@@ -491,6 +716,147 @@ type ContentPosts struct {
 	// TotalSize Example: 100
 	TotalSize int `json:"total_size"`
 }
+
+// EmailErrorResponse defines model for EmailErrorResponse.
+type EmailErrorResponse struct {
+	Code    *EmailErrorResponseCode `json:"code,omitempty"`
+	Message string                  `json:"message"`
+}
+
+// EmailErrorResponseCode defines model for EmailErrorResponse.Code.
+type EmailErrorResponseCode string
+
+// EmailList defines model for EmailList.
+type EmailList struct {
+	Emails     []EmailMessage            `json:"emails"`
+	NextCursor nullable.Nullable[string] `json:"next_cursor"`
+}
+
+// EmailMessage defines model for EmailMessage.
+type EmailMessage struct {
+	Body              string                       `json:"body"`
+	CreatedAt         time.Time                    `json:"created_at"`
+	Error             nullable.Nullable[string]    `json:"error"`
+	Id                openapi_types.UUID           `json:"id"`
+	Params            map[string]string            `json:"params"`
+	ProviderMessageId nullable.Nullable[string]    `json:"provider_message_id"`
+	Recipient         openapi_types.Email          `json:"recipient"`
+	SentAt            nullable.Nullable[time.Time] `json:"sent_at"`
+	Status            EmailMessageStatus           `json:"status"`
+	Subject           string                       `json:"subject"`
+	Template          string                       `json:"template"`
+	Tenant            string                       `json:"tenant"`
+}
+
+// EmailMessageStatus defines model for EmailMessage.Status.
+type EmailMessageStatus string
+
+// EmailStatus defines model for EmailStatus.
+type EmailStatus string
+
+// IdentityAccount defines model for IdentityAccount.
+type IdentityAccount struct {
+	AuthenticatedAt time.Time           `json:"authenticated_at"`
+	CreatedAt       time.Time           `json:"created_at"`
+	DisplayName     string              `json:"display_name"`
+	Email           openapi_types.Email `json:"email"`
+	Id              openapi_types.UUID  `json:"id"`
+}
+
+// IdentityErrorResponse defines model for IdentityErrorResponse.
+type IdentityErrorResponse struct {
+	Code    *IdentityErrorResponseCode `json:"code,omitempty"`
+	Message string                     `json:"message"`
+}
+
+// IdentityErrorResponseCode defines model for IdentityErrorResponse.Code.
+type IdentityErrorResponseCode string
+
+// IdentityLogin defines model for IdentityLogin.
+type IdentityLogin struct {
+	Email openapi_types.Email `json:"email"`
+
+	// Password At least 8 characters, at most 72 UTF-8 bytes; rejects similarity to the email under the Kratos v26.2.0 rule.
+	Password string `json:"password"`
+}
+
+// IdentityPasswordSettings defines model for IdentityPasswordSettings.
+type IdentityPasswordSettings struct {
+	// Password At least 8 characters, at most 72 UTF-8 bytes; rejects similarity to the email under the Kratos v26.2.0 rule.
+	Password string `json:"password"`
+}
+
+// IdentityProfileSettings defines model for IdentityProfileSettings.
+type IdentityProfileSettings struct {
+	DisplayName *string              `json:"display_name,omitempty"`
+	Email       *openapi_types.Email `json:"email,omitempty"`
+}
+
+// IdentityProxyErrorResponse defines model for IdentityProxyErrorResponse.
+type IdentityProxyErrorResponse struct {
+	Code    *IdentityProxyErrorResponseCode `json:"code,omitempty"`
+	Message string                          `json:"message"`
+}
+
+// IdentityProxyErrorResponseCode defines model for IdentityProxyErrorResponse.Code.
+type IdentityProxyErrorResponseCode string
+
+// IdentityProxyGuest defines model for IdentityProxyGuest.
+type IdentityProxyGuest struct {
+	Identity struct {
+		Id IdentityProxyGuestIdentityId `json:"id"`
+	} `json:"identity"`
+}
+
+// IdentityProxyGuestIdentityId defines model for IdentityProxyGuest.Identity.Id.
+type IdentityProxyGuestIdentityId string
+
+// IdentityProxySession defines model for IdentityProxySession.
+type IdentityProxySession struct {
+	union json.RawMessage
+}
+
+// IdentityProxyTraits defines model for IdentityProxyTraits.
+type IdentityProxyTraits struct {
+	DisplayName string              `json:"display_name"`
+	Email       openapi_types.Email `json:"email"`
+}
+
+// IdentityProxyUser defines model for IdentityProxyUser.
+type IdentityProxyUser struct {
+	AuthenticatedAt time.Time `json:"authenticated_at"`
+	ExpiresAt       time.Time `json:"expires_at"`
+	Identity        struct {
+		Id     openapi_types.UUID  `json:"id"`
+		Traits IdentityProxyTraits `json:"traits"`
+	} `json:"identity"`
+}
+
+// IdentityRecovery defines model for IdentityRecovery.
+type IdentityRecovery struct {
+	Email openapi_types.Email `json:"email"`
+
+	// ReturnTo Must use an allowed Tadoku app host.
+	ReturnTo string `json:"return_to"`
+}
+
+// IdentityRegistration defines model for IdentityRegistration.
+type IdentityRegistration struct {
+	DisplayName string              `json:"display_name"`
+	Email       openapi_types.Email `json:"email"`
+
+	// Password At least 8 characters, at most 72 UTF-8 bytes; rejects similarity to the email under the Kratos v26.2.0 rule.
+	Password string `json:"password"`
+}
+
+// IdentitySession defines model for IdentitySession.
+type IdentitySession struct {
+	Account    nullable.Nullable[IdentityAccount] `json:"account"`
+	AccountApp IdentitySessionAccountApp          `json:"account_app"`
+}
+
+// IdentitySessionAccountApp defines model for IdentitySession.AccountApp.
+type IdentitySessionAccountApp string
 
 // ImmersionActivities defines model for ImmersionActivities.
 type ImmersionActivities struct {
@@ -1071,6 +1437,16 @@ type ContentPostListParams struct {
 	IncludeDrafts *bool `form:"include_drafts,omitempty" json:"include_drafts,omitempty"`
 }
 
+// EmailListParams defines parameters for EmailList.
+type EmailListParams struct {
+	Recipient *openapi_types.Email `form:"recipient,omitempty" json:"recipient,omitempty"`
+	Template  *string              `form:"template,omitempty" json:"template,omitempty"`
+	Status    *EmailStatus         `form:"status,omitempty" json:"status,omitempty"`
+	Since     *time.Time           `form:"since,omitempty" json:"since,omitempty"`
+	Limit     *int                 `form:"limit,omitempty" json:"limit,omitempty"`
+	Cursor    *string              `form:"cursor,omitempty" json:"cursor,omitempty"`
+}
+
 // ImmersionContestListParams defines parameters for ImmersionContestList.
 type ImmersionContestListParams struct {
 	PageSize       *int                `form:"page_size,omitempty" json:"page_size,omitempty"`
@@ -1238,6 +1614,21 @@ type ContentPostCreateJSONRequestBody = ContentPost
 // ContentPostUpdateJSONRequestBody defines body for ContentPostUpdate for application/json ContentType.
 type ContentPostUpdateJSONRequestBody = ContentPost
 
+// IdentityLoginCreateJSONRequestBody defines body for IdentityLoginCreate for application/json ContentType.
+type IdentityLoginCreateJSONRequestBody = IdentityLogin
+
+// IdentityRecoveryCreateJSONRequestBody defines body for IdentityRecoveryCreate for application/json ContentType.
+type IdentityRecoveryCreateJSONRequestBody = IdentityRecovery
+
+// IdentityRegistrationCreateJSONRequestBody defines body for IdentityRegistrationCreate for application/json ContentType.
+type IdentityRegistrationCreateJSONRequestBody = IdentityRegistration
+
+// IdentityPasswordUpdateJSONRequestBody defines body for IdentityPasswordUpdate for application/json ContentType.
+type IdentityPasswordUpdateJSONRequestBody = IdentityPasswordSettings
+
+// IdentityProfileUpdateJSONRequestBody defines body for IdentityProfileUpdate for application/json ContentType.
+type IdentityProfileUpdateJSONRequestBody = IdentityProfileSettings
+
 // ImmersionContestCreateJSONRequestBody defines body for ImmersionContestCreate for application/json ContentType.
 type ImmersionContestCreateJSONRequestBody = ImmersionContest
 
@@ -1270,6 +1661,68 @@ type ImmersionLogContestRegistrationUpdateJSONRequestBody ImmersionLogContestReg
 
 // ImmersionScoringRuleSetCreatePlatformJSONRequestBody defines body for ImmersionScoringRuleSetCreatePlatform for application/json ContentType.
 type ImmersionScoringRuleSetCreatePlatformJSONRequestBody = ImmersionScoringRuleSetDraft
+
+// AsIdentityProxyGuest returns the union data inside the IdentityProxySession as a IdentityProxyGuest
+func (t IdentityProxySession) AsIdentityProxyGuest() (IdentityProxyGuest, error) {
+	var body IdentityProxyGuest
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromIdentityProxyGuest overwrites any union data inside the IdentityProxySession as the provided IdentityProxyGuest
+func (t *IdentityProxySession) FromIdentityProxyGuest(v IdentityProxyGuest) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeIdentityProxyGuest performs a merge with any union data inside the IdentityProxySession, using the provided IdentityProxyGuest
+func (t *IdentityProxySession) MergeIdentityProxyGuest(v IdentityProxyGuest) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsIdentityProxyUser returns the union data inside the IdentityProxySession as a IdentityProxyUser
+func (t IdentityProxySession) AsIdentityProxyUser() (IdentityProxyUser, error) {
+	var body IdentityProxyUser
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromIdentityProxyUser overwrites any union data inside the IdentityProxySession as the provided IdentityProxyUser
+func (t *IdentityProxySession) FromIdentityProxyUser(v IdentityProxyUser) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeIdentityProxyUser performs a merge with any union data inside the IdentityProxySession, using the provided IdentityProxyUser
+func (t *IdentityProxySession) MergeIdentityProxyUser(v IdentityProxyUser) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t IdentityProxySession) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *IdentityProxySession) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
@@ -1342,6 +1795,36 @@ type ServerInterface interface {
 	// ContentPostUpdate Updates an existing post
 	// (PUT /content/posts/{namespace}/{slug})
 	ContentPostUpdate(w http.ResponseWriter, r *http.Request, namespace string, slug string)
+	// EmailList List retained tenant emails, newest first
+	// (GET /emails)
+	EmailList(w http.ResponseWriter, r *http.Request, params EmailListParams)
+	// EmailGet Read a retained tenant email including parameters
+	// (GET /emails/{id})
+	EmailGet(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// IdentityLoginCreate Log in or re-authenticate
+	// (POST /identity/login)
+	IdentityLoginCreate(w http.ResponseWriter, r *http.Request)
+	// IdentityLogout Revoke the current session and clear its cookie
+	// (POST /identity/logout)
+	IdentityLogout(w http.ResponseWriter, r *http.Request)
+	// IdentityRecoveryCreate Request recovery without revealing account existence
+	// (POST /identity/recovery)
+	IdentityRecoveryCreate(w http.ResponseWriter, r *http.Request)
+	// IdentityRecoveryConsume Consume a recovery token and redirect to Settings
+	// (GET /identity/recovery/{token})
+	IdentityRecoveryConsume(w http.ResponseWriter, r *http.Request, token string)
+	// IdentityRegistrationCreate Register an account and create a session
+	// (POST /identity/registration)
+	IdentityRegistrationCreate(w http.ResponseWriter, r *http.Request)
+	// IdentitySessionGet Resolve the tenant account app and current account
+	// (GET /identity/session)
+	IdentitySessionGet(w http.ResponseWriter, r *http.Request)
+	// IdentityPasswordUpdate Update password after a recent login and revoke other sessions
+	// (PUT /identity/settings/password)
+	IdentityPasswordUpdate(w http.ResponseWriter, r *http.Request)
+	// IdentityProfileUpdate Update profile; email changes require a recent login
+	// (PATCH /identity/settings/profile)
+	IdentityProfileUpdate(w http.ResponseWriter, r *http.Request)
 	// ImmersionFeatureAccessRevoke Revokes named-user access to an allowlisted feature flag (admin only)
 	// (DELETE /immersion/admin/feature-flags/{flagKey}/users/{userId})
 	ImmersionFeatureAccessRevoke(w http.ResponseWriter, r *http.Request, flagKey ImmersionManagedFeatureFlagKey, userId openapi_types.UUID)
@@ -2304,6 +2787,254 @@ func (siw *ServerInterfaceWrapper) ContentPostUpdate(w http.ResponseWriter, r *h
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ContentPostUpdate(w, r, namespace, slug)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// EmailList operation middleware
+func (siw *ServerInterfaceWrapper) EmailList(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params EmailListParams
+
+	// ------------- Optional query parameter "recipient" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "recipient", r.URL.Query(), &params.Recipient, runtime.BindQueryParameterOptions{Type: "string", Format: "email"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "recipient"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "recipient", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "template" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "template", r.URL.Query(), &params.Template, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "template"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "template", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "status" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "status", r.URL.Query(), &params.Status, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "status"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "status", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "since" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "since", r.URL.Query(), &params.Since, runtime.BindQueryParameterOptions{Type: "string", Format: "date-time"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "since"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "since", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "cursor" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "cursor", r.URL.Query(), &params.Cursor, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "cursor"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "cursor", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.EmailList(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// EmailGet operation middleware
+func (siw *ServerInterfaceWrapper) EmailGet(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.EmailGet(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// IdentityLoginCreate operation middleware
+func (siw *ServerInterfaceWrapper) IdentityLoginCreate(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.IdentityLoginCreate(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// IdentityLogout operation middleware
+func (siw *ServerInterfaceWrapper) IdentityLogout(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.IdentityLogout(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// IdentityRecoveryCreate operation middleware
+func (siw *ServerInterfaceWrapper) IdentityRecoveryCreate(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.IdentityRecoveryCreate(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// IdentityRecoveryConsume operation middleware
+func (siw *ServerInterfaceWrapper) IdentityRecoveryConsume(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "token" -------------
+	var token string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", r.PathValue("token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.IdentityRecoveryConsume(w, r, token)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// IdentityRegistrationCreate operation middleware
+func (siw *ServerInterfaceWrapper) IdentityRegistrationCreate(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.IdentityRegistrationCreate(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// IdentitySessionGet operation middleware
+func (siw *ServerInterfaceWrapper) IdentitySessionGet(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.IdentitySessionGet(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// IdentityPasswordUpdate operation middleware
+func (siw *ServerInterfaceWrapper) IdentityPasswordUpdate(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.IdentityPasswordUpdate(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// IdentityProfileUpdate operation middleware
+func (siw *ServerInterfaceWrapper) IdentityProfileUpdate(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.IdentityProfileUpdate(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -4033,6 +4764,16 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/immersion/languages", wrapper.ImmersionLanguageCreate)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/immersion/languages/{code}", wrapper.ImmersionLanguageUpdate)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/profile/users", wrapper.ProfileUsersList)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/identity/registration", wrapper.IdentityRegistrationCreate)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/identity/login", wrapper.IdentityLoginCreate)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/identity/logout", wrapper.IdentityLogout)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/identity/session", wrapper.IdentitySessionGet)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/identity/recovery", wrapper.IdentityRecoveryCreate)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/identity/recovery/{token}", wrapper.IdentityRecoveryConsume)
+	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/identity/settings/profile", wrapper.IdentityProfileUpdate)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/identity/settings/password", wrapper.IdentityPasswordUpdate)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/emails", wrapper.EmailList)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/emails/{id}", wrapper.EmailGet)
 
 	return m
 }
@@ -4887,6 +5628,1332 @@ type ContentPostUpdate409Response struct {
 func (response ContentPostUpdate409Response) VisitContentPostUpdateResponse(w http.ResponseWriter) error {
 	w.WriteHeader(409)
 	return nil
+}
+
+type EmailListRequestObject struct {
+	Params EmailListParams
+}
+
+type EmailListResponseObject interface {
+	VisitEmailListResponse(w http.ResponseWriter) error
+}
+
+type EmailList200JSONResponse EmailList
+
+func (response EmailList200JSONResponse) VisitEmailListResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EmailList400JSONResponse EmailErrorResponse
+
+func (response EmailList400JSONResponse) VisitEmailListResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EmailList401JSONResponse EmailErrorResponse
+
+func (response EmailList401JSONResponse) VisitEmailListResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EmailList403JSONResponse EmailErrorResponse
+
+func (response EmailList403JSONResponse) VisitEmailListResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EmailList404JSONResponse EmailErrorResponse
+
+func (response EmailList404JSONResponse) VisitEmailListResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EmailList421JSONResponse EmailErrorResponse
+
+func (response EmailList421JSONResponse) VisitEmailListResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(421)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EmailList501JSONResponse EmailErrorResponse
+
+func (response EmailList501JSONResponse) VisitEmailListResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(501)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EmailList503JSONResponse EmailErrorResponse
+
+func (response EmailList503JSONResponse) VisitEmailListResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EmailGetRequestObject struct {
+	Id openapi_types.UUID `json:"id"`
+}
+
+type EmailGetResponseObject interface {
+	VisitEmailGetResponse(w http.ResponseWriter) error
+}
+
+type EmailGet200JSONResponse EmailMessage
+
+func (response EmailGet200JSONResponse) VisitEmailGetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EmailGet400JSONResponse EmailErrorResponse
+
+func (response EmailGet400JSONResponse) VisitEmailGetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EmailGet401JSONResponse EmailErrorResponse
+
+func (response EmailGet401JSONResponse) VisitEmailGetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EmailGet403JSONResponse EmailErrorResponse
+
+func (response EmailGet403JSONResponse) VisitEmailGetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EmailGet404JSONResponse EmailErrorResponse
+
+func (response EmailGet404JSONResponse) VisitEmailGetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EmailGet421JSONResponse EmailErrorResponse
+
+func (response EmailGet421JSONResponse) VisitEmailGetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(421)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EmailGet501JSONResponse EmailErrorResponse
+
+func (response EmailGet501JSONResponse) VisitEmailGetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(501)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EmailGet503JSONResponse EmailErrorResponse
+
+func (response EmailGet503JSONResponse) VisitEmailGetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityLoginCreateRequestObject struct {
+	Body *IdentityLoginCreateJSONRequestBody
+}
+
+type IdentityLoginCreateResponseObject interface {
+	VisitIdentityLoginCreateResponse(w http.ResponseWriter) error
+}
+
+type IdentityLoginCreate200ResponseHeaders struct {
+	SetCookie *string
+}
+
+type IdentityLoginCreate200JSONResponse struct {
+	Body    IdentitySession
+	Headers IdentityLoginCreate200ResponseHeaders
+}
+
+func (response IdentityLoginCreate200JSONResponse) VisitIdentityLoginCreateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.SetCookie != nil {
+		w.Header().Set("Set-Cookie", fmt.Sprint(*response.Headers.SetCookie))
+	}
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityLoginCreate400JSONResponse IdentityErrorResponse
+
+func (response IdentityLoginCreate400JSONResponse) VisitIdentityLoginCreateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityLoginCreate401JSONResponse IdentityErrorResponse
+
+func (response IdentityLoginCreate401JSONResponse) VisitIdentityLoginCreateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityLoginCreate403JSONResponse IdentityErrorResponse
+
+func (response IdentityLoginCreate403JSONResponse) VisitIdentityLoginCreateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityLoginCreate404JSONResponse IdentityErrorResponse
+
+func (response IdentityLoginCreate404JSONResponse) VisitIdentityLoginCreateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityLoginCreate409JSONResponse IdentityErrorResponse
+
+func (response IdentityLoginCreate409JSONResponse) VisitIdentityLoginCreateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityLoginCreate429JSONResponse IdentityErrorResponse
+
+func (response IdentityLoginCreate429JSONResponse) VisitIdentityLoginCreateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityLoginCreate501JSONResponse IdentityErrorResponse
+
+func (response IdentityLoginCreate501JSONResponse) VisitIdentityLoginCreateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(501)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityLoginCreate503JSONResponse IdentityErrorResponse
+
+func (response IdentityLoginCreate503JSONResponse) VisitIdentityLoginCreateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityLogoutRequestObject struct {
+}
+
+type IdentityLogoutResponseObject interface {
+	VisitIdentityLogoutResponse(w http.ResponseWriter) error
+}
+
+type IdentityLogout204ResponseHeaders struct {
+	SetCookie *string
+}
+
+type IdentityLogout204Response struct {
+	Headers IdentityLogout204ResponseHeaders
+}
+
+func (response IdentityLogout204Response) VisitIdentityLogoutResponse(w http.ResponseWriter) error {
+	if response.Headers.SetCookie != nil {
+		w.Header().Set("Set-Cookie", fmt.Sprint(*response.Headers.SetCookie))
+	}
+	w.WriteHeader(204)
+	return nil
+}
+
+type IdentityLogout400JSONResponse IdentityErrorResponse
+
+func (response IdentityLogout400JSONResponse) VisitIdentityLogoutResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityLogout401JSONResponse IdentityErrorResponse
+
+func (response IdentityLogout401JSONResponse) VisitIdentityLogoutResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityLogout403JSONResponse IdentityErrorResponse
+
+func (response IdentityLogout403JSONResponse) VisitIdentityLogoutResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityLogout404JSONResponse IdentityErrorResponse
+
+func (response IdentityLogout404JSONResponse) VisitIdentityLogoutResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityLogout409JSONResponse IdentityErrorResponse
+
+func (response IdentityLogout409JSONResponse) VisitIdentityLogoutResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityLogout429JSONResponse IdentityErrorResponse
+
+func (response IdentityLogout429JSONResponse) VisitIdentityLogoutResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityLogout501JSONResponse IdentityErrorResponse
+
+func (response IdentityLogout501JSONResponse) VisitIdentityLogoutResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(501)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityLogout503JSONResponse IdentityErrorResponse
+
+func (response IdentityLogout503JSONResponse) VisitIdentityLogoutResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityRecoveryCreateRequestObject struct {
+	Body *IdentityRecoveryCreateJSONRequestBody
+}
+
+type IdentityRecoveryCreateResponseObject interface {
+	VisitIdentityRecoveryCreateResponse(w http.ResponseWriter) error
+}
+
+type IdentityRecoveryCreate202Response struct {
+}
+
+func (response IdentityRecoveryCreate202Response) VisitIdentityRecoveryCreateResponse(w http.ResponseWriter) error {
+	w.WriteHeader(202)
+	return nil
+}
+
+type IdentityRecoveryCreate400JSONResponse IdentityErrorResponse
+
+func (response IdentityRecoveryCreate400JSONResponse) VisitIdentityRecoveryCreateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityRecoveryCreate401JSONResponse IdentityErrorResponse
+
+func (response IdentityRecoveryCreate401JSONResponse) VisitIdentityRecoveryCreateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityRecoveryCreate403JSONResponse IdentityErrorResponse
+
+func (response IdentityRecoveryCreate403JSONResponse) VisitIdentityRecoveryCreateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityRecoveryCreate404JSONResponse IdentityErrorResponse
+
+func (response IdentityRecoveryCreate404JSONResponse) VisitIdentityRecoveryCreateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityRecoveryCreate409JSONResponse IdentityErrorResponse
+
+func (response IdentityRecoveryCreate409JSONResponse) VisitIdentityRecoveryCreateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityRecoveryCreate429JSONResponse IdentityErrorResponse
+
+func (response IdentityRecoveryCreate429JSONResponse) VisitIdentityRecoveryCreateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityRecoveryCreate501JSONResponse IdentityErrorResponse
+
+func (response IdentityRecoveryCreate501JSONResponse) VisitIdentityRecoveryCreateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(501)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityRecoveryCreate503JSONResponse IdentityErrorResponse
+
+func (response IdentityRecoveryCreate503JSONResponse) VisitIdentityRecoveryCreateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityRecoveryConsumeRequestObject struct {
+	Token string `json:"token"`
+}
+
+type IdentityRecoveryConsumeResponseObject interface {
+	VisitIdentityRecoveryConsumeResponse(w http.ResponseWriter) error
+}
+
+type IdentityRecoveryConsume303ResponseHeaders struct {
+	Location  *string
+	SetCookie *string
+}
+
+type IdentityRecoveryConsume303Response struct {
+	Headers IdentityRecoveryConsume303ResponseHeaders
+}
+
+func (response IdentityRecoveryConsume303Response) VisitIdentityRecoveryConsumeResponse(w http.ResponseWriter) error {
+	if response.Headers.Location != nil {
+		w.Header().Set("Location", fmt.Sprint(*response.Headers.Location))
+	}
+	if response.Headers.SetCookie != nil {
+		w.Header().Set("Set-Cookie", fmt.Sprint(*response.Headers.SetCookie))
+	}
+	w.WriteHeader(303)
+	return nil
+}
+
+type IdentityRecoveryConsume400JSONResponse IdentityErrorResponse
+
+func (response IdentityRecoveryConsume400JSONResponse) VisitIdentityRecoveryConsumeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityRecoveryConsume401JSONResponse IdentityErrorResponse
+
+func (response IdentityRecoveryConsume401JSONResponse) VisitIdentityRecoveryConsumeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityRecoveryConsume403JSONResponse IdentityErrorResponse
+
+func (response IdentityRecoveryConsume403JSONResponse) VisitIdentityRecoveryConsumeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityRecoveryConsume404JSONResponse IdentityErrorResponse
+
+func (response IdentityRecoveryConsume404JSONResponse) VisitIdentityRecoveryConsumeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityRecoveryConsume409JSONResponse IdentityErrorResponse
+
+func (response IdentityRecoveryConsume409JSONResponse) VisitIdentityRecoveryConsumeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityRecoveryConsume429JSONResponse IdentityErrorResponse
+
+func (response IdentityRecoveryConsume429JSONResponse) VisitIdentityRecoveryConsumeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityRecoveryConsume501JSONResponse IdentityErrorResponse
+
+func (response IdentityRecoveryConsume501JSONResponse) VisitIdentityRecoveryConsumeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(501)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityRecoveryConsume503JSONResponse IdentityErrorResponse
+
+func (response IdentityRecoveryConsume503JSONResponse) VisitIdentityRecoveryConsumeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityRegistrationCreateRequestObject struct {
+	Body *IdentityRegistrationCreateJSONRequestBody
+}
+
+type IdentityRegistrationCreateResponseObject interface {
+	VisitIdentityRegistrationCreateResponse(w http.ResponseWriter) error
+}
+
+type IdentityRegistrationCreate201ResponseHeaders struct {
+	SetCookie *string
+}
+
+type IdentityRegistrationCreate201JSONResponse struct {
+	Body    IdentitySession
+	Headers IdentityRegistrationCreate201ResponseHeaders
+}
+
+func (response IdentityRegistrationCreate201JSONResponse) VisitIdentityRegistrationCreateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.SetCookie != nil {
+		w.Header().Set("Set-Cookie", fmt.Sprint(*response.Headers.SetCookie))
+	}
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityRegistrationCreate400JSONResponse IdentityErrorResponse
+
+func (response IdentityRegistrationCreate400JSONResponse) VisitIdentityRegistrationCreateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityRegistrationCreate401JSONResponse IdentityErrorResponse
+
+func (response IdentityRegistrationCreate401JSONResponse) VisitIdentityRegistrationCreateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityRegistrationCreate403JSONResponse IdentityErrorResponse
+
+func (response IdentityRegistrationCreate403JSONResponse) VisitIdentityRegistrationCreateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityRegistrationCreate404JSONResponse IdentityErrorResponse
+
+func (response IdentityRegistrationCreate404JSONResponse) VisitIdentityRegistrationCreateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityRegistrationCreate409JSONResponse IdentityErrorResponse
+
+func (response IdentityRegistrationCreate409JSONResponse) VisitIdentityRegistrationCreateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityRegistrationCreate429JSONResponse IdentityErrorResponse
+
+func (response IdentityRegistrationCreate429JSONResponse) VisitIdentityRegistrationCreateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityRegistrationCreate501JSONResponse IdentityErrorResponse
+
+func (response IdentityRegistrationCreate501JSONResponse) VisitIdentityRegistrationCreateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(501)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityRegistrationCreate503JSONResponse IdentityErrorResponse
+
+func (response IdentityRegistrationCreate503JSONResponse) VisitIdentityRegistrationCreateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentitySessionGetRequestObject struct {
+}
+
+type IdentitySessionGetResponseObject interface {
+	VisitIdentitySessionGetResponse(w http.ResponseWriter) error
+}
+
+type IdentitySessionGet200JSONResponse IdentitySession
+
+func (response IdentitySessionGet200JSONResponse) VisitIdentitySessionGetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentitySessionGet400JSONResponse IdentityErrorResponse
+
+func (response IdentitySessionGet400JSONResponse) VisitIdentitySessionGetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentitySessionGet401JSONResponse IdentityErrorResponse
+
+func (response IdentitySessionGet401JSONResponse) VisitIdentitySessionGetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentitySessionGet403JSONResponse IdentityErrorResponse
+
+func (response IdentitySessionGet403JSONResponse) VisitIdentitySessionGetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentitySessionGet404JSONResponse IdentityErrorResponse
+
+func (response IdentitySessionGet404JSONResponse) VisitIdentitySessionGetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentitySessionGet409JSONResponse IdentityErrorResponse
+
+func (response IdentitySessionGet409JSONResponse) VisitIdentitySessionGetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentitySessionGet429JSONResponse IdentityErrorResponse
+
+func (response IdentitySessionGet429JSONResponse) VisitIdentitySessionGetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentitySessionGet501JSONResponse IdentityErrorResponse
+
+func (response IdentitySessionGet501JSONResponse) VisitIdentitySessionGetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(501)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentitySessionGet503JSONResponse IdentityErrorResponse
+
+func (response IdentitySessionGet503JSONResponse) VisitIdentitySessionGetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityPasswordUpdateRequestObject struct {
+	Body *IdentityPasswordUpdateJSONRequestBody
+}
+
+type IdentityPasswordUpdateResponseObject interface {
+	VisitIdentityPasswordUpdateResponse(w http.ResponseWriter) error
+}
+
+type IdentityPasswordUpdate204Response struct {
+}
+
+func (response IdentityPasswordUpdate204Response) VisitIdentityPasswordUpdateResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type IdentityPasswordUpdate400JSONResponse IdentityErrorResponse
+
+func (response IdentityPasswordUpdate400JSONResponse) VisitIdentityPasswordUpdateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityPasswordUpdate401JSONResponse IdentityErrorResponse
+
+func (response IdentityPasswordUpdate401JSONResponse) VisitIdentityPasswordUpdateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityPasswordUpdate403JSONResponse IdentityErrorResponse
+
+func (response IdentityPasswordUpdate403JSONResponse) VisitIdentityPasswordUpdateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityPasswordUpdate404JSONResponse IdentityErrorResponse
+
+func (response IdentityPasswordUpdate404JSONResponse) VisitIdentityPasswordUpdateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityPasswordUpdate409JSONResponse IdentityErrorResponse
+
+func (response IdentityPasswordUpdate409JSONResponse) VisitIdentityPasswordUpdateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityPasswordUpdate429JSONResponse IdentityErrorResponse
+
+func (response IdentityPasswordUpdate429JSONResponse) VisitIdentityPasswordUpdateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityPasswordUpdate501JSONResponse IdentityErrorResponse
+
+func (response IdentityPasswordUpdate501JSONResponse) VisitIdentityPasswordUpdateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(501)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityPasswordUpdate503JSONResponse IdentityErrorResponse
+
+func (response IdentityPasswordUpdate503JSONResponse) VisitIdentityPasswordUpdateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityProfileUpdateRequestObject struct {
+	Body *IdentityProfileUpdateJSONRequestBody
+}
+
+type IdentityProfileUpdateResponseObject interface {
+	VisitIdentityProfileUpdateResponse(w http.ResponseWriter) error
+}
+
+type IdentityProfileUpdate200JSONResponse IdentityAccount
+
+func (response IdentityProfileUpdate200JSONResponse) VisitIdentityProfileUpdateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityProfileUpdate400JSONResponse IdentityErrorResponse
+
+func (response IdentityProfileUpdate400JSONResponse) VisitIdentityProfileUpdateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityProfileUpdate401JSONResponse IdentityErrorResponse
+
+func (response IdentityProfileUpdate401JSONResponse) VisitIdentityProfileUpdateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityProfileUpdate403JSONResponse IdentityErrorResponse
+
+func (response IdentityProfileUpdate403JSONResponse) VisitIdentityProfileUpdateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityProfileUpdate404JSONResponse IdentityErrorResponse
+
+func (response IdentityProfileUpdate404JSONResponse) VisitIdentityProfileUpdateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityProfileUpdate409JSONResponse IdentityErrorResponse
+
+func (response IdentityProfileUpdate409JSONResponse) VisitIdentityProfileUpdateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityProfileUpdate429JSONResponse IdentityErrorResponse
+
+func (response IdentityProfileUpdate429JSONResponse) VisitIdentityProfileUpdateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityProfileUpdate501JSONResponse IdentityErrorResponse
+
+func (response IdentityProfileUpdate501JSONResponse) VisitIdentityProfileUpdateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(501)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityProfileUpdate503JSONResponse IdentityErrorResponse
+
+func (response IdentityProfileUpdate503JSONResponse) VisitIdentityProfileUpdateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
 }
 
 type ImmersionFeatureAccessRevokeRequestObject struct {
@@ -6922,6 +8989,36 @@ type StrictServerInterface interface {
 	// ContentPostUpdate Updates an existing post
 	// (PUT /content/posts/{namespace}/{slug})
 	ContentPostUpdate(ctx context.Context, request ContentPostUpdateRequestObject) (ContentPostUpdateResponseObject, error)
+	// EmailList List retained tenant emails, newest first
+	// (GET /emails)
+	EmailList(ctx context.Context, request EmailListRequestObject) (EmailListResponseObject, error)
+	// EmailGet Read a retained tenant email including parameters
+	// (GET /emails/{id})
+	EmailGet(ctx context.Context, request EmailGetRequestObject) (EmailGetResponseObject, error)
+	// IdentityLoginCreate Log in or re-authenticate
+	// (POST /identity/login)
+	IdentityLoginCreate(ctx context.Context, request IdentityLoginCreateRequestObject) (IdentityLoginCreateResponseObject, error)
+	// IdentityLogout Revoke the current session and clear its cookie
+	// (POST /identity/logout)
+	IdentityLogout(ctx context.Context, request IdentityLogoutRequestObject) (IdentityLogoutResponseObject, error)
+	// IdentityRecoveryCreate Request recovery without revealing account existence
+	// (POST /identity/recovery)
+	IdentityRecoveryCreate(ctx context.Context, request IdentityRecoveryCreateRequestObject) (IdentityRecoveryCreateResponseObject, error)
+	// IdentityRecoveryConsume Consume a recovery token and redirect to Settings
+	// (GET /identity/recovery/{token})
+	IdentityRecoveryConsume(ctx context.Context, request IdentityRecoveryConsumeRequestObject) (IdentityRecoveryConsumeResponseObject, error)
+	// IdentityRegistrationCreate Register an account and create a session
+	// (POST /identity/registration)
+	IdentityRegistrationCreate(ctx context.Context, request IdentityRegistrationCreateRequestObject) (IdentityRegistrationCreateResponseObject, error)
+	// IdentitySessionGet Resolve the tenant account app and current account
+	// (GET /identity/session)
+	IdentitySessionGet(ctx context.Context, request IdentitySessionGetRequestObject) (IdentitySessionGetResponseObject, error)
+	// IdentityPasswordUpdate Update password after a recent login and revoke other sessions
+	// (PUT /identity/settings/password)
+	IdentityPasswordUpdate(ctx context.Context, request IdentityPasswordUpdateRequestObject) (IdentityPasswordUpdateResponseObject, error)
+	// IdentityProfileUpdate Update profile; email changes require a recent login
+	// (PATCH /identity/settings/profile)
+	IdentityProfileUpdate(ctx context.Context, request IdentityProfileUpdateRequestObject) (IdentityProfileUpdateResponseObject, error)
 	// ImmersionFeatureAccessRevoke Revokes named-user access to an allowlisted feature flag (admin only)
 	// (DELETE /immersion/admin/feature-flags/{flagKey}/users/{userId})
 	ImmersionFeatureAccessRevoke(ctx context.Context, request ImmersionFeatureAccessRevokeRequestObject) (ImmersionFeatureAccessRevokeResponseObject, error)
@@ -7780,6 +9877,287 @@ func (sh *strictHandler) ContentPostUpdate(w http.ResponseWriter, r *http.Reques
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ContentPostUpdateResponseObject); ok {
 		if err := validResponse.VisitContentPostUpdateResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// EmailList operation middleware
+func (sh *strictHandler) EmailList(w http.ResponseWriter, r *http.Request, params EmailListParams) {
+	var request EmailListRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.EmailList(ctx, request.(EmailListRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "EmailList")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(EmailListResponseObject); ok {
+		if err := validResponse.VisitEmailListResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// EmailGet operation middleware
+func (sh *strictHandler) EmailGet(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	var request EmailGetRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.EmailGet(ctx, request.(EmailGetRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "EmailGet")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(EmailGetResponseObject); ok {
+		if err := validResponse.VisitEmailGetResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// IdentityLoginCreate operation middleware
+func (sh *strictHandler) IdentityLoginCreate(w http.ResponseWriter, r *http.Request) {
+	var request IdentityLoginCreateRequestObject
+
+	var body IdentityLoginCreateJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.IdentityLoginCreate(ctx, request.(IdentityLoginCreateRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "IdentityLoginCreate")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(IdentityLoginCreateResponseObject); ok {
+		if err := validResponse.VisitIdentityLoginCreateResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// IdentityLogout operation middleware
+func (sh *strictHandler) IdentityLogout(w http.ResponseWriter, r *http.Request) {
+	var request IdentityLogoutRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.IdentityLogout(ctx, request.(IdentityLogoutRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "IdentityLogout")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(IdentityLogoutResponseObject); ok {
+		if err := validResponse.VisitIdentityLogoutResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// IdentityRecoveryCreate operation middleware
+func (sh *strictHandler) IdentityRecoveryCreate(w http.ResponseWriter, r *http.Request) {
+	var request IdentityRecoveryCreateRequestObject
+
+	var body IdentityRecoveryCreateJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.IdentityRecoveryCreate(ctx, request.(IdentityRecoveryCreateRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "IdentityRecoveryCreate")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(IdentityRecoveryCreateResponseObject); ok {
+		if err := validResponse.VisitIdentityRecoveryCreateResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// IdentityRecoveryConsume operation middleware
+func (sh *strictHandler) IdentityRecoveryConsume(w http.ResponseWriter, r *http.Request, token string) {
+	var request IdentityRecoveryConsumeRequestObject
+
+	request.Token = token
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.IdentityRecoveryConsume(ctx, request.(IdentityRecoveryConsumeRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "IdentityRecoveryConsume")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(IdentityRecoveryConsumeResponseObject); ok {
+		if err := validResponse.VisitIdentityRecoveryConsumeResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// IdentityRegistrationCreate operation middleware
+func (sh *strictHandler) IdentityRegistrationCreate(w http.ResponseWriter, r *http.Request) {
+	var request IdentityRegistrationCreateRequestObject
+
+	var body IdentityRegistrationCreateJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.IdentityRegistrationCreate(ctx, request.(IdentityRegistrationCreateRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "IdentityRegistrationCreate")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(IdentityRegistrationCreateResponseObject); ok {
+		if err := validResponse.VisitIdentityRegistrationCreateResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// IdentitySessionGet operation middleware
+func (sh *strictHandler) IdentitySessionGet(w http.ResponseWriter, r *http.Request) {
+	var request IdentitySessionGetRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.IdentitySessionGet(ctx, request.(IdentitySessionGetRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "IdentitySessionGet")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(IdentitySessionGetResponseObject); ok {
+		if err := validResponse.VisitIdentitySessionGetResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// IdentityPasswordUpdate operation middleware
+func (sh *strictHandler) IdentityPasswordUpdate(w http.ResponseWriter, r *http.Request) {
+	var request IdentityPasswordUpdateRequestObject
+
+	var body IdentityPasswordUpdateJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.IdentityPasswordUpdate(ctx, request.(IdentityPasswordUpdateRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "IdentityPasswordUpdate")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(IdentityPasswordUpdateResponseObject); ok {
+		if err := validResponse.VisitIdentityPasswordUpdateResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// IdentityProfileUpdate operation middleware
+func (sh *strictHandler) IdentityProfileUpdate(w http.ResponseWriter, r *http.Request) {
+	var request IdentityProfileUpdateRequestObject
+
+	var body IdentityProfileUpdateJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.IdentityProfileUpdate(ctx, request.(IdentityProfileUpdateRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "IdentityProfileUpdate")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(IdentityProfileUpdateResponseObject); ok {
+		if err := validResponse.VisitIdentityProfileUpdateResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

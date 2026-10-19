@@ -16,7 +16,7 @@ leaderboard cache invalidation.
 
 ## Public API domains
 
-The public contract is grouped into four domains. Each has a filtered view in
+The public contract is grouped by domain. Each has a filtered view in
 the [API reference](../api/index.md).
 
 | Domain | Covers | Features |
@@ -25,6 +25,8 @@ the [API reference](../api/index.md).
 | Content | Blog posts, CMS pages and announcements | `posts`, `pages`, `announcements` |
 | Profile | The administrator user list | `profile` |
 | Authorization | The current user's role, role management and permission checks | `authz` |
+| Identity | Registration, sessions, recovery and settings skeletons | `identity` |
+| Email | Retained-email read skeletons | `email` |
 
 ## Code ownership
 
@@ -46,7 +48,7 @@ All paths are relative to `services/tadoku-api/`.
 | `cmd/tadoku-worker/` | Worker composition root and private health/metrics lifecycle. |
 | `domain/<concept>/` | Business values and pure rules shared by several features. |
 | `internal/` | Technical support: errors (`errx`), request identity (`identity`), actor and target-role permissions (`permissions`), feature-flag evaluation (`featureflags`), business time (`timex`), callback authentication (`callbackauth`) and test fixtures (`test*`). |
-| `infra/` | Infrastructure adapters: PostgreSQL (`postgres`), Valkey (`valkey`), Keto (`keto`), Kratos reads and guarded writes (`kratos`, `kratosidentity`), Flipt evaluation and management (`flipt`, `fliptmanagement`), and scoring observability (`observability`). |
+| `infra/` | Infrastructure adapters: PostgreSQL (`postgres`), Valkey (`valkey`), Keto (`keto`), Kratos reads and guarded writes (`kratosidentity`), Flipt evaluation and management (`flipt`, `fliptmanagement`), and scoring observability (`observability`). |
 | `cmd/tadoku-api/` | The composition root: loads configuration, constructs and owns the pool, provider clients and HTTP resources, and wires them into the application. |
 
 The service-token exchange client and PostgreSQL migration commands remain in

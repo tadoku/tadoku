@@ -9,7 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/sahilm/fuzzy"
-	kratosclient "github.com/tadoku/tadoku/services/tadoku-api/infra/kratos"
+	kratosclient "github.com/tadoku/tadoku/services/tadoku-api/features/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
@@ -19,10 +19,15 @@ type Service struct {
 	repository *Repository
 	cache      *UserCache
 	roles      *permissions.KetoService
-	identities *kratosclient.Client
+	identities kratosclient.LegacyReader
 }
 
-func NewService(repository *Repository, cache *UserCache, roles *permissions.KetoService, identities *kratosclient.Client) *Service {
+func NewService(
+	repository *Repository,
+	cache *UserCache,
+	roles *permissions.KetoService,
+	identities kratosclient.LegacyReader,
+) *Service {
 	return &Service{
 		repository: repository,
 		cache:      cache,
@@ -180,7 +185,7 @@ func (s *Service) FetchAccountCreatedAt(ctx context.Context, userID uuid.UUID) (
 }
 
 func mapIdentityFetchError(err error) error {
-	if errors.Is(err, kratosclient.ErrNotFound) {
+	if errors.Is(err, kratosclient.ErrLegacyNotFound) {
 		return ErrIdentityNotFound
 	}
 	return errx.NewUnavailableError("fetch identity", err)

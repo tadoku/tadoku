@@ -3,9 +3,13 @@ package e2e_test
 import (
 	"context"
 	"encoding/json"
+	"io"
+	"log/slog"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -147,5 +151,29 @@ func emailRetention(t *testing.T, ctx context.Context, now time.Time) {
 	var count int
 	if err := api.db.Pool.QueryRow(ctx, "select count(*) from emails where tenant=$1", key.String()).Scan(&count); err != nil || count != 0 {
 		t.Fatalf("cascade count=%d err=%v", count, err)
+	}
+}
+
+func TestEmailAuditFailureHidesContent(t *testing.T) {
+	api.reset(t, "")
+	if err := api.keto.Reset(t.Context(), "testdata/journeys/relationships.json"); err != nil {
+		t.Fatal(err)
+	}
+	tokens := emailTokens(t)
+	ctx := tenant.WithKey(t.Context(), tenant.Production())
+	id := writeEmail(t, ctx, emailService(), recoveryMail())
+	closed := openClosedPool(t, api.db.AppPool.Config().ConnString())
+	handler, _, _, err := newTestRouterWithLogger(ctx, api.db.AppPool, closed, api.keto, api.kratos, slog.New(slog.NewTextHandler(io.Discard, nil)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, path := range []string{"/emails", "/emails/" + id.String()} {
+		request := httptest.NewRequest(http.MethodGet, path, nil)
+		request.Header.Set("Authorization", "Bearer "+tokens["admin"])
+		response := httptest.NewRecorder()
+		handler.ServeHTTP(response, request)
+		if response.Code != 500 || strings.Contains(response.Body.String(), "recovery_url") {
+			t.Errorf("audit failure response=%d %s", response.Code, response.Body.String())
+		}
 	}
 }

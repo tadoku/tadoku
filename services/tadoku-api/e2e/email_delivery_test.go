@@ -243,3 +243,37 @@ func TestEmailWorkerDelivery(t *testing.T) {
 		})
 	}
 }
+
+func TestEmailGuessedJobTenant(t *testing.T) {
+	api.reset(t, "")
+	fixture := emailSMTPServer(t, false)
+	sender, err := smtpinfra.New(fixture.config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	service := email.NewPersistentService(email.NewRepository(api.db.AppPool), sender)
+	productionCtx := tenant.WithKey(t.Context(), tenant.Production())
+	id := writeEmail(t, productionCtx, service, recoveryMail())
+	key, _ := tenant.Parse("e2e/email-guess")
+	if _, err := api.db.Pool.Exec(t.Context(), "insert into tenants(key,kind) values ($1,'test')", key.String()); err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		_, _ = api.db.Pool.Exec(context.Background(), "delete from tenants where key=$1", key.String())
+	}()
+	if err := service.Send(tenant.WithKey(t.Context(), key), id); err != nil {
+		t.Fatal(err)
+	}
+	row, err := service.Find(productionCtx, id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := row.Delivery.(email.Pending); !ok {
+		t.Errorf("guessed job changed production row: %T", row.Delivery)
+	}
+	fixture.mu.Lock()
+	defer fixture.mu.Unlock()
+	if fixture.attempts != 0 {
+		t.Errorf("guessed job made %d SMTP attempts", fixture.attempts)
+	}
+}

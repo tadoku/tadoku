@@ -51,3 +51,14 @@ deleting data you did not create.
 [sidebar](../../../../../frontend/apps/admin/app/ui/DashboardLayout.tsx),
 [content editors](../../../../../frontend/apps/admin/app/content/),
 [feature access](../../../../../frontend/apps/admin/app/feature-access/).
+
+## Retained email API
+
+Administrators can inspect their selected tenant with `GET /api/internal/emails`
+and `GET /api/internal/emails/{id}` on its branch host. There is no email UI or
+public send endpoint. Verify a produced email becomes `held` in development,
+read back its template/params as Dev Admin, and confirm Dev Reader and anonymous
+requests are denied. Check `X-Dev-Selected` and the actual API overlay backend.
+Production rows require an audit entry for each returned message; use disposable
+HTTP E2Es for production-tenant audit and SMTP delivery cases, never production
+email or shared account mutations. See the [email feature guide](../../../../../docs/docs/tadoku-api/email.md).

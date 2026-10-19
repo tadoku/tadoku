@@ -110,8 +110,10 @@ policy excludes application, feature, generated, infrastructure, storage and
 row and handler context, never from the payload. Recipients, rendered content,
 parameters and credentials stay outside this job. The handler reads current
 email state and must tolerate retries without resending terminal deliveries.
-The payload is declared but has no executable registration yet; no producer is
-wired. Sending and retention remain unimplemented.
+The worker registers this handler with concurrency 2, a 20-second bound and five
+attempts. Sending is disabled by default; every non-production tenant holds its
+mail. See [Retained email](./email.md) for transactional writing, SMTP outcomes,
+read auditing and daily retention.
 
 `domain/mail.Message` carries template, recipient and string parameters between
 features through application composition. `email.Writer.Write` requires the
@@ -170,6 +172,7 @@ The worker application in `app/worker/application.go` owns the registry.
 func registrations(
     invalidateContest func(context.Context, jobs.InvalidateContestLeaderboardV1) error,
     invalidateOfficial func(context.Context, jobs.InvalidateOfficialLeaderboardV1) error,
+    sendEmail func(context.Context, jobs.SendEmailV1) error,
 ) (*registry, error) {
     leaderboardPolicy := policy{
         Concurrency: 2,
@@ -179,6 +182,7 @@ func registrations(
     return newRegistry(
         handle(invalidateContest, leaderboardPolicy),
         handle(invalidateOfficial, leaderboardPolicy),
+        handle(sendEmail, policy{Concurrency: 2, Timeout: 20 * time.Second, MaxAttempts: 5}),
     )
 }
 ```

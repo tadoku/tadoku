@@ -28,6 +28,7 @@ import (
 	ketoclient "github.com/tadoku/tadoku/services/tadoku-api/infra/keto"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"go.yaml.in/yaml/v3"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func TestEmailGatewayCookieAndBearer(t *testing.T) {
@@ -180,9 +181,26 @@ func TestEmailGatewayCookieAndBearer(t *testing.T) {
 
 func gatewayAdminCookie(t *testing.T, key tenant.Key, proxyURL, host, forwardedProto string) string {
 	t.Helper()
-	body := `{"email":"gateway@example.test","display_name":"Gateway Admin","password":"Independent-653!"}`
+	userID := uuid.New()
+	hash, err := bcrypt.GenerateFromPassword([]byte(identityFixturePassword), bcrypt.MinCost)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = api.db.Pool.Exec(t.Context(), `with fixture_user as (
+		insert into users (tenant, id, display_name)
+		values ($1, $2, 'Gateway Admin')
+		returning tenant, id
+	)
+	insert into accounts (tenant, user_id, email, email_normalized, password_hash)
+	select tenant, id, 'gateway@example.test', 'gateway@example.test', $3
+	from fixture_user`, key.String(), userID, string(hash))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	body := `{"email":"gateway@example.test","password":"Fixture-login-482!"}`
 	request, err := http.NewRequestWithContext(
-		t.Context(), "POST", proxyURL+"/api/internal/identity/registration", strings.NewReader(body),
+		t.Context(), "POST", proxyURL+"/api/internal/identity/login", strings.NewReader(body),
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -194,19 +212,23 @@ func gatewayAdminCookie(t *testing.T, key tenant.Key, proxyURL, host, forwardedP
 	request.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{Timeout: 3 * time.Second}
+	started := time.Now()
 	response, err := client.Do(request)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer response.Body.Close()
+	t.Logf("gateway login completed in %s (client limit %s)", time.Since(started), client.Timeout)
 
 	var view identitySessionView
 	if err := json.NewDecoder(response.Body).Decode(&view); err != nil {
 		t.Fatal(err)
 	}
-	if response.StatusCode != http.StatusCreated || view.AccountApp != "v2" || view.Account == nil {
+	if response.StatusCode != http.StatusOK || view.AccountApp != "v2" || view.Account == nil ||
+		view.Account.ID != userID.String() || view.Account.DisplayName != "Gateway Admin" ||
+		view.Account.Email != "gateway@example.test" {
 		t.Fatalf(
-			"gateway registration: status=%d app=%s account=%+v",
+			"gateway login: status=%d app=%s account=%+v",
 			response.StatusCode, view.AccountApp, view.Account,
 		)
 	}
@@ -219,7 +241,7 @@ func gatewayAdminCookie(t *testing.T, key tenant.Key, proxyURL, host, forwardedP
 
 	cookies := response.Cookies()
 	if len(cookies) != 1 || cookies[0].Name != "tadoku_session_tadoku_gateway-0123abcd" {
-		t.Fatal("gateway registration did not issue the tenant's v2 cookie")
+		t.Fatal("gateway login did not issue the tenant's v2 cookie")
 	}
 	return cookies[0].Name + "=" + cookies[0].Value
 }

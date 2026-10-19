@@ -172,6 +172,7 @@ go_test(
         "@com_github_prometheus_client_golang//prometheus",
         "@com_github_valkey_io_valkey_go//:valkey-go",
         "@in_yaml_go_yaml_v3//:yaml",
+        "@org_golang_x_crypto//bcrypt",
         "@rules_go//go/runfiles",
         "@rules_go//go/tools/bazel",
     ],

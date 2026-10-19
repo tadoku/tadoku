@@ -1,7 +1,6 @@
 insert into tenants (key, kind)
 values
-  ('tadoku/identity-a-0123abcd', 'test'),
-  ('tadoku/identity-b-0123abcd', 'test')
+  ('e2e/alpha-0000000a', 'test')
 on conflict (key) do nothing;
 
 with actors (id, display_name, created_at) as (
@@ -14,12 +13,12 @@ with actors (id, display_name, created_at) as (
 ), scopes (tenant) as (
   values
     ('tadoku/prod'),
-    ('tadoku/identity-a-0123abcd'),
-    ('tadoku/identity-b-0123abcd')
+    ('e2e/alpha-0000000a')
 )
 insert into users (tenant, id, display_name, created_at, updated_at)
 select scopes.tenant, actors.id, actors.display_name, actors.created_at, actors.created_at
-from actors cross join scopes;
+from actors cross join scopes
+on conflict (tenant, id) do nothing;
 
 with actors (user_id, email) as (
   values
@@ -31,7 +30,8 @@ with actors (user_id, email) as (
 )
 insert into accounts (tenant, user_id, email, email_normalized, password_hash, created_at, updated_at)
 select u.tenant, u.id, actors.email, actors.email,
-  '$2b$12$TP8U/FQ8vCC/fzTCu5Fgve4WAHMgvG1jZ7V7bKWjDJRA.KeeC1xqK', u.created_at, u.updated_at
+  '$2b$04$Kr8WFdLSHO4NBQGmsmwqMe.2VlUTBQIIIXxP6HTw2nPq4IhuQ/P1W', u.created_at, u.updated_at
 from users u
 join actors on actors.user_id = u.id
-where u.tenant in ('tadoku/prod', 'tadoku/identity-a-0123abcd', 'tadoku/identity-b-0123abcd');
+where u.tenant in ('tadoku/prod', 'e2e/alpha-0000000a')
+on conflict (tenant, user_id) do nothing;

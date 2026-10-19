@@ -282,25 +282,24 @@ jq -r .token "$fixture_output"
 
 ## Local account fixtures
 
-`e2e/testdata/accounts.sql` seeds the fixed five-user cast as local accounts in
-three tenants of the disposable PostgreSQL database: `tadoku/prod` and the two
-`identity-a-0123abcd` / `identity-b-0123abcd` test tenants. UUIDs, display names,
-emails and account creation times match the legacy cast. The fixture uses the
-same synthetic cost-12 password hash as the identity workflow fixtures. It
-creates no sessions; workflows obtain cookies through real registration or
-login requests.
+`e2e/testdata/accounts.sql` seeds the fixed five-user cast in `tadoku/prod`
+and `e2e/alpha-0000000a`, matching the signed cast's tenants. UUIDs, names,
+emails and creation times match the legacy cast. Its synthetic bcrypt cost-4
+hash keeps fixture login cheap; production registration and the dedicated
+password-policy workflows retain cost 12. Sessions come from real API login.
 
-The account-cast workflows explicitly load this seed after reset and enable
-`identity-v2` only in the in-process Flipt fixture. They compare local session
-responses with the checked-in signed cast, reject another tenant's cookie and
-exercise inactive, deleted and deletion-locked accounts. A reset removes issued
-sessions and restores the active accounts. No shared tenant, flag or provider is
-modified. Roles and groups remain real Keto relationships.
+Load case SQL before the account seed. Explicit user/account primary-key
+conflicts preserve existing rows, including case-specific names, timestamps,
+inactive accounts and deleted or locked users. Repeating the seed is safe;
+other constraint failures still fail setup. Normal golden resets currently
+load case SQL without this account seed.
 
-Legacy profile, account-age and role-update callers still use the Kratos read
-adapter, so their existing golden scenarios retain the process fixture below.
-They do not read local account rows. Keep that boundary visible when choosing a
-fixture; local account authentication alone does not verify those callers.
+Focused workflows enable v2 in the in-process Flipt fixture, verify each unique
+signed (tenant, subject) through the real JWT router, reject foreign cookies,
+and check unavailable states and reset. No shared data changes. Roles remain
+real Keto relationships. Legacy profile, account-age and role-update goldens
+still use the Kratos reader and process below; local authentication does not
+verify those callers.
 
 ### Recorded legacy sessions
 
@@ -349,21 +348,18 @@ Provider protocol, error and cancellation tests remain with the read adapter.
 
 ## Email gateway fixture
 
-`TestEmailGatewayCookieAndBearer` runs the checked-in development rules with
-checksum-pinned Oathkeeper v26.2.0, real local Keto/PostgreSQL fixtures and the
-production API router on the restricted database role. It registers a v2
-account through the gateway, grants its tenant's admin relationship in the
-owned Keto fixture and uses the issued tenant cookie for email list/detail
-reads. It checks bearer reads, anonymous/forged/unrelated cookies, expiry,
-public logout followed by cookie rejection, unrelated-route denial and token
-absence from logs.
+`TestEmailGatewayCookieAndBearer` runs development rules with pinned
+Oathkeeper v26.2.0, local Keto/PostgreSQL and the production router on the
+restricted role. It seeds a disposable admin with a `bcrypt.MinCost` hash,
+then logs in through the real gateway with the unchanged three-second client.
+It checks cookie/bearer email reads, anonymous/forged/unrelated cookies,
+expiry, public logout, revoked cookies, other-route denial and token log absence.
 
-The fixture adapts the cookie-session configuration to the API's real identity
-callback with its synthetic bearer and forwarded Cookie / X-Dev-Branch headers,
-without an `only` cookie filter. This is local callback integration evidence;
-it does not prove the checked-in shared gateway has deployed that configuration.
-Routing rules, bearer header mutation and signing remain from the selected
-configuration.
+The fixture changes the cookie-session URL and bearer, forwards Cookie and
+X-Dev-Branch, and removes the legacy `only` filter. These additional adaptations
+are needed while checked-in configuration still selects Kratos cookies. This
+proves local callback integration, not deployment of that configuration.
+Rules, bearer mutation and signing remain from the selected configuration.
 
 To check production routing, render the paired GitOps checkout's Oathkeeper
 chart (version 0.60.1) into a scratch file and pass its absolute path through

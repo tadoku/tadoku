@@ -82,9 +82,12 @@ Never point tests at shared development or production services.
   v25.4.0 SQLite-enabled executable under Bazel. Each helper owns an in-memory,
   loopback-only process using `infra/dev/ory/namespaces.keto.ts` and never
   accepts an external target.
-- **Identity accounts:** focused v2 workflows seed local PostgreSQL account rows
-  and obtain sessions through real identity requests. The fixed cast and
-  recorded v1-session boundary are documented in
+- **Identity accounts:** focused v2 workflows seed tenant-owned PostgreSQL
+  accounts after case SQL, preserving existing user/account state on primary-key
+  conflicts, and obtain sessions through real identity requests. Cast and gateway
+  fixtures use test-cost bcrypt hashes; registration/password-policy workflows
+  retain production cost 12. Normal reader goldens still use Kratos. The fixed
+  cast and recorded v1-session boundary are documented in
   [Local account fixtures](./http-e2e.md#local-account-fixtures).
 - **Kratos:** legacy reader goldens and identity-writer tests still own a pinned
   Kratos process; see

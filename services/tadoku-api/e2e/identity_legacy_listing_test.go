@@ -93,7 +93,13 @@ func TestIdentityLegacyAdminSingleWalk(t *testing.T) {
 				}
 
 				wantCalls := (size + 499) / 500
-				t.Logf("identities=%d request=%s provider_calls=%d single_walk=%d", size, scenario.path, calls.Load(), wantCalls)
+				t.Logf(
+					"identities=%d request=%s provider_calls=%d single_walk=%d",
+					size,
+					scenario.path,
+					calls.Load(),
+					wantCalls,
+				)
 				if calls.Load() != int64(wantCalls) {
 					t.Errorf("provider calls=%d, want one complete walk=%d", calls.Load(), wantCalls)
 				}

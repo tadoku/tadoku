@@ -14,7 +14,7 @@ its source is `services/tadoku-api/spec/openapi.yaml`.
 ## Authentication and authorization
 
 - **Identity** owns tenant account reads. V1 identity/session commands remain
-  backed by Kratos; v2 session runtime is introduced separately. Oathkeeper's
+  backed by Kratos; v2 session commands return not implemented. Oathkeeper's
   configured session callback forwards Cookie and X-Dev-Branch with its trusted
   bearer through the branch-aware API hop. The callback must be deployed before
   activating this gateway configuration. Browser API calls carry a session
@@ -37,9 +37,8 @@ its source is `services/tadoku-api/spec/openapi.yaml`.
 Profile and moderation use `identity.Reader` for public profile details, account
 age, admin listing and ban-target existence. The identity feature chooses the
 implementation using the request tenant's flag. V2 targets must be active
-accounts in that tenant; v1 reads continue through Kratos. The unused guarded
-Kratos identity writer has been removed; this does not add an account-deletion
-operation or authorize shared provider mutations.
+accounts in that tenant; v1 reads continue through Kratos. Account deletion is
+not available, and read access does not authorize shared provider mutations.
 
 ## Keto data model
 

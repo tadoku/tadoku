@@ -65,8 +65,10 @@ http.createServer((req,res)=>{
     run('docker', ['run', '-d', '--name', stub, '--label', `tadoku.dev/test=${prefix}`, '--network', prefix, '-v', `${evidence}:/proof:ro`, 'node:22-alpine', 'node', '/proof/stub.cjs'])
     report.matrix = []
     report.logChecks = []
+    let callbackOffset = 0
     for (const fixture of fixtures) {
       const config = structuredClone(fixture.config)
+      if (process.env.IDENTITY_CALLBACK_LOG_LEVEL) config.log.level = process.env.IDENTITY_CALLBACK_LOG_LEVEL
       config.serve = { proxy: { port: 4455 }, api: { port: 4456 } }
       config.access_rules = { matching_strategy: 'glob', repositories: ['file:///proof/rules.yaml'] }
       config.authenticators.cookie_session.config.check_session_url = `http://${stub}:8080/identity/internal/v1/session`
@@ -114,9 +116,11 @@ http.createServer((req,res)=>{
       const logFile = report.steps.at(-1).log
       const complete = fs.readFileSync(path.join(evidence, logFile), 'utf8')
       const result = spawnSync('docker', ['logs', stub], { encoding: 'utf8' })
-      const callbackLines = (result.stdout + result.stderr).trim().split('\n').filter(Boolean).map(line => JSON.parse(line))
-      const check = { image: fixture.image, secretAbsent: !complete.includes(dummy), callbackCount: callbackLines.length, allCallbacksAuthenticated: callbackLines.length > 0 && callbackLines.every(line => line.auth), allCallbacksGET: callbackLines.every(line => line.method === 'GET') }
+      const callbackLines = (result.stdout + result.stderr).trim().split('\n').filter(Boolean).map(line => JSON.parse(line)).slice(callbackOffset)
+      fs.writeFileSync(path.join(evidence, `${fixture.name}-callbacks.json`), JSON.stringify(callbackLines, null, 2))
+      const check = { fixture: fixture.name, image: fixture.image, callbackOffset, secretAbsent: !complete.includes(dummy), callbackCount: callbackLines.length, allCallbacksAuthenticated: callbackLines.length > 0 && callbackLines.every(line => line.auth), allCallbacksGET: callbackLines.every(line => line.method === 'GET') }
       report.logChecks.push(check)
+      callbackOffset += callbackLines.length
     }
     report.result = report.matrix.every(row => row.passed) && report.logChecks.every(row => row.secretAbsent && row.allCallbacksAuthenticated && row.allCallbacksGET) ? 'passed' : 'failed'
     if (report.result !== 'passed') process.exitCode = 1

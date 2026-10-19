@@ -33,3 +33,61 @@ credential. Pass a Tadoku GitOps checkout as a second argument to include its
 pinned production image. This proves configuration and logging behavior;
 actual API sessions, ban admission, trusted routing and live tenant isolation
 require the branch journey.
+
+## Production release order
+
+A merge to the source repository's `main` runs `build-bazel.yaml`, publishes the
+API production image, and lets Image Updater and Argo CD reconcile it. Treat an
+API merge as a production release. The legacy webv2, admin and auth workflows
+publish commit and `latest` images on main; they publish `prod` only through an
+owner-approved `workflow_dispatch` with `publish_production: true`. Production
+tracks `prod`. Publishing any of these apps from a revision containing identity
+session reads requires the private session rule and working public identity
+routes. Otherwise SSR receives an error and visitors see the retry screen.
+
+Use this prerequisite order; ordinary source-merge permission does not authorize
+an activation or a workflow dispatch:
+
+1. Deploy and verify the account session, logout and callback runtime and the
+   public identity routes in production. Public routing and package readiness
+   must satisfy the account runtime's own live gate before its owner lands it;
+   do not waive that gate to impose an accounts-first order. Confirm callback
+   credential compatibility, banned-account session/logout admission, trusted
+   branch selection and the required public Kratos URL/proxy configuration.
+2. After independent review, current-head checks and real composed-callback
+   proof pass, obtain separate authorization for the production gateway change.
+   Merge the approved GitOps revision only after that authorization: the
+   `tadoku-oathkeeper` Application tracks main and automatically syncs, prunes and
+   self-heals. No manual sync or apply is required or implied.
+3. Verify the reconciled gateway revision, healthy API and Oathkeeper, private
+   and public `GET /identity/session` for guests and authenticated users, and
+   the actual credential-protected callback. Exercise cookie-bearing mutations,
+   banned session/logout access, unrelated cookies and canonical/branch cookie
+   coexistence. Confirm callback GET, trusted tenant and selected database;
+   verify logs without exposing the credential. Stop if any result is missing
+   or mismatched.
+4. Only then is the caller-change source merge eligible. Its development-base
+   gateway switch is automatic on Argo reconciliation; complete its separately
+   approved pre-merge proof and post-merge dev smoke. Source review, current-head
+   CI and branch-journey gates must also pass.
+5. Publish webv2, admin and auth production images only with the owner's normal
+   publication approval after all prerequisites above. Record the selected
+   source SHA and resulting image digests; verify anonymous pages, deep-link
+   login and return URL, authenticated navigation, reader/admin permissions,
+   session retry behavior and logout/protected-page denial through production
+   routes using approved test sessions. Do not create a production session
+   without authorization.
+
+Before each step, record the exact approved revisions, deployed image digests,
+route/configuration revision, check results and remaining permissions. A prior
+configuration-only stand-in result is not actual API callback or live-routing
+proof. Missing production session authority leaves that check unverified and
+blocks claiming completion.
+
+On failure, stop progression and further publications, retain sanitized evidence
+and report the failing route/revision and its user impact. Keeping the current
+frontend production images is the limited option before publication; this
+sequence assumes no production-publish freeze. Reverting source, republishing an
+older image or changing live configuration requires new explicit authorization
+unless minimum containment is urgently needed to prevent active harm. A
+prepared inverse patch or revert procedure grants no rollback authority.

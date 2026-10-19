@@ -283,7 +283,7 @@ export const inputDocument = defineCatalogDocument({
       "choosingBetween": {
         "heading": "Choose between",
         "content": [
-          "A read-only value remains focusable and selectable and is still submitted; a disabled value is unavailable and omitted from submission. Use readOnly when users may need to inspect or copy the value, and disabled only when the control does not currently participate in the form."
+          "A read-only value remains focusable and selectable. A disabled control prevents editing but retains its TanStack Form value. Use readOnly when users may need to inspect or copy the value; the submission handler decides which values belong in the operation."
         ]
       },
       "anatomy": {
@@ -307,7 +307,7 @@ export const inputDocument = defineCatalogDocument({
       "statesAndAdaptation": {
         "heading": "States and adaptation",
         "content": [
-          "required adds the native required state and a visible marker. An invalid field sets aria-invalid and connects its alert message alongside any hint. Read-only remains operable for selection; disabled is visually muted and removed from interaction and submission."
+          "required adds the native required state and a visible marker. An invalid field sets aria-invalid and connects its alert message alongside any hint. Read-only remains operable for selection; disabled is visually muted and cannot be edited, but its form value remains available on submission."
         ]
       },
       "behavior": {

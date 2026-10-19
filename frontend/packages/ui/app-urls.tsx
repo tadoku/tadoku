@@ -117,7 +117,9 @@ export function serverApiEndpointForHost(host?: string): string {
   const { publicRuntimeConfig, serverRuntimeConfig } = getConfig()
   return resolveAppUrls({
     ...publicRuntimeConfig,
-    apiEndpoint: serverRuntimeConfig?.apiEndpoint ?? publicRuntimeConfig.apiEndpoint,
+    apiEndpoint: (typeof window === 'undefined' ? process.env.NEXT_SERVER_API_ENDPOINT : undefined)
+      ?? serverRuntimeConfig?.apiEndpoint
+      ?? publicRuntimeConfig.apiEndpoint,
   }, host).apiEndpoint
 }
 

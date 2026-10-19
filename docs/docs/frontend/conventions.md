@@ -78,7 +78,9 @@ branch label directly beneath each configured development app host.
 Server-side API calls use the private endpoint from
 `serverApiEndpointForHost()` and forward the incoming `x-dev-branch` header,
 which branch host routes set and production edge routes remove, so the
-gateway signs the branch tenant.
+gateway signs the branch tenant. The resolver reads `NEXT_SERVER_API_ENDPOINT`
+at request time, ahead of the built Next.js runtime config, so standalone
+production servers honor their Deployment's private endpoint.
 
 Kratos builds redirects and email links from its production `ui_url`s, so the
 auth application routes them through `frontend/apps/auth/src/branch.ts`:

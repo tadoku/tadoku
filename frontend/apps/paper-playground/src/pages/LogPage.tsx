@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { FormProvider, useForm } from 'react-hook-form'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
-import { Breadcrumb, Button, Checkbox, EmptyState, Flash, Modal, PageHeader, Surface, buttonClassName } from 'paper-ui'
+import { Breadcrumb, Button, EmptyState, Flash, Modal, PageHeader, Surface, buttonClassName, usePaperForm } from 'paper-ui'
 import { PencilSquareIcon, TrashIcon } from 'paper-ui/icons'
 import { contestStatus, formatDate, formatNumber, personalScoreExplanation, sampleToday, scoreLog, scoreSubmission, users, type SampleContest, type SampleLog, type Submission } from '../data'
 import { contestEnd, contestStart, formatDateRange } from '../dates'
@@ -41,20 +40,20 @@ function SubmissionManager({ log, asOf, onSaved }: { log: SampleLog; asOf: strin
   const { contests, joinedContests, registrations, saveLog } = usePlayground()
   const [open, setOpen] = useState(false)
   const defaults = () => ({ selected: Object.fromEntries(log.submissions.filter(submission => !submission.closed).map(submission => [submission.contestId, true])) })
-  const methods = useForm<{ selected: Record<string, boolean> }>({ defaultValues: defaults() })
+  const methods = usePaperForm({ defaultValues: (defaults() as { selected: Record<string, boolean> }), onSubmit: ({ value: values }) => { saveLog({ ...log, submissions: updateSubmissions(log, Object.entries(values.selected).filter(([, selected]) => selected).map(([id]) => id), contests, joinedContests, registrations, asOf) }); setOpen(false); onSaved() } })
   const choices = contests.filter(contest => joinedContests.includes(contest.id) || log.submissions.some(submission => submission.contestId === contest.id))
   const available = choices.filter(contest => !submissionEligibility(log, contest, joinedContests, registrations, asOf))
-  return <Modal title="Contest submissions" description="Choose where this activity contributes. Each contest keeps its own score." trigger={<Button variant="outline">{log.submissions.length ? 'Manage submissions' : 'Submit to a contest'}</Button>} open={open} onOpenChange={next => { if (next) methods.reset(defaults()); setOpen(next) }} footer={null}>
-    <FormProvider {...methods}>
-      <form onSubmit={methods.handleSubmit(values => { saveLog({ ...log, submissions: updateSubmissions(log, Object.entries(values.selected).filter(([, selected]) => selected).map(([id]) => id), contests, joinedContests, registrations, asOf) }); setOpen(false); onSaved() })}>
+  return <Modal title="Contest submissions" description="Choose where this activity contributes. Each contest keeps its own score." trigger={<Button variant="outline">{log.submissions.length ? 'Manage submissions' : 'Submit to a contest'}</Button>} open={open} onOpenChange={next => { if (next) methods.reset(defaults(), { keepDefaultValues: true }); setOpen(next) }} footer={null}>
+    <methods.AppForm>
+      <methods.Form >
         {choices.length ? <div className="records-submission-choices">{choices.map(contest => {
           const reason = submissionEligibility(log, contest, joinedContests, registrations, asOf)
-          return <div key={contest.id}><Checkbox name={`selected.${contest.id}`} label={contest.title} disabled={Boolean(reason)} hint={reason ?? `${formatDateRange(contestStart(contest.start), contestEnd(contest.end))} · Eligible`} /></div>
+          return <div key={contest.id}><methods.AppField name={`selected.${contest.id}`}>{field => <field.Checkbox label={contest.title} disabled={Boolean(reason)} hint={reason ?? `${formatDateRange(contestStart(contest.start), contestEnd(contest.end))} · Eligible`} />}</methods.AppField></div>
         })}</div> : null}
         {!available.length ? <EmptyState variant="plain" headingLevel={3} title="No eligible contests" description="Check the activity date, language, and your registrations. This activity already counts in your personal history." actions={<Link className="text-link" to={`/contests/official?asOf=${asOf}`} onClick={() => setOpen(false)}>Find a contest to join</Link>} /> : <p className="muted text-sm">Removing a selection removes that contest contribution. Your personal record stays the same.</p>}
         <div className="app-form__actions"><Button type="submit" disabled={!available.length}>Save submissions</Button><Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button></div>
-      </form>
-    </FormProvider>
+      </methods.Form>
+    </methods.AppForm>
   </Modal>
 }
 

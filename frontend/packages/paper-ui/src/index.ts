@@ -28,6 +28,8 @@ export {
   TagsInput,
   TextArea,
   ToggleSelect,
+  usePaperForm,
+  withPaperForm,
   type AmountWithUnitProps,
   type AutocompleteInputProps,
   type AutocompleteMultiInputProps,

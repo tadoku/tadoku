@@ -1,13 +1,9 @@
+import { useStore } from '@tanstack/react-form';
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { FormProvider, useForm } from "react-hook-form";
+import { usePaperForm, Button } from '../src';
+
 import { describe, expect, it, vi } from "vitest";
-import {
-  AutocompleteInput,
-  AutocompleteMultiInput,
-  Button,
-  TagsInput,
-} from "../src";
 
 const LANGUAGES = [
   { id: "ja", label: "Japanese" },
@@ -16,32 +12,18 @@ const LANGUAGES = [
 ] as const;
 
 function AutocompleteForm({ multiple = false, tags = false }: { multiple?: boolean; tags?: boolean }) {
-  const methods = useForm({ defaultValues: { language: multiple ? [] : null } });
+  const methods = usePaperForm({ defaultValues: { language: (multiple ? [] : null) as (typeof LANGUAGES)[number] | (typeof LANGUAGES)[number][] | string[] | null } });
   return (
-    <FormProvider {...methods}>
+    <methods.AppForm>
       {tags ? (
-        <TagsInput name="language" label="Tags" options={["fiction", "history", "manga"]} placeholder="Add tag" />
+        <methods.AppField name="language">{field => <field.TagsInput label="Tags" options={["fiction", "history", "manga"]} placeholder="Add tag" />}</methods.AppField>
       ) : multiple ? (
-        <AutocompleteMultiInput
-          name="language"
-          label="Languages"
-          options={LANGUAGES}
-          format={(option) => option.label}
-          getId={(option) => option.id}
-          placeholder="Add language"
-        />
+        <methods.AppField name="language">{field => <field.AutocompleteMultiInput label="Languages" options={LANGUAGES} format={(option) => option.label} getId={(option) => option.id} placeholder="Add language" />}</methods.AppField>
       ) : (
-        <AutocompleteInput
-          name="language"
-          label="Languages"
-          options={LANGUAGES}
-          format={(option) => option.label}
-          getId={(option) => option.id}
-          placeholder="Choose language"
-        />
+        <methods.AppField name="language">{field => <field.AutocompleteInput label="Languages" options={LANGUAGES} format={(option) => option.label} getId={(option) => option.id} placeholder="Choose language" />}</methods.AppField>
       )}
-      <output data-testid="value">{JSON.stringify(methods.watch("language"))}</output>
-    </FormProvider>
+      <output data-testid="value">{JSON.stringify(useStore(methods.store, state => state.values["language"]))}</output>
+    </methods.AppForm>
   );
 }
 
@@ -64,17 +46,16 @@ describe("Base UI autocomplete controls", () => {
   it.each([false, true])("runs consumer validation for a %s multi-selection field and exposes its recovery message", async (multiple) => {
     const saved = vi.fn();
     function ValidatedAutocomplete() {
-      const methods = useForm<{ language: typeof LANGUAGES[number] | typeof LANGUAGES[number][] }>({ defaultValues: { language: multiple ? [LANGUAGES[0]] : LANGUAGES[0] } });
+      const methods = usePaperForm({ defaultValues: ({ language: multiple ? [LANGUAGES[0]] : LANGUAGES[0] } as { language: typeof LANGUAGES[number] | typeof LANGUAGES[number][] }), onSubmit: ({ value }) => saved(value) });
       const common = { name: "language", label: "Contest language", options: LANGUAGES,
         format: (value: typeof LANGUAGES[number]) => value.label,
         getId: (value: typeof LANGUAGES[number]) => value.id,
-        rules: { validate: (value: unknown) => (multiple ? Array.isArray(value) && value.length === 2 : (value as typeof LANGUAGES[number])?.id === "ko") || "Choose an eligible contest language." },
       };
-      return <FormProvider {...methods}><form onSubmit={methods.handleSubmit(saved)}>
-        {multiple ? <AutocompleteMultiInput {...common} /> : <AutocompleteInput {...common} />}
+      return <methods.AppForm><methods.Form >
+        <methods.AppField name="language" validators={{ onChange: ({ value }) => (multiple ? Array.isArray(value) && value.length === 2 : !Array.isArray(value) && value.id === "ko") ? undefined : "Choose an eligible contest language." }}>{field => multiple ? <field.AutocompleteMultiInput {...common} /> : <field.AutocompleteInput {...common} />}</methods.AppField>
         <Button type="submit">Save registration</Button>
-        <Button onClick={() => methods.setValue("language", multiple ? [LANGUAGES[0], LANGUAGES[2]] : LANGUAGES[2], { shouldValidate: true })}>Use eligible selection</Button>
-      </form></FormProvider>;
+        <Button onClick={() => methods.setFieldValue("language", multiple ? [LANGUAGES[0], LANGUAGES[2]] : LANGUAGES[2])}>Use eligible selection</Button>
+      </methods.Form></methods.AppForm>;
     }
     const user = userEvent.setup();
     render(<ValidatedAutocomplete />);
@@ -90,8 +71,8 @@ describe("Base UI autocomplete controls", () => {
 
   it("validates required selections on blur and exposes the error relationship", async () => {
     function RequiredAutocomplete() {
-      const methods = useForm({ mode: "onBlur", defaultValues: { language: null } });
-      return <FormProvider {...methods}><AutocompleteInput name="language" label="Language" required options={LANGUAGES} format={(option) => option.label} getId={(option) => option.id} /><button>Next</button></FormProvider>;
+      const methods = usePaperForm({ defaultValues: { language: null as (typeof LANGUAGES)[number] | null } });
+      return <methods.AppForm><methods.AppField name="language" validators={{ onBlur: ({ value }) => !value ? "Choose an option." : undefined }}>{field => <field.AutocompleteInput label="Language" required options={LANGUAGES} format={(option) => option.label} getId={(option) => option.id} />}</methods.AppField><button>Next</button></methods.AppForm>;
     }
     const user = userEvent.setup();
     render(<RequiredAutocomplete />);
@@ -105,8 +86,8 @@ describe("Base UI autocomplete controls", () => {
 
   it("prevents opening and adding beyond the tag limit while keeping removal available", async () => {
     function LimitedTags() {
-      const methods = useForm({ defaultValues: { tags: ["fiction"] } });
-      return <FormProvider {...methods}><TagsInput name="tags" label="Tags" options={["fiction", "history"]} maxSelections={1} /></FormProvider>;
+      const methods = usePaperForm({ defaultValues: { tags: ["fiction"] } });
+      return <methods.AppForm><methods.AppField name="tags">{field => <field.TagsInput label="Tags" options={["fiction", "history"]} maxSelections={1} />}</methods.AppField></methods.AppForm>;
     }
     const user = userEvent.setup();
     render(<LimitedTags />);

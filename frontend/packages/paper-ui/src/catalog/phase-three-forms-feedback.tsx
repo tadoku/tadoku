@@ -134,7 +134,7 @@ function document(spec: DocSpec): CatalogDocument {
       invalidCombinations: [spec.avoid],
     },
     fixtureIds: [spec.fixtureId, ...(spec.category === "forms" ? [`${spec.fixtureId}.empty`] : []), ...(spec.id === "component.radio-select" ? ["radio-select.native"] : [])],
-    dependencies: { documents: ["component.button"], packages: spec.category === "forms" ? ["paper-ui", "react-hook-form"] : ["paper-ui"] },
+    dependencies: { documents: ["component.button"], packages: spec.category === "forms" ? ["paper-ui", "@tanstack/react-form"] : ["paper-ui"] },
     migration: { legacy: [`ui ${spec.name}`], notes: [spec.migration] },
     changelog: [{ date: REVIEW_DATE, note: `Revised ${spec.name} with complete runnable examples, state guidance, and concrete prop contracts.` }],
     behaviorTestIds: [`${spec.id}.semantics`, `${spec.id}.behavior`],

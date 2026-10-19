@@ -12,26 +12,22 @@ export interface TextAreaProps
     Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, "name" | "onChange" | "onBlur" | "required"> {}
 
 export function TextArea({
-  name,
   label,
   hint,
-  rules,
   required,
   id: providedId,
   ...props
 }: TextAreaProps) {
   const id = providedId ?? `paper-textarea-${useId().replace(/:/gu, "")}`;
-  const { form, error } = useField(name);
-  const registration = form.register(name, {
-    ...rules,
-    disabled: props.disabled,
-    required: rules?.required ?? (required ? "This field is required." : undefined),
-  });
+  const { field, error } = useField<string>();
   return (
-    <FieldFrame id={id} label={label} hint={hint} required={required} error={error?.message?.toString()}>
+    <FieldFrame id={id} label={label} hint={hint} required={required} error={error}>
       <textarea
         {...props}
-        {...registration}
+        name={field.name}
+        value={field.state.value ?? ""}
+        onChange={event => field.handleChange(event.currentTarget.value)}
+        onBlur={field.handleBlur}
         id={id}
         required={required}
         aria-invalid={error ? true : undefined}
@@ -51,10 +47,8 @@ export interface SelectProps
 }
 
 export function Select({
-  name,
   label,
   hint,
-  rules,
   required,
   options,
   groups,
@@ -63,18 +57,16 @@ export function Select({
   ...props
 }: SelectProps) {
   const id = providedId ?? `paper-select-${useId().replace(/:/gu, "")}`;
-  const { form, error } = useField(name);
-  const registration = form.register(name, {
-    ...rules,
-    disabled: props.disabled,
-    required: rules?.required ?? (required ? "Choose an option." : undefined),
-  });
+  const { field, error } = useField<string>();
   return (
-    <FieldFrame id={id} label={label} hint={hint} required={required} error={error?.message?.toString()}>
+    <FieldFrame id={id} label={label} hint={hint} required={required} error={error}>
       <span className="paper-select__control">
         <select
           {...props}
-          {...registration}
+          name={field.name}
+          value={field.state.value ?? ""}
+          onChange={event => field.handleChange(event.currentTarget.value)}
+          onBlur={field.handleBlur}
           id={id}
           required={required}
           aria-invalid={error ? true : undefined}
@@ -112,27 +104,34 @@ export interface CheckboxProps
     Omit<InputHTMLAttributes<HTMLInputElement>, "name" | "type" | "onChange" | "onBlur" | "required"> {}
 
 export function Checkbox({
-  name,
   label,
   hint,
-  rules,
   required,
   id: providedId,
   ...props
 }: CheckboxProps) {
   const id = providedId ?? `paper-checkbox-${useId().replace(/:/gu, "")}`;
-  const { form, error } = useField(name);
-  const registration = form.register(name, {
-    ...rules,
-    disabled: props.disabled,
-    required: rules?.required ?? (required ? "Select this option to continue." : undefined),
-  });
+  const { field, error } = useField<boolean | string[]>();
+  const selected = field.state.value;
+  const option = typeof props.value === "string" ? props.value : undefined;
   return (
     <fieldset className={`paper-choice-field${error ? " paper-field--invalid" : ""}`}>
       <label className="paper-choice" htmlFor={id}>
         <input
           {...props}
-          {...registration}
+          name={field.name}
+          checked={option === undefined ? selected === true : Array.isArray(selected) && selected.includes(option)}
+          onChange={event => {
+            if (option === undefined) {
+              field.handleChange(event.currentTarget.checked);
+            } else {
+              const values = Array.isArray(selected) ? selected : [];
+              field.handleChange(event.currentTarget.checked
+                ? [...values, option]
+                : values.filter(value => value !== option));
+            }
+          }}
+          onBlur={field.handleBlur}
           id={id}
           type="checkbox"
           required={required}
@@ -142,7 +141,7 @@ export function Checkbox({
         <span>{label}</span>
       </label>
       {hint ? <p className="paper-field__hint" id={`${id}-hint`}>{hint}</p> : null}
-      {error ? <p className="paper-field__error" id={`${id}-error`} role="alert">{error.message?.toString()}</p> : null}
+      {error ? <p className="paper-field__error" id={`${id}-error`} role="alert">{error}</p> : null}
     </fieldset>
   );
 }

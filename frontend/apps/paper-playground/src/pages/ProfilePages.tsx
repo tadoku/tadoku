@@ -1,7 +1,7 @@
+import { useStore } from '@tanstack/react-form'
 import { useRef, useState } from 'react'
-import { FormProvider, useForm, useWatch } from 'react-hook-form'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
-import { AppliedFilters, AutocompleteMultiInput, Breadcrumb, Button, DescriptionList, EmptyState, HeatmapChart, Input, SectionHeading, Select, StatGrid, Tabbar, buttonClassName, chartPalette } from 'paper-ui'
+import { usePaperForm, AppliedFilters, Breadcrumb, Button, DescriptionList, EmptyState, HeatmapChart, SectionHeading, StatGrid, Tabbar, buttonClassName, chartPalette } from 'paper-ui'
 import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, PlusIcon } from 'paper-ui/icons'
 import { formatDate, formatNumber, scoreLog, users, type SampleLog } from '../data'
 import { contestEnd, contestStart, formatDateRange } from '../dates'
@@ -70,8 +70,8 @@ function ActivityRows({ logs, compact = false }: { logs: readonly SampleLog[]; c
 function ActivityLog({ logs, owner }: { logs: readonly SampleLog[]; owner: boolean }) {
   const [filtersOpen, setFiltersOpen] = useState(false)
   const filtersToggle = useRef<HTMLButtonElement>(null)
-  const methods = useForm<ActivityFilters>({ defaultValues: emptyFilters })
-  const values = useWatch({ control: methods.control })
+  const methods = usePaperForm({ defaultValues: (emptyFilters as ActivityFilters) })
+  const values = useStore(methods.store, state => state.values)
   const applied = { ...emptyFilters, ...values }
   const filtered = filterActivityLogs(logs, applied)
   const languages = [...new Set(logs.map(log => log.language))].sort()
@@ -82,21 +82,21 @@ function ActivityLog({ logs, owner }: { logs: readonly SampleLog[]; owner: boole
     ...(applied.query.trim() ? [`Search: ${applied.query.trim()}`] : []),
   ]
   const reset = () => {
-    methods.reset(emptyFilters)
+    methods.reset(emptyFilters, { keepDefaultValues: true })
     filtersToggle.current?.focus()
   }
 
   return <section className="page-section records-activity" aria-labelledby="activity-heading">
     <SectionHeading level={2} id="activity-heading" title="Activity log" actions={logs.length ? <><Button ref={filtersToggle} variant="ghost" aria-expanded={filtersOpen} aria-controls="activity-filters" onClick={() => setFiltersOpen(!filtersOpen)} trailingIcon={<ChevronDownIcon className={`paper-icon-compact${filtersOpen ? ' rotate-180' : ''}`} />}>Filters{appliedFilters.length ? ` (${appliedFilters.length})` : ''}</Button>{owner ? <Link className={buttonClassName()} to="/logs/new"><PlusIcon className="paper-icon-default" aria-hidden="true" />Log activity</Link> : null}</> : null} />
     {logs.length ? <>
-    <div id="activity-filters" hidden={!filtersOpen}><FormProvider {...methods}>
+    <div id="activity-filters" hidden={!filtersOpen}><methods.AppForm>
       <form onSubmit={event => event.preventDefault()} className="records-filter-panel">
-        <Select name="period" label="Period" options={[{ value: 'all', label: 'All time' }, ...years.map(year => ({ value: String(year), label: String(year) }))]} />
-        <AutocompleteMultiInput name="languages" label="Languages" placeholder="All languages" options={languages} format={value => value} getId={value => value} />
-        <AutocompleteMultiInput name="activities" label="Activities" placeholder="All activities" options={['Reading', 'Listening']} format={value => value} getId={value => value} />
-        <Input name="query" label="Search activity" type="search" placeholder="Title, note or tag" />
+        <methods.AppField name="period">{field => <field.Select label="Period" options={[{ value: 'all', label: 'All time' }, ...years.map(year => ({ value: String(year), label: String(year) }))]} />}</methods.AppField>
+        <methods.AppField name="languages">{field => <field.AutocompleteMultiInput label="Languages" placeholder="All languages" options={languages} format={value => value} getId={value => value} />}</methods.AppField>
+        <methods.AppField name="activities">{field => <field.AutocompleteMultiInput label="Activities" placeholder="All activities" options={['Reading', 'Listening']} format={value => value} getId={value => value} />}</methods.AppField>
+        <methods.AppField name="query">{field => <field.Input label="Search activity" type="search" placeholder="Title, note or tag" />}</methods.AppField>
       </form>
-    </FormProvider></div>
+    </methods.AppForm></div>
     <div className="records-filter-summary"><AppliedFilters filters={appliedFilters} onClear={reset} />
     <p className="records-result-count" role="status">{filtered.length} of {logs.length} entries</p></div>
     {filtered.length ? <ActivityRows logs={filtered} /> : <EmptyState headingLevel={3} title="No activity matches these filters." description="Try another title or include more dates and languages." actions={<Button variant="outline" onClick={reset}>Clear search and filters</Button>} />}

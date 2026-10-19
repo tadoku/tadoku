@@ -5,10 +5,13 @@ export default function DrawerExample() {
   const [open, setOpen] = useState(false)
   const [language, setLanguage] = useState('All languages')
   const formId = useId()
-  const methods = usePaperForm({ defaultValues: { language: 'All languages' }, onSubmit: ({ value: values }) => {
-              setLanguage(values.language)
-              setOpen(false)
-            } })
+  const methods = usePaperForm({
+    defaultValues: { language: 'All languages' },
+    onSubmit: ({ value: values }) => {
+      setLanguage(values.language)
+      setOpen(false)
+    },
+  })
   return (
     <div className="paper-stack">
       <p role="status">Showing: {language}</p>
@@ -19,7 +22,8 @@ export default function DrawerExample() {
           description="Choose which reading entries to show."
           open={open}
           onOpenChange={nextOpen => {
-            if (nextOpen) methods.reset({ language }, { keepDefaultValues: true })
+            if (nextOpen)
+              methods.reset({ language }, { keepDefaultValues: true })
             setOpen(nextOpen)
           }}
           footer={
@@ -34,11 +38,19 @@ export default function DrawerExample() {
           }
         >
           <methods.Form className="paper-stack" id={formId}>
-            <methods.AppField name="language">{field => <field.Select label="Language" options={[
-                { value: 'All languages', label: 'All languages' },
-                { value: 'Japanese', label: 'Japanese' },
-                { value: 'French', label: 'French' },
-              ]} hint="Changes take effect only when you apply filters." />}</methods.AppField>
+            <methods.AppField name="language">
+              {field => (
+                <field.Select
+                  label="Language"
+                  options={[
+                    { value: 'All languages', label: 'All languages' },
+                    { value: 'Japanese', label: 'Japanese' },
+                    { value: 'French', label: 'French' },
+                  ]}
+                  hint="Changes take effect only when you apply filters."
+                />
+              )}
+            </methods.AppField>
           </methods.Form>
         </Drawer>
       </methods.AppForm>

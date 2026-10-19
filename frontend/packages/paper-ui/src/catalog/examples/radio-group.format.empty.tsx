@@ -7,24 +7,47 @@ export default function Example() {
     string,
     unknown
   > | null>(null)
-  const methods = usePaperForm({ defaultValues: { format: '' }, onSubmit: ({ value: values }) => setSavedValues(values) })
+  const methods = usePaperForm({
+    defaultValues: { format: '' },
+    onSubmit: ({ value: values }) => setSavedValues(values),
+  })
+  const values = useStore(methods.store, state => state.values)
+
   return (
     <methods.AppForm>
       <methods.Form className="paper-stack" style={{ maxWidth: '32rem' }}>
-        <methods.AppField name="format" validators={{ onChange: ({ value }) => { if (!value) return "Choose an option."; } }}>{field => <field.RadioGroup label="Reading format" options={[
-            {
-              value: 'book',
-              label: 'Book',
-              description: 'Printed or digital text',
+        <methods.AppField
+          name="format"
+          validators={{
+            onChange: ({ value }) => {
+              if (!value) return 'Choose an option.'
             },
-            { value: 'audio', label: 'Audio', description: 'Narrated content' },
-            {
-              value: 'other',
-              label: 'Other',
-              description: 'Another eligible format',
-              disabled: true,
-            },
-          ]} />}</methods.AppField>
+          }}
+        >
+          {field => (
+            <field.RadioGroup
+              label="Reading format"
+              options={[
+                {
+                  value: 'book',
+                  label: 'Book',
+                  description: 'Printed or digital text',
+                },
+                {
+                  value: 'audio',
+                  label: 'Audio',
+                  description: 'Narrated content',
+                },
+                {
+                  value: 'other',
+                  label: 'Other',
+                  description: 'Another eligible format',
+                  disabled: true,
+                },
+              ]}
+            />
+          )}
+        </methods.AppField>
         <div className="paper-cluster">
           <Button type="submit">Save entry</Button>
           <Button
@@ -53,7 +76,7 @@ export default function Example() {
         <details>
           <summary>Current form values</summary>
           <pre style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
-            {JSON.stringify(useStore(methods.store, state => state.values), null, 2)}
+            {JSON.stringify(values, null, 2)}
           </pre>
         </details>
       </methods.Form>

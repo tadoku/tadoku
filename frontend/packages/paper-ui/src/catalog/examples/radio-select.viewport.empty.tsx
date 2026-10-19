@@ -7,15 +7,37 @@ export default function Example() {
     string,
     unknown
   > | null>(null)
-  const methods = usePaperForm({ defaultValues: { viewport: '' }, onSubmit: ({ value: values }) => setSavedValues(values) })
+  const methods = usePaperForm({
+    defaultValues: { viewport: '' },
+    onSubmit: ({ value: values }) => setSavedValues(values),
+  })
+  const values = useStore(methods.store, state => state.values)
+
   return (
     <methods.AppForm>
       <methods.Form className="paper-stack" style={{ maxWidth: '32rem' }}>
-        <methods.AppField name="viewport" validators={{ onChange: ({ value }) => { if (!value) return "Choose an option."; } }}>{field => <field.RadioSelect label="Preview size" hint="Choose one viewport for the isolated preview." variant="segmented" required options={[
-            { value: 'phone', label: 'Phone' },
-            { value: 'tablet', label: 'Tablet' },
-            { value: 'desktop', label: 'Desktop' },
-          ]} />}</methods.AppField>
+        <methods.AppField
+          name="viewport"
+          validators={{
+            onChange: ({ value }) => {
+              if (!value) return 'Choose an option.'
+            },
+          }}
+        >
+          {field => (
+            <field.RadioSelect
+              label="Preview size"
+              hint="Choose one viewport for the isolated preview."
+              variant="segmented"
+              required
+              options={[
+                { value: 'phone', label: 'Phone' },
+                { value: 'tablet', label: 'Tablet' },
+                { value: 'desktop', label: 'Desktop' },
+              ]}
+            />
+          )}
+        </methods.AppField>
         <div className="paper-cluster">
           <Button type="submit">Save entry</Button>
           <Button
@@ -44,7 +66,7 @@ export default function Example() {
         <details>
           <summary>Current form values</summary>
           <pre style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
-            {JSON.stringify(useStore(methods.store, state => state.values), null, 2)}
+            {JSON.stringify(values, null, 2)}
           </pre>
         </details>
       </methods.Form>

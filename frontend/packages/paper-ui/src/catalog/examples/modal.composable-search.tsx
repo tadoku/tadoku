@@ -21,7 +21,11 @@ export default function ComposableModalFixture() {
       footer={null}
     >
       <methods.AppForm>
-        <methods.AppField name="query">{field => <field.Input label="Component name" type="search" ref={searchRef} />}</methods.AppField>
+        <methods.AppField name="query">
+          {field => (
+            <field.Input label="Component name" type="search" ref={searchRef} />
+          )}
+        </methods.AppField>
         <p role="status">
           {matches.length ? matches.join(', ') : 'No matching components.'}
         </p>

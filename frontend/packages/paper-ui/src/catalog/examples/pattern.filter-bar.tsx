@@ -1,5 +1,12 @@
 import { useStore } from '@tanstack/react-form'
-import { AppliedFilters, Button, EmptyState, SectionHeading, Table, usePaperForm } from 'paper-ui'
+import {
+  AppliedFilters,
+  Button,
+  EmptyState,
+  SectionHeading,
+  Table,
+  usePaperForm,
+} from 'paper-ui'
 import { ChevronDownIcon } from 'paper-ui/icons'
 import { useId, useRef, useState } from 'react'
 
@@ -25,7 +32,11 @@ export default function FilterBarExample() {
   const panelId = useId()
   const headingId = useId()
   const methods = usePaperForm({ defaultValues: noFilters })
-  const { language = 'all', activity = 'all', query = '' } = useStore(methods.store, state => state.values)
+  const {
+    language = 'all',
+    activity = 'all',
+    query = '',
+  } = useStore(methods.store, state => state.values)
   const search = query.trim().toLocaleLowerCase()
   const applied = [
     language !== 'all' ? language : '',
@@ -78,21 +89,42 @@ export default function FilterBarExample() {
               paddingBlockEnd: '1rem',
             }}
           >
-            <methods.AppField name="language">{field => <field.Select label="Language" options={[
-                { value: 'all', label: 'All languages' },
-                { value: 'Japanese', label: 'Japanese' },
-                { value: 'Spanish', label: 'Spanish' },
-              ]} />}</methods.AppField>
-            <methods.AppField name="activity">{field => <field.Select label="Activity" options={[
-                { value: 'all', label: 'All activities' },
-                { value: 'Reading', label: 'Reading' },
-                { value: 'Listening', label: 'Listening' },
-              ]} />}</methods.AppField>
-            <methods.AppField name="query">{field => <field.Input label="Find a participant" type="search" />}</methods.AppField>
+            <methods.AppField name="language">
+              {field => (
+                <field.Select
+                  label="Language"
+                  options={[
+                    { value: 'all', label: 'All languages' },
+                    { value: 'Japanese', label: 'Japanese' },
+                    { value: 'Spanish', label: 'Spanish' },
+                  ]}
+                />
+              )}
+            </methods.AppField>
+            <methods.AppField name="activity">
+              {field => (
+                <field.Select
+                  label="Activity"
+                  options={[
+                    { value: 'all', label: 'All activities' },
+                    { value: 'Reading', label: 'Reading' },
+                    { value: 'Listening', label: 'Listening' },
+                  ]}
+                />
+              )}
+            </methods.AppField>
+            <methods.AppField name="query">
+              {field => (
+                <field.Input label="Find a participant" type="search" />
+              )}
+            </methods.AppField>
           </form>
         </methods.AppForm>
       </div>
-      <div className="paper-cluster" style={{ justifyContent: 'space-between' }}>
+      <div
+        className="paper-cluster"
+        style={{ justifyContent: 'space-between' }}
+      >
         <AppliedFilters filters={applied} onClear={clearFilters} />
         <p className="paper-type-metadata" role="status">
           {rows.length} of {standings.length} participants
@@ -106,9 +138,19 @@ export default function FilterBarExample() {
           getRowKey={row => row.name}
           minWidth="17rem"
           columns={[
-            { id: 'participant', header: 'Participant', rowHeader: true, cell: row => row.name },
+            {
+              id: 'participant',
+              header: 'Participant',
+              rowHeader: true,
+              cell: row => row.name,
+            },
             { id: 'language', header: 'Language', cell: row => row.language },
-            { id: 'score', header: 'Score', align: 'end', cell: row => row.score.toLocaleString('en') },
+            {
+              id: 'score',
+              header: 'Score',
+              align: 'end',
+              cell: row => row.score.toLocaleString('en'),
+            },
           ]}
         />
       ) : (

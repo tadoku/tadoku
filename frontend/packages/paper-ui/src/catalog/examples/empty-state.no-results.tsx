@@ -1,9 +1,11 @@
 import { useStore } from '@tanstack/react-form'
 import { Button, EmptyState, usePaperForm } from 'paper-ui'
+import { useRef } from 'react'
 
 const contests = ['2026 Round 5', 'Japanese novel club', 'Autumn in French']
 
 export default function Example() {
+  const search = useRef<HTMLInputElement>(null)
   const methods = usePaperForm({ defaultValues: { query: 'Klingon' } })
   const query = useStore(methods.store, state => state.values['query'])
   const matches = contests.filter(title =>
@@ -11,14 +13,18 @@ export default function Example() {
   )
   const clearSearch = () => {
     methods.setFieldValue('query', '')
-    document.getElementsByName('query')[0]?.focus()
+    search.current?.focus()
   }
 
   return (
     <div className="paper-stack" style={{ maxWidth: '40rem' }}>
       <methods.AppForm>
         <form role="search" onSubmit={event => event.preventDefault()}>
-          <methods.AppField name="query">{field => <field.Input label="Find a contest" type="search" />}</methods.AppField>
+          <methods.AppField name="query">
+            {field => (
+              <field.Input label="Find a contest" type="search" ref={search} />
+            )}
+          </methods.AppField>
         </form>
       </methods.AppForm>
       <p role="status">

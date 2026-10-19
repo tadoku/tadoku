@@ -7,11 +7,23 @@ export default function Example() {
     string,
     unknown
   > | null>(null)
-  const methods = usePaperForm({ defaultValues: { public: true }, onSubmit: ({ value: values }) => setSavedValues(values) })
+  const methods = usePaperForm({
+    defaultValues: { public: true },
+    onSubmit: ({ value: values }) => setSavedValues(values),
+  })
+  const values = useStore(methods.store, state => state.values)
+
   return (
     <methods.AppForm>
       <methods.Form className="paper-stack" style={{ maxWidth: '32rem' }}>
-        <methods.AppField name="public">{field => <field.Checkbox label="Show this entry on my profile" hint="Contest moderators can always review submitted entries." />}</methods.AppField>
+        <methods.AppField name="public">
+          {field => (
+            <field.Checkbox
+              label="Show this entry on my profile"
+              hint="Contest moderators can always review submitted entries."
+            />
+          )}
+        </methods.AppField>
         <div className="paper-cluster">
           <Button type="submit">Save entry</Button>
           <Button
@@ -40,7 +52,7 @@ export default function Example() {
         <details>
           <summary>Current form values</summary>
           <pre style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
-            {JSON.stringify(useStore(methods.store, state => state.values), null, 2)}
+            {JSON.stringify(values, null, 2)}
           </pre>
         </details>
       </methods.Form>

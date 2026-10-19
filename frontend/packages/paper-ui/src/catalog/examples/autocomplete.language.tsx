@@ -14,11 +14,33 @@ export default function Example() {
     unknown
   > | null>(null)
   const methods = usePaperForm({
-    defaultValues: { autocomplete: { id: 'ja', label: 'Japanese' } }, onSubmit: ({ value: values }) => setSavedValues(values) })
+    defaultValues: { autocomplete: { id: 'ja', label: 'Japanese' } },
+    onSubmit: ({ value: values }) => setSavedValues(values),
+  })
+  const values = useStore(methods.store, state => state.values)
+
   return (
     <methods.AppForm>
       <methods.Form className="paper-stack" style={{ maxWidth: '32rem' }}>
-        <methods.AppField name="autocomplete" validators={{ onChange: ({ value }) => { if (!value) return "Choose an option."; } }}>{field => <field.AutocompleteInput label="Language" required options={LANGUAGES} format={option => option.label} getId={option => option.id} placeholder="Search languages" />}</methods.AppField>
+        <methods.AppField
+          name="autocomplete"
+          validators={{
+            onChange: ({ value }) => {
+              if (!value) return 'Choose an option.'
+            },
+          }}
+        >
+          {field => (
+            <field.AutocompleteInput
+              label="Language"
+              required
+              options={LANGUAGES}
+              format={option => option.label}
+              getId={option => option.id}
+              placeholder="Search languages"
+            />
+          )}
+        </methods.AppField>
         <div className="paper-cluster">
           <Button type="submit">Save entry</Button>
           <Button
@@ -47,7 +69,7 @@ export default function Example() {
         <details>
           <summary>Current form values</summary>
           <pre style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
-            {JSON.stringify(useStore(methods.store, state => state.values), null, 2)}
+            {JSON.stringify(values, null, 2)}
           </pre>
         </details>
       </methods.Form>

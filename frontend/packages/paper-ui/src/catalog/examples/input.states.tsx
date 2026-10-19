@@ -7,8 +7,12 @@ export default function InputStatesFixture() {
   return (
     <methods.AppForm>
       <div className="paper-stack">
-        <methods.AppField name="readonly">{field => <field.Input label="Language" readOnly />}</methods.AppField>
-        <methods.AppField name="disabled">{field => <field.Input label="Status" disabled />}</methods.AppField>
+        <methods.AppField name="readonly">
+          {field => <field.Input label="Language" readOnly />}
+        </methods.AppField>
+        <methods.AppField name="disabled">
+          {field => <field.Input label="Status" disabled />}
+        </methods.AppField>
       </div>
     </methods.AppForm>
   )

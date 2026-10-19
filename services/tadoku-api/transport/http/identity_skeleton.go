@@ -41,17 +41,3 @@ func (*server) IdentityPasswordUpdate(
 ) (openapi.IdentityPasswordUpdateResponseObject, error) {
 	return nil, errx.NewNotImplementedError()
 }
-
-func (*server) EmailList(
-	context.Context,
-	openapi.EmailListRequestObject,
-) (openapi.EmailListResponseObject, error) {
-	return nil, errx.NewNotImplementedError()
-}
-
-func (*server) EmailGet(
-	context.Context,
-	openapi.EmailGetRequestObject,
-) (openapi.EmailGetResponseObject, error) {
-	return nil, errx.NewNotImplementedError()
-}

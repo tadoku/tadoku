@@ -22,6 +22,7 @@ go_library(
         "contest_profile.go",
         "contest_registration.go",
         "contest_summary.go",
+        "emails.go",
         "errors.go",
         "feature_access.go",
         "feature_flags.go",

@@ -5,6 +5,7 @@ package(default_visibility = ["//visibility:public"])
 
 exports_files([
     "auth.yaml",
+    "authv2.yaml",
     "admin.yaml",
     "tadoku-api.yaml",
     "tadoku-worker.yaml",

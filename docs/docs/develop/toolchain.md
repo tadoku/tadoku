@@ -52,10 +52,11 @@ bazel run --config=release //services/tadoku-api:branch_push -- \
 ```
 
 Frontend workflows and the `//frontend:webv2_branch_push`,
-`//frontend:webv3_branch_push`, `//frontend:auth_branch_push` and `//frontend:admin_branch_push` targets use
+`//frontend:webv3_branch_push`, `//frontend:auth_branch_push`, `//frontend:authv2_branch_push` and `//frontend:admin_branch_push` targets use
 `frontend/scripts/publish-image.sh`. It builds `HEAD:frontend` with `git archive`,
 so ignored local environment files and uncommitted edits do not enter images.
-Webv3 uses its standalone `frontend/apps/webv3/Dockerfile`; the other apps use
+Webv3 and authv2 use their standalone `frontend/apps/webv3/Dockerfile` and
+`frontend/apps/authv2/Dockerfile`; the other apps use
 `frontend/Dockerfile`. The script publishes only explicitly requested tags, on Linux amd64:
 
 ```sh
@@ -158,6 +159,7 @@ All workflows live in `.github/workflows/`.
 | `build-frontend-admin.yaml` | Pushes touching admin, `ui` or the lockfile | Tests and builds admin; publishes its image from `main` |
 | `build-frontend-styleguide.yaml` | Pushes touching styleguide, `ui` or the lockfile | Builds the `ui` styleguide; publishes its image from `main` |
 | `build-frontend-paper-styleguide.yaml` | PRs and `main` pushes touching Paper | Paper boundaries, `paper-ui` and `paper-styleguide` lint, typecheck, test and build, package checks, image smoke test; publishes from `main` |
+| `build-frontend-authv2.yaml` | PRs and main pushes touching authv2 or Paper | Node 22 typecheck, lint, boundaries and container build; main publishes commit/latest, owner-approved manual dispatch promotes prod; Playwright remains manual |
 | `build-frontend-webv3.yaml` | PRs and `main` pushes touching Webv3 or Paper inputs | Node 22 lint, typecheck, boundaries, standalone container and synthetic read-only browser journeys; publishes commit/`latest` for automatic Webv3 preview updates |
 | `check-paper-playground.yaml` | PRs and `main` pushes touching the playground or `paper-ui` | Paper boundaries and `paper-playground` lint, typecheck, test and build; never published |
 | `pr-branch.yaml` | `pull_request_target` label, push, reopen and close events | Authorizes the `deploy` label, deploys the pinned commit beside production with dev-cli and tears the branch down when the label is removed or the pull request closes. Its deploy and teardown jobs are the called workflows `pr-branch-called-deploy.yaml` and `pr-branch-called-teardown.yaml`. See [Pull-request deploys](./pull-request-deploys.md) |

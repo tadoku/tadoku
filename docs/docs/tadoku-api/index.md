@@ -26,14 +26,14 @@ the [API reference](../api/index.md).
 | Profile | The administrator user list | `profile` |
 | Authorization | The current user's role, role management and permission checks | `authz` |
 | Identity | Registration, sessions, recovery and settings skeletons | `identity` |
-| Email | Retained-email read skeletons | `email` |
+| Email | Transactional templates, delivery, audited reads and retention | `email` |
 
 ## Code ownership
 
 ```text
 transport/http -> app -> features/<feature> -> generated/sqlc/<feature>
 app and features/<feature> -> domain/<concept>
-cmd/tadoku-api constructs and owns the pgx/v5 pool, Valkey, Kratos identity/session and Keto clients and the HTTP resources
+cmd/tadoku-api constructs and owns the pgx/v5 pool, the Valkey, read-only Kratos and Keto clients and the HTTP resources
 ```
 
 All paths are relative to `services/tadoku-api/`.
@@ -61,8 +61,7 @@ The service-token exchange client and PostgreSQL migration commands remain in
   `services/tadoku-api/migrations/`. Queries live in
   `services/tadoku-api/sql/<feature>/`, and sqlc generates Go code into
   `services/tadoku-api/generated/sqlc/<feature>/`.
-- Valkey holds leaderboard caches and tenant-scoped login throttle counters;
-  PostgreSQL remains the source of truth for accounts and sessions.
+- Valkey holds leaderboard caches only; PostgreSQL remains the source of truth.
 
 ## CMS-managed content
 

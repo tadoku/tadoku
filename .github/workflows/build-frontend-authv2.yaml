@@ -1,0 +1,98 @@
+name: build-frontend-authv2
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish_production:
+        description: Publish the production image after owner approval
+        type: boolean
+        default: false
+        required: true
+  pull_request:
+    paths:
+      - "frontend/apps/authv2/**"
+      - "frontend/packages/paper-ui/**"
+      - "frontend/scripts/check-paper-boundaries.mjs"
+      - "frontend/scripts/check-paper-boundaries.test.mjs"
+      - "frontend/paper-boundaries.json"
+      - "frontend/package.json"
+      - "frontend/pnpm-workspace.yaml"
+      - "frontend/pnpm-lock.yaml"
+      - "frontend/.npmrc"
+      - "frontend/scripts/publish-image.sh"
+      - "frontend/.dockerignore"
+      - ".github/workflows/build-frontend-authv2.yaml"
+  push:
+    branches: [main]
+    paths:
+      - "frontend/apps/authv2/**"
+      - "frontend/packages/paper-ui/**"
+      - "frontend/scripts/check-paper-boundaries.mjs"
+      - "frontend/scripts/check-paper-boundaries.test.mjs"
+      - "frontend/paper-boundaries.json"
+      - "frontend/package.json"
+      - "frontend/pnpm-workspace.yaml"
+      - "frontend/pnpm-lock.yaml"
+      - "frontend/.npmrc"
+      - "frontend/scripts/publish-image.sh"
+      - "frontend/.dockerignore"
+      - ".github/workflows/build-frontend-authv2.yaml"
+
+concurrency:
+  group: authv2-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: authv2 / build
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 10.10.0
+          run_install: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile --filter authv2...
+        working-directory: frontend
+      - run: pnpm check:paper-boundaries
+        working-directory: frontend
+      - run: pnpm --filter paper-ui build
+        working-directory: frontend
+      - run: pnpm --filter authv2 typecheck && pnpm --filter authv2 lint
+        working-directory: frontend
+      - run: docker build --platform linux/amd64 -f apps/authv2/Dockerfile -t authv2:ci .
+        working-directory: frontend
+  publish:
+    name: authv2 / publish
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish requested image tags
+        env:
+          PUBLISH_PRODUCTION: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_production }}
+        working-directory: frontend
+        run: |
+          tags=(--tag "$GITHUB_SHA" --tag latest)
+          if [ "$PUBLISH_PRODUCTION" = true ]; then tags+=(--tag prod); fi
+          ./scripts/publish-image.sh authv2 --repository ghcr.io/tadoku/tadoku/frontend-authv2 "${tags[@]}"

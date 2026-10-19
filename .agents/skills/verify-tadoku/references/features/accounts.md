@@ -54,10 +54,11 @@ Record `account_app`; an unset `identity-v2` decision remains `v1`.
 
 The base API and overlays supply the development cookie domain and Kratos public
 URL.
-Recovery/settings, email/token routes and account lookup/search are still
-skeletons. Gateway exposure of `/identity` and the Oathkeeper callback switch are
-separate prerequisites: record a gateway 404 explicitly instead of treating an
-API port-forward as the public journey. Branch v2 flag provisioning must use an
+Recovery/settings, email-token verification and account lookup/search are still
+skeletons. Retained-email reads are implemented for administrators. The public
+identity rule forwards cookies with a guest JWT; the Oathkeeper callback switch
+for other routes remains a separate prerequisite. Confirm actual branch API
+responses rather than treating an API port-forward as the public journey. Branch v2 flag provisioning must use an
 authorized owner/tenant mechanism. A temporary, uncommitted `identity-v2` seed
 in the checkout before `dev up` is confined to that owner's test namespace;
 restore it after teardown and never apply it to canonical Flipt. Never edit
@@ -69,3 +70,34 @@ disposable providers and a tenant-aware Flipt fixture.
 [Account pages](../../../../../frontend/apps/auth/pages/),
 [session navigation](../../../../../frontend/apps/webv2/app/ui/Navigation.tsx),
 [auth E2E](../../../../../frontend/apps/auth/e2e/account.spec.ts).
+
+## Authv2 skeleton
+
+Authv2 uses `/` and `/login` on `authv2.tadoku.dev.lab` or the matching
+`<route>.authv2.tadoku.dev.lab` branch. Read
+[Authv2](../../../../../docs/docs/frontend/authv2.md) and
+[its manual smoke instructions](../../../../../frontend/apps/authv2/e2e/README.md).
+
+- Obtain the link with `dev url --owner <owner> --host authv2.tadoku.dev.lab '/login'`.
+  Confirm the document's overlay `X-Dev-Backend` before claiming branch behavior.
+  Authv2 shares `tdk-dev-frontend-auth` with auth, using distinct workload and
+  Service selectors. Its Vite overlay supplies URLs inline and reuses the existing
+  `tadoku-cli-ca`; no shared prerequisite creation is needed. Snapshot auth's
+  UID, spec, generation, selectors and ConfigMaps before startup and compare
+  after owner-scoped teardown. Require no owned resources and healthy auth.
+- A tenant selecting v2 shows the Paper skeleton and anonymous/signed-in state;
+  registration, recovery and settings are not available in this foundation.
+- A v1 session answer returns to the matching existing account host with the
+  path and query preserved, including legacy emoji display names and email
+  formats. Session API failures show an unavailable message
+  and existing-account link; a missing endpoint must not crash the page.
+- Verify mobile containment and `/healthz` independently of API availability.
+  Cookie/branch forwarding can be checked with the opt-in local session fixture;
+  disclose that substituted upstream instead of claiming real login coverage.
+  The Playwright smoke is run by hand, never wired into CI.
+- Public identity entry rules forward Cookie with a signed guest JWT and no
+  global session callback, so identity owns auth/CSRF and banned-user session or
+  logout handling. The base's disposable Oathkeeper E2E proves forwarding and
+  unchanged unrelated-route denial using synthetic HTTP fixtures. Until the
+  changed shared Oathkeeper and identity backend are deployed, that combined
+  live boundary remains unverified; a frontend overlay does not replace it.

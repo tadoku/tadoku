@@ -4,15 +4,22 @@ go_library(
     name = "email",
     srcs = [
         "domain.go",
+        "email_repository.go",
         "email_service.go",
+        "templates.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/features/email",
     visibility = ["//services/tadoku-api:feature_consumers"],
     deps = [
         "//services/tadoku-api/domain/jobs",
         "//services/tadoku-api/domain/mail",
+        "//services/tadoku-api/generated/sqlc/email",
+        "//services/tadoku-api/infra/postgres",
         "//services/tadoku-api/internal/errx",
         "//services/tadoku-api/internal/tenant",
+        "//services/tadoku-api/internal/timex",
         "@com_github_google_uuid//:uuid",
+        "@com_github_jackc_pgx_v5//:pgx",
+        "@com_github_jackc_pgx_v5//pgxpool",
     ],
 )

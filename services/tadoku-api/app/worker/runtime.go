@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/email"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
@@ -24,7 +25,10 @@ type handlerSpec struct {
 	maxAttempts int
 }
 
+type finalAttemptKey struct{}
+
 type runner struct {
+	email           *email.Service
 	scope           jobqueue.Scope
 	queue           *jobqueue.Service
 	handlers        *registry
@@ -60,6 +64,8 @@ func (r *runner) run(ctx context.Context) {
 	defer metricsTicker.Stop()
 	cleanupTicker := time.NewTicker(time.Hour)
 	defer cleanupTicker.Stop()
+	emailRetentionTicker := time.NewTicker(24 * time.Hour)
+	defer emailRetentionTicker.Stop()
 
 	rotation := 0
 	unsupported := int64(0)
@@ -76,6 +82,7 @@ func (r *runner) run(ctx context.Context) {
 	}
 
 	r.cleanupCompleted(queueCtx)
+	r.maintainEmails(ctx, true)
 	refreshMetrics()
 
 	for {
@@ -125,6 +132,9 @@ func (r *runner) run(ctx context.Context) {
 		case <-ticker.C:
 		case <-metricsTicker.C:
 			refreshMetrics()
+			r.maintainEmails(ctx, false)
+		case <-emailRetentionTicker.C:
+			r.maintainEmails(ctx, true)
 		case <-cleanupTicker.C:
 			r.cleanupCompleted(queueCtx)
 		}
@@ -228,6 +238,7 @@ func (r *runner) process(ctx context.Context, task jobqueue.ClaimedJob, spec han
 	renewed := make(chan error, 1)
 	go func() { renewed <- r.renew(renewCtx, cancelHandler, task, spec, maximum) }()
 
+	handlerCtx = context.WithValue(handlerCtx, finalAttemptKey{}, task.Attempts >= spec.maxAttempts)
 	handlerErr := r.handlers.dispatch(handlerCtx, task)
 	if handlerErr == nil && handlerCtx.Err() != nil {
 		handlerErr = handlerCtx.Err()

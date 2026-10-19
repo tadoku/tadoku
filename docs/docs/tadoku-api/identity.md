@@ -13,10 +13,11 @@ are implemented. A tenant's `identity-v2` flag selects local accounts or Kratos;
 its safe default is `false`, including for guests. Existing profile/authz callers
 continue to use `identity.LegacyReader`.
 
-Recovery, settings, account search/deletion, email operations and email access
-token verification remain skeletons returning `501`. Recovery requests already
-reject an unsafe `return_to`. The shared contracts preserve the boundaries for
-these operations; their presence does not enable email delivery or token access.
+Recovery, settings, account search/deletion and email access-token verification
+remain skeletons returning `501`. Recovery requests already reject an unsafe
+`return_to`. [Retained email](./email.md) implements transactional templates,
+delivery, audited reads and retention; identity recovery/settings do not yet
+produce those messages.
 
 ## HTTP boundaries
 

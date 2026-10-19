@@ -157,3 +157,30 @@ spec:
               service:
                 name: oathkeeper-proxy
                 port: {number: 4455}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tadoku-authv2
+  namespace: tdk-dev-routing
+  annotations:
+    argocd.argoproj.io/sync-wave: "50"
+    cert-manager.io/cluster-issuer: lab-ca-acme
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts: [authv2.tadoku.dev.lab]
+      secretName: tadoku-authv2-tls
+  rules:
+    - host: authv2.tadoku.dev.lab
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: dev-cli-gateway
+                port: {number: 80}

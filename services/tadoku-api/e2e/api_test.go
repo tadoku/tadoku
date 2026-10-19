@@ -23,6 +23,7 @@ import (
 	featureaudit "github.com/tadoku/tadoku/services/tadoku-api/features/audit"
 	featureauthz "github.com/tadoku/tadoku/services/tadoku-api/features/authz"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/contests"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/email"
 	featureflagsservice "github.com/tadoku/tadoku/services/tadoku-api/features/featureflags"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
@@ -352,6 +353,7 @@ func newTestRouterWithLeaderboardService(
 	)
 
 	application := app.New(app.Dependencies{
+		Email:              email.NewService(email.NewRepository(pool), nil),
 		JobQueue:           jobQueue,
 		Announcements:      announcementsService,
 		Audit:              auditService,

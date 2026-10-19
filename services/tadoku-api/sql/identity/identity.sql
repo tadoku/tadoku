@@ -2,11 +2,11 @@
 with new_user as (
   insert into users (id, display_name, created_at, updated_at)
   values (sqlc.arg(user_id), sqlc.arg(display_name), sqlc.arg(now), sqlc.arg(now))
-  returning tenant, id
+  returning tenant, id, created_at, updated_at
 ), new_account as (
   insert into accounts (tenant, user_id, email, email_normalized, password_hash, created_at, updated_at)
   select tenant, id, sqlc.arg(email), sqlc.arg(email_normalized), sqlc.arg(password_hash),
-    sqlc.arg(now), sqlc.arg(now)
+    created_at at time zone 'UTC', updated_at at time zone 'UTC'
   from new_user
   returning tenant, user_id
 )

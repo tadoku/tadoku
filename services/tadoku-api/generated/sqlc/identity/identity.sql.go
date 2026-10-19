@@ -126,11 +126,11 @@ const registerAccount = `-- name: RegisterAccount :exec
 with new_user as (
   insert into users (id, display_name, created_at, updated_at)
   values ($4, $5, $6, $6)
-  returning tenant, id
+  returning tenant, id, created_at, updated_at
 ), new_account as (
   insert into accounts (tenant, user_id, email, email_normalized, password_hash, created_at, updated_at)
   select tenant, id, $7, $8, $9,
-    $6, $6
+    created_at at time zone 'UTC', updated_at at time zone 'UTC'
   from new_user
   returning tenant, user_id
 )

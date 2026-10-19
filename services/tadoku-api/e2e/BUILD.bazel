@@ -2,7 +2,8 @@ load("@rules_go//go:def.bzl", "go_test")
 
 go_test(
     name = "e2e_test",
-    size = "large",
+    size = "medium",
+    timeout = "long",
     srcs = [
         "access_journeys_test.go",
         "access_level_test.go",

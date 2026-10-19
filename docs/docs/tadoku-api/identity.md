@@ -65,7 +65,9 @@ same. Password formatting is redacted.
 
 Registration evaluates the tenant flag, validates input, hashes the password
 and generates the initial session before acquiring a database connection. One
-SQL statement creates the user, account and session atomically. The tenant-prefixed email uniqueness constraint
+SQL statement creates the user, account and session atomically. User timestamps
+are interpreted explicitly as UTC when stored on the account, independently of
+the database session time zone. The tenant-prefixed email uniqueness constraint
 also resolves concurrent registration and differently cased duplicates. A
 conflict returns `409` with `email_taken`, preserving the existing enumeration
 behavior. Password hashes use bcrypt cost 12 and stay inside the identity
@@ -82,8 +84,8 @@ without the email, password or token and allow the attempt. The HTTP boundary
 uses the connection peer unless it belongs to an explicitly configured
 `API_IDENTITY_TRUSTED_PROXY_CIDRS` prefix. Only those peers may supply a single,
 valid `X-Real-IP`; the trusted edge must overwrite that header. Empty proxy
-configuration trusts no forwarded address. Development overlays configure the
-cluster pod prefix; production must configure its own trusted ingress boundary
+configuration trusts no forwarded address. The development base and overlays
+configure the cluster pod prefix; production must configure its own trusted ingress boundary
 before activation. Untrusted peers cannot evade the IP budget with forged
 forwarding headers. With no trusted proxy configured, clients behind the same
 proxy share its peer-IP throttle bucket. This fallback prevents header spoofing

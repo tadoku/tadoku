@@ -114,6 +114,11 @@ Canonical routes strip branch headers. Public identity rules use anonymous
 authentication and a signed JWT, forwarding Cookie to API-owned auth/CSRF;
 unrelated rules keep session checks. See [Authv2](../frontend/authv2.md).
 
+## Identity session callback
+
+[Identity gateway configuration](identity-gateway.md) covers the callback
+credential, logging boundary, internal SSR route and activation gates.
+
 ## Asynchronous worker ownership
 
 The private `tadoku-worker` Deployment consumes `jobs` in the base

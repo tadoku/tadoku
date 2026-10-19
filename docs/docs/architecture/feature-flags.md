@@ -60,6 +60,15 @@ Flipt calls pass through Oathkeeper with service JWTs that
 Their routes in `k8s/dev/base/oathkeeper/rules.yaml` allow only the snapshot
 read and managed segment calls. Metrics are named `tadoku_feature_flag_*`.
 
+`Evaluator.TenantBoolean` uses the parsed context tenant key as the Flipt entity,
+including guest traffic. It uses the same provider target mapping and safe-default
+observations as user evaluation, without caching a decision across tenants.
+`IdentityV2` (`identity-v2`) defaults to `false` for every unset tenant; the
+feature service exposes it as `IdentityV2(ctx)`. It is declared in webv2 but is
+not added to the public decisions response. The browser schema supplies `false`
+when that internal decision is absent. Account-app selection belongs to the
+identity session contract rather than the public user-flag endpoint.
+
 ## Decisions in the browser
 
 `GET /immersion/feature-flags` (`ImmersionFeatureFlagDecisions`) returns the

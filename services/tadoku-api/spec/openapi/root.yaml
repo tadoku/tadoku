@@ -85,3 +85,29 @@ x-tadoku-sources:
       version: 1.0.0
     servers:
       - url: http://tadoku-api.tdk-tadoku-api/authz/
+  Identity:
+    domain: identity
+    exposure: public
+    info:
+      title: identity-api
+      description: Registration, sessions, recovery and settings contracts; registered skeletons return 501.
+      version: 1.0.0
+    servers:
+    - url: https://tadoku.app/api/internal
+  Email:
+    domain: email
+    exposure: public
+    info:
+      title: email-api
+      description: Retained-email read contracts; registered skeletons and token verification return 501.
+      version: 1.0.0
+    servers:
+    - url: https://tadoku.app/api/internal
+  IdentityProxy:
+    domain: identity
+    exposure: callback
+    info:
+      title: IdentityProxy API
+      version: 1.0.0
+    servers:
+    - url: http://tadoku-api.tdk-tadoku-api/identity/

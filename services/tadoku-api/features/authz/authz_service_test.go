@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	kratosclient "github.com/tadoku/tadoku/services/tadoku-api/infra/kratos"
+	kratosclient "github.com/tadoku/tadoku/services/tadoku-api/features/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
@@ -27,7 +27,7 @@ func TestUpdateRoleMapsUserExistsFailureToUnavailable(t *testing.T) {
 	t.Cleanup(httpClient.CloseIdleConnections)
 	service := NewService(
 		nil,
-		kratosclient.NewClient(provider.URL, kratosclient.WithHTTPClient(httpClient)),
+		kratosclient.NewLegacyReader(provider.URL, kratosclient.WithHTTPClient(httpClient)),
 		nil,
 		nil,
 		nil,

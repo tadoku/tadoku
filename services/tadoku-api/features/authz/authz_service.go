@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	kratosclient "github.com/tadoku/tadoku/services/tadoku-api/infra/kratos"
+	kratosclient "github.com/tadoku/tadoku/services/tadoku-api/features/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
@@ -12,7 +12,7 @@ import (
 
 type Service struct {
 	permissions       *permissions.Checker
-	users             *kratosclient.Client
+	users             kratosclient.LegacyReader
 	roles             *permissions.KetoService
 	roleManager       *permissions.KetoManager
 	publicPermissions PublicPermissionAllowlist
@@ -20,7 +20,7 @@ type Service struct {
 
 func NewService(
 	permissions *permissions.Checker,
-	users *kratosclient.Client,
+	users kratosclient.LegacyReader,
 	roles *permissions.KetoService,
 	roleManager *permissions.KetoManager,
 	publicPermissions PublicPermissionAllowlist,

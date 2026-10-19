@@ -46,8 +46,32 @@ policies:
           allow:
             - local:services/tadoku-api/internal/featureflags
             - local:services/tadoku-api/features/{feature}/...
+            - local:services/tadoku-api/features/identity
             - local:services/tadoku-api/domain/...
             - local:services/tadoku-api/generated/sqlc/{feature}/...
+            - local:services/tadoku-api/infra/...
+            - local:services/tadoku-api/internal/...
+
+  - id: identity-provider
+    packages: [local:services/tadoku-api/features/identity/kratos]
+    imports:
+      default: deny
+      rules:
+        - use: language-dependencies
+        - id: own-adapter-tests
+          allow: [local:services/tadoku-api/features/identity/kratos]
+
+  - id: tenant-access-tokens
+    packages: [local:services/tadoku-api/features/authz/tokens]
+    imports:
+      default: deny
+      rules:
+        - use: language-dependencies
+        - id: token-data-and-infrastructure
+          allow:
+            - local:services/tadoku-api/features/authz/tokens/...
+            - local:services/tadoku-api/domain/...
+            - local:services/tadoku-api/generated/sqlc/tokens/...
             - local:services/tadoku-api/infra/...
             - local:services/tadoku-api/internal/...
 
@@ -79,7 +103,7 @@ policies:
       rules:
         - use: language-dependencies
         - id: infrastructure-dependencies
-          allow: [local:services/tadoku-api/infra/..., local:services/tadoku-api/internal/...]
+          allow: [local:services/tadoku-api/infra/..., local:services/tadoku-api/internal/..., local:services/tadoku-api/features/identity]
 
   - id: generated
     packages: [local:services/tadoku-api/generated/..., local:services/tadoku-api/sql/...]
@@ -117,7 +141,7 @@ policies:
         - id: raw-provider-client
           allow:
             - local:services/tadoku-api/internal/testkratos/...
-            - local:services/tadoku-api/infra/kratos
+            - local:services/tadoku-api/features/identity
 
   - id: flipt-fixture
     packages: [local:services/tadoku-api/internal/testflipt/...]

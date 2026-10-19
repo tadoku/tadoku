@@ -35,6 +35,7 @@ go_test(
         "feature_flags_test.go",
         "flipt_tenant_test.go",
         "golden_test.go",
+        "identity_skeleton_test.go",
         "journey_test.go",
         "kratos_test.go",
         "language_create_test.go",

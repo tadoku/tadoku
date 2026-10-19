@@ -103,6 +103,21 @@ Never embed a feature model in a stored payload. The native domain import
 policy excludes application, feature, generated, infrastructure, storage and
 `internal` dependencies. Keep provider objects and secrets out of jobs.
 
+### Email message contract
+
+`jobs.SendEmailV1` has the persisted name `email.send.v1` and carries exactly
+`{"email_id":"<uuid>"}`. A zero UUID is invalid. The tenant comes from the queue
+row and handler context, never from the payload. Recipients, rendered content,
+parameters and credentials stay outside this job. The handler reads current
+email state and must tolerate retries without resending terminal deliveries.
+The payload is declared but has no executable registration yet; no producer is
+wired. Sending and retention remain unimplemented.
+
+`domain/mail.Message` carries template, recipient and string parameters between
+features through application composition. `email.Writer.Write` requires the
+business transaction and returns `WriteResult.Jobs`; the application enqueues
+all jobs before committing, together with the identity write.
+
 ## Publish atomically
 
 A producing feature returns its ordinary result and `Jobs []jobs.Job`. It

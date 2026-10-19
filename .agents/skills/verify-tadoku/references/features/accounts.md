@@ -42,6 +42,21 @@ Branch host selection is independent of shared authentication, and `/kratos` is 
 served by a frontend overlay. Don't mock CSRF, fabricate JWTs or bypass the UI
 login when claiming a browser E2E.
 
+## Identity API skeleton
+
+[Identity contracts](../../../../../docs/docs/tadoku-api/identity.md) lists the
+new API and callback routes. They return `501` with the shared JSON error after
+their route group's authentication. Missing JWT credentials return `400`, invalid
+JWTs `401`, and missing/wrong callback credentials `401` before the stub.
+Email-only token verification is also a `501` stub and admits no reader.
+
+These paths are not yet exposed by Oathkeeper's public rules. Record that
+boundary explicitly when verifying a branch. A read-only API port-forward plus
+a real Oathkeeper decisions JWT can verify server routes, but does not prove the
+missing gateway exposure or a browser login journey. Verify an existing public
+endpoint's `X-Dev-Backend` separately. An unset `identity-v2` flag must evaluate
+false for the branch tenant; do not change shared flag policy to exercise it.
+
 ## Source anchors
 
 [Account pages](../../../../../frontend/apps/auth/pages/),

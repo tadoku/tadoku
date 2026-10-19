@@ -1,0 +1,81 @@
+components:
+  schemas:
+    IdentityProxyTraits:
+      type: object
+      properties:
+        email:
+          type: string
+          maxLength: 320
+          format: email
+        display_name:
+          type: string
+          maxLength: 32
+          minLength: 2
+      required:
+      - email
+      - display_name
+    IdentityProxyUser:
+      type: object
+      properties:
+        identity:
+          type: object
+          properties:
+            id:
+              type: string
+              maxLength: 36
+              format: uuid
+            traits:
+              $ref: '#/components/schemas/IdentityProxyTraits'
+          required:
+          - id
+          - traits
+        authenticated_at: &id001
+          type: string
+          format: date-time
+        expires_at: *id001
+      required:
+      - identity
+      - authenticated_at
+      - expires_at
+    IdentityProxyGuest:
+      type: object
+      properties:
+        identity:
+          type: object
+          properties:
+            id:
+              type: string
+              enum:
+              - guest
+          required:
+          - id
+      required:
+      - identity
+    IdentityProxySession:
+      oneOf:
+      - $ref: '#/components/schemas/IdentityProxyGuest'
+      - $ref: '#/components/schemas/IdentityProxyUser'
+    IdentityProxyErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          maxLength: 1000
+        code:
+          type: string
+          maxLength: 64
+          enum:
+          - wrong_password
+          - throttled
+          - email_taken
+          - stale_session
+          - invalid_display_name
+          - invalid_email
+          - invalid_password
+          - invalid_recovery_token
+          - invalid_origin
+          - invalid_return_to
+          - not_implemented
+          - unavailable
+      required:
+      - message

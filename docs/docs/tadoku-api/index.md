@@ -33,7 +33,7 @@ the [API reference](../api/index.md).
 ```text
 transport/http -> app -> features/<feature> -> generated/sqlc/<feature>
 app and features/<feature> -> domain/<concept>
-cmd/tadoku-api constructs and owns the pgx/v5 pool, the Valkey, read-only Kratos and Keto clients and the HTTP resources
+cmd/tadoku-api constructs and owns the pgx/v5 pool, Valkey, Kratos identity/session and Keto clients and the HTTP resources
 ```
 
 All paths are relative to `services/tadoku-api/`.

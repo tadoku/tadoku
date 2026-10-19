@@ -180,7 +180,7 @@ responses. In addition:
   creation time.
 - Anonymous gateway traffic carries a signed token with subject `guest`, which
   is distinct from a direct request without credentials. Every other subject
-  must be a UUID, the Kratos identity ID; a token with any other subject is
+  must be an account UUID (Kratos for v1, local for v2); a token with any other subject is
   rejected with `401` like any other invalid token. Service tokens are never
   converted into human identities.
 - The ban gate performs only the ban lookup, so no unrelated administrator

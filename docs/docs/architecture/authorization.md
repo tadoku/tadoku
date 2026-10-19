@@ -13,10 +13,14 @@ its source is `services/tadoku-api/spec/openapi.yaml`.
 
 ## Authentication and authorization
 
-- **Ory Kratos** owns identities, sessions and login. Browser API calls reach
-  Oathkeeper with a Kratos session cookie or no credentials. Oathkeeper's
-  `id_token` mutator replaces them with an RS256 JWT whose `sub` is the Kratos
-  identity ID, or `guest` for anonymous requests. Session traits travel in the
+- **Identity** owns account/session selection per tenant. V1 uses Ory Kratos;
+  v2 uses tenant-owned accounts and sessions in Tadoku API. The
+  [identity entry point](../tadoku-api/identity.md) selects with the tenant-level
+  `identity-v2` flag and provides the authenticated session callback. Existing
+  gateway callers continue to use Kratos until their callback configuration is
+  switched. Oathkeeper's
+  `id_token` mutator produces an RS256 JWT whose `sub` is the
+  account UUID, or `guest` for anonymous requests. Session traits travel in the
   `session` claim; `type` is `user`. API tokens carry a signed `tenant`
   claim for both anonymous and signed-in requests: `tadoku/prod`, or
   `tadoku/<route>` when a trusted branch selection reaches Oathkeeper. The
@@ -30,7 +34,7 @@ its source is `services/tadoku-api/spec/openapi.yaml`.
 
 ## Kratos identity writes
 
-Kratos identities and sessions are shared across tenants. Test tenants never
+V1 Kratos identities and sessions are shared across tenants. Test tenants never
 modify them. `Writer` in `services/tadoku-api/infra/kratosidentity/` is the only
 application path for deactivating an identity, deleting its sessions or deleting
 the identity itself. It requires a tenant context: `tadoku/prod` applies the
@@ -53,7 +57,7 @@ application data.
 | test object | The full tenant key, such as `e2e/alpha-0000000a` |
 | relations | `admins`, `banned`, `parents`, `testers` |
 | permits | `admin`, `is_banned`, `access` |
-| subject | direct `subject_id`: the Kratos identity ID from the JWT `sub`, never an email |
+| subject | direct `subject_id`: the account UUID from the JWT `sub`, never an email |
 
 The canonical tenant keeps `app:tadoku` and its existing administrator and ban
 relations. Tenant keys use `name/id`; the provider object for this existing

@@ -96,9 +96,10 @@ Never point tests at shared development or production services.
   test tenant, persist it on jobs and delete only that tenant's matching keys.
   The worker's extra marker outside its tenant prefix also embeds the unique
   key and is deleted by exact name. No test sharing database 13 flushes it.
-  The leased HTTP E2E database refuses pre-existing leaderboard keys and resets
-  only legacy and tenant-derived leaderboard patterns while holding its lease,
-  including keys created by arbitrary test-tenant jobs.
+  The leased HTTP E2E database refuses pre-existing leaderboard or identity
+  throttle keys. It resets only legacy/tenant-derived leaderboard patterns and
+  tenant-derived identity login patterns while holding its lease, including
+  leaderboard keys created by arbitrary test-tenant jobs.
 
 ## Repository and package tests
 

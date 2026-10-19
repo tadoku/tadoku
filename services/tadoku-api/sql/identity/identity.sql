@@ -45,12 +45,34 @@ where s.token_hash = sqlc.arg(token_hash)
 -- name: DeleteSession :exec
 delete from sessions where token_hash = sqlc.arg(token_hash);
 
+-- name: DevelopmentAccountExists :one
+select exists (
+  select 1
+  from accounts
+  where tenant = current_setting('tadoku.tenant')
+    and user_id = sqlc.arg(user_id)
+);
+
 -- name: InsertDevelopmentUser :exec
-insert into users (id, display_name, created_at, updated_at)
-values (sqlc.arg(id), sqlc.arg(display_name), now(), now())
+insert into users (tenant, id, display_name, created_at, updated_at)
+values (
+  current_setting('tadoku.tenant'),
+  sqlc.arg(id),
+  sqlc.arg(display_name),
+  coalesce((
+    select created_at
+    from users
+    where tenant = 'tadoku/prod'
+      and id = sqlc.arg(id)
+  ), now() at time zone 'UTC'),
+  now() at time zone 'UTC'
+)
 on conflict (tenant, id) do nothing;
 
 -- name: InsertDevelopmentAccount :exec
-insert into accounts (user_id, email, email_normalized, password_hash)
-values (sqlc.arg(user_id), sqlc.arg(email), sqlc.arg(email), sqlc.arg(password_hash))
-on conflict do nothing;
+insert into accounts (tenant, user_id, email, email_normalized, password_hash, created_at)
+select tenant, id, sqlc.arg(email), sqlc.arg(email), sqlc.arg(password_hash), created_at at time zone 'UTC'
+from users
+where tenant = current_setting('tadoku.tenant')
+  and id = sqlc.arg(user_id)
+on conflict (tenant, user_id) do nothing;

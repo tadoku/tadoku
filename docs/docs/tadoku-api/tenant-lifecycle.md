@@ -102,9 +102,16 @@ existing dev base UUIDs; public registration never accepts fixture UUIDs.
 
 The command hashes passwords at bcrypt cost 12 in the identity feature. Its
 fixture-only path permits the legacy short development password. Both inserts
-are transactional; reruns leave matching rows unchanged and fail on conflicting
-credentials or user metadata. No production account or provider identity is read
-or changed, and no session is created.
+are transactional. Fixture lookups and writes name the tenant explicitly because
+the development owner bypasses row-level security. Existing fixture UUIDs keep
+their branch-owned credentials, email, profile, state, timestamps and sessions;
+only missing accounts are initialized. A configured email held by another UUID
+for a missing fixture fails the entire pair. Account inserts handle conflicts
+only on `(tenant, user_id)`, so email collisions cannot report false success.
+New users copy the canonical fixture user's creation time by UUID when present;
+new accounts use their own tenant user's creation time. This reads no canonical
+account or credential, changes no canonical row or provider identity, and creates
+no session.
 
 `inspect` accepts only parsed test keys and registry-management credentials.
 It prints `{"tenant":"tadoku/branch-0123abcd","exists":false}` after successful

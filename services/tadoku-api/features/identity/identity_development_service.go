@@ -17,7 +17,7 @@ type DevelopmentAccount struct {
 }
 
 // Call only from development provisioning inside its authorized test-tenant transaction.
-// Existing fixture credentials must match; this operation never resets an account.
+// Existing fixture UUIDs belong to the branch; reseeding preserves their account data.
 func SeedDevelopmentAccounts(
 	ctx context.Context,
 	repository *Repository,
@@ -41,6 +41,14 @@ func SeedDevelopmentAccounts(
 			return errors.New("development fixture requires an ID and a password of 1–72 bytes")
 		}
 
+		exists, err := repository.developmentAccountExists(ctx, fixture.ID)
+		if err != nil {
+			return err
+		}
+		if exists {
+			continue
+		}
+
 		hash, err := bcrypt.GenerateFromPassword([]byte(fixture.Password), 12)
 		if err != nil {
 			return errors.New("hash development fixture password")
@@ -52,11 +60,6 @@ func SeedDevelopmentAccounts(
 			return err
 		}
 
-		stored, err := repository.credentials(ctx, email)
-		if err != nil || stored.account.ID != fixture.ID || stored.account.DisplayName != name || !stored.active ||
-			bcrypt.CompareHashAndPassword([]byte(stored.passwordHash), []byte(fixture.Password)) != nil {
-			return errors.New("existing development fixture differs; refusing to overwrite it")
-		}
 	}
 	return nil
 }

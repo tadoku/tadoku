@@ -121,9 +121,20 @@ segments: []
 				}
 			}
 		}
-		if err != nil || response.StatusCode != 200 || json.Unmarshal(body, &flag) != nil || !flag.Resource.Payload.Enabled ||
-			len(flag.Resource.Payload.Rollouts) != 1 || !flag.Resource.Payload.Rollouts[0].Threshold.Value || flag.Resource.Payload.Rollouts[0].Threshold.Percentage != 100 {
-			t.Fatalf("fresh tenant %s lacks true identity-v2 rollout: status=%d body=%s error=%v", target.String(), response.StatusCode, body, err)
+		if err != nil ||
+			response.StatusCode != 200 ||
+			json.Unmarshal(body, &flag) != nil ||
+			!flag.Resource.Payload.Enabled ||
+			len(flag.Resource.Payload.Rollouts) != 1 ||
+			!flag.Resource.Payload.Rollouts[0].Threshold.Value ||
+			flag.Resource.Payload.Rollouts[0].Threshold.Percentage != 100 {
+			t.Fatalf(
+				"fresh tenant %s lacks true identity-v2 rollout: status=%d body=%s error=%v",
+				target.String(),
+				response.StatusCode,
+				body,
+				err,
+			)
 		}
 	}
 	assertCopiedPlatformScoring(t, db, key)

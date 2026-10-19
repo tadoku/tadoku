@@ -101,29 +101,20 @@ func seedEveryTenantTable(t *testing.T, db *testpostgres.Database, key string) {
 		insert into tenant_overrides (tenant, component)
 		select $1, 'tadoku-worker' where $1 <> 'tadoku/prod'
 		on conflict do nothing;
+		insert into accounts (tenant, user_id, email, email_normalized, password_hash)
+		values ($1, uuid_generate_v5(uuid_nil(), $1 || '/user'),
+			'lifecycle@example.test', 'lifecycle@example.test', 'synthetic-hash');
+		insert into sessions (tenant, token_hash, user_id, authenticated_at, expires_at)
+		values ($1, 'synthetic-session-hash', uuid_generate_v5(uuid_nil(), $1 || '/user'),
+			now(), now() + interval '1 day');
+		insert into recovery_tokens (tenant, token_hash, user_id, expires_at)
+		values ($1, 'synthetic-recovery-hash', uuid_generate_v5(uuid_nil(), $1 || '/user'),
+			now() + interval '1 hour');
+		insert into emails (tenant, template, recipient, subject, body, params)
+		values ($1, 'account.recovery', 'lifecycle@example.test', 'Lifecycle', 'Fixture', '{}');
+		insert into access_tokens (tenant, name, token_hash, scopes, expires_at)
+		values ($1, 'Lifecycle', 'synthetic-access-hash', array['email:read'], now() + interval '1 day');
 	`
-	var hasAccounts bool
-	err := db.Pool.QueryRow(t.Context(), "select to_regclass('public.accounts') is not null").Scan(&hasAccounts)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if hasAccounts {
-		seed += `
-			insert into accounts (tenant, user_id, email, email_normalized, password_hash)
-			values ($1, uuid_generate_v5(uuid_nil(), $1 || '/user'),
-				'lifecycle@example.test', 'lifecycle@example.test', 'synthetic-hash');
-			insert into sessions (tenant, token_hash, user_id, authenticated_at, expires_at)
-			values ($1, 'synthetic-session-hash', uuid_generate_v5(uuid_nil(), $1 || '/user'),
-				now(), now() + interval '1 day');
-			insert into recovery_tokens (tenant, token_hash, user_id, expires_at)
-			values ($1, 'synthetic-recovery-hash', uuid_generate_v5(uuid_nil(), $1 || '/user'),
-				now() + interval '1 hour');
-			insert into emails (tenant, template, recipient, subject, body, params)
-			values ($1, 'account.recovery', 'lifecycle@example.test', 'Lifecycle', 'Fixture', '{}');
-			insert into access_tokens (tenant, name, token_hash, scopes, expires_at)
-			values ($1, 'Lifecycle', 'synthetic-access-hash', array['email:read'], now() + interval '1 day');
-		`
-	}
 
 	tx, err := db.Pool.Begin(t.Context())
 	if err != nil {

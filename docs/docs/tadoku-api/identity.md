@@ -1,6 +1,6 @@
 ---
 title: Identity contracts
-description: Identity, email and tenant access-token service contracts, their stub routes and authentication boundaries, and the temporary v1 reader.
+description: Identity, email and tenant access-token service contracts, their routes and authentication boundaries, and the temporary v1 reader.
 ---
 
 # Identity contracts
@@ -8,10 +8,13 @@ description: Identity, email and tenant access-token service contracts, their st
 Read this before implementing account, recovery, email or tenant access-token
 operations, or moving a caller to the identity entry point.
 
-The identity, email and token services are skeletons: new operations return
+Identity operations remain skeletons: they return
 `errx.NotImplemented`, mapped to `501` with `{"message":"not implemented"}`.
-No account, cookie, recovery token, email or access token is created or changed.
+No account, cookie or recovery token is created or changed.
 Existing v1 callers retain their behavior through `identity.LegacyReader`.
+Email delivery and reads are implemented; see [Retained email](./email.md).
+Tenant access-token creation, listing and revocation are implemented; see
+[Email access tokens](./tenant-lifecycle.md#email-access-tokens).
 
 ## Routes
 
@@ -22,13 +25,15 @@ Existing v1 callers retain their behavior through `identity.LegacyReader`.
 | Oathkeeper callback bearer | `GET /identity/internal/v1/session` |
 | Email-only token registrar | The same two email GET routes, selected by a `Bearer tdk_at_…` header |
 
-Public route paths are relative to `/api/internal`. They require the existing
-JWT even for guests. Missing or invalid JWT credentials are rejected before the
-stub. Callback requests require `API_OATHKEEPER_AUTHZ_TOKEN`, without creating a
-user identity. Email tokens enter `Application.AuthenticateEmailReader`, which
-returns `501` before decoding or authorizing anything. No token currently
-succeeds. A token-shaped bearer on every other public route remains an invalid
-JWT. Gateway token forwarding is not enabled by these skeletons.
+Public route paths are relative to `/api/internal`. JWT route groups require a
+valid JWT even for guests. Missing or invalid JWT credentials are rejected before
+the operation. Callback requests require `API_OATHKEEPER_AUTHZ_TOKEN`, without
+creating a user identity. Email tokens enter `Application.AuthenticateEmailReader`, which
+verifies an unrevoked, unexpired `email:read` token in its own tenant; see
+[Email access tokens](../architecture/authorization.md#email-access-tokens).
+The email gateway rule forwards `tdk_at_` bearers while preserving administrator
+cookie authentication. A token-shaped bearer on every other public route
+remains an invalid JWT.
 
 The canonical fragments in `services/tadoku-api/spec/openapi/` define success,
 error, cookie and redirect shapes as well as email filters and pagination.
@@ -41,7 +46,7 @@ has `identity.id` equal to `guest`.
 | Owner | Contract |
 | --- | --- |
 | `services/tadoku-api/features/identity/` | `Reader` owns account lookup, existence and search; `Accounts` adds registration, login, logout, session resolution, recovery, settings and deletion. `Service` implements the stubs. |
-| `services/tadoku-api/features/email/` | `Writer.Write(ctx, mail.Message)` renders and writes within the caller's transaction and returns every required job. `Reader` owns filtered listing and lookup. `Service.Send` and `Retain` are worker operation stubs. |
+| `services/tadoku-api/features/email/` | `Writer.Write(ctx, mail.Message)` renders and writes within the caller's transaction and returns every required job. `Reader` owns filtered listing and lookup. `Service.Send` handles delivery or holds; `Retain` deletes expired retained rows. |
 | `services/tadoku-api/features/authz/tokens/` | `Verifier.Verify` accepts the raw token and deployment scope; `Manager` owns create, list and revoke. Results expose a parsed tenant, ID and scopes, never stored hashes. |
 | `services/tadoku-api/domain/mail/` | `Message` is the application-composed template request shared by identity and email. Templates are `account.recovery` (`recovery_url`) and `account.email_changed` (`new_email`, `changed_at`). |
 | `services/tadoku-api/domain/jobs/` | `SendEmailV1` carries only `email_id`; see [Jobs](./jobs.md#email-message-contract). |
@@ -72,7 +77,7 @@ Identity recovery and profile updates return mail requests; application code
 coordinates the identity operation, each email write and every returned queue
 job inside one business transaction. Features do not import sibling features.
 The email writer must reject unknown templates and missing or unexpected
-parameters before inserting. These behaviors are not implemented by the stubs.
+parameters before inserting. Identity orchestration remains unimplemented.
 
 The `identity-v2` flag is a tenant decision with safe default `false`.
 `featureflags.Service.IdentityV2(ctx)` evaluates the context tenant, including

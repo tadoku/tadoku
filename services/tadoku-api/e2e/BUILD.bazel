@@ -33,6 +33,7 @@ go_test(
         "contest_summary_test.go",
         "dependency_failure_test.go",
         "email_delivery_test.go",
+        "email_maintenance_test.go",
         "email_read_test.go",
         "email_write_test.go",
         "feature_flags_test.go",

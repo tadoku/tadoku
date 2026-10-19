@@ -158,3 +158,29 @@ func TestEmailWriteTransactionAndPayload(t *testing.T) {
 		t.Fatalf("changed row=%+v err=%v", row, err)
 	}
 }
+
+func TestEmailRecoveryAllowedHosts(t *testing.T) {
+	api.reset(t, "")
+	ctx := tenant.WithKey(t.Context(), tenant.Production())
+	for _, host := range []string{
+		"tadoku.app", "account.tadoku.app", "admin.tadoku.app", "authv2.tadoku.app",
+		"pr-1549.preview.tadoku.app", "pr-1549.account.preview.tadoku.app",
+		"pr-1549.admin.preview.tadoku.app", "pr-1549.authv2.preview.tadoku.app",
+		"tadoku.dev.lab", "account.tadoku.dev.lab", "admin.tadoku.dev.lab", "authv2.tadoku.dev.lab",
+		"email-branch.tadoku.dev.lab", "email-branch.account.tadoku.dev.lab",
+		"email-branch.admin.tadoku.dev.lab", "email-branch.authv2.tadoku.dev.lab",
+	} {
+		t.Run(host, func(t *testing.T) {
+			message := recoveryMail()
+			message.Params["recovery_url"] = "https://" + host + "/identity/recovery/secret"
+			id := writeEmail(t, ctx, emailService(), message)
+			row, err := emailService().Find(ctx, id)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !strings.Contains(row.Body, message.Params["recovery_url"]) {
+				t.Errorf("recovery link missing from rendered email: %q", row.Body)
+			}
+		})
+	}
+}

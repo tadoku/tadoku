@@ -42,6 +42,20 @@ Branch host selection is independent of shared authentication, and `/kratos` is 
 served by a frontend overlay. Don't mock CSRF, fabricate JWTs or bypass the UI
 login when claiming a browser E2E.
 
+## Identity entry point
+
+Webv2 and admin read `GET /identity/session`, including as guests. Check that
+`account_app` selects account or authv2 links on the same branch, and that
+logout posts to `POST /identity/logout` before access to protected pages is
+removed. Auth selects the same endpoint before starting a v1 flow and redirects
+v2 requests to authv2 with their query. No frontend clears identity cookies
+when an unrelated API returns 401.
+
+The callback and session/logout runtime must be integrated before claiming this
+journey works on a branch. Gateway configuration forwards Cookie and
+X-Dev-Branch through the branch-aware API hop and adds the callback bearer;
+verify isolated-database branches as well as ordinary tenants.
+
 ## Identity API skeleton
 
 [Identity contracts](../../../../../docs/docs/tadoku-api/identity.md) lists the

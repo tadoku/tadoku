@@ -29,7 +29,7 @@ interface Props {
 export const LogDetailsV2 = ({ log }: Props) => {
   const [session] = useSession()
   const role = useUserRole()
-  const canEdit = log.user_id === session?.identity?.id || role === 'admin'
+  const canEdit = log.user_id === session?.id || role === 'admin'
   const logColor = colorForActivity(log.activity.id)
   const tags = log.tags
   const hasAmount = hasTrackedAmount(log)
@@ -191,7 +191,7 @@ export const LogDetailsV2 = ({ log }: Props) => {
 
 function DeleteButton({ log }: { log: Log }) {
   const [session] = useSession()
-  const isOwner = log.user_id === session?.identity?.id
+  const isOwner = log.user_id === session?.id
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const router = useRouter()
 

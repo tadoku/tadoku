@@ -10,7 +10,7 @@ import { logExportUrl } from '@app/immersion/api'
 export const LogExportMenu = ({ userId }: { userId: string }) => {
   const [session] = useSession()
 
-  if (session?.identity?.id !== userId) {
+  if (session?.id !== userId) {
     return null
   }
 

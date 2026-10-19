@@ -55,7 +55,10 @@ deleting data you did not create.
 ## Retained email API
 
 Administrators can inspect their selected tenant with `GET /api/internal/emails`
-and `GET /api/internal/emails/{id}` on its branch host. There is no email UI or
+and `GET /api/internal/emails/{id}` on its branch host once its email gateway
+rule is installed. An unconfigured gateway returns 404 before the API; use only
+an explicitly authorized temporary alias for backend proof and disclose that
+public-route boundary. There is no email UI or
 public send endpoint. Verify a produced email becomes `held` in development,
 read back its template/params as Dev Admin, and confirm Dev Reader and anonymous
 requests are denied. Check `X-Dev-Selected` and the actual API overlay backend.

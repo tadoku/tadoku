@@ -77,10 +77,16 @@ Use the branch main API URL printed by `dev url`, with an allowed HTTPS Origin
 and JSON request bodies. Authv2 screens may be unavailable independently of the
 API. In an owned v2 tenant, request recovery for its Dev Reader, read the held
 `account.recovery` message as Dev Admin through the public cookie gateway,
-follow `params.recovery_url`, set a new password and log in with it. Confirm
+follow `params.recovery_url` and require a `303` to that tenant's authv2
+Settings root. A supplied `return_to` must survive as a query parameter for
+continuation after Settings completion, never as the immediate destination.
+Set a new password and log in with it. Confirm
 actual overlay headers, tenant identity, a fresh secure cookie and rejection of
 the old password and sessions. A second consume and a foreign tenant must fail;
-unknown emails return the same empty `202`. Stale sessions cannot change email
+unknown emails return the same empty `202`. Destinations that cannot fit into
+the complete 2,048-byte Settings URL or 4,096-byte recovery link must fail before
+lookup or consumption, with no truncation and the same result for known and
+unknown emails. Stale sessions cannot change email
 or password, while a valid stale session may still change its display name.
 Email changes must notify the old address and password changes must revoke
 other sessions.

@@ -316,7 +316,7 @@ paths:
                 type: string
                 maxLength: 4096
             Location:
-              description: Allowlisted Settings URL
+              description: Tenant authv2 Settings URL with an optional validated return_to continuation after Settings completion.
               schema:
                 type: string
                 maxLength: 2048
@@ -377,7 +377,8 @@ paths:
           type: string
           maxLength: 2048
           format: uri
-        description: Allowlisted destination after recovery; defaults to the tenant authv2 Settings page.
+        description: Allowlisted continuation after Settings completion, preserved in the tenant authv2 Settings URL.
+          Rejected before token consumption if the complete Settings URL exceeds 2048 bytes.
       - in: path
         name: token
         required: true

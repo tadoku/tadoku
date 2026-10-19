@@ -1318,7 +1318,7 @@ type EmailListParams struct {
 
 // IdentityRecoveryConsumeParams defines parameters for IdentityRecoveryConsume.
 type IdentityRecoveryConsumeParams struct {
-	// ReturnTo Allowlisted destination after recovery; defaults to the tenant authv2 Settings page.
+	// ReturnTo Allowlisted continuation after Settings completion, preserved in the tenant authv2 Settings URL. Rejected before token consumption if the complete Settings URL exceeds 2048 bytes.
 	ReturnTo *string `form:"return_to,omitempty" json:"return_to,omitempty"`
 }
 

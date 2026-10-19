@@ -137,16 +137,22 @@ work exceeding that minimum is not hidden.
 The link uses the configured cookie domain and parsed tenant's main API host,
 never the incoming Host. Its path is `/api/internal/identity/recovery/{token}`,
 with the validated destination in an optional `return_to` query. Destinations
-may use the full 2,048-byte input limit; an encoded recovery link exceeding
-the email parameter limit of 4,096 bytes is rejected before any account lookup,
-so this limit cannot disclose account existence. Account and
+have a 2,048-byte input ceiling and must also fit, without truncation, into
+the tenant's Settings URL with an encoded `return_to` query. The complete
+Settings URL must not exceed 2,048 bytes; the encoded recovery link must not
+exceed the email parameter limit of 4,096 bytes. Both bounds are checked before
+any account lookup, identically for known and unknown emails. Account and
 authv2 hosts must use the configured main API URL rather than assume they serve
 relative API paths. The token contains 256 random bits; only its SHA-256 hash is
 stored in `recovery_tokens`, with a one-hour expiry. The email retains the usable
 link under the email feature's existing retention and authorized-read policy.
 
 `GET /identity/recovery/{token}` validates the destination before consuming the
-token. Missing destinations use that tenant's authv2 Settings root. Consumption
+token. It always redirects to that tenant's authv2 Settings root, carrying a
+supplied `return_to` as an encoded query parameter for continuation after the
+user completes Settings. Without it, Location is the Settings root alone.
+An invalid or unrepresentable continuation fails before consuming the token.
+Consumption
 locks the active account, atomically marks the token used, invalidates its other
 recovery tokens, revokes all its existing sessions and creates a fresh session.
 It returns `303`, Location and the normal secure tenant cookie. The fresh
@@ -166,7 +172,13 @@ changes. Re-authenticate through login to get a fresh cookie.
 
 Password settings apply the same parsing and cost-12 bcrypt policy as
 registration, retain the current session, revoke other sessions and invalidate
-pending recovery tokens. Both settings writes and recovery consumption
+pending recovery tokens. Session/app selection, recency checks, password
+validation and hashing finish before the application's transaction opens.
+V1 and guest settings requests return without opening a transaction or calling
+the v1 provider. Inside the transaction, the account lock is followed by another
+session lookup, recency check and password validation against the current email;
+concurrent email changes, expiry and revocation cannot bypass these rules.
+Both settings writes and recovery consumption
 serialize on the account row and recheck session/token state after acquiring
 the lock. Login session creation locks that same row and requires the password
 hash it verified still to match, preventing an in-flight old-password login

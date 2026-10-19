@@ -33,7 +33,21 @@ button or form styles:
 
 ## Forms
 
-Legacy applications use `react-hook-form`. Paper applications use TanStack Form with `usePaperForm` from `paper-ui`. Never keep form fields in plain `useState`.
+Legacy applications use `react-hook-form`. Paper applications use TanStack Form
+with `usePaperForm` from `paper-ui`. Never keep form fields in plain `useState`.
+Keep legacy forms on React Hook Form without bridging the two libraries.
+
+Paper form controls compose through
+`usePaperForm`, `form.AppForm`, `form.Form` and `form.AppField`; render the bound
+control from the field, such as `field.Input`. Screens own default values,
+TanStack validators and submission effects. `required` marks the native control;
+add the corresponding rule to the field or form validators. Number inputs emit
+numbers (an empty input emits `NaN`), checkboxes own booleans or string arrays,
+and autocomplete controls retain their selected objects. Disabled controls keep
+their form values; screen submission handlers decide which data to persist.
+Use `form.reset(values, { keepDefaultValues: true })` to load another draft
+without replacing the hook's default values on the next render.
+Paper consumers require TypeScript 5.4 or newer and the pinned TanStack Form peer.
 
 For legacy applications:
 
@@ -108,19 +122,8 @@ routers out of `paper-ui`. `pnpm check:paper-boundaries` rejects `paper-ui` in
 legacy applications and `ui`, Next.js or Headless UI in Paper code.
 
 Webv3 uses TanStack Start, Router and Query with request-scoped server rendering,
-Zod response validation and TanStack Form. Paper form controls compose through
-`usePaperForm`, `form.AppForm`, `form.Form` and `form.AppField`; render the bound
-control from the field, such as `field.Input`. Screens own default values,
-TanStack validators and submission effects. `required` marks the native control;
-add the corresponding rule to the field or form validators. Number inputs emit
-numbers (an empty input emits `NaN`), checkboxes own booleans or string arrays,
-and autocomplete controls retain their selected objects. Disabled controls keep
-their form values; screen submission handlers decide which data to persist.
-Use `form.reset(values, { keepDefaultValues: true })` to load another draft
-without replacing the hook's default values on the next render.
-Paper consumers require TypeScript 5.4 or newer and the pinned TanStack Form peer.
-Keep legacy forms on React Hook Form without bridging the two libraries. Its data source and local development commands
-are documented in [Webv3](webv3.md).
+Zod response validation and TanStack Form. Its data source and local development
+commands are documented in [Webv3](webv3.md).
 
 ## Checks
 

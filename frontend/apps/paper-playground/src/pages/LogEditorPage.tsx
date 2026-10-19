@@ -1,8 +1,7 @@
 import { useStore } from '@tanstack/react-form'
-import { usePaperForm, Button, EmptyState, Flash, PageHeader, buttonClassName, useToast } from 'paper-ui'
 import { useEffect, useRef, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
-
+import { usePaperForm, Button, EmptyState, Flash, PageHeader, buttonClassName, useToast } from 'paper-ui'
 import { ChevronDownIcon } from 'paper-ui/icons'
 import { compatibleModifiers, contestStatus, formatNumber, modifierRates, personalScoreExplanation, sampleToday, scoreLog, scoreSubmission, supportedLanguages, type Activity, type LogModifier, type LogUnit, type SampleLog } from '../data'
 import { renderLink } from '../routerLink'
@@ -137,7 +136,7 @@ function LogForm({ existing }: { existing?: SampleLog }) {
         {!existing && <RecentLogPicker logs={app.logs.filter(log => log.userId === app.userId)} onSelect={applyRecent} />}
         {origin && <div className="log-editor__reuse-notice" role="status"><div><strong>Using {logTitle(origin)}</strong><p>Details copied. Enter the amount for this new log.</p></div>{beforePrefill && <Button variant="ghost" onClick={undoRecent}>Undo</Button>}</div>}
         <fieldset className="log-editor__section"><legend>What are you logging?</legend><div className="log-editor__fields">
-          <div className="log-editor__row"><methods.AppField name="language" validators={existing ? {} : { onChange: ({ value }) => { if (!value) return 'Choose an option.'; } }}>{field => <field.Select label="Language" disabled={Boolean(existing)} value={existing?.language} required={!existing} options={supportedLanguages.map(value => ({ value, label: value }))} />}</methods.AppField><methods.AppField name="activity">{field => <field.Select label="Activity" disabled={Boolean(existing)} value={existing?.activity} options={[{ value: 'Reading', label: 'Reading' }, { value: 'Listening', label: 'Listening' }]} />}</methods.AppField></div>
+          <div className="log-editor__row"><methods.AppField name="language" validators={existing ? {} : { onChange: ({ value }) => { if (!value) return 'Choose an option.'; } }}>{field => <field.Select label="Language" disabled={Boolean(existing)} required={!existing} options={supportedLanguages.map(value => ({ value, label: value }))} />}</methods.AppField><methods.AppField name="activity">{field => <field.Select label="Activity" disabled={Boolean(existing)} options={[{ value: 'Reading', label: 'Reading' }, { value: 'Listening', label: 'Listening' }]} />}</methods.AppField></div>
           {existing && <p className="log-editor__hint">Language and activity stay fixed for existing entries.</p>}
           <methods.AppField name="title">{field => <field.Input label="What did you read or listen to?" hint="Optional. A book, episode, article, or anything you enjoyed." maxLength={180} />}</methods.AppField>
         </div></fieldset>

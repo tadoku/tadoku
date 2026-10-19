@@ -150,6 +150,12 @@ guard until it has the required protections.
 All HTTP E2E application repositories and the real journey worker use
 `AppPool`; reset, fixture mutations and `verify.sql` keep `Pool`.
 
+Tests using `testing/synctest` create and close every database pool used in the
+bubble inside that same bubble. Copy the fixture pool configuration to preserve
+the owner or restricted application role, then use the new pools for writes,
+worker services and verification SQL. Shared pools can open connections inside
+the bubble and abort the process when their synchronization crosses its boundary.
+
 `services/tadoku-api/e2e/tenant_isolation_test.go` runs signed requests through
 the production JWT/Keto router and real PostgreSQL and Valkey. It covers
 two-way log visibility, duplicate page slugs and synchronized identities,

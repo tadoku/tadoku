@@ -22,6 +22,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/tadoku/tadoku/services/common/postgresconfig"
 	"github.com/tadoku/tadoku/services/tadoku-api/app/worker"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/email"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/observability"
@@ -31,6 +32,7 @@ import (
 )
 
 type config struct {
+	Email                  emailConfig
 	Branch                 string `envconfig:"branch"`
 	Component              string `envconfig:"component"`
 	scope                  jobqueue.Scope
@@ -79,6 +81,10 @@ func loadConfig() (config, error) {
 }
 
 func run(ctx context.Context, cfg config, logger *slog.Logger) error {
+	sender, err := cfg.Email.sender()
+	if err != nil {
+		return fmt.Errorf("configure worker email: %w", err)
+	}
 	startupCtx, cancelStartup := context.WithTimeout(ctx, cfg.DialTimeout)
 	pool, err := postgres.Open(
 		startupCtx,
@@ -116,6 +122,7 @@ func run(ctx context.Context, cfg config, logger *slog.Logger) error {
 		jobqueue.NewService(jobqueue.NewRepository(pool)),
 		leaderboardService,
 		worker.Config{
+			Email:           email.NewService(email.NewRepository(pool), sender),
 			Scope:           cfg.scope,
 			Concurrency:     cfg.Concurrency,
 			ShutdownTimeout: cfg.ShutdownTimeout,

@@ -200,3 +200,14 @@ tadoku-worker replay --id 123 --actor operator-name --reason 'cause repaired'
 These inspection and replay steps do not alter the schema. Schema and SQL data
 migrations follow [Database and migrations](./database.md#migrations), with a
 separate PR and deployment gate before dependent code.
+
+## Retained email maintenance
+
+The worker performs tenant-scoped email retention at startup and daily:
+`tadoku/prod` rows older than three days, other tenant rows older than fourteen
+days. A branch worker cleans only its branch. Every fifteen seconds it also
+reconciles pending email rows whose send jobs exhausted their attempts. This
+is independent of three-calendar-month successful-job cleanup. See
+[Retained email](./email.md) for inspection, production audit records and SMTP
+failure semantics; never inspect production content with unaudited operator
+SQL as a substitute for its read API.

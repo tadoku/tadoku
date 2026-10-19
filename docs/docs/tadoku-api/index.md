@@ -26,7 +26,7 @@ the [API reference](../api/index.md).
 | Profile | The administrator user list | `profile` |
 | Authorization | The current user's role, role management and permission checks | `authz` |
 | Identity | Registration, sessions, recovery and settings skeletons | `identity` |
-| Email | Retained-email read skeletons | `email` |
+| Email | Transactional templates, delivery, audited reads and retention | `email` |
 
 ## Code ownership
 

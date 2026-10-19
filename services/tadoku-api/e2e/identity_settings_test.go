@@ -3,7 +3,10 @@ package e2e_test
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"net/http"
+	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -151,5 +154,75 @@ func TestIdentityRecoveryAndEmailSettingsRollbackOnQueueFailure(t *testing.T) {
 				t.Fatalf("failed enqueue committed identity/email writes: email=%q writes=%d err=%v", email, writes, err)
 			}
 		})
+	}
+}
+
+func TestIdentityPasswordChangeFencesInFlightLogin(t *testing.T) {
+	resetIdentity(t)
+	tx, err := api.db.Pool.Begin(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer tx.Rollback(context.Background())
+	_, err = tx.Exec(t.Context(), `update accounts set password_hash = 'changed-credential'
+		where tenant = $1`, identityBranchA)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var response *httptest.ResponseRecorder
+	atFixtureInstant(func() {
+		request := readHTTPRequest(t, "testdata/BannedUsers/200_guest")
+		contents, err := os.ReadFile("testdata/IdentityV2/tokens.json")
+		if err != nil {
+			t.Fatal(err)
+		}
+		var tokens map[string]string
+		if err := json.Unmarshal(contents, &tokens); err != nil {
+			t.Fatal(err)
+		}
+		request.Method, request.URL.Path = "POST", "/identity/login"
+		request.Body = io.NopCloser(strings.NewReader(`{"email":"reader@example.test","password":"Fixture-login-482!"}`))
+		request.Header.Set("Content-Type", "application/json")
+		request.Header.Set("Origin", "https://tadoku.dev.lab")
+		request.Header.Set("Authorization", "Bearer "+tokens[identityBranchA])
+		response = httptest.NewRecorder()
+		finished := make(chan struct{})
+		go func() {
+			defer close(finished)
+			api.handler.ServeHTTP(response, request)
+		}()
+
+		deadline := time.Now().Add(5 * time.Second)
+		waiting := false
+		for time.Now().Before(deadline) {
+			select {
+			case <-finished:
+				waiting = true
+			default:
+				err = api.db.Pool.QueryRow(t.Context(), `select exists (
+					select 1 from pg_stat_activity
+					where datname = current_database() and wait_event_type = 'Lock'
+					and query like '%insert into sessions%')`).Scan(&waiting)
+				if err != nil {
+					t.Error(err)
+				}
+			}
+			if waiting {
+				break
+			}
+			time.Sleep(5 * time.Millisecond)
+		}
+		if !waiting {
+			t.Error("login never reached the session creation boundary")
+		}
+		if err := tx.Commit(t.Context()); err != nil {
+			t.Error(err)
+		}
+		<-finished
+	})
+	requireIdentityStatus(t, response, http.StatusUnauthorized)
+	if response.Header().Get("Set-Cookie") != "" {
+		t.Fatal("in-flight old-password login minted a session after password replacement")
 	}
 }

@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "application.go",
         "dispatch.go",
+        "emails.go",
         "metrics.go",
         "runtime.go",
     ],

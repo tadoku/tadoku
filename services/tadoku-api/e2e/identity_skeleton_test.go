@@ -20,8 +20,6 @@ func TestIdentitySkeletonRoutes(t *testing.T) {
 		{"GET", "/identity/recovery/recovery-token", ""},
 		{"PATCH", "/identity/settings/profile", `{"display_name":"Reader"}`},
 		{"PUT", "/identity/settings/password", `{"password":"password123"}`},
-		{"GET", "/emails", ""},
-		{"GET", "/emails/11111111-1111-4111-8111-111111111111", ""},
 	}
 	for _, route := range routes {
 		t.Run(route.method+route.path, func(t *testing.T) {

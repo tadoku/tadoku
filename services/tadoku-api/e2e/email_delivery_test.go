@@ -145,7 +145,9 @@ func TestEmailWorkerDelivery(t *testing.T) {
 			key := tenant.Production()
 			if !tc.production {
 				key, _ = tenant.Parse("e2e/email-worker")
-				if _, err := api.db.Pool.Exec(t.Context(), "insert into tenants(key,kind) values ($1,'test')", key.String()); err != nil {
+				if _, err := api.db.Pool.Exec(t.Context(),
+					"insert into tenants(key,kind) values ($1,'test')",
+					key.String()); err != nil {
 					t.Fatal(err)
 				}
 				t.Cleanup(func() {
@@ -158,9 +160,12 @@ func TestEmailWorkerDelivery(t *testing.T) {
 			if !tc.production {
 				scope, _ = jobqueue.OnlyTenant(key)
 			}
-			application, err := worker.NewApplication(jobqueue.NewService(jobqueue.NewRepository(api.db.AppPool)), api.leaderboard, worker.Config{
-				Email: service, Scope: scope, Concurrency: 1, ShutdownTimeout: time.Second, Logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
-			})
+			application, err := worker.NewApplication(jobqueue.NewService(jobqueue.NewRepository(api.db.AppPool)),
+				api.leaderboard,
+				worker.Config{
+					Email: service, Scope: scope, Concurrency: 1, ShutdownTimeout: time.Second, Logger: slog.New(slog.NewTextHandler(io.Discard,
+						nil)),
+				})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -177,7 +182,11 @@ func TestEmailWorkerDelivery(t *testing.T) {
 			for {
 				var status, state string
 				var attempts int
-				err := api.db.Pool.QueryRow(ctx, `select e.status,j.state,j.attempts from emails e join jobs j on j.tenant=e.tenant and j.payload->>'email_id'=e.id::text where e.id=$1`, id).Scan(&status, &state, &attempts)
+				err := api.db.Pool.QueryRow(ctx,
+					`select e.status,j.state,j.attempts from emails e join jobs j on j.tenant=e.tenant and j.payload->>'email_id'=e.id::text where e.id=$1`,
+					id).Scan(&status,
+					&state,
+					&attempts)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -234,7 +243,13 @@ func TestEmailWorkerDelivery(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				for header, want := range map[string]string{"From": "no-reply@tadoku.app", "To": "reader@example.test", "X-SES-SOURCE-ARN": "arn:source", "X-SES-FROM-ARN": "arn:from", "X-SES-RETURN-PATH-ARN": "arn:return", "Message-ID": fmt.Sprintf("<%s@tadoku.app>", id)} {
+				for header, want := range map[string]string{"From": "no-reply@tadoku.app",
+					"To":                    "reader@example.test",
+					"X-SES-SOURCE-ARN":      "arn:source",
+					"X-SES-FROM-ARN":        "arn:from",
+					"X-SES-RETURN-PATH-ARN": "arn:return",
+					"Message-ID": fmt.Sprintf("<%s@tadoku.app>",
+						id)} {
 					if message.Get(header) != want {
 						t.Errorf("header %s=%q want %q", header, message.Get(header), want)
 					}
@@ -255,7 +270,9 @@ func TestEmailGuessedJobTenant(t *testing.T) {
 	productionCtx := tenant.WithKey(t.Context(), tenant.Production())
 	id := writeEmail(t, productionCtx, service, recoveryMail())
 	key, _ := tenant.Parse("e2e/email-guess")
-	if _, err := api.db.Pool.Exec(t.Context(), "insert into tenants(key,kind) values ($1,'test')", key.String()); err != nil {
+	if _, err := api.db.Pool.Exec(t.Context(),
+		"insert into tenants(key,kind) values ($1,'test')",
+		key.String()); err != nil {
 		t.Fatal(err)
 	}
 	defer func() {

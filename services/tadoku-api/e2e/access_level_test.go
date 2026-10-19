@@ -29,8 +29,8 @@ var operationAccess = map[string]accessLevel{
 	"IdentityRecoveryConsume":    accessPublic,
 	"IdentityProfileUpdate":      accessPublic,
 	"IdentityPasswordUpdate":     accessPublic,
-	"EmailList":                  accessPublic,
-	"EmailGet":                   accessPublic,
+	"EmailList":                  accessAdmin,
+	"EmailGet":                   accessAdmin,
 	"IdentityProxySessionCheck":  accessCallback,
 
 	"ImmersionLogFindByID":     accessPublic,
@@ -114,6 +114,8 @@ var operationAccess = map[string]accessLevel{
 }
 
 var operationFixtures = map[string]string{
+	"EmailList":                 "EmailList",
+	"EmailGet":                  "EmailGet",
 	"IdentityProxySessionCheck": "IdentityProxySessionCheck",
 	"AuthzPermissionCheck":      "AuthzPermissionCheck",
 	"AuthzProxyProxyAdminCheck": "AuthzProxyProxyAdminCheck",

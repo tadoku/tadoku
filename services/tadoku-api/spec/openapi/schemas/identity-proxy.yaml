@@ -1,0 +1,67 @@
+components:
+  schemas:
+    IdentityProxyTraits:
+      type: object
+      properties:
+        email:
+          type: string
+          maxLength: 320
+          format: email
+        display_name:
+          type: string
+          maxLength: 32
+          minLength: 2
+      required:
+      - email
+      - display_name
+    IdentityProxyUser:
+      type: object
+      properties:
+        identity:
+          type: object
+          properties:
+            id:
+              type: string
+              maxLength: 36
+              format: uuid
+            traits:
+              $ref: '#/components/schemas/IdentityProxyTraits'
+          required:
+          - id
+          - traits
+        authenticated_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+      required:
+      - identity
+      - authenticated_at
+      - expires_at
+    IdentityProxyGuest:
+      type: object
+      properties:
+        identity:
+          type: object
+          properties:
+            id:
+              type: string
+              enum:
+              - guest
+          required:
+          - id
+      required:
+      - identity
+    IdentityProxySession:
+      oneOf:
+      - $ref: '#/components/schemas/IdentityProxyGuest'
+      - $ref: '#/components/schemas/IdentityProxyUser'
+    IdentityProxyErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          maxLength: 1000
+      required:
+      - message

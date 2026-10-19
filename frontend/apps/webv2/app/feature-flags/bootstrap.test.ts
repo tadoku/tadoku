@@ -21,7 +21,7 @@ describe('bootstrapFeatureFlagDecisions', () => {
       .fn()
       .mockResolvedValue(
         new Response(
-          JSON.stringify({ decisions: { 'release-log-entry-v2': true } }),
+          JSON.stringify({ decisions: { 'release-log-entry-v2': true, 'identity-v2': false } }),
           { status: 200 },
         ),
       )
@@ -33,7 +33,7 @@ describe('bootstrapFeatureFlagDecisions', () => {
         true,
         request,
       ),
-    ).resolves.toEqual({ 'release-log-entry-v2': true })
+    ).resolves.toEqual({ 'release-log-entry-v2': true, 'identity-v2': false })
     expect(request).toHaveBeenCalledWith(
       'http://oathkeeper-proxy:4455/api/internal/immersion/feature-flags',
       {
@@ -71,7 +71,7 @@ describe('bootstrapFeatureFlagDecisions', () => {
 
     await expect(
       bootstrapFeatureFlagDecisions(undefined, undefined, true, request),
-    ).resolves.toEqual({ 'release-log-entry-v2': false })
+    ).resolves.toEqual({ 'release-log-entry-v2': false, 'identity-v2': false })
     expect(request).not.toHaveBeenCalled()
   })
 
@@ -85,7 +85,7 @@ describe('bootstrapFeatureFlagDecisions', () => {
           throw new Error('provider unavailable')
         },
       ),
-    ).resolves.toEqual({ 'release-log-entry-v2': false })
+    ).resolves.toEqual({ 'release-log-entry-v2': false, 'identity-v2': false })
   })
 
   it('bounds a stalled same-origin bootstrap request', async () => {
@@ -108,7 +108,7 @@ describe('bootstrapFeatureFlagDecisions', () => {
     )
     await vi.advanceTimersByTimeAsync(50)
 
-    await expect(result).resolves.toEqual({ 'release-log-entry-v2': false })
+    await expect(result).resolves.toEqual({ 'release-log-entry-v2': false, 'identity-v2': false })
     expect(request).toHaveBeenCalledWith(
       'http://oathkeeper-proxy:4455/api/internal/immersion/feature-flags',
       expect.objectContaining({ signal: expect.any(AbortSignal) }),
@@ -126,7 +126,7 @@ describe('bootstrapFeatureFlagDecisions', () => {
         false,
         request,
       ),
-    ).resolves.toEqual({ 'release-log-entry-v2': false })
+    ).resolves.toEqual({ 'release-log-entry-v2': false, 'identity-v2': false })
     expect(request).not.toHaveBeenCalled()
   })
 
@@ -143,7 +143,7 @@ describe('bootstrapFeatureFlagDecisions', () => {
         true,
         request,
       ),
-    ).resolves.toEqual({ 'release-log-entry-v2': false })
+    ).resolves.toEqual({ 'release-log-entry-v2': false, 'identity-v2': false })
     expect(request).not.toHaveBeenCalled()
   })
 
@@ -152,7 +152,7 @@ describe('bootstrapFeatureFlagDecisions', () => {
       new Response(
         JSON.stringify({
           decisions: {
-            'release-log-entry-v2': true,
+            'release-log-entry-v2': true, 'identity-v2': false,
             'unregistered-flag': true,
           },
         }),
@@ -167,6 +167,6 @@ describe('bootstrapFeatureFlagDecisions', () => {
         true,
         request,
       ),
-    ).resolves.toEqual({ 'release-log-entry-v2': true })
+    ).resolves.toEqual({ 'release-log-entry-v2': true, 'identity-v2': false })
   })
 })

@@ -9,9 +9,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/sahilm/fuzzy"
-	kratosclient "github.com/tadoku/tadoku/services/tadoku-api/infra/kratos"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
+	requestidentity "github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
 )
 
@@ -19,10 +19,15 @@ type Service struct {
 	repository *Repository
 	cache      *UserCache
 	roles      *permissions.KetoService
-	identities *kratosclient.Client
+	identities identity.LegacyReader
 }
 
-func NewService(repository *Repository, cache *UserCache, roles *permissions.KetoService, identities *kratosclient.Client) *Service {
+func NewService(
+	repository *Repository,
+	cache *UserCache,
+	roles *permissions.KetoService,
+	identities identity.LegacyReader,
+) *Service {
 	return &Service{
 		repository: repository,
 		cache:      cache,
@@ -31,8 +36,8 @@ func NewService(repository *Repository, cache *UserCache, roles *permissions.Ket
 	}
 }
 
-func (s *Service) SynchronizeUser(ctx context.Context, user *identity.User, now time.Time) (uuid.UUID, error) {
-	userID, ok := identity.ActorID(ctx)
+func (s *Service) SynchronizeUser(ctx context.Context, user *requestidentity.User, now time.Time) (uuid.UUID, error) {
+	userID, ok := requestidentity.ActorID(ctx)
 	if !ok {
 		return uuid.Nil, errx.NewInternalError("invalid signed user identity")
 	}
@@ -180,7 +185,7 @@ func (s *Service) FetchAccountCreatedAt(ctx context.Context, userID uuid.UUID) (
 }
 
 func mapIdentityFetchError(err error) error {
-	if errors.Is(err, kratosclient.ErrNotFound) {
+	if errors.Is(err, identity.ErrLegacyNotFound) {
 		return ErrIdentityNotFound
 	}
 	return errx.NewUnavailableError("fetch identity", err)

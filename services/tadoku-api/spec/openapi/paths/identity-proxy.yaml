@@ -1,0 +1,54 @@
+paths:
+  /identity/internal/v1/session:
+    get:
+      operationId: IdentityProxySessionCheck
+      summary: Oathkeeper session check for the selected tenant
+      description: Requires the Oathkeeper callback bearer. Resolves X-Dev-Branch and forwards the v1
+        cookie to Kratos, or resolves the v2 tenant cookie. Missing or invalid sessions return 200 with
+        identity.id guest, including unrelated cookies. Preserves the Kratos whoami shape for users.
+      tags:
+      - identity-session
+      security:
+      - IdentityProxyoathkeeperCallbackAuth: []
+      parameters:
+      - in: header
+        name: Cookie
+        schema:
+          type: string
+          maxLength: 8192
+      - in: header
+        name: X-Dev-Branch
+        schema:
+          type: string
+          maxLength: 113
+      responses:
+        '200':
+          description: Session or guest
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityProxySession'
+        '401':
+          description: Missing or invalid callback credential
+        '421':
+          description: Tenant not served
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityProxyErrorResponse'
+        '501':
+          description: Not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityProxyErrorResponse'
+        '503':
+          description: Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityProxyErrorResponse'
+      x-tadoku-source: IdentityProxy
+      x-tadoku-exposure: callback
+      x-legacy-path: /internal/v1/session
+      x-legacy-operation-id: sessionCheck

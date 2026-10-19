@@ -26,7 +26,7 @@ go_test(
     ],
     deps = [
         ":kratosidentity",
-        "//services/tadoku-api/infra/kratos",
+        "//services/tadoku-api/features/identity",
         "//services/tadoku-api/internal/tenant",
         "//services/tadoku-api/internal/testkratos",
         "@com_github_google_uuid//:uuid",

@@ -4,15 +4,15 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	kratosclient "github.com/tadoku/tadoku/services/tadoku-api/infra/kratos"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
+	requestidentity "github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
 )
 
 type Service struct {
 	permissions       *permissions.Checker
-	users             *kratosclient.Client
+	users             identity.LegacyReader
 	roles             *permissions.KetoService
 	roleManager       *permissions.KetoManager
 	publicPermissions PublicPermissionAllowlist
@@ -20,7 +20,7 @@ type Service struct {
 
 func NewService(
 	permissions *permissions.Checker,
-	users *kratosclient.Client,
+	users identity.LegacyReader,
 	roles *permissions.KetoService,
 	roleManager *permissions.KetoManager,
 	publicPermissions PublicPermissionAllowlist,
@@ -43,7 +43,7 @@ func (s *Service) ProxyAdminCheck(ctx context.Context, subject uuid.UUID) (bool,
 }
 
 func (s *Service) CurrentUserRole(ctx context.Context) (Role, error) {
-	user := identity.FromContext(ctx)
+	user := requestidentity.FromContext(ctx)
 	if user.Subject == "" || user.Subject == "guest" {
 		return RoleGuest, nil
 	}

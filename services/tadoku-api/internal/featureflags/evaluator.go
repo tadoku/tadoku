@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
 type EvaluationRequest struct {
@@ -109,13 +110,50 @@ func (e *Evaluator) Boolean(ctx context.Context, flag BooleanFlag, subject strin
 		return defaultResult(EvaluationReasonProviderError, true)
 	}
 
-	result, err := e.provider.EvaluateBoolean(ctx, EvaluationRequest{
+	return e.evaluate(ctx, flag, EvaluationRequest{
 		FlagKey:  definition.key,
 		EntityID: userID.String(),
-		Context: map[string]string{
-			"authenticated": "true",
-		},
-	})
+		Context:  map[string]string{"authenticated": "true"},
+	}, started, defaultResult)
+}
+
+func (e *Evaluator) TenantBoolean(ctx context.Context, flag BooleanFlag) bool {
+	started := e.now()
+	fallback := func(reason EvaluationReason, isError bool) bool {
+		e.observe(Observation{
+			Flag:     flag,
+			Enabled:  flag.SafeDefault(),
+			Reason:   reason,
+			Source:   EvaluationSourceDefault,
+			Duration: e.now().Sub(started),
+			Err:      isError,
+		})
+		return flag.SafeDefault()
+	}
+	if flag.Key() == "" {
+		return fallback(EvaluationReasonInvalidFlag, true)
+	}
+	if ctx.Err() != nil {
+		return fallback(EvaluationReasonCanceled, true)
+	}
+	key, ok := tenant.FromContext(ctx)
+	if !ok {
+		return fallback(EvaluationReasonInvalidIdentity, true)
+	}
+	if e.provider == nil {
+		return fallback(EvaluationReasonProviderError, true)
+	}
+	return e.evaluate(ctx, flag, EvaluationRequest{FlagKey: flag.Key(), EntityID: key.String()}, started, fallback)
+}
+
+func (e *Evaluator) evaluate(
+	ctx context.Context,
+	flag BooleanFlag,
+	request EvaluationRequest,
+	started time.Time,
+	defaultResult func(EvaluationReason, bool) bool,
+) bool {
+	result, err := e.provider.EvaluateBoolean(ctx, request)
 	if err != nil {
 		if errors.Is(err, ErrFlagNotFound) {
 			return defaultResult(EvaluationReasonNotFound, false)

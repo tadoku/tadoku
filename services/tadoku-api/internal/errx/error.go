@@ -13,6 +13,7 @@ const (
 	NotFound
 	Conflict
 	Unavailable
+	NotImplemented
 )
 
 type Error struct {
@@ -73,3 +74,5 @@ func KindOf(err error) Kind {
 	}
 	return Unknown
 }
+
+func NewNotImplementedError() *Error { return &Error{kind: NotImplemented, message: "not implemented"} }

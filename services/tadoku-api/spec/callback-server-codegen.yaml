@@ -6,4 +6,5 @@ generate:
 output-options:
   include-operation-ids:
     - AuthzProxyProxyAdminCheck
+    - IdentityProxySessionCheck
   nullable-type: true

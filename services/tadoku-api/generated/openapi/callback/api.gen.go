@@ -6,27 +6,152 @@
 package callback
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
+	"github.com/oapi-codegen/runtime"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
+
+// Defines values for IdentityProxyGuestIdentityId.
+const (
+	Guest IdentityProxyGuestIdentityId = "guest"
+)
+
+// Valid indicates whether the value is a known member of the IdentityProxyGuestIdentityId enum.
+func (e IdentityProxyGuestIdentityId) Valid() bool {
+	switch e {
+	case Guest:
+		return true
+	default:
+		return false
+	}
+}
 
 // AuthzProxyProxyAdminCheckRequest defines model for AuthzProxyProxyAdminCheckRequest.
 type AuthzProxyProxyAdminCheckRequest struct {
 	Subject openapi_types.UUID `json:"subject"`
 }
 
+// IdentityProxyErrorResponse defines model for IdentityProxyErrorResponse.
+type IdentityProxyErrorResponse struct {
+	Message string `json:"message"`
+}
+
+// IdentityProxyGuest defines model for IdentityProxyGuest.
+type IdentityProxyGuest struct {
+	Identity struct {
+		Id IdentityProxyGuestIdentityId `json:"id"`
+	} `json:"identity"`
+}
+
+// IdentityProxyGuestIdentityId defines model for IdentityProxyGuest.Identity.Id.
+type IdentityProxyGuestIdentityId string
+
+// IdentityProxySession defines model for IdentityProxySession.
+type IdentityProxySession struct {
+	union json.RawMessage
+}
+
+// IdentityProxyTraits defines model for IdentityProxyTraits.
+type IdentityProxyTraits struct {
+	DisplayName string              `json:"display_name"`
+	Email       openapi_types.Email `json:"email"`
+}
+
+// IdentityProxyUser defines model for IdentityProxyUser.
+type IdentityProxyUser struct {
+	AuthenticatedAt time.Time `json:"authenticated_at"`
+	ExpiresAt       time.Time `json:"expires_at"`
+	Identity        struct {
+		Id     openapi_types.UUID  `json:"id"`
+		Traits IdentityProxyTraits `json:"traits"`
+	} `json:"identity"`
+}
+
+// IdentityProxySessionCheckParams defines parameters for IdentityProxySessionCheck.
+type IdentityProxySessionCheckParams struct {
+	Cookie     *string `json:"Cookie,omitempty"`
+	XDevBranch *string `json:"X-Dev-Branch,omitempty"`
+}
+
 // AuthzProxyProxyAdminCheckJSONRequestBody defines body for AuthzProxyProxyAdminCheck for application/json ContentType.
 type AuthzProxyProxyAdminCheckJSONRequestBody = AuthzProxyProxyAdminCheckRequest
+
+// AsIdentityProxyGuest returns the union data inside the IdentityProxySession as a IdentityProxyGuest
+func (t IdentityProxySession) AsIdentityProxyGuest() (IdentityProxyGuest, error) {
+	var body IdentityProxyGuest
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromIdentityProxyGuest overwrites any union data inside the IdentityProxySession as the provided IdentityProxyGuest
+func (t *IdentityProxySession) FromIdentityProxyGuest(v IdentityProxyGuest) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeIdentityProxyGuest performs a merge with any union data inside the IdentityProxySession, using the provided IdentityProxyGuest
+func (t *IdentityProxySession) MergeIdentityProxyGuest(v IdentityProxyGuest) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsIdentityProxyUser returns the union data inside the IdentityProxySession as a IdentityProxyUser
+func (t IdentityProxySession) AsIdentityProxyUser() (IdentityProxyUser, error) {
+	var body IdentityProxyUser
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromIdentityProxyUser overwrites any union data inside the IdentityProxySession as the provided IdentityProxyUser
+func (t *IdentityProxySession) FromIdentityProxyUser(v IdentityProxyUser) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeIdentityProxyUser performs a merge with any union data inside the IdentityProxySession, using the provided IdentityProxyUser
+func (t *IdentityProxySession) MergeIdentityProxyUser(v IdentityProxyUser) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t IdentityProxySession) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *IdentityProxySession) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// AuthzProxyProxyAdminCheck Authorizes a Kratos subject as a Tadoku administrator
 	// (POST /authz/internal/v1/proxy/admin-check)
 	AuthzProxyProxyAdminCheck(w http.ResponseWriter, r *http.Request)
+	// IdentityProxySessionCheck Oathkeeper session check for the selected tenant
+	// (GET /identity/internal/v1/session)
+	IdentityProxySessionCheck(w http.ResponseWriter, r *http.Request, params IdentityProxySessionCheckParams)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -43,6 +168,66 @@ func (siw *ServerInterfaceWrapper) AuthzProxyProxyAdminCheck(w http.ResponseWrit
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.AuthzProxyProxyAdminCheck(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// IdentityProxySessionCheck operation middleware
+func (siw *ServerInterfaceWrapper) IdentityProxySessionCheck(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params IdentityProxySessionCheckParams
+
+	headers := r.Header
+
+	// ------------- Optional header parameter "Cookie" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("Cookie")]; found {
+		var Cookie string
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "Cookie", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "Cookie", valueList[0], &Cookie, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "Cookie", Err: err})
+			return
+		}
+
+		params.Cookie = &Cookie
+
+	}
+
+	// ------------- Optional header parameter "X-Dev-Branch" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("X-Dev-Branch")]; found {
+		var XDevBranch string
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "X-Dev-Branch", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "X-Dev-Branch", valueList[0], &XDevBranch, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "X-Dev-Branch", Err: err})
+			return
+		}
+
+		params.XDevBranch = &XDevBranch
+
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.IdentityProxySessionCheck(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -173,6 +358,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	}
 
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/authz/internal/v1/proxy/admin-check", wrapper.AuthzProxyProxyAdminCheck)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/identity/internal/v1/session", wrapper.IdentityProxySessionCheck)
 
 	return m
 }
@@ -225,11 +411,94 @@ func (response AuthzProxyProxyAdminCheck503Response) VisitAuthzProxyProxyAdminCh
 	return nil
 }
 
+type IdentityProxySessionCheckRequestObject struct {
+	Params IdentityProxySessionCheckParams
+}
+
+type IdentityProxySessionCheckResponseObject interface {
+	VisitIdentityProxySessionCheckResponse(w http.ResponseWriter) error
+}
+
+type IdentityProxySessionCheck200JSONResponse IdentityProxySession
+
+func (t IdentityProxySessionCheck200JSONResponse) MarshalJSON() ([]byte, error) {
+	return IdentityProxySession(t).MarshalJSON()
+}
+
+func (t *IdentityProxySessionCheck200JSONResponse) UnmarshalJSON(b []byte) error {
+	return (*IdentityProxySession)(t).UnmarshalJSON(b)
+}
+
+func (response IdentityProxySessionCheck200JSONResponse) VisitIdentityProxySessionCheckResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityProxySessionCheck401Response struct {
+}
+
+func (response IdentityProxySessionCheck401Response) VisitIdentityProxySessionCheckResponse(w http.ResponseWriter) error {
+	w.WriteHeader(401)
+	return nil
+}
+
+type IdentityProxySessionCheck421JSONResponse IdentityProxyErrorResponse
+
+func (response IdentityProxySessionCheck421JSONResponse) VisitIdentityProxySessionCheckResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(421)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityProxySessionCheck501JSONResponse IdentityProxyErrorResponse
+
+func (response IdentityProxySessionCheck501JSONResponse) VisitIdentityProxySessionCheckResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(501)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityProxySessionCheck503JSONResponse IdentityProxyErrorResponse
+
+func (response IdentityProxySessionCheck503JSONResponse) VisitIdentityProxySessionCheckResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 	// AuthzProxyProxyAdminCheck Authorizes a Kratos subject as a Tadoku administrator
 	// (POST /authz/internal/v1/proxy/admin-check)
 	AuthzProxyProxyAdminCheck(ctx context.Context, request AuthzProxyProxyAdminCheckRequestObject) (AuthzProxyProxyAdminCheckResponseObject, error)
+	// IdentityProxySessionCheck Oathkeeper session check for the selected tenant
+	// (GET /identity/internal/v1/session)
+	IdentityProxySessionCheck(ctx context.Context, request IdentityProxySessionCheckRequestObject) (IdentityProxySessionCheckResponseObject, error)
 }
 
 type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error)
@@ -295,6 +564,32 @@ func (sh *strictHandler) AuthzProxyProxyAdminCheck(w http.ResponseWriter, r *htt
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(AuthzProxyProxyAdminCheckResponseObject); ok {
 		if err := validResponse.VisitAuthzProxyProxyAdminCheckResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// IdentityProxySessionCheck operation middleware
+func (sh *strictHandler) IdentityProxySessionCheck(w http.ResponseWriter, r *http.Request, params IdentityProxySessionCheckParams) {
+	var request IdentityProxySessionCheckRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.IdentityProxySessionCheck(ctx, request.(IdentityProxySessionCheckRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "IdentityProxySessionCheck")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(IdentityProxySessionCheckResponseObject); ok {
+		if err := validResponse.VisitIdentityProxySessionCheckResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

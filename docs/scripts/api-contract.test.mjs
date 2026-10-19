@@ -1,11 +1,24 @@
 import {readFile} from 'node:fs/promises';
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import YAML from 'yaml';
 import {parseContract, sourceView} from './api-contract.mjs';
 
-const contract = parseContract(await readFile('../services/tadoku-api/spec/openapi.yaml', 'utf8'));
+const contractText = await readFile('../services/tadoku-api/spec/openapi.yaml', 'utf8');
+const contract = parseContract(contractText);
 const serverCodegen = parseContract(await readFile('../services/tadoku-api/spec/server-codegen.yaml', 'utf8'));
 const callbackServerCodegen = parseContract(await readFile('../services/tadoku-api/spec/callback-server-codegen.yaml', 'utf8'));
+
+test('bundled contract has unique YAML anchors', () => {
+  const anchors = new Set();
+  YAML.visit(YAML.parseDocument(contractText), {
+    Node(_, node) {
+      if (!node.anchor) return;
+      assert.ok(!anchors.has(node.anchor), `duplicate YAML anchor: ${node.anchor}`);
+      anchors.add(node.anchor);
+    },
+  });
+});
 
 test('public views cover canonical operations', () => {
   let operations = 0;
@@ -32,8 +45,8 @@ test('public views cover canonical operations', () => {
       if (operation['x-tadoku-exposure'] === 'public') publicOperations++;
     }
   }
-  assert.equal(operations, 70);
-  assert.equal(publicOperations, 69);
+  assert.equal(operations, 81);
+  assert.equal(publicOperations, 79);
 });
 
 test('operations match server generation', () => {

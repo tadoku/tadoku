@@ -53,7 +53,7 @@ Each fragment holds one part of the contract and stays at or under about 16 KB:
 
 - `x-tadoku-sources` defines the documentation views.
   `docs/scripts/api-contract.mjs` builds them from the canonical contract at
-  documentation build time. They keep the four sections and URLs of the
+  documentation build time. They keep the domain sections and URLs of the
   [API reference](../api/index.md); they are views, not four independent
   contracts.
 - Manually registered health and metrics endpoints are inventoried in the
@@ -115,7 +115,10 @@ After changing a contract fragment, run from the repository root:
   different HTTP authentication boundaries.
 - Generated routes register through boundary-specific registrars: business
   routes use JWT authentication and the ban gate, callback routes use callback
-  credentials. Both keep the shared deadlines and observability.
+  credentials. Both keep the shared deadlines and observability. Email GET routes also select
+  a separate token registrar for a `tdk_at_` bearer; its verification skeleton
+  returns the shared `501` error before request decoding. All other credentials
+  on those routes use the ordinary JWT and ban pipeline.
 - The Bazel-built binary has no Go module build-info header, so read the
   oapi-codegen version from `tools/oapi-codegen/go.mod`, not from the generated
   file header.

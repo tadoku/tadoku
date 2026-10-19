@@ -4,16 +4,21 @@ load("@rules_pkg//:pkg.bzl", "pkg_tar")
 
 go_library(
     name = "tadoku-worker_lib",
-    srcs = ["main.go"],
+    srcs = [
+        "email.go",
+        "main.go",
+    ],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/cmd/tadoku-worker",
     visibility = ["//visibility:private"],
     deps = [
         "//services/common/postgresconfig",
         "//services/tadoku-api/app/worker",
+        "//services/tadoku-api/features/email",
         "//services/tadoku-api/features/jobqueue",
         "//services/tadoku-api/features/leaderboard",
         "//services/tadoku-api/infra/observability",
         "//services/tadoku-api/infra/postgres",
+        "//services/tadoku-api/infra/smtp",
         "//services/tadoku-api/infra/valkey",
         "//services/tadoku-api/internal/tenant",
         "@com_github_go_playground_validator_v10//:validator",

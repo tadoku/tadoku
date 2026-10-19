@@ -50,12 +50,26 @@ func TestEmailWriteValidation(t *testing.T) {
 	}{
 		{"unknown", mail.Message{Template: "unknown", Recipient: "reader@example.test"}},
 		{"missing", mail.Message{Template: mail.AccountRecovery, Recipient: "reader@example.test"}},
-		{"unexpected", mail.Message{Template: mail.AccountRecovery, Recipient: "reader@example.test", Params: map[string]string{
-			"recovery_url": "https://tadoku.app/recover", "extra": "secret"}}},
-		{"empty", mail.Message{Template: mail.AccountRecovery, Recipient: "reader@example.test", Params: map[string]string{"recovery_url": ""}}},
-		{"email changed missing", mail.Message{Template: mail.AccountEmailChanged, Recipient: "reader@example.test", Params: map[string]string{"new_email": "new@example.test"}}},
+		{"unexpected",
+			mail.Message{Template: mail.AccountRecovery,
+				Recipient: "reader@example.test",
+				Params: map[string]string{
+					"recovery_url": "https://tadoku.app/recover", "extra": "secret"}}},
+		{"empty",
+			mail.Message{Template: mail.AccountRecovery,
+				Recipient: "reader@example.test",
+				Params:    map[string]string{"recovery_url": ""}}},
+		{"email changed missing",
+			mail.Message{Template: mail.AccountEmailChanged,
+				Recipient: "reader@example.test",
+				Params:    map[string]string{"new_email": "new@example.test"}}},
 	}
-	for _, raw := range []string{"https://evil.test/recover", "javascript:alert(1)", "https://tadoku.app.evil.test/recover", "https://tadoku.app@evil.test/", "http://account.tadoku.app/recover", "https://evil.preview.tadoku.app.evil.test/"} {
+	for _, raw := range []string{"https://evil.test/recover",
+		"javascript:alert(1)",
+		"https://tadoku.app.evil.test/recover",
+		"https://tadoku.app@evil.test/",
+		"http://account.tadoku.app/recover",
+		"https://evil.preview.tadoku.app.evil.test/"} {
 		m := recoveryMail()
 		m.Params["recovery_url"] = raw
 		cases = append(cases, struct {
@@ -107,12 +121,14 @@ func TestEmailWriteTransactionAndPayload(t *testing.T) {
 		t.Fatalf("rollback cause=%v", err)
 	}
 	var count int
-	if err := api.db.Pool.QueryRow(ctx, "select (select count(*) from emails)+(select count(*) from jobs)").Scan(&count); err != nil || count != 0 {
+	if err := api.db.Pool.QueryRow(ctx,
+		"select (select count(*) from emails)+(select count(*) from jobs)").Scan(&count); err != nil || count != 0 {
 		t.Fatalf("rollback count=%d err=%v", count, err)
 	}
 	id := writeEmail(t, ctx, service, recoveryMail())
 	var payload []byte
-	if err := api.db.Pool.QueryRow(ctx, "select payload from jobs where task_type='email.send.v1'").Scan(&payload); err != nil {
+	if err := api.db.Pool.QueryRow(ctx,
+		"select payload from jobs where task_type='email.send.v1'").Scan(&payload); err != nil {
 		t.Fatal(err)
 	}
 	var fields map[string]string
@@ -123,16 +139,22 @@ func TestEmailWriteTransactionAndPayload(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if row.Recipient != "reader@example.test" || !strings.Contains(row.Body, recoveryMail().Params["recovery_url"]) || row.Subject == "" {
+	if row.Recipient != "reader@example.test" || !strings.Contains(row.Body,
+		recoveryMail().Params["recovery_url"]) || row.Subject == "" {
 		t.Errorf("rendered row=%+v", row)
 	}
 	if _, ok := row.Delivery.(email.Pending); !ok {
 		t.Errorf("delivery=%T", row.Delivery)
 	}
-	changed := mail.Message{Template: mail.AccountEmailChanged, Recipient: "old@example.test", Params: map[string]string{"new_email": "new@example.test", "changed_at": "2026-10-19T12:00:00Z"}}
+	changed := mail.Message{Template: mail.AccountEmailChanged,
+		Recipient: "old@example.test",
+		Params: map[string]string{"new_email": "new@example.test",
+			"changed_at": "2026-10-19T12:00:00Z"}}
 	changedID := writeEmail(t, ctx, service, changed)
 	row, err = service.Find(ctx, changedID)
-	if err != nil || !strings.Contains(row.Body, "new@example.test") || !strings.Contains(row.Body, changed.Params["changed_at"]) {
+	if err != nil || !strings.Contains(row.Body,
+		"new@example.test") || !strings.Contains(row.Body,
+		changed.Params["changed_at"]) {
 		t.Fatalf("changed row=%+v err=%v", row, err)
 	}
 }

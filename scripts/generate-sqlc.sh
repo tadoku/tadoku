@@ -5,6 +5,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SQLC_PACKAGES=(
   "services/tadoku-api/infra/postgres/testdata/sqlc"
   "services/tadoku-api/sql/audit"
+  "services/tadoku-api/sql/email"
   "services/tadoku-api/sql/jobqueue"
   "services/tadoku-api/sql/tenantlifecycle"
   "services/tadoku-api/sql/announcements"

@@ -25,6 +25,7 @@ type Config struct {
 type Application struct {
 	runner      *runner
 	leaderboard *leaderboard.Service
+	email       *email.Service
 }
 
 func NewApplication(queue *jobqueue.Service, leaderboard *leaderboard.Service, config Config) (*Application, error) {
@@ -46,14 +47,15 @@ func NewApplication(queue *jobqueue.Service, leaderboard *leaderboard.Service, c
 		config.Metrics = NewMetrics(prometheus.NewRegistry())
 	}
 
-	a := &Application{leaderboard: leaderboard}
-	handlers, err := registrations(a.InvalidateContestLeaderboard, a.InvalidateOfficialLeaderboard)
+	a := &Application{leaderboard: leaderboard, email: config.Email}
+	handlers, err := registrations(a.InvalidateContestLeaderboard, a.InvalidateOfficialLeaderboard, a.SendEmail)
 	if err != nil {
 		return nil, err
 	}
 
 	a.runner = &runner{
 		scope:           config.Scope,
+		email:           config.Email,
 		queue:           queue,
 		handlers:        handlers,
 		logger:          config.Logger,
@@ -68,6 +70,7 @@ func NewApplication(queue *jobqueue.Service, leaderboard *leaderboard.Service, c
 func registrations(
 	invalidateContest func(context.Context, jobs.InvalidateContestLeaderboardV1) error,
 	invalidateOfficial func(context.Context, jobs.InvalidateOfficialLeaderboardV1) error,
+	sendEmail func(context.Context, jobs.SendEmailV1) error,
 ) (*registry, error) {
 	leaderboardPolicy := policy{
 		Concurrency: 2,
@@ -77,6 +80,7 @@ func registrations(
 	return newRegistry(
 		handle(invalidateContest, leaderboardPolicy),
 		handle(invalidateOfficial, leaderboardPolicy),
+		handle(sendEmail, policy{Concurrency: 2, Timeout: 20 * time.Second, MaxAttempts: 5}),
 	)
 }
 
@@ -96,7 +100,7 @@ func (a *Application) Run(ctx context.Context) error {
 }
 
 func Replay(ctx context.Context, queue *jobqueue.Service, id int64, actor, reason string) (int64, error) {
-	handlers, err := registrations(ignoreJob[jobs.InvalidateContestLeaderboardV1], ignoreJob[jobs.InvalidateOfficialLeaderboardV1])
+	handlers, err := registrations(ignoreJob[jobs.InvalidateContestLeaderboardV1], ignoreJob[jobs.InvalidateOfficialLeaderboardV1], ignoreJob[jobs.SendEmailV1])
 	if err != nil {
 		return 0, err
 	}
@@ -104,3 +108,11 @@ func Replay(ctx context.Context, queue *jobqueue.Service, id int64, actor, reaso
 }
 
 func ignoreJob[J jobs.Job](context.Context, J) error { return nil }
+
+func (a *Application) SendEmail(ctx context.Context, job jobs.SendEmailV1) error {
+	if a.email == nil {
+		return errors.New("worker email service is not configured")
+	}
+	final, _ := ctx.Value(finalAttemptKey{}).(bool)
+	return a.email.SendAttempt(ctx, job.EmailID, final)
+}

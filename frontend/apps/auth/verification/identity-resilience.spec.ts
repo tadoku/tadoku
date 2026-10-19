@@ -20,7 +20,7 @@ for (const status of [403, 501, 503, 'timeout']) {
       await expect(page.getByText('Unhandled Runtime Error')).toHaveCount(0)
       if (app === 'auth') await expect(page.getByRole('textbox')).toHaveCount(0)
       if (app === 'admin') await expect(page.getByRole('link', { name: 'Users', exact: true })).toHaveCount(0)
-      await page.screenshot({ path: `${process.env.IDENTITY_UI_EVIDENCE}/${app}-${status}.png` })
+      await page.screenshot({ animations: 'disabled', path: `${process.env.IDENTITY_UI_EVIDENCE}/${app}-${status}.png` })
     }
   })
 }
@@ -46,7 +46,7 @@ test('reader cannot render admin controls', async ({ page }) => {
   await page.goto(`${origins.admin}/users`)
   await expect(page.getByRole('heading', { name: 'Access Denied' })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Users', exact: true })).toHaveCount(0)
-  await page.screenshot({ path: `${process.env.IDENTITY_UI_EVIDENCE}/admin-reader-denied.png` })
+  await page.screenshot({ animations: 'disabled', path: `${process.env.IDENTITY_UI_EVIDENCE}/admin-reader-denied.png` })
 })
 
 test('banned screen keeps logout failure visible without losing session', async ({ page }) => {
@@ -56,7 +56,7 @@ test('banned screen keeps logout failure visible without losing session', async 
   await page.getByRole('button', { name: 'Log out' }).click()
   await expect(page.getByText('Log out failed. Please try again.')).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Account Suspended' })).toBeVisible()
-  await page.screenshot({ path: `${process.env.IDENTITY_UI_EVIDENCE}/banned-logout-failure.png` })
+  await page.screenshot({ animations: 'disabled', path: `${process.env.IDENTITY_UI_EVIDENCE}/banned-logout-failure.png` })
 })
 
 test('account links follow tenant mode and auth preserves deep-link redirect', async ({ page, request }) => {

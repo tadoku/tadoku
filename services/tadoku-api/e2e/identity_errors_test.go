@@ -5,17 +5,11 @@ import (
 	"log/slog"
 	"net/http"
 	"testing"
-
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func TestIdentityV2InfrastructureErrorBody(t *testing.T) {
 	resetIdentity(t)
-	pool, err := pgxpool.NewWithConfig(t.Context(), api.db.AppPool.Config())
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(pool.Close)
+	pool := openUnreachablePool(t, api.db.AppPool.Config().ConnString())
 	handler, _, _, err := newTestRouterWithLogger(
 		t.Context(),
 		pool,
@@ -27,8 +21,6 @@ func TestIdentityV2InfrastructureErrorBody(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	pool.Close()
-
 	response := identityRequest(t, handler, identityBranchA, "GET", "/identity/session", "",
 		"tadoku_session_tadoku_identity-a-0123abcd=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", nil)
 	requireIdentityStatus(t, response, http.StatusServiceUnavailable)

@@ -63,7 +63,7 @@ notification configuration.
 
 - The repository's existing CI publishes the GHCR runtime and migration images.
   Do not add another build or push pipeline.
-- Backend images and Webv3 select `latest` in
+- Backend images, Webv3 and authv2 select `latest` in
   `k8s/dev/base/kustomization.yaml`; Webv2, auth and admin select reviewed
   immutable commit tags. The development Image Updater uses the **digest**
   strategy and writes the immutable resolutions back to that file.
@@ -72,6 +72,12 @@ notification configuration.
 - Webv3 tracks its published `latest` digest independently at
   `https://next.tadoku.dev.lab`. Its deployment keeps the canonical Webv2 host
   available for product journeys linked from the preview.
+- Before authv2's first deployment, the maintainer must make the newly published
+  `ghcr.io/tadoku/tadoku/frontend-authv2` package public and verify an anonymous
+  pull. Enroll authv2 in the homelab Image Updater with the digest strategy and
+  write-back to `k8s/dev/base/kustomization.yaml`; require an immutable digest
+  resolution before deploying the base. Image Updater configuration lives in
+  the homelab infrastructure repository, outside this repository.
 - Hook migration images need Image Updater's `force-update`, because successful
   Jobs are removed from the live resource list.
 - Kustomize mirrors the migration image digest into a top-level annotation on
@@ -294,7 +300,11 @@ its YAML parser. The harness runs the real published migration images in
 isolated, resource-bounded Docker containers, not a nested Kubernetes cluster.
 The `verify-dev-base` workflow runs the same harness for changes to development
 manifests and migration inputs, retaining `development-base-evidence` even on
-failure. It needs no cluster credentials.
+failure. It always builds authv2 from the tested revision and substitutes that
+local image through `TADOKU_BASE_AUTHV2_IMAGE`, so this check covers source changes
+without requiring prior publication. Other images remain published inputs.
+Authv2 publication, registry visibility and Image Updater remain separate
+maintainer gates. The harness needs no cluster credentials.
 
 - It records the source revision, worktree status, rendered-manifest hash,
   exact image digests, commands and results in `report.json`, with individual

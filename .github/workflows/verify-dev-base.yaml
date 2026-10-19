@@ -55,7 +55,7 @@ jobs:
         working-directory: frontend
         run: pnpm install --frozen-lockfile --ignore-scripts
 
-      - name: Build authv2 from this revision before its first publication
+      - name: Build authv2 from the tested revision for isolated E2E
         run: docker build --platform linux/amd64 -f apps/authv2/Dockerfile -t tadoku-authv2:base-check .
         working-directory: frontend
 

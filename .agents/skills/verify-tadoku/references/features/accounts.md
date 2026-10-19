@@ -52,13 +52,16 @@ fresh tokens on login, persistence, rejection after logout, and isolation from
 base and another branch. Send a JSON content type and an allowed HTTPS Origin.
 Record `account_app`; an unset `identity-v2` decision remains `v1`.
 
-The API overlay supplies its development cookie domain and Kratos public URL.
+The base API and overlays supply the development cookie domain and Kratos public
+URL.
 Recovery/settings, email/token routes and account lookup/search are still
 skeletons. Gateway exposure of `/identity` and the Oathkeeper callback switch are
 separate prerequisites: record a gateway 404 explicitly instead of treating an
 API port-forward as the public journey. Branch v2 flag provisioning must use an
-authorized owner/tenant mechanism; never edit canonical flag policy or shared
-Kratos sessions to exercise local account behavior. Backend E2Es use real,
+authorized owner/tenant mechanism. A temporary, uncommitted `identity-v2` seed
+in the checkout before `dev up` is confined to that owner's test namespace;
+restore it after teardown and never apply it to canonical Flipt. Never edit
+canonical flag policy or shared Kratos sessions to exercise local account behavior. Backend E2Es use real,
 disposable providers and a tenant-aware Flipt fixture.
 
 ## Source anchors

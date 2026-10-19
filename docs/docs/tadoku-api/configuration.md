@@ -88,7 +88,8 @@ base deployments leave `API_BRANCH` unset.
 `API_IDENTITY_TRUSTED_PROXY_CIDRS` is an optional comma-separated list of
 IP prefixes. Only a connection from those prefixes may supply `X-Real-IP` for
 login throttling; configure only proxies whose edge overwrites that header.
-The default trusts no forwarding header. Malformed prefixes fail startup.
+The default trusts no forwarding header; clients behind an unconfigured proxy
+share that proxy's peer-IP budget. Malformed prefixes fail startup.
 
 ### Keto and Kratos
 
@@ -105,7 +106,7 @@ The default trusts no forwarding header. Malformed prefixes fail startup.
   the identity session adapter. Configure it before moving session callers to
   the identity API; a present v1 cookie fails closed when it is unset.
 - `API_IDENTITY_COOKIE_DOMAIN` (default `tadoku.app`), restricted to
-  `tadoku.app` or `tadoku.dev.lab`. Development API overlays set the latter.
+  `tadoku.app` or `tadoku.dev.lab`. The development base API and overlays set the latter.
 - `API_KRATOS_TIMEOUT` (default 2s), a positive total request timeout, including
   reading the response body.
 

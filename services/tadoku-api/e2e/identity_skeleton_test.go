@@ -12,7 +12,10 @@ func TestIdentityRouteAuthentication(t *testing.T) {
 	api.reset(t, "")
 	guest := readHTTPRequest(t, filepath.Join("testdata", APITestName("Authentication", http.StatusOK, "guest")))
 	routes := []struct{ method, path, body string }{
-		{"POST", "/identity/registration", `{"email":"reader@example.test","display_name":"Reader","password":"password123"}`},
+		{
+			"POST", "/identity/registration",
+			`{"email":"reader@example.test","display_name":"Reader","password":"password123"}`,
+		},
 		{"POST", "/identity/login", `{"email":"reader@example.test","password":"password123"}`},
 		{"POST", "/identity/logout", ""},
 		{"GET", "/identity/session", ""},

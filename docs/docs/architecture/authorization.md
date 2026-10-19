@@ -36,17 +36,22 @@ its source is `services/tadoku-api/spec/openapi.yaml`.
 
 V1 Kratos identities and sessions are shared across tenants. Test tenants never
 modify them. `Writer` in `services/tadoku-api/infra/kratosidentity/` is the only
-application path for deactivating an identity, deleting its sessions or deleting
+application path for deactivating an identity, deleting all its sessions or deleting
 the identity itself. It requires a tenant context: `tadoku/prod` applies the
 operation, every other parsed tenant returns `SkippedForTestTenant` and logs
 the tenant and identity ID, and a missing tenant returns an error before making
 a provider request. Repeating an operation against a missing identity succeeds.
 
-The identity read client in `services/tadoku-api/features/identity/kratos` exposes only
-`FetchIdentity`, `UserExists` and `ListIdentities`. The writer has no HTTP entry
-point and is not wired into account deletion. When that flow is added, it must
-use the writer and handle the skipped outcome after deleting the tenant's own
-application data.
+The identity adapter in `services/tadoku-api/features/identity/kratos` separates
+identity reads (`FetchIdentity`, `UserExists`, `ListIdentities`) from session
+operations (`Sessions.Check`, `Sessions.Revoke`). The identity logout operation
+checks the selected Kratos cookie and revokes only that session for the canonical
+tenant. Test-tenant logout clears the browser cookie and leaves shared provider
+sessions active; a missing tenant cannot revoke a session.
+
+The identity writer has no HTTP entry point and is not wired into account
+deletion. When that flow is added, it must use the writer and handle the skipped
+outcome after deleting the tenant's own application data.
 
 ## Keto data model
 
@@ -151,6 +156,13 @@ anonymous visitors and to signed-in users without any grant on their object:
 A test object's `is_banned` permit includes bans inherited from its parents,
 while a ban on the test object applies only to that tenant. The
 current-user-role exception lets a banned user discover its ban.
+
+Public identity entry rules use anonymous authentication with the signed tenant
+and the `id_token` mutator. Their handlers resolve the identity cookie themselves,
+so a banned account can inspect its session and log out without presenting a
+banned user JWT. Protected routes retain cookie-session authentication and the
+normal ban gate. Do not exempt identity paths from the backend ban middleware;
+the gateway must use the anonymous-only identity rule.
 
 ## Checks in application operations
 

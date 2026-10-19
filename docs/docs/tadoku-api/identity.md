@@ -57,10 +57,14 @@ removed. Display names contain 2–32 Unicode characters and at least one visibl
 character. Passwords contain at least 8 characters, use at most 72 UTF-8 bytes,
 and satisfy the Kratos v26.2.0 similarity rule: compare lowercase values, reject
 Levenshtein distance below 5 or a longest common substring exceeding half the
-password length. Password formatting is redacted.
+password length. Minimum length and similarity measure Unicode characters;
+Kratos uses byte lengths for its minimum and substring ratio, so multibyte
+password acceptance can differ. The explicit 72-byte bcrypt limit remains the
+same. Password formatting is redacted.
 
-Registration creates the user, account and initial session in one
-application-owned transaction. The tenant-prefixed email uniqueness constraint
+Registration evaluates the tenant flag, validates input, hashes the password
+and generates the initial session before acquiring a database connection. One
+SQL statement creates the user, account and session atomically. The tenant-prefixed email uniqueness constraint
 also resolves concurrent registration and differently cased duplicates. A
 conflict returns `409` with `email_taken`, preserving the existing enumeration
 behavior. Password hashes use bcrypt cost 12 and stay inside the identity
@@ -80,7 +84,13 @@ valid `X-Real-IP`; the trusted edge must overwrite that header. Empty proxy
 configuration trusts no forwarded address. Development overlays configure the
 cluster pod prefix; production must configure its own trusted ingress boundary
 before activation. Untrusted peers cannot evade the IP budget with forged
-forwarding headers.
+forwarding headers. With no trusted proxy configured, clients behind the same
+proxy share its peer-IP throttle bucket. This fallback prevents header spoofing
+but can throttle unrelated clients together.
+
+Registration does not use the login counters. It still performs cost-12 bcrypt
+work per valid submission; registration abuse controls remain a security-review
+and caller-flow concern before activation.
 
 ## Sessions and cookies
 
@@ -108,7 +118,9 @@ that specific session through the admin API only for the canonical tenant.
 Test tenants clear the browser cookie without mutating shared Kratos state.
 `API_KRATOS_PUBLIC_URL` must be configured before switching callers to v1 session
 lookup; an unset URL fails closed for a present Kratos cookie. Development API
-overlays supply this URL and `API_IDENTITY_COOKIE_DOMAIN=tadoku.dev.lab`.
+base and overlays supply this URL and
+`API_IDENTITY_COOKIE_DOMAIN=tadoku.dev.lab`, including frontend-only branches
+served by the base API.
 
 ## Contracts for the remaining operations
 

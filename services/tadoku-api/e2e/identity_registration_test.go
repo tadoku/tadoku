@@ -12,6 +12,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/featureflags"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
 
 func TestIdentityV2UniqueAccountTenantIsolation(t *testing.T) {
@@ -117,4 +118,54 @@ func TestIdentityRegistrationLeavesPoolAvailableDuringEvaluation(t *testing.T) {
 		handler.ServeHTTP(response, request)
 		requireIdentityStatus(t, response, http.StatusOK)
 	}
+}
+
+func TestIdentityRegistrationPreservesUTCInNonUTCSession(t *testing.T) {
+	resetIdentity(t)
+	config := api.db.AppPool.Config()
+	config.ConnConfig.RuntimeParams["timezone"] = "Asia/Tokyo"
+	pool, err := pgxpool.NewWithConfig(t.Context(), config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer pool.Close()
+
+	var zone string
+	if err := pool.QueryRow(t.Context(), "show timezone").Scan(&zone); err != nil {
+		t.Fatal(err)
+	}
+	if zone != "Asia/Tokyo" {
+		t.Fatalf("database session timezone=%q, want Asia/Tokyo", zone)
+	}
+	handler, _, _, err := newTestRouterWithLogger(
+		t.Context(), pool, pool, api.keto, api.kratos,
+		slog.New(slog.NewTextHandler(io.Discard, nil)),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	instant := time.Date(2026, time.October, 19, 12, 34, 56, 0, time.UTC)
+	timex.TheWorld(instant, func() {
+		response := identityRequest(t, handler, identityBranchA, "POST", "/identity/registration",
+			`{"email":"utc@example.test","display_name":"UTC Reader","password":"Independent-653!"}`, "", nil)
+		requireIdentityStatus(t, response, http.StatusCreated)
+		cookie := response.Result().Cookies()[0]
+
+		response = identityRequest(t, handler, identityBranchA, "GET", "/identity/session", "", cookie.String(), nil)
+		view := identityView(t, response)
+		if view.Account == nil {
+			t.Fatal("registered session has no account")
+		}
+		if !view.Account.CreatedAt.Equal(instant) {
+			t.Errorf("session account created_at=%s, want %s", view.Account.CreatedAt, instant)
+		}
+
+		response = identityRequest(t, handler, identityBranchA, "POST", "/identity/login",
+			`{"email":"utc@example.test","password":"Independent-653!"}`, "", nil)
+		view = identityView(t, response)
+		if view.Account == nil || !view.Account.CreatedAt.Equal(instant) {
+			t.Errorf("login account=%+v, want created_at=%s", view.Account, instant)
+		}
+	})
 }

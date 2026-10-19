@@ -71,7 +71,8 @@ use the provider-free `identity.Reader` contract.
 graph. Each allowed package covers only its own targets, not subpackages, and
   startup here means `cmd/tadoku-api` and `cmd/tadoku-tenant`:
 
-- Only `features/leaderboard`, `services/tadoku-api/infra/valkey`, startup, E2E
+- Only `features/leaderboard`, `features/identity` (login throttling),
+  `services/tadoku-api/infra/valkey`, startup, E2E
   and the `app/worker:worker_test` and
   `app/tenantlifecycle:tenantlifecycle_test` targets may depend directly on `valkey-go`.
   The worker test needs a raw client because `leaderboard.NewCache` takes
@@ -87,7 +88,9 @@ graph. Each allowed package covers only its own targets, not subpackages, and
   `services/tadoku-api/features/profile`,
   `services/tadoku-api/internal/testkratos` and E2E may depend directly on the Kratos SDK.
   The read adapter exposes identity reads without a raw SDK constructor;
-  profile uses its identity models. The writer owns identity writes
+  profile uses its identity models. The identity session adapter also reads the public session endpoint and
+  revokes canonical sessions through the admin endpoint; it enforces the tenant
+  guard before provider writes. The writer owns identity writes
   and requires the explicit canonical tenant before calling the provider.
   Test fixtures own their disposable provider and may arrange its state directly.
 

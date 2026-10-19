@@ -14,6 +14,7 @@ const (
 	Conflict
 	Unavailable
 	NotImplemented
+	Throttled
 )
 
 type Error struct {
@@ -44,6 +45,10 @@ func NewNotFoundError(message string) *Error {
 
 func NewConflictError(message string) *Error {
 	return &Error{kind: Conflict, message: message}
+}
+
+func NewThrottledError(message string) *Error {
+	return &Error{kind: Throttled, message: message}
 }
 
 func NewUnavailableError(message string, cause error) *Error {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	stdhttp "net/http"
+	"strings"
 
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
 	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
@@ -21,7 +22,17 @@ func (s *server) logOperationError(ctx context.Context, operation string, err er
 }
 
 func writeResponseError(w stdhttp.ResponseWriter, request *stdhttp.Request, err error) {
+	var identityError *app.IdentityError
 	switch {
+	case errors.As(err, &identityError):
+		writeJSON(w, errorStatus(request.Context(), err), map[string]string{
+			"code":    identityError.Code,
+			"message": identityError.Error(),
+		})
+	case strings.HasPrefix(request.URL.Path, "/identity/") && errx.KindOf(err) == errx.Unavailable:
+		writeJSON(w, errorStatus(request.Context(), err), map[string]string{"message": "identity service unavailable"})
+	case strings.HasPrefix(request.URL.Path, "/identity/") && errx.KindOf(err) == errx.InvalidInput:
+		writeJSON(w, errorStatus(request.Context(), err), map[string]string{"message": err.Error()})
 	case errx.KindOf(err) == errx.NotImplemented:
 		writeJSON(w, stdhttp.StatusNotImplemented, map[string]string{"message": "not implemented"})
 	case errors.Is(err, app.ErrAccountDeletionInProgress):
@@ -58,6 +69,8 @@ func errorStatus(ctx context.Context, err error) int {
 		return stdhttp.StatusInternalServerError
 	case errx.NotImplemented:
 		return stdhttp.StatusNotImplemented
+	case errx.Throttled:
+		return stdhttp.StatusTooManyRequests
 	case errx.InvalidInput:
 		return stdhttp.StatusBadRequest
 	case errx.Unauthorized:

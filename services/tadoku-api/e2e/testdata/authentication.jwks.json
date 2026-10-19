@@ -95,6 +95,14 @@
       "kid": "tadoku-isolation-journey-cf909639-980b-4cc5-a6c7-5af4b82f6576",
       "use": "sig",
       "alg": "RS256"
+    },
+    {
+      "kty": "RSA",
+      "n": "jwLqWPqm81OQKeD0tPflWUnvldaEANcjTOf1oV8M-ktPNjJNwa4ikF78_uqDSHojezUn5e955qAbCRo9rjsQkEbfMHAL3E4dJDmk1f6pNVfoh_BfgWvTUBONBCDQBsVPb-NHF9cO_bv7hPE8d5AOHN6cRWbwWt5ydnKk7zCvNp0gqPRl8FTCOwoG1pfZt2gcWtp9kEIfiMaawM6-1jthj5OvbYNFhcKNWiRTPLf9iNglfohUZgK2yqRrPN-KH5whilKCUIpaSxziP34pSpKq7FkHjI0ZgtEzvaUvT7K7OC4Myem-xb3tDw8ZGhhFEZxpm_wzrFc6DcgwELgMDkVl1w",
+      "e": "AQAB",
+      "kid": "identity-v2-a-fixture",
+      "use": "sig",
+      "alg": "RS256"
     }
   ]
 }

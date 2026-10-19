@@ -3,6 +3,7 @@ load("@rules_go//go:def.bzl", "go_test")
 go_test(
     name = "e2e_test",
     size = "medium",
+    timeout = "long",
     srcs = [
         "access_journeys_test.go",
         "access_level_test.go",
@@ -41,6 +42,11 @@ go_test(
         "feature_flags_test.go",
         "flipt_tenant_test.go",
         "golden_test.go",
+        "identity_accounts_test.go",
+        "identity_errors_test.go",
+        "identity_isolation_test.go",
+        "identity_providers_test.go",
+        "identity_registration_test.go",
         "identity_skeleton_test.go",
         "journey_test.go",
         "kratos_test.go",
@@ -126,6 +132,7 @@ go_test(
         "//services/tadoku-api/features/contests",
         "//services/tadoku-api/features/email",
         "//services/tadoku-api/features/featureflags",
+        "//services/tadoku-api/features/identity",
         "//services/tadoku-api/features/jobqueue",
         "//services/tadoku-api/features/languages",
         "//services/tadoku-api/features/leaderboard",

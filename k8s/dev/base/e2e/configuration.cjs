@@ -32,6 +32,15 @@ function checkConfiguration({ root, report }, docs) {
   if (envValue(workerContainer, 'WORKER_POSTGRES_DATABASE') !== 'tadoku' || envValue(workerContainer, 'WORKER_LEADERBOARD_CACHE_PREFIX') !== undefined || envValue(apiContainer, 'API_LEADERBOARD_CACHE_PREFIX') !== undefined) throw new Error('Base worker must use the base database and both base processes must use tenant-derived cache without a private-database prefix')
   if (envValue(branchWorker, 'WORKER_POSTGRES_DATABASE') !== '${DEV_VAR_DATABASE}' || envValue(branchWorker, 'WORKER_BRANCH') !== '${DEV_VAR_TENANT}' || envValue(branchWorker, 'WORKER_LEADERBOARD_CACHE_PREFIX') !== undefined) throw new Error('Branch worker must use the resolved shared database and exact tenant without a cache prefix')
   if (envValue(branchApi, 'API_POSTGRES_DATABASE') !== '${DEV_VAR_DATABASE}' || envValue(branchApi, 'API_BRANCH') !== '${DEV_VAR_TENANT}' || envValue(branchApi, 'API_LEADERBOARD_CACHE_PREFIX') !== undefined) throw new Error('Branch API must use the resolved shared database and exact tenant without a cache prefix')
+  const identityEnvironment = {
+    API_KRATOS_PUBLIC_URL: 'http://kratos-public.tdk-dev-kratos',
+    API_IDENTITY_COOKIE_DOMAIN: 'tadoku.dev.lab',
+    API_IDENTITY_TRUSTED_PROXY_CIDRS: '10.53.0.0/24',
+  }
+  for (const [name, expected] of Object.entries(identityEnvironment)) {
+    if (envValue(apiContainer, name) !== expected || envValue(branchApi, name) !== expected) throw new Error(`Base and branch identity configuration must set ${name}=${expected}`)
+  }
+  report.identityEnvironment = identityEnvironment
   const devConfig = Y.parse(fs.readFileSync(path.join(root, '.dev/config.yaml'), 'utf8'))
   const taskNames = new Set(devConfig.tasks.map(task => task.name))
   const hooks = [devConfig.hooks?.beforeUp, devConfig.hooks?.afterDown, ...Object.values(devConfig.hooks?.deployables || {}).flatMap(deployable => [deployable.beforeStart, deployable.afterStop])].flat().filter(Boolean)

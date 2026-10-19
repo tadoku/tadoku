@@ -22,3 +22,9 @@ func NewLegacyReader(url string, options ...kratos.Option) LegacyReader {
 }
 
 func WithHTTPClient(client *http.Client) kratos.Option { return kratos.WithHTTPClient(client) }
+
+type LegacySessions = kratos.Sessions
+
+func NewLegacySessions(publicURL, adminURL string, client *http.Client) *LegacySessions {
+	return kratos.NewSessions(publicURL, adminURL, client)
+}

@@ -5,7 +5,9 @@ go_library(
     srcs = [
         "domain.go",
         "identity_legacy.go",
+        "identity_repository.go",
         "identity_service.go",
+        "identity_throttle_store.go",
         "identity_values.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/features/identity",
@@ -19,8 +21,17 @@ go_library(
     deps = [
         "//services/tadoku-api/domain/mail",
         "//services/tadoku-api/features/identity/kratos",
+        "//services/tadoku-api/generated/sqlc/identity",
+        "//services/tadoku-api/infra/postgres",
         "//services/tadoku-api/internal/errx",
+        "//services/tadoku-api/internal/featureflags",
+        "//services/tadoku-api/internal/tenant",
+        "//services/tadoku-api/internal/timex",
         "@com_github_google_uuid//:uuid",
+        "@com_github_jackc_pgx_v5//:pgx",
+        "@com_github_jackc_pgx_v5//pgxpool",
         "@com_github_ory_kratos_client_go//:kratos-client-go",
+        "@com_github_valkey_io_valkey_go//:valkey-go",
+        "@org_golang_x_crypto//bcrypt",
     ],
 )

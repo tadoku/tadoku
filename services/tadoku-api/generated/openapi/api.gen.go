@@ -5813,34 +5813,6 @@ func (response IdentityLoginCreate403JSONResponse) VisitIdentityLoginCreateRespo
 	return err
 }
 
-type IdentityLoginCreate404JSONResponse IdentityErrorResponse
-
-func (response IdentityLoginCreate404JSONResponse) VisitIdentityLoginCreateResponse(w http.ResponseWriter) error {
-
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
-		return err
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(404)
-	_, err := buf.WriteTo(w)
-	return err
-}
-
-type IdentityLoginCreate409JSONResponse IdentityErrorResponse
-
-func (response IdentityLoginCreate409JSONResponse) VisitIdentityLoginCreateResponse(w http.ResponseWriter) error {
-
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
-		return err
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(409)
-	_, err := buf.WriteTo(w)
-	return err
-}
-
 type IdentityLoginCreate429JSONResponse IdentityErrorResponse
 
 func (response IdentityLoginCreate429JSONResponse) VisitIdentityLoginCreateResponse(w http.ResponseWriter) error {
@@ -5944,62 +5916,6 @@ func (response IdentityLogout403JSONResponse) VisitIdentityLogoutResponse(w http
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(403)
-	_, err := buf.WriteTo(w)
-	return err
-}
-
-type IdentityLogout404JSONResponse IdentityErrorResponse
-
-func (response IdentityLogout404JSONResponse) VisitIdentityLogoutResponse(w http.ResponseWriter) error {
-
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
-		return err
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(404)
-	_, err := buf.WriteTo(w)
-	return err
-}
-
-type IdentityLogout409JSONResponse IdentityErrorResponse
-
-func (response IdentityLogout409JSONResponse) VisitIdentityLogoutResponse(w http.ResponseWriter) error {
-
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
-		return err
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(409)
-	_, err := buf.WriteTo(w)
-	return err
-}
-
-type IdentityLogout429JSONResponse IdentityErrorResponse
-
-func (response IdentityLogout429JSONResponse) VisitIdentityLogoutResponse(w http.ResponseWriter) error {
-
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
-		return err
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(429)
-	_, err := buf.WriteTo(w)
-	return err
-}
-
-type IdentityLogout501JSONResponse IdentityErrorResponse
-
-func (response IdentityLogout501JSONResponse) VisitIdentityLogoutResponse(w http.ResponseWriter) error {
-
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
-		return err
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(501)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -6360,20 +6276,6 @@ func (response IdentityRegistrationCreate403JSONResponse) VisitIdentityRegistrat
 	return err
 }
 
-type IdentityRegistrationCreate404JSONResponse IdentityErrorResponse
-
-func (response IdentityRegistrationCreate404JSONResponse) VisitIdentityRegistrationCreateResponse(w http.ResponseWriter) error {
-
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
-		return err
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(404)
-	_, err := buf.WriteTo(w)
-	return err
-}
-
 type IdentityRegistrationCreate409JSONResponse IdentityErrorResponse
 
 func (response IdentityRegistrationCreate409JSONResponse) VisitIdentityRegistrationCreateResponse(w http.ResponseWriter) error {
@@ -6384,20 +6286,6 @@ func (response IdentityRegistrationCreate409JSONResponse) VisitIdentityRegistrat
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(409)
-	_, err := buf.WriteTo(w)
-	return err
-}
-
-type IdentityRegistrationCreate429JSONResponse IdentityErrorResponse
-
-func (response IdentityRegistrationCreate429JSONResponse) VisitIdentityRegistrationCreateResponse(w http.ResponseWriter) error {
-
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
-		return err
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(429)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -6489,62 +6377,6 @@ func (response IdentitySessionGet403JSONResponse) VisitIdentitySessionGetRespons
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(403)
-	_, err := buf.WriteTo(w)
-	return err
-}
-
-type IdentitySessionGet404JSONResponse IdentityErrorResponse
-
-func (response IdentitySessionGet404JSONResponse) VisitIdentitySessionGetResponse(w http.ResponseWriter) error {
-
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
-		return err
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(404)
-	_, err := buf.WriteTo(w)
-	return err
-}
-
-type IdentitySessionGet409JSONResponse IdentityErrorResponse
-
-func (response IdentitySessionGet409JSONResponse) VisitIdentitySessionGetResponse(w http.ResponseWriter) error {
-
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
-		return err
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(409)
-	_, err := buf.WriteTo(w)
-	return err
-}
-
-type IdentitySessionGet429JSONResponse IdentityErrorResponse
-
-func (response IdentitySessionGet429JSONResponse) VisitIdentitySessionGetResponse(w http.ResponseWriter) error {
-
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
-		return err
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(429)
-	_, err := buf.WriteTo(w)
-	return err
-}
-
-type IdentitySessionGet501JSONResponse IdentityErrorResponse
-
-func (response IdentitySessionGet501JSONResponse) VisitIdentitySessionGetResponse(w http.ResponseWriter) error {
-
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
-		return err
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(501)
 	_, err := buf.WriteTo(w)
 	return err
 }

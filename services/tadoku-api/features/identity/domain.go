@@ -2,6 +2,7 @@ package identity
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
@@ -9,7 +10,13 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
 
-var ErrNotImplemented = errx.NewNotImplementedError()
+var (
+	ErrNotImplemented  = errx.NewNotImplementedError()
+	ErrWrongPassword   = &Error{"wrong_password", errx.NewUnauthorizedError("invalid email or password")}
+	ErrEmailTaken      = &Error{"email_taken", errx.NewConflictError("email is already registered")}
+	ErrThrottled       = &Error{"throttled", errx.NewThrottledError("too many login attempts; try again later")}
+	errAccountNotFound = errors.New("identity account not found")
+)
 
 type AccountApp string
 

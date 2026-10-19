@@ -42,23 +42,33 @@ Branch host selection is independent of shared authentication, and `/kratos` is 
 served by a frontend overlay. Don't mock CSRF, fabricate JWTs or bypass the UI
 login when claiming a browser E2E.
 
-## Identity API skeleton
+## Identity API accounts and sessions
 
-[Identity contracts](../../../../../docs/docs/tadoku-api/identity.md) lists the
-new API and callback routes. They return `501` with the shared JSON error after
-their route group's authentication. Missing JWT credentials return `400`, invalid
-JWTs `401`, and missing/wrong callback credentials `401` before the stub.
-Email list/detail routes accept a verified tenant `email:read` bearer or a
-Keto-authorized administrator; see [Retained email API](admin.md#retained-email-api).
+[Identity accounts and sessions](../../../../../docs/docs/tadoku-api/identity.md)
+describes the local v2 operations and the v1 session adapter. Use an owned
+branch tenant and disposable account for registration, login, session lookup and
+logout. Assert the tenant-specific cookie name, Secure/HttpOnly/SameSite flags,
+fresh tokens on login, persistence, rejection after logout, and isolation from
+base and another branch. Send a JSON content type and an allowed HTTPS Origin.
+Record `account_app`; an unset `identity-v2` decision remains `v1`.
 
+The base API and overlays supply the development cookie domain and Kratos public
+URL.
+Recovery/settings and account lookup/search are still skeletons. Email list/detail
+routes accept a verified tenant `email:read` bearer or a Keto-authorized
+administrator; see [Retained email API](admin.md#retained-email-api).
 The development base exposes identity and GET email paths through separate
-public Oathkeeper rules. Verify that the shared rules and the backend image
-containing the relevant implementation are deployed before testing a branch;
-a frontend overlay does not deploy these shared rules. A read-only API
-port-forward plus a real Oathkeeper decisions JWT can verify server routes, but
-does not prove gateway exposure or a browser login journey. Verify an existing
-public endpoint's `X-Dev-Backend` separately. An unset `identity-v2` flag must
-evaluate false for the branch tenant; do not change shared flag policy to exercise it.
+public Oathkeeper rules. Verify that both the shared rules and the relevant
+backend image are deployed; a frontend overlay does not deploy these rules.
+The public
+identity rule forwards cookies with a guest JWT; the Oathkeeper callback switch
+for other routes remains a separate prerequisite. Confirm actual branch API
+responses rather than treating an API port-forward as the public journey.
+Branch v2 flag provisioning must use an authorized owner/tenant mechanism. A temporary, uncommitted `identity-v2` seed
+in the checkout before `dev up` is confined to that owner's test namespace;
+restore it after teardown and never apply it to canonical Flipt. Never edit
+canonical flag policy or shared Kratos sessions to exercise local account
+behavior. Backend E2Es use real, disposable providers and a tenant-aware Flipt fixture.
 
 ## Source anchors
 

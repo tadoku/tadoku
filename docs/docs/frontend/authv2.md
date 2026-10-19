@@ -91,6 +91,11 @@ proves application HTTP/SSR behavior; it does not prove real authentication,
 Oathkeeper, tenant isolation or shared-cluster routing. TLS verification remains
 enabled. Reports and screenshots go outside source control.
 
+The development-base E2E always builds authv2 from the tested revision and selects
+that local image through `TADOKU_BASE_AUTHV2_IMAGE`. This deliberate source check
+works before or after publication; other images remain published inputs. It does
+not verify authv2 publication, registry visibility or Image Updater.
+
 ## Images and deployment
 
 `frontend/apps/authv2/Dockerfile` builds the standalone Node 22 Nitro runtime.
@@ -106,3 +111,11 @@ Main publication creates commit and `latest` tags; only an owner-approved manual
 workflow dispatch with `publish_production` creates `prod`. The maintainer owns
 production manifests, DNS, certificate readiness and deployment in the separate
 GitOps repository. Preparing manifests does not activate the application.
+
+Before the first development-base deployment, the maintainer must make the newly
+published `ghcr.io/tadoku/tadoku/frontend-authv2` package public and verify an
+anonymous pull. Enroll authv2 in the homelab Image Updater with the digest strategy
+and write-back to `k8s/dev/base/kustomization.yaml`; require an immutable digest
+resolution before deploying the base. The homelab infrastructure repository owns
+that Image Updater configuration. These maintainer actions are separate from
+preparing the manifests in this repository.

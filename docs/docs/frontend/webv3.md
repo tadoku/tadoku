@@ -55,6 +55,8 @@ NODE_EXTRA_CA_CERTS=/usr/local/share/ca-certificates/lab-root-ca.crt pnpm webv3
 The development server uses port 5183 by default. `HOST` and `PORT` override the
 listener. Start a second instance only after checking ownership of existing
 listeners. `predev` builds `paper-ui` before serving the application.
+Nitro's development runner uses `self` to keep SSR in the Vite process and
+avoid racing worker initialization on page requests.
 
 The Lab CA path above is specific to Lab hosts. On another machine, supply its
 trusted Lab CA certificate through `NODE_EXTRA_CA_CERTS`; do not disable TLS

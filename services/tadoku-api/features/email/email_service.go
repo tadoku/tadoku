@@ -7,7 +7,13 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/mail"
 )
 
+type Sender interface {
+	Send(context.Context, uuid.UUID, string, string, string) (string, error)
+}
+
 type Service struct{}
+
+func NewPersistentService(*Repository, Sender) *Service { return NewService() }
 
 var (
 	_ Writer = (*Service)(nil)

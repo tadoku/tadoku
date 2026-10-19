@@ -8,11 +8,13 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/email"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
 )
 
 type Config struct {
+	Email           *email.Service
 	Scope           jobqueue.Scope
 	Concurrency     int
 	ShutdownTimeout time.Duration

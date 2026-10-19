@@ -4,6 +4,7 @@ go_library(
     name = "email",
     srcs = [
         "domain.go",
+        "email_repository.go",
         "email_service.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/features/email",
@@ -14,5 +15,6 @@ go_library(
         "//services/tadoku-api/internal/errx",
         "//services/tadoku-api/internal/tenant",
         "@com_github_google_uuid//:uuid",
+        "@com_github_jackc_pgx_v5//pgxpool",
     ],
 )

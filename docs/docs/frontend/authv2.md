@@ -48,6 +48,9 @@ NODE_EXTRA_CA_CERTS=/usr/local/share/ca-certificates/lab-root-ca.crt pnpm authv2
 
 `predev` builds `paper-ui`; Vite listens on port 5184. Check existing listener
 ownership before starting another instance.
+Nitro's development runner uses `self` so SSR starts in the Vite process and
+page requests do not race worker initialization. Source edits update the browser
+through Vite's live connection.
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
@@ -111,6 +114,10 @@ Main publication creates commit and `latest` tags; only an owner-approved manual
 workflow dispatch with `publish_production` creates `prod`. The maintainer owns
 production manifests, DNS, certificate readiness and deployment in the separate
 GitOps repository. Preparing manifests does not activate the application.
+The canonical `authv2.tadoku.app` DNS record must resolve to the current edge
+before merging the GitOps setup: its gateway, certificate and Oathkeeper
+Applications sync automatically on merge. The authv2 workload still requires
+the maintainer's manual activation and readiness gates.
 
 Before the first development-base deployment, the maintainer must make the newly
 published `ghcr.io/tadoku/tadoku/frontend-authv2` package public and verify an

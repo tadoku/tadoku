@@ -178,20 +178,11 @@ func (*emailClaimPause) TraceBatchEnd(context.Context, *pgx.Conn, pgx.TraceBatch
 func TestEmailWorkerStartupAndDailyRetention(t *testing.T) {
 	api.reset(t, "")
 	synctest.Test(t, func(t *testing.T) {
-		ctx := tenant.WithKey(t.Context(), tenant.Production())
-		service := emailService()
-		startupID := writeEmail(t, ctx, service, recoveryMail())
-		dailyID := writeEmail(t, ctx, service, recoveryMail())
-		for id, age := range map[uuid.UUID]time.Duration{
-			startupID: 4 * 24 * time.Hour,
-			dailyID:   2*24*time.Hour + time.Hour,
-		} {
-			_, err := api.db.Pool.Exec(ctx, `update emails set created_at = $2, status = 'held' where id = $1`,
-				id, timex.Now().Add(-age))
-			if err != nil {
-				t.Fatal(err)
-			}
+		ownerPool, err := pgxpool.NewWithConfig(t.Context(), api.db.Pool.Config())
+		if err != nil {
+			t.Fatal(err)
 		}
+		defer ownerPool.Close()
 
 		pause := &emailClaimPause{started: make(chan struct{}), resume: make(chan struct{})}
 		config := api.db.AppPool.Config()
@@ -201,6 +192,22 @@ func TestEmailWorkerStartupAndDailyRetention(t *testing.T) {
 			t.Fatal(err)
 		}
 		defer pool.Close()
+
+		ctx := tenant.WithKey(t.Context(), tenant.Production())
+		service := email.NewService(email.NewRepository(pool), nil)
+		startupID := writeEmailWithPool(t, ctx, pool, service, recoveryMail())
+		dailyID := writeEmailWithPool(t, ctx, pool, service, recoveryMail())
+		for id, age := range map[uuid.UUID]time.Duration{
+			startupID: 4 * 24 * time.Hour,
+			dailyID:   2*24*time.Hour + time.Hour,
+		} {
+			_, err := ownerPool.Exec(ctx, `update emails set created_at = $2, status = 'held' where id = $1`,
+				id, timex.Now().Add(-age))
+			if err != nil {
+				t.Fatal(err)
+			}
+		}
+
 		scope, _ := jobqueue.AllTenantsExcept(jobqueue.WorkerComponent)
 		application := emailWorker(t, service, jobqueue.NewRepository(pool), scope)
 		workerCtx, cancel := context.WithCancel(t.Context())
@@ -217,7 +224,7 @@ func TestEmailWorkerStartupAndDailyRetention(t *testing.T) {
 		var startupExists, dailyExists bool
 		read := func() {
 			t.Helper()
-			err := api.db.Pool.QueryRow(ctx, `select
+			err := ownerPool.QueryRow(ctx, `select
 				exists(select 1 from emails where id = $1), exists(select 1 from emails where id = $2)`,
 				startupID, dailyID).Scan(&startupExists, &dailyExists)
 			if err != nil {

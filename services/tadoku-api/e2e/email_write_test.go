@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/mail"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/email"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
@@ -28,14 +29,25 @@ func emailService() *email.Service {
 
 func writeEmail(t *testing.T, ctx context.Context, service *email.Service, message mail.Message) uuid.UUID {
 	t.Helper()
+	return writeEmailWithPool(t, ctx, api.db.AppPool, service, message)
+}
+
+func writeEmailWithPool(
+	t *testing.T,
+	ctx context.Context,
+	pool *pgxpool.Pool,
+	service *email.Service,
+	message mail.Message,
+) uuid.UUID {
+	t.Helper()
 	var id uuid.UUID
-	err := postgres.RunInTransaction(ctx, api.db.AppPool, func(ctx context.Context) error {
+	err := postgres.RunInTransaction(ctx, pool, func(ctx context.Context) error {
 		result, err := service.Write(ctx, message)
 		if err != nil {
 			return err
 		}
 		id = result.EmailID
-		return jobqueue.NewService(jobqueue.NewRepository(api.db.AppPool)).Enqueue(ctx, result.Jobs...)
+		return jobqueue.NewService(jobqueue.NewRepository(pool)).Enqueue(ctx, result.Jobs...)
 	})
 	if err != nil {
 		t.Fatal(err)

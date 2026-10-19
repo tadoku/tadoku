@@ -25,7 +25,9 @@ The callback retains its required bearer credential. Kubernetes expands
 expand templates in `additional_headers`. Keep Oathkeeper at `log.level: warn`
 and `leak_sensitive_values: false`: info and debug startup configuration logs
 expose the expanded credential. Do not raise that log level while this override
-is configured. Errors and denied-request warnings remain available.
+is configured. The callback verification entry point rejects unsafe effective
+config and explicit logging environment overrides, including unresolved sources.
+Errors and denied-request warnings remain available.
 
 Run `node k8s/dev/base/e2e/identity-session.cjs <evidence-directory>` to exercise
 the pinned development image with a disposable callback stand-in and dummy
@@ -54,8 +56,15 @@ an activation or a workflow dispatch:
    do not waive that gate to impose an accounts-first order. Confirm callback
    credential compatibility, banned-account session/logout admission, trusted
    branch selection and the required public Kratos URL/proxy configuration.
-2. After independent review, current-head checks and real composed-callback
-   proof pass, obtain separate authorization for the production gateway change.
+2. Land the production public-route and authv2 GitOps preparations under their
+   own authorization first. Refresh the callback GitOps branch onto that main,
+   preserving both the public anonymous identity route and the private session
+   route. Retain the final head/base SHAs, Helm render and image digests; rerun
+   the real-image callback matrix and production identity-proxy proof, and get
+   independent review of that final candidate. After current-head checks and
+   real composed-callback proof pass, obtain separate authorization for that
+   exact refreshed production gateway revision. An earlier preparation head
+   cannot be the activation candidate.
    Merge the approved GitOps revision only after that authorization: the
    `tadoku-oathkeeper` Application tracks main and automatically syncs, prunes and
    self-heals. No manual sync or apply is required or implied.
@@ -67,8 +76,9 @@ an activation or a workflow dispatch:
    verify logs without exposing the credential. Stop if any result is missing
    or mismatched.
 4. Only then is the caller-change source merge eligible. Its development-base
-   gateway switch is automatic on Argo reconciliation; complete its separately
-   approved pre-merge proof and post-merge dev smoke. Source review, current-head
+   gateway switch is automatic on Argo reconciliation; development webv2,
+   admin and auth also switch automatically through their main image publication.
+   Complete the separately approved pre-merge proof and post-merge dev smoke. Source review, current-head
    CI and branch-journey gates must also pass.
 5. Publish webv2, admin and auth production images only with the owner's normal
    publication approval after all prerequisites above. Record the selected

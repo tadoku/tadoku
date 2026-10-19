@@ -12,13 +12,30 @@ const dummy = 'disposable-identity-callback-credential'
 const fixtures = [
   { name: 'dev', image: 'oryd/oathkeeper:v26.2.0', config: Y.parse(fs.readFileSync('k8s/dev/base/oathkeeper/oathkeeper.yaml', 'utf8')), rules: Y.parse(fs.readFileSync('k8s/dev/base/oathkeeper/rules.yaml', 'utf8')), env: Y.parse(fs.readFileSync('k8s/dev/base/oathkeeper/deployment.yaml', 'utf8')).spec.template.spec.containers[0].env },
 ]
-if (process.argv[3]) {
+if (process.argv[3] && process.argv[3] !== '--validate-only') {
   const values = Y.parse(fs.readFileSync(path.join(process.argv[3], 'platform/oathkeeper/values.yaml'), 'utf8'))
   const rendered = Y.parseAllDocuments(harness.run('helm', ['template', 'oathkeeper', 'ory/oathkeeper', '--version', '0.60.1', '--namespace', 'tdk-prod-oathkeeper', '-f', path.join(process.argv[3], 'platform/oathkeeper/values.yaml')])).map(doc => doc.toJSON())
   const deployment = rendered.find(doc => doc.kind === 'Deployment')
   const configMap = rendered.find(doc => doc.kind === 'ConfigMap' && doc.data?.['config.yaml'])
   const container = deployment.spec.template.spec.containers[0]
   fixtures.push({ name: 'prod', image: container.image, config: Y.parse(configMap.data['config.yaml']), rules: Y.parse(values.oathkeeper.accessRules), env: container.env })
+}
+for (const fixture of fixtures) {
+  const logging = { ...fixture.config.log }
+  for (const env of fixture.env) {
+    if (env.name === 'LOG_LEVEL') logging.level = env.valueFrom ? undefined : env.value
+    if (env.name === 'LOG_LEAK_SENSITIVE_VALUES') {
+      logging.leak_sensitive_values = !!env.valueFrom || env.value !== 'false'
+    }
+  }
+  const override = fixture.env.some(env => env.name === 'AUTHENTICATORS_COOKIE_SESSION_CONFIG_ADDITIONAL_HEADERS')
+  if (override && (!['warn', 'error', 'fatal', 'panic'].includes(logging.level) || logging.leak_sensitive_values !== false)) {
+    throw new Error(`${fixture.name}: expanded callback credentials require warn-or-higher logging and leak_sensitive_values: false`)
+  }
+}
+if (process.argv.includes('--validate-only')) {
+  console.log('Oathkeeper effective callback logging is safe')
+  process.exit(0)
 }
 const cases = [
   { name: 'guest', subject: 'guest' },

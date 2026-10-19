@@ -108,16 +108,16 @@ ingress. `/api/internal` uses Oathkeeper before the API, while page and asset
 requests use Webv3. Existing Tadoku subdomain admission and shared account
 cookies cover the preview and branch hosts.
 
-Authv2 shares `tdk-dev-frontend-auth` with distinct selectors. Its base uses
-`tadoku-cli-authv2`; overlays use inline URLs and existing `tadoku-cli-ca`.
-Canonical routes strip branch headers. Public identity rules use anonymous
-authentication and a signed JWT, forwarding Cookie to API-owned auth/CSRF;
-unrelated rules keep session checks. See [Authv2](../frontend/authv2.md).
+Authv2 shares `tdk-dev-frontend-auth` with distinct selectors. It uses
+`tadoku-cli-authv2`; overlays use inline URLs and `tadoku-cli-ca`. Canonical
+routes strip branch headers. Anonymous public identity rules sign a guest JWT
+and forward Cookie to API auth/CSRF; other routes keep session checks.
+See [Authv2](../frontend/authv2.md).
 
 ## Identity session callback
 
-[Identity gateway configuration](identity-gateway.md) covers the callback
-credential, logging boundary, internal SSR route and activation gates.
+[Identity gateway configuration](identity-gateway.md) covers credentials,
+logging, private SSR and activation.
 
 ## Asynchronous worker ownership
 
@@ -195,37 +195,9 @@ management calls.
 
 ## Credentials
 
-There are no plaintext Secret manifests or private keys in `k8s/dev/base/`.
-
-- The Postgres operator generates `tadoku_owner`, `tadoku`, `kratos` and `keto`
-  credentials in `tdk-dev-data`. The owner Secret is named
-  `tadoku-owner.tadoku-dev-db.credentials.postgresql.acid.zalan.do`; the
-  operator replaces underscores in Secret names. The base Tadoku migrations
-  use this owner Secret. Tenant lifecycle Jobs use it for tenant and override
-  writes. API, worker and SQL fixture writes keep the `tadoku` credentials.
-- The Postgres administrator Secret stays in `tdk-dev-data`. The ownership
-  hooks and short-lived branch database creation Job use it. Branch migration
-  tasks use `tadoku_owner`; ordinary tenant tasks do not use administrator
-  credentials. API, worker and fixture seeding use `tadoku`. This
-  is cooperative isolation, not hostile multi-tenancy.
-- `scripts/dev/bootstrap-gitops-secrets.sh` copies only the required
-  credentials, including the owner credential for branch migrations, into
-  consumer namespaces. It targets only `homelab-talos-dev` at
-  `https://omni.lab:8100`. It generates the development-only Kratos runtime
-  secret, Oathkeeper JWKS and Oathkeeper authorization token once, and
-  preserves existing keys on rerun. It needs `kubectl`, `jq` and `node`.
-- The script fails closed on another API server, on namespaces not labeled as
-  part of the development base, and on Secrets with unexpected ownership. It
-  never reads credentials from outside the development GitOps base.
-- Run it only with explicit credential or bootstrap approval.
-- Keep generated keys only in development Kubernetes Secrets or an approved
-  encrypted backup, never in Git or a worktree. Commit only the public Lab CA
-  and Secret references, never private keys, kubeconfigs, tokens or plaintext
-  Secrets.
-
-When operator credentials rotate, rerun the bootstrap script, then perform an
-explicitly approved restart of the consumers. Kubernetes does not refresh
-environment variables in running processes.
+[Development credentials](development-credentials.md) covers generated database
+roles, Secret bootstrap, provider keys and rotation. Bootstrap requires explicit
+approval; keep private keys and Secret contents out of Git.
 
 ## Activation and bootstrap
 

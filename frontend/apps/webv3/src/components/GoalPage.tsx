@@ -1,7 +1,5 @@
-import { useForm, useStore } from '@tanstack/react-form'
-import { Button, PageHeader, Surface, buttonClassName } from 'paper-ui'
-import { CheckIcon, iconClassName } from 'paper-ui/icons'
-import { useMemo, useState, useSyncExternalStore, type ChangeEvent } from 'react'
+import { Button, PageHeader, Surface, buttonClassName, usePaperForm } from 'paper-ui'
+import { useMemo, useState, useSyncExternalStore } from 'react'
 import { z } from 'zod'
 import { useLinks } from '../lib/links'
 
@@ -73,7 +71,7 @@ export function GoalPage() {
   const storedGoal = useSyncExternalStore(subscribeToStorage, readStoredGoal, () => null)
   const saved = useMemo(() => parseGoal(storedGoal), [storedGoal])
   const [result, setResult] = useState<'saved' | 'failed' | null>(null)
-  const form = useForm({
+  const form = usePaperForm({
     // Until hydration the server snapshot is empty; then the stored goal becomes the untouched form's values.
     defaultValues: saved ?? firstGoal,
     validators: { onChange: goalSchema, onSubmit: goalSchema },
@@ -84,9 +82,6 @@ export function GoalPage() {
     },
   })
 
-  // Errors wait for the first save attempt, then follow each change, so they never shift the layout mid-click.
-  const submitted = useStore(form.store, state => state.submissionAttempts > 0)
-
   return (
     <div className="goal-page">
       <PageHeader
@@ -94,70 +89,12 @@ export function GoalPage() {
         lead="Decide how long you want to read or listen each day. Small, steady sessions add up over a round."
       />
       <div className="goal-layout">
-        <form
-          className="goal-form"
-          noValidate
-          onSubmit={event => {
-            event.preventDefault()
-            void form.handleSubmit()
-          }}
-        >
+        <form.AppForm><form.Form className="goal-form">
           <fieldset className="goal-form__controls" disabled={!hydrated}>
-            <form.Field name="activity">
-              {field => (
-                <fieldset className="paper-choice-field paper-radio-select paper-radio-select--segmented">
-                  <legend className="paper-field__label">Activity</legend>
-                  <div className="paper-choice-list">
-                    {activities.map(activity => (
-                      <label className="paper-radio-select__segment" key={activity.value}>
-                        <input
-                          type="radio"
-                          name={field.name}
-                          value={activity.value}
-                          checked={field.state.value === activity.value}
-                          onChange={() => field.handleChange(activity.value)}
-                          onBlur={field.handleBlur}
-                        />
-                        <span className="paper-radio-select__label">{activity.label}</span>
-                        <CheckIcon className={iconClassName('compact', 'paper-radio-select__check')} aria-hidden="true" />
-                      </label>
-                    ))}
-                  </div>
-                </fieldset>
-              )}
-            </form.Field>
-
+            <form.AppField name="activity">{field => <field.RadioSelect label="Activity" variant="segmented" options={activities} />}</form.AppField>
             <div className="goal-form__row">
-              <form.Field name="minutes">
-                {field => (
-                  <NumberField
-                    id="goal-minutes"
-                    label="Minutes each day"
-                    hint="Between 5 and 600."
-                    min={5}
-                    max={600}
-                    value={field.state.value}
-                    error={submitted ? errorText(field.state.meta.errors) : undefined}
-                    onChange={event => field.handleChange(event.target.valueAsNumber)}
-                    onBlur={field.handleBlur}
-                  />
-                )}
-              </form.Field>
-              <form.Field name="days">
-                {field => (
-                  <NumberField
-                    id="goal-days"
-                    label="Days each week"
-                    hint="Between 1 and 7."
-                    min={1}
-                    max={7}
-                    value={field.state.value}
-                    error={submitted ? errorText(field.state.meta.errors) : undefined}
-                    onChange={event => field.handleChange(event.target.valueAsNumber)}
-                    onBlur={field.handleBlur}
-                  />
-                )}
-              </form.Field>
+              <form.AppField name="minutes">{field => <field.Input id="goal-minutes" label="Minutes each day" hint="Between 5 and 600." type="number" inputMode="numeric" min={5} max={600} step={1} />}</form.AppField>
+              <form.AppField name="days">{field => <field.Input id="goal-days" label="Days each week" hint="Between 1 and 7." type="number" inputMode="numeric" min={1} max={7} step={1} />}</form.AppField>
             </div>
 
             <div className="goal-actions">
@@ -167,7 +104,7 @@ export function GoalPage() {
               </p>
             </div>
           </fieldset>
-        </form>
+        </form.Form></form.AppForm>
 
         <aside className="goal-aside" aria-label="Your goal">
           {saved ? <GoalSummary goal={saved} /> : null}
@@ -194,45 +131,5 @@ function GoalSummary({ goal }: { goal: Goal }) {
       <p className="goal-summary__note">Saved in this browser.</p>
       <a href={links.logs} className={buttonClassName({ variant: 'outline' })}>Log activity</a>
     </Surface>
-  )
-}
-
-function errorText(errors: readonly unknown[]) {
-  const error = errors[0]
-  return typeof error === 'string' ? error : (error as { message?: string } | undefined)?.message
-}
-
-/** Paper's field recipe on a native number input, so any form library can own the value. */
-function NumberField({ id, label, hint, min, max, value, error, onChange, onBlur }: {
-  id: string
-  label: string
-  hint: string
-  min: number
-  max: number
-  value: number
-  error?: string
-  onChange: (event: ChangeEvent<HTMLInputElement>) => void
-  onBlur: () => void
-}) {
-  return (
-    <div className={`paper-field${error ? ' paper-field--invalid' : ''}`}>
-      <label className="paper-field__label" htmlFor={id}>{label}</label>
-      <input
-        id={id}
-        className="paper-input"
-        type="number"
-        inputMode="numeric"
-        min={min}
-        max={max}
-        step={1}
-        value={Number.isNaN(value) ? '' : value}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={`${id}-hint${error ? ` ${id}-error` : ''}`}
-        onChange={onChange}
-        onBlur={onBlur}
-      />
-      <p className="paper-field__hint" id={`${id}-hint`}>{hint}</p>
-      {error ? <p className="paper-field__error" id={`${id}-error`} role="alert">{error}</p> : null}
-    </div>
   )
 }

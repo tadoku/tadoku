@@ -1,5 +1,5 @@
-import { Button, EmptyState, Input, PageHeader, Table, buttonClassName } from 'paper-ui'
-import { FormProvider, useForm, useWatch } from 'react-hook-form'
+import { useStore } from '@tanstack/react-form'
+import { Button, EmptyState, PageHeader, Table, buttonClassName, usePaperForm } from 'paper-ui'
 import { Link } from 'react-router-dom'
 import { usePlayground } from '../state'
 import './editorial.css'
@@ -215,25 +215,25 @@ function Rules() {
 }
 
 function Questions() {
-  const form = useForm({ defaultValues: { query: '' } })
-  const query = useWatch({ control: form.control, name: 'query' }).trim().toLocaleLowerCase()
+  const form = usePaperForm({ defaultValues: { query: '' }, onSubmit: () => undefined })
+  const query = useStore(form.store, state => state.values['query']).trim().toLocaleLowerCase()
   const visible = questions.filter(item => `${item.question} ${item.answer}`.toLocaleLowerCase().includes(query))
   const clear = () => {
-    form.setValue('query', '')
-    form.setFocus('query')
+    form.setFieldValue('query', '')
+    document.getElementsByName('query')[0]?.focus()
   }
 
   return (
     <>
-      <FormProvider {...form}>
-        <form role="search" onSubmit={form.handleSubmit(() => undefined)} className="guide-search">
-          <Input name="query" label="Search these questions" type="search" autoComplete="off" aria-describedby="guide-search-results" placeholder="Try registration, language or score" />
+      <form.AppForm>
+        <form.Form role="search" className="guide-search">
+          <form.AppField name="query">{field => <field.Input label="Search these questions" type="search" autoComplete="off" aria-describedby="guide-search-results" placeholder="Try registration, language or score" />}</form.AppField>
           <div className="guide-search-meta">
             <p id="guide-search-results" role="status">{visible.length} {visible.length === 1 ? 'question' : 'questions'}</p>
             {query && <Button variant="link" onClick={clear}>Clear search</Button>}
           </div>
-        </form>
-      </FormProvider>
+        </form.Form>
+      </form.AppForm>
       <div className="guide-questions">
         {visible.map(item => (
           <details key={item.question}>

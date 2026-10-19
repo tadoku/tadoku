@@ -1,7 +1,7 @@
+import { useStore } from '@tanstack/react-form'
 import { useEffect, useId, useRef, useState } from 'react'
-import { FormProvider, useForm, useWatch } from 'react-hook-form'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
-import { AppliedFilters, Button, DescriptionList, EmptyState, Input, PageHeader, Pagination, SectionHeading, Select, StatusTag, Table, Tabbar, buttonClassName, type TableColumn } from 'paper-ui'
+import { usePaperForm, AppliedFilters, Button, DescriptionList, EmptyState, PageHeader, Pagination, SectionHeading, StatusTag, Tabbar, Table, buttonClassName, type TableColumn } from 'paper-ui'
 import { ChevronDownIcon } from 'paper-ui/icons'
 import { contestStatus, formatDate, formatNumber, initialLogs, leaderboardPeople, supportedLanguages, users, type SampleLog } from '../data'
 import { contestEnd, contestStart, formatDateRange, formatDateTime } from '../dates'
@@ -32,8 +32,8 @@ export function LeaderboardPage() {
   const registrationOpen = Boolean(contest && status !== 'ended' && asOf <= contest.registrationDeadline)
   const isError = scenario === 'error'
   const isEmpty = scenario === 'empty' || (scope === 'contest' && status === 'upcoming') || (scope === 'year' && !['2026', '2025', '2024'].includes(year))
-  const methods = useForm<BoardFilters>({ defaultValues: { language: 'all', activity: 'all', query: '', year } })
-  const { language = 'all', activity = 'all', query = '' } = useWatch({ control: methods.control })
+  const methods = usePaperForm({ defaultValues: ({ language: 'all', activity: 'all', query: '', year } as BoardFilters) })
+  const { language = 'all', activity = 'all', query = '' } = useStore(methods.store, state => state.values)
   const [filterExpansion, setFilterExpansion] = useState({ scope, open: scope === 'year' })
   if (filterExpansion.scope !== scope) setFilterExpansion({ scope, open: scope === 'year' })
   const filtersOpen = filterExpansion.open
@@ -42,7 +42,7 @@ export function LeaderboardPage() {
   const filtersToggle = useRef<HTMLButtonElement>(null)
   const appliedFilters = [language !== 'all' ? language : '', activity !== 'all' ? activity : '', query.trim() ? `Name: ${query.trim()}` : ''].filter(Boolean)
   const clearFilters = () => {
-    methods.reset({ language: 'all', activity: 'all', query: '', year })
+    methods.reset({ language: 'all', activity: 'all', query: '', year }, { keepDefaultValues: true })
     filtersToggle.current?.focus()
   }
   const [pageState, setPageState] = useState({ key: '', page: 1 })
@@ -87,7 +87,7 @@ export function LeaderboardPage() {
   const showSelf = viewer !== 'guest' && (scope !== 'contest' || joined) && !isError && !isEmpty && self
   const findMyRow = () => {
     const index = ranked.findIndex(row => row.userId === userId)
-    methods.setValue('query', '')
+    methods.setFieldValue('query', '')
     setPageState({ key: `${scope}:${contest?.id}:${year}:${scenario}:${language}:${activity}:`, page: Math.floor(index / pageSize) + 1 })
     setFocusRequest(value => value + 1)
   }
@@ -122,12 +122,12 @@ export function LeaderboardPage() {
             description={scope === 'contest' && contest ? formatDateRange(contestStart(contest.start), contestEnd(contest.end)) : null}
             actions={showFilters ? <Button ref={filtersToggle} variant="ghost" aria-expanded={filtersOpen} aria-controls={filtersId} onClick={() => setFilterExpansion({ scope, open: !filtersOpen })} trailingIcon={<ChevronDownIcon className={`paper-icon-compact${filtersOpen ? ' rotate-180' : ''}`} />}>Filters{appliedFilters.length ? ` (${appliedFilters.length})` : ''}</Button> : null}
           />
-          {showFilters ? <><div id={filtersId} hidden={!filtersOpen}><FormProvider {...methods}><form className={`standings-filters${scope === 'year' ? ' standings-filters--yearly' : ''}`} onSubmit={event => event.preventDefault()}>
-            {scope === 'year' ? <Select name="year" label="Year" value={year} options={['2026', '2025', '2024'].map(value => ({ value, label: value }))} onInput={event => navigate(`/leaderboard/yearly/${event.currentTarget.value}${location.search}`)} /> : null}
-            <Select name="language" label="Language" options={[{ value: 'all', label: 'All languages' }, ...supportedLanguages.map(value => ({ value, label: value }))]} />
-            <Select name="activity" label="Activity" options={[{ value: 'all', label: 'All activities' }, { value: 'Reading', label: 'Reading' }, { value: 'Listening', label: 'Listening' }]} />
-            <Input name="query" label="Find a participant" type="search" placeholder="Search by name" />
-          </form></FormProvider></div><AppliedFilters className="standings-applied-filters" filters={appliedFilters} onClear={clearFilters} /></> : null}
+          {showFilters ? <><div id={filtersId} hidden={!filtersOpen}><methods.AppForm><form className={`standings-filters${scope === 'year' ? ' standings-filters--yearly' : ''}`} onSubmit={event => event.preventDefault()}>
+            {scope === 'year' ? <methods.AppField name="year">{field => <field.Select label="Year" value={year} options={['2026', '2025', '2024'].map(value => ({ value, label: value }))} onInput={event => navigate(`/leaderboard/yearly/${event.currentTarget.value}${location.search}`)} />}</methods.AppField> : null}
+            <methods.AppField name="language">{field => <field.Select label="Language" options={[{ value: 'all', label: 'All languages' }, ...supportedLanguages.map(value => ({ value, label: value }))]} />}</methods.AppField>
+            <methods.AppField name="activity">{field => <field.Select label="Activity" options={[{ value: 'all', label: 'All activities' }, { value: 'Reading', label: 'Reading' }, { value: 'Listening', label: 'Listening' }]} />}</methods.AppField>
+            <methods.AppField name="query">{field => <field.Input label="Find a participant" type="search" placeholder="Search by name" />}</methods.AppField>
+          </form></methods.AppForm></div><AppliedFilters className="standings-applied-filters" filters={appliedFilters} onClear={clearFilters} /></> : null}
           {showSelf ? <div className="standings-personal"><p><strong>Your rank: {self.tied ? 'T' : '#'}{self.rank}</strong><span>{formatNumber(self.score)} points</span></p><Button variant="ghost" onClick={findMyRow}>Jump to me</Button></div> : null}
           {isError || isEmpty || visible.length === 0 ? <EmptyState
             variant="plain"
@@ -136,7 +136,7 @@ export function LeaderboardPage() {
             headingLevel={3}
             title={isError ? 'Standings could not be loaded' : isEmpty || ranked.length === 0 ? scope === 'contest' ? 'The first page is yours to write' : 'No official scores for this period' : 'No participants match that name'}
             description={isError ? 'Try loading the standings again. The available contest details are still shown alongside.' : isEmpty || ranked.length === 0 ? scope === 'contest' ? status === 'upcoming' ? 'Scores begin when the round starts. Join now, then return after your first eligible activity.' : 'No participants are listed yet. Join the round and log your first activity.' : 'Scores will appear here when eligible activity is logged in this period.' : 'Try another display name. Searching does not change anyone’s rank.'}
-            actions={isError ? <Button onClick={() => setScenario('participant')}>Try again</Button> : isEmpty || ranked.length === 0 ? <Link className={buttonClassName({ variant: 'outline' })} to="/contests/official">Browse contests</Link> : <Button variant="outline" onClick={() => { methods.setValue('query', ''); if (filtersOpen) methods.setFocus('query'); else filtersToggle.current?.focus() }}>Clear search</Button>}
+            actions={isError ? <Button onClick={() => setScenario('participant')}>Try again</Button> : isEmpty || ranked.length === 0 ? <Link className={buttonClassName({ variant: 'outline' })} to="/contests/official">Browse contests</Link> : <Button variant="outline" onClick={() => { methods.setFieldValue('query', ''); if (filtersOpen) document.getElementsByName('query')[0]?.focus(); else filtersToggle.current?.focus() }}>Clear search</Button>}
           /> : <>
             <Table captionVisibility="screen-reader" caption={`${language === 'all' ? 'All languages' : language} · ${activity === 'all' ? 'All activities' : activity}${query.trim() ? ' · Name search applied' : ''}`} columns={columns} rows={visible.slice((page - 1) * pageSize, page * pageSize)} getRowKey={row => row.userId} minWidth="17rem" tableClassName="standings-table" getRowProps={row => ({ id: `standing-${row.userId}`, tabIndex: -1, 'aria-current': showSelf && row.userId === userId ? 'true' : undefined })} />
             <div className="standings-pagination"><p className="muted" role="status">{(page - 1) * pageSize + 1}–{Math.min(page * pageSize, visible.length)} of {visible.length} {query.trim() ? 'matches' : 'participants'}</p><Pagination totalPages={totalPages} currentPage={page} onPageChange={next => setPageState({ key: filterKey, page: next })} label="Standings pages" /></div>

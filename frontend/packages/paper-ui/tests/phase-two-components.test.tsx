@@ -1,30 +1,18 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { FormProvider, useForm } from "react-hook-form";
+import { usePaperForm, ActionMenu, Button, Modal, buttonClassName } from '../src';
+
 import { describe, expect, it, vi } from "vitest";
-import {
-  ActionMenu,
-  Button,
-  Input,
-  Modal,
-  buttonClassName,
-} from "../src";
 
 function InputForm({ onSubmit = vi.fn() }: { onSubmit?: (value: unknown) => void }) {
-  const methods = useForm<{ title: string }>({ defaultValues: { title: "" } });
+  const methods = usePaperForm({ defaultValues: ({ title: "" } as { title: string }), onSubmit: ({ value }) => onSubmit(value) });
   return (
-    <FormProvider {...methods}>
-      <form noValidate onSubmit={methods.handleSubmit(onSubmit)}>
-        <Input
-          name="title"
-          label="Log title"
-          hint="Use a recognizable name."
-          rules={{ required: "Enter a log title." }}
-          required
-        />
+    <methods.AppForm>
+      <methods.Form>
+        <methods.AppField name="title" validators={{ onChange: ({ value }) => { if (!value) return ("Enter a log title."); } }}>{field => <field.Input label="Log title" hint="Use a recognizable name." required />}</methods.AppField>
         <Button type="submit">Save log</Button>
-      </form>
-    </FormProvider>
+      </methods.Form>
+    </methods.AppForm>
   );
 }
 
@@ -72,7 +60,7 @@ describe("Button", () => {
 });
 
 describe("Input", () => {
-  it("associates label and hint, then submits through React Hook Form", async () => {
+  it("associates label and hint, then submits through TanStack Form", async () => {
     const user = userEvent.setup();
     const submit = vi.fn();
     render(<InputForm onSubmit={submit} />);
@@ -82,8 +70,7 @@ describe("Input", () => {
     await user.type(input, "August reading");
     await user.click(screen.getByRole("button", { name: "Save log" }));
     expect(submit).toHaveBeenCalledWith(
-      { title: "August reading" },
-      expect.anything(),
+      { title: "August reading" }
     );
   });
 

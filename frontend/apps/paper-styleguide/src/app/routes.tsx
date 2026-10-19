@@ -44,7 +44,7 @@ export function CatalogIndex() {
           <Link className="text-link paper-focus-ring" to="/setup">Set up Paper</Link>, then start with <Link className="text-link paper-focus-ring" to="/foundations/spacing-and-density">spacing and density</Link> and{' '}
           <Link className="text-link paper-focus-ring" to="/foundations/layout">layout</Link> to compose a page.
           For forms, the <Link className="text-link paper-focus-ring" to="/components/forms/input">Input guide</Link> includes
-          the required React Hook Form setup. Paper owns appearance and interaction;
+          the required TanStack Form setup. Paper owns appearance and interaction;
           your application owns routing, data and submission.
         </p>
       </section>

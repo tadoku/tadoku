@@ -59,7 +59,6 @@ func SeedDevelopmentAccounts(
 		if err := repository.seedDevelopmentAccount(ctx, fixture.ID, email, string(hash)); err != nil {
 			return err
 		}
-
 	}
 	return nil
 }

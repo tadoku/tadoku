@@ -112,7 +112,7 @@ func TestIdentityRegistrationLeavesPoolAvailableDuringEvaluation(t *testing.T) {
 		t.Errorf("registration holds %d database connections while flag evaluation waits, want 0", held)
 	} else {
 		request := readHTTPRequest(t, "testdata/BannedUsers/200_guest")
-		request.URL.Path = "/immersion/languages"
+		request.URL.Path = "/immersion/contests"
 		response := httptest.NewRecorder()
 		handler.ServeHTTP(response, request)
 		requireIdentityStatus(t, response, http.StatusOK)

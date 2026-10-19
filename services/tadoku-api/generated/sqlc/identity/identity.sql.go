@@ -11,38 +11,15 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const createAccount = `-- name: CreateAccount :exec
-insert into accounts (user_id, email, email_normalized, password_hash, created_at, updated_at)
-values ($1, $2, $3, $4,
-  $5, $5)
-`
-
-type CreateAccountParams struct {
-	UserID          pgtype.UUID
-	Email           string
-	EmailNormalized string
-	PasswordHash    string
-	Now             pgtype.Timestamptz
-}
-
-func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) error {
-	_, err := q.db.Exec(ctx, createAccount,
-		arg.UserID,
-		arg.Email,
-		arg.EmailNormalized,
-		arg.PasswordHash,
-		arg.Now,
-	)
-	return err
-}
-
 const createSession = `-- name: CreateSession :execrows
 insert into sessions (token_hash, user_id, authenticated_at, expires_at, created_at)
 select $1, a.user_id, $2, $3, $2
 from accounts a
 join users u on u.tenant = a.tenant and u.id = a.user_id
-where a.user_id = $4 and a.state = 'active'
-  and u.deleted_at is null and u.deletion_locked_at is null
+where a.user_id = $4
+  and a.state = 'active'
+  and u.deleted_at is null
+  and u.deletion_locked_at is null
 `
 
 type CreateSessionParams struct {
@@ -63,22 +40,6 @@ func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) (i
 		return 0, err
 	}
 	return result.RowsAffected(), nil
-}
-
-const createUser = `-- name: CreateUser :exec
-insert into users (id, display_name, created_at, updated_at)
-values ($1, $2, $3, $3)
-`
-
-type CreateUserParams struct {
-	ID          pgtype.UUID
-	DisplayName string
-	Now         pgtype.Timestamp
-}
-
-func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
-	_, err := q.db.Exec(ctx, createUser, arg.ID, arg.DisplayName, arg.Now)
-	return err
 }
 
 const deleteSession = `-- name: DeleteSession :exec
@@ -126,8 +87,11 @@ select a.user_id, a.email, u.display_name, a.created_at, s.authenticated_at, s.e
 from sessions s
 join accounts a on a.tenant = s.tenant and a.user_id = s.user_id
 join users u on u.tenant = a.tenant and u.id = a.user_id
-where s.token_hash = $1 and s.expires_at > $2
-  and a.state = 'active' and u.deleted_at is null and u.deletion_locked_at is null
+where s.token_hash = $1
+  and s.expires_at > $2
+  and a.state = 'active'
+  and u.deleted_at is null
+  and u.deletion_locked_at is null
 `
 
 type FindSessionParams struct {
@@ -156,4 +120,48 @@ func (q *Queries) FindSession(ctx context.Context, arg FindSessionParams) (FindS
 		&i.ExpiresAt,
 	)
 	return i, err
+}
+
+const registerAccount = `-- name: RegisterAccount :exec
+with new_user as (
+  insert into users (id, display_name, created_at, updated_at)
+  values ($4, $5, $6, $6)
+  returning tenant, id
+), new_account as (
+  insert into accounts (tenant, user_id, email, email_normalized, password_hash, created_at, updated_at)
+  select tenant, id, $7, $8, $9,
+    $6, $6
+  from new_user
+  returning tenant, user_id
+)
+insert into sessions (tenant, token_hash, user_id, authenticated_at, expires_at, created_at)
+select tenant, $1, user_id, $2, $3, $2
+from new_account
+`
+
+type RegisterAccountParams struct {
+	TokenHash       string
+	AuthenticatedAt pgtype.Timestamptz
+	ExpiresAt       pgtype.Timestamptz
+	UserID          pgtype.UUID
+	DisplayName     string
+	Now             pgtype.Timestamp
+	Email           string
+	EmailNormalized string
+	PasswordHash    string
+}
+
+func (q *Queries) RegisterAccount(ctx context.Context, arg RegisterAccountParams) error {
+	_, err := q.db.Exec(ctx, registerAccount,
+		arg.TokenHash,
+		arg.AuthenticatedAt,
+		arg.ExpiresAt,
+		arg.UserID,
+		arg.DisplayName,
+		arg.Now,
+		arg.Email,
+		arg.EmailNormalized,
+		arg.PasswordHash,
+	)
+	return err
 }

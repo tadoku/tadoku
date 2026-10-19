@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	"github.com/tadoku/tadoku/services/tadoku-api/features/identity"
-	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/callbackauth"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
@@ -17,13 +16,7 @@ func (a *Application) IdentityRegister(
 	ctx context.Context,
 	registration identity.Registration,
 ) (identity.LoginResult, error) {
-	var result identity.LoginResult
-	err := postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) error {
-		var err error
-		result, err = a.identity.Register(ctx, registration)
-		return err
-	})
-	return result, err
+	return a.identity.Register(ctx, registration)
 }
 
 func (a *Application) IdentityLogin(ctx context.Context, login identity.Login) (identity.LoginResult, error) {

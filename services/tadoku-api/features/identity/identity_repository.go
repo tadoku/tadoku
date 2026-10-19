@@ -22,29 +22,23 @@ type credentials struct {
 	active       bool
 }
 
-func (r *Repository) createUser(ctx context.Context, account Account) error {
+func (r *Repository) register(ctx context.Context, result LoginResult, passwordHash string) error {
 	db, err := postgres.Executor(ctx, r.pool)
 	if err != nil {
 		return err
 	}
-	return queries.New(db).CreateUser(ctx, queries.CreateUserParams{
-		ID:          postgres.UUID(account.ID),
-		DisplayName: account.DisplayName.value,
-		Now:         postgres.Timestamp(account.CreatedAt),
-	})
-}
 
-func (r *Repository) createAccount(ctx context.Context, account Account, passwordHash string) error {
-	db, err := postgres.Executor(ctx, r.pool)
-	if err != nil {
-		return err
-	}
-	err = queries.New(db).CreateAccount(ctx, queries.CreateAccountParams{
+	account := result.Session.Account
+	err = queries.New(db).RegisterAccount(ctx, queries.RegisterAccountParams{
 		UserID:          postgres.UUID(account.ID),
+		DisplayName:     account.DisplayName.value,
 		Email:           account.Email.value,
 		EmailNormalized: account.Email.value,
 		PasswordHash:    passwordHash,
-		Now:             postgres.Timestamptz(account.CreatedAt),
+		Now:             postgres.Timestamp(account.CreatedAt),
+		TokenHash:       hashToken(result.Cookie.Value),
+		AuthenticatedAt: postgres.Timestamptz(result.Session.AuthenticatedAt),
+		ExpiresAt:       postgres.Timestamptz(result.Session.ExpiresAt),
 	})
 	if postgres.IsUniqueViolation(err) {
 		return ErrEmailTaken

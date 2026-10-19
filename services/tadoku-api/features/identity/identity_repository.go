@@ -124,3 +124,28 @@ func (r *Repository) revokeSession(ctx context.Context, tokenHash string) error 
 	}
 	return queries.New(db).DeleteSession(ctx, tokenHash)
 }
+
+func (r *Repository) seedDevelopmentUser(ctx context.Context, id uuid.UUID, name DisplayName) error {
+	db, err := postgres.Executor(ctx, r.pool)
+	if err != nil {
+		return err
+	}
+	return queries.New(db).InsertDevelopmentUser(ctx, queries.InsertDevelopmentUserParams{
+		ID: postgres.UUID(id), DisplayName: name.value,
+	})
+}
+
+func (r *Repository) seedDevelopmentAccount(
+	ctx context.Context,
+	id uuid.UUID,
+	email Email,
+	passwordHash string,
+) error {
+	db, err := postgres.Executor(ctx, r.pool)
+	if err != nil {
+		return err
+	}
+	return queries.New(db).InsertDevelopmentAccount(ctx, queries.InsertDevelopmentAccountParams{
+		UserID: postgres.UUID(id), Email: email.value, PasswordHash: passwordHash,
+	})
+}

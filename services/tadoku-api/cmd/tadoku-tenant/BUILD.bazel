@@ -6,6 +6,8 @@ go_library(
     name = "tadoku-tenant_lib",
     srcs = [
         "access_token.go",
+        "development_accounts.go",
+        "inspect.go",
         "main.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/cmd/tadoku-tenant",
@@ -14,6 +16,7 @@ go_library(
         "//services/common/postgresconfig",
         "//services/tadoku-api/app/tenantlifecycle",
         "//services/tadoku-api/features/authz/tokens",
+        "//services/tadoku-api/features/identity",
         "//services/tadoku-api/features/jobqueue",
         "//services/tadoku-api/features/leaderboard",
         "//services/tadoku-api/infra/flipt",
@@ -38,6 +41,8 @@ go_test(
     name = "tadoku-tenant_test",
     srcs = [
         "access_token_test.go",
+        "development_accounts_test.go",
+        "inspect_test.go",
         "main_test.go",
     ],
     embed = [":tadoku-tenant_lib"],
@@ -50,6 +55,7 @@ go_test(
     deps = [
         "//services/tadoku-api/internal/testpostgres",
         "@com_github_google_uuid//:uuid",
+        "@org_golang_x_crypto//bcrypt",
     ],
 )
 

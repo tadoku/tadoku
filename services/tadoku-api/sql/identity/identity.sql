@@ -44,3 +44,13 @@ where s.token_hash = sqlc.arg(token_hash)
 
 -- name: DeleteSession :exec
 delete from sessions where token_hash = sqlc.arg(token_hash);
+
+-- name: InsertDevelopmentUser :exec
+insert into users (id, display_name, created_at, updated_at)
+values (sqlc.arg(id), sqlc.arg(display_name), now(), now())
+on conflict (tenant, id) do nothing;
+
+-- name: InsertDevelopmentAccount :exec
+insert into accounts (user_id, email, email_normalized, password_hash)
+values (sqlc.arg(user_id), sqlc.arg(email), sqlc.arg(email), sqlc.arg(password_hash))
+on conflict do nothing;

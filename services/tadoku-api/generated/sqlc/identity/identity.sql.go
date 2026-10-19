@@ -122,6 +122,39 @@ func (q *Queries) FindSession(ctx context.Context, arg FindSessionParams) (FindS
 	return i, err
 }
 
+const insertDevelopmentAccount = `-- name: InsertDevelopmentAccount :exec
+insert into accounts (user_id, email, email_normalized, password_hash)
+values ($1, $2, $2, $3)
+on conflict do nothing
+`
+
+type InsertDevelopmentAccountParams struct {
+	UserID       pgtype.UUID
+	Email        string
+	PasswordHash string
+}
+
+func (q *Queries) InsertDevelopmentAccount(ctx context.Context, arg InsertDevelopmentAccountParams) error {
+	_, err := q.db.Exec(ctx, insertDevelopmentAccount, arg.UserID, arg.Email, arg.PasswordHash)
+	return err
+}
+
+const insertDevelopmentUser = `-- name: InsertDevelopmentUser :exec
+insert into users (id, display_name, created_at, updated_at)
+values ($1, $2, now(), now())
+on conflict (tenant, id) do nothing
+`
+
+type InsertDevelopmentUserParams struct {
+	ID          pgtype.UUID
+	DisplayName string
+}
+
+func (q *Queries) InsertDevelopmentUser(ctx context.Context, arg InsertDevelopmentUserParams) error {
+	_, err := q.db.Exec(ctx, insertDevelopmentUser, arg.ID, arg.DisplayName)
+	return err
+}
+
 const registerAccount = `-- name: RegisterAccount :exec
 with new_user as (
   insert into users (id, display_name, created_at, updated_at)

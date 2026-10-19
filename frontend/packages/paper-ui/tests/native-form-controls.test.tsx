@@ -1,17 +1,8 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { FormProvider, useForm } from "react-hook-form";
+import { usePaperForm, Button } from '../src';
+
 import { describe, expect, it, vi } from "vitest";
-import {
-  AmountWithUnit,
-  Button,
-  Checkbox,
-  Input,
-  RadioGroup,
-  RadioSelect,
-  Select,
-  TextArea,
-} from "../src";
 
 const LANGUAGES = [
   { id: "ja", label: "Japanese" },
@@ -20,18 +11,18 @@ const LANGUAGES = [
 ] as const;
 
 function NativeControls({ onSubmit }: { onSubmit: (values: unknown) => void }) {
-  const methods = useForm({ defaultValues: { notes: "", language: "", public: false, pace: "", format: "" } });
+  const methods = usePaperForm({ defaultValues: { notes: "", language: "", public: false, pace: "", format: "" }, onSubmit: ({ value }) => onSubmit(value) });
   return (
-    <FormProvider {...methods}>
-      <form noValidate onSubmit={methods.handleSubmit(onSubmit)}>
-        <TextArea name="notes" label="Notes" hint="Keep spoilers out." required />
-        <Select name="language" label="Language" options={LANGUAGES.map(({ id, label }) => ({ value: id, label }))} placeholder="Choose language" required />
-        <Checkbox name="public" label="Show on my profile" />
-        <RadioSelect name="pace" label="Reading pace" options={[{ value: "pages", label: "Pages" }, { value: "minutes", label: "Minutes" }]} required />
-        <RadioGroup name="format" label="Format" options={[{ value: "book", label: "Book", description: "Printed or digital book" }, { value: "audio", label: "Audio", description: "Narrated content" }]} />
+    <methods.AppForm>
+      <methods.Form>
+        <methods.AppField name="notes" validators={{ onChange: ({ value }) => { if (!value) return "This field is required."; } }}>{field => <field.TextArea label="Notes" hint="Keep spoilers out." required />}</methods.AppField>
+        <methods.AppField name="language" validators={{ onChange: ({ value }) => { if (!value) return "Choose an option."; } }}>{field => <field.Select label="Language" options={LANGUAGES.map(({ id, label }) => ({ value: id, label }))} placeholder="Choose language" required />}</methods.AppField>
+        <methods.AppField name="public">{field => <field.Checkbox label="Show on my profile" />}</methods.AppField>
+        <methods.AppField name="pace" validators={{ onChange: ({ value }) => { if (!value) return "Choose an option."; } }}>{field => <field.RadioSelect label="Reading pace" options={[{ value: "pages", label: "Pages" }, { value: "minutes", label: "Minutes" }]} required />}</methods.AppField>
+        <methods.AppField name="format" validators={{ onChange: ({ value }) => { if (!value) return "Choose an option."; } }}>{field => <field.RadioGroup label="Format" options={[{ value: "book", label: "Book", description: "Printed or digital book" }, { value: "audio", label: "Audio", description: "Narrated content" }]} />}</methods.AppField>
         <Button type="submit">Save entry</Button>
-      </form>
-    </FormProvider>
+      </methods.Form>
+    </methods.AppForm>
   );
 }
 
@@ -42,53 +33,59 @@ function SegmentedRadioSelect({
   defaultViewport?: string;
   onSubmit?: (values: unknown) => void;
 }) {
-  const methods = useForm({ defaultValues: { viewport: defaultViewport } });
+  const methods = usePaperForm({ defaultValues: { viewport: defaultViewport }, onSubmit: ({ value }) => onSubmit(value) });
   return (
-    <FormProvider {...methods}>
-      <form noValidate onSubmit={methods.handleSubmit(onSubmit)}>
-        <RadioSelect
-          name="viewport"
-          label="Preview size"
-          hint="Choose one viewport for the isolated preview."
-          variant="segmented"
-          required
-          options={[
+    <methods.AppForm>
+      <methods.Form>
+        <methods.AppField name="viewport" validators={{ onChange: ({ value }) => { if (!value) return "Choose an option."; } }}>{field => <field.RadioSelect label="Preview size" hint="Choose one viewport for the isolated preview." variant="segmented" required options={[
             { value: "phone", label: "Phone" },
             { value: "tablet", label: "Tablet" },
             { value: "desktop", label: "Desktop" },
             { value: "wide", label: "Wide", disabled: true },
-          ]}
-        />
+          ]} />}</methods.AppField>
         <Button type="submit">Apply viewport</Button>
-      </form>
-    </FormProvider>
+      </methods.Form>
+    </methods.AppForm>
   );
 }
 
 function AmountForm() {
-  const methods = useForm({ defaultValues: { progressValue: 12, progressUnit: "pages" } });
+  const methods = usePaperForm({ defaultValues: { progressValue: 12, progressUnit: "pages" } });
   return (
-    <FormProvider {...methods}>
-      <AmountWithUnit name="progress" label="Progress" units={[{ value: "pages", label: "pages" }, { value: "minutes", label: "minutes" }]} />
-    </FormProvider>
+    <methods.AppForm>
+      <methods.AppField name="progressUnit">{unitField => <methods.AppField name="progressValue" >{field => <field.AmountWithUnit label="Progress" units={[{ value: "pages", label: "pages" }, { value: "minutes", label: "minutes" }]} unitField={unitField} />}</methods.AppField>}</methods.AppField>
+    </methods.AppForm>
   );
 }
 
-describe("native React Hook Form controls", () => {
+describe("native TanStack Form controls", () => {
+  it("keeps numeric input values numeric when edited without a library-specific coercion rule", async () => {
+    const submit = vi.fn();
+    function NumericEntry() {
+      const methods = usePaperForm({ defaultValues: { pages: 12 } , onSubmit: ({ value }) => submit(value) });
+      return <methods.AppForm><methods.Form><methods.AppField name="pages">{field => <field.Input label="Pages" type="number" />}</methods.AppField><Button type="submit">Save pages</Button></methods.Form></methods.AppForm>;
+    }
+    const user = userEvent.setup();
+    render(<NumericEntry />);
+    await user.clear(screen.getByRole("spinbutton", { name: "Pages" }));
+    await user.type(screen.getByRole("spinbutton", { name: "Pages" }), "24");
+    await user.click(screen.getByRole("button", { name: "Save pages" }));
+    expect(submit.mock.calls[0]?.[0]).toEqual({ pages: 24 });
+  });
   it("places helper text after controls so optional hints do not offset a row of fields", () => {
     function HintedFields() {
-      const methods = useForm({ defaultValues: { title: "", date: "2026-08-31", notes: "", language: "", public: false, progressValue: 1, progressUnit: "pages", pace: "", format: "" } });
+      const methods = usePaperForm({ defaultValues: { title: "", date: "2026-08-31", notes: "", language: "", public: false, progressValue: 1, progressUnit: "pages", pace: "", format: "" } });
       return (
-        <FormProvider {...methods}>
-          <Input name="title" label="Title" />
-          <Input name="date" label="Date" type="date" hint="The date you read." />
-          <TextArea name="notes" label="Notes" hint="No spoilers." />
-          <Select name="language" label="Language" hint="Reading language." options={[]} />
-          <Checkbox name="public" label="Public entry" hint="Shown on your profile." />
-          <AmountWithUnit name="progress" label="Progress" hint="Completed pages." units={[{ value: "pages", label: "pages" }]} />
-          <RadioSelect name="pace" label="Pace" hint="Choose a pace." options={[{ value: "pages", label: "Pages" }]} />
-          <RadioGroup name="format" label="Format" hint="Choose a format." options={[{ value: "book", label: "Book", description: "Printed or digital" }]} />
-        </FormProvider>
+        <methods.AppForm>
+          <methods.AppField name="title">{field => <field.Input label="Title" />}</methods.AppField>
+          <methods.AppField name="date">{field => <field.Input label="Date" type="date" hint="The date you read." />}</methods.AppField>
+          <methods.AppField name="notes">{field => <field.TextArea label="Notes" hint="No spoilers." />}</methods.AppField>
+          <methods.AppField name="language">{field => <field.Select label="Language" hint="Reading language." options={[]} />}</methods.AppField>
+          <methods.AppField name="public">{field => <field.Checkbox label="Public entry" hint="Shown on your profile." />}</methods.AppField>
+          <methods.AppField name="progressUnit">{unitField => <methods.AppField name="progressValue" >{field => <field.AmountWithUnit label="Progress" hint="Completed pages." units={[{ value: "pages", label: "pages" }]} unitField={unitField} />}</methods.AppField>}</methods.AppField>
+          <methods.AppField name="pace">{field => <field.RadioSelect label="Pace" hint="Choose a pace." options={[{ value: "pages", label: "Pages" }]} />}</methods.AppField>
+          <methods.AppField name="format" validators={{ onChange: ({ value }) => { if (!value) return "Choose an option."; } }}>{field => <field.RadioGroup label="Format" hint="Choose a format." options={[{ value: "book", label: "Book", description: "Printed or digital" }]} />}</methods.AppField>
+        </methods.AppForm>
       );
     }
     render(<HintedFields />);
@@ -110,8 +107,8 @@ describe("native React Hook Form controls", () => {
 
   it("preserves caller descriptions alongside built-in hints", () => {
     function DescribedFields() {
-      const methods = useForm({ defaultValues: { title: "", notes: "", language: "", public: false, progressValue: 1, progressUnit: "pages" } });
-      return <FormProvider {...methods}><p id="visibility-policy">Visible to contest moderators.</p><Input name="title" label="Title" hint="A short title." aria-describedby="visibility-policy" /><TextArea name="notes" label="Notes" hint="No spoilers." aria-describedby="visibility-policy" /><Select name="language" label="Language" hint="Reading language." options={[]} aria-describedby="visibility-policy" /><Checkbox name="public" label="Public entry" hint="Shown on your profile." aria-describedby="visibility-policy" /><AmountWithUnit name="progress" label="Progress" hint="Completed pages." units={[{ value: "pages", label: "pages" }]} aria-describedby="visibility-policy" /></FormProvider>;
+      const methods = usePaperForm({ defaultValues: { title: "", notes: "", language: "", public: false, progressValue: 1, progressUnit: "pages" } });
+      return <methods.AppForm><p id="visibility-policy">Visible to contest moderators.</p><methods.AppField name="title">{field => <field.Input label="Title" hint="A short title." aria-describedby="visibility-policy" />}</methods.AppField><methods.AppField name="notes">{field => <field.TextArea label="Notes" hint="No spoilers." aria-describedby="visibility-policy" />}</methods.AppField><methods.AppField name="language">{field => <field.Select label="Language" hint="Reading language." options={[]} aria-describedby="visibility-policy" />}</methods.AppField><methods.AppField name="public">{field => <field.Checkbox label="Public entry" hint="Shown on your profile." aria-describedby="visibility-policy" />}</methods.AppField><methods.AppField name="progressUnit">{unitField => <methods.AppField name="progressValue" >{field => <field.AmountWithUnit label="Progress" hint="Completed pages." units={[{ value: "pages", label: "pages" }]} aria-describedby="visibility-policy" unitField={unitField} />}</methods.AppField>}</methods.AppField></methods.AppForm>;
     }
     render(<DescribedFields />);
     for (const label of ["Title", "Notes", "Language", "Public entry"]) {
@@ -121,16 +118,16 @@ describe("native React Hook Form controls", () => {
     expect(screen.getByRole("spinbutton", { name: "Progress" })).toHaveAccessibleDescription("Completed pages. Visible to contest moderators.");
   });
 
-  it("omits disabled input values while retaining read-only values", async () => {
+  it("retains form state for disabled and read-only controls", async () => {
     const submit = vi.fn();
     function DisabledFields() {
-      const methods = useForm({ defaultValues: { disabledTitle: "Unavailable", readonlyTitle: "Reading log", notes: "Hidden note", language: "ja", public: true, viewport: "phone" } });
-      return <FormProvider {...methods}><form noValidate onSubmit={methods.handleSubmit(submit)}><Input name="disabledTitle" label="Unavailable title" disabled required /><Input name="readonlyTitle" label="Read-only title" readOnly /><TextArea name="notes" label="Notes" disabled /><Select name="language" label="Language" options={[{ value: "ja", label: "Japanese" }]} disabled /><Checkbox name="public" label="Public" disabled /><RadioSelect name="viewport" label="Viewport" options={[{ value: "phone", label: "Phone" }]} disabled /><Button type="submit">Save</Button></form></FormProvider>;
+      const methods = usePaperForm({ defaultValues: { disabledTitle: "Unavailable", readonlyTitle: "Reading log", notes: "Hidden note", language: "ja", public: true, viewport: "phone" }, onSubmit: ({ value }) => submit(value) });
+      return <methods.AppForm><methods.Form><methods.AppField name="disabledTitle">{field => <field.Input label="Unavailable title" disabled required />}</methods.AppField><methods.AppField name="readonlyTitle">{field => <field.Input label="Read-only title" readOnly />}</methods.AppField><methods.AppField name="notes">{field => <field.TextArea label="Notes" disabled />}</methods.AppField><methods.AppField name="language">{field => <field.Select label="Language" options={[{ value: "ja", label: "Japanese" }]} disabled />}</methods.AppField><methods.AppField name="public">{field => <field.Checkbox label="Public" disabled />}</methods.AppField><methods.AppField name="viewport">{field => <field.RadioSelect label="Viewport" options={[{ value: "phone", label: "Phone" }]} disabled />}</methods.AppField><Button type="submit">Save</Button></methods.Form></methods.AppForm>;
     }
     const user = userEvent.setup();
     render(<DisabledFields />);
     await user.click(screen.getByRole("button", { name: "Save" }));
-    expect(submit).toHaveBeenCalledWith({ disabledTitle: undefined, readonlyTitle: "Reading log", notes: undefined, language: undefined, public: undefined, viewport: undefined }, expect.anything());
+    expect(submit).toHaveBeenCalledWith({ disabledTitle: "Unavailable", readonlyTitle: "Reading log", notes: "Hidden note", language: "ja", public: true, viewport: "phone" });
   });
 
   it("submits associated native values", async () => {
@@ -150,7 +147,7 @@ describe("native React Hook Form controls", () => {
       public: true,
       pace: "pages",
       format: "book",
-    }), expect.anything());
+    }));
   });
 
   it("reports validation through field relationships", async () => {
@@ -177,8 +174,8 @@ describe("native React Hook Form controls", () => {
 
   it("validates compound amount bounds and disables the complete compound control", async () => {
     function ConstrainedAmount({ disabled = false }: { disabled?: boolean }) {
-      const methods = useForm({ defaultValues: { progressValue: 0, progressUnit: "pages" } });
-      return <FormProvider {...methods}><form noValidate onSubmit={methods.handleSubmit(() => undefined)}><AmountWithUnit name="progress" label="Progress" min={1} required disabled={disabled} units={[{ value: "pages", label: "pages" }, { value: "minutes", label: "minutes", disabled: true }]} /><Button type="submit">Save</Button></form></FormProvider>;
+      const methods = usePaperForm({ defaultValues: { progressValue: 0, progressUnit: "pages" }, onSubmit: () => undefined });
+      return <methods.AppForm><methods.Form><methods.AppField name="progressUnit">{unitField => <methods.AppField name="progressValue" validators={(disabled) ? {} : { onChange: ({ value }) => { if (String(value) === '' || !Number.isFinite(Number(value))) return "Enter an amount."; if (Number(value) < 1) return "Enter at least 1."; } }}>{field => <field.AmountWithUnit label="Progress" min={1} required disabled={disabled} units={[{ value: "pages", label: "pages" }, { value: "minutes", label: "minutes", disabled: true }]} unitField={unitField} />}</methods.AppField>}</methods.AppField><Button type="submit">Save</Button></methods.Form></methods.AppForm>;
     }
     const user = userEvent.setup();
     const { rerender } = render(<ConstrainedAmount />);
@@ -209,8 +206,7 @@ describe("native React Hook Form controls", () => {
     expect(screen.getByRole("radio", { name: "Tablet" })).not.toBeChecked();
     await user.click(screen.getByRole("button", { name: "Apply viewport" }));
     expect(submit).toHaveBeenCalledWith(
-      expect.objectContaining({ viewport: "phone" }),
-      expect.anything(),
+      expect.objectContaining({ viewport: "phone" })
     );
   });
 

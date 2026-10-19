@@ -91,7 +91,7 @@ jobs:
         working-directory: frontend
       - run: pnpm --filter paper-ui examples:check
         working-directory: frontend
-      - run: pnpm --filter paper-ui consumer:ts49
+      - run: pnpm --filter paper-ui consumer:typecheck
         working-directory: frontend
       - run: pnpm --filter paper-ui pack:check
         working-directory: frontend

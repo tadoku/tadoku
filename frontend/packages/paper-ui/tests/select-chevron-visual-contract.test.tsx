@@ -1,9 +1,9 @@
+import { render, screen } from "@testing-library/react";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { render, screen } from "@testing-library/react";
-import { FormProvider, useForm } from "react-hook-form";
+import { usePaperForm } from '../src';
+
 import { describe, expect, it } from "vitest";
-import { Select } from "../src";
 
 const formsCss = readFileSync(
   resolve("src/components/forms/forms.css"),
@@ -11,21 +11,17 @@ const formsCss = readFileSync(
 );
 
 function SelectFixture() {
-  const methods = useForm({ defaultValues: { language: "zh" } });
+  const methods = usePaperForm({ defaultValues: { language: "zh" } });
 
   return (
-    <FormProvider {...methods}>
-      <Select
-        name="language"
-        label="Language"
-        options={[
+    <methods.AppForm>
+      <methods.AppField name="language">{field => <field.Select label="Language" options={[
           {
             value: "zh",
             label: "Chinese with an intentionally long option label",
           },
-        ]}
-      />
-    </FormProvider>
+        ]} />}</methods.AppField>
+    </methods.AppForm>
   );
 }
 

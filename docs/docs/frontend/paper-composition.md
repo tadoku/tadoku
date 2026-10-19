@@ -17,6 +17,23 @@ Paper uses three levels of composition. They describe ownership, not mandatory d
 
 Screens may import local pattern components and `paper-ui` controls. Pattern components may import `paper-ui`. `paper-ui` must not import an application, router, API client, or product service. An application passes data, links, and callbacks into any extracted pattern component; it still owns their effects.
 
+## Form composition
+
+Paper screens use `usePaperForm` from `paper-ui`, built with TanStack Form's
+`createFormHookContexts` and `createFormHook`. Wrap the native form with
+`form.AppForm`, use `form.Form` for validated submission and error focus, and
+bind each control through `form.AppField` and its `field.Input`, `field.Select`
+or other control. The screen supplies typed default values, validators and
+`onSubmit`; controls own accessible labels, hints, errors and interaction.
+Validation is configured on the field or form, including required values and
+numeric bounds. The native `required`, `min` and `max` props describe the control.
+
+`AmountWithUnit` binds the amount field and takes a separate `unitField` from a
+nested `AppField`. Both names stay explicit in the screen's typed values.
+Autocomplete values are selected objects or arrays, and `ToggleSelect` stores
+an empty array or one selected value. Disabled controls retain their values;
+submission handlers own which values belong in the operation.
+
 ## When to extract and share
 
 Keep a section in its screen while it has one consumer and a clear local shape. Extract a named component when the section repeats, has meaningful independent states, or becomes hard to understand inside the screen. Name it for the user task or domain concept, such as `ReadingLogSummary`, rather than its layout.

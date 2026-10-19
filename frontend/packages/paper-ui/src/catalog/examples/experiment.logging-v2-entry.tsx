@@ -1,26 +1,28 @@
-import { Button, Flash, Input, Surface } from 'paper-ui'
+import { Button, Flash, Surface, usePaperForm } from 'paper-ui'
 import { useEffect, useRef, useState } from 'react'
-import { FormProvider, useForm } from 'react-hook-form'
 
 export default function LoggingExperimentFixture() {
-  const methods = useForm({
-    defaultValues: { title: 'コンビニ人間', pages: '48' },
+  const title = useRef<HTMLInputElement>(null)
+  const methods = usePaperForm({
+    defaultValues: { title: 'コンビニ人間', pages: 48 },
+    onSubmit: () => setReviewing(true),
   })
   const [reviewing, setReviewing] = useState(false)
   const heading = useRef<HTMLHeadingElement>(null)
   useEffect(() => {
     if (reviewing) heading.current?.focus()
-    else if (methods.formState.isSubmitted) methods.setFocus('title')
+    else if (methods.state.submissionAttempts > 0) title.current?.focus()
   }, [reviewing, methods])
   return (
-    <FormProvider {...methods}>
+    <methods.AppForm>
       {reviewing ? (
         <Surface className="paper-stack">
           <h3 ref={heading} tabIndex={-1} className="paper-type-component">
             Review reading
           </h3>
           <p>
-            {methods.getValues('pages')} pages of {methods.getValues('title')}
+            {methods.getFieldValue('pages')} pages of{' '}
+            {methods.getFieldValue('title')}
           </p>
           <Flash title="Preview only">
             Nothing has been saved or submitted to a contest.
@@ -32,37 +34,46 @@ export default function LoggingExperimentFixture() {
           </div>
         </Surface>
       ) : (
-        <form
-          className="paper-stack"
-          onSubmit={methods.handleSubmit(() => setReviewing(true))}
-        >
+        <methods.Form className="paper-stack">
           <Flash title="Experimental flow">
             Review the entry before considering a separate contest step.
           </Flash>
-          <Input
+          <methods.AppField
             name="title"
-            label="Work"
-            required
-            rules={{
-              validate: value =>
-                String(value).trim().length > 0 || 'Enter a work title.',
+            validators={{
+              onChange: ({ value }) => {
+                if (!value) return 'This field is required.'
+                if (!value.trim()) return 'Enter a work title.'
+              },
             }}
-          />
-          <Input
+          >
+            {field => <field.Input label="Work" ref={title} required />}
+          </methods.AppField>
+          <methods.AppField
             name="pages"
-            label="Pages"
-            type="number"
-            inputMode="numeric"
-            min={1}
-            step={1}
-            required
-            rules={{ min: { value: 1, message: 'Enter at least one page.' } }}
-          />
+            validators={{
+              onChange: ({ value }) => {
+                if (!Number.isFinite(value)) return 'This field is required.'
+                if (value < 1) return 'Enter at least one page.'
+              },
+            }}
+          >
+            {field => (
+              <field.Input
+                label="Pages"
+                type="number"
+                inputMode="numeric"
+                min={1}
+                step={1}
+                required
+              />
+            )}
+          </methods.AppField>
           <div className="paper-cluster">
             <Button type="submit">Review entry</Button>
           </div>
-        </form>
+        </methods.Form>
       )}
-    </FormProvider>
+    </methods.AppForm>
   )
 }

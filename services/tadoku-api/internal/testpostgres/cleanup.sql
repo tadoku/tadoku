@@ -5,7 +5,9 @@
 truncate table public.announcements, public.contest_logs, public.contest_registrations,
   public.jobs, public.log_tags, public.logs,
   public.moderation_audit_log, public.pages, public.pages_content, public.posts,
-  public.posts_content, public.user_roles, public.users restart identity;
+  public.posts_content, public.user_roles restart identity;
+
+delete from public.users;
 
 -- Restore scoring seed data on every reset. Logs must be cleared first because
 -- their provenance references scoring rule sets.

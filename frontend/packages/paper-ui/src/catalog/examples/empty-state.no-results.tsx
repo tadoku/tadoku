@@ -1,26 +1,32 @@
-import { Button, EmptyState, Input } from 'paper-ui'
-import { FormProvider, useForm, useWatch } from 'react-hook-form'
+import { useStore } from '@tanstack/react-form'
+import { Button, EmptyState, usePaperForm } from 'paper-ui'
+import { useRef } from 'react'
 
 const contests = ['2026 Round 5', 'Japanese novel club', 'Autumn in French']
 
 export default function Example() {
-  const methods = useForm({ defaultValues: { query: 'Klingon' } })
-  const query = useWatch({ control: methods.control, name: 'query' })
+  const search = useRef<HTMLInputElement>(null)
+  const methods = usePaperForm({ defaultValues: { query: 'Klingon' } })
+  const query = useStore(methods.store, state => state.values['query'])
   const matches = contests.filter(title =>
     title.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()),
   )
   const clearSearch = () => {
-    methods.setValue('query', '')
-    methods.setFocus('query')
+    methods.setFieldValue('query', '')
+    search.current?.focus()
   }
 
   return (
     <div className="paper-stack" style={{ maxWidth: '40rem' }}>
-      <FormProvider {...methods}>
+      <methods.AppForm>
         <form role="search" onSubmit={event => event.preventDefault()}>
-          <Input name="query" label="Find a contest" type="search" />
+          <methods.AppField name="query">
+            {field => (
+              <field.Input label="Find a contest" type="search" ref={search} />
+            )}
+          </methods.AppField>
         </form>
-      </FormProvider>
+      </methods.AppForm>
       <p role="status">
         {matches.length} {matches.length === 1 ? 'contest' : 'contests'}
       </p>

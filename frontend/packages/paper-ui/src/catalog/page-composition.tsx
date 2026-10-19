@@ -91,7 +91,7 @@ export const pageCompositionPatternDocuments = [
       invalidCombinations: ["The pattern is guidance; only AppliedFilters is an exported control."],
     },
     fixtureIds: ["pattern.filter-bar"],
-    dependencies: { documents: ["component.applied-filters", "component.section-heading", "component.empty-state", "component.button", "component.select", "component.input", "component.table"], packages: ["paper-ui", "react-hook-form"] },
+    dependencies: { documents: ["component.applied-filters", "component.section-heading", "component.empty-state", "component.button", "component.select", "component.input", "component.table"], packages: ["paper-ui", "@tanstack/react-form"] },
     migration: { legacy: ["paper-playground standings and activity-log filters"], notes: ["Keep each screen’s filter state and field layout; replace hand-built summaries with AppliedFilters and empty results with EmptyState."] },
     changelog: [{ date: REVIEW_DATE, note: "Documented from the paper-playground standings and activity-log filters." }],
     behaviorTestIds: ["pattern.filter-bar.summary", "pattern.filter-bar.empty"],

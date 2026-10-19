@@ -97,7 +97,7 @@ function importedPackages(source: string): string[] {
 describe('Paper styleguide dogfooding boundary', () => {
   it('deduplicates React and form context across the workspace-linked Paper package', () => {
     expect(viteConfig).toContain(
-      "dedupe: ['react', 'react-dom', 'react-hook-form']",
+      "dedupe: ['react', 'react-dom', '@tanstack/react-form']",
     )
   })
 

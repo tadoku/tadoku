@@ -10,7 +10,7 @@ Read this when you explore or change the Paper application study in `frontend/ap
 
 ## What it is
 
-paper-playground is a Vite and React Router app that composes `paper-ui` into full Tadoku screens: home, guide, leaderboards, contests, logs and the log editor, profiles, settings, sign-in and admin. Forms use react-hook-form.
+paper-playground is a Vite and React Router app that composes `paper-ui` into full Tadoku screens: home, guide, leaderboards, contests, logs and the log editor, profiles, settings, sign-in and admin. Forms use TanStack Form through Paper’s `usePaperForm` composition API.
 
 All data is sample fixtures (`src/data.ts`), and every action changes only browser-local state (`src/state.tsx`, persisted in `localStorage`). There is no API connection, deployment image or publishing workflow. Do not connect its sample sign-in or administrative flows to live services.
 

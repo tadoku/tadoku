@@ -156,7 +156,7 @@ export const inputDocument = defineCatalogDocument({
   ],
   "guidance": {
     "whenToUse": [
-      "Collect a short, free-form value in a React Hook Form."
+      "Collect a short, free-form value in a TanStack Form."
     ],
     "whenNotToUse": [
       "Use a choice control when the set of valid values is known."
@@ -177,7 +177,7 @@ export const inputDocument = defineCatalogDocument({
       "The native input follows platform text-editing behavior."
     ],
     "knownConstraints": [
-      "Input requires a react-hook-form FormProvider."
+      "Input requires a @tanstack/react-form form.AppForm."
     ]
   },
   "api": {
@@ -186,9 +186,9 @@ export const inputDocument = defineCatalogDocument({
     ],
     "props": [
       {
-        "name": "name",
+        "name": "name (AppField)",
         "type": "string",
-        "description": "React Hook Form field path.",
+        "description": "TanStack Form field path.",
         "required": true
       },
       {
@@ -203,14 +203,14 @@ export const inputDocument = defineCatalogDocument({
         "description": "Format, constraint or consequence; associated with the input."
       },
       {
-        "name": "rules",
-        "type": "RegisterOptions",
-        "description": "Validation messages and constraints supplied to React Hook Form."
+        "name": "validators (AppField)",
+        "type": "FieldValidators",
+        "description": "Validation messages and constraints supplied to TanStack Form."
       },
       {
         "name": "required",
         "type": "boolean",
-        "description": "Sets the native required attribute, label marker and a default RHF required rule.",
+        "description": "Sets the native required attribute and label marker; add the corresponding required validator.",
         "defaultValue": "false"
       },
       {
@@ -246,10 +246,10 @@ export const inputDocument = defineCatalogDocument({
     ],
     "defaults": [
       "Native text input behavior",
-      "Errors come from react-hook-form state"
+      "Errors come from @tanstack/react-form state"
     ],
     "invalidCombinations": [
-      "Do not render Input outside FormProvider."
+      "Do not render Input outside form.AppForm."
     ]
   },
   "migration": {
@@ -257,7 +257,7 @@ export const inputDocument = defineCatalogDocument({
       "ui/components/Form Input"
     ],
     "notes": [
-      "Keep names and validation rules in react-hook-form; replace implicit global field styling."
+      "Keep names and validation rules in @tanstack/react-form; replace implicit global field styling."
     ]
   },
   "sections": {
@@ -283,7 +283,7 @@ export const inputDocument = defineCatalogDocument({
       "choosingBetween": {
         "heading": "Choose between",
         "content": [
-          "A read-only value remains focusable and selectable and is still submitted; a disabled value is unavailable and omitted from submission. Use readOnly when users may need to inspect or copy the value, and disabled only when the control does not currently participate in the form."
+          "A read-only value remains focusable and selectable. A disabled control prevents editing but retains its TanStack Form value. Use readOnly when users may need to inspect or copy the value; the submission handler decides which values belong in the operation."
         ]
       },
       "anatomy": {
@@ -307,13 +307,13 @@ export const inputDocument = defineCatalogDocument({
       "statesAndAdaptation": {
         "heading": "States and adaptation",
         "content": [
-          "required adds the native required state and a visible marker. An invalid field sets aria-invalid and connects its alert message alongside any hint. Read-only remains operable for selection; disabled is visually muted and removed from interaction and submission."
+          "required adds the native required state and a visible marker. An invalid field sets aria-invalid and connects its alert message alongside any hint. Read-only remains operable for selection; disabled is visually muted and cannot be edited, but its form value remains available on submission."
         ]
       },
       "behavior": {
         "heading": "Behavior",
         "content": [
-          "Registration, value, blur, and validation state come from the nearest FormProvider."
+          "Value, blur and validation state come from the enclosing form.AppField."
         ]
       },
       "contentGuidance": {
@@ -332,13 +332,13 @@ export const inputDocument = defineCatalogDocument({
       "implementation": {
         "heading": "Implementation",
         "content": [
-          "Create methods with useForm(), wrap fields in FormProvider, and submit through methods.handleSubmit()."
+          "Create form with usePaperForm(), wrap form.Form in form.AppForm, and bind each named form.AppField to field.Input."
         ]
       },
       "apiReference": {
         "heading": "API reference",
         "content": [
-          "InputProps requires name and label, accepts hint and register rules, and otherwise follows native input attributes."
+          "InputProps requires label and accepts hint and native input attributes. Put name and validators on form.AppField."
         ]
       },
       "relatedPatterns": {
@@ -350,13 +350,13 @@ export const inputDocument = defineCatalogDocument({
       "migration": {
         "heading": "Migration",
         "content": [
-          "Move validation into register rules and remove application-owned label/error selectors."
+          "Move validation into AppField validators and remove application-owned label/error selectors."
         ]
       },
       "lifecycle": {
         "heading": "Lifecycle",
         "content": [
-          "Stable in Paper 0.1.0 with deterministic associations and React Hook Form ownership."
+          "Stable in Paper 0.1.0 with deterministic associations and TanStack Form ownership."
         ]
       }
     },

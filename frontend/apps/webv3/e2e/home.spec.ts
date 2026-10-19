@@ -53,6 +53,8 @@ test('validates and saves an editable local immersion goal without sending write
   const save = page.getByRole('button', { name: /save.*goal/i })
   await minutes.fill('-1')
   await days.fill('8')
+  await days.blur()
+  await expect(page.getByRole('alert')).toHaveCount(0)
   await save.click()
   await expect(page.getByRole('alert').first()).toBeVisible()
   await expect(minutes).toHaveAttribute('aria-invalid', 'true')

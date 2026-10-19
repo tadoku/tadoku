@@ -1,7 +1,6 @@
 import { useState } from 'react'
-import { FormProvider, useForm } from 'react-hook-form'
 import { Link, useLocation, useParams } from 'react-router-dom'
-import { Breadcrumb, Button, DescriptionList, Drawer, EmptyState, Flash, Input, Modal, PageHeader, SectionHeading, Select, Sidebar, StatGrid, StatusTag, Table, TextArea, buttonClassName, type SidebarSection, type StatusTagTone } from 'paper-ui'
+import { usePaperForm, Breadcrumb, Button, DescriptionList, Drawer, EmptyState, Flash, Modal, PageHeader, SectionHeading, Sidebar, StatGrid, StatusTag, Table, buttonClassName, type SidebarSection, type StatusTagTone } from 'paper-ui'
 import { Bars3Icon, PlusIcon } from 'paper-ui/icons'
 import { formatDate, users } from '../data'
 import { contestEnd, contestStart, formatDateRange, formatDateTime } from '../dates'
@@ -39,18 +38,18 @@ function RecordEditor({ record, section, onSave, variant }: { record?: AdminReco
   const [open, setOpen] = useState(false)
   const review = section === 'reports' || section === 'languages'
   const defaults = { title: record?.title ?? '', detail: record?.detail ?? '', status: record?.status ?? (review ? 'Open' : 'Draft') }
-  const methods = useForm({ defaultValues: defaults })
+  const methods = usePaperForm({ defaultValues: defaults, onSubmit: ({ value: values }) => { onSave({ ...values, id: record?.id ?? `${section}-${crypto.randomUUID()}`, section }); setOpen(false) } })
   const singular: Record<AdminSection, string> = { posts: 'post', pages: 'page', announcements: 'announcement', languages: 'language', reports: 'report' }
   const title = record ? `${review ? 'Review' : 'Edit'} ${singular[section]}` : `New ${singular[section]}`
-  return <Modal title={title} trigger={<Button variant={variant ?? (record ? 'outline' : 'default')} leadingIcon={record ? undefined : <PlusIcon className="paper-icon-default" />}>{record ? review ? 'Review' : 'Edit' : title}</Button>} open={open} onOpenChange={next => { if (next) methods.reset(defaults); setOpen(next) }} footer={null}>
-    <FormProvider {...methods}><form onSubmit={methods.handleSubmit(values => { onSave({ ...values, id: record?.id ?? `${section}-${crypto.randomUUID()}`, section }); setOpen(false) })}>
+  return <Modal title={title} trigger={<Button variant={variant ?? (record ? 'outline' : 'default')} leadingIcon={record ? undefined : <PlusIcon className="paper-icon-default" />}>{record ? review ? 'Review' : 'Edit' : title}</Button>} open={open} onOpenChange={next => { if (next) methods.reset(defaults, { keepDefaultValues: true }); setOpen(next) }} footer={null}>
+    <methods.AppForm><methods.Form >
       <div className="app-form__fields">
-      <Input name="title" label={section === 'languages' ? 'Language or request' : 'Title'} required maxLength={120} rules={{ validate: value => Boolean(String(value).trim()) || 'Enter a title.' }} />
-      <TextArea name="detail" label={review ? 'Review notes' : 'Content'} required rows={6} rules={{ validate: value => Boolean(String(value).trim()) || 'Add the content or review notes.' }} />
-      <Select name="status" label="Status" options={(review ? ['Open', section === 'languages' ? 'Approved' : 'Resolved'] : ['Draft', 'Published']).map(value => ({ value, label: value }))} />
+      <methods.AppField name="title" validators={{ onChange: ({ value }) => { if (!value) return "This field is required."; const result = (value => Boolean(String(value).trim()) || 'Enter a title.')(value); return result === true ? undefined : result || undefined; } }}>{field => <field.Input label={section === 'languages' ? 'Language or request' : 'Title'} required maxLength={120} />}</methods.AppField>
+      <methods.AppField name="detail" validators={{ onChange: ({ value }) => { if (!value) return "This field is required."; const result = (value => Boolean(String(value).trim()) || 'Add the content or review notes.')(value); return result === true ? undefined : result || undefined; } }}>{field => <field.TextArea label={review ? 'Review notes' : 'Content'} required rows={6} />}</methods.AppField>
+      <methods.AppField name="status">{field => <field.Select label="Status" options={(review ? ['Open', section === 'languages' ? 'Approved' : 'Resolved'] : ['Draft', 'Published']).map(value => ({ value, label: value }))} />}</methods.AppField>
       </div>
       <div className="app-form__actions"><Button type="submit">Save {review ? 'review' : 'changes'}</Button><Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button></div>
-    </form></FormProvider>
+    </methods.Form></methods.AppForm>
   </Modal>
 }
 

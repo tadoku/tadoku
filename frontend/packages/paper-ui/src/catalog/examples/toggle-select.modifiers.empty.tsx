@@ -1,30 +1,39 @@
-import { Button, ToggleSelect } from 'paper-ui'
+import { Button, usePaperForm } from 'paper-ui'
 import { useState } from 'react'
-import { FormProvider, useForm } from 'react-hook-form'
 
 export default function Example() {
-  const methods = useForm({ defaultValues: { modifiers: [] as string[] } })
+  const methods = usePaperForm({
+    defaultValues: { modifiers: [] as string[] },
+    onSubmit: ({ value: { modifiers } }) => {
+      setSaved(
+        modifiers.length
+          ? 'Saved with passive listening.'
+          : 'Saved without a modifier.',
+      )
+    },
+  })
   const [saved, setSaved] = useState<string | null>(null)
 
   return (
-    <FormProvider {...methods}>
-      <form
-        className="paper-stack"
-        noValidate
-        onSubmit={methods.handleSubmit(({ modifiers }) => {
-          setSaved(modifiers.length ? 'Saved with passive listening.' : 'Saved without a modifier.')
-        })}
-      >
-        <ToggleSelect
-          name="modifiers"
-          label="Score modifiers"
-          options={[
-            { value: 'Passive listening', label: 'Passive listening', description: '×0.5' },
-          ]}
-        />
+    <methods.AppForm>
+      <methods.Form className="paper-stack">
+        <methods.AppField name="modifiers">
+          {field => (
+            <field.ToggleSelect
+              label="Score modifiers"
+              options={[
+                {
+                  value: 'Passive listening',
+                  label: 'Passive listening',
+                  description: '×0.5',
+                },
+              ]}
+            />
+          )}
+        </methods.AppField>
         <Button type="submit">Save selection</Button>
         {saved ? <p role="status">{saved}</p> : null}
-      </form>
-    </FormProvider>
+      </methods.Form>
+    </methods.AppForm>
   )
 }

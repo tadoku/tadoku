@@ -1,66 +1,51 @@
 import { useId, type InputHTMLAttributes } from "react";
-import { useFormState } from "react-hook-form";
 import { FieldFrame, describedBy, useField, type Option } from "./field";
 
 export interface AmountWithUnitProps
-  extends Omit<InputHTMLAttributes<HTMLInputElement>, "name" | "type"> {
-  readonly name: string;
+  extends Omit<InputHTMLAttributes<HTMLInputElement>, 'name' | 'type' | 'value' | 'onChange' | 'onBlur'> {
   readonly label: string;
   readonly units: readonly Option<string>[];
   readonly unitsLabel?: string;
   readonly hint?: string;
+  readonly unitField: {
+    readonly name: string;
+    readonly state: { readonly value: string };
+    readonly handleChange: (value: string) => void;
+    readonly handleBlur: () => void;
+  };
 }
 
-export function AmountWithUnit({
-  name,
-  label,
-  units,
-  unitsLabel,
-  hint,
-  required,
-  min,
-  max,
-  disabled,
-  ...props
-}: AmountWithUnitProps) {
-  const id = `paper-amount-${useId().replace(/:/gu, "")}`;
-  const amountName = `${name}Value`;
-  const unitName = `${name}Unit`;
-  const { form, error: amountError } = useField(amountName);
-  const unitState = useFormState({ control: form.control, name: unitName });
-  const unitError = form.getFieldState(unitName, unitState).error;
-  const error = amountError ?? unitError;
+export function AmountWithUnit({ label, units, unitsLabel, unitField, hint, required, disabled, ...props }: AmountWithUnitProps) {
+  const id = `paper-amount-${useId().replace(/:/gu, '')}`;
+  const { field, error } = useField<number | string>();
   return (
-    <FieldFrame id={id} label={label} hint={hint} required={required} error={error?.message?.toString()}>
+    <FieldFrame id={id} label={label} hint={hint} required={required} error={error}>
       <div className="paper-compound-field" role="group" aria-labelledby={`${id}-label`}>
         <input
           {...props}
-          {...form.register(amountName, {
-            valueAsNumber: true,
-            disabled,
-            required: required ? "Enter an amount." : undefined,
-            min: min === undefined ? undefined : { value: min, message: `Enter at least ${min}.` },
-            max: max === undefined ? undefined : { value: max, message: `Enter no more than ${max}.` },
-          })}
+          name={field.name}
+          value={typeof field.state.value === 'number' && Number.isNaN(field.state.value) ? '' : field.state.value ?? ''}
+          onChange={event => field.handleChange(event.currentTarget.valueAsNumber)}
+          onBlur={field.handleBlur}
           required={required}
-          min={min}
-          max={max}
           disabled={disabled}
           id={id}
           type="number"
           className="paper-input"
-          aria-invalid={amountError ? true : undefined}
-          aria-describedby={describedBy(id, hint, error, props["aria-describedby"])}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={describedBy(id, hint, error, props['aria-describedby'])}
         />
         <select
-          {...form.register(unitName, { disabled })}
+          name={unitField.name}
+          value={unitField.state.value}
+          onChange={event => unitField.handleChange(event.currentTarget.value)}
+          onBlur={unitField.handleBlur}
           disabled={disabled}
           aria-label={unitsLabel ?? `Unit for ${label.toLocaleLowerCase()}`}
           className="paper-input paper-compound-field__unit"
-          aria-invalid={unitError ? true : undefined}
-          aria-describedby={describedBy(id, hint, error, props["aria-describedby"])}
+          aria-describedby={describedBy(id, hint, error, props['aria-describedby'])}
         >
-          {units.map((unit) => <option key={unit.value} value={unit.value} disabled={unit.disabled}>{unit.label}</option>)}
+          {units.map(unit => <option key={unit.value} value={unit.value} disabled={unit.disabled}>{unit.label}</option>)}
         </select>
       </div>
     </FieldFrame>

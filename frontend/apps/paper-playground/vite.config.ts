@@ -4,7 +4,7 @@ import { defineConfig } from 'vitest/config'
 export default defineConfig({
   plugins: [react()],
   resolve: {
-    dedupe: ['react', 'react-dom', 'react-hook-form'],
+    dedupe: ['react', 'react-dom', '@tanstack/react-form'],
   },
   build: {
     sourcemap: true,

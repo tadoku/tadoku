@@ -29,8 +29,9 @@ legacy applications keep their existing compatibility.
   configured existing Webv2 application.
 - `frontend/apps/webv3/src/components/` owns the Paper screen composition,
   navigation, appearance and local goal interactions.
-- The goal form uses TanStack Form with native controls and Paper CSS recipes.
-  Existing Paper form components retain their React Hook Form integration.
+- The goal form uses `usePaperForm` and bound Paper controls through TanStack
+  Form's composition contexts. Its Zod validators own numeric bounds and errors.
+  Saving and storage failures remain application-owned effects.
 
 Server responses are parsed before the screen uses them. Production API null
 language lists mean unrestricted languages and normalize to empty lists; missing

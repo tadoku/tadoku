@@ -54,9 +54,9 @@ export const formFieldDetails: ComponentDetails = {
     example: "Enter positive progress, then choose pages or minutes. Inspect current values to see progressValue as a number and progressUnit as a separate string. Submit the empty example to see required validation.",
     anatomy: "A labelled group joins one numeric input to one native unit picker. The shared hint and first error describe both controls.",
     variants: "One compound field. Use Input with a unit in its label when the unit is fixed; a disabled picker should not be used to fake a fixed suffix.",
-    states: "required, min, and max validate the amount on submission. An empty optional amount becomes NaN through valueAsNumber; normalize it before sending JSON. Disabling the field disables both controls.",
+    states: "Field or form validators enforce required amounts and numeric bounds on submission. Native required, min, and max describe the control. An empty optional amount becomes NaN through valueAsNumber; normalize it before sending JSON. Disabling the field disables both controls.",
     content: "Label the measurement, such as Progress. Use concise plural unit labels, and state any minimum or rounding policy in the hint.", implementation: formSetup,
-    props: [{ name: "name", type: "string", required: true, description: "Prefix for two fields: nameValue (number) and nameUnit (string). Initialize both in defaultValues." }, ...fieldProps.filter((prop) => prop.name !== "name"), { name: "units", type: "readonly Option<string>[]", required: true, description: "Available units. Each has value, label, and optional disabled." }, { name: "unitsLabel", type: "string", description: "Accessible unit-picker label; defaults to Unit for plus the lowercased field label." }, { name: "min / max / step", type: "number | string", description: "Native number constraints. min/max also validate through React Hook Form; use step for the native stepping interval." }, disabledProp],
+    props: [{ name: "unitField", type: "Unit field binding", required: true, description: "Bind the amount through form.AppField and pass the separate unit field as unitField." }, ...fieldProps.filter((prop) => prop.name !== "name"), { name: "units", type: "readonly Option<string>[]", required: true, description: "Available units. Each has value, label, and optional disabled." }, { name: "unitsLabel", type: "string", description: "Accessible unit-picker label; defaults to Unit for plus the lowercased field label." }, { name: "min / max / step", type: "number | string", description: "Native number constraints. Add matching min/max rules to AppField validators; use step for the native stepping interval." }, disabledProp],
   },
 };
 
@@ -64,7 +64,7 @@ export const formFieldCommonMistakes: Record<string, string> = {
   "component.textarea": "Do not set a fixed height with overflow hidden: users need to read and resize longer notes.",
   "component.select": "Do not store a placeholder as a real language value. Initialize the empty option with an empty string and validate required selections.",
   "component.checkbox": "Do not mark an optional preference required; required means the user must check it to continue.",
-  "component.amount-with-unit": "Do not initialize a single progress object: this component registers progressValue and progressUnit as two sibling fields.",
+  "component.amount-with-unit": "Do not initialize a single progress object: bind progressValue and progressUnit through separate AppFields, and pass the unit field to AmountWithUnit.",
 };
 
 export const textAreaFixtures = [
@@ -149,7 +149,7 @@ export const textAreaFixtures = [
 }, code: Example12Source, render: () => <Example12 /> }),
 ] as const;
 
-export const textAreaSpec: DocSpec = { id: "component.textarea", route: "/components/forms/textarea", name: "TextArea", category: "forms", summary: "Collects multiline text with the same deterministic field anatomy as Input.", fixtureId: "textarea.reading-notes", sourcePath: "src/components/forms/controls.tsx", react: ["TextArea"], types: ["TextAreaProps"], css: ["paper-textarea"], when: "Use for prose, notes, and other values that genuinely need multiple lines.", avoid: "Use Input for short single-line values and do not resize away the user's editing space.", choose: "Choose TextArea over Input by content length, not by visual preference.", behavior: "Native text editing, Tab focus, and React Hook Form validation remain intact.", accessibility: "Associate the persistent label, hint, and recoverable error with the native textarea.", migration: "Replace legacy TextArea while retaining the existing field name and register rules." };
+export const textAreaSpec: DocSpec = { id: "component.textarea", route: "/components/forms/textarea", name: "TextArea", category: "forms", summary: "Collects multiline text with the same deterministic field anatomy as Input.", fixtureId: "textarea.reading-notes", sourcePath: "src/components/forms/controls.tsx", react: ["TextArea"], types: ["TextAreaProps"], css: ["paper-textarea"], when: "Use for prose, notes, and other values that genuinely need multiple lines.", avoid: "Use Input for short single-line values and do not resize away the user's editing space.", choose: "Choose TextArea over Input by content length, not by visual preference.", behavior: "Native text editing, Tab focus, and TanStack Form validation remain intact.", accessibility: "Associate the persistent label, hint, and recoverable error with the native textarea.", migration: "Replace legacy TextArea while retaining the existing field name and TanStack validators." };
 
 export const selectFixtures = [
   defineCatalogFixture({ ...{
@@ -315,7 +315,7 @@ export const checkboxFixtures = [
 }, code: Example16Source, render: () => <Example16 /> }),
 ] as const;
 
-export const checkboxSpec: DocSpec = { id: "component.checkbox", route: "/components/forms/checkbox", name: "Checkbox", category: "forms", summary: "Captures an independent boolean choice with native semantics.", fixtureId: "checkbox.public-entry", sourcePath: "src/components/forms/controls.tsx", react: ["Checkbox"], types: ["CheckboxProps"], when: "Use for an independent yes/no setting or acknowledgement.", avoid: "Use radio choices when exactly one option in a set must be selected.", choose: "A checkbox toggles one proposition; a radio group chooses among mutually exclusive propositions.", behavior: "Space toggles the focused native checkbox and React Hook Form owns its boolean value.", accessibility: "Put the consequence in the visible label or hint and retain the native checkbox input.", migration: "Replace legacy Checkbox without converting it into a custom switch role." };
+export const checkboxSpec: DocSpec = { id: "component.checkbox", route: "/components/forms/checkbox", name: "Checkbox", category: "forms", summary: "Captures an independent boolean choice with native semantics.", fixtureId: "checkbox.public-entry", sourcePath: "src/components/forms/controls.tsx", react: ["Checkbox"], types: ["CheckboxProps"], when: "Use for an independent yes/no setting or acknowledgement.", avoid: "Use radio choices when exactly one option in a set must be selected.", choose: "A checkbox toggles one proposition; a radio group chooses among mutually exclusive propositions.", behavior: "Space toggles the focused native checkbox and TanStack Form owns its boolean value.", accessibility: "Put the consequence in the visible label or hint and retain the native checkbox input.", migration: "Replace legacy Checkbox without converting it into a custom switch role." };
 
 export const amountWithUnitFixtures = [
   defineCatalogFixture({ ...{

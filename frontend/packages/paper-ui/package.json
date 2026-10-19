@@ -37,14 +37,14 @@
     "test:watch": "vitest",
     "build": "tsup && node scripts/build-assets.mjs",
     "pack:check": "node scripts/check-package.mjs",
-    "consumer:ts49": "node ../../node_modules/typescript-4/bin/tsc --noEmit -p tests/consumer-4.9/tsconfig.json",
     "lint": "eslint .",
-    "examples:check": "node scripts/check-examples.mjs"
+    "examples:check": "node scripts/check-examples.mjs",
+    "consumer:typecheck": "tsc --noEmit -p tests/consumer/tsconfig.json"
   },
   "peerDependencies": {
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "react-hook-form": ">=7.40.0 <8"
+    "@tanstack/react-form": "1.33.2"
   },
   "dependencies": {
     "@base-ui/react": "1.8.0",
@@ -67,11 +67,10 @@
     "jsdom": "27.0.1",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "react-hook-form": "7.88.0",
     "tsup": "8.5.1",
     "typescript": "npm:@typescript/typescript6@6.0.2",
-    "typescript-4": "npm:typescript@4.9.3",
     "typescript-eslint": "8.66.0",
-    "vitest": "4.1.11"
+    "vitest": "4.1.11",
+    "@tanstack/react-form": "1.33.2"
   }
 }

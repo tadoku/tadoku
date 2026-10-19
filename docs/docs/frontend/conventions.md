@@ -1,6 +1,6 @@
 ---
 title: Frontend conventions
-description: The binding rules for frontend code in Tadoku, covering pnpm, the legacy ui design system, react-hook-form, API data parsing, Paper boundaries and the checks to run.
+description: The binding rules for frontend code in Tadoku, covering pnpm, the legacy ui design system, TanStack Form and React Hook Form, API data parsing, Paper boundaries and the checks to run.
 ---
 
 # Frontend conventions
@@ -33,7 +33,23 @@ button or form styles:
 
 ## Forms
 
-Existing applications use `react-hook-form`; Webv3 uses TanStack Form as described below. Never keep form fields in plain `useState`.
+Legacy applications use `react-hook-form`. Paper applications use TanStack Form
+with `usePaperForm` from `paper-ui`. Never keep form fields in plain `useState`.
+Keep legacy forms on React Hook Form without bridging the two libraries.
+
+Paper form controls compose through
+`usePaperForm`, `form.AppForm`, `form.Form` and `form.AppField`; render the bound
+control from the field, such as `field.Input`. Screens own default values,
+TanStack validators and submission effects. `required` marks the native control;
+add the corresponding rule to the field or form validators. Number inputs emit
+numbers (an empty input emits `NaN`), checkboxes own booleans or string arrays,
+and autocomplete controls retain their selected objects. Disabled controls keep
+their form values; screen submission handlers decide which data to persist.
+Use `form.reset(values, { keepDefaultValues: true })` to load another draft
+without replacing the hook's default values on the next render.
+Paper consumers require TypeScript 5.4 or newer and the pinned TanStack Form peer.
+
+For legacy applications:
 
 - Set up form context with `useForm()` and `<FormProvider>`.
 - Use `<Input>`, `<Select>` and `<TextArea>` from `ui`; they read the form
@@ -106,11 +122,8 @@ routers out of `paper-ui`. `pnpm check:paper-boundaries` rejects `paper-ui` in
 legacy applications and `ui`, Next.js or Headless UI in Paper code.
 
 Webv3 uses TanStack Start, Router and Query with request-scoped server rendering,
-Zod response validation and TanStack Form. Its native form controls reuse Paper's
-CSS recipes; the existing `paper-ui` form components still require React Hook
-Form context. Keep the Webv3 form state and validation in TanStack Form rather
-than bridging both form libraries. Its data source and local development commands
-are documented in [Webv3](webv3.md).
+Zod response validation and TanStack Form. Its data source and local development
+commands are documented in [Webv3](webv3.md).
 
 ## Checks
 

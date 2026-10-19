@@ -40,7 +40,10 @@ func accessTokenDatabase(t *testing.T) *testpostgres.Database {
 		t.Setenv("TENANT_POSTGRES_"+key, value)
 	}
 	t.Setenv("TENANT_PRODUCTION", "false")
-	if _, err := db.Pool.Exec(t.Context(), "insert into tenants(key,kind) values ('e2e/tokens-0123abcd','test'), ('e2e/other-0123abcd','test')"); err != nil {
+	_, err = db.Pool.Exec(t.Context(), `insert into tenants(key,kind)
+ values ('e2e/tokens-0123abcd','test'),
+ ('e2e/other-0123abcd','test')`)
+	if err != nil {
 		t.Fatal(err)
 	}
 	return db
@@ -66,7 +69,10 @@ func tokenCommand(t *testing.T, args ...string) (string, error) {
 
 func TestAccessTokenCommandLifecycle(t *testing.T) {
 	db := accessTokenDatabase(t)
-	raw, err := tokenCommand(t, "create", "--tenant", "e2e/tokens-0123abcd", "--scope", "email:read", "--name", "reader", "--expires-in", "720h")
+	raw, err := tokenCommand(t,
+		"create", "--tenant", "e2e/tokens-0123abcd", "--scope", "email:read",
+		"--name", "reader", "--expires-in", "720h",
+	)
 	if err != nil {
 		t.Fatalf("create failed: %v", err)
 	}
@@ -76,7 +82,10 @@ func TestAccessTokenCommandLifecycle(t *testing.T) {
 	hash := sha256.Sum256([]byte(raw))
 	var stored string
 	var id uuid.UUID
-	if err := db.Pool.QueryRow(t.Context(), "select id, token_hash from access_tokens where tenant='e2e/tokens-0123abcd'").Scan(&id, &stored); err != nil {
+	err = db.Pool.QueryRow(t.Context(),
+		"select id, token_hash from access_tokens where tenant='e2e/tokens-0123abcd'",
+	).Scan(&id, &stored)
+	if err != nil {
 		t.Fatal(err)
 	}
 	if stored != hex.EncodeToString(hash[:]) || stored == raw {
@@ -92,7 +101,8 @@ func TestAccessTokenCommandLifecycle(t *testing.T) {
 		ExpiresAt time.Time
 		RevokedAt *time.Time
 	}
-	if json.Unmarshal([]byte(list), &metadata) != nil || len(metadata) != 1 || metadata[0].ID != id || metadata[0].Name != "reader" {
+	if json.Unmarshal([]byte(list), &metadata) != nil || len(metadata) != 1 ||
+		metadata[0].ID != id || metadata[0].Name != "reader" {
 		t.Fatal("list did not return token metadata")
 	}
 	if strings.Contains(list, raw) || strings.Contains(list, stored) {
@@ -114,7 +124,10 @@ func TestAccessTokenCommandLifecycle(t *testing.T) {
 
 func TestAccessTokenCommandLimits(t *testing.T) {
 	db := accessTokenDatabase(t)
-	create := []string{"create", "--tenant", "e2e/tokens-0123abcd", "--scope", "email:read", "--name", "reader", "--expires-in", "1h"}
+	create := []string{
+		"create", "--tenant", "e2e/tokens-0123abcd", "--scope", "email:read",
+		"--name", "reader", "--expires-in", "1h",
+	}
 	if _, err := db.Pool.Exec(t.Context(), `insert into access_tokens(tenant,name,token_hash,scopes,expires_at)
   select 'e2e/tokens-0123abcd','existing',n::text,array['email:read'],now()+interval '1 day'
   from generate_series(1,10) n`); err != nil {
@@ -153,7 +166,10 @@ func TestAccessTokenCommandConcurrentLimit(t *testing.T) {
 	results := make(chan error, 8)
 	for range 8 {
 		wg.Go(func() {
-			results <- run(context.Background(), []string{"access-token", "create", "--tenant", "e2e/tokens-0123abcd", "--scope", "email:read", "--name", "parallel", "--expires-in", "1h"})
+			results <- run(context.Background(), []string{
+				"access-token", "create", "--tenant", "e2e/tokens-0123abcd", "--scope", "email:read",
+				"--name", "parallel", "--expires-in", "1h",
+			})
 		})
 	}
 	wg.Wait()

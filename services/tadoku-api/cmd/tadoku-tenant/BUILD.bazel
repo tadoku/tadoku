@@ -4,12 +4,16 @@ load("@rules_pkg//:pkg.bzl", "pkg_tar")
 
 go_library(
     name = "tadoku-tenant_lib",
-    srcs = ["main.go"],
+    srcs = [
+        "access_token.go",
+        "main.go",
+    ],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/cmd/tadoku-tenant",
     visibility = ["//visibility:private"],
     deps = [
         "//services/common/postgresconfig",
         "//services/tadoku-api/app/tenantlifecycle",
+        "//services/tadoku-api/features/authz/tokens",
         "//services/tadoku-api/features/jobqueue",
         "//services/tadoku-api/features/leaderboard",
         "//services/tadoku-api/infra/flipt",
@@ -32,13 +36,17 @@ go_binary(
 
 go_test(
     name = "tadoku-tenant_test",
-    env_inherit = ["TADOKU_TEST_POSTGRES_URL"],
-    tags = ["no-cache", "no-remote-exec", "requires-network"],
     srcs = [
         "access_token_test.go",
         "main_test.go",
     ],
     embed = [":tadoku-tenant_lib"],
+    env_inherit = ["TADOKU_TEST_POSTGRES_URL"],
+    tags = [
+        "no-cache",
+        "no-remote-exec",
+        "requires-network",
+    ],
     deps = [
         "//services/tadoku-api/internal/testpostgres",
         "@com_github_google_uuid//:uuid",

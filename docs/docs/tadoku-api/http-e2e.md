@@ -42,8 +42,12 @@ The general test principles are in [Testing](./testing.md).
   request fixture is checked in.
 - Lifecycle tests stay focused on startup and shutdown; keep endpoint
   assertions out of them.
-- Gateway token issuance and unrelated infrastructure stay outside these
-  in-process tests.
+- The email gateway journey starts the pinned Oathkeeper v26.2.0 executable
+  with the checked-in development rules, disposable signing keys and loopback
+  API upstream. It logs into the owned Kratos fixture, uses real Keto roles and
+  verifies cookie and bearer reads, anonymous rejection and token route isolation.
+  It does not replace the separate live branch-host gate.
+- Unrelated gateway infrastructure stays outside these in-process tests.
 
 ## Tenant feature-flag isolation
 

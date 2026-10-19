@@ -23,8 +23,10 @@ The general test principles are in [Testing](./testing.md).
 - Scenarios run sequentially. Call `reset` before each independent scenario,
   never between dependent requests.
 - The router uses the default deployed API request budget of 30 seconds,
-  including cost-12 password hashing. Provider fixtures retain their own
-  bounded timeouts; request-deadline behavior is tested at the transport boundary.
+  including cost-12 password hashing. The complete E2E target has Bazel's large
+  test budget so race instrumentation can cover real bcrypt work without reducing
+  the password cost or skipping throttle requests. Provider fixtures retain their
+  own bounded timeouts; request-deadline behavior is tested at the transport boundary.
 - `reset` runs `internal/testpostgres/cleanup.sql`, which explicitly lists the
   mutable tables to truncate with `restart identity`. Add newly tested mutable
   tables to that one file. Do not discover tables automatically or use

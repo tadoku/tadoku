@@ -15,7 +15,15 @@ import Example12 from "./examples/textarea.reading-notes.empty";
 import Example12Source from "./examples/textarea.reading-notes.empty.tsx?raw";
 import Example11Source from "./examples/textarea.reading-notes.tsx?raw";
 import { defineCatalogFixture } from "./schema";
-import { disabledProp, fieldProps, formSetup, optionsProp, validationProp, type ComponentDetails, type DocSpec } from "./forms-feedback-spec";
+import {
+  disabledProp,
+  fieldProps,
+  formSetup,
+  optionsProp,
+  validationProp,
+  type ComponentDetails,
+  type DocSpec,
+} from "./forms-feedback-spec";
 
 export const formFieldDetails: ComponentDetails = {
   "component.textarea": {

@@ -1,4 +1,8 @@
-import type { CatalogDocument, ComponentCategory, ComponentPageSectionKey } from "./schema"
+import type {
+  CatalogDocument,
+  ComponentCategory,
+  ComponentPageSectionKey,
+} from "./schema";
 
 export interface DocSpec {
   readonly id: string;

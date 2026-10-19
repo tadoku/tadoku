@@ -1,10 +1,61 @@
-import { buttonGroupAndSurfaceCommonMistakes, buttonGroupAndSurfaceDetails, buttonGroupFixtures, buttonGroupSpec, surfaceFixtures, surfaceSpec } from "./button-group-and-surface"
-import { feedbackCommonMistakes, feedbackDetails, flashFixtures, flashSpec, loadingFixtures, loadingSpec, toastFixtures, toastSpec } from "./feedback-components"
-import { autocompleteCommonMistakes, autocompleteDetails, autocompleteFixtures, autocompleteSpec, multiAutocompleteFixtures, multiAutocompleteSpec, tagsInputFixtures, tagsInputSpec } from "./form-autocomplete"
-import { choiceGroupCommonMistakes, choiceGroupDetails, radioGroupFixtures, radioGroupSpec, radioSelectFixtures, radioSelectNativeFixtures, radioSelectSpec, toggleSelectFixtures, toggleSelectSpec } from "./form-choice-groups"
-import { amountWithUnitFixtures, amountWithUnitSpec, checkboxFixtures, checkboxSpec, formFieldCommonMistakes, formFieldDetails, selectFixtures, selectSpec, textAreaFixtures, textAreaSpec } from "./form-fields"
-import type { ComponentDetails, DocSpec } from "./forms-feedback-spec"
-import { defineCatalogDocument, type CatalogDocument, type ComponentDocumentationSections, type RequiredComponentSections } from "./schema"
+import {
+defineCatalogDocument,
+type CatalogDocument,
+type ComponentDocumentationSections,
+type RequiredComponentSections,
+} from "./schema";
+import type { ComponentDetails, DocSpec } from "./forms-feedback-spec";
+import {
+  buttonGroupAndSurfaceCommonMistakes,
+  buttonGroupAndSurfaceDetails,
+  buttonGroupFixtures,
+  buttonGroupSpec,
+  surfaceFixtures,
+  surfaceSpec,
+} from "./button-group-and-surface";
+import {
+  feedbackCommonMistakes,
+  feedbackDetails,
+  flashFixtures,
+  flashSpec,
+  loadingFixtures,
+  loadingSpec,
+  toastFixtures,
+  toastSpec,
+} from "./feedback-components";
+import {
+  autocompleteCommonMistakes,
+  autocompleteDetails,
+  autocompleteFixtures,
+  autocompleteSpec,
+  multiAutocompleteFixtures,
+  multiAutocompleteSpec,
+  tagsInputFixtures,
+  tagsInputSpec,
+} from "./form-autocomplete";
+import {
+  choiceGroupCommonMistakes,
+  choiceGroupDetails,
+  radioGroupFixtures,
+  radioGroupSpec,
+  radioSelectFixtures,
+  radioSelectNativeFixtures,
+  radioSelectSpec,
+  toggleSelectFixtures,
+  toggleSelectSpec,
+} from "./form-choice-groups";
+import {
+  amountWithUnitFixtures,
+  amountWithUnitSpec,
+  checkboxFixtures,
+  checkboxSpec,
+  formFieldCommonMistakes,
+  formFieldDetails,
+  selectFixtures,
+  selectSpec,
+  textAreaFixtures,
+  textAreaSpec,
+} from "./form-fields";
 
 const REVIEW_DATE = "2026-09-05";
 

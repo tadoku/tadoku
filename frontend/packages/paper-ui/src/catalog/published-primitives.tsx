@@ -3,7 +3,14 @@ import Example48 from "./examples/drawer.filters";
 import Example48Source from "./examples/drawer.filters.tsx?raw";
 import Example47 from "./examples/tabs.content";
 import Example47Source from "./examples/tabs.content.tsx?raw";
-import { COMPONENT_PAGE_SECTION_KEYS, defineCatalogDocument, defineCatalogFixture, type CatalogDocument, type ComponentDocumentationSections, type RequiredComponentSections } from "./schema";
+import {
+COMPONENT_PAGE_SECTION_KEYS,
+defineCatalogDocument,
+defineCatalogFixture,
+type CatalogDocument,
+type ComponentDocumentationSections,
+type RequiredComponentSections,
+} from "./schema";
 
 const REVIEW_DATE = "2026-09-05";
 const VIEWPORTS = [

@@ -1,10 +1,10 @@
 import FilterBarExample from "./examples/pattern.filter-bar";
 import FilterBarExampleSource from "./examples/pattern.filter-bar.tsx?raw";
+import { defineCatalogDocument, type RequiredComponentSections } from "./schema";
 import { componentDocument, EXPERIMENTAL_LIFECYCLE, fixture, REVIEW_DATE } from "./page-composition-document";
 import { pageStructureDocuments, pageStructureFixtures } from "./page-structure";
-import { defineCatalogDocument, type RequiredComponentSections } from "./schema";
-import { statGridAndDescriptionListDocuments, statGridAndDescriptionListFixtures } from "./stat-grid-and-description-list";
 import { statusTagAndEmptyStateDocuments, statusTagAndEmptyStateFixtures } from "./status-tag-and-empty-state";
+import { statGridAndDescriptionListDocuments, statGridAndDescriptionListFixtures } from "./stat-grid-and-description-list";
 
 export const pageCompositionFixtures = [
   ...pageStructureFixtures,

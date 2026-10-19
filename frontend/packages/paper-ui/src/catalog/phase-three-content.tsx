@@ -2,8 +2,12 @@ import Example46 from "./examples/experiment.logging-v2-entry";
 import Example46Source from "./examples/experiment.logging-v2-entry.tsx?raw";
 import Example45 from "./examples/pattern.logging-summary";
 import Example45Source from "./examples/pattern.logging-summary.tsx?raw";
+import {
+defineCatalogDocument,
+defineCatalogFixture,
+type CatalogRedirect,
+} from "./schema";
 import { guidanceDocument, PACKAGE_VERSION, REVIEW_DATE } from "./guidance-document";
-import { defineCatalogDocument, defineCatalogFixture, type CatalogRedirect } from "./schema";
 import { visualFoundationDocuments } from "./visual-foundations";
 
 const VIEWPORTS = [

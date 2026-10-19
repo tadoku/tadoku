@@ -11,7 +11,15 @@ import Example28 from "./examples/tags.entry.empty";
 import Example28Source from "./examples/tags.entry.empty.tsx?raw";
 import Example27Source from "./examples/tags.entry.tsx?raw";
 import { defineCatalogFixture } from "./schema";
-import { disabledProp, fieldProps, formSetup, validationProp, type ComponentDetails, type DocSpec, type Prop } from "./forms-feedback-spec";
+import {
+  disabledProp,
+  fieldProps,
+  formSetup,
+  validationProp,
+  type ComponentDetails,
+  type DocSpec,
+  type Prop,
+} from "./forms-feedback-spec";
 
 const autocompleteProps: readonly Prop[] = [...fieldProps, validationProp,
   { name: "options", type: "readonly Value[]", required: true, description: "Known objects supplied by the application. Fetch remote suggestions outside this component." },

@@ -13,7 +13,15 @@ import ToggleModifiersSource from "./examples/toggle-select.modifiers.tsx?raw";
 import EmptyToggleModifiersExample from "./examples/toggle-select.modifiers.empty";
 import EmptyToggleModifiersSource from "./examples/toggle-select.modifiers.empty.tsx?raw";
 import { defineCatalogFixture } from "./schema";
-import { disabledProp, fieldProps, formSetup, optionsProp, validationProp, type ComponentDetails, type DocSpec } from "./forms-feedback-spec";
+import {
+  disabledProp,
+  fieldProps,
+  formSetup,
+  optionsProp,
+  validationProp,
+  type ComponentDetails,
+  type DocSpec,
+} from "./forms-feedback-spec";
 
 export const choiceGroupDetails: ComponentDetails = {
   "component.radio-select": {

@@ -7,10 +7,13 @@ spec:
         - name: development-ca
           mountPath: /etc/dev-ca
           readOnly: true
-      envFrom:
-        - configMapRef:
-            name: tadoku-cli-authv2
       env:
+        - name: TADOKU_WEB_URL
+          value: "https://tadoku.dev.lab"
+        - name: TADOKU_API_URL
+          value: "https://tadoku.dev.lab/api/internal"
+        - name: NODE_EXTRA_CA_CERTS
+          value: "/etc/dev-ca/ca.crt"
         - name: NODE_OPTIONS
           value: "--max-old-space-size=768"
         - name: HOST

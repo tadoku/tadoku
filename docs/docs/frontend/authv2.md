@@ -72,6 +72,12 @@ The base lives in `k8s/dev/base/frontend-authv2/`, with a native Nitro server,
 Lab CA trust, API-independent `/healthz` probes and canonical gateway routes
 that strip client-supplied branch headers. The development base becomes
 available only after its manifests and compatible image have been deployed.
+Both development account apps use `tdk-dev-frontend-auth`, with separate
+Deployment/Service names and selectors. Authv2 overlays set `TADOKU_WEB_URL`,
+`TADOKU_API_URL` and `NODE_EXTRA_CA_CERTS` inline and mount the existing
+`tadoku-cli-ca`; they do not need the base's `tadoku-cli-authv2` ConfigMap or
+auth's Next.js configuration. No new shared namespace or ConfigMap is required
+to verify a branch. Production retains its separate authv2 namespace.
 
 ## Checks and manual browser smoke
 

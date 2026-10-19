@@ -57,6 +57,11 @@ Authv2 uses `/` and `/login` on `authv2.tadoku.dev.lab` or the matching
 
 - Obtain the link with `dev url --owner <owner> --host authv2.tadoku.dev.lab '/login'`.
   Confirm the document's overlay `X-Dev-Backend` before claiming branch behavior.
+  Authv2 shares `tdk-dev-frontend-auth` with auth, using distinct workload and
+  Service selectors. Its Vite overlay supplies URLs inline and reuses the existing
+  `tadoku-cli-ca`; no shared prerequisite creation is needed. Snapshot auth's
+  UID, spec, generation, selectors and ConfigMaps before startup and compare
+  after owner-scoped teardown. Require no owned resources and healthy auth.
 - A tenant selecting v2 shows the Paper skeleton and anonymous/signed-in state;
   registration, recovery and settings are not available in this foundation.
 - A v1 session answer returns to the matching existing account host with the

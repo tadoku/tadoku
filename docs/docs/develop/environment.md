@@ -180,6 +180,9 @@ leaking across tabs. A printed link does not create an overlay or prove readines
 - Authentication is shared between base and branches. Kratos remains at
   `https://account.tadoku.dev.lab/kratos`; it is never routed to a frontend overlay.
 
+Authv2 shares the existing `tdk-dev-frontend-auth` namespace with auth, with
+separate workload names and selectors. Its overlay sets runtime URLs inline
+and reuses the existing `tadoku-cli-ca`; no shared prerequisite creation is needed.
 Authv2 has its own host family, `<route>.authv2.tadoku.dev.lab`, and uses the
 [Paper account skeleton](../frontend/authv2.md). Its server forwards the request
 cookie and branch selection to the identity session API. The API chooses v1

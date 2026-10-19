@@ -16,8 +16,9 @@ _DEV_INSTALL = [
     "--child-concurrency=1",
 ]
 
-def frontend_dev(name, host, readiness_path = "/", paper = False):
+def frontend_dev(name, host, readiness_path = "/", paper = False, namespace = None):
     """One app source graph, OCI runtime and dev-cli contract."""
+    namespace = namespace or "tdk-dev-frontend-%s" % name
     shared_package = "paper-ui" if paper else "ui"
     command = " ".join(_DEV_INSTALL) + " && exec pnpm --filter " + name + " dev"
     if paper:
@@ -100,7 +101,7 @@ def frontend_dev(name, host, readiness_path = "/", paper = False):
         metadata = json.encode({
             "name": "%s" % name,
             "kind": "frontend",
-            "namespace": "tdk-dev-frontend-%s" % name,
+            "namespace": namespace,
             "buildTarget": "//frontend:%s_dev_image" % name,
             "imageTarget": "//frontend:%s_dev_image" % name,
             "imageName": "%s" % name,
@@ -115,7 +116,7 @@ def frontend_dev(name, host, readiness_path = "/", paper = False):
             "publicHost": host,
             "baseService": {
                 "name": "frontend-%s" % name,
-                "namespace": "tdk-dev-frontend-%s" % name,
+                "namespace": namespace,
                 "port": 3000,
             },
             "devContainer": "%s" % name,

@@ -85,8 +85,10 @@ or password, while a valid stale session may still change its display name.
 Email changes must notify the old address and password changes must revoke
 other sessions.
 
-This public administrator read requires deployed cookie-session callback wiring,
-an existing authorized admin session, and tenant-local v2 fixture accounts.
+A v2 administrator cookie requires deployed identity callback wiring and
+tenant-local v2 administrator fixtures. The existing gateway also accepts an
+already authorized v1 administrator cookie. Both paths require a valid
+administrator session; opening a login page alone does not provide one.
 Missing prerequisites must be reported explicitly. A bearer read, API
 port-forward or disposable local gateway is separate evidence and does not
 satisfy this journey. Do not create shared Kratos sessions, change shared

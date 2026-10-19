@@ -56,7 +56,8 @@ func TestDevelopmentAccountsCommand(t *testing.T) {
 		err := db.Pool.QueryRow(t.Context(), `select a.email,u.display_name,a.password_hash
    from accounts a join users u on (u.tenant,u.id)=(a.tenant,a.user_id)
    where a.tenant='e2e/tokens-0123abcd' and a.user_id=$1`, fixture.id).Scan(&email, &name, &hash)
-		if err != nil || email != fixture.email || name != fixture.name || bcrypt.CompareHashAndPassword([]byte(hash), []byte("tadoku")) != nil {
+		if err != nil || email != fixture.email || name != fixture.name ||
+			bcrypt.CompareHashAndPassword([]byte(hash), []byte("tadoku")) != nil {
 			t.Fatalf("native fixture %s has wrong identity or password (error=%v)", fixture.name, err)
 		}
 	}
@@ -83,7 +84,10 @@ func TestDevelopmentAccountsCommand(t *testing.T) {
 		t.Fatal("denied invocation changed accounts")
 	}
 	var outside int
-	err := db.Pool.QueryRow(t.Context(), `select count(*) from accounts where tenant<>'e2e/tokens-0123abcd'`).Scan(&outside)
+	err := db.Pool.QueryRow(
+		t.Context(),
+		`select count(*) from accounts where tenant<>'e2e/tokens-0123abcd'`,
+	).Scan(&outside)
 	if err != nil || outside != 0 {
 		t.Fatalf("seed changed another tenant: count=%d error=%v", outside, err)
 	}

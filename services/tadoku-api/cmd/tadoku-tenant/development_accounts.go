@@ -72,10 +72,18 @@ func runDevelopmentAccounts(ctx context.Context, args []string) error {
 		return value
 	}
 	fixtures := []identity.DevelopmentAccount{
-		{ID: adminID, Email: defaults("TADOKU_DEV_ADMIN_EMAIL", "dev@tadoku.app"), DisplayName: "Dev Admin",
-			Password: defaults("TADOKU_DEV_ADMIN_PASSWORD", "tadoku")},
-		{ID: readerID, Email: defaults("TADOKU_DEV_READER_EMAIL", "reader@tadoku.app"), DisplayName: "Dev Reader",
-			Password: defaults("TADOKU_DEV_READER_PASSWORD", "tadoku")},
+		{
+			ID:          adminID,
+			Email:       defaults("TADOKU_DEV_ADMIN_EMAIL", "dev@tadoku.app"),
+			DisplayName: "Dev Admin",
+			Password:    defaults("TADOKU_DEV_ADMIN_PASSWORD", "tadoku"),
+		},
+		{
+			ID:          readerID,
+			Email:       defaults("TADOKU_DEV_READER_EMAIL", "reader@tadoku.app"),
+			DisplayName: "Dev Reader",
+			Password:    defaults("TADOKU_DEV_READER_PASSWORD", "tadoku"),
+		},
 	}
 	return tenantlifecycle.NewApplication(pool, nil, nil, nil).SeedDevelopmentAccounts(ctx, key, fixtures)
 }

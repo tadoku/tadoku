@@ -108,15 +108,12 @@ ingress. `/api/internal` uses Oathkeeper before the API, while page and asset
 requests use Webv3. Existing Tadoku subdomain admission and shared account
 cookies cover the preview and branch hosts.
 
-Authv2 follows the same Node 22 Nitro deployment, with `tadoku-cli-authv2`
-runtime configuration, Lab CA trust and API-independent `/healthz` probes. Its
-Deployment and Service use `tdk-dev-frontend-auth`, with distinct names and
-selectors from auth, and reuse that namespace's `tadoku-cli-ca`. Branch overlays
-set their runtime URLs inline, so they need no new shared ConfigMap or namespace.
-The existing `tadoku-cli-web` configuration remains specific to Next.js auth. Its
-canonical ingress and gateway routes serve `authv2.tadoku.dev.lab` and remove
-client-supplied branch headers. Identity API requests pass through Oathkeeper.
-See [Authv2](../frontend/authv2.md) for session selection and unavailable states.
+Authv2 shares `tdk-dev-frontend-auth` with auth, using distinct workload names
+and selectors. The base uses `tadoku-cli-authv2`; overlays supply URLs inline and
+reuse `tadoku-cli-ca`, so they need no new shared prerequisites. Auth's Next.js
+configuration stays unchanged. Canonical `authv2.tadoku.dev.lab` routes strip
+branch headers; identity requests use Oathkeeper.
+See [Authv2](../frontend/authv2.md) for runtime, probes and session behavior.
 
 ## Asynchronous worker ownership
 

@@ -1,5 +1,5 @@
-import { forwardRef, useId, type InputHTMLAttributes } from "react"
 import { useField } from "../field"
+import { forwardRef, useId, type InputHTMLAttributes } from "react"
 
 export interface InputProps
   extends Omit<

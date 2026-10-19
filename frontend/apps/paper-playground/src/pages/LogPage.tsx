@@ -1,8 +1,7 @@
-import { usePaperForm, Breadcrumb, Button, EmptyState, Flash, Modal, PageHeader, Surface, buttonClassName } from 'paper-ui'
 import { useEffect, useRef, useState } from 'react'
-
-import { PencilSquareIcon, TrashIcon } from 'paper-ui/icons'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { Breadcrumb, Button, EmptyState, Flash, Modal, PageHeader, Surface, buttonClassName, usePaperForm } from 'paper-ui'
+import { PencilSquareIcon, TrashIcon } from 'paper-ui/icons'
 import { contestStatus, formatDate, formatNumber, personalScoreExplanation, sampleToday, scoreLog, scoreSubmission, users, type SampleContest, type SampleLog, type Submission } from '../data'
 import { contestEnd, contestStart, formatDateRange } from '../dates'
 import { renderLink } from '../routerLink'

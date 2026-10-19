@@ -1,5 +1,5 @@
-import { useId, type InputHTMLAttributes } from 'react';
-import { FieldFrame, describedBy, useField, type Option } from './field';
+import { useId, type InputHTMLAttributes } from "react";
+import { FieldFrame, describedBy, useField, type Option } from "./field";
 
 export interface AmountWithUnitProps
   extends Omit<InputHTMLAttributes<HTMLInputElement>, 'name' | 'type' | 'value' | 'onChange' | 'onBlur'> {

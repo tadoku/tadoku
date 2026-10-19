@@ -1,5 +1,5 @@
 import { createFormHookContexts, useStore } from "@tanstack/react-form"
-import type { ReactNode } from "react"
+import type { ReactNode } from "react";
 
 export const { fieldContext, formContext, useFieldContext, useFormContext } = createFormHookContexts();
 

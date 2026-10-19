@@ -1,4 +1,9 @@
-import { useId, type InputHTMLAttributes, type SelectHTMLAttributes, type TextareaHTMLAttributes } from "react";
+import {
+  useId,
+  type InputHTMLAttributes,
+  type SelectHTMLAttributes,
+  type TextareaHTMLAttributes,
+} from "react";
 import { ChevronDownIcon, iconClassName } from "../../icons";
 import { FieldFrame, describedBy, useField, type FieldContract, type Option, type OptionGroup } from "./field";
 
@@ -59,9 +64,9 @@ export function Select({
         <select
           {...props}
           name={field.name}
-        value={field.state.value ?? ""}
-        onChange={event => field.handleChange(event.currentTarget.value)}
-        onBlur={field.handleBlur}
+          value={field.state.value ?? ""}
+          onChange={event => field.handleChange(event.currentTarget.value)}
+          onBlur={field.handleBlur}
           id={id}
           required={required}
           aria-invalid={error ? true : undefined}
@@ -116,8 +121,17 @@ export function Checkbox({
           {...props}
           name={field.name}
           checked={option === undefined ? selected === true : Array.isArray(selected) && selected.includes(option)}
-          onChange={event => field.handleChange(option === undefined ? event.currentTarget.checked : event.currentTarget.checked ? [...(Array.isArray(selected) ? selected : []), option] : (Array.isArray(selected) ? selected : []).filter(value => value !== option))}
-        onBlur={field.handleBlur}
+          onChange={event => {
+            if (option === undefined) {
+              field.handleChange(event.currentTarget.checked);
+            } else {
+              const values = Array.isArray(selected) ? selected : [];
+              field.handleChange(event.currentTarget.checked
+                ? [...values, option]
+                : values.filter(value => value !== option));
+            }
+          }}
+          onBlur={field.handleBlur}
           id={id}
           type="checkbox"
           required={required}

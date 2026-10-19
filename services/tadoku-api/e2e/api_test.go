@@ -263,7 +263,12 @@ func newTestRouterWithLeaderboard(
 type routerOption func(*routerEndpoints)
 
 type routerEndpoints struct {
-	ketoWrite string
+	ketoWrite      string
+	identityValkey valkeygo.Client
+}
+
+func withIdentityValkey(client valkeygo.Client) routerOption {
+	return func(endpoints *routerEndpoints) { endpoints.identityValkey = client }
 }
 
 func withKetoWriteURL(url string) routerOption {

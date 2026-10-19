@@ -53,7 +53,12 @@ create table emails (
   created_at timestamptz not null default now(),
 
   primary key (tenant, id),
-  constraint emails_status_valid check (status in ('pending', 'sent', 'held', 'failed'))
+  constraint emails_status_valid check (status in ('pending', 'sent', 'held', 'failed')),
+  constraint emails_status_fields check (
+    (status = 'sent') = (sent_at is not null)
+    and (status = 'failed') = (error is not null)
+    and (provider_message_id is null or status = 'sent')
+  )
 );
 
 create table access_tokens (

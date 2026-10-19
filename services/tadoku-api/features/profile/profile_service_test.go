@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	kratosclient "github.com/tadoku/tadoku/services/tadoku-api/features/identity"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
 
@@ -81,11 +81,11 @@ func TestDecodeIdentityTraitsRoundTripsDisplayNameWithoutEmail(t *testing.T) {
 func TestMapIdentityFetchErrorMapsKratosNotFound(t *testing.T) {
 	t.Parallel()
 
-	if err := mapIdentityFetchError(kratosclient.ErrLegacyNotFound); !errors.Is(err, ErrIdentityNotFound) {
+	if err := mapIdentityFetchError(identity.ErrLegacyNotFound); !errors.Is(err, ErrIdentityNotFound) {
 		t.Errorf("mapIdentityFetchError(ErrNotFound) = %v, want ErrIdentityNotFound", err)
 	}
 
-	wrapped := fmt.Errorf("fetch: %w", kratosclient.ErrLegacyNotFound)
+	wrapped := fmt.Errorf("fetch: %w", identity.ErrLegacyNotFound)
 	if err := mapIdentityFetchError(wrapped); !errors.Is(err, ErrIdentityNotFound) {
 		t.Errorf("mapIdentityFetchError(wrapped ErrNotFound) = %v, want ErrIdentityNotFound", err)
 	}
@@ -118,7 +118,12 @@ func TestFindProfileAndFetchAccountCreatedAtTreatNonUserSchemaAsNotFound(t *test
 	httpClient := provider.Client()
 	httpClient.Timeout = time.Second
 	t.Cleanup(httpClient.CloseIdleConnections)
-	service := NewService(nil, nil, nil, kratosclient.NewLegacyReader(provider.URL, kratosclient.WithHTTPClient(httpClient)))
+	service := NewService(
+		nil,
+		nil,
+		nil,
+		identity.NewLegacyReader(provider.URL, identity.WithHTTPClient(httpClient)),
+	)
 
 	if _, err := service.FindProfile(t.Context(), id); !errors.Is(err, ErrIdentityNotFound) {
 		t.Errorf("FindProfile() error = %v, want ErrIdentityNotFound", err)

@@ -48,9 +48,8 @@ func (s *Service) setNamedUserAccess(
 	ctx context.Context,
 	flagKey string,
 	targetUserID uuid.UUID,
-	enabled bool) (State,
-	error,
-) {
+	enabled bool,
+) (State, error) {
 	segment, err := validate(flagKey, targetUserID)
 	if err != nil {
 		return State{}, err

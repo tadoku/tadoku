@@ -74,22 +74,25 @@ type AccountPage struct {
 	NextCursor string
 }
 
+type CookieHeader string
+type RecoveryToken string
+
 type Reader interface {
-	FindAccount(context.Context, uuid.UUID) (Account, error)
-	UserExists(context.Context, uuid.UUID) (bool, error)
-	ListAccounts(context.Context, ListAccounts) (AccountPage, error)
+	FindAccount(ctx context.Context, userID uuid.UUID) (Account, error)
+	UserExists(ctx context.Context, userID uuid.UUID) (bool, error)
+	ListAccounts(ctx context.Context, query ListAccounts) (AccountPage, error)
 }
 
 type Accounts interface {
 	Reader
-	DeleteAccount(context.Context, uuid.UUID) error
-	Register(context.Context, Registration) (LoginResult, error)
-	Login(context.Context, Login) (LoginResult, error)
-	Logout(context.Context, string) (Cookie, error)
-	Session(context.Context, string) (SessionResult, error)
-	CheckSession(context.Context, string) (Session, error)
-	RequestRecovery(context.Context, Recovery) (RecoveryResult, error)
-	ConsumeRecovery(context.Context, string) (RecoveryLogin, error)
-	UpdateProfile(context.Context, string, ProfileSettings) (ProfileResult, error)
-	UpdatePassword(context.Context, string, string) error
+	DeleteAccount(ctx context.Context, userID uuid.UUID) error
+	Register(ctx context.Context, registration Registration) (LoginResult, error)
+	Login(ctx context.Context, login Login) (LoginResult, error)
+	Logout(ctx context.Context, cookieHeader CookieHeader) (Cookie, error)
+	Session(ctx context.Context, cookieHeader CookieHeader) (SessionResult, error)
+	CheckSession(ctx context.Context, cookieHeader CookieHeader) (Session, error)
+	RequestRecovery(ctx context.Context, recovery Recovery) (RecoveryResult, error)
+	ConsumeRecovery(ctx context.Context, recoveryToken RecoveryToken) (RecoveryLogin, error)
+	UpdateProfile(ctx context.Context, cookieHeader CookieHeader, settings ProfileSettings) (ProfileResult, error)
+	UpdatePassword(ctx context.Context, cookieHeader CookieHeader, password string) error
 }

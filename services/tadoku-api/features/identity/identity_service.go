@@ -24,20 +24,24 @@ func (*Service) Register(context.Context, Registration) (LoginResult, error) {
 func (*Service) Login(context.Context, Login) (LoginResult, error) {
 	return LoginResult{}, ErrNotImplemented
 }
-func (*Service) Logout(context.Context, string) (Cookie, error) { return Cookie{}, ErrNotImplemented }
-func (*Service) Session(context.Context, string) (SessionResult, error) {
+func (*Service) Logout(context.Context, CookieHeader) (Cookie, error) {
+	return Cookie{}, ErrNotImplemented
+}
+func (*Service) Session(context.Context, CookieHeader) (SessionResult, error) {
 	return SessionResult{}, ErrNotImplemented
 }
-func (*Service) CheckSession(context.Context, string) (Session, error) { return nil, ErrNotImplemented }
+func (*Service) CheckSession(context.Context, CookieHeader) (Session, error) {
+	return nil, ErrNotImplemented
+}
 func (*Service) RequestRecovery(context.Context, Recovery) (RecoveryResult, error) {
 	return RecoveryResult{}, ErrNotImplemented
 }
-func (*Service) ConsumeRecovery(context.Context, string) (RecoveryLogin, error) {
+func (*Service) ConsumeRecovery(context.Context, RecoveryToken) (RecoveryLogin, error) {
 	return RecoveryLogin{}, ErrNotImplemented
 }
-func (*Service) UpdateProfile(context.Context, string, ProfileSettings) (ProfileResult, error) {
+func (*Service) UpdateProfile(context.Context, CookieHeader, ProfileSettings) (ProfileResult, error) {
 	return ProfileResult{}, ErrNotImplemented
 }
-func (*Service) UpdatePassword(context.Context, string, string) error { return ErrNotImplemented }
+func (*Service) UpdatePassword(context.Context, CookieHeader, string) error { return ErrNotImplemented }
 
 func (*Service) DeleteAccount(context.Context, uuid.UUID) error { return ErrNotImplemented }

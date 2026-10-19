@@ -23,7 +23,7 @@ import (
 	featureauthz "github.com/tadoku/tadoku/services/tadoku-api/features/authz"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/contests"
 	featureflagsservice "github.com/tadoku/tadoku/services/tadoku-api/features/featureflags"
-	kratosclient "github.com/tadoku/tadoku/services/tadoku-api/features/identity"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/languages"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
@@ -58,7 +58,7 @@ type application struct {
 	transport       *http.Transport
 	pool            *pgxpool.Pool
 	valkey          valkeygo.Client
-	kratosRead      kratosclient.LegacyReader
+	kratosRead      identity.LegacyReader
 	keto            *ketoclient.Client
 	flipt           *fliptclient.Provider
 	fliptEvaluation *http.Client
@@ -168,7 +168,7 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 		Transport: transport,
 		Timeout:   cfg.KratosTimeout,
 	}
-	kratosIdentities := kratosclient.NewLegacyReader(cfg.KratosAdminURL, kratosclient.WithHTTPClient(kratosHTTP))
+	kratosIdentities := identity.NewLegacyReader(cfg.KratosAdminURL, identity.WithHTTPClient(kratosHTTP))
 	keto := ketoclient.NewClient(cfg.KetoReadURL, cfg.KetoWriteURL, ketoclient.WithHTTPClient(&http.Client{
 		Transport: transport,
 		Timeout:   cfg.KetoWriteTimeout,

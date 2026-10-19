@@ -21,7 +21,7 @@ import (
 	"github.com/bazelbuild/rules_go/go/runfiles"
 	_ "github.com/mattn/go-sqlite3"
 	kratosapi "github.com/ory/kratos-client-go"
-	kratosclient "github.com/tadoku/tadoku/services/tadoku-api/features/identity"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/identity"
 )
 
 const (
@@ -126,8 +126,8 @@ func New(ctx context.Context, seedFile string) (_ *Fixture, resultErr error) {
 
 func (fixture *Fixture) Client() *kratosapi.APIClient { return fixture.client }
 
-func (fixture *Fixture) CursorClient() kratosclient.LegacyReader {
-	return kratosclient.NewLegacyReader(adminURL, kratosclient.WithHTTPClient(fixture.http))
+func (fixture *Fixture) CursorClient() identity.LegacyReader {
+	return identity.NewLegacyReader(adminURL, identity.WithHTTPClient(fixture.http))
 }
 
 func (fixture *Fixture) Err() error {

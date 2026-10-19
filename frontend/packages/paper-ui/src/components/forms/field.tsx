@@ -26,7 +26,9 @@ export function useField<Value>() {
   const form = useFormContext();
   const submitted = useStore(form.store, state => state.submissionAttempts > 0);
   const errors = useStore(field.store, state => state.meta.errors);
-  const first = submitted || field.state.meta.isTouched ? errors[0] : undefined;
+  const showErrors = submitted || Boolean(field.state.meta.errorMap.onSubmit) ||
+    (field.state.meta.isTouched && Boolean(field.options.validators?.onBlur));
+  const first = showErrors ? errors[0] : undefined;
   const error = typeof first === "string" ? first : first?.message;
   return { field, error };
 }

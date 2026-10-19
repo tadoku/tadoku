@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/mail"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
@@ -35,10 +36,16 @@ func (s *Service) RequestRecovery(ctx context.Context, recovery Recovery) (Recov
 		return RecoveryResult{}, err
 	}
 	token := base64.RawURLEncoding.EncodeToString(secret)
-	link := s.appURL(ctx, "") + "api/internal/identity/recovery/" + token +
-		"?return_to=" + url.QueryEscape(recovery.ReturnTo)
-	if err := ValidateReturnTo(link); err != nil {
+	origin := strings.TrimSuffix(s.appURL(ctx, ""), "/")
+	if err := ValidateOrigin(origin); err != nil {
 		return RecoveryResult{}, err
+	}
+	link := origin + "/api/internal/identity/recovery/" + token +
+		"?return_to=" + url.QueryEscape(recovery.ReturnTo)
+	if len(link) > 4096 {
+		return RecoveryResult{}, &Error{
+			"invalid_return_to", errx.NewInvalidInputError("return_to makes the recovery link exceed 4096 bytes"),
+		}
 	}
 
 	credential, err := s.repository.lockRecoveryAccount(ctx, email)

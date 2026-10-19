@@ -136,7 +136,10 @@ work exceeding that minimum is not hidden.
 
 The link uses the configured cookie domain and parsed tenant's main API host,
 never the incoming Host. Its path is `/api/internal/identity/recovery/{token}`,
-with the validated destination in an optional `return_to` query. Account and
+with the validated destination in an optional `return_to` query. Destinations
+may use the full 2,048-byte input limit; an encoded recovery link exceeding
+the email parameter limit of 4,096 bytes is rejected before any account lookup,
+so this limit cannot disclose account existence. Account and
 authv2 hosts must use the configured main API URL rather than assume they serve
 relative API paths. The token contains 256 random bits; only its SHA-256 hash is
 stored in `recovery_tokens`, with a one-hour expiry. The email retains the usable

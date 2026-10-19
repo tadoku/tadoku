@@ -58,21 +58,30 @@ async function checkRuntimeLinks(base, cases) {
         let html = ''
         response.setEncoding('utf8')
         response.on('data', chunk => { html += chunk })
-        response.on('end', () => resolve({ status: response.statusCode, html }))
+        response.on('end', () => resolve({ status: response.statusCode, headers: response.headers, html }))
         response.on('error', reject)
       })
       request.on('timeout', () => request.destroy(new Error(`Goal SSR timed out for ${host}`)))
       request.on('error', reject)
     })
     assert.equal(response.status, 200, `Goal SSR failed for ${host}`)
+    assert.equal(response.headers['cache-control'], 'private, no-store')
+    assert(response.headers.vary.toLowerCase().includes('cookie'))
+    const auth = origin.includes('.preview.tadoku.app')
+      ? origin.replace('.preview.tadoku.app', '.account.preview.tadoku.app')
+      : origin === 'https://tadoku.app' || origin === 'https://tadoku.dev.lab'
+        ? origin.replace('https://', 'https://account.')
+        : origin.replace('.tadoku.dev.lab', '.account.tadoku.dev.lab')
+    const login = `${auth}/login?return_to=${encodeURIComponent(`https://${host}/plan`)}`
     const html = response.html
+    assert(html.includes(`href="${login}"`), `Wrong login return for ${host}`)
     await writeFile(`${artifacts}/links-${host}.html`, html)
     assert(html.includes(`href="${origin}/logs/new"`), `Wrong activity link for ${host}`)
     assert(html.includes(`href="${origin}/pages/manual"`), `Wrong guide link for ${host}`)
     for (const [, href] of html.matchAll(/href="(https:\/\/[^" ]+)"/g)) {
       const url = new URL(href)
       if (url.hostname.endsWith('.tadoku.app') || url.hostname === 'tadoku.app' || url.hostname.endsWith('.dev.lab')) {
-        assert.equal(url.origin, origin, `Cross-request product URL leaked on ${host}`)
+        assert([origin, auth].includes(url.origin), `Cross-request product URL leaked on ${host}`)
       }
     }
     return { host, origin, outcome: 'passed' }
@@ -109,6 +118,8 @@ try {
     ['alice.next.tadoku.dev.lab', 'https://alice.tadoku.dev.lab'],
     ['bob.next.tadoku.dev.lab', 'https://bob.tadoku.dev.lab'],
   ]))
+  const refused = await fetch(`${base}/logout`, { method: 'POST', headers: { Origin: 'https://evil.tadoku.app', 'Sec-Fetch-Site': 'same-site' }, redirect: 'manual' })
+  assert.equal(refused.status, 403)
   const html = await (await fetch(base, { signal: AbortSignal.timeout(15_000) })).text()
   assert(html.includes(contest.title), 'Runtime API override or SSR failed')
   assert(html.includes('https://tadoku.app'), 'Production product links missing')

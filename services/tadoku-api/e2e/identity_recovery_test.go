@@ -215,3 +215,26 @@ func TestIdentityRecoveryRejectsRedirectBeforeConsuming(t *testing.T) {
 		t.Fatal("default Settings redirect escaped the token tenant")
 	}
 }
+
+func TestIdentityRecoveryAcceptsFullLengthReturnTo(t *testing.T) {
+	prefix := "https://authv2.tadoku.dev.lab/?q="
+	for _, tc := range []struct {
+		name, email, character string
+		want                   int
+	}{
+		{"full destination", "reader@example.test", "a", http.StatusAccepted},
+		{"expanded link known", "reader@example.test", "&", http.StatusBadRequest},
+		{"expanded link unknown", "unknown@example.test", "&", http.StatusBadRequest},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			resetIdentity(t)
+			destination := prefix + strings.Repeat(tc.character, 2048-len(prefix))
+			body, err := json.Marshal(map[string]string{"email": tc.email, "return_to": destination})
+			if err != nil {
+				t.Fatal(err)
+			}
+			response := identityRequest(t, api.handler, identityBranchA, "POST", "/identity/recovery", string(body), "", nil)
+			requireIdentityStatus(t, response, tc.want)
+		})
+	}
+}

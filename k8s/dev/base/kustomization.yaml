@@ -61,7 +61,7 @@ configMapGenerator:
       - NEXT_PUBLIC_AUTH_UI_URL=https://account.tadoku.dev.lab
       - NEXT_PUBLIC_HOME_URL=https://tadoku.dev.lab
       - NEXT_PUBLIC_API_ENDPOINT=/api/internal
-      - NEXT_SERVER_API_ENDPOINT=https://tadoku.dev.lab/api/internal
+      - NEXT_SERVER_API_ENDPOINT=http://oathkeeper-proxy.tdk-dev-oathkeeper:4455/api/internal
       - NEXT_PUBLIC_COOKIE_DOMAIN=.tadoku.dev.lab
       - NEXT_PUBLIC_COOKIE_SECURE=true
       - NEXT_PUBLIC_ADMIN_URL=https://admin.tadoku.dev.lab
@@ -82,7 +82,7 @@ configMapGenerator:
       - NEXT_PUBLIC_AUTH_UI_URL=https://account.tadoku.dev.lab
       - NEXT_PUBLIC_HOME_URL=https://tadoku.dev.lab
       - NEXT_PUBLIC_API_ENDPOINT=https://tadoku.dev.lab/api/internal
-      - NEXT_SERVER_API_ENDPOINT=https://tadoku.dev.lab/api/internal
+      - NEXT_SERVER_API_ENDPOINT=http://oathkeeper-proxy.tdk-dev-oathkeeper:4455/api/internal
       - NEXT_PUBLIC_COOKIE_DOMAIN=.tadoku.dev.lab
       - NEXT_PUBLIC_COOKIE_SECURE=true
       - NEXT_PUBLIC_ADMIN_URL=https://admin.tadoku.dev.lab
@@ -103,7 +103,7 @@ configMapGenerator:
       - NEXT_PUBLIC_AUTH_UI_URL=https://account.tadoku.dev.lab
       - NEXT_PUBLIC_HOME_URL=https://tadoku.dev.lab
       - NEXT_PUBLIC_API_ENDPOINT=https://tadoku.dev.lab/api/internal
-      - NEXT_SERVER_API_ENDPOINT=https://tadoku.dev.lab/api/internal
+      - NEXT_SERVER_API_ENDPOINT=http://oathkeeper-proxy.tdk-dev-oathkeeper:4455/api/internal
       - NEXT_PUBLIC_COOKIE_DOMAIN=.tadoku.dev.lab
       - NEXT_PUBLIC_COOKIE_SECURE=true
       - NEXT_PUBLIC_ADMIN_URL=https://admin.tadoku.dev.lab

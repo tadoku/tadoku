@@ -1,5 +1,5 @@
 log:
-  level: info
+  level: warn
   format: json
   leak_sensitive_values: false
 serve:
@@ -60,14 +60,13 @@ authenticators:
     enabled: true
     config:
       check_session_url: http://tadoku-cli-api.tdk-dev-oathkeeper.svc.cluster.local/identity/internal/v1/session
+      force_method: GET
       preserve_path: true
       extra_from: "@this"
       subject_from: identity.id
       forward_http_headers:
         - Cookie
         - X-Dev-Branch
-      additional_headers:
-        Authorization: 'Bearer {{ env "OATHKEEPER_AUTHZ_TOKEN" }}'
   jwt:
     enabled: true
     config:

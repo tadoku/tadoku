@@ -108,12 +108,8 @@ cookies cover the preview and branch hosts.
 
 ## Identity session callback
 
-Oathkeeper forwards Cookie and X-Dev-Branch, adding its callback bearer through
-the branch-aware API hop. SSR uses an internal session rule for guest and
-account-app resolution. Activate these manifests only after the identity
-callback/session/logout runtime and public routes are deployed and verified;
-see [Identity contracts](../tadoku-api/identity.md). Manifest validation does
-not prove v1 login, webv2, admin or branch callback behavior.
+[Identity gateway configuration](identity-gateway.md) covers the callback
+credential, logging boundary, internal SSR route and activation gates.
 
 ## Asynchronous worker ownership
 
@@ -349,3 +345,4 @@ exact tested revision and any substituted routing boundary.
 
 Do not restart shared services or delete databases as a troubleshooting
 shortcut, and do not delete old resources or data without explicit approval.
+

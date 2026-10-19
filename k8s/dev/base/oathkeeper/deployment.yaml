@@ -63,6 +63,8 @@ spec:
                 secretKeyRef:
                   name: dev-oathkeeper-authz
                   key: token
+            - name: AUTHENTICATORS_COOKIE_SESSION_CONFIG_ADDITIONAL_HEADERS
+              value: '{"Authorization":"Bearer $(OATHKEEPER_AUTHZ_TOKEN)"}'
       volumes:
         - name: configuration
           configMap:

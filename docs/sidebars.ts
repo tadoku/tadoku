@@ -96,6 +96,7 @@ const sidebars: SidebarsConfig = {
       },
       items: [
         'operations/development-base',
+        'operations/identity-gateway',
         'operations/migration-recovery',
         'operations/account-deletion',
       ],

@@ -56,7 +56,9 @@ jobs:
         run: pnpm install --frozen-lockfile --ignore-scripts
 
       - name: Run real-image migration, ownership and frontend E2E
-        run: node k8s/dev/base/e2e.cjs "$RUNNER_TEMP/tadoku-base-evidence"
+        run: |
+          node k8s/dev/base/e2e.cjs "$RUNNER_TEMP/tadoku-base-evidence"
+          node k8s/dev/base/e2e/identity-session.cjs "$RUNNER_TEMP/tadoku-base-evidence/identity-session"
 
       - name: Retain inspectable verification evidence
         if: always()

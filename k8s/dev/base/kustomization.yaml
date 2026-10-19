@@ -16,6 +16,7 @@ resources:
   - frontend-webv2
   - frontend-webv3
   - frontend-auth
+  - frontend-authv2
   - frontend-admin
   - routing
   - ingress.yaml
@@ -39,6 +40,15 @@ configMapGenerator:
     files: [ca.crt=lab-root-ca.crt]
   - name: tadoku-cli-webv3
     namespace: tdk-dev-frontend-webv3
+    options:
+      disableNameSuffixHash: true
+    literals:
+      - TADOKU_WEB_URL=https://tadoku.dev.lab
+      - TADOKU_API_URL=https://tadoku.dev.lab/api/internal
+      - NODE_EXTRA_CA_CERTS=/etc/dev-ca/ca.crt
+      - NODE_OPTIONS=--max-old-space-size=384
+  - name: tadoku-cli-authv2
+    namespace: tdk-dev-frontend-auth
     options:
       disableNameSuffixHash: true
     literals:
@@ -133,11 +143,11 @@ images:
   - name: tadoku-api-image
     newName: ghcr.io/tadoku/tadoku/tadoku-api
     newTag: latest
-    digest: sha256:adfe387f777f31ab01b491a9cef25f8f3b4f34f184e1f144059b817137c1a8d1
+    digest: sha256:2e7bb57354417b4042875085b4bf9e9282df7241362e9d9d5a0bca438cd2d1ee
   - name: tadoku-worker-image
     newName: ghcr.io/tadoku/tadoku/tadoku-worker
     newTag: latest
-    digest: sha256:1cb9376b72721fddb7d850ec5bc4286b733ade707d4166526d8f31ec47c8e667
+    digest: sha256:d9fbcb868f012812835ba980b51a0ac91e04945c19431c10e78fc239951f469a
   - name: token-reflector-image
     newName: ghcr.io/tadoku/tadoku/token-reflector
     newTag: latest
@@ -149,7 +159,7 @@ images:
   - name: ghcr.io/tadoku/tadoku/frontend-webv3
     newName: ghcr.io/tadoku/tadoku/frontend-webv3
     newTag: latest
-    digest: sha256:85fe7ad42f510b5f05a3cf7f0972618b0fdc356012e87039945b9ce984e144d3
+    digest: sha256:75e78dba0fd9b681d766ac21d59ff64134bb4cb26fe3b40867ee7db4a01c492b
   - name: ghcr.io/tadoku/tadoku/frontend-auth
     newTag: 261cba31de11e05274668aac3dc9daf981daab7b
     newName: ghcr.io/tadoku/tadoku/frontend-auth
@@ -158,3 +168,6 @@ images:
     newTag: ea46e4c29df289ab4be3332aef664dc438fb7414
     newName: ghcr.io/tadoku/tadoku/frontend-admin
     digest: sha256:fd69abbeb50924938781e5c0e2da46266155c09aa12c10c622141aac7fa23e1d
+  - name: ghcr.io/tadoku/tadoku/frontend-authv2
+    newName: ghcr.io/tadoku/tadoku/frontend-authv2
+    newTag: latest

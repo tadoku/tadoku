@@ -133,6 +133,14 @@ written after the Keto write and never changes the response; see
 
 ## Request pipeline
 
+Public `/api/internal/identity/*` entry rules use only Oathkeeper's anonymous
+authenticator and `id_token` mutator. The signed guest JWT supplies the tenant;
+the original Cookie reaches the identity API, which owns session authentication
+and CSRF. These rules skip the global cookie-session callback so a banned user
+can read their session or log out. This does not exempt unrelated business routes
+from the ban pipeline below. The identity API's admission rules are owned by
+the identity feature; changing gateway rules does not implement those handlers.
+
 Every business route registered through `services/tadoku-api/transport/http/router.go`
 passes two shared middlewares before its handler. Health probes (`/livez`,
 `/readyz`) are outside this pipeline.

@@ -7,6 +7,7 @@
     "auth": "legacy",
     "webv2": "legacy",
     "paper-playground": "paper",
-    "webv3": "paper"
+    "webv3": "paper",
+    "authv2": "paper"
   }
 }

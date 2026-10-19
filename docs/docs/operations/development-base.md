@@ -32,11 +32,11 @@ The runtime role cannot create tables or write `schema_migrations`.
 
 ## Topology
 
-Each component runs in its own `tdk-dev-*` namespace:
+Components run in `tdk-dev-*` namespaces; auth and authv2 share the existing account namespace:
 
 | Namespace | Contents |
 | --- | --- |
-| `tdk-dev-frontend-webv2`, `tdk-dev-frontend-webv3`, `tdk-dev-frontend-auth`, `tdk-dev-frontend-admin` | Webv2, Webv3, account and admin frontends |
+| `tdk-dev-frontend-webv2`, `tdk-dev-frontend-webv3`, `tdk-dev-frontend-auth`, `tdk-dev-frontend-admin` | Webv2, Webv3, both account apps and admin frontends |
 | `tdk-dev-tadoku-api` | Tadoku API and the private asynchronous worker |
 | `tdk-dev-kratos`, `tdk-dev-keto`, `tdk-dev-oathkeeper` | Auth providers |
 | `tdk-dev-flipt` | Feature flags |
@@ -63,7 +63,7 @@ notification configuration.
 
 - The repository's existing CI publishes the GHCR runtime and migration images.
   Do not add another build or push pipeline.
-- Backend images and Webv3 select `latest` in
+- Backend images, Webv3 and authv2 select `latest` in
   `k8s/dev/base/kustomization.yaml`; Webv2, auth and admin select reviewed
   immutable commit tags. The development Image Updater uses the **digest**
   strategy and writes the immutable resolutions back to that file.
@@ -72,6 +72,8 @@ notification configuration.
 - Webv3 tracks its published `latest` digest independently at
   `https://next.tadoku.dev.lab`. Its deployment keeps the canonical Webv2 host
   available for product journeys linked from the preview.
+- Authv2 follows [merge → publish → public pulls → base readiness → Image Updater](../frontend/authv2.md#images-and-deployment).
+  Delayed public visibility can block its Pod and later sync waves.
 - Hook migration images need Image Updater's `force-update`, because successful
   Jobs are removed from the live resource list.
 - Kustomize mirrors the migration image digest into a top-level annotation on
@@ -105,6 +107,12 @@ Canonical Webv3 requests use the shared Envoy Gateway through a Lab CA
 ingress. `/api/internal` uses Oathkeeper before the API, while page and asset
 requests use Webv3. Existing Tadoku subdomain admission and shared account
 cookies cover the preview and branch hosts.
+
+Authv2 shares `tdk-dev-frontend-auth` with distinct selectors. Its base uses
+`tadoku-cli-authv2`; overlays use inline URLs and existing `tadoku-cli-ca`.
+Canonical routes strip branch headers. Public identity rules use anonymous
+authentication and a signed JWT, forwarding Cookie to API-owned auth/CSRF;
+unrelated rules keep session checks. See [Authv2](../frontend/authv2.md).
 
 ## Asynchronous worker ownership
 

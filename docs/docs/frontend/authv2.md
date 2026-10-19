@@ -1,0 +1,172 @@
+---
+title: Authv2
+description: The TanStack Start and Paper account skeleton, request-scoped session selection, local smoke test, dev-cli overlays and container runtime.
+---
+
+# Authv2
+
+Read this when you run or extend `frontend/apps/authv2`.
+
+Authv2 is the account application foundation on the [Webv3 stack](webv3.md):
+TanStack Start, Router, Query and Form, Zod, Vite, Nitro and Paper. `/` and
+`/login` render the skeleton. Registration, settings, recovery and account
+mutations are not implemented here. The existing `auth` app remains available.
+
+## Session and account selection
+
+`frontend/apps/authv2/src/lib/session.server.ts` requests `GET /identity/session`
+from the configured Tadoku API root, forwarding only the incoming Cookie and
+`X-Dev-Branch` request headers. Zod validates the response shape; the API owns
+account field constraints, so legacy display names and email formats do not block
+the v1 redirect. Session data
+is request-scoped; both the upstream read and rendered response disable caching.
+The server function in `frontend/apps/authv2/src/lib/session.ts` keeps server
+configuration and request credentials out of the browser bundle.
+
+The API chooses the account app for the request's tenant. A `v1` answer redirects
+to the existing account origin with the current path and query. A `v2` answer
+renders the skeleton with the session's signed-in or anonymous state. A missing
+endpoint, non-success response, timeout or invalid payload shows an unavailable
+message and a link to the existing account app. An unavailable answer does not
+invent an account-app selection or an authenticated account.
+
+`frontend/apps/authv2/src/lib/urls.server.ts` resolves origins per request.
+Development uses `authv2.tadoku.dev.lab` and
+`<route>.authv2.tadoku.dev.lab`; production uses `authv2.tadoku.app` and
+`<route>.authv2.preview.tadoku.app`. A valid branch label selects the sibling
+Webv2 API gateway and existing account origin. Other hosts retain the configured
+origins. Forwarded host headers cannot select an upstream.
+
+## Local development
+
+Use Node 22.12 or newer and pnpm. From `frontend/`:
+
+```sh
+pnpm install --frozen-lockfile
+NODE_EXTRA_CA_CERTS=/usr/local/share/ca-certificates/lab-root-ca.crt pnpm authv2
+```
+
+`predev` builds `paper-ui`; Vite listens on port 5184. Check existing listener
+ownership before starting another instance.
+Nitro's development runner uses `self` so SSR starts in the Vite process and
+page requests do not race worker initialization. Source edits update the browser
+through Vite's live connection.
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `TADOKU_WEB_URL` | `https://tadoku.dev.lab` | Webv2 origin and trusted sibling-host root |
+| `TADOKU_API_URL` | `https://tadoku.dev.lab/api/internal` | Server-only API root |
+| `HOST` | `0.0.0.0` | Listener address |
+| `PORT` | `5184` | Vite listener port |
+
+## Branch overlays and base
+
+Use [Development environment](../develop/environment.md) to start a branch and
+obtain its authv2 link. Authv2 source changes select its deployable; shared
+`paper-ui` changes select both authv2 and Webv3. The Paper runtime uses Node 22,
+builds shared declarations initially, watches Paper assets and runs the selected
+app's Vite server on port 3000. Public Paper type changes require another full
+`paper-ui` build. API and tenant provisioning remain separate responsibilities.
+
+The base lives in `k8s/dev/base/frontend-authv2/`, with a native Nitro server,
+Lab CA trust, API-independent `/healthz` probes and canonical gateway routes
+that strip client-supplied branch headers. The development base becomes
+available only after its manifests and compatible image have been deployed.
+Public `/api/internal/identity/*` requests use Oathkeeper's anonymous
+authenticator and signed `id_token`, retaining the original Cookie for the
+identity API. They do not invoke the global session callback: the identity API
+owns session authentication and CSRF, including session reads and logout for
+banned users. Other API rules retain their existing authentication behavior.
+Both development account apps use `tdk-dev-frontend-auth`, with separate
+Deployment/Service names and selectors. Authv2 overlays set `TADOKU_WEB_URL`,
+`TADOKU_API_URL` and `NODE_EXTRA_CA_CERTS` inline and mount the existing
+`tadoku-cli-ca`; they do not need the base's `tadoku-cli-authv2` ConfigMap or
+auth's Next.js configuration. No new shared namespace or ConfigMap is required
+to verify a branch. Production retains its separate authv2 namespace.
+
+## Checks and manual browser smoke
+
+From `frontend/`:
+
+```sh
+pnpm --filter authv2 exec tsc --noEmit
+pnpm --filter authv2 lint
+pnpm --filter authv2 build
+pnpm check:paper-boundaries
+AUTHV2_BASE_URL=http://127.0.0.1:5184 pnpm --filter authv2 test:e2e
+```
+
+The single Playwright smoke test is run by hand, never in CI. Use a tenant on
+v2, or a local server whose session endpoint is absent. It checks the rendered
+skeleton, mobile containment and health. See
+`frontend/apps/authv2/e2e/README.md` for the loopback session fixture that also
+checks header forwarding, v1 redirection and failure responses. That fixture
+proves application HTTP/SSR behavior; it does not prove real authentication,
+Oathkeeper, tenant isolation or shared-cluster routing. TLS verification remains
+enabled. Reports and screenshots go outside source control.
+
+The development-base E2E always builds authv2 from the tested revision and selects
+that local image through `TADOKU_BASE_AUTHV2_IMAGE`. This deliberate source check
+works before or after publication; other images remain published inputs. It does
+not verify authv2 publication, registry visibility or Image Updater.
+
+## Images and deployment
+
+`frontend/apps/authv2/Dockerfile` builds the standalone Node 22 Nitro runtime.
+It runs as UID/GID 1000 on port 3000 with a read-only root filesystem and no
+Kubernetes API token. `/healthz` remains healthy when the identity API is absent.
+The production image defaults runtime origins to `https://tadoku.app` and
+`https://tadoku.app/api/internal`; development overrides them through ConfigMaps.
+
+`frontend/scripts/publish-image.sh` and `//frontend:authv2_branch_push` publish
+explicitly requested tags from committed source. The authv2 build workflow
+checks types, lint, boundaries and the container without running Playwright.
+Main publication creates commit and `latest` tags; only an owner-approved manual
+workflow dispatch with `publish_production` creates `prod`. The maintainer owns
+production manifests, DNS, certificate readiness and deployment in the separate
+GitOps repository. Preparing manifests does not activate the application.
+The canonical `authv2.tadoku.app` DNS record must resolve to the current edge
+before merging the GitOps setup: its gateway, certificate and Oathkeeper
+Applications sync automatically on merge. The authv2 workload still requires
+the maintainer's manual activation and readiness gates.
+
+The first source merge automatically starts both image publication and the
+development base's sync from `main`. The package does not exist before its
+first publication; public repository permissions do not make a GHCR package
+public. Follow this order:
+
+1. Merge reviewed source with its current-head container journeys passing.
+   The normal `build-frontend-authv2` workflow checks the image, then publishes
+   `ghcr.io/tadoku/tadoku/frontend-authv2:<merge-sha>` and `:latest`.
+2. After that publication succeeds, a package administrator opens
+   [authv2 package settings](https://github.com/orgs/tadoku/packages/container/tadoku%2Ffrontend-authv2/settings)
+   and changes only this new package's visibility to Public. Verify an anonymous
+   pull. Publishing and changing visibility are separate actions; no manual
+   workflow dispatch or early image upload is needed.
+3. Require authv2's Pod Ready, `tadoku-dev` Synced and Healthy,
+   `https://authv2.tadoku.dev.lab/login` returning 200, and the existing account
+   host and auth workload unchanged. The source-only skeleton can show its
+   unavailable state until the identity API is deployed.
+4. Enroll authv2 in the homelab Image Updater with the digest strategy and
+   write-back to `k8s/dev/base/kustomization.yaml`, then verify an immutable digest
+   resolution. The homelab infrastructure repository owns this configuration.
+
+Before publication or while the package remains private, the new authv2 Pod may
+stay in `ImagePullBackOff`. Its wave-30 health gate can prevent wave-50 Ingress
+creation and leave the development Application's sync incomplete or failed;
+existing workloads remain available. Kubelet retries the same image pull after
+visibility changes. Argo recovery must be observed: the live Application has
+automated sync and self-heal but no explicit `syncPolicy.retry`; a previously
+observed operation carried a finite retry limit of five. Do not assume unlimited
+retry or authorize a manual sync from this guide. If it remains failed after the
+Pod recovers, the maintainer must assess the failed operation and approve any
+required full sync separately.
+
+Source changes to Webv3 or the workspace lockfile also trigger its normal
+publication workflow. Production already follows `frontend-webv3:latest` by
+digest: Image Updater writes to the production GitOps repository and Argo CD
+automatically rolls `next.tadoku.app`. This is a source-merge effect even while
+authv2 production setup and activation remain held. Webv3's SSR bundles
+`@tanstack/query-core` to keep its build compatible with this workspace; the
+separate Nitro `devServer.runner: 'self'` setting affects development only.
+Keep `webv3 / container journeys` green on the exact source head before landing.

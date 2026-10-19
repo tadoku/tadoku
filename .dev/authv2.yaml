@@ -1,0 +1,33 @@
+spec:
+  automountServiceAccountToken: false
+  containers:
+    - name: authv2
+      workingDir: /app
+      volumeMounts:
+        - name: development-ca
+          mountPath: /etc/dev-ca
+          readOnly: true
+      env:
+        - name: TADOKU_WEB_URL
+          value: "https://tadoku.dev.lab"
+        - name: TADOKU_API_URL
+          value: "https://tadoku.dev.lab/api/internal"
+        - name: NODE_EXTRA_CA_CERTS
+          value: "/etc/dev-ca/ca.crt"
+        - name: NODE_OPTIONS
+          value: "--max-old-space-size=768"
+        - name: HOST
+          value: "0.0.0.0"
+        - name: PORT
+          value: "3000"
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: "2"
+          memory: 1536Mi
+  volumes:
+    - name: development-ca
+      configMap:
+        name: tadoku-cli-ca

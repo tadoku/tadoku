@@ -4,13 +4,13 @@ import { nitro } from 'nitro/vite'
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-  plugins: [tanstackStart(), nitro({ serverDir: './server', preset: 'node-server' }), react()],
+  plugins: [tanstackStart(), nitro({ serverDir: './server', preset: 'node-server', devServer: { runner: 'self' } }), react()],
   resolve: {
     dedupe: ['react', 'react-dom', '@tanstack/react-query'],
   },
   ssr: {
     external: ['react', 'react-dom', 'react-dom/server', 'react/jsx-runtime'],
-    noExternal: ['@tanstack/react-query', '@tanstack/react-router-with-query'],
+    noExternal: ['@tanstack/query-core', '@tanstack/react-query', '@tanstack/react-router-with-query'],
   },
   server: {
     host: process.env.HOST || '0.0.0.0',

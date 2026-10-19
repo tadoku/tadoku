@@ -62,6 +62,7 @@ spec:
   hostnames:
     - tadoku.dev.lab
     - next.tadoku.dev.lab
+    - authv2.tadoku.dev.lab
   rules:
     - backendRefs:
         - group: gateway.envoyproxy.io
@@ -277,6 +278,53 @@ spec:
         - group: gateway.envoyproxy.io
           kind: Backend
           name: tadoku-cli-web
+          port: 3000
+      matches:
+        - path:
+            type: PathPrefix
+            value: /
+      filters:
+        - type: RequestHeaderModifier
+          requestHeaderModifier:
+            remove:
+              - x-dev-branch
+        - type: ResponseHeaderModifier
+          responseHeaderModifier:
+            set:
+              - name: Cache-Control
+                value: no-store
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: Backend
+metadata:
+  name: tadoku-cli-authv2
+  namespace: tdk-dev-routing
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  endpoints:
+    - fqdn:
+        hostname: frontend-authv2.tdk-dev-frontend-authv2.svc.cluster.local
+        port: 3000
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: tadoku-cli-authv2-base
+  namespace: tdk-dev-routing
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  parentRefs:
+    - name: dev-cli-playground
+      namespace: envoy-gateway-system
+  hostnames:
+    - authv2.tadoku.dev.lab
+  rules:
+    - backendRefs:
+        - group: gateway.envoyproxy.io
+          kind: Backend
+          name: tadoku-cli-authv2
           port: 3000
       matches:
         - path:

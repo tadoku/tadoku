@@ -16,6 +16,7 @@ resources:
   - frontend-webv2
   - frontend-webv3
   - frontend-auth
+  - frontend-authv2
   - frontend-admin
   - routing
   - ingress.yaml
@@ -39,6 +40,20 @@ configMapGenerator:
     files: [ca.crt=lab-root-ca.crt]
   - name: tadoku-cli-webv3
     namespace: tdk-dev-frontend-webv3
+    options:
+      disableNameSuffixHash: true
+    literals:
+      - TADOKU_WEB_URL=https://tadoku.dev.lab
+      - TADOKU_API_URL=https://tadoku.dev.lab/api/internal
+      - NODE_EXTRA_CA_CERTS=/etc/dev-ca/ca.crt
+      - NODE_OPTIONS=--max-old-space-size=384
+  - name: tadoku-cli-ca
+    namespace: tdk-dev-frontend-authv2
+    options:
+      disableNameSuffixHash: true
+    files: [ca.crt=lab-root-ca.crt]
+  - name: tadoku-cli-authv2
+    namespace: tdk-dev-frontend-authv2
     options:
       disableNameSuffixHash: true
     literals:
@@ -158,3 +173,6 @@ images:
     newTag: ea46e4c29df289ab4be3332aef664dc438fb7414
     newName: ghcr.io/tadoku/tadoku/frontend-admin
     digest: sha256:fd69abbeb50924938781e5c0e2da46266155c09aa12c10c622141aac7fa23e1d
+  - name: ghcr.io/tadoku/tadoku/frontend-authv2
+    newName: ghcr.io/tadoku/tadoku/frontend-authv2
+    newTag: latest

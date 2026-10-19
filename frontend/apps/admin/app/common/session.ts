@@ -1,4 +1,5 @@
 import { atom, useAtom } from 'jotai'
+import { toast } from 'react-toastify'
 import { Account, AccountApp, logout } from 'ui/identity'
 import { useRouter } from 'next/router'
 import { useEffect, useRef } from 'react'
@@ -54,9 +55,13 @@ export const useLogoutHandler = () => {
   const routes = useRoutes()
   const [, setSession] = useSession()
   return async () => {
-    await logout()
-    setSession(undefined)
-    window.location.assign(routes.authLogin())
+    try {
+      await logout()
+      setSession(undefined)
+      window.location.assign(routes.authLogin())
+    } catch {
+      toast.error('Log out failed. Please try again.')
+    }
   }
 }
 

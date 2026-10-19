@@ -107,6 +107,13 @@ guests. Its `account_app` selects account links, and logout uses
 `POST /identity/logout`. `frontend/packages/ui/identity.ts` owns response parsing
 and transport; the API owns cookies. SSR forwards Cookie and X-Dev-Branch to
 the private API endpoint, and responses use `Cache-Control: private, no-store`.
+Session transport errors, invalid responses and its bounded timeout produce a
+retry screen without authorizing protected content. Auth does not start a
+Kratos flow until the API selects v1. A protected query returning 401 stops
+without automatic reload or retries; the visitor can retry explicitly. Logout
+failures show a message and retain the current UI session until revocation
+succeeds. A fresh session read on each navigation keeps account-app selection
+and session expiry current without sharing a snapshot between tenants.
 
 The v1 auth application’s shared logout hook creates a Kratos logout flow only
 when `useSession()` has an authenticated session. Anonymous login pages must

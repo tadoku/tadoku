@@ -1,6 +1,6 @@
 import App, { AppProps } from 'next/app'
 import { NextPage } from 'next'
-import { ReactElement, ReactNode, useEffect } from 'react'
+import { ReactElement, ReactNode, useState, useEffect } from 'react'
 import { Atom, Provider, useAtom } from 'jotai'
 import {
   AppContextWithSession,
@@ -10,6 +10,7 @@ import {
   useCurrentLocation,
 } from '@app/common/session'
 import { Account, AccountApp, readIdentitySession } from 'ui/identity'
+import { SessionUnavailable } from 'ui/components/SessionUnavailable'
 import { ToastContainer } from 'ui/components/toasts'
 import 'ui/styles/globals.css'
 import { QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -27,6 +28,7 @@ interface Props {
   appUrls: AppUrls
   session: Account | undefined
   accountApp: AccountApp
+  sessionUnavailable: boolean
 }
 
 export type NextPageWithLayout<P = {}, IP = P> = NextPage<P, IP> & {
@@ -36,16 +38,6 @@ export type NextPageWithLayout<P = {}, IP = P> = NextPage<P, IP> & {
 type AppPropsWithLayout = AppProps<Props> & {
   Component: NextPageWithLayout<Props>
 }
-
-const queryClient = new QueryClient({
-  queryCache: new QueryCache({
-    onError: error => {
-      if ((error as Error).message === '401') {
-        window.location.reload()
-      }
-    },
-  }),
-})
 
 const createInitialValues = () => {
   const initialValues: (readonly [Atom<unknown>, unknown])[] = []
@@ -90,6 +82,19 @@ const AppContent = ({ children }: { children: ReactNode }) => {
 }
 
 const MyApp = ({ Component, pageProps }: AppPropsWithLayout) => {
+  const [sessionExpired, setSessionExpired] = useState(false)
+  const [queryClient] = useState(() => new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: (count, error) => (error as Error).message !== '401' && count < 3,
+      },
+    },
+    queryCache: new QueryCache({
+      onError: error => {
+        if ((error as Error).message === '401') setSessionExpired(true)
+      },
+    }),
+  }))
   const initialState = pageProps
   const { get: getInitialValues, set: setInitialValues } = createInitialValues()
 
@@ -115,10 +120,12 @@ const MyApp = ({ Component, pageProps }: AppPropsWithLayout) => {
               media="(prefers-color-scheme: dark)"
             />
           </Head>
-          <AppContent>
-            {getLayout(<Component {...pageProps} />)}
-            <ToastContainer />
-          </AppContent>
+          {sessionExpired || pageProps.sessionUnavailable ? <SessionUnavailable /> : (
+            <AppContent>
+              {getLayout(<Component {...pageProps} />)}
+            </AppContent>
+          )}
+          <ToastContainer />
         </QueryClientProvider>
       </Provider>
     </AppUrlsProvider>
@@ -129,11 +136,12 @@ MyApp.getInitialProps = async (ctx: AppContextWithSession) => {
   ctx.ctx.res?.setHeader('Cache-Control', 'private, no-store')
   const host = ctx.ctx.req?.headers.host ?? (typeof window === 'undefined' ? undefined : window.location.host)
   const identity = await readIdentitySession(host, ctx.ctx.req?.headers)
-  ctx.ctx.session = identity.account ?? undefined
+  ctx.ctx.session = identity?.account ?? undefined
 
   const initialAppProps = await App.getInitialProps(ctx)
   initialAppProps.pageProps.session = ctx.ctx.session
-  initialAppProps.pageProps.accountApp = identity.account_app
+  initialAppProps.pageProps.accountApp = identity?.account_app ?? 'v1'
+  initialAppProps.pageProps.sessionUnavailable = !identity
   initialAppProps.pageProps.appUrls = appUrlsForHost(ctx.ctx.req?.headers.host ?? (typeof window === 'undefined' ? undefined : window.location.host))
 
   return initialAppProps

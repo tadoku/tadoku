@@ -20,7 +20,7 @@ Flow pages are `register.tsx`, `login.tsx`, `account-recovery.tsx`, `verificatio
 
 - Next.js 13 Pages Router with Tailwind CSS. The legacy `ui` package supplies the navigation bar and toasts.
 - Ory Kratos browser flows run through `@ory/kratos-client`. `src/ui/Flow.tsx` renders each flow's Kratos UI nodes as a react-hook-form form.
-- Session state lives in Jotai (`src/session.ts`). Before starting a Kratos flow, the app asks `GET /identity/session` for the tenant's `account_app`. V2 redirects to the sibling authv2 host, preserving the path and query; Settings maps to `/settings` and account recovery to `/recovery`. V1 keeps its Kratos flows. SSR forwards Cookie and X-Dev-Branch through the private API endpoint and never caches the response.
+- Session state lives in Jotai (`src/session.ts`). Before starting a Kratos flow, the app asks `GET /identity/session` for the tenant's `account_app`. V2 redirects to the sibling authv2 host, preserving the path and query; Settings maps to `/settings` and account recovery to `/recovery`. V1 keeps its Kratos flows. If session selection is unavailable, a retry screen blocks Kratos initialization rather than guessing a mode. SSR forwards Cookie and X-Dev-Branch through the private API endpoint and never caches the response.
 - The `next.config.js` `NEXT_PUBLIC_*` variables set the Kratos endpoints, sibling application URLs, API endpoint and cookie domain. They default to the public tadoku.app hosts. `frontend/packages/ui/app-urls.tsx` resolves home/account/admin URLs from the request or browser host; Kratos remains on the base account host.
 - Playwright journeys in `e2e/` run against the development stack. See `frontend/apps/auth/e2e/README.md` for the required hosts and environment.
 

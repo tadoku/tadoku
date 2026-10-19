@@ -21,6 +21,7 @@ import (
 
 func TestAccessTokenEmailRoutes(t *testing.T) {
 	api.reset(t, "")
+
 	key, _ := tenant.Parse("e2e/tokens-0123abcd")
 	other, _ := tenant.Parse("e2e/other-0123abcd")
 	_, err := api.db.Pool.Exec(t.Context(), `insert into tenants(key,kind)
@@ -29,6 +30,7 @@ func TestAccessTokenEmailRoutes(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	t.Cleanup(func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
@@ -37,8 +39,10 @@ func TestAccessTokenEmailRoutes(t *testing.T) {
 			t.Error(err)
 		}
 	})
+
 	id := writeEmail(t, tenant.WithKey(t.Context(), key), emailService(), recoveryMail())
 	otherID := writeEmail(t, tenant.WithKey(t.Context(), other), emailService(), recoveryMail())
+
 	raw := "tdk_at_e2e_tokens-0123abcd_" + strings.Repeat("a", 43)
 	digest := sha256.Sum256([]byte(raw))
 	tokenID := uuid.New()
@@ -48,6 +52,7 @@ func TestAccessTokenEmailRoutes(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	deployment, _ := tenant.ParseDeployment(key.String())
 	handler, _, _, err := newTestRouterWithLeaderboardService(
 		t.Context(), api.db.AppPool, api.db.AppPool, api.keto, api.kratos,
@@ -56,6 +61,7 @@ func TestAccessTokenEmailRoutes(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	request := func(t *testing.T, h http.Handler, token, path string, status int) []byte {
 		t.Helper()
 		req := httptest.NewRequest("GET", path, nil)
@@ -63,21 +69,28 @@ func TestAccessTokenEmailRoutes(t *testing.T) {
 			req.Header.Set("Authorization", "Bearer "+token)
 		}
 		req.Header.Set("X-Dev-Branch", other.String())
+
 		response := httptest.NewRecorder()
+
 		h.ServeHTTP(response, req)
+
 		if response.Code != status {
 			t.Errorf("%s status=%d want=%d body=%s", path, response.Code, status, response.Body)
 		}
+
 		return response.Body.Bytes()
 	}
+
 	t.Run("list and detail", func(t *testing.T) {
 		body := request(t, handler, raw, "/emails", 200)
 		if !strings.Contains(string(body), id.String()) || strings.Contains(string(body), otherID.String()) {
 			t.Error("token list did not isolate tenant email")
 		}
+
 		request(t, handler, raw, "/emails/"+id.String(), 200)
 		request(t, handler, raw, "/emails/"+otherID.String(), 404)
 	})
+
 	t.Run("other deployment", func(t *testing.T) {
 		dep, _ := tenant.ParseDeployment(other.String())
 		h, _, _, err := newTestRouterWithLeaderboardService(
@@ -89,11 +102,13 @@ func TestAccessTokenEmailRoutes(t *testing.T) {
 		}
 		request(t, h, raw, "/emails", 421)
 	})
+
 	t.Run("outside email", func(t *testing.T) {
 		for _, path := range []string{"/identity/session", "/authz/current-user/role", "/profile/users"} {
 			request(t, handler, raw, path, 401)
 		}
 	})
+
 	for _, tc := range []struct{ name, sql string }{
 		{"expired", "update access_tokens set expires_at=now()-interval '1 second' where id=$1"},
 		{"revoked", "update access_tokens set expires_at=now()+interval '1 hour',revoked_at=now() where id=$1"},
@@ -103,10 +118,13 @@ func TestAccessTokenEmailRoutes(t *testing.T) {
 			if _, err := api.db.Pool.Exec(t.Context(), tc.sql, tokenID); err != nil {
 				t.Fatal(err)
 			}
+
 			request(t, handler, raw, "/emails", 401)
 		})
 	}
+
 	t.Run("unauthenticated", func(t *testing.T) { request(t, handler, "", "/emails", 400) })
+
 	t.Run("forged prefix", func(t *testing.T) {
 		request(t, api.handler, strings.Replace(raw, "e2e_tokens", "e2e_other", 1), "/emails", 401)
 	})
@@ -115,11 +133,13 @@ func TestAccessTokenEmailRoutes(t *testing.T) {
 func TestAccessTokenCanonicalDeploymentAndAudit(t *testing.T) {
 	api.reset(t, "")
 	key := tenant.Production()
+
 	id := writeEmail(t, tenant.WithKey(t.Context(), key), emailService(), recoveryMail())
 	secret := make([]byte, 32)
 	if _, err := rand.Read(secret); err != nil {
 		t.Fatal(err)
 	}
+
 	raw := "tdk_at_tadoku_prod_" + base64.RawURLEncoding.EncodeToString(secret)
 	hash := sha256.Sum256([]byte(raw))
 	tokenID := uuid.New()
@@ -129,25 +149,36 @@ func TestAccessTokenCanonicalDeploymentAndAudit(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	check := func(handler http.Handler, status int) []byte {
 		t.Helper()
 		request := httptest.NewRequest("GET", "/emails/"+id.String(), nil)
 		request.Header.Set("Authorization", "Bearer "+raw)
+
 		response := httptest.NewRecorder()
 		handler.ServeHTTP(response, request)
+
 		if response.Code != status {
 			t.Errorf("canonical email status=%d want=%d", response.Code, status)
 		}
+
 		return response.Body.Bytes()
 	}
+
 	check(api.handler, 401)
-	development := func(endpoints *routerEndpoints) { value := false; endpoints.production = &value }
+
+	development := func(endpoints *routerEndpoints) {
+		value := false
+		endpoints.production = &value
+	}
 	handler, _, _, err := newTestRouterWithLogger(t.Context(), api.db.AppPool, api.db.AppPool,
 		api.keto, api.kratos, slog.New(slog.NewTextHandler(io.Discard, nil)), development)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	check(handler, 200)
+
 	var audits int
 	err = api.db.Pool.QueryRow(t.Context(), `select count(*) from moderation_audit_log
   where tenant='tadoku/prod' and action='read_email' and user_id=$1
@@ -155,12 +186,14 @@ func TestAccessTokenCanonicalDeploymentAndAudit(t *testing.T) {
 	if err != nil || audits != 1 {
 		t.Errorf("canonical token audit count=%d error=%v, want 1", audits, err)
 	}
+
 	closed := openClosedPool(t, api.db.AppPool.Config().ConnString())
 	failed, _, _, err := newTestRouterWithLogger(t.Context(), api.db.AppPool, closed,
 		api.keto, api.kratos, slog.New(slog.NewTextHandler(io.Discard, nil)), development)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if bytes.Contains(check(failed, 500), []byte(id.String())) {
 		t.Error("failed canonical token audit leaked email content")
 	}

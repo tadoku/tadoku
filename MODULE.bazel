@@ -26,6 +26,13 @@ http_archive(
     urls = ["https://github.com/ory/oathkeeper/releases/download/v26.2.0/oathkeeper_26.2.0-linux_64bit.tar.gz"],
 )
 
+http_archive(
+    name = "oathkeeper_v25_4_0",
+    build_file_content = "exports_files([\"oathkeeper\"])\n",
+    sha256 = "b1f7c4680aaf46931925c899579e77a62303e4d4060ea6a273324e3bb31903a5",
+    urls = ["https://github.com/ory/oathkeeper/releases/download/v25.4.0/oathkeeper_25.4.0-linux_64bit.tar.gz"],
+)
+
 # Golang
 
 bazel_dep(name = "rules_go", version = "0.63.0")

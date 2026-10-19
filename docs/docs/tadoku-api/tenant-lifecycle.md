@@ -10,8 +10,8 @@ Read this when you change tenant provisioning, teardown or worker overrides, or
 run `tadoku-tenant` yourself.
 
 `services/tadoku-api/cmd/tadoku-tenant` provides provisioning, teardown and
-worker overrides and email access tokens. Lifecycle operations take a test tenant argument is a full parsed key, such
-as `tadoku/branch-0123abcd`; the id must end in a hyphen and eight lowercase
+worker overrides and email access tokens. Lifecycle operations take a full parsed
+test tenant key, such as `tadoku/branch-0123abcd`; the id must end in a hyphen and eight lowercase
 hexadecimal digits. Bare route ids, `tadoku/prod` and production registry rows
 are refused before provider writes.
 

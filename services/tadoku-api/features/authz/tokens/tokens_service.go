@@ -35,19 +35,24 @@ func (s *Service) Verify(ctx context.Context, raw string, deployment tenant.Depl
 	if err != nil {
 		return Principal{}, err
 	}
+
 	if !deployment.Serves(key) {
 		return Principal{}, ErrTenantNotServed
 	}
+
 	if s.production && key == tenant.Production() {
 		return Principal{}, errx.NewUnauthorizedError("invalid or expired access token")
 	}
+
 	if current, ok := tenant.FromContext(ctx); ok && current != key {
 		return Principal{}, errx.NewUnauthorizedError("access token tenant mismatch")
 	}
+
 	row, err := s.repository.verify(tenant.WithKey(ctx, key), tokenHash(raw), timex.Now())
 	if err != nil {
 		return Principal{}, err
 	}
+
 	return Principal{Tenant: key, TokenID: row.ID, Scopes: row.Scopes}, nil
 }
 
@@ -57,28 +62,35 @@ func (s *Service) Create(ctx context.Context, request Create) (Issued, error) {
 	if !ok {
 		return Issued{}, postgres.ErrNoTenant
 	}
+
 	if s.production && key == tenant.Production() {
 		return Issued{}, errx.NewForbiddenError("access tokens are unavailable for tadoku/prod in production")
 	}
+
 	if strings.TrimSpace(request.Name) == "" || len(request.Name) > 128 {
 		return Issued{}, errx.NewInvalidInputError("token name must contain 1–128 bytes")
 	}
+
 	if len(request.Scopes) != 1 || request.Scopes[0] != EmailRead {
 		return Issued{}, errx.NewInvalidInputError("token scope must be email:read")
 	}
+
 	if request.ExpiresIn <= 0 {
 		return Issued{}, errx.NewInvalidInputError("token expiry must be positive")
 	}
 	if request.ExpiresIn > 30*24*time.Hour {
 		return Issued{}, errx.NewInvalidInputError("token expiry must not exceed 30 days")
 	}
+
 	if err := s.repository.lockTenant(ctx); err != nil {
 		return Issued{}, err
 	}
+
 	secret := make([]byte, 32)
 	if _, err := rand.Read(secret); err != nil {
 		return Issued{}, err
 	}
+
 	raw := "tdk_at_" + strings.ReplaceAll(key.String(), "/", "_") + "_" + base64.RawURLEncoding.EncodeToString(secret)
 	now := timex.Now()
 	row := Token{
@@ -91,6 +103,7 @@ func (s *Service) Create(ctx context.Context, request Create) (Issued, error) {
 	if err := s.repository.insert(ctx, row, tokenHash(raw)); err != nil {
 		return Issued{}, err
 	}
+
 	return Issued{Token: row, Secret: raw}, nil
 }
 
@@ -110,21 +123,26 @@ func tokenTenant(raw string) (tenant.Key, error) {
 	if !ok {
 		return tenant.Key{}, invalid
 	}
+
 	name, rest, ok := strings.Cut(rest, "_")
 	if !ok {
 		return tenant.Key{}, invalid
 	}
+
 	id, secret, ok := strings.Cut(rest, "_")
 	if !ok {
 		return tenant.Key{}, invalid
 	}
+
 	decoded, err := base64.RawURLEncoding.DecodeString(secret)
 	if err != nil || len(decoded) != 32 {
 		return tenant.Key{}, invalid
 	}
+
 	key, err := tenant.Parse(name + "/" + id)
 	if err != nil {
 		return tenant.Key{}, invalid
 	}
+
 	return key, nil
 }

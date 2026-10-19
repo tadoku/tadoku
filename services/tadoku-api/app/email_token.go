@@ -16,10 +16,12 @@ func (a *Application) AuthenticateEmailReader(ctx context.Context, raw string) (
 	if a.tokens == nil {
 		return nil, errx.NewUnauthorizedError("access token authentication unavailable")
 	}
+
 	principal, err := a.tokens.Verify(ctx, raw, a.deployment)
 	if err != nil {
 		return nil, err
 	}
+
 	ctx = tenant.WithKey(ctx, principal.Tenant)
 	return context.WithValue(ctx, emailReaderKey{}, principal), nil
 }
@@ -27,7 +29,8 @@ func (a *Application) AuthenticateEmailReader(ctx context.Context, raw string) (
 func (a *Application) hasEmailReader(ctx context.Context) bool {
 	principal, ok := ctx.Value(emailReaderKey{}).(tokens.Principal)
 	key, present := tenant.FromContext(ctx)
-	return ok && present && principal.Tenant == key && len(principal.Scopes) == 1 && principal.Scopes[0] == tokens.EmailRead
+	return ok && present && principal.Tenant == key &&
+		len(principal.Scopes) == 1 && principal.Scopes[0] == tokens.EmailRead
 }
 
 func (a *Application) requireEmailReader(ctx context.Context) error {

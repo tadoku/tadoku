@@ -95,11 +95,13 @@ go_test(
         "//k8s/dev/base/oathkeeper:oathkeeper.yaml",
         "//k8s/dev/base/oathkeeper:rules.yaml",
         "//services/tadoku-api/spec:openapi.yaml",
+        "@oathkeeper_v25_4_0//:oathkeeper",
         "@oathkeeper_v26_2_0//:oathkeeper",
     ],
     env_inherit = [
         "CI",
         "TADOKU_GOLDEN_SOURCE_ROOT",
+        "TADOKU_TEST_EMAIL_GATEWAY_RENDER",
         "TADOKU_TEST_POSTGRES_URL",
         "TADOKU_TEST_VALKEY_URL",
     ],

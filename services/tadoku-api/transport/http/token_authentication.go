@@ -2,10 +2,10 @@ package http
 
 import (
 	"errors"
-	"github.com/tadoku/tadoku/services/tadoku-api/app"
 	stdhttp "net/http"
 	"strings"
 
+	"github.com/tadoku/tadoku/services/tadoku-api/app"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 

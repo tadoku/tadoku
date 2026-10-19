@@ -16,7 +16,7 @@ The general test principles are in [Testing](./testing.md).
   the production HTTP router once, with real JWT verification, ban checks and
   Keto-backed permissions. There is no second bypass router or injected
   administrator identity. Handlers run in process, without HTTP listeners.
-- The production router, profile-cache resets, alternate scoring/dependency
+- The production router, profile-service resets, alternate scoring/dependency
   routers and real worker journeys all use the restricted `AppPool`.
   Fixture reset and verification SQL use the owner `Pool`; an owner-pool
   application router would bypass the policies the suite must exercise.

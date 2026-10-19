@@ -409,7 +409,7 @@ func (s *suite) reset(t *testing.T, caseDir string) {
 			t.Fatal(err)
 		}
 	}
-	s.resetProfileCaches()
+	s.resetProfileService()
 	if s.keto != nil {
 		if err := s.keto.Reset(t.Context(), ketoSeeds...); err != nil {
 			t.Fatal(err)
@@ -420,7 +420,7 @@ func (s *suite) reset(t *testing.T, caseDir string) {
 	}
 }
 
-func (s *suite) resetProfileCaches() {
+func (s *suite) resetProfileService() {
 	if s.profile != nil {
 		*s.profile = *featureprofile.NewService(
 			featureprofile.NewRepository(s.db.AppPool),

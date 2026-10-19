@@ -20,7 +20,7 @@ func TestIdentityLegacyAdminSingleWalk(t *testing.T) {
 	for _, size := range []int{499, 1200, 4527} {
 		t.Run(strconv.Itoa(size), func(t *testing.T) {
 			api.reset(t, filepath.Join("testdata", "ProfileUsersList", "200_admin"))
-			t.Cleanup(api.resetProfileCaches)
+			t.Cleanup(api.resetProfileService)
 			var calls atomic.Int64
 			provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				calls.Add(1)

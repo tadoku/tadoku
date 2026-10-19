@@ -67,6 +67,16 @@ func (a *Application) CreateContest(ctx context.Context, parameters CreateContes
 		return nil, err
 	}
 
+	if !admin {
+		accountCreatedAt, err := a.profile.FetchAccountCreatedAt(ctx, creatorID)
+		if err != nil {
+			return nil, err
+		}
+		if err := a.contests.CheckCreatePermission(ctx, creatorID, accountCreatedAt); err != nil {
+			return nil, err
+		}
+	}
+
 	if err := a.contests.ValidateContestCreation(ctx, parameters, creatorID, creator.DisplayName, admin, now); err != nil {
 		return nil, err
 	}

@@ -17,54 +17,6 @@ import (
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
-// Defines values for IdentityProxyErrorResponseCode.
-const (
-	EmailTaken           IdentityProxyErrorResponseCode = "email_taken"
-	InvalidDisplayName   IdentityProxyErrorResponseCode = "invalid_display_name"
-	InvalidEmail         IdentityProxyErrorResponseCode = "invalid_email"
-	InvalidOrigin        IdentityProxyErrorResponseCode = "invalid_origin"
-	InvalidPassword      IdentityProxyErrorResponseCode = "invalid_password"
-	InvalidRecoveryToken IdentityProxyErrorResponseCode = "invalid_recovery_token"
-	InvalidReturnTo      IdentityProxyErrorResponseCode = "invalid_return_to"
-	NotImplemented       IdentityProxyErrorResponseCode = "not_implemented"
-	StaleSession         IdentityProxyErrorResponseCode = "stale_session"
-	Throttled            IdentityProxyErrorResponseCode = "throttled"
-	Unavailable          IdentityProxyErrorResponseCode = "unavailable"
-	WrongPassword        IdentityProxyErrorResponseCode = "wrong_password"
-)
-
-// Valid indicates whether the value is a known member of the IdentityProxyErrorResponseCode enum.
-func (e IdentityProxyErrorResponseCode) Valid() bool {
-	switch e {
-	case EmailTaken:
-		return true
-	case InvalidDisplayName:
-		return true
-	case InvalidEmail:
-		return true
-	case InvalidOrigin:
-		return true
-	case InvalidPassword:
-		return true
-	case InvalidRecoveryToken:
-		return true
-	case InvalidReturnTo:
-		return true
-	case NotImplemented:
-		return true
-	case StaleSession:
-		return true
-	case Throttled:
-		return true
-	case Unavailable:
-		return true
-	case WrongPassword:
-		return true
-	default:
-		return false
-	}
-}
-
 // Defines values for IdentityProxyGuestIdentityId.
 const (
 	Guest IdentityProxyGuestIdentityId = "guest"
@@ -87,12 +39,8 @@ type AuthzProxyProxyAdminCheckRequest struct {
 
 // IdentityProxyErrorResponse defines model for IdentityProxyErrorResponse.
 type IdentityProxyErrorResponse struct {
-	Code    *IdentityProxyErrorResponseCode `json:"code,omitempty"`
-	Message string                          `json:"message"`
+	Message string `json:"message"`
 }
-
-// IdentityProxyErrorResponseCode defines model for IdentityProxyErrorResponse.Code.
-type IdentityProxyErrorResponseCode string
 
 // IdentityProxyGuest defines model for IdentityProxyGuest.
 type IdentityProxyGuest struct {

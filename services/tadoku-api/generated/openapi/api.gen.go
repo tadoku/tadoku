@@ -86,96 +86,24 @@ func (e ContentAnnouncementStyle) Valid() bool {
 	}
 }
 
-// Defines values for EmailErrorResponseCode.
-const (
-	EmailErrorResponseCodeEmailTaken           EmailErrorResponseCode = "email_taken"
-	EmailErrorResponseCodeInvalidDisplayName   EmailErrorResponseCode = "invalid_display_name"
-	EmailErrorResponseCodeInvalidEmail         EmailErrorResponseCode = "invalid_email"
-	EmailErrorResponseCodeInvalidOrigin        EmailErrorResponseCode = "invalid_origin"
-	EmailErrorResponseCodeInvalidPassword      EmailErrorResponseCode = "invalid_password"
-	EmailErrorResponseCodeInvalidRecoveryToken EmailErrorResponseCode = "invalid_recovery_token"
-	EmailErrorResponseCodeInvalidReturnTo      EmailErrorResponseCode = "invalid_return_to"
-	EmailErrorResponseCodeNotImplemented       EmailErrorResponseCode = "not_implemented"
-	EmailErrorResponseCodeStaleSession         EmailErrorResponseCode = "stale_session"
-	EmailErrorResponseCodeThrottled            EmailErrorResponseCode = "throttled"
-	EmailErrorResponseCodeUnavailable          EmailErrorResponseCode = "unavailable"
-	EmailErrorResponseCodeWrongPassword        EmailErrorResponseCode = "wrong_password"
-)
-
-// Valid indicates whether the value is a known member of the EmailErrorResponseCode enum.
-func (e EmailErrorResponseCode) Valid() bool {
-	switch e {
-	case EmailErrorResponseCodeEmailTaken:
-		return true
-	case EmailErrorResponseCodeInvalidDisplayName:
-		return true
-	case EmailErrorResponseCodeInvalidEmail:
-		return true
-	case EmailErrorResponseCodeInvalidOrigin:
-		return true
-	case EmailErrorResponseCodeInvalidPassword:
-		return true
-	case EmailErrorResponseCodeInvalidRecoveryToken:
-		return true
-	case EmailErrorResponseCodeInvalidReturnTo:
-		return true
-	case EmailErrorResponseCodeNotImplemented:
-		return true
-	case EmailErrorResponseCodeStaleSession:
-		return true
-	case EmailErrorResponseCodeThrottled:
-		return true
-	case EmailErrorResponseCodeUnavailable:
-		return true
-	case EmailErrorResponseCodeWrongPassword:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for EmailMessageStatus.
-const (
-	EmailMessageStatusFailed  EmailMessageStatus = "failed"
-	EmailMessageStatusHeld    EmailMessageStatus = "held"
-	EmailMessageStatusPending EmailMessageStatus = "pending"
-	EmailMessageStatusSent    EmailMessageStatus = "sent"
-)
-
-// Valid indicates whether the value is a known member of the EmailMessageStatus enum.
-func (e EmailMessageStatus) Valid() bool {
-	switch e {
-	case EmailMessageStatusFailed:
-		return true
-	case EmailMessageStatusHeld:
-		return true
-	case EmailMessageStatusPending:
-		return true
-	case EmailMessageStatusSent:
-		return true
-	default:
-		return false
-	}
-}
-
 // Defines values for EmailStatus.
 const (
-	EmailStatusFailed  EmailStatus = "failed"
-	EmailStatusHeld    EmailStatus = "held"
-	EmailStatusPending EmailStatus = "pending"
-	EmailStatusSent    EmailStatus = "sent"
+	Failed  EmailStatus = "failed"
+	Held    EmailStatus = "held"
+	Pending EmailStatus = "pending"
+	Sent    EmailStatus = "sent"
 )
 
 // Valid indicates whether the value is a known member of the EmailStatus enum.
 func (e EmailStatus) Valid() bool {
 	switch e {
-	case EmailStatusFailed:
+	case Failed:
 		return true
-	case EmailStatusHeld:
+	case Held:
 		return true
-	case EmailStatusPending:
+	case Pending:
 		return true
-	case EmailStatusSent:
+	case Sent:
 		return true
 	default:
 		return false
@@ -184,94 +112,46 @@ func (e EmailStatus) Valid() bool {
 
 // Defines values for IdentityErrorResponseCode.
 const (
-	IdentityErrorResponseCodeEmailTaken           IdentityErrorResponseCode = "email_taken"
-	IdentityErrorResponseCodeInvalidDisplayName   IdentityErrorResponseCode = "invalid_display_name"
-	IdentityErrorResponseCodeInvalidEmail         IdentityErrorResponseCode = "invalid_email"
-	IdentityErrorResponseCodeInvalidOrigin        IdentityErrorResponseCode = "invalid_origin"
-	IdentityErrorResponseCodeInvalidPassword      IdentityErrorResponseCode = "invalid_password"
-	IdentityErrorResponseCodeInvalidRecoveryToken IdentityErrorResponseCode = "invalid_recovery_token"
-	IdentityErrorResponseCodeInvalidReturnTo      IdentityErrorResponseCode = "invalid_return_to"
-	IdentityErrorResponseCodeNotImplemented       IdentityErrorResponseCode = "not_implemented"
-	IdentityErrorResponseCodeStaleSession         IdentityErrorResponseCode = "stale_session"
-	IdentityErrorResponseCodeThrottled            IdentityErrorResponseCode = "throttled"
-	IdentityErrorResponseCodeUnavailable          IdentityErrorResponseCode = "unavailable"
-	IdentityErrorResponseCodeWrongPassword        IdentityErrorResponseCode = "wrong_password"
+	EmailTaken           IdentityErrorResponseCode = "email_taken"
+	InvalidDisplayName   IdentityErrorResponseCode = "invalid_display_name"
+	InvalidEmail         IdentityErrorResponseCode = "invalid_email"
+	InvalidOrigin        IdentityErrorResponseCode = "invalid_origin"
+	InvalidPassword      IdentityErrorResponseCode = "invalid_password"
+	InvalidRecoveryToken IdentityErrorResponseCode = "invalid_recovery_token"
+	InvalidReturnTo      IdentityErrorResponseCode = "invalid_return_to"
+	NotImplemented       IdentityErrorResponseCode = "not_implemented"
+	StaleSession         IdentityErrorResponseCode = "stale_session"
+	Throttled            IdentityErrorResponseCode = "throttled"
+	Unavailable          IdentityErrorResponseCode = "unavailable"
+	WrongPassword        IdentityErrorResponseCode = "wrong_password"
 )
 
 // Valid indicates whether the value is a known member of the IdentityErrorResponseCode enum.
 func (e IdentityErrorResponseCode) Valid() bool {
 	switch e {
-	case IdentityErrorResponseCodeEmailTaken:
+	case EmailTaken:
 		return true
-	case IdentityErrorResponseCodeInvalidDisplayName:
+	case InvalidDisplayName:
 		return true
-	case IdentityErrorResponseCodeInvalidEmail:
+	case InvalidEmail:
 		return true
-	case IdentityErrorResponseCodeInvalidOrigin:
+	case InvalidOrigin:
 		return true
-	case IdentityErrorResponseCodeInvalidPassword:
+	case InvalidPassword:
 		return true
-	case IdentityErrorResponseCodeInvalidRecoveryToken:
+	case InvalidRecoveryToken:
 		return true
-	case IdentityErrorResponseCodeInvalidReturnTo:
+	case InvalidReturnTo:
 		return true
-	case IdentityErrorResponseCodeNotImplemented:
+	case NotImplemented:
 		return true
-	case IdentityErrorResponseCodeStaleSession:
+	case StaleSession:
 		return true
-	case IdentityErrorResponseCodeThrottled:
+	case Throttled:
 		return true
-	case IdentityErrorResponseCodeUnavailable:
+	case Unavailable:
 		return true
-	case IdentityErrorResponseCodeWrongPassword:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for IdentityProxyErrorResponseCode.
-const (
-	IdentityProxyErrorResponseCodeEmailTaken           IdentityProxyErrorResponseCode = "email_taken"
-	IdentityProxyErrorResponseCodeInvalidDisplayName   IdentityProxyErrorResponseCode = "invalid_display_name"
-	IdentityProxyErrorResponseCodeInvalidEmail         IdentityProxyErrorResponseCode = "invalid_email"
-	IdentityProxyErrorResponseCodeInvalidOrigin        IdentityProxyErrorResponseCode = "invalid_origin"
-	IdentityProxyErrorResponseCodeInvalidPassword      IdentityProxyErrorResponseCode = "invalid_password"
-	IdentityProxyErrorResponseCodeInvalidRecoveryToken IdentityProxyErrorResponseCode = "invalid_recovery_token"
-	IdentityProxyErrorResponseCodeInvalidReturnTo      IdentityProxyErrorResponseCode = "invalid_return_to"
-	IdentityProxyErrorResponseCodeNotImplemented       IdentityProxyErrorResponseCode = "not_implemented"
-	IdentityProxyErrorResponseCodeStaleSession         IdentityProxyErrorResponseCode = "stale_session"
-	IdentityProxyErrorResponseCodeThrottled            IdentityProxyErrorResponseCode = "throttled"
-	IdentityProxyErrorResponseCodeUnavailable          IdentityProxyErrorResponseCode = "unavailable"
-	IdentityProxyErrorResponseCodeWrongPassword        IdentityProxyErrorResponseCode = "wrong_password"
-)
-
-// Valid indicates whether the value is a known member of the IdentityProxyErrorResponseCode enum.
-func (e IdentityProxyErrorResponseCode) Valid() bool {
-	switch e {
-	case IdentityProxyErrorResponseCodeEmailTaken:
-		return true
-	case IdentityProxyErrorResponseCodeInvalidDisplayName:
-		return true
-	case IdentityProxyErrorResponseCodeInvalidEmail:
-		return true
-	case IdentityProxyErrorResponseCodeInvalidOrigin:
-		return true
-	case IdentityProxyErrorResponseCodeInvalidPassword:
-		return true
-	case IdentityProxyErrorResponseCodeInvalidRecoveryToken:
-		return true
-	case IdentityProxyErrorResponseCodeInvalidReturnTo:
-		return true
-	case IdentityProxyErrorResponseCodeNotImplemented:
-		return true
-	case IdentityProxyErrorResponseCodeStaleSession:
-		return true
-	case IdentityProxyErrorResponseCodeThrottled:
-		return true
-	case IdentityProxyErrorResponseCodeUnavailable:
-		return true
-	case IdentityProxyErrorResponseCodeWrongPassword:
+	case WrongPassword:
 		return true
 	default:
 		return false
@@ -719,12 +599,8 @@ type ContentPosts struct {
 
 // EmailErrorResponse defines model for EmailErrorResponse.
 type EmailErrorResponse struct {
-	Code    *EmailErrorResponseCode `json:"code,omitempty"`
-	Message string                  `json:"message"`
+	Message string `json:"message"`
 }
-
-// EmailErrorResponseCode defines model for EmailErrorResponse.Code.
-type EmailErrorResponseCode string
 
 // EmailList defines model for EmailList.
 type EmailList struct {
@@ -742,14 +618,11 @@ type EmailMessage struct {
 	ProviderMessageId nullable.Nullable[string]    `json:"provider_message_id"`
 	Recipient         openapi_types.Email          `json:"recipient"`
 	SentAt            nullable.Nullable[time.Time] `json:"sent_at"`
-	Status            EmailMessageStatus           `json:"status"`
+	Status            EmailStatus                  `json:"status"`
 	Subject           string                       `json:"subject"`
 	Template          string                       `json:"template"`
 	Tenant            string                       `json:"tenant"`
 }
-
-// EmailMessageStatus defines model for EmailMessage.Status.
-type EmailMessageStatus string
 
 // EmailStatus defines model for EmailStatus.
 type EmailStatus string
@@ -794,12 +667,8 @@ type IdentityProfileSettings struct {
 
 // IdentityProxyErrorResponse defines model for IdentityProxyErrorResponse.
 type IdentityProxyErrorResponse struct {
-	Code    *IdentityProxyErrorResponseCode `json:"code,omitempty"`
-	Message string                          `json:"message"`
+	Message string `json:"message"`
 }
-
-// IdentityProxyErrorResponseCode defines model for IdentityProxyErrorResponse.Code.
-type IdentityProxyErrorResponseCode string
 
 // IdentityProxyGuest defines model for IdentityProxyGuest.
 type IdentityProxyGuest struct {

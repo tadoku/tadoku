@@ -31,18 +31,20 @@ components:
           type: string
           maxLength: 36
           format: uuid
-        email: &id002
+        email:
           type: string
           maxLength: 320
           format: email
-        display_name: &id003
+        display_name:
           type: string
           maxLength: 32
           minLength: 2
-        created_at: &id001
+        created_at:
           type: string
           format: date-time
-        authenticated_at: *id001
+        authenticated_at:
+          type: string
+          format: date-time
       required:
       - id
       - email
@@ -67,14 +69,20 @@ components:
     IdentityRegistration:
       type: object
       properties:
-        email: *id002
-        display_name: *id003
-        password: &id004
+        email:
+          type: string
+          maxLength: 320
+          format: email
+        display_name:
+          type: string
+          maxLength: 32
+          minLength: 2
+        password:
           type: string
           maxLength: 72
           minLength: 8
-          description: At least 8 characters, at most 72 UTF-8 bytes; rejects similarity to the email
-            under the Kratos v26.2.0 rule.
+          description: At least 8 characters, at most 72 UTF-8 bytes; rejects similarity
+            to the email under the Kratos v26.2.0 rule.
       required:
       - email
       - display_name
@@ -82,15 +90,26 @@ components:
     IdentityLogin:
       type: object
       properties:
-        email: *id002
-        password: *id004
+        email:
+          type: string
+          maxLength: 320
+          format: email
+        password:
+          type: string
+          maxLength: 72
+          minLength: 8
+          description: At least 8 characters, at most 72 UTF-8 bytes; rejects similarity
+            to the email under the Kratos v26.2.0 rule.
       required:
       - email
       - password
     IdentityRecovery:
       type: object
       properties:
-        email: *id002
+        email:
+          type: string
+          maxLength: 320
+          format: email
         return_to:
           type: string
           maxLength: 2048
@@ -103,11 +122,22 @@ components:
       type: object
       minProperties: 1
       properties:
-        email: *id002
-        display_name: *id003
+        email:
+          type: string
+          maxLength: 320
+          format: email
+        display_name:
+          type: string
+          maxLength: 32
+          minLength: 2
     IdentityPasswordSettings:
       type: object
       properties:
-        password: *id004
+        password:
+          type: string
+          maxLength: 72
+          minLength: 8
+          description: At least 8 characters, at most 72 UTF-8 bytes; rejects similarity
+            to the email under the Kratos v26.2.0 rule.
       required:
       - password

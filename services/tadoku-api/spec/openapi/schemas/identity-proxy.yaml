@@ -29,10 +29,12 @@ components:
           required:
           - id
           - traits
-        authenticated_at: &id001
+        authenticated_at:
           type: string
           format: date-time
-        expires_at: *id001
+        expires_at:
+          type: string
+          format: date-time
       required:
       - identity
       - authenticated_at
@@ -61,21 +63,5 @@ components:
         message:
           type: string
           maxLength: 1000
-        code:
-          type: string
-          maxLength: 64
-          enum:
-          - wrong_password
-          - throttled
-          - email_taken
-          - stale_session
-          - invalid_display_name
-          - invalid_email
-          - invalid_password
-          - invalid_recovery_token
-          - invalid_origin
-          - invalid_return_to
-          - not_implemented
-          - unavailable
       required:
       - message

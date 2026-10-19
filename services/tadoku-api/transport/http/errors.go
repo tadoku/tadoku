@@ -21,7 +21,13 @@ func (s *server) logOperationError(ctx context.Context, operation string, err er
 }
 
 func writeResponseError(w stdhttp.ResponseWriter, request *stdhttp.Request, err error) {
+	var identityError *app.IdentityError
 	switch {
+	case errors.As(err, &identityError):
+		writeJSON(w, errorStatus(request.Context(), err), map[string]string{
+			"code":    identityError.Code,
+			"message": identityError.Error(),
+		})
 	case errx.KindOf(err) == errx.NotImplemented:
 		writeJSON(w, stdhttp.StatusNotImplemented, map[string]string{"message": "not implemented"})
 	case errors.Is(err, app.ErrAccountDeletionInProgress):
@@ -58,6 +64,8 @@ func errorStatus(ctx context.Context, err error) int {
 		return stdhttp.StatusInternalServerError
 	case errx.NotImplemented:
 		return stdhttp.StatusNotImplemented
+	case errx.Throttled:
+		return stdhttp.StatusTooManyRequests
 	case errx.InvalidInput:
 		return stdhttp.StatusBadRequest
 	case errx.Unauthorized:

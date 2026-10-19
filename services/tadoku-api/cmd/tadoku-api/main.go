@@ -266,23 +266,32 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 
 	scoringObserver := observability.NewScoringObserver(metrics, logger, cfg.ScoringEngineEnabled)
 	scoringService := scoring.NewService(scoringRepository, cfg.ScoringEngineEnabled, scoringObserver)
+	identityService := identity.NewService(
+		identity.NewRepository(pool),
+		identity.NewThrottle(valkeyClient, cfg.ValkeyTimeout, logger),
+		identity.NewLegacySessions(cfg.KratosPublicURL, cfg.KratosAdminURL, kratosHTTP),
+		featureflags.NewEvaluator(fliptProvider, featureFlagMetrics),
+		cfg.IdentityCookieDomain,
+	)
 
 	api := app.New(app.Dependencies{
-		JobQueue:      jobQueue,
-		Announcements: announcementsService,
-		Audit:         auditService,
-		Authorization: authzService,
-		Contests:      contestsService,
-		Leaderboard:   leaderboardService,
-		Languages:     languagesService,
-		Logs:          logsService,
-		Pages:         pagesService,
-		Posts:         postsService,
-		Profile:       profileService,
-		Scoring:       scoringService,
-		FeatureFlags:  featureFlagService,
-		DB:            pool,
-		Permissions:   permissionChecker,
+		JobQueue:           jobQueue,
+		Announcements:      announcementsService,
+		Audit:              auditService,
+		Authorization:      authzService,
+		Contests:           contestsService,
+		Leaderboard:        leaderboardService,
+		Languages:          languagesService,
+		Logs:               logsService,
+		Pages:              pagesService,
+		Posts:              postsService,
+		Profile:            profileService,
+		Scoring:            scoringService,
+		FeatureFlags:       featureFlagService,
+		DB:                 pool,
+		Permissions:        permissionChecker,
+		Identity:           identityService,
+		IdentityDeployment: cfg.deployment,
 	})
 	rejectBanned := transporthttp.RejectBannedUsers(permissionChecker.Admit, logger)
 

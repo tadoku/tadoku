@@ -6,6 +6,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"net/http/cookiejar"
 	"strings"
 	"testing"
 
@@ -16,7 +17,21 @@ func TestIdentityV2IPThrottleAndFailOpen(t *testing.T) {
 	resetIdentity(t)
 	for i := 0; i < 51; i++ {
 		body := fmt.Sprintf(`{"email":"unknown%d@example.test","password":"Independent-653!"}`, i)
-		response := identityRequest(t, api.handler, identityBranchA, "POST", "/identity/login", body, "", nil)
+		response := identityRequest(t, api.handler, identityBranchA, "POST", "/identity/login", body, "",
+			func(r *http.Request) {
+				r.RemoteAddr = fmt.Sprintf("10.42.0.%d:12345", i+1)
+				r.Header.Set("X-Real-IP", "198.51.100.30")
+			})
+		want := http.StatusUnauthorized
+		if i == 50 {
+			want = http.StatusTooManyRequests
+		}
+		requireIdentityStatus(t, response, want)
+	}
+	for i := 0; i < 51; i++ {
+		body := fmt.Sprintf(`{"email":"unknown%d@example.test","password":"Independent-653!"}`, i)
+		response := identityRequest(t, api.handler, identityBranchB, "POST", "/identity/login", body, "",
+			func(r *http.Request) { r.Header.Set("X-Real-IP", fmt.Sprintf("198.51.100.%d", i+1)) })
 		want := http.StatusUnauthorized
 		if i == 50 {
 			want = http.StatusTooManyRequests
@@ -46,7 +61,8 @@ func TestIdentityV1ProviderSessionAndLogout(t *testing.T) {
 	if err := flipt.SetIdentityV2(tenant.Production(), false); err != nil {
 		t.Fatal(err)
 	}
-	provider := api.kratos.HTTPClient()
+	provider := *api.kratos.HTTPClient()
+	provider.Jar, _ = cookiejar.New(nil)
 	request, err := http.NewRequestWithContext(t.Context(), "POST", "http://kratos.test/admin/identities",
 		strings.NewReader(`{"schema_id":"user","traits":{"email":"legacy@example.test","display_name":"Legacy Reader"},"credentials":{"password":{"config":{"password":"Independent-653!"}}}}`))
 	if err != nil {
@@ -69,7 +85,8 @@ func TestIdentityV1ProviderSessionAndLogout(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	flowRequest, _ := http.NewRequestWithContext(t.Context(), "GET", "http://kratos-public.test/self-service/login/api", nil)
+	flowRequest, _ := http.NewRequestWithContext(t.Context(), "GET", "http://kratos-public.test/self-service/login/browser", nil)
+	flowRequest.Header.Set("Accept", "application/json")
 	flow, err := provider.Do(flowRequest)
 	if err != nil {
 		t.Fatal(err)
@@ -77,13 +94,33 @@ func TestIdentityV1ProviderSessionAndLogout(t *testing.T) {
 	defer flow.Body.Close()
 	var loginFlow struct {
 		ID string `json:"id"`
+		UI struct {
+			Nodes []struct {
+				Attributes struct {
+					Name  string
+					Value string
+				}
+			}
+		}
 	}
 	if err := json.NewDecoder(flow.Body).Decode(&loginFlow); err != nil {
 		t.Fatal(err)
 	}
+	csrf := ""
+	for _, node := range loginFlow.UI.Nodes {
+		if node.Attributes.Name == "csrf_token" {
+			csrf = node.Attributes.Value
+		}
+	}
+	loginBody, _ := json.Marshal(map[string]string{
+		"method":     "password",
+		"identifier": "legacy@example.test",
+		"password":   "Independent-653!",
+		"csrf_token": csrf,
+	})
 	loginRequest, _ := http.NewRequestWithContext(t.Context(), "POST",
 		"http://kratos-public.test/self-service/login?flow="+loginFlow.ID,
-		strings.NewReader(`{"method":"password","identifier":"legacy@example.test","password":"Independent-653!"}`))
+		strings.NewReader(string(loginBody)))
 	loginRequest.Header.Set("Content-Type", "application/json")
 	loginRequest.Header.Set("Accept", "application/json")
 	loginResponse, err := provider.Do(loginRequest)
@@ -95,13 +132,15 @@ func TestIdentityV1ProviderSessionAndLogout(t *testing.T) {
 		body, _ := io.ReadAll(loginResponse.Body)
 		t.Fatalf("owned Kratos login setup status=%d body=%s", loginResponse.StatusCode, body)
 	}
-	var login struct {
-		Token string `json:"session_token"`
+	cookie := ""
+	for _, issued := range loginResponse.Cookies() {
+		if issued.Name == "ory_kratos_session" {
+			cookie = issued.Name + "=" + issued.Value
+		}
 	}
-	if err := json.NewDecoder(loginResponse.Body).Decode(&login); err != nil || login.Token == "" {
-		t.Fatal("owned Kratos login did not issue a session")
+	if cookie == "" {
+		t.Fatal("owned Kratos browser login did not issue a session cookie")
 	}
-	cookie := "ory_kratos_session=" + login.Token
 	response := identityRequest(t, api.handler, "tadoku/prod", "GET", "/identity/session", "", cookie, nil)
 	view := identityView(t, response)
 	if view.AccountApp != "v1" || view.Account == nil || view.Account.ID != legacy.ID ||

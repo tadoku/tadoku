@@ -23,6 +23,7 @@ import (
 	featureauthz "github.com/tadoku/tadoku/services/tadoku-api/features/authz"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/contests"
 	featureflagsservice "github.com/tadoku/tadoku/services/tadoku-api/features/featureflags"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/languages"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
@@ -287,7 +288,7 @@ func newTestRouterWithLeaderboardService(
 	deployment tenant.Deployment,
 	options ...routerOption,
 ) (*transport.Router, *featureprofile.Service, *permissions.KetoService, error) {
-	endpoints := routerEndpoints{ketoWrite: ketoFixture.WriteURL()}
+	endpoints := routerEndpoints{ketoWrite: ketoFixture.WriteURL(), identityValkey: leaderboardValkey.client}
 	for _, option := range options {
 		option(&endpoints)
 	}
@@ -340,23 +341,32 @@ func newTestRouterWithLeaderboardService(
 	registry := prometheus.NewRegistry()
 	scoringObserver := observability.NewScoringObserver(registry, logger, scoringEngineEnabled)
 	scoringService := scoring.NewService(scoringRepository, scoringEngineEnabled, scoringObserver)
+	identityService := identity.NewService(
+		identity.NewRepository(pool),
+		identity.NewThrottle(endpoints.identityValkey, time.Second, logger),
+		identity.NewLegacySessions("http://kratos-public.test", "http://kratos.test", kratosFixture.HTTPClient()),
+		featureFlagEvaluator,
+		"tadoku.dev.lab",
+	)
 
 	application := app.New(app.Dependencies{
-		JobQueue:      jobQueue,
-		Announcements: announcementsService,
-		Audit:         auditService,
-		Authorization: authzService,
-		Contests:      contestsService,
-		Leaderboard:   leaderboardService,
-		Languages:     languagesService,
-		Logs:          logsService,
-		Pages:         pagesService,
-		Posts:         postsService,
-		Profile:       profileService,
-		Scoring:       scoringService,
-		FeatureFlags:  featureFlagsService,
-		DB:            pool,
-		Permissions:   permissionChecker,
+		JobQueue:           jobQueue,
+		Announcements:      announcementsService,
+		Audit:              auditService,
+		Authorization:      authzService,
+		Contests:           contestsService,
+		Leaderboard:        leaderboardService,
+		Languages:          languagesService,
+		Logs:               logsService,
+		Pages:              pagesService,
+		Posts:              postsService,
+		Profile:            profileService,
+		Scoring:            scoringService,
+		FeatureFlags:       featureFlagsService,
+		DB:                 pool,
+		Permissions:        permissionChecker,
+		Identity:           identityService,
+		IdentityDeployment: deployment,
 	})
 
 	authenticate, err := transport.NewJWTAuthentication(

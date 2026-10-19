@@ -61,7 +61,8 @@ The service-token exchange client and PostgreSQL migration commands remain in
   `services/tadoku-api/migrations/`. Queries live in
   `services/tadoku-api/sql/<feature>/`, and sqlc generates Go code into
   `services/tadoku-api/generated/sqlc/<feature>/`.
-- Valkey holds leaderboard caches only; PostgreSQL remains the source of truth.
+- Valkey holds leaderboard caches and tenant-scoped login throttle counters;
+  PostgreSQL remains the source of truth for accounts and sessions.
 
 ## CMS-managed content
 

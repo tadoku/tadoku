@@ -1,0 +1,132 @@
+package identity
+
+import (
+	"context"
+	"errors"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
+	queries "github.com/tadoku/tadoku/services/tadoku-api/generated/sqlc/identity"
+	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
+)
+
+type Repository struct{ pool *pgxpool.Pool }
+
+func NewRepository(pool *pgxpool.Pool) *Repository { return &Repository{pool: pool} }
+
+type credentials struct {
+	account      Account
+	passwordHash string
+	active       bool
+}
+
+func (r *Repository) createUser(ctx context.Context, account Account) error {
+	db, err := postgres.Executor(ctx, r.pool)
+	if err != nil {
+		return err
+	}
+	return queries.New(db).CreateUser(ctx, queries.CreateUserParams{
+		ID:          postgres.UUID(account.ID),
+		DisplayName: account.DisplayName.value,
+		Now:         postgres.Timestamp(account.CreatedAt),
+	})
+}
+
+func (r *Repository) createAccount(ctx context.Context, account Account, passwordHash string) error {
+	db, err := postgres.Executor(ctx, r.pool)
+	if err != nil {
+		return err
+	}
+	err = queries.New(db).CreateAccount(ctx, queries.CreateAccountParams{
+		UserID:          postgres.UUID(account.ID),
+		Email:           account.Email.value,
+		EmailNormalized: account.Email.value,
+		PasswordHash:    passwordHash,
+		Now:             postgres.Timestamptz(account.CreatedAt),
+	})
+	if postgres.IsUniqueViolation(err) {
+		return ErrEmailTaken
+	}
+	return err
+}
+
+func (r *Repository) credentials(ctx context.Context, email Email) (credentials, error) {
+	db, err := postgres.Executor(ctx, r.pool)
+	if err != nil {
+		return credentials{}, err
+	}
+	row, err := queries.New(db).FindCredentials(ctx, email.value)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return credentials{}, errAccountNotFound
+	}
+	if err != nil {
+		return credentials{}, err
+	}
+	return credentials{
+		account: Account{
+			ID:          uuid.UUID(row.UserID.Bytes),
+			Email:       Email{row.Email},
+			DisplayName: DisplayName{row.DisplayName},
+			CreatedAt:   row.CreatedAt.Time,
+		},
+		passwordHash: row.PasswordHash,
+		active:       row.Active,
+	}, nil
+}
+
+func (r *Repository) createSession(ctx context.Context, session AuthenticatedSession, tokenHash string) error {
+	db, err := postgres.Executor(ctx, r.pool)
+	if err != nil {
+		return err
+	}
+	count, err := queries.New(db).CreateSession(ctx, queries.CreateSessionParams{
+		UserID:          postgres.UUID(session.Account.ID),
+		TokenHash:       tokenHash,
+		AuthenticatedAt: postgres.Timestamptz(session.AuthenticatedAt),
+		ExpiresAt:       postgres.Timestamptz(session.ExpiresAt),
+	})
+	if err != nil {
+		return err
+	}
+	if count != 1 {
+		return ErrWrongPassword
+	}
+	return nil
+}
+
+func (r *Repository) session(ctx context.Context, tokenHash string, now time.Time) (Session, error) {
+	db, err := postgres.Executor(ctx, r.pool)
+	if err != nil {
+		return nil, err
+	}
+	row, err := queries.New(db).FindSession(ctx, queries.FindSessionParams{
+		TokenHash: tokenHash,
+		Now:       postgres.Timestamptz(now),
+	})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return GuestSession{}, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return AuthenticatedSession{
+		Account: Account{
+			ID:          uuid.UUID(row.UserID.Bytes),
+			Email:       Email{row.Email},
+			DisplayName: DisplayName{row.DisplayName},
+			CreatedAt:   row.CreatedAt.Time,
+		},
+		AuthenticatedAt: row.AuthenticatedAt.Time,
+		ExpiresAt:       row.ExpiresAt.Time,
+	}, nil
+}
+
+func (r *Repository) revokeSession(ctx context.Context, tokenHash string) error {
+	db, err := postgres.Executor(ctx, r.pool)
+	if err != nil {
+		return err
+	}
+	return queries.New(db).DeleteSession(ctx, tokenHash)
+}

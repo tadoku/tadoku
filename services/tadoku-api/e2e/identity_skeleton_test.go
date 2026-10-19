@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-func TestIdentitySkeletonRoutes(t *testing.T) {
+func TestIdentityRouteAuthentication(t *testing.T) {
 	api.reset(t, "")
 	guest := readHTTPRequest(t, filepath.Join("testdata", APITestName("Authentication", http.StatusOK, "guest")))
 	routes := []struct{ method, path, body string }{
@@ -39,10 +39,19 @@ func TestIdentitySkeletonRoutes(t *testing.T) {
 				}
 				request := httptest.NewRequest(route.method, route.path, strings.NewReader(route.body))
 				request.Header.Set("Content-Type", "application/json")
+				request.Header.Set("Origin", "https://tadoku.dev.lab")
 				request.Header.Set("Authorization", auth.authorization)
 				response := httptest.NewRecorder()
 
 				atFixtureInstant(func() { api.handler.ServeHTTP(response, request) })
+				if auth.name == "guest" {
+					if route.path == "/identity/logout" {
+						auth.status = http.StatusNoContent
+					}
+					if route.path == "/identity/session" {
+						auth.status = http.StatusOK
+					}
+				}
 
 				if response.Code != auth.status {
 					t.Errorf("%s status=%d body=%s, want %d", auth.name, response.Code, response.Body, auth.status)
@@ -55,14 +64,14 @@ func TestIdentitySkeletonRoutes(t *testing.T) {
 	}
 }
 
-func TestIdentitySessionCallbackSkeleton(t *testing.T) {
+func TestIdentitySessionCallbackAuthentication(t *testing.T) {
 	for _, auth := range []struct {
 		authorization string
 		status        int
 	}{
 		{"", http.StatusUnauthorized},
 		{"Bearer wrong", http.StatusUnauthorized},
-		{"Bearer " + callbackToken, http.StatusNotImplemented},
+		{"Bearer " + callbackToken, http.StatusOK},
 	} {
 		request := httptest.NewRequest("GET", "/identity/internal/v1/session", nil)
 		request.Header.Set("Authorization", auth.authorization)

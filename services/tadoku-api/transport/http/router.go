@@ -162,7 +162,7 @@ func NewHandler(
 
 	strictServer := openapi.NewStrictHandlerWithOptions(
 		apiServer,
-		nil,
+		[]openapi.StrictMiddlewareFunc{withIdentityRequest},
 		openapi.StrictHTTPServerOptions{
 			RequestErrorHandlerFunc: func(w stdhttp.ResponseWriter, _ *stdhttp.Request, err error) {
 				writeRequestError(w, err)

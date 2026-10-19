@@ -3,43 +3,21 @@ package http
 import (
 	"context"
 
+	"github.com/tadoku/tadoku/services/tadoku-api/app"
+
 	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
-	callbackopenapi "github.com/tadoku/tadoku/services/tadoku-api/generated/openapi/callback"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
 
-func (*server) IdentityRegistrationCreate(
-	context.Context,
-	openapi.IdentityRegistrationCreateRequestObject,
-) (openapi.IdentityRegistrationCreateResponseObject, error) {
-	return nil, errx.NewNotImplementedError()
-}
-
-func (*server) IdentityLoginCreate(
-	context.Context,
-	openapi.IdentityLoginCreateRequestObject,
-) (openapi.IdentityLoginCreateResponseObject, error) {
-	return nil, errx.NewNotImplementedError()
-}
-
-func (*server) IdentityLogout(
-	context.Context,
-	openapi.IdentityLogoutRequestObject,
-) (openapi.IdentityLogoutResponseObject, error) {
-	return nil, errx.NewNotImplementedError()
-}
-
-func (*server) IdentitySessionGet(
-	context.Context,
-	openapi.IdentitySessionGetRequestObject,
-) (openapi.IdentitySessionGetResponseObject, error) {
-	return nil, errx.NewNotImplementedError()
-}
-
 func (*server) IdentityRecoveryCreate(
-	context.Context,
-	openapi.IdentityRecoveryCreateRequestObject,
+	ctx context.Context,
+	request openapi.IdentityRecoveryCreateRequestObject,
 ) (openapi.IdentityRecoveryCreateResponseObject, error) {
+	if request.Body != nil {
+		if err := app.ValidateIdentityReturnTo(request.Body.ReturnTo); err != nil {
+			return nil, err
+		}
+	}
 	return nil, errx.NewNotImplementedError()
 }
 
@@ -75,12 +53,5 @@ func (*server) EmailGet(
 	context.Context,
 	openapi.EmailGetRequestObject,
 ) (openapi.EmailGetResponseObject, error) {
-	return nil, errx.NewNotImplementedError()
-}
-
-func (*server) IdentityProxySessionCheck(
-	context.Context,
-	callbackopenapi.IdentityProxySessionCheckRequestObject,
-) (callbackopenapi.IdentityProxySessionCheckResponseObject, error) {
 	return nil, errx.NewNotImplementedError()
 }

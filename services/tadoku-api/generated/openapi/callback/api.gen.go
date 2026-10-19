@@ -463,20 +463,6 @@ func (response IdentityProxySessionCheck421JSONResponse) VisitIdentityProxySessi
 	return err
 }
 
-type IdentityProxySessionCheck501JSONResponse IdentityProxyErrorResponse
-
-func (response IdentityProxySessionCheck501JSONResponse) VisitIdentityProxySessionCheckResponse(w http.ResponseWriter) error {
-
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
-		return err
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(501)
-	_, err := buf.WriteTo(w)
-	return err
-}
-
 type IdentityProxySessionCheck503JSONResponse IdentityProxyErrorResponse
 
 func (response IdentityProxySessionCheck503JSONResponse) VisitIdentityProxySessionCheckResponse(w http.ResponseWriter) error {

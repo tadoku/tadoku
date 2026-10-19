@@ -36,6 +36,7 @@ go_test(
         "flipt_tenant_test.go",
         "golden_test.go",
         "identity_accounts_test.go",
+        "identity_errors_test.go",
         "identity_isolation_test.go",
         "identity_providers_test.go",
         "identity_skeleton_test.go",

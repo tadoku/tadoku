@@ -32,11 +32,11 @@ The runtime role cannot create tables or write `schema_migrations`.
 
 ## Topology
 
-Each component runs in its own `tdk-dev-*` namespace:
+Components run in `tdk-dev-*` namespaces; auth and authv2 share the existing account namespace:
 
 | Namespace | Contents |
 | --- | --- |
-| `tdk-dev-frontend-webv2`, `tdk-dev-frontend-webv3`, `tdk-dev-frontend-auth`, `tdk-dev-frontend-authv2`, `tdk-dev-frontend-admin` | Webv2, Webv3, account, authv2 and admin frontends |
+| `tdk-dev-frontend-webv2`, `tdk-dev-frontend-webv3`, `tdk-dev-frontend-auth`, `tdk-dev-frontend-admin` | Webv2, Webv3, both account apps and admin frontends |
 | `tdk-dev-tadoku-api` | Tadoku API and the private asynchronous worker |
 | `tdk-dev-kratos`, `tdk-dev-keto`, `tdk-dev-oathkeeper` | Auth providers |
 | `tdk-dev-flipt` | Feature flags |
@@ -110,6 +110,10 @@ cookies cover the preview and branch hosts.
 
 Authv2 follows the same Node 22 Nitro deployment, with `tadoku-cli-authv2`
 runtime configuration, Lab CA trust and API-independent `/healthz` probes. Its
+Deployment and Service use `tdk-dev-frontend-auth`, with distinct names and
+selectors from auth, and reuse that namespace's `tadoku-cli-ca`. Branch overlays
+set their runtime URLs inline, so they need no new shared ConfigMap or namespace.
+The existing `tadoku-cli-web` configuration remains specific to Next.js auth. Its
 canonical ingress and gateway routes serve `authv2.tadoku.dev.lab` and remove
 client-supplied branch headers. Identity API requests pass through Oathkeeper.
 See [Authv2](../frontend/authv2.md) for session selection and unavailable states.

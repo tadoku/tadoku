@@ -47,13 +47,8 @@ configMapGenerator:
       - TADOKU_API_URL=https://tadoku.dev.lab/api/internal
       - NODE_EXTRA_CA_CERTS=/etc/dev-ca/ca.crt
       - NODE_OPTIONS=--max-old-space-size=384
-  - name: tadoku-cli-ca
-    namespace: tdk-dev-frontend-authv2
-    options:
-      disableNameSuffixHash: true
-    files: [ca.crt=lab-root-ca.crt]
   - name: tadoku-cli-authv2
-    namespace: tdk-dev-frontend-authv2
+    namespace: tdk-dev-frontend-auth
     options:
       disableNameSuffixHash: true
     literals:

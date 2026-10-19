@@ -304,7 +304,7 @@ metadata:
 spec:
   endpoints:
     - fqdn:
-        hostname: frontend-authv2.tdk-dev-frontend-authv2.svc.cluster.local
+        hostname: frontend-authv2.tdk-dev-frontend-auth.svc.cluster.local
         port: 3000
 ---
 apiVersion: gateway.networking.k8s.io/v1

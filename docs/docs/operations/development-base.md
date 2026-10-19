@@ -72,8 +72,8 @@ notification configuration.
 - Webv3 tracks its published `latest` digest independently at
   `https://next.tadoku.dev.lab`. Its deployment keeps the canonical Webv2 host
   available for product journeys linked from the preview.
-- Authv2 needs [public pulls and Image Updater enrollment](../frontend/authv2.md#images-and-deployment)
-  before deployment.
+- Authv2 follows [merge → publish → public pulls → base readiness → Image Updater](../frontend/authv2.md#images-and-deployment).
+  Delayed public visibility can block its Pod and later sync waves.
 - Hook migration images need Image Updater's `force-update`, because successful
   Jobs are removed from the live resource list.
 - Kustomize mirrors the migration image digest into a top-level annotation on
@@ -108,12 +108,11 @@ ingress. `/api/internal` uses Oathkeeper before the API, while page and asset
 requests use Webv3. Existing Tadoku subdomain admission and shared account
 cookies cover the preview and branch hosts.
 
-Authv2 shares `tdk-dev-frontend-auth` with auth, using distinct workload names
-and selectors. The base uses `tadoku-cli-authv2`; overlays supply URLs inline and
-reuse `tadoku-cli-ca`, so they need no new shared prerequisites. Auth's Next.js
-configuration stays unchanged. Canonical `authv2.tadoku.dev.lab` routes strip
-branch headers; identity requests use Oathkeeper.
-See [Authv2](../frontend/authv2.md) for runtime, probes and session behavior.
+Authv2 shares `tdk-dev-frontend-auth` with distinct selectors. Its base uses
+`tadoku-cli-authv2`; overlays use inline URLs and existing `tadoku-cli-ca`.
+Canonical routes strip branch headers. Public identity rules use anonymous
+authentication and a signed JWT, forwarding Cookie to API-owned auth/CSRF;
+unrelated rules keep session checks. See [Authv2](../frontend/authv2.md).
 
 ## Asynchronous worker ownership
 

@@ -72,6 +72,11 @@ The base lives in `k8s/dev/base/frontend-authv2/`, with a native Nitro server,
 Lab CA trust, API-independent `/healthz` probes and canonical gateway routes
 that strip client-supplied branch headers. The development base becomes
 available only after its manifests and compatible image have been deployed.
+Public `/api/internal/identity/*` requests use Oathkeeper's anonymous
+authenticator and signed `id_token`, retaining the original Cookie for the
+identity API. They do not invoke the global session callback: the identity API
+owns session authentication and CSRF, including session reads and logout for
+banned users. Other API rules retain their existing authentication behavior.
 Both development account apps use `tdk-dev-frontend-auth`, with separate
 Deployment/Service names and selectors. Authv2 overlays set `TADOKU_WEB_URL`,
 `TADOKU_API_URL` and `NODE_EXTRA_CA_CERTS` inline and mount the existing
@@ -125,10 +130,43 @@ before merging the GitOps setup: its gateway, certificate and Oathkeeper
 Applications sync automatically on merge. The authv2 workload still requires
 the maintainer's manual activation and readiness gates.
 
-Before the first development-base deployment, the maintainer must make the newly
-published `ghcr.io/tadoku/tadoku/frontend-authv2` package public and verify an
-anonymous pull. Enroll authv2 in the homelab Image Updater with the digest strategy
-and write-back to `k8s/dev/base/kustomization.yaml`; require an immutable digest
-resolution before deploying the base. The homelab infrastructure repository owns
-that Image Updater configuration. These maintainer actions are separate from
-preparing the manifests in this repository.
+The first source merge automatically starts both image publication and the
+development base's sync from `main`. The package does not exist before its
+first publication; public repository permissions do not make a GHCR package
+public. Follow this order:
+
+1. Merge reviewed source with its current-head container journeys passing.
+   The normal `build-frontend-authv2` workflow checks the image, then publishes
+   `ghcr.io/tadoku/tadoku/frontend-authv2:<merge-sha>` and `:latest`.
+2. After that publication succeeds, a package administrator opens
+   [authv2 package settings](https://github.com/orgs/tadoku/packages/container/tadoku%2Ffrontend-authv2/settings)
+   and changes only this new package's visibility to Public. Verify an anonymous
+   pull. Publishing and changing visibility are separate actions; no manual
+   workflow dispatch or early image upload is needed.
+3. Require authv2's Pod Ready, `tadoku-dev` Synced and Healthy,
+   `https://authv2.tadoku.dev.lab/login` returning 200, and the existing account
+   host and auth workload unchanged. The source-only skeleton can show its
+   unavailable state until the identity API is deployed.
+4. Enroll authv2 in the homelab Image Updater with the digest strategy and
+   write-back to `k8s/dev/base/kustomization.yaml`, then verify an immutable digest
+   resolution. The homelab infrastructure repository owns this configuration.
+
+Before publication or while the package remains private, the new authv2 Pod may
+stay in `ImagePullBackOff`. Its wave-30 health gate can prevent wave-50 Ingress
+creation and leave the development Application's sync incomplete or failed;
+existing workloads remain available. Kubelet retries the same image pull after
+visibility changes. Argo recovery must be observed: the live Application has
+automated sync and self-heal but no explicit `syncPolicy.retry`; a previously
+observed operation carried a finite retry limit of five. Do not assume unlimited
+retry or authorize a manual sync from this guide. If it remains failed after the
+Pod recovers, the maintainer must assess the failed operation and approve any
+required full sync separately.
+
+Source changes to Webv3 or the workspace lockfile also trigger its normal
+publication workflow. Production already follows `frontend-webv3:latest` by
+digest: Image Updater writes to the production GitOps repository and Argo CD
+automatically rolls `next.tadoku.app`. This is a source-merge effect even while
+authv2 production setup and activation remain held. Webv3's SSR bundles
+`@tanstack/query-core` to keep its build compatible with this workspace; the
+separate Nitro `devServer.runner: 'self'` setting affects development only.
+Keep `webv3 / container journeys` green on the exact source head before landing.

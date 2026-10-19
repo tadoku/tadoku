@@ -57,6 +57,10 @@ listener. Start a second instance only after checking ownership of existing
 listeners. `predev` builds `paper-ui` before serving the application.
 Nitro's development runner uses `self` to keep SSR in the Vite process and
 avoid racing worker initialization on page requests.
+The separate SSR `noExternal` entry for `@tanstack/query-core` bundles Query's
+core into server rendering so the shared workspace builds consistently after
+adding authv2. It affects the published build; the development runner option
+does not.
 
 The Lab CA path above is specific to Lab hosts. On another machine, supply its
 trusted Lab CA certificate through `NODE_EXTRA_CA_CERTS`; do not disable TLS
@@ -173,11 +177,16 @@ on pull requests. Main publishes immutable commit and `latest` tags to
 its digest can differ from the smoke-checked image. No pull request publishes an
 image.
 
-Once the separate GitOps configuration is activated, `next.tadoku.app` follows
+The active production GitOps configuration makes `next.tadoku.app` follow
 the `latest` digest automatically through Image Updater and Argo CD. No manual
 production tag promotion is required for Webv3. Webv3 uses the same production
 backend as Webv2; the current homepage reads public data and its activity links
 open production Webv2 for account operations.
+Merging source that matches the Webv3 workflow's paths, including the shared
+lockfile, therefore republishes `latest` and rolls this production preview through
+Image Updater's periodic digest reconciliation and Argo CD's automatic sync.
+Require `webv3 / container journeys` on the exact reviewed source head before
+landing such changes. An authv2 production hold does not hold this Webv3 pipeline.
 
 Before the first deployment, the package owner must confirm GHCR package
 visibility and cluster pull access. Newly created packages may be private;

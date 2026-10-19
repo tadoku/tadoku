@@ -62,8 +62,9 @@ startup creates no database, Postgres cluster, PVC or database dependency Job.
 - Before startup, a lifecycle marker records the owner, hooks and resolved
   variables. The `tenant` hook runs a bounded Job in `tdk-dev-data`.
 - The Job reads Dev Admin and Dev Reader IDs from the canonical `tadoku/prod`
-  fixture user rows in `users`. Missing base fixtures require authorized shared
-  setup; the branch task never seeds the base. Before loading its profiles, it
+  fixture user rows in `users`. If they are missing, ask the operator to run
+  `make dev-seed` first; it changes shared identities and base data, and the
+  branch task never seeds the base. Before loading its profiles, it
   creates native v2 accounts with those same UUIDs and the names Dev Admin and
   Dev Reader in its own tenant. Passwords and emails use the same
   `TADOKU_DEV_ADMIN_*` / `TADOKU_DEV_READER_*` source and defaults as the base
@@ -100,9 +101,18 @@ task Lease to force a retry; first prove that the abandoned holder has stopped.
 Native branch accounts use the existing documented fixture password, including
 its legacy short length; only the development fixture command permits this.
 Public registration retains its normal password policy. Seeding inserts missing
-accounts and refuses conflicting UUIDs, names, emails or passwords instead of
-resetting them. Both fixture inserts share one transaction. It creates no
-session; sign in through the configured branch API to create a native session.
+accounts by the exact tenant and fixture UUID. Existing accounts, including
+branch-changed names, emails, passwords, state, timestamps and sessions, stay
+unchanged. If a missing fixture's configured email belongs to a different UUID
+in that tenant, the whole fixture pair fails atomically. Other tenants may use
+the same UUIDs and emails with independent credentials. New fixture users retain
+the canonical fixture user's creation time when available, and new accounts
+retain their local user's creation time, preserving account-age rules. It creates
+no session; sign in through the configured branch API to create a native session.
+The branch SQL sets `seed_users=false` before loading immersion fixtures because
+the native fixture command owns initialization; reseeding still populates its
+profiles, contests and content without resetting user names. The human base seed
+keeps its existing user refresh behavior.
 
 Dev Admin keeps its base UUID, so the branch Keto parent preserves inherited
 administrator permits without changing canonical tuples. Dev Reader has direct

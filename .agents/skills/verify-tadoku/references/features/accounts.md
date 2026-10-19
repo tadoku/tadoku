@@ -67,7 +67,10 @@ responses rather than treating an API port-forward as the public journey.
 Provisioning seeds `identity-v2=true` automatically in the branch namespace.
 Use the native Dev Admin/Reader accounts and documented development password;
 verify their UUIDs/names, tenant cookie and session through the configured public
-branch API. Reseeding must preserve matching accounts. Never edit canonical
+branch API. Reseeding must preserve branch-changed credentials, display names and sessions,
+and continue through branch profile/content fixtures. New accounts retain the
+canonical fixture user age; a missing fixture email held by another UUID must
+fail atomically. Never edit canonical
 flag policy or shared Kratos sessions to exercise local account behavior.
 Backend E2Es use real, disposable providers and a tenant-aware Flipt fixture.
 

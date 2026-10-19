@@ -23,11 +23,11 @@ where tenant = 'tadoku/prod' and display_name = 'Dev Reader'
 \gset
 \if :admin_found
 \else
-  do $$ begin raise exception 'expected one base Dev Admin fixture; authorized shared setup is required'; end $$;
+  do $$ begin raise exception 'expected one base Dev Admin fixture; ask the operator to run make dev-seed first (changes shared identities and base data)'; end $$;
 \endif
 \if :reader_found
 \else
-  do $$ begin raise exception 'expected one base Dev Reader fixture; authorized shared setup is required'; end $$;
+  do $$ begin raise exception 'expected one base Dev Reader fixture; ask the operator to run make dev-seed first (changes shared identities and base data)'; end $$;
 \endif
 \echo :admin_user_id :reader_user_id
 commit;
@@ -35,7 +35,7 @@ SQL
 )
 set -- $fixture_ids
 if [ "$#" -ne 2 ]; then
-  echo 'expected base development fixture IDs; authorized shared setup is required' >&2
+  echo 'expected base development fixture IDs; ask the operator to run make dev-seed first (changes shared identities and base data)' >&2
   exit 1
 fi
 

@@ -39,6 +39,7 @@ go_test(
         "feature_flags_test.go",
         "flipt_tenant_test.go",
         "golden_test.go",
+        "identity_legacy_listing_test.go",
         "identity_read_test.go",
         "identity_skeleton_test.go",
         "journey_test.go",

@@ -29,7 +29,11 @@ func TestUpdateRoleMapsUserExistsFailureToUnavailable(t *testing.T) {
 	t.Cleanup(httpClient.CloseIdleConnections)
 	service := NewService(
 		nil,
-		identity.NewReader(nil, identity.NewLegacyReader(provider.URL, identity.WithHTTPClient(httpClient)), featureflags.NewEvaluator(nil, nil)),
+		identity.NewReader(
+			nil,
+			identity.NewLegacyReader(provider.URL, identity.WithHTTPClient(httpClient)),
+			featureflags.NewEvaluator(nil, nil),
+		),
 		nil,
 		nil,
 		nil,

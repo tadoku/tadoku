@@ -60,7 +60,7 @@ func (s legacySearch) String(i int) string {
 	return strings.ToLower(s[i].DisplayName.String() + " " + s[i].Email.String())
 }
 
-func (s *ReadService) listLegacyAccounts(ctx context.Context, query ListAccounts) (AccountPage, error) {
+func (s *ReadService) allLegacyAccounts(ctx context.Context, query string) ([]Account, error) {
 	accounts := make([]Account, 0)
 	seenIDs := make(map[uuid.UUID]bool)
 	seenTokens := make(map[string]bool)
@@ -68,7 +68,7 @@ func (s *ReadService) listLegacyAccounts(ctx context.Context, query ListAccounts
 	for {
 		values, next, err := s.legacy.ListIdentities(ctx, 500, token)
 		if err != nil {
-			return AccountPage{}, errx.NewUnavailableError("list users", err)
+			return nil, errx.NewUnavailableError("list users", err)
 		}
 		for _, value := range values {
 			account, err := legacyAccount(value)
@@ -82,19 +82,28 @@ func (s *ReadService) listLegacyAccounts(ctx context.Context, query ListAccounts
 			break
 		}
 		if seenTokens[next] {
-			return AccountPage{}, errx.NewUnavailableError("list users", fmt.Errorf("repeated next page token"))
+			return nil, errx.NewUnavailableError("list users", fmt.Errorf("repeated next page token"))
 		}
 		seenTokens[next] = true
 		token = next
 	}
-	if query.Query != "" {
-		matches := fuzzy.FindFrom(strings.ToLower(query.Query), legacySearch(accounts))
+	if query != "" {
+		matches := fuzzy.FindFrom(strings.ToLower(query), legacySearch(accounts))
 		filtered := make([]Account, 0, len(matches))
 		for _, match := range matches {
 			filtered = append(filtered, accounts[match.Index])
 		}
 		accounts = filtered
 	}
+	return accounts, nil
+}
+
+func (s *ReadService) listLegacyAccounts(ctx context.Context, query ListAccounts) (AccountPage, error) {
+	accounts, err := s.allLegacyAccounts(ctx, query.Query)
+	if err != nil {
+		return AccountPage{}, err
+	}
+
 	offset := 0
 	if query.Cursor != "" {
 		raw, err := base64.RawURLEncoding.DecodeString(query.Cursor)

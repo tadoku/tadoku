@@ -104,3 +104,27 @@ func (s *ReadService) ListAccounts(ctx context.Context, query ListAccounts) (Acc
 	}
 	return page, nil
 }
+
+func (s *ReadService) ListAllAccounts(ctx context.Context, query string) ([]Account, error) {
+	local, err := s.local(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if !local {
+		return s.allLegacyAccounts(ctx, query)
+	}
+
+	accounts := make([]Account, 0)
+	cursor := ""
+	for {
+		batch, err := s.ListAccounts(ctx, ListAccounts{Query: query, Limit: 500, Cursor: cursor})
+		if err != nil {
+			return nil, err
+		}
+		accounts = append(accounts, batch.Accounts...)
+		if batch.NextCursor == "" {
+			return accounts, nil
+		}
+		cursor = batch.NextCursor
+	}
+}

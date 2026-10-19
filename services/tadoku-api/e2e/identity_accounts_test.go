@@ -134,12 +134,28 @@ func TestIdentityV2RequestSecurity(t *testing.T) {
 		name, path, body, origin, contentType string
 		want                                  int
 	}{
-		{"foreign origin", "/identity/login", `{"email":"reader@example.test","password":"wrong-password"}`, "https://evil.test", "application/json", 403},
+		{
+			"foreign origin", "/identity/login",
+			`{"email":"reader@example.test","password":"wrong-password"}`,
+			"https://evil.test", "application/json", 403,
+		},
 		{"missing origin", "/identity/logout", "", "", "application/json", 403},
 		{"origin suffix attack", "/identity/logout", "", "https://tadoku.dev.lab.evil.test", "application/json", 403},
-		{"non JSON", "/identity/login", `{"email":"reader@example.test","password":"wrong-password"}`, "https://tadoku.dev.lab", "text/plain", 400},
-		{"foreign return", "/identity/recovery", `{"email":"reader@example.test","return_to":"https://evil.test/settings"}`, "https://tadoku.dev.lab", "application/json", 400},
-		{"return credentials", "/identity/recovery", `{"email":"reader@example.test","return_to":"https://evil.test@tadoku.app/settings"}`, "https://tadoku.dev.lab", "application/json", 400},
+		{
+			"non JSON", "/identity/login",
+			`{"email":"reader@example.test","password":"wrong-password"}`,
+			"https://tadoku.dev.lab", "text/plain", 400,
+		},
+		{
+			"foreign return", "/identity/recovery",
+			`{"email":"reader@example.test","return_to":"https://evil.test/settings"}`,
+			"https://tadoku.dev.lab", "application/json", 400,
+		},
+		{
+			"return credentials", "/identity/recovery",
+			`{"email":"reader@example.test","return_to":"https://evil.test@tadoku.app/settings"}`,
+			"https://tadoku.dev.lab", "application/json", 400,
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			resetIdentity(t)

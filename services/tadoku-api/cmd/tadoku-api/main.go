@@ -295,7 +295,17 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	})
 	rejectBanned := transporthttp.RejectBannedUsers(permissionChecker.Admit, logger)
 
-	handler, err := transporthttp.NewHandler(api, pool.Ping, cfg.RequestTimeout, metrics, logger, authenticate, rejectBanned, authenticateCallback)
+	handler, err := transporthttp.NewHandler(
+		api,
+		pool.Ping,
+		cfg.RequestTimeout,
+		metrics,
+		logger,
+		authenticate,
+		rejectBanned,
+		authenticateCallback,
+		transporthttp.WithIdentityTrustedProxies(cfg.identityTrustedProxies),
+	)
 	if err != nil {
 		return nil, err
 	}

@@ -6,6 +6,7 @@ import (
 	"mime"
 	"net"
 	stdhttp "net/http"
+	"net/netip"
 	"strings"
 
 	"github.com/oapi-codegen/nullable"
@@ -22,7 +23,7 @@ type identityRequestMetadata struct {
 	ip      string
 }
 
-func withIdentityRequest(next openapi.StrictHandlerFunc, operation string) openapi.StrictHandlerFunc {
+func (s *server) withIdentityRequest(next openapi.StrictHandlerFunc, operation string) openapi.StrictHandlerFunc {
 	if !strings.HasPrefix(operation, "Identity") {
 		return next
 	}
@@ -40,6 +41,16 @@ func withIdentityRequest(next openapi.StrictHandlerFunc, operation string) opena
 		ip, _, err := net.SplitHostPort(r.RemoteAddr)
 		if err != nil {
 			ip = r.RemoteAddr
+		}
+		peer, peerErr := netip.ParseAddr(ip)
+		forwarded, forwardedErr := netip.ParseAddr(r.Header.Get("X-Real-IP"))
+		if peerErr == nil && forwardedErr == nil && len(r.Header.Values("X-Real-IP")) == 1 {
+			for _, prefix := range s.identityTrustedProxies {
+				if prefix.Contains(peer.Unmap()) {
+					ip = forwarded.Unmap().String()
+					break
+				}
+			}
 		}
 		metadata := identityRequestMetadata{
 			cookies: app.IdentityCookieHeader(strings.Join(r.Header.Values("Cookie"), "; ")),

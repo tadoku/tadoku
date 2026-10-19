@@ -39,7 +39,7 @@ environment variables. Development values are in
   value is passed to the PostgreSQL pool or the migration tool.
 - `API_POSTGRES_MAX_CONNECTIONS` (default 4, validated range 1–32).
 
-### Valkey, leaderboard caches and login throttling
+### Valkey, leaderboard caches and login throttling {#valkey-and-leaderboard-caches}
 
 - `API_VALKEY_URL`, one standalone TCP URL accepted by `valkey-go`.
 - `API_VALKEY_TIMEOUT` (default 1s), the positive bound for each connection and
@@ -58,7 +58,7 @@ accepted and how commands, timeouts, cancellation and close behave.
 
 Identity also uses tenant-prefixed Valkey keys for login throttling. Its
 15-minute fixed window permits ten attempts per normalized email and fifty per
-network peer IP. Valkey failures allow login attempts and log a warning. See
+client IP. Valkey failures allow login attempts and log a warning. See
 [Identity](./identity.md) for session and credential behavior.
 
 ### Tenant deployment
@@ -84,6 +84,11 @@ base deployments leave `API_BRANCH` unset.
   unchecked.
 - `API_OATHKEEPER_AUTHZ_TOKEN`, the bearer credential required on trusted
   Oathkeeper authorization callbacks.
+
+`API_IDENTITY_TRUSTED_PROXY_CIDRS` is an optional comma-separated list of
+IP prefixes. Only a connection from those prefixes may supply `X-Real-IP` for
+login throttling; configure only proxies whose edge overwrites that header.
+The default trusts no forwarding header. Malformed prefixes fail startup.
 
 ### Keto and Kratos
 

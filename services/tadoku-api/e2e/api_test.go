@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"net/netip"
 	"os"
 	"path/filepath"
 	"testing"
@@ -388,7 +389,17 @@ func newTestRouterWithLeaderboardService(
 		return nil, nil, nil, err
 	}
 
-	handler, err := transport.NewHandler(application, pool.Ping, time.Second, registry, logger, authenticate, rejectBanned, authenticateCallback)
+	handler, err := transport.NewHandler(
+		application,
+		pool.Ping,
+		time.Second,
+		registry,
+		logger,
+		authenticate,
+		rejectBanned,
+		authenticateCallback,
+		transport.WithIdentityTrustedProxies([]netip.Prefix{netip.MustParsePrefix("10.42.0.0/16")}),
+	)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("create API handler: %w", err)
 	}

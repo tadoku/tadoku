@@ -69,14 +69,18 @@ policy to an imported password, and returns the same `wrong_password` answer for
 unknown, inactive, deleted or incorrect accounts. Unknown emails perform a
 cost-12 dummy comparison. No breached-password provider is called.
 
-Login attempts use atomic Valkey counters per normalized email and network peer
+Login attempts use atomic Valkey counters per normalized email and client
 IP, with tenant-prefixed, SHA-256-derived keys. A 15-minute window admits ten
 attempts per email and fifty per IP; further attempts return `429` with
 `throttled`. Counters include successful attempts. Provider errors log a warning
 without the email, password or token and allow the attempt. The HTTP boundary
-uses the connection peer rather than trusting a client-supplied forwarding
-header. A reverse proxy therefore shares its IP budget unless the trusted
-network boundary supplies distinct peers.
+uses the connection peer unless it belongs to an explicitly configured
+`API_IDENTITY_TRUSTED_PROXY_CIDRS` prefix. Only those peers may supply a single,
+valid `X-Real-IP`; the trusted edge must overwrite that header. Empty proxy
+configuration trusts no forwarded address. Development overlays configure the
+cluster pod prefix; production must configure its own trusted ingress boundary
+before activation. Untrusted peers cannot evade the IP budget with forged
+forwarding headers.
 
 ## Sessions and cookies
 

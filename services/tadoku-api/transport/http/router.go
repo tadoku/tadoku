@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log/slog"
 	stdhttp "net/http"
+	"net/netip"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -52,8 +53,15 @@ func (r *routeRegistrar) ServeHTTP(w stdhttp.ResponseWriter, request *stdhttp.Re
 }
 
 type server struct {
-	application *app.Application
-	logger      *slog.Logger
+	application            *app.Application
+	logger                 *slog.Logger
+	identityTrustedProxies []netip.Prefix
+}
+
+type HandlerOption func(*server)
+
+func WithIdentityTrustedProxies(prefixes []netip.Prefix) HandlerOption {
+	return func(s *server) { s.identityTrustedProxies = append([]netip.Prefix(nil), prefixes...) }
 }
 
 var (
@@ -82,6 +90,7 @@ func NewHandler(
 	authenticate func(stdhttp.Handler) stdhttp.Handler,
 	rejectBanned func(stdhttp.Handler) stdhttp.Handler,
 	authenticateCallback func(stdhttp.Handler) stdhttp.Handler,
+	options ...HandlerOption,
 ) (*Router, error) {
 	if application == nil || ready == nil {
 		return nil, fmt.Errorf("application and readiness are required")
@@ -152,6 +161,9 @@ func NewHandler(
 		application: application,
 		logger:      logger,
 	}
+	for _, option := range options {
+		option(apiServer)
+	}
 	tokenRoutes := &routeRegistrar{rootMux: router.rootMux, mux: stdhttp.NewServeMux()}
 	tokenHandler := apiServer.authenticateEmailToken(tokenRoutes)
 	tokenHandler = withPanicRecovery(logger, tokenHandler)
@@ -162,7 +174,7 @@ func NewHandler(
 
 	strictServer := openapi.NewStrictHandlerWithOptions(
 		apiServer,
-		[]openapi.StrictMiddlewareFunc{withIdentityRequest},
+		[]openapi.StrictMiddlewareFunc{apiServer.withIdentityRequest},
 		openapi.StrictHTTPServerOptions{
 			RequestErrorHandlerFunc: func(w stdhttp.ResponseWriter, _ *stdhttp.Request, err error) {
 				writeRequestError(w, err)

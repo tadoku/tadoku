@@ -64,7 +64,9 @@ func TestIdentityV1ProviderSessionAndLogout(t *testing.T) {
 	provider := *api.kratos.HTTPClient()
 	provider.Jar, _ = cookiejar.New(nil)
 	request, err := http.NewRequestWithContext(t.Context(), "POST", "http://kratos.test/admin/identities",
-		strings.NewReader(`{"schema_id":"user","traits":{"email":"legacy@example.test","display_name":"Legacy Reader"},"credentials":{"password":{"config":{"password":"Independent-653!"}}}}`))
+		strings.NewReader(`{"schema_id":"user",`+
+			`"traits":{"email":"legacy@example.test","display_name":"Legacy Reader"},`+
+			`"credentials":{"password":{"config":{"password":"Independent-653!"}}}}`))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -85,7 +87,12 @@ func TestIdentityV1ProviderSessionAndLogout(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	flowRequest, _ := http.NewRequestWithContext(t.Context(), "GET", "http://kratos-public.test/self-service/login/browser", nil)
+	flowRequest, _ := http.NewRequestWithContext(
+		t.Context(),
+		"GET",
+		"http://kratos-public.test/self-service/login/browser",
+		nil,
+	)
 	flowRequest.Header.Set("Accept", "application/json")
 	flow, err := provider.Do(flowRequest)
 	if err != nil {

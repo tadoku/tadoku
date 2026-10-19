@@ -13,7 +13,10 @@ import (
 
 var ErrIdentityTenantNotServed = errors.New("tenant not served by this deployment")
 
-func (a *Application) IdentityRegister(ctx context.Context, registration identity.Registration) (identity.LoginResult, error) {
+func (a *Application) IdentityRegister(
+	ctx context.Context,
+	registration identity.Registration,
+) (identity.LoginResult, error) {
 	var result identity.LoginResult
 	err := postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) error {
 		var err error
@@ -31,7 +34,10 @@ func (a *Application) IdentityLogout(ctx context.Context, cookieHeader identity.
 	return a.identity.Logout(ctx, cookieHeader)
 }
 
-func (a *Application) IdentitySession(ctx context.Context, cookieHeader identity.CookieHeader) (identity.SessionResult, error) {
+func (a *Application) IdentitySession(
+	ctx context.Context,
+	cookieHeader identity.CookieHeader,
+) (identity.SessionResult, error) {
 	return a.identity.Session(ctx, cookieHeader)
 }
 

@@ -280,6 +280,38 @@ jq -r .token "$fixture_output"
   token by hand invalidates its signature, so rerun the recipe instead.
 - Never use production signing keys or tokens in fixtures.
 
+## Local account fixtures
+
+`e2e/testdata/accounts.sql` seeds the fixed five-user cast as local accounts in
+three tenants of the disposable PostgreSQL database: `tadoku/prod` and the two
+`identity-a-0123abcd` / `identity-b-0123abcd` test tenants. UUIDs, display names,
+emails and account creation times match the legacy cast. The fixture uses the
+same synthetic cost-12 password hash as the identity workflow fixtures. It
+creates no sessions; workflows obtain cookies through real registration or
+login requests.
+
+The account-cast workflows explicitly load this seed after reset and enable
+`identity-v2` only in the in-process Flipt fixture. They compare local session
+responses with the checked-in signed cast, reject another tenant's cookie and
+exercise inactive, deleted and deletion-locked accounts. A reset removes issued
+sessions and restores the active accounts. No shared tenant, flag or provider is
+modified. Roles and groups remain real Keto relationships.
+
+Legacy profile, account-age and role-update callers still use the Kratos read
+adapter, so their existing golden scenarios retain the process fixture below.
+They do not read local account rows. Keep that boundary visible when choosing a
+fixture; local account authentication alone does not verify those callers.
+
+### Recorded legacy sessions
+
+The v1 session/logout workflow serves `e2e/testdata/IdentityV1/session.json` and
+`unauthorized.json` over loopback HTTP. These are responses recorded from the
+pinned disposable Kratos fixture, without session-cookie material. The workflow
+checks the real SDK/session adapter, callback shape, cookie forwarding and
+canonical-only session revocation. The response server is an explicit provider
+simulation; it does not verify Kratos password login or provider persistence.
+Provider protocol, error and cancellation tests remain with the read adapter.
+
 ## Kratos fixture
 
 - HTTP E2Es share one pinned Kratos v26.2.0 SQLite-enabled Linux x86-64 process,
@@ -318,10 +350,20 @@ jq -r .token "$fixture_output"
 ## Email gateway fixture
 
 `TestEmailGatewayCookieAndBearer` runs the checked-in development rules with
-checksum-pinned Oathkeeper v26.2.0, the real local Kratos/Keto fixtures and the
-production API router on the restricted database role. It generates ephemeral
-credentials in memory and checks cookie-admin and bearer list/detail reads,
-anonymous/forged denial, unrelated-route denial and token absence from logs.
+checksum-pinned Oathkeeper v26.2.0, real local Keto/PostgreSQL fixtures and the
+production API router on the restricted database role. It registers a v2
+account through the gateway, grants its tenant's admin relationship in the
+owned Keto fixture and uses the issued tenant cookie for email list/detail
+reads. It checks bearer reads, anonymous/forged/unrelated cookies, expiry,
+public logout followed by cookie rejection, unrelated-route denial and token
+absence from logs.
+
+The fixture adapts the cookie-session configuration to the API's real identity
+callback with its synthetic bearer and forwarded Cookie / X-Dev-Branch headers,
+without an `only` cookie filter. This is local callback integration evidence;
+it does not prove the checked-in shared gateway has deployed that configuration.
+Routing rules, bearer header mutation and signing remain from the selected
+configuration.
 
 To check production routing, render the paired GitOps checkout's Oathkeeper
 chart (version 0.60.1) into a scratch file and pass its absolute path through

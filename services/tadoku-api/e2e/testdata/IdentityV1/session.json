@@ -1,0 +1,58 @@
+{
+  "id": "7314a1c5-77aa-4689-9009-59fc2b58f7bc",
+  "active": true,
+  "expires_at": "2026-10-20T20:51:40.314144119Z",
+  "authenticated_at": "2026-10-19T20:51:40.314144119Z",
+  "authenticator_assurance_level": "aal1",
+  "authentication_methods": [
+    {
+      "method": "password",
+      "aal": "aal1",
+      "completed_at": "2026-10-19T20:51:40.314060298Z"
+    }
+  ],
+  "issued_at": "2026-10-19T20:51:40.314144119Z",
+  "identity": {
+    "id": "491ec087-0f4c-4ae1-86ff-84560f60871f",
+    "schema_id": "user",
+    "schema_url": "http://kratos-public.test/schemas/dXNlcg",
+    "state": "active",
+    "state_changed_at": "2026-10-19T20:51:40.162207342Z",
+    "traits": {
+      "email": "legacy@example.test",
+      "display_name": "Legacy Reader"
+    },
+    "verifiable_addresses": [
+      {
+        "id": "16b4bde6-2c91-4d1e-97d4-5f9848530725",
+        "value": "legacy@example.test",
+        "verified": false,
+        "via": "email",
+        "status": "pending",
+        "created_at": "2026-10-19T20:51:40.163126Z",
+        "updated_at": "2026-10-19T20:51:40.163126Z"
+      }
+    ],
+    "recovery_addresses": [
+      {
+        "id": "c78705bb-3ecf-4cfc-9331-f162bd4733f6",
+        "value": "legacy@example.test",
+        "via": "email",
+        "created_at": "2026-10-19T20:51:40.163262Z",
+        "updated_at": "2026-10-19T20:51:40.163262Z"
+      }
+    ],
+    "metadata_public": null,
+    "created_at": "2026-10-19T20:51:40.16282Z",
+    "updated_at": "2026-10-19T20:51:40.16282Z",
+    "organization_id": null
+  },
+  "devices": [
+    {
+      "id": "a405f3a6-ef4f-4044-8d84-99160dad6e57",
+      "ip_address": "@",
+      "user_agent": "Go-http-client/1.1",
+      "location": ""
+    }
+  ]
+}

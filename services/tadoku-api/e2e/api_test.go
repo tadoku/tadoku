@@ -272,6 +272,7 @@ type routerEndpoints struct {
 	ketoWrite        string
 	identityValkey   valkeygo.Client
 	identityObserver featureflags.Observer
+	legacySessions   *identity.LegacySessions
 }
 
 func withIdentityValkey(client valkeygo.Client) routerOption {
@@ -298,6 +299,9 @@ func newTestRouterWithLeaderboardService(
 		ketoWrite:      ketoFixture.WriteURL(),
 		jwks:           authenticationJWKS.URL,
 		identityValkey: leaderboardValkey.client,
+		legacySessions: identity.NewLegacySessions(
+			"http://kratos-public.test", "http://kratos.test", kratosFixture.HTTPClient(),
+		),
 	}
 	for _, option := range options {
 		option(&endpoints)
@@ -354,7 +358,7 @@ func newTestRouterWithLeaderboardService(
 	identityService := identity.NewService(
 		identity.NewRepository(pool),
 		identity.NewThrottle(endpoints.identityValkey, time.Second, logger),
-		identity.NewLegacySessions("http://kratos-public.test", "http://kratos.test", kratosFixture.HTTPClient()),
+		endpoints.legacySessions,
 		featureFlagEvaluator,
 		"tadoku.dev.lab",
 	)

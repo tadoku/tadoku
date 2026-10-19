@@ -82,7 +82,12 @@ Never point tests at shared development or production services.
   v25.4.0 SQLite-enabled executable under Bazel. Each helper owns an in-memory,
   loopback-only process using `infra/dev/ory/namespaces.keto.ts` and never
   accepts an external target.
-- **Kratos:** HTTP E2Es own a pinned Kratos process; see
+- **Identity accounts:** focused v2 workflows seed local PostgreSQL account rows
+  and obtain sessions through real identity requests. The fixed cast and
+  recorded v1-session boundary are documented in
+  [Local account fixtures](./http-e2e.md#local-account-fixtures).
+- **Kratos:** legacy reader goldens and identity-writer tests still own a pinned
+  Kratos process; see
   [Kratos fixture](./http-e2e.md#kratos-fixture). No Docker service, external Kratos URL or
   Kratos environment variable is needed.
 - **Valkey:** raw Valkey and application lifecycle tests require

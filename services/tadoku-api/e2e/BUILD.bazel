@@ -8,6 +8,7 @@ go_test(
         "access_journeys_test.go",
         "access_level_test.go",
         "access_tokens_test.go",
+        "account_fixtures_test.go",
         "announcement_create_test.go",
         "announcement_delete_test.go",
         "announcement_update_test.go",

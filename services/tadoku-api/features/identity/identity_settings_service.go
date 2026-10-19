@@ -74,7 +74,7 @@ type PasswordUpdate struct {
 
 // HashPasswordUpdate must run before opening the application's business transaction.
 func (s *Service) HashPasswordUpdate(ctx context.Context, header CookieHeader, raw string) (PasswordUpdate, error) {
-	session, err := s.settingsSession(ctx, header)
+	session, err := s.SettingsSession(ctx, header)
 	if err != nil {
 		return PasswordUpdate{}, err
 	}
@@ -132,12 +132,7 @@ func (s *Service) UpdatePassword(ctx context.Context, header CookieHeader, raw s
 	return s.ApplyPasswordUpdate(ctx, update)
 }
 
-func (s *Service) ValidateSettingsSession(ctx context.Context, header CookieHeader) error {
-	_, err := s.settingsSession(ctx, header)
-	return err
-}
-
-func (s *Service) settingsSession(ctx context.Context, header CookieHeader) (AuthenticatedSession, error) {
+func (s *Service) SettingsSession(ctx context.Context, header CookieHeader) (AuthenticatedSession, error) {
 	app, err := s.accountApp(ctx)
 	if err != nil {
 		return AuthenticatedSession{}, err
@@ -160,7 +155,7 @@ func (s *Service) settingsSession(ctx context.Context, header CookieHeader) (Aut
 }
 
 func (s *Service) lockSettingsSession(ctx context.Context, header CookieHeader) (AuthenticatedSession, error) {
-	session, err := s.settingsSession(ctx, header)
+	session, err := s.SettingsSession(ctx, header)
 	if err != nil {
 		return AuthenticatedSession{}, err
 	}

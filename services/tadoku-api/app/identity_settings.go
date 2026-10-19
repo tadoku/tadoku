@@ -7,7 +7,6 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/mail"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
 
 func (a *Application) IdentityRequestRecovery(ctx context.Context, recovery identity.Recovery) error {
@@ -54,12 +53,12 @@ func (a *Application) IdentityUpdateProfile(
 	header identity.CookieHeader,
 	settings identity.ProfileSettings,
 ) (identity.AuthenticatedSession, error) {
-	if err := a.identity.ValidateSettingsSession(ctx, header); err != nil {
+	session, err := a.identity.SettingsSession(ctx, header)
+	if err != nil {
 		return identity.AuthenticatedSession{}, err
 	}
 
-	var session identity.AuthenticatedSession
-	err := postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) error {
+	err = postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) error {
 		result, err := a.identity.UpdateProfile(ctx, header, settings)
 		if err != nil {
 			return err
@@ -67,15 +66,7 @@ func (a *Application) IdentityUpdateProfile(
 		if err := a.writeIdentityEmails(ctx, result.Emails); err != nil {
 			return err
 		}
-		current, err := a.identity.CheckSession(ctx, header)
-		if err != nil {
-			return err
-		}
-		var ok bool
-		session, ok = current.(identity.AuthenticatedSession)
-		if !ok {
-			return errx.NewUnauthorizedError("a valid session is required")
-		}
+		session.Account = result.Account
 		return nil
 	})
 	return session, err

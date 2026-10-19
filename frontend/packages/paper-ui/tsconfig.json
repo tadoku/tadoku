@@ -37,6 +37,6 @@
     "*.ts"
   ],
   "exclude": [
-    "tests/consumer-4.9"
+    "tests/consumer"
   ]
 }

@@ -19,7 +19,7 @@ export function SetupPage() {
           <p>
             Paper is a private package in this monorepo. Add it to your
             application’s dependencies using pnpm. Its peer dependencies are
-            React and React DOM 18.2 and React Hook Form 7.
+            React and React DOM 18.2 and TanStack Form 1.33.2.
           </p>
           <CodeBlock
             language="bash"
@@ -112,14 +112,14 @@ export function SetupPage() {
         <section id="forms" className="document-section">
           <h2 className="paper-type-section">Connect forms</h2>
           <p>
-            Paper fields read React Hook Form context. Wrap a form in{' '}
-            <code>FormProvider</code>, give each field a name, and submit
-            through <code>handleSubmit</code>. Your application owns persistence
+            Create a form with usePaperForm, wrap form.Form in{' '}
+            <code>form.AppForm</code>, and bind named fields through
+            <code>form.AppField</code>. Put validation on the field or form. Your application owns persistence
             and server errors.
           </p>
           <CodeBlock
             code={
-              'import { FormProvider, useForm } from "react-hook-form";\nimport { Button, Input } from "paper-ui";\n\nexport function ReadingForm() {\n  const methods = useForm({ defaultValues: { title: "" } });\n  return (\n    <FormProvider {...methods}>\n      <form className="paper-stack" onSubmit={methods.handleSubmit(values => console.log(values))}>\n        <Input name="title" label="Work title" required />\n        <Button type="submit">Save log</Button>\n      </form>\n    </FormProvider>\n  );\n}'
+              "import { Button, usePaperForm } from \"paper-ui\";\n\nexport function ReadingForm() {\n  const form = usePaperForm({\n    defaultValues: { title: \"\" },\n    onSubmit: ({ value }) => console.log(value),\n  });\n  return (\n    <form.AppForm><form.Form className=\"paper-stack\">\n      <form.AppField name=\"title\" validators={{ onChange: ({ value }) => value.trim() ? undefined : \"Enter a title.\" }}>\n        {field => <field.Input label=\"Work title\" required />}\n      </form.AppField>\n      <Button type=\"submit\">Save log</Button>\n    </form.Form></form.AppForm>\n  );\n}"
             }
           />
           <p>

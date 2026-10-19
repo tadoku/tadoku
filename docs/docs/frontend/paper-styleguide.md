@@ -29,4 +29,4 @@ pnpm --filter paper-styleguide build
 pnpm check:paper-boundaries
 ```
 
-The app imports the built `paper-ui` from `dist/`. After you change `frontend/packages/paper-ui`, run `pnpm --filter paper-ui build` or restart the dev server. `paper-ui` has the same `lint`, `typecheck`, `test` and `build` scripts, plus `pack:check`, `examples:check` and `consumer:ts49`.
+The app imports the built `paper-ui` from `dist/`. After you change `frontend/packages/paper-ui`, run `pnpm --filter paper-ui build` or restart the dev server. `paper-ui` has the same `lint`, `typecheck`, `test` and `build` scripts, plus `pack:check`, `examples:check` and `consumer:typecheck`.

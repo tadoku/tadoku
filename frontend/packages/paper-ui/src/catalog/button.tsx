@@ -404,7 +404,7 @@ export const buttonDocument = defineCatalogDocument({
       "behavior": {
         "heading": "Behavior",
         "content": [
-          "Buttons activate on Enter or Space and default to type=button, preventing accidental form submission. Explicitly set type=submit inside a React Hook Form and submit through methods.handleSubmit(); use methods.reset() only for a deliberate reset workflow."
+          "Buttons activate on Enter or Space and default to type=button, preventing accidental form submission. Explicitly set type=submit inside a TanStack Form and submit through methods.handleSubmit(); use methods.reset() only for a deliberate reset workflow."
         ]
       },
       "contentGuidance": {

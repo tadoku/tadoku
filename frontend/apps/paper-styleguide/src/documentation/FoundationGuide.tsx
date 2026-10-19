@@ -34,7 +34,7 @@ export function GovernanceGuide({ document }: { document: CatalogDocument }) {
       <li><strong>Review the rendered result.</strong> Test keyboard entry/exit, focus, light/dark, comfortable/compact and narrow layout. Inspect long content and 200% zoom. Check the component in a real composition, not just alone.</li>
       <li><strong>Record evidence and consequences.</strong> Update review date and changelog with behavior/API impact, migration steps and unresolved decisions. Stable promotion requires human review; passing a content-presence test is insufficient.</li>
     </ol>
-    <GuideCode label="Validation commands (repository root)" code={'cd frontend\npnpm --filter paper-ui build\npnpm --filter paper-ui typecheck\npnpm --filter paper-ui test\npnpm --filter paper-ui lint\npnpm --filter paper-ui consumer:ts49\npnpm --filter paper-styleguide typecheck\npnpm --filter paper-styleguide test\npnpm --filter paper-styleguide lint\npnpm --filter paper-styleguide build'} />
+    <GuideCode label="Validation commands (repository root)" code={'cd frontend\npnpm --filter paper-ui build\npnpm --filter paper-ui typecheck\npnpm --filter paper-ui test\npnpm --filter paper-ui lint\npnpm --filter paper-ui consumer:typecheck\npnpm --filter paper-styleguide typecheck\npnpm --filter paper-styleguide test\npnpm --filter paper-styleguide lint\npnpm --filter paper-styleguide build'} />
     <p>After editing package source, rebuild <code>paper-ui</code> before reviewing the styleguide: the app consumes the built package. Run <code>pnpm --filter paper-styleguide dev</code> from <code>frontend</code> to review locally.</p>
     <GuideTable label="Lifecycle is a promise" columns={['Status', 'Required meaning']} rows={[
       ['Experimental', 'Design or behavior still needs validation. Identify the open question; do not silently treat it as approved product behavior.'],
@@ -49,7 +49,7 @@ export function GovernanceGuide({ document }: { document: CatalogDocument }) {
     <GuideTable label="Changes and consumer impact" columns={['When', 'Change', 'Consumer impact']} rows={[
       ['Current review · unreleased', 'Foundation usage examples, spacing scale and layout utilities; corrected accent rail perimeter alignment. Experimental page-composition controls (PageHeader, SectionHeading, StatusTag, EmptyState, StatGrid, DescriptionList, AppliedFilters) and the Filter bar pattern.', 'Existing composition remains valid. New utilities and controls require the rebuilt package; the controls are Experimental and only paper-playground uses them. Application migrations remain separate work.'],
       ['2026-08-09', 'Refined action focus, form borders and Flash rails; restored wordmark and heatmap; styleguide controls use Paper.', 'Visual changes to existing components. Catalogue coverage did not establish complete usage guidance or readiness to migrate every application.'],
-      ['2026-08-08 · 0.1.0 baseline', 'Canonical catalogue, framework-neutral exports, semantic light/dark themes and density controls.', 'Private workspace package; React 18.2 and React Hook Form 7 peers. Built declarations target TypeScript 4.9 consumers.'],
+      ['2026-08-08 · 0.1.0 baseline', 'Canonical catalogue, framework-neutral exports, semantic light/dark themes and density controls.', 'Private workspace package; React 18.2 and TanStack Form 1.33.2 peers. Built declarations target TypeScript 5.4+ consumers.'],
     ]} />
     <h3>Before upgrading an application</h3><p>Read the affected component’s contract and migration notes, compare the application’s current commit to the intended version, then review its actual screens in both themes and densities. This page does not assert that Admin, Auth or webv2 has migrated.</p>
     <p><a href="https://github.com/tadoku/tadoku/commits/main/frontend/packages/paper-ui">Package commit history</a> and <a href="https://github.com/tadoku/tadoku/commits/main/frontend/apps/paper-styleguide">styleguide commit history</a> contain exact changes. Container digests and deployment approvals belong in release records, not inferred from the package version.</p>
@@ -58,7 +58,7 @@ export function GovernanceGuide({ document }: { document: CatalogDocument }) {
     <h2 className="paper-type-section">Compose the filter bar</h2>
     <GuideTable label="Parts in reading order" columns={['Part', 'Paper controls', 'Screen responsibility']} rows={[
       ['Filters toggle', 'A ghost Button in SectionHeading actions, with aria-expanded and aria-controls.', 'Open state, any default-open rule and the applied count in its label.'],
-      ['Filter panel', 'Select, Input and other form controls inside a FormProvider.', 'Field layout and filter state. Keep the panel mounted while collapsed.'],
+      ['Filter panel', 'Select, Input and other form controls inside a form.AppForm.', 'Field layout and filter state. Keep the panel mounted while collapsed.'],
       ['Summary and count', 'AppliedFilters beside a role="status" result count.', 'Derive both from the state that filters the results; move focus after clearing.'],
       ['Results', 'Table or the screen’s own list.', 'Sorting, pagination and ranks. Filtering never changes a rank.'],
       ['No matches', 'EmptyState with variant="plain" and a Clear filters action.', 'Explain that the filters exclude everything and reset them.'],

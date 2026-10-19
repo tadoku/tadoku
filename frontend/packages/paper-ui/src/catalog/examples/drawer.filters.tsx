@@ -1,23 +1,29 @@
-import { Button, Drawer, Select } from 'paper-ui'
+import { Button, Drawer, usePaperForm } from 'paper-ui'
 import { useId, useState } from 'react'
-import { FormProvider, useForm } from 'react-hook-form'
 
 export default function DrawerExample() {
   const [open, setOpen] = useState(false)
   const [language, setLanguage] = useState('All languages')
   const formId = useId()
-  const methods = useForm({ defaultValues: { language: 'All languages' } })
+  const methods = usePaperForm({
+    defaultValues: { language: 'All languages' },
+    onSubmit: ({ value: values }) => {
+      setLanguage(values.language)
+      setOpen(false)
+    },
+  })
   return (
     <div className="paper-stack">
       <p role="status">Showing: {language}</p>
-      <FormProvider {...methods}>
+      <methods.AppForm>
         <Drawer
           trigger={<Button variant="outline">Review filters</Button>}
           title="Entry filters"
           description="Choose which reading entries to show."
           open={open}
           onOpenChange={nextOpen => {
-            if (nextOpen) methods.reset({ language })
+            if (nextOpen)
+              methods.reset({ language }, { keepDefaultValues: true })
             setOpen(nextOpen)
           }}
           footer={
@@ -31,27 +37,23 @@ export default function DrawerExample() {
             </>
           }
         >
-          <form
-            className="paper-stack"
-            id={formId}
-            onSubmit={methods.handleSubmit(values => {
-              setLanguage(values.language)
-              setOpen(false)
-            })}
-          >
-            <Select
-              name="language"
-              label="Language"
-              options={[
-                { value: 'All languages', label: 'All languages' },
-                { value: 'Japanese', label: 'Japanese' },
-                { value: 'French', label: 'French' },
-              ]}
-              hint="Changes take effect only when you apply filters."
-            />
-          </form>
+          <methods.Form className="paper-stack" id={formId}>
+            <methods.AppField name="language">
+              {field => (
+                <field.Select
+                  label="Language"
+                  options={[
+                    { value: 'All languages', label: 'All languages' },
+                    { value: 'Japanese', label: 'Japanese' },
+                    { value: 'French', label: 'French' },
+                  ]}
+                  hint="Changes take effect only when you apply filters."
+                />
+              )}
+            </methods.AppField>
+          </methods.Form>
         </Drawer>
-      </FormProvider>
+      </methods.AppForm>
       <h3>Start placement, without a footer</h3>
       <Drawer
         placement="start"

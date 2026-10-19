@@ -1,5 +1,4 @@
 import { useId } from "react";
-import type { FieldValues, RegisterOptions } from "react-hook-form";
 import { CheckIcon, iconClassName } from "../../icons";
 import { describedBy, useField, type FieldContract, type Option } from "./field";
 
@@ -14,22 +13,15 @@ export interface RadioSelectProps extends FieldContract {
 }
 
 export function RadioSelect({
-  name,
   label,
   hint,
-  rules,
   required,
   options,
   disabled,
   variant = "default",
 }: RadioSelectProps) {
   const id = `paper-radio-${useId().replace(/:/gu, "")}`;
-  const { form, error } = useField(name);
-  const registration = form.register(name, {
-    ...rules,
-    disabled: disabled,
-    required: rules?.required ?? (required ? "Choose an option." : undefined),
-  });
+  const { field, error } = useField<string>();
   const segmented = variant === "segmented";
   return (
     <fieldset
@@ -43,7 +35,10 @@ export function RadioSelect({
         {options.map((option) => (
           <label className={segmented ? "paper-radio-select__segment" : "paper-choice"} key={option.value}>
             <input
-              {...registration}
+              name={field.name}
+              checked={field.state.value === option.value}
+              onChange={() => field.handleChange(option.value)}
+              onBlur={field.handleBlur}
               type="radio"
               value={option.value}
               disabled={option.disabled}
@@ -61,7 +56,7 @@ export function RadioSelect({
         ))}
       </div>
       {hint ? <p className="paper-field__hint" id={`${id}-hint`}>{hint}</p> : null}
-      {error ? <p className="paper-field__error" id={`${id}-error`} role="alert">{error.message?.toString()}</p> : null}
+      {error ? <p className="paper-field__error" id={`${id}-error`} role="alert">{error}</p> : null}
     </fieldset>
   );
 }
@@ -71,25 +66,18 @@ export interface RadioGroupOption<Value = string> extends Option<Value> {
 }
 
 export interface RadioGroupProps<Value = string>
-  extends Omit<FieldContract, "rules"> {
+  extends FieldContract {
   readonly options: readonly RadioGroupOption<Value>[];
-  readonly rules?: RegisterOptions<FieldValues, string>;
 }
 
 export function RadioGroup<Value extends string = string>({
-  name,
   label,
   hint,
   required = true,
-  rules,
   options,
 }: RadioGroupProps<Value>) {
   const id = `paper-radio-group-${useId().replace(/:/gu, "")}`;
-  const { form, error } = useField(name);
-  const registration = form.register(name, {
-    ...rules,
-    required: rules?.required ?? (required ? "Choose an option." : undefined),
-  });
+  const { field, error } = useField<string>();
   return (
     <fieldset
       className={`paper-choice-field${error ? " paper-field--invalid" : ""}`}
@@ -101,7 +89,10 @@ export function RadioGroup<Value extends string = string>({
         {options.map((option) => (
           <label className="paper-radio-card" key={option.value}>
             <input
-              {...registration}
+              name={field.name}
+              checked={field.state.value === option.value}
+              onChange={() => field.handleChange(option.value)}
+              onBlur={field.handleBlur}
               type="radio"
               value={option.value}
               required={required}
@@ -113,7 +104,7 @@ export function RadioGroup<Value extends string = string>({
         ))}
       </div>
       {hint ? <p className="paper-field__hint" id={`${id}-hint`}>{hint}</p> : null}
-      {error ? <p className="paper-field__error" id={`${id}-error`} role="alert">{error.message?.toString()}</p> : null}
+      {error ? <p className="paper-field__error" id={`${id}-error`} role="alert">{error}</p> : null}
     </fieldset>
   );
 }

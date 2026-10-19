@@ -35,7 +35,7 @@ export default defineConfig({
   external: [
     'react',
     'react-dom',
-    'react-hook-form',
+    '@tanstack/react-form',
     /^@base-ui\/react(?:\/.*)?$/,
   ],
 })

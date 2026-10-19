@@ -1,13 +1,11 @@
 #!/usr/bin/env bash
 # Fails when a handwritten text file is over 20,000 bytes (about 5,000 tokens at 4 bytes per token).
 # Checks tracked and untracked, unignored files. Skips binary files and files marked
-# linguist-generated=true in .gitattributes. Files listed in tools/ci/file_size_baseline.txt
-# predate the limit; remove a file's entry once it is split.
+# linguist-generated=true in .gitattributes.
 set -euo pipefail
 
 limit=20000
 cd "$(git rev-parse --show-toplevel)"
-baseline=tools/ci/file_size_baseline.txt
 
 oversized=$(
   git ls-files -z --cached --others --exclude-standard |
@@ -20,16 +18,13 @@ oversized=$(
     done |
     sort -u
 )
-allowed=$(sed -e '/^#/d' -e '/^$/d' "$baseline" | sort -u)
-new=$(comm -23 <(echo "$oversized") <(echo "$allowed") | sed '/^$/d')
-stale=$(comm -13 <(echo "$oversized") <(echo "$allowed") | sed '/^$/d')
+[[ -z $oversized ]] && exit 0
 
-if [[ -n $new ]]; then
-  while read -r path; do
-    size=$(stat -c %s "$path")
-    echo "::error file=$path::$path is $size bytes (about $((size / 4)) tokens); the limit is $limit bytes."
-  done <<<"$new"
-  cat <<'EOF'
+while read -r path; do
+  size=$(stat -c %s "$path")
+  echo "::error file=$path::$path is $size bytes (about $((size / 4)) tokens); the limit is $limit bytes."
+done <<<"$oversized"
+cat <<'EOF'
 
 Split each file along its existing responsibilities so a reader can work on one part without the rest:
 - Go: move a cohesive group of declarations, or a group of tests and their fixtures, into another file
@@ -43,9 +38,4 @@ Do not split by line count, add pass-through modules or move one operation acros
 See "Splitting a long file" in docs/docs/architecture/module-design.md.
 Mark a generated file linguist-generated=true in .gitattributes instead of splitting it.
 EOF
-fi
-if [[ -n $stale ]]; then
-  echo "::error::Remove these files from $baseline; they are no longer over the limit:"
-  echo "$stale"
-fi
-[[ -z $new && -z $stale ]]
+exit 1

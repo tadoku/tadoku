@@ -109,6 +109,4 @@ long file costs them context before they reach the part they need.
   test fixtures shared by several test files in a `_test.go` helper file.
 
 Generated files and lockfiles are exempt when `.gitattributes` marks them
-`linguist-generated=true`. `tools/ci/file_size_baseline.txt` lists the files
-that were over the limit when the check was added; delete an entry in the
-change that splits its file.
+`linguist-generated=true`. Every other text file is held to the limit.

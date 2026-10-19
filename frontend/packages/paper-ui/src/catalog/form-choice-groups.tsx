@@ -13,15 +13,7 @@ import ToggleModifiersSource from "./examples/toggle-select.modifiers.tsx?raw";
 import EmptyToggleModifiersExample from "./examples/toggle-select.modifiers.empty";
 import EmptyToggleModifiersSource from "./examples/toggle-select.modifiers.empty.tsx?raw";
 import { defineCatalogFixture } from "./schema";
-import {
-  disabledProp,
-  fieldProps,
-  formSetup,
-  optionsProp,
-  validationProp,
-  type ComponentDetails,
-  type DocSpec,
-} from "./forms-feedback-spec";
+import { disabledProp, fieldProps, formSetup, optionsProp, validationProp, type ComponentDetails, type DocSpec } from "./forms-feedback-spec";
 
 export const choiceGroupDetails: ComponentDetails = {
   "component.radio-select": {
@@ -109,7 +101,7 @@ export const toggleSelectSpec: DocSpec = {
   choose: "ToggleSelect lets users return to no selection by pressing the active option again.",
   behavior: "Tab moves between enabled choices. Enter, Space, or a click toggles the focused choice without submitting the form. Selecting another choice clears the previous one; focus stays on the pressed option.",
   accessibility: "The visible legend names the group. Each button exposes its pressed state, and a check reinforces selection without relying on color. Disabled choices are skipped by Tab.",
-  migration: "Replace separate form buttons and selection state with ToggleSelect inside FormProvider. Initialize the named field with [] or [value].",
+  migration: "Replace separate form buttons and selection state with ToggleSelect inside form.AppForm. Initialize the named field with [] or [value].",
 };
 
 export const radioSelectFixtures = [
@@ -320,4 +312,4 @@ export const radioGroupFixtures = [
 }, code: Example20Source, render: () => <Example20 /> }),
 ] as const;
 
-export const radioGroupSpec: DocSpec = { id: "component.radio-group", route: "/components/forms/radio-group", name: "RadioGroup", category: "forms", summary: "Presents mutually exclusive choices that each require supporting description.", fixtureId: "radio-group.format", sourcePath: "src/components/forms/choice-controls.tsx", react: ["RadioGroup"], types: ["RadioGroupProps", "RadioGroupOption"], when: "Use when each mutually exclusive choice needs a label and explanatory description.", avoid: "Use RadioSelect for terse choices and Checkbox for independent choices.", choose: "Choose the smallest radio presentation that gives users enough context to decide.", behavior: "Native radio focus and arrow-key selection work without a custom composite widget.", accessibility: "Use a legend for the decision, preserve disabled semantics, and never rely on the selected border alone.", migration: "Remove Headless UI RadioGroup imports; Paper uses native radios and React Hook Form." };
+export const radioGroupSpec: DocSpec = { id: "component.radio-group", route: "/components/forms/radio-group", name: "RadioGroup", category: "forms", summary: "Presents mutually exclusive choices that each require supporting description.", fixtureId: "radio-group.format", sourcePath: "src/components/forms/choice-controls.tsx", react: ["RadioGroup"], types: ["RadioGroupProps", "RadioGroupOption"], when: "Use when each mutually exclusive choice needs a label and explanatory description.", avoid: "Use RadioSelect for terse choices and Checkbox for independent choices.", choose: "Choose the smallest radio presentation that gives users enough context to decide.", behavior: "Native radio focus and arrow-key selection work without a custom composite widget.", accessibility: "Use a legend for the decision, preserve disabled semantics, and never rely on the selected border alone.", migration: "Remove Headless UI RadioGroup imports; Paper uses native radios and TanStack Form." };

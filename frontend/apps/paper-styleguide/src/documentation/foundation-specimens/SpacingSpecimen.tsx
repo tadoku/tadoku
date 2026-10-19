@@ -1,24 +1,24 @@
-import ContainerSpacingExample from '../foundation-examples/ContainerSpacingExample'
-import ContainerSpacingExampleSource from '../foundation-examples/ContainerSpacingExample.tsx?raw'
+import { usePaperForm, Button } from 'paper-ui'
+import { useState } from 'react'
 import CompactEntryExample from '../foundation-examples/CompactEntryExample'
 import CompactEntryExampleSource from '../foundation-examples/CompactEntryExample.tsx?raw'
-import { useState } from 'react'
-import { FormProvider, useForm } from 'react-hook-form'
-import { Button, Input } from 'paper-ui'
+import ContainerSpacingExample from '../foundation-examples/ContainerSpacingExample'
+import ContainerSpacingExampleSource from '../foundation-examples/ContainerSpacingExample.tsx?raw'
+
 import { GuideTable } from '../FoundationGuide'
 import { FoundationCanvas, FoundationExample } from './FoundationPreview'
 
 const spaces = [[1, 4, 'Icon/text micro-spacing'], [2, 8, 'Closely related items'], [3, 12, 'Small content groups'], [4, 16, 'Default stack and surface padding'], [6, 24, 'Related sections'], [8, 32, 'Page groups'], [12, 48, 'Major page sections']] as const
 function DensityExample({ density }: { density: 'comfortable' | 'compact' }) {
-  const methods = useForm({ defaultValues: { work: 'コンビニ人間', pages: '48' } })
+  const methods = usePaperForm({ defaultValues: { work: 'コンビニ人間', pages: '48' }, onSubmit: () => setSaved(true) })
   const [saved, setSaved] = useState(false)
   return <section data-density={density} className="foundation-guide__sample foundation-density-example">
     <h3>{density === 'comfortable' ? 'Comfortable' : 'Compact'}</h3>
-    <FormProvider {...methods}><form onSubmit={methods.handleSubmit(() => setSaved(true))}>
-      <Input name="work" label="Work" /><Input name="pages" label="Pages" type="number" min={1} />
+    <methods.AppForm><methods.Form >
+      <methods.AppField name="work">{field => <field.Input label="Work" />}</methods.AppField><methods.AppField name="pages">{field => <field.Input label="Pages" type="number" min={1} />}</methods.AppField>
       <div className="paper-cluster"><Button type="submit">Save reading</Button><Button variant="outline" onClick={() => {methods.reset(); setSaved(false)}}>Reset</Button></div>
       <p role="status">{saved ? 'Demo entry saved locally.' : 'Japanese · Not submitted to a contest'}</p>
-    </form></FormProvider>
+    </methods.Form></methods.AppForm>
   </section>
 }
 export function SpacingSpecimen() {
@@ -41,4 +41,3 @@ export function SpacingSpecimen() {
     <p>Set density once on the app root. A nested boundary changes tokens, but inherited body typography needs <code>paper-type-body</code> on that boundary. Portalled dialogs need the document root’s values; nesting does not move a portal into your local boundary.</p>
   </>
 }
-

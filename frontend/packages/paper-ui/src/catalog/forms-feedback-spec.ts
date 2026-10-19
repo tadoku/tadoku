@@ -1,8 +1,4 @@
-import type {
-  CatalogDocument,
-  ComponentCategory,
-  ComponentPageSectionKey,
-} from "./schema";
+import type { CatalogDocument, ComponentCategory, ComponentPageSectionKey } from "./schema"
 
 export interface DocSpec {
   readonly id: string;
@@ -31,12 +27,12 @@ export type Prop = NonNullable<CatalogDocument["api"]["props"]>[number];
 export type ComponentDetails = Record<string, { example: string; anatomy: string; variants: string; states: string; content: string; implementation: string; props: readonly Prop[] }>;
 
 export const fieldProps: readonly Prop[] = [
-  { name: "name", type: "string", required: true, description: "Path in the enclosing useForm values. Initialize it through defaultValues, then use reset to load another record." },
+  { name: "name", type: "string", required: true, description: "Pass name to form.AppField, not the bound control. Initialize it through usePaperForm defaultValues." },
   { name: "label", type: "string", required: true, description: "Persistent visible label; do not replace it with a placeholder." },
   { name: "hint", type: "string", description: "Help shown below the control and connected through aria-describedby. Optional hints do not shift adjacent controls out of alignment." },
-  { name: "required", type: "boolean", defaultValue: "false (RadioGroup: true)", description: "Marks the decision as required and validates it through React Hook Form." },
+  { name: "required", type: "boolean", defaultValue: "false (RadioGroup: true)", description: "Marks the native control as required; add the required rule to the AppField or form validators." },
 ];
-export const validationProp: Prop = { name: "rules", type: "RegisterOptions", description: "React Hook Form validation, including custom recovery messages. Use noValidate on the form so inline errors handle submission." };
+export const validationProp: Prop = { name: "validators (AppField)", type: "FieldValidators", description: "TanStack validation and recovery messages belong on form.AppField or the form. form.Form submits through handleSubmit and focuses errors." };
 export const optionsProp: Prop = { name: "options", type: "readonly Option<string>[]", required: true, description: "Objects with value, label, and optional disabled. Persist value; show label to the user." };
 export const disabledProp: Prop = { name: "disabled", type: "boolean", defaultValue: "false", description: "Prevents editing. Explain why the value is unavailable in nearby text." };
-export const formSetup = "Import from paper-ui and load paper-ui/styles.css once at the application root. Wrap the form in FormProvider, initialize useForm defaultValues, and submit with methods.handleSubmit. The examples show validation, reset, and locally observable submitted state; replace the local confirmation with your save handler.";
+export const formSetup = "Import usePaperForm from paper-ui. Initialize typed defaultValues, validators and onSubmit. Wrap form.Form in form.AppForm; bind each named form.AppField to field.Input or another bound control. required and numeric bounds need matching validators. Use reset(values, { keepDefaultValues: true }) to load another draft. The screen owns persistence and server errors.";

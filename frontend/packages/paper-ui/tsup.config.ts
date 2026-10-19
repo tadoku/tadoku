@@ -1,6 +1,6 @@
-import { defineConfig } from 'tsup'
 import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
+import { defineConfig } from 'tsup'
 
 export default defineConfig({
   entry: {
@@ -35,7 +35,7 @@ export default defineConfig({
   external: [
     'react',
     'react-dom',
-    'react-hook-form',
+    '@tanstack/react-form',
     /^@base-ui\/react(?:\/.*)?$/,
   ],
 })

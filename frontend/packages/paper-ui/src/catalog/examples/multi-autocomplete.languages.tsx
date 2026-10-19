@@ -1,6 +1,6 @@
-import { AutocompleteMultiInput, Button, Flash } from 'paper-ui'
+import { useStore } from '@tanstack/react-form'
+import { Button, Flash, usePaperForm } from 'paper-ui'
 import { useState } from 'react'
-import { FormProvider, useForm } from 'react-hook-form'
 
 const LANGUAGES = [
   { id: 'ja', label: 'Japanese' },
@@ -13,29 +13,12 @@ export default function Example() {
     string,
     unknown
   > | null>(null)
-  const methods = useForm({
-    defaultValues: { multiple: [{ id: 'ja', label: 'Japanese' }] },
-  })
+  const methods = usePaperForm({
+    defaultValues: { multiple: [{ id: 'ja', label: 'Japanese' }] }, onSubmit: ({ value: values }) => setSavedValues(values) })
   return (
-    <FormProvider {...methods}>
-      <form
-        className="paper-stack"
-        style={{ maxWidth: '32rem' }}
-        noValidate
-        onSubmit={methods.handleSubmit(values => setSavedValues(values))}
-      >
-        <AutocompleteMultiInput
-          name="multiple"
-          label="Languages"
-          hint="Choose two languages for this bilingual entry."
-          required
-          maxSelections={2}
-          rules={{ validate: selected => selected.length === 2 || "Choose two languages for this bilingual entry." }}
-          options={LANGUAGES}
-          format={option => option.label}
-          getId={option => option.id}
-          placeholder="Add language"
-        />
+    <methods.AppForm>
+      <methods.Form className="paper-stack" style={{ maxWidth: '32rem' }}>
+        <methods.AppField name="multiple" validators={{ onChange: ({ value }) => { if (!value.length) return "Choose at least one option."; const result = (selected => selected.length === 2 || "Choose two languages for this bilingual entry.")(value); return result === true ? undefined : result || undefined; } }}>{field => <field.AutocompleteMultiInput label="Languages" hint="Choose two languages for this bilingual entry." required maxSelections={2} options={LANGUAGES} format={option => option.label} getId={option => option.id} placeholder="Add language" />}</methods.AppField>
         <div className="paper-cluster">
           <Button type="submit">Save entry</Button>
           <Button
@@ -64,10 +47,10 @@ export default function Example() {
         <details>
           <summary>Current form values</summary>
           <pre style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
-            {JSON.stringify(methods.watch(), null, 2)}
+            {JSON.stringify(useStore(methods.store, state => state.values), null, 2)}
           </pre>
         </details>
-      </form>
-    </FormProvider>
+      </methods.Form>
+    </methods.AppForm>
   )
 }

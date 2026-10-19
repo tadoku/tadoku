@@ -1,6 +1,5 @@
 import { Combobox } from "@base-ui/react/combobox";
 import { useId, useMemo, useRef, useState } from "react";
-import { useController } from "react-hook-form";
 import { CheckIcon, ChevronDownIcon, XMarkIcon, iconClassName } from "../../icons";
 import { FieldFrame, describedBy, useField, type FieldContract } from "./field";
 
@@ -69,11 +68,9 @@ function ComboboxPopup<Value>({
 export type AutocompleteInputProps<Value> = AutocompleteContract<Value>;
 
 export function AutocompleteInput<Value>({
-  name,
   label,
   hint,
   required,
-  rules,
   options,
   format,
   getId,
@@ -83,20 +80,19 @@ export function AutocompleteInput<Value>({
   placeholder,
 }: AutocompleteInputProps<Value>) {
   const id = `paper-autocomplete-${useId().replace(/:/gu, "")}`;
-  const { form, error } = useField(name);
-  const { field } = useController({ name, control: form.control, rules: { ...rules, required: rules?.required ?? (required ? "Choose an option." : undefined) } });
+  const { field, error } = useField<Value | null>();
   const [query, setQuery] = useState("");
   const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
   const filtered = useFilteredOptions(options, query, format, match, maxResults);
   return (
-    <FieldFrame id={id} label={label} hint={hint} required={required} error={error?.message?.toString()}>
+    <FieldFrame id={id} label={label} hint={hint} required={required} error={error}>
       <Combobox.Root
         items={options}
         filteredItems={filtered}
-        value={(field.value as Value | null) ?? null}
+        value={(field.state.value as Value | null) ?? null}
         onValueChange={(value, details) => {
           if (details.reason === "escape-key") details.cancel();
-          else field.onChange(value);
+          else field.handleChange(value);
         }}
         onInputValueChange={(value, details) => {
           if (details.reason === "escape-key") details.cancel();
@@ -109,14 +105,14 @@ export function AutocompleteInput<Value>({
         <div className="paper-combobox__input-group">
           <Combobox.Input
             id={id}
-            onBlur={field.onBlur}
+            name={field.name}
+            onBlur={field.handleBlur}
             aria-required={required || undefined}
             placeholder={placeholder}
             className="paper-input"
             aria-invalid={error ? true : undefined}
             aria-describedby={describedBy(id, hint, error)}
             ref={(node) => {
-              field.ref(node);
               if (node && node.ownerDocument.body !== portalContainer) setPortalContainer(node.ownerDocument.body);
             }}
           />
@@ -135,11 +131,9 @@ export interface AutocompleteMultiInputProps<Value> extends AutocompleteContract
 }
 
 export function AutocompleteMultiInput<Value>({
-  name,
   label,
   hint,
   required,
-  rules,
   options,
   format,
   getId,
@@ -150,15 +144,14 @@ export function AutocompleteMultiInput<Value>({
   placeholder,
 }: AutocompleteMultiInputProps<Value>) {
   const id = `paper-multiautocomplete-${useId().replace(/:/gu, "")}`;
-  const { form, error } = useField(name);
-  const { field } = useController({ name, control: form.control, defaultValue: [], rules: { ...rules, required: rules?.required ?? (required ? "Choose at least one option." : undefined) } });
-  const values = (field.value ?? []) as Value[];
+  const { field, error } = useField<Value[]>();
+  const values = (field.state.value ?? []) as Value[];
   const [query, setQuery] = useState("");
   const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
   const filtered = useFilteredOptions(options, query, format, match, maxResults);
   const atLimit = maxSelections !== undefined && values.length >= maxSelections;
   return (
-    <FieldFrame id={id} label={label} hint={hint} required={required} error={error?.message?.toString()}>
+    <FieldFrame id={id} label={label} hint={hint} required={required} error={error}>
       <Combobox.Root
         multiple
         items={options}
@@ -166,7 +159,7 @@ export function AutocompleteMultiInput<Value>({
         value={values}
         onValueChange={(value, details) => {
           if (details.reason === "escape-key") details.cancel();
-          else if (maxSelections === undefined || value.length <= maxSelections || value.length < values.length) field.onChange(value);
+          else if (maxSelections === undefined || value.length <= maxSelections || value.length < values.length) field.handleChange(value);
         }}
         onInputValueChange={(value, details) => {
           if (details.reason === "escape-key") details.cancel();
@@ -187,7 +180,8 @@ export function AutocompleteMultiInput<Value>({
           ))}
           <Combobox.Input
             id={id}
-            onBlur={field.onBlur}
+            name={field.name}
+            onBlur={field.handleBlur}
             aria-required={required || undefined}
             placeholder={atLimit ? "Maximum selections reached" : placeholder}
             className="paper-combobox__chip-input"
@@ -195,7 +189,6 @@ export function AutocompleteMultiInput<Value>({
             aria-invalid={error ? true : undefined}
             aria-describedby={describedBy(id, hint, error)}
             ref={(node) => {
-              field.ref(node);
               if (node && node.ownerDocument.body !== portalContainer) setPortalContainer(node.ownerDocument.body);
             }}
           />
@@ -215,11 +208,9 @@ export type TagsInputProps = Omit<
 >;
 
 export function TagsInput({
-  name,
   label,
   hint,
   required,
-  rules,
   options,
   match,
   maxResults = 50,
@@ -228,9 +219,8 @@ export function TagsInput({
   placeholder = "Type to add a tag",
 }: TagsInputProps) {
   const id = `paper-tags-${useId().replace(/:/gu, "")}`;
-  const { form, error } = useField(name);
-  const { field } = useController({ name, control: form.control, defaultValue: [], rules: { ...rules, required: rules?.required ?? (required ? "Add at least one tag." : undefined) } });
-  const values = (field.value ?? []) as string[];
+  const { field, error } = useField<string[]>();
+  const values = (field.state.value ?? []) as string[];
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
@@ -250,7 +240,7 @@ export function TagsInput({
   const items = canCreate ? [...suggestions, candidate] : suggestions;
 
   return (
-    <FieldFrame id={id} label={label} hint={hint} required={required} error={error?.message?.toString()}>
+    <FieldFrame id={id} label={label} hint={hint} required={required} error={error}>
       <Combobox.Root
         multiple
         items={items}
@@ -262,7 +252,7 @@ export function TagsInput({
         onValueChange={(value, details) => {
           if (details.reason === "escape-key") details.cancel();
           else if (maxSelections === undefined || value.length <= maxSelections || value.length < values.length) {
-            field.onChange(value);
+            field.handleChange(value);
             if (value.length > values.length) {
               setQuery("");
               setOpen(false);
@@ -286,7 +276,8 @@ export function TagsInput({
           ))}
           <Combobox.Input
             id={id}
-            onBlur={field.onBlur}
+            name={field.name}
+            onBlur={field.handleBlur}
             onCompositionStart={() => { composing.current = true; }}
             onCompositionEnd={() => { composing.current = false; }}
             onKeyDown={event => {
@@ -300,7 +291,7 @@ export function TagsInput({
               if (event.currentTarget.getAttribute("aria-activedescendant")) return;
               event.preventBaseUIHandler();
               if (candidate && !alreadySelected) {
-                field.onChange([...values, existingTag ?? candidate]);
+                field.handleChange([...values, existingTag ?? candidate]);
                 setQuery("");
                 setOpen(false);
               }
@@ -313,7 +304,6 @@ export function TagsInput({
             aria-invalid={error ? true : undefined}
             aria-describedby={describedBy(id, hint, error)}
             ref={node => {
-              field.ref(node);
               if (node && node.ownerDocument.body !== portalContainer) setPortalContainer(node.ownerDocument.body);
             }}
           />

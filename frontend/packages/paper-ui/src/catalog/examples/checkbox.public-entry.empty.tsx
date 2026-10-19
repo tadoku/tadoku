@@ -1,26 +1,17 @@
-import { Button, Checkbox, Flash } from 'paper-ui'
+import { useStore } from '@tanstack/react-form'
+import { Button, Flash, usePaperForm } from 'paper-ui'
 import { useState } from 'react'
-import { FormProvider, useForm } from 'react-hook-form'
 
 export default function Example() {
   const [savedValues, setSavedValues] = useState<Record<
     string,
     unknown
   > | null>(null)
-  const methods = useForm({ defaultValues: { public: false } })
+  const methods = usePaperForm({ defaultValues: { public: false }, onSubmit: ({ value: values }) => setSavedValues(values) })
   return (
-    <FormProvider {...methods}>
-      <form
-        className="paper-stack"
-        style={{ maxWidth: '32rem' }}
-        noValidate
-        onSubmit={methods.handleSubmit(values => setSavedValues(values))}
-      >
-        <Checkbox
-          name="public"
-          label="Show this entry on my profile"
-          hint="Contest moderators can always review submitted entries."
-        />
+    <methods.AppForm>
+      <methods.Form className="paper-stack" style={{ maxWidth: '32rem' }}>
+        <methods.AppField name="public">{field => <field.Checkbox label="Show this entry on my profile" hint="Contest moderators can always review submitted entries." />}</methods.AppField>
         <div className="paper-cluster">
           <Button type="submit">Save entry</Button>
           <Button
@@ -49,10 +40,10 @@ export default function Example() {
         <details>
           <summary>Current form values</summary>
           <pre style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
-            {JSON.stringify(methods.watch(), null, 2)}
+            {JSON.stringify(useStore(methods.store, state => state.values), null, 2)}
           </pre>
         </details>
-      </form>
-    </FormProvider>
+      </methods.Form>
+    </methods.AppForm>
   )
 }

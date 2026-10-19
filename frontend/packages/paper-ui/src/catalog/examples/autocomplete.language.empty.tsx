@@ -1,6 +1,6 @@
-import { AutocompleteInput, Button, Flash } from 'paper-ui'
+import { useStore } from '@tanstack/react-form'
+import { Button, Flash, usePaperForm } from 'paper-ui'
 import { useState } from 'react'
-import { FormProvider, useForm } from 'react-hook-form'
 
 const LANGUAGES = [
   { id: 'ja', label: 'Japanese' },
@@ -13,24 +13,11 @@ export default function Example() {
     string,
     unknown
   > | null>(null)
-  const methods = useForm({ defaultValues: { autocomplete: null } })
+  const methods = usePaperForm({ defaultValues: { autocomplete: null as (typeof LANGUAGES)[number] | null }, onSubmit: ({ value: values }) => setSavedValues(values) })
   return (
-    <FormProvider {...methods}>
-      <form
-        className="paper-stack"
-        style={{ maxWidth: '32rem' }}
-        noValidate
-        onSubmit={methods.handleSubmit(values => setSavedValues(values))}
-      >
-        <AutocompleteInput
-          name="autocomplete"
-          label="Language"
-          required
-          options={LANGUAGES}
-          format={option => option.label}
-          getId={option => option.id}
-          placeholder="Search languages"
-        />
+    <methods.AppForm>
+      <methods.Form className="paper-stack" style={{ maxWidth: '32rem' }}>
+        <methods.AppField name="autocomplete" validators={{ onChange: ({ value }) => { if (!value) return "Choose an option."; } }}>{field => <field.AutocompleteInput label="Language" required options={LANGUAGES} format={option => option.label} getId={option => option.id} placeholder="Search languages" />}</methods.AppField>
         <div className="paper-cluster">
           <Button type="submit">Save entry</Button>
           <Button
@@ -59,10 +46,10 @@ export default function Example() {
         <details>
           <summary>Current form values</summary>
           <pre style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
-            {JSON.stringify(methods.watch(), null, 2)}
+            {JSON.stringify(useStore(methods.store, state => state.values), null, 2)}
           </pre>
         </details>
-      </form>
-    </FormProvider>
+      </methods.Form>
+    </methods.AppForm>
   )
 }

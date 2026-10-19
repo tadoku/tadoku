@@ -1,61 +1,10 @@
-import {
-defineCatalogDocument,
-type CatalogDocument,
-type ComponentDocumentationSections,
-type RequiredComponentSections,
-} from "./schema";
-import type { ComponentDetails, DocSpec } from "./forms-feedback-spec";
-import {
-  buttonGroupAndSurfaceCommonMistakes,
-  buttonGroupAndSurfaceDetails,
-  buttonGroupFixtures,
-  buttonGroupSpec,
-  surfaceFixtures,
-  surfaceSpec,
-} from "./button-group-and-surface";
-import {
-  feedbackCommonMistakes,
-  feedbackDetails,
-  flashFixtures,
-  flashSpec,
-  loadingFixtures,
-  loadingSpec,
-  toastFixtures,
-  toastSpec,
-} from "./feedback-components";
-import {
-  autocompleteCommonMistakes,
-  autocompleteDetails,
-  autocompleteFixtures,
-  autocompleteSpec,
-  multiAutocompleteFixtures,
-  multiAutocompleteSpec,
-  tagsInputFixtures,
-  tagsInputSpec,
-} from "./form-autocomplete";
-import {
-  choiceGroupCommonMistakes,
-  choiceGroupDetails,
-  radioGroupFixtures,
-  radioGroupSpec,
-  radioSelectFixtures,
-  radioSelectNativeFixtures,
-  radioSelectSpec,
-  toggleSelectFixtures,
-  toggleSelectSpec,
-} from "./form-choice-groups";
-import {
-  amountWithUnitFixtures,
-  amountWithUnitSpec,
-  checkboxFixtures,
-  checkboxSpec,
-  formFieldCommonMistakes,
-  formFieldDetails,
-  selectFixtures,
-  selectSpec,
-  textAreaFixtures,
-  textAreaSpec,
-} from "./form-fields";
+import { buttonGroupAndSurfaceCommonMistakes, buttonGroupAndSurfaceDetails, buttonGroupFixtures, buttonGroupSpec, surfaceFixtures, surfaceSpec } from "./button-group-and-surface"
+import { feedbackCommonMistakes, feedbackDetails, flashFixtures, flashSpec, loadingFixtures, loadingSpec, toastFixtures, toastSpec } from "./feedback-components"
+import { autocompleteCommonMistakes, autocompleteDetails, autocompleteFixtures, autocompleteSpec, multiAutocompleteFixtures, multiAutocompleteSpec, tagsInputFixtures, tagsInputSpec } from "./form-autocomplete"
+import { choiceGroupCommonMistakes, choiceGroupDetails, radioGroupFixtures, radioGroupSpec, radioSelectFixtures, radioSelectNativeFixtures, radioSelectSpec, toggleSelectFixtures, toggleSelectSpec } from "./form-choice-groups"
+import { amountWithUnitFixtures, amountWithUnitSpec, checkboxFixtures, checkboxSpec, formFieldCommonMistakes, formFieldDetails, selectFixtures, selectSpec, textAreaFixtures, textAreaSpec } from "./form-fields"
+import type { ComponentDetails, DocSpec } from "./forms-feedback-spec"
+import { defineCatalogDocument, type CatalogDocument, type ComponentDocumentationSections, type RequiredComponentSections } from "./schema"
 
 const REVIEW_DATE = "2026-09-05";
 
@@ -134,7 +83,7 @@ function document(spec: DocSpec): CatalogDocument {
       invalidCombinations: [spec.avoid],
     },
     fixtureIds: [spec.fixtureId, ...(spec.category === "forms" ? [`${spec.fixtureId}.empty`] : []), ...(spec.id === "component.radio-select" ? ["radio-select.native"] : [])],
-    dependencies: { documents: ["component.button"], packages: spec.category === "forms" ? ["paper-ui", "react-hook-form"] : ["paper-ui"] },
+    dependencies: { documents: ["component.button"], packages: spec.category === "forms" ? ["paper-ui", "@tanstack/react-form"] : ["paper-ui"] },
     migration: { legacy: [`ui ${spec.name}`], notes: [spec.migration] },
     changelog: [{ date: REVIEW_DATE, note: `Revised ${spec.name} with complete runnable examples, state guidance, and concrete prop contracts.` }],
     behaviorTestIds: [`${spec.id}.semantics`, `${spec.id}.behavior`],

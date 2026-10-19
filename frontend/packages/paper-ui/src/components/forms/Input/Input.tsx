@@ -1,42 +1,19 @@
-import {
-  forwardRef,
-  useId,
-  type ForwardedRef,
-  type InputHTMLAttributes,
-  type MutableRefObject,
-} from "react";
-import {
-  useFormContext,
-  useFormState,
-  type FieldValues,
-  type RegisterOptions,
-} from "react-hook-form";
+import { forwardRef, useId, type InputHTMLAttributes } from "react"
+import { useField } from "../field"
 
 export interface InputProps
   extends Omit<
     InputHTMLAttributes<HTMLInputElement>,
     "name" | "onBlur" | "onChange"
   > {
-  readonly name: string;
   readonly label: string;
   readonly hint?: string;
-  readonly rules?: RegisterOptions<FieldValues, string>;
-}
-
-function assignRef(
-  ref: ForwardedRef<HTMLInputElement>,
-  node: HTMLInputElement | null,
-): void {
-  if (typeof ref === "function") ref(node);
-  else if (ref) (ref as MutableRefObject<HTMLInputElement | null>).current = node;
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
   {
-    name,
     label,
     hint,
-    rules,
     id: providedId,
     required,
     readOnly,
@@ -46,21 +23,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
   },
   forwardedRef,
 ) {
-  const form = useFormContext();
+  const { field, error } = useField<string | number>();
   const generatedId = useId();
   const id = providedId ?? `paper-input-${generatedId.replace(/:/gu, "")}`;
 
-  if (!form) {
-    throw new Error("Paper Input must be rendered inside react-hook-form FormProvider");
-  }
-
-  const registration = form.register(name, {
-    ...rules,
-    disabled,
-    required: rules?.required ?? (required ? "This field is required." : undefined),
-  });
-  const subscribedFormState = useFormState({ control: form.control, name });
-  const error = form.getFieldState(name, subscribedFormState).error;
   const hintId = hint ? `${id}-hint` : undefined;
   const errorId = error ? `${id}-error` : undefined;
   const describedBy = [hintId, errorId, props["aria-describedby"]].filter(Boolean).join(" ") || undefined;
@@ -86,7 +52,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
       </label>
       <input
         {...props}
-        {...registration}
+        name={field.name}
+        value={typeof field.state.value === "number" && Number.isNaN(field.state.value) ? "" : field.state.value ?? ""}
+        onChange={event => field.handleChange(props.type === "number" ? event.currentTarget.valueAsNumber : event.currentTarget.value)}
+        onBlur={field.handleBlur}
         id={id}
         required={required}
         readOnly={readOnly}
@@ -94,10 +63,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy}
         className="paper-input"
-        ref={(node) => {
-          registration.ref(node);
-          assignRef(forwardedRef, node);
-        }}
+        ref={forwardedRef}
       />
       {hint ? (
         <p className="paper-field__hint" id={hintId}>
@@ -106,7 +72,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
       ) : null}
       {error ? (
         <p className="paper-field__error" id={errorId} role="alert">
-          {error.message?.toString() || "Check this field."}
+          {error || "Check this field."}
         </p>
       ) : null}
     </div>

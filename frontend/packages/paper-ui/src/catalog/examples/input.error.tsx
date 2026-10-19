@@ -1,21 +1,14 @@
-import { Input } from 'paper-ui'
+import { usePaperForm } from 'paper-ui'
 import { useEffect } from 'react'
-import { FormProvider, useForm } from 'react-hook-form'
 
 export default function InputErrorFixture() {
-  const methods = useForm<{ pages: string }>({ defaultValues: { pages: '' } })
+  const methods = usePaperForm({ defaultValues: ({ pages: '' } as { pages: string }) })
   useEffect(() => {
-    methods.setError('pages', { message: 'Enter the number of pages read.' })
+    methods.setFieldMeta('pages', meta => ({ ...meta, isTouched: true, errorMap: { onSubmit: 'Enter the number of pages read.' } }))
   }, [methods])
   return (
-    <FormProvider {...methods}>
-      <Input
-        name="pages"
-        label="Pages read"
-        hint="Use whole pages."
-        inputMode="numeric"
-        required
-      />
-    </FormProvider>
+    <methods.AppForm>
+      <methods.AppField name="pages" validators={{ onChange: ({ value }) => { if (!value) return "This field is required."; } }}>{field => <field.Input label="Pages read" hint="Use whole pages." inputMode="numeric" required />}</methods.AppField>
+    </methods.AppForm>
   )
 }

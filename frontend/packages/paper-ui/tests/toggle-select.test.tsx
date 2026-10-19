@@ -1,31 +1,25 @@
+import { useStore } from '@tanstack/react-form';
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { FormProvider, useForm } from "react-hook-form";
+import { usePaperForm, Button } from '../src';
+
 import { describe, expect, it, vi } from "vitest";
-import { Button, ToggleSelect } from "../src";
 
 function ModifierForm({ disabled = false, validate = false, onSubmit = vi.fn() }) {
-  const methods = useForm({ defaultValues: { modifiers: [] as string[] } });
+  const methods = usePaperForm({ defaultValues: { modifiers: [] as string[] }, onSubmit: ({ value }) => onSubmit(value) });
   return (
-    <FormProvider {...methods}>
-      <form onSubmit={methods.handleSubmit(onSubmit)}>
-        <ToggleSelect
-          name="modifiers"
-          label="Score modifiers"
-          hint="Choose one if it applies."
-          disabled={disabled}
-          rules={validate ? { validate: (value) => value.length > 0 || "Choose a modifier." } : undefined}
-          options={[
+    <methods.AppForm>
+      <methods.Form >
+        <methods.AppField name="modifiers" validators={{ onChange: ({ value }) => validate && !value.length ? "Choose a modifier." : undefined }}>{field => <field.ToggleSelect label="Score modifiers" hint="Choose one if it applies." disabled={disabled} options={[
             { value: "manga", label: "Manga", description: "×0.2" },
             { value: "comic", label: "Comic", description: "×0.1" },
             { value: "two-column", label: "Two column", description: "×2", disabled: true },
-          ]}
-        />
-        <output aria-label="Current modifiers">{JSON.stringify(methods.watch("modifiers"))}</output>
+          ]} />}</methods.AppField>
+        <output aria-label="Current modifiers">{JSON.stringify(useStore(methods.store, state => state.values["modifiers"]))}</output>
         <Button onClick={() => methods.reset()}>Reset</Button>
         <Button type="submit">Save entry</Button>
-      </form>
-    </FormProvider>
+      </methods.Form>
+    </methods.AppForm>
   );
 }
 
@@ -58,7 +52,7 @@ describe("ToggleSelect", () => {
     expect(submit).not.toHaveBeenCalled();
 
     await user.click(screen.getByRole("button", { name: "Save entry" }));
-    expect(submit).toHaveBeenCalledWith({ modifiers: ["comic"] }, expect.anything());
+    expect(submit).toHaveBeenCalledWith({ modifiers: ["comic"] });
     await user.click(screen.getByRole("button", { name: "Reset" }));
     expect(comic).toHaveAttribute("aria-pressed", "false");
     expect(screen.getByLabelText("Current modifiers")).toHaveTextContent("[]");

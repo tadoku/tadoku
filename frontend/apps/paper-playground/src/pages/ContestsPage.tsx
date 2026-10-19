@@ -1,6 +1,7 @@
-import { FormProvider, useForm, useWatch } from 'react-hook-form'
+import { useStore } from '@tanstack/react-form'
+import { usePaperForm, Button, EmptyState, PageHeader, SectionHeading, StatusTag, Surface, Tabbar, buttonClassName } from 'paper-ui'
+
 import { Link, useLocation } from 'react-router-dom'
-import { Button, EmptyState, Input, PageHeader, SectionHeading, Select, StatusTag, Surface, Tabbar, buttonClassName } from 'paper-ui'
 import { contestStatus, type SampleContest } from '../data'
 import { contestEnd, contestStart, formatDateRange, formatDateTime } from '../dates'
 import { usePlayground, useScenario } from '../state'
@@ -40,8 +41,8 @@ export function ContestsPage() {
   const asOf = useContestDate()
   const collection = location.pathname.split('/')[2]
   const scope: ContestCollection = collection === 'mine' ? 'managed' : collection === 'community' || collection === 'participating' || collection === 'managed' ? collection : 'official'
-  const methods = useForm({ defaultValues: { query: '', period: 'all' } })
-  const { query = '', period = 'all' } = useWatch({ control: methods.control })
+  const methods = usePaperForm({ defaultValues: { query: '', period: 'all' } })
+  const { query = '', period = 'all' } = useStore(methods.store, state => state.values)
   const signedIn = viewer !== 'guest'
   const blocked = !signedIn && (scope === 'participating' || scope === 'managed')
   const managedContests = signedIn && scenario !== 'empty' ? contests.filter(contest => contest.ownerId === userId || contest.moderatorIds?.includes(userId)) : []
@@ -54,13 +55,13 @@ export function ContestsPage() {
   const feature = scope === 'official' && !query.trim() && period === 'all' ? rows.find(contest => contestStatus(contest, asOf) === 'live') ?? rows.find(contest => contestStatus(contest, asOf) === 'upcoming') : undefined
   const descriptions = { official: 'Official rounds bring the Tadoku community together throughout the year.', community: 'Public challenges organized by Tadoku members. Check the languages and activities before joining.', participating: 'Contests you’ve joined, including past rounds.', managed: 'Contests you organize or moderate, including unlisted contests.' }
   const emptyCollection = collectionRows.length === 0 && !query && period === 'all' && (scope === 'participating' || scope === 'managed')
-  const clearFilters = () => { methods.reset(); methods.setFocus('query') }
+  const clearFilters = () => { methods.reset(); document.getElementsByName('query')[0]?.focus() }
 
   return <>
     <PageHeader title="Contests" lead={descriptions[scope]} actions={canCreate ? <Link className={buttonClassName()} to={`/contests/new?asOf=${asOf}`}>Create contest</Link> : null} />
     <div className="contest-collections"><Tabbar label="Contest collections" links={collections.map(id => ({ id, label: scopeLabels[id], href: `/contests/${id}${location.search}`, current: scope === id, onSelect: () => methods.reset() }))} renderLink={({ href, ...props }) => <Link to={href} {...props} />} /></div>
     {blocked ? <EmptyState headingLevel={2} title={scope === 'participating' ? 'Sign in to see the contests you’ve joined.' : 'Sign in to see the contests you manage.'} description="You can still browse official rounds and public community challenges." actions={<Link className={buttonClassName()} to={`/sign-in?next=${encodeURIComponent(`/contests/${scope}`)}`}>Sign in</Link>} /> : isError ? <EmptyState role="alert" headingLevel={2} title="Contests could not be loaded." description="Try loading this collection again." actions={<Button onClick={() => setScenario('member')}>Try again</Button>} /> : <>
-      <div className="contest-toolbar"><FormProvider {...methods}><form className="contest-filters" onSubmit={event => event.preventDefault()}><Input name="query" label="Find a contest" type="search" placeholder="Search title or language" /><Select name="period" label="Dates" options={[{ value: 'all', label: 'All dates' }, { value: 'live', label: 'Live now' }, { value: 'upcoming', label: 'Upcoming' }, { value: 'ended', label: 'Past contests' }]} />{query || period !== 'all' ? <Button variant="ghost" onClick={clearFilters}>Clear filters</Button> : null}</form></FormProvider>
+      <div className="contest-toolbar"><methods.AppForm><form className="contest-filters" onSubmit={event => event.preventDefault()}><methods.AppField name="query">{field => <field.Input label="Find a contest" type="search" placeholder="Search title or language" />}</methods.AppField><methods.AppField name="period">{field => <field.Select label="Dates" options={[{ value: 'all', label: 'All dates' }, { value: 'live', label: 'Live now' }, { value: 'upcoming', label: 'Upcoming' }, { value: 'ended', label: 'Past contests' }]} />}</methods.AppField>{query || period !== 'all' ? <Button variant="ghost" onClick={clearFilters}>Clear filters</Button> : null}</form></methods.AppForm>
       <p className="contest-count muted" role="status">{rows.length} {rows.length === 1 ? 'contest' : 'contests'}{query.trim() || period !== 'all' ? ' match your filters' : ''}</p></div>
       {rows.length === 0 ? <EmptyState headingLevel={2} title={emptyCollection ? scope === 'participating' ? 'You haven’t joined a contest yet.' : 'You don’t manage any contests yet.' : 'No contests match these filters.'} description={emptyCollection ? scope === 'participating' ? 'Join an official round or community challenge to see it here.' : 'Contests appear here when you organize them or are assigned as a moderator.' : 'Try another title or language, or include all dates.'} actions={emptyCollection ? <Link className={buttonClassName({ variant: 'outline' })} to="/contests/official">Explore official contests</Link> : <Button variant="outline" onClick={clearFilters}>Clear filters</Button>} /> : <>
         {feature ? <ContestFeature contest={feature} asOf={asOf} /> : null}
@@ -74,4 +75,3 @@ export function ContestsPage() {
     <p className="contest-time-note muted">Contest times are shown in your local time zone.</p>
   </>
 }
-

@@ -1,16 +1,15 @@
-import { Input } from 'paper-ui'
-import { FormProvider, useForm } from 'react-hook-form'
+import { usePaperForm } from 'paper-ui'
 
 export default function InputStatesFixture() {
-  const methods = useForm({
+  const methods = usePaperForm({
     defaultValues: { readonly: 'Japanese', disabled: 'Archived' },
   })
   return (
-    <FormProvider {...methods}>
+    <methods.AppForm>
       <div className="paper-stack">
-        <Input name="readonly" label="Language" readOnly />
-        <Input name="disabled" label="Status" disabled />
+        <methods.AppField name="readonly">{field => <field.Input label="Language" readOnly />}</methods.AppField>
+        <methods.AppField name="disabled">{field => <field.Input label="Status" disabled />}</methods.AppField>
       </div>
-    </FormProvider>
+    </methods.AppForm>
   )
 }

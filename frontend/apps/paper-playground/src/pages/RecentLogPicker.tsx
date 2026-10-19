@@ -1,13 +1,14 @@
+import { useStore } from '@tanstack/react-form'
+import { usePaperForm, Button } from 'paper-ui'
 import { useEffect, useId, useRef, useState } from 'react'
-import { FormProvider, useForm, useWatch } from 'react-hook-form'
-import { Button, Input } from 'paper-ui'
+
 import { ChevronDownIcon } from 'paper-ui/icons'
 import { formatDate, formatNumber, type SampleLog } from '../data'
 import './recent-log-picker.css'
 
 export function RecentLogPicker({ logs, onSelect }: { logs: readonly SampleLog[]; onSelect: (log: SampleLog) => void }) {
-  const search = useForm({ defaultValues: { query: '' } })
-  const query = useWatch({ control: search.control, name: 'query' }).trim().toLocaleLowerCase()
+  const search = usePaperForm({ defaultValues: { query: '' } })
+  const query = useStore(search.store, state => state.values['query']).trim().toLocaleLowerCase()
   const [visible, setVisible] = useState(5)
   const details = useRef<HTMLDetailsElement>(null)
   const list = useRef<HTMLUListElement>(null)
@@ -26,11 +27,11 @@ export function RecentLogPicker({ logs, onSelect }: { logs: readonly SampleLog[]
 
   return <details className="log-editor__disclosure recent-log-picker" ref={details}>
     <summary><span>Use a recent log</span><ChevronDownIcon className="paper-icon-compact" aria-hidden="true" /></summary>
-    <FormProvider {...search}><Input className="recent-log-picker__search" name="query" type="search" label="Search recent logs" placeholder="Search recent logs…" autoComplete="off" onKeyDown={event => { if (event.key === 'Enter') event.preventDefault() }} rules={{ onChange: () => {
+    <search.AppForm><search.AppField name="query" listeners={{ onChange: () => {
       firstAdded.current = null
       setVisible(5)
       if (list.current) list.current.scrollTop = 0
-    } }} /></FormProvider>
+    } }}>{field => <field.Input className="recent-log-picker__search" type="search" label="Search recent logs" placeholder="Search recent logs…" autoComplete="off" onKeyDown={event => { if (event.key === 'Enter') event.preventDefault() }} />}</search.AppField></search.AppForm>
     {sorted.length ? <>
       <ul className="recent-log-picker__list" aria-label="Recent activity entries" data-scrollable={sorted.length > 5 || undefined} ref={list}>
         {sorted.slice(0, visible).map((log, index) => <li className="recent-log-picker__row log-editor__recent-row" key={log.id}>

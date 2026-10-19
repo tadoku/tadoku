@@ -1,13 +1,9 @@
+import { useStore } from '@tanstack/react-form'
+import { usePaperForm } from 'paper-ui'
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { FormProvider, useForm, useFormContext } from 'react-hook-form'
-import { RadioSelect, Select } from 'paper-ui'
-import type {
-  CatalogFixture,
-  CatalogFixtureViewport,
-  FixtureDensity,
-  FixtureTheme,
-} from 'paper-ui/catalog'
+
+import type { CatalogFixture, CatalogFixtureViewport, FixtureDensity, FixtureTheme } from 'paper-ui/catalog'
 import type { PaperDensity, PaperTheme } from '../app/displayPreferences'
 
 const FALLBACK_VIEWPORTS = [
@@ -79,14 +75,18 @@ function applyPreferences(
   target.documentElement.dataset.density = density
 }
 
-function CanvasContent({
+export function ExampleCanvas({
   fixture: requestedFixture,
   fixtures,
   onFixtureChange,
 }: ExampleCanvasProps) {
-  const methods = useFormContext<CanvasFields>()
+  const initialFixture = requestedFixture ?? fixtures?.[0]
+  const methods = usePaperForm({ defaultValues: {
+    fixtureId: initialFixture?.id ?? '', theme: preferredTheme(initialFixture?.themes ?? THEMES),
+    density: preferredDensity(initialFixture?.densities ?? DENSITIES), viewportId: 'fit',
+  } as CanvasFields })
   const settingsTitleId = useId()
-  const fixtureId = methods.watch('fixtureId')
+  const fixtureId = useStore(methods.store, state => state.values['fixtureId'])
   const availableFixtures = useMemo(
     () =>
       fixtures?.length
@@ -110,9 +110,9 @@ function CanvasContent({
   const viewportCollectionKey = viewports
     .map(({ id, width, height }) => `${id}:${width}:${height}`)
     .join(',')
-  const theme = methods.watch('theme')
-  const density = methods.watch('density')
-  const viewportId = methods.watch('viewportId')
+  const theme = useStore(methods.store, state => state.values['theme'])
+  const density = useStore(methods.store, state => state.values['density'])
+  const viewportId = useStore(methods.store, state => state.values['viewportId'])
   const [previewRoot, setPreviewRoot] = useState<HTMLElement | null>(null)
   const frameDocumentRef = useRef<Document | null>(null)
   const stageRef = useRef<HTMLDivElement | null>(null)
@@ -136,12 +136,12 @@ function CanvasContent({
   }, [])
 
   useEffect(() => {
-    const selectedFixtureId = methods.getValues('fixtureId')
+    const selectedFixtureId = methods.getFieldValue('fixtureId')
     if (
       availableFixtures.length &&
       !availableFixtures.some((candidate) => candidate.id === selectedFixtureId)
     ) {
-      methods.setValue('fixtureId', availableFixtures[0].id)
+      methods.setFieldValue('fixtureId', availableFixtures[0].id)
     }
   }, [availableFixtures, methods])
 
@@ -150,15 +150,15 @@ function CanvasContent({
   }, [fixture, onFixtureChange])
 
   useEffect(() => {
-    const current = methods.getValues()
+    const current = methods.state.values
     if (!themes.includes(current.theme)) {
-      methods.setValue('theme', preferredTheme(themes))
+      methods.setFieldValue('theme', preferredTheme(themes))
     }
     if (!densities.includes(current.density)) {
-      methods.setValue('density', preferredDensity(densities))
+      methods.setFieldValue('density', preferredDensity(densities))
     }
     if (current.viewportId !== 'fit' && !viewports.some((candidate) => candidate.id === current.viewportId)) {
-      methods.setValue('viewportId', 'fit')
+      methods.setFieldValue('viewportId', 'fit')
     }
   }, [
     densities,
@@ -179,7 +179,7 @@ function CanvasContent({
   if (!viewport) return null
 
   return (
-    <section className="example-canvas" aria-label="Isolated component preview">
+    <methods.AppForm><section className="example-canvas" aria-label="Isolated component preview">
       <div
         className="canvas-controls"
         role="group"
@@ -196,46 +196,29 @@ function CanvasContent({
         </h3>
         {availableFixtures.length > 1 ? (
           <div className="canvas-controls__fixture">
-            <Select
-              name="fixtureId"
-              label="Fixture"
-              options={availableFixtures.map((candidate) => ({
+            <methods.AppField name="fixtureId">{field => <field.Select label="Fixture" options={availableFixtures.map((candidate) => ({
                 value: candidate.id,
                 label: candidate.name,
-              }))}
-            />
+              }))} />}</methods.AppField>
           </div>
         ) : null}
         <div className="canvas-controls__theme">
-          <Select
-            name="theme"
-            label="Theme"
-            options={themes.map((candidate) => ({
+          <methods.AppField name="theme">{field => <field.Select label="Theme" options={themes.map((candidate) => ({
               value: candidate,
               label: titleCase(candidate),
-            }))}
-          />
+            }))} />}</methods.AppField>
         </div>
         <div className="canvas-controls__density">
-          <Select
-            name="density"
-            label="Density"
-            options={densities.map((candidate) => ({
+          <methods.AppField name="density">{field => <field.Select label="Density" options={densities.map((candidate) => ({
               value: candidate,
               label: titleCase(candidate),
-            }))}
-          />
+            }))} />}</methods.AppField>
         </div>
         <div className="canvas-controls__viewport">
-          <RadioSelect
-            name="viewportId"
-            label="Viewport"
-            variant="segmented"
-            options={[{ value: 'fit', label: 'Fit' }, ...viewports.map((option) => ({
+          <methods.AppField name="viewportId">{field => <field.RadioSelect label="Viewport" variant="segmented" options={[{ value: 'fit', label: 'Fit' }, ...viewports.map((option) => ({
               value: option.id,
               label: option.label,
-            }))]}
-          />
+            }))]} />}</methods.AppField>
         </div>
       </div>
       <p className="canvas-status paper-type-metadata" aria-live="polite">
@@ -293,24 +276,6 @@ function CanvasContent({
             previewRoot,
           )
         : null}
-    </section>
-  )
-}
-
-export function ExampleCanvas(props: ExampleCanvasProps) {
-  const initialFixture = props.fixture ?? props.fixtures?.[0]
-  const methods = useForm<CanvasFields>({
-    defaultValues: {
-      fixtureId: initialFixture?.id ?? '',
-      theme: preferredTheme(initialFixture?.themes ?? THEMES),
-      density: preferredDensity(initialFixture?.densities ?? DENSITIES),
-      viewportId: 'fit',
-    },
-  })
-
-  return (
-    <FormProvider {...methods}>
-      <CanvasContent {...props} />
-    </FormProvider>
+    </section></methods.AppForm>
   )
 }

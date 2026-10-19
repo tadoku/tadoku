@@ -1,6 +1,6 @@
-import { Button, Flash, Select } from 'paper-ui'
+import { useStore } from '@tanstack/react-form'
+import { Button, Flash, usePaperForm } from 'paper-ui'
 import { useState } from 'react'
-import { FormProvider, useForm } from 'react-hook-form'
 
 const LANGUAGES = [
   { id: 'ja', label: 'Japanese' },
@@ -13,23 +13,11 @@ export default function Example() {
     string,
     unknown
   > | null>(null)
-  const methods = useForm({ defaultValues: { language: 'ja' } })
+  const methods = usePaperForm({ defaultValues: { language: 'ja' }, onSubmit: ({ value: values }) => setSavedValues(values) })
   return (
-    <FormProvider {...methods}>
-      <form
-        className="paper-stack"
-        style={{ maxWidth: '32rem' }}
-        noValidate
-        onSubmit={methods.handleSubmit(values => setSavedValues(values))}
-      >
-        <Select
-          name="language"
-          label="Language"
-          hint="Choose the language you read."
-          required
-          placeholder="Choose a language"
-          options={LANGUAGES.map(({ id, label }) => ({ value: id, label }))}
-        />
+    <methods.AppForm>
+      <methods.Form className="paper-stack" style={{ maxWidth: '32rem' }}>
+        <methods.AppField name="language" validators={{ onChange: ({ value }) => { if (!value) return "Choose an option."; } }}>{field => <field.Select label="Language" hint="Choose the language you read." required placeholder="Choose a language" options={LANGUAGES.map(({ id, label }) => ({ value: id, label }))} />}</methods.AppField>
         <div className="paper-cluster">
           <Button type="submit">Save entry</Button>
           <Button
@@ -58,10 +46,10 @@ export default function Example() {
         <details>
           <summary>Current form values</summary>
           <pre style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
-            {JSON.stringify(methods.watch(), null, 2)}
+            {JSON.stringify(useStore(methods.store, state => state.values), null, 2)}
           </pre>
         </details>
-      </form>
-    </FormProvider>
+      </methods.Form>
+    </methods.AppForm>
   )
 }

@@ -1,24 +1,27 @@
+import { useStore } from '@tanstack/react-form';
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { FormProvider, useForm } from "react-hook-form";
+import { usePaperForm, Button, type TagsInputProps } from '../src';
+
 import { describe, expect, it, vi } from "vitest";
-import { Button, TagsInput, type TagsInputProps } from "../src";
+
 import { phaseThreeFormsFeedbackFixtures } from "../src/catalog/phase-three-forms-feedback";
 
 function TagsForm({
   initialTags = [],
   onSubmit = () => undefined,
+  validate,
   ...props
-}: Partial<TagsInputProps> & { initialTags?: string[]; onSubmit?: (values: unknown) => void }) {
-  const methods = useForm({ defaultValues: { tags: initialTags } });
-  return <FormProvider {...methods}>
-    <form noValidate onSubmit={methods.handleSubmit(onSubmit)}>
-      <TagsInput name="tags" label="Tags" options={["fiction", "history", "manga"]} {...props} />
-      <output data-testid="tags">{JSON.stringify(methods.watch("tags"))}</output>
+}: Partial<TagsInputProps> & { initialTags?: string[]; validate?: (tags: string[]) => true | string; onSubmit?: (values: unknown) => void }) {
+  const methods = usePaperForm({ defaultValues: { tags: initialTags }, onSubmit: ({ value }) => onSubmit(value) });
+  return <methods.AppForm>
+    <methods.Form>
+      <methods.AppField name="tags" validators={{ onChange: ({ value }) => { if (props.required && !value.length) return "Add at least one tag."; const result = validate?.(value); return result === true ? undefined : result; } }}>{field => <field.TagsInput label="Tags" options={["fiction", "history", "manga"]} {...props} />}</methods.AppField>
+      <output data-testid="tags">{JSON.stringify(useStore(methods.store, state => state.values["tags"]))}</output>
       <Button type="submit">Save entry</Button>
       <Button onClick={() => methods.reset()}>Reset</Button>
-    </form>
-  </FormProvider>;
+    </methods.Form>
+  </methods.AppForm>;
 }
 
 describe("TagsInput creation and selection", () => {
@@ -128,7 +131,7 @@ describe("TagsInput creation and selection", () => {
   it("honors RHF validation and reset for custom tags", async () => {
     const user = userEvent.setup();
     const saved = vi.fn();
-    render(<TagsForm required onSubmit={saved} rules={{ validate: tags => tags.includes("book club") || "Add your book club tag." }} />);
+    render(<TagsForm required onSubmit={saved} validate={tags => tags.includes("book club") || "Add your book club tag."} />);
     await user.click(screen.getByRole("button", { name: "Save entry" }));
     const input = screen.getByRole("combobox", { name: /Tags/ });
     expect(input).toHaveAttribute("aria-invalid", "true");

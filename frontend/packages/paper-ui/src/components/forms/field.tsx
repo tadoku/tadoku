@@ -1,10 +1,7 @@
-import type { ReactNode } from "react";
-import {
-  useFormContext,
-  useFormState,
-  type FieldValues,
-  type RegisterOptions,
-} from "react-hook-form";
+import { createFormHookContexts, useStore } from "@tanstack/react-form"
+import type { ReactNode } from "react"
+
+export const { fieldContext, formContext, useFieldContext, useFormContext } = createFormHookContexts();
 
 export interface Option<Value = string> {
   readonly value: Value;
@@ -19,19 +16,19 @@ export interface OptionGroup<Value = string> {
 }
 
 export interface FieldContract {
-  readonly name: string;
   readonly label: string;
   readonly hint?: string;
   readonly required?: boolean;
-  readonly rules?: RegisterOptions<FieldValues, string>;
 }
 
-export function useField(name: string) {
+export function useField<Value>() {
+  const field = useFieldContext<Value>();
   const form = useFormContext();
-  if (!form) throw new Error("Paper form controls require react-hook-form FormProvider");
-  const formState = useFormState({ control: form.control, name });
-  const error = form.getFieldState(name, formState).error;
-  return { form, error };
+  const submitted = useStore(form.store, state => state.submissionAttempts > 0);
+  const errors = useStore(field.store, state => state.meta.errors);
+  const first = submitted || field.state.meta.isTouched ? errors[0] : undefined;
+  const error = typeof first === "string" ? first : first?.message;
+  return { field, error };
 }
 
 export function FieldFrame({

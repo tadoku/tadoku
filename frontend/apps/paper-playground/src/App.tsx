@@ -1,7 +1,7 @@
+import { usePaperForm, ActionMenu, Button, buttonClassName, Drawer, EmptyState, Loading, Navbar, ToastContainer, type NavbarItem } from 'paper-ui'
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { Link, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
-import { FormProvider, useForm } from 'react-hook-form'
-import { ActionMenu, Button, Drawer, EmptyState, Loading, Navbar, Select, ToastContainer, buttonClassName, type NavbarItem } from 'paper-ui'
+
 import wordmark from 'paper-ui/assets/brand/wordmark-accent.svg?no-inline'
 import reversedWordmark from 'paper-ui/assets/brand/wordmark-reversed.svg?no-inline'
 import { scenarioGroup, scenarios, usePlayground, useScenario, type GuideIA, type Viewer } from './state'
@@ -23,21 +23,21 @@ const reviewPages=[['Home','/'],['Profile overview','/users/anton'],['Activity l
 function ReviewControls() {
   const app=usePlayground();const location=useLocation();const navigate=useNavigate();const [open,setOpen]=useState(false)
   const group=scenarioGroup(location.pathname);const [scenario]=useScenario(group)
-  const methods=useForm({defaultValues:{theme:app.theme,density:app.density,viewer:app.viewer,ia:app.ia,scenario}})
-  return <Drawer trigger={<Button variant="ghost">Playground controls</Button>} title="Paper playground" description="Unpublished application study · sample data only" open={open} onOpenChange={next=>{if(next)methods.reset({theme:app.theme,density:app.density,viewer:app.viewer,ia:app.ia,scenario});setOpen(next)}}>
-    <FormProvider {...methods}><form className="grid gap-4" onSubmit={methods.handleSubmit(values=>{
+  const methods=usePaperForm({defaultValues:{theme:app.theme,density:app.density,viewer:app.viewer,ia:app.ia,scenario}, onSubmit: ({ value: values }) => {
       app.setTheme(values.theme);app.setDensity(values.density);app.setIa(values.ia as GuideIA);app.setViewer(values.viewer as Viewer)
       const next=new URLSearchParams(location.search)
       if(values.viewer!==app.viewer)next.delete('scenario');else if(values.scenario)next.set('scenario',values.scenario)
       navigate({pathname:location.pathname,search:next.toString()},{replace:true});setOpen(false)
-    })}>
-      <Select name="theme" label="Appearance" options={[{value:'light',label:'Light'},{value:'dark',label:'Dark'}]} />
-      <Select name="density" label="Density" options={[{value:'comfortable',label:'Comfortable'},{value:'compact',label:'Compact'}]} />
-      <Select name="viewer" label="Sample account" options={(['guest','member','participant','organizer','admin'] as const).map(value=>({value,label:{guest:'Guest',member:'Member, not joined',participant:'Participant',organizer:'Organizer',admin:'Administrator'}[value]}))} />
-      {scenarios[group].length>0&&<Select name="scenario" label="Page scenario" options={scenarios[group].map(([value,label])=>({value,label}))} />}
-      <Select name="ia" label="Help navigation" options={[{value:'guide',label:'B · Guide plus About'},{value:'separate',label:'A · Four familiar pages'},{value:'tasks',label:'C · Task-based help'}]} />
+    } })
+  return <Drawer trigger={<Button variant="ghost">Playground controls</Button>} title="Paper playground" description="Unpublished application study · sample data only" open={open} onOpenChange={next=>{if(next)methods.reset({theme:app.theme,density:app.density,viewer:app.viewer,ia:app.ia,scenario}, { keepDefaultValues: true });setOpen(next)}}>
+    <methods.AppForm><methods.Form className="grid gap-4">
+      <methods.AppField name="theme">{field => <field.Select label="Appearance" options={[{value:'light',label:'Light'},{value:'dark',label:'Dark'}]} />}</methods.AppField>
+      <methods.AppField name="density">{field => <field.Select label="Density" options={[{value:'comfortable',label:'Comfortable'},{value:'compact',label:'Compact'}]} />}</methods.AppField>
+      <methods.AppField name="viewer">{field => <field.Select label="Sample account" options={(['guest','member','participant','organizer','admin'] as const).map(value=>({value,label:{guest:'Guest',member:'Member, not joined',participant:'Participant',organizer:'Organizer',admin:'Administrator'}[value]}))} />}</methods.AppField>
+      {scenarios[group].length>0&&<methods.AppField name="scenario">{field => <field.Select label="Page scenario" options={scenarios[group].map(([value,label])=>({value,label}))} />}</methods.AppField>}
+      <methods.AppField name="ia">{field => <field.Select label="Help navigation" options={[{value:'guide',label:'B · Guide plus About'},{value:'separate',label:'A · Four familiar pages'},{value:'tasks',label:'C · Task-based help'}]} />}</methods.AppField>
       <Button type="submit">Apply view</Button>
-    </form></FormProvider>
+    </methods.Form></methods.AppForm>
     <p className="review-note">Entries, registrations, settings, and administrative actions stay in this browser. The sample date is 5 September 2026; lifecycle scenarios supply their own dates.</p>
     <h2 className="paper-type-component mt-8 mb-4">All page designs</h2>
     <nav aria-label="Playground pages" className="review-pages">{reviewPages.map(([label,to])=><Link className="text-link" key={to} to={to} onClick={()=>setOpen(false)}>{label}</Link>)}</nav>

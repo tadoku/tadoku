@@ -1,29 +1,18 @@
-import { Button, Flash, TextArea } from 'paper-ui'
+import { useStore } from '@tanstack/react-form'
+import { Button, Flash, usePaperForm } from 'paper-ui'
 import { useState } from 'react'
-import { FormProvider, useForm } from 'react-hook-form'
 
 export default function Example() {
   const [savedValues, setSavedValues] = useState<Record<
     string,
     unknown
   > | null>(null)
-  const methods = useForm({
-    defaultValues: { notes: 'Finished chapter two. The pacing is picking up.' },
-  })
+  const methods = usePaperForm({
+    defaultValues: { notes: 'Finished chapter two. The pacing is picking up.' }, onSubmit: ({ value: values }) => setSavedValues(values) })
   return (
-    <FormProvider {...methods}>
-      <form
-        className="paper-stack"
-        style={{ maxWidth: '32rem' }}
-        noValidate
-        onSubmit={methods.handleSubmit(values => setSavedValues(values))}
-      >
-        <TextArea
-          name="notes"
-          label="Reading notes"
-          hint="Keep spoilers out of public notes."
-          required
-        />
+    <methods.AppForm>
+      <methods.Form className="paper-stack" style={{ maxWidth: '32rem' }}>
+        <methods.AppField name="notes" validators={{ onChange: ({ value }) => { if (!value) return "This field is required."; } }}>{field => <field.TextArea label="Reading notes" hint="Keep spoilers out of public notes." required />}</methods.AppField>
         <div className="paper-cluster">
           <Button type="submit">Save entry</Button>
           <Button
@@ -52,10 +41,10 @@ export default function Example() {
         <details>
           <summary>Current form values</summary>
           <pre style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
-            {JSON.stringify(methods.watch(), null, 2)}
+            {JSON.stringify(useStore(methods.store, state => state.values), null, 2)}
           </pre>
         </details>
-      </form>
-    </FormProvider>
+      </methods.Form>
+    </methods.AppForm>
   )
 }

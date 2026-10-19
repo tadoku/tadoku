@@ -1,12 +1,12 @@
-import { Button, Input, Modal } from 'paper-ui'
+import { useStore } from '@tanstack/react-form'
+import { Button, Modal, usePaperForm } from 'paper-ui'
 import { useRef, useState } from 'react'
-import { FormProvider, useForm } from 'react-hook-form'
 
 export default function ComposableModalFixture() {
   const [open, setOpen] = useState(false)
   const searchRef = useRef<HTMLInputElement>(null)
-  const methods = useForm({ defaultValues: { query: '' } })
-  const query = methods.watch('query')
+  const methods = usePaperForm({ defaultValues: { query: '' } })
+  const query = useStore(methods.store, state => state.values['query'])
   const matches = ['Button', 'Input', 'Modal'].filter(name =>
     name.toLowerCase().includes(query.toLowerCase()),
   )
@@ -20,17 +20,12 @@ export default function ComposableModalFixture() {
       initialFocus={searchRef}
       footer={null}
     >
-      <FormProvider {...methods}>
-        <Input
-          name="query"
-          label="Component name"
-          type="search"
-          ref={searchRef}
-        />
+      <methods.AppForm>
+        <methods.AppField name="query">{field => <field.Input label="Component name" type="search" ref={searchRef} />}</methods.AppField>
         <p role="status">
           {matches.length ? matches.join(', ') : 'No matching components.'}
         </p>
-      </FormProvider>
+      </methods.AppForm>
     </Modal>
   )
 }

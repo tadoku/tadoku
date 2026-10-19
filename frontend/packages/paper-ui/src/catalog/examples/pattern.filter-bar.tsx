@@ -1,15 +1,7 @@
-import {
-  AppliedFilters,
-  Button,
-  EmptyState,
-  Input,
-  SectionHeading,
-  Select,
-  Table,
-} from 'paper-ui'
+import { useStore } from '@tanstack/react-form'
+import { AppliedFilters, Button, EmptyState, SectionHeading, Table, usePaperForm } from 'paper-ui'
 import { ChevronDownIcon } from 'paper-ui/icons'
 import { useId, useRef, useState } from 'react'
-import { FormProvider, useForm, useWatch } from 'react-hook-form'
 
 interface Standing {
   readonly name: string
@@ -32,10 +24,8 @@ export default function FilterBarExample() {
   const toggle = useRef<HTMLButtonElement>(null)
   const panelId = useId()
   const headingId = useId()
-  const methods = useForm({ defaultValues: noFilters })
-  const { language = 'all', activity = 'all', query = '' } = useWatch({
-    control: methods.control,
-  })
+  const methods = usePaperForm({ defaultValues: noFilters })
+  const { language = 'all', activity = 'all', query = '' } = useStore(methods.store, state => state.values)
   const search = query.trim().toLocaleLowerCase()
   const applied = [
     language !== 'all' ? language : '',
@@ -49,7 +39,7 @@ export default function FilterBarExample() {
       row.name.toLocaleLowerCase().includes(search),
   )
   const clearFilters = () => {
-    methods.reset(noFilters)
+    methods.reset(noFilters, { keepDefaultValues: true })
     toggle.current?.focus()
   }
 
@@ -78,7 +68,7 @@ export default function FilterBarExample() {
         }
       />
       <div id={panelId} hidden={!open}>
-        <FormProvider {...methods}>
+        <methods.AppForm>
           <form
             onSubmit={event => event.preventDefault()}
             style={{
@@ -88,27 +78,19 @@ export default function FilterBarExample() {
               paddingBlockEnd: '1rem',
             }}
           >
-            <Select
-              name="language"
-              label="Language"
-              options={[
+            <methods.AppField name="language">{field => <field.Select label="Language" options={[
                 { value: 'all', label: 'All languages' },
                 { value: 'Japanese', label: 'Japanese' },
                 { value: 'Spanish', label: 'Spanish' },
-              ]}
-            />
-            <Select
-              name="activity"
-              label="Activity"
-              options={[
+              ]} />}</methods.AppField>
+            <methods.AppField name="activity">{field => <field.Select label="Activity" options={[
                 { value: 'all', label: 'All activities' },
                 { value: 'Reading', label: 'Reading' },
                 { value: 'Listening', label: 'Listening' },
-              ]}
-            />
-            <Input name="query" label="Find a participant" type="search" />
+              ]} />}</methods.AppField>
+            <methods.AppField name="query">{field => <field.Input label="Find a participant" type="search" />}</methods.AppField>
           </form>
-        </FormProvider>
+        </methods.AppForm>
       </div>
       <div className="paper-cluster" style={{ justifyContent: 'space-between' }}>
         <AppliedFilters filters={applied} onClear={clearFilters} />

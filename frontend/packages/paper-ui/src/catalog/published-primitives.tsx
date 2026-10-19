@@ -3,14 +3,7 @@ import Example48 from "./examples/drawer.filters";
 import Example48Source from "./examples/drawer.filters.tsx?raw";
 import Example47 from "./examples/tabs.content";
 import Example47Source from "./examples/tabs.content.tsx?raw";
-import {
-COMPONENT_PAGE_SECTION_KEYS,
-defineCatalogDocument,
-defineCatalogFixture,
-type CatalogDocument,
-type ComponentDocumentationSections,
-type RequiredComponentSections,
-} from "./schema";
+import { COMPONENT_PAGE_SECTION_KEYS, defineCatalogDocument, defineCatalogFixture, type CatalogDocument, type ComponentDocumentationSections, type RequiredComponentSections } from "./schema";
 
 const REVIEW_DATE = "2026-09-05";
 const VIEWPORTS = [
@@ -97,7 +90,7 @@ const drawerSections: RequiredComponentSections = {
   behavior: { heading: "Behavior", content: ["Opening contains focus and blocks background interaction. Escape, outside press and Close dismiss and restore trigger focus. Use defaultOpen for an uncontrolled sheet or open/onOpenChange for a controlled one. Drawer does not save data or confirm unsaved changes; decide the draft policy in the application, as the example does."] },
   contentGuidance: { heading: "Content guidance", content: ["Use a brief noun title, add a description only when it clarifies scope, and keep persistent commit or cancel actions in the footer."] },
   accessibility: { heading: "Accessibility", content: ["Keep a visible title, supply an accurate trigger name, and preserve the close button. Tab and Shift+Tab stay within the sheet; Escape returns to the opener. Use the Phone preview to verify close and footer actions remain reachable while the body scrolls."] },
-  implementation: { heading: "Implementation", content: ["Import Drawer, Button and the form controls from paper-ui; load paper-ui/styles.css once. Wrap the form in FormProvider. The footer lives outside the body form, so give the form a unique id from useId and the submit button a matching form attribute. Update controlled open state after a successful submit; retain the draft and display an error if saving fails."] },
+  implementation: { heading: "Implementation", content: ["Import Drawer, Button and the form controls from paper-ui; load paper-ui/styles.css once. Wrap the form in form.AppForm. The footer lives outside the body form, so give the form a unique id from useId and the submit button a matching form attribute. Update controlled open state after a successful submit; retain the draft and display an error if saving fails."] },
   apiReference: { heading: "API reference", content: ["DrawerProps accepts trigger, title, description, children, footer, placement, closeLabel, and controlled or uncontrolled open state. DrawerPlacement is start or end."] },
   relatedPatterns: { heading: "Related patterns", content: ["Use Modal for compact decisions, Sidebar for persistent local navigation, and a page for durable workflows."] },
   migration: { heading: "Migration", content: ["Replace application-owned portal, backdrop, focus trap, and slide animation code while retaining the application trigger and body content."] },

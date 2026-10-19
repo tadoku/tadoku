@@ -1,13 +1,9 @@
-import { Button, Input, Modal } from 'paper-ui'
+import { useStore } from '@tanstack/react-form'
+import { Button, Modal, usePaperForm } from 'paper-ui'
 import type { CatalogDocument } from 'paper-ui/catalog'
 import { MagnifyingGlassIcon, iconClassName } from 'paper-ui/icons'
-import {
-  useEffect,
-  useRef,
-  useState,
-  type KeyboardEvent as ReactKeyboardEvent,
-} from 'react'
-import { FormProvider, useForm } from 'react-hook-form'
+import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
+
 import { Link, useLocation } from 'react-router-dom'
 import { searchCatalog } from './catalogue'
 
@@ -36,15 +32,15 @@ function CatalogueSearchDialog({ documents }: CatalogueSearchProps) {
   const [open, setOpen] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const resultRefs = useRef<Array<HTMLAnchorElement | null>>([])
-  const methods = useForm<CatalogueSearchForm>({
-    defaultValues: { query: '' },
+  const methods = usePaperForm({
+    defaultValues: ({ query: '' } as CatalogueSearchForm),
   })
-  const query = methods.watch('query')
+  const query = useStore(methods.store, state => state.values['query'])
   const results = searchCatalog(documents, query)
 
   const changeOpen = (nextOpen: boolean) => {
     setOpen(nextOpen)
-    if (!nextOpen) methods.reset({ query: '' })
+    if (!nextOpen) methods.reset({ query: '' }, { keepDefaultValues: true })
   }
 
   useEffect(() => {
@@ -108,15 +104,8 @@ function CatalogueSearchDialog({ documents }: CatalogueSearchProps) {
       }
     >
       <div className="catalogue-search">
-        <FormProvider {...methods}>
-          <Input
-            ref={inputRef}
-            className="search-field"
-            name="query"
-            type="search"
-            label="Search documents"
-            placeholder="Try “color” or “foundations”"
-            onKeyDown={(event) => {
+        <methods.AppForm>
+          <methods.AppField name="query">{field => <field.Input ref={inputRef} className="search-field" type="search" label="Search documents" placeholder="Try “color” or “foundations”" onKeyDown={(event) => {
               if (event.key === 'ArrowDown' && results.length > 0) {
                 event.preventDefault()
                 resultRefs.current[0]?.focus()
@@ -124,9 +113,8 @@ function CatalogueSearchDialog({ documents }: CatalogueSearchProps) {
                 event.preventDefault()
                 resultRefs.current[results.length - 1]?.focus()
               }
-            }}
-          />
-        </FormProvider>
+            }} />}</methods.AppField>
+        </methods.AppForm>
         <p className="search-count paper-type-metadata" aria-live="polite">
           {results.length} {results.length === 1 ? 'result' : 'results'}
         </p>

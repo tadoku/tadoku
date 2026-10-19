@@ -77,7 +77,7 @@ func TestEmailGatewayCookieAndBearer(t *testing.T) {
 	provider := httptest.NewServer(proxy)
 	defer provider.Close()
 
-	proxyURL, jwksURL := startEmailGateway(t, "http://"+backend.Listener.Addr().String(), provider.URL)
+	proxyURL, jwksURL := startEmailGateway(t, "http://"+backend.Listener.Addr().String(), provider.URL, cookie)
 	deployment, _ := tenant.ParseDeployment(key.String())
 
 	handler, _, _, err := newTestRouterWithLeaderboardService(t.Context(), api.db.AppPool, api.db.AppPool,
@@ -265,7 +265,7 @@ func gatewayAdminCookie(t *testing.T, key tenant.Key) string {
 	return ""
 }
 
-func startEmailGateway(t *testing.T, backend, provider string) (string, string) {
+func startEmailGateway(t *testing.T, backend, provider, cookie string) (string, string) {
 	t.Helper()
 
 	dir := t.TempDir()
@@ -405,8 +405,8 @@ func startEmailGateway(t *testing.T, backend, provider string) (string, string) 
 			<-done
 		}
 
-		if strings.Contains(logs.String(), "tdk_at_") {
-			t.Error("Oathkeeper logs exposed access token material")
+		if strings.Contains(logs.String(), "tdk_at_") || strings.Contains(logs.String(), cookie) {
+			t.Error("Oathkeeper logs exposed token or session cookie material")
 		}
 	})
 

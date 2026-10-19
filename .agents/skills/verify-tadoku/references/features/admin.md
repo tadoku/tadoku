@@ -56,9 +56,14 @@ deleting data you did not create.
 
 Administrators can inspect their selected tenant with `GET /api/internal/emails`
 and `GET /api/internal/emails/{id}` on its branch host once its email gateway
-rule is installed. An unconfigured gateway returns 404 before the API; use only
-an explicitly authorized temporary alias for backend proof and disclose that
-public-route boundary. There is no email UI or
+rule is installed. An unconfigured gateway returns 404 before the API; retain
+that result as an unmet public-route prerequisite. Attached `tadoku-tenant
+access-token create` can mint a branch `email:read` token without a shared login.
+Confirm token list/detail reads, rejection on another business route and another
+scoped API branch, and expiry/revocation. Retain only sanitized status/body
+assertions and metadata; never retain the token or pass it through Job logs.
+Cookie-admin verification needs an already approved session or owned provider
+fixtures; disposable HTTP gateway E2Es complement the required live branch gate. There is no email UI or
 public send endpoint. Verify a produced email becomes `held` in development,
 read back its template/params as Dev Admin, and confirm Dev Reader and anonymous
 requests are denied. Check `X-Dev-Selected` and the actual API overlay backend.

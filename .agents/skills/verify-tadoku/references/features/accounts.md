@@ -48,12 +48,13 @@ login when claiming a browser E2E.
 new API and callback routes. They return `501` with the shared JSON error after
 their route group's authentication. Missing JWT credentials return `400`, invalid
 JWTs `401`, and missing/wrong callback credentials `401` before the stub.
-Email-only token verification is also a `501` stub and admits no reader.
+Email list/detail routes accept a verified tenant `email:read` bearer or a
+Keto-authorized administrator; see [Retained email API](admin.md#retained-email-api).
 
-Identity paths are exposed once the dev base deploys its public identity rule;
-email paths are not yet exposed by Oathkeeper's public rules. Before that base
-deployment, record the missing gateway exposure explicitly when verifying a
-branch; a frontend overlay does not deploy this shared rule. A read-only API
+The development base exposes identity and GET email paths through separate
+public Oathkeeper rules. Verify that the shared rules and the backend image
+containing the relevant implementation are deployed before testing a branch;
+a frontend overlay does not deploy these shared rules. A read-only API
 port-forward plus a real Oathkeeper decisions JWT can verify server routes, but
 does not prove gateway exposure or a browser login journey. Verify an existing
 public endpoint's `X-Dev-Backend` separately. An unset `identity-v2` flag must

@@ -14,6 +14,7 @@ import (
 )
 
 type config struct {
+	Production              bool   `envconfig:"production" default:"true"`
 	Branch                  string `envconfig:"branch"`
 	deployment              tenant.Deployment
 	ScoringEngineEnabled    bool          `envconfig:"scoring_engine_enabled" required:"true"`

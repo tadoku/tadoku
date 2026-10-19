@@ -2,14 +2,14 @@ package tokens
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
-var ErrNotImplemented = errx.NewNotImplementedError()
+var ErrTenantNotServed = errors.New("tenant not served by this deployment")
 
 type Scope string
 

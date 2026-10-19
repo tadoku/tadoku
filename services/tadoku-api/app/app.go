@@ -5,6 +5,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/features/announcements"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/audit"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/authz"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/authz/tokens"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/contests"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/email"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/featureflags"
@@ -17,9 +18,12 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/features/profile"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/scoring"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
 type Application struct {
+	tokens        *tokens.Service
+	deployment    tenant.Deployment
 	email         email.Reader
 	jobqueue      *jobqueue.Service
 	announcements *announcements.Service
@@ -39,6 +43,8 @@ type Application struct {
 }
 
 type Dependencies struct {
+	Tokens        *tokens.Service
+	Deployment    tenant.Deployment
 	Email         email.Reader
 	JobQueue      *jobqueue.Service
 	Announcements *announcements.Service
@@ -59,6 +65,8 @@ type Dependencies struct {
 
 func New(deps Dependencies) *Application {
 	return &Application{
+		tokens:        deps.Tokens,
+		deployment:    deps.Deployment,
 		email:         deps.Email,
 		jobqueue:      deps.JobQueue,
 		announcements: deps.Announcements,

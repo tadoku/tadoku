@@ -77,20 +77,6 @@ func TestIdentitySessionCallbackSkeleton(t *testing.T) {
 	}
 }
 
-func TestIdentityEmailTokenSkeleton(t *testing.T) {
-	for _, path := range []string{"/emails", "/emails/11111111-1111-4111-8111-111111111111"} {
-		request := httptest.NewRequest("GET", path, nil)
-		request.Header.Set("Authorization", "Bearer tdk_at_e2e_skeleton_secret")
-		response := httptest.NewRecorder()
-
-		api.handler.ServeHTTP(response, request)
-
-		if response.Code != http.StatusNotImplemented || response.Body.String() != "{\"message\":\"not implemented\"}\n" {
-			t.Errorf("%s token verifier stub status=%d body=%s", path, response.Code, response.Body)
-		}
-	}
-}
-
 func TestIdentitySessionCallbackGolden(t *testing.T) {
 	name := APITestName("IdentityProxySessionCheck", http.StatusUnauthorized, "missing", "credential")
 	runCase(t, api, name, http.StatusUnauthorized, implementation{name: "tadoku-api", handler: api.handler})

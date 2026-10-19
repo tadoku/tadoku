@@ -82,9 +82,11 @@ missing reads disclose no email and create no read entry. Other tenants do not
 write email-read audits.
 
 Non-production `email:read` access uses the dedicated token route and a
-tenant-bound verifier. An absent verifier fails closed. Gateway bearer
-pass-through must preserve that verifier boundary alongside administrator
-cookie authentication; anonymous access never substitutes for token verification.
+tenant-bound verifier. An absent verifier fails closed. Canonical development
+token reads record the token UUID as actor with `access_token_id` metadata in the
+same fail-closed audit transaction; production rejects those tokens. Gateway bearer pass-through preserves that verifier boundary alongside
+administrator cookie authentication; anonymous access never substitutes for token
+verification. See [access-token commands](./tenant-lifecycle.md#email-access-tokens).
 
 ## Retention and operations
 

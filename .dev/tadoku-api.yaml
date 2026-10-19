@@ -4,6 +4,8 @@ spec:
   containers:
     - name: tadoku-api
       env:
+        - name: API_PRODUCTION
+          value: "false"
         - name: API_SCORING_ENGINE_ENABLED
           value: "false"
         - name: API_BRANCH

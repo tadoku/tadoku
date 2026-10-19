@@ -81,6 +81,10 @@ authorizers:
       remote: http://127.0.0.1
       payload: "{}"
 mutators:
+  header:
+    enabled: true
+    config:
+      headers: {}
   noop:
     enabled: true
   id_token:

@@ -103,3 +103,11 @@ compatibility. Its adapter walks reader pages to count matches and select the
 requested numbered page, then resolves roles only for that page. This can read
 multiple keyset pages for a large result set; the public response shape is
 unchanged.
+
+The numbered admin compatibility list uses the concrete reader's
+`ListAllAccounts` operation. A v1 request performs one complete Kratos cursor
+walk, maps and deduplicates identities in provider order, then applies the legacy
+fuzzy search and numbered page. Its snapshot exists only for that request.
+V2 traverses tenant-bound SQL keyset pages; each page is one statement joining
+active accounts to undeleted users. Frozen `Reader` and `Accounts` signatures
+remain unchanged.

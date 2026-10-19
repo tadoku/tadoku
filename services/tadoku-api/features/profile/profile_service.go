@@ -15,13 +15,13 @@ import (
 type Service struct {
 	repository *Repository
 	roles      *permissions.KetoService
-	identities identity.Reader
+	identities *identity.ReadService
 }
 
 func NewService(
 	repository *Repository,
 	roles *permissions.KetoService,
-	identities identity.Reader,
+	identities *identity.ReadService,
 ) *Service {
 	return &Service{
 		repository: repository,
@@ -59,19 +59,11 @@ func (s *Service) DisplayNames(ctx context.Context, ids []uuid.UUID) (map[uuid.U
 func (s *Service) ListUsers(ctx context.Context, pageSize, page int, query string) (*UserList, error) {
 	pageSize, page = normalizeUserPage(pageSize, page)
 
-	accounts := make([]identity.Account, 0)
-	cursor := ""
-	for {
-		batch, err := s.identities.ListAccounts(ctx, identity.ListAccounts{Query: query, Limit: 500, Cursor: cursor})
-		if err != nil {
-			return nil, err
-		}
-		accounts = append(accounts, batch.Accounts...)
-		if batch.NextCursor == "" {
-			break
-		}
-		cursor = batch.NextCursor
+	accounts, err := s.identities.ListAllAccounts(ctx, query)
+	if err != nil {
+		return nil, err
 	}
+
 	totalSize := len(accounts)
 	users := userPage(accounts, pageSize, page)
 

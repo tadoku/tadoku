@@ -63,11 +63,10 @@ For legacy applications:
 ## Cross-app URLs
 
 Use `useAppUrls()`, `browserAppUrls()` or `appUrlsForHost()` from
-`frontend/packages/ui/app-urls.tsx` for home, account, admin and browser API
+`frontend/packages/ui/app-urls.tsx` for home, account, authv2, admin and browser API
 URLs. Resolve them per request or browser call so branch hosts retain their
 sibling origins. Supply `AppUrlsProvider` from each application's request
-properties for consistent SSR and hydration. Kratos stays on the base account
-host. Avoid module-level runtime URL constants.
+properties for consistent SSR and hydration. The auth app's Kratos endpoint stays on the base account host. Avoid module-level runtime URL constants.
 
 Production branch hosts use `<branch>.preview.tadoku.app`,
 `<branch>.account.preview.tadoku.app` and
@@ -103,7 +102,13 @@ the complete current location before sending an anonymous visitor to login.
 The shared auth route helpers encode `return_to` so queries and fragments remain
 part of the original destination. Registration uses the same protected-page hook.
 
-The auth application’s shared logout hook creates a Kratos logout flow only
+Webv2 and admin read `GET /identity/session` on every page request, including
+guests. Its `account_app` selects account links, and logout uses
+`POST /identity/logout`. `frontend/packages/ui/identity.ts` owns response parsing
+and transport; the API owns cookies. SSR forwards Cookie and X-Dev-Branch to
+the private API endpoint, and responses use `Cache-Control: private, no-store`.
+
+The v1 auth application’s shared logout hook creates a Kratos logout flow only
 when `useSession()` has an authenticated session. Anonymous login pages must
 not create logout flows: their CSRF cookies can race the login flow. Session
 changes enable logout without requiring callers to reload the page.

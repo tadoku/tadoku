@@ -1,9 +1,8 @@
 import { routes } from '@app/common/routes'
-import { useLogoutHandler, useSession } from '@app/common/session'
+import { useLogoutHandler } from '@app/common/session'
 
 export default function BannedScreen() {
-  const [session] = useSession()
-  const onLogout = useLogoutHandler([session])
+  const onLogout = useLogoutHandler()
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50">

@@ -53,7 +53,7 @@ describe('log details edit visibility', () => {
     { viewer: 'other user', id: 'other-id', role: 'user', canEdit: false },
     { viewer: 'anonymous', id: undefined, role: undefined, canEdit: false },
   ])('$viewer sees edit links: $canEdit', ({ id, role, canEdit }) => {
-    useSession.mockReturnValue([id ? { identity: { id } } : undefined])
+    useSession.mockReturnValue([id ? { id } : undefined])
     useUserRole.mockReturnValue(role)
 
     const markup = renderToStaticMarkup(<LogDetailsV2 log={log} />)

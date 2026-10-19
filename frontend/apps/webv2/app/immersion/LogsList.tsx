@@ -54,7 +54,7 @@ const LogsList = ({ logs, showUsername = false, contestId }: Props) => {
   const isContestOwner =
     contestId &&
     contest.data?.owner_user_id &&
-    session?.identity?.id === contest.data.owner_user_id
+    session?.id === contest.data.owner_user_id
   const canModerate = isContestOwner || role === 'admin'
 
   const detachMutation = useDetachLogFromContest(

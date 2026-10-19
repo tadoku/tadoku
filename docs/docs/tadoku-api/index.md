@@ -25,7 +25,7 @@ the [API reference](../api/index.md).
 | Content | Blog posts, CMS pages and announcements | `posts`, `pages`, `announcements` |
 | Profile | The administrator user list | `profile` |
 | Authorization | The current user's role, role management and permission checks | `authz` |
-| Identity | Registration, sessions, recovery and settings skeletons | `identity` |
+| Identity | Registration, sessions, recovery and profile/password settings | `identity` |
 | Email | Transactional templates, delivery, audited reads and retention | `email` |
 
 ## Code ownership

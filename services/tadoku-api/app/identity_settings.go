@@ -1,0 +1,100 @@
+package app
+
+import (
+	"context"
+	"time"
+
+	"github.com/tadoku/tadoku/services/tadoku-api/domain/mail"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/identity"
+	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
+)
+
+func (a *Application) IdentityRequestRecovery(ctx context.Context, recovery identity.Recovery) error {
+	started := time.Now()
+	defer func() {
+		timer := time.NewTimer(300*time.Millisecond - time.Since(started))
+		defer timer.Stop()
+		select {
+		case <-timer.C:
+		case <-ctx.Done():
+		}
+	}()
+
+	return postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) error {
+		result, err := a.identity.RequestRecovery(ctx, recovery)
+		if err != nil {
+			return err
+		}
+		return a.writeIdentityEmails(ctx, result.Emails)
+	})
+}
+
+func (a *Application) IdentityConsumeRecovery(
+	ctx context.Context,
+	token identity.RecoveryToken,
+	returnTo *string,
+) (identity.RecoveryLogin, error) {
+	if returnTo != nil {
+		if err := identity.ValidateReturnTo(*returnTo); err != nil {
+			return identity.RecoveryLogin{}, err
+		}
+	}
+	var result identity.RecoveryLogin
+	err := postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) error {
+		var err error
+		result, err = a.identity.ConsumeRecovery(ctx, token)
+		return err
+	})
+	if returnTo != nil {
+		result.RedirectTo = *returnTo
+	}
+	return result, err
+}
+
+func (a *Application) IdentityUpdateProfile(
+	ctx context.Context,
+	header identity.CookieHeader,
+	settings identity.ProfileSettings,
+) (identity.AuthenticatedSession, error) {
+	var session identity.AuthenticatedSession
+	err := postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) error {
+		result, err := a.identity.UpdateProfile(ctx, header, settings)
+		if err != nil {
+			return err
+		}
+		if err := a.writeIdentityEmails(ctx, result.Emails); err != nil {
+			return err
+		}
+		current, err := a.identity.CheckSession(ctx, header)
+		if err != nil {
+			return err
+		}
+		var ok bool
+		session, ok = current.(identity.AuthenticatedSession)
+		if !ok {
+			return errx.NewUnauthorizedError("a valid session is required")
+		}
+		return nil
+	})
+	return session, err
+}
+
+func (a *Application) IdentityUpdatePassword(ctx context.Context, header identity.CookieHeader, password string) error {
+	return postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) error {
+		return a.identity.UpdatePassword(ctx, header, password)
+	})
+}
+
+func (a *Application) writeIdentityEmails(ctx context.Context, messages []mail.Message) error {
+	for _, message := range messages {
+		result, err := a.email.Write(ctx, message)
+		if err != nil {
+			return err
+		}
+		if err := a.jobqueue.Enqueue(ctx, result.Jobs...); err != nil {
+			return err
+		}
+	}
+	return nil
+}

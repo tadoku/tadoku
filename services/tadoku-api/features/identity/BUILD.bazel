@@ -5,8 +5,11 @@ go_library(
     srcs = [
         "domain.go",
         "identity_legacy.go",
+        "identity_recovery_repository.go",
+        "identity_recovery_service.go",
         "identity_repository.go",
         "identity_service.go",
+        "identity_settings_service.go",
         "identity_throttle_store.go",
         "identity_values.go",
     ],

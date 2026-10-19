@@ -1,6 +1,6 @@
 ---
 title: Identity accounts and sessions
-description: Tenant-owned accounts, password and session security, v1 Kratos session compatibility, and the remaining identity, email and tenant access-token contracts.
+description: Tenant-owned accounts, password/session security, recovery and settings, v1 Kratos compatibility and remaining account contracts.
 ---
 
 # Identity accounts and sessions
@@ -8,15 +8,15 @@ description: Tenant-owned accounts, password and session security, v1 Kratos ses
 Read this before changing account or session behavior, implementing recovery or
 settings, or moving a caller to the identity entry point.
 
-Registration, login, logout, session lookup and the Oathkeeper session callback
-are implemented. A tenant's `identity-v2` flag selects local accounts or Kratos;
+Registration, login, logout, session lookup, recovery, profile/password settings
+and the Oathkeeper session callback are implemented. A tenant's `identity-v2` flag selects local accounts or Kratos;
 its safe default is `false`, including for guests. Existing profile/authz callers
 continue to use `identity.LegacyReader`.
 
-Recovery, settings and account search/deletion remain skeletons returning `501`.
-Recovery requests already reject an unsafe `return_to`. [Retained email](./email.md) implements transactional templates,
-delivery, audited reads and retention; identity recovery/settings do not yet
-produce those messages.
+Account search/deletion remain skeletons returning `501`. V1 tenants continue
+to use the existing Kratos account frontend for registration, recovery and
+settings. [Retained email](./email.md) provides the recovery messages and
+old-address notices through transactional writes and queue publication.
 
 ## HTTP boundaries
 
@@ -123,6 +123,57 @@ lookup; an unset URL fails closed for a present Kratos cookie. Development API
 base and overlays supply this URL and
 `API_IDENTITY_COOKIE_DOMAIN=tadoku.dev.lab`, including frontend-only branches
 served by the base API.
+
+## Recovery and settings
+
+`POST /identity/recovery` accepts a normalized email and an allowlisted
+`return_to`. Existing active accounts receive `account.recovery`; unknown,
+inactive, deleted and deletion-locked accounts receive the same empty `202` without mail.
+The application pads responses to a 300 ms minimum using real elapsed time,
+after the transaction releases its connection. This covers ordinary query,
+rendering and enqueue differences; dependency failures still return errors and
+work exceeding that minimum is not hidden.
+
+The link uses the configured cookie domain and parsed tenant's main API host,
+never the incoming Host. Its path is `/api/internal/identity/recovery/{token}`,
+with the validated destination in an optional `return_to` query. Account and
+authv2 hosts must use the configured main API URL rather than assume they serve
+relative API paths. The token contains 256 random bits; only its SHA-256 hash is
+stored in `recovery_tokens`, with a one-hour expiry. The email retains the usable
+link under the email feature's existing retention and authorized-read policy.
+
+`GET /identity/recovery/{token}` validates the destination before consuming the
+token. Missing destinations use that tenant's authv2 Settings root. Consumption
+locks the active account, atomically marks the token used, invalidates its other
+recovery tokens, revokes all its existing sessions and creates a fresh session.
+It returns `303`, Location and the normal secure tenant cookie. The fresh
+`authenticated_at` grants the recovered user the same one-hour window to set a
+password. Expired, reused, malformed and foreign-tenant tokens share
+`invalid_recovery_token`; simultaneous attempts, including different tokens for
+one account, allow only one success.
+
+Profile settings accept email and/or display name. Display-name changes require
+a valid session; email changes additionally require authentication within the
+last hour. Email switches immediately with tenant-local normalized uniqueness,
+invalidates pending recovery tokens and queues `account.email_changed` to the
+old address, with `new_email` and RFC3339 `changed_at`. The response includes the
+existing session authentication time. A session older than one hour, or with an
+authentication time in the future, returns `stale_session` for email/password
+changes. Re-authenticate through login to get a fresh cookie.
+
+Password settings apply the same parsing and cost-12 bcrypt policy as
+registration, retain the current session, revoke other sessions and invalidate
+pending recovery tokens. Both settings writes and recovery consumption
+serialize on the account row and recheck session/token state after acquiring
+the lock. Login session creation locks that same row and requires the password
+hash it verified still to match, preventing an in-flight old-password login
+from surviving a credential replacement.
+
+The application owns each business transaction. Identity writes, rendered email
+rows and every ID-only `email.send.v1` job commit together; a rendering or enqueue
+failure rolls them all back. Recovery and password changes do not mutate the
+shared v1 provider. Development workers hold mail; SMTP activation remains a
+separate deployment decision.
 
 ## Contracts for the remaining operations
 

@@ -370,6 +370,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/IdentityErrorResponse'
       parameters:
+      - in: query
+        name: return_to
+        required: false
+        schema:
+          type: string
+          maxLength: 2048
+          format: uri
+        description: Allowlisted destination after recovery; defaults to the tenant authv2 Settings page.
       - in: path
         name: token
         required: true

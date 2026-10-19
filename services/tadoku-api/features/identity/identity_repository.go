@@ -70,12 +70,17 @@ func (r *Repository) credentials(ctx context.Context, email Email) (credentials,
 	}, nil
 }
 
-func (r *Repository) createSession(ctx context.Context, session AuthenticatedSession, tokenHash string) error {
+func (r *Repository) createSession(
+	ctx context.Context,
+	session AuthenticatedSession,
+	tokenHash, passwordHash string,
+) error {
 	db, err := postgres.Executor(ctx, r.pool)
 	if err != nil {
 		return err
 	}
 	count, err := queries.New(db).CreateSession(ctx, queries.CreateSessionParams{
+		PasswordHash:    passwordHash,
 		UserID:          postgres.UUID(session.Account.ID),
 		TokenHash:       tokenHash,
 		AuthenticatedAt: postgres.Timestamptz(session.AuthenticatedAt),

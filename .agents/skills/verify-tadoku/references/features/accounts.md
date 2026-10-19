@@ -54,7 +54,8 @@ Record `account_app`; an unset `identity-v2` decision remains `v1`.
 
 The base API and overlays supply the development cookie domain and Kratos public
 URL.
-Recovery/settings and account lookup/search are still skeletons. Email list/detail
+Recovery and profile/password settings use the local identity API; account
+lookup/search remain skeletons. Email list/detail
 routes accept a verified tenant `email:read` bearer or a Keto-authorized
 administrator; see [Retained email API](admin.md#retained-email-api).
 The development base exposes identity and GET email paths through separate
@@ -69,6 +70,29 @@ in the checkout before `dev up` is confined to that owner's test namespace;
 restore it after teardown and never apply it to canonical Flipt. Never edit
 canonical flag policy or shared Kratos sessions to exercise local account
 behavior. Backend E2Es use real, disposable providers and a tenant-aware Flipt fixture.
+
+## Recovery and settings API journey
+
+Use the branch main API URL printed by `dev url`, with an allowed HTTPS Origin
+and JSON request bodies. Authv2 screens may be unavailable independently of the
+API. In an owned v2 tenant, request recovery for its Dev Reader, read the held
+`account.recovery` message as Dev Admin through the public cookie gateway,
+follow `params.recovery_url`, set a new password and log in with it. Confirm
+actual overlay headers, tenant identity, a fresh secure cookie and rejection of
+the old password and sessions. A second consume and a foreign tenant must fail;
+unknown emails return the same empty `202`. Stale sessions cannot change email
+or password, while a valid stale session may still change its display name.
+Email changes must notify the old address and password changes must revoke
+other sessions.
+
+This public administrator read requires deployed cookie-session callback wiring,
+an existing authorized admin session, and tenant-local v2 fixture accounts.
+Missing prerequisites must be reported explicitly. A bearer read, API
+port-forward or disposable local gateway is separate evidence and does not
+satisfy this journey. Do not create shared Kratos sessions, change shared
+credentials/roles, or import unfinished wiring to bypass the prerequisite. Keep
+recovery URLs and cookies out of screenshots and retained output. Remove the
+owner's test data and overlay through `dev down` after verification.
 
 ## Source anchors
 

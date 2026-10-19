@@ -29,7 +29,9 @@ join users u on u.tenant = a.tenant and u.id = a.user_id
 where a.user_id = sqlc.arg(user_id)
   and a.state = 'active'
   and u.deleted_at is null
-  and u.deletion_locked_at is null;
+  and u.deletion_locked_at is null
+  and a.password_hash = sqlc.arg(password_hash)
+for update of a;
 
 -- name: FindSession :one
 select a.user_id, a.email, u.display_name, a.created_at, s.authenticated_at, s.expires_at
@@ -44,3 +46,63 @@ where s.token_hash = sqlc.arg(token_hash)
 
 -- name: DeleteSession :exec
 delete from sessions where token_hash = sqlc.arg(token_hash);
+
+-- name: LockRecoveryAccount :one
+select a.user_id, a.email, u.display_name, a.created_at, a.password_hash
+from accounts a
+join users u on u.tenant = a.tenant and u.id = a.user_id
+where a.email_normalized = sqlc.arg(email_normalized)
+  and a.state = 'active'
+  and u.deleted_at is null
+  and u.deletion_locked_at is null
+for update of a;
+
+-- name: LockAccount :one
+select a.user_id, a.email, u.display_name, a.created_at, a.password_hash
+from accounts a
+join users u on u.tenant = a.tenant and u.id = a.user_id
+where a.user_id = sqlc.arg(user_id)
+  and a.state = 'active'
+  and u.deleted_at is null
+  and u.deletion_locked_at is null
+for update of a;
+
+-- name: CreateRecoveryToken :exec
+insert into recovery_tokens (token_hash, user_id, expires_at)
+values (sqlc.arg(token_hash), sqlc.arg(user_id), sqlc.arg(expires_at));
+
+-- name: RecoveryAccount :one
+select user_id from recovery_tokens where token_hash = sqlc.arg(token_hash);
+
+-- name: UseRecoveryToken :execrows
+update recovery_tokens
+set used_at = sqlc.arg(now)
+where token_hash = sqlc.arg(token_hash)
+  and used_at is null
+  and expires_at > sqlc.arg(now);
+
+-- name: InvalidateRecoveryTokens :exec
+update recovery_tokens
+set used_at = sqlc.arg(now)
+where user_id = sqlc.arg(user_id)
+  and used_at is null;
+
+-- name: RevokeOtherSessions :exec
+delete from sessions
+where user_id = sqlc.arg(user_id)
+  and token_hash <> sqlc.arg(keep_token_hash);
+
+-- name: UpdateAccountEmail :exec
+update accounts
+set email = sqlc.arg(email), email_normalized = sqlc.arg(email), updated_at = sqlc.arg(now)
+where user_id = sqlc.arg(user_id);
+
+-- name: UpdateDisplayName :exec
+update users
+set display_name = sqlc.arg(display_name), updated_at = sqlc.arg(now)
+where id = sqlc.arg(user_id);
+
+-- name: UpdateAccountPassword :exec
+update accounts
+set password_hash = sqlc.arg(password_hash), updated_at = sqlc.arg(now)
+where user_id = sqlc.arg(user_id);

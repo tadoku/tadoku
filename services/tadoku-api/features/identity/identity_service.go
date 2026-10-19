@@ -129,7 +129,7 @@ func (s *Service) Login(ctx context.Context, login Login) (LoginResult, error) {
 		return LoginResult{}, ErrWrongPassword
 	}
 
-	return s.loginSession(ctx, credential.account)
+	return s.loginSession(ctx, credential)
 }
 
 func (s *Service) Logout(ctx context.Context, header CookieHeader) (Cookie, error) {
@@ -182,20 +182,6 @@ func (s *Service) CheckSession(ctx context.Context, header CookieHeader) (Sessio
 	return result.Session, err
 }
 
-func (*Service) RequestRecovery(context.Context, Recovery) (RecoveryResult, error) {
-	return RecoveryResult{}, ErrNotImplemented
-}
-
-func (*Service) ConsumeRecovery(context.Context, RecoveryToken) (RecoveryLogin, error) {
-	return RecoveryLogin{}, ErrNotImplemented
-}
-
-func (*Service) UpdateProfile(context.Context, CookieHeader, ProfileSettings) (ProfileResult, error) {
-	return ProfileResult{}, ErrNotImplemented
-}
-
-func (*Service) UpdatePassword(context.Context, CookieHeader, string) error { return ErrNotImplemented }
-
 func (*Service) DeleteAccount(context.Context, uuid.UUID) error { return ErrNotImplemented }
 
 const dummyPasswordHash = "$2b$12$hady7Vf2de/ngyT9TV6N/usj/9yeHugOWtf8eCYGfnWNO.z9CGeeu"
@@ -226,12 +212,18 @@ func (s *Service) cookie(ctx context.Context) Cookie {
 	}
 }
 
-func (s *Service) loginSession(ctx context.Context, account Account) (LoginResult, error) {
-	result, err := s.newLogin(ctx, account)
+func (s *Service) loginSession(ctx context.Context, credential credentials) (LoginResult, error) {
+	result, err := s.newLogin(ctx, credential.account)
 	if err != nil {
 		return LoginResult{}, err
 	}
-	if err := s.repository.createSession(ctx, result.Session, hashToken(result.Cookie.Value)); err != nil {
+	err = s.repository.createSession(
+		ctx,
+		result.Session,
+		hashToken(result.Cookie.Value),
+		credential.passwordHash,
+	)
+	if err != nil {
 		return LoginResult{}, err
 	}
 	return result, nil

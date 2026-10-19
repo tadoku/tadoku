@@ -13,15 +13,14 @@ are implemented. A tenant's `identity-v2` flag selects local accounts or Kratos;
 its safe default is `false`, including for guests. Existing profile/authz callers
 continue to use `identity.LegacyReader`.
 
-Recovery, settings, account search/deletion and email access-token verification
-remain skeletons returning `501`. Recovery requests already reject an unsafe
-`return_to`. [Retained email](./email.md) implements transactional templates,
+Recovery, settings and account search/deletion remain skeletons returning `501`.
+Recovery requests already reject an unsafe `return_to`. [Retained email](./email.md) implements transactional templates,
 delivery, audited reads and retention; identity recovery/settings do not yet
 produce those messages.
 
 ## HTTP boundaries
 
-Public paths are relative to `/api/internal` and enter the existing JWT and ban
+Public identity paths are relative to `/api/internal` and enter the JWT and ban
 pipeline, including guest requests. Missing JWT credentials return `400`, invalid
 JWTs `401`, and another tenant on a scoped deployment `421`. Public registration
 and login return `501` for v1 tenants; their account app remains the existing
@@ -85,8 +84,8 @@ uses the connection peer unless it belongs to an explicitly configured
 `API_IDENTITY_TRUSTED_PROXY_CIDRS` prefix. Only those peers may supply a single,
 valid `X-Real-IP`; the trusted edge must overwrite that header. Empty proxy
 configuration trusts no forwarded address. The development base and overlays
-configure the cluster pod prefix; production must configure its own trusted ingress boundary
-before activation. Untrusted peers cannot evade the IP budget with forged
+configure the cluster pod prefix; production must configure its own trusted
+ingress boundary before activation. Untrusted peers cannot evade the IP budget with forged
 forwarding headers. With no trusted proxy configured, clients behind the same
 proxy share its peer-IP throttle bucket. This fallback prevents header spoofing
 but can throttle unrelated clients together.
@@ -135,10 +134,16 @@ coordinates identity writes, email writes and queue jobs in one transaction.
 Features do not import sibling features or expose credential hashes.
 
 `features/email` owns template rendering, persistence, sending, retention and
-reads. `domain/mail` declares `account.recovery` and `account.email_changed`;
+reads. Tenant access-token creation, listing and revocation are implemented; see
+[Email access tokens](./tenant-lifecycle.md#email-access-tokens).
+`domain/mail` declares `account.recovery` and `account.email_changed`;
 `domain/jobs.SendEmailV1` carries only the email ID. Email-token routes enter
-`Application.AuthenticateEmailReader`, which still admits no reader and returns
-`501`. A token-shaped bearer on any other public route remains an invalid JWT.
+`Application.AuthenticateEmailReader`, which verifies an unrevoked, unexpired
+`email:read` token in its own tenant; see
+[Email access tokens](../architecture/authorization.md#email-access-tokens).
+The email gateway rule forwards `tdk_at_` bearers while preserving administrator
+cookie authentication. A token-shaped bearer on every other public route remains
+an invalid JWT.
 
 The temporary `identity.NewLegacyReader` retains read-only Kratos lookup,
 existence and cursor pagination for existing callers. Its implementation and

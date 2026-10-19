@@ -22,6 +22,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/features/announcements"
 	featureaudit "github.com/tadoku/tadoku/services/tadoku-api/features/audit"
 	featureauthz "github.com/tadoku/tadoku/services/tadoku-api/features/authz"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/authz/tokens"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/contests"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/email"
 	featureflagsservice "github.com/tadoku/tadoku/services/tadoku-api/features/featureflags"
@@ -266,6 +267,8 @@ func newTestRouterWithLeaderboard(
 type routerOption func(*routerEndpoints)
 
 type routerEndpoints struct {
+	jwks             string
+	production       *bool
 	ketoWrite        string
 	identityValkey   valkeygo.Client
 	identityObserver featureflags.Observer
@@ -291,7 +294,11 @@ func newTestRouterWithLeaderboardService(
 	deployment tenant.Deployment,
 	options ...routerOption,
 ) (*transport.Router, *featureprofile.Service, *permissions.KetoService, error) {
-	endpoints := routerEndpoints{ketoWrite: ketoFixture.WriteURL(), identityValkey: leaderboardValkey.client}
+	endpoints := routerEndpoints{
+		ketoWrite:      ketoFixture.WriteURL(),
+		jwks:           authenticationJWKS.URL,
+		identityValkey: leaderboardValkey.client,
+	}
 	for _, option := range options {
 		option(&endpoints)
 	}
@@ -352,30 +359,35 @@ func newTestRouterWithLeaderboardService(
 		"tadoku.dev.lab",
 	)
 
+	production := true
+	if endpoints.production != nil {
+		production = *endpoints.production
+	}
 	application := app.New(app.Dependencies{
-		Email:              email.NewService(email.NewRepository(pool), nil),
-		JobQueue:           jobQueue,
-		Announcements:      announcementsService,
-		Audit:              auditService,
-		Authorization:      authzService,
-		Contests:           contestsService,
-		Leaderboard:        leaderboardService,
-		Languages:          languagesService,
-		Logs:               logsService,
-		Pages:              pagesService,
-		Posts:              postsService,
-		Profile:            profileService,
-		Scoring:            scoringService,
-		FeatureFlags:       featureFlagsService,
-		DB:                 pool,
-		Permissions:        permissionChecker,
-		Identity:           identityService,
-		IdentityDeployment: deployment,
+		Tokens:        tokens.NewService(tokens.NewRepository(pool), production),
+		Deployment:    deployment,
+		Email:         email.NewService(email.NewRepository(pool), nil),
+		JobQueue:      jobQueue,
+		Announcements: announcementsService,
+		Audit:         auditService,
+		Authorization: authzService,
+		Contests:      contestsService,
+		Leaderboard:   leaderboardService,
+		Languages:     languagesService,
+		Logs:          logsService,
+		Pages:         pagesService,
+		Posts:         postsService,
+		Profile:       profileService,
+		Scoring:       scoringService,
+		FeatureFlags:  featureFlagsService,
+		DB:            pool,
+		Permissions:   permissionChecker,
+		Identity:      identityService,
 	})
 
 	authenticate, err := transport.NewJWTAuthentication(
 		ctx,
-		authenticationJWKS.URL,
+		endpoints.jwks,
 		time.Second,
 		24*time.Hour,
 		"http://oathkeeper-api/",

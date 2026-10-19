@@ -39,6 +39,7 @@ go_library(
         "//services/tadoku-api/features/announcements",
         "//services/tadoku-api/features/audit",
         "//services/tadoku-api/features/authz",
+        "//services/tadoku-api/features/authz/tokens",
         "//services/tadoku-api/features/contests",
         "//services/tadoku-api/features/email",
         "//services/tadoku-api/features/featureflags",

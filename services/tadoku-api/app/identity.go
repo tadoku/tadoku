@@ -50,7 +50,7 @@ func (a *Application) IdentityCheckSession(
 			return nil, ErrIdentityTenantNotServed
 		}
 	}
-	if !a.identityDeployment.Serves(key) {
+	if !a.deployment.Serves(key) {
 		return nil, ErrIdentityTenantNotServed
 	}
 	return a.identity.CheckSession(tenant.WithKey(ctx, key), cookieHeader)

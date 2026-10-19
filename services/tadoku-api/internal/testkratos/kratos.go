@@ -43,9 +43,10 @@ type Fixture struct {
 	configPath string
 	seed       []byte
 
-	client    *kratosapi.APIClient
-	http      *http.Client
-	transport *http.Transport
+	client          *kratosapi.APIClient
+	http            *http.Client
+	transport       *http.Transport
+	publicTransport *http.Transport
 
 	command *exec.Cmd
 	wait    chan struct{}
@@ -111,6 +112,10 @@ func New(ctx context.Context, seedFile string) (_ *Fixture, resultErr error) {
 		IdleConnTimeout:       30 * time.Second,
 		ResponseHeaderTimeout: requestTimeout,
 	}
+	fixture.publicTransport = fixture.transport.Clone()
+	fixture.publicTransport.DialContext = func(ctx context.Context, _, _ string) (net.Conn, error) {
+		return dialer.DialContext(ctx, "unix", filepath.Join(dir, "public.sock"))
+	}
 	fixture.http = &http.Client{
 		Transport: fixture.transport,
 		Timeout:   requestTimeout,
@@ -127,6 +132,10 @@ func New(ctx context.Context, seedFile string) (_ *Fixture, resultErr error) {
 		return nil, err
 	}
 	return fixture, nil
+}
+
+func (fixture *Fixture) PublicClient() *http.Client {
+	return &http.Client{Transport: fixture.publicTransport, Timeout: requestTimeout}
 }
 
 func (fixture *Fixture) Client() *kratosapi.APIClient { return fixture.client }
@@ -165,6 +174,9 @@ func (fixture *Fixture) Reset(ctx context.Context) (err error) {
 		}
 	}()
 	fixture.transport.CloseIdleConnections()
+	if fixture.publicTransport != nil {
+		fixture.publicTransport.CloseIdleConnections()
+	}
 	if err := fixture.stop(); err != nil {
 		return err
 	}
@@ -203,10 +215,13 @@ func (fixture *Fixture) writeConfig(schema string) error {
 				"socket":   map[string]int{"mode": 0o600},
 			},
 		},
-		"selfservice": map[string]string{"default_browser_return_url": "http://kratos-public.test/"},
-		"courier":     map[string]any{"smtp": map[string]string{"connection_uri": "smtp://127.0.0.1:1/"}},
-		"secrets":     map[string][]string{"default": {"disposable-kratos-fixture-secret-000000"}},
-		"log":         map[string]string{"level": "error"},
+		"selfservice": map[string]any{
+			"default_browser_return_url": "http://kratos-public.test/",
+			"methods":                    map[string]any{"password": map[string]bool{"enabled": true}},
+		},
+		"courier": map[string]any{"smtp": map[string]string{"connection_uri": "smtp://127.0.0.1:1/"}},
+		"secrets": map[string][]string{"default": {"disposable-kratos-fixture-secret-000000"}},
+		"log":     map[string]string{"level": "error"},
 	}
 	data, err := json.Marshal(config)
 	if err != nil {
@@ -353,6 +368,9 @@ func (fixture *Fixture) Close() error {
 		fixture.closed = true
 		if fixture.transport != nil {
 			fixture.transport.CloseIdleConnections()
+			if fixture.publicTransport != nil {
+				fixture.publicTransport.CloseIdleConnections()
+			}
 		}
 		fixture.closeErr = errors.Join(fixture.stop(), os.RemoveAll(fixture.dir))
 	})

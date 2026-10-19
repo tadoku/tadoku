@@ -54,16 +54,21 @@ Record `account_app`; an unset `identity-v2` decision remains `v1`.
 
 The base API and overlays supply the development cookie domain and Kratos public
 URL.
-Recovery/settings, email-token verification and account lookup/search are still
-skeletons. Retained-email reads are implemented for administrators. The public
+Recovery/settings and account lookup/search are still skeletons. Email list/detail
+routes accept a verified tenant `email:read` bearer or a Keto-authorized
+administrator; see [Retained email API](admin.md#retained-email-api).
+The development base exposes identity and GET email paths through separate
+public Oathkeeper rules. Verify that both the shared rules and the relevant
+backend image are deployed; a frontend overlay does not deploy these rules.
+The public
 identity rule forwards cookies with a guest JWT; the Oathkeeper callback switch
 for other routes remains a separate prerequisite. Confirm actual branch API
-responses rather than treating an API port-forward as the public journey. Branch v2 flag provisioning must use an
-authorized owner/tenant mechanism. A temporary, uncommitted `identity-v2` seed
+responses rather than treating an API port-forward as the public journey.
+Branch v2 flag provisioning must use an authorized owner/tenant mechanism. A temporary, uncommitted `identity-v2` seed
 in the checkout before `dev up` is confined to that owner's test namespace;
 restore it after teardown and never apply it to canonical Flipt. Never edit
-canonical flag policy or shared Kratos sessions to exercise local account behavior. Backend E2Es use real,
-disposable providers and a tenant-aware Flipt fixture.
+canonical flag policy or shared Kratos sessions to exercise local account
+behavior. Backend E2Es use real, disposable providers and a tenant-aware Flipt fixture.
 
 ## Source anchors
 

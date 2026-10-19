@@ -109,6 +109,9 @@ type config struct {
 }
 
 func run(ctx context.Context, args []string) error {
+	if len(args) > 0 && args[0] == "access-token" {
+		return runAccessToken(ctx, args[1:])
+	}
 	command, err := parseCommand(args)
 	if err != nil {
 		return err

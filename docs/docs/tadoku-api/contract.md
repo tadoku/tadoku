@@ -116,8 +116,8 @@ After changing a contract fragment, run from the repository root:
 - Generated routes register through boundary-specific registrars: business
   routes use JWT authentication and the ban gate, callback routes use callback
   credentials. Both keep the shared deadlines and observability. Email GET routes also select
-  a separate token registrar for a `tdk_at_` bearer; its verification skeleton
-  returns the shared `501` error before request decoding. All other credentials
+  a separate token registrar for a verified, tenant-bound `tdk_at_` bearer.
+  Invalid access tokens fail before request decoding. All other credentials
   on those routes use the ordinary JWT and ban pipeline.
 - The Bazel-built binary has no Go module build-info header, so read the
   oapi-codegen version from `tools/oapi-codegen/go.mod`, not from the generated

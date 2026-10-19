@@ -21,6 +21,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/features/announcements"
 	featureaudit "github.com/tadoku/tadoku/services/tadoku-api/features/audit"
 	featureauthz "github.com/tadoku/tadoku/services/tadoku-api/features/authz"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/authz/tokens"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/contests"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/email"
 	featureflagsservice "github.com/tadoku/tadoku/services/tadoku-api/features/featureflags"
@@ -276,24 +277,25 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	)
 
 	api := app.New(app.Dependencies{
-		Email:              email.NewService(email.NewRepository(pool), nil),
-		JobQueue:           jobQueue,
-		Announcements:      announcementsService,
-		Audit:              auditService,
-		Authorization:      authzService,
-		Contests:           contestsService,
-		Leaderboard:        leaderboardService,
-		Languages:          languagesService,
-		Logs:               logsService,
-		Pages:              pagesService,
-		Posts:              postsService,
-		Profile:            profileService,
-		Scoring:            scoringService,
-		FeatureFlags:       featureFlagService,
-		DB:                 pool,
-		Permissions:        permissionChecker,
-		Identity:           identityService,
-		IdentityDeployment: cfg.deployment,
+		Tokens:        tokens.NewService(tokens.NewRepository(pool), cfg.Production),
+		Deployment:    cfg.deployment,
+		Email:         email.NewService(email.NewRepository(pool), nil),
+		JobQueue:      jobQueue,
+		Announcements: announcementsService,
+		Audit:         auditService,
+		Authorization: authzService,
+		Contests:      contestsService,
+		Leaderboard:   leaderboardService,
+		Languages:     languagesService,
+		Logs:          logsService,
+		Pages:         pagesService,
+		Posts:         postsService,
+		Profile:       profileService,
+		Scoring:       scoringService,
+		FeatureFlags:  featureFlagService,
+		DB:            pool,
+		Permissions:   permissionChecker,
+		Identity:      identityService,
 	})
 	rejectBanned := transporthttp.RejectBannedUsers(permissionChecker.Admit, logger)
 

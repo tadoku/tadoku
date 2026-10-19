@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/mail"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/audit"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/authz/tokens"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/email"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
@@ -22,7 +23,7 @@ type EmailSent = email.Sent
 type EmailFailed = email.Failed
 
 func (a *Application) ListEmails(ctx context.Context, filter EmailFilter) (email.Page, error) {
-	if err := a.permissions.RequireAdmin(ctx); err != nil {
+	if err := a.requireEmailReader(ctx); err != nil {
 		return email.Page{}, err
 	}
 
@@ -44,7 +45,7 @@ func (a *Application) ListEmails(ctx context.Context, filter EmailFilter) (email
 }
 
 func (a *Application) FindEmail(ctx context.Context, id uuid.UUID) (Email, error) {
-	if err := a.permissions.RequireAdmin(ctx); err != nil {
+	if err := a.requireEmailReader(ctx); err != nil {
 		return Email{}, err
 	}
 
@@ -65,13 +66,21 @@ func (a *Application) auditEmailRead(ctx context.Context, row Email) error {
 		return nil
 	}
 
-	actor, err := identity.RequireActorID(ctx)
-	if err != nil {
-		return err
+	metadata := map[string]any{"email_id": row.ID.String()}
+	var actor uuid.UUID
+	if principal, ok := ctx.Value(emailReaderKey{}).(tokens.Principal); ok && a.hasEmailReader(ctx) {
+		actor = principal.TokenID
+		metadata["access_token_id"] = principal.TokenID.String()
+	} else {
+		var err error
+		actor, err = identity.RequireActorID(ctx)
+		if err != nil {
+			return err
+		}
 	}
 	return a.audit.Record(ctx, audit.Event{
 		ActorID:  actor,
 		Action:   "read_email",
-		Metadata: map[string]any{"email_id": row.ID.String()},
+		Metadata: metadata,
 	})
 }

@@ -32,6 +32,29 @@ its source is `services/tadoku-api/spec/openapi.yaml`.
   banned. Tadoku API reads them from Keto on every request that needs them. Roles
   are not stored in PostgreSQL or in the token, and results are not cached.
 
+## Email access tokens
+
+Only `GET /api/internal/emails` and its message-detail route accept tenant access
+tokens. Their Oathkeeper rule tries `cookie_session` and then `noop`, signs the
+normal cookie-session JWT, and restores the original Authorization header only
+when it contains a `tdk_at_` bearer. Other routes keep their existing authentication.
+The backend verifies tokens itself; proxy admission never grants email access.
+Anonymous requests and forged JWTs are rejected.
+
+The authz token feature parses the tenant from the token, checks `API_BRANCH`,
+and looks up its SHA-256 hash under that tenant's row-level security scope.
+The hash must be unrevoked, unexpired and scoped exactly to `email:read`.
+Successful verification updates `last_used_at` and creates a private application
+email-reader context, without creating a user identity or bypassing other routes.
+Token authentication rejects `tadoku/prod` when `API_PRODUCTION` is true (the
+default). Development explicitly sets it false; production administrators still
+use cookies, Keto authorization and transactional, fail-closed read auditing.
+Canonical development token reads record the token UUID as actor and include
+`access_token_id` in the same fail-closed audit transaction.
+
+See [Tenant lifecycle command](../tadoku-api/tenant-lifecycle.md#email-access-tokens)
+for attached issuance, limits, listing and revocation.
+
 ## Kratos identity writes
 
 V1 Kratos identities and sessions are shared across tenants. Test tenants never

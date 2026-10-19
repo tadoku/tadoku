@@ -5,6 +5,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/features/announcements"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/audit"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/authz"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/authz/tokens"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/contests"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/email"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/featureflags"
@@ -22,66 +23,69 @@ import (
 )
 
 type Application struct {
-	email              email.Reader
-	jobqueue           *jobqueue.Service
-	announcements      *announcements.Service
-	audit              *audit.Service
-	authorization      *authz.Service
-	contests           *contests.Service
-	leaderboard        *leaderboard.Service
-	languages          *languages.Service
-	logs               *logs.Service
-	pages              *pages.Service
-	posts              *posts.Service
-	profile            *profile.Service
-	scoring            *scoring.Service
-	featureFlags       *featureflags.Service
-	db                 *pgxpool.Pool
-	permissions        *permissions.Checker
-	identity           *identity.Service
-	identityDeployment tenant.Deployment
+	tokens        *tokens.Service
+	deployment    tenant.Deployment
+	email         email.Reader
+	jobqueue      *jobqueue.Service
+	announcements *announcements.Service
+	audit         *audit.Service
+	authorization *authz.Service
+	contests      *contests.Service
+	leaderboard   *leaderboard.Service
+	languages     *languages.Service
+	logs          *logs.Service
+	pages         *pages.Service
+	posts         *posts.Service
+	profile       *profile.Service
+	scoring       *scoring.Service
+	featureFlags  *featureflags.Service
+	db            *pgxpool.Pool
+	identity      *identity.Service
+	permissions   *permissions.Checker
 }
 
 type Dependencies struct {
-	Email              email.Reader
-	JobQueue           *jobqueue.Service
-	Announcements      *announcements.Service
-	Audit              *audit.Service
-	Authorization      *authz.Service
-	Contests           *contests.Service
-	Leaderboard        *leaderboard.Service
-	Languages          *languages.Service
-	Logs               *logs.Service
-	Pages              *pages.Service
-	Posts              *posts.Service
-	Profile            *profile.Service
-	Scoring            *scoring.Service
-	FeatureFlags       *featureflags.Service
-	DB                 *pgxpool.Pool
-	Permissions        *permissions.Checker
-	Identity           *identity.Service
-	IdentityDeployment tenant.Deployment
+	Tokens        *tokens.Service
+	Deployment    tenant.Deployment
+	Email         email.Reader
+	JobQueue      *jobqueue.Service
+	Announcements *announcements.Service
+	Audit         *audit.Service
+	Authorization *authz.Service
+	Contests      *contests.Service
+	Leaderboard   *leaderboard.Service
+	Languages     *languages.Service
+	Logs          *logs.Service
+	Pages         *pages.Service
+	Posts         *posts.Service
+	Profile       *profile.Service
+	Scoring       *scoring.Service
+	FeatureFlags  *featureflags.Service
+	DB            *pgxpool.Pool
+	Identity      *identity.Service
+	Permissions   *permissions.Checker
 }
 
 func New(deps Dependencies) *Application {
 	return &Application{
-		email:              deps.Email,
-		jobqueue:           deps.JobQueue,
-		announcements:      deps.Announcements,
-		audit:              deps.Audit,
-		authorization:      deps.Authorization,
-		contests:           deps.Contests,
-		leaderboard:        deps.Leaderboard,
-		languages:          deps.Languages,
-		logs:               deps.Logs,
-		pages:              deps.Pages,
-		posts:              deps.Posts,
-		profile:            deps.Profile,
-		scoring:            deps.Scoring,
-		featureFlags:       deps.FeatureFlags,
-		db:                 deps.DB,
-		permissions:        deps.Permissions,
-		identity:           deps.Identity,
-		identityDeployment: deps.IdentityDeployment,
+		tokens:        deps.Tokens,
+		deployment:    deps.Deployment,
+		email:         deps.Email,
+		jobqueue:      deps.JobQueue,
+		announcements: deps.Announcements,
+		audit:         deps.Audit,
+		authorization: deps.Authorization,
+		contests:      deps.Contests,
+		leaderboard:   deps.Leaderboard,
+		languages:     deps.Languages,
+		logs:          deps.Logs,
+		pages:         deps.Pages,
+		posts:         deps.Posts,
+		profile:       deps.Profile,
+		scoring:       deps.Scoring,
+		featureFlags:  deps.FeatureFlags,
+		db:            deps.DB,
+		identity:      deps.Identity,
+		permissions:   deps.Permissions,
 	}
 }

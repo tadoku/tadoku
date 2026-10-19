@@ -9,7 +9,7 @@ import (
 	"time"
 
 	kratosapi "github.com/ory/kratos-client-go"
-	kratosclient "github.com/tadoku/tadoku/services/tadoku-api/features/identity"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/identity"
 )
 
 const (
@@ -23,11 +23,11 @@ type UserCache struct {
 	users      []cachedUser
 	loaded     bool
 	checkedAt  time.Time
-	identities kratosclient.LegacyReader
+	identities identity.LegacyReader
 	now        func() time.Time
 }
 
-func NewUserCache(identities kratosclient.LegacyReader) *UserCache {
+func NewUserCache(identities identity.LegacyReader) *UserCache {
 	return &UserCache{
 		users:      []cachedUser{},
 		identities: identities,

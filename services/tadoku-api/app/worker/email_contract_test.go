@@ -21,7 +21,10 @@ func TestEmailSendEncoding(t *testing.T) {
 		t.Fatalf("payload contains more than email_id: %s", raw)
 	}
 	var received uuid.UUID
-	registration := handle(func(_ context.Context, job jobs.SendEmailV1) error { received = job.EmailID; return nil }, policy{Concurrency: 1, Timeout: time.Second, MaxAttempts: 1})
+	registration := handle(func(_ context.Context, job jobs.SendEmailV1) error {
+		received = job.EmailID
+		return nil
+	}, policy{Concurrency: 1, Timeout: time.Second, MaxAttempts: 1})
 	if registration.err != nil {
 		t.Fatal(registration.err)
 	}
@@ -35,7 +38,12 @@ func TestEmailSendEncoding(t *testing.T) {
 	if received != id {
 		t.Fatalf("decoded id=%s", received)
 	}
-	for _, invalid := range []string{`{}`, `{"email_id":null}`, `{"email_id":"bad"}`, `{"email_id":"11111111-1111-4111-8111-111111111111","recipient":"secret@example.test"}`} {
+	for _, invalid := range []string{
+		`{}`,
+		`{"email_id":null}`,
+		`{"email_id":"bad"}`,
+		`{"email_id":"11111111-1111-4111-8111-111111111111","recipient":"secret@example.test"}`,
+	} {
 		received = uuid.Nil
 		if err := registration.invoke(t.Context(), []byte(invalid)); err == nil || received != uuid.Nil {
 			t.Errorf("invalid payload reached handler: %s error=%v", invalid, err)

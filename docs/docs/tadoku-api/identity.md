@@ -54,6 +54,20 @@ email and display name. Password formatting is redacted. Guest/authenticated ses
 email delivery results are explicit variants with their required payloads.
 Password hashes and session/recovery token hashes never cross these interfaces.
 
+`Accounts.Logout`, `Session`, `CheckSession`, `UpdateProfile` and
+`UpdatePassword` receive `cookieHeader` of type `CookieHeader`, the complete
+incoming HTTP `Cookie` header, including cookie names. It is neither a single
+cookie value nor an Authorization bearer. The identity service resolves the tenant from `ctx` and
+selects the implementation using the tenant's `identity-v2` decision. The v1
+adapter selects `ory_kratos_session`; v2 selects `tadoku_session` for
+`tadoku/prod`, or `tadoku_session_` plus the tenant key with `/` replaced by `_`
+for other tenants. Callers must not select the cookie or switch implementations.
+`ConsumeRecovery.recoveryToken` has type `RecoveryToken`, the raw token from the
+URL path, without a cookie name or bearer prefix. `UpdatePassword.password` is the
+untrusted new plaintext password; the feature validates it before use. The
+cookie header, recovery token and password must never be logged. `CookieHeader`
+and `RecoveryToken` distinguish raw credentials; they do not imply validation.
+
 Identity recovery and profile updates return mail requests; application code
 coordinates the identity operation, each email write and every returned queue
 job inside one business transaction. Features do not import sibling features.

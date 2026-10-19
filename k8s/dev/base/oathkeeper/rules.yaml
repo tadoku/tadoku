@@ -12,7 +12,6 @@
       - DELETE
       - PATCH
   authenticators:
-    - handler: cookie_session
     - handler: anonymous
   authorizer:
     handler: allow

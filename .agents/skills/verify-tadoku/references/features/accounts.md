@@ -72,3 +72,9 @@ Authv2 uses `/` and `/login` on `authv2.tadoku.dev.lab` or the matching
   Cookie/branch forwarding can be checked with the opt-in local session fixture;
   disclose that substituted upstream instead of claiming real login coverage.
   The Playwright smoke is run by hand, never wired into CI.
+- Public identity entry rules forward Cookie with a signed guest JWT and no
+  global session callback, so identity owns auth/CSRF and banned-user session or
+  logout handling. The base's disposable Oathkeeper E2E proves forwarding and
+  unchanged unrelated-route denial using synthetic HTTP fixtures. Until the
+  changed shared Oathkeeper and identity backend are deployed, that combined
+  live boundary remains unverified; a frontend overlay does not replace it.

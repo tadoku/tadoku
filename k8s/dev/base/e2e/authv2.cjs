@@ -54,7 +54,7 @@ function checkAuthv2({ root, report }, docs) {
   for (const name of config.namespaces) assert.ok(docs.some(doc => doc.kind === 'Namespace' && doc.metadata.name === name), 'every configured namespace must be rendered by the base')
   const rule = Y.parse(fs.readFileSync(path.join(root, 'k8s/dev/base/oathkeeper/rules.yaml'), 'utf8')).find(r => r.id === 'tadoku:identity:api')
   assert.ok(rule, 'identity requests must pass through Oathkeeper')
-  assert.deepEqual(rule.authenticators.map(a => a.handler), ['cookie_session', 'anonymous'])
+  assert.deepEqual(rule.authenticators.map(a => a.handler), ['anonymous'])
   assert.equal(rule.mutators[0].handler, 'id_token')
   report.authv2 = { host: route.spec.hostnames[0], image: container.image, health: '/healthz', baseBranchHeader: 'removed' }
 }

@@ -8,6 +8,7 @@ const { checkConfiguration, checkWorkerMetadata } = require('./e2e/configuration
 const { proveMigrations } = require('./e2e/migrations.cjs')
 const { checkAuthv2 } = require('./e2e/authv2.cjs')
 const { proveFrontends } = require('./e2e/frontends.cjs')
+const { proveIdentityProxy } = require('./e2e/oathkeeper.cjs')
 const evidence = path.resolve(process.argv[2] || `/tmp/tadoku-base-evidence-${process.pid}`)
 const harness = createHarness(evidence)
 const { containers, prefix, report, run } = harness
@@ -22,6 +23,7 @@ try {
   checkConfiguration(harness, docs)
   checkAuthv2(harness, docs)
   const db = proveMigrations(harness, docs)
+  proveIdentityProxy(harness, docs)
   checkWorkerMetadata(harness)
   proveFrontends(harness, docs)
   const removedFixture = containers.find(name => name !== db)

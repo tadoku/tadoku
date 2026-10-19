@@ -1,6 +1,6 @@
 import App, { AppProps } from 'next/app'
 import { NextPage } from 'next'
-import { ReactElement, ReactNode } from 'react'
+import { ReactElement, ReactNode, useState } from 'react'
 import { Atom, Provider } from 'jotai'
 import {
   AppContextWithSession,
@@ -9,6 +9,7 @@ import {
   useUserRole,
 } from '@app/common/session'
 import { Account, AccountApp, readIdentitySession } from 'ui/identity'
+import { SessionUnavailable } from 'ui/components/SessionUnavailable'
 import { ToastContainer } from 'ui/components/toasts'
 import 'ui/styles/globals.css'
 import Navigation from '@app/ui/Navigation'
@@ -36,6 +37,7 @@ interface Props {
   appUrls: AppUrls
   session: Account | undefined
   accountApp: AccountApp
+  sessionUnavailable: boolean
   featureFlags: FeatureFlagDecisions
 }
 
@@ -46,16 +48,6 @@ export type NextPageWithLayout<P = {}, IP = P> = NextPage<P, IP> & {
 type AppPropsWithLayout = AppProps<Props> & {
   Component: NextPageWithLayout<Props>
 }
-
-const queryClient = new QueryClient({
-  queryCache: new QueryCache({
-    onError: error => {
-      if ((error as Error).message === '401') {
-        window.location.reload()
-      }
-    },
-  }),
-})
 
 const createInitialValues = () => {
   const initialValues: (readonly [Atom<unknown>, unknown])[] = []
@@ -77,6 +69,19 @@ const AppContent = ({ children }: { children: ReactNode }) => {
 }
 
 const MyApp = ({ Component, pageProps }: AppPropsWithLayout) => {
+  const [sessionExpired, setSessionExpired] = useState(false)
+  const [queryClient] = useState(() => new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: (count, error) => (error as Error).message !== '401' && count < 3,
+      },
+    },
+    queryCache: new QueryCache({
+      onError: error => {
+        if ((error as Error).message === '401') setSessionExpired(true)
+      },
+    }),
+  }))
   const initialState = pageProps
   const { get: getInitialValues, set: setInitialValues } = createInitialValues()
 
@@ -112,12 +117,14 @@ const MyApp = ({ Component, pageProps }: AppPropsWithLayout) => {
                 <Navigation />
                 <div className="p-4 md:px-8 md:pb-8 md:pt-4 mx-auto w-full max-w-7xl mb-auto">
                   <AnnouncementBanner />
-                  {getLayout(<Component {...pageProps} />)}
+                  {sessionExpired || pageProps.sessionUnavailable
+                    ? <SessionUnavailable />
+                    : getLayout(<Component {...pageProps} />)}
                 </div>
                 <Footer />
-                <ToastContainer />
               </div>
             </AppContent>
+            <ToastContainer />
           </FeatureFlagRefresh>
         </QueryClientProvider>
       </Provider>
@@ -130,11 +137,12 @@ MyApp.getInitialProps = async (ctx: AppContextWithSession) => {
   const cookie = ctx.ctx.req?.headers.cookie
   const host = ctx.ctx.req?.headers.host ?? (typeof window === 'undefined' ? undefined : window.location.host)
   const identity = await readIdentitySession(host, ctx.ctx.req?.headers)
-  ctx.ctx.session = identity.account ?? undefined
+  ctx.ctx.session = identity?.account ?? undefined
 
   const initialAppProps = await App.getInitialProps(ctx)
   initialAppProps.pageProps.session = ctx.ctx.session
-  initialAppProps.pageProps.accountApp = identity.account_app
+  initialAppProps.pageProps.accountApp = identity?.account_app ?? 'v1'
+  initialAppProps.pageProps.sessionUnavailable = !identity
   initialAppProps.pageProps.appUrls = appUrlsForHost(host)
   initialAppProps.pageProps.featureFlags = { ...defaultFeatureFlagDecisions }
 

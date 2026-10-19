@@ -28,20 +28,25 @@ export async function readIdentitySession(
   const endpoint = typeof window === 'undefined'
     ? serverApiEndpointForHost(host)
     : browserAppUrls().apiEndpoint
-  const response = await fetch(`${endpoint}/identity/session`, {
-    headers: forwarded,
-    credentials: 'include',
-    cache: 'no-store',
-    redirect: 'error',
-    signal: AbortSignal.timeout(10_000),
-  })
-  if (!response.ok) throw new Error(response.status.toString())
-  return sessionSchema.parse(await response.json())
+  try {
+    const response = await fetch(`${endpoint}/identity/session`, {
+      headers: forwarded,
+      credentials: 'include',
+      cache: 'no-store',
+      redirect: 'error',
+      signal: AbortSignal.timeout(3_000),
+    })
+    if (!response.ok) throw new Error(response.status.toString())
+    return sessionSchema.parse(await response.json())
+  } catch {
+    return undefined
+  }
 }
 
 export async function logout() {
   const response = await fetch(`${browserAppUrls().apiEndpoint}/identity/logout`, {
     method: 'POST',
+    signal: AbortSignal.timeout(10_000),
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: '{}',

@@ -8,12 +8,14 @@ import 'ui/styles/globals.css'
 import Navigation from '../src/Navigation'
 import Head from 'next/head'
 import { readIdentitySession } from 'ui/identity'
+import { SessionUnavailable } from 'ui/components/SessionUnavailable'
 import { AppUrls, AppUrlsProvider, appUrlsForHost, accountAppUrl } from 'ui/app-urls'
 
 
 interface Props {
   appUrls: AppUrls
   session: Session | undefined
+  sessionUnavailable?: boolean
   redirecting?: boolean
 }
 
@@ -33,6 +35,7 @@ const MyApp = ({ Component, pageProps }: AppProps<Props>) => {
   setInitialValues(sessionAtom, initialState.session)
 
   if (pageProps.redirecting) return null
+  if (pageProps.sessionUnavailable) return <SessionUnavailable />
 
   return (
     <AppUrlsProvider urls={pageProps.appUrls}>
@@ -67,6 +70,7 @@ MyApp.getInitialProps = async (ctx: AppContextWithSession) => {
   const host = ctx.ctx.req?.headers.host ?? (typeof window === 'undefined' ? undefined : window.location.host)
   const appUrls = appUrlsForHost(host)
   const identity = await readIdentitySession(host, ctx.ctx.req?.headers)
+  if (!identity) return { pageProps: { appUrls, sessionUnavailable: true } }
   if (identity.account_app === 'v2') {
     const current = new URL(ctx.ctx.asPath ?? '/', appUrls.authUiUrl)
     const target = new URL(accountAppUrl(appUrls, 'v2'))

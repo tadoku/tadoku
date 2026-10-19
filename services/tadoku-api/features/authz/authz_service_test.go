@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	kratosclient "github.com/tadoku/tadoku/services/tadoku-api/infra/kratos"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
+	requestidentity "github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
 )
 
@@ -27,7 +27,7 @@ func TestUpdateRoleMapsUserExistsFailureToUnavailable(t *testing.T) {
 	t.Cleanup(httpClient.CloseIdleConnections)
 	service := NewService(
 		nil,
-		kratosclient.NewClient(provider.URL, kratosclient.WithHTTPClient(httpClient)),
+		identity.NewLegacyReader(provider.URL, identity.WithHTTPClient(httpClient)),
 		nil,
 		nil,
 		nil,
@@ -45,7 +45,7 @@ func TestUpdateRoleMapsUserExistsFailureToUnavailable(t *testing.T) {
 
 func TestCurrentUserRoleTreatsEmptySubjectAsGuest(t *testing.T) {
 	service := NewService(nil, nil, nil, nil, nil)
-	ctx := identity.WithUser(t.Context(), &identity.User{})
+	ctx := requestidentity.WithUser(t.Context(), &requestidentity.User{})
 
 	role, err := service.CurrentUserRole(ctx)
 	if err != nil {
@@ -69,7 +69,7 @@ func TestProxyAdminCheckRejectsNilSubject(t *testing.T) {
 }
 
 func TestCurrentUserRoleBannedTakesPrecedence(t *testing.T) {
-	ctx := identity.WithUser(t.Context(), &identity.User{Subject: "admin"})
+	ctx := requestidentity.WithUser(t.Context(), &requestidentity.User{Subject: "admin"})
 	ctx = permissions.WithBanState(ctx, permissions.ConfirmedBan())
 	service := NewService(permissions.NewKetoChecker(nil), nil, nil, nil, nil)
 

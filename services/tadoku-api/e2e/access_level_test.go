@@ -21,6 +21,18 @@ const (
 )
 
 var operationAccess = map[string]accessLevel{
+	"IdentityRegistrationCreate": accessPublic,
+	"IdentityLoginCreate":        accessPublic,
+	"IdentityLogout":             accessPublic,
+	"IdentitySessionGet":         accessPublic,
+	"IdentityRecoveryCreate":     accessPublic,
+	"IdentityRecoveryConsume":    accessPublic,
+	"IdentityProfileUpdate":      accessPublic,
+	"IdentityPasswordUpdate":     accessPublic,
+	"EmailList":                  accessAdmin,
+	"EmailGet":                   accessAdmin,
+	"IdentityProxySessionCheck":  accessCallback,
+
 	"ImmersionLogFindByID":     accessPublic,
 	"ImmersionProfileListLogs": accessPublic,
 	"ImmersionContestListLogs": accessPublic,
@@ -102,6 +114,9 @@ var operationAccess = map[string]accessLevel{
 }
 
 var operationFixtures = map[string]string{
+	"EmailList":                 "EmailList",
+	"EmailGet":                  "EmailGet",
+	"IdentityProxySessionCheck": "IdentityProxySessionCheck",
 	"AuthzPermissionCheck":      "AuthzPermissionCheck",
 	"AuthzProxyProxyAdminCheck": "AuthzProxyProxyAdminCheck",
 	"AuthzRoleUpdate":           "AuthzRoleUpdate",

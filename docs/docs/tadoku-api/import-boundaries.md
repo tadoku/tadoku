@@ -56,6 +56,14 @@ boundaries described in [Code ownership](./index.md#code-ownership).
   visibility or package group and this page in the same change, and explain the
   new dependency direction in the PR.
 
+The identity feature owns the unchanged Kratos read adapter in its `kratos`
+subpackage. Only its owner imports that adapter. Existing profile and authz
+consumers temporarily depend on `identity.LegacyReader`; its SDK read models
+preserve their existing behavior. The provider fixture and the writer tests may
+construct the same reader. These exact consumers have explicit Bazel visibility;
+ordinary feature composition still belongs in the application. New consumers
+use the provider-free `identity.Reader` contract.
+
 ## Provider dependencies
 
 `./tools/ci/check_tadoku_api_provider_deps.sh` checks Bazel's direct dependency
@@ -72,7 +80,8 @@ graph. Each allowed package covers only its own targets, not subpackages, and
   Keto client (`services/tadoku-api/infra/keto`). The exact
   `app/tenantlifecycle:tenantlifecycle_test` target may also construct its owned
   provider fixture. Lifecycle application code uses `permissions.TenantManager`.
-- Only `services/tadoku-api/infra/kratos`,
+- Only `services/tadoku-api/features/identity`,
+  `services/tadoku-api/features/identity/kratos`,
   `services/tadoku-api/infra/kratosidentity`,
   `services/tadoku-api/features/profile`,
   `services/tadoku-api/internal/testkratos` and E2E may depend directly on the Kratos SDK.

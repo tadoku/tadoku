@@ -10,7 +10,7 @@ if [[ -n "$valkey_violations" ]]; then
 fi
 
 kratos_violations=$(bazel query --lockfile_mode=error \
-  'attr("deps", "com_github_ory_kratos_client_go//:kratos-client-go", //services/tadoku-api/...) except (//services/tadoku-api/infra/kratos:* union //services/tadoku-api/infra/kratosidentity:* union //services/tadoku-api/features/profile:* union //services/tadoku-api/internal/testkratos:* union //services/tadoku-api/e2e:*)')
+  'attr("deps", "com_github_ory_kratos_client_go//:kratos-client-go", //services/tadoku-api/...) except (//services/tadoku-api/features/identity/kratos:* union //services/tadoku-api/features/identity:* union //services/tadoku-api/infra/kratosidentity:* union //services/tadoku-api/features/profile:* union //services/tadoku-api/internal/testkratos:* union //services/tadoku-api/e2e:*)')
 if [[ -n "$kratos_violations" ]]; then
   echo "Direct Kratos SDK dependencies belong only in the read adapter, identity writer, profile reads or provider/E2E fixtures:" >&2
   echo "$kratos_violations" >&2

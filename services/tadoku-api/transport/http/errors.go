@@ -22,6 +22,8 @@ func (s *server) logOperationError(ctx context.Context, operation string, err er
 
 func writeResponseError(w stdhttp.ResponseWriter, request *stdhttp.Request, err error) {
 	switch {
+	case errx.KindOf(err) == errx.NotImplemented:
+		writeJSON(w, stdhttp.StatusNotImplemented, map[string]string{"message": "not implemented"})
 	case errors.Is(err, app.ErrAccountDeletionInProgress):
 		writeJSON(w, stdhttp.StatusConflict, openapi.ImmersionAccountDeletionInProgress{
 			Error: openapi.AccountDeletionInProgress,
@@ -54,6 +56,8 @@ func errorStatus(ctx context.Context, err error) int {
 	switch errx.KindOf(err) {
 	case errx.Internal:
 		return stdhttp.StatusInternalServerError
+	case errx.NotImplemented:
+		return stdhttp.StatusNotImplemented
 	case errx.InvalidInput:
 		return stdhttp.StatusBadRequest
 	case errx.Unauthorized:

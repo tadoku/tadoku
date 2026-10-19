@@ -89,3 +89,25 @@ types without an unbounded type label.
 | `tadoku_worker_unsupported_failed_jobs` | None | Failed jobs with an unsupported type. |
 | `tadoku_worker_unsupported_oldest_due_age_seconds` | None | Age of the oldest due unsupported job. |
 | `tadoku_worker_expired_leases_total` | `type` | Expired running leases reclaimed. |
+
+## Email delivery
+
+Sending defaults to disabled. `WORKER_EMAIL_ENABLED=true` constructs the SMTP
+sender; disabled deployments need no SMTP settings and contact no mail server.
+Even when enabled, only `tadoku/prod` rows can send. Configure:
+
+- `WORKER_EMAIL_ADDRESS`: SMTP host and port supporting STARTTLS.
+- `WORKER_EMAIL_USERNAME` and `WORKER_EMAIL_PASSWORD`: Secret references to the
+  existing SES SMTP credential used by Kratos. Never log or commit these values.
+- `WORKER_EMAIL_SENDER`: default `no-reply@tadoku.app`.
+- `WORKER_EMAIL_SOURCE_ARN`, `WORKER_EMAIL_FROM_ARN` and
+  `WORKER_EMAIL_RETURN_PATH_ARN`: the three matching `X-SES-*-ARN` headers from
+  the production Kratos configuration.
+- `WORKER_EMAIL_TIMEOUT`: positive per-send bound, default 10s, including
+  connection, TLS, authentication and response reads.
+
+Enabled deployments reject missing SMTP credentials, malformed addresses,
+missing SES headers or non-positive timeout before opening runtime resources.
+Production manifests and the namespace-local Secret prerequisite belong in
+`tadoku-argocd`; the maintainer controls activation. Development overlays leave
+sending disabled. [Retained email](./email.md) documents delivery and audit rules.

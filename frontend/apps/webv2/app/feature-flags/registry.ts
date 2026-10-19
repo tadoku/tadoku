@@ -2,6 +2,7 @@ import { z } from 'zod'
 
 export const featureFlagRegistry = {
   'release-log-entry-v2': { defaultValue: false },
+  'identity-v2': { defaultValue: false },
 } as const
 
 export type FeatureFlagKey = keyof typeof featureFlagRegistry
@@ -19,6 +20,7 @@ export const defaultFeatureFlagDecisions =
 
 export const featureFlagDecisionsSchema = z.object({
   'release-log-entry-v2': z.boolean(),
+  'identity-v2': z.boolean().default(false),
 })
 
 export const featureFlagResponseSchema = z.object({

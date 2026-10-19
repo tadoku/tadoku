@@ -1,0 +1,143 @@
+components:
+  schemas:
+    IdentityErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          maxLength: 1000
+        code:
+          type: string
+          maxLength: 64
+          enum:
+          - wrong_password
+          - throttled
+          - email_taken
+          - stale_session
+          - invalid_display_name
+          - invalid_email
+          - invalid_password
+          - invalid_recovery_token
+          - invalid_origin
+          - invalid_return_to
+          - not_implemented
+          - unavailable
+      required:
+      - message
+    IdentityAccount:
+      type: object
+      properties:
+        id:
+          type: string
+          maxLength: 36
+          format: uuid
+        email:
+          type: string
+          maxLength: 320
+          format: email
+        display_name:
+          type: string
+          maxLength: 32
+          minLength: 2
+        created_at:
+          type: string
+          format: date-time
+        authenticated_at:
+          type: string
+          format: date-time
+      required:
+      - id
+      - email
+      - display_name
+      - created_at
+      - authenticated_at
+    IdentitySession:
+      type: object
+      properties:
+        account_app:
+          type: string
+          enum:
+          - v1
+          - v2
+        account:
+          allOf:
+          - $ref: '#/components/schemas/IdentityAccount'
+          nullable: true
+      required:
+      - account_app
+      - account
+    IdentityRegistration:
+      type: object
+      properties:
+        email:
+          type: string
+          maxLength: 320
+          format: email
+        display_name:
+          type: string
+          maxLength: 32
+          minLength: 2
+        password:
+          type: string
+          maxLength: 72
+          minLength: 8
+          description: At least 8 characters, at most 72 UTF-8 bytes; rejects similarity
+            to the email under the Kratos v26.2.0 rule.
+      required:
+      - email
+      - display_name
+      - password
+    IdentityLogin:
+      type: object
+      properties:
+        email:
+          type: string
+          maxLength: 320
+          format: email
+        password:
+          type: string
+          maxLength: 72
+          minLength: 8
+          description: At least 8 characters, at most 72 UTF-8 bytes; rejects similarity
+            to the email under the Kratos v26.2.0 rule.
+      required:
+      - email
+      - password
+    IdentityRecovery:
+      type: object
+      properties:
+        email:
+          type: string
+          maxLength: 320
+          format: email
+        return_to:
+          type: string
+          maxLength: 2048
+          format: uri
+          description: Must use an allowed Tadoku app host.
+      required:
+      - email
+      - return_to
+    IdentityProfileSettings:
+      type: object
+      minProperties: 1
+      properties:
+        email:
+          type: string
+          maxLength: 320
+          format: email
+        display_name:
+          type: string
+          maxLength: 32
+          minLength: 2
+    IdentityPasswordSettings:
+      type: object
+      properties:
+        password:
+          type: string
+          maxLength: 72
+          minLength: 8
+          description: At least 8 characters, at most 72 UTF-8 bytes; rejects similarity
+            to the email under the Kratos v26.2.0 rule.
+      required:
+      - password

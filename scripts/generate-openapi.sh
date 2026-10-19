@@ -19,6 +19,9 @@ PATH_FRAGMENTS=(
   immersion-languages
   profile
   authz-proxy
+  identity
+  email
+  identity-proxy
 )
 SCHEMA_FRAGMENTS=(
   authz
@@ -29,6 +32,9 @@ SCHEMA_FRAGMENTS=(
   immersion-logs
   profile
   authz-proxy
+  identity
+  email
+  identity-proxy
 )
 
 ROOT_BAZEL_VERSION="$(tr -d '[:space:]' <"$API_ROOT/.bazelversion")"

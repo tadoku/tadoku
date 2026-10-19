@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	kratosclient "github.com/tadoku/tadoku/services/tadoku-api/infra/kratos"
+	kratosclient "github.com/tadoku/tadoku/services/tadoku-api/features/identity/kratos"
 )
 
 func TestClientUsesConfiguredHTTPClientForAllRequests(t *testing.T) {

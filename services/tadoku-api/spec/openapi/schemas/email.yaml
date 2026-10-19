@@ -1,0 +1,90 @@
+components:
+  schemas:
+    EmailErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          maxLength: 1000
+      required:
+      - message
+    EmailStatus:
+      type: string
+      enum:
+      - pending
+      - sent
+      - held
+      - failed
+    EmailMessage:
+      type: object
+      properties:
+        id:
+          type: string
+          maxLength: 36
+          format: uuid
+        tenant:
+          type: string
+          maxLength: 113
+        template:
+          type: string
+          maxLength: 100
+        recipient:
+          type: string
+          maxLength: 320
+          format: email
+        subject:
+          type: string
+          maxLength: 1000
+        body:
+          type: string
+          maxLength: 262144
+        params:
+          type: object
+          additionalProperties:
+            type: string
+            maxLength: 4096
+        status:
+          $ref: '#/components/schemas/EmailStatus'
+        sent_at:
+          type: string
+          format: date-time
+          nullable: true
+        provider_message_id:
+          type: string
+          maxLength: 1000
+          nullable: true
+        error:
+          type: string
+          maxLength: 4096
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+      required:
+      - id
+      - tenant
+      - template
+      - recipient
+      - subject
+      - body
+      - params
+      - status
+      - sent_at
+      - provider_message_id
+      - error
+      - created_at
+    EmailList:
+      type: object
+      properties:
+        emails:
+          type: array
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/EmailMessage'
+        next_cursor:
+          type: string
+          maxLength: 2048
+          nullable: true
+      required:
+      - emails
+      - next_cursor

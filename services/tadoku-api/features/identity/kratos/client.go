@@ -63,7 +63,11 @@ func (c *Client) UserExists(ctx context.Context, id uuid.UUID) (bool, error) {
 	return true, nil
 }
 
-func (c *Client) ListIdentities(ctx context.Context, pageSize int64, pageToken string) ([]kratosapi.Identity, string, error) {
+func (c *Client) ListIdentities(
+	ctx context.Context,
+	pageSize int64,
+	pageToken string,
+) ([]kratosapi.Identity, string, error) {
 	requestURL, err := url.Parse(c.listIdentitiesURL)
 	if err != nil {
 		return nil, "", fmt.Errorf("could not list identities: %w", err)

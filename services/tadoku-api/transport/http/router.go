@@ -21,13 +21,25 @@ type Router struct {
 }
 
 type routeRegistrar struct {
-	rootMux *stdhttp.ServeMux
-	mux     *stdhttp.ServeMux
-	handler stdhttp.Handler
+	rootMux     *stdhttp.ServeMux
+	mux         *stdhttp.ServeMux
+	handler     stdhttp.Handler
+	tokenRoutes *routeRegistrar
 }
 
 func (r *routeRegistrar) Handle(pattern string, handler stdhttp.Handler) {
 	r.mux.Handle(pattern, handler)
+	if r.tokenRoutes != nil && (pattern == "GET /emails" || pattern == "GET /emails/{id}") {
+		r.tokenRoutes.mux.Handle(pattern, handler)
+		r.rootMux.Handle(pattern, stdhttp.HandlerFunc(func(w stdhttp.ResponseWriter, request *stdhttp.Request) {
+			if _, ok := emailAccessToken(request); ok {
+				r.tokenRoutes.handler.ServeHTTP(w, request)
+				return
+			}
+			r.handler.ServeHTTP(w, request)
+		}))
+		return
+	}
 	r.rootMux.Handle(pattern, r.handler)
 }
 
@@ -140,6 +152,14 @@ func NewHandler(
 		application: application,
 		logger:      logger,
 	}
+	tokenRoutes := &routeRegistrar{rootMux: router.rootMux, mux: stdhttp.NewServeMux()}
+	tokenHandler := apiServer.authenticateEmailToken(tokenRoutes)
+	tokenHandler = withPanicRecovery(logger, tokenHandler)
+	tokenRoutes.handler = withRequestBodyLimit(observe(
+		patternRouteLabel, timeout, tokenHandler, requestDuration, logger,
+	))
+	protectedRoutes.tokenRoutes = tokenRoutes
+
 	strictServer := openapi.NewStrictHandlerWithOptions(
 		apiServer,
 		nil,

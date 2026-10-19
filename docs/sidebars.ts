@@ -2,6 +2,8 @@ import type {SidebarsConfig} from '@docusaurus/plugin-content-docs';
 import authorizationApiSidebar from './docs/api/authorization/sidebar';
 import contentApiSidebar from './docs/api/content/sidebar';
 import immersionApiSidebar from './docs/api/immersion/sidebar';
+import identityApiSidebar from './docs/api/identity/sidebar';
+import emailApiSidebar from './docs/api/email/sidebar';
 import profileApiSidebar from './docs/api/profile/sidebar';
 
 const sidebars: SidebarsConfig = {
@@ -53,6 +55,7 @@ const sidebars: SidebarsConfig = {
       items: [
         'tadoku-api/conventions',
         'tadoku-api/contract',
+        'tadoku-api/identity',
         'tadoku-api/database',
         'tadoku-api/jobs',
         'tadoku-api/jobs-operations',
@@ -132,6 +135,18 @@ const sidebars: SidebarsConfig = {
             id: 'api/profile/profile-api',
           },
           items: profileApiSidebar.slice(1),
+        },
+        {
+          type: 'category',
+          label: 'Identity API',
+          link: {type: 'doc', id: 'api/identity/identity-api'},
+          items: identityApiSidebar.slice(1),
+        },
+        {
+          type: 'category',
+          label: 'Email API',
+          link: {type: 'doc', id: 'api/email/email-api'},
+          items: emailApiSidebar.slice(1),
         },
         {
           type: 'category',

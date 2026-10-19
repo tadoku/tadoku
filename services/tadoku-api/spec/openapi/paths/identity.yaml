@@ -1,0 +1,592 @@
+paths:
+  /identity/registration:
+    post:
+      operationId: IdentityRegistrationCreate
+      summary: Register an account and create a session
+      tags:
+      - identity
+      security:
+      - IdentitycookieAuth: []
+      x-tadoku-source: Identity
+      x-tadoku-exposure: public
+      x-legacy-path: /identity/registration
+      x-legacy-operation-id: IdentityRegistrationCreate
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentitySession'
+          headers:
+            Set-Cookie:
+              description: Tenant-specific HttpOnly, Secure, SameSite=Lax session cookie; logout clears
+                it.
+              schema:
+                type: string
+                maxLength: 4096
+        '400':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '401':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '403':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '404':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '409':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '429':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '501':
+          description: Not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '503':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IdentityRegistration'
+  /identity/login:
+    post:
+      operationId: IdentityLoginCreate
+      summary: Log in or re-authenticate
+      tags:
+      - identity
+      security:
+      - IdentitycookieAuth: []
+      x-tadoku-source: Identity
+      x-tadoku-exposure: public
+      x-legacy-path: /identity/login
+      x-legacy-operation-id: IdentityLoginCreate
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentitySession'
+          headers:
+            Set-Cookie:
+              description: Tenant-specific HttpOnly, Secure, SameSite=Lax session cookie; logout clears
+                it.
+              schema:
+                type: string
+                maxLength: 4096
+        '400':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '401':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '403':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '404':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '409':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '429':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '501':
+          description: Not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '503':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IdentityLogin'
+  /identity/logout:
+    post:
+      operationId: IdentityLogout
+      summary: Revoke the current session and clear its cookie
+      tags:
+      - identity
+      security:
+      - IdentitycookieAuth: []
+      x-tadoku-source: Identity
+      x-tadoku-exposure: public
+      x-legacy-path: /identity/logout
+      x-legacy-operation-id: IdentityLogout
+      responses:
+        '204':
+          description: Success
+          headers:
+            Set-Cookie:
+              description: Tenant-specific HttpOnly, Secure, SameSite=Lax session cookie; logout clears
+                it.
+              schema:
+                type: string
+                maxLength: 4096
+        '400':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '401':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '403':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '404':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '409':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '429':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '501':
+          description: Not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '503':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+  /identity/session:
+    get:
+      operationId: IdentitySessionGet
+      summary: Resolve the tenant account app and current account
+      tags:
+      - identity
+      security:
+      - IdentitycookieAuth: []
+      x-tadoku-source: Identity
+      x-tadoku-exposure: public
+      x-legacy-path: /identity/session
+      x-legacy-operation-id: IdentitySessionGet
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentitySession'
+        '400':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '401':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '403':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '404':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '409':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '429':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '501':
+          description: Not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '503':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+  /identity/recovery:
+    post:
+      operationId: IdentityRecoveryCreate
+      summary: Request recovery without revealing account existence
+      tags:
+      - identity
+      security:
+      - IdentitycookieAuth: []
+      x-tadoku-source: Identity
+      x-tadoku-exposure: public
+      x-legacy-path: /identity/recovery
+      x-legacy-operation-id: IdentityRecoveryCreate
+      responses:
+        '202':
+          description: Recovery always accepted
+        '400':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '401':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '403':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '404':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '409':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '429':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '501':
+          description: Not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '503':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IdentityRecovery'
+  /identity/recovery/{token}:
+    get:
+      operationId: IdentityRecoveryConsume
+      summary: Consume a recovery token and redirect to Settings
+      tags:
+      - identity
+      security:
+      - IdentitycookieAuth: []
+      x-tadoku-source: Identity
+      x-tadoku-exposure: public
+      x-legacy-path: /identity/recovery/{token}
+      x-legacy-operation-id: IdentityRecoveryConsume
+      responses:
+        '303':
+          description: Success
+          headers:
+            Set-Cookie:
+              description: Tenant-specific HttpOnly, Secure, SameSite=Lax session cookie; logout clears
+                it.
+              schema:
+                type: string
+                maxLength: 4096
+            Location:
+              description: Allowlisted Settings URL
+              schema:
+                type: string
+                maxLength: 2048
+                format: uri
+        '400':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '401':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '403':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '404':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '409':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '429':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '501':
+          description: Not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '503':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+      parameters:
+      - in: path
+        name: token
+        required: true
+        schema:
+          type: string
+          maxLength: 256
+  /identity/settings/profile:
+    patch:
+      operationId: IdentityProfileUpdate
+      summary: Update profile; email changes require a recent login
+      tags:
+      - identity
+      security:
+      - IdentitycookieAuth: []
+      x-tadoku-source: Identity
+      x-tadoku-exposure: public
+      x-legacy-path: /identity/settings/profile
+      x-legacy-operation-id: IdentityProfileUpdate
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityAccount'
+        '400':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '401':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '403':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '404':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '409':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '429':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '501':
+          description: Not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '503':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IdentityProfileSettings'
+  /identity/settings/password:
+    put:
+      operationId: IdentityPasswordUpdate
+      summary: Update password after a recent login and revoke other sessions
+      tags:
+      - identity
+      security:
+      - IdentitycookieAuth: []
+      x-tadoku-source: Identity
+      x-tadoku-exposure: public
+      x-legacy-path: /identity/settings/password
+      x-legacy-operation-id: IdentityPasswordUpdate
+      responses:
+        '204':
+          description: Success
+        '400':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '401':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '403':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '404':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '409':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '429':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '501':
+          description: Not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '503':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IdentityPasswordSettings'

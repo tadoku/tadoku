@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "application.go",
         "dispatch.go",
+        "emails.go",
         "metrics.go",
         "runtime.go",
     ],
@@ -15,6 +16,7 @@ go_library(
     ],
     deps = [
         "//services/tadoku-api/domain/jobs",
+        "//services/tadoku-api/features/email",
         "//services/tadoku-api/features/jobqueue",
         "//services/tadoku-api/features/leaderboard",
         "//services/tadoku-api/internal/tenant",
@@ -26,6 +28,7 @@ go_library(
 go_test(
     name = "worker_test",
     srcs = [
+        "email_contract_test.go",
         "worker_fixture_test.go",
         "worker_housekeeping_test.go",
         "worker_lifecycle_test.go",

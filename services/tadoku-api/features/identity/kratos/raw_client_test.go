@@ -11,7 +11,7 @@ import (
 
 	"github.com/google/uuid"
 	kratosapi "github.com/ory/kratos-client-go"
-	kratosclient "github.com/tadoku/tadoku/services/tadoku-api/infra/kratos"
+	kratosclient "github.com/tadoku/tadoku/services/tadoku-api/features/identity/kratos"
 )
 
 func TestFetchIdentityPreservesProviderErrors(t *testing.T) {

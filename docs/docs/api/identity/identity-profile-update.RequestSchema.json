@@ -1,0 +1,1 @@
+{"title":"Body","body":{"required":true,"content":{"application/json":{"schema":{"type":"object","minProperties":1,"properties":{"email":{"type":"string","maxLength":320,"format":"email"},"display_name":{"type":"string","maxLength":32,"minLength":2}},"title":"ProfileSettings"}}}}}

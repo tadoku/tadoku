@@ -74,5 +74,15 @@ output-options:
     - ImmersionLogContestRegistrationUpdate
     - ImmersionLogDeleteByID
     - ImmersionContestModerationDetachLog
+    - IdentityRegistrationCreate
+    - IdentityLoginCreate
+    - IdentityLogout
+    - IdentitySessionGet
+    - IdentityRecoveryCreate
+    - IdentityRecoveryConsume
+    - IdentityProfileUpdate
+    - IdentityPasswordUpdate
+    - EmailList
+    - EmailGet
   nullable-type: true
   skip-prune: true

@@ -10,7 +10,7 @@ Read this when you call the Tadoku API or build a client for it.
 
 Tadoku's public HTTP APIs are documented from the single
 [Tadoku API contract](https://github.com/tadoku/tadoku/blob/main/services/tadoku-api/spec/openapi.yaml).
-Tadoku API serves every operation. The four sections below are filtered public
+Tadoku API serves every operation. The sections below are filtered public
 views of that one contract, grouped by domain, and reflect `main`.
 
 | Domain | Version | Production base URL | Reference |
@@ -19,6 +19,8 @@ views of that one contract, grouped by domain, and reflect `main`.
 | Content | 1.0.0 | `https://tadoku.app/api/internal/content/` | [Browse endpoints](./content/content-api) |
 | Profile | 1.0.0 | `https://tadoku.app/api/internal/profile/` | [Browse endpoints](./profile/profile-api) |
 | Authorization | 1.0.0 | `https://tadoku.app/api/internal/authz/` | [Browse endpoints](./authorization/authz-api) |
+| Identity | 1.0.0 | `https://tadoku.app/api/internal` | [Browse endpoints](./identity/identity-api) |
+| Email | 1.0.0 | `https://tadoku.app/api/internal` | [Browse endpoints](./email/email-api) |
 
 ## URLs
 
@@ -27,6 +29,10 @@ in the Immersion reference is `POST https://tadoku.app/api/internal/immersion/lo
 These are the routes the Tadoku website calls, and `/api/internal` is the only
 API prefix. A path such as `/api/immersion/logs` is not an API route: the
 website answers it with its HTML `404` page.
+
+Identity and email contracts are registered skeletons returning `501`. Token
+verification is also a `501` skeleton and never admits a token reader. Their
+gateway rollout is separate; see [Identity contracts](../tadoku-api/identity).
 
 ## Authentication
 

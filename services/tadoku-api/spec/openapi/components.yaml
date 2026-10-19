@@ -20,6 +20,23 @@ components:
       type: http
       scheme: bearer
       description: Shared callback token presented only by Oathkeeper
+    IdentitycookieAuth:
+      type: apiKey
+      in: cookie
+      name: tadoku_session
+    EmailcookieAuth:
+      type: apiKey
+      in: cookie
+      name: tadoku_session
+    EmailaccessTokenAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: tdk_at_TENANT_SECRET
+      description: Tenant email:read access token; never accepted by other API routes
+    IdentityProxyoathkeeperCallbackAuth:
+      type: http
+      scheme: bearer
+      description: API_OATHKEEPER_AUTHZ_TOKEN, presented only by Oathkeeper
   responses:
     ImmersionAccountDeletionInProgress:
       description: account deletion is in progress

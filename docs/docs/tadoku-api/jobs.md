@@ -103,6 +103,23 @@ Never embed a feature model in a stored payload. The native domain import
 policy excludes application, feature, generated, infrastructure, storage and
 `internal` dependencies. Keep provider objects and secrets out of jobs.
 
+### Email message contract
+
+`jobs.SendEmailV1` has the persisted name `email.send.v1` and carries exactly
+`{"email_id":"<uuid>"}`. A zero UUID is invalid. The tenant comes from the queue
+row and handler context, never from the payload. Recipients, rendered content,
+parameters and credentials stay outside this job. The handler reads current
+email state and must tolerate retries without resending terminal deliveries.
+The worker registers this handler with concurrency 2, a 20-second bound and five
+attempts. Sending is disabled by default; every non-production tenant holds its
+mail. See [Retained email](./email.md) for transactional writing, SMTP outcomes,
+read auditing and daily retention.
+
+`domain/mail.Message` carries template, recipient and string parameters between
+features through application composition. `email.Writer.Write` requires the
+business transaction and returns `WriteResult.Jobs`; the application enqueues
+all jobs before committing, together with the identity write.
+
 ## Publish atomically
 
 A producing feature returns its ordinary result and `Jobs []jobs.Job`. It
@@ -155,6 +172,7 @@ The worker application in `app/worker/application.go` owns the registry.
 func registrations(
     invalidateContest func(context.Context, jobs.InvalidateContestLeaderboardV1) error,
     invalidateOfficial func(context.Context, jobs.InvalidateOfficialLeaderboardV1) error,
+    sendEmail func(context.Context, jobs.SendEmailV1) error,
 ) (*registry, error) {
     leaderboardPolicy := policy{
         Concurrency: 2,
@@ -164,6 +182,7 @@ func registrations(
     return newRegistry(
         handle(invalidateContest, leaderboardPolicy),
         handle(invalidateOfficial, leaderboardPolicy),
+        handle(sendEmail, policy{Concurrency: 2, Timeout: 20 * time.Second, MaxAttempts: 5}),
     )
 }
 ```

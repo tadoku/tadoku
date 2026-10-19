@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	stdhttp "net/http"
+	"strings"
 
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
 	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
@@ -28,6 +29,10 @@ func writeResponseError(w stdhttp.ResponseWriter, request *stdhttp.Request, err 
 			"code":    identityError.Code,
 			"message": identityError.Error(),
 		})
+	case strings.HasPrefix(request.URL.Path, "/identity/") && errx.KindOf(err) == errx.Unavailable:
+		writeJSON(w, errorStatus(request.Context(), err), map[string]string{"message": "identity service unavailable"})
+	case strings.HasPrefix(request.URL.Path, "/identity/") && errx.KindOf(err) == errx.InvalidInput:
+		writeJSON(w, errorStatus(request.Context(), err), map[string]string{"message": err.Error()})
 	case errx.KindOf(err) == errx.NotImplemented:
 		writeJSON(w, stdhttp.StatusNotImplemented, map[string]string{"message": "not implemented"})
 	case errors.Is(err, app.ErrAccountDeletionInProgress):

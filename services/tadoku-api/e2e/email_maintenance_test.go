@@ -34,7 +34,7 @@ func TestEmailWorkerReconciliation(t *testing.T) {
 					t.Fatal(err)
 				}
 			}
-			service := email.NewPersistentService(email.NewRepository(api.db.AppPool), sender)
+			service := email.NewService(email.NewRepository(api.db.AppPool), sender)
 			ctx := tenant.WithKey(t.Context(), tenant.Production())
 			ids := make(map[string]uuid.UUID)
 			for _, name := range []string{"failed", "abandoned", "pending replay", "running replay"} {

@@ -35,10 +35,8 @@ parameter map. The job is `email.send.v1` with only `{"email_id":"<uuid>"}`.
 Its tenant is the queue row's tenant; payloads never carry tenant, recipient,
 content or credentials. See [Jobs and worker](./jobs.md#email-message-contract).
 
-`NewPersistentService(repository, sender)` supplies runtime dependencies without
-changing the initial writer/reader interfaces. The original no-argument
-constructor is an unconfigured skeleton and cannot persist or deliver email.
-A nil sender disables SMTP and holds every pending email.
+Construct the service with `NewService(repository, sender)`. A nil sender
+disables SMTP and holds every pending email.
 
 ## Delivery and failures
 
@@ -50,7 +48,9 @@ Terminal rows are not sent again.
 
 Enabled production delivery uses authenticated SMTP over STARTTLS, verifies
 the server certificate and records `sent`, the sending time and the provider's
-message ID. The sender uses a stable RFC Message-ID derived from the email ID.
+message ID returned by SMTP. The sender supplies an RFC Message-ID derived from
+the email ID, but [SES replaces Message-ID and Date headers](https://docs.aws.amazon.com/ses/latest/dg/header-fields.html).
+Use the recorded provider message ID to investigate a delivered message.
 A failed SMTP attempt leaves the email pending until the fifth attempt, which
 records `failed` and its error. Worker maintenance also reconciles pending rows
 whose corresponding delivery jobs have exhausted their attempts, including
@@ -59,16 +59,16 @@ abandoned final leases. Reconciliation runs at startup and with the worker's
 
 SMTP cannot make the external send and PostgreSQL update atomic. A crash after
 SMTP accepts a message and before `sent` is persisted can deliver twice. The
-stable Message-ID aids diagnosis; it is not a provider deduplication guarantee.
+submitted Message-ID does not provide a deduplication guarantee.
 See [Execution guarantees](./jobs.md#execution-and-failure-guarantees).
 
 ## Read retained messages
 
 `GET /emails` and `GET /emails/{id}` require an administrator of the verified
 request tenant. The gateway must expose these API routes; an environment without
-its email rule returns 404 before reaching the API. Temporary verification
-aliases can exercise the backend through an existing authenticated gateway
-prefix without changing shared gateway configuration. The list accepts exact recipient, template and status filters,
+its email rule returns 404 before reaching the API. Administrator cookie requests
+require the gateway's `cookie_session` authentication and `id_token` mutation.
+The list accepts exact recipient, template and status filters,
 `since` (inclusive), `limit` (1–100; default 100) and `cursor`. Results are newest
 first, with ID as a deterministic tie-breaker. Continue with the opaque
 `next_cursor`; cursors belong to one tenant and never change request scope.
@@ -81,10 +81,10 @@ fails the response without returning email content. Empty lists and denied or
 missing reads disclose no email and create no read entry. Other tenants do not
 write email-read audits.
 
-The dedicated access-token route and verifier remain the integration point for
-non-production `email:read` tokens. Until the verifier is implemented, tokens
-fail closed with the existing not-implemented response; anonymous access is
-never a substitute for token verification.
+Non-production `email:read` access uses the dedicated token route and a
+tenant-bound verifier. An absent verifier fails closed. Gateway bearer
+pass-through must preserve that verifier boundary alongside administrator
+cookie authentication; anonymous access never substitutes for token verification.
 
 ## Retention and operations
 
@@ -98,9 +98,12 @@ its email rows. Email retention and successful-job retention are independent.
 See [Worker configuration](./worker-configuration.md#email-delivery) for settings.
 Local E2Es use disposable databases, real worker execution, real authorization
 providers and a loopback SMTP server with TLS and synthetic credentials. They
-do not contact SES. Development verification should observe a write → worker
-hold → Dev Admin read through the selected branch API. Until an account flow
-produces mail, use an explicitly temporary administrator-only test entrypoint
-restricted to the branch, remove it afterward and retain the exact patch and
-sanitized responses outside source control. Never add a permanent public send
-endpoint or change shared provider identities to manufacture this verification.
+do not contact SES. Run them with the disposable provider setup in
+[Testing](./testing.md) to repeat the writer → worker → administrator-read proof
+without shared provider writes. Live branch verification uses an already approved
+session or branch-owned account fixture and confirms the selected API backend.
+Creating a shared-provider session requires explicit maintainer authorization.
+If an account flow needs a temporary administrator-only test entrypoint, restrict
+it to the branch, remove it afterward and retain its exact patch and sanitized
+responses outside source control. Never add a permanent public send endpoint or
+change shared provider identities to manufacture verification.

@@ -122,7 +122,7 @@ func run(ctx context.Context, cfg config, logger *slog.Logger) error {
 		jobqueue.NewService(jobqueue.NewRepository(pool)),
 		leaderboardService,
 		worker.Config{
-			Email:           email.NewPersistentService(email.NewRepository(pool), sender),
+			Email:           email.NewService(email.NewRepository(pool), sender),
 			Scope:           cfg.scope,
 			Concurrency:     cfg.Concurrency,
 			ShutdownTimeout: cfg.ShutdownTimeout,

@@ -35,32 +35,35 @@ func TestIdentityGeneratedRecoveryJourney(t *testing.T) {
 		t.Fatal(err)
 	}
 	application := emailWorker(t, emailService(), jobqueue.NewRepository(api.db.AppPool), scope)
-	ctx, cancel := context.WithCancel(t.Context())
-	done := make(chan error, 1)
-	go func() { done <- application.Run(ctx) }()
-	defer func() {
-		cancel()
-		if err := <-done; err != nil {
-			t.Error(err)
-		}
-	}()
-	deadline := time.Now().Add(10 * time.Second)
-	for {
-		var held int
-		err := api.db.Pool.QueryRow(t.Context(), `select count(*) from emails e join jobs j
+	atFixtureInstant(func() {
+		ctx, cancel := context.WithCancel(t.Context())
+		done := make(chan error, 1)
+		go func() { done <- application.Run(ctx) }()
+		defer func() {
+			cancel()
+			if err := <-done; err != nil {
+				t.Error(err)
+			}
+		}()
+		deadline := time.Now().Add(10 * time.Second)
+		for {
+			var held int
+			err := api.db.Pool.QueryRow(t.Context(), `select count(*) from emails e join jobs j
    on j.tenant = e.tenant and j.payload->>'email_id' = e.id::text
    where e.tenant = 'tadoku/prod' and e.status = 'held' and j.state = 'completed'`).Scan(&held)
-		if err != nil {
-			t.Fatal(err)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if held == 2 {
+				break
+			}
+			if time.Now().After(deadline) {
+				t.Fatal("recovery jobs did not hold both messages")
+			}
+			time.Sleep(10 * time.Millisecond)
 		}
-		if held == 2 {
-			break
-		}
-		if time.Now().After(deadline) {
-			t.Fatal("recovery jobs did not hold both messages")
-		}
-		time.Sleep(10 * time.Millisecond)
-	}
+
+	})
 
 	tokens := emailTokens(t)
 	raw := emailRequest(t, tokens["admin"], "GET", "/emails?template=account.recovery&status=held", "", 200)

@@ -17,13 +17,6 @@ type userDeletionState struct {
 	Deleted        bool
 }
 
-type cachedUser struct {
-	ID          string
-	DisplayName string
-	Email       string
-	CreatedAt   string
-}
-
 type User struct {
 	ID          string
 	DisplayName string

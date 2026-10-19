@@ -13,8 +13,12 @@ its source is `services/tadoku-api/spec/openapi.yaml`.
 
 ## Authentication and authorization
 
-- **Ory Kratos** owns identities, sessions and login. Browser API calls reach
-  Oathkeeper with a Kratos session cookie or no credentials. Oathkeeper's
+- **Identity** owns tenant account reads. V1 identity/session commands remain
+  backed by Kratos; v2 session runtime is introduced separately. Oathkeeper's
+  configured session callback forwards Cookie and X-Dev-Branch with its trusted
+  bearer through the branch-aware API hop. The callback must be deployed before
+  activating this gateway configuration. Browser API calls carry a session
+  cookie or no credentials. Oathkeeper's
   `id_token` mutator replaces them with an RS256 JWT whose `sub` is the Kratos
   identity ID, or `guest` for anonymous requests. Session traits travel in the
   `session` claim; `type` is `user`. API tokens carry a signed `tenant`
@@ -28,21 +32,14 @@ its source is `services/tadoku-api/spec/openapi.yaml`.
   banned. Tadoku API reads them from Keto on every request that needs them. Roles
   are not stored in PostgreSQL or in the token, and results are not cached.
 
-## Kratos identity writes
+## Identity reads
 
-Kratos identities and sessions are shared across tenants. Test tenants never
-modify them. `Writer` in `services/tadoku-api/infra/kratosidentity/` is the only
-application path for deactivating an identity, deleting its sessions or deleting
-the identity itself. It requires a tenant context: `tadoku/prod` applies the
-operation, every other parsed tenant returns `SkippedForTestTenant` and logs
-the tenant and identity ID, and a missing tenant returns an error before making
-a provider request. Repeating an operation against a missing identity succeeds.
-
-The identity read client in `services/tadoku-api/features/identity/kratos` exposes only
-`FetchIdentity`, `UserExists` and `ListIdentities`. The writer has no HTTP entry
-point and is not wired into account deletion. When that flow is added, it must
-use the writer and handle the skipped outcome after deleting the tenant's own
-application data.
+Profile and moderation use `identity.Reader` for public profile details, account
+age, admin listing and ban-target existence. The identity feature chooses the
+implementation using the request tenant's flag. V2 targets must be active
+accounts in that tenant; v1 reads continue through Kratos. The unused guarded
+Kratos identity writer has been removed; this does not add an account-deletion
+operation or authorize shared provider mutations.
 
 ## Keto data model
 

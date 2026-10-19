@@ -221,11 +221,13 @@ err = client.DeleteRelation(ctx, namespace, object, relation, group)
   ordering feature work around these primitives. Audit services own recording
   details such as business timestamps and persistence.
 
-## Kratos reads and guarded identity writes
+## Identity reads
 
 - The composition root keeps a concrete `identity.LegacyReader` on
-  `application.kratosRead`. Identity features use this same read client
-  for lookups and cursor pagination.
+  `application.kratosRead`. The identity reader uses this same read client
+  for v1 lookups and cursor pagination. Profile and moderation receive
+  `identity.NewReader(pool, legacy, evaluator)`, which selects the tenant's v1
+  adapter or local account reads.
 - `identity.NewLegacyReader(baseURL, identity.WithHTTPClient(httpClient))` uses the same client
   for SDK reads and cursor pagination. It constructs the pinned
   `github.com/ory/kratos-client-go` v0.11.1 SDK internally and exposes no raw
@@ -245,19 +247,11 @@ identity, err := kratosIdentities.FetchIdentity(ctx, identityID)
 - Use `errors.As` to inspect `*kratosapi.GenericOpenAPIError`, including its
   `Body()` and `Model()`, and `errors.Is` for `context.Canceled` or
   `context.DeadlineExceeded`.
-- Reads return the SDK identity models. Features own domain mapping, trait
-  policy, account-age rules and any cache lifecycle. `ListIdentities` fetches
+- Reads return the SDK identity models. Identity ownership maps traits and account creation time into its provider-free
+  `Account` type. `ListIdentities` fetches
   one requested cursor page and returns its next page token.
 - The total client timeout and any earlier caller deadline bound requests;
   caller cancellation also interrupts response-body reads.
-
-`Writer` in `services/tadoku-api/infra/kratosidentity/` owns application identity
-writes. `NewWriter(adminURL, httpClient, logger)` constructs its SDK internally
-from the admin URL and a caller-owned HTTP client with a positive total timeout.
-It checks the tenant before every mutation and remains unwired until an
-account-deletion flow exists. See
-[Kratos identity writes](../architecture/authorization.md#kratos-identity-writes)
-for its applied, skipped and missing-tenant outcomes.
 
 ## Metrics
 

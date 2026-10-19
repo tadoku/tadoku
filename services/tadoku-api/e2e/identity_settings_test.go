@@ -226,3 +226,43 @@ func TestIdentityPasswordChangeFencesInFlightLogin(t *testing.T) {
 		t.Fatal("in-flight old-password login minted a session after password replacement")
 	}
 }
+
+func TestIdentitySettingsEmailUniqueness(t *testing.T) {
+	for _, otherTenant := range []string{identityBranchA, identityBranchB} {
+		t.Run(otherTenant, func(t *testing.T) {
+			resetIdentity(t)
+			response := identityRequest(t, api.handler, otherTenant, "POST", "/identity/registration",
+				`{"email":"occupied@example.test","display_name":"Other Reader","password":"Independent-653!"}`, "", nil)
+			requireIdentityStatus(t, response, http.StatusCreated)
+			cookie := identityLoginCookie(t)
+			seedRecoveryToken(t, 'a', fixtureInstant.Add(time.Hour), nil)
+			response = identityRequest(t, api.handler, identityBranchA, "PATCH", "/identity/settings/profile",
+				`{"email":"OCCUPIED@EXAMPLE.TEST"}`, cookie, nil)
+			want := http.StatusOK
+			if otherTenant == identityBranchA {
+				want = http.StatusConflict
+			}
+			requireIdentityStatus(t, response, want)
+			if want == http.StatusConflict && !strings.Contains(response.Body.String(), `"code":"email_taken"`) {
+				t.Fatal("conflicting email error changed")
+			}
+			var email string
+			var notices, unused int
+			err := api.db.Pool.QueryRow(t.Context(), `select email,
+    (select count(*) from emails where tenant = $1),
+    (select count(*) from recovery_tokens where tenant = $1 and used_at is null)
+    from accounts where tenant = $1 and user_id = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'`,
+				identityBranchA).Scan(&email, &notices, &unused)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if otherTenant == identityBranchA {
+				if email != "reader@example.test" || notices != 0 || unused != 1 {
+					t.Fatal("conflict left side effects")
+				}
+			} else if email != "occupied@example.test" || notices != 1 || unused != 0 {
+				t.Fatal("foreign tenant email blocked a legitimate change")
+			}
+		})
+	}
+}

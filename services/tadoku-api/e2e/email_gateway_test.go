@@ -118,8 +118,14 @@ func TestEmailGatewayCookieAndBearer(t *testing.T) {
 
 func gatewayAdminCookie(t *testing.T, key tenant.Key) string {
 	t.Helper()
+	password := rand.Text() + "!a1"
 	credentials := &kratosapi.IdentityWithCredentials{}
-	rawCredentials := []byte(`{"password":{"config":{"password":"GatewayFixturePassword-9382!"}}}`)
+	rawCredentials, err := json.Marshal(map[string]any{
+		"password": map[string]any{"config": map[string]string{"password": password}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
 	if err := json.Unmarshal(rawCredentials, credentials); err != nil {
 		t.Fatal(err)
 	}
@@ -178,7 +184,7 @@ func gatewayAdminCookie(t *testing.T, key tenant.Key) string {
 	body, err := json.Marshal(map[string]any{
 		"method":     "password",
 		"identifier": "gateway@example.test",
-		"password":   "GatewayFixturePassword-9382!",
+		"password":   password,
 		"csrf_token": csrf,
 	})
 	if err != nil {

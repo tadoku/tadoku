@@ -14,8 +14,8 @@ frontend_dev(
 
 frontend_dev(
     name = "webv3",
-    paper = True,
     host = "next.tadoku.dev.lab",
+    paper = True,
     readiness_path = "/healthz",
 )
 

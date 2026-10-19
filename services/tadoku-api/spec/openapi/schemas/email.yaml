@@ -6,25 +6,9 @@ components:
         message:
           type: string
           maxLength: 1000
-        code:
-          type: string
-          maxLength: 64
-          enum:
-          - wrong_password
-          - throttled
-          - email_taken
-          - stale_session
-          - invalid_display_name
-          - invalid_email
-          - invalid_password
-          - invalid_recovery_token
-          - invalid_origin
-          - invalid_return_to
-          - not_implemented
-          - unavailable
       required:
       - message
-    EmailStatus: &id001
+    EmailStatus:
       type: string
       enum:
       - pending
@@ -59,7 +43,8 @@ components:
           additionalProperties:
             type: string
             maxLength: 4096
-        status: *id001
+        status:
+          $ref: '#/components/schemas/EmailStatus'
         sent_at:
           type: string
           format: date-time

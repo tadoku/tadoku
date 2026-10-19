@@ -85,6 +85,7 @@ http.createServer((req,res)=>{
         fs.writeFileSync(path.join(evidence, `${fixture.name}.yaml`), Y.stringify(config))
       }
       const env = fixture.env.filter(e => e.name === 'AUTHENTICATORS_COOKIE_SESSION_CONFIG_ADDITIONAL_HEADERS').flatMap(e => ['-e', `${e.name}=${e.value.replaceAll('$(OATHKEEPER_AUTHZ_TOKEN)', dummy)}`])
+      run('docker', ['pull', fixture.image])
       report.images[fixture.image] = run('docker', ['image', 'inspect', fixture.image, '--format', '{{json .RepoDigests}}'])
       containers.push(name)
       run('docker', ['run', '-d', '--name', name, '--label', `tadoku.dev/test=${prefix}`, '--network', prefix, '-p', '127.0.0.1::4455', '-p', '127.0.0.1::4456', '-v', `${evidence}:/proof:ro`, '-e', `OATHKEEPER_AUTHZ_TOKEN=${dummy}`, ...env, fixture.image, 'serve', '-c', `/proof/${fixture.name}.yaml`])

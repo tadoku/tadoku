@@ -14,6 +14,7 @@ frontend_dev(
 
 frontend_dev(
     name = "webv3",
+    paper = True,
     host = "next.tadoku.dev.lab",
     readiness_path = "/healthz",
 )
@@ -27,4 +28,11 @@ frontend_dev(
 frontend_dev(
     name = "admin",
     host = "admin.tadoku.dev.lab",
+)
+
+frontend_dev(
+    name = "authv2",
+    host = "authv2.tadoku.dev.lab",
+    paper = True,
+    readiness_path = "/healthz",
 )

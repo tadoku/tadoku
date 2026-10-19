@@ -16,14 +16,13 @@ _DEV_INSTALL = [
     "--child-concurrency=1",
 ]
 
-def frontend_dev(name, host, readiness_path = "/"):
+def frontend_dev(name, host, readiness_path = "/", paper = False):
     """One app source graph, OCI runtime and dev-cli contract."""
-    paper = name == "webv3"
     shared_package = "paper-ui" if paper else "ui"
     command = " ".join(_DEV_INSTALL) + " && exec pnpm --filter " + name + " dev"
     if paper:
         # ponytail: watcher retains initial declarations; rebuild paper-ui after public type changes.
-        command = " ".join(_DEV_INSTALL) + " && pnpm --filter paper-ui build && { pnpm --filter paper-ui exec tsup --no-dts --no-clean --watch src --watch styles --watch scripts --onSuccess 'node scripts/build-assets.mjs' & exec pnpm --filter webv3 exec vite; }"
+        command = " ".join(_DEV_INSTALL) + " && pnpm --filter paper-ui build && { pnpm --filter paper-ui exec tsup --no-dts --no-clean --watch src --watch styles --watch scripts --onSuccess 'node scripts/build-assets.mjs' & exec pnpm --filter %s exec vite; }" % name
 
     native.filegroup(
         name = "%s_sources" % name,

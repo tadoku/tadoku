@@ -6,6 +6,7 @@ namespaces:
   - tdk-dev-frontend-webv2
   - tdk-dev-frontend-webv3
   - tdk-dev-frontend-auth
+  - tdk-dev-frontend-authv2
   - tdk-dev-frontend-admin
   - tdk-dev-oathkeeper
   - tdk-dev-tadoku-api
@@ -15,6 +16,7 @@ publicHosts:
   - tadoku.dev.lab
   - next.tadoku.dev.lab
   - account.tadoku.dev.lab
+  - authv2.tadoku.dev.lab
   - admin.tadoku.dev.lab
 ingressClass: nginx
 clusterIssuer: lab-ca-acme

@@ -1,7 +1,6 @@
 import { useStore } from '@tanstack/react-form'
-import { usePaperForm, Button, EmptyState, PageHeader, buttonClassName } from 'paper-ui'
-
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { usePaperForm, Button, EmptyState, PageHeader, buttonClassName } from 'paper-ui'
 import { supportedLanguages, type Activity, type SampleContest } from '../data'
 import { contestEnd, contestStart, formatDateTime } from '../dates'
 import { renderLink } from '../routerLink'

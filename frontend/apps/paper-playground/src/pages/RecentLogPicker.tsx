@@ -1,7 +1,6 @@
 import { useStore } from '@tanstack/react-form'
-import { usePaperForm, Button } from 'paper-ui'
 import { useEffect, useId, useRef, useState } from 'react'
-
+import { usePaperForm, Button } from 'paper-ui'
 import { ChevronDownIcon } from 'paper-ui/icons'
 import { formatDate, formatNumber, type SampleLog } from '../data'
 import './recent-log-picker.css'

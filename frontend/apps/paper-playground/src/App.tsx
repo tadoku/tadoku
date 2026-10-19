@@ -1,7 +1,6 @@
-import { usePaperForm, ActionMenu, Button, buttonClassName, Drawer, EmptyState, Loading, Navbar, ToastContainer, type NavbarItem } from 'paper-ui'
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { Link, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
-
+import { usePaperForm, ActionMenu, Button, buttonClassName, Drawer, EmptyState, Loading, Navbar, ToastContainer, type NavbarItem } from 'paper-ui'
 import wordmark from 'paper-ui/assets/brand/wordmark-accent.svg?no-inline'
 import reversedWordmark from 'paper-ui/assets/brand/wordmark-reversed.svg?no-inline'
 import { scenarioGroup, scenarios, usePlayground, useScenario, type GuideIA, type Viewer } from './state'

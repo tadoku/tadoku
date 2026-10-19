@@ -1,8 +1,7 @@
-import { usePaperForm, Breadcrumb, Button, DescriptionList, Drawer, EmptyState, Flash, Modal, PageHeader, SectionHeading, Sidebar, StatGrid, StatusTag, Table, buttonClassName, type SidebarSection, type StatusTagTone } from 'paper-ui'
 import { useState } from 'react'
-
-import { Bars3Icon, PlusIcon } from 'paper-ui/icons'
 import { Link, useLocation, useParams } from 'react-router-dom'
+import { usePaperForm, Breadcrumb, Button, DescriptionList, Drawer, EmptyState, Flash, Modal, PageHeader, SectionHeading, Sidebar, StatGrid, StatusTag, Table, buttonClassName, type SidebarSection, type StatusTagTone } from 'paper-ui'
+import { Bars3Icon, PlusIcon } from 'paper-ui/icons'
 import { formatDate, users } from '../data'
 import { contestEnd, contestStart, formatDateRange, formatDateTime } from '../dates'
 import { renderLink } from '../routerLink'

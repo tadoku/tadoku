@@ -1,9 +1,8 @@
 import { useStore } from '@tanstack/react-form'
-import { usePaperForm, AppliedFilters, Breadcrumb, Button, DescriptionList, EmptyState, HeatmapChart, SectionHeading, StatGrid, Tabbar, buttonClassName, chartPalette } from 'paper-ui'
 import { useRef, useState } from 'react'
-
-import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, PlusIcon } from 'paper-ui/icons'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { usePaperForm, AppliedFilters, Breadcrumb, Button, DescriptionList, EmptyState, HeatmapChart, SectionHeading, StatGrid, Tabbar, buttonClassName, chartPalette } from 'paper-ui'
+import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, PlusIcon } from 'paper-ui/icons'
 import { formatDate, formatNumber, scoreLog, users, type SampleLog } from '../data'
 import { contestEnd, contestStart, formatDateRange } from '../dates'
 import { renderLink } from '../routerLink'

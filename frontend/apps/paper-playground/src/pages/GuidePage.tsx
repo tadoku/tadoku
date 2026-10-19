@@ -1,6 +1,5 @@
 import { useStore } from '@tanstack/react-form'
 import { Button, EmptyState, PageHeader, Table, buttonClassName, usePaperForm } from 'paper-ui'
-
 import { Link } from 'react-router-dom'
 import { usePlayground } from '../state'
 import './editorial.css'

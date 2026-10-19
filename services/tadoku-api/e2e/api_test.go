@@ -392,7 +392,7 @@ func newTestRouterWithLeaderboardService(
 	handler, err := transport.NewHandler(
 		application,
 		pool.Ping,
-		time.Second,
+		30*time.Second,
 		registry,
 		logger,
 		authenticate,

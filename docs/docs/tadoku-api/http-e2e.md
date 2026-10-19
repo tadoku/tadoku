@@ -22,6 +22,9 @@ The general test principles are in [Testing](./testing.md).
   application router would bypass the policies the suite must exercise.
 - Scenarios run sequentially. Call `reset` before each independent scenario,
   never between dependent requests.
+- The router uses the default deployed API request budget of 30 seconds,
+  including cost-12 password hashing. Provider fixtures retain their own
+  bounded timeouts; request-deadline behavior is tested at the transport boundary.
 - `reset` runs `internal/testpostgres/cleanup.sql`, which explicitly lists the
   mutable tables to truncate with `restart identity`. Add newly tested mutable
   tables to that one file. Do not discover tables automatically or use

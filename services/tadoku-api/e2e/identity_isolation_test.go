@@ -118,3 +118,60 @@ func TestIdentitySessionCallbackGuestAndSelection(t *testing.T) {
 		t.Error("v1 flag leaked into another tenant")
 	}
 }
+
+func TestIdentityV2ExpiredSessionIsGuest(t *testing.T) {
+	resetIdentity(t)
+	response := identityRequest(t, api.handler, identityBranchA, "POST", "/identity/login",
+		`{"email":"reader@example.test","password":"Fixture-login-482!"}`, "", nil)
+	requireIdentityStatus(t, response, http.StatusOK)
+	cookie := response.Result().Cookies()[0].String()
+	_, err := api.db.Pool.Exec(t.Context(), `update sessions
+		set authenticated_at = $2::timestamptz - interval '1 day', expires_at = $2
+		where tenant = $1`, identityBranchA, fixtureInstant)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	response = identityRequest(t, api.handler, identityBranchA, "GET", "/identity/session", "", cookie, nil)
+	if identityView(t, response).Account != nil {
+		t.Error("expired session still authenticates")
+	}
+	request := httptest.NewRequest("GET", "/identity/internal/v1/session", nil)
+	request.Header.Set("Authorization", "Bearer "+callbackToken)
+	request.Header.Set("X-Dev-Branch", strings.TrimPrefix(identityBranchA, "tadoku/"))
+	request.Header.Set("Cookie", cookie)
+	callback := httptest.NewRecorder()
+	atFixtureInstant(func() { api.handler.ServeHTTP(callback, request) })
+	requireIdentityStatus(t, callback, http.StatusOK)
+	if callback.Body.String() != "{\"identity\":{\"id\":\"guest\"}}\n" {
+		t.Error("expired session still authenticates through the callback")
+	}
+}
+
+func TestIdentityGuestGatewayAdmissionPreservesBanGate(t *testing.T) {
+	resetIdentity(t)
+	response := identityRequest(t, api.handler, "tadoku/prod", "POST", "/identity/login",
+		`{"email":"reader@example.test","password":"Fixture-login-482!"}`, "", nil)
+	requireIdentityStatus(t, response, http.StatusOK)
+	cookie := response.Result().Cookies()[0].String()
+	if err := api.keto.Reset(t.Context(), "testdata/IdentityV2/banned.json"); err != nil {
+		t.Fatal(err)
+	}
+
+	protected := readHTTPRequest(t, "testdata/BannedUsers/403_banned")
+	denied := httptest.NewRecorder()
+	atFixtureInstant(func() { api.handler.ServeHTTP(denied, protected) })
+	requireIdentityStatus(t, denied, http.StatusForbidden)
+
+	response = identityRequest(t, api.handler, "tadoku/prod", "GET", "/identity/session", "", cookie, nil)
+	view := identityView(t, response)
+	if view.Account == nil || view.Account.ID != "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa" {
+		t.Fatal("anonymous gateway admission failed to return the banned cookie account")
+	}
+	response = identityRequest(t, api.handler, "tadoku/prod", "POST", "/identity/logout", "", cookie, nil)
+	requireIdentityStatus(t, response, http.StatusNoContent)
+	response = identityRequest(t, api.handler, "tadoku/prod", "GET", "/identity/session", "", cookie, nil)
+	if identityView(t, response).Account != nil {
+		t.Error("banned cookie account could not revoke its session")
+	}
+}

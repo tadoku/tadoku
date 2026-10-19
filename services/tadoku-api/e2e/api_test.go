@@ -265,8 +265,9 @@ func newTestRouterWithLeaderboard(
 type routerOption func(*routerEndpoints)
 
 type routerEndpoints struct {
-	ketoWrite      string
-	identityValkey valkeygo.Client
+	ketoWrite        string
+	identityValkey   valkeygo.Client
+	identityObserver featureflags.Observer
 }
 
 func withIdentityValkey(client valkeygo.Client) routerOption {
@@ -330,7 +331,7 @@ func newTestRouterWithLeaderboardService(
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	featureFlagEvaluator := featureflags.NewEvaluator(flipt, nil)
+	featureFlagEvaluator := featureflags.NewEvaluator(flipt, endpoints.identityObserver)
 	featureFlagsService := featureflagsservice.NewService(
 		featureFlagEvaluator,
 		fliptmanagement.NewClient(fliptmanagement.Config{

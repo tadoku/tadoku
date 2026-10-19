@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/cookiejar"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
@@ -154,6 +155,40 @@ func TestIdentityV1ProviderSessionAndLogout(t *testing.T) {
 		view.Account.Email != "legacy@example.test" || view.Account.DisplayName != "Legacy Reader" {
 		t.Fatal("v1 session did not come from real Kratos")
 	}
+	callbackRequest := httptest.NewRequest("GET", "/identity/internal/v1/session", nil)
+	callbackRequest.Header.Set("Authorization", "Bearer "+callbackToken)
+	callbackRequest.Header.Set("Cookie", cookie)
+	callback := httptest.NewRecorder()
+	atFixtureInstant(func() { api.handler.ServeHTTP(callback, callbackRequest) })
+	requireIdentityStatus(t, callback, http.StatusOK)
+	var callbackView struct {
+		Identity struct{ ID string } `json:"identity"`
+	}
+	if err := json.Unmarshal(callback.Body.Bytes(), &callbackView); err != nil {
+		t.Fatal(err)
+	}
+	if callbackView.Identity.ID != legacy.ID {
+		t.Error("v1 callback did not resolve the real disposable Kratos session")
+	}
+
+	branchKey, err := tenant.Parse(identityBranchB)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := flipt.SetIdentityV2(branchKey, false); err != nil {
+		t.Fatal(err)
+	}
+	response = identityRequest(t, api.handler, identityBranchB, "POST", "/identity/logout", "", cookie, nil)
+	requireIdentityStatus(t, response, http.StatusNoContent)
+	cleared := response.Result().Cookies()
+	if len(cleared) != 1 || cleared[0].Name != "ory_kratos_session" || cleared[0].MaxAge != -1 {
+		t.Error("v1 test-tenant logout did not clear the browser cookie")
+	}
+	response = identityRequest(t, api.handler, "tadoku/prod", "GET", "/identity/session", "", cookie, nil)
+	if remaining := identityView(t, response); remaining.Account == nil || remaining.Account.ID != legacy.ID {
+		t.Error("v1 test-tenant logout changed the shared provider session")
+	}
+
 	response = identityRequest(t, api.handler, identityBranchA, "GET", "/identity/session", "", cookie, nil)
 	if identityView(t, response).Account != nil {
 		t.Error("v2 tenant accepted a Kratos session")

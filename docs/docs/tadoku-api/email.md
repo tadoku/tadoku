@@ -65,7 +65,10 @@ See [Execution guarantees](./jobs.md#execution-and-failure-guarantees).
 ## Read retained messages
 
 `GET /emails` and `GET /emails/{id}` require an administrator of the verified
-request tenant. The list accepts exact recipient, template and status filters,
+request tenant. The gateway must expose these API routes; an environment without
+its email rule returns 404 before reaching the API. Temporary verification
+aliases can exercise the backend through an existing authenticated gateway
+prefix without changing shared gateway configuration. The list accepts exact recipient, template and status filters,
 `since` (inclusive), `limit` (1–100; default 100) and `cursor`. Results are newest
 first, with ID as a deterministic tie-breaker. Continue with the opaque
 `next_cursor`; cursors belong to one tenant and never change request scope.

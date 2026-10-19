@@ -16,7 +16,9 @@ mutations are not implemented here. The existing `auth` app remains available.
 
 `frontend/apps/authv2/src/lib/session.server.ts` requests `GET /identity/session`
 from the configured Tadoku API root, forwarding only the incoming Cookie and
-`X-Dev-Branch` request headers. Responses are validated with Zod. Session data
+`X-Dev-Branch` request headers. Zod validates the response shape; the API owns
+account field constraints, so legacy display names and email formats do not block
+the v1 redirect. Session data
 is request-scoped; both the upstream read and rendered response disable caching.
 The server function in `frontend/apps/authv2/src/lib/session.ts` keeps server
 configuration and request credentials out of the browser bundle.

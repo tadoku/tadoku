@@ -34,7 +34,8 @@ AUTHV2_SESSION_FIXTURE=true \
 The opt-in test fixture binds only `127.0.0.1:5195` and closes after the test.
 It returns synthetic session responses and records synthetic request headers.
 Assertions prove the application's server forwards Cookie and `X-Dev-Branch`,
-v1 returns HTTP 307 to the existing account app preserving path/query, and
+v1 returns HTTP 307 to the existing account app preserving path/query (including
+legacy accounts with 25 emoji in their display name or a local-domain email), and
 404/503/malformed responses keep an unavailable message and account link.
 This substitutes only the identity API; real authentication, gateway routing,
 DNS, TLS termination and tenant persistence remain unverified. Never point

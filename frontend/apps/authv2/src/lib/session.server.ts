@@ -6,10 +6,10 @@ const sessionSchema = z.object({
   account_app: z.enum(['v1', 'v2']),
   account: z.object({
     id: z.string().min(1),
-    email: z.email(),
-    display_name: z.string().min(2).max(32),
-    created_at: z.iso.datetime({ offset: true }),
-    authenticated_at: z.iso.datetime({ offset: true }),
+    email: z.string().min(1),
+    display_name: z.string().min(1),
+    created_at: z.string().min(1),
+    authenticated_at: z.string().min(1),
   }).nullable(),
 })
 

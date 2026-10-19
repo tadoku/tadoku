@@ -46,6 +46,24 @@ test('account skeleton, session routing and unavailable API', async ({ page, req
     expect.soft(response.headers().location).toBe('http://account.localhost:5195/login?return_to=%2Flogs%2Fnew')
   })
 
+  await test.step('v1 legacy account details do not prevent the redirect', async () => {
+    for (const email of ['reader@example.test', 'reader@localhost']) {
+      session = {
+        account_app: 'v1',
+        account: {
+          id: '00000000-0000-4000-8000-000000000001',
+          email,
+          display_name: '😀'.repeat(25),
+          created_at: '2026-01-01T00:00:00Z',
+          authenticated_at: '2026-01-01T00:00:00Z',
+        },
+      }
+      const response = await request.get('/login?return_to=%2Flogs%2Fnew', { maxRedirects: 0 })
+      expect.soft(response.status()).toBe(307)
+      expect.soft(response.headers().location).toBe('http://account.localhost:5195/login?return_to=%2Flogs%2Fnew')
+    }
+  })
+
   await test.step('a missing, failing or malformed API keeps a visible unavailable state', async () => {
     for (const [code, body] of [[404, {}], [503, {}], [200, { account_app: 'unknown' }]] as const) {
       status = code

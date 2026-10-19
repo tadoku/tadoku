@@ -60,7 +60,8 @@ Authv2 uses `/` and `/login` on `authv2.tadoku.dev.lab` or the matching
 - A tenant selecting v2 shows the Paper skeleton and anonymous/signed-in state;
   registration, recovery and settings are not available in this foundation.
 - A v1 session answer returns to the matching existing account host with the
-  path and query preserved. Session API failures show an unavailable message
+  path and query preserved, including legacy emoji display names and email
+  formats. Session API failures show an unavailable message
   and existing-account link; a missing endpoint must not crash the page.
 - Verify mobile containment and `/healthz` independently of API availability.
   Cookie/branch forwarding can be checked with the opt-in local session fixture;

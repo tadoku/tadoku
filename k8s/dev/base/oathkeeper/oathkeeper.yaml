@@ -59,12 +59,15 @@ authenticators:
   cookie_session:
     enabled: true
     config:
-      check_session_url: http://kratos-public.tdk-dev-kratos/sessions/whoami
+      check_session_url: http://tadoku-cli-api.tdk-dev-oathkeeper.svc.cluster.local/identity/internal/v1/session
       preserve_path: true
       extra_from: "@this"
       subject_from: identity.id
-      only:
-        - ory_kratos_session
+      forward_http_headers:
+        - Cookie
+        - X-Dev-Branch
+      additional_headers:
+        Authorization: 'Bearer {{ env "OATHKEEPER_AUTHZ_TOKEN" }}'
   jwt:
     enabled: true
     config:

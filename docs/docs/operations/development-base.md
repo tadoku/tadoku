@@ -106,6 +106,15 @@ ingress. `/api/internal` uses Oathkeeper before the API, while page and asset
 requests use Webv3. Existing Tadoku subdomain admission and shared account
 cookies cover the preview and branch hosts.
 
+## Identity session callback
+
+Oathkeeper forwards Cookie and X-Dev-Branch, adding its callback bearer through
+the branch-aware API hop. SSR uses an internal session rule for guest and
+account-app resolution. Activate these manifests only after the identity
+callback/session/logout runtime and public routes are deployed and verified;
+see [Identity contracts](../tadoku-api/identity.md). Manifest validation does
+not prove v1 login, webv2, admin or branch callback behavior.
+
 ## Asynchronous worker ownership
 
 The private `tadoku-worker` Deployment consumes `jobs` in the base

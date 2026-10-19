@@ -33,7 +33,8 @@ boundaries described in [Code ownership](./index.md#code-ownership).
   to `cmd/tadoku-tenant` and E2E. Its generated sqlc package is visible only to
   that application; lifecycle SQL targets the tenant registry rather than an
   ordinary feature's business data.
-- A feature's generated sqlc package is visible only to that feature.
+- A feature's generated sqlc package is visible only to that feature. The
+  `generated/sqlc/tokens` package belongs only to `features/authz/tokens`.
 - `services/tadoku-api/infra/flipt` owns the shared tenant-to-provider target
   mapping. Its ordinary consumers use `:infrastructure_consumers`; the exact test-only
   `internal/testflipt` fixture package may also depend on it so HTTP evaluation

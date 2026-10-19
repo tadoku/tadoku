@@ -56,15 +56,22 @@ an activation or a workflow dispatch:
    do not waive that gate to impose an accounts-first order. Confirm callback
    credential compatibility, banned-account session/logout admission, trusted
    branch selection and the required public Kratos URL/proxy configuration.
-2. Land the production public-route and authv2 GitOps preparations under their
-   own authorization first. Refresh the callback GitOps branch onto that main,
-   preserving both the public anonymous identity route and the private session
-   route. Retain the final head/base SHAs, Helm render and image digests; rerun
-   the real-image callback matrix and production identity-proxy proof, and get
-   independent review of that final candidate. After current-head checks and
-   real composed-callback proof pass, obtain separate authorization for that
-   exact refreshed production gateway revision. An earlier preparation head
-   cannot be the activation candidate.
+2. Land the production public-route and authv2 GitOps preparations
+   (G #238/#239) and email-route preparation (C #242) under their own
+   authorization. B #240 remains separately held for its own prerequisites.
+   Refresh the callback GitOps branch (#241) onto the resulting main,
+   preserving the public anonymous identity route, private session route and
+   any landed email rule with its token-header mutator. If #241 lands before
+   #242, the email-route owner must refresh and revalidate that later change.
+   Retain the final head/base SHAs, Helm render and image digests; rerun the
+   real-image callback matrix, production identity-proxy proof and production
+   email-route cases under the callback configuration. Include token-only,
+   token with unrelated/expired/valid cookies, administrator cookie, guest,
+   forged-JWT, other-route rejection and tenant-scope cases. Get independent
+   review of that final candidate. After current-head checks and actual
+   composed-callback proof pass, obtain separate authorization for that exact
+   refreshed production gateway revision. An earlier preparation head cannot
+   be the activation candidate.
    Merge the approved GitOps revision only after that authorization: the
    `tadoku-oathkeeper` Application tracks main and automatically syncs, prunes and
    self-heals. No manual sync or apply is required or implied.

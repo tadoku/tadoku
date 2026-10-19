@@ -42,8 +42,9 @@ The general test principles are in [Testing](./testing.md).
   request fixture is checked in.
 - Lifecycle tests stay focused on startup and shutdown; keep endpoint
   assertions out of them.
-- Gateway token issuance and unrelated infrastructure stay outside these
-  in-process tests.
+- The [email gateway fixture](#email-gateway-fixture) checks cookie and bearer
+  routing with real local providers; it supplements the live branch-host gate.
+- Unrelated gateway infrastructure stays outside these in-process tests.
 
 ## Tenant feature-flag isolation
 
@@ -307,3 +308,33 @@ jq -r .token "$fixture_output"
   automatically and response UUIDs are not normalized; goldens remain exact
   comparisons.
 - Keep provider-schema SQL and process ownership in test-only helpers.
+
+## Email gateway fixture
+
+`TestEmailGatewayCookieAndBearer` runs the checked-in development rules with
+checksum-pinned Oathkeeper v26.2.0, the real local Kratos/Keto fixtures and the
+production API router on the restricted database role. It generates ephemeral
+credentials in memory and checks cookie-admin and bearer list/detail reads,
+anonymous/forged denial, unrelated-route denial and token absence from logs.
+
+To check production routing, render the paired GitOps checkout's Oathkeeper
+chart (version 0.60.1) into a scratch file and pass its absolute path through
+`TADOKU_TEST_EMAIL_GATEWAY_RENDER`. The same test reads the rendered ConfigMaps
+and uses checksum-pinned Oathkeeper v25.4.0. Only upstream/provider addresses,
+listener ports and the signing key location change for loopback fixtures;
+matching, authenticators, mutators and logging remain from the render.
+It checks forwarded HTTPS on `tadoku.app` and a preview host, plus HTTP denial.
+Both binaries are fetched and checksum-verified by Bazel on cold machines.
+
+```sh
+helm template oathkeeper oathkeeper --repo https://k8s.ory.sh/helm/charts \
+  --version 0.60.1 --namespace tdk-prod-oathkeeper \
+  --values "$GITOPS_CHECKOUT/platform/oathkeeper/values.yaml" > "$SCRATCH/oathkeeper.yaml"
+TADOKU_TEST_EMAIL_GATEWAY_RENDER="$SCRATCH/oathkeeper.yaml" \
+  bazel test //services/tadoku-api/e2e:e2e_test \
+  --test_filter=TestEmailGatewayCookieAndBearer --cache_test_results=no --test_output=all
+```
+
+Use the disposable PostgreSQL and Valkey settings above. This local production
+configuration check deploys nothing and does not replace public branch-host
+verification after the rules are released.

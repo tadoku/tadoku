@@ -13,6 +13,26 @@
     handler: allow
   mutators:
     - handler: id_token
+- id: tadoku:email:api
+  upstream:
+    preserve_host: false
+    url: http://tadoku-cli-api.tdk-dev-oathkeeper.svc.cluster.local
+    strip_path: /api/internal
+  match:
+    url: http://<{tadoku.dev.lab,*.tadoku.dev.lab}>/api/internal/<{emails,emails/**}>
+    methods:
+      - GET
+  authenticators:
+    - handler: cookie_session
+    - handler: noop
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: id_token
+    - handler: header
+      config:
+        headers:
+          Authorization: '{{ if regexMatch "(?i)^Bearer tdk_at_" (.MatchContext.Header.Get "Authorization") }}{{ .MatchContext.Header.Get "Authorization" }}{{ else }}{{ .Header.Get "Authorization" }}{{ end }}'
 - id: tadoku:identity:api
   upstream:
     preserve_host: false

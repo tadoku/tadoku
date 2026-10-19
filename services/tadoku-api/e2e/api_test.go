@@ -21,6 +21,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/features/announcements"
 	featureaudit "github.com/tadoku/tadoku/services/tadoku-api/features/audit"
 	featureauthz "github.com/tadoku/tadoku/services/tadoku-api/features/authz"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/authz/tokens"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/contests"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/email"
 	featureflagsservice "github.com/tadoku/tadoku/services/tadoku-api/features/featureflags"
@@ -265,7 +266,9 @@ func newTestRouterWithLeaderboard(
 type routerOption func(*routerEndpoints)
 
 type routerEndpoints struct {
-	ketoWrite string
+	jwks       string
+	production *bool
+	ketoWrite  string
 }
 
 func withKetoWriteURL(url string) routerOption {
@@ -284,7 +287,7 @@ func newTestRouterWithLeaderboardService(
 	deployment tenant.Deployment,
 	options ...routerOption,
 ) (*transport.Router, *featureprofile.Service, *permissions.KetoService, error) {
-	endpoints := routerEndpoints{ketoWrite: ketoFixture.WriteURL()}
+	endpoints := routerEndpoints{ketoWrite: ketoFixture.WriteURL(), jwks: authenticationJWKS.URL}
 	for _, option := range options {
 		option(&endpoints)
 	}
@@ -338,7 +341,13 @@ func newTestRouterWithLeaderboardService(
 	scoringObserver := observability.NewScoringObserver(registry, logger, scoringEngineEnabled)
 	scoringService := scoring.NewService(scoringRepository, scoringEngineEnabled, scoringObserver)
 
+	production := true
+	if endpoints.production != nil {
+		production = *endpoints.production
+	}
 	application := app.New(app.Dependencies{
+		Tokens:        tokens.NewService(tokens.NewRepository(pool), production),
+		Deployment:    deployment,
 		Email:         email.NewService(email.NewRepository(pool), nil),
 		JobQueue:      jobQueue,
 		Announcements: announcementsService,
@@ -359,7 +368,7 @@ func newTestRouterWithLeaderboardService(
 
 	authenticate, err := transport.NewJWTAuthentication(
 		ctx,
-		authenticationJWKS.URL,
+		endpoints.jwks,
 		time.Second,
 		24*time.Hour,
 		"http://oathkeeper-api/",

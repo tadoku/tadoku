@@ -120,8 +120,8 @@ dev-cli asks Bazel which deployables changed relative to the merge base with
 every other service keeps using the base.
 
 - Auth-only or admin-only edits select only that app. Shared `packages/ui`
-  edits select the three legacy frontends. Webv3-only or shared `packages/paper-ui`
-  edits select Webv3.
+  edits select the three legacy frontends. Webv3-only edits select Webv3;
+  authv2-only edits select authv2. Shared `packages/paper-ui` edits select both.
 - Unknown paths conservatively select every deployable.
 - `--base <ref>` changes the comparison ref.
 - `--service <name>` adds a deployable to the affected set; it does not filter
@@ -161,6 +161,7 @@ dev status --owner alice
 dev url --owner alice '/'
 dev url --owner alice --host next.tadoku.dev.lab '/'
 dev url --owner alice --host account.tadoku.dev.lab '/login'
+dev url --owner alice --host authv2.tadoku.dev.lab '/login'
 dev url --owner alice --host admin.tadoku.dev.lab '/'
 dev logs --owner alice tadoku-api
 dev logs --owner alice tadoku-worker
@@ -173,11 +174,16 @@ navigation across app, account and admin on the same branch. Each branch has
 its own origin, so two owners can use one browser profile without selection
 leaking across tabs. A printed link does not create an overlay or prove readiness.
 
-- Base URLs are `https://tadoku.dev.lab`, `https://next.tadoku.dev.lab`, `https://account.tadoku.dev.lab` and
-  `https://admin.tadoku.dev.lab`.
+- Base URLs are `https://tadoku.dev.lab`, `https://next.tadoku.dev.lab`, `https://account.tadoku.dev.lab`,
+  `https://admin.tadoku.dev.lab` and `https://authv2.tadoku.dev.lab`.
 - Each service independently uses its healthy overlay or the base fallback.
 - Authentication is shared between base and branches. Kratos remains at
   `https://account.tadoku.dev.lab/kratos`; it is never routed to a frontend overlay.
+
+Authv2 has its own host family, `<route>.authv2.tadoku.dev.lab`, and uses the
+[Paper account skeleton](../frontend/authv2.md). Its server forwards the request
+cookie and branch selection to the identity session API. The API chooses v1
+or v2; an unavailable endpoint leaves a visible unavailable state.
 
 ### Routing headers
 
@@ -199,7 +205,7 @@ writes, verify `X-Dev-Selected` and the persisted tenant as well.
 ### How requests reach your overlay
 
 ```text
-browser → ingress-nginx → Envoy → webv2 / webv3 / auth / admin
+browser → ingress-nginx → Envoy → webv2 / webv3 / auth / authv2 / admin
                              → Oathkeeper → Envoy → Tadoku API
 ```
 

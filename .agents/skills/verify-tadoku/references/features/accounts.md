@@ -47,3 +47,22 @@ login when claiming a browser E2E.
 [Account pages](../../../../../frontend/apps/auth/pages/),
 [session navigation](../../../../../frontend/apps/webv2/app/ui/Navigation.tsx),
 [auth E2E](../../../../../frontend/apps/auth/e2e/account.spec.ts).
+
+## Authv2 skeleton
+
+Authv2 uses `/` and `/login` on `authv2.tadoku.dev.lab` or the matching
+`<route>.authv2.tadoku.dev.lab` branch. Read
+[Authv2](../../../../../docs/docs/frontend/authv2.md) and
+[its manual smoke instructions](../../../../../frontend/apps/authv2/e2e/README.md).
+
+- Obtain the link with `dev url --owner <owner> --host authv2.tadoku.dev.lab '/login'`.
+  Confirm the document's overlay `X-Dev-Backend` before claiming branch behavior.
+- A tenant selecting v2 shows the Paper skeleton and anonymous/signed-in state;
+  registration, recovery and settings are not available in this foundation.
+- A v1 session answer returns to the matching existing account host with the
+  path and query preserved. Session API failures show an unavailable message
+  and existing-account link; a missing endpoint must not crash the page.
+- Verify mobile containment and `/healthz` independently of API availability.
+  Cookie/branch forwarding can be checked with the opt-in local session fixture;
+  disclose that substituted upstream instead of claiming real login coverage.
+  The Playwright smoke is run by hand, never wired into CI.

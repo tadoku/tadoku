@@ -36,7 +36,7 @@ Each component runs in its own `tdk-dev-*` namespace:
 
 | Namespace | Contents |
 | --- | --- |
-| `tdk-dev-frontend-webv2`, `tdk-dev-frontend-webv3`, `tdk-dev-frontend-auth`, `tdk-dev-frontend-admin` | Webv2, Webv3, account and admin frontends |
+| `tdk-dev-frontend-webv2`, `tdk-dev-frontend-webv3`, `tdk-dev-frontend-auth`, `tdk-dev-frontend-authv2`, `tdk-dev-frontend-admin` | Webv2, Webv3, account, authv2 and admin frontends |
 | `tdk-dev-tadoku-api` | Tadoku API and the private asynchronous worker |
 | `tdk-dev-kratos`, `tdk-dev-keto`, `tdk-dev-oathkeeper` | Auth providers |
 | `tdk-dev-flipt` | Feature flags |
@@ -105,6 +105,12 @@ Canonical Webv3 requests use the shared Envoy Gateway through a Lab CA
 ingress. `/api/internal` uses Oathkeeper before the API, while page and asset
 requests use Webv3. Existing Tadoku subdomain admission and shared account
 cookies cover the preview and branch hosts.
+
+Authv2 follows the same Node 22 Nitro deployment, with `tadoku-cli-authv2`
+runtime configuration, Lab CA trust and API-independent `/healthz` probes. Its
+canonical ingress and gateway routes serve `authv2.tadoku.dev.lab` and remove
+client-supplied branch headers. Identity API requests pass through Oathkeeper.
+See [Authv2](../frontend/authv2.md) for session selection and unavailable states.
 
 ## Asynchronous worker ownership
 

@@ -144,5 +144,5 @@ func formatAccountCreatedAt(value time.Time) string {
 	if value.IsZero() {
 		return ""
 	}
-	return value.Format("2006-01-02T15:04:05Z")
+	return value.UTC().Format("2006-01-02T15:04:05Z")
 }

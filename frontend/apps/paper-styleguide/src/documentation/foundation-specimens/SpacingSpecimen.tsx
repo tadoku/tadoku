@@ -1,10 +1,9 @@
-import { usePaperForm, Button } from 'paper-ui'
-import { useState } from 'react'
-import CompactEntryExample from '../foundation-examples/CompactEntryExample'
-import CompactEntryExampleSource from '../foundation-examples/CompactEntryExample.tsx?raw'
 import ContainerSpacingExample from '../foundation-examples/ContainerSpacingExample'
 import ContainerSpacingExampleSource from '../foundation-examples/ContainerSpacingExample.tsx?raw'
-
+import CompactEntryExample from '../foundation-examples/CompactEntryExample'
+import CompactEntryExampleSource from '../foundation-examples/CompactEntryExample.tsx?raw'
+import { useState } from 'react'
+import { usePaperForm, Button } from 'paper-ui'
 import { GuideTable } from '../FoundationGuide'
 import { FoundationCanvas, FoundationExample } from './FoundationPreview'
 

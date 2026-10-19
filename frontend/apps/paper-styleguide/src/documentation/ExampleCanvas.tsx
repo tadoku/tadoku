@@ -1,9 +1,13 @@
 import { useStore } from '@tanstack/react-form'
-import { usePaperForm } from 'paper-ui'
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-
-import type { CatalogFixture, CatalogFixtureViewport, FixtureDensity, FixtureTheme } from 'paper-ui/catalog'
+import { usePaperForm } from 'paper-ui'
+import type {
+  CatalogFixture,
+  CatalogFixtureViewport,
+  FixtureDensity,
+  FixtureTheme,
+} from 'paper-ui/catalog'
 import type { PaperDensity, PaperTheme } from '../app/displayPreferences'
 
 const FALLBACK_VIEWPORTS = [

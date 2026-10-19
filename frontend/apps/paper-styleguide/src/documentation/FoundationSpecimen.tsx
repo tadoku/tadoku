@@ -1,18 +1,17 @@
 import { useStore } from '@tanstack/react-form'
 import { usePaperForm } from 'paper-ui'
-
 import type { CatalogDocument } from 'paper-ui/catalog'
-import { BrandSpecimen } from './foundation-specimens/BrandSpecimen'
+import { PrinciplesSpecimen } from './foundation-specimens/PrinciplesSpecimen'
 import { ColorSpecimen } from './foundation-specimens/ColorSpecimen'
+import { TypographySpecimen } from './foundation-specimens/TypographySpecimen'
+import { SpacingSpecimen } from './foundation-specimens/SpacingSpecimen'
+import { LayoutSpecimen } from './foundation-specimens/LayoutSpecimen'
+import { ShapeSpecimen } from './foundation-specimens/ShapeSpecimen'
 import { ElevationSpecimen } from './foundation-specimens/ElevationSpecimen'
 import { IconographySpecimen } from './foundation-specimens/IconographySpecimen'
-import { LayoutSpecimen } from './foundation-specimens/LayoutSpecimen'
 import { MotionSpecimen } from './foundation-specimens/MotionSpecimen'
+import { BrandSpecimen } from './foundation-specimens/BrandSpecimen'
 import { PreviewSettings } from './foundation-specimens/preview-settings'
-import { PrinciplesSpecimen } from './foundation-specimens/PrinciplesSpecimen'
-import { ShapeSpecimen } from './foundation-specimens/ShapeSpecimen'
-import { SpacingSpecimen } from './foundation-specimens/SpacingSpecimen'
-import { TypographySpecimen } from './foundation-specimens/TypographySpecimen'
 
 const specimens: Readonly<Record<string, () => JSX.Element>> = {
   'foundation.principles': PrinciplesSpecimen, 'foundation.color': ColorSpecimen,

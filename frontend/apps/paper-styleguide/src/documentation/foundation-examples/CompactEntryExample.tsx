@@ -1,5 +1,5 @@
-import { usePaperForm, Button } from 'paper-ui'
 import { useState } from 'react'
+import { usePaperForm, Button } from 'paper-ui'
 
 export default function CompactEntry() {
   const methods = usePaperForm({ defaultValues: { work: 'コンビニ人間' }, onSubmit: () => setSaved(true) })

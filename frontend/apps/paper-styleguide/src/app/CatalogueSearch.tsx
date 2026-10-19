@@ -2,8 +2,12 @@ import { useStore } from '@tanstack/react-form'
 import { Button, Modal, usePaperForm } from 'paper-ui'
 import type { CatalogDocument } from 'paper-ui/catalog'
 import { MagnifyingGlassIcon, iconClassName } from 'paper-ui/icons'
-import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
-
+import {
+  useEffect,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+} from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { searchCatalog } from './catalogue'
 

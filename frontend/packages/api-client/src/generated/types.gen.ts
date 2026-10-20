@@ -2778,6 +2778,10 @@ export type IdentityRegistrationCreateErrors = {
      */
     409: IdentityErrorResponse;
     /**
+     * Request rejected
+     */
+    429: IdentityErrorResponse;
+    /**
      * Not implemented
      */
     501: IdentityErrorResponse;

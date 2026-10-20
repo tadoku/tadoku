@@ -8,8 +8,6 @@ import (
 const lateControlID = "ffffffff-ffff-4fff-8fff-ffffffffffff"
 const ideographicControlID = "33333333-3333-4333-8333-333333333333"
 
-// Each address normalizes to a distinct valid login key, so the importer admits it, but recovery and
-// email-change notices address the stored value and the email writer rejects it as a recipient.
 var incompatibleRecipients = []struct{ id, email string }{
 	{"aaaaaaaa-aaaa-4aaa-8aaa-000000000001", "\vvertical@example.test"},
 	{"aaaaaaaa-aaaa-4aaa-8aaa-000000000002", " space@example.test"},

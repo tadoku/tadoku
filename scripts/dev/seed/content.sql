@@ -50,12 +50,7 @@ values
     now(),
     now()
   )
-on conflict (tenant, "namespace", slug) do update
-set
-  current_content_id = excluded.current_content_id,
-  published_at = excluded.published_at,
-  updated_at = now(),
-  deleted_at = null;
+on conflict (tenant, "namespace", slug) do nothing;
 
 insert into pages_content (
   tenant,
@@ -74,11 +69,7 @@ values
     '<p>This page is seeded by the Tadoku dev environment.</p>',
     now()
   )
-on conflict (id) do update
-set
-  page_id = excluded.page_id,
-  title = excluded.title,
-  html = excluded.html;
+on conflict (id) do nothing;
 
 insert into posts (
   tenant,
@@ -101,12 +92,7 @@ values
     now(),
     now()
   )
-on conflict (tenant, "namespace", slug) do update
-set
-  current_content_id = excluded.current_content_id,
-  published_at = excluded.published_at,
-  updated_at = now(),
-  deleted_at = null;
+on conflict (tenant, "namespace", slug) do nothing;
 
 insert into posts_content (
   tenant,
@@ -125,11 +111,7 @@ values
     'This seeded post gives the dev site a small content dataset.',
     now()
   )
-on conflict (id) do update
-set
-  post_id = excluded.post_id,
-  title = excluded.title,
-  content = excluded.content;
+on conflict (id) do nothing;
 
 insert into announcements (
   tenant,
@@ -158,15 +140,6 @@ values
     now(),
     now()
   )
-on conflict (id) do update
-set
-  title = excluded.title,
-  content = excluded.content,
-  style = excluded.style,
-  href = excluded.href,
-  starts_at = excluded.starts_at,
-  ends_at = excluded.ends_at,
-  updated_at = now(),
-  deleted_at = null;
+on conflict (id) do nothing;
 
 commit;

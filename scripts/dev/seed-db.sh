@@ -210,9 +210,14 @@ where ic.identity_id = i.id
   and ic.identity_credential_type_id = ict.id
   and ict.name = 'password'
   and i.traits->>'email' = :'seed_email'
-  and i.metadata_admin->>'seeded_by' = 'tadoku-dev-seed';
+  and i.metadata_admin->>'seeded_by' = 'tadoku-dev-seed'
+  and not coalesce(
+    ic.config->>'hashed_password' like '$2a$%'
+      and crypt(:'seed_password', ic.config->>'hashed_password') = ic.config->>'hashed_password',
+    false
+  );
 SQL
-  echo "refreshed password for seeded identity ${email}"
+  echo "checked password for seeded identity ${email}"
 }
 
 seed_keto_admin() {
@@ -228,15 +233,18 @@ seed_keto_admin() {
     --image=python:3.12-alpine \
     --env="SEED_SUBJECT_ID=${subject_id}" \
     --env="KETO_WRITE_URL=${TADOKU_KETO_WRITE_URL:-http://keto-write.tdk-dev-keto:4467}" \
+    --env="KETO_READ_URL=${TADOKU_KETO_READ_URL:-http://keto-read.tdk-dev-keto:4466}" \
     -- python - <<'PY'
 import json
 import os
 import sys
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 
 keto_write = os.getenv("KETO_WRITE_URL", "http://keto-write:4467").rstrip("/")
+keto_read = os.getenv("KETO_READ_URL", "http://keto-read:4466").rstrip("/")
 subject_id = os.environ["SEED_SUBJECT_ID"]
 payload = {
     "namespace": os.getenv("KETO_NAMESPACE", "app"),
@@ -248,6 +256,18 @@ payload = {
 deadline = time.time() + 180
 last_error = None
 while time.time() < deadline:
+    try:
+        with urllib.request.urlopen(
+            f"{keto_read}/relation-tuples?{urllib.parse.urlencode(payload)}",
+            timeout=10,
+        ) as resp:
+            if json.load(resp).get("relation_tuples"):
+                print(f"keto admin already seeded for {subject_id}")
+                sys.exit(0)
+    except Exception as exc:
+        last_error = exc
+        time.sleep(2)
+        continue
     data = json.dumps(payload).encode("utf-8")
     req = urllib.request.Request(
         f"{keto_write}/admin/relation-tuples",

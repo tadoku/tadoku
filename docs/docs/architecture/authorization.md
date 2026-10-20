@@ -262,14 +262,16 @@ Application errors are `services/tadoku-api/internal/errx/` kinds, mapped in
 Run `make dev-seed` (`scripts/dev/seed-db.sh`) once Kratos and Keto are ready. It
 only runs against the `homelab-talos-dev` Kubernetes context and is safe to re-run.
 
-- Creates or refreshes two Kratos identities marked with
+- Creates two Kratos identities marked with
   `metadata_admin.seeded_by=tadoku-dev-seed`: an administrator
   (`TADOKU_DEV_ADMIN_EMAIL`, default `dev@tadoku.app`) and a reader
   (`TADOKU_DEV_READER_EMAIL`, default `reader@tadoku.app`). Passwords come from
-  `TADOKU_DEV_ADMIN_PASSWORD` and `TADOKU_DEV_READER_PASSWORD`. An existing
+  `TADOKU_DEV_ADMIN_PASSWORD` and `TADOKU_DEV_READER_PASSWORD`; a marked
+  identity's password is reset only when it no longer matches. An existing
   identity with the same email but no marker is never modified.
 - Writes `app:tadoku#admins@<administrator identity ID>` through the Keto write
-  API (`http://keto-write.tdk-dev-keto:4467`).
+  API (`http://keto-write.tdk-dev-keto:4467`) unless the read API already lists
+  it.
 - Loads the application seed data from `scripts/dev/seed/`.
 
 See [Development data](../develop/development-data.md) for branch seeding and

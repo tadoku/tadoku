@@ -26,7 +26,9 @@ the business write, email and queued work together.
 The writer rejects unknown templates, missing, empty or unexpected parameters,
 parameters over 4096 bytes, invalid addresses and recovery links outside the
 Tadoku app host allowlist. Addresses are bare mailboxes, without display names
-or header line breaks. Recovery links require HTTPS and exclude credentials
+or header line breaks, that `net/mail` reads back unchanged and that use at most
+320 bytes. `domain/mail.ValidAddress` holds this rule; the account importer
+applies it to every stored address it would import. Recovery links require HTTPS and exclude credentials
 and explicit ports. The allowlist covers the main, account, admin and authv2
 hosts, preview hosts and development branch equivalents.
 

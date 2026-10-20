@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/tadoku/tadoku/services/tadoku-api/domain/mail"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -84,6 +85,7 @@ func readSource(ctx context.Context, pool *pgxpool.Pool, expect int, output io.W
 	defer rows.Close()
 
 	var result []sourceIdentity
+	var incompatible []uuid.UUID
 	seenIDs := make(map[uuid.UUID]bool)
 	seenEmails := make(map[string]bool)
 	for rows.Next() {
@@ -124,6 +126,9 @@ func readSource(ctx context.Context, pool *pgxpool.Pool, expect int, output io.W
 			return nil, fmt.Errorf("preflight user_id=%s field=email_normalized duplicate", record.id)
 		}
 		seenEmails[record.normalizedEmail] = true
+		if !mail.ValidAddress(record.email) {
+			incompatible = append(incompatible, record.id)
+		}
 
 		var password struct {
 			Hash          string `json:"hashed_password"`
@@ -148,6 +153,15 @@ func readSource(ctx context.Context, pool *pgxpool.Pool, expect int, output io.W
 	}
 	if len(result) != identities {
 		return nil, errors.New("preflight password_credentials: source snapshot count mismatch")
+	}
+	for _, id := range incompatible {
+		_, err := fmt.Fprintf(output, "preflight user_id=%s field=email reason=recipient_rule\n", id)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if len(incompatible) > 0 {
+		return nil, fmt.Errorf("preflight email: %d stored addresses fail the email recipient rule", len(incompatible))
 	}
 	if err := tx.Commit(ctx); err != nil {
 		return nil, databaseError("source snapshot", err)

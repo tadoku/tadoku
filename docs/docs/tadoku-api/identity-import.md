@@ -1,6 +1,6 @@
 ---
 title: Import Kratos accounts
-description: Configure, dry-run and validate the guarded Kratos-to-account import command, its transactional boundaries and the operational holds on shared environments.
+description: Configure, dry-run and validate the guarded Kratos-to-account import command, its recipient compatibility preflight, transactional boundaries and the operational holds on shared environments.
 ---
 
 # Import Kratos accounts
@@ -114,6 +114,8 @@ Before any target writes, preflight requires:
   cost and alphabet; no password migration hook.
 - Valid emails with no duplicates after the same normalization used by local
   accounts, plus display names of 2–32 Unicode characters with visible content.
+- Every stored email passes the email writer's recipient rule, described in
+  [Recipient compatibility](#recipient-compatibility).
 - Valid source UUIDs, states and timestamps.
 - Existing accounts that match the source and users that are not deleted or
   deletion-locked. Legacy users without accounts may have a different name or
@@ -125,6 +127,48 @@ There is no hardcoded historical identity count. Review the current
 `source_identities` count and all proposed changes. A conflict stops the command
 with a nonzero exit code, UUID and field name. Investigate it without exposing
 values; do not delete or rewrite data to force a passing import.
+
+## Recipient compatibility
+
+The import keeps each Kratos email trait exactly as written and derives the
+normalized login key from it. Login looks up that key, and identity responses
+serialize any stored address. Recovery mail and email-change notices, however,
+are addressed to the stored email, and the email writer rejects a recipient
+that `net/mail` does not read back unchanged, that exceeds 320 bytes or that
+contains CR or LF. An account with such an address could sign in but could not
+recover access or change its email.
+
+Preflight therefore applies that same rule, `domain/mail.ValidAddress`, to
+every stored email in the source snapshot. Examples it refuses are a leading
+vertical tab, a leading or trailing ASCII space, tab or line break, and
+addresses longer than 320 bytes whose normalized key fits, such as a Kelvin
+sign or dotted capital I near the limit or a long ideographic-space prefix.
+Letter case and a short ideographic-space prefix that `net/mail` reads
+unchanged remain importable with their stored bytes.
+
+The check scans the whole snapshot. For each failing identity, in UUID order,
+the command prints one line and then a count, and exits nonzero:
+
+```text
+preflight user_id=<uuid> field=email reason=recipient_rule
+preflight email: <n> stored addresses fail the email recipient rule
+```
+
+The lines never include the address or any other source value. Other
+preflight failures still stop at the first identity, so the list is complete
+once the snapshot passes them. The refusal happens before the target
+transaction starts, in dry run and apply alike, so no target row is locked,
+read or written.
+No identity is skipped and no stored address is trimmed, lowercased or
+otherwise rewritten.
+
+This is containment for new imports only. A refused snapshot stays blocked
+until a person decides, outside this command, how each listed account's
+address and access are reconciled, for example through a separately approved
+source correction or delivery-address policy. The check does not repair
+accounts that are already stored, does not prove that mail reaches anyone, says
+nothing about a population it has not read, and does not complete the
+migration.
 
 ## Apply and validate on disposable databases
 
@@ -202,8 +246,12 @@ bazel test //services/tadoku-api/cmd/tadoku-identity-import:tadoku-identity-impo
 ```
 
 Tests execute the built command as a subprocess with explicit fixture-only
-configuration. Each scenario owns separate disposable source and target
-databases; the source uses the recorded import-facing schema and the target
-uses all current Tadoku migrations. No provider login, shared service, dev-cli
-overlay or deployment is part of this verification. Retain the tested revision,
-commands and Bazel test report outside source commits.
+configuration; operation-guard tests call the identity operation directly with
+the restricted fixture pools. The recipient compatibility test counts attempted
+target row writes with a sequence-backed trigger, which a rollback does not
+rewind, so a refusal that wrote and rolled back still fails. Each scenario owns
+separate disposable source and target databases; the source uses the recorded
+import-facing schema and the target uses all current Tadoku migrations. No
+provider login, shared service, dev-cli overlay or deployment is part of this
+verification. Retain the tested revision, commands and Bazel test report
+outside source commits.

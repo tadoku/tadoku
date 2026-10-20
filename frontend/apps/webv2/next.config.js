@@ -18,7 +18,7 @@ const nextConfig = {
     apiEndpoint:
       process.env.NEXT_PUBLIC_API_ENDPOINT ?? 'https://tadoku.app/api/internal',
   },
-  transpilePackages: ['ui'],
+  transpilePackages: ['ui', 'api-client'],
   async redirects() {
     return [
       {

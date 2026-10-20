@@ -69,17 +69,31 @@ export function isOperation(name: string): name is Operation {
   return Object.hasOwn(operations, name)
 }
 
-/** Identity API error codes, plus `unauthorized` for a 401 without one. */
-export type Code = NonNullable<IdentityErrorResponse['code']> | 'unauthorized'
+/**
+ * Identity API error codes, plus `unauthorized` for a 401 without one and `unchanged_email` for a Settings email
+ * submission that sent nothing because the address wasn't edited.
+ */
+export type Code = NonNullable<IdentityErrorResponse['code']> | 'unauthorized' | 'unchanged_email'
 
 export function isCode(value: unknown): value is Code {
-  return value === 'unauthorized' || (value !== undefined && zIdentityErrorResponse.shape.code.safeParse(value).success)
+  return value === 'unauthorized' || value === 'unchanged_email'
+    || (value !== undefined && zIdentityErrorResponse.shape.code.safeParse(value).success)
+}
+
+/** An address as an email input shows it: browsers drop its line breaks and surrounding ASCII whitespace. */
+function shownEmail(address: string) {
+  return address.replace(/[\r\n]/g, '').replace(/^[\t\f ]+|[\t\f ]+$/g, '')
 }
 
 export type Result = { ok: true; response: Response } | { ok: false; code: Code }
 
 /** Sends a form's values through its identity operation and reads the answer, failing closed on anything unexpected. */
 export async function sendIdentity(operation: Operation, transport: Transport, values: Values): Promise<Result> {
+  // The email form also carries the stored address, which its input can't always hold unchanged. Sending the shown
+  // address would ask the API to change an address the visitor never edited.
+  if (operation === 'email' && values.current_email !== undefined && values.email === shownEmail(values.current_email)) {
+    return { ok: false, code: 'unchanged_email' }
+  }
   const { error, response } = await operations[operation].send({
     ...transport,
     cache: 'no-store',
@@ -127,6 +141,8 @@ function describe(code: Code, operation: Operation, values?: Record<string, stri
       return { field: 'display_name', message: displayNameMessage }
     case 'invalid_email':
       return { field: 'email', message: 'Enter a valid email address.' }
+    case 'unchanged_email':
+      return { field: 'email', message: 'This is already your email address. Enter a different one to change it.' }
     case 'invalid_password':
       return {
         field: 'password',

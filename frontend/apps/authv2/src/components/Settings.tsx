@@ -75,7 +75,7 @@ function EmailForm({ search, account, next, reauthenticate }: SectionProps) {
   const { form, formProps, fieldId, pending, problem, submitted, succeeded } = useAccountForm({
     operation: 'email',
     id: 'email',
-    defaultValues: { email: account.email },
+    defaultValues: { email: account.email, current_email: account.email },
     nativeError: search.form === 'email' ? search.error : undefined,
     onSuccess: () => router.invalidate(),
   })
@@ -90,6 +90,7 @@ function EmailForm({ search, account, next, reauthenticate }: SectionProps) {
         <form.Form {...formProps} className="account-form">
           <FormProblem problem={problem} reauthenticate={reauthenticate} />
           <ReturnTo value={next} />
+          <input type="hidden" name="current_email" value={account.email} />
           <form.AppField name="email" validators={{ onChange: ({ value }) => emailProblem(value) }}>
             {field => <field.Input id={fieldId('email')} label="Email" type="email" autoComplete="email" required maxLength={320} />}
           </form.AppField>

@@ -1,6 +1,7 @@
 import { AutocompleteMultiInput, Input, Checkbox, TextArea } from 'ui'
 import { FormProvider, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { zImmersionActivity, zImmersionLanguage } from 'api-client'
 import { z } from 'zod'
 import { date } from '@app/common/regex'
 import { ContestConfigurationOptions, useCreateContest } from './contest-api'
@@ -20,19 +21,9 @@ export const ContestFormSchema = z
       .optional(),
     private: z.boolean(),
     official: z.boolean().optional().default(false),
-    language_code_allow_list: z.array(
-      z.object({
-        code: z.string(),
-        name: z.string(),
-      }),
-    ),
+    language_code_allow_list: z.array(zImmersionLanguage),
     activity_type_id_allow_list: z
-      .array(
-        z.object({
-          id: z.number(),
-          name: z.string(),
-        }),
-      )
+      .array(zImmersionActivity)
       .min(1, 'Need to select at least one activity'),
   })
   .refine(

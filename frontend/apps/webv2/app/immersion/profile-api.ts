@@ -1,11 +1,24 @@
-import { z } from 'zod'
-import { browserAppUrls } from 'ui/app-urls'
+import {
+  immersionProfileFindByUserId,
+  immersionProfileListLogs,
+  immersionProfileYearlyActivityByUserId,
+  immersionProfileYearlyActivitySplitByUserId,
+  immersionProfileYearlyContestRegistrationsByUserId,
+  immersionProfileYearlyScoresByUserId,
+  type ImmersionActivitySplit,
+  type ImmersionActivitySplitScore,
+  type ImmersionProfileScores,
+  type ImmersionUserActivity,
+  type ImmersionUserActivityScore,
+  type ImmersionUserProfile,
+} from 'api-client'
+import { apiData, browserApi } from 'ui/api'
 import { useQuery } from '@tanstack/react-query'
-import { Logs } from '@app/immersion/api'
-import { ContestRegistrationsView } from '@app/immersion/contest-api'
-import { Score } from '@app/immersion/scoring-api'
-
-const root = () => `${browserAppUrls().apiEndpoint}/immersion`
+import type { Logs } from '@app/immersion/api'
+import {
+  withRegistrationIds,
+  type ContestRegistrationsView,
+} from '@app/immersion/contest-api'
 
 export const useProfileLogs = (
   opts: {
@@ -27,35 +40,23 @@ export const useProfileLogs = (
       opts.includeDeleted,
       opts.date,
     ],
-    async (): Promise<Logs> => {
-      const params = new URLSearchParams({
-        page_size: opts.pageSize.toString(),
-        page: (opts.page - 1).toString(),
-        include_deleted: opts.includeDeleted.toString(),
-      })
-      if (opts.date) {
-        params.set('date', opts.date)
-      }
-      const response = await fetch(
-        `${root()}/users/${opts.userId}/logs?${params}`,
-      )
-
-      if (response.status !== 200) {
-        throw new Error(response.status.toString())
-      }
-
-      return Logs.parse(await response.json())
-    },
+    async (): Promise<Logs> =>
+      apiData(
+        immersionProfileListLogs({
+          ...browserApi(),
+          path: { user_id: opts.userId },
+          query: {
+            page_size: opts.pageSize,
+            page: opts.page - 1,
+            include_deleted: opts.includeDeleted,
+            ...(opts.date ? { date: opts.date } : {}),
+          },
+        }),
+      ),
     options,
   )
 
-const UserProfile = z.object({
-  id: z.string(),
-  display_name: z.string(),
-  created_at: z.string(),
-})
-
-export type UserProfile = z.infer<typeof UserProfile>
+export type UserProfile = ImmersionUserProfile
 
 export const useUserProfile = (
   opts: {
@@ -65,31 +66,18 @@ export const useUserProfile = (
 ) =>
   useQuery(
     ['users', opts.userId, 'profile'],
-    async (): Promise<UserProfile> => {
-      const response = await fetch(`${root()}/users/${opts.userId}/profile`)
-
-      if (response.status !== 200) {
-        throw new Error(response.status.toString())
-      }
-
-      return UserProfile.parse(await response.json())
-    },
+    async (): Promise<UserProfile> =>
+      apiData(
+        immersionProfileFindByUserId({
+          ...browserApi(),
+          path: { userId: opts.userId },
+        }),
+      ),
     options,
   )
 
-const UserActivityScore = z.object({
-  date: z.string(),
-  score: z.number(),
-})
-
-export type UserActivityScore = z.infer<typeof UserActivityScore>
-
-const UserActivity = z.object({
-  total_updates: z.number(),
-  scores: z.array(UserActivityScore),
-})
-
-export type UserActivity = z.infer<typeof UserActivity>
+export type UserActivityScore = ImmersionUserActivityScore
+export type UserActivity = ImmersionUserActivity
 
 export const useUserYearlyActivity = (
   opts: {
@@ -100,26 +88,17 @@ export const useUserYearlyActivity = (
 ) =>
   useQuery(
     ['users', opts.userId, 'yearly-activity', opts.year],
-    async (): Promise<UserActivity> => {
-      const response = await fetch(
-        `${root()}/users/${opts.userId}/activity/${opts.year}`,
-      )
-
-      if (response.status !== 200) {
-        throw new Error(response.status.toString())
-      }
-
-      return UserActivity.parse(await response.json())
-    },
+    async (): Promise<UserActivity> =>
+      apiData(
+        immersionProfileYearlyActivityByUserId({
+          ...browserApi(),
+          path: { userId: opts.userId, year: Number(opts.year) },
+        }),
+      ),
     options,
   )
 
-const ProfileScores = z.object({
-  overall_score: z.number(),
-  scores: z.array(Score),
-})
-
-export type ProfileScores = z.infer<typeof ProfileScores>
+export type ProfileScores = ImmersionProfileScores
 
 export const useProfileScores = (
   opts: {
@@ -130,17 +109,13 @@ export const useProfileScores = (
 ) =>
   useQuery(
     ['users', opts.userId, 'scores', opts.year],
-    async (): Promise<ProfileScores> => {
-      const response = await fetch(
-        `${root()}/users/${opts.userId}/scores/${opts.year}`,
-      )
-
-      if (response.status !== 200) {
-        throw new Error(response.status.toString())
-      }
-
-      return ProfileScores.parse(await response.json())
-    },
+    async (): Promise<ProfileScores> =>
+      apiData(
+        immersionProfileYearlyScoresByUserId({
+          ...browserApi(),
+          path: { userId: opts.userId, year: Number(opts.year) },
+        }),
+      ),
     options,
   )
 
@@ -163,39 +138,21 @@ export const useYearlyContestRegistrations = (
       opts.year,
       { pageSize: opts.pageSize, page: opts.page },
     ],
-    async (): Promise<ContestRegistrationsView> => {
-      const params = {
-        page_size: opts.pageSize.toString(),
-        page: (opts.page - 1).toString(),
-      }
-      const response = await fetch(
-        `${root()}/users/${opts.userId}/contest-registrations/${
-          opts.year
-        }?${new URLSearchParams(params)}`,
-      )
-
-      if (response.status !== 200) {
-        throw new Error(response.status.toString())
-      }
-
-      return ContestRegistrationsView.parse(await response.json())
-    },
+    async (): Promise<ContestRegistrationsView> =>
+      withRegistrationIds(
+        await apiData(
+          immersionProfileYearlyContestRegistrationsByUserId({
+            ...browserApi(),
+            path: { userId: opts.userId, year: Number(opts.year) },
+            query: { page_size: opts.pageSize, page: opts.page - 1 },
+          }),
+        ),
+      ),
     options,
   )
 
-const ActivitySplitScore = z.object({
-  activity_id: z.number(),
-  activity_name: z.string(),
-  score: z.number(),
-})
-
-export type ActivitySplitScore = z.infer<typeof ActivitySplitScore>
-
-const ActivitySplit = z.object({
-  activities: z.array(ActivitySplitScore),
-})
-
-export type ActivitySplit = z.infer<typeof ActivitySplit>
+export type ActivitySplitScore = ImmersionActivitySplitScore
+export type ActivitySplit = ImmersionActivitySplit
 
 export const useUserYearlyActivitySplit = (
   opts: {
@@ -206,16 +163,12 @@ export const useUserYearlyActivitySplit = (
 ) =>
   useQuery(
     ['users', opts.userId, 'activity-split', opts.year],
-    async (): Promise<ActivitySplit> => {
-      const response = await fetch(
-        `${root()}/users/${opts.userId}/activity-split/${opts.year}`,
-      )
-
-      if (response.status !== 200) {
-        throw new Error(response.status.toString())
-      }
-
-      return ActivitySplit.parse(await response.json())
-    },
+    async (): Promise<ActivitySplit> =>
+      apiData(
+        immersionProfileYearlyActivitySplitByUserId({
+          ...browserApi(),
+          path: { userId: opts.userId, year: Number(opts.year) },
+        }),
+      ),
     options,
   )

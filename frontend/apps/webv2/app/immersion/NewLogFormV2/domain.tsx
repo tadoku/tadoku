@@ -1,5 +1,6 @@
+import { zImmersionActivity, zImmersionUnit } from 'api-client'
 import { z } from 'zod'
-import { Activity, Unit } from '@app/immersion/api'
+import { Unit } from '@app/immersion/api'
 import { filterUnits as filterLegacyUnits } from '@app/immersion/NewLogForm/domain'
 
 const legacyReadingUnitKeys = new Set([
@@ -38,8 +39,8 @@ export const NewLogFormV2Schema = z
     amountValue: optionalNumber,
     amountUnit: z.string().optional(),
     durationMinutes: optionalPositiveNumber,
-    allUnits: z.array(Unit),
-    allActivities: z.array(Activity),
+    allUnits: z.array(zImmersionUnit),
+    allActivities: z.array(zImmersionActivity),
     tags: z.array(z.string().max(50)).max(10, 'Maximum 10 tags allowed'),
     description: z
       .string()

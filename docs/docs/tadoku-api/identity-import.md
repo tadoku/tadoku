@@ -54,7 +54,14 @@ join through `identity_credentials.identity_credential_type_id` to
 `identity_credentials.config.hashed_password`, not an identity trait. See the
 upstream [credential model](https://github.com/ory/kratos/blob/v26.2.0/identity/credentials.go)
 and [password configuration](https://github.com/ory/kratos/blob/v26.2.0/identity/credentials_password.go).
-The CLI tests create this schema with the actual pinned Kratos migrator.
+The CLI tests use the four import-facing tables recorded in
+`services/tadoku-api/cmd/tadoku-identity-import/testdata/kratos-source.sql`,
+derived from the [pinned PostgreSQL migrations](https://github.com/ory/kratos/tree/v26.2.0/persistence/sql/migrations/sql).
+The fixture retains their column types, credential types and cascading foreign
+keys. It omits unrelated tables and indexes. These tests exercise the real SQL
+reader and command against PostgreSQL; they do not execute Kratos or validate
+its migrator or a deployed source schema. Confirm the source schema separately
+before an authorized import.
 
 The identity feature owns the source snapshot, validation and target operation;
 the command owns configuration and pool lifetimes. Target reads and writes use
@@ -196,7 +203,7 @@ bazel test //services/tadoku-api/cmd/tadoku-identity-import:tadoku-identity-impo
 
 Tests execute the built command as a subprocess with explicit fixture-only
 configuration. Each scenario owns separate disposable source and target
-databases; the source is initialized by the real Kratos migrator and the target
+databases; the source uses the recorded import-facing schema and the target
 uses all current Tadoku migrations. No provider login, shared service, dev-cli
 overlay or deployment is part of this verification. Retain the tested revision,
 commands and Bazel test report outside source commits.

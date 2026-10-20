@@ -26,10 +26,8 @@ go_test(
         "import_guards_test.go",
         "import_test.go",
     ],
-    data = [
-        ":tadoku-identity-import",
-        "@kratos_v26_2_0//:kratos",
-    ],
+    data = [":tadoku-identity-import"],
+    embedsrcs = ["testdata/kratos-source.sql"],
     env_inherit = ["TADOKU_TEST_POSTGRES_URL"],
     tags = [
         "no-cache",

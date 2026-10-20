@@ -2,13 +2,17 @@ load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "tenantlifecycle",
-    srcs = ["lifecycle.go"],
+    srcs = [
+        "development_accounts.go",
+        "lifecycle.go",
+    ],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/app/tenantlifecycle",
     visibility = [
         "//services/tadoku-api/cmd/tadoku-tenant:__pkg__",
         "//services/tadoku-api/e2e:__pkg__",
     ],
     deps = [
+        "//services/tadoku-api/features/identity",
         "//services/tadoku-api/features/jobqueue",
         "//services/tadoku-api/features/leaderboard",
         "//services/tadoku-api/generated/sqlc/tenantlifecycle",

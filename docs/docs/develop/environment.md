@@ -85,8 +85,9 @@ test routing or login.
 ## Start a branch
 
 Create a feature branch and make your service edits before starting the loop.
-If the shared fixture accounts are missing, run `make dev-seed` first (see
-[Seed data](./development-data.md#seed-data)).
+If the shared fixture accounts are missing, ask the operator to run `make dev-seed`
+first. This changes shared identities and base data; coordinate it with the other
+developers (see [Seed data](./development-data.md#seed-data)).
 
 ```sh
 dev up --owner alice

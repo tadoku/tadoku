@@ -19,18 +19,20 @@ webv2 covers logging, official and user-created contests (including registration
 - Next.js 13 Pages Router. Routes live in `pages/`, and feature code lives in `app/`, imported as `@app/*`. The `app/` directory is not the Next.js App Router.
 - React Query 3 hooks in each feature's `api.ts` call Tadoku API with `fetch`, and Zod parses every response. There is no generated client.
 - The API contract is `services/tadoku-api/spec/openapi.yaml` (see the [API reference](../api/index.md)). webv2 uses its `immersion`, `content` and `authz` operations.
-- Sessions come from Ory Kratos through `@ory/kratos-client` and are held in Jotai.
+- Sessions and tenant account-app selection come from `GET /identity/session` and are held in Jotai. Login, registration and settings links select the v1 account host or authv2 from that response; logout posts to `POST /identity/logout`.
 - Forms use react-hook-form with `@hookform/resolvers` for Zod. The app also uses Luxon for dates, Chart.js for charts, Tailwind CSS, and the legacy `ui` components.
 - Tests run on Vitest with jsdom and Testing Library.
 
 ## Configuration
 
-`next.config.js` maps the `NEXT_PUBLIC_*` variables to `publicRuntimeConfig`. These cover the API endpoint, the Kratos endpoints, the auth, admin and home URLs, and cookie settings. `NEXT_SERVER_API_ENDPOINT` overrides the API endpoint for server-side requests. The defaults point at the public tadoku.app hosts, and the development stack sets them for `*.tadoku.dev.lab`.
+`next.config.js` maps the `NEXT_PUBLIC_*` variables to `publicRuntimeConfig`. These cover the API endpoint and the auth, authv2, admin and home URLs. `NEXT_SERVER_API_ENDPOINT` overrides the API endpoint for server-side requests. The defaults point at the public tadoku.app hosts, and the development stack sets them for `*.tadoku.dev.lab`.
 
 `frontend/packages/ui/app-urls.tsx` resolves sibling URLs and the public API
 endpoint per host. SSR supplies those URLs through its provider; browser API
-calls resolve them at call time. Internal server API endpoints and the shared
-Kratos endpoint remain on their configured hosts.
+calls resolve them at call time. The private server API endpoint stays on its configured host. Session lookup
+forwards the incoming Cookie and X-Dev-Branch headers, including for guests.
+Session responses are private and never cached; frontend code does not clear cookies
+on an API 401. The API owns session revocation and cookie clearing.
 
 ## Commands
 

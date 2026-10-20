@@ -6,13 +6,14 @@ export interface AppUrls {
   homeUrl: string
   authUiUrl: string
   adminUrl: string
+  authV2UiUrl?: string
   apiEndpoint: string
 }
 
 const labelPattern = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/
 
 function branchMapper(config: Record<string, unknown>, host?: string) {
-  const bases = ['homeUrl', 'authUiUrl', 'adminUrl'] as const
+  const bases = ['homeUrl', 'authUiUrl', 'adminUrl', ...(typeof config.authV2UiUrl === 'string' ? ['authV2UiUrl'] : [])]
   const urls = Object.fromEntries(bases.map(key => {
     if (typeof config[key] !== 'string') throw new Error(`Missing ${key}`)
     const url = new URL(config[key] as string)
@@ -22,7 +23,7 @@ function branchMapper(config: Record<string, unknown>, host?: string) {
   const hostname = host?.toLowerCase().replace(/:\d+$/, '')
   const baseHosts = bases.map(key => urls[key].hostname)
   const branchHosts = baseHosts.map(base =>
-    ['tadoku.app', 'account.tadoku.app', 'admin.tadoku.app'].includes(base)
+    ['tadoku.app', 'account.tadoku.app', 'admin.tadoku.app', 'authv2.tadoku.app'].includes(base)
       ? base.replace('tadoku.app', 'preview.tadoku.app')
       : base,
   )
@@ -56,6 +57,7 @@ export function resolveAppUrls(config: Record<string, unknown>, host?: string): 
     homeUrl: prefix(config.homeUrl as string),
     authUiUrl: prefix(config.authUiUrl as string),
     adminUrl: prefix(config.adminUrl as string),
+    ...(typeof config.authV2UiUrl === 'string' ? { authV2UiUrl: prefix(config.authV2UiUrl) } : {}),
     apiEndpoint: prefix(config.apiEndpoint),
   }
 }
@@ -95,6 +97,14 @@ export function branchFlowUrl(
   return current.toString()
 }
 
+export function accountAppUrl(urls: AppUrls, accountApp: 'v1' | 'v2'): string {
+  if (accountApp === 'v1') return urls.authUiUrl
+  if (urls.authV2UiUrl) return urls.authV2UiUrl
+  const url = new URL(urls.authUiUrl)
+  url.hostname = url.hostname.replace(/(^|\.)account\./, '$1authv2.')
+  return url.toString().replace(/\/$/, '')
+}
+
 export function appUrlsForHost(host?: string): AppUrls {
   return resolveAppUrls(getConfig().publicRuntimeConfig, host)
 }
@@ -107,7 +117,9 @@ export function serverApiEndpointForHost(host?: string): string {
   const { publicRuntimeConfig, serverRuntimeConfig } = getConfig()
   return resolveAppUrls({
     ...publicRuntimeConfig,
-    apiEndpoint: serverRuntimeConfig?.apiEndpoint ?? publicRuntimeConfig.apiEndpoint,
+    apiEndpoint: (typeof window === 'undefined' ? process.env.NEXT_SERVER_API_ENDPOINT : undefined)
+      ?? serverRuntimeConfig?.apiEndpoint
+      ?? publicRuntimeConfig.apiEndpoint,
   }, host).apiEndpoint
 }
 

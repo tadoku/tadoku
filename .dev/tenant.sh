@@ -23,11 +23,11 @@ where tenant = 'tadoku/prod' and display_name = 'Dev Reader'
 \gset
 \if :admin_found
 \else
-  do $$ begin raise exception 'expected one shared Dev Admin fixture; run make dev-seed first'; end $$;
+  do $$ begin raise exception 'expected one base Dev Admin fixture; ask the operator to run make dev-seed first (changes shared identities and base data)'; end $$;
 \endif
 \if :reader_found
 \else
-  do $$ begin raise exception 'expected one shared Dev Reader fixture; run make dev-seed first'; end $$;
+  do $$ begin raise exception 'expected one base Dev Reader fixture; ask the operator to run make dev-seed first (changes shared identities and base data)'; end $$;
 \endif
 \echo :admin_user_id :reader_user_id
 commit;
@@ -35,11 +35,13 @@ SQL
 )
 set -- $fixture_ids
 if [ "$#" -ne 2 ]; then
-  echo 'expected shared development fixture IDs; run make dev-seed first' >&2
+  echo 'expected base development fixture IDs; ask the operator to run make dev-seed first (changes shared identities and base data)' >&2
   exit 1
 fi
 
 /tadoku-tenant provision --tenant "$DEV_TENANT" --flipt-features /flipt/features.yaml --tester "$2"
+TENANT_PRODUCTION=false /tadoku-tenant development-accounts --tenant "$DEV_TENANT" \
+  --admin-id "$1" --reader-id "$2"
 exec psql -X --set=ON_ERROR_STOP=1 \
   --set=tenant="$DEV_TENANT" --set=admin_user_id="$1" --set=reader_user_id="$2" \
   --file=/seed.sql

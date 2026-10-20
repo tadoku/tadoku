@@ -10,8 +10,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/featureflags"
 	requestidentity "github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
 func TestUpdateRoleMapsUserExistsFailureToUnavailable(t *testing.T) {
@@ -27,13 +29,17 @@ func TestUpdateRoleMapsUserExistsFailureToUnavailable(t *testing.T) {
 	t.Cleanup(httpClient.CloseIdleConnections)
 	service := NewService(
 		nil,
-		identity.NewLegacyReader(provider.URL, identity.WithHTTPClient(httpClient)),
+		identity.NewReader(
+			nil,
+			identity.NewLegacyReader(provider.URL, identity.WithHTTPClient(httpClient)),
+			featureflags.NewEvaluator(nil, nil),
+		),
 		nil,
 		nil,
 		nil,
 	)
 
-	err := service.UpdateRole(t.Context(), RoleUpdateParameters{
+	err := service.UpdateRole(tenant.WithKey(t.Context(), tenant.Production()), RoleUpdateParameters{
 		UserID: uuid.MustParse("11111111-1111-4111-8111-111111111111"),
 		Role:   RoleBanned,
 		Reason: "moderation reason",

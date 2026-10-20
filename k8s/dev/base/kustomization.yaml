@@ -71,7 +71,7 @@ configMapGenerator:
       - NEXT_PUBLIC_AUTH_UI_URL=https://account.tadoku.dev.lab
       - NEXT_PUBLIC_HOME_URL=https://tadoku.dev.lab
       - NEXT_PUBLIC_API_ENDPOINT=/api/internal
-      - NEXT_SERVER_API_ENDPOINT=https://tadoku.dev.lab/api/internal
+      - NEXT_SERVER_API_ENDPOINT=http://oathkeeper-proxy.tdk-dev-oathkeeper:4455/api/internal
       - NEXT_PUBLIC_COOKIE_DOMAIN=.tadoku.dev.lab
       - NEXT_PUBLIC_COOKIE_SECURE=true
       - NEXT_PUBLIC_ADMIN_URL=https://admin.tadoku.dev.lab
@@ -92,7 +92,7 @@ configMapGenerator:
       - NEXT_PUBLIC_AUTH_UI_URL=https://account.tadoku.dev.lab
       - NEXT_PUBLIC_HOME_URL=https://tadoku.dev.lab
       - NEXT_PUBLIC_API_ENDPOINT=https://tadoku.dev.lab/api/internal
-      - NEXT_SERVER_API_ENDPOINT=https://tadoku.dev.lab/api/internal
+      - NEXT_SERVER_API_ENDPOINT=http://oathkeeper-proxy.tdk-dev-oathkeeper:4455/api/internal
       - NEXT_PUBLIC_COOKIE_DOMAIN=.tadoku.dev.lab
       - NEXT_PUBLIC_COOKIE_SECURE=true
       - NEXT_PUBLIC_ADMIN_URL=https://admin.tadoku.dev.lab
@@ -113,7 +113,7 @@ configMapGenerator:
       - NEXT_PUBLIC_AUTH_UI_URL=https://account.tadoku.dev.lab
       - NEXT_PUBLIC_HOME_URL=https://tadoku.dev.lab
       - NEXT_PUBLIC_API_ENDPOINT=https://tadoku.dev.lab/api/internal
-      - NEXT_SERVER_API_ENDPOINT=https://tadoku.dev.lab/api/internal
+      - NEXT_SERVER_API_ENDPOINT=http://oathkeeper-proxy.tdk-dev-oathkeeper:4455/api/internal
       - NEXT_PUBLIC_COOKIE_DOMAIN=.tadoku.dev.lab
       - NEXT_PUBLIC_COOKIE_SECURE=true
       - NEXT_PUBLIC_ADMIN_URL=https://admin.tadoku.dev.lab
@@ -143,7 +143,7 @@ images:
   - name: tadoku-api-image
     newName: ghcr.io/tadoku/tadoku/tadoku-api
     newTag: latest
-    digest: sha256:acc9139a848e36765cdb0cebd660be81db69f3130595261f3729adf8472559d6
+    digest: sha256:56a8e81483fc9e79ab6d2068497588e671608ed35f8e02e08a99b7b00aa9ef5e
   - name: tadoku-worker-image
     newName: ghcr.io/tadoku/tadoku/tadoku-worker
     newTag: latest
@@ -159,7 +159,7 @@ images:
   - name: ghcr.io/tadoku/tadoku/frontend-webv3
     newName: ghcr.io/tadoku/tadoku/frontend-webv3
     newTag: latest
-    digest: sha256:75e78dba0fd9b681d766ac21d59ff64134bb4cb26fe3b40867ee7db4a01c492b
+    digest: sha256:f7c3bd489ffc92d990bb0483157f29a761a2012509af0e51bf892877ce43ad4b
   - name: ghcr.io/tadoku/tadoku/frontend-auth
     newTag: 261cba31de11e05274668aac3dc9daf981daab7b
     newName: ghcr.io/tadoku/tadoku/frontend-auth

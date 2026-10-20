@@ -1,4 +1,4 @@
-import type { Session } from '@ory/kratos-client'
+import type { Account } from 'ui/identity'
 import getConfig from 'next/config'
 import {
   defaultFeatureFlagDecisions,
@@ -13,7 +13,7 @@ const featureFlagEndpoint = `${
 }/immersion/feature-flags`
 
 export const bootstrapFeatureFlagDecisions = async (
-  session: Session | undefined,
+  session: Account | undefined,
   cookie: string | undefined,
   isServer = typeof window === 'undefined',
   request: typeof fetch = fetch,
@@ -21,7 +21,7 @@ export const bootstrapFeatureFlagDecisions = async (
   apiEndpoint?: string,
   branch?: string | string[],
 ): Promise<FeatureFlagDecisions> => {
-  const subject = session?.identity?.id
+  const subject = session?.id
   if (
     !isServer ||
     !cookie ||

@@ -42,6 +42,19 @@ Branch host selection is independent of shared authentication, and `/kratos` is 
 served by a frontend overlay. Don't mock CSRF, fabricate JWTs or bypass the UI
 login when claiming a browser E2E.
 
+## Identity entry point
+
+Webv2 and admin read `GET /identity/session`, including as guests. Check that
+`account_app` selects account or authv2 links on the same branch, and that
+logout posts to `POST /identity/logout` before access to protected pages is
+removed. Auth selects the same endpoint before starting a v1 flow and redirects
+v2 requests to authv2 with their query. No frontend clears identity cookies
+when an unrelated API returns 401.
+
+Gateway configuration forwards Cookie and
+X-Dev-Branch through the branch-aware API hop and adds the callback bearer;
+verify isolated-database branches as well as ordinary tenants.
+
 ## Identity API accounts and sessions
 
 [Identity accounts and sessions](../../../../../docs/docs/tadoku-api/identity.md)
@@ -54,21 +67,47 @@ Record `account_app`; an unset `identity-v2` decision remains `v1`.
 
 The base API and overlays supply the development cookie domain and Kratos public
 URL.
-Recovery/settings and account lookup/search are still skeletons. Email list/detail
+Account lookup/search use the separate identity `ReadService` for profile and
+moderation; the `Accounts` service's Reader methods, recovery/settings and account
+deletion remain `501` stubs. Email list/detail
 routes accept a verified tenant `email:read` bearer or a Keto-authorized
 administrator; see [Retained email API](admin.md#retained-email-api).
 The development base exposes identity and GET email paths through separate
 public Oathkeeper rules. Verify that both the shared rules and the relevant
 backend image are deployed; a frontend overlay does not deploy these rules.
 The public
-identity rule forwards cookies with a guest JWT; the Oathkeeper callback switch
-for other routes remains a separate prerequisite. Confirm actual branch API
+identity rule forwards cookies with a guest JWT; the development configuration
+also switches other cookie-bearing routes to the identity callback and adds the
+private SSR session rule. Verify their deployed revision after source merge;
+the production gateway switch remains separately held. Confirm actual branch API
 responses rather than treating an API port-forward as the public journey.
-Branch v2 flag provisioning must use an authorized owner/tenant mechanism. A temporary, uncommitted `identity-v2` seed
-in the checkout before `dev up` is confined to that owner's test namespace;
-restore it after teardown and never apply it to canonical Flipt. Never edit
-canonical flag policy or shared Kratos sessions to exercise local account
-behavior. Backend E2Es use real, disposable providers and a tenant-aware Flipt fixture.
+Provisioning seeds `identity-v2=true` automatically in the branch namespace.
+Use the native Dev Admin/Reader accounts and documented development password;
+verify their UUIDs/names, tenant cookie and session through the configured public
+branch API. Reseeding must preserve branch-changed credentials, display names and sessions,
+and continue through branch profile/content fixtures. New accounts retain the
+canonical fixture user age; a missing fixture email held by another UUID must
+fail atomically. Never edit canonical
+flag policy or shared Kratos sessions to exercise local account behavior.
+Backend E2Es use real, disposable providers and a tenant-aware Flipt fixture.
+
+## Caller release smoke
+
+Follow the ordered gates in
+[Identity gateway configuration](../../../../../docs/docs/operations/identity-gateway.md#source-delivery-gates):
+production read-only baseline, actual-merge development image provenance, isolated
+native-v2 callback GET and invalid POST 400 with physical-database evidence, then
+canonical browser/SSR smoke with the same retained v1 sessions. Require live
+webv2/admin/auth builds from the merge commit before browser proof. Confirm
+signed-in server-rendered document content before hydration as well as the real
+Reader/Admin interactions; API curls and hydrated navigation alone are partial
+proof. Revoke the retained pair publicly only after every smoke gate passes and
+verify old-cookie 401. Keep secrets in the existing private storage states.
+
+New production branches and `deploy`-labelled pull requests using these callers
+are unsupported until the paired production identity routes, callback and authv2
+are ready. Source delivery does not activate held production branch-tooling
+adoption. See [Production branches](../../../../../docs/docs/develop/production-branches.md).
 
 ## Source anchors
 

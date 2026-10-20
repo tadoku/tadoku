@@ -15,6 +15,7 @@ Reflect.set(globalThis, 'React', React)
 
 const state = vi.hoisted(() => ({
   signedIn: true,
+  accountApp: 'v1',
   role: 'user',
   pathname: '/',
   navigate: vi.fn(),
@@ -23,10 +24,11 @@ const state = vi.hoisted(() => ({
 vi.mock('@app/common/session', () => ({
   useSession: () => [
     state.signedIn
-      ? { identity: { id: 'reader', traits: { display_name: 'Reader' } } }
+      ? { id: 'reader', display_name: 'Reader' }
       : undefined,
   ],
   useUserRole: () => state.role,
+  useAccountApp: () => state.accountApp,
   useLogoutHandler: () => vi.fn(),
 }))
 vi.mock('@app/common/hooks', () => ({ useCurrentLocation: () => '/' }))
@@ -57,6 +59,7 @@ vi.mock('next/link', () => ({
 vi.mock('ui/components/branding', () => ({ Logo: () => <span>Tadoku</span> }))
 
 beforeEach(() => {
+  state.accountApp = 'v1'
   state.signedIn = true
   state.role = 'user'
   state.pathname = '/'
@@ -129,5 +132,18 @@ describe('New log header action', () => {
     // Opening a separate tab remains possible.
     fireEvent.click(action, { ctrlKey: true })
     expect(state.navigate).toHaveBeenCalledWith('/logs/new')
+  })
+})
+
+
+describe('tenant account links', () => {
+  it('uses authv2 login and registration when the API selects v2', () => {
+    state.signedIn = false
+    state.accountApp = 'v2'
+    render(<Navigation />)
+    expect(screen.getByRole('link', { name: 'Log in' }).getAttribute('href'))
+      .toBe('https://authv2.tadoku.test/login?return_to=%2F')
+    expect(screen.getByRole('link', { name: 'Sign up' }).getAttribute('href'))
+      .toBe('https://authv2.tadoku.test/register?return_to=%2F')
   })
 })

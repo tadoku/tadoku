@@ -7,14 +7,16 @@ import { ToastContainer } from 'ui'
 import 'ui/styles/globals.css'
 import Navigation from '../src/Navigation'
 import Head from 'next/head'
-import getConfig from 'next/config'
-import { AppUrls, AppUrlsProvider, appUrlsForHost } from 'ui/app-urls'
+import { readIdentitySession } from 'ui/identity'
+import { SessionUnavailable } from 'ui/components/SessionUnavailable'
+import { AppUrls, AppUrlsProvider, appUrlsForHost, accountAppUrl } from 'ui/app-urls'
 
-const { publicRuntimeConfig } = getConfig()
 
 interface Props {
   appUrls: AppUrls
   session: Session | undefined
+  sessionUnavailable?: boolean
+  redirecting?: boolean
 }
 
 const createInitialValues = () => {
@@ -31,6 +33,9 @@ const MyApp = ({ Component, pageProps }: AppProps<Props>) => {
   const { get: getInitialValues, set: setInitialValues } = createInitialValues()
 
   setInitialValues(sessionAtom, initialState.session)
+
+  if (pageProps.redirecting) return null
+  if (pageProps.sessionUnavailable) return <SessionUnavailable />
 
   return (
     <AppUrlsProvider urls={pageProps.appUrls}>
@@ -61,6 +66,25 @@ const MyApp = ({ Component, pageProps }: AppProps<Props>) => {
 }
 
 MyApp.getInitialProps = async (ctx: AppContextWithSession) => {
+  ctx.ctx.res?.setHeader('Cache-Control', 'private, no-store')
+  const host = ctx.ctx.req?.headers.host ?? (typeof window === 'undefined' ? undefined : window.location.host)
+  const appUrls = appUrlsForHost(host)
+  const identity = await readIdentitySession(host, ctx.ctx.req?.headers)
+  if (!identity) return { pageProps: { appUrls, sessionUnavailable: true } }
+  if (identity.account_app === 'v2') {
+    const current = new URL(ctx.ctx.asPath ?? '/', appUrls.authUiUrl)
+    const target = new URL(accountAppUrl(appUrls, 'v2'))
+    target.pathname = current.pathname === '/' ? '/settings' : current.pathname === '/account-recovery' ? '/recovery' : current.pathname
+    target.search = current.search
+    target.hash = current.hash
+    if (ctx.ctx.res) {
+      ctx.ctx.res.writeHead(307, { Location: target.toString() })
+      ctx.ctx.res.end()
+    } else {
+      window.location.replace(target.toString())
+    }
+    return { pageProps: { appUrls, redirecting: true } }
+  }
   const cookie = ctx.ctx.req?.headers.cookie
   const props = {
     pageProps: {
@@ -75,24 +99,12 @@ MyApp.getInitialProps = async (ctx: AppContextWithSession) => {
       const { data: session } = await ory.toSession({ cookie })
       props.pageProps.initialState.session = session
       ctx.ctx.session = session
-    } catch (err) {
-      const cookieAttributes = [
-        'ory_kratos_session=0',
-        'Path=/',
-        `Domain=${publicRuntimeConfig.cookieDomain}`,
-        'Max-Age=0',
-        'SameSite=Lax',
-      ]
-      if (publicRuntimeConfig.cookieSecure) {
-        cookieAttributes.push('Secure')
-      }
-      ctx.ctx.res?.setHeader('Set-Cookie', [cookieAttributes.join('; ')])
-    }
+    } catch {}
   }
 
   const initialAppProps = await App.getInitialProps(ctx)
   initialAppProps.pageProps.session = ctx.ctx.session
-  initialAppProps.pageProps.appUrls = appUrlsForHost(ctx.ctx.req?.headers.host ?? (typeof window === 'undefined' ? undefined : window.location.host))
+  initialAppProps.pageProps.appUrls = appUrls
 
   return { ...props, ...initialAppProps }
 }

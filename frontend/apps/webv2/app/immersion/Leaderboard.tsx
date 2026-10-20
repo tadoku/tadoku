@@ -63,7 +63,7 @@ export const Leaderboard = ({
               <tr
                 key={it.user_id}
                 className={`link font-bold ${
-                  it.user_id === session?.identity?.id
+                  it.user_id === session?.id
                     ? 'bg-primary/5 hover:bg-primary/10'
                     : ''
                 }`}

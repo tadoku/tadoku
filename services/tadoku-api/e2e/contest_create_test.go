@@ -27,6 +27,7 @@ func TestCreateContest(t *testing.T) {
 		{description: []string{"guest"}, want: http.StatusUnauthorized},
 		{description: []string{"non", "admin", "official"}, want: http.StatusForbidden},
 		{description: []string{"yearly", "quota", "reached"}, want: http.StatusForbidden},
+		{description: []string{"young", "account"}, want: http.StatusForbidden},
 		{description: []string{"account", "deletion", "in", "progress"}, want: http.StatusConflict},
 	}
 

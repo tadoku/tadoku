@@ -16,10 +16,12 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -80,7 +82,11 @@ func TestEmailGatewayCookieAndBearer(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	backend.Config.Handler = handler
+	var active atomic.Value
+	active.Store(http.HandlerFunc(handler.ServeHTTP))
+	backend.Config.Handler = http.HandlerFunc(func(w http.ResponseWriter, request *http.Request) {
+		active.Load().(http.HandlerFunc).ServeHTTP(w, request)
+	})
 	backend.Start()
 
 	hosts := []string{"tadoku.dev.lab"}
@@ -90,8 +96,10 @@ func TestEmailGatewayCookieAndBearer(t *testing.T) {
 		forwardedProto = "https"
 	}
 	host := hosts[0]
+	branch := "gateway-0123abcd"
 	client := &http.Client{Timeout: 3 * time.Second}
-	cookie = gatewayAdminCookie(t, key, proxyURL, host, forwardedProto)
+	cookie = gatewayAdminCookie(t, key, proxyURL, host, forwardedProto, true)
+	readerCookie := gatewayAdminCookie(t, key, proxyURL, host, forwardedProto, false)
 
 	check := func(name, path, authorization, cookie string, want int) {
 		t.Helper()
@@ -102,7 +110,7 @@ func TestEmailGatewayCookieAndBearer(t *testing.T) {
 
 		req.Host = host
 		req.Header.Set("X-Forwarded-Proto", forwardedProto)
-		req.Header.Set("X-Dev-Branch", "gateway-0123abcd")
+		req.Header.Set("X-Dev-Branch", branch)
 		req.Header.Set("Authorization", authorization)
 		req.Header.Set("Cookie", cookie)
 
@@ -127,17 +135,31 @@ func TestEmailGatewayCookieAndBearer(t *testing.T) {
 	}
 
 	for _, host = range hosts {
+		check("public identity guest", "/identity/session", "", "", 200)
+		check("public identity unrelated", "/identity/session", "", "analytics=unrelated", 200)
+		check("public identity valid cookie", "/identity/session", "", cookie, 200)
 		check("bearer list", "/emails", "Bearer "+raw, "", 200)
+		check("bearer unrelated cookie", "/emails", "Bearer "+raw, "analytics=unrelated", 200)
+		check("bearer expired Kratos", "/emails", "Bearer "+raw, "ory_kratos_session=expired", 200)
+		check("bearer native session cookie", "/emails", "Bearer "+raw, cookie, 200)
+		check("bearer mixed cookies", "/emails", "Bearer "+raw, "analytics=unrelated; tadoku_session=invalid; "+
+			"tadoku_session_tadoku_gateway-0123abcd=invalid; "+cookie, 200)
+		check("invalid token admin cookie", "/emails", "Bearer tdk_at_invalid", cookie, 401)
+		check("unrelated guest", "/emails", "", "analytics=unrelated", 401)
+		check("expired Kratos guest", "/emails", "", "ory_kratos_session=expired", 401)
+		check("bearer outside email stays guest", "/authz/current-user/role", "Bearer "+raw, "analytics=unrelated", 200)
+		check("bearer protected route with cookie denied", "/profile/users", "Bearer "+raw, "analytics=unrelated", 401)
 		check("bearer detail", "/emails/"+id.String(), "Bearer "+raw, "", 200)
+		check("bearer reader cookie precedence", "/emails", "Bearer "+raw, readerCookie, 200)
+		check("reader cookie denied", "/emails", "", readerCookie, 403)
+		check("forged bearer admin cookie replaced", "/emails", "Bearer invalid", cookie, 200)
 		check("cookie admin", "/emails", "", cookie, 200)
-		check("anonymous", "/emails", "", "", 401)
-		check("unrelated cookie", "/emails", "", "unrelated=present", 401)
 		check("forged session", "/emails", "", "tadoku_session_tadoku_gateway-0123abcd=invalid", 401)
+		check("anonymous", "/emails", "", "", 401)
 		check("forged jwt", "/emails", "Bearer invalid", "", 401)
 		check("token outside email", "/authz/current-user/role", "Bearer "+raw, "", 401)
 		check("cookie detail", "/emails/"+id.String(), "", cookie, 200)
 	}
-
 	_, err = api.db.Pool.Exec(t.Context(), `update sessions
 		set expires_at = now() - interval '1 hour'
 		where tenant = $1`, key.String())
@@ -172,6 +194,25 @@ func TestEmailGatewayCookieAndBearer(t *testing.T) {
 	}
 
 	check("revoked session", "/emails", "", cookie, 401)
+	other, _ := tenant.ParseDeployment("tadoku/other-0123abcd")
+	otherHandler, _, _, err := newTestRouterWithLeaderboardService(t.Context(), api.db.AppPool, api.db.AppPool,
+		api.keto, api.kratos, slog.New(slog.NewTextHandler(io.Discard, nil)), false, nil, other,
+		func(e *routerEndpoints) { e.jwks = jwksURL })
+	if err != nil {
+		t.Fatal(err)
+	}
+	active.Store(http.HandlerFunc(otherHandler.ServeHTTP))
+	branch = "other-0123abcd"
+	check("token wrong deployment", "/emails", "Bearer "+raw, "analytics=unrelated", 421)
+	active.Store(http.HandlerFunc(handler.ServeHTTP))
+	branch = "gateway-0123abcd"
+	_, err = api.db.Pool.Exec(t.Context(),
+		"update access_tokens set revoked_at=now() where token_hash=$1", hex.EncodeToString(hash[:]),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	check("revoked token", "/emails", "Bearer "+raw, "", 401)
 	if os.Getenv("TADOKU_TEST_EMAIL_GATEWAY_RENDER") != "" {
 		host = hosts[0]
 		forwardedProto = ""
@@ -179,9 +220,10 @@ func TestEmailGatewayCookieAndBearer(t *testing.T) {
 	}
 }
 
-func gatewayAdminCookie(t *testing.T, key tenant.Key, proxyURL, host, forwardedProto string) string {
+func gatewayAdminCookie(t *testing.T, key tenant.Key, proxyURL, host, forwardedProto string, admin bool) string {
 	t.Helper()
 	userID := uuid.New()
+	email := userID.String() + "@example.test"
 	hash, err := bcrypt.GenerateFromPassword([]byte(identityFixturePassword), bcrypt.MinCost)
 	if err != nil {
 		t.Fatal(err)
@@ -192,13 +234,13 @@ func gatewayAdminCookie(t *testing.T, key tenant.Key, proxyURL, host, forwardedP
 		returning tenant, id
 	)
 	insert into accounts (tenant, user_id, email, email_normalized, password_hash)
-	select tenant, id, 'gateway@example.test', 'gateway@example.test', $3
-	from fixture_user`, key.String(), userID, string(hash))
+	select tenant, id, $4, $4, $3
+	from fixture_user`, key.String(), userID, string(hash), email)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	body := `{"email":"gateway@example.test","password":"Fixture-login-482!"}`
+	body := fmt.Sprintf(`{"email":%q,"password":%q}`, email, identityFixturePassword)
 	request, err := http.NewRequestWithContext(
 		t.Context(), "POST", proxyURL+"/api/internal/identity/login", strings.NewReader(body),
 	)
@@ -226,7 +268,7 @@ func gatewayAdminCookie(t *testing.T, key tenant.Key, proxyURL, host, forwardedP
 	}
 	if response.StatusCode != http.StatusOK || view.AccountApp != "v2" || view.Account == nil ||
 		view.Account.ID != userID.String() || view.Account.DisplayName != "Gateway Admin" ||
-		view.Account.Email != "gateway@example.test" {
+		view.Account.Email != email {
 		t.Fatalf(
 			"gateway login: status=%d app=%s account=%+v",
 			response.StatusCode, view.AccountApp, view.Account,
@@ -234,9 +276,12 @@ func gatewayAdminCookie(t *testing.T, key tenant.Key, proxyURL, host, forwardedP
 	}
 
 	roles := ketoclient.NewClient(api.keto.ReadURL(), api.keto.WriteURL())
-	err = roles.AddRelation(t.Context(), "app", key.String(), "admins", ketoclient.Subject{ID: view.Account.ID})
-	if err != nil {
-		t.Fatal(err)
+	if admin {
+		err = roles.AddRelation(t.Context(), "app", key.String(), "admins", ketoclient.Subject{ID: view.Account.ID})
+		if err != nil {
+			t.Fatal(err)
+		}
+
 	}
 
 	cookies := response.Cookies()
@@ -305,10 +350,12 @@ func startEmailGateway(t *testing.T, backend string, cookie *string) (string, st
 
 	authenticators := config["authenticators"].(map[string]any)
 	cookieSession := authenticators["cookie_session"].(map[string]any)["config"].(map[string]any)
-	cookieSession["check_session_url"] = backend + "/identity/internal/v1/session"
-	cookieSession["additional_headers"] = map[string]string{"Authorization": "Bearer " + callbackToken}
-	cookieSession["forward_http_headers"] = []string{"Cookie", "X-Dev-Branch"}
-	delete(cookieSession, "only")
+	callbackURL, err := url.Parse(cookieSession["check_session_url"].(string))
+	if err != nil || callbackURL.Path != "/identity/internal/v1/session" {
+		t.Fatal("gateway configuration must use the identity session callback")
+	}
+	cookieSession["check_session_url"] = backend + callbackURL.RequestURI()
+	serve["prometheus"] = map[string]any{"host": "127.0.0.1", "port": port()}
 
 	key, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
@@ -389,7 +436,9 @@ func startEmailGateway(t *testing.T, backend string, cookie *string) (string, st
 			<-done
 		}
 
-		if strings.Contains(logs.String(), "tdk_at_") || (*cookie != "" && strings.Contains(logs.String(), *cookie)) {
+		if strings.Contains(logs.String(), "tdk_at_") ||
+			(*cookie != "" && strings.Contains(logs.String(), *cookie)) ||
+			strings.Contains(logs.String(), callbackToken) {
 			t.Error("Oathkeeper logs exposed token or session cookie material")
 		}
 	})

@@ -1,5 +1,6 @@
 import { DateTime } from 'luxon'
-import { useAppUrls } from 'ui/app-urls'
+import { accountAppUrl, useAppUrls } from 'ui/app-urls'
+import { useAccountApp } from './session'
 
 type Page = string | number
 
@@ -51,10 +52,13 @@ export const routes = {
 }
 
 export function useRoutes() {
-  const { authUiUrl, adminUrl } = useAppUrls()
+  const urls = useAppUrls()
+  const { adminUrl } = urls
+  const accountApp = useAccountApp()
+  const authUiUrl = accountAppUrl(urls, accountApp)
   return {
     ...routes,
-    authSettings: (returnUrl = '') => `${authUiUrl}/?return_to=${encodeURIComponent(returnUrl)}`,
+    authSettings: (returnUrl = '') => `${authUiUrl}/${accountApp === 'v2' ? 'settings' : ''}?return_to=${encodeURIComponent(returnUrl)}`,
     authLogin: (returnUrl = '') => `${authUiUrl}/login?return_to=${encodeURIComponent(returnUrl)}`,
     authSignup: (returnUrl = '') => `${authUiUrl}/register?return_to=${encodeURIComponent(returnUrl)}`,
     admin: () => adminUrl,

@@ -154,13 +154,17 @@ E2Es check tenant-scoped PostgreSQL work with shared Valkey.
 
 ## Development email
 
-No development component sends real email:
+The base keeps email in the cluster:
 
-- Base and branch workers bind `WORKER_EMAIL_ENABLED=false`, which wins over
-  the unprefixed `ENABLED` fallback and any image environment.
-- The Kratos courier uses only SMTP, to `mailhog.tdk-dev-data:1025`.
-- The `mailhog-deny-egress` NetworkPolicy, enforced by Cilium, blocks MailHog
-  egress, so captured mail cannot be released externally. Ingress stays open.
+- Base and branch workers bind `WORKER_EMAIL_ENABLED=false`, overriding the
+  `ENABLED` fallback.
+- Kratos delivers only over SMTP to `mailhog.tdk-dev-data:1025`.
+- `mailhog-deny-egress` denies MailHog egress; ingress stays open.
+
+Manifests alone do not prove a cluster sends no email. That needs restarted
+worker Pods with the binding, Kratos loading this file, an enforcing CNI and no
+policy allowing MailHog egress. Without enforcement, a deliberate MailHog
+release can still send mail.
 
 ## Automatic migrations
 

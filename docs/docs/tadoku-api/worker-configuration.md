@@ -109,5 +109,7 @@ Even when enabled, only `tadoku/prod` rows can send. Configure:
 Enabled deployments reject missing SMTP credentials, malformed addresses,
 missing SES headers or non-positive timeout before opening runtime resources.
 Production manifests and the namespace-local Secret prerequisite belong in
-`tadoku-argocd`; the maintainer controls activation. Development overlays leave
-sending disabled. [Retained email](./email.md) documents delivery and audit rules.
+`tadoku-argocd`; the maintainer controls activation. The development base and
+branch workers bind `WORKER_EMAIL_ENABLED=false` explicitly; see
+[Development email](../operations/development-base.md#development-email).
+[Retained email](./email.md) documents delivery and audit rules.

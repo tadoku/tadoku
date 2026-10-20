@@ -43,6 +43,7 @@ spec:
             - {name: WORKER_POSTGRES_MAX_CONNECTIONS, value: "4"}
             - {name: WORKER_VALKEY_URL, value: "redis://valkey.tdk-dev-data:6379"}
             - {name: WORKER_VALKEY_TIMEOUT, value: "1s"}
+            - {name: WORKER_EMAIL_ENABLED, value: "false"}
             - name: WORKER_POSTGRES_USER
               valueFrom: {secretKeyRef: {name: tadoku.tadoku-dev-db.credentials.postgresql.acid.zalan.do, key: username}}
             - name: WORKER_POSTGRES_PASSWORD

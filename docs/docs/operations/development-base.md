@@ -152,6 +152,16 @@ The offline E2E (see [Verification](#verification)) checks rendered ownership,
 isolation, image separation and lack of worker routing. Tadoku API's backend
 E2Es check tenant-scoped PostgreSQL work with shared Valkey.
 
+## Development email
+
+No development component sends real email:
+
+- The base and dev-cli branch workers bind `WORKER_EMAIL_ENABLED=false`
+  explicitly. The explicit binding wins over the unprefixed `ENABLED` fallback
+  and any image environment, so canonical `tadoku/prod` mail stays held.
+- Kratos delivers its courier mail only over SMTP to
+  `mailhog.tdk-dev-data:1025`, with no HTTP or other channel.
+
 ## Automatic migrations
 
 Full Argo CD syncs apply these waves:
@@ -304,7 +314,8 @@ failure. It needs no cluster credentials.
   Authv2, built from the tested revision, proves its non-root image, Lab CA and
   compiled assets, and that during an API outage canonical and branch hosts show
   a retry page with a branch-preserving home link and no account-app choice.
-  It also checks the rendered leaderboard worker ownership.
+  It also checks the rendered leaderboard worker ownership, the explicit
+  worker email binding and the Kratos courier target.
 - It cleans up only its labeled fixtures. Synthetic credentials in its fixture
   logs are not live credentials.
 

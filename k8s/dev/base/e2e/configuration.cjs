@@ -81,6 +81,12 @@ function checkConfiguration({ root, report }, docs) {
   if (docs.some(d => d.kind === 'Service' && d.spec?.selector?.app === 'tadoku-worker') || docs.some(d => d.kind === 'HTTPRoute' && JSON.stringify(d.spec).includes('tadoku-worker'))) throw new Error('Worker must have no Service or public route')
   const resources = workerContainer.resources
   if (!resources?.requests?.cpu || !resources.requests.memory || !resources.limits?.cpu || !resources.limits.memory) throw new Error('Worker must declare CPU and memory requests and limits')
+  const emailBindings = container => container.env.filter(e => e.name === 'WORKER_EMAIL_ENABLED')
+  if ([workerContainer, branchWorker].some(container => emailBindings(container).length !== 1 || emailBindings(container)[0].value !== 'false')) throw new Error('Base and branch workers must bind WORKER_EMAIL_ENABLED=false explicitly')
+  const kratosConfig = docs.find(d => d.kind === 'ConfigMap' && d.metadata.namespace === 'tdk-dev-kratos' && d.metadata.name.startsWith('kratos-config'))
+  const courier = Y.parse(kratosConfig?.data?.['kratos.yaml'] || '{}').courier || {}
+  const courierURL = new URL(courier.smtp?.connection_uri || 'invalid:')
+  if (Object.keys(courier).join(',') !== 'smtp' || courierURL.protocol !== 'smtp:' || courierURL.host !== 'mailhog.tdk-dev-data:1025') throw new Error('Kratos must deliver only through SMTP to MailHog')
   report.leaderboardWorkers = { asyncJobs: 'tadoku-worker', baseDatabase: 'tadoku', branchDatabase: envValue(branchWorker, 'WORKER_POSTGRES_DATABASE'), branchTenant: envValue(branchWorker, 'WORKER_BRANCH'), baseKeyPattern: 'tenant:tadoku/prod:leaderboard:*', branchKeyPattern: 'tenant:tadoku/${DEV_ROUTE}:leaderboard:*', image: workerContainer.image }
 }
 

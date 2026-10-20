@@ -10,7 +10,7 @@
   },
   "scripts": {
     "generate": "openapi-ts && node scripts/generate-responses.mjs",
-    "check:generated": "node scripts/check-generated.mjs",
+    "check:generated": "pnpm run generate && git diff --exit-code -- src/generated && test -z \"$(git status --porcelain -- src/generated)\"",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },

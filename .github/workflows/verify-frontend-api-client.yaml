@@ -45,16 +45,12 @@ jobs:
           cache-dependency-path: frontend/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile --filter api-client...
         working-directory: frontend
-      - name: Regenerate the client
-        run: pnpm --filter api-client generate
-        working-directory: frontend
       - name: Verify generated code is current
         run: |
-          if [[ -n "$(git status --porcelain -- frontend/packages/api-client)" ]]; then
+          pnpm --filter api-client check:generated || {
             echo "::error::The frontend API client is out of date. Run pnpm --filter api-client generate in frontend/ and commit the complete output."
-            git status --short -- frontend/packages/api-client
-            git diff -- frontend/packages/api-client
             exit 1
-          fi
+          }
+        working-directory: frontend
       - run: pnpm --filter api-client typecheck && pnpm --filter api-client test
         working-directory: frontend

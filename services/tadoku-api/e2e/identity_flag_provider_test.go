@@ -30,15 +30,18 @@ const (
 
 // snapshotServer serves Flipt evaluation snapshots, so the real Flipt client and provider evaluate them.
 // Every snapshot response sets a cookie, so a client's cookie jar can hold a snapshot after its receipt.
-// While rejecting, it serves structurally valid snapshots that the SDK's engine rejects.
+// While rejecting, it serves structurally valid snapshots that the SDK's engine rejects. While a replacement body is
+// set, it serves that body to every request.
 type snapshotServer struct {
-	mu         sync.Mutex
-	namespaces map[string]identityFlag
-	outage     bool
-	rejecting  bool
-	rejections int
-	misses     map[string]int
-	server     *httptest.Server
+	mu           sync.Mutex
+	namespaces   map[string]identityFlag
+	outage       bool
+	rejecting    bool
+	rejections   int
+	replacement  string
+	replacements int
+	misses       map[string]int
+	server       *httptest.Server
 }
 
 func newSnapshotServer(t *testing.T, namespaces map[string]identityFlag) *snapshotServer {
@@ -55,6 +58,11 @@ func (s *snapshotServer) serveHTTP(w http.ResponseWriter, r *http.Request) {
 	namespace, ok := strings.CutPrefix(r.URL.Path, "/internal/v1/evaluation/snapshot/namespace/")
 	if s.outage {
 		http.Error(w, "unavailable", http.StatusServiceUnavailable)
+		return
+	}
+	if s.replacement != "" {
+		s.replacements++
+		_, _ = w.Write([]byte(s.replacement))
 		return
 	}
 	flag, exists := s.namespaces[namespace]
@@ -131,6 +139,32 @@ func (s *snapshotServer) rejected() bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	return s.rejections > 0
+}
+
+func (s *snapshotServer) setReplacement(body string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.replacement = body
+	s.replacements = 0
+}
+
+// awaitReplacementHandled waits until the server receives a fourth request for the replacement body. The SDK polls
+// sequentially and queues one fetched snapshot at a time, so by then it has finished handling the first replacement.
+func (s *snapshotServer) awaitReplacementHandled(t *testing.T) {
+	t.Helper()
+	deadline := time.Now().Add(10 * time.Second)
+	for {
+		s.mu.Lock()
+		served := s.replacements
+		s.mu.Unlock()
+		if served >= 4 {
+			return
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("the Flipt client fetched the replacement snapshot %d times, want 4", served)
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
 }
 
 func newSnapshotProvider(t *testing.T, url string, startup time.Duration, client *http.Client) *fliptclient.Provider {

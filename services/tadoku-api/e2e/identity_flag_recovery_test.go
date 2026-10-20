@@ -215,3 +215,70 @@ func TestIdentityFliptCanonicalFailedStartIsNeverInstalled(t *testing.T) {
 	flags.setRejecting(false)
 	requireCanonicalRecoveryRevokes(t, handler, native, legacy)
 }
+
+func TestIdentityFliptCanonicalKeepsItsDecisionWhenAnUpdateFailsValidation(t *testing.T) {
+	seedIdentityReads(t)
+	accounts, err := os.ReadFile("testdata/IdentityV2/setup.sql")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := api.db.Pool.Exec(t.Context(), string(accounts)); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, test := range []struct{ name, body string }{
+		{"another namespace", `{"namespace":{"key":"other"},"flags":[],"digest":"rev-2"}`},
+		{"no digest", `{"namespace":{"key":"default"},"flags":[]}`},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			legacy := newCountingLegacyProvider(t)
+			flags := newSnapshotServer(t, map[string]identityFlag{"default": identityFlagTrue})
+			handler := legacy.router(t, withFlagProvider(newSnapshotProvider(t, flags.server.URL, 2*time.Second, nil)))
+			native := nativeLogin(t, handler, "tadoku/prod")
+			if app, signedIn := sessionAccountApp(t, handler, "tadoku/prod", native); app != "v2" || !signedIn {
+				t.Fatalf("warm canonical decision: app=%q signed-in=%t, want a v2 session", app, signedIn)
+			}
+
+			flags.setReplacement(test.body)
+			flags.awaitReplacementHandled(t)
+			view := identityView(t,
+				identityRequest(t, handler, "tadoku/prod", "GET", "/identity/session", "", native+"; "+recordedKratosCookie, nil))
+			if view.AccountApp != "v2" || view.Account == nil || view.Account.ID == legacy.identity {
+				t.Errorf("session after a rejected update: app=%q account=%v, want the native v2 account",
+					view.AccountApp, view.Account)
+			}
+			if id := callbackIdentity(t, identityCallback(t, handler, t.Context(), "", recordedKratosCookie)); id != "guest" {
+				t.Errorf("callback after a rejected update admitted %q from the Kratos cookie", id)
+			}
+			for _, fixture := range []string{"ImmersionProfileFindByUserID/200_user_populated", "ProfileUsersList/200_admin"} {
+				request := readHTTPRequest(t, filepath.Join("testdata", fixture))
+				response := httptest.NewRecorder()
+				atFixtureInstant(func() { handler.ServeHTTP(response, request) })
+				if response.Code != http.StatusOK {
+					t.Errorf("%s after a rejected update: status=%d body=%s, want 200", fixture, response.Code, response.Body)
+				}
+			}
+			logout := identityRequest(t, handler, "tadoku/prod", "POST", "/identity/logout", "", native, nil)
+			cleared := logout.Result().Cookies()
+			if logout.Code != http.StatusNoContent || len(cleared) != 1 || cleared[0].Name != strings.SplitN(native, "=", 2)[0] {
+				t.Errorf("logout after a rejected update: status=%d cleared=%v, want 204 clearing the native cookie",
+					logout.Code, cleared)
+			}
+
+			flags.setReplacement("")
+			eventually(t, "the restored v2 decision", func() bool {
+				app, _ := sessionAccountApp(t, handler, "tadoku/prod", native)
+				return app == "v2"
+			})
+			if _, signedIn := sessionAccountApp(t, handler, "tadoku/prod", native); signedIn {
+				t.Error("logout after a rejected update reported success while the native session stayed valid")
+			}
+			if id := callbackIdentity(t, identityCallback(t, handler, t.Context(), "", native)); id != "guest" {
+				t.Errorf("callback accepted the logged-out native cookie as %q", id)
+			}
+			if calls := legacy.calls.Load(); calls != 0 {
+				t.Errorf("canonical identity after a rejected update called the shared provider %d times", calls)
+			}
+		})
+	}
+}

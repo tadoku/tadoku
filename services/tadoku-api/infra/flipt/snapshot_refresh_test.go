@@ -344,3 +344,62 @@ func TestClientNeverInstallsAFailedStartAfterARejectedUpdateClearsItsError(t *te
 	})
 	assert.ErrorIs(t, err, featureflags.ErrFlagNotFound, "a fetched snapshot without the flag reports it missing")
 }
+
+func TestClientKeepsItsDecisionWhenAnUpdateFailsValidation(t *testing.T) {
+	enabled := strings.NewReplacer(`"release-log-entry-v2"`, `"identity-v2"`, `"enabled": false`, `"enabled": true`).
+		Replace(booleanSnapshot(nil))
+	for _, test := range []struct{ name, body string }{
+		{"another namespace", `{"namespace":{"key":"other"},"flags":[],"digest":"rev-2"}`},
+		{"no digest", `{"namespace":{"key":"default"},"flags":[]}`},
+		{
+			"namespace key in another case",
+			`{"namespace":{"key":"other"},"NAMESPACE":{"key":"default"},"flags":[],"digest":"rev-2"}`,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			var replaced atomic.Bool
+			var replacements atomic.Int32
+			server := httptest.NewServer(http.HandlerFunc(func(response http.ResponseWriter, _ *http.Request) {
+				if replaced.Load() {
+					replacements.Add(1)
+					_, _ = response.Write([]byte(test.body))
+					return
+				}
+				_, _ = response.Write([]byte(enabled))
+			}))
+			t.Cleanup(server.Close)
+			client, err := New(context.Background(), Config{
+				URL:            server.URL,
+				Environment:    "local",
+				Namespace:      "default",
+				UpdateInterval: time.Second,
+				RequestTimeout: time.Second,
+				StartupTimeout: time.Second,
+			}, &recordingObserver{})
+			require.NoError(t, err)
+			t.Cleanup(func() { require.NoError(t, client.Close(context.Background())) })
+			evaluate := func() (featureflags.ProviderResult, error) {
+				return client.EvaluateBoolean(context.Background(), featureflags.EvaluationRequest{
+					FlagKey:  "identity-v2",
+					EntityID: "tadoku/prod",
+				})
+			}
+			result, err := evaluate()
+			require.NoError(t, err)
+			require.True(t, result.Enabled)
+
+			replaced.Store(true)
+			require.Eventually(t, func() bool { return replacements.Load() >= 4 }, 10*time.Second, 20*time.Millisecond)
+			result, err = evaluate()
+			require.NoError(t, err, "a rejected update replaced the evaluated snapshot")
+			assert.True(t, result.Enabled)
+			assert.True(t, result.Stale)
+
+			replaced.Store(false)
+			require.Eventually(t, func() bool {
+				result, err := evaluate()
+				return err == nil && result.Enabled && !result.Stale
+			}, 5*time.Second, 20*time.Millisecond)
+		})
+	}
+}

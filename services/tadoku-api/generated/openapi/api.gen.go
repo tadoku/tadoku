@@ -228,6 +228,7 @@ func (e ImmersionErrorResponseError) Valid() bool {
 const (
 	Local      ImmersionFeatureAccessResponseEnvironment = "local"
 	Production ImmersionFeatureAccessResponseEnvironment = "production"
+	Test       ImmersionFeatureAccessResponseEnvironment = "test"
 )
 
 // Valid indicates whether the value is a known member of the ImmersionFeatureAccessResponseEnvironment enum.
@@ -236,6 +237,8 @@ func (e ImmersionFeatureAccessResponseEnvironment) Valid() bool {
 	case Local:
 		return true
 	case Production:
+		return true
+	case Test:
 		return true
 	default:
 		return false
@@ -778,8 +781,10 @@ type ImmersionContest struct {
 	Description *string             `json:"description,omitempty"`
 	Id          *openapi_types.UUID `json:"id,omitempty"`
 
-	// LanguageCodeAllowList Example: ["jpa","zho","kor"]
-	LanguageCodeAllowList []string `json:"language_code_allow_list"`
+	// LanguageCodeAllowList Language codes the contest allows; null allows every language.
+	//
+	// Example: ["jpa","zho","kor"]
+	LanguageCodeAllowList nullable.Nullable[[]string] `json:"language_code_allow_list"`
 
 	// Official Example: false
 	Official bool `json:"official"`
@@ -906,9 +911,11 @@ type ImmersionContestSummary struct {
 // ImmersionContestView defines model for ImmersionContestView.
 type ImmersionContestView struct {
 	AllowedActivities []ImmersionActivity `json:"allowed_activities"`
-	AllowedLanguages  []ImmersionLanguage `json:"allowed_languages"`
-	ContestEnd        openapi_types.Date  `json:"contest_end"`
-	ContestStart      openapi_types.Date  `json:"contest_start"`
+
+	// AllowedLanguages Languages the contest allows; null allows every language.
+	AllowedLanguages nullable.Nullable[[]ImmersionLanguage] `json:"allowed_languages"`
+	ContestEnd       openapi_types.Date                     `json:"contest_end"`
+	ContestStart     openapi_types.Date                     `json:"contest_start"`
 
 	// CreatedAt Example: 2022-12-14T19:48:00Z
 	CreatedAt   *time.Time          `json:"created_at,omitempty"`
@@ -955,13 +962,15 @@ type ImmersionErrorResponseError string
 
 // ImmersionFeatureAccessResponse defines model for ImmersionFeatureAccessResponse.
 type ImmersionFeatureAccessResponse struct {
-	Changed     bool                                      `json:"changed"`
-	Enabled     bool                                      `json:"enabled"`
+	Changed bool `json:"changed"`
+	Enabled bool `json:"enabled"`
+
+	// Environment The Flipt environment that evaluated the flag; test tenants use the test environment.
 	Environment ImmersionFeatureAccessResponseEnvironment `json:"environment"`
 	Revision    string                                    `json:"revision"`
 }
 
-// ImmersionFeatureAccessResponseEnvironment defines model for ImmersionFeatureAccessResponse.Environment.
+// ImmersionFeatureAccessResponseEnvironment The Flipt environment that evaluated the flag; test tenants use the test environment.
 type ImmersionFeatureAccessResponseEnvironment string
 
 // ImmersionFeatureFlagDecisions defines model for ImmersionFeatureFlagDecisions.
@@ -1316,6 +1325,9 @@ type EmailListParams struct {
 	Cursor    *string              `form:"cursor,omitempty" json:"cursor,omitempty"`
 }
 
+// IdentityLogoutJSONBody defines parameters for IdentityLogout.
+type IdentityLogoutJSONBody = map[string]interface{}
+
 // IdentityRecoveryConsumeParams defines parameters for IdentityRecoveryConsume.
 type IdentityRecoveryConsumeParams struct {
 	// ReturnTo Allowlisted continuation after Settings completion, preserved in the tenant authv2 Settings URL. Rejected before token consumption if the complete Settings URL exceeds 2048 bytes.
@@ -1491,6 +1503,9 @@ type ContentPostUpdateJSONRequestBody = ContentPost
 
 // IdentityLoginCreateJSONRequestBody defines body for IdentityLoginCreate for application/json ContentType.
 type IdentityLoginCreateJSONRequestBody = IdentityLogin
+
+// IdentityLogoutJSONRequestBody defines body for IdentityLogout for application/json ContentType.
+type IdentityLogoutJSONRequestBody = IdentityLogoutJSONBody
 
 // IdentityRecoveryCreateJSONRequestBody defines body for IdentityRecoveryCreate for application/json ContentType.
 type IdentityRecoveryCreateJSONRequestBody = IdentityRecovery
@@ -5878,6 +5893,7 @@ func (response IdentityLoginCreate503JSONResponse) VisitIdentityLoginCreateRespo
 }
 
 type IdentityLogoutRequestObject struct {
+	Body *IdentityLogoutJSONRequestBody
 }
 
 type IdentityLogoutResponseObject interface {
@@ -9694,6 +9710,16 @@ func (sh *strictHandler) IdentityLoginCreate(w http.ResponseWriter, r *http.Requ
 // IdentityLogout operation middleware
 func (sh *strictHandler) IdentityLogout(w http.ResponseWriter, r *http.Request) {
 	var request IdentityLogoutRequestObject
+
+	var body IdentityLogoutJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		if !errors.Is(err, io.EOF) {
+			sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+			return
+		}
+	} else {
+		request.Body = &body
+	}
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.IdentityLogout(ctx, request.(IdentityLogoutRequestObject))

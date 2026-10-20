@@ -2772,6 +2772,13 @@ paths:
       x-tadoku-exposure: public
       x-legacy-path: /identity/logout
       x-legacy-operation-id: IdentityLogout
+      requestBody:
+        description: Every identity write must be JSON. Send an empty object; the API ignores its contents.
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
       responses:
         '204':
           description: Success
@@ -3462,7 +3469,7 @@ components:
           properties:
             pages:
               type: array
-              maxItems: 50
+              maxItems: 100
               items:
                 $ref: "#/components/schemas/ContentPage"
     ContentPost:
@@ -3510,7 +3517,7 @@ components:
           properties:
             posts:
               type: array
-              maxItems: 50
+              maxItems: 100
               items:
                 $ref: "#/components/schemas/ContentPost"
     ContentPageVersion:
@@ -3707,9 +3714,11 @@ components:
           type: boolean
         environment:
           type: string
+          description: The Flipt environment that evaluated the flag; test tenants use the test environment.
           enum:
             - local
             - production
+            - test
         revision:
           type: string
           pattern: ^[0-9a-f]{40}$
@@ -3966,6 +3975,8 @@ components:
           properties:
             language_code_allow_list:
               type: array
+              nullable: true
+              description: Language codes the contest allows; null allows every language.
               items:
                 type: string
               example:
@@ -3990,6 +4001,8 @@ components:
           properties:
             allowed_languages:
               type: array
+              nullable: true
+              description: Languages the contest allows; null allows every language.
               items:
                 $ref: "#/components/schemas/ImmersionLanguage"
             allowed_activities:
@@ -4005,7 +4018,7 @@ components:
           properties:
             contests:
               type: array
-              maxItems: 50
+              maxItems: 100
               items:
                 $ref: "#/components/schemas/ImmersionContest"
     ImmersionContestSummary:

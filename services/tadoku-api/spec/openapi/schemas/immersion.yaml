@@ -44,9 +44,11 @@ components:
           type: boolean
         environment:
           type: string
+          description: The Flipt environment that evaluated the flag; test tenants use the test environment.
           enum:
             - local
             - production
+            - test
         revision:
           type: string
           pattern: ^[0-9a-f]{40}$

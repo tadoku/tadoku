@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Button, PageHeader, Surface, usePaperForm } from 'paper-ui'
 import { useSearch } from '@tanstack/react-router'
 import { accountSearch, errorMessage, returnDestination, submitAccount } from '../lib/account'
@@ -27,8 +27,17 @@ export function CredentialsForm({ mode }: { mode: 'login' | 'registration' }) {
   const [code, setCode] = useState(search.error)
   const registration = mode === 'registration'
   const continuation = returnDestination(search.return_to)
+  const initialValues = useMemo(() => {
+    const element = typeof document === 'undefined' ? null : document.getElementById(`credentials-${mode}-form`)
+    const values = typeof HTMLFormElement !== 'undefined' && element instanceof HTMLFormElement ? new FormData(element) : null
+    return {
+      email: String(values?.get('email') || ''),
+      display_name: String(values?.get('display_name') || ''),
+      password: String(values?.get('password') || ''),
+    }
+  }, [mode])
   const form = usePaperForm({
-    defaultValues: { email: '', display_name: '', password: '' },
+    defaultValues: initialValues,
     onSubmit: async ({ value, formApi }) => {
       setCode(undefined)
       const result = await submitAccount(mode, { ...value, return_to: search.return_to || '' })
@@ -50,7 +59,7 @@ export function CredentialsForm({ mode }: { mode: 'login' | 'registration' }) {
     {identity.session.account ? <p>You are signed in as {identity.session.account.display_name}. <a href="/">Open Settings</a>, or log in again below.</p> : null}
     <Surface className="account-status">
       <AccountFeedback code={search.return_to && !continuation ? 'invalid_return_to' : code} />
-      <form.AppForm><form.Form className="account-form" method="post" action={`/actions/${mode}`} onSubmitCapture={event => {
+      <form.AppForm><form.Form id={`credentials-${mode}-form`} className="account-form" method="post" action={`/actions/${mode}`} onSubmitCapture={event => {
         const values = new FormData(event.currentTarget)
         for (const field of ['email', 'display_name', 'password'] as const) form.setFieldValue(field, String(values.get(field) || ''))
       }}>

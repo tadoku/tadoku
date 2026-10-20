@@ -7,6 +7,40 @@ import { test, expect } from '@playwright/test'
 test('rendered account forms and progressive enhancement', async ({ browser, page }, testInfo) => {
   const stateFile = process.env.AUTHV2_READER_STATE_FILE
   const initialPassword = stateFile && existsSync(stateFile) ? readFileSync(stateFile, 'utf8') : process.env.AUTHV2_READER_PASSWORD || 'tadoku'
+  await test.step('credentials typed before hydration survive its completion', async () => {
+    const early = await browser.newContext({ baseURL: testInfo.project.use.baseURL })
+    const earlyPage = await early.newPage()
+    const email = `early-${randomUUID()}@example.test`
+    const secret = `Prehydration-${randomUUID()}`
+    for (const operation of ['registration', 'login'] as const) {
+      let release!: () => void
+      const gate = new Promise<void>(resolve => { release = resolve })
+      let scriptsHeld = 0
+      await earlyPage.route('**/*', async route => {
+        if (route.request().resourceType() === 'script') { scriptsHeld++; await gate }
+        await route.continue()
+      })
+      await earlyPage.goto(operation === 'registration' ? '/register' : '/login', { waitUntil: 'domcontentloaded' })
+      await earlyPage.getByLabel('Email').fill(email)
+      if (operation === 'registration') await earlyPage.getByLabel('Display name').fill('W2 Early Reader')
+      await earlyPage.getByLabel('Password').fill(secret)
+      expect(scriptsHeld).toBeGreaterThan(0)
+      release()
+      await earlyPage.waitForLoadState('networkidle')
+      await earlyPage.unroute('**/*')
+      await expect(earlyPage.getByLabel('Email')).toHaveValue(email)
+      expect(await earlyPage.getByLabel('Password').inputValue() === secret).toBe(true)
+      const responsePromise = earlyPage.waitForResponse(response => response.url().endsWith(`/actions/${operation}`))
+      await earlyPage.getByRole('button', { name: operation === 'registration' ? 'Create account' : 'Log in', exact: true }).click()
+      const response = await responsePromise
+      expect(response.status()).toBe(200)
+      expect(response.request().headers().accept).toBe('application/json')
+      await expect(earlyPage.getByRole('heading', { name: 'Settings', exact: true })).toBeVisible()
+      await expect(earlyPage.getByLabel('Email')).toHaveValue(email)
+      await earlyPage.getByRole('button', { name: 'Log out', exact: true }).click()
+    }
+    await early.close()
+  })
   await page.goto('/login')
   await expect(page.getByRole('heading', { name: 'Log in', exact: true })).toBeVisible()
   await expect(page.getByLabel('Email')).toBeEditable()

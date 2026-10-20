@@ -54,11 +54,10 @@ func newFixture(t *testing.T) *fixture {
 	}
 	migration := exec.CommandContext(t.Context(), kratos, "migrate", "sql", "--read-from-env", "--yes")
 	migration.Env = []string{"HOME=" + t.TempDir(), "DSN=" + f.source.DSN, "LOG_LEVEL=error"}
-	if output, err := migration.CombinedOutput(); err != nil {
-		message := strings.ReplaceAll(string(output), f.source.DSN, "[source database]")
-		message = strings.ReplaceAll(message, "postgres://", "[database scheme]")
-		t.Fatalf("pinned Kratos PostgreSQL migration failed: %s", message)
+	if migration.Run() != nil {
+		t.Fatal("pinned Kratos PostgreSQL migration failed")
 	}
+	f.sql(t, true, `insert into networks(id, created_at, updated_at) values ($1, now(), now())`, uuid.NewString())
 	f.binary, err = runfiles.Rlocation("tadoku/services/tadoku-api/cmd/tadoku-identity-import/tadoku-identity-import_/tadoku-identity-import")
 	if err != nil {
 		t.Fatal(err)
@@ -73,6 +72,7 @@ func newFixture(t *testing.T) *fixture {
 	if err != nil {
 		t.Fatal(err)
 	}
+	f.created = f.created.UTC()
 
 	for i, id := range []string{firstID, secondID} {
 		f.sql(t, true, `insert into identities
@@ -88,6 +88,12 @@ func newFixture(t *testing.T) *fixture {
 			from identities i cross join identity_credential_types ct
 			where i.id = $3 and ct.name = 'password'`, uuid.NewString(), f.hash, id,
 		)
+	}
+	var identities, credentials int
+	err = f.source.Pool.QueryRow(t.Context(), `select
+		(select count(*) from identities), (select count(*) from identity_credentials)`).Scan(&identities, &credentials)
+	if err != nil || identities != 2 || credentials != 2 {
+		t.Fatalf("source fixture requires two identities and credentials: identities=%d credentials=%d", identities, credentials)
 	}
 
 	role := f.source.AppPool.Config().ConnConfig.User
@@ -144,6 +150,7 @@ func (f *fixture) command(t *testing.T, args ...string) (string, error) {
 	if ctx.Err() != nil {
 		t.Fatal("CLI exceeded bounded execution deadline")
 	}
+	t.Logf("CLI arguments=%q\n%s", args, text)
 	return text, err
 }
 

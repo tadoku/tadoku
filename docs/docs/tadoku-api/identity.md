@@ -67,8 +67,8 @@ for v1, and for v2 the normalized address or an imported address as written.
 When Go's `net/mail` reads an address from it, the API writes that address
 part, so a quoted local part arrives unquoted and surrounding ASCII spaces and
 tabs are dropped, while letter case, other characters and length are kept. An
-address `net/mail` cannot read, such as an imported address with a leading
-vertical tab, is written unchanged. The contract therefore types the account
+address `net/mail` cannot read, such as a Kratos trait with a leading vertical
+tab, is written unchanged. The contract therefore types the account
 `email` in identity responses and the session callback as a plain string
 containing `@`, not `format: email`.
 Display names contain 2–32 Unicode characters and at least one visible

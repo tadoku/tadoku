@@ -27,8 +27,8 @@ var importedCreatedAt = time.Date(2019, 1, 2, 9, 34, 5, 123456000, time.UTC)
 
 type importedEmailCase struct {
 	name string
-	// raw is the source Kratos trait. stored, when set, replaces the imported address afterwards to model a v1
-	// trait the importer itself does not admit.
+	// raw is the source Kratos trait. stored, when set, replaces the imported address afterwards to model a
+	// stored address the importer itself refuses, such as a v1 trait.
 	raw, stored string
 	login       string
 	wire        string
@@ -36,7 +36,9 @@ type importedEmailCase struct {
 
 func TestIdentityImportedAccountEmailResponses(t *testing.T) {
 	kelvin := strings.Repeat("a", 316) + "K@x"
+	kelvinLogin := strings.Repeat("a", 316) + "k@x"
 	dottedI := strings.Repeat("a", 317) + "İ@x"
+	dottedILogin := strings.Repeat("a", 317) + "i@x"
 	longPrefix := strings.Repeat("　", 350) + "imported@example.test"
 	cases := []importedEmailCase{
 		{name: "ordinary", raw: "imported@example.test", login: "imported@example.test", wire: "imported@example.test"},
@@ -48,22 +50,41 @@ func TestIdentityImportedAccountEmailResponses(t *testing.T) {
 			login:  "imported@example.test",
 			wire:   "imported@example.test",
 		},
-		{name: "leading space", raw: " imported@example.test", login: "imported@example.test", wire: "imported@example.test"},
-		{name: "trailing tab", raw: "imported@example.test\t", login: "imported@example.test", wire: "imported@example.test"},
+		{
+			name:   "leading space",
+			raw:    "imported@example.test",
+			stored: " imported@example.test",
+			login:  "imported@example.test",
+			wire:   "imported@example.test",
+		},
+		{
+			name:   "trailing tab",
+			raw:    "imported@example.test",
+			stored: "imported@example.test\t",
+			login:  "imported@example.test",
+			wire:   "imported@example.test",
+		},
 		{
 			name:  "ideographic space prefix",
 			raw:   "　imported@example.test",
 			login: "imported@example.test",
 			wire:  "　imported@example.test",
 		},
-		{name: "kelvin sign", raw: kelvin, login: strings.Repeat("a", 316) + "k@x", wire: kelvin},
-		{name: "dotted capital I", raw: dottedI, login: strings.Repeat("a", 317) + "i@x", wire: dottedI},
-		{name: "long ideographic prefix", raw: longPrefix, login: "imported@example.test", wire: longPrefix},
+		{name: "kelvin sign", raw: kelvinLogin, stored: kelvin, login: kelvinLogin, wire: kelvin},
+		{name: "dotted capital I", raw: dottedILogin, stored: dottedI, login: dottedILogin, wire: dottedI},
 		{
-			name:  "leading vertical tab",
-			raw:   "\vimported@example.test",
-			login: "imported@example.test",
-			wire:  "\vimported@example.test",
+			name:   "long ideographic prefix",
+			raw:    "imported@example.test",
+			stored: longPrefix,
+			login:  "imported@example.test",
+			wire:   longPrefix,
+		},
+		{
+			name:   "leading vertical tab",
+			raw:    "imported@example.test",
+			stored: "\vimported@example.test",
+			login:  "imported@example.test",
+			wire:   "\vimported@example.test",
 		},
 	}
 	source := newKratosSource(t)

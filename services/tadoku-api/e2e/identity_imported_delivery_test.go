@@ -24,6 +24,15 @@ type importedDeliveryCase struct {
 	mailbox string
 	// keeps reports that submitting the normalized address leaves the stored address and its recipient unchanged.
 	keeps bool
+	// refused marks a raw address the importer refuses; the case imports the login address and then stores raw.
+	refused bool
+}
+
+func (tc importedDeliveryCase) account() importedEmailCase {
+	if tc.refused {
+		return importedEmailCase{raw: tc.login, stored: tc.raw, login: tc.login}
+	}
+	return importedEmailCase{raw: tc.raw, login: tc.login}
 }
 
 func importedDeliveryCases() []importedDeliveryCase {
@@ -51,6 +60,7 @@ func importedDeliveryCases() []importedDeliveryCase {
 			login:   "imported@example.test",
 			mailbox: "imported@example.test",
 			keeps:   true,
+			refused: true,
 		},
 		{
 			name:    "trailing tab",
@@ -58,12 +68,14 @@ func importedDeliveryCases() []importedDeliveryCase {
 			login:   "imported@example.test",
 			mailbox: "imported@example.test",
 			keeps:   true,
+			refused: true,
 		},
 		{
 			name:    "leading tab and mixed case",
 			raw:     "\tImported@Example.Test",
 			login:   "imported@example.test",
 			mailbox: "Imported@Example.Test",
+			refused: true,
 		},
 		{
 			name:    "leading space at the 320-byte recipient limit",
@@ -71,6 +83,7 @@ func importedDeliveryCases() []importedDeliveryCase {
 			login:   boundary,
 			mailbox: boundary,
 			keeps:   true,
+			refused: true,
 		},
 		{
 			name:    "ideographic space prefix",
@@ -79,39 +92,46 @@ func importedDeliveryCases() []importedDeliveryCase {
 			mailbox: "　imported@example.test",
 		},
 		{
-			name:  "leading vertical tab",
-			raw:   "\vimported@example.test",
-			login: "imported@example.test",
+			name:    "leading vertical tab",
+			raw:     "\vimported@example.test",
+			login:   "imported@example.test",
+			refused: true,
 		},
 		{
-			name:  "leading form feed",
-			raw:   "\fimported@example.test",
-			login: "imported@example.test",
+			name:    "leading form feed",
+			raw:     "\fimported@example.test",
+			login:   "imported@example.test",
+			refused: true,
 		},
 		{
-			name:  "leading CRLF",
-			raw:   "\r\nimported@example.test",
-			login: "imported@example.test",
+			name:    "leading CRLF",
+			raw:     "\r\nimported@example.test",
+			login:   "imported@example.test",
+			refused: true,
 		},
 		{
-			name:  "trailing LF",
-			raw:   "imported@example.test\n",
-			login: "imported@example.test",
+			name:    "trailing LF",
+			raw:     "imported@example.test\n",
+			login:   "imported@example.test",
+			refused: true,
 		},
 		{
-			name:  "kelvin sign",
-			raw:   kelvin,
-			login: strings.Repeat("a", 316) + "k@x",
+			name:    "kelvin sign",
+			raw:     kelvin,
+			login:   strings.Repeat("a", 316) + "k@x",
+			refused: true,
 		},
 		{
-			name:  "dotted capital I",
-			raw:   dottedI,
-			login: strings.Repeat("a", 317) + "i@x",
+			name:    "dotted capital I",
+			raw:     dottedI,
+			login:   strings.Repeat("a", 317) + "i@x",
+			refused: true,
 		},
 		{
-			name:  "long ideographic prefix",
-			raw:   longPrefix,
-			login: "imported@example.test",
+			name:    "long ideographic prefix",
+			raw:     longPrefix,
+			login:   "imported@example.test",
+			refused: true,
 		},
 	}
 }
@@ -121,7 +141,7 @@ func TestIdentityImportedAccountRecoveryDelivery(t *testing.T) {
 
 	for _, tc := range importedDeliveryCases() {
 		t.Run(tc.name, func(t *testing.T) {
-			original := importedEmailCase{raw: tc.raw, login: tc.login}
+			original := tc.account()
 			importAccount(t, source, original)
 			seedImportedRecoveryToken(t)
 
@@ -166,7 +186,7 @@ func TestIdentityImportedAccountEmailChange(t *testing.T) {
 
 	for _, tc := range importedDeliveryCases() {
 		t.Run(tc.name+"/different address", func(t *testing.T) {
-			original := importedEmailCase{raw: tc.raw, login: tc.login}
+			original := tc.account()
 			importAccount(t, source, original)
 			seedImportedRecoveryToken(t)
 			cookie := insertImportedSession(t)
@@ -192,7 +212,7 @@ func TestIdentityImportedAccountEmailChange(t *testing.T) {
 		})
 
 		t.Run(tc.name+"/normalized address", func(t *testing.T) {
-			original := importedEmailCase{raw: tc.raw, login: tc.login}
+			original := tc.account()
 			importAccount(t, source, original)
 			seedImportedRecoveryToken(t)
 			cookie := insertImportedSession(t)
@@ -228,7 +248,11 @@ func TestIdentityImportedAccountEmailChange(t *testing.T) {
 	}
 
 	t.Run("stale session", func(t *testing.T) {
-		original := importedEmailCase{raw: " imported@example.test", login: "imported@example.test"}
+		original := importedEmailCase{
+			raw:    "imported@example.test",
+			stored: " imported@example.test",
+			login:  "imported@example.test",
+		}
 		importAccount(t, source, original)
 		cookie := insertImportedSession(t)
 		_, err := api.db.Pool.Exec(t.Context(), `update sessions set authenticated_at = $2
@@ -248,7 +272,11 @@ func TestIdentityImportedAccountEmailChange(t *testing.T) {
 	})
 
 	t.Run("foreign tenant", func(t *testing.T) {
-		original := importedEmailCase{raw: " imported@example.test", login: "imported@example.test"}
+		original := importedEmailCase{
+			raw:    "imported@example.test",
+			stored: " imported@example.test",
+			login:  "imported@example.test",
+		}
 		importAccount(t, source, original)
 		cookie := insertImportedSession(t)
 

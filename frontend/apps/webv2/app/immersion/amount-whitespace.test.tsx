@@ -25,7 +25,7 @@ const activity = {
   input_type: 'amount_primary' as const,
 }
 const unit = {
-  id: 'pages',
+  id: '00000000-0000-4000-8000-000000000001',
   unit_key: 'reading_page',
   log_activity_id: 1,
   name: 'Pages',

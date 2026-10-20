@@ -33,15 +33,16 @@ const form = {
   activity_type_id_allow_list: [],
 }
 
-function created(contest: Record<string, unknown>) {
+function answerCreatedContest(contest: Record<string, unknown>) {
   vi.stubGlobal('fetch', async () => new Response(
     JSON.stringify({ ...form, ...contest }),
     { status: 200, headers: { 'Content-Type': 'application/json' } },
   ))
-  const navigate = vi.fn()
-  useCreateContest(navigate)
+}
+
+async function submit() {
   const options = useMutation.mock.lastCall?.[0]
-  return { navigate, submit: async () => options.onSuccess(await options.mutationFn(form)) }
+  options.onSuccess(await options.mutationFn(form))
 }
 
 describe('useCreateContest', () => {
@@ -50,14 +51,18 @@ describe('useCreateContest', () => {
   })
 
   it('fails like a malformed answer when the created contest has no ID', async () => {
-    const { navigate, submit } = created({})
+    answerCreatedContest({})
+    const navigate = vi.fn()
+    useCreateContest(navigate)
 
     await expect(submit()).rejects.toThrow('unavailable')
     expect(navigate).not.toHaveBeenCalled()
   })
 
   it('navigates to the created contest', async () => {
-    const { navigate, submit } = created({ id: '00000000-0000-4000-8000-000000000001' })
+    answerCreatedContest({ id: '00000000-0000-4000-8000-000000000001' })
+    const navigate = vi.fn()
+    useCreateContest(navigate)
 
     await submit()
     expect(navigate).toHaveBeenCalledWith('00000000-0000-4000-8000-000000000001')

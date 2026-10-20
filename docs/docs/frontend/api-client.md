@@ -57,10 +57,24 @@ break the contract's constraints, which must fail.
 - Validators check JSON types, required properties, nullability, enum values,
   formats, lengths, patterns, ranges, item counts and objects the contract
   closes with `additionalProperties: false`.
-- Three rules follow the API rather than Zod's defaults: lengths count
-  characters (code points), not UTF-16 units, so a 25-emoji display name fits 32;
-  `format: email` accepts what Go's `net/mail` writes, such as `reader@localhost`;
-  date-times accept any RFC 3339 offset. `openapi-ts.config.mjs` holds them.
+- Three rules in `openapi-ts.config.mjs` follow the API rather than Zod's
+  defaults:
+  - Lengths count characters (code points), not UTF-16 units, so a 25-emoji
+    display name fits 32.
+  - `format: email` accepts exactly the addresses `identity.ParseEmail` stores
+    as written, up to letter case, because v1 sessions return Kratos addresses
+    as stored. `reader@localhost`, `é@localhost`, a U+00A0 inside the domain and
+    IP literals pass; `a..b@localhost`, quoted local parts, display names and
+    surrounding spaces fail. The API bounds an address at 320 UTF-8 bytes, not
+    the 320 characters `maxLength` states, and the client checks the bytes.
+  - `format: date-time` accepts RFC 3339 as Go writes it: seconds, two-digit
+    fields and `Z` or a `±hh:mm` offset under 24 hours. Go's `time.Parse` also
+    reads some forms outside RFC 3339, such as `+24:00` or a one-digit hour,
+    that Go never writes; the client rejects them.
+
+  `frontend/packages/api-client/test/formats.json` lists Go's verdict on each
+  tested value; `frontend/packages/api-client/test/formats.test.ts` sends them
+  through the generated session operation.
 - Every answer is parsed as JSON. An HTML page fails.
 - Validation does not transform data: a call returns the JSON as sent. Use only
   the properties the types declare.
@@ -78,7 +92,9 @@ operations are excluded, because no frontend calls them.
 
 Pass `baseUrl` on every call: the client has no default server. Pass `headers` as
 a plain object: operations with a JSON body spread it, which drops a `Headers`
-instance. Thin adapters own base URLs, cookie and branch forwarding, `Origin`,
+instance. The API requires `Content-Type: application/json` on every identity
+write; the shared transport sets it on bodyless ones such as logout, which the
+generated client would send without it. Thin adapters own base URLs, cookie and branch forwarding, `Origin`,
 credentials, caching and timeouts.
 
 | Application | Adapters |

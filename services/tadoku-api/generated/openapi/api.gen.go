@@ -6322,6 +6322,20 @@ func (response IdentityRegistrationCreate409JSONResponse) VisitIdentityRegistrat
 	return err
 }
 
+type IdentityRegistrationCreate429JSONResponse IdentityErrorResponse
+
+func (response IdentityRegistrationCreate429JSONResponse) VisitIdentityRegistrationCreateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type IdentityRegistrationCreate501JSONResponse IdentityErrorResponse
 
 func (response IdentityRegistrationCreate501JSONResponse) VisitIdentityRegistrationCreateResponse(w http.ResponseWriter) error {

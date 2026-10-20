@@ -113,6 +113,19 @@ new accounts use their own tenant user's creation time. This reads no canonical
 account or credential, changes no canonical row or provider identity, and creates
 no session.
 
+The development base seed uses a separate entry point for the canonical tenant
+when it uses native accounts:
+
+```sh
+TENANT_PRODUCTION=false tadoku-tenant canonical-development-accounts \
+  --admin-id <fixture-admin-uuid> --reader-id <fixture-reader-uuid>
+```
+
+It takes no tenant and always writes `tadoku/prod`; `development-accounts`
+keeps refusing that tenant, so the branch task cannot reach it. It has the same
+host, `TENANT_PRODUCTION=false`, fixture and insert-missing rules, in one
+transaction, and needs only `users` and `accounts` DML.
+
 `inspect` accepts only parsed test keys and registry-management credentials.
 It prints `{"tenant":"tadoku/branch-0123abcd","exists":false}` after successful
 teardown. An absent registry row proves removal of its foreign-key-owned users,

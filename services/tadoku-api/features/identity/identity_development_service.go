@@ -5,6 +5,8 @@ import (
 	"errors"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -28,6 +30,19 @@ func SeedDevelopmentAccounts(
 	if !ok || key.String() == "" || current != key.Key() {
 		return errors.New("development accounts require their parsed test tenant")
 	}
+	return seedDevelopmentAccounts(ctx, repository, fixtures)
+}
+
+// Call only from the development base seed while the canonical tenant uses native accounts; production has no
+// development fixtures. Existing canonical accounts, including imported ones, keep their data.
+func SeedCanonicalDevelopmentAccounts(ctx context.Context, pool *pgxpool.Pool, fixtures []DevelopmentAccount) error {
+	ctx = tenant.WithKey(ctx, tenant.Production())
+	return postgres.RunInTransaction(ctx, pool, func(ctx context.Context) error {
+		return seedDevelopmentAccounts(ctx, NewRepository(pool), fixtures)
+	})
+}
+
+func seedDevelopmentAccounts(ctx context.Context, repository *Repository, fixtures []DevelopmentAccount) error {
 	for _, fixture := range fixtures {
 		email, err := ParseEmail(fixture.Email)
 		if err != nil {

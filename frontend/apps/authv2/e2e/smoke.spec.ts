@@ -86,7 +86,10 @@ test('account screen, session routing and unavailable API', async ({ page, reque
       contentType = type
       await page.goto('/login')
       await expect.soft(page.getByRole('heading', { level: 1, name: 'We can’t reach your account right now' })).toBeVisible()
-      await expect.soft(page.getByRole('link', { name: 'Try again' })).toHaveAttribute('href', '/login')
+      const retry = page.getByRole('link', { name: 'Try again' })
+      await expect.soft(retry).toHaveAttribute('href', '/login')
+      const label = await retry.evaluate(link => [getComputedStyle(link).color, getComputedStyle(link).backgroundColor])
+      expect.soft(label[0], 'retry label differs from its background').not.toBe(label[1])
       await expect.soft(page.getByLabel('Email')).toHaveCount(0)
       expect((await request.get('/healthz')).status()).toBe(200)
     }

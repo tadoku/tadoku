@@ -80,6 +80,43 @@ func (t *Throttle) admitRegistration(ctx context.Context, ip string) error {
 	return nil
 }
 
+var recoveryAdmissions = valkeygo.NewLuaScript(`
+local client = redis.call('INCR', KEYS[1])
+if client == 1 then redis.call('EXPIRE', KEYS[1], 900) end
+if client > 10 then return 0 end
+local recipient = redis.call('INCR', KEYS[2])
+if recipient == 1 then redis.call('EXPIRE', KEYS[2], 900) end
+if recipient > 3 then return 1 end
+return 2
+`)
+
+// admitRecovery fails closed: callers must not write a token or mail unless it returns true.
+// False without an error suppresses the recipient; answer exactly as for an unknown address.
+func (t *Throttle) admitRecovery(ctx context.Context, email Email, ip string) (bool, error) {
+	key, ok := tenant.FromContext(ctx)
+	if !ok {
+		return false, errx.NewUnavailableError("tenant is required for recovery admission", nil)
+	}
+	prefix := "tenant:" + key.String() + ":identity:recovery:"
+	bounded, cancel := context.WithTimeout(ctx, t.timeout)
+	defer cancel()
+	admission, err := recoveryAdmissions.Exec(bounded, t.client, []string{
+		prefix + "ip:" + hashToken(ip),
+		prefix + "email:" + hashToken(email.value),
+	}, nil).AsInt64()
+	if err != nil {
+		return false, errx.NewUnavailableError("recovery admission unavailable", err)
+	}
+
+	switch admission {
+	case 0:
+		return false, ErrRecoveryThrottled
+	case 1:
+		return false, nil
+	}
+	return true, nil
+}
+
 func hashToken(raw string) string {
 	digest := sha256.Sum256([]byte(raw))
 	return hex.EncodeToString(digest[:])

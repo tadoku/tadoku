@@ -121,7 +121,7 @@ const account = (id: string, email: string) => ({
   account: { id, email, display_name: 'Reader', created_at: '2026-01-01T00:00:00Z', authenticated_at: '2026-01-01T00:00:00Z' },
 })
 
-test('Settings shows and resubmits stored account values unchanged', async ({ page, request }, testInfo) => {
+test('Settings shows stored account values unchanged', async ({ page, request }, testInfo) => {
   test.skip(!fixtureEnabled, 'needs the local session fixture')
   status = 200
   contentType = 'application/json'
@@ -154,7 +154,7 @@ test('Settings shows and resubmits stored account values unchanged', async ({ pa
     ['Kelvin sign at 321 bytes', 'a'.repeat(316) + '\u212A@x'],
     ['dotted capital I at 321 bytes', 'a'.repeat(317) + '\u0130@x'],
   ]) {
-    await test.step(`${name}: server-rendered, hydrated and submitted unchanged`, async () => {
+    await test.step(`${name}: server-rendered and hydrated unchanged; resubmitting it sends nothing`, async () => {
       session = account('00000000-0000-4000-8000-000000000001', email)
       const html = await (await request.get('/settings')).text()
       expect.soft(nuls(html), 'server HTML gains no NUL').toBe(routerNuls)
@@ -171,8 +171,8 @@ test('Settings shows and resubmits stored account values unchanged', async ({ pa
       }
       profileUpdates.length = 0
       await page.getByRole('button', { name: 'Change email' }).click()
-      await expect.soft(page.getByText('Email changed.')).toBeVisible()
-      expect.soft(profileUpdates).toEqual([{ email }])
+      await expect.soft(page.locator('#email-email-error')).toHaveText('This is already your email address. Enter a different one to change it.')
+      expect.soft(profileUpdates, 'an unchanged address sends nothing').toEqual([])
     })
   }
 

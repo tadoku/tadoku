@@ -166,6 +166,9 @@ func (c *Client) EvaluateBoolean(ctx context.Context, request featureflags.Evalu
 		Context:  cloneContext(request.Context),
 	})
 	if err != nil {
+		if isMissingFlag(err) && c.fetchState != nil && !c.fetchState.delivered() {
+			return featureflags.ProviderResult{}, errors.New("Flipt namespace snapshot has not been delivered")
+		}
 		if isMissingFlag(err) {
 			return featureflags.ProviderResult{}, featureflags.ErrFlagNotFound
 		}
@@ -428,6 +431,12 @@ func (s *providerFetchState) snapshotNotModified(etag string) {
 	if s.observer != nil {
 		s.observer.ObserveConfigRefresh()
 	}
+}
+
+func (s *providerFetchState) delivered() bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.hasSnapshot || s.pending
 }
 
 func (s *providerFetchState) failed() {

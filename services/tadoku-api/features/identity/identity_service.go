@@ -187,10 +187,25 @@ func (*Service) DeleteAccount(context.Context, uuid.UUID) error { return ErrNotI
 const dummyPasswordHash = "$2b$12$hady7Vf2de/ngyT9TV6N/usj/9yeHugOWtf8eCYGfnWNO.z9CGeeu"
 
 func (s *Service) accountApp(ctx context.Context) (AccountApp, error) {
-	if _, ok := tenant.FromContext(ctx); !ok {
+	return accountApp(ctx, s.flags)
+}
+
+// accountApp fails unavailable unless the tenant's identity-v2 flag is decided. Only the canonical tenant
+// may use the flag's safe default, while its configuration does not declare the flag.
+func accountApp(ctx context.Context, flags *featureflags.Evaluator) (AccountApp, error) {
+	key, ok := tenant.FromContext(ctx)
+	if !ok {
 		return "", errx.NewUnavailableError("identity tenant is required", nil)
 	}
-	if s.flags.TenantBoolean(ctx, featureflags.IdentityV2) {
+
+	enabled, err := flags.TenantBoolean(ctx, featureflags.IdentityV2)
+	if errors.Is(err, featureflags.ErrFlagNotFound) && key == tenant.Production() {
+		enabled, err = featureflags.IdentityV2.SafeDefault(), nil
+	}
+	if err != nil {
+		return "", errx.NewUnavailableError("identity provider selection unavailable", err)
+	}
+	if enabled {
 		return V2, nil
 	}
 	return V1, nil

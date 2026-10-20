@@ -61,13 +61,22 @@ Their routes in `k8s/dev/base/oathkeeper/rules.yaml` allow only the snapshot
 read and managed segment calls. Metrics are named `tadoku_feature_flag_*`.
 
 `Evaluator.TenantBoolean` uses the parsed context tenant key as the Flipt entity,
-including guest traffic. It uses the same provider target mapping and safe-default
+including guest traffic. It uses the same provider target mapping and
 observations as user evaluation, without caching a decision across tenants.
-`IdentityV2` (`identity-v2`) defaults to `false` for every unset tenant; the
-feature service exposes it as `IdentityV2(ctx)`. It is declared in webv2 but is
-not added to the public decisions response. The browser schema supplies `false`
-when that internal decision is absent. Account-app selection belongs to the
-identity session contract rather than the public user-flag endpoint.
+Unlike `Boolean`, it returns an error instead of a safe default when it cannot
+decide. The error wraps `ErrFlagNotFound` when the delivered namespace snapshot
+lacks the flag, and otherwise carries the provider, invalid-response or context
+error. A Flipt client that has not received its namespace snapshot, because
+Flipt was unreachable or the namespace does not exist, reports a provider error
+rather than a missing flag; `Boolean` still serves the safe default.
+
+`IdentityV2` (`identity-v2`) has the safe default `false`. Only the identity
+feature evaluates it; see
+[Account-app selection](../tadoku-api/identity.md#account-app-selection). It is
+declared in webv2 but is not added to the public decisions response. The browser
+schema supplies `false` when that internal decision is absent. Account-app
+selection belongs to the identity session contract rather than the public
+user-flag endpoint.
 
 ## Decisions in the browser
 
@@ -150,9 +159,9 @@ not permit namespace creation or deletion.
    missing namespace returns `500`.
 3. Verify
    `GET /internal/v1/evaluation/snapshot/namespace/e2e_run-1` with header
-   `x-flipt-environment: test`. An unprovisioned namespace returns `404` and
-   evaluation uses safe defaults. Test namespaces never share canonical members
-   or revisions.
+   `x-flipt-environment: test`. An unprovisioned namespace returns `404`; user
+   flags then use safe defaults and identity requests for the tenant are
+   unavailable. Test namespaces never share canonical members or revisions.
 4. Delete only the owned namespace with
    `DELETE /api/v2/environments/test/namespaces/e2e_run-1` during teardown.
    Provision it again after a Flipt restart.

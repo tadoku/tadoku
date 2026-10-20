@@ -117,7 +117,8 @@ func TestNewUsesFallbackWhenFliptIsEmptyOrUnavailable(t *testing.T) {
 	assert.Equal(t, []featureflags.InitializationStatus{featureflags.InitializationStatusFallback}, statuses)
 	assert.Contains(t, providerErrors, "fetch")
 	_, err = client.EvaluateBoolean(context.Background(), featureflags.EvaluationRequest{FlagKey: "release-log-entry-v2", EntityID: "4c47b265-6987-4bc1-8933-006168a31793"})
-	assert.ErrorIs(t, err, featureflags.ErrFlagNotFound)
+	require.Error(t, err)
+	assert.NotErrorIs(t, err, featureflags.ErrFlagNotFound)
 }
 
 func TestNewDoesNotMarkMalformedSnapshotAsFresh(t *testing.T) {

@@ -61,8 +61,8 @@ type IdentityProxySession struct {
 type IdentityProxyTraits struct {
 	DisplayName string `json:"display_name"`
 
-	// Email The account's stored address: a v1 Kratos trait, or for v2 the normalized address registration or settings stored or an imported address as written. The API writes the address part Go's net/mail reads from it, so a quoted local part arrives unquoted and surrounding ASCII spaces and tabs are dropped; letter case, every other character and its length are kept. It is not normalized like email input and need not satisfy format: email.
-	Email openapi_types.Email `json:"email"`
+	// Email The account's stored address: a v1 Kratos trait, or for v2 the normalized address registration or settings stored or an imported address as written. When Go's net/mail reads an address from it, the API writes that address part, so a quoted local part arrives unquoted and surrounding ASCII spaces and tabs are dropped; letter case, every other character and its length are kept. Otherwise, such as for an imported address with a leading vertical tab, the API writes the stored address unchanged. It is not normalized like email input and need not satisfy format: email.
+	Email string `json:"email"`
 }
 
 // IdentityProxyUser defines model for IdentityProxyUser.

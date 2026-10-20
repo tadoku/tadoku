@@ -45,6 +45,7 @@ go_test(
         "golden_test.go",
         "identity_accounts_test.go",
         "identity_errors_test.go",
+        "identity_imported_email_test.go",
         "identity_isolation_test.go",
         "identity_legacy_listing_test.go",
         "identity_providers_test.go",
@@ -107,6 +108,7 @@ go_test(
     ]) + [
         "//k8s/dev/base/oathkeeper:oathkeeper.yaml",
         "//k8s/dev/base/oathkeeper:rules.yaml",
+        "//services/tadoku-api/cmd/tadoku-identity-import:testdata/kratos-source.sql",
         "//services/tadoku-api/spec:openapi.yaml",
         "@oathkeeper_v25_4_0//:oathkeeper",
         "@oathkeeper_v26_2_0//:oathkeeper",

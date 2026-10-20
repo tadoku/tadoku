@@ -8,8 +8,11 @@ sidebar_position: 4
 
 Read this when you gate behavior behind a flag, change who sees a flagged feature or add a new flag.
 
-This page describes the development environment. Flags are boolean; without a
-decision, every consumer uses the flag's behavior-preserving safe default.
+This page describes the development environment. Flags are boolean. Without a
+decision, `Evaluator.Boolean` consumers use the flag's behavior-preserving safe
+default. Identity selection through `Evaluator.TenantBoolean` is unavailable
+instead; only the canonical tenant's missing `identity-v2` flag uses the safe
+default, as described below.
 
 ## Where flags are declared
 
@@ -47,8 +50,11 @@ The provider wraps the Flipt client SDK in polling mode: it fetches the resolved
 namespace evaluation snapshot every
 `API_FLIPT_UPDATE_INTERVAL` and evaluates in process. A failed fetch keeps the
 last snapshot and marks results stale. Startup waits at most
-`API_FLIPT_STARTUP_TIMEOUT` before serving safe defaults. The canonical client is
-created at startup. Test clients are created on first evaluation, retained in a
+`API_FLIPT_STARTUP_TIMEOUT`. A client only evaluates a snapshot it fetched: when
+its first fetch fails, it discards the SDK's empty fallback state and starts a
+fresh SDK every `API_FLIPT_UPDATE_INTERVAL` until a fetch succeeds. Until then
+`Boolean` serves safe defaults and `TenantBoolean` reports a provider error. The
+canonical client is created at startup. Test clients are created on first evaluation, retained in a
 16-client LRU cache and closed on eviction or shutdown. A missing tenant never
 falls back to canonical flags. Test clients have no provider-lifecycle observer,
 so `tadoku_feature_flag_config_age_seconds` continues to describe canonical
@@ -64,11 +70,12 @@ read and managed segment calls. Metrics are named `tadoku_feature_flag_*`.
 including guest traffic. It uses the same provider target mapping and
 observations as user evaluation, without caching a decision across tenants.
 Unlike `Boolean`, it returns an error instead of a safe default when it cannot
-decide. The error wraps `ErrFlagNotFound` when the delivered namespace snapshot
-lacks the flag, and otherwise carries the provider, invalid-response or context
-error. A Flipt client that has not received its namespace snapshot, because
-Flipt was unreachable or the namespace does not exist, reports a provider error
-rather than a missing flag; `Boolean` still serves the safe default.
+decide. The error wraps `ErrFlagNotFound` only when the fetched namespace
+snapshot the client evaluated lacks the flag, and otherwise carries the
+provider, invalid-response or context error. When Flipt is disabled, or a
+client has no fetched snapshot yet because Flipt was unreachable or the
+namespace does not exist, it reports a provider error rather than a missing
+flag; `Boolean` still serves the safe default.
 
 `IdentityV2` (`identity-v2`) has the safe default `false`. Only the identity
 feature evaluates it; see

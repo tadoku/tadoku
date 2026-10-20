@@ -63,7 +63,9 @@ branch tenant and disposable account for registration, login, session lookup and
 logout. Assert the tenant-specific cookie name, Secure/HttpOnly/SameSite flags,
 fresh tokens on login, persistence, rejection after logout, and isolation from
 base and another branch. Send a JSON content type and an allowed HTTPS Origin.
-Record `account_app`; an unset `identity-v2` decision remains `v1`.
+Record `account_app`. Only an `identity-v2` flag absent from the canonical
+`tadoku/prod` snapshot defaults to `v1`. Any other undecided selection returns
+`503`, or `504` past the request deadline and `499` when the client cancels.
 
 The base API and overlays supply the development cookie domain and Kratos public
 URL.

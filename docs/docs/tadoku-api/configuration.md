@@ -133,17 +133,22 @@ rejected; path prefixes are supported and trailing slashes are removed.
   `flipt-management/tadoku-api`. A non-empty `API_FLIPT_MANAGEMENT_URL` must be
   an HTTP(S) base URL without credentials, query or fragment even when Flipt is
   disabled; empty is allowed when Flipt is disabled. `API_FLIPT_URL` is
-  validated only when Flipt is enabled. Provider outages keep safe defaults
-  active and do not fail startup; later polling recovers without a restart.
+  validated only when Flipt is enabled. Provider outages do not fail startup.
+  Until a client has fetched its namespace snapshot, `Boolean` flag consumers
+  use safe defaults and identity provider selection is unavailable; a later
+  fetch recovers without a restart.
 - `API_FLIPT_TEST_ENVIRONMENT` defaults to `test`. When Flipt is enabled, it
   must be nonempty and different from `API_FLIPT_ENVIRONMENT`; an invalid value
   fails startup. The canonical tenant `tadoku/prod` keeps the configured
   environment and namespace. Other tenants use the test environment and the
   tenant key with `/` mapped to `_`, because Flipt namespace keys cannot contain
   slashes. Evaluation and named-user management use this same mapping. Test
-  clients are lazy and bounded to 16; missing namespaces or missing tenant
-  contexts use safe evaluation defaults. Disabled Flipt serves safe defaults
-  for every tenant. See [Feature flags](../architecture/feature-flags.md).
+  clients are lazy and bounded to 16. Missing namespaces, missing tenant
+  contexts and disabled Flipt give `Boolean` consumers safe defaults and make
+  identity provider selection unavailable for the affected tenants, including
+  `tadoku/prod` when Flipt is disabled. See
+  [Feature flags](../architecture/feature-flags.md) and
+  [Account-app selection](./identity.md#account-app-selection).
 
 ### Scoring engine
 

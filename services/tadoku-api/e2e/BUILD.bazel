@@ -45,6 +45,8 @@ go_test(
         "golden_test.go",
         "identity_accounts_test.go",
         "identity_errors_test.go",
+        "identity_flag_failure_test.go",
+        "identity_flag_provider_test.go",
         "identity_isolation_test.go",
         "identity_legacy_listing_test.go",
         "identity_providers_test.go",

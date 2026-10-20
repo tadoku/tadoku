@@ -256,6 +256,8 @@ type routerEndpoints struct {
 	identityValkey   valkeygo.Client
 	identityObserver featureflags.Observer
 	legacySessions   *identity.LegacySessions
+	legacyReader     identity.LegacyReader
+	flags            featureflags.BooleanProvider
 }
 
 func withIdentityValkey(client valkeygo.Client) routerOption {
@@ -264,6 +266,17 @@ func withIdentityValkey(client valkeygo.Client) routerOption {
 
 func withKetoWriteURL(url string) routerOption {
 	return func(endpoints *routerEndpoints) { endpoints.ketoWrite = url }
+}
+
+func withLegacyIdentity(sessions *identity.LegacySessions, reader identity.LegacyReader) routerOption {
+	return func(endpoints *routerEndpoints) {
+		endpoints.legacySessions = sessions
+		endpoints.legacyReader = reader
+	}
+}
+
+func withFlagProvider(provider featureflags.BooleanProvider) routerOption {
+	return func(endpoints *routerEndpoints) { endpoints.flags = provider }
 }
 
 func newTestRouterWithLeaderboardService(
@@ -284,6 +297,8 @@ func newTestRouterWithLeaderboardService(
 		legacySessions: identity.NewLegacySessions(
 			"http://kratos-public.test", "http://kratos.test", &http.Client{Transport: forbiddenLegacyTransport{}},
 		),
+		legacyReader: fixtureLegacyReader(),
+		flags:        flipt,
 	}
 	for _, option := range options {
 		option(&endpoints)
@@ -293,7 +308,7 @@ func newTestRouterWithLeaderboardService(
 	readWriter := ketoclient.NewClient(ketoFixture.ReadURL(), endpoints.ketoWrite)
 	permissionChecker := permissions.NewKetoChecker(reader)
 	roleService := permissions.NewKetoService(reader)
-	identities := identity.NewReader(pool, fixtureLegacyReader(), featureflags.NewEvaluator(flipt, nil))
+	identities := identity.NewReader(pool, endpoints.legacyReader, featureflags.NewEvaluator(endpoints.flags, nil))
 
 	authzService := featureauthz.NewService(
 		permissionChecker,
@@ -325,7 +340,7 @@ func newTestRouterWithLeaderboardService(
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	featureFlagEvaluator := featureflags.NewEvaluator(flipt, endpoints.identityObserver)
+	featureFlagEvaluator := featureflags.NewEvaluator(endpoints.flags, endpoints.identityObserver)
 	featureFlagsService := featureflagsservice.NewService(
 		featureFlagEvaluator,
 		fliptmanagement.NewClient(fliptmanagement.Config{

@@ -36,77 +36,143 @@ pinned production image. This proves configuration and logging behavior;
 actual API sessions, ban admission, trusted routing and live tenant isolation
 require the branch journey.
 
-## Production release order
+## Source delivery and production activation
 
-A merge to the source repository's `main` runs `build-bazel.yaml`, publishes the
-API production image, and lets Image Updater and Argo CD reconcile it. Treat an
-API merge as a production release. The legacy webv2, admin and auth workflows
-publish commit and `latest` images on main; they publish `prod` only through an
-owner-approved `workflow_dispatch` with `publish_production: true`. Production
-tracks `prod`. Publishing any of these apps from a revision containing identity
-session reads requires the private session rule and working public identity
-routes. Otherwise SSR receives an error and visitors see the retry screen.
+A source merge automatically releases the API and worker to production through
+`build-bazel.yaml`, Image Updater and Argo CD. It also publishes development
+frontend images; development reconciliation switches the shared callback and
+private SSR routes. Treat this as a real production API/worker release.
+Production Oathkeeper is managed in the separate GitOps repository. Legacy
+webv2, admin and auth publish `prod` only through a separately authorized
+`workflow_dispatch` with `publish_production: true`; production tracks those pins.
+Keep their existing production images until the identity stack is ready.
 
-Use this prerequisite order; ordinary source-merge permission does not authorize
-an activation or a workflow dispatch:
+The selected order permits compatible source delivery before production gateway
+activation. It grants no production gateway, public-route, authv2, SMTP,
+branch-tooling adoption, frontend publication, flag, import, deletion or rollback
+permission. New production branches and pull-request deploys built from these
+sources are **unsupported** until the paired production identity stack is ready:
+provisioning enables v2 in test tenants, while the existing production gateway
+still authenticates Kratos sessions. Native Reader results can be empty and new
+frontends cannot read sessions. Do not create such branches or add `deploy`.
+[Production branches](../develop/production-branches.md) describes this hold.
 
-1. Deploy and verify the account session, logout and callback runtime and the
-   public identity routes in production. Public routing and package readiness
-   must satisfy the account runtime's own live gate before its owner lands it;
-   do not waive that gate to impose an accounts-first order. Confirm callback
-   credential compatibility, banned-account session/logout admission, trusted
-   branch selection and the required public Kratos URL/proxy configuration.
-2. Land the required production public-route and authv2 preparations under their
-   own authorization. Email-route preparation has its own authorization and
-   readiness gates: preserve its rule and token-header mutator if it has landed;
-   otherwise its owner must refresh and revalidate the later email change
-   against the callback configuration. SMTP/worker preparation remains
-   independently held for its own prerequisites.
-   Refresh the callback GitOps branch onto the resulting main, preserving the
-   public anonymous identity route and private session route alongside any
-   landed email rule.
-   Retain the final head/base SHAs, Helm render and image digests; rerun the
-   real-image callback matrix, production identity-proxy proof and production
-   email-route cases under the callback configuration. Include token-only,
-   token with unrelated/expired/valid cookies, administrator cookie, guest,
-   forged-JWT, other-route rejection and tenant-scope cases. Get independent
-   review of that final candidate. After current-head checks and actual
-   composed-callback proof pass, obtain separate authorization for that exact
-   refreshed production gateway revision. An earlier preparation head cannot
-   be the activation candidate.
-   Merge the approved GitOps revision only after that authorization: the
-   `tadoku-oathkeeper` Application tracks main and automatically syncs, prunes and
-   self-heals. No manual sync or apply is required or implied.
-3. Verify the reconciled gateway revision, healthy API and Oathkeeper, private
-   and public `GET /identity/session` for guests and authenticated users, and
-   the actual credential-protected callback. Exercise cookie-bearing mutations,
-   banned session/logout access, unrelated cookies and canonical/branch cookie
-   coexistence. Confirm callback GET, trusted tenant and selected database;
-   verify logs without exposing the credential. Stop if any result is missing
-   or mismatched.
-4. Only then is the caller-change source merge eligible. Its development-base
-   gateway switch is automatic on Argo reconciliation; development webv2,
-   admin and auth also switch automatically through their main image publication.
-   Complete the separately approved pre-merge proof and post-merge dev smoke. Source review, current-head
-   CI and branch-journey gates must also pass.
-5. Publish webv2, admin and auth production images only with the owner's normal
-   publication approval after all prerequisites above. Record the selected
-   source SHA and resulting image digests; verify anonymous pages, deep-link
-   login and return URL, authenticated navigation, reader/admin permissions,
-   session retry behavior and logout/protected-page denial through production
-   routes using approved test sessions. Do not create a production session
-   without authorization.
+### Source delivery gates
 
-Before each step, record the exact approved revisions, deployed image digests,
-route/configuration revision, check results and remaining permissions. A prior
+1. Before source delivery, capture these read-only preflight results:
+   - Resolve the actual production flag repository's `main` SHA from the Flipt
+     Git configuration. Inspect its decision definitions: canonical production
+     must have no enabled `identity-v2` decision. Record absence explicitly;
+     missing flags, errors and timeouts use the unchanged false/v1 fallback.
+     Git evidence alone does not prove the running evaluator's state.
+   - Require zero production branch Deployments, no preview routes beyond the
+     catchall, and zero open pull requests labelled `deploy`. Inventory the API,
+     frontend, gateway, routing and branch-marker namespaces; do not create a
+     deployment or apply a label to test this condition.
+   - Capture production API readiness at 2/2, worker readiness and image digests,
+     all three legacy frontend production pins, gateway health, and its current
+     Kratos `whoami` callback with the session-cookie `only` filter. Retain an
+     anonymous known-profile 200 body hash and known-unknown UUID 404 baseline;
+     use the same URLs after release. Send no production session or credential.
+   - Confirm v1 compatibility with those deployed routes and pins: profile and
+     account age retain the existing per-request Kratos reads; the admin list
+     performs one bounded provider walk per request with compatible ordering,
+     fuzzy matching, totals and paging. The caller change adds no API environment
+     requirement. Kratos public URL, cookie domain and trusted-proxy configuration
+     remain readiness gates for the new legacy session path before gateway
+     activation; the current production gateway does not route that path.
+   - Retain accepted runtime/callback/security evidence, unchanged token-bearing
+     golden fixtures, deployed clean migration 52 proof in both environments,
+     source review and current-head CI. Prove composition with actual current
+     main, preserving branch-tooling queries and fixtures; normal compare-and-swap
+     merge gates still apply. Record the impending shared development gateway
+     switch on the coordination board. Image-pin-only changes do not require
+     rebuilding equivalent accepted code.
+2. Deliver source through the normal source merge process. Record the **actual
+   merge commit**, release workflow run and artifact provenance, API/worker
+   digests, and development reconciliation. Do not substitute the PR head for
+   the merge commit. Then complete these post-merge gates in order:
+   - **Production read-only:** require the new API digest at 2/2, a healthy worker
+     traced to the release artifact, unchanged known-profile 200 body hash and
+     unknown-profile 404, and unchanged gateway, frontend pins and flag
+     definitions. A missing or mismatched result stops progression.
+   - **Development provenance:** require healthy API/gateway revisions containing
+     the merge and live webv2, admin and auth images built from the actual merge
+     commit. Capture build revisions, digests, workflow runs and artifacts before
+     any browser smoke; an old image or successful client hydration is not SSR
+     proof.
+   - **Isolated v2 routing:** use an owned isolated-database branch, native branch
+     accounts and JSON login. Require cookie-bearing non-identity GETs proving
+     the account/role and Reader result, plus a schema-invalid POST through a
+     `cookie_session` route returning the actual branch API's 400. Gateway 401,
+     wrong method or wrong backend fails the gate. Invalid input must prevent
+     business mutation. The base host must remain guest even with the branch
+     cookie and spoofed selection header. Prove physical database placement
+     separately; pod configuration, lifecycle markers and backend headers alone
+     leave catalog/row placement unverified. Use only an existing authorized
+     read-only database connection, never shared-namespace exec, port-forward,
+     extra Jobs or metadata repair. After owner-scoped down, retain and report
+     the marked database; verification grants no deletion.
+   - **Canonical v1 browser smoke:** reuse the same retained Reader/Admin sessions
+     on canonical development hosts; new v2 branches reject those v1 sessions.
+     Verify signed-in server-rendered document state with those private storage
+     states, reload, Reader navigation/profile and admin denial, and Admin
+     list/search/empty/clear and paging where controls exist. Record API-only
+     paging separately. Check session retry, deep-link query/fragment return,
+     full cookies and app-origin CORS. Only after all smoke preconditions and
+     observations pass, publicly log out exactly that pair and require old
+     `whoami` cookies to return 401 and protected access to be denied. No new
+     shared login, replacement session, admin revocation or role/flag change.
+   - Publish sanitized evidence to the source PR and coordination board, retaining
+     exact commands, setup, tested revisions, results and unresolved boundaries.
+     Physical isolation and live smoke are required; neither is waived by local
+     composition evidence.
+
+### Separately held production activation
+
+1. Deploy and verify account session/logout/callback runtime and public identity
+   routes under their own gates. Confirm callback credential compatibility,
+   banned-account session/logout admission, trusted selection, Kratos public URL,
+   cookie domain and proxy configuration. Public routing/package readiness must
+   satisfy the account runtime's live gate. Production public-route and authv2
+   preparations and branch-tooling adoption stay independently held. Preserve any
+   landed email rule and token-header mutator; otherwise the email owner refreshes
+   and revalidates later. SMTP/worker preparation retains its own gates.
+2. Refresh the existing callback GitOps branch onto actual upstream main,
+   preserving public anonymous identity and private session entries alongside
+   any landed email rule. Retain final head/base SHAs, Helm render and image
+   digests. Rerun the real-image callback matrix, production identity-proxy proof
+   and applicable production email-route cases: token-only; token with unrelated,
+   expired, revoked and valid cookies; reader-cookie precedence; administrator
+   cookie; guest; forged JWT; invalid-token no-fallback; other-route rejection
+   and tenant scope. Obtain focused independent review and current-head checks
+   plus actual composed-callback proof. Only that final reviewed revision may
+   receive separate exact-candidate activation authorization (the D4 gate);
+   an earlier preparation head is not an activation candidate.
+   Its authorized merge automatically syncs, prunes and self-heals through the
+   `tadoku-oathkeeper` Application; no manual sync or apply is implied.
+3. Verify the reconciled revision, healthy API/Oathkeeper, guest and authenticated
+   private/public `GET /identity/session` and the credential-protected callback.
+   Require callback GET with its correct bearer, cookie-bearing mutations,
+   banned session/logout access, unrelated cookies, canonical/branch full-cookie
+   coexistence, trusted tenant and selected physical database. Verify logs
+   without exposing the credential. **Stop if any result is missing or mismatched.**
+4. Publish webv2, admin and auth production images only with the owner's normal
+   separate publication authorization after all prerequisites above. Record
+   selected source SHA and image digests; verify anonymous pages, deep-link login
+   with query/fragment return, authenticated navigation, Reader/Admin permissions,
+   session retry behavior, logout and protected-page denial through production
+   routes using authorized test sessions. **Do not create a production session
+   without authorization.**
+
+Before each step, record the exact authorized revisions, deployed image digests,
+route/configuration revision, check results and remaining authority. A prior
 configuration-only stand-in result is not actual API callback or live-routing
 proof. Missing production session authority leaves that check unverified and
 blocks claiming completion.
 
 On failure, stop progression and further publications, retain sanitized evidence
-and report the failing route/revision and its user impact. Keeping the current
-frontend production images is the limited option before publication; this
-sequence assumes no production-publish freeze. Reverting source, republishing an
-older image or changing live configuration requires new explicit authorization
-unless minimum containment is urgently needed to prevent active harm. A
-prepared inverse patch or revert procedure grants no rollback authority.
+and report the failing route/revision and user impact. Reverting source,
+republishing an older image or changing live configuration requires explicit
+permission unless minimum containment is urgently needed to prevent active harm.
+A prepared inverse patch or runbook grants no rollback authority.

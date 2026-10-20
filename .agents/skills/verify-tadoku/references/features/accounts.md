@@ -87,6 +87,24 @@ restore it after teardown and never apply it to canonical Flipt. Never edit
 canonical flag policy or shared Kratos sessions to exercise local account
 behavior. Backend E2Es use real, disposable providers and a tenant-aware Flipt fixture.
 
+## Caller release smoke
+
+Follow the ordered gates in
+[Identity gateway configuration](../../../../../docs/docs/operations/identity-gateway.md#source-delivery-gates):
+production read-only baseline, actual-merge development image provenance, isolated
+native-v2 callback GET and invalid POST 400 with physical-database evidence, then
+canonical browser/SSR smoke with the same retained v1 sessions. Require live
+webv2/admin/auth builds from the merge commit before browser proof. Confirm
+signed-in server-rendered document content before hydration as well as the real
+Reader/Admin interactions; API curls and hydrated navigation alone are partial
+proof. Revoke the retained pair publicly only after every smoke gate passes and
+verify old-cookie 401. Keep secrets in the existing private storage states.
+
+New production branches and `deploy`-labelled pull requests using these callers
+are unsupported until the paired production identity routes, callback and authv2
+are ready. Source delivery does not activate held production branch-tooling
+adoption. See [Production branches](../../../../../docs/docs/develop/production-branches.md).
+
 ## Source anchors
 
 [Account pages](../../../../../frontend/apps/auth/pages/),

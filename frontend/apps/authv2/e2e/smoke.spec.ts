@@ -121,7 +121,7 @@ const account = (id: string, email: string) => ({
   account: { id, email, display_name: 'Reader', created_at: '2026-01-01T00:00:00Z', authenticated_at: '2026-01-01T00:00:00Z' },
 })
 
-test('Settings shows and resubmits stored account values unchanged', async ({ page, request }) => {
+test('Settings shows and resubmits stored account values unchanged', async ({ page, request }, testInfo) => {
   test.skip(!fixtureEnabled, 'needs the local session fixture')
   status = 200
   contentType = 'application/json'
@@ -164,6 +164,11 @@ test('Settings shows and resubmits stored account values unchanged', async ({ pa
       await page.goto('/settings')
       await waitForHydration(page)
       await expect.soft(page.getByRole('textbox', { name: 'Email', exact: true })).toHaveValue(email)
+      for (const width of [1280, 390]) {
+        await page.setViewportSize({ width, height: 844 })
+        expect.soft(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `fits ${width}px`).toBe(true)
+        await page.screenshot({ path: testInfo.outputPath(`settings-${name.replaceAll(' ', '-')}-${width}.png`), fullPage: true })
+      }
       profileUpdates.length = 0
       await page.getByRole('button', { name: 'Change email' }).click()
       await expect.soft(page.getByText('Email changed.')).toBeVisible()

@@ -8,6 +8,7 @@ MODULE.bazel.lock merge=bazel-lockfile-merge
 # Generated files and lockfiles: collapsed in GitHub diffs and skipped by tools/ci/check_file_sizes.sh.
 services/tadoku-api/generated/** linguist-generated=true
 services/tadoku-api/spec/openapi.yaml linguist-generated=true
+frontend/packages/api-client/src/generated/** linguist-generated=true
 frontend/apps/admin/app/languages/iso639-3.ts linguist-generated=true
 **/pnpm-lock.yaml linguist-generated=true
 **/MODULE.bazel.lock linguist-generated=true

@@ -97,6 +97,7 @@ generated diff and never edit generated files by hand.
 | sqlc | Changing a query in `services/tadoku-api/sql/` | `./scripts/generate-sqlc.sh` | `services/tadoku-api/generated/sqlc/` |
 | OpenAPI bundle and oapi-codegen | Changing a fragment in `services/tadoku-api/spec/openapi/` | `./scripts/generate-openapi.sh` | `services/tadoku-api/spec/openapi.yaml` and `services/tadoku-api/generated/openapi/` |
 | API reference | Changing the OpenAPI contract, after `./scripts/generate-openapi.sh` | `pnpm api:generate` in `docs/` | `docs/docs/api/` |
+| Frontend API client | Changing the OpenAPI contract, after `./scripts/generate-openapi.sh` | `pnpm --filter api-client generate` in `frontend/` | `frontend/packages/api-client/src/generated/` |
 
 `./scripts/generate-sqlc.sh` downloads the sqlc version pinned in each query
 package's `generate.go`, so it needs only `curl` and `tar`. New query packages
@@ -155,6 +156,7 @@ console output; they include assertion output and fixture cleanup errors.
 | --- | --- | --- |
 | `build-bazel.yaml` | PRs and `main` pushes touching Bazel or Go inputs | Frozen lockfile, changed forward migration risk check on PRs, Gazelle diff, visibility, provider-dependency, repository, Go comment and `.depolicy.yaml` import checks, OpenAPI bundle and generation diff, build, image target coverage, tests and race tests; scans and publishes backend images from `main` |
 | `verify-sqlc.yaml` | Every PR | Reruns `./scripts/generate-sqlc.sh` and fails on any change |
+| `verify-frontend-api-client.yaml` | PRs and `main` pushes touching the contract, recorded HTTP golden responses, the client package or the frontend lockfile | Regenerates the [frontend API client](../frontend/api-client.md), fails on any change, then typechecks it and replays the recorded responses through it |
 | `verify-standalone-migrations.yaml` | Every PR | Fails when migration SQL files change together with other files, unless the PR has the `migration-move` label |
 | `verify-docs.yaml` | Every PR | Runs `docs/scripts/docs-check.test.mjs`, so removing code that the docs still name fails |
 | `verify-dev-base.yaml` | PRs and `main` pushes touching development manifests, migration inputs or its workflow | Runs `k8s/dev/base/e2e.cjs` against real published images with disposable Docker fixtures, checks profiles and owner/runtime separation, and uploads its report and logs |

@@ -107,7 +107,9 @@ After changing a contract fragment, run from the repository root:
   standard-library strict-server bindings to
   `services/tadoku-api/generated/openapi/`. CI fails if the bundle or the
   generated code is stale.
-- Then run `pnpm api:generate` in `docs/` to regenerate the API reference.
+- Then run `pnpm api:generate` in `docs/` to regenerate the API reference, and
+  `pnpm --filter api-client generate` in `frontend/` to regenerate the
+  [frontend API client](../frontend/api-client.md). CI fails if either is stale.
 - The isolated oapi-codegen module under `tools/oapi-codegen` generates every
   canonical component schema. The server codegen configs
   (`spec/server-codegen.yaml` and `spec/callback-server-codegen.yaml`) limit

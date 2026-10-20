@@ -32,6 +32,11 @@ rejections map onto the field they concern (`email_taken`, `invalid_email`,
 `throttled`, `stale_session`, a 401 without a code, `invalid_origin` and service
 failures). A wrong password clears and focuses the password field.
 
+Both paths send the form through `sendIdentity()` in
+`frontend/apps/authv2/src/lib/identity.ts`, which calls the generated identity
+operation with only that form's fields and reads error codes with the generated
+error validator.
+
 The `/actions/{operation}` server route completes native submissions only. It
 accepts a bounded, single-valued form from this host's own pages (the `Origin`
 must match the request host, itself an allowed Tadoku app), calls the fixed
@@ -61,10 +66,11 @@ addresses. Development mail remains held.
 ## Session and account selection
 
 `frontend/apps/authv2/src/lib/session.server.ts` requests `GET /identity/session`
-from the configured Tadoku API root, forwarding only the incoming Cookie and
-`X-Dev-Branch` request headers. Zod validates the response shape; the API owns
-account field constraints, so legacy display names and email formats do not block
-the v1 redirect. Session data
+through the [generated client](api-client.md) from the configured Tadoku API root,
+forwarding only the incoming Cookie and `X-Dev-Branch` request headers. The
+generated validator checks the response shape; the API owns account field
+constraints, so legacy display names and email formats do not block the v1
+redirect. Session data
 is request-scoped; both the upstream read and rendered response disable caching.
 The server function in `frontend/apps/authv2/src/lib/session.ts` keeps server
 configuration and request credentials out of the browser bundle.

@@ -1,7 +1,7 @@
 import { useStore } from '@tanstack/react-form'
 import { usePaperForm } from 'paper-ui'
 import { useState, type FormEvent } from 'react'
-import { problemFor, submitIdentity, type Code, type Operation, type Problem } from './identity'
+import { problemFor, sendIdentity, type Code, type Operation, type Problem } from './identity'
 import { useIdentity } from './session'
 
 type Values = Record<string, string>
@@ -46,7 +46,9 @@ export function useAccountForm<V extends Values>({ operation, id, defaultValues,
     defaultValues: initialValues,
     validators: {
       onSubmitAsync: async ({ value }) => {
-        const result = await submitIdentity(api, operation, body ? body(value) : value)
+        // Sent from the browser, so login throttling sees the visitor's own address.
+        const browser = { baseUrl: api, credentials: 'include' as const, headers: { Accept: 'application/json' } }
+        const result = await sendIdentity(operation, browser, body ? body(value) : value)
         if (result.ok) return
         const problem = problemFor(result.code, value)
         return problem.field ? { fields: { [problem.field]: problem.message } } : { form: problem, fields: {} }

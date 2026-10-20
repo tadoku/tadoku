@@ -1,17 +1,6 @@
 import { getRequestHeader, setResponseHeader } from '@tanstack/react-start/server'
-import { z } from 'zod'
+import { identitySessionGet } from 'api-client'
 import { requestUrls } from './urls.server'
-
-const sessionSchema = z.object({
-  account_app: z.enum(['v1', 'v2']),
-  account: z.object({
-    id: z.string().min(1),
-    email: z.string().min(1),
-    display_name: z.string().min(1),
-    created_at: z.string().min(1),
-    authenticated_at: z.string().min(1),
-  }).nullable(),
-})
 
 export async function readSession() {
   setResponseHeader('Cache-Control', 'private, no-store')
@@ -24,17 +13,12 @@ export async function readSession() {
     if (value) headers.set(name, value)
   }
 
-  try {
-    const response = await fetch(`${apiUrl}/identity/session`, {
-      method: 'GET',
-      headers,
-      cache: 'no-store',
-      redirect: 'error',
-      signal: AbortSignal.timeout(10_000),
-    })
-    if (!response.ok) return { status: 'unavailable' as const, ...urls }
-    return { status: 'ready' as const, ...urls, session: sessionSchema.parse(await response.json()) }
-  } catch {
-    return { status: 'unavailable' as const, ...urls }
-  }
+  const { data } = await identitySessionGet({
+    baseUrl: apiUrl,
+    headers,
+    cache: 'no-store',
+    redirect: 'error',
+    signal: AbortSignal.timeout(10_000),
+  })
+  return data ? { status: 'ready' as const, ...urls, session: data } : { status: 'unavailable' as const, ...urls }
 }

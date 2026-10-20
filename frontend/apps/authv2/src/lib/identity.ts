@@ -1,62 +1,93 @@
-export type Operation = 'login' | 'register' | 'recover' | 'display-name' | 'email' | 'password' | 'logout'
+import {
+  identityLoginCreate,
+  identityLogout,
+  identityPasswordUpdate,
+  identityProfileUpdate,
+  identityRecoveryCreate,
+  identityRegistrationCreate,
+  zIdentityErrorResponse,
+  type IdentityErrorResponse,
+} from 'api-client'
 
-/** Identity API operations behind each account form. Fields are the only request properties a form may send. */
+type Values = Record<string, string>
+
+/** Where one call reaches the identity API, and the headers or credentials its side of the boundary needs. */
+export type Transport = {
+  readonly baseUrl: string
+  readonly headers?: HeadersInit
+  readonly credentials?: RequestCredentials
+}
+
+type Request = Transport & {
+  readonly cache: RequestCache
+  readonly redirect: RequestRedirect
+  readonly signal: AbortSignal
+}
+type Send = (request: Request, values: Values) => Promise<{ error?: unknown; response?: Response }>
+
+/** The generated identity operation behind each account form, sent with only that form's fields. */
 export const operations = {
-  login: { path: 'login', method: 'POST', fields: ['email', 'password'], page: '/login' },
-  register: { path: 'registration', method: 'POST', fields: ['display_name', 'email', 'password'], page: '/register' },
-  recover: { path: 'recovery', method: 'POST', fields: ['email'], page: '/recovery' },
-  'display-name': { path: 'settings/profile', method: 'PATCH', fields: ['display_name'], page: '/' },
-  email: { path: 'settings/profile', method: 'PATCH', fields: ['email'], page: '/' },
-  password: { path: 'settings/password', method: 'PUT', fields: ['password'], page: '/' },
-  logout: { path: 'logout', method: 'POST', fields: [], page: '/' },
-} as const satisfies Record<Operation, { path: string; method: string; fields: readonly string[]; page: string }>
+  login: {
+    page: '/login',
+    send: (request, v) => identityLoginCreate({ ...request, body: { email: v.email, password: v.password } }),
+  },
+  register: {
+    page: '/register',
+    send: (request, v) => identityRegistrationCreate({
+      ...request,
+      body: { display_name: v.display_name, email: v.email, password: v.password },
+    }),
+  },
+  recover: {
+    page: '/recovery',
+    send: (request, v) => identityRecoveryCreate({ ...request, body: { email: v.email, return_to: v.return_to } }),
+  },
+  'display-name': {
+    page: '/',
+    send: (request, v) => identityProfileUpdate({ ...request, body: { display_name: v.display_name } }),
+  },
+  email: {
+    page: '/',
+    send: (request, v) => identityProfileUpdate({ ...request, body: { email: v.email } }),
+  },
+  password: {
+    page: '/',
+    send: (request, v) => identityPasswordUpdate({ ...request, body: { password: v.password } }),
+  },
+  logout: {
+    page: '/',
+    send: request => identityLogout({ ...request, body: {} }),
+  },
+} satisfies Record<string, { page: string; send: Send }>
+
+export type Operation = keyof typeof operations
 
 export function isOperation(name: string): name is Operation {
   return Object.hasOwn(operations, name)
 }
 
-const codes = [
-  'wrong_password', 'throttled', 'email_taken', 'stale_session', 'invalid_display_name', 'invalid_email',
-  'invalid_password', 'invalid_origin', 'invalid_return_to', 'not_implemented', 'unauthorized', 'unavailable',
-] as const
-
-/** Identity API error codes a form can receive, plus `unauthorized` for a 401 without one. */
-export type Code = (typeof codes)[number]
+/** Identity API error codes, plus `unauthorized` for a 401 without one. */
+export type Code = NonNullable<IdentityErrorResponse['code']> | 'unauthorized'
 
 export function isCode(value: unknown): value is Code {
-  return codes.includes(value as Code)
+  return value === 'unauthorized' || (value !== undefined && zIdentityErrorResponse.shape.code.safeParse(value).success)
 }
 
-export type Result = { ok: true } | { ok: false; code: Code }
+export type Result = { ok: true; response: Response } | { ok: false; code: Code }
 
-export async function readResult(response: Response): Promise<Result> {
-  if (response.ok) return { ok: true }
-  const body: unknown = await response.json().catch(() => undefined)
-  const code = typeof body === 'object' && body !== null && 'code' in body ? body.code : undefined
-  if (isCode(code)) return { ok: false, code }
+/** Sends a form's values through its identity operation and reads the answer, failing closed on anything unexpected. */
+export async function sendIdentity(operation: Operation, transport: Transport, values: Values): Promise<Result> {
+  const { error, response } = await operations[operation].send({
+    ...transport,
+    cache: 'no-store',
+    redirect: 'error',
+    signal: AbortSignal.timeout(15_000),
+  }, values)
+  if (!response || (response.ok && error !== undefined)) return { ok: false, code: 'unavailable' }
+  if (response.ok) return { ok: true, response }
+  const body = zIdentityErrorResponse.safeParse(error)
+  if (body.success && body.data.code) return { ok: false, code: body.data.code }
   return { ok: false, code: response.status === 401 ? 'unauthorized' : 'unavailable' }
-}
-
-/**
- * Sends a hydrated form from the browser to the tenant's identity API, so login throttling sees the visitor's own
- * address. `api` is the public API root on the tenant's main host.
- */
-export async function submitIdentity(api: string, operation: Operation, body: Record<string, string>): Promise<Result> {
-  const { path, method } = operations[operation]
-  try {
-    const response = await fetch(`${api}/identity/${path}`, {
-      method,
-      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-      credentials: 'include',
-      cache: 'no-store',
-      redirect: 'error',
-      signal: AbortSignal.timeout(15_000),
-    })
-    return await readResult(response)
-  } catch {
-    return { ok: false, code: 'unavailable' }
-  }
 }
 
 export type Problem = {
@@ -99,6 +130,8 @@ function describe(code: Code, values?: Record<string, string>): Omit<Problem, 'c
       return { message: 'This request didn’t come from a Tadoku page. Reload the page and try again.' }
     case 'invalid_return_to':
       return { message: 'The link you followed has a return address Tadoku doesn’t allow.' }
+    case 'invalid_recovery_token':
+      return { message: 'This recovery link is invalid or has expired. Request a new one.' }
     case 'not_implemented':
       return { message: 'This account still uses the previous account pages. Reload the page to continue.' }
     case 'unavailable':

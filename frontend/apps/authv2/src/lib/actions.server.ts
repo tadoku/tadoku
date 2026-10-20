@@ -1,5 +1,5 @@
 import { getRequestHeader } from '@tanstack/react-start/server'
-import { continuation, isOperation, operations, readResult, withReturnTo, type Operation } from './identity'
+import { continuation, isOperation, operations, sendIdentity, withReturnTo, type Operation } from './identity'
 import { requestUrls } from './urls.server'
 
 async function readForm(request: Request) {
@@ -53,39 +53,25 @@ export async function handleNativeAction(request: Request, name: string) {
     return new Response('This request did not come from a Tadoku account page.', { status: 403, headers })
   }
 
-  const operation = operations[name]
+  const { page } = operations[name]
   const form = await readForm(request)
   const next = continuation(form?.get('return_to'), urls.origin)
   const redirect = (location: string) => {
     headers.set('Location', new URL(location, urls.origin).href)
     return new Response(null, { status: 303, headers })
   }
-  const failure = (code: string) => redirect(withReturnTo(`${operation.page}?error=${code}&form=${name}`, next))
+  const failure = (code: string) => redirect(withReturnTo(`${page}?error=${code}&form=${name}`, next))
   if (!form) return failure('invalid_origin')
 
-  const body: Record<string, string> = {}
-  for (const field of operation.fields) body[field] = form.get(field) ?? ''
-  if (name === 'recover') body.return_to = next ?? urls.webUrl
-
-  const forwarded = new Headers({ Accept: 'application/json', 'Content-Type': 'application/json', Origin: urls.origin })
+  const values = Object.fromEntries(form)
+  if (name === 'recover') values.return_to = next ?? urls.webUrl
+  const forwarded = new Headers({ Accept: 'application/json', Origin: urls.origin })
   for (const header of ['cookie', 'x-dev-branch']) {
     const value = getRequestHeader(header)
     if (value) forwarded.set(header, value)
   }
-  try {
-    const response = await fetch(`${urls.apiUrl}/identity/${operation.path}`, {
-      method: operation.method,
-      headers: forwarded,
-      body: JSON.stringify(body),
-      cache: 'no-store',
-      redirect: 'error',
-      signal: AbortSignal.timeout(15_000),
-    })
-    const result = await readResult(response)
-    if (!result.ok) return name === 'logout' && result.code === 'unauthorized' ? redirect('/login') : failure(result.code)
-    for (const cookie of response.headers.getSetCookie()) headers.append('Set-Cookie', cookie)
-    return redirect(success(name, next))
-  } catch {
-    return failure('unavailable')
-  }
+  const result = await sendIdentity(name, { baseUrl: urls.apiUrl, headers: forwarded }, values)
+  if (!result.ok) return name === 'logout' && result.code === 'unauthorized' ? redirect('/login') : failure(result.code)
+  for (const cookie of result.response.headers.getSetCookie()) headers.append('Set-Cookie', cookie)
+  return redirect(success(name, next))
 }

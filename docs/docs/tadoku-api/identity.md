@@ -62,7 +62,14 @@ the API routes alone does not change the gateway configuration.
 
 `Email`, `DisplayName` and `Password` have private representations and parsing
 constructors. Emails are normalized to lowercase with surrounding whitespace
-removed. Display names contain 2–32 Unicode characters and at least one visible
+removed. Responses carry an account's stored address instead: the Kratos trait
+for v1, and for v2 the normalized address or an imported address as written.
+The API writes the address part Go's `net/mail` reads from it, so a quoted local
+part arrives unquoted and surrounding ASCII spaces and tabs are dropped, while
+letter case, other characters and length are kept. The contract therefore types
+the account `email` in identity responses and the session callback as a string
+containing `@`, not `format: email`, and keeps its Go type with `x-go-type`.
+Display names contain 2–32 Unicode characters and at least one visible
 character. Passwords contain at least 8 characters, use at most 72 UTF-8 bytes,
 and satisfy the Kratos v26.2.0 similarity rule: compare lowercase values, reject
 Levenshtein distance below 5 or a longest common substring exceeding half the

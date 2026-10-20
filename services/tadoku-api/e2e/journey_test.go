@@ -277,7 +277,12 @@ func resetJourney(t *testing.T, s *suite, directory string) {
 	t.Helper()
 
 	ctx := t.Context()
-	if err := s.db.Reset(ctx, filepath.Join(journeysDir, "setup.sql"), filepath.Join(directory, "setup.sql"), "testdata/accounts.sql"); err != nil {
+	if err := s.db.Reset(
+		ctx,
+		filepath.Join(journeysDir, "setup.sql"),
+		filepath.Join(directory, "setup.sql"),
+		"testdata/accounts.sql",
+	); err != nil {
 		t.Fatal(err)
 	}
 	if err := s.keto.Reset(ctx, filepath.Join(journeysDir, "relationships.json"), filepath.Join(directory, "relationships.json")); err != nil {

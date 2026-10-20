@@ -9,38 +9,37 @@ vi.mock('next/config', () => ({
 import { getFeatureAccess, updateFeatureAccess } from './api'
 
 const targetUserId = '0198f6c5-c4af-7b1d-9776-884c065d72db'
+const endpoint = `https://tadoku.test/api/internal/immersion/admin/feature-flags/release-log-entry-v2/users/${targetUserId}`
 const result = {
   enabled: true,
   changed: true,
   environment: 'production',
   revision: 'a'.repeat(40),
 }
+const answer = (body: unknown) =>
+  vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(body), { status: 200 }))
+const sent = (fetchMock: { mock: { calls: unknown[][] } }) => fetchMock.mock.calls[0][0] as Request
 
 describe('feature access browser API', () => {
   beforeEach(() => vi.restoreAllMocks())
 
   it('calls the public immersion endpoint directly', async () => {
-    const fetchMock = vi
-      .spyOn(globalThis, 'fetch')
-      .mockResolvedValue(new Response(JSON.stringify(result), { status: 200 }))
+    const fetchMock = answer(result)
 
     await expect(
       getFeatureAccess({ targetUserId, flagKey: 'release-log-entry-v2' }),
     ).resolves.toEqual(result)
 
-    expect(fetchMock).toHaveBeenCalledWith(
-      `https://tadoku.test/api/internal/immersion/admin/feature-flags/release-log-entry-v2/users/${targetUserId}`,
-      { credentials: 'include' },
-    )
+    expect(sent(fetchMock).url).toBe(endpoint)
+    expect(sent(fetchMock).method).toBe('GET')
+    expect(sent(fetchMock).credentials).toBe('include')
   })
 
   it.each([
     [true, 'PUT'],
     [false, 'DELETE'],
   ])('uses the resource method for enabled=%s', async (enabled, method) => {
-    const fetchMock = vi
-      .spyOn(globalThis, 'fetch')
-      .mockResolvedValue(new Response(JSON.stringify(result), { status: 200 }))
+    const fetchMock = answer(result)
 
     await updateFeatureAccess({
       targetUserId,
@@ -48,9 +47,20 @@ describe('feature access browser API', () => {
       enabled,
     })
 
-    expect(fetchMock).toHaveBeenCalledWith(
-      `https://tadoku.test/api/internal/immersion/admin/feature-flags/release-log-entry-v2/users/${targetUserId}`,
-      { method, credentials: 'include' },
-    )
+    expect(sent(fetchMock).url).toBe(endpoint)
+    expect(sent(fetchMock).method).toBe(method)
+    expect(sent(fetchMock).credentials).toBe('include')
+  })
+
+  it.each([
+    ['personal data', { ...result, email: 'private@example.test' }],
+    ['a missing change flag', { enabled: true, environment: 'production', revision: result.revision }],
+    ['an unknown environment', { ...result, environment: 'attacker-controlled' }],
+  ])('rejects an answer with %s', async (_, body) => {
+    answer(body)
+
+    await expect(
+      getFeatureAccess({ targetUserId, flagKey: 'release-log-entry-v2' }),
+    ).rejects.toThrow('feature access unavailable')
   })
 })

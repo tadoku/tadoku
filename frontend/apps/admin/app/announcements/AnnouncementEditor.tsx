@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { FormProvider, useForm, useController } from 'react-hook-form'
 import { Input, Loading, Select, Tabbar } from 'ui'
 import {
+  Announcement,
   useAnnouncementCreate,
   useAnnouncementFind,
   useAnnouncementUpdate,
@@ -44,7 +45,7 @@ export function AnnouncementEditor({ id }: Props) {
     defaultValues: {
       title: '',
       content: '',
-      style: 'info',
+      style: 'info' as Announcement['style'],
       href: '',
       startsAt: '',
       endsAt: '',

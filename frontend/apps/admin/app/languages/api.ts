@@ -1,37 +1,21 @@
-import { z } from 'zod'
-import { browserAppUrls } from 'ui/app-urls'
+import {
+  immersionLanguageCreate,
+  immersionLanguageList,
+  immersionLanguageUpdate,
+  type ImmersionLanguage,
+  type ImmersionLanguages,
+} from 'api-client'
+import { apiData, browserApi } from 'ui/api'
 import { useMutation, useQuery } from '@tanstack/react-query'
 
-
-const root = () => `${browserAppUrls().apiEndpoint}/immersion`
-
-const Language = z.object({
-  code: z.string(),
-  name: z.string(),
-})
-
-export type Language = z.infer<typeof Language>
-
-const LanguageList = z.object({
-  languages: z.array(Language),
-})
-
-export type LanguageList = z.infer<typeof LanguageList>
+export type Language = ImmersionLanguage
+export type LanguageList = ImmersionLanguages
 
 export const useLanguageList = (options?: { enabled?: boolean }) =>
   useQuery(
     ['languages', 'list'],
-    async (): Promise<LanguageList> => {
-      const response = await fetch(`${root()}/languages`, {
-        credentials: 'include',
-      })
-
-      if (response.status === 401) throw new Error('401')
-      if (response.status === 403) throw new Error('403')
-      if (response.status !== 200) throw new Error(response.status.toString())
-
-      return LanguageList.parse(await response.json())
-    },
+    async (): Promise<LanguageList> =>
+      apiData(immersionLanguageList(browserApi())),
     { ...options, retry: false },
   )
 
@@ -41,14 +25,14 @@ export const useLanguageCreate = (
 ) =>
   useMutation({
     mutationFn: async ({ code, name }: { code: string; name: string }) => {
-      const response = await fetch(`${root()}/languages`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code, name }),
-        credentials: 'include',
+      const result = await immersionLanguageCreate({
+        ...browserApi(),
+        body: { code, name },
       })
-      if (response.status === 409) throw new Error('Language with this code already exists')
-      if (response.status !== 200) throw new Error(response.status.toString())
+      if (result.response?.status === 409) {
+        throw new Error('Language with this code already exists')
+      }
+      await apiData(result)
     },
     onSuccess,
     onError,
@@ -60,13 +44,13 @@ export const useLanguageUpdate = (
 ) =>
   useMutation({
     mutationFn: async ({ code, name }: { code: string; name: string }) => {
-      const response = await fetch(`${root()}/languages/${code}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name }),
-        credentials: 'include',
-      })
-      if (response.status !== 200) throw new Error(response.status.toString())
+      await apiData(
+        immersionLanguageUpdate({
+          ...browserApi(),
+          path: { code },
+          body: { name },
+        }),
+      )
     },
     onSuccess,
     onError,

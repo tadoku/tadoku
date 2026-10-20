@@ -4,7 +4,7 @@ import { toast } from 'react-toastify'
 import { Account, AccountApp, logout } from 'ui/identity'
 import { useRouter } from 'next/router'
 import { useEffect, useRef } from 'react'
-import { browserAppUrls } from 'ui/app-urls'
+import { browserApi } from 'ui/api'
 import { AppContext } from 'next/app'
 import { NextPageContext } from 'next'
 import { useRoutes } from './routes'
@@ -79,10 +79,7 @@ export const useUserRole = () => {
 
     prevUserIdRef.current = userId
 
-    void authzRoleGet({
-      baseUrl: browserAppUrls().apiEndpoint,
-      credentials: 'include',
-    }).then(({ data }) => setRole(data?.role))
+    void authzRoleGet(browserApi()).then(({ data }) => setRole(data?.role))
   }, [userId, setRole])
 
   return role

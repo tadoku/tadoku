@@ -1,7 +1,10 @@
 import { browserAppUrls } from './app-urls'
 
-/** Where browser code calls generated Tadoku API operations. */
-export const browserApi = () => ({ baseUrl: browserAppUrls().apiEndpoint })
+/** How browser code calls generated Tadoku API operations: on the app's API root, with the session cookie. */
+export const browserApi = () => ({
+  baseUrl: browserAppUrls().apiEndpoint,
+  credentials: 'include' as const,
+})
 
 /**
  * The validated data of a generated Tadoku API call. API errors throw an Error whose message is the HTTP status,

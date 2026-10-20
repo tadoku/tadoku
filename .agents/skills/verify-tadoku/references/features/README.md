@@ -31,14 +31,14 @@ accounts Dev Reader and Dev Admin from the
 `@tadoku.app` email strings are **not** test destination hosts. Don't change their
 credentials/profile/roles for an unrelated test.
 
-The automatic `tenant` hook reuses those identities and populates branch-local
+The automatic `tenant` hook creates native v2 accounts using those fixture UUIDs and populates branch-local
 data in `tadoku/<route>`. Frontend-only branches use the base API with that
 selected tenant. Use branch-host links for auth or admin API writes and
 check the API response's `X-Dev-Selected`.
-Missing shared identities require authorized setup, not invented IDs or auth
-bypasses. User IDs are generated; obtain them from the profile link or your
-authenticated session, not a hardcoded UUID. The same Kratos identity ID is
-used by its profiles in canonical and branch tenants.
+Missing base fixtures require authorized setup. Branch accounts keep the base
+fixture UUIDs, names and documented password, with independent credentials and
+sessions. Obtain actual IDs from the session or profile, not a hardcoded UUID.
+Provision seeds `identity-v2=true` only in the owned branch namespace.
 
 Useful fixtures from [the seed sources](../../../../../scripts/dev/seed/):
 
@@ -56,7 +56,7 @@ Branch contest, registration and log UUIDs are derived from the full tenant key
 with UUIDv5. A canonical fixed UUID will return 404 on a branch; obtain the
 branch's own IDs before opening a deep link.
 Record starting values; create uniquely named records in your selected branch when
-testing writes. Re-seeding is not a reset. Account providers remain shared.
+testing writes. Re-seeding is not a reset. Native accounts are tenant-owned; v1 providers remain shared.
 
 ## Sweep and maintenance
 

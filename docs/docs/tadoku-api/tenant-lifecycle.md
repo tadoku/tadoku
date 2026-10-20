@@ -65,7 +65,11 @@ revisions and posts are not copied. Each copy is skipped when the tenant
 already has platform scoring config or any page, so reruns keep the tenant's
 own changes; contest rule sets and user data are never copied. It then grants
 the canonical Keto parent and repeated `--tester` UUIDs, then creates only
-missing Flipt resources from the strict boolean seed format.
+missing Flipt resources from the strict boolean seed format. Provisioning adds
+`identity-v2` with a true 100% rollout only to this test namespace, independently
+of canonical feature files. It replaces any input definition of that key for a
+new namespace. Canonical `tadoku/prod`, imports and the safe false default remain
+unchanged.
 Keto grants are checked by their complete tuple before creating them because
 the provider accepts duplicate relationship writes.
 Reruns preserve existing grants and flag values. Teardown deletes the tenant's
@@ -75,6 +79,45 @@ runs when a prior attempt already removed that row. Commands sharing a tenant
 must be serialized by the caller's route lease. Provider HTTP calls have a
 30-second timeout; the command has a five-minute deadline and observes shutdown
 signals. Secrets are supplied through environment variables and never printed.
+
+## Development accounts and cleanup inspection
+
+The development hook invokes `development-accounts` before profile seeding:
+
+```sh
+TENANT_PRODUCTION=false tadoku-tenant development-accounts \
+  --tenant tadoku/branch-0123abcd --admin-id <base-admin-uuid> --reader-id <base-reader-uuid>
+tadoku-tenant inspect --tenant tadoku/branch-0123abcd
+```
+
+`development-accounts` requires the development database host
+`tadoku-dev-db.tdk-dev-data`, or loopback for
+local disposable tests, explicit `TENANT_PRODUCTION=false`, a registered test
+tenant and registry-management privileges. It uses the development fixture
+emails/passwords from `TADOKU_DEV_ADMIN_EMAIL`, `TADOKU_DEV_ADMIN_PASSWORD`,
+`TADOKU_DEV_READER_EMAIL` and `TADOKU_DEV_READER_PASSWORD`; defaults are
+`dev@tadoku.app`, `reader@tadoku.app` and the documented development password.
+It fixes display names to Dev Admin and Dev Reader. The owner supplies their
+existing dev base UUIDs; public registration never accepts fixture UUIDs.
+
+The command hashes passwords at bcrypt cost 12 in the identity feature. Its
+fixture-only path permits the legacy short development password. Both inserts
+are transactional. Fixture lookups and writes name the tenant explicitly because
+the development owner bypasses row-level security. Existing fixture UUIDs keep
+their branch-owned credentials, email, profile, state, timestamps and sessions;
+only missing accounts are initialized. A configured email held by another UUID
+for a missing fixture fails the entire pair. Account inserts handle conflicts
+only on `(tenant, user_id)`, so email collisions cannot report false success.
+New users copy the canonical fixture user's creation time by UUID when present;
+new accounts use their own tenant user's creation time. This reads no canonical
+account or credential, changes no canonical row or provider identity, and creates
+no session.
+
+`inspect` accepts only parsed test keys and registry-management credentials.
+It prints `{"tenant":"tadoku/branch-0123abcd","exists":false}` after successful
+teardown. An absent registry row proves removal of its foreign-key-owned users,
+accounts, sessions, recovery tokens, emails and access tokens. Existing test rows
+return true; production-kind rows and unauthorized credentials fail closed.
 
 ## Email access tokens
 

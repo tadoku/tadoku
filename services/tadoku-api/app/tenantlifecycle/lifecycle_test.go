@@ -2,7 +2,9 @@ package tenantlifecycle_test
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 	"reflect"
 	"strings"
@@ -95,6 +97,44 @@ segments: []
 	for _, target := range []tenant.TestKey{key, key, other} {
 		if err := application.Provision(t.Context(), target, []uuid.UUID{reader}, features); err != nil {
 			t.Fatal(err)
+		}
+	}
+
+	for _, target := range []tenant.TestKey{key, other} {
+		response, err := http.Get(fliptFixture.URL() + "/api/v2/environments/test/namespaces/" +
+			strings.ReplaceAll(target.String(), "/", "_") + "/resources/flipt.core.Flag/identity-v2")
+		if err != nil {
+			t.Fatal(err)
+		}
+		body, err := io.ReadAll(response.Body)
+		response.Body.Close()
+		var flag struct {
+			Resource struct {
+				Payload struct {
+					Enabled  bool
+					Rollouts []struct {
+						Threshold struct {
+							Value      bool
+							Percentage float64
+						}
+					}
+				}
+			}
+		}
+		if err != nil ||
+			response.StatusCode != 200 ||
+			json.Unmarshal(body, &flag) != nil ||
+			!flag.Resource.Payload.Enabled ||
+			len(flag.Resource.Payload.Rollouts) != 1 ||
+			!flag.Resource.Payload.Rollouts[0].Threshold.Value ||
+			flag.Resource.Payload.Rollouts[0].Threshold.Percentage != 100 {
+			t.Fatalf(
+				"fresh tenant %s lacks true identity-v2 rollout: status=%d body=%s error=%v",
+				target.String(),
+				response.StatusCode,
+				body,
+				err,
+			)
 		}
 	}
 	assertCopiedPlatformScoring(t, db, key)

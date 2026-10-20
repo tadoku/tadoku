@@ -109,6 +109,12 @@ type config struct {
 }
 
 func run(ctx context.Context, args []string) error {
+	if len(args) > 0 && args[0] == "inspect" {
+		return runInspect(ctx, args[1:])
+	}
+	if len(args) > 0 && args[0] == "development-accounts" {
+		return runDevelopmentAccounts(ctx, args[1:])
+	}
 	if len(args) > 0 && args[0] == "access-token" {
 		return runAccessToken(ctx, args[1:])
 	}

@@ -14,6 +14,7 @@ import (
 	accountidentity "github.com/tadoku/tadoku/services/tadoku-api/features/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/profile"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/featureflags"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
 func TestIdentityLegacyAdminSingleWalk(t *testing.T) {
@@ -21,6 +22,9 @@ func TestIdentityLegacyAdminSingleWalk(t *testing.T) {
 		t.Run(strconv.Itoa(size), func(t *testing.T) {
 			api.reset(t, filepath.Join("testdata", "ProfileUsersList", "200_admin"))
 			t.Cleanup(api.resetProfileService)
+			if err := api.flipt.SetIdentityV2(tenant.Production(), false); err != nil {
+				t.Fatal(err)
+			}
 			var calls atomic.Int64
 			provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				calls.Add(1)

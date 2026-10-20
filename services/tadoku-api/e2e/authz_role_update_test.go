@@ -51,7 +51,6 @@ func auditUnavailableRoleUpdateHandler(t *testing.T) *transport.Router {
 		api.db.AppPool,
 		closedPool,
 		keto,
-		api.kratos,
 		logger,
 	)
 	if err != nil {
@@ -70,7 +69,6 @@ func ketoWriteFailureRoleUpdateHandler(t *testing.T) *transport.Router {
 		api.db.AppPool,
 		api.db.AppPool,
 		keto,
-		api.kratos,
 		logger,
 		withKetoWriteURL("http://127.0.0.1:1"),
 	)

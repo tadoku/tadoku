@@ -13,13 +13,6 @@ http_archive(
 )
 
 http_archive(
-    name = "kratos_v26_2_0",
-    build_file_content = "exports_files([\"kratos\"])\n",
-    sha256 = "c80113f2c861b2fbd80290697d1380000111e297716018617423cca7f2e7e668",
-    urls = ["https://github.com/ory/kratos/releases/download/v26.2.0/kratos_26.2.0-linux_sqlite_64bit.tar.gz"],
-)
-
-http_archive(
     name = "oathkeeper_v26_2_0",
     build_file_content = "exports_files([\"oathkeeper\"])\n",
     sha256 = "03e4e5bd90f8b17767fa52d988cd6862732923198de9ecd9053e58648e7e8528",

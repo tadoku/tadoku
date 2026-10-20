@@ -145,6 +145,12 @@ From `docs/`, after `pnpm install --frozen-lockfile`:
 
 All workflows live in `.github/workflows/`.
 
+When a normal or race test step fails, `build-bazel.yaml` uploads the available HTTP
+E2E target's `test.log` and `test.xml` as a workflow artifact for seven days.
+Artifact names include the job and run attempt, for example `http-e2e-build-1`.
+Download these files from the workflow run when Bazel suppresses oversized
+console output; they include assertion output and fixture cleanup errors.
+
 | Workflow | Runs on | Checks |
 | --- | --- | --- |
 | `build-bazel.yaml` | PRs and `main` pushes touching Bazel or Go inputs | Frozen lockfile, changed forward migration risk check on PRs, Gazelle diff, visibility, provider-dependency, repository, Go comment and `.depolicy.yaml` import checks, OpenAPI bundle and generation diff, build, image target coverage, tests and race tests; scans and publishes backend images from `main` |

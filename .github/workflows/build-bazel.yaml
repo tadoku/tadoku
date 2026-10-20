@@ -185,7 +185,18 @@ jobs:
           || { echo "//:push_images is out of sync with production oci_push targets named :push under //services/..." >&2; exit 1; }
 
       - name: Run tests
+        id: tests
         run: bazel test --lockfile_mode=error --test_output=errors //...
+
+      - name: Retain HTTP E2E diagnostics after test failure
+        if: failure() && steps.tests.outcome == 'failure'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: http-e2e-${{ github.job }}-${{ github.run_attempt }}
+          path: |
+            bazel-testlogs/services/tadoku-api/e2e/e2e_test/test.log
+            bazel-testlogs/services/tadoku-api/e2e/e2e_test/test.xml
+          retention-days: 7
 
       - name: Show PgBouncer regression evidence
         run: cat bazel-testlogs/services/tadoku-api/infra/postgres/pgbouncer_test/test.log
@@ -287,6 +298,7 @@ jobs:
           cache-save: ${{ github.event_name != 'pull_request' }}
 
       - name: Race-test Tadoku API and helpers
+        id: tests
         run: >-
           bazel test --lockfile_mode=error --test_output=errors --@rules_go//go/config:race
           //services/tadoku-api/internal/permissions:permissions_test
@@ -305,6 +317,16 @@ jobs:
           //services/tadoku-api/e2e:e2e_test
           //services/tadoku-api/cmd/tadoku-api:tadoku-api_test
           //services/tadoku-api/transport/http:http_test
+
+      - name: Retain HTTP E2E diagnostics after test failure
+        if: failure() && steps.tests.outcome == 'failure'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: http-e2e-${{ github.job }}-${{ github.run_attempt }}
+          path: |
+            bazel-testlogs/services/tadoku-api/e2e/e2e_test/test.log
+            bazel-testlogs/services/tadoku-api/e2e/e2e_test/test.xml
+          retention-days: 7
 
       - name: Show PgBouncer regression evidence
         run: cat bazel-testlogs/services/tadoku-api/infra/postgres/pgbouncer_test/test.log

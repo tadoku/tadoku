@@ -206,7 +206,6 @@ func TestAuthenticationBranch(t *testing.T) {
 		api.db.AppPool,
 		api.db.AppPool,
 		api.keto,
-		api.kratos,
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 		false,
 		api.leaderboard,

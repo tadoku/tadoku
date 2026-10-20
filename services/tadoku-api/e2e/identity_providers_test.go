@@ -6,11 +6,12 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
-	"net/http/cookiejar"
 	"net/http/httptest"
-	"strings"
+	"os"
+	"sync/atomic"
 	"testing"
 
+	"github.com/tadoku/tadoku/services/tadoku-api/features/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
@@ -45,7 +46,7 @@ func TestIdentityV2IPThrottleAndFailOpen(t *testing.T) {
 		t.Fatal(err)
 	}
 	handler, _, _, err := newTestRouterWithLogger(
-		t.Context(), api.db.AppPool, api.db.AppPool, api.keto, api.kratos,
+		t.Context(), api.db.AppPool, api.db.AppPool, api.keto,
 		slog.New(slog.NewTextHandler(io.Discard, nil)), withIdentityValkey(closed),
 	)
 	if err != nil {
@@ -58,108 +59,71 @@ func TestIdentityV2IPThrottleAndFailOpen(t *testing.T) {
 
 func TestIdentityV1ProviderSessionAndLogout(t *testing.T) {
 	resetIdentity(t)
-	resetKratosAfter(t, api)
 	if err := flipt.SetIdentityV2(tenant.Production(), false); err != nil {
 		t.Fatal(err)
 	}
-	provider := *api.kratos.HTTPClient()
-	provider.Jar, _ = cookiejar.New(nil)
-	request, err := http.NewRequestWithContext(t.Context(), "POST", "http://kratos.test/admin/identities",
-		strings.NewReader(`{"schema_id":"user",`+
-			`"traits":{"email":"legacy@example.test","display_name":"Legacy Reader"},`+
-			`"credentials":{"password":{"config":{"password":"Independent-653!"}}}}`))
+	active, err := os.ReadFile("testdata/IdentityV1/session.json")
 	if err != nil {
 		t.Fatal(err)
 	}
-	request.Header.Set("Content-Type", "application/json")
-	created, err := provider.Do(request)
+	unauthorized, err := os.ReadFile("testdata/IdentityV1/unauthorized.json")
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer created.Body.Close()
-	if created.StatusCode != http.StatusCreated {
-		body, _ := io.ReadAll(created.Body)
-		t.Fatalf("owned Kratos identity setup status=%d body=%s", created.StatusCode, body)
+	var recorded struct {
+		ID       string
+		Identity struct{ ID string }
 	}
-	var legacy struct {
-		ID string `json:"id"`
-	}
-	if err := json.NewDecoder(created.Body).Decode(&legacy); err != nil {
+	if err := json.Unmarshal(active, &recorded); err != nil {
 		t.Fatal(err)
 	}
-
-	flowRequest, _ := http.NewRequestWithContext(
-		t.Context(),
-		"GET",
-		"http://kratos-public.test/self-service/login/browser",
-		nil,
-	)
-	flowRequest.Header.Set("Accept", "application/json")
-	flow, err := provider.Do(flowRequest)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer flow.Body.Close()
-	var loginFlow struct {
-		ID string `json:"id"`
-		UI struct {
-			Nodes []struct {
-				Attributes struct {
-					Name  string
-					Value string
-				}
+	const cookie = "ory_kratos_session=recorded-session"
+	var revoked atomic.Bool
+	var writes atomic.Int64
+	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch {
+		case r.Method == http.MethodGet && r.URL.Path == "/sessions/whoami":
+			if r.Header.Get("Cookie") != cookie {
+				t.Errorf("legacy session cookie changed")
 			}
+			if revoked.Load() {
+				w.WriteHeader(http.StatusUnauthorized)
+				_, _ = w.Write(unauthorized)
+			} else {
+				_, _ = w.Write(active)
+			}
+		case r.Method == http.MethodDelete && r.URL.Path == "/admin/sessions/"+recorded.ID:
+			revoked.Store(true)
+			writes.Add(1)
+			w.WriteHeader(http.StatusNoContent)
+		default:
+			t.Errorf("unexpected legacy request: %s %s", r.Method, r.URL.Path)
+			http.NotFound(w, r)
 		}
-	}
-	if err := json.NewDecoder(flow.Body).Decode(&loginFlow); err != nil {
-		t.Fatal(err)
-	}
-	csrf := ""
-	for _, node := range loginFlow.UI.Nodes {
-		if node.Attributes.Name == "csrf_token" {
-			csrf = node.Attributes.Value
-		}
-	}
-	loginBody, _ := json.Marshal(map[string]string{
-		"method":     "password",
-		"identifier": "legacy@example.test",
-		"password":   "Independent-653!",
-		"csrf_token": csrf,
-	})
-	loginRequest, _ := http.NewRequestWithContext(t.Context(), "POST",
-		"http://kratos-public.test/self-service/login?flow="+loginFlow.ID,
-		strings.NewReader(string(loginBody)))
-	loginRequest.Header.Set("Content-Type", "application/json")
-	loginRequest.Header.Set("Accept", "application/json")
-	loginResponse, err := provider.Do(loginRequest)
+	}))
+	defer provider.Close()
+	handler, _, _, err := newTestRouterWithLogger(
+		t.Context(), api.db.AppPool, api.db.AppPool, api.keto,
+		slog.New(slog.NewTextHandler(io.Discard, nil)),
+		func(e *routerEndpoints) {
+			e.legacySessions = identity.NewLegacySessions(provider.URL, provider.URL, provider.Client())
+		},
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer loginResponse.Body.Close()
-	if loginResponse.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(loginResponse.Body)
-		t.Fatalf("owned Kratos login setup status=%d body=%s", loginResponse.StatusCode, body)
-	}
-	cookie := ""
-	for _, issued := range loginResponse.Cookies() {
-		if issued.Name == "ory_kratos_session" {
-			cookie = issued.Name + "=" + issued.Value
-		}
-	}
-	if cookie == "" {
-		t.Fatal("owned Kratos browser login did not issue a session cookie")
-	}
-	response := identityRequest(t, api.handler, "tadoku/prod", "GET", "/identity/session", "", cookie, nil)
+	response := identityRequest(t, handler, "tadoku/prod", "GET", "/identity/session", "", cookie, nil)
 	view := identityView(t, response)
-	if view.AccountApp != "v1" || view.Account == nil || view.Account.ID != legacy.ID ||
+	if view.AccountApp != "v1" || view.Account == nil || view.Account.ID != recorded.Identity.ID ||
 		view.Account.Email != "legacy@example.test" || view.Account.DisplayName != "Legacy Reader" {
-		t.Fatal("v1 session did not come from real Kratos")
+		t.Fatal("v1 session did not come from recorded Kratos")
 	}
 	callbackRequest := httptest.NewRequest("GET", "/identity/internal/v1/session", nil)
 	callbackRequest.Header.Set("Authorization", "Bearer "+callbackToken)
 	callbackRequest.Header.Set("Cookie", cookie)
 	callback := httptest.NewRecorder()
-	atFixtureInstant(func() { api.handler.ServeHTTP(callback, callbackRequest) })
+	atFixtureInstant(func() { handler.ServeHTTP(callback, callbackRequest) })
 	requireIdentityStatus(t, callback, http.StatusOK)
 	var callbackView struct {
 		Identity struct{ ID string } `json:"identity"`
@@ -167,8 +131,8 @@ func TestIdentityV1ProviderSessionAndLogout(t *testing.T) {
 	if err := json.Unmarshal(callback.Body.Bytes(), &callbackView); err != nil {
 		t.Fatal(err)
 	}
-	if callbackView.Identity.ID != legacy.ID {
-		t.Error("v1 callback did not resolve the real disposable Kratos session")
+	if callbackView.Identity.ID != recorded.Identity.ID {
+		t.Error("v1 callback did not resolve the recorded Kratos session")
 	}
 
 	branchKey, err := tenant.Parse(identityBranchB)
@@ -178,25 +142,25 @@ func TestIdentityV1ProviderSessionAndLogout(t *testing.T) {
 	if err := flipt.SetIdentityV2(branchKey, false); err != nil {
 		t.Fatal(err)
 	}
-	response = identityRequest(t, api.handler, identityBranchB, "POST", "/identity/logout", "", cookie, nil)
+	response = identityRequest(t, handler, identityBranchB, "POST", "/identity/logout", "", cookie, nil)
 	requireIdentityStatus(t, response, http.StatusNoContent)
 	cleared := response.Result().Cookies()
 	if len(cleared) != 1 || cleared[0].Name != "ory_kratos_session" || cleared[0].MaxAge != -1 {
 		t.Error("v1 test-tenant logout did not clear the browser cookie")
 	}
-	response = identityRequest(t, api.handler, "tadoku/prod", "GET", "/identity/session", "", cookie, nil)
-	if remaining := identityView(t, response); remaining.Account == nil || remaining.Account.ID != legacy.ID {
+	response = identityRequest(t, handler, "tadoku/prod", "GET", "/identity/session", "", cookie, nil)
+	if remaining := identityView(t, response); remaining.Account == nil || remaining.Account.ID != recorded.Identity.ID {
 		t.Error("v1 test-tenant logout changed the shared provider session")
 	}
 
-	response = identityRequest(t, api.handler, identityBranchA, "GET", "/identity/session", "", cookie, nil)
+	response = identityRequest(t, handler, identityBranchA, "GET", "/identity/session", "", cookie, nil)
 	if identityView(t, response).Account != nil {
 		t.Error("v2 tenant accepted a Kratos session")
 	}
-	response = identityRequest(t, api.handler, "tadoku/prod", "POST", "/identity/logout", "", cookie, nil)
+	response = identityRequest(t, handler, "tadoku/prod", "POST", "/identity/logout", "", cookie, nil)
 	requireIdentityStatus(t, response, http.StatusNoContent)
-	response = identityRequest(t, api.handler, "tadoku/prod", "GET", "/identity/session", "", cookie, nil)
-	if identityView(t, response).Account != nil {
-		t.Error("v1 logout did not revoke the provider session")
+	response = identityRequest(t, handler, "tadoku/prod", "GET", "/identity/session", "", cookie, nil)
+	if identityView(t, response).Account != nil || writes.Load() != 1 {
+		t.Error("v1 logout did not revoke exactly the selected provider session")
 	}
 }

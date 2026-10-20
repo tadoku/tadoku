@@ -222,8 +222,10 @@ an invalid JWT.
 
 `identity.NewLegacyReader` constructs the unchanged read-only Kratos adapter
 behind `LegacyReader`. Its raw implementation and provider tests live in
-`services/tadoku-api/features/identity/kratos/`. Only identity ownership and the owned Kratos fixture consume this temporary
-interface. Profile and authz receive provider-free `Reader` values. Reads do not mutate Kratos or share a profile-user snapshot across requests.
+`services/tadoku-api/features/identity/kratos/`. Identity ownership consumes this
+temporary interface; explicit v1 E2Es supply recorded loopback responses. Profile
+and authz receive provider-free `Reader` values. Reads do not mutate Kratos or
+share a profile-user snapshot across requests.
 
 V1 reads retain the user-schema filter, trait mapping, provider order and fuzzy
 search ranking. Listing reads the provider's complete cursor sequence per call,

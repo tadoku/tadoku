@@ -58,7 +58,9 @@ func newFixture(t *testing.T) *fixture {
 		t.Fatal("pinned Kratos PostgreSQL migration failed")
 	}
 	f.sql(t, true, `insert into networks(id, created_at, updated_at) values ($1, now(), now())`, uuid.NewString())
-	f.binary, err = runfiles.Rlocation("tadoku/services/tadoku-api/cmd/tadoku-identity-import/tadoku-identity-import_/tadoku-identity-import")
+	f.binary, err = runfiles.Rlocation(
+		"tadoku/services/tadoku-api/cmd/tadoku-identity-import/tadoku-identity-import_/tadoku-identity-import",
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -93,7 +95,9 @@ func newFixture(t *testing.T) *fixture {
 	err = f.source.Pool.QueryRow(t.Context(), `select
 		(select count(*) from identities), (select count(*) from identity_credentials)`).Scan(&identities, &credentials)
 	if err != nil || identities != 2 || credentials != 2 {
-		t.Fatalf("source fixture requires two identities and credentials: identities=%d credentials=%d", identities, credentials)
+		t.Fatalf(
+			"source fixture requires two identities and credentials: identities=%d credentials=%d", identities, credentials,
+		)
 	}
 
 	role := f.source.AppPool.Config().ConnConfig.User

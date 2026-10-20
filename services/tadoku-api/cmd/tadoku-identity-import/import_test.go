@@ -58,16 +58,28 @@ func TestImportPreflight(t *testing.T) {
 	for _, tc := range []struct {
 		name, sql, field string
 	}{
-		{"missing-password", "delete from identity_credentials where identity_id = '" + secondID + "'", "password_credentials"},
+		{
+			"missing-password",
+			"delete from identity_credentials where identity_id = '" + secondID + "'",
+			"password_credentials",
+		},
 		{"short-hash", `update identity_credentials set config = '{"hashed_password":"invalid"}'`, "password_hash"},
 		{"hash-alphabet", `update identity_credentials set config = jsonb_build_object(
 			'hashed_password', '$2a$04$' || repeat('!',53))`, "password_hash"},
-		{"migration-hook", `update identity_credentials set config = config || '{"use_password_migration_hook":true}'`, "password_hash"},
+		{
+			"migration-hook",
+			`update identity_credentials set config = config || '{"use_password_migration_hook":true}'`,
+			"password_hash",
+		},
 		{"duplicate-email", `update identities set traits = jsonb_set(traits, '{email}', '"mixedcase@example.test"')
 			where id = '` + secondID + "'", "email_normalized"},
 		{"invalid-email", `update identities set traits = jsonb_set(traits, '{email}', '"invalid"')`, "email"},
 		{"short-name", `update identities set traits = jsonb_set(traits, '{display_name}', '"a"')`, "display_name"},
-		{"long-name", `update identities set traits = jsonb_set(traits, '{display_name}', to_jsonb(repeat('界',33)))`, "display_name"},
+		{
+			"long-name",
+			`update identities set traits = jsonb_set(traits, '{display_name}', to_jsonb(repeat('界',33)))`,
+			"display_name",
+		},
 		{"blank-name", `update identities set traits = jsonb_set(traits, '{display_name}', '"  "')`, "display_name"},
 		{"invalid-trait-type", `update identities set traits = jsonb_set(traits, '{email}', '42')`, "traits"},
 		{"multiple-networks", `insert into networks(id, created_at, updated_at)

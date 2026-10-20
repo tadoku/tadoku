@@ -33,6 +33,7 @@ def frontend_dev(name, host, readiness_path = "/", paper = False, namespace = No
             ] + ["packages/%s/**" % package for package in shared_packages] + [
                 ".npmrc",
                 "package.json",
+                "patches/**",
                 "pnpm-lock.yaml",
                 "pnpm-workspace.yaml",
             ],
@@ -130,6 +131,7 @@ def frontend_dev(name, host, readiness_path = "/", paper = False, namespace = No
             ] + ["frontend/packages/%s" % package for package in shared_packages] + [
                 "frontend/.npmrc",
                 "frontend/package.json",
+                "frontend/patches",
                 "frontend/pnpm-lock.yaml",
                 "frontend/pnpm-workspace.yaml",
             ],
@@ -138,6 +140,7 @@ def frontend_dev(name, host, readiness_path = "/", paper = False, namespace = No
             ] + ["frontend/packages/%s" % package for package in shared_packages] + [
                 "frontend/.npmrc",
                 "frontend/package.json",
+                "frontend/patches",
                 "frontend/pnpm-lock.yaml",
                 "frontend/pnpm-workspace.yaml",
             ],
@@ -154,6 +157,7 @@ def frontend_dev(name, host, readiness_path = "/", paper = False, namespace = No
             ] + ["frontend/packages/%s/package.json" % package for package in shared_packages] + [
                 "frontend/.npmrc",
                 "frontend/package.json",
+                "frontend/patches",
                 "frontend/pnpm-lock.yaml",
                 "frontend/pnpm-workspace.yaml",
             ],

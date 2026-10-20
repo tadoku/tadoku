@@ -3,6 +3,7 @@ FROM docker.io/node:22-bookworm-slim@sha256:c3de60bf2f9dd0ac6370e6117950ff62d6e3
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@10.10.0 --activate
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json .npmrc ./
+COPY patches ./patches
 RUN pnpm fetch
 COPY apps/webv3 ./apps/webv3
 COPY packages/paper-ui ./packages/paper-ui

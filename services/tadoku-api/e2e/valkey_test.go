@@ -110,7 +110,7 @@ func (f *leaderboardValkeyFixture) reset(ctx context.Context) error {
 
 func (f *leaderboardValkeyFixture) cacheKeys(ctx context.Context) ([]string, error) {
 	var keys []string
-	for _, pattern := range []string{"leaderboard:*", "tenant:*:leaderboard:*", "tenant:*:identity:login:*"} {
+	for _, pattern := range []string{"leaderboard:*", "tenant:*:leaderboard:*", "tenant:*:identity:*"} {
 		var cursor uint64
 		for {
 			page, err := f.client.Do(

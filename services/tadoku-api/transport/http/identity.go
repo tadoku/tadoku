@@ -64,13 +64,11 @@ func (s *server) IdentityRegistrationCreate(
 	ctx context.Context,
 	request openapi.IdentityRegistrationCreateRequestObject,
 ) (openapi.IdentityRegistrationCreateResponseObject, error) {
-	var command app.IdentityRegistration
+	metadata := ctx.Value(identityRequestKey{}).(identityRequestMetadata)
+	command := app.IdentityRegistration{IP: metadata.ip}
 	if request.Body != nil {
-		command = app.IdentityRegistration{
-			Email:       string(request.Body.Email),
-			DisplayName: request.Body.DisplayName,
-			Password:    request.Body.Password,
-		}
+		command.Email = string(request.Body.Email)
+		command.DisplayName, command.Password = request.Body.DisplayName, request.Body.Password
 	}
 	result, err := s.application.IdentityRegister(ctx, command)
 	if err != nil {

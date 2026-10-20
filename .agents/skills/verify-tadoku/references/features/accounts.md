@@ -162,23 +162,29 @@ Authv2 uses `/` for Settings, `/login`, `/register` and `/recovery` on `authv2.t
   UID, spec, generation, selectors and ConfigMaps before startup and compare
   after owner-scoped teardown. Require no owned resources and healthy auth.
 - A v2 guest gets login, registration and recovery forms; signed-in navigation
-  opens Settings and logout. Settings is at `/`, with `/settings` retained for
-  existing caller links. `/registration` also opens registration.
+  shows the display name and logout. Settings is at `/`, with `/settings`
+  retained for existing caller links. A guest opening Settings goes through
+  login and returns to the same Settings URL.
 - Run the manual real-API smoke. With JavaScript disabled, register a disposable
   account, reload Settings, log out and log in again. Enter values before delayed
-  hydration, then submit after hydration and verify those same values survive.
-  Inspect labels, keyboard focus, pending states, field/form errors and mobile
+  hydration, then submit after hydration and verify those same values survive
+  and that the browser posts JSON to the tenant's main-host
+  `/api/internal/identity/*`, not to authv2's `/actions/*` fallback. Inspect
+  labels, keyboard focus, pending states, field/form errors and mobile
   containment. Do not inject cookies or mock identity responses for this proof.
+- Log in with an allowed `return_to` and require that exact destination; a
+  foreign one must never be rendered, carried or followed.
 - As the owned native Reader, save a display name and reload; exercise invalid
-  names/passwords, taken email, throttling and expired/stale session feedback.
-  A stale valid session can save an unchanged-email display-name edit; email or
-  password edits require logging in again. Email changes notify the old address.
+  names/passwords, taken email, throttling and stale-session feedback. A stale
+  valid session can save its display name; email or password edits link to a
+  login that returns to Settings. Email changes notify the old address.
 - Request recovery through its form; use a separate native Admin context's cookie
-  to read the actual public held email. Follow its exact `params.recovery_url`,
-  set a password in Settings, continue, log out and log in using the new password.
-  Require old-password, old-session and used/sibling-link rejection. The
-  continuation must wait for a successful password save, and crafted off-allowlist
-  Settings queries must not redirect. Invalid recovery links retain API 400 JSON.
+  to read the newly held email. Follow its exact `params.recovery_url`, set a
+  password in Settings, continue, log out and log in using the new password.
+  Require old-password, old-session and used-link rejection. Settings offers a
+  valid continuation as a link and follows it only after a password save;
+  crafted off-allowlist queries are ignored. Invalid recovery links retain API
+  400 JSON.
 - Keep a page mounted, change source and observe HMR with unchanged navigation
   time origin, Pod UID and image. Keep the local generated route tree current:
   synchronizing a stale tree makes the overlay regenerate it and reload.

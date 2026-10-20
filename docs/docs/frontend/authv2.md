@@ -8,45 +8,55 @@ description: Paper account screens, native and enhanced JSON submissions, recove
 Read this when you run or extend `frontend/apps/authv2`.
 
 Authv2 is the account application on the [Webv3 stack](webv3.md):
-TanStack Start, Router, Query and Form, Zod, Vite, Nitro and Paper. `/` and
-`/login` provide Settings and login respectively. `/register` (also
-`/registration`) creates an account; `/recovery` requests a password-reset email.
-`/settings` also opens Settings for existing caller links. The existing `auth`
-app serves tenants that select v1.
+TanStack Start, Router, Query and Form, Zod, Vite, Nitro and Paper. `/` is
+Settings, the identity API's recovery redirect target; `/settings` opens the
+same screen for existing caller links. `/login`, `/register` and `/recovery`
+log in, create an account and request a password-reset email. The existing
+`auth` app serves tenants that select v1.
 
 ## Forms and recovery
 
-Forms use Paper's `usePaperForm` and bound controls. Login and registration
-render enabled native forms in server HTML and work with JavaScript disabled.
-Hydration enhances the same form with pending states, field errors and TanStack
-submission. Submission reads the live form controls so values entered before
-hydration are preserved.
+Each form uses `useAccountForm` from `frontend/apps/authv2/src/lib/account-form.ts`
+with Paper's `usePaperForm` controls. The server renders enabled native forms that
+post to `/actions/{operation}`, so every form works with JavaScript disabled or
+before hydration. On hydration the form adopts values already typed into those
+controls, and again from the live controls at submission.
 
-The narrow `/actions/{operation}` server routes accept bounded, same-origin
-form submissions and call the fixed identity operations with JSON. They forward
-Cookie and the trusted `X-Dev-Branch`, preserve the submitted Origin, and pass
-API Set-Cookie headers to the browser. They never accept an upstream URL or
-expose session cookies to JavaScript. Responses disable caching. Native failures
-redirect with a public error code; passwords and account values are not put in
-URLs. The visitor re-enters their values after a native failure. Enhanced
-failures retain field values and show inline or form feedback.
+A hydrated form sends JSON from the browser to the identity API on the tenant's
+main host, for example `https://tadoku.app/api/internal/identity/login`, with
+credentials and the API's CORS rules. Login throttling therefore sees each
+visitor's own address. Branch authv2 hosts do not route `/api/internal`. Client
+validation mirrors the API's length rules; the API's similarity rule and other
+rejections map onto the field they concern (`email_taken`, `invalid_email`,
+`invalid_display_name`, `invalid_password`) or onto the form (`wrong_password`,
+`throttled`, `stale_session`, a 401 without a code, `invalid_origin` and service
+failures). A wrong password clears and focuses the password field.
 
-Settings lives at `/`, the identity API's recovery redirect target. A recovery
-link creates a recent session, then the password form sets the new password.
-Profile changes preserve an unchanged email so a stale session can still update
-its display name. Email and password changes require authentication within the
-last hour; stale-session feedback links to login for reauthentication. Logout
-uses the identity entry point.
+The `/actions/{operation}` server route completes native submissions only. It
+accepts a bounded, single-valued form from this host's own pages (the `Origin`
+must match the request host, itself an allowed Tadoku app), calls the fixed
+identity operation with JSON, forwards Cookie and the trusted `X-Dev-Branch`,
+returns the API's Set-Cookie headers and redirects. Failures redirect with a
+public error code shown as a form message; passwords and account values never
+enter URLs. Native logins reach the API from the authv2 server, so the API's
+per-address throttle counts them under that server's address.
 
-An incoming `return_to` is external input, including on Settings. The UI boundary
-validates HTTPS, the identity host allowlist and the complete Settings URL's
-2,048-byte ceiling. A continuation is carried through login and Settings and
-followed only after a successful password save. A profile save stays in Settings.
-Untrusted destinations show an error and are never followed.
-Invalid, expired or reused recovery links still return the public identity API's
-`400` JSON response; they do not render an authv2 error page. Request another link
-at `/recovery`. Recovery requests show the same success message for known and
-unknown accounts. Development mail remains held.
+Settings has separate forms for the display name, email address and password.
+Email and password changes need a login within the last hour; their stale-session
+message links to a login that returns to the same Settings URL. Logout posts to
+the identity API through the native route. A guest opening Settings is sent to
+login with Settings as the continuation.
+
+An incoming `return_to` is external input. `continuation()` in
+`frontend/apps/authv2/src/lib/identity.ts` accepts only HTTPS URLs on the
+identity API's host allowlist whose Settings URL fits 2,048 bytes; anything else
+is ignored and never rendered. Login and registration continue to it. Settings
+offers it as **Back to Tadoku** and follows it after a password change; display
+name and email changes stay on Settings. Recovery requests carry it, or the
+Tadoku home page, into the emailed link. Invalid, expired or reused recovery
+links still return the identity API's `400` JSON response; request another at
+`/recovery`. Recovery requests show the same confirmation for known and unknown
+addresses. Development mail remains held.
 
 ## Session and account selection
 
@@ -60,11 +70,11 @@ The server function in `frontend/apps/authv2/src/lib/session.ts` keeps server
 configuration and request credentials out of the browser bundle.
 
 The API chooses the account app for the request's tenant. A `v1` answer redirects
-to the existing account origin with the current path and query. A `v2` answer
-renders Settings or the login form according to the session. A missing
+to the matching page of the existing account origin with the query preserved:
+`/settings` maps to `/` and `/recovery` to `/account-recovery`. A missing
 endpoint, non-success response, timeout or invalid payload shows an unavailable
-message and a link to the existing account app. An unavailable answer does not
-invent an account-app selection or an authenticated account.
+page with a retry link. An unavailable answer does not invent an account-app
+selection or an authenticated account.
 
 `frontend/apps/authv2/src/lib/urls.server.ts` resolves origins per request.
 Development uses `authv2.tadoku.dev.lab` and
@@ -134,16 +144,20 @@ AUTHV2_BASE_URL=http://127.0.0.1:5184 pnpm --filter authv2 test:e2e
 
 The Playwright smoke suite is run by hand, never in CI. Use an owned tenant on
 v2 with native Dev Reader/Admin fixtures and the real API, gateway and worker.
-It exercises native registration/login with JavaScript disabled, login errors,
-profile persistence, password validation, held-email recovery, the generated
-link, Settings password replacement, continuation, logout and session revocation.
-It also checks mobile containment and health. See
-`frontend/apps/authv2/e2e/README.md` for the loopback session fixture that also
-checks header forwarding, v1 redirection and failure responses. That fixture
-proves application HTTP/SSR behavior; it does not prove real authentication,
-Oathkeeper, tenant isolation or shared-cluster routing. TLS verification remains
-enabled. Reports, screenshots and recordings go outside source control. Tracing
-is disabled because authenticated network payloads contain credentials and links.
+`credentials.spec.ts` covers JavaScript-disabled registration and login,
+delayed hydration, the browser-to-API transport, `return_to`, wrong passwords,
+throttling, field errors and mobile containment. `settings.spec.ts` covers the
+guest continuation, profile and email persistence, the old-address notice,
+password errors, foreign-origin posts, logout and, when an operator ages the
+session, stale-session reauthentication. `recovery.spec.ts` follows a held
+recovery email's generated link through Settings and checks old passwords,
+sessions and links fail. See `frontend/apps/authv2/e2e/README.md` for setup and
+for the loopback session fixture that checks header forwarding, v1 redirection
+and failure responses. That fixture proves application HTTP/SSR behavior; it
+does not prove real authentication, Oathkeeper, tenant isolation or
+shared-cluster routing. TLS verification remains enabled. Reports, screenshots
+and recordings go outside source control. Tracing is disabled because
+authenticated network payloads contain credentials and links.
 
 The development-base E2E always builds authv2 from the tested revision and selects
 that local image through `TADOKU_BASE_AUTHV2_IMAGE`. This deliberate source check

@@ -1,7 +1,7 @@
 # Authv2 manual smoke
 
 Run from `frontend/` with Node 22.12+, pnpm and a running authv2 server. This
-single Playwright test is deliberately not wired into CI.
+Playwright smoke suite is deliberately not wired into CI.
 
 ```sh
 pnpm --filter authv2 exec playwright install chromium
@@ -10,9 +10,24 @@ AUTHV2_BASE_URL=https://<route>.authv2.tadoku.dev.lab \
   pnpm --filter authv2 test:e2e
 ```
 
-The tenant must select v2. The browser checks the visible skeleton and mobile
-containment; the HTTP client checks API-independent health. TLS verification
-stays enabled. No account or provider data is written.
+The tenant must select v2 and provide native Dev Reader and Dev Admin accounts,
+with the documented development passwords. The suite writes only to that owned
+branch tenant. It checks rendered forms, JavaScript-disabled registration/login,
+profile persistence and errors, real held-email recovery using an Admin cookie,
+the exact generated link, Settings password replacement and continuation,
+logout, new/old-password results and session revocation. It changes the branch
+Reader password. For repeat runs, pass `AUTHV2_READER_STATE_FILE` as an absolute
+file in a private directory outside the report; the replacement password is
+saved with mode 0600. Delete it after owner teardown. Optional
+`AUTHV2_READER_PASSWORD` and `AUTHV2_ADMIN_PASSWORD` select private fixture
+credentials. No shared Kratos account is used.
+
+TLS verification stays enabled. Reports and videos contain synthetic fixture
+screens only. Tracing is disabled to avoid retaining authenticated requests or
+recovery URLs. Inspect and sanitize all artifacts before publication. The
+optional local fixture below tests session transport only; run
+`pnpm --filter authv2 exec playwright test e2e/smoke.spec.ts` for that fixture,
+never the real account journey.
 
 For deterministic local HTTP/SSR coverage, first check ports 5184 and 5195 are
 free and start this checkout's server in a separate terminal:
@@ -43,6 +58,5 @@ this fixture at a shared API or treat it as live end-to-end authentication.
 
 `AUTHV2_BASE_URL` defaults to `http://127.0.0.1:5184`.
 `PLAYWRIGHT_OUTPUT_DIR` defaults to a temporary directory. Reports and mobile
-screenshots remain outside Git; failed tests retain a trace, which can contain
-synthetic cookies. Inspect evidence before attaching it to a PR. Stop only the
+screenshots remain outside Git; tracing stays off because network payloads can contain credentials. Inspect evidence before attaching it to a PR. Stop only the
 server you started when verification is finished.

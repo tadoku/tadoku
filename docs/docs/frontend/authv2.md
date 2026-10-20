@@ -1,16 +1,52 @@
 ---
 title: Authv2
-description: The TanStack Start and Paper account skeleton, request-scoped session selection, local smoke test, dev-cli overlays and container runtime.
+description: Paper account screens, native and enhanced JSON submissions, recovery and Settings, session selection, manual browser smoke and deployment.
 ---
 
 # Authv2
 
 Read this when you run or extend `frontend/apps/authv2`.
 
-Authv2 is the account application foundation on the [Webv3 stack](webv3.md):
+Authv2 is the account application on the [Webv3 stack](webv3.md):
 TanStack Start, Router, Query and Form, Zod, Vite, Nitro and Paper. `/` and
-`/login` render the skeleton. Registration, settings, recovery and account
-mutations are not implemented here. The existing `auth` app remains available.
+`/login` provide Settings and login respectively. `/register` (also
+`/registration`) creates an account; `/recovery` requests a password-reset email.
+`/settings` also opens Settings for existing caller links. The existing `auth`
+app serves tenants that select v1.
+
+## Forms and recovery
+
+Forms use Paper's `usePaperForm` and bound controls. Login and registration
+render enabled native forms in server HTML and work with JavaScript disabled.
+Hydration enhances the same form with pending states, field errors and TanStack
+submission. Submission reads the live form controls so values entered before
+hydration are preserved.
+
+The narrow `/actions/{operation}` server routes accept bounded, same-origin
+form submissions and call the fixed identity operations with JSON. They forward
+Cookie and the trusted `X-Dev-Branch`, preserve the submitted Origin, and pass
+API Set-Cookie headers to the browser. They never accept an upstream URL or
+expose session cookies to JavaScript. Responses disable caching. Native failures
+redirect with a public error code; passwords and account values are not put in
+URLs. The visitor re-enters their values after a native failure. Enhanced
+failures retain field values and show inline or form feedback.
+
+Settings lives at `/`, the identity API's recovery redirect target. A recovery
+link creates a recent session, then the password form sets the new password.
+Profile changes preserve an unchanged email so a stale session can still update
+its display name. Email and password changes require authentication within the
+last hour; stale-session feedback links to login for reauthentication. Logout
+uses the identity entry point.
+
+An incoming `return_to` is external input, including on Settings. The UI boundary
+validates HTTPS, the identity host allowlist and the complete Settings URL's
+2,048-byte ceiling. A continuation is carried through login and Settings and
+followed only after a successful password save. A profile save stays in Settings.
+Untrusted destinations show an error and are never followed.
+Invalid, expired or reused recovery links still return the public identity API's
+`400` JSON response; they do not render an authv2 error page. Request another link
+at `/recovery`. Recovery requests show the same success message for known and
+unknown accounts. Development mail remains held.
 
 ## Session and account selection
 
@@ -25,7 +61,7 @@ configuration and request credentials out of the browser bundle.
 
 The API chooses the account app for the request's tenant. A `v1` answer redirects
 to the existing account origin with the current path and query. A `v2` answer
-renders the skeleton with the session's signed-in or anonymous state. A missing
+renders Settings or the login form according to the session. A missing
 endpoint, non-success response, timeout or invalid payload shows an unavailable
 message and a link to the existing account app. An unavailable answer does not
 invent an account-app selection or an authenticated account.
@@ -96,14 +132,18 @@ pnpm check:paper-boundaries
 AUTHV2_BASE_URL=http://127.0.0.1:5184 pnpm --filter authv2 test:e2e
 ```
 
-The single Playwright smoke test is run by hand, never in CI. Use a tenant on
-v2, or a local server whose session endpoint is absent. It checks the rendered
-skeleton, mobile containment and health. See
+The Playwright smoke suite is run by hand, never in CI. Use an owned tenant on
+v2 with native Dev Reader/Admin fixtures and the real API, gateway and worker.
+It exercises native registration/login with JavaScript disabled, login errors,
+profile persistence, password validation, held-email recovery, the generated
+link, Settings password replacement, continuation, logout and session revocation.
+It also checks mobile containment and health. See
 `frontend/apps/authv2/e2e/README.md` for the loopback session fixture that also
 checks header forwarding, v1 redirection and failure responses. That fixture
 proves application HTTP/SSR behavior; it does not prove real authentication,
 Oathkeeper, tenant isolation or shared-cluster routing. TLS verification remains
-enabled. Reports and screenshots go outside source control.
+enabled. Reports, screenshots and recordings go outside source control. Tracing
+is disabled because authenticated network payloads contain credentials and links.
 
 The development-base E2E always builds authv2 from the tested revision and selects
 that local image through `TADOKU_BASE_AUTHV2_IMAGE`. This deliberate source check

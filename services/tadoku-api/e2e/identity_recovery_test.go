@@ -74,7 +74,10 @@ func TestIdentityRecoveryEnumerationAndTransactionalEmail(t *testing.T) {
 		(select count(*) from emails where tenant = $1),
 		(select count(*) from jobs where tenant = $1 and task_type = 'email.send.v1'
 		 and (payload::jsonb - 'email_id') = '{}'::jsonb)`, identityBranchA).Scan(&tokens, &emails, &jobs)
-	if err != nil || tokens != 4 || emails != 4 || jobs != 4 {
+	if err != nil ||
+		tokens != recoveryRecipientBudget ||
+		emails != recoveryRecipientBudget ||
+		jobs != recoveryRecipientBudget {
 		t.Fatalf("recovery tokens=%d emails=%d ID-only jobs=%d err=%v", tokens, emails, jobs, err)
 	}
 	var rawURL, recipient, storedHash string

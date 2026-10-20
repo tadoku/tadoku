@@ -39,9 +39,9 @@ allowlist. App hosts include the main, account, admin and authv2 hosts, their
 preview branches and development equivalents. Credentials, explicit ports and
 lookalike suffixes are rejected. Return URLs use the same host policy and may
 retain their path, query and fragment. Request bodies keep the shared byte cap
-and generated decoder. Logout's body is an optional JSON object that it ignores,
-so clients send `{}`; the generated decoder rejects malformed JSON with 400
-before the `Origin` check.
+and generated decoder. Logout takes no body and never reads one, but still
+requires the JSON `Content-Type`; whatever body arrives, its `Origin` check
+comes first and its answer is never cached.
 
 `GET /identity/internal/v1/session` requires the callback bearer
 `API_OATHKEEPER_AUTHZ_TOKEN`, rather than a user JWT. It resolves canonical

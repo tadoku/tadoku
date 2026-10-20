@@ -139,6 +139,9 @@ paths:
     post:
       operationId: IdentityLogout
       summary: Revoke the current session and clear its cookie
+      description: >-
+        Like every identity write, logout must send `Content-Type: application/json`. It takes no body
+        and never reads one.
       tags:
       - identity
       security:
@@ -147,13 +150,6 @@ paths:
       x-tadoku-exposure: public
       x-legacy-path: /identity/logout
       x-legacy-operation-id: IdentityLogout
-      requestBody:
-        description: Every identity write must be JSON. Send an empty object; the API ignores its contents.
-        required: false
-        content:
-          application/json:
-            schema:
-              type: object
       responses:
         '204':
           description: Success

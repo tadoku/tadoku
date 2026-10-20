@@ -1,11 +1,11 @@
 ---
 id: identity-logout
 title: "Revoke the current session and clear its cookie"
-description: "Revoke the current session and clear its cookie"
+description: "Like every identity write, logout must send `Content-Type: application/json`. It takes no body and never reads one."
 sidebar_label: "Revoke the current session and clear its cookie"
 hide_title: true
 hide_table_of_contents: true
-api: eJztVk1v4zYQ/SvEnBnbabMLVEEP6SJA0wbNIk5PhmHQ0kTmmiK55MiOIei/L4aUXO+67aI9BrkYsjjkzPsw/TpwHoMi7exdBQXcVWhJ0+He1a4lkECqjlAsQA8LsJQQsWwDPxeLDkrnthpvWtpAsVj2SwkBP7cY6RdXHaDooMJYBu25BRRwu8NwEONpYh80oWjaSGKN4rf5wx8TMUdbCWUFNp4Owq0/YUnXgjYobj7eCV1bFzAKTVGUzhJaihPIXXXACopnZSJKGBZ5BOW90WVCOf0UeY4OYrnBRvETHTxCAbkR9H3f82nROxsxcsEPs6tzIPO2LDFGkLBBVWFIlXOkiw+JkPMNT2iVpYvosdTPuhS/EvkHaw5SzJlPlGKuGpxrwp/v1YuIGKN2VmR+r4VJiojSoAqMnjGfYYgUtK1BQqNe7tHWLMrV7Kf3GdTVbHY+1mNWSwRk+FjB/2ZOgg/sJtKZtgZjVDV+Z7zL2WzWc8/qe5XvrySgbRu24z44W6+8inHvAs9Mm+CITJofG6XNitQWLZNEyuBqoBMkaLtTRlerSkdv1GFlVYMnr9Pmk+8nPcZXAUvHNl6Ryy3GBRd0re1XldQGuyIHEqyjlW68wQZt5rm1aqe0UWuDsMyuGz28OLK3lECaDJNyG4ILj4MzYdT08k3TV6fpj2+avjJN371p+so07eWZmju3xRRUyjYEtHT8E1e2yv/cQ2xJCUFCg7RxHLu8i0lDxVzDdIxHUzPGsIhhlzLGooM2GChgQ+RjMZ2Sqty2nSjvp8rrqbaEwSoD/UlQm7NrsjFO49pRceX173hI3EEBx/GSOgXkDkcVGTjb8fGvmHf7ophcKLqez3h26eyBuRHMhfIazjmrdaQcQOVIV5RilDkxF5FI2zrnvaBKitcipI0YsBJxiwbJ2Siy5OLd7JLTEROWu1xOZpMZ9DLx3Kj0SxrA/XfRvgJwpJDwhabeKG25T5KoG/Q8Cc8SBkWXEjasebGArluriH8G0/f8+nOLgZP1UsJOBZ0MysF6zJnJAls8QAEf8l1x8cQjcLlps5rf3Bu9HHfclCV6+tfa5YktPz7Mn0DCekjyTbonIKg95221hwJAgktUJHOldx0YZes23T6Qz2TLqDPLbZPlhgdGNS7Zw8mE37hPDkj4k3H97Z6uy47u+2N9XvrHHQO3YzWruOz7/gu4MZ4R
+api: eJztVktv2zgQ/ivEnBlb2U0LrIo9FEWBBhugizh7MgyXkaYya4pkOCMngqD/vhg9vE6MoscFglz8oGY48z1sfB2EiMmwDf66hByuS/Rsub0JVWgYNJRIRbJRCiCHG7tHhQdMrbJTpXpMllErN3SouiFWhL5U3z4Fz+j54q6NmCsTo7PFMGn5g4L/tlDXrNjskZQP6j6UrTK+VF6uVwlNSSp4XIAGNhVBvoZ5JGw0EBZNks/5uoMihL3Fjw3vIF9v+o2GhBSDJyTIO/gtu5K351BWTVEgEWjYoSkxDZUr5ItPw2XnDXfojecLiljY77ZQX5jjV+9arVayC2q1MjWuLOOfN+ZJERLZ4NW424eZn8KhSaQsCzAqdlgbGcVtRMiBOFlfgYbaPN2grwTQVfbH+77vew1XWXa+1i0+NEisEv7AgrEEDcVIvNS+ZF3OzqaGe2kFDTGJG9iOtNVIZCr8xXqXWZb1MrP8VeX7Kw3om1qkfEzBV9toiB5Dkp15lwKzG/bH2li3FWt4IYmNw+1EJ2iw/mCcLbelpehMu/WmxpPjofnk+8mM+ShhEcTDWw7jiPlBSLay/lklN8lvOYAGH3hr6+iwRj/y3HhzMNaZe4ewEYESPjQ2YSkIZ/Y2GtiyE1I+pxTS7eRMmDW9fNP01Wn6+5umr0zTd2+avjJNew018i5I7ImBBg2McAXLOWgs3RyDCNNhyAjrDprkIIcdc6R8uWRThn2zMDEuTbRL6xmTNw76k5CyEtVHYU+jylExE+1f2A7YIZ9KBLWwm8M44aiCLG799zD0T+jmhS9MtGeh7RYrSzyGPD3nEtJqlmKIXYTM1lekxMDJFEwfVBoaMWGpaI8OOXhSoyzqXXYpCUZIGadcLrJFBr0euKzN4PYJwC0ewh4V71AVTUro+ZiOZPQQiZRlUkfkzwB0//2o/q8AOsrE+MTL6Iz1gnOwQTd55iScaphcs9GwE1/la+i6e0P4T3J9L8cPDSZJrhsNB5PsYGIJrnMWHWy2xxZy+FgUGMWBB+Oa0Ssv/lXEaEcj//11dQcazJm/9oO/pg9y/fzItyeXv7CanpaQ117/pKfrRvv2/bF+fPTTjgnkXC10bvq+/xcH8mxC
 sidebar_class_name: "post api-method"
 info_path: api/identity/identity-api
 custom_edit_url: null
@@ -38,15 +38,7 @@ import Translate from "@docusaurus/Translate";
 
 
 
-Revoke the current session and clear its cookie
-
-<Heading
-  id={"request"}
-  as={"h2"}
-  className={"openapi-tabs__heading"}
->
-  <Translate id="theme.openapi.request.title">Request</Translate>
-</Heading>
+Like every identity write, logout must send `Content-Type: application/json`. It takes no body and never reads one.
 
 <ParamsDetails>
   

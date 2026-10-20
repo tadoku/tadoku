@@ -1,4 +1,5 @@
-insert into tenants (key, kind) values ('e2e/alpha-0000000a', 'test');
+insert into tenants (key, kind) values ('e2e/alpha-0000000a', 'test')
+on conflict (key) do nothing;
 insert into tenant_overrides (tenant, component) values ('e2e/alpha-0000000a', 'tadoku-worker');
 
 delete from platform_scoring_config;

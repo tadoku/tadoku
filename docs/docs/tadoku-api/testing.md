@@ -82,14 +82,19 @@ Never point tests at shared development or production services.
   v25.4.0 SQLite-enabled executable under Bazel. Each helper owns an in-memory,
   loopback-only process using `infra/dev/ory/namespaces.keto.ts` and never
   accepts an external target.
-- **Kratos:** HTTP E2Es own a pinned Kratos process; see
-  [Kratos fixture](./http-e2e.md#kratos-fixture). No Docker service, external Kratos URL or
-  Kratos environment variable is needed.
+- **Identity accounts:** ordinary HTTP golden and journey resets seed native
+  tenant-owned accounts after case SQL, preserving existing user/account state
+  on primary-key conflicts, and enable v2 for their registered fixture tenants.
+  Cast and gateway fixtures obtain sessions through real login with test-cost
+  bcrypt hashes; registration/password-policy workflows retain production cost
+  12. Default legacy HTTP clients fail immediately on any call. V1 adapters use
+  recorded loopback responses, without a Kratos binary or container. See
+  [Local account fixtures](./http-e2e.md#local-account-fixtures).
 - **Valkey:** raw Valkey and application lifecycle tests require
   `TADOKU_TEST_VALKEY_URL` in the exact form `redis://127.0.0.1:<port>` (or
   `localhost`) for a disposable Valkey 9 service. They never flush the shared
-  instance. Logical databases are reserved per suite: 15 for HTTP E2Es, 14 for
-  their nested cleanup probe, and 13 for the leaderboard cache fence and worker
+  instance. Logical databases are reserved per suite: 15 for HTTP E2Es
+  and 13 for the leaderboard cache fence and worker
   tests. The HTTP E2E fixtures lease their database. Tests sharing database 13
   use unique parsed `e2e/<id>` tenants: the fence and cross-tenant tests create
   and delete only their named tenant keys; worker cache tests register a unique

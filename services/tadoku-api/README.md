@@ -40,7 +40,7 @@ bazel run //:gazelle            # after adding Go files or changing imports
 - [Testing](../../docs/docs/tadoku-api/testing.md): test principles, test
   infrastructure and repository tests.
 - [HTTP end-to-end tests](../../docs/docs/tadoku-api/http-e2e.md): golden
-  cases, fixture tokens, relationships and the Kratos fixture.
+  cases, fixture tokens, relationships and local identity fixtures.
 - [User journeys](../../docs/docs/tadoku-api/user-journeys.md): chained
   scenarios for the important user flows.
 - [Import boundaries](../../docs/docs/tadoku-api/import-boundaries.md): Bazel

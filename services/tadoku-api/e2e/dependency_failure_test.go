@@ -17,7 +17,7 @@ func TestDependencyFailures(t *testing.T) {
 	closedPool := openClosedPool(t, api.db.AppPool.Config().ConnString())
 	var logs bytes.Buffer
 	logger := slog.New(slog.NewTextHandler(&logs, &slog.HandlerOptions{Level: slog.LevelDebug}))
-	handler, _, _, err := newTestRouterWithLogger(t.Context(), closedPool, closedPool, keto, api.kratos, logger)
+	handler, _, _, err := newTestRouterWithLogger(t.Context(), closedPool, closedPool, keto, logger)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -29,7 +29,6 @@ func TestDependencyFailures(t *testing.T) {
 		unreachablePool,
 		unreachablePool,
 		keto,
-		api.kratos,
 		logger,
 	)
 	if err != nil {
@@ -47,7 +46,6 @@ func TestDependencyFailures(t *testing.T) {
 		api.db.AppPool,
 		api.db.AppPool,
 		keto,
-		api.kratos,
 		logger,
 		false,
 		closedValkey,
@@ -61,7 +59,7 @@ func TestDependencyFailures(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	ketoUnavailable, _, _, err := newTestRouterWithLogger(t.Context(), api.db.AppPool, api.db.AppPool, closedKeto, api.kratos, logger)
+	ketoUnavailable, _, _, err := newTestRouterWithLogger(t.Context(), api.db.AppPool, api.db.AppPool, closedKeto, logger)
 	if err != nil {
 		_ = closedKeto.Close()
 		t.Fatal(err)

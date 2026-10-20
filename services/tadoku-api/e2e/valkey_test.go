@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/google/uuid"
@@ -28,7 +27,7 @@ func newLeaderboardValkeyFixture(ctx context.Context) (_ *leaderboardValkeyFixtu
 	if err != nil {
 		return nil, fmt.Errorf("parse test Valkey URL: %w", err)
 	}
-	// Test safety: DB 15 is reserved for this E2E suite and DB 14 for its nested cleanup probe.
+	// Test safety: DB 15 is reserved for this E2E suite.
 	option.SelectDB = leaderboardValkeyDatabase()
 	option.ForceSingleClient = true
 	option.DisableRetry = true
@@ -92,9 +91,6 @@ func newClosedLeaderboardValkeyClient() (valkeygo.Client, error) {
 }
 
 func leaderboardValkeyDatabase() int {
-	if os.Getenv("TADOKU_KRATOS_CLEANUP_FAILURE_TEST") != "" {
-		return 14
-	}
 	return 15
 }
 

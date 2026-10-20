@@ -229,7 +229,6 @@ func TestEmailAuditFailureHidesContent(t *testing.T) {
 		api.db.AppPool,
 		closed,
 		api.keto,
-		api.kratos,
 		slog.New(slog.NewTextHandler(io.Discard,
 			nil)))
 	if err != nil {

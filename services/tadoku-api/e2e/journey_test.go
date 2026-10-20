@@ -67,11 +67,6 @@ func runJourneyWithHandler(t *testing.T, s *suite, handler http.Handler, name st
 
 func runJourneyWithSetup(t *testing.T, s *suite, handler http.Handler, name string, afterReset func(*testing.T), steps []step) {
 	t.Helper()
-	if s.kratos != nil {
-		if err := s.kratos.Err(); err != nil {
-			t.Fatal(err)
-		}
-	}
 
 	directory := filepath.Join(journeysDir, name)
 	names, err := stepDirNames(steps)
@@ -282,14 +277,19 @@ func resetJourney(t *testing.T, s *suite, directory string) {
 	t.Helper()
 
 	ctx := t.Context()
-	if err := s.db.Reset(ctx, filepath.Join(journeysDir, "setup.sql"), filepath.Join(directory, "setup.sql")); err != nil {
+	if err := s.db.Reset(
+		ctx,
+		filepath.Join(journeysDir, "setup.sql"),
+		filepath.Join(directory, "setup.sql"),
+		"testdata/accounts.sql",
+	); err != nil {
 		t.Fatal(err)
 	}
 	if err := s.keto.Reset(ctx, filepath.Join(journeysDir, "relationships.json"), filepath.Join(directory, "relationships.json")); err != nil {
 		t.Fatal(err)
 	}
 	if s.flipt != nil {
-		s.flipt.Reset()
+		s.resetIdentityFlags(t)
 	}
 	if leaderboardValkey != nil {
 		if err := leaderboardValkey.reset(ctx); err != nil {

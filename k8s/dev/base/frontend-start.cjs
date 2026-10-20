@@ -23,7 +23,7 @@ config.publicRuntimeConfig = {
 }
 config.serverRuntimeConfig = {
   ...config.serverRuntimeConfig,
-  apiEndpoint: 'https://tadoku.dev.lab/api/internal',
+  apiEndpoint: 'http://oathkeeper-proxy.tdk-dev-oathkeeper:4455/api/internal',
 }
 process.env.__NEXT_PRIVATE_STANDALONE_CONFIG = JSON.stringify(config)
 const appRequire = createRequire(path.join(dir, 'server.js'))

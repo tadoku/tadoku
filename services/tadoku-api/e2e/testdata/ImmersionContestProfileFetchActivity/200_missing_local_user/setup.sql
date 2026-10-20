@@ -26,4 +26,3 @@ insert into contest_logs (contest_id,log_id,amount,modifier,duration_seconds,com
 ('f1111111-1111-4111-8111-111111111111', 'aaaaaaaa-aaaa-4aaa-8aaa-000000000006', 6, 2, 60, null),
 ('f1111111-1111-4111-8111-111111111111', 'aaaaaaaa-aaaa-4aaa-8aaa-000000000007', 7, 2, 60, 999);
 insert into contest_logs (contest_id,log_id,duration_seconds,computed_score) values ('f1111111-1111-4111-8111-111111111111','bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',60,1000);
-delete from users where id='11111111-1111-4111-8111-111111111111';

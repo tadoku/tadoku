@@ -31,13 +31,26 @@ type identitySessionView struct {
 	} `json:"account"`
 }
 
-func resetIdentity(t *testing.T) {
+func resetIdentity(t *testing.T, seedFiles ...string) {
 	t.Helper()
 	api.reset(t, "")
-	if err := api.db.Reset(t.Context(), "testdata/IdentityV2/setup.sql"); err != nil {
+	if len(seedFiles) == 0 {
+		seedFiles = []string{"testdata/IdentityV2/setup.sql"}
+	}
+	if err := api.db.Reset(t.Context(), seedFiles...); err != nil {
 		t.Fatal(err)
 	}
-	for _, raw := range []string{"tadoku/prod", identityBranchA, identityBranchB} {
+
+	rows, err := api.db.Pool.Query(t.Context(), "select distinct tenant from accounts order by tenant")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var raw string
+		if err := rows.Scan(&raw); err != nil {
+			t.Fatal(err)
+		}
 		key, err := tenant.Parse(raw)
 		if err != nil {
 			t.Fatal(err)
@@ -45,6 +58,9 @@ func resetIdentity(t *testing.T) {
 		if err := flipt.SetIdentityV2(key, true); err != nil {
 			t.Fatal(err)
 		}
+	}
+	if err := rows.Err(); err != nil {
+		t.Fatal(err)
 	}
 }
 

@@ -44,7 +44,6 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testflipt"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testketo"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/testkratos"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
 	transport "github.com/tadoku/tadoku/services/tadoku-api/transport/http"
 	valkeygo "github.com/valkey-io/valkey-go"
@@ -101,13 +100,6 @@ func runTests(m *testing.M) (code int) {
 	}
 	defer func() { cleanupErr = errors.Join(cleanupErr, keto.Close()) }()
 
-	kratos, err := testkratos.New(ctx, "testdata/kratos.sql")
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return 1
-	}
-	defer func() { cleanupErr = errors.Join(cleanupErr, kratos.Close()) }()
-
 	leaderboardValkey, err = newLeaderboardValkeyFixture(ctx)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -115,7 +107,7 @@ func runTests(m *testing.M) (code int) {
 	}
 	defer func() { cleanupErr = errors.Join(cleanupErr, leaderboardValkey.close()) }()
 
-	api, err = newTestAPI(ctx, keto, kratos)
+	api, err = newTestAPI(ctx, keto)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
@@ -127,7 +119,6 @@ func runTests(m *testing.M) (code int) {
 		api.db.AppPool,
 		api.db.AppPool,
 		keto,
-		kratos,
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 		true,
 		api.leaderboard,
@@ -144,7 +135,6 @@ func runTests(m *testing.M) (code int) {
 type suite struct {
 	db          *testpostgres.Database
 	keto        *testketo.Fixture
-	kratos      *testkratos.Fixture
 	flipt       *testflipt.Fixture
 	handler     *transport.Router
 	profile     *featureprofile.Service
@@ -152,7 +142,7 @@ type suite struct {
 	roles       *permissions.KetoService
 }
 
-func newTestAPI(ctx context.Context, ketoFixture *testketo.Fixture, kratosFixture *testkratos.Fixture) (_ *suite, err error) {
+func newTestAPI(ctx context.Context, ketoFixture *testketo.Fixture) (_ *suite, err error) {
 	db, err := testpostgres.New(ctx)
 	if err != nil {
 		return nil, err
@@ -173,7 +163,6 @@ func newTestAPI(ctx context.Context, ketoFixture *testketo.Fixture, kratosFixtur
 		db.AppPool,
 		db.AppPool,
 		ketoFixture,
-		kratosFixture,
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 		false,
 		leaderboardService,
@@ -186,7 +175,6 @@ func newTestAPI(ctx context.Context, ketoFixture *testketo.Fixture, kratosFixtur
 	api := &suite{
 		db:          db,
 		keto:        ketoFixture,
-		kratos:      kratosFixture,
 		flipt:       flipt,
 		handler:     handler,
 		profile:     profileService,
@@ -202,11 +190,10 @@ func newTestRouterWithLogger(
 	pool *pgxpool.Pool,
 	auditPool *pgxpool.Pool,
 	ketoFixture *testketo.Fixture,
-	kratosFixture *testkratos.Fixture,
 	logger *slog.Logger,
 	options ...routerOption,
 ) (*transport.Router, *featureprofile.Service, *permissions.KetoService, error) {
-	return newTestRouterWithScoringEngine(ctx, pool, auditPool, ketoFixture, kratosFixture, logger, false, options...)
+	return newTestRouterWithScoringEngine(ctx, pool, auditPool, ketoFixture, logger, false, options...)
 }
 
 func newTestRouterWithScoringEngine(
@@ -214,7 +201,6 @@ func newTestRouterWithScoringEngine(
 	pool *pgxpool.Pool,
 	auditPool *pgxpool.Pool,
 	ketoFixture *testketo.Fixture,
-	kratosFixture *testkratos.Fixture,
 	logger *slog.Logger,
 	scoringEngineEnabled bool,
 	options ...routerOption,
@@ -224,7 +210,6 @@ func newTestRouterWithScoringEngine(
 		pool,
 		auditPool,
 		ketoFixture,
-		kratosFixture,
 		logger,
 		scoringEngineEnabled,
 		leaderboardValkey.client,
@@ -238,7 +223,6 @@ func newTestRouterWithLeaderboard(
 	pool *pgxpool.Pool,
 	auditPool *pgxpool.Pool,
 	ketoFixture *testketo.Fixture,
-	kratosFixture *testkratos.Fixture,
 	logger *slog.Logger,
 	scoringEngineEnabled bool,
 	valkeyClient valkeygo.Client,
@@ -254,7 +238,6 @@ func newTestRouterWithLeaderboard(
 		pool,
 		auditPool,
 		ketoFixture,
-		kratosFixture,
 		logger,
 		scoringEngineEnabled,
 		leaderboardService,
@@ -272,6 +255,7 @@ type routerEndpoints struct {
 	ketoWrite        string
 	identityValkey   valkeygo.Client
 	identityObserver featureflags.Observer
+	legacySessions   *identity.LegacySessions
 }
 
 func withIdentityValkey(client valkeygo.Client) routerOption {
@@ -287,7 +271,6 @@ func newTestRouterWithLeaderboardService(
 	pool *pgxpool.Pool,
 	auditPool *pgxpool.Pool,
 	ketoFixture *testketo.Fixture,
-	kratosFixture *testkratos.Fixture,
 	logger *slog.Logger,
 	scoringEngineEnabled bool,
 	leaderboardService *leaderboard.Service,
@@ -298,6 +281,9 @@ func newTestRouterWithLeaderboardService(
 		ketoWrite:      ketoFixture.WriteURL(),
 		jwks:           authenticationJWKS.URL,
 		identityValkey: leaderboardValkey.client,
+		legacySessions: identity.NewLegacySessions(
+			"http://kratos-public.test", "http://kratos.test", &http.Client{Transport: forbiddenLegacyTransport{}},
+		),
 	}
 	for _, option := range options {
 		option(&endpoints)
@@ -307,7 +293,7 @@ func newTestRouterWithLeaderboardService(
 	readWriter := ketoclient.NewClient(ketoFixture.ReadURL(), endpoints.ketoWrite)
 	permissionChecker := permissions.NewKetoChecker(reader)
 	roleService := permissions.NewKetoService(reader)
-	identities := identity.NewReader(pool, kratosFixture.CursorClient(), featureflags.NewEvaluator(flipt, nil))
+	identities := identity.NewReader(pool, fixtureLegacyReader(), featureflags.NewEvaluator(flipt, nil))
 
 	authzService := featureauthz.NewService(
 		permissionChecker,
@@ -354,7 +340,7 @@ func newTestRouterWithLeaderboardService(
 	identityService := identity.NewService(
 		identity.NewRepository(pool),
 		identity.NewThrottle(endpoints.identityValkey, time.Second, logger),
-		identity.NewLegacySessions("http://kratos-public.test", "http://kratos.test", kratosFixture.HTTPClient()),
+		endpoints.legacySessions,
 		featureFlagEvaluator,
 		"tadoku.dev.lab",
 	)
@@ -423,19 +409,58 @@ func newTestRouterWithLeaderboardService(
 	return handler, profileService, roleService, nil
 }
 
-func (s *suite) reset(t *testing.T, caseDir string) {
+type forbiddenLegacyTransport struct{}
+
+func (forbiddenLegacyTransport) RoundTrip(request *http.Request) (*http.Response, error) {
+	panic("native HTTP fixture called legacy provider: " + request.Method + " " + request.URL.Path)
+}
+
+func fixtureLegacyReader() identity.LegacyReader {
+	return identity.NewLegacyReader(
+		"http://legacy-provider.invalid",
+		identity.WithHTTPClient(&http.Client{Transport: forbiddenLegacyTransport{}}),
+	)
+}
+
+func (s *suite) resetIdentityFlags(t *testing.T) {
 	t.Helper()
-	if s.kratos != nil {
-		if err := s.kratos.Err(); err != nil {
+	s.flipt.Reset()
+	rows, err := s.db.Pool.Query(t.Context(), "select key from tenants order by key")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var raw string
+		if err := rows.Scan(&raw); err != nil {
+			t.Fatal(err)
+		}
+		key, err := tenant.Parse(raw)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := s.flipt.SetIdentityV2(key, true); err != nil {
 			t.Fatal(err)
 		}
 	}
+	if err := rows.Err(); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func (s *suite) reset(t *testing.T, caseDir string) {
+	t.Helper()
 	requireKnownCaseFiles(t, caseDir)
 
 	var postgresSeeds, ketoSeeds []string
 	if caseDir != "" {
 		postgresSeeds = fixtureSeeds(caseDir, "setup.sql")
 		ketoSeeds = fixtureSeeds(caseDir, "relationships.json")
+	}
+	postgresSeeds = append(postgresSeeds, "testdata/accounts.sql")
+	if caseDir != "" {
+		postgresSeeds = append(postgresSeeds, fixtureSeeds(caseDir, "finalize.sql")...)
 	}
 	if s.db != nil {
 		if err := s.db.Reset(t.Context(), postgresSeeds...); err != nil {
@@ -454,7 +479,7 @@ func (s *suite) reset(t *testing.T, caseDir string) {
 		}
 	}
 	if s.flipt != nil {
-		s.flipt.Reset()
+		s.resetIdentityFlags(t)
 	}
 }
 
@@ -463,7 +488,7 @@ func (s *suite) resetProfileService() {
 		*s.profile = *featureprofile.NewService(
 			featureprofile.NewRepository(s.db.AppPool),
 			s.roles,
-			identity.NewReader(s.db.AppPool, s.kratos.CursorClient(), featureflags.NewEvaluator(flipt, nil)),
+			identity.NewReader(s.db.AppPool, fixtureLegacyReader(), featureflags.NewEvaluator(flipt, nil)),
 		)
 	}
 }
@@ -502,7 +527,7 @@ func checkKnownCaseFiles(caseDir string) error {
 
 	for _, entry := range entries {
 		switch entry.Name() {
-		case "request.http", "golden.http", "setup.sql", "relationships.json":
+		case "request.http", "golden.http", "setup.sql", "finalize.sql", "relationships.json":
 		default:
 			return fmt.Errorf("unknown entry %q in case directory %s", entry.Name(), caseDir)
 		}

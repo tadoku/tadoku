@@ -1,13 +1,13 @@
 ---
 title: HTTP end-to-end tests
-description: How Tadoku API HTTP golden cases are laid out, seeded, compared and regenerated, and how E2Es authenticate with real JWTs, Keto and the Kratos fixture.
+description: How Tadoku API HTTP golden cases are laid out, seeded, compared and regenerated, and how E2Es authenticate with real JWTs, Keto and local identity accounts.
 sidebar_position: 6
 ---
 
 # HTTP end-to-end tests
 
 Read this when you add or change an operation's HTTP golden cases, fixture
-tokens or relationships, or anything that touches the shared Kratos fixture.
+tokens or relationships, or anything that touches the shared identity fixtures.
 The general test principles are in [Testing](./testing.md).
 
 ## HTTP E2E suite
@@ -95,6 +95,7 @@ e2e/testdata/<operation>/
   relationships.json     # optional operation-level Keto tuples
   <status>_<description>/
     setup.sql            # optional
+    finalize.sql         # optional final state after the account cast
     relationships.json   # optional Keto relation-tuple array
     request.http
     golden.http
@@ -106,7 +107,7 @@ e2e/testdata/<operation>/
 
 ### Seed resolution
 
-Seed files (`setup.sql`, `relationships.json`) resolve per file name, one level
+Seed files (`setup.sql`, `finalize.sql`, `relationships.json`) resolve per file name, one level
 deep:
 
 - A non-empty case file is the case's only seed for that name. It replaces the
@@ -215,7 +216,7 @@ TADOKU_GOLDEN_SOURCE_ROOT="$PWD/services/tadoku-api/e2e/testdata" \
 ### Signing a new fixture token
 
 `e2e/testdata/TenantIsolation/` contains synthetic signed canonical and
-`e2e/isolation-0123abcd` tokens for the same seeded Kratos subject. Its test
+`e2e/isolation-0123abcd` tokens for the same seeded account subject. Its test
 registry entry exists only in the suite's disposable database. Reuse the
 subject's real Keto tuples and explicitly provision the test object's parent
 when a case needs inherited administrators or bans; changing a tenant never
@@ -280,64 +281,71 @@ jq -r .token "$fixture_output"
   token by hand invalidates its signature, so rerun the recipe instead.
 - Never use production signing keys or tokens in fixtures.
 
-## Kratos fixture
+## Local account fixtures
 
-- HTTP E2Es share one pinned Kratos v26.2.0 SQLite-enabled Linux x86-64 process,
-  owned by `internal/testkratos`. It runs its migrations against a private
-  SQLite database on RAM-backed tmpfs at `/dev/shm` (not Kratos's
-  process-private `dsn: memory`). It uses the shared
-  `infra/dev/ory/identity.default.schema.json` and private Unix sockets, and
-  supplies a bounded HTTP client to the raw SDK constructor.
-- `TestMain` seeds it once from `e2e/testdata/kratos.sql` by direct SQL, with
-  fixed identities that match the signed fixture subjects, traits and
-  timestamps. The seed depends on the pinned provider schema and creates
-  identity records only: no passwords, credential identifiers or sessions.
-  Tests of those operations arrange the provider state explicitly.
-- Guest and unauthenticated requests have no Kratos identity; roles and bans
-  stay in Keto.
-- Kratos is excluded from the ordinary per-case reset. Tests that are not marked
-  for a Kratos reset must leave its state unchanged.
-- A test that may mutate Kratos calls `resetKratosAfter(t, api)` on the
-  enclosing test before any mutation. The helper registers `t.Cleanup` to
-  restore the full seed after the test or whole journey, even after `t.Fatal`
-  or cancellation. It uses a fresh bounded context because `t.Context()` is
-  cancelled before cleanup. Never mark individual journey steps.
-- A reset stops the process, recreates and migrates the database and restores
-  the seed. Existing SDK clients keep working through the same socket path. A
-  failed reset fails the test, and later cases reject the unusable fixture.
-- Startup and reset are bounded. Failure or shutdown closes connections, reaps
-  the child process and removes the owned database, journals and sockets.
-  Each test process uses a random directory prefix because Bazel PID namespaces
-  can reuse process IDs while sharing `/dev/shm`; cleanup checks inspect only
-  that process's directories.
-- Tests sharing the provider stay sequential. Mutations are not detected
-  automatically and response UUIDs are not normalized; goldens remain exact
-  comparisons.
-- Keep provider-schema SQL and process ownership in test-only helpers.
+`e2e/testdata/accounts.sql` seeds the fixed five-user cast in `tadoku/prod`
+and `e2e/alpha-0000000a`, matching the signed cast's tenants. UUIDs, names,
+emails and creation times match the legacy cast. Its synthetic bcrypt cost-4
+hash keeps fixture login cheap; production registration and the dedicated
+password-policy workflows retain cost 12. Sessions come from real API login.
+
+Ordinary golden and journey resets load case SQL before the account seed and
+enable `identity-v2` for registered fixture tenants in the in-process Flipt
+fixture. Explicit user/account primary-key conflicts preserve existing rows,
+including case-specific names, timestamps, inactive accounts and deleted or
+locked users. Repeating the seed is safe; other constraint failures fail setup.
+Optional `finalize.sql` uses the same case/operation resolution and runs after
+the cast in the reset transaction.
+Put final absence mutations there so the default cast cannot resurrect a user
+that a scenario deliberately removes.
+Focused scenarios that define a different account population reset PostgreSQL
+with their own explicit seed.
+
+Profile, account-age and role-update requests use the production identity Reader
+and restricted application pool. The default legacy reader and session adapter
+share a transport that panics on any provider request, so accidental fallback
+fails the suite. No Kratos executable, container or external URL is used.
+The signed cast workflow verifies each unique tenant/subject pair through the
+real JWT router, rejects a foreign session under the target tenant's cookie name,
+and checks unavailable states and reset. Roles remain real Keto relationships.
+
+### Recorded legacy sessions
+
+The v1 session/logout workflow serves `e2e/testdata/IdentityV1/session.json` and
+`unauthorized.json` over loopback HTTP. These are responses recorded from the
+pinned disposable Kratos fixture, without session-cookie material. The workflow
+checks the real SDK/session adapter, callback shape, cookie forwarding and
+canonical-only session revocation. The response server is an explicit provider
+simulation; it does not verify Kratos password login or provider persistence.
+The legacy admin-list workflow explicitly selects v1 and serves recorded-shape
+paged HTTP responses. Provider protocol, error and cancellation tests remain
+with the read adapter. These explicit legacy scenarios supply their own
+loopback clients instead of the default tripwire.
 
 ## Email gateway fixture
 
 `TestEmailGatewayCookieAndBearer` runs the checked-in development rules with
-checksum-pinned Oathkeeper v26.2.0, the real local Kratos/Keto fixtures and the
-production API router on the restricted database role. Cookie checks call that
-API's `/identity/internal/v1/session`, using the same additional-header
-environment override as the deployment with a synthetic callback bearer. The
-API resolves sessions through the real disposable Kratos provider. The fixture
-keeps real RSA JWT signing and validation; it does not replace authentication
-or inject a subject.
+checksum-pinned Oathkeeper v26.2.0, local Keto/PostgreSQL and the production
+router on the restricted role. It seeds disposable native admin and reader
+accounts with `bcrypt.MinCost` hashes, then logs in through the real gateway
+with the unchanged three-second client. Cookie checks call the API's session
+callback using the deployment's additional-header environment override with a
+synthetic bearer. JWT signing and verification remain real.
 
-Assertions cover email list/detail; token precedence over a reader cookie;
-invalid-token refusal despite an admin cookie; unrelated, expired, revoked and
-mixed cookies; guest-only access outside email; protected-route denial; wrong
-deployment `421`; revoked tokens; public identity access; and credential absence
-from logs. Public logout and fixture-only SQLite expiry invalidate disposable
-Kratos sessions, with real whoami `401` checks. No shared provider is used.
+Assertions cover email list/detail, reader-cookie token precedence, invalid
+tokens despite admin cookies, unrelated/forged/expired/revoked/mixed cookies,
+guest access outside email, protected-route denial, wrong-deployment `421`,
+revoked tokens, public identity access, logout and credential absence from logs.
+Native session expiry is fixture-only SQL; no shared provider is used.
 
 To check production routing, render the paired GitOps checkout's Oathkeeper
 chart (version 0.60.1) into a scratch file and pass its absolute path through
-`TADOKU_TEST_EMAIL_GATEWAY_RENDER`. The render must include the public identity
-and email rules and this callback configuration. The same test reads the
-rendered ConfigMaps and uses checksum-pinned Oathkeeper v25.4.0. Adaptations
+`TADOKU_TEST_EMAIL_GATEWAY_RENDER`. The render must include the public
+`tadoku.app` identity rule, preview identity rules, email rules and this callback
+configuration. These public identity rules
+are a prerequisite for gateway login; a render without them cannot run this
+mode. Rendering does not activate those rules in any deployment. The same test
+reads the rendered ConfigMaps and uses checksum-pinned Oathkeeper v25.4.0. Adaptations
 are limited to loopback upstream/callback addresses, listener ports, ephemeral
 signing keys and the synthetic callback bearer. Matching, authenticator options,
 mutators and logging remain from the checked-in configuration or render.

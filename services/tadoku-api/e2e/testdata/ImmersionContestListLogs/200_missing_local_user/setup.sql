@@ -37,4 +37,3 @@ insert into contest_registrations (id,contest_id,user_id,language_codes) values
  ('e2222222-2222-4222-8222-222222222222','f2222222-2222-4222-8222-222222222222','11111111-1111-4111-8111-111111111111','{jpn}');
 insert into contest_logs (contest_id,log_id,duration_seconds,computed_score) values
  ('f2222222-2222-4222-8222-222222222222','d1111111-1111-4111-8111-111111111111',60,0);
-delete from users where id='11111111-1111-4111-8111-111111111111';

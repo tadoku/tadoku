@@ -1,0 +1,8 @@
+{
+  "error": {
+    "code": 401,
+    "status": "Unauthorized",
+    "reason": "No valid session credentials found in the request.",
+    "message": "The request could not be authorized"
+  }
+}

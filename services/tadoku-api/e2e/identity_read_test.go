@@ -19,6 +19,9 @@ import (
 func seedIdentityReads(t *testing.T) {
 	t.Helper()
 	api.reset(t, "")
+	if err := api.db.Reset(t.Context()); err != nil {
+		t.Fatal(err)
+	}
 	t.Cleanup(func() {
 		_, err := api.db.Pool.Exec(context.Background(), `
 			delete from tenants where key = 'e2e/read-0123abcd';
@@ -66,7 +69,7 @@ func TestIdentityReaderTenantPaging(t *testing.T) {
 	seedIdentityReads(t)
 	var reader accountidentity.Reader = accountidentity.NewReader(
 		api.db.AppPool,
-		api.kratos.CursorClient(),
+		fixtureLegacyReader(),
 		featureflags.NewEvaluator(api.flipt, nil),
 	)
 	ctx := tenant.WithKey(t.Context(), tenant.Production())

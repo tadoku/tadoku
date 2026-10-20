@@ -81,7 +81,7 @@ func TestIdentityRegistrationLeavesPoolAvailableDuringEvaluation(t *testing.T) {
 
 	observer := &waitingIdentityObserver{entered: make(chan struct{}), release: make(chan struct{})}
 	handler, _, _, err := newTestRouterWithLogger(
-		t.Context(), pool, pool, api.keto, api.kratos,
+		t.Context(), pool, pool, api.keto,
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 		func(endpoints *routerEndpoints) { endpoints.identityObserver = observer },
 	)
@@ -137,7 +137,7 @@ func TestIdentityRegistrationPreservesUTCInNonUTCSession(t *testing.T) {
 		t.Fatalf("database session timezone=%q, want Asia/Tokyo", zone)
 	}
 	handler, _, _, err := newTestRouterWithLogger(
-		t.Context(), pool, pool, api.keto, api.kratos,
+		t.Context(), pool, pool, api.keto,
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	)
 	if err != nil {

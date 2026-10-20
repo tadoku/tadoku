@@ -3,6 +3,7 @@ package main_test
 import (
 	"context"
 	"crypto/sha256"
+	_ "embed"
 	"fmt"
 	"os/exec"
 	"reflect"
@@ -19,6 +20,9 @@ import (
 
 const firstID = "11111111-1111-4111-8111-111111111111"
 const secondID = "22222222-2222-4222-8222-222222222222"
+
+//go:embed testdata/kratos-source.sql
+var sourceSchema string
 
 type fixture struct {
 	source, target *testpostgres.Database
@@ -48,22 +52,15 @@ func newFixture(t *testing.T) *fixture {
 	f.sql(t, true, "drop schema public cascade; create schema public")
 	f.sql(t, true, `grant usage on schema public to "`+f.source.AppPool.Config().ConnConfig.User+`"`)
 
-	kratos, err := runfiles.Rlocation("kratos_v26_2_0/kratos")
-	if err != nil {
-		t.Fatal(err)
-	}
-	migration := exec.CommandContext(t.Context(), kratos, "migrate", "sql", "--read-from-env", "--yes")
-	migration.Env = []string{"HOME=" + t.TempDir(), "DSN=" + f.source.DSN, "LOG_LEVEL=error"}
-	if migration.Run() != nil {
-		t.Fatal("pinned Kratos PostgreSQL migration failed")
-	}
+	f.sql(t, true, sourceSchema)
 	f.sql(t, true, `insert into networks(id, created_at, updated_at) values ($1, now(), now())`, uuid.NewString())
-	f.binary, err = runfiles.Rlocation(
+	binary, err := runfiles.Rlocation(
 		"tadoku/services/tadoku-api/cmd/tadoku-identity-import/tadoku-identity-import_/tadoku-identity-import",
 	)
 	if err != nil {
 		t.Fatal(err)
 	}
+	f.binary = binary
 
 	hash, err := bcrypt.GenerateFromPassword([]byte("fixture-password-only"), bcrypt.MinCost)
 	if err != nil {

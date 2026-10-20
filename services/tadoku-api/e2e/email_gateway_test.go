@@ -15,7 +15,6 @@ import (
 	"math/big"
 	"net"
 	"net/http"
-	"net/http/cookiejar"
 	"net/http/httptest"
 	"net/url"
 	"os"
@@ -28,15 +27,14 @@ import (
 
 	"github.com/bazelbuild/rules_go/go/runfiles"
 	"github.com/google/uuid"
-	kratosapi "github.com/ory/kratos-client-go"
 	ketoclient "github.com/tadoku/tadoku/services/tadoku-api/infra/keto"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"go.yaml.in/yaml/v3"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func TestEmailGatewayCookieAndBearer(t *testing.T) {
 	api.reset(t, "")
-	resetKratosAfter(t, api)
 
 	key, _ := tenant.Parse("tadoku/gateway-0123abcd")
 	_, err := api.db.Pool.Exec(t.Context(), "insert into tenants(key,kind) values($1,'test')", key.String())
@@ -67,16 +65,18 @@ func TestEmailGatewayCookieAndBearer(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	cookie := gatewayAdminCookie(t, key, true)
-	readerCookie := gatewayAdminCookie(t, key, false)
+	if err := flipt.SetIdentityV2(key, true); err != nil {
+		t.Fatal(err)
+	}
+	var cookie string
 	backend := httptest.NewUnstartedServer(nil)
 	defer backend.Close()
 
-	proxyURL, jwksURL := startEmailGateway(t, "http://"+backend.Listener.Addr().String(), cookie)
+	proxyURL, jwksURL := startEmailGateway(t, "http://"+backend.Listener.Addr().String(), &cookie)
 	deployment, _ := tenant.ParseDeployment(key.String())
 
 	handler, _, _, err := newTestRouterWithLeaderboardService(t.Context(), api.db.AppPool, api.db.AppPool,
-		api.keto, api.kratos, slog.New(slog.NewTextHandler(io.Discard, nil)), false, nil, deployment,
+		api.keto, slog.New(slog.NewTextHandler(io.Discard, nil)), false, nil, deployment,
 		func(e *routerEndpoints) { e.jwks = jwksURL })
 	if err != nil {
 		t.Fatal(err)
@@ -98,6 +98,8 @@ func TestEmailGatewayCookieAndBearer(t *testing.T) {
 	host := hosts[0]
 	branch := "gateway-0123abcd"
 	client := &http.Client{Timeout: 3 * time.Second}
+	cookie = gatewayAdminCookie(t, key, proxyURL, host, forwardedProto, true)
+	readerCookie := gatewayAdminCookie(t, key, proxyURL, host, forwardedProto, false)
 
 	check := func(name, path, authorization, cookie string, want int) {
 		t.Helper()
@@ -145,7 +147,7 @@ func TestEmailGatewayCookieAndBearer(t *testing.T) {
 		check("bearer list", "/emails", "Bearer "+raw, "", 200)
 		check("bearer unrelated cookie", "/emails", "Bearer "+raw, "analytics=unrelated", 200)
 		check("bearer expired Kratos", "/emails", "Bearer "+raw, "ory_kratos_session=expired", 200)
-		check("bearer real Kratos cookie", "/emails", "Bearer "+raw, cookie, 200)
+		check("bearer native session cookie", "/emails", "Bearer "+raw, cookie, 200)
 		check("bearer mixed cookies", "/emails", "Bearer "+raw, "analytics=unrelated; tadoku_session=invalid; "+
 			"tadoku_session_tadoku_gateway-0123abcd=invalid; "+cookie, 200)
 		check("invalid token admin cookie", "/emails", "Bearer tdk_at_invalid", cookie, 401)
@@ -158,63 +160,51 @@ func TestEmailGatewayCookieAndBearer(t *testing.T) {
 		check("reader cookie denied", "/emails", "", readerCookie, 403)
 		check("forged bearer admin cookie replaced", "/emails", "Bearer invalid", cookie, 200)
 		check("cookie admin", "/emails", "", cookie, 200)
+		check("forged session", "/emails", "", "tadoku_session_tadoku_gateway-0123abcd=invalid", 401)
 		check("anonymous", "/emails", "", "", 401)
 		check("forged jwt", "/emails", "Bearer invalid", "", 401)
 		check("token outside email", "/authz/current-user/role", "Bearer "+raw, "", 401)
 		check("cookie detail", "/emails/"+id.String(), "", cookie, 200)
 	}
-	providerClient := api.kratos.PublicClient()
-	request, _ := http.NewRequestWithContext(t.Context(), "GET", "http://kratos-public.test/self-service/logout/browser", nil)
-	request.Header.Set("Cookie", cookie)
-	logout, err := providerClient.Do(request)
+	_, err = api.db.Pool.Exec(t.Context(), `update sessions
+		set expires_at = now() - interval '1 hour'
+		where tenant = $1`, key.String())
 	if err != nil {
 		t.Fatal(err)
 	}
-	var logoutView struct {
-		LogoutURL string `json:"logout_url"`
-	}
-	err = json.NewDecoder(logout.Body).Decode(&logoutView)
-	logout.Body.Close()
-	if err != nil || logoutView.LogoutURL == "" {
-		t.Fatalf("real public logout init: %v", err)
-	}
-	request, _ = http.NewRequestWithContext(t.Context(), "GET", logoutView.LogoutURL, nil)
-	request.Header.Set("Cookie", cookie)
-	logout, err = providerClient.Do(request)
+	check("expired session", "/emails", "", cookie, 401)
+	check("bearer expired native session", "/emails", "Bearer "+raw, cookie, 200)
+	_, err = api.db.Pool.Exec(t.Context(), `update sessions
+		set expires_at = now() + interval '1 hour'
+		where tenant = $1`, key.String())
 	if err != nil {
 		t.Fatal(err)
 	}
-	logout.Body.Close()
-	request, _ = http.NewRequestWithContext(t.Context(), "GET", "http://kratos-public.test/sessions/whoami", nil)
-	request.Header.Set("Cookie", cookie)
-	who, err := providerClient.Do(request)
+
+	logout, err := http.NewRequestWithContext(t.Context(), "POST", proxyURL+"/api/internal/identity/logout", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	who.Body.Close()
-	if who.StatusCode != 401 {
-		t.Fatalf("disposable old session status=%d", who.StatusCode)
-	}
-	check("real revoked Kratos cookie guest", "/emails", "", cookie, 401)
-	check("bearer real revoked Kratos cookie", "/emails", "Bearer "+raw, cookie, 200)
-	if err := api.kratos.ExpireOwnedSessions(t.Context()); err != nil {
-		t.Fatal(err)
-	}
-	request, _ = http.NewRequestWithContext(t.Context(), "GET", "http://kratos-public.test/sessions/whoami", nil)
-	request.Header.Set("Cookie", readerCookie)
-	who, err = providerClient.Do(request)
+	logout.Host = host
+	logout.Header.Set("X-Forwarded-Proto", forwardedProto)
+	logout.Header.Set("X-Dev-Branch", "gateway-0123abcd")
+	logout.Header.Set("Origin", "https://tadoku.dev.lab")
+	logout.Header.Set("Content-Type", "application/json")
+	logout.Header.Set("Cookie", cookie)
+	loggedOut, err := client.Do(logout)
 	if err != nil {
 		t.Fatal(err)
 	}
-	who.Body.Close()
-	if who.StatusCode != 401 {
-		t.Fatalf("disposable expired session status=%d", who.StatusCode)
+	loggedOut.Body.Close()
+	if loggedOut.StatusCode != http.StatusNoContent {
+		t.Fatalf("logout status=%d", loggedOut.StatusCode)
 	}
-	check("real expired Kratos cookie guest", "/emails", "", readerCookie, 401)
-	check("bearer real expired Kratos cookie", "/emails", "Bearer "+raw, readerCookie, 200)
+
+	check("revoked session", "/emails", "", cookie, 401)
+	check("bearer revoked native session", "/emails", "Bearer "+raw, cookie, 200)
 	other, _ := tenant.ParseDeployment("tadoku/other-0123abcd")
 	otherHandler, _, _, err := newTestRouterWithLeaderboardService(t.Context(), api.db.AppPool, api.db.AppPool,
-		api.keto, api.kratos, slog.New(slog.NewTextHandler(io.Discard, nil)), false, nil, other,
+		api.keto, slog.New(slog.NewTextHandler(io.Discard, nil)), false, nil, other,
 		func(e *routerEndpoints) { e.jwks = jwksURL })
 	if err != nil {
 		t.Fatal(err)
@@ -238,127 +228,77 @@ func TestEmailGatewayCookieAndBearer(t *testing.T) {
 	}
 }
 
-func gatewayAdminCookie(t *testing.T, key tenant.Key, admin bool) string {
+func gatewayAdminCookie(t *testing.T, key tenant.Key, proxyURL, host, forwardedProto string, admin bool) string {
 	t.Helper()
-
-	password := rand.Text() + "!a1"
-	email := uuid.NewString() + "@example.test"
-	credentials := &kratosapi.IdentityWithCredentials{}
-	rawCredentials, err := json.Marshal(map[string]any{
-		"password": map[string]any{"config": map[string]string{"password": password}},
-	})
+	userID := uuid.New()
+	email := userID.String() + "@example.test"
+	hash, err := bcrypt.GenerateFromPassword([]byte(identityFixturePassword), bcrypt.MinCost)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := json.Unmarshal(rawCredentials, credentials); err != nil {
+	_, err = api.db.Pool.Exec(t.Context(), `with fixture_user as (
+		insert into users (tenant, id, display_name)
+		values ($1, $2, 'Gateway Admin')
+		returning tenant, id
+	)
+	insert into accounts (tenant, user_id, email, email_normalized, password_hash)
+	select tenant, id, $4, $4, $3
+	from fixture_user`, key.String(), userID, string(hash), email)
+	if err != nil {
 		t.Fatal(err)
 	}
 
-	identityAPI := api.kratos.Client().IdentityApi
-	actor, _, err := identityAPI.CreateIdentity(t.Context()).CreateIdentityBody(kratosapi.CreateIdentityBody{
-		SchemaId:    "user",
-		Traits:      map[string]interface{}{"email": email, "display_name": "Gateway Account"},
-		Credentials: credentials,
-	}).Execute()
+	body := fmt.Sprintf(`{"email":%q,"password":%q}`, email, identityFixturePassword)
+	request, err := http.NewRequestWithContext(
+		t.Context(), "POST", proxyURL+"/api/internal/identity/login", strings.NewReader(body),
+	)
 	if err != nil {
 		t.Fatal(err)
+	}
+	request.Host = host
+	request.Header.Set("X-Forwarded-Proto", forwardedProto)
+	request.Header.Set("X-Dev-Branch", strings.TrimPrefix(key.String(), "tadoku/"))
+	request.Header.Set("Origin", "https://tadoku.dev.lab")
+	request.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{Timeout: 3 * time.Second}
+	started := time.Now()
+	response, err := client.Do(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer response.Body.Close()
+	t.Logf("gateway login completed in %s (client limit %s)", time.Since(started), client.Timeout)
+
+	var view identitySessionView
+	if err := json.NewDecoder(response.Body).Decode(&view); err != nil {
+		t.Fatal(err)
+	}
+	if response.StatusCode != http.StatusOK || view.AccountApp != "v2" || view.Account == nil ||
+		view.Account.ID != userID.String() || view.Account.DisplayName != "Gateway Admin" ||
+		view.Account.Email != email {
+		t.Fatalf(
+			"gateway login: status=%d app=%s account=%+v",
+			response.StatusCode, view.AccountApp, view.Account,
+		)
 	}
 
 	roles := ketoclient.NewClient(api.keto.ReadURL(), api.keto.WriteURL())
 	if admin {
-		err = roles.AddRelation(t.Context(), "app", key.String(), "admins", ketoclient.Subject{ID: actor.Id})
+		err = roles.AddRelation(t.Context(), "app", key.String(), "admins", ketoclient.Subject{ID: view.Account.ID})
 		if err != nil {
 			t.Fatal(err)
 		}
 	}
 
-	jar, err := cookiejar.New(nil)
-	if err != nil {
-		t.Fatal(err)
+	cookies := response.Cookies()
+	if len(cookies) != 1 || cookies[0].Name != "tadoku_session_tadoku_gateway-0123abcd" {
+		t.Fatal("gateway login did not issue the tenant's v2 cookie")
 	}
-
-	client := api.kratos.PublicClient()
-	client.Jar = jar
-	client.CheckRedirect = func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }
-
-	req, err := http.NewRequestWithContext(
-		t.Context(), "GET", "http://kratos-public.test/self-service/login/browser", nil,
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	req.Header.Set("Accept", "application/json")
-	response, err := client.Do(req)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	var flow struct {
-		ID string `json:"id"`
-		UI struct {
-			Nodes []struct {
-				Attributes struct {
-					Name  string
-					Value any
-				}
-			}
-		}
-	}
-
-	err = json.NewDecoder(response.Body).Decode(&flow)
-	response.Body.Close()
-	if err != nil || response.StatusCode != 200 || flow.ID == "" {
-		t.Fatalf("initialize real Kratos browser login: status=%d error=%v", response.StatusCode, err)
-	}
-
-	var csrf any
-	for _, node := range flow.UI.Nodes {
-		if node.Attributes.Name == "csrf_token" {
-			csrf = node.Attributes.Value
-		}
-	}
-
-	body, err := json.Marshal(map[string]any{
-		"method":     "password",
-		"identifier": email,
-		"password":   password,
-		"csrf_token": csrf,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	req, err = http.NewRequestWithContext(
-		t.Context(), "POST", "http://kratos-public.test/self-service/login?flow="+flow.ID, bytes.NewReader(body),
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	req.Header.Set("Accept", "application/json")
-	req.Header.Set("Content-Type", "application/json")
-	response, err = client.Do(req)
-	if err != nil {
-		t.Fatal(err)
-	}
-	response.Body.Close()
-	if response.StatusCode != 200 {
-		t.Fatalf("real Kratos browser login status=%d", response.StatusCode)
-	}
-
-	u, _ := url.Parse("http://kratos-public.test")
-	for _, cookie := range jar.Cookies(u) {
-		if cookie.Name == "ory_kratos_session" {
-			return cookie.String()
-		}
-	}
-
-	t.Fatal("real Kratos browser login returned no session cookie")
-	return ""
+	return cookies[0].Name + "=" + cookies[0].Value
 }
 
-func startEmailGateway(t *testing.T, backend, cookie string) (string, string) {
+func startEmailGateway(t *testing.T, backend string, cookie *string) (string, string) {
 	t.Helper()
 
 	dir := t.TempDir()
@@ -483,9 +423,11 @@ func startEmailGateway(t *testing.T, backend, cookie string) (string, string) {
 		t.Context(), resolve(binary), "serve", "--sqa-opt-out", "--config", configPath,
 	)
 
-	command.Env = append(os.Environ(),
-		`AUTHENTICATORS_COOKIE_SESSION_CONFIG_ADDITIONAL_HEADERS={"Authorization":"Bearer `+callbackToken+`"}`,
-	)
+	command.Env = []string{
+		"PATH=" + os.Getenv("PATH"),
+		"GOMAXPROCS=2",
+		`AUTHENTICATORS_COOKIE_SESSION_CONFIG_ADDITIONAL_HEADERS={"Authorization":"Bearer ` + callbackToken + `"}`,
+	}
 
 	logs := new(bytes.Buffer)
 	command.Stdout = logs
@@ -507,7 +449,8 @@ func startEmailGateway(t *testing.T, backend, cookie string) (string, string) {
 			<-done
 		}
 
-		if strings.Contains(logs.String(), "tdk_at_") || strings.Contains(logs.String(), cookie) ||
+		if strings.Contains(logs.String(), "tdk_at_") ||
+			(*cookie != "" && strings.Contains(logs.String(), *cookie)) ||
 			strings.Contains(logs.String(), callbackToken) {
 			t.Error("Oathkeeper logs exposed token or session cookie material")
 		}

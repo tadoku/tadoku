@@ -55,7 +55,7 @@ func TestAccessTokenEmailRoutes(t *testing.T) {
 
 	deployment, _ := tenant.ParseDeployment(key.String())
 	handler, _, _, err := newTestRouterWithLeaderboardService(
-		t.Context(), api.db.AppPool, api.db.AppPool, api.keto, api.kratos,
+		t.Context(), api.db.AppPool, api.db.AppPool, api.keto,
 		slog.New(slog.NewTextHandler(io.Discard, nil)), false, nil, deployment,
 	)
 	if err != nil {
@@ -94,7 +94,7 @@ func TestAccessTokenEmailRoutes(t *testing.T) {
 	t.Run("other deployment", func(t *testing.T) {
 		dep, _ := tenant.ParseDeployment(other.String())
 		h, _, _, err := newTestRouterWithLeaderboardService(
-			t.Context(), api.db.AppPool, api.db.AppPool, api.keto, api.kratos,
+			t.Context(), api.db.AppPool, api.db.AppPool, api.keto,
 			slog.New(slog.NewTextHandler(io.Discard, nil)), false, nil, dep,
 		)
 		if err != nil {
@@ -172,7 +172,7 @@ func TestAccessTokenCanonicalDeploymentAndAudit(t *testing.T) {
 		endpoints.production = &value
 	}
 	handler, _, _, err := newTestRouterWithLogger(t.Context(), api.db.AppPool, api.db.AppPool,
-		api.keto, api.kratos, slog.New(slog.NewTextHandler(io.Discard, nil)), development)
+		api.keto, slog.New(slog.NewTextHandler(io.Discard, nil)), development)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -189,7 +189,7 @@ func TestAccessTokenCanonicalDeploymentAndAudit(t *testing.T) {
 
 	closed := openClosedPool(t, api.db.AppPool.Config().ConnString())
 	failed, _, _, err := newTestRouterWithLogger(t.Context(), api.db.AppPool, closed,
-		api.keto, api.kratos, slog.New(slog.NewTextHandler(io.Discard, nil)), development)
+		api.keto, slog.New(slog.NewTextHandler(io.Discard, nil)), development)
 	if err != nil {
 		t.Fatal(err)
 	}

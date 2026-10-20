@@ -6,10 +6,15 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
-func TestIdentityRouteAuthentication(t *testing.T) {
+func TestIdentityV1RouteAuthentication(t *testing.T) {
 	api.reset(t, "")
+	if err := flipt.SetIdentityV2(tenant.Production(), false); err != nil {
+		t.Fatal(err)
+	}
 	guest := readHTTPRequest(t, filepath.Join("testdata", APITestName("Authentication", http.StatusOK, "guest")))
 	routes := []struct{ method, path, body string }{
 		{

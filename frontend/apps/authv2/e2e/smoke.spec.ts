@@ -22,13 +22,13 @@ test.afterAll(async () => {
   if (fixtureEnabled) await new Promise<void>((resolve, reject) => fixture.close(error => error ? reject(error) : resolve()))
 })
 
-test('account skeleton, session routing and unavailable API', async ({ page, request }, testInfo) => {
+test('account screen, session routing and unavailable API', async ({ page, request }, testInfo) => {
   await page.goto('/login')
-  await expect(page.getByRole('heading', { name: 'Your Tadoku account' })).toBeVisible()
-  await expect(page.getByText('Account pages are being prepared.')).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Log in', exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Log in', exact: true })).toBeEnabled()
   await page.setViewportSize({ width: 390, height: 844 })
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
-  await page.screenshot({ path: testInfo.outputPath('skeleton-mobile.png'), fullPage: true })
+  await page.screenshot({ path: testInfo.outputPath('login-mobile.png'), fullPage: true })
   expect((await request.get('/healthz')).status()).toBe(200)
 
   if (!fixtureEnabled) return

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -113,11 +114,18 @@ func TestNewUsesFallbackWhenFliptIsEmptyOrUnavailable(t *testing.T) {
 
 	require.NoError(t, err)
 	t.Cleanup(func() { require.NoError(t, client.Close(context.Background())) })
-	statuses, _, providerErrors := observer.snapshot()
-	assert.Equal(t, []featureflags.InitializationStatus{featureflags.InitializationStatusFallback}, statuses)
-	assert.Contains(t, providerErrors, "fetch")
+	require.Eventually(t, func() bool {
+		_, _, providerErrors := observer.snapshot()
+		return slices.Contains(providerErrors, "fetch")
+	}, 10*time.Second, 10*time.Millisecond)
+	statuses, _, _ := observer.snapshot()
+	require.NotEmpty(t, statuses)
+	for _, status := range statuses {
+		assert.Equal(t, featureflags.InitializationStatusFallback, status)
+	}
 	_, err = client.EvaluateBoolean(context.Background(), featureflags.EvaluationRequest{FlagKey: "release-log-entry-v2", EntityID: "4c47b265-6987-4bc1-8933-006168a31793"})
-	assert.ErrorIs(t, err, featureflags.ErrFlagNotFound)
+	require.Error(t, err)
+	assert.NotErrorIs(t, err, featureflags.ErrFlagNotFound)
 }
 
 func TestNewDoesNotMarkMalformedSnapshotAsFresh(t *testing.T) {
@@ -303,8 +311,9 @@ func TestNewReturnsAtStartupBudgetAndInstallsClientAfterRecovery(t *testing.T) {
 		UpdateInterval: time.Minute,
 		RequestTimeout: time.Second,
 		StartupTimeout: 10 * time.Millisecond,
-	}, observer, func(context.Context, ...fliptsdk.Option) (sdkClient, error) {
+	}, observer, func(ctx context.Context, _ ...fliptsdk.Option) (sdkClient, error) {
 		<-release
+		ctx.Value(initialFetchKey{}).(*initialFetch).succeeded.Store(true)
 		return sdk, nil
 	})
 

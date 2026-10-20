@@ -15,32 +15,41 @@ func TestTenantEvaluation(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, key := range []tenant.Key{tenant.Production(), branch} {
-		if evaluator.TenantBoolean(tenant.WithKey(t.Context(), key), IdentityV2) {
-			t.Fatalf("unset flag enabled for %s", key)
+		enabled, err := evaluator.TenantBoolean(tenant.WithKey(t.Context(), key), IdentityV2)
+		if err == nil || errors.Is(err, ErrFlagNotFound) || enabled {
+			t.Fatalf("missing provider for %s decided enabled=%t err=%v", key, enabled, err)
 		}
 	}
 
 	provider := &tenantDecisionProvider{enabled: map[tenant.Key]bool{branch: true}}
 	evaluator.provider = provider
 	for _, key := range []tenant.Key{branch, tenant.Production(), branch, tenant.Production()} {
-		if got := evaluator.TenantBoolean(tenant.WithKey(t.Context(), key), IdentityV2); got != provider.enabled[key] {
-			t.Errorf("tenant %s enabled=%t", key, got)
+		enabled, err := evaluator.TenantBoolean(tenant.WithKey(t.Context(), key), IdentityV2)
+		if err != nil || enabled != provider.enabled[key] {
+			t.Errorf("tenant %s enabled=%t err=%v", key, enabled, err)
 		}
 	}
-	if evaluator.TenantBoolean(t.Context(), IdentityV2) {
-		t.Fatal("missing tenant enabled")
+	if _, err := evaluator.TenantBoolean(t.Context(), IdentityV2); err == nil {
+		t.Fatal("missing tenant was decided")
 	}
 	if provider.calls != 4 {
 		t.Fatalf("provider calls=%d want 4", provider.calls)
 	}
 
-	provider.err = errors.New("outage")
-	if evaluator.TenantBoolean(tenant.WithKey(t.Context(), branch), IdentityV2) {
-		t.Fatal("outage did not use false")
-	}
-	provider.err = ErrFlagNotFound
-	if evaluator.TenantBoolean(tenant.WithKey(t.Context(), branch), IdentityV2) {
-		t.Fatal("missing flag did not use false")
+	for _, test := range []struct {
+		err      error
+		notFound bool
+	}{
+		{errors.New("outage"), false},
+		{ErrInvalidResponse, false},
+		{context.DeadlineExceeded, false},
+		{ErrFlagNotFound, true},
+	} {
+		provider.err = test.err
+		_, err := evaluator.TenantBoolean(tenant.WithKey(t.Context(), branch), IdentityV2)
+		if !errors.Is(err, test.err) || errors.Is(err, ErrFlagNotFound) != test.notFound {
+			t.Errorf("provider error %v returned %v", test.err, err)
+		}
 	}
 }
 

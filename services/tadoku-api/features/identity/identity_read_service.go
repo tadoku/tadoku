@@ -25,10 +25,8 @@ func NewReader(pool *pgxpool.Pool, legacy LegacyReader, evaluator *featureflags.
 }
 
 func (s *ReadService) local(ctx context.Context) (bool, error) {
-	if _, ok := tenant.FromContext(ctx); !ok {
-		return false, errx.NewUnavailableError("identity tenant missing", nil)
-	}
-	return s.evaluator.TenantBoolean(ctx, featureflags.IdentityV2), nil
+	app, err := accountApp(ctx, s.evaluator)
+	return app == V2, err
 }
 
 func (s *ReadService) FindAccount(ctx context.Context, userID uuid.UUID) (Account, error) {

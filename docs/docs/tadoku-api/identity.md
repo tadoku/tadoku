@@ -13,10 +13,11 @@ the operational holds on shared imports, read [Import Kratos accounts](./identit
 
 Registration, login, logout, session lookup, recovery, profile/password settings
 and the Oathkeeper session callback are implemented. A tenant's `identity-v2`
-flag selects local accounts or Kratos; its safe default is `false`, including
-for guests. Profile and moderation callers use `identity.Reader`, constructed
-by `identity.NewReader`. It selects tenant-local reads or the v1 adapter from
-the tenant flag; callers never select the provider.
+flag selects local accounts or Kratos, including for guests, as described in
+[Account-app selection](./identity-selection.md). Profile and moderation callers
+use `identity.Reader`, constructed by `identity.NewReader`. It selects
+tenant-local reads or the v1 adapter from the same decision; callers never
+select the provider.
 
 Account lookup and search are implemented by the separate `ReadService` used by
 profile and moderation; the `Accounts` service's embedded Reader methods and

@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	featureflags "github.com/tadoku/tadoku/services/tadoku-api/internal/featureflags"
@@ -25,6 +26,8 @@ type Config struct {
 	RequestTimeout time.Duration
 	StartupTimeout time.Duration
 	HTTPClient     *http.Client
+	// OpenSDK replaces fliptsdk.NewClient. Tests use it to delay the handoff of a real SDK client.
+	OpenSDK func(context.Context, ...fliptsdk.Option) (*fliptsdk.Client, error)
 }
 
 type Observer interface {
@@ -48,17 +51,18 @@ type Client struct {
 }
 
 func New(ctx context.Context, cfg Config, observer Observer) (*Client, error) {
+	open := cfg.OpenSDK
+	if open == nil {
+		open = fliptsdk.NewClient
+	}
 	return newClient(ctx, cfg, observer, func(ctx context.Context, options ...fliptsdk.Option) (sdkClient, error) {
-		return fliptsdk.NewClient(ctx, options...)
+		return open(ctx, options...)
 	})
 }
 
 type sdkFactory func(context.Context, ...fliptsdk.Option) (sdkClient, error)
 
-type initializationResult struct {
-	client sdkClient
-	err    error
-}
+var errSnapshotUnavailable = errors.New("Flipt namespace snapshot is unavailable")
 
 func newClient(ctx context.Context, cfg Config, observer Observer, factory sdkFactory) (*Client, error) {
 	if err := cfg.validate(); err != nil {
@@ -70,10 +74,9 @@ func newClient(ctx context.Context, cfg Config, observer Observer, factory sdkFa
 	httpClient := withObservability(cfg.HTTPClient, fetchState)
 	lifetimeCtx, cancel := context.WithCancel(ctx)
 	client := &Client{fetchState: fetchState, cancel: cancel}
-	results := make(chan initializationResult, 1)
-	go func() {
-		sdk, err := factory(
-			lifetimeCtx,
+	open := func(ctx context.Context) (sdkClient, error) {
+		return factory(
+			ctx,
 			fliptsdk.WithURL(cfg.URL),
 			fliptsdk.WithEnvironment(cfg.Environment),
 			fliptsdk.WithNamespace(cfg.Namespace),
@@ -83,37 +86,20 @@ func newClient(ctx context.Context, cfg Config, observer Observer, factory sdkFa
 			fliptsdk.WithErrorStrategy(fliptSdkErrorStrategy),
 			fliptsdk.WithHTTPClient(httpClient),
 		)
-		results <- initializationResult{client: sdk, err: err}
-	}()
+	}
+	first := make(chan error, 1)
+	go client.connect(lifetimeCtx, cfg.UpdateInterval, open, observer, first)
 
 	timer := time.NewTimer(cfg.StartupTimeout)
 	defer timer.Stop()
 	select {
-	case result := <-results:
-		if result.err != nil {
-			cancel()
-			observeInitialization(observer, featureflags.InitializationStatusError)
-			if observer != nil {
-				observer.ObserveProviderError("initialization")
-			}
-			return nil, fmt.Errorf("initialize Flipt client: %w", result.err)
+	case err := <-first:
+		if err != nil && !errors.Is(err, errSnapshotUnavailable) {
+			return nil, fmt.Errorf("initialize Flipt client: %w", err)
 		}
-		client.install(result.client, observer)
 		return client, nil
 	case <-timer.C:
 		observeInitialization(observer, featureflags.InitializationStatusFallback)
-		go func() {
-			result := <-results
-			if result.err != nil {
-				cancel()
-				observeInitialization(observer, featureflags.InitializationStatusError)
-				if observer != nil {
-					observer.ObserveProviderError("initialization")
-				}
-				return
-			}
-			client.install(result.client, observer)
-		}()
 		return client, nil
 	case <-ctx.Done():
 		cancel()
@@ -121,15 +107,75 @@ func newClient(ctx context.Context, cfg Config, observer Observer, factory sdkFa
 	}
 }
 
-func (c *Client) install(client sdkClient, observer Observer) {
-	if c.fetchState != nil && client.Err() == nil {
-		c.fetchState.confirmPendingSnapshot()
-	}
-	status := featureflags.InitializationStatusReady
-	if c.isStale(client) {
-		status = featureflags.InitializationStatusFallback
-	}
+// connect installs the first SDK client whose engine was initialized from its own fetched snapshot, so an installed
+// engine always evaluates a fetched snapshot. An SDK whose initial fetch failed evaluates an empty fallback engine;
+// connect closes it and retries every interval. Only the first attempt's outcome is sent on first.
+func (c *Client) connect(
+	ctx context.Context,
+	interval time.Duration,
+	open func(context.Context) (sdkClient, error),
+	observer Observer,
+	first chan<- error,
+) {
+	for attempt := 0; ; attempt++ {
+		fetch := &initialFetch{}
+		sdk, err := open(context.WithValue(ctx, initialFetchKey{}, fetch))
+		if ctx.Err() != nil {
+			if err == nil {
+				_ = sdk.Close(context.Background())
+			}
+			return
+		}
 
+		switch {
+		case err != nil && attempt == 0:
+			c.cancel()
+			observeInitialization(observer, featureflags.InitializationStatusError)
+			if observer != nil {
+				observer.ObserveProviderError("initialization")
+			}
+			first <- err
+			return
+		case err != nil:
+			if observer != nil {
+				observer.ObserveProviderError("initialization")
+			}
+		case fetch.succeeded.Load():
+			c.fetchState.confirmPendingSnapshot()
+			c.install(sdk, observer)
+			if attempt == 0 {
+				first <- nil
+			}
+			return
+		default:
+			_ = sdk.Close(context.Background())
+		}
+		if attempt == 0 {
+			observeInitialization(observer, featureflags.InitializationStatusFallback)
+			first <- errSnapshotUnavailable
+		}
+
+		timer := time.NewTimer(interval)
+		select {
+		case <-ctx.Done():
+			timer.Stop()
+			return
+		case <-timer.C:
+		}
+	}
+}
+
+// initialFetch records whether one SDK client's initial fetch returned a valid snapshot. The SDK sends only that fetch
+// with the context passed to its constructor; it polls with a context of its own, so later fetches never set it. A
+// constructor that returns without error has initialized its engine from the snapshot it fetched. A later fetch whose
+// snapshot fails validation returns an error, so the SDK keeps evaluating its current snapshot.
+type initialFetch struct {
+	succeeded atomic.Bool
+}
+
+type initialFetchKey struct{}
+
+func (c *Client) install(client sdkClient, observer Observer) {
 	c.mu.Lock()
 	if c.closed {
 		c.mu.Unlock()
@@ -138,7 +184,7 @@ func (c *Client) install(client sdkClient, observer Observer) {
 	}
 	c.client = client
 	c.mu.Unlock()
-	observeInitialization(observer, status)
+	observeInitialization(observer, featureflags.InitializationStatusReady)
 }
 
 const (
@@ -299,10 +345,17 @@ func (t *observedTransport) RoundTrip(request *http.Request) (*http.Response, er
 			return nil, fmt.Errorf("read Flipt snapshot response: %w", readErr)
 		}
 		if t.state != nil {
+			fetch, initial := request.Context().Value(initialFetchKey{}).(*initialFetch)
 			if err := t.state.acceptSnapshot(body); err != nil {
 				t.state.failed()
+				if !initial {
+					return nil, fmt.Errorf("reject Flipt snapshot update: %w", err)
+				}
 			} else {
 				t.state.snapshotReceived(response.Header.Get("ETag"))
+				if initial {
+					fetch.succeeded.Store(true)
+				}
 			}
 		}
 	case http.StatusNotModified:
@@ -334,30 +387,30 @@ func newProviderFetchState(namespace string, observer Observer) *providerFetchSt
 	return &providerFetchState{namespace: namespace, observer: observer, stale: true}
 }
 
+// acceptSnapshot matches keys exactly, as the SDK's engine does. Decoding into a struct would also match keys in another
+// case, so the engine could apply a namespace that validation never checked.
 func (s *providerFetchState) acceptSnapshot(payload []byte) error {
-	var snapshot struct {
-		Namespace *struct {
-			Key string `json:"key"`
-		} `json:"namespace"`
-		Flags []struct {
-			Key string `json:"key"`
-		} `json:"flags"`
-		Digest string `json:"digest"`
-	}
+	var snapshot, namespace map[string]json.RawMessage
 	if err := json.Unmarshal(payload, &snapshot); err != nil {
 		return fmt.Errorf("decode Flipt snapshot: %w", err)
 	}
-	if snapshot.Namespace == nil || snapshot.Namespace.Key != s.namespace {
+
+	var namespaceKey, digest string
+	if json.Unmarshal(snapshot["namespace"], &namespace) != nil ||
+		json.Unmarshal(namespace["key"], &namespaceKey) != nil ||
+		namespaceKey != s.namespace {
 		return errors.New("Flipt snapshot namespace does not match configuration")
 	}
-	if snapshot.Flags == nil {
+	var flags []map[string]json.RawMessage
+	if json.Unmarshal(snapshot["flags"], &flags) != nil || flags == nil {
 		return errors.New("Flipt snapshot flags are missing")
 	}
-	if snapshot.Digest == "" {
+	if json.Unmarshal(snapshot["digest"], &digest) != nil || digest == "" {
 		return errors.New("Flipt snapshot digest is missing")
 	}
-	for _, flag := range snapshot.Flags {
-		if flag.Key == "" {
+	for _, flag := range flags {
+		var key string
+		if json.Unmarshal(flag["key"], &key) != nil || key == "" {
 			return errors.New("Flipt snapshot contains a flag without a key")
 		}
 	}

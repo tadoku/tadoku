@@ -8,8 +8,11 @@ sidebar_position: 4
 
 Read this when you gate behavior behind a flag, change who sees a flagged feature or add a new flag.
 
-This page describes the development environment. Flags are boolean; without a
-decision, every consumer uses the flag's behavior-preserving safe default.
+This page describes the development environment. Flags are boolean. Without a
+decision, `Evaluator.Boolean` consumers use the flag's behavior-preserving safe
+default. Identity selection through `Evaluator.TenantBoolean` is unavailable
+instead; only the canonical tenant's missing `identity-v2` flag uses the safe
+default, as described below.
 
 ## Where flags are declared
 
@@ -46,9 +49,17 @@ rejects the key, breaking evaluation snapshots for the environment.
 The provider wraps the Flipt client SDK in polling mode: it fetches the resolved
 namespace evaluation snapshot every
 `API_FLIPT_UPDATE_INTERVAL` and evaluates in process. A failed fetch keeps the
-last snapshot and marks results stale. Startup waits at most
-`API_FLIPT_STARTUP_TIMEOUT` before serving safe defaults. The canonical client is
-created at startup. Test clients are created on first evaluation, retained in a
+last snapshot and marks results stale. So does a fetched snapshot that fails
+validation: the client hands the SDK only snapshots whose exact `namespace.key`
+matches the resolved namespace, whose `flags` entries all have keys and that
+carry a `digest`. Startup waits at most
+`API_FLIPT_STARTUP_TIMEOUT`. A client only evaluates a snapshot it fetched: it
+installs an SDK only when that SDK's own initial fetch returned a valid snapshot
+and its engine accepted it. When the initial fetch fails, the client discards the
+SDK and its empty fallback state, even if later background fetches clear the
+SDK's last error, and starts a fresh SDK every `API_FLIPT_UPDATE_INTERVAL`. Until then
+`Boolean` serves safe defaults and `TenantBoolean` reports a provider error. The
+canonical client is created at startup. Test clients are created on first evaluation, retained in a
 16-client LRU cache and closed on eviction or shutdown. A missing tenant never
 falls back to canonical flags. Test clients have no provider-lifecycle observer,
 so `tadoku_feature_flag_config_age_seconds` continues to describe canonical
@@ -61,13 +72,23 @@ Their routes in `k8s/dev/base/oathkeeper/rules.yaml` allow only the snapshot
 read and managed segment calls. Metrics are named `tadoku_feature_flag_*`.
 
 `Evaluator.TenantBoolean` uses the parsed context tenant key as the Flipt entity,
-including guest traffic. It uses the same provider target mapping and safe-default
+including guest traffic. It uses the same provider target mapping and
 observations as user evaluation, without caching a decision across tenants.
-`IdentityV2` (`identity-v2`) defaults to `false` for every unset tenant; the
-feature service exposes it as `IdentityV2(ctx)`. It is declared in webv2 but is
-not added to the public decisions response. The browser schema supplies `false`
-when that internal decision is absent. Account-app selection belongs to the
-identity session contract rather than the public user-flag endpoint.
+Unlike `Boolean`, it returns an error instead of a safe default when it cannot
+decide. The error wraps `ErrFlagNotFound` only when the fetched namespace
+snapshot the client evaluated lacks the flag, and otherwise carries the
+provider, invalid-response or context error. When Flipt is disabled, or a
+client has no fetched snapshot yet because Flipt was unreachable or the
+namespace does not exist, it reports a provider error rather than a missing
+flag; `Boolean` still serves the safe default.
+
+`IdentityV2` (`identity-v2`) has the safe default `false`. Only the identity
+feature evaluates it; see
+[Account-app selection](../tadoku-api/identity-selection.md). It is
+declared in webv2 but is not added to the public decisions response. The browser
+schema supplies `false` when that internal decision is absent. Account-app
+selection belongs to the identity session contract rather than the public
+user-flag endpoint.
 
 ## Decisions in the browser
 
@@ -150,9 +171,9 @@ not permit namespace creation or deletion.
    missing namespace returns `500`.
 3. Verify
    `GET /internal/v1/evaluation/snapshot/namespace/e2e_run-1` with header
-   `x-flipt-environment: test`. An unprovisioned namespace returns `404` and
-   evaluation uses safe defaults. Test namespaces never share canonical members
-   or revisions.
+   `x-flipt-environment: test`. An unprovisioned namespace returns `404`; user
+   flags then use safe defaults and identity requests for the tenant are
+   unavailable. Test namespaces never share canonical members or revisions.
 4. Delete only the owned namespace with
    `DELETE /api/v2/environments/test/namespaces/e2e_run-1` during teardown.
    Provision it again after a Flipt restart.

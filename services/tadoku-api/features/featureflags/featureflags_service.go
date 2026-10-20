@@ -70,7 +70,3 @@ func fromClient(state fliptmanagement.State) State {
 		Revision:    state.Revision,
 	}
 }
-
-func (s *Service) IdentityV2(ctx context.Context) bool {
-	return s.evaluator.TenantBoolean(ctx, commonflags.IdentityV2)
-}

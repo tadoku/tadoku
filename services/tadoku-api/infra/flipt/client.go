@@ -55,10 +55,7 @@ func New(ctx context.Context, cfg Config, observer Observer) (*Client, error) {
 
 type sdkFactory func(context.Context, ...fliptsdk.Option) (sdkClient, error)
 
-type initializationResult struct {
-	client sdkClient
-	err    error
-}
+var errSnapshotUnavailable = errors.New("Flipt namespace snapshot is unavailable")
 
 func newClient(ctx context.Context, cfg Config, observer Observer, factory sdkFactory) (*Client, error) {
 	if err := cfg.validate(); err != nil {
@@ -70,9 +67,8 @@ func newClient(ctx context.Context, cfg Config, observer Observer, factory sdkFa
 	httpClient := withObservability(cfg.HTTPClient, fetchState)
 	lifetimeCtx, cancel := context.WithCancel(ctx)
 	client := &Client{fetchState: fetchState, cancel: cancel}
-	results := make(chan initializationResult, 1)
-	go func() {
-		sdk, err := factory(
+	open := func() (sdkClient, error) {
+		return factory(
 			lifetimeCtx,
 			fliptsdk.WithURL(cfg.URL),
 			fliptsdk.WithEnvironment(cfg.Environment),
@@ -83,37 +79,20 @@ func newClient(ctx context.Context, cfg Config, observer Observer, factory sdkFa
 			fliptsdk.WithErrorStrategy(fliptSdkErrorStrategy),
 			fliptsdk.WithHTTPClient(httpClient),
 		)
-		results <- initializationResult{client: sdk, err: err}
-	}()
+	}
+	first := make(chan error, 1)
+	go client.connect(lifetimeCtx, cfg.UpdateInterval, open, observer, first)
 
 	timer := time.NewTimer(cfg.StartupTimeout)
 	defer timer.Stop()
 	select {
-	case result := <-results:
-		if result.err != nil {
-			cancel()
-			observeInitialization(observer, featureflags.InitializationStatusError)
-			if observer != nil {
-				observer.ObserveProviderError("initialization")
-			}
-			return nil, fmt.Errorf("initialize Flipt client: %w", result.err)
+	case err := <-first:
+		if err != nil && !errors.Is(err, errSnapshotUnavailable) {
+			return nil, fmt.Errorf("initialize Flipt client: %w", err)
 		}
-		client.install(result.client, observer)
 		return client, nil
 	case <-timer.C:
 		observeInitialization(observer, featureflags.InitializationStatusFallback)
-		go func() {
-			result := <-results
-			if result.err != nil {
-				cancel()
-				observeInitialization(observer, featureflags.InitializationStatusError)
-				if observer != nil {
-					observer.ObserveProviderError("initialization")
-				}
-				return
-			}
-			client.install(result.client, observer)
-		}()
 		return client, nil
 	case <-ctx.Done():
 		cancel()
@@ -121,15 +100,64 @@ func newClient(ctx context.Context, cfg Config, observer Observer, factory sdkFa
 	}
 }
 
-func (c *Client) install(client sdkClient, observer Observer) {
-	if c.fetchState != nil && client.Err() == nil {
-		c.fetchState.confirmPendingSnapshot()
-	}
-	status := featureflags.InitializationStatusReady
-	if c.isStale(client) {
-		status = featureflags.InitializationStatusFallback
-	}
+// connect installs the first SDK client whose initial fetch succeeded, so an installed engine always evaluates a
+// delivered snapshot. An SDK whose initial fetch failed evaluates an empty fallback engine; connect closes it and
+// retries every interval. Only the first attempt's outcome is sent on first.
+func (c *Client) connect(
+	ctx context.Context,
+	interval time.Duration,
+	open func() (sdkClient, error),
+	observer Observer,
+	first chan<- error,
+) {
+	for attempt := 0; ; attempt++ {
+		sdk, err := open()
+		if ctx.Err() != nil {
+			if err == nil {
+				_ = sdk.Close(context.Background())
+			}
+			return
+		}
 
+		switch {
+		case err != nil && attempt == 0:
+			c.cancel()
+			observeInitialization(observer, featureflags.InitializationStatusError)
+			if observer != nil {
+				observer.ObserveProviderError("initialization")
+			}
+			first <- err
+			return
+		case err != nil:
+			if observer != nil {
+				observer.ObserveProviderError("initialization")
+			}
+		case sdk.Err() == nil:
+			c.fetchState.confirmPendingSnapshot()
+			c.install(sdk, observer)
+			if attempt == 0 {
+				first <- nil
+			}
+			return
+		default:
+			_ = sdk.Close(context.Background())
+		}
+		if attempt == 0 {
+			observeInitialization(observer, featureflags.InitializationStatusFallback)
+			first <- errSnapshotUnavailable
+		}
+
+		timer := time.NewTimer(interval)
+		select {
+		case <-ctx.Done():
+			timer.Stop()
+			return
+		case <-timer.C:
+		}
+	}
+}
+
+func (c *Client) install(client sdkClient, observer Observer) {
 	c.mu.Lock()
 	if c.closed {
 		c.mu.Unlock()
@@ -138,7 +166,7 @@ func (c *Client) install(client sdkClient, observer Observer) {
 	}
 	c.client = client
 	c.mu.Unlock()
-	observeInitialization(observer, status)
+	observeInitialization(observer, featureflags.InitializationStatusReady)
 }
 
 const (
@@ -166,9 +194,6 @@ func (c *Client) EvaluateBoolean(ctx context.Context, request featureflags.Evalu
 		Context:  cloneContext(request.Context),
 	})
 	if err != nil {
-		if isMissingFlag(err) && c.fetchState != nil && !c.fetchState.delivered() {
-			return featureflags.ProviderResult{}, errors.New("Flipt namespace snapshot has not been delivered")
-		}
 		if isMissingFlag(err) {
 			return featureflags.ProviderResult{}, featureflags.ErrFlagNotFound
 		}
@@ -431,12 +456,6 @@ func (s *providerFetchState) snapshotNotModified(etag string) {
 	if s.observer != nil {
 		s.observer.ObserveConfigRefresh()
 	}
-}
-
-func (s *providerFetchState) delivered() bool {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	return s.hasSnapshot || s.pending
 }
 
 func (s *providerFetchState) failed() {

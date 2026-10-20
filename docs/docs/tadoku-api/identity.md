@@ -34,11 +34,11 @@ Oathkeeper callback, recovery, settings and every `Reader` lookup.
 
 | Flag evaluation | Selection |
 | --- | --- |
-| `true` from the current or last delivered snapshot | v2 tenant-local accounts |
-| `false` from the current or last delivered snapshot | v1 Kratos |
-| Flag absent from the delivered canonical `tadoku/prod` snapshot | The flag's safe default, `false` (v1) |
-| Flag absent from a test tenant's delivered snapshot | Unavailable |
-| No delivered snapshot, provider error or invalid response | Unavailable |
+| `true` from the current or last fetched snapshot | v2 tenant-local accounts |
+| `false` from the current or last fetched snapshot | v1 Kratos |
+| Flag absent from the fetched canonical `tadoku/prod` snapshot the client evaluated | The flag's safe default, `false` (v1) |
+| Flag absent from a test tenant's fetched snapshot | Unavailable |
+| No fetched snapshot, Flipt disabled, provider error or invalid response | Unavailable |
 | Request canceled or past its deadline | The request's context error |
 
 Only the canonical tenant may use the safe default, because production Flipt
@@ -47,10 +47,12 @@ need not declare the flag before the switch. Tenant provisioning always creates
 tenant task. The tenant comes from the verified request context, never from a
 host or cookie name.
 
-A running client keeps evaluating its last delivered snapshot through Flipt
+A running client keeps evaluating its last fetched snapshot through Flipt
 outages and namespace deletion. A client without one, such as after an API
 restart, a startup timeout or a new or evicted test-tenant client, cannot
-decide until Flipt delivers the namespace.
+decide until it starts from a fetched snapshot. A snapshot that has been
+received but not yet applied, or that the evaluation engine rejected, does not
+count.
 
 An undecided selection never falls back to the other provider. It makes no
 Kratos call, revokes nothing and sets no cookie. Identity routes return `503`

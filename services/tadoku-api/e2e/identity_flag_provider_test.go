@@ -29,6 +29,7 @@ const (
 )
 
 // snapshotServer serves Flipt evaluation snapshots, so the real Flipt client and provider evaluate them.
+// Every snapshot response sets a cookie, so a client's cookie jar can hold a snapshot after its receipt.
 type snapshotServer struct {
 	mu         sync.Mutex
 	namespaces map[string]identityFlag
@@ -66,6 +67,7 @@ func (s *snapshotServer) serveHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	encoded, _ := json.Marshal(flags)
 	digest := sha256.Sum256(encoded)
+	http.SetCookie(w, &http.Cookie{Name: "flipt-snapshot", Value: namespace})
 	_ = json.NewEncoder(w).Encode(map[string]any{
 		"namespace": map[string]string{"key": namespace},
 		"flags":     flags,
@@ -112,7 +114,7 @@ func (s *snapshotServer) setOutage(outage bool) {
 	s.outage = outage
 }
 
-func newSnapshotProvider(t *testing.T, url string, startup time.Duration) *fliptclient.Provider {
+func newSnapshotProvider(t *testing.T, url string, startup time.Duration, client *http.Client) *fliptclient.Provider {
 	t.Helper()
 	targets, err := fliptclient.NewTargets("local", "default", "test")
 	if err != nil {
@@ -123,6 +125,7 @@ func newSnapshotProvider(t *testing.T, url string, startup time.Duration) *flipt
 		UpdateInterval: time.Second,
 		RequestTimeout: time.Second,
 		StartupTimeout: startup,
+		HTTPClient:     client,
 	}, targets, nil)
 	if err != nil {
 		t.Fatal(err)
@@ -160,7 +163,7 @@ func TestIdentityFliptProviderSelection(t *testing.T) {
 		identityNamespaceA: identityFlagTrue,
 		identityNamespaceB: identityFlagAbsent,
 	})
-	warm := legacy.router(t, withFlagProvider(newSnapshotProvider(t, flags.server.URL, 2*time.Second)))
+	warm := legacy.router(t, withFlagProvider(newSnapshotProvider(t, flags.server.URL, 2*time.Second, nil)))
 
 	view := identityView(t, identityRequest(t, warm, "tadoku/prod", "GET", "/identity/session", "", recordedKratosCookie, nil))
 	if view.AccountApp != "v1" || view.Account == nil || view.Account.ID != legacy.identity {
@@ -176,7 +179,7 @@ func TestIdentityFliptProviderSelection(t *testing.T) {
 		t.Errorf("warm stale decision lost the native session: app=%q signed-in=%t", app, signedIn)
 	}
 
-	cold := legacy.router(t, withFlagProvider(newSnapshotProvider(t, flags.server.URL, 2*time.Second)))
+	cold := legacy.router(t, withFlagProvider(newSnapshotProvider(t, flags.server.URL, 2*time.Second, nil)))
 	requireIdentityUnavailable(t, "cold missing namespace session",
 		identityRequest(t, cold, identityBranchA, "GET", "/identity/session", "", native+"; "+recordedKratosCookie, nil))
 	requireIdentityUnavailable(t, "cold missing namespace logout",
@@ -194,7 +197,7 @@ func TestIdentityFliptProviderSelection(t *testing.T) {
 	})
 
 	flags.setOutage(true)
-	outage := legacy.router(t, withFlagProvider(newSnapshotProvider(t, flags.server.URL, 2*time.Second)))
+	outage := legacy.router(t, withFlagProvider(newSnapshotProvider(t, flags.server.URL, 2*time.Second, nil)))
 	requireIdentityUnavailable(t, "cold outage canonical session",
 		identityRequest(t, outage, "tadoku/prod", "GET", "/identity/session", "", recordedKratosCookie, nil))
 	requireIdentityUnavailable(t, "cold outage branch session",
@@ -213,7 +216,7 @@ func TestIdentityFliptProviderSelection(t *testing.T) {
 	}))
 	t.Cleanup(silent.Close)
 	t.Cleanup(func() { close(release) })
-	uninitialized := legacy.router(t, withFlagProvider(newSnapshotProvider(t, silent.URL, 10*time.Millisecond)))
+	uninitialized := legacy.router(t, withFlagProvider(newSnapshotProvider(t, silent.URL, 10*time.Millisecond, nil)))
 	requireIdentityUnavailable(t, "uninitialized provider callback",
 		identityCallback(t, uninitialized, t.Context(), "", recordedKratosCookie))
 

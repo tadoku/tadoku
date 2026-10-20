@@ -50,9 +50,11 @@ The provider wraps the Flipt client SDK in polling mode: it fetches the resolved
 namespace evaluation snapshot every
 `API_FLIPT_UPDATE_INTERVAL` and evaluates in process. A failed fetch keeps the
 last snapshot and marks results stale. Startup waits at most
-`API_FLIPT_STARTUP_TIMEOUT`. A client only evaluates a snapshot it fetched: when
-its first fetch fails, it discards the SDK's empty fallback state and starts a
-fresh SDK every `API_FLIPT_UPDATE_INTERVAL` until a fetch succeeds. Until then
+`API_FLIPT_STARTUP_TIMEOUT`. A client only evaluates a snapshot it fetched: it
+installs an SDK only when that SDK's own initial fetch returned a valid snapshot
+and its engine accepted it. When the initial fetch fails, the client discards the
+SDK and its empty fallback state, even if later background fetches clear the
+SDK's last error, and starts a fresh SDK every `API_FLIPT_UPDATE_INTERVAL`. Until then
 `Boolean` serves safe defaults and `TenantBoolean` reports a provider error. The
 canonical client is created at startup. Test clients are created on first evaluation, retained in a
 16-client LRU cache and closed on eviction or shutdown. A missing tenant never

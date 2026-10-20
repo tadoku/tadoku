@@ -51,8 +51,8 @@ A running client keeps evaluating its last fetched snapshot through Flipt
 outages and namespace deletion. A client without one, such as after an API
 restart, a startup timeout or a new or evicted test-tenant client, cannot
 decide until it starts from a fetched snapshot. A snapshot that has been
-received but not yet applied, or that the evaluation engine rejected, does not
-count.
+received but not yet applied, that the evaluation engine rejected, or that a
+client fetched only after its initial fetch failed, does not count.
 
 An undecided selection never falls back to the other provider. It makes no
 Kratos call, revokes nothing and sets no cookie. Identity routes return `503`

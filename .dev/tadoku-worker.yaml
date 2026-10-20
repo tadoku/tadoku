@@ -30,6 +30,8 @@ spec:
               key: password
         - name: WORKER_VALKEY_URL
           value: redis://valkey.tdk-dev-data:6379
+        - name: WORKER_EMAIL_ENABLED
+          value: "false"
       ports:
         - name: http
           containerPort: 8000

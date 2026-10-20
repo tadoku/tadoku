@@ -1,5 +1,6 @@
 /* Authv2 layout on Paper tokens. Paper recipes sit in cascade layers, so these unlayered rules win. */
-a { color: var(--paper-color-text-link); text-underline-offset: .2em; }
+a { text-underline-offset: .2em; }
+a:where(:not(.paper-button)) { color: var(--paper-color-text-link); }
 
 /* Shell */
 .account-shell { --account-gutter: clamp(16px, 4vw, 32px); min-height: 100vh; display: flex; flex-direction: column; }

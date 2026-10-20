@@ -705,7 +705,7 @@ type IdentityProxyUser struct {
 type IdentityRecovery struct {
 	Email openapi_types.Email `json:"email"`
 
-	// ReturnTo Must use an allowed Tadoku app host.
+	// ReturnTo Must use an allowed Tadoku app host. The complete Settings URL, including this continuation, must fit within 2,048 bytes; oversized destinations are rejected uniformly before account lookup.
 	ReturnTo string `json:"return_to"`
 }
 

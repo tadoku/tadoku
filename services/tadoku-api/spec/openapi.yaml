@@ -4674,7 +4674,10 @@ components:
           type: string
           maxLength: 2048
           format: uri
-          description: Must use an allowed Tadoku app host.
+          description: >-
+            Must use an allowed Tadoku app host. The complete Settings URL,
+            including this continuation, must fit within 2,048 bytes; oversized
+            destinations are rejected uniformly before account lookup.
       required:
       - email
       - return_to

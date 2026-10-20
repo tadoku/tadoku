@@ -1,0 +1,87 @@
+{
+  "email": {
+    "accepted": [
+      "reader@example.test",
+      "reader@localhost",
+      "Reader@Example.Test",
+      "\u00e9@localhost",
+      "\ud83d\ude00@localhost",
+      "first.last+tag@sub.example.test",
+      "!#$%&'*+-/=?^_`{|}~@example.test",
+      "a@exa\u00a0mple.test",
+      "a@example.test\ufeff",
+      "a@[127.0.0.1]",
+      "a@[::1]",
+      "a@[2001:DB8::ffff:1.2.3.4]",
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@x.y"
+    ],
+    "rejected": [
+      "",
+      "reader",
+      "reader@",
+      "@example.test",
+      "a@@localhost",
+      "a b@localhost",
+      ".a@localhost",
+      "a.@localhost",
+      "a..b@localhost",
+      "a@host..test",
+      "a@.host",
+      "a@host.",
+      "a@exa mple.test",
+      "a\tb@localhost",
+      "a(b)@localhost",
+      "\"a b\"@example.test",
+      "Reader <reader@example.test>",
+      "reader@example.test (comment)",
+      " reader@example.test",
+      "reader@example.test ",
+      "a@exa\u00a0",
+      "\u3000a@localhost",
+      "a@localhost\u0000",
+      "a@[1.2.3]",
+      "a@[01.2.3.4]",
+      "a@[256.0.0.1]",
+      "a@[example.test]",
+      "a@[::1%eth0]",
+      "a@[1:2:3:4:5:6:7:8:9]",
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@x.y",
+      "\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9@x"
+    ]
+  },
+  "date-time": {
+    "accepted": [
+      "2026-01-01T00:00:00Z",
+      "2026-01-01T09:00:00+09:00",
+      "2026-01-01T00:00:00.123456789-05:30",
+      "2024-02-29T23:59:59Z",
+      "0000-01-01T00:00:00Z",
+      "9999-12-31T23:59:59.1+23:59",
+      "2026-01-01T00:00:00.000000000001Z"
+    ],
+    "rejected": [
+      "2026-01-01T00:00:00+99:99",
+      "2026-01-01T00:00:00+0900",
+      "2026-01-01T00:00Z",
+      "2026-01-01T00:00:00",
+      "2026-01-01t00:00:00z",
+      "2026-01-01 00:00:00Z",
+      "2026-02-30T00:00:00Z",
+      "2023-02-29T00:00:00Z",
+      "2026-13-01T00:00:00Z",
+      "2026-01-01T24:00:00Z",
+      "2026-01-01T00:60:00Z",
+      "2026-01-01T00:00:60Z",
+      "2026-01-01T00:00:00.Z",
+      "2026-01-01T00:00:00+09",
+      "26-01-01T00:00:00Z",
+      "yesterday"
+    ],
+    "readByGoFallbackOnly": [
+      "2026-01-01T00:00:00+24:00",
+      "2026-01-01T00:00:00+09:60",
+      "2026-01-01T1:00:00Z",
+      "2026-01-01T00:00:00,5Z"
+    ]
+  }
+}

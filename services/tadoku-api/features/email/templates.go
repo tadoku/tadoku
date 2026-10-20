@@ -2,7 +2,6 @@ package email
 
 import (
 	"bytes"
-	"net/mail"
 	"net/url"
 	"strings"
 	"text/template"
@@ -42,7 +41,7 @@ func render(message domainmail.Message) (string, string, error) {
 	if !ok {
 		return "", "", errx.NewInvalidInputError("unknown email template")
 	}
-	if !validAddress(message.Recipient) {
+	if !domainmail.ValidAddress(message.Recipient) {
 		return "", "", errx.NewInvalidInputError("invalid email recipient")
 	}
 	for _, name := range entry.params {
@@ -62,7 +61,7 @@ func render(message domainmail.Message) (string, string, error) {
 			return "", "", errx.NewInvalidInputError("recovery_url must use an allowed Tadoku host")
 		}
 	case domainmail.AccountEmailChanged:
-		if !validAddress(message.Params["new_email"]) {
+		if !domainmail.ValidAddress(message.Params["new_email"]) {
 			return "", "", errx.NewInvalidInputError("invalid new_email parameter")
 		}
 		if _, err := time.Parse(time.RFC3339, message.Params["changed_at"]); err != nil {
@@ -74,11 +73,6 @@ func render(message domainmail.Message) (string, string, error) {
 		return "", "", err
 	}
 	return entry.subject, body.String(), nil
-}
-
-func validAddress(value string) bool {
-	parsed, err := mail.ParseAddress(value)
-	return err == nil && parsed.Address == value && len(value) <= 320 && !strings.ContainsAny(value, "\r\n")
 }
 
 func allowedRecoveryURL(value string) bool {

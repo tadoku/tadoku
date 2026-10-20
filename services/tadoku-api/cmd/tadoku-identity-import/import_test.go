@@ -1,6 +1,7 @@
 package main_test
 
 import (
+	"fmt"
 	"strings"
 	"sync"
 	"testing"
@@ -89,6 +90,7 @@ func TestImportPreflight(t *testing.T) {
 			select '44444444-4444-4444-8444-444444444444', i.nid, i.id, ct.id, '{}', 0, now(), now()
 			from identities i cross join identity_credential_types ct
 			where i.id = '` + secondID + `' and ct.name = 'totp'`, "credential_types"},
+		{"unexpected-schema", `update identities set schema_id = 'service'`, "schema_id"},
 		{"empty-source", "delete from identities", "source_count"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -241,4 +243,78 @@ func TestImportExtraTargetAccount(t *testing.T) {
 		t.Fatalf("extra target account accepted: error=%v output=%s", err, out)
 	}
 	f.unchanged(t, before)
+}
+
+func TestImportLegacyUserReconciliation(t *testing.T) {
+	for _, tc := range []struct {
+		name, displayName string
+		updates           int
+		fail              bool
+	}{
+		{"later-creation-time", "読書する人", 0, false},
+		{"stale-display-name", "Old Reader", 1, false},
+		{"atomic-name-update", "Old Reader", 1, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			f := newFixture(t)
+			f.sql(t, false, `insert into users (tenant, id, display_name, created_at, updated_at)
+				values ('tadoku/prod', $1, $2, '2022-06-15', '2024-01-01')`, firstID, tc.displayName)
+			f.sql(t, false, `insert into sessions (tenant, token_hash, user_id, authenticated_at, expires_at)
+				values ('tadoku/prod', 'legacy-session-marker', $1, now(), now() + interval '1 day')`, firstID)
+			if tc.fail {
+				f.sql(t, false, `alter table accounts add constraint fixture_reject_second
+					check (user_id <> '`+secondID+`')`)
+			}
+			before := f.snapshot(t)
+
+			out, err := f.command(t, "--dry-run", "--expect-count", "2")
+			if err != nil || !strings.Contains(out, "insert_users=1 insert_accounts=2") ||
+				!strings.Contains(out, fmt.Sprintf("update_users=%d", tc.updates)) {
+				t.Fatalf("legacy dry run did not report reconciliation: error=%v output=%s", err, out)
+			}
+			if tc.updates == 1 && !strings.Contains(out,
+				"user_id="+firstID+" insert_user=false insert_account=true update_display_name=true") {
+				t.Fatal("dry run did not identify the legacy display-name change")
+			}
+			f.unchanged(t, before)
+
+			out, err = f.command(t, "--apply", "--expect-count", "2")
+			if tc.fail {
+				if err == nil || !strings.Contains(out, "target write") {
+					t.Fatalf("late failure did not abort legacy reconciliation: error=%v output=%s", err, out)
+				}
+				f.unchanged(t, before)
+				return
+			}
+			if err != nil || !strings.Contains(out, "committed_accounts=2") {
+				t.Fatalf("legacy reconciliation failed: error=%v output=%s", err, out)
+			}
+
+			var preserved bool
+			err = f.target.Pool.QueryRow(t.Context(), `select
+				u.display_name = '読書する人'
+				and u.created_at = timestamp '2022-06-15'
+				and u.updated_at = timestamp '2024-01-01'
+				and a.created_at = $2 and a.password_hash = $3
+				and a.email = 'MixedCase@example.test'
+				and (select count(*) from sessions where tenant = 'tadoku/prod') = 1
+				and (select display_name from users where tenant = 'e2e/import-other' and id = $1) = 'Other tenant'
+				from users u
+				join accounts a on (a.tenant, a.user_id) = (u.tenant, u.id)
+				where u.tenant = 'tadoku/prod' and u.id = $1`, firstID, f.created, f.hash).Scan(&preserved)
+			if err != nil || !preserved {
+				t.Fatal("legacy reconciliation lost metadata, account fields, sessions or tenant isolation")
+			}
+			before = f.snapshot(t)
+
+			for _, args := range [][]string{{"--dry-run"}, {"--apply", "--expect-count", "2"}} {
+				out, err := f.command(t, args...)
+				if err != nil || !strings.Contains(out, "insert_users=0 insert_accounts=0") ||
+					!strings.Contains(out, "update_users=0") || !strings.Contains(out, "unchanged_accounts=2") {
+					t.Fatalf("legacy repeat did not converge: error=%v output=%s", err, out)
+				}
+				f.unchanged(t, before)
+			}
+		})
+	}
 }

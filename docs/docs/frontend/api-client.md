@@ -110,6 +110,14 @@ credentials, caching and timeouts.
 | webv3 | `frontend/apps/webv3/src/lib/home.server.ts` makes anonymous home-page reads; `404` means no contest. |
 | webv2, admin, auth | `frontend/packages/ui/identity.ts` reads the session and logs out. `browserApi()` and `apiData()` in `frontend/packages/ui/api.ts` call operations from React Query hooks and throw `Error(<status>)` for API errors. |
 
+The validators must run on the package's own pinned Zod 3, whose UUID check
+accepts any well-formed UUID as the API does; Zod 4's rejects IDs that imported
+accounts keep. Bundlers resolve the generated `zod` import from the consuming app
+when `zod` stays external in a server build. An app should therefore not declare
+its own `zod` unless it uses it. One that needs Zod 4, like webv3, lists `zod` in
+`ssr.noExternal` in its `vite.config.ts`, so each import is bundled from its own
+package.
+
 Some contract properties are optional only because request bodies or drafts share
 the schema: contest and registration IDs, page HTML, post publish times and
 announcement IDs. Where a screen needs one, `requireFields()` in

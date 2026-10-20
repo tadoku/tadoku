@@ -113,6 +113,13 @@ Bazel version as the repo root via `tools/oapi-codegen/.bazelversion`. See
 Always use `pnpm`, never `npm`. Use pnpm 10.10.0: it is the `packageManager` in
 `docs/package.json` and the version CI installs for `frontend/`. CI uses Node 20.
 
+`frontend/patches/` holds pnpm `patchedDependencies`, declared in
+`frontend/package.json`. `react-dom@18.2.0.patch` applies React 19.0.0's fix to
+the Node stream encoder in `renderToPipeableStream`, which otherwise writes a NUL
+into the HTML when a multi-byte character meets its 2 KB buffer boundary. React 18
+has no release with the fix; delete the patch when the frontend moves to React 19.
+Image builds and dev-cli copy `frontend/patches/` with the lockfile.
+
 ### Frontend checks
 
 From `frontend/`, after `pnpm install --frozen-lockfile`:

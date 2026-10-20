@@ -124,7 +124,10 @@ TENANT_PRODUCTION=false tadoku-tenant canonical-development-accounts \
 It takes no tenant and always writes `tadoku/prod`; `development-accounts`
 keeps refusing that tenant, so the branch task cannot reach it. It has the same
 host, `TENANT_PRODUCTION=false`, fixture and insert-missing rules, in one
-transaction, and needs only `users` and `accounts` DML.
+transaction, and needs only `users` and `accounts` DML. `scripts/dev/seed-db.sh`
+runs it with the runtime role over a loopback port-forward only after the base
+API reports v2, so row-level security scopes every statement; see
+[Seed data](../develop/development-data.md#seed-data).
 
 `inspect` accepts only parsed test keys and registry-management credentials.
 It prints `{"tenant":"tadoku/branch-0123abcd","exists":false}` after successful

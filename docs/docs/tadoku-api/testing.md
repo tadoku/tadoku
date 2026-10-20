@@ -103,7 +103,7 @@ Never point tests at shared development or production services.
   key and is deleted by exact name. No test sharing database 13 flushes it.
   The leased HTTP E2E database refuses pre-existing leaderboard or identity
   throttle keys. It resets only legacy/tenant-derived leaderboard patterns and
-  tenant-derived identity login and registration patterns while holding its
+  tenant-derived identity login, registration and recovery patterns while holding its
   lease, including leaderboard keys created by arbitrary test-tenant jobs.
 
 ## Repository and package tests

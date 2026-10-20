@@ -165,6 +165,31 @@ after the transaction releases its connection. This covers ordinary query,
 rendering and enqueue differences; dependency failures still return errors and
 work exceeding that minimum is not hidden.
 
+Recovery has its own admission, separate from the login and registration
+counters. After the flag check and input validation, and before the transaction
+opens, one atomic Valkey script charges two tenant-prefixed, SHA-256-derived
+counters, each with a fixed 900-second window from its first valid request:
+
+- **Client:** ten requests per trusted client IP, using the login and
+  registration IP rule. Further requests return `429` with `throttled` and are
+  not charged to the recipient.
+- **Recipient:** three requests per normalized email, from any client. Further
+  requests write nothing and return the same empty `202` as an unknown
+  address, so one mailbox receives at most three recovery emails per window
+  however many clients ask.
+
+Known and unknown addresses consume both counters identically, so neither
+answer reveals whether an account exists. Rejected input consumes neither.
+Admission fails closed with the shared error mapping, identically for known and
+unknown addresses: a Valkey error or missing tenant returns `503`, the admission
+timeout `504` and a cancelled request `499`, all before any token, email or job
+is written. A request whose transaction later rolls back, for example on an
+enqueue failure, has still used one unit of each budget; the user can retry
+while the recipient budget lasts or after the window ends. The recipient budget
+leaves room for two retries after a lost or delayed email within the one-hour
+token lifetime. The counters use the normalized email only as a hashed key;
+mail still goes to the account's stored address.
+
 The link uses the configured cookie domain and parsed tenant's main API host,
 never the incoming Host. Its path is `/api/internal/identity/recovery/{token}`,
 with the validated destination in an optional `return_to` query. Destinations

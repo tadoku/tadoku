@@ -122,7 +122,9 @@ continuation after Settings completion, never as the immediate destination.
 Set a new password and log in with it. Confirm
 actual overlay headers, tenant identity, a fresh secure cookie and rejection of
 the old password and sessions. A second consume and a foreign tenant must fail;
-unknown emails return the same empty `202`. Destinations that cannot fit into
+unknown emails return the same empty `202`. Within 15 minutes, one address
+receives at most three recovery emails, with later requests returning that
+`202` without mail, and one client IP gets ten requests before `429`. Destinations that cannot fit into
 the complete 2,048-byte Settings URL or 4,096-byte recovery link must fail before
 lookup or consumption, with no truncation and the same result for known and
 unknown emails. Stale sessions cannot change email

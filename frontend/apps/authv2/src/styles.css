@@ -37,7 +37,7 @@ a:where(:not(.paper-button)) { color: var(--paper-color-text-link); }
 /* Settings */
 .settings { width: min(100%, 880px); margin-inline: auto; }
 .settings .paper-page-header { margin-bottom: 28px; }
-.settings .paper-page-header__lead { overflow-wrap: anywhere; }
+.settings .paper-page-header__lead { overflow-wrap: anywhere; white-space: break-spaces; }
 .settings .paper-page-header__lead strong { color: var(--paper-color-text-ink); font-weight: 600; }
 .settings .paper-page-header__actions .paper-button { gap: 8px; }
 .settings-list { padding: 0; }

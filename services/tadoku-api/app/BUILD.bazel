@@ -13,6 +13,7 @@ go_library(
         "emails.go",
         "feature_flags.go",
         "identity.go",
+        "identity_settings.go",
         "identity_types.go",
         "languages.go",
         "leaderboard.go",

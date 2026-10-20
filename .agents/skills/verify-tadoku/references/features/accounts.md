@@ -67,9 +67,10 @@ Record `account_app`; an unset `identity-v2` decision remains `v1`.
 
 The base API and overlays supply the development cookie domain and Kratos public
 URL.
-Account lookup/search use the separate identity `ReadService` for profile and
-moderation; the `Accounts` service's Reader methods, recovery/settings and account
-deletion remain `501` stubs. Email list/detail
+Recovery and profile/password settings use the local identity API. Account
+lookup/search use the separate identity `ReadService` for profile and moderation;
+the `Accounts` service's Reader methods and account deletion remain `501` stubs.
+Email list/detail
 routes accept a verified tenant `email:read` bearer or a Keto-authorized
 administrator; see [Retained email API](admin.md#retained-email-api).
 The development base exposes identity and GET email paths through separate
@@ -108,6 +109,37 @@ New production branches and `deploy`-labelled pull requests using these callers
 are unsupported until the paired production identity routes, callback and authv2
 are ready. Source delivery does not activate held production branch-tooling
 adoption. See [Production branches](../../../../../docs/docs/develop/production-branches.md).
+
+## Recovery and settings API journey
+
+Use the branch main API URL printed by `dev url`, with an allowed HTTPS Origin
+and JSON request bodies. Authv2 screens may be unavailable independently of the
+API. In an owned v2 tenant, request recovery for its Dev Reader, read the held
+`account.recovery` message as Dev Admin through the public cookie gateway,
+follow `params.recovery_url` and require a `303` to that tenant's authv2
+Settings root. A supplied `return_to` must survive as a query parameter for
+continuation after Settings completion, never as the immediate destination.
+Set a new password and log in with it. Confirm
+actual overlay headers, tenant identity, a fresh secure cookie and rejection of
+the old password and sessions. A second consume and a foreign tenant must fail;
+unknown emails return the same empty `202`. Destinations that cannot fit into
+the complete 2,048-byte Settings URL or 4,096-byte recovery link must fail before
+lookup or consumption, with no truncation and the same result for known and
+unknown emails. Stale sessions cannot change email
+or password, while a valid stale session may still change its display name.
+Email changes must notify the old address and password changes must revoke
+other sessions.
+
+A v2 administrator cookie requires deployed identity callback wiring and
+tenant-local v2 administrator fixtures. The existing gateway also accepts an
+already authorized v1 administrator cookie. Both paths require a valid
+administrator session; opening a login page alone does not provide one.
+Missing prerequisites must be reported explicitly. A bearer read, API
+port-forward or disposable local gateway is separate evidence and does not
+satisfy this journey. Do not create shared Kratos sessions, change shared
+credentials/roles, or import unfinished wiring to bypass the prerequisite. Keep
+recovery URLs and cookies out of screenshots and retained output. Remove the
+owner's test data and overlay through `dev down` after verification.
 
 ## Source anchors
 

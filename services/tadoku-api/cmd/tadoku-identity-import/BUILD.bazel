@@ -28,6 +28,7 @@ go_test(
     name = "tadoku-identity-import_test",
     srcs = [
         "fixtures_test.go",
+        "import_compatibility_test.go",
         "import_guards_test.go",
         "import_test.go",
     ],

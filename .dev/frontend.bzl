@@ -19,7 +19,7 @@ _DEV_INSTALL = [
 def frontend_dev(name, host, readiness_path = "/", paper = False, namespace = None):
     """One app source graph, OCI runtime and dev-cli contract."""
     namespace = namespace or "tdk-dev-frontend-%s" % name
-    shared_package = "paper-ui" if paper else "ui"
+    shared_packages = ["paper-ui" if paper else "ui", "api-client"]
     command = " ".join(_DEV_INSTALL) + " && exec pnpm --filter " + name + " dev"
     if paper:
         # ponytail: watcher retains initial declarations; rebuild paper-ui after public type changes.
@@ -30,7 +30,7 @@ def frontend_dev(name, host, readiness_path = "/", paper = False, namespace = No
         srcs = native.glob(
             [
                 "apps/%s/**" % name,
-                "packages/%s/**" % shared_package,
+            ] + ["packages/%s/**" % package for package in shared_packages] + [
                 ".npmrc",
                 "package.json",
                 "pnpm-lock.yaml",
@@ -127,7 +127,7 @@ def frontend_dev(name, host, readiness_path = "/", paper = False, namespace = No
             ],
             "sourceRoots": [
                 "frontend/apps/%s" % name,
-                "frontend/packages/%s" % shared_package,
+            ] + ["frontend/packages/%s" % package for package in shared_packages] + [
                 "frontend/.npmrc",
                 "frontend/package.json",
                 "frontend/pnpm-lock.yaml",
@@ -135,7 +135,7 @@ def frontend_dev(name, host, readiness_path = "/", paper = False, namespace = No
             ],
             "syncPaths": [
                 "frontend/apps/%s" % name,
-                "frontend/packages/%s" % shared_package,
+            ] + ["frontend/packages/%s" % package for package in shared_packages] + [
                 "frontend/.npmrc",
                 "frontend/package.json",
                 "frontend/pnpm-lock.yaml",
@@ -151,7 +151,7 @@ def frontend_dev(name, host, readiness_path = "/", paper = False, namespace = No
             ],
             "dependencyPaths": [
                 "frontend/apps/%s/package.json" % name,
-                "frontend/packages/%s/package.json" % shared_package,
+            ] + ["frontend/packages/%s/package.json" % package for package in shared_packages] + [
                 "frontend/.npmrc",
                 "frontend/package.json",
                 "frontend/pnpm-lock.yaml",

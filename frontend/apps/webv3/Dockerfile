@@ -6,6 +6,7 @@ COPY pnpm-lock.yaml pnpm-workspace.yaml package.json .npmrc ./
 RUN pnpm fetch
 COPY apps/webv3 ./apps/webv3
 COPY packages/paper-ui ./packages/paper-ui
+COPY packages/api-client ./packages/api-client
 RUN pnpm install --frozen-lockfile --offline --filter webv3...
 ENV NODE_OPTIONS=--max-old-space-size=3072
 RUN pnpm --filter paper-ui build && pnpm --filter webv3 build

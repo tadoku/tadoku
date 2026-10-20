@@ -1,22 +1,16 @@
+import { authzRoleGet, type AuthzUserRole } from 'api-client'
 import { atom, useAtom } from 'jotai'
 import { toast } from 'react-toastify'
 import { Account, AccountApp, logout } from 'ui/identity'
 import { useRouter } from 'next/router'
 import { useEffect, useRef } from 'react'
-import { z } from 'zod'
 import { browserAppUrls } from 'ui/app-urls'
 import { AppContext } from 'next/app'
 import { NextPageContext } from 'next'
 import { useCurrentLocation } from '@app/common/hooks'
 import { useRoutes } from './routes'
 
-const root = () => `${browserAppUrls().apiEndpoint}/authz`
-
-export type Role = 'admin' | 'user' | 'guest' | 'banned'
-
-const UserRoleResponse = z.object({
-  role: z.enum(['admin', 'user', 'guest', 'banned']),
-})
+export type Role = AuthzUserRole['role']
 
 export const sessionAtom = atom(undefined as undefined | Account)
 export const accountAppAtom = atom<AccountApp>('v1')
@@ -80,17 +74,7 @@ export const useUserRole = () => {
 
     prevUserIdRef.current = userId
 
-    fetch(`${root()}/current-user/role`)
-      .then(async response => {
-        if (response.status !== 200) {
-          throw new Error(response.status.toString())
-        }
-        const data = UserRoleResponse.parse(await response.json())
-        setRole(data.role)
-      })
-      .catch(() => {
-        setRole(undefined)
-      })
+    void authzRoleGet({ baseUrl: browserAppUrls().apiEndpoint }).then(({ data }) => setRole(data?.role))
   }, [userId, setRole])
 
   return role

@@ -11,6 +11,9 @@ vi.mock('next/config', () => ({
   }),
 }))
 
+const sent = (request: { mock: { calls: unknown[][] } }) =>
+  request.mock.calls[0][0] as Request
+
 const session = {
   id: '123e4567-e89b-12d3-a456-426614174000',
 } as Account
@@ -34,14 +37,12 @@ describe('bootstrapFeatureFlagDecisions', () => {
         request,
       ),
     ).resolves.toEqual({ 'release-log-entry-v2': true, 'identity-v2': false })
-    expect(request).toHaveBeenCalledWith(
+    expect(sent(request).url).toBe(
       'http://oathkeeper-proxy:4455/api/internal/immersion/feature-flags',
-      {
-        cache: 'no-store',
-        headers: { cookie: 'ory_kratos_session=secret' },
-        signal: expect.any(AbortSignal),
-      },
     )
+    expect(sent(request).cache).toBe('no-store')
+    expect(sent(request).headers.get('cookie')).toBe('ory_kratos_session=secret')
+    expect(sent(request).headers.has('x-dev-branch')).toBe(false)
   })
 
   it('forwards the incoming branch so a branch host gets its own tenant', async () => {
@@ -58,12 +59,11 @@ describe('bootstrapFeatureFlagDecisions', () => {
       'http://oathkeeper-proxy:4455/api/internal',
       'alice-0123abcd',
     )
-    expect(request).toHaveBeenCalledWith(
+    expect(sent(request).url).toBe(
       'http://oathkeeper-proxy:4455/api/internal/immersion/feature-flags',
-      expect.objectContaining({
-        headers: { cookie: 'ory_kratos_session=secret', 'x-dev-branch': 'alice-0123abcd' },
-      }),
     )
+    expect(sent(request).headers.get('cookie')).toBe('ory_kratos_session=secret')
+    expect(sent(request).headers.get('x-dev-branch')).toBe('alice-0123abcd')
   })
 
   it('uses the registry default without loading Flipt when there is no session', async () => {
@@ -91,28 +91,27 @@ describe('bootstrapFeatureFlagDecisions', () => {
   it('bounds a stalled same-origin bootstrap request', async () => {
     vi.useFakeTimers()
     const request = vi.fn(
-      (_: RequestInfo | URL, init?: RequestInit) =>
+      (input: RequestInfo | URL) =>
         new Promise<Response>((_, reject) => {
-          init?.signal?.addEventListener('abort', () =>
-            reject(init.signal?.reason),
-          )
+          const { signal } = input as Request
+          signal.addEventListener('abort', () => reject(signal.reason))
         }),
-    ) as typeof fetch
+    )
 
     const result = bootstrapFeatureFlagDecisions(
       session,
       'ory_kratos_session=secret',
       true,
-      request,
+      request as typeof fetch,
       50,
     )
     await vi.advanceTimersByTimeAsync(50)
 
     await expect(result).resolves.toEqual({ 'release-log-entry-v2': false, 'identity-v2': false })
-    expect(request).toHaveBeenCalledWith(
+    expect(sent(request).url).toBe(
       'http://oathkeeper-proxy:4455/api/internal/immersion/feature-flags',
-      expect.objectContaining({ signal: expect.any(AbortSignal) }),
     )
+    expect(sent(request).signal.aborted).toBe(true)
     vi.useRealTimers()
   })
 

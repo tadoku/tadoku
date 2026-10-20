@@ -165,14 +165,10 @@ describe('feature flag browser state', () => {
 
     await waitFor(() => expect(screen.getByText('disabled')).toBeTruthy())
     expect(input.value).toBe('unsaved form value')
-    expect(fetchMock).toHaveBeenCalledWith(
-      'https://tadoku.test/api/internal/immersion/feature-flags',
-      {
-        credentials: 'include',
-        cache: 'no-store',
-        signal: expect.any(AbortSignal),
-      },
-    )
+    const sent = fetchMock.mock.calls[0][0] as Request
+    expect(sent.url).toBe('https://tadoku.test/api/internal/immersion/feature-flags')
+    expect(sent.credentials).toBe('include')
+    expect(sent.cache).toBe('no-store')
 
     resolveRefresh(
       new Response(
@@ -203,10 +199,10 @@ describe('feature flag browser state', () => {
 
   it('bounds a stalled browser refresh and keeps the form mounted', async () => {
     vi.useFakeTimers()
-    vi.mocked(fetch).mockImplementation((_, init) => {
-      const signal = init?.signal
+    vi.mocked(fetch).mockImplementation(input => {
+      const { signal } = input as Request
       return new Promise<Response>((_, reject) => {
-        signal?.addEventListener('abort', () => reject(signal.reason))
+        signal.addEventListener('abort', () => reject(signal.reason))
       })
     })
 

@@ -18,15 +18,17 @@ export const defaultFeatureFlagDecisions =
     return decisions
   }, {} as FeatureFlagDecisions)
 
-export const featureFlagDecisionsSchema = z.object({
-  'release-log-entry-v2': z.boolean(),
-  'identity-v2': z.boolean().default(false),
-})
-
-export const featureFlagResponseSchema = z.object({
-  decisions: featureFlagDecisionsSchema,
-})
+/** The registered decisions in an API answer, with the safe default for any it lacks. */
+export const registeredDecisions = (
+  decisions: Partial<Record<FeatureFlagKey, boolean>> = {},
+) =>
+  featureFlagKeys.reduce<FeatureFlagDecisions>((result, flagKey) => {
+    const decision = decisions[flagKey]
+    result[flagKey] =
+      typeof decision === 'boolean'
+        ? decision
+        : featureFlagRegistry[flagKey].defaultValue
+    return result
+  }, {} as FeatureFlagDecisions)
 
 export const featureFlagSubjectSchema = z.string().uuid()
-
-export type FeatureFlagResponse = z.infer<typeof featureFlagResponseSchema>

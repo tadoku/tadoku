@@ -10,7 +10,6 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
-import { Route as RegistrationRouteImport } from './routes/registration'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as RecoveryRouteImport } from './routes/recovery'
 import { Route as LoginRouteImport } from './routes/login'
@@ -20,11 +19,6 @@ import { Route as ActionsOperationRouteImport } from './routes/actions.$operatio
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RegistrationRoute = RegistrationRouteImport.update({
-  id: '/registration',
-  path: '/registration',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RegisterRoute = RegisterRouteImport.update({
@@ -58,7 +52,6 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/recovery': typeof RecoveryRoute
   '/register': typeof RegisterRoute
-  '/registration': typeof RegistrationRoute
   '/settings': typeof SettingsRoute
   '/actions/$operation': typeof ActionsOperationRoute
 }
@@ -67,7 +60,6 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/recovery': typeof RecoveryRoute
   '/register': typeof RegisterRoute
-  '/registration': typeof RegistrationRoute
   '/settings': typeof SettingsRoute
   '/actions/$operation': typeof ActionsOperationRoute
 }
@@ -77,7 +69,6 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/recovery': typeof RecoveryRoute
   '/register': typeof RegisterRoute
-  '/registration': typeof RegistrationRoute
   '/settings': typeof SettingsRoute
   '/actions/$operation': typeof ActionsOperationRoute
 }
@@ -88,7 +79,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/recovery'
     | '/register'
-    | '/registration'
     | '/settings'
     | '/actions/$operation'
   fileRoutesByTo: FileRoutesByTo
@@ -97,7 +87,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/recovery'
     | '/register'
-    | '/registration'
     | '/settings'
     | '/actions/$operation'
   id:
@@ -106,7 +95,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/recovery'
     | '/register'
-    | '/registration'
     | '/settings'
     | '/actions/$operation'
   fileRoutesById: FileRoutesById
@@ -116,7 +104,6 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   RecoveryRoute: typeof RecoveryRoute
   RegisterRoute: typeof RegisterRoute
-  RegistrationRoute: typeof RegistrationRoute
   SettingsRoute: typeof SettingsRoute
   ActionsOperationRoute: typeof ActionsOperationRoute
 }
@@ -128,13 +115,6 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof SettingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/registration': {
-      id: '/registration'
-      path: '/registration'
-      fullPath: '/registration'
-      preLoaderRoute: typeof RegistrationRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/register': {
@@ -180,7 +160,6 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   RecoveryRoute: RecoveryRoute,
   RegisterRoute: RegisterRoute,
-  RegistrationRoute: RegistrationRoute,
   SettingsRoute: SettingsRoute,
   ActionsOperationRoute: ActionsOperationRoute,
 }

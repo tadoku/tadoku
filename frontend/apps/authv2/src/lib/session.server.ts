@@ -15,7 +15,9 @@ const sessionSchema = z.object({
 
 export async function readSession() {
   setResponseHeader('Cache-Control', 'private, no-store')
-  const { apiUrl, ...urls } = requestUrls()
+  const { apiUrl, ...origins } = requestUrls()
+  // Browsers send identity forms to the public API on the tenant's main host; apiUrl may be private to the server.
+  const urls = { ...origins, api: `${origins.webUrl}/api/internal` }
   const headers = new Headers({ Accept: 'application/json' })
   for (const name of ['cookie', 'x-dev-branch']) {
     const value = getRequestHeader(name)

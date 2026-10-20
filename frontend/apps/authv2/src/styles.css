@@ -1,20 +1,61 @@
-.account-shell { min-height: 100vh; background: var(--paper-color-surface-paper); color: var(--paper-color-text-ink); }
-.account-shell header { padding: 20px 24px; border-bottom: 1px solid var(--paper-color-rule-default); display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
-.account-shell header > a { font-family: var(--paper-font-display); font-size: 1.5rem; color: inherit; text-decoration: none; }
-.account-shell header nav { display: flex; align-items: center; gap: 20px; }
-.account-content { width: min(100%, 640px); margin-inline: auto; padding: 48px 24px; overflow-wrap: anywhere; }
-.account-status { margin-top: 24px; padding: 24px; }
-.account-status p { margin: 0 0 20px; line-height: 1.6; }
-.text-link { color: var(--paper-color-text-link); text-underline-offset: .2em; }
-.skip-link { position: fixed; left: 12px; top: 12px; transform: translateY(-180%); }
-.skip-link:focus { transform: none; }
-.account-form { display: grid; gap: 20px; margin-block: 24px; }
-.account-form button { justify-self: start; }
-.account-links { display: flex; flex-wrap: wrap; gap: 12px 24px; margin-block-start: 28px; }
-.account-links a, .account-content a { text-underline-offset: .2em; }
-.account-shell a { color: var(--paper-color-text-link); }
-.account-feedback { color: var(--paper-color-status-danger); margin-block: 20px; }
-.account-feedback p { margin-block-end: 8px; }
-.account-note { color: var(--paper-color-text-muted); font-size: .9rem; }
-.account-logout { margin-block: 28px; }
-@media (max-width: 480px) { .account-content { padding: 32px 16px; } .account-status { padding: 20px; } }
+/* Authv2 layout on Paper tokens. Paper recipes sit in cascade layers, so these unlayered rules win. */
+a { color: var(--paper-color-text-link); text-underline-offset: .2em; }
+
+/* Shell */
+.account-shell { --account-gutter: clamp(16px, 4vw, 32px); min-height: 100vh; display: flex; flex-direction: column; }
+.account-skip { position: fixed; z-index: 100; left: 12px; top: 12px; transform: translateY(-180%); }
+.account-skip:focus { transform: none; }
+.account-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; padding: 14px var(--account-gutter); border-bottom: 1px solid var(--paper-color-rule-default); background: var(--paper-color-surface-paper); }
+.account-brand { display: inline-flex; align-items: center; gap: 14px; color: var(--paper-color-text-muted); text-decoration: none; }
+.account-wordmark { display: block; width: 124px; height: auto; }
+.account-wordmark--dark { display: none; }
+[data-theme="dark"] .account-wordmark--light { display: none; }
+[data-theme="dark"] .account-wordmark--dark { display: block; }
+.account-brand__label { padding-left: 14px; border-left: 1px solid var(--paper-color-rule-default); font-size: .875rem; font-weight: 600; line-height: 1.25rem; }
+.account-session { display: flex; align-items: center; gap: 16px; min-width: 0; margin: 0; }
+.account-session__name { min-width: 0; color: var(--paper-color-text-muted); font-size: .875rem; overflow-wrap: anywhere; }
+.account-main { flex: 1; width: 100%; padding: clamp(32px, 7vh, 72px) var(--account-gutter) 72px; }
+.account-main:focus { outline: none; }
+
+/* Single-task cards: log in, create an account, recovery and status pages. */
+.card-page { width: min(100%, 440px); margin-inline: auto; }
+.card-page__card { padding: clamp(24px, 6vw, 36px); }
+.card-page__header { margin-bottom: 28px; }
+.card-page__footer { margin: 24px 0 0; text-align: center; color: var(--paper-color-text-muted); font-size: .9375rem; }
+.account-confirmation { display: grid; gap: 16px; }
+.account-confirmation p { margin: 0; line-height: 1.7; }
+
+/* Forms */
+.account-form { display: grid; gap: 20px; min-width: 0; }
+.account-form .paper-field { min-width: 0; }
+.account-form__aside { justify-self: center; font-size: .875rem; }
+.account-form__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; }
+.account-form__actions > .paper-button { flex-shrink: 0; }
+.account-form .paper-flash a { white-space: nowrap; }
+
+/* Settings */
+.settings { width: min(100%, 880px); margin-inline: auto; }
+.settings .paper-page-header { margin-bottom: 28px; }
+.settings .paper-page-header__lead { overflow-wrap: anywhere; }
+.settings .paper-page-header__lead strong { color: var(--paper-color-text-ink); font-weight: 600; }
+.settings .paper-page-header__actions .paper-button { gap: 8px; }
+.settings-list { padding: 0; }
+.settings-notice { margin-bottom: 20px; }
+.settings-section { display: grid; grid-template-columns: minmax(0, 15rem) minmax(0, 1fr); gap: 16px 48px; padding: 32px clamp(20px, 4vw, 36px); }
+.settings-section + .settings-section { border-top: 1px solid var(--paper-color-rule-default); }
+.settings-section__intro { min-width: 0; }
+.settings-section__title { margin: 0 0 8px; font-family: var(--paper-font-display); font-size: 1.125rem; line-height: 1.5rem; }
+.settings-section__intro p { margin: 0; color: var(--paper-color-text-muted); font-size: .875rem; line-height: 1.6; }
+.settings-section__body { min-width: 0; max-width: 28rem; }
+.settings-saved { margin: 0; color: var(--paper-color-status-success); font-size: .875rem; font-weight: 600; }
+
+@media (max-width: 720px) {
+  .settings-section { grid-template-columns: minmax(0, 1fr); gap: 20px; padding-block: 28px; }
+  .settings-section__body { max-width: none; }
+}
+
+@media (max-width: 480px) {
+  .account-brand__label { display: none; }
+  .account-session { gap: 12px; }
+  .card-page__card { padding: 24px 20px; }
+}

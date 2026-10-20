@@ -1,82 +1,175 @@
-import { useState } from 'react'
-import { useSearch } from '@tanstack/react-router'
-import { Button, PageHeader, SectionHeading, Surface, usePaperForm } from 'paper-ui'
-import { accountSearch, errorMessage, returnDestination, submitAccount } from '../lib/account'
-import { Route } from '../routes/__root'
-import { AccountFeedback, AccountUnavailable, CredentialsForm } from './AccountForms'
+import { useLocation, useRouter } from '@tanstack/react-router'
+import { Button, PageHeader, Surface, buttonClassName } from 'paper-ui'
+import { ArrowLeftIcon, iconClassName } from 'paper-ui/icons'
+import type { ReactNode } from 'react'
+import { continuation, displayNameProblem, emailProblem, passwordProblem, problemFor, withReturnTo } from '../lib/identity'
+import { navigate, useAccountForm } from '../lib/account-form'
+import type { AccountSearch } from '../lib/search'
+import { useIdentity } from '../lib/session'
+import { FormProblem, ReturnTo } from './AccountForm'
+import { passwordHint } from './Credentials'
 
-export function Settings() {
-  const { identity } = Route.useRouteContext()
-  const search = accountSearch(useSearch({ strict: false }))
-  const [profileCode, setProfileCode] = useState(search.error)
-  const [passwordCode, setPasswordCode] = useState<string>()
-  const [saved, setSaved] = useState(search.saved)
-  const account = identity.status === 'ready' ? identity.session.account : null
-  const continuation = returnDestination(search.return_to)
-  const profile = usePaperForm({
-    defaultValues: { email: account?.email || '', display_name: account?.display_name || '' },
-    onSubmit: async ({ value, formApi }) => {
-      setProfileCode(undefined)
-      setSaved(undefined)
-      const result = await submitAccount('profile', { ...value, return_to: search.return_to || '' })
-      if (result.ok) { setSaved('profile'); return }
-      setProfileCode(result.code)
-      const field = result.code === 'invalid_display_name' ? 'display_name' : result.code === 'invalid_email' || result.code === 'email_taken' ? 'email' : undefined
-      if (field) {
-        setProfileCode(undefined)
-        formApi.setFieldMeta(field, meta => ({ ...meta, errorMap: { ...meta.errorMap, onSubmit: errorMessage(result.code) } }))
-        document.getElementById(`profile-${field}`)?.focus()
-      }
-    },
+type Account = { readonly email: string; readonly display_name: string }
+
+type SectionProps = {
+  readonly search: AccountSearch
+  readonly account: Account
+  /** Where Settings sends the visitor when they are done, if a trusted page asked for it. */
+  readonly next?: string
+  /** Login that returns here, for problems a fresh session resolves. */
+  readonly reauthenticate: string
+}
+
+function SettingsSection({ id, title, description, children }: {
+  readonly id: string
+  readonly title: string
+  readonly description: string
+  readonly children: ReactNode
+}) {
+  return (
+    <section className="settings-section" aria-labelledby={`${id}-heading`}>
+      <div className="settings-section__intro">
+        <h2 id={`${id}-heading`} className="settings-section__title">{title}</h2>
+        <p>{description}</p>
+      </div>
+      <div className="settings-section__body">{children}</div>
+    </section>
+  )
+}
+
+function Saved({ message }: { readonly message?: string }) {
+  return <p className="settings-saved" role="status">{message}</p>
+}
+
+function DisplayNameForm({ search, account, next, reauthenticate }: SectionProps) {
+  const router = useRouter()
+  const { form, formProps, fieldId, pending, problem, submitted, succeeded } = useAccountForm({
+    operation: 'display-name',
+    id: 'display-name',
+    defaultValues: { display_name: account.display_name },
+    nativeError: search.form === 'display-name' ? search.error : undefined,
+    onSuccess: () => router.invalidate(),
   })
-  const password = usePaperForm({
+  const saved = succeeded || (search.saved === 'display-name' && !submitted)
+  return (
+    <SettingsSection id="profile" title="Profile" description="Your display name appears on leaderboards, in contests and on your profile.">
+      <form.AppForm>
+        <form.Form {...formProps} className="account-form">
+          <FormProblem problem={problem} reauthenticate={reauthenticate} />
+          <ReturnTo value={next} />
+          <form.AppField name="display_name" validators={{ onChange: ({ value }) => displayNameProblem(value) }}>
+            {field => <field.Input id={fieldId('display_name')} label="Display name" autoComplete="nickname" required />}
+          </form.AppField>
+          <div className="account-form__actions">
+            <Button type="submit" variant="outline" loading={pending} loadingLabel="Saving">Save display name</Button>
+            <Saved message={saved ? 'Display name saved.' : undefined} />
+          </div>
+        </form.Form>
+      </form.AppForm>
+    </SettingsSection>
+  )
+}
+
+function EmailForm({ search, account, next, reauthenticate }: SectionProps) {
+  const router = useRouter()
+  const { form, formProps, fieldId, pending, problem, submitted, succeeded } = useAccountForm({
+    operation: 'email',
+    id: 'email',
+    defaultValues: { email: account.email },
+    nativeError: search.form === 'email' ? search.error : undefined,
+    onSuccess: () => router.invalidate(),
+  })
+  const saved = succeeded || (search.saved === 'email' && !submitted)
+  return (
+    <SettingsSection
+      id="email"
+      title="Email address"
+      description="You log in and recover your account with this address. Changing it needs a login within the last hour; we’ll let your old address know."
+    >
+      <form.AppForm>
+        <form.Form {...formProps} className="account-form">
+          <FormProblem problem={problem} reauthenticate={reauthenticate} />
+          <ReturnTo value={next} />
+          <form.AppField name="email" validators={{ onChange: ({ value }) => emailProblem(value) }}>
+            {field => <field.Input id={fieldId('email')} label="Email" type="email" autoComplete="email" required maxLength={320} />}
+          </form.AppField>
+          <div className="account-form__actions">
+            <Button type="submit" variant="outline" loading={pending} loadingLabel="Saving">Change email</Button>
+            <Saved message={saved ? 'Email changed. We’ve let your previous address know.' : undefined} />
+          </div>
+        </form.Form>
+      </form.AppForm>
+    </SettingsSection>
+  )
+}
+
+function PasswordForm({ search, account, next, reauthenticate }: SectionProps) {
+  const { form, formProps, fieldId, pending, problem, submitted, succeeded } = useAccountForm({
+    operation: 'password',
+    id: 'password',
     defaultValues: { password: '' },
-    onSubmit: async ({ value, formApi }) => {
-      setPasswordCode(undefined)
-      setSaved(undefined)
-      const result = await submitAccount('password', { ...value, return_to: search.return_to || '' })
-      if (result.ok) {
-        if (continuation) { window.location.assign(result.redirect); return }
-        formApi.reset()
-        setSaved('password')
-        return
-      }
-      setPasswordCode(result.code)
-      if (result.code === 'invalid_password') {
-        setPasswordCode(undefined)
-        formApi.setFieldMeta('password', meta => ({ ...meta, errorMap: { ...meta.errorMap, onSubmit: errorMessage(result.code) } }))
-        document.getElementById('new-password')?.focus()
-      }
-    },
+    nativeError: search.form === 'password' ? search.error : undefined,
+    onSuccess: (): Promise<never> | void => next ? navigate(next) : form.resetField('password'),
   })
-  if (identity.status === 'unavailable') return <AccountUnavailable />
-  if (!account) return <CredentialsForm mode="login" />
-  return <>
-    <PageHeader title="Settings" lead={`Your account, ${account.display_name}.`} />
-    {search.return_to ? <p>{continuation ? 'Set your new password to finish and continue to Tadoku.' : errorMessage('invalid_return_to')}</p> : null}
-    <Surface as="section" className="account-status" aria-labelledby="profile-heading">
-      <SectionHeading id="profile-heading" level={2} title="Profile" description="Your display name is public. Changing your email requires a login within the last hour." />
-      <AccountFeedback code={profileCode} />
-      {saved === 'profile' ? <p role="status">Profile saved.</p> : null}
-      <profile.AppForm><profile.Form className="account-form" method="post" action="/actions/profile" onSubmitCapture={event => {
-        const values = new FormData(event.currentTarget)
-        for (const field of ['email', 'display_name'] as const) profile.setFieldValue(field, String(values.get(field) || ''))
-      }}>
-        <input type="hidden" name="return_to" value={search.return_to || ''} />
-        <profile.AppField name="display_name">{field => <field.Input id="profile-display_name" label="Display name" autoComplete="nickname" required hint="2–32 characters, including a visible character." />}</profile.AppField>
-        <profile.AppField name="email">{field => <field.Input id="profile-email" label="Email" type="email" autoComplete="email" required maxLength={320} />}</profile.AppField>
-        <profile.Subscribe selector={state => state.isSubmitting}>{pending => <Button type="submit" disabled={pending} aria-busy={pending}>{pending ? 'Saving…' : 'Save profile'}</Button>}</profile.Subscribe>
-      </profile.Form></profile.AppForm>
-    </Surface>
-    <Surface as="section" className="account-status" aria-labelledby="password-heading">
-      <SectionHeading id="password-heading" level={2} title="Password" description="Log in within the last hour, or follow a recovery link. Saving signs out your other sessions." />
-      <AccountFeedback code={passwordCode} />
-      {saved === 'password' ? <p role="status">Password saved. Your other sessions have been signed out.</p> : null}
-      <password.AppForm><password.Form className="account-form" method="post" action="/actions/password" onSubmitCapture={event => password.setFieldValue('password', String(new FormData(event.currentTarget).get('password') || ''))}>
-        <input type="hidden" name="return_to" value={search.return_to || ''} />
-        <password.AppField name="password">{field => <field.Input id="new-password" label="New password" type="password" autoComplete="new-password" required hint="At least 8 characters, at most 72 UTF-8 bytes. Avoid words from your email." />}</password.AppField>
-        <password.Subscribe selector={state => state.isSubmitting}>{pending => <Button type="submit" disabled={pending} aria-busy={pending}>{pending ? 'Saving…' : continuation ? 'Save password and continue' : 'Save password'}</Button>}</password.Subscribe>
-      </password.Form></password.AppForm>
-    </Surface>
-  </>
+  const saved = succeeded || (search.saved === 'password' && !submitted)
+  return (
+    <SettingsSection
+      id="password"
+      title="Password"
+      description="Changing it needs a login within the last hour or a recovery link, and signs you out on your other devices."
+    >
+      <form.AppForm>
+        <form.Form {...formProps} className="account-form">
+          <FormProblem problem={problem} reauthenticate={reauthenticate} />
+          <ReturnTo value={next} />
+          <input type="email" name="username" autoComplete="username" value={account.email} hidden readOnly />
+          <form.AppField name="password" validators={{ onChange: ({ value }) => passwordProblem(value) }}>
+            {field => <field.Input id={fieldId('password')} label="New password" type="password" autoComplete="new-password" required hint={passwordHint} />}
+          </form.AppField>
+          <div className="account-form__actions">
+            <Button type="submit" variant={next ? 'default' : 'outline'} loading={pending} loadingLabel="Saving">
+              {next ? 'Change password and continue' : 'Change password'}
+            </Button>
+            <Saved message={saved ? 'Password changed. Your other devices have been signed out.' : undefined} />
+          </div>
+        </form.Form>
+      </form.AppForm>
+    </SettingsSection>
+  )
+}
+
+export function Settings({ search }: { readonly search: AccountSearch }) {
+  const { origin, session } = useIdentity()
+  const pathname = useLocation({ select: location => location.pathname })
+  const account = session.account
+  if (!account) return null
+
+  const next = continuation(search.return_to, origin)
+  const here = withReturnTo(`${origin}${pathname}`, next)
+  const props: SectionProps = {
+    search,
+    account,
+    next,
+    reauthenticate: continuation(here, origin) ? withReturnTo('/login', here) : '/login',
+  }
+  return (
+    <div className="settings">
+      <PageHeader
+        title="Account settings"
+        lead={<>Logged in as <strong>{account.email}</strong></>}
+        actions={next ? (
+          <a className={buttonClassName({ variant: 'outline' })} href={next}>
+            <ArrowLeftIcon className={iconClassName('compact')} aria-hidden="true" />
+            Back to Tadoku
+          </a>
+        ) : null}
+      />
+      {search.form === 'logout' && search.error ? <div className="settings-notice"><FormProblem problem={problemFor(search.error)} /></div> : null}
+      <Surface className="settings-list">
+        <DisplayNameForm {...props} />
+        <EmailForm {...props} />
+        <PasswordForm {...props} />
+      </Surface>
+    </div>
+  )
 }

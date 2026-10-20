@@ -50,7 +50,7 @@ export function useAccountForm<V extends Values>({ operation, id, defaultValues,
         const browser = { baseUrl: api, credentials: 'include' as const, headers: { Accept: 'application/json' } }
         const result = await sendIdentity(operation, browser, body ? body(value) : value)
         if (result.ok) return
-        const problem = problemFor(result.code, value)
+        const problem = problemFor(result.code, operation, value)
         return problem.field ? { fields: { [problem.field]: problem.message } } : { form: problem, fields: {} }
       },
     },
@@ -67,7 +67,7 @@ export function useAccountForm<V extends Values>({ operation, id, defaultValues,
   const submitted = useStore(form.store, state => state.submissionAttempts > 0)
   const succeeded = useStore(form.store, state => state.isSubmitSuccessful)
   const formError = useStore(form.store, state => state.errorMap.onSubmit) as Problem | undefined
-  const problem = formError ?? (!submitted && nativeError ? problemFor(nativeError) : undefined)
+  const problem = formError ?? (!submitted && nativeError ? problemFor(nativeError, operation) : undefined)
 
   const adoptTypedValues = (event: FormEvent<HTMLFormElement>) => {
     const data = new FormData(event.currentTarget)

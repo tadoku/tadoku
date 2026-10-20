@@ -164,7 +164,7 @@ export function Settings({ search }: { readonly search: AccountSearch }) {
           </a>
         ) : null}
       />
-      {search.form === 'logout' && search.error ? <div className="settings-notice"><FormProblem problem={problemFor(search.error)} /></div> : null}
+      {search.form === 'logout' && search.error ? <div className="settings-notice"><FormProblem problem={problemFor(search.error, 'logout')} /></div> : null}
       <Surface className="settings-list">
         <DisplayNameForm {...props} />
         <EmailForm {...props} />

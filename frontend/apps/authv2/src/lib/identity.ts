@@ -101,17 +101,22 @@ export type Problem = {
   readonly reauthenticate?: boolean
 }
 
-/** Describes an identity error code. Pass the submitted values to explain a rejected password precisely. */
-export function problemFor(code: Code, values?: Record<string, string>): Problem {
-  return { code, ...describe(code, values) }
+/**
+ * Describes an identity error code from the operation that returned it. Pass the submitted values to explain a
+ * rejected password precisely.
+ */
+export function problemFor(code: Code, operation: Operation, values?: Record<string, string>): Problem {
+  return { code, ...describe(code, operation, values) }
 }
 
-function describe(code: Code, values?: Record<string, string>): Omit<Problem, 'code'> {
+function describe(code: Code, operation: Operation, values?: Record<string, string>): Omit<Problem, 'code'> {
   switch (code) {
     case 'wrong_password':
       return { message: 'That email and password don’t match. Try again, or reset your password.' }
     case 'throttled':
-      return { message: 'Too many login attempts. Wait 15 minutes, then try again.' }
+      return operation === 'register'
+        ? { message: 'Too many sign-up attempts from your network. Wait 15 minutes, then try again.' }
+        : { message: 'Too many login attempts. Wait 15 minutes, then try again.' }
     case 'email_taken':
       return { field: 'email', message: 'This email is already registered. Log in or reset your password instead.' }
     case 'stale_session':

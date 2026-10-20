@@ -3,6 +3,7 @@ package http
 import (
 	"context"
 
+	"github.com/oapi-codegen/nullable"
 	openapiTypes "github.com/oapi-codegen/runtime/types"
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
 	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
@@ -22,7 +23,7 @@ func (s *server) ImmersionContestCreate(
 			Description:             request.Body.Description,
 			Official:                request.Body.Official,
 			Private:                 request.Body.Private,
-			LanguageCodeAllowList:   request.Body.LanguageCodeAllowList,
+			LanguageCodeAllowList:   request.Body.LanguageCodeAllowList.GetOrEmpty(),
 			ActivityTypeIDAllowList: request.Body.ActivityTypeIdAllowList,
 		}
 	}
@@ -46,7 +47,7 @@ func contestResponse(item *app.Contest) openapi.ImmersionContest {
 		Deleted:                 &deleted,
 		Description:             item.Description,
 		Id:                      &item.ID,
-		LanguageCodeAllowList:   item.LanguageCodeAllowList,
+		LanguageCodeAllowList:   nullable.NewNullableWithValue(item.LanguageCodeAllowList),
 		Official:                item.Official,
 		OwnerUserDisplayName:    &item.OwnerUserDisplayName,
 		OwnerUserId:             &item.OwnerUserID,

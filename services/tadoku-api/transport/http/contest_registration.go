@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/oapi-codegen/nullable"
 	openapiTypes "github.com/oapi-codegen/runtime/types"
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
 	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
@@ -116,7 +117,7 @@ func registrationResponse(registration *app.ContestRegistration) openapi.Immersi
 	contest := registration.Contest
 	response.Contest = &openapi.ImmersionContestView{
 		AllowedActivities:    make([]openapi.ImmersionActivity, 0, len(contest.AllowedActivities)),
-		AllowedLanguages:     []openapi.ImmersionLanguage{},
+		AllowedLanguages:     nullable.NewNullableWithValue([]openapi.ImmersionLanguage{}),
 		ContestEnd:           openapiTypes.Date{Time: contest.ContestEnd},
 		ContestStart:         openapiTypes.Date{Time: contest.ContestStart},
 		Description:          contest.Description,

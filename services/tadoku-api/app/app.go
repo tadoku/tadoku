@@ -25,7 +25,7 @@ import (
 type Application struct {
 	tokens        *tokens.Service
 	deployment    tenant.Deployment
-	email         email.Reader
+	email         *email.Service
 	jobqueue      *jobqueue.Service
 	announcements *announcements.Service
 	audit         *audit.Service
@@ -47,7 +47,7 @@ type Application struct {
 type Dependencies struct {
 	Tokens        *tokens.Service
 	Deployment    tenant.Deployment
-	Email         email.Reader
+	Email         *email.Service
 	JobQueue      *jobqueue.Service
 	Announcements *announcements.Service
 	Audit         *audit.Service

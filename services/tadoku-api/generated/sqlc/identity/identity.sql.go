@@ -11,6 +11,22 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const createRecoveryToken = `-- name: CreateRecoveryToken :exec
+insert into recovery_tokens (token_hash, user_id, expires_at)
+values ($1, $2, $3)
+`
+
+type CreateRecoveryTokenParams struct {
+	TokenHash string
+	UserID    pgtype.UUID
+	ExpiresAt pgtype.Timestamptz
+}
+
+func (q *Queries) CreateRecoveryToken(ctx context.Context, arg CreateRecoveryTokenParams) error {
+	_, err := q.db.Exec(ctx, createRecoveryToken, arg.TokenHash, arg.UserID, arg.ExpiresAt)
+	return err
+}
+
 const createSession = `-- name: CreateSession :execrows
 insert into sessions (token_hash, user_id, authenticated_at, expires_at, created_at)
 select $1, a.user_id, $2, $3, $2
@@ -20,6 +36,8 @@ where a.user_id = $4
   and a.state = 'active'
   and u.deleted_at is null
   and u.deletion_locked_at is null
+  and a.password_hash = $5
+for update of a
 `
 
 type CreateSessionParams struct {
@@ -27,6 +45,7 @@ type CreateSessionParams struct {
 	AuthenticatedAt pgtype.Timestamptz
 	ExpiresAt       pgtype.Timestamptz
 	UserID          pgtype.UUID
+	PasswordHash    string
 }
 
 func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) (int64, error) {
@@ -35,6 +54,7 @@ func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) (i
 		arg.AuthenticatedAt,
 		arg.ExpiresAt,
 		arg.UserID,
+		arg.PasswordHash,
 	)
 	if err != nil {
 		return 0, err
@@ -185,6 +205,98 @@ func (q *Queries) InsertDevelopmentUser(ctx context.Context, arg InsertDevelopme
 	return err
 }
 
+const invalidateRecoveryTokens = `-- name: InvalidateRecoveryTokens :exec
+update recovery_tokens
+set used_at = $1
+where user_id = $2
+  and used_at is null
+`
+
+type InvalidateRecoveryTokensParams struct {
+	Now    pgtype.Timestamptz
+	UserID pgtype.UUID
+}
+
+func (q *Queries) InvalidateRecoveryTokens(ctx context.Context, arg InvalidateRecoveryTokensParams) error {
+	_, err := q.db.Exec(ctx, invalidateRecoveryTokens, arg.Now, arg.UserID)
+	return err
+}
+
+const lockAccount = `-- name: LockAccount :one
+select a.user_id, a.email, u.display_name, a.created_at, a.password_hash
+from accounts a
+join users u on u.tenant = a.tenant and u.id = a.user_id
+where a.user_id = $1
+  and a.state = 'active'
+  and u.deleted_at is null
+  and u.deletion_locked_at is null
+for update of a
+`
+
+type LockAccountRow struct {
+	UserID       pgtype.UUID
+	Email        string
+	DisplayName  string
+	CreatedAt    pgtype.Timestamptz
+	PasswordHash string
+}
+
+func (q *Queries) LockAccount(ctx context.Context, userID pgtype.UUID) (LockAccountRow, error) {
+	row := q.db.QueryRow(ctx, lockAccount, userID)
+	var i LockAccountRow
+	err := row.Scan(
+		&i.UserID,
+		&i.Email,
+		&i.DisplayName,
+		&i.CreatedAt,
+		&i.PasswordHash,
+	)
+	return i, err
+}
+
+const lockRecoveryAccount = `-- name: LockRecoveryAccount :one
+select a.user_id, a.email, u.display_name, a.created_at, a.password_hash
+from accounts a
+join users u on u.tenant = a.tenant and u.id = a.user_id
+where a.email_normalized = $1
+  and a.state = 'active'
+  and u.deleted_at is null
+  and u.deletion_locked_at is null
+for update of a
+`
+
+type LockRecoveryAccountRow struct {
+	UserID       pgtype.UUID
+	Email        string
+	DisplayName  string
+	CreatedAt    pgtype.Timestamptz
+	PasswordHash string
+}
+
+func (q *Queries) LockRecoveryAccount(ctx context.Context, emailNormalized string) (LockRecoveryAccountRow, error) {
+	row := q.db.QueryRow(ctx, lockRecoveryAccount, emailNormalized)
+	var i LockRecoveryAccountRow
+	err := row.Scan(
+		&i.UserID,
+		&i.Email,
+		&i.DisplayName,
+		&i.CreatedAt,
+		&i.PasswordHash,
+	)
+	return i, err
+}
+
+const recoveryAccount = `-- name: RecoveryAccount :one
+select user_id from recovery_tokens where token_hash = $1
+`
+
+func (q *Queries) RecoveryAccount(ctx context.Context, tokenHash string) (pgtype.UUID, error) {
+	row := q.db.QueryRow(ctx, recoveryAccount, tokenHash)
+	var user_id pgtype.UUID
+	err := row.Scan(&user_id)
+	return user_id, err
+}
+
 const registerAccount = `-- name: RegisterAccount :exec
 with new_user as (
   insert into users (id, display_name, created_at, updated_at)
@@ -227,4 +339,92 @@ func (q *Queries) RegisterAccount(ctx context.Context, arg RegisterAccountParams
 		arg.PasswordHash,
 	)
 	return err
+}
+
+const revokeOtherSessions = `-- name: RevokeOtherSessions :exec
+delete from sessions
+where user_id = $1
+  and token_hash <> $2
+`
+
+type RevokeOtherSessionsParams struct {
+	UserID        pgtype.UUID
+	KeepTokenHash string
+}
+
+func (q *Queries) RevokeOtherSessions(ctx context.Context, arg RevokeOtherSessionsParams) error {
+	_, err := q.db.Exec(ctx, revokeOtherSessions, arg.UserID, arg.KeepTokenHash)
+	return err
+}
+
+const updateAccountEmail = `-- name: UpdateAccountEmail :exec
+update accounts
+set email = $1, email_normalized = $1, updated_at = $2
+where user_id = $3
+`
+
+type UpdateAccountEmailParams struct {
+	Email  string
+	Now    pgtype.Timestamptz
+	UserID pgtype.UUID
+}
+
+func (q *Queries) UpdateAccountEmail(ctx context.Context, arg UpdateAccountEmailParams) error {
+	_, err := q.db.Exec(ctx, updateAccountEmail, arg.Email, arg.Now, arg.UserID)
+	return err
+}
+
+const updateAccountPassword = `-- name: UpdateAccountPassword :exec
+update accounts
+set password_hash = $1, updated_at = $2
+where user_id = $3
+`
+
+type UpdateAccountPasswordParams struct {
+	PasswordHash string
+	Now          pgtype.Timestamptz
+	UserID       pgtype.UUID
+}
+
+func (q *Queries) UpdateAccountPassword(ctx context.Context, arg UpdateAccountPasswordParams) error {
+	_, err := q.db.Exec(ctx, updateAccountPassword, arg.PasswordHash, arg.Now, arg.UserID)
+	return err
+}
+
+const updateDisplayName = `-- name: UpdateDisplayName :exec
+update users
+set display_name = $1, updated_at = $2
+where id = $3
+`
+
+type UpdateDisplayNameParams struct {
+	DisplayName string
+	Now         pgtype.Timestamp
+	UserID      pgtype.UUID
+}
+
+func (q *Queries) UpdateDisplayName(ctx context.Context, arg UpdateDisplayNameParams) error {
+	_, err := q.db.Exec(ctx, updateDisplayName, arg.DisplayName, arg.Now, arg.UserID)
+	return err
+}
+
+const useRecoveryToken = `-- name: UseRecoveryToken :execrows
+update recovery_tokens
+set used_at = $1
+where token_hash = $2
+  and used_at is null
+  and expires_at > $1
+`
+
+type UseRecoveryTokenParams struct {
+	Now       pgtype.Timestamptz
+	TokenHash string
+}
+
+func (q *Queries) UseRecoveryToken(ctx context.Context, arg UseRecoveryTokenParams) (int64, error) {
+	result, err := q.db.Exec(ctx, useRecoveryToken, arg.Now, arg.TokenHash)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }

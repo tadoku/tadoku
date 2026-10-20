@@ -705,7 +705,7 @@ type IdentityProxyUser struct {
 type IdentityRecovery struct {
 	Email openapi_types.Email `json:"email"`
 
-	// ReturnTo Must use an allowed Tadoku app host.
+	// ReturnTo Must use an allowed Tadoku app host. The complete Settings URL, including this continuation, must fit within 2,048 bytes; oversized destinations are rejected uniformly before account lookup.
 	ReturnTo string `json:"return_to"`
 }
 
@@ -1316,6 +1316,12 @@ type EmailListParams struct {
 	Cursor    *string              `form:"cursor,omitempty" json:"cursor,omitempty"`
 }
 
+// IdentityRecoveryConsumeParams defines parameters for IdentityRecoveryConsume.
+type IdentityRecoveryConsumeParams struct {
+	// ReturnTo Allowlisted continuation after Settings completion, preserved in the tenant authv2 Settings URL. Rejected before token consumption if the complete Settings URL exceeds 2048 bytes.
+	ReturnTo *string `form:"return_to,omitempty" json:"return_to,omitempty"`
+}
+
 // ImmersionContestListParams defines parameters for ImmersionContestList.
 type ImmersionContestListParams struct {
 	PageSize       *int                `form:"page_size,omitempty" json:"page_size,omitempty"`
@@ -1681,7 +1687,7 @@ type ServerInterface interface {
 	IdentityRecoveryCreate(w http.ResponseWriter, r *http.Request)
 	// IdentityRecoveryConsume Consume a recovery token and redirect to Settings
 	// (GET /identity/recovery/{token})
-	IdentityRecoveryConsume(w http.ResponseWriter, r *http.Request, token string)
+	IdentityRecoveryConsume(w http.ResponseWriter, r *http.Request, token string, params IdentityRecoveryConsumeParams)
 	// IdentityRegistrationCreate Register an account and create a session
 	// (POST /identity/registration)
 	IdentityRegistrationCreate(w http.ResponseWriter, r *http.Request)
@@ -2846,8 +2852,24 @@ func (siw *ServerInterfaceWrapper) IdentityRecoveryConsume(w http.ResponseWriter
 		return
 	}
 
+	// Parameter object where we will unmarshal all parameters from the context
+	var params IdentityRecoveryConsumeParams
+
+	// ------------- Optional query parameter "return_to" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "return_to", r.URL.Query(), &params.ReturnTo, runtime.BindQueryParameterOptions{Type: "string", Format: "uri"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "return_to"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "return_to", Err: err})
+		}
+		return
+	}
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.IdentityRecoveryConsume(w, r, token)
+		siw.Handler.IdentityRecoveryConsume(w, r, token, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -6063,7 +6085,8 @@ func (response IdentityRecoveryCreate503JSONResponse) VisitIdentityRecoveryCreat
 }
 
 type IdentityRecoveryConsumeRequestObject struct {
-	Token string `json:"token"`
+	Token  string `json:"token"`
+	Params IdentityRecoveryConsumeParams
 }
 
 type IdentityRecoveryConsumeResponseObject interface {
@@ -9724,10 +9747,11 @@ func (sh *strictHandler) IdentityRecoveryCreate(w http.ResponseWriter, r *http.R
 }
 
 // IdentityRecoveryConsume operation middleware
-func (sh *strictHandler) IdentityRecoveryConsume(w http.ResponseWriter, r *http.Request, token string) {
+func (sh *strictHandler) IdentityRecoveryConsume(w http.ResponseWriter, r *http.Request, token string, params IdentityRecoveryConsumeParams) {
 	var request IdentityRecoveryConsumeRequestObject
 
 	request.Token = token
+	request.Params = params
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.IdentityRecoveryConsume(ctx, request.(IdentityRecoveryConsumeRequestObject))

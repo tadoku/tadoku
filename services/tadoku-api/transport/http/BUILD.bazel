@@ -27,7 +27,7 @@ go_library(
         "feature_access.go",
         "feature_flags.go",
         "identity.go",
-        "identity_skeleton.go",
+        "identity_settings.go",
         "language_create.go",
         "language_update.go",
         "languages.go",

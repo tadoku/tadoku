@@ -21,7 +21,7 @@ const {
 vi.mock('@app/feature-flags/client', () => ({ useLatchedFeatureFlag }))
 
 vi.mock('@app/common/session', () => ({
-  useSession: () => [{ identity: { id: 'user-id' } }],
+  useSession: () => [{ id: 'user-id' }],
   useSessionOrRedirect: vi.fn(),
 }))
 

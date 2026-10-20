@@ -13,10 +13,13 @@ the operational holds on shared imports, read [Import Kratos accounts](./identit
 
 Registration, login, logout, session lookup and the Oathkeeper session callback
 are implemented. A tenant's `identity-v2` flag selects local accounts or Kratos;
-its safe default is `false`, including for guests. Existing profile/authz callers
-continue to use `identity.LegacyReader`.
+its safe default is `false`, including for guests. Profile and moderation callers use
+`identity.Reader`, constructed by `identity.NewReader`. It selects tenant-local
+reads or the v1 adapter from the tenant flag; callers never select the provider.
 
-Recovery, settings and account search/deletion remain skeletons returning `501`.
+Account lookup and search are implemented by the separate `ReadService` used by
+profile and moderation; the `Accounts` service's embedded Reader methods remain
+`501` stubs, as do recovery, settings and account deletion.
 Recovery requests already reject an unsafe `return_to`. [Retained email](./email.md) implements transactional templates,
 delivery, audited reads and retention; identity recovery/settings do not yet
 produce those messages.
@@ -148,6 +151,32 @@ The email gateway rule forwards `tdk_at_` bearers while preserving administrator
 cookie authentication. A token-shaped bearer on every other public route remains
 an invalid JWT.
 
-The temporary `identity.NewLegacyReader` retains read-only Kratos lookup,
-existence and cursor pagination for existing callers. Its implementation and
-provider tests live in `services/tadoku-api/features/identity/kratos/`.
+## V1 adapter
+
+`identity.NewLegacyReader` constructs the unchanged read-only Kratos adapter
+behind `LegacyReader`. Its raw implementation and provider tests live in
+`services/tadoku-api/features/identity/kratos/`. Only identity ownership and the owned Kratos fixture consume this temporary
+interface. Profile and authz receive provider-free `Reader` values. Reads do not mutate Kratos or share a profile-user snapshot across requests.
+
+V1 reads retain the user-schema filter, trait mapping, provider order and fuzzy
+search ranking. Listing reads the provider's complete cursor sequence per call,
+deduplicates IDs and rejects repeated continuation tokens; no stale snapshot is
+served after an outage. V2 reads join active accounts to undeleted users under
+the transaction-local tenant. Each reader page uses one SQL statement, orders by
+user UUID and searches display name or email with a literal case-insensitive
+substring. Cursors bind the tenant, search and last UUID. No password or token
+hash is selected.
+
+The administrator HTTP list retains numbered pages and `total_size` for
+compatibility. Its adapter walks reader pages to count matches and select the
+requested numbered page, then resolves roles only for that page. This can read
+multiple keyset pages for a large result set; the public response shape is
+unchanged.
+
+The numbered admin compatibility list uses the concrete reader's
+`ListAllAccounts` operation. A v1 request performs one complete Kratos cursor
+walk, maps and deduplicates identities in provider order, then applies the legacy
+fuzzy search and numbered page. Its snapshot exists only for that request.
+V2 traverses tenant-bound SQL keyset pages; each page is one statement joining
+active accounts to undeleted users. Frozen `Reader` and `Accounts` signatures
+remain unchanged.

@@ -225,9 +225,14 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	permissionChecker := permissions.NewKetoChecker(ketoReader)
 	roleService := permissions.NewKetoService(ketoReader)
 
+	identityReader := identity.NewReader(
+		pool,
+		kratosIdentities,
+		featureflags.NewEvaluator(fliptProvider, featureFlagMetrics),
+	)
 	authzService := featureauthz.NewService(
 		permissionChecker,
-		kratosIdentities,
+		identityReader,
 		roleService,
 		permissions.NewKetoManager(keto),
 		nil,
@@ -244,7 +249,6 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	postsRepository := posts.NewPostsRepository(pool)
 	profileRepository := profile.NewRepository(pool)
 	scoringRepository := scoring.NewScoringRepository(pool)
-	userCache := profile.NewUserCache(kratosIdentities)
 
 	announcementsService := announcements.NewService(announcementsRepository)
 	contestsService := contests.NewService(contestsRepository)
@@ -256,7 +260,7 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	logsService := logs.NewService(logsRepository, cfg.ScoringEngineEnabled)
 	pagesService := pages.NewService(pagesRepository)
 	postsService := posts.NewService(postsRepository)
-	profileService := profile.NewService(profileRepository, userCache, roleService, kratosIdentities)
+	profileService := profile.NewService(profileRepository, roleService, identityReader)
 	featureFlagService := featureflagsservice.NewService(
 		featureflags.NewEvaluator(fliptProvider, featureFlagMetrics),
 		fliptmanagement.NewClient(fliptmanagement.Config{

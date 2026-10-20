@@ -2,13 +2,10 @@ package profile
 
 import (
 	"context"
-	"errors"
 	"math"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/sahilm/fuzzy"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	requestidentity "github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
@@ -17,20 +14,17 @@ import (
 
 type Service struct {
 	repository *Repository
-	cache      *UserCache
 	roles      *permissions.KetoService
-	identities identity.LegacyReader
+	identities *identity.ReadService
 }
 
 func NewService(
 	repository *Repository,
-	cache *UserCache,
 	roles *permissions.KetoService,
-	identities identity.LegacyReader,
+	identities *identity.ReadService,
 ) *Service {
 	return &Service{
 		repository: repository,
-		cache:      cache,
 		roles:      roles,
 		identities: identities,
 	}
@@ -65,19 +59,17 @@ func (s *Service) DisplayNames(ctx context.Context, ids []uuid.UUID) (map[uuid.U
 func (s *Service) ListUsers(ctx context.Context, pageSize, page int, query string) (*UserList, error) {
 	pageSize, page = normalizeUserPage(pageSize, page)
 
-	users, err := s.cache.Users(ctx)
+	accounts, err := s.identities.ListAllAccounts(ctx, query)
 	if err != nil {
-		return nil, errx.NewUnavailableError("list users", err)
+		return nil, err
 	}
-	if query != "" {
-		users = searchUsers(users, query)
-	}
-	totalSize := len(users)
-	users = userPage(users, pageSize, page)
+
+	totalSize := len(accounts)
+	users := userPage(accounts, pageSize, page)
 
 	subjectIDs := make([]string, 0, len(users))
 	for _, user := range users {
-		subjectIDs = append(subjectIDs, user.ID)
+		subjectIDs = append(subjectIDs, user.ID.String())
 	}
 	claims, err := s.roles.RolesForSubjects(ctx, subjectIDs)
 	if err != nil {
@@ -87,16 +79,16 @@ func (s *Service) ListUsers(ctx context.Context, pageSize, page int, query strin
 	result := make([]User, 0, len(users))
 	for _, user := range users {
 		role := "user"
-		if claims[user.ID].Admin {
+		if claims[user.ID.String()].Admin {
 			role = "admin"
-		} else if claims[user.ID].Banned {
+		} else if claims[user.ID.String()].Banned {
 			role = "banned"
 		}
 		result = append(result, User{
-			ID:          user.ID,
-			DisplayName: user.DisplayName,
-			Email:       user.Email,
-			CreatedAt:   user.CreatedAt,
+			ID:          user.ID.String(),
+			DisplayName: user.DisplayName.String(),
+			Email:       user.Email.String(),
+			CreatedAt:   formatAccountCreatedAt(user.CreatedAt),
 			Role:        role,
 		})
 	}
@@ -117,34 +109,14 @@ func normalizeUserPage(pageSize, page int) (int, int) {
 	return pageSize, page
 }
 
-type userSearchSource []cachedUser
-
-func (s userSearchSource) String(i int) string {
-	return strings.ToLower(s[i].DisplayName + " " + s[i].Email)
-}
-
-func (s userSearchSource) Len() int {
-	return len(s)
-}
-
-func searchUsers(users []cachedUser, query string) []cachedUser {
-	matches := fuzzy.FindFrom(strings.ToLower(query), userSearchSource(users))
-
-	result := make([]cachedUser, 0, len(matches))
-	for _, match := range matches {
-		result = append(result, users[match.Index])
-	}
-	return result
-}
-
-func userPage(users []cachedUser, pageSize, page int) []cachedUser {
+func userPage(users []identity.Account, pageSize, page int) []identity.Account {
 	offset := int64(page)
 	if offset > math.MaxInt64/int64(pageSize) {
-		return []cachedUser{}
+		return []identity.Account{}
 	}
 	offset *= int64(pageSize)
 	if offset >= int64(len(users)) {
-		return []cachedUser{}
+		return []identity.Account{}
 	}
 
 	start := int(offset)
@@ -153,40 +125,24 @@ func userPage(users []cachedUser, pageSize, page int) []cachedUser {
 }
 
 func (s *Service) FindProfile(ctx context.Context, userID uuid.UUID) (*PublicProfile, error) {
-	identity, err := s.identities.FetchIdentity(ctx, userID)
-	if err != nil {
-		return nil, mapIdentityFetchError(err)
-	}
-	if identity.GetSchemaId() != "user" {
-		return nil, ErrIdentityNotFound
-	}
-
-	traits, err := decodeIdentityTraits(identity.GetTraits())
+	account, err := s.identities.FindAccount(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
-
-	return &PublicProfile{
-		DisplayName: traits.DisplayName,
-		CreatedAt:   identity.GetCreatedAt(),
-	}, nil
+	return &PublicProfile{DisplayName: account.DisplayName.String(), CreatedAt: account.CreatedAt}, nil
 }
 
 func (s *Service) FetchAccountCreatedAt(ctx context.Context, userID uuid.UUID) (time.Time, error) {
-	identity, err := s.identities.FetchIdentity(ctx, userID)
+	account, err := s.identities.FindAccount(ctx, userID)
 	if err != nil {
-		return time.Time{}, mapIdentityFetchError(err)
+		return time.Time{}, err
 	}
-	if identity.GetSchemaId() != "user" {
-		return time.Time{}, ErrIdentityNotFound
-	}
-
-	return identity.GetCreatedAt(), nil
+	return account.CreatedAt, nil
 }
 
-func mapIdentityFetchError(err error) error {
-	if errors.Is(err, identity.ErrLegacyNotFound) {
-		return ErrIdentityNotFound
+func formatAccountCreatedAt(value time.Time) string {
+	if value.IsZero() {
+		return ""
 	}
-	return errx.NewUnavailableError("fetch identity", err)
+	return value.UTC().Format("2006-01-02T15:04:05Z")
 }

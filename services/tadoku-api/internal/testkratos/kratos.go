@@ -399,3 +399,13 @@ func (fixture *Fixture) logs() string {
 	data, _ := io.ReadAll(io.LimitReader(file, 8192))
 	return "\nKratos logs:\n" + string(data)
 }
+
+func (fixture *Fixture) ExpireOwnedSessions(ctx context.Context) (err error) {
+	db, err := sql.Open("sqlite3", "file:"+fixture.databasePath()+"?_foreign_keys=on&_busy_timeout=1000")
+	if err != nil {
+		return err
+	}
+	defer func() { err = errors.Join(err, db.Close()) }()
+	_, err = db.ExecContext(ctx, "update sessions set expires_at=?", time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC))
+	return err
+}

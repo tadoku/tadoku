@@ -296,7 +296,7 @@ func resetJourney(t *testing.T, s *suite, directory string) {
 			t.Fatal(err)
 		}
 	}
-	s.resetProfileCaches()
+	s.resetProfileService()
 }
 
 func runRequestStep(t *testing.T, s *suite, handler http.Handler, directory string, current step, tokens map[member]string) {

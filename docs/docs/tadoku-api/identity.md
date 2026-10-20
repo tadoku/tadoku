@@ -14,7 +14,7 @@ the operational holds on shared imports, read [Import Kratos accounts](./identit
 Registration, login, logout, session lookup, recovery, profile/password settings
 and the Oathkeeper session callback are implemented. A tenant's `identity-v2`
 flag selects local accounts or Kratos, including for guests, as described in
-[Account-app selection](#account-app-selection). Profile and moderation callers
+[Account-app selection](./identity-selection.md). Profile and moderation callers
 use `identity.Reader`, constructed by `identity.NewReader`. It selects
 tenant-local reads or the v1 adapter from the same decision; callers never
 select the provider.
@@ -25,43 +25,6 @@ account deletion remain `501` stubs. V1 tenants continue to use the existing
 Kratos account frontend for registration, recovery and settings.
 [Retained email](./email.md) provides recovery messages and old-address notices
 through transactional writes and queue publication.
-
-## Account-app selection
-
-Every identity operation selects its provider from one evaluation of the
-tenant's `identity-v2` flag: registration, login, logout, session lookup, the
-Oathkeeper callback, recovery, settings and every `Reader` lookup.
-
-| Flag evaluation | Selection |
-| --- | --- |
-| `true` from the current or last fetched snapshot | v2 tenant-local accounts |
-| `false` from the current or last fetched snapshot | v1 Kratos |
-| Flag absent from the fetched canonical `tadoku/prod` snapshot the client evaluated | The flag's safe default, `false` (v1) |
-| Flag absent from a test tenant's fetched snapshot | Unavailable |
-| No fetched snapshot, Flipt disabled, provider error or invalid response | Unavailable |
-| Request canceled or past its deadline | The request's context error |
-
-Only the canonical tenant may use the safe default, because production Flipt
-need not declare the flag before the switch. Tenant provisioning always creates
-`identity-v2`, so a test tenant without it has lost its namespace; rerun the
-tenant task. The tenant comes from the verified request context, never from a
-host or cookie name.
-
-A running client keeps evaluating its last fetched snapshot through Flipt
-outages and namespace deletion. A client without one, such as after an API
-restart, a startup timeout or a new or evicted test-tenant client, cannot
-decide until it starts from a fetched snapshot. A snapshot that has been
-received but not yet applied, that the evaluation engine rejected, or that a
-client fetched only after its initial fetch failed, does not count.
-
-An undecided selection never falls back to the other provider. It makes no
-Kratos call, revokes nothing and sets no cookie. Identity routes return `503`
-with `{"message":"identity service unavailable"}`, `504` when the request
-deadline expired and `499` when the client canceled. The callback returns the
-same statuses, so Oathkeeper denies the request instead of admitting a guest or
-a Kratos identity. Logout reports the failure instead of `204`, and the native
-session stays valid until a retry succeeds. Profile, moderation and ban-target
-reads fail the same way.
 
 ## HTTP boundaries
 

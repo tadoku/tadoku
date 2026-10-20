@@ -148,7 +148,7 @@ rejected; path prefixes are supported and trailing slashes are removed.
   identity provider selection unavailable for the affected tenants, including
   `tadoku/prod` when Flipt is disabled. See
   [Feature flags](../architecture/feature-flags.md) and
-  [Account-app selection](./identity.md#account-app-selection).
+  [Account-app selection](./identity-selection.md).
 
 ### Scoring engine
 

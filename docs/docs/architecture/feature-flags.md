@@ -81,7 +81,7 @@ flag; `Boolean` still serves the safe default.
 
 `IdentityV2` (`identity-v2`) has the safe default `false`. Only the identity
 feature evaluates it; see
-[Account-app selection](../tadoku-api/identity.md#account-app-selection). It is
+[Account-app selection](../tadoku-api/identity-selection.md). It is
 declared in webv2 but is not added to the public decisions response. The browser
 schema supplies `false` when that internal decision is absent. Account-app
 selection belongs to the identity session contract rather than the public

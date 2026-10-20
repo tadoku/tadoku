@@ -13,13 +13,13 @@ export const zAuthzUserRole = z.object({
 
 export const zAuthzRoleUpdateRequest = z.object({
     role: z.enum(['user', 'banned']),
-    reason: z.string()
+    reason: z.string().regex(/^[\s\S]{1,1000}$/u)
 });
 
 export const zAuthzPermissionCheckRequest = z.object({
-    namespace: z.string(),
-    object: z.string(),
-    relation: z.string()
+    namespace: z.string().regex(/^[\s\S]{1,}$/u),
+    object: z.string().regex(/^[\s\S]{1,}$/u),
+    relation: z.string().regex(/^[\s\S]{1,}$/u)
 });
 
 export const zAuthzPermissionCheckResponse = z.object({
@@ -27,32 +27,32 @@ export const zAuthzPermissionCheckResponse = z.object({
 });
 
 export const zContentPage = z.object({
-    id: z.string().optional(),
+    id: z.string().uuid().optional(),
     slug: z.string(),
     title: z.string(),
     html: z.string().optional(),
-    published_at: z.string().optional(),
-    created_at: z.string().optional(),
-    updated_at: z.string().optional()
+    published_at: z.string().datetime({ offset: true }).optional(),
+    created_at: z.string().datetime({ offset: true }).optional(),
+    updated_at: z.string().datetime({ offset: true }).optional()
 });
 
 export const zContentPost = z.object({
-    id: z.string().optional(),
+    id: z.string().uuid().optional(),
     namespace: z.string().optional(),
     slug: z.string(),
     title: z.string(),
     content: z.string(),
-    published_at: z.string().optional(),
-    created_at: z.string().optional(),
-    updated_at: z.string().optional()
+    published_at: z.string().datetime({ offset: true }).optional(),
+    created_at: z.string().datetime({ offset: true }).optional(),
+    updated_at: z.string().datetime({ offset: true }).optional()
 });
 
 export const zContentPageVersion = z.object({
-    id: z.string(),
+    id: z.string().uuid(),
     version: z.number().int(),
     title: z.string(),
     html: z.string().optional(),
-    created_at: z.string()
+    created_at: z.string().datetime({ offset: true })
 });
 
 export const zContentPageVersions = z.object({
@@ -60,11 +60,11 @@ export const zContentPageVersions = z.object({
 });
 
 export const zContentPostVersion = z.object({
-    id: z.string(),
+    id: z.string().uuid(),
     version: z.number().int(),
     title: z.string(),
     content: z.string().optional(),
-    created_at: z.string()
+    created_at: z.string().datetime({ offset: true })
 });
 
 export const zContentPostVersions = z.object({
@@ -72,7 +72,7 @@ export const zContentPostVersions = z.object({
 });
 
 export const zContentAnnouncement = z.object({
-    id: z.string().optional(),
+    id: z.string().uuid().optional(),
     namespace: z.string().optional(),
     title: z.string(),
     content: z.string(),
@@ -82,11 +82,11 @@ export const zContentAnnouncement = z.object({
         'error',
         'info'
     ]),
-    href: z.string().nullish(),
-    starts_at: z.string(),
-    ends_at: z.string(),
-    created_at: z.string().optional(),
-    updated_at: z.string().optional()
+    href: z.string().regex(/^[\s\S]{0,2048}$/u).nullish(),
+    starts_at: z.string().datetime({ offset: true }),
+    ends_at: z.string().datetime({ offset: true }),
+    created_at: z.string().datetime({ offset: true }).optional(),
+    updated_at: z.string().datetime({ offset: true }).optional()
 });
 
 export const zContentAnnouncements = z.object({
@@ -99,15 +99,15 @@ export const zContentPaginatedList = z.object({
 });
 
 export const zContentPages = zContentPaginatedList.and(z.object({
-    pages: z.array(zContentPage)
+    pages: z.array(zContentPage).max(100)
 }));
 
 export const zContentPosts = zContentPaginatedList.and(z.object({
-    posts: z.array(zContentPost)
+    posts: z.array(zContentPost).max(100)
 }));
 
 export const zContentAnnouncementList = zContentPaginatedList.and(z.object({
-    announcements: z.array(zContentAnnouncement)
+    announcements: z.array(zContentAnnouncement).max(100)
 }));
 
 export const zImmersionErrorResponse = z.object({
@@ -132,17 +132,17 @@ export const zImmersionFeatureAccessResponse = z.object({
         'production',
         'test'
     ]),
-    revision: z.string()
+    revision: z.string().regex(/^[0-9a-f]{40}$/)
 }).strict();
 
 export const zImmersionUserProfile = z.object({
-    id: z.string(),
+    id: z.string().uuid(),
     display_name: z.string(),
-    created_at: z.string()
+    created_at: z.string().datetime({ offset: true })
 });
 
 export const zImmersionUserActivityScore = z.object({
-    date: z.string(),
+    date: z.string().date(),
     score: z.number()
 });
 
@@ -162,7 +162,7 @@ export const zImmersionActivitySplit = z.object({
 });
 
 export const zImmersionUnit = z.object({
-    id: z.string(),
+    id: z.string().uuid(),
     unit_key: z.string(),
     log_activity_id: z.number().int(),
     name: z.string(),
@@ -193,7 +193,7 @@ export const zImmersionLanguages = z.object({
 });
 
 export const zImmersionActivity = z.object({
-    id: z.number().int(),
+    id: z.number().int().min(-2147483648, { message: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' }),
     name: z.string(),
     default: z.boolean().optional(),
     input_type: z.enum(['amount_primary', 'time_primary']).optional()
@@ -213,24 +213,24 @@ export const zImmersionContestConfigurationOptions = zImmersionLanguages.and(zIm
 }));
 
 export const zImmersionContestBase = z.object({
-    id: z.string().optional(),
+    id: z.string().uuid().optional(),
     title: z.string(),
     description: z.string().optional(),
-    contest_start: z.string(),
-    contest_end: z.string(),
-    registration_end: z.string(),
+    contest_start: z.string().date(),
+    contest_end: z.string().date(),
+    registration_end: z.string().date(),
     private: z.boolean(),
     official: z.boolean(),
-    owner_user_id: z.string().optional(),
+    owner_user_id: z.string().uuid().optional(),
     owner_user_display_name: z.string().optional(),
-    created_at: z.string().optional(),
-    updated_at: z.string().optional(),
+    created_at: z.string().datetime({ offset: true }).optional(),
+    updated_at: z.string().datetime({ offset: true }).optional(),
     deleted: z.boolean().optional()
 });
 
 export const zImmersionContest = zImmersionContestBase.and(z.object({
     language_code_allow_list: z.array(z.string()).nullable(),
-    activity_type_id_allow_list: z.array(z.number().int())
+    activity_type_id_allow_list: z.array(z.number().int().min(-2147483648, { message: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' }))
 }));
 
 export const zImmersionContestView = zImmersionContestBase.and(z.object({
@@ -245,18 +245,18 @@ export const zImmersionContestSummary = z.object({
 });
 
 export const zImmersionContestRegistration = z.object({
-    id: z.string().optional(),
-    contest_id: z.string(),
-    user_id: z.string(),
+    id: z.string().uuid().optional(),
+    contest_id: z.string().uuid(),
+    user_id: z.string().uuid(),
     user_display_name: z.string(),
     languages: z.array(zImmersionLanguage),
     contest: zImmersionContestView.optional()
 });
 
 export const zImmersionContestRegistrationReference = z.object({
-    registration_id: z.string(),
-    contest_id: z.string(),
-    contest_end: z.string(),
+    registration_id: z.string().uuid(),
+    contest_id: z.string().uuid(),
+    contest_end: z.string().date(),
     title: z.string(),
     owner_user_display_name: z.string().optional(),
     official: z.boolean().optional(),
@@ -265,7 +265,7 @@ export const zImmersionContestRegistrationReference = z.object({
 
 export const zImmersionLeaderboardEntry = z.object({
     rank: z.number().int(),
-    user_id: z.string(),
+    user_id: z.string().uuid(),
     user_display_name: z.string(),
     score: z.number(),
     is_tie: z.boolean()
@@ -278,20 +278,20 @@ export const zImmersionScore = z.object({
 });
 
 export const zImmersionAppliedScoringRule = z.object({
-    rule_id: z.string(),
+    rule_id: z.string().uuid(),
     rate: z.number()
 });
 
 export const zImmersionScoreEstimate = z.object({
     score: z.number(),
     source: z.enum(['amount', 'duration_minutes']),
-    rule_set_id: z.string().optional(),
+    rule_set_id: z.string().uuid().optional(),
     rules: z.array(zImmersionAppliedScoringRule)
 });
 
 export const zImmersionContestScoreEstimate = z.object({
-    registration_id: z.string(),
-    contest_id: z.string(),
+    registration_id: z.string().uuid(),
+    contest_id: z.string().uuid(),
     estimate: zImmersionScoreEstimate
 });
 
@@ -301,10 +301,10 @@ export const zImmersionScorePreview = z.object({
 });
 
 export const zImmersionScoringRule = z.object({
-    id: z.string().optional(),
-    priority: z.number().int(),
+    id: z.string().uuid().optional(),
+    priority: z.number().int().min(-2147483648, { message: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' }),
     stackable: z.boolean(),
-    activity_id: z.number().int(),
+    activity_id: z.number().int().min(-2147483648, { message: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' }),
     unit_key: z.string().optional(),
     language_code: z.string().optional(),
     tag: z.string().optional(),
@@ -314,22 +314,22 @@ export const zImmersionScoringRule = z.object({
 
 export const zImmersionScoringRuleSetDraft = z.object({
     mode: z.enum(['override', 'replace']).optional(),
-    fallback_rule_set_id: z.string().optional(),
+    fallback_rule_set_id: z.string().uuid().optional(),
     rules: z.array(zImmersionScoringRule)
 });
 
 export const zImmersionScoringRuleSet = z.object({
-    id: z.string(),
+    id: z.string().uuid(),
     scope: z.enum(['platform', 'contest']),
-    contest_id: z.string().optional(),
-    version: z.number().int(),
+    contest_id: z.string().uuid().optional(),
+    version: z.number().int().min(-2147483648, { message: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' }),
     status: z.enum(['draft', 'published']),
     active: z.boolean(),
     mode: z.enum(['override', 'replace']).optional(),
-    fallback_rule_set_id: z.string().optional(),
+    fallback_rule_set_id: z.string().uuid().optional(),
     rules: z.array(zImmersionScoringRule),
-    created_at: z.string(),
-    published_at: z.string().optional()
+    created_at: z.string().datetime({ offset: true }),
+    published_at: z.string().datetime({ offset: true }).optional()
 });
 
 export const zImmersionScoringRuleSets = z.object({
@@ -348,7 +348,7 @@ export const zImmersionContestProfileScores = zImmersionProfileScores.and(z.obje
 }));
 
 export const zImmersionContestProfileActivityRow = z.object({
-    date: z.string(),
+    date: z.string().date(),
     language_code: z.string(),
     score: z.number()
 });
@@ -358,22 +358,22 @@ export const zImmersionContestProfileActivity = z.object({
 });
 
 export const zImmersionLog = z.object({
-    id: z.string(),
-    user_id: z.string(),
+    id: z.string().uuid(),
+    user_id: z.string().uuid(),
     user_display_name: z.string().optional(),
     description: z.string().optional(),
     language: zImmersionLanguage,
     activity: zImmersionActivity,
-    unit_id: z.string(),
+    unit_id: z.string().uuid(),
     unit_key: z.string().optional(),
     unit_name: z.string(),
     tags: z.array(z.string()),
     amount: z.number(),
     modifier: z.number(),
     score: z.number(),
-    duration_seconds: z.number().int().optional(),
+    duration_seconds: z.number().int().min(-2147483648, { message: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
     registrations: z.array(zImmersionContestRegistrationReference).optional(),
-    created_at: z.string(),
+    created_at: z.string().datetime({ offset: true }),
     deleted: z.boolean()
 });
 
@@ -381,15 +381,15 @@ export const zImmersionLog = z.object({
  * CSV columns follow the property order listed here.
  */
 export const zImmersionLogExportEntry = z.object({
-    id: z.string(),
-    created_at: z.string(),
+    id: z.string().uuid(),
+    created_at: z.string().datetime({ offset: true }),
     language_code: z.string(),
     language_name: z.string(),
-    activity_id: z.number().int(),
+    activity_id: z.number().int().min(-2147483648, { message: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' }),
     activity_name: z.string(),
     amount: z.number().nullable(),
     unit_name: z.string().nullable(),
-    duration_seconds: z.number().int().nullable(),
+    duration_seconds: z.number().int().min(-2147483648, { message: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' }).nullable(),
     score: z.number(),
     tags: z.array(z.string()),
     description: z.string().nullable()
@@ -405,7 +405,7 @@ export const zImmersionPaginatedList = z.object({
 });
 
 export const zImmersionContests = zImmersionPaginatedList.and(z.object({
-    contests: z.array(zImmersionContest)
+    contests: z.array(zImmersionContest).max(100)
 }));
 
 export const zImmersionContestRegistrations = zImmersionPaginatedList.and(z.object({
@@ -434,7 +434,7 @@ export const zProfileUserList = z.object({
 });
 
 export const zIdentityErrorResponse = z.object({
-    message: z.string(),
+    message: z.string().regex(/^[\s\S]{0,1000}$/u),
     code: z.enum([
         'wrong_password',
         'throttled',
@@ -452,11 +452,11 @@ export const zIdentityErrorResponse = z.object({
 });
 
 export const zIdentityAccount = z.object({
-    id: z.string(),
-    email: z.string(),
-    display_name: z.string(),
-    created_at: z.string(),
-    authenticated_at: z.string()
+    id: z.string().uuid().regex(/^[\s\S]{0,36}$/u),
+    email: z.string().regex(/^.+@[^\s@]+$/).regex(/^[\s\S]{0,320}$/u),
+    display_name: z.string().regex(/^[\s\S]{2,32}$/u),
+    created_at: z.string().datetime({ offset: true }),
+    authenticated_at: z.string().datetime({ offset: true })
 });
 
 export const zIdentitySession = z.object({
@@ -465,32 +465,32 @@ export const zIdentitySession = z.object({
 });
 
 export const zIdentityRegistration = z.object({
-    email: z.string(),
-    display_name: z.string(),
-    password: z.string()
+    email: z.string().regex(/^.+@[^\s@]+$/).regex(/^[\s\S]{0,320}$/u),
+    display_name: z.string().regex(/^[\s\S]{2,32}$/u),
+    password: z.string().regex(/^[\s\S]{8,72}$/u)
 });
 
 export const zIdentityLogin = z.object({
-    email: z.string(),
-    password: z.string()
+    email: z.string().regex(/^.+@[^\s@]+$/).regex(/^[\s\S]{0,320}$/u),
+    password: z.string().regex(/^[\s\S]{8,72}$/u)
 });
 
 export const zIdentityRecovery = z.object({
-    email: z.string(),
-    return_to: z.string()
+    email: z.string().regex(/^.+@[^\s@]+$/).regex(/^[\s\S]{0,320}$/u),
+    return_to: z.string().url().regex(/^[\s\S]{0,2048}$/u)
 });
 
 export const zIdentityProfileSettings = z.object({
-    email: z.string().optional(),
-    display_name: z.string().optional()
+    email: z.string().regex(/^.+@[^\s@]+$/).regex(/^[\s\S]{0,320}$/u).optional(),
+    display_name: z.string().regex(/^[\s\S]{2,32}$/u).optional()
 });
 
 export const zIdentityPasswordSettings = z.object({
-    password: z.string()
+    password: z.string().regex(/^[\s\S]{8,72}$/u)
 });
 
 export const zEmailErrorResponse = z.object({
-    message: z.string()
+    message: z.string().regex(/^[\s\S]{0,1000}$/u)
 });
 
 export const zEmailStatus = z.enum([
@@ -501,23 +501,23 @@ export const zEmailStatus = z.enum([
 ]);
 
 export const zEmailMessage = z.object({
-    id: z.string(),
-    tenant: z.string(),
-    template: z.string(),
-    recipient: z.string(),
-    subject: z.string(),
-    body: z.string(),
-    params: z.record(z.string()),
+    id: z.string().uuid().regex(/^[\s\S]{0,36}$/u),
+    tenant: z.string().regex(/^[\s\S]{0,113}$/u),
+    template: z.string().regex(/^[\s\S]{0,100}$/u),
+    recipient: z.string().regex(/^.+@[^\s@]+$/).regex(/^[\s\S]{0,320}$/u),
+    subject: z.string().regex(/^[\s\S]{0,1000}$/u),
+    body: z.string().regex(/^[\s\S]{0,262144}$/u),
+    params: z.record(z.string().regex(/^[\s\S]{0,4096}$/u)),
     status: zEmailStatus,
-    sent_at: z.string().nullable(),
-    provider_message_id: z.string().nullable(),
-    error: z.string().nullable(),
-    created_at: z.string()
+    sent_at: z.string().datetime({ offset: true }).nullable(),
+    provider_message_id: z.string().regex(/^[\s\S]{0,1000}$/u).nullable(),
+    error: z.string().regex(/^[\s\S]{0,4096}$/u).nullable(),
+    created_at: z.string().datetime({ offset: true })
 });
 
 export const zEmailList = z.object({
-    emails: z.array(zEmailMessage),
-    next_cursor: z.string().nullable()
+    emails: z.array(zEmailMessage).max(100),
+    next_cursor: z.string().regex(/^[\s\S]{0,2048}$/u).nullable()
 });
 
 /**
@@ -528,7 +528,7 @@ export const zAuthzRoleGetResponse = zAuthzUserRole;
 export const zAuthzRoleUpdateBody = zAuthzRoleUpdateRequest;
 
 export const zAuthzRoleUpdatePath = z.object({
-    id: z.string()
+    id: z.string().uuid()
 });
 
 export const zAuthzPermissionCheckBody = zAuthzPermissionCheckRequest;
@@ -609,7 +609,7 @@ export const zContentPageVersionListResponse = zContentPageVersions;
 export const zContentPageVersionGetPath = z.object({
     namespace: z.string(),
     id: z.string(),
-    contentId: z.string()
+    contentId: z.string().uuid()
 });
 
 /**
@@ -688,7 +688,7 @@ export const zContentPostVersionListResponse = zContentPostVersions;
 export const zContentPostVersionGetPath = z.object({
     namespace: z.string(),
     id: z.string(),
-    contentId: z.string()
+    contentId: z.string().uuid()
 });
 
 /**
@@ -767,7 +767,7 @@ export const zImmersionContestListQuery = z.object({
     page: z.number().int().optional(),
     include_deleted: z.boolean().optional(),
     official: z.boolean().optional(),
-    user_id: z.string().optional()
+    user_id: z.string().uuid().optional()
 });
 
 /**
@@ -783,7 +783,7 @@ export const zImmersionContestCreateBody = zImmersionContest;
 export const zImmersionContestCreateResponse = zImmersionContest;
 
 export const zImmersionContestFindByIdPath = z.object({
-    id: z.string()
+    id: z.string().uuid()
 });
 
 /**
@@ -797,7 +797,7 @@ export const zImmersionContestFindByIdResponse = zImmersionContestView;
 export const zImmersionContestFindLatestOfficialResponse = zImmersionContestView;
 
 export const zImmersionContestFindRegistrationPath = z.object({
-    id: z.string()
+    id: z.string().uuid()
 });
 
 export const zImmersionContestFindRegistrationResponse = z.union([
@@ -810,18 +810,18 @@ export const zImmersionContestRegistrationUpsertBody = z.object({
 });
 
 export const zImmersionContestRegistrationUpsertPath = z.object({
-    id: z.string()
+    id: z.string().uuid()
 });
 
 export const zImmersionContestFetchLeaderboardPath = z.object({
-    id: z.string()
+    id: z.string().uuid()
 });
 
 export const zImmersionContestFetchLeaderboardQuery = z.object({
     page_size: z.number().int().optional(),
     page: z.number().int().optional(),
     language_code: z.string().optional(),
-    activity_id: z.number().int().optional()
+    activity_id: z.number().int().min(-2147483648, { message: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' }).optional()
 });
 
 /**
@@ -830,7 +830,7 @@ export const zImmersionContestFetchLeaderboardQuery = z.object({
 export const zImmersionContestFetchLeaderboardResponse = zImmersionLeaderboard;
 
 export const zImmersionContestFetchSummaryPath = z.object({
-    id: z.string()
+    id: z.string().uuid()
 });
 
 /**
@@ -839,14 +839,14 @@ export const zImmersionContestFetchSummaryPath = z.object({
 export const zImmersionContestFetchSummaryResponse = zImmersionContestSummary;
 
 export const zImmersionContestListLogsPath = z.object({
-    id: z.string()
+    id: z.string().uuid()
 });
 
 export const zImmersionContestListLogsQuery = z.object({
     include_deleted: z.boolean().optional(),
     page_size: z.number().int().optional(),
     page: z.number().int().optional(),
-    user_id: z.string().optional()
+    user_id: z.string().uuid().optional()
 });
 
 /**
@@ -855,17 +855,17 @@ export const zImmersionContestListLogsQuery = z.object({
 export const zImmersionContestListLogsResponse = zImmersionLogs;
 
 export const zImmersionContestModerationDetachLogBody = z.object({
-    reason: z.string()
+    reason: z.string().regex(/^[\s\S]{1,1000}$/u)
 });
 
 export const zImmersionContestModerationDetachLogPath = z.object({
-    id: z.string(),
-    log_id: z.string()
+    id: z.string().uuid(),
+    log_id: z.string().uuid()
 });
 
 export const zImmersionContestProfileFetchScoresPath = z.object({
-    id: z.string(),
-    user_id: z.string()
+    id: z.string().uuid(),
+    user_id: z.string().uuid()
 });
 
 /**
@@ -874,8 +874,8 @@ export const zImmersionContestProfileFetchScoresPath = z.object({
 export const zImmersionContestProfileFetchScoresResponse = zImmersionContestProfileScores;
 
 export const zImmersionContestProfileFetchActivityPath = z.object({
-    id: z.string(),
-    user_id: z.string()
+    id: z.string().uuid(),
+    user_id: z.string().uuid()
 });
 
 /**
@@ -894,13 +894,13 @@ export const zImmersionContestFindOngoingRegistrationsResponse = zImmersionConte
 export const zImmersionContestGetConfigurationsResponse = zImmersionContestConfigurationOptions;
 
 export const zImmersionLogCreateBody = z.object({
-    registration_ids: z.array(z.string()).optional(),
+    registration_ids: z.array(z.string().uuid()).optional(),
     language_code: z.string(),
-    activity_id: z.number().int(),
+    activity_id: z.number().int().min(-2147483648, { message: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' }),
     amount: z.number().optional(),
-    unit_id: z.string().optional(),
+    unit_id: z.string().uuid().optional(),
     unit_key: z.string().optional(),
-    duration_seconds: z.number().int().optional(),
+    duration_seconds: z.number().int().min(-2147483648, { message: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
     tags: z.array(z.string()),
     description: z.string().optional()
 });
@@ -920,13 +920,13 @@ export const zImmersionLogExportQuery = z.object({
 export const zImmersionLogExportResponse = zImmersionLogExport;
 
 export const zImmersionScorePreviewBody = z.object({
-    registration_ids: z.array(z.string()).optional(),
+    registration_ids: z.array(z.string().uuid()).optional(),
     language_code: z.string(),
-    activity_id: z.number().int(),
+    activity_id: z.number().int().min(-2147483648, { message: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' }),
     amount: z.number().optional(),
-    unit_id: z.string().optional(),
+    unit_id: z.string().uuid().optional(),
     unit_key: z.string().optional(),
-    duration_seconds: z.number().int().optional(),
+    duration_seconds: z.number().int().min(-2147483648, { message: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
     tags: z.array(z.string())
 });
 
@@ -936,11 +936,11 @@ export const zImmersionScorePreviewBody = z.object({
 export const zImmersionScorePreviewResponse = zImmersionScorePreview;
 
 export const zImmersionLogDeleteByIdPath = z.object({
-    id: z.string()
+    id: z.string().uuid()
 });
 
 export const zImmersionLogFindByIdPath = z.object({
-    id: z.string()
+    id: z.string().uuid()
 });
 
 /**
@@ -950,15 +950,15 @@ export const zImmersionLogFindByIdResponse = zImmersionLog;
 
 export const zImmersionLogUpdateBody = z.object({
     amount: z.number().optional(),
-    unit_id: z.string().optional(),
+    unit_id: z.string().uuid().optional(),
     unit_key: z.string().optional(),
-    duration_seconds: z.number().int().optional(),
+    duration_seconds: z.number().int().min(-2147483648, { message: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
     tags: z.array(z.string()),
     description: z.string().optional()
 });
 
 export const zImmersionLogUpdatePath = z.object({
-    id: z.string()
+    id: z.string().uuid()
 });
 
 /**
@@ -967,11 +967,11 @@ export const zImmersionLogUpdatePath = z.object({
 export const zImmersionLogUpdateResponse = zImmersionLog;
 
 export const zImmersionLogContestRegistrationUpdateBody = z.object({
-    registration_ids: z.array(z.string())
+    registration_ids: z.array(z.string().uuid())
 });
 
 export const zImmersionLogContestRegistrationUpdatePath = z.object({
-    id: z.string()
+    id: z.string().uuid()
 });
 
 /**
@@ -994,7 +994,7 @@ export const zImmersionLogTagSuggestionsQuery = z.object({
 export const zImmersionLogTagSuggestionsResponse = zImmersionTagSuggestions;
 
 export const zImmersionProfileFindByUserIdPath = z.object({
-    userId: z.string()
+    userId: z.string().uuid()
 });
 
 /**
@@ -1003,7 +1003,7 @@ export const zImmersionProfileFindByUserIdPath = z.object({
 export const zImmersionProfileFindByUserIdResponse = zImmersionUserProfile;
 
 export const zImmersionProfileYearlyActivityByUserIdPath = z.object({
-    userId: z.string(),
+    userId: z.string().uuid(),
     year: z.number().int()
 });
 
@@ -1013,7 +1013,7 @@ export const zImmersionProfileYearlyActivityByUserIdPath = z.object({
 export const zImmersionProfileYearlyActivityByUserIdResponse = zImmersionUserActivity;
 
 export const zImmersionProfileYearlyScoresByUserIdPath = z.object({
-    userId: z.string(),
+    userId: z.string().uuid(),
     year: z.number().int()
 });
 
@@ -1023,14 +1023,14 @@ export const zImmersionProfileYearlyScoresByUserIdPath = z.object({
 export const zImmersionProfileYearlyScoresByUserIdResponse = zImmersionProfileScores;
 
 export const zImmersionProfileListLogsPath = z.object({
-    user_id: z.string()
+    user_id: z.string().uuid()
 });
 
 export const zImmersionProfileListLogsQuery = z.object({
     include_deleted: z.boolean().optional(),
     page_size: z.number().int().optional(),
     page: z.number().int().optional(),
-    date: z.string().optional()
+    date: z.string().date().optional()
 });
 
 /**
@@ -1039,7 +1039,7 @@ export const zImmersionProfileListLogsQuery = z.object({
 export const zImmersionProfileListLogsResponse = zImmersionLogs;
 
 export const zImmersionProfileYearlyContestRegistrationsByUserIdPath = z.object({
-    userId: z.string(),
+    userId: z.string().uuid(),
     year: z.number().int()
 });
 
@@ -1052,11 +1052,11 @@ export const zImmersionProfileYearlyContestRegistrationsByUserIdQuery = z.object
  * successful operation
  */
 export const zImmersionProfileYearlyContestRegistrationsByUserIdResponse = zImmersionContestRegistrations.and(z.object({
-    registrations: z.array(zImmersionContestRegistration).optional()
+    registrations: z.array(zImmersionContestRegistration).max(50).optional()
 }));
 
 export const zImmersionProfileYearlyActivitySplitByUserIdPath = z.object({
-    userId: z.string(),
+    userId: z.string().uuid(),
     year: z.number().int()
 });
 
@@ -1073,7 +1073,7 @@ export const zImmersionFetchLeaderboardForYearQuery = z.object({
     page_size: z.number().int().optional(),
     page: z.number().int().optional(),
     language_code: z.string().optional(),
-    activity_id: z.number().int().optional()
+    activity_id: z.number().int().min(-2147483648, { message: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' }).optional()
 });
 
 /**
@@ -1085,7 +1085,7 @@ export const zImmersionFetchLeaderboardGlobalQuery = z.object({
     page_size: z.number().int().optional(),
     page: z.number().int().optional(),
     language_code: z.string().optional(),
-    activity_id: z.number().int().optional()
+    activity_id: z.number().int().min(-2147483648, { message: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' }).optional()
 });
 
 /**
@@ -1106,7 +1106,7 @@ export const zImmersionScoringRuleSetCreatePlatformBody = zImmersionScoringRuleS
 export const zImmersionScoringRuleSetCreatePlatformResponse = zImmersionScoringRuleSet;
 
 export const zImmersionScoringRuleSetListContestPath = z.object({
-    id: z.string()
+    id: z.string().uuid()
 });
 
 /**
@@ -1117,7 +1117,7 @@ export const zImmersionScoringRuleSetListContestResponse = zImmersionScoringRule
 export const zImmersionScoringRuleSetCreateContestBody = zImmersionScoringRuleSetDraft;
 
 export const zImmersionScoringRuleSetCreateContestPath = z.object({
-    id: z.string()
+    id: z.string().uuid()
 });
 
 /**
@@ -1126,7 +1126,7 @@ export const zImmersionScoringRuleSetCreateContestPath = z.object({
 export const zImmersionScoringRuleSetCreateContestResponse = zImmersionScoringRuleSet;
 
 export const zImmersionScoringRuleSetPublishPath = z.object({
-    id: z.string()
+    id: z.string().uuid()
 });
 
 /**
@@ -1135,7 +1135,7 @@ export const zImmersionScoringRuleSetPublishPath = z.object({
 export const zImmersionScoringRuleSetPublishResponse = zImmersionScoringRuleSet;
 
 export const zImmersionScoringRuleSetActivatePath = z.object({
-    id: z.string()
+    id: z.string().uuid()
 });
 
 /**
@@ -1150,7 +1150,7 @@ export const zImmersionFeatureFlagDecisionsResponse2 = zImmersionFeatureFlagDeci
 
 export const zImmersionFeatureAccessRevokePath = z.object({
     flagKey: zImmersionManagedFeatureFlagKey,
-    userId: z.string()
+    userId: z.string().uuid()
 });
 
 /**
@@ -1160,7 +1160,7 @@ export const zImmersionFeatureAccessRevokeResponse = zImmersionFeatureAccessResp
 
 export const zImmersionFeatureAccessGetPath = z.object({
     flagKey: zImmersionManagedFeatureFlagKey,
-    userId: z.string()
+    userId: z.string().uuid()
 });
 
 /**
@@ -1170,7 +1170,7 @@ export const zImmersionFeatureAccessGetResponse = zImmersionFeatureAccessRespons
 
 export const zImmersionFeatureAccessGrantPath = z.object({
     flagKey: zImmersionManagedFeatureFlagKey,
-    userId: z.string()
+    userId: z.string().uuid()
 });
 
 /**
@@ -1186,7 +1186,7 @@ export const zImmersionLanguageListResponse = zImmersionLanguages;
 export const zImmersionLanguageCreateBody = zImmersionLanguage;
 
 export const zImmersionLanguageUpdateBody = z.object({
-    name: z.string()
+    name: z.string().regex(/^[\s\S]{1,100}$/u)
 });
 
 export const zImmersionLanguageUpdatePath = z.object({
@@ -1218,6 +1218,9 @@ export const zIdentityLoginCreateBody = zIdentityLogin;
  */
 export const zIdentityLoginCreateResponse = zIdentitySession;
 
+/**
+ * Every identity write must be JSON. Send an empty object; the API ignores its contents.
+ */
 export const zIdentityLogoutBody = z.record(z.unknown());
 
 /**
@@ -1233,11 +1236,11 @@ export const zIdentitySessionGetResponse = zIdentitySession;
 export const zIdentityRecoveryCreateBody = zIdentityRecovery;
 
 export const zIdentityRecoveryConsumePath = z.object({
-    token: z.string()
+    token: z.string().regex(/^[\s\S]{0,256}$/u)
 });
 
 export const zIdentityRecoveryConsumeQuery = z.object({
-    return_to: z.string().optional()
+    return_to: z.string().url().regex(/^[\s\S]{0,2048}$/u).optional()
 });
 
 export const zIdentityProfileUpdateBody = zIdentityProfileSettings;
@@ -1255,12 +1258,12 @@ export const zIdentityPasswordUpdateBody = zIdentityPasswordSettings;
 export const zIdentityPasswordUpdateResponse = z.void();
 
 export const zEmailListQuery = z.object({
-    recipient: z.string().optional(),
-    template: z.string().optional(),
+    recipient: z.string().regex(/^.+@[^\s@]+$/).regex(/^[\s\S]{0,320}$/u).optional(),
+    template: z.string().regex(/^[\s\S]{0,100}$/u).optional(),
     status: zEmailStatus.optional(),
-    since: z.string().optional(),
-    limit: z.number().int().optional().default(100),
-    cursor: z.string().optional()
+    since: z.string().datetime({ offset: true }).optional(),
+    limit: z.number().int().gte(1).lte(100).optional().default(100),
+    cursor: z.string().regex(/^[\s\S]{0,2048}$/u).optional()
 });
 
 /**
@@ -1269,7 +1272,7 @@ export const zEmailListQuery = z.object({
 export const zEmailListResponse = zEmailList;
 
 export const zEmailGetPath = z.object({
-    id: z.string()
+    id: z.string().uuid().regex(/^[\s\S]{0,36}$/u)
 });
 
 /**

@@ -134,6 +134,9 @@ export type ImmersionManagedFeatureFlagKey = 'release-log-entry-v2';
 export type ImmersionFeatureAccessResponse = {
     enabled: boolean;
     changed: boolean;
+    /**
+     * The Flipt environment that evaluated the flag; test tenants use the test environment.
+     */
     environment: 'local' | 'production' | 'test';
     revision: string;
 };
@@ -235,11 +238,17 @@ export type ImmersionContestBase = {
 };
 
 export type ImmersionContest = ImmersionContestBase & {
+    /**
+     * Language codes the contest allows; null allows every language.
+     */
     language_code_allow_list: Array<string> | null;
     activity_type_id_allow_list: Array<number>;
 };
 
 export type ImmersionContestView = ImmersionContestBase & {
+    /**
+     * Languages the contest allows; null allows every language.
+     */
     allowed_languages: Array<ImmersionLanguage> | null;
     allowed_activities: Array<ImmersionActivity>;
 };
@@ -2832,7 +2841,10 @@ export type IdentityLoginCreateResponses = {
 export type IdentityLoginCreateResponse = IdentityLoginCreateResponses[keyof IdentityLoginCreateResponses];
 
 export type IdentityLogoutData = {
-    body: {
+    /**
+     * Every identity write must be JSON. Send an empty object; the API ignores its contents.
+     */
+    body?: {
         [key: string]: unknown;
     };
     path?: never;

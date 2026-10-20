@@ -1,7 +1,24 @@
 // Generates the frontend Tadoku API client from the canonical contract. Run `pnpm --filter api-client generate`.
 
-/** Response validators check the JSON shape: types, required properties, nullability and enum values. */
-const shapeOnly = ctx => ctx.nodes.base(ctx)
+/**
+ * Strings keep their format, length and pattern constraints, with the API's semantics where Zod's differ: the API
+ * counts characters (code points) where Zod's `min` and `max` count UTF-16 units, and Go's `net/mail` accepts
+ * addresses Zod's email rule rejects, such as a domain without a dot.
+ */
+const string = ctx => {
+  const { $, chain, nodes, schema } = ctx
+  const constant = nodes.const(ctx)
+  if (constant) return constant
+  chain.current = nodes.base(ctx)
+  chain.current = schema.format === 'email'
+    ? chain.current.attr('regex').call($.regexp('^.+@[^\\s@]+$'))
+    : nodes.format(ctx) ?? chain.current
+  if (schema.minLength !== undefined || schema.maxLength !== undefined) {
+    const characters = `^[\\s\\S]{${schema.minLength ?? 0},${schema.maxLength ?? ''}}$`
+    chain.current = chain.current.attr('regex').call($.regexp(characters, 'u'))
+  }
+  return nodes.pattern(ctx) ?? chain.current
+}
 
 /** Objects the contract closes with `additionalProperties: false` reject unknown properties. */
 const closedObject = ctx =>
@@ -16,27 +33,6 @@ export default {
       // Oathkeeper callbacks; browsers and frontend servers never call them.
       operations: { exclude: ['POST /authz/internal/v1/proxy/admin-check', 'GET /identity/internal/v1/session'] },
     },
-    patch: {
-      operations: {
-        // The API requires JSON on every identity write; the contract documents logout without a body.
-        'POST /identity/logout': operation => {
-          operation.requestBody = { required: true, content: { 'application/json': { schema: { type: 'object' } } } }
-        },
-      },
-      schemas: {
-        // The API answers null for a contest without a language allow list; the contract documents an array.
-        ImmersionContest: schema => {
-          schema.allOf[1].properties.language_code_allow_list.nullable = true
-        },
-        ImmersionContestView: schema => {
-          schema.allOf[1].properties.allowed_languages.nullable = true
-        },
-        // Test tenants evaluate flags in the Flipt test environment.
-        ImmersionFeatureAccessResponse: schema => {
-          schema.properties.environment.enum.push('test')
-        },
-      },
-    },
   },
   plugins: [
     { name: '@hey-api/client-fetch', baseUrl: false },
@@ -45,10 +41,9 @@ export default {
       name: 'zod',
       // Legacy Next.js applications compile with TypeScript 4.9, which cannot read Zod 4 declarations.
       compatibilityVersion: 3,
-      // Lengths, formats, patterns, ranges and item counts describe accepted input. JavaScript cannot check
-      // them with the API's semantics (it counts UTF-16 units, not characters), and stored data predates
-      // some limits, so response validators do not reject on them.
-      '~resolvers': { array: shapeOnly, number: shapeOnly, object: closedObject, string: shapeOnly },
+      // Go writes times in RFC 3339 with the time's own offset.
+      dates: { offset: true },
+      '~resolvers': { object: closedObject, string },
     },
     // The API validates requests; responses are validated before callers see them.
     { name: '@hey-api/sdk', validator: { request: false, response: 'zod' } },

@@ -157,8 +157,6 @@ func TestIdentityV2RequestSecurity(t *testing.T) {
 		},
 		{"missing origin", "/identity/logout", "", "", "application/json", 403},
 		{"origin suffix attack", "/identity/logout", "", "https://tadoku.dev.lab.evil.test", "application/json", 403},
-		{"logout object", "/identity/logout", "{}", "https://tadoku.dev.lab", "application/json", 204},
-		{"logout malformed body", "/identity/logout", "{", "https://tadoku.dev.lab", "application/json", 400},
 		{
 			"non JSON", "/identity/login",
 			`{"email":"reader@example.test","password":"wrong-password"}`,
@@ -182,6 +180,37 @@ func TestIdentityV2RequestSecurity(t *testing.T) {
 				r.Header.Set("Content-Type", tc.contentType)
 			})
 			requireIdentityStatus(t, response, tc.want)
+		})
+	}
+}
+
+func TestIdentityV2LogoutIgnoresBody(t *testing.T) {
+	oversized := `{"padding":"` + strings.Repeat("x", 128<<10) + `"}`
+	for _, tc := range []struct {
+		name, body, origin string
+		want               int
+	}{
+		{"empty", "", "https://tadoku.dev.lab", http.StatusNoContent},
+		{"object", "{}", "https://tadoku.dev.lab", http.StatusNoContent},
+		{"malformed", "{", "https://tadoku.dev.lab", http.StatusNoContent},
+		{"array", "[]", "https://tadoku.dev.lab", http.StatusNoContent},
+		{"over the body limit", oversized, "https://tadoku.dev.lab", http.StatusNoContent},
+		{"malformed from a foreign origin", "{", "https://evil.test", http.StatusForbidden},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			resetIdentity(t)
+			cookie := identityLoginCookie(t)
+			response := identityRequest(t, api.handler, identityBranchA, "POST", "/identity/logout", tc.body, cookie,
+				func(r *http.Request) { r.Header.Set("Origin", tc.origin) })
+			requireIdentityStatus(t, response, tc.want)
+			if response.Header().Get("Cache-Control") != "private, no-store" {
+				t.Error("logout response may be cached")
+			}
+
+			response = identityRequest(t, api.handler, identityBranchA, "GET", "/identity/session", "", cookie, nil)
+			if signedIn := identityView(t, response).Account != nil; signedIn != (tc.want != http.StatusNoContent) {
+				t.Errorf("signed in=%v after logout answered %d", signedIn, tc.want)
+			}
 		})
 	}
 }

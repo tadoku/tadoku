@@ -63,9 +63,9 @@ legacy accounts with 25 emoji in their display name or a local-domain email), an
 and the shell's home link. A second test renders Settings for stored account
 values: a version-0 account ID, and imported emails with an ideographic-space
 prefix or 321 raw bytes. Each must appear unchanged in the server HTML and the
-hydrated input, fit 1280px and 390px viewports, and reach the fixture's
-`PATCH /identity/settings/profile` unchanged; a value typed before hydration must
-be the one sent.
+hydrated input and fit 1280px and 390px viewports. Resubmitting the unchanged
+address must send no `PATCH /identity/settings/profile`; a value typed before
+hydration must be the one sent.
 This substitutes only the identity API; real authentication, gateway routing,
 DNS, TLS termination and tenant persistence remain unverified. Never point
 this fixture at a shared API or treat it as live end-to-end authentication.
@@ -97,6 +97,24 @@ they never reach the network; the native test posts to `/actions/register` as
 fixture. Each failure must keep the visitor on the form with the expected
 message after exactly one request, and only the `201` session may continue or
 pass a session cookie on.
+
+The Settings fixture uses the same server. Run:
+
+```sh
+AUTHV2_SETTINGS_FIXTURE=true \
+  PLAYWRIGHT_OUTPUT_DIR=/workspace/.scratch/authv2-smoke \
+  pnpm --filter authv2 exec playwright test e2e/settings-email.spec.ts
+```
+
+It serves the session bytes the API writes for an ordinary address and for
+imported addresses with a leading vertical tab, form feed or CRLF, or a
+trailing LF. The email input shows the address without line breaks or
+surrounding ASCII whitespace. With and without JavaScript, resubmitting the
+unchanged address must send nothing and show that it is already the account's
+address; display-name and password saves must send only their own field, and an
+edited address must be sent as typed. The JavaScript-disabled test captures each
+native form body the browser posts, then replays it to `/actions/*` as
+`authv2.tadoku.dev.lab`.
 
 `AUTHV2_BASE_URL` defaults to `http://127.0.0.1:5184`.
 `PLAYWRIGHT_OUTPUT_DIR` defaults to a temporary directory. Reports and mobile

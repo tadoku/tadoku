@@ -71,8 +71,9 @@ break the contract's constraints, which must fail.
   - An account's `email` in identity responses is not `format: email`. The API
     sends the stored address as `net/mail` reads it, which can be unquoted text
     such as `a b@example.test`, keep non-ASCII spaces and case, or exceed 320
-    bytes for an imported account, so the contract only requires an `@`
-    between non-empty parts.
+    bytes for an imported account. An imported address `net/mail` can't read,
+    such as one with a leading vertical tab or line break, is sent as stored.
+    The contract therefore only requires an `@` between non-empty parts.
   - `format: date-time` accepts RFC 3339 as Go writes it: seconds, two-digit
     fields and `Z` or a `±hh:mm` offset under 24 hours. Go's `time.Parse` also
     reads some forms outside RFC 3339, such as `+24:00` or a one-digit hour,

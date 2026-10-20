@@ -50,11 +50,20 @@ public error code shown as a form message; passwords and account values never
 enter URLs. Native logins reach the API from the authv2 server, so the API's
 per-address throttle counts them under that server's address.
 
-Settings has separate forms for the display name, email address and password.
-Email and password changes need a login within the last hour; their stale-session
-message links to a login that returns to the same Settings URL. Logout posts to
-the identity API through the native route. A guest opening Settings is sent to
-login with Settings as the continuation.
+Settings has separate forms for the display name, email address and password,
+and each sends only its own field. Email and password changes need a login within
+the last hour; their stale-session message links to a login that returns to the
+same Settings URL. Logout posts to the identity API through the native route. A
+guest opening Settings is sent to login with Settings as the continuation.
+
+The account's email is shown exactly as the API sends it, which for an imported
+address can include control characters. An email input drops line breaks and
+surrounding ASCII whitespace, so its value can differ from the stored address.
+The email form therefore also carries the stored address in a hidden
+`current_email` field. When the submitted address equals the stored one as an
+input shows it, `sendIdentity()` sends nothing and reports `unchanged_email` on
+the email field, on both the hydrated and native paths. An edited address is
+sent as typed.
 
 An incoming `return_to` is external input. `continuation()` in
 `frontend/apps/authv2/src/lib/identity.ts` accepts only HTTPS URLs on the
@@ -163,9 +172,10 @@ session, stale-session reauthentication. `recovery.spec.ts` follows a held
 recovery email's generated link through Settings and checks old passwords,
 sessions and links fail. See `frontend/apps/authv2/e2e/README.md` for setup and
 for the loopback session fixture that checks header forwarding, v1 redirection
-and failure responses, and for the registration fixture that sends controlled
+and failure responses, for the registration fixture that sends controlled
 API answers, including the registration `429`, through both the hydrated and
-native registration paths. These fixtures prove application HTTP/SSR behavior; it
+native registration paths, and for the Settings fixture that serves the API's
+exact session bytes for imported addresses with control characters. These fixtures prove application HTTP/SSR behavior; it
 does not prove real authentication, Oathkeeper, tenant isolation or
 shared-cluster routing. TLS verification remains enabled. Reports, screenshots
 and recordings go outside source control. Tracing is disabled because

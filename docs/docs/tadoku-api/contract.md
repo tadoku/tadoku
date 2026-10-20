@@ -119,6 +119,10 @@ After changing a contract fragment, run from the repository root:
   a separate token registrar for a verified, tenant-bound `tdk_at_` bearer.
   Invalid access tokens fail before request decoding. All other credentials
   on those routes use the ordinary JWT and ban pipeline.
+- A format describes every value a field carries. When a response field's
+  values do not all satisfy one, such as an account's stored email, drop the
+  format and keep the field's Go type with `x-go-type` and `x-go-type-import`,
+  so its serialization does not change.
 - The Bazel-built binary has no Go module build-info header, so read the
   oapi-codegen version from `tools/oapi-codegen/go.mod`, not from the generated
   file header.

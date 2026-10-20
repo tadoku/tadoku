@@ -24,8 +24,7 @@
     "api-client": "workspace:*",
     "paper-ui": "workspace:*",
     "react": "18.2.0",
-    "react-dom": "18.2.0",
-    "zod": "4.4.3"
+    "react-dom": "18.2.0"
   },
   "devDependencies": {
     "@eslint/js": "9.39.2",

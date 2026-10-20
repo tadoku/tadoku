@@ -31,9 +31,9 @@ export const zContentPage = z.object({
     slug: z.string(),
     title: z.string(),
     html: z.string().optional(),
-    published_at: z.string().datetime({ offset: true }).optional(),
-    created_at: z.string().datetime({ offset: true }).optional(),
-    updated_at: z.string().datetime({ offset: true }).optional()
+    published_at: z.string().datetime({ offset: true }).regex(/T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/).optional(),
+    created_at: z.string().datetime({ offset: true }).regex(/T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/).optional(),
+    updated_at: z.string().datetime({ offset: true }).regex(/T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/).optional()
 });
 
 export const zContentPost = z.object({
@@ -42,9 +42,9 @@ export const zContentPost = z.object({
     slug: z.string(),
     title: z.string(),
     content: z.string(),
-    published_at: z.string().datetime({ offset: true }).optional(),
-    created_at: z.string().datetime({ offset: true }).optional(),
-    updated_at: z.string().datetime({ offset: true }).optional()
+    published_at: z.string().datetime({ offset: true }).regex(/T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/).optional(),
+    created_at: z.string().datetime({ offset: true }).regex(/T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/).optional(),
+    updated_at: z.string().datetime({ offset: true }).regex(/T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/).optional()
 });
 
 export const zContentPageVersion = z.object({
@@ -52,7 +52,7 @@ export const zContentPageVersion = z.object({
     version: z.number().int(),
     title: z.string(),
     html: z.string().optional(),
-    created_at: z.string().datetime({ offset: true })
+    created_at: z.string().datetime({ offset: true }).regex(/T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/)
 });
 
 export const zContentPageVersions = z.object({
@@ -64,7 +64,7 @@ export const zContentPostVersion = z.object({
     version: z.number().int(),
     title: z.string(),
     content: z.string().optional(),
-    created_at: z.string().datetime({ offset: true })
+    created_at: z.string().datetime({ offset: true }).regex(/T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/)
 });
 
 export const zContentPostVersions = z.object({
@@ -83,10 +83,10 @@ export const zContentAnnouncement = z.object({
         'info'
     ]),
     href: z.string().regex(/^[\s\S]{0,2048}$/u).nullish(),
-    starts_at: z.string().datetime({ offset: true }),
-    ends_at: z.string().datetime({ offset: true }),
-    created_at: z.string().datetime({ offset: true }).optional(),
-    updated_at: z.string().datetime({ offset: true }).optional()
+    starts_at: z.string().datetime({ offset: true }).regex(/T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/),
+    ends_at: z.string().datetime({ offset: true }).regex(/T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/),
+    created_at: z.string().datetime({ offset: true }).regex(/T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/).optional(),
+    updated_at: z.string().datetime({ offset: true }).regex(/T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/).optional()
 });
 
 export const zContentAnnouncements = z.object({
@@ -138,7 +138,7 @@ export const zImmersionFeatureAccessResponse = z.object({
 export const zImmersionUserProfile = z.object({
     id: z.string().uuid(),
     display_name: z.string(),
-    created_at: z.string().datetime({ offset: true })
+    created_at: z.string().datetime({ offset: true }).regex(/T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/)
 });
 
 export const zImmersionUserActivityScore = z.object({
@@ -223,8 +223,8 @@ export const zImmersionContestBase = z.object({
     official: z.boolean(),
     owner_user_id: z.string().uuid().optional(),
     owner_user_display_name: z.string().optional(),
-    created_at: z.string().datetime({ offset: true }).optional(),
-    updated_at: z.string().datetime({ offset: true }).optional(),
+    created_at: z.string().datetime({ offset: true }).regex(/T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/).optional(),
+    updated_at: z.string().datetime({ offset: true }).regex(/T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/).optional(),
     deleted: z.boolean().optional()
 });
 
@@ -328,8 +328,8 @@ export const zImmersionScoringRuleSet = z.object({
     mode: z.enum(['override', 'replace']).optional(),
     fallback_rule_set_id: z.string().uuid().optional(),
     rules: z.array(zImmersionScoringRule),
-    created_at: z.string().datetime({ offset: true }),
-    published_at: z.string().datetime({ offset: true }).optional()
+    created_at: z.string().datetime({ offset: true }).regex(/T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/),
+    published_at: z.string().datetime({ offset: true }).regex(/T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/).optional()
 });
 
 export const zImmersionScoringRuleSets = z.object({
@@ -373,7 +373,7 @@ export const zImmersionLog = z.object({
     score: z.number(),
     duration_seconds: z.number().int().min(-2147483648, { message: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
     registrations: z.array(zImmersionContestRegistrationReference).optional(),
-    created_at: z.string().datetime({ offset: true }),
+    created_at: z.string().datetime({ offset: true }).regex(/T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/),
     deleted: z.boolean()
 });
 
@@ -382,7 +382,7 @@ export const zImmersionLog = z.object({
  */
 export const zImmersionLogExportEntry = z.object({
     id: z.string().uuid(),
-    created_at: z.string().datetime({ offset: true }),
+    created_at: z.string().datetime({ offset: true }).regex(/T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/),
     language_code: z.string(),
     language_name: z.string(),
     activity_id: z.number().int().min(-2147483648, { message: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' }),
@@ -453,10 +453,10 @@ export const zIdentityErrorResponse = z.object({
 
 export const zIdentityAccount = z.object({
     id: z.string().uuid().regex(/^[\s\S]{0,36}$/u),
-    email: z.string().regex(/^.+@[^\s@]+$/).regex(/^[\s\S]{0,320}$/u),
+    email: z.string().regex(/^(?![\u{85}\u{a0}\u{1680}\u{2000}-\u{200a}\u{2028}\u{2029}\u{202f}\u{205f}\u{3000}])(?![\s\S]*[\u{85}\u{a0}\u{1680}\u{2000}-\u{200a}\u{2028}\u{2029}\u{202f}\u{205f}\u{3000}]$)[!#-'*+\-\/-9=?A-Z^-~\u{80}-\u{d7ff}\u{e000}-\u{10ffff}]+(?:\.[!#-'*+\-\/-9=?A-Z^-~\u{80}-\u{d7ff}\u{e000}-\u{10ffff}]+)*@(?:[!#-'*+\-\/-9=?A-Z^-~\u{80}-\u{d7ff}\u{e000}-\u{10ffff}]+(?:\.[!#-'*+\-\/-9=?A-Z^-~\u{80}-\u{d7ff}\u{e000}-\u{10ffff}]+)*|\[(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}|(?:[\dA-Fa-f]{1,4}:){6}(?:[\dA-Fa-f]{1,4}:[\dA-Fa-f]{1,4}|(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|::(?:[\dA-Fa-f]{1,4}:){5}(?:[\dA-Fa-f]{1,4}:[\dA-Fa-f]{1,4}|(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|(?:[\dA-Fa-f]{1,4})?::(?:[\dA-Fa-f]{1,4}:){4}(?:[\dA-Fa-f]{1,4}:[\dA-Fa-f]{1,4}|(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|(?:(?:[\dA-Fa-f]{1,4}:){0,1}[\dA-Fa-f]{1,4})?::(?:[\dA-Fa-f]{1,4}:){3}(?:[\dA-Fa-f]{1,4}:[\dA-Fa-f]{1,4}|(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|(?:(?:[\dA-Fa-f]{1,4}:){0,2}[\dA-Fa-f]{1,4})?::(?:[\dA-Fa-f]{1,4}:){2}(?:[\dA-Fa-f]{1,4}:[\dA-Fa-f]{1,4}|(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|(?:(?:[\dA-Fa-f]{1,4}:){0,3}[\dA-Fa-f]{1,4})?::[\dA-Fa-f]{1,4}:(?:[\dA-Fa-f]{1,4}:[\dA-Fa-f]{1,4}|(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|(?:(?:[\dA-Fa-f]{1,4}:){0,4}[\dA-Fa-f]{1,4})?::(?:[\dA-Fa-f]{1,4}:[\dA-Fa-f]{1,4}|(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|(?:(?:[\dA-Fa-f]{1,4}:){0,5}[\dA-Fa-f]{1,4})?::[\dA-Fa-f]{1,4}|(?:(?:[\dA-Fa-f]{1,4}:){0,6}[\dA-Fa-f]{1,4})?::)\])$/u).regex(/^[\s\S]{0,320}$/u).refine(value => new TextEncoder().encode(value).length <= 320),
     display_name: z.string().regex(/^[\s\S]{2,32}$/u),
-    created_at: z.string().datetime({ offset: true }),
-    authenticated_at: z.string().datetime({ offset: true })
+    created_at: z.string().datetime({ offset: true }).regex(/T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/),
+    authenticated_at: z.string().datetime({ offset: true }).regex(/T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/)
 });
 
 export const zIdentitySession = z.object({
@@ -465,23 +465,23 @@ export const zIdentitySession = z.object({
 });
 
 export const zIdentityRegistration = z.object({
-    email: z.string().regex(/^.+@[^\s@]+$/).regex(/^[\s\S]{0,320}$/u),
+    email: z.string().regex(/^(?![\u{85}\u{a0}\u{1680}\u{2000}-\u{200a}\u{2028}\u{2029}\u{202f}\u{205f}\u{3000}])(?![\s\S]*[\u{85}\u{a0}\u{1680}\u{2000}-\u{200a}\u{2028}\u{2029}\u{202f}\u{205f}\u{3000}]$)[!#-'*+\-\/-9=?A-Z^-~\u{80}-\u{d7ff}\u{e000}-\u{10ffff}]+(?:\.[!#-'*+\-\/-9=?A-Z^-~\u{80}-\u{d7ff}\u{e000}-\u{10ffff}]+)*@(?:[!#-'*+\-\/-9=?A-Z^-~\u{80}-\u{d7ff}\u{e000}-\u{10ffff}]+(?:\.[!#-'*+\-\/-9=?A-Z^-~\u{80}-\u{d7ff}\u{e000}-\u{10ffff}]+)*|\[(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}|(?:[\dA-Fa-f]{1,4}:){6}(?:[\dA-Fa-f]{1,4}:[\dA-Fa-f]{1,4}|(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|::(?:[\dA-Fa-f]{1,4}:){5}(?:[\dA-Fa-f]{1,4}:[\dA-Fa-f]{1,4}|(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|(?:[\dA-Fa-f]{1,4})?::(?:[\dA-Fa-f]{1,4}:){4}(?:[\dA-Fa-f]{1,4}:[\dA-Fa-f]{1,4}|(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|(?:(?:[\dA-Fa-f]{1,4}:){0,1}[\dA-Fa-f]{1,4})?::(?:[\dA-Fa-f]{1,4}:){3}(?:[\dA-Fa-f]{1,4}:[\dA-Fa-f]{1,4}|(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|(?:(?:[\dA-Fa-f]{1,4}:){0,2}[\dA-Fa-f]{1,4})?::(?:[\dA-Fa-f]{1,4}:){2}(?:[\dA-Fa-f]{1,4}:[\dA-Fa-f]{1,4}|(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|(?:(?:[\dA-Fa-f]{1,4}:){0,3}[\dA-Fa-f]{1,4})?::[\dA-Fa-f]{1,4}:(?:[\dA-Fa-f]{1,4}:[\dA-Fa-f]{1,4}|(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|(?:(?:[\dA-Fa-f]{1,4}:){0,4}[\dA-Fa-f]{1,4})?::(?:[\dA-Fa-f]{1,4}:[\dA-Fa-f]{1,4}|(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|(?:(?:[\dA-Fa-f]{1,4}:){0,5}[\dA-Fa-f]{1,4})?::[\dA-Fa-f]{1,4}|(?:(?:[\dA-Fa-f]{1,4}:){0,6}[\dA-Fa-f]{1,4})?::)\])$/u).regex(/^[\s\S]{0,320}$/u).refine(value => new TextEncoder().encode(value).length <= 320),
     display_name: z.string().regex(/^[\s\S]{2,32}$/u),
     password: z.string().regex(/^[\s\S]{8,72}$/u)
 });
 
 export const zIdentityLogin = z.object({
-    email: z.string().regex(/^.+@[^\s@]+$/).regex(/^[\s\S]{0,320}$/u),
+    email: z.string().regex(/^(?![\u{85}\u{a0}\u{1680}\u{2000}-\u{200a}\u{2028}\u{2029}\u{202f}\u{205f}\u{3000}])(?![\s\S]*[\u{85}\u{a0}\u{1680}\u{2000}-\u{200a}\u{2028}\u{2029}\u{202f}\u{205f}\u{3000}]$)[!#-'*+\-\/-9=?A-Z^-~\u{80}-\u{d7ff}\u{e000}-\u{10ffff}]+(?:\.[!#-'*+\-\/-9=?A-Z^-~\u{80}-\u{d7ff}\u{e000}-\u{10ffff}]+)*@(?:[!#-'*+\-\/-9=?A-Z^-~\u{80}-\u{d7ff}\u{e000}-\u{10ffff}]+(?:\.[!#-'*+\-\/-9=?A-Z^-~\u{80}-\u{d7ff}\u{e000}-\u{10ffff}]+)*|\[(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}|(?:[\dA-Fa-f]{1,4}:){6}(?:[\dA-Fa-f]{1,4}:[\dA-Fa-f]{1,4}|(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|::(?:[\dA-Fa-f]{1,4}:){5}(?:[\dA-Fa-f]{1,4}:[\dA-Fa-f]{1,4}|(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|(?:[\dA-Fa-f]{1,4})?::(?:[\dA-Fa-f]{1,4}:){4}(?:[\dA-Fa-f]{1,4}:[\dA-Fa-f]{1,4}|(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|(?:(?:[\dA-Fa-f]{1,4}:){0,1}[\dA-Fa-f]{1,4})?::(?:[\dA-Fa-f]{1,4}:){3}(?:[\dA-Fa-f]{1,4}:[\dA-Fa-f]{1,4}|(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|(?:(?:[\dA-Fa-f]{1,4}:){0,2}[\dA-Fa-f]{1,4})?::(?:[\dA-Fa-f]{1,4}:){2}(?:[\dA-Fa-f]{1,4}:[\dA-Fa-f]{1,4}|(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|(?:(?:[\dA-Fa-f]{1,4}:){0,3}[\dA-Fa-f]{1,4})?::[\dA-Fa-f]{1,4}:(?:[\dA-Fa-f]{1,4}:[\dA-Fa-f]{1,4}|(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|(?:(?:[\dA-Fa-f]{1,4}:){0,4}[\dA-Fa-f]{1,4})?::(?:[\dA-Fa-f]{1,4}:[\dA-Fa-f]{1,4}|(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|(?:(?:[\dA-Fa-f]{1,4}:){0,5}[\dA-Fa-f]{1,4})?::[\dA-Fa-f]{1,4}|(?:(?:[\dA-Fa-f]{1,4}:){0,6}[\dA-Fa-f]{1,4})?::)\])$/u).regex(/^[\s\S]{0,320}$/u).refine(value => new TextEncoder().encode(value).length <= 320),
     password: z.string().regex(/^[\s\S]{8,72}$/u)
 });
 
 export const zIdentityRecovery = z.object({
-    email: z.string().regex(/^.+@[^\s@]+$/).regex(/^[\s\S]{0,320}$/u),
+    email: z.string().regex(/^(?![\u{85}\u{a0}\u{1680}\u{2000}-\u{200a}\u{2028}\u{2029}\u{202f}\u{205f}\u{3000}])(?![\s\S]*[\u{85}\u{a0}\u{1680}\u{2000}-\u{200a}\u{2028}\u{2029}\u{202f}\u{205f}\u{3000}]$)[!#-'*+\-\/-9=?A-Z^-~\u{80}-\u{d7ff}\u{e000}-\u{10ffff}]+(?:\.[!#-'*+\-\/-9=?A-Z^-~\u{80}-\u{d7ff}\u{e000}-\u{10ffff}]+)*@(?:[!#-'*+\-\/-9=?A-Z^-~\u{80}-\u{d7ff}\u{e000}-\u{10ffff}]+(?:\.[!#-'*+\-\/-9=?A-Z^-~\u{80}-\u{d7ff}\u{e000}-\u{10ffff}]+)*|\[(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}|(?:[\dA-Fa-f]{1,4}:){6}(?:[\dA-Fa-f]{1,4}:[\dA-Fa-f]{1,4}|(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|::(?:[\dA-Fa-f]{1,4}:){5}(?:[\dA-Fa-f]{1,4}:[\dA-Fa-f]{1,4}|(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|(?:[\dA-Fa-f]{1,4})?::(?:[\dA-Fa-f]{1,4}:){4}(?:[\dA-Fa-f]{1,4}:[\dA-Fa-f]{1,4}|(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|(?:(?:[\dA-Fa-f]{1,4}:){0,1}[\dA-Fa-f]{1,4})?::(?:[\dA-Fa-f]{1,4}:){3}(?:[\dA-Fa-f]{1,4}:[\dA-Fa-f]{1,4}|(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|(?:(?:[\dA-Fa-f]{1,4}:){0,2}[\dA-Fa-f]{1,4})?::(?:[\dA-Fa-f]{1,4}:){2}(?:[\dA-Fa-f]{1,4}:[\dA-Fa-f]{1,4}|(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|(?:(?:[\dA-Fa-f]{1,4}:){0,3}[\dA-Fa-f]{1,4})?::[\dA-Fa-f]{1,4}:(?:[\dA-Fa-f]{1,4}:[\dA-Fa-f]{1,4}|(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|(?:(?:[\dA-Fa-f]{1,4}:){0,4}[\dA-Fa-f]{1,4})?::(?:[\dA-Fa-f]{1,4}:[\dA-Fa-f]{1,4}|(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|(?:(?:[\dA-Fa-f]{1,4}:){0,5}[\dA-Fa-f]{1,4})?::[\dA-Fa-f]{1,4}|(?:(?:[\dA-Fa-f]{1,4}:){0,6}[\dA-Fa-f]{1,4})?::)\])$/u).regex(/^[\s\S]{0,320}$/u).refine(value => new TextEncoder().encode(value).length <= 320),
     return_to: z.string().url().regex(/^[\s\S]{0,2048}$/u)
 });
 
 export const zIdentityProfileSettings = z.object({
-    email: z.string().regex(/^.+@[^\s@]+$/).regex(/^[\s\S]{0,320}$/u).optional(),
+    email: z.string().regex(/^(?![\u{85}\u{a0}\u{1680}\u{2000}-\u{200a}\u{2028}\u{2029}\u{202f}\u{205f}\u{3000}])(?![\s\S]*[\u{85}\u{a0}\u{1680}\u{2000}-\u{200a}\u{2028}\u{2029}\u{202f}\u{205f}\u{3000}]$)[!#-'*+\-\/-9=?A-Z^-~\u{80}-\u{d7ff}\u{e000}-\u{10ffff}]+(?:\.[!#-'*+\-\/-9=?A-Z^-~\u{80}-\u{d7ff}\u{e000}-\u{10ffff}]+)*@(?:[!#-'*+\-\/-9=?A-Z^-~\u{80}-\u{d7ff}\u{e000}-\u{10ffff}]+(?:\.[!#-'*+\-\/-9=?A-Z^-~\u{80}-\u{d7ff}\u{e000}-\u{10ffff}]+)*|\[(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}|(?:[\dA-Fa-f]{1,4}:){6}(?:[\dA-Fa-f]{1,4}:[\dA-Fa-f]{1,4}|(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|::(?:[\dA-Fa-f]{1,4}:){5}(?:[\dA-Fa-f]{1,4}:[\dA-Fa-f]{1,4}|(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|(?:[\dA-Fa-f]{1,4})?::(?:[\dA-Fa-f]{1,4}:){4}(?:[\dA-Fa-f]{1,4}:[\dA-Fa-f]{1,4}|(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|(?:(?:[\dA-Fa-f]{1,4}:){0,1}[\dA-Fa-f]{1,4})?::(?:[\dA-Fa-f]{1,4}:){3}(?:[\dA-Fa-f]{1,4}:[\dA-Fa-f]{1,4}|(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|(?:(?:[\dA-Fa-f]{1,4}:){0,2}[\dA-Fa-f]{1,4})?::(?:[\dA-Fa-f]{1,4}:){2}(?:[\dA-Fa-f]{1,4}:[\dA-Fa-f]{1,4}|(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|(?:(?:[\dA-Fa-f]{1,4}:){0,3}[\dA-Fa-f]{1,4})?::[\dA-Fa-f]{1,4}:(?:[\dA-Fa-f]{1,4}:[\dA-Fa-f]{1,4}|(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|(?:(?:[\dA-Fa-f]{1,4}:){0,4}[\dA-Fa-f]{1,4})?::(?:[\dA-Fa-f]{1,4}:[\dA-Fa-f]{1,4}|(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|(?:(?:[\dA-Fa-f]{1,4}:){0,5}[\dA-Fa-f]{1,4})?::[\dA-Fa-f]{1,4}|(?:(?:[\dA-Fa-f]{1,4}:){0,6}[\dA-Fa-f]{1,4})?::)\])$/u).regex(/^[\s\S]{0,320}$/u).refine(value => new TextEncoder().encode(value).length <= 320).optional(),
     display_name: z.string().regex(/^[\s\S]{2,32}$/u).optional()
 });
 
@@ -504,15 +504,15 @@ export const zEmailMessage = z.object({
     id: z.string().uuid().regex(/^[\s\S]{0,36}$/u),
     tenant: z.string().regex(/^[\s\S]{0,113}$/u),
     template: z.string().regex(/^[\s\S]{0,100}$/u),
-    recipient: z.string().regex(/^.+@[^\s@]+$/).regex(/^[\s\S]{0,320}$/u),
+    recipient: z.string().regex(/^(?![\u{85}\u{a0}\u{1680}\u{2000}-\u{200a}\u{2028}\u{2029}\u{202f}\u{205f}\u{3000}])(?![\s\S]*[\u{85}\u{a0}\u{1680}\u{2000}-\u{200a}\u{2028}\u{2029}\u{202f}\u{205f}\u{3000}]$)[!#-'*+\-\/-9=?A-Z^-~\u{80}-\u{d7ff}\u{e000}-\u{10ffff}]+(?:\.[!#-'*+\-\/-9=?A-Z^-~\u{80}-\u{d7ff}\u{e000}-\u{10ffff}]+)*@(?:[!#-'*+\-\/-9=?A-Z^-~\u{80}-\u{d7ff}\u{e000}-\u{10ffff}]+(?:\.[!#-'*+\-\/-9=?A-Z^-~\u{80}-\u{d7ff}\u{e000}-\u{10ffff}]+)*|\[(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}|(?:[\dA-Fa-f]{1,4}:){6}(?:[\dA-Fa-f]{1,4}:[\dA-Fa-f]{1,4}|(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|::(?:[\dA-Fa-f]{1,4}:){5}(?:[\dA-Fa-f]{1,4}:[\dA-Fa-f]{1,4}|(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|(?:[\dA-Fa-f]{1,4})?::(?:[\dA-Fa-f]{1,4}:){4}(?:[\dA-Fa-f]{1,4}:[\dA-Fa-f]{1,4}|(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|(?:(?:[\dA-Fa-f]{1,4}:){0,1}[\dA-Fa-f]{1,4})?::(?:[\dA-Fa-f]{1,4}:){3}(?:[\dA-Fa-f]{1,4}:[\dA-Fa-f]{1,4}|(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|(?:(?:[\dA-Fa-f]{1,4}:){0,2}[\dA-Fa-f]{1,4})?::(?:[\dA-Fa-f]{1,4}:){2}(?:[\dA-Fa-f]{1,4}:[\dA-Fa-f]{1,4}|(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|(?:(?:[\dA-Fa-f]{1,4}:){0,3}[\dA-Fa-f]{1,4})?::[\dA-Fa-f]{1,4}:(?:[\dA-Fa-f]{1,4}:[\dA-Fa-f]{1,4}|(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|(?:(?:[\dA-Fa-f]{1,4}:){0,4}[\dA-Fa-f]{1,4})?::(?:[\dA-Fa-f]{1,4}:[\dA-Fa-f]{1,4}|(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|(?:(?:[\dA-Fa-f]{1,4}:){0,5}[\dA-Fa-f]{1,4})?::[\dA-Fa-f]{1,4}|(?:(?:[\dA-Fa-f]{1,4}:){0,6}[\dA-Fa-f]{1,4})?::)\])$/u).regex(/^[\s\S]{0,320}$/u).refine(value => new TextEncoder().encode(value).length <= 320),
     subject: z.string().regex(/^[\s\S]{0,1000}$/u),
     body: z.string().regex(/^[\s\S]{0,262144}$/u),
     params: z.record(z.string().regex(/^[\s\S]{0,4096}$/u)),
     status: zEmailStatus,
-    sent_at: z.string().datetime({ offset: true }).nullable(),
+    sent_at: z.string().datetime({ offset: true }).regex(/T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/).nullable(),
     provider_message_id: z.string().regex(/^[\s\S]{0,1000}$/u).nullable(),
     error: z.string().regex(/^[\s\S]{0,4096}$/u).nullable(),
-    created_at: z.string().datetime({ offset: true })
+    created_at: z.string().datetime({ offset: true }).regex(/T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/)
 });
 
 export const zEmailList = z.object({
@@ -1253,10 +1253,10 @@ export const zIdentityPasswordUpdateBody = zIdentityPasswordSettings;
 export const zIdentityPasswordUpdateResponse = z.void();
 
 export const zEmailListQuery = z.object({
-    recipient: z.string().regex(/^.+@[^\s@]+$/).regex(/^[\s\S]{0,320}$/u).optional(),
+    recipient: z.string().regex(/^(?![\u{85}\u{a0}\u{1680}\u{2000}-\u{200a}\u{2028}\u{2029}\u{202f}\u{205f}\u{3000}])(?![\s\S]*[\u{85}\u{a0}\u{1680}\u{2000}-\u{200a}\u{2028}\u{2029}\u{202f}\u{205f}\u{3000}]$)[!#-'*+\-\/-9=?A-Z^-~\u{80}-\u{d7ff}\u{e000}-\u{10ffff}]+(?:\.[!#-'*+\-\/-9=?A-Z^-~\u{80}-\u{d7ff}\u{e000}-\u{10ffff}]+)*@(?:[!#-'*+\-\/-9=?A-Z^-~\u{80}-\u{d7ff}\u{e000}-\u{10ffff}]+(?:\.[!#-'*+\-\/-9=?A-Z^-~\u{80}-\u{d7ff}\u{e000}-\u{10ffff}]+)*|\[(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}|(?:[\dA-Fa-f]{1,4}:){6}(?:[\dA-Fa-f]{1,4}:[\dA-Fa-f]{1,4}|(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|::(?:[\dA-Fa-f]{1,4}:){5}(?:[\dA-Fa-f]{1,4}:[\dA-Fa-f]{1,4}|(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|(?:[\dA-Fa-f]{1,4})?::(?:[\dA-Fa-f]{1,4}:){4}(?:[\dA-Fa-f]{1,4}:[\dA-Fa-f]{1,4}|(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|(?:(?:[\dA-Fa-f]{1,4}:){0,1}[\dA-Fa-f]{1,4})?::(?:[\dA-Fa-f]{1,4}:){3}(?:[\dA-Fa-f]{1,4}:[\dA-Fa-f]{1,4}|(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|(?:(?:[\dA-Fa-f]{1,4}:){0,2}[\dA-Fa-f]{1,4})?::(?:[\dA-Fa-f]{1,4}:){2}(?:[\dA-Fa-f]{1,4}:[\dA-Fa-f]{1,4}|(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|(?:(?:[\dA-Fa-f]{1,4}:){0,3}[\dA-Fa-f]{1,4})?::[\dA-Fa-f]{1,4}:(?:[\dA-Fa-f]{1,4}:[\dA-Fa-f]{1,4}|(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|(?:(?:[\dA-Fa-f]{1,4}:){0,4}[\dA-Fa-f]{1,4})?::(?:[\dA-Fa-f]{1,4}:[\dA-Fa-f]{1,4}|(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|(?:(?:[\dA-Fa-f]{1,4}:){0,5}[\dA-Fa-f]{1,4})?::[\dA-Fa-f]{1,4}|(?:(?:[\dA-Fa-f]{1,4}:){0,6}[\dA-Fa-f]{1,4})?::)\])$/u).regex(/^[\s\S]{0,320}$/u).refine(value => new TextEncoder().encode(value).length <= 320).optional(),
     template: z.string().regex(/^[\s\S]{0,100}$/u).optional(),
     status: zEmailStatus.optional(),
-    since: z.string().datetime({ offset: true }).optional(),
+    since: z.string().datetime({ offset: true }).regex(/T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/).optional(),
     limit: z.number().int().gte(1).lte(100).optional().default(100),
     cursor: z.string().regex(/^[\s\S]{0,2048}$/u).optional()
 });

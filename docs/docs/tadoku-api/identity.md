@@ -109,16 +109,19 @@ but can throttle unrelated clients together.
 
 Registration has its own admission budget, separate from the login counters.
 After the flag check and input validation, and before bcrypt runs, an atomic
-Valkey counter per tenant and client IP admits ten registrations in a 15-minute
-window. It uses the same client IP and trusted-proxy rule as login, with a
-tenant-prefixed, SHA-256-derived key. Duplicate and new emails both consume the
-budget, so unique addresses cannot bypass it; rejected input does not. Further
-attempts return `429` with `throttled` without hashing. Unlike login,
-registration fails closed: a Valkey error, timeout or cancellation, or a missing
-tenant, returns `503` before hashing. The limit bounds one address to forty
-cost-12 hashes an hour while leaving room for several people to sign up behind
-one shared address. Without trusted proxy configuration, every client behind one
-proxy shares the budget.
+Valkey counter per tenant and client IP admits ten registrations per fixed
+900-second window, which starts with the first valid attempt and is not extended
+by later ones. It uses the same client IP and trusted-proxy rule as login, with
+a tenant-prefixed, SHA-256-derived key. Duplicate and new emails both consume
+the budget, so unique addresses cannot bypass it; rejected input does not.
+Further attempts return `429` with `throttled` without hashing. Unlike login,
+registration fails closed: every admission failure returns before hashing, with
+the status the shared error mapping gives it. A Valkey error or a missing tenant
+returns `503`, the admission timeout returns `504`, and a request the client
+cancelled returns `499`. The limit bounds the cost-12 hashes one address can
+cause while leaving room for several people to sign up behind one shared
+address. Without trusted proxy configuration, every client behind one proxy
+shares the budget.
 
 ## Sessions and cookies
 

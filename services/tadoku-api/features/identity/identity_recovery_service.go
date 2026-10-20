@@ -83,7 +83,7 @@ func (s *Service) WriteRecovery(ctx context.Context, request RecoveryRequest) (R
 	}
 	return RecoveryResult{Emails: []mail.Message{{
 		Template:  mail.AccountRecovery,
-		Recipient: credential.account.Email.value,
+		Recipient: credential.account.Email.recipient(),
 		Params:    map[string]string{"recovery_url": request.link},
 	}}}, nil
 }

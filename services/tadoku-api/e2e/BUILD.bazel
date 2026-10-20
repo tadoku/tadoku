@@ -45,6 +45,7 @@ go_test(
         "golden_test.go",
         "identity_accounts_test.go",
         "identity_errors_test.go",
+        "identity_imported_delivery_test.go",
         "identity_imported_email_test.go",
         "identity_isolation_test.go",
         "identity_legacy_listing_test.go",

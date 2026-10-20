@@ -1,12 +1,32 @@
 import { createServer } from 'node:http'
 import { test, expect } from '@playwright/test'
+import { holdScripts, waitForHydration } from './support'
 
 const fixtureEnabled = process.env.AUTHV2_SESSION_FIXTURE === 'true'
 let status = 200
 let contentType = 'application/json'
 let session: unknown = { account_app: 'v2', account: null }
 const requests: { cookie?: string; branch?: string; method?: string; path?: string }[] = []
+const profileUpdates: unknown[] = []
 const fixture = createServer((request, response) => {
+  const cors = request.headers.origin
+    ? { 'Access-Control-Allow-Origin': request.headers.origin, 'Access-Control-Allow-Credentials': 'true' }
+    : {}
+  if (request.url === '/api/internal/identity/settings/profile') {
+    if (request.method === 'OPTIONS') {
+      response.writeHead(204, { ...cors, 'Access-Control-Allow-Methods': 'PATCH', 'Access-Control-Allow-Headers': 'content-type' }).end()
+      return
+    }
+    const chunks: Buffer[] = []
+    request.on('data', chunk => chunks.push(chunk))
+    request.on('end', () => {
+      const update = JSON.parse(Buffer.concat(chunks).toString('utf8'))
+      profileUpdates.push(update)
+      const account = (session as { account: object }).account
+      response.writeHead(200, { ...cors, 'Content-Type': 'application/json' }).end(JSON.stringify({ ...account, ...update }))
+    })
+    return
+  }
   if (request.url !== '/api/internal/identity/session') {
     response.writeHead(404).end()
     return
@@ -93,5 +113,69 @@ test('account screen, session routing and unavailable API', async ({ page, reque
       await expect.soft(page.getByLabel('Email')).toHaveCount(0)
       expect((await request.get('/healthz')).status()).toBe(200)
     }
+  })
+})
+
+const account = (id: string, email: string) => ({
+  account_app: 'v2',
+  account: { id, email, display_name: 'Reader', created_at: '2026-01-01T00:00:00Z', authenticated_at: '2026-01-01T00:00:00Z' },
+})
+
+test('Settings shows and resubmits stored account values unchanged', async ({ page, request }) => {
+  test.skip(!fixtureEnabled, 'needs the local session fixture')
+  status = 200
+  contentType = 'application/json'
+
+  await test.step('any well-formed account ID reaches Settings; a malformed one stays unavailable', async () => {
+    // The import keeps source IDs without checking their UUID version, so a version-0 ID is a real stored value.
+    for (const [id, ready] of [
+      ['01000000-0000-0000-0000-000000000000', true],
+      ['00000000-0000-4000-8000-000000000001', true],
+      ['00000000-0000-8000-8000-000000000001', true],
+      ['not-a-uuid', false],
+    ] as const) {
+      session = account(id, 'reader@example.test')
+      const html = await (await request.get('/settings')).text()
+      expect.soft(html.includes('Change email'), id).toBe(ready)
+      expect.soft(html.includes('We can’t reach your account right now'), id).toBe(!ready)
+    }
+  })
+
+  // Imported addresses keep their raw stored form: a long ideographic-space prefix, and 321 bytes that only fit
+  // the 320-byte limit once Go lowercases them.
+  for (const [name, email] of [
+    ['long ideographic-space prefix', '\u3000'.repeat(350) + 'reader@example.test'],
+    ['short ideographic-space prefix', '\u3000reader@example.test'],
+    ['Kelvin sign at 321 bytes', 'a'.repeat(316) + '\u212A@x'],
+    ['dotted capital I at 321 bytes', 'a'.repeat(317) + '\u0130@x'],
+  ]) {
+    await test.step(`${name}: server-rendered, hydrated and submitted unchanged`, async () => {
+      session = account('00000000-0000-4000-8000-000000000001', email)
+      const html = await (await request.get('/settings')).text()
+      expect.soft(html.includes('\u0000'), 'server HTML has no NUL').toBe(false)
+      expect.soft(html.includes('\uFFFD'), 'server HTML has no replacement character').toBe(false)
+      expect.soft(html.includes(`value="${email}"`), 'server-rendered email input').toBe(true)
+
+      await page.goto('/settings')
+      await waitForHydration(page)
+      await expect.soft(page.getByRole('textbox', { name: 'Email', exact: true })).toHaveValue(email)
+      profileUpdates.length = 0
+      await page.getByRole('button', { name: 'Change email' }).click()
+      await expect.soft(page.getByText('Email changed.')).toBeVisible()
+      expect.soft(profileUpdates).toEqual([{ email }])
+    })
+  }
+
+  await test.step('an edit typed before hydration is kept and submitted', async () => {
+    session = account('00000000-0000-4000-8000-000000000001', '\u3000'.repeat(350) + 'reader@example.test')
+    const scripts = await holdScripts(page)
+    await page.goto('/settings', { waitUntil: 'domcontentloaded' })
+    await page.getByRole('textbox', { name: 'Email', exact: true }).fill('edited@example.test')
+    await scripts.release()
+    await expect.soft(page.getByRole('textbox', { name: 'Email', exact: true })).toHaveValue('edited@example.test')
+    profileUpdates.length = 0
+    await page.getByRole('button', { name: 'Change email' }).click()
+    await expect.soft(page.getByText('Email changed.')).toBeVisible()
+    expect.soft(profileUpdates).toEqual([{ email: 'edited@example.test' }])
   })
 })

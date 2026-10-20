@@ -194,8 +194,10 @@ Authv2 uses `/` for Settings, `/login`, `/register` and `/recovery` on `authv2.t
   with a retry action and the shell's home link; a missing endpoint must not
   crash the page.
 - Verify mobile containment and `/healthz` independently of API availability.
-  Cookie/branch forwarding can be checked with the opt-in local session fixture;
-  disclose that substituted upstream instead of claiming real login coverage.
+  Cookie/branch forwarding can be checked with the opt-in local session fixture,
+  and registration answers, including the registration budget's `429`, with the
+  opt-in registration fixture; disclose that substituted upstream instead of
+  claiming real login coverage.
   The Playwright smoke is run by hand, never wired into CI.
 - Public identity entry rules forward Cookie with a signed guest JWT and no
   global session callback, so identity owns auth/CSRF and banned-user session or

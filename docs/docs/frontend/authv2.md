@@ -30,7 +30,11 @@ validation mirrors the API's length rules; the API's similarity rule and other
 rejections map onto the field they concern (`email_taken`, `invalid_email`,
 `invalid_display_name`, `invalid_password`) or onto the form (`wrong_password`,
 `throttled`, `stale_session`, a 401 without a code, `invalid_origin` and service
-failures). A wrong password clears and focuses the password field.
+failures). A wrong password clears and focuses the password field. On
+registration, `throttled` means the tenant's per-network registration budget is
+spent, and the message says to wait 15 minutes; on login it names the login
+limit. A registration answer with an undocumented status, such as the API's
+`504` or `499`, or a malformed body counts as a service failure.
 
 Both paths send the form through `sendIdentity()` in
 `frontend/apps/authv2/src/lib/identity.ts`, which calls the generated identity
@@ -159,7 +163,9 @@ session, stale-session reauthentication. `recovery.spec.ts` follows a held
 recovery email's generated link through Settings and checks old passwords,
 sessions and links fail. See `frontend/apps/authv2/e2e/README.md` for setup and
 for the loopback session fixture that checks header forwarding, v1 redirection
-and failure responses. That fixture proves application HTTP/SSR behavior; it
+and failure responses, and for the registration fixture that sends controlled
+API answers, including the registration `429`, through both the hydrated and
+native registration paths. These fixtures prove application HTTP/SSR behavior; it
 does not prove real authentication, Oathkeeper, tenant isolation or
 shared-cluster routing. TLS verification remains enabled. Reports, screenshots
 and recordings go outside source control. Tracing is disabled because

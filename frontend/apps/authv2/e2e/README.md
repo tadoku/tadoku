@@ -70,6 +70,34 @@ This substitutes only the identity API; real authentication, gateway routing,
 DNS, TLS termination and tenant persistence remain unverified. Never point
 this fixture at a shared API or treat it as live end-to-end authentication.
 
+The registration fixture needs a server whose web URL is HTTPS, because native
+submissions are accepted only from an HTTPS allowed account origin. Stop the
+session fixture's server, check the same ports are free, and start:
+
+```sh
+TADOKU_WEB_URL=https://tadoku.dev.lab \
+TADOKU_API_URL=http://127.0.0.1:5195/api/internal \
+HOST=127.0.0.1 pnpm authv2
+```
+
+Then run:
+
+```sh
+AUTHV2_REGISTRATION_FIXTURE=true \
+  PLAYWRIGHT_OUTPUT_DIR=/workspace/.scratch/authv2-smoke \
+  pnpm --filter authv2 exec playwright test e2e/registration.spec.ts
+```
+
+It answers registration with a `201` session, the registration budget's `429`,
+`409`, `400`, `503`, the undocumented `504` and `499`, an HTML `429`, a
+malformed `201`, an undocumented `200` and a reset connection. The hydrated test
+answers the browser's calls to `https://tadoku.dev.lab` inside Playwright, so
+they never reach the network; the native test posts to `/actions/register` as
+`authv2.tadoku.dev.lab`, and the server forwards to the `127.0.0.1:5195`
+fixture. Each failure must keep the visitor on the form with the expected
+message after exactly one request, and only the `201` session may continue or
+pass a session cookie on.
+
 `AUTHV2_BASE_URL` defaults to `http://127.0.0.1:5184`.
 `PLAYWRIGHT_OUTPUT_DIR` defaults to a temporary directory. Reports and mobile
 screenshots remain outside Git; tracing stays off because network payloads can contain credentials. Inspect evidence before attaching it to a PR. Stop only the

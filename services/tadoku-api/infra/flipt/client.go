@@ -167,7 +167,8 @@ func (c *Client) connect(
 
 // initialFetch records whether one SDK client's initial fetch returned a valid snapshot. The SDK sends only that fetch
 // with the context passed to its constructor; it polls with a context of its own, so later fetches never set it. A
-// constructor that returns without error has initialized its engine from the snapshot it fetched.
+// constructor that returns without error has initialized its engine from the snapshot it fetched. A later fetch whose
+// snapshot fails validation returns an error, so the SDK keeps evaluating its current snapshot.
 type initialFetch struct {
 	succeeded atomic.Bool
 }
@@ -344,11 +345,15 @@ func (t *observedTransport) RoundTrip(request *http.Request) (*http.Response, er
 			return nil, fmt.Errorf("read Flipt snapshot response: %w", readErr)
 		}
 		if t.state != nil {
+			fetch, initial := request.Context().Value(initialFetchKey{}).(*initialFetch)
 			if err := t.state.acceptSnapshot(body); err != nil {
 				t.state.failed()
+				if !initial {
+					return nil, fmt.Errorf("reject Flipt snapshot update: %w", err)
+				}
 			} else {
 				t.state.snapshotReceived(response.Header.Get("ETag"))
-				if fetch, ok := request.Context().Value(initialFetchKey{}).(*initialFetch); ok {
+				if initial {
 					fetch.succeeded.Store(true)
 				}
 			}
@@ -382,30 +387,30 @@ func newProviderFetchState(namespace string, observer Observer) *providerFetchSt
 	return &providerFetchState{namespace: namespace, observer: observer, stale: true}
 }
 
+// acceptSnapshot matches keys exactly, as the SDK's engine does. Decoding into a struct would also match keys in another
+// case, so the engine could apply a namespace that validation never checked.
 func (s *providerFetchState) acceptSnapshot(payload []byte) error {
-	var snapshot struct {
-		Namespace *struct {
-			Key string `json:"key"`
-		} `json:"namespace"`
-		Flags []struct {
-			Key string `json:"key"`
-		} `json:"flags"`
-		Digest string `json:"digest"`
-	}
+	var snapshot, namespace map[string]json.RawMessage
 	if err := json.Unmarshal(payload, &snapshot); err != nil {
 		return fmt.Errorf("decode Flipt snapshot: %w", err)
 	}
-	if snapshot.Namespace == nil || snapshot.Namespace.Key != s.namespace {
+
+	var namespaceKey, digest string
+	if json.Unmarshal(snapshot["namespace"], &namespace) != nil ||
+		json.Unmarshal(namespace["key"], &namespaceKey) != nil ||
+		namespaceKey != s.namespace {
 		return errors.New("Flipt snapshot namespace does not match configuration")
 	}
-	if snapshot.Flags == nil {
+	var flags []map[string]json.RawMessage
+	if json.Unmarshal(snapshot["flags"], &flags) != nil || flags == nil {
 		return errors.New("Flipt snapshot flags are missing")
 	}
-	if snapshot.Digest == "" {
+	if json.Unmarshal(snapshot["digest"], &digest) != nil || digest == "" {
 		return errors.New("Flipt snapshot digest is missing")
 	}
-	for _, flag := range snapshot.Flags {
-		if flag.Key == "" {
+	for _, flag := range flags {
+		var key string
+		if json.Unmarshal(flag["key"], &key) != nil || key == "" {
 			return errors.New("Flipt snapshot contains a flag without a key")
 		}
 	}

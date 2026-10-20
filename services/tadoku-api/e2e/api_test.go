@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"net/netip"
 	"os"
 	"path/filepath"
 	"testing"
@@ -25,7 +26,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/features/contests"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/email"
 	featureflagsservice "github.com/tadoku/tadoku/services/tadoku-api/features/featureflags"
-	accountidentity "github.com/tadoku/tadoku/services/tadoku-api/features/identity"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/languages"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
@@ -266,9 +267,15 @@ func newTestRouterWithLeaderboard(
 type routerOption func(*routerEndpoints)
 
 type routerEndpoints struct {
-	jwks       string
-	production *bool
-	ketoWrite  string
+	jwks             string
+	production       *bool
+	ketoWrite        string
+	identityValkey   valkeygo.Client
+	identityObserver featureflags.Observer
+}
+
+func withIdentityValkey(client valkeygo.Client) routerOption {
+	return func(endpoints *routerEndpoints) { endpoints.identityValkey = client }
 }
 
 func withKetoWriteURL(url string) routerOption {
@@ -287,7 +294,11 @@ func newTestRouterWithLeaderboardService(
 	deployment tenant.Deployment,
 	options ...routerOption,
 ) (*transport.Router, *featureprofile.Service, *permissions.KetoService, error) {
-	endpoints := routerEndpoints{ketoWrite: ketoFixture.WriteURL(), jwks: authenticationJWKS.URL}
+	endpoints := routerEndpoints{
+		ketoWrite:      ketoFixture.WriteURL(),
+		jwks:           authenticationJWKS.URL,
+		identityValkey: leaderboardValkey.client,
+	}
 	for _, option := range options {
 		option(&endpoints)
 	}
@@ -296,7 +307,7 @@ func newTestRouterWithLeaderboardService(
 	readWriter := ketoclient.NewClient(ketoFixture.ReadURL(), endpoints.ketoWrite)
 	permissionChecker := permissions.NewKetoChecker(reader)
 	roleService := permissions.NewKetoService(reader)
-	identities := accountidentity.NewReader(pool, kratosFixture.CursorClient(), featureflags.NewEvaluator(flipt, nil))
+	identities := identity.NewReader(pool, kratosFixture.CursorClient(), featureflags.NewEvaluator(flipt, nil))
 
 	authzService := featureauthz.NewService(
 		permissionChecker,
@@ -328,7 +339,7 @@ func newTestRouterWithLeaderboardService(
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	featureFlagEvaluator := featureflags.NewEvaluator(flipt, nil)
+	featureFlagEvaluator := featureflags.NewEvaluator(flipt, endpoints.identityObserver)
 	featureFlagsService := featureflagsservice.NewService(
 		featureFlagEvaluator,
 		fliptmanagement.NewClient(fliptmanagement.Config{
@@ -340,6 +351,13 @@ func newTestRouterWithLeaderboardService(
 	registry := prometheus.NewRegistry()
 	scoringObserver := observability.NewScoringObserver(registry, logger, scoringEngineEnabled)
 	scoringService := scoring.NewService(scoringRepository, scoringEngineEnabled, scoringObserver)
+	identityService := identity.NewService(
+		identity.NewRepository(pool),
+		identity.NewThrottle(endpoints.identityValkey, time.Second, logger),
+		identity.NewLegacySessions("http://kratos-public.test", "http://kratos.test", kratosFixture.HTTPClient()),
+		featureFlagEvaluator,
+		"tadoku.dev.lab",
+	)
 
 	production := true
 	if endpoints.production != nil {
@@ -364,6 +382,7 @@ func newTestRouterWithLeaderboardService(
 		FeatureFlags:  featureFlagsService,
 		DB:            pool,
 		Permissions:   permissionChecker,
+		Identity:      identityService,
 	})
 
 	authenticate, err := transport.NewJWTAuthentication(
@@ -385,7 +404,17 @@ func newTestRouterWithLeaderboardService(
 		return nil, nil, nil, err
 	}
 
-	handler, err := transport.NewHandler(application, pool.Ping, time.Second, registry, logger, authenticate, rejectBanned, authenticateCallback)
+	handler, err := transport.NewHandler(
+		application,
+		pool.Ping,
+		30*time.Second,
+		registry,
+		logger,
+		authenticate,
+		rejectBanned,
+		authenticateCallback,
+		transport.WithIdentityTrustedProxies([]netip.Prefix{netip.MustParsePrefix("10.42.0.0/16")}),
+	)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("create API handler: %w", err)
 	}
@@ -434,7 +463,7 @@ func (s *suite) resetProfileService() {
 		*s.profile = *featureprofile.NewService(
 			featureprofile.NewRepository(s.db.AppPool),
 			s.roles,
-			accountidentity.NewReader(s.db.AppPool, s.kratos.CursorClient(), featureflags.NewEvaluator(flipt, nil)),
+			identity.NewReader(s.db.AppPool, s.kratos.CursorClient(), featureflags.NewEvaluator(flipt, nil)),
 		)
 	}
 }

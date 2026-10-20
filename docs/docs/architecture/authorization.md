@@ -13,14 +13,13 @@ its source is `services/tadoku-api/spec/openapi.yaml`.
 
 ## Authentication and authorization
 
-- **Identity** owns tenant account reads. V1 identity/session commands remain
-  backed by Kratos; v2 session commands return not implemented. Oathkeeper's
-  configured session callback forwards Cookie and X-Dev-Branch with its trusted
-  bearer through the branch-aware API hop. The callback must be deployed before
-  activating this gateway configuration. Browser API calls carry a session
-  cookie or no credentials. Oathkeeper's
-  `id_token` mutator replaces them with an RS256 JWT whose `sub` is the Kratos
-  identity ID, or `guest` for anonymous requests. Session traits travel in the
+- **Identity** owns account/session selection per tenant. V1 uses Ory Kratos;
+  v2 uses tenant-owned accounts and sessions in Tadoku API. The
+  [identity entry point](../tadoku-api/identity.md) selects with the tenant-level
+  `identity-v2` flag and provides the authenticated session callback. Oathkeeper's cookie-session authenticator forwards the complete Cookie and trusted
+  X-Dev-Branch headers to that callback through the branch-aware API hop. Oathkeeper's
+  `id_token` mutator produces an RS256 JWT whose `sub` is the
+  account UUID, or `guest` for anonymous requests. Session traits travel in the
   `session` claim; `type` is `user`. API tokens carry a signed `tenant`
   claim for both anonymous and signed-in requests: `tadoku/prod`, or
   `tadoku/<route>` when a trusted branch selection reaches Oathkeeper. The
@@ -55,7 +54,6 @@ Canonical development token reads record the token UUID as actor and include
 See [Tenant lifecycle command](../tadoku-api/tenant-lifecycle.md#email-access-tokens)
 for attached issuance, limits, listing and revocation.
 
-
 ## Identity reads
 
 Profile and moderation use `identity.Reader` for public profile details, account
@@ -63,6 +61,11 @@ age, admin listing and ban-target existence. The identity feature chooses the
 implementation using the request tenant's flag. V2 targets must be active
 accounts in that tenant; v1 reads continue through Kratos. Account deletion is
 not available, and read access does not authorize shared provider mutations.
+
+The identity session adapter in `services/tadoku-api/features/identity/kratos`
+checks the selected Kratos cookie and revokes only that session for the canonical
+tenant. Test-tenant logout clears the browser cookie and leaves shared provider
+sessions active; a missing tenant cannot revoke a session.
 
 ## Keto data model
 
@@ -73,7 +76,7 @@ not available, and read access does not authorize shared provider mutations.
 | test object | The full tenant key, such as `e2e/alpha-0000000a` |
 | relations | `admins`, `banned`, `parents`, `testers` |
 | permits | `admin`, `is_banned`, `access` |
-| subject | direct `subject_id`: the Kratos identity ID from the JWT `sub`, never an email |
+| subject | direct `subject_id`: the account UUID from the JWT `sub`, never an email |
 
 The canonical tenant keeps `app:tadoku` and its existing administrator and ban
 relations. Tenant keys use `name/id`; the provider object for this existing
@@ -175,6 +178,13 @@ anonymous visitors and to signed-in users without any grant on their object:
 A test object's `is_banned` permit includes bans inherited from its parents,
 while a ban on the test object applies only to that tenant. The
 current-user-role exception lets a banned user discover its ban.
+
+Public identity entry rules use anonymous authentication with the signed tenant
+and the `id_token` mutator. Their handlers resolve the identity cookie themselves,
+so a banned account can inspect its session and log out without presenting a
+banned user JWT. Protected routes retain cookie-session authentication and the
+normal ban gate. Do not exempt identity paths from the backend ban middleware;
+the gateway must use the anonymous-only identity rule.
 
 ## Checks in application operations
 

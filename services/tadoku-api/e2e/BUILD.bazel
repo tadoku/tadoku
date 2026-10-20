@@ -3,6 +3,7 @@ load("@rules_go//go:def.bzl", "go_test")
 go_test(
     name = "e2e_test",
     size = "medium",
+    timeout = "long",
     srcs = [
         "access_journeys_test.go",
         "access_level_test.go",
@@ -43,6 +44,11 @@ go_test(
         "golden_test.go",
         "identity_legacy_listing_test.go",
         "identity_read_test.go",
+        "identity_accounts_test.go",
+        "identity_errors_test.go",
+        "identity_isolation_test.go",
+        "identity_providers_test.go",
+        "identity_registration_test.go",
         "identity_skeleton_test.go",
         "journey_test.go",
         "kratos_test.go",

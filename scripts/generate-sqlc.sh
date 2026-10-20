@@ -17,6 +17,7 @@ SQLC_PACKAGES=(
   "services/tadoku-api/sql/contests"
   "services/tadoku-api/sql/profile"
   "services/tadoku-api/sql/identityreads"
+  "services/tadoku-api/sql/identity"
   "services/tadoku-api/sql/leaderboard"
   "services/tadoku-api/sql/scoring"
 )

@@ -39,7 +39,7 @@ environment variables. Development values are in
   value is passed to the PostgreSQL pool or the migration tool.
 - `API_POSTGRES_MAX_CONNECTIONS` (default 4, validated range 1–32).
 
-### Valkey and leaderboard caches
+### Valkey, leaderboard caches and login throttling {#valkey-and-leaderboard-caches}
 
 - `API_VALKEY_URL`, one standalone TCP URL accepted by `valkey-go`.
 - `API_VALKEY_TIMEOUT` (default 1s), the positive bound for each connection and
@@ -55,6 +55,11 @@ cache prefix is configured.
 
 `services/tadoku-api/infra/valkey/README.md` documents which URL options are
 accepted and how commands, timeouts, cancellation and close behave.
+
+Identity also uses tenant-prefixed Valkey keys for login throttling. Its
+15-minute fixed window permits ten attempts per normalized email and fifty per
+client IP. Valkey failures allow login attempts and log a warning. See
+[Identity](./identity.md) for session and credential behavior.
 
 ### Tenant deployment
 
@@ -83,6 +88,12 @@ base deployments leave `API_BRANCH` unset.
 - `API_OATHKEEPER_AUTHZ_TOKEN`, the bearer credential required on trusted
   Oathkeeper authorization callbacks.
 
+`API_IDENTITY_TRUSTED_PROXY_CIDRS` is an optional comma-separated list of
+IP prefixes. Only a connection from those prefixes may supply `X-Real-IP` for
+login throttling; configure only proxies whose edge overwrites that header.
+The default trusts no forwarding header; clients behind an unconfigured proxy
+share that proxy's peer-IP budget. Malformed prefixes fail startup.
+
 ### Keto and Kratos
 
 - `API_KETO_READ_URL`, an absolute HTTP(S) base URL for the Keto read
@@ -94,6 +105,11 @@ base deployments leave `API_BRANCH` unset.
   the raw read/write client, including response-body reads.
 - `API_KRATOS_ADMIN_URL`, an absolute HTTP(S) base URL for the Kratos admin
   service.
+- `API_KRATOS_PUBLIC_URL`, the optional absolute HTTP(S) public Kratos URL for
+  the identity session adapter. Configure it before moving session callers to
+  the identity API; a present v1 cookie fails closed when it is unset.
+- `API_IDENTITY_COOKIE_DOMAIN` (default `tadoku.app`), restricted to
+  `tadoku.app` or `tadoku.dev.lab`. The development base API and overlays set the latter.
 - `API_KRATOS_TIMEOUT` (default 2s), a positive total request timeout, including
   reading the response body.
 
@@ -168,7 +184,7 @@ responses. In addition:
   creation time.
 - Anonymous gateway traffic carries a signed token with subject `guest`, which
   is distinct from a direct request without credentials. Every other subject
-  must be a UUID, the Kratos identity ID; a token with any other subject is
+  must be an account UUID (Kratos for v1, local for v2); a token with any other subject is
   rejected with `401` like any other invalid token. Service tokens are never
   converted into human identities.
 - The ban gate performs only the ban lookup, so no unrelated administrator

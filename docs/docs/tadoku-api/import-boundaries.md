@@ -70,7 +70,8 @@ only to identity. General cross-feature composition remains in the application.
 graph. Each allowed package covers only its own targets, not subpackages, and
   startup here means `cmd/tadoku-api` and `cmd/tadoku-tenant`:
 
-- Only `features/leaderboard`, `services/tadoku-api/infra/valkey`, startup, E2E
+- Only `features/leaderboard`, `features/identity` (login throttling),
+  `services/tadoku-api/infra/valkey`, startup, E2E
   and the `app/worker:worker_test` and
   `app/tenantlifecycle:tenantlifecycle_test` targets may depend directly on `valkey-go`.
   The worker test needs a raw client because `leaderboard.NewCache` takes
@@ -83,7 +84,9 @@ graph. Each allowed package covers only its own targets, not subpackages, and
 - Only `services/tadoku-api/features/identity`,
   `services/tadoku-api/features/identity/kratos`,
   `services/tadoku-api/internal/testkratos` and E2E may depend directly on the Kratos SDK.
-  Only identity ownership maps SDK models into accounts.
+  Only identity ownership maps SDK models into accounts. The identity session
+  adapter reads the public session endpoint and revokes canonical sessions through
+  the admin endpoint; it enforces the tenant guard before provider writes.
   Test fixtures own their disposable provider and may arrange its state directly.
 
 This keeps other packages on the shared permission checker. Keep shared ban and

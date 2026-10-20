@@ -9,6 +9,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/features/contests"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/email"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/featureflags"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/languages"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
@@ -39,6 +40,7 @@ type Application struct {
 	scoring       *scoring.Service
 	featureFlags  *featureflags.Service
 	db            *pgxpool.Pool
+	identity      *identity.Service
 	permissions   *permissions.Checker
 }
 
@@ -60,6 +62,7 @@ type Dependencies struct {
 	Scoring       *scoring.Service
 	FeatureFlags  *featureflags.Service
 	DB            *pgxpool.Pool
+	Identity      *identity.Service
 	Permissions   *permissions.Checker
 }
 
@@ -82,6 +85,7 @@ func New(deps Dependencies) *Application {
 		scoring:       deps.Scoring,
 		featureFlags:  deps.FeatureFlags,
 		db:            deps.DB,
+		identity:      deps.Identity,
 		permissions:   deps.Permissions,
 	}
 }

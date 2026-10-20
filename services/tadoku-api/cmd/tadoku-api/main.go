@@ -272,6 +272,13 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 
 	scoringObserver := observability.NewScoringObserver(metrics, logger, cfg.ScoringEngineEnabled)
 	scoringService := scoring.NewService(scoringRepository, cfg.ScoringEngineEnabled, scoringObserver)
+	identityService := identity.NewService(
+		identity.NewRepository(pool),
+		identity.NewThrottle(valkeyClient, cfg.ValkeyTimeout, logger),
+		identity.NewLegacySessions(cfg.KratosPublicURL, cfg.KratosAdminURL, kratosHTTP),
+		featureflags.NewEvaluator(fliptProvider, featureFlagMetrics),
+		cfg.IdentityCookieDomain,
+	)
 
 	api := app.New(app.Dependencies{
 		Tokens:        tokens.NewService(tokens.NewRepository(pool), cfg.Production),
@@ -292,10 +299,21 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 		FeatureFlags:  featureFlagService,
 		DB:            pool,
 		Permissions:   permissionChecker,
+		Identity:      identityService,
 	})
 	rejectBanned := transporthttp.RejectBannedUsers(permissionChecker.Admit, logger)
 
-	handler, err := transporthttp.NewHandler(api, pool.Ping, cfg.RequestTimeout, metrics, logger, authenticate, rejectBanned, authenticateCallback)
+	handler, err := transporthttp.NewHandler(
+		api,
+		pool.Ping,
+		cfg.RequestTimeout,
+		metrics,
+		logger,
+		authenticate,
+		rejectBanned,
+		authenticateCallback,
+		transporthttp.WithIdentityTrustedProxies(cfg.identityTrustedProxies),
+	)
 	if err != nil {
 		return nil, err
 	}

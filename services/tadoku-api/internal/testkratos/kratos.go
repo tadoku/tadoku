@@ -14,6 +14,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -98,8 +99,12 @@ func New(ctx context.Context, seedFile string) (_ *Fixture, resultErr error) {
 
 	dialer := &net.Dialer{Timeout: requestTimeout}
 	fixture.transport = &http.Transport{
-		DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
-			return dialer.DialContext(ctx, "unix", filepath.Join(dir, "admin.sock"))
+		DialContext: func(ctx context.Context, _, address string) (net.Conn, error) {
+			socket := "admin.sock"
+			if strings.HasPrefix(address, "kratos-public.test:") {
+				socket = "public.sock"
+			}
+			return dialer.DialContext(ctx, "unix", filepath.Join(dir, socket))
 		},
 		MaxConnsPerHost:       4,
 		MaxIdleConns:          4,
@@ -134,6 +139,8 @@ func (fixture *Fixture) PublicClient() *http.Client {
 }
 
 func (fixture *Fixture) Client() *kratosapi.APIClient { return fixture.client }
+
+func (fixture *Fixture) HTTPClient() *http.Client { return fixture.http }
 
 func (fixture *Fixture) CursorClient() identity.LegacyReader {
 	return identity.NewLegacyReader(adminURL, identity.WithHTTPClient(fixture.http))

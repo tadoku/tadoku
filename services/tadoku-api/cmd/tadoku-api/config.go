@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"net/netip"
 	"net/url"
 	"strings"
 	"time"
@@ -40,8 +41,12 @@ type config struct {
 	FliptStartupTimeout  time.Duration `validate:"gt=0" envconfig:"flipt_startup_timeout" default:"3s"`
 	FliptManagementURL   string        `envconfig:"flipt_management_url" default:"http://oathkeeper-proxy.default:4455/flipt-management"`
 
-	KratosAdminURL string        `validate:"required" envconfig:"kratos_admin_url"`
-	KratosTimeout  time.Duration `validate:"gt=0" envconfig:"kratos_timeout" default:"2s"`
+	KratosAdminURL            string   `validate:"required" envconfig:"kratos_admin_url"`
+	KratosPublicURL           string   `envconfig:"kratos_public_url"`
+	IdentityCookieDomain      string   `envconfig:"identity_cookie_domain" default:"tadoku.app"`
+	IdentityTrustedProxyCIDRs []string `envconfig:"identity_trusted_proxy_cidrs"`
+	identityTrustedProxies    []netip.Prefix
+	KratosTimeout             time.Duration `validate:"gt=0" envconfig:"kratos_timeout" default:"2s"`
 
 	PostgresMaxConnections int32                 `validate:"gt=0,lte=32" envconfig:"postgres_max_connections" default:"4"`
 	Postgres               postgresconfig.Config `ignored:"true"`
@@ -125,6 +130,22 @@ func loadConfig() (config, error) {
 		return config{}, fmt.Errorf("validate config: KratosAdminURL must be an HTTP(S) URL without credentials, query or fragment")
 	}
 	cfg.KratosAdminURL = strings.TrimRight(cfg.KratosAdminURL, "/")
+	if cfg.KratosPublicURL != "" {
+		cfg.KratosPublicURL, err = providerBaseURL("KratosPublicURL", cfg.KratosPublicURL)
+		if err != nil {
+			return config{}, err
+		}
+	}
+	if cfg.IdentityCookieDomain != "tadoku.app" && cfg.IdentityCookieDomain != "tadoku.dev.lab" {
+		return config{}, fmt.Errorf("validate config: IdentityCookieDomain must be tadoku.app or tadoku.dev.lab")
+	}
+	for _, raw := range cfg.IdentityTrustedProxyCIDRs {
+		prefix, parseErr := netip.ParsePrefix(raw)
+		if parseErr != nil {
+			return config{}, fmt.Errorf("validate config: IdentityTrustedProxyCIDRs must contain IP prefixes")
+		}
+		cfg.identityTrustedProxies = append(cfg.identityTrustedProxies, prefix)
+	}
 
 	cfg.Postgres, err = postgresconfig.Load("API_POSTGRES", "API_POSTGRES_URL")
 	if err != nil {

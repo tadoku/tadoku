@@ -24,7 +24,7 @@ test.afterAll(async () => {
 
 test('account screen, session routing and unavailable API', async ({ page, request }, testInfo) => {
   await page.goto('/login')
-  await expect(page.getByRole('heading', { name: 'Log in', exact: true })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: 'Log in' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Log in', exact: true })).toBeEnabled()
   await page.setViewportSize({ width: 390, height: 844 })
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
@@ -39,11 +39,19 @@ test('account screen, session routing and unavailable API', async ({ page, reque
     expect.soft(requests).toContainEqual({ cookie: 'tadoku_session_fixture=synthetic', branch: 'g-smoke', method: 'GET', path: '/api/internal/identity/session' })
   })
 
-  await test.step('v1 returns to the existing account app with path and query', async () => {
+  await test.step('v1 returns to the matching page of the existing account app', async () => {
     session = { account_app: 'v1', account: null }
-    const response = await request.get('/login?return_to=%2Flogs%2Fnew', { maxRedirects: 0 })
-    expect.soft(response.status()).toBe(307)
-    expect.soft(response.headers().location).toBe('http://account.localhost:5195/login?return_to=%2Flogs%2Fnew')
+    for (const [path, location] of [
+      ['/login?return_to=%2Flogs%2Fnew', '/login?return_to=%2Flogs%2Fnew'],
+      ['/register', '/register'],
+      ['/', '/'],
+      ['/settings?return_to=https%3A%2F%2Ftadoku.app%2F', '/?return_to=https%3A%2F%2Ftadoku.app%2F'],
+      ['/recovery', '/account-recovery'],
+    ]) {
+      const response = await request.get(path, { maxRedirects: 0 })
+      expect.soft(response.status(), path).toBe(307)
+      expect.soft(response.headers().location, path).toBe(`http://account.localhost:5195${location}`)
+    }
   })
 
   await test.step('v1 legacy account details do not prevent the redirect', async () => {
@@ -69,8 +77,9 @@ test('account screen, session routing and unavailable API', async ({ page, reque
       status = code
       session = body
       await page.goto('/login')
-      await expect.soft(page.getByText('Account service is unavailable. Try again later.')).toBeVisible()
-      await expect.soft(page.getByRole('link', { name: 'Open existing account app' })).toHaveAttribute('href', 'http://account.localhost:5195/login')
+      await expect.soft(page.getByRole('heading', { level: 1, name: 'We can’t reach your account right now' })).toBeVisible()
+      await expect.soft(page.getByRole('link', { name: 'Try again' })).toHaveAttribute('href', '/login')
+      await expect.soft(page.getByLabel('Email')).toHaveCount(0)
       expect((await request.get('/healthz')).status()).toBe(200)
     }
   })

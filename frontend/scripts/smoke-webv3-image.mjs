@@ -27,8 +27,9 @@ const fixture = createServer((request, response) => {
   let data
   if (path.endsWith('/latest-official')) data = contest
   else if (path.endsWith('/summary')) data = { participant_count: 1, language_count: 1, total_score: 13319.6455 }
+  // Imported accounts keep their source IDs without a UUID version check, so standings can hold a version-0 user ID.
   else if (path.endsWith('/leaderboard')) data = {
-    entries: [{ rank: 1, user_id: contest.id, user_display_name: 'Fixture learner', score: 13319.6455, is_tie: false }],
+    entries: [{ rank: 1, user_id: '01000000-0000-0000-0000-000000000000', user_display_name: 'Fixture learner', score: 13319.6455, is_tie: false }],
     total_size: 1, next_page_token: '',
   }
   else if (path === '/immersion/contests') data = { contests: [contest], total_size: 1, next_page_token: '' }

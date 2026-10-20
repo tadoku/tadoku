@@ -197,8 +197,34 @@ describe('generated client on malformed answers', () => {
   })
 
   it('accepts an empty answer where the contract has no body', async () => {
-    const result = await api.identityLogout({ baseUrl: 'https://api.test', body: {}, fetch: respond(204, {}, null) })
+    const result = await api.identityLogout({ baseUrl: 'https://api.test', fetch: respond(204, {}, null) })
     expect(result.error).toBeUndefined()
+  })
+
+  it('sends logout without a body but with the JSON type every identity write needs', async () => {
+    let sent: Request | undefined
+    await api.identityLogout({
+      baseUrl: 'https://api.test',
+      fetch: async input => {
+        sent = input as Request
+        return new Response(null, { status: 204 })
+      },
+    })
+    expect(sent!.headers.get('content-type')).toBe('application/json')
+    expect(await sent!.text()).toBe('')
+  })
+
+  it('sends other bodyless writes without a content type', async () => {
+    let sent: Request | undefined
+    await api.immersionLogDeleteById({
+      baseUrl: 'https://api.test',
+      path: { id: '00000000-0000-4000-8000-000000000001' },
+      fetch: async input => {
+        sent = input as Request
+        return new Response(null, { status: 200 })
+      },
+    })
+    expect(sent!.headers.get('content-type')).toBeNull()
   })
 })
 

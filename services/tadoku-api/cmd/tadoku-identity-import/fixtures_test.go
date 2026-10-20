@@ -86,9 +86,15 @@ func newFixture(t *testing.T) *fixture {
 		)
 		f.sql(t, true, `insert into identity_credentials
 			(id, nid, identity_id, identity_credential_type_id, config, version, created_at, updated_at)
-			select $1, i.nid, i.id, ct.id, jsonb_build_object('hashed_password', $2::text), 0, i.created_at, i.updated_at
-			from identities i cross join identity_credential_types ct
-			where i.id = $3 and ct.name = 'password'`, uuid.NewString(), f.hash, id,
+			select $1, i.nid, i.id, ct.id, jsonb_build_object('hashed_password', $2::text),
+			0, i.created_at, i.updated_at
+			from identities i
+			cross join identity_credential_types ct
+			where i.id = $3
+			  and ct.name = 'password'`,
+			uuid.NewString(),
+			f.hash,
+			id,
 		)
 	}
 	var identities, credentials int
@@ -96,7 +102,9 @@ func newFixture(t *testing.T) *fixture {
 		(select count(*) from identities), (select count(*) from identity_credentials)`).Scan(&identities, &credentials)
 	if err != nil || identities != 2 || credentials != 2 {
 		t.Fatalf(
-			"source fixture requires two identities and credentials: identities=%d credentials=%d", identities, credentials,
+			"source fixture requires two identities and credentials: identities=%d credentials=%d",
+			identities,
+			credentials,
 		)
 	}
 

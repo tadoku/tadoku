@@ -126,7 +126,7 @@ func TestImportCountAndArgumentGuards(t *testing.T) {
 
 func TestImportTargetConflicts(t *testing.T) {
 	for _, field := range []string{
-		"email", "password_hash", "created_at", "display_name", "user-created-at", "deleted_at", "locked", "foreign-email",
+		"email", "password_hash", "created_at", "display_name", "deleted_at", "locked", "foreign-email",
 	} {
 		t.Run(field, func(t *testing.T) {
 			f := newFixture(t)
@@ -144,14 +144,13 @@ func TestImportTargetConflicts(t *testing.T) {
 				f.sql(t, false, `update accounts set created_at = now() where user_id = $1`, secondID)
 			case "display_name":
 				f.sql(t, false, `update users set display_name = 'Changed' where id = $1`, secondID)
-			case "user-created-at":
-				f.sql(t, false, `update users set created_at = now() where id = $1`, secondID)
 			case "deleted_at":
 				f.sql(t, false, `update users set deleted_at = now() where id = $1`, secondID)
 			case "locked":
 				f.sql(t, false, `update users set deletion_locked_at = now() where id = $1`, secondID)
 			case "foreign-email":
-				f.sql(t, false, `update accounts set email_normalized = 'mixedcase@example.test' where user_id = $1`, secondID)
+				f.sql(t, false, `update accounts set email_normalized = 'mixedcase@example.test'
+					where user_id = $1`, secondID)
 			}
 			before := f.snapshot(t)
 
@@ -224,7 +223,9 @@ func TestImportConcurrentApply(t *testing.T) {
 	}
 	wg.Wait()
 	var count int
-	err := f.target.Pool.QueryRow(t.Context(), "select count(*) from accounts where tenant = 'tadoku/prod'").Scan(&count)
+	err := f.target.Pool.QueryRow(t.Context(), `select count(*)
+		from accounts
+		where tenant = 'tadoku/prod'`).Scan(&count)
 	if err != nil || count != 2 {
 		t.Fatal("concurrent import lost or duplicated accounts")
 	}

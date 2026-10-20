@@ -33,7 +33,13 @@ boundaries described in [Code ownership](./index.md#code-ownership).
   to `cmd/tadoku-tenant` and E2E. Its generated sqlc package is visible only to
   that application; lifecycle SQL targets the tenant registry rather than an
   ordinary feature's business data.
-- A feature's generated sqlc package is visible only to that feature. The
+- A feature's generated sqlc package is visible only to that feature.
+- The identity import command owns configuration and source/target pool
+  lifetimes. `features/identity` owns the external Kratos snapshot and hashes,
+  preflight and atomic target operation. Target SQL is sqlc-backed through its
+  own repository; the external source schema is read by the identity-owned
+  import adapter, outside Tadoku's migration-derived sqlc schema. The command
+  never receives account rows or hashes. The
   `generated/sqlc/tokens` package belongs only to `features/authz/tokens`.
 - `services/tadoku-api/infra/flipt` owns the shared tenant-to-provider target
   mapping. Its ordinary consumers use `:infrastructure_consumers`; the exact test-only

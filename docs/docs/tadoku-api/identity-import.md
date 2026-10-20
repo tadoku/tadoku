@@ -9,9 +9,9 @@ Read this when preparing or verifying the account import command.
 
 The command imports a consistent Kratos PostgreSQL snapshot into the target
 database's canonical `tadoku/prod` tenant. It preserves UUIDs, email spelling,
-display names, bcrypt hashes, account state and creation timestamps. It never
-creates sessions, contacts identity providers, changes feature flags or applies
-schema migrations.
+display names, bcrypt hashes, account state and account creation timestamps.
+It never creates sessions, contacts identity providers, changes feature flags
+or applies schema migrations.
 
 **Operational hold:** command development and disposable database tests do not
 authorize a shared-development rehearsal or production import. Shared source
@@ -56,13 +56,29 @@ upstream [credential model](https://github.com/ory/kratos/blob/v26.2.0/identity/
 and [password configuration](https://github.com/ory/kratos/blob/v26.2.0/identity/credentials_password.go).
 The CLI tests create this schema with the actual pinned Kratos migrator.
 
-The target uses the existing account and user schema. Existing matching users
-and accounts retain all their metadata, including `updated_at`, and sessions
-are untouched. Missing rows receive source timestamps. The user's timestamp
-without time zone is explicitly interpreted as UTC. A different existing
-display name, creation timestamp, email, hash or state is a conflict; deleted
-or deletion-locked users are also conflicts. The command never overwrites,
-resurrects or automatically repairs conflicting rows.
+The identity feature owns the source snapshot, validation and target operation;
+the command owns configuration and pool lifetimes. Target reads and writes use
+`services/tadoku-api/sql/identity/import.sql` through the identity repository.
+The external Kratos source queries stay handwritten inside identity because
+sqlc's target schema describes Tadoku migrations, not the independently
+migrated Kratos database. Password hashes never leave the identity feature.
+
+Existing legacy `users` rows often date from the first contest or log write,
+or an earlier backfill, rather than account registration. Their names may
+also be stale because profile synchronization is lazy. For a nondeleted,
+nonlocked user **without an account**, the import preserves `users.created_at`
+and all other metadata, including `updated_at`, and reconciles only
+`display_name` to the Kratos trait. This is an import reconciliation, so it does
+not impersonate a new profile edit by advancing `updated_at`. The new
+`accounts.created_at` still receives the original Kratos account time.
+
+Missing user rows receive source timestamps with UTC wall-clock semantics;
+existing user timestamps are never compared to or replaced by Kratos time.
+Existing accounts remain strict: a different email, normalized email, hash,
+state or account creation time is a conflict, as is a different display name
+for a user who already has an account. Deleted or deletion-locked users are
+always conflicts, even without an account. Sessions and unrelated tenants are
+untouched. The command never resurrects a user or repairs conflicting accounts.
 
 ## Preflight and dry run
 
@@ -73,13 +89,17 @@ bazel run //services/tadoku-api/cmd/tadoku-identity-import -- --dry-run
 ```
 
 Dry run is also the default when no mode flag is supplied. It prints current
-source counts, UUIDs and the names of fields or rows that would change. It never
-prints email addresses, display names, hashes, tokens or connection details.
+source counts, UUIDs and the names of fields or rows that would change.
+`update_display_name=true` identifies a proposed legacy-name reconciliation;
+`update_users` counts these updates alongside `insert_users` and
+`insert_accounts`. A dry run performs no inserts or updates. It never prints
+email addresses, display names, hashes, tokens or connection details.
 Database errors expose only the failing stage and SQLSTATE when available.
 
 Before any target writes, preflight requires:
 
-- Exactly one source network and a nonempty identity snapshot.
+- Exactly one source network, a nonempty identity snapshot and `schema_id = user`
+  for every identity; other schemas are rejected rather than omitted.
 - Exactly one password credential for every identity, with matching network
   membership. Other credential types require separate review rather than
   silently discarding additional authentication factors.
@@ -88,9 +108,11 @@ Before any target writes, preflight requires:
 - Valid emails with no duplicates after the same normalization used by local
   accounts, plus display names of 2–32 Unicode characters with visible content.
 - Valid source UUIDs, states and timestamps.
-- Matching existing target rows, no email owned by a different UUID, and no
-  canonical account absent from the source snapshot. Unrelated user rows and
-  other tenants are retained.
+- Existing accounts that match the source and users that are not deleted or
+  deletion-locked. Legacy users without accounts may have a different name or
+  creation time, as described above. No email may belong to another UUID, and
+  no canonical account may be absent from the source snapshot. Unrelated user
+  rows and other tenants are retained.
 
 There is no hardcoded historical identity count. Review the current
 `source_identities` count and all proposed changes. A conflict stops the command
@@ -110,9 +132,9 @@ bazel run //services/tadoku-api/cmd/tadoku-identity-import -- --dry-run --expect
 `--apply` requires a positive expected count and cannot be combined with
 `--dry-run`. A changed count fails before target writes. A successful apply
 prints `committed_accounts` for newly inserted accounts and `target_accounts`
-for the validated total. A repeat dry run must print zero insertions and an
-unchanged-account count equal to `source_identities`. A repeat apply succeeds
-without changing existing rows or sessions.
+for the validated total. A repeat dry run must print zero insertions,
+`update_users=0` and an unchanged-account count equal to `source_identities`.
+A repeat apply succeeds without changing existing rows or sessions.
 
 For additional count validation, run this in the disposable target database
 through an authenticated PostgreSQL client that does not echo credentials:
@@ -149,11 +171,18 @@ acquire `share row exclusive` locks on `users` and `accounts` before target
 preflight. These table locks block writers across tenants while held and
 serialize concurrent import commands. Lock acquisition has a five-second
 timeout; command execution has a five-minute deadline. All source validation
-and target conflict checks finish before the first insert. Every insert and
-the final count check share one target transaction; a failure rolls back the
-entire batch. A commit transport failure can leave the outcome uncertain:
-inspect a fresh dry run before retrying. Never infer failure from missing
+and target conflict checks finish before the first insert or update. Every
+insert, legacy-name update and final count check share one target transaction;
+a failure rolls back the entire batch. A commit transport failure can leave the
+outcome uncertain: inspect a fresh dry run before retrying. Never infer failure from missing
 success output alone.
+
+The command currently performs individual row writes and takes the same
+writer-blocking locks for dry run as for apply. Batching and a nonblocking
+dry-run snapshot are deferred to the separately held rehearsal, where the
+lock window must be measured with a representative workload before choosing
+an optimization. No throughput or lock-duration improvement is assumed here.
+This limitation does not authorize that rehearsal.
 
 ## Repeatable CLI verification
 

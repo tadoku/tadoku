@@ -13,6 +13,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/tadoku/tadoku/services/common/postgresconfig"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 )
 
@@ -47,22 +48,26 @@ func run(ctx context.Context, args []string, output io.Writer) error {
 		return errors.New("source and target must be distinct databases")
 	}
 
-	source, err := postgres.Open(ctx, sourceConfig.WithApplicationName("tadoku-identity-import-source").URL().Reveal(), 1)
+	source, err := postgres.Open(
+		ctx,
+		sourceConfig.WithApplicationName("tadoku-identity-import-source").URL().Reveal(),
+		1,
+	)
 	if err != nil {
 		return databaseError("source connection", err)
 	}
 	defer source.Close()
-	records, err := readSource(ctx, source, *expect, output)
-	if err != nil {
-		return err
-	}
 
-	target, err := postgres.Open(ctx, targetConfig.WithApplicationName("tadoku-identity-import-target").URL().Reveal(), 1)
+	target, err := postgres.Open(
+		ctx,
+		targetConfig.WithApplicationName("tadoku-identity-import-target").URL().Reveal(),
+		1,
+	)
 	if err != nil {
 		return databaseError("target connection", err)
 	}
 	defer target.Close()
-	return importTarget(ctx, target, records, *apply, output)
+	return identity.ImportKratosAccounts(ctx, source, target, *expect, *apply, output)
 }
 
 func databaseError(stage string, err error) error {

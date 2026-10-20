@@ -1,23 +1,36 @@
-package main
+package identity
 
 import (
 	"context"
 	"errors"
 	"fmt"
 	"io"
-	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
 type targetUser struct {
-	id          uuid.UUID
 	displayName string
-	createdAt   time.Time
 	deleted     bool
+}
+
+// Use only for an explicitly authorized import with distinct source and target pools.
+func ImportKratosAccounts(
+	ctx context.Context,
+	source, target *pgxpool.Pool,
+	expect int,
+	apply bool,
+	output io.Writer,
+) error {
+	records, err := readSource(ctx, source, expect, output)
+	if err != nil {
+		return err
+	}
+	return importTarget(ctx, target, records, apply, output)
 }
 
 func importTarget(
@@ -28,7 +41,8 @@ func importTarget(
 	output io.Writer,
 ) error {
 	ctx = tenant.WithKey(ctx, tenant.Production())
-	newUsers, newAccounts := 0, 0
+	newUsers, newAccounts, updatedUsers := 0, 0, 0
+	repository := NewRepository(pool)
 	var operationErr error
 	err := postgres.RunInTransaction(ctx, pool, func(ctx context.Context) (err error) {
 		defer func() { operationErr = err }()
@@ -43,9 +57,13 @@ func importTarget(
 			return databaseError("target lock", err)
 		}
 
-		users, accounts, err := readTarget(ctx, db)
+		users, err := repository.importUsers(ctx)
 		if err != nil {
-			return err
+			return databaseError("target read", err)
+		}
+		accounts, err := repository.importAccounts(ctx)
+		if err != nil {
+			return databaseError("target read", err)
 		}
 		sourceIDs := make(map[uuid.UUID]bool, len(records))
 		for _, record := range records {
@@ -66,11 +84,8 @@ func importTarget(
 				if user.deleted {
 					return fmt.Errorf("target conflict user_id=%s field=deletion_state", record.id)
 				}
-				if user.displayName != record.displayName {
+				if accountExists && user.displayName != record.displayName {
 					return fmt.Errorf("target conflict user_id=%s field=display_name", record.id)
-				}
-				if !user.createdAt.Equal(record.createdAt) {
-					return fmt.Errorf("target conflict user_id=%s field=users.created_at", record.id)
 				}
 			}
 			if accountExists {
@@ -98,16 +113,34 @@ func importTarget(
 			if !accountExists {
 				newAccounts++
 			}
-			if !userExists || !accountExists {
-				_, err := fmt.Fprintf(output, "difference user_id=%s insert_user=%t insert_account=%t\n",
-					record.id, !userExists, !accountExists)
+			updateName := userExists && user.displayName != record.displayName
+			if updateName {
+				updatedUsers++
+			}
+			if !userExists || !accountExists || updateName {
+				_, err := fmt.Fprintf(
+					output,
+					"difference user_id=%s insert_user=%t insert_account=%t update_display_name=%t\n",
+					record.id,
+					!userExists,
+					!accountExists,
+					updateName,
+				)
 				if err != nil {
 					return err
 				}
 			}
 		}
-		if _, err := fmt.Fprintf(output, "dry_run=%t insert_users=%d insert_accounts=%d unchanged_accounts=%d\n",
-			!apply, newUsers, newAccounts, len(accounts)); err != nil {
+		_, err = fmt.Fprintf(
+			output,
+			"dry_run=%t insert_users=%d insert_accounts=%d update_users=%d unchanged_accounts=%d\n",
+			!apply,
+			newUsers,
+			newAccounts,
+			updatedUsers,
+			len(accounts),
+		)
+		if err != nil {
 			return err
 		}
 		if !apply {
@@ -115,32 +148,27 @@ func importTarget(
 		}
 
 		for _, record := range records {
-			if _, exists := users[record.id]; !exists {
-				_, err := db.Exec(ctx, `insert into users (tenant, id, display_name, created_at, updated_at)
-					values (current_setting('tadoku.tenant'), $1, $2,
-					$3::timestamptz at time zone 'UTC', $4::timestamptz at time zone 'UTC')`,
-					record.id, record.displayName, record.createdAt, record.updatedAt)
-				if err != nil {
+			user, exists := users[record.id]
+			if !exists {
+				if err := repository.insertImportedUser(ctx, record); err != nil {
+					return databaseError("target write", err)
+				}
+			} else if user.displayName != record.displayName {
+				if err := repository.updateImportedUserName(ctx, record); err != nil {
 					return databaseError("target write", err)
 				}
 			}
 			if _, exists := accounts[record.id]; !exists {
-				_, err := db.Exec(ctx, `insert into accounts
-					(tenant, user_id, email, email_normalized, password_hash, state, created_at, updated_at)
-					values (current_setting('tadoku.tenant'), $1, $2, $3, $4, $5, $6, $7)`,
-					record.id, record.email, record.normalizedEmail, record.hash, record.state, record.createdAt, record.updatedAt)
-				if err != nil {
+				if err := repository.insertImportedAccount(ctx, record); err != nil {
 					return databaseError("target write", err)
 				}
 			}
 		}
-		var count int
-		err = db.QueryRow(ctx, `select count(*) from accounts
-			where tenant = current_setting('tadoku.tenant')`).Scan(&count)
+		count, err := repository.importAccountCount(ctx)
 		if err != nil {
 			return databaseError("target validation", err)
 		}
-		if count != len(records) {
+		if count != int64(len(records)) {
 			return errors.New("target validation: account count differs from source snapshot")
 		}
 		return nil
@@ -157,50 +185,10 @@ func importTarget(
 	return err
 }
 
-func readTarget(
-	ctx context.Context,
-	db postgres.DBTX,
-) (map[uuid.UUID]targetUser, map[uuid.UUID]sourceIdentity, error) {
-	rows, err := db.Query(ctx, `select id, display_name, created_at at time zone 'UTC',
-		deleted_at is not null or deletion_locked_at is not null
-		from users
-		where tenant = current_setting('tadoku.tenant')`)
-	if err != nil {
-		return nil, nil, databaseError("target read", err)
+func databaseError(stage string, err error) error {
+	var pgError *pgconn.PgError
+	if errors.As(err, &pgError) {
+		return fmt.Errorf("%s failed (SQLSTATE %s); database details suppressed", stage, pgError.Code)
 	}
-	defer rows.Close()
-	users := make(map[uuid.UUID]targetUser)
-	for rows.Next() {
-		var user targetUser
-		if err := rows.Scan(&user.id, &user.displayName, &user.createdAt, &user.deleted); err != nil {
-			return nil, nil, databaseError("target read", err)
-		}
-		users[user.id] = user
-	}
-	if err := rows.Err(); err != nil {
-		return nil, nil, databaseError("target read", err)
-	}
-
-	rows, err = db.Query(ctx, `select user_id, email, email_normalized, password_hash, state, created_at
-		from accounts
-		where tenant = current_setting('tadoku.tenant')`)
-	if err != nil {
-		return nil, nil, databaseError("target read", err)
-	}
-	defer rows.Close()
-	accounts := make(map[uuid.UUID]sourceIdentity)
-	for rows.Next() {
-		var account sourceIdentity
-		err := rows.Scan(
-			&account.id, &account.email, &account.normalizedEmail, &account.hash, &account.state, &account.createdAt,
-		)
-		if err != nil {
-			return nil, nil, databaseError("target read", err)
-		}
-		accounts[account.id] = account
-	}
-	if err := rows.Err(); err != nil {
-		return nil, nil, databaseError("target read", err)
-	}
-	return users, accounts, nil
+	return fmt.Errorf("%s failed; connection and database details suppressed", stage)
 }

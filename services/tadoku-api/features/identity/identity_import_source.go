@@ -1,4 +1,4 @@
-package main
+package identity
 
 import (
 	"context"
@@ -12,7 +12,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/tadoku/tadoku/services/tadoku-api/features/identity"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -41,8 +40,10 @@ func readSource(ctx context.Context, pool *pgxpool.Pool, expect int, output io.W
 	err = tx.QueryRow(ctx, `select
 		(select count(*) from networks),
 		(select count(*) from identities),
-		(select count(*) from identity_credentials c
-		 join identity_credential_types ct on ct.id = c.identity_credential_type_id where ct.name = 'password'),
+		(select count(*)
+		 from identity_credentials c
+		 join identity_credential_types ct on ct.id = c.identity_credential_type_id
+		 where ct.name = 'password'),
 		(select count(*) from identity_credentials)`).Scan(&networks, &identities, &passwords, &credentials)
 	if err != nil {
 		return nil, databaseError("source read", err)
@@ -64,9 +65,10 @@ func readSource(ctx context.Context, pool *pgxpool.Pool, expect int, output io.W
 		return nil, errors.New("preflight credential_types: non-password credentials require separate review")
 	}
 
-	rows, err := tx.Query(ctx, `select i.id, i.traits, i.state, i.created_at, i.updated_at, c.config
+	rows, err := tx.Query(ctx, `select i.id, i.traits, i.state, i.created_at, i.updated_at, c.config, i.schema_id
 		from identities i
-		left join identity_credentials c on c.identity_id = i.id and c.nid = i.nid
+		left join identity_credentials c on c.identity_id = i.id
+		  and c.nid = i.nid
 		  and c.identity_credential_type_id = (select id from identity_credential_types where name = 'password')
 		where i.nid = (select id from networks)
 		order by i.id`)
@@ -81,9 +83,13 @@ func readSource(ctx context.Context, pool *pgxpool.Pool, expect int, output io.W
 	for rows.Next() {
 		var record sourceIdentity
 		var traits, config []byte
-		err := rows.Scan(&record.id, &traits, &record.state, &record.createdAt, &record.updatedAt, &config)
+		var schema string
+		err := rows.Scan(&record.id, &traits, &record.state, &record.createdAt, &record.updatedAt, &config, &schema)
 		if err != nil {
 			return nil, databaseError("source read", err)
+		}
+		if schema != "user" {
+			return nil, fmt.Errorf("preflight user_id=%s field=schema_id", record.id)
 		}
 		if record.id == uuid.Nil || seenIDs[record.id] || config == nil {
 			return nil, errors.New("preflight password_credentials: invalid UUID or credential cardinality")
@@ -94,17 +100,20 @@ func readSource(ctx context.Context, pool *pgxpool.Pool, expect int, output io.W
 			Email       string `json:"email"`
 			DisplayName string `json:"display_name"`
 		}
-		if json.Unmarshal(traits, &rawTraits) != nil {
+		err = json.Unmarshal(traits, &rawTraits)
+		if err != nil {
 			return nil, fmt.Errorf("preflight user_id=%s field=traits", record.id)
 		}
-		email, err := identity.ParseEmail(rawTraits.Email)
+		email, err := ParseEmail(rawTraits.Email)
 		if err != nil {
 			return nil, fmt.Errorf("preflight user_id=%s field=email", record.id)
 		}
-		if _, err := identity.ParseDisplayName(rawTraits.DisplayName); err != nil {
+		if _, err := ParseDisplayName(rawTraits.DisplayName); err != nil {
 			return nil, fmt.Errorf("preflight user_id=%s field=display_name", record.id)
 		}
-		record.email, record.normalizedEmail, record.displayName = rawTraits.Email, email.String(), rawTraits.DisplayName
+		record.email = rawTraits.Email
+		record.normalizedEmail = email.String()
+		record.displayName = rawTraits.DisplayName
 		if seenEmails[record.normalizedEmail] {
 			return nil, fmt.Errorf("preflight user_id=%s field=email_normalized duplicate", record.id)
 		}
@@ -114,7 +123,8 @@ func readSource(ctx context.Context, pool *pgxpool.Pool, expect int, output io.W
 			Hash          string `json:"hashed_password"`
 			MigrationHook bool   `json:"use_password_migration_hook"`
 		}
-		if json.Unmarshal(config, &password) != nil || password.MigrationHook || !bcryptFormat.MatchString(password.Hash) {
+		err = json.Unmarshal(config, &password)
+		if err != nil || password.MigrationHook || !bcryptFormat.MatchString(password.Hash) {
 			return nil, fmt.Errorf("preflight user_id=%s field=password_hash invalid bcrypt config", record.id)
 		}
 		if _, err := bcrypt.Cost([]byte(password.Hash)); err != nil {

@@ -4,6 +4,7 @@ go_library(
     name = "identity",
     srcs = [
         "domain.go",
+        "identity_development_service.go",
         "identity_legacy.go",
         "identity_repository.go",
         "identity_service.go",

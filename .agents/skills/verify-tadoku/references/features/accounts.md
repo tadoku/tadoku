@@ -64,11 +64,15 @@ The public
 identity rule forwards cookies with a guest JWT; the Oathkeeper callback switch
 for other routes remains a separate prerequisite. Confirm actual branch API
 responses rather than treating an API port-forward as the public journey.
-Branch v2 flag provisioning must use an authorized owner/tenant mechanism. A temporary, uncommitted `identity-v2` seed
-in the checkout before `dev up` is confined to that owner's test namespace;
-restore it after teardown and never apply it to canonical Flipt. Never edit
-canonical flag policy or shared Kratos sessions to exercise local account
-behavior. Backend E2Es use real, disposable providers and a tenant-aware Flipt fixture.
+Provisioning seeds `identity-v2=true` automatically in the branch namespace.
+Use the native Dev Admin/Reader accounts and documented development password;
+verify their UUIDs/names, tenant cookie and session through the configured public
+branch API. Reseeding must preserve branch-changed credentials, display names and sessions,
+and continue through branch profile/content fixtures. New accounts retain the
+canonical fixture user age; a missing fixture email held by another UUID must
+fail atomically. Never edit canonical
+flag policy or shared Kratos sessions to exercise local account behavior.
+Backend E2Es use real, disposable providers and a tenant-aware Flipt fixture.
 
 ## Source anchors
 

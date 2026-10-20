@@ -196,19 +196,19 @@ Migration Jobs have a bounded deadline, `backoffLimit: 0` and the
 - **Never use selective resource sync to release an application**: it skips
   Argo CD hooks. Do not configure `ApplyOutOfSyncOnly=true`.
 
-Follow the repository's migration-first release contract: schema changes land
-and deploy on their own before dependent runtime code. Digest tracking is not a
-substitute for backward-compatible schema and application releases.
+Follow the migration-first release contract: schema changes land and deploy on
+their own before dependent runtime code. Digest tracking does not replace
+backward-compatible schema and application releases.
 
-Base seeding is separate from migrations: `make dev-seed` creates the synthetic
-fixture accounts through the canonical identity provider, and the base
-fixtures, on `homelab-talos-dev` for tenant `tadoku/prod`. SQL seeds require the supplied tenant, set it for each
-transaction and write that tenant explicitly. The canonical tenant retains the
-fixture UUIDs; other tenants derive fixture UUIDs from their tenant key.
+Base seeding is separate from migrations. On `homelab-talos-dev`, `make dev-seed`
+seeds tenant `tadoku/prod` with base fixtures and, through the canonical
+identity provider, synthetic fixture accounts. SQL seeds require the supplied
+tenant, set it per transaction and write it explicitly. The canonical tenant
+retains the fixture UUIDs; other tenants derive them from their tenant key.
 Caller-supplied identity UUIDs are unchanged.
 
-Branch startup uses the `tenant` hook to provision and seed its test tenant;
-see [Branch tenants](../develop/development-data.md#branch-tenants).
+Branch startup's `tenant` hook provisions and seeds its test tenant; see
+[Branch tenants](../develop/development-data.md#branch-tenants).
 The Job reuses the marked shared identities, grants the Keto object a canonical
 parent and Dev Reader tester, and provisions missing Flipt resources in
 `test/tadoku_<route>`. It runs in `tdk-dev-data`; Flipt's ingress policy admits
@@ -235,7 +235,7 @@ imports no production data or credentials.
 4. Once the namespaces and operator-generated Secrets exist, run the bootstrap.
    The initial sync can wait at the auth-provider wave until it supplies the
    runtime Secrets.
-5. Wait for the migration Jobs and base workloads to become Healthy, then seed.
+5. Once the migration Jobs and base workloads are Healthy, seed.
 
 ```sh
 bash scripts/dev/bootstrap-gitops-secrets.sh

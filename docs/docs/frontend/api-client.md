@@ -61,20 +61,27 @@ break the contract's constraints, which must fail.
   defaults:
   - Lengths count characters (code points), not UTF-16 units, so a 25-emoji
     display name fits 32.
-  - `format: email` accepts exactly the addresses `identity.ParseEmail` stores
-    as written, up to letter case, because v1 sessions return Kratos addresses
-    as stored. `reader@localhost`, `é@localhost`, a U+00A0 inside the domain and
-    IP literals pass; `a..b@localhost`, quoted local parts, display names and
-    surrounding spaces fail. The API bounds an address at 320 UTF-8 bytes, not
-    the 320 characters `maxLength` states, and the client checks the bytes.
+  - `format: email` accepts an address `net/mail` reads back unchanged, at most
+    320 UTF-8 bytes as written. That is the email feature's `validAddress`,
+    which admits every email recipient, the one response field with this
+    format. `reader@localhost`, `é@localhost`, IP literals and non-ASCII
+    characters, including non-ASCII spaces, pass; `a..b@localhost`, quoted
+    local parts, display names and ASCII spaces fail. The API is more lenient
+    with email input: it trims and lowercases it first.
+  - An account's `email` in identity responses is not `format: email`. The API
+    sends the stored address as `net/mail` reads it, which can be unquoted text
+    such as `a b@example.test`, keep non-ASCII spaces and case, or exceed 320
+    bytes for an imported account, so the contract only requires an `@`
+    between non-empty parts.
   - `format: date-time` accepts RFC 3339 as Go writes it: seconds, two-digit
     fields and `Z` or a `±hh:mm` offset under 24 hours. Go's `time.Parse` also
     reads some forms outside RFC 3339, such as `+24:00` or a one-digit hour,
     that Go never writes; the client rejects them.
 
   `frontend/packages/api-client/test/formats.json` lists Go's verdict on each
-  tested value; `frontend/packages/api-client/test/formats.test.ts` sends them
-  through the generated session operation.
+  tested value and the account emails the API sends for stored Kratos and
+  imported addresses; `frontend/packages/api-client/test/formats.test.ts` sends
+  them through the generated email and session operations.
 - Every answer is parsed as JSON. An HTML page fails.
 - Validation does not transform data: a call returns the JSON as sent. Use only
   the properties the types declare.

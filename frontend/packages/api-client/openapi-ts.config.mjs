@@ -1,7 +1,5 @@
 // Generates the frontend Tadoku API client from the canonical contract. Run `pnpm --filter api-client generate`.
 
-// Go's `unicode.IsSpace` beyond ASCII; `strings.TrimSpace` removes these from the ends of an address.
-const goSpace = '\\u{85}\\u{a0}\\u{1680}\\u{2000}-\\u{200a}\\u{2028}\\u{2029}\\u{202f}\\u{205f}\\u{3000}'
 // `net/mail` atext: RFC 5322 atext plus every non-ASCII character (RFC 6532).
 const atext = "[!#-'*+\\-/-9=?A-Z^-~\\u{80}-\\u{d7ff}\\u{e000}-\\u{10ffff}]"
 const dotAtom = `${atext}+(?:\\.${atext}+)*`
@@ -23,21 +21,19 @@ const ipv6 = [
 ].join('|')
 
 /**
- * Go's `identity.ParseEmail` stores an address when `net/mail` reads its trimmed, lowercased form back unchanged and
- * it fits 320 bytes. This accepts exactly the addresses it stores as written, up to letter case: a dot-atom local part
- * and a dot-atom or IP-literal domain, no surrounding space. Lowercasing never changes that structure, so mixed-case
- * v1 addresses pass. The byte bound applies to the address as written.
+ * An address `net/mail` reads back unchanged: a dot-atom local part and a dot-atom or IP-literal domain. This is the
+ * email feature's `validAddress`, which admits every stored recipient; its 320-byte bound is the schema's
+ * `maxLength`, checked in UTF-8 bytes. Stored account emails are not `format: email`.
  */
-const emailPattern =
-  `^(?![${goSpace}])(?![\\s\\S]*[${goSpace}]$)${dotAtom}@(?:${dotAtom}|\\[(?:${ipv4}|${ipv6})\\])$`
+const emailPattern = `^${dotAtom}@(?:${dotAtom}|\\[(?:${ipv4}|${ipv6})\\])$`
 
 /** Go's RFC 3339 reader: two-digit fields, seconds below 60 and a `Z` or `±hh:mm` offset under 24 hours. */
 const goTime = 'T(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|[+-](?:[01]\\d|2[0-3]):[0-5]\\d)$'
 
 /**
  * Strings keep their format, length and pattern constraints, with the API's semantics where Zod's differ: lengths
- * count characters (code points), not UTF-16 units; `format: email` follows `identity.ParseEmail`, including its bound
- * in UTF-8 bytes; `format: date-time` follows Go's RFC 3339 reader.
+ * count characters (code points), not UTF-16 units; `format: email` follows `validAddress`, including its bound in UTF-8
+ * bytes; `format: date-time` follows Go's RFC 3339 reader.
  */
 const string = ctx => {
   const { $, chain, nodes, schema } = ctx

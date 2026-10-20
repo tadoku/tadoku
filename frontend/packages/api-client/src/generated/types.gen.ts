@@ -497,6 +497,9 @@ export type IdentityErrorResponse = {
 
 export type IdentityAccount = {
     id: string;
+    /**
+     * The account's stored address: a v1 Kratos trait, or for v2 the normalized address registration or settings stored or an imported address as written. The API writes the address part Go's net/mail reads from it, so a quoted local part arrives unquoted and surrounding ASCII spaces and tabs are dropped; letter case, every other character and its length are kept. It is not normalized like email input and need not satisfy format: email.
+     */
     email: string;
     display_name: string;
     created_at: string;

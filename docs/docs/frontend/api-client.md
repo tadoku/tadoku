@@ -31,7 +31,7 @@ After changing the contract and running `./scripts/generate-openapi.sh`, run fro
 
 ```sh
 pnpm --filter api-client generate          # rewrites packages/api-client/src/generated/
-pnpm --filter api-client check:generated   # regenerates, then fails on any change from the commit
+pnpm --filter api-client check:generated   # refuses uncommitted output, regenerates, then fails on any change
 pnpm --filter api-client typecheck
 pnpm --filter api-client test       # replays recorded API responses through the client
 ```

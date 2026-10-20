@@ -10,7 +10,7 @@
   },
   "scripts": {
     "generate": "openapi-ts && node scripts/generate-responses.mjs",
-    "check:generated": "pnpm run generate && git diff --exit-code -- src/generated && test -z \"$(git status --porcelain -- src/generated)\"",
+    "check:generated": "test -z \"$(git status --porcelain --untracked-files=all -- src/generated)\" || { git status --short --untracked-files=all -- src/generated; echo 'Commit or discard these src/generated changes first: the check regenerates over them.' >&2; exit 1; }; pnpm run generate && git diff --exit-code -- src/generated && test -z \"$(git status --porcelain --untracked-files=all -- src/generated)\"",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },

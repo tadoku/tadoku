@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { AccountSkeleton } from '../components/AccountSkeleton'
+import { Settings } from '../components/Settings'
+import { accountSearch } from '../lib/account'
 
-export const Route = createFileRoute('/')({ component: AccountSkeleton })
+export const Route = createFileRoute('/')({ validateSearch: accountSearch, component: Settings })

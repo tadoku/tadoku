@@ -1,6 +1,7 @@
 import { createRootRouteWithContext, HeadContent, Scripts, Outlet, redirect } from '@tanstack/react-router'
 import type { QueryClient } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
+import { Button } from 'paper-ui'
 import { getSession } from '../lib/session'
 import 'paper-ui/styles.css'
 import '../styles.css'
@@ -26,7 +27,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 function AccountLayout() {
   const { identity } = Route.useRouteContext()
   return <div className="account-shell">
-    <header><a href={identity.webUrl} aria-label="Tadoku home">Tadoku</a></header>
+    <header><a href={identity.webUrl} aria-label="Tadoku home">Tadoku</a>
+      {identity.status === 'ready' ? <nav aria-label="Account">
+        {identity.session.account ? <><a href="/">Settings</a><form method="post" action="/actions/logout"><Button variant="outline" type="submit">Log out</Button></form></>
+          : <><a href="/login">Log in</a><a href="/register">Sign up</a></>}
+      </nav> : null}
+    </header>
     <main id="main" className="account-content"><Outlet /></main>
   </div>
 }

@@ -3,6 +3,7 @@ package http
 import (
 	"context"
 
+	"github.com/oapi-codegen/nullable"
 	openapiTypes "github.com/oapi-codegen/runtime/types"
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
 	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
@@ -52,7 +53,7 @@ func contestViewResponse(item *app.ContestView) openapi.ImmersionContestView {
 	deleted := item.Deleted
 	return openapi.ImmersionContestView{
 		AllowedActivities:    activities,
-		AllowedLanguages:     languages,
+		AllowedLanguages:     nullable.NewNullableWithValue(languages),
 		ContestEnd:           openapiTypes.Date{Time: item.ContestEnd},
 		ContestStart:         openapiTypes.Date{Time: item.ContestStart},
 		CreatedAt:            &item.CreatedAt,

@@ -58,6 +58,8 @@ components:
           properties:
             language_code_allow_list:
               type: array
+              nullable: true
+              description: Language codes the contest allows; null allows every language.
               items:
                 type: string
               example:
@@ -82,6 +84,8 @@ components:
           properties:
             allowed_languages:
               type: array
+              nullable: true
+              description: Languages the contest allows; null allows every language.
               items:
                 $ref: "#/components/schemas/ImmersionLanguage"
             allowed_activities:
@@ -97,7 +101,7 @@ components:
           properties:
             contests:
               type: array
-              maxItems: 50
+              maxItems: 100
               items:
                 $ref: "#/components/schemas/ImmersionContest"
     ImmersionContestSummary:

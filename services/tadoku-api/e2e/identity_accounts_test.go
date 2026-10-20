@@ -157,6 +157,8 @@ func TestIdentityV2RequestSecurity(t *testing.T) {
 		},
 		{"missing origin", "/identity/logout", "", "", "application/json", 403},
 		{"origin suffix attack", "/identity/logout", "", "https://tadoku.dev.lab.evil.test", "application/json", 403},
+		{"logout object", "/identity/logout", "{}", "https://tadoku.dev.lab", "application/json", 204},
+		{"logout malformed body", "/identity/logout", "{", "https://tadoku.dev.lab", "application/json", 400},
 		{
 			"non JSON", "/identity/login",
 			`{"email":"reader@example.test","password":"wrong-password"}`,

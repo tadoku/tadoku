@@ -40,7 +40,7 @@ components:
           properties:
             pages:
               type: array
-              maxItems: 50
+              maxItems: 100
               items:
                 $ref: "#/components/schemas/ContentPage"
     ContentPost:
@@ -88,7 +88,7 @@ components:
           properties:
             posts:
               type: array
-              maxItems: 50
+              maxItems: 100
               items:
                 $ref: "#/components/schemas/ContentPost"
     ContentPageVersion:

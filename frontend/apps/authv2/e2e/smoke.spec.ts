@@ -3,6 +3,7 @@ import { test, expect } from '@playwright/test'
 
 const fixtureEnabled = process.env.AUTHV2_SESSION_FIXTURE === 'true'
 let status = 200
+let contentType = 'application/json'
 let session: unknown = { account_app: 'v2', account: null }
 const requests: { cookie?: string; branch?: string; method?: string; path?: string }[] = []
 const fixture = createServer((request, response) => {
@@ -11,7 +12,7 @@ const fixture = createServer((request, response) => {
     return
   }
   requests.push({ cookie: request.headers.cookie, branch: request.headers['x-dev-branch']?.toString(), method: request.method, path: request.url })
-  response.writeHead(status, { 'Content-Type': 'application/json' }).end(JSON.stringify(session))
+  response.writeHead(status, { 'Content-Type': contentType }).end(typeof session === 'string' ? session : JSON.stringify(session))
 })
 
 test.beforeAll(async () => {
@@ -73,9 +74,16 @@ test('account screen, session routing and unavailable API', async ({ page, reque
   })
 
   await test.step('a missing, failing or malformed API keeps a visible unavailable state', async () => {
-    for (const [code, body] of [[404, {}], [503, {}], [200, { account_app: 'unknown' }]] as const) {
+    for (const [code, body, type] of [
+      [404, {}, 'application/json'],
+      [503, {}, 'application/json'],
+      [200, { account_app: 'unknown' }, 'application/json'],
+      [200, '<!doctype html><title>Gateway</title>', 'text/html'],
+      [200, '', 'application/json'],
+    ] as const) {
       status = code
       session = body
+      contentType = type
       await page.goto('/login')
       await expect.soft(page.getByRole('heading', { level: 1, name: 'We can’t reach your account right now' })).toBeVisible()
       await expect.soft(page.getByRole('link', { name: 'Try again' })).toHaveAttribute('href', '/login')

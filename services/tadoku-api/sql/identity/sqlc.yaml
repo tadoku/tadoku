@@ -2,7 +2,7 @@ version: "2"
 sql:
   - engine: postgresql
     schema: ../../migrations
-    queries: [identity.sql]
+    queries: [identity.sql, import.sql]
     gen:
       go:
         package: identity

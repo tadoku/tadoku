@@ -71,6 +71,22 @@ func (q *Queries) DeleteSession(ctx context.Context, tokenHash string) error {
 	return err
 }
 
+const developmentAccountExists = `-- name: DevelopmentAccountExists :one
+select exists (
+  select 1
+  from accounts
+  where tenant = current_setting('tadoku.tenant')
+    and user_id = $1
+)
+`
+
+func (q *Queries) DevelopmentAccountExists(ctx context.Context, userID pgtype.UUID) (bool, error) {
+	row := q.db.QueryRow(ctx, developmentAccountExists, userID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const findCredentials = `-- name: FindCredentials :one
 select a.user_id, a.email, u.display_name, a.created_at, a.password_hash,
   (a.state = 'active' and u.deleted_at is null and u.deletion_locked_at is null)::boolean as active
@@ -140,6 +156,53 @@ func (q *Queries) FindSession(ctx context.Context, arg FindSessionParams) (FindS
 		&i.ExpiresAt,
 	)
 	return i, err
+}
+
+const insertDevelopmentAccount = `-- name: InsertDevelopmentAccount :exec
+insert into accounts (tenant, user_id, email, email_normalized, password_hash, created_at)
+select tenant, id, $1, $1, $2, created_at at time zone 'UTC'
+from users
+where tenant = current_setting('tadoku.tenant')
+  and id = $3
+on conflict (tenant, user_id) do nothing
+`
+
+type InsertDevelopmentAccountParams struct {
+	Email        string
+	PasswordHash string
+	UserID       pgtype.UUID
+}
+
+func (q *Queries) InsertDevelopmentAccount(ctx context.Context, arg InsertDevelopmentAccountParams) error {
+	_, err := q.db.Exec(ctx, insertDevelopmentAccount, arg.Email, arg.PasswordHash, arg.UserID)
+	return err
+}
+
+const insertDevelopmentUser = `-- name: InsertDevelopmentUser :exec
+insert into users (tenant, id, display_name, created_at, updated_at)
+values (
+  current_setting('tadoku.tenant'),
+  $1,
+  $2,
+  coalesce((
+    select created_at
+    from users
+    where tenant = 'tadoku/prod'
+      and id = $1
+  ), now() at time zone 'UTC'),
+  now() at time zone 'UTC'
+)
+on conflict (tenant, id) do nothing
+`
+
+type InsertDevelopmentUserParams struct {
+	ID          pgtype.UUID
+	DisplayName string
+}
+
+func (q *Queries) InsertDevelopmentUser(ctx context.Context, arg InsertDevelopmentUserParams) error {
+	_, err := q.db.Exec(ctx, insertDevelopmentUser, arg.ID, arg.DisplayName)
+	return err
 }
 
 const invalidateRecoveryTokens = `-- name: InvalidateRecoveryTokens :exec

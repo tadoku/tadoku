@@ -41,6 +41,11 @@ select
   end as spanish_log_id
 \gset
 
+\if :{?seed_users}
+\else
+  \set seed_users true
+\endif
+\if :seed_users
 insert into users (tenant, id, display_name, created_at, updated_at)
 values
   (:'tenant', :'admin_user_id'::uuid, 'Dev Admin', now(), now()),
@@ -49,6 +54,7 @@ on conflict (tenant, id) do update
 set
   display_name = excluded.display_name,
   updated_at = now();
+\endif
 
 insert into user_roles (tenant, user_id, role, updated_at)
 values

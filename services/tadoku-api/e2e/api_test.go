@@ -307,7 +307,7 @@ func newTestRouterWithLeaderboardService(
 	readWriter := ketoclient.NewClient(ketoFixture.ReadURL(), endpoints.ketoWrite)
 	permissionChecker := permissions.NewKetoChecker(reader)
 	roleService := permissions.NewKetoService(reader)
-	identities := kratosFixture.CursorClient()
+	identities := identity.NewReader(pool, kratosFixture.CursorClient(), featureflags.NewEvaluator(flipt, nil))
 
 	authzService := featureauthz.NewService(
 		permissionChecker,
@@ -334,7 +334,7 @@ func newTestRouterWithLeaderboardService(
 	logsService := logs.NewService(logsRepository, scoringEngineEnabled)
 	pagesService := pages.NewService(pagesRepository)
 	postsService := posts.NewService(postsRepository)
-	profileService := featureprofile.NewService(profileRepository, featureprofile.NewUserCache(identities), roleService, identities)
+	profileService := featureprofile.NewService(profileRepository, roleService, identities)
 	fliptTargets, err := fliptclient.NewTargets("local", "default", "test")
 	if err != nil {
 		return nil, nil, nil, err
@@ -447,7 +447,7 @@ func (s *suite) reset(t *testing.T, caseDir string) {
 			t.Fatal(err)
 		}
 	}
-	s.resetProfileCaches()
+	s.resetProfileService()
 	if s.keto != nil {
 		if err := s.keto.Reset(t.Context(), ketoSeeds...); err != nil {
 			t.Fatal(err)
@@ -458,13 +458,12 @@ func (s *suite) reset(t *testing.T, caseDir string) {
 	}
 }
 
-func (s *suite) resetProfileCaches() {
+func (s *suite) resetProfileService() {
 	if s.profile != nil {
 		*s.profile = *featureprofile.NewService(
 			featureprofile.NewRepository(s.db.AppPool),
-			featureprofile.NewUserCache(s.kratos.CursorClient()),
 			s.roles,
-			s.kratos.CursorClient(),
+			identity.NewReader(s.db.AppPool, s.kratos.CursorClient(), featureflags.NewEvaluator(flipt, nil)),
 		)
 	}
 }

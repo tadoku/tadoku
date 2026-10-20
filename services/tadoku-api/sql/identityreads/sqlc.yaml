@@ -1,0 +1,13 @@
+version: "2"
+sql:
+  - engine: postgresql
+    schema: ../../migrations
+    queries:
+      - identity_reads.sql
+    gen:
+      go:
+        package: reads
+        out: ../../generated/sqlc/identity/reads
+        sql_package: pgx/v5
+        emit_empty_slices: true
+        omit_unused_structs: true

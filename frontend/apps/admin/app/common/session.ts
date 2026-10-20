@@ -1,11 +1,10 @@
 import { atom, useAtom } from 'jotai'
-import { Session } from '@ory/kratos-client'
+import { toast } from 'react-toastify'
+import { Account, AccountApp, logout } from 'ui/identity'
 import { useRouter } from 'next/router'
-import { useEffect, useRef, DependencyList } from 'react'
-import { AxiosError } from 'axios'
+import { useEffect, useRef } from 'react'
 import { z } from 'zod'
 import { browserAppUrls } from 'ui/app-urls'
-import ory from '@app/common/ory'
 import { AppContext } from 'next/app'
 import { NextPageContext } from 'next'
 import { useRoutes } from './routes'
@@ -18,7 +17,10 @@ const UserRoleResponse = z.object({
   role: z.enum(['admin', 'user', 'guest', 'banned']),
 })
 
-export const sessionAtom = atom(undefined as undefined | Session)
+export const sessionAtom = atom(undefined as undefined | Account)
+export const accountAppAtom = atom<AccountApp>('v1')
+export const useAccountApp = () => useAtom(accountAppAtom)[0]
+
 export const userRoleAtom = atom(undefined as undefined | Role)
 
 export const useSession = () => {
@@ -49,42 +51,16 @@ export const useSessionOrRedirect = () => {
   return result
 }
 
-export const logoutTokenAtom = atom(undefined as undefined | string)
-
-// Returns a function which will log the user out
-export const useLogoutHandler = (deps?: DependencyList) => {
+export const useLogoutHandler = () => {
   const routes = useRoutes()
-  const [logoutToken, setLogoutToken] = useAtom(logoutTokenAtom)
-  const [session] = useSession()
-
-  useEffect(() => {
-    if (logoutToken || !session) {
-      return
-    }
-
-    ory
-      .createBrowserLogoutFlow()
-      .then(({ data }) => {
-        setLogoutToken(data.logout_token)
-      })
-      .catch((err: AxiosError) => {
-        switch (err.response?.status) {
-          case 401:
-            // do nothing, the user is not logged in
-            return
-        }
-
-        // Something else happened!
-        return Promise.reject(err)
-      })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [...(deps ?? []), logoutToken, session, setLogoutToken])
-
-  return () => {
-    if (logoutToken) {
-      ory
-        .updateLogoutFlow({ token: logoutToken })
-        .then(() => window.location.assign(routes.authLogin()))
+  const [, setSession] = useSession()
+  return async () => {
+    try {
+      await logout()
+      setSession(undefined)
+      window.location.assign(routes.authLogin())
+    } catch {
+      toast.error('Log out failed. Please try again.')
     }
   }
 }
@@ -94,7 +70,7 @@ export const useUserRole = () => {
   const [role, setRole] = useAtom(userRoleAtom)
   const prevUserIdRef = useRef<string | undefined>(undefined)
 
-  const userId = session?.identity?.id
+  const userId = session?.id
 
   useEffect(() => {
     if (!userId) {
@@ -130,5 +106,5 @@ export interface AppContextWithSession extends AppContext {
 }
 
 export interface NextPageContextWithSession extends NextPageContext {
-  session: Session | undefined
+  session: Account | undefined
 }

@@ -1,0 +1,46 @@
+load("@rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+
+go_library(
+    name = "tadoku-identity-import_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/tadoku/tadoku/services/tadoku-api/cmd/tadoku-identity-import",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//services/common/postgresconfig",
+        "//services/tadoku-api/features/identity",
+        "//services/tadoku-api/infra/postgres",
+        "@com_github_jackc_pgx_v5//pgconn",
+    ],
+)
+
+go_binary(
+    name = "tadoku-identity-import",
+    embed = [":tadoku-identity-import_lib"],
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "tadoku-identity-import_test",
+    srcs = [
+        "fixtures_test.go",
+        "import_guards_test.go",
+        "import_test.go",
+    ],
+    data = [
+        ":tadoku-identity-import",
+        "@kratos_v26_2_0//:kratos",
+    ],
+    env_inherit = ["TADOKU_TEST_POSTGRES_URL"],
+    tags = [
+        "no-cache",
+        "no-remote-exec",
+        "requires-network",
+    ],
+    deps = [
+        "//services/tadoku-api/features/identity",
+        "//services/tadoku-api/internal/testpostgres",
+        "@com_github_google_uuid//:uuid",
+        "@org_golang_x_crypto//bcrypt",
+        "@rules_go//go/runfiles",
+    ],
+)

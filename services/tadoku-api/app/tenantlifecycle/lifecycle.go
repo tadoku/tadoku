@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -62,7 +63,25 @@ func (app *Application) Provision(
 	if err := app.keto.Provision(ctx, key, testers); err != nil {
 		return fmt.Errorf("provision tenant authorization: %w", err)
 	}
-	if err := app.flipt.ProvisionTestNamespace(ctx, key, features); err != nil {
+
+	branchFlags, err := fliptmanagement.ParseFeatures(strings.NewReader(`version: "1.6"
+namespace:
+  key: branch-only
+flags:
+  - key: identity-v2
+    name: Identity v2
+    type: BOOLEAN_FLAG_TYPE
+    enabled: true
+    rollouts:
+      - threshold:
+          percentage: 100
+          value: true
+`))
+	if err != nil {
+		return err
+	}
+	branchFlags = append(branchFlags, features...)
+	if err := app.flipt.ProvisionTestNamespace(ctx, key, branchFlags); err != nil {
 		return fmt.Errorf("provision tenant flags: %w", err)
 	}
 	return nil
@@ -84,6 +103,22 @@ func (app *Application) Teardown(ctx context.Context, key tenant.TestKey) error 
 	return app.registry(ctx, key, true, func(ctx context.Context, q *queries.Queries) error {
 		return q.DeleteTestTenant(ctx, key.String())
 	})
+}
+
+func (app *Application) Inspect(ctx context.Context, key tenant.TestKey) (bool, error) {
+	var exists bool
+	err := app.registry(ctx, key, true, func(ctx context.Context, q *queries.Queries) error {
+		_, err := q.TenantKind(ctx, key.String())
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		exists = true
+		return nil
+	})
+	return exists, err
 }
 
 func (app *Application) SetOverride(ctx context.Context, key tenant.TestKey, component string) error {

@@ -60,7 +60,9 @@ jobs:
         working-directory: frontend
 
       - name: Run real-image migration, ownership and frontend E2E
-        run: node k8s/dev/base/e2e.cjs "$RUNNER_TEMP/tadoku-base-evidence"
+        run: |
+          node k8s/dev/base/e2e.cjs "$RUNNER_TEMP/tadoku-base-evidence"
+          node k8s/dev/base/e2e/identity-session.cjs "$RUNNER_TEMP/tadoku-base-evidence/identity-session"
         env:
           TADOKU_BASE_AUTHV2_IMAGE: tadoku-authv2:base-check
 

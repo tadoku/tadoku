@@ -1,4 +1,4 @@
-import { Session } from '@ory/kratos-client'
+import { Account } from 'ui/identity'
 import { describe, expect, it, vi } from 'vitest'
 import { bootstrapFeatureFlagDecisions } from './bootstrap'
 
@@ -12,8 +12,8 @@ vi.mock('next/config', () => ({
 }))
 
 const session = {
-  identity: { id: '123e4567-e89b-12d3-a456-426614174000' },
-} as unknown as Session
+  id: '123e4567-e89b-12d3-a456-426614174000',
+} as Account
 
 describe('bootstrapFeatureFlagDecisions', () => {
   it('bootstraps the server decision alongside an authenticated session', async () => {
@@ -133,8 +133,8 @@ describe('bootstrapFeatureFlagDecisions', () => {
   it('does not request decisions for a malformed Kratos subject', async () => {
     const request = vi.fn()
     const malformedSession = {
-      identity: { id: 'not-a-uuid' },
-    } as unknown as Session
+      id: 'not-a-uuid',
+    } as Account
 
     await expect(
       bootstrapFeatureFlagDecisions(

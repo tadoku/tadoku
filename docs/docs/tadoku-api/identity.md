@@ -78,18 +78,19 @@ Kratos uses byte lengths for its minimum and substring ratio, so multibyte
 password acceptance can differ. The explicit 72-byte bcrypt limit remains the
 same. Password formatting is redacted.
 
-Registration evaluates the tenant flag, validates input, hashes the password
-and generates the initial session before acquiring a database connection. One
-SQL statement creates the user, account and session atomically. User timestamps
-are interpreted explicitly as UTC when stored on the account, independently of
-the database session time zone. The tenant-prefixed email uniqueness constraint
-also resolves concurrent registration and differently cased duplicates. A
-conflict returns `409` with `email_taken`, preserving the existing enumeration
-behavior. Password hashes use bcrypt cost 12 and stay inside the identity
-feature. Login verifies stored hashes without applying a new registration
-policy to an imported password, and returns the same `wrong_password` answer for
-unknown, inactive, deleted or incorrect accounts. Unknown emails perform a
-cost-12 dummy comparison. No breached-password provider is called.
+Registration evaluates the tenant flag, validates input, passes admission,
+hashes the password and generates the initial session before acquiring a
+database connection. One SQL statement creates the user, account and session
+atomically. User timestamps are interpreted explicitly as UTC when stored on the
+account, independently of the database session time zone. The tenant-prefixed
+email uniqueness constraint also resolves concurrent registration and
+differently cased duplicates. A conflict returns `409` with `email_taken`,
+preserving the existing enumeration behavior. Password hashes use bcrypt cost 12
+and stay inside the identity feature. Login verifies stored hashes without
+applying a new registration policy to an imported password, and returns the same
+`wrong_password` answer for unknown, inactive, deleted or incorrect accounts.
+Unknown emails perform a cost-12 dummy comparison. No breached-password provider
+is called.
 
 Login attempts use atomic Valkey counters per normalized email and client
 IP, with tenant-prefixed, SHA-256-derived keys. A 15-minute window admits ten
@@ -106,9 +107,21 @@ with forged forwarding headers. With no trusted proxy configured, clients behind
 the same proxy share its peer-IP throttle bucket. This fallback prevents header spoofing
 but can throttle unrelated clients together.
 
-Registration does not use the login counters. It still performs cost-12 bcrypt
-work per valid submission; registration abuse controls remain a security-review
-and caller-flow concern before activation.
+Registration has its own admission budget, separate from the login counters.
+After the flag check and input validation, and before bcrypt runs, an atomic
+Valkey counter per tenant and client IP admits ten registrations per fixed
+900-second window, which starts with the first valid attempt and is not extended
+by later ones. It uses the same client IP and trusted-proxy rule as login, with
+a tenant-prefixed, SHA-256-derived key. Duplicate and new emails both consume
+the budget, so unique addresses cannot bypass it; rejected input does not.
+Further attempts return `429` with `throttled` without hashing. Unlike login,
+registration fails closed: every admission failure returns before hashing, with
+the status the shared error mapping gives it. A Valkey error or a missing tenant
+returns `503`, the admission timeout returns `504`, and a request the client
+cancelled returns `499`. The limit bounds the cost-12 hashes one address can
+cause while leaving room for several people to sign up behind one shared
+address. Without trusted proxy configuration, every client behind one proxy
+shares the budget.
 
 ## Sessions and cookies
 

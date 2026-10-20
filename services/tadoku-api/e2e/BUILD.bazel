@@ -51,6 +51,7 @@ go_test(
         "identity_read_test.go",
         "identity_recovery_journey_test.go",
         "identity_recovery_test.go",
+        "identity_registration_admission_test.go",
         "identity_registration_test.go",
         "identity_settings_pool_test.go",
         "identity_settings_test.go",

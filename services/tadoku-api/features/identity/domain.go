@@ -17,6 +17,9 @@ var (
 	ErrInvalidRecoveryToken = &Error{
 		"invalid_recovery_token", errx.NewInvalidInputError("invalid or expired recovery token"),
 	}
+	ErrRegistrationThrottled = &Error{
+		"throttled", errx.NewThrottledError("too many registration attempts; try again later"),
+	}
 	ErrNotImplemented  = errx.NewNotImplementedError()
 	ErrWrongPassword   = &Error{"wrong_password", errx.NewUnauthorizedError("invalid email or password")}
 	ErrEmailTaken      = &Error{"email_taken", errx.NewConflictError("email is already registered")}
@@ -64,7 +67,7 @@ type LoginResult struct {
 	Session AuthenticatedSession
 	Cookie  Cookie
 }
-type Registration struct{ Email, DisplayName, Password string }
+type Registration struct{ Email, DisplayName, Password, IP string }
 type Login struct{ Email, Password, IP string }
 type Recovery struct{ Email, ReturnTo string }
 type RecoveryResult struct{ Emails []mail.Message }

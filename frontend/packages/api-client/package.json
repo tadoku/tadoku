@@ -9,7 +9,7 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "generate": "openapi-ts",
+    "generate": "openapi-ts && node scripts/generate-responses.mjs",
     "check:generated": "node scripts/check-generated.mjs",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"

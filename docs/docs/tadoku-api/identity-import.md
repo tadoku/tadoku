@@ -133,9 +133,9 @@ values; do not delete or rewrite data to force a passing import.
 The import keeps each Kratos email trait exactly as written and derives the
 normalized login key from it. Login looks up that key, and identity responses
 serialize any stored address. Recovery mail and email-change notices, however,
-are addressed to the stored email, and the email writer rejects a recipient
-that `net/mail` does not read back unchanged, that exceeds 320 bytes or that
-contains CR or LF. An account with such an address could sign in but could not
+are addressed to the stored email without its surrounding spaces and tabs, and
+the email writer rejects a recipient that `net/mail` does not read back
+unchanged, that exceeds 320 bytes or that contains CR or LF. An account with such an address could sign in but could not
 recover access or change its email.
 
 Preflight therefore applies that same rule, `domain/mail.ValidAddress`, to

@@ -41,6 +41,7 @@ go_test(
     name = "tadoku-tenant_test",
     srcs = [
         "access_token_test.go",
+        "canonical_development_accounts_test.go",
         "development_accounts_test.go",
         "inspect_test.go",
         "main_test.go",

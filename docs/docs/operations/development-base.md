@@ -200,9 +200,9 @@ Follow the repository's migration-first release contract: schema changes land
 and deploy on their own before dependent runtime code. Digest tracking is not a
 substitute for backward-compatible schema and application releases.
 
-Base seeding is separate from migrations: `make dev-seed` creates the marked
-synthetic identities and base fixtures on `homelab-talos-dev` for tenant
-`tadoku/prod`. SQL seeds require the supplied tenant, set it for each
+Base seeding is separate from migrations: `make dev-seed` creates the synthetic
+fixture accounts through the canonical identity provider, and the base
+fixtures, on `homelab-talos-dev` for tenant `tadoku/prod`. SQL seeds require the supplied tenant, set it for each
 transaction and write that tenant explicitly. The canonical tenant retains the
 fixture UUIDs; other tenants derive fixture UUIDs from their tenant key.
 Caller-supplied identity UUIDs are unchanged.

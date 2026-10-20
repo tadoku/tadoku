@@ -259,18 +259,24 @@ Application errors are `services/tadoku-api/internal/errx/` kinds, mapped in
 
 ## Seeding an administrator in development
 
-Run `make dev-seed` (`scripts/dev/seed-db.sh`) once Kratos and Keto are ready. It
-only runs against the `homelab-talos-dev` Kubernetes context and is safe to re-run.
+Run `make dev-seed` (`scripts/dev/seed-db.sh`) once the base API and Keto are
+ready, and Kratos too while the canonical tenant uses v1. It only runs against
+the `homelab-talos-dev` Kubernetes context and is safe to re-run.
 
-- Creates or refreshes two Kratos identities marked with
-  `metadata_admin.seeded_by=tadoku-dev-seed`: an administrator
-  (`TADOKU_DEV_ADMIN_EMAIL`, default `dev@tadoku.app`) and a reader
-  (`TADOKU_DEV_READER_EMAIL`, default `reader@tadoku.app`). Passwords come from
-  `TADOKU_DEV_ADMIN_PASSWORD` and `TADOKU_DEV_READER_PASSWORD`. An existing
-  identity with the same email but no marker is never modified.
-- Writes `app:tadoku#admins@<administrator identity ID>` through the Keto write
-  API (`http://keto-write.tdk-dev-keto:4467`).
+- Creates an administrator (`TADOKU_DEV_ADMIN_EMAIL`, default `dev@tadoku.app`)
+  and a reader (`TADOKU_DEV_READER_EMAIL`, default `reader@tadoku.app`) through
+  the canonical tenant's identity provider: Kratos identities marked with
+  `metadata_admin.seeded_by=tadoku-dev-seed` on v1, native accounts on v2.
+  Passwords come from `TADOKU_DEV_ADMIN_PASSWORD` and
+  `TADOKU_DEV_READER_PASSWORD`. An identity or account with the same email that
+  the seed does not own is never modified.
+- Writes `app:tadoku#admins@<administrator UUID>` through the Keto write API
+  (`http://keto-write.tdk-dev-keto:4467`) unless the read API already lists it.
+  Keto holds roles for both providers; native accounts have no role field, and
+  the API never reads the `user_roles` row the SQL fixtures write. The reader
+  gets no role.
 - Loads the application seed data from `scripts/dev/seed/`.
 
-See [Development data](../develop/development-data.md) for branch seeding and
+See [Development data](../develop/development-data.md#seed-data) for provider
+selection, fixture UUIDs, reruns and branch seeding, and
 [Development environment](../develop/environment.md#clean-up) for cleanup.

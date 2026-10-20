@@ -50,8 +50,10 @@ Useful fixtures from [the seed sources](../../../../../scripts/dev/seed/):
 - Public page `/pages/dev-welcome`, post `/blog/posts/dev-round-open`.
 - Reader/admin logs with reading/listening examples; discover them through profiles.
 
-Seeds use current dates and reruns update records. Don't assert fixed scores,
-timestamps, registration windows or ordering against a shared/previously used DB.
+Seeded rows keep the dates of their first seeding, and reruns restore missing
+fixtures while keeping existing rows and user edits. Don't assert fixed scores,
+timestamps, registration windows or ordering against a shared/previously used DB;
+discover the actual values.
 Branch contest, registration and log UUIDs are derived from the full tenant key
 with UUIDv5. A canonical fixed UUID will return 404 on a branch; obtain the
 branch's own IDs before opening a deep link.

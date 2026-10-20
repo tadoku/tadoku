@@ -166,7 +166,7 @@ describe('generated client on malformed answers', () => {
   })
 
   it('accepts an empty answer where the contract has no body', async () => {
-    const result = await api.identityLogout({ baseUrl: 'https://api.test', fetch: respond(204, {}, null) })
+    const result = await api.identityLogout({ baseUrl: 'https://api.test', body: {}, fetch: respond(204, {}, null) })
     expect(result.error).toBeUndefined()
   })
 })

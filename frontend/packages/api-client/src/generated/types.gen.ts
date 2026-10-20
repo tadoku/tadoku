@@ -2832,7 +2832,9 @@ export type IdentityLoginCreateResponses = {
 export type IdentityLoginCreateResponse = IdentityLoginCreateResponses[keyof IdentityLoginCreateResponses];
 
 export type IdentityLogoutData = {
-    body?: never;
+    body: {
+        [key: string]: unknown;
+    };
     path?: never;
     query?: never;
     url: '/identity/logout';

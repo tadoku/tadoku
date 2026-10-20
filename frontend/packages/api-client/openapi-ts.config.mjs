@@ -13,6 +13,12 @@ export default {
       operations: { exclude: ['POST /authz/internal/v1/proxy/admin-check', 'GET /identity/internal/v1/session'] },
     },
     patch: {
+      operations: {
+        // The API requires JSON on every identity write; the contract documents logout without a body.
+        'POST /identity/logout': operation => {
+          operation.requestBody = { required: true, content: { 'application/json': { schema: { type: 'object' } } } }
+        },
+      },
       schemas: {
         // The API answers null for a contest without a language allow list; the contract documents an array.
         ImmersionContest: schema => {

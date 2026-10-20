@@ -1218,6 +1218,8 @@ export const zIdentityLoginCreateBody = zIdentityLogin;
  */
 export const zIdentityLoginCreateResponse = zIdentitySession;
 
+export const zIdentityLogoutBody = z.record(z.unknown());
+
 /**
  * Success
  */

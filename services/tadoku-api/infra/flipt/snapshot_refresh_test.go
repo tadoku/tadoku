@@ -217,3 +217,34 @@ func TestFetchStateRejectsMismatchedPendingETagWithoutReplacingConfirmedSnapshot
 	assert.Equal(t, []string{"fetch", "fetch"}, providerErrors)
 	assert.True(t, state.isStale(false))
 }
+
+func TestClientNeverReportsMissingFlagsFromTheStartupFallbackEngine(t *testing.T) {
+	rejected := strings.Replace(booleanSnapshot(nil), `"rollouts": []`, `"rollouts": {}`, 1)
+	var served atomic.Int32
+	server := httptest.NewServer(http.HandlerFunc(func(response http.ResponseWriter, _ *http.Request) {
+		if served.Add(1) == 1 {
+			response.WriteHeader(http.StatusServiceUnavailable)
+			return
+		}
+		_, _ = response.Write([]byte(rejected))
+	}))
+	t.Cleanup(server.Close)
+	client, err := New(context.Background(), Config{
+		URL:            server.URL,
+		Environment:    "local",
+		Namespace:      "default",
+		UpdateInterval: time.Second,
+		RequestTimeout: time.Second,
+		StartupTimeout: time.Second,
+	}, &recordingObserver{})
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, client.Close(context.Background())) })
+
+	require.Eventually(t, func() bool { return served.Load() >= 4 }, 6*time.Second, 20*time.Millisecond)
+	_, err = client.EvaluateBoolean(context.Background(), featureflags.EvaluationRequest{
+		FlagKey:  "identity-v2",
+		EntityID: "tadoku/prod",
+	})
+	require.Error(t, err)
+	assert.NotErrorIs(t, err, featureflags.ErrFlagNotFound)
+}

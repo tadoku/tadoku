@@ -59,7 +59,8 @@ It returns synthetic session responses and records synthetic request headers.
 Assertions prove the application's server forwards Cookie and `X-Dev-Branch`,
 v1 returns HTTP 307 to the existing account app preserving path/query (including
 legacy accounts with 25 emoji in their display name or a local-domain email), and
-404/503/malformed responses keep an unavailable message and account link.
+404/503/malformed responses show an unavailable message with a retry action
+and the shell's home link.
 This substitutes only the identity API; real authentication, gateway routing,
 DNS, TLS termination and tenant persistence remain unverified. Never point
 this fixture at a shared API or treat it as live end-to-end authentication.

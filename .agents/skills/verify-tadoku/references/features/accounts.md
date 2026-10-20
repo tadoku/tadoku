@@ -191,7 +191,8 @@ Authv2 uses `/` for Settings, `/login`, `/register` and `/recovery` on `authv2.t
 - A v1 session answer returns to the matching existing account host with the
   path and query preserved, including legacy emoji display names and email
   formats. Session API failures show an unavailable message
-  and existing-account link; a missing endpoint must not crash the page.
+  with a retry action and the shell's home link; a missing endpoint must not
+  crash the page.
 - Verify mobile containment and `/healthz` independently of API availability.
   Cookie/branch forwarding can be checked with the opt-in local session fixture;
   disclose that substituted upstream instead of claiming real login coverage.

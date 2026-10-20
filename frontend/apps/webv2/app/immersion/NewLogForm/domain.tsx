@@ -1,3 +1,4 @@
+import { zImmersionContestRegistration, zImmersionUnit } from 'api-client'
 import { z } from 'zod'
 import { Activity, Language, Unit } from '@app/immersion/api'
 import {
@@ -15,18 +16,20 @@ import { DateTime, Interval } from 'luxon'
 
 type TrackingMode = 'automatic' | 'manual' | 'personal'
 
+const registrationSchema = zImmersionContestRegistration.extend({ id: z.string() })
+
 export const NewLogFormSchema = z
   .object({
     tracking_mode: z.enum(['automatic', 'manual', 'personal']),
-    registrations: z.array(ContestRegistrationView),
-    selected_registrations: z.array(ContestRegistrationView),
+    registrations: z.array(registrationSchema),
+    selected_registrations: z.array(registrationSchema),
     languageCode: z.string().length(3, 'invalid language'),
     activityId: z.number(),
     amountValue: z
       .number({ invalid_type_error: 'Please enter a number' })
       .positive(),
     amountUnit: z.string(),
-    allUnits: z.array(Unit),
+    allUnits: z.array(zImmersionUnit),
     tags: z.array(z.string().max(50)).max(10, 'Maximum 10 tags allowed'),
     description: z
       .string()

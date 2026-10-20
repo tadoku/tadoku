@@ -9,9 +9,28 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as RegisterRouteImport } from './routes/register'
+import { Route as RecoveryRouteImport } from './routes/recovery'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ActionsOperationRouteImport } from './routes/actions.$operation'
 
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RecoveryRoute = RecoveryRouteImport.update({
+  id: '/recovery',
+  path: '/recovery',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -22,35 +41,96 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ActionsOperationRoute = ActionsOperationRouteImport.update({
+  id: '/actions/$operation',
+  path: '/actions/$operation',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/recovery': typeof RecoveryRoute
+  '/register': typeof RegisterRoute
+  '/settings': typeof SettingsRoute
+  '/actions/$operation': typeof ActionsOperationRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/recovery': typeof RecoveryRoute
+  '/register': typeof RegisterRoute
+  '/settings': typeof SettingsRoute
+  '/actions/$operation': typeof ActionsOperationRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/recovery': typeof RecoveryRoute
+  '/register': typeof RegisterRoute
+  '/settings': typeof SettingsRoute
+  '/actions/$operation': typeof ActionsOperationRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/recovery'
+    | '/register'
+    | '/settings'
+    | '/actions/$operation'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login'
-  id: '__root__' | '/' | '/login'
+  to:
+    | '/'
+    | '/login'
+    | '/recovery'
+    | '/register'
+    | '/settings'
+    | '/actions/$operation'
+  id:
+    | '__root__'
+    | '/'
+    | '/login'
+    | '/recovery'
+    | '/register'
+    | '/settings'
+    | '/actions/$operation'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LoginRoute: typeof LoginRoute
+  RecoveryRoute: typeof RecoveryRoute
+  RegisterRoute: typeof RegisterRoute
+  SettingsRoute: typeof SettingsRoute
+  ActionsOperationRoute: typeof ActionsOperationRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/recovery': {
+      id: '/recovery'
+      path: '/recovery'
+      fullPath: '/recovery'
+      preLoaderRoute: typeof RecoveryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -65,12 +145,23 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/actions/$operation': {
+      id: '/actions/$operation'
+      path: '/actions/$operation'
+      fullPath: '/actions/$operation'
+      preLoaderRoute: typeof ActionsOperationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LoginRoute: LoginRoute,
+  RecoveryRoute: RecoveryRoute,
+  RegisterRoute: RegisterRoute,
+  SettingsRoute: SettingsRoute,
+  ActionsOperationRoute: ActionsOperationRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

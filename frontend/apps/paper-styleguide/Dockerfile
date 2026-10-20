@@ -3,6 +3,7 @@ FROM docker.io/node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a0463
 WORKDIR /app
 RUN npm install -g pnpm@10.10.0 && pnpm config set store-dir .pnpm-store
 COPY pnpm-lock.yaml .npmrc* ./
+COPY patches ./patches
 RUN pnpm fetch
 COPY . .
 RUN pnpm install --frozen-lockfile --offline --ignore-scripts --workspace-root --filter paper-styleguide...

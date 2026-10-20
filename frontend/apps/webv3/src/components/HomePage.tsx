@@ -2,7 +2,8 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { Button, EmptyState, Loading, SectionHeading, StatGrid, Surface, Table, buttonClassName } from 'paper-ui'
 import type { ReactNode } from 'react'
-import { homeQueryOptions, type Contest, type HomeData } from '../lib/home'
+import type { ImmersionContest } from 'api-client'
+import { homeQueryOptions, type HomeData } from '../lib/home'
 import { useLinks } from '../lib/links'
 
 // Contest dates are UTC calendar days. Formatting them by hand keeps server (Node ICU) and browser markup identical.
@@ -10,7 +11,7 @@ const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 
 const numberFormat = new Intl.NumberFormat('en-GB', { maximumFractionDigits: 1 })
 const dayAndMonth = (date: string) => `${Number(date.slice(8, 10))} ${months[Number(date.slice(5, 7)) - 1]}`
 const formatDate = (date: string) => `${dayAndMonth(date)} ${date.slice(0, 4)}`
-const formatPeriod = ({ contest_start: start, contest_end: end }: Pick<Contest, 'contest_start' | 'contest_end'>) =>
+const formatPeriod = ({ contest_start: start, contest_end: end }: Pick<ImmersionContest, 'contest_start' | 'contest_end'>) =>
   `${start.slice(0, 4) === end.slice(0, 4) ? dayAndMonth(start) : formatDate(start)} – ${formatDate(end)}`
 const dayNumber = (from: string, to: string) => Math.round((Date.parse(to) - Date.parse(from)) / 86_400_000) + 1
 

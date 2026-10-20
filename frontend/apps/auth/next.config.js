@@ -22,7 +22,7 @@ const nextConfig = {
     cookieDomain: process.env.NEXT_PUBLIC_COOKIE_DOMAIN ?? '.tadoku.app',
     cookieSecure: process.env.NEXT_PUBLIC_COOKIE_SECURE !== 'false',
   },
-  transpilePackages: ['ui'],
+  transpilePackages: ['ui', 'api-client'],
 }
 
 module.exports = nextConfig

@@ -149,9 +149,9 @@ owner's test data and overlay through `dev down` after verification.
 [session navigation](../../../../../frontend/apps/webv2/app/ui/Navigation.tsx),
 [auth E2E](../../../../../frontend/apps/auth/e2e/account.spec.ts).
 
-## Authv2 skeleton
+## Authv2 account screens
 
-Authv2 uses `/` and `/login` on `authv2.tadoku.dev.lab` or the matching
+Authv2 uses `/` for Settings, `/login`, `/register` and `/recovery` on `authv2.tadoku.dev.lab` or the matching
 `<route>.authv2.tadoku.dev.lab` branch. Read
 [Authv2](../../../../../docs/docs/frontend/authv2.md) and
 [its manual smoke instructions](../../../../../frontend/apps/authv2/e2e/README.md).
@@ -163,15 +163,47 @@ Authv2 uses `/` and `/login` on `authv2.tadoku.dev.lab` or the matching
   `tadoku-cli-ca`; no shared prerequisite creation is needed. Snapshot auth's
   UID, spec, generation, selectors and ConfigMaps before startup and compare
   after owner-scoped teardown. Require no owned resources and healthy auth.
-- A tenant selecting v2 shows the Paper skeleton and anonymous/signed-in state;
-  registration, recovery and settings are not available in this foundation.
+- A v2 guest gets login, registration and recovery forms; signed-in navigation
+  shows the display name and logout. Settings is at `/`, with `/settings`
+  retained for existing caller links. A guest opening Settings goes through
+  login and returns to the same Settings URL.
+- Run the manual real-API smoke. With JavaScript disabled, register a disposable
+  account, reload Settings, log out and log in again. Enter values before delayed
+  hydration, then submit after hydration and verify those same values survive
+  and that the browser posts JSON to the tenant's main-host
+  `/api/internal/identity/*`, not to authv2's `/actions/*` fallback. Inspect
+  labels, keyboard focus, pending states, field/form errors and mobile
+  containment. Do not inject cookies or mock identity responses for this proof.
+- Log in with an allowed `return_to` and require that exact destination; a
+  foreign one must never be rendered, carried or followed.
+- As the owned native Reader, save a display name and reload; exercise invalid
+  names/passwords, taken email, throttling and stale-session feedback. A stale
+  valid session can save its display name; email or password edits link to a
+  login that returns to Settings. Email changes notify the old address.
+  Resubmitting the unchanged email shows that it is already the account's
+  address and sends no request; display-name and password saves send only their
+  own field.
+- Request recovery through its form; use a separate native Admin context's cookie
+  to read the newly held email. Follow its exact `params.recovery_url`, set a
+  password in Settings, continue, log out and log in using the new password.
+  Require old-password, old-session and used-link rejection. Settings offers a
+  valid continuation as a link and follows it only after a password save;
+  crafted off-allowlist queries are ignored. Invalid recovery links retain API
+  400 JSON.
+- Keep a page mounted, change source and observe HMR with unchanged navigation
+  time origin, Pod UID and image. Keep the local generated route tree current:
+  synchronizing a stale tree makes the overlay regenerate it and reload.
 - A v1 session answer returns to the matching existing account host with the
   path and query preserved, including legacy emoji display names and email
   formats. Session API failures show an unavailable message
-  and existing-account link; a missing endpoint must not crash the page.
+  with a retry action and the shell's home link; a missing endpoint must not
+  crash the page.
 - Verify mobile containment and `/healthz` independently of API availability.
-  Cookie/branch forwarding can be checked with the opt-in local session fixture;
-  disclose that substituted upstream instead of claiming real login coverage.
+  Cookie/branch forwarding can be checked with the opt-in local session fixture,
+  registration answers, including the registration budget's `429`, with the
+  opt-in registration fixture, and Settings for imported addresses with control
+  characters with the opt-in Settings fixture; disclose that substituted upstream
+  instead of claiming real login coverage.
   The Playwright smoke is run by hand, never wired into CI.
 - Public identity entry rules forward Cookie with a signed guest JWT and no
   global session callback, so identity owns auth/CSRF and banned-user session or

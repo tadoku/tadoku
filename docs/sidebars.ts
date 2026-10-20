@@ -78,6 +78,7 @@ const sidebars: SidebarsConfig = {
       },
       items: [
         'frontend/conventions',
+        'frontend/api-client',
         'frontend/webv2',
         'frontend/auth',
         'frontend/authv2',

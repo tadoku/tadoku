@@ -22,7 +22,7 @@ Source: `frontend/apps/admin`. Development host: `admin.tadoku.dev.lab`.
 ## Stack
 
 - Next.js 13 Pages Router, with feature code in `app/` imported as `@app/*`, Tailwind CSS and the legacy `ui` components.
-- React Query 3 hooks call Tadoku API (`immersion`, `content`, `authz` and `profile`) with `fetch`, and Zod parses the responses. There is no generated client. See the [API reference](../api/index.md).
+- React Query 3 hooks call Tadoku API (`immersion`, `content`, `authz` and `profile`) through the [generated client](api-client.md), which validates every response. See the [API reference](../api/index.md).
 - The app also uses react-hook-form, Luxon, Jotai for the session, with accounts read from `GET /identity/session`.
 - `frontend/packages/ui/app-urls.tsx` derives account, home and browser API URLs
   from the current branch host. SSR passes them through its provider; browser

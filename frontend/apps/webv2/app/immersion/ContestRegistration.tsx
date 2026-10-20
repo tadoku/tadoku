@@ -1,6 +1,7 @@
 import { AutocompleteMultiInput, Flash, Loading } from 'ui'
 import { FormProvider, useForm, useFormContext } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { zImmersionLanguage } from 'api-client'
 import { z } from 'zod'
 import {
   ContestRegistrationView,
@@ -19,12 +20,7 @@ import {
 export const ContestRegistrationFormSchema = z.object({
   contest_id: z.string(),
   new_languages: z
-    .array(
-      z.object({
-        code: z.string(),
-        name: z.string(),
-      }),
-    )
+    .array(zImmersionLanguage)
     .max(3, 'Cannot select more than 3 languages')
     .min(1, 'Must select at least 1 languages')
     .refine(
@@ -33,14 +29,7 @@ export const ContestRegistrationFormSchema = z.object({
         languages.length,
       'Cannot select the same language more than once',
     ),
-  languages: z
-    .array(
-      z.object({
-        code: z.string(),
-        name: z.string(),
-      }),
-    )
-    .optional(),
+  languages: z.array(zImmersionLanguage).optional(),
 })
 
 export type ContestRegistrationFormSchema = z.infer<

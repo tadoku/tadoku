@@ -17,14 +17,14 @@ const timeActivity = {
   input_type: 'time_primary' as const,
 }
 const amountUnit = {
-  id: 'amount-unit',
+  id: '00000000-0000-4000-8000-000000000001',
   unit_key: 'test_amount_unit',
   log_activity_id: amountActivity.id,
   name: 'Amount unit',
   modifier: 1,
 }
 const timeUnit = {
-  id: 'time-unit',
+  id: '00000000-0000-4000-8000-000000000002',
   unit_key: 'test_time_unit',
   log_activity_id: timeActivity.id,
   name: 'Time unit',

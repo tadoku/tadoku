@@ -3,7 +3,7 @@ import { FormProvider, useForm } from 'react-hook-form'
 import { Modal, Select } from 'ui'
 import { toast } from 'react-toastify'
 import { UserListEntry } from '@app/common/api'
-import { FeatureFlagKey } from './contracts'
+import type { FeatureFlagKey } from './api'
 import { useFeatureAccess, useUpdateFeatureAccess } from './api'
 
 const flagOptions = [

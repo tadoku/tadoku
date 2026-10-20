@@ -8,20 +8,12 @@ import (
 
 var (
 	ErrLocalUserNotFound         = errx.NewNotFoundError("local user not found")
-	ErrIdentityNotFound          = errx.NewNotFoundError("identity not found")
 	ErrAccountDeletionInProgress = errx.NewConflictError("account deletion in progress")
 )
 
 type userDeletionState struct {
 	DeletionLocked bool
 	Deleted        bool
-}
-
-type cachedUser struct {
-	ID          string
-	DisplayName string
-	Email       string
-	CreatedAt   string
 }
 
 type User struct {

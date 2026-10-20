@@ -16,9 +16,9 @@ its source is `services/tadoku-api/spec/openapi.yaml`.
 - **Identity** owns account/session selection per tenant. V1 uses Ory Kratos;
   v2 uses tenant-owned accounts and sessions in Tadoku API. The
   [identity entry point](../tadoku-api/identity.md) selects with the tenant-level
-  `identity-v2` flag and provides the authenticated session callback. Existing
-  gateway callers continue to use Kratos until their callback configuration is
-  switched. Oathkeeper's
+  `identity-v2` flag and provides the authenticated session callback. Its cookie-session authenticator forwards the
+  complete Cookie and trusted X-Dev-Branch headers through the branch-aware API
+  hop. Oathkeeper's
   `id_token` mutator produces an RS256 JWT whose `sub` is the
   account UUID, or `guest` for anonymous requests. Session traits travel in the
   `session` claim; `type` is `user`. API tokens carry a signed `tenant`
@@ -55,26 +55,18 @@ Canonical development token reads record the token UUID as actor and include
 See [Tenant lifecycle command](../tadoku-api/tenant-lifecycle.md#email-access-tokens)
 for attached issuance, limits, listing and revocation.
 
-## Kratos identity writes
+## Identity reads
 
-V1 Kratos identities and sessions are shared across tenants. Test tenants never
-modify them. `Writer` in `services/tadoku-api/infra/kratosidentity/` is the only
-application path for deactivating an identity, deleting all its sessions or deleting
-the identity itself. It requires a tenant context: `tadoku/prod` applies the
-operation, every other parsed tenant returns `SkippedForTestTenant` and logs
-the tenant and identity ID, and a missing tenant returns an error before making
-a provider request. Repeating an operation against a missing identity succeeds.
+Profile and moderation use `identity.Reader` for public profile details, account
+age, admin listing and ban-target existence. The identity feature chooses the
+implementation using the request tenant's flag. V2 targets must be active
+accounts in that tenant; v1 reads continue through Kratos. Account deletion is
+not available, and read access does not authorize shared provider mutations.
 
-The identity adapter in `services/tadoku-api/features/identity/kratos` separates
-identity reads (`FetchIdentity`, `UserExists`, `ListIdentities`) from session
-operations (`Sessions.Check`, `Sessions.Revoke`). The identity logout operation
+The identity session adapter in `services/tadoku-api/features/identity/kratos`
 checks the selected Kratos cookie and revokes only that session for the canonical
 tenant. Test-tenant logout clears the browser cookie and leaves shared provider
 sessions active; a missing tenant cannot revoke a session.
-
-The identity writer has no HTTP entry point and is not wired into account
-deletion. When that flow is added, it must use the writer and handle the skipped
-outcome after deleting the tenant's own application data.
 
 ## Keto data model
 

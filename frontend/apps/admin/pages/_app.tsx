@@ -1,15 +1,16 @@
 import App, { AppProps } from 'next/app'
 import { NextPage } from 'next'
-import { ReactElement, ReactNode, useEffect } from 'react'
-import { sdkServer as ory } from '@app/common/ory'
+import { ReactElement, ReactNode, useState, useEffect } from 'react'
 import { Atom, Provider, useAtom } from 'jotai'
 import {
   AppContextWithSession,
   sessionAtom,
+  accountAppAtom,
   useUserRole,
   useCurrentLocation,
 } from '@app/common/session'
-import { Session } from '@ory/kratos-client'
+import { Account, AccountApp, readIdentitySession } from 'ui/identity'
+import { SessionUnavailable } from 'ui/components/SessionUnavailable'
 import { ToastContainer } from 'ui/components/toasts'
 import 'ui/styles/globals.css'
 import { QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -17,14 +18,17 @@ import Head from 'next/head'
 import { Settings } from 'luxon'
 import AccessDenied from '@app/ui/AccessDenied'
 import LoadingScreen from '@app/ui/LoadingScreen'
-import { AppUrls, AppUrlsProvider, appUrlsForHost, useAppUrls } from 'ui/app-urls'
+import { AppUrls, AppUrlsProvider, appUrlsForHost } from 'ui/app-urls'
+import { useRoutes } from '@app/common/routes'
 
 // Default timezone for app
 Settings.defaultZone = 'utc'
 
 interface Props {
   appUrls: AppUrls
-  session: Session | undefined
+  session: Account | undefined
+  accountApp: AccountApp
+  sessionUnavailable: boolean
 }
 
 export type NextPageWithLayout<P = {}, IP = P> = NextPage<P, IP> & {
@@ -34,16 +38,6 @@ export type NextPageWithLayout<P = {}, IP = P> = NextPage<P, IP> & {
 type AppPropsWithLayout = AppProps<Props> & {
   Component: NextPageWithLayout<Props>
 }
-
-const queryClient = new QueryClient({
-  queryCache: new QueryCache({
-    onError: error => {
-      if ((error as Error).message === '401') {
-        window.location.pathname = '/api/unauthorized'
-      }
-    },
-  }),
-})
 
 const createInitialValues = () => {
   const initialValues: (readonly [Atom<unknown>, unknown])[] = []
@@ -55,12 +49,12 @@ const createInitialValues = () => {
 }
 
 const RedirectToLogin = () => {
-  const { authUiUrl } = useAppUrls()
-  const currentUrl = useCurrentLocation()
+  const routes = useRoutes()
+  const loginUrl = routes.authLogin(useCurrentLocation())
 
   useEffect(() => {
-    window.location.href = `${authUiUrl}/login?return_to=${currentUrl}`
-  }, [currentUrl, authUiUrl])
+    window.location.href = loginUrl
+  }, [loginUrl])
 
   return <LoadingScreen />
 }
@@ -87,27 +81,31 @@ const AppContent = ({ children }: { children: ReactNode }) => {
   return <>{children}</>
 }
 
-// Store the initial values outside component to persist across navigations
-let initializedSession: Session | undefined = undefined
-let isInitialized = false
-
 const MyApp = ({ Component, pageProps }: AppPropsWithLayout) => {
+  const [sessionExpired, setSessionExpired] = useState(false)
+  const [queryClient] = useState(() => new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: (count, error) => (error as Error).message !== '401' && count < 3,
+      },
+    },
+    queryCache: new QueryCache({
+      onError: error => {
+        if ((error as Error).message === '401') setSessionExpired(true)
+      },
+    }),
+  }))
   const initialState = pageProps
   const { get: getInitialValues, set: setInitialValues } = createInitialValues()
 
-  // Only set initial session from SSR on first render
-  if (!isInitialized && initialState.session) {
-    initializedSession = initialState.session
-    isInitialized = true
-  }
-
-  setInitialValues(sessionAtom, initializedSession)
+  setInitialValues(sessionAtom, initialState.session)
+  setInitialValues(accountAppAtom, initialState.accountApp)
 
   const getLayout = Component.getLayout ?? (page => page)
 
   return (
     <AppUrlsProvider urls={pageProps.appUrls}>
-      <Provider initialValues={getInitialValues()}>
+      <Provider key={`${initialState.accountApp}:${initialState.session?.id ?? 'guest'}`} initialValues={getInitialValues()}>
         <QueryClientProvider client={queryClient}>
           <Head>
             <title>Admin - Tadoku</title>
@@ -122,10 +120,12 @@ const MyApp = ({ Component, pageProps }: AppPropsWithLayout) => {
               media="(prefers-color-scheme: dark)"
             />
           </Head>
-          <AppContent>
-            {getLayout(<Component {...pageProps} />)}
-            <ToastContainer />
-          </AppContent>
+          {sessionExpired || pageProps.sessionUnavailable ? <SessionUnavailable /> : (
+            <AppContent>
+              {getLayout(<Component {...pageProps} />)}
+            </AppContent>
+          )}
+          <ToastContainer />
         </QueryClientProvider>
       </Provider>
     </AppUrlsProvider>
@@ -133,28 +133,18 @@ const MyApp = ({ Component, pageProps }: AppPropsWithLayout) => {
 }
 
 MyApp.getInitialProps = async (ctx: AppContextWithSession) => {
-  const cookie = ctx.ctx.req?.headers.cookie
-  const props = {
-    pageProps: {
-      initialState: {
-        session: undefined as Session | undefined,
-      },
-    },
-  }
-
-  if (cookie) {
-    try {
-      const { data: session } = await ory.toSession({ cookie })
-      props.pageProps.initialState.session = session
-      ctx.ctx.session = session
-    } catch (err) {}
-  }
+  ctx.ctx.res?.setHeader('Cache-Control', 'private, no-store')
+  const host = ctx.ctx.req?.headers.host ?? (typeof window === 'undefined' ? undefined : window.location.host)
+  const identity = await readIdentitySession(host, ctx.ctx.req?.headers)
+  ctx.ctx.session = identity?.account ?? undefined
 
   const initialAppProps = await App.getInitialProps(ctx)
   initialAppProps.pageProps.session = ctx.ctx.session
+  initialAppProps.pageProps.accountApp = identity?.account_app ?? 'v1'
+  initialAppProps.pageProps.sessionUnavailable = !identity
   initialAppProps.pageProps.appUrls = appUrlsForHost(ctx.ctx.req?.headers.host ?? (typeof window === 'undefined' ? undefined : window.location.host))
 
-  return { ...props, ...initialAppProps }
+  return initialAppProps
 }
 
 export default MyApp

@@ -22,14 +22,14 @@ export default function Navigation() {
   const [session] = useSession()
   const role = useUserRole()
   const isAdmin = role === 'admin'
-  const onLogout = useLogoutHandler([session])
+  const onLogout = useLogoutHandler()
   const currentUrl = useCurrentLocation()
 
   const userNavigation: (
     | NavigationLinkProps
     | NavigationDropDownProps
     | NavigationActionProps
-  )[] = session?.identity
+  )[] = session
     ? [
         {
           type: 'action',
@@ -38,11 +38,11 @@ export default function Navigation() {
         },
         {
           type: 'dropdown',
-          label: session.identity.traits.display_name ?? 'User',
+          label: session.display_name ?? 'User',
           links: [
             {
               label: 'Profile',
-              href: routes.userProfileStatistics(session.identity.id),
+              href: routes.userProfileStatistics(session.id),
               IconComponent: UserIcon,
               divider: !isAdmin,
             },

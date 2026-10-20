@@ -16,7 +16,7 @@ The general test principles are in [Testing](./testing.md).
   the production HTTP router once, with real JWT verification, ban checks and
   Keto-backed permissions. There is no second bypass router or injected
   administrator identity. Handlers run in process, without HTTP listeners.
-- The production router, profile-cache resets, alternate scoring/dependency
+- The production router, profile-service resets, alternate scoring/dependency
   routers and real worker journeys all use the restricted `AppPool`.
   Fixture reset and verification SQL use the owner `Pool`; an owner-pool
   application router would bypass the policies the suite must exercise.
@@ -319,16 +319,30 @@ jq -r .token "$fixture_output"
 
 `TestEmailGatewayCookieAndBearer` runs the checked-in development rules with
 checksum-pinned Oathkeeper v26.2.0, the real local Kratos/Keto fixtures and the
-production API router on the restricted database role. It generates ephemeral
-credentials in memory and checks cookie-admin and bearer list/detail reads,
-anonymous/forged denial, unrelated-route denial and token absence from logs.
+production API router on the restricted database role. Cookie checks call that
+API's `/identity/internal/v1/session`, using the same additional-header
+environment override as the deployment with a synthetic callback bearer. The
+API resolves sessions through the real disposable Kratos provider. The fixture
+keeps real RSA JWT signing and validation; it does not replace authentication
+or inject a subject.
+
+Assertions cover email list/detail; token precedence over a reader cookie;
+invalid-token refusal despite an admin cookie; unrelated, expired, revoked and
+mixed cookies; guest-only access outside email; protected-route denial; wrong
+deployment `421`; revoked tokens; public identity access; and credential absence
+from logs. Public logout and fixture-only SQLite expiry invalidate disposable
+Kratos sessions, with real whoami `401` checks. No shared provider is used.
 
 To check production routing, render the paired GitOps checkout's Oathkeeper
 chart (version 0.60.1) into a scratch file and pass its absolute path through
-`TADOKU_TEST_EMAIL_GATEWAY_RENDER`. The same test reads the rendered ConfigMaps
-and uses checksum-pinned Oathkeeper v25.4.0. Only upstream/provider addresses,
-listener ports and the signing key location change for loopback fixtures;
-matching, authenticators, mutators and logging remain from the render.
+`TADOKU_TEST_EMAIL_GATEWAY_RENDER`. The render must include the public identity
+and email rules and this callback configuration. The same test reads the
+rendered ConfigMaps and uses checksum-pinned Oathkeeper v25.4.0. Adaptations
+are limited to loopback upstream/callback addresses, listener ports, ephemeral
+signing keys and the synthetic callback bearer. Matching, authenticator options,
+mutators and logging remain from the checked-in configuration or render.
+The second router used for the wrong-deployment case is test-only fixture
+instrumentation; no test route is added to production.
 It checks forwarded HTTPS on `tadoku.app` and a preview host, plus HTTP denial.
 Both binaries are fetched and checksum-verified by Bazel on cold machines.
 

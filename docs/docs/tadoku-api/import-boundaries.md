@@ -57,13 +57,12 @@ boundaries described in [Code ownership](./index.md#code-ownership).
   visibility or package group and this page in the same change, and explain the
   new dependency direction in the PR.
 
-The identity feature owns the unchanged Kratos read adapter in its `kratos`
-subpackage. Only its owner imports that adapter. Existing profile and authz
-consumers temporarily depend on `identity.LegacyReader`; its SDK read models
-preserve their existing behavior. The provider fixture and the writer tests may
-construct the same reader. These exact consumers have explicit Bazel visibility;
-ordinary feature composition still belongs in the application. New consumers
-use the provider-free `identity.Reader` contract.
+The identity feature owns the Kratos read adapter in its `kratos` subpackage.
+Only its owner imports that adapter. Profile and authz use the provider-free
+`identity.Reader` contract through their existing exact visibility exception;
+they never import the SDK. The provider fixture may construct `LegacyReader`.
+The generated read queries under `generated/sqlc/identity/reads` are visible
+only to identity. General cross-feature composition remains in the application.
 
 ## Provider dependencies
 
@@ -84,14 +83,10 @@ graph. Each allowed package covers only its own targets, not subpackages, and
   provider fixture. Lifecycle application code uses `permissions.TenantManager`.
 - Only `services/tadoku-api/features/identity`,
   `services/tadoku-api/features/identity/kratos`,
-  `services/tadoku-api/infra/kratosidentity`,
-  `services/tadoku-api/features/profile`,
   `services/tadoku-api/internal/testkratos` and E2E may depend directly on the Kratos SDK.
-  The read adapter exposes identity reads without a raw SDK constructor;
-  profile uses its identity models. The identity session adapter also reads the public session endpoint and
-  revokes canonical sessions through the admin endpoint; it enforces the tenant
-  guard before provider writes. The writer owns identity writes
-  and requires the explicit canonical tenant before calling the provider.
+  Only identity ownership maps SDK models into accounts. The identity session
+  adapter reads the public session endpoint and revokes canonical sessions through
+  the admin endpoint; it enforces the tenant guard before provider writes.
   Test fixtures own their disposable provider and may arrange its state directly.
 
 This keeps other packages on the shared permission checker. Keep shared ban and

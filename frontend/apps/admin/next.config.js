@@ -3,21 +3,17 @@ const nextConfig = {
   output: 'standalone',
   reactStrictMode: true,
   swcMinify: true,
+  serverRuntimeConfig: {
+    apiEndpoint: process.env.NEXT_SERVER_API_ENDPOINT ?? process.env.NEXT_PUBLIC_API_ENDPOINT ?? 'https://tadoku.app/api/internal',
+  },
   publicRuntimeConfig: {
-    kratosPublicEndpoint:
-      process.env.NEXT_PUBLIC_KRATOS_ENDPOINT ??
-      'https://account.tadoku.app/kratos',
-    kratosInternalEndpoint:
-      process.env.NEXT_PUBLIC_KRATOS_INTERNAL_ENDPOINT ??
-      'http://kratos-public',
     authUiUrl:
       process.env.NEXT_PUBLIC_AUTH_UI_URL ?? 'https://account.tadoku.app',
+    authV2UiUrl: process.env.NEXT_PUBLIC_AUTHV2_UI_URL,
     homeUrl: process.env.NEXT_PUBLIC_HOME_URL ?? 'https://tadoku.app',
     adminUrl: process.env.NEXT_PUBLIC_ADMIN_URL ?? 'https://admin.tadoku.app',
     apiEndpoint:
       process.env.NEXT_PUBLIC_API_ENDPOINT ?? 'https://tadoku.app/api/internal',
-    cookieDomain: process.env.NEXT_PUBLIC_COOKIE_DOMAIN ?? '.tadoku.app',
-    cookieSecure: process.env.NEXT_PUBLIC_COOKIE_SECURE !== 'false',
   },
   transpilePackages: ['ui'],
 }

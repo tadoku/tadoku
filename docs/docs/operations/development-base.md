@@ -67,6 +67,10 @@ notification configuration.
   `k8s/dev/base/kustomization.yaml`; Webv2, auth and admin select reviewed
   immutable commit tags. The development Image Updater uses the **digest**
   strategy and writes the immutable resolutions back to that file.
+- The `image-list` annotation of the homelab repository's `tadoku-dev` Argo CD
+  Application (clusters/talos/dev/root/tadoku-dev.yaml) owns the Webv2, auth
+  and admin tag selections. Change them there; Image Updater reverts a
+  selection edited only in the Kustomization.
 - The worker has its own GHCR image and Kustomize image entry. Image Updater
   tracks its digest independently of the API image.
 - Webv3 tracks its published `latest` digest independently at
@@ -87,7 +91,11 @@ notification configuration.
 The CI-published Next.js standalone images freeze their build-time URLs in
 `server.js`. `k8s/dev/base/frontend-start.cjs` keeps their compiled assets and
 build configuration unchanged, but supplies development-only runtime endpoints
-before starting Next. The public Lab CA is mounted for server-side HTTPS.
+before starting Next. The browser receives the public
+`https://tadoku.dev.lab/api/internal` endpoint. Server-side requests use
+`http://oathkeeper-proxy.tdk-dev-oathkeeper:4455/api/internal`, the private
+Oathkeeper entry for session and feature-flag reads, and forward the incoming
+X-Dev-Branch. The public Lab CA is mounted for server-side HTTPS.
 
 - It is a deployment adapter, not a source-sync server or reusable CLI runtime.
 - It calls a private Next startup API. Reverify it whenever the frontend
@@ -286,7 +294,11 @@ failure. It needs no cluster credentials.
 - It also proves fresh migrations, no-op reruns, an intentional connection
   failure and recovery, plus HTTP readiness, development runtime URLs and
   compiled assets in the three Next.js frontend images and Webv3 with external
-  networking disabled. Webv3 additionally proves non-root, read-only Nitro
+  networking disabled. For base and branch hosts, each Next.js image's
+  server-rendered session read must match a rendered private Oathkeeper rule,
+  forward the exact Cookie and only the incoming X-Dev-Branch, open no
+  connection to the public API, and give the browser only public API URLs.
+  Loopback fixtures stand in for Oathkeeper and the API. Webv3 additionally proves non-root, read-only Nitro
   startup, Lab CA loading, SSR and compiled assets on canonical and branch
   hosts, development product links and healthy probes during an API outage.
   It also checks the rendered leaderboard worker ownership.

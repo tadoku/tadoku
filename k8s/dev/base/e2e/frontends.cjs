@@ -1,9 +1,19 @@
-// Frontend image startup proof with external networking disabled.
+// Frontend image startup proof with external networking disabled. Legacy SSR
+// API hosts resolve to loopback fixtures inside each container: the private
+// Oathkeeper host answers sessions, the public HTTPS host only counts connections.
 const fs = require('node:fs')
 const path = require('node:path')
 const { spawnSync } = require('node:child_process')
+const Y = require('../../../../frontend/node_modules/yaml')
 
 function proveFrontends({ evidence, prefix, containers, report, run }, docs) {
+  const rules = Y.parse(docs.find(d => d.kind === 'ConfigMap' && d.data?.['rules.yaml']).data['rules.yaml'])
+  const privateSession = new URL(rules.find(rule => rule.id === 'tadoku:identity:session:internal').match.url)
+  const privateRules = rules.filter(rule => rule.match.url.startsWith(`${privateSession.origin}/`))
+    .map(rule => ({ url: rule.match.url, methods: rule.match.methods }))
+  const publicApi = 'https://tadoku.dev.lab/api/internal'
+  const branch = 'proof-0123abcd'
+  const apiHosts = [privateSession.hostname, new URL(publicApi).hostname, `${branch}.${new URL(publicApi).hostname}`]
   const frontends = docs.filter(d => d.kind === 'Deployment' && d.metadata.name.startsWith('frontend-'))
   for (const deployment of frontends) {
     const spec = deployment.spec.template.spec
@@ -25,7 +35,7 @@ function proveFrontends({ evidence, prefix, containers, report, run }, docs) {
     // login or API acceptance, and cannot accidentally contact production.
     const runtime = native ? docs.find(d => d.kind === 'ConfigMap' && d.metadata.namespace === deployment.metadata.namespace && d.metadata.name === container.envFrom[0].configMapRef.name) : undefined
     const env = native ? Object.entries(runtime.data) : container.env.map(e => [e.name, e.value])
-    run('docker', ['create', '--name', name, '--network', 'none', '--label', `tadoku.dev/test=${prefix}`, '--cpus', '0.5', '--memory', '512m', ...env.flatMap(([key, value]) => ['-e', `${key}=${value}`]), ...(native ? ['--read-only', '--cap-drop=ALL', '--security-opt=no-new-privileges', '--volume', mount.mountPath] : ['--entrypoint', container.command[0]]), image, ...(container.command?.slice(1) || [])])
+    run('docker', ['create', '--name', name, '--network', 'none', '--label', `tadoku.dev/test=${prefix}`, '--cpus', '0.5', '--memory', '512m', ...env.flatMap(([key, value]) => ['-e', `${key}=${value}`]), ...(native ? ['--read-only', '--cap-drop=ALL', '--security-opt=no-new-privileges', '--volume', mount.mountPath] : ['--entrypoint', container.command[0], ...apiHosts.flatMap(host => ['--add-host', `${host}:127.0.0.1`])]), image, ...(container.command?.slice(1) || [])])
     containers.push(name)
     run('docker', ['cp', native ? `${dir}/.` : dir, `${name}:${mount.mountPath}`])
     run('docker', ['start', name])
@@ -102,8 +112,34 @@ function proveFrontends({ evidence, prefix, containers, report, run }, docs) {
             console.log(JSON.stringify({api: process.env.TADOKU_API_URL, outage: 'visible', health: after.status}));
           })().catch(error => { console.error(error); process.exit(1) });
         `])
-      } else run('docker', ['exec', name, 'node', '-e', String.raw`
+      } else run('docker', ['exec', '-e', `PROOF=${JSON.stringify({ app: deployment.metadata.name, privateSession, privateRules, publicApi, branch })}`, name, 'node', '-e', String.raw`
         (async () => {
+          const http = require('node:http');
+          const proof = JSON.parse(process.env.PROOF);
+          const privateSession = new URL(proof.privateSession);
+          const cookie = 'ory_kratos_session=base-proof; tadoku_session_' + proof.branch + '=branch-proof; unrelated=proof';
+          const account = {id: '7d0c6a3e-3f43-4f4b-9a7e-1c2b3d4e5f60', email: 'reader@example.test', display_name: 'Private SSR proof', created_at: '2026-01-01T00:00:00Z', authenticated_at: '2026-01-01T00:00:00Z'};
+          let observed = [];
+          let publicConnections = 0;
+          const listen = (server, port) => new Promise((resolve, reject) => server.once('error', reject).listen(Number(port), '127.0.0.1', resolve).unref());
+          await listen(http.createServer((request, response) => {
+            observed.push({method: request.method, url: request.url, cookie: request.headers.cookie, branch: request.headers['x-dev-branch']});
+            response.setHeader('Content-Type', 'application/json');
+            if (request.url !== '/api/internal/identity/session') { response.statusCode = 404; response.end('{}'); return }
+            response.end(JSON.stringify({account_app: 'v1', account: request.headers.cookie ? account : null}));
+          }), privateSession.port);
+          await listen(require('node:net').createServer(socket => { publicConnections++; socket.destroy() }), 443);
+          const readHtml = (host, headers) => new Promise((resolve, reject) => {
+            const request = http.get('http://127.0.0.1:3000/', {headers: {Host: host, Cookie: cookie, ...headers}, timeout: 15000}, response => {
+              let html = '';
+              response.setEncoding('utf8');
+              response.on('data', chunk => { html += chunk });
+              response.on('end', () => resolve({status: response.statusCode, html}));
+              response.on('error', reject);
+            });
+            request.on('timeout', () => request.destroy(new Error('SSR timed out for ' + host)));
+            request.on('error', reject);
+          });
           let response;
           for (let i = 0; i < 60; i++) {
             try {
@@ -126,6 +162,21 @@ function proveFrontends({ evidence, prefix, containers, report, run }, docs) {
             await result.arrayBuffer();
           }
           console.log(JSON.stringify({runtime, assets: assets.length}));
+          const host = new URL(runtime[{'frontend-admin': 'adminUrl', 'frontend-auth': 'authUiUrl'}[proof.app] ?? 'homeUrl']).host;
+          const branchApi = proof.publicApi.replace('://', '://' + proof.branch + '.');
+          for (const [requestHost, headers, browserApi] of [[host, {}, proof.publicApi], [proof.branch + '.' + host, {'X-Dev-Branch': proof.branch}, branchApi]]) {
+            observed = [];
+            publicConnections = 0;
+            const {status, html} = await readHtml(requestHost, headers);
+            const props = JSON.parse(html.match(/<script id="__NEXT_DATA__"[^>]*>(.*?)<\/script>/s)?.[1] ?? '{}').props?.pageProps;
+            console.log(JSON.stringify({host: requestHost, status, publicConnections, observed}));
+            if (publicConnections || !observed.some(row => row.method === 'GET' && row.url === '/api/internal/identity/session')) throw new Error(requestHost + ' SSR session read must use the private Oathkeeper session rule, not the public API; public connections: ' + publicConnections + ', private requests: ' + observed.length);
+            const unmatched = observed.filter(row => !proof.privateRules.some(rule => rule.url === privateSession.origin + row.url && rule.methods.includes(row.method)));
+            if (unmatched.length) throw new Error(requestHost + ' SSR requests have no private Oathkeeper rule: ' + JSON.stringify(unmatched));
+            if (!observed.every(row => row.cookie === cookie && row.branch === headers['X-Dev-Branch'])) throw new Error(requestHost + ' SSR must forward the exact Cookie and only the incoming X-Dev-Branch');
+            if (status !== 200 || !props || props.sessionUnavailable || (proof.app !== 'frontend-auth' && props.session?.id !== account.id)) throw new Error(requestHost + ' SSR did not render the private session response');
+            if (props.appUrls?.apiEndpoint !== browserApi || html.includes(privateSession.hostname)) throw new Error(requestHost + ' browser must receive only the public API endpoint');
+          }
         })().catch(error => { console.error(error); process.exit(1) });
       `])
     } finally { run('docker', ['logs', name]) }

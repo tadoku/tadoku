@@ -1325,9 +1325,6 @@ type EmailListParams struct {
 	Cursor    *string              `form:"cursor,omitempty" json:"cursor,omitempty"`
 }
 
-// IdentityLogoutJSONBody defines parameters for IdentityLogout.
-type IdentityLogoutJSONBody = map[string]interface{}
-
 // IdentityRecoveryConsumeParams defines parameters for IdentityRecoveryConsume.
 type IdentityRecoveryConsumeParams struct {
 	// ReturnTo Allowlisted continuation after Settings completion, preserved in the tenant authv2 Settings URL. Rejected before token consumption if the complete Settings URL exceeds 2048 bytes.
@@ -1503,9 +1500,6 @@ type ContentPostUpdateJSONRequestBody = ContentPost
 
 // IdentityLoginCreateJSONRequestBody defines body for IdentityLoginCreate for application/json ContentType.
 type IdentityLoginCreateJSONRequestBody = IdentityLogin
-
-// IdentityLogoutJSONRequestBody defines body for IdentityLogout for application/json ContentType.
-type IdentityLogoutJSONRequestBody = IdentityLogoutJSONBody
 
 // IdentityRecoveryCreateJSONRequestBody defines body for IdentityRecoveryCreate for application/json ContentType.
 type IdentityRecoveryCreateJSONRequestBody = IdentityRecovery
@@ -5893,7 +5887,6 @@ func (response IdentityLoginCreate503JSONResponse) VisitIdentityLoginCreateRespo
 }
 
 type IdentityLogoutRequestObject struct {
-	Body *IdentityLogoutJSONRequestBody
 }
 
 type IdentityLogoutResponseObject interface {
@@ -9710,16 +9703,6 @@ func (sh *strictHandler) IdentityLoginCreate(w http.ResponseWriter, r *http.Requ
 // IdentityLogout operation middleware
 func (sh *strictHandler) IdentityLogout(w http.ResponseWriter, r *http.Request) {
 	var request IdentityLogoutRequestObject
-
-	var body IdentityLogoutJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		if !errors.Is(err, io.EOF) {
-			sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
-			return
-		}
-	} else {
-		request.Body = &body
-	}
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.IdentityLogout(ctx, request.(IdentityLogoutRequestObject))

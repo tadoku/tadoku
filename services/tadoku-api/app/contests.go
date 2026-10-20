@@ -104,6 +104,11 @@ func (a *Application) CreateContest(ctx context.Context, parameters CreateContes
 		if err := a.profile.LockUser(ctx, creatorID); err != nil {
 			return err
 		}
+		if !admin {
+			if err := a.contests.CheckYearlyCreationLimit(ctx, creatorID, now.Year()); err != nil {
+				return err
+			}
+		}
 		var createErr error
 		result, createErr = a.contests.CreateContest(ctx, contest)
 		return createErr

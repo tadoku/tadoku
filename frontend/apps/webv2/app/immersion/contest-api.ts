@@ -43,8 +43,8 @@ export const useContestConfigurationOptions = (options?: {
 
 export const useCreateContest = (onSuccess: (id: string) => void) =>
   useMutation({
-    mutationFn: async (contest: ContestFormSchema) =>
-      apiData(
+    mutationFn: async (contest: ContestFormSchema) => {
+      const created = await apiData(
         immersionContestCreate({
           ...browserApi(),
           body: {
@@ -57,9 +57,11 @@ export const useCreateContest = (onSuccess: (id: string) => void) =>
             ),
           },
         }),
-      ),
+      )
+      return requireFields(created, 'id')
+    },
     onSuccess(data) {
-      if (data.id) onSuccess(data.id)
+      onSuccess(data.id)
     },
   })
 

@@ -116,11 +116,11 @@ export const zImmersionErrorResponse = z.object({
 
 export const zImmersionFeatureFlagDecisions = z.object({
     'release-log-entry-v2': z.boolean()
-});
+}).strict();
 
 export const zImmersionFeatureFlagDecisionsResponse = z.object({
     decisions: zImmersionFeatureFlagDecisions
-});
+}).strict();
 
 export const zImmersionManagedFeatureFlagKey = z.enum(['release-log-entry-v2']);
 
@@ -133,7 +133,7 @@ export const zImmersionFeatureAccessResponse = z.object({
         'test'
     ]),
     revision: z.string()
-});
+}).strict();
 
 export const zImmersionUserProfile = z.object({
     id: z.string(),

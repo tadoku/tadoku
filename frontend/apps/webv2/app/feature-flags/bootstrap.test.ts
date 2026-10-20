@@ -24,7 +24,7 @@ describe('bootstrapFeatureFlagDecisions', () => {
       .fn()
       .mockResolvedValue(
         new Response(
-          JSON.stringify({ decisions: { 'release-log-entry-v2': true, 'identity-v2': false } }),
+          JSON.stringify({ decisions: { 'release-log-entry-v2': true } }),
           { status: 200 },
         ),
       )
@@ -146,12 +146,12 @@ describe('bootstrapFeatureFlagDecisions', () => {
     expect(request).not.toHaveBeenCalled()
   })
 
-  it('returns only allowlisted decisions from the immersion API', async () => {
+  it('uses the registry defaults when the answer holds an unregistered flag', async () => {
     const request = vi.fn().mockResolvedValue(
       new Response(
         JSON.stringify({
           decisions: {
-            'release-log-entry-v2': true, 'identity-v2': false,
+            'release-log-entry-v2': true,
             'unregistered-flag': true,
           },
         }),
@@ -166,6 +166,6 @@ describe('bootstrapFeatureFlagDecisions', () => {
         true,
         request,
       ),
-    ).resolves.toEqual({ 'release-log-entry-v2': true, 'identity-v2': false })
+    ).resolves.toEqual({ 'release-log-entry-v2': false, 'identity-v2': false })
   })
 })

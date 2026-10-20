@@ -3,6 +3,10 @@
 /** Response validators check the JSON shape: types, required properties, nullability and enum values. */
 const shapeOnly = ctx => ctx.nodes.base(ctx)
 
+/** Objects the contract closes with `additionalProperties: false` reject unknown properties. */
+const closedObject = ctx =>
+  ctx.schema.additionalProperties?.type === 'never' ? ctx.nodes.base(ctx).attr('strict').call() : undefined
+
 /** @type {import('@hey-api/openapi-ts').UserConfig} */
 export default {
   input: '../../../services/tadoku-api/spec/openapi.yaml',
@@ -44,7 +48,7 @@ export default {
       // Lengths, formats, patterns, ranges and item counts describe accepted input. JavaScript cannot check
       // them with the API's semantics (it counts UTF-16 units, not characters), and stored data predates
       // some limits, so response validators do not reject on them.
-      '~resolvers': { array: shapeOnly, number: shapeOnly, string: shapeOnly },
+      '~resolvers': { array: shapeOnly, number: shapeOnly, object: closedObject, string: shapeOnly },
     },
     // The API validates requests; responses are validated before callers see them.
     { name: '@hey-api/sdk', validator: { request: false, response: 'zod' } },

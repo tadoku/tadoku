@@ -172,7 +172,7 @@ describe('feature flag browser state', () => {
 
     resolveRefresh(
       new Response(
-        JSON.stringify({ decisions: { 'release-log-entry-v2': true, 'identity-v2': false } }),
+        JSON.stringify({ decisions: { 'release-log-entry-v2': true } }),
         { status: 200, headers: { 'Content-Type': 'application/json' } },
       ),
     )

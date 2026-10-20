@@ -76,7 +76,7 @@ func TestEmailGatewayCookieAndBearer(t *testing.T) {
 	deployment, _ := tenant.ParseDeployment(key.String())
 
 	handler, _, _, err := newTestRouterWithLeaderboardService(t.Context(), api.db.AppPool, api.db.AppPool,
-		api.keto, api.kratos, slog.New(slog.NewTextHandler(io.Discard, nil)), false, nil, deployment,
+		api.keto, slog.New(slog.NewTextHandler(io.Discard, nil)), false, nil, deployment,
 		func(e *routerEndpoints) { e.jwks = jwksURL })
 	if err != nil {
 		t.Fatal(err)
@@ -129,7 +129,13 @@ func TestEmailGatewayCookieAndBearer(t *testing.T) {
 		if response.StatusCode != want {
 			t.Errorf("%s %s: status=%d want=%d body=%s", host, name, response.StatusCode, want, body)
 		}
-		if want == 200 && !bytes.Contains(body, []byte(id.String())) {
+		if path == "/authz/current-user/role" && want == 200 && string(body) != "{\"role\":\"guest\"}\n" {
+			t.Errorf("token on guest-readable route did not stay guest: %s", body)
+		}
+		if want == 200 && path == "/identity/session" && !bytes.Contains(body, []byte("account_app")) {
+			t.Errorf("%s did not return the actual identity session", name)
+		}
+		if want == 200 && strings.HasPrefix(path, "/emails") && !bytes.Contains(body, []byte(id.String())) {
 			t.Errorf("%s did not return owned email", name)
 		}
 	}
@@ -167,6 +173,7 @@ func TestEmailGatewayCookieAndBearer(t *testing.T) {
 		t.Fatal(err)
 	}
 	check("expired session", "/emails", "", cookie, 401)
+	check("bearer expired native session", "/emails", "Bearer "+raw, cookie, 200)
 	_, err = api.db.Pool.Exec(t.Context(), `update sessions
 		set expires_at = now() + interval '1 hour'
 		where tenant = $1`, key.String())
@@ -194,9 +201,10 @@ func TestEmailGatewayCookieAndBearer(t *testing.T) {
 	}
 
 	check("revoked session", "/emails", "", cookie, 401)
+	check("bearer revoked native session", "/emails", "Bearer "+raw, cookie, 200)
 	other, _ := tenant.ParseDeployment("tadoku/other-0123abcd")
 	otherHandler, _, _, err := newTestRouterWithLeaderboardService(t.Context(), api.db.AppPool, api.db.AppPool,
-		api.keto, api.kratos, slog.New(slog.NewTextHandler(io.Discard, nil)), false, nil, other,
+		api.keto, slog.New(slog.NewTextHandler(io.Discard, nil)), false, nil, other,
 		func(e *routerEndpoints) { e.jwks = jwksURL })
 	if err != nil {
 		t.Fatal(err)
@@ -281,7 +289,6 @@ func gatewayAdminCookie(t *testing.T, key tenant.Key, proxyURL, host, forwardedP
 		if err != nil {
 			t.Fatal(err)
 		}
-
 	}
 
 	cookies := response.Cookies()
@@ -415,6 +422,12 @@ func startEmailGateway(t *testing.T, backend string, cookie *string) (string, st
 	command := exec.CommandContext(
 		t.Context(), resolve(binary), "serve", "--sqa-opt-out", "--config", configPath,
 	)
+
+	command.Env = []string{
+		"PATH=" + os.Getenv("PATH"),
+		"GOMAXPROCS=2",
+		`AUTHENTICATORS_COOKIE_SESSION_CONFIG_ADDITIONAL_HEADERS={"Authorization":"Bearer ` + callbackToken + `"}`,
+	}
 
 	logs := new(bytes.Buffer)
 	command.Stdout = logs

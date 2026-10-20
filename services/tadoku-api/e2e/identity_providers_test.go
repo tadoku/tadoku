@@ -46,7 +46,7 @@ func TestIdentityV2IPThrottleAndFailOpen(t *testing.T) {
 		t.Fatal(err)
 	}
 	handler, _, _, err := newTestRouterWithLogger(
-		t.Context(), api.db.AppPool, api.db.AppPool, api.keto, api.kratos,
+		t.Context(), api.db.AppPool, api.db.AppPool, api.keto,
 		slog.New(slog.NewTextHandler(io.Discard, nil)), withIdentityValkey(closed),
 	)
 	if err != nil {
@@ -104,7 +104,7 @@ func TestIdentityV1ProviderSessionAndLogout(t *testing.T) {
 	}))
 	defer provider.Close()
 	handler, _, _, err := newTestRouterWithLogger(
-		t.Context(), api.db.AppPool, api.db.AppPool, api.keto, api.kratos,
+		t.Context(), api.db.AppPool, api.db.AppPool, api.keto,
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 		func(e *routerEndpoints) {
 			e.legacySessions = identity.NewLegacySessions(provider.URL, provider.URL, provider.Client())

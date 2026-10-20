@@ -1,13 +1,13 @@
 ---
 title: HTTP end-to-end tests
-description: How Tadoku API HTTP golden cases are laid out, seeded, compared and regenerated, and how E2Es authenticate with real JWTs, Keto and the Kratos fixture.
+description: How Tadoku API HTTP golden cases are laid out, seeded, compared and regenerated, and how E2Es authenticate with real JWTs, Keto and local identity accounts.
 sidebar_position: 6
 ---
 
 # HTTP end-to-end tests
 
 Read this when you add or change an operation's HTTP golden cases, fixture
-tokens or relationships, or anything that touches the shared Kratos fixture.
+tokens or relationships, or anything that touches the shared identity fixtures.
 The general test principles are in [Testing](./testing.md).
 
 ## HTTP E2E suite
@@ -95,6 +95,7 @@ e2e/testdata/<operation>/
   relationships.json     # optional operation-level Keto tuples
   <status>_<description>/
     setup.sql            # optional
+  finalize.sql         # optional final state after the account cast
     relationships.json   # optional Keto relation-tuple array
     request.http
     golden.http
@@ -106,7 +107,7 @@ e2e/testdata/<operation>/
 
 ### Seed resolution
 
-Seed files (`setup.sql`, `relationships.json`) resolve per file name, one level
+Seed files (`setup.sql`, `finalize.sql`, `relationships.json`) resolve per file name, one level
 deep:
 
 - A non-empty case file is the case's only seed for that name. It replaces the
@@ -215,7 +216,7 @@ TADOKU_GOLDEN_SOURCE_ROOT="$PWD/services/tadoku-api/e2e/testdata" \
 ### Signing a new fixture token
 
 `e2e/testdata/TenantIsolation/` contains synthetic signed canonical and
-`e2e/isolation-0123abcd` tokens for the same seeded Kratos subject. Its test
+`e2e/isolation-0123abcd` tokens for the same seeded account subject. Its test
 registry entry exists only in the suite's disposable database. Reuse the
 subject's real Keto tuples and explicitly provision the test object's parent
 when a case needs inherited administrators or bans; changing a tenant never
@@ -288,18 +289,24 @@ emails and creation times match the legacy cast. Its synthetic bcrypt cost-4
 hash keeps fixture login cheap; production registration and the dedicated
 password-policy workflows retain cost 12. Sessions come from real API login.
 
-Load case SQL before the account seed. Explicit user/account primary-key
-conflicts preserve existing rows, including case-specific names, timestamps,
-inactive accounts and deleted or locked users. Repeating the seed is safe;
-other constraint failures still fail setup. Normal golden resets currently
-load case SQL without this account seed.
+Ordinary golden and journey resets load case SQL before the account seed and
+enable `identity-v2` for registered fixture tenants in the in-process Flipt
+fixture. Explicit user/account primary-key conflicts preserve existing rows,
+including case-specific names, timestamps, inactive accounts and deleted or
+locked users. Repeating the seed is safe; other constraint failures fail setup. Optional `finalize.sql` uses the same
+case/operation resolution and runs after the cast in the reset transaction.
+Put final absence mutations there so the default cast cannot resurrect a user
+that a scenario deliberately removes.
+Focused scenarios that define a different account population reset PostgreSQL
+with their own explicit seed.
 
-Focused workflows enable v2 in the in-process Flipt fixture, verify each unique
-signed (tenant, subject) through the real JWT router, reject foreign cookies,
-and check unavailable states and reset. No shared data changes. Roles remain
-real Keto relationships. Legacy profile, account-age and role-update goldens
-still use the Kratos reader and process below; local authentication does not
-verify those callers.
+Profile, account-age and role-update requests use the production identity Reader
+and restricted application pool. The default legacy reader and session adapter
+share a transport that panics on any provider request, so accidental fallback
+fails the suite. No Kratos executable, container or external URL is used.
+The signed cast workflow verifies each unique tenant/subject pair through the
+real JWT router, rejects a foreign session under the target tenant's cookie name,
+and checks unavailable states and reset. Roles remain real Keto relationships.
 
 ### Recorded legacy sessions
 
@@ -309,42 +316,10 @@ pinned disposable Kratos fixture, without session-cookie material. The workflow
 checks the real SDK/session adapter, callback shape, cookie forwarding and
 canonical-only session revocation. The response server is an explicit provider
 simulation; it does not verify Kratos password login or provider persistence.
-Provider protocol, error and cancellation tests remain with the read adapter.
-
-## Kratos fixture
-
-- HTTP E2Es share one pinned Kratos v26.2.0 SQLite-enabled Linux x86-64 process,
-  owned by `internal/testkratos`. It runs its migrations against a private
-  SQLite database on RAM-backed tmpfs at `/dev/shm` (not Kratos's
-  process-private `dsn: memory`). It uses the shared
-  `infra/dev/ory/identity.default.schema.json` and private Unix sockets, and
-  supplies a bounded HTTP client to the raw SDK constructor.
-- `TestMain` seeds it once from `e2e/testdata/kratos.sql` by direct SQL, with
-  fixed identities that match the signed fixture subjects, traits and
-  timestamps. The seed depends on the pinned provider schema and creates
-  identity records only: no passwords, credential identifiers or sessions.
-  Tests of those operations arrange the provider state explicitly.
-- Guest and unauthenticated requests have no Kratos identity; roles and bans
-  stay in Keto.
-- Kratos is excluded from the ordinary per-case reset. Tests that are not marked
-  for a Kratos reset must leave its state unchanged.
-- A test that may mutate Kratos calls `resetKratosAfter(t, api)` on the
-  enclosing test before any mutation. The helper registers `t.Cleanup` to
-  restore the full seed after the test or whole journey, even after `t.Fatal`
-  or cancellation. It uses a fresh bounded context because `t.Context()` is
-  cancelled before cleanup. Never mark individual journey steps.
-- A reset stops the process, recreates and migrates the database and restores
-  the seed. Existing SDK clients keep working through the same socket path. A
-  failed reset fails the test, and later cases reject the unusable fixture.
-- Startup and reset are bounded. Failure or shutdown closes connections, reaps
-  the child process and removes the owned database, journals and sockets.
-  Each test process uses a random directory prefix because Bazel PID namespaces
-  can reuse process IDs while sharing `/dev/shm`; cleanup checks inspect only
-  that process's directories.
-- Tests sharing the provider stay sequential. Mutations are not detected
-  automatically and response UUIDs are not normalized; goldens remain exact
-  comparisons.
-- Keep provider-schema SQL and process ownership in test-only helpers.
+The legacy admin-list workflow explicitly selects v1 and serves recorded-shape
+paged HTTP responses. Provider protocol, error and cancellation tests remain
+with the read adapter. These explicit legacy scenarios supply their own
+loopback clients instead of the default tripwire.
 
 ## Email gateway fixture
 

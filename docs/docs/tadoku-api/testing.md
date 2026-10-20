@@ -82,17 +82,14 @@ Never point tests at shared development or production services.
   v25.4.0 SQLite-enabled executable under Bazel. Each helper owns an in-memory,
   loopback-only process using `infra/dev/ory/namespaces.keto.ts` and never
   accepts an external target.
-- **Identity accounts:** focused v2 workflows seed tenant-owned PostgreSQL
-  accounts after case SQL, preserving existing user/account state on primary-key
-  conflicts, and obtain sessions through real identity requests. Cast and gateway
-  fixtures use test-cost bcrypt hashes; registration/password-policy workflows
-  retain production cost 12. Normal reader goldens still use Kratos. The fixed
-  cast and recorded v1-session boundary are documented in
+- **Identity accounts:** ordinary HTTP golden and journey resets seed native
+  tenant-owned accounts after case SQL, preserving existing user/account state
+  on primary-key conflicts, and enable v2 for their registered fixture tenants.
+  Cast and gateway fixtures obtain sessions through real login with test-cost
+  bcrypt hashes; registration/password-policy workflows retain production cost
+  12. Default legacy HTTP clients fail immediately on any call. V1 adapters use
+  recorded loopback responses, without a Kratos binary or container. See
   [Local account fixtures](./http-e2e.md#local-account-fixtures).
-- **Kratos:** legacy reader goldens and identity-writer tests still own a pinned
-  Kratos process; see
-  [Kratos fixture](./http-e2e.md#kratos-fixture). No Docker service, external Kratos URL or
-  Kratos environment variable is needed.
 - **Valkey:** raw Valkey and application lifecycle tests require
   `TADOKU_TEST_VALKEY_URL` in the exact form `redis://127.0.0.1:<port>` (or
   `localhost`) for a disposable Valkey 9 service. They never flush the shared

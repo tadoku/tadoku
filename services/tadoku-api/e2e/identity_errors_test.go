@@ -15,7 +15,6 @@ func TestIdentityV2InfrastructureErrorBody(t *testing.T) {
 		pool,
 		pool,
 		api.keto,
-		api.kratos,
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	)
 	if err != nil {

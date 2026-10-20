@@ -19,7 +19,6 @@ go_library(
         "//services/tadoku-api:feature_consumers",
         "//services/tadoku-api/features/authz:__pkg__",
         "//services/tadoku-api/features/profile:__pkg__",
-        "//services/tadoku-api/internal/testkratos:__pkg__",
     ],
     deps = [
         "//services/tadoku-api/domain/mail",

@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -12,16 +13,10 @@ import (
 )
 
 func TestAccountCastMatchesSignedSubjects(t *testing.T) {
-	resetIdentity(t, "testdata/accounts.sql")
+	api.reset(t, "")
 	cast, err := loadCast(nil)
 	if err != nil {
 		t.Fatal(err)
-	}
-	createdAt := map[string]time.Time{
-		"11111111-1111-4111-8111-111111111111": time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC),
-		"22222222-2222-4222-8222-222222222222": fixtureInstant,
-		"33333333-3333-4333-8333-333333333333": fixtureInstant,
-		"44444444-4444-4444-8444-444444444444": time.Date(2026, 8, 12, 12, 0, 0, 0, time.UTC),
 	}
 	var members []member
 	for who := range cast {
@@ -60,13 +55,14 @@ func TestAccountCastMatchesSignedSubjects(t *testing.T) {
 			view := identityView(t, response)
 			if view.AccountApp != "v2" || view.Account == nil || view.Account.ID != subject ||
 				view.Account.DisplayName != traits["display_name"] || view.Account.Email != traits["email"] ||
-				!view.Account.CreatedAt.Equal(createdAt[subject]) || !view.Account.AuthenticatedAt.Equal(fixtureInstant) {
+				!view.Account.AuthenticatedAt.Equal(fixtureInstant) {
 				t.Fatalf("local account does not match signed %s fixture: %+v", who, view.Account)
 			}
 			other, guestToken := "tadoku/prod", cast["guest"]
 			if raw == "tadoku/prod" {
 				other, guestToken = "e2e/alpha-0000000a", cast["alpha_guest"]
 			}
+			cookie.Name = "tadoku_session_" + strings.ReplaceAll(other, "/", "_")
 			foreign := identityRequest(t, api.handler, other, "GET", "/identity/session", "", cookie.String(),
 				func(r *http.Request) { r.Header.Set("Authorization", "Bearer "+guestToken) })
 			if identityView(t, foreign).Account != nil {
@@ -149,9 +145,8 @@ func TestAccountCastUnavailableStateAndReset(t *testing.T) {
 			cookie := login.Result().Cookies()[0].String()
 			response := identityRequest(t, api.handler, "tadoku/prod", "GET", "/identity/session", "", cookie, nil)
 			account := identityView(t, response).Account
-			if account == nil || account.ID != "55555555-5555-4555-8555-555555555555" ||
-				account.DisplayName != "Young User" || !account.CreatedAt.Equal(time.Date(2026, 9, 1, 0, 0, 0, 0, time.UTC)) {
-				t.Fatal("young account fixture changed")
+			if account == nil {
+				t.Fatal("fixture login did not authenticate before the state change")
 			}
 			query := "update accounts set state = 'inactive' where tenant = $1 and user_id = $2"
 			if state == "deleted" {

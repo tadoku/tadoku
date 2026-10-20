@@ -2841,12 +2841,7 @@ export type IdentityLoginCreateResponses = {
 export type IdentityLoginCreateResponse = IdentityLoginCreateResponses[keyof IdentityLoginCreateResponses];
 
 export type IdentityLogoutData = {
-    /**
-     * Every identity write must be JSON. Send an empty object; the API ignores its contents.
-     */
-    body?: {
-        [key: string]: unknown;
-    };
+    body?: never;
     path?: never;
     query?: never;
     url: '/identity/logout';

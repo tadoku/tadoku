@@ -59,7 +59,7 @@ export const operations = {
   },
   logout: {
     page: '/',
-    send: request => identityLogout({ ...request, body: {} }),
+    send: request => identityLogout(request),
   },
 } satisfies Record<string, { page: string; send: Send }>
 

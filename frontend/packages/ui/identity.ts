@@ -30,7 +30,6 @@ export async function readIdentitySession(
 export async function logout() {
   const { error, response } = await identityLogout({
     baseUrl: browserAppUrls().apiEndpoint,
-    body: {},
     credentials: 'include',
     signal: AbortSignal.timeout(10_000),
   })

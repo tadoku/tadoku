@@ -1026,6 +1026,8 @@ export const identityLoginCreate = <ThrowOnError extends boolean = false>(option
 
 /**
  * Revoke the current session and clear its cookie
+ *
+ * Like every identity write, logout must send `Content-Type: application/json`. It takes no body and never reads one.
  */
 export const identityLogout = <ThrowOnError extends boolean = false>(options?: Options<IdentityLogoutData, ThrowOnError>): RequestResult<IdentityLogoutResponses, IdentityLogoutErrors, ThrowOnError> => (options?.client ?? client).post<IdentityLogoutResponses, IdentityLogoutErrors, ThrowOnError>({
     responseValidator: async (data) => await zIdentityLogoutResponse.parseAsync(data),
@@ -1036,11 +1038,7 @@ export const identityLogout = <ThrowOnError extends boolean = false>(options?: O
             type: 'apiKey'
         }],
     url: '/identity/logout',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options?.headers
-    }
+    ...options
 });
 
 /**

@@ -1219,11 +1219,6 @@ export const zIdentityLoginCreateBody = zIdentityLogin;
 export const zIdentityLoginCreateResponse = zIdentitySession;
 
 /**
- * Every identity write must be JSON. Send an empty object; the API ignores its contents.
- */
-export const zIdentityLogoutBody = z.record(z.unknown());
-
-/**
  * Success
  */
 export const zIdentityLogoutResponse = z.void();

@@ -22,9 +22,11 @@ func TestIdentitySettingsLeavesPoolAvailableDuringEvaluation(t *testing.T) {
 	}
 	defer pool.Close()
 	observer := &waitingIdentityObserver{entered: make(chan struct{}), release: make(chan struct{})}
-	handler, _, _, err := newTestRouterWithLogger(t.Context(), pool, pool, api.keto, api.kratos,
+	handler, _, _, err := newTestRouterWithLogger(
+		t.Context(), pool, pool, api.keto,
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
-		func(endpoints *routerEndpoints) { endpoints.identityObserver = observer })
+		func(endpoints *routerEndpoints) { endpoints.identityObserver = observer },
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -54,8 +56,10 @@ func TestIdentitySettingsRejectBeforeDatabase(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	handler, _, _, err := newTestRouterWithLogger(t.Context(), pool, pool, api.keto, api.kratos,
-		slog.New(slog.NewTextHandler(io.Discard, nil)))
+	handler, _, _, err := newTestRouterWithLogger(
+		t.Context(), pool, pool, api.keto,
+		slog.New(slog.NewTextHandler(io.Discard, nil)),
+	)
 	if err != nil {
 		pool.Close()
 		t.Fatal(err)

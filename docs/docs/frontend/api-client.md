@@ -77,9 +77,10 @@ operations are excluded, because no frontend calls them.
 
 ## Call the client
 
-Pass `baseUrl` on every call: the client has no default server. Thin adapters own
-base URLs, cookie and branch forwarding, `Origin`, credentials, caching and
-timeouts.
+Pass `baseUrl` on every call: the client has no default server. Pass `headers` as
+a plain object: operations with a JSON body spread it, which drops a `Headers`
+instance. Thin adapters own base URLs, cookie and branch forwarding, `Origin`,
+credentials, caching and timeouts.
 
 | Application | Adapters |
 | --- | --- |

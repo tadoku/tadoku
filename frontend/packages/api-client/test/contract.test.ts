@@ -165,6 +165,25 @@ describe('generated client on malformed answers', () => {
     expect(result.data).toEqual({ account_app: 'v2', account: null })
   })
 
+  it('sends plain-object headers with a JSON write', async () => {
+    let sent: Request | undefined
+    await api.identityLoginCreate({
+      baseUrl: 'https://api.test',
+      headers: { Origin: 'https://authv2.tadoku.app', cookie: 'tadoku_session=a', 'x-dev-branch': 'b' },
+      body: { email: 'a@b.test', password: 'password' },
+      fetch: async input => {
+        sent = input as Request
+        return new Response(null, { status: 401 })
+      },
+    })
+    expect(Object.fromEntries(sent!.headers)).toMatchObject({
+      'content-type': 'application/json',
+      origin: 'https://authv2.tadoku.app',
+      cookie: 'tadoku_session=a',
+      'x-dev-branch': 'b',
+    })
+  })
+
   it('accepts an empty answer where the contract has no body', async () => {
     const result = await api.identityLogout({ baseUrl: 'https://api.test', body: {}, fetch: respond(204, {}, null) })
     expect(result.error).toBeUndefined()

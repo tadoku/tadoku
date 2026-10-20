@@ -11,10 +11,13 @@ import {
 
 type Values = Record<string, string>
 
-/** Where one call reaches the identity API, and the headers or credentials its side of the boundary needs. */
+/**
+ * Where one call reaches the identity API, and the headers or credentials its side of the boundary needs. Headers are
+ * a plain record: generated operations with a JSON body spread them, which would drop a `Headers` instance.
+ */
 export type Transport = {
   readonly baseUrl: string
-  readonly headers?: HeadersInit
+  readonly headers?: Readonly<Record<string, string>>
   readonly credentials?: RequestCredentials
 }
 

@@ -7,10 +7,10 @@ export async function readSession() {
   const { apiUrl, ...origins } = requestUrls()
   // Browsers send identity forms to the public API on the tenant's main host; apiUrl may be private to the server.
   const urls = { ...origins, api: `${origins.webUrl}/api/internal` }
-  const headers = new Headers({ Accept: 'application/json' })
+  const headers: Record<string, string> = { Accept: 'application/json' }
   for (const name of ['cookie', 'x-dev-branch']) {
     const value = getRequestHeader(name)
-    if (value) headers.set(name, value)
+    if (value) headers[name] = value
   }
 
   const { data } = await identitySessionGet({

@@ -65,10 +65,10 @@ export async function handleNativeAction(request: Request, name: string) {
 
   const values = Object.fromEntries(form)
   if (name === 'recover') values.return_to = next ?? urls.webUrl
-  const forwarded = new Headers({ Accept: 'application/json', Origin: urls.origin })
+  const forwarded: Record<string, string> = { Accept: 'application/json', Origin: urls.origin }
   for (const header of ['cookie', 'x-dev-branch']) {
     const value = getRequestHeader(header)
-    if (value) forwarded.set(header, value)
+    if (value) forwarded[header] = value
   }
   const result = await sendIdentity(name, { baseUrl: urls.apiUrl, headers: forwarded }, values)
   if (!result.ok) return name === 'logout' && result.code === 'unauthorized' ? redirect('/login') : failure(result.code)

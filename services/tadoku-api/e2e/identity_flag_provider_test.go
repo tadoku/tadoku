@@ -30,10 +30,13 @@ const (
 
 // snapshotServer serves Flipt evaluation snapshots, so the real Flipt client and provider evaluate them.
 // Every snapshot response sets a cookie, so a client's cookie jar can hold a snapshot after its receipt.
+// While rejecting, it serves structurally valid snapshots that the SDK's engine rejects.
 type snapshotServer struct {
 	mu         sync.Mutex
 	namespaces map[string]identityFlag
 	outage     bool
+	rejecting  bool
+	rejections int
 	misses     map[string]int
 	server     *httptest.Server
 }
@@ -64,6 +67,10 @@ func (s *snapshotServer) serveHTTP(w http.ResponseWriter, r *http.Request) {
 	flags := []map[string]any{snapshotFlag("release-log-entry-v2", false)}
 	if flag != identityFlagAbsent {
 		flags = append(flags, snapshotFlag("identity-v2", flag == identityFlagTrue))
+	}
+	if s.rejecting {
+		s.rejections++
+		flags[0]["rollouts"] = map[string]any{}
 	}
 	encoded, _ := json.Marshal(flags)
 	digest := sha256.Sum256(encoded)
@@ -112,6 +119,18 @@ func (s *snapshotServer) setOutage(outage bool) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.outage = outage
+}
+
+func (s *snapshotServer) setRejecting(rejecting bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.rejecting = rejecting
+}
+
+func (s *snapshotServer) rejected() bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.rejections > 0
 }
 
 func newSnapshotProvider(t *testing.T, url string, startup time.Duration, client *http.Client) *fliptclient.Provider {

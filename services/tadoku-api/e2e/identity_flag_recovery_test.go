@@ -1,6 +1,7 @@
 package e2e_test
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -8,8 +9,13 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
+
+	fliptclient "github.com/tadoku/tadoku/services/tadoku-api/infra/flipt"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/featureflags"
+	fliptsdk "go.flipt.io/flipt-client"
 )
 
 // snapshotGate is a cookie jar that holds the first snapshot response after the Flipt client's transport has
@@ -67,27 +73,47 @@ func TestIdentityFliptCanonicalRecoveryWaitsForAppliedSnapshot(t *testing.T) {
 	case <-time.After(5 * time.Second):
 		t.Fatal("the Flipt client never received the recovered snapshot")
 	}
+	requireCanonicalIdentityUnavailable(t, handler, native, legacy, "before the snapshot is applied")
+
+	gate.release()
+	requireCanonicalRecoveryRevokes(t, handler, native, legacy)
+}
+
+// requireCanonicalIdentityUnavailable asserts that every canonical identity path returns 503, without a cookie change
+// or a shared-provider call, for the native cookie, the recorded Kratos cookie and both.
+func requireCanonicalIdentityUnavailable(
+	t *testing.T,
+	handler http.Handler,
+	native string,
+	legacy *countingLegacyProvider,
+	when string,
+) {
+	t.Helper()
 	for _, cookie := range []string{native, recordedKratosCookie, native + "; " + recordedKratosCookie} {
-		requireIdentityUnavailable(t, "session before the snapshot is applied",
+		requireIdentityUnavailable(t, "session "+when,
 			identityRequest(t, handler, "tadoku/prod", "GET", "/identity/session", "", cookie, nil))
-		requireIdentityUnavailable(t, "callback before the snapshot is applied",
+		requireIdentityUnavailable(t, "callback "+when,
 			identityCallback(t, handler, t.Context(), "", cookie))
 	}
-	requireIdentityUnavailable(t, "native logout before the snapshot is applied",
+	requireIdentityUnavailable(t, "native logout "+when,
 		identityRequest(t, handler, "tadoku/prod", "POST", "/identity/logout", "", native, nil))
 	for _, fixture := range []string{"ImmersionProfileFindByUserID/200_user_populated", "ProfileUsersList/200_admin"} {
 		request := readHTTPRequest(t, filepath.Join("testdata", fixture))
 		response := httptest.NewRecorder()
 		atFixtureInstant(func() { handler.ServeHTTP(response, request) })
 		if response.Code != http.StatusServiceUnavailable {
-			t.Errorf("%s before the snapshot is applied: status=%d body=%s, want 503", fixture, response.Code, response.Body)
+			t.Errorf("%s %s: status=%d body=%s, want 503", fixture, when, response.Code, response.Body)
 		}
 	}
 	if calls := legacy.calls.Load(); calls != 0 {
-		t.Fatalf("an unapplied snapshot selected the shared provider %d times", calls)
+		t.Fatalf("canonical identity %s selected the shared provider %d times", when, calls)
 	}
+}
 
-	gate.release()
+// requireCanonicalRecoveryRevokes waits for the canonical v2 decision, then asserts that logout revokes the native
+// session and that no request reached the shared provider.
+func requireCanonicalRecoveryRevokes(t *testing.T, handler http.Handler, native string, legacy *countingLegacyProvider) {
+	t.Helper()
 	eventually(t, "the applied v2 decision", func() bool {
 		app, signedIn := sessionAccountApp(t, handler, "tadoku/prod", native)
 		return app == "v2" && signedIn
@@ -106,4 +132,86 @@ func TestIdentityFliptCanonicalRecoveryWaitsForAppliedSnapshot(t *testing.T) {
 	if calls := legacy.calls.Load(); calls != 0 {
 		t.Errorf("canonical recovery called the shared provider %d times", calls)
 	}
+}
+
+type initializationRecorder struct {
+	ready atomic.Bool
+}
+
+func (r *initializationRecorder) ObserveInitialization(status featureflags.InitializationStatus) {
+	if status == featureflags.InitializationStatusReady {
+		r.ready.Store(true)
+	}
+}
+
+func (r *initializationRecorder) ObserveConfigRefresh() {}
+
+func (r *initializationRecorder) ObserveProviderError(string) {}
+
+func TestIdentityFliptCanonicalFailedStartIsNeverInstalled(t *testing.T) {
+	seedIdentityReads(t)
+	accounts, err := os.ReadFile("testdata/IdentityV2/setup.sql")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := api.db.Pool.Exec(t.Context(), string(accounts)); err != nil {
+		t.Fatal(err)
+	}
+	native := nativeLogin(t, api.handler, "tadoku/prod")
+	legacy := newCountingLegacyProvider(t)
+
+	flags := newSnapshotServer(t, map[string]identityFlag{"default": identityFlagTrue})
+	flags.setOutage(true)
+	var opens atomic.Int32
+	held := make(chan *fliptsdk.Client, 1)
+	released := make(chan struct{})
+	release := sync.OnceFunc(func() { close(released) })
+	t.Cleanup(release)
+	targets, err := fliptclient.NewTargets("local", "default", "test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	observer := &initializationRecorder{}
+	provider, err := fliptclient.NewProvider(t.Context(), fliptclient.Config{
+		URL:            flags.server.URL,
+		UpdateInterval: time.Second,
+		RequestTimeout: time.Second,
+		StartupTimeout: 200 * time.Millisecond,
+		OpenSDK: func(ctx context.Context, options ...fliptsdk.Option) (*fliptsdk.Client, error) {
+			sdk, err := fliptsdk.NewClient(ctx, options...)
+			if opens.Add(1) == 1 && err == nil {
+				held <- sdk
+				<-released
+			}
+			return sdk, err
+		},
+	}, targets, observer)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = provider.Close(context.Background()) })
+	handler := legacy.router(t, withFlagProvider(provider))
+
+	var first *fliptsdk.Client
+	select {
+	case first = <-held:
+	case <-time.After(5 * time.Second):
+		t.Fatal("the canonical SDK client was never constructed")
+	}
+	if first.Err() == nil {
+		t.Fatal("the canonical SDK client did not start from a failed fetch")
+	}
+	flags.setRejecting(true)
+	flags.setOutage(false)
+	eventually(t, "a rejected snapshot to clear the failed start's error", func() bool {
+		return flags.rejected() && first.Err() == nil
+	})
+	release()
+	eventually(t, "the client to settle the failed-start SDK", func() bool {
+		return observer.ready.Load() || opens.Load() > 1
+	})
+	requireCanonicalIdentityUnavailable(t, handler, native, legacy, "after a failed start cleared its error")
+
+	flags.setRejecting(false)
+	requireCanonicalRecoveryRevokes(t, handler, native, legacy)
 }

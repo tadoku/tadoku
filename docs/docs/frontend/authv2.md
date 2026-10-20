@@ -205,8 +205,8 @@ public. Follow this order:
    workflow dispatch or early image upload is needed.
 3. Require authv2's Pod Ready, `tadoku-dev` Synced and Healthy,
    `https://authv2.tadoku.dev.lab/login` returning 200, and the existing account
-   host and auth workload unchanged. The source-only skeleton can show its
-   unavailable state until the identity API is deployed.
+   host and auth workload unchanged. Authv2 shows its unavailable page until
+   the identity API is deployed.
 4. Enroll authv2 in the homelab Image Updater with the digest strategy and
    write-back to `k8s/dev/base/kustomization.yaml`, then verify an immutable digest
    resolution. The homelab infrastructure repository owns this configuration.

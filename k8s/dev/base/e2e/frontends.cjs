@@ -61,9 +61,10 @@ function proveFrontends({ evidence, prefix, containers, report, run }, docs) {
                   response.on('error', reject);
                 }).on('error', reject);
               });
-              if (response.status !== 200 || !response.html.includes('Your Tadoku account') || !response.html.includes('Account service is unavailable. Try again later.')) throw new Error('authv2 must render the skeleton during API outage');
-              const account = host.replace('.authv2.', '.account.').replace(/^authv2\./, 'account.');
-              if (!response.html.includes('href="https://' + account + '/login"')) throw new Error('authv2 account fallback lost its branch');
+              if (response.status !== 200 || !response.html.includes('We can’t reach your account right now') || !response.html.includes('href="/login"')) throw new Error('authv2 must offer a retry during API outage');
+              const web = host.replace('.authv2.', '.').replace(/^authv2\./, '');
+              if (!response.html.includes('href="https://' + web + '"')) throw new Error('authv2 home link lost its branch');
+              if (/href="https:\/\/[^"]*account\./.test(response.html)) throw new Error('authv2 must not choose an account app during API outage');
               const assets = [...response.html.matchAll(/(?:src|href)="([^" ]+\.(?:js|css)(?:\?[^" ]*)?)"/g)].map(m => m[1]);
               if (!assets.length) throw new Error('authv2 has no compiled assets');
               for (const asset of assets) if (!(await fetch(new URL(asset, base))).ok) throw new Error('Missing authv2 asset: ' + asset);

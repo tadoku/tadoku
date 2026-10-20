@@ -26,6 +26,10 @@ func ImportKratosAccounts(
 	apply bool,
 	output io.Writer,
 ) error {
+	if apply && expect <= 0 {
+		return errors.New("apply requires a positive expected count")
+	}
+
 	records, err := readSource(ctx, source, expect, output)
 	if err != nil {
 		return err
@@ -88,6 +92,7 @@ func importTarget(
 					return fmt.Errorf("target conflict user_id=%s field=display_name", record.id)
 				}
 			}
+
 			if accountExists {
 				for _, field := range []struct {
 					name string
@@ -104,9 +109,11 @@ func importTarget(
 					}
 				}
 			}
+
 			if id, exists := emailOwners[record.normalizedEmail]; exists && id != record.id {
 				return fmt.Errorf("target conflict user_id=%s field=email_normalized owner_differs", record.id)
 			}
+
 			if !userExists {
 				newUsers++
 			}
@@ -117,6 +124,7 @@ func importTarget(
 			if updateName {
 				updatedUsers++
 			}
+
 			if !userExists || !accountExists || updateName {
 				_, err := fmt.Fprintf(
 					output,

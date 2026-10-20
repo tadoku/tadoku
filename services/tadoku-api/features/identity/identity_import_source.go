@@ -48,8 +48,14 @@ func readSource(ctx context.Context, pool *pgxpool.Pool, expect int, output io.W
 	if err != nil {
 		return nil, databaseError("source read", err)
 	}
-	if _, err := fmt.Fprintf(output, "source_networks=%d source_identities=%d password_credentials=%d\n",
-		networks, identities, passwords); err != nil {
+	_, err = fmt.Fprintf(
+		output,
+		"source_networks=%d source_identities=%d password_credentials=%d\n",
+		networks,
+		identities,
+		passwords,
+	)
+	if err != nil {
 		return nil, err
 	}
 	if networks != 1 {

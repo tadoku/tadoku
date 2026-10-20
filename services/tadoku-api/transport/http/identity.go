@@ -6,11 +6,11 @@ import (
 	"mime"
 	"net"
 	stdhttp "net/http"
+	"net/mail"
 	"net/netip"
 	"strings"
 
 	"github.com/oapi-codegen/nullable"
-	openapi_types "github.com/oapi-codegen/runtime/types"
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
 	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
 	callbackopenapi "github.com/tadoku/tadoku/services/tadoku-api/generated/openapi/callback"
@@ -64,13 +64,11 @@ func (s *server) IdentityRegistrationCreate(
 	ctx context.Context,
 	request openapi.IdentityRegistrationCreateRequestObject,
 ) (openapi.IdentityRegistrationCreateResponseObject, error) {
-	var command app.IdentityRegistration
+	metadata := ctx.Value(identityRequestKey{}).(identityRequestMetadata)
+	command := app.IdentityRegistration{IP: metadata.ip}
 	if request.Body != nil {
-		command = app.IdentityRegistration{
-			Email:       string(request.Body.Email),
-			DisplayName: request.Body.DisplayName,
-			Password:    request.Body.Password,
-		}
+		command.Email = string(request.Body.Email)
+		command.DisplayName, command.Password = request.Body.DisplayName, request.Body.Password
 	}
 	result, err := s.application.IdentityRegister(ctx, command)
 	if err != nil {
@@ -153,13 +151,22 @@ func identitySession(result app.IdentitySessionResult) openapi.IdentitySession {
 	if session, ok := result.Session.(app.IdentityAuthenticatedSession); ok {
 		account = nullable.NewNullableWithValue(openapi.IdentityAccount{
 			Id:              session.Account.ID,
-			Email:           openapi_types.Email(session.Account.Email.String()),
+			Email:           accountEmail(session.Account.Email.String()),
 			DisplayName:     session.Account.DisplayName.String(),
 			CreatedAt:       session.Account.CreatedAt,
 			AuthenticatedAt: session.AuthenticatedAt,
 		})
 	}
 	return openapi.IdentitySession{AccountApp: openapi.IdentitySessionAccountApp(result.AccountApp), Account: account}
+}
+
+// Responses keep the address part net/mail reads from a stored address and send an address it cannot read unchanged.
+func accountEmail(stored string) string {
+	address, err := mail.ParseAddress(stored)
+	if err != nil {
+		return stored
+	}
+	return address.Address
 }
 
 func (s *server) IdentityProxySessionCheck(
@@ -189,7 +196,7 @@ func (s *server) IdentityProxySessionCheck(
 		}
 		user.Identity.Id = session.Account.ID
 		user.Identity.Traits = callbackopenapi.IdentityProxyTraits{
-			Email:       openapi_types.Email(session.Account.Email.String()),
+			Email:       accountEmail(session.Account.Email.String()),
 			DisplayName: session.Account.DisplayName.String(),
 		}
 		err = response.FromIdentityProxyUser(user)

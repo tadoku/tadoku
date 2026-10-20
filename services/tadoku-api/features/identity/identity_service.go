@@ -73,6 +73,9 @@ func (s *Service) Register(ctx context.Context, registration Registration) (Logi
 	if err != nil {
 		return LoginResult{}, err
 	}
+	if err := s.throttle.admitRegistration(ctx, registration.IP); err != nil {
+		return LoginResult{}, err
+	}
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(password.value), 12)
 	if err != nil {

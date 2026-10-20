@@ -53,6 +53,33 @@ func (t *Throttle) allow(ctx context.Context, email Email, ip string) error {
 	return nil
 }
 
+var registrationAttempts = valkeygo.NewLuaScript(`
+local ip = redis.call('INCR', KEYS[1])
+if ip == 1 then redis.call('EXPIRE', KEYS[1], 900) end
+if ip > 10 then return 0 end
+return 1
+`)
+
+// admitRegistration fails closed: callers must not hash a password unless it returns nil.
+func (t *Throttle) admitRegistration(ctx context.Context, ip string) error {
+	key, ok := tenant.FromContext(ctx)
+	if !ok {
+		return errx.NewUnavailableError("tenant is required for registration admission", nil)
+	}
+	bounded, cancel := context.WithTimeout(ctx, t.timeout)
+	defer cancel()
+	admitted, err := registrationAttempts.Exec(bounded, t.client, []string{
+		"tenant:" + key.String() + ":identity:registration:ip:" + hashToken(ip),
+	}, nil).AsInt64()
+	if err != nil {
+		return errx.NewUnavailableError("registration admission unavailable", err)
+	}
+	if admitted != 1 {
+		return ErrRegistrationThrottled
+	}
+	return nil
+}
+
 func hashToken(raw string) string {
 	digest := sha256.Sum256([]byte(raw))
 	return hex.EncodeToString(digest[:])

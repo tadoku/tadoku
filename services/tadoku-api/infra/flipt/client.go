@@ -25,6 +25,8 @@ type Config struct {
 	RequestTimeout time.Duration
 	StartupTimeout time.Duration
 	HTTPClient     *http.Client
+	// OpenSDK replaces fliptsdk.NewClient. Tests use it to delay the handoff of a real SDK client.
+	OpenSDK func(context.Context, ...fliptsdk.Option) (*fliptsdk.Client, error)
 }
 
 type Observer interface {
@@ -48,8 +50,12 @@ type Client struct {
 }
 
 func New(ctx context.Context, cfg Config, observer Observer) (*Client, error) {
+	open := cfg.OpenSDK
+	if open == nil {
+		open = fliptsdk.NewClient
+	}
 	return newClient(ctx, cfg, observer, func(ctx context.Context, options ...fliptsdk.Option) (sdkClient, error) {
-		return fliptsdk.NewClient(ctx, options...)
+		return open(ctx, options...)
 	})
 }
 

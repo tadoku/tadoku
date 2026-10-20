@@ -3,7 +3,6 @@ package http
 import (
 	"context"
 
-	openapi_types "github.com/oapi-codegen/runtime/types"
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
 	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
 )
@@ -66,7 +65,7 @@ func (s *server) IdentityProfileUpdate(
 	}
 	return openapi.IdentityProfileUpdate200JSONResponse{
 		Id:              result.Account.ID,
-		Email:           openapi_types.Email(result.Account.Email.String()),
+		Email:           accountEmail(result.Account.Email.String()),
 		DisplayName:     result.Account.DisplayName.String(),
 		CreatedAt:       result.Account.CreatedAt,
 		AuthenticatedAt: result.AuthenticatedAt,

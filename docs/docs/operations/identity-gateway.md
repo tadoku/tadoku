@@ -109,10 +109,12 @@ frontends cannot read sessions. Do not create such branches or add `deploy`.
      business mutation. The base host must remain guest even with the branch
      cookie and spoofed selection header. Prove physical database placement
      separately; pod configuration, lifecycle markers and backend headers alone
-     leave catalog/row placement unverified. Use only an existing authorized
-     read-only database connection, never shared-namespace exec, port-forward,
-     extra Jobs or metadata repair. After owner-scoped down, retain and report
-     the marked database; verification grants no deletion.
+     leave catalog/row placement unverified. Use the runtime-role connection in
+     [Jobs operations](../tadoku-api/jobs-operations.md#run-jobs-on-your-development-branch)
+     through a loopback port-forward inside a read-only transaction; never exec
+     into shared pods, create Jobs, write rows or repair metadata. After
+     owner-scoped down, retain and report the marked database; verification
+     grants no deletion.
    - **Canonical v1 browser smoke:** reuse the same retained Reader/Admin sessions
      on canonical development hosts; new v2 branches reject those v1 sessions.
      Verify signed-in server-rendered document state with those private storage

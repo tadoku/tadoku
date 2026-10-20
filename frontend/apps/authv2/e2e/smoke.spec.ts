@@ -141,6 +141,11 @@ test('Settings shows and resubmits stored account values unchanged', async ({ pa
     }
   })
 
+  // The router's dehydrated match IDs contain NUL separators, so count NULs against an ASCII address's page.
+  const nuls = (html: string) => html.split('\u0000').length - 1
+  session = account('00000000-0000-4000-8000-000000000001', 'reader@example.test')
+  const routerNuls = nuls(await (await request.get('/settings')).text())
+
   // Imported addresses keep their raw stored form: a long ideographic-space prefix, and 321 bytes that only fit
   // the 320-byte limit once Go lowercases them.
   for (const [name, email] of [
@@ -152,7 +157,7 @@ test('Settings shows and resubmits stored account values unchanged', async ({ pa
     await test.step(`${name}: server-rendered, hydrated and submitted unchanged`, async () => {
       session = account('00000000-0000-4000-8000-000000000001', email)
       const html = await (await request.get('/settings')).text()
-      expect.soft(html.includes('\u0000'), 'server HTML has no NUL').toBe(false)
+      expect.soft(nuls(html), 'server HTML gains no NUL').toBe(routerNuls)
       expect.soft(html.includes('\uFFFD'), 'server HTML has no replacement character').toBe(false)
       expect.soft(html.includes(`value="${email}"`), 'server-rendered email input').toBe(true)
 

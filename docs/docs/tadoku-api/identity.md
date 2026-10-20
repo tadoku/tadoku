@@ -196,13 +196,15 @@ whitespace outside the mailbox, and identity responses drop them too. Letter
 case and every other character are kept, including Unicode spaces, and the
 address is never lowercased, trimmed further or truncated. The email writer
 then applies its unchanged recipient rules. An address that is not a bare
-mailbox of at most 320 bytes after that trim, such as an imported address with
-a leading vertical tab, form feed or line break or with a long Unicode-space
-prefix, gets no recovery email or notice. Its recovery request and email
-changes return `400` with `invalid email recipient` and write nothing, so its
-tokens, sessions and stored values stay as they were. That answer differs from
-an unknown address's `202`. Login is unaffected because it uses the normalized
-email.
+mailbox of at most 320 bytes after that trim, such as a stored address with a
+leading vertical tab, form feed or line break or with a long Unicode-space
+prefix, gets no recovery email or notice. The account importer refuses such
+addresses, and also those with surrounding spaces or tabs; see
+[Recipient compatibility](./identity-import.md#recipient-compatibility).
+Its recovery request and email changes return `400` with
+`invalid email recipient` and write nothing, so its tokens, sessions and stored
+values stay as they were. That answer differs from an unknown address's `202`.
+Login is unaffected because it uses the normalized email.
 
 The link uses the configured cookie domain and parsed tenant's main API host,
 never the incoming Host. Its path is `/api/internal/identity/recovery/{token}`,
@@ -236,7 +238,7 @@ a valid session; email changes additionally require authentication within the
 last hour. A submitted email whose normalized form equals the address the
 account's mail goes to is unchanged: nothing about the email is written and no
 recent login is needed. Any other value is a change, including one that differs
-from an imported address only in letter case or Unicode spaces, because it
+from the stored address only in letter case or Unicode spaces, because it
 changes where mail goes. Email switches immediately with tenant-local
 normalized uniqueness, stores the normalized form, invalidates pending recovery
 tokens and queues `account.email_changed` to the old address, with `new_email`

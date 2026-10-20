@@ -134,7 +134,7 @@ export type ImmersionManagedFeatureFlagKey = 'release-log-entry-v2';
 export type ImmersionFeatureAccessResponse = {
     enabled: boolean;
     changed: boolean;
-    environment: 'local' | 'production';
+    environment: 'local' | 'production' | 'test';
     revision: string;
 };
 
@@ -235,12 +235,12 @@ export type ImmersionContestBase = {
 };
 
 export type ImmersionContest = ImmersionContestBase & {
-    language_code_allow_list: Array<string>;
+    language_code_allow_list: Array<string> | null;
     activity_type_id_allow_list: Array<number>;
 };
 
 export type ImmersionContestView = ImmersionContestBase & {
-    allowed_languages: Array<ImmersionLanguage>;
+    allowed_languages: Array<ImmersionLanguage> | null;
     allowed_activities: Array<ImmersionActivity>;
 };
 
@@ -481,10 +481,6 @@ export type ProfileUserListEntry = {
     role?: string;
 };
 
-export type AuthzProxyProxyAdminCheckRequest = {
-    subject: string;
-};
-
 export type IdentityErrorResponse = {
     message: string;
     code?: 'wrong_password' | 'throttled' | 'email_taken' | 'stale_session' | 'invalid_display_name' | 'invalid_email' | 'invalid_password' | 'invalid_recovery_token' | 'invalid_origin' | 'invalid_return_to' | 'not_implemented' | 'unavailable';
@@ -566,32 +562,6 @@ export type EmailMessage = {
 export type EmailList = {
     emails: Array<EmailMessage>;
     next_cursor: string | null;
-};
-
-export type IdentityProxyTraits = {
-    email: string;
-    display_name: string;
-};
-
-export type IdentityProxyUser = {
-    identity: {
-        id: string;
-        traits: IdentityProxyTraits;
-    };
-    authenticated_at: string;
-    expires_at: string;
-};
-
-export type IdentityProxyGuest = {
-    identity: {
-        id: 'guest';
-    };
-};
-
-export type IdentityProxySession = IdentityProxyGuest | IdentityProxyUser;
-
-export type IdentityProxyErrorResponse = {
-    message: string;
 };
 
 export type AuthzRoleGetData = {
@@ -2771,39 +2741,6 @@ export type ProfileUsersListResponses = {
 
 export type ProfileUsersListResponse = ProfileUsersListResponses[keyof ProfileUsersListResponses];
 
-export type AuthzProxyProxyAdminCheckData = {
-    body: AuthzProxyProxyAdminCheckRequest;
-    path?: never;
-    query?: never;
-    url: '/authz/internal/v1/proxy/admin-check';
-};
-
-export type AuthzProxyProxyAdminCheckErrors = {
-    /**
-     * invalid request
-     */
-    400: unknown;
-    /**
-     * missing or invalid Oathkeeper callback credential
-     */
-    401: unknown;
-    /**
-     * subject is not a Tadoku administrator
-     */
-    403: unknown;
-    /**
-     * authorization unavailable
-     */
-    503: unknown;
-};
-
-export type AuthzProxyProxyAdminCheckResponses = {
-    /**
-     * subject is a Tadoku administrator; the empty response is required by Oathkeeper remote_json
-     */
-    200: unknown;
-};
-
 export type IdentityRegistrationCreateData = {
     body: IdentityRegistration;
     path?: never;
@@ -3282,40 +3219,3 @@ export type EmailGetResponses = {
 };
 
 export type EmailGetResponse = EmailGetResponses[keyof EmailGetResponses];
-
-export type IdentityProxySessionCheckData = {
-    body?: never;
-    headers?: {
-        Cookie?: string;
-        'X-Dev-Branch'?: string;
-    };
-    path?: never;
-    query?: never;
-    url: '/identity/internal/v1/session';
-};
-
-export type IdentityProxySessionCheckErrors = {
-    /**
-     * Missing or invalid callback credential
-     */
-    401: unknown;
-    /**
-     * Tenant not served
-     */
-    421: IdentityProxyErrorResponse;
-    /**
-     * Unavailable
-     */
-    503: IdentityProxyErrorResponse;
-};
-
-export type IdentityProxySessionCheckError = IdentityProxySessionCheckErrors[keyof IdentityProxySessionCheckErrors];
-
-export type IdentityProxySessionCheckResponses = {
-    /**
-     * Session or guest
-     */
-    200: IdentityProxySession;
-};
-
-export type IdentityProxySessionCheckResponse = IdentityProxySessionCheckResponses[keyof IdentityProxySessionCheckResponses];

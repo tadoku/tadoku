@@ -8,6 +8,9 @@ description: Tenant-owned accounts, password and session security, v1 Kratos ses
 Read this before changing account or session behavior, implementing recovery or
 settings, or moving a caller to the identity entry point.
 
+For the standalone Kratos account importer, its disposable CLI verification and
+the operational holds on shared imports, read [Import Kratos accounts](./identity-import.md).
+
 Registration, login, logout, session lookup and the Oathkeeper session callback
 are implemented. A tenant's `identity-v2` flag selects local accounts or Kratos;
 its safe default is `false`, including for guests. Profile and moderation callers use

@@ -6,21 +6,29 @@ Playwright smoke suite is deliberately not wired into CI.
 ```sh
 pnpm --filter authv2 exec playwright install chromium
 AUTHV2_BASE_URL=https://<route>.authv2.tadoku.dev.lab \
+  AUTHV2_READER_STATE_FILE=<private file outside the report> \
   PLAYWRIGHT_OUTPUT_DIR=/workspace/.scratch/authv2-smoke \
-  pnpm --filter authv2 test:e2e
+  pnpm --filter authv2 exec playwright test e2e/credentials.spec.ts e2e/recovery.spec.ts e2e/settings.spec.ts
 ```
 
 The tenant must select v2 and provide native Dev Reader and Dev Admin accounts,
 with the documented development passwords. The suite writes only to that owned
-branch tenant. It checks rendered forms, JavaScript-disabled registration/login,
-profile persistence and errors, real held-email recovery using an Admin cookie,
-the exact generated link, Settings password replacement and continuation,
-logout, new/old-password results and session revocation. It changes the branch
-Reader password. For repeat runs, pass `AUTHV2_READER_STATE_FILE` as an absolute
-file in a private directory outside the report; the replacement password is
-saved with mode 0600. Delete it after owner teardown. Optional
-`AUTHV2_READER_PASSWORD` and `AUTHV2_ADMIN_PASSWORD` select private fixture
-credentials. No shared Kratos account is used.
+branch tenant and reads held email through the tenant's main host with an Admin
+cookie. The recovery journey replaces the branch Reader password and saves the
+replacement with mode 0600 in `AUTHV2_READER_STATE_FILE`, so repeat runs can log
+in; delete the file after owner teardown. Optional `AUTHV2_READER_PASSWORD` and
+`AUTHV2_ADMIN_PASSWORD` select private fixture credentials. No shared Kratos
+account is used.
+
+A full run makes about ten Reader logins and eleven throttled attempts for one
+random address. The identity API allows ten attempts per email and fifty per
+address in fifteen minutes, so space repeat runs or reset only the owned
+tenant's `tenant:tadoku/<route>:identity:login:*` counters between them.
+
+The stale-session test is skipped unless `AUTHV2_STALE_SESSION_DIR` names a
+private directory. It logs the Reader in, writes `ready` there and waits for an
+`aged` file. Move only that tenant's Reader sessions' `authenticated_at` back
+more than an hour with an owner-scoped task, then create `aged`.
 
 TLS verification stays enabled. Reports and videos contain synthetic fixture
 screens only. Tracing is disabled to avoid retaining authenticated requests or

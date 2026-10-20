@@ -20,6 +20,13 @@ test('recovery through a held email sets a new password and continues', async ({
   await logIn(admin, adminEmail, adminPassword())
   await expectSettings(admin)
 
+  const held = async () => {
+    const list = await admin.request.get(`${main}/api/internal/emails?recipient=${encodeURIComponent(readerEmail)}&template=account.recovery&status=held`)
+    expect(list.status()).toBe(200)
+    return ((await list.json()) as { emails: { id: string }[] }).emails.map(message => message.id)
+  }
+  const earlierEmails = new Set(await held())
+
   const page = await newPage(browser, testInfo, { viewport: { width: 1280, height: 900 } })
   const confirmations: string[] = []
   for (const email of [`w2-unknown-${randomUUID()}@example.test`, readerEmail]) {
@@ -34,9 +41,7 @@ test('recovery through a held email sets a new password and continues', async ({
 
   let id: string | undefined
   await expect.poll(async () => {
-    const list = await admin.request.get(`${main}/api/internal/emails?recipient=${encodeURIComponent(readerEmail)}&template=account.recovery&status=held`)
-    expect(list.status()).toBe(200)
-    id = ((await list.json()) as { emails: { id: string }[] }).emails[0]?.id
+    id = (await held()).find(candidate => !earlierEmails.has(candidate))
     return id
   }, { timeout: 30_000 }).toBeTruthy()
   const detail = await admin.request.get(`${main}/api/internal/emails/${id}`)

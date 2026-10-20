@@ -311,8 +311,9 @@ func TestNewReturnsAtStartupBudgetAndInstallsClientAfterRecovery(t *testing.T) {
 		UpdateInterval: time.Minute,
 		RequestTimeout: time.Second,
 		StartupTimeout: 10 * time.Millisecond,
-	}, observer, func(context.Context, ...fliptsdk.Option) (sdkClient, error) {
+	}, observer, func(ctx context.Context, _ ...fliptsdk.Option) (sdkClient, error) {
 		<-release
+		ctx.Value(initialFetchKey{}).(*initialFetch).succeeded.Store(true)
 		return sdk, nil
 	})
 

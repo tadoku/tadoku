@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	featureflags "github.com/tadoku/tadoku/services/tadoku-api/internal/featureflags"
@@ -73,9 +74,9 @@ func newClient(ctx context.Context, cfg Config, observer Observer, factory sdkFa
 	httpClient := withObservability(cfg.HTTPClient, fetchState)
 	lifetimeCtx, cancel := context.WithCancel(ctx)
 	client := &Client{fetchState: fetchState, cancel: cancel}
-	open := func() (sdkClient, error) {
+	open := func(ctx context.Context) (sdkClient, error) {
 		return factory(
-			lifetimeCtx,
+			ctx,
 			fliptsdk.WithURL(cfg.URL),
 			fliptsdk.WithEnvironment(cfg.Environment),
 			fliptsdk.WithNamespace(cfg.Namespace),
@@ -106,18 +107,19 @@ func newClient(ctx context.Context, cfg Config, observer Observer, factory sdkFa
 	}
 }
 
-// connect installs the first SDK client whose initial fetch succeeded, so an installed engine always evaluates a
-// delivered snapshot. An SDK whose initial fetch failed evaluates an empty fallback engine; connect closes it and
-// retries every interval. Only the first attempt's outcome is sent on first.
+// connect installs the first SDK client whose engine was initialized from its own fetched snapshot, so an installed
+// engine always evaluates a fetched snapshot. An SDK whose initial fetch failed evaluates an empty fallback engine;
+// connect closes it and retries every interval. Only the first attempt's outcome is sent on first.
 func (c *Client) connect(
 	ctx context.Context,
 	interval time.Duration,
-	open func() (sdkClient, error),
+	open func(context.Context) (sdkClient, error),
 	observer Observer,
 	first chan<- error,
 ) {
 	for attempt := 0; ; attempt++ {
-		sdk, err := open()
+		fetch := &initialFetch{}
+		sdk, err := open(context.WithValue(ctx, initialFetchKey{}, fetch))
 		if ctx.Err() != nil {
 			if err == nil {
 				_ = sdk.Close(context.Background())
@@ -138,7 +140,7 @@ func (c *Client) connect(
 			if observer != nil {
 				observer.ObserveProviderError("initialization")
 			}
-		case sdk.Err() == nil:
+		case fetch.succeeded.Load():
 			c.fetchState.confirmPendingSnapshot()
 			c.install(sdk, observer)
 			if attempt == 0 {
@@ -162,6 +164,15 @@ func (c *Client) connect(
 		}
 	}
 }
+
+// initialFetch records whether one SDK client's initial fetch returned a valid snapshot. The SDK sends only that fetch
+// with the context passed to its constructor; it polls with a context of its own, so later fetches never set it. A
+// constructor that returns without error has initialized its engine from the snapshot it fetched.
+type initialFetch struct {
+	succeeded atomic.Bool
+}
+
+type initialFetchKey struct{}
 
 func (c *Client) install(client sdkClient, observer Observer) {
 	c.mu.Lock()
@@ -337,6 +348,9 @@ func (t *observedTransport) RoundTrip(request *http.Request) (*http.Response, er
 				t.state.failed()
 			} else {
 				t.state.snapshotReceived(response.Header.Get("ETag"))
+				if fetch, ok := request.Context().Value(initialFetchKey{}).(*initialFetch); ok {
+					fetch.succeeded.Store(true)
+				}
 			}
 		}
 	case http.StatusNotModified:

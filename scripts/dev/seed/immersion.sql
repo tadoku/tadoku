@@ -41,6 +41,9 @@ select
   end as spanish_log_id
 \gset
 
+-- Stable fixtures: reruns insert only missing rows and keep existing ones, including
+-- user edits. Rows that reference a fixture user follow that user's current UUID.
+
 \if :{?seed_users}
 \else
   \set seed_users true
@@ -53,7 +56,8 @@ values
 on conflict (tenant, id) do update
 set
   display_name = excluded.display_name,
-  updated_at = now();
+  updated_at = now()
+where users.display_name is distinct from excluded.display_name;
 \endif
 
 insert into user_roles (tenant, user_id, role, updated_at)
@@ -62,7 +66,8 @@ values
 on conflict (tenant, user_id) do update
 set
   role = excluded.role,
-  updated_at = now();
+  updated_at = now()
+where user_roles.role is distinct from excluded.role;
 
 insert into contests (
   tenant,
@@ -120,17 +125,8 @@ on conflict (id) do update
 set
   owner_user_id = excluded.owner_user_id,
   owner_user_display_name = excluded.owner_user_display_name,
-  "private" = excluded."private",
-  contest_start = excluded.contest_start,
-  contest_end = excluded.contest_end,
-  registration_end = excluded.registration_end,
-  title = excluded.title,
-  "description" = excluded."description",
-  language_code_allow_list = excluded.language_code_allow_list,
-  activity_type_id_allow_list = excluded.activity_type_id_allow_list,
-  official = excluded.official,
-  updated_at = now(),
-  deleted_at = null;
+  updated_at = now()
+where contests.owner_user_id is distinct from excluded.owner_user_id;
 
 -- remove stale seed registrations left over from runs with different seed
 -- identities, so the fixed ids below never collide on the primary key
@@ -179,11 +175,7 @@ values
     now(),
     now()
   )
-on conflict (tenant, user_id, contest_id) do update
-set
-  language_codes = excluded.language_codes,
-  updated_at = now(),
-  deleted_at = null;
+on conflict (tenant, user_id, contest_id) do nothing;
 
 insert into logs (
   tenant,
@@ -257,18 +249,8 @@ values
 on conflict (id) do update
 set
   user_id = excluded.user_id,
-  language_code = excluded.language_code,
-  log_activity_id = excluded.log_activity_id,
-  unit_id = excluded.unit_id,
-  unit_key = excluded.unit_key,
-  "description" = excluded."description",
-  amount = excluded.amount,
-  modifier = excluded.modifier,
-  computed_score = excluded.computed_score,
-  eligible_official_leaderboard = excluded.eligible_official_leaderboard,
-  duration_seconds = excluded.duration_seconds,
-  updated_at = now(),
-  deleted_at = null;
+  updated_at = now()
+where logs.user_id is distinct from excluded.user_id;
 
 insert into contest_logs (
   tenant,
@@ -311,13 +293,7 @@ values
     null,
     18
   )
-on conflict (tenant, contest_id, log_id) do update
-set
-  unit_key = excluded.unit_key,
-  amount = excluded.amount,
-  modifier = excluded.modifier,
-  duration_seconds = excluded.duration_seconds,
-  computed_score = excluded.computed_score;
+on conflict (tenant, contest_id, log_id) do nothing;
 
 insert into log_tags (tenant, log_id, user_id, tag, created_at)
 values
@@ -325,6 +301,7 @@ values
   (:'tenant', :'listening_log_id'::uuid, :'reader_user_id'::uuid, 'podcast', now()),
   (:'tenant', :'spanish_log_id'::uuid, :'reader_user_id'::uuid, 'fiction', now())
 on conflict (tenant, log_id, tag) do update
-set user_id = excluded.user_id;
+set user_id = excluded.user_id
+where log_tags.user_id is distinct from excluded.user_id;
 
 commit;

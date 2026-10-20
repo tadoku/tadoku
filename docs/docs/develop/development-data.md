@@ -21,23 +21,63 @@ belong to their tenant.
 ## Seed data
 
 `make dev-seed` runs `scripts/dev/seed-db.sh` against the shared base with
-tenant `tadoku/prod`. It:
+tenant `tadoku/prod`. It needs `kubectl`, `curl`, lab DNS and CA trust, and
+Bazel when the canonical tenant uses native accounts. It:
 
-- runs only against the `homelab-talos-dev` context at `https://omni.lab:8100`
-  and waits for Postgres and the base migrations;
-- creates the two fixture identities in Kratos, marked as owned by the seed,
-  and refuses to touch an existing identity with the same email but no marker;
-- resets the fixture passwords to the configured values on every run;
-- grants the administrator role in Keto;
+- runs only against the `homelab-talos-dev` context at `https://omni.lab:8100`;
+- before any write, asks the base API which identity provider the canonical
+  tenant uses through an anonymous
+  `GET https://tadoku.dev.lab/api/internal/identity/session`. The base host
+  always serves `tadoku/prod`. Only `{"account":null,"account_app":"v1"}` or
+  `"v2"` is accepted; an undecided provider, a transport error or any other
+  response stops the seed without changes. See
+  [Account-app selection](../tadoku-api/identity-selection.md);
+- waits for Postgres and the base migrations;
+- creates the two fixture accounts through that provider, as described below;
+- grants the administrator role in Keto unless the tuple already exists;
 - loads the fixtures in `scripts/dev/seed/` into the base `tadoku` database.
+
+**v1 (Kratos).** The seed creates missing Kratos identities marked with
+`metadata_admin.seeded_by=tadoku-dev-seed` and refuses an existing identity
+with the same email but no marker. It resets a marked identity's password only
+when the stored hash does not match the configured password. Fixture rows use
+the Kratos identity UUIDs, and the seed restores the fixture users' names.
+
+**v2 (native accounts).** The seed never contacts Kratos. Dev Admin and Dev
+Reader keep the UUIDs that own the seeded contests
+`00000000-0000-4000-8000-000000000101` and
+`00000000-0000-4000-8000-000000000102`, which earlier v1 seeds or the account
+import gave them. On a base without those contests it uses
+`00000000-0000-4000-8000-000000000001` and
+`00000000-0000-4000-8000-000000000002`. Only the seed creates these contests,
+and their owner never changes, so a registered account cannot become a fixture.
+The seed builds `tadoku-tenant`, forwards the database to loopback and runs
+`canonical-development-accounts` with the runtime `tadoku` role; see
+[Tenant lifecycle](../tadoku-api/tenant-lifecycle.md#development-accounts-and-cleanup-inspection).
+It stops the port-forward and deletes the built command when that step
+succeeds, fails or is interrupted by `SIGHUP`, `SIGINT` or `SIGTERM`; after a
+`SIGKILL`, stop the leftover `kubectl port-forward` yourself.
+It follows the native branch account contract below: existing accounts,
+including imported ones, keep their email, password, state, timestamps and
+sessions, and an email held by another UUID fails the pair before any Keto or
+SQL write. Import the Kratos accounts with
+[the account import](../tadoku-api/identity-import.md) before switching the
+canonical flag; seeding native accounts first creates accounts the import
+reports as conflicts.
+
+Rerunning with the same configuration changes no row, credential, timestamp or
+Keto tuple. The SQL fixtures are stable: a rerun restores missing fixture rows
+and keeps existing ones, including user edits, soft deletions and the dates of
+their first seeding. Rows that reference a fixture user follow that user's
+current UUID. The seed never deletes unrelated rows.
 
 The SQL fixtures require a `tenant` psql variable; they set it
 transaction-locally and write that tenant explicitly. The canonical tenant keeps
 the fixed fixture UUIDs; other tenants derive those UUIDs from their tenant key.
 Caller-supplied identity UUIDs remain unchanged.
 
-It is safe to rerun for the same tenant, but it changes shared identities and
-base data. See
+The first run, and any run that repairs missing fixtures, changes shared
+identities and base data. See
 [Authorization](../architecture/authorization.md#seeding-an-administrator-in-development)
 for the role details.
 
@@ -110,9 +150,9 @@ the canonical fixture user's creation time when available, and new accounts
 retain their local user's creation time, preserving account-age rules. It creates
 no session; sign in through the configured branch API to create a native session.
 The branch SQL sets `seed_users=false` before loading immersion fixtures because
-the native fixture command owns initialization; reseeding still populates its
-profiles, contests and content without resetting user names. The human base seed
-keeps its existing user refresh behavior.
+the native fixture command owns user initialization. Reseeding restores missing
+profiles, contests and content and keeps existing rows, as described in
+[Seed data](#seed-data).
 
 Dev Admin keeps its base UUID, so the branch Keto parent preserves inherited
 administrator permits without changing canonical tuples. Dev Reader has direct

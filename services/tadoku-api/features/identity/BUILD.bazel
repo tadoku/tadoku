@@ -23,8 +23,8 @@ go_library(
     deps = [
         "//services/tadoku-api/domain/mail",
         "//services/tadoku-api/features/identity/kratos",
-        "//services/tadoku-api/generated/sqlc/identity/reads",
         "//services/tadoku-api/generated/sqlc/identity",
+        "//services/tadoku-api/generated/sqlc/identity/reads",
         "//services/tadoku-api/infra/postgres",
         "//services/tadoku-api/internal/errx",
         "//services/tadoku-api/internal/featureflags",

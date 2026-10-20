@@ -417,7 +417,11 @@ func startEmailGateway(t *testing.T, backend, cookie string) (string, string) {
 
 	authenticators := config["authenticators"].(map[string]any)
 	cookieSession := authenticators["cookie_session"].(map[string]any)["config"].(map[string]any)
-	cookieSession["check_session_url"] = backend + "/identity/internal/v1/session"
+	callbackURL, err := url.Parse(cookieSession["check_session_url"].(string))
+	if err != nil || callbackURL.Path != "/identity/internal/v1/session" {
+		t.Fatal("gateway configuration must use the identity session callback")
+	}
+	cookieSession["check_session_url"] = backend + callbackURL.RequestURI()
 	serve["prometheus"] = map[string]any{"host": "127.0.0.1", "port": port()}
 
 	key, err := rsa.GenerateKey(rand.Reader, 2048)

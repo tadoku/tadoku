@@ -31,6 +31,12 @@ func ParseEmail(raw string) (Email, error) {
 	return Email{value}, nil
 }
 
+// recipient is the stored address without the spaces and tabs around it, which RFC 5322 reads as folding whitespace
+// outside the mailbox. Case and every other character are kept; the email writer decides whether it is a recipient.
+func (e Email) recipient() string {
+	return strings.Trim(e.value, " \t")
+}
+
 func ParseDisplayName(raw string) (DisplayName, error) {
 	if !utf8.ValidString(raw) || utf8.RuneCountInString(raw) < 2 || utf8.RuneCountInString(raw) > 32 {
 		return DisplayName{}, &Error{

@@ -57,7 +57,9 @@ func seedIdentityReads(t *testing.T) {
 	if err := api.keto.Reset(t.Context(), "testdata/ProfileUsersList/relationships.json"); err != nil {
 		t.Fatal(err)
 	}
-	api.flipt.SetIdentityV2(tenant.Production(), true)
+	if err := api.flipt.SetIdentityV2(tenant.Production(), true); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestIdentityReaderTenantPaging(t *testing.T) {
@@ -103,7 +105,9 @@ func TestIdentityReaderTenantPaging(t *testing.T) {
 		t.Fatalf("foreign account exists=%v err=%v", exists, err)
 	}
 	branch, _ := tenant.Parse("e2e/read-0123abcd")
-	api.flipt.SetIdentityV2(branch, true)
+	if err := api.flipt.SetIdentityV2(branch, true); err != nil {
+		t.Fatal(err)
+	}
 	for _, invalid := range []struct {
 		ctx   context.Context
 		query accountidentity.ListAccounts

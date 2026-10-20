@@ -16,8 +16,9 @@ its source is `services/tadoku-api/spec/openapi.yaml`.
 - **Identity** owns account/session selection per tenant. V1 uses Ory Kratos;
   v2 uses tenant-owned accounts and sessions in Tadoku API. The
   [identity entry point](../tadoku-api/identity.md) selects with the tenant-level
-  `identity-v2` flag and provides the authenticated session callback. Oathkeeper's cookie-session authenticator forwards the complete Cookie and trusted
-  X-Dev-Branch headers to that callback through the branch-aware API hop. Oathkeeper's
+  `identity-v2` flag and provides the authenticated session callback. Its cookie-session authenticator forwards the
+  complete Cookie and trusted X-Dev-Branch headers through the branch-aware API
+  hop. Oathkeeper's
   `id_token` mutator produces an RS256 JWT whose `sub` is the
   account UUID, or `guest` for anonymous requests. Session traits travel in the
   `session` claim; `type` is `user`. API tokens carry a signed `tenant`

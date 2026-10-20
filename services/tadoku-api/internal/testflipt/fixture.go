@@ -27,7 +27,6 @@ type Fixture struct {
 	targets     flipt.Targets
 	namespaces  map[flipt.Target]*namespaceState
 	unavailable bool
-	identityV2  map[string]bool
 	requests    int
 	creates     map[flipt.Target]CreateCounts
 	server      *httptest.Server
@@ -60,7 +59,6 @@ func (f *Fixture) Reset() {
 			resources: seededResources(),
 		},
 	}
-	f.identityV2 = make(map[string]bool)
 	f.unavailable = false
 	f.requests = 0
 	f.creates = make(map[flipt.Target]CreateCounts)
@@ -77,12 +75,6 @@ func (f *Fixture) SeedTenant(key tenant.Key) error {
 		f.namespaces[target] = &namespaceState{members: make(map[string]struct{}), revision: 1, resources: seededResources()}
 	}
 	return nil
-}
-
-func (f *Fixture) SetIdentityV2(key tenant.Key, enabled bool) {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	f.identityV2[key.String()] = enabled
 }
 
 func (f *Fixture) SetUnavailable(unavailable bool) {
@@ -120,9 +112,6 @@ func (f *Fixture) EvaluateBoolean(
 	defer f.mu.Unlock()
 	if f.unavailable {
 		return featureflags.ProviderResult{}, fmt.Errorf("test Flipt unavailable")
-	}
-	if request.FlagKey == "identity-v2" {
-		return featureflags.ProviderResult{Enabled: f.identityV2[request.EntityID], Reason: "match"}, nil
 	}
 	state := f.namespaces[target]
 	if state != nil && request.FlagKey == "identity-v2" {

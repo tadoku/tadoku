@@ -56,13 +56,15 @@ an activation or a workflow dispatch:
    do not waive that gate to impose an accounts-first order. Confirm callback
    credential compatibility, banned-account session/logout admission, trusted
    branch selection and the required public Kratos URL/proxy configuration.
-2. Land the production public-route and authv2 GitOps preparations
-   (G #238/#239) and email-route preparation (C #242) under their own
-   authorization. B #240 remains separately held for its own prerequisites.
-   Refresh the callback GitOps branch (#241) onto the resulting main,
-   preserving the public anonymous identity route, private session route and
-   any landed email rule with its token-header mutator. If #241 lands before
-   #242, the email-route owner must refresh and revalidate that later change.
+2. Land the required production public-route and authv2 preparations under their
+   own authorization. Email-route preparation has its own authorization and
+   readiness gates: preserve its rule and token-header mutator if it has landed;
+   otherwise its owner must refresh and revalidate the later email change
+   against the callback configuration. SMTP/worker preparation remains
+   independently held for its own prerequisites.
+   Refresh the callback GitOps branch onto the resulting main, preserving the
+   public anonymous identity route and private session route alongside any
+   landed email rule.
    Retain the final head/base SHAs, Helm render and image digests; rerun the
    real-image callback matrix, production identity-proxy proof and production
    email-route cases under the callback configuration. Include token-only,

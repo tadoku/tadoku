@@ -49,7 +49,10 @@ rejects the key, breaking evaluation snapshots for the environment.
 The provider wraps the Flipt client SDK in polling mode: it fetches the resolved
 namespace evaluation snapshot every
 `API_FLIPT_UPDATE_INTERVAL` and evaluates in process. A failed fetch keeps the
-last snapshot and marks results stale. Startup waits at most
+last snapshot and marks results stale. So does a fetched snapshot that fails
+validation: the client hands the SDK only snapshots whose exact `namespace.key`
+matches the resolved namespace, whose `flags` entries all have keys and that
+carry a `digest`. Startup waits at most
 `API_FLIPT_STARTUP_TIMEOUT`. A client only evaluates a snapshot it fetched: it
 installs an SDK only when that SDK's own initial fetch returned a valid snapshot
 and its engine accepted it. When the initial fetch fails, the client discards the

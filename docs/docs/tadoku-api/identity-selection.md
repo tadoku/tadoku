@@ -28,7 +28,8 @@ tenant task. The tenant comes from the verified request context, never from a
 host or cookie name.
 
 A running client keeps evaluating its last fetched snapshot through Flipt
-outages and namespace deletion. A client without one, such as after an API
+outages, namespace deletion and fetched snapshots that fail validation, such as
+one for another namespace or without a digest. A client without one, such as after an API
 restart, a startup timeout or a new or evicted test-tenant client, cannot
 decide until it starts from a fetched snapshot. A snapshot that has been
 received but not yet applied, that the evaluation engine rejected, or that a

@@ -32,3 +32,13 @@ spec:
   ports:
     - {name: smtp, port: 1025, targetPort: smtp}
     - {name: http, port: 8025, targetPort: http}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mailhog-deny-egress
+spec:
+  podSelector:
+    matchLabels: {app: mailhog}
+  policyTypes: [Egress]
+  egress: []

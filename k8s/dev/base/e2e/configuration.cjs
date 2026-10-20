@@ -87,6 +87,11 @@ function checkConfiguration({ root, report }, docs) {
   const courier = Y.parse(kratosConfig?.data?.['kratos.yaml'] || '{}').courier || {}
   const courierURL = new URL(courier.smtp?.connection_uri || 'invalid:')
   if (Object.keys(courier).join(',') !== 'smtp' || courierURL.protocol !== 'smtp:' || courierURL.host !== 'mailhog.tdk-dev-data:1025') throw new Error('Kratos must deliver only through SMTP to MailHog')
+  const mailhogLabels = docs.find(d => d.kind === 'Deployment' && d.metadata.namespace === 'tdk-dev-data' && d.metadata.name === 'mailhog')?.spec.template.metadata.labels || {}
+  const selectsMailhog = policy => Object.entries(policy.spec.podSelector?.matchLabels || {}).every(([key, value]) => mailhogLabels[key] === value) && !policy.spec.podSelector?.matchExpressions
+  const dataPolicies = docs.filter(d => d.kind === 'NetworkPolicy' && d.metadata.namespace === 'tdk-dev-data' && selectsMailhog(d))
+  const mailhogEgress = dataPolicies.find(d => d.metadata.name === 'mailhog-deny-egress')
+  if (mailhogEgress?.spec.policyTypes?.join(',') !== 'Egress' || mailhogEgress.spec.egress?.length !== 0 || mailhogEgress.spec.ingress || mailhogEgress.spec.podSelector.matchLabels?.app !== 'mailhog' || dataPolicies.some(d => d.spec.egress?.length)) throw new Error('MailHog must have an egress-only deny policy and no egress allow')
   report.leaderboardWorkers = { asyncJobs: 'tadoku-worker', baseDatabase: 'tadoku', branchDatabase: envValue(branchWorker, 'WORKER_POSTGRES_DATABASE'), branchTenant: envValue(branchWorker, 'WORKER_BRANCH'), baseKeyPattern: 'tenant:tadoku/prod:leaderboard:*', branchKeyPattern: 'tenant:tadoku/${DEV_ROUTE}:leaderboard:*', image: workerContainer.image }
 }
 

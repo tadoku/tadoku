@@ -156,11 +156,11 @@ E2Es check tenant-scoped PostgreSQL work with shared Valkey.
 
 No development component sends real email:
 
-- The base and dev-cli branch workers bind `WORKER_EMAIL_ENABLED=false`
-  explicitly. The explicit binding wins over the unprefixed `ENABLED` fallback
-  and any image environment, so canonical `tadoku/prod` mail stays held.
-- Kratos delivers its courier mail only over SMTP to
-  `mailhog.tdk-dev-data:1025`, with no HTTP or other channel.
+- Base and branch workers bind `WORKER_EMAIL_ENABLED=false`, which wins over
+  the unprefixed `ENABLED` fallback and any image environment.
+- The Kratos courier uses only SMTP, to `mailhog.tdk-dev-data:1025`.
+- The `mailhog-deny-egress` NetworkPolicy, enforced by Cilium, blocks MailHog
+  egress, so captured mail cannot be released externally. Ingress stays open.
 
 ## Automatic migrations
 
@@ -314,8 +314,8 @@ failure. It needs no cluster credentials.
   Authv2, built from the tested revision, proves its non-root image, Lab CA and
   compiled assets, and that during an API outage canonical and branch hosts show
   a retry page with a branch-preserving home link and no account-app choice.
-  It also checks the rendered leaderboard worker ownership, the explicit
-  worker email binding and the Kratos courier target.
+  It also checks the rendered leaderboard worker ownership and the
+  [development email](#development-email) barriers.
 - It cleans up only its labeled fixtures. Synthetic credentials in its fixture
   logs are not live credentials.
 

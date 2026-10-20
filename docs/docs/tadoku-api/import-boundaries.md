@@ -88,7 +88,7 @@ graph. Each allowed package covers only its own targets, not subpackages, and
   `app/tenantlifecycle:tenantlifecycle_test` target may also construct its owned
   provider fixture. Lifecycle application code uses `permissions.TenantManager`.
 - Only `services/tadoku-api/features/identity`,
-  `services/tadoku-api/features/identity/kratos` and E2E may depend directly on the Kratos SDK.
+  `services/tadoku-api/features/identity/kratos` may depend directly on the Kratos SDK.
   Only identity ownership maps SDK models into accounts. The identity session
   adapter reads the public session endpoint and revokes canonical sessions through
   the admin endpoint; it enforces the tenant guard before provider writes.

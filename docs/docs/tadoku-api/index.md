@@ -89,7 +89,7 @@ see [Contributing workflow](../develop/contributing.md#cms-managed-content).
 - [Testing](./testing.md): read before adding or changing any test; covers
   principles, test infrastructure and repository tests.
 - [HTTP end-to-end tests](./http-e2e.md): read before adding or changing an
-  operation's golden cases, fixture tokens, relationships or the Kratos fixture.
+  operation's golden cases, fixture tokens, relationships or local identity fixtures.
 - [User journeys](./user-journeys.md): read before changing a chained user
   journey or its fixtures.
 - [Import boundaries](./import-boundaries.md): read before adding an import, a

@@ -93,8 +93,8 @@ Never point tests at shared development or production services.
 - **Valkey:** raw Valkey and application lifecycle tests require
   `TADOKU_TEST_VALKEY_URL` in the exact form `redis://127.0.0.1:<port>` (or
   `localhost`) for a disposable Valkey 9 service. They never flush the shared
-  instance. Logical databases are reserved per suite: 15 for HTTP E2Es, 14 for
-  their nested cleanup probe, and 13 for the leaderboard cache fence and worker
+  instance. Logical databases are reserved per suite: 15 for HTTP E2Es
+  and 13 for the leaderboard cache fence and worker
   tests. The HTTP E2E fixtures lease their database. Tests sharing database 13
   use unique parsed `e2e/<id>` tenants: the fence and cross-tenant tests create
   and delete only their named tenant keys; worker cache tests register a unique

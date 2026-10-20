@@ -95,7 +95,7 @@ e2e/testdata/<operation>/
   relationships.json     # optional operation-level Keto tuples
   <status>_<description>/
     setup.sql            # optional
-  finalize.sql         # optional final state after the account cast
+    finalize.sql         # optional final state after the account cast
     relationships.json   # optional Keto relation-tuple array
     request.http
     golden.http
@@ -293,8 +293,9 @@ Ordinary golden and journey resets load case SQL before the account seed and
 enable `identity-v2` for registered fixture tenants in the in-process Flipt
 fixture. Explicit user/account primary-key conflicts preserve existing rows,
 including case-specific names, timestamps, inactive accounts and deleted or
-locked users. Repeating the seed is safe; other constraint failures fail setup. Optional `finalize.sql` uses the same
-case/operation resolution and runs after the cast in the reset transaction.
+locked users. Repeating the seed is safe; other constraint failures fail setup.
+Optional `finalize.sql` uses the same case/operation resolution and runs after
+the cast in the reset transaction.
 Put final absence mutations there so the default cast cannot resurrect a user
 that a scenario deliberately removes.
 Focused scenarios that define a different account population reset PostgreSQL
@@ -339,11 +340,12 @@ Native session expiry is fixture-only SQL; no shared provider is used.
 
 To check production routing, render the paired GitOps checkout's Oathkeeper
 chart (version 0.60.1) into a scratch file and pass its absolute path through
-`TADOKU_TEST_EMAIL_GATEWAY_RENDER`. The render must include the public `tadoku.app` identity rule, preview identity
-rules, email rules and this callback configuration. These public identity rules
+`TADOKU_TEST_EMAIL_GATEWAY_RENDER`. The render must include the public
+`tadoku.app` identity rule, preview identity rules, email rules and this callback
+configuration. These public identity rules
 are a prerequisite for gateway login; a render without them cannot run this
-mode. Rendering does not activate those rules in any deployment. The same test reads the
-rendered ConfigMaps and uses checksum-pinned Oathkeeper v25.4.0. Adaptations
+mode. Rendering does not activate those rules in any deployment. The same test
+reads the rendered ConfigMaps and uses checksum-pinned Oathkeeper v25.4.0. Adaptations
 are limited to loopback upstream/callback addresses, listener ports, ephemeral
 signing keys and the synthetic callback bearer. Matching, authenticator options,
 mutators and logging remain from the checked-in configuration or render.

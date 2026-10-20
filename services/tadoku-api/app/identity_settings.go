@@ -20,8 +20,12 @@ func (a *Application) IdentityRequestRecovery(ctx context.Context, recovery iden
 		}
 	}()
 
+	request, err := a.identity.AdmitRecovery(ctx, recovery)
+	if err != nil || request == nil {
+		return err
+	}
 	return postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) error {
-		result, err := a.identity.RequestRecovery(ctx, recovery)
+		result, err := a.identity.WriteRecovery(ctx, *request)
 		if err != nil {
 			return err
 		}

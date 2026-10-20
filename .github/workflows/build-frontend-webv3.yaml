@@ -6,6 +6,7 @@ on:
     paths:
       - "frontend/apps/webv3/**"
       - "frontend/packages/paper-ui/**"
+      - "frontend/packages/api-client/**"
       - "frontend/scripts/check-paper-boundaries.mjs"
       - "frontend/scripts/check-paper-boundaries.test.mjs"
       - "frontend/scripts/smoke-webv3-image.mjs"
@@ -21,6 +22,7 @@ on:
     paths:
       - "frontend/apps/webv3/**"
       - "frontend/packages/paper-ui/**"
+      - "frontend/packages/api-client/**"
       - "frontend/scripts/check-paper-boundaries.mjs"
       - "frontend/scripts/check-paper-boundaries.test.mjs"
       - "frontend/scripts/smoke-webv3-image.mjs"

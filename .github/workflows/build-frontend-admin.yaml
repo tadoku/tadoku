@@ -15,6 +15,7 @@ on:
     paths:
       - "frontend/apps/admin/**"
       - "frontend/packages/ui/**"
+      - "frontend/packages/api-client/**"
       - ".github/workflows/build-frontend-admin.yaml"
       - "frontend/pnpm-lock.yaml"
       - "frontend/Dockerfile"

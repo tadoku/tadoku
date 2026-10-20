@@ -97,6 +97,7 @@ generated diff and never edit generated files by hand.
 | sqlc | Changing a query in `services/tadoku-api/sql/` | `./scripts/generate-sqlc.sh` | `services/tadoku-api/generated/sqlc/` |
 | OpenAPI bundle and oapi-codegen | Changing a fragment in `services/tadoku-api/spec/openapi/` | `./scripts/generate-openapi.sh` | `services/tadoku-api/spec/openapi.yaml` and `services/tadoku-api/generated/openapi/` |
 | API reference | Changing the OpenAPI contract, after `./scripts/generate-openapi.sh` | `pnpm api:generate` in `docs/` | `docs/docs/api/` |
+| Frontend API client | Changing the OpenAPI contract, after `./scripts/generate-openapi.sh` | `pnpm --filter api-client generate` in `frontend/` | `frontend/packages/api-client/src/generated/` |
 
 `./scripts/generate-sqlc.sh` downloads the sqlc version pinned in each query
 package's `generate.go`, so it needs only `curl` and `tar`. New query packages
@@ -111,6 +112,13 @@ Bazel version as the repo root via `tools/oapi-codegen/.bazelversion`. See
 `frontend/` and `docs/` are separate pnpm projects with their own lockfiles.
 Always use `pnpm`, never `npm`. Use pnpm 10.10.0: it is the `packageManager` in
 `docs/package.json` and the version CI installs for `frontend/`. CI uses Node 20.
+
+`frontend/patches/` holds pnpm `patchedDependencies`, declared in
+`frontend/package.json`. `react-dom@18.2.0.patch` applies React 19.0.0's fix to
+the Node stream encoder in `renderToPipeableStream`, which otherwise writes a NUL
+into the HTML when a multi-byte character meets its 2 KB buffer boundary. React 18
+has no release with the fix; delete the patch when the frontend moves to React 19.
+Image builds and dev-cli copy `frontend/patches/` with the lockfile.
 
 ### Frontend checks
 
@@ -155,6 +163,7 @@ console output; they include assertion output and fixture cleanup errors.
 | --- | --- | --- |
 | `build-bazel.yaml` | PRs and `main` pushes touching Bazel or Go inputs | Frozen lockfile, changed forward migration risk check on PRs, Gazelle diff, visibility, provider-dependency, repository, Go comment and `.depolicy.yaml` import checks, OpenAPI bundle and generation diff, build, image target coverage, tests and race tests; scans and publishes backend images from `main` |
 | `verify-sqlc.yaml` | Every PR | Reruns `./scripts/generate-sqlc.sh` and fails on any change |
+| `verify-frontend-api-client.yaml` | PRs and `main` pushes touching the contract, recorded HTTP golden responses, the client package or the frontend lockfile | Regenerates the [frontend API client](../frontend/api-client.md), fails on any change, then typechecks it and replays the recorded responses through it |
 | `verify-standalone-migrations.yaml` | Every PR | Fails when migration SQL files change together with other files, unless the PR has the `migration-move` label |
 | `verify-docs.yaml` | Every PR | Runs `docs/scripts/docs-check.test.mjs`, so removing code that the docs still name fails |
 | `verify-dev-base.yaml` | PRs and `main` pushes touching development manifests, migration inputs or its workflow | Runs `k8s/dev/base/e2e.cjs` against real published images with disposable Docker fixtures, checks profiles and owner/runtime separation, and uploads its report and logs |

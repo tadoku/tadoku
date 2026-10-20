@@ -1,15 +1,11 @@
+import { immersionFeatureFlagDecisions } from 'api-client'
 import { atom, useAtomValue, useSetAtom } from 'jotai'
 import { browserAppUrls } from 'ui/app-urls'
 import { useRouter } from 'next/router'
 import React, { useEffect, useRef } from 'react'
 import type { ReactNode } from 'react'
-import {
-  defaultFeatureFlagDecisions,
-  featureFlagResponseSchema,
-} from './registry'
+import { defaultFeatureFlagDecisions, registeredDecisions } from './registry'
 import type { FeatureFlagDecisions, FeatureFlagKey } from './registry'
-
-const featureFlagEndpoint = () => `${browserAppUrls().apiEndpoint}/immersion/feature-flags`
 
 export const featureFlagDecisionsAtom = atom<FeatureFlagDecisions>({
   ...defaultFeatureFlagDecisions,
@@ -54,20 +50,17 @@ export const FeatureFlagRefresh = ({
         timeoutMilliseconds,
       )
 
-      void fetch(featureFlagEndpoint(), {
+      void immersionFeatureFlagDecisions({
+        baseUrl: browserAppUrls().apiEndpoint,
         credentials: 'include',
         cache: 'no-store',
         signal: currentController.signal,
       })
-        .then(async response => {
-          if (!response.ok) {
-            throw new Error(response.status.toString())
+        .then(({ data }) => {
+          if (data) {
+            setDecisions(registeredDecisions(data.decisions))
           }
-          return featureFlagResponseSchema.parse(await response.json())
-            .decisions
         })
-        .then(setDecisions)
-        .catch(() => {})
         .finally(() => clearTimeout(timeout))
     }
 

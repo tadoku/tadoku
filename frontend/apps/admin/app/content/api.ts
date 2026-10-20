@@ -1,47 +1,120 @@
-import { z } from 'zod'
-import { browserAppUrls } from 'ui/app-urls'
+import {
+  contentPageCreate,
+  contentPageDelete,
+  contentPageFindBySlug,
+  contentPageList,
+  contentPageUpdate,
+  contentPageVersionGet,
+  contentPageVersionList,
+  contentPostCreate,
+  contentPostDelete,
+  contentPostFindBySlug,
+  contentPostList,
+  contentPostUpdate,
+  contentPostVersionGet,
+  contentPostVersionList,
+  type ContentPage,
+  type ContentPageVersion,
+  type ContentPost,
+  type ContentPostVersion,
+} from 'api-client'
+import { apiData, browserApi, requireFields } from 'ui/api'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { ContentConfig, ContentItem, ContentListResponse } from './types'
 
-const root = () => `${browserAppUrls().apiEndpoint}/content`
-
-// Zod schemas for validation
-const ContentItemSchema = z.object({
-  id: z.string(),
-  namespace: z.string().optional().default(''),
-  slug: z.string(),
-  title: z.string(),
-  content: z.string().optional(),
-  html: z.string().optional(),
-  published_at: z.string().nullable().optional().default(null),
-  created_at: z.string().optional().default(''),
-  updated_at: z.string().optional().default(''),
-})
-
-const ContentListSchema = z.object({
-  total_size: z.number(),
-  next_page_token: z.string(),
-})
-
-async function handleResponse(response: Response) {
-  if (response.status === 401) throw new Error('401')
-  if (response.status === 403) throw new Error('403')
-  if (response.status === 404) throw new Error('404')
-  if (!response.ok) throw new Error(response.status.toString())
-  return response.json()
+type ContentInput = {
+  id: string
+  slug: string
+  title: string
+  body: string
+  published_at?: string | null
 }
 
-function parseItem(data: z.infer<typeof ContentItemSchema>, bodyField: 'content' | 'html'): ContentItem {
+// The API reads a missing and a null publish time alike, as a draft.
+const written = (input: ContentInput) => ({
+  slug: input.slug,
+  title: input.title,
+  ...(input.published_at ? { published_at: input.published_at } : {}),
+})
+
+function item(record: ContentPage | ContentPost, body: string | undefined): ContentItem {
   return {
-    id: data.id,
-    namespace: data.namespace ?? '',
-    slug: data.slug,
-    title: data.title,
-    body: (bodyField === 'content' ? data.content : data.html) ?? '',
-    published_at: data.published_at ?? null,
-    created_at: data.created_at ?? '',
-    updated_at: data.updated_at ?? '',
+    id: requireFields(record, 'id').id,
+    namespace: ('namespace' in record && record.namespace) || '',
+    slug: record.slug,
+    title: record.title,
+    body: body ?? '',
+    published_at: record.published_at ?? null,
+    created_at: record.created_at ?? '',
+    updated_at: record.updated_at ?? '',
   }
+}
+
+function versionDetail(record: ContentPageVersion | ContentPostVersion, body: string | undefined): ContentVersionDetail {
+  const { id, version, title, created_at } = record
+  return { id, version, title, created_at, body: body ?? '' }
+}
+
+type Page = { page_size: number; page: number; include_drafts: boolean }
+
+/** The generated operations behind each kind of content, mapped onto the editor's content items. */
+const kinds = {
+  pages: {
+    list: async (namespace: string, query: Page) => {
+      const data = await apiData(contentPageList({ ...browserApi(), path: { namespace }, query }))
+      return { ...data, items: data.pages.map(page => item(page, page.html)) }
+    },
+    find: async (namespace: string, slug: string) => {
+      const page = await apiData(contentPageFindBySlug({ ...browserApi(), path: { namespace, slug } }))
+      return item(page, page.html)
+    },
+    create: async (namespace: string, input: ContentInput) => {
+      const body = { ...written(input), id: input.id, html: input.body }
+      const page = await apiData(contentPageCreate({ ...browserApi(), path: { namespace }, body }))
+      return item(page, page.html)
+    },
+    update: async (namespace: string, input: ContentInput) => {
+      const body = { ...written(input), html: input.body }
+      const page = await apiData(contentPageUpdate({ ...browserApi(), path: { namespace, slug: input.id }, body }))
+      return item(page, page.html)
+    },
+    remove: (namespace: string, id: string) =>
+      apiData(contentPageDelete({ ...browserApi(), path: { namespace, slug: id } })),
+    versions: async (namespace: string, id: string) =>
+      (await apiData(contentPageVersionList({ ...browserApi(), path: { namespace, id } }))).versions,
+    version: async (namespace: string, id: string, contentId: string) => {
+      const record = await apiData(contentPageVersionGet({ ...browserApi(), path: { namespace, id, contentId } }))
+      return versionDetail(record, record.html)
+    },
+  },
+  posts: {
+    list: async (namespace: string, query: Page) => {
+      const data = await apiData(contentPostList({ ...browserApi(), path: { namespace }, query }))
+      return { ...data, items: data.posts.map(post => item(post, post.content)) }
+    },
+    find: async (namespace: string, slug: string) => {
+      const post = await apiData(contentPostFindBySlug({ ...browserApi(), path: { namespace, slug } }))
+      return item(post, post.content)
+    },
+    create: async (namespace: string, input: ContentInput) => {
+      const body = { ...written(input), id: input.id, content: input.body }
+      const post = await apiData(contentPostCreate({ ...browserApi(), path: { namespace }, body }))
+      return item(post, post.content)
+    },
+    update: async (namespace: string, input: ContentInput) => {
+      const body = { ...written(input), content: input.body }
+      const post = await apiData(contentPostUpdate({ ...browserApi(), path: { namespace, slug: input.id }, body }))
+      return item(post, post.content)
+    },
+    remove: (namespace: string, id: string) =>
+      apiData(contentPostDelete({ ...browserApi(), path: { namespace, slug: id } })),
+    versions: async (namespace: string, id: string) =>
+      (await apiData(contentPostVersionList({ ...browserApi(), path: { namespace, id } }))).versions,
+    version: async (namespace: string, id: string, contentId: string) => {
+      const record = await apiData(contentPostVersionGet({ ...browserApi(), path: { namespace, id, contentId } }))
+      return versionDetail(record, record.content)
+    },
+  },
 }
 
 export function useContentList(
@@ -53,24 +126,12 @@ export function useContentList(
   return useQuery(
     [config.type, 'list', namespace, opts],
     async (): Promise<ContentListResponse> => {
-      const params = new URLSearchParams({
-        page_size: opts.pageSize.toString(),
-        page: opts.page.toString(),
-        include_drafts: 'true',
+      const { items, total_size, next_page_token } = await kinds[config.type].list(namespace, {
+        page_size: opts.pageSize,
+        page: opts.page,
+        include_drafts: true,
       })
-      const response = await fetch(
-        `${root()}/${config.type}/${namespace}?${params}`,
-        { credentials: 'include' },
-      )
-      const data = await handleResponse(response)
-      const list = ContentListSchema.parse(data)
-      const items = z.array(ContentItemSchema).parse(data[config.type])
-
-      return {
-        items: items.map(item => parseItem(item, config.bodyField)),
-        total_size: list.total_size,
-        next_page_token: list.next_page_token,
-      }
+      return { items, total_size, next_page_token }
     },
     { ...options, retry: false },
   )
@@ -84,15 +145,7 @@ export function useContentFind(
 ) {
   return useQuery(
     [config.type, 'find', namespace, slug],
-    async (): Promise<ContentItem> => {
-      const response = await fetch(
-        `${root()}/${config.type}/${namespace}/${slug}`,
-        { credentials: 'include' },
-      )
-      const data = await handleResponse(response)
-      const item = ContentItemSchema.parse(data)
-      return parseItem(item, config.bodyField)
-    },
+    async (): Promise<ContentItem> => kinds[config.type].find(namespace, slug),
     { ...options, retry: false },
   )
 }
@@ -104,36 +157,7 @@ export function useContentCreate(
   onError: (error: Error) => void,
 ) {
   return useMutation({
-    mutationFn: async (input: {
-      id: string
-      slug: string
-      title: string
-      body: string
-      published_at?: string | null
-    }) => {
-      const payload: Record<string, unknown> = {
-        id: input.id,
-        slug: input.slug,
-        title: input.title,
-        [config.bodyField]: input.body,
-      }
-      if (input.published_at !== undefined) {
-        payload.published_at = input.published_at
-      }
-
-      const response = await fetch(
-        `${root()}/${config.type}/${namespace}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-          credentials: 'include',
-        },
-      )
-      const data = await handleResponse(response)
-      const item = ContentItemSchema.parse(data)
-      return parseItem(item, config.bodyField)
-    },
+    mutationFn: async (input: ContentInput) => kinds[config.type].create(namespace, input),
     onSuccess,
     onError,
   })
@@ -146,35 +170,7 @@ export function useContentUpdate(
   onError: (error: Error) => void,
 ) {
   return useMutation({
-    mutationFn: async (input: {
-      id: string
-      slug: string
-      title: string
-      body: string
-      published_at?: string | null
-    }) => {
-      const payload: Record<string, unknown> = {
-        slug: input.slug,
-        title: input.title,
-        [config.bodyField]: input.body,
-      }
-      if (input.published_at !== undefined) {
-        payload.published_at = input.published_at
-      }
-
-      const response = await fetch(
-        `${root()}/${config.type}/${namespace}/${input.id}`,
-        {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-          credentials: 'include',
-        },
-      )
-      const data = await handleResponse(response)
-      const item = ContentItemSchema.parse(data)
-      return parseItem(item, config.bodyField)
-    },
+    mutationFn: async (input: ContentInput) => kinds[config.type].update(namespace, input),
     onSuccess,
     onError,
   })
@@ -188,17 +184,7 @@ export function useContentDelete(
 ) {
   return useMutation({
     mutationFn: async (id: string) => {
-      const response = await fetch(
-        `${root()}/${config.type}/${namespace}/${id}`,
-        {
-          method: 'DELETE',
-          credentials: 'include',
-        },
-      )
-      if (response.status === 204) return
-      if (response.status === 403) throw new Error('403')
-      if (response.status === 404) throw new Error('404')
-      if (!response.ok) throw new Error(response.status.toString())
+      await kinds[config.type].remove(namespace, id)
     },
     onSuccess,
     onError,
@@ -225,23 +211,7 @@ export function useContentVersionList(
 ) {
   return useQuery(
     [config.type, 'versions', namespace, id],
-    async (): Promise<ContentVersion[]> => {
-      const response = await fetch(
-        `${root()}/${config.type}/${namespace}/${id}/versions`,
-        { credentials: 'include' },
-      )
-      const data = await handleResponse(response)
-      return z
-        .array(
-          z.object({
-            id: z.string(),
-            version: z.number(),
-            title: z.string(),
-            created_at: z.string(),
-          }),
-        )
-        .parse(data.versions)
-    },
+    async (): Promise<ContentVersion[]> => kinds[config.type].versions(namespace, id),
     { ...options, retry: false },
   )
 }
@@ -255,30 +225,7 @@ export function useContentVersionGet(
 ) {
   return useQuery(
     [config.type, 'version', namespace, id, contentId],
-    async (): Promise<ContentVersionDetail> => {
-      const response = await fetch(
-        `${root()}/${config.type}/${namespace}/${id}/versions/${contentId}`,
-        { credentials: 'include' },
-      )
-      const data = await handleResponse(response)
-      const parsed = z
-        .object({
-          id: z.string(),
-          version: z.number(),
-          title: z.string(),
-          content: z.string().optional(),
-          html: z.string().optional(),
-          created_at: z.string(),
-        })
-        .parse(data)
-      return {
-        id: parsed.id,
-        version: parsed.version,
-        title: parsed.title,
-        body: (config.bodyField === 'content' ? parsed.content : parsed.html) ?? '',
-        created_at: parsed.created_at,
-      }
-    },
+    async (): Promise<ContentVersionDetail> => kinds[config.type].version(namespace, id, contentId ?? ''),
     { ...options, enabled: !!contentId && (options?.enabled ?? true), retry: false },
   )
 }
@@ -292,15 +239,7 @@ export function useContentFindById(
 ) {
   return useQuery(
     [config.type, 'findById', namespace, id],
-    async (): Promise<ContentItem> => {
-      const response = await fetch(
-        `${root()}/${config.type}/${namespace}/${id}`,
-        { credentials: 'include' },
-      )
-      const data = await handleResponse(response)
-      const item = ContentItemSchema.parse(data)
-      return parseItem(item, config.bodyField)
-    },
+    async (): Promise<ContentItem> => kinds[config.type].find(namespace, id),
     { ...options, retry: false },
   )
 }

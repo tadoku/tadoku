@@ -11,7 +11,8 @@ func (s *server) IdentityRecoveryCreate(
 	ctx context.Context,
 	request openapi.IdentityRecoveryCreateRequestObject,
 ) (openapi.IdentityRecoveryCreateResponseObject, error) {
-	var command app.IdentityRecovery
+	metadata := ctx.Value(identityRequestKey{}).(identityRequestMetadata)
+	command := app.IdentityRecovery{IP: metadata.ip}
 	if request.Body != nil {
 		command.Email, command.ReturnTo = string(request.Body.Email), request.Body.ReturnTo
 	}

@@ -1,22 +1,10 @@
-import { z } from 'zod'
+import { identityLogout, identitySessionGet, type IdentityAccount, type IdentitySession } from 'api-client'
 import { browserAppUrls, serverApiEndpointForHost } from './app-urls'
 
-const accountSchema = z.object({
-  id: z.string().uuid(),
-  email: z.string(),
-  display_name: z.string(),
-  created_at: z.string(),
-  authenticated_at: z.string(),
-})
+export type Account = IdentityAccount
+export type AccountApp = IdentitySession['account_app']
 
-const sessionSchema = z.object({
-  account_app: z.enum(['v1', 'v2']),
-  account: accountSchema.nullable(),
-})
-
-export type Account = z.infer<typeof accountSchema>
-export type AccountApp = z.infer<typeof sessionSchema>['account_app']
-
+/** The request's identity session, or undefined when the identity API gives no valid answer. */
 export async function readIdentitySession(
   host?: string,
   headers?: { cookie?: string; 'x-dev-branch'?: string | string[] },
@@ -28,28 +16,22 @@ export async function readIdentitySession(
   const endpoint = typeof window === 'undefined'
     ? serverApiEndpointForHost(host)
     : browserAppUrls().apiEndpoint
-  try {
-    const response = await fetch(`${endpoint}/identity/session`, {
-      headers: forwarded,
-      credentials: 'include',
-      cache: 'no-store',
-      redirect: 'error',
-      signal: AbortSignal.timeout(3_000),
-    })
-    if (!response.ok) throw new Error(response.status.toString())
-    return sessionSchema.parse(await response.json())
-  } catch {
-    return undefined
-  }
+  const { data } = await identitySessionGet({
+    baseUrl: endpoint,
+    headers: forwarded,
+    credentials: 'include',
+    cache: 'no-store',
+    redirect: 'error',
+    signal: AbortSignal.timeout(3_000),
+  })
+  return data
 }
 
 export async function logout() {
-  const response = await fetch(`${browserAppUrls().apiEndpoint}/identity/logout`, {
-    method: 'POST',
-    signal: AbortSignal.timeout(10_000),
+  const { error, response } = await identityLogout({
+    baseUrl: browserAppUrls().apiEndpoint,
     credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: '{}',
+    signal: AbortSignal.timeout(10_000),
   })
-  if (!response.ok) throw new Error(response.status.toString())
+  if (error !== undefined) throw new Error(response ? response.status.toString() : 'unavailable')
 }

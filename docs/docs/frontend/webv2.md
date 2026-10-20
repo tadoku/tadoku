@@ -17,7 +17,7 @@ webv2 covers logging, official and user-created contests (including registration
 ## Stack
 
 - Next.js 13 Pages Router. Routes live in `pages/`, and feature code lives in `app/`, imported as `@app/*`. The `app/` directory is not the Next.js App Router.
-- React Query 3 hooks in each feature's `api.ts` call Tadoku API with `fetch`, and Zod parses every response. There is no generated client.
+- React Query 3 hooks in each feature's `api.ts` call Tadoku API through the [generated client](api-client.md), which validates every response.
 - The API contract is `services/tadoku-api/spec/openapi.yaml` (see the [API reference](../api/index.md)). webv2 uses its `immersion`, `content` and `authz` operations.
 - Sessions and tenant account-app selection come from `GET /identity/session` and are held in Jotai. Login, registration and settings links select the v1 account host or authv2 from that response; logout posts to `POST /identity/logout`.
 - Forms use react-hook-form with `@hookform/resolvers` for Zod. The app also uses Luxon for dates, Chart.js for charts, Tailwind CSS, and the legacy `ui` components.

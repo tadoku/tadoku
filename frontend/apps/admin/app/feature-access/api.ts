@@ -1,12 +1,15 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { browserAppUrls } from 'ui/app-urls'
 import {
-  FeatureAccessResult,
-  FeatureFlagKey,
-  featureAccessResultSchema,
-} from './contracts'
+  immersionFeatureAccessGet,
+  immersionFeatureAccessGrant,
+  immersionFeatureAccessRevoke,
+  type ImmersionFeatureAccessResponse,
+  type ImmersionManagedFeatureFlagKey,
+} from 'api-client'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { browserApi } from 'ui/api'
 
-const immersionRoot = () => `${browserAppUrls().apiEndpoint}/immersion`
+export type FeatureFlagKey = ImmersionManagedFeatureFlagKey
+export type FeatureAccessResult = ImmersionFeatureAccessResponse
 
 interface FeatureAccessVariables {
   targetUserId: string
@@ -17,55 +20,41 @@ interface FeatureAccessMutationVariables extends FeatureAccessVariables {
   enabled: boolean
 }
 
-const featureAccessEndpoint = ({
-  targetUserId,
-  flagKey,
-}: FeatureAccessVariables) =>
-  `${immersionRoot()}/admin/feature-flags/${encodeURIComponent(
-    flagKey,
-  )}/users/${encodeURIComponent(targetUserId)}`
-
 const queryKey = ({ targetUserId, flagKey }: FeatureAccessVariables) => [
   'feature-access',
   targetUserId,
   flagKey,
 ]
 
-const responseError = async (response: Response) => {
-  if (response.status === 401) throw new Error('401')
-  if (response.status === 403) throw new Error('403')
+const resultOf = async (
+  request: Promise<{ data?: FeatureAccessResult; error?: unknown; response?: Response }>,
+) => {
+  const { data, error, response } = await request
+  if (response?.ok && error === undefined && data) return data
+  if (response?.status === 401) throw new Error('401')
+  if (response?.status === 403) throw new Error('403')
   throw new Error('feature access unavailable')
 }
 
-export const getFeatureAccess = async ({
-  targetUserId,
-  flagKey,
-}: FeatureAccessVariables): Promise<FeatureAccessResult> => {
-  const response = await fetch(
-    featureAccessEndpoint({ targetUserId, flagKey }),
-    {
-      credentials: 'include',
-    },
-  )
-  if (!response.ok) await responseError(response)
-  return featureAccessResultSchema.parse(await response.json())
-}
+const options = ({ targetUserId, flagKey }: FeatureAccessVariables) => ({
+  ...browserApi(),
+  path: { flagKey, userId: targetUserId },
+})
+
+export const getFeatureAccess = async (
+  variables: FeatureAccessVariables,
+): Promise<FeatureAccessResult> =>
+  resultOf(immersionFeatureAccessGet(options(variables)))
 
 export const updateFeatureAccess = async ({
-  targetUserId,
-  flagKey,
   enabled,
-}: FeatureAccessMutationVariables): Promise<FeatureAccessResult> => {
-  const response = await fetch(
-    featureAccessEndpoint({ targetUserId, flagKey }),
-    {
-      method: enabled ? 'PUT' : 'DELETE',
-      credentials: 'include',
-    },
+  ...variables
+}: FeatureAccessMutationVariables): Promise<FeatureAccessResult> =>
+  resultOf(
+    enabled
+      ? immersionFeatureAccessGrant(options(variables))
+      : immersionFeatureAccessRevoke(options(variables)),
   )
-  if (!response.ok) await responseError(response)
-  return featureAccessResultSchema.parse(await response.json())
-}
 
 export const useFeatureAccess = (
   variables: FeatureAccessVariables,

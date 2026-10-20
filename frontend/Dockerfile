@@ -8,6 +8,7 @@ WORKDIR /app
 # Set up pnpm
 RUN npm install -g pnpm@10.10.0 && pnpm config set store-dir .pnpm-store
 COPY pnpm-lock.yaml .npmrc* ./
+COPY patches ./patches
 RUN pnpm fetch
 
 # Build

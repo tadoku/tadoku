@@ -1,6 +1,6 @@
 ---
 title: Frontend conventions
-description: The binding rules for frontend code in Tadoku, covering pnpm, the legacy ui design system, TanStack Form and React Hook Form, API data parsing, Paper boundaries and the checks to run.
+description: The binding rules for frontend code in Tadoku, covering pnpm, the legacy ui design system, TanStack Form and React Hook Form, calling Tadoku API, Paper boundaries and the checks to run.
 ---
 
 # Frontend conventions
@@ -106,8 +106,8 @@ part of the original destination. Registration uses the same protected-page hook
 
 Webv2 and admin read `GET /identity/session` on every page request, including
 guests. Its `account_app` selects account links, and logout uses
-`POST /identity/logout`. `frontend/packages/ui/identity.ts` owns response parsing
-and transport; the API owns cookies. SSR forwards Cookie and X-Dev-Branch to
+`POST /identity/logout`. `frontend/packages/ui/identity.ts` calls both through the
+generated client; the API owns cookies. SSR forwards Cookie and X-Dev-Branch to
 the private API endpoint, and responses use `Cache-Control: private, no-store`.
 Session transport errors, invalid responses and its bounded timeout produce a
 retry screen without authorizing protected content. Auth does not start a
@@ -122,11 +122,12 @@ when `useSession()` has an authenticated session. Anonymous login pages must
 not create logout flows: their CSRF cookies can race the login flow. Session
 changes enable logout without requiring callers to reload the page.
 
-## API response parsing
+## Calling Tadoku API
 
-webv2 and admin call Tadoku API with React Query hooks and parse every response
-with Zod before using it ([ADR 003](../adr/003-zod.md)). The contract is
-`services/tadoku-api/spec/openapi.yaml`.
+Every frontend calls Tadoku API through the client generated from
+`services/tadoku-api/spec/openapi.yaml`, whose operations validate responses with
+Zod ([ADR 003](../adr/003-zod.md)). Never write an API URL, request or response
+type, or response schema by hand; see [Tadoku API client](api-client.md).
 
 ## Paper applications
 

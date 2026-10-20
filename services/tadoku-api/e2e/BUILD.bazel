@@ -53,6 +53,7 @@ go_test(
         "identity_legacy_listing_test.go",
         "identity_providers_test.go",
         "identity_read_test.go",
+        "identity_recovery_admission_test.go",
         "identity_recovery_journey_test.go",
         "identity_recovery_test.go",
         "identity_registration_admission_test.go",

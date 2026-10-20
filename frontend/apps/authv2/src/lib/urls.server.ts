@@ -18,6 +18,7 @@ export function requestUrls() {
   const hostname = host?.toLowerCase().replace(/:\d+$/, '')
   const production = web.hostname === 'tadoku.app'
   const branchRoot = production ? 'authv2.preview.tadoku.app' : `authv2.${web.hostname}`
+  const origin = `${web.protocol}//${host?.toLowerCase() || `authv2.${web.host}`}`
   const account = new URL(web.origin)
   account.hostname = `account.${web.hostname}`
   if (hostname?.endsWith(`.${branchRoot}`)) {
@@ -30,5 +31,5 @@ export function requestUrls() {
     api.protocol = web.protocol
   }
 
-  return { webUrl: web.origin, accountUrl: account.origin, apiUrl: api.href.replace(/\/$/, '') }
+  return { origin, webUrl: web.origin, accountUrl: account.origin, apiUrl: api.href.replace(/\/$/, '') }
 }

@@ -189,8 +189,10 @@ operator UI.
 6. To expose it to the browser, add it to both `PublicDecisions` types and the
    service mapping, the `ImmersionFeatureFlagDecisions` schema in
    `services/tadoku-api/spec/openapi/schemas/immersion.yaml` and `services/tadoku-api/transport/http/feature_flags.go`.
-   Run `./scripts/generate-openapi.sh` and `pnpm api:generate`, and update the
+   Run `./scripts/generate-openapi.sh`, `pnpm api:generate` and
+   `pnpm --filter api-client generate`, and update the
    `ImmersionFeatureFlagDecisions` goldens.
 7. For named-user access, add a segment and rollout to `features.yaml`, the key
-   and segment to `domain.go`, the `ImmersionManagedFeatureFlagKey` enum, the
-   `frontend/apps/admin/app/feature-access/contracts.ts` schema, and an Oathkeeper rule for reading the segment.
+   and segment to `domain.go`, the `ImmersionManagedFeatureFlagKey` enum (then
+   regenerate the frontend API client, which admin uses), and an Oathkeeper rule
+   for reading the segment.

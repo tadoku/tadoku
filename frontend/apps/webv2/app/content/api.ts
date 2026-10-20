@@ -1,89 +1,59 @@
-import { z } from 'zod'
-import { browserAppUrls } from 'ui/app-urls'
+import {
+  contentAnnouncementListActive,
+  contentPageFindBySlug,
+  contentPostFindBySlug,
+  contentPostList,
+  type ContentAnnouncement,
+  type ContentPage,
+  type ContentPost,
+  type ContentPosts,
+} from 'api-client'
+import { apiData, browserApi, requireFields, type WithRequired } from 'ui/api'
 import { useQuery } from '@tanstack/react-query'
 
-
-const root = () => `${browserAppUrls().apiEndpoint}/content`
-
-const Page = z.object({
-  id: z.string(),
-  slug: z.string(),
-  title: z.string(),
-  html: z.string(),
-})
-
-export type Page = z.infer<typeof Page>
+export type Page = WithRequired<ContentPage, 'html'>
 
 export const usePage = (slug: string) =>
   useQuery(['content_page', slug], async ({ queryKey }): Promise<Page> => {
     const [_, slug] = queryKey
-    const response = await fetch(`${root()}/pages/tadoku/${slug}`)
-
-    if (response.status !== 200) {
-      throw new Error(response.status.toString())
-    }
-
-    return Page.parse(await response.json())
+    const page = await apiData(
+      contentPageFindBySlug({
+        ...browserApi(),
+        path: { namespace: 'tadoku', slug },
+      }),
+    )
+    return requireFields(page, 'html')
   })
 
-const Post = z.object({
-  id: z.string(),
-  slug: z.string(),
-  title: z.string(),
-  content: z.string(),
-  published_at: z.string().datetime({ offset: true }),
-})
-
-export type Post = z.infer<typeof Post>
+export type Post = WithRequired<ContentPost, 'published_at'>
 
 export const usePost = (slug: string) =>
   useQuery(['content_post', slug], async ({ queryKey }): Promise<Post> => {
     const [_, slug] = queryKey
-    const response = await fetch(`${root()}/posts/tadoku/${slug}`)
-
-    if (response.status !== 200) {
-      throw new Error(response.status.toString())
-    }
-
-    return Post.parse(await response.json())
+    const post = await apiData(
+      contentPostFindBySlug({
+        ...browserApi(),
+        path: { namespace: 'tadoku', slug },
+      }),
+    )
+    return requireFields(post, 'published_at')
   })
 
-const PostList = z.object({
-  posts: z.array(Post),
-  next_page_token: z.string(),
-  total_size: z.number(),
-})
+export type PostList = Omit<ContentPosts, 'posts'> & { posts: Post[] }
 
-export type PostList = z.infer<typeof PostList>
-
-const ActiveAnnouncement = z.object({
-  id: z.string(),
-  title: z.string(),
-  content: z.string(),
-  style: z.enum(['success', 'warning', 'error', 'info']),
-  href: z.string().nullable().optional(),
-  starts_at: z.string(),
-  ends_at: z.string(),
-})
-
-export type ActiveAnnouncement = z.infer<typeof ActiveAnnouncement>
-
-const ActiveAnnouncements = z.object({
-  announcements: z.array(ActiveAnnouncement),
-})
+export type ActiveAnnouncement = WithRequired<ContentAnnouncement, 'id'>
 
 export const useActiveAnnouncements = () =>
   useQuery(
     ['content_announcements', 'active'],
     async (): Promise<ActiveAnnouncement[]> => {
-      const response = await fetch(`${root()}/announcements/tadoku/active`)
-
-      if (response.status !== 200) {
-        return []
-      }
-
-      const data = ActiveAnnouncements.parse(await response.json())
-      return data.announcements
+      const { data } = await contentAnnouncementListActive({
+        ...browserApi(),
+        path: { namespace: 'tadoku' },
+      })
+      return (data?.announcements ?? []).map(announcement =>
+        requireFields(announcement, 'id'),
+      )
     },
     {
       staleTime: 60_000,
@@ -101,15 +71,16 @@ export const usePostList = ({
   useQuery(
     ['content_post', 'list', page],
     async ({ queryKey }): Promise<PostList> => {
-      const page = queryKey[2]
-      const response = await fetch(
-        `${root()}/posts/tadoku?page_size=${pageSize}&page=${page}`,
+      const data = await apiData(
+        contentPostList({
+          ...browserApi(),
+          path: { namespace: 'tadoku' },
+          query: { page_size: pageSize, page: queryKey[2] as number },
+        }),
       )
-
-      if (response.status !== 200) {
-        throw new Error(response.status.toString())
+      return {
+        ...data,
+        posts: data.posts.map(post => requireFields(post, 'published_at')),
       }
-
-      return PostList.parse(await response.json())
     },
   )

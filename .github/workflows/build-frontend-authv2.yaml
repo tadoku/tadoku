@@ -12,6 +12,7 @@ on:
     paths:
       - "frontend/apps/authv2/**"
       - "frontend/packages/paper-ui/**"
+      - "frontend/packages/api-client/**"
       - "frontend/scripts/check-paper-boundaries.mjs"
       - "frontend/scripts/check-paper-boundaries.test.mjs"
       - "frontend/paper-boundaries.json"
@@ -27,6 +28,7 @@ on:
     paths:
       - "frontend/apps/authv2/**"
       - "frontend/packages/paper-ui/**"
+      - "frontend/packages/api-client/**"
       - "frontend/scripts/check-paper-boundaries.mjs"
       - "frontend/scripts/check-paper-boundaries.test.mjs"
       - "frontend/paper-boundaries.json"

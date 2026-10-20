@@ -133,36 +133,58 @@ commit;
 SQL
 }
 
+NATIVE_RUNNER=""
+NATIVE_FORWARD_LOG=""
+NATIVE_FORWARD_PID=""
+
+# Stops the owned port-forward and removes the runner and its log; safe to run more than once.
+cleanup_native_accounts() {
+  if [ -n "$NATIVE_FORWARD_PID" ]; then
+    kill "$NATIVE_FORWARD_PID" 2>/dev/null || true
+    wait "$NATIVE_FORWARD_PID" 2>/dev/null || true
+  fi
+  rm -f -- ${NATIVE_RUNNER:+"$NATIVE_RUNNER"} ${NATIVE_FORWARD_LOG:+"$NATIVE_FORWARD_LOG"}
+  NATIVE_RUNNER=""
+  NATIVE_FORWARD_LOG=""
+  NATIVE_FORWARD_PID=""
+}
+
+# Cleans up, then ends the seed with the signal it received.
+interrupt_native_accounts() {
+  cleanup_native_accounts
+  trap - "$1"
+  kill -"$1" "$$"
+}
+
 seed_native_accounts() {
   local admin_id="$1"
   local reader_id="$2"
   local pod
-  local forward_log
-  local forward_pid
   local port=""
-  local runner
   local database_password_value
+  trap cleanup_native_accounts EXIT
+  trap 'interrupt_native_accounts HUP' HUP
+  trap 'interrupt_native_accounts INT' INT
+  trap 'interrupt_native_accounts TERM' TERM
   database_password_value="$(database_password tadoku)"
-  runner="$(mktemp)"
+  NATIVE_RUNNER="$(mktemp)"
   # Build before forwarding; the database credentials reach only the built command.
   (cd "$ROOT" && env -u TADOKU_DEV_ADMIN_PASSWORD -u TADOKU_DEV_READER_PASSWORD \
-    bazel run --noshow_progress --script_path="$runner" //services/tadoku-api/cmd/tadoku-tenant)
+    bazel run --noshow_progress --script_path="$NATIVE_RUNNER" //services/tadoku-api/cmd/tadoku-tenant)
   pod="$(db_pod)"
-  forward_log="$(mktemp)"
+  NATIVE_FORWARD_LOG="$(mktemp)"
 
   kubectl --context "$KUBE_CONTEXT" -n "$DB_NAMESPACE" port-forward --address 127.0.0.1 "pod/${pod}" :5432 \
-    > "$forward_log" 2>&1 &
-  forward_pid=$!
+    > "$NATIVE_FORWARD_LOG" 2>&1 &
+  NATIVE_FORWARD_PID=$!
   for _ in $(seq 1 100); do
-    port="$(sed -n 's/^Forwarding from 127\.0\.0\.1:\([0-9][0-9]*\) -> 5432$/\1/p' "$forward_log")"
-    if [ -n "$port" ] || ! kill -0 "$forward_pid" 2>/dev/null; then
+    port="$(sed -n 's/^Forwarding from 127\.0\.0\.1:\([0-9][0-9]*\) -> 5432$/\1/p' "$NATIVE_FORWARD_LOG")"
+    if [ -n "$port" ] || ! kill -0 "$NATIVE_FORWARD_PID" 2>/dev/null; then
       break
     fi
     sleep 0.2
   done
   if [ -z "$port" ]; then
-    kill "$forward_pid" 2>/dev/null || true
-    rm -f "$forward_log" "$runner"
     echo "could not forward the development database to loopback" >&2
     exit 1
   fi
@@ -179,10 +201,9 @@ seed_native_accounts() {
     TADOKU_DEV_ADMIN_PASSWORD="$ADMIN_PASSWORD" \
     TADOKU_DEV_READER_EMAIL="$READER_EMAIL" \
     TADOKU_DEV_READER_PASSWORD="$READER_PASSWORD" \
-    "$runner" canonical-development-accounts --admin-id "$admin_id" --reader-id "$reader_id" || status=$?
-  kill "$forward_pid" 2>/dev/null || true
-  wait "$forward_pid" 2>/dev/null || true
-  rm -f "$forward_log" "$runner"
+    "$NATIVE_RUNNER" canonical-development-accounts --admin-id "$admin_id" --reader-id "$reader_id" || status=$?
+  cleanup_native_accounts
+  trap - EXIT HUP INT TERM
   if [ "$status" -ne 0 ]; then
     echo "native fixture accounts were not seeded; nothing else was changed" >&2
     exit "$status"

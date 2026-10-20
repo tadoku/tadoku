@@ -54,6 +54,9 @@ and their owner never changes, so a registered account cannot become a fixture.
 The seed builds `tadoku-tenant`, forwards the database to loopback and runs
 `canonical-development-accounts` with the runtime `tadoku` role; see
 [Tenant lifecycle](../tadoku-api/tenant-lifecycle.md#development-accounts-and-cleanup-inspection).
+It stops the port-forward and deletes the built command when that step
+succeeds, fails or is interrupted by `SIGHUP`, `SIGINT` or `SIGTERM`; after a
+`SIGKILL`, stop the leftover `kubectl port-forward` yourself.
 It follows the native branch account contract below: existing accounts,
 including imported ones, keep their email, password, state, timestamps and
 sessions, and an email held by another UUID fails the pair before any Keto or

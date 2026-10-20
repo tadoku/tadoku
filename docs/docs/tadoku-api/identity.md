@@ -14,7 +14,9 @@ its safe default is `false`, including for guests. Profile and moderation caller
 `identity.Reader`, constructed by `identity.NewReader`. It selects tenant-local
 reads or the v1 adapter from the tenant flag; callers never select the provider.
 
-Recovery, settings and account search/deletion remain skeletons returning `501`.
+Account lookup and search are implemented by the separate `ReadService` used by
+profile and moderation; the `Accounts` service's embedded Reader methods remain
+`501` stubs, as do recovery, settings and account deletion.
 Recovery requests already reject an unsafe `return_to`. [Retained email](./email.md) implements transactional templates,
 delivery, audited reads and retention; identity recovery/settings do not yet
 produce those messages.

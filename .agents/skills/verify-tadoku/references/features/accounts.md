@@ -67,15 +67,19 @@ Record `account_app`; an unset `identity-v2` decision remains `v1`.
 
 The base API and overlays supply the development cookie domain and Kratos public
 URL.
-Recovery/settings and account lookup/search are still skeletons. Email list/detail
+Account lookup/search use the separate identity `ReadService` for profile and
+moderation; the `Accounts` service's Reader methods, recovery/settings and account
+deletion remain `501` stubs. Email list/detail
 routes accept a verified tenant `email:read` bearer or a Keto-authorized
 administrator; see [Retained email API](admin.md#retained-email-api).
 The development base exposes identity and GET email paths through separate
 public Oathkeeper rules. Verify that both the shared rules and the relevant
 backend image are deployed; a frontend overlay does not deploy these rules.
 The public
-identity rule forwards cookies with a guest JWT; the Oathkeeper callback switch
-for other routes remains a separate prerequisite. Confirm actual branch API
+identity rule forwards cookies with a guest JWT; the development configuration
+also switches other cookie-bearing routes to the identity callback and adds the
+private SSR session rule. Verify their deployed revision after source merge;
+the production gateway switch remains separately held. Confirm actual branch API
 responses rather than treating an API port-forward as the public journey.
 Branch v2 flag provisioning must use an authorized owner/tenant mechanism. A temporary, uncommitted `identity-v2` seed
 in the checkout before `dev up` is confined to that owner's test namespace;

@@ -201,6 +201,23 @@ jobs:
       - name: Show PgBouncer regression evidence
         run: cat bazel-testlogs/services/tadoku-api/infra/postgres/pgbouncer_test/test.log
 
+      - name: Test identity importer staging
+        run: ./tools/ci/stage_identity_importer_test.sh
+
+      - name: Stage release identity importer
+        run: |
+          ./tools/ci/stage_identity_importer.sh "$RUNNER_TEMP/identity-importer"
+          cat "$RUNNER_TEMP/identity-importer/receipt.json"
+
+      - name: Retain release identity importer
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: tadoku-identity-import-${{ github.sha }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/identity-importer/
+          if-no-files-found: error
+          retention-days: 90
+
       - name: Load backend images for scanning
         if: github.event_name != 'pull_request'
         run: bazel run --lockfile_mode=error --config=release //:load_images

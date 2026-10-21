@@ -143,6 +143,11 @@ stays on the production account host, and identities are shared with
 production. [Frontend conventions](../frontend/conventions.md#cross-app-urls)
 describe how the frontends resolve sibling branch hosts.
 
+Test tenants run on identity v2, but the production webv2 base keeps its held
+legacy image, which reads only Kratos sessions. On a branch without a webv2
+overlay, an account signed in on the authv2 host appears signed out on the app
+host. Add `--service webv2` to `dev up` when a branch needs the signed-in app.
+
 The branch API and worker run with `API_BRANCH` and `WORKER_BRANCH` set to the
 branch tenant. The API rejects a request signed for any other tenant with HTTP
 421, and the worker claims only that tenant's jobs. Each branch host route

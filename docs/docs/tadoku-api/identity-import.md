@@ -28,6 +28,9 @@ Build the standalone operator command from the repository root:
 bazel build //services/tadoku-api/cmd/tadoku-identity-import
 ```
 
+CI also retains release builds of `main` with a build receipt; see
+[Identity importer artifact](../develop/toolchain.md#identity-importer-artifact).
+
 Supply individual database fields through a private, mode-0600 environment file
 or a secret manager. Both prefixes require `HOST`, `DATABASE`, `USER`, `PASSWORD`
 and `SSLMODE`; `PORT` defaults to 5432:

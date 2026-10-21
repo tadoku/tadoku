@@ -81,7 +81,7 @@ base deployments leave `API_BRANCH` unset.
 - `API_PRODUCTION` (default `true`) rejects `tadoku/prod` access tokens. Only
   development sets it to `false`; it does not alter JWT, cookie or administrator
   authorization. Test-tenant tokens remain available in both environments.
-- `API_JWKS`, the gateway's public signing-key URL.
+- `API_JWKS`, the gateway's public signing-key URL; same HTTP(S) URL rules as the other provider base URLs.
 - `API_MAX_TOKEN_AGE` (default 24h), the maximum accepted age since `iat`.
 - `API_JWT_ISSUER`, an optional exact issuer match. Empty leaves the issuer
   unchecked.

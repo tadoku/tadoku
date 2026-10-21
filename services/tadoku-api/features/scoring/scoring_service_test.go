@@ -4,8 +4,11 @@ import (
 	"math"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
+
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
 
 func TestEvaluateSelectsAndCombinesRules(t *testing.T) {
@@ -365,3 +368,41 @@ func TestEvaluateRejectsInvalidInput(t *testing.T) {
 }
 
 func floatPointerForTest(value float32) *float32 { return &value }
+
+func TestActivateRuleSetRejectsImpossiblePersistedStates(t *testing.T) {
+	service := NewService(nil, false, nil)
+	updatedAt := time.Date(2026, 5, 1, 0, 0, 0, 0, time.UTC)
+	tests := []struct {
+		name    string
+		ruleSet RuleSet
+		message string
+	}{
+		{
+			name: "contest without contest_id",
+			ruleSet: RuleSet{
+				ID:     uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"),
+				Scope:  "contest",
+				Status: "published",
+			},
+			message: "contest scoring rule set requires contest_id",
+		},
+		{
+			name: "unknown scope",
+			ruleSet: RuleSet{
+				ID:     uuid.MustParse("bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"),
+				Scope:  "bogus",
+				Status: "published",
+			},
+			message: "scoring rule set scope is invalid",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := service.ActivateRuleSet(t.Context(), tt.ruleSet, updatedAt)
+			if errx.KindOf(err) != errx.Internal || err.Error() != tt.message {
+				t.Errorf("error = %v (%v), want internal %q", err, errx.KindOf(err), tt.message)
+			}
+		})
+	}
+}

@@ -188,10 +188,10 @@ func (s *Service) ActivateRuleSet(ctx context.Context, ruleSet RuleSet, updatedA
 		return s.repository.ActivatePlatformRuleSet(ctx, ruleSet.ID)
 	case "contest":
 		if ruleSet.ContestID == nil {
-			return errx.NewInvalidInputError("contest scoring rule set requires contest_id")
+			return errx.NewInternalError("contest scoring rule set requires contest_id")
 		}
 		return s.repository.ActivateContestRuleSet(ctx, *ruleSet.ContestID, ruleSet.ID, updatedAt)
 	default:
-		return errx.NewInvalidInputError("scoring rule set scope is invalid")
+		return errx.NewInternalError("scoring rule set scope is invalid")
 	}
 }

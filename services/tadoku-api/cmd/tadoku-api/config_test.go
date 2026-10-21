@@ -226,6 +226,32 @@ func TestLoadConfigUsesValidatedDefaults(t *testing.T) {
 	if _, err := loadConfig(); err == nil || !strings.Contains(err.Error(), "JWKS") {
 		t.Errorf("missing JWKS configuration error=%v", err)
 	}
+	for _, rawURL := range []string{
+		"not-a-url", "/relative", "ftp://host/jwks.json", "http://:4456",
+		"http://user:pass@host/jwks.json", "http://host/jwks.json?x=1", "http://host/jwks.json?",
+		"http://host/jwks.json#f", "http://host/jwks.json#",
+	} {
+		t.Setenv("API_JWKS", rawURL)
+		if _, err := loadConfig(); err == nil || !strings.Contains(err.Error(), "JWKS") {
+			t.Errorf("JWKS URL %q error=%v", rawURL, err)
+		}
+	}
+	t.Setenv("API_JWKS", "http://oathkeeper-api.tdk-dev-oathkeeper:4456/.well-known/jwks.json")
+	jwksConfig, err := loadConfig()
+	if err != nil {
+		t.Fatalf("load explicit JWKS configuration: %v", err)
+	}
+	if jwksConfig.JWKS != "http://oathkeeper-api.tdk-dev-oathkeeper:4456/.well-known/jwks.json" {
+		t.Errorf("JWKS=%q", jwksConfig.JWKS)
+	}
+	t.Setenv("API_JWKS", "http://jwks.test/")
+	canonicalJWKS, err := loadConfig()
+	if err != nil {
+		t.Fatalf("load canonical JWKS configuration: %v", err)
+	}
+	if canonicalJWKS.JWKS != "http://jwks.test" {
+		t.Errorf("JWKS=%q", canonicalJWKS.JWKS)
+	}
 	t.Setenv("API_JWKS", "http://jwks.test")
 	t.Setenv("API_OATHKEEPER_AUTHZ_TOKEN", "")
 	if _, err := loadConfig(); err == nil || !strings.Contains(err.Error(), "OathkeeperAuthzToken") {

@@ -93,11 +93,11 @@
   --paper-private-rule-subtle: #363235;
   --paper-private-rule-default: #4e484b;
   --paper-private-rule-strong: #81777c;
-  --paper-private-field-edge: #696166;
+  --paper-private-field-edge: #5b5458;
   --paper-private-accent: #9a8bea;
   --paper-private-accent-hover: #6d5cc7;
   --paper-private-accent-active: #5747b8;
-  --paper-private-accent-edge: #40318c;
+  --paper-private-accent-edge: #5242a6;
   --paper-private-accent-soft: #332d52;
   --paper-private-neutral-action-hover: #2d292c;
   --paper-private-action-default: #6150bc;
@@ -110,7 +110,7 @@
   --paper-private-warning: #ddb66f;
   --paper-private-danger: #d77171;
   --paper-private-danger-hover: #b94f4f;
-  --paper-private-danger-edge: #6f2424;
+  --paper-private-danger-edge: #883434;
   --paper-private-shadow: rgb(0 0 0 / 48%);
 
   --paper-color-surface-canvas: var(--paper-private-canvas);

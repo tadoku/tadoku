@@ -62,6 +62,50 @@ func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) (i
 	return result.RowsAffected(), nil
 }
 
+const deleteExpiredCredentials = `-- name: DeleteExpiredCredentials :one
+with expired_sessions as (
+  delete from sessions
+  where token_hash in (
+    select expired.token_hash
+    from sessions as expired
+    where expired.expires_at < $1
+    limit $2::integer
+    for update skip locked
+  )
+  returning 1
+), expired_recovery_tokens as (
+  delete from recovery_tokens
+  where token_hash in (
+    select expired.token_hash
+    from recovery_tokens as expired
+    where expired.expires_at < $1
+    limit $2::integer
+    for update skip locked
+  )
+  returning 1
+)
+select
+  (select count(*) from expired_sessions)::integer as sessions,
+  (select count(*) from expired_recovery_tokens)::integer as recovery_tokens
+`
+
+type DeleteExpiredCredentialsParams struct {
+	Now       pgtype.Timestamptz
+	BatchSize int32
+}
+
+type DeleteExpiredCredentialsRow struct {
+	Sessions       int32
+	RecoveryTokens int32
+}
+
+func (q *Queries) DeleteExpiredCredentials(ctx context.Context, arg DeleteExpiredCredentialsParams) (DeleteExpiredCredentialsRow, error) {
+	row := q.db.QueryRow(ctx, deleteExpiredCredentials, arg.Now, arg.BatchSize)
+	var i DeleteExpiredCredentialsRow
+	err := row.Scan(&i.Sessions, &i.RecoveryTokens)
+	return i, err
+}
+
 const deleteSession = `-- name: DeleteSession :exec
 delete from sessions where token_hash = $1
 `

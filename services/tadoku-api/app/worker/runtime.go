@@ -12,6 +12,7 @@ import (
 
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/email"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
@@ -29,6 +30,7 @@ type finalAttemptKey struct{}
 
 type runner struct {
 	email           *email.Service
+	identity        *identity.Expiry
 	scope           jobqueue.Scope
 	queue           *jobqueue.Service
 	handlers        *registry
@@ -83,6 +85,7 @@ func (r *runner) run(ctx context.Context) {
 
 	r.cleanupCompleted(queueCtx)
 	r.maintainEmails(ctx, true)
+	r.expireCredentials(ctx)
 	refreshMetrics()
 
 	for {
@@ -137,6 +140,7 @@ func (r *runner) run(ctx context.Context) {
 			r.maintainEmails(ctx, true)
 		case <-cleanupTicker.C:
 			r.cleanupCompleted(queueCtx)
+			r.expireCredentials(ctx)
 		}
 	}
 

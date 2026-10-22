@@ -14,6 +14,7 @@ go_library(
         "//services/common/postgresconfig",
         "//services/tadoku-api/app/worker",
         "//services/tadoku-api/features/email",
+        "//services/tadoku-api/features/identity",
         "//services/tadoku-api/features/jobqueue",
         "//services/tadoku-api/features/leaderboard",
         "//services/tadoku-api/infra/observability",

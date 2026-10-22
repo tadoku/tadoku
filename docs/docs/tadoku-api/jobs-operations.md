@@ -1,6 +1,6 @@
 ---
 title: Operate jobs and the worker
-description: Worker health and leaderboard freshness, running jobs on a development branch, successful-job retention, and inspecting and replaying retained jobs.
+description: Worker health and leaderboard freshness, running jobs on a development branch, successful-job retention, expired credential removal, and inspecting and replaying retained jobs.
 sidebar_position: 5.1
 ---
 
@@ -211,3 +211,35 @@ is independent of three-calendar-month successful-job cleanup. See
 [Retained email](./email.md) for inspection, production audit records and SMTP
 failure semantics; never inspect production content with unaudited operator
 SQL as a substitute for its read API.
+
+## Expired credential removal
+
+The worker removes expired native identity sessions and recovery tokens at
+startup and then hourly, after successful-job cleanup. A row is eligible when
+its `expires_at` is strictly earlier than the business clock, read once when a
+tenant's pass starts. Exact-boundary rows remain, although they no longer
+authenticate. Every unexpired session remains, and so does every unexpired
+recovery token, whether it is unused, consumed or invalidated by a sibling's
+consumption. Removal never deletes users, accounts, access tokens, emails,
+jobs or Kratos data, and it does not change session or recovery-token
+lifetimes or revocation.
+
+`identity.Expiry.RemoveExpired` owns the rule; callers do not supply a cutoff.
+Each batch is one statement in its own implicit transaction that deletes at
+most 100 sessions and 100 recovery tokens and skips rows that a concurrent
+request holds locked. Batches repeat while either table fills its batch. One
+pass across all tenants has a five-second budget. Worker shutdown or the end of
+the budget stops it between batches, and the remaining rows wait for the next
+run. A database error is logged for its tenant, the pass continues with the
+next tenant, and that tenant's rows wait for the next run. Repeating a pass
+removes nothing new.
+
+A base worker enumerates every registered tenant, including tenants with an
+override, and runs each tenant's batches within that tenant's ordinary
+row-level security scope. A branch worker removes only its own tenant's rows.
+No statement spans tenants, and removal uses the worker's ordinary database
+role.
+
+The tables have no expiry index; each batch reads the tenant's rows through the
+tenant-prefixed primary key. Add an index, as a standalone migration, only when
+measured query plans show the need.

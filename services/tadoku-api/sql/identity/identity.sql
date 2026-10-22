@@ -92,6 +92,32 @@ delete from sessions
 where user_id = sqlc.arg(user_id)
   and token_hash <> sqlc.arg(keep_token_hash);
 
+-- name: DeleteExpiredCredentials :one
+with expired_sessions as (
+  delete from sessions
+  where token_hash in (
+    select expired.token_hash
+    from sessions as expired
+    where expired.expires_at < sqlc.arg(now)
+    limit sqlc.arg(batch_size)::integer
+    for update skip locked
+  )
+  returning 1
+), expired_recovery_tokens as (
+  delete from recovery_tokens
+  where token_hash in (
+    select expired.token_hash
+    from recovery_tokens as expired
+    where expired.expires_at < sqlc.arg(now)
+    limit sqlc.arg(batch_size)::integer
+    for update skip locked
+  )
+  returning 1
+)
+select
+  (select count(*) from expired_sessions)::integer as sessions,
+  (select count(*) from expired_recovery_tokens)::integer as recovery_tokens;
+
 -- name: UpdateAccountEmail :exec
 update accounts
 set email = sqlc.arg(email), email_normalized = sqlc.arg(email), updated_at = sqlc.arg(now)

@@ -11,7 +11,7 @@ export default defineConfig({
   ssr: {
     external: ['react', 'react-dom', 'react-dom/server', 'react/jsx-runtime'],
     // Bundled so api-client's generated validators keep its pinned Zod 3 while this app's own code uses Zod 4.
-    noExternal: ['@tanstack/query-core', '@tanstack/react-query', '@tanstack/react-router-with-query', 'zod'],
+    noExternal: ['@tanstack/query-core', '@tanstack/react-query', '@tanstack/react-router-ssr-query', '@tanstack/router-ssr-query-core', 'zod'],
   },
   server: {
     host: process.env.HOST || '0.0.0.0',

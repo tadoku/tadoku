@@ -10,7 +10,7 @@ export default defineConfig({
   },
   ssr: {
     external: ['react', 'react-dom', 'react-dom/server', 'react/jsx-runtime'],
-    noExternal: ['@tanstack/query-core', '@tanstack/react-query', '@tanstack/react-router-with-query'],
+    noExternal: ['@tanstack/query-core', '@tanstack/react-query', '@tanstack/react-router-ssr-query', '@tanstack/router-ssr-query-core'],
   },
   server: {
     host: process.env.HOST || '0.0.0.0',

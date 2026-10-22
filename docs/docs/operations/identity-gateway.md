@@ -39,9 +39,7 @@ Production Oathkeeper is managed in the separate GitOps repository. Its
 cookie-session authenticator calls the API's session callback, so the
 `tadoku_session` cookie authenticates application routes. Public
 `/api/internal/identity/*` rules use the anonymous authenticator, so the
-identity API owns session reads, logout and CSRF. No rule forwards to Kratos,
-which is offline in production; see
-[Identity v2 rollback](./identity-v2-rollback.md#current-production-identity).
+identity API owns session reads, logout and CSRF.
 
 A source merge automatically releases the API and worker to production through
 `build-bazel.yaml`, Image Updater and Argo CD. Treat it as a real production
@@ -64,8 +62,8 @@ After reconciliation, verify:
 
 Verify logs without exposing the credential. Authenticated checks need an
 authorized production session; without one, report them as unverified.
-Reverting a change follows [Identity v2 rollback](./identity-v2-rollback.md),
-which requires the incident owner's authorization for each scope.
+Reverting a change requires the incident owner's authorization for each scope;
+see [Identity incident recovery](./identity-recovery.md#triggers-and-authority).
 
 ## Session-check latency
 

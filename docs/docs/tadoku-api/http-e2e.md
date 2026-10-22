@@ -283,44 +283,27 @@ jq -r .token "$fixture_output"
 
 ## Local account fixtures
 
-`e2e/testdata/accounts.sql` seeds the fixed five-user cast in `tadoku/prod`
-and `e2e/alpha-0000000a`, matching the signed cast's tenants. UUIDs, names,
-emails and creation times match the legacy cast. Its synthetic bcrypt cost-4
-hash keeps fixture login cheap; production registration and the dedicated
-password-policy workflows retain cost 12. Sessions come from real API login.
+`e2e/testdata/accounts.sql` seeds the fixed five-user cast in `tadoku/prod` and
+`e2e/alpha-0000000a`, matching the signed cast's tenants and subjects. Its
+synthetic bcrypt cost-4 hash keeps fixture login cheap; production registration
+and the dedicated password-policy workflows retain cost 12. Sessions come from
+real API login.
 
-Ordinary golden and journey resets load case SQL before the account seed and
-enable `identity-v2` for registered fixture tenants in the in-process Flipt
-fixture. Explicit user/account primary-key conflicts preserve existing rows,
-including case-specific names, timestamps, inactive accounts and deleted or
-locked users. Repeating the seed is safe; other constraint failures fail setup.
-Optional `finalize.sql` uses the same case/operation resolution and runs after
-the cast in the reset transaction.
-Put final absence mutations there so the default cast cannot resurrect a user
-that a scenario deliberately removes.
-Focused scenarios that define a different account population reset PostgreSQL
-with their own explicit seed.
+Ordinary golden and journey resets load case SQL before the account seed.
+Explicit user/account primary-key conflicts preserve existing rows, including
+case-specific names, timestamps, inactive accounts and deleted or locked users.
+Repeating the seed is safe; other constraint failures fail setup. Optional
+`finalize.sql` uses the same case/operation resolution and runs after the cast
+in the reset transaction. Put final absence mutations there so the default cast
+cannot resurrect a user that a scenario deliberately removes. Focused scenarios
+that define a different account population reset PostgreSQL with their own
+explicit seed.
 
 Profile, account-age and role-update requests use the production identity Reader
-and restricted application pool. The default legacy reader and session adapter
-share a transport that panics on any provider request, so accidental fallback
-fails the suite. No Kratos executable, container or external URL is used.
-The signed cast workflow verifies each unique tenant/subject pair through the
-real JWT router, rejects a foreign session under the target tenant's cookie name,
-and checks unavailable states and reset. Roles remain real Keto relationships.
-
-### Recorded legacy sessions
-
-The v1 session/logout workflow serves `e2e/testdata/IdentityV1/session.json` and
-`unauthorized.json` over loopback HTTP. These are responses recorded from the
-pinned disposable Kratos fixture, without session-cookie material. The workflow
-checks the real SDK/session adapter, callback shape, cookie forwarding and
-canonical-only session revocation. The response server is an explicit provider
-simulation; it does not verify Kratos password login or provider persistence.
-The legacy admin-list workflow explicitly selects v1 and serves recorded-shape
-paged HTTP responses. Provider protocol, error and cancellation tests remain
-with the read adapter. These explicit legacy scenarios supply their own
-loopback clients instead of the default tripwire.
+and restricted application pool. The signed cast workflow verifies each unique
+tenant/subject pair through the real JWT router, rejects a foreign session under
+the target tenant's cookie name, and checks unavailable states and reset. Roles
+remain real Keto relationships.
 
 ## Email gateway fixture
 

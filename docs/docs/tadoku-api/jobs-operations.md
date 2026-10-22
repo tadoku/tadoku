@@ -220,9 +220,8 @@ its `expires_at` is strictly earlier than the business clock, read once when a
 tenant's pass starts. Exact-boundary rows remain, although they no longer
 authenticate. Every unexpired session remains, and so does every unexpired
 recovery token, whether it is unused, consumed or invalidated by a sibling's
-consumption. Removal never deletes users, accounts, access tokens, emails,
-jobs or Kratos data, and it does not change session or recovery-token
-lifetimes or revocation.
+consumption. Removal never deletes users, accounts, access tokens, emails or
+jobs, and it does not change session or recovery-token lifetimes or revocation.
 
 `identity.Expiry.RemoveExpired` owns the rule; callers do not supply a cutoff.
 Each batch is one statement in its own implicit transaction that deletes at

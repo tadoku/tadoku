@@ -36,8 +36,8 @@ frontend, gateway and API path: no mocked API, injected identity or auth bypass.
   overlay `X-Dev-Backend` only when verifying changed API code. Confirm the
   persisted tenant when proving isolation. Use the matching branch app API host for auth
   or admin writes as well as the branch frontend hostname.
-- Kratos identities are shared. Use the fixture accounts or disposable
-  identities you own without changing shared credentials or canonical roles.
+- Use the fixture accounts or disposable accounts you own without changing
+  shared credentials or canonical roles.
   Change only your tenant's Keto object and Flipt namespace.
 - Finish with `dev down` for your owner to remove its branch hosts.
 

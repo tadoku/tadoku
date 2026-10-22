@@ -84,11 +84,9 @@ Never point tests at shared development or production services.
   accepts an external target.
 - **Identity accounts:** ordinary HTTP golden and journey resets seed native
   tenant-owned accounts after case SQL, preserving existing user/account state
-  on primary-key conflicts, and enable v2 for their registered fixture tenants.
-  Cast and gateway fixtures obtain sessions through real login with test-cost
-  bcrypt hashes; registration/password-policy workflows retain production cost
-  12. Default legacy HTTP clients fail immediately on any call. V1 adapters use
-  recorded loopback responses, without a Kratos binary or container. See
+  on primary-key conflicts. Cast and gateway fixtures obtain sessions through
+  real login with test-cost bcrypt hashes; registration/password-policy
+  workflows retain production cost 12. See
   [Local account fixtures](./http-e2e.md#local-account-fixtures).
 - **Valkey:** raw Valkey and application lifecycle tests require
   `TADOKU_TEST_VALKEY_URL` in the exact form `redis://127.0.0.1:<port>` (or

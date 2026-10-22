@@ -1,6 +1,6 @@
 ---
 title: Runtime configuration
-description: Tadoku API environment variables, startup and shutdown behavior, authentication wiring, the raw Keto and Kratos clients, metrics and production credentials.
+description: Tadoku API environment variables, startup and shutdown behavior, authentication wiring, the raw Keto client, metrics and production credentials.
 sidebar_position: 9
 ---
 
@@ -24,8 +24,8 @@ environment variables. Development values are in
 - `API_REQUEST_TIMEOUT` (default 30s), the shared request deadline.
 - `API_DIAL_TIMEOUT` (default 3s), `API_RESPONSE_HEADER_TIMEOUT` (default 10s)
   and `API_IDLE_TIMEOUT` (default 30s) bound the owned outgoing HTTP transport
-  shared by the Flipt, Kratos and Keto clients. `API_IDLE_TIMEOUT` is also the
-  listeners' idle-connection timeout.
+  shared by the service-token exchange, Flipt and Keto clients.
+  `API_IDLE_TIMEOUT` is also the listeners' idle-connection timeout.
 - `API_SHUTDOWN_TIMEOUT` (default 10s).
 
 ### PostgreSQL
@@ -94,7 +94,11 @@ login throttling; configure only proxies whose edge overwrites that header.
 The default trusts no forwarding header; clients behind an unconfigured proxy
 share that proxy's peer-IP budget. Malformed prefixes fail startup.
 
-### Keto and Kratos
+`API_IDENTITY_COOKIE_DOMAIN` (default `tadoku.app`) is restricted to
+`tadoku.app` or `tadoku.dev.lab`. The development base API and overlays set
+the latter.
+
+### Keto
 
 - `API_KETO_READ_URL`, an absolute HTTP(S) base URL for the Keto read
   service. Ban and administrator checks use a separate read-only client with a
@@ -103,17 +107,8 @@ share that proxy's peer-IP budget. Malformed prefixes fail startup.
   service.
 - `API_KETO_WRITE_TIMEOUT` (default 2s), a positive total request timeout for
   the raw read/write client, including response-body reads.
-- `API_KRATOS_ADMIN_URL`, an absolute HTTP(S) base URL for the Kratos admin
-  service.
-- `API_KRATOS_PUBLIC_URL`, the optional absolute HTTP(S) public Kratos URL for
-  the identity session adapter. Configure it before moving session callers to
-  the identity API; a present v1 cookie fails closed when it is unset.
-- `API_IDENTITY_COOKIE_DOMAIN` (default `tadoku.app`), restricted to
-  `tadoku.app` or `tadoku.dev.lab`. The development base API and overlays set the latter.
-- `API_KRATOS_TIMEOUT` (default 2s), a positive total request timeout, including
-  reading the response body.
 
-For the Keto and Kratos base URLs, credentials, query strings and fragments are
+For the Keto base URLs, credentials, query strings and fragments are
 rejected; path prefixes are supported and trailing slashes are removed.
 
 ### Service tokens and feature flags
@@ -135,8 +130,7 @@ rejected; path prefixes are supported and trailing slashes are removed.
   disabled; empty is allowed when Flipt is disabled. `API_FLIPT_URL` is
   validated only when Flipt is enabled. Provider outages do not fail startup.
   Until a client has fetched its namespace snapshot, `Boolean` flag consumers
-  use safe defaults and identity provider selection is unavailable; a later
-  fetch recovers without a restart.
+  use safe defaults; a later fetch recovers without a restart.
 - `API_FLIPT_TEST_ENVIRONMENT` defaults to `test`. When Flipt is enabled, it
   must be nonempty and different from `API_FLIPT_ENVIRONMENT`; an invalid value
   fails startup. The canonical tenant `tadoku/prod` keeps the configured
@@ -144,11 +138,8 @@ rejected; path prefixes are supported and trailing slashes are removed.
   tenant key with `/` mapped to `_`, because Flipt namespace keys cannot contain
   slashes. Evaluation and named-user management use this same mapping. Test
   clients are lazy and bounded to 16. Missing namespaces, missing tenant
-  contexts and disabled Flipt give `Boolean` consumers safe defaults and make
-  identity provider selection unavailable for the affected tenants, including
-  `tadoku/prod` when Flipt is disabled. See
-  [Feature flags](../architecture/feature-flags.md) and
-  [Account-app selection](./identity-selection.md).
+  contexts and disabled Flipt give `Boolean` consumers safe defaults. See
+  [Feature flags](../architecture/feature-flags.md).
 
 ### Scoring engine
 
@@ -168,9 +159,9 @@ each environment; the development manifests set it to `false`.
 - Startup always constructs and owns the raw Valkey client. Invalid Valkey
   configuration or cancelled setup aborts startup. An unavailable server logs a
   warning and starts in degraded mode; the client reconnects on a later command.
-- Startup constructs and retains the read-only Kratos client and the shared Keto
-  read and read/write clients. Constructing them makes no provider request, and
-  provider-backed caches stay cold until a request needs them.
+- Startup constructs and retains the shared Keto read and read/write clients.
+  Constructing them makes no provider request, and provider-backed caches stay
+  cold until a request needs them.
 - Provider availability and cache refresh completion are not startup or
   health-check gates. Startup and health checks never mutate provider state.
 - `/readyz` checks PostgreSQL. `/livez` is independent of dependency health.
@@ -189,9 +180,9 @@ responses. In addition:
   creation time.
 - Anonymous gateway traffic carries a signed token with subject `guest`, which
   is distinct from a direct request without credentials. Every other subject
-  must be an account UUID (Kratos for v1, local for v2); a token with any other subject is
-  rejected with `401` like any other invalid token. Service tokens are never
-  converted into human identities.
+  must be an account UUID; a token with any other subject is rejected with
+  `401` like any other invalid token. Service tokens are never converted into
+  human identities.
 - The ban gate performs only the ban lookup, so no unrelated administrator
   lookup can discard a successful ban result. Request deadlines bound the Keto
   call. A failed lookup is kept in the request context, so later authenticated
@@ -247,35 +238,9 @@ err = client.DeleteRelation(ctx, namespace, object, relation, group)
 
 ## Identity reads
 
-- The composition root keeps a concrete `identity.LegacyReader` on
-  `application.kratosRead`. The identity reader uses this same read client
-  for v1 lookups and cursor pagination. Profile and moderation receive
-  `identity.NewReader(pool, legacy, evaluator)`, which selects the tenant's v1
-  adapter or local account reads.
-- `identity.NewLegacyReader(baseURL, identity.WithHTTPClient(httpClient))` uses the same client
-  for SDK reads and cursor pagination. It constructs the pinned
-  `github.com/ory/kratos-client-go` v0.11.1 SDK internally and exposes no raw
-  SDK constructor. Tadoku API validates the configuration and supplies a
-  client with a total timeout on its owned transport; the read client does not
-  own that HTTP client. Without the option, it uses the SDK's default client.
-
-Call the read client with the operation's caller context:
-
-```go
-identity, err := kratosIdentities.FetchIdentity(ctx, identityID)
-```
-
-- `FetchIdentity` maps provider HTTP 404 to `kratos.ErrNotFound` and returns
-  other provider failures as wrapped errors. `UserExists` translates that
-  sentinel to `false`.
-- Use `errors.As` to inspect `*kratosapi.GenericOpenAPIError`, including its
-  `Body()` and `Model()`, and `errors.Is` for `context.Canceled` or
-  `context.DeadlineExceeded`.
-- Reads return the SDK identity models. Identity ownership maps traits and account creation time into its provider-free
-  `Account` type. `ListIdentities` fetches
-  one requested cursor page and returns its next page token.
-- The total client timeout and any earlier caller deadline bound requests;
-  caller cancellation also interrupts response-body reads.
+Profile and moderation receive `identity.NewReader(pool)` on the API's
+PostgreSQL pool; it reads tenant-local accounts only. See
+[Account reads](./identity.md#account-reads).
 
 ## Metrics
 
@@ -308,7 +273,7 @@ set of series.
 - Shutdown closes the request and metrics listeners. After request handling
   stops, it closes the database and provider transport dependencies: the Flipt
   polling provider, the PostgreSQL pool, the Valkey client and idle HTTP
-  connections, including Flipt, Kratos and Keto connections.
+  connections, including service-token exchange, Flipt and Keto connections.
 - A startup failure closes the same owned transport. Raw clients have no
   separate close operation.
 - Valkey close follows the upstream client's per-connection close allowance

@@ -244,7 +244,7 @@ func TestClientNeverReportsMissingFlagsFromTheStartupFallbackEngine(t *testing.T
 
 	require.Eventually(t, func() bool { return served.Load() >= 4 }, 6*time.Second, 20*time.Millisecond)
 	_, err = client.EvaluateBoolean(context.Background(), featureflags.EvaluationRequest{
-		FlagKey:  "identity-v2",
+		FlagKey:  "other-flag",
 		EntityID: "tadoku/prod",
 	})
 	require.Error(t, err)
@@ -314,7 +314,7 @@ func TestClientNeverInstallsAFailedStartAfterARejectedUpdateClearsItsError(t *te
 	requireNoMissingFlag := func(when string) {
 		t.Helper()
 		_, err := client.EvaluateBoolean(context.Background(), featureflags.EvaluationRequest{
-			FlagKey:  "identity-v2",
+			FlagKey:  "other-flag",
 			EntityID: "tadoku/prod",
 		})
 		require.Error(t, err, when)
@@ -339,14 +339,14 @@ func TestClientNeverInstallsAFailedStartAfterARejectedUpdateClearsItsError(t *te
 		return err == nil && result.Enabled
 	}, 5*time.Second, 10*time.Millisecond)
 	_, err = client.EvaluateBoolean(context.Background(), featureflags.EvaluationRequest{
-		FlagKey:  "identity-v2",
+		FlagKey:  "other-flag",
 		EntityID: "tadoku/prod",
 	})
 	assert.ErrorIs(t, err, featureflags.ErrFlagNotFound, "a fetched snapshot without the flag reports it missing")
 }
 
 func TestClientKeepsItsDecisionWhenAnUpdateFailsValidation(t *testing.T) {
-	enabled := strings.NewReplacer(`"release-log-entry-v2"`, `"identity-v2"`, `"enabled": false`, `"enabled": true`).
+	enabled := strings.NewReplacer(`"release-log-entry-v2"`, `"other-flag"`, `"enabled": false`, `"enabled": true`).
 		Replace(booleanSnapshot(nil))
 	for _, test := range []struct{ name, body string }{
 		{"another namespace", `{"namespace":{"key":"other"},"flags":[],"digest":"rev-2"}`},
@@ -380,7 +380,7 @@ func TestClientKeepsItsDecisionWhenAnUpdateFailsValidation(t *testing.T) {
 			t.Cleanup(func() { require.NoError(t, client.Close(context.Background())) })
 			evaluate := func() (featureflags.ProviderResult, error) {
 				return client.EvaluateBoolean(context.Background(), featureflags.EvaluationRequest{
-					FlagKey:  "identity-v2",
+					FlagKey:  "other-flag",
 					EntityID: "tadoku/prod",
 				})
 			}

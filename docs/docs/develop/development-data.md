@@ -111,9 +111,8 @@ startup creates no database, Postgres cluster, PVC or database dependency Job.
   membership. Dev Admin inherits administrator permits.
 - Flipt uses environment `test` and namespace `tadoku_<route>`, with display
   name `tadoku/<route>`. Provisioning adds missing resources from this branch's
-  `k8s/dev/base/flipt/features.yaml`, plus a branch-only `identity-v2` flag with
-  a 100% true rollout. Canonical definitions/imports and the safe false default
-  are unchanged. Existing flag values and grants are preserved on retries.
+  `k8s/dev/base/flipt/features.yaml`. Canonical definitions/imports and the safe
+  false default are unchanged. Existing flag values and grants are preserved on retries.
 - SQL fixtures use the non-owner `tadoku` role so row-level security checks
   every write. The guard requires the route-shaped test tenant, the expected
   role and development database host. It refuses canonical seeding through

@@ -16,10 +16,9 @@ import (
 )
 
 type namespaceState struct {
-	members    map[string]struct{}
-	revision   uint64
-	resources  map[string]json.RawMessage
-	identityV2 bool
+	members   map[string]struct{}
+	revision  uint64
+	resources map[string]json.RawMessage
 }
 
 type Fixture struct {
@@ -83,20 +82,6 @@ func (f *Fixture) SetUnavailable(unavailable bool) {
 	f.unavailable = unavailable
 }
 
-func (f *Fixture) SetIdentityV2(key tenant.Key, enabled bool) error {
-	if err := f.SeedTenant(key); err != nil {
-		return err
-	}
-	target, err := f.targets.Resolve(tenant.WithKey(context.Background(), key))
-	if err != nil {
-		return err
-	}
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	f.namespaces[target].identityV2 = enabled
-	return nil
-}
-
 func (f *Fixture) EvaluateBoolean(
 	ctx context.Context,
 	request featureflags.EvaluationRequest,
@@ -114,9 +99,6 @@ func (f *Fixture) EvaluateBoolean(
 		return featureflags.ProviderResult{}, fmt.Errorf("test Flipt unavailable")
 	}
 	state := f.namespaces[target]
-	if state != nil && request.FlagKey == "identity-v2" {
-		return featureflags.ProviderResult{Enabled: state.identityV2, Reason: "MATCH_EVALUATION_REASON"}, nil
-	}
 	if state == nil || request.FlagKey != "release-log-entry-v2" {
 		return featureflags.ProviderResult{}, featureflags.ErrFlagNotFound
 	}

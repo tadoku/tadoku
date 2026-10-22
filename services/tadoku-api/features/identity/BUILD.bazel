@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "domain.go",
         "identity_development_service.go",
+        "identity_expiry_service.go",
         "identity_import_repository.go",
         "identity_import_service.go",
         "identity_import_source.go",

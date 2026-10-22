@@ -126,6 +126,9 @@ with removable as (
 )
 delete from jobs as task using removable where task.id = removable.id;
 
+-- name: Tenants :many
+select key from tenants order by key;
+
 -- name: Stats :one
 select
   count(*) filter (where state = 'pending') as pending,

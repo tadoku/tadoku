@@ -11,6 +11,7 @@ import (
 
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
 
@@ -122,6 +123,10 @@ func (s *Service) CleanupCompleted(ctx context.Context, limit int) (int64, error
 	}
 
 	return s.repository.CleanupCompleted(ctx, now, limit)
+}
+
+func (s *Service) Tenants(ctx context.Context) ([]tenant.Key, error) {
+	return s.repository.Tenants(ctx)
 }
 
 func (s *Service) Stats(ctx context.Context, typ jobs.Type) (Stats, error) {

@@ -165,3 +165,15 @@ func (r *Repository) seedDevelopmentAccount(
 		PasswordHash: passwordHash,
 	})
 }
+
+func (r *Repository) deleteExpiredCredentials(ctx context.Context, now time.Time, limit int32) (int32, int32, error) {
+	db, err := postgres.Executor(ctx, r.pool)
+	if err != nil {
+		return 0, 0, err
+	}
+	row, err := queries.New(db).DeleteExpiredCredentials(ctx, queries.DeleteExpiredCredentialsParams{
+		Now:       postgres.Timestamptz(now),
+		BatchSize: limit,
+	})
+	return row.Sessions, row.RecoveryTokens, err
+}

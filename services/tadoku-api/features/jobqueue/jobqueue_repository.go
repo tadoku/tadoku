@@ -175,6 +175,26 @@ func (r *Repository) CleanupCompleted(ctx context.Context, now time.Time, limit 
 	})
 }
 
+func (r *Repository) Tenants(ctx context.Context) ([]tenant.Key, error) {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := queries.New(executor).Tenants(ctx)
+	if err != nil {
+		return nil, err
+	}
+	keys := make([]tenant.Key, 0, len(rows))
+	for _, value := range rows {
+		key, err := tenant.Parse(value)
+		if err != nil {
+			return nil, err
+		}
+		keys = append(keys, key)
+	}
+	return keys, nil
+}
+
 func (r *Repository) Stats(ctx context.Context, typ jobs.Type) (Stats, error) {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {

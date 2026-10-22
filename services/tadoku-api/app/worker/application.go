@@ -9,12 +9,14 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/email"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
 )
 
 type Config struct {
 	Email           *email.Service
+	Identity        *identity.Expiry
 	Scope           jobqueue.Scope
 	Concurrency     int
 	ShutdownTimeout time.Duration
@@ -56,6 +58,7 @@ func NewApplication(queue *jobqueue.Service, leaderboard *leaderboard.Service, c
 	a.runner = &runner{
 		scope:           config.Scope,
 		email:           config.Email,
+		identity:        config.Identity,
 		queue:           queue,
 		handlers:        handlers,
 		logger:          config.Logger,

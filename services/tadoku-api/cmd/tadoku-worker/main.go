@@ -23,6 +23,7 @@ import (
 	"github.com/tadoku/tadoku/services/common/postgresconfig"
 	"github.com/tadoku/tadoku/services/tadoku-api/app/worker"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/email"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/observability"
@@ -123,6 +124,7 @@ func run(ctx context.Context, cfg config, logger *slog.Logger) error {
 		leaderboardService,
 		worker.Config{
 			Email:           email.NewService(email.NewRepository(pool), sender),
+			Identity:        identity.NewExpiry(identity.NewRepository(pool)),
 			Scope:           cfg.scope,
 			Concurrency:     cfg.Concurrency,
 			ShutdownTimeout: cfg.ShutdownTimeout,

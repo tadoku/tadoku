@@ -90,7 +90,6 @@ go_test(
         "authentication_jwks_test.go",
         "authentication_test.go",
         "banned_users_test.go",
-        "emails_test.go",
         "errors_test.go",
         "fixtures_test.go",
         "generated_test.go",

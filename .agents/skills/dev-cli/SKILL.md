@@ -29,16 +29,16 @@ Keep the loop, owner, checkout and terminal handle together. Do not start anothe
 
 ## Open and inspect
 
-Use the actual links printed by `dev up` or `dev url --owner <owner> '/desired/path'`. Add `--host account.tadoku.dev.lab` or `--host admin.tadoku.dev.lab` for those hosts. Quote paths containing `?`, `&` or `#`; flags precede positional paths. The printed branch hostname keeps app, account and admin on the same route. Different owners can share one profile; authentication remains shared.
+Use the actual links printed by `dev up` or `dev url --owner <owner> '/desired/path'`. Add `--host account.tadoku.dev.lab` or `--host admin.tadoku.dev.lab` for those hosts. Quote paths containing `?`, `&` or `#`; flags precede positional paths. The printed branch hostname keeps app, account and admin on the same route. Different owners can share one profile; each branch tenant has its own accounts and session cookie.
 
 A printed URL does not prove the overlay is ready. Check status, then confirm actual frontend and API responses. `X-Dev-Selected` describes intent; `X-Dev-Backend` identifies the upstream that served the request. Cold-start convergence can briefly serve base. For browser journeys, persisted results and PR evidence, follow [verify-tadoku](../verify-tadoku/SKILL.md) and its feature map. Do not claim HMR from a source transfer or backend identity from an HTTP 200 alone.
 
-Use branch-host links for admin or auth API writes. Verify `X-Dev-Selected` on the API response: host selection determines the
+Use branch-host links for admin or authv2 API writes. Verify `X-Dev-Selected` on the API response: host selection determines the
 signed tenant even when a frontend-only branch uses the base API. Branch data
 normally uses shared `tadoku`; migration branches use `tadoku-<route>`. Both use
 tenant-scoped Valkey keys and Flipt namespace
 `test/tadoku_<route>`. Reseed only your tenant with
-`dev task --owner <owner> tenant`; shared Kratos identities stay unchanged.
+`dev task --owner <owner> tenant`; canonical accounts stay unchanged.
 
 Selecting either API or worker starts both. `worker-override-set` runs before
 the branch worker starts and `worker-override-clear` after its pods stop. Do not

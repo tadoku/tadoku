@@ -33,7 +33,7 @@ credentials/profile/roles for an unrelated test.
 
 The automatic `tenant` hook creates native v2 accounts using those fixture UUIDs and populates branch-local
 data in `tadoku/<route>`. Frontend-only branches use the base API with that
-selected tenant. Use branch-host links for auth or admin API writes and
+selected tenant. Use branch-host links for authv2 or admin API writes and
 check the API response's `X-Dev-Selected`.
 Missing base fixtures require authorized setup. Branch accounts keep the base
 fixture UUIDs, names and documented password, with independent credentials and

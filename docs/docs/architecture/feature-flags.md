@@ -107,8 +107,8 @@ Flipt runs in `tdk-dev-flipt` from `k8s/dev/base/flipt/` and loads
 discards changes. The separate `test` environment uses in-memory storage with
 no Git remote; its namespaces also disappear when the pod restarts. Production
 uses the same separate memory-only test environment, so test flags are never
-committed or pushed to the canonical feature-flags repository. The operator UI at `https://flags.tadoku.dev.lab` requires a
-Kratos session of an administrator, checked by Oathkeeper through Tadoku API.
+committed or pushed to the canonical feature-flags repository. The operator UI at `https://flags.tadoku.dev.lab` requires the
+canonical native session of an administrator, checked by Oathkeeper through Tadoku API.
 Flipt is shared: do not change flag policy for other developers. HTTP E2Es use `services/tadoku-api/internal/testflipt/` instead.
 
 Every dev-cli branch, including frontend-only work, provisions its own

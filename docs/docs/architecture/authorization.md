@@ -124,12 +124,10 @@ Administrators can toggle only the `banned` relation through the API
 No API grants `admins`; see
 [Granting an administrator](#granting-an-administrator).
 
-Every role update that reaches the permission store is recorded in
-`moderation_audit_log`: `ban_user` or `unban_user` when the relation changed,
-and `ban_user_failed` or `unban_user_failed` with the error when it did not.
-The entry is written after the relationship write, outside its transaction,
-and never changes the response; see
-[Auditing a provider change](../tadoku-api/conventions.md#auditing-a-provider-change).
+A role update writes the `banned` relationship and its `moderation_audit_log`
+entry, `ban_user` or `unban_user`, in one transaction. If either write fails,
+both roll back and the request fails with no ban change and no entry. A refused
+request (invalid input, `401`, `403` or `404`) writes nothing.
 
 ### Granting an administrator
 

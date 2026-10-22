@@ -30,9 +30,9 @@ These are the routes the Tadoku website calls, and `/api/internal` is the only
 API prefix. A path such as `/api/immersion/logs` is not an API route: the
 website answers it with its HTML `404` page.
 
-Identity and email contracts are registered skeletons returning `501`. Token
-verification is also a `501` skeleton and never admits a token reader. Their
-gateway rollout is separate; see [Identity contracts](../tadoku-api/identity).
+Identity registration and login return `501` for a tenant that selects the
+legacy v1 account app; see [Identity accounts and sessions](../tadoku-api/identity).
+The email routes also accept tenant access tokens.
 
 ## Authentication
 
@@ -41,11 +41,14 @@ The gateway in front of Tadoku API authenticates a request in one of two ways:
 | Request | Result |
 | --- | --- |
 | No credentials | Runs as an anonymous guest. Operations without `cookieAuth` work. Operations that need a signed-in user return `401`. |
-| `ory_kratos_session` cookie | Runs as that user. Kratos sets the cookie when the user signs in on the Tadoku website. Some operations also require the administrator role. |
+| `tadoku_session` cookie | Runs as that user. The identity API sets the cookie when the user signs in on the Tadoku website. Some operations also require the administrator role. |
 
-The gateway reads no other credential. It ignores a Kratos session token sent
-as `X-Session-Token`, so the request runs as a guest. It rejects a request that
-has an `Authorization` header and no session cookie with `401`. The response
+Some domain references still name the legacy `ory_kratos_session` cookie in
+their security scheme; production authenticates only `tadoku_session`. Apart
+from tenant access tokens on the email routes, the gateway reads no other
+credential. It ignores a session token sent as `X-Session-Token`, so the request
+runs as a guest. On other routes, it rejects a request that has an
+`Authorization` header and no session cookie with `401`. The response
 definitions on each endpoint describe the expected authorization failures.
 
 This documentation displays request schemas and generated code examples, but
@@ -56,10 +59,9 @@ Pages origin need a separately reviewed cross-origin authentication policy.
 
 Tadoku has no supported authentication for third-party clients, such as
 e-reader plugins and scripts. There are no API keys, personal access tokens or
-OAuth clients, and the gateway does not accept the session tokens that Kratos
-issues to native apps. Operations that need a signed-in user, such as
-submitting a log, accept only the session cookie from signing in on the Tadoku
-website.
+OAuth clients, and no session tokens for native apps. Operations that need a
+signed-in user, such as submitting a log, accept only the session cookie from
+signing in on the Tadoku website.
 
 Anonymous read operations need no credentials:
 

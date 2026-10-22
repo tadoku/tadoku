@@ -15,7 +15,7 @@ Read this when you start frontend work and need to find the right application, p
 | [webv2](webv2.md) | Main site: logs, contests, leaderboards, profiles, blog and CMS pages | Next.js 13 | `ui` (legacy) |
 | [webv3](webv3.md) | Unpublished homepage foundation with read-only development data and a local immersion goal | TanStack Start, Router, Query and Form | `paper-ui` (Paper) |
 | [authv2](authv2.md) | Account skeleton with API-selected v1/v2 routing | TanStack Start, Router, Query and Form | `paper-ui` (Paper) |
-| [auth](auth.md) | Account portal for Ory Kratos | Next.js 13 | `ui` (legacy) |
+| [auth](auth.md) | Legacy account portal for Ory Kratos (v1 tenants) | Next.js 13 | `ui` (legacy) |
 | [admin](admin.md) | Administration: CMS content, users, languages, feature access | Next.js 13 | `ui` (legacy) |
 | [paper-styleguide](paper-styleguide.md) | Catalogue for `paper-ui` | Vite, React Router | `paper-ui` (Paper) |
 | [paper-playground](paper-playground.md) | Unpublished Paper application study with sample data | Vite, React Router | `paper-ui` (Paper) |

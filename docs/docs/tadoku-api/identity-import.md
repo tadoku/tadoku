@@ -13,12 +13,13 @@ display names, bcrypt hashes, account state and account creation timestamps.
 It never creates sessions, contacts identity providers, changes feature flags
 or applies schema migrations.
 
-**Operational hold:** command development and disposable database tests do not
-authorize a shared-development rehearsal or production import. Shared source
-credential access, account freezes, the development seed switch, flag changes,
-production cutover, default changes, deployment, rollback and Kratos removal
-each remain held for separately authorized operational work. Do not run this
-command against shared development or production as a verification step.
+**Operational hold:** canonical production already runs on imported native
+accounts, and the import is one-way. Running the command against shared
+development or production, shared source credential access, account freezes and
+retained-data disposition each need separately authorized operational work;
+never run it there as a verification step. See
+[Identity v2 rollback](../operations/identity-v2-rollback.md#data-is-one-way)
+for what the import cannot reverse.
 
 ## Configuration and source schema
 

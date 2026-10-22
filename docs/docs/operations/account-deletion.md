@@ -1,50 +1,111 @@
 ---
 sidebar_position: 1
 title: Account deletion
-description: How to manually delete a Tadoku account from the Tadoku API database, the leaderboard cache, Keto and Kratos, keeping anonymised history for finished contests.
+description: How to manually delete a Tadoku account, its native sign-in account and its sessions from the Tadoku API database, plus its leaderboard cache entries and Keto roles, keeping anonymised history for finished contests.
 ---
 
 # Account deletion
 
 Read this when a user has asked for their Tadoku account to be deleted.
 
-Account deletion is manual. Run the steps below in order. You can safely rerun any step.
+Account deletion is manual. Tadoku has no self-service or API operation for it,
+and the identity feature's `DeleteAccount` is not implemented. Start only after
+you have confirmed that the request comes from the account's owner. Run the
+steps below in order. You can safely rerun any step.
 
-The deletion removes the account's logs, contest registrations, log tags, roles
-and profile rows, except the history of finished contests. A contest is finished
-once its end date has passed and it has not been deleted. The account's
-registrations and logs in finished contests stay, so their final results and
-leaderboards do not change. Those logs are anonymised: their descriptions and tags
-are removed and `frozen_at` is set, which stops any further change to them.
+The steps have two stages with different effects:
+
+- **Lock (step 2)** disables the account at once. Login, session lookup,
+  recovery and settings ignore a native account whose user is
+  deletion-locked, so its existing sessions stop authenticating. Writes to
+  logs, contests and registrations return `409`. Nothing is deleted yet: until
+  step 3 commits, clearing `deletion_locked_at` restores the account.
+- **Delete (step 3)** cannot be undone. It removes the native sign-in account,
+  its sessions and recovery tokens, and the account's logs, contest
+  registrations, log tags, roles and profile rows, except the history of
+  finished contests.
+
+A contest is finished once its end date has passed and it has not been
+deleted. The account's registrations and logs in finished contests stay, so
+their final results and leaderboards do not change. Those logs are anonymised:
+their descriptions and tags are removed and `frozen_at` is set, which stops any
+further change to them.
 
 The `users` row stays as an anonymised tombstone that keeps the ID and
 `created_at`: contest queries join contest owners and participants to `users`,
 and the Tadoku API rejects writes and profile synchronisation for users whose
-`deletion_locked_at` or `deleted_at` is set.
+`deletion_locked_at` or `deleted_at` is set. Deleting the `accounts` row frees
+the email address; a later registration with it creates a new, unrelated user.
+
+## Data this guide does not remove
+
+- **Moderation audit entries** stay in `moderation_audit_log`, both entries
+  where the account was the moderator and entries where it was the target.
+- **Retained email** rows addressed to the account, such as recovery messages
+  and old-address notices, are removed by the worker's
+  [email retention](../tadoku-api/email.md#retention-and-operations) after three
+  days in production. Deleting the recovery tokens in step 3 invalidates every
+  link in them.
+- **Legacy identity data.** Production accounts were imported from Ory Kratos.
+  Production Kratos is offline, and its database and Secrets are retained, so
+  they still hold the identity's pre-import email address and password hash.
+  This guide never starts Kratos or uses its self-service or admin APIs.
+  Record the account ID with the operation's evidence so that the separately
+  authorized disposition of retained legacy data can include it.
+- **Database backups** keep earlier copies until the provider's retention
+  removes them; see [Identity v2 rollback](./identity-v2-rollback.md#database-recovery).
+
+`account_deletion_requests` has request states, but no application operation
+reads or writes it; step 3 only removes rows for the account.
+
+A tenant whose `identity-v2` flag selects v1, such as one in development,
+keeps its accounts in that environment's Kratos instead of `accounts`. For
+such a tenant, run the same database, leaderboard and Keto steps, and delete
+the identity through that environment's running Kratos admin API.
 
 ## Prerequisites
 
-- Write access to the Tadoku API database through `psql`. The statements use
-  unqualified table names, like the migrations in
-  `services/tadoku-api/migrations/`, so connect with the `search_path` that the
-  Tadoku API uses.
+- Write access to the Tadoku API database through `psql` as the non-owner
+  runtime role. Row-level security scopes every statement to the tenant that
+  its transaction sets, and each transaction below sets `tadoku/prod`. Never use
+  the owner role: it bypasses row-level security. See
+  [Tenancy](../tadoku-api/database.md#tenancy). The statements use unqualified
+  table names, like the migrations in `services/tadoku-api/migrations/`, so
+  connect with the `search_path` that the Tadoku API uses.
 - A running `tadoku-worker` release that registers both
   `leaderboard.invalidate_contest.v1` and
   `leaderboard.invalidate_official.v1`, connected to this exact database and
   its matching Valkey cache prefix. Confirm the deployed release's registration
   before proceeding.
-- Access to the Kratos admin API and the Keto read and write APIs.
-- The account ID. This is the Kratos identity ID, which is also `users.id`. To
-  find it from an email address, run
-  `curl "$KRATOS_ADMIN_URL/admin/identities?credentials_identifier=<EMAIL>"`.
+- Access to the Keto read and write APIs, and an administrator session for the
+  feature-flag routes.
+- The account ID, which is `accounts.user_id` and `users.id`. Imported accounts
+  keep their former Kratos identity ID.
 
-Set the ID once for `psql` and once for the shell. The Tadoku API compares
-contest dates with the current UTC date, so set the `psql` session to UTC too:
+Set the variables once for `psql` and once for the shell. The Tadoku API
+compares contest dates with the current UTC date, so set the `psql` session to
+UTC too:
 
 ```sql
 \set ON_ERROR_STOP on
-\set account_id '<ACCOUNT_ID>'
+\set tenant 'tadoku/prod'
 set time zone 'UTC';
+```
+
+To find the account ID from an email address, look it up by the address
+lowercased with surrounding whitespace removed, the form that login uses:
+
+```sql
+begin transaction read only;
+select set_config('tadoku.tenant', :'tenant', true);
+select user_id, state from accounts where email_normalized = '<NORMALIZED_EMAIL>';
+commit;
+```
+
+Then set the ID:
+
+```sql
+\set account_id '<ACCOUNT_ID>'
 ```
 
 ```bash
@@ -56,10 +117,16 @@ ACCOUNT_ID='<ACCOUNT_ID>'
 Run these read-only queries. First, list the data the account owns:
 
 ```sql
+begin transaction read only;
+select set_config('tadoku.tenant', :'tenant', true);
+
 select
   (select count(*) from users where id = :'account_id') as users,
   (select deletion_locked_at from users where id = :'account_id') as deletion_locked_at,
   (select deleted_at from users where id = :'account_id') as deleted_at,
+  (select count(*) from accounts where user_id = :'account_id') as accounts,
+  (select count(*) from sessions where user_id = :'account_id') as sessions,
+  (select count(*) from recovery_tokens where user_id = :'account_id') as recovery_tokens,
   (select count(*) from logs where user_id = :'account_id') as logs,
   (select count(*) from contest_registrations where user_id = :'account_id') as registrations,
   (select count(*) from contests where owner_user_id = :'account_id') as owned_contests,
@@ -70,8 +137,8 @@ select
     where user_id = :'account_id' or metadata->>'target_user_id' = :'account_id') as audit_entries;
 ```
 
-If `users` is `0`, the account has no Tadoku API data. Skip to
-[Keto relations](#5-keto-relations-and-feature-access).
+If `users` is `0`, the account has no Tadoku API data. Run `commit;` and skip
+to [Keto relations](#5-keto-relations-and-feature-access).
 
 Next, count the finished-contest history that the delete step keeps anonymised:
 
@@ -97,12 +164,14 @@ select
 
 Every other log and registration of the account is deleted.
 
-Finally, review the contests that the account owns:
+Finally, review the contests that the account owns and end the transaction:
 
 ```sql
 select id, title, contest_start, contest_end, "private", official, deleted_at
 from contests
 where owner_user_id = :'account_id';
+
+commit;
 ```
 
 The delete step keeps owned contests and shows them with the organiser
@@ -110,15 +179,23 @@ The delete step keeps owned contests and shows them with the organiser
 
 ## 2. Lock the account
 
-Commit the lock on its own before you delete anything. Once it is committed, the
-Tadoku API rejects every log, contest and registration write for this account
-with `409` and `{"error":"account_deletion_in_progress"}`.
+Commit the lock on its own before you delete anything:
 
 ```sql
+begin;
+select set_config('tadoku.tenant', :'tenant', true);
+
 update users
 set deletion_locked_at = coalesce(deletion_locked_at, now())
 where id = :'account_id';
+
+commit;
 ```
+
+Once it is committed, the account cannot sign in, its sessions and recovery
+links stop working, and the Tadoku API rejects every log, contest and
+registration write for it with `409` and
+`{"error":"account_deletion_in_progress"}`.
 
 ## 3. Delete the data
 
@@ -135,6 +212,7 @@ these message names or payloads without the consumer-version preflight.
 
 ```sql
 begin;
+select set_config('tadoku.tenant', :'tenant', true);
 
 with affected_contests as (
   select contest_id from contest_registrations where user_id = :'account_id'
@@ -199,6 +277,11 @@ delete from user_roles where user_id = :'account_id';
 delete from profiles where user_id = :'account_id';
 delete from account_deletion_requests where identity_id = :'account_id';
 
+-- The native sign-in account and everything that authenticates as it.
+delete from sessions where user_id = :'account_id';
+delete from recovery_tokens where user_id = :'account_id';
+delete from accounts where user_id = :'account_id';
+
 update contests
 set owner_user_display_name = 'Deleted organizer'
 where owner_user_id = :'account_id';
@@ -228,9 +311,6 @@ prove that an earlier batch completed.
 If it printed `UPDATE 0`, the lock is missing. Run `rollback;` and go back to
 step 2.
 
-Moderation audit entries stay in `moderation_audit_log`, both entries where the
-account was the moderator and entries where it was the target.
-
 ## 4. Leaderboards
 
 The separate `tadoku-worker` processes the rows inserted into `jobs` in step 3.
@@ -248,6 +328,9 @@ Use the recorded `deletion_job_ids` from the committed transaction to inspect
 these jobs and any linked replay attempts in the same `psql` session:
 
 ```sql
+begin transaction read only;
+select set_config('tadoku.tenant', :'tenant', true);
+
 with recursive requested as (
   select unnest(:'deletion_job_ids'::bigint[]) as original_id
 ), attempts as (
@@ -270,6 +353,8 @@ from requested
 left join attempts using (original_id)
 group by requested.original_id
 order by requested.original_id;
+
+commit;
 ```
 
 A batch with no IDs needs no invalidation. Otherwise every original ID needs
@@ -303,21 +388,14 @@ those flags, call `GET /immersion/admin/feature-flags/{flagKey}/users/{userId}`
 as an administrator. If the account has access, send `DELETE` to the same path
 to revoke it.
 
-## 6. Kratos identity
-
-Delete the identity through the Kratos admin API:
-
-```bash
-curl -fsS -X DELETE "$KRATOS_ADMIN_URL/admin/identities/$ACCOUNT_ID"
-```
-
-A `404` response means the identity is already gone.
-
 ## Verify
 
 In the Tadoku API database:
 
 ```sql
+begin transaction read only;
+select set_config('tadoku.tenant', :'tenant', true);
+
 select display_name, deletion_locked_at, deleted_at from users where id = :'account_id';
 
 with finished_contests as (
@@ -347,24 +425,26 @@ select
   (select count(*) from user_roles where user_id = :'account_id') as user_roles,
   (select count(*) from profiles where user_id = :'account_id') as profiles,
   (select count(*) from account_deletion_requests where identity_id = :'account_id') as deletion_requests,
+  (select count(*) from accounts where user_id = :'account_id') as accounts,
+  (select count(*) from sessions where user_id = :'account_id') as sessions,
+  (select count(*) from recovery_tokens where user_id = :'account_id') as recovery_tokens,
   (select count(*) from contests
     where owner_user_id = :'account_id'
       and owner_user_display_name <> 'Deleted organizer') as named_contests;
+
+commit;
 ```
 
 The `users` query returns one row, with `Deleted participant` as the display name
 and both timestamps set. In the second query, `kept_registrations` and
 `kept_logs` match the preflight, and every other count is `0`.
 
-In Keto and Kratos:
+In Keto:
 
 ```bash
 # Expect "relation_tuples":[]
 curl -fsS "$KETO_READ_URL/relation-tuples?namespace=app&subject_id=$ACCOUNT_ID"
-
-# Expect 404
-curl -s -o /dev/null -w '%{http_code}\n' "$KRATOS_ADMIN_URL/admin/identities/$ACCOUNT_ID"
 ```
 
-The admin user list reads identities from an in-memory Kratos cache. The account
-disappears from that list within five minutes.
+The admin user list reads native accounts from the database on each request,
+so the account disappears from it immediately.

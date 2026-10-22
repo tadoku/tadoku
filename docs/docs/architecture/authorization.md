@@ -60,8 +60,9 @@ for attached issuance, limits, listing and revocation.
 Profile and moderation use `identity.Reader` for public profile details, account
 age, admin listing and ban-target existence. The identity feature chooses the
 implementation using the request tenant's flag. V2 targets must be active
-accounts in that tenant; v1 reads continue through Kratos. Account deletion is
-not available, and read access does not authorize shared provider mutations.
+accounts in that tenant; v1 reads continue through Kratos. Account deletion has
+no API; see [Account deletion](../operations/account-deletion.md). Read access
+does not authorize shared provider mutations.
 
 The identity session adapter in `services/tadoku-api/features/identity/kratos`
 checks the selected Kratos cookie and revokes only that session for the canonical

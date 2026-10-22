@@ -52,7 +52,7 @@ function proveFrontends({ evidence, prefix, containers, report, run }, docs) {
               await new Promise(resolve => setTimeout(resolve, 500));
             }
             if (!health?.ok) throw new Error('authv2 Nitro server did not become healthy');
-            for (const host of ['authv2.tadoku.dev.lab', 'proof-0123abcd.authv2.tadoku.dev.lab']) {
+            for (const host of ['account.tadoku.dev.lab', 'proof-0123abcd.account.tadoku.dev.lab']) {
               const response = await new Promise((resolve, reject) => {
                 require('node:http').get(base + '/login', {headers: {Host: host}}, response => {
                   let html = '';
@@ -62,9 +62,8 @@ function proveFrontends({ evidence, prefix, containers, report, run }, docs) {
                 }).on('error', reject);
               });
               if (response.status !== 200 || !response.html.includes('We can’t reach your account right now') || !response.html.includes('href="/login"')) throw new Error('authv2 must offer a retry during API outage');
-              const web = host.replace('.authv2.', '.').replace(/^authv2\./, '');
+              const web = host.replace('.account.', '.').replace(/^account\./, '');
               if (!response.html.includes('href="https://' + web + '"')) throw new Error('authv2 home link lost its branch');
-              if (/href="https:\/\/[^"]*account\./.test(response.html)) throw new Error('authv2 must not choose an account app during API outage');
               const assets = [...response.html.matchAll(/(?:src|href)="([^" ]+\.(?:js|css)(?:\?[^" ]*)?)"/g)].map(m => m[1]);
               if (!assets.length) throw new Error('authv2 has no compiled assets');
               for (const asset of assets) if (!(await fetch(new URL(asset, base))).ok) throw new Error('Missing authv2 asset: ' + asset);
@@ -163,7 +162,7 @@ function proveFrontends({ evidence, prefix, containers, report, run }, docs) {
             await result.arrayBuffer();
           }
           console.log(JSON.stringify({runtime, assets: assets.length}));
-          const host = new URL(runtime[{'frontend-admin': 'adminUrl', 'frontend-auth': 'authUiUrl'}[proof.app] ?? 'homeUrl']).host;
+          const host = new URL(runtime[proof.app === 'frontend-admin' ? 'adminUrl' : 'homeUrl']).host;
           const branchApi = proof.publicApi.replace('://', '://' + proof.branch + '.');
           for (const [requestHost, headers, browserApi] of [[host, {}, proof.publicApi], [proof.branch + '.' + host, {'X-Dev-Branch': proof.branch}, branchApi]]) {
             observed = [];
@@ -175,7 +174,7 @@ function proveFrontends({ evidence, prefix, containers, report, run }, docs) {
             const unmatched = observed.filter(row => !proof.privateRules.some(rule => rule.url === privateSession.origin + row.url && rule.methods.includes(row.method)));
             if (unmatched.length) throw new Error(requestHost + ' SSR requests have no private Oathkeeper rule: ' + JSON.stringify(unmatched));
             if (!observed.every(row => row.cookie === cookie && row.branch === headers['X-Dev-Branch'])) throw new Error(requestHost + ' SSR must forward the exact Cookie and only the incoming X-Dev-Branch');
-            if (status !== 200 || !props || props.sessionUnavailable || (proof.app !== 'frontend-auth' && props.session?.id !== account.id)) throw new Error(requestHost + ' SSR did not render the private session response');
+            if (status !== 200 || !props || props.sessionUnavailable || props.session?.id !== account.id) throw new Error(requestHost + ' SSR did not render the private session response');
             if (props.appUrls?.apiEndpoint !== browserApi || html.includes(privateSession.hostname)) throw new Error(requestHost + ' browser must receive only the public API endpoint');
           }
         })().catch(error => { console.error(error); process.exit(1) });

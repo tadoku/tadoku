@@ -15,7 +15,6 @@ resources:
   - flipt
   - frontend-webv2
   - frontend-webv3
-  - frontend-auth
   - frontend-authv2
   - frontend-admin
   - routing
@@ -26,9 +25,6 @@ configMapGenerator:
     files: [keto/keto.yaml, keto/namespaces.keto.ts]
   - name: frontend-runtime
     namespace: tdk-dev-frontend-webv2
-    files: [frontend-start.cjs, ca.crt=lab-root-ca.crt]
-  - name: frontend-runtime
-    namespace: tdk-dev-frontend-auth
     files: [frontend-start.cjs, ca.crt=lab-root-ca.crt]
   - name: frontend-runtime
     namespace: tdk-dev-frontend-admin
@@ -82,22 +78,6 @@ configMapGenerator:
     options:
       disableNameSuffixHash: true
     files: [ca.crt=lab-root-ca.crt]
-  - name: tadoku-cli-web
-    namespace: tdk-dev-frontend-auth
-    options:
-      disableNameSuffixHash: true
-    literals:
-      - NEXT_PUBLIC_KRATOS_INTERNAL_ENDPOINT=http://kratos-public.tdk-dev-kratos
-      - NEXT_PUBLIC_KRATOS_ENDPOINT=https://account.tadoku.dev.lab/kratos
-      - NEXT_PUBLIC_AUTH_UI_URL=https://account.tadoku.dev.lab
-      - NEXT_PUBLIC_HOME_URL=https://tadoku.dev.lab
-      - NEXT_PUBLIC_API_ENDPOINT=https://tadoku.dev.lab/api/internal
-      - NEXT_SERVER_API_ENDPOINT=http://oathkeeper-proxy.tdk-dev-oathkeeper:4455/api/internal
-      - NEXT_PUBLIC_COOKIE_DOMAIN=.tadoku.dev.lab
-      - NEXT_PUBLIC_COOKIE_SECURE=true
-      - NEXT_PUBLIC_ADMIN_URL=https://admin.tadoku.dev.lab
-      - NODE_EXTRA_CA_CERTS=/etc/dev-ca/ca.crt
-      - NODE_OPTIONS=--max-old-space-size=768
   - name: tadoku-cli-ca
     namespace: tdk-dev-frontend-admin
     options:
@@ -160,10 +140,6 @@ images:
     newName: ghcr.io/tadoku/tadoku/frontend-webv3
     newTag: latest
     digest: sha256:b161897e48c3f3d07d89512c7c54f54f5c8aa839cf839779fd23dbec08a58740
-  - name: ghcr.io/tadoku/tadoku/frontend-auth
-    newTag: 80565d5dd13f8c86ad99626d895951b22741ef05
-    newName: ghcr.io/tadoku/tadoku/frontend-auth
-    digest: sha256:bb1af0d79db8926d0d43e0433543d6b500fbff141926fadcc6fc8da741d4c13d
   - name: ghcr.io/tadoku/tadoku/frontend-admin
     newTag: 80565d5dd13f8c86ad99626d895951b22741ef05
     newName: ghcr.io/tadoku/tadoku/frontend-admin

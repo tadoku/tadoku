@@ -62,6 +62,7 @@ spec:
   hostnames:
     - tadoku.dev.lab
     - next.tadoku.dev.lab
+    - account.tadoku.dev.lab
     - authv2.tadoku.dev.lab
   rules:
     - backendRefs:
@@ -131,54 +132,6 @@ spec:
             set:
               - name: Cache-Control
                 value: no-store
----
-apiVersion: gateway.envoyproxy.io/v1alpha1
-kind: Backend
-metadata:
-  name: tadoku-cli-auth
-  namespace: tdk-dev-routing
-  annotations:
-    argocd.argoproj.io/sync-wave: "0"
-spec:
-  endpoints:
-    - fqdn:
-        hostname: frontend-auth.tdk-dev-frontend-auth.svc.cluster.local
-        port: 3000
----
-apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
-metadata:
-  name: tadoku-cli-auth-base
-  namespace: tdk-dev-routing
-  annotations:
-    argocd.argoproj.io/sync-wave: "0"
-spec:
-  parentRefs:
-    - name: dev-cli-playground
-      namespace: envoy-gateway-system
-  hostnames:
-    - account.tadoku.dev.lab
-  rules:
-    - backendRefs:
-        - group: gateway.envoyproxy.io
-          kind: Backend
-          name: tadoku-cli-auth
-          port: 3000
-      matches:
-        - path:
-            type: PathPrefix
-            value: /
-      filters:
-        - type: RequestHeaderModifier
-          requestHeaderModifier:
-            remove:
-              - x-dev-branch
-        - type: ResponseHeaderModifier
-          responseHeaderModifier:
-            set:
-              - name: Cache-Control
-                value: no-store
-
 ---
 apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: Backend
@@ -319,6 +272,7 @@ spec:
     - name: dev-cli-playground
       namespace: envoy-gateway-system
   hostnames:
+    - account.tadoku.dev.lab
     - authv2.tadoku.dev.lab
   rules:
     - backendRefs:

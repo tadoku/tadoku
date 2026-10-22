@@ -20,12 +20,6 @@ frontend_dev(
 )
 
 frontend_dev(
-    name = "auth",
-    host = "account.tadoku.dev.lab",
-    readiness_path = "/login",
-)
-
-frontend_dev(
     name = "admin",
     host = "admin.tadoku.dev.lab",
 )

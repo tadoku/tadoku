@@ -11,7 +11,6 @@ const legacyOnlyClasses = new Set([
   'auto-format',
   'h-stack',
   'input-frame',
-  'kratos-form',
   'modal-actions',
   'modal-body',
   'secondary',

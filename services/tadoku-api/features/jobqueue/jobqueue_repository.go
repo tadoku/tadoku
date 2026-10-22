@@ -76,6 +76,33 @@ func (r *Repository) Claim(ctx context.Context, typ jobs.Type, limit int, lease 
 	return tasks, nil
 }
 
+func (r *Repository) FailExhausted(ctx context.Context, typ jobs.Type, maxAttempts int) ([]ExhaustedJob, error) {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := queries.New(executor).FailExhausted(ctx, queries.FailExhaustedParams{
+		Now:         postgres.Timestamptz(timex.Now()),
+		TaskType:    string(typ),
+		Component:   postgres.NullableText(componentFromContext(ctx)),
+		MaxAttempts: int32(maxAttempts),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("fail exhausted jobs: %w", err)
+	}
+
+	failed := make([]ExhaustedJob, len(rows))
+	for i, row := range rows {
+		key, err := tenant.Parse(row.Tenant)
+		if err != nil {
+			return nil, fmt.Errorf("exhausted job tenant: %w", err)
+		}
+		failed[i] = ExhaustedJob{Tenant: key, Code: row.LastError.String}
+	}
+	return failed, nil
+}
+
 func (r *Repository) Renew(ctx context.Context, task ClaimedJob, lease time.Duration) (time.Time, bool, error) {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {

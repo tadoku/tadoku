@@ -12,29 +12,7 @@ import (
 )
 
 const claim = `-- name: Claim :many
-with exhausted as (
-  select id from jobs
-  where task_type = $1::text
-    and ($2::text is null or not exists (
-      select 1 from tenant_overrides as o
-      where o.tenant = jobs.tenant
-        and o.component = $2::text
-    ))
-    and attempts >= $3::integer
-    and ((state = 'pending' and next_attempt_at <= $4::timestamptz)
-      or (state = 'running' and lease_expires_at <= clock_timestamp()))
-  order by next_attempt_at, id
-  for update skip locked
-  limit 100
-), failed as (
-  update jobs as task
-  set state = 'failed', claim_token = null, lease_expires_at = null,
-    failed_at = $4::timestamptz,
-    last_error = case when task.state = 'running' then 'lease_expired' else 'attempts_exhausted' end
-  from exhausted
-  where task.id = exhausted.id
-  returning task.id
-), picked as (
+with picked as (
   select id, (state = 'running') as reclaimed from jobs
   where task_type = $1::text
     and ($2::text is null or not exists (
@@ -221,6 +199,68 @@ func (q *Queries) Fail(ctx context.Context, arg FailParams) (int64, error) {
 		return 0, err
 	}
 	return result.RowsAffected(), nil
+}
+
+const failExhausted = `-- name: FailExhausted :many
+with exhausted as (
+  select id from jobs
+  where task_type = $2::text
+    and ($3::text is null or not exists (
+      select 1 from tenant_overrides as o
+      where o.tenant = jobs.tenant
+        and o.component = $3::text
+    ))
+    and attempts >= $4::integer
+    and ((state = 'pending' and next_attempt_at <= $1::timestamptz)
+      or (state = 'running' and lease_expires_at <= clock_timestamp()))
+  order by next_attempt_at, id
+  for update skip locked
+  limit 100
+)
+update jobs as task
+set state = 'failed', claim_token = null, lease_expires_at = null,
+  failed_at = $1::timestamptz,
+  last_error = case when task.state = 'running' then 'lease_expired' else 'attempts_exhausted' end
+from exhausted
+where task.id = exhausted.id
+returning task.tenant, task.last_error
+`
+
+type FailExhaustedParams struct {
+	Now         pgtype.Timestamptz
+	TaskType    string
+	Component   pgtype.Text
+	MaxAttempts int32
+}
+
+type FailExhaustedRow struct {
+	Tenant    string
+	LastError pgtype.Text
+}
+
+func (q *Queries) FailExhausted(ctx context.Context, arg FailExhaustedParams) ([]FailExhaustedRow, error) {
+	rows, err := q.db.Query(ctx, failExhausted,
+		arg.Now,
+		arg.TaskType,
+		arg.Component,
+		arg.MaxAttempts,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []FailExhaustedRow{}
+	for rows.Next() {
+		var i FailExhaustedRow
+		if err := rows.Scan(&i.Tenant, &i.LastError); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const renew = `-- name: Renew :one

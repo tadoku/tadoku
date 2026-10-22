@@ -63,6 +63,19 @@ func (s *Service) Claim(ctx context.Context, typ jobs.Type, limit int, lease tim
 	return s.repository.Claim(ctx, typ, limit, lease, maxAttempts)
 }
 
+// FailExhausted fails up to 100 due jobs of typ that already used maxAttempts, including
+// running jobs whose final lease expired. Claim never picks these jobs.
+func (s *Service) FailExhausted(ctx context.Context, typ jobs.Type, maxAttempts int) ([]ExhaustedJob, error) {
+	if typ == "" {
+		return nil, errx.NewInvalidInputError("job type must not be empty")
+	}
+	if maxAttempts < 1 || maxAttempts > math.MaxInt32 {
+		return nil, errx.NewInvalidInputError("max attempts must be between 1 and 2147483647")
+	}
+
+	return s.repository.FailExhausted(ctx, typ, maxAttempts)
+}
+
 func (s *Service) Renew(ctx context.Context, task ClaimedJob, lease time.Duration) (time.Time, bool, error) {
 	if lease < time.Microsecond {
 		return time.Time{}, false, errx.NewInvalidInputError("job lease must be at least one microsecond")

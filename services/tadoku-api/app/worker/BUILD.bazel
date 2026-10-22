@@ -38,6 +38,7 @@ go_test(
         "worker_runtime_test.go",
         "worker_shutdown_capacity_test.go",
         "worker_tenant_test.go",
+        "worker_terminal_test.go",
         "worker_test.go",
     ],
     embed = [":worker"],

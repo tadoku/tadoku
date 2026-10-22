@@ -31,6 +31,11 @@ type ClaimedJob struct {
 	Reclaimed      bool
 }
 
+type ExhaustedJob struct {
+	Tenant tenant.Key
+	Code   string
+}
+
 type Stats struct {
 	Pending     int64
 	Failed      int64

@@ -17,9 +17,11 @@ The steps have two stages with different effects:
 
 - **Lock (step 2)** disables the account at once. Login, session lookup,
   recovery and settings ignore a native account whose user is
-  deletion-locked, so its existing sessions stop authenticating. Writes to
-  logs, contests and registrations return `409`. Nothing is deleted yet: until
-  step 3 commits, clearing `deletion_locked_at` restores the account.
+  deletion-locked, so its existing sessions stop authenticating and requests
+  that need a signed-in user return `401`. A log, contest or registration
+  write that reaches the API already authenticated as the locked user returns
+  `409`. Nothing is deleted yet: until step 3 commits, clearing
+  `deletion_locked_at` restores the account.
 - **Delete (step 3)** cannot be undone. It removes the native sign-in account,
   its sessions and recovery tokens, and the account's logs, contest
   registrations, log tags, roles and profile rows, except the history of
@@ -192,10 +194,12 @@ where id = :'account_id';
 commit;
 ```
 
-Once it is committed, the account cannot sign in, its sessions and recovery
-links stop working, and the Tadoku API rejects every log, contest and
-registration write for it with `409` and
-`{"error":"account_deletion_in_progress"}`.
+Once it is committed, the account cannot sign in and its recovery links stop
+working. Its session rows remain until step 3, but session lookup no longer
+finds them, so requests with its cookie are treated as a guest and signed-in
+writes return `401`. A log, contest or registration write that reaches the
+Tadoku API already authenticated as this user, such as one authenticated
+before the lock, returns `409` and `{"error":"account_deletion_in_progress"}`.
 
 ## 3. Delete the data
 

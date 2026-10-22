@@ -33,10 +33,10 @@ what a rollback has to reverse, not its manifests.
 
 ## Triggers and authority
 
-Revert only for a real, sustained burst of `5xx` answers from identity routes
-or the session callback, or for the maintainer's own sign-in failing. These are
-not triggers on their own: `401` answers to guests, a gap in sparse logs,
-Argo CD revision drift, or a single failed request.
+Revert only for a real burst of `5xx` answers from identity routes or the
+session callback. These are not triggers on their own: a failed sign-in, which
+can come from a credential or client problem, `401` answers to guests, a gap in
+sparse logs, Argo CD revision drift, or a single failed request.
 
 The maintainer is the incident owner and authorizes each reversal scope by
 name. This page grants no authority. A prepared revert, an earlier approval for

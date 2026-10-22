@@ -11,8 +11,9 @@ Authv2 is the account application on the [Webv3 stack](webv3.md):
 TanStack Start, Router, Query and Form, Zod, Vite, Nitro and Paper. `/` is
 Settings, the identity API's recovery redirect target; `/settings` opens the
 same screen for existing caller links. `/login`, `/register` and `/recovery`
-log in, create an account and request a password-reset email. The existing
-`auth` app serves tenants that select v1.
+log in, create an account and request a password-reset email. The legacy
+`auth` app serves tenants that select v1 where Kratos runs, such as in
+development.
 
 ## Forms and recovery
 
@@ -98,7 +99,9 @@ selection or an authenticated account.
 `frontend/apps/authv2/src/lib/urls.server.ts` resolves origins per request.
 Development uses `authv2.tadoku.dev.lab` and
 `<route>.authv2.tadoku.dev.lab`; production uses `authv2.tadoku.app` and
-`<route>.authv2.preview.tadoku.app`. A valid branch label selects the sibling
+`<route>.authv2.preview.tadoku.app`. In production, `account.tadoku.app`
+redirects to `authv2.tadoku.app`, keeping the path and query and mapping
+`/account-recovery` to `/recovery`. A valid branch label selects the sibling
 Webv2 API gateway and existing account origin. Other hosts retain the configured
 origins. Forwarded host headers cannot select an upstream.
 
@@ -198,13 +201,9 @@ The production image defaults runtime origins to `https://tadoku.app` and
 explicitly requested tags from committed source. The authv2 build workflow
 checks types, lint, boundaries and the container without running Playwright.
 Main publication creates commit and `latest` tags; only an owner-approved manual
-workflow dispatch with `publish_production` creates `prod`. The maintainer owns
-production manifests, DNS, certificate readiness and deployment in the separate
-GitOps repository. Preparing manifests does not activate the application.
-The canonical `authv2.tadoku.app` DNS record must resolve to the current edge
-before merging the GitOps setup: its gateway, certificate and Oathkeeper
-Applications sync automatically on merge. The authv2 workload still requires
-the maintainer's manual activation and readiness gates.
+workflow dispatch with `publish_production` creates `prod`. Production serves
+authv2 at `authv2.tadoku.app`; the maintainer owns its manifests, DNS,
+certificates and deployment in the separate GitOps repository.
 
 The first source merge automatically starts both image publication and the
 development base's sync from `main`. The package does not exist before its
@@ -241,8 +240,7 @@ required full sync separately.
 Source changes to Webv3 or the workspace lockfile also trigger its normal
 publication workflow. Production already follows `frontend-webv3:latest` by
 digest: Image Updater writes to the production GitOps repository and Argo CD
-automatically rolls `next.tadoku.app`. This is a source-merge effect even while
-authv2 production setup and activation remain held. Webv3's SSR bundles
+automatically rolls `next.tadoku.app`. This is a source-merge effect. Webv3's SSR bundles
 `@tanstack/query-core` to keep its build compatible with this workspace; the
 separate Nitro `devServer.runner: 'self'` setting affects development only.
 Keep `webv3 / container journeys` green on the exact source head before landing.

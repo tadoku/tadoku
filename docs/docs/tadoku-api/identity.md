@@ -21,8 +21,9 @@ select the provider.
 
 Account lookup and search are implemented by the separate `ReadService` used by
 profile and moderation; the `Accounts` service's embedded Reader methods and
-account deletion remain `501` stubs. V1 tenants continue to use the existing
-Kratos account frontend for registration, recovery and settings.
+account deletion remain `501` stubs; see the manual
+[Account deletion](../operations/account-deletion.md). V1 tenants use the Kratos
+account frontend where it runs; production Kratos is offline.
 [Retained email](./email.md) provides recovery messages and old-address notices
 through transactional writes and queue publication.
 
@@ -105,7 +106,7 @@ uses the connection peer unless it belongs to an explicitly configured
 valid `X-Real-IP`; the trusted edge must overwrite that header. Empty proxy
 configuration trusts no forwarded address. The development base and overlays
 configure the cluster pod prefix; production must configure its own trusted
-ingress boundary before activation. Untrusted peers cannot evade the IP budget
+ingress boundary. Untrusted peers cannot evade the IP budget
 with forged forwarding headers. With no trusted proxy configured, clients behind
 the same proxy share its peer-IP throttle bucket. This fallback prevents header spoofing
 but can throttle unrelated clients together.
@@ -265,8 +266,8 @@ from surviving a credential replacement.
 The application owns each business transaction. Identity writes, rendered email
 rows and every ID-only `email.send.v1` job commit together; a rendering or enqueue
 failure rolls them all back. Recovery and password changes do not mutate the
-shared v1 provider. Development workers hold mail; SMTP activation remains a
-separate deployment decision.
+shared v1 provider. Only a sending-enabled worker delivers, and only
+`tadoku/prod` rows; development and branch workers hold mail.
 
 ## Contracts for the remaining operations
 

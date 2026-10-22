@@ -103,6 +103,7 @@ const sidebars: SidebarsConfig = {
         'operations/identity-gateway',
         'operations/migration-recovery',
         'operations/account-deletion',
+        'operations/identity-v2-rollback',
       ],
     },
     {

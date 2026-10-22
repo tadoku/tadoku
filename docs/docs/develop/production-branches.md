@@ -8,18 +8,13 @@ description: How a runtime branch is deployed beside production with dev-cli pro
 Read this when a branch is, or will be, deployed beside production, by hand or
 with a pull request's `deploy` label, or when you are asked to verify one.
 
-**Identity rollout hold:** production branches and pull-request deploys built
-with the identity-session callers are unsupported until the production identity
-stack, public and private session routes, callback and authv2 are deployed and
-verified. Do not create such a branch or add its `deploy` label while this hold
-applies. Test-tenant provisioning enables `identity-v2`; those API readers use
-the branch's native accounts, while the current production gateway still
-authenticates through Kratos. Without the paired stack, profiles, moderation
-targets and admin lists can be empty, and new frontends show session retry
-errors. Canonical production remains on v1 and its existing frontend pins.
-Source delivery does not activate production branch-tooling adoption. See
-[Identity gateway configuration](../operations/identity-gateway.md#source-delivery-and-production-activation)
-for the release gates.
+**Identity branch hold:** canonical production runs on native accounts
+through authv2 and the API's session callback, but branch support for that
+stack is not verified. Do not create a production branch or add a `deploy`
+label until the maintainer confirms it. Test-tenant provisioning enables
+`identity-v2`, so a branch's API readers and sessions use that branch's native
+accounts. See [Identity gateway configuration](../operations/identity-gateway.md#production)
+for the production gateway.
 
 dev-cli's production mode runs a pushed branch commit beside the production
 workloads, on its own hosts and its own test tenant. Production users and data

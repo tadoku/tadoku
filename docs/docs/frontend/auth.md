@@ -1,14 +1,14 @@
 ---
 title: auth
-description: The Tadoku account portal, a Next.js frontend for Ory Kratos registration, login, recovery, verification and account settings.
+description: The legacy Tadoku account portal, a Next.js frontend for Ory Kratos registration, login, recovery, verification and account settings for tenants that select v1.
 sidebar_position: 3
 ---
 
 # auth
 
-Read this when you change registration, login, account recovery, verification or account settings at https://account.tadoku.app.
+Read this when you change the legacy Kratos account flows for tenants that select v1.
 
-Source: `frontend/apps/auth`. Development host: `account.tadoku.dev.lab`.
+Source: `frontend/apps/auth`. Development host: `account.tadoku.dev.lab`. Production does not run this app: `account.tadoku.app` redirects to [authv2](authv2.md), and production Kratos is offline.
 
 ## Scope
 

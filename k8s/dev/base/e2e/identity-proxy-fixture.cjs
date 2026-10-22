@@ -49,7 +49,7 @@ async function check() {
   })
   const hosts = production
     ? ['tadoku.app', 'account.tadoku.app', 'authv2.tadoku.app', 'proof-0123abcd.preview.tadoku.app', 'proof-0123abcd.account.preview.tadoku.app', 'proof-0123abcd.authv2.preview.tadoku.app']
-    : ['tadoku.dev.lab', 'account.tadoku.dev.lab', 'proof-0123abcd.account.tadoku.dev.lab', 'authv2.tadoku.dev.lab', 'proof-0123abcd.authv2.tadoku.dev.lab']
+    : ['tadoku.dev.lab', 'account.tadoku.dev.lab', 'proof-0123abcd.account.tadoku.dev.lab']
   const cases = []
   for (const host of hosts) {
     for (const [method, endpoint] of [['GET', 'session'], ['POST', 'logout']]) {

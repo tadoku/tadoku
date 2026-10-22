@@ -63,7 +63,6 @@ spec:
     - tadoku.dev.lab
     - next.tadoku.dev.lab
     - account.tadoku.dev.lab
-    - authv2.tadoku.dev.lab
   rules:
     - backendRefs:
         - group: gateway.envoyproxy.io
@@ -273,7 +272,6 @@ spec:
       namespace: envoy-gateway-system
   hostnames:
     - account.tadoku.dev.lab
-    - authv2.tadoku.dev.lab
   rules:
     - backendRefs:
         - group: gateway.envoyproxy.io

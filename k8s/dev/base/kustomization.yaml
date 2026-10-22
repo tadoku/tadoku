@@ -61,7 +61,6 @@ configMapGenerator:
     options:
       disableNameSuffixHash: true
     literals:
-      - NEXT_PUBLIC_AUTH_UI_URL=https://account.tadoku.dev.lab
       - NEXT_PUBLIC_HOME_URL=https://tadoku.dev.lab
       - NEXT_PUBLIC_API_ENDPOINT=/api/internal
       - NEXT_SERVER_API_ENDPOINT=http://oathkeeper-proxy.tdk-dev-oathkeeper:4455/api/internal
@@ -85,7 +84,6 @@ configMapGenerator:
     options:
       disableNameSuffixHash: true
     literals:
-      - NEXT_PUBLIC_AUTH_UI_URL=https://account.tadoku.dev.lab
       - NEXT_PUBLIC_HOME_URL=https://tadoku.dev.lab
       - NEXT_PUBLIC_API_ENDPOINT=https://tadoku.dev.lab/api/internal
       - NEXT_SERVER_API_ENDPOINT=http://oathkeeper-proxy.tdk-dev-oathkeeper:4455/api/internal

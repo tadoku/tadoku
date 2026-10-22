@@ -236,6 +236,7 @@ func (r *runner) process(ctx context.Context, task jobqueue.ClaimedJob, spec han
 	margin := spec.lease / 3
 	remainingLease := time.Until(task.LeaseExpiresAt)
 	if remainingLease <= margin {
+		r.logger.WarnContext(ctx, "claim lease expired before dispatch", "job_id", task.ID, "type", task.Type)
 		return fmt.Errorf("job %d: claim lease expired before dispatch", task.ID)
 	}
 
@@ -244,9 +245,11 @@ func (r *runner) process(ctx context.Context, task jobqueue.ClaimedJob, spec han
 		expiry, held, err := r.queue.Renew(renewCtx, task, spec.lease)
 		stop()
 		if err != nil {
+			r.logger.ErrorContext(ctx, "renew claim before dispatch", "job_id", task.ID, "type", task.Type, "error", err)
 			return fmt.Errorf("renew claim before dispatch: %w", err)
 		}
 		if !held {
+			r.logger.WarnContext(ctx, "claim lease lost before dispatch", "job_id", task.ID, "type", task.Type)
 			return fmt.Errorf("job %d: claim lease lost before dispatch", task.ID)
 		}
 		task.LeaseExpiresAt = expiry
@@ -297,9 +300,11 @@ func (r *runner) process(ctx context.Context, task jobqueue.ClaimedJob, spec han
 	}
 
 	if err != nil {
+		r.logger.ErrorContext(ctx, "transition job", "job_id", task.ID, "type", task.Type, "error", err)
 		return fmt.Errorf("transition job %d: %w", task.ID, err)
 	}
 	if !held {
+		r.logger.WarnContext(ctx, "lease lost before transition", "job_id", task.ID, "type", task.Type)
 		return fmt.Errorf("job %d: lease lost before transition", task.ID)
 	}
 	if terminal {

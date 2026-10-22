@@ -88,7 +88,9 @@ e2e/testdata/journeys/
   as described in
   [Relationship files](./http-e2e.md#relationship-files). There are no
   per-step seeds and no resets between steps. A journey may seed an external
-  cache after reset to establish its initial state.
+  cache after reset to establish its initial state. A failure journey may
+  install a fault after reset, such as a trigger that makes inserts into one
+  table fail, and removes it in cleanup.
 - The JWT clock stays at the fixture instant for the whole journey, while each
   step's `at` sets its business instant through `timex`.
 - The runner stops at the first failing step. Unknown entries in a journey or

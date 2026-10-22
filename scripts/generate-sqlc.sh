@@ -7,6 +7,7 @@ SQLC_PACKAGES=(
   "services/tadoku-api/sql/audit"
   "services/tadoku-api/sql/email"
   "services/tadoku-api/sql/tokens"
+  "services/tadoku-api/sql/permissions"
   "services/tadoku-api/sql/jobqueue"
   "services/tadoku-api/sql/tenantlifecycle"
   "services/tadoku-api/sql/announcements"

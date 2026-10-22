@@ -470,7 +470,7 @@ func (s *Service) RegistrationsForRescoring(log *Log, now time.Time) []logscore.
 	}
 	selected := make([]logscore.Target, 0, len(log.Registrations))
 	for _, registration := range log.Registrations {
-		if !registration.ContestEnd.Before(now) {
+		if registration.ContestEnd.Add(24 * time.Hour).After(now) {
 			selected = append(selected, logscore.Target{
 				RegistrationID: registration.RegistrationID,
 				ContestID:      registration.ContestID,

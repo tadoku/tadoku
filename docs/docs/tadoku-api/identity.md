@@ -13,10 +13,11 @@ the operational holds on shared imports, read [Import Kratos accounts](./identit
 
 Registration, login, logout, session lookup, recovery, profile/password settings
 and the Oathkeeper session callback are implemented. A tenant's `identity-v2`
-flag selects local accounts or Kratos; its safe default is `false`, including
-for guests. Profile and moderation callers use `identity.Reader`, constructed
-by `identity.NewReader`. It selects tenant-local reads or the v1 adapter from
-the tenant flag; callers never select the provider.
+flag selects local accounts or Kratos, including for guests, as described in
+[Account-app selection](./identity-selection.md). Profile and moderation callers
+use `identity.Reader`, constructed by `identity.NewReader`. It selects
+tenant-local reads or the v1 adapter from the same decision; callers never
+select the provider.
 
 Account lookup and search are implemented by the separate `ReadService` used by
 profile and moderation; the `Accounts` service's embedded Reader methods and
@@ -67,8 +68,8 @@ for v1, and for v2 the normalized address or an imported address as written.
 When Go's `net/mail` reads an address from it, the API writes that address
 part, so a quoted local part arrives unquoted and surrounding ASCII spaces and
 tabs are dropped, while letter case, other characters and length are kept. An
-address `net/mail` cannot read, such as an imported address with a leading
-vertical tab, is written unchanged. The contract therefore types the account
+address `net/mail` cannot read, such as a Kratos trait with a leading vertical
+tab, is written unchanged. The contract therefore types the account
 `email` in identity responses and the session callback as a plain string
 containing `@`, not `format: email`.
 Display names contain 2–32 Unicode characters and at least one visible
@@ -188,7 +189,23 @@ enqueue failure, has still used one unit of each budget; the user can retry
 while the recipient budget lasts or after the window ends. The recipient budget
 leaves room for two retries after a lost or delayed email within the one-hour
 token lifetime. The counters use the normalized email only as a hashed key;
-mail still goes to the account's stored address.
+mail goes to the account's address as described next.
+
+Recovery email and old-address notices go to the account's stored address
+without the spaces and tabs around it. RFC 5322 reads those as folding
+whitespace outside the mailbox, and identity responses drop them too. Letter
+case and every other character are kept, including Unicode spaces, and the
+address is never lowercased, trimmed further or truncated. The email writer
+then applies its unchanged recipient rules. An address that is not a bare
+mailbox of at most 320 bytes after that trim, such as a stored address with a
+leading vertical tab, form feed or line break or with a long Unicode-space
+prefix, gets no recovery email or notice. The account importer refuses such
+addresses, and also those with surrounding spaces or tabs; see
+[Recipient compatibility](./identity-import.md#recipient-compatibility).
+Its recovery request and email changes return `400` with
+`invalid email recipient` and write nothing, so its tokens, sessions and stored
+values stay as they were. That answer differs from an unknown address's `202`.
+Login is unaffected because it uses the normalized email.
 
 The link uses the configured cookie domain and parsed tenant's main API host,
 never the incoming Host. Its path is `/api/internal/identity/recovery/{token}`,
@@ -219,9 +236,14 @@ one account, allow only one success.
 
 Profile settings accept email and/or display name. Display-name changes require
 a valid session; email changes additionally require authentication within the
-last hour. Email switches immediately with tenant-local normalized uniqueness,
-invalidates pending recovery tokens and queues `account.email_changed` to the
-old address, with `new_email` and RFC3339 `changed_at`. The response includes the
+last hour. A submitted email whose normalized form equals the address the
+account's mail goes to is unchanged: nothing about the email is written and no
+recent login is needed. Any other value is a change, including one that differs
+from the stored address only in letter case or Unicode spaces, because it
+changes where mail goes. Email switches immediately with tenant-local
+normalized uniqueness, stores the normalized form, invalidates pending recovery
+tokens and queues `account.email_changed` to the old address, with `new_email`
+and RFC3339 `changed_at`. The response includes the
 existing session authentication time. A session older than one hour, or with an
 authentication time in the future, returns `stale_session` for email/password
 changes. Re-authenticate through login to get a fresh cookie.

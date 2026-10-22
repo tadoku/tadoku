@@ -20,7 +20,7 @@ func (f BooleanFlag) definition() booleanDefinition {
 			safeDefault: false,
 		}
 	case IdentityV2:
-		return booleanDefinition{key: "identity-v2", safeDefault: false}
+		return booleanDefinition{key: "identity-v2", safeDefault: true}
 	default:
 		return booleanDefinition{}
 	}

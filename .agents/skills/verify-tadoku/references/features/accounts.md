@@ -63,7 +63,9 @@ branch tenant and disposable account for registration, login, session lookup and
 logout. Assert the tenant-specific cookie name, Secure/HttpOnly/SameSite flags,
 fresh tokens on login, persistence, rejection after logout, and isolation from
 base and another branch. Send a JSON content type and an allowed HTTPS Origin.
-Record `account_app`; an unset `identity-v2` decision remains `v1`.
+Record `account_app`. Only an `identity-v2` flag absent from the canonical
+`tadoku/prod` snapshot defaults to `v1`. Any other undecided selection returns
+`503`, or `504` past the request deadline and `499` when the client cancels.
 
 The base API and overlays supply the development cookie domain and Kratos public
 URL.
@@ -130,7 +132,9 @@ lookup or consumption, with no truncation and the same result for known and
 unknown emails. Stale sessions cannot change email
 or password, while a valid stale session may still change its display name.
 Email changes must notify the old address and password changes must revoke
-other sessions.
+other sessions. Stored addresses receive mail without the spaces and tabs around them; one
+the email writer still rejects makes recovery and email changes return `400`
+without writes.
 
 A v2 administrator cookie requires deployed identity callback wiring and
 tenant-local v2 administrator fixtures. The existing gateway also accepts an

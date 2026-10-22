@@ -1,12 +1,16 @@
 package contests
 
 import (
+	"context"
 	"errors"
+	"fmt"
 	"reflect"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
@@ -197,6 +201,149 @@ func TestCheckContestCreationYearlyLimit(t *testing.T) {
 				t.Errorf("checkContestCreationYearlyLimit(%d) error=%v, want %v", test.createdThisYear, err, test.want)
 			}
 		})
+	}
+}
+
+func TestCheckYearlyCreationLimit(t *testing.T) {
+	t.Parallel()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
+	db, err := testpostgres.New(tenantCtx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Error(err)
+		}
+	})
+
+	year := time.Now().UTC().Year()
+	ownerID := uuid.MustParse("11111111-1111-4111-8111-111111111111")
+	seedContestsCreatedThisYear(t, tenantCtx, db, ownerID, year, contestCreationYearlyLimit-1)
+
+	service := NewService(NewContestsRepository(db.Pool))
+	if err := service.CheckYearlyCreationLimit(tenantCtx, ownerID, year); err != nil {
+		t.Fatalf("below limit error=%v, want nil", err)
+	}
+
+	seedContestsCreatedThisYear(t, tenantCtx, db, ownerID, year, 1)
+	if err := service.CheckYearlyCreationLimit(tenantCtx, ownerID, year); !errors.Is(err, ErrContestCreationForbidden) {
+		t.Fatalf("at limit error=%v, want %v", err, ErrContestCreationForbidden)
+	}
+}
+
+func TestCreateContestYearlyLimitUnderUserLock(t *testing.T) {
+	t.Parallel()
+	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
+	db, err := testpostgres.New(tenantCtx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Error(err)
+		}
+	})
+
+	year := time.Now().UTC().Year()
+	ownerID := uuid.MustParse("11111111-1111-4111-8111-111111111111")
+	now := time.Date(year, time.September, 12, 12, 0, 0, 0, time.UTC)
+	seedContestsCreatedThisYear(t, tenantCtx, db, ownerID, year, contestCreationYearlyLimit-1)
+
+	service := NewService(NewContestsRepository(db.Pool))
+	const workers = 4
+	start := make(chan struct{})
+	errs := make(chan error, workers)
+	var wg sync.WaitGroup
+	for i := 0; i < workers; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			<-start
+			contest := Contest{
+				ID:                      uuid.New(),
+				ContestStart:            time.Date(year, time.October, 1, 0, 0, 0, 0, time.UTC),
+				ContestEnd:              time.Date(year, time.October, 31, 0, 0, 0, 0, time.UTC),
+				RegistrationEnd:         time.Date(year, time.September, 30, 0, 0, 0, 0, time.UTC),
+				Title:                   fmt.Sprintf("Concurrent %d", i),
+				OwnerUserID:             ownerID,
+				OwnerUserDisplayName:    "Owner",
+				ActivityTypeIDAllowList: []int32{1},
+				CreatedAt:               now,
+				UpdatedAt:               now,
+			}
+			errs <- postgres.RunInTransaction(tenantCtx, db.Pool, func(ctx context.Context) error {
+				executor, err := postgres.Executor(ctx, db.Pool)
+				if err != nil {
+					return err
+				}
+				var locked uuid.UUID
+				if err := executor.QueryRow(ctx, `select id from users where id = $1 for update`, ownerID).Scan(&locked); err != nil {
+					return err
+				}
+				if err := service.CheckYearlyCreationLimit(ctx, ownerID, year); err != nil {
+					return err
+				}
+				_, err = service.CreateContest(ctx, contest)
+				return err
+			})
+		}(i)
+	}
+	close(start)
+	wg.Wait()
+	close(errs)
+
+	var succeeded, forbidden int
+	for err := range errs {
+		switch {
+		case err == nil:
+			succeeded++
+		case errors.Is(err, ErrContestCreationForbidden):
+			forbidden++
+		default:
+			t.Errorf("unexpected error=%v", err)
+		}
+	}
+	if succeeded != 1 || forbidden != workers-1 {
+		t.Fatalf("outcomes succeeded=%d forbidden=%d, want 1 and %d", succeeded, forbidden, workers-1)
+	}
+
+	count, err := service.contests.CountContestsCreatedByUserForYear(tenantCtx, ownerID, int32(year))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if count != contestCreationYearlyLimit {
+		t.Errorf("final count=%d, want %d", count, contestCreationYearlyLimit)
+	}
+}
+
+func seedContestsCreatedThisYear(
+	t *testing.T,
+	ctx context.Context,
+	db *testpostgres.Database,
+	ownerID uuid.UUID,
+	year int,
+	count int,
+) {
+	t.Helper()
+	if _, err := db.Pool.Exec(ctx, `
+		insert into users (tenant, id, display_name, created_at, updated_at)
+		values ('tadoku/prod', $1, 'Owner', '2025-01-01', '2025-01-01')
+		on conflict (tenant, id) do nothing`, ownerID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Pool.Exec(ctx, `
+		insert into contests (
+			tenant, id, owner_user_id, owner_user_display_name, "private", contest_start, contest_end,
+			registration_end, title, activity_type_id_allow_list, official, created_at, updated_at
+		)
+		select
+			'tadoku/prod', gen_random_uuid(), $1, 'Owner', false,
+			'2026-01-01', '2026-01-31', '2026-01-01', 'Seed', '{}', false,
+			make_date($2::int, 1, 1) + (n || ' days')::interval, make_date($2::int, 1, 1)
+		from generate_series(1, $3::int) as n`,
+		ownerID, year, count); err != nil {
+		t.Fatal(err)
 	}
 }
 

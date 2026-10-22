@@ -112,6 +112,11 @@ func loadConfig() (config, error) {
 		}
 	}
 
+	cfg.JWKS, err = providerBaseURL("JWKS", cfg.JWKS)
+	if err != nil {
+		return config{}, err
+	}
+
 	cfg.KetoReadURL, err = providerBaseURL("KetoReadURL", cfg.KetoReadURL)
 	if err != nil {
 		return config{}, err

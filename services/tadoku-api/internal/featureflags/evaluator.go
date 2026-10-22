@@ -110,40 +110,53 @@ func (e *Evaluator) Boolean(ctx context.Context, flag BooleanFlag, subject strin
 		return defaultResult(EvaluationReasonProviderError, true)
 	}
 
-	return e.evaluate(ctx, flag, EvaluationRequest{
+	enabled, err := e.evaluate(ctx, flag, EvaluationRequest{
 		FlagKey:  definition.key,
 		EntityID: userID.String(),
 		Context:  map[string]string{"authenticated": "true"},
-	}, started, defaultResult)
+	}, started)
+	if err != nil {
+		return defaultResult(providerErrorReason(err))
+	}
+	return enabled
 }
 
-func (e *Evaluator) TenantBoolean(ctx context.Context, flag BooleanFlag) bool {
+// TenantBoolean returns the context tenant's decision. Its error wraps ErrFlagNotFound when the provider's
+// configuration lacks the flag; any other error means no decision was made, and false is not a decision.
+func (e *Evaluator) TenantBoolean(ctx context.Context, flag BooleanFlag) (bool, error) {
 	started := e.now()
-	fallback := func(reason EvaluationReason, isError bool) bool {
+	fail := func(reason EvaluationReason, err error) (bool, error) {
 		e.observe(Observation{
 			Flag:     flag,
 			Enabled:  flag.SafeDefault(),
 			Reason:   reason,
 			Source:   EvaluationSourceDefault,
 			Duration: e.now().Sub(started),
-			Err:      isError,
+			Err:      reason != EvaluationReasonNotFound,
 		})
-		return flag.SafeDefault()
+		return false, err
 	}
+
 	if flag.Key() == "" {
-		return fallback(EvaluationReasonInvalidFlag, true)
+		return fail(EvaluationReasonInvalidFlag, errors.New("feature flag is not declared"))
 	}
-	if ctx.Err() != nil {
-		return fallback(EvaluationReasonCanceled, true)
+	if err := ctx.Err(); err != nil {
+		return fail(EvaluationReasonCanceled, err)
 	}
 	key, ok := tenant.FromContext(ctx)
 	if !ok {
-		return fallback(EvaluationReasonInvalidIdentity, true)
+		return fail(EvaluationReasonInvalidIdentity, errors.New("feature flag evaluation requires a tenant"))
 	}
 	if e.provider == nil {
-		return fallback(EvaluationReasonProviderError, true)
+		return fail(EvaluationReasonProviderError, errors.New("feature flag provider is not configured"))
 	}
-	return e.evaluate(ctx, flag, EvaluationRequest{FlagKey: flag.Key(), EntityID: key.String()}, started, fallback)
+
+	enabled, err := e.evaluate(ctx, flag, EvaluationRequest{FlagKey: flag.Key(), EntityID: key.String()}, started)
+	if err != nil {
+		reason, _ := providerErrorReason(err)
+		return fail(reason, err)
+	}
+	return enabled, nil
 }
 
 func (e *Evaluator) evaluate(
@@ -151,20 +164,10 @@ func (e *Evaluator) evaluate(
 	flag BooleanFlag,
 	request EvaluationRequest,
 	started time.Time,
-	defaultResult func(EvaluationReason, bool) bool,
-) bool {
+) (bool, error) {
 	result, err := e.provider.EvaluateBoolean(ctx, request)
 	if err != nil {
-		if errors.Is(err, ErrFlagNotFound) {
-			return defaultResult(EvaluationReasonNotFound, false)
-		}
-		if errors.Is(err, ErrInvalidResponse) {
-			return defaultResult(EvaluationReasonInvalidResponse, true)
-		}
-		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
-			return defaultResult(EvaluationReasonCanceled, true)
-		}
-		return defaultResult(EvaluationReasonProviderError, true)
+		return false, err
 	}
 
 	source := EvaluationSourceProvider
@@ -178,7 +181,20 @@ func (e *Evaluator) evaluate(
 		Source:   source,
 		Duration: e.now().Sub(started),
 	})
-	return result.Enabled
+	return result.Enabled, nil
+}
+
+func providerErrorReason(err error) (EvaluationReason, bool) {
+	switch {
+	case errors.Is(err, ErrFlagNotFound):
+		return EvaluationReasonNotFound, false
+	case errors.Is(err, ErrInvalidResponse):
+		return EvaluationReasonInvalidResponse, true
+	case errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded):
+		return EvaluationReasonCanceled, true
+	default:
+		return EvaluationReasonProviderError, true
+	}
 }
 
 func (e *Evaluator) observe(observation Observation) {

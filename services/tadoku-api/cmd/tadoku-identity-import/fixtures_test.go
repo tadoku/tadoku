@@ -73,27 +73,8 @@ func newFixture(t *testing.T) *fixture {
 	}
 	f.created = f.created.UTC()
 
-	for i, id := range []string{firstID, secondID} {
-		f.sql(t, true, `insert into identities
-			(id, nid, schema_id, traits, state, created_at, updated_at)
-			select $1, id, 'user', jsonb_build_object('email', $2::text, 'display_name', $3::text),
-			$4, $5, $5 from networks`,
-			id, []string{"MixedCase@example.test", "second@example.test"}[i],
-			[]string{"読書する人", "Second User"}[i], []string{"active", "inactive"}[i], f.created,
-		)
-		f.sql(t, true, `insert into identity_credentials
-			(id, nid, identity_id, identity_credential_type_id, config, version, created_at, updated_at)
-			select $1, i.nid, i.id, ct.id, jsonb_build_object('hashed_password', $2::text),
-			0, i.created_at, i.updated_at
-			from identities i
-			cross join identity_credential_types ct
-			where i.id = $3
-			  and ct.name = 'password'`,
-			uuid.NewString(),
-			f.hash,
-			id,
-		)
-	}
+	f.addIdentity(t, firstID, "MixedCase@example.test", "読書する人", "active")
+	f.addIdentity(t, secondID, "second@example.test", "Second User", "inactive")
 	var identities, credentials int
 	err = f.source.Pool.QueryRow(t.Context(), `select
 		(select count(*) from identities), (select count(*) from identity_credentials)`).Scan(&identities, &credentials)
@@ -113,6 +94,33 @@ func newFixture(t *testing.T) *fixture {
 	f.sql(t, false, `alter role "`+f.target.AppPool.Config().ConnConfig.User+`" set timezone to 'Asia/Tokyo'`)
 
 	return f
+}
+
+func (f *fixture) addIdentity(t *testing.T, id, email, displayName, state string) {
+	t.Helper()
+
+	f.sql(t, true, `insert into identities
+		(id, nid, schema_id, traits, state, created_at, updated_at)
+		select $1, id, 'user', jsonb_build_object('email', $2::text, 'display_name', $3::text),
+		$4, $5, $5 from networks`,
+		id,
+		email,
+		displayName,
+		state,
+		f.created,
+	)
+	f.sql(t, true, `insert into identity_credentials
+		(id, nid, identity_id, identity_credential_type_id, config, version, created_at, updated_at)
+		select $1, i.nid, i.id, ct.id, jsonb_build_object('hashed_password', $2::text),
+		0, i.created_at, i.updated_at
+		from identities i
+		cross join identity_credential_types ct
+		where i.id = $3
+		  and ct.name = 'password'`,
+		uuid.NewString(),
+		f.hash,
+		id,
+	)
 }
 
 func (f *fixture) sql(t *testing.T, source bool, sql string, args ...any) {

@@ -113,7 +113,10 @@ func run(ctx context.Context, args []string) error {
 		return runInspect(ctx, args[1:])
 	}
 	if len(args) > 0 && args[0] == "development-accounts" {
-		return runDevelopmentAccounts(ctx, args[1:])
+		return runDevelopmentAccounts(ctx, args[1:], false)
+	}
+	if len(args) > 0 && args[0] == "canonical-development-accounts" {
+		return runDevelopmentAccounts(ctx, args[1:], true)
 	}
 	if len(args) > 0 && args[0] == "access-token" {
 		return runAccessToken(ctx, args[1:])

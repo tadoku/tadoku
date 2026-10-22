@@ -246,26 +246,6 @@ func newTestRouterWithLeaderboard(
 	)
 }
 
-// routerOption replaces a dependency endpoint the fixtures normally supply.
-type routerOption func(*routerEndpoints)
-
-type routerEndpoints struct {
-	jwks             string
-	production       *bool
-	ketoWrite        string
-	identityValkey   valkeygo.Client
-	identityObserver featureflags.Observer
-	legacySessions   *identity.LegacySessions
-}
-
-func withIdentityValkey(client valkeygo.Client) routerOption {
-	return func(endpoints *routerEndpoints) { endpoints.identityValkey = client }
-}
-
-func withKetoWriteURL(url string) routerOption {
-	return func(endpoints *routerEndpoints) { endpoints.ketoWrite = url }
-}
-
 func newTestRouterWithLeaderboardService(
 	ctx context.Context,
 	pool *pgxpool.Pool,
@@ -284,6 +264,8 @@ func newTestRouterWithLeaderboardService(
 		legacySessions: identity.NewLegacySessions(
 			"http://kratos-public.test", "http://kratos.test", &http.Client{Transport: forbiddenLegacyTransport{}},
 		),
+		legacyReader: fixtureLegacyReader(),
+		flags:        flipt,
 	}
 	for _, option := range options {
 		option(&endpoints)
@@ -293,7 +275,7 @@ func newTestRouterWithLeaderboardService(
 	readWriter := ketoclient.NewClient(ketoFixture.ReadURL(), endpoints.ketoWrite)
 	permissionChecker := permissions.NewKetoChecker(reader)
 	roleService := permissions.NewKetoService(reader)
-	identities := identity.NewReader(pool, fixtureLegacyReader(), featureflags.NewEvaluator(flipt, nil))
+	identities := identity.NewReader(pool, endpoints.legacyReader, featureflags.NewEvaluator(endpoints.flags, nil))
 
 	authzService := featureauthz.NewService(
 		permissionChecker,
@@ -325,7 +307,7 @@ func newTestRouterWithLeaderboardService(
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	featureFlagEvaluator := featureflags.NewEvaluator(flipt, endpoints.identityObserver)
+	featureFlagEvaluator := featureflags.NewEvaluator(endpoints.flags, endpoints.identityObserver)
 	featureFlagsService := featureflagsservice.NewService(
 		featureFlagEvaluator,
 		fliptmanagement.NewClient(fliptmanagement.Config{

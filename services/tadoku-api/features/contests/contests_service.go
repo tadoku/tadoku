@@ -262,7 +262,11 @@ func (s *Service) CheckCreatePermission(ctx context.Context, userID uuid.UUID, a
 		return err
 	}
 
-	count, err := s.contests.CountContestsCreatedByUserForYear(ctx, userID, int32(now.Year()))
+	return s.CheckYearlyCreationLimit(ctx, userID, now.Year())
+}
+
+func (s *Service) CheckYearlyCreationLimit(ctx context.Context, userID uuid.UUID, year int) error {
+	count, err := s.contests.CountContestsCreatedByUserForYear(ctx, userID, int32(year))
 	if err != nil {
 		return err
 	}

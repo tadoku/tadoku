@@ -203,6 +203,10 @@ func TestEmailGatewayCookieAndBearer(t *testing.T) {
 	check("revoked session", "/emails", "", cookie, 401)
 	check("bearer revoked native session", "/emails", "Bearer "+raw, cookie, 200)
 	other, _ := tenant.ParseDeployment("tadoku/other-0123abcd")
+	otherKey, _ := tenant.Parse("tadoku/other-0123abcd")
+	if err := flipt.SetIdentityV2(otherKey, true); err != nil {
+		t.Fatal(err)
+	}
 	otherHandler, _, _, err := newTestRouterWithLeaderboardService(t.Context(), api.db.AppPool, api.db.AppPool,
 		api.keto, slog.New(slog.NewTextHandler(io.Discard, nil)), false, nil, other,
 		func(e *routerEndpoints) { e.jwks = jwksURL })

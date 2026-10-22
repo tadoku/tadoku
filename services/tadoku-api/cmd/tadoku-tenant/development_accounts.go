@@ -17,10 +17,15 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
-func runDevelopmentAccounts(ctx context.Context, args []string) error {
+// Pass canonical only for canonical-development-accounts, the development base seed's explicit entry point.
+// The branch task's development-accounts never reaches tadoku/prod.
+func runDevelopmentAccounts(ctx context.Context, args []string, canonical bool) error {
 	flags := flag.NewFlagSet("development-accounts", flag.ContinueOnError)
 	flags.SetOutput(io.Discard)
-	rawTenant := flags.String("tenant", "", "full test tenant")
+	rawTenant := ""
+	if !canonical {
+		flags.StringVar(&rawTenant, "tenant", "", "full test tenant")
+	}
 	admin := flags.String("admin-id", "", "existing development administrator UUID")
 	reader := flags.String("reader-id", "", "existing development reader UUID")
 	if err := flags.Parse(args); err != nil {
@@ -29,9 +34,13 @@ func runDevelopmentAccounts(ctx context.Context, args []string) error {
 	if flags.NArg() != 0 {
 		return errors.New("unexpected development account arguments")
 	}
-	key, err := tenant.ParseTestTenant(*rawTenant)
-	if err != nil {
-		return err
+	var key tenant.TestKey
+	if !canonical {
+		parsed, err := tenant.ParseTestTenant(rawTenant)
+		if err != nil {
+			return err
+		}
+		key = parsed
 	}
 	adminID, err := uuid.Parse(*admin)
 	if err != nil || adminID == uuid.Nil {
@@ -84,6 +93,9 @@ func runDevelopmentAccounts(ctx context.Context, args []string) error {
 			DisplayName: "Dev Reader",
 			Password:    defaults("TADOKU_DEV_READER_PASSWORD", "tadoku"),
 		},
+	}
+	if canonical {
+		return identity.SeedCanonicalDevelopmentAccounts(ctx, pool, fixtures)
 	}
 	return tenantlifecycle.NewApplication(pool, nil, nil, nil).SeedDevelopmentAccounts(ctx, key, fixtures)
 }

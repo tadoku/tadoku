@@ -32,7 +32,7 @@ func (s *Service) UpdateProfile(
 		if err != nil {
 			return ProfileResult{}, err
 		}
-		if email != account.Email {
+		if email.value != account.Email.recipient() {
 			if err := recentSession(session); err != nil {
 				return ProfileResult{}, err
 			}
@@ -44,7 +44,7 @@ func (s *Service) UpdateProfile(
 			}
 			messages = []mail.Message{{
 				Template:  mail.AccountEmailChanged,
-				Recipient: account.Email.value,
+				Recipient: account.Email.recipient(),
 				Params: map[string]string{
 					"new_email":  email.value,
 					"changed_at": timex.Now().Format(time.RFC3339),

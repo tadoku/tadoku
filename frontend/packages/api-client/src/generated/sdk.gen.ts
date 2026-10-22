@@ -27,7 +27,7 @@ export const authzRoleGet = <ThrowOnError extends boolean = false>(options?: Opt
     security: [{
             key: 'AuthzcookieAuth',
             in: 'cookie',
-            name: 'ory_kratos_session',
+            name: 'tadoku_session',
             type: 'apiKey'
         }],
     url: '/authz/current-user/role',
@@ -41,7 +41,7 @@ export const authzRoleUpdate = <ThrowOnError extends boolean = false>(options: O
     security: [{
             key: 'AuthzcookieAuth',
             in: 'cookie',
-            name: 'ory_kratos_session',
+            name: 'tadoku_session',
             type: 'apiKey'
         }],
     url: '/authz/users/{id}/role',
@@ -60,7 +60,7 @@ export const authzPermissionCheck = <ThrowOnError extends boolean = false>(optio
     security: [{
             key: 'AuthzcookieAuth',
             in: 'cookie',
-            name: 'ory_kratos_session',
+            name: 'tadoku_session',
             type: 'apiKey'
         }],
     url: '/authz/permission/check',
@@ -79,7 +79,7 @@ export const contentPageDelete = <ThrowOnError extends boolean = false>(options:
     security: [{
             key: 'ContentcookieAuth',
             in: 'cookie',
-            name: 'ory_kratos_session',
+            name: 'tadoku_session',
             type: 'apiKey'
         }],
     url: '/content/pages/{namespace}/{slug}',
@@ -103,7 +103,7 @@ export const contentPageUpdate = <ThrowOnError extends boolean = false>(options:
     security: [{
             key: 'ContentcookieAuth',
             in: 'cookie',
-            name: 'ory_kratos_session',
+            name: 'tadoku_session',
             type: 'apiKey'
         }],
     url: '/content/pages/{namespace}/{slug}',
@@ -122,7 +122,7 @@ export const contentPageList = <ThrowOnError extends boolean = false>(options: O
     security: [{
             key: 'ContentcookieAuth',
             in: 'cookie',
-            name: 'ory_kratos_session',
+            name: 'tadoku_session',
             type: 'apiKey'
         }],
     url: '/content/pages/{namespace}',
@@ -137,7 +137,7 @@ export const contentPageCreate = <ThrowOnError extends boolean = false>(options:
     security: [{
             key: 'ContentcookieAuth',
             in: 'cookie',
-            name: 'ory_kratos_session',
+            name: 'tadoku_session',
             type: 'apiKey'
         }],
     url: '/content/pages/{namespace}',
@@ -156,7 +156,7 @@ export const contentPageVersionList = <ThrowOnError extends boolean = false>(opt
     security: [{
             key: 'ContentcookieAuth',
             in: 'cookie',
-            name: 'ory_kratos_session',
+            name: 'tadoku_session',
             type: 'apiKey'
         }],
     url: '/content/pages/{namespace}/{id}/versions',
@@ -171,7 +171,7 @@ export const contentPageVersionGet = <ThrowOnError extends boolean = false>(opti
     security: [{
             key: 'ContentcookieAuth',
             in: 'cookie',
-            name: 'ory_kratos_session',
+            name: 'tadoku_session',
             type: 'apiKey'
         }],
     url: '/content/pages/{namespace}/{id}/versions/{contentId}',
@@ -186,7 +186,7 @@ export const contentPostDelete = <ThrowOnError extends boolean = false>(options:
     security: [{
             key: 'ContentcookieAuth',
             in: 'cookie',
-            name: 'ory_kratos_session',
+            name: 'tadoku_session',
             type: 'apiKey'
         }],
     url: '/content/posts/{namespace}/{slug}',
@@ -210,7 +210,7 @@ export const contentPostUpdate = <ThrowOnError extends boolean = false>(options:
     security: [{
             key: 'ContentcookieAuth',
             in: 'cookie',
-            name: 'ory_kratos_session',
+            name: 'tadoku_session',
             type: 'apiKey'
         }],
     url: '/content/posts/{namespace}/{slug}',
@@ -238,7 +238,7 @@ export const contentPostCreate = <ThrowOnError extends boolean = false>(options:
     security: [{
             key: 'ContentcookieAuth',
             in: 'cookie',
-            name: 'ory_kratos_session',
+            name: 'tadoku_session',
             type: 'apiKey'
         }],
     url: '/content/posts/{namespace}',
@@ -257,7 +257,7 @@ export const contentPostVersionList = <ThrowOnError extends boolean = false>(opt
     security: [{
             key: 'ContentcookieAuth',
             in: 'cookie',
-            name: 'ory_kratos_session',
+            name: 'tadoku_session',
             type: 'apiKey'
         }],
     url: '/content/posts/{namespace}/{id}/versions',
@@ -272,7 +272,7 @@ export const contentPostVersionGet = <ThrowOnError extends boolean = false>(opti
     security: [{
             key: 'ContentcookieAuth',
             in: 'cookie',
-            name: 'ory_kratos_session',
+            name: 'tadoku_session',
             type: 'apiKey'
         }],
     url: '/content/posts/{namespace}/{id}/versions/{contentId}',
@@ -296,7 +296,7 @@ export const contentAnnouncementList = <ThrowOnError extends boolean = false>(op
     security: [{
             key: 'ContentcookieAuth',
             in: 'cookie',
-            name: 'ory_kratos_session',
+            name: 'tadoku_session',
             type: 'apiKey'
         }],
     url: '/content/announcements/{namespace}',
@@ -311,7 +311,7 @@ export const contentAnnouncementCreate = <ThrowOnError extends boolean = false>(
     security: [{
             key: 'ContentcookieAuth',
             in: 'cookie',
-            name: 'ory_kratos_session',
+            name: 'tadoku_session',
             type: 'apiKey'
         }],
     url: '/content/announcements/{namespace}',
@@ -330,7 +330,7 @@ export const contentAnnouncementDelete = <ThrowOnError extends boolean = false>(
     security: [{
             key: 'ContentcookieAuth',
             in: 'cookie',
-            name: 'ory_kratos_session',
+            name: 'tadoku_session',
             type: 'apiKey'
         }],
     url: '/content/announcements/{namespace}/{id}',
@@ -345,7 +345,7 @@ export const contentAnnouncementFindById = <ThrowOnError extends boolean = false
     security: [{
             key: 'ContentcookieAuth',
             in: 'cookie',
-            name: 'ory_kratos_session',
+            name: 'tadoku_session',
             type: 'apiKey'
         }],
     url: '/content/announcements/{namespace}/{id}',
@@ -360,7 +360,7 @@ export const contentAnnouncementUpdate = <ThrowOnError extends boolean = false>(
     security: [{
             key: 'ContentcookieAuth',
             in: 'cookie',
-            name: 'ory_kratos_session',
+            name: 'tadoku_session',
             type: 'apiKey'
         }],
     url: '/content/announcements/{namespace}/{id}',
@@ -388,7 +388,7 @@ export const immersionContestCreate = <ThrowOnError extends boolean = false>(opt
     security: [{
             key: 'ImmersioncookieAuth',
             in: 'cookie',
-            name: 'ory_kratos_session',
+            name: 'tadoku_session',
             type: 'apiKey'
         }],
     url: '/immersion/contests',
@@ -406,7 +406,7 @@ export const immersionContestCreatePermissionCheck = <ThrowOnError extends boole
     security: [{
             key: 'ImmersioncookieAuth',
             in: 'cookie',
-            name: 'ory_kratos_session',
+            name: 'tadoku_session',
             type: 'apiKey'
         }],
     url: '/immersion/contests/create-permissions',
@@ -439,7 +439,7 @@ export const immersionContestFindRegistration = <ThrowOnError extends boolean = 
     security: [{
             key: 'ImmersioncookieAuth',
             in: 'cookie',
-            name: 'ory_kratos_session',
+            name: 'tadoku_session',
             type: 'apiKey'
         }],
     url: '/immersion/contests/{id}/registration',
@@ -453,7 +453,7 @@ export const immersionContestRegistrationUpsert = <ThrowOnError extends boolean 
     security: [{
             key: 'ImmersioncookieAuth',
             in: 'cookie',
-            name: 'ory_kratos_session',
+            name: 'tadoku_session',
             type: 'apiKey'
         }],
     url: '/immersion/contests/{id}/registration',
@@ -498,7 +498,7 @@ export const immersionContestModerationDetachLog = <ThrowOnError extends boolean
     security: [{
             key: 'ImmersioncookieAuth',
             in: 'cookie',
-            name: 'ory_kratos_session',
+            name: 'tadoku_session',
             type: 'apiKey'
         }],
     url: '/immersion/contests/{id}/moderation/detach/{log_id}',
@@ -535,7 +535,7 @@ export const immersionContestFindOngoingRegistrations = <ThrowOnError extends bo
     security: [{
             key: 'ImmersioncookieAuth',
             in: 'cookie',
-            name: 'ory_kratos_session',
+            name: 'tadoku_session',
             type: 'apiKey'
         }],
     url: '/immersion/contests/ongoing-registrations',
@@ -550,7 +550,7 @@ export const immersionContestGetConfigurations = <ThrowOnError extends boolean =
     security: [{
             key: 'ImmersioncookieAuth',
             in: 'cookie',
-            name: 'ory_kratos_session',
+            name: 'tadoku_session',
             type: 'apiKey'
         }],
     url: '/immersion/contests/configuration-options',
@@ -565,7 +565,7 @@ export const immersionLogCreate = <ThrowOnError extends boolean = false>(options
     security: [{
             key: 'ImmersioncookieAuth',
             in: 'cookie',
-            name: 'ory_kratos_session',
+            name: 'tadoku_session',
             type: 'apiKey'
         }],
     url: '/immersion/logs',
@@ -586,7 +586,7 @@ export const immersionLogExport = <ThrowOnError extends boolean = false>(options
     security: [{
             key: 'ImmersioncookieAuth',
             in: 'cookie',
-            name: 'ory_kratos_session',
+            name: 'tadoku_session',
             type: 'apiKey'
         }],
     url: '/immersion/logs/export',
@@ -601,7 +601,7 @@ export const immersionScorePreview = <ThrowOnError extends boolean = false>(opti
     security: [{
             key: 'ImmersioncookieAuth',
             in: 'cookie',
-            name: 'ory_kratos_session',
+            name: 'tadoku_session',
             type: 'apiKey'
         }],
     url: '/immersion/logs/score-preview',
@@ -634,7 +634,7 @@ export const immersionLogUpdate = <ThrowOnError extends boolean = false>(options
     security: [{
             key: 'ImmersioncookieAuth',
             in: 'cookie',
-            name: 'ory_kratos_session',
+            name: 'tadoku_session',
             type: 'apiKey'
         }],
     url: '/immersion/logs/{id}',
@@ -653,7 +653,7 @@ export const immersionLogContestRegistrationUpdate = <ThrowOnError extends boole
     security: [{
             key: 'ImmersioncookieAuth',
             in: 'cookie',
-            name: 'ory_kratos_session',
+            name: 'tadoku_session',
             type: 'apiKey'
         }],
     url: '/immersion/logs/{id}/contest-registrations',
@@ -672,7 +672,7 @@ export const immersionLogGetConfigurations = <ThrowOnError extends boolean = fal
     security: [{
             key: 'ImmersioncookieAuth',
             in: 'cookie',
-            name: 'ory_kratos_session',
+            name: 'tadoku_session',
             type: 'apiKey'
         }],
     url: '/immersion/logs/configuration-options',
@@ -687,7 +687,7 @@ export const immersionLogTagSuggestions = <ThrowOnError extends boolean = false>
     security: [{
             key: 'ImmersioncookieAuth',
             in: 'cookie',
-            name: 'ory_kratos_session',
+            name: 'tadoku_session',
             type: 'apiKey'
         }],
     url: '/immersion/logs/tag-suggestions',
@@ -776,7 +776,7 @@ export const immersionScoringRuleSetListPlatform = <ThrowOnError extends boolean
     security: [{
             key: 'ImmersioncookieAuth',
             in: 'cookie',
-            name: 'ory_kratos_session',
+            name: 'tadoku_session',
             type: 'apiKey'
         }],
     url: '/immersion/scoring/rule-sets',
@@ -791,7 +791,7 @@ export const immersionScoringRuleSetCreatePlatform = <ThrowOnError extends boole
     security: [{
             key: 'ImmersioncookieAuth',
             in: 'cookie',
-            name: 'ory_kratos_session',
+            name: 'tadoku_session',
             type: 'apiKey'
         }],
     url: '/immersion/scoring/rule-sets',
@@ -810,7 +810,7 @@ export const immersionScoringRuleSetListContest = <ThrowOnError extends boolean 
     security: [{
             key: 'ImmersioncookieAuth',
             in: 'cookie',
-            name: 'ory_kratos_session',
+            name: 'tadoku_session',
             type: 'apiKey'
         }],
     url: '/immersion/contests/{id}/scoring/rule-sets',
@@ -825,7 +825,7 @@ export const immersionScoringRuleSetCreateContest = <ThrowOnError extends boolea
     security: [{
             key: 'ImmersioncookieAuth',
             in: 'cookie',
-            name: 'ory_kratos_session',
+            name: 'tadoku_session',
             type: 'apiKey'
         }],
     url: '/immersion/contests/{id}/scoring/rule-sets',
@@ -844,7 +844,7 @@ export const immersionScoringRuleSetPublish = <ThrowOnError extends boolean = fa
     security: [{
             key: 'ImmersioncookieAuth',
             in: 'cookie',
-            name: 'ory_kratos_session',
+            name: 'tadoku_session',
             type: 'apiKey'
         }],
     url: '/immersion/scoring/rule-sets/{id}/publish',
@@ -859,7 +859,7 @@ export const immersionScoringRuleSetActivate = <ThrowOnError extends boolean = f
     security: [{
             key: 'ImmersioncookieAuth',
             in: 'cookie',
-            name: 'ory_kratos_session',
+            name: 'tadoku_session',
             type: 'apiKey'
         }],
     url: '/immersion/scoring/rule-sets/{id}/activate',
@@ -883,7 +883,7 @@ export const immersionFeatureAccessRevoke = <ThrowOnError extends boolean = fals
     security: [{
             key: 'ImmersioncookieAuth',
             in: 'cookie',
-            name: 'ory_kratos_session',
+            name: 'tadoku_session',
             type: 'apiKey'
         }],
     url: '/immersion/admin/feature-flags/{flagKey}/users/{userId}',
@@ -898,7 +898,7 @@ export const immersionFeatureAccessGet = <ThrowOnError extends boolean = false>(
     security: [{
             key: 'ImmersioncookieAuth',
             in: 'cookie',
-            name: 'ory_kratos_session',
+            name: 'tadoku_session',
             type: 'apiKey'
         }],
     url: '/immersion/admin/feature-flags/{flagKey}/users/{userId}',
@@ -913,7 +913,7 @@ export const immersionFeatureAccessGrant = <ThrowOnError extends boolean = false
     security: [{
             key: 'ImmersioncookieAuth',
             in: 'cookie',
-            name: 'ory_kratos_session',
+            name: 'tadoku_session',
             type: 'apiKey'
         }],
     url: '/immersion/admin/feature-flags/{flagKey}/users/{userId}',
@@ -928,7 +928,7 @@ export const immersionLanguageList = <ThrowOnError extends boolean = false>(opti
     security: [{
             key: 'ImmersioncookieAuth',
             in: 'cookie',
-            name: 'ory_kratos_session',
+            name: 'tadoku_session',
             type: 'apiKey'
         }],
     url: '/immersion/languages',
@@ -942,7 +942,7 @@ export const immersionLanguageCreate = <ThrowOnError extends boolean = false>(op
     security: [{
             key: 'ImmersioncookieAuth',
             in: 'cookie',
-            name: 'ory_kratos_session',
+            name: 'tadoku_session',
             type: 'apiKey'
         }],
     url: '/immersion/languages',
@@ -960,7 +960,7 @@ export const immersionLanguageUpdate = <ThrowOnError extends boolean = false>(op
     security: [{
             key: 'ImmersioncookieAuth',
             in: 'cookie',
-            name: 'ory_kratos_session',
+            name: 'tadoku_session',
             type: 'apiKey'
         }],
     url: '/immersion/languages/{code}',
@@ -979,7 +979,7 @@ export const profileUsersList = <ThrowOnError extends boolean = false>(options?:
     security: [{
             key: 'ProfilecookieAuth',
             in: 'cookie',
-            name: 'ory_kratos_session',
+            name: 'tadoku_session',
             type: 'apiKey'
         }],
     url: '/profile/users',

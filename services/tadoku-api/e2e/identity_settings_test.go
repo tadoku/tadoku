@@ -143,7 +143,7 @@ func TestIdentityRecoveryAndEmailSettingsRollbackOnQueueFailure(t *testing.T) {
 				}
 			})
 			method, path := "POST", "/identity/recovery"
-			body := `{"email":"reader@example.test","return_to":"https://authv2.tadoku.dev.lab/"}`
+			body := `{"email":"reader@example.test","return_to":"https://account.tadoku.dev.lab/"}`
 			if operation == "email settings" {
 				method, path, body = "PATCH", "/identity/settings/profile", `{"email":"changed@example.test"}`
 			}

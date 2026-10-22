@@ -112,7 +112,7 @@ func TestIdentityGeneratedRecoveryJourney(t *testing.T) {
 	location, err := url.Parse(response.Header().Get("Location"))
 	if err != nil ||
 		location.Scheme != "https" ||
-		location.Host != "authv2.tadoku.dev.lab" ||
+		location.Host != "account.tadoku.dev.lab" ||
 		location.Path != "/" ||
 		location.Query().Get("edit") != "password" ||
 		location.Query().Get("return_to") != destination ||
@@ -143,7 +143,7 @@ func TestIdentityGeneratedRecoveryJourney(t *testing.T) {
 }
 
 func TestIdentityRecoverySettingsLocationBounds(t *testing.T) {
-	settings := "https://identity-a-0123abcd.authv2.tadoku.dev.lab/?edit=password"
+	settings := "https://identity-a-0123abcd.account.tadoku.dev.lab/?edit=password"
 	prefix := "https://tadoku.dev.lab/?q="
 	boundary := prefix + strings.Repeat("a", 2048-len(settings+"&return_to=")-len(url.QueryEscape(prefix)))
 	fitsWithoutEditor := boundary + strings.Repeat("a", len("edit=password&"))

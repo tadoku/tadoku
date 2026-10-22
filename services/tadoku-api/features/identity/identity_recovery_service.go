@@ -112,11 +112,11 @@ func (s *Service) ConsumeRecovery(ctx context.Context, raw RecoveryToken) (Recov
 	if err != nil {
 		return RecoveryLogin{}, err
 	}
-	return RecoveryLogin{Login: login, RedirectTo: s.appURL(ctx, "authv2")}, nil
+	return RecoveryLogin{Login: login, RedirectTo: s.appURL(ctx, "account")}, nil
 }
 
 func (s *Service) RecoverySettingsURL(ctx context.Context, returnTo *string) (string, error) {
-	location := s.appURL(ctx, "authv2") + "?edit=password"
+	location := s.appURL(ctx, "account") + "?edit=password"
 	if returnTo != nil {
 		if err := ValidateReturnTo(*returnTo); err != nil {
 			return "", err

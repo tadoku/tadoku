@@ -145,9 +145,9 @@ func TestIdentityRecoveryClientBudget(t *testing.T) {
 	resetIdentity(t)
 	const peer = "198.51.100.40"
 	for _, body := range []string{
-		`{"email":"not-an-address","return_to":"https://authv2.tadoku.dev.lab/"}`,
+		`{"email":"not-an-address","return_to":"https://account.tadoku.dev.lab/"}`,
 		`{"email":"reader@example.test","return_to":"https://evil.example/"}`,
-		`{"email":"reader@example.test","return_to":"https://authv2.tadoku.dev.lab/` + strings.Repeat("a", 2040) + `"}`,
+		`{"email":"reader@example.test","return_to":"https://account.tadoku.dev.lab/` + strings.Repeat("a", 2040) + `"}`,
 	} {
 		response := identityRequest(t, api.handler, identityBranchA, "POST", "/identity/recovery", body, "",
 			func(r *http.Request) { r.RemoteAddr = peer + ":12345" })

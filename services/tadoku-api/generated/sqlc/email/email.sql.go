@@ -236,27 +236,3 @@ func (q *Queries) Retain(ctx context.Context, now pgtype.Timestamptz) (int64, er
 	}
 	return result.RowsAffected(), nil
 }
-
-const tenants = `-- name: Tenants :many
-select key from tenants order by key
-`
-
-func (q *Queries) Tenants(ctx context.Context) ([]string, error) {
-	rows, err := q.db.Query(ctx, tenants)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []string{}
-	for rows.Next() {
-		var key string
-		if err := rows.Scan(&key); err != nil {
-			return nil, err
-		}
-		items = append(items, key)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}

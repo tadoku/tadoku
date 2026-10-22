@@ -13,20 +13,10 @@ func (r *runner) maintainEmails(ctx context.Context, retention bool) {
 	}
 	bounded, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
-	scoped, err := r.scope.Context(bounded)
+	keys, err := r.maintenanceTenants(bounded)
 	if err != nil {
-		r.logger.ErrorContext(ctx, "scope email maintenance", "error", err)
+		r.logger.ErrorContext(ctx, "list email maintenance tenants", "error", err)
 		return
-	}
-	keys := []tenant.Key{}
-	if key, ok := tenant.FromContext(scoped); ok {
-		keys = append(keys, key)
-	} else {
-		keys, err = r.email.Tenants(scoped)
-		if err != nil {
-			r.logger.ErrorContext(ctx, "list email tenants", "error", err)
-			return
-		}
 	}
 	for _, key := range keys {
 		tenantCtx := tenant.WithKey(bounded, key)
@@ -39,4 +29,15 @@ func (r *runner) maintainEmails(ctx context.Context, retention bool) {
 			}
 		}
 	}
+}
+
+func (r *runner) maintenanceTenants(ctx context.Context) ([]tenant.Key, error) {
+	scoped, err := r.scope.Context(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if key, ok := tenant.FromContext(scoped); ok {
+		return []tenant.Key{key}, nil
+	}
+	return r.queue.Tenants(scoped)
 }

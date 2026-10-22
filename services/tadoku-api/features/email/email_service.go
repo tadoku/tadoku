@@ -152,10 +152,6 @@ func (s *Service) Retain(ctx context.Context) error {
 	return s.repository.retain(ctx, timex.Now())
 }
 
-func (s *Service) Tenants(ctx context.Context) ([]tenant.Key, error) {
-	return s.repository.tenants(ctx)
-}
-
 func (s *Service) ReconcileFailures(ctx context.Context) error {
 	return s.repository.reconcileFailures(ctx, s.sender == nil)
 }

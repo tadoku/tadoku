@@ -123,26 +123,6 @@ func (r *Repository) retain(ctx context.Context, now time.Time) error {
 	return err
 }
 
-func (r *Repository) tenants(ctx context.Context) ([]tenant.Key, error) {
-	executor, err := postgres.Executor(ctx, r.pool)
-	if err != nil {
-		return nil, err
-	}
-	rows, err := queries.New(executor).Tenants(ctx)
-	if err != nil {
-		return nil, err
-	}
-	keys := make([]tenant.Key, 0, len(rows))
-	for _, value := range rows {
-		key, err := tenant.Parse(value)
-		if err != nil {
-			return nil, err
-		}
-		keys = append(keys, key)
-	}
-	return keys, nil
-}
-
 func (r *Repository) reconcileFailures(ctx context.Context, hold bool) error {
 	executor, err := postgres.Executor(ctx, r.pool)
 	if err != nil {

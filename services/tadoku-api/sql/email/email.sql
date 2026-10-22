@@ -33,9 +33,6 @@ where created_at < sqlc.arg('now')::timestamptz - case
   else interval '14 days'
 end;
 
--- name: Tenants :many
-select key from tenants order by key;
-
 -- name: ReconcileFailures :exec
 update emails as e
 set status = case

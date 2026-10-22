@@ -130,6 +130,10 @@ a malformed answer when it is missing.
 - The log export, `GET /immersion/logs/export`, is a download link that the
   browser navigates to.
 - The auth application's Kratos flows use Kratos's own client and contract.
+- Session, login and registration answers are validated without `account_app`,
+  which no frontend reads, so answers with or without it pass. The validator is
+  `zSession` in `frontend/packages/ui/identity.ts` and in
+  `frontend/apps/authv2/src/lib/identity.ts`.
 - Form validation and error messages belong to each form.
 - Manual Playwright journeys read API responses directly to drive and check
   flows.

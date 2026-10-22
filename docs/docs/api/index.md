@@ -43,9 +43,7 @@ The gateway in front of Tadoku API authenticates a request in one of two ways:
 | No credentials | Runs as an anonymous guest. Operations without `cookieAuth` work. Operations that need a signed-in user return `401`. |
 | `tadoku_session` cookie | Runs as that user. The identity API sets the cookie when the user signs in on the Tadoku website. Some operations also require the administrator role. |
 
-Some domain references still name the legacy `ory_kratos_session` cookie in
-their security scheme; production authenticates only `tadoku_session`. Apart
-from tenant access tokens on the email routes, the gateway reads no other
+Apart from tenant access tokens on the email routes, the gateway reads no other
 credential. It ignores a session token sent as `X-Session-Token`, so the request
 runs as a guest. On other routes, it rejects a request that has an
 `Authorization` header and no session cookie with `401`. The response

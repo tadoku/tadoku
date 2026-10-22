@@ -4894,19 +4894,19 @@ components:
     AuthzcookieAuth:
       type: apiKey
       in: cookie
-      name: ory_kratos_session
+      name: tadoku_session
     ContentcookieAuth:
       type: apiKey
       in: cookie
-      name: ory_kratos_session
+      name: tadoku_session
     ImmersioncookieAuth:
       type: apiKey
       in: cookie
-      name: ory_kratos_session
+      name: tadoku_session
     ProfilecookieAuth:
       type: apiKey
       in: cookie
-      name: ory_kratos_session
+      name: tadoku_session
     AuthzProxyoathkeeperCallbackAuth:
       type: http
       scheme: bearer

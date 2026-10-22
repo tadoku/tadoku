@@ -1,7 +1,7 @@
 ---
 sidebar_position: 1
 title: Account deletion
-description: How to manually delete a Tadoku account, its native sign-in account and its sessions from the Tadoku API database, plus its leaderboard cache entries and Keto roles, keeping anonymised history for finished contests.
+description: How to manually delete a Tadoku account, its native sign-in account, its sessions and its roles from the Tadoku API database, plus its leaderboard cache entries and feature access, keeping anonymised history for finished contests.
 ---
 
 # Account deletion
@@ -24,7 +24,9 @@ The steps have two stages with different effects:
 - **Delete (step 3)** cannot be undone. It removes the native sign-in account,
   its sessions and recovery tokens, and the account's logs, contest
   registrations, log tags, roles and profile rows, except the history of
-  finished contests.
+  finished contests. Roles include the account's administrator and ban rows in
+  `permission_relationships`, which nothing in the Tadoku API removes
+  automatically.
 
 A contest is finished once its end date has passed and it has not been
 deleted. The account's registrations and logs in finished contests stay, so
@@ -73,14 +75,12 @@ reads or writes it; step 3 only removes rows for the account.
   `leaderboard.invalidate_official.v1`, connected to this exact database and
   its matching Valkey cache prefix. Confirm the deployed release's registration
   before proceeding.
-- Access to the Keto read and write APIs, and an administrator session for the
-  feature-flag routes.
+- An administrator session for the feature-flag routes.
 - The account ID, which is `accounts.user_id` and `users.id`. Imported accounts
   keep their former Kratos identity ID.
 
-Set the variables once for `psql` and once for the shell. The Tadoku API
-compares contest dates with the current UTC date, so set the `psql` session to
-UTC too:
+Set the variables once for `psql`. The Tadoku API compares contest dates with
+the current UTC date, so set the `psql` session to UTC too:
 
 ```sql
 \set ON_ERROR_STOP on
@@ -104,10 +104,6 @@ Then set the ID:
 \set account_id '<ACCOUNT_ID>'
 ```
 
-```bash
-ACCOUNT_ID='<ACCOUNT_ID>'
-```
-
 ## 1. Preflight
 
 Run these read-only queries. First, list the data the account owns:
@@ -127,14 +123,25 @@ select
   (select count(*) from contest_registrations where user_id = :'account_id') as registrations,
   (select count(*) from contests where owner_user_id = :'account_id') as owned_contests,
   (select count(*) from user_roles where user_id = :'account_id') as user_roles,
+  (select count(*) from permission_relationships
+    where subject_type = 'user' and subject_id = lower(:'account_id')) as permission_relationships,
   (select count(*) from profiles where user_id = :'account_id') as profiles,
   (select count(*) from account_deletion_requests where identity_id = :'account_id') as deletion_requests,
   (select count(*) from moderation_audit_log
     where user_id = :'account_id' or metadata->>'target_user_id' = :'account_id') as audit_entries;
 ```
 
-If `users` is `0`, the account has no Tadoku API data. Run `commit;` and skip
-to [Keto relations](#5-keto-relations-and-feature-access).
+If `users` is `0`, the account has no other Tadoku API data. Run `commit;`,
+remove any permission relationships it holds with this transaction, then skip
+to [Feature access](#5-feature-access):
+
+```sql
+begin;
+select set_config('tadoku.tenant', :'tenant', true);
+delete from permission_relationships
+where subject_type = 'user' and subject_id = lower(:'account_id');
+commit;
+```
 
 Next, count the finished-contest history that the delete step keeps anonymised:
 
@@ -272,6 +279,8 @@ where user_id = :'account_id'
   and not exists (select 1 from contest_logs where contest_logs.log_id = logs.id);
 
 delete from user_roles where user_id = :'account_id';
+delete from permission_relationships
+where subject_type = 'user' and subject_id = lower(:'account_id');
 delete from profiles where user_id = :'account_id';
 delete from account_deletion_requests where identity_id = :'account_id';
 
@@ -368,17 +377,7 @@ failed originals remain. If recorded completion has aged out, use that retained
 evidence rather than replaying solely because the query no longer finds a
 completed descendant.
 
-## 5. Keto relations and feature access
-
-Tadoku stores roles as `app:tadoku#admins` and `app:tadoku#banned` tuples. Remove
-both through the Keto write API. The Verify section checks that none are left.
-
-```bash
-for relation in admins banned; do
-  curl -sS -X DELETE \
-    "$KETO_WRITE_URL/admin/relation-tuples?namespace=app&object=tadoku&relation=$relation&subject_id=$ACCOUNT_ID"
-done
-```
+## 5. Feature access
 
 Flipt stores named-user feature access by account ID. The flags that support it
 are listed in `services/tadoku-api/features/featureflags/domain.go`. For each of
@@ -421,6 +420,8 @@ select
       )) as unscrubbed_logs,
   (select count(*) from log_tags where user_id = :'account_id') as log_tags,
   (select count(*) from user_roles where user_id = :'account_id') as user_roles,
+  (select count(*) from permission_relationships
+    where subject_type = 'user' and subject_id = lower(:'account_id')) as permission_relationships,
   (select count(*) from profiles where user_id = :'account_id') as profiles,
   (select count(*) from account_deletion_requests where identity_id = :'account_id') as deletion_requests,
   (select count(*) from accounts where user_id = :'account_id') as accounts,
@@ -435,14 +436,8 @@ commit;
 
 The `users` query returns one row, with `Deleted participant` as the display name
 and both timestamps set. In the second query, `kept_registrations` and
-`kept_logs` match the preflight, and every other count is `0`.
-
-In Keto:
-
-```bash
-# Expect "relation_tuples":[]
-curl -fsS "$KETO_READ_URL/relation-tuples?namespace=app&subject_id=$ACCOUNT_ID"
-```
+`kept_logs` match the preflight, and every other count is `0`, including
+`permission_relationships`.
 
 The admin user list reads native accounts from the database on each request,
 so the account disappears from it immediately.

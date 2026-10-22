@@ -240,11 +240,11 @@ importers:
         specifier: 5.101.2
         version: 5.101.2(react@18.2.0)
       '@tanstack/react-router':
-        specifier: 1.170.16
-        version: 1.170.16(react-dom@18.2.0(patch_hash=426d29ba9e52646c4884f25f1f2c42eda3bff8e949defd24496f7b6a6d531e57)(react@18.2.0))(react@18.2.0)
+        specifier: 1.170.41
+        version: 1.170.41(react-dom@18.2.0(patch_hash=426d29ba9e52646c4884f25f1f2c42eda3bff8e949defd24496f7b6a6d531e57)(react@18.2.0))(react@18.2.0)
       '@tanstack/react-router-with-query':
         specifier: 1.130.17
-        version: 1.130.17(@tanstack/react-query@5.101.2(react@18.2.0))(@tanstack/react-router@1.170.16(react-dom@18.2.0(patch_hash=426d29ba9e52646c4884f25f1f2c42eda3bff8e949defd24496f7b6a6d531e57)(react@18.2.0))(react@18.2.0))(@tanstack/router-core@1.171.34)(react-dom@18.2.0(patch_hash=426d29ba9e52646c4884f25f1f2c42eda3bff8e949defd24496f7b6a6d531e57)(react@18.2.0))(react@18.2.0)
+        version: 1.130.17(@tanstack/react-query@5.101.2(react@18.2.0))(@tanstack/react-router@1.170.41(react-dom@18.2.0(patch_hash=426d29ba9e52646c4884f25f1f2c42eda3bff8e949defd24496f7b6a6d531e57)(react@18.2.0))(react@18.2.0))(@tanstack/router-core@1.171.34)(react-dom@18.2.0(patch_hash=426d29ba9e52646c4884f25f1f2c42eda3bff8e949defd24496f7b6a6d531e57)(react@18.2.0))(react@18.2.0)
       '@tanstack/react-start':
         specifier: 1.168.60
         version: 1.168.60(crossws@0.4.15(srvx@0.11.22))(esbuild@0.27.7)(react-dom@18.2.0(patch_hash=426d29ba9e52646c4884f25f1f2c42eda3bff8e949defd24496f7b6a6d531e57)(react@18.2.0))(react@18.2.0)(rolldown@1.2.13)(rollup@4.62.4)(vite@8.0.16(@types/node@22.20.4)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.7.1))
@@ -689,11 +689,11 @@ importers:
         specifier: 5.101.2
         version: 5.101.2(react@18.2.0)
       '@tanstack/react-router':
-        specifier: 1.170.16
-        version: 1.170.16(react-dom@18.2.0(patch_hash=426d29ba9e52646c4884f25f1f2c42eda3bff8e949defd24496f7b6a6d531e57)(react@18.2.0))(react@18.2.0)
+        specifier: 1.170.41
+        version: 1.170.41(react-dom@18.2.0(patch_hash=426d29ba9e52646c4884f25f1f2c42eda3bff8e949defd24496f7b6a6d531e57)(react@18.2.0))(react@18.2.0)
       '@tanstack/react-router-with-query':
         specifier: 1.130.17
-        version: 1.130.17(@tanstack/react-query@5.101.2(react@18.2.0))(@tanstack/react-router@1.170.16(react-dom@18.2.0(patch_hash=426d29ba9e52646c4884f25f1f2c42eda3bff8e949defd24496f7b6a6d531e57)(react@18.2.0))(react@18.2.0))(@tanstack/router-core@1.171.34)(react-dom@18.2.0(patch_hash=426d29ba9e52646c4884f25f1f2c42eda3bff8e949defd24496f7b6a6d531e57)(react@18.2.0))(react@18.2.0)
+        version: 1.130.17(@tanstack/react-query@5.101.2(react@18.2.0))(@tanstack/react-router@1.170.41(react-dom@18.2.0(patch_hash=426d29ba9e52646c4884f25f1f2c42eda3bff8e949defd24496f7b6a6d531e57)(react@18.2.0))(react@18.2.0))(@tanstack/router-core@1.171.34)(react-dom@18.2.0(patch_hash=426d29ba9e52646c4884f25f1f2c42eda3bff8e949defd24496f7b6a6d531e57)(react@18.2.0))(react@18.2.0)
       '@tanstack/react-start':
         specifier: 1.168.60
         version: 1.168.60(crossws@0.4.15(srvx@0.11.22))(esbuild@0.27.7)(react-dom@18.2.0(patch_hash=426d29ba9e52646c4884f25f1f2c42eda3bff8e949defd24496f7b6a6d531e57)(react@18.2.0))(react@18.2.0)(rolldown@1.2.13)(rollup@4.62.4)(vite@8.0.16(@types/node@22.20.4)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.7.1))
@@ -2242,10 +2242,6 @@ packages:
   '@tanstack/form-core@1.33.2':
     resolution: {integrity: sha512-F60zJd15bGrXKonc1kpRYnNRNfiES7F+hgvrPMrsZznPLqZtO2DIg76OU6R25kCYkqYQY5xvuKteuWcUsc587A==}
 
-  '@tanstack/history@1.162.0':
-    resolution: {integrity: sha512-79pf/RkhteYZTRgcR4F9kbk84P2N8rugQJswxfIqovlbRiT3yI7eBE+5QorIrZaOKktsgzRlXh1l/du/xpl4iA==}
-    engines: {node: '>=20.19'}
-
   '@tanstack/history@1.162.4':
     resolution: {integrity: sha512-utTS5L2OkeYUzXGohL1Z8sefu1GLNOJcxe8Hd6iIdc/Xo1K1nDB2JEp4iSFhvYh33xKC9V91TxrS8qfrpoKobQ==}
     engines: {node: '>=20.19'}
@@ -2293,13 +2289,6 @@ packages:
       '@tanstack/react-query': '>=5.49.2'
       '@tanstack/react-router': '>=1.43.2'
       '@tanstack/router-core': '>=1.114.7'
-      react: 18.2.0
-      react-dom: 18.2.0
-
-  '@tanstack/react-router@1.170.16':
-    resolution: {integrity: sha512-w6eq1IJklujs1tESazaK/FxH0+H2l8vm/QPuu1cD3oRW/ubgKneQpd7b64ti/8gUyEimzimJQZDmJr6YHfP5+g==}
-    engines: {node: '>=20.19'}
-    peerDependencies:
       react: 18.2.0
       react-dom: 18.2.0
 
@@ -2364,12 +2353,6 @@ packages:
       react: 18.2.0
       react-dom: 18.2.0
 
-  '@tanstack/react-store@0.9.3':
-    resolution: {integrity: sha512-y2iHd/N9OkoQbFJLUX1T9vbc2O9tjH0pQRgTcx1/Nz4IlwLvkgpuglXUx+mXt0g5ZDFrEeDnONPqkbfxXJKwRg==}
-    peerDependencies:
-      react: 18.2.0
-      react-dom: 18.2.0
-
   '@tanstack/react-table@8.21.3':
     resolution: {integrity: sha512-5nNMTSETP4ykGegmVkhjcS8tTLW6Vl4axfEGQN3v0zdHYbK4UfoqfPChclTrJ4EoK9QynqAu9oUf8VEmrpZ5Ww==}
     engines: {node: '>=12'}
@@ -2382,10 +2365,6 @@ packages:
     peerDependencies:
       react: 18.2.0
       react-dom: 18.2.0
-
-  '@tanstack/router-core@1.171.13':
-    resolution: {integrity: sha512-+NOwEj1kO/6IGmpHRIZHasYxYWpyBQGNIZAST9aNrk9Q3YlU9SgqVnl1pbLa9qAKfeNdXQIRve0RQb/0kyDeDA==}
-    engines: {node: '>=20.19'}
 
   '@tanstack/router-core@1.171.34':
     resolution: {integrity: sha512-X+19pGuuLVPvvAvPYw9v/+ktRk5cCll8AtfpBpOhDRmVgUMrfqze0467xtq8YRVVs/mmo5rVtWn/7Tp32RDBKw==}
@@ -2450,9 +2429,6 @@ packages:
 
   '@tanstack/store@0.11.2':
     resolution: {integrity: sha512-sJ4mjol8uQsHV0gOJzzjwXfh2Fwm+Sz0+8deqiTm4jGbMdjzNSW+xZCFm0kUa870uhd8yi+DpKnZb5Kc4apa0Q==}
-
-  '@tanstack/store@0.9.3':
-    resolution: {integrity: sha512-8reSzl/qGWGGVKhBoxXPMWzATSbZLZFWhwBAFO9NAyp0TxzfBP0mIrGb8CP8KrQTmvzXlR/vFPPUrHTLBGyFyw==}
 
   '@tanstack/table-core@8.21.3':
     resolution: {integrity: sha512-ldZXEhOBb8Is7xLs01fR3YEc3DERiz5silj8tnGkFZytt1abEvl/GhUmCE0PMLaMPTa3Jk4HbKmRlHmu+gCftg==}
@@ -7337,8 +7313,6 @@ snapshots:
       '@tanstack/pacer-lite': 0.1.1
       '@tanstack/store': 0.11.2
 
-  '@tanstack/history@1.162.0': {}
-
   '@tanstack/history@1.162.4': {}
 
   '@tanstack/pacer-lite@0.1.1': {}
@@ -7370,20 +7344,11 @@ snapshots:
       '@tanstack/query-core': 5.101.2
       react: 18.2.0
 
-  '@tanstack/react-router-with-query@1.130.17(@tanstack/react-query@5.101.2(react@18.2.0))(@tanstack/react-router@1.170.16(react-dom@18.2.0(patch_hash=426d29ba9e52646c4884f25f1f2c42eda3bff8e949defd24496f7b6a6d531e57)(react@18.2.0))(react@18.2.0))(@tanstack/router-core@1.171.34)(react-dom@18.2.0(patch_hash=426d29ba9e52646c4884f25f1f2c42eda3bff8e949defd24496f7b6a6d531e57)(react@18.2.0))(react@18.2.0)':
+  '@tanstack/react-router-with-query@1.130.17(@tanstack/react-query@5.101.2(react@18.2.0))(@tanstack/react-router@1.170.41(react-dom@18.2.0(patch_hash=426d29ba9e52646c4884f25f1f2c42eda3bff8e949defd24496f7b6a6d531e57)(react@18.2.0))(react@18.2.0))(@tanstack/router-core@1.171.34)(react-dom@18.2.0(patch_hash=426d29ba9e52646c4884f25f1f2c42eda3bff8e949defd24496f7b6a6d531e57)(react@18.2.0))(react@18.2.0)':
     dependencies:
       '@tanstack/react-query': 5.101.2(react@18.2.0)
-      '@tanstack/react-router': 1.170.16(react-dom@18.2.0(patch_hash=426d29ba9e52646c4884f25f1f2c42eda3bff8e949defd24496f7b6a6d531e57)(react@18.2.0))(react@18.2.0)
+      '@tanstack/react-router': 1.170.41(react-dom@18.2.0(patch_hash=426d29ba9e52646c4884f25f1f2c42eda3bff8e949defd24496f7b6a6d531e57)(react@18.2.0))(react@18.2.0)
       '@tanstack/router-core': 1.171.34
-      react: 18.2.0
-      react-dom: 18.2.0(patch_hash=426d29ba9e52646c4884f25f1f2c42eda3bff8e949defd24496f7b6a6d531e57)(react@18.2.0)
-
-  '@tanstack/react-router@1.170.16(react-dom@18.2.0(patch_hash=426d29ba9e52646c4884f25f1f2c42eda3bff8e949defd24496f7b6a6d531e57)(react@18.2.0))(react@18.2.0)':
-    dependencies:
-      '@tanstack/history': 1.162.0
-      '@tanstack/react-store': 0.9.3(react-dom@18.2.0(patch_hash=426d29ba9e52646c4884f25f1f2c42eda3bff8e949defd24496f7b6a6d531e57)(react@18.2.0))(react@18.2.0)
-      '@tanstack/router-core': 1.171.13
-      isbot: 5.2.2
       react: 18.2.0
       react-dom: 18.2.0(patch_hash=426d29ba9e52646c4884f25f1f2c42eda3bff8e949defd24496f7b6a6d531e57)(react@18.2.0)
 
@@ -7476,13 +7441,6 @@ snapshots:
       react-dom: 18.2.0(patch_hash=426d29ba9e52646c4884f25f1f2c42eda3bff8e949defd24496f7b6a6d531e57)(react@18.2.0)
       use-sync-external-store: 1.6.0(react@18.2.0)
 
-  '@tanstack/react-store@0.9.3(react-dom@18.2.0(patch_hash=426d29ba9e52646c4884f25f1f2c42eda3bff8e949defd24496f7b6a6d531e57)(react@18.2.0))(react@18.2.0)':
-    dependencies:
-      '@tanstack/store': 0.9.3
-      react: 18.2.0
-      react-dom: 18.2.0(patch_hash=426d29ba9e52646c4884f25f1f2c42eda3bff8e949defd24496f7b6a6d531e57)(react@18.2.0)
-      use-sync-external-store: 1.6.0(react@18.2.0)
-
   '@tanstack/react-table@8.21.3(react-dom@18.2.0(patch_hash=426d29ba9e52646c4884f25f1f2c42eda3bff8e949defd24496f7b6a6d531e57)(react@18.2.0))(react@18.2.0)':
     dependencies:
       '@tanstack/table-core': 8.21.3
@@ -7494,13 +7452,6 @@ snapshots:
       '@tanstack/virtual-core': 3.13.18
       react: 18.2.0
       react-dom: 18.2.0(patch_hash=426d29ba9e52646c4884f25f1f2c42eda3bff8e949defd24496f7b6a6d531e57)(react@18.2.0)
-
-  '@tanstack/router-core@1.171.13':
-    dependencies:
-      '@tanstack/history': 1.162.0
-      cookie-es: 3.1.1
-      seroval: 1.6.9
-      seroval-plugins: 1.6.9(seroval@1.6.9)
 
   '@tanstack/router-core@1.171.34':
     dependencies:
@@ -7624,8 +7575,6 @@ snapshots:
       '@tanstack/router-core': 1.171.34
 
   '@tanstack/store@0.11.2': {}
-
-  '@tanstack/store@0.9.3': {}
 
   '@tanstack/table-core@8.21.3': {}
 
@@ -8915,7 +8864,7 @@ snapshots:
       eslint: 8.29.0
       eslint-import-resolver-node: 0.3.9
       eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.31.0(eslint@8.29.0))(eslint@8.29.0)
-      eslint-plugin-import: 2.31.0(@typescript-eslint/parser@6.21.0(eslint@8.29.0)(typescript@4.9.3))(eslint-import-resolver-typescript@3.10.1)(eslint@8.29.0)
+      eslint-plugin-import: 2.31.0(@typescript-eslint/parser@6.21.0(eslint@8.29.0)(typescript@4.9.3))(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.31.0(eslint@8.29.0))(eslint@8.29.0))(eslint@8.29.0)
       eslint-plugin-jsx-a11y: 6.10.2(eslint@8.29.0)
       eslint-plugin-react: 7.37.5(eslint@8.29.0)
       eslint-plugin-react-hooks: 5.0.0-canary-7118f5dd7-20230705(eslint@8.29.0)
@@ -8945,7 +8894,7 @@ snapshots:
       tinyglobby: 0.2.13
       unrs-resolver: 1.7.2
     optionalDependencies:
-      eslint-plugin-import: 2.31.0(@typescript-eslint/parser@6.21.0(eslint@8.29.0)(typescript@4.9.3))(eslint-import-resolver-typescript@3.10.1)(eslint@8.29.0)
+      eslint-plugin-import: 2.31.0(@typescript-eslint/parser@6.21.0(eslint@8.29.0)(typescript@4.9.3))(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.31.0(eslint@8.29.0))(eslint@8.29.0))(eslint@8.29.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -8960,7 +8909,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-import@2.31.0(@typescript-eslint/parser@6.21.0(eslint@8.29.0)(typescript@4.9.3))(eslint-import-resolver-typescript@3.10.1)(eslint@8.29.0):
+  eslint-plugin-import@2.31.0(@typescript-eslint/parser@6.21.0(eslint@8.29.0)(typescript@4.9.3))(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.31.0(eslint@8.29.0))(eslint@8.29.0))(eslint@8.29.0):
     dependencies:
       '@rtsao/scc': 1.1.0
       array-includes: 3.1.8

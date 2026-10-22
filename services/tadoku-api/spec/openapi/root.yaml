@@ -90,7 +90,7 @@ x-tadoku-sources:
     exposure: public
     info:
       title: identity-api
-      description: Registration, sessions, recovery and settings contracts; registered skeletons return 501.
+      description: Registration, sessions, recovery and settings contracts.
       version: 1.0.0
     servers:
     - url: https://tadoku.app/api/internal

@@ -5,9 +5,9 @@ import * as api from '../src'
 type Verdicts = { accepted: string[]; rejected?: string[]; readByGoFallbackOnly?: string[] }
 
 // Go's verdict on each value. `email`: what the email feature's `validAddress` stores as a recipient and answers as
-// written. `account-email`: what the API answers as an account's email for stored values Kratos v26.2.0 or the
-// identity import admits; it writes the address `net/mail` reads from the stored value, or the stored value itself
-// when `net/mail` can't read it, such as an imported address with a leading vertical tab. `date-time`: what
+// written. `account-email`: what the API answers as an account's email for stored values, including imported ones;
+// it writes the address `net/mail` reads from the stored value, or the stored value itself when `net/mail` can't read
+// it, such as an imported address with a leading vertical tab. `date-time`: what
 // `time.Parse(time.RFC3339, …)` reads; `readByGoFallbackOnly` lists times outside RFC 3339 that Go's layout fallback
 // still reads but never writes, and the client rejects them.
 const go = JSON.parse(readFileSync(new URL('formats.json', import.meta.url), 'utf8')) as Record<string, Verdicts>
@@ -44,8 +44,8 @@ const answer = (body: unknown) => ({
     new Response(JSON.stringify(body), { status: 200, headers: { 'Content-Type': 'application/json' } }),
 })
 
-const session = (fields: Record<string, string>, accountApp = 'v1') =>
-  api.identitySessionGet(answer({ account_app: accountApp, account: { ...account, ...fields } }))
+const session = (fields: Record<string, string>) =>
+  api.identitySessionGet(answer({ account: { ...account, ...fields } }))
 
 const recipient = (value: string) =>
   api.emailGet({ ...answer({ ...message, recipient: value }), path: { id: message.id } })
@@ -64,11 +64,11 @@ describe.each([
   })
 })
 
-describe.each(['v1', 'v2'])('generated %s session validator', accountApp => {
+describe('generated session validator', () => {
   it.each(go['account-email'].accepted.map(value => [label(value), value]))(
     'accepts the account email the API sends: %s',
     async (_, value) => {
-      expect((await session({ email: value }, accountApp)).error).toBeUndefined()
+      expect((await session({ email: value })).error).toBeUndefined()
     },
   )
 })

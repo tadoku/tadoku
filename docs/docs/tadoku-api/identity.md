@@ -14,8 +14,7 @@ for guests, uses tenant-local accounts. Profile and moderation callers use
 `identity.Reader`, constructed by `identity.NewReader`.
 
 Account lookup and search are implemented by the separate `ReadService` used by
-profile and moderation; the `Accounts` service's embedded Reader methods and
-account deletion remain `501` stubs; see the manual
+profile and moderation. Account deletion is manual; see
 [Account deletion](../operations/account-deletion.md).
 [Retained email](./email.md) provides recovery messages and old-address notices
 through transactional writes and queue publication.
@@ -25,8 +24,8 @@ through transactional writes and queue publication.
 Public identity paths are relative to `/api/internal` and enter the JWT and ban
 pipeline, including guest requests. Missing JWT credentials return `400`, invalid
 JWTs `401`, and another tenant on a scoped deployment `421`.
-`GET /identity/session` returns `account_app`, always `v2`, plus the account or
-`null`.
+`GET /identity/session` returns `account`: the signed-in account, or `null` for
+a guest.
 
 Identity mutations require JSON and an HTTPS `Origin` on the Tadoku app
 allowlist. App hosts include the main, account, admin and authv2 hosts, their

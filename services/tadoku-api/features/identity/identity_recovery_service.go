@@ -81,16 +81,6 @@ func (s *Service) WriteRecovery(ctx context.Context, request RecoveryRequest) (R
 	}}}, nil
 }
 
-// RequestRecovery requires the application's business transaction, including email writes and enqueue.
-// HTTP callers admit with AdmitRecovery before the transaction and use WriteRecovery inside it.
-func (s *Service) RequestRecovery(ctx context.Context, recovery Recovery) (RecoveryResult, error) {
-	request, err := s.AdmitRecovery(ctx, recovery)
-	if err != nil || request == nil {
-		return RecoveryResult{}, err
-	}
-	return s.WriteRecovery(ctx, *request)
-}
-
 // ConsumeRecovery requires the application's business transaction through the new session write.
 func (s *Service) ConsumeRecovery(ctx context.Context, raw RecoveryToken) (RecoveryLogin, error) {
 	if !validSessionToken(string(raw)) {

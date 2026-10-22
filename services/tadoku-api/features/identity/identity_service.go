@@ -21,20 +21,8 @@ type Service struct {
 	cookieDomain string
 }
 
-var _ Accounts = (*Service)(nil)
-
 func NewService(repository *Repository, throttle *Throttle, cookieDomain string) *Service {
 	return &Service{repository: repository, throttle: throttle, cookieDomain: cookieDomain}
-}
-
-func (*Service) FindAccount(context.Context, uuid.UUID) (Account, error) {
-	return Account{}, ErrNotImplemented
-}
-
-func (*Service) UserExists(context.Context, uuid.UUID) (bool, error) { return false, ErrNotImplemented }
-
-func (*Service) ListAccounts(context.Context, ListAccounts) (AccountPage, error) {
-	return AccountPage{}, ErrNotImplemented
 }
 
 func (s *Service) Register(ctx context.Context, registration Registration) (LoginResult, error) {
@@ -124,8 +112,6 @@ func (s *Service) Session(ctx context.Context, header CookieHeader) (Session, er
 	}
 	return s.repository.session(ctx, hashToken(value), timex.Now())
 }
-
-func (*Service) DeleteAccount(context.Context, uuid.UUID) error { return ErrNotImplemented }
 
 const dummyPasswordHash = "$2b$12$hady7Vf2de/ngyT9TV6N/usj/9yeHugOWtf8eCYGfnWNO.z9CGeeu"
 

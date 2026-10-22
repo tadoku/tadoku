@@ -24,9 +24,6 @@ func TestIdentitySessionCallbackAuthentication(t *testing.T) {
 		if response.Code != auth.status {
 			t.Errorf("status=%d body=%s, want %d", response.Code, response.Body, auth.status)
 		}
-		if auth.status == http.StatusNotImplemented && response.Body.String() != "{\"message\":\"not implemented\"}\n" {
-			t.Errorf("stub error=%s", response.Body)
-		}
 	}
 }
 

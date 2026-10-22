@@ -30,8 +30,6 @@ These are the routes the Tadoku website calls, and `/api/internal` is the only
 API prefix. A path such as `/api/immersion/logs` is not an API route: the
 website answers it with its HTML `404` page.
 
-Identity registration and login return `501` for a tenant that selects the
-legacy v1 account app; see [Identity accounts and sessions](../tadoku-api/identity).
 The email routes also accept tenant access tokens.
 
 ## Authentication

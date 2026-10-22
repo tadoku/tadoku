@@ -161,9 +161,8 @@ describe('generated client on malformed answers', () => {
     ['an HTML page', 200, { 'Content-Type': 'text/html' }, '<html>Gateway</html>'],
     ['an empty body', 200, { 'Content-Length': '0' }, null],
     ['no content', 204, {}, null],
-    ['an unknown account app', 200, json, '{"account_app":"v3","account":null}'],
-    ['a missing account', 200, json, '{"account_app":"v2"}'],
-    ['an account without an ID', 200, json, '{"account_app":"v2","account":{"email":"a@b.test","display_name":"Ab",'
+    ['a missing account', 200, json, '{}'],
+    ['an account without an ID', 200, json, '{"account":{"email":"a@b.test","display_name":"Ab",'
       + '"created_at":"2026-01-01T00:00:00Z","authenticated_at":"2026-01-01T00:00:00Z"}}'],
   ])('rejects %s', async (_, status, headers, body) => {
     const result = await session(status, headers, body)
@@ -172,9 +171,9 @@ describe('generated client on malformed answers', () => {
   })
 
   it('accepts a signed-out session', async () => {
-    const result = await session(200, json, '{"account_app":"v2","account":null}')
+    const result = await session(200, json, '{"account":null}')
     expect(result.error).toBeUndefined()
-    expect(result.data).toEqual({ account_app: 'v2', account: null })
+    expect(result.data).toEqual({ account: null })
   })
 
   it('sends plain-object headers with a JSON write', async () => {
@@ -239,7 +238,7 @@ describe('generated client on success answers the contract does not document', (
   const contest = { path: { id: '00000000-0000-4000-8000-000000000001' } }
 
   it.each([
-    ['a session under 201', () => api.identitySessionGet(answer(201, '{"account_app":"v2","account":null}', json))],
+    ['a session under 201', () => api.identitySessionGet(answer(201, '{"account":null}', json))],
     ['an empty 200 for a password change documented as 204',
       () => api.identityPasswordUpdate({ ...answer(200, null, empty), ...password })],
     ['JSON under 200 for a recovery request documented as an empty 202',
@@ -285,7 +284,7 @@ describe('generated client on values the contract constrains', () => {
     authenticated_at: '2026-01-01T00:00:00Z',
   }
   const session = (fields: Record<string, string>) =>
-    api.identitySessionGet(answer({ account_app: 'v2', account: { ...account, ...fields } }))
+    api.identitySessionGet(answer({ account: { ...account, ...fields } }))
 
   it.each([
     ['empty account fields', { id: '', email: '', display_name: '', created_at: '', authenticated_at: '' }],

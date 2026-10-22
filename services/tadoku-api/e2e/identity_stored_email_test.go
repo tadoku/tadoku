@@ -175,11 +175,10 @@ func checkStoredAccount(
 	body := response.Body.Bytes()
 	if operation != "profile" {
 		var view struct {
-			AccountApp string          `json:"account_app"`
-			Account    json.RawMessage `json:"account"`
+			Account json.RawMessage `json:"account"`
 		}
-		if err := json.Unmarshal(body, &view); err != nil || view.AccountApp != "v2" {
-			t.Errorf("%s body=%q is not a v2 session", operation, response.Body)
+		if err := json.Unmarshal(body, &view); err != nil || view.Account == nil {
+			t.Errorf("%s body=%q is not a session", operation, response.Body)
 			return
 		}
 		body = view.Account

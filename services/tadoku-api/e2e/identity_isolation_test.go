@@ -39,9 +39,6 @@ func TestIdentityV2CookieTenantHostMatrix(t *testing.T) {
 					response := identityRequest(t, api.handler, key, "GET", "/identity/session", "", cookie.String(),
 						func(r *http.Request) { r.Host = host })
 					view := identityView(t, response)
-					if view.AccountApp != "v2" {
-						t.Fatal("account app escaped its signed tenant")
-					}
 					if actor != credential {
 						if view.Account != nil {
 							t.Error("foreign cookie authenticated")

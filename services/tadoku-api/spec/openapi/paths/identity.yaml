@@ -55,12 +55,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/IdentityErrorResponse'
-        '501':
-          description: Not implemented
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/IdentityErrorResponse'
         '503':
           description: Request rejected
           content:
@@ -119,12 +113,6 @@ paths:
                 $ref: '#/components/schemas/IdentityErrorResponse'
         '429':
           description: Request rejected
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/IdentityErrorResponse'
-        '501':
-          description: Not implemented
           content:
             application/json:
               schema:
@@ -284,12 +272,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/IdentityErrorResponse'
-        '501':
-          description: Not implemented
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/IdentityErrorResponse'
         '503':
           description: Request rejected
           content:
@@ -363,12 +345,6 @@ paths:
                 $ref: '#/components/schemas/IdentityErrorResponse'
         '429':
           description: Request rejected
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/IdentityErrorResponse'
-        '501':
-          description: Not implemented
           content:
             application/json:
               schema:
@@ -450,12 +426,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/IdentityErrorResponse'
-        '501':
-          description: Not implemented
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/IdentityErrorResponse'
         '503':
           description: Request rejected
           content:
@@ -515,12 +485,6 @@ paths:
                 $ref: '#/components/schemas/IdentityErrorResponse'
         '429':
           description: Request rejected
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/IdentityErrorResponse'
-        '501':
-          description: Not implemented
           content:
             application/json:
               schema:

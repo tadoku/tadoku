@@ -10,7 +10,6 @@ import { expectContained, settingRow, waitForHydration } from './support'
 // Runs on the Settings fixture's server (see e2e/README.md); only the session read reaches the fixture below.
 const enabled = process.env.AUTHV2_SETTINGS_FIXTURE === 'true'
 const session = JSON.stringify({
-  account_app: 'v2',
   account: {
     id: '00000000-0000-4000-8000-000000000001',
     email: 'reader@example.test',

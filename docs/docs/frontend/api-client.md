@@ -80,8 +80,8 @@ break the contract's constraints, which must fail.
     that Go never writes; the client rejects them.
 
   `frontend/packages/api-client/test/formats.json` lists Go's verdict on each
-  tested value and the account emails the API sends for stored Kratos and
-  imported addresses; `frontend/packages/api-client/test/formats.test.ts` sends
+  tested value and the account emails the API sends for stored addresses,
+  including imported ones; `frontend/packages/api-client/test/formats.test.ts` sends
   them through the generated email and session operations.
 - Every answer is parsed as JSON. An HTML page fails.
 - Validation does not transform data: a call returns the JSON as sent. Use only
@@ -129,10 +129,6 @@ a malformed answer when it is missing.
 
 - The log export, `GET /immersion/logs/export`, is a download link that the
   browser navigates to.
-- Session, login and registration answers are validated without `account_app`,
-  which no frontend reads, so answers with or without it pass. The validator is
-  `zSession` in `frontend/packages/ui/identity.ts` and in
-  `frontend/apps/authv2/src/lib/identity.ts`.
 - Form validation and error messages belong to each form.
 - Manual Playwright journeys read API responses directly to drive and check
   flows.

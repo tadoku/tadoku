@@ -14,7 +14,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/kelseyhightower/envconfig"
 	"github.com/tadoku/tadoku/services/common/postgresconfig"
 	"github.com/tadoku/tadoku/services/tadoku-api/app/tenantlifecycle"
@@ -22,32 +21,16 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/flipt"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/fliptmanagement"
-	"github.com/tadoku/tadoku/services/tadoku-api/infra/keto"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/valkey"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
 type command struct {
 	action    string
 	key       tenant.TestKey
-	testers   []uuid.UUID
 	features  string
 	component string
-}
-
-type testerIDs []uuid.UUID
-
-func (testers *testerIDs) String() string { return "tester UUID" }
-
-func (testers *testerIDs) Set(raw string) error {
-	id, err := uuid.Parse(raw)
-	if err != nil || id == uuid.Nil {
-		return errors.New("tester must be a nonzero UUID")
-	}
-	*testers = append(*testers, id)
-	return nil
 }
 
 func parseCommand(args []string) (command, error) {
@@ -71,10 +54,8 @@ func parseCommand(args []string) (command, error) {
 	rawTenant := flags.String("tenant", "", "full parsed test tenant")
 	var result command
 	result.action = action
-	var testers testerIDs
 	if action == "provision" {
 		flags.StringVar(&result.features, "flipt-features", "", "Flipt seed file")
-		flags.Var(&testers, "tester", "tester UUID; repeat to grant several identities")
 	}
 	if action == "override set" || action == "override clear" {
 		flags.StringVar(&result.component, "component", "", "registered worker component")
@@ -90,7 +71,6 @@ func parseCommand(args []string) (command, error) {
 		return command{}, err
 	}
 	result.key = key
-	result.testers = testers
 	if action == "provision" && result.features == "" {
 		return command{}, errors.New("provision requires --flipt-features")
 	}
@@ -101,8 +81,6 @@ func parseCommand(args []string) (command, error) {
 }
 
 type config struct {
-	KetoReadURL        string `envconfig:"keto_read_url" required:"true"`
-	KetoWriteURL       string `envconfig:"keto_write_url" required:"true"`
 	ValkeyURL          string `envconfig:"valkey_url" required:"true"`
 	FliptManagementURL string `envconfig:"flipt_management_url" required:"true"`
 	FliptEnvironment   string `envconfig:"flipt_environment" default:"test"`
@@ -146,7 +124,7 @@ func run(ctx context.Context, args []string) error {
 		return fmt.Errorf("open tenant postgres: %s", postgresConfig.Redact(err))
 	}
 	defer pool.Close()
-	application := tenantlifecycle.NewApplication(pool, nil, nil, nil)
+	application := tenantlifecycle.NewApplication(pool, nil, nil)
 	if command.action == "override set" {
 		return application.SetOverride(ctx, command.key, command.component)
 	}
@@ -158,12 +136,9 @@ func run(ctx context.Context, args []string) error {
 	if err := envconfig.Process("TENANT", &cfg); err != nil {
 		return err
 	}
-	for _, field := range []*string{&cfg.KetoReadURL, &cfg.KetoWriteURL, &cfg.FliptManagementURL} {
-		normalized, err := providerURL(*field)
-		if err != nil {
-			return err
-		}
-		*field = normalized
+	cfg.FliptManagementURL, err = providerURL(cfg.FliptManagementURL)
+	if err != nil {
+		return err
 	}
 	targets, err := flipt.NewTargets("production", "default", cfg.FliptEnvironment)
 	if err != nil {
@@ -180,14 +155,13 @@ func run(ctx context.Context, args []string) error {
 	defer httpClient.CloseIdleConnections()
 	application = tenantlifecycle.NewApplication(
 		pool,
-		permissions.NewTenantManager(keto.NewClient(cfg.KetoReadURL, cfg.KetoWriteURL, keto.WithHTTPClient(httpClient))),
 		leaderboard.NewCache(client, time.Second),
 		fliptmanagement.NewClient(fliptmanagement.Config{
 			URL: cfg.FliptManagementURL, Targets: targets, HTTPClient: httpClient,
 		}),
 	)
 	if command.action == "provision" {
-		return application.Provision(ctx, command.key, command.testers, features)
+		return application.Provision(ctx, command.key, features)
 	}
 	return application.Teardown(ctx, command.key)
 }

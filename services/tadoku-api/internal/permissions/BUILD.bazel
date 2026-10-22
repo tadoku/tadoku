@@ -10,7 +10,6 @@ go_library(
         "namespace.go",
         "relationships.go",
         "rules.go",
-        "tenant_lifecycle.go",
         "tuples.go",
         "types.go",
         "validate.go",
@@ -18,43 +17,25 @@ go_library(
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/internal/permissions",
     visibility = ["//services/tadoku-api:internal_consumers"],
     deps = [
-        "//services/tadoku-api/infra/keto",
         "//services/tadoku-api/internal/errx",
         "//services/tadoku-api/internal/identity",
-        "//services/tadoku-api/internal/tenant",
         "@com_github_google_uuid//:uuid",
     ],
 )
 
 go_test(
     name = "permissions_test",
-    size = "medium",
     srcs = [
         "checker_test.go",
         "fixtures_test.go",
         "model_test.go",
         "relationships_test.go",
-        "tenant_lifecycle_test.go",
     ],
-    args = ["-test.parallel=4"],
     embed = [":permissions"],
-    env_inherit = ["TADOKU_TEST_POSTGRES_URL"],
-    tags = [
-        "no-cache",
-        "no-remote-exec",
-        "requires-network",
-    ],
-    target_compatible_with = [
-        "@platforms//cpu:x86_64",
-        "@platforms//os:linux",
-    ],
     deps = [
-        "//services/tadoku-api/infra/keto",
         "//services/tadoku-api/internal/errx",
         "//services/tadoku-api/internal/identity",
         "//services/tadoku-api/internal/tenant",
-        "//services/tadoku-api/internal/testketo",
         "@com_github_google_uuid//:uuid",
-        "@com_github_ory_keto_client_go//:keto-client-go",
     ],
 )

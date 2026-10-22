@@ -39,7 +39,7 @@ if [ "$#" -ne 2 ]; then
   exit 1
 fi
 
-/tadoku-tenant provision --tenant "$DEV_TENANT" --flipt-features /flipt/features.yaml --tester "$2"
+/tadoku-tenant provision --tenant "$DEV_TENANT" --flipt-features /flipt/features.yaml
 TENANT_PRODUCTION=false /tadoku-tenant development-accounts --tenant "$DEV_TENANT" \
   --admin-id "$1" --reader-id "$2"
 exec psql -X --set=ON_ERROR_STOP=1 \

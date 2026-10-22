@@ -22,7 +22,7 @@ documented here.
 | webv2 | Main site: logging, contests, leaderboards and content | `frontend/apps/webv2/`, `k8s/dev/base/frontend-webv2/` |
 | authv2 | Account app: login, registration, recovery and Settings through the identity API | `frontend/apps/authv2/`, `k8s/dev/base/frontend-authv2/` |
 | admin | Administration, moderation and CMS | `frontend/apps/admin/`, `k8s/dev/base/frontend-admin/` |
-| Ory Keto | Test-tenant relationships that `tadoku-tenant` provisions; Tadoku API does not read it | `k8s/dev/base/keto/` |
+| Ory Keto | Deployed by the development base; no Tadoku service reads or writes it | `k8s/dev/base/keto/` |
 | Ory Oathkeeper | Access proxy for API and operator routes; issues user and service JWTs | `k8s/dev/base/oathkeeper/` |
 | token-reflector | Publishes the Kubernetes service-account JWKS and returns exchanged service tokens | `services/token-reflector/` |
 | Flipt | Feature flags | `k8s/dev/base/flipt/`, `feature-flags.contract.json` |

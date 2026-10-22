@@ -16,13 +16,14 @@ Oathkeeper callback, recovery, settings and every `Reader` lookup.
 | --- | --- |
 | `true` from the current or last fetched snapshot | v2 tenant-local accounts |
 | `false` from the current or last fetched snapshot | v1 Kratos |
-| Flag absent from the fetched canonical `tadoku/prod` snapshot the client evaluated | The flag's safe default, `false` (v1) |
+| Flag absent from the fetched canonical `tadoku/prod` snapshot the client evaluated | The flag's safe default, `true` (v2) |
 | Flag absent from a test tenant's fetched snapshot | Unavailable |
 | No fetched snapshot, Flipt disabled, provider error or invalid response | Unavailable |
 | Request canceled or past its deadline | The request's context error |
 
 Only the canonical tenant may use the safe default, because production Flipt
-need not declare the flag before the switch. Tenant provisioning always creates
+need not declare the flag. A missing canonical flag therefore selects
+tenant-local accounts and never calls Kratos. Tenant provisioning always creates
 `identity-v2`, so a test tenant without it has lost its namespace; rerun the
 tenant task. The tenant comes from the verified request context, never from a
 host or cookie name.

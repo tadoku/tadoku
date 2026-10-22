@@ -7,7 +7,7 @@
     "overrides": {
       "react": "18.2.0",
       "react-dom": "18.2.0",
-      "vitest>vite": "6.4.3"
+      "vitest>vite": "8.1.6"
     },
     "patchedDependencies": {
       "react-dom@18.2.0": "patches/react-dom@18.2.0.patch"

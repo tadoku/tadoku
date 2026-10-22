@@ -6,13 +6,6 @@ module(
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 http_archive(
-    name = "keto_v25_4_0",
-    build_file_content = "exports_files([\"keto\"])\n",
-    sha256 = "9241ee405b3ed0ecd03e3506ecc8485dd8d8a05e5dc9ea011853eb5800ed31c9",
-    urls = ["https://github.com/ory/keto/releases/download/v25.4.0/keto_25.4.0-linux_sqlite_64bit.tar.gz"],
-)
-
-http_archive(
     name = "oathkeeper_v26_2_0",
     build_file_content = "exports_files([\"oathkeeper\"])\n",
     sha256 = "03e4e5bd90f8b17767fa52d988cd6862732923198de9ecd9053e58648e7e8528",
@@ -67,7 +60,6 @@ use_repo(
     "com_github_micahparks_keyfunc",
     "com_github_oapi_codegen_nullable",
     "com_github_oapi_codegen_runtime",
-    "com_github_ory_keto_client_go",
     "com_github_pganalyze_pg_query_go_v6",
     "com_github_prometheus_client_golang",
     "com_github_satorunooshie_depolicy",
@@ -76,7 +68,6 @@ use_repo(
     "io_flipt_go_flipt_client",
     "in_yaml_go_yaml_v3",
     "org_golang_x_crypto",
-    "org_golang_x_sync",
     "org_golang_x_tools",
 )
 

@@ -25,7 +25,7 @@ func TestCreateLanguage(t *testing.T) {
 		{description: []string{"guest"}, want: http.StatusUnauthorized},
 		{description: []string{"non", "admin"}, want: http.StatusForbidden},
 		{description: []string{"test", "tenant", "admin"}, want: http.StatusForbidden},
-		{description: []string{"test", "tenant", "inherited", "admin"}, want: http.StatusForbidden},
+		{description: []string{"test", "tenant", "production", "admin", "not", "inherited"}, want: http.StatusForbidden},
 		{description: []string{"duplicate", "code"}, want: http.StatusConflict},
 	}
 

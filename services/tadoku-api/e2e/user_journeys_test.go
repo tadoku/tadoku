@@ -44,7 +44,7 @@ func TestTenantIsolationJourney(t *testing.T) {
 		},
 		{request: "test_member_admitted", as: alphaUser, want: http.StatusOK},
 		{
-			request: "test_inherited_admin",
+			request: "test_tenant_admin",
 			as:      alphaAdmin,
 			want:    http.StatusOK,
 			others:  cast{alphaBanned: http.StatusOK},

@@ -114,19 +114,9 @@ func seedEveryTenantTable(t *testing.T, db *testpostgres.Database, key string) {
 		values ($1, 'account.recovery', 'lifecycle@example.test', 'Lifecycle', 'Fixture', '{}');
 		insert into access_tokens (tenant, name, token_hash, scopes, expires_at)
 		values ($1, 'Lifecycle', 'synthetic-access-hash', array['email:read'], now() + interval '1 day');
+		insert into permission_relationships (tenant, object_type, object_id, relation, subject_type, subject_id)
+		values ($1, 'app', 'root', 'admins', 'user', uuid_generate_v5(uuid_nil(), $1 || '/user')::text);
 	`
-	var hasPermissionRelationships bool
-	err := db.Pool.QueryRow(t.Context(), "select to_regclass('public.permission_relationships') is not null").
-		Scan(&hasPermissionRelationships)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if hasPermissionRelationships {
-		seed += `
-			insert into permission_relationships (tenant, object_type, object_id, relation, subject_type, subject_id)
-			values ($1, 'app', 'root', 'admins', 'user', uuid_generate_v5(uuid_nil(), $1 || '/user')::text);
-		`
-	}
 
 	tx, err := db.Pool.Begin(t.Context())
 	if err != nil {

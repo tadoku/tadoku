@@ -19,7 +19,7 @@ export function saveReaderPassword(password: string) {
 
 export function origins(testInfo: TestInfo) {
   const authv2 = new URL(testInfo.project.use.baseURL as string).origin
-  return { authv2, main: authv2.replace('.authv2.', '.') }
+  return { authv2, main: authv2.replace(/(\/\/|\.)account\./, '$1') }
 }
 
 export async function newPage(browser: Browser, testInfo: TestInfo, options: BrowserContextOptions = {}) {

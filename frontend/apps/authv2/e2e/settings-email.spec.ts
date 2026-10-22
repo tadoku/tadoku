@@ -8,7 +8,7 @@ import { waitForHydration } from './support'
 // TADOKU_WEB_URL=https://tadoku.dev.lab and TADOKU_API_URL pointing at the fixture below. Browser calls to that web
 // host's API are answered in the test and never leave it.
 const enabled = process.env.AUTHV2_SETTINGS_FIXTURE === 'true'
-const host = 'authv2.tadoku.dev.lab'
+const host = 'account.tadoku.dev.lab'
 const unchanged = 'This is already your email address. Enter a different one to change it.'
 
 // Byte for byte what the API's generated session writer emits, with the email exactly as encoding/json escapes it.

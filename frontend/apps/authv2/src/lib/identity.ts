@@ -157,7 +157,6 @@ function describe(code: Code, operation: Operation, values?: Record<string, stri
     case 'invalid_recovery_token':
       return { message: 'This recovery link is invalid or has expired. Request a new one.' }
     case 'not_implemented':
-      return { message: 'This account still uses the previous account pages. Reload the page to continue.' }
     case 'unavailable':
       return { message: 'Something went wrong on our side. Try again in a moment.' }
   }

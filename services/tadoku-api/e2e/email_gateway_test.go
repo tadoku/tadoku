@@ -27,7 +27,6 @@ import (
 
 	"github.com/bazelbuild/rules_go/go/runfiles"
 	"github.com/google/uuid"
-	ketoclient "github.com/tadoku/tadoku/services/tadoku-api/infra/keto"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"go.yaml.in/yaml/v3"
 	"golang.org/x/crypto/bcrypt"
@@ -280,9 +279,13 @@ func gatewayAdminCookie(t *testing.T, key tenant.Key, proxyURL, host, forwardedP
 		)
 	}
 
-	roles := ketoclient.NewClient(api.keto.ReadURL(), api.keto.WriteURL())
 	if admin {
-		err = roles.AddRelation(t.Context(), "app", key.String(), "admins", ketoclient.Subject{ID: view.Account.ID})
+		_, err = api.db.Pool.Exec(t.Context(), `insert into permission_relationships
+			(tenant, object_type, object_id, relation, subject_type, subject_id)
+			values ($1, 'app', 'root', 'admins', 'user', $2)`,
+			key.String(),
+			view.Account.ID,
+		)
 		if err != nil {
 			t.Fatal(err)
 		}

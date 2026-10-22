@@ -285,7 +285,13 @@ func resetJourney(t *testing.T, s *suite, directory string) {
 	); err != nil {
 		t.Fatal(err)
 	}
-	if err := s.keto.Reset(ctx, filepath.Join(journeysDir, "relationships.json"), filepath.Join(directory, "relationships.json")); err != nil {
+	err := resetRelationships(
+		ctx,
+		s.db.Pool,
+		filepath.Join(journeysDir, "relationships.json"),
+		filepath.Join(directory, "relationships.json"),
+	)
+	if err != nil {
 		t.Fatal(err)
 	}
 	if s.flipt != nil {

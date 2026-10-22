@@ -25,7 +25,7 @@ func TestDependencyFailures(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	poolClosed := &suite{db: api.db, keto: keto, handler: handler}
+	poolClosed := &suite{db: api.db, handler: handler}
 
 	unreachablePool := openUnreachablePool(t, api.db.AppPool.Config().ConnString())
 	handler, _, err = newTestRouterWithLogger(
@@ -38,7 +38,7 @@ func TestDependencyFailures(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	databaseUnavailable := &suite{db: api.db, keto: keto, handler: handler}
+	databaseUnavailable := &suite{db: api.db, handler: handler}
 
 	closedValkey, err := newClosedLeaderboardValkeyClient()
 	if err != nil {

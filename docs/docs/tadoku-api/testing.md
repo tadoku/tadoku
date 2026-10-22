@@ -78,8 +78,13 @@ Never point tests at shared development or production services.
   goroutines, 12,000 tenant reads and 6,000 writes. Its test-only
   session-setting negative control must observe cross-client leaks. Normal and race CI jobs
   print both workload and negative-control results.
-- **Keto:** relationship scenarios start a pinned, official Linux x86-64 Keto
-  v25.4.0 SQLite-enabled executable under Bazel. Each helper owns an in-memory,
+- **Permissions:** the API's tests and E2Es store permission relationships in
+  the disposable PostgreSQL database and start no Keto process.
+- **Keto:** only `tadoku-tenant` relationship tests, in
+  `services/tadoku-api/app/tenantlifecycle/` and the `permissions.TenantManager`
+  tests in `services/tadoku-api/internal/permissions/`, start a pinned,
+  official Linux x86-64 Keto v25.4.0 SQLite-enabled executable under Bazel
+  (`services/tadoku-api/internal/testketo/`). Each helper owns an in-memory,
   loopback-only process using `infra/dev/ory/namespaces.keto.ts` and never
   accepts an external target.
 - **Identity accounts:** ordinary HTTP golden and journey resets seed native
@@ -161,7 +166,8 @@ worker services and verification SQL. Shared pools can open connections inside
 the bubble and abort the process when their synchronization crosses its boundary.
 
 `services/tadoku-api/e2e/tenant_isolation_test.go` runs signed requests through
-the production JWT/Keto router and real PostgreSQL and Valkey. It covers
+the production router, with JWT verification and PostgreSQL-backed
+permissions, and real PostgreSQL and Valkey. It covers
 two-way log visibility, duplicate page slugs and synchronized identities,
 shared-table write denial, base and branch job claims, actual delegated
 provider tenant contexts, and test-tenant deletion including a replay chain

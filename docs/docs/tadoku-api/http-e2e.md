@@ -1,6 +1,6 @@
 ---
 title: HTTP end-to-end tests
-description: How Tadoku API HTTP golden cases are laid out, seeded, compared and regenerated, and how E2Es authenticate with real JWTs, Keto and local identity accounts.
+description: How Tadoku API HTTP golden cases are laid out, seeded, compared and regenerated, and how E2Es authenticate with real JWTs, PostgreSQL permission relationships and local identity accounts.
 sidebar_position: 6
 ---
 
@@ -14,7 +14,7 @@ The general test principles are in [Testing](./testing.md).
 
 - `TestMain` creates one disposable database, applies migrations and constructs
   the production HTTP router once, with real JWT verification, ban checks and
-  Keto-backed permissions. There is no second bypass router or injected
+  PostgreSQL-backed permissions. There is no second bypass router or injected
   administrator identity. Handlers run in process, without HTTP listeners.
 - The production router, profile-service resets, alternate scoring/dependency
   routers and real worker journeys all use the restricted `AppPool`.
@@ -57,8 +57,9 @@ The general test principles are in [Testing](./testing.md).
 `services/tadoku-api/e2e/flipt_tenant_test.go` compares a complete sequence of
 HTTP responses under `testdata/FliptTenantIsolation/`: separate initial
 canonical/test decisions, a test grant, a canonical revoke and a test revoke.
-It freezes the normal fixture clock, uses signed tenant JWTs, real Keto and the
-non-owner application pool, and preserves the opposite tenant's decisions.
+It freezes the normal fixture clock, uses signed tenant JWTs, real permission
+relationships and the non-owner application pool, and preserves the opposite
+tenant's decisions.
 The Flipt fixture is an explicit provider simulation: it stores independent
 members and revisions per environment/namespace and uses the production
 `Targets` mapping. `SeedTenant` provisions another parsed test tenant for a
@@ -92,11 +93,11 @@ Case files are language-neutral and reviewable:
 ```text
 e2e/testdata/<operation>/
   setup.sql              # optional operation-level seed
-  relationships.json     # optional operation-level Keto tuples
+  relationships.json     # optional operation-level permission relationships
   <status>_<description>/
     setup.sql            # optional
     finalize.sql         # optional final state after the account cast
-    relationships.json   # optional Keto relation-tuple array
+    relationships.json   # optional permission relationship array
     request.http
     golden.http
 ```
@@ -118,10 +119,35 @@ deep:
   fallback beyond the operation directory.
 
 Put seed data shared by most cases in the operation file, add a case file only
-when a case needs different data, and add a zero-byte case file when a case
-must start without the operation's data. Shared PostgreSQL and Keto cleanup
-always runs, even without setup. A resolved seed file that does not exist is
-skipped; other read, SQL, decode and provider errors fail the scenario.
+when a case needs different data, and add a zero-byte case file when a case must
+start without the operation's data. Shared PostgreSQL cleanup, including
+`permission_relationships`, always runs, even without setup. A resolved seed
+file that does not exist is skipped; other read, SQL, decode and provider errors
+fail the scenario.
+
+### Relationship files
+
+`relationships.json` is an array of permission relationship rows. Unknown
+fields fail decoding:
+
+```json
+[
+  {
+    "tenant": "tadoku/prod",
+    "object": "app:root",
+    "relation": "admins",
+    "subject": "user:11111111-1111-4111-8111-111111111111"
+  }
+]
+```
+
+The PostgreSQL seeds run first: the resolved `setup.sql`, then
+`testdata/accounts.sql`, then the resolved `finalize.sql`. The harness then
+replaces every stored relationship with the resolved file's rows through the
+owner `Pool`. Each row's tenant must already be registered by those seeds; for
+a test tenant, insert its registry row in the case's `setup.sql` with
+`on conflict (key) do nothing`. Grant a test tenant's roles on that tenant;
+nothing is inherited.
 
 ### Comparison
 
@@ -170,17 +196,20 @@ TADOKU_GOLDEN_SOURCE_ROOT="$PWD/services/tadoku-api/e2e/testdata" \
 
 ## Authentication in E2Es
 
-- Endpoint E2Es run through the production JWT and ban middleware, real Keto and
-  real PostgreSQL. Never substitute passthrough middleware, inject an identity
+- Endpoint E2Es run through the production JWT and ban middleware and the real
+  PostgreSQL-backed permission checker on the restricted `AppPool`, with no
+  Keto process. Never substitute passthrough middleware, inject an identity
   or administrator claim, or install an always-allow permission checker.
-- Put synthetic signed tokens in `request.http` and required role tuples in the
-  case's `relationships.json`. Administrator scenarios seed explicit admin
-  tuples; an absent relationship file grants no roles. Public scenarios use
-  signed `guest` tokens, as the gateway does.
-- Keep the full invalid-credential, role, ban and provider matrix at the shared
-  middleware boundary instead of repeating it for every endpoint.
-  Provider-protocol tests belong with the provider adapter; do not embed ad hoc
-  Keto emulators in endpoint fixtures.
+- Put synthetic signed tokens in `request.http` and required role
+  relationships in the case's `relationships.json`. Administrator scenarios
+  seed explicit `admins` relationships; an absent relationship file grants no
+  roles. Public scenarios use signed `guest` tokens, as the gateway does.
+- Keep the full invalid-credential, role, ban and permission-store matrix at
+  the shared middleware boundary instead of repeating it for every endpoint.
+  Simulate a permission-store outage with `withPermissionsPool` or
+  `withGrantsPool` in `services/tadoku-api/e2e/router_options_test.go`, which
+  give the checker or the relationship storage (role reads and ban writes) a
+  closed pool.
 - Test authentication goldens at the middleware boundary, not on a business
   endpoint. They register `GET /test/authentication` on the same production
   router with a test-only success handler, and test-only identity headers prove
@@ -189,10 +218,10 @@ TADOKU_GOLDEN_SOURCE_ROOT="$PWD/services/tadoku-api/e2e/testdata" \
   same production router with an exact `e2e/branch-golden` deployment and prove
   the own-tenant success and other-tenant `421` boundary. The successful case
   seeds no relationships: admission needs no grant on any tenant. Ban-policy
-  scenarios register `GET /test/banned` the same way, using the same real Keto
-  fixture, and cover guests, ungranted users and bans on both canonical and
-  test tenants. Provider fail-open behavior and deadlines are tested at that
-  boundary. No test endpoint is added to production.
+  scenarios register `GET /test/banned` the same way, using the same real
+  permission checker, and cover guests, ungranted users and bans on both
+  canonical and test tenants. Permission-store fail-open behavior and
+  deadlines are tested at that boundary. No test endpoint is added to production.
 - The transport router test proves that every registered application route
   inherits the shared gates.
 - The suite serves a synthetic, checked-in public JWKS
@@ -217,15 +246,15 @@ TADOKU_GOLDEN_SOURCE_ROOT="$PWD/services/tadoku-api/e2e/testdata" \
 
 `e2e/testdata/TenantIsolation/` contains synthetic signed canonical and
 `e2e/isolation-0123abcd` tokens for the same seeded account subject. Its test
-registry entry exists only in the suite's disposable database. Reuse the
-subject's real Keto tuples and explicitly provision the test object's parent
-when a case needs inherited administrators or bans; changing a tenant never
+registry entry exists only in the suite's disposable database. Roles do not
+carry over between tenants: when a case needs an administrator or a ban on the
+test tenant, add a relationship row for that tenant. Changing a tenant never
 grants an administrator identity or bypasses the JWT and ban gates. Seed rows
 name their tenant explicitly, and owner teardown removes only the fixture's
 test entry. Do not insert test tenants in the shared development base or
 production database.
 
-Reuse an existing signed request when only its Keto relationship tuples change.
+Reuse an existing signed request when only its relationships change.
 When a scenario needs different JWT claims, generate a new synthetic key and
 token locally with Node's built-in cryptography, then append the printed public
 JWK to the existing `keys` array without removing any checked-in keys. Run this
@@ -303,12 +332,12 @@ Profile, account-age and role-update requests use the production identity Reader
 and restricted application pool. The signed cast workflow verifies each unique
 tenant/subject pair through the real JWT router, rejects a foreign session under
 the target tenant's cookie name, and checks unavailable states and reset. Roles
-remain real Keto relationships.
+remain real permission relationships.
 
 ## Email gateway fixture
 
 `TestEmailGatewayCookieAndBearer` runs the checked-in development rules with
-checksum-pinned Oathkeeper v26.2.0, local Keto/PostgreSQL and the production
+checksum-pinned Oathkeeper v26.2.0, local PostgreSQL and the production
 router on the restricted role. It seeds disposable native admin and reader
 accounts with `bcrypt.MinCost` hashes, then logs in through the real gateway
 with the unchanged three-second client. Cookie checks call the API's session

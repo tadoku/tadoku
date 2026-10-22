@@ -6,7 +6,7 @@
 - [ ] Move the announcements timestamp columns to `timestamptz` in a standalone migration.
 - [ ] Reconsider the announcements primary key as (`namespace`, `id`) so IDs can be scoped to their namespace.
 - [ ] After the Tadoku API migration is complete, make a final documentation pass and delete all references to this migration.
-- [ ] Maintain the Keto-backed contest-create permission through a background reconciliation job.
+- [x] Drop the planned background reconciliation job for the Keto-backed contest-create permission. Permission relationships commit in PostgreSQL, so there is nothing to reconcile.
 - [x] Drop `leaderboard_outbox` in standalone migration 0033. The table is absent in development and production.
 - [x] Deploy the typed `tadoku-worker` before the API release that removed the embedded consumer; the production worker image and ReplicaSet were verified before that API rollout.
 - [x] Restructure the Tadoku API documentation for progressive disclosure for agents: a short entry point with focused documents behind it instead of one long README.
@@ -27,7 +27,7 @@
 - [ ] Depolicy/sqlc lint: contests SQL must not declare catalog-only `from languages` without a contest join/filter.
 - [x] Deny `valkey-go` imports outside cache and store files in feature packages (`tools/ci/repopolicy`).
 - [ ] Ban private unit→activity maps outside `domain/activities` (lint).
-- [ ] Forbid raw banned/admins Keto triples outside `internal/permissions` (lint).
+- [x] Make raw banned/admins triples impossible outside their owner without a lint. Checks and relationships have unexported fields and come only from a namespace; `features/authz` owns the `app` namespace, and Bazel visibility keeps other features from importing it.
 - [ ] Add a CI check that bans parsing the identity subject in application operations.
 - [ ] Decide whether pages/posts should share content-revision primitives or stay intentional twins.
 - [x] Bind the ban-middleware path carve-out to the mux/generated `AuthzRoleGet` pattern, not the magic `"/authz/current-user/role"` string.

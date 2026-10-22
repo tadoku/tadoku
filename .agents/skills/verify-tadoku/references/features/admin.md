@@ -35,9 +35,11 @@ contain Feature access and, for non-admin users, Ban/Unban User.
 ## Traps
 
 Content namespace and environment selection are different. Changing namespace
-doesn't switch branches. Accounts, application records, Keto grants and
+doesn't switch branches. Accounts, application records, roles and
 named-user Flipt access use the selected
-branch tenant, its Keto object and its `test/tadoku_<route>` namespace. Do not
+branch tenant and its `test/tadoku_<route>` namespace. Dev Admin is an
+administrator there through its own branch grant; administrators and bans in
+`tadoku/prod` do not apply. Do not
 change shared credentials or canonical roles through a branch test. Feature
 access is distinct from global Flipt flag policy. Don't modify
 global flags or expose its administration interface to make a UI test pass.

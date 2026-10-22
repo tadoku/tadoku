@@ -30,9 +30,9 @@ The [authv2 Playwright smoke](../../../../../frontend/apps/authv2/e2e/README.md)
 documents installation, environment variables and its opt-in local fixtures; see
 [Authv2 account screens](#authv2-account-screens).
 
-Do not retain session cookies or recovery tokens in shared evidence. Keto is
-shared even with a branch API, and canonical accounts serve everyone using the
-base: changing their password, name, permissions or session affects others.
+Do not retain session cookies or recovery tokens in shared evidence. Canonical
+accounts serve everyone using the base: changing their password, name, roles or
+session affects others. Roles belong to the tenant that stores them.
 Don't mock CSRF, fabricate JWTs or bypass the UI login when claiming a browser E2E.
 
 ## Identity entry point
@@ -63,8 +63,8 @@ Recovery and profile/password settings use the local identity API. Account
 lookup/search use the separate identity `ReadService` for profile and moderation;
 the `Accounts` service's Reader methods and account deletion remain `501` stubs.
 Email list/detail
-routes accept a verified tenant `email:read` bearer or a Keto-authorized
-administrator; see [Retained email API](admin.md#retained-email-api).
+routes accept a verified tenant `email:read` bearer or an administrator of
+that tenant; see [Retained email API](admin.md#retained-email-api).
 The development base exposes identity and GET email paths through separate
 public Oathkeeper rules. Verify that both the shared rules and the relevant
 backend image are deployed; a frontend overlay does not deploy these rules.

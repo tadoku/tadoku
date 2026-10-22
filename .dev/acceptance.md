@@ -19,12 +19,12 @@ sanitized output with the PR report. Do not include credentials or cookies.
 2. Render `kubectl --context homelab-talos-dev kustomize k8s/dev/base`. Validate with
    kubeconform. Auth/admin ingress must use Envoy, retain TLS and hostnames,
    and preserve the more-specific `/kratos` route to shared Kratos.
-3. Base: use a fresh browser profile to log in through authv2.tadoku.dev.lab
+3. Base: use a fresh browser profile to log in through account.tadoku.dev.lab
    with a synthetic development account, follow its return URL, and load admin.
    Reject attempted requests to production Tadoku hosts.
 4. From a fresh branch with a source-only change, run `dev doctor`, then
    `dev up --owner <unique-owner>`. Confirm only the affected app starts.
-   Open `dev url --host authv2.tadoku.dev.lab /login` or the admin equivalent.
+   Open `dev url --host account.tadoku.dev.lab /login` or the admin equivalent.
    Verify selected backend headers with no selection cookies, and a base host
    still seeing base. Open both owners’ branch hosts in one profile; each must
    select its own backend. Admin must call the matching branch app API host.

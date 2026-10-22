@@ -106,10 +106,10 @@ authentication remains shared across branches.
   image baseline returns. More routing/sync gates: [acceptance](../../../.dev/acceptance.md).
 - Use pnpm frontend checks and Bazel backend checks from `AGENTS.md`. Backend
   destructive reset/reseed suites use disposable local test databases, never the
-  shared development server. Existing [auth browser tests](../../../frontend/apps/auth/e2e/README.md)
-  exercise registration/recovery; they do not select a branch automatically and
-  their Playwright config bypasses TLS verification. Report that limitation and
-  any skipped tests instead of claiming full coverage.
+  shared development server. The [authv2 browser smoke](../../../frontend/apps/authv2/e2e/README.md)
+  exercises registration, login, recovery and Settings against an owned branch
+  tenant with TLS verification enabled. Report any skipped tests instead of
+  claiming full coverage.
 
 If the wrong backend, auth failure, missing data or sync error blocks proof,
 capture status and scoped logs first. Fix within the assigned change or report the

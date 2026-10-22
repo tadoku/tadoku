@@ -17,17 +17,16 @@ Source: `frontend/apps/admin`. Development host: `admin.tadoku.dev.lab`.
 - Users (`pages/users.tsx`) can be listed, banned or unbanned, and granted or denied per-user feature access.
 - Languages (`pages/languages.tsx`) manages the immersion language list.
 
-`pages/_app.tsx` requires an identity session and the `admin` role from Tadoku API. It sends visitors without a session to the auth login page and shows other users an access-denied screen.
+`pages/_app.tsx` requires an identity session and the `admin` role from Tadoku API. It sends visitors without a session to the [authv2](authv2.md) login page and shows other users an access-denied screen.
 
 ## Stack
 
 - Next.js 13 Pages Router, with feature code in `app/` imported as `@app/*`, Tailwind CSS and the legacy `ui` components.
 - React Query 3 hooks call Tadoku API (`immersion`, `content`, `authz` and `profile`) through the [generated client](api-client.md), which validates every response. See the [API reference](../api/index.md).
 - The app also uses react-hook-form, Luxon, Jotai for the session, with accounts read from `GET /identity/session`.
-- `frontend/packages/ui/app-urls.tsx` derives account, home and browser API URLs
+- `frontend/packages/ui/app-urls.tsx` derives authv2, home and browser API URLs
   from the current branch host. SSR passes them through its provider; browser
-  API calls resolve their endpoint at call time. `account_app` from the session
-  response selects the account or authv2 host. Logout uses `POST /identity/logout`.
+  API calls resolve their endpoint at call time. Logout uses `POST /identity/logout`.
   SSR forwards Cookie and X-Dev-Branch to the private API endpoint and never caches
   session responses. Session initialization is scoped to the request.
 - Tests run on Vitest with jsdom and Testing Library.

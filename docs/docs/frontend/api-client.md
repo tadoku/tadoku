@@ -109,7 +109,7 @@ credentials, caching and timeouts.
 | --- | --- |
 | authv2 | `frontend/apps/authv2/src/lib/session.server.ts` reads the session. `sendIdentity()` in `frontend/apps/authv2/src/lib/identity.ts` sends every account form, from the browser or the native form route, and reads error codes with `zIdentityErrorResponse`. |
 | webv3 | `frontend/apps/webv3/src/lib/home.server.ts` makes anonymous home-page reads; `404` means no contest. |
-| webv2, admin, auth | `frontend/packages/ui/identity.ts` reads the session and logs out. `browserApi()` and `apiData()` in `frontend/packages/ui/api.ts` call operations from React Query hooks and throw `Error(<status>)` for API errors. |
+| webv2, admin | `frontend/packages/ui/identity.ts` reads the session and logs out. `browserApi()` and `apiData()` in `frontend/packages/ui/api.ts` call operations from React Query hooks and throw `Error(<status>)` for API errors. |
 
 The validators must run on the package's own pinned Zod 3, whose UUID check
 accepts any well-formed UUID as the API does; Zod 4's rejects IDs that imported
@@ -129,7 +129,6 @@ a malformed answer when it is missing.
 
 - The log export, `GET /immersion/logs/export`, is a download link that the
   browser navigates to.
-- The auth application's Kratos flows use Kratos's own client and contract.
 - Session, login and registration answers are validated without `account_app`,
   which no frontend reads, so answers with or without it pass. The validator is
   `zSession` in `frontend/packages/ui/identity.ts` and in

@@ -58,10 +58,6 @@ spec:
                 secretKeyRef:
                   name: tadoku-owner.tadoku-dev-db.credentials.postgresql.acid.zalan.do
                   key: password
-            - name: TENANT_KETO_WRITE_URL
-              value: http://keto-write.tdk-dev-keto:4467
-            - name: TENANT_KETO_READ_URL
-              value: http://keto-read.tdk-dev-keto:4466
             - name: TENANT_VALKEY_URL
               value: redis://valkey.tdk-dev-data:6379
             - name: TENANT_FLIPT_MANAGEMENT_URL

@@ -20,12 +20,9 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/flipt"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/fliptmanagement"
-	"github.com/tadoku/tadoku/services/tadoku-api/infra/keto"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/valkey"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testflipt"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/testketo"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testvalkey"
 	valkeygo "github.com/valkey-io/valkey-go"
@@ -38,15 +35,6 @@ func TestTenantLifecycle(t *testing.T) {
 	}
 	t.Cleanup(func() {
 		if err := db.Close(); err != nil {
-			t.Error(err)
-		}
-	})
-	ketoFixture, err := testketo.New(t.Context())
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() {
-		if err := ketoFixture.Close(); err != nil {
 			t.Error(err)
 		}
 	})
@@ -65,18 +53,14 @@ func TestTenantLifecycle(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	ketoClient := keto.NewClient(ketoFixture.ReadURL(), ketoFixture.WriteURL(),
-		keto.WithHTTPClient(&http.Client{Timeout: 2 * time.Second}))
 	lifecycle := lifecyclePool(t, db)
 	application := tenantlifecycle.NewApplication(
 		lifecycle,
-		permissions.NewTenantManager(ketoClient),
 		leaderboard.NewCache(client, time.Second),
 		fliptmanagement.NewClient(fliptmanagement.Config{URL: fliptFixture.URL(), Targets: targets}),
 	)
 	key := lifecycleKey(t, "removed")
 	other := lifecycleKey(t, "preserved")
-	reader := uuid.New()
 	features, err := fliptmanagement.ParseFeatures(strings.NewReader(`version: "1.6"
 namespace:
   key: default
@@ -95,7 +79,7 @@ segments: []
 	seedProductionPages(t, db)
 	productionBeforeProvision := ownedRows(t, db, tenant.Production().String())
 	for _, target := range []tenant.TestKey{key, key, other} {
-		if err := application.Provision(t.Context(), target, []uuid.UUID{reader}, features); err != nil {
+		if err := application.Provision(t.Context(), target, features); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -148,12 +132,6 @@ segments: []
 	if err := db.Pool.QueryRow(t.Context(), "select count(*) from tenants where key = $1", key.String()).
 		Scan(&registry); err != nil || registry != 1 {
 		t.Fatalf("idempotent tenant registry: rows=%d error=%v", registry, err)
-	}
-	for _, relation := range []string{"testers", "access"} {
-		allowed, err := ketoClient.CheckPermission(t.Context(), "app", key.String(), relation, keto.Subject{ID: reader.String()})
-		if err != nil || !allowed {
-			t.Fatalf("provisioned %s: allowed=%t error=%v", relation, allowed, err)
-		}
 	}
 	if err := application.SetOverride(t.Context(), key, jobqueue.WorkerComponent); err != nil {
 		t.Fatal(err)
@@ -240,20 +218,12 @@ segments: []
 			t.Errorf("preserved cache key changed: value=%q error=%v", value, err)
 		}
 	}
-	allowed, err := ketoClient.CheckPermission(t.Context(), "app", other.String(), "access", keto.Subject{ID: reader.String()})
-	if err != nil || !allowed {
-		t.Errorf("other Keto access changed: allowed=%t error=%v", allowed, err)
-	}
-	allowed, err = ketoClient.CheckPermission(t.Context(), "app", key.String(), "access", keto.Subject{ID: reader.String()})
-	if err != nil || allowed {
-		t.Errorf("removed Keto access remains: allowed=%t error=%v", allowed, err)
-	}
 	if fliptFixture.Exists(key.Key()) || !fliptFixture.Exists(other.Key()) || !fliptFixture.Exists(tenant.Production()) {
 		t.Error("Flipt teardown failed to remove only its tenant namespace")
 	}
 
 	orphan := lifecycleKey(t, "orphan")
-	if err := application.Provision(t.Context(), orphan, []uuid.UUID{reader}, features); err != nil {
+	if err := application.Provision(t.Context(), orphan, features); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := db.Pool.Exec(t.Context(), "delete from tenants where key = $1", orphan.String()); err != nil {
@@ -266,7 +236,7 @@ segments: []
 		t.Fatal("missing registry row prevented provider cleanup")
 	}
 
-	if err := application.Provision(t.Context(), tenant.TestKey{}, nil, features); err == nil {
+	if err := application.Provision(t.Context(), tenant.TestKey{}, features); err == nil {
 		t.Fatal("provision accepted zero test key")
 	}
 	if err := application.Teardown(t.Context(), tenant.TestKey{}); err == nil {
@@ -276,10 +246,10 @@ segments: []
 		t.Fatal("override accepted zero test key")
 	}
 	requestsBefore := fliptFixture.RequestCount()
-	runtimeApplication := tenantlifecycle.NewApplication(db.AppPool, permissions.NewTenantManager(ketoClient),
+	runtimeApplication := tenantlifecycle.NewApplication(db.AppPool,
 		leaderboard.NewCache(client, time.Second),
 		fliptmanagement.NewClient(fliptmanagement.Config{URL: fliptFixture.URL(), Targets: targets}))
-	if err := runtimeApplication.Provision(t.Context(), other, []uuid.UUID{reader}, features); err == nil {
+	if err := runtimeApplication.Provision(t.Context(), other, features); err == nil {
 		t.Fatal("runtime credentials were accepted for provisioning")
 	}
 	if err := runtimeApplication.Teardown(t.Context(), other); err == nil {
@@ -294,7 +264,7 @@ segments: []
 	if fliptFixture.RequestCount() != requestsBefore {
 		t.Fatal("runtime credentials reached the provider")
 	}
-	ownerApplication := tenantlifecycle.NewApplication(db.Pool, permissions.NewTenantManager(ketoClient),
+	ownerApplication := tenantlifecycle.NewApplication(db.Pool,
 		leaderboard.NewCache(client, time.Second),
 		fliptmanagement.NewClient(fliptmanagement.Config{URL: fliptFixture.URL(), Targets: targets}))
 	if err := ownerApplication.Teardown(t.Context(), other); err != nil {
@@ -309,7 +279,7 @@ segments: []
 	if _, err := db.Pool.Exec(t.Context(), "insert into tenants (key, kind) values ($1, 'production')", corrupt.String()); err != nil {
 		t.Fatal(err)
 	}
-	if err := application.Provision(t.Context(), corrupt, nil, features); err == nil {
+	if err := application.Provision(t.Context(), corrupt, features); err == nil {
 		t.Fatal("provision accepted production-kind row")
 	}
 	if err := application.Teardown(t.Context(), corrupt); err == nil {

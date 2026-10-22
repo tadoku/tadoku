@@ -22,7 +22,7 @@ func TestUpdateLanguage(t *testing.T) {
 		{description: []string{"guest"}, want: http.StatusUnauthorized},
 		{description: []string{"non", "admin"}, want: http.StatusForbidden},
 		{description: []string{"test", "tenant", "admin"}, want: http.StatusForbidden},
-		{description: []string{"test", "tenant", "inherited", "admin"}, want: http.StatusForbidden},
+		{description: []string{"test", "tenant", "production", "admin", "not", "inherited"}, want: http.StatusForbidden},
 		{description: []string{"missing", "code"}, want: http.StatusNotFound},
 		{description: []string{"case", "sensitive", "code"}, want: http.StatusNotFound},
 	}

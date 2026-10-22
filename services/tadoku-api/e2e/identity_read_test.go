@@ -56,7 +56,11 @@ func seedIdentityReads(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := api.keto.Reset(t.Context(), "testdata/ProfileUsersList/relationships.json"); err != nil {
+	if err := resetRelationships(
+		t.Context(),
+		api.db.Pool,
+		"testdata/ProfileUsersList/relationships.json",
+	); err != nil {
 		t.Fatal(err)
 	}
 }

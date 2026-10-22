@@ -11,7 +11,11 @@ func TestFliptTenantIsolation(t *testing.T) {
 	if err := api.db.Reset(t.Context(), "testdata/FliptTenantIsolation/setup.sql"); err != nil {
 		t.Fatal(err)
 	}
-	if err := api.keto.Reset(t.Context(), "testdata/FliptTenantIsolation/relationships.json"); err != nil {
+	if err := resetRelationships(
+		t.Context(),
+		api.db.Pool,
+		"testdata/FliptTenantIsolation/relationships.json",
+	); err != nil {
 		t.Fatal(err)
 	}
 

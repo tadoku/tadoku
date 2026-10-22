@@ -43,7 +43,6 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testflipt"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/testketo"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
 	transport "github.com/tadoku/tadoku/services/tadoku-api/transport/http"
 	valkeygo "github.com/valkey-io/valkey-go"
@@ -52,7 +51,6 @@ import (
 var api *suite
 var scoringEnabledHandler http.Handler
 var authenticationJWKS *httptest.Server
-var keto *testketo.Fixture
 var flipt *testflipt.Fixture
 var leaderboardValkey *leaderboardValkeyFixture
 
@@ -93,13 +91,6 @@ func runTests(m *testing.M) (code int) {
 	defer cancel()
 	flipt = testflipt.New()
 	defer flipt.Close()
-	keto, err = testketo.New(ctx)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return 1
-	}
-	defer func() { cleanupErr = errors.Join(cleanupErr, keto.Close()) }()
-
 	leaderboardValkey, err = newLeaderboardValkeyFixture(ctx)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -107,7 +98,7 @@ func runTests(m *testing.M) (code int) {
 	}
 	defer func() { cleanupErr = errors.Join(cleanupErr, leaderboardValkey.close()) }()
 
-	api, err = newTestAPI(ctx, keto)
+	api, err = newTestAPI(ctx)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
@@ -133,14 +124,13 @@ func runTests(m *testing.M) (code int) {
 
 type suite struct {
 	db          *testpostgres.Database
-	keto        *testketo.Fixture
 	flipt       *testflipt.Fixture
 	handler     *transport.Router
 	profile     *featureprofile.Service
 	leaderboard *leaderboard.Service
 }
 
-func newTestAPI(ctx context.Context, ketoFixture *testketo.Fixture) (_ *suite, err error) {
+func newTestAPI(ctx context.Context) (_ *suite, err error) {
 	db, err := testpostgres.New(ctx)
 	if err != nil {
 		return nil, err
@@ -171,7 +161,6 @@ func newTestAPI(ctx context.Context, ketoFixture *testketo.Fixture) (_ *suite, e
 
 	api := &suite{
 		db:          db,
-		keto:        ketoFixture,
 		flipt:       flipt,
 		handler:     handler,
 		profile:     profileService,
@@ -377,10 +366,10 @@ func (s *suite) reset(t *testing.T, caseDir string) {
 	t.Helper()
 	requireKnownCaseFiles(t, caseDir)
 
-	var postgresSeeds, ketoSeeds []string
+	var postgresSeeds, relationshipSeeds []string
 	if caseDir != "" {
 		postgresSeeds = fixtureSeeds(caseDir, "setup.sql")
-		ketoSeeds = fixtureSeeds(caseDir, "relationships.json")
+		relationshipSeeds = fixtureSeeds(caseDir, "relationships.json")
 	}
 	postgresSeeds = append(postgresSeeds, "testdata/accounts.sql")
 	if caseDir != "" {
@@ -390,6 +379,9 @@ func (s *suite) reset(t *testing.T, caseDir string) {
 		if err := s.db.Reset(t.Context(), postgresSeeds...); err != nil {
 			t.Fatal(err)
 		}
+		if err := resetRelationships(t.Context(), s.db.Pool, relationshipSeeds...); err != nil {
+			t.Fatal(err)
+		}
 	}
 	if leaderboardValkey != nil {
 		if err := leaderboardValkey.reset(t.Context()); err != nil {
@@ -397,11 +389,6 @@ func (s *suite) reset(t *testing.T, caseDir string) {
 		}
 	}
 	s.resetProfileService()
-	if s.keto != nil {
-		if err := s.keto.Reset(t.Context(), ketoSeeds...); err != nil {
-			t.Fatal(err)
-		}
-	}
 	if s.flipt != nil {
 		s.flipt.Reset()
 	}

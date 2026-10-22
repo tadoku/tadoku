@@ -72,6 +72,7 @@ func (r *runner) run(ctx context.Context) {
 	rotation := 0
 	unsupported := int64(0)
 	refreshMetrics := func() {
+		r.failExhausted(queueCtx)
 		count, err := r.updateMetrics(queueCtx)
 		if err != nil {
 			r.logger.WarnContext(queueCtx, "inspect job backlog", "error", err)
@@ -181,6 +182,22 @@ func totalActive(active map[jobs.Type]int) int {
 	return total
 }
 
+func (r *runner) failExhausted(ctx context.Context) {
+	for _, entry := range r.handlers.ordered {
+		spec := entry.spec
+		failed, err := r.queue.FailExhausted(ctx, spec.typeName, spec.maxAttempts)
+		if err != nil {
+			r.logger.WarnContext(ctx, "fail exhausted jobs", "type", spec.typeName, "error", err)
+			continue
+		}
+
+		for _, job := range failed {
+			kind := tenant.MetricKind(tenant.WithKey(ctx, job.Tenant))
+			r.metrics.terminal.WithLabelValues(string(spec.typeName), job.Code, kind).Inc()
+		}
+	}
+}
+
 func (r *runner) updateMetrics(ctx context.Context) (int64, error) {
 	known := make([]jobs.Type, 0, len(r.handlers.ordered))
 	for _, entry := range r.handlers.ordered {
@@ -262,14 +279,16 @@ func (r *runner) process(ctx context.Context, task jobqueue.ClaimedJob, spec han
 	transitionCtx, stop := context.WithTimeout(tenant.WithKey(context.Background(), task.Tenant), 5*time.Second)
 	defer stop()
 
-	var held bool
+	var held, terminal bool
 	var err error
 	if handlerErr == nil {
 		held, err = r.queue.Complete(transitionCtx, task)
 	} else {
 		code := failureCode(handlerErr)
 		var permanent *permanentError
-		if errors.As(handlerErr, &permanent) {
+		isPermanent := errors.As(handlerErr, &permanent)
+		terminal = isPermanent || task.Attempts >= spec.maxAttempts
+		if isPermanent {
 			held, err = r.queue.Fail(transitionCtx, task, code)
 		} else {
 			held, err = r.queue.Retry(transitionCtx, task, retryAt(task.Attempts), code, spec.maxAttempts)
@@ -282,6 +301,9 @@ func (r *runner) process(ctx context.Context, task jobqueue.ClaimedJob, spec han
 	}
 	if !held {
 		return fmt.Errorf("job %d: lease lost before transition", task.ID)
+	}
+	if terminal {
+		r.metrics.terminal.WithLabelValues(string(task.Type), failureCode(handlerErr), tenant.MetricKind(ctx)).Inc()
 	}
 
 	if handlerErr != nil {

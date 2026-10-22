@@ -4,7 +4,7 @@ values (sqlc.arg('task_type')::text, sqlc.arg('payload')::jsonb,
   sqlc.arg('now')::timestamptz, sqlc.arg('now')::timestamptz)
 returning id;
 
--- name: Claim :many
+-- name: FailExhausted :many
 with exhausted as (
   select id from jobs
   where task_type = sqlc.arg('task_type')::text
@@ -19,15 +19,17 @@ with exhausted as (
   order by next_attempt_at, id
   for update skip locked
   limit 100
-), failed as (
-  update jobs as task
-  set state = 'failed', claim_token = null, lease_expires_at = null,
-    failed_at = sqlc.arg('now')::timestamptz,
-    last_error = case when task.state = 'running' then 'lease_expired' else 'attempts_exhausted' end
-  from exhausted
-  where task.id = exhausted.id
-  returning task.id
-), picked as (
+)
+update jobs as task
+set state = 'failed', claim_token = null, lease_expires_at = null,
+  failed_at = sqlc.arg('now')::timestamptz,
+  last_error = case when task.state = 'running' then 'lease_expired' else 'attempts_exhausted' end
+from exhausted
+where task.id = exhausted.id
+returning task.tenant, task.last_error;
+
+-- name: Claim :many
+with picked as (
   select id, (state = 'running') as reclaimed from jobs
   where task_type = sqlc.arg('task_type')::text
     and (sqlc.narg('component')::text is null or not exists (

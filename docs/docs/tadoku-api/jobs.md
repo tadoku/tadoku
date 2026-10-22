@@ -283,8 +283,13 @@ the error text.
 | Payload fails decoding or `Validate` | `failed`, without retry or handler call | `invalid_payload` |
 | Handler exceeds `policy.Timeout` | `pending` for retry, or `failed` after the last attempt | `deadline_exceeded` |
 | Handler returns another error, including cancellation at shutdown | `pending` for retry, or `failed` after the last attempt | `handler_error` |
-| Lease expires during the last attempt | `failed` at the next claim | `lease_expired` |
-| A `pending` job already at a lowered attempt limit | `failed` at the next claim | `attempts_exhausted` |
+| Lease expires during the last attempt | `failed` by the next exhaustion pass | `lease_expired` |
+| A `pending` job already at a lowered attempt limit | `failed` by the next exhaustion pass | `attempts_exhausted` |
+
+Claims never pick a job that used all its attempts. The worker's exhaustion
+pass, at startup and every fifteen seconds with the backlog gauges, fails up to
+100 such jobs per registered type. Each transition to `failed`, from a handler
+or from this pass, increments `tadoku_worker_terminal_failures_total` once.
 
 After attempt _n_ fails, the retry waits a random delay between half and all of
 2<sup>_n_−1</sup> seconds, capped at one minute: 0.5–1 seconds after the first

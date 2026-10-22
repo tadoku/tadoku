@@ -2,9 +2,18 @@ package worker
 
 import "github.com/prometheus/client_golang/prometheus"
 
+var terminalCodes = []string{
+	"invalid_payload",
+	"deadline_exceeded",
+	"handler_error",
+	"lease_expired",
+	"attempts_exhausted",
+}
+
 type Metrics struct {
 	inFlight                *prometheus.GaugeVec
 	attempts                *prometheus.CounterVec
+	terminal                *prometheus.CounterVec
 	duration                *prometheus.HistogramVec
 	pending                 *prometheus.GaugeVec
 	failed                  *prometheus.GaugeVec
@@ -25,6 +34,10 @@ func NewMetrics(registry *prometheus.Registry) *Metrics {
 		attempts: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Name: "tadoku_worker_failed_attempts_total",
 			Help: "Failed handler attempts by predefined type and failure code.",
+		}, []string{"type", "code", "tenant_kind"}),
+		terminal: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name: "tadoku_worker_terminal_failures_total",
+			Help: "Jobs moved to failed by predefined type, failure code and tenant kind.",
 		}, []string{"type", "code", "tenant_kind"}),
 		duration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Name:    "tadoku_worker_handler_duration_seconds",
@@ -67,6 +80,7 @@ func NewMetrics(registry *prometheus.Registry) *Metrics {
 	registry.MustRegister(
 		metrics.inFlight,
 		metrics.attempts,
+		metrics.terminal,
 		metrics.duration,
 		metrics.pending,
 		metrics.failed,
@@ -88,6 +102,9 @@ func (m *Metrics) initialize(handlers *registry) {
 		m.inFlight.WithLabelValues(string(spec.typeName)).Set(0)
 		for _, kind := range []string{"production", "test", "unknown"} {
 			m.duration.WithLabelValues(string(spec.typeName), kind)
+			for _, code := range terminalCodes {
+				m.terminal.WithLabelValues(string(spec.typeName), code, kind)
+			}
 		}
 		m.pending.WithLabelValues(string(spec.typeName)).Set(0)
 		m.failed.WithLabelValues(string(spec.typeName)).Set(0)

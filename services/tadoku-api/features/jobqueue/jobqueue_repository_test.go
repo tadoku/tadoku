@@ -203,6 +203,12 @@ func TestClaimLimitsKnownTypesAndFencesExpiredLeases(t *testing.T) {
 		if claims, err := repo.Claim(tenantCtx, jobs.LeaderboardInvalidateContestV1, 2, time.Minute, 2); err != nil || len(claims) != 1 || claims[0].ID != second.ID || claims[0].Attempts != 2 {
 			t.Errorf("exhausted crash claims = %v, %v; want only second task", claims, err)
 		}
+		exhausted, err := repo.FailExhausted(tenantCtx, jobs.LeaderboardInvalidateContestV1, 2)
+		if err != nil ||
+			len(exhausted) != 1 ||
+			exhausted[0] != (ExhaustedJob{Tenant: tenant.Production(), Code: "lease_expired"}) {
+			t.Errorf("exhausted crash failures = %+v, %v; want first task lease_expired", exhausted, err)
+		}
 		if ok, err := repo.Complete(tenantCtx, third); err != nil || ok {
 			t.Errorf("other expired claim completed = %v, %v", ok, err)
 		}
@@ -247,6 +253,12 @@ func TestReducedAttemptLimitFailsDuePendingTask(t *testing.T) {
 		claims, err = repo.Claim(tenantCtx, jobs.LeaderboardInvalidateOfficialV1, 1, time.Minute, 1)
 		if err != nil || len(claims) != 0 {
 			t.Errorf("reduced limit claim = %v, %v", claims, err)
+		}
+		exhausted, err := repo.FailExhausted(tenantCtx, jobs.LeaderboardInvalidateOfficialV1, 1)
+		if err != nil ||
+			len(exhausted) != 1 ||
+			exhausted[0] != (ExhaustedJob{Tenant: tenant.Production(), Code: "attempts_exhausted"}) {
+			t.Errorf("reduced limit failures = %+v, %v", exhausted, err)
 		}
 	})
 

@@ -80,9 +80,10 @@ types without an unbounded type label.
 | --- | --- | --- |
 | `tadoku_worker_in_flight` | `type` | Jobs executing in this process. |
 | `tadoku_worker_failed_attempts_total` | `type`, `code`, `tenant_kind` | Failed handler attempts for the persisted job tenant. |
+| `tadoku_worker_terminal_failures_total` | `type`, `code`, `tenant_kind` | Jobs that became `failed`, counted once at the transition. Retries that later succeed never count. Every registered type, failure code and tenant kind starts at zero. |
 | `tadoku_worker_handler_duration_seconds` | `type`, `tenant_kind` | Histogram of handler execution duration before the job transition. |
 | `tadoku_worker_pending_jobs` | `type` | Pending jobs for each registered type. |
-| `tadoku_worker_failed_jobs` | `type` | Terminally failed jobs for each registered type. |
+| `tadoku_worker_failed_jobs` | `type` | Retained `failed` jobs for each registered type. Test-tenant teardown and worker overrides lower it, so alert on `tadoku_worker_terminal_failures_total` instead. |
 | `tadoku_worker_oldest_due_age_seconds` | `type` | Age of the oldest due or expired job. |
 | `tadoku_worker_unsupported_pending_jobs` | None | Pending jobs with an unsupported type. |
 | `tadoku_worker_unsupported_running_jobs` | None | Running jobs with an unsupported type. |

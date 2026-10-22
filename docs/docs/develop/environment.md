@@ -233,8 +233,8 @@ dev down --owner alice
 
 `dev down` stops the local loop and removes only the current owner and branch's
 overlays. It waits for their pods to stop, clears worker overrides, then runs
-`tenant-teardown`: Keto object tuples, tenant Valkey keys, the test Flipt
-namespace, and finally the PostgreSQL tenant row with its cascading data.
+`tenant-teardown`: tenant Valkey keys, the test Flipt namespace, and finally
+the PostgreSQL tenant row with its cascading data.
 Disposable Jobs and the lifecycle marker are removed after successful teardown.
 It does not stop the Argo CD base. Ctrl-C alone leaves overlays running.
 

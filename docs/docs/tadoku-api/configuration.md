@@ -1,6 +1,6 @@
 ---
 title: Runtime configuration
-description: Tadoku API environment variables, startup and shutdown behavior, authentication wiring, permissions, the Keto client `tadoku-tenant` uses, metrics and production credentials.
+description: Tadoku API environment variables, startup and shutdown behavior, authentication wiring, permissions, the unused raw Keto client, metrics and production credentials.
 sidebar_position: 9
 ---
 
@@ -191,10 +191,8 @@ responses. In addition:
 
 ## Raw Keto relationship primitive
 
-- Tadoku API constructs no Keto client. `services/tadoku-api/infra/keto` serves
-  `tadoku-tenant`, which passes a client to `permissions.TenantManager` for
-  test-tenant relationships; see
-  [Tenant lifecycle command](./tenant-lifecycle.md).
+- Neither Tadoku API nor `tadoku-tenant` constructs a Keto client;
+  `services/tadoku-api/infra/keto` has no caller outside its own tests.
 - `keto.NewClient(readURL, writeURL, keto.WithHTTPClient(httpClient))` applies
   options to both APIs; the caller owns the HTTP client and transport. Without
   options, the constructor keeps the SDK defaults.

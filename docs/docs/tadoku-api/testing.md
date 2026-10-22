@@ -80,11 +80,9 @@ Never point tests at shared development or production services.
   print both workload and negative-control results.
 - **Permissions:** the API's tests and E2Es store permission relationships in
   the disposable PostgreSQL database and start no Keto process.
-- **Keto:** only `tadoku-tenant` relationship tests, in
-  `services/tadoku-api/app/tenantlifecycle/` and the `permissions.TenantManager`
-  tests in `services/tadoku-api/internal/permissions/`, start a pinned,
-  official Linux x86-64 Keto v25.4.0 SQLite-enabled executable under Bazel
-  (`services/tadoku-api/internal/testketo/`). Each helper owns an in-memory,
+- **Keto:** no test outside the fixture's own test starts the pinned, official
+  Linux x86-64 Keto v25.4.0 SQLite-enabled executable under Bazel
+  (`services/tadoku-api/internal/testketo/`). The helper owns an in-memory,
   loopback-only process using `infra/dev/ory/namespaces.keto.ts` and never
   accepts an external target.
 - **Identity accounts:** ordinary HTTP golden and journey resets seed native
@@ -140,7 +138,7 @@ Never point tests at shared development or production services.
 ## Tenancy guard and isolation
 
 `services/tadoku-api/app/tenantlifecycle/` tests the owner command's orchestration
-against disposable PostgreSQL, Valkey and the pinned Keto process. Its complete
+against disposable PostgreSQL and Valkey. Its complete
 tenant-column inventory includes registry overrides; every ordinary owned table
 has a nonempty teardown fixture. Canonical and another test tenant's complete
 row snapshots remain unchanged. The Flipt HTTP fixture records resource

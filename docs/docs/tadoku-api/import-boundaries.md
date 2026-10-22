@@ -83,7 +83,7 @@ graph. Each allowed package covers only its own targets, not subpackages, and
 - Only `internal/permissions`, startup and E2E may depend directly on the raw
   Keto client (`services/tadoku-api/infra/keto`). The exact
   `app/tenantlifecycle:tenantlifecycle_test` target may also construct its owned
-  provider fixture. Lifecycle application code uses `permissions.TenantManager`.
+  provider fixture.
 
 This keeps other packages on the shared permission checker. Keep ban and
 administrator permit lookups in `features/authz`, which owns the `app`

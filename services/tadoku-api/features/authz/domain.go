@@ -25,6 +25,12 @@ type RoleUpdateParameters struct {
 	Reason string
 }
 
+// RoleUpdate is a validated role change for an existing user; build it with Service.PrepareRoleUpdate.
+type RoleUpdate struct {
+	userID uuid.UUID
+	banned bool
+}
+
 func (p RoleUpdateParameters) Validate() error {
 	if p.UserID == uuid.Nil {
 		return errx.NewInvalidInputError("user id is required")

@@ -238,7 +238,6 @@ func newTestRouterWithLeaderboardService(
 ) (*transport.Router, *featureprofile.Service, error) {
 	endpoints := routerEndpoints{
 		permissions:    pool,
-		grants:         pool,
 		jwks:           authenticationJWKS.URL,
 		identityValkey: leaderboardValkey.client,
 	}
@@ -251,7 +250,7 @@ func newTestRouterWithLeaderboardService(
 		return nil, nil, err
 	}
 	permissionChecker := permissions.NewChecker(featureauthz.NewRepository(endpoints.permissions), permissionModel)
-	relationships := permissions.NewRelationships(featureauthz.NewRepository(endpoints.grants), permissionModel)
+	relationships := permissions.NewRelationships(featureauthz.NewRepository(pool), permissionModel)
 	roles := featureauthz.NewRoles(permissionChecker, relationships)
 	identities := identity.NewReader(pool)
 

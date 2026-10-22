@@ -46,28 +46,33 @@ func (s *Service) CurrentUserRole(ctx context.Context) (Role, error) {
 	return RoleUser, nil
 }
 
-func (s *Service) UpdateRole(ctx context.Context, parameters RoleUpdateParameters) error {
+// PrepareRoleUpdate reads the identity provider, so call it before opening the transaction that runs UpdateRole.
+func (s *Service) PrepareRoleUpdate(ctx context.Context, parameters RoleUpdateParameters) (RoleUpdate, error) {
 	if err := parameters.Validate(); err != nil {
-		return err
+		return RoleUpdate{}, err
 	}
 
 	exists, err := s.users.UserExists(ctx, parameters.UserID)
 	if err != nil {
-		return errx.NewUnavailableError("check whether target user exists", err)
+		return RoleUpdate{}, errx.NewUnavailableError("check whether target user exists", err)
 	}
 	if !exists {
-		return ErrUserNotFound
+		return RoleUpdate{}, ErrUserNotFound
 	}
 
-	roles, err := s.roles.UserRoles(ctx, []uuid.UUID{parameters.UserID})
+	return RoleUpdate{userID: parameters.UserID, banned: parameters.Role == RoleBanned}, nil
+}
+
+func (s *Service) UpdateRole(ctx context.Context, update RoleUpdate) error {
+	roles, err := s.roles.UserRoles(ctx, []uuid.UUID{update.userID})
 	if err != nil {
 		return errx.NewUnavailableError("fetch target claims", err)
 	}
-	if roles[parameters.UserID] == RoleAdmin {
+	if roles[update.userID] == RoleAdmin {
 		return ErrAdminRoleProtected
 	}
 
-	if err := s.roles.SetBanned(ctx, parameters.UserID, parameters.Role == RoleBanned); err != nil {
+	if err := s.roles.SetBanned(ctx, update.userID, update.banned); err != nil {
 		return errx.NewUnavailableError("update banned role", err)
 	}
 

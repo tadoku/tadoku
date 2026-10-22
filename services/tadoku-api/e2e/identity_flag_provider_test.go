@@ -219,8 +219,12 @@ func TestIdentityFliptProviderSelection(t *testing.T) {
 	warm := legacy.router(t, withFlagProvider(newSnapshotProvider(t, flags.server.URL, 2*time.Second, nil)))
 
 	view := identityView(t, identityRequest(t, warm, "tadoku/prod", "GET", "/identity/session", "", recordedKratosCookie, nil))
-	if view.AccountApp != "v1" || view.Account == nil || view.Account.ID != legacy.identity {
-		t.Error("canonical tenant without an identity-v2 flag no longer uses v1")
+	if view.AccountApp != "v2" || view.Account != nil {
+		t.Error("canonical tenant without an identity-v2 flag accepted a shared Kratos session")
+	}
+	canonical := nativeLogin(t, warm, "tadoku/prod") + "; " + recordedKratosCookie
+	if app, signedIn := sessionAccountApp(t, warm, "tadoku/prod", canonical); app != "v2" || !signedIn {
+		t.Errorf("canonical tenant without an identity-v2 flag: app=%q signed-in=%t, want native v2", app, signedIn)
 	}
 	requireIdentityUnavailable(t, "branch without identity-v2",
 		identityRequest(t, warm, identityBranchB, "GET", "/identity/session", "", recordedKratosCookie, nil))
@@ -278,7 +282,7 @@ func TestIdentityFliptProviderSelection(t *testing.T) {
 	if _, signedIn := sessionAccountApp(t, warm, identityBranchA, native); signedIn {
 		t.Error("native logout through the recovered provider left the session valid")
 	}
-	if calls := legacy.calls.Load(); calls != 1 {
-		t.Errorf("shared provider calls=%d, want only the canonical v1 lookup", calls)
+	if calls := legacy.calls.Load(); calls != 0 {
+		t.Errorf("shared provider calls=%d, want none", calls)
 	}
 }

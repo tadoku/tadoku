@@ -62,8 +62,8 @@ frontends cannot read sessions. Do not create such branches or add `deploy`.
 1. Before source delivery, capture these read-only preflight results:
    - Resolve the actual production flag repository's `main` SHA from the Flipt
      Git configuration. Inspect its decision definitions: canonical production
-     must have no enabled `identity-v2` decision. Record absence explicitly;
-     missing flags, errors and timeouts use the unchanged false/v1 fallback.
+     must decide `identity-v2` explicitly `false`. A missing canonical flag
+     selects v2, and errors and timeouts make selection unavailable.
      Git evidence alone does not prove the running evaluator's state.
    - Require zero production branch Deployments, no preview routes beyond the
      catchall, and zero open pull requests labelled `deploy`. Inventory the API,

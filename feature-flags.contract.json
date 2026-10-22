@@ -4,7 +4,7 @@
       "safeDefault": false
     },
     "identity-v2": {
-      "safeDefault": false
+      "safeDefault": true
     }
   }
 }

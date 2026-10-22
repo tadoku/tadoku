@@ -12,7 +12,6 @@ type routerEndpoints struct {
 	jwks           string
 	production     *bool
 	permissions    *pgxpool.Pool
-	grants         *pgxpool.Pool
 	identityValkey valkeygo.Client
 }
 
@@ -20,14 +19,7 @@ func withIdentityValkey(client valkeygo.Client) routerOption {
 	return func(endpoints *routerEndpoints) { endpoints.identityValkey = client }
 }
 
-// withPermissionsPool serves permission checks, role reads and grants from pool instead of the router's database pool.
+// withPermissionsPool serves permission checks from pool instead of the router's database pool.
 func withPermissionsPool(pool *pgxpool.Pool) routerOption {
-	return func(endpoints *routerEndpoints) {
-		endpoints.permissions = pool
-		endpoints.grants = pool
-	}
-}
-
-func withGrantsPool(pool *pgxpool.Pool) routerOption {
-	return func(endpoints *routerEndpoints) { endpoints.grants = pool }
+	return func(endpoints *routerEndpoints) { endpoints.permissions = pool }
 }

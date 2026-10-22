@@ -1,12 +1,8 @@
 package e2e_test
 
 import (
-	"io"
-	"log/slog"
 	"net/http"
 	"testing"
-
-	transport "github.com/tadoku/tadoku/services/tadoku-api/transport/http"
 )
 
 func TestAuthzRoleUpdate(t *testing.T) {
@@ -39,41 +35,4 @@ func TestAuthzRoleUpdate(t *testing.T) {
 			)
 		})
 	}
-}
-
-func auditUnavailableRoleUpdateHandler(t *testing.T) *transport.Router {
-	t.Helper()
-
-	closedPool := openClosedPool(t, api.db.AppPool.Config().ConnString())
-	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	router, _, err := newTestRouterWithLogger(
-		t.Context(),
-		api.db.AppPool,
-		closedPool,
-		logger,
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	return router
-}
-
-func grantsFailureRoleUpdateHandler(t *testing.T) *transport.Router {
-	t.Helper()
-
-	closedPool := openClosedPool(t, api.db.AppPool.Config().ConnString())
-	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	router, _, err := newTestRouterWithLogger(
-		t.Context(),
-		api.db.AppPool,
-		api.db.AppPool,
-		logger,
-		withGrantsPool(closedPool),
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	return router
 }

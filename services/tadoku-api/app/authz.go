@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/audit"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/authz"
+	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/callbackauth"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
@@ -31,12 +32,16 @@ func (a *Application) CurrentUserRole(ctx context.Context) (Role, error) {
 
 type RoleUpdateParameters = authz.RoleUpdateParameters
 
-func (a *Application) UpdateRole(ctx context.Context, parameters RoleUpdateParameters) (err error) {
+func (a *Application) UpdateRole(ctx context.Context, parameters RoleUpdateParameters) error {
 	if err := a.roles.RequireAdmin(ctx); err != nil {
 		return err
 	}
 
 	actorID, err := identity.RequireActorID(ctx)
+	if err != nil {
+		return err
+	}
+	update, err := a.authorization.PrepareRoleUpdate(ctx, parameters)
 	if err != nil {
 		return err
 	}
@@ -54,7 +59,11 @@ func (a *Application) UpdateRole(ctx context.Context, parameters RoleUpdateParam
 		},
 		Description: parameters.Reason,
 	}
-	defer func() { a.audit.RecordOutcome(ctx, event, err) }()
 
-	return a.authorization.UpdateRole(ctx, parameters)
+	return postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) error {
+		if err := a.authorization.UpdateRole(ctx, update); err != nil {
+			return err
+		}
+		return a.audit.Record(ctx, event)
+	})
 }

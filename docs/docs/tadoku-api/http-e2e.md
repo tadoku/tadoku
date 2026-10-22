@@ -197,8 +197,8 @@ TADOKU_GOLDEN_SOURCE_ROOT="$PWD/services/tadoku-api/e2e/testdata" \
 ## Authentication in E2Es
 
 - Endpoint E2Es run through the production JWT and ban middleware and the real
-  PostgreSQL-backed permission checker on the restricted `AppPool`, with no
-  Keto process. Never substitute passthrough middleware, inject an identity
+  PostgreSQL-backed permission checker on the restricted `AppPool`. Never
+  substitute passthrough middleware, inject an identity
   or administrator claim, or install an always-allow permission checker.
 - Put synthetic signed tokens in `request.http` and required role
   relationships in the case's `relationships.json`. Administrator scenarios

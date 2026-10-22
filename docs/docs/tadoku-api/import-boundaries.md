@@ -35,12 +35,13 @@ boundaries described in [Code ownership](./index.md#code-ownership).
   ordinary feature's business data.
 - A feature's generated sqlc package is visible only to that feature.
   The `generated/sqlc/tokens` package belongs only to `features/authz/tokens`.
-- The permission engine, `services/tadoku-api/internal/permissions`, reads and
-  writes relationships only through the `Tuples` port it declares.
-  `services/tadoku-api/features/authz` implements it with its `Repository` over
-  `permission_relationships` and the `generated/sqlc/authz` queries, which are
-  visible only to that feature. A composition root passes the repository to
-  `permissions.NewChecker` and `permissions.NewRelationships`.
+- The permission engine, `services/tadoku-api/internal/permissions`, imports
+  only `internal/` packages and reads and writes relationships only through the
+  `Tuples` port it declares. `services/tadoku-api/features/authz` implements it
+  with its `Repository` over `permission_relationships` and the
+  `generated/sqlc/authz` queries, which are visible only to that feature. A
+  composition root passes the repository to `permissions.NewChecker` and
+  `permissions.NewRelationships`.
 - `services/tadoku-api/infra/flipt` owns the shared tenant-to-provider target
   mapping. Its ordinary consumers use `:infrastructure_consumers`; the exact test-only
   `internal/testflipt` fixture package may also depend on it so HTTP evaluation
@@ -81,10 +82,6 @@ graph. Each allowed package covers only its own targets, not subpackages, and
   The worker test needs a raw client because `leaderboard.NewCache` takes
   one; it seeds and inspects cache keys and simulates a blocked or unavailable
   Valkey. The `app/worker` library itself may not.
-- Only `internal/permissions`, startup and E2E may depend directly on the raw
-  Keto client (`services/tadoku-api/infra/keto`). The exact
-  `app/tenantlifecycle:tenantlifecycle_test` target may also construct its owned
-  provider fixture.
 
 This keeps other packages on the shared permission checker. Keep ban and
 administrator permit lookups in `features/authz`, which owns the `app`
@@ -104,7 +101,7 @@ handwritten, non-test file under `features/` by its file name:
 - `*_repository.go` may not import provider clients: `valkey-go`, the Ory and
   Flipt SDKs, the service-token client (`services/common/client/s2s/`), or any
   package under `services/tadoku-api/infra/` other than `postgres`, which
-  includes the Keto, Flipt and Valkey clients.
+  includes the Flipt and Valkey clients.
 - Every other feature file, including the service, may not import `valkey-go`.
 
 The rules follow [Repositories and stores](./conventions.md#repositories-and-stores).

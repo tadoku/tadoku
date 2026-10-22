@@ -1,6 +1,6 @@
 ---
 title: Runtime configuration
-description: Tadoku API environment variables, startup and shutdown behavior, authentication wiring, permissions, the unused raw Keto client, metrics and production credentials.
+description: Tadoku API environment variables, startup and shutdown behavior, authentication wiring, permissions, metrics and production credentials.
 sidebar_position: 9
 ---
 
@@ -188,45 +188,6 @@ responses. In addition:
   into consumers and hands `Roles.Admit` to the ban gate.
 - [Authorization](../architecture/authorization.md#permission-model) documents
   the model, its storage and the checker methods.
-
-## Raw Keto relationship primitive
-
-- Neither Tadoku API nor `tadoku-tenant` constructs a Keto client;
-  `services/tadoku-api/infra/keto` has no caller outside its own tests.
-- `keto.NewClient(readURL, writeURL, keto.WithHTTPClient(httpClient))` applies
-  options to both APIs; the caller owns the HTTP client and transport. Without
-  options, the constructor keeps the SDK defaults.
-
-Use the existing primitives with the operation's caller context and a complete
-tuple target. Set exactly one of `Subject.ID` or `Subject.Set`:
-
-```go
-subject := keto.Subject{ID: subjectID}
-err := client.AddRelation(ctx, namespace, object, relation, subject)
-// Delete only this namespace/object/relation/subject tuple.
-err = client.DeleteRelation(ctx, namespace, object, relation, subject)
-
-group := keto.Subject{Set: &keto.SubjectSet{
-    Namespace: groupNamespace,
-    Object:    groupID,
-    Relation:  membershipRelation,
-}}
-err = client.AddRelation(ctx, namespace, object, relation, group)
-err = client.DeleteRelation(ctx, namespace, object, relation, group)
-```
-
-- Direct subjects use `subject_id`; subject sets keep their namespace, object
-  and relation. Delete sends every target component, including every subject-set
-  field.
-- Add treats HTTP 409 as success and delete treats HTTP 404 as success.
-- Other errors keep their wrapped provider error: `errors.As` can inspect
-  `*ketoapi.GenericOpenAPIError` and its `Body()` and `Model()`, and `errors.Is`
-  identifies `context.Canceled` and `context.DeadlineExceeded`. The primitives
-  return only an error, without separate HTTP response metadata.
-- The total client timeout, any earlier caller deadline and caller cancellation
-  bound requests, including response-body reads. There is no mutation retry
-  loop; a timeout or cancellation does not establish whether Keto committed the
-  write.
 
 ## Identity reads
 

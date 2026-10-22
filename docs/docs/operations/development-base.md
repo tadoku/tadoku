@@ -267,9 +267,8 @@ After activation, run the live acceptance gates listed under
   operation. Never run namespace-wide deletion.
 - `make dev-reset` is disabled. Any reset needs an explicitly approved, scoped
   runbook.
-- `infra/dev/ory/` holds the Keto namespace fixture that Bazel backend tests
-  load; it is not an obsolete deployment file. Preserve the shared
-  SQL fixtures in `scripts/dev/seed/`, which base and branch seeding both use.
+- Preserve the shared SQL fixtures in `scripts/dev/seed/`, which base and
+  branch seeding both use.
 - Any future rebuild of the environment needs its own data-disposition
   decision. A previous deletion approval is not permission to erase later data.
 

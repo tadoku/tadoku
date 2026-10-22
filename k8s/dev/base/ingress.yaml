@@ -109,33 +109,6 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: tadoku-kratos
-  namespace: tdk-dev-kratos
-  annotations:
-    argocd.argoproj.io/sync-wave: "50"
-    cert-manager.io/cluster-issuer: lab-ca-acme
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/use-regex: "true"
-    nginx.ingress.kubernetes.io/rewrite-target: "/$2"
-spec:
-  ingressClassName: nginx
-  tls:
-    - hosts: [account.tadoku.dev.lab]
-      secretName: tadoku-kratos-tls
-  rules:
-    - host: account.tadoku.dev.lab
-      http:
-        paths:
-          - path: /kratos(/|$)(.*)
-            pathType: ImplementationSpecific
-            backend:
-              service:
-                name: kratos-public
-                port: {number: 80}
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
   name: tadoku-flipt
   namespace: tdk-dev-oathkeeper
   annotations:

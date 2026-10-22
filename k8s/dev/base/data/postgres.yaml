@@ -12,11 +12,9 @@ spec:
   users:
     tadoku_owner: []
     tadoku: []
-    kratos: []
     keto: []
   databases:
     tadoku: tadoku_owner
-    kratos: kratos
     keto: keto
   postgresql:
     version: "17"

@@ -3,5 +3,4 @@ kind: Kustomization
 resources:
   - tadoku-api-ownership.yaml
   - tadoku-api.yaml
-  - kratos.yaml
   - keto.yaml

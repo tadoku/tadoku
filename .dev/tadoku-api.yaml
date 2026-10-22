@@ -40,10 +40,6 @@ spec:
           value: http://keto-read.tdk-dev-keto:4466
         - name: API_KETO_WRITE_URL
           value: http://keto-write.tdk-dev-keto:4467
-        - name: API_KRATOS_ADMIN_URL
-          value: http://kratos-admin.tdk-dev-kratos
-        - name: API_KRATOS_PUBLIC_URL
-          value: http://kratos-public.tdk-dev-kratos
         - name: API_IDENTITY_COOKIE_DOMAIN
           value: tadoku.dev.lab
         - name: API_IDENTITY_TRUSTED_PROXY_CIDRS

@@ -9,7 +9,6 @@ resources:
   - data
   - migrations
   - services
-  - kratos
   - keto
   - oathkeeper
   - flipt
@@ -62,8 +61,6 @@ configMapGenerator:
     options:
       disableNameSuffixHash: true
     literals:
-      - NEXT_PUBLIC_KRATOS_INTERNAL_ENDPOINT=http://kratos-public.tdk-dev-kratos
-      - NEXT_PUBLIC_KRATOS_ENDPOINT=https://account.tadoku.dev.lab/kratos
       - NEXT_PUBLIC_AUTH_UI_URL=https://account.tadoku.dev.lab
       - NEXT_PUBLIC_HOME_URL=https://tadoku.dev.lab
       - NEXT_PUBLIC_API_ENDPOINT=/api/internal
@@ -88,8 +85,6 @@ configMapGenerator:
     options:
       disableNameSuffixHash: true
     literals:
-      - NEXT_PUBLIC_KRATOS_INTERNAL_ENDPOINT=http://kratos-public.tdk-dev-kratos
-      - NEXT_PUBLIC_KRATOS_ENDPOINT=https://account.tadoku.dev.lab/kratos
       - NEXT_PUBLIC_AUTH_UI_URL=https://account.tadoku.dev.lab
       - NEXT_PUBLIC_HOME_URL=https://tadoku.dev.lab
       - NEXT_PUBLIC_API_ENDPOINT=https://tadoku.dev.lab/api/internal

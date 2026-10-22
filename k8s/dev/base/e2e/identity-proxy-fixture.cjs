@@ -32,7 +32,7 @@ async function check() {
     await new Promise(resolve => setTimeout(resolve, 250))
   }
   const metrics = () => fetch('http://127.0.0.1:8080/metrics').then(res => res.json())
-  const cookie = 'ory_kratos_session=synthetic-banned-user; tadoku_session_tadoku_proof_0123abcd=synthetic-identity-session; unrelated=preserved'
+  const cookie = 'tadoku_session=synthetic-banned-user; tadoku_session_tadoku_proof_0123abcd=synthetic-identity-session; unrelated=preserved'
   const send = (host, path, method = 'GET', withCookie = true, internal = false) => new Promise((resolve, reject) => {
     const req = (production ? https : http).request({ hostname: proxy, port: 4455, path, method,
       ...(production ? { ca: readFileSync('/etc/config/tls.crt'), servername: proxy } : {}), headers: {

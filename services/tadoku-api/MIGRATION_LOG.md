@@ -10,7 +10,7 @@
 - [x] Drop `leaderboard_outbox` in standalone migration 0033. The table is absent in development and production.
 - [x] Deploy the typed `tadoku-worker` before the API release that removed the embedded consumer; the production worker image and ReplicaSet were verified before that API rollout.
 - [x] Restructure the Tadoku API documentation for progressive disclosure for agents: a short entry point with focused documents behind it instead of one long README.
-- [ ] Rename the standard test identity from `Reader One` to `User One` across Kratos seeds, tests and HTTP goldens; regenerate affected signed JWT fixtures and update the public JWKS together.
+- [ ] Rename the standard test identity from `Reader One` to `User One` across account seeds, tests and HTTP goldens; regenerate affected signed JWT fixtures and update the public JWKS together.
 - [ ] Rename `moderation_audit_log` to an audit-owned table in a standalone migration.
 - [ ] Replace `github.com/google/uuid` with the standard-library UUID API when it is available in the adopted Go toolchain.
 - [ ] Introduce a generic paginated request type and convert every existing paginated operation to use it.
@@ -25,10 +25,8 @@
 - [ ] Add a domain-errors lint that not-found sentinels use `errx` (plain `errors.New` maps to Unknown→500).
 - [ ] Ban `Normalize*` functions returning Internal errors (lint).
 - [ ] Depolicy/sqlc lint: contests SQL must not declare catalog-only `from languages` without a contest join/filter.
-- [ ] CI deny `ory/kratos-client-go` imports outside `features/profile`.
 - [x] Deny `valkey-go` imports outside cache and store files in feature packages (`tools/ci/repopolicy`).
 - [ ] Ban private unit→activity maps outside `domain/activities` (lint).
-- [x] Share one profile Kratos traits decoder; remove the dead untagged `Email` field in `FindProfile`.
 - [ ] Forbid raw banned/admins Keto triples outside `internal/permissions` (lint).
 - [ ] Add a CI check that bans parsing the identity subject in application operations.
 - [ ] Decide whether pages/posts should share content-revision primitives or stay intentional twins.

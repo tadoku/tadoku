@@ -80,22 +80,22 @@ func runDevelopmentAccounts(ctx context.Context, args []string, canonical bool) 
 		}
 		return value
 	}
-	fixtures := []identity.DevelopmentAccount{
-		{
-			ID:          adminID,
-			Email:       defaults("TADOKU_DEV_ADMIN_EMAIL", "dev@tadoku.app"),
-			DisplayName: "Dev Admin",
-			Password:    defaults("TADOKU_DEV_ADMIN_PASSWORD", "tadoku"),
-		},
-		{
-			ID:          readerID,
-			Email:       defaults("TADOKU_DEV_READER_EMAIL", "reader@tadoku.app"),
-			DisplayName: "Dev Reader",
-			Password:    defaults("TADOKU_DEV_READER_PASSWORD", "tadoku"),
-		},
+	adminAccount := identity.DevelopmentAccount{
+		ID:          adminID,
+		Email:       defaults("TADOKU_DEV_ADMIN_EMAIL", "dev@tadoku.app"),
+		DisplayName: "Dev Admin",
+		Password:    defaults("TADOKU_DEV_ADMIN_PASSWORD", "tadoku"),
+	}
+	readerAccount := identity.DevelopmentAccount{
+		ID:          readerID,
+		Email:       defaults("TADOKU_DEV_READER_EMAIL", "reader@tadoku.app"),
+		DisplayName: "Dev Reader",
+		Password:    defaults("TADOKU_DEV_READER_PASSWORD", "tadoku"),
 	}
 	if canonical {
+		fixtures := []identity.DevelopmentAccount{adminAccount, readerAccount}
 		return identity.SeedCanonicalDevelopmentAccounts(ctx, pool, fixtures)
 	}
-	return tenantlifecycle.NewApplication(pool, nil, nil, nil).SeedDevelopmentAccounts(ctx, key, fixtures)
+	application := tenantlifecycle.NewApplication(pool, nil, nil, nil)
+	return application.SeedDevelopmentAccounts(ctx, key, adminAccount, readerAccount)
 }

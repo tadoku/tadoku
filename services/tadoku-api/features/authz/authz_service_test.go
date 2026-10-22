@@ -36,7 +36,6 @@ func TestUpdateRoleMapsUserExistsFailureToUnavailable(t *testing.T) {
 		),
 		nil,
 		nil,
-		nil,
 	)
 
 	err := service.UpdateRole(tenant.WithKey(t.Context(), tenant.Production()), RoleUpdateParameters{
@@ -50,7 +49,7 @@ func TestUpdateRoleMapsUserExistsFailureToUnavailable(t *testing.T) {
 }
 
 func TestCurrentUserRoleTreatsEmptySubjectAsGuest(t *testing.T) {
-	service := NewService(nil, nil, nil, nil, nil)
+	service := NewService(nil, nil, nil, nil)
 	ctx := requestidentity.WithUser(t.Context(), &requestidentity.User{})
 
 	role, err := service.CurrentUserRole(ctx)
@@ -63,7 +62,7 @@ func TestCurrentUserRoleTreatsEmptySubjectAsGuest(t *testing.T) {
 }
 
 func TestProxyAdminCheckRejectsNilSubject(t *testing.T) {
-	service := NewService(nil, nil, nil, nil, nil)
+	service := NewService(nil, nil, nil, nil)
 
 	_, err := service.ProxyAdminCheck(t.Context(), uuid.Nil)
 	if errx.KindOf(err) != errx.InvalidInput {
@@ -77,7 +76,7 @@ func TestProxyAdminCheckRejectsNilSubject(t *testing.T) {
 func TestCurrentUserRoleBannedTakesPrecedence(t *testing.T) {
 	ctx := requestidentity.WithUser(t.Context(), &requestidentity.User{Subject: "admin"})
 	ctx = permissions.WithBanState(ctx, permissions.ConfirmedBan())
-	service := NewService(permissions.NewKetoChecker(nil), nil, nil, nil, nil)
+	service := NewService(permissions.NewKetoChecker(nil), nil, nil, nil)
 
 	role, err := service.CurrentUserRole(ctx)
 	if err != nil {
@@ -85,42 +84,6 @@ func TestCurrentUserRoleBannedTakesPrecedence(t *testing.T) {
 	}
 	if role != RoleBanned {
 		t.Errorf("role = %q, want %q", role, RoleBanned)
-	}
-}
-
-func TestPermissionCheckParametersValidate(t *testing.T) {
-	tests := []struct {
-		name       string
-		parameters PermissionCheckParameters
-		want       string
-	}{
-		{
-			name:       "namespace is required",
-			parameters: PermissionCheckParameters{Object: "tadoku", Relation: "admins"},
-			want:       "namespace is required",
-		},
-		{
-			name:       "object is required",
-			parameters: PermissionCheckParameters{Namespace: "app", Relation: "admins"},
-			want:       "object is required",
-		},
-		{
-			name:       "relation is required",
-			parameters: PermissionCheckParameters{Namespace: "app", Object: "tadoku"},
-			want:       "relation is required",
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			err := test.parameters.Validate()
-			if errx.KindOf(err) != errx.InvalidInput {
-				t.Errorf("Validate() error kind = %v, want invalid input", errx.KindOf(err))
-			}
-			if err == nil || err.Error() != test.want {
-				t.Errorf("Validate() error = %v, want %q", err, test.want)
-			}
-		})
 	}
 }
 

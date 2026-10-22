@@ -282,7 +282,6 @@ func newTestRouterWithLeaderboardService(
 		identities,
 		roleService,
 		permissions.NewKetoManager(readWriter),
-		nil,
 	)
 	auditService := featureaudit.NewService(featureaudit.NewRepository(auditPool))
 

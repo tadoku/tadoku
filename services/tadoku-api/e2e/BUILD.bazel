@@ -15,7 +15,6 @@ go_test(
         "announcements_test.go",
         "api_test.go",
         "authentication_test.go",
-        "authz_permission_check_test.go",
         "authz_proxy_admin_check_test.go",
         "authz_role_get_test.go",
         "authz_role_update_test.go",

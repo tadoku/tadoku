@@ -136,11 +136,6 @@ The following rules decide where each check belongs.
   services in `services/tadoku-api/internal/permissions/`. Those facts never
   authorize the actor: the operation still uses `Checker` for its own access
   decision. Batch facts are read for each request, not cached.
-- Public permission checks use a typed, construction-time allowlist keyed by
-  namespace and relation; production supplies an empty list. After
-  authentication, input validation and allowlist membership, the checker
-  evaluates the requested object in Keto for the verified request subject and
-  returns the provider decision. Provider failures return unavailable.
 - A trusted callback route authenticates its own required bearer credential
   before request decoding and records a callback-authentication fact
   (`internal/callbackauth`) that its application operation must require. It

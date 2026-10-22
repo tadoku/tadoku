@@ -4,7 +4,6 @@
 export const successResponses: Readonly<Record<string, Readonly<Record<number, boolean>>>> = {
   'GET /authz/current-user/role': { 200: true },
   'PUT /authz/users/{id}/role': { 200: false },
-  'POST /authz/permission/check': { 200: true },
   'GET /content/pages/{namespace}/{slug}': { 200: true },
   'PUT /content/pages/{namespace}/{slug}': { 200: true },
   'DELETE /content/pages/{namespace}/{slug}': { 204: false },

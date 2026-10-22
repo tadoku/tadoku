@@ -235,7 +235,6 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 		identityReader,
 		roleService,
 		permissions.NewKetoManager(keto),
-		nil,
 	)
 
 	auditService := featureaudit.NewService(featureaudit.NewRepository(pool))

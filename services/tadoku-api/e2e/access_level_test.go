@@ -48,7 +48,6 @@ var operationAccess = map[string]accessLevel{
 	"ImmersionProfileYearlyScoresByUserID":        accessPublic,
 	"ImmersionProfileYearlyActivitySplitByUserID": accessPublic,
 
-	"AuthzPermissionCheck":      accessAuthenticated,
 	"AuthzProxyProxyAdminCheck": accessCallback,
 	"AuthzRoleGet":              accessPublic,
 	"AuthzRoleUpdate":           accessAdmin,
@@ -117,7 +116,6 @@ var operationFixtures = map[string]string{
 	"EmailList":                 "EmailList",
 	"EmailGet":                  "EmailGet",
 	"IdentityProxySessionCheck": "IdentityProxySessionCheck",
-	"AuthzPermissionCheck":      "AuthzPermissionCheck",
 	"AuthzProxyProxyAdminCheck": "AuthzProxyProxyAdminCheck",
 	"AuthzRoleUpdate":           "AuthzRoleUpdate",
 

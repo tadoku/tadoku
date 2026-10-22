@@ -174,39 +174,6 @@ paths:
       x-tadoku-exposure: public
       x-legacy-path: /users/{id}/role
       x-legacy-operation-id: roleUpdate
-  /authz/permission/check:
-    post:
-      summary: Checks if the current user has a specific permission
-      operationId: AuthzPermissionCheck
-      tags:
-        - permissions
-      security:
-        - AuthzcookieAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/AuthzPermissionCheckRequest"
-      responses:
-        "200":
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AuthzPermissionCheckResponse"
-        "400":
-          description: invalid request
-        "401":
-          description: unauthorized
-        "403":
-          description: forbidden (not allowlisted)
-        "503":
-          description: authorization unavailable
-      x-tadoku-source: Authz
-      x-tadoku-exposure: public
-      x-legacy-path: /permission/check
-      x-legacy-operation-id: permissionCheck
   "/content/pages/{namespace}/{slug}":
     get:
       summary: Returns page content for a given slug
@@ -3408,29 +3375,6 @@ components:
           type: string
           minLength: 1
           maxLength: 1000
-    AuthzPermissionCheckRequest:
-      type: object
-      required:
-        - namespace
-        - object
-        - relation
-      properties:
-        namespace:
-          type: string
-          minLength: 1
-        object:
-          type: string
-          minLength: 1
-        relation:
-          type: string
-          minLength: 1
-    AuthzPermissionCheckResponse:
-      type: object
-      required:
-        - allowed
-      properties:
-        allowed:
-          type: boolean
     ContentPage:
       type: object
       required:

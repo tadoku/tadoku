@@ -24,7 +24,7 @@ the [API reference](../api/index.md).
 | Immersion | Logs, contests, registrations, leaderboards, scoring, languages and user profiles | `logs`, `contests`, `leaderboard`, `scoring`, `languages`, `profile` |
 | Content | Blog posts, CMS pages and announcements | `posts`, `pages`, `announcements` |
 | Profile | The administrator user list | `profile` |
-| Authorization | The current user's role, role management and permission checks | `authz` |
+| Authorization | The current user's role, role management and the administrator callback | `authz` |
 | Identity | Registration, sessions, recovery and profile/password settings | `identity` |
 | Email | Transactional templates, delivery, audited reads and retention | `email` |
 

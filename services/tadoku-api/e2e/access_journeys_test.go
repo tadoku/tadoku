@@ -100,15 +100,6 @@ func TestAuthorizationVisibilityJourney(t *testing.T) {
 			as:      banned,
 			want:    http.StatusOK,
 		},
-		{
-			request: "permission_denied",
-			as:      user,
-			want:    http.StatusForbidden,
-			others: cast{
-				guest:  http.StatusUnauthorized,
-				banned: http.StatusForbidden,
-			},
-		},
 	})
 }
 

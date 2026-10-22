@@ -2596,7 +2596,7 @@ paths:
       x-legacy-operation-id: usersList
   /authz/internal/v1/proxy/admin-check:
     post:
-      summary: Authorizes a Kratos subject as a Tadoku administrator
+      summary: Authorizes an account subject as a Tadoku administrator
       operationId: AuthzProxyProxyAdminCheck
       tags:
         - proxy
@@ -3336,9 +3336,10 @@ paths:
     get:
       operationId: IdentityProxySessionCheck
       summary: Oathkeeper session check for the selected tenant
-      description: Requires the Oathkeeper callback bearer. Resolves X-Dev-Branch and forwards the v1
-        cookie to Kratos, or resolves the v2 tenant cookie. Missing or invalid sessions return 200 with
-        identity.id guest, including unrelated cookies. Preserves the Kratos whoami shape for users.
+      description: Requires the Oathkeeper callback bearer. Resolves X-Dev-Branch to the tenant and
+        reads that tenant's session cookie. Missing or invalid sessions return 200 with identity.id
+        guest, including unrelated cookies. Users keep the identity, traits and timestamp shape that
+        Oathkeeper's cookie-session authenticator reads.
       tags:
       - identity-session
       security:
@@ -4610,9 +4611,9 @@ components:
           type: string
           pattern: '^[\s\S]+@[\s\S]+$'
           description: >-
-            The account's stored address: a v1 Kratos trait, or for v2 the
-            normalized address registration or settings stored or an imported
-            address as written. When Go's net/mail reads an address from it, the
+            The account's stored address: the normalized address registration or
+            settings stored, or an imported address as written. When Go's net/mail
+            reads an address from it, the
             API writes that address part, so a quoted local part arrives unquoted
             and surrounding ASCII spaces and tabs are dropped; letter case, every
             other character and its length are kept. Otherwise, such as for an
@@ -4665,8 +4666,10 @@ components:
           type: string
           maxLength: 72
           minLength: 8
-          description: At least 8 characters, at most 72 UTF-8 bytes; rejects similarity
-            to the email under the Kratos v26.2.0 rule.
+          description: At least 8 characters, at most 72 UTF-8 bytes; rejects a password
+            whose lowercase form is within Levenshtein distance 4 of the lowercase
+            email or shares with it a common substring longer than half the
+            password.
       required:
       - email
       - display_name
@@ -4682,8 +4685,10 @@ components:
           type: string
           maxLength: 72
           minLength: 8
-          description: At least 8 characters, at most 72 UTF-8 bytes; rejects similarity
-            to the email under the Kratos v26.2.0 rule.
+          description: At least 8 characters, at most 72 UTF-8 bytes; rejects a password
+            whose lowercase form is within Levenshtein distance 4 of the lowercase
+            email or shares with it a common substring longer than half the
+            password.
       required:
       - email
       - password
@@ -4724,8 +4729,10 @@ components:
           type: string
           maxLength: 72
           minLength: 8
-          description: At least 8 characters, at most 72 UTF-8 bytes; rejects similarity
-            to the email under the Kratos v26.2.0 rule.
+          description: At least 8 characters, at most 72 UTF-8 bytes; rejects a password
+            whose lowercase form is within Levenshtein distance 4 of the lowercase
+            email or shares with it a common substring longer than half the
+            password.
       required:
       - password
     EmailErrorResponse:
@@ -4823,9 +4830,9 @@ components:
           type: string
           pattern: '^[\s\S]+@[\s\S]+$'
           description: >-
-            The account's stored address: a v1 Kratos trait, or for v2 the
-            normalized address registration or settings stored or an imported
-            address as written. When Go's net/mail reads an address from it, the
+            The account's stored address: the normalized address registration or
+            settings stored, or an imported address as written. When Go's net/mail
+            reads an address from it, the
             API writes that address part, so a quoted local part arrives unquoted
             and surrounding ASCII spaces and tabs are dropped; letter case, every
             other character and its length are kept. Otherwise, such as for an

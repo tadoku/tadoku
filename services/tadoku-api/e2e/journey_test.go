@@ -289,7 +289,7 @@ func resetJourney(t *testing.T, s *suite, directory string) {
 		t.Fatal(err)
 	}
 	if s.flipt != nil {
-		s.resetIdentityFlags(t)
+		s.flipt.Reset()
 	}
 	if leaderboardValkey != nil {
 		if err := leaderboardValkey.reset(ctx); err != nil {

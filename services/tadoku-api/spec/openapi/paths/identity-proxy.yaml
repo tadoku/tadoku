@@ -3,9 +3,10 @@ paths:
     get:
       operationId: IdentityProxySessionCheck
       summary: Oathkeeper session check for the selected tenant
-      description: Requires the Oathkeeper callback bearer. Resolves X-Dev-Branch and forwards the v1
-        cookie to Kratos, or resolves the v2 tenant cookie. Missing or invalid sessions return 200 with
-        identity.id guest, including unrelated cookies. Preserves the Kratos whoami shape for users.
+      description: Requires the Oathkeeper callback bearer. Resolves X-Dev-Branch to the tenant and
+        reads that tenant's session cookie. Missing or invalid sessions return 200 with identity.id
+        guest, including unrelated cookies. Users keep the identity, traits and timestamp shape that
+        Oathkeeper's cookie-session authenticator reads.
       tags:
       - identity-session
       security:

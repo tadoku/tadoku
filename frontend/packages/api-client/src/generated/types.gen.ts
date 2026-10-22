@@ -498,7 +498,7 @@ export type IdentityErrorResponse = {
 export type IdentityAccount = {
     id: string;
     /**
-     * The account's stored address: a v1 Kratos trait, or for v2 the normalized address registration or settings stored or an imported address as written. When Go's net/mail reads an address from it, the API writes that address part, so a quoted local part arrives unquoted and surrounding ASCII spaces and tabs are dropped; letter case, every other character and its length are kept. Otherwise, such as for an imported address with a leading vertical tab, the API writes the stored address unchanged. It is not normalized like email input and need not satisfy format: email.
+     * The account's stored address: the normalized address registration or settings stored, or an imported address as written. When Go's net/mail reads an address from it, the API writes that address part, so a quoted local part arrives unquoted and surrounding ASCII spaces and tabs are dropped; letter case, every other character and its length are kept. Otherwise, such as for an imported address with a leading vertical tab, the API writes the stored address unchanged. It is not normalized like email input and need not satisfy format: email.
      */
     email: string;
     display_name: string;
@@ -515,7 +515,7 @@ export type IdentityRegistration = {
     email: string;
     display_name: string;
     /**
-     * At least 8 characters, at most 72 UTF-8 bytes; rejects similarity to the email under the Kratos v26.2.0 rule.
+     * At least 8 characters, at most 72 UTF-8 bytes; rejects a password whose lowercase form is within Levenshtein distance 4 of the lowercase email or shares with it a common substring longer than half the password.
      */
     password: string;
 };
@@ -523,7 +523,7 @@ export type IdentityRegistration = {
 export type IdentityLogin = {
     email: string;
     /**
-     * At least 8 characters, at most 72 UTF-8 bytes; rejects similarity to the email under the Kratos v26.2.0 rule.
+     * At least 8 characters, at most 72 UTF-8 bytes; rejects a password whose lowercase form is within Levenshtein distance 4 of the lowercase email or shares with it a common substring longer than half the password.
      */
     password: string;
 };
@@ -543,7 +543,7 @@ export type IdentityProfileSettings = {
 
 export type IdentityPasswordSettings = {
     /**
-     * At least 8 characters, at most 72 UTF-8 bytes; rejects similarity to the email under the Kratos v26.2.0 rule.
+     * At least 8 characters, at most 72 UTF-8 bytes; rejects a password whose lowercase form is within Levenshtein distance 4 of the lowercase email or shares with it a common substring longer than half the password.
      */
     password: string;
 };

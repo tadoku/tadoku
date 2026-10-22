@@ -8,36 +8,21 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/featureflags"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
 type ReadService struct {
 	repository *readRepository
-	legacy     LegacyReader
-	evaluator  *featureflags.Evaluator
 }
 
 var _ Reader = (*ReadService)(nil)
 
-func NewReader(pool *pgxpool.Pool, legacy LegacyReader, evaluator *featureflags.Evaluator) *ReadService {
-	return &ReadService{repository: &readRepository{pool: pool}, legacy: legacy, evaluator: evaluator}
-}
-
-func (s *ReadService) local(ctx context.Context) (bool, error) {
-	app, err := accountApp(ctx, s.evaluator)
-	return app == V2, err
+func NewReader(pool *pgxpool.Pool) *ReadService {
+	return &ReadService{repository: &readRepository{pool: pool}}
 }
 
 func (s *ReadService) FindAccount(ctx context.Context, userID uuid.UUID) (Account, error) {
-	local, err := s.local(ctx)
-	if err != nil {
-		return Account{}, err
-	}
-	if local {
-		return s.repository.find(ctx, userID)
-	}
-	return s.findLegacyAccount(ctx, userID)
+	return s.repository.find(ctx, userID)
 }
 
 func (s *ReadService) UserExists(ctx context.Context, userID uuid.UUID) (bool, error) {
@@ -55,18 +40,11 @@ type readCursor struct {
 }
 
 func (s *ReadService) ListAccounts(ctx context.Context, query ListAccounts) (AccountPage, error) {
-	local, err := s.local(ctx)
-	if err != nil {
-		return AccountPage{}, err
-	}
 	if query.Limit <= 0 {
 		query.Limit = 100
 	}
 	if query.Limit > 500 {
 		query.Limit = 500
-	}
-	if !local {
-		return s.listLegacyAccounts(ctx, query)
 	}
 
 	key, _ := tenant.FromContext(ctx)
@@ -80,10 +58,11 @@ func (s *ReadService) ListAccounts(ctx context.Context, query ListAccounts) (Acc
 			cursor.Query != query.Query {
 			return AccountPage{}, errx.NewInvalidInputError("invalid account cursor")
 		}
-		after, err = uuid.Parse(cursor.After)
+		parsed, err := uuid.Parse(cursor.After)
 		if err != nil {
 			return AccountPage{}, errx.NewInvalidInputError("invalid account cursor")
 		}
+		after = parsed
 	}
 
 	accounts, err := s.repository.list(ctx, query.Query, after, query.Limit+1)
@@ -104,14 +83,6 @@ func (s *ReadService) ListAccounts(ctx context.Context, query ListAccounts) (Acc
 }
 
 func (s *ReadService) ListAllAccounts(ctx context.Context, query string) ([]Account, error) {
-	local, err := s.local(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if !local {
-		return s.allLegacyAccounts(ctx, query)
-	}
-
 	accounts := make([]Account, 0)
 	cursor := ""
 	for {

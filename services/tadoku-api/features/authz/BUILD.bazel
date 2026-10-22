@@ -22,12 +22,9 @@ go_test(
     srcs = ["authz_service_test.go"],
     embed = [":authz"],
     deps = [
-        "//services/tadoku-api/features/identity",
         "//services/tadoku-api/internal/errx",
-        "//services/tadoku-api/internal/featureflags",
         "//services/tadoku-api/internal/identity",
         "//services/tadoku-api/internal/permissions",
-        "//services/tadoku-api/internal/tenant",
         "@com_github_google_uuid//:uuid",
     ],
 )

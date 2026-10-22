@@ -24,13 +24,6 @@ type RecoveryRequest struct {
 // AdmitRecovery must run before the application's business transaction. A nil request without an error
 // means admission suppressed the recipient; answer exactly as for an unknown address.
 func (s *Service) AdmitRecovery(ctx context.Context, recovery Recovery) (*RecoveryRequest, error) {
-	app, err := s.accountApp(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if app == V1 {
-		return nil, ErrNotImplemented
-	}
 	email, err := ParseEmail(recovery.Email)
 	if err != nil {
 		return nil, err
@@ -100,13 +93,6 @@ func (s *Service) RequestRecovery(ctx context.Context, recovery Recovery) (Recov
 
 // ConsumeRecovery requires the application's business transaction through the new session write.
 func (s *Service) ConsumeRecovery(ctx context.Context, raw RecoveryToken) (RecoveryLogin, error) {
-	app, err := s.accountApp(ctx)
-	if err != nil {
-		return RecoveryLogin{}, err
-	}
-	if app == V1 {
-		return RecoveryLogin{}, ErrNotImplemented
-	}
 	if !validSessionToken(string(raw)) {
 		return RecoveryLogin{}, ErrInvalidRecoveryToken
 	}

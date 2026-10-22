@@ -30,13 +30,6 @@ var (
 	errAccountNotFound = errors.New("identity account not found")
 )
 
-type AccountApp string
-
-const (
-	V1 AccountApp = "v1"
-	V2 AccountApp = "v2"
-)
-
 type Account struct {
 	ID          uuid.UUID
 	Email       Email
@@ -57,10 +50,6 @@ type AuthenticatedSession struct {
 
 func (AuthenticatedSession) session() {}
 
-type SessionResult struct {
-	AccountApp AccountApp
-	Session    Session
-}
 type Cookie struct {
 	Name, Value, Domain string
 	Expires             time.Time
@@ -108,8 +97,7 @@ type Accounts interface {
 	Register(ctx context.Context, registration Registration) (LoginResult, error)
 	Login(ctx context.Context, login Login) (LoginResult, error)
 	Logout(ctx context.Context, cookieHeader CookieHeader) (Cookie, error)
-	Session(ctx context.Context, cookieHeader CookieHeader) (SessionResult, error)
-	CheckSession(ctx context.Context, cookieHeader CookieHeader) (Session, error)
+	Session(ctx context.Context, cookieHeader CookieHeader) (Session, error)
 	RequestRecovery(ctx context.Context, recovery Recovery) (RecoveryResult, error)
 	ConsumeRecovery(ctx context.Context, recoveryToken RecoveryToken) (RecoveryLogin, error)
 	UpdateProfile(ctx context.Context, cookieHeader CookieHeader, settings ProfileSettings) (ProfileResult, error)

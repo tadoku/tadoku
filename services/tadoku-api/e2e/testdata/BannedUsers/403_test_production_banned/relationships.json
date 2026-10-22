@@ -1,18 +1,8 @@
 [
   {
-    "namespace": "app",
-    "object": "e2e/alpha-0000000a",
-    "relation": "parents",
-    "subject_set": {
-      "namespace": "app",
-      "object": "tadoku",
-      "relation": ""
-    }
-  },
-  {
-    "namespace": "app",
-    "object": "tadoku",
+    "tenant": "tadoku/prod",
+    "object": "app:root",
     "relation": "banned",
-    "subject_id": "33333333-3333-4333-8333-333333333333"
+    "subject": "user:33333333-3333-4333-8333-333333333333"
   }
 ]

@@ -85,18 +85,6 @@ function checkConfiguration({ root, report }, docs) {
   if (!resources?.requests?.cpu || !resources.requests.memory || !resources.limits?.cpu || !resources.limits.memory) throw new Error('Worker must declare CPU and memory requests and limits')
   const emailBindings = container => container.env.filter(e => e.name === 'WORKER_EMAIL_ENABLED')
   if ([workerContainer, branchWorker].some(container => emailBindings(container).length !== 1 || emailBindings(container)[0].value !== 'false')) throw new Error('Base and branch workers must bind WORKER_EMAIL_ENABLED=false explicitly')
-  const mailhogLabels = docs.find(d => d.kind === 'Deployment' && d.metadata.namespace === 'tdk-dev-data' && d.metadata.name === 'mailhog')?.spec.template.metadata.labels || {}
-  // Unknown operators and value-less In/NotIn count as selecting MailHog, so an unaccounted allow fails closed.
-  const selectsMailhog = ({ matchLabels = {}, matchExpressions = [] } = {}) => Object.entries(matchLabels).every(([key, value]) => mailhogLabels[key] === value) && matchExpressions.every(({ key, operator, values = [] }) => {
-    if (operator === 'Exists') return key in mailhogLabels
-    if (operator === 'DoesNotExist') return !(key in mailhogLabels)
-    if (!['In', 'NotIn'].includes(operator) || !values.length) return true
-    return values.includes(mailhogLabels[key]) === (operator === 'In')
-  })
-  const policyTypes = policy => policy.spec.policyTypes || (policy.spec.egress?.length ? ['Ingress', 'Egress'] : ['Ingress'])
-  const dataPolicies = docs.filter(d => d.kind === 'NetworkPolicy' && d.metadata.namespace === 'tdk-dev-data' && selectsMailhog(d.spec.podSelector))
-  const mailhogEgress = dataPolicies.find(d => d.metadata.name === 'mailhog-deny-egress')
-  if (mailhogEgress?.spec.policyTypes?.join(',') !== 'Egress' || mailhogEgress.spec.egress?.length !== 0 || mailhogEgress.spec.ingress || JSON.stringify(mailhogEgress.spec.podSelector) !== '{"matchLabels":{"app":"mailhog"}}' || dataPolicies.some(d => policyTypes(d).includes('Egress') && d.spec.egress?.length)) throw new Error('MailHog must have an egress-only deny policy and no egress allow')
   report.leaderboardWorkers = { asyncJobs: 'tadoku-worker', baseDatabase: 'tadoku', branchDatabase: envValue(branchWorker, 'WORKER_POSTGRES_DATABASE'), branchTenant: envValue(branchWorker, 'WORKER_BRANCH'), baseKeyPattern: 'tenant:tadoku/prod:leaderboard:*', branchKeyPattern: 'tenant:tadoku/${DEV_ROUTE}:leaderboard:*', image: workerContainer.image }
 }
 

@@ -1,8 +1,10 @@
-import { identityLogout, identitySessionGet, type IdentityAccount, type IdentitySession } from 'api-client'
+import { identityLogout, identitySessionGet, zIdentitySession, type IdentityAccount } from 'api-client'
 import { browserAppUrls, serverApiEndpointForHost } from './app-urls'
 
 export type Account = IdentityAccount
-export type AccountApp = IdentitySession['account_app']
+
+// Session answers may omit account_app, which no frontend reads.
+const zSession = zIdentitySession.omit({ account_app: true })
 
 /** The request's identity session, or undefined when the identity API gives no valid answer. */
 export async function readIdentitySession(
@@ -23,8 +25,9 @@ export async function readIdentitySession(
     cache: 'no-store',
     redirect: 'error',
     signal: AbortSignal.timeout(3_000),
+    responseValidator: body => zSession.parseAsync(body),
   })
-  return data
+  return data && { account: data.account }
 }
 
 export async function logout() {

@@ -10,7 +10,7 @@ files in an area, read its page; those rules are as binding as this file.
 | --- | --- |
 | `services/tadoku-api/` | Tadoku API, the only backend (Go, built with Bazel) |
 | `services/` | Supporting services and shared packages in `services/common/` |
-| `frontend/` | pnpm workspace: webv2, auth, admin, the Paper apps and the `ui`, `paper-ui` and generated `api-client` packages |
+| `frontend/` | pnpm workspace: webv2, admin, the Paper apps and the `ui`, `paper-ui` and generated `api-client` packages |
 | `docs/docs/` | Developer documentation, published at https://tadoku.github.io/tadoku/ |
 | `.dev/`, `k8s/dev/base/` | Development environment: dev-cli configuration and the Argo CD base |
 | `scripts/`, `tools/` | Code generation, development seeding and CI checks |
@@ -88,7 +88,7 @@ files in an area, read its page; those rules are as binding as this file.
 | Startup, environment variables, provider clients or the leaderboard worker | `docs/docs/tadoku-api/configuration.md` |
 | Access rules, roles or bans | `docs/docs/architecture/authorization.md` |
 | Feature flags | `docs/docs/architecture/feature-flags.md` |
-| webv2, auth, admin or the `ui` package | `docs/docs/frontend/conventions.md` |
+| webv2, admin or the `ui` package | `docs/docs/frontend/conventions.md` |
 | A frontend call to Tadoku API or `frontend/packages/api-client` | `docs/docs/frontend/api-client.md` |
 | A Paper application or `paper-ui` | `docs/docs/frontend/paper-composition.md` |
 | Build tooling, code generation or CI | `docs/docs/develop/toolchain.md` |

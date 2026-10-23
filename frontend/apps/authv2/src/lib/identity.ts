@@ -6,8 +6,12 @@ import {
   identityRecoveryCreate,
   identityRegistrationCreate,
   zIdentityErrorResponse,
+  zIdentitySession,
   type IdentityErrorResponse,
 } from 'api-client'
+
+/** Identity session answers, which may omit account_app: no frontend reads it. */
+export const zSession = zIdentitySession.omit({ account_app: true })
 
 type Values = Record<string, string>
 
@@ -32,13 +36,18 @@ type Send = (request: Request, values: Values) => Promise<{ error?: unknown; res
 export const operations = {
   login: {
     page: '/login',
-    send: (request, v) => identityLoginCreate({ ...request, body: { email: v.email, password: v.password } }),
+    send: (request, v) => identityLoginCreate({
+      ...request,
+      body: { email: v.email, password: v.password },
+      responseValidator: body => zSession.parseAsync(body),
+    }),
   },
   register: {
     page: '/register',
     send: (request, v) => identityRegistrationCreate({
       ...request,
       body: { display_name: v.display_name, email: v.email, password: v.password },
+      responseValidator: body => zSession.parseAsync(body),
     }),
   },
   recover: {
@@ -157,7 +166,6 @@ function describe(code: Code, operation: Operation, values?: Record<string, stri
     case 'invalid_recovery_token':
       return { message: 'This recovery link is invalid or has expired. Request a new one.' }
     case 'not_implemented':
-      return { message: 'This account still uses the previous account pages. Reload the page to continue.' }
     case 'unavailable':
       return { message: 'Something went wrong on our side. Try again in a moment.' }
   }

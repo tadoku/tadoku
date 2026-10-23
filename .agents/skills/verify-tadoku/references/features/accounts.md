@@ -2,8 +2,8 @@
 
 ## Find it
 
-Main-site **Log in** or **Sign up** opens the account host. Account routes are
-`/login`, `/register`, `/account-recovery`, `/verification`, and `/` for Settings.
+Main-site **Log in** or **Sign up** opens authv2. Account routes are `/login`,
+`/register`, `/recovery`, and `/` or `/settings` for Settings.
 The logged-in main-site user menu offers Profile, Account settings and Log out;
 Admin appears for administrators. Use a separate browser context for each identity.
 
@@ -16,9 +16,7 @@ Admin appears for administrators. Use a separate browser context for each identi
 - Open `/logs/new` and a branch contest's registration page anonymously with
   multiple query parameters and a fragment. Their login URL must carry the full
   original URL in `return_to`; after fixture login and reload, the browser must
-  show that same protected page and URL. The auth suite's `login-return.spec.ts`
-  uses an existing development reader and verifies TLS without recording traces
-  or changing the identity or submitting activity/registration writes.
+  show that same protected page and URL.
 - For registration/settings/recovery changes, use a new uniquely named disposable
   identity. Exercise validation, successful submission, profile/password settings,
   forced reauthentication, logout and recovery mail. Confirm logout also removes
@@ -28,11 +26,9 @@ Admin appears for administrators. Use a separate browser context for each identi
 
 ## Tools and traps
 
-The existing [Playwright journey](../../../../../frontend/apps/auth/e2e/README.md)
-documents installation, MailHog loopback forwarding, environment variables and the
-optional administrator test. It creates its own identity and leaves mail/identity
-data for diagnosis. Missing env skips tests. Its configured TLS bypass is not
-certificate verification. It targets base hosts unless branch-host URLs are supplied.
+The [authv2 Playwright smoke](../../../../../frontend/apps/authv2/e2e/README.md)
+documents installation, environment variables and its opt-in local fixtures; see
+[Authv2 account screens](#authv2-account-screens).
 
 Use MailHog only through the documented loopback port-forward; do not expose its
 inbox publicly or reuse production mailboxes. Do not retain session cookies or
@@ -45,11 +41,9 @@ login when claiming a browser E2E.
 ## Identity entry point
 
 Webv2 and admin read `GET /identity/session`, including as guests. Check that
-`account_app` selects account or authv2 links on the same branch, and that
+login, registration and settings links open authv2 on the same branch, and that
 logout posts to `POST /identity/logout` before access to protected pages is
-removed. Auth selects the same endpoint before starting a v1 flow and redirects
-v2 requests to authv2 with their query. No frontend clears identity cookies
-when an unrelated API returns 401.
+removed. No frontend clears identity cookies when an unrelated API returns 401.
 
 Gateway configuration forwards Cookie and
 X-Dev-Branch through the branch-aware API hop and adds the callback bearer;
@@ -101,7 +95,7 @@ Follow the ordered gates in
 production read-only baseline, actual-merge development image provenance, isolated
 native-v2 callback GET and invalid POST 400 with physical-database evidence, then
 canonical browser/SSR smoke with the same retained v1 sessions. Require live
-webv2/admin/auth builds from the merge commit before browser proof. Confirm
+webv2/admin builds from the merge commit before browser proof. Confirm
 signed-in server-rendered document content before hydration as well as the real
 Reader/Admin interactions; API curls and hydrated navigation alone are partial
 proof. Revoke the retained pair publicly only after every smoke gate passes and
@@ -149,18 +143,18 @@ owner's test data and overlay through `dev down` after verification.
 
 ## Source anchors
 
-[Account pages](../../../../../frontend/apps/auth/pages/),
+[Account screens](../../../../../frontend/apps/authv2/src/routes/),
 [session navigation](../../../../../frontend/apps/webv2/app/ui/Navigation.tsx),
-[auth E2E](../../../../../frontend/apps/auth/e2e/account.spec.ts).
+[authv2 E2E](../../../../../frontend/apps/authv2/e2e/README.md).
 
 ## Authv2 account screens
 
-Authv2 uses `/` for Settings, `/login`, `/register` and `/recovery` on `authv2.tadoku.dev.lab` or the matching
-`<route>.authv2.tadoku.dev.lab` branch. Read
+Authv2 uses `/` for Settings, `/login`, `/register` and `/recovery` on `account.tadoku.dev.lab` or the matching
+`<route>.account.tadoku.dev.lab` branch. Read
 [Authv2](../../../../../docs/docs/frontend/authv2.md) and
 [its manual smoke instructions](../../../../../frontend/apps/authv2/e2e/README.md).
 
-- Obtain the link with `dev url --owner <owner> --host authv2.tadoku.dev.lab '/login'`.
+- Obtain the link with `dev url --owner <owner> --host account.tadoku.dev.lab '/login'`.
   Confirm the document's overlay `X-Dev-Backend` before claiming branch behavior.
   Authv2 shares `tdk-dev-frontend-auth` with auth, using distinct workload and
   Service selectors. Its Vite overlay supplies URLs inline and reuses the existing
@@ -197,11 +191,8 @@ Authv2 uses `/` for Settings, `/login`, `/register` and `/recovery` on `authv2.t
 - Keep a page mounted, change source and observe HMR with unchanged navigation
   time origin, Pod UID and image. Keep the local generated route tree current:
   synchronizing a stale tree makes the overlay regenerate it and reload.
-- A v1 session answer returns to the matching existing account host with the
-  path and query preserved, including legacy emoji display names and email
-  formats. Session API failures show an unavailable message
-  with a retry action and the shell's home link; a missing endpoint must not
-  crash the page.
+- Session API failures show an unavailable message with a retry action and
+  the shell's home link; a missing endpoint must not crash the page.
 - Verify mobile containment and `/healthz` independently of API availability.
   Cookie/branch forwarding can be checked with the opt-in local session fixture,
   registration answers, including the registration budget's `429`, with the

@@ -1,5 +1,6 @@
 import { getRequestHeader, setResponseHeader } from '@tanstack/react-start/server'
 import { identitySessionGet } from 'api-client'
+import { zSession } from './identity'
 import { requestUrls } from './urls.server'
 
 export async function readSession() {
@@ -19,6 +20,9 @@ export async function readSession() {
     cache: 'no-store',
     redirect: 'error',
     signal: AbortSignal.timeout(10_000),
+    responseValidator: body => zSession.parseAsync(body),
   })
-  return data ? { status: 'ready' as const, ...urls, session: data } : { status: 'unavailable' as const, ...urls }
+  return data
+    ? { status: 'ready' as const, ...urls, session: { account: data.account } }
+    : { status: 'unavailable' as const, ...urls }
 }

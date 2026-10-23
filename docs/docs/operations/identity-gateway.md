@@ -47,7 +47,7 @@ A source merge automatically releases the API and worker to production through
 `build-bazel.yaml`, Image Updater and Argo CD. Treat it as a real production
 release. It also publishes development frontend images; development
 reconciliation switches the shared callback and private SSR routes. Legacy
-webv2, admin and auth publish `prod` only through a separately authorized
+webv2 and admin publish `prod` only through a separately authorized
 `workflow_dispatch` with `publish_production: true`. See
 [Production branches](../develop/production-branches.md) for branch support.
 

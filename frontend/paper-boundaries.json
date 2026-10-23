@@ -4,7 +4,6 @@
     "paper-styleguide": "paper",
     "styleguide": "legacy",
     "admin": "legacy",
-    "auth": "legacy",
     "webv2": "legacy",
     "paper-playground": "paper",
     "webv3": "paper",

@@ -16,6 +16,6 @@ export default defineConfig({
     host: process.env.HOST || '0.0.0.0',
     port: process.env.PORT ? Number(process.env.PORT) : 5184,
     strictPort: true,
-    allowedHosts: ['localhost', '.code.apps.lab', 'authv2.tadoku.dev.lab', '.authv2.tadoku.dev.lab'],
+    allowedHosts: ['localhost', '.code.apps.lab', 'account.tadoku.dev.lab', '.account.tadoku.dev.lab', 'authv2.tadoku.dev.lab', '.authv2.tadoku.dev.lab'],
   },
 })

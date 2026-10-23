@@ -39,7 +39,7 @@
     url: http://tadoku-cli-api.tdk-dev-oathkeeper.svc.cluster.local
     strip_path: /api/internal
   match:
-    url: http://<{tadoku.dev.lab,*.tadoku.dev.lab,authv2.tadoku.dev.lab,*.authv2.tadoku.dev.lab}>/api/internal/identity/<**>
+    url: http://<{tadoku.dev.lab,*.tadoku.dev.lab,*.account.tadoku.dev.lab,authv2.tadoku.dev.lab,*.authv2.tadoku.dev.lab}>/api/internal/identity/<**>
     methods:
       - GET
       - POST

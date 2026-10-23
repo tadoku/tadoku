@@ -43,7 +43,7 @@ test.afterAll(async () => {
   if (fixtureEnabled) await new Promise<void>((resolve, reject) => fixture.close(error => error ? reject(error) : resolve()))
 })
 
-test('account screen, session routing and unavailable API', async ({ page, request }, testInfo) => {
+test('account screen, session forwarding and unavailable API', async ({ page, request }, testInfo) => {
   await page.goto('/login')
   await expect(page.getByRole('heading', { level: 1, name: 'Log in' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Log in', exact: true })).toBeEnabled()
@@ -58,39 +58,6 @@ test('account screen, session routing and unavailable API', async ({ page, reque
     const response = await request.get('/login', { headers: { Cookie: 'tadoku_session_fixture=synthetic', 'X-Dev-Branch': 'g-smoke' } })
     expect(response.status()).toBe(200)
     expect.soft(requests).toContainEqual({ cookie: 'tadoku_session_fixture=synthetic', branch: 'g-smoke', method: 'GET', path: '/api/internal/identity/session' })
-  })
-
-  await test.step('v1 returns to the matching page of the existing account app', async () => {
-    session = { account_app: 'v1', account: null }
-    for (const [path, location] of [
-      ['/login?return_to=%2Flogs%2Fnew', '/login?return_to=%2Flogs%2Fnew'],
-      ['/register', '/register'],
-      ['/', '/'],
-      ['/settings?return_to=https%3A%2F%2Ftadoku.app%2F', '/?return_to=https%3A%2F%2Ftadoku.app%2F'],
-      ['/recovery', '/account-recovery'],
-    ]) {
-      const response = await request.get(path, { maxRedirects: 0 })
-      expect.soft(response.status(), path).toBe(307)
-      expect.soft(response.headers().location, path).toBe(`http://account.localhost:5195${location}`)
-    }
-  })
-
-  await test.step('v1 legacy account details do not prevent the redirect', async () => {
-    for (const email of ['reader@example.test', 'reader@localhost']) {
-      session = {
-        account_app: 'v1',
-        account: {
-          id: '00000000-0000-4000-8000-000000000001',
-          email,
-          display_name: '😀'.repeat(25),
-          created_at: '2026-01-01T00:00:00Z',
-          authenticated_at: '2026-01-01T00:00:00Z',
-        },
-      }
-      const response = await request.get('/login?return_to=%2Flogs%2Fnew', { maxRedirects: 0 })
-      expect.soft(response.status()).toBe(307)
-      expect.soft(response.headers().location).toBe('http://account.localhost:5195/login?return_to=%2Flogs%2Fnew')
-    }
   })
 
   await test.step('a missing, failing or malformed API keeps a visible unavailable state', async () => {

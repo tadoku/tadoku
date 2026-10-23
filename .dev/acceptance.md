@@ -1,6 +1,6 @@
 # Supported development acceptance (development cluster only)
 
-Scope: webv2, webv3, auth, authv2, admin, tadoku-api and tadoku-worker. Token-reflector is base-only.
+Scope: webv2, webv3, authv2, admin, tadoku-api and tadoku-worker. Token-reflector is base-only.
 Paper styleguide is deferred; its local pnpm workflow is independent.
 
 Use dev-cli v0.9.0 or newer and only the `homelab-talos-dev` context. Record
@@ -11,8 +11,8 @@ sanitized output with the PR report. Do not include credentials or cookies.
 ## Failure modes and gates
 
 1. Bazel discovery must not select unrelated apps: query reverse dependencies
-   for an auth-only file, an admin-only file and shared `packages/ui` code.
-   Expect auth only, admin only, and the three legacy frontends respectively.
+   for an admin-only file and shared `packages/ui` code. Expect admin only and
+   both legacy frontends respectively.
    A Webv3 file selects only Webv3; an authv2 file selects only authv2. Shared
    `packages/paper-ui` files select both. Each Paper overlay must use Node22,
    port 3000 and the Paper build watcher, running its own Vite server.

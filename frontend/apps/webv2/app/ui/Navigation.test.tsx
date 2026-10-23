@@ -15,7 +15,6 @@ Reflect.set(globalThis, 'React', React)
 
 const state = vi.hoisted(() => ({
   signedIn: true,
-  accountApp: 'v1',
   role: 'user',
   pathname: '/',
   navigate: vi.fn(),
@@ -28,13 +27,12 @@ vi.mock('@app/common/session', () => ({
       : undefined,
   ],
   useUserRole: () => state.role,
-  useAccountApp: () => state.accountApp,
   useLogoutHandler: () => vi.fn(),
 }))
 vi.mock('@app/common/hooks', () => ({ useCurrentLocation: () => '/' }))
 vi.mock('@tanstack/react-query', () => ({ useIsFetching: () => 0 }))
 vi.mock('next/config', () => ({
-  default: () => ({ publicRuntimeConfig: { homeUrl: 'https://tadoku.test', authUiUrl: 'https://account.tadoku.test', adminUrl: 'https://admin.tadoku.test', apiEndpoint: 'https://tadoku.test/api/internal' } }),
+  default: () => ({ publicRuntimeConfig: { homeUrl: 'https://tadoku.test', adminUrl: 'https://admin.tadoku.test', apiEndpoint: 'https://tadoku.test/api/internal' } }),
 }))
 vi.mock('next/router', () => ({
   useRouter: () => ({ pathname: state.pathname }),
@@ -59,7 +57,6 @@ vi.mock('next/link', () => ({
 vi.mock('ui/components/branding', () => ({ Logo: () => <span>Tadoku</span> }))
 
 beforeEach(() => {
-  state.accountApp = 'v1'
   state.signedIn = true
   state.role = 'user'
   state.pathname = '/'
@@ -137,13 +134,12 @@ describe('New log header action', () => {
 
 
 describe('tenant account links', () => {
-  it('uses authv2 login and registration when the API selects v2', () => {
+  it('uses authv2 login and registration', () => {
     state.signedIn = false
-    state.accountApp = 'v2'
     render(<Navigation />)
     expect(screen.getByRole('link', { name: 'Log in' }).getAttribute('href'))
-      .toBe('https://authv2.tadoku.test/login?return_to=%2F')
+      .toBe('https://account.tadoku.test/login?return_to=%2F')
     expect(screen.getByRole('link', { name: 'Sign up' }).getAttribute('href'))
-      .toBe('https://authv2.tadoku.test/register?return_to=%2F')
+      .toBe('https://account.tadoku.test/register?return_to=%2F')
   })
 })

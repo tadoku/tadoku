@@ -1,6 +1,6 @@
 ---
 title: Authv2
-description: Paper account screens, native and enhanced JSON submissions, recovery and Settings, session selection, manual browser smoke and deployment.
+description: Paper account screens, native and enhanced JSON submissions, recovery and Settings, session reads, manual browser smoke and deployment.
 ---
 
 # Authv2
@@ -11,9 +11,7 @@ Authv2 is the account application on the [Webv3 stack](webv3.md):
 TanStack Start, Router, Query and Form, Zod, Vite, Nitro and Paper. `/` is
 Settings, the identity API's recovery redirect target; `/settings` opens the
 same screen for existing caller links. `/login`, `/register` and `/recovery`
-log in, create an account and request a password-reset email. The legacy
-`auth` app serves tenants that select v1 where Kratos runs, such as in
-development.
+log in, create an account and request a password-reset email.
 
 ## Forms and recovery
 
@@ -26,7 +24,7 @@ controls, and again from the live controls at submission.
 A hydrated form sends JSON from the browser to the identity API on the tenant's
 main host, for example `https://tadoku.app/api/internal/identity/login`, with
 credentials and the API's CORS rules. Login throttling therefore sees each
-visitor's own address. Branch authv2 hosts do not route `/api/internal`. Client
+visitor's own address. Branch account hosts do not route `/api/internal`. Client
 validation mirrors the API's length rules; the API's similarity rule and other
 rejections map onto the field they concern (`email_taken`, `invalid_email`,
 `invalid_display_name`, `invalid_password`) or onto the form (`wrong_password`,
@@ -77,33 +75,30 @@ links still return the identity API's `400` JSON response; request another at
 `/recovery`. Recovery requests show the same confirmation for known and unknown
 addresses. Development mail remains held.
 
-## Session and account selection
+## Session
 
 `frontend/apps/authv2/src/lib/session.server.ts` requests `GET /identity/session`
 through the [generated client](api-client.md) from the configured Tadoku API root,
 forwarding only the incoming Cookie and `X-Dev-Branch` request headers. The
-generated validator checks the response shape; the API owns account field
-constraints, so legacy display names and email formats do not block the v1
-redirect. Session data
-is request-scoped; both the upstream read and rendered response disable caching.
+generated session schema, without `account_app`, checks the response shape; the
+API owns account field constraints, so imported display names and email formats
+pass. Session data is request-scoped; both the upstream read and rendered response disable caching.
 The server function in `frontend/apps/authv2/src/lib/session.ts` keeps server
 configuration and request credentials out of the browser bundle.
 
-The API chooses the account app for the request's tenant. A `v1` answer redirects
-to the matching page of the existing account origin with the query preserved:
-`/settings` maps to `/` and `/recovery` to `/account-recovery`. A missing
-endpoint, non-success response, timeout or invalid payload shows an unavailable
-page with a retry link. An unavailable answer does not invent an account-app
-selection or an authenticated account.
+A missing endpoint, non-success response, timeout or invalid payload shows an
+unavailable page with a retry link. An unavailable answer does not invent an
+authenticated account.
 
 `frontend/apps/authv2/src/lib/urls.server.ts` resolves origins per request.
-Development uses `authv2.tadoku.dev.lab` and
-`<route>.authv2.tadoku.dev.lab`; production uses `authv2.tadoku.app` and
-`<route>.authv2.preview.tadoku.app`. In production, `account.tadoku.app`
-redirects to `authv2.tadoku.app`, keeping the path and query and mapping
-`/account-recovery` to `/recovery`. A valid branch label selects the sibling
-Webv2 API gateway and existing account origin. Other hosts retain the configured
-origins. Forwarded host headers cannot select an upstream.
+Authv2 is the account app: development serves it on `account.tadoku.dev.lab`
+and `<route>.account.tadoku.dev.lab`, production on `account.tadoku.app` and
+`<route>.account.preview.tadoku.app`. The former `authv2.` hosts are a temporary
+redirect: `authv2.tadoku.app` redirects to `account.tadoku.app`, keeping the
+path and query, and `urls.server.ts` still accepts `authv2.` branch hosts until
+that redirect is removed. A valid branch label selects the sibling Webv2 origin
+and API gateway. Other hosts retain the configured origins. Forwarded host
+headers cannot select an upstream.
 
 ## Local development
 
@@ -174,8 +169,8 @@ password errors, foreign-origin posts, logout and, when an operator ages the
 session, stale-session reauthentication. `recovery.spec.ts` follows a held
 recovery email's generated link through Settings and checks old passwords,
 sessions and links fail. See `frontend/apps/authv2/e2e/README.md` for setup and
-for the loopback session fixture that checks header forwarding, v1 redirection
-and failure responses, for the registration fixture that sends controlled
+for the loopback session fixture that checks header forwarding and failure
+responses, for the registration fixture that sends controlled
 API answers, including the registration `429`, through both the hydrated and
 native registration paths, and for the Settings fixture that serves the API's
 exact session bytes for imported addresses with control characters. These fixtures prove application HTTP/SSR behavior; it
@@ -202,7 +197,7 @@ explicitly requested tags from committed source. The authv2 build workflow
 checks types, lint, boundaries and the container without running Playwright.
 Main publication creates commit and `latest` tags; only an owner-approved manual
 workflow dispatch with `publish_production` creates `prod`. Production serves
-authv2 at `authv2.tadoku.app`; the maintainer owns its manifests, DNS,
+authv2 at `account.tadoku.app`; the maintainer owns its manifests, DNS,
 certificates and deployment in the separate GitOps repository.
 
 The first source merge automatically starts both image publication and the
@@ -218,10 +213,9 @@ public. Follow this order:
    and changes only this new package's visibility to Public. Verify an anonymous
    pull. Publishing and changing visibility are separate actions; no manual
    workflow dispatch or early image upload is needed.
-3. Require authv2's Pod Ready, `tadoku-dev` Synced and Healthy,
-   `https://authv2.tadoku.dev.lab/login` returning 200, and the existing account
-   host and auth workload unchanged. Authv2 shows its unavailable page until
-   the identity API is deployed.
+3. Require authv2's Pod Ready, `tadoku-dev` Synced and Healthy and
+   `https://account.tadoku.dev.lab/login` returning 200. Authv2 shows its
+   unavailable page until the identity API is deployed.
 4. Enroll authv2 in the homelab Image Updater with the digest strategy and
    write-back to `k8s/dev/base/kustomization.yaml`, then verify an immutable digest
    resolution. The homelab infrastructure repository owns this configuration.

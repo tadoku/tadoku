@@ -20,7 +20,7 @@ documented here.
 | Tadoku API | Serves every public HTTP operation and publishes typed jobs in the business transaction. | `services/tadoku-api/`, `k8s/dev/base/services/tadoku-api.yaml` |
 | Tadoku worker | Executes registered jobs, composes feature operations and invalidates leaderboard caches. | `services/tadoku-api/cmd/tadoku-worker/`, `k8s/dev/base/services/tadoku-worker.yaml` |
 | webv2 | Main site: logging, contests, leaderboards and content | `frontend/apps/webv2/`, `k8s/dev/base/frontend-webv2/` |
-| auth | Account portal built on Kratos self-service flows | `frontend/apps/auth/`, `k8s/dev/base/frontend-auth/` |
+| authv2 | Account app: login, registration, recovery and Settings through the identity API | `frontend/apps/authv2/`, `k8s/dev/base/frontend-authv2/` |
 | admin | Administration, moderation and CMS | `frontend/apps/admin/`, `k8s/dev/base/frontend-admin/` |
 | Ory Kratos | Identities, sessions and login flows | `k8s/dev/base/kratos/` |
 | Ory Keto | Role relationships such as administrators and bans | `k8s/dev/base/keto/` |
@@ -37,7 +37,7 @@ attaches the application routes to the platform Envoy Gateway.
 ## Request paths
 
 ```text
-browser → ingress-nginx → Envoy → webv2 / auth / admin
+browser → ingress-nginx → Envoy → webv2 / authv2 / admin
                              → Oathkeeper → Envoy → Tadoku API
 ```
 

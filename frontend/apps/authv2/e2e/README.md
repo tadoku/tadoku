@@ -5,20 +5,19 @@ Playwright smoke suite is deliberately not wired into CI.
 
 ```sh
 pnpm --filter authv2 exec playwright install chromium
-AUTHV2_BASE_URL=https://<route>.authv2.tadoku.dev.lab \
+AUTHV2_BASE_URL=https://<route>.account.tadoku.dev.lab \
   AUTHV2_READER_STATE_FILE=<private file outside the report> \
   PLAYWRIGHT_OUTPUT_DIR=/workspace/.scratch/authv2-smoke \
   pnpm --filter authv2 exec playwright test e2e/credentials.spec.ts e2e/recovery.spec.ts e2e/settings.spec.ts
 ```
 
-The tenant must select v2 and provide native Dev Reader and Dev Admin accounts,
-with the documented development passwords. The suite writes only to that owned
+The tenant must provide native Dev Reader and Dev Admin accounts, with the
+documented development passwords. The suite writes only to that owned
 branch tenant and reads held email through the tenant's main host with an Admin
 cookie. The recovery journey replaces the branch Reader password and saves the
 replacement with mode 0600 in `AUTHV2_READER_STATE_FILE`, so repeat runs can log
 in; delete the file after owner teardown. Optional `AUTHV2_READER_PASSWORD` and
-`AUTHV2_ADMIN_PASSWORD` select private fixture credentials. No shared Kratos
-account is used.
+`AUTHV2_ADMIN_PASSWORD` select private fixture credentials.
 
 A full run makes about ten Reader logins and eleven throttled attempts for one
 random address. The identity API allows ten attempts per email and fifty per
@@ -57,9 +56,7 @@ AUTHV2_SESSION_FIXTURE=true \
 The opt-in test fixture binds only `127.0.0.1:5195` and closes after the test.
 It returns synthetic session responses and records synthetic request headers.
 Assertions prove the application's server forwards Cookie and `X-Dev-Branch`,
-v1 returns HTTP 307 to the existing account app preserving path/query (including
-legacy accounts with 25 emoji in their display name or a local-domain email), and
-404/503/malformed responses show an unavailable message with a retry action
+and 404/503/malformed responses show an unavailable message with a retry action
 and the shell's home link. A second test renders Settings for stored account
 values: a version-0 account ID, and imported emails with an ideographic-space
 prefix or 321 raw bytes. Each must appear unchanged in the server HTML and the
@@ -93,7 +90,7 @@ It answers registration with a `201` session, the registration budget's `429`,
 malformed `201`, an undocumented `200` and a reset connection. The hydrated test
 answers the browser's calls to `https://tadoku.dev.lab` inside Playwright, so
 they never reach the network; the native test posts to `/actions/register` as
-`authv2.tadoku.dev.lab`, and the server forwards to the `127.0.0.1:5195`
+`account.tadoku.dev.lab`, and the server forwards to the `127.0.0.1:5195`
 fixture. Each failure must keep the visitor on the form with the expected
 message after exactly one request, and only the `201` session may continue or
 pass a session cookie on.
@@ -114,7 +111,7 @@ unchanged address must send nothing and show that it is already the account's
 address; display-name and password saves must send only their own field, and an
 edited address must be sent as typed. The JavaScript-disabled test captures each
 native form body the browser posts, then replays it to `/actions/*` as
-`authv2.tadoku.dev.lab`.
+`account.tadoku.dev.lab`.
 
 `AUTHV2_BASE_URL` defaults to `http://127.0.0.1:5184`.
 `PLAYWRIGHT_OUTPUT_DIR` defaults to a temporary directory. Reports and mobile

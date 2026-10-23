@@ -34,7 +34,7 @@ errors:
     redirect:
       enabled: true
       config:
-        to: https://account.tadoku.dev.lab/
+        to: https://account.tadoku.dev.lab/login
         when:
           - error:
               - unauthorized

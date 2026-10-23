@@ -325,7 +325,8 @@ paths:
                 type: string
                 maxLength: 4096
             Location:
-              description: Tenant authv2 Settings URL with an optional validated return_to continuation after Settings completion.
+              description: Tenant authv2 Settings URL that opens the Password editor (edit=password), with an
+                optional validated return_to continuation after Settings completion.
               schema:
                 type: string
                 maxLength: 2048

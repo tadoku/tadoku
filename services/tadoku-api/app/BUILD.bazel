@@ -1,4 +1,4 @@
-load("@rules_go//go:def.bzl", "go_library")
+load("@rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "app",
@@ -57,10 +57,38 @@ go_library(
         "//services/tadoku-api/internal/callbackauth",
         "//services/tadoku-api/internal/errx",
         "//services/tadoku-api/internal/identity",
-        "//services/tadoku-api/internal/permissions",
         "//services/tadoku-api/internal/tenant",
         "//services/tadoku-api/internal/timex",
         "@com_github_google_uuid//:uuid",
         "@com_github_jackc_pgx_v5//pgxpool",
+    ],
+)
+
+go_test(
+    name = "app_test",
+    size = "medium",
+    srcs = ["contests_registration_upsert_test.go"],
+    args = ["-test.parallel=4"],
+    embed = [":app"],
+    env_inherit = ["TADOKU_TEST_POSTGRES_URL"],
+    tags = [
+        "no-cache",
+        "no-remote-exec",
+        "requires-network",
+    ],
+    target_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
+    deps = [
+        "//services/tadoku-api/features/contests",
+        "//services/tadoku-api/features/jobqueue",
+        "//services/tadoku-api/features/languages",
+        "//services/tadoku-api/features/profile",
+        "//services/tadoku-api/internal/errx",
+        "//services/tadoku-api/internal/identity",
+        "//services/tadoku-api/internal/tenant",
+        "//services/tadoku-api/internal/testpostgres",
+        "@com_github_google_uuid//:uuid",
     ],
 )

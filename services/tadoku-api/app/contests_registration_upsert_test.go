@@ -36,16 +36,21 @@ func TestUpsertContestRegistrationConcurrentFirstTime(t *testing.T) {
 
 	_, err = db.Pool.Exec(tenantCtx, `
 		insert into users (tenant, id, display_name, created_at, updated_at)
-		values ('tadoku/prod', $1, 'Owner', '2026-01-01', '2026-01-01');
+		values ('tadoku/prod', $1, 'Owner', '2026-01-01', '2026-01-01')
+	`, ownerID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = db.Pool.Exec(tenantCtx, `
 		insert into contests (
 			tenant, id, owner_user_id, owner_user_display_name, "private", contest_start, contest_end,
 			registration_end, title, activity_type_id_allow_list, official, created_at, updated_at
 		) values (
-			'tadoku/prod', $2, $1, 'Owner', false,
+			'tadoku/prod', $1, $2, 'Owner', false,
 			'2026-09-01', '2026-09-30', '2026-09-30', 'Concurrent registration', '{1}', false,
 			'2026-01-01', '2026-01-01'
-		);
-	`, ownerID, contestID)
+		)
+	`, contestID, ownerID)
 	if err != nil {
 		t.Fatal(err)
 	}

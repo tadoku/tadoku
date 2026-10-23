@@ -25,6 +25,6 @@
     "authv2": "pnpm --filter authv2 dev"
   },
   "devDependencies": {
-    "vite": "6.4.3"
+    "vite": "8.1.6"
   }
 }

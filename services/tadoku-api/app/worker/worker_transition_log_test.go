@@ -102,6 +102,90 @@ func TestWorkerLogsTransitionFailureAfterSuccessfulHandler(t *testing.T) {
 	}
 }
 
+func TestWorkerLogsHandlerErrorWhenTransitionFails(t *testing.T) {
+	fixture, err := newWorkerFixture(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := fixture.Close(); err != nil {
+			t.Error(err)
+		}
+	})
+
+	pool, err := pgxpool.New(t.Context(), fixture.dsn)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(pool.Close)
+
+	var id int64
+	err = fixture.db.QueryRow(t.Context(), `
+		insert into jobs (tenant, task_type, payload)
+		values ($1, $2, '{"year":2026}')
+		returning id`,
+		tenant.Production().String(),
+		string(jobs.LeaderboardInvalidateOfficialV1),
+	).Scan(&id)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	queue := jobqueue.NewService(jobqueue.NewRepository(pool))
+	claimed, err := queue.Claim(
+		tenant.WithKey(t.Context(), tenant.Production()),
+		jobs.LeaderboardInvalidateOfficialV1,
+		1,
+		time.Minute,
+		3,
+	)
+	if err != nil || len(claimed) != 1 || claimed[0].ID != id {
+		t.Fatalf("claim fixture: count=%d error=%v", len(claimed), err)
+	}
+
+	failure := errors.New("handler fixture failure")
+	handlers, err := newRegistry(handle(
+		func(context.Context, jobs.InvalidateOfficialLeaderboardV1) error {
+			pool.Close()
+			return failure
+		},
+		policy{Concurrency: 1, Timeout: time.Second, MaxAttempts: 3},
+	))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var logs bytes.Buffer
+	runtime := &runner{
+		queue:    queue,
+		handlers: handlers,
+		logger:   slog.New(slog.NewJSONHandler(&logs, nil)),
+		metrics:  NewMetrics(prometheus.NewRegistry()),
+	}
+	spec := handlers.ordered[0].spec
+	spec.lease = time.Minute
+
+	err = runtime.process(t.Context(), claimed[0], spec)
+	if err == nil {
+		t.Fatal("process error = nil, want transition failure")
+	}
+
+	events := decodeLogEvents(t, logs.Bytes())
+	transition := eventsWithMessage(events, "transition job")
+	if len(transition) != 1 {
+		t.Fatalf("transition job events=%v, want exactly one", events)
+	}
+	if transition[0]["handler_error"] != failure.Error() {
+		t.Errorf("handler_error=%v, want %q", transition[0]["handler_error"], failure.Error())
+	}
+	if transition[0]["code"] != failureCode(failure) {
+		t.Errorf("code=%v, want %s", transition[0]["code"], failureCode(failure))
+	}
+	if len(eventsWithMessage(events, "job failed")) != 0 {
+		t.Errorf("unexpected job failed events in %v", events)
+	}
+}
+
 func TestWorkerLogsHandlerFailureOnce(t *testing.T) {
 	fixture, err := newWorkerFixture(t.Context())
 	if err != nil {

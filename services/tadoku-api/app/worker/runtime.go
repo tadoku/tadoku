@@ -272,7 +272,11 @@ func (r *runner) process(ctx context.Context, task jobqueue.ClaimedJob, spec han
 	renewErr := <-renewed
 	cancelHandler()
 	if renewErr != nil {
-		r.logger.WarnContext(ctx, "job lease lost", "job_id", task.ID, "type", task.Type, "error", renewErr)
+		attrs := []any{"job_id", task.ID, "type", task.Type, "error", renewErr}
+		if handlerErr != nil {
+			attrs = append(attrs, "handler_error", handlerErr, "code", failureCode(handlerErr))
+		}
+		r.logger.WarnContext(ctx, "job lease lost", attrs...)
 		return renewErr
 	}
 
@@ -300,11 +304,19 @@ func (r *runner) process(ctx context.Context, task jobqueue.ClaimedJob, spec han
 	}
 
 	if err != nil {
-		r.logger.ErrorContext(ctx, "transition job", "job_id", task.ID, "type", task.Type, "error", err)
+		attrs := []any{"job_id", task.ID, "type", task.Type, "error", err}
+		if handlerErr != nil {
+			attrs = append(attrs, "handler_error", handlerErr, "code", failureCode(handlerErr))
+		}
+		r.logger.ErrorContext(ctx, "transition job", attrs...)
 		return fmt.Errorf("transition job %d: %w", task.ID, err)
 	}
 	if !held {
-		r.logger.WarnContext(ctx, "lease lost before transition", "job_id", task.ID, "type", task.Type)
+		attrs := []any{"job_id", task.ID, "type", task.Type}
+		if handlerErr != nil {
+			attrs = append(attrs, "handler_error", handlerErr, "code", failureCode(handlerErr))
+		}
+		r.logger.WarnContext(ctx, "lease lost before transition", attrs...)
 		return fmt.Errorf("job %d: lease lost before transition", task.ID)
 	}
 	if terminal {

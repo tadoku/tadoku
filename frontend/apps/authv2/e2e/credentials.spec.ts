@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto'
 import { test, expect } from '@playwright/test'
 import {
-  expectContained, expectSettings, firstWrite, holdScripts, logIn, newPage, origins, readerEmail, readerPassword,
-  waitForHydration,
+  expectContained, expectSettings, firstWrite, holdScripts, logIn, newPage, openSetting, origins, readerEmail,
+  readerPassword, settingRow, settingValue, waitForHydration,
 } from './support'
 
 // Failure modes: server HTML without usable controls; native submissions that cannot create a session; values typed
@@ -22,9 +22,9 @@ test('login and registration work without JavaScript', async ({ browser }, testI
   await page.getByLabel('Password').fill(password)
   await page.getByRole('button', { name: 'Create account', exact: true }).click()
   await expectSettings(page)
-  await expect(page.getByRole('textbox', { name: 'Email', exact: true })).toHaveValue(email)
+  await expect(settingValue(page, 'Email')).toHaveText(email)
   await page.reload()
-  await expect(page.getByLabel('Display name')).toHaveValue('Native Reader')
+  await expect(settingValue(page, 'Display name')).toHaveText('Native Reader')
 
   await page.getByRole('button', { name: 'Log out', exact: true }).click()
   await expect(page.getByRole('heading', { level: 1, name: 'Log in' })).toBeVisible()
@@ -32,11 +32,12 @@ test('login and registration work without JavaScript', async ({ browser }, testI
   await expect(page.getByText('That email and password don’t match.')).toBeVisible()
   await logIn(page, email, password)
   await expectSettings(page)
-  const emailSection = page.getByRole('region', { name: 'Email address' })
-  await emailSection.getByRole('textbox', { name: 'Email' }).fill(readerEmail)
-  await emailSection.getByRole('button', { name: 'Change email' }).click()
+  const emailSection = settingRow(page, 'Email')
+  await openSetting(page, 'Email')
+  await emailSection.getByRole('textbox', { name: 'New email' }).fill(readerEmail)
+  await emailSection.getByRole('button', { name: 'Save email' }).click()
   await expect(emailSection.getByRole('alert')).toContainText('already registered')
-  await expect(page.getByRole('region', { name: 'Profile' }).getByRole('alert')).toHaveCount(0)
+  await expect(settingRow(page, 'Display name').getByRole('alert')).toHaveCount(0)
   await page.screenshot({ path: testInfo.outputPath('settings-without-javascript.png'), fullPage: true })
   await page.getByRole('button', { name: 'Log out', exact: true }).click()
   await page.context().close()
@@ -66,7 +67,7 @@ test('credentials typed before hydration are kept and sent straight to the ident
     expect(request.url()).toBe(main + endpoint)
     expect(request.headers()['content-type']).toBe('application/json')
     await expectSettings(page)
-    await expect(page.getByRole('textbox', { name: 'Email', exact: true })).toHaveValue(email)
+    await expect(settingValue(page, 'Email')).toHaveText(email)
     await page.getByRole('button', { name: 'Log out', exact: true }).click()
     await expect(page.getByRole('heading', { level: 1, name: 'Log in' })).toBeVisible()
   }

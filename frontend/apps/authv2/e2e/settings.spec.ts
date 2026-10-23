@@ -2,14 +2,14 @@ import { randomUUID } from 'node:crypto'
 import { existsSync, writeFileSync } from 'node:fs'
 import { test, expect } from '@playwright/test'
 import {
-  adminEmail, adminPassword, expectContained, expectSettings, logIn, newPage, origins, readerEmail, readerPassword,
-  waitForHydration,
+  adminEmail, adminPassword, expectContained, expectSettings, logIn, newPage, openSetting, origins, readerEmail,
+  readerPassword, settingRow, settingValue, waitForHydration,
 } from './support'
 
 // Failure modes: guests stranded on Settings or returned without their continuation; profile and email changes that
 // do not persist or are not explained; the old address never told about an email change; crafted continuations
 // rendered as links; foreign-origin native posts accepted; logout that leaves a usable session; stale sessions
-// without a way to log in again and come back.
+// without a way to log in again and come back to the editor they were using.
 
 test('guests log in and come back to Settings with its continuation', async ({ browser }, testInfo) => {
   const { authv2, main } = origins(testInfo)
@@ -38,29 +38,33 @@ test('profile and email changes persist, explain problems and notify the old add
   await expectSettings(page)
   await waitForHydration(page)
 
-  const profile = page.getByRole('region', { name: 'Profile' })
+  const profile = settingRow(page, 'Display name')
+  await openSetting(page, 'Display name')
   await profile.getByRole('textbox', { name: 'Display name' }).fill('x')
   await profile.getByRole('button', { name: 'Save display name' }).click()
   await expect(profile.getByRole('textbox', { name: 'Display name' })).toHaveAccessibleDescription(/Use 2 to 32 characters/)
   await profile.getByRole('textbox', { name: 'Display name' }).fill('W2 Reader')
   await profile.getByRole('button', { name: 'Save display name' }).click()
-  await expect(profile.getByText('Display name saved.')).toBeVisible()
+  await expect(profile.getByRole('status')).toHaveText('Display name saved.')
+  await expect(settingValue(page, 'Display name')).toHaveText('W2 Reader')
   await expect(page.getByRole('banner')).toContainText('W2 Reader')
   await page.reload()
   await waitForHydration(page)
-  await expect(profile.getByRole('textbox', { name: 'Display name' })).toHaveValue('W2 Reader')
+  await expect(settingValue(page, 'Display name')).toHaveText('W2 Reader')
 
-  const email = page.getByRole('region', { name: 'Email address' })
-  await email.getByRole('textbox', { name: 'Email' }).fill(adminEmail)
-  await email.getByRole('button', { name: 'Change email' }).click()
-  await expect(email.getByRole('textbox', { name: 'Email' })).toHaveAccessibleDescription(/already registered/)
+  const email = settingRow(page, 'Email')
+  await openSetting(page, 'Email')
+  await email.getByRole('textbox', { name: 'New email' }).fill(adminEmail)
+  await email.getByRole('button', { name: 'Save email' }).click()
+  await expect(email.getByRole('textbox', { name: 'New email' })).toHaveAccessibleDescription(/already registered/)
   const changed = `w2-reader-${randomUUID()}@example.test`
-  await email.getByRole('textbox', { name: 'Email' }).fill(changed)
-  await email.getByRole('button', { name: 'Change email' }).click()
-  await expect(email.getByText('Email changed.')).toBeVisible()
+  await email.getByRole('textbox', { name: 'New email' }).fill(changed)
+  await email.getByRole('button', { name: 'Save email' }).click()
+  await expect(email.getByRole('status')).toContainText('Email changed.')
+  await expect(settingValue(page, 'Email')).toHaveText(changed)
   await page.reload()
   await waitForHydration(page)
-  await expect(email.getByRole('textbox', { name: 'Email' })).toHaveValue(changed)
+  await expect(settingValue(page, 'Email')).toHaveText(changed)
   await page.screenshot({ path: testInfo.outputPath('settings-desktop.png'), fullPage: true })
 
   const admin = await newPage(browser, testInfo)
@@ -74,9 +78,11 @@ test('profile and email changes persist, explain problems and notify the old add
   }, { timeout: 30_000 }).toBe(true)
   await admin.context().close()
 
-  await email.getByRole('textbox', { name: 'Email' }).fill(readerEmail)
-  await email.getByRole('button', { name: 'Change email' }).click()
-  await expect(email.getByText('Email changed.')).toBeVisible()
+  await openSetting(page, 'Email')
+  await email.getByRole('textbox', { name: 'New email' }).fill(readerEmail)
+  await email.getByRole('button', { name: 'Save email' }).click()
+  await expect(email.getByRole('status')).toContainText('Email changed.')
+  await expect(settingValue(page, 'Email')).toHaveText(readerEmail)
   await page.setViewportSize({ width: 390, height: 844 })
   await expectContained(page)
   await page.screenshot({ path: testInfo.outputPath('settings-mobile.png'), fullPage: true })
@@ -89,9 +95,10 @@ test('password problems are explained and foreign-origin posts are refused', asy
   await expectSettings(page)
   await waitForHydration(page)
 
-  const password = page.getByRole('region', { name: 'Password' })
+  const password = settingRow(page, 'Password')
+  await openSetting(page, 'Password')
   await password.getByLabel('New password').fill(readerEmail)
-  await password.getByRole('button', { name: 'Change password' }).click()
+  await password.getByRole('button', { name: 'Save password' }).click()
   await expect(password.getByLabel('New password')).toHaveAccessibleDescription(/too similar to your email/)
 
   const foreign = await page.request.post('/actions/password', {
@@ -126,14 +133,16 @@ test('stale sessions keep display names editable and log in again for email chan
 
   await page.reload()
   await waitForHydration(page)
-  const profile = page.getByRole('region', { name: 'Profile' })
+  const profile = settingRow(page, 'Display name')
+  await openSetting(page, 'Display name')
   await profile.getByRole('textbox', { name: 'Display name' }).fill('Stale Reader')
   await profile.getByRole('button', { name: 'Save display name' }).click()
-  await expect(profile.getByText('Display name saved.')).toBeVisible()
+  await expect(profile.getByRole('status')).toHaveText('Display name saved.')
 
-  const email = page.getByRole('region', { name: 'Email address' })
-  await email.getByRole('textbox', { name: 'Email' }).fill(`w2-stale-${randomUUID()}@example.test`)
-  await email.getByRole('button', { name: 'Change email' }).click()
+  const email = settingRow(page, 'Email')
+  await openSetting(page, 'Email')
+  await email.getByRole('textbox', { name: 'New email' }).fill(`w2-stale-${randomUUID()}@example.test`)
+  await email.getByRole('button', { name: 'Save email' }).click()
   await expect(email.getByRole('alert')).toContainText('log in again')
   await page.screenshot({ path: testInfo.outputPath('settings-stale-session.png'), fullPage: true })
 
@@ -144,8 +153,11 @@ test('stale sessions keep display names editable and log in again for email chan
   await page.getByRole('button', { name: 'Log in', exact: true }).click()
   await expectSettings(page)
   await waitForHydration(page)
+  expect(new URL(page.url()).searchParams.get('edit')).toBe('email')
+  await expect(email.getByRole('textbox', { name: 'New email' })).toBeFocused()
+  await openSetting(page, 'Display name')
   await profile.getByRole('textbox', { name: 'Display name' }).fill('Dev Reader')
   await profile.getByRole('button', { name: 'Save display name' }).click()
-  await expect(profile.getByText('Display name saved.')).toBeVisible()
+  await expect(profile.getByRole('status')).toHaveText('Display name saved.')
   await page.context().close()
 })

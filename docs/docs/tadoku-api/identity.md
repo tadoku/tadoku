@@ -212,19 +212,21 @@ The link uses the configured cookie domain and parsed tenant's main API host,
 never the incoming Host. Its path is `/api/internal/identity/recovery/{token}`,
 with the validated destination in an optional `return_to` query. Destinations
 have a 2,048-byte input ceiling and must also fit, without truncation, into
-the tenant's Settings URL with an encoded `return_to` query. The complete
-Settings URL must not exceed 2,048 bytes; the encoded recovery link must not
-exceed the email parameter limit of 4,096 bytes. Both bounds are checked before
-any account lookup, identically for known and unknown emails. Account and
-authv2 hosts must use the configured main API URL rather than assume they serve
-relative API paths. The token contains 256 random bits; only its SHA-256 hash is
-stored in `recovery_tokens`, with a one-hour expiry. The email retains the usable
-link under the email feature's existing retention and authorized-read policy.
+the tenant's Settings URL as an encoded `return_to` after `edit=password`. The
+complete Settings URL must not exceed 2,048 bytes; the encoded recovery link
+must not exceed the email parameter limit of 4,096 bytes. Both bounds are
+checked before any account lookup, identically for known and unknown emails.
+Account and authv2 hosts must use the configured main API URL rather than
+assume they serve relative API paths. The token contains 256 random bits; only
+its SHA-256 hash is stored in `recovery_tokens`, with a one-hour expiry. The
+email retains the usable link under the email feature's existing retention and
+authorized-read policy.
 
 `GET /identity/recovery/{token}` validates the destination before consuming the
-token. It always redirects to that tenant's authv2 Settings root, carrying a
-supplied `return_to` as an encoded query parameter for continuation after the
-user completes Settings. Without it, Location is the Settings root alone.
+token. It always redirects to that tenant's authv2 Settings root with
+`edit=password`, opening the Password editor, and adds a supplied `return_to`
+as an encoded query parameter for continuation after the user completes
+Settings.
 An invalid or unrepresentable continuation fails before consuming the token.
 Consumption
 locks the active account, atomically marks the token used, invalidates its other

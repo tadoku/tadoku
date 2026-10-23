@@ -113,8 +113,9 @@ and JSON request bodies. Authv2 screens may be unavailable independently of the
 API. In an owned v2 tenant, request recovery for its Dev Reader, read the held
 `account.recovery` message as Dev Admin through the public cookie gateway,
 follow `params.recovery_url` and require a `303` to that tenant's authv2
-Settings root. A supplied `return_to` must survive as a query parameter for
-continuation after Settings completion, never as the immediate destination.
+Settings URL `/?edit=password`, which opens the Password editor. A supplied
+`return_to` must follow it as `&return_to=` for continuation after Settings
+completion, never as the immediate destination.
 Set a new password and log in with it. Confirm
 actual overlay headers, tenant identity, a fresh secure cookie and rejection of
 the old password and sessions. A second consume and a foreign tenant must fail;

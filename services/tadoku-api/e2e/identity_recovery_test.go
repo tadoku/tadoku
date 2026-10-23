@@ -134,9 +134,10 @@ func TestIdentityRecoveryConsumeRevokesAndSetsPassword(t *testing.T) {
 	response := identityRequest(t, api.handler, identityBranchA, "GET",
 		"/identity/recovery/"+first+"?return_to="+url.QueryEscape(recoverySettingsURL), "", "", nil)
 	requireIdentityStatus(t, response, http.StatusSeeOther)
-	if response.Header().Get("Location") != "https://identity-a-0123abcd.authv2.tadoku.dev.lab/?return_to="+
-		url.QueryEscape(recoverySettingsURL) {
-		t.Fatal("recovery lost its validated return destination")
+	want := "https://identity-a-0123abcd.authv2.tadoku.dev.lab/?edit=password&return_to=" +
+		url.QueryEscape(recoverySettingsURL)
+	if response.Header().Get("Location") != want {
+		t.Fatal("recovery must open the Password editor with its validated return destination")
 	}
 	cookie := response.Result().Cookies()[0]
 	if !cookie.HttpOnly || !cookie.Secure || cookie.SameSite != http.SameSiteLaxMode {
@@ -215,8 +216,8 @@ func TestIdentityRecoveryRejectsRedirectBeforeConsuming(t *testing.T) {
 	requireIdentityStatus(t, response, http.StatusBadRequest)
 	response = identityRequest(t, api.handler, identityBranchA, "GET", "/identity/recovery/"+token, "", "", nil)
 	requireIdentityStatus(t, response, http.StatusSeeOther)
-	if response.Header().Get("Location") != "https://identity-a-0123abcd.authv2.tadoku.dev.lab/" {
-		t.Fatal("default Settings redirect escaped the token tenant")
+	if response.Header().Get("Location") != "https://identity-a-0123abcd.authv2.tadoku.dev.lab/?edit=password" {
+		t.Fatal("default Settings redirect escaped the token tenant or closed the Password editor")
 	}
 }
 

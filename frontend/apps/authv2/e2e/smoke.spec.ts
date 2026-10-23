@@ -1,6 +1,6 @@
 import { createServer } from 'node:http'
 import { test, expect } from '@playwright/test'
-import { holdScripts, waitForHydration } from './support'
+import { holdScripts, settingRow, settingValue, waitForHydration } from './support'
 
 const fixtureEnabled = process.env.AUTHV2_SESSION_FIXTURE === 'true'
 let status = 200
@@ -103,7 +103,7 @@ test('Settings shows stored account values unchanged', async ({ page, request },
     ] as const) {
       session = account(id, 'reader@example.test')
       const html = await (await request.get('/settings')).text()
-      expect.soft(html.includes('Change email'), id).toBe(ready)
+      expect.soft(/href="[^"]*edit=email/.test(html), id).toBe(ready)
       expect.soft(html.includes('We can’t reach your account right now'), id).toBe(!ready)
     }
   })
@@ -111,7 +111,7 @@ test('Settings shows stored account values unchanged', async ({ page, request },
   // The router's dehydrated match IDs contain NUL separators, so count NULs against an ASCII address's page.
   const nuls = (html: string) => html.split('\u0000').length - 1
   session = account('00000000-0000-4000-8000-000000000001', 'reader@example.test')
-  const routerNuls = nuls(await (await request.get('/settings')).text())
+  const routerNuls = nuls(await (await request.get('/settings?edit=email')).text())
 
   // Imported addresses keep their raw stored form: a long ideographic-space prefix, and 321 bytes that only fit
   // the 320-byte limit once Go lowercases them.
@@ -123,21 +123,30 @@ test('Settings shows stored account values unchanged', async ({ page, request },
   ]) {
     await test.step(`${name}: server-rendered and hydrated unchanged; resubmitting it sends nothing`, async () => {
       session = account('00000000-0000-4000-8000-000000000001', email)
-      const html = await (await request.get('/settings')).text()
+      const html = await (await request.get('/settings?edit=email')).text()
       expect.soft(nuls(html), 'server HTML gains no NUL').toBe(routerNuls)
       expect.soft(html.includes('\uFFFD'), 'server HTML has no replacement character').toBe(false)
       expect.soft(html.includes(`value="${email}"`), 'server-rendered email input').toBe(true)
 
+      const fits = async (view: string) => {
+        for (const width of [1280, 390]) {
+          await page.setViewportSize({ width, height: 844 })
+          expect.soft(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${view} fits ${width}px`).toBe(true)
+          await page.screenshot({ path: testInfo.outputPath(`settings-${name.replaceAll(' ', '-')}-${view}-${width}.png`), fullPage: true })
+        }
+      }
       await page.goto('/settings')
       await waitForHydration(page)
-      await expect.soft(page.getByRole('textbox', { name: 'Email', exact: true })).toHaveValue(email)
-      for (const width of [1280, 390]) {
-        await page.setViewportSize({ width, height: 844 })
-        expect.soft(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `fits ${width}px`).toBe(true)
-        await page.screenshot({ path: testInfo.outputPath(`settings-${name.replaceAll(' ', '-')}-${width}.png`), fullPage: true })
-      }
+      await expect(settingValue(page, 'Email')).toHaveCount(1)
+      expect.soft(await settingValue(page, 'Email').evaluate(value => value.textContent), 'the row shows the stored address').toBe(email)
+      await fits('row')
+
+      await page.goto('/settings?edit=email')
+      await waitForHydration(page)
+      await expect(settingRow(page, 'Email').getByRole('textbox', { name: 'New email', exact: true })).toHaveValue(email)
+      await fits('editor')
       profileUpdates.length = 0
-      await page.getByRole('button', { name: 'Change email' }).click()
+      await page.getByRole('button', { name: 'Save email' }).click()
       await expect.soft(page.locator('#email-email-error')).toHaveText('This is already your email address. Enter a different one to change it.')
       expect.soft(profileUpdates, 'an unchanged address sends nothing').toEqual([])
     })
@@ -146,13 +155,13 @@ test('Settings shows stored account values unchanged', async ({ page, request },
   await test.step('an edit typed before hydration is kept and submitted', async () => {
     session = account('00000000-0000-4000-8000-000000000001', '\u3000'.repeat(350) + 'reader@example.test')
     const scripts = await holdScripts(page)
-    await page.goto('/settings', { waitUntil: 'domcontentloaded' })
-    await page.getByRole('textbox', { name: 'Email', exact: true }).fill('edited@example.test')
+    await page.goto('/settings?edit=email', { waitUntil: 'domcontentloaded' })
+    await page.getByRole('textbox', { name: 'New email', exact: true }).fill('edited@example.test')
     await scripts.release()
-    await expect.soft(page.getByRole('textbox', { name: 'Email', exact: true })).toHaveValue('edited@example.test')
+    await expect.soft(page.getByRole('textbox', { name: 'New email', exact: true })).toHaveValue('edited@example.test')
     profileUpdates.length = 0
-    await page.getByRole('button', { name: 'Change email' }).click()
-    await expect.soft(page.getByText('Email changed.')).toBeVisible()
+    await page.getByRole('button', { name: 'Save email' }).click()
+    await expect.soft(settingRow(page, 'Email').getByRole('status')).toHaveText(/^Email changed\./)
     expect.soft(profileUpdates).toEqual([{ email: 'edited@example.test' }])
   })
 })

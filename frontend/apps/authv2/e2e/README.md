@@ -59,10 +59,11 @@ Assertions prove the application's server forwards Cookie and `X-Dev-Branch`,
 and 404/503/malformed responses show an unavailable message with a retry action
 and the shell's home link. A second test renders Settings for stored account
 values: a version-0 account ID, and imported emails with an ideographic-space
-prefix or 321 raw bytes. Each must appear unchanged in the server HTML and the
-hydrated input and fit 1280px and 390px viewports. Resubmitting the unchanged
-address must send no `PATCH /identity/settings/profile`; a value typed before
-hydration must be the one sent.
+prefix or 321 raw bytes. Each must appear unchanged in the Email row, in the
+server HTML of its open editor and in the hydrated input, and fit 1280px and
+390px viewports. Resubmitting the unchanged address must send no
+`PATCH /identity/settings/profile`; a value typed before hydration into the
+editor at `/settings?edit=email` must be the one sent.
 This substitutes only the identity API; real authentication, gateway routing,
 DNS, TLS termination and tenant persistence remain unverified. Never point
 this fixture at a shared API or treat it as live end-to-end authentication.
@@ -95,23 +96,35 @@ fixture. Each failure must keep the visitor on the form with the expected
 message after exactly one request, and only the `201` session may continue or
 pass a session cookie on.
 
-The Settings fixture uses the same server. Run:
+The Settings fixtures use the same server. Run:
 
 ```sh
 AUTHV2_SETTINGS_FIXTURE=true \
   PLAYWRIGHT_OUTPUT_DIR=/workspace/.scratch/authv2-smoke \
-  pnpm --filter authv2 exec playwright test e2e/settings-email.spec.ts
+  pnpm --filter authv2 exec playwright test e2e/settings-email.spec.ts e2e/settings-rows.spec.ts
 ```
 
-It serves the session bytes the API writes for an ordinary address and for
-imported addresses with a leading vertical tab, form feed or CRLF, or a
-trailing LF. The email input shows the address without line breaks or
-surrounding ASCII whitespace. With and without JavaScript, resubmitting the
-unchanged address must send nothing and show that it is already the account's
-address; display-name and password saves must send only their own field, and an
-edited address must be sent as typed. The JavaScript-disabled test captures each
-native form body the browser posts, then replays it to `/actions/*` as
+`settings-email.spec.ts` serves the session bytes the API writes for an
+ordinary address and for imported addresses with a leading vertical tab, form
+feed or CRLF, or a trailing LF. The Email row shows the stored address
+unchanged; its editor's input shows it without line breaks or surrounding ASCII
+whitespace. With and without JavaScript, resubmitting the unchanged address must
+send nothing and show that it is already the account's address; display-name
+and password saves must send only their own field, and an edited address must
+be sent as typed. A hydrated save must land on `?saved=<operation>`, keeping
+`return_to`, with the row collapsed and its confirmation shown. The
+JavaScript-disabled test opens each editor through its Change link, captures
+each native form body the browser posts, then replays it to `/actions/*` as
 `account.tadoku.dev.lab`.
+
+`settings-rows.spec.ts` loads every Settings URL state with JavaScript on and
+off: at rest, each editor open, a native error with a conflicting `edit`, a
+confirmation and the recovery landing at `/?edit=password&return_to=…`. Only
+the open row may hold an input, which has focus, and at most one filled button
+shows. Change and Cancel must keep the path and `return_to` and drop any error
+or confirmation; errors and confirmations stay in their own row, and every
+state fits 1280px and 390px viewports. A keyboard pass moves through the
+Change links, opens each editor and cancels it.
 
 `AUTHV2_BASE_URL` defaults to `http://127.0.0.1:5184`.
 `PLAYWRIGHT_OUTPUT_DIR` defaults to a temporary directory. Reports and mobile

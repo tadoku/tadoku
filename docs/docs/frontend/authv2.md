@@ -49,11 +49,25 @@ public error code shown as a form message; passwords and account values never
 enter URLs. Native logins reach the API from the authv2 server, so the API's
 per-address throttle counts them under that server's address.
 
-Settings has separate forms for the display name, email address and password,
-and each sends only its own field. Email and password changes need a login within
-the last hour; their stale-session message links to a login that returns to the
-same Settings URL. Logout posts to the identity API through the native route. A
-guest opening Settings is sent to login with Settings as the continuation.
+Settings shows two groups of read-only rows: Profile holds the display name,
+and Sign-in and security holds the email address and password. Each row shows
+its stored value and a **Change** link. The `edit` query parameter
+(`display-name`, `email` or `password`) opens one editor in place of its row's
+value. `settingsView()` in `frontend/apps/authv2/src/lib/search.ts` reads it
+with the other Settings parameters: a failed native submission's `form` and
+`error` reopen the editor that sent it ahead of any `edit`, and `saved` shows a
+row's confirmation only while no editor is open. **Change** and the editor's
+**Cancel** are links that keep the path and the trusted `return_to`, so they
+work without JavaScript and only one editor is open at a time. The open editor
+focuses its input and has the page's only filled button.
+
+Each form sends only its own field. A hydrated save navigates to the same
+`?saved=<operation>` URL that a native save redirects to. That navigation reads
+the session again, collapses the row and shows its confirmation. Email and
+password changes need a login within the last hour; their stale-session
+message links to a login that returns to the same Settings URL with that editor
+open. Logout posts to the identity API through the native route. A guest
+opening Settings is sent to login with Settings as the continuation.
 
 The account's email is shown exactly as the API sends it, which for an imported
 address can include control characters. An email input drops line breaks and
@@ -66,11 +80,16 @@ sent as typed.
 
 An incoming `return_to` is external input. `continuation()` in
 `frontend/apps/authv2/src/lib/identity.ts` accepts only HTTPS URLs on the
-identity API's host allowlist whose Settings URL fits 2,048 bytes; anything else
-is ignored and never rendered. Login and registration continue to it. Settings
-offers it as **Back to Tadoku** and follows it after a password change; display
-name and email changes stay on Settings. Recovery requests carry it, or the
-Tadoku home page, into the emailed link. Invalid, expired or reused recovery
+identity API's host allowlist whose longest Settings URL,
+`/?edit=password&return_to=…`, fits 2,048 bytes. That budget is 14 bytes more
+than a bare `/?return_to=…`, so authv2 never offers a destination the recovery
+redirect would refuse. Anything else is ignored and never rendered. Login and
+registration continue to it. Settings offers it as **Back to Tadoku** and
+follows it after a password change; display name and email changes stay on
+Settings. Recovery requests carry it, or the Tadoku home page, into the emailed
+link. A recovery redirect that carries `edit=password` lands with the Password
+editor open, and with a continuation its button reads **Save password and
+continue**. Invalid, expired or reused recovery
 links still return the identity API's `400` JSON response; request another at
 `/recovery`. Recovery requests show the same confirmation for known and unknown
 addresses. Development mail remains held.
@@ -172,8 +191,9 @@ sessions and links fail. See `frontend/apps/authv2/e2e/README.md` for setup and
 for the loopback session fixture that checks header forwarding and failure
 responses, for the registration fixture that sends controlled
 API answers, including the registration `429`, through both the hydrated and
-native registration paths, and for the Settings fixture that serves the API's
-exact session bytes for imported addresses with control characters. These fixtures prove application HTTP/SSR behavior; it
+native registration paths, and for the Settings fixtures that serve the API's
+exact session bytes for imported addresses with control characters and check
+every Settings URL state with and without JavaScript. These fixtures prove application HTTP/SSR behavior; it
 does not prove real authentication, Oathkeeper, tenant isolation or
 shared-cluster routing. TLS verification remains enabled. Reports, screenshots
 and recordings go outside source control. Tracing is disabled because

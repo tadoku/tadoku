@@ -174,10 +174,14 @@ Authv2 uses `/` for Settings, `/login`, `/register` and `/recovery` on `account.
   containment. Do not inject cookies or mock identity responses for this proof.
 - Log in with an allowed `return_to` and require that exact destination; a
   foreign one must never be rendered, carried or followed.
+- Settings rows open one editor at a time through their **Change** links, which
+  set `?edit=`; Change and Cancel must work without JavaScript and keep
+  `return_to`. A save collapses the row and shows its confirmation.
 - As the owned native Reader, save a display name and reload; exercise invalid
   names/passwords, taken email, throttling and stale-session feedback. A stale
   valid session can save its display name; email or password edits link to a
-  login that returns to Settings. Email changes notify the old address.
+  login that returns to Settings with that editor open. Email changes notify the
+  old address.
   Resubmitting the unchanged email shows that it is already the account's
   address and sends no request; display-name and password saves send only their
   own field.

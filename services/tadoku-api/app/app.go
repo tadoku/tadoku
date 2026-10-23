@@ -1,6 +1,8 @@
 package app
 
 import (
+	"context"
+
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/announcements"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/audit"
@@ -18,9 +20,16 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/features/posts"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/profile"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/scoring"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
+
+type Permissions interface {
+	RequireAuthenticated(ctx context.Context) error
+	RequireAdmin(ctx context.Context) error
+	RequireProductionAdmin(ctx context.Context) error
+	IsAdmin(ctx context.Context) (bool, error)
+	IsAdminOrFalse(ctx context.Context) bool
+}
 
 type Application struct {
 	tokens        *tokens.Service
@@ -41,7 +50,7 @@ type Application struct {
 	featureFlags  *featureflags.Service
 	db            *pgxpool.Pool
 	identity      *identity.Service
-	permissions   *permissions.Checker
+	permissions   Permissions
 }
 
 type Dependencies struct {
@@ -63,7 +72,7 @@ type Dependencies struct {
 	FeatureFlags  *featureflags.Service
 	DB            *pgxpool.Pool
 	Identity      *identity.Service
-	Permissions   *permissions.Checker
+	Permissions   Permissions
 }
 
 func New(deps Dependencies) *Application {

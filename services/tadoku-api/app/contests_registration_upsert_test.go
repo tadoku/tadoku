@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"sync"
 	"testing"
 	"time"
@@ -10,11 +11,37 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/languages"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/profile"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
 )
+
+type allowAuthenticatedPermissions struct{}
+
+func (allowAuthenticatedPermissions) RequireAuthenticated(ctx context.Context) error {
+	user := identity.FromContext(ctx)
+	if user == nil || user.Subject == "" || user.Subject == "guest" {
+		return errx.NewUnauthorizedError("unauthorized")
+	}
+	return nil
+}
+
+func (allowAuthenticatedPermissions) RequireAdmin(context.Context) error {
+	return errx.NewForbiddenError("forbidden")
+}
+
+func (allowAuthenticatedPermissions) RequireProductionAdmin(context.Context) error {
+	return errx.NewForbiddenError("forbidden")
+}
+
+func (allowAuthenticatedPermissions) IsAdmin(context.Context) (bool, error) {
+	return false, nil
+}
+
+func (allowAuthenticatedPermissions) IsAdminOrFalse(context.Context) bool {
+	return false
+}
 
 func TestUpsertContestRegistrationConcurrentFirstTime(t *testing.T) {
 	t.Parallel()
@@ -61,7 +88,7 @@ func TestUpsertContestRegistrationConcurrentFirstTime(t *testing.T) {
 		Languages:   languages.NewService(languages.NewLanguagesRepository(db.AppPool)),
 		Profile:     profile.NewService(profile.NewRepository(db.AppPool), nil, nil),
 		DB:          db.AppPool,
-		Permissions: permissions.NewKetoChecker(nil),
+		Permissions: allowAuthenticatedPermissions{},
 	})
 
 	ctx := identity.WithUser(tenantCtx, &identity.User{

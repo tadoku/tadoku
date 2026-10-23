@@ -34,25 +34,31 @@ a:where(:not(.paper-button)) { color: var(--paper-color-text-link); }
 .account-form__actions > .paper-button { flex-shrink: 0; }
 .account-form .paper-flash a { white-space: nowrap; }
 
-/* Settings */
-.settings { width: min(100%, 880px); margin-inline: auto; }
-.settings .paper-page-header { margin-bottom: 28px; }
-.settings .paper-page-header__lead { overflow-wrap: anywhere; white-space: break-spaces; }
-.settings .paper-page-header__lead strong { color: var(--paper-color-text-ink); font-weight: 600; }
+/* Settings: headed groups of rows; the row the URL opens shows its editor on the raised surface. */
+.settings { width: min(100%, 760px); margin-inline: auto; }
+.settings .paper-page-header { margin-bottom: 32px; }
 .settings .paper-page-header__actions .paper-button { gap: 8px; }
-.settings-list { padding: 0; }
 .settings-notice { margin-bottom: 20px; }
-.settings-section { display: grid; grid-template-columns: minmax(0, 15rem) minmax(0, 1fr); gap: 16px 48px; padding: 32px clamp(20px, 4vw, 36px); }
-.settings-section + .settings-section { border-top: 1px solid var(--paper-color-rule-default); }
-.settings-section__intro { min-width: 0; }
-.settings-section__title { margin: 0 0 8px; font-family: var(--paper-font-display); font-size: 1.125rem; line-height: 1.5rem; }
-.settings-section__intro p { margin: 0; color: var(--paper-color-text-muted); font-size: .875rem; line-height: 1.6; }
-.settings-section__body { min-width: 0; max-width: 28rem; }
-.settings-saved { margin: 0; color: var(--paper-color-status-success); font-size: .875rem; font-weight: 600; }
+.settings-group + .settings-group { margin-top: 32px; }
+.settings-group__title { margin: 0 0 12px; font-family: var(--paper-font-display); font-size: var(--paper-type-component-size); line-height: var(--paper-type-component-line-height); }
+.settings-group__rows { padding: 0; }
+.settings-row { display: grid; grid-template-columns: 10rem minmax(0, 1fr) auto; align-items: center; gap: 4px 24px; padding: 16px 20px; }
+.settings-row + .settings-row { border-top: 1px solid var(--paper-color-rule-subtle); }
+.settings-row__label { margin: 0; color: var(--paper-color-text-muted); font-family: var(--paper-font-body); font-size: var(--paper-type-metadata-size); font-weight: 600; line-height: var(--paper-type-metadata-line-height); }
+.settings-row__summary { min-width: 0; }
+.settings-row__value { margin: 0; color: var(--paper-color-text-ink); font-size: var(--paper-type-body-size); line-height: var(--paper-type-body-line-height); overflow-wrap: anywhere; white-space: break-spaces; }
+.settings-row__description, .settings-row__hint { margin: 0; color: var(--paper-color-text-muted); font-size: var(--paper-type-metadata-size); line-height: var(--paper-type-metadata-line-height); }
+.settings-row--open { grid-template-columns: 10rem minmax(0, 1fr); align-items: start; background: var(--paper-color-surface-raised); box-shadow: inset var(--paper-accent-rail-width) 0 0 var(--paper-color-focus-ring); }
+.settings-row__editor { min-width: 0; max-width: 26rem; overflow-wrap: anywhere; }
+/* The email hint holds the stored address, whose raw spaces would otherwise hang past the row. */
+.settings-row__editor .paper-field__hint { white-space: break-spaces; }
+.settings-row__editor .account-form { gap: 16px; }
+.settings-saved { margin: 0; color: var(--paper-color-status-success); font-size: var(--paper-type-metadata-size); font-weight: 600; line-height: var(--paper-type-metadata-line-height); }
 
 @media (max-width: 720px) {
-  .settings-section { grid-template-columns: minmax(0, 1fr); gap: 20px; padding-block: 28px; }
-  .settings-section__body { max-width: none; }
+  .settings-row, .settings-row--open { grid-template-columns: minmax(0, 1fr) auto; }
+  .settings-row__label, .settings-row__editor { grid-column: 1 / -1; }
+  .settings-row__editor { max-width: none; }
 }
 
 @media (max-width: 480px) {

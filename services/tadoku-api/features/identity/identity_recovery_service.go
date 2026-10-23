@@ -140,12 +140,12 @@ func (s *Service) ConsumeRecovery(ctx context.Context, raw RecoveryToken) (Recov
 }
 
 func (s *Service) RecoverySettingsURL(ctx context.Context, returnTo *string) (string, error) {
-	location := s.appURL(ctx, "authv2")
+	location := s.appURL(ctx, "authv2") + "?edit=password"
 	if returnTo != nil {
 		if err := ValidateReturnTo(*returnTo); err != nil {
 			return "", err
 		}
-		location += "?return_to=" + url.QueryEscape(*returnTo)
+		location += "&return_to=" + url.QueryEscape(*returnTo)
 	}
 	if err := ValidateReturnTo(location); err != nil {
 		return "", &Error{

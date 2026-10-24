@@ -36,9 +36,8 @@ func TestCommandRefusalsBeforeConfiguration(t *testing.T) {
 		{"teardown", "--tenant", "tadoku"}, {"teardown", "--tenant", "branch-0123abcd"},
 		{"teardown", "--tenant", "tadoku/branch"}, {"teardown", "--tenant", "tadoku/branch-0123abcd", "extra"},
 		{"provision", "--tenant", "tadoku/branch-0123abcd"},
-		{"provision", "--tenant", "tadoku/branch-0123abcd", "--flipt-features", "/absent", "--tester", "invalid"},
 		{"provision", "--tenant", "tadoku/branch-0123abcd", "--flipt-features", "/absent",
-			"--tester", "00000000-0000-0000-0000-000000000000"},
+			"--tester", "11111111-1111-4111-8111-111111111111"},
 		{"override", "set", "--tenant", "tadoku/prod", "--component", "tadoku-worker"},
 		{"override", "set", "--tenant", "tadoku/branch-0123abcd", "--component", "unregistered-worker"},
 		{"override", "clear", "--tenant", "tadoku/branch-0123abcd", "--component", "unregistered-worker"},
@@ -52,13 +51,11 @@ func TestCommandRefusalsBeforeConfiguration(t *testing.T) {
 	}
 }
 
-func TestCommandParsesRepeatedTesters(t *testing.T) {
+func TestCommandParsesProvision(t *testing.T) {
 	command, err := parseCommand([]string{
 		"provision", "--tenant", "tadoku/branch-0123abcd", "--flipt-features", "features.yaml",
-		"--tester", "11111111-1111-4111-8111-111111111111",
-		"--tester", "22222222-2222-4222-8222-222222222222",
 	})
-	if err != nil || len(command.testers) != 2 || command.key.String() != "tadoku/branch-0123abcd" {
+	if err != nil || command.features != "features.yaml" || command.key.String() != "tadoku/branch-0123abcd" {
 		t.Fatalf("parsed command=%+v error=%v", command, err)
 	}
 }

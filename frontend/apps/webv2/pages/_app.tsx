@@ -5,10 +5,9 @@ import { Atom, Provider } from 'jotai'
 import {
   AppContextWithSession,
   sessionAtom,
-  accountAppAtom,
   useUserRole,
 } from '@app/common/session'
-import { Account, AccountApp, readIdentitySession } from 'ui/identity'
+import { Account, readIdentitySession } from 'ui/identity'
 import { SessionUnavailable } from 'ui/components/SessionUnavailable'
 import { ToastContainer } from 'ui/components/toasts'
 import 'ui/styles/globals.css'
@@ -36,7 +35,6 @@ Settings.defaultZone = 'utc'
 interface Props {
   appUrls: AppUrls
   session: Account | undefined
-  accountApp: AccountApp
   sessionUnavailable: boolean
   featureFlags: FeatureFlagDecisions
 }
@@ -86,7 +84,6 @@ const MyApp = ({ Component, pageProps }: AppPropsWithLayout) => {
   const { get: getInitialValues, set: setInitialValues } = createInitialValues()
 
   setInitialValues(sessionAtom, initialState.session)
-  setInitialValues(accountAppAtom, initialState.accountApp)
   setInitialValues(
     featureFlagDecisionsAtom,
     initialState.featureFlags ?? defaultFeatureFlagDecisions,
@@ -96,7 +93,7 @@ const MyApp = ({ Component, pageProps }: AppPropsWithLayout) => {
 
   return (
     <AppUrlsProvider urls={pageProps.appUrls}>
-      <Provider key={`${initialState.accountApp}:${initialState.session?.id ?? 'guest'}`} initialValues={getInitialValues()}>
+      <Provider key={initialState.session?.id ?? 'guest'} initialValues={getInitialValues()}>
         <QueryClientProvider client={queryClient}>
           <Head>
             <title>Tadoku</title>
@@ -141,7 +138,6 @@ MyApp.getInitialProps = async (ctx: AppContextWithSession) => {
 
   const initialAppProps = await App.getInitialProps(ctx)
   initialAppProps.pageProps.session = ctx.ctx.session
-  initialAppProps.pageProps.accountApp = identity?.account_app ?? 'v1'
   initialAppProps.pageProps.sessionUnavailable = !identity
   initialAppProps.pageProps.appUrls = appUrlsForHost(host)
   initialAppProps.pageProps.featureFlags = { ...defaultFeatureFlagDecisions }

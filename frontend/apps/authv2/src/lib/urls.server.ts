@@ -16,20 +16,17 @@ export function requestUrls() {
   const host = getRequestHeader('host')
   if (host && !hostPattern.test(host)) throw new Error('Invalid account request host')
   const hostname = host?.toLowerCase().replace(/:\d+$/, '')
-  const production = web.hostname === 'tadoku.app'
-  const branchRoot = production ? 'authv2.preview.tadoku.app' : `authv2.${web.hostname}`
-  const origin = `${web.protocol}//${host?.toLowerCase() || `authv2.${web.host}`}`
-  const account = new URL(web.origin)
-  account.hostname = `account.${web.hostname}`
-  if (hostname?.endsWith(`.${branchRoot}`)) {
+  const branchDomain = web.hostname === 'tadoku.app' ? 'preview.tadoku.app' : web.hostname
+  // authv2 branch hosts stay accepted while authv2.tadoku.app redirects to account.tadoku.app; drop them with it.
+  const branchRoot = [`account.${branchDomain}`, `authv2.${branchDomain}`].find(root => hostname?.endsWith(`.${root}`))
+  const origin = `${web.protocol}//${host?.toLowerCase() || `account.${web.host}`}`
+  if (hostname && branchRoot) {
     const branch = hostname.slice(0, -(branchRoot.length + 1))
     if (!labelPattern.test(branch)) throw new Error('Invalid account branch host')
-    const branchDomain = production ? 'preview.tadoku.app' : web.hostname
     web.hostname = `${branch}.${branchDomain}`
-    account.hostname = `${branch}.account.${branchDomain}`
     api.host = web.host
     api.protocol = web.protocol
   }
 
-  return { origin, webUrl: web.origin, accountUrl: account.origin, apiUrl: api.href.replace(/\/$/, '') }
+  return { origin, webUrl: web.origin, apiUrl: api.href.replace(/\/$/, '') }
 }

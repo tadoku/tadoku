@@ -1,5 +1,4 @@
-import { accountAppUrl, useAppUrls } from 'ui/app-urls'
-import { useAccountApp } from './session'
+import { useAppUrls } from 'ui/app-urls'
 
 export const routes = {
   home: () => `/`,
@@ -20,14 +19,11 @@ export const routes = {
 }
 
 export function useRoutes() {
-  const urls = useAppUrls()
-  const { homeUrl } = urls
-  const accountApp = useAccountApp()
-  const authUiUrl = accountAppUrl(urls, accountApp)
+  const { homeUrl, accountUrl } = useAppUrls()
   return {
     ...routes,
-    authSettings: (returnUrl = '') => `${authUiUrl}/${accountApp === 'v2' ? 'settings' : ''}?return_to=${encodeURIComponent(returnUrl)}`,
-    authLogin: (returnUrl = '') => `${authUiUrl}/login?return_to=${encodeURIComponent(returnUrl)}`,
+    authSettings: (returnUrl = '') => `${accountUrl}/settings?return_to=${encodeURIComponent(returnUrl)}`,
+    authLogin: (returnUrl = '') => `${accountUrl}/login?return_to=${encodeURIComponent(returnUrl)}`,
     mainApp: () => homeUrl,
   }
 }

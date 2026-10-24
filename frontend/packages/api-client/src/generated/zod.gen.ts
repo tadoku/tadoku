@@ -261,6 +261,23 @@ export const zImmersionLeaderboardEntry = z.object({
     is_tie: z.boolean()
 });
 
+export const zImmersionContestEvent = z.object({
+    id: z.string().uuid(),
+    log_id: z.string().uuid(),
+    occurred_at: z.string().datetime({ offset: true }).regex(/T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/),
+    event: z.enum([
+        'log.submitted',
+        'log.updated',
+        'log.withdrawn'
+    ])
+}).strict();
+
+export const zImmersionContestEventPage = z.object({
+    events: z.array(zImmersionContestEvent).max(100),
+    next_cursor: z.string().regex(/^[\s\S]{1,36}$/u),
+    has_more: z.boolean()
+}).strict();
+
 export const zImmersionScore = z.object({
     language_code: z.string(),
     language_name: z.string().optional(),
@@ -450,7 +467,6 @@ export const zIdentityAccount = z.object({
 });
 
 export const zIdentitySession = z.object({
-    account_app: z.enum(['v1', 'v2']),
     account: zIdentityAccount.nullable()
 });
 
@@ -875,6 +891,30 @@ export const zImmersionContestFindOngoingRegistrationsResponse = zImmersionConte
  * successful operation
  */
 export const zImmersionContestGetConfigurationsResponse = zImmersionContestConfigurationOptions;
+
+export const zImmersionContestListEventsPath = z.object({
+    id: z.string().uuid()
+});
+
+export const zImmersionContestListEventsQuery = z.object({
+    cursor: z.string().regex(/^[\s\S]{1,36}$/u).optional(),
+    limit: z.number().int().gte(1).lte(100).optional().default(100)
+});
+
+/**
+ * Event page, including an empty page with a reusable cursor.
+ */
+export const zImmersionContestListEventsResponse = zImmersionContestEventPage;
+
+export const zImmersionContestFindLogPath = z.object({
+    id: z.string().uuid(),
+    logId: z.string().uuid()
+});
+
+/**
+ * Current visible contest log.
+ */
+export const zImmersionContestFindLogResponse = zImmersionLog;
 
 export const zImmersionLogCreateBody = z.object({
     registration_ids: z.array(z.string().uuid()).optional(),

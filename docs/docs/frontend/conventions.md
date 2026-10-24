@@ -17,7 +17,7 @@ Always use `pnpm`, never `npm`. Run commands from `frontend/`.
 
 ## Legacy applications
 
-webv2, auth, admin and styleguide use the `ui` package. Never write custom
+webv2, admin and styleguide use the `ui` package. Never write custom
 button or form styles:
 
 - Buttons use `className="btn"` with the variants `primary`, `secondary`,
@@ -63,10 +63,11 @@ For legacy applications:
 ## Cross-app URLs
 
 Use `useAppUrls()`, `browserAppUrls()` or `appUrlsForHost()` from
-`frontend/packages/ui/app-urls.tsx` for home, account, authv2, admin and browser API
-URLs. Resolve them per request or browser call so branch hosts retain their
-sibling origins. Supply `AppUrlsProvider` from each application's request
-properties for consistent SSR and hydration. The auth app's Kratos endpoint stays on the base account host. Avoid module-level runtime URL constants.
+`frontend/packages/ui/app-urls.tsx` for home, account, admin and browser API
+URLs. The account URL is always the `account.` sibling of the home URL. Resolve
+them per request or browser call so branch hosts retain their sibling origins.
+Supply `AppUrlsProvider` from each application's request properties for
+consistent SSR and hydration. Avoid module-level runtime URL constants.
 
 Production branch hosts use `<branch>.preview.tadoku.app`,
 `<branch>.account.preview.tadoku.app` and
@@ -82,20 +83,6 @@ gateway signs the branch tenant. The resolver reads `NEXT_SERVER_API_ENDPOINT`
 at request time, ahead of the built Next.js runtime config, so standalone
 production servers honor their Deployment's private endpoint.
 
-Kratos builds redirects and email links from its production `ui_url`s, so the
-auth application routes them through `frontend/apps/auth/src/branch.ts`:
-
-- `followKratosUrl()` follows `redirect_browser_to` and Kratos UI anchors.
-  On a branch host, `branchUrl()` moves production app URLs to the sibling
-  branch host; URLs under the Kratos public endpoint stay on the base host.
-- `flowReturnTo()` defaults a new flow's `return_to` to the branch account host
-  on branch hosts, so Kratos remembers the branch for later email links.
-- `forwardBranchFlow()` runs on every flow fetched by id. When the flow's
-  `return_to`, or the `return_to` in its `request_url`, is on a branch host
-  that `resolveAppUrls()` recognises, `branchFlowUrl()` sends the browser to
-  the same page and query on that branch's account host. Pages already on that
-  branch, production flows and foreign hosts stay where they are.
-
 ## Authentication flows
 
 Webv2 protected pages use `useSessionOrRedirect()` from
@@ -104,23 +91,18 @@ the complete current location before sending an anonymous visitor to login.
 The shared auth route helpers encode `return_to` so queries and fragments remain
 part of the original destination. Registration uses the same protected-page hook.
 
-Webv2 and admin read `GET /identity/session` on every page request, including
-guests. Its `account_app` selects account links, and logout uses
-`POST /identity/logout`. `frontend/packages/ui/identity.ts` calls both through the
-generated client; the API owns cookies. SSR forwards Cookie and X-Dev-Branch to
-the private API endpoint, and responses use `Cache-Control: private, no-store`.
-Session transport errors, invalid responses and its bounded timeout produce a
-retry screen without authorizing protected content. Auth does not start a
-Kratos flow until the API selects v1. A protected query returning 401 stops
-without automatic reload or retries; the visitor can retry explicitly. Logout
-failures show a message and retain the current UI session until revocation
-succeeds. A fresh session read on each navigation keeps account-app selection
-and session expiry current without sharing a snapshot between tenants.
-
-The v1 auth application’s shared logout hook creates a Kratos logout flow only
-when `useSession()` has an authenticated session. Anonymous login pages must
-not create logout flows: their CSRF cookies can race the login flow. Session
-changes enable logout without requiring callers to reload the page.
+Login, registration and settings links always open authv2. Webv2 and admin
+read `GET /identity/session` on every page request, including guests, and
+logout uses `POST /identity/logout`. `frontend/packages/ui/identity.ts` calls
+both through the generated client; the API owns cookies. SSR forwards Cookie
+and X-Dev-Branch to the private API endpoint, and responses use
+`Cache-Control: private, no-store`. Session transport errors, invalid responses
+and its bounded timeout produce a retry screen without authorizing protected
+content. A protected query returning 401 stops without automatic reload or
+retries; the visitor can retry explicitly. Logout failures show a message and
+retain the current UI session until revocation succeeds. A fresh session read
+on each navigation keeps session expiry current without sharing a snapshot
+between tenants.
 
 ## Calling Tadoku API
 

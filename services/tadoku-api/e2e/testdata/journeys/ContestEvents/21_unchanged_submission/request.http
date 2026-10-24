@@ -1,0 +1,7 @@
+PUT /immersion/logs/00000000-0000-4000-8000-000000000001/contest-registrations HTTP/1.1
+Host: api.test
+X-Request-Id: contest-event-journey
+Content-Type: application/json
+Content-Length: 61
+
+{"registration_ids":["e0000000-0000-4000-8000-000000000001"]}

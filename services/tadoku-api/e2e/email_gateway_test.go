@@ -65,9 +65,6 @@ func TestEmailGatewayCookieAndBearer(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := flipt.SetIdentityV2(key, true); err != nil {
-		t.Fatal(err)
-	}
 	var cookie string
 	backend := httptest.NewUnstartedServer(nil)
 	defer backend.Close()
@@ -132,7 +129,7 @@ func TestEmailGatewayCookieAndBearer(t *testing.T) {
 		if path == "/authz/current-user/role" && want == 200 && string(body) != "{\"role\":\"guest\"}\n" {
 			t.Errorf("token on guest-readable route did not stay guest: %s", body)
 		}
-		if want == 200 && path == "/identity/session" && !bytes.Contains(body, []byte("account_app")) {
+		if want == 200 && path == "/identity/session" && !bytes.Contains(body, []byte(`"account"`)) {
 			t.Errorf("%s did not return the actual identity session", name)
 		}
 		if want == 200 && strings.HasPrefix(path, "/emails") && !bytes.Contains(body, []byte(id.String())) {
@@ -203,10 +200,6 @@ func TestEmailGatewayCookieAndBearer(t *testing.T) {
 	check("revoked session", "/emails", "", cookie, 401)
 	check("bearer revoked native session", "/emails", "Bearer "+raw, cookie, 200)
 	other, _ := tenant.ParseDeployment("tadoku/other-0123abcd")
-	otherKey, _ := tenant.Parse("tadoku/other-0123abcd")
-	if err := flipt.SetIdentityV2(otherKey, true); err != nil {
-		t.Fatal(err)
-	}
 	otherHandler, _, _, err := newTestRouterWithLeaderboardService(t.Context(), api.db.AppPool, api.db.AppPool,
 		api.keto, slog.New(slog.NewTextHandler(io.Discard, nil)), false, nil, other,
 		func(e *routerEndpoints) { e.jwks = jwksURL })
@@ -278,12 +271,12 @@ func gatewayAdminCookie(t *testing.T, key tenant.Key, proxyURL, host, forwardedP
 	if err := json.NewDecoder(response.Body).Decode(&view); err != nil {
 		t.Fatal(err)
 	}
-	if response.StatusCode != http.StatusOK || view.AccountApp != "v2" || view.Account == nil ||
+	if response.StatusCode != http.StatusOK || view.Account == nil ||
 		view.Account.ID != userID.String() || view.Account.DisplayName != "Gateway Admin" ||
 		view.Account.Email != email {
 		t.Fatalf(
-			"gateway login: status=%d app=%s account=%+v",
-			response.StatusCode, view.AccountApp, view.Account,
+			"gateway login: status=%d account=%+v",
+			response.StatusCode, view.Account,
 		)
 	}
 

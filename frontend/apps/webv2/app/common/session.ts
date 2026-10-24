@@ -1,7 +1,7 @@
 import { authzRoleGet, type AuthzUserRole } from 'api-client'
 import { atom, useAtom } from 'jotai'
 import { toast } from 'react-toastify'
-import { Account, AccountApp, logout } from 'ui/identity'
+import { Account, logout } from 'ui/identity'
 import { useRouter } from 'next/router'
 import { useEffect, useRef } from 'react'
 import { browserApi } from 'ui/api'
@@ -13,8 +13,6 @@ import { useRoutes } from './routes'
 export type Role = AuthzUserRole['role']
 
 export const sessionAtom = atom(undefined as undefined | Account)
-export const accountAppAtom = atom<AccountApp>('v1')
-export const useAccountApp = () => useAtom(accountAppAtom)[0]
 
 export const userRoleAtom = atom(undefined as undefined | Role)
 

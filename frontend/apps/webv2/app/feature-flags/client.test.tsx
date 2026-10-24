@@ -34,7 +34,7 @@ vi.mock('next/router', () => ({
 
 vi.mock('next/config', () => ({
   default: () => ({
-    publicRuntimeConfig: { homeUrl: 'https://tadoku.test', authUiUrl: 'https://account.tadoku.test', adminUrl: 'https://admin.tadoku.test', apiEndpoint: 'https://tadoku.test/api/internal' },
+    publicRuntimeConfig: { homeUrl: 'https://tadoku.test', adminUrl: 'https://admin.tadoku.test', apiEndpoint: 'https://tadoku.test/api/internal' },
   }),
 }))
 
@@ -51,7 +51,7 @@ const LatchedFlagValue = () => {
     <>
       <button
         type="button"
-        onClick={() => setDecisions({ 'release-log-entry-v2': false, 'identity-v2': false })}
+        onClick={() => setDecisions({ 'release-log-entry-v2': false })}
       >
         Disable
       </button>
@@ -76,7 +76,7 @@ const Wrapper = ({
 }) => (
   <Provider
     initialValues={[
-      [featureFlagDecisionsAtom, { 'release-log-entry-v2': enabled, 'identity-v2': false }],
+      [featureFlagDecisionsAtom, { 'release-log-entry-v2': enabled }],
     ]}
   >
     {children}

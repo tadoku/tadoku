@@ -39,15 +39,13 @@ Production Oathkeeper is managed in the separate GitOps repository. Its
 cookie-session authenticator calls the API's session callback, so the
 `tadoku_session` cookie authenticates application routes. Public
 `/api/internal/identity/*` rules use the anonymous authenticator, so the
-identity API owns session reads, logout and CSRF. No rule forwards to Kratos,
-which is offline in production; see
-[Identity v2 rollback](./identity-v2-rollback.md#current-production-identity).
+identity API owns session reads, logout and CSRF.
 
 A source merge automatically releases the API and worker to production through
 `build-bazel.yaml`, Image Updater and Argo CD. Treat it as a real production
 release. It also publishes development frontend images; development
 reconciliation switches the shared callback and private SSR routes. Legacy
-webv2, admin and auth publish `prod` only through a separately authorized
+webv2 and admin publish `prod` only through a separately authorized
 `workflow_dispatch` with `publish_production: true`. See
 [Production branches](../develop/production-branches.md) for branch support.
 
@@ -64,45 +62,30 @@ After reconciliation, verify:
 
 Verify logs without exposing the credential. Authenticated checks need an
 authorized production session; without one, report them as unverified.
-Reverting a change follows [Identity v2 rollback](./identity-v2-rollback.md),
-which requires the incident owner's authorization for each scope.
+Reverting a change requires the incident owner's authorization for each scope;
+see [Identity incident recovery](./identity-recovery.md#triggers-and-authority).
 
 ## Session-check latency
 
-The identity v2 session-check latency gate is **closed** by maintainer
-decision. Production native session checks, observed passively on 22 October
-2026, had lower p95 values than the development Kratos reference. No production
-Kratos session-check baseline exists, so these figures are not a production
-before-and-after comparison and set no latency target.
+Production session checks were observed passively on 22 October 2026. The
+figures are a reference for later comparisons, not a latency target.
 
 | Observation | Timed interval | Successful samples | p50 | p95 |
 | --- | --- | --- | --- | --- |
-| Development, Kratos (reference) | Oathkeeper decision, including the Kratos session call | 90 | 9.13 ms | 18.80 ms |
-| Production, native, 177-second window | API session handler | 19 | 0.15 ms | 6.16 ms |
-| Production, native, 600-second window | API session handler | 79 | 0.32 ms | 12.54 ms |
+| Production, 177-second window | API session handler | 19 | 0.15 ms | 6.16 ms |
+| Production, 600-second window | API session handler | 79 | 0.32 ms | 12.54 ms |
 
-How each figure was taken, with nearest-rank quantiles throughout:
+Existing request logs from both production API Pods were read without
+generating requests. The figures cover successful
+`GET /identity/internal/v1/session` records, using the `latency` field that
+`services/tadoku-api/transport/http/observability.go` measures around the
+handler, converted from nanoseconds, with nearest-rank quantiles. It covers the
+handler through writing the response and excludes Oathkeeper, the network, the
+browser and password sign-in. The two windows ran different API images. In the
+19-sample window the p95 is the maximum; the 600-second window's maximum was
+37.45 ms. The endpoint logs its tenant as `unknown`, so the scope is the
+production API deployment, not a proven `tadoku/prod`-only cohort.
 
-- **Development Kratos reference.** One signed-in development account sent
-  three sequential, warm windows of 30 requests to Oathkeeper's `/decisions`
-  endpoint, using the same rule and cookie authenticator as a public content
-  `GET`. The timing is Oathkeeper's `http_response.took`: rule matching, the
-  Kratos session round trip, authorization and ID-token signing. It excludes
-  the application upstream, ingress, the client and TLS.
-- **Production native.** Existing request logs from both production API Pods
-  were read without generating requests. The figures cover successful
-  `GET /identity/internal/v1/session` records in native mode, using the
-  `latency` field that `services/tadoku-api/transport/http/observability.go`
-  measures around the handler, converted from nanoseconds. It covers the
-  handler through writing the response and excludes Oathkeeper, the network,
-  the browser and password sign-in. The two windows ran different API images.
-  In the 19-sample window the p95 is the maximum; the 600-second window's
-  maximum was 37.45 ms. The endpoint logs its tenant as `unknown`, so the scope
-  is the production API deployment, not a proven `tadoku/prod`-only cohort.
-
-The rows differ in environment, traffic, cache state, image and timed interval:
-the development figure includes Oathkeeper's processing and the Kratos call,
-while the production figure covers only the API handler that Oathkeeper's
-callback reaches. Do not derive a ratio, speedup, regression, capacity or
-statistical claim from them. To compare a later change, measure the old and new
-behavior at the same boundary with the same method.
+Do not derive a capacity or statistical claim from these samples. To compare a
+later change, measure the old and new behavior at the same boundary with the
+same method.

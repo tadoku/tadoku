@@ -41,6 +41,8 @@ func (s *Service) SynchronizeUser(ctx context.Context, user *requestidentity.Use
 	return userID, nil
 }
 
+// Within a transaction, ErrAccountDeletionInProgress still leaves the user row
+// locked; callers may finish read-only work but must not mutate that user's data.
 func (s *Service) LockUser(ctx context.Context, userID uuid.UUID) error {
 	state, err := s.repository.LockUser(ctx, userID)
 	if err != nil {

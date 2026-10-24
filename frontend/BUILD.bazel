@@ -20,19 +20,13 @@ frontend_dev(
 )
 
 frontend_dev(
-    name = "auth",
-    host = "account.tadoku.dev.lab",
-    readiness_path = "/login",
-)
-
-frontend_dev(
     name = "admin",
     host = "admin.tadoku.dev.lab",
 )
 
 frontend_dev(
     name = "authv2",
-    host = "authv2.tadoku.dev.lab",
+    host = "account.tadoku.dev.lab",
     namespace = "tdk-dev-frontend-auth",
     paper = True,
     readiness_path = "/healthz",

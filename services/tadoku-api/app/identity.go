@@ -30,7 +30,7 @@ func (a *Application) IdentityLogout(ctx context.Context, cookieHeader identity.
 func (a *Application) IdentitySession(
 	ctx context.Context,
 	cookieHeader identity.CookieHeader,
-) (identity.SessionResult, error) {
+) (identity.Session, error) {
 	return a.identity.Session(ctx, cookieHeader)
 }
 
@@ -53,5 +53,5 @@ func (a *Application) IdentityCheckSession(
 	if !a.deployment.Serves(key) {
 		return nil, ErrIdentityTenantNotServed
 	}
-	return a.identity.CheckSession(tenant.WithKey(ctx, key), cookieHeader)
+	return a.identity.Session(tenant.WithKey(ctx, key), cookieHeader)
 }

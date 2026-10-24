@@ -55,8 +55,8 @@ const sidebars: SidebarsConfig = {
       items: [
         'tadoku-api/conventions',
         'tadoku-api/contract',
+        'tadoku-api/contest-events',
         'tadoku-api/identity',
-        'tadoku-api/identity-selection',
         'tadoku-api/database',
         'tadoku-api/jobs',
         'tadoku-api/jobs-operations',
@@ -81,7 +81,6 @@ const sidebars: SidebarsConfig = {
         'frontend/conventions',
         'frontend/api-client',
         'frontend/webv2',
-        'frontend/auth',
         'frontend/authv2',
         'frontend/admin',
         'frontend/paper-styleguide',
@@ -103,7 +102,7 @@ const sidebars: SidebarsConfig = {
         'operations/identity-gateway',
         'operations/migration-recovery',
         'operations/account-deletion',
-        'operations/identity-v2-rollback',
+        'operations/identity-recovery',
       ],
     },
     {

@@ -52,7 +52,7 @@ bazel run --config=release //services/tadoku-api:branch_push -- \
 ```
 
 Frontend workflows and the `//frontend:webv2_branch_push`,
-`//frontend:webv3_branch_push`, `//frontend:auth_branch_push`, `//frontend:authv2_branch_push` and `//frontend:admin_branch_push` targets use
+`//frontend:webv3_branch_push`, `//frontend:authv2_branch_push` and `//frontend:admin_branch_push` targets use
 `frontend/scripts/publish-image.sh`. It builds `HEAD:frontend` with `git archive`,
 so ignored local environment files and uncommitted edits do not enter images.
 Webv3 and authv2 use their standalone `frontend/apps/webv3/Dockerfile` and
@@ -65,30 +65,6 @@ frontend/scripts/publish-image.sh webv2 \
 ```
 
 Production tag approval remains manual.
-
-### Identity importer artifact
-
-After the backend tests pass, the `build-bazel` workflow runs
-`tools/ci/stage_identity_importer.sh`. It builds
-`//services/tadoku-api/cmd/tadoku-identity-import` with `--config=release`
-and the frozen lockfile from the clean checked-out commit, then stages the
-binary, a `sha256sum` file and `receipt.json`. The receipt records the size,
-SHA-256, source commit and tree, the Bazel, rules_go and Go versions, the
-configured platform, the ELF header and the workflow run. The script inspects
-the binary statically and never runs it;
-`tools/ci/stage_identity_importer_test.sh` covers its refusals with a fake
-`bazel` and inert fixture files.
-
-Pull requests stage the binary without uploading it. Runs on `main` upload the
-directory as the `tadoku-identity-import-<commit>-<attempt>` artifact, kept for
-90 days, the repository maximum. GitHub artifacts cannot be changed after
-upload, but the repository is public: any signed-in GitHub user can download
-them, and users with write access can delete them early. The zip drops the
-executable bit. A newer push to `main` cancels a running build, and commits
-that change no workflow path do not run it, so not every commit has an
-artifact. Check a download with `sha256sum -c` and its receipt before use.
-The artifact is a build record; it does not lift the
-[import holds](../tadoku-api/identity-import.md).
 
 ### Gazelle
 
@@ -194,7 +170,6 @@ console output; they include assertion output and fixture cleanup errors.
 | `verify-file-sizes.yaml` | Every PR | Runs `./tools/ci/check_file_sizes.sh`, which fails when a handwritten text file is over 20,000 bytes; see [Splitting a long file](../architecture/module-design.md#splitting-a-long-file) |
 | `verify-http-error-mapping.yaml` | Every PR | Rejects literal 5xx responses in `services/tadoku-api/transport/http/`; `services/tadoku-api/transport/http/errors.go` maps errors to statuses |
 | `build-frontend-webv2.yaml` | Pushes touching webv2, `ui` or the lockfile | Builds webv2; publishes its image from `main` |
-| `build-frontend-auth.yaml` | Pushes touching auth, `ui` or the lockfile | Builds auth; publishes its image from `main` |
 | `build-frontend-admin.yaml` | Pushes touching admin, `ui` or the lockfile | Tests and builds admin; publishes its image from `main` |
 | `build-frontend-styleguide.yaml` | Pushes touching styleguide, `ui` or the lockfile | Builds the `ui` styleguide; publishes its image from `main` |
 | `build-frontend-paper-styleguide.yaml` | PRs and `main` pushes touching Paper | Paper boundaries, `paper-ui` and `paper-styleguide` lint, typecheck, test and build, package checks, image smoke test; publishes from `main` |

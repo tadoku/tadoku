@@ -16,6 +16,7 @@ go_library(
         "contest_configuration.go",
         "contest_create.go",
         "contest_create_permission.go",
+        "contest_events.go",
         "contest_find.go",
         "contest_list.go",
         "contest_profile.go",

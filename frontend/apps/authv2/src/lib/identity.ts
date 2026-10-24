@@ -157,7 +157,6 @@ function describe(code: Code, operation: Operation, values?: Record<string, stri
     case 'invalid_recovery_token':
       return { message: 'This recovery link is invalid or has expired. Request a new one.' }
     case 'not_implemented':
-      return { message: 'This account still uses the previous account pages. Reload the page to continue.' }
     case 'unavailable':
       return { message: 'Something went wrong on our side. Try again in a moment.' }
   }
@@ -202,13 +201,14 @@ function queryEscapedLength(value: string) {
 
 /**
  * Parses an untrusted return_to into a destination the identity API would also accept: HTTPS on an allowed Tadoku
- * host, with the Settings URL that carries it within 2,048 bytes. Anything else has no continuation.
+ * host, with the longest Settings URL that carries it, recovery's `?edit=password&return_to=`, within 2,048 bytes.
+ * Anything else has no continuation.
  */
 export function continuation(raw: unknown, origin: string): string | undefined {
   if (typeof raw !== 'string' || /[\s\\]/u.test(raw)) return
   const authority = /^https:\/\/([^/?#]*)/iu.exec(raw)?.[1]?.toLowerCase()
   if (!authority || !allowedHost.test(authority)) return
-  if (new TextEncoder().encode(`${origin}/?return_to=`).length + queryEscapedLength(raw) > 2048) return
+  if (new TextEncoder().encode(`${origin}/?edit=password&return_to=`).length + queryEscapedLength(raw) > 2048) return
   try {
     if (new URL(raw).hostname === authority) return raw
   } catch {

@@ -9,14 +9,6 @@ if [[ -n "$valkey_violations" ]]; then
   exit 1
 fi
 
-kratos_violations=$(bazel query --lockfile_mode=error \
-  'attr("deps", "com_github_ory_kratos_client_go//:kratos-client-go", //services/tadoku-api/...) except (//services/tadoku-api/features/identity/kratos:* union //services/tadoku-api/features/identity:*)')
-if [[ -n "$kratos_violations" ]]; then
-  echo "Direct Kratos SDK dependencies belong only in the read adapter or identity feature:" >&2
-  echo "$kratos_violations" >&2
-  exit 1
-fi
-
 keto_violations=$(bazel query --lockfile_mode=error \
   'attr("deps", "//services/tadoku-api/infra/keto", //services/tadoku-api/...) except (//services/tadoku-api/internal/permissions:* union //services/tadoku-api/cmd/tadoku-api:* union //services/tadoku-api/cmd/tadoku-tenant:* union //services/tadoku-api/e2e:* union //services/tadoku-api/app/tenantlifecycle:tenantlifecycle_test)')
 if [[ -n "$keto_violations" ]]; then

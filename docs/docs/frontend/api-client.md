@@ -80,8 +80,8 @@ break the contract's constraints, which must fail.
     that Go never writes; the client rejects them.
 
   `frontend/packages/api-client/test/formats.json` lists Go's verdict on each
-  tested value and the account emails the API sends for stored Kratos and
-  imported addresses; `frontend/packages/api-client/test/formats.test.ts` sends
+  tested value and the account emails the API sends for stored addresses,
+  including imported ones; `frontend/packages/api-client/test/formats.test.ts` sends
   them through the generated email and session operations.
 - Every answer is parsed as JSON. An HTML page fails.
 - Validation does not transform data: a call returns the JSON as sent. Use only
@@ -109,7 +109,7 @@ credentials, caching and timeouts.
 | --- | --- |
 | authv2 | `frontend/apps/authv2/src/lib/session.server.ts` reads the session. `sendIdentity()` in `frontend/apps/authv2/src/lib/identity.ts` sends every account form, from the browser or the native form route, and reads error codes with `zIdentityErrorResponse`. |
 | webv3 | `frontend/apps/webv3/src/lib/home.server.ts` makes anonymous home-page reads; `404` means no contest. |
-| webv2, admin, auth | `frontend/packages/ui/identity.ts` reads the session and logs out. `browserApi()` and `apiData()` in `frontend/packages/ui/api.ts` call operations from React Query hooks and throw `Error(<status>)` for API errors. |
+| webv2, admin | `frontend/packages/ui/identity.ts` reads the session and logs out. `browserApi()` and `apiData()` in `frontend/packages/ui/api.ts` call operations from React Query hooks and throw `Error(<status>)` for API errors. |
 
 The validators must run on the package's own pinned Zod 3, whose UUID check
 accepts any well-formed UUID as the API does; Zod 4's rejects IDs that imported
@@ -129,7 +129,6 @@ a malformed answer when it is missing.
 
 - The log export, `GET /immersion/logs/export`, is a download link that the
   browser navigates to.
-- The auth application's Kratos flows use Kratos's own client and contract.
 - Form validation and error messages belong to each form.
 - Manual Playwright journeys read API responses directly to drive and check
   flows.

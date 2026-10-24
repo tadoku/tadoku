@@ -10,8 +10,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/featureflags"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 	"golang.org/x/crypto/bcrypt"
@@ -20,47 +18,14 @@ import (
 type Service struct {
 	repository   *Repository
 	throttle     *Throttle
-	legacy       *LegacySessions
-	flags        *featureflags.Evaluator
 	cookieDomain string
 }
 
-var _ Accounts = (*Service)(nil)
-
-func NewService(
-	repository *Repository,
-	throttle *Throttle,
-	legacy *LegacySessions,
-	flags *featureflags.Evaluator,
-	cookieDomain string,
-) *Service {
-	return &Service{
-		repository:   repository,
-		throttle:     throttle,
-		legacy:       legacy,
-		flags:        flags,
-		cookieDomain: cookieDomain,
-	}
-}
-
-func (*Service) FindAccount(context.Context, uuid.UUID) (Account, error) {
-	return Account{}, ErrNotImplemented
-}
-
-func (*Service) UserExists(context.Context, uuid.UUID) (bool, error) { return false, ErrNotImplemented }
-
-func (*Service) ListAccounts(context.Context, ListAccounts) (AccountPage, error) {
-	return AccountPage{}, ErrNotImplemented
+func NewService(repository *Repository, throttle *Throttle, cookieDomain string) *Service {
+	return &Service{repository: repository, throttle: throttle, cookieDomain: cookieDomain}
 }
 
 func (s *Service) Register(ctx context.Context, registration Registration) (LoginResult, error) {
-	app, err := s.accountApp(ctx)
-	if err != nil {
-		return LoginResult{}, err
-	}
-	if app == V1 {
-		return LoginResult{}, ErrNotImplemented
-	}
 	email, err := ParseEmail(registration.Email)
 	if err != nil {
 		return LoginResult{}, err
@@ -98,13 +63,6 @@ func (s *Service) Register(ctx context.Context, registration Registration) (Logi
 }
 
 func (s *Service) Login(ctx context.Context, login Login) (LoginResult, error) {
-	app, err := s.accountApp(ctx)
-	if err != nil {
-		return LoginResult{}, err
-	}
-	if app == V1 {
-		return LoginResult{}, ErrNotImplemented
-	}
 	email, err := ParseEmail(login.Email)
 	if err != nil {
 		return LoginResult{}, err
@@ -136,27 +94,8 @@ func (s *Service) Login(ctx context.Context, login Login) (LoginResult, error) {
 }
 
 func (s *Service) Logout(ctx context.Context, header CookieHeader) (Cookie, error) {
-	app, err := s.accountApp(ctx)
-	if err != nil {
-		return Cookie{}, err
-	}
-
 	cookie := s.cookie(ctx)
-	if app == V1 {
-		cookie.Name = "ory_kratos_session"
-		value := cookieValue(header, cookie.Name)
-		if value != "" {
-			session, err := s.legacy.Check(ctx, cookie.Name+"="+value)
-			if err != nil {
-				return Cookie{}, errx.NewUnavailableError("identity provider unavailable", err)
-			}
-			if session != nil {
-				if err := s.legacy.Revoke(ctx, session.Id); err != nil {
-					return Cookie{}, errx.NewUnavailableError("identity provider unavailable", err)
-				}
-			}
-		}
-	} else if value := cookieValue(header, cookie.Name); validSessionToken(value) {
+	if value := cookieValue(header, cookie.Name); validSessionToken(value) {
 		if err := s.repository.revokeSession(ctx, hashToken(value)); err != nil {
 			return Cookie{}, err
 		}
@@ -166,53 +105,15 @@ func (s *Service) Logout(ctx context.Context, header CookieHeader) (Cookie, erro
 	return cookie, nil
 }
 
-func (s *Service) Session(ctx context.Context, header CookieHeader) (SessionResult, error) {
-	app, err := s.accountApp(ctx)
-	if err != nil {
-		return SessionResult{}, err
+func (s *Service) Session(ctx context.Context, header CookieHeader) (Session, error) {
+	value := cookieValue(header, s.cookie(ctx).Name)
+	if !validSessionToken(value) {
+		return GuestSession{}, nil
 	}
-	var session Session = GuestSession{}
-	if app == V1 {
-		session, err = s.legacySession(ctx, header)
-	} else if value := cookieValue(header, s.cookie(ctx).Name); validSessionToken(value) {
-		session, err = s.repository.session(ctx, hashToken(value), timex.Now())
-	}
-	return SessionResult{AccountApp: app, Session: session}, err
+	return s.repository.session(ctx, hashToken(value), timex.Now())
 }
-
-func (s *Service) CheckSession(ctx context.Context, header CookieHeader) (Session, error) {
-	result, err := s.Session(ctx, header)
-	return result.Session, err
-}
-
-func (*Service) DeleteAccount(context.Context, uuid.UUID) error { return ErrNotImplemented }
 
 const dummyPasswordHash = "$2b$12$hady7Vf2de/ngyT9TV6N/usj/9yeHugOWtf8eCYGfnWNO.z9CGeeu"
-
-func (s *Service) accountApp(ctx context.Context) (AccountApp, error) {
-	return accountApp(ctx, s.flags)
-}
-
-// accountApp fails unavailable unless the tenant's identity-v2 flag is decided. Only the canonical tenant
-// may use the flag's safe default, while its configuration does not declare the flag.
-func accountApp(ctx context.Context, flags *featureflags.Evaluator) (AccountApp, error) {
-	key, ok := tenant.FromContext(ctx)
-	if !ok {
-		return "", errx.NewUnavailableError("identity tenant is required", nil)
-	}
-
-	enabled, err := flags.TenantBoolean(ctx, featureflags.IdentityV2)
-	if errors.Is(err, featureflags.ErrFlagNotFound) && key == tenant.Production() {
-		enabled, err = featureflags.IdentityV2.SafeDefault(), nil
-	}
-	if err != nil {
-		return "", errx.NewUnavailableError("identity provider selection unavailable", err)
-	}
-	if enabled {
-		return V2, nil
-	}
-	return V1, nil
-}
 
 func (s *Service) cookie(ctx context.Context) Cookie {
 	key, _ := tenant.FromContext(ctx)
@@ -279,41 +180,4 @@ func cookieValue(header CookieHeader, name string) string {
 func validSessionToken(raw string) bool {
 	decoded, err := base64.RawURLEncoding.DecodeString(raw)
 	return err == nil && len(decoded) == 32 && base64.RawURLEncoding.EncodeToString(decoded) == raw
-}
-
-func (s *Service) legacySession(ctx context.Context, header CookieHeader) (Session, error) {
-	value := cookieValue(header, "ory_kratos_session")
-	if value == "" {
-		return GuestSession{}, nil
-	}
-	session, err := s.legacy.Check(ctx, "ory_kratos_session="+value)
-	if err != nil {
-		return nil, errx.NewUnavailableError("identity provider unavailable", err)
-	}
-	if session == nil {
-		return GuestSession{}, nil
-	}
-	id, err := uuid.Parse(session.Identity.Id)
-	if err != nil {
-		return nil, errx.NewUnavailableError("identity provider returned an invalid account", nil)
-	}
-	traits, ok := session.Identity.Traits.(map[string]interface{})
-	if !ok {
-		return nil, errx.NewUnavailableError("identity provider returned invalid traits", nil)
-	}
-	email, emailOK := traits["email"].(string)
-	name, nameOK := traits["display_name"].(string)
-	if !emailOK || !nameOK {
-		return nil, errx.NewUnavailableError("identity provider returned invalid traits", nil)
-	}
-	return AuthenticatedSession{
-		Account: Account{
-			ID:          id,
-			Email:       Email{email},
-			DisplayName: DisplayName{name},
-			CreatedAt:   session.Identity.GetCreatedAt(),
-		},
-		AuthenticatedAt: session.GetAuthenticatedAt(),
-		ExpiresAt:       session.GetExpiresAt(),
-	}, nil
 }

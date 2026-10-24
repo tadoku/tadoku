@@ -574,7 +574,7 @@ func TestLogsRepositoryModerateDetachClearsOfficialEligibility(t *testing.T) {
 
 	now := time.Date(2026, 9, 2, 12, 0, 0, 0, time.UTC)
 	service := NewService(repository, false)
-	followUp, err := service.ModerateDetach(tenantCtx, logID, contestID, now)
+	result, err := service.ModerateDetach(tenantCtx, logID, contestID, now)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -589,7 +589,7 @@ func TestLogsRepositoryModerateDetachClearsOfficialEligibility(t *testing.T) {
 
 	wantContest := jobs.InvalidateContestLeaderboardV1{ContestID: contestID}
 	wantOfficial := jobs.InvalidateOfficialLeaderboardV1{Year: 2026}
-	if len(followUp) != 2 || followUp[0] != wantContest || followUp[1] != wantOfficial {
-		t.Errorf("followUp=%v, want [%v %v]", followUp, wantContest, wantOfficial)
+	if len(result.Jobs) != 2 || result.Jobs[0] != wantContest || result.Jobs[1] != wantOfficial {
+		t.Errorf("followUp=%v, want [%v %v]", result.Jobs, wantContest, wantOfficial)
 	}
 }

@@ -65,11 +65,8 @@ revisions and posts are not copied. Each copy is skipped when the tenant
 already has platform scoring config or any page, so reruns keep the tenant's
 own changes; contest rule sets and user data are never copied. It then grants
 the canonical Keto parent and repeated `--tester` UUIDs, then creates only
-missing Flipt resources from the strict boolean seed format. Provisioning adds
-`identity-v2` with a true 100% rollout only to this test namespace, independently
-of canonical feature files. It replaces any input definition of that key for a
-new namespace. Canonical `tadoku/prod`, imports and the safe false default remain
-unchanged.
+missing Flipt resources from the strict boolean seed format. Canonical
+`tadoku/prod`, imports and the safe false default remain unchanged.
 Keto grants are checked by their complete tuple before creating them because
 the provider accepts duplicate relationship writes.
 Reruns preserve existing grants and flag values. Teardown deletes the tenant's
@@ -141,7 +138,7 @@ Run the command attached to a cluster shell with the intended database credentia
 never create tokens through a Kubernetes Job, redirected log, CI step or API.
 Token operations need only `TENANT_POSTGRES_*` and access-token table DML privileges,
 plus row-lock privileges on the tenant registry for creation. They make no Keto,
-Kratos, Valkey or Flipt writes. Runtime row-level security still scopes each
+Valkey or Flipt writes. Runtime row-level security still scopes each
 statement to the parsed tenant.
 
 ```sh

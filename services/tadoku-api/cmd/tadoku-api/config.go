@@ -41,12 +41,9 @@ type config struct {
 	FliptStartupTimeout  time.Duration `validate:"gt=0" envconfig:"flipt_startup_timeout" default:"3s"`
 	FliptManagementURL   string        `envconfig:"flipt_management_url" default:"http://oathkeeper-proxy.default:4455/flipt-management"`
 
-	KratosAdminURL            string   `validate:"required" envconfig:"kratos_admin_url"`
-	KratosPublicURL           string   `envconfig:"kratos_public_url"`
 	IdentityCookieDomain      string   `envconfig:"identity_cookie_domain" default:"tadoku.app"`
 	IdentityTrustedProxyCIDRs []string `envconfig:"identity_trusted_proxy_cidrs"`
 	identityTrustedProxies    []netip.Prefix
-	KratosTimeout             time.Duration `validate:"gt=0" envconfig:"kratos_timeout" default:"2s"`
 
 	PostgresMaxConnections int32                 `validate:"gt=0,lte=32" envconfig:"postgres_max_connections" default:"4"`
 	Postgres               postgresconfig.Config `ignored:"true"`
@@ -129,18 +126,6 @@ func loadConfig() (config, error) {
 	}
 	cfg.KetoWriteURL = strings.TrimRight(cfg.KetoWriteURL, "/")
 
-	kratosURL, err := url.Parse(cfg.KratosAdminURL)
-	if err != nil || kratosURL.Hostname() == "" || (kratosURL.Scheme != "http" && kratosURL.Scheme != "https") ||
-		kratosURL.User != nil || kratosURL.RawQuery != "" || kratosURL.ForceQuery || strings.Contains(cfg.KratosAdminURL, "#") {
-		return config{}, fmt.Errorf("validate config: KratosAdminURL must be an HTTP(S) URL without credentials, query or fragment")
-	}
-	cfg.KratosAdminURL = strings.TrimRight(cfg.KratosAdminURL, "/")
-	if cfg.KratosPublicURL != "" {
-		cfg.KratosPublicURL, err = providerBaseURL("KratosPublicURL", cfg.KratosPublicURL)
-		if err != nil {
-			return config{}, err
-		}
-	}
 	if cfg.IdentityCookieDomain != "tadoku.app" && cfg.IdentityCookieDomain != "tadoku.dev.lab" {
 		return config{}, fmt.Errorf("validate config: IdentityCookieDomain must be tadoku.app or tadoku.dev.lab")
 	}

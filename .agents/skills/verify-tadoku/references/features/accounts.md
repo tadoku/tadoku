@@ -2,8 +2,8 @@
 
 ## Find it
 
-Main-site **Log in** or **Sign up** opens the account host. Account routes are
-`/login`, `/register`, `/account-recovery`, `/verification`, and `/` for Settings.
+Main-site **Log in** or **Sign up** opens authv2 on the matching account host. Its
+routes are `/login`, `/register`, `/recovery`, and `/` or `/settings` for Settings.
 The logged-in main-site user menu offers Profile, Account settings and Log out;
 Admin appears for administrators. Use a separate browser context for each identity.
 
@@ -16,9 +16,7 @@ Admin appears for administrators. Use a separate browser context for each identi
 - Open `/logs/new` and a branch contest's registration page anonymously with
   multiple query parameters and a fragment. Their login URL must carry the full
   original URL in `return_to`; after fixture login and reload, the browser must
-  show that same protected page and URL. The auth suite's `login-return.spec.ts`
-  uses an existing development reader and verifies TLS without recording traces
-  or changing the identity or submitting activity/registration writes.
+  show that same protected page and URL.
 - For registration/settings/recovery changes, use a new uniquely named disposable
   identity. Exercise validation, successful submission, profile/password settings,
   forced reauthentication, logout and recovery mail. Confirm logout also removes
@@ -28,28 +26,21 @@ Admin appears for administrators. Use a separate browser context for each identi
 
 ## Tools and traps
 
-The existing [Playwright journey](../../../../../frontend/apps/auth/e2e/README.md)
-documents installation, MailHog loopback forwarding, environment variables and the
-optional administrator test. It creates its own identity and leaves mail/identity
-data for diagnosis. Missing env skips tests. Its configured TLS bypass is not
-certificate verification. It targets base hosts unless branch-host URLs are supplied.
+The [authv2 Playwright smoke](../../../../../frontend/apps/authv2/e2e/README.md)
+documents installation, environment variables and its opt-in local fixtures; see
+[Authv2 account screens](#authv2-account-screens).
 
-Use MailHog only through the documented loopback port-forward; do not expose its
-inbox publicly or reuse production mailboxes. Do not retain session cookies or
-recovery tokens in shared evidence. Kratos/Keto are shared even with a branch API:
-changing a shared identity's password, name, permissions or session affects others.
-Branch host selection is independent of shared authentication, and `/kratos` is never
-served by a frontend overlay. Don't mock CSRF, fabricate JWTs or bypass the UI
-login when claiming a browser E2E.
+Do not retain session cookies or recovery tokens in shared evidence. Keto is
+shared even with a branch API, and canonical accounts serve everyone using the
+base: changing their password, name, permissions or session affects others.
+Don't mock CSRF, fabricate JWTs or bypass the UI login when claiming a browser E2E.
 
 ## Identity entry point
 
 Webv2 and admin read `GET /identity/session`, including as guests. Check that
-`account_app` selects account or authv2 links on the same branch, and that
+login, registration and settings links open authv2 on the same branch, and that
 logout posts to `POST /identity/logout` before access to protected pages is
-removed. Auth selects the same endpoint before starting a v1 flow and redirects
-v2 requests to authv2 with their query. No frontend clears identity cookies
-when an unrelated API returns 401.
+removed. No frontend clears identity cookies when an unrelated API returns 401.
 
 Gateway configuration forwards Cookie and
 X-Dev-Branch through the branch-aware API hop and adds the callback bearer;
@@ -67,8 +58,7 @@ Record `account_app`. Only an `identity-v2` flag absent from the canonical
 `tadoku/prod` snapshot defaults to `v1`. Any other undecided selection returns
 `503`, or `504` past the request deadline and `499` when the client cancels.
 
-The base API and overlays supply the development cookie domain and Kratos public
-URL.
+The base API and overlays supply the development cookie domain.
 Recovery and profile/password settings use the local identity API. Account
 lookup/search use the separate identity `ReadService` for profile and moderation;
 the `Accounts` service's Reader methods and account deletion remain `501` stubs.
@@ -91,7 +81,7 @@ branch API. Reseeding must preserve branch-changed credentials, display names an
 and continue through branch profile/content fixtures. New accounts retain the
 canonical fixture user age; a missing fixture email held by another UUID must
 fail atomically. Never edit canonical
-flag policy or shared Kratos sessions to exercise local account behavior.
+flag policy or canonical sessions to exercise local account behavior.
 Backend E2Es use real, disposable providers and a tenant-aware Flipt fixture.
 
 ## Caller release smoke
@@ -101,7 +91,7 @@ Follow the ordered gates in
 production read-only baseline, actual-merge development image provenance, isolated
 native-v2 callback GET and invalid POST 400 with physical-database evidence, then
 canonical browser/SSR smoke with the same retained v1 sessions. Require live
-webv2/admin/auth builds from the merge commit before browser proof. Confirm
+webv2/admin builds from the merge commit before browser proof. Confirm
 signed-in server-rendered document content before hydration as well as the real
 Reader/Admin interactions; API curls and hydrated navigation alone are partial
 proof. Revoke the retained pair publicly only after every smoke gate passes and
@@ -119,8 +109,9 @@ and JSON request bodies. Authv2 screens may be unavailable independently of the
 API. In an owned v2 tenant, request recovery for its Dev Reader, read the held
 `account.recovery` message as Dev Admin through the public cookie gateway,
 follow `params.recovery_url` and require a `303` to that tenant's authv2
-Settings root. A supplied `return_to` must survive as a query parameter for
-continuation after Settings completion, never as the immediate destination.
+Settings URL `/?edit=password`, which opens the Password editor. A supplied
+`return_to` must follow it as `&return_to=` for continuation after Settings
+completion, never as the immediate destination.
 Set a new password and log in with it. Confirm
 actual overlay headers, tenant identity, a fresh secure cookie and rejection of
 the old password and sessions. A second consume and a foreign tenant must fail;
@@ -137,36 +128,34 @@ the email writer still rejects makes recovery and email changes return `400`
 without writes.
 
 A v2 administrator cookie requires deployed identity callback wiring and
-tenant-local v2 administrator fixtures. The existing gateway also accepts an
-already authorized v1 administrator cookie. Both paths require a valid
-administrator session; opening a login page alone does not provide one.
+tenant-local v2 administrator fixtures. It requires a valid administrator
+session; opening a login page alone does not provide one.
 Missing prerequisites must be reported explicitly. A bearer read, API
 port-forward or disposable local gateway is separate evidence and does not
-satisfy this journey. Do not create shared Kratos sessions, change shared
-credentials/roles, or import unfinished wiring to bypass the prerequisite. Keep
+satisfy this journey. Do not change shared credentials/roles or import
+unfinished wiring to bypass the prerequisite. Keep
 recovery URLs and cookies out of screenshots and retained output. Remove the
 owner's test data and overlay through `dev down` after verification.
 
 ## Source anchors
 
-[Account pages](../../../../../frontend/apps/auth/pages/),
+[Account screens](../../../../../frontend/apps/authv2/src/routes/),
 [session navigation](../../../../../frontend/apps/webv2/app/ui/Navigation.tsx),
-[auth E2E](../../../../../frontend/apps/auth/e2e/account.spec.ts).
+[authv2 E2E](../../../../../frontend/apps/authv2/e2e/README.md).
 
 ## Authv2 account screens
 
-Authv2 uses `/` for Settings, `/login`, `/register` and `/recovery` on `authv2.tadoku.dev.lab` or the matching
-`<route>.authv2.tadoku.dev.lab` branch. Read
+Authv2 uses `/` for Settings, `/login`, `/register` and `/recovery` on `account.tadoku.dev.lab` or the matching
+`<route>.account.tadoku.dev.lab` branch. Read
 [Authv2](../../../../../docs/docs/frontend/authv2.md) and
 [its manual smoke instructions](../../../../../frontend/apps/authv2/e2e/README.md).
 
-- Obtain the link with `dev url --owner <owner> --host authv2.tadoku.dev.lab '/login'`.
+- Obtain the link with `dev url --owner <owner> --host account.tadoku.dev.lab '/login'`.
   Confirm the document's overlay `X-Dev-Backend` before claiming branch behavior.
-  Authv2 shares `tdk-dev-frontend-auth` with auth, using distinct workload and
-  Service selectors. Its Vite overlay supplies URLs inline and reuses the existing
-  `tadoku-cli-ca`; no shared prerequisite creation is needed. Snapshot auth's
-  UID, spec, generation, selectors and ConfigMaps before startup and compare
-  after owner-scoped teardown. Require no owned resources and healthy auth.
+  Authv2 runs in `tdk-dev-frontend-auth`. Its Vite overlay supplies URLs inline
+  and reuses the existing `tadoku-cli-ca`; no shared prerequisite creation is
+  needed. After owner-scoped teardown, require no owned resources and a healthy
+  base authv2.
 - A v2 guest gets login, registration and recovery forms; signed-in navigation
   shows the display name and logout. Settings is at `/`, with `/settings`
   retained for existing caller links. A guest opening Settings goes through
@@ -180,10 +169,14 @@ Authv2 uses `/` for Settings, `/login`, `/register` and `/recovery` on `authv2.t
   containment. Do not inject cookies or mock identity responses for this proof.
 - Log in with an allowed `return_to` and require that exact destination; a
   foreign one must never be rendered, carried or followed.
+- Settings rows open one editor at a time through their **Change** links, which
+  set `?edit=`; Change and Cancel must work without JavaScript and keep
+  `return_to`. A save collapses the row and shows its confirmation.
 - As the owned native Reader, save a display name and reload; exercise invalid
   names/passwords, taken email, throttling and stale-session feedback. A stale
   valid session can save its display name; email or password edits link to a
-  login that returns to Settings. Email changes notify the old address.
+  login that returns to Settings with that editor open. Email changes notify the
+  old address.
   Resubmitting the unchanged email shows that it is already the account's
   address and sends no request; display-name and password saves send only their
   own field.
@@ -197,11 +190,8 @@ Authv2 uses `/` for Settings, `/login`, `/register` and `/recovery` on `authv2.t
 - Keep a page mounted, change source and observe HMR with unchanged navigation
   time origin, Pod UID and image. Keep the local generated route tree current:
   synchronizing a stale tree makes the overlay regenerate it and reload.
-- A v1 session answer returns to the matching existing account host with the
-  path and query preserved, including legacy emoji display names and email
-  formats. Session API failures show an unavailable message
-  with a retry action and the shell's home link; a missing endpoint must not
-  crash the page.
+- Session API failures show an unavailable message with a retry action and
+  the shell's home link; a missing endpoint must not crash the page.
 - Verify mobile containment and `/healthz` independently of API availability.
   Cookie/branch forwarding can be checked with the opt-in local session fixture,
   registration answers, including the registration budget's `429`, with the

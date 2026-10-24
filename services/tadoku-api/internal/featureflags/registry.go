@@ -4,7 +4,6 @@ type BooleanFlag uint8
 
 const (
 	ReleaseLogEntryV2 BooleanFlag = iota
-	IdentityV2
 )
 
 type booleanDefinition struct {
@@ -19,8 +18,6 @@ func (f BooleanFlag) definition() booleanDefinition {
 			key:         "release-log-entry-v2",
 			safeDefault: false,
 		}
-	case IdentityV2:
-		return booleanDefinition{key: "identity-v2", safeDefault: true}
 	default:
 		return booleanDefinition{}
 	}

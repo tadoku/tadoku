@@ -33,7 +33,7 @@ the [API reference](../api/index.md).
 ```text
 transport/http -> app -> features/<feature> -> generated/sqlc/<feature>
 app and features/<feature> -> domain/<concept>
-cmd/tadoku-api constructs and owns the pgx/v5 pool, the Valkey, read-only Kratos and Keto clients and the HTTP resources
+cmd/tadoku-api constructs and owns the pgx/v5 pool, the Valkey and Keto clients and the HTTP resources
 ```
 
 All paths are relative to `services/tadoku-api/`.
@@ -78,6 +78,8 @@ see [Contributing workflow](../develop/contributing.md#cms-managed-content).
   Go, including tests; covers wrapping, blank-line grouping and SQL in Go.
 - [Contract and OpenAPI](./contract.md): read before changing
   the OpenAPI contract, a request or response shape, or generated HTTP code.
+- [Contest event feeds](./contest-events.md): poll submission changes and read
+  current contest log contents for integrations.
 - [Database and migrations](./database.md): read before writing a migration,
   changing a SQL query or opening a transaction.
 - [Jobs and worker](./jobs.md): read before adding background work or changing

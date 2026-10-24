@@ -12,8 +12,6 @@ import (
 	"strings"
 	"testing"
 	"time"
-
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
 const identityBranchA = "tadoku/identity-a-0123abcd"
@@ -21,8 +19,7 @@ const identityBranchB = "tadoku/identity-b-0123abcd"
 const identityFixturePassword = "Fixture-login-482!"
 
 type identitySessionView struct {
-	AccountApp string `json:"account_app"`
-	Account    *struct {
+	Account *struct {
 		ID              string    `json:"id"`
 		Email           string    `json:"email"`
 		DisplayName     string    `json:"display_name"`
@@ -38,28 +35,6 @@ func resetIdentity(t *testing.T, seedFiles ...string) {
 		seedFiles = []string{"testdata/IdentityV2/setup.sql"}
 	}
 	if err := api.db.Reset(t.Context(), seedFiles...); err != nil {
-		t.Fatal(err)
-	}
-
-	rows, err := api.db.Pool.Query(t.Context(), "select distinct tenant from accounts order by tenant")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var raw string
-		if err := rows.Scan(&raw); err != nil {
-			t.Fatal(err)
-		}
-		key, err := tenant.Parse(raw)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if err := flipt.SetIdentityV2(key, true); err != nil {
-			t.Fatal(err)
-		}
-	}
-	if err := rows.Err(); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -291,7 +266,7 @@ func TestIdentityV2SessionJourney(t *testing.T) {
 	}
 	response = identityRequest(t, api.handler, identityBranchA, "GET", "/identity/session", "", first.String(), nil)
 	view := identityView(t, response)
-	if view.AccountApp != "v2" || view.Account == nil || view.Account.Email != "new@example.test" ||
+	if view.Account == nil || view.Account.Email != "new@example.test" ||
 		view.Account.DisplayName != "New Reader" || !view.Account.CreatedAt.Equal(fixtureInstant) ||
 		!view.Account.AuthenticatedAt.Equal(fixtureInstant) {
 		t.Fatal("registration did not persist the complete session account")

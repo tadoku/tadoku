@@ -12,7 +12,6 @@ import (
 	"github.com/google/uuid"
 	accountidentity "github.com/tadoku/tadoku/services/tadoku-api/features/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/featureflags"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
@@ -60,18 +59,11 @@ func seedIdentityReads(t *testing.T) {
 	if err := api.keto.Reset(t.Context(), "testdata/ProfileUsersList/relationships.json"); err != nil {
 		t.Fatal(err)
 	}
-	if err := api.flipt.SetIdentityV2(tenant.Production(), true); err != nil {
-		t.Fatal(err)
-	}
 }
 
 func TestIdentityReaderTenantPaging(t *testing.T) {
 	seedIdentityReads(t)
-	var reader accountidentity.Reader = accountidentity.NewReader(
-		api.db.AppPool,
-		fixtureLegacyReader(),
-		featureflags.NewEvaluator(api.flipt, nil),
-	)
+	var reader accountidentity.Reader = accountidentity.NewReader(api.db.AppPool)
 	ctx := tenant.WithKey(t.Context(), tenant.Production())
 	first, err := reader.ListAccounts(ctx, accountidentity.ListAccounts{Limit: 1})
 	if err != nil {
@@ -108,9 +100,6 @@ func TestIdentityReaderTenantPaging(t *testing.T) {
 		t.Fatalf("foreign account exists=%v err=%v", exists, err)
 	}
 	branch, _ := tenant.Parse("e2e/read-0123abcd")
-	if err := api.flipt.SetIdentityV2(branch, true); err != nil {
-		t.Fatal(err)
-	}
 	for _, invalid := range []struct {
 		ctx   context.Context
 		query accountidentity.ListAccounts

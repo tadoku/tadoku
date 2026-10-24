@@ -24,13 +24,6 @@ type RecoveryRequest struct {
 // AdmitRecovery must run before the application's business transaction. A nil request without an error
 // means admission suppressed the recipient; answer exactly as for an unknown address.
 func (s *Service) AdmitRecovery(ctx context.Context, recovery Recovery) (*RecoveryRequest, error) {
-	app, err := s.accountApp(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if app == V1 {
-		return nil, ErrNotImplemented
-	}
 	email, err := ParseEmail(recovery.Email)
 	if err != nil {
 		return nil, err
@@ -88,25 +81,8 @@ func (s *Service) WriteRecovery(ctx context.Context, request RecoveryRequest) (R
 	}}}, nil
 }
 
-// RequestRecovery requires the application's business transaction, including email writes and enqueue.
-// HTTP callers admit with AdmitRecovery before the transaction and use WriteRecovery inside it.
-func (s *Service) RequestRecovery(ctx context.Context, recovery Recovery) (RecoveryResult, error) {
-	request, err := s.AdmitRecovery(ctx, recovery)
-	if err != nil || request == nil {
-		return RecoveryResult{}, err
-	}
-	return s.WriteRecovery(ctx, *request)
-}
-
 // ConsumeRecovery requires the application's business transaction through the new session write.
 func (s *Service) ConsumeRecovery(ctx context.Context, raw RecoveryToken) (RecoveryLogin, error) {
-	app, err := s.accountApp(ctx)
-	if err != nil {
-		return RecoveryLogin{}, err
-	}
-	if app == V1 {
-		return RecoveryLogin{}, ErrNotImplemented
-	}
 	if !validSessionToken(string(raw)) {
 		return RecoveryLogin{}, ErrInvalidRecoveryToken
 	}
@@ -136,16 +112,16 @@ func (s *Service) ConsumeRecovery(ctx context.Context, raw RecoveryToken) (Recov
 	if err != nil {
 		return RecoveryLogin{}, err
 	}
-	return RecoveryLogin{Login: login, RedirectTo: s.appURL(ctx, "authv2")}, nil
+	return RecoveryLogin{Login: login, RedirectTo: s.appURL(ctx, "account")}, nil
 }
 
 func (s *Service) RecoverySettingsURL(ctx context.Context, returnTo *string) (string, error) {
-	location := s.appURL(ctx, "authv2")
+	location := s.appURL(ctx, "account") + "?edit=password"
 	if returnTo != nil {
 		if err := ValidateReturnTo(*returnTo); err != nil {
 			return "", err
 		}
-		location += "?return_to=" + url.QueryEscape(*returnTo)
+		location += "&return_to=" + url.QueryEscape(*returnTo)
 	}
 	if err := ValidateReturnTo(location); err != nil {
 		return "", &Error{

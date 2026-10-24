@@ -1,6 +1,6 @@
 ---
 title: styleguide
-description: The reference site for the legacy ui component library used by webv2, auth and admin.
+description: The reference site for the legacy ui component library used by webv2 and admin.
 sidebar_position: 7
 ---
 
@@ -12,7 +12,7 @@ Source: `frontend/apps/styleguide`. Published at https://ui.tadoku.app.
 
 ## What it is
 
-`ui` (`frontend/packages/ui`) and this styleguide make up the legacy design system that webv2, auth and admin still use. New Paper work uses `paper-ui` and [paper-styleguide](paper-styleguide.md) instead.
+`ui` (`frontend/packages/ui`) and this styleguide make up the legacy design system that webv2 and admin still use. New Paper work uses `paper-ui` and [paper-styleguide](paper-styleguide.md) instead.
 
 The styleguide is a Next.js 13 site with one page for each area of `ui`: branding, colour, typography, buttons, forms, modals, flash messages, toasts, navigation, breadcrumbs, pagination, action menus, tables, charts, templates and logging. Each page renders live examples from `examples/` next to their source code. The examples use react-hook-form with Zod resolvers, Luxon, Chart.js, TanStack Table and faker fixtures.
 

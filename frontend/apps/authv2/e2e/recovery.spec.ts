@@ -2,11 +2,12 @@ import { randomUUID } from 'node:crypto'
 import { test, expect } from '@playwright/test'
 import {
   adminEmail, adminPassword, expectSettings, logIn, newPage, origins, readerEmail, readerPassword, saveReaderPassword,
+  settingRow,
 } from './support'
 
 // Failure modes: recovery answers that reveal whether an account exists; a held email whose link differs from its
-// body or leaves the tenant; a recovery link that does not land signed in on Settings, or continues before the new
-// password is saved; old passwords, sessions or links still working afterwards.
+// body or leaves the tenant; a recovery link that does not land signed in on Settings with the Password editor open,
+// or continues before the new password is saved; old passwords, sessions or links still working afterwards.
 
 test('recovery through a held email sets a new password and continues', async ({ browser }, testInfo) => {
   const { authv2, main } = origins(testInfo)
@@ -56,13 +57,15 @@ test('recovery through a held email sets a new password and continues', async ({
   await expectSettings(page)
   expect(new URL(page.url()).origin).toBe(authv2)
   expect(new URL(page.url()).searchParams.get('return_to')).toBe(destination)
+  expect(new URL(page.url()).searchParams.get('edit')).toBe('password')
   await expect(page.getByRole('banner')).toContainText('Log out')
+  const password = settingRow(page, 'Password')
+  await expect(password.getByLabel('New password')).toBeFocused()
   await page.screenshot({ path: testInfo.outputPath('recovered-settings.png'), fullPage: true })
 
   const replacement = `Recovered-${randomUUID()}`
-  const password = page.getByRole('region', { name: 'Password' })
   await password.getByLabel('New password').fill(replacement)
-  await password.getByRole('button', { name: 'Change password and continue' }).click()
+  await password.getByRole('button', { name: 'Save password and continue' }).click()
   await expect(page).toHaveURL(destination)
   saveReaderPassword(replacement)
 

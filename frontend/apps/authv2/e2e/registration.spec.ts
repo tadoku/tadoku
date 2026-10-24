@@ -6,13 +6,12 @@ import { waitForHydration } from './support'
 // accepts an https account origin, so the server runs with TADOKU_WEB_URL=https://tadoku.dev.lab and TADOKU_API_URL
 // pointing at the fixture below. Browser calls to that web host's API are answered in the test and never leave it.
 const enabled = process.env.AUTHV2_REGISTRATION_FIXTURE === 'true'
-const host = 'authv2.tadoku.dev.lab'
+const host = 'account.tadoku.dev.lab'
 const api = 'https://tadoku.dev.lab/api/internal/identity/registration'
 
 type Answer = { readonly status: number; readonly body?: string; readonly type?: string; readonly cookie?: string }
 const json = (value: unknown) => JSON.stringify(value)
 const created = json({
-  account_app: 'v2',
   account: {
     id: '00000000-0000-4000-8000-000000000001',
     email: 'reader@example.test',
@@ -55,7 +54,7 @@ const failures: readonly {
   { name: 'admission timeout (504, undocumented)', answer: { status: 504, body: '' }, message: unavailable },
   { name: 'cancelled (499, undocumented)', answer: { status: 499, body: '' }, message: unavailable },
   { name: 'proxy page with 429', answer: { status: 429, body: '<!doctype html><title>Busy</title>', type: 'text/html' }, message: unavailable },
-  { name: 'malformed 201', answer: { status: 201, body: json({ account_app: 'v2', account: { id: 'x' } }), cookie }, message: unavailable },
+  { name: 'malformed 201', answer: { status: 201, body: json({ account: { id: 'x' } }), cookie }, message: unavailable },
   { name: 'undocumented 200', answer: { status: 200, body: created, cookie }, message: unavailable },
   { name: 'connection reset', answer: 'reset', message: unavailable },
 ]
@@ -72,7 +71,7 @@ function reply(response: ServerResponse) {
 
 const fixture = createServer((request, response) => {
   if (request.url === '/api/internal/identity/session') {
-    response.writeHead(200, { 'Content-Type': 'application/json' }).end(json({ account_app: 'v2', account: null }))
+    response.writeHead(200, { 'Content-Type': 'application/json' }).end(json({ account: null }))
     return
   }
   if (request.url !== '/api/internal/identity/registration' || request.method !== 'POST') {

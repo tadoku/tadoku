@@ -19,7 +19,7 @@ export function saveReaderPassword(password: string) {
 
 export function origins(testInfo: TestInfo) {
   const authv2 = new URL(testInfo.project.use.baseURL as string).origin
-  return { authv2, main: authv2.replace('.authv2.', '.') }
+  return { authv2, main: authv2.replace(/(\/\/|\.)account\./, '$1') }
 }
 
 export async function newPage(browser: Browser, testInfo: TestInfo, options: BrowserContextOptions = {}) {
@@ -42,12 +42,32 @@ export async function expectContained(page: Page) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
 }
 
-/** React attaches its props to every hydrated element, so this works for any build of the screens. */
+/**
+ * React attaches its props to every hydrated element, so this works for any build of the screens. Settings at rest
+ * has no input, only links.
+ */
 export async function waitForHydration(page: Page) {
   await page.waitForFunction(() => {
-    const input = document.querySelector('main input:not([type="hidden"])')
-    return input !== null && Object.keys(input).some(key => key.startsWith('__reactProps'))
+    const control = document.querySelector('main :is(input:not([type="hidden"]), a[href])')
+    return control !== null && Object.keys(control).some(key => key.startsWith('__reactProps'))
   })
+}
+
+/** A Settings row, the region its heading labels: "Display name", "Email" or "Password". */
+export function settingRow(page: Page, name: string) {
+  return page.getByRole('region', { name, exact: true })
+}
+
+/** The stored value a collapsed Settings row shows. */
+export function settingValue(page: Page, name: string) {
+  return settingRow(page, name).locator('.settings-row__value')
+}
+
+/** Opens a collapsed Settings row's editor through its Change link, with or without JavaScript. */
+export async function openSetting(page: Page, name: string) {
+  const row = settingRow(page, name)
+  await row.getByRole('link', { name: `Change ${name.toLowerCase()}`, exact: true }).click()
+  await expect(row.getByRole('link', { name: 'Cancel', exact: true })).toBeVisible()
 }
 
 export async function holdScripts(page: Page) {

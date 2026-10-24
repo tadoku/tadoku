@@ -23,18 +23,10 @@ var (
 	ErrRecoveryThrottled = &Error{
 		"throttled", errx.NewThrottledError("too many recovery requests; try again later"),
 	}
-	ErrNotImplemented  = errx.NewNotImplementedError()
 	ErrWrongPassword   = &Error{"wrong_password", errx.NewUnauthorizedError("invalid email or password")}
 	ErrEmailTaken      = &Error{"email_taken", errx.NewConflictError("email is already registered")}
 	ErrThrottled       = &Error{"throttled", errx.NewThrottledError("too many login attempts; try again later")}
 	errAccountNotFound = errors.New("identity account not found")
-)
-
-type AccountApp string
-
-const (
-	V1 AccountApp = "v1"
-	V2 AccountApp = "v2"
 )
 
 type Account struct {
@@ -57,10 +49,6 @@ type AuthenticatedSession struct {
 
 func (AuthenticatedSession) session() {}
 
-type SessionResult struct {
-	AccountApp AccountApp
-	Session    Session
-}
 type Cookie struct {
 	Name, Value, Domain string
 	Expires             time.Time
@@ -100,18 +88,4 @@ type Reader interface {
 	FindAccount(ctx context.Context, userID uuid.UUID) (Account, error)
 	UserExists(ctx context.Context, userID uuid.UUID) (bool, error)
 	ListAccounts(ctx context.Context, query ListAccounts) (AccountPage, error)
-}
-
-type Accounts interface {
-	Reader
-	DeleteAccount(ctx context.Context, userID uuid.UUID) error
-	Register(ctx context.Context, registration Registration) (LoginResult, error)
-	Login(ctx context.Context, login Login) (LoginResult, error)
-	Logout(ctx context.Context, cookieHeader CookieHeader) (Cookie, error)
-	Session(ctx context.Context, cookieHeader CookieHeader) (SessionResult, error)
-	CheckSession(ctx context.Context, cookieHeader CookieHeader) (Session, error)
-	RequestRecovery(ctx context.Context, recovery Recovery) (RecoveryResult, error)
-	ConsumeRecovery(ctx context.Context, recoveryToken RecoveryToken) (RecoveryLogin, error)
-	UpdateProfile(ctx context.Context, cookieHeader CookieHeader, settings ProfileSettings) (ProfileResult, error)
-	UpdatePassword(ctx context.Context, cookieHeader CookieHeader, password string) error
 }

@@ -100,9 +100,9 @@ lowercase letter or digit and contains at most 56 lowercase letters, digits
 or hyphens. Physical database names and database roles are independent of keys.
 
 Every application transaction or standalone statement carries its tenant
-through the PostgreSQL executor. The 24 tenant-owned tables include users,
+through the PostgreSQL executor. The 25 tenant-owned tables include users,
 profiles, accounts, sessions, recovery tokens, emails, access tokens, content,
-contests, logs, scoring configuration, audit records, account-deletion requests
+contests, logs, contest events, scoring configuration, audit records, account-deletion requests
 and jobs. All have a non-null tenant column with the strict
 `current_setting('tadoku.tenant')` default. Ordinary
 `tenant_isolation` policies permit only that tenant's rows. The jobs policy

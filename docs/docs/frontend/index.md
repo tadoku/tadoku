@@ -14,8 +14,7 @@ Read this when you start frontend work and need to find the right application, p
 | --- | --- | --- | --- |
 | [webv2](webv2.md) | Main site: logs, contests, leaderboards, profiles, blog and CMS pages | Next.js 13 | `ui` (legacy) |
 | [webv3](webv3.md) | Unpublished homepage foundation with read-only development data and a local immersion goal | TanStack Start, Router, Query and Form | `paper-ui` (Paper) |
-| [authv2](authv2.md) | Account skeleton with API-selected v1/v2 routing | TanStack Start, Router, Query and Form | `paper-ui` (Paper) |
-| [auth](auth.md) | Legacy account portal for Ory Kratos (v1 tenants) | Next.js 13 | `ui` (legacy) |
+| [authv2](authv2.md) | Account app: login, registration, recovery and Settings | TanStack Start, Router, Query and Form | `paper-ui` (Paper) |
 | [admin](admin.md) | Administration: CMS content, users, languages, feature access | Next.js 13 | `ui` (legacy) |
 | [paper-styleguide](paper-styleguide.md) | Catalogue for `paper-ui` | Vite, React Router | `paper-ui` (Paper) |
 | [paper-playground](paper-playground.md) | Unpublished Paper application study with sample data | Vite, React Router | `paper-ui` (Paper) |
@@ -32,7 +31,7 @@ Always use pnpm, never npm. From `frontend/`:
 
 ```sh
 pnpm install --frozen-lockfile
-pnpm webv2                     # also webv3, auth, authv2, admin, styleguide, paper-styleguide, paper-playground
+pnpm webv2                     # also webv3, authv2, admin, styleguide, paper-styleguide, paper-playground
 pnpm --filter <app> lint
 pnpm --filter <app> test       # when the app defines it
 pnpm build                     # runs build in every workspace package that defines it
@@ -41,7 +40,7 @@ pnpm check:paper-boundaries
 
 The Next.js apps have no typecheck script, so use `pnpm --filter <app> exec tsc --noEmit`. The Paper apps have `pnpm --filter <app> typecheck`. Each application page lists its own commands.
 
-To run webv2, webv3, auth, authv2 or admin against the shared development backend, use dev-cli as described in [Development environment](../develop/environment.md).
+To run webv2, webv3, authv2 or admin against the shared development backend, use dev-cli as described in [Development environment](../develop/environment.md).
 
 ## Conventions
 

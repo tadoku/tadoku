@@ -88,6 +88,18 @@ const sidebar: SidebarsConfig = {
           label: "Fetches the configuration options for a new contest",
           className: "api-method get",
         },
+        {
+          type: "doc",
+          id: "api/immersion/contest-list-events",
+          label: "Read contest submission events",
+          className: "api-method get",
+        },
+        {
+          type: "doc",
+          id: "api/immersion/contest-find-log",
+          label: "Read a current log in a contest",
+          className: "api-method get",
+        },
       ],
     },
     {

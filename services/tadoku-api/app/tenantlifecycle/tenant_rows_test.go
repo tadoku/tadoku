@@ -140,6 +140,20 @@ func seedEveryTenantTable(t *testing.T, db *testpostgres.Database, key string) {
 	if _, err := tx.Exec(t.Context(), seed, pgx.QueryExecModeSimpleProtocol, key); err != nil {
 		t.Fatalf("seed %s: %v", key, err)
 	}
+	var hasContestEvents bool
+	if err := tx.QueryRow(t.Context(), "select to_regclass('contest_events') is not null").Scan(&hasContestEvents); err != nil {
+		t.Fatal(err)
+	}
+	if hasContestEvents {
+		_, err := tx.Exec(t.Context(), `insert into contest_events (tenant, id, contest_id, log_id, event)
+			values ($1, uuid_generate_v5(uuid_nil(), $1 || '/event'),
+				uuid_generate_v5(uuid_nil(), $1 || '/contest'), uuid_generate_v5(uuid_nil(), $1 || '/log'),
+				'log.submitted')`, key)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
 	if err := tx.Commit(t.Context()); err != nil {
 		t.Fatal(err)
 	}

@@ -64,11 +64,8 @@ spec:
                 secretKeyRef:
                   name: dev-oathkeeper-authz
                   key: token
-            - {name: API_KRATOS_ADMIN_URL, value: "http://kratos-admin.tdk-dev-kratos"}
-            - {name: API_KRATOS_PUBLIC_URL, value: "http://kratos-public.tdk-dev-kratos"}
             - {name: API_IDENTITY_COOKIE_DOMAIN, value: tadoku.dev.lab}
             - {name: API_IDENTITY_TRUSTED_PROXY_CIDRS, value: 10.53.0.0/24}
-            - {name: API_KRATOS_TIMEOUT, value: "2s"}
             - {name: API_POSTGRES_HOST, value: tadoku-dev-db.tdk-dev-data.svc.cluster.local}
             - {name: API_POSTGRES_DATABASE, value: tadoku}
             - {name: API_POSTGRES_SSLMODE, value: require}

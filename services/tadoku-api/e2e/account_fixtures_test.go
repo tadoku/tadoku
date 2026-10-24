@@ -53,7 +53,7 @@ func TestAccountCastMatchesSignedSubjects(t *testing.T) {
 			cookie := response.Result().Cookies()[0]
 			response = identityRequest(t, api.handler, raw, "GET", "/identity/session", "", cookie.String(), signed)
 			view := identityView(t, response)
-			if view.AccountApp != "v2" || view.Account == nil || view.Account.ID != subject ||
+			if view.Account == nil || view.Account.ID != subject ||
 				view.Account.DisplayName != traits["display_name"] || view.Account.Email != traits["email"] ||
 				!view.Account.AuthenticatedAt.Equal(fixtureInstant) {
 				t.Fatalf("local account does not match signed %s fixture: %+v", who, view.Account)

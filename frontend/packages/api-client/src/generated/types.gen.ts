@@ -288,6 +288,37 @@ export type ImmersionLeaderboard = ImmersionPaginatedList & {
     entries: Array<ImmersionLeaderboardEntry>;
 };
 
+export type ImmersionContestEvent = {
+    /**
+     * Stable event identity, also usable as a cursor and deduplication key.
+     */
+    id: string;
+    log_id: string;
+    /**
+     * Source operation time, stored once when the event is created.
+     */
+    occurred_at: string;
+    /**
+     * submitted means the log entered this contest. updated means its
+     * contest-visible log fields changed while it remained submitted.
+     * withdrawn means it left this contest, including deletion or moderation.
+     *
+     */
+    event: 'log.submitted' | 'log.updated' | 'log.withdrawn';
+};
+
+export type ImmersionContestEventPage = {
+    events: Array<ImmersionContestEvent>;
+    /**
+     * Last returned event ID, the input event ID on an empty poll, or 0 before any event.
+     */
+    next_cursor: string;
+    /**
+     * More visible events existed beyond this page at the time of the read.
+     */
+    has_more: boolean;
+};
+
 export type ImmersionScore = {
     language_code: string;
     language_name?: string;
@@ -488,7 +519,7 @@ export type IdentityErrorResponse = {
 export type IdentityAccount = {
     id: string;
     /**
-     * The account's stored address: a v1 Kratos trait, or for v2 the normalized address registration or settings stored or an imported address as written. When Go's net/mail reads an address from it, the API writes that address part, so a quoted local part arrives unquoted and surrounding ASCII spaces and tabs are dropped; letter case, every other character and its length are kept. Otherwise, such as for an imported address with a leading vertical tab, the API writes the stored address unchanged. It is not normalized like email input and need not satisfy format: email.
+     * The account's stored address: the normalized address registration or settings stored, or an imported address as written. When Go's net/mail reads an address from it, the API writes that address part, so a quoted local part arrives unquoted and surrounding ASCII spaces and tabs are dropped; letter case, every other character and its length are kept. Otherwise, such as for an imported address with a leading vertical tab, the API writes the stored address unchanged. It is not normalized like email input and need not satisfy format: email.
      */
     email: string;
     display_name: string;
@@ -497,7 +528,6 @@ export type IdentityAccount = {
 };
 
 export type IdentitySession = {
-    account_app: 'v1' | 'v2';
     account: IdentityAccount | null;
 };
 
@@ -505,7 +535,7 @@ export type IdentityRegistration = {
     email: string;
     display_name: string;
     /**
-     * At least 8 characters, at most 72 UTF-8 bytes; rejects similarity to the email under the Kratos v26.2.0 rule.
+     * At least 8 characters, at most 72 UTF-8 bytes; rejects a password whose lowercase form is within Levenshtein distance 4 of the lowercase email or shares with it a common substring longer than half the password.
      */
     password: string;
 };
@@ -513,7 +543,7 @@ export type IdentityRegistration = {
 export type IdentityLogin = {
     email: string;
     /**
-     * At least 8 characters, at most 72 UTF-8 bytes; rejects similarity to the email under the Kratos v26.2.0 rule.
+     * At least 8 characters, at most 72 UTF-8 bytes; rejects a password whose lowercase form is within Levenshtein distance 4 of the lowercase email or shares with it a common substring longer than half the password.
      */
     password: string;
 };
@@ -533,7 +563,7 @@ export type IdentityProfileSettings = {
 
 export type IdentityPasswordSettings = {
     /**
-     * At least 8 characters, at most 72 UTF-8 bytes; rejects similarity to the email under the Kratos v26.2.0 rule.
+     * At least 8 characters, at most 72 UTF-8 bytes; rejects a password whose lowercase form is within Levenshtein distance 4 of the lowercase email or shares with it a common substring longer than half the password.
      */
     password: string;
 };
@@ -1694,6 +1724,71 @@ export type ImmersionContestGetConfigurationsResponses = {
 
 export type ImmersionContestGetConfigurationsResponse = ImmersionContestGetConfigurationsResponses[keyof ImmersionContestGetConfigurationsResponses];
 
+export type ImmersionContestListEventsData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: {
+        /**
+         * A retained event UUID, 0 for the beginning, or now for the latest visible event.
+         */
+        cursor?: string;
+        limit?: number;
+    };
+    url: '/immersion/contests/{id}/events';
+};
+
+export type ImmersionContestListEventsErrors = {
+    /**
+     * Invalid limit, UUID or cursor; unknown event or event from another contest or tenant.
+     */
+    400: unknown;
+    /**
+     * Contest does not exist or was deleted.
+     */
+    404: unknown;
+};
+
+export type ImmersionContestListEventsResponses = {
+    /**
+     * Event page, including an empty page with a reusable cursor.
+     */
+    200: ImmersionContestEventPage;
+};
+
+export type ImmersionContestListEventsResponse = ImmersionContestListEventsResponses[keyof ImmersionContestListEventsResponses];
+
+export type ImmersionContestFindLogData = {
+    body?: never;
+    path: {
+        id: string;
+        logId: string;
+    };
+    query?: never;
+    url: '/immersion/contests/{id}/logs/{logId}';
+};
+
+export type ImmersionContestFindLogErrors = {
+    /**
+     * Invalid contest or log UUID.
+     */
+    400: unknown;
+    /**
+     * Contest is missing or deleted, or the log is not currently visible in this contest.
+     */
+    404: unknown;
+};
+
+export type ImmersionContestFindLogResponses = {
+    /**
+     * Current visible contest log.
+     */
+    200: ImmersionLog;
+};
+
+export type ImmersionContestFindLogResponse = ImmersionContestFindLogResponses[keyof ImmersionContestFindLogResponses];
+
 export type ImmersionLogCreateData = {
     body?: {
         registration_ids?: Array<string>;
@@ -2737,10 +2832,6 @@ export type IdentityRegistrationCreateErrors = {
      */
     429: IdentityErrorResponse;
     /**
-     * Not implemented
-     */
-    501: IdentityErrorResponse;
-    /**
      * Request rejected
      */
     503: IdentityErrorResponse;
@@ -2781,10 +2872,6 @@ export type IdentityLoginCreateErrors = {
      * Request rejected
      */
     429: IdentityErrorResponse;
-    /**
-     * Not implemented
-     */
-    501: IdentityErrorResponse;
     /**
      * Request rejected
      */
@@ -2909,10 +2996,6 @@ export type IdentityRecoveryCreateErrors = {
      */
     429: IdentityErrorResponse;
     /**
-     * Not implemented
-     */
-    501: IdentityErrorResponse;
-    /**
      * Request rejected
      */
     503: IdentityErrorResponse;
@@ -2967,10 +3050,6 @@ export type IdentityRecoveryConsumeErrors = {
      */
     429: IdentityErrorResponse;
     /**
-     * Not implemented
-     */
-    501: IdentityErrorResponse;
-    /**
      * Request rejected
      */
     503: IdentityErrorResponse;
@@ -3010,10 +3089,6 @@ export type IdentityProfileUpdateErrors = {
      * Request rejected
      */
     429: IdentityErrorResponse;
-    /**
-     * Not implemented
-     */
-    501: IdentityErrorResponse;
     /**
      * Request rejected
      */
@@ -3063,10 +3138,6 @@ export type IdentityPasswordUpdateErrors = {
      * Request rejected
      */
     429: IdentityErrorResponse;
-    /**
-     * Not implemented
-     */
-    501: IdentityErrorResponse;
     /**
      * Request rejected
      */

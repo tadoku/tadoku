@@ -9,13 +9,11 @@ resources:
   - data
   - migrations
   - services
-  - kratos
   - keto
   - oathkeeper
   - flipt
   - frontend-webv2
   - frontend-webv3
-  - frontend-auth
   - frontend-authv2
   - frontend-admin
   - routing
@@ -26,9 +24,6 @@ configMapGenerator:
     files: [keto/keto.yaml, keto/namespaces.keto.ts]
   - name: frontend-runtime
     namespace: tdk-dev-frontend-webv2
-    files: [frontend-start.cjs, ca.crt=lab-root-ca.crt]
-  - name: frontend-runtime
-    namespace: tdk-dev-frontend-auth
     files: [frontend-start.cjs, ca.crt=lab-root-ca.crt]
   - name: frontend-runtime
     namespace: tdk-dev-frontend-admin
@@ -66,9 +61,6 @@ configMapGenerator:
     options:
       disableNameSuffixHash: true
     literals:
-      - NEXT_PUBLIC_KRATOS_INTERNAL_ENDPOINT=http://kratos-public.tdk-dev-kratos
-      - NEXT_PUBLIC_KRATOS_ENDPOINT=https://account.tadoku.dev.lab/kratos
-      - NEXT_PUBLIC_AUTH_UI_URL=https://account.tadoku.dev.lab
       - NEXT_PUBLIC_HOME_URL=https://tadoku.dev.lab
       - NEXT_PUBLIC_API_ENDPOINT=/api/internal
       - NEXT_SERVER_API_ENDPOINT=http://oathkeeper-proxy.tdk-dev-oathkeeper:4455/api/internal
@@ -82,22 +74,6 @@ configMapGenerator:
     options:
       disableNameSuffixHash: true
     files: [ca.crt=lab-root-ca.crt]
-  - name: tadoku-cli-web
-    namespace: tdk-dev-frontend-auth
-    options:
-      disableNameSuffixHash: true
-    literals:
-      - NEXT_PUBLIC_KRATOS_INTERNAL_ENDPOINT=http://kratos-public.tdk-dev-kratos
-      - NEXT_PUBLIC_KRATOS_ENDPOINT=https://account.tadoku.dev.lab/kratos
-      - NEXT_PUBLIC_AUTH_UI_URL=https://account.tadoku.dev.lab
-      - NEXT_PUBLIC_HOME_URL=https://tadoku.dev.lab
-      - NEXT_PUBLIC_API_ENDPOINT=https://tadoku.dev.lab/api/internal
-      - NEXT_SERVER_API_ENDPOINT=http://oathkeeper-proxy.tdk-dev-oathkeeper:4455/api/internal
-      - NEXT_PUBLIC_COOKIE_DOMAIN=.tadoku.dev.lab
-      - NEXT_PUBLIC_COOKIE_SECURE=true
-      - NEXT_PUBLIC_ADMIN_URL=https://admin.tadoku.dev.lab
-      - NODE_EXTRA_CA_CERTS=/etc/dev-ca/ca.crt
-      - NODE_OPTIONS=--max-old-space-size=768
   - name: tadoku-cli-ca
     namespace: tdk-dev-frontend-admin
     options:
@@ -108,9 +84,6 @@ configMapGenerator:
     options:
       disableNameSuffixHash: true
     literals:
-      - NEXT_PUBLIC_KRATOS_INTERNAL_ENDPOINT=http://kratos-public.tdk-dev-kratos
-      - NEXT_PUBLIC_KRATOS_ENDPOINT=https://account.tadoku.dev.lab/kratos
-      - NEXT_PUBLIC_AUTH_UI_URL=https://account.tadoku.dev.lab
       - NEXT_PUBLIC_HOME_URL=https://tadoku.dev.lab
       - NEXT_PUBLIC_API_ENDPOINT=https://tadoku.dev.lab/api/internal
       - NEXT_SERVER_API_ENDPOINT=http://oathkeeper-proxy.tdk-dev-oathkeeper:4455/api/internal
@@ -139,36 +112,32 @@ images:
   - name: tadoku-api-migrations-image
     newName: ghcr.io/tadoku/tadoku/tadoku-api-migrations
     newTag: latest
-    digest: sha256:ef254f2598b6f54c06129cced76271efa21c80df876fae00e3e4e4dc5196f7cf
+    digest: sha256:debbbb96ac76651d7dd0032b164e185d1c2b23220949530180e71c3c61494263
   - name: tadoku-api-image
     newName: ghcr.io/tadoku/tadoku/tadoku-api
     newTag: latest
-    digest: sha256:16008004cb811cdd3f819a60665d72623ce6288c4d8469a94368a95d8f4e3f23
+    digest: sha256:a661995af8db5f5a5c734ba1dccff4329f148fa6b27b6a2fa099a5660846a456
   - name: tadoku-worker-image
     newName: ghcr.io/tadoku/tadoku/tadoku-worker
     newTag: latest
-    digest: sha256:d78d94a88ebaba08116d5165cffcc268ad3ee7f92c2d3fd35bb152b229fb4633
+    digest: sha256:6af01be7931e214fb1d4c37c60c4ebd56345952a05acb5d845a924542da6b9f1
   - name: token-reflector-image
     newName: ghcr.io/tadoku/tadoku/token-reflector
     newTag: latest
     digest: sha256:ccb8693802a5bdc0a793002cd686d2b33efae386224019618908b4b3bc432280
   - name: ghcr.io/tadoku/tadoku/frontend-webv2
-    newTag: 80565d5dd13f8c86ad99626d895951b22741ef05
+    newTag: ac741400df8035b634cc655695cb1fedef9d58f0
     newName: ghcr.io/tadoku/tadoku/frontend-webv2
-    digest: sha256:1cae8242e4c9c6fcb30d5342bf38f5b68c3cc9a628175433cfacb79705caa298
+    digest: sha256:1f782a9add5e2d4345fe9beb0ebcc64154dce61a923d9f059e131c8f2173a94f
   - name: ghcr.io/tadoku/tadoku/frontend-webv3
     newName: ghcr.io/tadoku/tadoku/frontend-webv3
     newTag: latest
-    digest: sha256:9eaed4788a13a418df80c47c2cfb1d0da2062e7d5919c5627ed5fcf6ccbc94b2
-  - name: ghcr.io/tadoku/tadoku/frontend-auth
-    newTag: 80565d5dd13f8c86ad99626d895951b22741ef05
-    newName: ghcr.io/tadoku/tadoku/frontend-auth
-    digest: sha256:bb1af0d79db8926d0d43e0433543d6b500fbff141926fadcc6fc8da741d4c13d
+    digest: sha256:687f57a311096cf66d4b013614507c9313f94457c61944020cff77c5e56f5df4
   - name: ghcr.io/tadoku/tadoku/frontend-admin
-    newTag: 80565d5dd13f8c86ad99626d895951b22741ef05
+    newTag: ac741400df8035b634cc655695cb1fedef9d58f0
     newName: ghcr.io/tadoku/tadoku/frontend-admin
-    digest: sha256:3c20adda4b5ca1f4d7bc5d91b55d9f9b38b2a06ac7ca1c5c5ab3ac9ac435d7a9
+    digest: sha256:36ea2665c158fa4e94cb8b97829a436e6824f530103dfef235d54f4d1c255d99
   - name: ghcr.io/tadoku/tadoku/frontend-authv2
     newName: ghcr.io/tadoku/tadoku/frontend-authv2
     newTag: latest
-    digest: sha256:e8f8124ab33bb128f9037255c93da3d3ebb343a1387c22749c499d95579d4ba0
+    digest: sha256:4547190bfc61d6b36db58174b779b9e52d48b483456af575bdbd10198ea87447

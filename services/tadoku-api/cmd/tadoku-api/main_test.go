@@ -19,7 +19,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	ketoclient "github.com/tadoku/tadoku/services/tadoku-api/infra/keto"
 	valkeygo "github.com/valkey-io/valkey-go"
 )
@@ -70,26 +69,6 @@ func TestApplicationStartsAndShutsDown(t *testing.T) {
 	keto.Start()
 	t.Cleanup(keto.Close)
 	cfg.KetoWriteURL = keto.URL
-	kratosDisconnected := make(chan struct{}, 1)
-	kratos := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, request *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		if request.URL.Path == "/admin/identities" {
-			_, _ = w.Write([]byte(`[]`))
-			return
-		}
-		_, _ = w.Write([]byte(`{"id":"synthetic","schema_id":"user","schema_url":"http://kratos.test/schema","traits":{}}`))
-	}))
-	kratos.Config.ConnState = func(_ net.Conn, state http.ConnState) {
-		if state == http.StateClosed {
-			select {
-			case kratosDisconnected <- struct{}{}:
-			default:
-			}
-		}
-	}
-	kratos.Start()
-	t.Cleanup(kratos.Close)
-	cfg.KratosAdminURL = kratos.URL
 	cfg.IdleTimeout = time.Minute
 	observer, err := valkeygo.NewClient(valkeygo.MustParseURL(cfg.ValkeyURL))
 	if err != nil {
@@ -151,9 +130,6 @@ func TestApplicationStartsAndShutsDown(t *testing.T) {
 		t.Fatal("Keto connection was not kept idle until shutdown")
 	default:
 	}
-	if application.kratosRead == nil {
-		t.Fatal("startup did not retain the read-only Kratos client")
-	}
 	if application.flipt == nil {
 		t.Fatal("Flipt outage did not preserve the fallback provider")
 	}
@@ -196,14 +172,6 @@ func TestApplicationStartsAndShutsDown(t *testing.T) {
 	}
 	if evaluationExchanges.Load() == 0 || managementExchanges.Load() != 1 {
 		t.Errorf("token exchanges: evaluation=%d management=%d", evaluationExchanges.Load(), managementExchanges.Load())
-	}
-	if _, err := application.kratosRead.FetchIdentity(t.Context(), uuid.Nil); err != nil {
-		t.Fatalf("owned Kratos request: %v", err)
-	}
-	select {
-	case <-kratosDisconnected:
-		t.Fatal("Kratos connection was not kept idle until shutdown")
-	default:
 	}
 
 	_, metricsPort, err := net.SplitHostPort(application.metricsListener.Addr().String())
@@ -256,44 +224,9 @@ func TestApplicationStartsAndShutsDown(t *testing.T) {
 	}
 	waitForValkeyDisconnect(t, observer, "id="+strconv.FormatInt(clientID, 10))
 	select {
-	case <-kratosDisconnected:
-	case <-time.After(time.Second):
-		t.Error("Kratos connection remained open after shutdown")
-	}
-	select {
 	case <-ketoDisconnected:
 	case <-time.After(time.Second):
 		t.Error("Keto connection remained open after shutdown")
-	}
-}
-
-func TestApplicationBoundsKratosRequests(t *testing.T) {
-	cfg := validApplicationConfig(t)
-	provider := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
-		<-r.Context().Done()
-	}))
-	t.Cleanup(provider.Close)
-	cfg.KratosAdminURL = provider.URL
-	cfg.KratosTimeout = 50 * time.Millisecond
-
-	ctx, cancel := context.WithCancel(t.Context())
-	t.Cleanup(cancel)
-	application, err := start(ctx, cfg, slog.New(slog.NewTextHandler(io.Discard, nil)))
-	if err != nil {
-		t.Fatalf("startup without a responsive Kratos provider: %v", err)
-	}
-	t.Cleanup(func() {
-		cancel()
-		if err := application.wait(); err != nil {
-			t.Error(err)
-		}
-	})
-
-	requestContext, cancelRequest := context.WithTimeout(t.Context(), 500*time.Millisecond)
-	t.Cleanup(cancelRequest)
-	_, err = application.kratosRead.FetchIdentity(requestContext, uuid.Nil)
-	if !errors.Is(err, context.DeadlineExceeded) || requestContext.Err() != nil {
-		t.Errorf("Kratos request error=%v, caller error=%v", err, requestContext.Err())
 	}
 }
 
@@ -341,11 +274,6 @@ func TestApplicationClosesValkeyWhenLaterStartupFails(t *testing.T) {
 	}))
 	t.Cleanup(keto.Close)
 	cfg.KetoWriteURL = keto.URL
-	kratos := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {
-		t.Error("failed startup must not make Kratos requests")
-	}))
-	t.Cleanup(kratos.Close)
-	cfg.KratosAdminURL = kratos.URL
 	observer, err := valkeygo.NewClient(valkeygo.MustParseURL(cfg.ValkeyURL))
 	if err != nil {
 		t.Fatal(err)

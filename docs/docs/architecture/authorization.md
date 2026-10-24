@@ -13,21 +13,18 @@ its source is `services/tadoku-api/spec/openapi.yaml`.
 
 ## Authentication and authorization
 
-- **Identity** owns account/session selection per tenant. V1 uses Ory Kratos;
-  v2 uses tenant-owned accounts and sessions in Tadoku API. The
-  [identity entry point](../tadoku-api/identity.md) selects with the tenant-level
-  `identity-v2` flag and provides the authenticated session callback. Its cookie-session authenticator forwards the
+- **Identity** keeps tenant-owned accounts and sessions in Tadoku API. The
+  [identity entry point](../tadoku-api/identity.md) provides the authenticated
+  session callback. Oathkeeper's cookie-session authenticator forwards the
   complete Cookie and trusted X-Dev-Branch headers through the branch-aware API
-  hop. Oathkeeper's
-  `id_token` mutator produces an RS256 JWT whose `sub` is the
+  hop. Oathkeeper's `id_token` mutator produces an RS256 JWT whose `sub` is the
   account UUID, or `guest` for anonymous requests. Session traits travel in the
-  `session` claim; `type` is `user`. API tokens carry a signed `tenant`
-  claim for both anonymous and signed-in requests: `tadoku/prod`, or
-  `tadoku/<route>` when a trusted branch selection reaches Oathkeeper. The
-  edge removes client branch headers, so only branch hosts and in-cluster
-  callers forwarding the selection choose a test tenant; production Oathkeeper
-  signs an empty, rejected tenant for a malformed route. Service-token
-  exchanges use their own claims.
+  `session` claim; `type` is `user`. API tokens carry a signed `tenant` claim
+  for both anonymous and signed-in requests: `tadoku/prod`, or `tadoku/<route>`
+  when a trusted branch selection reaches Oathkeeper. The edge removes client
+  branch headers, so only branch hosts and in-cluster callers forwarding the
+  selection choose a test tenant; production Oathkeeper signs an empty, rejected
+  tenant for a malformed route. Service-token exchanges use their own claims.
 - **Ory Keto** owns authorization facts: who is an administrator and who is
   banned. Tadoku API reads them from Keto on every request that needs them. Roles
   are not stored in PostgreSQL or in the token, and results are not cached.
@@ -58,16 +55,10 @@ for attached issuance, limits, listing and revocation.
 ## Identity reads
 
 Profile and moderation use `identity.Reader` for public profile details, account
-age, admin listing and ban-target existence. The identity feature chooses the
-implementation using the request tenant's flag. V2 targets must be active
-accounts in that tenant; v1 reads continue through Kratos. Account deletion has
-no API; see [Account deletion](../operations/account-deletion.md). Read access
-does not authorize shared provider mutations.
-
-The identity session adapter in `services/tadoku-api/features/identity/kratos`
-checks the selected Kratos cookie and revokes only that session for the canonical
-tenant. Test-tenant logout clears the browser cookie and leaves shared provider
-sessions active; a missing tenant cannot revoke a session.
+age, admin listing and ban-target existence. Targets must be active accounts in
+the request tenant. Account deletion has no API; see
+[Account deletion](../operations/account-deletion.md). Read access does not
+authorize shared provider mutations.
 
 ## Keto data model
 
@@ -230,7 +221,7 @@ policies on the shared tables also reject writes from any other tenant.
 
 ## Oathkeeper administrator callback
 
-Operator routes, such as the Flipt UI on `flags.tadoku.dev.lab`, require a Kratos
+Operator routes, such as the Flipt UI on `flags.tadoku.dev.lab`, require a native
 session. Oathkeeper's `remote_json` authorizer then posts the session subject to
 `POST /authz/internal/v1/proxy/admin-check`. This callback route bypasses the JWT
 and ban pipeline and never creates a user identity. It accepts only the shared
@@ -261,23 +252,20 @@ Application errors are `services/tadoku-api/internal/errx/` kinds, mapped in
 ## Seeding an administrator in development
 
 Run `make dev-seed` (`scripts/dev/seed-db.sh`) once the base API and Keto are
-ready, and Kratos too while the canonical tenant uses v1. It only runs against
-the `homelab-talos-dev` Kubernetes context and is safe to re-run.
+ready. It only runs against the `homelab-talos-dev` Kubernetes context and is
+safe to re-run.
 
-- Creates an administrator (`TADOKU_DEV_ADMIN_EMAIL`, default `dev@tadoku.app`)
-  and a reader (`TADOKU_DEV_READER_EMAIL`, default `reader@tadoku.app`) through
-  the canonical tenant's identity provider: Kratos identities marked with
-  `metadata_admin.seeded_by=tadoku-dev-seed` on v1, native accounts on v2.
-  Passwords come from `TADOKU_DEV_ADMIN_PASSWORD` and
-  `TADOKU_DEV_READER_PASSWORD`. An identity or account with the same email that
-  the seed does not own is never modified.
+- Creates a native administrator account (`TADOKU_DEV_ADMIN_EMAIL`, default
+  `dev@tadoku.app`) and reader account (`TADOKU_DEV_READER_EMAIL`, default
+  `reader@tadoku.app`) in the canonical tenant. Passwords come from
+  `TADOKU_DEV_ADMIN_PASSWORD` and `TADOKU_DEV_READER_PASSWORD`. An account with
+  the same email that the seed does not own is never modified.
 - Writes `app:tadoku#admins@<administrator UUID>` through the Keto write API
   (`http://keto-write.tdk-dev-keto:4467`) unless the read API already lists it.
-  Keto holds roles for both providers; native accounts have no role field, and
+  Keto holds roles; native accounts have no role field, and
   the API never reads the `user_roles` row the SQL fixtures write. The reader
   gets no role.
 - Loads the application seed data from `scripts/dev/seed/`.
 
-See [Development data](../develop/development-data.md#seed-data) for provider
-selection, fixture UUIDs, reruns and branch seeding, and
+See [Development data](../develop/development-data.md#seed-data) for fixture UUIDs, reruns and branch seeding, and
 [Development environment](../develop/environment.md#clean-up) for cleanup.

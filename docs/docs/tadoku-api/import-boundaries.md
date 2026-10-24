@@ -35,12 +35,6 @@ boundaries described in [Code ownership](./index.md#code-ownership).
   ordinary feature's business data.
 - A feature's generated sqlc package is visible only to that feature.
   The `generated/sqlc/tokens` package belongs only to `features/authz/tokens`.
-- The identity import command owns configuration and source/target pool
-  lifetimes. `features/identity` owns the external Kratos snapshot and hashes,
-  preflight and atomic target operation. Target SQL is sqlc-backed through its
-  own repository; the external source schema is read by the identity-owned
-  import adapter, outside Tadoku's migration-derived sqlc schema. The command
-  never receives account rows or hashes.
 - `services/tadoku-api/infra/flipt` owns the shared tenant-to-provider target
   mapping. Its ordinary consumers use `:infrastructure_consumers`; the exact test-only
   `internal/testflipt` fixture package may also depend on it so HTTP evaluation
@@ -63,12 +57,10 @@ boundaries described in [Code ownership](./index.md#code-ownership).
   visibility or package group and this page in the same change, and explain the
   new dependency direction in the PR.
 
-The identity feature owns the Kratos read adapter in its `kratos` subpackage.
-Only its owner imports that adapter. Profile and authz use the provider-free
-`identity.Reader` contract through their existing exact visibility exception;
-they never import the SDK. The provider fixture may construct `LegacyReader`.
-The generated read queries under `generated/sqlc/identity/reads` are visible
-only to identity. General cross-feature composition remains in the application.
+Profile and authz use the provider-free `identity.Reader` contract through
+their existing exact visibility exception. The generated read queries under
+`generated/sqlc/identity/reads` are visible only to identity. General
+cross-feature composition remains in the application.
 
 ## Provider dependencies
 
@@ -87,12 +79,6 @@ graph. Each allowed package covers only its own targets, not subpackages, and
   Keto client (`services/tadoku-api/infra/keto`). The exact
   `app/tenantlifecycle:tenantlifecycle_test` target may also construct its owned
   provider fixture. Lifecycle application code uses `permissions.TenantManager`.
-- Only `services/tadoku-api/features/identity`,
-  `services/tadoku-api/features/identity/kratos` may depend directly on the Kratos SDK.
-  Only identity ownership maps SDK models into accounts. The identity session
-  adapter reads the public session endpoint and revokes canonical sessions through
-  the admin endpoint; it enforces the tenant guard before provider writes.
-  E2E legacy protocol fixtures serve recorded responses over loopback HTTP.
 
 This keeps other packages on the shared permission checker. Keep shared ban and
 administrator permit lookups in `internal/permissions`; the check cannot
@@ -111,7 +97,7 @@ handwritten, non-test file under `features/` by its file name:
 - `*_repository.go` may not import provider clients: `valkey-go`, the Ory and
   Flipt SDKs, the service-token client (`services/common/client/s2s/`), or any
   package under `services/tadoku-api/infra/` other than `postgres`, which
-  includes the Keto, Kratos, Flipt and Valkey clients.
+  includes the Keto, Flipt and Valkey clients.
 - Every other feature file, including the service, may not import `valkey-go`.
 
 The rules follow [Repositories and stores](./conventions.md#repositories-and-stores).

@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
 type EvaluationRequest struct {
@@ -110,64 +109,13 @@ func (e *Evaluator) Boolean(ctx context.Context, flag BooleanFlag, subject strin
 		return defaultResult(EvaluationReasonProviderError, true)
 	}
 
-	enabled, err := e.evaluate(ctx, flag, EvaluationRequest{
+	result, err := e.provider.EvaluateBoolean(ctx, EvaluationRequest{
 		FlagKey:  definition.key,
 		EntityID: userID.String(),
 		Context:  map[string]string{"authenticated": "true"},
-	}, started)
+	})
 	if err != nil {
 		return defaultResult(providerErrorReason(err))
-	}
-	return enabled
-}
-
-// TenantBoolean returns the context tenant's decision. Its error wraps ErrFlagNotFound when the provider's
-// configuration lacks the flag; any other error means no decision was made, and false is not a decision.
-func (e *Evaluator) TenantBoolean(ctx context.Context, flag BooleanFlag) (bool, error) {
-	started := e.now()
-	fail := func(reason EvaluationReason, err error) (bool, error) {
-		e.observe(Observation{
-			Flag:     flag,
-			Enabled:  flag.SafeDefault(),
-			Reason:   reason,
-			Source:   EvaluationSourceDefault,
-			Duration: e.now().Sub(started),
-			Err:      reason != EvaluationReasonNotFound,
-		})
-		return false, err
-	}
-
-	if flag.Key() == "" {
-		return fail(EvaluationReasonInvalidFlag, errors.New("feature flag is not declared"))
-	}
-	if err := ctx.Err(); err != nil {
-		return fail(EvaluationReasonCanceled, err)
-	}
-	key, ok := tenant.FromContext(ctx)
-	if !ok {
-		return fail(EvaluationReasonInvalidIdentity, errors.New("feature flag evaluation requires a tenant"))
-	}
-	if e.provider == nil {
-		return fail(EvaluationReasonProviderError, errors.New("feature flag provider is not configured"))
-	}
-
-	enabled, err := e.evaluate(ctx, flag, EvaluationRequest{FlagKey: flag.Key(), EntityID: key.String()}, started)
-	if err != nil {
-		reason, _ := providerErrorReason(err)
-		return fail(reason, err)
-	}
-	return enabled, nil
-}
-
-func (e *Evaluator) evaluate(
-	ctx context.Context,
-	flag BooleanFlag,
-	request EvaluationRequest,
-	started time.Time,
-) (bool, error) {
-	result, err := e.provider.EvaluateBoolean(ctx, request)
-	if err != nil {
-		return false, err
 	}
 
 	source := EvaluationSourceProvider
@@ -181,7 +129,7 @@ func (e *Evaluator) evaluate(
 		Source:   source,
 		Duration: e.now().Sub(started),
 	})
-	return result.Enabled, nil
+	return result.Enabled
 }
 
 func providerErrorReason(err error) (EvaluationReason, bool) {

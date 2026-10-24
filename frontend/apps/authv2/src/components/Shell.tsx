@@ -21,7 +21,7 @@ export function Shell({ identity, children }: { readonly identity: Identity; rea
         {account ? (
           <form className="account-session" method="post" action="/actions/logout">
             <span className="account-session__name">{account.display_name}</span>
-            <Button variant="outline" type="submit">Log out</Button>
+            <Button variant="ghost" type="submit">Log out</Button>
           </form>
         ) : null}
       </header>

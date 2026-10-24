@@ -40,6 +40,7 @@ go_test(
         "worker_tenant_test.go",
         "worker_terminal_test.go",
         "worker_test.go",
+        "worker_transition_log_test.go",
     ],
     embed = [":worker"],
     env_inherit = [

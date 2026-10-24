@@ -32,6 +32,7 @@ func (s *server) EmailList(
 	}
 	page, err := s.application.ListEmails(ctx, filter)
 	if err != nil {
+		s.logOperationError(ctx, "list emails", err)
 		return nil, err
 	}
 	response := openapi.EmailList200JSONResponse{
@@ -53,6 +54,7 @@ func (s *server) EmailGet(
 ) (openapi.EmailGetResponseObject, error) {
 	row, err := s.application.FindEmail(ctx, request.Id)
 	if err != nil {
+		s.logOperationError(ctx, "find email", err)
 		return nil, err
 	}
 	return openapi.EmailGet200JSONResponse(emailResponse(row)), nil

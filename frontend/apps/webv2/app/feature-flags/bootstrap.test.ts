@@ -32,16 +32,16 @@ describe('bootstrapFeatureFlagDecisions', () => {
     await expect(
       bootstrapFeatureFlagDecisions(
         session,
-        'ory_kratos_session=secret',
+        'tadoku_session=secret',
         true,
         request,
       ),
-    ).resolves.toEqual({ 'release-log-entry-v2': true, 'identity-v2': true })
+    ).resolves.toEqual({ 'release-log-entry-v2': true })
     expect(sent(request).url).toBe(
       'http://oathkeeper-proxy:4455/api/internal/immersion/feature-flags',
     )
     expect(sent(request).cache).toBe('no-store')
-    expect(sent(request).headers.get('cookie')).toBe('ory_kratos_session=secret')
+    expect(sent(request).headers.get('cookie')).toBe('tadoku_session=secret')
     expect(sent(request).headers.has('x-dev-branch')).toBe(false)
   })
 
@@ -52,7 +52,7 @@ describe('bootstrapFeatureFlagDecisions', () => {
 
     await bootstrapFeatureFlagDecisions(
       session,
-      'ory_kratos_session=secret',
+      'tadoku_session=secret',
       true,
       request,
       3_000,
@@ -62,7 +62,7 @@ describe('bootstrapFeatureFlagDecisions', () => {
     expect(sent(request).url).toBe(
       'http://oathkeeper-proxy:4455/api/internal/immersion/feature-flags',
     )
-    expect(sent(request).headers.get('cookie')).toBe('ory_kratos_session=secret')
+    expect(sent(request).headers.get('cookie')).toBe('tadoku_session=secret')
     expect(sent(request).headers.get('x-dev-branch')).toBe('alice-0123abcd')
   })
 
@@ -71,7 +71,7 @@ describe('bootstrapFeatureFlagDecisions', () => {
 
     await expect(
       bootstrapFeatureFlagDecisions(undefined, undefined, true, request),
-    ).resolves.toEqual({ 'release-log-entry-v2': false, 'identity-v2': true })
+    ).resolves.toEqual({ 'release-log-entry-v2': false })
     expect(request).not.toHaveBeenCalled()
   })
 
@@ -79,13 +79,13 @@ describe('bootstrapFeatureFlagDecisions', () => {
     await expect(
       bootstrapFeatureFlagDecisions(
         session,
-        'ory_kratos_session=secret',
+        'tadoku_session=secret',
         true,
         async () => {
           throw new Error('provider unavailable')
         },
       ),
-    ).resolves.toEqual({ 'release-log-entry-v2': false, 'identity-v2': true })
+    ).resolves.toEqual({ 'release-log-entry-v2': false })
   })
 
   it('bounds a stalled same-origin bootstrap request', async () => {
@@ -100,14 +100,14 @@ describe('bootstrapFeatureFlagDecisions', () => {
 
     const result = bootstrapFeatureFlagDecisions(
       session,
-      'ory_kratos_session=secret',
+      'tadoku_session=secret',
       true,
       request as typeof fetch,
       50,
     )
     await vi.advanceTimersByTimeAsync(50)
 
-    await expect(result).resolves.toEqual({ 'release-log-entry-v2': false, 'identity-v2': true })
+    await expect(result).resolves.toEqual({ 'release-log-entry-v2': false })
     expect(sent(request).url).toBe(
       'http://oathkeeper-proxy:4455/api/internal/immersion/feature-flags',
     )
@@ -121,15 +121,15 @@ describe('bootstrapFeatureFlagDecisions', () => {
     await expect(
       bootstrapFeatureFlagDecisions(
         session,
-        'ory_kratos_session=secret',
+        'tadoku_session=secret',
         false,
         request,
       ),
-    ).resolves.toEqual({ 'release-log-entry-v2': false, 'identity-v2': true })
+    ).resolves.toEqual({ 'release-log-entry-v2': false })
     expect(request).not.toHaveBeenCalled()
   })
 
-  it('does not request decisions for a malformed Kratos subject', async () => {
+  it('does not request decisions for a malformed account subject', async () => {
     const request = vi.fn()
     const malformedSession = {
       id: 'not-a-uuid',
@@ -138,11 +138,11 @@ describe('bootstrapFeatureFlagDecisions', () => {
     await expect(
       bootstrapFeatureFlagDecisions(
         malformedSession,
-        'ory_kratos_session=secret',
+        'tadoku_session=secret',
         true,
         request,
       ),
-    ).resolves.toEqual({ 'release-log-entry-v2': false, 'identity-v2': true })
+    ).resolves.toEqual({ 'release-log-entry-v2': false })
     expect(request).not.toHaveBeenCalled()
   })
 
@@ -162,10 +162,10 @@ describe('bootstrapFeatureFlagDecisions', () => {
     await expect(
       bootstrapFeatureFlagDecisions(
         session,
-        'ory_kratos_session=secret',
+        'tadoku_session=secret',
         true,
         request,
       ),
-    ).resolves.toEqual({ 'release-log-entry-v2': false, 'identity-v2': true })
+    ).resolves.toEqual({ 'release-log-entry-v2': false })
   })
 })

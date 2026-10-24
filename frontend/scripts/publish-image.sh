@@ -2,12 +2,12 @@
 set -euo pipefail
 
 usage() {
-  echo 'Usage: publish-image.sh <webv2|webv3|authv2|auth|admin|styleguide> --repository <repo> --tag <tag> [--tag <tag> ...]' >&2
+  echo 'Usage: publish-image.sh <webv2|webv3|authv2|admin|styleguide> --repository <repo> --tag <tag> [--tag <tag> ...]' >&2
   exit 2
 }
 
 app=${1:-}
-case "$app" in webv2|webv3|authv2|auth|admin|styleguide) ;; *) usage ;; esac
+case "$app" in webv2|webv3|authv2|admin|styleguide) ;; *) usage ;; esac
 shift
 repository=
 tags=()

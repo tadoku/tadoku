@@ -27,10 +27,10 @@ The writer rejects unknown templates, missing, empty or unexpected parameters,
 parameters over 4096 bytes, invalid addresses and recovery links outside the
 Tadoku app host allowlist. Addresses are bare mailboxes, without display names
 or header line breaks, that `net/mail` reads back unchanged and that use at most
-320 bytes. `domain/mail.ValidAddress` holds this rule; the account importer
-applies it to every stored address it would import. Recovery links require HTTPS and exclude credentials
-and explicit ports. The allowlist covers the main, account, admin and authv2
-hosts, preview hosts and development branch equivalents.
+320 bytes. `domain/mail.ValidAddress` holds this rule. Recovery links require
+HTTPS and exclude credentials and explicit ports. The allowlist covers the main,
+account, admin and authv2 hosts, preview hosts and development branch
+equivalents.
 
 A successful write inserts a `pending` email with its rendered subject/body and
 parameter map. The job is `email.send.v1` with only `{"email_id":"<uuid>"}`.

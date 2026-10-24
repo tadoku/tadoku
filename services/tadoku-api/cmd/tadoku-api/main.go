@@ -22,6 +22,7 @@ import (
 	featureaudit "github.com/tadoku/tadoku/services/tadoku-api/features/audit"
 	featureauthz "github.com/tadoku/tadoku/services/tadoku-api/features/authz"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/authz/tokens"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/contestevents"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/contests"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/email"
 	featureflagsservice "github.com/tadoku/tadoku/services/tadoku-api/features/featureflags"
@@ -60,7 +61,6 @@ type application struct {
 	transport       *http.Transport
 	pool            *pgxpool.Pool
 	valkey          valkeygo.Client
-	kratosRead      identity.LegacyReader
 	keto            *ketoclient.Client
 	flipt           *fliptclient.Provider
 	fliptEvaluation *http.Client
@@ -166,11 +166,6 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 		}
 	}()
 
-	kratosHTTP := &http.Client{
-		Transport: transport,
-		Timeout:   cfg.KratosTimeout,
-	}
-	kratosIdentities := identity.NewLegacyReader(cfg.KratosAdminURL, identity.WithHTTPClient(kratosHTTP))
 	keto := ketoclient.NewClient(cfg.KetoReadURL, cfg.KetoWriteURL, ketoclient.WithHTTPClient(&http.Client{
 		Transport: transport,
 		Timeout:   cfg.KetoWriteTimeout,
@@ -225,11 +220,7 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	permissionChecker := permissions.NewKetoChecker(ketoReader)
 	roleService := permissions.NewKetoService(ketoReader)
 
-	identityReader := identity.NewReader(
-		pool,
-		kratosIdentities,
-		featureflags.NewEvaluator(fliptProvider, featureFlagMetrics),
-	)
+	identityReader := identity.NewReader(pool)
 	authzService := featureauthz.NewService(
 		permissionChecker,
 		identityReader,
@@ -274,8 +265,6 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	identityService := identity.NewService(
 		identity.NewRepository(pool),
 		identity.NewThrottle(valkeyClient, cfg.ValkeyTimeout, logger),
-		identity.NewLegacySessions(cfg.KratosPublicURL, cfg.KratosAdminURL, kratosHTTP),
-		featureflags.NewEvaluator(fliptProvider, featureFlagMetrics),
 		cfg.IdentityCookieDomain,
 	)
 
@@ -288,6 +277,7 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 		Audit:         auditService,
 		Authorization: authzService,
 		Contests:      contestsService,
+		ContestEvents: contestevents.NewService(contestevents.NewRepository(pool)),
 		Leaderboard:   leaderboardService,
 		Languages:     languagesService,
 		Logs:          logsService,
@@ -359,7 +349,6 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 		transport:       transport,
 		pool:            pool,
 		valkey:          valkeyClient,
-		kratosRead:      kratosIdentities,
 		keto:            keto,
 		flipt:           fliptProvider,
 		fliptEvaluation: fliptEvaluation,

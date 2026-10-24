@@ -180,22 +180,22 @@ func (r *ContestsRepository) DetachContestLogsForLanguages(
 	userID uuid.UUID,
 	contestID uuid.UUID,
 	languageCodes []string,
-) error {
+) ([]uuid.UUID, error) {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	err = queries.New(executor).DetachContestLogsForLanguages(ctx, queries.DetachContestLogsForLanguagesParams{
+	ids, err := queries.New(executor).DetachContestLogsForLanguages(ctx, queries.DetachContestLogsForLanguagesParams{
 		ContestID:     postgres.UUID(contestID),
 		UserID:        postgres.UUID(userID),
 		LanguageCodes: languageCodes,
 	})
 	if err != nil {
-		return fmt.Errorf("detach contest logs for languages: %w", err)
+		return nil, fmt.Errorf("detach contest logs for languages: %w", err)
 	}
 
-	return nil
+	return postgres.UUIDs(ids), nil
 }
 
 func (r *ContestsRepository) UpsertRegistration(ctx context.Context, registration Registration) error {

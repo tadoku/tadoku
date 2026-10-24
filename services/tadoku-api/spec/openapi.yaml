@@ -91,7 +91,7 @@ x-tadoku-sources:
     exposure: public
     info:
       title: identity-api
-      description: Registration, sessions, recovery and settings contracts; registered skeletons return 501.
+      description: Registration, sessions, recovery and settings contracts.
       version: 1.0.0
     servers:
     - url: https://tadoku.app/api/internal
@@ -1407,6 +1407,124 @@ paths:
       x-tadoku-exposure: public
       x-legacy-path: /contests/configuration-options
       x-legacy-operation-id: contestGetConfigurations
+  "/immersion/contests/{id}/events":
+    get:
+      summary: Read contest submission events
+      description: |
+        Returns metadata-only events ordered by occurred_at, oldest first,
+        with event UUID as the tie-breaker for equal timestamps.
+        Each event describes a submission entering the contest, a change to its
+        visible log fields, or its withdrawal. Changes outside this contest do
+        not appear. Recording starts when the feature is enabled; existing logs
+        do not receive fabricated historical submission events.
+
+        Omit cursor or use 0 to read from the beginning. Use now once to obtain
+        an empty page with the latest visible event ID, or 0 for an empty feed.
+        Otherwise pass a retained event ID to read strictly after that event.
+        Event UUIDs are stable deduplication keys. The server resolves a cursor
+        ID to its stored (occurred_at, id) pair; consumers use response order.
+        occurred_at is the source operation's timestamp, stored once at creation.
+        Occurrence order is not commit order: a transaction that commits late
+        can appear before an already-consumed cursor. Forward polling alone
+        does not guarantee delivery of those late events.
+
+        A nonempty page's next_cursor is its final event ID. An ordinary empty
+        page preserves the supplied event ID, or 0 when starting at the
+        beginning. Save the cursor only after processing the page. When
+        has_more is false, poll later using that same cursor. Retrying can
+        repeat events. Events are retained for the lifetime of the contest.
+
+        Uses the same public read access as the contest log list. A cursor
+        never grants access to another contest or tenant. Fetch current log
+        contents separately through this contest's log endpoint; event records
+        contain no log contents or historical snapshots.
+      operationId: ImmersionContestListEvents
+      tags:
+        - contests
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: cursor
+          in: query
+          description: A retained event UUID, 0 for the beginning, or now for the latest visible event.
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 36
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 100
+      responses:
+        "200":
+          description: Event page, including an empty page with a reusable cursor.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionContestEventPage"
+        "400":
+          description: Invalid limit, UUID or cursor; unknown event or event from another contest or tenant.
+        "404":
+          description: Contest does not exist or was deleted.
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-legacy-path: /contests/{id}/events
+      x-legacy-operation-id: contestListEvents
+  "/immersion/contests/{id}/logs/{logId}":
+    get:
+      summary: Read a current log in a contest
+      description: |
+        Returns the ordinary contest log representation, including the contest's
+        score and tracking values. It does not include the author's other
+        contest registrations. Uses the same public read access as the contest
+        log list. The result is current state, not the log contents at the time
+        of an event. A withdrawn or deleted log returns 404.
+      operationId: ImmersionContestFindLog
+      tags:
+        - contests
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: logId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Current visible contest log.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionLog"
+        "400":
+          description: Invalid contest or log UUID.
+        "404":
+          description: Contest is missing or deleted, or the log is not currently visible in this contest.
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-legacy-path: /contests/{id}/logs/{logId}
+      x-legacy-operation-id: contestFindLog
   /immersion/logs:
     post:
       summary: Submits a new log
@@ -2563,7 +2681,7 @@ paths:
       x-legacy-operation-id: usersList
   /authz/internal/v1/proxy/admin-check:
     post:
-      summary: Authorizes a Kratos subject as a Tadoku administrator
+      summary: Authorizes an account subject as a Tadoku administrator
       operationId: AuthzProxyProxyAdminCheck
       tags:
         - proxy
@@ -2647,12 +2765,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/IdentityErrorResponse'
-        '501':
-          description: Not implemented
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/IdentityErrorResponse'
         '503':
           description: Request rejected
           content:
@@ -2711,12 +2823,6 @@ paths:
                 $ref: '#/components/schemas/IdentityErrorResponse'
         '429':
           description: Request rejected
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/IdentityErrorResponse'
-        '501':
-          description: Not implemented
           content:
             application/json:
               schema:
@@ -2876,12 +2982,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/IdentityErrorResponse'
-        '501':
-          description: Not implemented
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/IdentityErrorResponse'
         '503':
           description: Request rejected
           content:
@@ -2917,7 +3017,8 @@ paths:
                 type: string
                 maxLength: 4096
             Location:
-              description: Tenant authv2 Settings URL with an optional validated return_to continuation after Settings completion.
+              description: Tenant authv2 Settings URL that opens the Password editor (edit=password), with an
+                optional validated return_to continuation after Settings completion.
               schema:
                 type: string
                 maxLength: 2048
@@ -2954,12 +3055,6 @@ paths:
                 $ref: '#/components/schemas/IdentityErrorResponse'
         '429':
           description: Request rejected
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/IdentityErrorResponse'
-        '501':
-          description: Not implemented
           content:
             application/json:
               schema:
@@ -3041,12 +3136,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/IdentityErrorResponse'
-        '501':
-          description: Not implemented
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/IdentityErrorResponse'
         '503':
           description: Request rejected
           content:
@@ -3106,12 +3195,6 @@ paths:
                 $ref: '#/components/schemas/IdentityErrorResponse'
         '429':
           description: Request rejected
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/IdentityErrorResponse'
-        '501':
-          description: Not implemented
           content:
             application/json:
               schema:
@@ -3303,9 +3386,10 @@ paths:
     get:
       operationId: IdentityProxySessionCheck
       summary: Oathkeeper session check for the selected tenant
-      description: Requires the Oathkeeper callback bearer. Resolves X-Dev-Branch and forwards the v1
-        cookie to Kratos, or resolves the v2 tenant cookie. Missing or invalid sessions return 200 with
-        identity.id guest, including unrelated cookies. Preserves the Kratos whoami shape for users.
+      description: Requires the Oathkeeper callback bearer. Resolves X-Dev-Branch to the tenant and
+        reads that tenant's session cookie. Missing or invalid sessions return 200 with identity.id
+        guest, including unrelated cookies. Users keep the identity, traits and timestamp shape that
+        Oathkeeper's cookie-session authenticator reads.
       tags:
       - identity-session
       security:
@@ -4078,6 +4162,57 @@ components:
               type: array
               items:
                 $ref: "#/components/schemas/ImmersionLeaderboardEntry"
+    ImmersionContestEvent:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - log_id
+        - event
+        - occurred_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Stable event identity, also usable as a cursor and deduplication key.
+        log_id:
+          type: string
+          format: uuid
+        occurred_at:
+          type: string
+          format: date-time
+          description: Source operation time, stored once when the event is created.
+        event:
+          type: string
+          enum:
+            - log.submitted
+            - log.updated
+            - log.withdrawn
+          description: |
+            submitted means the log entered this contest. updated means its
+            contest-visible log fields changed while it remained submitted.
+            withdrawn means it left this contest, including deletion or moderation.
+    ImmersionContestEventPage:
+      type: object
+      additionalProperties: false
+      required:
+        - events
+        - next_cursor
+        - has_more
+      properties:
+        events:
+          type: array
+          maxItems: 100
+          items:
+            $ref: "#/components/schemas/ImmersionContestEvent"
+        next_cursor:
+          type: string
+          minLength: 1
+          maxLength: 36
+          description: Last returned event ID, the input event ID on an empty poll, or 0 before any event.
+        has_more:
+          type: boolean
+          description: More visible events existed beyond this page at the time of the read.
     ImmersionScore:
       type: object
       required:
@@ -4554,9 +4689,9 @@ components:
           type: string
           pattern: '^[\s\S]+@[\s\S]+$'
           description: >-
-            The account's stored address: a v1 Kratos trait, or for v2 the
-            normalized address registration or settings stored or an imported
-            address as written. When Go's net/mail reads an address from it, the
+            The account's stored address: the normalized address registration or
+            settings stored, or an imported address as written. When Go's net/mail
+            reads an address from it, the
             API writes that address part, so a quoted local part arrives unquoted
             and surrounding ASCII spaces and tabs are dropped; letter case, every
             other character and its length are kept. Otherwise, such as for an
@@ -4582,17 +4717,11 @@ components:
     IdentitySession:
       type: object
       properties:
-        account_app:
-          type: string
-          enum:
-          - v1
-          - v2
         account:
           allOf:
           - $ref: '#/components/schemas/IdentityAccount'
           nullable: true
       required:
-      - account_app
       - account
     IdentityRegistration:
       type: object
@@ -4609,8 +4738,10 @@ components:
           type: string
           maxLength: 72
           minLength: 8
-          description: At least 8 characters, at most 72 UTF-8 bytes; rejects similarity
-            to the email under the Kratos v26.2.0 rule.
+          description: At least 8 characters, at most 72 UTF-8 bytes; rejects a password
+            whose lowercase form is within Levenshtein distance 4 of the lowercase
+            email or shares with it a common substring longer than half the
+            password.
       required:
       - email
       - display_name
@@ -4626,8 +4757,10 @@ components:
           type: string
           maxLength: 72
           minLength: 8
-          description: At least 8 characters, at most 72 UTF-8 bytes; rejects similarity
-            to the email under the Kratos v26.2.0 rule.
+          description: At least 8 characters, at most 72 UTF-8 bytes; rejects a password
+            whose lowercase form is within Levenshtein distance 4 of the lowercase
+            email or shares with it a common substring longer than half the
+            password.
       required:
       - email
       - password
@@ -4668,8 +4801,10 @@ components:
           type: string
           maxLength: 72
           minLength: 8
-          description: At least 8 characters, at most 72 UTF-8 bytes; rejects similarity
-            to the email under the Kratos v26.2.0 rule.
+          description: At least 8 characters, at most 72 UTF-8 bytes; rejects a password
+            whose lowercase form is within Levenshtein distance 4 of the lowercase
+            email or shares with it a common substring longer than half the
+            password.
       required:
       - password
     EmailErrorResponse:
@@ -4767,9 +4902,9 @@ components:
           type: string
           pattern: '^[\s\S]+@[\s\S]+$'
           description: >-
-            The account's stored address: a v1 Kratos trait, or for v2 the
-            normalized address registration or settings stored or an imported
-            address as written. When Go's net/mail reads an address from it, the
+            The account's stored address: the normalized address registration or
+            settings stored, or an imported address as written. When Go's net/mail
+            reads an address from it, the
             API writes that address part, so a quoted local part arrives unquoted
             and surrounding ASCII spaces and tabs are dropped; letter case, every
             other character and its length are kept. Otherwise, such as for an

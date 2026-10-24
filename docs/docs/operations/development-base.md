@@ -32,19 +32,19 @@ The runtime role cannot create tables or write `schema_migrations`.
 
 ## Topology
 
-Components run in `tdk-dev-*` namespaces; auth and authv2 share the existing account namespace:
+Components run in `tdk-dev-*` namespaces; authv2 runs in the account namespace, `tdk-dev-frontend-auth`:
 
 | Namespace | Contents |
 | --- | --- |
-| `tdk-dev-frontend-webv2`, `tdk-dev-frontend-webv3`, `tdk-dev-frontend-auth`, `tdk-dev-frontend-admin` | Webv2, Webv3, both account apps and admin frontends |
+| `tdk-dev-frontend-webv2`, `tdk-dev-frontend-webv3`, `tdk-dev-frontend-auth`, `tdk-dev-frontend-admin` | Webv2, Webv3, authv2 and admin frontends |
 | `tdk-dev-tadoku-api` | Tadoku API and the private asynchronous worker |
-| `tdk-dev-kratos`, `tdk-dev-keto`, `tdk-dev-oathkeeper` | Auth providers |
+| `tdk-dev-keto`, `tdk-dev-oathkeeper` | Auth providers |
 | `tdk-dev-flipt` | Feature flags |
 | `tdk-dev-token-reflector` | Token-reflector |
-| `tdk-dev-data` | One operator-managed Postgres server (`tadoku-dev-db`), disposable Valkey and Mailhog |
+| `tdk-dev-data` | One operator-managed Postgres server (`tadoku-dev-db`) and disposable Valkey |
 | `tdk-dev-routing` | Application routes attached to the platform Envoy Gateway |
 
-The Postgres server holds the base `tadoku`, `kratos` and `keto` databases and
+The Postgres server holds the base `tadoku` and `keto` databases and
 retained `tadoku-<route>` migration branch databases. Ordinary branches use
 their own test tenant, `tadoku/<route>`, in `tadoku`; canonical base data uses
 `tadoku/prod`. Row-level security and transaction-local tenant context isolate
@@ -64,12 +64,12 @@ notification configuration.
 - The repository's existing CI publishes the GHCR runtime and migration images.
   Do not add another build or push pipeline.
 - Backend images, Webv3 and authv2 select `latest` in
-  `k8s/dev/base/kustomization.yaml`; Webv2, auth and admin select reviewed
+  `k8s/dev/base/kustomization.yaml`; Webv2 and admin select reviewed
   immutable commit tags. The development Image Updater uses the **digest**
   strategy and writes the immutable resolutions back to that file.
 - The `image-list` annotation of the homelab repository's `tadoku-dev` Argo CD
-  Application (clusters/talos/dev/root/tadoku-dev.yaml) owns the Webv2, auth
-  and admin tag selections. Change them there; Image Updater reverts a
+  Application (clusters/talos/dev/root/tadoku-dev.yaml) owns the Webv2 and
+  admin tag selections. Change them there; Image Updater reverts a
   selection edited only in the Kustomization.
 - The worker has its own GHCR image and Kustomize image entry. Image Updater
   tracks its digest independently of the API image.
@@ -116,7 +116,7 @@ ingress. `/api/internal` uses Oathkeeper before the API, while page and asset
 requests use Webv3. Existing Tadoku subdomain admission and shared account
 cookies cover the preview and branch hosts.
 
-Authv2 shares `tdk-dev-frontend-auth` with distinct selectors. It uses
+Authv2 runs in `tdk-dev-frontend-auth` and uses
 `tadoku-cli-authv2`; overlays use inline URLs and `tadoku-cli-ca`. Canonical
 routes strip branch headers. Anonymous public identity rules sign a guest JWT
 and forward Cookie to API auth/CSRF; other routes keep session checks.
@@ -154,17 +154,10 @@ E2Es check tenant-scoped PostgreSQL work with shared Valkey.
 
 ## Development email
 
-The base keeps email in the cluster:
-
-- Base and branch workers bind `WORKER_EMAIL_ENABLED=false`, overriding the
-  `ENABLED` fallback.
-- Kratos delivers only over SMTP to `mailhog.tdk-dev-data:1025`.
-- `mailhog-deny-egress` denies MailHog egress; ingress stays open.
-
-Manifests alone do not prove a cluster sends no email. That needs restarted
-worker Pods with the binding, Kratos loading this file, an enforcing CNI and no
-policy allowing MailHog egress. Without enforcement, a deliberate MailHog
-release can still send mail.
+The base sends no email: base and branch workers bind
+`WORKER_EMAIL_ENABLED=false`, overriding the `ENABLED` fallback. Manifests alone
+do not prove a cluster sends no email; that needs restarted worker Pods with
+the binding.
 
 ## Automatic migrations
 
@@ -175,7 +168,7 @@ Full Argo CD syncs apply these waves:
 | -30 | Development namespaces |
 | -20 | Postgres custom resource and generated configuration |
 | -15 | Transfer existing Tadoku objects to `tadoku_owner` and establish runtime grants |
-| -10 | Tadoku API migrations as `tadoku_owner`; Kratos and Keto migration Sync hooks; each waits for authenticated database connectivity |
+| -10 | Tadoku API migrations as `tadoku_owner` and the Keto migration Sync hook; each waits for authenticated database connectivity |
 | -5 | Reapply runtime grants and revoke writes to the newly created `schema_migrations` table |
 | 0 | Auth providers, cache, Flipt, token-reflector and Gateway routes |
 | 10 | Oathkeeper, which publishes its JWKS before the APIs start |
@@ -209,11 +202,11 @@ Caller-supplied identity UUIDs are unchanged.
 
 Branch startup's `tenant` hook provisions and seeds its test tenant; see
 [Branch tenants](../develop/development-data.md#branch-tenants).
-The Job reuses the marked shared identities, grants the Keto object a canonical
-parent and Dev Reader tester, and provisions missing Flipt resources in
-`test/tadoku_<route>`. It runs in `tdk-dev-data`; Flipt's ingress policy admits
-only labeled tenant-lifecycle pods from that namespace for these direct
-management calls.
+The Job creates native fixture accounts with the canonical fixture UUIDs, grants
+the Keto object a canonical parent and Dev Reader tester, and provisions missing
+Flipt resources in `test/tadoku_<route>`. It runs in `tdk-dev-data`; Flipt's
+ingress policy admits only labeled tenant-lifecycle pods from that namespace for
+these direct management calls.
 
 ## Credentials
 
@@ -274,8 +267,8 @@ After activation, run the live acceptance gates listed under
   operation. Never run namespace-wide deletion.
 - `make dev-reset` is disabled. Any reset needs an explicitly approved, scoped
   runbook.
-- `infra/dev/ory/` holds the Kratos schema and Keto namespace fixtures that Bazel
-  backend tests load; they are not obsolete deployment files. Preserve the shared
+- `infra/dev/ory/` holds the Keto namespace fixture that Bazel backend tests
+  load; it is not an obsolete deployment file. Preserve the shared
   SQL fixtures in `scripts/dev/seed/`, which base and branch seeding both use.
 - Any future rebuild of the environment needs its own data-disposition
   decision. A previous deletion approval is not permission to erase later data.
@@ -307,7 +300,7 @@ failure. It needs no cluster credentials.
   branch-only migration targets, and refusal to provision legacy-owned databases.
 - It also proves fresh migrations, no-op reruns, an intentional connection
   failure and recovery, plus HTTP readiness, development runtime URLs and
-  compiled assets in the three Next.js frontend images and Webv3 with external
+  compiled assets in the Webv2 and admin Next.js images and Webv3 with external
   networking disabled. For base and branch hosts, each Next.js image's
   server-rendered session read must match a rendered private Oathkeeper rule,
   forward the exact Cookie and only the incoming X-Dev-Branch, open no
@@ -319,7 +312,7 @@ failure. It needs no cluster credentials.
   compiled assets, and that during an API outage canonical and branch hosts show
   a retry page with a branch-preserving home link and no account-app choice.
   It also checks the rendered leaderboard worker ownership and the
-  [development email](#development-email) barriers.
+  [development email](#development-email) binding.
 - It cleans up only its labeled fixtures. Synthetic credentials in its fixture
   logs are not live credentials.
 

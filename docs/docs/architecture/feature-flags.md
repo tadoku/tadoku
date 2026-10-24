@@ -10,9 +10,7 @@ Read this when you gate behavior behind a flag, change who sees a flagged featur
 
 This page describes the development environment. Flags are boolean. Without a
 decision, `Evaluator.Boolean` consumers use the flag's behavior-preserving safe
-default. Identity selection through `Evaluator.TenantBoolean` is unavailable
-instead; only the canonical tenant's missing `identity-v2` flag uses the safe
-default, as described below.
+default.
 
 ## Where flags are declared
 
@@ -33,7 +31,7 @@ so run both locally (`bazel test`, `pnpm --filter webv2 test`).
 `Evaluator.Boolean` in `services/tadoku-api/internal/featureflags/` accepts a
 verified subject and never returns an error to product code. Anonymous and guest
 requests get the safe default without asking Flipt; signed-in users are evaluated
-with their Kratos ID as the entity ID. The old common `UserIdentity` type is gone.
+with their account ID as the entity ID. The old common `UserIdentity` type is gone.
 
 The provider in `services/tadoku-api/infra/flipt/` resolves the verified tenant
 before evaluating a flag. `tadoku/prod` keeps the configured canonical target:
@@ -58,7 +56,7 @@ installs an SDK only when that SDK's own initial fetch returned a valid snapshot
 and its engine accepted it. When the initial fetch fails, the client discards the
 SDK and its empty fallback state, even if later background fetches clear the
 SDK's last error, and starts a fresh SDK every `API_FLIPT_UPDATE_INTERVAL`. Until then
-`Boolean` serves safe defaults and `TenantBoolean` reports a provider error. The
+`Boolean` serves safe defaults. The
 canonical client is created at startup. Test clients are created on first evaluation, retained in a
 16-client LRU cache and closed on eviction or shutdown. A missing tenant never
 falls back to canonical flags. Test clients have no provider-lifecycle observer,
@@ -70,25 +68,6 @@ Flipt calls pass through Oathkeeper with service JWTs that
 `flipt-management` audience ([Service-to-service auth](./service-tokens.md)).
 Their routes in `k8s/dev/base/oathkeeper/rules.yaml` allow only the snapshot
 read and managed segment calls. Metrics are named `tadoku_feature_flag_*`.
-
-`Evaluator.TenantBoolean` uses the parsed context tenant key as the Flipt entity,
-including guest traffic. It uses the same provider target mapping and
-observations as user evaluation, without caching a decision across tenants.
-Unlike `Boolean`, it returns an error instead of a safe default when it cannot
-decide. The error wraps `ErrFlagNotFound` only when the fetched namespace
-snapshot the client evaluated lacks the flag, and otherwise carries the
-provider, invalid-response or context error. When Flipt is disabled, or a
-client has no fetched snapshot yet because Flipt was unreachable or the
-namespace does not exist, it reports a provider error rather than a missing
-flag; `Boolean` still serves the safe default.
-
-`IdentityV2` (`identity-v2`) has the safe default `true`. Only the identity
-feature evaluates it; see
-[Account-app selection](../tadoku-api/identity-selection.md). It is
-declared in webv2 but is not added to the public decisions response. The browser
-schema supplies `true` when that internal decision is absent. Account-app
-selection belongs to the identity session contract rather than the public
-user-flag endpoint.
 
 ## Decisions in the browser
 
@@ -128,8 +107,8 @@ Flipt runs in `tdk-dev-flipt` from `k8s/dev/base/flipt/` and loads
 discards changes. The separate `test` environment uses in-memory storage with
 no Git remote; its namespaces also disappear when the pod restarts. Production
 uses the same separate memory-only test environment, so test flags are never
-committed or pushed to the canonical feature-flags repository. The operator UI at `https://flags.tadoku.dev.lab` requires a
-Kratos session of an administrator, checked by Oathkeeper through Tadoku API.
+committed or pushed to the canonical feature-flags repository. The operator UI at `https://flags.tadoku.dev.lab` requires the
+canonical native session of an administrator, checked by Oathkeeper through Tadoku API.
 Flipt is shared: do not change flag policy for other developers. HTTP E2Es use `services/tadoku-api/internal/testflipt/` instead.
 
 Every dev-cli branch, including frontend-only work, provisions its own
@@ -172,8 +151,8 @@ not permit namespace creation or deletion.
 3. Verify
    `GET /internal/v1/evaluation/snapshot/namespace/e2e_run-1` with header
    `x-flipt-environment: test`. An unprovisioned namespace returns `404`; user
-   flags then use safe defaults and identity requests for the tenant are
-   unavailable. Test namespaces never share canonical members or revisions.
+   flags then use safe defaults. Test namespaces never share canonical members
+   or revisions.
 4. Delete only the owned namespace with
    `DELETE /api/v2/environments/test/namespaces/e2e_run-1` during teardown.
    Provision it again after a Flipt restart.

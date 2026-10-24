@@ -5,10 +5,10 @@ description: How to install dev-cli and run, open, verify and clean up your bran
 
 # Development environment
 
-Read this when you want to run your branch of webv2, webv3, auth, admin, Tadoku API or its worker
+Read this when you want to run your branch of webv2, webv3, authv2, admin, Tadoku API or its worker
 on the shared development cluster, or check that a change works there.
 
-dev-cli deploys live branch overlays of webv2, webv3, auth, admin, Tadoku API and its
+dev-cli deploys live branch overlays of webv2, webv3, authv2, admin, Tadoku API and its
 worker to the `homelab-talos-dev` Kubernetes cluster. Argo CD keeps a shared
 base of every service running there even when no developer has a loop running;
 see [Development base](../operations/development-base.md). There is no local
@@ -96,8 +96,8 @@ dev up --owner alice
 Keep this terminal running.
 
 - Frontend sources sync into pnpm-managed dev servers with hot module
-  replacement (HMR). Webv2, auth and admin use Next.js; Webv3 uses Node22 and
-  Vite, with a `paper-ui` build watcher.
+  replacement (HMR). Webv2 and admin use Next.js; Webv3 and authv2 use Node22
+  and Vite, with a `paper-ui` build watcher.
 - Go edits rebuild the affected Bazel binary and restart it in the same pod.
   A failed compilation keeps the last working process running.
 - A Tadoku API or worker selection starts both workloads against the profile's
@@ -120,8 +120,8 @@ dev-cli asks Bazel which deployables changed relative to the merge base with
 `origin/main`, including uncommitted edits. It starts overlays only for those;
 every other service keeps using the base.
 
-- Auth-only or admin-only edits select only that app. Shared `packages/ui`
-  edits select the three legacy frontends. Webv3-only edits select Webv3;
+- Admin-only edits select only admin. Shared `packages/ui` edits select
+  webv2 and admin. Webv3-only edits select Webv3;
   authv2-only edits select authv2. Shared `packages/paper-ui` edits select both.
 - Unknown paths conservatively select every deployable.
 - `--base <ref>` changes the comparison ref.
@@ -135,7 +135,7 @@ every other service keeps using the base.
 A frontend-only overlay reads and writes its branch tenant through the base
 API. Add `--service tadoku-api` when you need to run changed API code, rather
 than to isolate frontend writes. Branch-host links select the same route across
-apps, including API writes initiated by auth or admin.
+apps, including API writes initiated by authv2 or admin.
 
 Token-reflector is base-only. Paper styleguide has no live overlay; run it
 locally with `cd frontend && pnpm paper-styleguide`.
@@ -162,7 +162,6 @@ dev status --owner alice
 dev url --owner alice '/'
 dev url --owner alice --host next.tadoku.dev.lab '/'
 dev url --owner alice --host account.tadoku.dev.lab '/login'
-dev url --owner alice --host authv2.tadoku.dev.lab '/login'
 dev url --owner alice --host admin.tadoku.dev.lab '/'
 dev logs --owner alice tadoku-api
 dev logs --owner alice tadoku-worker
@@ -175,19 +174,20 @@ navigation across app, account and admin on the same branch. Each branch has
 its own origin, so two owners can use one browser profile without selection
 leaking across tabs. A printed link does not create an overlay or prove readiness.
 
-- Base URLs are `https://tadoku.dev.lab`, `https://next.tadoku.dev.lab`, `https://account.tadoku.dev.lab`,
-  `https://admin.tadoku.dev.lab` and `https://authv2.tadoku.dev.lab`.
+- Base URLs are `https://tadoku.dev.lab`, `https://next.tadoku.dev.lab`,
+  `https://account.tadoku.dev.lab` (authv2) and `https://admin.tadoku.dev.lab`.
 - Each service independently uses its healthy overlay or the base fallback.
-- Authentication is shared between base and branches. Kratos remains at
-  `https://account.tadoku.dev.lab/kratos`; it is never routed to a frontend overlay.
+- Accounts and sessions belong to a tenant. Sign in on the branch host to get
+  that branch tenant's session; see
+  [Branch tenants](./development-data.md#branch-tenants).
 
-Authv2 shares the existing `tdk-dev-frontend-auth` namespace with auth, with
-separate workload names and selectors. Its overlay sets runtime URLs inline
-and reuses the existing `tadoku-cli-ca`; no shared prerequisite creation is needed.
-Authv2 has its own host family, `<route>.authv2.tadoku.dev.lab`, and uses the
+Authv2 runs in the `tdk-dev-frontend-auth` namespace. Its overlay sets runtime
+URLs inline and reuses the existing `tadoku-cli-ca`; no shared prerequisite
+creation is needed. Authv2 serves the account host family,
+`<route>.account.tadoku.dev.lab`, and uses the
 [Paper account skeleton](../frontend/authv2.md). Its server forwards the request
-cookie and branch selection to the identity session API. The API chooses v1
-or v2; an unavailable endpoint leaves a visible unavailable state.
+cookie and branch selection to the identity session API; an unavailable
+endpoint leaves a visible unavailable state.
 
 ### Routing headers
 
@@ -209,7 +209,7 @@ writes, verify `X-Dev-Selected` and the persisted tenant as well.
 ### How requests reach your overlay
 
 ```text
-browser → ingress-nginx → Envoy → webv2 / webv3 / auth / authv2 / admin
+browser → ingress-nginx → Envoy → webv2 / webv3 / authv2 / admin
                              → Oathkeeper → Envoy → Tadoku API
 ```
 
@@ -222,8 +222,8 @@ browser → ingress-nginx → Envoy → webv2 / webv3 / auth / authv2 / admin
 - Base and branch frontends send server-side rendering requests through the
   same public branch host and gateway with Lab CA trust, so an API-only
   selection also applies to server-rendered pages.
-- Kratos and Oathkeeper allow the development hosts and every
-  `*.tadoku.dev.lab` branch host; no temporary auth allowlist is needed.
+- Oathkeeper allows the development hosts and every `*.tadoku.dev.lab`
+  branch host as CORS origins; no temporary auth allowlist is needed.
 
 ## Clean up
 
@@ -250,7 +250,7 @@ It does not stop the Argo CD base. Ctrl-C alone leaves overlays running.
   Deleting one requires
   inspecting its exact name, marker, owner and active connections, then separate
   authorization.
-- Never drop the shared `tadoku`, `kratos` or `keto` databases, and never
+- Never drop the shared `tadoku` or `keto` databases, and never
   run namespace-wide deletion or cleanup.
 - `make dev-reset` is disabled. Any reset needs an explicitly approved, scoped
   runbook.

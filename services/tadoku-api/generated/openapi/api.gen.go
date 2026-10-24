@@ -173,24 +173,6 @@ func (e IdentityProxyGuestIdentityId) Valid() bool {
 	}
 }
 
-// Defines values for IdentitySessionAccountApp.
-const (
-	V1 IdentitySessionAccountApp = "v1"
-	V2 IdentitySessionAccountApp = "v2"
-)
-
-// Valid indicates whether the value is a known member of the IdentitySessionAccountApp enum.
-func (e IdentitySessionAccountApp) Valid() bool {
-	switch e {
-	case V1:
-		return true
-	case V2:
-		return true
-	default:
-		return false
-	}
-}
-
 // Defines values for ImmersionActivityInputType.
 const (
 	AmountPrimary ImmersionActivityInputType = "amount_primary"
@@ -203,6 +185,27 @@ func (e ImmersionActivityInputType) Valid() bool {
 	case AmountPrimary:
 		return true
 	case TimePrimary:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ImmersionContestEventEvent.
+const (
+	LogSubmitted ImmersionContestEventEvent = "log.submitted"
+	LogUpdated   ImmersionContestEventEvent = "log.updated"
+	LogWithdrawn ImmersionContestEventEvent = "log.withdrawn"
+)
+
+// Valid indicates whether the value is a known member of the ImmersionContestEventEvent enum.
+func (e ImmersionContestEventEvent) Valid() bool {
+	switch e {
+	case LogSubmitted:
+		return true
+	case LogUpdated:
+		return true
+	case LogWithdrawn:
 		return true
 	default:
 		return false
@@ -624,7 +627,7 @@ type IdentityAccount struct {
 	CreatedAt       time.Time `json:"created_at"`
 	DisplayName     string    `json:"display_name"`
 
-	// Email The account's stored address: a v1 Kratos trait, or for v2 the normalized address registration or settings stored or an imported address as written. When Go's net/mail reads an address from it, the API writes that address part, so a quoted local part arrives unquoted and surrounding ASCII spaces and tabs are dropped; letter case, every other character and its length are kept. Otherwise, such as for an imported address with a leading vertical tab, the API writes the stored address unchanged. It is not normalized like email input and need not satisfy format: email.
+	// Email The account's stored address: the normalized address registration or settings stored, or an imported address as written. When Go's net/mail reads an address from it, the API writes that address part, so a quoted local part arrives unquoted and surrounding ASCII spaces and tabs are dropped; letter case, every other character and its length are kept. Otherwise, such as for an imported address with a leading vertical tab, the API writes the stored address unchanged. It is not normalized like email input and need not satisfy format: email.
 	Email string             `json:"email"`
 	Id    openapi_types.UUID `json:"id"`
 }
@@ -642,13 +645,13 @@ type IdentityErrorResponseCode string
 type IdentityLogin struct {
 	Email openapi_types.Email `json:"email"`
 
-	// Password At least 8 characters, at most 72 UTF-8 bytes; rejects similarity to the email under the Kratos v26.2.0 rule.
+	// Password At least 8 characters, at most 72 UTF-8 bytes; rejects a password whose lowercase form is within Levenshtein distance 4 of the lowercase email or shares with it a common substring longer than half the password.
 	Password string `json:"password"`
 }
 
 // IdentityPasswordSettings defines model for IdentityPasswordSettings.
 type IdentityPasswordSettings struct {
-	// Password At least 8 characters, at most 72 UTF-8 bytes; rejects similarity to the email under the Kratos v26.2.0 rule.
+	// Password At least 8 characters, at most 72 UTF-8 bytes; rejects a password whose lowercase form is within Levenshtein distance 4 of the lowercase email or shares with it a common substring longer than half the password.
 	Password string `json:"password"`
 }
 
@@ -682,7 +685,7 @@ type IdentityProxySession struct {
 type IdentityProxyTraits struct {
 	DisplayName string `json:"display_name"`
 
-	// Email The account's stored address: a v1 Kratos trait, or for v2 the normalized address registration or settings stored or an imported address as written. When Go's net/mail reads an address from it, the API writes that address part, so a quoted local part arrives unquoted and surrounding ASCII spaces and tabs are dropped; letter case, every other character and its length are kept. Otherwise, such as for an imported address with a leading vertical tab, the API writes the stored address unchanged. It is not normalized like email input and need not satisfy format: email.
+	// Email The account's stored address: the normalized address registration or settings stored, or an imported address as written. When Go's net/mail reads an address from it, the API writes that address part, so a quoted local part arrives unquoted and surrounding ASCII spaces and tabs are dropped; letter case, every other character and its length are kept. Otherwise, such as for an imported address with a leading vertical tab, the API writes the stored address unchanged. It is not normalized like email input and need not satisfy format: email.
 	Email string `json:"email"`
 }
 
@@ -709,18 +712,14 @@ type IdentityRegistration struct {
 	DisplayName string              `json:"display_name"`
 	Email       openapi_types.Email `json:"email"`
 
-	// Password At least 8 characters, at most 72 UTF-8 bytes; rejects similarity to the email under the Kratos v26.2.0 rule.
+	// Password At least 8 characters, at most 72 UTF-8 bytes; rejects a password whose lowercase form is within Levenshtein distance 4 of the lowercase email or shares with it a common substring longer than half the password.
 	Password string `json:"password"`
 }
 
 // IdentitySession defines model for IdentitySession.
 type IdentitySession struct {
-	Account    nullable.Nullable[IdentityAccount] `json:"account"`
-	AccountApp IdentitySessionAccountApp          `json:"account_app"`
+	Account nullable.Nullable[IdentityAccount] `json:"account"`
 }
-
-// IdentitySessionAccountApp defines model for IdentitySession.AccountApp.
-type IdentitySessionAccountApp string
 
 // ImmersionActivities defines model for ImmersionActivities.
 type ImmersionActivities struct {
@@ -826,6 +825,37 @@ type ImmersionContestConfigurationOptions struct {
 	Activities             []ImmersionActivity `json:"activities"`
 	CanCreateOfficialRound bool                `json:"can_create_official_round"`
 	Languages              []ImmersionLanguage `json:"languages"`
+}
+
+// ImmersionContestEvent defines model for ImmersionContestEvent.
+type ImmersionContestEvent struct {
+	// Event submitted means the log entered this contest. updated means its
+	// contest-visible log fields changed while it remained submitted.
+	// withdrawn means it left this contest, including deletion or moderation.
+	Event ImmersionContestEventEvent `json:"event"`
+
+	// Id Stable event identity, also usable as a cursor and deduplication key.
+	Id    openapi_types.UUID `json:"id"`
+	LogId openapi_types.UUID `json:"log_id"`
+
+	// OccurredAt Source operation time, stored once when the event is created.
+	OccurredAt time.Time `json:"occurred_at"`
+}
+
+// ImmersionContestEventEvent submitted means the log entered this contest. updated means its
+// contest-visible log fields changed while it remained submitted.
+// withdrawn means it left this contest, including deletion or moderation.
+type ImmersionContestEventEvent string
+
+// ImmersionContestEventPage defines model for ImmersionContestEventPage.
+type ImmersionContestEventPage struct {
+	Events []ImmersionContestEvent `json:"events"`
+
+	// HasMore More visible events existed beyond this page at the time of the read.
+	HasMore bool `json:"has_more"`
+
+	// NextCursor Last returned event ID, the input event ID on an empty poll, or 0 before any event.
+	NextCursor string `json:"next_cursor"`
 }
 
 // ImmersionContestProfileActivity defines model for ImmersionContestProfileActivity.
@@ -1332,6 +1362,13 @@ type ImmersionContestListParams struct {
 	UserId         *openapi_types.UUID `form:"user_id,omitempty" json:"user_id,omitempty"`
 }
 
+// ImmersionContestListEventsParams defines parameters for ImmersionContestListEvents.
+type ImmersionContestListEventsParams struct {
+	// Cursor A retained event UUID, 0 for the beginning, or now for the latest visible event.
+	Cursor *string `form:"cursor,omitempty" json:"cursor,omitempty"`
+	Limit  *int    `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
 // ImmersionContestFetchLeaderboardParams defines parameters for ImmersionContestFetchLeaderboard.
 type ImmersionContestFetchLeaderboardParams struct {
 	PageSize     *int    `form:"page_size,omitempty" json:"page_size,omitempty"`
@@ -1725,12 +1762,18 @@ type ServerInterface interface {
 	// ImmersionContestFindByID Fetches a contest by id
 	// (GET /immersion/contests/{id})
 	ImmersionContestFindByID(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// ImmersionContestListEvents Read contest submission events
+	// (GET /immersion/contests/{id}/events)
+	ImmersionContestListEvents(w http.ResponseWriter, r *http.Request, id openapi_types.UUID, params ImmersionContestListEventsParams)
 	// ImmersionContestFetchLeaderboard Fetches the leaderboard for a contest
 	// (GET /immersion/contests/{id}/leaderboard)
 	ImmersionContestFetchLeaderboard(w http.ResponseWriter, r *http.Request, id openapi_types.UUID, params ImmersionContestFetchLeaderboardParams)
 	// ImmersionContestListLogs Lists the logs attached to a contest
 	// (GET /immersion/contests/{id}/logs)
 	ImmersionContestListLogs(w http.ResponseWriter, r *http.Request, id openapi_types.UUID, params ImmersionContestListLogsParams)
+	// ImmersionContestFindLog Read a current log in a contest
+	// (GET /immersion/contests/{id}/logs/{logId})
+	ImmersionContestFindLog(w http.ResponseWriter, r *http.Request, id openapi_types.UUID, logId openapi_types.UUID)
 	// ImmersionContestModerationDetachLog Detaches a log from a contest (moderation action)
 	// (POST /immersion/contests/{id}/moderation/detach/{log_id})
 	ImmersionContestModerationDetachLog(w http.ResponseWriter, r *http.Request, id openapi_types.UUID, logId openapi_types.UUID)
@@ -3202,6 +3245,61 @@ func (siw *ServerInterfaceWrapper) ImmersionContestFindByID(w http.ResponseWrite
 	handler.ServeHTTP(w, r)
 }
 
+// ImmersionContestListEvents operation middleware
+func (siw *ServerInterfaceWrapper) ImmersionContestListEvents(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ImmersionContestListEventsParams
+
+	// ------------- Optional query parameter "cursor" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "cursor", r.URL.Query(), &params.Cursor, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "cursor"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "cursor", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ImmersionContestListEvents(w, r, id, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ImmersionContestFetchLeaderboard operation middleware
 func (siw *ServerInterfaceWrapper) ImmersionContestFetchLeaderboard(w http.ResponseWriter, r *http.Request) {
 
@@ -3355,6 +3453,41 @@ func (siw *ServerInterfaceWrapper) ImmersionContestListLogs(w http.ResponseWrite
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ImmersionContestListLogs(w, r, id, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ImmersionContestFindLog operation middleware
+func (siw *ServerInterfaceWrapper) ImmersionContestFindLog(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "logId" -------------
+	var logId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "logId", r.PathValue("logId"), &logId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "logId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ImmersionContestFindLog(w, r, id, logId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -4604,6 +4737,8 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/{id}/profile/{user_id}/activity", wrapper.ImmersionContestProfileFetchActivity)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/ongoing-registrations", wrapper.ImmersionContestFindOngoingRegistrations)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/configuration-options", wrapper.ImmersionContestGetConfigurations)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/{id}/events", wrapper.ImmersionContestListEvents)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/contests/{id}/logs/{logId}", wrapper.ImmersionContestFindLog)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/immersion/logs", wrapper.ImmersionLogCreate)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/logs/export", wrapper.ImmersionLogExport)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/immersion/logs/score-preview", wrapper.ImmersionScorePreview)
@@ -5775,20 +5910,6 @@ func (response IdentityLoginCreate429JSONResponse) VisitIdentityLoginCreateRespo
 	return err
 }
 
-type IdentityLoginCreate501JSONResponse IdentityErrorResponse
-
-func (response IdentityLoginCreate501JSONResponse) VisitIdentityLoginCreateResponse(w http.ResponseWriter) error {
-
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
-		return err
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(501)
-	_, err := buf.WriteTo(w)
-	return err
-}
-
 type IdentityLoginCreate503JSONResponse IdentityErrorResponse
 
 func (response IdentityLoginCreate503JSONResponse) VisitIdentityLoginCreateResponse(w http.ResponseWriter) error {
@@ -5982,20 +6103,6 @@ func (response IdentityRecoveryCreate429JSONResponse) VisitIdentityRecoveryCreat
 	return err
 }
 
-type IdentityRecoveryCreate501JSONResponse IdentityErrorResponse
-
-func (response IdentityRecoveryCreate501JSONResponse) VisitIdentityRecoveryCreateResponse(w http.ResponseWriter) error {
-
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
-		return err
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(501)
-	_, err := buf.WriteTo(w)
-	return err
-}
-
 type IdentityRecoveryCreate503JSONResponse IdentityErrorResponse
 
 func (response IdentityRecoveryCreate503JSONResponse) VisitIdentityRecoveryCreateResponse(w http.ResponseWriter) error {
@@ -6123,20 +6230,6 @@ func (response IdentityRecoveryConsume429JSONResponse) VisitIdentityRecoveryCons
 	return err
 }
 
-type IdentityRecoveryConsume501JSONResponse IdentityErrorResponse
-
-func (response IdentityRecoveryConsume501JSONResponse) VisitIdentityRecoveryConsumeResponse(w http.ResponseWriter) error {
-
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
-		return err
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(501)
-	_, err := buf.WriteTo(w)
-	return err
-}
-
 type IdentityRecoveryConsume503JSONResponse IdentityErrorResponse
 
 func (response IdentityRecoveryConsume503JSONResponse) VisitIdentityRecoveryConsumeResponse(w http.ResponseWriter) error {
@@ -6249,20 +6342,6 @@ func (response IdentityRegistrationCreate429JSONResponse) VisitIdentityRegistrat
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(429)
-	_, err := buf.WriteTo(w)
-	return err
-}
-
-type IdentityRegistrationCreate501JSONResponse IdentityErrorResponse
-
-func (response IdentityRegistrationCreate501JSONResponse) VisitIdentityRegistrationCreateResponse(w http.ResponseWriter) error {
-
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
-		return err
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(501)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -6458,20 +6537,6 @@ func (response IdentityPasswordUpdate429JSONResponse) VisitIdentityPasswordUpdat
 	return err
 }
 
-type IdentityPasswordUpdate501JSONResponse IdentityErrorResponse
-
-func (response IdentityPasswordUpdate501JSONResponse) VisitIdentityPasswordUpdateResponse(w http.ResponseWriter) error {
-
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
-		return err
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(501)
-	_, err := buf.WriteTo(w)
-	return err
-}
-
 type IdentityPasswordUpdate503JSONResponse IdentityErrorResponse
 
 func (response IdentityPasswordUpdate503JSONResponse) VisitIdentityPasswordUpdateResponse(w http.ResponseWriter) error {
@@ -6588,20 +6653,6 @@ func (response IdentityProfileUpdate429JSONResponse) VisitIdentityProfileUpdateR
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(429)
-	_, err := buf.WriteTo(w)
-	return err
-}
-
-type IdentityProfileUpdate501JSONResponse IdentityErrorResponse
-
-func (response IdentityProfileUpdate501JSONResponse) VisitIdentityProfileUpdateResponse(w http.ResponseWriter) error {
-
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
-		return err
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(501)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -7063,6 +7114,55 @@ func (response ImmersionContestFindByID404Response) VisitImmersionContestFindByI
 	return nil
 }
 
+type ImmersionContestListEventsRequestObject struct {
+	Id     openapi_types.UUID `json:"id"`
+	Params ImmersionContestListEventsParams
+}
+
+type ImmersionContestListEventsResponseObject interface {
+	VisitImmersionContestListEventsResponse(w http.ResponseWriter) error
+}
+
+type ImmersionContestListEvents200ResponseHeaders struct {
+	CacheControl *string
+}
+
+type ImmersionContestListEvents200JSONResponse struct {
+	Body    ImmersionContestEventPage
+	Headers ImmersionContestListEvents200ResponseHeaders
+}
+
+func (response ImmersionContestListEvents200JSONResponse) VisitImmersionContestListEventsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.CacheControl != nil {
+		w.Header().Set("Cache-Control", fmt.Sprint(*response.Headers.CacheControl))
+	}
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImmersionContestListEvents400Response struct {
+}
+
+func (response ImmersionContestListEvents400Response) VisitImmersionContestListEventsResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
+type ImmersionContestListEvents404Response struct {
+}
+
+func (response ImmersionContestListEvents404Response) VisitImmersionContestListEventsResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
 type ImmersionContestFetchLeaderboardRequestObject struct {
 	Id     openapi_types.UUID `json:"id"`
 	Params ImmersionContestFetchLeaderboardParams
@@ -7138,6 +7238,55 @@ type ImmersionContestListLogs500Response struct {
 
 func (response ImmersionContestListLogs500Response) VisitImmersionContestListLogsResponse(w http.ResponseWriter) error {
 	w.WriteHeader(500)
+	return nil
+}
+
+type ImmersionContestFindLogRequestObject struct {
+	Id    openapi_types.UUID `json:"id"`
+	LogId openapi_types.UUID `json:"logId"`
+}
+
+type ImmersionContestFindLogResponseObject interface {
+	VisitImmersionContestFindLogResponse(w http.ResponseWriter) error
+}
+
+type ImmersionContestFindLog200ResponseHeaders struct {
+	CacheControl *string
+}
+
+type ImmersionContestFindLog200JSONResponse struct {
+	Body    ImmersionLog
+	Headers ImmersionContestFindLog200ResponseHeaders
+}
+
+func (response ImmersionContestFindLog200JSONResponse) VisitImmersionContestFindLogResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.CacheControl != nil {
+		w.Header().Set("Cache-Control", fmt.Sprint(*response.Headers.CacheControl))
+	}
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImmersionContestFindLog400Response struct {
+}
+
+func (response ImmersionContestFindLog400Response) VisitImmersionContestFindLogResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
+type ImmersionContestFindLog404Response struct {
+}
+
+func (response ImmersionContestFindLog404Response) VisitImmersionContestFindLogResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
 	return nil
 }
 
@@ -8710,12 +8859,18 @@ type StrictServerInterface interface {
 	// ImmersionContestFindByID Fetches a contest by id
 	// (GET /immersion/contests/{id})
 	ImmersionContestFindByID(ctx context.Context, request ImmersionContestFindByIDRequestObject) (ImmersionContestFindByIDResponseObject, error)
+	// ImmersionContestListEvents Read contest submission events
+	// (GET /immersion/contests/{id}/events)
+	ImmersionContestListEvents(ctx context.Context, request ImmersionContestListEventsRequestObject) (ImmersionContestListEventsResponseObject, error)
 	// ImmersionContestFetchLeaderboard Fetches the leaderboard for a contest
 	// (GET /immersion/contests/{id}/leaderboard)
 	ImmersionContestFetchLeaderboard(ctx context.Context, request ImmersionContestFetchLeaderboardRequestObject) (ImmersionContestFetchLeaderboardResponseObject, error)
 	// ImmersionContestListLogs Lists the logs attached to a contest
 	// (GET /immersion/contests/{id}/logs)
 	ImmersionContestListLogs(ctx context.Context, request ImmersionContestListLogsRequestObject) (ImmersionContestListLogsResponseObject, error)
+	// ImmersionContestFindLog Read a current log in a contest
+	// (GET /immersion/contests/{id}/logs/{logId})
+	ImmersionContestFindLog(ctx context.Context, request ImmersionContestFindLogRequestObject) (ImmersionContestFindLogResponseObject, error)
 	// ImmersionContestModerationDetachLog Detaches a log from a contest (moderation action)
 	// (POST /immersion/contests/{id}/moderation/detach/{log_id})
 	ImmersionContestModerationDetachLog(ctx context.Context, request ImmersionContestModerationDetachLogRequestObject) (ImmersionContestModerationDetachLogResponseObject, error)
@@ -10059,6 +10214,33 @@ func (sh *strictHandler) ImmersionContestFindByID(w http.ResponseWriter, r *http
 	}
 }
 
+// ImmersionContestListEvents operation middleware
+func (sh *strictHandler) ImmersionContestListEvents(w http.ResponseWriter, r *http.Request, id openapi_types.UUID, params ImmersionContestListEventsParams) {
+	var request ImmersionContestListEventsRequestObject
+
+	request.Id = id
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ImmersionContestListEvents(ctx, request.(ImmersionContestListEventsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ImmersionContestListEvents")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ImmersionContestListEventsResponseObject); ok {
+		if err := validResponse.VisitImmersionContestListEventsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ImmersionContestFetchLeaderboard operation middleware
 func (sh *strictHandler) ImmersionContestFetchLeaderboard(w http.ResponseWriter, r *http.Request, id openapi_types.UUID, params ImmersionContestFetchLeaderboardParams) {
 	var request ImmersionContestFetchLeaderboardRequestObject
@@ -10106,6 +10288,33 @@ func (sh *strictHandler) ImmersionContestListLogs(w http.ResponseWriter, r *http
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ImmersionContestListLogsResponseObject); ok {
 		if err := validResponse.VisitImmersionContestListLogsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ImmersionContestFindLog operation middleware
+func (sh *strictHandler) ImmersionContestFindLog(w http.ResponseWriter, r *http.Request, id openapi_types.UUID, logId openapi_types.UUID) {
+	var request ImmersionContestFindLogRequestObject
+
+	request.Id = id
+	request.LogId = logId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ImmersionContestFindLog(ctx, request.(ImmersionContestFindLogRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ImmersionContestFindLog")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ImmersionContestFindLogResponseObject); ok {
+		if err := validResponse.VisitImmersionContestFindLogResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

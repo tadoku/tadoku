@@ -5,11 +5,10 @@ import { Atom, Provider, useAtom } from 'jotai'
 import {
   AppContextWithSession,
   sessionAtom,
-  accountAppAtom,
   useUserRole,
   useCurrentLocation,
 } from '@app/common/session'
-import { Account, AccountApp, readIdentitySession } from 'ui/identity'
+import { Account, readIdentitySession } from 'ui/identity'
 import { SessionUnavailable } from 'ui/components/SessionUnavailable'
 import { ToastContainer } from 'ui/components/toasts'
 import 'ui/styles/globals.css'
@@ -27,7 +26,6 @@ Settings.defaultZone = 'utc'
 interface Props {
   appUrls: AppUrls
   session: Account | undefined
-  accountApp: AccountApp
   sessionUnavailable: boolean
 }
 
@@ -99,13 +97,12 @@ const MyApp = ({ Component, pageProps }: AppPropsWithLayout) => {
   const { get: getInitialValues, set: setInitialValues } = createInitialValues()
 
   setInitialValues(sessionAtom, initialState.session)
-  setInitialValues(accountAppAtom, initialState.accountApp)
 
   const getLayout = Component.getLayout ?? (page => page)
 
   return (
     <AppUrlsProvider urls={pageProps.appUrls}>
-      <Provider key={`${initialState.accountApp}:${initialState.session?.id ?? 'guest'}`} initialValues={getInitialValues()}>
+      <Provider key={initialState.session?.id ?? 'guest'} initialValues={getInitialValues()}>
         <QueryClientProvider client={queryClient}>
           <Head>
             <title>Admin - Tadoku</title>
@@ -140,7 +137,6 @@ MyApp.getInitialProps = async (ctx: AppContextWithSession) => {
 
   const initialAppProps = await App.getInitialProps(ctx)
   initialAppProps.pageProps.session = ctx.ctx.session
-  initialAppProps.pageProps.accountApp = identity?.account_app ?? 'v1'
   initialAppProps.pageProps.sessionUnavailable = !identity
   initialAppProps.pageProps.appUrls = appUrlsForHost(ctx.ctx.req?.headers.host ?? (typeof window === 'undefined' ? undefined : window.location.host))
 

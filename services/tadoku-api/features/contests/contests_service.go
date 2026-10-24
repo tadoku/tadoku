@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/tadoku/tadoku/services/tadoku-api/domain/contestevent"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
 	domainlanguages "github.com/tadoku/tadoku/services/tadoku-api/domain/languages"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/logscore"
@@ -206,7 +207,8 @@ func (s *Service) ApplyRegistration(
 	registration Registration,
 	existing *Registration,
 	contest Contest,
-) ([]jobs.Job, error) {
+) (RegistrationResult, error) {
+	result := RegistrationResult{}
 	removedLanguages := []string{}
 	if existing != nil {
 		selectedLanguages := make(map[string]struct{}, len(registration.LanguageCodes))
@@ -222,21 +224,30 @@ func (s *Service) ApplyRegistration(
 	}
 
 	if len(removedLanguages) > 0 {
-		if err := s.contests.DetachContestLogsForLanguages(
+		removedIDs, err := s.contests.DetachContestLogsForLanguages(
 			ctx,
 			registration.UserID,
 			registration.ContestID,
 			removedLanguages,
-		); err != nil {
-			return nil, err
+		)
+		if err != nil {
+			return RegistrationResult{}, err
+		}
+		for _, id := range removedIDs {
+			result.Events = append(result.Events, contestevent.Change{
+				ContestID: registration.ContestID,
+				LogID:     id,
+				Type:      contestevent.Withdrawn,
+			})
 		}
 	}
 
 	if err := s.contests.UpsertRegistration(ctx, registration); err != nil {
-		return nil, err
+		return RegistrationResult{}, err
 	}
 
-	return registrationLeaderboardJobs(registration, contest), nil
+	result.Jobs = registrationLeaderboardJobs(registration, contest)
+	return result, nil
 }
 
 func registrationLeaderboardJobs(registration Registration, contest Contest) []jobs.Job {

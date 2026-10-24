@@ -2,7 +2,7 @@
 
 This directory holds Tadoku's dev-cli setup for the `homelab-talos-dev` development
 cluster: `config.yaml` (the real, non-secret configuration), the overlay
-workload manifests (`webv2.yaml`, `webv3.yaml`, `auth.yaml`, `authv2.yaml`, `admin.yaml`, `tadoku-api.yaml`,
+workload manifests (`webv2.yaml`, `webv3.yaml`, `authv2.yaml`, `admin.yaml`, `tadoku-api.yaml`,
 `tadoku-worker.yaml`),
 the tenant lifecycle task manifests (`tenant.yaml`, `tenant-teardown.yaml`,
 `worker-override-set.yaml`, `worker-override-clear.yaml`), the fixture loader
@@ -12,7 +12,7 @@ database work; ordinary branches use a test tenant in the shared database.
 
 Use dev-cli v0.7.0 or newer. `dev up --owner <owner>` automatically provisions
 and seeds `tadoku/<route>` before startup, including frontend-only work. Select
-the main hostname before admin or auth API writes. `dev down` and expired-route
+the main hostname before admin or authv2 API writes. `dev down` and expired-route
 cleanup stop overlays and remove that tenant's application and provider data.
 
 - [Development environment](../docs/docs/develop/environment.md): install dev-cli,

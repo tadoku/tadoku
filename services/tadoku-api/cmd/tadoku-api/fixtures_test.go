@@ -65,8 +65,6 @@ func validApplicationConfig(t *testing.T) config {
 		FliptRequestTimeout:     time.Second,
 		FliptStartupTimeout:     10 * time.Millisecond,
 		FliptManagementURL:      upstream.URL + "/flipt-management",
-		KratosAdminURL:          upstream.URL,
-		KratosTimeout:           time.Second,
 
 		DialTimeout:           10 * time.Second,
 		MaxTokenAge:           24 * time.Hour,

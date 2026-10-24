@@ -15,39 +15,23 @@ installing dev-cli and starting, opening and cleaning up a branch.
 Argo CD runs the base migrations automatically during full syncs; see
 [Development base](../operations/development-base.md#automatic-migrations).
 Selective resource sync skips those migration hooks, so never use it for a
-release. V1 identities and Keto providers are shared; v2 accounts and sessions
-belong to their tenant.
+release. The Keto provider is shared; accounts and sessions belong to their
+tenant.
 
 ## Seed data
 
 `make dev-seed` runs `scripts/dev/seed-db.sh` against the shared base with
-tenant `tadoku/prod`. It needs `kubectl`, `curl`, lab DNS and CA trust, and
-Bazel when the canonical tenant uses native accounts. It:
+tenant `tadoku/prod`. It needs `kubectl` and Bazel. It:
 
 - runs only against the `homelab-talos-dev` context at `https://omni.lab:8100`;
-- before any write, asks the base API which identity provider the canonical
-  tenant uses through an anonymous
-  `GET https://tadoku.dev.lab/api/internal/identity/session`. The base host
-  always serves `tadoku/prod`. Only `{"account":null,"account_app":"v1"}` or
-  `"v2"` is accepted; an undecided provider, a transport error or any other
-  response stops the seed without changes. See
-  [Account-app selection](../tadoku-api/identity-selection.md);
 - waits for Postgres and the base migrations;
-- creates the two fixture accounts through that provider, as described below;
+- creates the two native fixture accounts, as described below;
 - grants the administrator role in Keto unless the tuple already exists;
 - loads the fixtures in `scripts/dev/seed/` into the base `tadoku` database.
 
-**v1 (Kratos).** The seed creates missing Kratos identities marked with
-`metadata_admin.seeded_by=tadoku-dev-seed` and refuses an existing identity
-with the same email but no marker. It resets a marked identity's password only
-when the stored hash does not match the configured password. Fixture rows use
-the Kratos identity UUIDs, and the seed restores the fixture users' names.
-
-**v2 (native accounts).** The seed never contacts Kratos. Dev Admin and Dev
-Reader keep the UUIDs that own the seeded contests
+Dev Admin and Dev Reader keep the UUIDs that own the seeded contests
 `00000000-0000-4000-8000-000000000101` and
-`00000000-0000-4000-8000-000000000102`, which earlier v1 seeds or the account
-import gave them. On a base without those contests it uses
+`00000000-0000-4000-8000-000000000102`. On a base without those contests it uses
 `00000000-0000-4000-8000-000000000001` and
 `00000000-0000-4000-8000-000000000002`. Only the seed creates these contests,
 and their owner never changes, so a registered account cannot become a fixture.
@@ -60,10 +44,7 @@ succeeds, fails or is interrupted by `SIGHUP`, `SIGINT` or `SIGTERM`; after a
 It follows the native branch account contract below: existing accounts,
 including imported ones, keep their email, password, state, timestamps and
 sessions, and an email held by another UUID fails the pair before any Keto or
-SQL write. Import the Kratos accounts with
-[the account import](../tadoku-api/identity-import.md) before switching the
-canonical flag; seeding native accounts first creates accounts the import
-reports as conflicts.
+SQL write.
 
 Rerunning with the same configuration changes no row, credential, timestamp or
 Keto tuple. The SQL fixtures are stable: a rerun restores missing fixture rows
@@ -93,7 +74,7 @@ outside Git with `TADOKU_DEV_ADMIN_EMAIL`, `TADOKU_DEV_ADMIN_PASSWORD`,
 ## Branch tenants
 
 The operator-managed `tdk-dev-data/tadoku-dev-db` is the only Postgres server.
-Its `tadoku`, `kratos` and `keto` databases are shared. Ordinary branches use
+Its `tadoku` and `keto` databases are shared. Ordinary branches use
 the base `tadoku` database and a separate test tenant. The tenant key is
 `tadoku/<route>`; the route contains the owner, branch and a collision-resistant
 hash. Different owners of the same branch get different tenants. Normal
@@ -105,7 +86,7 @@ startup creates no database, Postgres cluster, PVC or database dependency Job.
   fixture user rows in `users`. If they are missing, ask the operator to run
   `make dev-seed` first; it changes shared identities and base data, and the
   branch task never seeds the base. Before loading its profiles, it
-  creates native v2 accounts with those same UUIDs and the names Dev Admin and
+  creates native accounts with those same UUIDs and the names Dev Admin and
   Dev Reader in its own tenant. Passwords and emails use the same
   `TADOKU_DEV_ADMIN_*` / `TADOKU_DEV_READER_*` source and defaults as the base
   seed. Custom values must be supplied privately in the tenant Job environment,
@@ -115,9 +96,8 @@ startup creates no database, Postgres cluster, PVC or database dependency Job.
   membership. Dev Admin inherits administrator permits.
 - Flipt uses environment `test` and namespace `tadoku_<route>`, with display
   name `tadoku/<route>`. Provisioning adds missing resources from this branch's
-  `k8s/dev/base/flipt/features.yaml`, plus a branch-only `identity-v2` flag with
-  a 100% true rollout. Canonical definitions/imports and the safe false default
-  are unchanged. Existing flag values and grants are preserved on retries.
+  `k8s/dev/base/flipt/features.yaml`. Canonical definitions/imports and the safe
+  false default are unchanged. Existing flag values and grants are preserved on retries.
 - SQL fixtures use the non-owner `tadoku` role so row-level security checks
   every write. The guard requires the route-shaped test tenant, the expected
   role and development database host. It refuses canonical seeding through
@@ -149,16 +129,14 @@ the same UUIDs and emails with independent credentials. New fixture users retain
 the canonical fixture user's creation time when available, and new accounts
 retain their local user's creation time, preserving account-age rules. It creates
 no session; sign in through the configured branch API to create a native session.
-The branch SQL sets `seed_users=false` before loading immersion fixtures because
-the native fixture command owns user initialization. Reseeding restores missing
-profiles, contests and content and keeps existing rows, as described in
-[Seed data](#seed-data).
+The SQL fixtures create no users; the native fixture command owns user
+initialization. Reseeding restores missing profiles, contests and content and
+keeps existing rows, as described in [Seed data](#seed-data).
 
 Dev Admin keeps its base UUID, so the branch Keto parent preserves inherited
 administrator permits without changing canonical tuples. Dev Reader has direct
-tester membership. Native sessions use the tenant-specific cookie; v1 Kratos
-sessions do not authenticate native accounts. Do not change shared fixture
-passwords, profiles or canonical roles. Down deletes the branch accounts,
+tester membership. Native sessions use the tenant-specific cookie. Do not change
+shared fixture passwords, profiles or canonical roles. Down deletes the branch accounts,
 sessions, recovery tokens, emails and access tokens through the tenant cascade.
 Provider processes and runtime credentials remain shared.
 

@@ -256,7 +256,7 @@ import (
 	"context"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	kratos "github.com/ory/kratos-client-go"
+	ketoapi "github.com/ory/keto-client-go"
 	"github.com/tadoku/tadoku/services/common/client/s2s"
 	queries "github.com/tadoku/tadoku/services/tadoku-api/generated/sqlc/leaderboard"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/keto"

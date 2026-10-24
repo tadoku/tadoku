@@ -8,10 +8,9 @@ description: How to manually delete a Tadoku account, its native sign-in account
 
 Read this when a user has asked for their Tadoku account to be deleted.
 
-Account deletion is manual. Tadoku has no self-service or API operation for it,
-and the identity feature's `DeleteAccount` is not implemented. Start only after
-you have confirmed that the request comes from the account's owner. Run the
-steps below in order. You can safely rerun any step.
+Account deletion is manual. Tadoku has no self-service or API operation for it.
+Start only after you have confirmed that the request comes from the account's
+owner. Run the steps below in order. You can safely rerun any step.
 
 The steps have two stages with different effects:
 
@@ -55,15 +54,10 @@ the email address; a later registration with it creates a new, unrelated user.
   Record the account ID with the operation's evidence so that the separately
   authorized disposition of retained legacy data can include it.
 - **Database backups** keep earlier copies until the provider's retention
-  removes them; see [Identity v2 rollback](./identity-v2-rollback.md#database-recovery).
+  removes them; see [Database recovery](./identity-recovery.md#database-recovery).
 
 `account_deletion_requests` has request states, but no application operation
 reads or writes it; step 3 only removes rows for the account.
-
-A tenant whose `identity-v2` flag selects v1, such as one in development,
-keeps its accounts in that environment's Kratos instead of `accounts`. For
-such a tenant, run the same database, leaderboard and Keto steps, and delete
-the identity through that environment's running Kratos admin API.
 
 ## Prerequisites
 

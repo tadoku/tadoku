@@ -8,13 +8,13 @@ description: How a runtime branch is deployed beside production with dev-cli pro
 Read this when a branch is, or will be, deployed beside production, by hand or
 with a pull request's `deploy` label, or when you are asked to verify one.
 
-**Identity branch hold:** canonical production runs on native accounts
-through authv2 and the API's session callback, but branch support for that
-stack is not verified. Do not create a production branch or add a `deploy`
-label until the maintainer confirms it. Test-tenant provisioning enables
-`identity-v2`, so a branch's API readers and sessions use that branch's native
-accounts. See [Identity gateway configuration](../operations/identity-gateway.md#production)
-for the production gateway.
+**Identity branch hold:** canonical production runs on native accounts through
+authv2 and the API's session callback, but branch support for that stack is not
+verified. Do not create a production branch or add a `deploy` label until the
+maintainer confirms it. A branch's API readers and sessions use that branch
+tenant's native accounts. See [Identity gateway
+configuration](../operations/identity-gateway.md#production) for the production
+gateway.
 
 dev-cli's production mode runs a pushed branch commit beside the production
 workloads, on its own hosts and its own test tenant. Production users and data
@@ -57,7 +57,7 @@ Branch images are built the same way as release images, so a branch runs what
 | --- | --- | --- |
 | Tadoku API | `//services/tadoku-api:branch_push` | `--config=release` |
 | Tadoku worker | `//services/tadoku-api/cmd/tadoku-worker:branch_push` | `--config=release` |
-| webv2, webv3, auth, authv2, admin | `//frontend:webv2_branch_push`, `//frontend:webv3_branch_push`, `//frontend:auth_branch_push`, `//frontend:authv2_branch_push`, `//frontend:admin_branch_push` | `frontend/scripts/publish-image.sh` from `HEAD:frontend` |
+| webv2, webv3, authv2, admin | `//frontend:webv2_branch_push`, `//frontend:webv3_branch_push`, `//frontend:authv2_branch_push`, `//frontend:admin_branch_push` | `frontend/scripts/publish-image.sh` from `HEAD:frontend` |
 | Tenant lifecycle Jobs | `//services/tadoku-api/cmd/tadoku-tenant:branch_push` | `--config=release` |
 
 Each deployable's `dev_deployable` metadata names its `release.imageName` and
@@ -69,8 +69,8 @@ describes the targets and how to run them against a local registry.
 ### Branch image path
 
 Images are pushed to `ghcr.io/tadoku/tadoku/branches/<image>`, where `<image>`
-is `tadoku-api`, `tadoku-worker`, `frontend-webv2`, `frontend-auth`,
-`frontend-admin`, `frontend-webv3`, `frontend-authv2` or `tenant`. The tag is `<route>-<commit12>`, the route
+is `tadoku-api`, `tadoku-worker`, `frontend-webv2`, `frontend-admin`,
+`frontend-webv3`, `frontend-authv2` or `tenant`. The tag is `<route>-<commit12>`, the route
 followed by the first 12 characters of the commit. An existing tag is reused
 because it names a clean, pushed commit. Workloads are deployed by digest.
 
@@ -124,8 +124,7 @@ A route identifies one branch deployment. It has the form
 | Production tenant | `tadoku/prod`, never used by a branch's lifecycle Jobs |
 | App host | `<route>.preview.tadoku.app` |
 | Webv3 host | `<route>.next.preview.tadoku.app` |
-| Authv2 host | `<route>.authv2.preview.tadoku.app` |
-| Account host | `<route>.account.preview.tadoku.app` |
+| Account host | `<route>.account.preview.tadoku.app` (authv2) |
 | Admin host | `<route>.admin.preview.tadoku.app` |
 | API | The branch host's `/api/internal` path |
 | Expiry | 4 hours after `dev up`; rerunning `dev up` renews it |
@@ -133,14 +132,13 @@ A route identifies one branch deployment. It has the form
 Each branch host serves the branch's overlay for a deployable it deployed and
 the production base for every other one. The routing headers described in
 [Development environment](./environment.md#routing-headers) are emitted here as
-well; `X-Dev-Backend` identifies the upstream that served a request. Kratos
-stays on the production account host, and identities are shared with
-production. [Frontend conventions](../frontend/conventions.md#cross-app-urls)
+well; `X-Dev-Backend` identifies the upstream that served a request.
+[Frontend conventions](../frontend/conventions.md#cross-app-urls)
 describe how the frontends resolve sibling branch hosts.
 
 Test tenants run on identity v2, but the production webv2 base keeps its held
 legacy image, which reads only Kratos sessions. On a branch without a webv2
-overlay, an account signed in on the authv2 host appears signed out on the app
+overlay, an account signed in on the account host appears signed out on the app
 host. Add `--service webv2` to `dev up` when a branch needs the signed-in app.
 
 The branch API and worker run with `API_BRANCH` and `WORKER_BRANCH` set to the
@@ -177,9 +175,9 @@ admission rules.
 - **Production administrators** inherit administrator permits on the branch
   through the canonical parent of its Keto object.
 - **Test accounts.** Pull-request deploys create none. For a branch the
-  maintainer deploys by hand, the maintainer's private tooling creates
-  three Kratos identities per route, marked with the route, using plus-aliased
-  addresses of the project mailbox:
+  maintainer deploys by hand, the maintainer's private tooling registers
+  three accounts in the branch tenant through the branch's own identity API,
+  marked with the route, using plus-aliased addresses of the project mailbox:
 
   | Account | Grants on the branch object |
   | --- | --- |
@@ -197,15 +195,15 @@ admission rules.
 The maintainer runs `dev down` to remove a branch. It removes the branch's
 routes and workloads and waits for their pods to stop; the worker override is
 cleared once the branch worker has stopped. Its teardown hooks then delete the
-route's test identities, if any, and the tenant's Keto relationships, cache
-keys, Flipt namespace and registry row with its cascading data. Production
-data, identities and base deployments are untouched.
+tenant's Keto relationships, cache keys, Flipt namespace and registry row with
+its cascading data, including its test accounts, sessions and access tokens.
+Production data, accounts and base deployments are untouched.
 
 A branch expires 4 hours after its last `dev up`. A cluster CronJob scales the
 Deployments of expired branches to zero, so an abandoned branch stops serving
-traffic. It deletes nothing. A maintainer branch keeps its tenant data, routes
-and test identities until the maintainer runs `dev down`, or until a later
-production `dev up`, which first tears down expired routes of every owner. A
-pull-request branch is torn down in full by the first
+traffic. It deletes nothing. A maintainer branch keeps its tenant data,
+including test accounts, and routes until the maintainer runs `dev down`, or
+until a later production `dev up`, which first tears down expired routes of
+every owner. A pull-request branch is torn down in full by the first
 [reconciler](./pull-request-deploys.md#the-reconciler) run after it expires,
 normally within 15 minutes; a run waits while the runner is busy.

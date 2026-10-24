@@ -1,11 +1,11 @@
 import { createServer } from 'node:http'
 import { test, expect } from '@playwright/test'
-import { holdScripts, waitForHydration } from './support'
+import { holdScripts, settingRow, settingValue, waitForHydration } from './support'
 
 const fixtureEnabled = process.env.AUTHV2_SESSION_FIXTURE === 'true'
 let status = 200
 let contentType = 'application/json'
-let session: unknown = { account_app: 'v2', account: null }
+let session: unknown = { account: null }
 const requests: { cookie?: string; branch?: string; method?: string; path?: string }[] = []
 const profileUpdates: unknown[] = []
 const fixture = createServer((request, response) => {
@@ -43,7 +43,7 @@ test.afterAll(async () => {
   if (fixtureEnabled) await new Promise<void>((resolve, reject) => fixture.close(error => error ? reject(error) : resolve()))
 })
 
-test('account screen, session routing and unavailable API', async ({ page, request }, testInfo) => {
+test('account screen, session forwarding and unavailable API', async ({ page, request }, testInfo) => {
   await page.goto('/login')
   await expect(page.getByRole('heading', { level: 1, name: 'Log in' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Log in', exact: true })).toBeEnabled()
@@ -60,44 +60,11 @@ test('account screen, session routing and unavailable API', async ({ page, reque
     expect.soft(requests).toContainEqual({ cookie: 'tadoku_session_fixture=synthetic', branch: 'g-smoke', method: 'GET', path: '/api/internal/identity/session' })
   })
 
-  await test.step('v1 returns to the matching page of the existing account app', async () => {
-    session = { account_app: 'v1', account: null }
-    for (const [path, location] of [
-      ['/login?return_to=%2Flogs%2Fnew', '/login?return_to=%2Flogs%2Fnew'],
-      ['/register', '/register'],
-      ['/', '/'],
-      ['/settings?return_to=https%3A%2F%2Ftadoku.app%2F', '/?return_to=https%3A%2F%2Ftadoku.app%2F'],
-      ['/recovery', '/account-recovery'],
-    ]) {
-      const response = await request.get(path, { maxRedirects: 0 })
-      expect.soft(response.status(), path).toBe(307)
-      expect.soft(response.headers().location, path).toBe(`http://account.localhost:5195${location}`)
-    }
-  })
-
-  await test.step('v1 legacy account details do not prevent the redirect', async () => {
-    for (const email of ['reader@example.test', 'reader@localhost']) {
-      session = {
-        account_app: 'v1',
-        account: {
-          id: '00000000-0000-4000-8000-000000000001',
-          email,
-          display_name: '😀'.repeat(25),
-          created_at: '2026-01-01T00:00:00Z',
-          authenticated_at: '2026-01-01T00:00:00Z',
-        },
-      }
-      const response = await request.get('/login?return_to=%2Flogs%2Fnew', { maxRedirects: 0 })
-      expect.soft(response.status()).toBe(307)
-      expect.soft(response.headers().location).toBe('http://account.localhost:5195/login?return_to=%2Flogs%2Fnew')
-    }
-  })
-
   await test.step('a missing, failing or malformed API keeps a visible unavailable state', async () => {
     for (const [code, body, type] of [
       [404, {}, 'application/json'],
       [503, {}, 'application/json'],
-      [200, { account_app: 'unknown' }, 'application/json'],
+      [200, { account: { id: 'x' } }, 'application/json'],
       [200, '<!doctype html><title>Gateway</title>', 'text/html'],
       [200, '', 'application/json'],
     ] as const) {
@@ -117,7 +84,6 @@ test('account screen, session routing and unavailable API', async ({ page, reque
 })
 
 const account = (id: string, email: string) => ({
-  account_app: 'v2',
   account: { id, email, display_name: 'Reader', created_at: '2026-01-01T00:00:00Z', authenticated_at: '2026-01-01T00:00:00Z' },
 })
 
@@ -136,7 +102,7 @@ test('Settings shows stored account values unchanged', async ({ page, request },
     ] as const) {
       session = account(id, 'reader@example.test')
       const html = await (await request.get('/settings')).text()
-      expect.soft(html.includes('Change email'), id).toBe(ready)
+      expect.soft(/href="[^"]*edit=email/.test(html), id).toBe(ready)
       expect.soft(html.includes('We can’t reach your account right now'), id).toBe(!ready)
     }
   })
@@ -144,7 +110,7 @@ test('Settings shows stored account values unchanged', async ({ page, request },
   // The router's dehydrated match IDs contain NUL separators, so count NULs against an ASCII address's page.
   const nuls = (html: string) => html.split('\u0000').length - 1
   session = account('00000000-0000-4000-8000-000000000001', 'reader@example.test')
-  const routerNuls = nuls(await (await request.get('/settings')).text())
+  const routerNuls = nuls(await (await request.get('/settings?edit=email')).text())
 
   // Imported addresses keep their raw stored form: a long ideographic-space prefix, and 321 bytes that only fit
   // the 320-byte limit once Go lowercases them.
@@ -156,21 +122,30 @@ test('Settings shows stored account values unchanged', async ({ page, request },
   ]) {
     await test.step(`${name}: server-rendered and hydrated unchanged; resubmitting it sends nothing`, async () => {
       session = account('00000000-0000-4000-8000-000000000001', email)
-      const html = await (await request.get('/settings')).text()
+      const html = await (await request.get('/settings?edit=email')).text()
       expect.soft(nuls(html), 'server HTML gains no NUL').toBe(routerNuls)
       expect.soft(html.includes('\uFFFD'), 'server HTML has no replacement character').toBe(false)
       expect.soft(html.includes(`value="${email}"`), 'server-rendered email input').toBe(true)
 
+      const fits = async (view: string) => {
+        for (const width of [1280, 390]) {
+          await page.setViewportSize({ width, height: 844 })
+          expect.soft(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${view} fits ${width}px`).toBe(true)
+          await page.screenshot({ path: testInfo.outputPath(`settings-${name.replaceAll(' ', '-')}-${view}-${width}.png`), fullPage: true })
+        }
+      }
       await page.goto('/settings')
       await waitForHydration(page)
-      await expect.soft(page.getByRole('textbox', { name: 'Email', exact: true })).toHaveValue(email)
-      for (const width of [1280, 390]) {
-        await page.setViewportSize({ width, height: 844 })
-        expect.soft(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `fits ${width}px`).toBe(true)
-        await page.screenshot({ path: testInfo.outputPath(`settings-${name.replaceAll(' ', '-')}-${width}.png`), fullPage: true })
-      }
+      await expect(settingValue(page, 'Email')).toHaveCount(1)
+      expect.soft(await settingValue(page, 'Email').evaluate(value => value.textContent), 'the row shows the stored address').toBe(email)
+      await fits('row')
+
+      await page.goto('/settings?edit=email')
+      await waitForHydration(page)
+      await expect(settingRow(page, 'Email').getByRole('textbox', { name: 'New email', exact: true })).toHaveValue(email)
+      await fits('editor')
       profileUpdates.length = 0
-      await page.getByRole('button', { name: 'Change email' }).click()
+      await page.getByRole('button', { name: 'Save email' }).click()
       await expect.soft(page.locator('#email-email-error')).toHaveText('This is already your email address. Enter a different one to change it.')
       expect.soft(profileUpdates, 'an unchanged address sends nothing').toEqual([])
     })
@@ -179,13 +154,13 @@ test('Settings shows stored account values unchanged', async ({ page, request },
   await test.step('an edit typed before hydration is kept and submitted', async () => {
     session = account('00000000-0000-4000-8000-000000000001', '\u3000'.repeat(350) + 'reader@example.test')
     const scripts = await holdScripts(page)
-    await page.goto('/settings', { waitUntil: 'domcontentloaded' })
-    await page.getByRole('textbox', { name: 'Email', exact: true }).fill('edited@example.test')
+    await page.goto('/settings?edit=email', { waitUntil: 'domcontentloaded' })
+    await page.getByRole('textbox', { name: 'New email', exact: true }).fill('edited@example.test')
     await scripts.release()
-    await expect.soft(page.getByRole('textbox', { name: 'Email', exact: true })).toHaveValue('edited@example.test')
+    await expect.soft(page.getByRole('textbox', { name: 'New email', exact: true })).toHaveValue('edited@example.test')
     profileUpdates.length = 0
-    await page.getByRole('button', { name: 'Change email' }).click()
-    await expect.soft(page.getByText('Email changed.')).toBeVisible()
+    await page.getByRole('button', { name: 'Save email' }).click()
+    await expect.soft(settingRow(page, 'Email').getByRole('status')).toHaveText(/^Email changed\./)
     expect.soft(profileUpdates).toEqual([{ email: 'edited@example.test' }])
   })
 })

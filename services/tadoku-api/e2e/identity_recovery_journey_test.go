@@ -110,9 +110,14 @@ func TestIdentityGeneratedRecoveryJourney(t *testing.T) {
 		t.Fatal("insecure recovery session")
 	}
 	location, err := url.Parse(response.Header().Get("Location"))
-	if err != nil || location.Scheme != "https" || location.Host != "authv2.tadoku.dev.lab" ||
-		location.Path != "/" || location.Query().Get("return_to") != destination || len(location.String()) > 2048 {
-		t.Error("consumption must land on tenant Settings with an intact continuation")
+	if err != nil ||
+		location.Scheme != "https" ||
+		location.Host != "account.tadoku.dev.lab" ||
+		location.Path != "/" ||
+		location.Query().Get("edit") != "password" ||
+		location.Query().Get("return_to") != destination ||
+		len(location.String()) > 2048 {
+		t.Error("consumption must open the tenant's Settings Password editor with an intact continuation")
 	}
 	response = identityRequest(t, api.handler, "tadoku/prod", "GET", "/identity/session", "", oldCookie, nil)
 	if identityView(t, response).Account != nil {
@@ -138,9 +143,10 @@ func TestIdentityGeneratedRecoveryJourney(t *testing.T) {
 }
 
 func TestIdentityRecoverySettingsLocationBounds(t *testing.T) {
-	root := "https://identity-a-0123abcd.authv2.tadoku.dev.lab/"
+	settings := "https://identity-a-0123abcd.account.tadoku.dev.lab/?edit=password"
 	prefix := "https://tadoku.dev.lab/?q="
-	boundary := prefix + strings.Repeat("a", 2048-len(root+"?return_to=")-len(url.QueryEscape(prefix)))
+	boundary := prefix + strings.Repeat("a", 2048-len(settings+"&return_to=")-len(url.QueryEscape(prefix)))
+	fitsWithoutEditor := boundary + strings.Repeat("a", len("edit=password&"))
 	for _, destination := range []string{"", "https://admin.tadoku.app/users?a=1&b=2#here", boundary} {
 		resetIdentity(t)
 		token := seedRecoveryToken(t, 'a', fixtureInstant.Add(time.Hour), nil)
@@ -150,16 +156,22 @@ func TestIdentityRecoverySettingsLocationBounds(t *testing.T) {
 		}
 		response := identityRequest(t, api.handler, identityBranchA, "GET", path, "", "", nil)
 		requireIdentityStatus(t, response, http.StatusSeeOther)
-		want := root
+		want := settings
 		if destination != "" {
-			want += "?return_to=" + url.QueryEscape(destination)
+			want += "&return_to=" + url.QueryEscape(destination)
 		}
 		if response.Header().Get("Location") != want || len(want) > 2048 {
 			t.Error("Settings URL or continuation changed")
 		}
 	}
-	for _, destination := range []string{boundary + "a", prefix + strings.Repeat("a", 2048-len(prefix)),
-		prefix + strings.Repeat("&", 2048-len(prefix)), "https://evil.test/", "https://foreign.example/"} {
+	for _, destination := range []string{
+		fitsWithoutEditor,
+		boundary + "a",
+		prefix + strings.Repeat("a", 2048-len(prefix)),
+		prefix + strings.Repeat("&", 2048-len(prefix)),
+		"https://evil.test/",
+		"https://foreign.example/",
+	} {
 		resetIdentity(t)
 		token := seedRecoveryToken(t, 'a', fixtureInstant.Add(time.Hour), nil)
 		for _, email := range []string{"reader@example.test", "unknown@example.test"} {
@@ -167,7 +179,11 @@ func TestIdentityRecoverySettingsLocationBounds(t *testing.T) {
 			response := identityRequest(
 				t, api.handler, identityBranchA, "POST", "/identity/recovery", string(body), "", nil,
 			)
-			requireIdentityStatus(t, response, http.StatusBadRequest)
+			if response.Code != http.StatusBadRequest ||
+				!strings.Contains(response.Body.String(), `"code":"invalid_return_to"`) {
+				t.Fatalf("%d-byte return_to: status=%d body=%s, want 400 invalid_return_to",
+					len(destination), response.Code, response.Body)
+			}
 		}
 		response := identityRequest(t, api.handler, identityBranchA, "GET",
 			"/identity/recovery/"+token+"?return_to="+url.QueryEscape(destination), "", "", nil)

@@ -1,6 +1,6 @@
 # Supported development acceptance (development cluster only)
 
-Scope: webv2, webv3, auth, authv2, admin, tadoku-api and tadoku-worker. Token-reflector is base-only.
+Scope: webv2, webv3, authv2, admin, tadoku-api and tadoku-worker. Token-reflector is base-only.
 Paper styleguide is deferred; its local pnpm workflow is independent.
 
 Use dev-cli v0.9.0 or newer and only the `homelab-talos-dev` context. Record
@@ -11,14 +11,14 @@ sanitized output with the PR report. Do not include credentials or cookies.
 ## Failure modes and gates
 
 1. Bazel discovery must not select unrelated apps: query reverse dependencies
-   for an auth-only file, an admin-only file and shared `packages/ui` code.
-   Expect auth only, admin only, and the three legacy frontends respectively.
+   for an admin-only file and shared `packages/ui` code. Expect admin only,
+   and webv2 and admin respectively.
    A Webv3 file selects only Webv3; an authv2 file selects only authv2. Shared
    `packages/paper-ui` files select both. Each Paper overlay must use Node22,
    port 3000 and the Paper build watcher, running its own Vite server.
 2. Render `kubectl --context homelab-talos-dev kustomize k8s/dev/base`. Validate with
-   kubeconform. Auth/admin ingress must use Envoy, retain TLS and hostnames,
-   and preserve the more-specific `/kratos` route to shared Kratos.
+   kubeconform. Account/admin ingress must use Envoy and retain TLS and
+   hostnames.
 3. Base: use a fresh browser profile to log in through account.tadoku.dev.lab
    with a synthetic development account, follow its return URL, and load admin.
    Reject attempted requests to production Tadoku hosts.

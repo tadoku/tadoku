@@ -1,8 +1,7 @@
-import { identityLogout, identitySessionGet, type IdentityAccount, type IdentitySession } from 'api-client'
+import { identityLogout, identitySessionGet, type IdentityAccount } from 'api-client'
 import { browserAppUrls, serverApiEndpointForHost } from './app-urls'
 
 export type Account = IdentityAccount
-export type AccountApp = IdentitySession['account_app']
 
 /** The request's identity session, or undefined when the identity API gives no valid answer. */
 export async function readIdentitySession(

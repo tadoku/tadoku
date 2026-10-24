@@ -7,8 +7,6 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
 func TestIdentityV2CookieTenantHostMatrix(t *testing.T) {
@@ -41,9 +39,6 @@ func TestIdentityV2CookieTenantHostMatrix(t *testing.T) {
 					response := identityRequest(t, api.handler, key, "GET", "/identity/session", "", cookie.String(),
 						func(r *http.Request) { r.Host = host })
 					view := identityView(t, response)
-					if view.AccountApp != "v2" {
-						t.Fatal("account app escaped its signed tenant")
-					}
 					if actor != credential {
 						if view.Account != nil {
 							t.Error("foreign cookie authenticated")
@@ -104,18 +99,6 @@ func TestIdentitySessionCallbackGuestAndSelection(t *testing.T) {
 				t.Errorf("unrelated/invalid cookie did not return guest: %s", response.Body)
 			}
 		}
-	}
-	if err := flipt.SetIdentityV2(tenant.Production(), false); err != nil {
-		t.Fatal(err)
-	}
-	response := identityRequest(t, api.handler, "tadoku/prod", "GET", "/identity/session", "", "unrelated=present", nil)
-	view := identityView(t, response)
-	if view.AccountApp != "v1" || view.Account != nil {
-		t.Error("v1 tenant did not select Kratos guest handling")
-	}
-	response = identityRequest(t, api.handler, identityBranchA, "GET", "/identity/session", "", "", nil)
-	if identityView(t, response).AccountApp != "v2" {
-		t.Error("v1 flag leaked into another tenant")
 	}
 }
 

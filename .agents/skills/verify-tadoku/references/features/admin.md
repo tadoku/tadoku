@@ -35,8 +35,8 @@ contain Feature access and, for non-admin users, Ban/Unban User.
 ## Traps
 
 Content namespace and environment selection are different. Changing namespace
-doesn't switch branches. Kratos identities and account settings remain shared.
-Application records, Keto grants and named-user Flipt access use the selected
+doesn't switch branches. Accounts, application records, Keto grants and
+named-user Flipt access use the selected
 branch tenant, its Keto object and its `test/tadoku_<route>` namespace. Do not
 change shared credentials or canonical roles through a branch test. Feature
 access is distinct from global Flipt flag policy. Don't modify

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -64,24 +63,7 @@ func (app *Application) Provision(
 		return fmt.Errorf("provision tenant authorization: %w", err)
 	}
 
-	branchFlags, err := fliptmanagement.ParseFeatures(strings.NewReader(`version: "1.6"
-namespace:
-  key: branch-only
-flags:
-  - key: identity-v2
-    name: Identity v2
-    type: BOOLEAN_FLAG_TYPE
-    enabled: true
-    rollouts:
-      - threshold:
-          percentage: 100
-          value: true
-`))
-	if err != nil {
-		return err
-	}
-	branchFlags = append(branchFlags, features...)
-	if err := app.flipt.ProvisionTestNamespace(ctx, key, branchFlags); err != nil {
+	if err := app.flipt.ProvisionTestNamespace(ctx, key, features); err != nil {
 		return fmt.Errorf("provision tenant flags: %w", err)
 	}
 	return nil

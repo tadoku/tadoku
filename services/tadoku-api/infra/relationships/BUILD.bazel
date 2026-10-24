@@ -1,0 +1,38 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "relationships",
+    srcs = ["store.go"],
+    importpath = "github.com/tadoku/tadoku/services/tadoku-api/infra/relationships",
+    visibility = ["//services/tadoku-api/internal/permissions:__pkg__"],
+    deps = [
+        "//services/tadoku-api/generated/sqlc/relationships",
+        "//services/tadoku-api/infra/postgres",
+        "//services/tadoku-api/internal/errx",
+        "@com_github_jackc_pgx_v5//pgxpool",
+    ],
+)
+
+go_test(
+    name = "relationships_test",
+    size = "medium",
+    srcs = ["store_test.go"],
+    embed = [":relationships"],
+    env_inherit = ["TADOKU_TEST_POSTGRES_URL"],
+    tags = [
+        "no-cache",
+        "no-remote-exec",
+        "requires-network",
+    ],
+    target_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
+    deps = [
+        "//services/tadoku-api/infra/postgres",
+        "//services/tadoku-api/internal/errx",
+        "//services/tadoku-api/internal/tenant",
+        "//services/tadoku-api/internal/testpostgres",
+        "@com_github_google_uuid//:uuid",
+    ],
+)

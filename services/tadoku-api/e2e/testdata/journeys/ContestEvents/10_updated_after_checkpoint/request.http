@@ -1,0 +1,5 @@
+GET /immersion/contests/f0000000-0000-4000-8000-000000000001/events?cursor=00000000-0000-4000-8000-000000000002 HTTP/1.1
+Host: api.test
+X-Request-Id: contest-event-journey
+
+

@@ -1,0 +1,7 @@
+>>> GET /immersion/contests/f0000000-0000-4000-8000-000000000001/events?cursor=now
+HTTP/1.1 200 OK
+Content-Length: 84
+Cache-Control: private, no-store
+Content-Type: application/json; charset=UTF-8
+
+{"events":[],"has_more":false,"next_cursor":"00000000-0000-4000-8000-000000000002"}

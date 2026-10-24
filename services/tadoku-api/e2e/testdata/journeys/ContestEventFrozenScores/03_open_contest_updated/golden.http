@@ -1,0 +1,7 @@
+>>> GET /immersion/contests/f0000000-0000-4000-8000-000000000002/events
+HTTP/1.1 200 OK
+Content-Length: 199
+Cache-Control: private, no-store
+Content-Type: application/json; charset=UTF-8
+
+{"events":[{"event":"log.updated","id":"00000000-0000-4000-8000-000000000001","log_id":"d0000000-0000-4000-8000-000000000001"}],"has_more":false,"next_cursor":"00000000-0000-4000-8000-000000000001"}

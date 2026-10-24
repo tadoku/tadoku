@@ -23,6 +23,7 @@ import (
 	featureaudit "github.com/tadoku/tadoku/services/tadoku-api/features/audit"
 	featureauthz "github.com/tadoku/tadoku/services/tadoku-api/features/authz"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/authz/tokens"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/contestevents"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/contests"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/email"
 	featureflagsservice "github.com/tadoku/tadoku/services/tadoku-api/features/featureflags"
@@ -332,6 +333,7 @@ func newTestRouterWithLeaderboardService(
 		Audit:         auditService,
 		Authorization: authzService,
 		Contests:      contestsService,
+		ContestEvents: contestevents.NewService(contestevents.NewRepository(pool)),
 		Leaderboard:   leaderboardService,
 		Languages:     languagesService,
 		Logs:          logsService,

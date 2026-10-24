@@ -1,0 +1,75 @@
+---
+id: contest-find-log
+title: "Read a current log in a contest"
+description: "Returns the ordinary contest log representation, including the contest's"
+sidebar_label: "Read a current log in a contest"
+hide_title: true
+hide_table_of_contents: true
+api: eJztV1tv2zYU/ivEeWkLKJabBgWqtyxrB2/ZWiQN9pAEAi0e26eRSJWknBqG/vtwSElWEjf1gG1Pe7JMnvv14xYUusJS7cloyOACfWO1E36FwlhFWtqNKIz26LwozVJYrC061F4yRyJIF2WjSC8DS0f5wt1oVxiLQmolvJXFHVOsZdmgm4iZF8qgE9r4jh8Dt2z8ytgXThi/Qnuje70Wl+S8DRrdRFw5jAY6WaGom3lJhbAolZBFgc4J6cbG3Gi2uyTnJ+LzCoVF15RekBNFYy1qL5yXHpNgDvMxeeDV3gkZzzxVeKPNQkgtcI3aT8SpuCe/Ulbea2GsUFiiR9UFKUbxZHoyudGQgKkxmj9TkEFn2AfS6twsIQEvlw6y6/7CwW0CtbSyQo+Wb7agZYWQASlIgDhTtfQrSMDi14YsKsi8bTABV6ywkpBtwW9q5nDekmYlC2Mr6SGDpiEFbZsMQkuznP1zcm+Z2dVGO3RMfzyd8s/DOjvrQr8mR/MSxyU2gQRWKFXwfAtnsljh0ZnR3pqSD75nSdu2CXR541tZ1yUVIerpF8da9/Ca+Rcs/AN/r2OQG4c2D1+l1MtGLhESkIWnNfkN32vy8T58hVB2mUxAVqbRLLYyihaEFjiCxjJJYVF6VLnk+65qQsItV4mnGDVSB8R6Z+XBtIpcXcpNtPdpDJOHedpzP0TjB0EsjGJvg54n3oXLPTbjN1nVJR99qSU8MgZmWswuPx69ffPu6I1YeV+7LE1RT+7pjmpUJCfGLlP+l/7ZH2X89ckatjA/72x36Tk5n5tFPrv8mAd5ee9Xzra5/OXx9PW7V+zw/kiNbf1V1lKjQ24q8OTDYa+LRQxlc0jh7Y9YzPGQU9L+zTHXW5RG2uMyVNlg1euDTL9AqYbEL2RT+hH93JgSpeZL0nXj83i+R55uKrY/ln1eW6qk5SbhsTn8vR2H57QPSbtrpYOKmGnvcPO8Wza6ldddAnYt+ixbTx7n8UAprZXsDXms3N6mGERcw0/G3EECH6gIVXvbDtNgx6ibah6yNbi3KI30LGkYGAdRx5lyEKlq4gbKHRZGq7Efu+p5VF8tl+do9x4Qk+/MgjDd47js/6BW8FB+vI8V8qQBHhMeUiwjvX+HnC17jl5JH8sk1vLzo0E3DKGOp8dvmcXca7T5YZPYLBZUkCz3d+TBqR813Vl08GIUygtcoEVdxOE12k0/CsAR93acG3GF7bFyPA5N2NBtAif78MBMr2VJasABxgYgdXU1+3kCgelkD4joiMmJipxjiLkDYgl/93COItjsAF+5GXAHaeFXDAWjqEmwuUK/MgzUlsiVHBBRBmmPztItqTYtzdKl2wCdWt7uaNc9VmtsCRn0C8pLZe6aiazrVNaUcrNZLcuUqgqtY3QCjJkcFo0lv7lkiNJvSXNHeNqw+l3j1fQbbnq0Fkn6rZFBVJY7dCw5eEN6YQJ/l4lB75GsieENFahdKKVOyO+zzwxrHnixJL9q5pPCVJ1D/c+8NPO0kqTT89nZ+z8u33O61lEDZHA8mU6mfFQb5yupR2ouAmQfUHjIk+aDGOfH63+7A3f/P1P+nWdKV2Iev/m0LiWFQRPqYNt1weiNkkAW4bEJkDeLr4jbBFbGeabcbufS4ZUt25aPvzZoN5Bd3yawlpbkPOzLLShy/K0gW8jS4TNZf3nR7ZRX4nvG9k2iuUNCIiEDSCAgBghj/j/VGIPSMgqIb5rgcrw7LQqs/YjryYuF58IwjH55/xna9i/WlGuv
+sidebar_class_name: "get api-method"
+info_path: api/immersion/immersion-api
+custom_edit_url: null
+hide_send_button: true
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+import Translate from "@docusaurus/Translate";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Read a current log in a contest"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/contests/{id}/logs/{logId}"}
+  context={"endpoint"}
+>
+  
+</MethodEndpoint>
+
+
+
+Returns the ordinary contest log representation, including the contest's
+score and tracking values. It does not include the author's other
+contest registrations. Uses the same public read access as the contest
+log list. The result is current state, not the log contents at the time
+of an event. A withdrawn or deleted log returns 404.
+
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+>
+  <Translate id="theme.openapi.request.title">Request</Translate>
+</Heading>
+
+<ParamsDetails
+  {...require("./contest-find-log.ParamsDetails.json")}
+>
+  
+</ParamsDetails>
+
+<RequestSchema
+  {...require("./contest-find-log.RequestSchema.json")}
+>
+  
+</RequestSchema>
+
+<StatusCodes
+  {...require("./contest-find-log.StatusCodes.json")}
+>
+  
+</StatusCodes>
+
+
+      

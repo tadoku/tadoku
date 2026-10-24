@@ -66,7 +66,13 @@ func (a *Application) CreateLog(ctx context.Context, p LogCreateParameters) (*Lo
 
 		var eligible []logscore.Target
 		if len(p.RegistrationIDs) > 0 {
-			eligible, err = a.contests.SelectRegistrationsForScoring(ctx, userID, p.RegistrationIDs, input.LanguageCode, input.ActivityID)
+			eligible, err = a.contests.SelectRegistrationsForScoring(
+				ctx,
+				userID,
+				p.RegistrationIDs,
+				input.LanguageCode,
+				input.ActivityID,
+			)
 			if err != nil {
 				return err
 			}
@@ -81,6 +87,9 @@ func (a *Application) CreateLog(ctx context.Context, p LogCreateParameters) (*Lo
 			return err
 		}
 		id = result.ID
+		if err := a.contestEvents.Append(ctx, result.Events); err != nil {
+			return err
+		}
 		return a.jobqueue.Enqueue(ctx, result.Jobs...)
 	})
 	if err != nil {
@@ -106,26 +115,33 @@ func (a *Application) UpdateLog(ctx context.Context, p LogUpdateParameters) (*Lo
 		if err := a.profile.LockUser(ctx, existing.UserID); err != nil {
 			return err
 		}
+		current, err := a.logs.FindLog(ctx, p.ID)
+		if err != nil {
+			return err
+		}
 
 		input := logscore.Input{
 			UnitID:          p.UnitID,
 			UnitKey:         p.UnitKey,
-			ActivityID:      existing.Activity.ID,
-			LanguageCode:    existing.LanguageCode,
+			ActivityID:      current.Activity.ID,
+			LanguageCode:    current.LanguageCode,
 			Amount:          p.Amount,
 			DurationSeconds: p.DurationSeconds,
 			Tags:            p.Tags,
 		}
-		eligible := a.logs.RegistrationsForRescoring(existing, now)
+		eligible := a.logs.RegistrationsForRescoring(current, now)
 		scored, err := a.scoring.ScoreLog(ctx, scoring.LogUpdate, input, eligible)
 		if err != nil {
 			return err
 		}
-		pending, err := a.logs.Update(ctx, p.ID, now, p.Description, scored)
+		result, err := a.logs.Update(ctx, p.ID, now, p.Description, scored)
 		if err != nil {
 			return err
 		}
-		return a.jobqueue.Enqueue(ctx, pending...)
+		if err := a.contestEvents.Append(ctx, result.Events); err != nil {
+			return err
+		}
+		return a.jobqueue.Enqueue(ctx, result.Jobs...)
 	})
 	if err != nil {
 		return nil, err

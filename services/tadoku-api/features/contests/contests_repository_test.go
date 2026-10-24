@@ -400,7 +400,7 @@ func TestContestsRepositoryRegistrationPersistenceAndTransaction(t *testing.T) {
 
 	rollbackErr := errors.New("force registration rollback")
 	err = postgres.RunInTransaction(tenantCtx, db.Pool, func(ctx context.Context) error {
-		if err := repository.DetachContestLogsForLanguages(ctx, userID, contestID, removedLanguages); err != nil {
+		if _, err := repository.DetachContestLogsForLanguages(ctx, userID, contestID, removedLanguages); err != nil {
 			return err
 		}
 		if err := repository.UpsertRegistration(ctx, updatedRegistration); err != nil {
@@ -429,7 +429,7 @@ func TestContestsRepositoryRegistrationPersistenceAndTransaction(t *testing.T) {
 	}
 
 	err = postgres.RunInTransaction(tenantCtx, db.Pool, func(ctx context.Context) error {
-		if err := repository.DetachContestLogsForLanguages(ctx, userID, contestID, removedLanguages); err != nil {
+		if _, err := repository.DetachContestLogsForLanguages(ctx, userID, contestID, removedLanguages); err != nil {
 			return err
 		}
 		return repository.UpsertRegistration(ctx, updatedRegistration)

@@ -1,0 +1,4 @@
+>>> GET /immersion/contests/f0000000-0000-4000-8000-000000000001/logs/d0000000-0000-4000-8000-000000000001
+HTTP/1.1 404 Not Found
+Content-Length: 0
+

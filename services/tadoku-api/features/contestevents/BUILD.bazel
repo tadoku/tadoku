@@ -1,0 +1,22 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "contestevents",
+    srcs = [
+        "contestevents_repository.go",
+        "contestevents_service.go",
+        "domain.go",
+    ],
+    importpath = "github.com/tadoku/tadoku/services/tadoku-api/features/contestevents",
+    visibility = ["//services/tadoku-api:feature_consumers"],
+    deps = [
+        "//services/tadoku-api/domain/contestevent",
+        "//services/tadoku-api/generated/sqlc/contestevents",
+        "//services/tadoku-api/infra/postgres",
+        "//services/tadoku-api/internal/errx",
+        "@com_github_google_uuid//:uuid",
+        "@com_github_jackc_pgx_v5//:pgx",
+        "@com_github_jackc_pgx_v5//pgtype",
+        "@com_github_jackc_pgx_v5//pgxpool",
+    ],
+)

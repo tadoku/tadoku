@@ -101,16 +101,20 @@ func (q *Queries) CreateContest(ctx context.Context, arg CreateContestParams) er
 	return err
 }
 
-const detachContestLogsForLanguages = `-- name: DetachContestLogsForLanguages :exec
-delete from contest_logs
-where contest_id = $1
-  and log_id in (
-    select logs.id
-    from logs
-    where logs.user_id = $2
-      and logs.language_code = any($3::varchar[])
-      and logs.deleted_at is null
-  )
+const detachContestLogsForLanguages = `-- name: DetachContestLogsForLanguages :many
+with detached as (
+  delete from contest_logs
+  where contest_id = $1
+    and log_id in (
+      select logs.id
+      from logs
+      where logs.user_id = $2
+        and logs.language_code = any($3::varchar[])
+        and logs.deleted_at is null
+    )
+  returning log_id
+)
+select log_id from detached order by log_id
 `
 
 type DetachContestLogsForLanguagesParams struct {
@@ -119,9 +123,24 @@ type DetachContestLogsForLanguagesParams struct {
 	LanguageCodes []string
 }
 
-func (q *Queries) DetachContestLogsForLanguages(ctx context.Context, arg DetachContestLogsForLanguagesParams) error {
-	_, err := q.db.Exec(ctx, detachContestLogsForLanguages, arg.ContestID, arg.UserID, arg.LanguageCodes)
-	return err
+func (q *Queries) DetachContestLogsForLanguages(ctx context.Context, arg DetachContestLogsForLanguagesParams) ([]pgtype.UUID, error) {
+	rows, err := q.db.Query(ctx, detachContestLogsForLanguages, arg.ContestID, arg.UserID, arg.LanguageCodes)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []pgtype.UUID{}
+	for rows.Next() {
+		var log_id pgtype.UUID
+		if err := rows.Scan(&log_id); err != nil {
+			return nil, err
+		}
+		items = append(items, log_id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const fetchContestSummary = `-- name: FetchContestSummary :one

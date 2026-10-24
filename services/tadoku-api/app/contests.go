@@ -207,7 +207,6 @@ func (a *Application) UpsertContestRegistration(ctx context.Context, parameters 
 		return err
 	}
 
-	registrationID := uuid.New()
 	contest, err := a.contests.ValidateRegistrationUpsert(ctx, parameters)
 	if err != nil {
 		return err
@@ -221,36 +220,40 @@ func (a *Application) UpsertContestRegistration(ctx context.Context, parameters 
 		return err
 	}
 
-	existing, err := a.contests.FindRegistration(ctx, userID, parameters.ContestID, languages)
-	if errors.Is(err, contests.ErrRegistrationNotFound) {
-		existing = nil
-	} else if err != nil {
-		return err
-	}
-
-	if existing != nil {
-		registrationID = existing.ID
-	}
-
-	registration := contests.Registration{
-		ID:            registrationID,
-		ContestID:     parameters.ContestID,
-		UserID:        userID,
-		LanguageCodes: parameters.LanguageCodes,
-		CreatedAt:     now,
-		UpdatedAt:     now,
-	}
-
 	return postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) error {
 		if err := a.profile.LockUser(ctx, userID); err != nil {
 			return err
 		}
 
-		pending, err := a.contests.ApplyRegistration(ctx, registration, existing, *contest)
+		registrationID := uuid.New()
+		existing, err := a.contests.FindRegistration(ctx, userID, parameters.ContestID, languages)
+		if errors.Is(err, contests.ErrRegistrationNotFound) {
+			existing = nil
+		} else if err != nil {
+			return err
+		}
+
+		if existing != nil {
+			registrationID = existing.ID
+		}
+
+		registration := contests.Registration{
+			ID:            registrationID,
+			ContestID:     parameters.ContestID,
+			UserID:        userID,
+			LanguageCodes: parameters.LanguageCodes,
+			CreatedAt:     now,
+			UpdatedAt:     now,
+		}
+
+		result, err := a.contests.ApplyRegistration(ctx, registration, existing, *contest)
 		if err != nil {
 			return err
 		}
-		return a.jobqueue.Enqueue(ctx, pending...)
+		if err := a.contestEvents.Append(ctx, result.Events); err != nil {
+			return err
+		}
+		return a.jobqueue.Enqueue(ctx, result.Jobs...)
 	})
 }
 

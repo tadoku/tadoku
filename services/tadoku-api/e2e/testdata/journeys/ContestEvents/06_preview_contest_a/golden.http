@@ -1,0 +1,7 @@
+>>> GET /immersion/contests/f0000000-0000-4000-8000-000000000001/logs/00000000-0000-4000-8000-000000000001
+HTTP/1.1 200 OK
+Content-Length: 434
+Cache-Control: private, no-store
+Content-Type: application/json; charset=UTF-8
+
+{"activity":{"id":1,"input_type":"amount_primary","name":"Reading"},"amount":11,"created_at":"2026-09-12T12:00:00Z","deleted":false,"description":"preview","id":"00000000-0000-4000-8000-000000000001","language":{"code":"eng","name":"English"},"modifier":1,"score":44,"tags":["book"],"unit_id":"00000000-0000-0000-0000-000000000000","unit_name":"Page","user_display_name":"Reader One","user_id":"11111111-1111-4111-8111-111111111111"}

@@ -1,0 +1,113 @@
+paths:
+  "/immersion/contests/{id}/events":
+    get:
+      summary: Read contest submission events
+      description: |
+        Returns metadata-only events in committed publication order, oldest first.
+        Each event describes a submission entering the contest, a change to its
+        visible log fields, or its withdrawal. Changes outside this contest do
+        not appear. Recording starts when the feature is enabled; existing logs
+        do not receive fabricated historical submission events.
+
+        Omit cursor or use 0 to read from the beginning. Use now once to obtain
+        an empty page with the latest visible event ID, or 0 for an empty feed.
+        Otherwise pass a retained event ID to read strictly after that event.
+        Event UUIDs are stable deduplication keys, not sortable positions.
+
+        A nonempty page's next_cursor is its final event ID. An ordinary empty
+        page preserves the supplied event ID, or 0 when starting at the
+        beginning. Save the cursor only after processing the page. When
+        has_more is false, poll later using that same cursor. Retrying can
+        repeat events. Events are retained for the lifetime of the contest.
+
+        Uses the same public read access as the contest log list. A cursor
+        never grants access to another contest or tenant. Fetch current log
+        contents separately through this contest's log endpoint; event records
+        contain no log contents or historical snapshots.
+      operationId: ImmersionContestListEvents
+      tags:
+        - contests
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: cursor
+          in: query
+          description: A retained event UUID, 0 for the beginning, or now for the latest visible event.
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 36
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 100
+      responses:
+        "200":
+          description: Event page, including an empty page with a reusable cursor.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionContestEventPage"
+        "400":
+          description: Invalid limit, UUID or cursor; unknown event or event from another contest or tenant.
+        "404":
+          description: Contest does not exist or was deleted.
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-legacy-path: /contests/{id}/events
+      x-legacy-operation-id: contestListEvents
+  "/immersion/contests/{id}/logs/{logId}":
+    get:
+      summary: Read a current log in a contest
+      description: |
+        Returns the ordinary contest log representation, including the contest's
+        score and tracking values. It does not include the author's other
+        contest registrations. Uses the same public read access as the contest
+        log list. The result is current state, not the log contents at the time
+        of an event. A withdrawn or deleted log returns 404.
+      operationId: ImmersionContestFindLog
+      tags:
+        - contests
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: logId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Current visible contest log.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImmersionLog"
+        "400":
+          description: Invalid contest or log UUID.
+        "404":
+          description: Contest is missing or deleted, or the log is not currently visible in this contest.
+      x-tadoku-source: Immersion
+      x-tadoku-exposure: public
+      x-legacy-path: /contests/{id}/logs/{logId}
+      x-legacy-operation-id: contestFindLog

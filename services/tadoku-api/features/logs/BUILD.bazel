@@ -4,6 +4,9 @@ go_library(
     name = "logs",
     srcs = [
         "domain.go",
+        "logs_contest_repository.go",
+        "logs_contest_service.go",
+        "logs_mutation_service.go",
         "logs_read_repository.go",
         "logs_repository.go",
         "logs_service.go",
@@ -13,6 +16,7 @@ go_library(
     visibility = ["//services/tadoku-api:feature_consumers"],
     deps = [
         "//services/tadoku-api/domain/activities",
+        "//services/tadoku-api/domain/contestevent",
         "//services/tadoku-api/domain/jobs",
         "//services/tadoku-api/domain/logscore",
         "//services/tadoku-api/generated/sqlc/logs",

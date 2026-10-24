@@ -1,0 +1,4 @@
+>>> GET /immersion/contests/f1000000-0000-4000-8000-000000000001/events?cursor=ffffffff-ffff-4fff-8fff-fffffffffff1
+HTTP/1.1 400 Bad Request
+Content-Length: 0
+

@@ -192,7 +192,7 @@ insert into platform_scoring_config (
 on conflict (tenant, singleton) do update
 set active_rule_set_id = excluded.active_rule_set_id;
 
--- name: ActivateContestScoringRuleSet :exec
+-- name: ActivateContestScoringRuleSet :execrows
 update contests
 set
   scoring_rule_set_id = sqlc.arg('rule_set_id'),

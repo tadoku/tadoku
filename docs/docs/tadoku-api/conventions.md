@@ -80,9 +80,9 @@ Service orchestration is exercised through HTTP E2Es; see [Testing](./testing.md
 
 ### Auditing a provider change
 
-A Flipt change cannot share a transaction with its audit entry, and a ban is
-written outside one, so the application applies the change first and then
-records one entry for what happened.
+A Flipt change cannot share a transaction with its audit entry, so the
+application applies the change first and then records one entry for what
+happened.
 
 - Call `audit.Service.RecordOutcome` with the operation's error, or nil when it
   applied, from a `defer` in the application operation, so both outcomes take
@@ -94,12 +94,13 @@ records one entry for what happened.
 - Recording is best effort. It outlives the request's cancellation so a
   finished change is still recorded, and a storage failure is reported to the
   log as `privileged change not audited` instead of to the caller. An applied
-  ban or grant is never undone to match the audit log, and a response never
+  Flipt change is never undone to match the audit log, and a response never
   reports a change as failed because its entry could not be stored. That log
   line is the only record of such a change, so alert on it.
 - An audit entry is never updated after it is written. Use
-  `audit.Service.Record` for an entry that belongs to a PostgreSQL write, inside
-  that write's transaction.
+  `audit.Service.Record` for an entry that belongs to a PostgreSQL write, such
+  as a ban, inside that write's transaction. The change and its entry then
+  commit or roll back together, so a failure records no `_failed` entry.
 
 ## Routes and actor authorization
 

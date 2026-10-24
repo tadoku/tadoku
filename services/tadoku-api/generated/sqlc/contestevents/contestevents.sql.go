@@ -12,15 +12,16 @@ import (
 )
 
 const insertContestEvent = `-- name: InsertContestEvent :exec
-insert into contest_events (id, contest_id, log_id, event)
-values ($1, $2, $3, $4)
+insert into contest_events (id, contest_id, log_id, event, occurred_at)
+values ($1, $2, $3, $4, $5)
 `
 
 type InsertContestEventParams struct {
-	ID        pgtype.UUID
-	ContestID pgtype.UUID
-	LogID     pgtype.UUID
-	Event     string
+	ID         pgtype.UUID
+	ContestID  pgtype.UUID
+	LogID      pgtype.UUID
+	Event      string
+	OccurredAt pgtype.Timestamptz
 }
 
 func (q *Queries) InsertContestEvent(ctx context.Context, arg InsertContestEventParams) error {
@@ -29,41 +30,14 @@ func (q *Queries) InsertContestEvent(ctx context.Context, arg InsertContestEvent
 		arg.ContestID,
 		arg.LogID,
 		arg.Event,
+		arg.OccurredAt,
 	)
 	return err
 }
 
-const lockContestEventPublication = `-- name: LockContestEventPublication :many
-select id
-from contests
-where id = any($1::uuid[])
-order by id
-for no key update
-`
-
-func (q *Queries) LockContestEventPublication(ctx context.Context, contestIds []pgtype.UUID) ([]pgtype.UUID, error) {
-	rows, err := q.db.Query(ctx, lockContestEventPublication, contestIds)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []pgtype.UUID{}
-	for rows.Next() {
-		var id pgtype.UUID
-		if err := rows.Scan(&id); err != nil {
-			return nil, err
-		}
-		items = append(items, id)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const readContestEvents = `-- name: ReadContestEvents :many
 with cursor_event as materialized (
-  select events.id, events.position
+  select events.id, events.occurred_at
   from contest_events as events
   where events.contest_id = $1
     and events.id = $2::uuid
@@ -74,28 +48,31 @@ with cursor_event as materialized (
         select events.id
         from contest_events as events
         where events.contest_id = $1
-        order by events.position desc
+        order by events.occurred_at desc, events.id desc
         limit 1
       )
       else $2::uuid
     end as checkpoint_id,
-    coalesce((select position from cursor_event), 0)::bigint as position,
+    (select occurred_at from cursor_event) as occurred_at,
     ($2::uuid is null or exists (select 1 from cursor_event))::boolean as cursor_valid
 ), page as (
-  select events.id, events.log_id, events.event, events.position
+  select events.id, events.log_id, events.event, events.occurred_at
   from contest_events as events
   cross join checkpoint
   where events.contest_id = $1
-    and events.position > checkpoint.position
+    and (
+      $2::uuid is null
+      or (events.occurred_at, events.id) > (checkpoint.occurred_at, checkpoint.checkpoint_id)
+    )
     and checkpoint.cursor_valid
     and not $3::boolean
-  order by events.position
+  order by events.occurred_at, events.id
   limit $4
 )
-select checkpoint.cursor_valid, checkpoint.checkpoint_id, page.id, page.log_id, page.event
+select checkpoint.cursor_valid, checkpoint.checkpoint_id, page.id, page.log_id, page.event, page.occurred_at
 from checkpoint
 left join page on true
-order by page.position
+order by page.occurred_at, page.id
 `
 
 type ReadContestEventsParams struct {
@@ -111,6 +88,7 @@ type ReadContestEventsRow struct {
 	ID           pgtype.UUID
 	LogID        pgtype.UUID
 	Event        pgtype.Text
+	OccurredAt   pgtype.Timestamptz
 }
 
 func (q *Queries) ReadContestEvents(ctx context.Context, arg ReadContestEventsParams) ([]ReadContestEventsRow, error) {
@@ -133,6 +111,7 @@ func (q *Queries) ReadContestEvents(ctx context.Context, arg ReadContestEventsPa
 			&i.ID,
 			&i.LogID,
 			&i.Event,
+			&i.OccurredAt,
 		); err != nil {
 			return nil, err
 		}

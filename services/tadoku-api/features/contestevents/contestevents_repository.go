@@ -3,10 +3,10 @@ package contestevents
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/contestevent"
 	queries "github.com/tadoku/tadoku/services/tadoku-api/generated/sqlc/contestevents"
@@ -18,7 +18,7 @@ type Repository struct{ db *pgxpool.Pool }
 
 func NewRepository(db *pgxpool.Pool) *Repository { return &Repository{db: db} }
 
-func (r *Repository) LockContests(ctx context.Context, ids []uuid.UUID) error {
+func (r *Repository) Insert(ctx context.Context, id uuid.UUID, change contestevent.Change, occurredAt time.Time) error {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return err
@@ -27,30 +27,12 @@ func (r *Repository) LockContests(ctx context.Context, ids []uuid.UUID) error {
 		return errors.New("contest event publication requires a transaction")
 	}
 
-	parameters := make([]pgtype.UUID, len(ids))
-	for i, id := range ids {
-		parameters[i] = postgres.UUID(id)
-	}
-	locked, err := queries.New(executor).LockContestEventPublication(ctx, parameters)
-	if err != nil {
-		return err
-	}
-	if len(locked) != len(ids) {
-		return errors.New("contest event publication target does not exist")
-	}
-	return nil
-}
-
-func (r *Repository) Insert(ctx context.Context, id uuid.UUID, change contestevent.Change) error {
-	executor, err := postgres.Executor(ctx, r.db)
-	if err != nil {
-		return err
-	}
 	return queries.New(executor).InsertContestEvent(ctx, queries.InsertContestEventParams{
-		ID:        postgres.UUID(id),
-		ContestID: postgres.UUID(change.ContestID),
-		LogID:     postgres.UUID(change.LogID),
-		Event:     string(change.Type),
+		ID:         postgres.UUID(id),
+		ContestID:  postgres.UUID(change.ContestID),
+		LogID:      postgres.UUID(change.LogID),
+		Event:      string(change.Type),
+		OccurredAt: postgres.Timestamptz(occurredAt),
 	})
 }
 
@@ -79,9 +61,10 @@ func (r *Repository) Read(ctx context.Context, parameters readParameters) (*Page
 		}
 		if row.ID.Valid {
 			page.Events = append(page.Events, Event{
-				ID:    uuid.UUID(row.ID.Bytes),
-				LogID: uuid.UUID(row.LogID.Bytes),
-				Type:  contestevent.Type(row.Event.String),
+				ID:         uuid.UUID(row.ID.Bytes),
+				LogID:      uuid.UUID(row.LogID.Bytes),
+				Type:       contestevent.Type(row.Event.String),
+				OccurredAt: row.OccurredAt.Time,
 			})
 		}
 	}

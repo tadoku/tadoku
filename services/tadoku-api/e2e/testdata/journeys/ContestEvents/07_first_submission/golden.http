@@ -1,7 +1,7 @@
 >>> GET /immersion/contests/f0000000-0000-4000-8000-000000000001/events
 HTTP/1.1 200 OK
-Content-Length: 201
+Content-Length: 238
 Cache-Control: private, no-store
 Content-Type: application/json; charset=UTF-8
 
-{"events":[{"event":"log.submitted","id":"00000000-0000-4000-8000-000000000002","log_id":"00000000-0000-4000-8000-000000000001"}],"has_more":false,"next_cursor":"00000000-0000-4000-8000-000000000002"}
+{"events":[{"event":"log.submitted","id":"00000000-0000-4000-8000-000000000002","log_id":"00000000-0000-4000-8000-000000000001","occurred_at":"2026-09-12T12:00:04Z"}],"has_more":false,"next_cursor":"00000000-0000-4000-8000-000000000002"}

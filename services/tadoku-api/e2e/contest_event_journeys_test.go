@@ -37,7 +37,7 @@ func TestContestEventsJourney(t *testing.T) {
 	useContestEventUUIDs(t)
 	cleanupContestEventUnit(t)
 
-	runJourneyWithHandler(t, api, scoringEnabledHandler, "ContestEvents", []step{
+	steps := []step{
 		{request: "empty_now", as: guest, want: http.StatusOK},
 		{request: "create_a", as: user, want: http.StatusOK},
 		{request: "update_a_before_submission", as: user, want: http.StatusOK},
@@ -61,14 +61,19 @@ func TestContestEventsJourney(t *testing.T) {
 		{request: "unchanged_submission", as: user, want: http.StatusOK},
 		{request: "no_op_keeps_cursor", as: guest, want: http.StatusOK},
 		{request: "current_a_preview", as: guest, want: http.StatusOK},
-	})
+	}
+	for index := range steps {
+		steps[index].at = fixtureInstant.Add(time.Duration(index) * time.Second)
+	}
+
+	runJourneyWithHandler(t, api, scoringEnabledHandler, "ContestEvents", steps)
 }
 
 func TestContestEventWithdrawalsJourney(t *testing.T) {
 	useContestEventUUIDs(t)
 	cleanupContestEventUnit(t)
 
-	runJourneyWithHandler(t, api, scoringEnabledHandler, "ContestEventWithdrawals", []step{
+	steps := []step{
 		{request: "existing_logs_have_no_synthetic_history", as: guest, want: http.StatusOK},
 		{request: "unchanged_log", as: user, want: http.StatusOK},
 		{request: "unchanged_attachments", as: user, want: http.StatusOK},
@@ -89,14 +94,19 @@ func TestContestEventWithdrawalsJourney(t *testing.T) {
 		{request: "delete_remaining_log", as: user, want: http.StatusOK},
 		{request: "other_contest_withdrawal", as: guest, want: http.StatusOK},
 		{request: "unattached_delete_does_not_repeat_withdrawal", as: guest, want: http.StatusOK},
-	})
+	}
+	for index := range steps {
+		steps[index].at = fixtureInstant.Add(time.Duration(index) * time.Second)
+	}
+
+	runJourneyWithHandler(t, api, scoringEnabledHandler, "ContestEventWithdrawals", steps)
 }
 
 func TestContestEventFrozenScoresJourney(t *testing.T) {
 	useContestEventUUIDs(t)
 	cleanupContestEventUnit(t)
 
-	runJourneyWithHandler(t, api, scoringEnabledHandler, "ContestEventFrozenScores", []step{
+	steps := []step{
 		{request: "personal_tracking_changes", as: admin, want: http.StatusOK},
 		{request: "closed_contest_silent", as: guest, want: http.StatusOK},
 		{request: "open_contest_updated", as: guest, want: http.StatusOK},
@@ -105,7 +115,12 @@ func TestContestEventFrozenScoresJourney(t *testing.T) {
 		{request: "closed_contest_content_event", as: guest, want: http.StatusOK},
 		{request: "closed_preview_new_content_frozen_score", as: guest, want: http.StatusOK},
 		{request: "open_preview_current_score", as: guest, want: http.StatusOK},
-	})
+	}
+	for index := range steps {
+		steps[index].at = fixtureInstant.Add(time.Duration(index) * time.Second)
+	}
+
+	runJourneyWithHandler(t, api, scoringEnabledHandler, "ContestEventFrozenScores", steps)
 }
 
 func TestContestEventRollbackJourney(t *testing.T) {

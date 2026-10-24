@@ -3,7 +3,8 @@ paths:
     get:
       summary: Read contest submission events
       description: |
-        Returns metadata-only events in committed publication order, oldest first.
+        Returns metadata-only events ordered by occurred_at, oldest first,
+        with event UUID as the tie-breaker for equal timestamps.
         Each event describes a submission entering the contest, a change to its
         visible log fields, or its withdrawal. Changes outside this contest do
         not appear. Recording starts when the feature is enabled; existing logs
@@ -12,7 +13,12 @@ paths:
         Omit cursor or use 0 to read from the beginning. Use now once to obtain
         an empty page with the latest visible event ID, or 0 for an empty feed.
         Otherwise pass a retained event ID to read strictly after that event.
-        Event UUIDs are stable deduplication keys, not sortable positions.
+        Event UUIDs are stable deduplication keys. The server resolves a cursor
+        ID to its stored (occurred_at, id) pair; consumers use response order.
+        occurred_at is the source operation's timestamp, stored once at creation.
+        Occurrence order is not commit order: a transaction that commits late
+        can appear before an already-consumed cursor. Forward polling alone
+        does not guarantee delivery of those late events.
 
         A nonempty page's next_cursor is its final event ID. An ordinary empty
         page preserves the supplied event ID, or 0 when starting at the

@@ -305,6 +305,10 @@ export type ImmersionContestEvent = {
     id: string;
     log_id: string;
     /**
+     * Source operation time, stored once when the event is created.
+     */
+    occurred_at: string;
+    /**
      * submitted means the log entered this contest. updated means its
      * contest-visible log fields changed while it remained submitted.
      * withdrawn means it left this contest, including deletion or moderation.

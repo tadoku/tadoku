@@ -274,6 +274,7 @@ export const zImmersionLeaderboardEntry = z.object({
 export const zImmersionContestEvent = z.object({
     id: z.string().uuid(),
     log_id: z.string().uuid(),
+    occurred_at: z.string().datetime({ offset: true }).regex(/T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/),
     event: z.enum([
         'log.submitted',
         'log.updated',

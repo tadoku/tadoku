@@ -73,7 +73,7 @@ func (a *Application) UpdateLogContestRegistrations(
 			return err
 		}
 
-		if err := a.contestEvents.Append(ctx, result.Events); err != nil {
+		if err := a.contestEvents.Append(ctx, result.Events, now); err != nil {
 			return err
 		}
 		if err := a.jobqueue.Enqueue(ctx, result.Jobs...); err != nil {
@@ -110,7 +110,7 @@ func (a *Application) DeleteLog(ctx context.Context, logID uuid.UUID) error {
 		if err != nil {
 			return err
 		}
-		if err := a.contestEvents.Append(ctx, result.Events); err != nil {
+		if err := a.contestEvents.Append(ctx, result.Events, now); err != nil {
 			return err
 		}
 		return a.jobqueue.Enqueue(ctx, result.Jobs...)
@@ -153,11 +153,12 @@ func (a *Application) DetachContestLog(ctx context.Context, contestID, logID uui
 		}); err != nil {
 			return err
 		}
-		result, err := a.logs.ModerateDetach(ctx, logID, contestID, timex.Now())
+		now := timex.Now()
+		result, err := a.logs.ModerateDetach(ctx, logID, contestID, now)
 		if err != nil {
 			return err
 		}
-		if err := a.contestEvents.Append(ctx, result.Events); err != nil {
+		if err := a.contestEvents.Append(ctx, result.Events, now); err != nil {
 			return err
 		}
 		return a.jobqueue.Enqueue(ctx, result.Jobs...)

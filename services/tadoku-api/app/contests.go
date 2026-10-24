@@ -250,7 +250,7 @@ func (a *Application) UpsertContestRegistration(ctx context.Context, parameters 
 		if err != nil {
 			return err
 		}
-		if err := a.contestEvents.Append(ctx, result.Events); err != nil {
+		if err := a.contestEvents.Append(ctx, result.Events, now); err != nil {
 			return err
 		}
 		return a.jobqueue.Enqueue(ctx, result.Jobs...)

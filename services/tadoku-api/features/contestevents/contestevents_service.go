@@ -1,9 +1,8 @@
 package contestevents
 
 import (
-	"bytes"
 	"context"
-	"slices"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/contestevent"
@@ -16,25 +15,10 @@ func NewService(repository *Repository) *Service {
 	return &Service{repository: repository}
 }
 
-// Append requires the source mutation's transaction. Call once per operation
-// with all changes so publication locks are acquired together in contest order.
-func (s *Service) Append(ctx context.Context, changes []contestevent.Change) error {
-	if len(changes) == 0 {
-		return nil
-	}
-
-	contestIDs := make([]uuid.UUID, 0, len(changes))
+// Append requires the source mutation's transaction and operation timestamp.
+func (s *Service) Append(ctx context.Context, changes []contestevent.Change, occurredAt time.Time) error {
 	for _, change := range changes {
-		contestIDs = append(contestIDs, change.ContestID)
-	}
-	slices.SortFunc(contestIDs, func(a, b uuid.UUID) int { return bytes.Compare(a[:], b[:]) })
-	contestIDs = slices.Compact(contestIDs)
-	if err := s.repository.LockContests(ctx, contestIDs); err != nil {
-		return err
-	}
-
-	for _, change := range changes {
-		if err := s.repository.Insert(ctx, uuid.New(), change); err != nil {
+		if err := s.repository.Insert(ctx, uuid.New(), change, occurredAt); err != nil {
 			return err
 		}
 	}

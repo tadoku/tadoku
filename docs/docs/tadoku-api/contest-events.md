@@ -8,7 +8,7 @@ description: Poll contest submission events with event-ID cursors and fetch curr
 Read this when building an integration that follows a contest's submissions.
 
 A contest feed reports changes to that contest's logs. Each event contains only
-`id`, `log_id` and `event`. Fetch current log contents separately when an
+`id`, `log_id`, `event` and `occurred_at`. Fetch current log contents separately when an
 integration needs a preview or the contest's score.
 
 ## Read events
@@ -35,8 +35,16 @@ failed writes produce no events. Renaming users or activity labels and
 recalculating a leaderboard are outside this feed.
 
 The response contains `events`, `next_cursor` and `has_more`. Events arrive in
-committed publication order, oldest first. Event IDs are opaque UUIDs: use the
-response order, not UUID sorting.
+occurrence order, oldest first, with the event UUID breaking equal-timestamp
+ties. `occurred_at` is stored once using the source operation's timestamp; it
+does not change when the feed is read. The server resolves an event-ID cursor
+to that event's stored `(occurred_at, id)` pair. Use the response order.
+
+Occurrence order is not commit order. If a transaction commits after a consumer
+has advanced past its occurrence time, its event can appear before the saved
+cursor. Forward polling alone does not guarantee delivery of those late events.
+Replaying earlier history and deduplicating by event ID can recover them; there
+is no bounded replay window that guarantees recovery of every delayed commit.
 
 - Omit `cursor`, or pass `0`, to start at the earliest recorded event.
 - Pass `now` once to receive an empty page with the latest visible event ID,
@@ -77,7 +85,7 @@ A board consumer can refresh a log for any of the three events:
 Process refreshes for one log in order. A log may change again or be withdrawn
 before its content fetch. It may also be resubmitted before a withdrawal event
 is processed. The content endpoint returns current state, not the content at
-the event's original position. No log contents are embedded in event records.
+the event's occurrence time. No log contents are embedded in event records.
 
 ## Access and history
 

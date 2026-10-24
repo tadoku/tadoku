@@ -63,10 +63,17 @@ insert into contest_registrations (tenant, id, contest_id, user_id, language_cod
   ('tadoku/prod', 'e0000000-0000-4000-8000-000000000001', 'f0000000-0000-4000-8000-000000000001', '11111111-1111-4111-8111-111111111111', '{eng,jpn}'),
   ('tadoku/prod', 'e0000000-0000-4000-8000-000000000002', 'f0000000-0000-4000-8000-000000000002', '11111111-1111-4111-8111-111111111111', '{eng,jpn}');
 
-insert into contest_events (tenant, id, contest_id, log_id, event, position)
-overriding system value values
-  ('tadoku/prod', 'ffffffff-ffff-4fff-8fff-fffffffffff1', 'f0000000-0000-4000-8000-000000000001', 'd0000000-0000-4000-8000-000000000001', 'log.submitted', 10),
-  ('tadoku/prod', '11111111-1111-4111-8111-111111111112', 'f0000000-0000-4000-8000-000000000001', 'd0000000-0000-4000-8000-000000000001', 'log.updated', 20),
-  ('tadoku/prod', 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee3', 'f0000000-0000-4000-8000-000000000001', 'd0000000-0000-4000-8000-000000000002', 'log.withdrawn', 30),
-  ('tadoku/prod', 'cccccccc-cccc-4ccc-8ccc-ccccccccccc4', 'f0000000-0000-4000-8000-000000000002', 'd0000000-0000-4000-8000-000000000001', 'log.submitted', 40),
-  ('e2e/alpha-0000000a', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb5', 'f1000000-0000-4000-8000-000000000001', 'd1000000-0000-4000-8000-000000000001', 'log.submitted', 50);
+-- History starts with fff at the earlier timestamp, then 111 and eee share a
+-- timestamp across the middle/last page boundary. Insert the tie in reverse
+-- UUID order so pagination must use (occurred_at, id), not insertion order.
+insert into contest_events (tenant, id, contest_id, log_id, event, occurred_at) values
+  ('tadoku/prod', 'ffffffff-ffff-4fff-8fff-fffffffffff1', 'f0000000-0000-4000-8000-000000000001',
+   'd0000000-0000-4000-8000-000000000001', 'log.submitted', '2026-09-12T12:00:00Z'),
+  ('tadoku/prod', 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee3', 'f0000000-0000-4000-8000-000000000001',
+   'd0000000-0000-4000-8000-000000000002', 'log.withdrawn', '2026-09-12T12:01:00.123456Z'),
+  ('tadoku/prod', '11111111-1111-4111-8111-111111111112', 'f0000000-0000-4000-8000-000000000001',
+   'd0000000-0000-4000-8000-000000000001', 'log.updated', '2026-09-12T12:01:00.123456Z'),
+  ('tadoku/prod', 'cccccccc-cccc-4ccc-8ccc-ccccccccccc4', 'f0000000-0000-4000-8000-000000000002',
+   'd0000000-0000-4000-8000-000000000001', 'log.submitted', '2026-09-12T12:02:00Z'),
+  ('e2e/alpha-0000000a', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb5', 'f1000000-0000-4000-8000-000000000001',
+   'd1000000-0000-4000-8000-000000000001', 'log.submitted', '2026-09-12T12:03:00Z');

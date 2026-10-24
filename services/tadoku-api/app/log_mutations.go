@@ -87,7 +87,7 @@ func (a *Application) CreateLog(ctx context.Context, p LogCreateParameters) (*Lo
 			return err
 		}
 		id = result.ID
-		if err := a.contestEvents.Append(ctx, result.Events); err != nil {
+		if err := a.contestEvents.Append(ctx, result.Events, now); err != nil {
 			return err
 		}
 		return a.jobqueue.Enqueue(ctx, result.Jobs...)
@@ -138,7 +138,7 @@ func (a *Application) UpdateLog(ctx context.Context, p LogUpdateParameters) (*Lo
 		if err != nil {
 			return err
 		}
-		if err := a.contestEvents.Append(ctx, result.Events); err != nil {
+		if err := a.contestEvents.Append(ctx, result.Events, now); err != nil {
 			return err
 		}
 		return a.jobqueue.Enqueue(ctx, result.Jobs...)

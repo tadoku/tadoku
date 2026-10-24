@@ -849,6 +849,9 @@ type ImmersionContestEvent struct {
 	// Id Stable event identity, also usable as a cursor and deduplication key.
 	Id    openapi_types.UUID `json:"id"`
 	LogId openapi_types.UUID `json:"log_id"`
+
+	// OccurredAt Source operation time, stored once when the event is created.
+	OccurredAt time.Time `json:"occurred_at"`
 }
 
 // ImmersionContestEventEvent submitted means the log entered this contest. updated means its

@@ -7,6 +7,7 @@ components:
         - id
         - log_id
         - event
+        - occurred_at
       properties:
         id:
           type: string
@@ -15,6 +16,10 @@ components:
         log_id:
           type: string
           format: uuid
+        occurred_at:
+          type: string
+          format: date-time
+          description: Source operation time, stored once when the event is created.
         event:
           type: string
           enum:

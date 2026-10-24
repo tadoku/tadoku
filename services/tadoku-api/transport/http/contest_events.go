@@ -29,9 +29,10 @@ func (s *server) ImmersionContestListEvents(
 	events := make([]openapi.ImmersionContestEvent, 0, len(page.Events))
 	for _, event := range page.Events {
 		events = append(events, openapi.ImmersionContestEvent{
-			Id:    event.ID,
-			LogId: event.LogID,
-			Event: openapi.ImmersionContestEventEvent(event.Type),
+			Id:         event.ID,
+			LogId:      event.LogID,
+			Event:      openapi.ImmersionContestEventEvent(event.Type),
+			OccurredAt: event.OccurredAt,
 		})
 	}
 

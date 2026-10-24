@@ -89,7 +89,7 @@ func (a *Application) ListPlatformScoringRuleSets(ctx context.Context) ([]Scorin
 	if err := a.permissions.RequireAuthenticated(ctx); err != nil {
 		return nil, err
 	}
-	return a.scoring.ListPlatformRuleSets(ctx, a.permissions.IsAdminOrFalse(ctx))
+	return a.scoring.ListPlatformRuleSets(ctx, a.roles.IsAdminOrFalse(ctx))
 }
 
 func (a *Application) ListContestScoringRuleSets(ctx context.Context, contestID uuid.UUID) ([]ScoringRuleSet, error) {
@@ -108,7 +108,7 @@ func (a *Application) ListContestScoringRuleSets(ctx context.Context, contestID 
 }
 
 func (a *Application) CreatePlatformScoringRuleSetDraft(ctx context.Context, parameters PlatformScoringRuleSetDraftParameters) (*ScoringRuleSet, error) {
-	if err := a.permissions.RequireAdmin(ctx); err != nil {
+	if err := a.roles.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 
@@ -224,7 +224,7 @@ func (a *Application) ActivateScoringRuleSet(ctx context.Context, id uuid.UUID) 
 func (a *Application) authorizeScoringRuleSetChange(ctx context.Context, ruleSet ScoringRuleSet) error {
 	switch ruleSet.Scope {
 	case "platform":
-		return a.permissions.RequireAdmin(ctx)
+		return a.roles.RequireAdmin(ctx)
 	case "contest":
 		if ruleSet.ContestID == nil {
 			return errx.NewInternalError("contest scoring rule set requires contest_id")

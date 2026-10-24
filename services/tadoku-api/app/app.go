@@ -44,6 +44,7 @@ type Application struct {
 	db            *pgxpool.Pool
 	identity      *identity.Service
 	permissions   *permissions.Checker
+	roles         *authz.Roles
 }
 
 type Dependencies struct {
@@ -67,6 +68,7 @@ type Dependencies struct {
 	DB            *pgxpool.Pool
 	Identity      *identity.Service
 	Permissions   *permissions.Checker
+	Roles         *authz.Roles
 }
 
 func New(deps Dependencies) *Application {
@@ -91,5 +93,6 @@ func New(deps Dependencies) *Application {
 		db:            deps.DB,
 		identity:      deps.Identity,
 		permissions:   deps.Permissions,
+		roles:         deps.Roles,
 	}
 }

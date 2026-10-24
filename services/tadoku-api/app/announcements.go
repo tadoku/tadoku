@@ -11,7 +11,7 @@ import (
 type Announcement = announcements.Announcement
 
 func (a *Application) FindAnnouncementByID(ctx context.Context, namespace string, id uuid.UUID) (*announcements.Announcement, error) {
-	if err := a.permissions.RequireAdmin(ctx); err != nil {
+	if err := a.roles.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 
@@ -23,7 +23,7 @@ func (a *Application) ListActiveAnnouncements(ctx context.Context, namespace str
 }
 
 func (a *Application) ListAnnouncements(ctx context.Context, namespace string, pageSize, page int) (*announcements.AnnouncementList, error) {
-	if err := a.permissions.RequireAdmin(ctx); err != nil {
+	if err := a.roles.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 
@@ -33,7 +33,7 @@ func (a *Application) ListAnnouncements(ctx context.Context, namespace string, p
 type CreateAnnouncementParameters = announcements.CreateAnnouncementParameters
 
 func (a *Application) CreateAnnouncement(ctx context.Context, parameters CreateAnnouncementParameters) (*announcements.Announcement, error) {
-	if err := a.permissions.RequireAdmin(ctx); err != nil {
+	if err := a.roles.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 
@@ -54,7 +54,7 @@ func (a *Application) CreateAnnouncement(ctx context.Context, parameters CreateA
 type UpdateAnnouncementParameters = announcements.UpdateAnnouncementParameters
 
 func (a *Application) UpdateAnnouncement(ctx context.Context, parameters UpdateAnnouncementParameters) (*announcements.Announcement, error) {
-	if err := a.permissions.RequireAdmin(ctx); err != nil {
+	if err := a.roles.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 
@@ -73,7 +73,7 @@ func (a *Application) UpdateAnnouncement(ctx context.Context, parameters UpdateA
 }
 
 func (a *Application) DeleteAnnouncement(ctx context.Context, namespace string, id uuid.UUID) error {
-	if err := a.permissions.RequireAdmin(ctx); err != nil {
+	if err := a.roles.RequireAdmin(ctx); err != nil {
 		return err
 	}
 

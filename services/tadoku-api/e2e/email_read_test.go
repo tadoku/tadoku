@@ -225,10 +225,9 @@ func TestEmailAuditFailureHidesContent(t *testing.T) {
 	ctx := tenant.WithKey(t.Context(), tenant.Production())
 	id := writeEmail(t, ctx, emailService(), recoveryMail())
 	closed := openClosedPool(t, api.db.AppPool.Config().ConnString())
-	handler, _, _, err := newTestRouterWithLogger(ctx,
+	handler, _, err := newTestRouterWithLogger(ctx,
 		api.db.AppPool,
 		closed,
-		api.keto,
 		slog.New(slog.NewTextHandler(io.Discard,
 			nil)))
 	if err != nil {

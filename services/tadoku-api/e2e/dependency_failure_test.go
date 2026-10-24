@@ -9,43 +9,46 @@ import (
 	"strings"
 	"testing"
 	"time"
-
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/testketo"
 )
 
 func TestDependencyFailures(t *testing.T) {
 	closedPool := openClosedPool(t, api.db.AppPool.Config().ConnString())
 	var logs bytes.Buffer
 	logger := slog.New(slog.NewTextHandler(&logs, &slog.HandlerOptions{Level: slog.LevelDebug}))
-	handler, _, _, err := newTestRouterWithLogger(t.Context(), closedPool, closedPool, keto, logger)
-	if err != nil {
-		t.Fatal(err)
-	}
-	poolClosed := &suite{keto: keto, handler: handler}
-
-	unreachablePool := openUnreachablePool(t, api.db.AppPool.Config().ConnString())
-	handler, _, _, err = newTestRouterWithLogger(
+	handler, _, err := newTestRouterWithLogger(
 		t.Context(),
-		unreachablePool,
-		unreachablePool,
-		keto,
+		closedPool,
+		closedPool,
 		logger,
+		withPermissionsPool(api.db.AppPool),
 	)
 	if err != nil {
 		t.Fatal(err)
 	}
-	databaseUnavailable := &suite{keto: keto, handler: handler}
+	poolClosed := &suite{db: api.db, keto: keto, handler: handler}
+
+	unreachablePool := openUnreachablePool(t, api.db.AppPool.Config().ConnString())
+	handler, _, err = newTestRouterWithLogger(
+		t.Context(),
+		unreachablePool,
+		unreachablePool,
+		logger,
+		withPermissionsPool(api.db.AppPool),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	databaseUnavailable := &suite{db: api.db, keto: keto, handler: handler}
 
 	closedValkey, err := newClosedLeaderboardValkeyClient()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	cacheUnavailable, _, _, err := newTestRouterWithLeaderboard(
+	cacheUnavailable, _, err := newTestRouterWithLeaderboard(
 		t.Context(),
 		api.db.AppPool,
 		api.db.AppPool,
-		keto,
 		logger,
 		false,
 		closedValkey,
@@ -55,16 +58,14 @@ func TestDependencyFailures(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	closedKeto, err := testketo.New(t.Context())
+	permissionsUnavailable, _, err := newTestRouterWithLogger(
+		t.Context(),
+		api.db.AppPool,
+		api.db.AppPool,
+		logger,
+		withPermissionsPool(closedPool),
+	)
 	if err != nil {
-		t.Fatal(err)
-	}
-	ketoUnavailable, _, _, err := newTestRouterWithLogger(t.Context(), api.db.AppPool, api.db.AppPool, closedKeto, logger)
-	if err != nil {
-		_ = closedKeto.Close()
-		t.Fatal(err)
-	}
-	if err := closedKeto.Close(); err != nil {
 		t.Fatal(err)
 	}
 
@@ -165,21 +166,21 @@ func TestDependencyFailures(t *testing.T) {
 			description: []string{"production", "provider", "unavailable"},
 			want:        http.StatusOK,
 			suite:       api,
-			handler:     ketoUnavailable,
+			handler:     permissionsUnavailable,
 		},
 		{
 			operation:   "BannedUsers",
 			description: []string{"test", "provider", "unavailable"},
 			want:        http.StatusOK,
 			suite:       api,
-			handler:     ketoUnavailable,
+			handler:     permissionsUnavailable,
 		},
 		{
 			operation:   "AuthzProxyProxyAdminCheck",
 			description: []string{"provider", "unavailable"},
 			want:        http.StatusServiceUnavailable,
 			suite:       api,
-			handler:     ketoUnavailable,
+			handler:     permissionsUnavailable,
 		},
 	}
 

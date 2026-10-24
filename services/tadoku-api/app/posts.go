@@ -25,7 +25,7 @@ func (a *Application) FindPostBySlug(ctx context.Context, namespace, slug string
 	if err != nil {
 		return nil, posts.ErrPostNotFound
 	}
-	if err := a.permissions.RequireAdmin(ctx); err != nil {
+	if err := a.roles.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 
@@ -34,7 +34,7 @@ func (a *Application) FindPostBySlug(ctx context.Context, namespace, slug string
 
 func (a *Application) ListPosts(ctx context.Context, namespace string, includeDrafts bool, pageSize, page int) (*posts.PostList, error) {
 	if includeDrafts {
-		allowed, err := a.permissions.IsAdmin(ctx)
+		allowed, err := a.roles.IsAdmin(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -49,7 +49,7 @@ func (a *Application) ListPosts(ctx context.Context, namespace string, includeDr
 type CreatePostParameters = posts.CreatePostParameters
 
 func (a *Application) CreatePost(ctx context.Context, parameters CreatePostParameters) (*posts.Post, error) {
-	if err := a.permissions.RequireAdmin(ctx); err != nil {
+	if err := a.roles.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 
@@ -70,7 +70,7 @@ func (a *Application) CreatePost(ctx context.Context, parameters CreatePostParam
 type UpdatePostParameters = posts.UpdatePostParameters
 
 func (a *Application) UpdatePost(ctx context.Context, parameters UpdatePostParameters) (*posts.Post, error) {
-	if err := a.permissions.RequireAdmin(ctx); err != nil {
+	if err := a.roles.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 
@@ -89,7 +89,7 @@ func (a *Application) UpdatePost(ctx context.Context, parameters UpdatePostParam
 }
 
 func (a *Application) DeletePost(ctx context.Context, namespace string, id uuid.UUID) error {
-	if err := a.permissions.RequireAdmin(ctx); err != nil {
+	if err := a.roles.RequireAdmin(ctx); err != nil {
 		return err
 	}
 
@@ -97,7 +97,7 @@ func (a *Application) DeletePost(ctx context.Context, namespace string, id uuid.
 }
 
 func (a *Application) ListPostVersions(ctx context.Context, namespace string, id uuid.UUID) ([]posts.PostVersion, error) {
-	if err := a.permissions.RequireAdmin(ctx); err != nil {
+	if err := a.roles.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 
@@ -105,7 +105,7 @@ func (a *Application) ListPostVersions(ctx context.Context, namespace string, id
 }
 
 func (a *Application) GetPostVersion(ctx context.Context, namespace string, postID, contentID uuid.UUID) (*posts.PostVersion, error) {
-	if err := a.permissions.RequireAdmin(ctx); err != nil {
+	if err := a.roles.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 

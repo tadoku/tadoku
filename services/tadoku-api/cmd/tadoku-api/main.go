@@ -37,7 +37,6 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/features/scoring"
 	fliptclient "github.com/tadoku/tadoku/services/tadoku-api/infra/flipt"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/fliptmanagement"
-	ketoclient "github.com/tadoku/tadoku/services/tadoku-api/infra/keto"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/observability"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 	valkeyinfra "github.com/tadoku/tadoku/services/tadoku-api/infra/valkey"
@@ -61,7 +60,6 @@ type application struct {
 	transport       *http.Transport
 	pool            *pgxpool.Pool
 	valkey          valkeygo.Client
-	keto            *ketoclient.Client
 	flipt           *fliptclient.Provider
 	fliptEvaluation *http.Client
 	fliptManagement *http.Client
@@ -166,11 +164,6 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 		}
 	}()
 
-	keto := ketoclient.NewClient(cfg.KetoReadURL, cfg.KetoWriteURL, ketoclient.WithHTTPClient(&http.Client{
-		Transport: transport,
-		Timeout:   cfg.KetoWriteTimeout,
-	}))
-
 	startupContext, cancelStartup := context.WithTimeout(ctx, cfg.DialTimeout)
 	defer cancelStartup()
 
@@ -212,21 +205,16 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 		postgres.NewPoolCollector(pool),
 	)
 
-	ketoHTTP := &http.Client{
-		Transport: transport,
-		Timeout:   2 * time.Second,
+	permissionModel, err := permissions.NewModel(featureauthz.Permissions)
+	if err != nil {
+		return nil, err
 	}
-	ketoReader := ketoclient.NewReadClient(cfg.KetoReadURL, ketoclient.WithHTTPClient(ketoHTTP))
-	permissionChecker := permissions.NewKetoChecker(ketoReader)
-	roleService := permissions.NewKetoService(ketoReader)
+	permissionTuples := featureauthz.NewRepository(pool)
+	permissionChecker := permissions.NewChecker(permissionTuples, permissionModel)
+	roles := featureauthz.NewRoles(permissionChecker, permissions.NewRelationships(permissionTuples, permissionModel))
 
 	identityReader := identity.NewReader(pool)
-	authzService := featureauthz.NewService(
-		permissionChecker,
-		identityReader,
-		roleService,
-		permissions.NewKetoManager(keto),
-	)
+	authzService := featureauthz.NewService(roles, identityReader)
 
 	auditService := featureaudit.NewService(featureaudit.NewRepository(pool))
 	announcementsRepository := announcements.NewAnnouncementsRepository(pool)
@@ -250,7 +238,7 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	logsService := logs.NewService(logsRepository, cfg.ScoringEngineEnabled)
 	pagesService := pages.NewService(pagesRepository)
 	postsService := posts.NewService(postsRepository)
-	profileService := profile.NewService(profileRepository, roleService, identityReader)
+	profileService := profile.NewService(profileRepository, identityReader)
 	featureFlagService := featureflagsservice.NewService(
 		featureflags.NewEvaluator(fliptProvider, featureFlagMetrics),
 		fliptmanagement.NewClient(fliptmanagement.Config{
@@ -288,9 +276,10 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 		FeatureFlags:  featureFlagService,
 		DB:            pool,
 		Permissions:   permissionChecker,
+		Roles:         roles,
 		Identity:      identityService,
 	})
-	rejectBanned := transporthttp.RejectBannedUsers(permissionChecker.Admit, logger)
+	rejectBanned := transporthttp.RejectBannedUsers(roles.Admit, logger)
 
 	handler, err := transporthttp.NewHandler(
 		api,
@@ -349,7 +338,6 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 		transport:       transport,
 		pool:            pool,
 		valkey:          valkeyClient,
-		keto:            keto,
 		flipt:           fliptProvider,
 		fliptEvaluation: fliptEvaluation,
 		fliptManagement: fliptManagement,

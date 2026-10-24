@@ -46,11 +46,10 @@ func auditUnavailableRoleUpdateHandler(t *testing.T) *transport.Router {
 
 	closedPool := openClosedPool(t, api.db.AppPool.Config().ConnString())
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	router, _, _, err := newTestRouterWithLogger(
+	router, _, err := newTestRouterWithLogger(
 		t.Context(),
 		api.db.AppPool,
 		closedPool,
-		keto,
 		logger,
 	)
 	if err != nil {
@@ -60,17 +59,17 @@ func auditUnavailableRoleUpdateHandler(t *testing.T) *transport.Router {
 	return router
 }
 
-func ketoWriteFailureRoleUpdateHandler(t *testing.T) *transport.Router {
+func grantsFailureRoleUpdateHandler(t *testing.T) *transport.Router {
 	t.Helper()
 
+	closedPool := openClosedPool(t, api.db.AppPool.Config().ConnString())
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	router, _, _, err := newTestRouterWithLogger(
+	router, _, err := newTestRouterWithLogger(
 		t.Context(),
 		api.db.AppPool,
 		api.db.AppPool,
-		keto,
 		logger,
-		withKetoWriteURL("http://127.0.0.1:1"),
+		withGrantsPool(closedPool),
 	)
 	if err != nil {
 		t.Fatal(err)

@@ -18,18 +18,15 @@ type config struct {
 	Production              bool   `envconfig:"production" default:"true"`
 	Branch                  string `envconfig:"branch"`
 	deployment              tenant.Deployment
-	ScoringEngineEnabled    bool          `envconfig:"scoring_engine_enabled" required:"true"`
-	Port                    int           `validate:"gt=0,lte=65535" default:"8000"`
-	MetricsPort             int           `validate:"gt=0,lte=65535" envconfig:"metrics_port" default:"9090"`
-	ServiceName             string        `validate:"required" envconfig:"service_name" default:"tadoku-api"`
-	JWKS                    string        `validate:"required"`
-	JWTIssuer               string        `envconfig:"jwt_issuer"`
-	KetoReadURL             string        `validate:"required" envconfig:"keto_read_url"`
-	KetoWriteURL            string        `validate:"required" envconfig:"keto_write_url"`
-	KetoWriteTimeout        time.Duration `validate:"gt=0" envconfig:"keto_write_timeout" default:"2s"`
-	OathkeeperAuthzToken    string        `validate:"required" envconfig:"oathkeeper_authz_token"`
-	OathkeeperURL           string        `envconfig:"oathkeeper_url" default:"http://oathkeeper-proxy.default:4455"`
-	ServiceAccountTokenPath string        `validate:"required" envconfig:"service_account_token_path" default:"/var/run/secrets/tokens/token"`
+	ScoringEngineEnabled    bool   `envconfig:"scoring_engine_enabled" required:"true"`
+	Port                    int    `validate:"gt=0,lte=65535" default:"8000"`
+	MetricsPort             int    `validate:"gt=0,lte=65535" envconfig:"metrics_port" default:"9090"`
+	ServiceName             string `validate:"required" envconfig:"service_name" default:"tadoku-api"`
+	JWKS                    string `validate:"required"`
+	JWTIssuer               string `envconfig:"jwt_issuer"`
+	OathkeeperAuthzToken    string `validate:"required" envconfig:"oathkeeper_authz_token"`
+	OathkeeperURL           string `envconfig:"oathkeeper_url" default:"http://oathkeeper-proxy.default:4455"`
+	ServiceAccountTokenPath string `validate:"required" envconfig:"service_account_token_path" default:"/var/run/secrets/tokens/token"`
 
 	FliptEnabled         bool          `envconfig:"flipt_enabled" default:"false"`
 	FliptURL             string        `envconfig:"flipt_url" default:"http://oathkeeper-proxy.default:4455/flipt"`
@@ -113,18 +110,6 @@ func loadConfig() (config, error) {
 	if err != nil {
 		return config{}, err
 	}
-
-	cfg.KetoReadURL, err = providerBaseURL("KetoReadURL", cfg.KetoReadURL)
-	if err != nil {
-		return config{}, err
-	}
-
-	ketoWriteURL, err := url.Parse(cfg.KetoWriteURL)
-	if err != nil || ketoWriteURL.Hostname() == "" || (ketoWriteURL.Scheme != "http" && ketoWriteURL.Scheme != "https") ||
-		ketoWriteURL.User != nil || ketoWriteURL.RawQuery != "" || ketoWriteURL.ForceQuery || strings.Contains(cfg.KetoWriteURL, "#") {
-		return config{}, fmt.Errorf("validate config: KetoWriteURL must be an HTTP(S) URL without credentials, query or fragment")
-	}
-	cfg.KetoWriteURL = strings.TrimRight(cfg.KetoWriteURL, "/")
 
 	if cfg.IdentityCookieDomain != "tadoku.app" && cfg.IdentityCookieDomain != "tadoku.dev.lab" {
 		return config{}, fmt.Errorf("validate config: IdentityCookieDomain must be tadoku.app or tadoku.dev.lab")

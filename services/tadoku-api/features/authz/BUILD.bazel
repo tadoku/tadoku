@@ -3,9 +3,11 @@ load("@rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "authz",
     srcs = [
+        "authz_permissions.go",
         "authz_repository.go",
         "authz_service.go",
         "domain.go",
+        "roles.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/features/authz",
     visibility = ["//services/tadoku-api:feature_consumers"],
@@ -16,6 +18,7 @@ go_library(
         "//services/tadoku-api/internal/errx",
         "//services/tadoku-api/internal/identity",
         "//services/tadoku-api/internal/permissions",
+        "//services/tadoku-api/internal/tenant",
         "@com_github_google_uuid//:uuid",
         "@com_github_jackc_pgx_v5//pgxpool",
     ],
@@ -25,10 +28,12 @@ go_test(
     name = "authz_test",
     size = "medium",
     srcs = [
+        "authz_checker_repository_test.go",
         "authz_checks_repository_test.go",
         "authz_fixtures_test.go",
         "authz_repository_test.go",
         "authz_service_test.go",
+        "roles_test.go",
     ],
     args = ["-test.parallel=4"],
     embed = [":authz"],

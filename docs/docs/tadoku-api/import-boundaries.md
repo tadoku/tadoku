@@ -80,10 +80,6 @@ graph. Each allowed package covers only its own targets, not subpackages, and
   The worker test needs a raw client because `leaderboard.NewCache` takes
   one; it seeds and inspects cache keys and simulates a blocked or unavailable
   Valkey. The `app/worker` library itself may not.
-- Only `internal/permissions`, startup and E2E may depend directly on the raw
-  Keto client (`services/tadoku-api/infra/keto`). The exact
-  `app/tenantlifecycle:tenantlifecycle_test` target may also construct its owned
-  provider fixture.
 
 This keeps other packages on the shared permission checker. Keep ban and
 administrator permit lookups in `features/authz`, which owns the `app`
@@ -103,7 +99,7 @@ handwritten, non-test file under `features/` by its file name:
 - `*_repository.go` may not import provider clients: `valkey-go`, the Ory and
   Flipt SDKs, the service-token client (`services/common/client/s2s/`), or any
   package under `services/tadoku-api/infra/` other than `postgres`, which
-  includes the Keto, Flipt and Valkey clients.
+  includes the Flipt and Valkey clients.
 - Every other feature file, including the service, may not import `valkey-go`.
 
 The rules follow [Repositories and stores](./conventions.md#repositories-and-stores).

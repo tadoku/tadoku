@@ -7,6 +7,7 @@
 - [ ] Reconsider the announcements primary key as (`namespace`, `id`) so IDs can be scoped to their namespace.
 - [ ] After the Tadoku API migration is complete, make a final documentation pass and delete all references to this migration.
 - [x] Drop the planned background reconciliation job for the Keto-backed contest-create permission. Permission relationships commit in PostgreSQL, so there is nothing to reconcile.
+- [x] Remove Keto from Tadoku API and `tadoku-tenant`: permissions live in `permission_relationships`, and the Keto client, its test fixture, the pinned Keto binary and `keto-client-go` are deleted.
 - [x] Drop `leaderboard_outbox` in standalone migration 0033. The table is absent in development and production.
 - [x] Deploy the typed `tadoku-worker` before the API release that removed the embedded consumer; the production worker image and ReplicaSet were verified before that API rollout.
 - [x] Restructure the Tadoku API documentation for progressive disclosure for agents: a short entry point with focused documents behind it instead of one long README.

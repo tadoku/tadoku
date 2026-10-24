@@ -7,8 +7,8 @@ const Y = require('../../../../frontend/node_modules/yaml')
 
 function proveMigrations({ root, evidence, prefix, containers, report, run, createNetwork }, docs) {
   const jobs = docs.filter(d => d.kind === 'Job')
-  const roles = { 'tadoku-api-migrate': 'tadoku_owner', 'kratos-migrate': 'kratos', 'keto-migrate': 'keto' }
-  const database = { tadoku_owner: 'tadoku', kratos: 'kratos', keto: 'keto' }
+  const roles = { 'tadoku-api-migrate': 'tadoku_owner', 'keto-migrate': 'keto' }
+  const database = { tadoku_owner: 'tadoku', keto: 'keto' }
   const postgres = docs.find(d => d.kind === 'postgresql' && d.metadata.name === 'tadoku-dev-db')
   const ownership = jobs.find(j => j.metadata.name === 'tadoku-api-ownership')
   const grants = jobs.find(j => j.metadata.name === 'tadoku-api-grants')

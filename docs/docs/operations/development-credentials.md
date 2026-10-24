@@ -10,7 +10,7 @@ Read this when bootstrapping or rotating credentials for the development base.
 
 There are no plaintext Secret manifests or private keys in `k8s/dev/base/`.
 
-- The Postgres operator generates `tadoku_owner`, `tadoku`, `kratos` and `keto`
+- The Postgres operator generates `tadoku_owner`, `tadoku` and `keto`
   credentials in `tdk-dev-data`. The owner Secret is named
   `tadoku-owner.tadoku-dev-db.credentials.postgresql.acid.zalan.do`; the
   operator replaces underscores in Secret names. The base Tadoku migrations
@@ -24,8 +24,8 @@ There are no plaintext Secret manifests or private keys in `k8s/dev/base/`.
 - `scripts/dev/bootstrap-gitops-secrets.sh` copies only the required
   credentials, including the owner credential for branch migrations, into
   consumer namespaces. It targets only `homelab-talos-dev` at
-  `https://omni.lab:8100`. It generates the development-only Kratos runtime
-  secret, Oathkeeper JWKS and Oathkeeper authorization token once, and
+  `https://omni.lab:8100`. It generates the development-only Oathkeeper JWKS
+  and Oathkeeper authorization token once, and
   preserves existing keys on rerun. It needs `kubectl`, `jq` and `node`.
 - The script fails closed on another API server, on namespaces not labeled as
   part of the development base, and on Secrets with unexpected ownership. It

@@ -22,7 +22,7 @@ the development environment and verified.
 | `frontend/` | pnpm workspace: webv2, webv3, authv2 and admin, the styleguides and Paper playground, and the `ui` and `paper-ui` design systems |
 | `docs/` | This Docusaurus site; pages live in `docs/docs/` |
 | `k8s/` | Development-only GitOps base for Argo CD in `k8s/dev/base/` |
-| `infra/` | Kratos identity schema and Keto namespace fixtures for backend tests (`infra/dev/ory/`) and a development kubeconfig helper |
+| `infra/` | Keto namespace fixtures for backend tests (`infra/dev/ory/`) and a development kubeconfig helper |
 | `scripts/` | Code generation, the Tadoku API visibility check, and development seed and secret bootstrap scripts |
 | `tools/` | CI check scripts and the pinned oapi-codegen module |
 | `.dev/` | dev-cli configuration, deployable definitions and the development runbook |

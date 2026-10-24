@@ -11,14 +11,14 @@ sanitized output with the PR report. Do not include credentials or cookies.
 ## Failure modes and gates
 
 1. Bazel discovery must not select unrelated apps: query reverse dependencies
-   for an admin-only file and shared `packages/ui` code. Expect admin only and
-   both legacy frontends respectively.
+   for an admin-only file and shared `packages/ui` code. Expect admin only,
+   and webv2 and admin respectively.
    A Webv3 file selects only Webv3; an authv2 file selects only authv2. Shared
    `packages/paper-ui` files select both. Each Paper overlay must use Node22,
    port 3000 and the Paper build watcher, running its own Vite server.
 2. Render `kubectl --context homelab-talos-dev kustomize k8s/dev/base`. Validate with
-   kubeconform. Auth/admin ingress must use Envoy, retain TLS and hostnames,
-   and preserve the more-specific `/kratos` route to shared Kratos.
+   kubeconform. Account/admin ingress must use Envoy and retain TLS and
+   hostnames.
 3. Base: use a fresh browser profile to log in through account.tadoku.dev.lab
    with a synthetic development account, follow its return URL, and load admin.
    Reject attempted requests to production Tadoku hosts.

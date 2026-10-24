@@ -9,7 +9,6 @@ resources:
   - data
   - migrations
   - services
-  - kratos
   - keto
   - oathkeeper
   - flipt
@@ -62,9 +61,6 @@ configMapGenerator:
     options:
       disableNameSuffixHash: true
     literals:
-      - NEXT_PUBLIC_KRATOS_INTERNAL_ENDPOINT=http://kratos-public.tdk-dev-kratos
-      - NEXT_PUBLIC_KRATOS_ENDPOINT=https://account.tadoku.dev.lab/kratos
-      - NEXT_PUBLIC_AUTH_UI_URL=https://account.tadoku.dev.lab
       - NEXT_PUBLIC_HOME_URL=https://tadoku.dev.lab
       - NEXT_PUBLIC_API_ENDPOINT=/api/internal
       - NEXT_SERVER_API_ENDPOINT=http://oathkeeper-proxy.tdk-dev-oathkeeper:4455/api/internal
@@ -88,9 +84,6 @@ configMapGenerator:
     options:
       disableNameSuffixHash: true
     literals:
-      - NEXT_PUBLIC_KRATOS_INTERNAL_ENDPOINT=http://kratos-public.tdk-dev-kratos
-      - NEXT_PUBLIC_KRATOS_ENDPOINT=https://account.tadoku.dev.lab/kratos
-      - NEXT_PUBLIC_AUTH_UI_URL=https://account.tadoku.dev.lab
       - NEXT_PUBLIC_HOME_URL=https://tadoku.dev.lab
       - NEXT_PUBLIC_API_ENDPOINT=https://tadoku.dev.lab/api/internal
       - NEXT_SERVER_API_ENDPOINT=http://oathkeeper-proxy.tdk-dev-oathkeeper:4455/api/internal
@@ -148,7 +141,3 @@ images:
     newName: ghcr.io/tadoku/tadoku/frontend-authv2
     newTag: latest
     digest: sha256:547a2cf7eb3cfd7f1517e67c1cf942473dabaa716eea14dd984ee295fa90807f
-  - name: ghcr.io/tadoku/tadoku/frontend-auth
-    newName: ghcr.io/tadoku/tadoku/frontend-auth
-    newTag: 80565d5dd13f8c86ad99626d895951b22741ef05
-    digest: sha256:bb1af0d79db8926d0d43e0433543d6b500fbff141926fadcc6fc8da741d4c13d

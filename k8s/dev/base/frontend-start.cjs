@@ -12,9 +12,6 @@ process.env.NODE_ENV = 'production'
 const config = JSON.parse(readFileSync(path.join(dir, '.next/required-server-files.json'))).config
 config.publicRuntimeConfig = {
   ...config.publicRuntimeConfig,
-  kratosPublicEndpoint: 'https://account.tadoku.dev.lab/kratos',
-  kratosInternalEndpoint: 'http://kratos-public.tdk-dev-kratos',
-  authUiUrl: 'https://account.tadoku.dev.lab',
   homeUrl: 'https://tadoku.dev.lab',
   adminUrl: 'https://admin.tadoku.dev.lab',
   apiEndpoint: 'https://tadoku.dev.lab/api/internal',

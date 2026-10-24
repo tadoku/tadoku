@@ -76,7 +76,7 @@ Use the **printed `dev url` links**, including for deep links; a printed link do
 not create an overlay or prove it is ready. The branch hostname keeps navigation
 and API calls on that route without selection cookies. Two owners can share one
 browser context. Use separate contexts when testing different identities;
-authentication remains shared across branches.
+each branch tenant has its own accounts and session cookie.
 
 ## Drive and observe
 
@@ -84,7 +84,7 @@ authentication remains shared across branches.
   visible navigation. Inspect the rendered page and relevant network responses;
   do not invoke internal React handlers or mock the API to claim an E2E pass.
 - Before writes, confirm `X-Dev-Selected` on the API response identifies your
-  route. Use the matching branch hostname for auth or admin work. Require an
+  route. Use the matching branch hostname for authv2 or admin work. Require an
   overlay `X-Dev-Backend` when verifying changed API code; a frontend-only branch
   intentionally uses the base API. `X-Dev-Selected` alone does not prove persisted
   isolation: verify the result's tenant when testing routing. `X-Dev-Proxy-Backend` can describe outer
@@ -92,9 +92,9 @@ authentication remains shared across branches.
   changes and actual API responses for backend changes. Unselected base routes
   need not emit these headers. Cold-start convergence may briefly serve base.
 - Exercise the relevant feature-map steps, including a reload or a second view
-  for persisted changes. Keep writes in your branch tenant. Kratos identities
-  remain shared: use fixture accounts or owned disposable identities for
-  account/role tests without changing shared credentials or canonical roles.
+  for persisted changes. Keep writes in your branch tenant. Accounts belong to
+  the branch tenant: use its fixture accounts or owned disposable accounts for
+  account/role tests without changing canonical credentials or roles.
   Restrict Keto and Flipt changes to your tenant object and
   `test/tadoku_<route>` namespace. Discover branch fixture IDs from its UI or
   API; canonical fixture UUIDs do not identify branch contests or logs.

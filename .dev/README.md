@@ -12,7 +12,7 @@ database work; ordinary branches use a test tenant in the shared database.
 
 Use dev-cli v0.7.0 or newer. `dev up --owner <owner>` automatically provisions
 and seeds `tadoku/<route>` before startup, including frontend-only work. Select
-the main hostname before admin or account API writes. `dev down` and expired-route
+the main hostname before admin or authv2 API writes. `dev down` and expired-route
 cleanup stop overlays and remove that tenant's application and provider data.
 
 - [Development environment](../docs/docs/develop/environment.md): install dev-cli,

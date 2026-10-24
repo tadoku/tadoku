@@ -40,9 +40,9 @@ if (process.argv.includes('--validate-only')) {
 const cases = [
   { name: 'guest', subject: 'guest' },
   { name: 'unrelated', cookie: 'analytics=unrelated', subject: 'guest' },
-  { name: 'canonical', cookie: 'ory_kratos_session=canonical', subject: 'canonical-user' },
-  { name: 'branch-and-canonical', branch: 'proof-0123abcd', cookie: 'ory_kratos_session=canonical; tadoku_session_proof-0123abcd=branch', subject: 'branch-user' },
-  { name: 'branch-with-canonical-only', branch: 'proof-0123abcd', cookie: 'ory_kratos_session=canonical', subject: 'guest' },
+  { name: 'canonical', cookie: 'tadoku_session=canonical', subject: 'canonical-user' },
+  { name: 'branch-and-canonical', branch: 'proof-0123abcd', cookie: 'tadoku_session=canonical; tadoku_session_proof-0123abcd=branch', subject: 'branch-user' },
+  { name: 'branch-with-canonical-only', branch: 'proof-0123abcd', cookie: 'tadoku_session=canonical', subject: 'guest' },
   { name: 'callback-failure', cookie: 'failure=yes', status: 401 },
 ]
 function request(port, method, route, headers) {
@@ -71,7 +71,7 @@ http.createServer((req,res)=>{
  if(callback){
   console.log(JSON.stringify({method:req.method,auth,cookie,branch}));
   if(!auth||req.method!=='GET'||cookie.includes('failure=yes')){res.statusCode=401;return res.end('{}')}
-  const id=branch?(cookie.includes('tadoku_session_'+branch+'=branch')?'branch-user':'guest'):(cookie.includes('ory_kratos_session=canonical')?'canonical-user':'guest');
+  const id=branch?(cookie.includes('tadoku_session_'+branch+'=branch')?'branch-user':'guest'):(cookie.includes('tadoku_session=canonical')?'canonical-user':'guest');
   res.setHeader('content-type','application/json');return res.end(JSON.stringify({identity:{id},marker:'extra-preserved'}));
  }
  res.setHeader('content-type','application/json');res.end(JSON.stringify({method:req.method,subject:req.headers['x-subject'],extra:req.headers['x-extra'],cookie:req.headers.cookie||'',branch:req.headers['x-dev-branch']||''}));
@@ -124,7 +124,7 @@ http.createServer((req,res)=>{
         report.matrix.push({ image: fixture.image, method, case: test.name, expectedStatus, status: res.status, passed: !!passed })
       }
       const internalHost = new URL(internal.match.url).host
-      for (const cookie of ['failure=yes', 'unrelated=yes', 'ory_kratos_session=canonical; tadoku_session_proof-0123abcd=branch']) {
+      for (const cookie of ['failure=yes', 'unrelated=yes', 'tadoku_session=canonical; tadoku_session_proof-0123abcd=branch']) {
         const res = await request(port, 'GET', '/api/internal/identity/session', { Host: internalHost, Cookie: cookie, 'X-Dev-Branch': 'proof-0123abcd' })
         report.matrix.push({ image: fixture.image, case: 'internal-session-anonymous', status: res.status, passed: res.status === 200 && res.body.subject === 'guest' && res.body.cookie === cookie && res.body.branch === 'proof-0123abcd' })
       }

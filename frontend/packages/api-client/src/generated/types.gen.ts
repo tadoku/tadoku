@@ -298,6 +298,37 @@ export type ImmersionLeaderboard = ImmersionPaginatedList & {
     entries: Array<ImmersionLeaderboardEntry>;
 };
 
+export type ImmersionContestEvent = {
+    /**
+     * Stable event identity, also usable as a cursor and deduplication key.
+     */
+    id: string;
+    log_id: string;
+    /**
+     * Source operation time, stored once when the event is created.
+     */
+    occurred_at: string;
+    /**
+     * submitted means the log entered this contest. updated means its
+     * contest-visible log fields changed while it remained submitted.
+     * withdrawn means it left this contest, including deletion or moderation.
+     *
+     */
+    event: 'log.submitted' | 'log.updated' | 'log.withdrawn';
+};
+
+export type ImmersionContestEventPage = {
+    events: Array<ImmersionContestEvent>;
+    /**
+     * Last returned event ID, the input event ID on an empty poll, or 0 before any event.
+     */
+    next_cursor: string;
+    /**
+     * More visible events existed beyond this page at the time of the read.
+     */
+    has_more: boolean;
+};
+
 export type ImmersionScore = {
     language_code: string;
     language_name?: string;
@@ -1737,6 +1768,71 @@ export type ImmersionContestGetConfigurationsResponses = {
 };
 
 export type ImmersionContestGetConfigurationsResponse = ImmersionContestGetConfigurationsResponses[keyof ImmersionContestGetConfigurationsResponses];
+
+export type ImmersionContestListEventsData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: {
+        /**
+         * A retained event UUID, 0 for the beginning, or now for the latest visible event.
+         */
+        cursor?: string;
+        limit?: number;
+    };
+    url: '/immersion/contests/{id}/events';
+};
+
+export type ImmersionContestListEventsErrors = {
+    /**
+     * Invalid limit, UUID or cursor; unknown event or event from another contest or tenant.
+     */
+    400: unknown;
+    /**
+     * Contest does not exist or was deleted.
+     */
+    404: unknown;
+};
+
+export type ImmersionContestListEventsResponses = {
+    /**
+     * Event page, including an empty page with a reusable cursor.
+     */
+    200: ImmersionContestEventPage;
+};
+
+export type ImmersionContestListEventsResponse = ImmersionContestListEventsResponses[keyof ImmersionContestListEventsResponses];
+
+export type ImmersionContestFindLogData = {
+    body?: never;
+    path: {
+        id: string;
+        logId: string;
+    };
+    query?: never;
+    url: '/immersion/contests/{id}/logs/{logId}';
+};
+
+export type ImmersionContestFindLogErrors = {
+    /**
+     * Invalid contest or log UUID.
+     */
+    400: unknown;
+    /**
+     * Contest is missing or deleted, or the log is not currently visible in this contest.
+     */
+    404: unknown;
+};
+
+export type ImmersionContestFindLogResponses = {
+    /**
+     * Current visible contest log.
+     */
+    200: ImmersionLog;
+};
+
+export type ImmersionContestFindLogResponse = ImmersionContestFindLogResponses[keyof ImmersionContestFindLogResponses];
 
 export type ImmersionLogCreateData = {
     body?: {

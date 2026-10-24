@@ -263,16 +263,20 @@ insert into contest_registrations (
   language_codes = sqlc.arg(language_codes),
   updated_at = sqlc.arg(updated_at);
 
--- name: DetachContestLogsForLanguages :exec
-delete from contest_logs
-where contest_id = sqlc.arg(contest_id)
-  and log_id in (
-    select logs.id
-    from logs
-    where logs.user_id = sqlc.arg(user_id)
-      and logs.language_code = any(sqlc.arg(language_codes)::varchar[])
-      and logs.deleted_at is null
-  );
+-- name: DetachContestLogsForLanguages :many
+with detached as (
+  delete from contest_logs
+  where contest_id = sqlc.arg(contest_id)
+    and log_id in (
+      select logs.id
+      from logs
+      where logs.user_id = sqlc.arg(user_id)
+        and logs.language_code = any(sqlc.arg(language_codes)::varchar[])
+        and logs.deleted_at is null
+    )
+  returning log_id
+)
+select log_id from detached order by log_id;
 
 -- name: ListYearlyContestRegistrations :many
 with matches as materialized (

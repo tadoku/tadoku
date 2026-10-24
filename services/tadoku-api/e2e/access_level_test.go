@@ -33,9 +33,11 @@ var operationAccess = map[string]accessLevel{
 	"EmailGet":                   accessAdmin,
 	"IdentityProxySessionCheck":  accessCallback,
 
-	"ImmersionLogFindByID":     accessPublic,
-	"ImmersionProfileListLogs": accessPublic,
-	"ImmersionContestListLogs": accessPublic,
+	"ImmersionLogFindByID":       accessPublic,
+	"ImmersionProfileListLogs":   accessPublic,
+	"ImmersionContestListLogs":   accessPublic,
+	"ImmersionContestListEvents": accessPublic,
+	"ImmersionContestFindLog":    accessPublic,
 
 	"ImmersionContestProfileFetchScores":   accessPublic,
 	"ImmersionContestProfileFetchActivity": accessPublic,

@@ -4,6 +4,7 @@ sql:
     schema: ../../migrations
     queries:
       - logs.sql
+      - contest_logs.sql
     gen:
       go:
         package: logs

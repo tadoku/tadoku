@@ -9,6 +9,8 @@ import (
 
 	"github.com/google/uuid"
 	activitiescatalog "github.com/tadoku/tadoku/services/tadoku-api/domain/activities"
+	"github.com/tadoku/tadoku/services/tadoku-api/domain/contestevent"
+	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
 
@@ -28,6 +30,11 @@ type Language struct {
 }
 
 type Activity = activitiescatalog.Activity
+
+type RegistrationResult struct {
+	Jobs   []jobs.Job
+	Events []contestevent.Change
+}
 
 type Contest struct {
 	ID                      uuid.UUID

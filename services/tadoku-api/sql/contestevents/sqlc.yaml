@@ -1,0 +1,13 @@
+version: "2"
+sql:
+  - engine: postgresql
+    schema: ../../migrations
+    queries:
+      - contestevents.sql
+    gen:
+      go:
+        package: contestevents
+        out: ../../generated/sqlc/contestevents
+        sql_package: pgx/v5
+        emit_empty_slices: true
+        omit_unused_structs: true

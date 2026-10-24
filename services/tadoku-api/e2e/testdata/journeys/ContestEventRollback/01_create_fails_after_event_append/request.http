@@ -1,0 +1,7 @@
+POST /immersion/logs HTTP/1.1
+Host: api.test
+X-Request-Id: contest-event-journey
+Content-Type: application/json
+Content-Length: 178
+
+{"language_code":"eng","activity_id":1,"amount":10,"unit_key":"reading_page","description":"rollback","tags":["book"],"registration_ids":["e0000000-0000-4000-8000-000000000001"]}

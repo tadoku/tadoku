@@ -3,6 +3,7 @@ load("@rules_go//go:def.bzl", "go_library")
 go_library(
     name = "logs",
     srcs = [
+        "contest_logs.sql.go",
         "db.go",
         "logs.sql.go",
         "models.go",

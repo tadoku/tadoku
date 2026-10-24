@@ -37,6 +37,20 @@ Main navigation **Leaderboard** opens `/leaderboard/latest`; also cover
   participant and owner/admin boundaries relevant to the change, including the
   private contest case when privacy is in scope.
 
+- For contest integrations, poll `/api/internal/immersion/contests/<id>/events`
+  with `cursor=now`, then create an unsubmitted log and confirm the feed stays
+  empty. Submit it, edit its visible content, and withdraw it; verify submitted,
+  updated and withdrawn events with stable IDs. Fetch
+  `/api/internal/immersion/contests/<id>/logs/<log-id>` to verify the contest score
+  and contents, and 404 after withdrawal. Event entries contain only `id`,
+  `log_id`, `event` and `occurred_at`; neither content nor other registrations
+  belongs there. Repeated reads preserve the timestamp. Check a one-event page,
+  equal-timestamp ties and an empty tail poll, preserving the returned cursor.
+  The HTTP journeys additionally cover frozen scores, indirect removals, rollback
+  and transaction visibility; run those against disposable local providers.
+  The feed orders by occurrence time and UUID, not commit time: a late commit
+  can appear before a saved cursor and requires earlier-history replay to see.
+
 ## Traps
 
 “Latest” depends on current contest dates and is not a stable fixture ID. Find

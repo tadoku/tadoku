@@ -6,6 +6,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/features/audit"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/authz"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/authz/tokens"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/contestevents"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/contests"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/email"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/featureflags"
@@ -31,6 +32,7 @@ type Application struct {
 	audit         *audit.Service
 	authorization *authz.Service
 	contests      *contests.Service
+	contestEvents *contestevents.Service
 	leaderboard   *leaderboard.Service
 	languages     *languages.Service
 	logs          *logs.Service
@@ -53,6 +55,7 @@ type Dependencies struct {
 	Audit         *audit.Service
 	Authorization *authz.Service
 	Contests      *contests.Service
+	ContestEvents *contestevents.Service
 	Leaderboard   *leaderboard.Service
 	Languages     *languages.Service
 	Logs          *logs.Service
@@ -76,6 +79,7 @@ func New(deps Dependencies) *Application {
 		audit:         deps.Audit,
 		authorization: deps.Authorization,
 		contests:      deps.Contests,
+		contestEvents: deps.ContestEvents,
 		leaderboard:   deps.Leaderboard,
 		languages:     deps.Languages,
 		logs:          deps.Logs,

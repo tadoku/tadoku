@@ -40,7 +40,7 @@ func (i implementation) uuidReader() io.Reader {
 	if i.uuidSeed != nil {
 		return rand.New(rand.NewSource(*i.uuidSeed))
 	}
-	return repeatingByteReader(0x11)
+	return io.MultiReader(io.LimitReader(repeatingByteReader(0x11), 16), rand.New(rand.NewSource(1)))
 }
 
 type repeatingByteReader byte

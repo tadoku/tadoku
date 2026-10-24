@@ -55,6 +55,8 @@ output-options:
     - ImmersionLogFindByID
     - ImmersionProfileListLogs
     - ImmersionContestListLogs
+    - ImmersionContestListEvents
+    - ImmersionContestFindLog
     - ImmersionFeatureFlagDecisions
     - ImmersionFeatureAccessGet
     - ImmersionFeatureAccessGrant

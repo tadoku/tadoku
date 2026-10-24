@@ -8,10 +8,10 @@ create table contest_events (
   contest_id uuid not null,
   log_id uuid not null,
   event text not null,
-  position bigint generated always as identity (cache 1),
+  occurred_at timestamptz not null default current_timestamp,
 
   primary key (tenant, id),
-  unique (tenant, contest_id, position),
+  unique (tenant, contest_id, occurred_at, id),
   constraint contest_events_event_valid check (
     event in ('log.submitted', 'log.updated', 'log.withdrawn')
   )

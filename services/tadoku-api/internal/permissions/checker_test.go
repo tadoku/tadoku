@@ -5,215 +5,164 @@ import (
 	"errors"
 	"testing"
 
-	ketoclient "github.com/tadoku/tadoku/services/tadoku-api/infra/keto"
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/testketo"
 )
 
-func TestIsAdminSkipsKetoWithoutAuthenticatedUser(t *testing.T) {
-	tests := []struct {
-		name string
-		user *identity.User
-	}{
-		{name: "missing identity"},
-		{name: "empty subject", user: &identity.User{}},
-		{name: "guest", user: &identity.User{Subject: "guest"}},
-	}
+const granted = errx.Unknown
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			ctx := tenant.WithKey(t.Context(), tenant.Production())
-			if test.user != nil {
-				ctx = identity.WithUser(ctx, test.user)
-			}
+func signedIn(ctx context.Context, subject string) context.Context {
+	return identity.WithUser(ctx, &identity.User{Subject: subject})
+}
 
-			allowed, err := NewKetoChecker(nil).IsAdmin(ctx)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if allowed {
-				t.Error("IsAdmin allowed an unauthenticated identity")
-			}
-		})
+func checkKind(t *testing.T, call string, err error, want errx.Kind) {
+	t.Helper()
+
+	if errx.KindOf(err) != want || (err == nil) != (want == granted) {
+		t.Errorf("%s error = %v, want kind %v (nil when granted)", call, err, want)
 	}
 }
 
-func TestIsAdminFailsClosedWithoutKeto(t *testing.T) {
-	ctx := identity.WithUser(tenant.WithKey(t.Context(), tenant.Production()), &identity.User{Subject: "admin"})
-	for _, test := range []struct {
+func TestCheckerRequire(t *testing.T) {
+	t.Parallel()
+	prodCtx := productionContext(t)
+
+	db := newTestDatabase(t)
+	branchCtx := registerTestTenant(t, db, "e2e/checker-0000000a")
+	writer := NewRelationships(db.AppPool, testModel)
+	admin, branchAdmin, user := uuid.New(), uuid.New(), uuid.New()
+	grantAll(t, prodCtx, writer, adminRelationship(admin))
+	grantAll(t, branchCtx, writer, adminRelationship(branchAdmin))
+	checker := NewChecker(db.AppPool, testModel)
+
+	cases := []struct {
+		name        string
+		ctx         context.Context
+		subject     string
+		wantAllowed bool
+		wantRequire errx.Kind
+	}{
+		{"admin in its tenant", prodCtx, admin.String(), true, granted},
+		{"user", prodCtx, user.String(), false, errx.Forbidden},
+		{"production admin on a test tenant", branchCtx, admin.String(), false, errx.Forbidden},
+		{"test tenant admin in its tenant", branchCtx, branchAdmin.String(), true, granted},
+		{"test tenant admin in production", prodCtx, branchAdmin.String(), false, errx.Forbidden},
+		{"nil UUID subject", prodCtx, uuid.Nil.String(), false, errx.Forbidden},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := signedIn(tc.ctx, tc.subject)
+
+			allowed, err := checker.Allowed(ctx, siteAdmin)
+			requireErr := checker.Require(ctx, siteAdmin)
+
+			if err != nil || allowed != tc.wantAllowed {
+				t.Errorf("Allowed = %t, %v; want %t, nil", allowed, err, tc.wantAllowed)
+			}
+			checkKind(t, "Require", requireErr, tc.wantRequire)
+		})
+	}
+
+	t.Run("allowed for an explicit user", func(t *testing.T) {
+		adminAllowed, adminErr := checker.AllowedFor(prodCtx, siteAdmin, admin)
+		userAllowed, userErr := checker.AllowedFor(prodCtx, siteAdmin, user)
+
+		if adminErr != nil || !adminAllowed {
+			t.Errorf("AllowedFor(admin) = %t, %v; want true, nil", adminAllowed, adminErr)
+		}
+		if userErr != nil || userAllowed {
+			t.Errorf("AllowedFor(user) = %t, %v; want false, nil", userAllowed, userErr)
+		}
+	})
+}
+
+func TestCheckerFailsClosed(t *testing.T) {
+	t.Parallel()
+	ctx := productionContext(t)
+
+	db := newTestDatabase(t)
+	admin := uuid.New()
+	grantAll(t, ctx, NewRelationships(db.AppPool, testModel), adminRelationship(admin))
+	closedPool, err := pgxpool.NewWithConfig(ctx, db.AppPool.Config())
+	if err != nil {
+		t.Fatal(err)
+	}
+	closedPool.Close()
+	cancelled, cancel := context.WithCancel(ctx)
+	cancel()
+	lookupErr := errors.New("ban lookup failed")
+
+	working := NewChecker(db.AppPool, testModel)
+	unknownBan := WithBanState(ctx, BanUnknown(lookupErr))
+
+	cases := []struct {
 		name    string
 		checker *Checker
+		ctx     context.Context
+		check   Check
+		cause   error
 	}{
-		{name: "nil client", checker: NewKetoChecker(nil)},
-		{name: "nil receiver"},
+		{"storage error", NewChecker(closedPool, testModel), ctx, siteAdmin, nil},
+		{"cancelled context", working, cancelled, siteAdmin, context.Canceled},
+		{"unknown ban", working, unknownBan, siteAdmin, lookupErr},
+		{"unknown permit", working, ctx, sites.Check(siteRoot, "own"), nil},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			adminCtx := signedIn(tc.ctx, admin.String())
+
+			allowed, allowedErr := tc.checker.Allowed(adminCtx, tc.check)
+			requireErr := tc.checker.Require(adminCtx, tc.check)
+
+			if allowed {
+				t.Error("Allowed = true, want false")
+			}
+			for call, err := range map[string]error{"Allowed": allowedErr, "Require": requireErr} {
+				if errx.KindOf(err) != errx.Unavailable || (tc.cause != nil && !errors.Is(err, tc.cause)) {
+					t.Errorf("%s error = %v, want unavailable wrapping %v", call, err, tc.cause)
+				}
+			}
+		})
+	}
+
+	t.Run("unknown ban allows only reads", func(t *testing.T) {
+		userCtx := signedIn(WithBanState(ctx, BanUnknown(lookupErr)), uuid.NewString())
+		authErr := working.RequireAuthenticated(userCtx)
+		readErr := working.RequireAuthenticatedAllowingUnknownBan(userCtx)
+
+		if errx.KindOf(authErr) != errx.Unavailable || !errors.Is(authErr, lookupErr) {
+			t.Errorf("RequireAuthenticated error = %v, want unavailable wrapping %v", authErr, lookupErr)
+		}
+		if readErr != nil {
+			t.Errorf("RequireAuthenticatedAllowingUnknownBan error = %v, want nil", readErr)
+		}
+	})
+}
+
+func TestCheckerAuthentication(t *testing.T) {
+	t.Parallel()
+	ctx := productionContext(t)
+
+	checker := NewChecker(nil, testModel)
+
+	for name, userCtx := range map[string]context.Context{
+		"missing identity": ctx,
+		"empty subject":    signedIn(ctx, ""),
+		"guest":            signedIn(ctx, "guest"),
 	} {
-		t.Run(test.name, func(t *testing.T) {
-			allowed, err := test.checker.IsAdmin(ctx)
-			if allowed || errx.KindOf(err) != errx.Unavailable {
-				t.Errorf("IsAdmin=(%t, %v), want false and unavailable kind", allowed, err)
-			}
-		})
-	}
-}
+		authErr := checker.RequireAuthenticated(userCtx)
+		readErr := checker.RequireAuthenticatedAllowingUnknownBan(userCtx)
+		requireErr := checker.Require(userCtx, siteAdmin)
+		allowed, allowedErr := checker.Allowed(userCtx, siteAdmin)
 
-func TestCheckerClassifiesKetoFailures(t *testing.T) {
-	fixture, err := testketo.New(t.Context())
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() {
-		if err := fixture.Close(); err != nil {
-			t.Error(err)
+		checkKind(t, name+" RequireAuthenticated", authErr, errx.Unauthorized)
+		checkKind(t, name+" RequireAuthenticatedAllowingUnknownBan", readErr, errx.Unauthorized)
+		checkKind(t, name+" Require", requireErr, errx.Unauthorized)
+		checkKind(t, name+" Allowed", allowedErr, errx.Unauthorized)
+		if allowed {
+			t.Errorf("%s: Allowed = true, want false", name)
 		}
-	})
-
-	checker := NewKetoChecker(ketoclient.NewReadClient(fixture.ReadURL()))
-	checks := []struct {
-		name  string
-		check func(context.Context) (bool, error)
-	}{
-		{name: "admin", check: checker.IsAdmin},
-	}
-
-	userCtx := identity.WithUser(
-		tenant.WithKey(t.Context(), tenant.Production()),
-		&identity.User{Subject: "admin"},
-	)
-	canceledCtx, cancel := context.WithCancel(userCtx)
-	cancel()
-	for _, check := range checks {
-		t.Run(check.name+" canceled", func(t *testing.T) {
-			allowed, err := check.check(canceledCtx)
-			if allowed || errx.KindOf(err) != errx.Unavailable || !errors.Is(err, context.Canceled) {
-				t.Errorf("check=(%t, %v), want false and unavailable wrapping context.Canceled", allowed, err)
-			}
-		})
-	}
-
-	if err := fixture.Close(); err != nil {
-		t.Fatal(err)
-	}
-	ctx := identity.WithUser(tenant.WithKey(t.Context(), tenant.Production()), &identity.User{Subject: "admin"})
-	for _, check := range checks {
-		t.Run(check.name+" provider down", func(t *testing.T) {
-			allowed, err := check.check(ctx)
-			if allowed || errx.KindOf(err) != errx.Unavailable {
-				t.Errorf("check=(%t, %v), want false and unavailable kind", allowed, err)
-			}
-		})
-	}
-	if checker.IsAdminOrFalse(ctx) {
-		t.Error("provider failure granted administrator read visibility")
-	}
-	if checker.IsAdminOrFalse(WithBanState(ctx, BanUnknown(errors.New("ban lookup failed")))) {
-		t.Error("unknown ban status granted administrator read visibility")
-	}
-}
-
-func TestAuthenticationRequirements(t *testing.T) {
-	tests := []struct {
-		name      string
-		user      *identity.User
-		wantAuth  errx.Kind
-		wantAdmin errx.Kind
-	}{
-		{name: "missing identity", wantAuth: errx.Unauthorized, wantAdmin: errx.Unauthorized},
-		{name: "empty subject", user: &identity.User{}, wantAuth: errx.Unauthorized, wantAdmin: errx.Unauthorized},
-		{name: "guest", user: &identity.User{Subject: "guest"}, wantAuth: errx.Unauthorized, wantAdmin: errx.Unauthorized},
-		{name: "authenticated user", user: &identity.User{Subject: "reader"}, wantAdmin: errx.Unavailable},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			ctx := tenant.WithKey(t.Context(), tenant.Production())
-			if test.user != nil {
-				ctx = identity.WithUser(ctx, test.user)
-			}
-			checker := NewKetoChecker(nil)
-
-			if err := checker.RequireAuthenticated(ctx); errx.KindOf(err) != test.wantAuth || (err == nil) != (test.wantAuth == errx.Unknown) {
-				t.Errorf("RequireAuthenticated error=%v, want kind %v (nil for Unknown)", err, test.wantAuth)
-			}
-			if err := checker.RequireAdmin(ctx); errx.KindOf(err) != test.wantAdmin {
-				t.Errorf("RequireAdmin error=%v, want kind %v", err, test.wantAdmin)
-			}
-		})
-	}
-}
-
-func TestAuthenticationRequirementsHandleUnknownBan(t *testing.T) {
-	providerErr := errors.New("ban lookup failed")
-	ctx := identity.WithUser(tenant.WithKey(t.Context(), tenant.Production()), &identity.User{Subject: "user"})
-	ctx = WithBanState(ctx, BanUnknown(providerErr))
-
-	checker := NewKetoChecker(nil)
-	if err := checker.RequireAuthenticated(ctx); errx.KindOf(err) != errx.Unavailable || !errors.Is(err, providerErr) {
-		t.Errorf("RequireAuthenticated error=%v, want unavailable preserving ban lookup error", err)
-	}
-	if allowed, err := checker.IsAdmin(ctx); allowed || errx.KindOf(err) != errx.Unavailable || !errors.Is(err, providerErr) {
-		t.Errorf("IsAdmin=(%t, %v), want false and unavailable preserving ban lookup error", allowed, err)
-	}
-	if err := checker.RequireAuthenticatedAllowingUnknownBan(ctx); err != nil {
-		t.Errorf("RequireAuthenticatedAllowingUnknownBan error=%v, want nil", err)
-	}
-}
-
-func TestPermissionModelInheritsFromProduction(t *testing.T) {
-	fixture, err := testketo.New(t.Context())
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() {
-		if err := fixture.Close(); err != nil {
-			t.Error(err)
-		}
-	})
-
-	err = fixture.Reset(t.Context(), "testdata/tenant_relationships.json")
-	if err != nil {
-		t.Fatal(err)
-	}
-	client := ketoclient.NewReadClient(fixture.ReadURL())
-
-	tests := []struct {
-		name     string
-		subject  string
-		object   string
-		relation string
-		allowed  bool
-	}{
-		{"inherited administrator", "production-admin", "e2e/alpha-0000000a", "admin", true},
-		{"administrator branch access", "production-admin", "e2e/alpha-0000000a", "access", true},
-		{"administrator other branch access", "production-admin", "e2e/beta-0000000b", "access", true},
-		{"branch administrator stays local", "branch-admin", "tadoku", "admin", false},
-		{"inherited production ban", "production-banned", "e2e/alpha-0000000a", "is_banned", true},
-		{"provisioned tester access", "tester", "e2e/alpha-0000000a", "access", true},
-		{"tester does not access other branch", "tester", "e2e/beta-0000000b", "access", false},
-		{"unprovisioned user denied", "user", "e2e/alpha-0000000a", "access", false},
-		{"inherited administrator has no local tuple", "production-admin", "e2e/alpha-0000000a", "admins", false},
-		{"legacy production administrator", "production-admin", "tadoku", "admin", true},
-		{"legacy production administrator access", "production-admin", "tadoku", "access", true},
-		{"legacy production ban", "production-banned", "tadoku", "is_banned", true},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			allowed, err := client.CheckPermission(
-				t.Context(),
-				"app",
-				test.object,
-				test.relation,
-				ketoclient.Subject{ID: test.subject},
-			)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			if allowed != test.allowed {
-				t.Errorf("%s#%s@%s allowed=%t, want %t", test.object, test.relation, test.subject, allowed, test.allowed)
-			}
-		})
 	}
 }

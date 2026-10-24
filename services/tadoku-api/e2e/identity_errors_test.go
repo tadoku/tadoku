@@ -10,11 +10,10 @@ import (
 func TestIdentityV2InfrastructureErrorBody(t *testing.T) {
 	resetIdentity(t)
 	pool := openUnreachablePool(t, api.db.AppPool.Config().ConnString())
-	handler, _, _, err := newTestRouterWithLogger(
+	handler, _, err := newTestRouterWithLogger(
 		t.Context(),
 		pool,
 		pool,
-		api.keto,
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	)
 	if err != nil {

@@ -3,14 +3,16 @@ package permissions
 import (
 	"context"
 
-	ketoclient "github.com/tadoku/tadoku/services/tadoku-api/infra/keto"
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
+// Checker evaluates the model's checks in the context tenant. Nothing is inherited from another tenant.
 type Checker struct {
-	client *ketoclient.Client
+	model Model
+	store store
 }
 
 type banStateKey struct{}
@@ -57,71 +59,44 @@ func banLookupError(ctx context.Context) error {
 	return state.err
 }
 
-func NewKetoChecker(client *ketoclient.Client) *Checker {
-	return &Checker{client: client}
+func NewChecker(db *pgxpool.Pool, model Model) *Checker {
+	return &Checker{model: model, store: newStore(db)}
 }
 
-func rolesObject(ctx context.Context) (string, error) {
-	key, ok := tenant.FromContext(ctx)
+// Require returns unauthorized when nobody is signed in, forbidden when the check is denied, and unavailable when
+// the check fails or the request's ban state is unknown.
+func (c *Checker) Require(ctx context.Context, check Check) error {
+	allowed, err := c.Allowed(ctx, check)
+	if err != nil {
+		return err
+	}
+	if !allowed {
+		return errx.NewForbiddenError("forbidden")
+	}
+	return nil
+}
+
+// Allowed evaluates the check for the signed-in user in the context tenant, with Require's errors.
+func (c *Checker) Allowed(ctx context.Context, check Check) (bool, error) {
+	if err := c.RequireAuthenticated(ctx); err != nil {
+		return false, err
+	}
+
+	userID, ok := identity.ActorID(ctx)
 	if !ok {
-		return "", errx.NewUnavailableError("permissions require a tenant", nil)
-	}
-	if key == tenant.Production() {
-		return "tadoku", nil
-	}
-	return key.String(), nil
-}
-
-func (c *Checker) CheckBanned(ctx context.Context, subjectID string) (bool, error) {
-	object, err := rolesObject(ctx)
-	if err != nil {
-		return false, err
-	}
-	return c.lookup(ctx, "app", object, "is_banned", subjectID)
-}
-
-func (c *Checker) CheckAdmin(ctx context.Context, subjectID string) (bool, error) {
-	object, err := rolesObject(ctx)
-	if err != nil {
-		return false, err
-	}
-	return c.lookup(ctx, "app", object, "admin", subjectID)
-}
-
-func (c *Checker) IsProductionAdmin(ctx context.Context, subjectID string) (bool, error) {
-	return c.lookup(ctx, "app", "tadoku", "admin", subjectID)
-}
-
-func (c *Checker) lookup(ctx context.Context, namespace, object, relation, subjectID string) (bool, error) {
-	if c == nil || c.client == nil {
-		return false, errx.NewUnavailableError("permissions unavailable", nil)
-	}
-
-	allowed, err := c.client.CheckPermission(ctx, namespace, object, relation, ketoclient.Subject{ID: subjectID})
-	if err != nil {
-		return false, errx.NewUnavailableError("check "+relation+" permission", err)
-	}
-	if err := ctx.Err(); err != nil {
-		return false, errx.NewUnavailableError("check "+relation+" permission", err)
-	}
-	return allowed, nil
-}
-
-func (c *Checker) IsAdmin(ctx context.Context) (bool, error) {
-	user := identity.FromContext(ctx)
-	if user == nil || user.Subject == "" || user.Subject == "guest" {
 		return false, nil
 	}
-	if err := banLookupError(ctx); err != nil {
-		return false, errx.NewUnavailableError("check ban permission", err)
-	}
-
-	return c.CheckAdmin(ctx, user.Subject)
+	return c.AllowedFor(ctx, check, userID)
 }
 
-func (c *Checker) IsAdminOrFalse(ctx context.Context) bool {
-	allowed, err := c.IsAdmin(ctx)
-	return err == nil && allowed
+// AllowedFor evaluates the check for userID in the context tenant without reading the request identity or ban
+// state. A failed check is unavailable.
+func (c *Checker) AllowedFor(ctx context.Context, check Check, userID uuid.UUID) (bool, error) {
+	allowed, err := c.model.check(ctx, c.store, check, userID)
+	if err != nil {
+		return false, errx.NewUnavailableError("check "+check.permit+" permission", err)
+	}
+	return allowed, nil
 }
 
 func (c *Checker) RequireAuthenticated(ctx context.Context) error {
@@ -139,34 +114,6 @@ func (c *Checker) RequireAuthenticatedAllowingUnknownBan(ctx context.Context) er
 	user := identity.FromContext(ctx)
 	if user == nil || user.Subject == "" || user.Subject == "guest" {
 		return errx.NewUnauthorizedError("unauthorized")
-	}
-	return nil
-}
-
-func (c *Checker) RequireAdmin(ctx context.Context) error {
-	if err := c.RequireAuthenticated(ctx); err != nil {
-		return err
-	}
-
-	allowed, err := c.IsAdmin(ctx)
-	if err != nil {
-		return err
-	}
-	if !allowed {
-		return errx.NewForbiddenError("forbidden")
-	}
-	return nil
-}
-
-// RequireProductionAdmin guards writes to data shared by every tenant, such as languages and log units.
-func (c *Checker) RequireProductionAdmin(ctx context.Context) error {
-	if err := c.RequireAdmin(ctx); err != nil {
-		return err
-	}
-
-	key, _ := tenant.FromContext(ctx)
-	if key != tenant.Production() {
-		return errx.NewForbiddenError("shared data is writable only from the production tenant")
 	}
 	return nil
 }

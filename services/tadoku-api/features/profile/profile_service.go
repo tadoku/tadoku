@@ -9,25 +9,18 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/features/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	requestidentity "github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
 )
 
 type Service struct {
 	repository *Repository
-	roles      *permissions.KetoService
 	identities *identity.ReadService
 }
 
-func NewService(
-	repository *Repository,
-	roles *permissions.KetoService,
-	identities *identity.ReadService,
-) *Service {
-	return &Service{
-		repository: repository,
-		roles:      roles,
-		identities: identities,
-	}
+// RoleLookup returns each user's role name in the context tenant: admin, banned or user.
+type RoleLookup func(ctx context.Context, userIDs []uuid.UUID) (map[uuid.UUID]string, error)
+
+func NewService(repository *Repository, identities *identity.ReadService) *Service {
+	return &Service{repository: repository, identities: identities}
 }
 
 func (s *Service) SynchronizeUser(ctx context.Context, user *requestidentity.User, now time.Time) (uuid.UUID, error) {
@@ -58,7 +51,12 @@ func (s *Service) DisplayNames(ctx context.Context, ids []uuid.UUID) (map[uuid.U
 	return s.repository.DisplayNames(ctx, ids)
 }
 
-func (s *Service) ListUsers(ctx context.Context, pageSize, page int, query string) (*UserList, error) {
+func (s *Service) ListUsers(
+	ctx context.Context,
+	pageSize, page int,
+	query string,
+	roles RoleLookup,
+) (*UserList, error) {
 	pageSize, page = normalizeUserPage(pageSize, page)
 
 	accounts, err := s.identities.ListAllAccounts(ctx, query)
@@ -69,29 +67,23 @@ func (s *Service) ListUsers(ctx context.Context, pageSize, page int, query strin
 	totalSize := len(accounts)
 	users := userPage(accounts, pageSize, page)
 
-	subjectIDs := make([]string, 0, len(users))
+	userIDs := make([]uuid.UUID, 0, len(users))
 	for _, user := range users {
-		subjectIDs = append(subjectIDs, user.ID.String())
+		userIDs = append(userIDs, user.ID)
 	}
-	claims, err := s.roles.RolesForSubjects(ctx, subjectIDs)
+	userRoles, err := roles(ctx, userIDs)
 	if err != nil {
 		return nil, errx.NewUnavailableError("list user roles", err)
 	}
 
 	result := make([]User, 0, len(users))
 	for _, user := range users {
-		role := "user"
-		if claims[user.ID.String()].Admin {
-			role = "admin"
-		} else if claims[user.ID.String()].Banned {
-			role = "banned"
-		}
 		result = append(result, User{
 			ID:          user.ID.String(),
 			DisplayName: user.DisplayName.String(),
 			Email:       user.Email.String(),
 			CreatedAt:   formatAccountCreatedAt(user.CreatedAt),
-			Role:        role,
+			Role:        userRoles[user.ID],
 		})
 	}
 

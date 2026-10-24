@@ -31,7 +31,7 @@ func (a *Application) CheckContestCreatePermission(ctx context.Context) error {
 	if err := a.permissions.RequireAuthenticated(ctx); err != nil {
 		return err
 	}
-	if a.permissions.IsAdminOrFalse(ctx) {
+	if a.roles.IsAdminOrFalse(ctx) {
 		return nil
 	}
 
@@ -52,7 +52,7 @@ func (a *Application) CreateContest(ctx context.Context, parameters CreateContes
 	if err := a.permissions.RequireAuthenticated(ctx); err != nil {
 		return nil, err
 	}
-	admin, err := a.permissions.IsAdmin(ctx)
+	admin, err := a.roles.IsAdmin(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -120,13 +120,13 @@ func (a *Application) CreateContest(ctx context.Context, parameters CreateContes
 }
 
 func (a *Application) ListContests(ctx context.Context, parameters ListContestsParameters) (*contests.ContestList, error) {
-	includePrivate := a.permissions.IsAdminOrFalse(ctx)
+	includePrivate := a.roles.IsAdminOrFalse(ctx)
 
 	return a.contests.ListContests(ctx, parameters, includePrivate)
 }
 
 func (a *Application) FindContestByID(ctx context.Context, id uuid.UUID) (*contests.ContestView, error) {
-	includeDeleted := a.permissions.IsAdminOrFalse(ctx)
+	includeDeleted := a.roles.IsAdminOrFalse(ctx)
 	return a.contests.FindContestByID(ctx, id, includeDeleted)
 }
 
@@ -145,7 +145,7 @@ type ContestConfigurationOptions struct {
 }
 
 func (a *Application) ContestConfigurationOptions(ctx context.Context) (*ContestConfigurationOptions, error) {
-	canCreateOfficialRound := a.permissions.IsAdminOrFalse(ctx)
+	canCreateOfficialRound := a.roles.IsAdminOrFalse(ctx)
 
 	languages, err := a.languages.ListLanguages(ctx)
 	if err != nil {
@@ -262,7 +262,7 @@ func (a *Application) ListYearlyContestRegistrations(
 	parameters ListYearlyContestRegistrationsParameters,
 ) (*ContestRegistrationList, error) {
 	actorID, ok := identity.ActorID(ctx)
-	includePrivate := a.permissions.IsAdminOrFalse(ctx) || (ok && actorID == parameters.UserID)
+	includePrivate := a.roles.IsAdminOrFalse(ctx) || (ok && actorID == parameters.UserID)
 
 	languages, err := a.languages.ListLanguages(ctx)
 	if err != nil {

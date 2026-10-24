@@ -25,7 +25,7 @@ func (a *Application) FindPageBySlug(ctx context.Context, namespace, slug string
 	if err != nil {
 		return nil, pages.ErrPageNotFound
 	}
-	if err := a.permissions.RequireAdmin(ctx); err != nil {
+	if err := a.roles.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 
@@ -33,7 +33,7 @@ func (a *Application) FindPageBySlug(ctx context.Context, namespace, slug string
 }
 
 func (a *Application) ListPages(ctx context.Context, namespace string, includeDrafts bool, pageSize, page int) (*pages.PageList, error) {
-	if err := a.permissions.RequireAdmin(ctx); err != nil {
+	if err := a.roles.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 
@@ -43,7 +43,7 @@ func (a *Application) ListPages(ctx context.Context, namespace string, includeDr
 type CreatePageParameters = pages.CreatePageParameters
 
 func (a *Application) CreatePage(ctx context.Context, parameters CreatePageParameters) (*pages.Page, error) {
-	if err := a.permissions.RequireAdmin(ctx); err != nil {
+	if err := a.roles.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 
@@ -64,7 +64,7 @@ func (a *Application) CreatePage(ctx context.Context, parameters CreatePageParam
 type UpdatePageParameters = pages.UpdatePageParameters
 
 func (a *Application) UpdatePage(ctx context.Context, parameters UpdatePageParameters) (*pages.Page, error) {
-	if err := a.permissions.RequireAdmin(ctx); err != nil {
+	if err := a.roles.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 
@@ -83,7 +83,7 @@ func (a *Application) UpdatePage(ctx context.Context, parameters UpdatePageParam
 }
 
 func (a *Application) DeletePage(ctx context.Context, namespace string, id uuid.UUID) error {
-	if err := a.permissions.RequireAdmin(ctx); err != nil {
+	if err := a.roles.RequireAdmin(ctx); err != nil {
 		return err
 	}
 
@@ -91,7 +91,7 @@ func (a *Application) DeletePage(ctx context.Context, namespace string, id uuid.
 }
 
 func (a *Application) ListPageVersions(ctx context.Context, namespace string, id uuid.UUID) ([]pages.PageVersion, error) {
-	if err := a.permissions.RequireAdmin(ctx); err != nil {
+	if err := a.roles.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 
@@ -99,7 +99,7 @@ func (a *Application) ListPageVersions(ctx context.Context, namespace string, id
 }
 
 func (a *Application) GetPageVersion(ctx context.Context, namespace string, pageID, contentID uuid.UUID) (*pages.PageVersion, error) {
-	if err := a.permissions.RequireAdmin(ctx); err != nil {
+	if err := a.roles.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 

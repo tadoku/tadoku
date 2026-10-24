@@ -234,7 +234,7 @@ func TestModerationProviderFailureJourney(t *testing.T) {
 	failureAPI := &suite{
 		db:      api.db,
 		keto:    api.keto,
-		handler: ketoWriteFailureRoleUpdateHandler(t),
+		handler: grantsFailureRoleUpdateHandler(t),
 	}
 
 	runJourney(t, failureAPI, "ModerationProviderFailure", []step{

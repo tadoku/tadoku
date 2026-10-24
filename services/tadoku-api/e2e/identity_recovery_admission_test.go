@@ -311,8 +311,8 @@ func TestIdentityRecoveryAdmissionFailsClosed(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		handler, _, _, err := newTestRouterWithLogger(
-			t.Context(), api.db.AppPool, api.db.AppPool, api.keto,
+		handler, _, err := newTestRouterWithLogger(
+			t.Context(), api.db.AppPool, api.db.AppPool,
 			slog.New(slog.NewTextHandler(io.Discard, nil)), withIdentityValkey(tc.client),
 		)
 		if err != nil {

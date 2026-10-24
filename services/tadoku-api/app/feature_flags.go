@@ -21,7 +21,7 @@ func (a *Application) FeatureFlagDecisions(ctx context.Context) FeatureFlagDecis
 }
 
 func (a *Application) FeatureAccessGet(ctx context.Context, flagKey string, targetUserID uuid.UUID) (FeatureAccessState, error) {
-	if err := a.permissions.RequireAdmin(ctx); err != nil {
+	if err := a.roles.RequireAdmin(ctx); err != nil {
 		return featureflags.State{}, err
 	}
 	return a.featureFlags.GetNamedUserAccess(ctx, flagKey, targetUserID)
@@ -32,7 +32,7 @@ func (a *Application) FeatureAccessGrant(
 	flagKey string,
 	targetUserID uuid.UUID,
 ) (state FeatureAccessState, err error) {
-	if err := a.permissions.RequireAdmin(ctx); err != nil {
+	if err := a.roles.RequireAdmin(ctx); err != nil {
 		return featureflags.State{}, err
 	}
 	actorID, err := identity.RequireActorID(ctx)
@@ -53,7 +53,7 @@ func (a *Application) FeatureAccessRevoke(
 	flagKey string,
 	targetUserID uuid.UUID,
 ) (state FeatureAccessState, err error) {
-	if err := a.permissions.RequireAdmin(ctx); err != nil {
+	if err := a.roles.RequireAdmin(ctx); err != nil {
 		return featureflags.State{}, err
 	}
 	actorID, err := identity.RequireActorID(ctx)

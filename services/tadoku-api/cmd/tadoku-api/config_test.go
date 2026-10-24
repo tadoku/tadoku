@@ -10,8 +10,6 @@ import (
 func TestLoadConfigUsesValidatedDefaults(t *testing.T) {
 	t.Setenv("API_SCORING_ENGINE_ENABLED", "false")
 	t.Setenv("API_JWKS", "http://jwks.test")
-	t.Setenv("API_KETO_READ_URL", "http://keto-read.test")
-	t.Setenv("API_KETO_WRITE_URL", "http://keto-write.test")
 	t.Setenv("API_OATHKEEPER_AUTHZ_TOKEN", "callback-token")
 	t.Setenv("API_KRATOS_ADMIN_URL", "http://kratos-admin.test")
 	t.Setenv("API_IMMERSION_URL", "")
@@ -50,12 +48,6 @@ func TestLoadConfigUsesValidatedDefaults(t *testing.T) {
 	}
 	if cfg.JWKS != "http://jwks.test" {
 		t.Errorf("JWKS=%q", cfg.JWKS)
-	}
-	if cfg.KetoReadURL != "http://keto-read.test" {
-		t.Errorf("Keto read URL=%q", cfg.KetoReadURL)
-	}
-	if cfg.KetoWriteURL != "http://keto-write.test" || cfg.KetoWriteTimeout != 2*time.Second {
-		t.Errorf("Keto write URL=%q timeout=%v", cfg.KetoWriteURL, cfg.KetoWriteTimeout)
 	}
 	if cfg.OathkeeperAuthzToken != "callback-token" {
 		t.Errorf("Oathkeeper authorization token=%q", cfg.OathkeeperAuthzToken)
@@ -168,31 +160,6 @@ func TestLoadConfigUsesValidatedDefaults(t *testing.T) {
 		t.Fatal("missing scoring setting accepted")
 	}
 	t.Setenv("API_SCORING_ENGINE_ENABLED", "false")
-	for _, rawURL := range []string{
-		"", "not-a-url", "/relative", "ftp://keto.test", "http://:4467", "http://keto.test:bad",
-		"http://user:secret@keto.test", "http://keto.test?query=1", "http://keto.test?",
-		"http://keto.test#fragment", "http://keto.test#",
-	} {
-		t.Setenv("API_KETO_WRITE_URL", rawURL)
-		if _, err := loadConfig(); err == nil || !strings.Contains(err.Error(), "KetoWriteURL") {
-			t.Errorf("Keto write URL %q error=%v", rawURL, err)
-		}
-	}
-	t.Setenv("API_KETO_WRITE_URL", "https://keto-write.test:4467/provider/")
-	for _, timeout := range []string{"0s", "-1s", "invalid"} {
-		t.Setenv("API_KETO_WRITE_TIMEOUT", timeout)
-		if _, err := loadConfig(); err == nil || !strings.Contains(err.Error(), "KetoWriteTimeout") {
-			t.Errorf("Keto write timeout %q error=%v", timeout, err)
-		}
-	}
-	t.Setenv("API_KETO_WRITE_TIMEOUT", "750ms")
-	ketoConfig, err := loadConfig()
-	if err != nil {
-		t.Fatalf("load explicit Keto configuration: %v", err)
-	}
-	if ketoConfig.KetoWriteURL != "https://keto-write.test:4467/provider" || ketoConfig.KetoWriteTimeout != 750*time.Millisecond {
-		t.Errorf("Keto write URL=%q timeout=%v", ketoConfig.KetoWriteURL, ketoConfig.KetoWriteTimeout)
-	}
 	t.Setenv("API_JWKS", "")
 	if _, err := loadConfig(); err == nil || !strings.Contains(err.Error(), "JWKS") {
 		t.Errorf("missing JWKS configuration error=%v", err)
@@ -229,25 +196,6 @@ func TestLoadConfigUsesValidatedDefaults(t *testing.T) {
 		t.Errorf("missing Oathkeeper callback credential error=%v", err)
 	}
 	t.Setenv("API_OATHKEEPER_AUTHZ_TOKEN", "callback-token")
-	for _, rawURL := range []string{
-		"", "not-a-url", "/relative", "ftp://keto-read.test", "http://:4466", "http://keto-read.test:bad",
-		"http://user:secret@keto-read.test", "http://keto-read.test?query=1", "http://keto-read.test?",
-		"http://keto-read.test#fragment", "http://keto-read.test#",
-	} {
-		t.Setenv("API_KETO_READ_URL", rawURL)
-		if _, err := loadConfig(); err == nil || !strings.Contains(err.Error(), "KetoReadURL") {
-			t.Errorf("Keto read URL %q error=%v", rawURL, err)
-		}
-	}
-	t.Setenv("API_KETO_READ_URL", "https://keto-read.test:4466/provider/")
-	ketoReadConfig, err := loadConfig()
-	if err != nil {
-		t.Fatalf("load explicit Keto read configuration: %v", err)
-	}
-	if ketoReadConfig.KetoReadURL != "https://keto-read.test:4466/provider" {
-		t.Errorf("Keto read URL=%q", ketoReadConfig.KetoReadURL)
-	}
-	t.Setenv("API_KETO_READ_URL", "http://keto-read.test")
 	t.Setenv("API_JWT_ISSUER", "https://issuer.example.test/")
 	issuerConfig, err := loadConfig()
 	if err != nil {
@@ -271,8 +219,6 @@ func TestLoadConfigRejectsInvalidBranch(t *testing.T) {
 	for key, value := range map[string]string{
 		"API_SCORING_ENGINE_ENABLED": "false",
 		"API_JWKS":                   "http://jwks.test",
-		"API_KETO_READ_URL":          "http://keto-read.test",
-		"API_KETO_WRITE_URL":         "http://keto-write.test",
 		"API_OATHKEEPER_AUTHZ_TOKEN": "callback-token",
 		"API_VALKEY_URL":             "redis://valkey:6379",
 		"API_POSTGRES_HOST":          "localhost",

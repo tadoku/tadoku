@@ -72,8 +72,8 @@ func TestEmailGatewayCookieAndBearer(t *testing.T) {
 	proxyURL, jwksURL := startEmailGateway(t, "http://"+backend.Listener.Addr().String(), &cookie)
 	deployment, _ := tenant.ParseDeployment(key.String())
 
-	handler, _, _, err := newTestRouterWithLeaderboardService(t.Context(), api.db.AppPool, api.db.AppPool,
-		api.keto, slog.New(slog.NewTextHandler(io.Discard, nil)), false, nil, deployment,
+	handler, _, err := newTestRouterWithLeaderboardService(t.Context(), api.db.AppPool, api.db.AppPool,
+		slog.New(slog.NewTextHandler(io.Discard, nil)), false, nil, deployment,
 		func(e *routerEndpoints) { e.jwks = jwksURL })
 	if err != nil {
 		t.Fatal(err)
@@ -200,8 +200,8 @@ func TestEmailGatewayCookieAndBearer(t *testing.T) {
 	check("revoked session", "/emails", "", cookie, 401)
 	check("bearer revoked native session", "/emails", "Bearer "+raw, cookie, 200)
 	other, _ := tenant.ParseDeployment("tadoku/other-0123abcd")
-	otherHandler, _, _, err := newTestRouterWithLeaderboardService(t.Context(), api.db.AppPool, api.db.AppPool,
-		api.keto, slog.New(slog.NewTextHandler(io.Discard, nil)), false, nil, other,
+	otherHandler, _, err := newTestRouterWithLeaderboardService(t.Context(), api.db.AppPool, api.db.AppPool,
+		slog.New(slog.NewTextHandler(io.Discard, nil)), false, nil, other,
 		func(e *routerEndpoints) { e.jwks = jwksURL })
 	if err != nil {
 		t.Fatal(err)

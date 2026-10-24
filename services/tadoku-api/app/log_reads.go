@@ -17,7 +17,7 @@ type ExportedLog = logs.ExportedLog
 
 func (a *Application) FindLog(ctx context.Context, id uuid.UUID) (*Log, error) {
 	actorID, hasActor := identity.ActorID(ctx)
-	isAdmin := hasActor && a.permissions.IsAdminOrFalse(ctx)
+	isAdmin := hasActor && a.roles.IsAdminOrFalse(ctx)
 	var viewer logs.Viewer = logs.GuestViewer{}
 	switch {
 	case isAdmin:
@@ -37,14 +37,14 @@ func (a *Application) ListUserLogs(
 	parameters LogListParameters,
 	createdOn *time.Time,
 ) (*LogList, error) {
-	if parameters.IncludeDeleted && !a.permissions.IsAdminOrFalse(ctx) {
+	if parameters.IncludeDeleted && !a.roles.IsAdminOrFalse(ctx) {
 		return nil, errx.NewForbiddenError("include_deleted requires administrator access")
 	}
 	return a.logs.ListUserLogs(ctx, parameters, createdOn)
 }
 
 func (a *Application) ListContestLogs(ctx context.Context, parameters LogListParameters) (*LogList, error) {
-	if parameters.IncludeDeleted && !a.permissions.IsAdminOrFalse(ctx) {
+	if parameters.IncludeDeleted && !a.roles.IsAdminOrFalse(ctx) {
 		return nil, errx.NewForbiddenError("include_deleted requires administrator access")
 	}
 

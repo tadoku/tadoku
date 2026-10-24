@@ -11,7 +11,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const activateContestScoringRuleSet = `-- name: ActivateContestScoringRuleSet :exec
+const activateContestScoringRuleSet = `-- name: ActivateContestScoringRuleSet :execrows
 update contests
 set
   scoring_rule_set_id = $1,
@@ -26,9 +26,12 @@ type ActivateContestScoringRuleSetParams struct {
 	ContestID pgtype.UUID
 }
 
-func (q *Queries) ActivateContestScoringRuleSet(ctx context.Context, arg ActivateContestScoringRuleSetParams) error {
-	_, err := q.db.Exec(ctx, activateContestScoringRuleSet, arg.RuleSetID, arg.UpdatedAt, arg.ContestID)
-	return err
+func (q *Queries) ActivateContestScoringRuleSet(ctx context.Context, arg ActivateContestScoringRuleSetParams) (int64, error) {
+	result, err := q.db.Exec(ctx, activateContestScoringRuleSet, arg.RuleSetID, arg.UpdatedAt, arg.ContestID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const activatePlatformScoringRuleSet = `-- name: ActivatePlatformScoringRuleSet :exec

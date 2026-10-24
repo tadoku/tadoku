@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-const recoverySettingsURL = "https://identity-a-0123abcd.authv2.tadoku.dev.lab/?from=recovery#password"
+const recoverySettingsURL = "https://identity-a-0123abcd.account.tadoku.dev.lab/?from=recovery#password"
 
 func seedRecoveryToken(t *testing.T, marker byte, expires time.Time, used *time.Time) string {
 	t.Helper()
@@ -134,7 +134,7 @@ func TestIdentityRecoveryConsumeRevokesAndSetsPassword(t *testing.T) {
 	response := identityRequest(t, api.handler, identityBranchA, "GET",
 		"/identity/recovery/"+first+"?return_to="+url.QueryEscape(recoverySettingsURL), "", "", nil)
 	requireIdentityStatus(t, response, http.StatusSeeOther)
-	want := "https://identity-a-0123abcd.authv2.tadoku.dev.lab/?edit=password&return_to=" +
+	want := "https://identity-a-0123abcd.account.tadoku.dev.lab/?edit=password&return_to=" +
 		url.QueryEscape(recoverySettingsURL)
 	if response.Header().Get("Location") != want {
 		t.Fatal("recovery must open the Password editor with its validated return destination")
@@ -216,13 +216,13 @@ func TestIdentityRecoveryRejectsRedirectBeforeConsuming(t *testing.T) {
 	requireIdentityStatus(t, response, http.StatusBadRequest)
 	response = identityRequest(t, api.handler, identityBranchA, "GET", "/identity/recovery/"+token, "", "", nil)
 	requireIdentityStatus(t, response, http.StatusSeeOther)
-	if response.Header().Get("Location") != "https://identity-a-0123abcd.authv2.tadoku.dev.lab/?edit=password" {
+	if response.Header().Get("Location") != "https://identity-a-0123abcd.account.tadoku.dev.lab/?edit=password" {
 		t.Fatal("default Settings redirect escaped the token tenant or closed the Password editor")
 	}
 }
 
 func TestIdentityRecoveryRejectsUnrepresentableReturnTo(t *testing.T) {
-	prefix := "https://authv2.tadoku.dev.lab/?q="
+	prefix := "https://account.tadoku.dev.lab/?q="
 	for _, tc := range []struct {
 		name, email, character string
 		want                   int

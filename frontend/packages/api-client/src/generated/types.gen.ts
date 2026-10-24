@@ -507,7 +507,6 @@ export type IdentityAccount = {
 };
 
 export type IdentitySession = {
-    account_app: 'v1' | 'v2';
     account: IdentityAccount | null;
 };
 
@@ -2782,10 +2781,6 @@ export type IdentityRegistrationCreateErrors = {
      */
     429: IdentityErrorResponse;
     /**
-     * Not implemented
-     */
-    501: IdentityErrorResponse;
-    /**
      * Request rejected
      */
     503: IdentityErrorResponse;
@@ -2826,10 +2821,6 @@ export type IdentityLoginCreateErrors = {
      * Request rejected
      */
     429: IdentityErrorResponse;
-    /**
-     * Not implemented
-     */
-    501: IdentityErrorResponse;
     /**
      * Request rejected
      */
@@ -2954,10 +2945,6 @@ export type IdentityRecoveryCreateErrors = {
      */
     429: IdentityErrorResponse;
     /**
-     * Not implemented
-     */
-    501: IdentityErrorResponse;
-    /**
      * Request rejected
      */
     503: IdentityErrorResponse;
@@ -3012,10 +2999,6 @@ export type IdentityRecoveryConsumeErrors = {
      */
     429: IdentityErrorResponse;
     /**
-     * Not implemented
-     */
-    501: IdentityErrorResponse;
-    /**
      * Request rejected
      */
     503: IdentityErrorResponse;
@@ -3055,10 +3038,6 @@ export type IdentityProfileUpdateErrors = {
      * Request rejected
      */
     429: IdentityErrorResponse;
-    /**
-     * Not implemented
-     */
-    501: IdentityErrorResponse;
     /**
      * Request rejected
      */
@@ -3108,10 +3087,6 @@ export type IdentityPasswordUpdateErrors = {
      * Request rejected
      */
     429: IdentityErrorResponse;
-    /**
-     * Not implemented
-     */
-    501: IdentityErrorResponse;
     /**
      * Request rejected
      */

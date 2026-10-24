@@ -23,7 +23,6 @@ var (
 	ErrRecoveryThrottled = &Error{
 		"throttled", errx.NewThrottledError("too many recovery requests; try again later"),
 	}
-	ErrNotImplemented  = errx.NewNotImplementedError()
 	ErrWrongPassword   = &Error{"wrong_password", errx.NewUnauthorizedError("invalid email or password")}
 	ErrEmailTaken      = &Error{"email_taken", errx.NewConflictError("email is already registered")}
 	ErrThrottled       = &Error{"throttled", errx.NewThrottledError("too many login attempts; try again later")}
@@ -89,17 +88,4 @@ type Reader interface {
 	FindAccount(ctx context.Context, userID uuid.UUID) (Account, error)
 	UserExists(ctx context.Context, userID uuid.UUID) (bool, error)
 	ListAccounts(ctx context.Context, query ListAccounts) (AccountPage, error)
-}
-
-type Accounts interface {
-	Reader
-	DeleteAccount(ctx context.Context, userID uuid.UUID) error
-	Register(ctx context.Context, registration Registration) (LoginResult, error)
-	Login(ctx context.Context, login Login) (LoginResult, error)
-	Logout(ctx context.Context, cookieHeader CookieHeader) (Cookie, error)
-	Session(ctx context.Context, cookieHeader CookieHeader) (Session, error)
-	RequestRecovery(ctx context.Context, recovery Recovery) (RecoveryResult, error)
-	ConsumeRecovery(ctx context.Context, recoveryToken RecoveryToken) (RecoveryLogin, error)
-	UpdateProfile(ctx context.Context, cookieHeader CookieHeader, settings ProfileSettings) (ProfileResult, error)
-	UpdatePassword(ctx context.Context, cookieHeader CookieHeader, password string) error
 }

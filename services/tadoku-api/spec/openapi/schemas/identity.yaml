@@ -63,17 +63,11 @@ components:
     IdentitySession:
       type: object
       properties:
-        account_app:
-          type: string
-          enum:
-          - v1
-          - v2
         account:
           allOf:
           - $ref: '#/components/schemas/IdentityAccount'
           nullable: true
       required:
-      - account_app
       - account
     IdentityRegistration:
       type: object

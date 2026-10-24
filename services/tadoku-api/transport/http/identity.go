@@ -157,7 +157,7 @@ func identitySession(result app.IdentitySession) openapi.IdentitySession {
 			AuthenticatedAt: session.AuthenticatedAt,
 		})
 	}
-	return openapi.IdentitySession{AccountApp: openapi.V2, Account: account}
+	return openapi.IdentitySession{Account: account}
 }
 
 // Responses keep the address part net/mail reads from a stored address and send an address it cannot read unchanged.

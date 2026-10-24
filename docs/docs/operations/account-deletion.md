@@ -8,10 +8,9 @@ description: How to manually delete a Tadoku account, its native sign-in account
 
 Read this when a user has asked for their Tadoku account to be deleted.
 
-Account deletion is manual. Tadoku has no self-service or API operation for it,
-and the identity feature's `DeleteAccount` is not implemented. Start only after
-you have confirmed that the request comes from the account's owner. Run the
-steps below in order. You can safely rerun any step.
+Account deletion is manual. Tadoku has no self-service or API operation for it.
+Start only after you have confirmed that the request comes from the account's
+owner. Run the steps below in order. You can safely rerun any step.
 
 The steps have two stages with different effects:
 

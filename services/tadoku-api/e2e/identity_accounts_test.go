@@ -19,8 +19,7 @@ const identityBranchB = "tadoku/identity-b-0123abcd"
 const identityFixturePassword = "Fixture-login-482!"
 
 type identitySessionView struct {
-	AccountApp string `json:"account_app"`
-	Account    *struct {
+	Account *struct {
 		ID              string    `json:"id"`
 		Email           string    `json:"email"`
 		DisplayName     string    `json:"display_name"`
@@ -267,7 +266,7 @@ func TestIdentityV2SessionJourney(t *testing.T) {
 	}
 	response = identityRequest(t, api.handler, identityBranchA, "GET", "/identity/session", "", first.String(), nil)
 	view := identityView(t, response)
-	if view.AccountApp != "v2" || view.Account == nil || view.Account.Email != "new@example.test" ||
+	if view.Account == nil || view.Account.Email != "new@example.test" ||
 		view.Account.DisplayName != "New Reader" || !view.Account.CreatedAt.Equal(fixtureInstant) ||
 		!view.Account.AuthenticatedAt.Equal(fixtureInstant) {
 		t.Fatal("registration did not persist the complete session account")

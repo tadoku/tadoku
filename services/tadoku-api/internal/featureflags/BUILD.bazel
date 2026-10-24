@@ -11,7 +11,6 @@ go_library(
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/internal/featureflags",
     visibility = ["//services/tadoku-api:internal_consumers"],
     deps = [
-        "//services/tadoku-api/internal/tenant",
         "@com_github_google_uuid//:uuid",
         "@com_github_prometheus_client_golang//prometheus",
     ],
@@ -24,12 +23,10 @@ go_test(
         "evaluator_test.go",
         "metrics_test.go",
         "public_test.go",
-        "tenant_test.go",
     ],
     data = ["//:feature-flags.contract.json"],
     embed = [":featureflags"],
     deps = [
-        "//services/tadoku-api/internal/tenant",
         "@com_github_google_uuid//:uuid",
         "@com_github_prometheus_client_golang//prometheus",
         "@com_github_prometheus_client_golang//prometheus/promhttp",

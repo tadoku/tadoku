@@ -99,7 +99,7 @@ addresses. Development mail remains held.
 `frontend/apps/authv2/src/lib/session.server.ts` requests `GET /identity/session`
 through the [generated client](api-client.md) from the configured Tadoku API root,
 forwarding only the incoming Cookie and `X-Dev-Branch` request headers. The
-generated session schema, without `account_app`, checks the response shape; the
+generated session schema checks the response shape; the
 API owns account field constraints, so imported display names and email formats
 pass. Session data is request-scoped; both the upstream read and rendered response disable caching.
 The server function in `frontend/apps/authv2/src/lib/session.ts` keeps server

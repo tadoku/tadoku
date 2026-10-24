@@ -460,7 +460,6 @@ export const zIdentityAccount = z.object({
 });
 
 export const zIdentitySession = z.object({
-    account_app: z.enum(['v1', 'v2']),
     account: zIdentityAccount.nullable()
 });
 

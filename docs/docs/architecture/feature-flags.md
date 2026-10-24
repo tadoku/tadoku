@@ -10,8 +10,7 @@ Read this when you gate behavior behind a flag, change who sees a flagged featur
 
 This page describes the development environment. Flags are boolean. Without a
 decision, `Evaluator.Boolean` consumers use the flag's behavior-preserving safe
-default. `Evaluator.TenantBoolean` returns an error instead, as described
-below.
+default.
 
 ## Where flags are declared
 
@@ -57,7 +56,7 @@ installs an SDK only when that SDK's own initial fetch returned a valid snapshot
 and its engine accepted it. When the initial fetch fails, the client discards the
 SDK and its empty fallback state, even if later background fetches clear the
 SDK's last error, and starts a fresh SDK every `API_FLIPT_UPDATE_INTERVAL`. Until then
-`Boolean` serves safe defaults and `TenantBoolean` reports a provider error. The
+`Boolean` serves safe defaults. The
 canonical client is created at startup. Test clients are created on first evaluation, retained in a
 16-client LRU cache and closed on eviction or shutdown. A missing tenant never
 falls back to canonical flags. Test clients have no provider-lifecycle observer,
@@ -69,22 +68,6 @@ Flipt calls pass through Oathkeeper with service JWTs that
 `flipt-management` audience ([Service-to-service auth](./service-tokens.md)).
 Their routes in `k8s/dev/base/oathkeeper/rules.yaml` allow only the snapshot
 read and managed segment calls. Metrics are named `tadoku_feature_flag_*`.
-
-`Evaluator.TenantBoolean` uses the parsed context tenant key as the Flipt entity,
-including guest traffic. It uses the same provider target mapping and
-observations as user evaluation, without caching a decision across tenants.
-Unlike `Boolean`, it returns an error instead of a safe default when it cannot
-decide. The error wraps `ErrFlagNotFound` only when the fetched namespace
-snapshot the client evaluated lacks the flag, and otherwise carries the
-provider, invalid-response or context error. When Flipt is disabled, or a
-client has no fetched snapshot yet because Flipt was unreachable or the
-namespace does not exist, it reports a provider error rather than a missing
-flag; `Boolean` still serves the safe default.
-
-`IdentityV2` (`identity-v2`) has the safe default `true`. Tenant provisioning
-creates it, but no Tadoku API operation evaluates it. It is declared in webv2
-but is not added to the public decisions response. The browser schema supplies
-`true` when that internal decision is absent.
 
 ## Decisions in the browser
 

@@ -6,12 +6,8 @@ import {
   identityRecoveryCreate,
   identityRegistrationCreate,
   zIdentityErrorResponse,
-  zIdentitySession,
   type IdentityErrorResponse,
 } from 'api-client'
-
-/** Identity session answers, which may omit account_app: no frontend reads it. */
-export const zSession = zIdentitySession.omit({ account_app: true })
 
 type Values = Record<string, string>
 
@@ -36,18 +32,13 @@ type Send = (request: Request, values: Values) => Promise<{ error?: unknown; res
 export const operations = {
   login: {
     page: '/login',
-    send: (request, v) => identityLoginCreate({
-      ...request,
-      body: { email: v.email, password: v.password },
-      responseValidator: body => zSession.parseAsync(body),
-    }),
+    send: (request, v) => identityLoginCreate({ ...request, body: { email: v.email, password: v.password } }),
   },
   register: {
     page: '/register',
     send: (request, v) => identityRegistrationCreate({
       ...request,
       body: { display_name: v.display_name, email: v.email, password: v.password },
-      responseValidator: body => zSession.parseAsync(body),
     }),
   },
   recover: {

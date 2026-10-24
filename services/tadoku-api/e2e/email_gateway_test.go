@@ -129,7 +129,7 @@ func TestEmailGatewayCookieAndBearer(t *testing.T) {
 		if path == "/authz/current-user/role" && want == 200 && string(body) != "{\"role\":\"guest\"}\n" {
 			t.Errorf("token on guest-readable route did not stay guest: %s", body)
 		}
-		if want == 200 && path == "/identity/session" && !bytes.Contains(body, []byte("account_app")) {
+		if want == 200 && path == "/identity/session" && !bytes.Contains(body, []byte(`"account"`)) {
 			t.Errorf("%s did not return the actual identity session", name)
 		}
 		if want == 200 && strings.HasPrefix(path, "/emails") && !bytes.Contains(body, []byte(id.String())) {
@@ -271,12 +271,12 @@ func gatewayAdminCookie(t *testing.T, key tenant.Key, proxyURL, host, forwardedP
 	if err := json.NewDecoder(response.Body).Decode(&view); err != nil {
 		t.Fatal(err)
 	}
-	if response.StatusCode != http.StatusOK || view.AccountApp != "v2" || view.Account == nil ||
+	if response.StatusCode != http.StatusOK || view.Account == nil ||
 		view.Account.ID != userID.String() || view.Account.DisplayName != "Gateway Admin" ||
 		view.Account.Email != email {
 		t.Fatalf(
-			"gateway login: status=%d app=%s account=%+v",
-			response.StatusCode, view.AccountApp, view.Account,
+			"gateway login: status=%d account=%+v",
+			response.StatusCode, view.Account,
 		)
 	}
 

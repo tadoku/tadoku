@@ -122,16 +122,6 @@ func (s *Service) ApplyPasswordUpdate(ctx context.Context, update PasswordUpdate
 	)
 }
 
-// UpdatePassword requires the application's transaction through credential change and revocation.
-// HTTP callers hash with HashPasswordUpdate before the transaction and use ApplyPasswordUpdate inside it.
-func (s *Service) UpdatePassword(ctx context.Context, header CookieHeader, raw string) error {
-	update, err := s.HashPasswordUpdate(ctx, header, raw)
-	if err != nil {
-		return err
-	}
-	return s.ApplyPasswordUpdate(ctx, update)
-}
-
 func (s *Service) SettingsSession(ctx context.Context, header CookieHeader) (AuthenticatedSession, error) {
 	current, err := s.Session(ctx, header)
 	if err != nil {

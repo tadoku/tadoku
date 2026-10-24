@@ -91,7 +91,7 @@ x-tadoku-sources:
     exposure: public
     info:
       title: identity-api
-      description: Registration, sessions, recovery and settings contracts; registered skeletons return 501.
+      description: Registration, sessions, recovery and settings contracts.
       version: 1.0.0
     servers:
     - url: https://tadoku.app/api/internal
@@ -2680,12 +2680,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/IdentityErrorResponse'
-        '501':
-          description: Not implemented
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/IdentityErrorResponse'
         '503':
           description: Request rejected
           content:
@@ -2744,12 +2738,6 @@ paths:
                 $ref: '#/components/schemas/IdentityErrorResponse'
         '429':
           description: Request rejected
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/IdentityErrorResponse'
-        '501':
-          description: Not implemented
           content:
             application/json:
               schema:
@@ -2909,12 +2897,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/IdentityErrorResponse'
-        '501':
-          description: Not implemented
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/IdentityErrorResponse'
         '503':
           description: Request rejected
           content:
@@ -2988,12 +2970,6 @@ paths:
                 $ref: '#/components/schemas/IdentityErrorResponse'
         '429':
           description: Request rejected
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/IdentityErrorResponse'
-        '501':
-          description: Not implemented
           content:
             application/json:
               schema:
@@ -3075,12 +3051,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/IdentityErrorResponse'
-        '501':
-          description: Not implemented
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/IdentityErrorResponse'
         '503':
           description: Request rejected
           content:
@@ -3140,12 +3110,6 @@ paths:
                 $ref: '#/components/schemas/IdentityErrorResponse'
         '429':
           description: Request rejected
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/IdentityErrorResponse'
-        '501':
-          description: Not implemented
           content:
             application/json:
               schema:
@@ -4640,17 +4604,11 @@ components:
     IdentitySession:
       type: object
       properties:
-        account_app:
-          type: string
-          enum:
-          - v1
-          - v2
         account:
           allOf:
           - $ref: '#/components/schemas/IdentityAccount'
           nullable: true
       required:
-      - account_app
       - account
     IdentityRegistration:
       type: object

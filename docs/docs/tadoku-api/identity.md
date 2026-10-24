@@ -14,8 +14,7 @@ for guests, uses tenant-local accounts. Profile and moderation callers use
 `identity.Reader`, constructed by `identity.NewReader`.
 
 Account lookup and search are implemented by the separate `ReadService` used by
-profile and moderation; the `Accounts` service's embedded Reader methods and
-account deletion remain `501` stubs; see the manual
+profile and moderation. Account deletion is manual; see
 [Account deletion](../operations/account-deletion.md).
 [Retained email](./email.md) provides recovery messages and old-address notices
 through transactional writes and queue publication.
@@ -25,12 +24,13 @@ through transactional writes and queue publication.
 Public identity paths are relative to `/api/internal` and enter the JWT and ban
 pipeline, including guest requests. Missing JWT credentials return `400`, invalid
 JWTs `401`, and another tenant on a scoped deployment `421`.
-`GET /identity/session` returns `account_app`, always `v2`, plus the account or
-`null`.
+`GET /identity/session` returns `account`: the signed-in account, or `null` for
+a guest.
 
 Identity mutations require JSON and an HTTPS `Origin` on the Tadoku app
-allowlist. App hosts include the main, account, admin and authv2 hosts, their
-preview branches and development equivalents. Credentials, explicit ports and
+allowlist. App hosts include the main, account and admin hosts, their preview
+branches and development equivalents. The former authv2 hosts stay accepted
+while `authv2.tadoku.app` redirects to `account.tadoku.app`. Credentials, explicit ports and
 lookalike suffixes are rejected. Return URLs use the same host policy and may
 retain their path, query and fragment. Request bodies keep the shared byte cap
 and generated decoder. Logout takes no body and never reads one, but still
@@ -197,17 +197,17 @@ the tenant's Settings URL as an encoded `return_to` after `edit=password`. The
 complete Settings URL must not exceed 2,048 bytes; the encoded recovery link
 must not exceed the email parameter limit of 4,096 bytes. Both bounds are
 checked before any account lookup, identically for known and unknown emails.
-Account and authv2 hosts must use the configured main API URL rather than
-assume they serve relative API paths. The token contains 256 random bits; only
-its SHA-256 hash is stored in `recovery_tokens`, with a one-hour expiry. The
-email retains the usable link under the email feature's existing retention and
+Account hosts must use the configured main API URL rather than assume they
+serve relative API paths. The token contains 256 random bits; only its SHA-256
+hash is stored in `recovery_tokens`, with a one-hour expiry. The email retains
+the usable link under the email feature's existing retention and
 authorized-read policy.
 
 `GET /identity/recovery/{token}` validates the destination before consuming the
-token. It always redirects to that tenant's authv2 Settings root with
-`edit=password`, opening the Password editor, and adds a supplied `return_to`
-as an encoded query parameter for continuation after the user completes
-Settings.
+token. It always redirects to that tenant's Settings root on its account host,
+`account.<domain>` or the branch's account host, with `edit=password`, opening
+the Password editor, and adds a supplied `return_to` as an encoded query
+parameter for continuation after the user completes Settings.
 An invalid or unrepresentable continuation fails before consuming the token.
 Consumption
 locks the active account, atomically marks the token used, invalidates its other

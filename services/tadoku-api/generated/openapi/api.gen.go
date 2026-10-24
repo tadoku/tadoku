@@ -173,24 +173,6 @@ func (e IdentityProxyGuestIdentityId) Valid() bool {
 	}
 }
 
-// Defines values for IdentitySessionAccountApp.
-const (
-	V1 IdentitySessionAccountApp = "v1"
-	V2 IdentitySessionAccountApp = "v2"
-)
-
-// Valid indicates whether the value is a known member of the IdentitySessionAccountApp enum.
-func (e IdentitySessionAccountApp) Valid() bool {
-	switch e {
-	case V1:
-		return true
-	case V2:
-		return true
-	default:
-		return false
-	}
-}
-
 // Defines values for ImmersionActivityInputType.
 const (
 	AmountPrimary ImmersionActivityInputType = "amount_primary"
@@ -727,12 +709,8 @@ type IdentityRegistration struct {
 
 // IdentitySession defines model for IdentitySession.
 type IdentitySession struct {
-	Account    nullable.Nullable[IdentityAccount] `json:"account"`
-	AccountApp IdentitySessionAccountApp          `json:"account_app"`
+	Account nullable.Nullable[IdentityAccount] `json:"account"`
 }
-
-// IdentitySessionAccountApp defines model for IdentitySession.AccountApp.
-type IdentitySessionAccountApp string
 
 // ImmersionActivities defines model for ImmersionActivities.
 type ImmersionActivities struct {
@@ -5862,20 +5840,6 @@ func (response IdentityLoginCreate429JSONResponse) VisitIdentityLoginCreateRespo
 	return err
 }
 
-type IdentityLoginCreate501JSONResponse IdentityErrorResponse
-
-func (response IdentityLoginCreate501JSONResponse) VisitIdentityLoginCreateResponse(w http.ResponseWriter) error {
-
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
-		return err
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(501)
-	_, err := buf.WriteTo(w)
-	return err
-}
-
 type IdentityLoginCreate503JSONResponse IdentityErrorResponse
 
 func (response IdentityLoginCreate503JSONResponse) VisitIdentityLoginCreateResponse(w http.ResponseWriter) error {
@@ -6069,20 +6033,6 @@ func (response IdentityRecoveryCreate429JSONResponse) VisitIdentityRecoveryCreat
 	return err
 }
 
-type IdentityRecoveryCreate501JSONResponse IdentityErrorResponse
-
-func (response IdentityRecoveryCreate501JSONResponse) VisitIdentityRecoveryCreateResponse(w http.ResponseWriter) error {
-
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
-		return err
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(501)
-	_, err := buf.WriteTo(w)
-	return err
-}
-
 type IdentityRecoveryCreate503JSONResponse IdentityErrorResponse
 
 func (response IdentityRecoveryCreate503JSONResponse) VisitIdentityRecoveryCreateResponse(w http.ResponseWriter) error {
@@ -6210,20 +6160,6 @@ func (response IdentityRecoveryConsume429JSONResponse) VisitIdentityRecoveryCons
 	return err
 }
 
-type IdentityRecoveryConsume501JSONResponse IdentityErrorResponse
-
-func (response IdentityRecoveryConsume501JSONResponse) VisitIdentityRecoveryConsumeResponse(w http.ResponseWriter) error {
-
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
-		return err
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(501)
-	_, err := buf.WriteTo(w)
-	return err
-}
-
 type IdentityRecoveryConsume503JSONResponse IdentityErrorResponse
 
 func (response IdentityRecoveryConsume503JSONResponse) VisitIdentityRecoveryConsumeResponse(w http.ResponseWriter) error {
@@ -6336,20 +6272,6 @@ func (response IdentityRegistrationCreate429JSONResponse) VisitIdentityRegistrat
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(429)
-	_, err := buf.WriteTo(w)
-	return err
-}
-
-type IdentityRegistrationCreate501JSONResponse IdentityErrorResponse
-
-func (response IdentityRegistrationCreate501JSONResponse) VisitIdentityRegistrationCreateResponse(w http.ResponseWriter) error {
-
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
-		return err
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(501)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -6545,20 +6467,6 @@ func (response IdentityPasswordUpdate429JSONResponse) VisitIdentityPasswordUpdat
 	return err
 }
 
-type IdentityPasswordUpdate501JSONResponse IdentityErrorResponse
-
-func (response IdentityPasswordUpdate501JSONResponse) VisitIdentityPasswordUpdateResponse(w http.ResponseWriter) error {
-
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
-		return err
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(501)
-	_, err := buf.WriteTo(w)
-	return err
-}
-
 type IdentityPasswordUpdate503JSONResponse IdentityErrorResponse
 
 func (response IdentityPasswordUpdate503JSONResponse) VisitIdentityPasswordUpdateResponse(w http.ResponseWriter) error {
@@ -6675,20 +6583,6 @@ func (response IdentityProfileUpdate429JSONResponse) VisitIdentityProfileUpdateR
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(429)
-	_, err := buf.WriteTo(w)
-	return err
-}
-
-type IdentityProfileUpdate501JSONResponse IdentityErrorResponse
-
-func (response IdentityProfileUpdate501JSONResponse) VisitIdentityProfileUpdateResponse(w http.ResponseWriter) error {
-
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
-		return err
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(501)
 	_, err := buf.WriteTo(w)
 	return err
 }

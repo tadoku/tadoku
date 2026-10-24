@@ -27,7 +27,6 @@ import (
 
 	"github.com/bazelbuild/rules_go/go/runfiles"
 	"github.com/google/uuid"
-	ketoclient "github.com/tadoku/tadoku/services/tadoku-api/infra/keto"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"go.yaml.in/yaml/v3"
 	"golang.org/x/crypto/bcrypt"
@@ -72,8 +71,8 @@ func TestEmailGatewayCookieAndBearer(t *testing.T) {
 	proxyURL, jwksURL := startEmailGateway(t, "http://"+backend.Listener.Addr().String(), &cookie)
 	deployment, _ := tenant.ParseDeployment(key.String())
 
-	handler, _, _, err := newTestRouterWithLeaderboardService(t.Context(), api.db.AppPool, api.db.AppPool,
-		api.keto, slog.New(slog.NewTextHandler(io.Discard, nil)), false, nil, deployment,
+	handler, _, err := newTestRouterWithLeaderboardService(t.Context(), api.db.AppPool, api.db.AppPool,
+		slog.New(slog.NewTextHandler(io.Discard, nil)), false, nil, deployment,
 		func(e *routerEndpoints) { e.jwks = jwksURL })
 	if err != nil {
 		t.Fatal(err)
@@ -200,8 +199,8 @@ func TestEmailGatewayCookieAndBearer(t *testing.T) {
 	check("revoked session", "/emails", "", cookie, 401)
 	check("bearer revoked native session", "/emails", "Bearer "+raw, cookie, 200)
 	other, _ := tenant.ParseDeployment("tadoku/other-0123abcd")
-	otherHandler, _, _, err := newTestRouterWithLeaderboardService(t.Context(), api.db.AppPool, api.db.AppPool,
-		api.keto, slog.New(slog.NewTextHandler(io.Discard, nil)), false, nil, other,
+	otherHandler, _, err := newTestRouterWithLeaderboardService(t.Context(), api.db.AppPool, api.db.AppPool,
+		slog.New(slog.NewTextHandler(io.Discard, nil)), false, nil, other,
 		func(e *routerEndpoints) { e.jwks = jwksURL })
 	if err != nil {
 		t.Fatal(err)
@@ -280,9 +279,13 @@ func gatewayAdminCookie(t *testing.T, key tenant.Key, proxyURL, host, forwardedP
 		)
 	}
 
-	roles := ketoclient.NewClient(api.keto.ReadURL(), api.keto.WriteURL())
 	if admin {
-		err = roles.AddRelation(t.Context(), "app", key.String(), "admins", ketoclient.Subject{ID: view.Account.ID})
+		_, err = api.db.Pool.Exec(t.Context(), `insert into permission_relationships
+			(tenant, object_type, object_id, relation, subject_type, subject_id)
+			values ($1, 'app', 'root', 'admins', 'user', $2)`,
+			key.String(),
+			view.Account.ID,
+		)
 		if err != nil {
 			t.Fatal(err)
 		}

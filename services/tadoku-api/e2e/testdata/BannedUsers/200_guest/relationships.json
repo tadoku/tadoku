@@ -1,8 +1,1 @@
-[
-  {
-    "namespace": "app",
-    "object": "tadoku",
-    "relation": "banned",
-    "subject_id": "guest"
-  }
-]
+[]

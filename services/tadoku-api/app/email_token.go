@@ -37,5 +37,5 @@ func (a *Application) requireEmailReader(ctx context.Context) error {
 	if a.hasEmailReader(ctx) {
 		return nil
 	}
-	return a.permissions.RequireAdmin(ctx)
+	return a.roles.RequireAdmin(ctx)
 }

@@ -12,6 +12,7 @@ go_library(
         "//services/tadoku-api/e2e:__pkg__",
     ],
     deps = [
+        "//services/tadoku-api/features/authz",
         "//services/tadoku-api/features/identity",
         "//services/tadoku-api/features/jobqueue",
         "//services/tadoku-api/features/leaderboard",

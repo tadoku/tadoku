@@ -37,7 +37,7 @@ func emailTokens(t *testing.T) map[string]string {
 
 func TestEmailReadAuthorizationAuditAndPagination(t *testing.T) {
 	api.reset(t, "")
-	if err := api.keto.Reset(t.Context(),
+	if err := resetRelationships(t.Context(), api.db.Pool,
 		"testdata/journeys/relationships.json",
 		"testdata/journeys/TenantIsolation/relationships.json"); err != nil {
 		t.Fatal(err)
@@ -51,8 +51,9 @@ func TestEmailReadAuthorizationAuditAndPagination(t *testing.T) {
 			runCase(t, api, name, entry.status, implementation{name: "tadoku-api", handler: api.handler})
 		}
 	}
-	if err := api.keto.Reset(
+	if err := resetRelationships(
 		t.Context(),
+		api.db.Pool,
 		"testdata/journeys/relationships.json",
 		"testdata/journeys/TenantIsolation/relationships.json",
 	); err != nil {
@@ -216,7 +217,7 @@ func emailRetention(t *testing.T, ctx context.Context, now time.Time) {
 
 func TestEmailAuditFailureHidesContent(t *testing.T) {
 	api.reset(t, "")
-	if err := api.keto.Reset(t.Context(),
+	if err := resetRelationships(t.Context(), api.db.Pool,
 		"testdata/journeys/relationships.json",
 		"testdata/journeys/TenantIsolation/relationships.json"); err != nil {
 		t.Fatal(err)
@@ -225,10 +226,9 @@ func TestEmailAuditFailureHidesContent(t *testing.T) {
 	ctx := tenant.WithKey(t.Context(), tenant.Production())
 	id := writeEmail(t, ctx, emailService(), recoveryMail())
 	closed := openClosedPool(t, api.db.AppPool.Config().ConnString())
-	handler, _, _, err := newTestRouterWithLogger(ctx,
+	handler, _, err := newTestRouterWithLogger(ctx,
 		api.db.AppPool,
 		closed,
-		api.keto,
 		slog.New(slog.NewTextHandler(io.Discard,
 			nil)))
 	if err != nil {

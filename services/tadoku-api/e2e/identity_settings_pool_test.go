@@ -15,8 +15,8 @@ func TestIdentitySettingsRejectBeforeDatabase(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	handler, _, _, err := newTestRouterWithLogger(
-		t.Context(), pool, pool, api.keto,
+	handler, _, err := newTestRouterWithLogger(
+		t.Context(), pool, pool,
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	)
 	if err != nil {

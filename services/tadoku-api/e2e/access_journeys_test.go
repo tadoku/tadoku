@@ -27,7 +27,6 @@ func TestFeatureAccessAuditFailureJourney(t *testing.T) {
 	logs := captureDefaultLogs(t)
 	failureAPI := &suite{
 		db:      api.db,
-		keto:    api.keto,
 		flipt:   api.flipt,
 		handler: auditUnavailableRoleUpdateHandler(t),
 	}
@@ -198,7 +197,6 @@ func TestModerationAuditFailureJourney(t *testing.T) {
 	handler := auditUnavailableRoleUpdateHandler(t)
 	failureAPI := &suite{
 		db:      api.db,
-		keto:    api.keto,
 		handler: handler,
 	}
 
@@ -233,8 +231,7 @@ func TestModerationAuditFailureJourney(t *testing.T) {
 func TestModerationProviderFailureJourney(t *testing.T) {
 	failureAPI := &suite{
 		db:      api.db,
-		keto:    api.keto,
-		handler: ketoWriteFailureRoleUpdateHandler(t),
+		handler: grantsFailureRoleUpdateHandler(t),
 	}
 
 	runJourney(t, failureAPI, "ModerationProviderFailure", []step{

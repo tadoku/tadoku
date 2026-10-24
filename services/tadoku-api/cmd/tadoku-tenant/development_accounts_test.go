@@ -35,7 +35,7 @@ func developmentDatabase(t *testing.T) *testpostgres.Database {
 			t.Error(err)
 		}
 	})
-	for _, table := range []string{"tenants", "users", "accounts", "sessions"} {
+	for _, table := range []string{"tenants", "users", "accounts", "sessions", "permission_relationships"} {
 		_, err := db.Pool.Exec(t.Context(), "alter table "+table+" owner to "+role)
 		if err != nil {
 			t.Fatal(err)
@@ -74,7 +74,7 @@ func developmentSnapshot(t *testing.T, db *testpostgres.Database) []string {
 	t.Helper()
 
 	var out []string
-	for _, table := range []string{"users", "accounts", "sessions"} {
+	for _, table := range []string{"users", "accounts", "sessions", "permission_relationships"} {
 		var rows string
 		err := db.Pool.QueryRow(t.Context(),
 			"select coalesce(jsonb_agg(to_jsonb(t) order by to_jsonb(t)::text)::text, '[]') from "+table+" t",
@@ -109,6 +109,30 @@ func assertDevelopmentFixtures(t *testing.T, db *testpostgres.Database, key, pas
 	}
 }
 
+func assertDevelopmentAdmin(t *testing.T, db *testpostgres.Database, key string) {
+	t.Helper()
+
+	rows, err := db.Pool.Query(t.Context(), `select object_type || ':' || object_id || '#' || relation || '@'
+		|| subject_type || ':' || subject_id
+		from permission_relationships
+		where tenant = $1
+		order by 1`,
+		key,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	stored, err := pgx.CollectRows(rows, pgx.RowTo[string])
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	want := []string{"app:root#admins@user:" + developmentAdmin}
+	if !reflect.DeepEqual(stored, want) {
+		t.Fatalf("relationships in %s = %q, want only Dev Admin as administrator %q", key, stored, want)
+	}
+}
+
 func TestDevelopmentAccountsCommand(t *testing.T) {
 	db := developmentDatabase(t)
 	args := developmentArgs(developmentTenant)
@@ -117,6 +141,7 @@ func TestDevelopmentAccountsCommand(t *testing.T) {
 		t.Fatalf("seed native development accounts: %v", err)
 	}
 	assertDevelopmentFixtures(t, db, developmentTenant, "tadoku")
+	assertDevelopmentAdmin(t, db, developmentTenant)
 	before := developmentSnapshot(t, db)
 	for range 2 {
 		if err := run(t.Context(), args); err != nil {
@@ -157,6 +182,8 @@ func TestDevelopmentAccountsOwnerIsolation(t *testing.T) {
 	}
 	assertDevelopmentFixtures(t, db, developmentTenant, "tadoku")
 	assertDevelopmentFixtures(t, db, otherDevelopmentTenant, "other-branch-password")
+	assertDevelopmentAdmin(t, db, developmentTenant)
+	assertDevelopmentAdmin(t, db, otherDevelopmentTenant)
 	_, err := db.Pool.Exec(t.Context(), "delete from tenants where key = $1", developmentTenant)
 	if err != nil {
 		t.Fatal(err)
@@ -275,6 +302,7 @@ func TestDevelopmentAccountsConcurrentSeed(t *testing.T) {
 		}
 	}
 	assertDevelopmentFixtures(t, db, developmentTenant, "tadoku")
+	assertDevelopmentAdmin(t, db, developmentTenant)
 	var count int
 	err := db.Pool.QueryRow(t.Context(), "select count(*) from accounts where tenant = $1",
 		developmentTenant).Scan(&count)

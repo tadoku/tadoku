@@ -38,13 +38,11 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/features/scoring"
 	fliptclient "github.com/tadoku/tadoku/services/tadoku-api/infra/flipt"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/fliptmanagement"
-	ketoclient "github.com/tadoku/tadoku/services/tadoku-api/infra/keto"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/observability"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/featureflags"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testflipt"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/testketo"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
 	transport "github.com/tadoku/tadoku/services/tadoku-api/transport/http"
 	valkeygo "github.com/valkey-io/valkey-go"
@@ -53,7 +51,6 @@ import (
 var api *suite
 var scoringEnabledHandler http.Handler
 var authenticationJWKS *httptest.Server
-var keto *testketo.Fixture
 var flipt *testflipt.Fixture
 var leaderboardValkey *leaderboardValkeyFixture
 
@@ -94,13 +91,6 @@ func runTests(m *testing.M) (code int) {
 	defer cancel()
 	flipt = testflipt.New()
 	defer flipt.Close()
-	keto, err = testketo.New(ctx)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return 1
-	}
-	defer func() { cleanupErr = errors.Join(cleanupErr, keto.Close()) }()
-
 	leaderboardValkey, err = newLeaderboardValkeyFixture(ctx)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -108,18 +98,17 @@ func runTests(m *testing.M) (code int) {
 	}
 	defer func() { cleanupErr = errors.Join(cleanupErr, leaderboardValkey.close()) }()
 
-	api, err = newTestAPI(ctx, keto)
+	api, err = newTestAPI(ctx)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}
 	defer func() { cleanupErr = errors.Join(cleanupErr, api.db.Close()) }()
 
-	scoringEnabledHandler, _, _, err = newTestRouterWithLeaderboardService(
+	scoringEnabledHandler, _, err = newTestRouterWithLeaderboardService(
 		ctx,
 		api.db.AppPool,
 		api.db.AppPool,
-		keto,
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 		true,
 		api.leaderboard,
@@ -135,15 +124,13 @@ func runTests(m *testing.M) (code int) {
 
 type suite struct {
 	db          *testpostgres.Database
-	keto        *testketo.Fixture
 	flipt       *testflipt.Fixture
 	handler     *transport.Router
 	profile     *featureprofile.Service
 	leaderboard *leaderboard.Service
-	roles       *permissions.KetoService
 }
 
-func newTestAPI(ctx context.Context, ketoFixture *testketo.Fixture) (_ *suite, err error) {
+func newTestAPI(ctx context.Context) (_ *suite, err error) {
 	db, err := testpostgres.New(ctx)
 	if err != nil {
 		return nil, err
@@ -159,11 +146,10 @@ func newTestAPI(ctx context.Context, ketoFixture *testketo.Fixture) (_ *suite, e
 		leaderboard.NewRepository(db.AppPool),
 		leaderboard.NewCache(leaderboardValkey.client, time.Second),
 	)
-	handler, profileService, roleService, err := newTestRouterWithLeaderboardService(
+	handler, profileService, err := newTestRouterWithLeaderboardService(
 		ctx,
 		db.AppPool,
 		db.AppPool,
-		ketoFixture,
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 		false,
 		leaderboardService,
@@ -175,12 +161,10 @@ func newTestAPI(ctx context.Context, ketoFixture *testketo.Fixture) (_ *suite, e
 
 	api := &suite{
 		db:          db,
-		keto:        ketoFixture,
 		flipt:       flipt,
 		handler:     handler,
 		profile:     profileService,
 		leaderboard: leaderboardService,
-		roles:       roleService,
 	}
 	complete = true
 	return api, nil
@@ -190,27 +174,24 @@ func newTestRouterWithLogger(
 	ctx context.Context,
 	pool *pgxpool.Pool,
 	auditPool *pgxpool.Pool,
-	ketoFixture *testketo.Fixture,
 	logger *slog.Logger,
 	options ...routerOption,
-) (*transport.Router, *featureprofile.Service, *permissions.KetoService, error) {
-	return newTestRouterWithScoringEngine(ctx, pool, auditPool, ketoFixture, logger, false, options...)
+) (*transport.Router, *featureprofile.Service, error) {
+	return newTestRouterWithScoringEngine(ctx, pool, auditPool, logger, false, options...)
 }
 
 func newTestRouterWithScoringEngine(
 	ctx context.Context,
 	pool *pgxpool.Pool,
 	auditPool *pgxpool.Pool,
-	ketoFixture *testketo.Fixture,
 	logger *slog.Logger,
 	scoringEngineEnabled bool,
 	options ...routerOption,
-) (*transport.Router, *featureprofile.Service, *permissions.KetoService, error) {
+) (*transport.Router, *featureprofile.Service, error) {
 	return newTestRouterWithLeaderboard(
 		ctx,
 		pool,
 		auditPool,
-		ketoFixture,
 		logger,
 		scoringEngineEnabled,
 		leaderboardValkey.client,
@@ -223,13 +204,12 @@ func newTestRouterWithLeaderboard(
 	ctx context.Context,
 	pool *pgxpool.Pool,
 	auditPool *pgxpool.Pool,
-	ketoFixture *testketo.Fixture,
 	logger *slog.Logger,
 	scoringEngineEnabled bool,
 	valkeyClient valkeygo.Client,
 	valkeyTimeout time.Duration,
 	options ...routerOption,
-) (*transport.Router, *featureprofile.Service, *permissions.KetoService, error) {
+) (*transport.Router, *featureprofile.Service, error) {
 	leaderboardService := leaderboard.NewService(
 		leaderboard.NewRepository(pool),
 		leaderboard.NewCache(valkeyClient, valkeyTimeout),
@@ -238,7 +218,6 @@ func newTestRouterWithLeaderboard(
 		ctx,
 		pool,
 		auditPool,
-		ketoFixture,
 		logger,
 		scoringEngineEnabled,
 		leaderboardService,
@@ -251,15 +230,15 @@ func newTestRouterWithLeaderboardService(
 	ctx context.Context,
 	pool *pgxpool.Pool,
 	auditPool *pgxpool.Pool,
-	ketoFixture *testketo.Fixture,
 	logger *slog.Logger,
 	scoringEngineEnabled bool,
 	leaderboardService *leaderboard.Service,
 	deployment tenant.Deployment,
 	options ...routerOption,
-) (*transport.Router, *featureprofile.Service, *permissions.KetoService, error) {
+) (*transport.Router, *featureprofile.Service, error) {
 	endpoints := routerEndpoints{
-		ketoWrite:      ketoFixture.WriteURL(),
+		permissions:    pool,
+		grants:         pool,
 		jwks:           authenticationJWKS.URL,
 		identityValkey: leaderboardValkey.client,
 	}
@@ -267,18 +246,15 @@ func newTestRouterWithLeaderboardService(
 		option(&endpoints)
 	}
 
-	reader := ketoclient.NewReadClient(ketoFixture.ReadURL())
-	readWriter := ketoclient.NewClient(ketoFixture.ReadURL(), endpoints.ketoWrite)
-	permissionChecker := permissions.NewKetoChecker(reader)
-	roleService := permissions.NewKetoService(reader)
+	permissionModel, err := permissions.NewModel(featureauthz.Namespace)
+	if err != nil {
+		return nil, nil, err
+	}
+	permissionChecker := permissions.NewChecker(endpoints.permissions, permissionModel)
+	roles := featureauthz.NewRoles(permissionChecker, permissions.NewRelationships(endpoints.grants, permissionModel))
 	identities := identity.NewReader(pool)
 
-	authzService := featureauthz.NewService(
-		permissionChecker,
-		identities,
-		roleService,
-		permissions.NewKetoManager(readWriter),
-	)
+	authzService := featureauthz.NewService(roles, identities)
 	auditService := featureaudit.NewService(featureaudit.NewRepository(auditPool))
 
 	announcementsRepository := announcements.NewAnnouncementsRepository(pool)
@@ -297,10 +273,10 @@ func newTestRouterWithLeaderboardService(
 	logsService := logs.NewService(logsRepository, scoringEngineEnabled)
 	pagesService := pages.NewService(pagesRepository)
 	postsService := posts.NewService(postsRepository)
-	profileService := featureprofile.NewService(profileRepository, roleService, identities)
+	profileService := featureprofile.NewService(profileRepository, identities)
 	fliptTargets, err := fliptclient.NewTargets("local", "default", "test")
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 	featureFlagsService := featureflagsservice.NewService(
 		featureflags.NewEvaluator(flipt, nil),
@@ -343,6 +319,7 @@ func newTestRouterWithLeaderboardService(
 		FeatureFlags:  featureFlagsService,
 		DB:            pool,
 		Permissions:   permissionChecker,
+		Roles:         roles,
 		Identity:      identityService,
 	})
 
@@ -356,13 +333,13 @@ func newTestRouterWithLeaderboardService(
 		logger,
 	)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
-	rejectBanned := transport.RejectBannedUsers(permissionChecker.Admit, logger)
+	rejectBanned := transport.RejectBannedUsers(roles.Admit, logger)
 	authenticateCallback, err := transport.NewCallbackAuthentication(callbackToken)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
 	handler, err := transport.NewHandler(
@@ -377,21 +354,21 @@ func newTestRouterWithLeaderboardService(
 		transport.WithIdentityTrustedProxies([]netip.Prefix{netip.MustParsePrefix("10.42.0.0/16")}),
 	)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("create API handler: %w", err)
+		return nil, nil, fmt.Errorf("create API handler: %w", err)
 	}
 	handler.HandleFunc("GET /test/authentication", observeIdentity)
 	handler.HandleFunc("GET /test/banned", observeIdentity)
-	return handler, profileService, roleService, nil
+	return handler, profileService, nil
 }
 
 func (s *suite) reset(t *testing.T, caseDir string) {
 	t.Helper()
 	requireKnownCaseFiles(t, caseDir)
 
-	var postgresSeeds, ketoSeeds []string
+	var postgresSeeds, relationshipSeeds []string
 	if caseDir != "" {
 		postgresSeeds = fixtureSeeds(caseDir, "setup.sql")
-		ketoSeeds = fixtureSeeds(caseDir, "relationships.json")
+		relationshipSeeds = fixtureSeeds(caseDir, "relationships.json")
 	}
 	postgresSeeds = append(postgresSeeds, "testdata/accounts.sql")
 	if caseDir != "" {
@@ -401,6 +378,9 @@ func (s *suite) reset(t *testing.T, caseDir string) {
 		if err := s.db.Reset(t.Context(), postgresSeeds...); err != nil {
 			t.Fatal(err)
 		}
+		if err := resetRelationships(t.Context(), s.db.Pool, relationshipSeeds...); err != nil {
+			t.Fatal(err)
+		}
 	}
 	if leaderboardValkey != nil {
 		if err := leaderboardValkey.reset(t.Context()); err != nil {
@@ -408,11 +388,6 @@ func (s *suite) reset(t *testing.T, caseDir string) {
 		}
 	}
 	s.resetProfileService()
-	if s.keto != nil {
-		if err := s.keto.Reset(t.Context(), ketoSeeds...); err != nil {
-			t.Fatal(err)
-		}
-	}
 	if s.flipt != nil {
 		s.flipt.Reset()
 	}
@@ -422,7 +397,6 @@ func (s *suite) resetProfileService() {
 	if s.profile != nil {
 		*s.profile = *featureprofile.NewService(
 			featureprofile.NewRepository(s.db.AppPool),
-			s.roles,
 			identity.NewReader(s.db.AppPool),
 		)
 	}

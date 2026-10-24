@@ -38,7 +38,7 @@ frontend, gateway and API path: no mocked API, injected identity or auth bypass.
   or admin writes as well as the branch frontend hostname.
 - Accounts belong to your branch tenant. Use its fixture accounts or
   disposable accounts you own without changing canonical credentials or roles.
-  Change only your tenant's Keto object and Flipt namespace.
+  Change only your tenant's roles and Flipt namespace.
 - Finish with `dev down` for your owner to remove its branch hosts.
 
 Changes to dev-cli routing or synchronization must also pass the gates in

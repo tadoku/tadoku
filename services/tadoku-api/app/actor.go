@@ -12,5 +12,5 @@ func (a *Application) requireOwnerOrAdmin(ctx context.Context, ownerID uuid.UUID
 	if actorID, ok := identity.ActorID(ctx); ok && actorID == ownerID {
 		return nil
 	}
-	return a.permissions.RequireAdmin(ctx)
+	return a.roles.RequireAdmin(ctx)
 }

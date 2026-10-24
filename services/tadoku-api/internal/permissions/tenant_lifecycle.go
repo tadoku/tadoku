@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	ketoclient "github.com/tadoku/tadoku/services/tadoku-api/infra/keto"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
@@ -56,4 +57,15 @@ func (manager *TenantManager) Delete(ctx context.Context, key tenant.TestKey) er
 		return err
 	}
 	return manager.keto.DeleteObjectRelations(ctx, "app", object)
+}
+
+func rolesObject(ctx context.Context) (string, error) {
+	key, ok := tenant.FromContext(ctx)
+	if !ok {
+		return "", errx.NewUnavailableError("permissions require a tenant", nil)
+	}
+	if key == tenant.Production() {
+		return "tadoku", nil
+	}
+	return key.String(), nil
 }

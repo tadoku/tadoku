@@ -11,24 +11,12 @@ import (
 )
 
 type Service struct {
-	permissions *permissions.Checker
-	users       identity.Reader
-	roles       *permissions.KetoService
-	roleManager *permissions.KetoManager
+	roles *Roles
+	users identity.Reader
 }
 
-func NewService(
-	permissions *permissions.Checker,
-	users identity.Reader,
-	roles *permissions.KetoService,
-	roleManager *permissions.KetoManager,
-) *Service {
-	return &Service{
-		permissions: permissions,
-		users:       users,
-		roles:       roles,
-		roleManager: roleManager,
-	}
+func NewService(roles *Roles, users identity.Reader) *Service {
+	return &Service{roles: roles, users: users}
 }
 
 func (s *Service) ProxyAdminCheck(ctx context.Context, subject uuid.UUID) (bool, error) {
@@ -36,7 +24,7 @@ func (s *Service) ProxyAdminCheck(ctx context.Context, subject uuid.UUID) (bool,
 		return false, errx.NewInvalidInputError("subject must be a UUID")
 	}
 
-	return s.permissions.IsProductionAdmin(ctx, subject.String())
+	return s.roles.IsProductionAdmin(ctx, subject.String())
 }
 
 func (s *Service) CurrentUserRole(ctx context.Context) (Role, error) {
@@ -48,7 +36,7 @@ func (s *Service) CurrentUserRole(ctx context.Context) (Role, error) {
 		return RoleBanned, nil
 	}
 
-	admin, err := s.permissions.IsAdmin(ctx)
+	admin, err := s.roles.IsAdmin(ctx)
 	if err != nil {
 		return "", err
 	}
@@ -71,16 +59,15 @@ func (s *Service) UpdateRole(ctx context.Context, parameters RoleUpdateParameter
 		return ErrUserNotFound
 	}
 
-	claims, err := s.roles.RolesForSubject(ctx, parameters.UserID.String())
+	roles, err := s.roles.UserRoles(ctx, []uuid.UUID{parameters.UserID})
 	if err != nil {
 		return errx.NewUnavailableError("fetch target claims", err)
 	}
-	if claims.Admin {
+	if roles[parameters.UserID] == RoleAdmin {
 		return ErrAdminRoleProtected
 	}
 
-	banned := parameters.Role == RoleBanned
-	if err := s.roleManager.SetBanned(ctx, parameters.UserID.String(), banned); err != nil {
+	if err := s.roles.SetBanned(ctx, parameters.UserID, parameters.Role == RoleBanned); err != nil {
 		return errx.NewUnavailableError("update banned role", err)
 	}
 

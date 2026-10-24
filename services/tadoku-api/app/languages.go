@@ -7,7 +7,7 @@ import (
 )
 
 func (a *Application) ListLanguages(ctx context.Context) ([]languages.Language, error) {
-	if err := a.permissions.RequireAdmin(ctx); err != nil {
+	if err := a.roles.RequireAdmin(ctx); err != nil {
 		return nil, err
 	}
 
@@ -17,7 +17,7 @@ func (a *Application) ListLanguages(ctx context.Context) ([]languages.Language, 
 type CreateLanguageParameters = languages.CreateLanguageParameters
 
 func (a *Application) CreateLanguage(ctx context.Context, parameters CreateLanguageParameters) error {
-	if err := a.permissions.RequireProductionAdmin(ctx); err != nil {
+	if err := a.roles.RequireProductionAdmin(ctx); err != nil {
 		return err
 	}
 	return a.languages.CreateLanguage(ctx, parameters)
@@ -26,7 +26,7 @@ func (a *Application) CreateLanguage(ctx context.Context, parameters CreateLangu
 type UpdateLanguageParameters = languages.UpdateLanguageParameters
 
 func (a *Application) UpdateLanguage(ctx context.Context, parameters UpdateLanguageParameters) error {
-	if err := a.permissions.RequireProductionAdmin(ctx); err != nil {
+	if err := a.roles.RequireProductionAdmin(ctx); err != nil {
 		return err
 	}
 	return a.languages.UpdateLanguage(ctx, parameters)

@@ -105,8 +105,8 @@ func TestIdentityV2RegistrationAdmissionUnavailable(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	handler, _, _, err := newTestRouterWithLogger(
-		t.Context(), api.db.AppPool, api.db.AppPool, api.keto,
+	handler, _, err := newTestRouterWithLogger(
+		t.Context(), api.db.AppPool, api.db.AppPool,
 		slog.New(slog.NewTextHandler(io.Discard, nil)), withIdentityValkey(closed),
 	)
 	if err != nil {

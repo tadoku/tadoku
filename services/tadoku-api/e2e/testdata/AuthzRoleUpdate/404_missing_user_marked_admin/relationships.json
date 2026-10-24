@@ -1,20 +1,20 @@
 [
   {
-    "namespace": "app",
-    "object": "tadoku",
+    "tenant": "tadoku/prod",
+    "object": "app:root",
     "relation": "admins",
-    "subject_id": "22222222-2222-4222-8222-222222222222"
+    "subject": "user:22222222-2222-4222-8222-222222222222"
   },
   {
-    "namespace": "app",
-    "object": "tadoku",
+    "tenant": "tadoku/prod",
+    "object": "app:root",
     "relation": "banned",
-    "subject_id": "33333333-3333-4333-8333-333333333333"
+    "subject": "user:33333333-3333-4333-8333-333333333333"
   },
   {
-    "namespace": "app",
-    "object": "tadoku",
+    "tenant": "tadoku/prod",
+    "object": "app:root",
     "relation": "admins",
-    "subject_id": "66666666-6666-4666-8666-666666666666"
+    "subject": "user:66666666-6666-4666-8666-666666666666"
   }
 ]

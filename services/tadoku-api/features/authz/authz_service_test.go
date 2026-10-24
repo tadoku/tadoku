@@ -11,7 +11,7 @@ import (
 )
 
 func TestCurrentUserRoleTreatsEmptySubjectAsGuest(t *testing.T) {
-	service := NewService(nil, nil, nil, nil)
+	service := NewService(nil, nil)
 	ctx := requestidentity.WithUser(t.Context(), &requestidentity.User{})
 
 	role, err := service.CurrentUserRole(ctx)
@@ -24,7 +24,7 @@ func TestCurrentUserRoleTreatsEmptySubjectAsGuest(t *testing.T) {
 }
 
 func TestProxyAdminCheckRejectsNilSubject(t *testing.T) {
-	service := NewService(nil, nil, nil, nil)
+	service := NewService(nil, nil)
 
 	_, err := service.ProxyAdminCheck(t.Context(), uuid.Nil)
 	if errx.KindOf(err) != errx.InvalidInput {
@@ -38,7 +38,7 @@ func TestProxyAdminCheckRejectsNilSubject(t *testing.T) {
 func TestCurrentUserRoleBannedTakesPrecedence(t *testing.T) {
 	ctx := requestidentity.WithUser(t.Context(), &requestidentity.User{Subject: "admin"})
 	ctx = permissions.WithBanState(ctx, permissions.ConfirmedBan())
-	service := NewService(permissions.NewKetoChecker(nil), nil, nil, nil)
+	service := NewService(nil, nil)
 
 	role, err := service.CurrentUserRole(ctx)
 	if err != nil {

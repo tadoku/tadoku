@@ -80,9 +80,9 @@ Service orchestration is exercised through HTTP E2Es; see [Testing](./testing.md
 
 ### Auditing a provider change
 
-A change to Keto or Flipt cannot share a transaction with its audit entry, so
-the application applies the change first and then records one entry for what
-happened.
+A Flipt change cannot share a transaction with its audit entry, and a ban is
+written outside one, so the application applies the change first and then
+records one entry for what happened.
 
 - Call `audit.Service.RecordOutcome` with the operation's error, or nil when it
   applied, from a `defer` in the application operation, so both outcomes take
@@ -111,8 +111,9 @@ The following rules decide where each check belongs.
   methods during construction. Every such route inherits the shared request
   deadline, authentication and ban check.
 - Application operations own full actor-access checks, such as
-  authenticated-user and administrator requirements. They receive a named
-  `*permissions.Checker` (`internal/permissions`) and call its checks
+  authenticated-user and administrator requirements. They receive the generic
+  `*permissions.Checker` (`internal/permissions`) for authentication and
+  namespace checks and `*authz.Roles` for administrator checks, and call them
   explicitly. Do not enforce administrator access with HTTP middleware.
 - The actor is the authenticated user performing an operation; audit events
   record it as `ActorID`. Read the actor's user ID with `identity.ActorID`,
@@ -123,19 +124,23 @@ The following rules decide where each check belongs.
   application's `requireOwnerOrAdmin` with the owner's user ID after
   `RequireAuthenticated`. It passes when the actor is the owner and otherwise
   requires administrator access.
-- The checker resolves the request tenant's Keto object and `admin` permit
-  for each check. The canonical tenant retains `app:tadoku`. The checker derives
-  its subject from the verified `internal/identity` context and does not cache
-  results.
+- The checker evaluates each check in the request tenant, from the
+  relationships stored in PostgreSQL. It derives its subject from the verified
+  `internal/identity` context and does not cache results. A feature that needs
+  permissions on its own objects defines a namespace with `permissions.Define`
+  in its package and builds its checks and relationships through it; see
+  [Authorization](../architecture/authorization.md#permission-model).
+  Administrator and ban checks come from `authz.Roles`.
 - Do not duplicate the shared ban gate in application operations or feature
   services. Code that invokes an application operation outside the application
   router must provide an equivalent baseline ban policy.
 - A feature service may inspect authorization facts only to expand behavior
   inside an operation the application has already authorized.
-- Feature services read and change facts about other users through the target-role
-  services in `services/tadoku-api/internal/permissions/`. Those facts never
-  authorize the actor: the operation still uses `Checker` for its own access
-  decision. Batch facts are read for each request, not cached.
+- Facts about other users come from the feature that owns their namespace,
+  such as `authz.Roles.UserRoles`, which reads through
+  `permissions.Relationships`. Those facts never authorize the actor: the
+  operation still checks its own access. Batch facts are read for each request,
+  not cached.
 - A trusted callback route authenticates its own required bearer credential
   before request decoding and records a callback-authentication fact
   (`internal/callbackauth`) that its application operation must require. It

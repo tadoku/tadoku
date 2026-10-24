@@ -11,11 +11,10 @@ import (
 )
 
 type Service struct {
-	permissions       *permissions.Checker
-	users             identity.Reader
-	roles             *permissions.KetoService
-	roleManager       *permissions.KetoManager
-	publicPermissions PublicPermissionAllowlist
+	permissions *permissions.Checker
+	users       identity.Reader
+	roles       *permissions.KetoService
+	roleManager *permissions.KetoManager
 }
 
 func NewService(
@@ -23,14 +22,12 @@ func NewService(
 	users identity.Reader,
 	roles *permissions.KetoService,
 	roleManager *permissions.KetoManager,
-	publicPermissions PublicPermissionAllowlist,
 ) *Service {
 	return &Service{
-		permissions:       permissions,
-		users:             users,
-		roles:             roles,
-		roleManager:       roleManager,
-		publicPermissions: publicPermissions,
+		permissions: permissions,
+		users:       users,
+		roles:       roles,
+		roleManager: roleManager,
 	}
 }
 
@@ -59,17 +56,6 @@ func (s *Service) CurrentUserRole(ctx context.Context) (Role, error) {
 		return RoleAdmin, nil
 	}
 	return RoleUser, nil
-}
-
-func (s *Service) CheckPermission(ctx context.Context, parameters PermissionCheckParameters) (bool, error) {
-	if err := parameters.Validate(); err != nil {
-		return false, err
-	}
-	if !s.publicPermissions.Allows(parameters.Namespace, parameters.Relation) {
-		return false, errx.NewForbiddenError("forbidden")
-	}
-
-	return s.permissions.CheckPermission(ctx, parameters.Namespace, parameters.Object, parameters.Relation)
 }
 
 func (s *Service) UpdateRole(ctx context.Context, parameters RoleUpdateParameters) error {

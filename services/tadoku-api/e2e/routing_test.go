@@ -150,6 +150,7 @@ func TestRetiredAuthzRoutesAreNotForwarded(t *testing.T) {
 		{method: http.MethodHead, path: "/authz/ping", want: http.StatusNotFound},
 		{method: http.MethodGet, path: "/authz/internal/v1/ping", want: http.StatusNotFound},
 		{method: http.MethodPost, path: "/authz/internal/v1/permission/check", want: http.StatusNotFound},
+		{method: http.MethodPost, path: "/authz/permission/check", want: http.StatusNotFound},
 		{method: http.MethodPost, path: "/authz/internal/v1/relationships", want: http.StatusNotFound},
 		{method: http.MethodDelete, path: "/authz/internal/v1/relationships", want: http.StatusNotFound},
 		{method: http.MethodHead, path: "/authz/internal/v1/proxy/admin-check", want: http.StatusMethodNotAllowed},

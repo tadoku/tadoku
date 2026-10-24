@@ -16,16 +16,6 @@ export const zAuthzRoleUpdateRequest = z.object({
     reason: z.string().regex(/^[\s\S]{1,1000}$/u)
 });
 
-export const zAuthzPermissionCheckRequest = z.object({
-    namespace: z.string().regex(/^[\s\S]{1,}$/u),
-    object: z.string().regex(/^[\s\S]{1,}$/u),
-    relation: z.string().regex(/^[\s\S]{1,}$/u)
-});
-
-export const zAuthzPermissionCheckResponse = z.object({
-    allowed: z.boolean()
-});
-
 export const zContentPage = z.object({
     id: z.string().uuid().optional(),
     slug: z.string(),
@@ -546,13 +536,6 @@ export const zAuthzRoleUpdateBody = zAuthzRoleUpdateRequest;
 export const zAuthzRoleUpdatePath = z.object({
     id: z.string().uuid()
 });
-
-export const zAuthzPermissionCheckBody = zAuthzPermissionCheckRequest;
-
-/**
- * successful operation
- */
-export const zAuthzPermissionCheckResponse2 = zAuthzPermissionCheckResponse;
 
 export const zContentPageDeletePath = z.object({
     namespace: z.string(),

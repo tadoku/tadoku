@@ -30,18 +30,6 @@ const sidebar: SidebarsConfig = {
         },
       ],
     },
-    {
-      type: "category",
-      label: "permissions",
-      items: [
-        {
-          type: "doc",
-          id: "api/authorization/permission-check",
-          label: "Checks if the current user has a specific permission",
-          className: "api-method post",
-        },
-      ],
-    },
   ],
 };
 

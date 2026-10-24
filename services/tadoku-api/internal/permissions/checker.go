@@ -61,15 +61,6 @@ func NewKetoChecker(client *ketoclient.Client) *Checker {
 	return &Checker{client: client}
 }
 
-func (c *Checker) CheckPermission(ctx context.Context, namespace, object, relation string) (bool, error) {
-	if err := c.RequireAuthenticated(ctx); err != nil {
-		return false, err
-	}
-
-	user := identity.FromContext(ctx)
-	return c.lookup(ctx, namespace, object, relation, user.Subject)
-}
-
 func rolesObject(ctx context.Context) (string, error) {
 	key, ok := tenant.FromContext(ctx)
 	if !ok {

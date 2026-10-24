@@ -75,9 +75,6 @@ func TestCheckerClassifiesKetoFailures(t *testing.T) {
 		check func(context.Context) (bool, error)
 	}{
 		{name: "admin", check: checker.IsAdmin},
-		{name: "configured permission", check: func(ctx context.Context) (bool, error) {
-			return checker.CheckPermission(ctx, "app", "tadoku", "admins")
-		}},
 	}
 
 	userCtx := identity.WithUser(
@@ -117,16 +114,15 @@ func TestCheckerClassifiesKetoFailures(t *testing.T) {
 
 func TestAuthenticationRequirements(t *testing.T) {
 	tests := []struct {
-		name           string
-		user           *identity.User
-		wantAuth       errx.Kind
-		wantAdmin      errx.Kind
-		wantPermission errx.Kind
+		name      string
+		user      *identity.User
+		wantAuth  errx.Kind
+		wantAdmin errx.Kind
 	}{
-		{name: "missing identity", wantAuth: errx.Unauthorized, wantAdmin: errx.Unauthorized, wantPermission: errx.Unauthorized},
-		{name: "empty subject", user: &identity.User{}, wantAuth: errx.Unauthorized, wantAdmin: errx.Unauthorized, wantPermission: errx.Unauthorized},
-		{name: "guest", user: &identity.User{Subject: "guest"}, wantAuth: errx.Unauthorized, wantAdmin: errx.Unauthorized, wantPermission: errx.Unauthorized},
-		{name: "authenticated user", user: &identity.User{Subject: "reader"}, wantAdmin: errx.Unavailable, wantPermission: errx.Unavailable},
+		{name: "missing identity", wantAuth: errx.Unauthorized, wantAdmin: errx.Unauthorized},
+		{name: "empty subject", user: &identity.User{}, wantAuth: errx.Unauthorized, wantAdmin: errx.Unauthorized},
+		{name: "guest", user: &identity.User{Subject: "guest"}, wantAuth: errx.Unauthorized, wantAdmin: errx.Unauthorized},
+		{name: "authenticated user", user: &identity.User{Subject: "reader"}, wantAdmin: errx.Unavailable},
 	}
 
 	for _, test := range tests {
@@ -143,9 +139,6 @@ func TestAuthenticationRequirements(t *testing.T) {
 			if err := checker.RequireAdmin(ctx); errx.KindOf(err) != test.wantAdmin {
 				t.Errorf("RequireAdmin error=%v, want kind %v", err, test.wantAdmin)
 			}
-			if allowed, err := checker.CheckPermission(ctx, "app", "tadoku", "admins"); allowed || errx.KindOf(err) != test.wantPermission {
-				t.Errorf("CheckPermission=(%t, %v), want false and kind %v", allowed, err, test.wantPermission)
-			}
 		})
 	}
 }
@@ -161,9 +154,6 @@ func TestAuthenticationRequirementsHandleUnknownBan(t *testing.T) {
 	}
 	if allowed, err := checker.IsAdmin(ctx); allowed || errx.KindOf(err) != errx.Unavailable || !errors.Is(err, providerErr) {
 		t.Errorf("IsAdmin=(%t, %v), want false and unavailable preserving ban lookup error", allowed, err)
-	}
-	if allowed, err := checker.CheckPermission(ctx, "app", "tadoku", "admins"); allowed || errx.KindOf(err) != errx.Unavailable || !errors.Is(err, providerErr) {
-		t.Errorf("CheckPermission=(%t, %v), want false and unavailable preserving ban lookup error", allowed, err)
 	}
 	if err := checker.RequireAuthenticatedAllowingUnknownBan(ctx); err != nil {
 		t.Errorf("RequireAuthenticatedAllowingUnknownBan error=%v, want nil", err)

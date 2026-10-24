@@ -101,13 +101,6 @@ func TestRejectBannedUsersAllowsOnlyRoleIntrospection(t *testing.T) {
 			pattern: "GET /authz/current-user/role/extra",
 			want:    stdhttp.StatusForbidden,
 		},
-		{
-			name:    "permission check pattern",
-			method:  stdhttp.MethodPost,
-			path:    "/authz/permission/check",
-			pattern: "POST /authz/permission/check",
-			want:    stdhttp.StatusForbidden,
-		},
 	}
 
 	for _, test := range tests {

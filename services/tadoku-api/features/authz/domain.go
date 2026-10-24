@@ -19,41 +19,6 @@ var (
 	ErrAdminRoleProtected = errx.NewForbiddenError("cannot modify role of an admin user")
 )
 
-type PermissionCheckParameters struct {
-	Namespace string
-	Object    string
-	Relation  string
-}
-
-type PublicPermission struct {
-	Namespace string
-	Relation  string
-}
-
-type PublicPermissionAllowlist []PublicPermission
-
-func (a PublicPermissionAllowlist) Allows(namespace, relation string) bool {
-	for _, permission := range a {
-		if permission.Namespace == namespace && permission.Relation == relation {
-			return true
-		}
-	}
-	return false
-}
-
-func (p PermissionCheckParameters) Validate() error {
-	if p.Namespace == "" {
-		return errx.NewInvalidInputError("namespace is required")
-	}
-	if p.Object == "" {
-		return errx.NewInvalidInputError("object is required")
-	}
-	if p.Relation == "" {
-		return errx.NewInvalidInputError("relation is required")
-	}
-	return nil
-}
-
 type RoleUpdateParameters struct {
 	UserID uuid.UUID
 	Role   Role

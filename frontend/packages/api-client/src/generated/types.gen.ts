@@ -13,16 +13,6 @@ export type AuthzRoleUpdateRequest = {
     reason: string;
 };
 
-export type AuthzPermissionCheckRequest = {
-    namespace: string;
-    object: string;
-    relation: string;
-};
-
-export type AuthzPermissionCheckResponse = {
-    allowed: boolean;
-};
-
 export type ContentPage = {
     id?: string;
     slug: string;
@@ -671,41 +661,6 @@ export type AuthzRoleUpdateResponses = {
      */
     200: unknown;
 };
-
-export type AuthzPermissionCheckData = {
-    body: AuthzPermissionCheckRequest;
-    path?: never;
-    query?: never;
-    url: '/authz/permission/check';
-};
-
-export type AuthzPermissionCheckErrors = {
-    /**
-     * invalid request
-     */
-    400: unknown;
-    /**
-     * unauthorized
-     */
-    401: unknown;
-    /**
-     * forbidden (not allowlisted)
-     */
-    403: unknown;
-    /**
-     * authorization unavailable
-     */
-    503: unknown;
-};
-
-export type AuthzPermissionCheckResponses = {
-    /**
-     * successful operation
-     */
-    200: AuthzPermissionCheckResponse;
-};
-
-export type AuthzPermissionCheckResponse2 = AuthzPermissionCheckResponses[keyof AuthzPermissionCheckResponses];
 
 export type ContentPageDeleteData = {
     body?: never;

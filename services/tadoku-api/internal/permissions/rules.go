@@ -7,18 +7,21 @@ type Rule interface {
 type relatedRule struct{ relation string }
 type allowedRule struct{ permit string }
 type viaRule struct{ relation, permit string }
-type appRule struct{ permit string }
+type permitOnRule struct {
+	object object
+	permit string
+}
 type anyOfRule struct{ rules []Rule }
 type allOfRule struct{ rules []Rule }
 type exceptRule struct{ base, subtract Rule }
 
-func (relatedRule) rule() {}
-func (allowedRule) rule() {}
-func (viaRule) rule()     {}
-func (appRule) rule()     {}
-func (anyOfRule) rule()   {}
-func (allOfRule) rule()   {}
-func (exceptRule) rule()  {}
+func (relatedRule) rule()  {}
+func (allowedRule) rule()  {}
+func (viaRule) rule()      {}
+func (permitOnRule) rule() {}
+func (anyOfRule) rule()    {}
+func (allOfRule) rule()    {}
+func (exceptRule) rule()   {}
 
 // Related passes for users stored in the relation, directly or through a subject set.
 func Related(relation string) Rule { return relatedRule{relation: relation} }
@@ -29,8 +32,10 @@ func Allowed(permit string) Rule { return allowedRule{permit: permit} }
 // Via passes when the permit passes on any object stored in the relation.
 func Via(relation, permit string) Rule { return viaRule{relation: relation, permit: permit} }
 
-// AppPermit passes when the permit passes on the tenant's app:root object.
-func AppPermit(permit string) Rule { return appRule{permit: permit} }
+// PermitOn passes when the permit passes on one fixed object, which may belong to another feature's namespace.
+func PermitOn(objectType ObjectType, objectID, permit string) Rule {
+	return permitOnRule{object: object{objectType: objectType, id: objectID}, permit: permit}
+}
 
 func AnyOf(rules ...Rule) Rule { return anyOfRule{rules: rules} }
 
@@ -62,10 +67,3 @@ func (subject SubjectType) isObject() bool {
 type Relations map[string][]SubjectType
 
 type Permits map[string]Rule
-
-type Definition struct {
-	Relations Relations
-	Permits   Permits
-}
-
-type Model map[ObjectType]Definition

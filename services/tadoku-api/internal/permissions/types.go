@@ -24,13 +24,13 @@ type subjectSet struct {
 func (userSubject) subject() {}
 func (subjectSet) subject()  {}
 
-// Check is a permit on one object. Build it with the constructors in model.go.
+// Check is a permit on one object. Build it with Namespace.Check.
 type Check struct {
 	object object
 	permit string
 }
 
-// Relationship is one stored fact. Build it with the constructors in model.go.
+// Relationship is one stored fact. Build it with a Namespace method.
 type Relationship struct {
 	object   object
 	relation string

@@ -95,6 +95,8 @@ policies:
         - use: language-dependencies
         - id: infrastructure-dependencies
           allow: [local:services/tadoku-api/infra/..., local:services/tadoku-api/internal/..., local:services/tadoku-api/features/identity]
+        - id: relationship-store-queries
+          allow: [local:services/tadoku-api/generated/sqlc/relationships]
 
   - id: generated
     packages: [local:services/tadoku-api/generated/..., local:services/tadoku-api/sql/...]
@@ -151,8 +153,7 @@ policies:
             - local:services/tadoku-api/internal/testketo/...
             - local:services/tadoku-api/internal/testpostgres/...
             - local:services/tadoku-api/infra/keto
-            - local:services/tadoku-api/infra/postgres
-            - local:services/tadoku-api/generated/sqlc/permissions
+            - local:services/tadoku-api/infra/relationships
 
   - id: construction
     packages: [local:services/tadoku-api/cmd/...]

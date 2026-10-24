@@ -3,11 +3,11 @@ sql:
   - engine: postgresql
     schema: ../../migrations
     queries:
-      - permissions.sql
+      - relationships.sql
     gen:
       go:
-        package: permissions
-        out: ../../generated/sqlc/permissions
+        package: relationships
+        out: ../../generated/sqlc/relationships
         sql_package: pgx/v5
         emit_empty_slices: true
         omit_unused_structs: true

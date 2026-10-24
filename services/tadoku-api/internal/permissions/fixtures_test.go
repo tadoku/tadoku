@@ -14,56 +14,82 @@ import (
 )
 
 const (
+	Site    ObjectType = "site"
 	Group   ObjectType = "group"
 	Contest ObjectType = "contest"
 	Log     ObjectType = "log"
 )
 
-var testModel = Model{
-	App: model[App],
-	Group: {
-		Relations: Relations{
-			"members": {Users, SetOf(Group, "members")},
+const siteRoot = "root"
+
+var (
+	sites = Define(
+		Site,
+		Relations{
+			"admins": {Users},
+			"banned": {Users},
 		},
-	},
-	Contest: {
-		Relations: Relations{
+		Permits{"admin": Related("admins")},
+	)
+	groups = Define(
+		Group,
+		Relations{"members": {Users, SetOf(Group, "members")}},
+		nil,
+	)
+	contests = Define(
+		Contest,
+		Relations{
 			"owners":     {Users},
 			"moderators": {Users, SetOf(Group, "members")},
 		},
-		Permits: Permits{
-			"edit":     AnyOf(Related("owners"), AppPermit("admin")),
+		Permits{
+			"edit":     AnyOf(Related("owners"), PermitOn(Site, siteRoot, "admin")),
 			"moderate": AnyOf(Allowed("edit"), Related("moderators")),
 		},
-	},
-	Log: {
-		Relations: Relations{
-			"contests": {ObjectOf(Contest)},
-		},
-		Permits: Permits{
-			"hide": AnyOf(AppPermit("admin"), Via("contests", "moderate")),
-		},
-	},
+	)
+	logs = Define(
+		Log,
+		Relations{"contests": {ObjectOf(Contest)}},
+		Permits{"hide": AnyOf(PermitOn(Site, siteRoot, "admin"), Via("contests", "moderate"))},
+	)
+	testModel = mustModel(sites, groups, contests, logs)
+	siteAdmin = sites.Check(siteRoot, "admin")
+)
+
+func mustModel(namespaces ...Namespace) Model {
+	model, err := NewModel(namespaces...)
+	if err != nil {
+		panic(err)
+	}
+	return model
+}
+
+func adminRelationship(userID uuid.UUID) Relationship {
+	return sites.UserRelationship(siteRoot, "admins", userID)
+}
+
+func banRelationship(userID uuid.UUID) Relationship {
+	return sites.UserRelationship(siteRoot, "banned", userID)
 }
 
 func editContest(contestID uuid.UUID) Check {
-	return Check{object: contestObject(contestID), permit: "edit"}
+	return contests.Check(contestID.String(), "edit")
 }
 
 func moderateContest(contestID uuid.UUID) Check {
-	return Check{object: contestObject(contestID), permit: "moderate"}
+	return contests.Check(contestID.String(), "moderate")
 }
 
 func hideLog(logID uuid.UUID) Check {
-	return Check{object: logObject(logID), permit: "hide"}
+	return logs.Check(logID.String(), "hide")
 }
 
 func contestOwner(contestID, userID uuid.UUID) Relationship {
-	return Relationship{object: contestObject(contestID), relation: "owners", subject: userSubject(userID)}
+	return contests.UserRelationship(contestID.String(), "owners", userID)
 }
 
 func contestModerator(contestID, userID uuid.UUID) Relationship {
-	return Relationship{object: contestObject(contestID), relation: "moderators", subject: userSubject(userID)}
+	return contests.UserRelationship(contestID.String(), "moderators", userID)
 }
 
 func contestModeratorGroup(contestID, groupID uuid.UUID) Relationship {
@@ -71,7 +97,7 @@ func contestModeratorGroup(contestID, groupID uuid.UUID) Relationship {
 }
 
 func groupMember(groupID, userID uuid.UUID) Relationship {
-	return Relationship{object: groupObject(groupID), relation: "members", subject: userSubject(userID)}
+	return groups.UserRelationship(groupID.String(), "members", userID)
 }
 
 func subgroup(groupID, memberGroupID uuid.UUID) Relationship {
@@ -129,11 +155,11 @@ func registerTestTenant(t *testing.T, db *testpostgres.Database, raw string) con
 	return tenant.WithKey(t.Context(), key)
 }
 
-func grantAll(t *testing.T, ctx context.Context, grants *Grants, relationships ...Relationship) {
+func grantAll(t *testing.T, ctx context.Context, writer *Relationships, relationships ...Relationship) {
 	t.Helper()
 
 	for _, relationship := range relationships {
-		if err := grants.Grant(ctx, relationship); err != nil {
+		if err := writer.Grant(ctx, relationship); err != nil {
 			t.Fatalf("grant %+v: %v", relationship, err)
 		}
 	}

@@ -13,10 +13,7 @@ go_library(
         "transaction.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/infra/postgres",
-    visibility = [
-        "//services/tadoku-api:infrastructure_consumers",
-        "//services/tadoku-api/internal/permissions:__pkg__",
-    ],
+    visibility = ["//services/tadoku-api:infrastructure_consumers"],
     deps = [
         "//services/tadoku-api/internal/errx",
         "//services/tadoku-api/internal/tenant",

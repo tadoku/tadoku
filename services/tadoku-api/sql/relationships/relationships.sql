@@ -22,11 +22,15 @@ where object_type = @object_type
   and subject_id = @subject_id
   and subject_relation = @subject_relation;
 
--- name: UserRelations :many
-select relation, subject_id
+-- name: StoredRelationships :many
+select object_type, object_id, relation, subject_type, subject_id, subject_relation
 from permission_relationships
-where object_type = 'app'
-  and object_id = 'root'
-  and relation = any(@relations::text[])
-  and subject_type = 'user'
-  and subject_id = any(@user_ids::text[]);
+where (object_type, object_id, relation, subject_type, subject_id, subject_relation) in (
+  select
+    unnest(@object_types::text[]),
+    unnest(@object_ids::text[]),
+    unnest(@relations::text[]),
+    unnest(@subject_types::text[]),
+    unnest(@subject_ids::text[]),
+    unnest(@subject_relations::text[])
+);

@@ -19,13 +19,13 @@ func TestCheckFailsClosed(t *testing.T) {
 	grantAll(
 		t,
 		ctx,
-		&Grants{model: testModel, store: store{db: db.AppPool}},
+		NewRelationships(db.AppPool, testModel),
 		contestModeratorGroup(cycleContest, first),
 		subgroup(first, second),
 		subgroup(second, first),
 		contestModerator(contestID, moderator),
 	)
-	working := store{db: db.AppPool}
+	working := newStore(db.AppPool)
 
 	closedPool, err := pgxpool.NewWithConfig(ctx, db.AppPool.Config())
 	if err != nil {
@@ -48,7 +48,7 @@ func TestCheckFailsClosed(t *testing.T) {
 		want  error
 	}{
 		{"group cycle", ctx, working, moderateContest(cycleContest), uuid.New(), errMaxDepth},
-		{"storage error", ctx, store{db: closedPool}, moderateContest(contestID), moderator, nil},
+		{"storage error", ctx, newStore(closedPool), moderateContest(contestID), moderator, nil},
 		{"unknown permit", ctx, working, unknownPermit, moderator, nil},
 		{"unknown object type", ctx, working, unknownType, moderator, nil},
 		{"cancelled context", cancelled, working, moderateContest(contestID), moderator, context.Canceled},
@@ -74,21 +74,19 @@ func TestCombinators(t *testing.T) {
 	t.Parallel()
 	ctx := productionContext(t)
 
-	suspensions := Model{
-		Group: testModel[Group],
-		Contest: {
-			Relations: Relations{
-				"moderators": {Users},
-				"suspended":  {Users, SetOf(Group, "members")},
-				"verified":   {Users},
-			},
-			Permits: Permits{
-				"moderate": Except(Related("moderators"), Related("suspended")),
-				"review":   AllOf(Related("moderators"), Related("verified")),
-			},
+	suspensions, err := NewModel(groups, Define(
+		Contest,
+		Relations{
+			"moderators": {Users},
+			"suspended":  {Users, SetOf(Group, "members")},
+			"verified":   {Users},
 		},
-	}
-	if err := suspensions.validate(); err != nil {
+		Permits{
+			"moderate": Except(Related("moderators"), Related("suspended")),
+			"review":   AllOf(Related("moderators"), Related("verified")),
+		},
+	))
+	if err != nil {
 		t.Fatal(err)
 	}
 
@@ -101,7 +99,7 @@ func TestCombinators(t *testing.T) {
 	grantAll(
 		t,
 		ctx,
-		&Grants{model: suspensions, store: store{db: db.AppPool}},
+		NewRelationships(db.AppPool, suspensions),
 		contest(contestID, "moderators", userSubject(active)),
 		contest(contestID, "moderators", userSubject(suspended)),
 		contest(contestID, "suspended", userSubject(suspended)),
@@ -129,7 +127,7 @@ func TestCombinators(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			check := Check{object: tc.object, permit: tc.permit}
 
-			allowed, err := suspensions.check(ctx, store{db: db.AppPool}, check, tc.user)
+			allowed, err := suspensions.check(ctx, newStore(db.AppPool), check, tc.user)
 
 			if err != nil {
 				t.Fatal(err)
@@ -143,7 +141,7 @@ func TestCombinators(t *testing.T) {
 	t.Run("error in the subtracted rule", func(t *testing.T) {
 		check := Check{object: contestObject(cycleContest), permit: "moderate"}
 
-		allowed, err := suspensions.check(ctx, store{db: db.AppPool}, check, cycleModerator)
+		allowed, err := suspensions.check(ctx, newStore(db.AppPool), check, cycleModerator)
 
 		if !errors.Is(err, errMaxDepth) {
 			t.Errorf("error = %v, want %v", err, errMaxDepth)
@@ -157,45 +155,47 @@ func TestCombinators(t *testing.T) {
 func TestModelValidation(t *testing.T) {
 	t.Parallel()
 
+	owners := Relations{"owners": {Users}}
 	cases := []struct {
-		name  string
-		model Model
+		name       string
+		namespaces []Namespace
 	}{
-		{"unknown relation", Model{Contest: {Permits: Permits{"edit": Related("owners")}}}},
-		{"unknown permit", Model{Contest: {Permits: Permits{"edit": Allowed("moderate")}}}},
-		{"relation and permit share a name", Model{Contest: {
-			Relations: Relations{"edit": {Users}},
-			Permits:   Permits{"edit": Related("edit")},
-		}}},
-		{"via over users", Model{Contest: {
-			Relations: Relations{"owners": {Users}},
-			Permits:   Permits{"edit": Via("owners", "edit")},
-		}}},
-		{"related over objects", Model{
-			Contest: {},
-			Log: {
-				Relations: Relations{"contests": {ObjectOf(Contest)}},
-				Permits:   Permits{"hide": Related("contests")},
-			},
+		{"unknown relation", []Namespace{Define(Contest, nil, Permits{"edit": Related("owners")})}},
+		{"unknown permit", []Namespace{Define(Contest, nil, Permits{"edit": Allowed("moderate")})}},
+		{"relation and permit share a name", []Namespace{
+			Define(Contest, Relations{"edit": {Users}}, Permits{"edit": Related("edit")}),
 		}},
-		{"via to a missing permit", Model{
-			Contest: {},
-			Log: {
-				Relations: Relations{"contests": {ObjectOf(Contest)}},
-				Permits:   Permits{"hide": Via("contests", "moderate")},
-			},
+		{"via over users", []Namespace{Define(Contest, owners, Permits{"edit": Via("owners", "edit")})}},
+		{"related over objects", []Namespace{
+			Define(Contest, nil, nil),
+			Define(Log, Relations{"contests": {ObjectOf(Contest)}}, Permits{"hide": Related("contests")}),
 		}},
-		{"missing app permit", Model{Contest: {Permits: Permits{"edit": AppPermit("admin")}}}},
-		{"single-rule combinator", Model{Contest: {
-			Relations: Relations{"owners": {Users}},
-			Permits:   Permits{"edit": AnyOf(Related("owners"))},
-		}}},
-		{"unknown subject type", Model{Contest: {Relations: Relations{"moderators": {SetOf(Group, "members")}}}}},
-		{"object type reserved for users", Model{"user": {Relations: Relations{"friends": {Users}}}}},
+		{"via to a missing permit", []Namespace{
+			Define(Contest, nil, nil),
+			Define(Log, Relations{"contests": {ObjectOf(Contest)}}, Permits{"hide": Via("contests", "moderate")}),
+		}},
+		{"permit on an unknown object type", []Namespace{
+			Define(Contest, nil, Permits{"edit": PermitOn(Site, siteRoot, "admin")}),
+		}},
+		{"permit on a missing permit", []Namespace{
+			Define(Site, nil, nil),
+			Define(Contest, nil, Permits{"edit": PermitOn(Site, siteRoot, "admin")}),
+		}},
+		{"permit on an object without an ID", []Namespace{
+			sites,
+			Define(Contest, nil, Permits{"edit": PermitOn(Site, "", "admin")}),
+		}},
+		{"single-rule combinator", []Namespace{Define(Contest, owners, Permits{"edit": AnyOf(Related("owners"))})}},
+		{"unknown subject type", []Namespace{
+			Define(Contest, Relations{"moderators": {SetOf(Group, "members")}}, nil),
+		}},
+		{"object type reserved for users", []Namespace{Define("user", Relations{"friends": {Users}}, nil)}},
+		{"object type without a name", []Namespace{Define("", owners, nil)}},
+		{"object type defined twice", []Namespace{Define(Contest, owners, nil), Define(Contest, nil, nil)}},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			if err := tc.model.validate(); err == nil {
+			if _, err := NewModel(tc.namespaces...); err == nil {
 				t.Error("invalid model passed validation")
 			}
 		})
@@ -208,7 +208,7 @@ func TestRelationshipValidation(t *testing.T) {
 
 	db := newTestDatabase(t)
 	pool, statements := newLoggedAppPool(t, db)
-	grants := &Grants{model: testModel, store: store{db: pool}}
+	writer := NewRelationships(pool, testModel)
 	contest, user := contestObject(uuid.New()), userSubject(uuid.New())
 
 	cases := []struct {
@@ -223,14 +223,18 @@ func TestRelationshipValidation(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			grantErr := grants.Grant(ctx, tc.relationship)
-			revokeErr := grants.Revoke(ctx, tc.relationship)
+			grantErr := writer.Grant(ctx, tc.relationship)
+			revokeErr := writer.Revoke(ctx, tc.relationship)
+			_, storedErr := writer.Stored(ctx, []Relationship{tc.relationship})
 
 			if grantErr == nil {
 				t.Error("grant accepted an invalid relationship")
 			}
 			if revokeErr == nil {
 				t.Error("revoke accepted an invalid relationship")
+			}
+			if storedErr == nil {
+				t.Error("stored accepted an invalid relationship")
 			}
 			if sent := statements.take(); len(sent) != 0 {
 				t.Errorf("sent %d statements before rejecting: %q", len(sent), sent)

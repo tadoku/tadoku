@@ -1,8 +1,0 @@
-load("@rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "permissions",
-    srcs = ["generate.go"],
-    importpath = "github.com/tadoku/tadoku/services/tadoku-api/sql/permissions",
-    visibility = ["//services/tadoku-api:internal_consumers"],
-)

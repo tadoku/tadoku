@@ -30,7 +30,8 @@ func (e evaluation) permit(ctx context.Context, obj object, permit string, depth
 		return false, errMaxDepth
 	}
 
-	rule, ok := e.model[obj.objectType].Permits[permit]
+	namespace, _ := e.model.namespace(obj.objectType)
+	rule, ok := namespace.permits[permit]
 	if !ok {
 		return false, fmt.Errorf("unknown permit %s#%s", obj.objectType, permit)
 	}
@@ -43,8 +44,8 @@ func (e evaluation) rule(ctx context.Context, obj object, rule Rule, depth int) 
 		return e.relation(ctx, obj, rule.relation, depth+1)
 	case allowedRule:
 		return e.permit(ctx, obj, rule.permit, depth+1)
-	case appRule:
-		return e.permit(ctx, appRoot, rule.permit, depth+1)
+	case permitOnRule:
+		return e.permit(ctx, rule.object, rule.permit, depth+1)
 	case viaRule:
 		return e.via(ctx, obj, rule, depth+1)
 	case anyOfRule:
@@ -84,7 +85,8 @@ func (e evaluation) relation(ctx context.Context, obj object, relation string, d
 }
 
 func (e evaluation) subjectSet(ctx context.Context, set subjectSet, depth int) (bool, error) {
-	if _, ok := e.model[set.object.objectType].Permits[set.relation]; ok {
+	namespace, _ := e.model.namespace(set.object.objectType)
+	if _, ok := namespace.permits[set.relation]; ok {
 		return e.permit(ctx, set.object, set.relation, depth)
 	}
 	return e.relation(ctx, set.object, set.relation, depth)

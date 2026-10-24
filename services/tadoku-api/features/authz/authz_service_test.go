@@ -1,53 +1,14 @@
 package authz
 
 import (
-	"net/http"
-	"net/http/httptest"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
-	"github.com/tadoku/tadoku/services/tadoku-api/features/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/featureflags"
 	requestidentity "github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
-
-func TestUpdateRoleMapsUserExistsFailureToUnavailable(t *testing.T) {
-	t.Parallel()
-
-	provider := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		http.Error(w, "kratos unavailable", http.StatusServiceUnavailable)
-	}))
-	t.Cleanup(provider.Close)
-
-	httpClient := provider.Client()
-	httpClient.Timeout = time.Second
-	t.Cleanup(httpClient.CloseIdleConnections)
-	service := NewService(
-		nil,
-		identity.NewReader(
-			nil,
-			identity.NewLegacyReader(provider.URL, identity.WithHTTPClient(httpClient)),
-			featureflags.NewEvaluator(nil, nil),
-		),
-		nil,
-		nil,
-		nil,
-	)
-
-	err := service.UpdateRole(tenant.WithKey(t.Context(), tenant.Production()), RoleUpdateParameters{
-		UserID: uuid.MustParse("11111111-1111-4111-8111-111111111111"),
-		Role:   RoleBanned,
-		Reason: "moderation reason",
-	})
-	if errx.KindOf(err) != errx.Unavailable {
-		t.Errorf("UpdateRole() error kind = %v, want unavailable", errx.KindOf(err))
-	}
-}
 
 func TestCurrentUserRoleTreatsEmptySubjectAsGuest(t *testing.T) {
 	service := NewService(nil, nil, nil, nil, nil)

@@ -77,7 +77,7 @@ func (s *server) IdentityRegistrationCreate(
 	}
 	cookie := identityCookie(result.Cookie)
 	return openapi.IdentityRegistrationCreate201JSONResponse{
-		Body:    identitySession(app.IdentitySessionResult{AccountApp: app.IdentityV2, Session: result.Session}),
+		Body:    identitySession(result.Session),
 		Headers: openapi.IdentityRegistrationCreate201ResponseHeaders{SetCookie: &cookie},
 	}, nil
 }
@@ -98,7 +98,7 @@ func (s *server) IdentityLoginCreate(
 	}
 	cookie := identityCookie(result.Cookie)
 	return openapi.IdentityLoginCreate200JSONResponse{
-		Body:    identitySession(app.IdentitySessionResult{AccountApp: app.IdentityV2, Session: result.Session}),
+		Body:    identitySession(result.Session),
 		Headers: openapi.IdentityLoginCreate200ResponseHeaders{SetCookie: &cookie},
 	}, nil
 }
@@ -146,9 +146,9 @@ func identityCookie(cookie app.IdentityCookie) string {
 	}).String()
 }
 
-func identitySession(result app.IdentitySessionResult) openapi.IdentitySession {
+func identitySession(result app.IdentitySession) openapi.IdentitySession {
 	account := nullable.NewNullNullable[openapi.IdentityAccount]()
-	if session, ok := result.Session.(app.IdentityAuthenticatedSession); ok {
+	if session, ok := result.(app.IdentityAuthenticatedSession); ok {
 		account = nullable.NewNullableWithValue(openapi.IdentityAccount{
 			Id:              session.Account.ID,
 			Email:           accountEmail(session.Account.Email.String()),
@@ -157,7 +157,7 @@ func identitySession(result app.IdentitySessionResult) openapi.IdentitySession {
 			AuthenticatedAt: session.AuthenticatedAt,
 		})
 	}
-	return openapi.IdentitySession{AccountApp: openapi.IdentitySessionAccountApp(result.AccountApp), Account: account}
+	return openapi.IdentitySession{AccountApp: openapi.V2, Account: account}
 }
 
 // Responses keep the address part net/mail reads from a stored address and send an address it cannot read unchanged.

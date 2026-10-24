@@ -116,10 +116,7 @@ object.
 Flipt evaluation and management use the suite's tenant-aware protocol fixture.
 This journey therefore verifies application routing and independent flag
 state, not the Flipt server's storage or SDK snapshot behavior. Those boundaries
-require separate real-provider verification. Identity session and command routes remain skeletons until their runtime lane
-is integrated. Reader E2Es use disposable PostgreSQL and Kratos with the
-protocol fixture selecting the identity implementation; they do not prove a
-shared flag rollout.
+require separate real-provider verification.
 
 ### Regenerating journey goldens
 

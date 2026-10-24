@@ -5,13 +5,10 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
-	"net/http/httptest"
-	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/featureflags"
 )
 
 func TestIdentityV2UniqueAccountTenantIsolation(t *testing.T) {
@@ -53,69 +50,6 @@ func TestIdentityV2DuplicateRegistrationIsAtomic(t *testing.T) {
 	}
 	if before != after {
 		t.Errorf("duplicate registration left a user behind: before=%d after=%d", before, after)
-	}
-}
-
-type waitingIdentityObserver struct {
-	entered chan struct{}
-	release chan struct{}
-	waiting atomic.Bool
-}
-
-func (o *waitingIdentityObserver) ObserveEvaluation(featureflags.Observation) {
-	if o.waiting.CompareAndSwap(false, true) {
-		close(o.entered)
-		<-o.release
-	}
-}
-
-func TestIdentityRegistrationLeavesPoolAvailableDuringEvaluation(t *testing.T) {
-	resetIdentity(t)
-	config := api.db.AppPool.Config()
-	config.MaxConns = 1
-	pool, err := pgxpool.NewWithConfig(t.Context(), config)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer pool.Close()
-
-	observer := &waitingIdentityObserver{entered: make(chan struct{}), release: make(chan struct{})}
-	handler, _, _, err := newTestRouterWithLogger(
-		t.Context(), pool, pool, api.keto,
-		slog.New(slog.NewTextHandler(io.Discard, nil)),
-		func(endpoints *routerEndpoints) { endpoints.identityObserver = observer },
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	finished := make(chan struct{})
-	go func() {
-		defer close(finished)
-		response := identityRequest(t, handler, identityBranchA, "POST", "/identity/registration",
-			`{"email":"pool@example.test","display_name":"Pool Reader","password":"Independent-653!"}`, "", nil)
-		if response.Code != http.StatusCreated {
-			t.Errorf("registration status=%d body=%s", response.Code, response.Body)
-		}
-	}()
-	defer func() {
-		close(observer.release)
-		<-finished
-	}()
-
-	select {
-	case <-observer.entered:
-	case <-time.After(5 * time.Second):
-		t.Fatal("registration did not reach the flag evaluation boundary")
-	}
-	if held := pool.Stat().AcquiredConns(); held != 0 {
-		t.Errorf("registration holds %d database connections while flag evaluation waits, want 0", held)
-	} else {
-		request := readHTTPRequest(t, "testdata/BannedUsers/200_guest")
-		request.URL.Path = "/immersion/contests"
-		response := httptest.NewRecorder()
-		handler.ServeHTTP(response, request)
-		requireIdentityStatus(t, response, http.StatusOK)
 	}
 }
 

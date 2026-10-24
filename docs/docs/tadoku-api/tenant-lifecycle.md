@@ -141,7 +141,7 @@ Run the command attached to a cluster shell with the intended database credentia
 never create tokens through a Kubernetes Job, redirected log, CI step or API.
 Token operations need only `TENANT_POSTGRES_*` and access-token table DML privileges,
 plus row-lock privileges on the tenant registry for creation. They make no Keto,
-Kratos, Valkey or Flipt writes. Runtime row-level security still scopes each
+Valkey or Flipt writes. Runtime row-level security still scopes each
 statement to the parsed tenant.
 
 ```sh

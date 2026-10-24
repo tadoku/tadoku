@@ -61,7 +61,7 @@ type IdentityProxySession struct {
 type IdentityProxyTraits struct {
 	DisplayName string `json:"display_name"`
 
-	// Email The account's stored address: a v1 Kratos trait, or for v2 the normalized address registration or settings stored or an imported address as written. When Go's net/mail reads an address from it, the API writes that address part, so a quoted local part arrives unquoted and surrounding ASCII spaces and tabs are dropped; letter case, every other character and its length are kept. Otherwise, such as for an imported address with a leading vertical tab, the API writes the stored address unchanged. It is not normalized like email input and need not satisfy format: email.
+	// Email The account's stored address: the normalized address registration or settings stored, or an imported address as written. When Go's net/mail reads an address from it, the API writes that address part, so a quoted local part arrives unquoted and surrounding ASCII spaces and tabs are dropped; letter case, every other character and its length are kept. Otherwise, such as for an imported address with a leading vertical tab, the API writes the stored address unchanged. It is not normalized like email input and need not satisfy format: email.
 	Email string `json:"email"`
 }
 
@@ -148,7 +148,7 @@ func (t *IdentityProxySession) UnmarshalJSON(b []byte) error {
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// AuthzProxyProxyAdminCheck Authorizes a Kratos subject as a Tadoku administrator
+	// AuthzProxyProxyAdminCheck Authorizes an account subject as a Tadoku administrator
 	// (POST /authz/internal/v1/proxy/admin-check)
 	AuthzProxyProxyAdminCheck(w http.ResponseWriter, r *http.Request)
 	// IdentityProxySessionCheck Oathkeeper session check for the selected tenant
@@ -481,7 +481,7 @@ func (response IdentityProxySessionCheck503JSONResponse) VisitIdentityProxySessi
 
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
-	// AuthzProxyProxyAdminCheck Authorizes a Kratos subject as a Tadoku administrator
+	// AuthzProxyProxyAdminCheck Authorizes an account subject as a Tadoku administrator
 	// (POST /authz/internal/v1/proxy/admin-check)
 	AuthzProxyProxyAdminCheck(ctx context.Context, request AuthzProxyProxyAdminCheckRequestObject) (AuthzProxyProxyAdminCheckResponseObject, error)
 	// IdentityProxySessionCheck Oathkeeper session check for the selected tenant

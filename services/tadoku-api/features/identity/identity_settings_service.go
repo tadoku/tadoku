@@ -133,19 +133,9 @@ func (s *Service) UpdatePassword(ctx context.Context, header CookieHeader, raw s
 }
 
 func (s *Service) SettingsSession(ctx context.Context, header CookieHeader) (AuthenticatedSession, error) {
-	app, err := s.accountApp(ctx)
+	current, err := s.Session(ctx, header)
 	if err != nil {
 		return AuthenticatedSession{}, err
-	}
-	if app == V1 {
-		return AuthenticatedSession{}, ErrNotImplemented
-	}
-	current := Session(GuestSession{})
-	if value := cookieValue(header, s.cookie(ctx).Name); validSessionToken(value) {
-		current, err = s.repository.session(ctx, hashToken(value), timex.Now())
-		if err != nil {
-			return AuthenticatedSession{}, err
-		}
 	}
 	session, ok := current.(AuthenticatedSession)
 	if !ok {

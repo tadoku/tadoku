@@ -33,8 +33,8 @@ func SeedDevelopmentAccounts(
 	return seedDevelopmentAccounts(ctx, repository, fixtures)
 }
 
-// Call only from the development base seed while the canonical tenant uses native accounts; production has no
-// development fixtures. Existing canonical accounts, including imported ones, keep their data.
+// Call only from the development base seed; production has no development fixtures. Existing canonical accounts
+// keep their data.
 func SeedCanonicalDevelopmentAccounts(ctx context.Context, pool *pgxpool.Pool, fixtures []DevelopmentAccount) error {
 	ctx = tenant.WithKey(ctx, tenant.Production())
 	return postgres.RunInTransaction(ctx, pool, func(ctx context.Context) error {

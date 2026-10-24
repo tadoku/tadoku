@@ -30,8 +30,7 @@ Bazel when the canonical tenant uses native accounts. It:
   `GET https://tadoku.dev.lab/api/internal/identity/session`. The base host
   always serves `tadoku/prod`. Only `{"account":null,"account_app":"v1"}` or
   `"v2"` is accepted; an undecided provider, a transport error or any other
-  response stops the seed without changes. See
-  [Account-app selection](../tadoku-api/identity-selection.md);
+  response stops the seed without changes;
 - waits for Postgres and the base migrations;
 - creates the two fixture accounts through that provider, as described below;
 - grants the administrator role in Keto unless the tuple already exists;
@@ -60,10 +59,7 @@ succeeds, fails or is interrupted by `SIGHUP`, `SIGINT` or `SIGTERM`; after a
 It follows the native branch account contract below: existing accounts,
 including imported ones, keep their email, password, state, timestamps and
 sessions, and an email held by another UUID fails the pair before any Keto or
-SQL write. Import the Kratos accounts with
-[the account import](../tadoku-api/identity-import.md) before switching the
-canonical flag; seeding native accounts first creates accounts the import
-reports as conflicts.
+SQL write.
 
 Rerunning with the same configuration changes no row, credential, timestamp or
 Keto tuple. The SQL fixtures are stable: a rerun restores missing fixture rows

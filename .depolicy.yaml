@@ -52,17 +52,6 @@ policies:
             - local:services/tadoku-api/infra/...
             - local:services/tadoku-api/internal/...
 
-  - id: identity-provider
-    packages: [local:services/tadoku-api/features/identity/kratos]
-    imports:
-      default: deny
-      rules:
-        - use: language-dependencies
-        - id: own-adapter-tests
-          allow:
-            - local:services/tadoku-api/features/identity/kratos
-            - local:services/tadoku-api/internal/tenant
-
   - id: tenant-access-tokens
     packages: [local:services/tadoku-api/features/authz/tokens]
     imports:

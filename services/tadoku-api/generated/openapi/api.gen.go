@@ -636,7 +636,7 @@ type IdentityAccount struct {
 	CreatedAt       time.Time `json:"created_at"`
 	DisplayName     string    `json:"display_name"`
 
-	// Email The account's stored address: a v1 Kratos trait, or for v2 the normalized address registration or settings stored or an imported address as written. When Go's net/mail reads an address from it, the API writes that address part, so a quoted local part arrives unquoted and surrounding ASCII spaces and tabs are dropped; letter case, every other character and its length are kept. Otherwise, such as for an imported address with a leading vertical tab, the API writes the stored address unchanged. It is not normalized like email input and need not satisfy format: email.
+	// Email The account's stored address: the normalized address registration or settings stored, or an imported address as written. When Go's net/mail reads an address from it, the API writes that address part, so a quoted local part arrives unquoted and surrounding ASCII spaces and tabs are dropped; letter case, every other character and its length are kept. Otherwise, such as for an imported address with a leading vertical tab, the API writes the stored address unchanged. It is not normalized like email input and need not satisfy format: email.
 	Email string             `json:"email"`
 	Id    openapi_types.UUID `json:"id"`
 }
@@ -654,13 +654,13 @@ type IdentityErrorResponseCode string
 type IdentityLogin struct {
 	Email openapi_types.Email `json:"email"`
 
-	// Password At least 8 characters, at most 72 UTF-8 bytes; rejects similarity to the email under the Kratos v26.2.0 rule.
+	// Password At least 8 characters, at most 72 UTF-8 bytes; rejects a password whose lowercase form is within Levenshtein distance 4 of the lowercase email or shares with it a common substring longer than half the password.
 	Password string `json:"password"`
 }
 
 // IdentityPasswordSettings defines model for IdentityPasswordSettings.
 type IdentityPasswordSettings struct {
-	// Password At least 8 characters, at most 72 UTF-8 bytes; rejects similarity to the email under the Kratos v26.2.0 rule.
+	// Password At least 8 characters, at most 72 UTF-8 bytes; rejects a password whose lowercase form is within Levenshtein distance 4 of the lowercase email or shares with it a common substring longer than half the password.
 	Password string `json:"password"`
 }
 
@@ -694,7 +694,7 @@ type IdentityProxySession struct {
 type IdentityProxyTraits struct {
 	DisplayName string `json:"display_name"`
 
-	// Email The account's stored address: a v1 Kratos trait, or for v2 the normalized address registration or settings stored or an imported address as written. When Go's net/mail reads an address from it, the API writes that address part, so a quoted local part arrives unquoted and surrounding ASCII spaces and tabs are dropped; letter case, every other character and its length are kept. Otherwise, such as for an imported address with a leading vertical tab, the API writes the stored address unchanged. It is not normalized like email input and need not satisfy format: email.
+	// Email The account's stored address: the normalized address registration or settings stored, or an imported address as written. When Go's net/mail reads an address from it, the API writes that address part, so a quoted local part arrives unquoted and surrounding ASCII spaces and tabs are dropped; letter case, every other character and its length are kept. Otherwise, such as for an imported address with a leading vertical tab, the API writes the stored address unchanged. It is not normalized like email input and need not satisfy format: email.
 	Email string `json:"email"`
 }
 
@@ -721,7 +721,7 @@ type IdentityRegistration struct {
 	DisplayName string              `json:"display_name"`
 	Email       openapi_types.Email `json:"email"`
 
-	// Password At least 8 characters, at most 72 UTF-8 bytes; rejects similarity to the email under the Kratos v26.2.0 rule.
+	// Password At least 8 characters, at most 72 UTF-8 bytes; rejects a password whose lowercase form is within Levenshtein distance 4 of the lowercase email or shares with it a common substring longer than half the password.
 	Password string `json:"password"`
 }
 

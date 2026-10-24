@@ -193,35 +193,6 @@ func TestLoadConfigUsesValidatedDefaults(t *testing.T) {
 	if ketoConfig.KetoWriteURL != "https://keto-write.test:4467/provider" || ketoConfig.KetoWriteTimeout != 750*time.Millisecond {
 		t.Errorf("Keto write URL=%q timeout=%v", ketoConfig.KetoWriteURL, ketoConfig.KetoWriteTimeout)
 	}
-	if cfg.KratosAdminURL != "http://kratos-admin.test" || cfg.KratosTimeout != 2*time.Second {
-		t.Errorf("Kratos admin URL=%q timeout=%v", cfg.KratosAdminURL, cfg.KratosTimeout)
-	}
-	for _, rawURL := range []string{
-		"", "not-a-url", "/relative", "ftp://kratos.test", "http://:4434",
-		"http://kratos.test:bad",
-		"http://user:secret@kratos.test", "http://kratos.test?query=1", "http://kratos.test?",
-		"http://kratos.test#fragment", "http://kratos.test#",
-	} {
-		t.Setenv("API_KRATOS_ADMIN_URL", rawURL)
-		if _, err := loadConfig(); err == nil || !strings.Contains(err.Error(), "KratosAdminURL") {
-			t.Errorf("Kratos admin URL %q error=%v", rawURL, err)
-		}
-	}
-	t.Setenv("API_KRATOS_ADMIN_URL", "https://kratos-admin.test:4434/provider/")
-	for _, timeout := range []string{"0s", "-1s", "invalid"} {
-		t.Setenv("API_KRATOS_TIMEOUT", timeout)
-		if _, err := loadConfig(); err == nil || !strings.Contains(err.Error(), "KratosTimeout") {
-			t.Errorf("Kratos timeout %q error=%v", timeout, err)
-		}
-	}
-	t.Setenv("API_KRATOS_TIMEOUT", "750ms")
-	kratosConfig, err := loadConfig()
-	if err != nil {
-		t.Fatalf("load explicit Kratos configuration: %v", err)
-	}
-	if kratosConfig.KratosAdminURL != "https://kratos-admin.test:4434/provider" || kratosConfig.KratosTimeout != 750*time.Millisecond {
-		t.Errorf("Kratos admin URL=%q timeout=%v", kratosConfig.KratosAdminURL, kratosConfig.KratosTimeout)
-	}
 	t.Setenv("API_JWKS", "")
 	if _, err := loadConfig(); err == nil || !strings.Contains(err.Error(), "JWKS") {
 		t.Errorf("missing JWKS configuration error=%v", err)
@@ -303,7 +274,6 @@ func TestLoadConfigRejectsInvalidBranch(t *testing.T) {
 		"API_KETO_READ_URL":          "http://keto-read.test",
 		"API_KETO_WRITE_URL":         "http://keto-write.test",
 		"API_OATHKEEPER_AUTHZ_TOKEN": "callback-token",
-		"API_KRATOS_ADMIN_URL":       "http://kratos-admin.test",
 		"API_VALKEY_URL":             "redis://valkey:6379",
 		"API_POSTGRES_HOST":          "localhost",
 		"API_POSTGRES_DATABASE":      "tadoku",

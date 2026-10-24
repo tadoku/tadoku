@@ -12,8 +12,6 @@ import (
 	"strings"
 	"testing"
 	"time"
-
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
 const identityBranchA = "tadoku/identity-a-0123abcd"
@@ -38,28 +36,6 @@ func resetIdentity(t *testing.T, seedFiles ...string) {
 		seedFiles = []string{"testdata/IdentityV2/setup.sql"}
 	}
 	if err := api.db.Reset(t.Context(), seedFiles...); err != nil {
-		t.Fatal(err)
-	}
-
-	rows, err := api.db.Pool.Query(t.Context(), "select distinct tenant from accounts order by tenant")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var raw string
-		if err := rows.Scan(&raw); err != nil {
-			t.Fatal(err)
-		}
-		key, err := tenant.Parse(raw)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if err := flipt.SetIdentityV2(key, true); err != nil {
-			t.Fatal(err)
-		}
-	}
-	if err := rows.Err(); err != nil {
 		t.Fatal(err)
 	}
 }

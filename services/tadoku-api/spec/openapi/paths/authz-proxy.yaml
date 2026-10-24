@@ -1,7 +1,7 @@
 paths:
   /authz/internal/v1/proxy/admin-check:
     post:
-      summary: Authorizes a Kratos subject as a Tadoku administrator
+      summary: Authorizes an account subject as a Tadoku administrator
       operationId: AuthzProxyProxyAdminCheck
       tags:
         - proxy

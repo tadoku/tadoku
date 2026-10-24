@@ -261,11 +261,6 @@ func newTestRouterWithLeaderboardService(
 		ketoWrite:      ketoFixture.WriteURL(),
 		jwks:           authenticationJWKS.URL,
 		identityValkey: leaderboardValkey.client,
-		legacySessions: identity.NewLegacySessions(
-			"http://kratos-public.test", "http://kratos.test", &http.Client{Transport: forbiddenLegacyTransport{}},
-		),
-		legacyReader: fixtureLegacyReader(),
-		flags:        flipt,
 	}
 	for _, option := range options {
 		option(&endpoints)
@@ -275,7 +270,7 @@ func newTestRouterWithLeaderboardService(
 	readWriter := ketoclient.NewClient(ketoFixture.ReadURL(), endpoints.ketoWrite)
 	permissionChecker := permissions.NewKetoChecker(reader)
 	roleService := permissions.NewKetoService(reader)
-	identities := identity.NewReader(pool, endpoints.legacyReader, featureflags.NewEvaluator(endpoints.flags, nil))
+	identities := identity.NewReader(pool)
 
 	authzService := featureauthz.NewService(
 		permissionChecker,
@@ -307,9 +302,8 @@ func newTestRouterWithLeaderboardService(
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	featureFlagEvaluator := featureflags.NewEvaluator(endpoints.flags, endpoints.identityObserver)
 	featureFlagsService := featureflagsservice.NewService(
-		featureFlagEvaluator,
+		featureflags.NewEvaluator(flipt, nil),
 		fliptmanagement.NewClient(fliptmanagement.Config{
 			URL:     flipt.URL(),
 			Targets: fliptTargets,
@@ -322,8 +316,6 @@ func newTestRouterWithLeaderboardService(
 	identityService := identity.NewService(
 		identity.NewRepository(pool),
 		identity.NewThrottle(endpoints.identityValkey, time.Second, logger),
-		endpoints.legacySessions,
-		featureFlagEvaluator,
 		"tadoku.dev.lab",
 	)
 
@@ -391,46 +383,6 @@ func newTestRouterWithLeaderboardService(
 	return handler, profileService, roleService, nil
 }
 
-type forbiddenLegacyTransport struct{}
-
-func (forbiddenLegacyTransport) RoundTrip(request *http.Request) (*http.Response, error) {
-	panic("native HTTP fixture called legacy provider: " + request.Method + " " + request.URL.Path)
-}
-
-func fixtureLegacyReader() identity.LegacyReader {
-	return identity.NewLegacyReader(
-		"http://legacy-provider.invalid",
-		identity.WithHTTPClient(&http.Client{Transport: forbiddenLegacyTransport{}}),
-	)
-}
-
-func (s *suite) resetIdentityFlags(t *testing.T) {
-	t.Helper()
-	s.flipt.Reset()
-	rows, err := s.db.Pool.Query(t.Context(), "select key from tenants order by key")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var raw string
-		if err := rows.Scan(&raw); err != nil {
-			t.Fatal(err)
-		}
-		key, err := tenant.Parse(raw)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if err := s.flipt.SetIdentityV2(key, true); err != nil {
-			t.Fatal(err)
-		}
-	}
-	if err := rows.Err(); err != nil {
-		t.Fatal(err)
-	}
-}
-
 func (s *suite) reset(t *testing.T, caseDir string) {
 	t.Helper()
 	requireKnownCaseFiles(t, caseDir)
@@ -461,7 +413,7 @@ func (s *suite) reset(t *testing.T, caseDir string) {
 		}
 	}
 	if s.flipt != nil {
-		s.resetIdentityFlags(t)
+		s.flipt.Reset()
 	}
 }
 
@@ -470,7 +422,7 @@ func (s *suite) resetProfileService() {
 		*s.profile = *featureprofile.NewService(
 			featureprofile.NewRepository(s.db.AppPool),
 			s.roles,
-			identity.NewReader(s.db.AppPool, fixtureLegacyReader(), featureflags.NewEvaluator(flipt, nil)),
+			identity.NewReader(s.db.AppPool),
 		)
 	}
 }

@@ -10,9 +10,8 @@ Read this when you gate behavior behind a flag, change who sees a flagged featur
 
 This page describes the development environment. Flags are boolean. Without a
 decision, `Evaluator.Boolean` consumers use the flag's behavior-preserving safe
-default. Identity selection through `Evaluator.TenantBoolean` is unavailable
-instead; only the canonical tenant's missing `identity-v2` flag uses the safe
-default, as described below.
+default. `Evaluator.TenantBoolean` returns an error instead, as described
+below.
 
 ## Where flags are declared
 
@@ -33,7 +32,7 @@ so run both locally (`bazel test`, `pnpm --filter webv2 test`).
 `Evaluator.Boolean` in `services/tadoku-api/internal/featureflags/` accepts a
 verified subject and never returns an error to product code. Anonymous and guest
 requests get the safe default without asking Flipt; signed-in users are evaluated
-with their Kratos ID as the entity ID. The old common `UserIdentity` type is gone.
+with their account ID as the entity ID. The old common `UserIdentity` type is gone.
 
 The provider in `services/tadoku-api/infra/flipt/` resolves the verified tenant
 before evaluating a flag. `tadoku/prod` keeps the configured canonical target:
@@ -82,13 +81,10 @@ client has no fetched snapshot yet because Flipt was unreachable or the
 namespace does not exist, it reports a provider error rather than a missing
 flag; `Boolean` still serves the safe default.
 
-`IdentityV2` (`identity-v2`) has the safe default `true`. Only the identity
-feature evaluates it; see
-[Account-app selection](../tadoku-api/identity-selection.md). It is
-declared in webv2 but is not added to the public decisions response. The browser
-schema supplies `true` when that internal decision is absent. Account-app
-selection belongs to the identity session contract rather than the public
-user-flag endpoint.
+`IdentityV2` (`identity-v2`) has the safe default `true`. Tenant provisioning
+creates it, but no Tadoku API operation evaluates it. It is declared in webv2
+but is not added to the public decisions response. The browser schema supplies
+`true` when that internal decision is absent.
 
 ## Decisions in the browser
 
@@ -172,8 +168,8 @@ not permit namespace creation or deletion.
 3. Verify
    `GET /internal/v1/evaluation/snapshot/namespace/e2e_run-1` with header
    `x-flipt-environment: test`. An unprovisioned namespace returns `404`; user
-   flags then use safe defaults and identity requests for the tenant are
-   unavailable. Test namespaces never share canonical members or revisions.
+   flags then use safe defaults. Test namespaces never share canonical members
+   or revisions.
 4. Delete only the owned namespace with
    `DELETE /api/v2/environments/test/namespaces/e2e_run-1` during teardown.
    Provision it again after a Flipt restart.

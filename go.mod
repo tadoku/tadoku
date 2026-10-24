@@ -13,14 +13,11 @@ require (
 	github.com/jackc/pgerrcode v0.0.0-20250907135507-afb5586c32a6
 	github.com/jackc/pgx/v5 v5.11.0
 	github.com/kelseyhightower/envconfig v1.4.0
-	github.com/mattn/go-sqlite3 v1.14.52
 	github.com/oapi-codegen/nullable v1.2.0
 	github.com/oapi-codegen/runtime v1.6.0
 	github.com/ory/keto-client-go v0.11.0-alpha.0
-	github.com/ory/kratos-client-go v0.11.1
 	github.com/pganalyze/pg_query_go/v6 v6.2.2
 	github.com/prometheus/client_golang v1.24.1
-	github.com/sahilm/fuzzy v0.1.3
 	github.com/satorunooshie/depolicy v0.0.0-20260729001356-d754cd9f261c
 	github.com/stretchr/testify v1.12.1
 	github.com/valkey-io/valkey-go v1.0.78

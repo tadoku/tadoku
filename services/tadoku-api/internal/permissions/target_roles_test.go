@@ -69,7 +69,7 @@ func TestKetoService_RolesForSubject_Admin(t *testing.T) {
 		},
 	})
 
-	claims, err := svc.RolesForSubject(tenant.WithKey(t.Context(), tenant.Production()), "kratos-id")
+	claims, err := svc.RolesForSubject(tenant.WithKey(t.Context(), tenant.Production()), "user-id")
 	require.NoError(t, err)
 	assert.True(t, claims.Admin)
 	assert.False(t, claims.Banned)
@@ -83,7 +83,7 @@ func TestKetoService_RolesForSubject_Banned(t *testing.T) {
 		},
 	})
 
-	claims, err := svc.RolesForSubject(tenant.WithKey(t.Context(), tenant.Production()), "kratos-id")
+	claims, err := svc.RolesForSubject(tenant.WithKey(t.Context(), tenant.Production()), "user-id")
 	require.NoError(t, err)
 	assert.False(t, claims.Admin)
 	assert.True(t, claims.Banned)
@@ -97,7 +97,7 @@ func TestKetoService_RolesForSubject_Error(t *testing.T) {
 		},
 	})
 
-	_, err := svc.RolesForSubject(tenant.WithKey(t.Context(), tenant.Production()), "kratos-id")
+	_, err := svc.RolesForSubject(tenant.WithKey(t.Context(), tenant.Production()), "user-id")
 	require.Error(t, err)
 }
 

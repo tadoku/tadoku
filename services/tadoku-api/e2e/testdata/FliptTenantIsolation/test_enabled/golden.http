@@ -1,7 +1,7 @@
 >>> GET /immersion/feature-flags
 HTTP/1.1 200 OK
+Content-Length: 37
 Cache-Control: private, no-store
-Content-Length: 36
 Content-Type: application/json; charset=UTF-8
 
 {"decisions":{"release-webv3":true}}

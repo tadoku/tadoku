@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"sort"
+	"slices"
 	"strings"
 	"sync"
 
@@ -16,7 +16,6 @@ import (
 )
 
 type namespaceState struct {
-	members   map[string]struct{}
 	revision  uint64
 	resources map[string]json.RawMessage
 }
@@ -48,14 +47,12 @@ func (f *Fixture) Reset() {
 	defer f.mu.Unlock()
 	f.namespaces = map[flipt.Target]*namespaceState{
 		{Environment: "local", Namespace: "default"}: {
-			members:   map[string]struct{}{"11111111-1111-4111-8111-111111111111": {}},
 			revision:  1,
-			resources: seededResources(),
+			resources: seededResources([]string{"11111111-1111-4111-8111-111111111111"}),
 		},
 		{Environment: "test", Namespace: "e2e_flipt-0123abcd"}: {
-			members:   make(map[string]struct{}),
 			revision:  1,
-			resources: seededResources(),
+			resources: seededResources([]string{}),
 		},
 	}
 	f.unavailable = false
@@ -71,7 +68,7 @@ func (f *Fixture) SeedTenant(key tenant.Key) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.namespaces[target] == nil {
-		f.namespaces[target] = &namespaceState{members: make(map[string]struct{}), revision: 1, resources: seededResources()}
+		f.namespaces[target] = &namespaceState{revision: 1, resources: seededResources([]string{})}
 	}
 	return nil
 }
@@ -105,7 +102,20 @@ func (f *Fixture) EvaluateBoolean(
 	if request.Context["authenticated"] != "true" {
 		return featureflags.ProviderResult{}, featureflags.ErrInvalidResponse
 	}
-	_, enabled := state.members[request.EntityID]
+	var segment struct {
+		Constraints []struct {
+			Value string `json:"value"`
+		} `json:"constraints"`
+	}
+	err = json.Unmarshal(state.resources["flipt.core.Segment/release-webv3-access"], &segment)
+	if err != nil || len(segment.Constraints) != 1 {
+		return featureflags.ProviderResult{}, featureflags.ErrInvalidResponse
+	}
+	var members []string
+	if err := json.Unmarshal([]byte(segment.Constraints[0].Value), &members); err != nil {
+		return featureflags.ProviderResult{}, featureflags.ErrInvalidResponse
+	}
+	enabled := slices.Contains(members, request.EntityID)
 	return featureflags.ProviderResult{Enabled: enabled, Reason: "MATCH_EVALUATION_REASON"}, nil
 }
 
@@ -134,71 +144,46 @@ func (f *Fixture) serveHTTP(response http.ResponseWriter, request *http.Request)
 		return
 	}
 
-	switch {
-	case request.Method == http.MethodGet && len(parts) == 9 && parts[7] == "flipt.core.Segment" &&
-		parts[8] == "release-webv3-access":
-		f.writeSegment(response, target, state)
-	case request.Method == http.MethodPut && len(parts) == 7:
+	if request.Method == http.MethodPut && len(parts) == 7 {
 		var update struct {
-			Revision string `json:"revision"`
-			Payload  struct {
-				Constraints []struct {
-					Value string `json:"value"`
-				} `json:"constraints"`
-			} `json:"payload"`
+			Key      string          `json:"key"`
+			Revision string          `json:"revision"`
+			Payload  json.RawMessage `json:"payload"`
 		}
-		if err := json.NewDecoder(request.Body).Decode(&update); err != nil || len(update.Payload.Constraints) != 1 {
+		if err := json.NewDecoder(request.Body).Decode(&update); err != nil || !json.Valid(update.Payload) {
 			http.Error(response, "invalid update", http.StatusBadRequest)
+			return
+		}
+		identity := "flipt.core.Segment/" + update.Key
+		if _, exists := state.resources[identity]; !exists {
+			http.NotFound(response, request)
 			return
 		}
 		if update.Revision != revisionString(state) {
 			response.WriteHeader(http.StatusConflict)
 			return
 		}
-		var members []string
-		if err := json.Unmarshal([]byte(update.Payload.Constraints[0].Value), &members); err != nil {
-			http.Error(response, "invalid members", http.StatusBadRequest)
-			return
-		}
-		state.members = make(map[string]struct{}, len(members))
-		for _, member := range members {
-			state.members[member] = struct{}{}
-		}
+		state.resources[identity] = update.Payload
 		state.revision++
-		f.writeSegment(response, target, state)
-	default:
-		http.NotFound(response, request)
+		f.writeResource(response, target, state, update.Key, update.Payload)
+		return
 	}
+	http.NotFound(response, request)
 }
 
-func (f *Fixture) writeSegment(response http.ResponseWriter, target flipt.Target, state *namespaceState) {
-	members := make([]string, 0, len(state.members))
-	for member := range state.members {
-		members = append(members, member)
-	}
-	sort.Strings(members)
-	encodedMembers, _ := json.Marshal(members)
-	payload := map[string]any{
-		"@type":       "flipt.core.Segment",
-		"key":         "release-webv3-access",
-		"name":        "Webv3 access",
-		"description": "Synthetic fixture account IDs.",
-		"matchType":   "ALL_MATCH_TYPE",
-		"constraints": []map[string]string{{
-			"type":        "ENTITY_ID_COMPARISON_TYPE",
-			"property":    "entityId",
-			"operator":    "isoneof",
-			"value":       string(encodedMembers),
-			"description": "",
-		}},
-	}
-	encodedPayload, _ := json.Marshal(payload)
+func (f *Fixture) writeResource(
+	response http.ResponseWriter,
+	target flipt.Target,
+	state *namespaceState,
+	key string,
+	payload json.RawMessage,
+) {
 	response.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(response).Encode(map[string]any{
 		"resource": map[string]any{
 			"namespaceKey": target.Namespace,
-			"key":          "release-webv3-access",
-			"payload":      json.RawMessage(encodedPayload),
+			"key":          key,
+			"payload":      payload,
 		},
 		"revision": revisionString(state),
 	})

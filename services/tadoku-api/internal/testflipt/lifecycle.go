@@ -44,9 +44,24 @@ func (f *Fixture) RequestCount() int {
 	return f.requests
 }
 
-func seededResources() map[string]json.RawMessage {
+func seededResources(members []string) map[string]json.RawMessage {
+	encodedMembers, _ := json.Marshal(members)
+	segment, _ := json.Marshal(map[string]any{
+		"@type":       "flipt.core.Segment",
+		"key":         "release-webv3-access",
+		"name":        "Webv3 access",
+		"description": "Synthetic fixture account IDs.",
+		"matchType":   "ALL_MATCH_TYPE",
+		"constraints": []map[string]string{{
+			"type":        "ENTITY_ID_COMPARISON_TYPE",
+			"property":    "entityId",
+			"operator":    "isoneof",
+			"value":       string(encodedMembers),
+			"description": "",
+		}},
+	})
 	return map[string]json.RawMessage{
-		"flipt.core.Segment/release-webv3-access": json.RawMessage(`{}`),
+		"flipt.core.Segment/release-webv3-access": segment,
 		"flipt.core.Flag/release-webv3":           json.RawMessage(`{}`),
 	}
 }
@@ -72,7 +87,6 @@ func (f *Fixture) serveLifecycle(response http.ResponseWriter, request *http.Req
 			return true
 		}
 		f.namespaces[target] = &namespaceState{
-			members:   make(map[string]struct{}),
 			revision:  1,
 			resources: make(map[string]json.RawMessage),
 		}
@@ -116,12 +130,7 @@ func (f *Fixture) serveLifecycle(response http.ResponseWriter, request *http.Req
 			http.NotFound(response, request)
 			return true
 		}
-		if parts[7] == "flipt.core.Segment" && parts[8] == "release-webv3-access" {
-			return false
-		}
-		_ = json.NewEncoder(response).Encode(map[string]any{
-			"resource": map[string]any{"key": parts[8], "namespaceKey": target.Namespace, "payload": payload},
-		})
+		f.writeResource(response, target, state, parts[8], payload)
 		return true
 	}
 	if len(parts) != 7 || request.Method != http.MethodPost {
@@ -137,10 +146,7 @@ func (f *Fixture) serveLifecycle(response http.ResponseWriter, request *http.Req
 		return true
 	}
 	var payload struct {
-		Type        string `json:"@type"`
-		Constraints []struct {
-			Value string `json:"value"`
-		} `json:"constraints"`
+		Type string `json:"@type"`
 	}
 	if err := json.Unmarshal(resource.Payload, &payload); err != nil || resource.Key == "" || payload.Type == "" {
 		http.Error(response, "invalid payload", http.StatusBadRequest)
@@ -150,20 +156,6 @@ func (f *Fixture) serveLifecycle(response http.ResponseWriter, request *http.Req
 	if _, exists := state.resources[identity]; exists {
 		response.WriteHeader(http.StatusConflict)
 		return true
-	}
-	if payload.Type == "flipt.core.Segment" && resource.Key == "release-webv3-access" {
-		if len(payload.Constraints) != 1 {
-			http.Error(response, "invalid members constraint", http.StatusBadRequest)
-			return true
-		}
-		var members []string
-		if err := json.Unmarshal([]byte(payload.Constraints[0].Value), &members); err != nil {
-			http.Error(response, "invalid members", http.StatusBadRequest)
-			return true
-		}
-		for _, member := range members {
-			state.members[member] = struct{}{}
-		}
 	}
 	state.resources[identity] = resource.Payload
 	counts := f.creates[target]

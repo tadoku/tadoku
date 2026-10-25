@@ -1,11 +1,11 @@
 [
   {
-    "key": "fixture-flag-access",
+    "key": "release-webv3-access",
     "payload": {
       "@type": "flipt.core.Segment",
-      "key": "fixture-flag-access",
-      "name": "Fixture flag access",
-      "description": "Synthetic fixture account IDs.",
+      "key": "release-webv3-access",
+      "name": "Webv3 preview access",
+      "description": "Native account IDs explicitly granted Webv3 preview access.",
       "matchType": "ALL_MATCH_TYPE",
       "constraints": [
         {
@@ -19,20 +19,20 @@
     }
   },
   {
-    "key": "fixture-flag",
+    "key": "release-webv3",
     "payload": {
       "@type": "flipt.core.Flag",
-      "key": "fixture-flag",
-      "name": "Release log entry v2",
+      "key": "release-webv3",
+      "name": "Webv3 preview",
       "type": "BOOLEAN_FLAG_TYPE",
-      "description": "Use the second-generation log entry flow.",
+      "description": "Enable the Webv3 preview. Disabled for everyone by default.",
       "enabled": false,
       "rollouts": [
         {
           "type": "SEGMENT_ROLLOUT_TYPE",
           "description": "Enabled for explicitly granted users.",
           "segment": {
-            "segments": ["fixture-flag-access"],
+            "segments": ["release-webv3-access"],
             "segmentOperator": "OR_SEGMENT_OPERATOR",
             "value": true
           }

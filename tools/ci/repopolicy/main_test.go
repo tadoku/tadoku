@@ -259,7 +259,7 @@ import (
 	ketoapi "github.com/ory/keto-client-go"
 	"github.com/tadoku/tadoku/services/common/client/s2s"
 	queries "github.com/tadoku/tadoku/services/tadoku-api/generated/sqlc/leaderboard"
-	"github.com/tadoku/tadoku/services/tadoku-api/infra/keto"
+	"github.com/tadoku/tadoku/services/tadoku-api/infra/flipt"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 	valkeyinfra "github.com/tadoku/tadoku/services/tadoku-api/infra/valkey"
 	valkeygo "github.com/valkey-io/valkey-go"

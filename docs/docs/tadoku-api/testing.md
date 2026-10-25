@@ -78,13 +78,8 @@ Never point tests at shared development or production services.
   goroutines, 12,000 tenant reads and 6,000 writes. Its test-only
   session-setting negative control must observe cross-client leaks. Normal and race CI jobs
   print both workload and negative-control results.
-- **Permissions:** the API's tests and E2Es store permission relationships in
-  the disposable PostgreSQL database and start no Keto process.
-- **Keto:** no test outside the fixture's own test starts the pinned, official
-  Linux x86-64 Keto v25.4.0 SQLite-enabled executable under Bazel
-  (`services/tadoku-api/internal/testketo/`). The helper owns an in-memory,
-  loopback-only process using `infra/dev/ory/namespaces.keto.ts` and never
-  accepts an external target.
+- **Permissions:** tests and E2Es store permission relationships in the
+  disposable PostgreSQL database.
 - **Identity accounts:** ordinary HTTP golden and journey resets seed native
   tenant-owned accounts after case SQL, preserving existing user/account state
   on primary-key conflicts. Cast and gateway fixtures obtain sessions through

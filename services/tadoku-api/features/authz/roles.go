@@ -83,14 +83,14 @@ func (r *Roles) Admit(ctx context.Context) permissions.Admission {
 	return permissions.Admitted{}
 }
 
-// UserRoles reads each user's stored role in the context tenant with one query. RoleAdmin wins over RoleBanned, and a
-// user with neither is RoleUser.
+// UserRoles evaluates each user's admin and is_banned permits in the context tenant with two batched checks.
+// RoleAdmin wins over RoleBanned, and a user with neither is RoleUser.
 func (r *Roles) UserRoles(ctx context.Context, userIDs []uuid.UUID) (map[uuid.UUID]Role, error) {
-	candidates := make([]permissions.Relationship, 0, 2*len(userIDs))
-	for _, userID := range userIDs {
-		candidates = append(candidates, adminRelationship(userID), bannedRelationship(userID))
+	admins, err := r.checker.AllowedForEach(ctx, adminPermission(), userIDs)
+	if err != nil {
+		return nil, err
 	}
-	stored, err := r.relationships.Stored(ctx, candidates)
+	banned, err := r.checker.AllowedForEach(ctx, isBannedPermission(), userIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -98,9 +98,9 @@ func (r *Roles) UserRoles(ctx context.Context, userIDs []uuid.UUID) (map[uuid.UU
 	roles := make(map[uuid.UUID]Role, len(userIDs))
 	for _, userID := range userIDs {
 		switch {
-		case stored[adminRelationship(userID)]:
+		case admins[userID]:
 			roles[userID] = RoleAdmin
-		case stored[bannedRelationship(userID)]:
+		case banned[userID]:
 			roles[userID] = RoleBanned
 		default:
 			roles[userID] = RoleUser

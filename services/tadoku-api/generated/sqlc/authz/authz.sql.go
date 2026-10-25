@@ -184,76 +184,36 @@ func (q *Queries) ReadRelationships(ctx context.Context, arg ReadRelationshipsPa
 }
 
 const relationshipSubjects = `-- name: RelationshipSubjects :many
-select subject_type, subject_id, subject_relation
-from permission_relationships
-where object_type = $1
-  and object_id = $2
-  and relation = $3
-  and (subject_type <> 'user' or subject_id = $4)
-`
-
-type RelationshipSubjectsParams struct {
-	ObjectType string
-	ObjectID   string
-	Relation   string
-	UserID     string
-}
-
-type RelationshipSubjectsRow struct {
-	SubjectType     string
-	SubjectID       string
-	SubjectRelation string
-}
-
-func (q *Queries) RelationshipSubjects(ctx context.Context, arg RelationshipSubjectsParams) ([]RelationshipSubjectsRow, error) {
-	rows, err := q.db.Query(ctx, relationshipSubjects,
-		arg.ObjectType,
-		arg.ObjectID,
-		arg.Relation,
-		arg.UserID,
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []RelationshipSubjectsRow{}
-	for rows.Next() {
-		var i RelationshipSubjectsRow
-		if err := rows.Scan(&i.SubjectType, &i.SubjectID, &i.SubjectRelation); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const storedRelationships = `-- name: StoredRelationships :many
 select object_type, object_id, relation, subject_type, subject_id, subject_relation
 from permission_relationships
-where (object_type, object_id, relation, subject_type, subject_id, subject_relation) in (
+where (object_type, object_id, relation, subject_type, subject_id) in (
   select
     unnest($1::text[]),
     unnest($2::text[]),
     unnest($3::text[]),
-    unnest($4::text[]),
-    unnest($5::text[]),
-    unnest($6::text[])
+    'user',
+    unnest($4::text[])
 )
+union all
+select object_type, object_id, relation, subject_type, subject_id, subject_relation
+from permission_relationships
+where subject_type <> 'user'
+  and (object_type, object_id, relation) in (
+    select
+      unnest($1::text[]),
+      unnest($2::text[]),
+      unnest($3::text[])
+  )
 `
 
-type StoredRelationshipsParams struct {
-	ObjectTypes      []string
-	ObjectIds        []string
-	Relations        []string
-	SubjectTypes     []string
-	SubjectIds       []string
-	SubjectRelations []string
+type RelationshipSubjectsParams struct {
+	ObjectTypes []string
+	ObjectIds   []string
+	Relations   []string
+	UserIds     []string
 }
 
-type StoredRelationshipsRow struct {
+type RelationshipSubjectsRow struct {
 	ObjectType      string
 	ObjectID        string
 	Relation        string
@@ -262,22 +222,20 @@ type StoredRelationshipsRow struct {
 	SubjectRelation string
 }
 
-func (q *Queries) StoredRelationships(ctx context.Context, arg StoredRelationshipsParams) ([]StoredRelationshipsRow, error) {
-	rows, err := q.db.Query(ctx, storedRelationships,
+func (q *Queries) RelationshipSubjects(ctx context.Context, arg RelationshipSubjectsParams) ([]RelationshipSubjectsRow, error) {
+	rows, err := q.db.Query(ctx, relationshipSubjects,
 		arg.ObjectTypes,
 		arg.ObjectIds,
 		arg.Relations,
-		arg.SubjectTypes,
-		arg.SubjectIds,
-		arg.SubjectRelations,
+		arg.UserIds,
 	)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []StoredRelationshipsRow{}
+	items := []RelationshipSubjectsRow{}
 	for rows.Next() {
-		var i StoredRelationshipsRow
+		var i RelationshipSubjectsRow
 		if err := rows.Scan(
 			&i.ObjectType,
 			&i.ObjectID,

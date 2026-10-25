@@ -334,3 +334,66 @@ func TestViaPastMaxDepthFailsClosed(t *testing.T) {
 		t.Error("check failed open")
 	}
 }
+
+// TestChecksDecideWithoutUnrelatedErrors stores a group cycle in moderators, so every walk through it fails, and
+// checks that the failure decides only results that depend on it, whatever the order of the rules.
+func TestChecksDecideWithoutUnrelatedErrors(t *testing.T) {
+	t.Parallel()
+	ctx := productionContext(t)
+
+	cyclic := permissions.MustDefine(
+		contestType,
+		permissions.Relations{
+			"owners":     {permissions.Users},
+			"moderators": {permissions.Users, permissions.SetOf(groupType, "members")},
+			"verified":   {permissions.Users},
+		},
+		permissions.Permits{
+			"moderate": permissions.AnyOf(permissions.Related("moderators"), permissions.Related("owners")),
+			"review":   permissions.AllOf(permissions.Related("moderators"), permissions.Related("verified")),
+			"publish":  permissions.Except(permissions.Related("moderators"), permissions.Related("owners")),
+		},
+	)
+	model, err := permissions.NewModel(groups, cyclic)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	db := newTestDatabase(t)
+	repository := NewRepository(db.AppPool)
+	contestID, owner, stranger := uuid.New(), uuid.New(), uuid.New()
+	first, second := uuid.New(), uuid.New()
+	grantAll(
+		t,
+		ctx,
+		permissions.NewRelationships(repository, model),
+		cyclic.MustUserRelation("owners").On(contestID.String(), owner),
+		cyclic.MustSetRelation("moderators").On(contestID.String(), first.String()),
+		subgroup(first, second),
+		subgroup(second, first),
+	)
+	checker := permissions.NewChecker(repository, model)
+
+	cases := []struct {
+		name     string
+		permit   string
+		user     uuid.UUID
+		want     bool
+		wantFail bool
+	}{
+		{"any of a failed and a passed rule passes", "moderate", owner, true, false},
+		{"any of a failed and a denied rule fails", "moderate", stranger, false, true},
+		{"all of a failed and a denied rule denies", "review", owner, false, false},
+		{"a failed rule except a passed one denies", "publish", owner, false, false},
+		{"a failed rule except a denied one fails", "publish", stranger, false, true},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			allowed, err := checker.AllowedFor(ctx, cyclic.MustPermit(tc.permit).On(contestID.String()), tc.user)
+
+			if tc.wantFail != (err != nil && strings.Contains(err.Error(), maxDepthError)) || allowed != tc.want {
+				t.Errorf("AllowedFor = %t, %v; want %t, depth error %t", allowed, err, tc.want, tc.wantFail)
+			}
+		})
+	}
+}

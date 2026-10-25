@@ -80,13 +80,3 @@ func (r *Relationships) tuplesOf(relationships []Relationship) ([]Tuple, error) 
 	}
 	return tuples, nil
 }
-
-// Stored reports which of the candidates are stored, directly and without evaluating permits, in one query.
-func (r *Relationships) Stored(ctx context.Context, candidates []Relationship) (map[Relationship]bool, error) {
-	for _, candidate := range candidates {
-		if err := r.model.validateRelationship(candidate); err != nil {
-			return nil, err
-		}
-	}
-	return storedRelationships(ctx, r.tuples, candidates)
-}

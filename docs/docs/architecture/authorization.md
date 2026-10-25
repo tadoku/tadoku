@@ -180,6 +180,7 @@ administrator checks, `*authz.Roles` (`services/tadoku-api/features/authz/`):
 | `Roles.RequireProductionAdmin` | `RequireAdmin` passes and the request tenant is `tadoku/prod`. | As `RequireAdmin`, and `403` for every other tenant. |
 | `Roles.IsAdmin`, `Roles.IsAdminOrFalse` | Report administrator status to expand behavior inside an already-authorized operation. | `IsAdmin` returns unavailable on errors; `IsAdminOrFalse` returns `false`. |
 | `Require`, `Allowed` | Evaluate any `permissions.Check` a namespace built, for the actor; `Allowed` reports the result. | `Require` returns the errors below. |
+| `AllowedEach` | Reports many checks for the actor, each as `Allowed` would. | `false` for every check for a guest or a banned user; `503` when the ban state is unknown or any check fails. |
 
 Checks return `401` when nobody is signed in, `403` when denied and `503` when
 the check fails or the request's ban state is unknown. A signed-in subject that

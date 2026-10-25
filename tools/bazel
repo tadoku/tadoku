@@ -1,0 +1,170 @@
+#!/usr/bin/env python3
+"""Bazelisk's workspace hook: serialize and scrub builds, then exec run targets."""
+
+import json
+import os
+from pathlib import Path
+import shutil
+import signal
+import subprocess
+import sys
+import tempfile
+
+
+BUILD_ENV = {
+    "PATH", "HOME", "USER", "LOGNAME", "SHELL", "TMPDIR", "TMP", "TEMP", "TERM", "TZ",
+    "LANG", "LC_ALL", "LC_CTYPE", "LC_COLLATE", "LC_MESSAGES", "LC_MONETARY", "LC_NUMERIC", "LC_TIME",
+    "SSL_CERT_FILE", "SSL_CERT_DIR", "DOCKER_CONFIG",
+    "TADOKU_TEST_POSTGRES_URL", "TADOKU_TEST_PGBOUNCER_URL", "TADOKU_TEST_VALKEY_URL",
+    "TADOKU_TEST_EMAIL_GATEWAY_RENDER",
+}
+STARTUP_VALUES = {
+    "--bazelrc", "--command_port", "--connect_timeout_secs", "--digest_function", "--failure_detail_out",
+    "--experimental_cgroup_parent", "--extra_classpath", "--host_jvm_args", "--host_jvm_profile",
+    "--install_base", "--invocation_policy", "--io_nice_level", "--local_startup_timeout_secs",
+    "--macos_qos_class", "--max_idle_secs", "--oom_more_eagerly_threshold", "--output_base",
+    "--output_user_root", "--server_javabase", "--server_jvm_out", "--unix_digest_hash_attribute_name",
+}
+INTERRUPTS = (signal.SIGINT, signal.SIGTERM, signal.SIGHUP)
+
+
+def build(real, directory, args):
+    (Path(directory) / "started").touch()
+    interrupted = 0
+    cancellation = Path(directory) / "cancelled"
+
+    def remember(signum, _frame):
+        nonlocal interrupted
+        interrupted = signum
+
+    for sig in INTERRUPTS:
+        signal.signal(sig, remember)
+
+    def invoke(argv, capture=False):
+        cancelled = interrupted or (signal.SIGTERM if cancellation.exists() else 0)
+        if cancelled:
+            return subprocess.CompletedProcess(argv, 128 + cancelled, b"", b"")
+        child = subprocess.Popen(argv, stdout=subprocess.PIPE if capture else None,
+                                 stderr=subprocess.PIPE if capture else None)
+        if cancellation.exists():
+            child.send_signal(interrupted or signal.SIGTERM)
+        stdout, stderr = child.communicate()
+        return subprocess.CompletedProcess(argv, 128 + interrupted if interrupted else child.returncode,
+                                           stdout, stderr)
+
+    if args == ["--version"]:
+        return invoke([real, *args]).returncode
+
+    index = 0
+    while index < len(args) and args[index].startswith("-"):
+        index += 2 if args[index] in STARTUP_VALUES else 1
+    startup, command, options = args[:index], args[index:index + 1], args[index + 1:]
+    invocation = [real, "--host_jvm_args=-Xmx1024m", "--max_idle_secs=60", *startup, *command]
+    if command and command[0] in {"build", "test", "run", "coverage", "aquery", "cquery"}:
+        invocation.append("--local_resources=memory=HOST_RAM*0.25")
+    if command != ["run"]:
+        return invoke([*invocation, *options]).returncode
+
+    separator = options.index("--") if "--" in options else len(options)
+    before, residue = options[:separator], options[separator:]
+    events = Path(directory) / "options.jsonl"
+    # Let Bazel expand RC imports/configs. --noanalyze cannot execute even a cached target.
+    probe = invoke([
+        *invocation, *before, "--noanalyze", "--nobuild",
+        "--build_event_json_file=" + str(events), "--build_event_text_file=", "--build_event_binary_file=",
+        "--build_event_json_file_upload_mode=wait_for_upload_complete",
+        "--bes_backend=", *residue,
+    ], capture=True)
+    if interrupted:
+        return 128 + interrupted
+    effective = None
+    if events.exists():
+        for line in events.read_text().splitlines():
+            command_line = json.loads(line).get("structuredCommandLine", {})
+            if command_line.get("commandLineLabel") == "canonical":
+                effective = {
+                    option["optionName"]: option.get("optionValue", "")
+                    for section in command_line["sections"]
+                    for option in section.get("optionList", {}).get("option", [])
+                }
+                break
+    if effective is None:
+        sys.stdout.buffer.write(probe.stdout)
+        sys.stderr.buffer.write(probe.stderr)
+        return probe.returncode
+    if "script_path" in effective or effective.get("run", "1") in {"0", "false"}:
+        return invoke([*invocation, *options]).returncode
+
+    script = Path(directory) / "run.sh"
+    return invoke([*invocation, *before, "--script_path=" + str(script), *residue]).returncode
+
+
+def main():
+    real = os.environ.get("BAZEL_REAL")
+    if not real:
+        sys.exit("Invoke bazel through Bazelisk so it sets BAZEL_REAL for tools/bazel.")
+    runtime_env = dict(os.environ)
+    for name in ("BAZEL_REAL", "BAZELISK_SKIP_WRAPPER", "BAZELISK_WRAPPER_DIRECTORY"):
+        runtime_env.pop(name, None)
+    # Bazelisk prepends the hook's directory, which would bypass Bazelisk on a nested call.
+    path = runtime_env.get("PATH", os.defpath).split(os.pathsep)
+    try:
+        if (Path(path[0]) / "bazel").samefile(__file__):
+            path.pop(0)
+    except OSError:
+        pass
+    runtime_env["PATH"] = os.pathsep.join(path)
+    build_env = {name: value for name, value in runtime_env.items() if name in BUILD_ENV}
+    flock = shutil.which("flock", path=build_env["PATH"])
+    if not flock and sys.platform != "darwin":
+        sys.exit("tools/bazel requires flock (util-linux) on this platform.")
+
+    with tempfile.TemporaryDirectory(prefix="tadoku-bazel-") as directory:
+        # A separate process owns the lock; -o prevents its descriptor reaching the JVM.
+        worker = [sys.executable, "-c",
+                  'import runpy,sys; sys.exit(runpy.run_path(sys.argv[1])["build"](sys.argv[2],sys.argv[3],sys.argv[4:]))',
+                  str(Path(__file__).absolute()), real, directory, *sys.argv[1:]]
+        if flock:
+            worker = [flock, "-o", "-w", "1", "-E", "200", f"/tmp/tadoku-bazel-{os.getuid()}.lock", *worker]
+        def keep_lock_until_client_exits():
+            for sig in INTERRUPTS:
+                signal.signal(sig, signal.SIG_IGN)
+
+        interrupted = 0
+
+        def forward(signum, _frame):
+            nonlocal interrupted
+            interrupted = signum
+            (Path(directory) / "cancelled").touch()
+            try:
+                os.killpg(child.pid, signum)
+            except ProcessLookupError:
+                pass
+
+        while True:
+            child = subprocess.Popen(worker, env=build_env, start_new_session=True,
+                                     preexec_fn=keep_lock_until_client_exits)
+            previous = {sig: signal.signal(sig, forward) for sig in INTERRUPTS}
+            try:
+                status = child.wait()
+            finally:
+                for sig, handler in previous.items():
+                    signal.signal(sig, handler)
+            if interrupted:
+                return 128 + interrupted
+            if status != 200 or (Path(directory) / "started").exists():
+                break
+        if status:
+            return status if status > 0 else 128 - status
+        script = Path(directory) / "run.sh"
+        if not script.exists():
+            return 0
+        contents = script.read_text(encoding="utf-8", errors="surrogateescape")
+        shell = contents.splitlines()[0][2:]
+
+    # Remove private files before exec, retaining the generated cwd/runfiles/environment setup.
+    os.execve(shell, [shell, "-c", contents, str(script)], runtime_env)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -80,9 +80,9 @@ Service orchestration is exercised through HTTP E2Es; see [Testing](./testing.md
 
 ### Auditing a provider change
 
-A Flipt change cannot share a transaction with its audit entry, so the
-application applies the change first and then records one entry for what
-happened.
+A change to an external provider cannot share a transaction with its audit
+entry, so the application applies the change first and then records one entry
+for what happened.
 
 - Call `audit.Service.RecordOutcome` with the operation's error, or nil when it
   applied, from a `defer` in the application operation, so both outcomes take
@@ -94,13 +94,12 @@ happened.
 - Recording is best effort. It outlives the request's cancellation so a
   finished change is still recorded, and a storage failure is reported to the
   log as `privileged change not audited` instead of to the caller. An applied
-  Flipt change is never undone to match the audit log, and a response never
+  change is never undone to match the audit log, and a response never
   reports a change as failed because its entry could not be stored. That log
   line is the only record of such a change, so alert on it.
 - An audit entry is never updated after it is written. Use
-  `audit.Service.Record` for an entry that belongs to a PostgreSQL write, such
-  as a ban, inside that write's transaction. The change and its entry then
-  commit or roll back together, so a failure records no `_failed` entry.
+  `audit.Service.Record` for an entry that belongs to a PostgreSQL write, inside
+  that write's transaction.
 
 ## Routes and actor authorization
 
@@ -112,10 +111,10 @@ The following rules decide where each check belongs.
   methods during construction. Every such route inherits the shared request
   deadline, authentication and ban check.
 - Application operations own full actor-access checks, such as
-  authenticated-user and administrator requirements. They receive the generic
+  authenticated-user and administrator requirements. They call
   `*permissions.Checker` (`internal/permissions`) for authentication and
-  namespace checks and `*authz.Roles` for administrator checks, and call them
-  explicitly. Do not enforce administrator access with HTTP middleware.
+  namespace checks and `*authz.Roles` for administrator checks. Do not enforce
+  administrator access with HTTP middleware.
 - The actor is the authenticated user performing an operation; audit events
   record it as `ActorID`. Read the actor's user ID with `identity.ActorID`,
   which reports no actor for a missing identity or a guest, or with
@@ -125,27 +124,18 @@ The following rules decide where each check belongs.
   application's `requireOwnerOrAdmin` with the owner's user ID after
   `RequireAuthenticated`. It passes when the actor is the owner and otherwise
   requires administrator access.
-- The checker evaluates each check in the request tenant, from the
-  relationships stored in PostgreSQL. It derives its subject from the verified
-  `internal/identity` context and does not cache results. A feature that needs
-  permissions on its own objects declares
-  `var Permissions = permissions.Define(...)` in `<feature>_permissions.go`
-  with helpers that take typed IDs: `<Permit>Permission` returns a
-  `permissions.Check` and `<Relation>Relationship` returns a
-  `permissions.Relationship`, so call sites never spell namespace, permit or
-  relation strings; see
-  [Authorization](../architecture/authorization.md#permission-model).
-  Administrator and ban checks come from `authz.Roles`.
+- The checker evaluates each check in the request tenant for the verified
+  `internal/identity` subject, without caching. A feature defines permissions
+  on its own objects as the
+  [permission model](../architecture/authorization.md#permission-model)
+  describes.
 - Do not duplicate the shared ban gate in application operations or feature
   services. Code that invokes an application operation outside the application
   router must provide an equivalent baseline ban policy.
 - A feature service may inspect authorization facts only to expand behavior
   inside an operation the application has already authorized.
-- Facts about other users come from the feature that owns their namespace,
-  such as `authz.Roles.UserRoles`, which reads through
-  `permissions.Relationships`. Those facts never authorize the actor: the
-  operation still checks its own access. Batch facts are read for each request,
-  not cached.
+- Facts about other users come from the feature that owns their namespace.
+  They never authorize the actor and are read for each request, not cached.
 - A trusted callback route authenticates its own required bearer credential
   before request decoding and records a callback-authentication fact
   (`internal/callbackauth`) that its application operation must require. It
@@ -197,11 +187,10 @@ The following rules decide where each check belongs.
 
 - Pass concrete application-owned collaborators through constructors.
 - Introduce a narrow, consumer-owned interface only for a genuine provider or
-  layer boundary with multiple implementations, or for the port an engine in
-  `internal/` declares because it cannot import the package that owns its state,
-  such as `featureflags.BooleanProvider` (implemented in
-  `services/tadoku-api/infra/flipt`) and `permissions.Tuples` (implemented in
-  `services/tadoku-api/features/authz`). Never add an interface, including
+  layer boundary with multiple implementations, or for the port that core logic
+  in `internal/` declares for state it cannot import; see
+  [Cross-cutting concerns](../architecture/cross-cutting-concerns.md). Never
+  add an interface, including
   a feature or repository interface, solely to inject mocks. Exercise concrete
   providers through their boundary tests and HTTP E2Es.
 - Provider-backed feature services may consume the API-local feature-flag

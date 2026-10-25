@@ -95,9 +95,8 @@ each branch tenant has its own accounts and session cookie.
   for persisted changes. Keep writes in your branch tenant. Accounts belong to
   the branch tenant: use its fixture accounts or owned disposable accounts for
   account/role tests without changing canonical credentials or roles.
-  Restrict role and Flipt changes to your branch tenant and
-  `test/tadoku_<route>` namespace; roles are per tenant and none are inherited
-  from `tadoku/prod`. Discover branch fixture IDs from its UI or
+  Restrict role and Flipt changes to your branch tenant and its
+  `test/tadoku_<route>` namespace. Discover branch fixture IDs from its UI or
   API; canonical fixture UUIDs do not identify branch contests or logs.
 - For live frontend edits, keep the page mounted, edit again and prove HMR without
   navigation; record unchanged Pod UID/image. For Go edits, observe rebuild,

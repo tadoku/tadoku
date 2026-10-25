@@ -24,9 +24,8 @@ The steps have two stages with different effects:
 - **Delete (step 3)** cannot be undone. It removes the native sign-in account,
   its sessions and recovery tokens, and the account's logs, contest
   registrations, log tags, roles and profile rows, except the history of
-  finished contests. Roles include the account's administrator and ban rows in
-  `permission_relationships`, which nothing in the Tadoku API removes
-  automatically.
+  finished contests. Roles are the account's rows in
+  `permission_relationships`; the Tadoku API never removes them itself.
 
 A contest is finished once its end date has passed and it has not been
 deleted. The account's registrations and logs in finished contests stay, so
@@ -132,8 +131,8 @@ select
 ```
 
 If `users` is `0`, the account has no other Tadoku API data. Run `commit;`,
-remove any permission relationships it holds with this transaction, then skip
-to [Feature access](#5-feature-access):
+remove its permission relationships, then skip to
+[Feature access](#5-feature-access):
 
 ```sql
 begin;

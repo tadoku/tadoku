@@ -31,6 +31,7 @@ const sidebars: SidebarsConfig = {
       },
       items: [
         'architecture/module-design',
+        'architecture/cross-cutting-concerns',
         'architecture/authorization',
         'architecture/service-tokens',
         'architecture/feature-flags',

@@ -81,16 +81,13 @@ e2e/testdata/journeys/
 
 ### Reset and time
 
-- The runner resets PostgreSQL, permission relationships and Valkey once per
-  journey: cleanup, then the optional shared `journeys/setup.sql`, the
-  journey's own `setup.sql` and the account cast, then the rows of the shared
-  `journeys/relationships.json` plus the journey's own `relationships.json`,
-  as described in
-  [Relationship files](./http-e2e.md#relationship-files). There are no
-  per-step seeds and no resets between steps. A journey may seed an external
-  cache after reset to establish its initial state. A failure journey may
-  install a fault after reset, such as a trigger that makes inserts into one
-  table fail, and removes it in cleanup.
+- The runner resets PostgreSQL and Valkey once per journey: cleanup, then the
+  optional shared `journeys/setup.sql`, the journey's own `setup.sql` and the
+  account cast, then the shared and the journey's own `relationships.json`, as
+  [Relationship files](./http-e2e.md#relationship-files) describes. There are
+  no per-step seeds and no resets between steps. A journey may seed an external
+  cache or install a fault, such as a failing trigger, after reset; it removes
+  a fault in cleanup.
 - The JWT clock stays at the fixture instant for the whole journey, while each
   step's `at` sets its business instant through `timex`.
 - The runner stops at the first failing step. Unknown entries in a journey or
@@ -99,25 +96,21 @@ e2e/testdata/journeys/
 ### Cast
 
 - Cast members are `guest`, `user`, `user2`, `admin` and `banned`, plus the
-  implicit `none`. `admin` and `banned` hold their `admins` and `banned`
-  relationships on `tadoku/prod` through the shared `relationships.json`.
-  Tenant variants use the same subjects in signed tokens with a different
-  tenant claim. Any of them may enter that tenant, but holds a role there only
-  through a relationship row for that tenant; nothing is inherited from
-  `tadoku/prod`.
+  implicit `none`. `admin` and `banned` hold their roles on `tadoku/prod`
+  through the shared `relationships.json`. Tenant variants use the same
+  subjects in signed tokens with a different tenant claim, and hold a role
+  there only through a relationship for that tenant.
 - To add a member, sign a token with the
   [fixture recipe](./http-e2e.md#signing-a-new-fixture-token), append its public key when you
   use a new signing key, and add the token to `cast.json` and any relationship
-  row to `relationships.json`.
+  to `relationships.json`.
 
 ### Tenant isolation
 
-`TestTenantIsolationJourney` uses the restricted PostgreSQL application role,
-real Valkey and PostgreSQL-backed permissions. Its requests create one log in
-each tenant, then check separate leaderboards, cache keys, scoped worker
-outcomes, feature grants and bans. The canonical tenant remains `tadoku/prod`;
-each tenant has its own `app:root`, and the test tenant inherits no
-administrators or bans from it.
+`TestTenantIsolationJourney` uses the restricted PostgreSQL application role
+and real Valkey. Its requests create one log in each tenant, then check
+separate leaderboards, cache keys, scoped worker outcomes, feature grants and
+bans.
 
 Flipt evaluation and management use the suite's tenant-aware protocol fixture.
 This journey therefore verifies application routing and independent flag

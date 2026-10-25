@@ -38,8 +38,8 @@ environment variables. Development values are in
   `[REDACTED]`, and JSON encoding omits them. Call `Reveal` only where the
   value is passed to the PostgreSQL pool or the migration tool.
 - `API_POSTGRES_MAX_CONNECTIONS` (default 4, validated range 1–32).
-- Permission checks and relationship writes use this pool. There is no
-  separate permissions endpoint or timeout; see [Permissions](#permissions).
+- [Permissions](../architecture/authorization.md#permission-model) use this
+  pool, with no endpoint or timeout of their own.
 
 ### Valkey, leaderboard caches and login throttling {#valkey-and-leaderboard-caches}
 
@@ -100,8 +100,7 @@ share that proxy's peer-IP budget. Malformed prefixes fail startup.
 `tadoku.app` or `tadoku.dev.lab`. The development base API and overlays set
 the latter.
 
-Tadoku API reads no Keto configuration and ignores `API_KETO_*` variables a
-manifest still sets.
+Tadoku API ignores `API_KETO_*` variables.
 
 ### Service tokens and feature flags
 
@@ -151,8 +150,7 @@ each environment; the development manifests set it to `false`.
 - Startup always constructs and owns the raw Valkey client. Invalid Valkey
   configuration or cancelled setup aborts startup. An unavailable server logs a
   warning and starts in degraded mode; the client reconnects on a later command.
-- Startup assembles the permission model from feature namespaces with
-  `permissions.NewModel`, which validates it. An invalid model aborts startup.
+- An invalid permission model aborts startup.
 - Provider availability and cache refresh completion are not startup or
   health-check gates. Startup and health checks never mutate provider state.
 - `/readyz` checks PostgreSQL. `/livez` is independent of dependency health.
@@ -178,16 +176,6 @@ responses. In addition:
   lookup can discard a successful ban result. Request deadlines bound the ban
   query. A failed lookup is kept in the request context, so later authenticated
   and administrator checks return unavailable without another ban query.
-
-## Permissions
-
-- The composition root builds the model with
-  `permissions.NewModel(authz.Permissions)`, then `permissions.NewChecker` and
-  `permissions.NewRelationships` over `authz.NewRepository` on the API's
-  PostgreSQL pool, and `authz.NewRoles` from both. It passes them explicitly
-  into consumers and hands `Roles.Admit` to the ban gate.
-- [Authorization](../architecture/authorization.md#permission-model) documents
-  the model, its storage and the checker methods.
 
 ## Identity reads
 

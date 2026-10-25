@@ -156,7 +156,8 @@ dev-cli's lifecycle hooks run `tadoku-tenant` as Jobs before startup and after
 teardown, connecting as the scoped `tadoku_tenant_lifecycle` database role
 rather than the owner. Provisioning creates the test tenant's registry row,
 copies production's active platform scoring rule set and published CMS pages
-into it and creates its Flipt namespace `tadoku_<route>` in the `test` environment.
+into it and creates its Flipt namespace `tadoku_<route>` in the `test`
+environment.
 Selecting the worker sets a worker override so only the branch worker claims
 the tenant's jobs. [Tenant lifecycle command](../tadoku-api/tenant-lifecycle.md)
 documents the command, the role and its refusals of `tadoku/prod`.
@@ -166,29 +167,20 @@ documents the command, the role and its refusals of `tadoku/prod`.
 Anyone can use a branch. Its pages load for anonymous visitors, and its API
 admits guests and every signed-in user without any grant. Pages that need a
 session, such as `/logs/new`, redirect to the branch's login page on its
-account host. Only a ban stored in the branch tenant refuses a signed-in user;
-production bans do not apply on a branch.
+account host. Only a ban stored in the branch tenant refuses a signed-in user.
 [Authorization](../architecture/authorization.md#request-pipeline) lists the
 admission rules.
 
-- **Administrators.** A branch tenant has no administrators until one is
-  granted, and production administrators are not administrators there. Grant
-  one with the
-  [operator SQL](../architecture/authorization.md#granting-an-administrator),
-  using the branch tenant key `tadoku/<route>`.
+- **Administrators.** A branch tenant has none, production administrators
+  included, until one is granted with the
+  [operator SQL](../architecture/authorization.md#granting-an-administrator)
+  for `tadoku/<route>`.
 - **Test accounts.** Pull-request deploys create none. For a branch the
   maintainer deploys by hand, the maintainer's private tooling registers
   three accounts in the branch tenant through the branch's own identity API,
   marked with the route, using plus-aliased addresses of the project mailbox:
-
-  | Account | Role on the branch tenant |
-  | --- | --- |
-  | reader | None |
-  | admin | `admins`, granted with the operator SQL |
-  | outsider | None |
-
-  Only `admins` changes what an account can do, so the reader and the
-  outsider both use the branch as ordinary signed-in users. Their passwords
+  reader, admin and outsider. Only admin holds a role, `admins`, granted with
+  the operator SQL. Their passwords
   exist only in the maintainer's local accounts file. Nobody registers new
   accounts on a branch.
 

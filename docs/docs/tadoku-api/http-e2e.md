@@ -127,8 +127,8 @@ fail the scenario.
 
 ### Relationship files
 
-`relationships.json` is an array of permission relationship rows. Unknown
-fields fail decoding:
+`relationships.json` is an array of permission relationships; unknown fields
+fail decoding:
 
 ```json
 [
@@ -141,13 +141,11 @@ fields fail decoding:
 ]
 ```
 
-The PostgreSQL seeds run first: the resolved `setup.sql`, then
-`testdata/accounts.sql`, then the resolved `finalize.sql`. The harness then
-replaces every stored relationship with the resolved file's rows through the
-owner `Pool`. Each row's tenant must already be registered by those seeds; for
-a test tenant, insert its registry row in the case's `setup.sql` with
-`on conflict (key) do nothing`. Grant a test tenant's roles on that tenant;
-nothing is inherited.
+The harness runs the resolved `setup.sql`, `testdata/accounts.sql` and the
+resolved `finalize.sql`, then replaces every stored relationship with the
+resolved file's rows. A row's tenant must be registered by then: for a test
+tenant, insert its registry row in the case's `setup.sql` with
+`on conflict (key) do nothing`.
 
 ### Comparison
 
@@ -197,9 +195,9 @@ TADOKU_GOLDEN_SOURCE_ROOT="$PWD/services/tadoku-api/e2e/testdata" \
 ## Authentication in E2Es
 
 - Endpoint E2Es run through the production JWT and ban middleware and the real
-  PostgreSQL-backed permission checker on the restricted `AppPool`. Never
-  substitute passthrough middleware, inject an identity
-  or administrator claim, or install an always-allow permission checker.
+  permission checker on the restricted `AppPool`. Never substitute passthrough
+  middleware, inject an identity or administrator claim, or install an
+  always-allow permission checker.
 - Put synthetic signed tokens in `request.http` and required role
   relationships in the case's `relationships.json`. Administrator scenarios
   seed explicit `admins` relationships; an absent relationship file grants no
@@ -208,8 +206,8 @@ TADOKU_GOLDEN_SOURCE_ROOT="$PWD/services/tadoku-api/e2e/testdata" \
   the shared middleware boundary instead of repeating it for every endpoint.
   Simulate a permission-store outage with `withPermissionsPool` in
   `services/tadoku-api/e2e/router_options_test.go`, which gives the checker a
-  closed pool. Role reads and ban writes share the router's transaction pool, so
-  fail their writes inside the database instead.
+  closed pool. Role reads and ban writes use the router's transaction pool;
+  make their writes fail inside the database instead.
 - Test authentication goldens at the middleware boundary, not on a business
   endpoint. They register `GET /test/authentication` on the same production
   router with a test-only success handler, and test-only identity headers prove
@@ -218,10 +216,10 @@ TADOKU_GOLDEN_SOURCE_ROOT="$PWD/services/tadoku-api/e2e/testdata" \
   same production router with an exact `e2e/branch-golden` deployment and prove
   the own-tenant success and other-tenant `421` boundary. The successful case
   seeds no relationships: admission needs no grant on any tenant. Ban-policy
-  scenarios register `GET /test/banned` the same way, using the same real
-  permission checker, and cover guests, ungranted users and bans on both
-  canonical and test tenants. Permission-store fail-open behavior and
-  deadlines are tested at that boundary. No test endpoint is added to production.
+  scenarios register `GET /test/banned` the same way and cover guests,
+  ungranted users and bans on both canonical and test tenants. Permission-store
+  fail-open behavior and deadlines are tested at that boundary. No test endpoint
+  is added to production.
 - The transport router test proves that every registered application route
   inherits the shared gates.
 - The suite serves a synthetic, checked-in public JWKS
@@ -246,10 +244,10 @@ TADOKU_GOLDEN_SOURCE_ROOT="$PWD/services/tadoku-api/e2e/testdata" \
 
 `e2e/testdata/TenantIsolation/` contains synthetic signed canonical and
 `e2e/isolation-0123abcd` tokens for the same seeded account subject. Its test
-registry entry exists only in the suite's disposable database. Roles do not
-carry over between tenants: when a case needs an administrator or a ban on the
-test tenant, add a relationship row for that tenant. Changing a tenant never
-grants an administrator identity or bypasses the JWT and ban gates. Seed rows
+registry entry exists only in the suite's disposable database. A case that
+needs an administrator or a ban on the test tenant adds a relationship for that
+tenant. Changing a tenant never grants an administrator identity or bypasses
+the JWT and ban gates. Seed rows
 name their tenant explicitly, and owner teardown removes only the fixture's
 test entry. Do not insert test tenants in the shared development base or
 production database.

@@ -132,3 +132,7 @@ a { text-underline-offset: .2em; }
 @media (max-width: 360px) {
   .app-wordmark { width: 88px; }
 }
+
+.app-account-actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: var(--space-3, .75rem); }
+.app-account-actions form { margin: 0; }
+@media (max-width: 600px) { .app-account-actions { font-size: .8rem; gap: .4rem; max-width: 12rem; } }

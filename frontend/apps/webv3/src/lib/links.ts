@@ -4,7 +4,10 @@ import { useMemo } from 'react'
 
 export const getWebUrl = createServerFn({ method: 'GET' }).handler(async () => {
   const { requestUrls } = await import('./urls.server')
-  return requestUrls().webUrl
+  const { webUrl, appOrigin, accountUrl } = requestUrls()
+  const { getRequest } = await import('@tanstack/react-start/server')
+  const request = new URL(getRequest().url)
+  return { webUrl, appOrigin, accountUrl, requestPath: request.pathname + request.search }
 })
 
 export function useLinks() {

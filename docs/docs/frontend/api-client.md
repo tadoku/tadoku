@@ -108,7 +108,7 @@ credentials, caching and timeouts.
 | Application | Adapters |
 | --- | --- |
 | authv2 | `frontend/apps/authv2/src/lib/session.server.ts` reads the session. `sendIdentity()` in `frontend/apps/authv2/src/lib/identity.ts` sends every account form, from the browser or the native form route, and reads error codes with `zIdentityErrorResponse`. |
-| webv3 | `frontend/apps/webv3/src/lib/home.server.ts` makes anonymous home-page reads; `404` means no contest. |
+| webv3 | `frontend/apps/webv3/src/lib/home.server.ts` makes anonymous home-page reads; `404` means no contest. `frontend/apps/webv3/src/lib/session.server.ts` reads the session and role with the visitor's session cookies, and `frontend/apps/webv3/server/routes/logout.post.ts` logs out. |
 | webv2, admin | `frontend/packages/ui/identity.ts` reads the session and logs out. `browserApi()` and `apiData()` in `frontend/packages/ui/api.ts` call operations from React Query hooks and throw `Error(<status>)` for API errors. |
 
 The validators must run on the package's own pinned Zod 3, whose UUID check

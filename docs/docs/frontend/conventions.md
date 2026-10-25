@@ -104,6 +104,14 @@ retain the current UI session until revocation succeeds. A fresh session read
 on each navigation keeps session expiry current without sharing a snapshot
 between tenants.
 
+Webv3 reads `GET /identity/session` and the tenant role on the server,
+forwarding only Tadoku session cookies to the request's public API gateway. Its
+login link opens authv2 and upgrades the SSR path and search to the full browser
+URL after hydration; without JavaScript fragments cannot be preserved. Logout is
+an ordinary POST form that the server completes with `POST /identity/logout`.
+Its mutation boundary requires the same Origin and same-origin Fetch Metadata,
+and personalized responses disable shared caching.
+
 ## Calling Tadoku API
 
 Every frontend calls Tadoku API through the client generated from

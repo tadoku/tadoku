@@ -17,14 +17,23 @@ export function resolveRequestUrls(webUrl: string, apiUrl: string, host?: string
   const hostname = host?.toLowerCase().replace(/:\d+$/, '')
   const production = web.hostname === 'tadoku.app'
   const branchRoot = production ? 'next.preview.tadoku.app' : `next.${web.hostname}`
+  let branch: string | undefined
   if (hostname?.endsWith(`.${branchRoot}`)) {
-    const branch = hostname.slice(0, -(branchRoot.length + 1))
+    branch = hostname.slice(0, -(branchRoot.length + 1))
     if (!labelPattern.test(branch)) throw new Error('Invalid Webv3 branch host')
     web.hostname = `${branch}.${production ? 'preview.tadoku.app' : web.hostname}`
-    return { webUrl: web.origin, apiUrl: new URL(`${api.pathname}${api.search}`, web).href.replace(/\/$/, '') }
+    api.href = new URL(`${api.pathname}${api.search}`, web).href
   }
 
-  return { webUrl: web.origin, apiUrl: api.href.replace(/\/$/, '') }
+  // The account app is always the sibling `account.` host, as in authv2 and ui/app-urls.
+  const accountHost = branch
+    ? `${branch}.account.${production ? 'preview.tadoku.app' : new URL(webUrl).hostname}`
+    : `account.${web.hostname}`
+  return {
+    webUrl: web.origin, apiUrl: api.href.replace(/\/$/, ''),
+    appOrigin: `${web.protocol}//${host || `next.${web.host}`}`,
+    accountUrl: `${web.protocol}//${accountHost}${web.port ? `:${web.port}` : ''}`,
+  }
 }
 
 export function requestUrls() {

@@ -62,6 +62,12 @@ core into server rendering so the shared workspace builds consistently after
 adding authv2. It affects the published build; the development runner option
 does not.
 
+Local loopback runs cannot use the account cookie scoped to `tadoku.dev.lab`.
+The server uses the scheme of `TADOKU_WEB_URL` for return URLs and mutation
+origin checks, so an HTTP loopback run with the default HTTPS configuration
+supports anonymous reads only. Use an owned HTTPS branch host for authenticated
+journeys and mutations.
+
 The Lab CA path above is specific to Lab hosts. On another machine, supply its
 trusted Lab CA certificate through `NODE_EXTRA_CA_CERTS`; do not disable TLS
 verification.
@@ -74,8 +80,9 @@ verification.
 | `PORT` | `5183` | Local development port |
 
 The TanStack server function performs upstream reads, so the browser does not
-need cross-origin API cookies or a CORS exception. The app has no account session or
-API mutation. Local runs default to development API data and Webv2 links; the
+need cross-origin API cookies or a CORS exception. Account sessions are resolved
+server-side through the identity API; public homepage reads remain anonymous.
+Local runs default to development API data and Webv2 links; the
 production image defaults both origins to `https://tadoku.app`.
 
 ## Branch routing
@@ -192,3 +199,44 @@ Before the first deployment, the package owner must confirm GHCR package
 visibility and cluster pull access. Newly created packages may be private;
 public unauthenticated pulls require making this package public, otherwise the
 cluster needs an authorized image pull credential.
+
+## Account sessions
+
+The root loader prefetches the viewer into the request's QueryClient. Viewer data
+is separate from the indefinitely fresh sibling URL loader. It becomes stale after
+30 seconds and is read again when a stale viewer is next used, for example on
+window focus. A request without a `tadoku_session` or `tadoku_session_<tenant>`
+cookie makes no upstream session lookup.
+`frontend/apps/webv3/src/lib/session.server.ts` forwards every such cookie,
+including empty or repeated ones, to the request's API gateway through the
+[generated client](api-client.md):
+`GET /identity/session` names the account and `GET /authz/current-user/role`
+gives its tenant role. The gateway host selects the tenant; no incoming header
+can. Anonymous, signed-in, banned and unavailable states are distinct, and a
+failed or malformed answer never shows an account.
+
+Log in opens authv2's `/login` on the sibling account host, `account.<domain>`
+or `<route>.account.<domain>`, with the current page as `return_to`. It
+preserves the router path and search during SSR and adds the current fragment
+after hydration. Without JavaScript the server cannot preserve a fragment.
+Authv2 follows only returns on the identity API's
+[app host allowlist](../tadoku-api/identity.md#http-boundaries).
+
+Log out is a plain POST form to `/logout`. After the Origin check below, the
+route sends `POST /identity/logout` with the session cookies and the app's own
+Origin, relays the API's cookie-clearing `Set-Cookie` and returns home. Any
+other answer, including a timeout, shows an unavailable message and keeps the
+browser's cookie, although an unconfirmed request may still have revoked the
+session. The identity API refuses logout from a host outside its allowlist. Logout and all
+non-GET server functions require an exact Origin and reject non-same-origin
+Fetch Metadata. Personalized documents and server-function responses emit
+`Cache-Control: private, no-store` and `Vary: Cookie`; development ingress
+replaces Cache-Control with its own `no-store` policy. Health keeps its own headers.
+
+The account E2E logs in through authv2 with two native fixture identities and
+makes anonymous requests, including thirty interleaved SSR reads. On a branch it
+adds an unrelated canonical `tadoku_session` cookie and expects the branch
+account to remain signed in. After logout it checks that the API no longer
+accepts the old session cookie. Set
+`TADOKU_API_URL` to the branch's public API root for that check. Authenticated
+tests disable traces and videos and retain no browser storage.

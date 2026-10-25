@@ -114,7 +114,7 @@ func ignoreJob[J jobs.Job](context.Context, J) error { return nil }
 
 func (a *Application) SendEmail(ctx context.Context, job jobs.SendEmailV1) error {
 	if a.email == nil {
-		return errors.New("worker email service is not configured")
+		return &permanentError{err: errors.New("worker email service is not configured")}
 	}
 	final, _ := ctx.Value(finalAttemptKey{}).(bool)
 	return a.email.SendAttempt(ctx, job.EmailID, final)

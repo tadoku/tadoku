@@ -4,14 +4,11 @@ import (
 	"fmt"
 	"slices"
 	"strings"
-	"testing"
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
 	"pgregory.net/rapid"
 )
-
-var propertySeeds = []uint64{1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233}
 
 // graphPool is the small set of objects and users that generated relationships draw from, so that objects appear
 // both as objects and as subjects and repeated draws collide.
@@ -239,10 +236,4 @@ func rowDifference(got, want []string) string {
 		}
 	}
 	return fmt.Sprintf("missing %q, extra %q", missing, extra)
-}
-
-func propertyFailure(t *testing.T, seed uint64, graph []permissions.Relationship, format string, args ...any) {
-	t.Helper()
-
-	t.Errorf("seed %d: %s\ngraph:\n  %s", seed, fmt.Sprintf(format, args...), strings.Join(rows(graph), "\n  "))
 }

@@ -1,17 +1,26 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type BrowserContext, type Page } from '@playwright/test'
 
 const base = process.env.WEBV3_BASE_URL
 const email = process.env.E2E_READER_EMAIL
 const password = process.env.E2E_READER_PASSWORD
 const secondEmail = process.env.E2E_SECOND_EMAIL
 const secondPassword = process.env.E2E_SECOND_PASSWORD
+const api = process.env.TADOKU_API_URL
 
 test.use({ trace: 'off', video: 'off', ignoreHTTPSErrors: false })
 
 async function login(page: Page, identity = 'reader') {
-  await page.locator('input[name="identifier"]').fill(identity === 'reader' ? email! : secondEmail!)
-  await page.locator('input[name="password"]').fill(identity === 'reader' ? password! : secondPassword!)
-  await page.locator('button[type="submit"]').click()
+  await page.getByLabel('Email').fill(identity === 'reader' ? email! : secondEmail!)
+  await page.getByLabel('Password').fill(identity === 'reader' ? password! : secondPassword!)
+  await page.getByRole('button', { name: 'Log in', exact: true }).click()
+}
+
+const branch = base ? new URL(base).hostname.includes('.next.') : false
+
+/** The tenant's session cookie: `tadoku_session` canonically, `tadoku_session_<tenant>` on a branch. */
+async function sessionCookie(context: BrowserContext) {
+  return (await context.cookies())
+    .find(cookie => branch ? cookie.name.startsWith('tadoku_session_') : cookie.name === 'tadoku_session')
 }
 
 test('anonymous login return is SSR stable and includes the fragment after hydration', async ({ browser, page }) => {
@@ -31,8 +40,8 @@ test('anonymous login return is SSR stable and includes the fragment after hydra
   await expect.poll(async () => new URL((await page.getByRole('link', { name: 'Log in', exact: true }).getAttribute('href'))!).searchParams.get('return_to')).toBe(`${destination.split('#')[0]}#main-content`)
 })
 
-test('login, exact return, SSR reload, foreign-origin refusal and logout invalidate the session', async ({ page, context }, testInfo) => {
-  test.skip(!base || !email || !password, 'Set development fixture credentials')
+test('login, exact return, SSR reload, foreign-origin refusal and logout invalidate the session', async ({ page, context, playwright }, testInfo) => {
+  test.skip(!base || !email || !password || !api, 'Set development fixture credentials and TADOKU_API_URL')
   const destination = `${base}/plan?source=next&note=reading%20%26%20listening#entry`
   await page.goto(destination)
   await expect.poll(async () => new URL((await page.getByRole('link', { name: 'Log in', exact: true }).getAttribute('href'))!).searchParams.get('return_to')).toBe(destination)
@@ -46,19 +55,35 @@ test('login, exact return, SSR reload, foreign-origin refusal and logout invalid
   expect(rejected.status()).toBe(403)
   await page.reload()
   await expect(page.getByRole('navigation', { name: 'Main navigation' }).getByText('Dev Reader', { exact: true })).toBeVisible()
+  if (branch) {
+    // The branch API selects its own tenant's cookie, so a canonical session cookie beside it changes nothing.
+    const domain = new URL(base!).hostname.split('.next.')[1]
+    await context.addCookies([{ name: 'tadoku_session', value: 'canonical', domain: `.${domain}`, path: '/', secure: true, sameSite: 'Lax' }])
+    await page.reload()
+    await expect(page.getByRole('navigation', { name: 'Main navigation' }).getByText('Dev Reader', { exact: true })).toBeVisible()
+  }
   await page.screenshot({ path: testInfo.outputPath('signed-in.png'), fullPage: true })
-  const oldCookie = (await context.cookies()).find(cookie => cookie.name === 'ory_kratos_session')!
+  const oldCookie = (await sessionCookie(context))!
   await page.getByRole('button', { name: 'Log out', exact: true }).click()
   await expect(page).toHaveURL(`${base}/`)
   await expect(page.getByRole('link', { name: 'Log in', exact: true })).toBeVisible()
-  const who = await context.request.get('https://account.tadoku.dev.lab/kratos/sessions/whoami', { headers: { Cookie: `${oldCookie.name}=${oldCookie.value}` } })
-  expect(who.status()).toBe(401)
+  expect(await sessionCookie(context)).toBeUndefined()
+  const anonymous = await playwright.request.newContext({ extraHTTPHeaders: { Cookie: `${oldCookie.name}=${oldCookie.value}` } })
+  const who = await anonymous.get(`${api}/identity/session`)
+  expect(who.status()).toBe(200)
+  expect((await who.json()).account).toBeNull()
+  await anonymous.dispose()
 })
 
-test('expired cookie renders anonymous', async ({ context, page }) => {
-  test.skip(!base, 'Set WEBV3_BASE_URL')
-  await context.addCookies([{ name: 'ory_kratos_session', value: 'expired', url: base! }])
+test('an expired session cookie renders anonymous', async ({ context, page }) => {
+  test.skip(!base || !email || !password, 'Set development fixture credentials')
   await page.goto('/plan')
+  await page.getByRole('link', { name: 'Log in', exact: true }).click()
+  await login(page)
+  await expect(page.getByRole('navigation', { name: 'Main navigation' }).getByText('Dev Reader', { exact: true })).toBeVisible()
+  const cookie = (await sessionCookie(context))!
+  await context.addCookies([{ ...cookie, value: 'expired' }])
+  await page.reload()
   await expect(page.getByRole('link', { name: 'Log in', exact: true })).toBeVisible()
 })
 

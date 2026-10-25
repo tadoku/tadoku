@@ -210,12 +210,15 @@ Authv2 uses `/` for Settings, `/login`, `/register` and `/recovery` on `account.
 
 Use `dev url --owner <owner> --host next.tadoku.dev.lab '/plan?source=next#entry'`.
 Anonymous HTML shows Log in with path and search; hydration adds the fragment.
-Sign in through the sibling account host, confirm the exact return and display
-name, reload, then POST Log out and verify home is anonymous and the old session
-is invalid. Check a foreign-origin logout returns 403 without ending the session.
+Sign in through authv2 on the sibling account host, confirm the exact return and
+display name, reload, then POST Log out and verify home is anonymous, the
+tenant's `tadoku_session_<tenant>` cookie is cleared and `GET /identity/session`
+on the branch API returns no account for the old cookie. Check a foreign-origin
+logout returns 403 without ending the session.
 
 Use Reader, Admin and anonymous contexts for thirty interleaved SSR reads. Each
 response must show only its viewer and disable caching. The application emits
 private, no-store; development ingress replaces it with no-store. Keep traces,
-videos and storage dumps off for authenticated runs. Canonical production and
-branch preview login-return acceptance are separate release gates.
+videos and storage dumps off for authenticated runs. Production login returns
+and logout also need `next.tadoku.app` and `<route>.next.preview.tadoku.app` on
+the identity API's app host allowlist and in authv2's continuation check.

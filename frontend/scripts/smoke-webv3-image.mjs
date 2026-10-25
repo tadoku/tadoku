@@ -121,6 +121,12 @@ try {
   ]))
   const refused = await fetch(`${base}/logout`, { method: 'POST', headers: { Origin: 'https://evil.tadoku.app', 'Sec-Fetch-Site': 'same-site' }, redirect: 'manual' })
   assert.equal(refused.status, 403)
+  // The synthetic API has no identity routes, so a session cookie meets an unavailable identity service.
+  const outage = await fetch(`${base}/plan`, { headers: { Cookie: 'tadoku_session=fixture' }, signal: AbortSignal.timeout(15_000) })
+  const outageHtml = await outage.text()
+  assert.equal(outage.status, 200)
+  assert(outageHtml.includes('Account service unavailable'), 'Identity outage did not render the unavailable account state')
+  assert(!outageHtml.includes('>Log in<'), 'Identity outage rendered a guest')
   const html = await (await fetch(base, { signal: AbortSignal.timeout(15_000) })).text()
   assert(html.includes(contest.title), 'Runtime API override or SSR failed')
   assert(html.includes('https://tadoku.app'), 'Production product links missing')

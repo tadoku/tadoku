@@ -1,6 +1,6 @@
+import { identityLogout } from 'api-client'
 import { defineHandler } from 'nitro'
-import { z } from 'zod'
-import { assertSameOrigin, sessionCookie } from '../../src/lib/session.server'
+import { assertSameOrigin, sessionCookie, sessionRequest } from '../../src/lib/session.server'
 import { resolveRequestUrls } from '../../src/lib/urls.server'
 
 export default defineHandler(async event => {
@@ -10,25 +10,20 @@ export default defineHandler(async event => {
     process.env.TADOKU_API_URL || 'https://tadoku.dev.lab/api/internal',
     request.headers.get('host') || undefined,
   )
-  const headers = { 'Cache-Control': 'private, no-store', Vary: 'Cookie' }
+  const headers = new Headers({ 'Cache-Control': 'private, no-store', Vary: 'Cookie' })
   try { assertSameOrigin(request, urls.appOrigin) } catch {
     return new Response('Forbidden', { status: 403, headers })
   }
   const cookie = sessionCookie(request.headers.get('cookie') || '')
-  if (!cookie) return new Response(null, { status: 303, headers: { ...headers, Location: '/' } })
-  try {
-    const response = await fetch(`${urls.kratosUrl}/self-service/logout/browser?return_to=${encodeURIComponent(`${urls.appOrigin}/`)}`, {
-      headers: { Accept: 'application/json', Cookie: cookie }, redirect: 'error', signal: AbortSignal.timeout(10_000),
-    })
-    if (response.status === 401) return new Response(null, { status: 303, headers: { ...headers, Location: '/' } })
-    if (!response.ok) throw new Error('Logout unavailable')
-    const { logout_url } = z.object({ logout_url: z.url() }).parse(await response.json())
-    const target = new URL(logout_url)
-    if (target.origin !== new URL(urls.kratosUrl).origin || target.pathname !== '/kratos/self-service/logout') {
-      throw new Error('Invalid logout URL')
+  if (cookie) {
+    // The identity API accepts logout only from an allowed app Origin, which this host's own page has just proved.
+    const options = sessionRequest(cookie, urls.apiUrl)
+    const { error, response } = await identityLogout({ ...options, headers: { ...options.headers, Origin: urls.appOrigin } })
+    if (!response?.ok || error !== undefined) {
+      return new Response('Log out is unavailable. Return to the previous page and try again.', { status: 503, headers })
     }
-    return new Response(null, { status: 303, headers: { ...headers, Location: target.href } })
-  } catch {
-    return new Response('Log out is unavailable. Return to the previous page and try again.', { status: 503, headers })
+    for (const value of response.headers.getSetCookie()) headers.append('Set-Cookie', value)
   }
+  headers.set('Location', '/')
+  return new Response(null, { status: 303, headers })
 })

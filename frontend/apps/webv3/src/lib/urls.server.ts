@@ -18,7 +18,6 @@ export function resolveRequestUrls(webUrl: string, apiUrl: string, host?: string
   const production = web.hostname === 'tadoku.app'
   const branchRoot = production ? 'next.preview.tadoku.app' : `next.${web.hostname}`
   let branch: string | undefined
-  const kratosUrl = new URL(`/kratos`, new URL(`${web.protocol}//account.${web.host}`)).href
   if (hostname?.endsWith(`.${branchRoot}`)) {
     branch = hostname.slice(0, -(branchRoot.length + 1))
     if (!labelPattern.test(branch)) throw new Error('Invalid Webv3 branch host')
@@ -26,14 +25,14 @@ export function resolveRequestUrls(webUrl: string, apiUrl: string, host?: string
     api.href = new URL(`${api.pathname}${api.search}`, web).href
   }
 
-  // ponytail: sibling account host; add TADOKU_AUTH_URL only for a non-sibling deployment.
-  const authHost = branch
+  // The account app is always the sibling `account.` host, as in authv2 and ui/app-urls.
+  const accountHost = branch
     ? `${branch}.account.${production ? 'preview.tadoku.app' : new URL(webUrl).hostname}`
     : `account.${web.hostname}`
   return {
     webUrl: web.origin, apiUrl: api.href.replace(/\/$/, ''),
     appOrigin: `${web.protocol}//${host || `next.${web.host}`}`,
-    authUrl: `${web.protocol}//${authHost}${web.port ? `:${web.port}` : ''}`, kratosUrl,
+    accountUrl: `${web.protocol}//${accountHost}${web.port ? `:${web.port}` : ''}`,
   }
 }
 

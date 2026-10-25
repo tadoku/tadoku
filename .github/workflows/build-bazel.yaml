@@ -11,6 +11,7 @@ on:
       - "services/**"
       - "infra/dev/ory/identity.default.schema.json"
       - "tools/ci/**"
+      - "tools/bazel"
       - "tools/oapi-codegen/**"
       - ".depolicy.yaml"
       - "**/BUILD"
@@ -33,6 +34,7 @@ on:
       - "services/**"
       - "infra/dev/ory/identity.default.schema.json"
       - "tools/ci/**"
+      - "tools/bazel"
       - "tools/oapi-codegen/**"
       - ".depolicy.yaml"
       - "**/BUILD"
@@ -122,6 +124,25 @@ jobs:
           repository-cache: true
           disk-cache: ${{ github.workflow }}
           cache-save: ${{ github.event_name != 'pull_request' }}
+
+      - name: Verify safe Bazel execution
+        run: python3 tools/ci/check_bazel_wrapper.py --evidence-dir "$RUNNER_TEMP/bazel-wrapper"
+
+      - name: Verify image publication authentication
+        run: python3 tools/ci/check_bazel_publish.py --evidence-dir "$RUNNER_TEMP/bazel-publish"
+
+      - name: Retain Bazel wrapper evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: bazel-wrapper-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/bazel-wrapper/*.json
+            ${{ runner.temp }}/bazel-wrapper/commands.jsonl
+            ${{ runner.temp }}/bazel-wrapper/*.log
+            ${{ runner.temp }}/bazel-publish/result.json
+            ${{ runner.temp }}/bazel-publish/*.log
+          retention-days: 7
 
       - name: Verify frozen Bazel dependencies
         run: bazel mod deps --lockfile_mode=error

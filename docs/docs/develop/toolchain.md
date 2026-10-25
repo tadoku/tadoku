@@ -23,6 +23,66 @@ bazel test //services/tadoku-api/e2e:e2e_test    # one target
 bazel test //services/tadoku-api/e2e:e2e_test --test_filter=TestAuthentication
 ```
 
+### Safe execution
+
+Bazelisk automatically runs the executable `tools/bazel` hook. It requires
+Python 3 and applies to commands from the repository root and its subdirectories.
+The separate `tools/oapi-codegen/` workspace links its own hook to the same file,
+so OpenAPI generation has the same protection. Calling a downloaded Bazel binary
+directly, or setting `BAZELISK_SKIP_WRAPPER`, bypasses this protection; use Bazelisk
+as `bazel` on your `PATH`.
+
+On Linux, the hook requires `flock` from util-linux and serializes Bazel clients
+across worktrees using one fixed lock per Unix user under `/tmp/` with `flock -o`.
+The lock covers the build, and cannot be inherited by the idle server. On macOS,
+where `flock` is usually absent, builds still receive the environment and resource
+defaults but are not serialized.
+
+The defaults are a 1 GiB JVM heap, a `HOST_RAM*0.25` action memory budget and a
+60-second idle timeout. The action budget controls scheduling; it is not a hard
+per-process memory limit. Explicit Bazel command-line overrides remain available:
+
+```sh
+bazel --host_jvm_args=-Xmx2048m --max_idle_secs=120 build \
+  --local_resources=memory=2048 //services/...
+```
+
+Only explicitly allowed environment variables reach the Bazel client and server:
+the host toolchain, home directory, terminal, locale and certificate paths, Docker
+configuration path, and the repository's disposable test-service settings.
+Provider token variables are excluded. Do not put secrets in Bazel flags or RC
+files: explicit values there can still be recorded in logs. The test-service URL
+variables intentionally reach Bazel tests and must contain disposable credentials.
+
+For `bazel run`, a native preflight resolves RC imports and configs without
+analyzing, building or executing the target. The hook then builds a native launch
+script under the lock, releases the lock, removes its private script, and executes
+the target with the caller's runtime environment. Long-running commands and
+commands that invoke Bazel do not hold the build lock. Arguments, stdin, exit
+status, signals and runfiles remain
+native to the generated launch script. Explicit `--script_path` requests remain
+build-only, and `--norun` does not execute the target.
+
+CI image publication authenticates through the Docker config file written by
+`docker login`, normally under `$HOME/.docker/`, or through `DOCKER_CONFIG`.
+`tools/ci/run_bazel_images.sh` invokes the OCI push programs after the build lock
+is released. Registry tokens do not need to enter the Bazel server environment.
+
+Run the real execution checks with Python 3, Bazelisk and Linux `flock`; the
+publication check additionally needs Docker. Choose new evidence directories
+outside the repository:
+
+```sh
+python3 tools/ci/check_bazel_wrapper.py --evidence-dir /tmp/tadoku-wrapper-check
+python3 tools/ci/check_bazel_publish.py --evidence-dir /tmp/tadoku-publish-check
+```
+
+The publication check uses synthetic credentials and a disposable registry bound
+to loopback. It runs the same image runner and OCI push rules as CI, rejects an
+unauthenticated push, then verifies both Docker config paths and reads the
+published manifest back. It does not publish to GHCR. The build workflow retains
+the checks' reports and logs as the `bazel-wrapper` artifact for seven days.
+
 Tadoku API integration tests need disposable loopback PostgreSQL 17,
 PgBouncer 1.25.2 in transaction mode and Valkey 9 instances, passed as
 `TADOKU_TEST_POSTGRES_URL`, `TADOKU_TEST_PGBOUNCER_URL` and

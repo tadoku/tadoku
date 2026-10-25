@@ -40,16 +40,12 @@ func TestRelationshipValidation(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			grantErr := writer.Grant(ctx, tc.relationship)
 			revokeErr := writer.Revoke(ctx, tc.relationship)
-			_, storedErr := writer.Stored(ctx, []Relationship{tc.relationship})
 
 			if grantErr == nil {
 				t.Error("grant accepted an invalid relationship")
 			}
 			if revokeErr == nil {
 				t.Error("revoke accepted an invalid relationship")
-			}
-			if storedErr == nil {
-				t.Error("stored accepted an invalid relationship")
 			}
 		})
 	}

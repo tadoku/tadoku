@@ -71,16 +71,3 @@ where subject_type = 'user'
   and (@object_type::text = '' or object_type = @object_type::text)
   and (@relation::text = '' or relation = @relation::text)
 order by object_type, object_id, relation, subject_type, subject_id, subject_relation;
-
--- name: StoredRelationships :many
-select object_type, object_id, relation, subject_type, subject_id, subject_relation
-from permission_relationships
-where (object_type, object_id, relation, subject_type, subject_id, subject_relation) in (
-  select
-    unnest(@object_types::text[]),
-    unnest(@object_ids::text[]),
-    unnest(@relations::text[]),
-    unnest(@subject_types::text[]),
-    unnest(@subject_ids::text[]),
-    unnest(@subject_relations::text[])
-);

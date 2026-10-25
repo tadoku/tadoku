@@ -81,7 +81,7 @@ func (r *Repository) Insert(ctx context.Context, tuples []permissions.Tuple) err
 		return err
 	}
 
-	_, err = q.InsertRelationships(ctx, queries.InsertRelationshipsParams(tupleColumns(tuples)))
+	_, err = q.InsertRelationships(ctx, tupleColumns(tuples))
 	return err
 }
 
@@ -118,29 +118,8 @@ func (r *Repository) DeleteUser(ctx context.Context, userID string) error {
 	return err
 }
 
-func (r *Repository) Stored(ctx context.Context, tuples []permissions.Tuple) ([]permissions.Tuple, error) {
-	q, err := r.queries(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if len(tuples) == 0 {
-		return nil, nil
-	}
-
-	rows, err := q.StoredRelationships(ctx, tupleColumns(tuples))
-	if err != nil {
-		return nil, err
-	}
-
-	stored := make([]permissions.Tuple, len(rows))
-	for i, row := range rows {
-		stored[i] = permissions.Tuple(row)
-	}
-	return stored, nil
-}
-
-func tupleColumns(tuples []permissions.Tuple) queries.StoredRelationshipsParams {
-	var columns queries.StoredRelationshipsParams
+func tupleColumns(tuples []permissions.Tuple) queries.InsertRelationshipsParams {
+	var columns queries.InsertRelationshipsParams
 	for _, tuple := range tuples {
 		columns.ObjectTypes = append(columns.ObjectTypes, tuple.ObjectType)
 		columns.ObjectIds = append(columns.ObjectIds, tuple.ObjectID)

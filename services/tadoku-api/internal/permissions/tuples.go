@@ -56,30 +56,6 @@ type Tuples interface {
 	DeleteObject(ctx context.Context, objectType, objectID string) error
 	// DeleteUser removes, with one statement, the tuples whose subject is the user.
 	DeleteUser(ctx context.Context, userID string) error
-	// Stored returns the given tuples that are stored, with at most one query. It fails without a tenant even for no
-	// tuples.
-	Stored(ctx context.Context, tuples []Tuple) ([]Tuple, error)
-}
-
-func storedRelationships(ctx context.Context, tuples Tuples, candidates []Relationship) (map[Relationship]bool, error) {
-	byTuple := make(map[Tuple]Relationship, len(candidates))
-	wanted := make([]Tuple, 0, len(candidates))
-	for _, candidate := range candidates {
-		tuple := tupleOf(candidate)
-		byTuple[tuple] = candidate
-		wanted = append(wanted, tuple)
-	}
-
-	rows, err := tuples.Stored(ctx, wanted)
-	if err != nil {
-		return nil, err
-	}
-
-	stored := make(map[Relationship]bool, len(rows))
-	for _, row := range rows {
-		stored[byTuple[row]] = true
-	}
-	return stored, nil
 }
 
 // tupleOf accepts only relationships that passed Model.validateRelationship.

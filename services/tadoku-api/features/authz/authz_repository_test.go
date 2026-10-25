@@ -3,7 +3,6 @@ package authz
 import (
 	"context"
 	"errors"
-	"maps"
 	"slices"
 	"testing"
 
@@ -46,12 +45,8 @@ func TestRepositoryJoinsTheContextTransaction(t *testing.T) {
 		t.Fatalf("transaction error = %v, want %v", err, errRollback)
 	}
 
-	stored, err := repository.Stored(ctx, []permissions.Tuple{admin})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(stored) != 0 {
-		t.Errorf("stored after rollback = %+v, want none", stored)
+	if stored := storedRelationships(t, db, tenant.Production().String()); len(stored) != 0 {
+		t.Errorf("stored after rollback = %q, want none", stored)
 	}
 }
 
@@ -63,112 +58,18 @@ func TestRepositoryRequiresATenant(t *testing.T) {
 	admin := userTuple(uuid.New())
 
 	_, subjectsErr := repository.Subjects(t.Context(), nil)
-	_, storedErr := repository.Stored(t.Context(), nil)
 	errs := []error{
 		subjectsErr,
 		repository.Insert(t.Context(), []permissions.Tuple{admin}),
 		repository.Insert(t.Context(), nil),
 		repository.Delete(t.Context(), []permissions.Tuple{admin}),
 		repository.Delete(t.Context(), nil),
-		storedErr,
 	}
 	for _, err := range errs {
 		if errx.KindOf(err) != errx.Unavailable || !errors.Is(err, postgres.ErrNoTenant) {
 			t.Errorf("error = %v, want unavailable wrapping %v", err, postgres.ErrNoTenant)
 		}
 	}
-}
-
-func TestStoredRelationships(t *testing.T) {
-	t.Parallel()
-	ctx := productionContext(t)
-
-	db := newTestDatabase(t)
-	pool, statements := newLoggedPool(t, db)
-	repository := NewRepository(pool)
-	writer := permissions.NewRelationships(repository, testModel)
-	branchCtx := registerTestTenant(t, db, "e2e/permissions-0000000c")
-	admin, banned, both, stranger := uuid.New(), uuid.New(), uuid.New(), uuid.New()
-	contestID, groupID := uuid.New(), uuid.New()
-	grantAll(
-		t,
-		ctx,
-		writer,
-		siteAdminRelationship(admin),
-		siteBanRelationship(banned),
-		siteAdminRelationship(both),
-		siteBanRelationship(both),
-	)
-	grantAll(t, ctx, writer, contestModeratorGroup(contestID, groupID))
-	grantAll(t, branchCtx, writer, siteAdminRelationship(stranger))
-	statements.take()
-
-	t.Run("batch", func(t *testing.T) {
-		candidates := []permissions.Relationship{
-			siteAdminRelationship(admin),
-			siteBanRelationship(admin),
-			siteBanRelationship(banned),
-			siteAdminRelationship(both),
-			siteBanRelationship(both),
-			siteAdminRelationship(stranger),
-		}
-
-		got, err := writer.Stored(ctx, candidates)
-
-		if err != nil {
-			t.Fatal(err)
-		}
-		want := map[permissions.Relationship]bool{
-			siteAdminRelationship(admin): true,
-			siteBanRelationship(banned):  true,
-			siteAdminRelationship(both):  true,
-			siteBanRelationship(both):    true,
-		}
-		if !maps.Equal(got, want) {
-			t.Errorf("stored = %v, want %v", got, want)
-		}
-		if sent := statements.take(); len(sent) != 1 {
-			t.Errorf("sent %d statements, want 1: %q", len(sent), sent)
-		}
-	})
-
-	t.Run("subject sets", func(t *testing.T) {
-		stored := contestModeratorGroup(contestID, groupID)
-
-		got, err := writer.Stored(ctx, []permissions.Relationship{stored, contestModeratorGroup(contestID, uuid.New())})
-
-		if err != nil {
-			t.Fatal(err)
-		}
-		if want := map[permissions.Relationship]bool{stored: true}; !maps.Equal(got, want) {
-			t.Errorf("stored = %+v, want %+v", got, want)
-		}
-		if sent := statements.take(); len(sent) != 1 {
-			t.Errorf("sent %d statements, want 1: %q", len(sent), sent)
-		}
-	})
-
-	t.Run("no candidates", func(t *testing.T) {
-		got, err := writer.Stored(ctx, nil)
-
-		if err != nil || len(got) != 0 {
-			t.Errorf("stored = %v, %v; want nothing", got, err)
-		}
-		if sent := statements.take(); len(sent) != 0 {
-			t.Errorf("sent %d statements, want none: %q", len(sent), sent)
-		}
-	})
-
-	t.Run("missing tenant", func(t *testing.T) {
-		_, oneErr := writer.Stored(t.Context(), []permissions.Relationship{siteAdminRelationship(admin)})
-		_, noneErr := writer.Stored(t.Context(), nil)
-
-		for _, err := range []error{oneErr, noneErr} {
-			if errx.KindOf(err) != errx.Unavailable {
-				t.Errorf("error = %v, want unavailable", err)
-			}
-		}
-	})
 }
 
 func TestRelationshipStorage(t *testing.T) {

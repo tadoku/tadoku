@@ -38,7 +38,7 @@ type Tuples interface {
 func storedSubjects(
 	ctx context.Context,
 	tuples Tuples,
-	obj object,
+	obj Object,
 	relation string,
 	user uuid.UUID,
 ) (bool, []subjectSet, error) {
@@ -53,7 +53,7 @@ func storedSubjects(
 			return true, nil, nil
 		}
 		sets = append(sets, subjectSet{
-			object:   object{objectType: ObjectType(tuple.SubjectType), id: tuple.SubjectID},
+			object:   Object{objectType: ObjectType(tuple.SubjectType), id: tuple.SubjectID},
 			relation: tuple.SubjectRelation,
 		})
 	}
@@ -92,6 +92,9 @@ func tupleOf(relationship Relationship) Tuple {
 	case userSubject:
 		tuple.SubjectType = UserSubjectType
 		tuple.SubjectID = uuid.UUID(subject).String()
+	case Object:
+		tuple.SubjectType = string(subject.objectType)
+		tuple.SubjectID = subject.id
 	case subjectSet:
 		tuple.SubjectType = string(subject.object.objectType)
 		tuple.SubjectID = subject.object.id

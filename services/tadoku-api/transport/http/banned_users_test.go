@@ -27,7 +27,7 @@ func TestBanLookupFailureBlocksPrivilegeChecks(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	admin := sites.Check("root", "admin")
+	admin := sites.MustPermit("admin").On("root")
 	for _, test := range []struct {
 		name  string
 		check func(*permissions.Checker, context.Context) (bool, error)

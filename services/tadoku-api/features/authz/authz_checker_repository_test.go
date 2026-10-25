@@ -89,7 +89,7 @@ func TestCheckerFailsClosed(t *testing.T) {
 		{"storage error", permissions.NewChecker(NewRepository(closedPool(t, db)), testModel), ctx, siteAdmin, nil},
 		{"cancelled context", working, cancelled, siteAdmin, context.Canceled},
 		{"unknown ban", working, unknownBan, siteAdmin, lookupErr},
-		{"unknown permit", working, ctx, sites.Check(siteRoot, "own"), nil},
+		{"unknown permit", working, ctx, permissions.Check{}, nil},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

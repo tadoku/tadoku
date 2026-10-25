@@ -132,7 +132,7 @@ func TestStoredRelationships(t *testing.T) {
 		siteAdminRelationship(both),
 		siteBanRelationship(both),
 	)
-	insertAll(t, ctx, repository, contestModeratorGroup(contestID, groupID))
+	grantAll(t, ctx, writer, contestModeratorGroup(contestID, groupID))
 	grantAll(t, branchCtx, writer, siteAdminRelationship(stranger))
 	statements.take()
 
@@ -168,12 +168,12 @@ func TestStoredRelationships(t *testing.T) {
 	t.Run("subject sets", func(t *testing.T) {
 		stored := contestModeratorGroup(contestID, groupID)
 
-		got, err := repository.Stored(ctx, []permissions.Tuple{stored, contestModeratorGroup(contestID, uuid.New())})
+		got, err := writer.Stored(ctx, []permissions.Relationship{stored, contestModeratorGroup(contestID, uuid.New())})
 
 		if err != nil {
 			t.Fatal(err)
 		}
-		if want := []permissions.Tuple{stored}; !slices.Equal(got, want) {
+		if want := map[permissions.Relationship]bool{stored: true}; !maps.Equal(got, want) {
 			t.Errorf("stored = %+v, want %+v", got, want)
 		}
 		if sent := statements.take(); len(sent) != 1 {
@@ -212,8 +212,14 @@ func TestRelationshipStorage(t *testing.T) {
 	repository := NewRepository(db.AppPool)
 	userID, contestID, groupID, logID := uuid.New(), uuid.New(), uuid.New(), uuid.New()
 
-	grantAll(t, ctx, permissions.NewRelationships(repository, testModel), siteAdminRelationship(userID))
-	insertAll(t, ctx, repository, contestModeratorGroup(contestID, groupID), logCountsFor(logID, contestID))
+	grantAll(
+		t,
+		ctx,
+		permissions.NewRelationships(repository, testModel),
+		siteAdminRelationship(userID),
+		contestModeratorGroup(contestID, groupID),
+		logCountsFor(logID, contestID),
+	)
 
 	want := []string{
 		"contest:" + contestID.String() + "#moderators@group:" + groupID.String() + "#members",

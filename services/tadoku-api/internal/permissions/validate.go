@@ -176,9 +176,14 @@ func (m Model) validateRelationship(relationship Relationship) error {
 	switch subject := relationship.subject.(type) {
 	case userSubject:
 		subjectType = Users
+	case Object:
+		if subject.objectType == "" || subject.id == "" {
+			return errors.New("linked object needs an object type and an ID")
+		}
+		subjectType = ObjectOf(subject.objectType)
 	case subjectSet:
-		if subject.object.id == "" {
-			return errors.New("relationship subject needs an object ID")
+		if subject.object.objectType == "" || subject.object.id == "" || subject.relation == "" {
+			return errors.New("subject set needs an object type, an ID and a relation")
 		}
 		subjectType = SetOf(subject.object.objectType, subject.relation)
 	default:

@@ -8,7 +8,7 @@ type relatedRule struct{ relation string }
 type allowedRule struct{ permit string }
 type viaRule struct{ relation, permit string }
 type permitOnRule struct {
-	object object
+	object Object
 	permit string
 }
 type anyOfRule struct{ rules []Rule }
@@ -34,7 +34,7 @@ func Via(relation, permit string) Rule { return viaRule{relation: relation, perm
 
 // PermitOn passes when the permit passes on one fixed object, which may belong to another feature's namespace.
 func PermitOn(objectType ObjectType, objectID, permit string) Rule {
-	return permitOnRule{object: object{objectType: objectType, id: objectID}, permit: permit}
+	return permitOnRule{object: Object{objectType: objectType, id: objectID}, permit: permit}
 }
 
 func AnyOf(rules ...Rule) Rule { return anyOfRule{rules: rules} }
@@ -62,6 +62,10 @@ func ObjectOf(objectType ObjectType) SubjectType {
 
 func (subject SubjectType) isObject() bool {
 	return subject.objectType != "" && subject.relation == ""
+}
+
+func (subject SubjectType) isSet() bool {
+	return subject.objectType != "" && subject.relation != ""
 }
 
 type Relations map[string][]SubjectType

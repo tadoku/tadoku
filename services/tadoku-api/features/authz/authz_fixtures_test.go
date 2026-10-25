@@ -60,7 +60,19 @@ var (
 		)},
 	)
 	testModel = mustModel(sites, groups, contests, logs)
-	siteAdmin = sites.Check(siteRoot, "admin")
+	siteAdmin = sites.MustPermit("admin").On(siteRoot)
+
+	siteAdmins       = sites.MustUserRelation("admins")
+	siteBans         = sites.MustUserRelation("banned")
+	editPermit       = contests.MustPermit("edit")
+	moderatePermit   = contests.MustPermit("moderate")
+	hidePermit       = logs.MustPermit("hide")
+	ownersRelation   = contests.MustUserRelation("owners")
+	moderatorUsers   = contests.MustUserRelation("moderators")
+	moderatorGroups  = contests.MustSetRelation("moderators")
+	memberUsers      = groups.MustUserRelation("members")
+	memberGroups     = groups.MustSetRelation("members")
+	contestsRelation = logs.MustObjectRelation("contests")
 )
 
 func mustModel(namespaces ...permissions.Namespace) permissions.Model {
@@ -72,69 +84,47 @@ func mustModel(namespaces ...permissions.Namespace) permissions.Model {
 }
 
 func siteAdminRelationship(userID uuid.UUID) permissions.Relationship {
-	return sites.UserRelationship(siteRoot, "admins", userID)
+	return siteAdmins.On(siteRoot, userID)
 }
 
 func siteBanRelationship(userID uuid.UUID) permissions.Relationship {
-	return sites.UserRelationship(siteRoot, "banned", userID)
+	return siteBans.On(siteRoot, userID)
 }
 
 func editContest(contestID uuid.UUID) permissions.Check {
-	return contests.Check(contestID.String(), "edit")
+	return editPermit.On(contestID.String())
 }
 
 func moderateContest(contestID uuid.UUID) permissions.Check {
-	return contests.Check(contestID.String(), "moderate")
+	return moderatePermit.On(contestID.String())
 }
 
 func hideLog(logID uuid.UUID) permissions.Check {
-	return logs.Check(logID.String(), "hide")
+	return hidePermit.On(logID.String())
 }
 
 func contestOwner(contestID, userID uuid.UUID) permissions.Relationship {
-	return contests.UserRelationship(contestID.String(), "owners", userID)
+	return ownersRelation.On(contestID.String(), userID)
 }
 
 func contestModerator(contestID, userID uuid.UUID) permissions.Relationship {
-	return contests.UserRelationship(contestID.String(), "moderators", userID)
+	return moderatorUsers.On(contestID.String(), userID)
 }
 
 func groupMember(groupID, userID uuid.UUID) permissions.Relationship {
-	return groups.UserRelationship(groupID.String(), "members", userID)
+	return memberUsers.On(groupID.String(), userID)
 }
 
-func contestModeratorGroup(contestID, groupID uuid.UUID) permissions.Tuple {
-	return groupMembersTuple(contestType, contestID, "moderators", groupID)
+func contestModeratorGroup(contestID, groupID uuid.UUID) permissions.Relationship {
+	return moderatorGroups.On(contestID.String(), groupID.String())
 }
 
-func subgroup(groupID, memberGroupID uuid.UUID) permissions.Tuple {
-	return groupMembersTuple(groupType, groupID, "members", memberGroupID)
+func subgroup(groupID, memberGroupID uuid.UUID) permissions.Relationship {
+	return memberGroups.On(groupID.String(), memberGroupID.String())
 }
 
-func groupMembersTuple(
-	objectType permissions.ObjectType,
-	objectID uuid.UUID,
-	relation string,
-	groupID uuid.UUID,
-) permissions.Tuple {
-	return permissions.Tuple{
-		ObjectType:      string(objectType),
-		ObjectID:        objectID.String(),
-		Relation:        relation,
-		SubjectType:     string(groupType),
-		SubjectID:       groupID.String(),
-		SubjectRelation: "members",
-	}
-}
-
-func logCountsFor(logID, contestID uuid.UUID) permissions.Tuple {
-	return permissions.Tuple{
-		ObjectType:  string(logType),
-		ObjectID:    logID.String(),
-		Relation:    "contests",
-		SubjectType: string(contestType),
-		SubjectID:   contestID.String(),
-	}
+func logCountsFor(logID, contestID uuid.UUID) permissions.Relationship {
+	return contestsRelation.On(logID.String(), contestID.String())
 }
 
 func newTestDatabase(t *testing.T) *testpostgres.Database {
@@ -194,17 +184,6 @@ func grantAll(
 	for _, relationship := range relationships {
 		if err := writer.Grant(ctx, relationship); err != nil {
 			t.Fatalf("grant %+v: %v", relationship, err)
-		}
-	}
-}
-
-// insertAll stores subject sets and linked objects, which no namespace builds yet.
-func insertAll(t *testing.T, ctx context.Context, repository *Repository, tuples ...permissions.Tuple) {
-	t.Helper()
-
-	for _, tuple := range tuples {
-		if err := repository.Insert(ctx, tuple); err != nil {
-			t.Fatalf("insert %+v: %v", tuple, err)
 		}
 	}
 }

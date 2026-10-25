@@ -91,7 +91,7 @@ func (s *Sender) Send(ctx context.Context, id uuid.UUID, recipient, subject, bod
 		return "", err
 	}
 	if err := client.Auth(stdsmtp.PlainAuth("", s.config.Username, s.config.Password, s.host)); err != nil {
-		return "", errors.New("SMTP authentication failed")
+		return "", fmt.Errorf("SMTP authentication failed: %w", err)
 	}
 	if err := client.Mail(s.config.Sender); err != nil {
 		return "", err

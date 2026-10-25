@@ -46,8 +46,8 @@ func (f *Fixture) RequestCount() int {
 
 func seededResources() map[string]json.RawMessage {
 	return map[string]json.RawMessage{
-		"flipt.core.Segment/release-webv3-access": json.RawMessage(`{}`),
-		"flipt.core.Flag/release-webv3":           json.RawMessage(`{}`),
+		"flipt.core.Segment/release-log-entry-v2-access": json.RawMessage(`{}`),
+		"flipt.core.Flag/release-log-entry-v2":           json.RawMessage(`{}`),
 	}
 }
 
@@ -116,7 +116,7 @@ func (f *Fixture) serveLifecycle(response http.ResponseWriter, request *http.Req
 			http.NotFound(response, request)
 			return true
 		}
-		if parts[7] == "flipt.core.Segment" && parts[8] == "release-webv3-access" {
+		if parts[7] == "flipt.core.Segment" && parts[8] == "release-log-entry-v2-access" {
 			return false
 		}
 		_ = json.NewEncoder(response).Encode(map[string]any{
@@ -151,7 +151,7 @@ func (f *Fixture) serveLifecycle(response http.ResponseWriter, request *http.Req
 		response.WriteHeader(http.StatusConflict)
 		return true
 	}
-	if payload.Type == "flipt.core.Segment" && resource.Key == "release-webv3-access" {
+	if payload.Type == "flipt.core.Segment" && resource.Key == "release-log-entry-v2-access" {
 		if len(payload.Constraints) != 1 {
 			http.Error(response, "invalid members constraint", http.StatusBadRequest)
 			return true

@@ -41,6 +41,9 @@ named-user Flipt access use the selected branch tenant and its
 not change shared credentials or canonical roles through a branch test. Feature
 access is distinct from global Flipt flag policy. Don't modify
 global flags or expose its administration interface to make a UI test pass.
+The retained **Release log entry v2** control changes named-user allowlist
+membership, which must persist independently in each tenant. Its state no longer
+selects the log UI: the public decision stays true after a revoke.
 CMS copy-only requests are not application-code tasks; obey `AGENTS.md` rather
 than checking those edits into Git. Record retained test records instead of
 deleting data you did not create.

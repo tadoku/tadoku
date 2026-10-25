@@ -3713,9 +3713,9 @@ components:
       type: object
       additionalProperties: false
       required:
-        - release-webv3
+        - release-log-entry-v2
       properties:
-        release-webv3:
+        release-log-entry-v2:
           type: boolean
     ImmersionFeatureFlagDecisionsResponse:
       type: object
@@ -3728,7 +3728,7 @@ components:
     ImmersionManagedFeatureFlagKey:
       type: string
       enum:
-        - release-webv3
+        - release-log-entry-v2
     ImmersionFeatureAccessResponse:
       type: object
       additionalProperties: false

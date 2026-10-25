@@ -58,14 +58,14 @@ describe('FeatureAccessModal', () => {
     expect(screen.getByText('Named User')).toBeInTheDocument()
     expect(screen.getByText('named@example.test')).toBeInTheDocument()
     expect(
-      screen.getByRole('option', { name: 'Release webv3' }),
+      screen.getByRole('option', { name: 'Release log entry v2' }),
     ).toBeInTheDocument()
 
     await userEvent.click(screen.getByRole('button', { name: 'Grant access' }))
 
     expect(mutateAsync).toHaveBeenCalledWith({
       targetUserId: '0198f6c5-c4af-7b1d-9776-884c065d72db',
-      flagKey: 'release-webv3',
+      flagKey: 'release-log-entry-v2',
       enabled: true,
     })
     expect(JSON.stringify(mutateAsync.mock.calls)).not.toContain(

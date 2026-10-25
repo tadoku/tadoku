@@ -105,14 +105,14 @@ export const zImmersionErrorResponse = z.object({
 });
 
 export const zImmersionFeatureFlagDecisions = z.object({
-    'release-webv3': z.boolean()
+    'release-log-entry-v2': z.boolean()
 }).strict();
 
 export const zImmersionFeatureFlagDecisionsResponse = z.object({
     decisions: zImmersionFeatureFlagDecisions
 }).strict();
 
-export const zImmersionManagedFeatureFlagKey = z.enum(['release-webv3']);
+export const zImmersionManagedFeatureFlagKey = z.enum(['release-log-entry-v2']);
 
 export const zImmersionFeatureAccessResponse = z.object({
     enabled: z.boolean(),

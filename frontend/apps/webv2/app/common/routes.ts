@@ -51,16 +51,12 @@ export const routes = {
 }
 
 export function useRoutes() {
-  const { adminUrl, accountUrl, homeUrl, branch } = useAppUrls()
-  const webv3 = new URL(homeUrl)
-  const baseHost = branch ? webv3.hostname.slice(branch.length + 1) : webv3.hostname
-  webv3.hostname = [branch, 'next', baseHost].filter(Boolean).join('.')
+  const { adminUrl, accountUrl } = useAppUrls()
   return {
     ...routes,
     authSettings: (returnUrl = '') => `${accountUrl}/settings?return_to=${encodeURIComponent(returnUrl)}`,
     authLogin: (returnUrl = '') => `${accountUrl}/login?return_to=${encodeURIComponent(returnUrl)}`,
     authSignup: (returnUrl = '') => `${accountUrl}/register?return_to=${encodeURIComponent(returnUrl)}`,
     admin: () => adminUrl,
-    webv3: () => webv3.origin,
   }
 }

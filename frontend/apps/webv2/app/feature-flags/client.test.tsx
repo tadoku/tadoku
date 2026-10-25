@@ -38,20 +38,20 @@ vi.mock('next/config', () => ({
 }))
 
 const FlagValue = () => {
-  const enabled = useFeatureFlag('release-webv3')
+  const enabled = useFeatureFlag('release-log-entry-v2')
   return <output>{enabled ? 'enabled' : 'disabled'}</output>
 }
 
 const Wrapper = ({
   children,
-  enabled = false,
+  enabled = true,
 }: {
   children: ReactNode
   enabled?: boolean
 }) => (
   <Provider
     initialValues={[
-      [featureFlagDecisionsAtom, { 'release-webv3': enabled }],
+      [featureFlagDecisionsAtom, { 'release-log-entry-v2': enabled }],
     ]}
   >
     {children}
@@ -80,17 +80,17 @@ describe('feature flag browser state', () => {
     expect(screen.queryByText('disabled')).toBeNull()
   })
 
-  it('defaults to the disabled behavior', () => {
+  it('defaults to v2 without a hydrated decision', () => {
     render(
-      <Wrapper>
+      <Provider>
         <FlagValue />
-      </Wrapper>,
+      </Provider>,
     )
 
-    expect(screen.getByText('disabled')).toBeTruthy()
+    expect(screen.getByText('enabled')).toBeTruthy()
   })
 
-  it('uses the disabled default while refreshing after navigation without remounting a form', async () => {
+  it('uses the enabled default while refreshing after navigation without remounting a form', async () => {
     let resolveRefresh: (response: Response) => void = () => {}
     const fetchMock = vi.mocked(fetch).mockReturnValue(
       new Promise(resolve => {
@@ -114,7 +114,7 @@ describe('feature flag browser state', () => {
 
     act(() => routerEvents.emit())
 
-    await waitFor(() => expect(screen.getByText('disabled')).toBeTruthy())
+    await waitFor(() => expect(screen.getByText('enabled')).toBeTruthy())
     expect(input.value).toBe('unsaved form value')
     const sent = fetchMock.mock.calls[0][0] as Request
     expect(sent.url).toBe('https://tadoku.test/api/internal/immersion/feature-flags')
@@ -123,16 +123,16 @@ describe('feature flag browser state', () => {
 
     resolveRefresh(
       new Response(
-        JSON.stringify({ decisions: { 'release-webv3': true } }),
+        JSON.stringify({ decisions: { 'release-log-entry-v2': false } }),
         { status: 200, headers: { 'Content-Type': 'application/json' } },
       ),
     )
 
-    await waitFor(() => expect(screen.getByText('enabled')).toBeTruthy())
+    await waitFor(() => expect(screen.getByText('disabled')).toBeTruthy())
     expect(input.value).toBe('unsaved form value')
   })
 
-  it('keeps the disabled default when refresh fails', async () => {
+  it('keeps the enabled default when refresh fails', async () => {
     vi.mocked(fetch).mockRejectedValue(new Error('provider unavailable'))
 
     render(
@@ -145,7 +145,7 @@ describe('feature flag browser state', () => {
     act(() => routerEvents.emit())
 
     await waitFor(() => expect(fetch).toHaveBeenCalled())
-    expect(screen.getByText('disabled')).toBeTruthy()
+    expect(screen.getByText('enabled')).toBeTruthy()
   })
 
   it('bounds a stalled browser refresh and keeps the form mounted', async () => {
@@ -176,7 +176,7 @@ describe('feature flag browser state', () => {
       await vi.advanceTimersByTimeAsync(50)
     })
 
-    expect(screen.getByText('disabled')).toBeTruthy()
+    expect(screen.getByText('enabled')).toBeTruthy()
     expect(input.value).toBe('unsaved form value')
     vi.useRealTimers()
   })

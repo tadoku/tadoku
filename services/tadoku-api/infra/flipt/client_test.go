@@ -32,14 +32,14 @@ func TestClientMapsSuccessfulAndStaleBooleanDecisions(t *testing.T) {
 			sdk := &fakeSDKClient{
 				response: &fliptsdk.BooleanEvaluationResponse{
 					Enabled: true,
-					FlagKey: "release-webv3",
+					FlagKey: "release-log-entry-v2",
 					Reason:  "MATCH_EVALUATION_REASON",
 				},
 				stateErr: tt.stateErr,
 			}
 			client := &Client{client: sdk}
 			request := featureflags.EvaluationRequest{
-				FlagKey:  "release-webv3",
+				FlagKey:  "release-log-entry-v2",
 				EntityID: "4c47b265-6987-4bc1-8933-006168a31793",
 				Context:  map[string]string{"authenticated": "true"},
 			}
@@ -72,7 +72,7 @@ func TestClientRejectsMalformedAndMissingResponses(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			client := &Client{client: tt.sdk}
-			_, err := client.EvaluateBoolean(context.Background(), featureflags.EvaluationRequest{FlagKey: "release-webv3"})
+			_, err := client.EvaluateBoolean(context.Background(), featureflags.EvaluationRequest{FlagKey: "release-log-entry-v2"})
 			if tt.wantError != nil {
 				assert.ErrorIs(t, err, tt.wantError)
 			} else {
@@ -85,10 +85,10 @@ func TestClientRejectsMalformedAndMissingResponses(t *testing.T) {
 func TestClientHonorsCancellationWithoutCallingSDK(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	sdk := &fakeSDKClient{response: &fliptsdk.BooleanEvaluationResponse{FlagKey: "release-webv3"}}
+	sdk := &fakeSDKClient{response: &fliptsdk.BooleanEvaluationResponse{FlagKey: "release-log-entry-v2"}}
 	client := &Client{client: sdk}
 
-	_, err := client.EvaluateBoolean(ctx, featureflags.EvaluationRequest{FlagKey: "release-webv3"})
+	_, err := client.EvaluateBoolean(ctx, featureflags.EvaluationRequest{FlagKey: "release-log-entry-v2"})
 
 	assert.ErrorIs(t, err, context.Canceled)
 	assert.Nil(t, sdk.request)
@@ -123,7 +123,7 @@ func TestNewUsesFallbackWhenFliptIsEmptyOrUnavailable(t *testing.T) {
 	for _, status := range statuses {
 		assert.Equal(t, featureflags.InitializationStatusFallback, status)
 	}
-	_, err = client.EvaluateBoolean(context.Background(), featureflags.EvaluationRequest{FlagKey: "release-webv3", EntityID: "4c47b265-6987-4bc1-8933-006168a31793"})
+	_, err = client.EvaluateBoolean(context.Background(), featureflags.EvaluationRequest{FlagKey: "release-log-entry-v2", EntityID: "4c47b265-6987-4bc1-8933-006168a31793"})
 	require.Error(t, err)
 	assert.NotErrorIs(t, err, featureflags.ErrFlagNotFound)
 }
@@ -205,11 +205,11 @@ func TestPinnedSDKSupportsNamedAndStickyPercentageTargeting(t *testing.T) {
                 }`, targetedID)}))
 
 		targeted, err := client.EvaluateBoolean(context.Background(), featureflags.EvaluationRequest{
-			FlagKey: "release-webv3", EntityID: targetedID,
+			FlagKey: "release-log-entry-v2", EntityID: targetedID,
 		})
 		require.NoError(t, err)
 		other, err := client.EvaluateBoolean(context.Background(), featureflags.EvaluationRequest{
-			FlagKey: "release-webv3", EntityID: "978dc423-2868-481f-b30d-4a88cf791903",
+			FlagKey: "release-log-entry-v2", EntityID: "978dc423-2868-481f-b30d-4a88cf791903",
 		})
 		require.NoError(t, err)
 		assert.True(t, targeted.Enabled)
@@ -226,13 +226,13 @@ func TestPinnedSDKSupportsNamedAndStickyPercentageTargeting(t *testing.T) {
 		for i := range 100 {
 			entityID := fmt.Sprintf("00000000-0000-4000-8000-%012d", i)
 			first, err := client.EvaluateBoolean(context.Background(), featureflags.EvaluationRequest{
-				FlagKey: "release-webv3", EntityID: entityID,
+				FlagKey: "release-log-entry-v2", EntityID: entityID,
 			})
 			require.NoError(t, err)
 			seen[first.Enabled] = true
 			for range 3 {
 				repeated, err := client.EvaluateBoolean(context.Background(), featureflags.EvaluationRequest{
-					FlagKey: "release-webv3", EntityID: entityID,
+					FlagKey: "release-log-entry-v2", EntityID: entityID,
 				})
 				require.NoError(t, err)
 				assert.Equal(t, first.Enabled, repeated.Enabled)
@@ -298,7 +298,7 @@ func TestNewReturnsAtStartupBudgetAndInstallsClientAfterRecovery(t *testing.T) {
 	sdk := &fakeSDKClient{
 		response: &fliptsdk.BooleanEvaluationResponse{
 			Enabled: true,
-			FlagKey: "release-webv3",
+			FlagKey: "release-log-entry-v2",
 			Reason:  "MATCH_EVALUATION_REASON",
 		},
 	}
@@ -319,12 +319,12 @@ func TestNewReturnsAtStartupBudgetAndInstallsClientAfterRecovery(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Less(t, time.Since(started), time.Second)
-	_, err = client.EvaluateBoolean(context.Background(), featureflags.EvaluationRequest{FlagKey: "release-webv3"})
+	_, err = client.EvaluateBoolean(context.Background(), featureflags.EvaluationRequest{FlagKey: "release-log-entry-v2"})
 	assert.Error(t, err)
 
 	close(release)
 	require.Eventually(t, func() bool {
-		result, err := client.EvaluateBoolean(context.Background(), featureflags.EvaluationRequest{FlagKey: "release-webv3"})
+		result, err := client.EvaluateBoolean(context.Background(), featureflags.EvaluationRequest{FlagKey: "release-log-entry-v2"})
 		return err == nil && result.Enabled
 	}, time.Second, 10*time.Millisecond)
 	statuses, _, _ := observer.snapshot()
@@ -375,7 +375,7 @@ func TestSDKUsesMappedTenantNamespaceAndTestEnvironment(t *testing.T) {
 	})
 
 	result, err := client.EvaluateBoolean(t.Context(), featureflags.EvaluationRequest{
-		FlagKey:  "release-webv3",
+		FlagKey:  "release-log-entry-v2",
 		EntityID: "11111111-1111-4111-8111-111111111111",
 	})
 	if err != nil || !result.Enabled || result.Stale {

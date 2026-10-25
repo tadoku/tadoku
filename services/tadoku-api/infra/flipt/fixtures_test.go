@@ -67,7 +67,7 @@ func booleanSnapshot(rollouts []string) string {
 	return fmt.Sprintf(`{
         "namespace": {"key": "default"},
         "flags": [{
-			"key": "release-webv3",
+			"key": "release-log-entry-v2",
 			"name": "",
 			"description": "",
 			"enabled": false,

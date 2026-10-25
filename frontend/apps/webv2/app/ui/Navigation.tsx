@@ -6,7 +6,6 @@ import {
 } from 'ui/components/Navbar'
 import {
   ArrowRightOnRectangleIcon,
-  ArrowTopRightOnSquareIcon,
   Cog8ToothIcon,
   UserIcon,
   WrenchScrewdriverIcon,
@@ -15,7 +14,6 @@ import { useLogoutHandler, useSession, useUserRole } from '@app/common/session'
 import { useCurrentLocation } from '@app/common/hooks'
 import { useRoutes } from '@app/common/routes'
 import { useIsFetching } from '@tanstack/react-query'
-import { useFeatureFlag } from '@app/feature-flags/client'
 
 export default function Navigation() {
   const routes = useRoutes()
@@ -26,7 +24,6 @@ export default function Navigation() {
   const isAdmin = role === 'admin'
   const onLogout = useLogoutHandler()
   const currentUrl = useCurrentLocation()
-  const webv3Enabled = useFeatureFlag('release-webv3')
 
   const userNavigation: (
     | NavigationLinkProps
@@ -64,13 +61,6 @@ export default function Navigation() {
               href: routes.authSettings(currentUrl),
               IconComponent: Cog8ToothIcon,
             },
-            ...(webv3Enabled
-              ? [{
-                  label: 'Try webv3',
-                  href: routes.webv3(),
-                  IconComponent: ArrowTopRightOnSquareIcon,
-                }]
-              : []),
             {
               label: 'Log out',
               href: '#',

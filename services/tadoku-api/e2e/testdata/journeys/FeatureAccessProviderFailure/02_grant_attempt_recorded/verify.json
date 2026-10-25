@@ -2,7 +2,7 @@
   {
     "action": "feature_access_grant_failed",
     "target_user_id": "44444444-4444-4444-8444-444444444444",
-    "flag_key": "release-webv3",
+    "flag_key": "release-log-entry-v2",
     "environment": null,
     "error_recorded": true
   }

@@ -12,12 +12,13 @@ This page describes the development environment. Flags are boolean. Without a
 decision, `Evaluator.Boolean` consumers use the flag's behavior-preserving safe
 default.
 
-`release-webv3` controls the signed-in user menu's **Try webv3** link to the
-corresponding `next.` host, preserving the selected branch. It defaults to false
-and its seeded allowlist is empty. The flag controls discovery through webv2;
-the existing public webv3 preview remains directly accessible. Log creation,
-details and editing use the v2 flow for everyone and do not depend on flag
-evaluation.
+Log creation, details and editing use v2 for everyone. The legacy
+`release-log-entry-v2` decision remains in the public API and defaults to true
+in webv2. The feature service returns it as true regardless of the caller,
+Flipt's decision or provider availability. Named-user management and the
+underlying evaluator remain available, but no longer select the log UI.
+`release-webv3` is not exposed by this API or webv2 navigation; its separate
+disabled production flag does not change this compatibility contract.
 
 ## Where flags are declared
 
@@ -80,10 +81,20 @@ read and managed segment calls. Metrics are named `tadoku_feature_flag_*`.
 
 `GET /immersion/feature-flags` (`ImmersionFeatureFlagDecisions`) returns the
 decisions for the current user or guest with `Cache-Control: private, no-store`. Only flags in
-`PublicDecisions` (`services/tadoku-api/internal/featureflags/public.go`) are exposed.
+`PublicDecisions` (`services/tadoku-api/features/featureflags/domain.go`) are exposed.
+The feature service owns the public compatibility result; the underlying
+`Evaluator.Boolean` still evaluates provider state for its consumers.
 [webv2](../frontend/webv2.md) fetches them server-side in `frontend/apps/webv2/pages/_app.tsx` and
 after each client-side route change, falling back to defaults on any failure.
-Components use `useFeatureFlag`.
+Components can use `useFeatureFlag`; the log pages do not read a flag.
+
+The response is exactly `{"decisions":{"release-log-entry-v2":true}}`.
+Existing generated clients reject extra keys as well as missing keys. Adding a
+second decision or replacing this key therefore breaks already-open browsers.
+Deploying an unconditional UI alone does not retire their loaded JavaScript.
+Before changing or removing this contract, prove that old consumers are gone,
+enforce a refresh or cutover that retires them, or retain the legacy endpoint
+while introducing a versioned contract. Elapsed time is not that proof.
 
 ## Named-user access
 
@@ -97,6 +108,10 @@ allowlist segment through the Flipt management API
 evaluation. A test grant or revoke does not change the canonical allowlist. The
 client rejects a provider response from another namespace, or a segment that
 differs from the Go definition.
+
+The retained `release-log-entry-v2` control reports and changes allowlist
+membership only. Revoking it does not disable v2 logging or change the public
+decision.
 
 Each attempt that reaches Flipt is recorded in `moderation_audit_log`:
 `feature_access_grant` or `feature_access_revoke` with the resulting
@@ -148,7 +163,7 @@ not permit namespace creation or deletion.
    `k8s/dev/base/flipt/features.yaml` using
    `POST /api/v2/environments/test/namespaces/e2e_run-1/resources`. Send the
    resource key and typed `payload`, such as
-   `{"key":"release-webv3-access","payload":{"@type":"flipt.core.Segment",...}}`.
+   `{"key":"release-log-entry-v2-access","payload":{"@type":"flipt.core.Segment",...}}`.
    Translate the seed into Flipt's v2 resource schema: a segment rollout needs
    `type: "SEGMENT_ROLLOUT_TYPE"`, `segment.segments` and
    `segment.segmentOperator`. Raw seed YAML field names are not the v2 JSON

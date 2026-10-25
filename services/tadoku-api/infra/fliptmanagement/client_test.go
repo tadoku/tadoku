@@ -23,9 +23,9 @@ func TestManagementRejectsAnotherNamespaceAndMissingTenant(t *testing.T) {
 		t.Fatal(err)
 	}
 	spec := Segment{
-		Key:         "release-webv3-access",
-		Name:        "Release webv3 access",
-		Description: "Account UUIDs explicitly granted access to release webv3.",
+		Key:         "release-log-entry-v2-access",
+		Name:        "Release log entry v2 access",
+		Description: "Kratos UUIDs explicitly granted access to release log entry v2.",
 	}
 	user := uuid.MustParse("11111111-1111-4111-8111-111111111111")
 
@@ -35,14 +35,14 @@ func TestManagementRejectsAnotherNamespaceAndMissingTenant(t *testing.T) {
 			server := httptest.NewServer(http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
 				calls++
 				if request.URL.Path != "/api/v2/environments/test/namespaces/e2e_flipt-0123abcd/resources/"+
-					"flipt.core.Segment/release-webv3-access" {
+					"flipt.core.Segment/release-log-entry-v2-access" {
 					t.Errorf("management target=%q", request.URL.Path)
 				}
 				response.Header().Set("Content-Type", "application/json")
-				body := `{"resource":{"namespaceKey":"NAMESPACE","key":"release-webv3-access",` +
-					`"payload":{"@type":"flipt.core.Segment","key":"release-webv3-access",` +
-					`"name":"Release webv3 access",` +
-					`"description":"Account UUIDs explicitly granted access to release webv3.",` +
+				body := `{"resource":{"namespaceKey":"NAMESPACE","key":"release-log-entry-v2-access",` +
+					`"payload":{"@type":"flipt.core.Segment","key":"release-log-entry-v2-access",` +
+					`"name":"Release log entry v2 access",` +
+					`"description":"Kratos UUIDs explicitly granted access to release log entry v2.",` +
 					`"matchType":"ALL_MATCH_TYPE","constraints":[{"type":"ENTITY_ID_COMPARISON_TYPE",` +
 					`"property":"entityId","operator":"isoneof","value":"[]","description":""}]}},` +
 					`"revision":"0000000000000000000000000000000000000001"}`

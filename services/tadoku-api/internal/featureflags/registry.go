@@ -3,7 +3,7 @@ package featureflags
 type BooleanFlag uint8
 
 const (
-	ReleaseWebV3 BooleanFlag = iota
+	ReleaseLogEntryV2 BooleanFlag = iota
 )
 
 type booleanDefinition struct {
@@ -13,10 +13,10 @@ type booleanDefinition struct {
 
 func (f BooleanFlag) definition() booleanDefinition {
 	switch f {
-	case ReleaseWebV3:
+	case ReleaseLogEntryV2:
 		return booleanDefinition{
-			key:         "release-webv3",
-			safeDefault: false,
+			key:         "release-log-entry-v2",
+			safeDefault: true,
 		}
 	default:
 		return booleanDefinition{}

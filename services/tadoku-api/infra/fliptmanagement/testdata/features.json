@@ -1,11 +1,11 @@
 [
   {
-    "key": "release-webv3-access",
+    "key": "release-log-entry-v2-access",
     "payload": {
       "@type": "flipt.core.Segment",
-      "key": "release-webv3-access",
-      "name": "Release webv3 access",
-      "description": "Account UUIDs explicitly granted access to release webv3.",
+      "key": "release-log-entry-v2-access",
+      "name": "Release log entry v2 access",
+      "description": "Kratos UUIDs explicitly granted access to release log entry v2.",
       "matchType": "ALL_MATCH_TYPE",
       "constraints": [
         {
@@ -19,20 +19,20 @@
     }
   },
   {
-    "key": "release-webv3",
+    "key": "release-log-entry-v2",
     "payload": {
       "@type": "flipt.core.Flag",
-      "key": "release-webv3",
-      "name": "Release webv3",
+      "key": "release-log-entry-v2",
+      "name": "Release log entry v2",
       "type": "BOOLEAN_FLAG_TYPE",
-      "description": "Control access to the webv3 rollout.",
+      "description": "Use the second-generation log entry flow.",
       "enabled": false,
       "rollouts": [
         {
           "type": "SEGMENT_ROLLOUT_TYPE",
           "description": "Enabled for explicitly granted users.",
           "segment": {
-            "segments": ["release-webv3-access"],
+            "segments": ["release-log-entry-v2-access"],
             "segmentOperator": "OR_SEGMENT_OPERATOR",
             "value": true
           }

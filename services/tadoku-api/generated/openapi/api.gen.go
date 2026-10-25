@@ -250,13 +250,13 @@ func (e ImmersionFeatureAccessResponseEnvironment) Valid() bool {
 
 // Defines values for ImmersionManagedFeatureFlagKey.
 const (
-	ReleaseWebv3 ImmersionManagedFeatureFlagKey = "release-webv3"
+	ReleaseLogEntryV2 ImmersionManagedFeatureFlagKey = "release-log-entry-v2"
 )
 
 // Valid indicates whether the value is a known member of the ImmersionManagedFeatureFlagKey enum.
 func (e ImmersionManagedFeatureFlagKey) Valid() bool {
 	switch e {
-	case ReleaseWebv3:
+	case ReleaseLogEntryV2:
 		return true
 	default:
 		return false
@@ -997,7 +997,7 @@ type ImmersionFeatureAccessResponseEnvironment string
 
 // ImmersionFeatureFlagDecisions defines model for ImmersionFeatureFlagDecisions.
 type ImmersionFeatureFlagDecisions struct {
-	ReleaseWebv3 bool `json:"release-webv3"`
+	ReleaseLogEntryV2 bool `json:"release-log-entry-v2"`
 }
 
 // ImmersionFeatureFlagDecisionsResponse defines model for ImmersionFeatureFlagDecisionsResponse.

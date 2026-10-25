@@ -6,16 +6,16 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
 
-const releaseWebV3 = "release-webv3"
+const releaseLogEntryV2 = "release-log-entry-v2"
 
-var releaseWebV3Access = fliptmanagement.Segment{
-	Key:         "release-webv3-access",
-	Name:        "Release webv3 access",
-	Description: "Account UUIDs explicitly granted access to release webv3.",
+var releaseLogEntryV2Access = fliptmanagement.Segment{
+	Key:         "release-log-entry-v2-access",
+	Name:        "Release log entry v2 access",
+	Description: "Kratos UUIDs explicitly granted access to release log entry v2.",
 }
 
 type PublicDecisions struct {
-	ReleaseWebV3 bool
+	ReleaseLogEntryV2 bool
 }
 
 type State struct {
@@ -29,8 +29,8 @@ func validate(flagKey string, targetUserID uuid.UUID) (fliptmanagement.Segment, 
 	if targetUserID == uuid.Nil {
 		return fliptmanagement.Segment{}, errx.NewInvalidInputError("target user ID must not be nil")
 	}
-	if flagKey != releaseWebV3 {
+	if flagKey != releaseLogEntryV2 {
 		return fliptmanagement.Segment{}, errx.NewInvalidInputError("feature flag is not supported")
 	}
-	return releaseWebV3Access, nil
+	return releaseLogEntryV2Access, nil
 }

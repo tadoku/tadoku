@@ -17,9 +17,9 @@ func TestEvaluatePublicReturnsAllowlistedDecisionForAuthenticatedUser(t *testing
 
 	decisions := evaluator.EvaluatePublicForSubject(context.Background(), subject)
 
-	assert.True(t, decisions.ReleaseWebV3)
+	assert.True(t, decisions.ReleaseLogEntryV2)
 	require.Len(t, provider.requests, 1)
-	assert.Equal(t, ReleaseWebV3.Key(), provider.requests[0].FlagKey)
+	assert.Equal(t, ReleaseLogEntryV2.Key(), provider.requests[0].FlagKey)
 }
 
 func TestEvaluatePublicTreatsGuestAsAnonymous(t *testing.T) {
@@ -29,7 +29,7 @@ func TestEvaluatePublicTreatsGuestAsAnonymous(t *testing.T) {
 
 	decisions := evaluator.EvaluatePublicForSubject(context.Background(), "guest")
 
-	assert.False(t, decisions.ReleaseWebV3)
+	assert.True(t, decisions.ReleaseLogEntryV2)
 	assert.Empty(t, provider.requests)
 	require.Len(t, observer.observations, 1)
 	assert.Equal(t, EvaluationReasonAnonymous, observer.observations[0].Reason)
@@ -42,5 +42,5 @@ func TestEvaluatePublicUsesSafeDefaultWhenProviderFails(t *testing.T) {
 
 	decisions := evaluator.EvaluatePublicForSubject(context.Background(), uuid.NewString())
 
-	assert.False(t, decisions.ReleaseWebV3)
+	assert.True(t, decisions.ReleaseLogEntryV2)
 }

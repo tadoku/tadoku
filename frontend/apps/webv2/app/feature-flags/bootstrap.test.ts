@@ -24,7 +24,7 @@ describe('bootstrapFeatureFlagDecisions', () => {
       .fn()
       .mockResolvedValue(
         new Response(
-          JSON.stringify({ decisions: { 'release-webv3': true } }),
+          JSON.stringify({ decisions: { 'release-log-entry-v2': false } }),
           { status: 200 },
         ),
       )
@@ -36,7 +36,7 @@ describe('bootstrapFeatureFlagDecisions', () => {
         true,
         request,
       ),
-    ).resolves.toEqual({ 'release-webv3': true })
+    ).resolves.toEqual({ 'release-log-entry-v2': false })
     expect(sent(request).url).toBe(
       'http://oathkeeper-proxy:4455/api/internal/immersion/feature-flags',
     )
@@ -71,7 +71,7 @@ describe('bootstrapFeatureFlagDecisions', () => {
 
     await expect(
       bootstrapFeatureFlagDecisions(undefined, undefined, true, request),
-    ).resolves.toEqual({ 'release-webv3': false })
+    ).resolves.toEqual({ 'release-log-entry-v2': true })
     expect(request).not.toHaveBeenCalled()
   })
 
@@ -85,7 +85,7 @@ describe('bootstrapFeatureFlagDecisions', () => {
           throw new Error('provider unavailable')
         },
       ),
-    ).resolves.toEqual({ 'release-webv3': false })
+    ).resolves.toEqual({ 'release-log-entry-v2': true })
   })
 
   it('bounds a stalled same-origin bootstrap request', async () => {
@@ -107,7 +107,7 @@ describe('bootstrapFeatureFlagDecisions', () => {
     )
     await vi.advanceTimersByTimeAsync(50)
 
-    await expect(result).resolves.toEqual({ 'release-webv3': false })
+    await expect(result).resolves.toEqual({ 'release-log-entry-v2': true })
     expect(sent(request).url).toBe(
       'http://oathkeeper-proxy:4455/api/internal/immersion/feature-flags',
     )
@@ -125,7 +125,7 @@ describe('bootstrapFeatureFlagDecisions', () => {
         false,
         request,
       ),
-    ).resolves.toEqual({ 'release-webv3': false })
+    ).resolves.toEqual({ 'release-log-entry-v2': true })
     expect(request).not.toHaveBeenCalled()
   })
 
@@ -142,7 +142,7 @@ describe('bootstrapFeatureFlagDecisions', () => {
         true,
         request,
       ),
-    ).resolves.toEqual({ 'release-webv3': false })
+    ).resolves.toEqual({ 'release-log-entry-v2': true })
     expect(request).not.toHaveBeenCalled()
   })
 
@@ -151,7 +151,7 @@ describe('bootstrapFeatureFlagDecisions', () => {
       new Response(
         JSON.stringify({
           decisions: {
-            'release-webv3': true,
+            'release-log-entry-v2': false,
             'unregistered-flag': true,
           },
         }),
@@ -166,6 +166,6 @@ describe('bootstrapFeatureFlagDecisions', () => {
         true,
         request,
       ),
-    ).resolves.toEqual({ 'release-webv3': false })
+    ).resolves.toEqual({ 'release-log-entry-v2': true })
   })
 })

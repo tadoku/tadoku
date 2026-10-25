@@ -34,8 +34,8 @@ func (o *recordingObserver) ObserveEvaluation(observation Observation) {
 }
 
 func TestRegistryOwnsPilotKeyAndSafeDefault(t *testing.T) {
-	assert.Equal(t, "release-webv3", ReleaseWebV3.Key())
-	assert.False(t, ReleaseWebV3.SafeDefault())
+	assert.Equal(t, "release-log-entry-v2", ReleaseLogEntryV2.Key())
+	assert.True(t, ReleaseLogEntryV2.SafeDefault())
 }
 
 func TestEvaluatorUsesOnlyStableSubjectAndAllowlistedContext(t *testing.T) {
@@ -44,11 +44,11 @@ func TestEvaluatorUsesOnlyStableSubjectAndAllowlistedContext(t *testing.T) {
 	evaluator := NewEvaluator(provider, observer)
 	subject := uuid.NewString()
 
-	enabled := evaluator.Boolean(context.Background(), ReleaseWebV3, subject)
+	enabled := evaluator.Boolean(context.Background(), ReleaseLogEntryV2, subject)
 
 	assert.True(t, enabled)
 	require.Len(t, provider.requests, 1)
-	assert.Equal(t, "release-webv3", provider.requests[0].FlagKey)
+	assert.Equal(t, "release-log-entry-v2", provider.requests[0].FlagKey)
 	assert.Equal(t, subject, provider.requests[0].EntityID)
 	assert.Equal(t, map[string]string{"authenticated": "true"}, provider.requests[0].Context)
 	assert.NotContains(t, provider.requests[0].Context, "email")
@@ -71,9 +71,9 @@ func TestEvaluatorPreservesNamedTargetingAndStickyEntity(t *testing.T) {
 	targetedUser := targetedSubject
 
 	for range 3 {
-		assert.True(t, evaluator.Boolean(context.Background(), ReleaseWebV3, targetedUser))
+		assert.True(t, evaluator.Boolean(context.Background(), ReleaseLogEntryV2, targetedUser))
 	}
-	assert.False(t, evaluator.Boolean(context.Background(), ReleaseWebV3, otherSubject))
+	assert.False(t, evaluator.Boolean(context.Background(), ReleaseLogEntryV2, otherSubject))
 
 	require.Len(t, provider.requests, 4)
 	for _, request := range provider.requests[:3] {
@@ -92,16 +92,16 @@ func TestEvaluatorUsesRegistryDefaultForUnsafeStates(t *testing.T) {
 		wantReason EvaluationReason
 		wantError  bool
 	}{
-		{name: "anonymous cold start", provider: &fakeProvider{}, ctx: context.Background, flag: ReleaseWebV3, wantReason: EvaluationReasonAnonymous},
-		{name: "invalid identity", provider: &fakeProvider{}, ctx: context.Background, subject: "not-a-uuid", flag: ReleaseWebV3, wantReason: EvaluationReasonInvalidIdentity, wantError: true},
-		{name: "nil UUID identity", provider: &fakeProvider{}, ctx: context.Background, subject: uuid.Nil.String(), flag: ReleaseWebV3, wantReason: EvaluationReasonInvalidIdentity, wantError: true},
-		{name: "provider not initialized", ctx: context.Background, subject: uuid.NewString(), flag: ReleaseWebV3, wantReason: EvaluationReasonProviderError, wantError: true},
-		{name: "empty provider missing flag", provider: &fakeProvider{err: ErrFlagNotFound}, ctx: context.Background, subject: uuid.NewString(), flag: ReleaseWebV3, wantReason: EvaluationReasonNotFound},
-		{name: "malformed provider response", provider: &fakeProvider{err: ErrInvalidResponse}, ctx: context.Background, subject: uuid.NewString(), flag: ReleaseWebV3, wantReason: EvaluationReasonInvalidResponse, wantError: true},
-		{name: "provider outage", provider: &fakeProvider{err: errors.New("connection refused")}, ctx: context.Background, subject: uuid.NewString(), flag: ReleaseWebV3, wantReason: EvaluationReasonProviderError, wantError: true},
-		{name: "provider deadline", provider: &fakeProvider{err: context.DeadlineExceeded}, ctx: context.Background, subject: uuid.NewString(), flag: ReleaseWebV3, wantReason: EvaluationReasonCanceled, wantError: true},
+		{name: "anonymous cold start", provider: &fakeProvider{}, ctx: context.Background, flag: ReleaseLogEntryV2, wantReason: EvaluationReasonAnonymous},
+		{name: "invalid identity", provider: &fakeProvider{}, ctx: context.Background, subject: "not-a-uuid", flag: ReleaseLogEntryV2, wantReason: EvaluationReasonInvalidIdentity, wantError: true},
+		{name: "nil UUID identity", provider: &fakeProvider{}, ctx: context.Background, subject: uuid.Nil.String(), flag: ReleaseLogEntryV2, wantReason: EvaluationReasonInvalidIdentity, wantError: true},
+		{name: "provider not initialized", ctx: context.Background, subject: uuid.NewString(), flag: ReleaseLogEntryV2, wantReason: EvaluationReasonProviderError, wantError: true},
+		{name: "empty provider missing flag", provider: &fakeProvider{err: ErrFlagNotFound}, ctx: context.Background, subject: uuid.NewString(), flag: ReleaseLogEntryV2, wantReason: EvaluationReasonNotFound},
+		{name: "malformed provider response", provider: &fakeProvider{err: ErrInvalidResponse}, ctx: context.Background, subject: uuid.NewString(), flag: ReleaseLogEntryV2, wantReason: EvaluationReasonInvalidResponse, wantError: true},
+		{name: "provider outage", provider: &fakeProvider{err: errors.New("connection refused")}, ctx: context.Background, subject: uuid.NewString(), flag: ReleaseLogEntryV2, wantReason: EvaluationReasonProviderError, wantError: true},
+		{name: "provider deadline", provider: &fakeProvider{err: context.DeadlineExceeded}, ctx: context.Background, subject: uuid.NewString(), flag: ReleaseLogEntryV2, wantReason: EvaluationReasonCanceled, wantError: true},
 		{name: "unknown flag", provider: &fakeProvider{result: ProviderResult{Enabled: true}}, ctx: context.Background, subject: uuid.NewString(), flag: BooleanFlag(200), wantReason: EvaluationReasonInvalidFlag, wantError: true},
-		{name: "canceled", provider: &fakeProvider{result: ProviderResult{Enabled: true}}, ctx: canceledContext, subject: uuid.NewString(), flag: ReleaseWebV3, wantReason: EvaluationReasonCanceled, wantError: true},
+		{name: "canceled", provider: &fakeProvider{result: ProviderResult{Enabled: true}}, ctx: canceledContext, subject: uuid.NewString(), flag: ReleaseLogEntryV2, wantReason: EvaluationReasonCanceled, wantError: true},
 	}
 
 	for _, tt := range tests {
@@ -109,7 +109,7 @@ func TestEvaluatorUsesRegistryDefaultForUnsafeStates(t *testing.T) {
 			observer := &recordingObserver{}
 			evaluator := NewEvaluator(tt.provider, observer)
 
-			assert.False(t, evaluator.Boolean(tt.ctx(), tt.flag, tt.subject))
+			assert.Equal(t, tt.flag.SafeDefault(), evaluator.Boolean(tt.ctx(), tt.flag, tt.subject))
 			require.Len(t, observer.observations, 1)
 			assert.Equal(t, tt.wantReason, observer.observations[0].Reason)
 			assert.Equal(t, EvaluationSourceDefault, observer.observations[0].Source)
@@ -123,7 +123,7 @@ func TestEvaluatorMarksLastKnownGoodDecisionAsStale(t *testing.T) {
 	observer := &recordingObserver{}
 	evaluator := NewEvaluator(provider, observer)
 
-	assert.True(t, evaluator.Boolean(context.Background(), ReleaseWebV3, uuid.NewString()))
+	assert.True(t, evaluator.Boolean(context.Background(), ReleaseLogEntryV2, uuid.NewString()))
 	require.Len(t, observer.observations, 1)
 	assert.Equal(t, EvaluationSourceStaleCache, observer.observations[0].Source)
 }

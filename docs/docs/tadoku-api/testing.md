@@ -128,6 +128,33 @@ Never point tests at shared development or production services.
 - The `services/tadoku-api/infra/postgres/` helper tests have their own setup in
   `services/tadoku-api/infra/postgres/README.md`.
 
+## Property tests
+
+- Write a
+  [property-based test](https://github.com/flyingmutant/rapid#what-is-property-based-testing)
+  with [rapid](https://pkg.go.dev/pgregory.net/rapid) when a rule must hold
+  over a combinatorial input space and an independent model states the
+  expected result. Keep example tests for the cases a reader should see.
+- Draw from small pools so values collide, and build them through the public
+  constructors. Generate invalid input only when the property is about
+  rejecting it. Rapid seeds, shrinks and prints counterexamples; do not do any
+  of that by hand.
+- Test a stateful component with
+  [`T.Repeat`](https://pkg.go.dev/pgregory.net/rapid#T.Repeat). Each action
+  calls the real component, and the invariant compares its state with an
+  in-memory model of the expected state. The model is an oracle, not a fake of
+  a port; storage stays real.
+- A database property keeps one disposable database and deletes its rows at
+  the start of each case.
+- Every run draws a fresh seed. A target with property tests is tagged
+  `no-cache`, so CI never reuses its result, and passes `-rapid.nofailfile` in
+  its `args`, because a fail file stays in the Bazel sandbox. Locally,
+  `--nocache_test_results` reruns an unchanged target. Replay a failure with
+  the seed it prints:
+  `bazel test <target> --test_filter=<Test> --test_arg=-rapid.seed=<seed>`.
+  `--test_arg=-rapid.checks=<n>` runs more cases and `--test_arg=-test.short`
+  fewer. Keep a counterexample worth reading as an example test.
+
 ## Tenancy guard and isolation
 
 `services/tadoku-api/app/tenantlifecycle/` tests the owner command's

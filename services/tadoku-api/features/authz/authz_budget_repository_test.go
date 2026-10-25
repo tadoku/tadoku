@@ -44,6 +44,7 @@ func TestCheckQueryBudget(t *testing.T) {
 	}
 	grantAll(t, ctx, permissions.NewRelationships(repository, refModel), relationships...)
 	asModerator := signedIn(ctx, moderator.String())
+	roles, _ := newTestRoles(t, pool)
 
 	cases := []struct {
 		name        string
@@ -72,6 +73,13 @@ func TestCheckQueryBudget(t *testing.T) {
 			}
 			return err
 		}, 3},
+		{"role badges for 50 users", func() error {
+			badges, err := roles.UserRoles(ctx, users)
+			if err == nil && (len(badges) != len(users) || badges[moderator] != RoleUser) {
+				err = fmt.Errorf("roles = %v", badges)
+			}
+			return err
+		}, 2},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

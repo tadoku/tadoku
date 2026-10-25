@@ -270,8 +270,8 @@ func TestRolesUserRoles(t *testing.T) {
 	if !maps.Equal(got, want) {
 		t.Errorf("UserRoles = %v, want %v", got, want)
 	}
-	if sent := statements.take(); len(sent) != 1 {
-		t.Errorf("sent %d statements, want 1: %q", len(sent), sent)
+	if sent := statements.take(); len(sent) != 2 {
+		t.Errorf("sent %d statements, want one for each permit: %q", len(sent), sent)
 	}
 
 	_, oneErr := roles.UserRoles(t.Context(), []uuid.UUID{admin})

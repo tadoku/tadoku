@@ -97,13 +97,22 @@ transaction (`postgres.RunInTransaction`) and fails closed.
 
 | Building block | Use | SQL statements |
 | --- | --- | --- |
-| `Checker.Require`, `Allowed` and `AllowedFor` | Check one permit for the actor or for a given user | One for each relation or link the rules read |
+| `Checker.Require`, `Allowed` and `AllowedFor` | Check one permit for the actor or for a given user | At most one for each rule level reached |
+| `Checker.AllowedEach` | Check many permits for the actor, such as whether each row on a page is editable | At most one for each rule level reached, whatever the number of checks |
+| `Checker.AllowedForEach` | Check one permit for many users, such as role badges on a user list | At most one for each rule level reached, whatever the number of users |
 | `Relationships.Grant` and `Revoke` | Store or remove any number of relationships | 1 |
 | `Relationships.RevokeObject` and `RevokeUser` | Remove every relationship of a deleted object or user | 1 |
 | `Relationships.Read` | Read stored relationships on an object or for a user | 1 |
 
 [Checks in application operations](./authorization.md#checks-in-application-operations)
-describes the checker's errors. A walk deeper than eight levels is an error.
+describes the checker's results and errors. `AllowedForEach`, like
+`AllowedFor`, reads no request identity and never authorizes the actor.
+
+A call evaluates all its questions together, one rule level at a time, reads
+every relation a level needs with one query, and answers an identical
+sub-question once. An error fails the whole call. A rule that cannot be
+decided, such as a walk deeper than eight levels, fails a check only when the
+answer depends on it.
 
 `Grant` and `Revoke` validate every relationship before any SQL. Granting a
 stored relationship or revoking a missing one changes nothing.

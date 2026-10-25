@@ -23,7 +23,8 @@ Paper screens use `usePaperForm` from `paper-ui`, built with TanStack Form's
 `createFormHookContexts` and `createFormHook`. Wrap the native form with
 `form.AppForm`, use `form.Form` for validated submission and error focus, and
 bind each control through `form.AppField` and its `field.Input`, `field.Select`
-or other control. The screen supplies typed default values, validators and
+or other control. `form.Form` ignores a submission while the previous one is
+still running, so a repeated submit can't send the operation twice. The screen supplies typed default values, validators and
 `onSubmit`; controls own accessible labels, hints, errors and interaction.
 Validation is configured on the field or form, including required values and
 numeric bounds. The native `required`, `min` and `max` props describe the control.

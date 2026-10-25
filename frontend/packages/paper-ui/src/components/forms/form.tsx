@@ -12,6 +12,8 @@ function Form({ children, ...props }: Omit<FormHTMLAttributes<HTMLFormElement>, 
   const form = useFormContext()
   return <form {...props} noValidate onSubmit={async event => {
     event.preventDefault()
+    // TanStack Form starts another submission while one is running, so a repeated submit would repeat the operation.
+    if (form.state.isSubmitting) return
     const element = event.currentTarget
     await form.handleSubmit()
     if (!form.state.isValid) {

@@ -18,6 +18,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/tadoku/tadoku/services/common/client/s2s"
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
+	"github.com/tadoku/tadoku/services/tadoku-api/app/permissionmodel"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/announcements"
 	featureaudit "github.com/tadoku/tadoku/services/tadoku-api/features/audit"
 	featureauthz "github.com/tadoku/tadoku/services/tadoku-api/features/authz"
@@ -205,7 +206,7 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 		postgres.NewPoolCollector(pool),
 	)
 
-	permissionModel, err := permissions.NewModel(featureauthz.Permissions)
+	permissionModel, err := permissionmodel.New()
 	if err != nil {
 		return nil, err
 	}

@@ -19,6 +19,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/tadoku/tadoku/services/tadoku-api/app"
+	"github.com/tadoku/tadoku/services/tadoku-api/app/permissionmodel"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/announcements"
 	featureaudit "github.com/tadoku/tadoku/services/tadoku-api/features/audit"
 	featureauthz "github.com/tadoku/tadoku/services/tadoku-api/features/authz"
@@ -245,7 +246,7 @@ func newTestRouterWithLeaderboardService(
 		option(&endpoints)
 	}
 
-	permissionModel, err := permissions.NewModel(featureauthz.Permissions)
+	permissionModel, err := permissionmodel.New()
 	if err != nil {
 		return nil, nil, err
 	}

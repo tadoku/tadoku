@@ -3,6 +3,7 @@ package tenantlifecycle
 import (
 	"context"
 
+	"github.com/tadoku/tadoku/services/tadoku-api/app/permissionmodel"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/authz"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/identity"
 	queries "github.com/tadoku/tadoku/services/tadoku-api/generated/sqlc/tenantlifecycle"
@@ -22,7 +23,7 @@ func (app *Application) SeedDevelopmentAccounts(
 		if err := identity.SeedDevelopmentAccounts(ctx, identity.NewRepository(app.pool), key, fixtures); err != nil {
 			return err
 		}
-		model, err := permissions.NewModel(authz.Permissions)
+		model, err := permissionmodel.New()
 		if err != nil {
 			return err
 		}

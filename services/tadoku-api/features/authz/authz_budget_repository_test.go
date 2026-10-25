@@ -30,6 +30,7 @@ func TestCheckQueryBudget(t *testing.T) {
 	trioChecker := permissions.NewChecker(repository, mustModel(trios))
 	admin, moderator := uuid.New(), uuid.New()
 	relationships := []permissions.Relationship{refSiteAdmins.On(siteRoot, admin), refMemberUsers.On("g1", moderator)}
+	users := []uuid.UUID{moderator, admin}
 	var edits []permissions.Check
 	for i := range 50 {
 		logID, contestID := fmt.Sprintf("l%d", i), fmt.Sprintf("c%d", i%5)
@@ -39,8 +40,10 @@ func TestCheckQueryBudget(t *testing.T) {
 			refModeratorMembers.On(contestID, "g1"),
 		)
 		edits = append(edits, refLogEdit.On(logID))
+		users = append(users, uuid.New())
 	}
 	grantAll(t, ctx, permissions.NewRelationships(repository, refModel), relationships...)
+	asModerator := signedIn(ctx, moderator.String())
 
 	cases := []struct {
 		name        string
@@ -55,6 +58,19 @@ func TestCheckQueryBudget(t *testing.T) {
 		}, 1},
 		{"edit through a contest a group moderates", func() error {
 			return wantAllowed(checker.AllowedFor(ctx, edits[0], moderator))
+		}, 3},
+		{"one edit for the actor", func() error {
+			return wantAllAllowed(checker.AllowedEach(asModerator, edits[0]))
+		}, 3},
+		{"50 edits for the actor", func() error {
+			return wantAllAllowed(checker.AllowedEach(asModerator, edits...))
+		}, 3},
+		{"one edit for 50 users", func() error {
+			allowed, err := checker.AllowedForEach(ctx, edits[0], users)
+			if err == nil && (len(allowed) != len(users) || !allowed[moderator] || allowed[users[2]]) {
+				err = fmt.Errorf("allowed = %v", allowed)
+			}
+			return err
 		}, 3},
 	}
 	for _, tc := range cases {
@@ -83,6 +99,15 @@ func wantAllowed(allowed bool, err error) error {
 func wantDenied(allowed bool, err error) error {
 	if err == nil && allowed {
 		err = errors.New("check allowed, want denied")
+	}
+	return err
+}
+
+func wantAllAllowed(allowed map[permissions.Check]bool, err error) error {
+	for check, passed := range allowed {
+		if err == nil && !passed {
+			err = fmt.Errorf("%+v denied, want allowed", check)
+		}
 	}
 	return err
 }

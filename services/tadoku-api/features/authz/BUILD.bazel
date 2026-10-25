@@ -28,6 +28,7 @@ go_test(
     name = "authz_test",
     size = "medium",
     srcs = [
+        "authz_batch_checks_repository_test.go",
         "authz_budget_repository_test.go",
         "authz_check_properties_repository_test.go",
         "authz_checker_repository_test.go",

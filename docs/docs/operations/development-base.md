@@ -38,14 +38,15 @@ Components run in `tdk-dev-*` namespaces; authv2 runs in the account namespace, 
 | --- | --- |
 | `tdk-dev-frontend-webv2`, `tdk-dev-frontend-webv3`, `tdk-dev-frontend-auth`, `tdk-dev-frontend-admin` | Webv2, Webv3, authv2 and admin frontends |
 | `tdk-dev-tadoku-api` | Tadoku API and the private asynchronous worker |
-| `tdk-dev-keto`, `tdk-dev-oathkeeper` | Auth providers |
+| `tdk-dev-oathkeeper` | Identity gateway |
 | `tdk-dev-flipt` | Feature flags |
 | `tdk-dev-token-reflector` | Token-reflector |
 | `tdk-dev-data` | One operator-managed Postgres server (`tadoku-dev-db`) and disposable Valkey |
 | `tdk-dev-routing` | Application routes attached to the platform Envoy Gateway |
 
-The Postgres server holds the base `tadoku` and `keto` databases and
-retained `tadoku-<route>` migration branch databases. Ordinary branches use
+The Postgres server holds the base `tadoku` database, the retained former
+`keto` database and retained `tadoku-<route>` migration branch databases. No
+Keto service or migration hook is deployed. Ordinary branches use
 their own test tenant, `tadoku/<route>`, in `tadoku`; canonical base data uses
 `tadoku/prod`. Row-level security and transaction-local tenant context isolate
 their application rows. No ordinary branch database is created. Changed
@@ -168,7 +169,7 @@ Full Argo CD syncs apply these waves:
 | -30 | Development namespaces |
 | -20 | Postgres custom resource and generated configuration |
 | -15 | Transfer existing Tadoku objects to `tadoku_owner` and establish runtime grants |
-| -10 | Tadoku API migrations as `tadoku_owner` and the Keto migration Sync hook; each waits for authenticated database connectivity |
+| -10 | Tadoku API migrations as `tadoku_owner`, after authenticated database connectivity |
 | -5 | Reapply runtime grants and revoke writes to the newly created `schema_migrations` table |
 | 0 | Auth providers, cache, Flipt, token-reflector and Gateway routes |
 | 10 | Oathkeeper, which publishes its JWKS before the APIs start |
@@ -244,6 +245,11 @@ After activation, run the live acceptance gates listed under
 - The Postgres custom resource and the `tdk-dev-data` namespace have
   `Prune=false,Delete=false`. Ordinary Argo CD pruning or removing the
   Application must not destroy data.
+- `k8s/dev/base/retained-keto-namespace.yaml` preserves the former Keto
+  namespace with `Prune=false,Delete=false`. The Postgres specification retains
+  its database and role, and existing credential Secrets remain in Kubernetes.
+  They have no runtime consumer. Do not delete this retained state without an
+  exact inventory and separate authorization.
 - `dev down` and TTL cleanup remove the selected test tenant's Valkey keys and
   Flipt namespace before deleting its PostgreSQL tenant row and cascading
   application rows. They stop branch pods and clear their worker overrides

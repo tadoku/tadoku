@@ -100,8 +100,6 @@ share that proxy's peer-IP budget. Malformed prefixes fail startup.
 `tadoku.app` or `tadoku.dev.lab`. The development base API and overlays set
 the latter.
 
-Tadoku API ignores `API_KETO_*` variables.
-
 ### Service tokens and feature flags
 
 - `API_OATHKEEPER_URL` (default `http://oathkeeper-proxy.default:4455`), used

@@ -9,7 +9,7 @@ resources:
   - data
   - migrations
   - services
-  - keto
+  - retained-keto-namespace.yaml
   - oathkeeper
   - flipt
   - frontend-webv2
@@ -19,9 +19,6 @@ resources:
   - routing
   - ingress.yaml
 configMapGenerator:
-  - name: keto-migration-config
-    namespace: tdk-dev-data
-    files: [keto/keto.yaml, keto/namespaces.keto.ts]
   - name: frontend-runtime
     namespace: tdk-dev-frontend-webv2
     files: [frontend-start.cjs, ca.crt=lab-root-ca.crt]

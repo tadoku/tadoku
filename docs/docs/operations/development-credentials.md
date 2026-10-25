@@ -10,12 +10,16 @@ Read this when bootstrapping or rotating credentials for the development base.
 
 There are no plaintext Secret manifests or private keys in `k8s/dev/base/`.
 
-- The Postgres operator generates `tadoku_owner`, `tadoku` and `keto`
+- The Postgres operator generates `tadoku_owner` and `tadoku`
   credentials in `tdk-dev-data`. The owner Secret is named
   `tadoku-owner.tadoku-dev-db.credentials.postgresql.acid.zalan.do`; the
   operator replaces underscores in Secret names. The base Tadoku migrations
   use this owner Secret. Tenant lifecycle Jobs use it for tenant and override
   writes. API, worker and SQL fixture writes keep the `tadoku` credentials.
+- The former Keto database role and its generated credentials are retained;
+  no bootstrap step copies them and no deployed service consumes them. Their
+  deletion follows the retained-state rules in
+  [Development base](development-base.md#data-safety).
 - The Postgres administrator Secret stays in `tdk-dev-data`. The ownership
   hooks and short-lived branch database creation Job use it. Branch migration
   tasks use `tadoku_owner`; ordinary tenant tasks do not use administrator

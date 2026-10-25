@@ -221,7 +221,7 @@ Its steps, in order:
    `tadoku/`. It removes the routes and workloads and runs the teardown hooks
    described in [Teardown and expiry](./production-branches.md#teardown-and-expiry).
 6. Run the isolation check's `after-teardown` mode, which checks that no
-   object, Keto tuple, Valkey key, Flipt namespace or test identity remains for
+   object, permission relationship, Valkey key, Flipt namespace or test identity remains for
    the route.
 7. Update the comment, set the `prod-branch/deploy` status on the deployed
    commit, which the marker's `dev-cli.io/source-revision` annotation names,

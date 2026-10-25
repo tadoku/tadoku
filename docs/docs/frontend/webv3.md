@@ -114,9 +114,9 @@ forwarded-host or branch headers cannot choose an upstream URL.
 The root route loader resolves the product-link origin once per request, and SSR
 serializes that loader data for hydration. Client navigation and intent preloads
 reuse it without another server call. Links are resolved when a screen renders;
-they are never frozen into a production build or shared across requests. Opening
-Log activity reaches the matching Webv2 branch, whose login flow keeps the same
-tenant selection. Canonical `next.tadoku.app` uses production data and the
+they are never frozen into a production build or shared across requests. Log
+activity stays on the same Webv3 host, and its login link opens the matching
+branch's account host. Canonical `next.tadoku.app` uses production data and the
 canonical `tadoku.app` product links.
 
 ## Checks
@@ -243,15 +243,17 @@ tests disable traces and videos and retain no browser storage.
 
 ## Native activity logging
 
-`/logs/new` prompts anonymous visitors to sign in through the existing account
-application, then loads configuration and ongoing contest registrations from the
+`/logs/new` prompts anonymous visitors to sign in through authv2, then loads
+configuration and ongoing contest registrations from the
 selected tenant. TanStack Form owns the draft. Language and activity determine
 the available unit or duration input and eligible contests. Eligible contests
 are selected initially; a user can uncheck them to save a personal record.
 
-`frontend/apps/webv3/src/lib/logs.ts` validates responses and form values with
-Zod. Its server counterpart forwards only the session cookie to the existing
-configuration, registrations, create and detail endpoints. The API owns scoring,
+`frontend/apps/webv3/src/lib/logs.ts` validates form values with Zod.
+`frontend/apps/webv3/src/lib/logs.server.ts` calls the configuration,
+registrations, create and detail operations through the generated client, which
+validates their responses, with the session cookies described above. A
+registration without its ID or contest makes the options unavailable. The API owns scoring,
 contest eligibility, authorization and persistence; Webv3 does not read the
 legacy log-entry feature flag or calculate a provisional score.
 
@@ -274,11 +276,21 @@ failure asks the user to check their activity before retrying; the API has no
 idempotency key, so retrying an ambiguous save can create another record. Drafts
 are held in memory and are lost when the form is reloaded or closed.
 
-Run `logging.spec.ts` with `WEBV3_BASE_URL`, `TADOKU_API_URL`,
-`E2E_READER_EMAIL` and `E2E_READER_PASSWORD` for the documented development
-fixture. Ownership and branch-only suspension cases also use `E2E_SECOND_EMAIL`
-and `E2E_SECOND_PASSWORD` for Dev Admin; the suspension case restores the Reader
-role in the same branch tenant. Set `NODE_EXTRA_CA_CERTS` to the trusted Lab CA
+`logging.spec.ts` covers the form, saves, detail, ownership and tenant
+isolation; `logging-session.spec.ts` covers expiry, CSRF, suspension and account
+switches. Run them with `WEBV3_BASE_URL`, `TADOKU_API_URL`, `E2E_READER_EMAIL`
+and `E2E_READER_PASSWORD` for the documented development fixture. Ownership,
+suspension and account-switch cases also use `E2E_SECOND_EMAIL` and
+`E2E_SECOND_PASSWORD` for Dev Admin; the suspension case first checks that the
+administrator reaches the selected branch and restores the Reader role there.
+The identity API admits ten logins per account in 15 minutes, counting
+successful ones. `frontend/apps/webv3/e2e/logging-fixtures.ts` therefore shares
+one real session per account, held in memory, across journeys where login is
+incidental. Both logging files and the account E2E together sign in with Dev
+Reader eight times and Dev Admin five times, so wait 15 minutes after the last
+login before repeating a complete run. A failed test restarts the Playwright
+worker, whose shared sessions then sign in again, and rejected attempts count
+towards the limit too. Set `NODE_EXTRA_CA_CERTS` to the trusted Lab CA
 and `PLAYWRIGHT_OUTPUT_DIR` outside the checkout. Authenticated runs disable
 traces and videos; browser-boundary delay and abort cases cover repeated submits
 and transport errors without mocking the API's successful writes.

@@ -108,7 +108,7 @@ credentials, caching and timeouts.
 | Application | Adapters |
 | --- | --- |
 | authv2 | `frontend/apps/authv2/src/lib/session.server.ts` reads the session. `sendIdentity()` in `frontend/apps/authv2/src/lib/identity.ts` sends every account form, from the browser or the native form route, and reads error codes with `zIdentityErrorResponse`. |
-| webv3 | `frontend/apps/webv3/src/lib/home.server.ts` makes anonymous home-page reads; `404` means no contest. `frontend/apps/webv3/src/lib/session.server.ts` reads the session and role with the visitor's session cookies, and `frontend/apps/webv3/server/routes/logout.post.ts` logs out. |
+| webv3 | `frontend/apps/webv3/src/lib/home.server.ts` makes anonymous home-page reads; `404` means no contest. `frontend/apps/webv3/src/lib/session.server.ts` reads the session and role with the visitor's session cookies, `frontend/apps/webv3/server/routes/logout.post.ts` logs out and `frontend/apps/webv3/src/lib/logs.server.ts` reads logging options and creates and reads logs. |
 | webv2, admin | `frontend/packages/ui/identity.ts` reads the session and logs out. `browserApi()` and `apiData()` in `frontend/packages/ui/api.ts` call operations from React Query hooks and throw `Error(<status>)` for API errors. |
 
 The validators must run on the package's own pinned Zod 3, whose UUID check
@@ -122,8 +122,8 @@ package.
 Some contract properties are optional only because request bodies or drafts share
 the schema: contest and registration IDs, page HTML, post publish times and
 announcement IDs. Where a screen needs one, `requireFields()` in
-`frontend/packages/ui/api.ts`, or `identified()` in webv3's home data, fails like
-a malformed answer when it is missing.
+`frontend/packages/ui/api.ts`, or `identified()` in webv3's home data and log
+options, fails like a malformed answer when it is missing.
 
 ## Exceptions
 

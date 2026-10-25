@@ -88,15 +88,17 @@ null for absent amount, unit, duration and description values.
 ## Webv3 native activity
 
 Open the printed next-host branch URL at `/logs/new`. Anonymous visitors see a
-sign-in prompt; login returns through the existing account UI. As Dev Reader,
+sign-in prompt; login returns through authv2 on the branch account host. As
+the branch tenant's native Dev Reader,
 choose a language/activity, enter an amount and unit or minutes, optional tags
 and description, and review selected eligible contests. Save once, record the
 returned ID and values, then reload the detail and compare a fresh API read.
 Confirm `X-Dev-Selected` and that the canonical tenant cannot read the branch ID.
 Public detail is readable; contest submissions and management remain owner-only.
 
-Run the Webv3 `logging.spec.ts` with the documented fixture environment and Lab
-CA. It verifies invalid-field focus, real amount/time writes, contest selection,
+Run the Webv3 `logging.spec.ts` and `logging-session.spec.ts` with the
+documented fixture environment and Lab CA. Native login admits ten logins per
+account in 15 minutes, so wait that long before repeating a complete run. It verifies invalid-field focus, real amount/time writes, contest selection,
 reload, duplicate-submit prevention, keyboard layouts and expired-session draft
 recovery, server-function CSRF refusal, non-owner mutation refusal and cross-tenant
 isolation. Switch accounts in another tab before saving: the old draft must

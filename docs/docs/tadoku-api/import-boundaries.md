@@ -35,6 +35,12 @@ boundaries described in [Code ownership](./index.md#code-ownership).
   ordinary feature's business data.
 - A feature's generated sqlc package is visible only to that feature.
   The `generated/sqlc/tokens` package belongs only to `features/authz/tokens`.
+- The permission engine, `services/tadoku-api/internal/permissions`, reads and
+  writes relationships only through the `Tuples` port it declares.
+  `services/tadoku-api/features/authz` implements it with its `Repository` over
+  `permission_relationships` and the `generated/sqlc/authz` queries, which are
+  visible only to that feature. A composition root passes the repository to
+  `permissions.NewChecker` and `permissions.NewRelationships`.
 - `services/tadoku-api/infra/flipt` owns the shared tenant-to-provider target
   mapping. Its ordinary consumers use `:infrastructure_consumers`; the exact test-only
   `internal/testflipt` fixture package may also depend on it so HTTP evaluation

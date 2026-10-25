@@ -187,7 +187,11 @@ The following rules decide where each check belongs.
 
 - Pass concrete application-owned collaborators through constructors.
 - Introduce a narrow, consumer-owned interface only for a genuine provider or
-  layer boundary with multiple implementations. Never add an interface, including
+  layer boundary with multiple implementations, or for the port an engine in
+  `internal/` declares because it cannot import the package that owns its state,
+  such as `featureflags.BooleanProvider` (implemented in
+  `services/tadoku-api/infra/flipt`) and `permissions.Tuples` (implemented in
+  `services/tadoku-api/features/authz`). Never add an interface, including
   a feature or repository interface, solely to inject mocks. Exercise concrete
   providers through their boundary tests and HTTP E2Es.
 - Provider-backed feature services may consume the API-local feature-flag

@@ -48,6 +48,13 @@ def effective_options(path):
     raise AssertionError("missing canonical options")
 
 
+def process_info(pid):
+    proc = Path("/proc") / str(pid)
+    return {"pid": pid, "ppid": int((proc / "stat").read_text().rsplit(")", 1)[1].split()[1]),
+            "exe": os.readlink(proc / "exe"),
+            "argv": [os.fsdecode(arg) for arg in (proc / "cmdline").read_bytes().split(b"\0")[:-1]]}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--evidence-dir", required=True, type=Path)
@@ -252,7 +259,16 @@ def main():
         lock = Path("/tmp") / f"tadoku-bazel-{os.getuid()}.lock"
         assert subprocess.run(["flock", "-n", str(lock), "true"]).returncode == 0, "target owns build lock"
         assert not list(tmp.glob("tadoku-bazel-*")), "private script survives long running target"
-        assert child.pid == int(ready.read_text()), "wrapper did not exec target"
+        target, launcher = process_info(int(ready.read_text())), process_info(child.pid)
+        (evidence / "run-processes.json").write_text(json.dumps(
+            {"target": target, "launcher": launcher}, indent=2) + "\n")
+        node = shutil.which("node", path=env["PATH"])
+        assert target["pid"] == child.pid or (
+            target["ppid"] == child.pid and node is not None
+            and Path(launcher["exe"]).samefile(node)
+            and len(launcher["argv"]) > 1
+            and Path(launcher["argv"][1]).samefile(bazel)
+        ), "wrapper did not exec target"
         os.killpg(child.pid, signal.SIGTERM)
         assert child.wait(timeout=10) == 42
         pass_check("target unlock/cleanup/signals")

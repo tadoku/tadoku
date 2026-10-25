@@ -33,9 +33,13 @@ if mode == "nested":
         "stderr": result.stderr}))
     sys.exit(result.returncode)
 if mode == "wait":
+    def stop(signum, _frame):
+        signal.signal(signal.SIGTERM, signal.SIG_IGN)
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
+        sys.exit(42 if signum == signal.SIGTERM else 43)
+    signal.signal(signal.SIGTERM, stop)
+    signal.signal(signal.SIGINT, stop)
     out.write_text(str(os.getpid()))
-    signal.signal(signal.SIGTERM, lambda *_: sys.exit(42))
-    signal.signal(signal.SIGINT, lambda *_: sys.exit(43))
     while True: time.sleep(.1)
 env = {key: os.environ.get(key) for key in (
     "GH_TOKEN", "NEW_PROVIDER_SECRET", "DOCKER_CONFIG", "BAZEL_REAL",

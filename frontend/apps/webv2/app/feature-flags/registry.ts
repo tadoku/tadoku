@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 export const featureFlagRegistry = {
-  'release-log-entry-v2': { defaultValue: true },
+  'release-webv3': { defaultValue: false },
 } as const
 
 export type FeatureFlagKey = keyof typeof featureFlagRegistry

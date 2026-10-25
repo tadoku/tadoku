@@ -5,7 +5,6 @@ import {
   NoSymbolIcon,
   CheckCircleIcon,
   HomeIcon,
-  KeyIcon,
 } from '@heroicons/react/20/solid'
 import Head from 'next/head'
 import {
@@ -24,7 +23,6 @@ import { DateTime } from 'luxon'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
 import { FormProvider, useForm } from 'react-hook-form'
-import { FeatureAccessModal } from '@app/feature-access/FeatureAccessModal'
 
 function RoleBadge({ role }: { role?: string }) {
   if (role === 'admin') {
@@ -53,9 +51,6 @@ const Page: NextPageWithLayout = () => {
   const [search, setSearch] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState<UserListEntry | null>(null)
-  const [featureAccessOpen, setFeatureAccessOpen] = useState(false)
-  const [featureAccessUser, setFeatureAccessUser] =
-    useState<UserListEntry | null>(null)
   const pageSize = 20
   const queryClient = useQueryClient()
 
@@ -221,46 +216,25 @@ const Page: NextPageWithLayout = () => {
                         : 'N/A'}
                     </td>
                     <td className="default">
-                      <ActionMenu
-                        orientation="right"
-                        links={[
-                          {
-                            label: 'Feature access',
-                            href: '#',
-                            IconComponent: KeyIcon,
-                            onClick: () => {
-                              setFeatureAccessUser(user)
-                              setFeatureAccessOpen(true)
+                      {user.role !== 'admin' ? (
+                        <ActionMenu
+                          orientation="right"
+                          links={[
+                            {
+                              label: user.role === 'banned' ? 'Unban User' : 'Ban User',
+                              href: '#',
+                              IconComponent: user.role === 'banned' ? CheckCircleIcon : NoSymbolIcon,
+                              type: user.role === 'banned' ? undefined : 'danger',
+                              onClick: () => {
+                                setSelectedUser(user)
+                                setModalOpen(true)
+                              },
                             },
-                          },
-                          ...(user.role !== 'admin'
-                            ? [
-                                user.role === 'banned'
-                                  ? {
-                                      label: 'Unban User',
-                                      href: '#',
-                                      IconComponent: CheckCircleIcon,
-                                      onClick: () => {
-                                        setSelectedUser(user)
-                                        setModalOpen(true)
-                                      },
-                                    }
-                                  : {
-                                      label: 'Ban User',
-                                      href: '#',
-                                      IconComponent: NoSymbolIcon,
-                                      type: 'danger' as const,
-                                      onClick: () => {
-                                        setSelectedUser(user)
-                                        setModalOpen(true)
-                                      },
-                                    },
-                              ]
-                            : []),
-                        ]}
-                      >
-                        <EllipsisVerticalIcon className="w-5 h-5" />
-                      </ActionMenu>
+                          ]}
+                        >
+                          <EllipsisVerticalIcon className="w-5 h-5" />
+                        </ActionMenu>
+                      ) : null}
                     </td>
                   </tr>
                 ))}
@@ -348,17 +322,6 @@ const Page: NextPageWithLayout = () => {
           </div>
         </FormProvider>
       </Modal>
-
-      <FeatureAccessModal
-        isOpen={featureAccessOpen}
-        setIsOpen={open => {
-          const nextOpen =
-            typeof open === 'function' ? open(featureAccessOpen) : open
-          setFeatureAccessOpen(nextOpen)
-          if (!nextOpen) setFeatureAccessUser(null)
-        }}
-        user={featureAccessUser}
-      />
     </>
   )
 }

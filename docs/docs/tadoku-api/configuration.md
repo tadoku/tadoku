@@ -110,22 +110,18 @@ the latter.
   disabled.
 - `API_FLIPT_ENABLED`, `API_FLIPT_URL`, `API_FLIPT_ENVIRONMENT`,
   `API_FLIPT_NAMESPACE`, `API_FLIPT_TEST_ENVIRONMENT`, `API_FLIPT_UPDATE_INTERVAL`,
-  `API_FLIPT_REQUEST_TIMEOUT`, `API_FLIPT_STARTUP_TIMEOUT` and
-  `API_FLIPT_MANAGEMENT_URL` configure the feature-flag evaluation provider and
-  the management client. Evaluation and management exchange separate
-  credentials for `flipt-evaluation/tadoku-api` and
-  `flipt-management/tadoku-api`. A non-empty `API_FLIPT_MANAGEMENT_URL` must be
-  an HTTP(S) base URL without credentials, query or fragment even when Flipt is
-  disabled; empty is allowed when Flipt is disabled. `API_FLIPT_URL` is
-  validated only when Flipt is enabled. Provider outages do not fail startup.
-  Until a client has fetched its namespace snapshot, `Boolean` flag consumers
-  use safe defaults; a later fetch recovers without a restart.
+  `API_FLIPT_REQUEST_TIMEOUT` and `API_FLIPT_STARTUP_TIMEOUT` configure evaluation.
+  Evaluation exchanges credentials for `flipt-evaluation/tadoku-api`.
+  `API_FLIPT_URL` is validated only when Flipt is enabled. Provider outages do
+  not fail startup. Until a client has fetched its namespace snapshot,
+  `Boolean` flag consumers use safe defaults; a later fetch recovers without
+  a restart.
 - `API_FLIPT_TEST_ENVIRONMENT` defaults to `test`. When Flipt is enabled, it
   must be nonempty and different from `API_FLIPT_ENVIRONMENT`; an invalid value
   fails startup. The canonical tenant `tadoku/prod` keeps the configured
   environment and namespace. Other tenants use the test environment and the
   tenant key with `/` mapped to `_`, because Flipt namespace keys cannot contain
-  slashes. Evaluation and named-user management use this same mapping. Test
+  slashes. Evaluation and namespace provisioning use this same mapping. Test
   clients are lazy and bounded to 16. Missing namespaces, missing tenant
   contexts and disabled Flipt give `Boolean` consumers safe defaults. See
   [Feature flags](../architecture/feature-flags.md).

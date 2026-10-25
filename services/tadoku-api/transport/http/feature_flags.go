@@ -16,7 +16,7 @@ func (s *server) ImmersionFeatureFlagDecisions(
 	return openapi.ImmersionFeatureFlagDecisions200JSONResponse{
 		Body: openapi.ImmersionFeatureFlagDecisionsResponse{
 			Decisions: openapi.ImmersionFeatureFlagDecisions{
-				ReleaseLogEntryV2: decisions.ReleaseLogEntryV2,
+				ReleaseWebV3: decisions.ReleaseWebV3,
 			},
 		},
 		Headers: openapi.ImmersionFeatureFlagDecisions200ResponseHeaders{

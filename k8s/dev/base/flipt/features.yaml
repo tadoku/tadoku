@@ -3,22 +3,22 @@ namespace:
   key: default
   name: Default
 flags:
-  - key: release-log-entry-v2
-    name: Release log entry v2
+  - key: release-webv3
+    name: Webv3 preview
     type: BOOLEAN_FLAG_TYPE
-    description: Use the second-generation log entry flow.
+    description: Enable the Webv3 preview. Disabled for everyone by default.
     enabled: false
     rollouts:
       - description: Enabled for explicitly granted users.
         segment:
           keys:
-            - release-log-entry-v2-access
+            - release-webv3-access
           operator: OR_SEGMENT_OPERATOR
           value: true
 segments:
-  - key: release-log-entry-v2-access
-    name: Release log entry v2 access
-    description: Kratos UUIDs explicitly granted access to release log entry v2.
+  - key: release-webv3-access
+    name: Webv3 preview access
+    description: Native account IDs explicitly granted Webv3 preview access.
     match_type: ALL_MATCH_TYPE
     constraints:
       - type: ENTITY_ID_COMPARISON_TYPE

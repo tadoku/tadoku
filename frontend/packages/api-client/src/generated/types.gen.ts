@@ -112,23 +112,11 @@ export type ImmersionErrorResponse = {
 };
 
 export type ImmersionFeatureFlagDecisions = {
-    'release-log-entry-v2': boolean;
+    'release-webv3': boolean;
 };
 
 export type ImmersionFeatureFlagDecisionsResponse = {
     decisions: ImmersionFeatureFlagDecisions;
-};
-
-export type ImmersionManagedFeatureFlagKey = 'release-log-entry-v2';
-
-export type ImmersionFeatureAccessResponse = {
-    enabled: boolean;
-    changed: boolean;
-    /**
-     * The Flipt environment that evaluated the flag; test tenants use the test environment.
-     */
-    environment: 'local' | 'production' | 'test';
-    revision: string;
 };
 
 export type ImmersionUserProfile = {
@@ -2557,120 +2545,6 @@ export type ImmersionFeatureFlagDecisionsResponses = {
 };
 
 export type ImmersionFeatureFlagDecisionsResponse2 = ImmersionFeatureFlagDecisionsResponses[keyof ImmersionFeatureFlagDecisionsResponses];
-
-export type ImmersionFeatureAccessRevokeData = {
-    body?: never;
-    path: {
-        flagKey: ImmersionManagedFeatureFlagKey;
-        userId: string;
-    };
-    query?: never;
-    url: '/immersion/admin/feature-flags/{flagKey}/users/{userId}';
-};
-
-export type ImmersionFeatureAccessRevokeErrors = {
-    /**
-     * invalid request
-     */
-    400: unknown;
-    /**
-     * unauthorized
-     */
-    401: unknown;
-    /**
-     * forbidden (not admin)
-     */
-    403: unknown;
-    /**
-     * feature configuration unavailable
-     */
-    502: unknown;
-};
-
-export type ImmersionFeatureAccessRevokeResponses = {
-    /**
-     * Updated named-user feature access
-     */
-    200: ImmersionFeatureAccessResponse;
-};
-
-export type ImmersionFeatureAccessRevokeResponse = ImmersionFeatureAccessRevokeResponses[keyof ImmersionFeatureAccessRevokeResponses];
-
-export type ImmersionFeatureAccessGetData = {
-    body?: never;
-    path: {
-        flagKey: ImmersionManagedFeatureFlagKey;
-        userId: string;
-    };
-    query?: never;
-    url: '/immersion/admin/feature-flags/{flagKey}/users/{userId}';
-};
-
-export type ImmersionFeatureAccessGetErrors = {
-    /**
-     * invalid request
-     */
-    400: unknown;
-    /**
-     * unauthorized
-     */
-    401: unknown;
-    /**
-     * forbidden (not admin)
-     */
-    403: unknown;
-    /**
-     * feature configuration unavailable
-     */
-    502: unknown;
-};
-
-export type ImmersionFeatureAccessGetResponses = {
-    /**
-     * Named-user feature access
-     */
-    200: ImmersionFeatureAccessResponse;
-};
-
-export type ImmersionFeatureAccessGetResponse = ImmersionFeatureAccessGetResponses[keyof ImmersionFeatureAccessGetResponses];
-
-export type ImmersionFeatureAccessGrantData = {
-    body?: never;
-    path: {
-        flagKey: ImmersionManagedFeatureFlagKey;
-        userId: string;
-    };
-    query?: never;
-    url: '/immersion/admin/feature-flags/{flagKey}/users/{userId}';
-};
-
-export type ImmersionFeatureAccessGrantErrors = {
-    /**
-     * invalid request
-     */
-    400: unknown;
-    /**
-     * unauthorized
-     */
-    401: unknown;
-    /**
-     * forbidden (not admin)
-     */
-    403: unknown;
-    /**
-     * feature configuration unavailable
-     */
-    502: unknown;
-};
-
-export type ImmersionFeatureAccessGrantResponses = {
-    /**
-     * Updated named-user feature access
-     */
-    200: ImmersionFeatureAccessResponse;
-};
-
-export type ImmersionFeatureAccessGrantResponse = ImmersionFeatureAccessGrantResponses[keyof ImmersionFeatureAccessGrantResponses];
 
 export type ImmersionLanguageListData = {
     body?: never;

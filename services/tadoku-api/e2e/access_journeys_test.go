@@ -13,53 +13,6 @@ import (
 	transport "github.com/tadoku/tadoku/services/tadoku-api/transport/http"
 )
 
-func TestFeatureAccessJourney(t *testing.T) {
-	runJourney(t, api, "FeatureAccess", []step{
-		{request: "target_initially_disabled", as: admin, want: http.StatusOK},
-		{request: "grant_target", as: admin, want: http.StatusOK, others: cast{guest: http.StatusUnauthorized, user: http.StatusForbidden, banned: http.StatusForbidden}},
-		{request: "target_enabled", as: admin, want: http.StatusOK},
-		{request: "repeat_grant", as: admin, want: http.StatusOK},
-		{request: "target_decision_enabled", as: user2, want: http.StatusOK},
-		{request: "revoke_target", as: admin, want: http.StatusOK, others: cast{guest: http.StatusUnauthorized, user: http.StatusForbidden, banned: http.StatusForbidden}},
-		{request: "target_disabled_again", as: admin, want: http.StatusOK},
-		{request: "target_decision_after_revoke", as: user2, want: http.StatusOK},
-		{verify: "changes_audited"},
-		{request: "guest_decision", as: guest, want: http.StatusOK},
-		{request: "admin_decision", as: admin, want: http.StatusOK},
-	})
-}
-
-func TestFeatureAccessAuditFailureJourney(t *testing.T) {
-	logs := captureDefaultLogs(t)
-	failureAPI := &suite{
-		db:      api.db,
-		flipt:   api.flipt,
-		handler: auditUnavailableHandler(t),
-	}
-	runJourney(t, failureAPI, "FeatureAccessAuditFailure", []step{
-		{request: "grant_audit_unavailable", as: admin, want: http.StatusOK},
-		{request: "provider_change_persisted", as: admin, want: http.StatusOK},
-		{verify: "audit_empty"},
-	})
-
-	requireLogged(t, logs,
-		"privileged change not audited",
-		"feature_access_grant",
-		"44444444-4444-4444-8444-444444444444",
-	)
-}
-
-// Test safety: the unavailable provider is a shared fixture setting, so the
-// journey restores it before another test evaluates a flag.
-func TestFeatureAccessProviderFailureJourney(t *testing.T) {
-	t.Cleanup(func() { flipt.SetUnavailable(false) })
-
-	runJourneyWithHandler(t, api, withFliptUnavailable(api.handler), "FeatureAccessProviderFailure", []step{
-		{request: "grant_provider_unavailable", as: admin, want: http.StatusServiceUnavailable},
-		{verify: "grant_attempt_recorded"},
-	})
-}
-
 // Test safety: the audit service reports an unrecorded change through the
 // default logger, so these journeys swap it for a buffer and restore it.
 func captureDefaultLogs(t *testing.T) *bytes.Buffer {

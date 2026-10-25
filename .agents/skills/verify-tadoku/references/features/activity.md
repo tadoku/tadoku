@@ -51,10 +51,9 @@ administrator role. Logging and contest submission are separate steps, so
 creating a log alone does not prove it reached the expected contest leaderboard.
 Check both amount-based legacy logs and duration-based logs when editing changes.
 Language-specific units must still override the generic unit with the same name.
-The retained feature-flags API must return only `release-log-entry-v2: true`,
-including for guests, users without a named grant and unavailable Flipt.
-Check the complete response: already-open clients reject a replacement key or
-an additional key even when the HTTP status is 200.
+Logging must keep working when the feature-flags request fails. The public
+response contains only the Webv3 decision, which defaults to false; log pages
+do not branch on that decision.
 
 Leaderboard updates are asynchronous and branch-cache scoped. A healthy API pod
 does not prove the worker processed the write. Keep selected headers and actual

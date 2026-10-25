@@ -1,11 +1,11 @@
 [
   {
-    "key": "release-log-entry-v2-access",
+    "key": "fixture-flag-access",
     "payload": {
       "@type": "flipt.core.Segment",
-      "key": "release-log-entry-v2-access",
-      "name": "Release log entry v2 access",
-      "description": "Kratos UUIDs explicitly granted access to release log entry v2.",
+      "key": "fixture-flag-access",
+      "name": "Fixture flag access",
+      "description": "Synthetic fixture account IDs.",
       "matchType": "ALL_MATCH_TYPE",
       "constraints": [
         {
@@ -19,10 +19,10 @@
     }
   },
   {
-    "key": "release-log-entry-v2",
+    "key": "fixture-flag",
     "payload": {
       "@type": "flipt.core.Flag",
-      "key": "release-log-entry-v2",
+      "key": "fixture-flag",
       "name": "Release log entry v2",
       "type": "BOOLEAN_FLAG_TYPE",
       "description": "Use the second-generation log entry flow.",
@@ -32,7 +32,7 @@
           "type": "SEGMENT_ROLLOUT_TYPE",
           "description": "Enabled for explicitly granted users.",
           "segment": {
-            "segments": ["release-log-entry-v2-access"],
+            "segments": ["fixture-flag-access"],
             "segmentOperator": "OR_SEGMENT_OPERATOR",
             "value": true
           }

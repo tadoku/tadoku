@@ -26,7 +26,6 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/features/contestevents"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/contests"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/email"
-	featureflagsservice "github.com/tadoku/tadoku/services/tadoku-api/features/featureflags"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/languages"
@@ -37,7 +36,6 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/features/profile"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/scoring"
 	fliptclient "github.com/tadoku/tadoku/services/tadoku-api/infra/flipt"
-	"github.com/tadoku/tadoku/services/tadoku-api/infra/fliptmanagement"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/observability"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 	valkeyinfra "github.com/tadoku/tadoku/services/tadoku-api/infra/valkey"
@@ -63,7 +61,6 @@ type application struct {
 	valkey          valkeygo.Client
 	flipt           *fliptclient.Provider
 	fliptEvaluation *http.Client
-	fliptManagement *http.Client
 }
 
 func noRedirect(_ *http.Request, _ []*http.Request) error { return http.ErrUseLastResponse }
@@ -127,11 +124,6 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 
 	fliptEvaluation := &http.Client{
 		Transport:     s2s.NewAuthTransport(s2sClient, "flipt-evaluation/tadoku-api", transport),
-		Timeout:       cfg.FliptRequestTimeout,
-		CheckRedirect: noRedirect,
-	}
-	fliptManagement := &http.Client{
-		Transport:     s2s.NewAuthTransport(s2sClient, "flipt-management/tadoku-api", transport),
 		Timeout:       cfg.FliptRequestTimeout,
 		CheckRedirect: noRedirect,
 	}
@@ -240,14 +232,7 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	pagesService := pages.NewService(pagesRepository)
 	postsService := posts.NewService(postsRepository)
 	profileService := profile.NewService(profileRepository, identityReader)
-	featureFlagService := featureflagsservice.NewService(
-		featureflags.NewEvaluator(fliptProvider, featureFlagMetrics),
-		fliptmanagement.NewClient(fliptmanagement.Config{
-			URL:        cfg.FliptManagementURL,
-			Targets:    targets,
-			HTTPClient: fliptManagement,
-		}),
-	)
+	featureFlagService := featureflags.NewEvaluator(fliptProvider, featureFlagMetrics)
 
 	scoringObserver := observability.NewScoringObserver(metrics, logger, cfg.ScoringEngineEnabled)
 	scoringService := scoring.NewService(scoringRepository, cfg.ScoringEngineEnabled, scoringObserver)
@@ -341,7 +326,6 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 		valkey:          valkeyClient,
 		flipt:           fliptProvider,
 		fliptEvaluation: fliptEvaluation,
-		fliptManagement: fliptManagement,
 	}
 
 	go func() {

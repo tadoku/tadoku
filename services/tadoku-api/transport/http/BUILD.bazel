@@ -24,7 +24,6 @@ go_library(
         "contest_summary.go",
         "emails.go",
         "errors.go",
-        "feature_access.go",
         "feature_flags.go",
         "identity.go",
         "identity_settings.go",

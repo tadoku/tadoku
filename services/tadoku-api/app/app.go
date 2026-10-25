@@ -9,7 +9,6 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/features/contestevents"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/contests"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/email"
-	"github.com/tadoku/tadoku/services/tadoku-api/features/featureflags"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/languages"
@@ -19,6 +18,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/features/posts"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/profile"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/scoring"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/featureflags"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
@@ -40,7 +40,7 @@ type Application struct {
 	posts         *posts.Service
 	profile       *profile.Service
 	scoring       *scoring.Service
-	featureFlags  *featureflags.Service
+	featureFlags  *featureflags.Evaluator
 	db            *pgxpool.Pool
 	identity      *identity.Service
 	permissions   *permissions.Checker
@@ -64,7 +64,7 @@ type Dependencies struct {
 	Posts         *posts.Service
 	Profile       *profile.Service
 	Scoring       *scoring.Service
-	FeatureFlags  *featureflags.Service
+	FeatureFlags  *featureflags.Evaluator
 	DB            *pgxpool.Pool
 	Identity      *identity.Service
 	Permissions   *permissions.Checker

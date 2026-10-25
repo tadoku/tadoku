@@ -155,9 +155,9 @@ func TestDependencyFailures(t *testing.T) {
 			handler:     cacheUnavailable,
 		},
 		{
-			operation:   "ImmersionFeatureAccessGet",
-			description: []string{"provider", "unavailable"},
-			want:        http.StatusServiceUnavailable,
+			operation:   "ImmersionFeatureFlagDecisions",
+			description: []string{"provider", "unavailable", "safe", "default"},
+			want:        http.StatusOK,
 			suite:       api,
 			handler:     withFliptUnavailable(api.handler),
 		},

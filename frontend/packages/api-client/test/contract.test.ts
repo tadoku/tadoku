@@ -307,14 +307,6 @@ describe('generated client on values the contract constrains', () => {
     expect((await session(fields)).error).toBeUndefined()
   })
 
-  it('rejects a feature-access revision that is not a commit hash', async () => {
-    const result = await api.immersionFeatureAccessGet({
-      ...answer({ enabled: true, changed: false, environment: 'production', revision: 'not-a-revision' }),
-      path: { flagKey: 'release-log-entry-v2', userId: '00000000-0000-4000-8000-000000000001' },
-    })
-    expect(result.error).toBeDefined()
-  })
-
   it('rejects a post published at a time that is not a date-time', () => {
     const post = { slug: 'hello', title: 'Hello', content: 'Hello', published_at: 'not-a-date' }
     expect(api.zContentPost.safeParse(post).success).toBe(false)

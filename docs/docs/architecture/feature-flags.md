@@ -12,13 +12,11 @@ This page describes the development environment. Flags are boolean. Without a
 decision, `Evaluator.Boolean` consumers use the flag's behavior-preserving safe
 default.
 
-Log creation, details and editing use v2 for everyone. The legacy
-`release-log-entry-v2` decision remains in the public API and defaults to true
-in webv2. The feature service returns it as true regardless of the caller,
-Flipt's decision or provider availability. Named-user management and the
-underlying evaluator remain available, but no longer select the log UI.
-`release-webv3` is not exposed by this API or webv2 navigation; its separate
-disabled production flag does not change this compatibility contract.
+Log creation, details and editing use v2 for everyone and do not depend on a
+feature flag. The public registry contains `release-webv3`, which defaults to
+false. Its Flipt seed is disabled with an empty allowlist. Named-user rollout
+policy is managed in the Flipt operator UI; the admin application has no
+feature-access controls.
 
 ## Where flags are declared
 
@@ -26,7 +24,7 @@ disabled production flag does not change this compatibility contract.
 | --- | --- |
 | `feature-flags.contract.json` | Cross-stack list of flag keys and safe defaults |
 | `services/tadoku-api/internal/featureflags/registry.go` | Typed Go `BooleanFlag` constants; call sites cannot supply keys or defaults |
-| `frontend/apps/webv2/app/feature-flags/registry.ts` | webv2 keys, defaults and response schema |
+| `frontend/apps/webv2/app/feature-flags/registry.ts` | webv2 keys and safe defaults |
 | `k8s/dev/base/flipt/features.yaml` | Development Flipt seed: flags, rollouts and segments |
 
 `services/tadoku-api/internal/featureflags/contract_test.go` and
@@ -81,45 +79,16 @@ read and managed segment calls. Metrics are named `tadoku_feature_flag_*`.
 
 `GET /immersion/feature-flags` (`ImmersionFeatureFlagDecisions`) returns the
 decisions for the current user or guest with `Cache-Control: private, no-store`. Only flags in
-`PublicDecisions` (`services/tadoku-api/features/featureflags/domain.go`) are exposed.
-The feature service owns the public compatibility result; the underlying
-`Evaluator.Boolean` still evaluates provider state for its consumers.
+`PublicDecisions` (`services/tadoku-api/internal/featureflags/public.go`) are exposed.
+The application uses the evaluator for public decisions as well as backend consumers.
 [webv2](../frontend/webv2.md) fetches them server-side in `frontend/apps/webv2/pages/_app.tsx` and
 after each client-side route change, falling back to defaults on any failure.
 Components can use `useFeatureFlag`; the log pages do not read a flag.
 
-The response is exactly `{"decisions":{"release-log-entry-v2":true}}`.
-Existing generated clients reject extra keys as well as missing keys. Adding a
-second decision or replacing this key therefore breaks already-open browsers.
-Deploying an unconditional UI alone does not retire their loaded JavaScript.
-Before changing or removing this contract, prove that old consumers are gone,
-enforce a refresh or cutover that retires them, or retain the legacy endpoint
-while introducing a versioned contract. Elapsed time is not that proof.
-
-## Named-user access
-
-Administrators grant or revoke a flag for one user from the admin users page
-(`frontend/apps/admin/app/feature-access/`) through
-`/immersion/admin/feature-flags/{flagKey}/users/{userId}`. Tadoku API requires
-an administrator, accepts only the managed flags in
-`services/tadoku-api/features/featureflags/domain.go`, updates the flag's
-allowlist segment through the Flipt management API
-(`services/tadoku-api/infra/fliptmanagement/`) at the same tenant target used for
-evaluation. A test grant or revoke does not change the canonical allowlist. The
-client rejects a provider response from another namespace, or a segment that
-differs from the Go definition.
-
-The retained `release-log-entry-v2` control reports and changes allowlist
-membership only. Revoking it does not disable v2 logging or change the public
-decision.
-
-Each attempt that reaches Flipt is recorded in `moderation_audit_log`:
-`feature_access_grant` or `feature_access_revoke` with the resulting
-environment, revision and whether the allowlist changed, and
-`feature_access_grant_failed` or `feature_access_revoke_failed` with the
-provider error when the write did not apply. The entry is written after the
-Flipt write and never changes the response; see
-[Auditing a provider change](../tadoku-api/conventions.md#auditing-a-provider-change).
+The response is exactly `{"decisions":{"release-webv3":false}}` when the
+preview is disabled. Generated clients reject missing or extra decision keys.
+Before changing this contract again, retire incompatible consumers or version
+the endpoint. An unconditional UI does not retire already-open browser code.
 
 ## Development Flipt
 
@@ -136,8 +105,7 @@ Every dev-cli branch, including frontend-only work, provisions its own
 `test/tadoku_<route>` namespace with display name `tadoku/<route>`. The `tenant`
 hook publishes the branch's own `features.yaml` in its tenant image, converts
 the seed to Flipt v2 resources and creates missing segments and flags. Repeating
-the task preserves existing resources and named-user grants. Evaluation and
-admin grant changes use that namespace when the main hostname is selected;
+the task preserves existing resources and named-user grants. Evaluation uses that namespace when the main hostname is selected;
 canonical development requests still use `local/default`.
 
 `dev down` and expired-route cleanup delete the owned test namespace. After a
@@ -150,8 +118,8 @@ tenant's members.
 
 Provisioners use Flipt's management API directly with their own authorized
 operator or provisioning credentials. Tadoku API's Oathkeeper service-token rules
-permit evaluation snapshots and the managed segment GET/PUT operations; they do
-not permit namespace creation or deletion.
+permit evaluation snapshots only. Namespace and rollout management use the
+provisioner's direct management connection.
 
 1. Parse the tenant key and use `Targets` to obtain the test environment and
    mapped namespace key. The test environment must differ from the canonical
@@ -163,7 +131,7 @@ not permit namespace creation or deletion.
    `k8s/dev/base/flipt/features.yaml` using
    `POST /api/v2/environments/test/namespaces/e2e_run-1/resources`. Send the
    resource key and typed `payload`, such as
-   `{"key":"release-log-entry-v2-access","payload":{"@type":"flipt.core.Segment",...}}`.
+   `{"key":"release-webv3-access","payload":{"@type":"flipt.core.Segment",...}}`.
    Translate the seed into Flipt's v2 resource schema: a segment rollout needs
    `type: "SEGMENT_ROLLOUT_TYPE"`, `segment.segments` and
    `segment.segmentOperator`. Raw seed YAML field names are not the v2 JSON
@@ -186,16 +154,14 @@ operator UI.
 
 1. Add the key and `safeDefault` to `feature-flags.contract.json`.
 2. Add a `BooleanFlag` constant and definition in `registry.go`; extend `contract_test.go`.
-3. Add the key to `featureFlagRegistry` and `featureFlagDecisionsSchema` in webv2 `registry.ts`, in contract order.
+3. Add the key to `featureFlagRegistry` in webv2 `registry.ts`, in contract order.
 4. Add the flag, disabled, to `k8s/dev/base/flipt/features.yaml`.
-5. To gate backend behavior, evaluate it in the application layer via the `featureflags` feature service.
-6. To expose it to the browser, add it to both `PublicDecisions` types and the
-   service mapping, the `ImmersionFeatureFlagDecisions` schema in
+5. To gate backend behavior, evaluate it in the application layer through the evaluator.
+6. To expose it to the browser, add it to `PublicDecisions` and the
+   evaluator mapping, the `ImmersionFeatureFlagDecisions` schema in
    `services/tadoku-api/spec/openapi/schemas/immersion.yaml` and `services/tadoku-api/transport/http/feature_flags.go`.
    Run `./scripts/generate-openapi.sh`, `pnpm api:generate` and
    `pnpm --filter api-client generate`, and update the
    `ImmersionFeatureFlagDecisions` goldens.
-7. For named-user access, add a segment and rollout to `features.yaml`, the key
-   and segment to `domain.go`, the `ImmersionManagedFeatureFlagKey` enum (then
-   regenerate the frontend API client, which admin uses), and an Oathkeeper rule
-   for reading the segment.
+7. For named-user targeting, add a segment and rollout to `features.yaml`.
+   Manage grants in Flipt and keep provisioning restricted to the owned tenant.

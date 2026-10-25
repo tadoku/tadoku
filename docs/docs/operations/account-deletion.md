@@ -378,11 +378,11 @@ completed descendant.
 
 ## 5. Feature access
 
-Flipt stores named-user feature access by account ID. The flags that support it
-are listed in `services/tadoku-api/features/featureflags/domain.go`. For each of
-those flags, call `GET /immersion/admin/feature-flags/{flagKey}/users/{userId}`
-as an administrator. If the account has access, send `DELETE` to the same path
-to revoke it.
+Flipt stores named-user rollout membership by account ID. In the protected
+Flipt operator UI, select the account's environment and namespace, then inspect
+the allowlist segments declared by `k8s/dev/base/flipt/features.yaml`. Remove
+the account ID from each matching segment and save. Confirm the ID is absent
+after reloading the segment. The admin application has no feature-access API.
 
 ## Verify
 

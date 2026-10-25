@@ -61,7 +61,6 @@ func validApplicationConfig(t *testing.T) config {
 		FliptUpdateInterval:     time.Minute,
 		FliptRequestTimeout:     time.Second,
 		FliptStartupTimeout:     10 * time.Millisecond,
-		FliptManagementURL:      upstream.URL + "/flipt-management",
 
 		DialTimeout:           10 * time.Second,
 		MaxTokenAge:           24 * time.Hour,

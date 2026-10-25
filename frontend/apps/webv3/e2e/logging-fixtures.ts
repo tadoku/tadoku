@@ -1,4 +1,4 @@
-import { expect, test as base, type Browser, type BrowserContext, type Cookie, type Page } from '@playwright/test'
+import { expect, test as base, type Browser, type BrowserContext, type Cookie, type Page, type Request } from '@playwright/test'
 
 export const webv3 = process.env.WEBV3_BASE_URL
 export const api = process.env.TADOKU_API_URL
@@ -18,13 +18,47 @@ export async function signIn(page: Page, account = reader) {
   await page.getByRole('link', { name: 'Log in', exact: true }).first().click()
   await authenticate(page, account)
   await page.waitForURL(`${webv3}/logs/new`)
-  await expect(page.getByRole('button', { name: 'Save activity', exact: true })).toBeEnabled({ timeout: 15_000 })
+  await expect(saveButton(page)).toBeEnabled({ timeout: 15_000 })
 }
 
 /** Opens the activity form in a context that already holds a session from `signIn`. */
 export async function openForm(page: Page) {
   await page.goto('/logs/new')
-  await expect(page.getByRole('button', { name: 'Save activity', exact: true })).toBeEnabled({ timeout: 15_000 })
+  await expect(saveButton(page)).toBeEnabled({ timeout: 15_000 })
+}
+
+export const savedLogUrl = /\/logs\/[a-f0-9-]{36}$/
+
+/** A save: the only POST the activity form sends, to its server function. */
+export const isSaveRequest = (request: Request) => request.method() === 'POST' && request.url().includes('_serverFn')
+
+export const saveButton = (page: Page) => page.getByRole('button', { name: 'Save activity', exact: true })
+
+/** Paper's amount field is a group labelled "Amount" that holds the amount input and the unit select. */
+export const amountInput = (page: Page) => page.getByRole('spinbutton', { name: 'Amount', exact: true })
+
+/** Enters an amount and a description in the open activity form. */
+export async function fillDraft(page: Page, amount: string, description: string) {
+  await amountInput(page).fill(amount)
+  await page.getByLabel('Description', { exact: true }).fill(description)
+}
+
+/** The open activity form still holds the draft, unsaved. */
+export async function expectDraftKept(page: Page, amount: string, description: string) {
+  await expect(amountInput(page)).toHaveValue(amount)
+  await expect(page.getByLabel('Description', { exact: true })).toHaveValue(description)
+  await expect(page).toHaveURL(/\/logs\/new$/)
+}
+
+export function savedLogId(page: Page) {
+  return new URL(page.url()).pathname.split('/').pop()!
+}
+
+/** The account's logs with this description, read from the API. */
+export async function logsDescribed(context: BrowserContext, userId: string, description: string) {
+  const response = await context.request.get(`${api}/immersion/users/${userId}/logs?page_size=100&page=0`)
+  const { logs } = await response.json() as { logs: { description?: string }[] }
+  return logs.filter(log => log.description === description)
 }
 
 /** The tenant's session cookie, which the identity API names after the tenant. */

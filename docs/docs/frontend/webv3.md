@@ -244,18 +244,33 @@ tests disable traces and videos and retain no browser storage.
 ## Native activity logging
 
 `/logs/new` prompts anonymous visitors to sign in through authv2, then loads
-configuration and ongoing contest registrations from the
-selected tenant. TanStack Form owns the draft. Language and activity determine
-the available unit or duration input and eligible contests. Eligible contests
-are selected initially; a user can uncheck them to save a personal record.
+configuration and ongoing contest registrations from the selected tenant.
+Language and activity determine the available unit or duration input and
+eligible contests. Eligible contests are selected initially; a user can uncheck
+them to save a personal record. Changing the activity clears the quantity,
+because activities count in different units. A missing unit is reported on the
+amount field, which shows one error for the amount and its unit.
 
-`frontend/apps/webv3/src/lib/logs.ts` validates form values with Zod.
+The draft has three owners:
+
+- `frontend/apps/webv3/src/lib/log-draft.ts` owns the form's values: their
+  defaults, the unit and contests that follow a language or activity change,
+  validation with the API's rules, and conversion to the `NewLog` the server
+  function accepts.
+- `frontend/apps/webv3/src/components/LogForm.tsx` composes the screen from
+  `usePaperForm` and Paper's bound controls, and owns navigation and failure
+  messages.
+- `frontend/apps/webv3/src/lib/logs.ts` owns the server functions, their query
+  keys and `useSaveLog()`, which caches a saved log for its detail page and
+  refreshes the viewer after an account switch.
+
 `frontend/apps/webv3/src/lib/logs.server.ts` calls the configuration,
 registrations, create and detail operations through the generated client, which
 validates their responses, with the session cookies described above. A
-registration without its ID or contest makes the options unavailable. The API owns scoring,
-contest eligibility, authorization and persistence; Webv3 does not read the
-legacy log-entry feature flag or calculate a provisional score.
+registration without its ID or contest makes the options unavailable. The API
+owns scoring, contest eligibility, authorization and persistence; Webv3 does not
+read the legacy log-entry feature flag or calculate a provisional score.
+Legacy two-column and comic page units are not offered.
 
 A successful save navigates to `/logs/$logId` using the returned ID and displays
 the persisted language, measure, tags, score and contests. Reload reads that

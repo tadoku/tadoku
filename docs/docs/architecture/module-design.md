@@ -65,6 +65,10 @@ Keep [actor authorization](./authorization.md) in the application and preserve
 product effects under [Paper composition](../frontend/paper-composition.md);
 they need not know the data hook's cache representation to request a mutation.
 
+A concern that many features use divides into core logic, state, vocabulary
+and enforcement, each with one owner; see
+[Cross-cutting concerns](./cross-cutting-concerns.md).
+
 Document non-obvious caller obligations, such as an enclosing transaction or
 concurrency constraint, at the declaration under the existing
 [Go comment rules](../tadoku-api/conventions.md#readability). Make the contract

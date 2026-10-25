@@ -68,7 +68,9 @@ files in an area, read its page; those rules are as binding as this file.
   reproduction and affected checks.
 - **Keep the docs current.** Update the page that documents a behavior,
   convention or workflow in the same pull request that changes it. Durable docs
-  describe the current state only, without task history or issue numbers.
+  describe the current state only, without task history or issue numbers. They
+  state rules and point to the code; they do not list current instances
+  (existing concerns, features, call sites) or examples, which go stale.
 
 ## Before you change … read
 
@@ -86,6 +88,7 @@ files in an area, read its page; those rules are as binding as this file.
 | A user journey | `docs/docs/tadoku-api/user-journeys.md` |
 | An import, package, feature or Bazel visibility | `docs/docs/tadoku-api/import-boundaries.md` |
 | Startup, environment variables, provider clients or the leaderboard worker | `docs/docs/tadoku-api/configuration.md` |
+| A cross-cutting concern, or a feature's entries in one | `docs/docs/architecture/cross-cutting-concerns.md` |
 | Access rules, roles or bans | `docs/docs/architecture/authorization.md` |
 | Feature flags | `docs/docs/architecture/feature-flags.md` |
 | webv2, admin or the `ui` package | `docs/docs/frontend/conventions.md` |

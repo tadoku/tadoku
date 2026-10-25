@@ -39,6 +39,7 @@ the development environment and verified.
 | Commit, open a pull request, ship a migration or report a bug | [Contributing workflow](./develop/contributing.md) |
 | Understand the running system and request paths | [System overview](./architecture/index.md) |
 | Design or review a module boundary or shared abstraction | [Module design](./architecture/module-design.md) |
+| Use or design a concern that many features share | [Cross-cutting concerns](./architecture/cross-cutting-concerns.md) |
 | Work with sign-in, roles and bans | [Authentication and authorization](./architecture/authorization.md) |
 | Call one service from another | [Service-to-service auth](./architecture/service-tokens.md) |
 | Gate behavior behind a flag | [Feature flags](./architecture/feature-flags.md) |

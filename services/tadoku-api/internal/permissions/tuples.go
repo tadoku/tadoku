@@ -30,11 +30,19 @@ type TupleFilter struct {
 	Relation   string
 }
 
+// SubjectsKey asks for the tuples in one relation of one object whose subject is UserID or is not a user.
+type SubjectsKey struct {
+	ObjectType string
+	ObjectID   string
+	Relation   string
+	UserID     string
+}
+
 // Tuples stores relationship tuples for the context tenant. Every call joins the transaction the context carries, so
 // a check sees that transaction's own writes, and fails as unavailable without a tenant.
 type Tuples interface {
-	// Subjects returns the tuples stored in objectType:objectID#relation whose subject is userID or is not a user.
-	Subjects(ctx context.Context, objectType, objectID, relation, userID string) ([]Tuple, error)
+	// Subjects returns, with one statement, the tuples every key asks for.
+	Subjects(ctx context.Context, keys []SubjectsKey) ([]Tuple, error)
 	// Read returns the tuples the filter selects, with one statement, sorted by object, relation and subject.
 	Read(ctx context.Context, filter TupleFilter) ([]Tuple, error)
 	// Insert stores the tuples with one statement and keeps those already stored. It fails without a tenant even for
@@ -51,33 +59,6 @@ type Tuples interface {
 	// Stored returns the given tuples that are stored, with at most one query. It fails without a tenant even for no
 	// tuples.
 	Stored(ctx context.Context, tuples []Tuple) ([]Tuple, error)
-}
-
-// storedSubjects reports whether user is stored in the relation and returns the subject sets and linked objects
-// stored in it.
-func storedSubjects(
-	ctx context.Context,
-	tuples Tuples,
-	obj Object,
-	relation string,
-	user uuid.UUID,
-) (bool, []subjectSet, error) {
-	stored, err := tuples.Subjects(ctx, string(obj.objectType), obj.id, relation, user.String())
-	if err != nil {
-		return false, nil, err
-	}
-
-	sets := make([]subjectSet, 0, len(stored))
-	for _, tuple := range stored {
-		if tuple.SubjectType == UserSubjectType {
-			return true, nil, nil
-		}
-		sets = append(sets, subjectSet{
-			object:   Object{objectType: ObjectType(tuple.SubjectType), id: tuple.SubjectID},
-			relation: tuple.SubjectRelation,
-		})
-	}
-	return false, sets, nil
 }
 
 func storedRelationships(ctx context.Context, tuples Tuples, candidates []Relationship) (map[Relationship]bool, error) {

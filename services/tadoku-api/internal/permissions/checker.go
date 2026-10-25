@@ -91,14 +91,14 @@ func (c *Checker) Allowed(ctx context.Context, check Check) (bool, error) {
 // AllowedFor evaluates the check for userID in the context tenant without reading the request identity or ban
 // state. A failed check, or one whose context ends before it returns, is unavailable.
 func (c *Checker) AllowedFor(ctx context.Context, check Check, userID uuid.UUID) (bool, error) {
-	allowed, err := c.model.check(ctx, c.tuples, check, userID)
+	answers, err := c.model.evaluate(ctx, c.tuples, []question{{check: check, user: userID}})
 	if err == nil {
 		err = ctx.Err()
 	}
 	if err != nil {
 		return false, errx.NewUnavailableError("check "+check.permit+" permission", err)
 	}
-	return allowed, nil
+	return answers[0], nil
 }
 
 func (c *Checker) RequireAuthenticated(ctx context.Context) error {

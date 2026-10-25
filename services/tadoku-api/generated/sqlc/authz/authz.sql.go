@@ -184,22 +184,39 @@ func (q *Queries) ReadRelationships(ctx context.Context, arg ReadRelationshipsPa
 }
 
 const relationshipSubjects = `-- name: RelationshipSubjects :many
-select subject_type, subject_id, subject_relation
+select object_type, object_id, relation, subject_type, subject_id, subject_relation
 from permission_relationships
-where object_type = $1
-  and object_id = $2
-  and relation = $3
-  and (subject_type <> 'user' or subject_id = $4)
+where (object_type, object_id, relation, subject_type, subject_id) in (
+  select
+    unnest($1::text[]),
+    unnest($2::text[]),
+    unnest($3::text[]),
+    'user',
+    unnest($4::text[])
+)
+union all
+select object_type, object_id, relation, subject_type, subject_id, subject_relation
+from permission_relationships
+where subject_type <> 'user'
+  and (object_type, object_id, relation) in (
+    select
+      unnest($1::text[]),
+      unnest($2::text[]),
+      unnest($3::text[])
+  )
 `
 
 type RelationshipSubjectsParams struct {
-	ObjectType string
-	ObjectID   string
-	Relation   string
-	UserID     string
+	ObjectTypes []string
+	ObjectIds   []string
+	Relations   []string
+	UserIds     []string
 }
 
 type RelationshipSubjectsRow struct {
+	ObjectType      string
+	ObjectID        string
+	Relation        string
 	SubjectType     string
 	SubjectID       string
 	SubjectRelation string
@@ -207,10 +224,10 @@ type RelationshipSubjectsRow struct {
 
 func (q *Queries) RelationshipSubjects(ctx context.Context, arg RelationshipSubjectsParams) ([]RelationshipSubjectsRow, error) {
 	rows, err := q.db.Query(ctx, relationshipSubjects,
-		arg.ObjectType,
-		arg.ObjectID,
-		arg.Relation,
-		arg.UserID,
+		arg.ObjectTypes,
+		arg.ObjectIds,
+		arg.Relations,
+		arg.UserIds,
 	)
 	if err != nil {
 		return nil, err
@@ -219,7 +236,14 @@ func (q *Queries) RelationshipSubjects(ctx context.Context, arg RelationshipSubj
 	items := []RelationshipSubjectsRow{}
 	for rows.Next() {
 		var i RelationshipSubjectsRow
-		if err := rows.Scan(&i.SubjectType, &i.SubjectID, &i.SubjectRelation); err != nil {
+		if err := rows.Scan(
+			&i.ObjectType,
+			&i.ObjectID,
+			&i.Relation,
+			&i.SubjectType,
+			&i.SubjectID,
+			&i.SubjectRelation,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

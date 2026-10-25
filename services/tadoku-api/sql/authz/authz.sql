@@ -1,10 +1,24 @@
 -- name: RelationshipSubjects :many
-select subject_type, subject_id, subject_relation
+select object_type, object_id, relation, subject_type, subject_id, subject_relation
 from permission_relationships
-where object_type = @object_type
-  and object_id = @object_id
-  and relation = @relation
-  and (subject_type <> 'user' or subject_id = @user_id);
+where (object_type, object_id, relation, subject_type, subject_id) in (
+  select
+    unnest(@object_types::text[]),
+    unnest(@object_ids::text[]),
+    unnest(@relations::text[]),
+    'user',
+    unnest(@user_ids::text[])
+)
+union all
+select object_type, object_id, relation, subject_type, subject_id, subject_relation
+from permission_relationships
+where subject_type <> 'user'
+  and (object_type, object_id, relation) in (
+    select
+      unnest(@object_types::text[]),
+      unnest(@object_ids::text[]),
+      unnest(@relations::text[])
+  );
 
 -- name: InsertRelationships :execrows
 insert into permission_relationships (

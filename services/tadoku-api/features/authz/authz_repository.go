@@ -32,35 +32,27 @@ func (r *Repository) queries(ctx context.Context) (*queries.Queries, error) {
 	return queries.New(db), nil
 }
 
-func (r *Repository) Subjects(
-	ctx context.Context,
-	objectType, objectID, relation, userID string,
-) ([]permissions.Tuple, error) {
+func (r *Repository) Subjects(ctx context.Context, keys []permissions.SubjectsKey) ([]permissions.Tuple, error) {
 	q, err := r.queries(ctx)
-	if err != nil {
+	if err != nil || len(keys) == 0 {
 		return nil, err
 	}
 
-	rows, err := q.RelationshipSubjects(ctx, queries.RelationshipSubjectsParams{
-		ObjectType: objectType,
-		ObjectID:   objectID,
-		Relation:   relation,
-		UserID:     userID,
-	})
+	var columns queries.RelationshipSubjectsParams
+	for _, key := range keys {
+		columns.ObjectTypes = append(columns.ObjectTypes, key.ObjectType)
+		columns.ObjectIds = append(columns.ObjectIds, key.ObjectID)
+		columns.Relations = append(columns.Relations, key.Relation)
+		columns.UserIds = append(columns.UserIds, key.UserID)
+	}
+	rows, err := q.RelationshipSubjects(ctx, columns)
 	if err != nil {
 		return nil, err
 	}
 
 	tuples := make([]permissions.Tuple, len(rows))
 	for i, row := range rows {
-		tuples[i] = permissions.Tuple{
-			ObjectType:      objectType,
-			ObjectID:        objectID,
-			Relation:        relation,
-			SubjectType:     row.SubjectType,
-			SubjectID:       row.SubjectID,
-			SubjectRelation: row.SubjectRelation,
-		}
+		tuples[i] = permissions.Tuple(row)
 	}
 	return tuples, nil
 }

@@ -28,7 +28,12 @@ func TestRepositoryJoinsTheContextTransaction(t *testing.T) {
 			return err
 		}
 
-		subjects, err := repository.Subjects(ctx, admin.ObjectType, admin.ObjectID, admin.Relation, admin.SubjectID)
+		subjects, err := repository.Subjects(ctx, []permissions.SubjectsKey{{
+			ObjectType: admin.ObjectType,
+			ObjectID:   admin.ObjectID,
+			Relation:   admin.Relation,
+			UserID:     admin.SubjectID,
+		}})
 		if err != nil {
 			return err
 		}
@@ -57,13 +62,7 @@ func TestRepositoryRequiresATenant(t *testing.T) {
 	repository := NewRepository(db.AppPool)
 	admin := userTuple(uuid.New())
 
-	_, subjectsErr := repository.Subjects(
-		t.Context(),
-		admin.ObjectType,
-		admin.ObjectID,
-		admin.Relation,
-		admin.SubjectID,
-	)
+	_, subjectsErr := repository.Subjects(t.Context(), nil)
 	_, storedErr := repository.Stored(t.Context(), nil)
 	errs := []error{
 		subjectsErr,

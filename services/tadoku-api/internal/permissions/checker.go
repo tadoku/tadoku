@@ -3,6 +3,7 @@ package permissions
 import (
 	"context"
 
+	"github.com/google/uuid"
 	ketoclient "github.com/tadoku/tadoku/services/tadoku-api/infra/keto"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/identity"
@@ -11,6 +12,8 @@ import (
 
 type Checker struct {
 	client *ketoclient.Client
+	model  Model
+	tuples Tuples
 }
 
 type banStateKey struct{}
@@ -59,6 +62,23 @@ func banLookupError(ctx context.Context) error {
 
 func NewKetoChecker(client *ketoclient.Client) *Checker {
 	return &Checker{client: client}
+}
+
+func NewChecker(tuples Tuples, model Model) *Checker {
+	return &Checker{model: model, tuples: tuples}
+}
+
+// AllowedFor evaluates the check for userID in the context tenant without reading the request identity or ban
+// state. A failed check, or one whose context ends before it returns, is unavailable.
+func (c *Checker) AllowedFor(ctx context.Context, check Check, userID uuid.UUID) (bool, error) {
+	allowed, err := c.model.check(ctx, c.tuples, check, userID)
+	if err == nil {
+		err = ctx.Err()
+	}
+	if err != nil {
+		return false, errx.NewUnavailableError("check "+check.permit+" permission", err)
+	}
+	return allowed, nil
 }
 
 func rolesObject(ctx context.Context) (string, error) {

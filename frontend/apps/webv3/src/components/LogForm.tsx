@@ -36,7 +36,7 @@ export function LogForm({ configuration, registrations, viewerId }: { configurat
     measure: configuration.activities.find(activity => activity.id === draft.activityId)?.input_type === 'time_primary'
       ? { kind: 'time', minutes: draft.quantity }
       : { kind: 'amount', amount: draft.quantity, unitId: draft.unitId },
-    tags: draft.tagsText.split(',').map(tag => tag.trim()).filter(Boolean), description: draft.description,
+    tags: draft.tagsText.split(','), description: draft.description,
     registrationIds: eligibleRegistrations(registrations, draft.languageCode, draft.activityId).filter(registration => draft.registrationIds.includes(registration.id)).map(registration => registration.id),
   })
   const draftSchema = z.object({

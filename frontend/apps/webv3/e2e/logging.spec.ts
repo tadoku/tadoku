@@ -65,6 +65,30 @@ for (const [activity, field, quantity] of [['Reading', 'Amount', '17'], ['Listen
   })
 }
 
+test('text limits follow the API: description characters, tag bytes and normalized tags', async ({ page, readerContext }) => {
+  test.skip(!webv3 || !api || !reader.email, 'Set development URLs and fixture credentials')
+  await openForm(page)
+  await page.getByLabel('Amount', { exact: true }).fill('1')
+  // 128 emoji are 256 UTF-16 units but 128 characters; the API allows 255 characters.
+  const description = `${'😀'.repeat(128)}${Date.now()}`
+  await page.getByLabel('Description', { exact: true }).fill(description)
+  // 18 characters but 54 UTF-8 bytes; the API allows 50 bytes per tag.
+  await page.getByLabel('Tags', { exact: true }).fill('日本語'.repeat(6))
+  await page.getByRole('button', { name: 'Save activity', exact: true }).click()
+  await expect(page.getByLabel('Tags', { exact: true })).toBeFocused()
+  await expect(page.getByLabel('Description', { exact: true })).not.toHaveAttribute('aria-invalid', 'true')
+  // Fourteen entries that normalize to five tags, as Go's strings.TrimSpace and strings.ToLower do: they trim U+0085
+  // but keep U+FEFF, 'İ' becomes the single byte 'i' and 'Σ' becomes 'σ' wherever it stands.
+  await page.getByLabel('Tags', { exact: true }).fill(`${'Book, book, BOOK, '.repeat(3)}Fiction, \u0085fiction\u2003, ${'İ'.repeat(17)}, ΟΣ, \ufeffbook`)
+  await page.getByRole('button', { name: 'Save activity', exact: true }).click()
+  await expect(page).toHaveURL(/\/logs\/[a-f0-9-]{36}$/)
+  const id = new URL(page.url()).pathname.split('/').pop()!
+  const record = await (await readerContext.request.get(`${api}/immersion/logs/${id}`)).json()
+  expect(record.description).toBe(description)
+  // The API returns tags in its collation order, which ignores U+FEFF.
+  expect([...record.tags].sort()).toEqual(['book', 'fiction', 'i'.repeat(17), 'οσ', '\ufeffbook'].sort())
+})
+
 test('transport failure keeps values and never navigates or claims success', async ({ readerContext }) => {
   test.skip(!webv3 || !reader.email, 'Set development fixture credentials')
   const page = await readerContext.newPage()

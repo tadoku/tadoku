@@ -264,7 +264,12 @@ anonymously. Public detail omits private contest submissions; only the owner
 gets the contest management link to Webv2. History, edit, delete and score
 preview remain Webv2 journeys.
 
-Invalid input focuses the first invalid control. A pending save disables
+Invalid input focuses the first invalid control. Validation follows the API's
+text rules: a description allows 255 characters, and tags are normalized as Go's
+`strings.TrimSpace` and `strings.ToLower` do and deduplicated before the limits
+of 10 tags and 50 UTF-8 bytes per tag apply. Unicode white space is trimmed and
+each character is lowercased on its own, so `İ` becomes `i` and `Σ` becomes `σ`
+in every position. A pending save disables
 controls and repeated submits. Rejected saves keep the draft. Each save checks
 the current session against the account that started the draft; an account
 switch is refused before the API write, updates the header and offers an

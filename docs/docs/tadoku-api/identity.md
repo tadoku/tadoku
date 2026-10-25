@@ -28,10 +28,10 @@ JWTs `401`, and another tenant on a scoped deployment `421`.
 a guest.
 
 Identity mutations require JSON and an HTTPS `Origin` on the Tadoku app
-allowlist. App hosts include the main, account and admin hosts, their preview
-branches and development equivalents. The former authv2 hosts stay accepted
-while `authv2.tadoku.app` redirects to `account.tadoku.app`. Credentials, explicit ports and
-lookalike suffixes are rejected. Return URLs use the same host policy and may
+allowlist. App hosts include the main, account, admin and Webv3 `next.` hosts,
+their preview branches and development equivalents. The former authv2 hosts
+stay accepted while `authv2.tadoku.app` redirects to `account.tadoku.app`.
+Credentials, explicit ports and lookalike suffixes are rejected. Return URLs use the same host policy and may
 retain their path, query and fragment. Request bodies keep the shared byte cap
 and generated decoder. Logout takes no body and never reads one, but still
 requires the JSON `Content-Type`; whatever body arrives, its `Origin` check

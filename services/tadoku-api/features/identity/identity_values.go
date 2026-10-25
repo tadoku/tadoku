@@ -124,7 +124,8 @@ func allowedURL(value *url.URL) bool {
 	}
 	host := strings.ToLower(value.Host)
 	for _, parent := range []string{"tadoku.app", "tadoku.dev.lab"} {
-		if host == parent || host == "account."+parent || host == "admin."+parent || host == "authv2."+parent {
+		if host == parent || host == "account."+parent || host == "admin."+parent || host == "authv2."+parent ||
+			host == "next."+parent {
 			return true
 		}
 	}
@@ -140,7 +141,7 @@ func allowedURL(value *url.URL) bool {
 			return true
 		}
 		if len(labels) == 2 && (labels[1] == "account" || labels[1] == "admin" || labels[1] == "authv2" ||
-			(suffix == ".tadoku.dev.lab" && labels[1] == "next")) {
+			labels[1] == "next") {
 			return true
 		}
 	}

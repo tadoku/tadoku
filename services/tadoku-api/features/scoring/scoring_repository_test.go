@@ -312,8 +312,8 @@ func TestScoringRepositoryContestRuleSets(t *testing.T) {
 		t.Errorf("active contest rule set=%v, want %s", activeID, replace.ID)
 	}
 
-	if err := repository.ActivateContestRuleSet(tenantCtx, deletedContestID, replace.ID, updatedAt); err != nil {
-		t.Fatal(err)
+	if err := repository.ActivateContestRuleSet(tenantCtx, deletedContestID, replace.ID, updatedAt); !errors.Is(err, ErrContestNotFound) {
+		t.Errorf("deleted contest activate error=%v, want contest not found", err)
 	}
 
 	var liveUpdatedAt time.Time

@@ -308,12 +308,16 @@ func (r *ScoringRepository) ActivateContestRuleSet(ctx context.Context, contestI
 		return err
 	}
 
-	if err := q.ActivateContestScoringRuleSet(ctx, queries.ActivateContestScoringRuleSetParams{
+	updated, err := q.ActivateContestScoringRuleSet(ctx, queries.ActivateContestScoringRuleSetParams{
 		RuleSetID: postgres.UUID(id),
 		UpdatedAt: postgres.Timestamp(updatedAt),
 		ContestID: postgres.UUID(contestID),
-	}); err != nil {
+	})
+	if err != nil {
 		return fmt.Errorf("activate contest scoring rule set: %w", err)
+	}
+	if updated == 0 {
+		return ErrContestNotFound
 	}
 	return nil
 }

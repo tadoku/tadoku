@@ -96,6 +96,6 @@ func runDevelopmentAccounts(ctx context.Context, args []string, canonical bool) 
 		fixtures := []identity.DevelopmentAccount{adminAccount, readerAccount}
 		return identity.SeedCanonicalDevelopmentAccounts(ctx, pool, fixtures)
 	}
-	application := tenantlifecycle.NewApplication(pool, nil, nil, nil)
+	application := tenantlifecycle.NewApplication(pool, nil, nil)
 	return application.SeedDevelopmentAccounts(ctx, key, adminAccount, readerAccount)
 }

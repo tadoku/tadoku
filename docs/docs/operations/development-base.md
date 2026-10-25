@@ -203,10 +203,10 @@ Caller-supplied identity UUIDs are unchanged.
 Branch startup's `tenant` hook provisions and seeds its test tenant; see
 [Branch tenants](../develop/development-data.md#branch-tenants).
 The Job creates native fixture accounts with the canonical fixture UUIDs, grants
-the Keto object a canonical parent and Dev Reader tester, and provisions missing
-Flipt resources in `test/tadoku_<route>`. It runs in `tdk-dev-data`; Flipt's
-ingress policy admits only labeled tenant-lifecycle pods from that namespace for
-these direct management calls.
+Dev Admin `admins` in the branch tenant and provisions missing Flipt resources
+in `test/tadoku_<route>`. It runs in `tdk-dev-data`; Flipt's ingress policy
+admits only labeled tenant-lifecycle pods from that namespace for these direct
+management calls.
 
 ## Credentials
 
@@ -244,9 +244,9 @@ After activation, run the live acceptance gates listed under
 - The Postgres custom resource and the `tdk-dev-data` namespace have
   `Prune=false,Delete=false`. Ordinary Argo CD pruning or removing the
   Application must not destroy data.
-- `dev down` and TTL cleanup remove the selected test tenant's Keto tuples,
-  Valkey keys and Flipt namespace before deleting its PostgreSQL tenant row and
-  cascading application rows. They stop branch pods and clear their worker
+- `dev down` and TTL cleanup remove the selected test tenant's Valkey keys and
+  Flipt namespace before deleting its PostgreSQL tenant row and cascading
+  application rows, including its permission relationships. They stop branch pods and clear their worker
   overrides first. Canonical `tadoku/prod` is refused by the lifecycle tool.
 - Teardown failures retain the lifecycle marker for retry. The tenant row is
   deleted last so an external-provider failure preserves an inventory of the

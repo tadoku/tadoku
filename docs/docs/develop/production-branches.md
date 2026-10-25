@@ -156,8 +156,7 @@ dev-cli's lifecycle hooks run `tadoku-tenant` as Jobs before startup and after
 teardown, connecting as the scoped `tadoku_tenant_lifecycle` database role
 rather than the owner. Provisioning creates the test tenant's registry row,
 copies production's active platform scoring rule set and published CMS pages
-into it, gives its Keto object `app:tadoku/<route>` the canonical parent and
-creates its Flipt namespace `tadoku_<route>` in the `test` environment.
+into it and creates its Flipt namespace `tadoku_<route>` in the `test` environment.
 Selecting the worker sets a worker override so only the branch worker claims
 the tenant's jobs. [Tenant lifecycle command](../tadoku-api/tenant-lifecycle.md)
 documents the command, the role and its refusals of `tadoku/prod`.
@@ -198,9 +197,9 @@ admission rules.
 The maintainer runs `dev down` to remove a branch. It removes the branch's
 routes and workloads and waits for their pods to stop; the worker override is
 cleared once the branch worker has stopped. Its teardown hooks then delete the
-tenant's Keto relationships, cache keys, Flipt namespace and registry row with
-its cascading data, including its test accounts, sessions and access tokens.
-Production data, accounts and base deployments are untouched.
+tenant's cache keys, Flipt namespace and registry row with its cascading data,
+including its test accounts, sessions, access tokens and permission
+relationships. Production data, accounts and base deployments are untouched.
 
 A branch expires 4 hours after its last `dev up`. A cluster CronJob scales the
 Deployments of expired branches to zero, so an abandoned branch stops serving

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
@@ -13,38 +12,21 @@ import (
 	queries "github.com/tadoku/tadoku/services/tadoku-api/generated/sqlc/tenantlifecycle"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/fliptmanagement"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
 // Serialize lifecycle commands for one tenant externally, including calls from different processes.
 type Application struct {
 	pool  *pgxpool.Pool
-	keto  *permissions.TenantManager
 	cache *leaderboard.Cache
 	flipt *fliptmanagement.Client
 }
 
-func NewApplication(
-	pool *pgxpool.Pool,
-	keto *permissions.TenantManager,
-	cache *leaderboard.Cache,
-	flipt *fliptmanagement.Client,
-) *Application {
-	return &Application{pool: pool, keto: keto, cache: cache, flipt: flipt}
+func NewApplication(pool *pgxpool.Pool, cache *leaderboard.Cache, flipt *fliptmanagement.Client) *Application {
+	return &Application{pool: pool, cache: cache, flipt: flipt}
 }
 
-func (app *Application) Provision(
-	ctx context.Context,
-	key tenant.TestKey,
-	testers []uuid.UUID,
-	features []fliptmanagement.Resource,
-) error {
-	for _, tester := range testers {
-		if tester == uuid.Nil {
-			return errors.New("tester must be a nonzero UUID")
-		}
-	}
+func (app *Application) Provision(ctx context.Context, key tenant.TestKey, features []fliptmanagement.Resource) error {
 	if err := app.registry(ctx, key, true, func(ctx context.Context, q *queries.Queries) error {
 		if err := q.InsertTestTenant(ctx, key.String()); err != nil {
 			return err
@@ -59,9 +41,6 @@ func (app *Application) Provision(
 	}); err != nil {
 		return err
 	}
-	if err := app.keto.Provision(ctx, key, testers); err != nil {
-		return fmt.Errorf("provision tenant authorization: %w", err)
-	}
 
 	if err := app.flipt.ProvisionTestNamespace(ctx, key, features); err != nil {
 		return fmt.Errorf("provision tenant flags: %w", err)
@@ -72,9 +51,6 @@ func (app *Application) Provision(
 func (app *Application) Teardown(ctx context.Context, key tenant.TestKey) error {
 	if err := app.registry(ctx, key, true, nil); err != nil {
 		return err
-	}
-	if err := app.keto.Delete(ctx, key); err != nil {
-		return fmt.Errorf("delete tenant authorization: %w", err)
 	}
 	if err := app.cache.DeleteTestTenant(ctx, key); err != nil {
 		return fmt.Errorf("delete tenant caches: %w", err)

@@ -104,9 +104,8 @@ this run. Keep unrelated canonical writes outside the count boundary.
    readiness. A failed teardown must retain its marker for diagnosis and retry.
 6. **Complete cleanup.** After down, prove all owned overlays and pods are gone,
    the worker override and tenant row are absent, and the counting query
-   returns zero for every tenant-owned table. Through scoped port-forwards,
-   Keto `GET /relation-tuples?namespace=app&object=tadoku/<route>` must be empty
-   and Flipt
+   returns zero for every tenant-owned table, including
+   `permission_relationships`. Through a scoped port-forward, Flipt
    `GET /api/v2/environments/test/namespaces/tadoku_<route>` must return 404.
    Run a scoped Valkey scan; it must find no keys:
 
@@ -162,7 +161,7 @@ database-name inventory before startup.
    profile and resolved database.
 4. With the scratch file still absent, run `dev down --owner <owner>`. It must
    use the recorded isolated database, remove its tenant/override and cascading
-   rows, clear Keto tuples and Valkey keys, return Flipt namespace 404, and
+   rows, clear Valkey keys, return Flipt namespace 404, and
    remove owned overlays and marker. Reuse tenant gate 6's exact commands with
    the count query connected to the isolated database. The marked database and
    scratch schema remain retained; never drop it as verification cleanup.

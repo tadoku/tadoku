@@ -38,7 +38,7 @@ func runInspect(ctx context.Context, args []string) error {
 		return fmt.Errorf("open tenant postgres: %s", cfg.Redact(err))
 	}
 	defer pool.Close()
-	exists, err := tenantlifecycle.NewApplication(pool, nil, nil, nil).Inspect(ctx, key)
+	exists, err := tenantlifecycle.NewApplication(pool, nil, nil).Inspect(ctx, key)
 	if err != nil {
 		return err
 	}

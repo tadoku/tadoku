@@ -1,9 +1,6 @@
 package authz
 
 import (
-	"context"
-	"fmt"
-	"math/rand/v2"
 	"slices"
 	"testing"
 
@@ -144,87 +141,4 @@ func TestRevokeUser(t *testing.T) {
 	if err := writer.RevokeUser(t.Context(), user); errx.KindOf(err) != errx.Unavailable {
 		t.Errorf("RevokeUser without tenant error = %v, want unavailable", err)
 	}
-}
-
-// TestCleanupProperties checks, for random graphs, that Read returns the rows on an object and for a user, that no
-// row names the object after RevokeObject or the user after RevokeUser, that every other row stays, and that each
-// call is one statement.
-func TestCleanupProperties(t *testing.T) {
-	t.Parallel()
-
-	db := newTestDatabase(t)
-	pool, statements := newLoggedPool(t, db)
-	writer := permissions.NewRelationships(NewRepository(pool), testModel)
-	graphs := newGraphPool()
-	objects := graphs.objects()
-
-	for _, seed := range propertySeeds {
-		key := fmt.Sprintf("e2e/cleanup-properties-%d", seed)
-		ctx := registerTestTenant(t, db, key)
-		r := rand.New(rand.NewPCG(seed, 0))
-		graph := graphs.randomRelationships(r, 1+r.IntN(30))
-		grantAll(t, ctx, writer, graph...)
-		object, user := objects[r.IntN(len(objects))], graphs.users[r.IntN(len(graphs.users))]
-		storesUser := func(r permissions.Relationship) bool {
-			subject, ok := r.User()
-			return ok && subject == user
-		}
-		withoutObject := keep(graph, func(r permissions.Relationship) bool { return !namesObject(r, object) })
-		withoutEither := keep(withoutObject, func(r permissions.Relationship) bool { return !storesUser(r) })
-		check := func(step string, revoke func(context.Context) error, want []string) {
-			t.Helper()
-			statements.take()
-
-			err := revoke(ctx)
-
-			sent := statements.take()
-			if err != nil {
-				propertyFailure(t, seed, graph, "%s: %v", step, err)
-			}
-			if stored := storedRelationships(t, db, key); !slices.Equal(stored, want) {
-				propertyFailure(t, seed, graph, "%s: stored rows %s", step, rowDifference(stored, want))
-			}
-			if len(sent) != 1 {
-				propertyFailure(t, seed, graph, "%s: sent %d statements, want 1", step, len(sent))
-			}
-		}
-
-		for name, read := range map[string]struct {
-			filter permissions.Filter
-			keep   func(permissions.Relationship) bool
-		}{
-			"read on the object": {permissions.OnObject(object), func(r permissions.Relationship) bool {
-				return r.Object() == object
-			}},
-			"read for the user": {permissions.ForUser(user), storesUser},
-		} {
-			statements.take()
-
-			got, err := writer.Read(ctx, read.filter)
-
-			want := rows(keep(graph, read.keep))
-			if err != nil || !slices.Equal(rows(got), want) {
-				propertyFailure(t, seed, graph, "%s: %v, rows %s", name, err, rowDifference(rows(got), want))
-			}
-			if sent := statements.take(); len(sent) != 1 {
-				propertyFailure(t, seed, graph, "%s: sent %d statements, want 1", name, len(sent))
-			}
-		}
-		check(
-			fmt.Sprintf("revoke object %s:%s", object.Type(), object.ID()),
-			func(ctx context.Context) error { return writer.RevokeObject(ctx, object) },
-			rows(withoutObject),
-		)
-		check(
-			fmt.Sprintf("revoke user %s", user),
-			func(ctx context.Context) error { return writer.RevokeUser(ctx, user) },
-			rows(withoutEither),
-		)
-	}
-}
-
-func namesObject(relationship permissions.Relationship, object permissions.Object) bool {
-	target, _ := relationship.Target()
-	set, _, _ := relationship.Set()
-	return relationship.Object() == object || target == object || set == object
 }

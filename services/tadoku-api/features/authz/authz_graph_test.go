@@ -2,19 +2,19 @@ package authz
 
 import (
 	"fmt"
-	"math/rand/v2"
 	"slices"
 	"strings"
 	"testing"
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
+	"pgregory.net/rapid"
 )
 
 var propertySeeds = []uint64{1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233}
 
-// graphPool is the small set of objects and users a random graph draws from, so that objects appear both as
-// objects and as subjects and repeated draws collide.
+// graphPool is the small set of objects and users that generated relationships draw from, so that objects appear
+// both as objects and as subjects and repeated draws collide.
 type graphPool struct {
 	users    []uuid.UUID
 	contests []string
@@ -48,36 +48,155 @@ func (p graphPool) objects() []permissions.Object {
 	return objects
 }
 
-// randomRelationship draws one relationship of the test model, of any subject kind.
-func (p graphPool) randomRelationship(r *rand.Rand) permissions.Relationship {
-	user := p.users[r.IntN(len(p.users))]
-	contest, group := p.contests[r.IntN(len(p.contests))], p.groups[r.IntN(len(p.groups))]
-	switch r.IntN(8) {
-	case 0:
-		return siteAdmins.On(siteRoot, user)
-	case 1:
-		return siteBans.On(siteRoot, user)
-	case 2:
-		return ownersRelation.On(contest, user)
-	case 3:
-		return moderatorUsers.On(contest, user)
-	case 4:
-		return moderatorGroups.On(contest, group)
-	case 5:
-		return memberUsers.On(group, user)
-	case 6:
-		return memberGroups.On(group, p.groups[r.IntN(len(p.groups))])
-	default:
-		return contestsRelation.On(p.logs[r.IntN(len(p.logs))], contest)
+// relationship generates relationships of the test model, of every subject kind.
+func (p graphPool) relationship() *rapid.Generator[permissions.Relationship] {
+	user, contest := rapid.SampledFrom(p.users), rapid.SampledFrom(p.contests)
+	group, log := rapid.SampledFrom(p.groups), rapid.SampledFrom(p.logs)
+	return rapid.Custom(func(t *rapid.T) permissions.Relationship {
+		switch rapid.IntRange(0, 7).Draw(t, "kind") {
+		case 0:
+			return siteAdmins.On(siteRoot, user.Draw(t, "user"))
+		case 1:
+			return siteBans.On(siteRoot, user.Draw(t, "user"))
+		case 2:
+			return ownersRelation.On(contest.Draw(t, "contest"), user.Draw(t, "user"))
+		case 3:
+			return moderatorUsers.On(contest.Draw(t, "contest"), user.Draw(t, "user"))
+		case 4:
+			return moderatorGroups.On(contest.Draw(t, "contest"), group.Draw(t, "group"))
+		case 5:
+			return memberUsers.On(group.Draw(t, "group"), user.Draw(t, "user"))
+		case 6:
+			return memberGroups.On(group.Draw(t, "group"), group.Draw(t, "subgroup"))
+		default:
+			return contestsRelation.On(log.Draw(t, "log"), contest.Draw(t, "contest"))
+		}
+	})
+}
+
+// invalidRelationships are built with handles but fail validation against testModel.
+func (p graphPool) invalidRelationships() []permissions.Relationship {
+	return []permissions.Relationship{
+		ownersRelation.On("", p.users[0]),
+		memberGroups.On(p.groups[0], ""),
+		refParents.On(p.groups[0], p.groups[1]),
 	}
 }
 
-func (p graphPool) randomRelationships(r *rand.Rand, count int) []permissions.Relationship {
-	relationships := make([]permissions.Relationship, count)
-	for i := range relationships {
-		relationships[i] = p.randomRelationship(r)
+// batch prints as its rows, in order, in rapid's counterexamples.
+type batch []permissions.Relationship
+
+func (b batch) GoString() string {
+	formatted := make([]string, len(b))
+	for i, relationship := range b {
+		formatted[i] = row(relationship)
 	}
-	return relationships
+	return "[" + strings.Join(formatted, " ") + "]"
+}
+
+func batchOf(relationship *rapid.Generator[permissions.Relationship], maxLen int) *rapid.Generator[batch] {
+	return rapid.Map(rapid.SliceOfN(relationship, 0, maxLen), func(relationships []permissions.Relationship) batch {
+		return relationships
+	})
+}
+
+// writes generates Grant and Revoke batches, some with one invalid relationship at any position.
+func (p graphPool) writes() *rapid.Generator[batch] {
+	valid, invalid := batchOf(p.relationship(), 8), rapid.SampledFrom(p.invalidRelationships())
+	return rapid.Custom(func(t *rapid.T) batch {
+		relationships := valid.Draw(t, "valid")
+		if rapid.IntRange(0, 3).Draw(t, "invalid") == 3 {
+			at := rapid.IntRange(0, len(relationships)).Draw(t, "at")
+			relationships = slices.Insert(relationships, at, invalid.Draw(t, "relationship"))
+		}
+		return relationships
+	})
+}
+
+var testNamespaces = []permissions.Namespace{sites, groups, contests, logs}
+
+// testRelation names a relation handle of testModel, for Read filters.
+type testRelation struct {
+	handle     permissions.Relation
+	objectType permissions.ObjectType
+	name       string
+}
+
+var testRelations = []testRelation{
+	{siteAdmins, siteType, "admins"},
+	{siteBans, siteType, "banned"},
+	{ownersRelation, contestType, "owners"},
+	{moderatorUsers, contestType, "moderators"},
+	{moderatorGroups, contestType, "moderators"},
+	{memberUsers, groupType, "members"},
+	{memberGroups, groupType, "members"},
+	{contestsRelation, logType, "contests"},
+}
+
+// read is a valid Read filter and the relationships it selects.
+type read struct {
+	filter  permissions.Filter
+	selects func(permissions.Relationship) bool
+	name    string
+}
+
+func (r read) GoString() string { return r.name }
+
+// reads generates filters on a pool object or for a pool user, some narrowed to a namespace, a relation or both.
+func (p graphPool) reads() *rapid.Generator[read] {
+	objects, users := rapid.SampledFrom(p.objects()), rapid.SampledFrom(p.users)
+	return rapid.Custom(func(t *rapid.T) read {
+		var r read
+		var objectType permissions.ObjectType
+		if rapid.Bool().Draw(t, "for a user") {
+			user := users.Draw(t, "user")
+			r = read{
+				filter:  permissions.ForUser(user),
+				selects: storesUser(user),
+				name:    fmt.Sprintf("ForUser(%s)", user),
+			}
+			if rapid.Bool().Draw(t, "in a namespace") {
+				namespace := rapid.SampledFrom(testNamespaces).Draw(t, "namespace")
+				objectType = namespace.Object(siteRoot).Type()
+				r.filter, r.name = r.filter.In(namespace), fmt.Sprintf("%s.In(%s)", r.name, objectType)
+			}
+		} else {
+			object := objects.Draw(t, "object")
+			objectType = object.Type()
+			r = read{
+				filter:  permissions.OnObject(object),
+				selects: func(x permissions.Relationship) bool { return x.Object() == object },
+				name:    fmt.Sprintf("OnObject(%s:%s)", objectType, object.ID()),
+			}
+		}
+
+		relations := testRelations
+		if objectType != "" {
+			relations = slices.DeleteFunc(slices.Clone(relations), func(relation testRelation) bool {
+				return relation.objectType != objectType
+			})
+		}
+		var relation testRelation
+		if rapid.Bool().Draw(t, "one relation") {
+			relation = rapid.SampledFrom(relations).Draw(t, "relation")
+			r.filter, r.name = r.filter.Relation(relation.handle), fmt.Sprintf("%s.Relation(%s)", r.name, relation.name)
+		}
+
+		anchored := r.selects
+		r.selects = func(x permissions.Relationship) bool {
+			return anchored(x) &&
+				(objectType == "" || x.Object().Type() == objectType) &&
+				(relation.name == "" || x.Object().Type() == relation.objectType && x.Relation() == relation.name)
+		}
+		return r
+	})
+}
+
+func storesUser(user uuid.UUID) func(permissions.Relationship) bool {
+	return func(relationship permissions.Relationship) bool {
+		subject, ok := relationship.User()
+		return ok && subject == user
+	}
 }
 
 // row formats a relationship as storedRelationships reads it back.
@@ -94,19 +213,6 @@ func row(relationship permissions.Relationship) string {
 		subject = string(set.Type()) + ":" + set.ID() + "#" + relation
 	}
 	return string(object.Type()) + ":" + object.ID() + "#" + relationship.Relation() + "@" + subject
-}
-
-func keep(
-	relationships []permissions.Relationship,
-	kept func(permissions.Relationship) bool,
-) []permissions.Relationship {
-	var selected []permissions.Relationship
-	for _, relationship := range relationships {
-		if kept(relationship) {
-			selected = append(selected, relationship)
-		}
-	}
-	return selected
 }
 
 // rows returns the distinct rows of relationships, sorted as storedRelationships returns them.

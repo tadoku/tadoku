@@ -12,6 +12,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
+	"pgregory.net/rapid"
 )
 
 const (
@@ -173,8 +174,14 @@ func closedPool(t *testing.T, db *testpostgres.Database) *pgxpool.Pool {
 	return pool
 }
 
+// tb is a *testing.T or, inside a property, a *rapid.T.
+type tb interface {
+	rapid.TB
+	Context() context.Context
+}
+
 func grantAll(
-	t *testing.T,
+	t tb,
 	ctx context.Context,
 	writer *permissions.Relationships,
 	relationships ...permissions.Relationship,
@@ -187,7 +194,7 @@ func grantAll(
 }
 
 // storedRelationships reads one tenant's rows through the owner pool as object#relation@subject#subject_relation.
-func storedRelationships(t *testing.T, db *testpostgres.Database, key string) []string {
+func storedRelationships(t tb, db *testpostgres.Database, key string) []string {
 	t.Helper()
 
 	rows, err := db.Pool.Query(t.Context(), `select object_type || ':' || object_id || '#' || relation || '@'
@@ -206,6 +213,15 @@ func storedRelationships(t *testing.T, db *testpostgres.Database, key string) []
 		t.Fatal(err)
 	}
 	return stored
+}
+
+// clearRelationships deletes one tenant's rows through the owner pool.
+func clearRelationships(t tb, db *testpostgres.Database, key string) {
+	t.Helper()
+
+	if _, err := db.Pool.Exec(t.Context(), `delete from permission_relationships where tenant = $1`, key); err != nil {
+		t.Fatal(err)
+	}
 }
 
 type statementLog struct {

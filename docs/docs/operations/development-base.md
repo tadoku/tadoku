@@ -246,8 +246,8 @@ After activation, run the live acceptance gates listed under
   Application must not destroy data.
 - `dev down` and TTL cleanup remove the selected test tenant's Valkey keys and
   Flipt namespace before deleting its PostgreSQL tenant row and cascading
-  application rows, including its permission relationships. They stop branch pods and clear their worker
-  overrides first. Canonical `tadoku/prod` is refused by the lifecycle tool.
+  application rows. They stop branch pods and clear their worker overrides
+  first. Canonical `tadoku/prod` is refused by the lifecycle tool.
 - Teardown failures retain the lifecycle marker for retry. The tenant row is
   deleted last so an external-provider failure preserves an inventory of the
   remaining tenant. Do not delete its marker or task Lease to bypass a failure.

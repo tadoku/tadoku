@@ -26,8 +26,8 @@ tenant `tadoku/prod`. It needs `kubectl` and Bazel. It:
 - runs only against the `homelab-talos-dev` context at `https://omni.lab:8100`;
 - waits for Postgres and the base migrations;
 - creates the two native fixture accounts, as described below;
-- waits for the `permission_relationships` table and grants Dev Admin
-  `admins` on `app:root` in `tadoku/prod` with SQL, keeping an existing grant;
+- grants Dev Admin `admins` on `app:root` in `tadoku/prod`, keeping an
+  existing grant;
 - loads the fixtures in `scripts/dev/seed/` into the base `tadoku` database.
 
 Dev Admin and Dev Reader keep the UUIDs that own the seeded contests
@@ -95,8 +95,7 @@ startup creates no database, Postgres cluster, PVC or database dependency Job.
 - Provisioning uses `tadoku_owner` to create the test tenant. The
   `development-accounts` step then grants Dev Admin `admins` on the tenant's
   `app:root` in the same transaction that seeds the accounts. Dev Reader gets
-  no role. Administrators and bans in `tadoku/prod` do not apply to the
-  branch tenant.
+  no role.
 - Flipt uses environment `test` and namespace `tadoku_<route>`, with display
   name `tadoku/<route>`. Provisioning adds missing resources from this branch's
   `k8s/dev/base/flipt/features.yaml`. Canonical definitions/imports and the safe
@@ -136,9 +135,8 @@ The SQL fixtures create no users; the native fixture command owns user
 initialization. Reseeding restores missing profiles, contests and content and
 keeps existing rows, as described in [Seed data](#seed-data).
 
-Dev Admin keeps its base UUID and is an administrator through its own grant in
-the branch tenant, without changing canonical roles. Native sessions use the
-tenant-specific cookie. Do not change shared fixture passwords, profiles or
+Dev Admin keeps its base UUID. Native sessions use the tenant-specific
+cookie. Do not change shared fixture passwords, profiles or
 canonical roles. Down deletes the branch accounts, sessions, recovery tokens,
 emails, access tokens and permission relationships through the tenant cascade.
 Provider processes and runtime credentials remain shared.

@@ -39,10 +39,10 @@ Credentials come from `TENANT_POSTGRES_HOST`,
 `TENANT_POSTGRES_URL` is rejected. Provision and teardown additionally require
 `TENANT_VALKEY_URL` and `TENANT_FLIPT_MANAGEMENT_URL`;
 `TENANT_FLIPT_ENVIRONMENT` defaults to `test` and must differ from
-`production`. The command reads no Keto configuration and ignores
-`TENANT_KETO_*` variables. The Flipt management URL must be absolute HTTP(S)
-without credentials, query or fragment; trailing slashes are removed. Use the direct provisioning-authorized Flipt endpoint, rather than the
-API's restricted service-token route. Override commands need only PostgreSQL.
+`production`. The Flipt management URL must be absolute HTTP(S) without
+credentials, query or fragment; trailing slashes are removed. Use the direct
+provisioning-authorized Flipt endpoint, rather than the API's restricted
+service-token route. Override commands need only PostgreSQL.
 The only registered override component is `jobqueue.WorkerComponent`, currently
 `tadoku-worker`.
 
@@ -62,14 +62,14 @@ the content revision it displays, keeping namespaces, slugs, titles and
 timestamps under new ids. Drafts, scheduled and deleted pages, earlier
 revisions and posts are not copied. Each copy is skipped when the tenant
 already has platform scoring config or any page, so reruns keep the tenant's
-own changes; contest rule sets and user data are never copied. Provisioning
-grants no permissions, so a new tenant has no administrators or bans. It then
-creates only missing Flipt resources from the strict boolean seed format.
+own changes; contest rule sets and user data are never copied. It grants no
+permissions. It then creates only missing Flipt resources from the strict
+boolean seed format.
 Canonical `tadoku/prod`, imports and the safe false default remain unchanged.
 Reruns preserve existing flag values. Teardown deletes the tenant's cache keys
 and Flipt namespace before deleting the registry row and its cascading data,
-including its permission relationships. Failure leaves the row for a retry; cleanup still
-runs when a prior attempt already removed that row. Commands sharing a tenant
+including permission relationships. Failure leaves the row for a retry; cleanup
+still runs when a prior attempt already removed that row. Commands sharing a tenant
 must be serialized by the caller's route lease. Provider HTTP calls have a
 30-second timeout; the command has a five-minute deadline and observes shutdown
 signals. Secrets are supplied through environment variables and never printed.

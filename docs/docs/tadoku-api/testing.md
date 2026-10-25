@@ -78,8 +78,6 @@ Never point tests at shared development or production services.
   goroutines, 12,000 tenant reads and 6,000 writes. Its test-only
   session-setting negative control must observe cross-client leaks. Normal and race CI jobs
   print both workload and negative-control results.
-- **Permissions:** tests and E2Es store permission relationships in the
-  disposable PostgreSQL database.
 - **Identity accounts:** ordinary HTTP golden and journey resets seed native
   tenant-owned accounts after case SQL, preserving existing user/account state
   on primary-key conflicts. Cast and gateway fixtures obtain sessions through
@@ -132,8 +130,8 @@ Never point tests at shared development or production services.
 
 ## Tenancy guard and isolation
 
-`services/tadoku-api/app/tenantlifecycle/` tests the owner command's orchestration
-against disposable PostgreSQL and Valkey. Its complete
+`services/tadoku-api/app/tenantlifecycle/` tests the owner command's
+orchestration against disposable PostgreSQL and Valkey. Its complete
 tenant-column inventory includes registry overrides; every ordinary owned table
 has a nonempty teardown fixture. Canonical and another test tenant's complete
 row snapshots remain unchanged. The Flipt HTTP fixture records resource
@@ -159,9 +157,8 @@ worker services and verification SQL. Shared pools can open connections inside
 the bubble and abort the process when their synchronization crosses its boundary.
 
 `services/tadoku-api/e2e/tenant_isolation_test.go` runs signed requests through
-the production router, with JWT verification and PostgreSQL-backed
-permissions, and real PostgreSQL and Valkey. It covers
-two-way log visibility, duplicate page slugs and synchronized identities,
+the production router with real JWT verification, PostgreSQL and Valkey. It
+covers two-way log visibility, duplicate page slugs and synchronized identities,
 shared-table write denial, base and branch job claims, actual delegated
 provider tenant contexts, and test-tenant deletion including a replay chain
 without changing canonical rows. Pool tests also prove fresh and reused

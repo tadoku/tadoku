@@ -9,7 +9,7 @@ vi.mock('next/config', () => ({
 import { getFeatureAccess, updateFeatureAccess } from './api'
 
 const targetUserId = '0198f6c5-c4af-7b1d-9776-884c065d72db'
-const endpoint = `https://tadoku.test/api/internal/immersion/admin/feature-flags/release-log-entry-v2/users/${targetUserId}`
+const endpoint = `https://tadoku.test/api/internal/immersion/admin/feature-flags/release-webv3/users/${targetUserId}`
 const result = {
   enabled: true,
   changed: true,
@@ -27,7 +27,7 @@ describe('feature access browser API', () => {
     const fetchMock = answer(result)
 
     await expect(
-      getFeatureAccess({ targetUserId, flagKey: 'release-log-entry-v2' }),
+      getFeatureAccess({ targetUserId, flagKey: 'release-webv3' }),
     ).resolves.toEqual(result)
 
     expect(sent(fetchMock).url).toBe(endpoint)
@@ -43,7 +43,7 @@ describe('feature access browser API', () => {
 
     await updateFeatureAccess({
       targetUserId,
-      flagKey: 'release-log-entry-v2',
+      flagKey: 'release-webv3',
       enabled,
     })
 
@@ -60,7 +60,7 @@ describe('feature access browser API', () => {
     answer(body)
 
     await expect(
-      getFeatureAccess({ targetUserId, flagKey: 'release-log-entry-v2' }),
+      getFeatureAccess({ targetUserId, flagKey: 'release-webv3' }),
     ).rejects.toThrow('feature access unavailable')
   })
 })

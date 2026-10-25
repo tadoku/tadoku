@@ -112,14 +112,14 @@ export type ImmersionErrorResponse = {
 };
 
 export type ImmersionFeatureFlagDecisions = {
-    'release-log-entry-v2': boolean;
+    'release-webv3': boolean;
 };
 
 export type ImmersionFeatureFlagDecisionsResponse = {
     decisions: ImmersionFeatureFlagDecisions;
 };
 
-export type ImmersionManagedFeatureFlagKey = 'release-log-entry-v2';
+export type ImmersionManagedFeatureFlagKey = 'release-webv3';
 
 export type ImmersionFeatureAccessResponse = {
     enabled: boolean;

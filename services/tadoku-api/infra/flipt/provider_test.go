@@ -28,7 +28,7 @@ func TestProviderRoutesAndBoundsTenantClients(t *testing.T) {
 			t.Error("test provider changed canonical lifecycle metrics")
 		}
 		sdk := &fakeSDKClient{response: &fliptsdk.BooleanEvaluationResponse{
-			FlagKey: "release-log-entry-v2",
+			FlagKey: "release-webv3",
 			Enabled: target.Environment == "test",
 		}}
 		clients[target] = sdk
@@ -49,7 +49,7 @@ func TestProviderRoutesAndBoundsTenantClients(t *testing.T) {
 		t.Fatal("canonical client was not created at startup")
 	}
 
-	request := featureflags.EvaluationRequest{FlagKey: "release-log-entry-v2", EntityID: "11111111-1111-4111-8111-111111111111"}
+	request := featureflags.EvaluationRequest{FlagKey: "release-webv3", EntityID: "11111111-1111-4111-8111-111111111111"}
 	if _, err := provider.EvaluateBoolean(t.Context(), request); err == nil || clients[canonical].request != nil {
 		t.Fatal("missing tenant evaluated production")
 	}

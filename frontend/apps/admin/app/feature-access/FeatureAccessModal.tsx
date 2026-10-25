@@ -7,7 +7,7 @@ import type { FeatureFlagKey } from './api'
 import { useFeatureAccess, useUpdateFeatureAccess } from './api'
 
 const flagOptions = [
-  { value: 'release-log-entry-v2', label: 'Release log entry v2' },
+  { value: 'release-webv3', label: 'Release webv3' },
 ]
 
 interface FormValues {
@@ -22,7 +22,7 @@ interface Props {
 
 export const FeatureAccessModal = ({ isOpen, setIsOpen, user }: Props) => {
   const methods = useForm<FormValues>({
-    defaultValues: { flagKey: 'release-log-entry-v2' },
+    defaultValues: { flagKey: 'release-webv3' },
   })
   const flagKey = methods.watch('flagKey')
   const access = useFeatureAccess(
@@ -32,7 +32,7 @@ export const FeatureAccessModal = ({ isOpen, setIsOpen, user }: Props) => {
   const update = useUpdateFeatureAccess()
 
   useEffect(() => {
-    if (isOpen) methods.reset({ flagKey: 'release-log-entry-v2' })
+    if (isOpen) methods.reset({ flagKey: 'release-webv3' })
   }, [isOpen, methods])
 
   const submit = methods.handleSubmit(async values => {

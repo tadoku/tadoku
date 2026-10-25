@@ -20,7 +20,7 @@ func NewService(evaluator *commonflags.Evaluator, client *fliptmanagement.Client
 
 func (s *Service) EvaluatePublic(ctx context.Context, subject string) PublicDecisions {
 	decisions := s.evaluator.EvaluatePublicForSubject(ctx, subject)
-	return PublicDecisions{ReleaseLogEntryV2: decisions.ReleaseLogEntryV2}
+	return PublicDecisions{ReleaseWebV3: decisions.ReleaseWebV3}
 }
 
 func (s *Service) GetNamedUserAccess(ctx context.Context, flagKey string, targetUserID uuid.UUID) (State, error) {

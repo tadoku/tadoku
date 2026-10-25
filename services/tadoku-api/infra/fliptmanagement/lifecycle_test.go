@@ -34,9 +34,9 @@ func TestTestNamespaceLifecyclePreservesExistingResources(t *testing.T) {
 	}
 	user := uuid.MustParse("22222222-2222-4222-8222-222222222222")
 	spec := fliptmanagement.Segment{
-		Key:         "release-log-entry-v2-access",
-		Name:        "Release log entry v2 access",
-		Description: "Kratos UUIDs explicitly granted access to release log entry v2.",
+		Key:         "release-webv3-access",
+		Name:        "Release webv3 access",
+		Description: "Account UUIDs explicitly granted access to release webv3.",
 	}
 	_, err = client.SetNamedUserAccess(tenant.WithKey(t.Context(), key.Key()), spec, user, true)
 	if err != nil {
@@ -106,9 +106,9 @@ func TestTestNamespaceLifecycleRejectsZeroKeyWithoutRequests(t *testing.T) {
 const lifecycleSeed = `version: "1.6"
 namespace: {key: default}
 segments:
-- key: release-log-entry-v2-access
-  name: Release log entry v2 access
-  description: Kratos UUIDs explicitly granted access to release log entry v2.
+- key: release-webv3-access
+  name: Release webv3 access
+  description: Account UUIDs explicitly granted access to release webv3.
   match_type: ALL_MATCH_TYPE
   constraints:
   - type: ENTITY_ID_COMPARISON_TYPE

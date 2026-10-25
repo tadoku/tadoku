@@ -12,6 +12,11 @@ This page describes the development environment. Flags are boolean. Without a
 decision, `Evaluator.Boolean` consumers use the flag's behavior-preserving safe
 default.
 
+`release-webv3` is the managed flag for the webv3 rollout. It defaults to false
+and its seeded allowlist is empty. Webv3 is not enabled for any account by this
+configuration. Log creation, details and editing use the v2 flow for everyone
+and do not depend on flag evaluation.
+
 ## Where flags are declared
 
 | File | Role |
@@ -76,8 +81,7 @@ decisions for the current user or guest with `Cache-Control: private, no-store`.
 `PublicDecisions` (`services/tadoku-api/internal/featureflags/public.go`) are exposed.
 [webv2](../frontend/webv2.md) fetches them server-side in `frontend/apps/webv2/pages/_app.tsx` and
 after each client-side route change, falling back to defaults on any failure.
-Components use `useFeatureFlag`, or `useLatchedFeatureFlag` to keep the first
-value for the component's lifetime.
+Components use `useFeatureFlag`.
 
 ## Named-user access
 
@@ -142,7 +146,7 @@ not permit namespace creation or deletion.
    `k8s/dev/base/flipt/features.yaml` using
    `POST /api/v2/environments/test/namespaces/e2e_run-1/resources`. Send the
    resource key and typed `payload`, such as
-   `{"key":"release-log-entry-v2-access","payload":{"@type":"flipt.core.Segment",...}}`.
+   `{"key":"release-webv3-access","payload":{"@type":"flipt.core.Segment",...}}`.
    Translate the seed into Flipt's v2 resource schema: a segment rollout needs
    `type: "SEGMENT_ROLLOUT_TYPE"`, `segment.segments` and
    `segment.segmentOperator`. Raw seed YAML field names are not the v2 JSON

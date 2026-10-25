@@ -61,7 +61,7 @@ func TestClientClearsStaleAfterUnchangedSnapshotRecovers(t *testing.T) {
 	}, 4*time.Second, 20*time.Millisecond)
 
 	result, err := client.EvaluateBoolean(context.Background(), featureflags.EvaluationRequest{
-		FlagKey:  "release-log-entry-v2",
+		FlagKey:  "release-webv3",
 		EntityID: "4c47b265-6987-4bc1-8933-006168a31793",
 	})
 	require.NoError(t, err)
@@ -114,7 +114,7 @@ func TestClientConfirmsChangedSnapshotAfterRecovery(t *testing.T) {
 	assert.Equal(t, 1, refreshesBeforeEvaluation)
 
 	result, err := client.EvaluateBoolean(context.Background(), featureflags.EvaluationRequest{
-		FlagKey:  "release-log-entry-v2",
+		FlagKey:  "release-webv3",
 		EntityID: "4c47b265-6987-4bc1-8933-006168a31793",
 	})
 	require.NoError(t, err)
@@ -333,7 +333,7 @@ func TestClientNeverInstallsAFailedStartAfterARejectedUpdateClearsItsError(t *te
 	mode.Store(serving)
 	require.Eventually(t, func() bool {
 		result, err := client.EvaluateBoolean(context.Background(), featureflags.EvaluationRequest{
-			FlagKey:  "release-log-entry-v2",
+			FlagKey:  "release-webv3",
 			EntityID: "4c47b265-6987-4bc1-8933-006168a31793",
 		})
 		return err == nil && result.Enabled
@@ -346,7 +346,7 @@ func TestClientNeverInstallsAFailedStartAfterARejectedUpdateClearsItsError(t *te
 }
 
 func TestClientKeepsItsDecisionWhenAnUpdateFailsValidation(t *testing.T) {
-	enabled := strings.NewReplacer(`"release-log-entry-v2"`, `"other-flag"`, `"enabled": false`, `"enabled": true`).
+	enabled := strings.NewReplacer(`"release-webv3"`, `"other-flag"`, `"enabled": false`, `"enabled": true`).
 		Replace(booleanSnapshot(nil))
 	for _, test := range []struct{ name, body string }{
 		{"another namespace", `{"namespace":{"key":"other"},"flags":[],"digest":"rev-2"}`},

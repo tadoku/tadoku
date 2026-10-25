@@ -4,4 +4,4 @@ Content-Length: 45
 Cache-Control: private, no-store
 Content-Type: application/json; charset=UTF-8
 
-{"decisions":{"release-log-entry-v2":false}}
+{"decisions":{"release-webv3":false}}

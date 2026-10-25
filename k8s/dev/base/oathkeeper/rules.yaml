@@ -195,7 +195,7 @@
     strip_path: /flipt
 - id: tadoku:flipt:management:feature-access:get
   match:
-    url: http://oathkeeper-proxy.tdk-dev-oathkeeper:4455/flipt-management/api/v2/environments/local/namespaces/default/resources/flipt.core.Segment/release-log-entry-v2-access
+    url: http://oathkeeper-proxy.tdk-dev-oathkeeper:4455/flipt-management/api/v2/environments/local/namespaces/default/resources/flipt.core.Segment/release-webv3-access
     methods:
       - GET
   authenticators:
@@ -235,7 +235,7 @@
     strip_path: /flipt-management
 - id: tadoku:flipt:management:feature-access:test:get
   match:
-    url: http://oathkeeper-proxy.tdk-dev-oathkeeper:4455/flipt-management/api/v2/environments/test/namespaces/<*>/resources/flipt.core.Segment/release-log-entry-v2-access
+    url: http://oathkeeper-proxy.tdk-dev-oathkeeper:4455/flipt-management/api/v2/environments/test/namespaces/<*>/resources/flipt.core.Segment/release-webv3-access
     methods:
       - GET
   authenticators:

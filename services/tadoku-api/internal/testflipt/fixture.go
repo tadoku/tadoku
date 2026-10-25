@@ -99,7 +99,7 @@ func (f *Fixture) EvaluateBoolean(
 		return featureflags.ProviderResult{}, fmt.Errorf("test Flipt unavailable")
 	}
 	state := f.namespaces[target]
-	if state == nil || request.FlagKey != "release-log-entry-v2" {
+	if state == nil || request.FlagKey != "release-webv3" {
 		return featureflags.ProviderResult{}, featureflags.ErrFlagNotFound
 	}
 	if request.Context["authenticated"] != "true" {
@@ -136,7 +136,7 @@ func (f *Fixture) serveHTTP(response http.ResponseWriter, request *http.Request)
 
 	switch {
 	case request.Method == http.MethodGet && len(parts) == 9 && parts[7] == "flipt.core.Segment" &&
-		parts[8] == "release-log-entry-v2-access":
+		parts[8] == "release-webv3-access":
 		f.writeSegment(response, target, state)
 	case request.Method == http.MethodPut && len(parts) == 7:
 		var update struct {
@@ -180,9 +180,9 @@ func (f *Fixture) writeSegment(response http.ResponseWriter, target flipt.Target
 	encodedMembers, _ := json.Marshal(members)
 	payload := map[string]any{
 		"@type":       "flipt.core.Segment",
-		"key":         "release-log-entry-v2-access",
-		"name":        "Release log entry v2 access",
-		"description": "Kratos UUIDs explicitly granted access to release log entry v2.",
+		"key":         "release-webv3-access",
+		"name":        "Release webv3 access",
+		"description": "Account UUIDs explicitly granted access to release webv3.",
 		"matchType":   "ALL_MATCH_TYPE",
 		"constraints": []map[string]string{{
 			"type":        "ENTITY_ID_COMPARISON_TYPE",
@@ -197,7 +197,7 @@ func (f *Fixture) writeSegment(response http.ResponseWriter, target flipt.Target
 	_ = json.NewEncoder(response).Encode(map[string]any{
 		"resource": map[string]any{
 			"namespaceKey": target.Namespace,
-			"key":          "release-log-entry-v2-access",
+			"key":          "release-webv3-access",
 			"payload":      json.RawMessage(encodedPayload),
 		},
 		"revision": revisionString(state),

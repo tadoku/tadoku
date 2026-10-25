@@ -117,6 +117,17 @@ func TestNewApplicationRejectsZeroScope(t *testing.T) {
 	}
 }
 
+func TestSendEmailWithoutServiceFailsPermanently(t *testing.T) {
+	err := (&Application{}).SendEmail(t.Context(), jobs.SendEmailV1{})
+	var permanent *permanentError
+	if !errors.As(err, &permanent) {
+		t.Fatalf("got %v; want permanent failure", err)
+	}
+	if permanent.Error() != "worker email service is not configured" {
+		t.Errorf("got %q", permanent.Error())
+	}
+}
+
 func baseWorkerScope(t *testing.T) jobqueue.Scope {
 	t.Helper()
 	scope, err := jobqueue.AllTenantsExcept("tadoku-worker")

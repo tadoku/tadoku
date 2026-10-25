@@ -183,9 +183,8 @@ export function passwordProblem(password: string) {
 
 const label = '[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?'
 const allowedHost = new RegExp([
-  '^(?:(?:account|admin|authv2)\\.)?tadoku\\.(?:app|dev\\.lab)$',
-  `^${label}(?:\\.(?:account|admin|authv2|next))?\\.tadoku\\.dev\\.lab$`,
-  `^${label}(?:\\.(?:account|admin|authv2))?\\.preview\\.tadoku\\.app$`,
+  '^(?:(?:account|admin|authv2|next)\\.)?tadoku\\.(?:app|dev\\.lab)$',
+  `^${label}(?:\\.(?:account|admin|authv2|next))?\\.(?:tadoku\\.dev\\.lab|preview\\.tadoku\\.app)$`,
 ].join('|'))
 
 /** Bytes Go's url.QueryEscape produces, which the identity API uses to build the Settings URL. */

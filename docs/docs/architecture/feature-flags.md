@@ -12,10 +12,12 @@ This page describes the development environment. Flags are boolean. Without a
 decision, `Evaluator.Boolean` consumers use the flag's behavior-preserving safe
 default.
 
-`release-webv3` is the managed flag for the webv3 rollout. It defaults to false
-and its seeded allowlist is empty. Webv3 is not enabled for any account by this
-configuration. Log creation, details and editing use the v2 flow for everyone
-and do not depend on flag evaluation.
+`release-webv3` controls the signed-in user menu's **Try webv3** link to the
+corresponding `next.` host, preserving the selected branch. It defaults to false
+and its seeded allowlist is empty. The flag controls discovery through webv2;
+the existing public webv3 preview remains directly accessible. Log creation,
+details and editing use the v2 flow for everyone and do not depend on flag
+evaluation.
 
 ## Where flags are declared
 

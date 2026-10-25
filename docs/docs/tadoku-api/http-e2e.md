@@ -206,10 +206,10 @@ TADOKU_GOLDEN_SOURCE_ROOT="$PWD/services/tadoku-api/e2e/testdata" \
   roles. Public scenarios use signed `guest` tokens, as the gateway does.
 - Keep the full invalid-credential, role, ban and permission-store matrix at
   the shared middleware boundary instead of repeating it for every endpoint.
-  Simulate a permission-store outage with `withPermissionsPool` or
-  `withGrantsPool` in `services/tadoku-api/e2e/router_options_test.go`, which
-  give the checker or the relationship storage (role reads and ban writes) a
-  closed pool.
+  Simulate a permission-store outage with `withPermissionsPool` in
+  `services/tadoku-api/e2e/router_options_test.go`, which gives the checker a
+  closed pool. Role reads and ban writes share the router's transaction pool, so
+  fail their writes inside the database instead.
 - Test authentication goldens at the middleware boundary, not on a business
   endpoint. They register `GET /test/authentication` on the same production
   router with a test-only success handler, and test-only identity headers prove

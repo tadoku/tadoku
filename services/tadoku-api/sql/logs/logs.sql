@@ -12,7 +12,8 @@ order by log_activity_id asc;
 -- name: ListDistinctLanguageCodesForUser :many
 select distinct language_code
 from logs
-where logs.user_id = sqlc.arg('user_id') and logs.deleted_at is null;
+where logs.user_id = sqlc.arg('user_id') and logs.deleted_at is null
+order by language_code;
 
 -- name: ListTagSuggestionsForUser :many
 select tag, count(*) as usage_count

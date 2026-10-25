@@ -647,6 +647,7 @@ const listDistinctLanguageCodesForUser = `-- name: ListDistinctLanguageCodesForU
 select distinct language_code
 from logs
 where logs.user_id = $1 and logs.deleted_at is null
+order by language_code
 `
 
 func (q *Queries) ListDistinctLanguageCodesForUser(ctx context.Context, userID pgtype.UUID) ([]string, error) {

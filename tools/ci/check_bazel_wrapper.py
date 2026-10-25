@@ -107,9 +107,14 @@ def main():
                 (workspace / "tools/bazel").symlink_to(hook)
     manifest = {"revision": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repo, text=True).strip(),
                 "command": sys.argv, "failure_cases": FAILURE_CASES, "bazel": bazel,
+                "cli_version": None if options.prepare_only else subprocess.check_output(
+                    [bazel, "--version"], cwd=workspaces[0], env=env, text=True).strip(),
+                "bazelisk_sha256": hashlib.sha256(Path(bazel).read_bytes()).hexdigest(),
                 "version": version.strip(), "unwrapped": options.unwrapped,
                 "check_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
                 "hook_sha256": hashlib.sha256(hook.read_bytes()).hexdigest() if hook.exists() else None}
+    if not options.prepare_only:
+        assert manifest["cli_version"] == "bazel " + version.strip()
     for source in (Path(__file__), Path(__file__).with_name("bazel_wrapper_fixture.py"), hook):
         if source.exists():
             shutil.copyfile(source, evidence / (source.name + ".source"))
@@ -234,7 +239,7 @@ def main():
         wait_for(held.exists, "held production lock")
         queued = start(["info", "server_pid"])
         wait_for(lambda: list(tmp.glob("tadoku-bazel-*")), "queued wrapper")
-        queued.send_signal(signal.SIGINT)
+        os.killpg(queued.pid, signal.SIGINT)
         assert queued.wait(timeout=5) == 130
         assert not list(tmp.glob("tadoku-bazel-*")), "queued cancellation leaked files"
         os.killpg(holder.pid, signal.SIGTERM)
@@ -248,7 +253,7 @@ def main():
         assert subprocess.run(["flock", "-n", str(lock), "true"]).returncode == 0, "target owns build lock"
         assert not list(tmp.glob("tadoku-bazel-*")), "private script survives long running target"
         assert child.pid == int(ready.read_text()), "wrapper did not exec target"
-        os.kill(child.pid, signal.SIGTERM)
+        os.killpg(child.pid, signal.SIGTERM)
         assert child.wait(timeout=10) == 42
         pass_check("target unlock/cleanup/signals")
         workspace = workspaces[0]
@@ -257,7 +262,7 @@ def main():
         (workspace / "action.py").write_text(ACTION + "\n# interrupt\n")
         child = start(["run", "--incompatible_autoload_externally=", "//:probe", "--", "record", str(out)])
         wait_for((workspace / "started").exists, "interruptible build")
-        child.send_signal(signal.SIGTERM)
+        os.killpg(child.pid, signal.SIGTERM)
         assert child.wait(timeout=20) == 143
         assert not list(tmp.glob("tadoku-bazel-*")), "interrupted build leaked scripts"
         (workspace / "release").touch()

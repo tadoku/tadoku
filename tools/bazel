@@ -52,6 +52,9 @@ def build(real, directory, args):
         return subprocess.CompletedProcess(argv, 128 + interrupted if interrupted else child.returncode,
                                            stdout, stderr)
 
+    if args == ["--version"]:
+        return invoke([real, *args]).returncode
+
     index = 0
     while index < len(args) and args[index].startswith("-"):
         index += 2 if args[index] in STARTUP_VALUES else 1

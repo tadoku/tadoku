@@ -33,6 +33,7 @@ go_test(
         "authz_cleanup_repository_test.go",
         "authz_fixtures_test.go",
         "authz_graph_test.go",
+        "authz_read_repository_test.go",
         "authz_repository_test.go",
         "authz_service_test.go",
         "authz_writes_repository_test.go",

@@ -96,6 +96,19 @@ func row(relationship permissions.Relationship) string {
 	return string(object.Type()) + ":" + object.ID() + "#" + relationship.Relation() + "@" + subject
 }
 
+func keep(
+	relationships []permissions.Relationship,
+	kept func(permissions.Relationship) bool,
+) []permissions.Relationship {
+	var selected []permissions.Relationship
+	for _, relationship := range relationships {
+		if kept(relationship) {
+			selected = append(selected, relationship)
+		}
+	}
+	return selected
+}
+
 // rows returns the distinct rows of relationships, sorted as storedRelationships returns them.
 func rows(relationships []permissions.Relationship) []string {
 	formatted := make([]string, len(relationships))

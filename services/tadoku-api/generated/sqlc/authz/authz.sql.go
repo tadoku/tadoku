@@ -117,6 +117,72 @@ func (q *Queries) InsertRelationships(ctx context.Context, arg InsertRelationshi
 	return result.RowsAffected(), nil
 }
 
+const readRelationships = `-- name: ReadRelationships :many
+select object_type, object_id, relation, subject_type, subject_id, subject_relation
+from permission_relationships
+where object_type = $1::text
+  and object_id = $2::text
+  and $3::text = ''
+  and ($4::text = '' or relation = $4::text)
+union all
+select object_type, object_id, relation, subject_type, subject_id, subject_relation
+from permission_relationships
+where subject_type = 'user'
+  and subject_id = $3::text
+  and $2::text = ''
+  and ($1::text = '' or object_type = $1::text)
+  and ($4::text = '' or relation = $4::text)
+order by object_type, object_id, relation, subject_type, subject_id, subject_relation
+`
+
+type ReadRelationshipsParams struct {
+	ObjectType string
+	ObjectID   string
+	UserID     string
+	Relation   string
+}
+
+type ReadRelationshipsRow struct {
+	ObjectType      string
+	ObjectID        string
+	Relation        string
+	SubjectType     string
+	SubjectID       string
+	SubjectRelation string
+}
+
+func (q *Queries) ReadRelationships(ctx context.Context, arg ReadRelationshipsParams) ([]ReadRelationshipsRow, error) {
+	rows, err := q.db.Query(ctx, readRelationships,
+		arg.ObjectType,
+		arg.ObjectID,
+		arg.UserID,
+		arg.Relation,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ReadRelationshipsRow{}
+	for rows.Next() {
+		var i ReadRelationshipsRow
+		if err := rows.Scan(
+			&i.ObjectType,
+			&i.ObjectID,
+			&i.Relation,
+			&i.SubjectType,
+			&i.SubjectID,
+			&i.SubjectRelation,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const relationshipSubjects = `-- name: RelationshipSubjects :many
 select subject_type, subject_id, subject_relation
 from permission_relationships

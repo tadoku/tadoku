@@ -49,6 +49,27 @@ func (r *Relationships) RevokeUser(ctx context.Context, userID uuid.UUID) error 
 	return r.tuples.DeleteUser(ctx, userID.String())
 }
 
+// Read returns the stored relationships the filter selects, with one statement, without evaluating any rule.
+func (r *Relationships) Read(ctx context.Context, filter Filter) ([]Relationship, error) {
+	tupleFilter, err := r.model.tupleFilter(filter)
+	if err != nil {
+		return nil, err
+	}
+
+	tuples, err := r.tuples.Read(ctx, tupleFilter)
+	if err != nil {
+		return nil, err
+	}
+
+	relationships := make([]Relationship, len(tuples))
+	for i, tuple := range tuples {
+		if relationships[i], err = relationshipOf(tuple); err != nil {
+			return nil, err
+		}
+	}
+	return relationships, nil
+}
+
 func (r *Relationships) tuplesOf(relationships []Relationship) ([]Tuple, error) {
 	tuples := make([]Tuple, len(relationships))
 	for i, relationship := range relationships {

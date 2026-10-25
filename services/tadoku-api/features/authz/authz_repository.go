@@ -65,6 +65,24 @@ func (r *Repository) Subjects(
 	return tuples, nil
 }
 
+func (r *Repository) Read(ctx context.Context, filter permissions.TupleFilter) ([]permissions.Tuple, error) {
+	q, err := r.queries(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := q.ReadRelationships(ctx, queries.ReadRelationshipsParams(filter))
+	if err != nil {
+		return nil, err
+	}
+
+	tuples := make([]permissions.Tuple, len(rows))
+	for i, row := range rows {
+		tuples[i] = permissions.Tuple(row)
+	}
+	return tuples, nil
+}
+
 func (r *Repository) Insert(ctx context.Context, tuples []permissions.Tuple) error {
 	q, err := r.queries(ctx)
 	if err != nil || len(tuples) == 0 {

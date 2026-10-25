@@ -54,3 +54,26 @@ func TestRelationshipValidation(t *testing.T) {
 		})
 	}
 }
+
+func TestRelationshipsReadBack(t *testing.T) {
+	t.Parallel()
+
+	contestID, groupID, logID, userID := uuid.NewString(), uuid.NewString(), uuid.NewString(), uuid.New()
+	for _, relationship := range []Relationship{
+		contests.MustUserRelation("owners").On(contestID, userID),
+		logs.MustObjectRelation("contests").On(logID, contestID),
+		contests.MustSetRelation("moderators").On(contestID, groupID),
+	} {
+		read, err := relationshipOf(tupleOf(relationship))
+
+		if err != nil || read != relationship {
+			t.Errorf("read back %+v, %v; want %+v", read, err, relationship)
+		}
+	}
+
+	tuple := tupleOf(contests.MustUserRelation("owners").On(contestID, userID))
+	tuple.SubjectID = "not-a-uuid"
+	if _, err := relationshipOf(tuple); err == nil {
+		t.Error("read back a user subject that is not a UUID")
+	}
+}

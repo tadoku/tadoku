@@ -6,6 +6,7 @@ go_library(
         "admission.go",
         "checker.go",
         "evaluate.go",
+        "filter.go",
         "handles.go",
         "model.go",
         "namespace.go",

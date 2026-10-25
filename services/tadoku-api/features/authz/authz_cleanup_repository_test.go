@@ -146,8 +146,9 @@ func TestRevokeUser(t *testing.T) {
 	}
 }
 
-// TestCleanupProperties checks, for random graphs, that no row names an object after RevokeObject or a user after
-// RevokeUser, that every other row stays and that each call is one statement.
+// TestCleanupProperties checks, for random graphs, that Read returns the rows on an object and for a user, that no
+// row names the object after RevokeObject or the user after RevokeUser, that every other row stays, and that each
+// call is one statement.
 func TestCleanupProperties(t *testing.T) {
 	t.Parallel()
 
@@ -164,13 +165,12 @@ func TestCleanupProperties(t *testing.T) {
 		graph := graphs.randomRelationships(r, 1+r.IntN(30))
 		grantAll(t, ctx, writer, graph...)
 		object, user := objects[r.IntN(len(objects))], graphs.users[r.IntN(len(graphs.users))]
-		withoutObject := slices.DeleteFunc(slices.Clone(graph), func(relationship permissions.Relationship) bool {
-			return namesObject(relationship, object)
-		})
-		withoutEither := slices.DeleteFunc(slices.Clone(withoutObject), func(r permissions.Relationship) bool {
+		storesUser := func(r permissions.Relationship) bool {
 			subject, ok := r.User()
 			return ok && subject == user
-		})
+		}
+		withoutObject := keep(graph, func(r permissions.Relationship) bool { return !namesObject(r, object) })
+		withoutEither := keep(withoutObject, func(r permissions.Relationship) bool { return !storesUser(r) })
 		check := func(step string, revoke func(context.Context) error, want []string) {
 			t.Helper()
 			statements.take()
@@ -189,6 +189,27 @@ func TestCleanupProperties(t *testing.T) {
 			}
 		}
 
+		for name, read := range map[string]struct {
+			filter permissions.Filter
+			keep   func(permissions.Relationship) bool
+		}{
+			"read on the object": {permissions.OnObject(object), func(r permissions.Relationship) bool {
+				return r.Object() == object
+			}},
+			"read for the user": {permissions.ForUser(user), storesUser},
+		} {
+			statements.take()
+
+			got, err := writer.Read(ctx, read.filter)
+
+			want := rows(keep(graph, read.keep))
+			if err != nil || !slices.Equal(rows(got), want) {
+				propertyFailure(t, seed, graph, "%s: %v, rows %s", name, err, rowDifference(rows(got), want))
+			}
+			if sent := statements.take(); len(sent) != 1 {
+				propertyFailure(t, seed, graph, "%s: sent %d statements, want 1", name, len(sent))
+			}
+		}
 		check(
 			fmt.Sprintf("revoke object %s:%s", object.Type(), object.ID()),
 			func(ctx context.Context) error { return writer.RevokeObject(ctx, object) },

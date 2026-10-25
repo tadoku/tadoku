@@ -18,7 +18,7 @@ import (
 
 func TestBanLookupFailureBlocksPrivilegeChecks(t *testing.T) {
 	providerErr := errors.New("ban lookup failed")
-	sites := permissions.Define(
+	sites := permissions.MustDefine(
 		"site",
 		permissions.Relations{"admins": {permissions.Users}},
 		permissions.Permits{"admin": permissions.Related("admins")},

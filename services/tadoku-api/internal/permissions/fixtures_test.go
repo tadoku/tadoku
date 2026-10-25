@@ -18,7 +18,7 @@ const (
 const siteRoot = "root"
 
 var (
-	sites = Define(
+	sites = MustDefine(
 		Site,
 		Relations{
 			"admins": {Users},
@@ -26,12 +26,12 @@ var (
 		},
 		Permits{"admin": Related("admins")},
 	)
-	groups = Define(
+	groups = MustDefine(
 		Group,
 		Relations{"members": {Users, SetOf(Group, "members")}},
 		nil,
 	)
-	contests = Define(
+	contests = MustDefine(
 		Contest,
 		Relations{
 			"owners":     {Users},
@@ -42,7 +42,7 @@ var (
 			"moderate": AnyOf(Allowed("edit"), Related("moderators")),
 		},
 	)
-	logs = Define(
+	logs = MustDefine(
 		Log,
 		Relations{"contests": {ObjectOf(Contest)}},
 		Permits{"hide": AnyOf(PermitOn(Site, siteRoot, "admin"), Via("contests", "moderate"))},

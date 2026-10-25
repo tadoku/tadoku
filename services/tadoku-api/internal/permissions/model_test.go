@@ -10,46 +10,72 @@ func TestModelIsValid(t *testing.T) {
 	}
 }
 
-func TestModelValidation(t *testing.T) {
+func TestDefineRejectsWrongLocalNames(t *testing.T) {
 	t.Parallel()
 
 	owners := Relations{"owners": {Users}}
+	links := Relations{"contests": {ObjectOf(Contest)}}
+	cases := []struct {
+		name       string
+		objectType ObjectType
+		relations  Relations
+		permits    Permits
+	}{
+		{"unknown relation", Contest, nil, Permits{"edit": Related("owners")}},
+		{"unknown permit", Contest, nil, Permits{"edit": Allowed("moderate")}},
+		{"relation and permit share a name", Contest, Relations{"edit": {Users}}, Permits{"edit": Related("edit")}},
+		{"via over users", Contest, owners, Permits{"edit": Via("owners", "edit")}},
+		{"via over an unknown relation", Log, nil, Permits{"hide": Via("contests", "moderate")}},
+		{"related over objects", Log, links, Permits{"hide": Related("contests")}},
+		{"single-rule combinator", Contest, owners, Permits{"edit": AnyOf(Related("owners"))}},
+		{"missing rule", Contest, owners, Permits{"edit": AllOf(Related("owners"), nil)}},
+		{"permit on an object without an ID", Contest, nil, Permits{"edit": PermitOn(Site, "", "admin")}},
+		{"own subject set without a relation", Group, Relations{"members": {SetOf(Group, "admins")}}, nil},
+		{"object type reserved for users", "user", Relations{"friends": {Users}}, nil},
+		{"object type without a name", "", owners, nil},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			defer func() {
+				if recover() == nil {
+					t.Error("MustDefine accepted an invalid namespace")
+				}
+			}()
+
+			MustDefine(tc.objectType, tc.relations, tc.permits)
+		})
+	}
+}
+
+func TestModelRejectsWrongReferences(t *testing.T) {
+	t.Parallel()
+
+	contestOnly := MustDefine(Contest, nil, nil)
 	cases := []struct {
 		name       string
 		namespaces []Namespace
 	}{
-		{"unknown relation", []Namespace{Define(Contest, nil, Permits{"edit": Related("owners")})}},
-		{"unknown permit", []Namespace{Define(Contest, nil, Permits{"edit": Allowed("moderate")})}},
-		{"relation and permit share a name", []Namespace{
-			Define(Contest, Relations{"edit": {Users}}, Permits{"edit": Related("edit")}),
-		}},
-		{"via over users", []Namespace{Define(Contest, owners, Permits{"edit": Via("owners", "edit")})}},
-		{"related over objects", []Namespace{
-			Define(Contest, nil, nil),
-			Define(Log, Relations{"contests": {ObjectOf(Contest)}}, Permits{"hide": Related("contests")}),
-		}},
 		{"via to a missing permit", []Namespace{
-			Define(Contest, nil, nil),
-			Define(Log, Relations{"contests": {ObjectOf(Contest)}}, Permits{"hide": Via("contests", "moderate")}),
+			contestOnly,
+			MustDefine(Log, Relations{"contests": {ObjectOf(Contest)}}, Permits{"hide": Via("contests", "moderate")}),
 		}},
 		{"permit on an unknown object type", []Namespace{
-			Define(Contest, nil, Permits{"edit": PermitOn(Site, siteRoot, "admin")}),
+			MustDefine(Contest, nil, Permits{"edit": PermitOn(Site, siteRoot, "admin")}),
 		}},
 		{"permit on a missing permit", []Namespace{
-			Define(Site, nil, nil),
-			Define(Contest, nil, Permits{"edit": PermitOn(Site, siteRoot, "admin")}),
+			MustDefine(Site, nil, nil),
+			MustDefine(Contest, nil, Permits{"edit": PermitOn(Site, siteRoot, "admin")}),
 		}},
-		{"permit on an object without an ID", []Namespace{
-			sites,
-			Define(Contest, nil, Permits{"edit": PermitOn(Site, "", "admin")}),
-		}},
-		{"single-rule combinator", []Namespace{Define(Contest, owners, Permits{"edit": AnyOf(Related("owners"))})}},
 		{"unknown subject type", []Namespace{
-			Define(Contest, Relations{"moderators": {SetOf(Group, "members")}}, nil),
+			MustDefine(Contest, Relations{"moderators": {SetOf(Group, "members")}}, nil),
 		}},
-		{"object type reserved for users", []Namespace{Define("user", Relations{"friends": {Users}}, nil)}},
-		{"object type without a name", []Namespace{Define("", owners, nil)}},
-		{"object type defined twice", []Namespace{Define(Contest, owners, nil), Define(Contest, nil, nil)}},
+		{"unknown subject set", []Namespace{
+			MustDefine(Group, nil, nil),
+			MustDefine(Contest, Relations{"moderators": {SetOf(Group, "members")}}, nil),
+		}},
+		{"unknown linked object type", []Namespace{MustDefine(Log, Relations{"contests": {ObjectOf(Contest)}}, nil)}},
+		{"object type defined twice", []Namespace{contestOnly, contestOnly}},
+		{"namespace not built by MustDefine", []Namespace{{}}},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

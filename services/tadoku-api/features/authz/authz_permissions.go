@@ -7,7 +7,7 @@ import (
 
 const appRoot = "root"
 
-var Permissions = permissions.Define(
+var Permissions = permissions.MustDefine(
 	"app",
 	permissions.Relations{
 		"admins": {permissions.Users},

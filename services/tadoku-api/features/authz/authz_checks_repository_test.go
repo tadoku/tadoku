@@ -144,7 +144,7 @@ func TestCheckFailsClosed(t *testing.T) {
 	cancel()
 
 	unknownPermit := contests.Check(contestID.String(), "delete")
-	unknownType := permissions.Define("badge", nil, nil).Check("1", "view")
+	unknownType := permissions.MustDefine("badge", nil, nil).Check("1", "view")
 
 	cases := []struct {
 		name     string
@@ -201,7 +201,7 @@ func TestCombinators(t *testing.T) {
 	t.Parallel()
 	ctx := productionContext(t)
 
-	suspendable := permissions.Define(
+	suspendable := permissions.MustDefine(
 		contestType,
 		permissions.Relations{
 			"moderators": {permissions.Users},
@@ -291,7 +291,7 @@ func TestViaPastMaxDepthFailsClosed(t *testing.T) {
 	t.Parallel()
 	ctx := productionContext(t)
 
-	nested := permissions.Define(
+	nested := permissions.MustDefine(
 		groupType,
 		permissions.Relations{
 			"members": {permissions.Users},

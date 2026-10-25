@@ -24,7 +24,7 @@ const (
 const siteRoot = "root"
 
 var (
-	sites = permissions.Define(
+	sites = permissions.MustDefine(
 		siteType,
 		permissions.Relations{
 			"admins": {permissions.Users},
@@ -32,12 +32,12 @@ var (
 		},
 		permissions.Permits{"admin": permissions.Related("admins")},
 	)
-	groups = permissions.Define(
+	groups = permissions.MustDefine(
 		groupType,
 		permissions.Relations{"members": {permissions.Users, permissions.SetOf(groupType, "members")}},
 		nil,
 	)
-	contests = permissions.Define(
+	contests = permissions.MustDefine(
 		contestType,
 		permissions.Relations{
 			"owners":     {permissions.Users},
@@ -51,7 +51,7 @@ var (
 			"moderate": permissions.AnyOf(permissions.Allowed("edit"), permissions.Related("moderators")),
 		},
 	)
-	logs = permissions.Define(
+	logs = permissions.MustDefine(
 		logType,
 		permissions.Relations{"contests": {permissions.ObjectOf(contestType)}},
 		permissions.Permits{"hide": permissions.AnyOf(

@@ -24,7 +24,7 @@ func TestRepositoryJoinsTheContextTransaction(t *testing.T) {
 
 	errRollback := errors.New("roll back")
 	err := postgres.RunInTransaction(ctx, db.AppPool, func(ctx context.Context) error {
-		if err := repository.Insert(ctx, admin); err != nil {
+		if err := repository.Insert(ctx, []permissions.Tuple{admin}); err != nil {
 			return err
 		}
 
@@ -67,47 +67,15 @@ func TestRepositoryRequiresATenant(t *testing.T) {
 	_, storedErr := repository.Stored(t.Context(), nil)
 	errs := []error{
 		subjectsErr,
-		repository.Insert(t.Context(), admin),
-		repository.Delete(t.Context(), admin),
+		repository.Insert(t.Context(), []permissions.Tuple{admin}),
+		repository.Insert(t.Context(), nil),
+		repository.Delete(t.Context(), []permissions.Tuple{admin}),
+		repository.Delete(t.Context(), nil),
 		storedErr,
 	}
 	for _, err := range errs {
 		if errx.KindOf(err) != errx.Unavailable || !errors.Is(err, postgres.ErrNoTenant) {
 			t.Errorf("error = %v, want unavailable wrapping %v", err, postgres.ErrNoTenant)
-		}
-	}
-}
-
-func TestRelationshipsWrite(t *testing.T) {
-	t.Parallel()
-	ctx := productionContext(t)
-
-	db := newTestDatabase(t)
-	writer := permissions.NewRelationships(NewRepository(db.AppPool), testModel)
-	production := tenant.Production().String()
-	twice := uuid.New()
-
-	grantAll(t, ctx, writer, siteAdminRelationship(twice), siteAdminRelationship(twice))
-	want := []string{"site:root#admins@user:" + twice.String() + "#"}
-	if stored := storedRelationships(t, db, production); !slices.Equal(stored, want) {
-		t.Errorf("stored after granting twice = %q, want %q", stored, want)
-	}
-
-	if err := writer.Revoke(ctx, siteBanRelationship(twice)); err != nil {
-		t.Errorf("revoke a missing relationship: %v", err)
-	}
-	if err := writer.Revoke(ctx, siteAdminRelationship(twice)); err != nil {
-		t.Errorf("revoke a stored relationship: %v", err)
-	}
-	if stored := storedRelationships(t, db, production); len(stored) != 0 {
-		t.Errorf("stored after revoke = %q, want none", stored)
-	}
-
-	grantErr := writer.Grant(t.Context(), siteAdminRelationship(twice))
-	revokeErr := writer.Revoke(t.Context(), siteAdminRelationship(twice))
-	for _, err := range []error{grantErr, revokeErr} {
-		if errx.KindOf(err) != errx.Unavailable {
-			t.Errorf("write without tenant error = %v, want unavailable", err)
 		}
 	}
 }
@@ -132,7 +100,7 @@ func TestStoredRelationships(t *testing.T) {
 		siteAdminRelationship(both),
 		siteBanRelationship(both),
 	)
-	insertAll(t, ctx, repository, contestModeratorGroup(contestID, groupID))
+	grantAll(t, ctx, writer, contestModeratorGroup(contestID, groupID))
 	grantAll(t, branchCtx, writer, siteAdminRelationship(stranger))
 	statements.take()
 
@@ -168,12 +136,12 @@ func TestStoredRelationships(t *testing.T) {
 	t.Run("subject sets", func(t *testing.T) {
 		stored := contestModeratorGroup(contestID, groupID)
 
-		got, err := repository.Stored(ctx, []permissions.Tuple{stored, contestModeratorGroup(contestID, uuid.New())})
+		got, err := writer.Stored(ctx, []permissions.Relationship{stored, contestModeratorGroup(contestID, uuid.New())})
 
 		if err != nil {
 			t.Fatal(err)
 		}
-		if want := []permissions.Tuple{stored}; !slices.Equal(got, want) {
+		if want := map[permissions.Relationship]bool{stored: true}; !maps.Equal(got, want) {
 			t.Errorf("stored = %+v, want %+v", got, want)
 		}
 		if sent := statements.take(); len(sent) != 1 {
@@ -212,8 +180,14 @@ func TestRelationshipStorage(t *testing.T) {
 	repository := NewRepository(db.AppPool)
 	userID, contestID, groupID, logID := uuid.New(), uuid.New(), uuid.New(), uuid.New()
 
-	grantAll(t, ctx, permissions.NewRelationships(repository, testModel), siteAdminRelationship(userID))
-	insertAll(t, ctx, repository, contestModeratorGroup(contestID, groupID), logCountsFor(logID, contestID))
+	grantAll(
+		t,
+		ctx,
+		permissions.NewRelationships(repository, testModel),
+		siteAdminRelationship(userID),
+		contestModeratorGroup(contestID, groupID),
+		logCountsFor(logID, contestID),
+	)
 
 	want := []string{
 		"contest:" + contestID.String() + "#moderators@group:" + groupID.String() + "#members",

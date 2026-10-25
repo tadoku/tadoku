@@ -41,6 +41,7 @@ the development environment and verified.
 | Design or review a module boundary or shared abstraction | [Module design](./architecture/module-design.md) |
 | Use or design a concern that many features share | [Cross-cutting concerns](./architecture/cross-cutting-concerns.md) |
 | Work with sign-in, roles and bans | [Authentication and authorization](./architecture/authorization.md) |
+| Define a feature's permissions, or write, read or check relationships | [Permission model](./architecture/permission-model.md) |
 | Call one service from another | [Service-to-service auth](./architecture/service-tokens.md) |
 | Gate behavior behind a flag | [Feature flags](./architecture/feature-flags.md) |
 | Read past design decisions | [Decisions](./adr.md) |

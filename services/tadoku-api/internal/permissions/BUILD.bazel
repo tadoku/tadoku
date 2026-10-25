@@ -6,6 +6,8 @@ go_library(
         "admission.go",
         "checker.go",
         "evaluate.go",
+        "filter.go",
+        "handles.go",
         "model.go",
         "namespace.go",
         "relationships.go",
@@ -28,6 +30,7 @@ go_test(
     srcs = [
         "checker_test.go",
         "fixtures_test.go",
+        "handles_test.go",
         "model_test.go",
         "relationships_test.go",
     ],

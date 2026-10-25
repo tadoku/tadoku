@@ -32,6 +32,9 @@ exception.
   rule.** A concern that seems to need an import exception is a design question
   for the pull request; see
   [Import boundaries](../tadoku-api/import-boundaries.md).
+- **Core logic provides the complete set of building blocks for its domain,**
+  so features compose them instead of extending it. Its options and
+  configuration still follow current needs.
 - **Core logic imports only `internal/` packages and libraries.** It declares
   its port, the state owner implements it, and a composition root wires them. A
   port with one production implementation is allowed at this boundary; an

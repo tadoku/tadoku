@@ -45,6 +45,7 @@ All paths are relative to `services/tadoku-api/`.
 | `features/<feature>/` | One feature: a service that owns its business decisions, a repository that queries and maps its rows and, where needed, a cache or store for non-authoritative data. |
 | `generated/` | Generated code: sqlc queries per feature (`generated/sqlc/<feature>/`) and HTTP bindings (`generated/openapi/`). |
 | `app/worker/` | Typed handlers, registration, bounded execution and feature composition. |
+| `app/permissionmodel/` | The list of every feature's permission namespace, from which composition roots build the permission model. |
 | `cmd/tadoku-worker/` | Worker composition root and private health/metrics lifecycle. |
 | `domain/<concept>/` | Business values and pure rules shared by several features. |
 | `internal/` | Technical support: errors (`errx`), request identity (`identity`), permission evaluation (`permissions`), feature-flag evaluation (`featureflags`), business time (`timex`), callback authentication (`callbackauth`) and test fixtures (`test*`). |

@@ -33,6 +33,7 @@ const sidebars: SidebarsConfig = {
         'architecture/module-design',
         'architecture/cross-cutting-concerns',
         'architecture/authorization',
+        'architecture/permission-model',
         'architecture/service-tokens',
         'architecture/feature-flags',
         {

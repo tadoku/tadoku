@@ -73,10 +73,10 @@ func TestRelationshipGraphChecks(t *testing.T) {
 		groupMember(team, teamMember),
 		groupMember(nestedTeam, nestedMember),
 	)
-	insertAll(
+	grantAll(
 		t,
 		ctx,
-		repository,
+		permissions.NewRelationships(repository, testModel),
 		contestModeratorGroup(contestA, team),
 		subgroup(team, nestedTeam),
 		logCountsFor(logA, contestA),
@@ -128,23 +128,27 @@ func TestCheckFailsClosed(t *testing.T) {
 	repository := NewRepository(db.AppPool)
 	cycleContest, first, second := uuid.New(), uuid.New(), uuid.New()
 	contestID, moderator := uuid.New(), uuid.New()
-	insertAll(
+	grantAll(
 		t,
 		ctx,
-		repository,
+		permissions.NewRelationships(repository, testModel),
 		contestModeratorGroup(cycleContest, first),
 		subgroup(first, second),
 		subgroup(second, first),
+		contestModerator(contestID, moderator),
 	)
-	grantAll(t, ctx, permissions.NewRelationships(repository, testModel), contestModerator(contestID, moderator))
 	working := permissions.NewChecker(repository, testModel)
 	broken := permissions.NewChecker(NewRepository(closedPool(t, db)), testModel)
 
 	cancelled, cancel := context.WithCancel(ctx)
 	cancel()
 
-	unknownPermit := contests.Check(contestID.String(), "delete")
-	unknownType := permissions.Define("badge", nil, nil).Check("1", "view")
+	badges := permissions.MustDefine(
+		"badge",
+		permissions.Relations{"holders": {permissions.Users}},
+		permissions.Permits{"view": permissions.Related("holders")},
+	)
+	unknownType := badges.MustPermit("view").On("1")
 
 	cases := []struct {
 		name     string
@@ -157,7 +161,7 @@ func TestCheckFailsClosed(t *testing.T) {
 	}{
 		{"group cycle", ctx, working, moderateContest(cycleContest), uuid.New(), nil, maxDepthError},
 		{"storage error", ctx, broken, moderateContest(contestID), moderator, nil, ""},
-		{"unknown permit", ctx, working, unknownPermit, moderator, nil, ""},
+		{"unknown permit", ctx, working, permissions.Check{}, moderator, nil, ""},
 		{"unknown object type", ctx, working, unknownType, moderator, nil, ""},
 		{"cancelled context", cancelled, working, moderateContest(contestID), moderator, context.Canceled, ""},
 	}
@@ -201,7 +205,7 @@ func TestCombinators(t *testing.T) {
 	t.Parallel()
 	ctx := productionContext(t)
 
-	suspendable := permissions.Define(
+	suspendable := permissions.MustDefine(
 		contestType,
 		permissions.Relations{
 			"moderators": {permissions.Users},
@@ -222,25 +226,20 @@ func TestCombinators(t *testing.T) {
 	repository := NewRepository(db.AppPool)
 	contestID, active, suspended, verified := uuid.New(), uuid.New(), uuid.New(), uuid.New()
 	cycleContest, cycleModerator, first, second := uuid.New(), uuid.New(), uuid.New(), uuid.New()
-	contest := func(id uuid.UUID, relation string, userID uuid.UUID) permissions.Relationship {
-		return suspendable.UserRelationship(id.String(), relation, userID)
-	}
+	moderators, suspendedUsers := suspendable.MustUserRelation("moderators"), suspendable.MustUserRelation("suspended")
+	verifiedUsers, suspendedGroups := suspendable.MustUserRelation("verified"), suspendable.MustSetRelation("suspended")
+	moderate, review := suspendable.MustPermit("moderate"), suspendable.MustPermit("review")
 	grantAll(
 		t,
 		ctx,
 		permissions.NewRelationships(repository, suspensions),
-		contest(contestID, "moderators", active),
-		contest(contestID, "moderators", suspended),
-		contest(contestID, "suspended", suspended),
-		contest(contestID, "moderators", verified),
-		contest(contestID, "verified", verified),
-		contest(cycleContest, "moderators", cycleModerator),
-	)
-	insertAll(
-		t,
-		ctx,
-		repository,
-		groupMembersTuple(contestType, cycleContest, "suspended", first),
+		moderators.On(contestID.String(), active),
+		moderators.On(contestID.String(), suspended),
+		suspendedUsers.On(contestID.String(), suspended),
+		moderators.On(contestID.String(), verified),
+		verifiedUsers.On(contestID.String(), verified),
+		moderators.On(cycleContest.String(), cycleModerator),
+		suspendedGroups.On(cycleContest.String(), first.String()),
 		subgroup(first, second),
 		subgroup(second, first),
 	)
@@ -249,18 +248,18 @@ func TestCombinators(t *testing.T) {
 	cases := []struct {
 		name    string
 		contest uuid.UUID
-		permit  string
+		permit  permissions.Permit
 		user    uuid.UUID
 		want    bool
 	}{
-		{"active moderator moderates", contestID, "moderate", active, true},
-		{"suspended moderator cannot moderate", contestID, "moderate", suspended, false},
-		{"verified moderator reviews", contestID, "review", verified, true},
-		{"unverified moderator cannot review", contestID, "review", active, false},
+		{"active moderator moderates", contestID, moderate, active, true},
+		{"suspended moderator cannot moderate", contestID, moderate, suspended, false},
+		{"verified moderator reviews", contestID, review, verified, true},
+		{"unverified moderator cannot review", contestID, review, active, false},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			check := suspendable.Check(tc.contest.String(), tc.permit)
+			check := tc.permit.On(tc.contest.String())
 
 			allowed, err := checker.AllowedFor(ctx, check, tc.user)
 
@@ -274,7 +273,7 @@ func TestCombinators(t *testing.T) {
 	}
 
 	t.Run("error in the subtracted rule", func(t *testing.T) {
-		check := suspendable.Check(cycleContest.String(), "moderate")
+		check := moderate.On(cycleContest.String())
 
 		allowed, err := checker.AllowedFor(ctx, check, cycleModerator)
 
@@ -291,7 +290,7 @@ func TestViaPastMaxDepthFailsClosed(t *testing.T) {
 	t.Parallel()
 	ctx := productionContext(t)
 
-	nested := permissions.Define(
+	nested := permissions.MustDefine(
 		groupType,
 		permissions.Relations{
 			"members": {permissions.Users},
@@ -322,11 +321,11 @@ func TestViaPastMaxDepthFailsClosed(t *testing.T) {
 		t,
 		ctx,
 		permissions.NewRelationships(repository, model),
-		nested.UserRelationship(groupID.String(), "members", member),
+		nested.MustUserRelation("members").On(groupID.String(), member),
 	)
 	checker := permissions.NewChecker(repository, model)
 
-	allowed, err := checker.AllowedFor(ctx, nested.Check(groupID.String(), "hop0"), member)
+	allowed, err := checker.AllowedFor(ctx, nested.MustPermit("hop0").On(groupID.String()), member)
 
 	if err == nil || !strings.Contains(err.Error(), maxDepthError) {
 		t.Errorf("error = %v, want %q", err, maxDepthError)

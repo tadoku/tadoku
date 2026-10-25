@@ -25,7 +25,7 @@ type evaluation struct {
 	user   uuid.UUID
 }
 
-func (e evaluation) permit(ctx context.Context, obj object, permit string, depth int) (bool, error) {
+func (e evaluation) permit(ctx context.Context, obj Object, permit string, depth int) (bool, error) {
 	if depth > maxDepth {
 		return false, errMaxDepth
 	}
@@ -38,7 +38,7 @@ func (e evaluation) permit(ctx context.Context, obj object, permit string, depth
 	return e.rule(ctx, obj, rule, depth)
 }
 
-func (e evaluation) rule(ctx context.Context, obj object, rule Rule, depth int) (bool, error) {
+func (e evaluation) rule(ctx context.Context, obj Object, rule Rule, depth int) (bool, error) {
 	switch rule := rule.(type) {
 	case relatedRule:
 		return e.relation(ctx, obj, rule.relation, depth+1)
@@ -59,7 +59,7 @@ func (e evaluation) rule(ctx context.Context, obj object, rule Rule, depth int) 
 	}
 }
 
-func (e evaluation) relation(ctx context.Context, obj object, relation string, depth int) (bool, error) {
+func (e evaluation) relation(ctx context.Context, obj Object, relation string, depth int) (bool, error) {
 	if depth > maxDepth {
 		return false, errMaxDepth
 	}
@@ -92,7 +92,7 @@ func (e evaluation) subjectSet(ctx context.Context, set subjectSet, depth int) (
 	return e.relation(ctx, set.object, set.relation, depth)
 }
 
-func (e evaluation) via(ctx context.Context, obj object, rule viaRule, depth int) (bool, error) {
+func (e evaluation) via(ctx context.Context, obj Object, rule viaRule, depth int) (bool, error) {
 	if depth > maxDepth {
 		return false, errMaxDepth
 	}
@@ -114,7 +114,7 @@ func (e evaluation) via(ctx context.Context, obj object, rule viaRule, depth int
 	return false, nil
 }
 
-func (e evaluation) anyOf(ctx context.Context, obj object, rules []Rule, depth int) (bool, error) {
+func (e evaluation) anyOf(ctx context.Context, obj Object, rules []Rule, depth int) (bool, error) {
 	for _, rule := range rules {
 		passed, err := e.rule(ctx, obj, rule, depth)
 		if err != nil {
@@ -127,7 +127,7 @@ func (e evaluation) anyOf(ctx context.Context, obj object, rules []Rule, depth i
 	return false, nil
 }
 
-func (e evaluation) allOf(ctx context.Context, obj object, rules []Rule, depth int) (bool, error) {
+func (e evaluation) allOf(ctx context.Context, obj Object, rules []Rule, depth int) (bool, error) {
 	for _, rule := range rules {
 		passed, err := e.rule(ctx, obj, rule, depth)
 		if err != nil || !passed {
@@ -137,7 +137,7 @@ func (e evaluation) allOf(ctx context.Context, obj object, rules []Rule, depth i
 	return true, nil
 }
 
-func (e evaluation) except(ctx context.Context, obj object, rule exceptRule, depth int) (bool, error) {
+func (e evaluation) except(ctx context.Context, obj Object, rule exceptRule, depth int) (bool, error) {
 	passed, err := e.rule(ctx, obj, rule.base, depth)
 	if err != nil || !passed {
 		return false, err

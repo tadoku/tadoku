@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
@@ -18,7 +17,7 @@ const (
 const siteRoot = "root"
 
 var (
-	sites = Define(
+	sites = MustDefine(
 		Site,
 		Relations{
 			"admins": {Users},
@@ -26,12 +25,12 @@ var (
 		},
 		Permits{"admin": Related("admins")},
 	)
-	groups = Define(
+	groups = MustDefine(
 		Group,
 		Relations{"members": {Users, SetOf(Group, "members")}},
 		nil,
 	)
-	contests = Define(
+	contests = MustDefine(
 		Contest,
 		Relations{
 			"owners":     {Users},
@@ -42,13 +41,13 @@ var (
 			"moderate": AnyOf(Allowed("edit"), Related("moderators")),
 		},
 	)
-	logs = Define(
+	logs = MustDefine(
 		Log,
 		Relations{"contests": {ObjectOf(Contest)}},
 		Permits{"hide": AnyOf(PermitOn(Site, siteRoot, "admin"), Via("contests", "moderate"))},
 	)
 	testModel = mustModel(sites, groups, contests, logs)
-	siteAdmin = sites.Check(siteRoot, "admin")
+	siteAdmin = sites.MustPermit("admin").On(siteRoot)
 )
 
 func mustModel(namespaces ...Namespace) Model {
@@ -57,13 +56,6 @@ func mustModel(namespaces ...Namespace) Model {
 		panic(err)
 	}
 	return model
-}
-
-func contestObject(id uuid.UUID) object { return object{objectType: Contest, id: id.String()} }
-func groupObject(id uuid.UUID) object   { return object{objectType: Group, id: id.String()} }
-
-func groupMembers(groupID uuid.UUID) subjectSet {
-	return subjectSet{object: groupObject(groupID), relation: "members"}
 }
 
 func productionContext(t *testing.T) context.Context {

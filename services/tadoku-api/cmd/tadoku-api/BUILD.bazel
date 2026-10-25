@@ -12,6 +12,7 @@ go_library(
         "//services/common/client/s2s",
         "//services/common/postgresconfig",
         "//services/tadoku-api/app",
+        "//services/tadoku-api/app/permissionmodel",
         "//services/tadoku-api/features/announcements",
         "//services/tadoku-api/features/audit",
         "//services/tadoku-api/features/authz",

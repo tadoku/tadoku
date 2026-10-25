@@ -7,7 +7,7 @@ import (
 
 const appRoot = "root"
 
-var Permissions = permissions.Define(
+var Permissions = permissions.MustDefine(
 	"app",
 	permissions.Relations{
 		"admins": {permissions.Users},
@@ -19,18 +19,25 @@ var Permissions = permissions.Define(
 	},
 )
 
+var (
+	adminPermit    = Permissions.MustPermit("admin")
+	isBannedPermit = Permissions.MustPermit("is_banned")
+	adminsRelation = Permissions.MustUserRelation("admins")
+	bannedRelation = Permissions.MustUserRelation("banned")
+)
+
 func adminPermission() permissions.Check {
-	return Permissions.Check(appRoot, "admin")
+	return adminPermit.On(appRoot)
 }
 
 func isBannedPermission() permissions.Check {
-	return Permissions.Check(appRoot, "is_banned")
+	return isBannedPermit.On(appRoot)
 }
 
 func adminRelationship(userID uuid.UUID) permissions.Relationship {
-	return Permissions.UserRelationship(appRoot, "admins", userID)
+	return adminsRelation.On(appRoot, userID)
 }
 
 func bannedRelationship(userID uuid.UUID) permissions.Relationship {
-	return Permissions.UserRelationship(appRoot, "banned", userID)
+	return bannedRelation.On(appRoot, userID)
 }

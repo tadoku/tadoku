@@ -21,7 +21,13 @@ func NewModel(namespaces ...Namespace) (Model, error) {
 		}
 		model.namespaces[namespace.objectType] = namespace
 	}
-	if err := errors.Join(append(errs, model.validate())...); err != nil {
+	for _, namespace := range namespaces {
+		if err := namespace.validate(); err != nil {
+			errs = append(errs, fmt.Errorf("%s: %w", namespace.objectType, err))
+		}
+		errs = append(errs, model.validateReferences(namespace))
+	}
+	if err := errors.Join(errs...); err != nil {
 		return Model{}, fmt.Errorf("permission model: %w", err)
 	}
 	return model, nil

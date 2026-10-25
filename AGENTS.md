@@ -90,6 +90,7 @@ files in an area, read its page; those rules are as binding as this file.
 | Startup, environment variables, provider clients or the leaderboard worker | `docs/docs/tadoku-api/configuration.md` |
 | A cross-cutting concern, or a feature's entries in one | `docs/docs/architecture/cross-cutting-concerns.md` |
 | Access rules, roles or bans | `docs/docs/architecture/authorization.md` |
+| A permission namespace, handle or relationship, or a check | `docs/docs/architecture/permission-model.md` |
 | Feature flags | `docs/docs/architecture/feature-flags.md` |
 | webv2, admin or the `ui` package | `docs/docs/frontend/conventions.md` |
 | A frontend call to Tadoku API or `frontend/packages/api-client` | `docs/docs/frontend/api-client.md` |

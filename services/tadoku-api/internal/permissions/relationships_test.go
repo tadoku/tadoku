@@ -7,21 +7,33 @@ import (
 )
 
 // TestRelationshipValidation gives Relationships no Tuples, so a relationship that reached storage would panic.
+// Handles build only valid relationships for their own namespace, so the hand-built cases stand in for values a
+// handle cannot produce.
 func TestRelationshipValidation(t *testing.T) {
 	t.Parallel()
 	ctx := productionContext(t)
 
 	writer := NewRelationships(nil, testModel)
-	contest, user := contestObject(uuid.New()), userSubject(uuid.New())
+	contestID, groupID, logID, user := uuid.NewString(), uuid.NewString(), uuid.NewString(), uuid.New()
+	contest, log := contests.Object(contestID), logs.Object(logID)
+	members := subjectSet{object: groups.Object(groupID), relation: "members"}
+	untyped, unnamed := Object{id: groupID}, subjectSet{object: contest}
 
 	cases := []struct {
 		name         string
 		relationship Relationship
 	}{
-		{"group as owner", Relationship{object: contest, relation: "owners", subject: groupMembers(uuid.New())}},
-		{"unknown relation", Relationship{object: contest, relation: "judges", subject: user}},
+		{"namespace missing from the model", reviews.MustUserRelation("reviewers").On(contestID, user)},
+		{"missing object ID", contests.MustUserRelation("owners").On("", user)},
+		{"linked object without an ID", logs.MustObjectRelation("contests").On(logID, "")},
+		{"subject set without an object ID", contests.MustSetRelation("moderators").On(contestID, "")},
+		{"zero handle", UserRelation{}.On(contestID, user)},
+		{"unknown relation", Relationship{object: contest, relation: "judges", subject: userSubject(user)}},
+		{"group as owner", Relationship{object: contest, relation: "owners", subject: members}},
+		{"user as linked object", Relationship{object: log, relation: "contests", subject: userSubject(user)}},
+		{"linked object without a type", Relationship{object: contest, relation: "owners", subject: untyped}},
+		{"subject set without a relation", Relationship{object: log, relation: "contests", subject: unnamed}},
 		{"missing subject", Relationship{object: contest, relation: "owners"}},
-		{"missing object ID", Relationship{object: object{objectType: Contest}, relation: "owners", subject: user}},
 		{"zero value", Relationship{}},
 	}
 	for _, tc := range cases {
@@ -43,64 +55,25 @@ func TestRelationshipValidation(t *testing.T) {
 	}
 }
 
-func TestRelationshipTuples(t *testing.T) {
+func TestRelationshipsReadBack(t *testing.T) {
 	t.Parallel()
 
-	contestID, groupID, logID, userID := uuid.New(), uuid.New(), uuid.New(), uuid.New()
-	contest := contestObject(contestID)
-	logObject := object{objectType: Log, id: logID.String()}
+	contestID, groupID, logID, userID := uuid.NewString(), uuid.NewString(), uuid.NewString(), uuid.New()
+	for _, relationship := range []Relationship{
+		contests.MustUserRelation("owners").On(contestID, userID),
+		logs.MustObjectRelation("contests").On(logID, contestID),
+		contests.MustSetRelation("moderators").On(contestID, groupID),
+	} {
+		read, err := relationshipOf(tupleOf(relationship))
 
-	cases := []struct {
-		name         string
-		relationship Relationship
-		want         Tuple
-	}{
-		{
-			name:         "user",
-			relationship: Relationship{object: contest, relation: "owners", subject: userSubject(userID)},
-			want: Tuple{
-				ObjectType:  string(Contest),
-				ObjectID:    contestID.String(),
-				Relation:    "owners",
-				SubjectType: UserSubjectType,
-				SubjectID:   userID.String(),
-			},
-		},
-		{
-			name:         "subject set",
-			relationship: Relationship{object: contest, relation: "moderators", subject: groupMembers(groupID)},
-			want: Tuple{
-				ObjectType:      string(Contest),
-				ObjectID:        contestID.String(),
-				Relation:        "moderators",
-				SubjectType:     string(Group),
-				SubjectID:       groupID.String(),
-				SubjectRelation: "members",
-			},
-		},
-		{
-			name:         "linked object",
-			relationship: Relationship{object: logObject, relation: "contests", subject: subjectSet{object: contest}},
-			want: Tuple{
-				ObjectType:  string(Log),
-				ObjectID:    logID.String(),
-				Relation:    "contests",
-				SubjectType: string(Contest),
-				SubjectID:   contestID.String(),
-			},
-		},
+		if err != nil || read != relationship {
+			t.Errorf("read back %+v, %v; want %+v", read, err, relationship)
+		}
 	}
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			if err := testModel.validateRelationship(tc.relationship); err != nil {
-				t.Fatalf("relationship is invalid: %v", err)
-			}
 
-			tuple := tupleOf(tc.relationship)
-
-			if tuple != tc.want {
-				t.Errorf("tuple = %+v, want %+v", tuple, tc.want)
-			}
-		})
+	tuple := tupleOf(contests.MustUserRelation("owners").On(contestID, userID))
+	tuple.SubjectID = "not-a-uuid"
+	if _, err := relationshipOf(tuple); err == nil {
+		t.Error("read back a user subject that is not a UUID")
 	}
 }

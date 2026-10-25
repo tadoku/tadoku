@@ -9,33 +9,55 @@ import (
 	"context"
 )
 
-const deleteRelationship = `-- name: DeleteRelationship :execrows
+const deleteObjectRelationships = `-- name: DeleteObjectRelationships :execrows
 delete from permission_relationships
-where object_type = $1
-  and object_id = $2
-  and relation = $3
-  and subject_type = $4
-  and subject_id = $5
-  and subject_relation = $6
+where (object_type = $1 and object_id = $2)
+  or (subject_type = $1 and subject_id = $2)
 `
 
-type DeleteRelationshipParams struct {
-	ObjectType      string
-	ObjectID        string
-	Relation        string
-	SubjectType     string
-	SubjectID       string
-	SubjectRelation string
+type DeleteObjectRelationshipsParams struct {
+	ObjectType string
+	ObjectID   string
 }
 
-func (q *Queries) DeleteRelationship(ctx context.Context, arg DeleteRelationshipParams) (int64, error) {
-	result, err := q.db.Exec(ctx, deleteRelationship,
-		arg.ObjectType,
-		arg.ObjectID,
-		arg.Relation,
-		arg.SubjectType,
-		arg.SubjectID,
-		arg.SubjectRelation,
+func (q *Queries) DeleteObjectRelationships(ctx context.Context, arg DeleteObjectRelationshipsParams) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteObjectRelationships, arg.ObjectType, arg.ObjectID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const deleteRelationships = `-- name: DeleteRelationships :execrows
+delete from permission_relationships
+where (object_type, object_id, relation, subject_type, subject_id, subject_relation) in (
+  select
+    unnest($1::text[]),
+    unnest($2::text[]),
+    unnest($3::text[]),
+    unnest($4::text[]),
+    unnest($5::text[]),
+    unnest($6::text[])
+)
+`
+
+type DeleteRelationshipsParams struct {
+	ObjectTypes      []string
+	ObjectIds        []string
+	Relations        []string
+	SubjectTypes     []string
+	SubjectIds       []string
+	SubjectRelations []string
+}
+
+func (q *Queries) DeleteRelationships(ctx context.Context, arg DeleteRelationshipsParams) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteRelationships,
+		arg.ObjectTypes,
+		arg.ObjectIds,
+		arg.Relations,
+		arg.SubjectTypes,
+		arg.SubjectIds,
+		arg.SubjectRelations,
 	)
 	if err != nil {
 		return 0, err
@@ -43,15 +65,84 @@ func (q *Queries) DeleteRelationship(ctx context.Context, arg DeleteRelationship
 	return result.RowsAffected(), nil
 }
 
-const insertRelationship = `-- name: InsertRelationship :execrows
+const deleteUserRelationships = `-- name: DeleteUserRelationships :execrows
+delete from permission_relationships
+where subject_type = 'user'
+  and subject_id = $1
+`
+
+func (q *Queries) DeleteUserRelationships(ctx context.Context, userID string) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteUserRelationships, userID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const insertRelationships = `-- name: InsertRelationships :execrows
 insert into permission_relationships (
   object_type, object_id, relation, subject_type, subject_id, subject_relation
 )
-values ($1, $2, $3, $4, $5, $6)
+select
+  unnest($1::text[]),
+  unnest($2::text[]),
+  unnest($3::text[]),
+  unnest($4::text[]),
+  unnest($5::text[]),
+  unnest($6::text[])
 on conflict do nothing
 `
 
-type InsertRelationshipParams struct {
+type InsertRelationshipsParams struct {
+	ObjectTypes      []string
+	ObjectIds        []string
+	Relations        []string
+	SubjectTypes     []string
+	SubjectIds       []string
+	SubjectRelations []string
+}
+
+func (q *Queries) InsertRelationships(ctx context.Context, arg InsertRelationshipsParams) (int64, error) {
+	result, err := q.db.Exec(ctx, insertRelationships,
+		arg.ObjectTypes,
+		arg.ObjectIds,
+		arg.Relations,
+		arg.SubjectTypes,
+		arg.SubjectIds,
+		arg.SubjectRelations,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const readRelationships = `-- name: ReadRelationships :many
+select object_type, object_id, relation, subject_type, subject_id, subject_relation
+from permission_relationships
+where object_type = $1::text
+  and object_id = $2::text
+  and $3::text = ''
+  and ($4::text = '' or relation = $4::text)
+union all
+select object_type, object_id, relation, subject_type, subject_id, subject_relation
+from permission_relationships
+where subject_type = 'user'
+  and subject_id = $3::text
+  and $2::text = ''
+  and ($1::text = '' or object_type = $1::text)
+  and ($4::text = '' or relation = $4::text)
+order by object_type, object_id, relation, subject_type, subject_id, subject_relation
+`
+
+type ReadRelationshipsParams struct {
+	ObjectType string
+	ObjectID   string
+	UserID     string
+	Relation   string
+}
+
+type ReadRelationshipsRow struct {
 	ObjectType      string
 	ObjectID        string
 	Relation        string
@@ -60,19 +151,36 @@ type InsertRelationshipParams struct {
 	SubjectRelation string
 }
 
-func (q *Queries) InsertRelationship(ctx context.Context, arg InsertRelationshipParams) (int64, error) {
-	result, err := q.db.Exec(ctx, insertRelationship,
+func (q *Queries) ReadRelationships(ctx context.Context, arg ReadRelationshipsParams) ([]ReadRelationshipsRow, error) {
+	rows, err := q.db.Query(ctx, readRelationships,
 		arg.ObjectType,
 		arg.ObjectID,
+		arg.UserID,
 		arg.Relation,
-		arg.SubjectType,
-		arg.SubjectID,
-		arg.SubjectRelation,
 	)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
-	return result.RowsAffected(), nil
+	defer rows.Close()
+	items := []ReadRelationshipsRow{}
+	for rows.Next() {
+		var i ReadRelationshipsRow
+		if err := rows.Scan(
+			&i.ObjectType,
+			&i.ObjectID,
+			&i.Relation,
+			&i.SubjectType,
+			&i.SubjectID,
+			&i.SubjectRelation,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const relationshipSubjects = `-- name: RelationshipSubjects :many

@@ -37,7 +37,9 @@ and his discussion of
   require following several calls to understand the same responsibility.
 - Keep shared APIs to current needs. A general operation can simplify several
   existing callers; speculative extension points and configuration add to the
-  interface before they hide any useful work.
+  interface before they hide any useful work. The core logic of a
+  [cross-cutting concern](./cross-cutting-concerns.md#rules) is the exception:
+  it provides the complete set of building blocks for its domain.
 
 ## Preserve meaningful boundaries
 

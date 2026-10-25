@@ -69,6 +69,7 @@ use_repo(
     "in_yaml_go_yaml_v3",
     "org_golang_x_crypto",
     "org_golang_x_tools",
+    "net_pgregory_rapid",
 )
 
 # Packaging

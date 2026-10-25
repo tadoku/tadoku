@@ -1,8 +1,6 @@
 package authz
 
 import (
-	"fmt"
-	"math/rand/v2"
 	"slices"
 	"testing"
 
@@ -88,51 +86,4 @@ func TestRelationshipsWrite(t *testing.T) {
 			}
 		}
 	})
-}
-
-// TestWriteProperties checks, for random graphs, that Grant is idempotent, that revoking newly granted
-// relationships restores the rows, and that every write is one statement.
-func TestWriteProperties(t *testing.T) {
-	t.Parallel()
-
-	db := newTestDatabase(t)
-	pool, statements := newLoggedPool(t, db)
-	writer := permissions.NewRelationships(NewRepository(pool), testModel)
-	graphs := newGraphPool()
-
-	for _, seed := range propertySeeds {
-		key := fmt.Sprintf("e2e/write-properties-%d", seed)
-		ctx := registerTestTenant(t, db, key)
-		r := rand.New(rand.NewPCG(seed, 0))
-		base := graphs.randomRelationships(r, r.IntN(31))
-		again := slices.Clone(base)
-		r.Shuffle(len(again), func(i, j int) { again[i], again[j] = again[j], again[i] })
-		var added []permissions.Relationship
-		for _, relationship := range graphs.randomRelationships(r, 1+r.IntN(15)) {
-			if !slices.Contains(base, relationship) {
-				added = append(added, relationship)
-			}
-		}
-		check := func(step string, err error, batch []permissions.Relationship, want []string) {
-			t.Helper()
-
-			sent := statements.take()
-			if err != nil {
-				propertyFailure(t, seed, base, "%s: %v", step, err)
-			}
-			if stored := storedRelationships(t, db, key); !slices.Equal(stored, want) {
-				propertyFailure(t, seed, base, "%s: stored rows %s", step, rowDifference(stored, want))
-			}
-			if wantStatements := min(len(batch), 1); len(sent) != wantStatements {
-				propertyFailure(t, seed, base, "%s: sent %d statements, want %d", step, len(sent), wantStatements)
-			}
-		}
-		statements.take()
-
-		check("grant", writer.Grant(ctx, base...), base, rows(base))
-		check("grant again", writer.Grant(ctx, again...), again, rows(base))
-		check("grant more", writer.Grant(ctx, added...), added, rows(append(slices.Clone(base), added...)))
-		check("revoke them", writer.Revoke(ctx, added...), added, rows(base))
-		check("revoke them again", writer.Revoke(ctx, added...), added, rows(base))
-	}
 }

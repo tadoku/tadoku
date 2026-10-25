@@ -2,6 +2,7 @@ package authz
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"sync"
 	"testing"
@@ -12,6 +13,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
+	"pgregory.net/rapid"
 )
 
 const (
@@ -173,8 +175,14 @@ func closedPool(t *testing.T, db *testpostgres.Database) *pgxpool.Pool {
 	return pool
 }
 
+// tb is a *testing.T or, inside a property, a *rapid.T.
+type tb interface {
+	rapid.TB
+	Context() context.Context
+}
+
 func grantAll(
-	t *testing.T,
+	t tb,
 	ctx context.Context,
 	writer *permissions.Relationships,
 	relationships ...permissions.Relationship,
@@ -187,7 +195,7 @@ func grantAll(
 }
 
 // storedRelationships reads one tenant's rows through the owner pool as object#relation@subject#subject_relation.
-func storedRelationships(t *testing.T, db *testpostgres.Database, key string) []string {
+func storedRelationships(t tb, db *testpostgres.Database, key string) []string {
 	t.Helper()
 
 	rows, err := db.Pool.Query(t.Context(), `select object_type || ':' || object_id || '#' || relation || '@'
@@ -208,11 +216,24 @@ func storedRelationships(t *testing.T, db *testpostgres.Database, key string) []
 	return stored
 }
 
+// clearRelationships deletes one tenant's rows through the owner pool.
+func clearRelationships(t tb, db *testpostgres.Database, key string) {
+	t.Helper()
+
+	if _, err := db.Pool.Exec(t.Context(), `delete from permission_relationships where tenant = $1`, key); err != nil {
+		t.Fatal(err)
+	}
+}
+
+var errStorage = errors.New("injected storage failure")
+
 type statementLog struct {
 	mu         sync.Mutex
 	statements []string
 	// onBatchEnd runs once a batch's results are read, before the query call returns.
 	onBatchEnd func()
+	failAt     int
+	failed     bool
 }
 
 func (l *statementLog) record(sql string) {
@@ -246,6 +267,38 @@ func (l *statementLog) TraceBatchEnd(context.Context, *pgx.Conn, pgx.TraceBatchE
 	}
 }
 
+// failAcquisition makes the nth pool acquisition from now fail with errStorage before its statement is sent. Zero
+// makes none fail.
+func (l *statementLog) failAcquisition(n int) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	l.failAt, l.failed = n, false
+}
+
+// acquisitionFailed reports whether the acquisition chosen by the last failAcquisition failed.
+func (l *statementLog) acquisitionFailed() bool {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	return l.failed
+}
+
+func (l *statementLog) prepareConn(context.Context, *pgx.Conn) (bool, error) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	if l.failAt == 0 {
+		return true, nil
+	}
+	l.failAt--
+	if l.failAt > 0 {
+		return true, nil
+	}
+	l.failed = true
+	return true, errStorage
+}
+
 func (l *statementLog) take() []string {
 	l.mu.Lock()
 	defer l.mu.Unlock()
@@ -255,13 +308,15 @@ func (l *statementLog) take() []string {
 	return statements
 }
 
-// newLoggedPool opens an application-role pool that records every permission_relationships query.
+// newLoggedPool opens an application-role pool that records every permission_relationships query and can fail an
+// acquisition.
 func newLoggedPool(t *testing.T, db *testpostgres.Database) (*pgxpool.Pool, *statementLog) {
 	t.Helper()
 
 	statements := &statementLog{}
 	config := db.AppPool.Config()
 	config.ConnConfig.Tracer = statements
+	config.PrepareConn = statements.prepareConn
 	pool, err := pgxpool.NewWithConfig(t.Context(), config)
 	if err != nil {
 		t.Fatal(err)

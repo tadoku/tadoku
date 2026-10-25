@@ -41,10 +41,14 @@ go_test(
         "authz_reference_test.go",
         "authz_repository_test.go",
         "authz_service_test.go",
+        "authz_store_properties_repository_test.go",
         "authz_writes_repository_test.go",
         "roles_test.go",
     ],
-    args = ["-test.parallel=4"],
+    args = [
+        "-test.parallel=4",
+        "-rapid.nofailfile",
+    ],
     embed = [":authz"],
     env_inherit = ["TADOKU_TEST_POSTGRES_URL"],
     tags = [
@@ -66,5 +70,6 @@ go_test(
         "@com_github_google_uuid//:uuid",
         "@com_github_jackc_pgx_v5//:pgx",
         "@com_github_jackc_pgx_v5//pgxpool",
+        "@net_pgregory_rapid//:rapid",
     ],
 )

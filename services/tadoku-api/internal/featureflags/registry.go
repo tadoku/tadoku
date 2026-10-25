@@ -16,7 +16,7 @@ func (f BooleanFlag) definition() booleanDefinition {
 	case ReleaseLogEntryV2:
 		return booleanDefinition{
 			key:         "release-log-entry-v2",
-			safeDefault: false,
+			safeDefault: true,
 		}
 	default:
 		return booleanDefinition{}

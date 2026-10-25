@@ -22,8 +22,10 @@ func TestFeatureAccessJourney(t *testing.T) {
 		{request: "target_decision_enabled", as: user2, want: http.StatusOK},
 		{request: "revoke_target", as: admin, want: http.StatusOK, others: cast{guest: http.StatusUnauthorized, user: http.StatusForbidden, banned: http.StatusForbidden}},
 		{request: "target_disabled_again", as: admin, want: http.StatusOK},
-		{request: "target_decision_disabled", as: user2, want: http.StatusOK},
+		{request: "target_decision_after_revoke", as: user2, want: http.StatusOK},
 		{verify: "changes_audited"},
+		{request: "guest_decision", as: guest, want: http.StatusOK},
+		{request: "admin_decision", as: admin, want: http.StatusOK},
 	})
 }
 

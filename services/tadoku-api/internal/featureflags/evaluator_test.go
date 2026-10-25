@@ -35,7 +35,7 @@ func (o *recordingObserver) ObserveEvaluation(observation Observation) {
 
 func TestRegistryOwnsPilotKeyAndSafeDefault(t *testing.T) {
 	assert.Equal(t, "release-log-entry-v2", ReleaseLogEntryV2.Key())
-	assert.False(t, ReleaseLogEntryV2.SafeDefault())
+	assert.True(t, ReleaseLogEntryV2.SafeDefault())
 }
 
 func TestEvaluatorUsesOnlyStableSubjectAndAllowlistedContext(t *testing.T) {
@@ -109,7 +109,7 @@ func TestEvaluatorUsesRegistryDefaultForUnsafeStates(t *testing.T) {
 			observer := &recordingObserver{}
 			evaluator := NewEvaluator(tt.provider, observer)
 
-			assert.False(t, evaluator.Boolean(tt.ctx(), tt.flag, tt.subject))
+			assert.Equal(t, tt.flag.SafeDefault(), evaluator.Boolean(tt.ctx(), tt.flag, tt.subject))
 			require.Len(t, observer.observations, 1)
 			assert.Equal(t, tt.wantReason, observer.observations[0].Reason)
 			assert.Equal(t, EvaluationSourceDefault, observer.observations[0].Source)

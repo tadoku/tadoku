@@ -20,7 +20,6 @@ import {
 import { apiData, browserApi } from 'ui/api'
 import { browserAppUrls } from 'ui/app-urls'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import type { NewLogAPISchema } from '@app/immersion/NewLogForm/domain'
 
 // A download link the browser navigates to, not a fetched operation.
 export const logExportUrl = (format: 'csv' | 'json') =>
@@ -53,15 +52,6 @@ export const fetchTagSuggestions = async (
   })
   return data?.suggestions ?? []
 }
-
-export const useCreateLog = (onSuccess: (id: string) => void) =>
-  useMutation({
-    mutationFn: async (contest: NewLogAPISchema) =>
-      apiData(immersionLogCreate({ ...browserApi(), body: contest })),
-    onSuccess(data) {
-      onSuccess(data.id)
-    },
-  })
 
 export type CreateLogV2Payload = NonNullable<ImmersionLogCreateData['body']>
 

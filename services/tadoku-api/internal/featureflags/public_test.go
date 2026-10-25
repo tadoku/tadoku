@@ -29,7 +29,7 @@ func TestEvaluatePublicTreatsGuestAsAnonymous(t *testing.T) {
 
 	decisions := evaluator.EvaluatePublicForSubject(context.Background(), "guest")
 
-	assert.False(t, decisions.ReleaseLogEntryV2)
+	assert.True(t, decisions.ReleaseLogEntryV2)
 	assert.Empty(t, provider.requests)
 	require.Len(t, observer.observations, 1)
 	assert.Equal(t, EvaluationReasonAnonymous, observer.observations[0].Reason)
@@ -42,5 +42,5 @@ func TestEvaluatePublicUsesSafeDefaultWhenProviderFails(t *testing.T) {
 
 	decisions := evaluator.EvaluatePublicForSubject(context.Background(), uuid.NewString())
 
-	assert.False(t, decisions.ReleaseLogEntryV2)
+	assert.True(t, decisions.ReleaseLogEntryV2)
 }

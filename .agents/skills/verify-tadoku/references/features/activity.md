@@ -46,13 +46,15 @@ leaderboard values; don't edit seed logs or another run's records.
 
 ## Traps
 
-`release-log-entry-v2` selects between two forms. Its default is false, and the
-decision is latched while the form is mounted. Record the active variant; don't
-claim both were covered by one visit. For variant changes, use an authorized test
-identity's feature access and remount the route. Shared flag-policy changes need
-separate scope. A disabled or unavailable variant is an explicit coverage gap.
-The newer flow separates logging from contest submission; creating a log alone
-does not prove it reached the expected contest leaderboard.
+All accounts use the v2 log form and details; editing requires ownership or an
+administrator role. Logging and contest submission are separate steps, so
+creating a log alone does not prove it reached the expected contest leaderboard.
+Check both amount-based legacy logs and duration-based logs when editing changes.
+Language-specific units must still override the generic unit with the same name.
+The retained feature-flags API must return only `release-log-entry-v2: true`,
+including for guests, users without a named grant and unavailable Flipt.
+Check the complete response: already-open clients reject a replacement key or
+an additional key even when the HTTP status is 200.
 
 Leaderboard updates are asynchronous and branch-cache scoped. A healthy API pod
 does not prove the worker processed the write. Keep selected headers and actual
@@ -78,7 +80,6 @@ null for absent amount, unit, duration and description values.
 [Log routes](../../../../../frontend/apps/webv2/pages/logs/),
 [forms and API hooks](../../../../../frontend/apps/webv2/app/immersion/),
 [profile routes](../../../../../frontend/apps/webv2/pages/profile/),
-[flag registry](../../../../../frontend/apps/webv2/app/feature-flags/registry.ts),
 [export menu](../../../../../frontend/apps/webv2/app/immersion/LogExportMenu.tsx),
 [export transport](../../../../../services/tadoku-api/transport/http/log_export.go),
 [export HTTP cases](../../../../../services/tadoku-api/e2e/log_export_test.go),

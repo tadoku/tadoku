@@ -2,24 +2,17 @@ import type { NextPage } from 'next'
 import { Breadcrumb, Loading } from 'ui'
 import { HomeIcon } from '@heroicons/react/20/solid'
 import { useLogConfigurationOptions } from '@app/immersion/api'
-import { useOngoingContestRegistrations } from '@app/immersion/contest-api'
 import { routes } from '@app/common/routes'
-import { LogForm } from '@app/immersion/NewLogForm/Form'
 import { LogFormV2 } from '@app/immersion/NewLogFormV2/Form'
 import { useRouter } from 'next/router'
 import { getQueryStringIntParameter } from '@app/common/router'
 import Head from 'next/head'
 import { useSessionOrRedirect } from '@app/common/session'
-import { useLatchedFeatureFlag } from '@app/feature-flags/client'
 
 interface Props {}
 
 const Page: NextPage<Props> = () => {
-  const useV2 = useLatchedFeatureFlag('release-log-entry-v2')
   const options = useLogConfigurationOptions()
-  const registrations = useOngoingContestRegistrations({
-    enabled: useV2 === false,
-  })
 
   useSessionOrRedirect()
 
@@ -40,38 +33,18 @@ const Page: NextPage<Props> = () => {
         />
       </div>
       <h1 className="title mb-4">New log</h1>
-      {useV2 ? (
-        <>
-          {options.isLoading ? <Loading /> : null}
-          {options.isError ? (
-            <span className="flash error">
-              Could not load page, please try again later.
-            </span>
-          ) : null}
-          {options.isSuccess ? (
-            <LogFormV2
-              options={options.data}
-              defaultValues={{ amountValue: amount }}
-            />
-          ) : null}
-        </>
-      ) : (
-        <>
-          {options.isLoading || registrations.isInitialLoading ? <Loading /> : null}
-          {options.isError || registrations.isError ? (
-            <span className="flash error">
-              Could not load page, please try again later.
-            </span>
-          ) : null}
-          {options.isSuccess && registrations.isSuccess ? (
-            <LogForm
-              registrations={registrations.data}
-              options={options.data}
-              defaultValues={{ amountValue: amount }}
-            />
-          ) : null}
-        </>
-      )}
+      {options.isLoading ? <Loading /> : null}
+      {options.isError ? (
+        <span className="flash error">
+          Could not load page, please try again later.
+        </span>
+      ) : null}
+      {options.isSuccess ? (
+        <LogFormV2
+          options={options.data}
+          defaultValues={{ amountValue: amount }}
+        />
+      ) : null}
     </>
   )
 }

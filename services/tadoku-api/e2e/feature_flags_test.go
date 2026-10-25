@@ -14,7 +14,7 @@ type featureAccessCase struct {
 func TestImmersionFeatureFlagDecisions(t *testing.T) {
 	tests := []featureAccessCase{
 		{description: []string{"named", "user", "enabled"}, want: http.StatusOK},
-		{description: []string{"test", "tenant", "disabled"}, want: http.StatusOK},
+		{description: []string{"test", "tenant", "provider", "disabled"}, want: http.StatusOK},
 		{description: []string{"guest", "safe", "default"}, want: http.StatusOK},
 		{description: []string{"provider", "unavailable", "safe", "default"}, want: http.StatusOK, unavailable: true},
 	}

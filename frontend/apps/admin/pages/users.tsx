@@ -221,10 +221,17 @@ const Page: NextPageWithLayout = () => {
                           orientation="right"
                           links={[
                             {
-                              label: user.role === 'banned' ? 'Unban User' : 'Ban User',
+                              label:
+                                user.role === 'banned'
+                                  ? 'Unban User'
+                                  : 'Ban User',
                               href: '#',
-                              IconComponent: user.role === 'banned' ? CheckCircleIcon : NoSymbolIcon,
-                              type: user.role === 'banned' ? undefined : 'danger',
+                              IconComponent:
+                                user.role === 'banned'
+                                  ? CheckCircleIcon
+                                  : NoSymbolIcon,
+                              type:
+                                user.role === 'banned' ? undefined : 'danger',
                               onClick: () => {
                                 setSelectedUser(user)
                                 setModalOpen(true)

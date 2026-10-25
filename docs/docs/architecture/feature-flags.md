@@ -69,11 +69,11 @@ falls back to canonical flags. Test clients have no provider-lifecycle observer,
 so `tadoku_feature_flag_config_age_seconds` continues to describe canonical
 configuration freshness. See [Configuration](../tadoku-api/configuration.md) for the `API_FLIPT_*` settings.
 
-Flipt calls pass through Oathkeeper with service JWTs that
-`services/common/client/s2s/` exchanges for the `flipt-evaluation` or
-`flipt-management` audience ([Service-to-service auth](./service-tokens.md)).
-Their routes in `k8s/dev/base/oathkeeper/rules.yaml` allow only the snapshot
-read and managed segment calls. Metrics are named `tadoku_feature_flag_*`.
+Application evaluation calls pass through Oathkeeper with service JWTs that
+`services/common/client/s2s/` exchanges for the `flipt-evaluation` audience
+([Service-to-service auth](./service-tokens.md)). The routes in
+`k8s/dev/base/oathkeeper/rules.yaml` permit snapshot reads only. Provisioners
+use their direct management connection. Metrics are named `tadoku_feature_flag_*`.
 
 ## Decisions in the browser
 

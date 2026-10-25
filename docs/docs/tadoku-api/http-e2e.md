@@ -55,8 +55,10 @@ The general test principles are in [Testing](./testing.md).
 ## Tenant feature-flag isolation
 
 `services/tadoku-api/e2e/flipt_tenant_test.go` compares a complete sequence of
-HTTP responses under `testdata/FliptTenantIsolation/`: separate initial
-canonical/test decisions, a test grant, a canonical revoke and a test revoke.
+public decision HTTP responses under `testdata/FliptTenantIsolation/` for the
+same account in canonical and test tenants. The test sets up a test grant, a
+canonical revoke and a test revoke through the real Flipt management adapter
+against the provider fixture; the application has no management endpoint.
 It freezes the normal fixture clock, uses signed tenant JWTs, real permission
 relationships and the non-owner application pool, and preserves the opposite
 tenant's decisions.

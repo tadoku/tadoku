@@ -192,8 +192,8 @@ pnpm build                              # every workspace package
 pnpm check:paper-boundaries
 ```
 
-Replace `webv2` with the application you changed. CI runs unit tests only for
-admin and the Paper projects, so run the others locally. See
+Replace `webv2` with the application you changed. CI runs tests for webv2,
+the Paper projects and the generated API client. See
 [Frontend overview](../frontend/index.md) for per-application commands.
 
 ### Docs site
@@ -230,7 +230,7 @@ console output; they include assertion output and fixture cleanup errors.
 | `verify-file-sizes.yaml` | Every PR | Runs `./tools/ci/check_file_sizes.sh`, which fails when a handwritten text file is over 20,000 bytes; see [Splitting a long file](../architecture/module-design.md#splitting-a-long-file) |
 | `verify-http-error-mapping.yaml` | Every PR | Rejects literal 5xx responses in `services/tadoku-api/transport/http/`; `services/tadoku-api/transport/http/errors.go` maps errors to statuses |
 | `build-frontend-webv2.yaml` | Pushes touching webv2, `ui` or the lockfile | Builds webv2; publishes its image from `main` |
-| `build-frontend-admin.yaml` | Pushes touching admin, `ui` or the lockfile | Tests and builds admin; publishes its image from `main` |
+| `build-frontend-admin.yaml` | Pushes touching admin, `ui` or the lockfile | Builds admin; publishes its image from `main` |
 | `build-frontend-styleguide.yaml` | Pushes touching styleguide, `ui` or the lockfile | Builds the `ui` styleguide; publishes its image from `main` |
 | `build-frontend-paper-styleguide.yaml` | PRs and `main` pushes touching Paper | Paper boundaries, `paper-ui` and `paper-styleguide` lint, typecheck, test and build, package checks, image smoke test; publishes from `main` |
 | `build-frontend-authv2.yaml` | PRs and main pushes touching authv2 or Paper | Node 22 typecheck, lint, boundaries and container build; main publishes commit/latest, owner-approved manual dispatch promotes prod; Playwright remains manual |

@@ -22,11 +22,10 @@ documented here.
 | webv2 | Main site: logging, contests, leaderboards and content | `frontend/apps/webv2/`, `k8s/dev/base/frontend-webv2/` |
 | authv2 | Account app: login, registration, recovery and Settings through the identity API | `frontend/apps/authv2/`, `k8s/dev/base/frontend-authv2/` |
 | admin | Administration, moderation and CMS | `frontend/apps/admin/`, `k8s/dev/base/frontend-admin/` |
-| Ory Keto | Deployed by the development base; no Tadoku service reads or writes it | `k8s/dev/base/keto/` |
 | Ory Oathkeeper | Access proxy for API and operator routes; issues user and service JWTs | `k8s/dev/base/oathkeeper/` |
 | token-reflector | Publishes the Kubernetes service-account JWKS and returns exchanged service tokens | `services/token-reflector/` |
 | Flipt | Feature flags | `k8s/dev/base/flipt/`, `feature-flags.contract.json` |
-| PostgreSQL | Tadoku API and Keto databases in one operator-managed server | `k8s/dev/base/data/postgres.yaml` |
+| PostgreSQL | Tadoku API database in an operator-managed server | `k8s/dev/base/data/postgres.yaml` |
 | Valkey | Leaderboard cache | `k8s/dev/base/data/cache.yaml` |
 
 Each component runs in its own `tdk-dev-*` namespace. `tdk-dev-routing`
@@ -69,7 +68,9 @@ browser → ingress-nginx → Envoy → webv2 / authv2 / admin
   [Leaderboard freshness and worker health](../tadoku-api/jobs-operations.md#leaderboard-freshness-and-worker-health).
 - Administrator and ban relationships are tenant-owned rows in the Tadoku API
   database; see [Authorization](./authorization.md#permission-model).
-- Keto keeps its own database in the same PostgreSQL server.
+- The former Keto database and namespace are retained without a service. Their
+  removal requires a separate data-disposition decision; see
+  [Development base](../operations/development-base.md#data-safety).
 
 ## Where to go next
 

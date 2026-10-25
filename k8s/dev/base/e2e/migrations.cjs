@@ -7,8 +7,8 @@ const Y = require('../../../../frontend/node_modules/yaml')
 
 function proveMigrations({ root, evidence, prefix, containers, report, run, createNetwork }, docs) {
   const jobs = docs.filter(d => d.kind === 'Job')
-  const roles = { 'tadoku-api-migrate': 'tadoku_owner', 'keto-migrate': 'keto' }
-  const database = { tadoku_owner: 'tadoku', keto: 'keto' }
+  const roles = { 'tadoku-api-migrate': 'tadoku_owner' }
+  const database = { tadoku_owner: 'tadoku' }
   const postgres = docs.find(d => d.kind === 'postgresql' && d.metadata.name === 'tadoku-dev-db')
   const ownership = jobs.find(j => j.metadata.name === 'tadoku-api-ownership')
   const grants = jobs.find(j => j.metadata.name === 'tadoku-api-grants')
@@ -45,9 +45,7 @@ function proveMigrations({ root, evidence, prefix, containers, report, run, crea
     const migrationRole = userSecret?.startsWith('tadoku-owner.') ? 'tadoku_owner' : 'tadoku'
     const env = isPsql
       ? { PGHOST: db, PGUSER: role === 'postgres' ? role : migrationRole, PGPASSWORD: 'disposable-test-only', PGDATABASE: target, PGSSLMODE: 'disable' }
-      : role === 'tadoku_owner'
-        ? { POSTGRES_HOST: db, POSTGRES_USER: migrationRole, POSTGRES_PASSWORD: 'disposable-test-only', POSTGRES_DATABASE: fail ? 'missing_fixture_database' : target, POSTGRES_SSLMODE: 'disable' }
-        : { DSN: `postgres://${role}@${db}:5432/${role}?sslmode=disable`, PGPASSWORD: 'disposable-test-only' }
+      : { POSTGRES_HOST: db, POSTGRES_USER: migrationRole, POSTGRES_PASSWORD: 'disposable-test-only', POSTGRES_DATABASE: fail ? 'missing_fixture_database' : target, POSTGRES_SSLMODE: 'disable' }
     const args = container.args.map(arg => arg.replaceAll('$$', '$'))
     run('docker', [
       'create', '--name', name, '--network', prefix, '--label', `tadoku.dev/test=${prefix}`, '--cpus', '0.5', '--memory', '256m',

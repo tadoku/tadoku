@@ -75,8 +75,8 @@ outside Git with `TADOKU_DEV_ADMIN_EMAIL`, `TADOKU_DEV_ADMIN_PASSWORD`,
 ## Branch tenants
 
 The operator-managed `tdk-dev-data/tadoku-dev-db` is the only Postgres server.
-Its `tadoku` and `keto` databases are shared. Ordinary branches use
-the base `tadoku` database and a separate test tenant. The tenant key is
+Ordinary branches use the base `tadoku` database and a separate test tenant.
+The former `keto` database is retained without a deployed consumer. The tenant key is
 `tadoku/<route>`; the route contains the owner, branch and a collision-resistant
 hash. Different owners of the same branch get different tenants. Normal
 startup creates no database, Postgres cluster, PVC or database dependency Job.

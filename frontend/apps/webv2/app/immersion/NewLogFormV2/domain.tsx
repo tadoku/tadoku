@@ -1,7 +1,6 @@
 import { zImmersionActivity, zImmersionUnit } from 'api-client'
 import { z } from 'zod'
 import { Unit } from '@app/immersion/api'
-import { filterUnits as filterLegacyUnits } from '@app/immersion/NewLogForm/domain'
 
 const legacyReadingUnitKeys = new Set([
   'reading_two_column_page',
@@ -12,10 +11,43 @@ export const filterUnits = (
   units: Unit[],
   activityId: number | undefined,
   languageCode: string | undefined,
-) =>
-  filterLegacyUnits(units, activityId, languageCode).filter(
-    unit => !legacyReadingUnitKeys.has(unit.unit_key),
+) => {
+  if (!activityId) {
+    return []
+  }
+
+  const base = units.filter(
+    unit =>
+      unit.log_activity_id === activityId &&
+      !legacyReadingUnitKeys.has(unit.unit_key),
   )
+
+  const grouped = base.reduce((acc, unit) => {
+    if (!acc.has(unit.name)) {
+      acc.set(unit.name, [])
+    }
+
+    acc.get(unit.name)?.push(unit)
+
+    return acc
+  }, new Map<string, Unit[]>())
+
+  const filteredUnits = []
+  for (const units of grouped.values()) {
+    const unitForCurrentLanguage = units.find(
+      it => it.language_code === languageCode,
+    )
+    const fallback = units.find(it => it.language_code === undefined)
+
+    if (unitForCurrentLanguage) {
+      filteredUnits.push(unitForCurrentLanguage)
+    } else if (fallback) {
+      filteredUnits.push(fallback)
+    }
+  }
+
+  return filteredUnits
+}
 
 const optionalNumber = z.preprocess(
   value =>

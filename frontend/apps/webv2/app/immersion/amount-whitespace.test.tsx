@@ -16,7 +16,6 @@ vi.mock('next/config', () => ({
   default: () => ({ publicRuntimeConfig: { apiEndpoint: '' } }),
 }))
 
-import { NewLogAPISchema } from './NewLogForm/domain'
 import { NewLogV2APISchema } from './NewLogFormV2/domain'
 
 const activity = {
@@ -34,10 +33,8 @@ const unit = {
 
 afterEach(cleanup)
 
-describe.each([
-  ['v1', NewLogAPISchema],
-  ['v2', NewLogV2APISchema],
-] as const)('%s logging amount', (_, schema) => {
+describe('logging amount', () => {
+  const schema = NewLogV2APISchema
   function AmountForm({
     onSubmit,
     inputProps,
@@ -50,9 +47,6 @@ describe.each([
   }) {
     const methods = useForm({
       defaultValues: {
-        tracking_mode: 'personal',
-        registrations: [],
-        selected_registrations: [],
         languageCode: 'jpn',
         activityId: 1,
         amountValue: 0,

@@ -14,6 +14,16 @@ Source: `frontend/apps/webv2`. Development host: `tadoku.dev.lab`.
 
 webv2 covers logging, official and user-created contests (including registration and contest leaderboards), latest, yearly and all-time leaderboards, user profiles, the blog, and CMS pages. CMS copy is edited in [admin](admin.md), not in this app.
 
+## Logging
+
+All accounts use the v2 create, detail and edit pages. Create an amount-based or
+time-based log, then choose eligible contests on the separate submission page;
+Skip keeps it in personal tracking only. Owners and administrators can edit logs.
+Existing amount-only logs retain their amount and unit when edited, including
+activities that now prefer duration. Language and activity cannot be changed
+while editing. The form remembers the last language and activity; it does not
+backdate logs or reuse the previous description.
+
 ## Stack
 
 - Next.js 13 Pages Router. Routes live in `pages/`, and feature code lives in `app/`, imported as `@app/*`. The `app/` directory is not the Next.js App Router.

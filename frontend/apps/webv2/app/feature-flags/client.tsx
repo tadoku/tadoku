@@ -2,7 +2,7 @@ import { immersionFeatureFlagDecisions } from 'api-client'
 import { atom, useAtomValue, useSetAtom } from 'jotai'
 import { browserAppUrls } from 'ui/app-urls'
 import { useRouter } from 'next/router'
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect } from 'react'
 import type { ReactNode } from 'react'
 import { defaultFeatureFlagDecisions, registeredDecisions } from './registry'
 import type { FeatureFlagDecisions, FeatureFlagKey } from './registry'
@@ -13,19 +13,6 @@ export const featureFlagDecisionsAtom = atom<FeatureFlagDecisions>({
 
 export const useFeatureFlag = (flag: FeatureFlagKey) =>
   useAtomValue(featureFlagDecisionsAtom)[flag]
-
-export const useLatchedFeatureFlag = (
-  flag: FeatureFlagKey,
-): boolean => {
-  const enabled = useFeatureFlag(flag)
-  const latched = useRef<boolean>()
-
-  if (latched.current === undefined) {
-    latched.current = enabled
-  }
-
-  return latched.current
-}
 
 export const FeatureFlagRefresh = ({
   children,

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { Provider, useSetAtom } from 'jotai'
+import { Provider } from 'jotai'
 import {
   act,
   cleanup,
@@ -15,7 +15,6 @@ import {
   FeatureFlagRefresh,
   featureFlagDecisionsAtom,
   useFeatureFlag,
-  useLatchedFeatureFlag,
 } from './client'
 
 const routerEvents = vi.hoisted(() => {
@@ -39,32 +38,8 @@ vi.mock('next/config', () => ({
 }))
 
 const FlagValue = () => {
-  const enabled = useFeatureFlag('release-log-entry-v2')
+  const enabled = useFeatureFlag('release-webv3')
   return <output>{enabled ? 'enabled' : 'disabled'}</output>
-}
-
-const LatchedFlagValue = () => {
-  const enabled = useLatchedFeatureFlag('release-log-entry-v2')
-  const setDecisions = useSetAtom(featureFlagDecisionsAtom)
-
-  return (
-    <>
-      <button
-        type="button"
-        onClick={() => setDecisions({ 'release-log-entry-v2': false })}
-      >
-        Disable
-      </button>
-      {enabled ? (
-        <label>
-          V2 draft
-          <input defaultValue="before decision change" />
-        </label>
-      ) : (
-        <output>latched disabled</output>
-      )}
-    </>
-  )
 }
 
 const Wrapper = ({
@@ -76,7 +51,7 @@ const Wrapper = ({
 }) => (
   <Provider
     initialValues={[
-      [featureFlagDecisionsAtom, { 'release-log-entry-v2': enabled }],
+      [featureFlagDecisionsAtom, { 'release-webv3': enabled }],
     ]}
   >
     {children}
@@ -105,7 +80,7 @@ describe('feature flag browser state', () => {
     expect(screen.queryByText('disabled')).toBeNull()
   })
 
-  it('defaults to the legacy behavior', () => {
+  it('defaults to the disabled behavior', () => {
     render(
       <Wrapper>
         <FlagValue />
@@ -115,31 +90,7 @@ describe('feature flag browser state', () => {
     expect(screen.getByText('disabled')).toBeTruthy()
   })
 
-  it('keeps a mounted feature flow stable until the next mount', () => {
-    const mounted = render(
-      <Wrapper enabled>
-        <LatchedFlagValue />
-      </Wrapper>,
-    )
-
-    const input = screen.getByLabelText('V2 draft') as HTMLInputElement
-    fireEvent.change(input, { target: { value: 'unsaved form value' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Disable' }))
-
-    expect(input.value).toBe('unsaved form value')
-    expect(screen.getByLabelText('V2 draft')).toBe(input)
-    mounted.unmount()
-
-    render(
-      <Wrapper>
-        <LatchedFlagValue />
-      </Wrapper>,
-    )
-
-    expect(screen.getByText('latched disabled')).toBeTruthy()
-  })
-
-  it('uses the legacy default while refreshing after navigation without remounting a form', async () => {
+  it('uses the disabled default while refreshing after navigation without remounting a form', async () => {
     let resolveRefresh: (response: Response) => void = () => {}
     const fetchMock = vi.mocked(fetch).mockReturnValue(
       new Promise(resolve => {
@@ -172,7 +123,7 @@ describe('feature flag browser state', () => {
 
     resolveRefresh(
       new Response(
-        JSON.stringify({ decisions: { 'release-log-entry-v2': true } }),
+        JSON.stringify({ decisions: { 'release-webv3': true } }),
         { status: 200, headers: { 'Content-Type': 'application/json' } },
       ),
     )
@@ -181,7 +132,7 @@ describe('feature flag browser state', () => {
     expect(input.value).toBe('unsaved form value')
   })
 
-  it('keeps the legacy default when refresh fails', async () => {
+  it('keeps the disabled default when refresh fails', async () => {
     vi.mocked(fetch).mockRejectedValue(new Error('provider unavailable'))
 
     render(

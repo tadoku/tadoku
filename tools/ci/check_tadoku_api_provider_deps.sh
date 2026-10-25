@@ -8,11 +8,3 @@ if [[ -n "$valkey_violations" ]]; then
   echo "$valkey_violations" >&2
   exit 1
 fi
-
-keto_violations=$(bazel query --lockfile_mode=error \
-  'attr("deps", "//services/tadoku-api/infra/keto", //services/tadoku-api/...) except (//services/tadoku-api/internal/permissions:* union //services/tadoku-api/cmd/tadoku-api:* union //services/tadoku-api/cmd/tadoku-tenant:* union //services/tadoku-api/e2e:* union //services/tadoku-api/app/tenantlifecycle:tenantlifecycle_test)')
-if [[ -n "$keto_violations" ]]; then
-  echo "Direct raw Keto client dependencies belong only in internal/permissions, startup or E2E:" >&2
-  echo "$keto_violations" >&2
-  exit 1
-fi

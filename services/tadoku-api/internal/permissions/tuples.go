@@ -30,6 +30,11 @@ type Tuples interface {
 	// Delete removes the tuples with one statement and skips those not stored. It fails without a tenant even for no
 	// tuples.
 	Delete(ctx context.Context, tuples []Tuple) error
+	// DeleteObject removes, with one statement, the tuples on the object and the tuples that name it as a linked
+	// object or in a subject set.
+	DeleteObject(ctx context.Context, objectType, objectID string) error
+	// DeleteUser removes, with one statement, the tuples whose subject is the user.
+	DeleteUser(ctx context.Context, userID string) error
 	// Stored returns the given tuples that are stored, with at most one query. It fails without a tenant even for no
 	// tuples.
 	Stored(ctx context.Context, tuples []Tuple) ([]Tuple, error)

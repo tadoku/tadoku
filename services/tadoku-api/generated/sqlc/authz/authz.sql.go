@@ -9,6 +9,25 @@ import (
 	"context"
 )
 
+const deleteObjectRelationships = `-- name: DeleteObjectRelationships :execrows
+delete from permission_relationships
+where (object_type = $1 and object_id = $2)
+  or (subject_type = $1 and subject_id = $2)
+`
+
+type DeleteObjectRelationshipsParams struct {
+	ObjectType string
+	ObjectID   string
+}
+
+func (q *Queries) DeleteObjectRelationships(ctx context.Context, arg DeleteObjectRelationshipsParams) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteObjectRelationships, arg.ObjectType, arg.ObjectID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const deleteRelationships = `-- name: DeleteRelationships :execrows
 delete from permission_relationships
 where (object_type, object_id, relation, subject_type, subject_id, subject_relation) in (
@@ -40,6 +59,20 @@ func (q *Queries) DeleteRelationships(ctx context.Context, arg DeleteRelationshi
 		arg.SubjectIds,
 		arg.SubjectRelations,
 	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const deleteUserRelationships = `-- name: DeleteUserRelationships :execrows
+delete from permission_relationships
+where subject_type = 'user'
+  and subject_id = $1
+`
+
+func (q *Queries) DeleteUserRelationships(ctx context.Context, userID string) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteUserRelationships, userID)
 	if err != nil {
 		return 0, err
 	}

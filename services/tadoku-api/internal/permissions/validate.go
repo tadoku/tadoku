@@ -161,6 +161,16 @@ func (m Model) validateRuleReferences(n Namespace, rule Rule) error {
 	return nil
 }
 
+func (m Model) validateObject(object Object) error {
+	if _, ok := m.namespace(object.objectType); !ok {
+		return fmt.Errorf("unknown object type %q", object.objectType)
+	}
+	if object.id == "" {
+		return errors.New("object needs an ID")
+	}
+	return nil
+}
+
 func (m Model) validateRelationship(relationship Relationship) error {
 	if relationship.object.id == "" {
 		return errors.New("relationship object needs an ID")

@@ -85,6 +85,29 @@ func (r *Repository) Delete(ctx context.Context, tuples []permissions.Tuple) err
 	return err
 }
 
+func (r *Repository) DeleteObject(ctx context.Context, objectType, objectID string) error {
+	q, err := r.queries(ctx)
+	if err != nil {
+		return err
+	}
+
+	_, err = q.DeleteObjectRelationships(ctx, queries.DeleteObjectRelationshipsParams{
+		ObjectType: objectType,
+		ObjectID:   objectID,
+	})
+	return err
+}
+
+func (r *Repository) DeleteUser(ctx context.Context, userID string) error {
+	q, err := r.queries(ctx)
+	if err != nil {
+		return err
+	}
+
+	_, err = q.DeleteUserRelationships(ctx, userID)
+	return err
+}
+
 func (r *Repository) Stored(ctx context.Context, tuples []permissions.Tuple) ([]permissions.Tuple, error) {
 	q, err := r.queries(ctx)
 	if err != nil {

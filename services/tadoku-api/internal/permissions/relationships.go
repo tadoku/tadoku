@@ -1,6 +1,10 @@
 package permissions
 
-import "context"
+import (
+	"context"
+
+	"github.com/google/uuid"
+)
 
 // Relationships writes and reads stored relationships in the context tenant and joins the context's transaction.
 // Granting a stored relationship or revoking a missing one succeeds without a change.
@@ -29,6 +33,20 @@ func (r *Relationships) Revoke(ctx context.Context, relationships ...Relationshi
 		return err
 	}
 	return r.tuples.Delete(ctx, tuples)
+}
+
+// RevokeObject removes every relationship on the object and every relationship that names it as a linked object or
+// in a subject set, with one statement. Call it in the transaction that deletes the object.
+func (r *Relationships) RevokeObject(ctx context.Context, object Object) error {
+	if err := r.model.validateObject(object); err != nil {
+		return err
+	}
+	return r.tuples.DeleteObject(ctx, string(object.objectType), object.id)
+}
+
+// RevokeUser removes every relationship whose subject is the user, with one statement.
+func (r *Relationships) RevokeUser(ctx context.Context, userID uuid.UUID) error {
+	return r.tuples.DeleteUser(ctx, userID.String())
 }
 
 func (r *Relationships) tuplesOf(relationships []Relationship) ([]Tuple, error) {

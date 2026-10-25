@@ -65,23 +65,23 @@ func (r *Repository) Subjects(
 	return tuples, nil
 }
 
-func (r *Repository) Insert(ctx context.Context, tuple permissions.Tuple) error {
+func (r *Repository) Insert(ctx context.Context, tuples []permissions.Tuple) error {
 	q, err := r.queries(ctx)
-	if err != nil {
+	if err != nil || len(tuples) == 0 {
 		return err
 	}
 
-	_, err = q.InsertRelationship(ctx, queries.InsertRelationshipParams(tuple))
+	_, err = q.InsertRelationships(ctx, queries.InsertRelationshipsParams(tupleColumns(tuples)))
 	return err
 }
 
-func (r *Repository) Delete(ctx context.Context, tuple permissions.Tuple) error {
+func (r *Repository) Delete(ctx context.Context, tuples []permissions.Tuple) error {
 	q, err := r.queries(ctx)
-	if err != nil {
+	if err != nil || len(tuples) == 0 {
 		return err
 	}
 
-	_, err = q.DeleteRelationship(ctx, queries.DeleteRelationshipParams(tuple))
+	_, err = q.DeleteRelationships(ctx, queries.DeleteRelationshipsParams(tupleColumns(tuples)))
 	return err
 }
 
@@ -94,16 +94,7 @@ func (r *Repository) Stored(ctx context.Context, tuples []permissions.Tuple) ([]
 		return nil, nil
 	}
 
-	var wanted queries.StoredRelationshipsParams
-	for _, tuple := range tuples {
-		wanted.ObjectTypes = append(wanted.ObjectTypes, tuple.ObjectType)
-		wanted.ObjectIds = append(wanted.ObjectIds, tuple.ObjectID)
-		wanted.Relations = append(wanted.Relations, tuple.Relation)
-		wanted.SubjectTypes = append(wanted.SubjectTypes, tuple.SubjectType)
-		wanted.SubjectIds = append(wanted.SubjectIds, tuple.SubjectID)
-		wanted.SubjectRelations = append(wanted.SubjectRelations, tuple.SubjectRelation)
-	}
-	rows, err := q.StoredRelationships(ctx, wanted)
+	rows, err := q.StoredRelationships(ctx, tupleColumns(tuples))
 	if err != nil {
 		return nil, err
 	}
@@ -113,4 +104,17 @@ func (r *Repository) Stored(ctx context.Context, tuples []permissions.Tuple) ([]
 		stored[i] = permissions.Tuple(row)
 	}
 	return stored, nil
+}
+
+func tupleColumns(tuples []permissions.Tuple) queries.StoredRelationshipsParams {
+	var columns queries.StoredRelationshipsParams
+	for _, tuple := range tuples {
+		columns.ObjectTypes = append(columns.ObjectTypes, tuple.ObjectType)
+		columns.ObjectIds = append(columns.ObjectIds, tuple.ObjectID)
+		columns.Relations = append(columns.Relations, tuple.Relation)
+		columns.SubjectTypes = append(columns.SubjectTypes, tuple.SubjectType)
+		columns.SubjectIds = append(columns.SubjectIds, tuple.SubjectID)
+		columns.SubjectRelations = append(columns.SubjectRelations, tuple.SubjectRelation)
+	}
+	return columns
 }

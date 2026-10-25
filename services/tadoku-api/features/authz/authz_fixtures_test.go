@@ -181,10 +181,8 @@ func grantAll(
 ) {
 	t.Helper()
 
-	for _, relationship := range relationships {
-		if err := writer.Grant(ctx, relationship); err != nil {
-			t.Fatalf("grant %+v: %v", relationship, err)
-		}
+	if err := writer.Grant(ctx, relationships...); err != nil {
+		t.Fatalf("grant %q: %v", rows(relationships), err)
 	}
 }
 

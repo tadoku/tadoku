@@ -24,10 +24,12 @@ type Tuple struct {
 type Tuples interface {
 	// Subjects returns the tuples stored in objectType:objectID#relation whose subject is userID or is not a user.
 	Subjects(ctx context.Context, objectType, objectID, relation, userID string) ([]Tuple, error)
-	// Insert keeps a tuple that is already stored.
-	Insert(ctx context.Context, tuple Tuple) error
-	// Delete succeeds when the tuple is not stored.
-	Delete(ctx context.Context, tuple Tuple) error
+	// Insert stores the tuples with one statement and keeps those already stored. It fails without a tenant even for
+	// no tuples.
+	Insert(ctx context.Context, tuples []Tuple) error
+	// Delete removes the tuples with one statement and skips those not stored. It fails without a tenant even for no
+	// tuples.
+	Delete(ctx context.Context, tuples []Tuple) error
 	// Stored returns the given tuples that are stored, with at most one query. It fails without a tenant even for no
 	// tuples.
 	Stored(ctx context.Context, tuples []Tuple) ([]Tuple, error)

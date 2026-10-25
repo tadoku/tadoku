@@ -13,18 +13,33 @@ func NewRelationships(tuples Tuples, model Model) *Relationships {
 	return &Relationships{model: model, tuples: tuples}
 }
 
-func (r *Relationships) Grant(ctx context.Context, relationship Relationship) error {
-	if err := r.model.validateRelationship(relationship); err != nil {
+// Grant stores the relationships with one statement after validating all of them.
+func (r *Relationships) Grant(ctx context.Context, relationships ...Relationship) error {
+	tuples, err := r.tuplesOf(relationships)
+	if err != nil {
 		return err
 	}
-	return r.tuples.Insert(ctx, tupleOf(relationship))
+	return r.tuples.Insert(ctx, tuples)
 }
 
-func (r *Relationships) Revoke(ctx context.Context, relationship Relationship) error {
-	if err := r.model.validateRelationship(relationship); err != nil {
+// Revoke removes the relationships with one statement after validating all of them.
+func (r *Relationships) Revoke(ctx context.Context, relationships ...Relationship) error {
+	tuples, err := r.tuplesOf(relationships)
+	if err != nil {
 		return err
 	}
-	return r.tuples.Delete(ctx, tupleOf(relationship))
+	return r.tuples.Delete(ctx, tuples)
+}
+
+func (r *Relationships) tuplesOf(relationships []Relationship) ([]Tuple, error) {
+	tuples := make([]Tuple, len(relationships))
+	for i, relationship := range relationships {
+		if err := r.model.validateRelationship(relationship); err != nil {
+			return nil, err
+		}
+		tuples[i] = tupleOf(relationship)
+	}
+	return tuples, nil
 }
 
 // Stored reports which of the candidates are stored, directly and without evaluating permits, in one query.

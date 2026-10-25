@@ -1,6 +1,6 @@
 ---
 title: Runtime configuration
-description: Tadoku API environment variables, startup and shutdown behavior, authentication wiring, the raw Keto client, metrics and production credentials.
+description: Tadoku API environment variables, startup and shutdown behavior, authentication wiring, permissions, the Keto client `tadoku-tenant` uses, metrics and production credentials.
 sidebar_position: 9
 ---
 
@@ -24,7 +24,7 @@ environment variables. Development values are in
 - `API_REQUEST_TIMEOUT` (default 30s), the shared request deadline.
 - `API_DIAL_TIMEOUT` (default 3s), `API_RESPONSE_HEADER_TIMEOUT` (default 10s)
   and `API_IDLE_TIMEOUT` (default 30s) bound the owned outgoing HTTP transport
-  shared by the service-token exchange, Flipt and Keto clients.
+  shared by the service-token exchange and Flipt clients.
   `API_IDLE_TIMEOUT` is also the listeners' idle-connection timeout.
 - `API_SHUTDOWN_TIMEOUT` (default 10s).
 
@@ -38,6 +38,8 @@ environment variables. Development values are in
   `[REDACTED]`, and JSON encoding omits them. Call `Reveal` only where the
   value is passed to the PostgreSQL pool or the migration tool.
 - `API_POSTGRES_MAX_CONNECTIONS` (default 4, validated range 1–32).
+- Permission checks and relationship writes use this pool. There is no
+  separate permissions endpoint or timeout; see [Permissions](#permissions).
 
 ### Valkey, leaderboard caches and login throttling {#valkey-and-leaderboard-caches}
 
@@ -98,18 +100,8 @@ share that proxy's peer-IP budget. Malformed prefixes fail startup.
 `tadoku.app` or `tadoku.dev.lab`. The development base API and overlays set
 the latter.
 
-### Keto
-
-- `API_KETO_READ_URL`, an absolute HTTP(S) base URL for the Keto read
-  service. Ban and administrator checks use a separate read-only client with a
-  2s total request timeout.
-- `API_KETO_WRITE_URL`, an absolute HTTP(S) base URL for the Keto write
-  service.
-- `API_KETO_WRITE_TIMEOUT` (default 2s), a positive total request timeout for
-  the raw read/write client, including response-body reads.
-
-For the Keto base URLs, credentials, query strings and fragments are
-rejected; path prefixes are supported and trailing slashes are removed.
+Tadoku API reads no Keto configuration and ignores `API_KETO_*` variables a
+manifest still sets.
 
 ### Service tokens and feature flags
 
@@ -159,9 +151,8 @@ each environment; the development manifests set it to `false`.
 - Startup always constructs and owns the raw Valkey client. Invalid Valkey
   configuration or cancelled setup aborts startup. An unavailable server logs a
   warning and starts in degraded mode; the client reconnects on a later command.
-- Startup constructs and retains the shared Keto read and read/write clients.
-  Constructing them makes no provider request, and provider-backed caches stay
-  cold until a request needs them.
+- Startup assembles the permission model from feature namespaces with
+  `permissions.NewModel`, which validates it. An invalid model aborts startup.
 - Provider availability and cache refresh completion are not startup or
   health-check gates. Startup and health checks never mutate provider state.
 - `/readyz` checks PostgreSQL. `/livez` is independent of dependency health.
@@ -184,23 +175,29 @@ responses. In addition:
   `401` like any other invalid token. Service tokens are never converted into
   human identities.
 - The ban gate performs only the ban lookup, so no unrelated administrator
-  lookup can discard a successful ban result. Request deadlines bound the Keto
-  call. A failed lookup is kept in the request context, so later authenticated
+  lookup can discard a successful ban result. Request deadlines bound the ban
+  query. A failed lookup is kept in the request context, so later authenticated
   and administrator checks return unavailable without another ban query.
+
+## Permissions
+
+- The composition root builds the model with
+  `permissions.NewModel(authz.Permissions)`, then `permissions.NewChecker` and
+  `permissions.NewRelationships` over `authz.NewRepository` on the API's
+  PostgreSQL pool, and `authz.NewRoles` from both. It passes them explicitly
+  into consumers and hands `Roles.Admit` to the ban gate.
+- [Authorization](../architecture/authorization.md#permission-model) documents
+  the model, its storage and the checker methods.
 
 ## Raw Keto relationship primitive
 
-- The composition root retains a concrete `*ketoclient.Client` from
-  `services/tadoku-api/infra/keto` on `application.keto`. It feeds the concrete
-  relationship mutation services.
-- A bounded `NewReadClient` instance, with no write API, feeds shared role
-  facts, request ban checks and actor administrator checks.
-- Pass concrete clients and shared application services explicitly into
-  consumers.
+- Tadoku API constructs no Keto client. `services/tadoku-api/infra/keto` serves
+  `tadoku-tenant`, which passes a client to `permissions.TenantManager` for
+  test-tenant relationships; see
+  [Tenant lifecycle command](./tenant-lifecycle.md).
 - `keto.NewClient(readURL, writeURL, keto.WithHTTPClient(httpClient))` applies
   options to both APIs; the caller owns the HTTP client and transport. Without
-  options, the constructor keeps the SDK defaults. Tadoku API supplies its
-  bounded HTTP client.
+  options, the constructor keeps the SDK defaults.
 
 Use the existing primitives with the operation's caller context and a complete
 tuple target. Set exactly one of `Subject.ID` or `Subject.Set`:
@@ -232,9 +229,6 @@ err = client.DeleteRelation(ctx, namespace, object, relation, group)
   bound requests, including response-body reads. There is no mutation retry
   loop; a timeout or cancellation does not establish whether Keto committed the
   write.
-- Application operations remain responsible for actor authorization and for
-  ordering feature work around these primitives. Audit services own recording
-  details such as business timestamps and persistence.
 
 ## Identity reads
 
@@ -273,7 +267,7 @@ set of series.
 - Shutdown closes the request and metrics listeners. After request handling
   stops, it closes the database and provider transport dependencies: the Flipt
   polling provider, the PostgreSQL pool, the Valkey client and idle HTTP
-  connections, including service-token exchange, Flipt and Keto connections.
+  connections, including service-token exchange and Flipt connections.
 - A startup failure closes the same owned transport. Raw clients have no
   separate close operation.
 - Valkey close follows the upstream client's per-connection close allowance

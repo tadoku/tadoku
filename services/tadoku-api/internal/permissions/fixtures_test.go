@@ -48,6 +48,7 @@ var (
 		Permits{"hide": AnyOf(PermitOn(Site, siteRoot, "admin"), Via("contests", "moderate"))},
 	)
 	testModel = mustModel(sites, groups, contests, logs)
+	siteAdmin = sites.Check(siteRoot, "admin")
 )
 
 func mustModel(namespaces ...Namespace) Model {

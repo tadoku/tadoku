@@ -86,9 +86,10 @@ graph. Each allowed package covers only its own targets, not subpackages, and
   `app/tenantlifecycle:tenantlifecycle_test` target may also construct its owned
   provider fixture. Lifecycle application code uses `permissions.TenantManager`.
 
-This keeps other packages on the shared permission checker. Keep shared ban and
-administrator permit lookups in `internal/permissions`; the check cannot
-detect a raw `banned` or `admins` relation literal inside an allowed package.
+This keeps other packages on the shared permission checker. Keep ban and
+administrator permit lookups in `features/authz`, which owns the `app`
+namespace; the check cannot detect a raw `banned` or `admins` relation literal
+inside an allowed package.
 
 ## Repository and store files
 

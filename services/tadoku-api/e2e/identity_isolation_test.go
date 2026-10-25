@@ -137,7 +137,11 @@ func TestIdentityGuestGatewayAdmissionPreservesBanGate(t *testing.T) {
 		`{"email":"reader@example.test","password":"Fixture-login-482!"}`, "", nil)
 	requireIdentityStatus(t, response, http.StatusOK)
 	cookie := response.Result().Cookies()[0].String()
-	if err := api.keto.Reset(t.Context(), "testdata/IdentityV2/banned.json"); err != nil {
+	if err := resetRelationships(
+		t.Context(),
+		api.db.Pool,
+		"testdata/IdentityV2/banned.json",
+	); err != nil {
 		t.Fatal(err)
 	}
 

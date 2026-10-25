@@ -1,14 +1,14 @@
 [
   {
-    "namespace": "app",
-    "object": "tadoku",
+    "tenant": "tadoku/prod",
+    "object": "app:root",
     "relation": "admins",
-    "subject_id": "44444444-4444-4444-8444-444444444444"
+    "subject": "user:44444444-4444-4444-8444-444444444444"
   },
   {
-    "namespace": "app",
-    "object": "tadoku",
+    "tenant": "tadoku/prod",
+    "object": "app:root",
     "relation": "banned",
-    "subject_id": "44444444-4444-4444-8444-444444444444"
+    "subject": "user:44444444-4444-4444-8444-444444444444"
   }
 ]

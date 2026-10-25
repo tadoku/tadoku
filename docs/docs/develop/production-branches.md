@@ -165,24 +165,27 @@ documents the command, the role and its refusals of `tadoku/prod`.
 ## Who can use a branch
 
 Anyone can use a branch. Its pages load for anonymous visitors, and its API
-admits guests and every signed-in user, with no grant on its Keto object.
-Pages that need a session, such as `/logs/new`, redirect to the branch's login
-page on its account host. Only a ban refuses a signed-in user, whether
-inherited from production or set on the branch.
+admits guests and every signed-in user without any grant. Pages that need a
+session, such as `/logs/new`, redirect to the branch's login page on its
+account host. Only a ban stored in the branch tenant refuses a signed-in user;
+production bans do not apply on a branch.
 [Authorization](../architecture/authorization.md#request-pipeline) lists the
 admission rules.
 
-- **Production administrators** inherit administrator permits on the branch
-  through the canonical parent of its Keto object.
+- **Administrators.** A branch tenant has no administrators until one is
+  granted, and production administrators are not administrators there. Grant
+  one with the
+  [operator SQL](../architecture/authorization.md#granting-an-administrator),
+  using the branch tenant key `tadoku/<route>`.
 - **Test accounts.** Pull-request deploys create none. For a branch the
   maintainer deploys by hand, the maintainer's private tooling registers
   three accounts in the branch tenant through the branch's own identity API,
   marked with the route, using plus-aliased addresses of the project mailbox:
 
-  | Account | Grants on the branch object |
+  | Account | Role on the branch tenant |
   | --- | --- |
-  | reader | `testers` |
-  | admin | `testers` and `admins` |
+  | reader | None |
+  | admin | `admins`, granted with the operator SQL |
   | outsider | None |
 
   Only `admins` changes what an account can do, so the reader and the

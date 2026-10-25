@@ -1,6 +1,9 @@
 package e2e_test
 
-import valkeygo "github.com/valkey-io/valkey-go"
+import (
+	"github.com/jackc/pgx/v5/pgxpool"
+	valkeygo "github.com/valkey-io/valkey-go"
+)
 
 // routerOption replaces a dependency endpoint the fixtures normally supply.
 type routerOption func(*routerEndpoints)
@@ -8,7 +11,8 @@ type routerOption func(*routerEndpoints)
 type routerEndpoints struct {
 	jwks           string
 	production     *bool
-	ketoWrite      string
+	permissions    *pgxpool.Pool
+	grants         *pgxpool.Pool
 	identityValkey valkeygo.Client
 }
 
@@ -16,6 +20,14 @@ func withIdentityValkey(client valkeygo.Client) routerOption {
 	return func(endpoints *routerEndpoints) { endpoints.identityValkey = client }
 }
 
-func withKetoWriteURL(url string) routerOption {
-	return func(endpoints *routerEndpoints) { endpoints.ketoWrite = url }
+// withPermissionsPool serves permission checks, role reads and grants from pool instead of the router's database pool.
+func withPermissionsPool(pool *pgxpool.Pool) routerOption {
+	return func(endpoints *routerEndpoints) {
+		endpoints.permissions = pool
+		endpoints.grants = pool
+	}
+}
+
+func withGrantsPool(pool *pgxpool.Pool) routerOption {
+	return func(endpoints *routerEndpoints) { endpoints.grants = pool }
 }

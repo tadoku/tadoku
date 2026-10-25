@@ -19,7 +19,7 @@ func TestBannedUsers(t *testing.T) {
 		{description: []string{"test", "guest"}, want: http.StatusOK},
 		{description: []string{"test", "without", "access"}, want: http.StatusOK},
 		{description: []string{"test", "production", "admin"}, want: http.StatusOK},
-		{description: []string{"test", "production", "banned"}, want: http.StatusForbidden},
+		{description: []string{"test", "production", "ban", "not", "inherited"}, want: http.StatusOK},
 		{description: []string{"test", "local", "banned"}, want: http.StatusForbidden},
 		{description: []string{"production", "locally", "banned"}, want: http.StatusOK},
 	}

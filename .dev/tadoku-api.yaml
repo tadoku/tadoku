@@ -36,10 +36,6 @@ spec:
           value: 3s
         - name: API_FLIPT_MANAGEMENT_URL
           value: http://oathkeeper-proxy.tdk-dev-oathkeeper:4455/flipt-management
-        - name: API_KETO_READ_URL
-          value: http://keto-read.tdk-dev-keto:4466
-        - name: API_KETO_WRITE_URL
-          value: http://keto-write.tdk-dev-keto:4467
         - name: API_IDENTITY_COOKIE_DOMAIN
           value: tadoku.dev.lab
         - name: API_IDENTITY_TRUSTED_PROXY_CIDRS

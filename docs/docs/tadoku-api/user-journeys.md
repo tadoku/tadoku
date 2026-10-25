@@ -34,7 +34,7 @@ and, where needed, the worker application in process. Fixtures live under
 ```text
 e2e/testdata/journeys/
   cast.json                  # cast member -> bearer token
-  relationships.json         # cast Keto tuples, seeded for every journey
+  relationships.json         # cast roles, seeded for every journey
   <Journey>/
     setup.sql                # optional, journey-specific
     relationships.json       # optional, journey-specific
@@ -81,9 +81,12 @@ e2e/testdata/journeys/
 
 ### Reset and time
 
-- The runner resets PostgreSQL, Keto and Valkey once per journey: cleanup, then
-  the optional shared `journeys/setup.sql` and the shared
-  `journeys/relationships.json`, then the journey's own files. There are no
+- The runner resets PostgreSQL, permission relationships and Valkey once per
+  journey: cleanup, then the optional shared `journeys/setup.sql`, the
+  journey's own `setup.sql` and the account cast, then the rows of the shared
+  `journeys/relationships.json` plus the journey's own `relationships.json`,
+  as described in
+  [Relationship files](./http-e2e.md#relationship-files). There are no
   per-step seeds and no resets between steps. A journey may seed an external
   cache after reset to establish its initial state.
 - The JWT clock stays at the fixture instant for the whole journey, while each
@@ -94,24 +97,25 @@ e2e/testdata/journeys/
 ### Cast
 
 - Cast members are `guest`, `user`, `user2`, `admin` and `banned`, plus the
-  implicit `none`. `admin` and `banned` hold their `app:tadoku` tuples through
-  the shared `relationships.json`. Tenant variants use the same subjects in
-  signed tokens with a different tenant claim. Any of them may enter that
-  tenant; they inherit `app:tadoku` administrators and bans only through a
-  real Keto parent grant.
+  implicit `none`. `admin` and `banned` hold their `admins` and `banned`
+  relationships on `tadoku/prod` through the shared `relationships.json`.
+  Tenant variants use the same subjects in signed tokens with a different
+  tenant claim. Any of them may enter that tenant, but holds a role there only
+  through a relationship row for that tenant; nothing is inherited from
+  `tadoku/prod`.
 - To add a member, sign a token with the
   [fixture recipe](./http-e2e.md#signing-a-new-fixture-token), append its public key when you
-  use a new signing key, and add the token to `cast.json` and any tuple to
-  `relationships.json`.
+  use a new signing key, and add the token to `cast.json` and any relationship
+  row to `relationships.json`.
 
 ### Tenant isolation
 
 `TestTenantIsolationJourney` uses the restricted PostgreSQL application role,
-real Valkey and real Keto. Its requests create one log in each tenant, then
-check separate leaderboards, cache keys, scoped worker outcomes, feature grants
-and bans. The canonical tenant remains `tadoku/prod`; test-tenant objects in
-Keto use their full parsed key and inherit from the existing `app:tadoku`
-object.
+real Valkey and PostgreSQL-backed permissions. Its requests create one log in
+each tenant, then check separate leaderboards, cache keys, scoped worker
+outcomes, feature grants and bans. The canonical tenant remains `tadoku/prod`;
+each tenant has its own `app:root`, and the test tenant inherits no
+administrators or bans from it.
 
 Flipt evaluation and management use the suite's tenant-aware protocol fixture.
 This journey therefore verifies application routing and independent flag

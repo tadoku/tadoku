@@ -16,7 +16,11 @@ import (
 
 func TestIdentityGeneratedRecoveryJourney(t *testing.T) {
 	resetIdentity(t)
-	if err := api.keto.Reset(t.Context(), "testdata/journeys/relationships.json"); err != nil {
+	if err := resetRelationships(
+		t.Context(),
+		api.db.Pool,
+		"testdata/journeys/relationships.json",
+	); err != nil {
 		t.Fatal(err)
 	}
 	old := identityRequest(t, api.handler, "tadoku/prod", "POST", "/identity/login",

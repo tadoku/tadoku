@@ -51,8 +51,9 @@ func TestTenantIsolation(t *testing.T) {
 		}
 	})
 
-	if err := api.keto.Reset(
+	if err := resetRelationships(
 		t.Context(),
+		api.db.Pool,
 		"testdata/CreatePage/relationships.json",
 		"testdata/TenantIsolation/relationships.json",
 	); err != nil {

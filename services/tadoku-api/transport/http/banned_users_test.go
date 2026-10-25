@@ -18,21 +18,31 @@ import (
 
 func TestBanLookupFailureBlocksPrivilegeChecks(t *testing.T) {
 	providerErr := errors.New("ban lookup failed")
+	sites := permissions.Define(
+		"site",
+		permissions.Relations{"admins": {permissions.Users}},
+		permissions.Permits{"admin": permissions.Related("admins")},
+	)
+	model, err := permissions.NewModel(sites)
+	if err != nil {
+		t.Fatal(err)
+	}
+	admin := sites.Check("root", "admin")
 	for _, test := range []struct {
 		name  string
 		check func(*permissions.Checker, context.Context) (bool, error)
 	}{
-		{name: "conditional admin privilege", check: func(checker *permissions.Checker, ctx context.Context) (bool, error) {
-			return checker.IsAdmin(ctx)
+		{name: "conditional privilege", check: func(checker *permissions.Checker, ctx context.Context) (bool, error) {
+			return checker.Allowed(ctx, admin)
 		}},
-		{name: "admin-only operation", check: func(checker *permissions.Checker, ctx context.Context) (bool, error) {
-			err := checker.RequireAdmin(ctx)
+		{name: "privileged operation", check: func(checker *permissions.Checker, ctx context.Context) (bool, error) {
+			err := checker.Require(ctx, admin)
 			return err == nil, err
 		}},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			banChecks := 0
-			checker := permissions.NewKetoChecker(nil)
+			checker := permissions.NewChecker(nil, model)
 			rejectBanned := RejectBannedUsers(func(context.Context) permissions.Admission {
 				banChecks++
 				return permissions.AdmittedBanUnknown{Err: providerErr}

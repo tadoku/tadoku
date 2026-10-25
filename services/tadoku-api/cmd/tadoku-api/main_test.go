@@ -19,7 +19,6 @@ import (
 	"testing"
 	"time"
 
-	ketoclient "github.com/tadoku/tadoku/services/tadoku-api/infra/keto"
 	valkeygo "github.com/valkey-io/valkey-go"
 )
 
@@ -49,26 +48,6 @@ func TestApplicationStartsAndShutsDown(t *testing.T) {
 	}))
 	t.Cleanup(exchange.Close)
 	cfg.OathkeeperURL = exchange.URL
-	var ketoRequests atomic.Int32
-	ketoDisconnected := make(chan struct{}, 1)
-	keto := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ketoRequests.Add(1)
-		_, _ = io.Copy(io.Discard, r.Body)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusCreated)
-		_, _ = w.Write([]byte(`{}`))
-	}))
-	keto.Config.ConnState = func(_ net.Conn, state http.ConnState) {
-		if state == http.StateClosed {
-			select {
-			case ketoDisconnected <- struct{}{}:
-			default:
-			}
-		}
-	}
-	keto.Start()
-	t.Cleanup(keto.Close)
-	cfg.KetoWriteURL = keto.URL
 	cfg.IdleTimeout = time.Minute
 	observer, err := valkeygo.NewClient(valkeygo.MustParseURL(cfg.ValkeyURL))
 	if err != nil {
@@ -115,20 +94,6 @@ func TestApplicationStartsAndShutsDown(t *testing.T) {
 	}
 	if got := application.pool.Config().ConnConfig.RuntimeParams["application_name"]; got != cfg.ServiceName {
 		t.Errorf("application_name=%q want=%q", got, cfg.ServiceName)
-	}
-	if got := ketoRequests.Load(); got != 0 {
-		t.Fatalf("startup/readiness made %d Keto write requests", got)
-	}
-	if application.keto == nil {
-		t.Fatal("startup did not retain the raw Keto client")
-	}
-	if err := application.keto.AddRelation(t.Context(), "app", "synthetic", "admins", ketoclient.Subject{ID: "synthetic"}); err != nil {
-		t.Fatalf("owned Keto request: %v", err)
-	}
-	select {
-	case <-ketoDisconnected:
-		t.Fatal("Keto connection was not kept idle until shutdown")
-	default:
 	}
 	if application.flipt == nil {
 		t.Fatal("Flipt outage did not preserve the fallback provider")
@@ -223,11 +188,6 @@ func TestApplicationStartsAndShutsDown(t *testing.T) {
 		t.Errorf("closed Valkey client PING error=%v, want ErrClosing", err)
 	}
 	waitForValkeyDisconnect(t, observer, "id="+strconv.FormatInt(clientID, 10))
-	select {
-	case <-ketoDisconnected:
-	case <-time.After(time.Second):
-		t.Error("Keto connection remained open after shutdown")
-	}
 }
 
 func TestApplicationReadinessDoesNotDependOnValkey(t *testing.T) {
@@ -269,11 +229,6 @@ func TestApplicationReadinessDoesNotDependOnValkey(t *testing.T) {
 
 func TestApplicationClosesValkeyWhenLaterStartupFails(t *testing.T) {
 	cfg := validApplicationConfig(t)
-	keto := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {
-		t.Error("failed startup must not make Keto write requests")
-	}))
-	t.Cleanup(keto.Close)
-	cfg.KetoWriteURL = keto.URL
 	observer, err := valkeygo.NewClient(valkeygo.MustParseURL(cfg.ValkeyURL))
 	if err != nil {
 		t.Fatal(err)

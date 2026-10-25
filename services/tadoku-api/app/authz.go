@@ -32,7 +32,7 @@ func (a *Application) CurrentUserRole(ctx context.Context) (Role, error) {
 type RoleUpdateParameters = authz.RoleUpdateParameters
 
 func (a *Application) UpdateRole(ctx context.Context, parameters RoleUpdateParameters) (err error) {
-	if err := a.permissions.RequireAdmin(ctx); err != nil {
+	if err := a.roles.RequireAdmin(ctx); err != nil {
 		return err
 	}
 

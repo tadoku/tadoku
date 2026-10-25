@@ -192,79 +192,27 @@ seed_native_accounts() {
   echo "seeded native accounts ${admin_id} ${reader_id}"
 }
 
-seed_keto_admin() {
+seed_admin() {
   local subject_id="$1"
-  local pod_name
-  pod_name="tadoku-dev-keto-seed-${RANDOM}-${RANDOM}"
+  local pod
+  local database_password_value
+  pod="$(db_pod)"
+  database_password_value="$(database_password tadoku)"
 
-  kubectl --context "$KUBE_CONTEXT" -n "$DB_NAMESPACE" run "$pod_name" \
-    --quiet \
-    --rm \
-    -i \
-    --restart=Never \
-    --image=python:3.12-alpine \
-    --env="SEED_SUBJECT_ID=${subject_id}" \
-    --env="KETO_WRITE_URL=${TADOKU_KETO_WRITE_URL:-http://keto-write.tdk-dev-keto:4467}" \
-    --env="KETO_READ_URL=${TADOKU_KETO_READ_URL:-http://keto-read.tdk-dev-keto:4466}" \
-    -- python - <<'PY'
-import json
-import os
-import sys
-import time
-import urllib.error
-import urllib.parse
-import urllib.request
-
-keto_write = os.getenv("KETO_WRITE_URL", "http://keto-write:4467").rstrip("/")
-keto_read = os.getenv("KETO_READ_URL", "http://keto-read:4466").rstrip("/")
-subject_id = os.environ["SEED_SUBJECT_ID"]
-payload = {
-    "namespace": os.getenv("KETO_NAMESPACE", "app"),
-    "object": os.getenv("KETO_OBJECT", "tadoku"),
-    "relation": os.getenv("KETO_RELATION", "admins"),
-    "subject_id": subject_id,
-}
-
-deadline = time.time() + 180
-last_error = None
-while time.time() < deadline:
-    try:
-        with urllib.request.urlopen(
-            f"{keto_read}/relation-tuples?{urllib.parse.urlencode(payload)}",
-            timeout=10,
-        ) as resp:
-            if json.load(resp).get("relation_tuples"):
-                print(f"keto admin already seeded for {subject_id}")
-                sys.exit(0)
-    except Exception as exc:
-        last_error = exc
-        time.sleep(2)
-        continue
-    data = json.dumps(payload).encode("utf-8")
-    req = urllib.request.Request(
-        f"{keto_write}/admin/relation-tuples",
-        data=data,
-        method="PUT",
-    )
-    req.add_header("Accept", "application/json")
-    req.add_header("Content-Type", "application/json")
-    try:
-        with urllib.request.urlopen(req, timeout=10) as resp:
-            if resp.getcode() in (200, 201, 204):
-                print(f"seeded keto admin for {subject_id}")
-                sys.exit(0)
-    except urllib.error.HTTPError as exc:
-        if exc.code == 409:
-            print(f"keto admin already seeded for {subject_id}")
-            sys.exit(0)
-        last_error = f"http {exc.code}: {exc.read().decode('utf-8', 'replace')}"
-    except Exception as exc:
-        last_error = exc
-    time.sleep(2)
-
-print(f"failed to seed keto admin for {subject_id}: {last_error}", file=sys.stderr)
-sys.exit(1)
-PY
+  kubectl --context "$KUBE_CONTEXT" -n "$DB_NAMESPACE" exec -i "$pod" -- env PGPASSWORD="$database_password_value" PGSSLMODE=require \
+    psql -X -q \
+      -v ON_ERROR_STOP=1 \
+      -v tenant=tadoku/prod \
+      -v "admin_user_id=${subject_id}" \
+      -h "${DB_NAME}.${DB_NAMESPACE}" -U tadoku -d tadoku <<'SQL'
+begin;
+select set_config('tadoku.tenant', :'tenant', true) as tenant \gset
+insert into permission_relationships (tenant, object_type, object_id, relation, subject_type, subject_id)
+values (:'tenant', 'app', 'root', 'admins', 'user', lower(:'admin_user_id'))
+on conflict do nothing;
+commit;
+SQL
+  echo "seeded administrator ${subject_id}"
 }
 
 run_seed_sql() {
@@ -303,7 +251,8 @@ read -r ADMIN_USER_ID READER_USER_ID <<< "$FIXTURE_IDS"
 echo "seeding native accounts..."
 seed_native_accounts "$ADMIN_USER_ID" "$READER_USER_ID"
 export ADMIN_USER_ID READER_USER_ID
-seed_keto_admin "$ADMIN_USER_ID"
+wait_for_relation tadoku tadoku permission_relationships
+seed_admin "$ADMIN_USER_ID"
 
 wait_for_relation tadoku tadoku pages
 wait_for_relation tadoku tadoku profiles

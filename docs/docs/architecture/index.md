@@ -22,7 +22,7 @@ documented here.
 | webv2 | Main site: logging, contests, leaderboards and content | `frontend/apps/webv2/`, `k8s/dev/base/frontend-webv2/` |
 | authv2 | Account app: login, registration, recovery and Settings through the identity API | `frontend/apps/authv2/`, `k8s/dev/base/frontend-authv2/` |
 | admin | Administration, moderation and CMS | `frontend/apps/admin/`, `k8s/dev/base/frontend-admin/` |
-| Ory Keto | Role relationships such as administrators and bans | `k8s/dev/base/keto/` |
+| Ory Keto | Test-tenant relationships that `tadoku-tenant` provisions; Tadoku API does not read it | `k8s/dev/base/keto/` |
 | Ory Oathkeeper | Access proxy for API and operator routes; issues user and service JWTs | `k8s/dev/base/oathkeeper/` |
 | token-reflector | Publishes the Kubernetes service-account JWKS and returns exchanged service tokens | `services/token-reflector/` |
 | Flipt | Feature flags | `k8s/dev/base/flipt/`, `feature-flags.contract.json` |
@@ -67,6 +67,8 @@ browser → ingress-nginx → Envoy → webv2 / authv2 / admin
   terminal failure it stays stale until the next write to the same contest or
   year, or a replay. See
   [Leaderboard freshness and worker health](../tadoku-api/jobs-operations.md#leaderboard-freshness-and-worker-health).
+- Administrator and ban relationships are tenant-owned rows in the Tadoku API
+  database; see [Authorization](./authorization.md#permission-model).
 - Keto keeps its own database in the same PostgreSQL server.
 
 ## Where to go next

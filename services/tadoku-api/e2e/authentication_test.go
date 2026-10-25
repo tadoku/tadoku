@@ -201,11 +201,10 @@ func TestAuthenticationBranch(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	handler, _, _, err := newTestRouterWithLeaderboardService(
+	handler, _, err := newTestRouterWithLeaderboardService(
 		t.Context(),
 		api.db.AppPool,
 		api.db.AppPool,
-		api.keto,
 		slog.New(slog.NewTextHandler(io.Discard, nil)),
 		false,
 		api.leaderboard,

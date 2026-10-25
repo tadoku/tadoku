@@ -38,8 +38,8 @@ environment variables. Development values are in
   `[REDACTED]`, and JSON encoding omits them. Call `Reveal` only where the
   value is passed to the PostgreSQL pool or the migration tool.
 - `API_POSTGRES_MAX_CONNECTIONS` (default 4, validated range 1–32).
-- [Permissions](../architecture/authorization.md#permission-model) use this
-  pool, with no endpoint or timeout of their own.
+- [Permissions](../architecture/permission-model.md) use this pool, with no
+  endpoint or timeout of their own.
 
 ### Valkey, leaderboard caches and login throttling {#valkey-and-leaderboard-caches}
 

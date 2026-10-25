@@ -127,7 +127,7 @@ The following rules decide where each check belongs.
 - The checker evaluates each check in the request tenant for the verified
   `internal/identity` subject, without caching. A feature defines permissions
   on its own objects as the
-  [permission model](../architecture/authorization.md#permission-model)
+  [permission model](../architecture/permission-model.md#namespaces-and-handles)
   describes.
 - Do not duplicate the shared ban gate in application operations or feature
   services. Code that invokes an application operation outside the application

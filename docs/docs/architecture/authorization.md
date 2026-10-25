@@ -62,48 +62,13 @@ authorize shared provider mutations.
 
 ## Permission model
 
-Permissions follow
-[Zanzibar](https://research.google/pubs/zanzibar-googles-consistent-global-authorization-system/).
-Relation tuples are rows in the tenant-owned table `permission_relationships`;
-row-level security scopes them to the transaction's tenant, and deleting a
-tenant deletes them. A user subject is `user` with the lowercase account UUID
-from the JWT `sub`, never an email.
-
-The core logic in `services/tadoku-api/internal/permissions/` knows no object
-type. Each feature declares the namespace of the objects it owns as
-`var Permissions = permissions.Define(...)` in `<feature>_permissions.go`, with
-permits built from these rules:
-
-| Rule | Zanzibar equivalent |
-| --- | --- |
-| `Related(relation)` | `_this` |
-| `Allowed(permit)` | `computed_userset` |
-| `Via(relation, permit)` | `tuple_to_userset` |
-| `AnyOf`, `AllOf`, `Except` | union, intersection, exclusion |
-| `PermitOn(objectType, objectID, permit)` | None: the permit on one fixed object, which may belong to another feature's namespace |
-
-Features cannot import each other, so a reference to another namespace is a
-name. `permissions.NewModel` validates all namespaces together; an invalid
-model stops startup. Evaluation fails closed, and a walk deeper than eight
-levels is an error.
-
-The core logic reaches storage only through the `permissions.Tuples` port,
-which the `features/authz` repository implements
-(`services/tadoku-api/features/authz/authz_repository.go`).
-
-Checks and relationships can be built only through their namespace, and Bazel
-visibility keeps other features from importing it. The feature exports helpers
-that take typed IDs, so call sites never spell a namespace, permit or relation: `<Permit>Permission` returns a `permissions.Check` and
-`<Relation>Relationship` returns a `permissions.Relationship`. To add a
-namespace, add it to every `permissions.NewModel` call. A namespace builds only
-user relationships; add a method for linked objects or subject sets when a
-feature first stores one.
+Features define permissions as [Permission model](./permission-model.md)
+describes.
 
 `authz.Permissions` (`services/tadoku-api/features/authz/authz_permissions.go`)
 defines the `app` namespace, with one object per tenant, `app:root`: the
 relations `admins` and `banned`, and the permits `admin`, `Related("admins")`,
-and `is_banned`, `Related("banned")`. Its helpers are unexported behind
-`authz.Roles`.
+and `is_banned`, `Related("banned")`.
 
 Nothing is inherited between tenants: a test or branch tenant starts with no
 administrators and no bans.
@@ -223,10 +188,8 @@ is not a UUID has no roles.
 Feature services may inspect permissions only to expand behavior inside an
 operation the application has already authorized, and never repeat the ban
 gate. Roles of other users come from `authz.Roles.UserRoles` and never
-authorize the actor. `permissions.Relationships` writes with `Grant` and
-`Revoke` inside the caller's transaction (`postgres.RunInTransaction`) and
-validates every relationship before any SQL. Checks, reads and writes all use
-the request tenant.
+authorize the actor. Relationship writes and reads use the
+[building blocks](./permission-model.md#building-blocks).
 
 ## Shared data
 

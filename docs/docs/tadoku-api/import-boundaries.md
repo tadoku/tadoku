@@ -38,6 +38,9 @@ boundaries described in [Code ownership](./index.md#code-ownership).
 - Core logic in `internal/` imports no feature, adapter or generated package;
   it reaches state through a port it declares. See
   [Cross-cutting concerns](../architecture/cross-cutting-concerns.md).
+- `app/permissionmodel`, the list of every feature's permission namespace, is
+  visible only to the composition roots that build the model from it:
+  `cmd/tadoku-api`, `app/tenantlifecycle` and E2E.
 - `services/tadoku-api/infra/flipt` owns the shared tenant-to-provider target
   mapping. Its ordinary consumers use `:infrastructure_consumers`; the exact test-only
   `internal/testflipt` fixture package may also depend on it so HTTP evaluation

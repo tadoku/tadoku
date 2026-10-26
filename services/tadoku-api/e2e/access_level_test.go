@@ -29,6 +29,7 @@ var operationAccess = map[string]accessLevel{
 	"IdentityRecoveryConsume":    accessPublic,
 	"IdentityProfileUpdate":      accessPublic,
 	"IdentityPasswordUpdate":     accessPublic,
+	"IdentityAccountDelete":      accessPublic,
 	"EmailList":                  accessAdmin,
 	"EmailGet":                   accessAdmin,
 	"IdentityProxySessionCheck":  accessCallback,

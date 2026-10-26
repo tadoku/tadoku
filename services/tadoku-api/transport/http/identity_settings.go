@@ -5,6 +5,7 @@ import (
 
 	"github.com/tadoku/tadoku/services/tadoku-api/app/api"
 	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
 
 func (s *server) IdentityRecoveryCreate(
@@ -87,4 +88,11 @@ func (s *server) IdentityPasswordUpdate(
 		return nil, err
 	}
 	return openapi.IdentityPasswordUpdate204Response{}, nil
+}
+
+func (s *server) IdentityAccountDelete(
+	ctx context.Context,
+	request openapi.IdentityAccountDeleteRequestObject,
+) (openapi.IdentityAccountDeleteResponseObject, error) {
+	return nil, errx.NewNotImplementedError()
 }

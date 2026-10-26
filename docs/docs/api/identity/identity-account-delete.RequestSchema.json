@@ -1,0 +1,1 @@
+{"title":"Body","body":{"required":true,"content":{"application/json":{"schema":{"type":"object","properties":{"email":{"type":"string","maxLength":320,"format":"email","description":"The account's email address, compared with it after normalization, so letter case and surrounding whitespace do not matter."}},"required":["email"],"title":"AccountDeletion"}}}}}

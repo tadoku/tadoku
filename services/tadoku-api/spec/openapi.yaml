@@ -3160,6 +3160,68 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/IdentityPasswordSettings'
+  /identity/settings/account-deletion:
+    post:
+      operationId: IdentityAccountDelete
+      summary: Delete the signed-in account after a recent login
+      description: >-
+        Requires a login within the last hour and the account's own email address, compared after
+        normalization. The request locks the account at once: from its commit the cookie reads as a guest
+        and login answers wrong_password. A worker job then deletes the account's data. Administrators
+        and banned accounts are refused.
+      tags:
+      - identity
+      security:
+      - IdentitycookieAuth: []
+      x-tadoku-source: Identity
+      x-tadoku-exposure: public
+      x-legacy-path: /identity/settings/account-deletion
+      x-legacy-operation-id: IdentityAccountDelete
+      responses:
+        '202':
+          description: Accepted; the account is locked and its deletion is queued
+          headers:
+            Set-Cookie:
+              description: Clears the tenant-specific session cookie.
+              schema:
+                type: string
+                maxLength: 4096
+        '400':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '401':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '403':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '409':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '503':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IdentityAccountDeletion'
   /emails:
     get:
       operationId: EmailList
@@ -4635,6 +4697,9 @@ components:
           - invalid_recovery_token
           - invalid_origin
           - invalid_return_to
+          - confirmation_mismatch
+          - admin_account
+          - banned_account
           - not_implemented
           - unavailable
       required:
@@ -4776,6 +4841,17 @@ components:
             password.
       required:
       - password
+    IdentityAccountDeletion:
+      type: object
+      properties:
+        email:
+          type: string
+          maxLength: 320
+          format: email
+          description: The account's email address, compared with it after normalization, so letter case and
+            surrounding whitespace do not matter.
+      required:
+      - email
     EmailErrorResponse:
       type: object
       properties:

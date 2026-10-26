@@ -27,9 +27,9 @@ credentials and the API's CORS rules. Login throttling therefore sees each
 visitor's own address. Branch account hosts do not route `/api/internal`. Client
 validation mirrors the API's length rules; the API's similarity rule and other
 rejections map onto the field they concern (`email_taken`, `invalid_email`,
-`invalid_display_name`, `invalid_password`) or onto the form (`wrong_password`,
-`throttled`, `stale_session`, a 401 without a code, `invalid_origin` and service
-failures). A wrong password clears and focuses the password field. On
+`invalid_display_name`, `invalid_password`, `confirmation_mismatch`) or onto the
+form (`wrong_password`, `throttled`, `stale_session`, `admin_account`,
+`banned_account`, a 401 without a code, `invalid_origin` and service failures). A wrong password clears and focuses the password field. On
 registration, `throttled` means the tenant's per-network registration budget is
 spent, and the message says to wait 15 minutes; on login it names the login
 limit. A registration answer with an undocumented status, such as the API's

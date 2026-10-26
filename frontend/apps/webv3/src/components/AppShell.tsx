@@ -1,5 +1,7 @@
 import { Link, useHydrated, useRouterState } from '@tanstack/react-router'
 import { Button, Navbar, buttonClassName, type NavbarItem, type NavigationLinkProps } from 'paper-ui'
+import mark from 'paper-ui/assets/brand/cut-meter.svg?url'
+import reversedMark from 'paper-ui/assets/brand/cut-meter-reversed.svg?url'
 import wordmark from 'paper-ui/assets/brand/wordmark-accent.svg?url'
 import reversedWordmark from 'paper-ui/assets/brand/wordmark-reversed.svg?url'
 import type { ReactNode } from 'react'
@@ -47,6 +49,8 @@ export function AppShell({ children }: { children: ReactNode }) {
       <header className="app-header">
         <Navbar
           brand={<>
+            <img className="app-mark app-mark--light" src={mark} width="40" height="40" alt="" />
+            <img className="app-mark app-mark--dark" src={reversedMark} width="40" height="40" alt="" />
             <img className="app-wordmark app-wordmark--light" src={wordmark} width="158" height="29" alt="Tadoku" />
             <img className="app-wordmark app-wordmark--dark" src={reversedWordmark} width="158" height="29" alt="Tadoku" />
           </>}

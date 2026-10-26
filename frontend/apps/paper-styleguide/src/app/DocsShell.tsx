@@ -7,6 +7,8 @@ import {
   type SidebarSection,
 } from 'paper-ui'
 import type { CatalogDocument } from 'paper-ui/catalog'
+import cutMeterUrl from 'paper-ui/assets/brand/cut-meter.svg?no-inline'
+import cutMeterReversedUrl from 'paper-ui/assets/brand/cut-meter-reversed.svg?no-inline'
 import wordmarkAccentUrl from 'paper-ui/assets/brand/wordmark-accent.svg?no-inline'
 import wordmarkReversedUrl from 'paper-ui/assets/brand/wordmark-reversed.svg?no-inline'
 import { Bars3Icon, iconClassName } from 'paper-ui/icons'
@@ -114,6 +116,22 @@ export function DocsShell({ documents, children }: DocsShellProps) {
           mobileNavigation={false}
           brand={
             <span className="docs-wordmark" role="img" aria-label="Tadoku">
+              <img
+                className="docs-wordmark__mark docs-wordmark__mark--ink"
+                src={cutMeterUrl}
+                alt=""
+                aria-hidden="true"
+                width={36}
+                height={36}
+              />
+              <img
+                className="docs-wordmark__mark docs-wordmark__mark--reversed"
+                src={cutMeterReversedUrl}
+                alt=""
+                aria-hidden="true"
+                width={36}
+                height={36}
+              />
               <img
                 className="docs-wordmark__image docs-wordmark__image--accent"
                 src={wordmarkAccentUrl}

@@ -5,7 +5,7 @@ body { margin: 0; }
 a { text-underline-offset: .2em; }
 .text-link { color: var(--paper-color-text-link); }
 .muted { color: var(--paper-color-text-muted); }
-.app-shell { --app-gutter: 28px; --app-content-width: 1160px; min-height: 100vh; display: flex; flex-direction: column; }
+.app-shell { --app-gutter: 28px; --app-content-width: 1160px; --app-brand-width: 142px; min-height: 100vh; display: flex; flex-direction: column; }
 .app-header { border-bottom: 1px solid var(--paper-color-rule-default); background: var(--paper-color-surface-paper); }
 .app-header .paper-navbar { max-width: calc(var(--app-content-width) + var(--app-gutter) * 2); padding-inline: var(--app-gutter); margin: 0 auto; border: 0; }
 .app-header .paper-navbar__inner { padding: 8px 0; }
@@ -14,7 +14,8 @@ a { text-underline-offset: .2em; }
 .app-account-menu--desktop .paper-button > span { max-width: 18ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .app-mobile-account { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--paper-color-rule-subtle); }
 .app-mobile-account__name { margin: 0 0 4px; padding-inline: var(--paper-field-padding-inline); font-size: .875rem; font-weight: 600; color: var(--paper-color-text-muted); overflow-wrap: anywhere; }
-.app-wordmark { display: block; width: 142px; height: auto; }
+.app-mark { display: block; width: calc(var(--app-brand-width) * .282); height: auto; }
+.app-wordmark { display: block; width: var(--app-brand-width); height: auto; }
 .app-content { width: 100%; max-width: calc(var(--app-content-width) + var(--app-gutter) * 2); padding: 48px var(--app-gutter) 64px; margin-inline: auto; flex: 1; min-width: 0; }
 .app-footer { border-top: 1px solid var(--paper-color-rule-default); padding: 24px var(--app-gutter) 32px; }
 .app-footer__inner { max-width: var(--app-content-width); margin: auto; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; }
@@ -47,9 +48,9 @@ a { text-underline-offset: .2em; }
 .app-entry__account h2 { margin: 0 0 12px; font-family: var(--paper-font-body); font-size: 1.125rem; }
 .app-entry__account p { margin: 0; max-width: 48ch; color: var(--paper-color-text-muted); }
 .app-admin-label { border-left: 1px solid var(--paper-color-rule-default); padding-left: 16px; font-weight: 600; }
-@media (max-width: 800px) { .app-shell { --app-gutter: 20px; } .page-columns { grid-template-columns: minmax(0,1fr); gap: 28px; } .app-content { padding-block: 32px 48px; } .app-wordmark { width: 120px; } }
+@media (max-width: 800px) { .app-shell { --app-gutter: 20px; --app-brand-width: 120px; } .page-columns { grid-template-columns: minmax(0,1fr); gap: 28px; } .app-content { padding-block: 32px 48px; } }
 @media (max-width: 800px) { .app-editor-layout { grid-template-columns: minmax(0, 680px); gap: 32px; } .app-editor-aside { padding: 24px 0 0; border-left: 0; border-top: 1px solid var(--paper-color-rule-default); max-width: 60ch; } }
-@media (max-width: 520px) { .app-shell { --app-gutter: 16px; } .app-content { padding-block: 28px 40px; } .app-form__row { grid-template-columns: 1fr; } .app-wordmark { width: 106px; } .app-account-label { display:none; } .app-admin-label { font-size:.8rem; padding-left:8px; } }
+@media (max-width: 520px) { .app-shell { --app-gutter: 16px; --app-brand-width: 106px; } .app-content { padding-block: 28px 40px; } .app-form__row { grid-template-columns: 1fr; } .app-account-label { display:none; } .app-admin-label { font-size:.8rem; padding-left:8px; } }
 @media (min-width: 768px) and (max-width: 1000px) { .app-account-menu--desktop .paper-button > span { max-width: 10ch; } }
 @media (width < 48rem) { .app-account-menu--desktop { display: none; } .app-header .paper-navbar__inner { gap: 8px; } .app-header .paper-navbar__brand { flex-shrink: 0; } .app-header .paper-navbar__actions { margin-inline-start: auto; } .app-header .paper-navbar__mobile-link, .app-header .paper-navbar__actions .paper-button { min-height: 44px; } }
-@media (max-width: 360px) { .app-wordmark { width: 88px; } }
+@media (max-width: 360px) { .app-shell { --app-brand-width: 88px; } }

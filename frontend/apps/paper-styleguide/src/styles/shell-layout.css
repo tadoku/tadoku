@@ -17,22 +17,31 @@
   }
 
   .docs-wordmark {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .docs-wordmark__mark {
+    display: block;
+    inline-size: 36px;
+    block-size: 36px;
+  }
+
+  .docs-wordmark__image {
     display: block;
     inline-size: 126.4px;
     block-size: 23.2px;
   }
 
-  .docs-wordmark__image {
-    display: block;
-    inline-size: 100%;
-    block-size: 100%;
-  }
-
+  .docs-wordmark__mark--reversed,
   .docs-wordmark__image--reversed,
+  :root[data-theme='dark'] .docs-wordmark__mark--ink,
   :root[data-theme='dark'] .docs-wordmark__image--accent {
     display: none;
   }
 
+  :root[data-theme='dark'] .docs-wordmark__mark--reversed,
   :root[data-theme='dark'] .docs-wordmark__image--reversed {
     display: block;
   }

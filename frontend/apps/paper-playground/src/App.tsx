@@ -1,6 +1,8 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { Link, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { usePaperForm, ActionMenu, Button, buttonClassName, Drawer, EmptyState, Loading, Navbar, ToastContainer, type NavbarItem } from 'paper-ui'
+import mark from 'paper-ui/assets/brand/cut-meter.svg?no-inline'
+import reversedMark from 'paper-ui/assets/brand/cut-meter-reversed.svg?no-inline'
 import wordmark from 'paper-ui/assets/brand/wordmark-accent.svg?no-inline'
 import reversedWordmark from 'paper-ui/assets/brand/wordmark-reversed.svg?no-inline'
 import { scenarioGroup, scenarios, usePlayground, useScenario, type GuideIA, type Viewer } from './state'
@@ -61,7 +63,7 @@ export function App() {
     <a className={`${buttonClassName()} app-skip`} href="#main-content">Skip to content</a>
     <header className="app-header">
       <Navbar
-        brand={<div className="flex items-center gap-2"><img className="app-wordmark" src={app.theme==='dark'?reversedWordmark:wordmark} width="158" height="29" alt="Tadoku"/>{admin&&<span className="app-admin-label">Admin</span>}</div>}
+        brand={<div className="flex items-center gap-2"><img className="app-mark" src={app.theme==='dark'?reversedMark:mark} width="40" height="40" alt=""/><img className="app-wordmark" src={app.theme==='dark'?reversedWordmark:wordmark} width="158" height="29" alt="Tadoku"/>{admin&&<span className="app-admin-label">Admin</span>}</div>}
         brandHref="/" navigation={nav} renderLink={({href,...props})=><Link to={href} {...props}/>}
         mobileNavigation={!admin}
         actions={admin ? <Link to="/" className={buttonClassName({variant:'outline'})}>Back to Tadoku</Link> :

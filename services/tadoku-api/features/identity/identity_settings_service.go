@@ -145,7 +145,7 @@ func (s *Service) AdmitAccountDeletion(ctx context.Context, header CookieHeader,
 }
 
 // RequestAccountDeletion requires the transaction that files the deletion for the returned user. It locks the
-// account row before filing locks the users row, and returns the cookie that clears the session.
+// account row before filing locks the users row.
 func (s *Service) RequestAccountDeletion(ctx context.Context, deletion AccountDeletion) (uuid.UUID, Cookie, error) {
 	session, err := s.lockSettingsSession(ctx, deletion.header)
 	if err != nil {

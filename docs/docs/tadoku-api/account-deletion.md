@@ -1,6 +1,6 @@
 ---
 title: Account deletion
-description: How a deletion request locks an account and the worker's account.delete.v1 job removes its data, what a deletion keeps, and why the two transactions' lock orders are safe.
+description: How a deletion request locks an account and the worker's account.delete.v1 job removes its data, what a deletion keeps, and the account-then-user lock order every transaction follows.
 ---
 
 # Account deletion
@@ -33,9 +33,10 @@ registration writes return `409` `account_deletion_in_progress`. A write that
 committed before the lock is visible to the worker and is deleted with the rest.
 
 The worker's `account.delete.v1` handler makes every change in one
-transaction. It locks the `users` row first and changes nothing for a user who
-is already deleted, so a duplicate or replayed job is harmless. A job for a user
-without a deletion lock or without a `users` row fails without retry. Any other
+transaction. It locks the account row and then the `users` row, and changes
+nothing for a user who is already deleted, so a duplicate or replayed job is
+harmless. A job for a user without a deletion lock or without a `users` row
+fails without retry. Any other
 failure rolls the whole deletion back and leaves the account locked until the
 job is retried or replayed. A finished contest is one whose end date is before
 the current UTC date, the rule that closes log editing.
@@ -61,17 +62,16 @@ Every contest event of a deletion carries the time the worker started, but feed
 readers see them only when the transaction commits, which takes seconds on a
 large account.
 
-Filing locks the account row before the `users` row, the order the settings
-writes use, so it waits for a settings write that already holds the account row.
-The worker takes the opposite order: it locks the `users` row and then deletes
-the account row. This is safe because no transaction can hold the account row
-while it waits for that `users` row:
+Every transaction that locks both an account row and its `users` row takes the
+account row first: the settings writes, login and recovery (whose session and
+token inserts lock the `users` row through their foreign keys), filing and the
+worker. Filing therefore waits for a settings write that already holds the
+account row, and the worker waits for any of them instead of deadlocking.
 
-- Every account row lock in `services/tadoku-api/sql/identity/identity.sql`
-  that starts after the deletion lock commits excludes deletion-locked users or
-  skips locked rows. That includes filing itself, so filing again for a pending
-  deletion takes no account lock.
-- A lock that was already queued behind filing still gets the account row,
-  because filing only locked it. A settings write then rechecks its session, and
-  a second filing reads the committed deletion state; both fail before they
-  touch the `users` row. Login and recovery never lock the `users` row.
+- Filing's account lock skips a user whose deletion was already filed when the
+  statement started, and filing reads the committed deletion state before it
+  waits for the `users` row. Filing again answers
+  `account_deletion_in_progress` at once, even while the worker runs.
+- A settings write queued behind filing's account lock gets the row after
+  filing commits, rechecks its session and fails before it touches the `users`
+  row.

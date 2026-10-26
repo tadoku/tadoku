@@ -56,9 +56,9 @@ for attached issuance, limits, listing and revocation.
 
 Profile and moderation use `identity.Reader` for public profile details, account
 age, admin listing and ban-target existence. Targets must be active accounts in
-the request tenant. Account deletion has no API; see
-[Account deletion](../operations/account-deletion.md). Read access does not
-authorize shared provider mutations.
+the request tenant. Administrators file account deletions through the profile
+API; see [Account deletion](../tadoku-api/account-deletion.md). Read access does
+not authorize shared provider mutations.
 
 ## Permission model
 

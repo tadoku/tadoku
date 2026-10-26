@@ -14,7 +14,6 @@ Read this when you need a runbook for the development base or a manual data repa
 | --- | --- |
 | [Development base](./development-base.md) | Operate the development-only base in `k8s/dev/base/`: ownership, automatic migrations, credential bootstrap and verification |
 | [Database migration recovery](./migration-recovery.md) | Contain and repair a failed Tadoku API migration that left `schema_migrations` dirty |
-| [Account deletion](./account-deletion.md) | File an account deletion for the worker, follow it, replay a failed one and verify the anonymised tombstone |
 | [Identity incident recovery](./identity-recovery.md) | Decide whether to revert identity changes or restore identity data during a production incident, and verify database recovery |
 
 ## CMS-managed content

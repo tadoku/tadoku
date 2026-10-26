@@ -32,9 +32,6 @@ boundaries described in [Code ownership](./index.md#code-ownership).
   transport imports no other application.
 - The worker application (`app/worker`) is visible only to its binary
   (`cmd/tadoku-worker`) and E2E.
-- Account deletion filing (`app/accountdeletion`) composes features, like an
-  application, so that more than one application can file a deletion. It is
-  visible only to the worker application, its binary and E2E.
 - The owner-only lifecycle application (`app/tenantlifecycle`) is visible only
   to `cmd/tadoku-tenant` and E2E. Its generated sqlc package is visible only to
   that application; lifecycle SQL targets the tenant registry rather than an

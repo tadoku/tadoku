@@ -68,8 +68,9 @@ e2e/testdata/journeys/
 - Verify queries end with `order by` and select only application-supplied
   columns; database-defaulted IDs and `now()` timestamps are not deterministic.
 - A `run_worker` job step has no fixture directory. It starts the worker against
-  the journey's disposable database and Valkey fixture, waits for queued jobs
-  eligible for the base worker to complete, and stops it before the next step.
+  the journey's disposable database and Valkey fixture, waits until every job
+  eligible for the base worker has completed, including jobs those jobs enqueue,
+  and stops it before the next step.
   Tenants overridden for `tadoku-worker` remain pending. A `run_branch_worker`
   job step requires `forTenant` with a parsed non-production key and completes
   only that tenant's jobs.

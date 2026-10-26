@@ -14,7 +14,8 @@ for guests, uses tenant-local accounts. Profile and moderation callers use
 `identity.Reader`, constructed by `identity.NewReader`.
 
 Account lookup and search are implemented by the separate `ReadService` used by
-profile and moderation. The worker deletes accounts; see
+profile and moderation. Administrators file account deletions through the
+profile API, and the worker deletes the accounts; see
 [Account deletion](./account-deletion.md).
 [Retained email](./email.md) provides recovery messages and old-address notices
 through transactional writes and queue publication.

@@ -1,13 +1,13 @@
 ---
 title: Module design
-description: How to prefer deep modules, hide implementation decisions, preserve meaningful boundaries, when a new Tadoku API application package needs the maintainer's approval, review the knowledge an interface requires of its callers and split a file over the size limit.
+description: How to prefer deep modules, hide implementation decisions, preserve meaningful boundaries, review the knowledge an interface requires of its callers and split a file over the size limit, and why a new Tadoku API application package needs the maintainer's approval.
 ---
 
 # Module design
 
 Read this when you design or review a module boundary, public interface or
-shared abstraction in backend or frontend code, or think the Tadoku API needs
-a new application package.
+shared abstraction in backend or frontend code, or before you add a package
+under `services/tadoku-api/app/`.
 
 Prefer **deep modules**: a small, coherent interface that hides meaningful
 implementation complexity. A module can be a package, service, component or
@@ -77,23 +77,6 @@ concurrency constraint, at the declaration under the existing
 [Go comment rules](../tadoku-api/conventions.md#readability). Make the contract
 sufficient to use the module without reading its implementation.
 
-## Tadoku API application packages
-
-A new package under `services/tadoku-api/app/` is a major architecture change.
-Requests always go through the API application (`app/api`), and the worker
-application (`app/worker`) only executes jobs; see
-[Code ownership](../tadoku-api/index.md#code-ownership).
-
-- The maintainer explicitly approves a new package there before any code for
-  it is written. Agents never create one on their own.
-- When the API application and the worker both seem to need the same code,
-  keep request handling in `app/api` and job execution in `app/worker`.
-  Business decisions they share belong in a feature and pure rules in a
-  [shared domain package](../tadoku-api/conventions.md#shared-domain-packages),
-  not in a shared application package.
-- An agent that believes a new package is needed stops and asks the
-  maintainer.
-
 ## Review a boundary through its callers
 
 Trace a real caller through the operation before deciding to add, split or
@@ -114,6 +97,22 @@ while preserving observable behavior and ownership. Verify affected workflows
 using [Verifying changes](../develop/verifying-changes.md). Do not use quotas
 for function size or exported methods as a substitute for this review. The file
 size limit below prompts a split; it does not choose the boundary.
+
+## Tadoku API application packages
+
+A new package under `services/tadoku-api/app/` is a major architectural
+decision. The API application (`app/api`) handles HTTP requests and the worker
+application (`app/worker`) executes jobs; see
+[Code ownership](../tadoku-api/index.md#code-ownership).
+
+- Agents never create one on their own. If you think one is needed, stop and
+  ask the maintainer, and write no code for it until they explicitly approve
+  it.
+- When the API application and the worker both seem to need the same code,
+  keep request handling in `app/api` and job execution in `app/worker` rather
+  than adding a shared application package. A business decision belongs to the
+  feature that owns it, and pure rules used by several features to a
+  [shared domain package](../tadoku-api/conventions.md#shared-domain-packages).
 
 ## Splitting a long file
 

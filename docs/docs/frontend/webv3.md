@@ -269,7 +269,7 @@ registrations, create and detail operations through the generated client, which
 validates their responses, with the session cookies described above. A
 registration without its ID or contest makes the options unavailable. The API
 owns scoring, contest eligibility, authorization and persistence; Webv3 does not
-read the legacy log-entry feature flag or calculate a provisional score.
+calculate a provisional score.
 Legacy two-column and comic page units are not offered.
 
 A successful save navigates to `/logs/$logId` using the returned ID and displays

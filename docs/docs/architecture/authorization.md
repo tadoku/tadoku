@@ -76,8 +76,9 @@ administrators and no bans.
 Administrators can change only the `banned` relation through the API
 (`PUT /authz/users/{id}/role`), and never for another administrator. No API
 grants `admins`; see [Granting an administrator](#granting-an-administrator).
-A role update writes the relationship and its `moderation_audit_log` entry,
-`ban_user` or `unban_user`, in one transaction.
+A role update locks the target's `users` row, then writes the relationship and
+its `moderation_audit_log` entry, `ban_user` or `unban_user`, in one
+transaction. A target whose account deletion is filed or done returns `409`.
 
 ### Granting an administrator
 

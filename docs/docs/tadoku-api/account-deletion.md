@@ -29,8 +29,10 @@ transaction:
 
 From that commit, login answers `wrong_password`, session lookup treats the
 cookie as a guest, recovery and settings find no account, and log, contest and
-registration writes return `409` `account_deletion_in_progress`. A write that
-committed before the lock is visible to the worker and is deleted with the rest.
+registration writes and role changes for the user return `409`
+`account_deletion_in_progress`. Those writes lock the `users` row, so a write
+that committed before the lock is visible to the worker and is deleted with the
+rest, and one still in flight waits for the deletion and is refused.
 
 The worker's `account.delete.v1` handler makes every change in one
 transaction. It locks the account row and then the `users` row, and changes
@@ -75,3 +77,7 @@ account row, and the worker waits for any of them instead of deadlocking.
 - A settings write queued behind filing's account lock gets the row after
   filing commits, rechecks its session and fails before it touches the `users`
   row.
+- A login or recovery request queued the same way can still store a session or
+  send a recovery email. The session never authenticates, because session lookup
+  excludes deletion-locked users, and the worker deletes it and the recovery
+  token.

@@ -65,8 +65,7 @@ func TestLoadConfigUsesValidatedDefaults(t *testing.T) {
 		cfg.FliptTestEnvironment != "test" ||
 		cfg.FliptUpdateInterval != 30*time.Second ||
 		cfg.FliptRequestTimeout != 5*time.Second ||
-		cfg.FliptStartupTimeout != 3*time.Second ||
-		cfg.FliptManagementURL != "http://oathkeeper-proxy.default:4455/flipt-management" {
+		cfg.FliptStartupTimeout != 3*time.Second {
 		t.Errorf("unexpected Flipt defaults: %+v", cfg)
 	}
 	t.Setenv("API_FLIPT_ENABLED", "true")
@@ -74,9 +73,8 @@ func TestLoadConfigUsesValidatedDefaults(t *testing.T) {
 		validURL string
 		field    string
 	}{
-		"API_OATHKEEPER_URL":       {validURL: "http://oathkeeper.test", field: "OathkeeperURL"},
-		"API_FLIPT_URL":            {validURL: "http://flipt.test/evaluation", field: "FliptURL"},
-		"API_FLIPT_MANAGEMENT_URL": {validURL: "http://flipt.test/management", field: "FliptManagementURL"},
+		"API_OATHKEEPER_URL": {validURL: "http://oathkeeper.test", field: "OathkeeperURL"},
+		"API_FLIPT_URL":      {validURL: "http://flipt.test/evaluation", field: "FliptURL"},
 	} {
 		for _, invalidURL := range []string{"not-a-url", "http://:4455", "http://user:secret@gateway.test", "http://gateway.test?route=1", "http://gateway.test#fragment"} {
 			t.Setenv(variable, invalidURL)
@@ -90,8 +88,7 @@ func TestLoadConfigUsesValidatedDefaults(t *testing.T) {
 	if err != nil {
 		t.Fatalf("canonical Flipt configuration: %v", err)
 	}
-	if canonicalFlipt.OathkeeperURL != "http://oathkeeper.test" || canonicalFlipt.FliptURL != "http://flipt.test/evaluation" ||
-		canonicalFlipt.FliptManagementURL != "http://flipt.test/management" {
+	if canonicalFlipt.OathkeeperURL != "http://oathkeeper.test" || canonicalFlipt.FliptURL != "http://flipt.test/evaluation" {
 		t.Errorf("canonical Flipt URLs: %+v", canonicalFlipt)
 	}
 	for variable, field := range map[string]string{
@@ -114,15 +111,13 @@ func TestLoadConfigUsesValidatedDefaults(t *testing.T) {
 	t.Setenv("API_FLIPT_ENABLED", "false")
 	t.Setenv("API_OATHKEEPER_URL", "")
 	t.Setenv("API_FLIPT_URL", "")
-	t.Setenv("API_FLIPT_MANAGEMENT_URL", "")
 	t.Setenv("API_FLIPT_ENVIRONMENT", "   ")
 	t.Setenv("API_FLIPT_NAMESPACE", "   ")
 	if _, err := loadConfig(); err != nil {
 		t.Errorf("disabled Flipt rejected dormant provider configuration: %v", err)
 	}
 	for variable, field := range map[string]string{
-		"API_OATHKEEPER_URL":       "OathkeeperURL",
-		"API_FLIPT_MANAGEMENT_URL": "FliptManagementURL",
+		"API_OATHKEEPER_URL": "OathkeeperURL",
 	} {
 		for _, invalidURL := range []string{
 			"http://user:secret@gateway.test",
@@ -139,7 +134,6 @@ func TestLoadConfigUsesValidatedDefaults(t *testing.T) {
 	}
 	t.Setenv("API_OATHKEEPER_URL", "http://oathkeeper.test")
 	t.Setenv("API_FLIPT_URL", "http://flipt.test/evaluation")
-	t.Setenv("API_FLIPT_MANAGEMENT_URL", "http://flipt.test/management")
 	t.Setenv("API_FLIPT_ENVIRONMENT", "local")
 	t.Setenv("API_FLIPT_NAMESPACE", "default")
 	for _, value := range []string{"true", "false"} {

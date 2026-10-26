@@ -20,7 +20,7 @@ Never use production `tadoku.app` for these checks.
 | Record learning, edit logs, inspect a learner's progress | Log activity; Profile → Statistics/Updates | [Activity and profiles](activity.md) |
 | Join/create contests, compare scores and rankings | Contests; Leaderboard | [Contests and leaderboards](contests.md) |
 | Read the homepage, blog, manual and announcements | Home; Blog; footer links | [Public content](content.md) |
-| Publish content, manage languages, moderate users and feature access | User menu → Admin | [Administration](admin.md) |
+| Publish content, manage languages, moderate users | User menu → Admin | [Administration](admin.md) |
 
 ## Fixtures and test boundaries
 

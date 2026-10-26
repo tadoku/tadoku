@@ -7,7 +7,7 @@ host's sidebar exposes Posts, Pages, Announcements, Languages and Users.
 Content routes use namespace `tadoku`: `/posts/tadoku`, `/pages/tadoku`,
 `/announcements/tadoku`, each with `/new` and record edit routes.
 Platform/moderation routes are `/languages` and `/users`. User row action menus
-contain Feature access and, for non-admin users, Ban/Unban User.
+contain Ban/Unban User for non-admin users.
 
 ## Verify
 
@@ -27,8 +27,7 @@ contain Feature access and, for non-admin users, Ban/Unban User.
 - Languages: filter by name/code, check no-match and clear, open Add/Edit Language
   and cancel. For authorized write tests, use an owned branch record; verify
   validation and persisted display name. Existing language codes aren't editable.
-- Users: search by name/email, clear and verify empty results. For moderation or
-  feature-access changes, use a disposable identity, confirm/cancel the action,
+- Users: search by name/email, clear and verify empty results. For moderation changes, use a disposable identity, confirm/cancel the action,
   reload, and verify the affected user's real journey in another context. Record
   both UI state and API result. Do not ban shared fixture users or alter their roles.
 
@@ -41,9 +40,8 @@ named-user Flipt access use the selected branch tenant and its
 not change shared credentials or canonical roles through a branch test. Feature
 access is distinct from global Flipt flag policy. Don't modify
 global flags or expose its administration interface to make a UI test pass.
-The retained **Release log entry v2** control changes named-user allowlist
-membership, which must persist independently in each tenant. Its state no longer
-selects the log UI: the public decision stays true after a revoke.
+The admin application has no feature-access control. Use the protected Flipt
+operator UI for rollout policy changes.
 CMS copy-only requests are not application-code tasks; obey `AGENTS.md` rather
 than checking those edits into Git. Record retained test records instead of
 deleting data you did not create.
@@ -52,8 +50,7 @@ deleting data you did not create.
 
 [Admin routes](../../../../../frontend/apps/admin/pages/),
 [sidebar](../../../../../frontend/apps/admin/app/ui/DashboardLayout.tsx),
-[content editors](../../../../../frontend/apps/admin/app/content/),
-[feature access](../../../../../frontend/apps/admin/app/feature-access/).
+[content editors](../../../../../frontend/apps/admin/app/content/).
 
 ## Retained email API
 

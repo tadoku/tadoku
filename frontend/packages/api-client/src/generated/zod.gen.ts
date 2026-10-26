@@ -105,24 +105,11 @@ export const zImmersionErrorResponse = z.object({
 });
 
 export const zImmersionFeatureFlagDecisions = z.object({
-    'release-log-entry-v2': z.boolean()
+    'release-webv3': z.boolean()
 }).strict();
 
 export const zImmersionFeatureFlagDecisionsResponse = z.object({
     decisions: zImmersionFeatureFlagDecisions
-}).strict();
-
-export const zImmersionManagedFeatureFlagKey = z.enum(['release-log-entry-v2']);
-
-export const zImmersionFeatureAccessResponse = z.object({
-    enabled: z.boolean(),
-    changed: z.boolean(),
-    environment: z.enum([
-        'local',
-        'production',
-        'test'
-    ]),
-    revision: z.string().regex(/^[0-9a-f]{40}$/)
 }).strict();
 
 export const zImmersionUserProfile = z.object({
@@ -1170,36 +1157,6 @@ export const zImmersionScoringRuleSetActivateResponse = z.void();
  * Public feature flag decisions
  */
 export const zImmersionFeatureFlagDecisionsResponse2 = zImmersionFeatureFlagDecisionsResponse;
-
-export const zImmersionFeatureAccessRevokePath = z.object({
-    flagKey: zImmersionManagedFeatureFlagKey,
-    userId: z.string().uuid()
-});
-
-/**
- * Updated named-user feature access
- */
-export const zImmersionFeatureAccessRevokeResponse = zImmersionFeatureAccessResponse;
-
-export const zImmersionFeatureAccessGetPath = z.object({
-    flagKey: zImmersionManagedFeatureFlagKey,
-    userId: z.string().uuid()
-});
-
-/**
- * Named-user feature access
- */
-export const zImmersionFeatureAccessGetResponse = zImmersionFeatureAccessResponse;
-
-export const zImmersionFeatureAccessGrantPath = z.object({
-    flagKey: zImmersionManagedFeatureFlagKey,
-    userId: z.string().uuid()
-});
-
-/**
- * Updated named-user feature access
- */
-export const zImmersionFeatureAccessGrantResponse = zImmersionFeatureAccessResponse;
 
 /**
  * successful operation

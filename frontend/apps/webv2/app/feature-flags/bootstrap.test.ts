@@ -24,7 +24,7 @@ describe('bootstrapFeatureFlagDecisions', () => {
       .fn()
       .mockResolvedValue(
         new Response(
-          JSON.stringify({ decisions: { 'release-log-entry-v2': false } }),
+          JSON.stringify({ decisions: { 'release-webv3': false } }),
           { status: 200 },
         ),
       )
@@ -36,7 +36,7 @@ describe('bootstrapFeatureFlagDecisions', () => {
         true,
         request,
       ),
-    ).resolves.toEqual({ 'release-log-entry-v2': false })
+    ).resolves.toEqual({ 'release-webv3': false })
     expect(sent(request).url).toBe(
       'http://oathkeeper-proxy:4455/api/internal/immersion/feature-flags',
     )
@@ -48,7 +48,9 @@ describe('bootstrapFeatureFlagDecisions', () => {
   it('forwards the incoming branch so a branch host gets its own tenant', async () => {
     const request = vi
       .fn()
-      .mockResolvedValue(new Response(JSON.stringify({ decisions: {} }), { status: 200 }))
+      .mockResolvedValue(
+        new Response(JSON.stringify({ decisions: {} }), { status: 200 }),
+      )
 
     await bootstrapFeatureFlagDecisions(
       session,
@@ -71,7 +73,7 @@ describe('bootstrapFeatureFlagDecisions', () => {
 
     await expect(
       bootstrapFeatureFlagDecisions(undefined, undefined, true, request),
-    ).resolves.toEqual({ 'release-log-entry-v2': true })
+    ).resolves.toEqual({ 'release-webv3': false })
     expect(request).not.toHaveBeenCalled()
   })
 
@@ -85,7 +87,7 @@ describe('bootstrapFeatureFlagDecisions', () => {
           throw new Error('provider unavailable')
         },
       ),
-    ).resolves.toEqual({ 'release-log-entry-v2': true })
+    ).resolves.toEqual({ 'release-webv3': false })
   })
 
   it('bounds a stalled same-origin bootstrap request', async () => {
@@ -107,7 +109,7 @@ describe('bootstrapFeatureFlagDecisions', () => {
     )
     await vi.advanceTimersByTimeAsync(50)
 
-    await expect(result).resolves.toEqual({ 'release-log-entry-v2': true })
+    await expect(result).resolves.toEqual({ 'release-webv3': false })
     expect(sent(request).url).toBe(
       'http://oathkeeper-proxy:4455/api/internal/immersion/feature-flags',
     )
@@ -125,7 +127,7 @@ describe('bootstrapFeatureFlagDecisions', () => {
         false,
         request,
       ),
-    ).resolves.toEqual({ 'release-log-entry-v2': true })
+    ).resolves.toEqual({ 'release-webv3': false })
     expect(request).not.toHaveBeenCalled()
   })
 
@@ -142,7 +144,7 @@ describe('bootstrapFeatureFlagDecisions', () => {
         true,
         request,
       ),
-    ).resolves.toEqual({ 'release-log-entry-v2': true })
+    ).resolves.toEqual({ 'release-webv3': false })
     expect(request).not.toHaveBeenCalled()
   })
 
@@ -151,7 +153,7 @@ describe('bootstrapFeatureFlagDecisions', () => {
       new Response(
         JSON.stringify({
           decisions: {
-            'release-log-entry-v2': false,
+            'release-webv3': false,
             'unregistered-flag': true,
           },
         }),
@@ -166,6 +168,6 @@ describe('bootstrapFeatureFlagDecisions', () => {
         true,
         request,
       ),
-    ).resolves.toEqual({ 'release-log-entry-v2': true })
+    ).resolves.toEqual({ 'release-webv3': false })
   })
 })

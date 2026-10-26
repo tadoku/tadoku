@@ -27,7 +27,6 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/features/contestevents"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/contests"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/email"
-	featureflagsservice "github.com/tadoku/tadoku/services/tadoku-api/features/featureflags"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/languages"
@@ -37,8 +36,6 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/features/posts"
 	featureprofile "github.com/tadoku/tadoku/services/tadoku-api/features/profile"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/scoring"
-	fliptclient "github.com/tadoku/tadoku/services/tadoku-api/infra/flipt"
-	"github.com/tadoku/tadoku/services/tadoku-api/infra/fliptmanagement"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/observability"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/featureflags"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
@@ -275,17 +272,7 @@ func newTestRouterWithLeaderboardService(
 	pagesService := pages.NewService(pagesRepository)
 	postsService := posts.NewService(postsRepository)
 	profileService := featureprofile.NewService(profileRepository, identities)
-	fliptTargets, err := fliptclient.NewTargets("local", "default", "test")
-	if err != nil {
-		return nil, nil, err
-	}
-	featureFlagsService := featureflagsservice.NewService(
-		featureflags.NewEvaluator(flipt, nil),
-		fliptmanagement.NewClient(fliptmanagement.Config{
-			URL:     flipt.URL(),
-			Targets: fliptTargets,
-		}),
-	)
+	featureFlagsService := featureflags.NewEvaluator(flipt, nil)
 
 	registry := prometheus.NewRegistry()
 	scoringObserver := observability.NewScoringObserver(registry, logger, scoringEngineEnabled)

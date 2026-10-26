@@ -10,7 +10,7 @@ Read this when you add an authenticated call from Tadoku API to an internal serv
 
 ## Overview
 
-Tadoku API calls Flipt for feature-flag evaluation and feature-access management.
+Tadoku API calls Flipt for feature-flag evaluation.
 It never sends its Kubernetes credential to Flipt. Instead it exchanges that
 credential at Oathkeeper for a short-lived service JWT scoped to one target, and
 Oathkeeper guards the target routes with that JWT.
@@ -68,22 +68,20 @@ The client lives in `services/common/client/s2s/`.
 `s2s.NewAuthTransport(client, "<target>/<caller>", base)` wraps an
 `http.RoundTripper` so every request gets a current bearer token; the exchange
 follows the request's cancellation and deadline. `services/tadoku-api/cmd/tadoku-api/main.go`
-builds separate Flipt HTTP clients for `flipt-evaluation/tadoku-api` and
-`flipt-management/tadoku-api`.
+builds its Flipt HTTP client for `flipt-evaluation/tadoku-api`.
 
 ## Service JWT claims
 
 | Claim | Value |
 | --- | --- |
 | `sub` | Caller service account, `system:serviceaccount:<namespace>:<name>` |
-| `aud` | Array with the target: `flipt-evaluation` or `flipt-management` |
+| `aud` | Array with the target: `flipt-evaluation` |
 | `type` | `service` |
 | `iss`, `iat`, `exp` | Set by Oathkeeper; the issuer is `http://oathkeeper-api/` |
 
 ## Target routes
 
-Oathkeeper forwards `API_FLIPT_URL` (`…:4455/flipt`) and
-`API_FLIPT_MANAGEMENT_URL` (`…:4455/flipt-management`) requests to Flipt only for
+Oathkeeper forwards `API_FLIPT_URL` (`…:4455/flipt`) requests to Flipt only for
 the exact paths and methods listed in `rules.yaml`. Each such rule uses a `jwt`
 authenticator against Oathkeeper's own JWKS
 (`http://oathkeeper-api.tdk-dev-oathkeeper:4456/.well-known/jwks.json`), requires
@@ -91,10 +89,8 @@ the matching `target_audience`, and strips the prefix before forwarding to
 `flipt.tdk-dev-flipt:8080`.
 
 Evaluation permits snapshot reads for any namespace, with the environment in
-`x-flipt-environment`. Named-user management permits the configured canonical
-namespace and namespaces in the separate `test` environment, only for the
-managed segment GET and resource PUT methods. These service credentials cannot
-create or delete a namespace; provisioning needs its own authorized route.
+`x-flipt-environment`. These service credentials cannot manage rollouts or
+create or delete namespaces; provisioning uses its own authorized connection.
 
 Tadoku API itself rejects service JWTs with `401`; they are valid only on
 Oathkeeper-guarded internal routes.
@@ -116,5 +112,4 @@ wrapped with `s2s.NewAuthTransport`.
 | Service JWT missing or with the wrong audience on a Flipt route | Oathkeeper returns `401`. |
 
 In Tadoku API, a failed exchange leaves feature-flag evaluation on its safe
-defaults without failing startup, and feature-access management operations
-return `503`.
+defaults without failing startup.

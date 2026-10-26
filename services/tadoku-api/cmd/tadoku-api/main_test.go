@@ -116,7 +116,6 @@ func TestApplicationStartsAndShutsDown(t *testing.T) {
 	t.Cleanup(provider.Close)
 	for name, client := range map[string]*http.Client{
 		"evaluation": application.fliptEvaluation,
-		"management": application.fliptManagement,
 	} {
 		response, err := client.Get(provider.URL + "/" + name)
 		if err != nil {
@@ -127,15 +126,15 @@ func TestApplicationStartsAndShutsDown(t *testing.T) {
 			t.Errorf("%s Flipt status=%d", name, response.StatusCode)
 		}
 	}
-	response, err = application.fliptManagement.Get(provider.URL + "/redirect")
+	response, err = application.fliptEvaluation.Get(provider.URL + "/redirect")
 	if err != nil {
-		t.Fatalf("management redirect request: %v", err)
+		t.Fatalf("evaluation redirect request: %v", err)
 	}
 	_ = response.Body.Close()
 	if response.StatusCode != http.StatusFound || redirectedRequests.Load() != 0 {
-		t.Errorf("management redirect status=%d followed=%d", response.StatusCode, redirectedRequests.Load())
+		t.Errorf("evaluation redirect status=%d followed=%d", response.StatusCode, redirectedRequests.Load())
 	}
-	if evaluationExchanges.Load() == 0 || managementExchanges.Load() != 1 {
+	if evaluationExchanges.Load() == 0 || managementExchanges.Load() != 0 {
 		t.Errorf("token exchanges: evaluation=%d management=%d", evaluationExchanges.Load(), managementExchanges.Load())
 	}
 

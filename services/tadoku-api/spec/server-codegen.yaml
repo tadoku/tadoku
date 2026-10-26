@@ -57,9 +57,9 @@ output-options:
     - ImmersionContestListEvents
     - ImmersionContestFindLog
     - ImmersionFeatureFlagDecisions
-    - ImmersionFeatureAccessGet
-    - ImmersionFeatureAccessGrant
-    - ImmersionFeatureAccessRevoke
+
+
+
     - ImmersionContestFetchLeaderboard
     - ImmersionFetchLeaderboardForYear
     - ImmersionFetchLeaderboardGlobal

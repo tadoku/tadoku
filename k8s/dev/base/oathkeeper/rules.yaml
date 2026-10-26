@@ -193,86 +193,6 @@
     preserve_host: false
     url: http://flipt.tdk-dev-flipt.svc.cluster.local:8080
     strip_path: /flipt
-- id: tadoku:flipt:management:feature-access:get
-  match:
-    url: http://oathkeeper-proxy.tdk-dev-oathkeeper:4455/flipt-management/api/v2/environments/local/namespaces/default/resources/flipt.core.Segment/release-log-entry-v2-access
-    methods:
-      - GET
-  authenticators:
-    - handler: jwt
-      config:
-        jwks_urls:
-          - http://oathkeeper-api.tdk-dev-oathkeeper:4456/.well-known/jwks.json
-        target_audience:
-          - flipt-management
-  authorizer:
-    handler: allow
-  mutators:
-    - handler: noop
-  upstream:
-    preserve_host: false
-    url: http://flipt.tdk-dev-flipt.svc.cluster.local:8080
-    strip_path: /flipt-management
-- id: tadoku:flipt:management:feature-access:update
-  match:
-    url: http://oathkeeper-proxy.tdk-dev-oathkeeper:4455/flipt-management/api/v2/environments/local/namespaces/default/resources
-    methods:
-      - PUT
-  authenticators:
-    - handler: jwt
-      config:
-        jwks_urls:
-          - http://oathkeeper-api.tdk-dev-oathkeeper:4456/.well-known/jwks.json
-        target_audience:
-          - flipt-management
-  authorizer:
-    handler: allow
-  mutators:
-    - handler: noop
-  upstream:
-    preserve_host: false
-    url: http://flipt.tdk-dev-flipt.svc.cluster.local:8080
-    strip_path: /flipt-management
-- id: tadoku:flipt:management:feature-access:test:get
-  match:
-    url: http://oathkeeper-proxy.tdk-dev-oathkeeper:4455/flipt-management/api/v2/environments/test/namespaces/<*>/resources/flipt.core.Segment/release-log-entry-v2-access
-    methods:
-      - GET
-  authenticators:
-    - handler: jwt
-      config:
-        jwks_urls:
-          - http://oathkeeper-api.tdk-dev-oathkeeper:4456/.well-known/jwks.json
-        target_audience:
-          - flipt-management
-  authorizer:
-    handler: allow
-  mutators:
-    - handler: noop
-  upstream:
-    preserve_host: false
-    url: http://flipt.tdk-dev-flipt.svc.cluster.local:8080
-    strip_path: /flipt-management
-- id: tadoku:flipt:management:feature-access:test:update
-  match:
-    url: http://oathkeeper-proxy.tdk-dev-oathkeeper:4455/flipt-management/api/v2/environments/test/namespaces/<*>/resources
-    methods:
-      - PUT
-  authenticators:
-    - handler: jwt
-      config:
-        jwks_urls:
-          - http://oathkeeper-api.tdk-dev-oathkeeper:4456/.well-known/jwks.json
-        target_audience:
-          - flipt-management
-  authorizer:
-    handler: allow
-  mutators:
-    - handler: noop
-  upstream:
-    preserve_host: false
-    url: http://flipt.tdk-dev-flipt.svc.cluster.local:8080
-    strip_path: /flipt-management
 - id: s2s:tadoku-to-flipt-evaluation
   match:
     url: http://oathkeeper-proxy.tdk-dev-oathkeeper:4455/token-exchange/flipt-evaluation/tadoku-api
@@ -302,38 +222,6 @@
             "type": "service",
             "sub": "{{ .Subject }}",
             "aud": ["flipt-evaluation"]
-          }
-  upstream:
-    url: http://token-reflector.tdk-dev-token-reflector
-- id: s2s:tadoku-to-flipt-management
-  match:
-    url: http://oathkeeper-proxy.tdk-dev-oathkeeper:4455/token-exchange/flipt-management/tadoku-api
-    methods:
-      - GET
-  authenticators:
-    - handler: jwt
-      config:
-        jwks_urls:
-          - http://token-reflector.tdk-dev-token-reflector/jwks
-        target_audience:
-          - tadoku-api
-  authorizer:
-    handler: remote_json
-    config:
-      remote: http://token-reflector.tdk-dev-token-reflector/authorize-service-account
-      payload: |
-        {
-          "subject": {{ .Subject | toJson }},
-          "expected_subject": "system:serviceaccount:tdk-dev-tadoku-api:tadoku-api"
-        }
-  mutators:
-    - handler: id_token
-      config:
-        claims: |
-          {
-            "type": "service",
-            "sub": "{{ .Subject }}",
-            "aud": ["flipt-management"]
           }
   upstream:
     url: http://token-reflector.tdk-dev-token-reflector

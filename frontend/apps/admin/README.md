@@ -8,7 +8,6 @@ From `frontend/`:
 pnpm --filter admin dev      # port 3000
 pnpm --filter admin lint
 pnpm --filter admin exec tsc --noEmit
-pnpm --filter admin test
 pnpm --filter admin build
 ```
 

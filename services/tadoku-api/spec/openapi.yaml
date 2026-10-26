@@ -2435,117 +2435,6 @@ paths:
       x-tadoku-exposure: public
       x-legacy-path: /feature-flags
       x-legacy-operation-id: featureFlagDecisions
-  "/immersion/admin/feature-flags/{flagKey}/users/{userId}":
-    get:
-      summary: Returns named-user access for an allowlisted feature flag (admin only)
-      operationId: ImmersionFeatureAccessGet
-      tags:
-        - admin
-      security:
-        - ImmersioncookieAuth: []
-      responses:
-        "200":
-          description: Named-user feature access
-          headers:
-            Cache-Control:
-              schema:
-                type: string
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ImmersionFeatureAccessResponse"
-        "400":
-          description: invalid request
-        "401":
-          description: unauthorized
-        "403":
-          description: forbidden (not admin)
-        "502":
-          description: feature configuration unavailable
-      parameters:
-        - &a1
-          name: flagKey
-          in: path
-          required: true
-          schema:
-            $ref: "#/components/schemas/ImmersionManagedFeatureFlagKey"
-        - &a2
-          name: userId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      x-tadoku-source: Immersion
-      x-tadoku-exposure: public
-      x-legacy-path: /admin/feature-flags/{flagKey}/users/{userId}
-      x-legacy-operation-id: featureAccessGet
-    put:
-      summary: Grants named-user access to an allowlisted feature flag (admin only)
-      operationId: ImmersionFeatureAccessGrant
-      tags:
-        - admin
-      security:
-        - ImmersioncookieAuth: []
-      responses:
-        "200":
-          description: Updated named-user feature access
-          headers:
-            Cache-Control:
-              schema:
-                type: string
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ImmersionFeatureAccessResponse"
-        "400":
-          description: invalid request
-        "401":
-          description: unauthorized
-        "403":
-          description: forbidden (not admin)
-        "502":
-          description: feature configuration unavailable
-      parameters:
-        - *a1
-        - *a2
-      x-tadoku-source: Immersion
-      x-tadoku-exposure: public
-      x-legacy-path: /admin/feature-flags/{flagKey}/users/{userId}
-      x-legacy-operation-id: featureAccessGrant
-    delete:
-      summary: Revokes named-user access to an allowlisted feature flag (admin only)
-      operationId: ImmersionFeatureAccessRevoke
-      tags:
-        - admin
-      security:
-        - ImmersioncookieAuth: []
-      responses:
-        "200":
-          description: Updated named-user feature access
-          headers:
-            Cache-Control:
-              schema:
-                type: string
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ImmersionFeatureAccessResponse"
-        "400":
-          description: invalid request
-        "401":
-          description: unauthorized
-        "403":
-          description: forbidden (not admin)
-        "502":
-          description: feature configuration unavailable
-      parameters:
-        - *a1
-        - *a2
-      x-tadoku-source: Immersion
-      x-tadoku-exposure: public
-      x-legacy-path: /admin/feature-flags/{flagKey}/users/{userId}
-      x-legacy-operation-id: featureAccessRevoke
   /immersion/languages:
     get:
       summary: Lists all languages (admin only)
@@ -3713,9 +3602,9 @@ components:
       type: object
       additionalProperties: false
       required:
-        - release-log-entry-v2
+        - release-webv3
       properties:
-        release-log-entry-v2:
+        release-webv3:
           type: boolean
     ImmersionFeatureFlagDecisionsResponse:
       type: object
@@ -3725,33 +3614,6 @@ components:
       properties:
         decisions:
           $ref: "#/components/schemas/ImmersionFeatureFlagDecisions"
-    ImmersionManagedFeatureFlagKey:
-      type: string
-      enum:
-        - release-log-entry-v2
-    ImmersionFeatureAccessResponse:
-      type: object
-      additionalProperties: false
-      required:
-        - enabled
-        - changed
-        - environment
-        - revision
-      properties:
-        enabled:
-          type: boolean
-        changed:
-          type: boolean
-        environment:
-          type: string
-          description: The Flipt environment that evaluated the flag; test tenants use the test environment.
-          enum:
-            - local
-            - production
-            - test
-        revision:
-          type: string
-          pattern: ^[0-9a-f]{40}$
     ImmersionUserProfile:
       type: object
       required:

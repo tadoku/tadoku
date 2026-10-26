@@ -227,42 +227,6 @@ func (e ImmersionErrorResponseError) Valid() bool {
 	}
 }
 
-// Defines values for ImmersionFeatureAccessResponseEnvironment.
-const (
-	Local      ImmersionFeatureAccessResponseEnvironment = "local"
-	Production ImmersionFeatureAccessResponseEnvironment = "production"
-	Test       ImmersionFeatureAccessResponseEnvironment = "test"
-)
-
-// Valid indicates whether the value is a known member of the ImmersionFeatureAccessResponseEnvironment enum.
-func (e ImmersionFeatureAccessResponseEnvironment) Valid() bool {
-	switch e {
-	case Local:
-		return true
-	case Production:
-		return true
-	case Test:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for ImmersionManagedFeatureFlagKey.
-const (
-	ReleaseLogEntryV2 ImmersionManagedFeatureFlagKey = "release-log-entry-v2"
-)
-
-// Valid indicates whether the value is a known member of the ImmersionManagedFeatureFlagKey enum.
-func (e ImmersionManagedFeatureFlagKey) Valid() bool {
-	switch e {
-	case ReleaseLogEntryV2:
-		return true
-	default:
-		return false
-	}
-}
-
 // Defines values for ImmersionScoreEstimateSource.
 const (
 	ImmersionScoreEstimateSourceAmount          ImmersionScoreEstimateSource = "amount"
@@ -982,22 +946,9 @@ type ImmersionErrorResponse struct {
 // ImmersionErrorResponseError defines model for ImmersionErrorResponse.Error.
 type ImmersionErrorResponseError string
 
-// ImmersionFeatureAccessResponse defines model for ImmersionFeatureAccessResponse.
-type ImmersionFeatureAccessResponse struct {
-	Changed bool `json:"changed"`
-	Enabled bool `json:"enabled"`
-
-	// Environment The Flipt environment that evaluated the flag; test tenants use the test environment.
-	Environment ImmersionFeatureAccessResponseEnvironment `json:"environment"`
-	Revision    string                                    `json:"revision"`
-}
-
-// ImmersionFeatureAccessResponseEnvironment The Flipt environment that evaluated the flag; test tenants use the test environment.
-type ImmersionFeatureAccessResponseEnvironment string
-
 // ImmersionFeatureFlagDecisions defines model for ImmersionFeatureFlagDecisions.
 type ImmersionFeatureFlagDecisions struct {
-	ReleaseLogEntryV2 bool `json:"release-log-entry-v2"`
+	ReleaseWebv3 bool `json:"release-webv3"`
 }
 
 // ImmersionFeatureFlagDecisionsResponse defines model for ImmersionFeatureFlagDecisionsResponse.
@@ -1138,9 +1089,6 @@ type ImmersionLogs struct {
 	// TotalSize Example: 100
 	TotalSize int `json:"total_size"`
 }
-
-// ImmersionManagedFeatureFlagKey defines model for ImmersionManagedFeatureFlagKey.
-type ImmersionManagedFeatureFlagKey string
 
 // ImmersionPaginatedList defines model for ImmersionPaginatedList.
 type ImmersionPaginatedList struct {
@@ -1732,15 +1680,6 @@ type ServerInterface interface {
 	// IdentityProfileUpdate Update profile; email changes require a recent login
 	// (PATCH /identity/settings/profile)
 	IdentityProfileUpdate(w http.ResponseWriter, r *http.Request)
-	// ImmersionFeatureAccessRevoke Revokes named-user access to an allowlisted feature flag (admin only)
-	// (DELETE /immersion/admin/feature-flags/{flagKey}/users/{userId})
-	ImmersionFeatureAccessRevoke(w http.ResponseWriter, r *http.Request, flagKey ImmersionManagedFeatureFlagKey, userId openapi_types.UUID)
-	// ImmersionFeatureAccessGet Returns named-user access for an allowlisted feature flag (admin only)
-	// (GET /immersion/admin/feature-flags/{flagKey}/users/{userId})
-	ImmersionFeatureAccessGet(w http.ResponseWriter, r *http.Request, flagKey ImmersionManagedFeatureFlagKey, userId openapi_types.UUID)
-	// ImmersionFeatureAccessGrant Grants named-user access to an allowlisted feature flag (admin only)
-	// (PUT /immersion/admin/feature-flags/{flagKey}/users/{userId})
-	ImmersionFeatureAccessGrant(w http.ResponseWriter, r *http.Request, flagKey ImmersionManagedFeatureFlagKey, userId openapi_types.UUID)
 	// ImmersionContestList Lists all the contests, paginated
 	// (GET /immersion/contests)
 	ImmersionContestList(w http.ResponseWriter, r *http.Request, params ImmersionContestListParams)
@@ -2950,111 +2889,6 @@ func (siw *ServerInterfaceWrapper) IdentityProfileUpdate(w http.ResponseWriter, 
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.IdentityProfileUpdate(w, r)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// ImmersionFeatureAccessRevoke operation middleware
-func (siw *ServerInterfaceWrapper) ImmersionFeatureAccessRevoke(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-	_ = err
-
-	// ------------- Path parameter "flagKey" -------------
-	var flagKey ImmersionManagedFeatureFlagKey
-
-	err = runtime.BindStyledParameterWithOptions("simple", "flagKey", r.PathValue("flagKey"), &flagKey, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "flagKey", Err: err})
-		return
-	}
-
-	// ------------- Path parameter "userId" -------------
-	var userId openapi_types.UUID
-
-	err = runtime.BindStyledParameterWithOptions("simple", "userId", r.PathValue("userId"), &userId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "userId", Err: err})
-		return
-	}
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ImmersionFeatureAccessRevoke(w, r, flagKey, userId)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// ImmersionFeatureAccessGet operation middleware
-func (siw *ServerInterfaceWrapper) ImmersionFeatureAccessGet(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-	_ = err
-
-	// ------------- Path parameter "flagKey" -------------
-	var flagKey ImmersionManagedFeatureFlagKey
-
-	err = runtime.BindStyledParameterWithOptions("simple", "flagKey", r.PathValue("flagKey"), &flagKey, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "flagKey", Err: err})
-		return
-	}
-
-	// ------------- Path parameter "userId" -------------
-	var userId openapi_types.UUID
-
-	err = runtime.BindStyledParameterWithOptions("simple", "userId", r.PathValue("userId"), &userId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "userId", Err: err})
-		return
-	}
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ImmersionFeatureAccessGet(w, r, flagKey, userId)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// ImmersionFeatureAccessGrant operation middleware
-func (siw *ServerInterfaceWrapper) ImmersionFeatureAccessGrant(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-	_ = err
-
-	// ------------- Path parameter "flagKey" -------------
-	var flagKey ImmersionManagedFeatureFlagKey
-
-	err = runtime.BindStyledParameterWithOptions("simple", "flagKey", r.PathValue("flagKey"), &flagKey, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "flagKey", Err: err})
-		return
-	}
-
-	// ------------- Path parameter "userId" -------------
-	var userId openapi_types.UUID
-
-	err = runtime.BindStyledParameterWithOptions("simple", "userId", r.PathValue("userId"), &userId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "userId", Err: err})
-		return
-	}
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ImmersionFeatureAccessGrant(w, r, flagKey, userId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -4763,9 +4597,6 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/immersion/scoring/rule-sets/{id}/publish", wrapper.ImmersionScoringRuleSetPublish)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/immersion/scoring/rule-sets/{id}/activate", wrapper.ImmersionScoringRuleSetActivate)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/feature-flags", wrapper.ImmersionFeatureFlagDecisions)
-	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/immersion/admin/feature-flags/{flagKey}/users/{userId}", wrapper.ImmersionFeatureAccessRevoke)
-	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/admin/feature-flags/{flagKey}/users/{userId}", wrapper.ImmersionFeatureAccessGet)
-	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/immersion/admin/feature-flags/{flagKey}/users/{userId}", wrapper.ImmersionFeatureAccessGrant)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/immersion/languages", wrapper.ImmersionLanguageList)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/immersion/languages", wrapper.ImmersionLanguageCreate)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/immersion/languages/{code}", wrapper.ImmersionLanguageUpdate)
@@ -6669,201 +6500,6 @@ func (response IdentityProfileUpdate503JSONResponse) VisitIdentityProfileUpdateR
 	w.WriteHeader(503)
 	_, err := buf.WriteTo(w)
 	return err
-}
-
-type ImmersionFeatureAccessRevokeRequestObject struct {
-	FlagKey ImmersionManagedFeatureFlagKey `json:"flagKey"`
-	UserId  openapi_types.UUID             `json:"userId"`
-}
-
-type ImmersionFeatureAccessRevokeResponseObject interface {
-	VisitImmersionFeatureAccessRevokeResponse(w http.ResponseWriter) error
-}
-
-type ImmersionFeatureAccessRevoke200ResponseHeaders struct {
-	CacheControl *string
-}
-
-type ImmersionFeatureAccessRevoke200JSONResponse struct {
-	Body    ImmersionFeatureAccessResponse
-	Headers ImmersionFeatureAccessRevoke200ResponseHeaders
-}
-
-func (response ImmersionFeatureAccessRevoke200JSONResponse) VisitImmersionFeatureAccessRevokeResponse(w http.ResponseWriter) error {
-
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
-		return err
-	}
-	w.Header().Set("Content-Type", "application/json")
-	if response.Headers.CacheControl != nil {
-		w.Header().Set("Cache-Control", fmt.Sprint(*response.Headers.CacheControl))
-	}
-	w.WriteHeader(200)
-	_, err := buf.WriteTo(w)
-	return err
-}
-
-type ImmersionFeatureAccessRevoke400Response struct {
-}
-
-func (response ImmersionFeatureAccessRevoke400Response) VisitImmersionFeatureAccessRevokeResponse(w http.ResponseWriter) error {
-	w.WriteHeader(400)
-	return nil
-}
-
-type ImmersionFeatureAccessRevoke401Response struct {
-}
-
-func (response ImmersionFeatureAccessRevoke401Response) VisitImmersionFeatureAccessRevokeResponse(w http.ResponseWriter) error {
-	w.WriteHeader(401)
-	return nil
-}
-
-type ImmersionFeatureAccessRevoke403Response struct {
-}
-
-func (response ImmersionFeatureAccessRevoke403Response) VisitImmersionFeatureAccessRevokeResponse(w http.ResponseWriter) error {
-	w.WriteHeader(403)
-	return nil
-}
-
-type ImmersionFeatureAccessRevoke502Response struct {
-}
-
-func (response ImmersionFeatureAccessRevoke502Response) VisitImmersionFeatureAccessRevokeResponse(w http.ResponseWriter) error {
-	w.WriteHeader(502)
-	return nil
-}
-
-type ImmersionFeatureAccessGetRequestObject struct {
-	FlagKey ImmersionManagedFeatureFlagKey `json:"flagKey"`
-	UserId  openapi_types.UUID             `json:"userId"`
-}
-
-type ImmersionFeatureAccessGetResponseObject interface {
-	VisitImmersionFeatureAccessGetResponse(w http.ResponseWriter) error
-}
-
-type ImmersionFeatureAccessGet200ResponseHeaders struct {
-	CacheControl *string
-}
-
-type ImmersionFeatureAccessGet200JSONResponse struct {
-	Body    ImmersionFeatureAccessResponse
-	Headers ImmersionFeatureAccessGet200ResponseHeaders
-}
-
-func (response ImmersionFeatureAccessGet200JSONResponse) VisitImmersionFeatureAccessGetResponse(w http.ResponseWriter) error {
-
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
-		return err
-	}
-	w.Header().Set("Content-Type", "application/json")
-	if response.Headers.CacheControl != nil {
-		w.Header().Set("Cache-Control", fmt.Sprint(*response.Headers.CacheControl))
-	}
-	w.WriteHeader(200)
-	_, err := buf.WriteTo(w)
-	return err
-}
-
-type ImmersionFeatureAccessGet400Response struct {
-}
-
-func (response ImmersionFeatureAccessGet400Response) VisitImmersionFeatureAccessGetResponse(w http.ResponseWriter) error {
-	w.WriteHeader(400)
-	return nil
-}
-
-type ImmersionFeatureAccessGet401Response struct {
-}
-
-func (response ImmersionFeatureAccessGet401Response) VisitImmersionFeatureAccessGetResponse(w http.ResponseWriter) error {
-	w.WriteHeader(401)
-	return nil
-}
-
-type ImmersionFeatureAccessGet403Response struct {
-}
-
-func (response ImmersionFeatureAccessGet403Response) VisitImmersionFeatureAccessGetResponse(w http.ResponseWriter) error {
-	w.WriteHeader(403)
-	return nil
-}
-
-type ImmersionFeatureAccessGet502Response struct {
-}
-
-func (response ImmersionFeatureAccessGet502Response) VisitImmersionFeatureAccessGetResponse(w http.ResponseWriter) error {
-	w.WriteHeader(502)
-	return nil
-}
-
-type ImmersionFeatureAccessGrantRequestObject struct {
-	FlagKey ImmersionManagedFeatureFlagKey `json:"flagKey"`
-	UserId  openapi_types.UUID             `json:"userId"`
-}
-
-type ImmersionFeatureAccessGrantResponseObject interface {
-	VisitImmersionFeatureAccessGrantResponse(w http.ResponseWriter) error
-}
-
-type ImmersionFeatureAccessGrant200ResponseHeaders struct {
-	CacheControl *string
-}
-
-type ImmersionFeatureAccessGrant200JSONResponse struct {
-	Body    ImmersionFeatureAccessResponse
-	Headers ImmersionFeatureAccessGrant200ResponseHeaders
-}
-
-func (response ImmersionFeatureAccessGrant200JSONResponse) VisitImmersionFeatureAccessGrantResponse(w http.ResponseWriter) error {
-
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
-		return err
-	}
-	w.Header().Set("Content-Type", "application/json")
-	if response.Headers.CacheControl != nil {
-		w.Header().Set("Cache-Control", fmt.Sprint(*response.Headers.CacheControl))
-	}
-	w.WriteHeader(200)
-	_, err := buf.WriteTo(w)
-	return err
-}
-
-type ImmersionFeatureAccessGrant400Response struct {
-}
-
-func (response ImmersionFeatureAccessGrant400Response) VisitImmersionFeatureAccessGrantResponse(w http.ResponseWriter) error {
-	w.WriteHeader(400)
-	return nil
-}
-
-type ImmersionFeatureAccessGrant401Response struct {
-}
-
-func (response ImmersionFeatureAccessGrant401Response) VisitImmersionFeatureAccessGrantResponse(w http.ResponseWriter) error {
-	w.WriteHeader(401)
-	return nil
-}
-
-type ImmersionFeatureAccessGrant403Response struct {
-}
-
-func (response ImmersionFeatureAccessGrant403Response) VisitImmersionFeatureAccessGrantResponse(w http.ResponseWriter) error {
-	w.WriteHeader(403)
-	return nil
-}
-
-type ImmersionFeatureAccessGrant502Response struct {
-}
-
-func (response ImmersionFeatureAccessGrant502Response) VisitImmersionFeatureAccessGrantResponse(w http.ResponseWriter) error {
-	w.WriteHeader(502)
-	return nil
 }
 
 type ImmersionContestListRequestObject struct {
@@ -8829,15 +8465,6 @@ type StrictServerInterface interface {
 	// IdentityProfileUpdate Update profile; email changes require a recent login
 	// (PATCH /identity/settings/profile)
 	IdentityProfileUpdate(ctx context.Context, request IdentityProfileUpdateRequestObject) (IdentityProfileUpdateResponseObject, error)
-	// ImmersionFeatureAccessRevoke Revokes named-user access to an allowlisted feature flag (admin only)
-	// (DELETE /immersion/admin/feature-flags/{flagKey}/users/{userId})
-	ImmersionFeatureAccessRevoke(ctx context.Context, request ImmersionFeatureAccessRevokeRequestObject) (ImmersionFeatureAccessRevokeResponseObject, error)
-	// ImmersionFeatureAccessGet Returns named-user access for an allowlisted feature flag (admin only)
-	// (GET /immersion/admin/feature-flags/{flagKey}/users/{userId})
-	ImmersionFeatureAccessGet(ctx context.Context, request ImmersionFeatureAccessGetRequestObject) (ImmersionFeatureAccessGetResponseObject, error)
-	// ImmersionFeatureAccessGrant Grants named-user access to an allowlisted feature flag (admin only)
-	// (PUT /immersion/admin/feature-flags/{flagKey}/users/{userId})
-	ImmersionFeatureAccessGrant(ctx context.Context, request ImmersionFeatureAccessGrantRequestObject) (ImmersionFeatureAccessGrantResponseObject, error)
 	// ImmersionContestList Lists all the contests, paginated
 	// (GET /immersion/contests)
 	ImmersionContestList(ctx context.Context, request ImmersionContestListRequestObject) (ImmersionContestListResponseObject, error)
@@ -9944,87 +9571,6 @@ func (sh *strictHandler) IdentityProfileUpdate(w http.ResponseWriter, r *http.Re
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(IdentityProfileUpdateResponseObject); ok {
 		if err := validResponse.VisitIdentityProfileUpdateResponse(w); err != nil {
-			sh.options.ResponseErrorHandlerFunc(w, r, err)
-		}
-	} else if response != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
-	}
-}
-
-// ImmersionFeatureAccessRevoke operation middleware
-func (sh *strictHandler) ImmersionFeatureAccessRevoke(w http.ResponseWriter, r *http.Request, flagKey ImmersionManagedFeatureFlagKey, userId openapi_types.UUID) {
-	var request ImmersionFeatureAccessRevokeRequestObject
-
-	request.FlagKey = flagKey
-	request.UserId = userId
-
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.ImmersionFeatureAccessRevoke(ctx, request.(ImmersionFeatureAccessRevokeRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "ImmersionFeatureAccessRevoke")
-	}
-
-	response, err := handler(r.Context(), w, r, request)
-
-	if err != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(ImmersionFeatureAccessRevokeResponseObject); ok {
-		if err := validResponse.VisitImmersionFeatureAccessRevokeResponse(w); err != nil {
-			sh.options.ResponseErrorHandlerFunc(w, r, err)
-		}
-	} else if response != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
-	}
-}
-
-// ImmersionFeatureAccessGet operation middleware
-func (sh *strictHandler) ImmersionFeatureAccessGet(w http.ResponseWriter, r *http.Request, flagKey ImmersionManagedFeatureFlagKey, userId openapi_types.UUID) {
-	var request ImmersionFeatureAccessGetRequestObject
-
-	request.FlagKey = flagKey
-	request.UserId = userId
-
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.ImmersionFeatureAccessGet(ctx, request.(ImmersionFeatureAccessGetRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "ImmersionFeatureAccessGet")
-	}
-
-	response, err := handler(r.Context(), w, r, request)
-
-	if err != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(ImmersionFeatureAccessGetResponseObject); ok {
-		if err := validResponse.VisitImmersionFeatureAccessGetResponse(w); err != nil {
-			sh.options.ResponseErrorHandlerFunc(w, r, err)
-		}
-	} else if response != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
-	}
-}
-
-// ImmersionFeatureAccessGrant operation middleware
-func (sh *strictHandler) ImmersionFeatureAccessGrant(w http.ResponseWriter, r *http.Request, flagKey ImmersionManagedFeatureFlagKey, userId openapi_types.UUID) {
-	var request ImmersionFeatureAccessGrantRequestObject
-
-	request.FlagKey = flagKey
-	request.UserId = userId
-
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.ImmersionFeatureAccessGrant(ctx, request.(ImmersionFeatureAccessGrantRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "ImmersionFeatureAccessGrant")
-	}
-
-	response, err := handler(r.Context(), w, r, request)
-
-	if err != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(ImmersionFeatureAccessGrantResponseObject); ok {
-		if err := validResponse.VisitImmersionFeatureAccessGrantResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

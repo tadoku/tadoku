@@ -3,11 +3,11 @@ package featureflags
 import "context"
 
 type PublicDecisions struct {
-	ReleaseLogEntryV2 bool
+	ReleaseWebV3 bool
 }
 
 func (e *Evaluator) EvaluatePublicForSubject(ctx context.Context, subject string) PublicDecisions {
 	return PublicDecisions{
-		ReleaseLogEntryV2: e.Boolean(ctx, ReleaseLogEntryV2, subject),
+		ReleaseWebV3: e.Boolean(ctx, ReleaseWebV3, subject),
 	}
 }

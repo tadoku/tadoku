@@ -36,7 +36,6 @@ type config struct {
 	FliptUpdateInterval  time.Duration `validate:"gte=1s" envconfig:"flipt_update_interval" default:"30s"`
 	FliptRequestTimeout  time.Duration `validate:"gte=1s" envconfig:"flipt_request_timeout" default:"5s"`
 	FliptStartupTimeout  time.Duration `validate:"gt=0" envconfig:"flipt_startup_timeout" default:"3s"`
-	FliptManagementURL   string        `envconfig:"flipt_management_url" default:"http://oathkeeper-proxy.default:4455/flipt-management"`
 
 	IdentityCookieDomain      string   `envconfig:"identity_cookie_domain" default:"tadoku.app"`
 	IdentityTrustedProxyCIDRs []string `envconfig:"identity_trusted_proxy_cidrs"`
@@ -95,12 +94,6 @@ func loadConfig() (config, error) {
 
 	if cfg.OathkeeperURL != "" {
 		cfg.OathkeeperURL, err = providerBaseURL("OathkeeperURL", cfg.OathkeeperURL)
-		if err != nil {
-			return config{}, err
-		}
-	}
-	if cfg.FliptManagementURL != "" {
-		cfg.FliptManagementURL, err = providerBaseURL("FliptManagementURL", cfg.FliptManagementURL)
 		if err != nil {
 			return config{}, err
 		}

@@ -29,7 +29,6 @@ Source: `frontend/apps/admin`. Development host: `admin.tadoku.dev.lab`.
   API calls resolve their endpoint at call time. Logout uses `POST /identity/logout`.
   SSR forwards Cookie and X-Dev-Branch to the private API endpoint and never caches
   session responses. Session initialization is scoped to the request.
-- Tests run on Vitest with jsdom and Testing Library.
 - The `next.config.js` `NEXT_PUBLIC_*` variables work as they do in [webv2](webv2.md).
 
 ## Commands
@@ -40,6 +39,5 @@ From `frontend/`:
 pnpm --filter admin dev      # port 3000
 pnpm --filter admin lint
 pnpm --filter admin exec tsc --noEmit
-pnpm --filter admin test
 pnpm --filter admin build
 ```

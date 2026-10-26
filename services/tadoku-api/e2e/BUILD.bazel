@@ -147,7 +147,6 @@ go_test(
         "//services/tadoku-api/features/contestevents",
         "//services/tadoku-api/features/contests",
         "//services/tadoku-api/features/email",
-        "//services/tadoku-api/features/featureflags",
         "//services/tadoku-api/features/identity",
         "//services/tadoku-api/features/jobqueue",
         "//services/tadoku-api/features/languages",

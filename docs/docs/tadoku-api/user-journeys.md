@@ -24,7 +24,7 @@ to `runJourney`:
 | --- | --- |
 | `services/tadoku-api/e2e/user_journeys_test.go` | Tenant isolation, languages, contests, registrations and scoring rule sets |
 | `services/tadoku-api/e2e/log_journeys_test.go` | Logs and leaderboard jobs |
-| `services/tadoku-api/e2e/access_journeys_test.go` | Roles, bans, feature access and the user list |
+| `services/tadoku-api/e2e/access_journeys_test.go` | Roles, bans and the user list |
 | `services/tadoku-api/e2e/content_journeys_test.go` | Announcements, pages and posts |
 
 Journeys keep dependent steps in one scenario and run the production API router
@@ -109,8 +109,7 @@ e2e/testdata/journeys/
 
 `TestTenantIsolationJourney` uses the restricted PostgreSQL application role
 and real Valkey. Its requests create one log in each tenant, then check
-separate leaderboards, cache keys, scoped worker outcomes, feature grants and
-bans.
+separate leaderboards, cache keys, scoped worker outcomes and bans.
 
 Flipt evaluation and management use the suite's tenant-aware protocol fixture.
 This journey therefore verifies application routing and independent flag

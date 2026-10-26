@@ -92,6 +92,16 @@ delete from sessions
 where user_id = sqlc.arg(user_id)
   and token_hash <> sqlc.arg(keep_token_hash);
 
+-- name: DeleteAccount :many
+with deleted_recovery_tokens as (
+  delete from recovery_tokens where recovery_tokens.user_id = sqlc.arg(user_id)::uuid
+), deleted_sessions as (
+  delete from sessions where sessions.user_id = sqlc.arg(user_id)::uuid
+)
+delete from accounts
+where accounts.user_id = sqlc.arg(user_id)::uuid
+returning accounts.email;
+
 -- name: DeleteExpiredCredentials :one
 with expired_sessions as (
   delete from sessions

@@ -62,6 +62,37 @@ func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) (i
 	return result.RowsAffected(), nil
 }
 
+const deleteAccount = `-- name: DeleteAccount :many
+with deleted_recovery_tokens as (
+  delete from recovery_tokens where recovery_tokens.user_id = $1::uuid
+), deleted_sessions as (
+  delete from sessions where sessions.user_id = $1::uuid
+)
+delete from accounts
+where accounts.user_id = $1::uuid
+returning accounts.email
+`
+
+func (q *Queries) DeleteAccount(ctx context.Context, userID pgtype.UUID) ([]string, error) {
+	rows, err := q.db.Query(ctx, deleteAccount, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []string{}
+	for rows.Next() {
+		var email string
+		if err := rows.Scan(&email); err != nil {
+			return nil, err
+		}
+		items = append(items, email)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const deleteExpiredCredentials = `-- name: DeleteExpiredCredentials :one
 with expired_sessions as (
   delete from sessions

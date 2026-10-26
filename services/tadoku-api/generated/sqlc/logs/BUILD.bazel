@@ -7,6 +7,7 @@ go_library(
         "db.go",
         "logs.sql.go",
         "models.go",
+        "user_removal.sql.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/generated/sqlc/logs",
     visibility = ["//services/tadoku-api/features/logs:__pkg__"],

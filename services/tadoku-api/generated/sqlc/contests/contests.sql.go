@@ -613,7 +613,8 @@ select
   contests.title,
   contests.description,
   contests.owner_user_id,
-  owner_users.display_name as owner_user_display_name
+  case when owner_users.deleted_at is not null then 'Deleted organizer' else owner_users.display_name end::varchar
+    as owner_user_display_name
 from contest_registrations
 inner join contests on contests.id = contest_registrations.contest_id
 inner join users on users.id = contest_registrations.user_id

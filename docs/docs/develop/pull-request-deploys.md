@@ -11,11 +11,6 @@ change `.github/workflows/pr-branch.yaml` or
 pull-request branch. [Production branches](./production-branches.md) describes
 the images, hosts, tenant and access every production branch shares.
 
-The [identity rollout hold](./production-branches.md) applies to new builds with
-identity-session callers. Keep `deploy` absent until the production identity
-stack and branch-tooling adoption are ready; a source merge does not lift this
-hold.
-
 The `deploy` label asks for a pull request to be deployed beside production.
 `.github/workflows/pr-branch.yaml` authorizes the request on a GitHub-hosted
 runner, then deploys the pinned commit, or tears the branch down, with dev-cli

@@ -97,11 +97,6 @@ Reader/Admin interactions; API curls and hydrated navigation alone are partial
 proof. Revoke the retained pair publicly only after every smoke gate passes and
 verify old-cookie 401. Keep secrets in the existing private storage states.
 
-New production branches and `deploy`-labelled pull requests using these callers
-are unsupported until the paired production identity routes, callback and authv2
-are ready. Source delivery does not activate held production branch-tooling
-adoption. See [Production branches](../../../../../docs/docs/develop/production-branches.md).
-
 ## Recovery and settings API journey
 
 Use the branch main API URL printed by `dev url`, with an allowed HTTPS Origin

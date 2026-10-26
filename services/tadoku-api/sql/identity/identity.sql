@@ -92,6 +92,9 @@ delete from sessions
 where user_id = sqlc.arg(user_id)
   and token_hash <> sqlc.arg(keep_token_hash);
 
+-- name: LockAccountForDeletion :exec
+select user_id from accounts where user_id = sqlc.arg(user_id) for update;
+
 -- name: DeleteAccount :many
 with deleted_recovery_tokens as (
   delete from recovery_tokens where recovery_tokens.user_id = sqlc.arg(user_id)::uuid

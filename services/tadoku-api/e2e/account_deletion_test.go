@@ -1,11 +1,13 @@
 package e2e_test
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/tadoku/tadoku/services/tadoku-api/features/identity"
 	featureprofile "github.com/tadoku/tadoku/services/tadoku-api/features/profile"
@@ -65,6 +67,52 @@ func TestAccountDeletionFilingEndsAccess(t *testing.T) {
 	response = httptest.NewRecorder()
 	atFixtureInstant(func() { api.handler.ServeHTTP(response, request) })
 	requireErrorBody(t, response, http.StatusConflict, `"error":"account_deletion_in_progress"`)
+}
+
+func TestAccountDeletionFilingWaitsForAccountWrites(t *testing.T) {
+	resetAccountDeletion(t)
+	holder, err := api.db.AppPool.Begin(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = holder.Rollback(context.Background()) }()
+	_, err = holder.Exec(t.Context(), "select set_config('tadoku.tenant', 'tadoku/prod', true)")
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = holder.Exec(t.Context(), "select 1 from accounts where user_id = $1 for update", readerUserID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	filed := make(chan error, 1)
+	go func() {
+		_, err := fileOperatorDeletion(t, readerUserID, adminUserID, "Owner confirmed by email")
+		filed <- err
+	}()
+
+	deadline := time.Now().Add(10 * time.Second)
+	for waiting := false; !waiting; time.Sleep(10 * time.Millisecond) {
+		select {
+		case err := <-filed:
+			t.Fatalf("filing finished (%v) while a settings write held the account row", err)
+		default:
+		}
+		err := api.db.Pool.QueryRow(t.Context(), `select exists (select 1 from pg_stat_activity
+			where datname = current_database() and wait_event_type = 'Lock')`).Scan(&waiting)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("filing never waited for the account row")
+		}
+	}
+	if err := holder.Commit(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	if err := <-filed; err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestAccountDeletionRemovesData(t *testing.T) {

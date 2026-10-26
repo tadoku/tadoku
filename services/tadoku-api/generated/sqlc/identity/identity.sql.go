@@ -329,6 +329,15 @@ func (q *Queries) LockAccount(ctx context.Context, userID pgtype.UUID) (LockAcco
 	return i, err
 }
 
+const lockAccountForDeletion = `-- name: LockAccountForDeletion :exec
+select user_id from accounts where user_id = $1 for update
+`
+
+func (q *Queries) LockAccountForDeletion(ctx context.Context, userID pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, lockAccountForDeletion, userID)
+	return err
+}
+
 const lockRecoveryAccount = `-- name: LockRecoveryAccount :one
 select a.user_id, a.email, u.display_name, a.created_at, a.password_hash
 from accounts a

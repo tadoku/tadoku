@@ -49,14 +49,21 @@ func SelfServiceRequest(userID uuid.UUID) Request {
 }
 
 type Filing struct {
-	roles   *authz.Roles
-	profile *profile.Service
-	audit   *audit.Service
-	queue   *jobqueue.Service
+	roles    *authz.Roles
+	accounts *identity.Deletion
+	profile  *profile.Service
+	audit    *audit.Service
+	queue    *jobqueue.Service
 }
 
-func NewFiling(roles *authz.Roles, profile *profile.Service, audit *audit.Service, queue *jobqueue.Service) *Filing {
-	return &Filing{roles: roles, profile: profile, audit: audit, queue: queue}
+func NewFiling(
+	roles *authz.Roles,
+	accounts *identity.Deletion,
+	profile *profile.Service,
+	audit *audit.Service,
+	queue *jobqueue.Service,
+) *Filing {
+	return &Filing{roles: roles, accounts: accounts, profile: profile, audit: audit, queue: queue}
 }
 
 // File requires the caller's transaction and returns the ID of the account.delete.v1 job. It refuses an administrator,
@@ -75,6 +82,9 @@ func (f *Filing) File(ctx context.Context, request Request) (int64, error) {
 		}
 	}
 
+	if err := f.accounts.LockAccount(ctx, request.userID); err != nil {
+		return 0, err
+	}
 	if err := f.profile.LockForDeletion(ctx, request.userID, timex.Now()); err != nil {
 		return 0, err
 	}

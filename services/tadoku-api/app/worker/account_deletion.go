@@ -32,8 +32,9 @@ type AccountDeletion struct {
 	ContestEvents *contestevents.Service
 }
 
-// DeleteAccount locks the user row before any other row of the deletion, the reverse of the settings writes'
-// account-then-user order. That is safe because every account row lock skips deletion-locked users.
+// DeleteAccount locks the user row before any other row of the deletion, the reverse of the filing and settings writes'
+// account-then-user order. That is safe because filing waits for settings writes that hold the account row, and every
+// later account row lock skips deletion-locked users.
 func (a *Application) DeleteAccount(ctx context.Context, job jobs.DeleteAccountV1) error {
 	deletion := a.accountDeletion
 	if deletion == nil || a.email == nil {

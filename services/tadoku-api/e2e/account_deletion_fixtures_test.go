@@ -112,6 +112,7 @@ func fileOperatorDeletion(t *testing.T, userID, operatorID, reason string) (int6
 	tuples := featureauthz.NewRepository(pool)
 	filing := accountdeletion.NewFiling(
 		featureauthz.NewRoles(permissions.NewChecker(tuples, model), permissions.NewRelationships(tuples, model)),
+		identity.NewDeletion(identity.NewRepository(pool)),
 		featureprofile.NewService(featureprofile.NewRepository(pool), identity.NewReader(pool)),
 		featureaudit.NewService(featureaudit.NewRepository(pool)),
 		jobqueue.NewService(jobqueue.NewRepository(pool)),

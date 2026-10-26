@@ -12,6 +12,13 @@ type Deletion struct{ repository *Repository }
 
 func NewDeletion(repository *Repository) *Deletion { return &Deletion{repository: repository} }
 
+// LockAccount requires the caller's transaction and must come before the users row lock, the order the settings writes
+// use. A deletion request then waits for a settings write that already holds the account row, and a settings write
+// that waits for the request rechecks its session and finds the account locked.
+func (d *Deletion) LockAccount(ctx context.Context, userID uuid.UUID) error {
+	return d.repository.lockAccountForDeletion(ctx, userID)
+}
+
 // DeleteAccount requires the caller's transaction and a user locked for deletion. It deletes the user's account,
 // sessions and recovery tokens and returns the account.deleted notice for the stored address. An address that cannot
 // receive mail gets no notice, so it never blocks the deletion.

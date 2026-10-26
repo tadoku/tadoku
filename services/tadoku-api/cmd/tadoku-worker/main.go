@@ -299,6 +299,7 @@ func deleteAccount(ctx context.Context, args []string, logger *slog.Logger) erro
 	tuples := authz.NewRepository(pool)
 	filing := accountdeletion.NewFiling(
 		authz.NewRoles(permissions.NewChecker(tuples, model), permissions.NewRelationships(tuples, model)),
+		identity.NewDeletion(identity.NewRepository(pool)),
 		profile.NewService(profile.NewRepository(pool), identity.NewReader(pool)),
 		audit.NewService(audit.NewRepository(pool)),
 		jobqueue.NewService(jobqueue.NewRepository(pool)),

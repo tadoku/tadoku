@@ -100,7 +100,7 @@ function proveFrontends({ evidence, prefix, containers, report, run }, docs) {
               if (response.status !== 200) throw new Error('Webv3 SSR failed for ' + host);
               const html = response.html;
               if (!html.includes('Daily goal') || !html.includes('href="https://' + product + '/pages/manual"') || /href="https:\/\/tadoku\.app/.test(html)) throw new Error('Webv3 SSR development product links are incorrect for ' + host);
-              if (!html.includes('href="/logs/new"')) throw new Error('Webv3 SSR activity link must stay on the Webv3 host for ' + host);
+              if (!html.includes('href="/logs/new"') || /href="https?:\/\/[^"]*\/logs\/new"/.test(html)) throw new Error('Webv3 SSR activity link must stay on the Webv3 host for ' + host);
               const assets = [...html.matchAll(/(?:src|href)="([^" ]+\.(?:js|css)(?:\?[^" ]*)?)"/g)].map(m => m[1]);
               if (!assets.length) throw new Error('Webv3 SSR has no compiled assets');
               for (const asset of assets) if (!(await fetch(new URL(asset, base), {signal: AbortSignal.timeout(5000)})).ok) throw new Error('Missing compiled Webv3 asset: ' + asset);

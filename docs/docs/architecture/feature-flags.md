@@ -1,167 +1,101 @@
 ---
 title: Feature flags
-description: How Tadoku declares boolean feature flags, evaluates them in Tadoku API against Flipt, exposes decisions to webv2 and admins, and what adding a flag requires.
+description: Rules for declaring boolean flags, evaluating tenant-scoped decisions, evolving the public contract and managing provider state.
 sidebar_position: 4
 ---
 
 # Feature flags
 
-Read this when you gate behavior behind a flag, change who sees a flagged feature or add a new flag.
+Read this when you add a flag, change targeting or retire a flagged behavior.
 
-This page describes the development environment. Flags are boolean. Without a
-decision, `Evaluator.Boolean` consumers use the flag's behavior-preserving safe
-default.
+## Declarations and defaults
 
-Log creation, details and editing use v2 for everyone and do not depend on a
-feature flag. The public registry contains `release-webv3`, which defaults to
-false. Its Flipt seed is disabled with an empty allowlist. Named-user rollout
-policy is managed in the Flipt operator UI; the admin application has no
-feature-access controls.
+Declare flag vocabulary centrally in `feature-flags.contract.json`,
+`services/tadoku-api/internal/featureflags/registry.go` and
+`frontend/apps/webv2/app/feature-flags/registry.ts`. Keep keys, order and safe
+defaults consistent. Use typed definitions at call sites rather than supplying
+provider keys or defaults independently.
 
-## Where flags are declared
+Choose a behavior-preserving safe default. Evaluate through the application
+layer; transport and product components must not assemble provider policy.
+The contract checks beside the registries protect consistency across languages.
 
-| File | Role |
-| --- | --- |
-| `feature-flags.contract.json` | Cross-stack list of flag keys and safe defaults |
-| `services/tadoku-api/internal/featureflags/registry.go` | Typed Go `BooleanFlag` constants; call sites cannot supply keys or defaults |
-| `frontend/apps/webv2/app/feature-flags/registry.ts` | webv2 keys and safe defaults |
-| `k8s/dev/base/flipt/features.yaml` | Development Flipt seed: flags, rollouts and segments |
+## Evaluation and tenancy
 
-`services/tadoku-api/internal/featureflags/contract_test.go` and
-`frontend/apps/webv2/app/feature-flags/registry.test.ts` compare the registries
-with the contract. CI runs only the Go test, and only when Bazel inputs change,
-so run both locally (`bazel test`, `pnpm --filter webv2 test`).
+`services/tadoku-api/internal/featureflags/` accepts verified subjects. Guests
+receive safe defaults without provider evaluation. Signed-in accounts use their
+account IDs. Product code receives a boolean decision rather than a provider
+error.
 
-## Evaluation in Tadoku API
+`services/tadoku-api/infra/flipt/` resolves the verified tenant before evaluating.
+Canonical requests use the configured environment and namespace. Other tenants
+use the separate test environment and the provider's tenant-to-namespace mapping.
+A missing tenant must never fall back to canonical state. Preserve the parsed
+tenant-key restrictions that make this mapping collision-free.
 
-`Evaluator.Boolean` in `services/tadoku-api/internal/featureflags/` accepts a
-verified subject and never returns an error to product code. Anonymous and guest
-requests get the safe default without asking Flipt; signed-in users are evaluated
-with their account ID as the entity ID. The old common `UserIdentity` type is gone.
+The provider polls evaluation snapshots and evaluates in process. Accept only
+snapshots that identify the requested namespace and satisfy the SDK's required
+fields. Install an SDK only after its own initial fetch and engine initialization
+succeed. Failed initialization must not install an empty fallback snapshot; retry
+through a fresh SDK. After successful initialization, a failed refresh retains the
+last valid snapshot and marks decisions stale. Keep test-client caching bounded
+and close clients on eviction or shutdown.
 
-The provider in `services/tadoku-api/infra/flipt/` resolves the verified tenant
-before evaluating a flag. `tadoku/prod` keeps the configured canonical target:
-`production/default` in production and `local/default` in development. Other
-tenants use `API_FLIPT_TEST_ENVIRONMENT` (default `test`) and their own namespace.
-The single `Targets` mapping replaces the tenant's `/` with `_` for the Flipt
-namespace key; `e2e/run-1` becomes `e2e_run-1`. Tenant segments cannot contain
-underscores, so distinct tenant keys cannot collide. Keep the original
-`<name>/<id>` as the namespace's display name. Do not create a literal slash
-namespace: Flipt v2.11 accepts that management write but its feature schema
-rejects the key, breaking evaluation snapshots for the environment.
+Configuration and lifecycle metrics belong to the provider. See
+[Configuration](../tadoku-api/configuration.md) for its environment variables and
+startup bounds. Application snapshot reads use the evaluation service audience
+through Oathkeeper; see [Service-to-service auth](./service-tokens.md).
+Provisioners use their separate direct management connection.
 
-The provider wraps the Flipt client SDK in polling mode: it fetches the resolved
-namespace evaluation snapshot every
-`API_FLIPT_UPDATE_INTERVAL` and evaluates in process. A failed fetch keeps the
-last snapshot and marks results stale. So does a fetched snapshot that fails
-validation: the client hands the SDK only snapshots whose exact `namespace.key`
-matches the resolved namespace, whose `flags` entries all have keys and that
-carry a `digest`. Startup waits at most
-`API_FLIPT_STARTUP_TIMEOUT`. A client only evaluates a snapshot it fetched: it
-installs an SDK only when that SDK's own initial fetch returned a valid snapshot
-and its engine accepted it. When the initial fetch fails, the client discards the
-SDK and its empty fallback state, even if later background fetches clear the
-SDK's last error, and starts a fresh SDK every `API_FLIPT_UPDATE_INTERVAL`. Until then
-`Boolean` serves safe defaults. The
-canonical client is created at startup. Test clients are created on first evaluation, retained in a
-16-client LRU cache and closed on eviction or shutdown. A missing tenant never
-falls back to canonical flags. Test clients have no provider-lifecycle observer,
-so `tadoku_feature_flag_config_age_seconds` continues to describe canonical
-configuration freshness. See [Configuration](../tadoku-api/configuration.md) for the `API_FLIPT_*` settings.
+## Public decision contract
 
-Application evaluation calls pass through Oathkeeper with service JWTs that
-`services/common/client/s2s/` exchanges for the `flipt-evaluation` audience
-([Service-to-service auth](./service-tokens.md)). The routes in
-`k8s/dev/base/oathkeeper/rules.yaml` permit snapshot reads only. Provisioners
-use their direct management connection. Metrics are named `tadoku_feature_flag_*`.
+Expose browser decisions through the typed mapping in
+`services/tadoku-api/internal/featureflags/public.go` and the OpenAPI fragments
+under `services/tadoku-api/spec/openapi/`. Keep the response private and uncached.
+The application uses the evaluator for public decisions and backend consumers.
 
-## Decisions in the browser
+webv2 fetches decisions during SSR and navigation, using registry defaults when
+transport or validation fails. Generated clients reject missing and additional
+keys. Adding or removing a public decision therefore changes a strict contract.
 
-`GET /immersion/feature-flags` (`ImmersionFeatureFlagDecisions`) returns the
-decisions for the current user or guest with `Cache-Control: private, no-store`. Only flags in
-`PublicDecisions` (`services/tadoku-api/internal/featureflags/public.go`) are exposed.
-The application uses the evaluator for public decisions as well as backend consumers.
-[webv2](../frontend/webv2.md) fetches them server-side in `frontend/apps/webv2/pages/_app.tsx` and
-after each client-side route change, falling back to defaults on any failure.
-Components can use `useFeatureFlag`; the log pages do not read a flag.
+Before changing that shape, retire incompatible consumers, enforce a verified
+refresh/cutover or retain a compatible endpoint while introducing a versioned
+contract. Deploying unconditional product behavior does not retire already-open
+JavaScript. Elapsed time alone is not proof that old consumers are gone.
 
-The response is exactly `{"decisions":{"release-webv3":false}}` when the
-preview is disabled. Generated clients reject missing or extra decision keys.
-Before changing this contract again, retire incompatible consumers or version
-the endpoint. An unconditional UI does not retire already-open browser code.
+Remove a release check and its obsolete product path only after the replacement
+behavior is verified. Preserve behavior still shared by retained callers. Remove
+managed API operations, generated clients and administration controls together;
+retire older callers before removing their gateway permissions or provider state.
 
-## Development Flipt
+## Provider state and development ownership
 
-Flipt runs in `tdk-dev-flipt` from `k8s/dev/base/flipt/` and loads
-`features.yaml` into in-memory storage when the pod starts; recreating the pod
-discards changes. The separate `test` environment uses in-memory storage with
-no Git remote; its namespaces also disappear when the pod restarts. Production
-uses the same separate memory-only test environment, so test flags are never
-committed or pushed to the canonical feature-flags repository. The operator UI at `https://flags.tadoku.dev.lab` requires the
-canonical native session of an administrator, checked by Oathkeeper through Tadoku API.
-Flipt is shared: do not change flag policy for other developers. HTTP E2Es use `services/tadoku-api/internal/testflipt/` instead.
+`k8s/dev/base/flipt/features.yaml` supplies development declarations. Keep new
+rollout policy disabled unless its release is explicitly authorized. Targeting
+changes belong in the authorized Flipt operator interface; Tadoku API has no
+management endpoint.
 
-Every dev-cli branch, including frontend-only work, provisions its own
-`test/tadoku_<route>` namespace with display name `tadoku/<route>`. The `tenant`
-hook publishes the branch's own `features.yaml` in its tenant image, converts
-the seed to Flipt v2 resources and creates missing segments and flags. Repeating
-the task preserves existing resources and named-user grants. Evaluation uses that namespace when the main hostname is selected;
-canonical development requests still use `local/default`.
+Branch provisioning publishes the branch's seed into its owned test namespace.
+Provision resources through the management adapter's typed schema, preserving
+existing resources and grants on repeated setup. Use the provider's namespace
+mapping and validate resource references; do not copy another tenant's members
+or revisions. Management requests do not write canonical Git-backed policy.
 
-`dev down` and expired-route cleanup delete the owned test namespace. After a
-Flipt restart, rerun `dev task --owner <owner> tenant` to restore missing
-resources. Do not edit canonical flags to repair a branch or copy another
-tenant's members.
+The test environment is memory-only. A provider restart discards its namespaces;
+rerun the owned provisioning task to restore them. Teardown deletes only the
+owned namespace. Do not repair a branch by changing canonical policy or restarting
+shared services. See [Development environment](../develop/environment.md) for the
+owner-scoped commands.
 
+## Changing the contract
 
-## Provisioning a test namespace
+Update declarations, typed public mappings and schema fragments together. Run
+the contract and generated-client checks, and regenerate the bundled OpenAPI,
+SDK and API reference through their documented commands. See
+[API contract](../tadoku-api/contract.md) and
+[Frontend API client](../frontend/api-client.md).
 
-Provisioners use Flipt's management API directly with their own authorized
-operator or provisioning credentials. Tadoku API's Oathkeeper service-token rules
-permit evaluation snapshots only. Namespace and rollout management use the
-provisioner's direct management connection.
-
-1. Parse the tenant key and use `Targets` to obtain the test environment and
-   mapped namespace key. The test environment must differ from the canonical
-   environment. For `e2e/run-1`, create the namespace with
-   `POST /api/v2/environments/test/namespaces` and body
-   `{"key":"e2e_run-1","name":"e2e/run-1"}`. Creation returns `409` when it
-   already exists.
-2. Create each segment and flag from the branch's
-   `k8s/dev/base/flipt/features.yaml` using
-   `POST /api/v2/environments/test/namespaces/e2e_run-1/resources`. Send the
-   resource key and typed `payload`, such as
-   `{"key":"release-webv3-access","payload":{"@type":"flipt.core.Segment",...}}`.
-   Translate the seed into Flipt's v2 resource schema: a segment rollout needs
-   `type: "SEGMENT_ROLLOUT_TYPE"`, `segment.segments` and
-   `segment.segmentOperator`. Raw seed YAML field names are not the v2 JSON
-   contract. `PUT` updates existing resources; creating a resource under a
-   missing namespace returns `500`.
-3. Verify
-   `GET /internal/v1/evaluation/snapshot/namespace/e2e_run-1` with header
-   `x-flipt-environment: test`. An unprovisioned namespace returns `404`; user
-   flags then use safe defaults. Test namespaces never share canonical members
-   or revisions.
-4. Delete only the owned namespace with
-   `DELETE /api/v2/environments/test/namespaces/e2e_run-1` during teardown.
-   Provision it again after a Flipt restart.
-
-These calls do not write the production flags repository or modify canonical
-flags. Test environment namespaces are visible to administrators in the shared
-operator UI.
-
-## Adding a flag
-
-1. Add the key and `safeDefault` to `feature-flags.contract.json`.
-2. Add a `BooleanFlag` constant and definition in `registry.go`; extend `contract_test.go`.
-3. Add the key to `featureFlagRegistry` in webv2 `registry.ts`, in contract order.
-4. Add the flag, disabled, to `k8s/dev/base/flipt/features.yaml`.
-5. To gate backend behavior, evaluate it in the application layer through the evaluator.
-6. To expose it to the browser, add it to `PublicDecisions` and the
-   evaluator mapping, the `ImmersionFeatureFlagDecisions` schema in
-   `services/tadoku-api/spec/openapi/schemas/immersion.yaml` and `services/tadoku-api/transport/http/feature_flags.go`.
-   Run `./scripts/generate-openapi.sh`, `pnpm api:generate` and
-   `pnpm --filter api-client generate`, and update the
-   `ImmersionFeatureFlagDecisions` goldens.
-7. For named-user targeting, add a segment and rollout to `features.yaml`.
-   Manage grants in Flipt and keep provisioning restricted to the owned tenant.
+Verify defaults, provider errors and tenant isolation through the actual API.
+Provider-protocol fixtures are simulations, so record that boundary separately
+from real-provider and browser verification. Retain meaningful adapter coverage
+when a product flag is retired; generic provider tests may use test-only keys.

@@ -27,6 +27,9 @@ boundaries described in [Code ownership](./index.md#code-ownership).
   maps its validated base scope to this marker; other features and the API
   transport cannot request it. A database context must carry either this marker or one tenant, never
   both.
+- The API application (`app/api`) is visible only to its binary
+  (`cmd/tadoku-api`), the HTTP transport (`transport/http`) and E2E. The
+  transport imports no other application.
 - The worker application (`app/worker`) is visible only to its binary
   (`cmd/tadoku-worker`) and E2E.
 - The owner-only lifecycle application (`app/tenantlifecycle`) is visible only

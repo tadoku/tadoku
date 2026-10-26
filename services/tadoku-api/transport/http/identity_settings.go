@@ -96,7 +96,7 @@ func (s *server) IdentityAccountDelete(
 	metadata := ctx.Value(identityRequestKey{}).(identityRequestMetadata)
 	email := ""
 	if request.Body != nil {
-		email = string(request.Body.Email)
+		email = request.Body.Email
 	}
 	cookie, err := s.application.IdentityRequestAccountDeletion(ctx, metadata.cookies, email)
 	if err != nil {

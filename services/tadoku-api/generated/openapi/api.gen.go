@@ -648,8 +648,8 @@ type IdentityAccount struct {
 
 // IdentityAccountDeletion defines model for IdentityAccountDeletion.
 type IdentityAccountDeletion struct {
-	// Email The account's email address, compared with it after normalization, so letter case and surrounding whitespace do not matter.
-	Email openapi_types.Email `json:"email"`
+	// Email The account's email address, compared with it after normalization, so letter case and surrounding whitespace do not matter. The API validates it after the session checks, so it has no format.
+	Email string `json:"email"`
 }
 
 // IdentityErrorResponse defines model for IdentityErrorResponse.

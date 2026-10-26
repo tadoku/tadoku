@@ -581,7 +581,7 @@ export type IdentityPasswordSettings = {
 
 export type IdentityAccountDeletion = {
     /**
-     * The account's email address, compared with it after normalization, so letter case and surrounding whitespace do not matter.
+     * The account's email address, compared with it after normalization, so letter case and surrounding whitespace do not matter. The API validates it after the session checks, so it has no format.
      */
     email: string;
 };

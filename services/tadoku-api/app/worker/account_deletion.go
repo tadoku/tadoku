@@ -12,6 +12,7 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/features/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/logs"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/profile"
+	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
 )
 
@@ -36,5 +37,14 @@ func FileAccountDeletion(
 	filing *accountdeletion.Filing,
 	request accountdeletion.Request,
 ) (int64, error) {
-	return 0, nil
+	var jobID int64
+	err := postgres.RunInTransaction(ctx, db, func(ctx context.Context) error {
+		var err error
+		jobID, err = filing.File(ctx, request)
+		return err
+	})
+	if err != nil {
+		return 0, err
+	}
+	return jobID, nil
 }

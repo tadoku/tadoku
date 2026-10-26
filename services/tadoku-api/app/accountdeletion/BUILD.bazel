@@ -10,11 +10,14 @@ go_library(
         "//services/tadoku-api/e2e:__pkg__",
     ],
     deps = [
+        "//services/tadoku-api/domain/jobs",
         "//services/tadoku-api/features/audit",
         "//services/tadoku-api/features/authz",
+        "//services/tadoku-api/features/identity",
         "//services/tadoku-api/features/jobqueue",
         "//services/tadoku-api/features/profile",
         "//services/tadoku-api/internal/errx",
+        "//services/tadoku-api/internal/timex",
         "@com_github_google_uuid//:uuid",
     ],
 )

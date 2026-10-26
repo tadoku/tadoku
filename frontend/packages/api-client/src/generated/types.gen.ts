@@ -509,7 +509,7 @@ export type ProfileAccountDeletionRequest = {
      */
     email: string;
     /**
-     * Why the account is deleted, kept in the audit log for good. Surrounding whitespace is trimmed. Do not include the user's email address or display name.
+     * Why the account is deleted, kept in the audit log for good. Surrounding whitespace is trimmed before the length is checked. Do not include the user's email address or display name.
      */
     reason: string;
 };
@@ -522,7 +522,7 @@ export type ProfileAccountDeletionFiled = {
 };
 
 export type ProfileErrorResponse = {
-    error: 'confirmation_mismatch' | 'admin_account' | 'account_deletion_in_progress';
+    error: 'admin_account' | 'account_deletion_in_progress';
 };
 
 export type IdentityErrorResponse = {
@@ -2724,9 +2724,9 @@ export type ProfileAccountDeletionCreateData = {
 
 export type ProfileAccountDeletionCreateErrors = {
     /**
-     * invalid request; an email that does not match the account returns confirmation_mismatch, and other invalid input, such as a missing email or reason, has an empty body
+     * invalid request. An email that does not match the account returns {"error":"confirmation_mismatch"}; other invalid input, such as a missing email or reason, has an empty body.
      */
-    400: ProfileErrorResponse;
+    400: unknown;
     /**
      * unauthorized
      */

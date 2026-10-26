@@ -441,11 +441,7 @@ export const zProfileAccountDeletionFiled = z.object({
 });
 
 export const zProfileErrorResponse = z.object({
-    error: z.enum([
-        'confirmation_mismatch',
-        'admin_account',
-        'account_deletion_in_progress'
-    ])
+    error: z.enum(['admin_account', 'account_deletion_in_progress'])
 });
 
 export const zIdentityErrorResponse = z.object({

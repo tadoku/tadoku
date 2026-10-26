@@ -354,7 +354,6 @@ func (e ImmersionScoringRuleSetDraftMode) Valid() bool {
 const (
 	ProfileErrorResponseErrorAccountDeletionInProgress ProfileErrorResponseError = "account_deletion_in_progress"
 	ProfileErrorResponseErrorAdminAccount              ProfileErrorResponseError = "admin_account"
-	ProfileErrorResponseErrorConfirmationMismatch      ProfileErrorResponseError = "confirmation_mismatch"
 )
 
 // Valid indicates whether the value is a known member of the ProfileErrorResponseError enum.
@@ -363,8 +362,6 @@ func (e ProfileErrorResponseError) Valid() bool {
 	case ProfileErrorResponseErrorAccountDeletionInProgress:
 		return true
 	case ProfileErrorResponseErrorAdminAccount:
-		return true
-	case ProfileErrorResponseErrorConfirmationMismatch:
 		return true
 	default:
 		return false
@@ -1305,7 +1302,7 @@ type ProfileAccountDeletionRequest struct {
 	// Email The account's email address as the administrator typed it, compared with the account's address after normalization, so letter case and surrounding whitespace do not matter. It has no format, so an imported address that is not a valid email can still be confirmed.
 	Email string `json:"email"`
 
-	// Reason Why the account is deleted, kept in the audit log for good. Surrounding whitespace is trimmed. Do not include the user's email address or display name.
+	// Reason Why the account is deleted, kept in the audit log for good. Surrounding whitespace is trimmed before the length is checked. Do not include the user's email address or display name.
 	Reason string `json:"reason"`
 }
 
@@ -8507,18 +8504,12 @@ func (response ProfileAccountDeletionCreate202JSONResponse) VisitProfileAccountD
 	return err
 }
 
-type ProfileAccountDeletionCreate400JSONResponse ProfileErrorResponse
+type ProfileAccountDeletionCreate400Response struct {
+}
 
-func (response ProfileAccountDeletionCreate400JSONResponse) VisitProfileAccountDeletionCreateResponse(w http.ResponseWriter) error {
-
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
-		return err
-	}
-	w.Header().Set("Content-Type", "application/json")
+func (response ProfileAccountDeletionCreate400Response) VisitProfileAccountDeletionCreateResponse(w http.ResponseWriter) error {
 	w.WriteHeader(400)
-	_, err := buf.WriteTo(w)
-	return err
+	return nil
 }
 
 type ProfileAccountDeletionCreate401Response struct {

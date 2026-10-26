@@ -40,7 +40,8 @@ func TestAccountDeletionUpdatesLeaderboardsAndContestReads(t *testing.T) {
 	}
 	after := leaderboardEntries(t, finished)[bannedUserID]
 	if after.UserDisplayName != "Deleted participant" || after.Score != before.Score || before.Score == 0 {
-		t.Errorf("finished contest entry before=%+v after=%+v, want the same score as Deleted participant", before, after)
+		t.Errorf("finished contest entry before=%+v after=%+v, want the same score as Deleted participant",
+			before, after)
 	}
 
 	var ongoing struct {

@@ -135,9 +135,11 @@ func deletionFiling(t *testing.T, request apiapp.AccountDeletionRequest) func() 
 	}
 	pool := api.db.AppPool
 	tuples := featureauthz.NewRepository(pool)
+	checker := permissions.NewChecker(tuples, model)
+	relationships := permissions.NewRelationships(tuples, model)
 	application := apiapp.New(apiapp.Dependencies{
 		DB:               pool,
-		Roles:            featureauthz.NewRoles(permissions.NewChecker(tuples, model), permissions.NewRelationships(tuples, model)),
+		Roles:            featureauthz.NewRoles(checker, relationships),
 		IdentityDeletion: identity.NewDeletion(identity.NewRepository(pool)),
 		Profile:          featureprofile.NewService(featureprofile.NewRepository(pool), identity.NewReader(pool)),
 		Audit:            featureaudit.NewService(featureaudit.NewRepository(pool)),

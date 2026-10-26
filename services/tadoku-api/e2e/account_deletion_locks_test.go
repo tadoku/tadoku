@@ -59,7 +59,7 @@ func TestAccountDeletionConfirmsTheLockedAddress(t *testing.T) {
 	}
 
 	if err := <-filed; !errors.Is(err, identity.ErrConfirmationMismatch) {
-		t.Errorf("filing with the address before the change returned %v, want %v", err, identity.ErrConfirmationMismatch)
+		t.Errorf("filing with the earlier address returned %v, want %v", err, identity.ErrConfirmationMismatch)
 	}
 	if after := snapshot(t, targetSnapshotSQL, readerUserID); after != before {
 		t.Errorf("a refused filing changed state\nbefore=%s\nafter=%s", before, after)
@@ -101,7 +101,8 @@ func TestAccountDeletionQueuedSettingsWriteFails(t *testing.T) {
 	if response.Code != http.StatusUnauthorized {
 		t.Errorf("settings write queued behind filing: status=%d body=%s, want 401", response.Code, response.Body)
 	}
-	if name := snapshot(t, "select display_name from users where tenant = 'tadoku/prod' and id = $1", readerUserID); name != "Reader One" {
+	name := snapshot(t, "select display_name from users where tenant = 'tadoku/prod' and id = $1", readerUserID)
+	if name != "Reader One" {
 		t.Errorf("display name=%q after a settings write queued behind filing", name)
 	}
 }
@@ -196,7 +197,8 @@ func TestAccountDeletionWorkerLocksTheAccountBeforeTheUser(t *testing.T) {
 	waitForLockWaiters(t, 1, nil)
 
 	probe := holdRow(t, "select 1")
-	if _, err := probe.Exec(t.Context(), "select 1 from users where id = $1 for update nowait", readerUserID); err != nil {
+	_, err = probe.Exec(t.Context(), "select 1 from users where id = $1 for update nowait", readerUserID)
+	if err != nil {
 		t.Errorf("the worker holds the users row while it waits for the account row: %v", err)
 	}
 	if err := probe.Rollback(t.Context()); err != nil {

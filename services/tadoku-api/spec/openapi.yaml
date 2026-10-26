@@ -2609,12 +2609,9 @@ paths:
                 $ref: "#/components/schemas/ProfileAccountDeletionFiled"
         "400":
           description: >-
-            invalid request; an email that does not match the account returns confirmation_mismatch, and other
-            invalid input, such as a missing email or reason, has an empty body
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ProfileErrorResponse"
+            invalid request. An email that does not match the account returns
+            {"error":"confirmation_mismatch"}; other invalid input, such as a missing email or reason, has an
+            empty body.
         "401":
           description: unauthorized
         "403":
@@ -4600,8 +4597,8 @@ components:
           minLength: 1
           maxLength: 1000
           description: >-
-            Why the account is deleted, kept in the audit log for good. Surrounding whitespace is trimmed. Do not
-            include the user's email address or display name.
+            Why the account is deleted, kept in the audit log for good. Surrounding whitespace is trimmed before
+            the length is checked. Do not include the user's email address or display name.
     ProfileAccountDeletionFiled:
       type: object
       required:
@@ -4619,7 +4616,6 @@ components:
         error:
           type: string
           enum:
-            - confirmation_mismatch
             - admin_account
             - account_deletion_in_progress
     AuthzProxyProxyAdminCheckRequest:

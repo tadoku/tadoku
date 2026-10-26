@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
@@ -56,8 +57,8 @@ func AdminAccountDeletion(userID, adminID uuid.UUID, email, reason string) (Acco
 	if reason == "" {
 		return AccountDeletionRequest{}, errx.NewInvalidInputError("reason is required")
 	}
-	if len(reason) > 1000 {
-		return AccountDeletionRequest{}, errx.NewInvalidInputError("reason must be at most 1000 bytes")
+	if utf8.RuneCountInString(reason) > 1000 {
+		return AccountDeletionRequest{}, errx.NewInvalidInputError("reason must be at most 1000 characters")
 	}
 	return AccountDeletionRequest{
 		userID:  userID,
@@ -93,8 +94,9 @@ func (a *Application) RequestAccountDeletion(ctx context.Context, parameters Acc
 // FileAccountDeletion files the request in its own transaction and returns the ID of the account.delete.v1 job. It
 // checks no actor: call it from an operation that has authorized the actor, such as RequestAccountDeletion. An
 // unknown or deleted user is not found. An administrator's request must name the account's address. It refuses an
-// administrator, and a banned user only when the user asks, and a refusal writes nothing. It reads roles once it holds the users row, which role changes lock too, so a ban or grant
-// that commits first counts. From its commit the user can no longer sign in or change data.
+// administrator, and a banned user only when the user asks, and a refusal writes nothing. It reads roles once it
+// holds the users row, which role changes lock too, so a ban or grant that commits first counts. From its commit the
+// user can no longer sign in or change data.
 func (a *Application) FileAccountDeletion(ctx context.Context, request AccountDeletionRequest) (int64, error) {
 	var jobID int64
 	err := postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) error {

@@ -48,8 +48,8 @@ components:
           minLength: 1
           maxLength: 1000
           description: >-
-            Why the account is deleted, kept in the audit log for good. Surrounding whitespace is trimmed. Do not
-            include the user's email address or display name.
+            Why the account is deleted, kept in the audit log for good. Surrounding whitespace is trimmed before
+            the length is checked. Do not include the user's email address or display name.
     ProfileAccountDeletionFiled:
       type: object
       required:
@@ -67,6 +67,5 @@ components:
         error:
           type: string
           enum:
-            - confirmation_mismatch
             - admin_account
             - account_deletion_in_progress

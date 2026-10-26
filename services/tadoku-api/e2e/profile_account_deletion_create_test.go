@@ -11,10 +11,12 @@ func TestProfileAccountDeletionCreate(t *testing.T) {
 		want        int
 	}{
 		{description: []string{"normalized", "email"}, want: http.StatusAccepted},
+		{description: []string{"multibyte", "reason"}, want: http.StatusAccepted},
 		{description: []string{"confirmation", "mismatch"}, want: http.StatusBadRequest},
 		{description: []string{"missing", "email"}, want: http.StatusBadRequest},
 		{description: []string{"missing", "reason"}, want: http.StatusBadRequest},
 		{description: []string{"blank", "reason"}, want: http.StatusBadRequest},
+		{description: []string{"long", "reason"}, want: http.StatusBadRequest},
 		{description: []string{"guest"}, want: http.StatusUnauthorized},
 		{description: []string{"non", "admin"}, want: http.StatusForbidden},
 		{description: []string{"unknown", "user"}, want: http.StatusNotFound},

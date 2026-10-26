@@ -74,12 +74,9 @@ paths:
                 $ref: "#/components/schemas/ProfileAccountDeletionFiled"
         "400":
           description: >-
-            invalid request; an email that does not match the account returns confirmation_mismatch, and other
-            invalid input, such as a missing email or reason, has an empty body
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ProfileErrorResponse"
+            invalid request. An email that does not match the account returns
+            {"error":"confirmation_mismatch"}; other invalid input, such as a missing email or reason, has an
+            empty body.
         "401":
           description: unauthorized
         "403":

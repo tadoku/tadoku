@@ -50,15 +50,15 @@ export const filterUnits = (
 }
 
 const optionalNumber = z.preprocess(
-  value =>
+  (value: number | undefined) =>
     typeof value === 'number' && Number.isNaN(value) ? undefined : value,
-  z.number({ invalid_type_error: 'Please enter a number' }).optional(),
+  z.number({ error: 'Please enter a number' }).optional(),
 )
 
 const optionalPositiveNumber = z.preprocess(
-  value =>
+  (value: number | undefined) =>
     typeof value === 'number' && Number.isNaN(value) ? undefined : value,
-  z.number({ invalid_type_error: 'Please enter a number' }).positive().optional(),
+  z.number({ error: 'Please enter a number' }).positive().optional(),
 )
 
 const durationSecondsFromMinutes = (minutes?: number) =>

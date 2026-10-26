@@ -30,4 +30,4 @@ export const registeredDecisions = (
     return result
   }, {} as FeatureFlagDecisions)
 
-export const featureFlagSubjectSchema = z.string().uuid()
+export const featureFlagSubjectSchema = z.guid()

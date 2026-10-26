@@ -32,8 +32,8 @@ const goTime = 'T(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|[+-](?:[01
 
 /**
  * Strings keep their format, length and pattern constraints, with the API's semantics where Zod's differ: lengths
- * count characters (code points), not UTF-16 units; `format: email` follows `validAddress`, including its bound in UTF-8
- * bytes; `format: date-time` follows Go's RFC 3339 reader.
+ * count characters (code points), not UTF-16 units; UUIDs use GUID validation; `format: email` follows `validAddress`,
+ * including its UTF-8 byte bound; `format: date-time` follows Go's RFC 3339 reader.
  */
 const string = ctx => {
   const { $, chain, nodes, schema } = ctx
@@ -41,6 +41,7 @@ const string = ctx => {
   if (constant) return constant
   chain.current = nodes.base(ctx)
   if (schema.format === 'email') chain.current = chain.current.attr('regex').call($.regexp(emailPattern, 'u'))
+  else if (schema.format === 'uuid') chain.current = chain.current.attr('guid').call()
   else if (schema.format === 'date-time') chain.current = nodes.format(ctx).attr('regex').call($.regexp(goTime))
   else chain.current = nodes.format(ctx) ?? chain.current
   if (schema.minLength !== undefined || schema.maxLength !== undefined) {
@@ -76,8 +77,7 @@ export default {
     '@hey-api/typescript',
     {
       name: 'zod',
-      // Legacy Next.js applications compile with TypeScript 4.9, which cannot read Zod 4 declarations.
-      compatibilityVersion: 3,
+      compatibilityVersion: 4,
       // Go writes times in RFC 3339 with the time's own offset.
       dates: { offset: true },
       '~resolvers': { object: closedObject, string },

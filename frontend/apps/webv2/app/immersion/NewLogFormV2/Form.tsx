@@ -54,7 +54,7 @@ export const LogFormV2 = ({
     allActivities: options.activities,
   }
 
-  const methods = useForm({
+  const methods = useForm<NewLogFormV2Schema>({
     resolver: zodResolver(NewLogFormV2Schema),
     defaultValues,
   })

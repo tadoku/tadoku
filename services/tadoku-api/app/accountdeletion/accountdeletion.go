@@ -82,7 +82,7 @@ func (f *Filing) File(ctx context.Context, request Request) (int64, error) {
 		}
 	}
 
-	if err := f.accounts.LockAccount(ctx, request.userID); err != nil {
+	if err := f.accounts.LockAccountForRequest(ctx, request.userID); err != nil {
 		return 0, err
 	}
 	if err := f.profile.LockForDeletion(ctx, request.userID, timex.Now()); err != nil {

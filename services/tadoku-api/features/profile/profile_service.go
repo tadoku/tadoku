@@ -49,8 +49,8 @@ func (s *Service) LockUser(ctx context.Context, userID uuid.UUID) error {
 
 // LockForDeletion requires the caller's transaction. From its commit the user can no longer sign in or change data;
 // a user whose deletion is already requested or done returns ErrAccountDeletionInProgress. It reads the committed
-// state before it waits for the users row, so a request that waited behind another request's account row returns at
-// once instead of waiting for the worker, which holds the users row while it deletes that account row.
+// state before it waits for the users row, so filing again answers at once instead of waiting for whoever holds the
+// row, such as a running deletion or another request that got the account row first.
 func (s *Service) LockForDeletion(ctx context.Context, userID uuid.UUID, now time.Time) error {
 	state, err := s.repository.DeletionState(ctx, userID)
 	if err != nil {
@@ -70,7 +70,7 @@ func (s *Service) LockForDeletion(ctx context.Context, userID uuid.UUID, now tim
 	return s.repository.MarkDeletionLocked(ctx, userID, now)
 }
 
-// Tombstone requires the caller's transaction and locks the user row before any other row of the deletion. It returns
+// Tombstone requires the caller's transaction and locks the user row before the deletion changes anything. It returns
 // false without changes for a user who is already deleted, and ErrDeletionNotRequested for a user who is not locked
 // for deletion.
 func (s *Service) Tombstone(ctx context.Context, userID uuid.UUID, now time.Time) (bool, error) {

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	featureprofile "github.com/tadoku/tadoku/services/tadoku-api/features/profile"
 )
 
@@ -74,7 +75,10 @@ func TestAccountDeletionRefilingDoesNotWaitForTheWorker(t *testing.T) {
 	if _, err := fileOperatorDeletion(t, readerUserID, adminUserID, "Owner confirmed by email"); err != nil {
 		t.Fatal(err)
 	}
-	deletion := holdRow(t, "select 1 from users where id = $1 for update", readerUserID)
+	deletion := holdRow(t, "select 1 from accounts where user_id = $1 for update", readerUserID)
+	if _, err := deletion.Exec(t.Context(), "select 1 from users where id = $1 for update", readerUserID); err != nil {
+		t.Fatal(err)
+	}
 	file := operatorFiling(t, readerUserID, adminUserID, "Asked again")
 
 	filed := make(chan error, 1)
@@ -88,7 +92,7 @@ func TestAccountDeletionRefilingDoesNotWaitForTheWorker(t *testing.T) {
 			t.Errorf("filing again returned %v, want %v", err, featureprofile.ErrAccountDeletionInProgress)
 		}
 	case <-time.After(5 * time.Second):
-		t.Error("filing again waits for the users row the worker holds")
+		t.Error("filing again waits for the running deletion")
 	}
 
 	if err := deletion.Commit(t.Context()); err != nil {
@@ -111,15 +115,15 @@ func TestAccountDeletionFilingQueuedBehindFilingTakesNoUserLock(t *testing.T) {
 		filed <- err
 	}()
 	waitForLockWaiters(t, 1, filed)
-	deletion := holdRowAsync(t, "select 1 from users where id = $1 for update", readerUserID)
+	usersHolder := holdRowAsync(t, "select 1 from users where id = $1 for update", readerUserID)
 	waitForLockWaiters(t, 2, filed)
 
 	if err := first.Commit(t.Context()); err != nil {
 		t.Fatal(err)
 	}
-	deletionTx, held := <-deletion
+	holder, held := <-usersHolder
 	if !held {
-		t.Fatal("the stand-in worker could not lock the users row")
+		t.Fatal("the second transaction could not lock the users row")
 	}
 	select {
 	case err := <-filed:
@@ -127,10 +131,55 @@ func TestAccountDeletionFilingQueuedBehindFilingTakesNoUserLock(t *testing.T) {
 			t.Errorf("the second filing returned %v, want %v", err, featureprofile.ErrAccountDeletionInProgress)
 		}
 	case <-time.After(5 * time.Second):
-		t.Error("the second filing waits for the users row the worker holds")
+		t.Error("the second filing waits for the users row another transaction holds")
 	}
-	if err := deletionTx.Commit(t.Context()); err != nil {
+	if err := holder.Commit(t.Context()); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestAccountDeletionWorkerLocksTheAccountBeforeTheUser(t *testing.T) {
+	resetAccountDeletion(t)
+	if _, err := fileOperatorDeletion(t, readerUserID, adminUserID, "Owner confirmed by email"); err != nil {
+		t.Fatal(err)
+	}
+	login := holdRow(t, "select 1 from accounts where user_id = $1 for update", readerUserID)
+
+	scope, err := jobqueue.AllTenantsExcept(jobqueue.WorkerComponent)
+	if err != nil {
+		t.Fatal(err)
+	}
+	application := newWorkerApplication(t, api.db.AppPool, scope)
+	ctx, stop := context.WithCancel(t.Context())
+	stopped := make(chan error, 1)
+	go atFixtureInstant(func() { stopped <- application.Run(ctx) })
+	defer func() {
+		stop()
+		<-stopped
+	}()
+	waitForLockWaiters(t, 1, nil)
+
+	probe := holdRow(t, "select 1")
+	if _, err := probe.Exec(t.Context(), "select 1 from users where id = $1 for update nowait", readerUserID); err != nil {
+		t.Errorf("the worker holds the users row while it waits for the account row: %v", err)
+	}
+	if err := probe.Rollback(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := login.Commit(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	deadline := time.Now().Add(10 * time.Second)
+	for state := ""; state != "completed"; time.Sleep(20 * time.Millisecond) {
+		err := api.db.Pool.QueryRow(t.Context(), `select state from jobs
+			where task_type = 'account.delete.v1'`).Scan(&state)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if state == "failed" || time.Now().After(deadline) {
+			t.Fatalf("account.delete.v1 is %s after the account row was released", state)
+		}
 	}
 }
 

@@ -12,11 +12,16 @@ type Deletion struct{ repository *Repository }
 
 func NewDeletion(repository *Repository) *Deletion { return &Deletion{repository: repository} }
 
-// LockAccount requires the caller's transaction and must come before the users row lock, the order the settings writes
-// use. A deletion request then waits for a settings write that already holds the account row, and a settings write
-// that waits for the request rechecks its session and finds the account locked. Like every account row lock, it skips
-// a user whose deletion was already filed when the statement started.
-func (d *Deletion) LockAccount(ctx context.Context, userID uuid.UUID) error {
+// LockAccountForRequest requires the caller's transaction and comes before the users row lock: every transaction
+// that locks both rows takes the account row first. It skips a user whose deletion was already filed when the
+// statement started.
+func (d *Deletion) LockAccountForRequest(ctx context.Context, userID uuid.UUID) error {
+	return d.repository.lockAccountForRequest(ctx, userID)
+}
+
+// LockAccountForDeletion requires the worker's deletion transaction and comes before the users row lock, so the
+// worker waits for any login, recovery or settings write that holds the account row instead of deadlocking with it.
+func (d *Deletion) LockAccountForDeletion(ctx context.Context, userID uuid.UUID) error {
 	return d.repository.lockAccountForDeletion(ctx, userID)
 }
 

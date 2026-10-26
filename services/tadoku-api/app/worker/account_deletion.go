@@ -32,10 +32,8 @@ type AccountDeletion struct {
 	ContestEvents *contestevents.Service
 }
 
-// DeleteAccount locks the user row before any other row of the deletion, the reverse of the filing and settings writes'
-// account-then-user order. That is safe because filing waits for settings writes that hold the account row, every
-// account row lock taken after the deletion lock skips the user, and a settings write or second filing already queued
-// for the account row fails its committed-state check before it touches the user row.
+// DeleteAccount locks the account row and then the user row, the order of every transaction that locks both, so it
+// waits for a login, recovery, settings write or filing that holds the account row instead of deadlocking with it.
 func (a *Application) DeleteAccount(ctx context.Context, job jobs.DeleteAccountV1) error {
 	deletion := a.accountDeletion
 	if deletion == nil || a.email == nil {
@@ -44,6 +42,9 @@ func (a *Application) DeleteAccount(ctx context.Context, job jobs.DeleteAccountV
 
 	now := timex.Now()
 	err := postgres.RunInTransaction(ctx, deletion.DB, func(ctx context.Context) error {
+		if err := deletion.Identity.LockAccountForDeletion(ctx, job.UserID); err != nil {
+			return err
+		}
 		tombstoned, err := deletion.Profile.Tombstone(ctx, job.UserID, now)
 		if err != nil || !tombstoned {
 			return err

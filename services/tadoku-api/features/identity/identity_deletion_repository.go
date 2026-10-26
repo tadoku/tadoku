@@ -8,6 +8,14 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 )
 
+func (r *Repository) lockAccountForRequest(ctx context.Context, id uuid.UUID) error {
+	db, err := postgres.Executor(ctx, r.pool)
+	if err != nil {
+		return err
+	}
+	return queries.New(db).LockAccountForRequest(ctx, postgres.UUID(id))
+}
+
 func (r *Repository) lockAccountForDeletion(ctx context.Context, id uuid.UUID) error {
 	db, err := postgres.Executor(ctx, r.pool)
 	if err != nil {

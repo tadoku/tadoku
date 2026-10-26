@@ -76,6 +76,9 @@ func loadConfig() (config, error) {
 		if strings.TrimSpace(cfg.FliptNamespace) == "" {
 			return config{}, fmt.Errorf("validate config: FliptNamespace is required")
 		}
+		if strings.TrimSpace(cfg.OathkeeperURL) == "" {
+			return config{}, fmt.Errorf("validate config: OathkeeperURL is required")
+		}
 
 		_, targetsErr := fliptclient.NewTargets(
 			cfg.FliptEnvironment,

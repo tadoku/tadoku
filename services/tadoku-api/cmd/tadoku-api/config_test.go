@@ -108,6 +108,10 @@ func TestLoadConfigUsesValidatedDefaults(t *testing.T) {
 		}
 	}
 	t.Setenv("API_FLIPT_TEST_ENVIRONMENT", "test")
+	t.Setenv("API_OATHKEEPER_URL", "")
+	if _, err := loadConfig(); err == nil || !strings.Contains(err.Error(), "OathkeeperURL") {
+		t.Errorf("enabled Flipt with empty OathkeeperURL error=%v", err)
+	}
 	t.Setenv("API_FLIPT_ENABLED", "false")
 	t.Setenv("API_OATHKEEPER_URL", "")
 	t.Setenv("API_FLIPT_URL", "")

@@ -17,12 +17,14 @@ The filing operation, `accountdeletion.Filing.File` in
 `services/tadoku-api/app/accountdeletion/`, runs inside its caller's
 transaction:
 
-1. It refuses an administrator with `admin_account`, and a banned user who asks
-   through self-service with `banned_account`, both `409`, before it writes
-   anything. An operator request may delete a banned user.
-2. It locks the account row, then the `users` row, and sets
+1. It locks the account row, then the `users` row, and sets
    `deletion_locked_at`. A user whose deletion is already filed or done returns
    `account_deletion_in_progress`.
+2. It refuses an administrator with `admin_account`, and a banned user who asks
+   through self-service with `banned_account`, both `409`. An operator request
+   may delete a banned user. A refusal rolls back the caller's transaction, so
+   nothing is written. Roles are read only while filing holds the `users` row,
+   which role changes also lock, so a ban or grant that commits first is seen.
 3. It records `request_account_deletion` with the actor, the reason, the
    `target_user_id` and a `source` of `operator` or `self_service`.
 4. It enqueues `account.delete.v1` with the user ID.

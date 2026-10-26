@@ -67,8 +67,17 @@ func NewFiling(
 }
 
 // File requires the caller's transaction and returns the ID of the account.delete.v1 job. It refuses an administrator,
-// and a banned user only when the user asks; from its commit the user can no longer sign in or change data.
+// and a banned user only when the user asks; a refusal leaves the caller to roll back the lock File already took. It
+// reads roles once it holds the users row, which role changes lock too, so a ban or grant that commits first counts.
+// From its commit the user can no longer sign in or change data.
 func (f *Filing) File(ctx context.Context, request Request) (int64, error) {
+	if err := f.accounts.LockAccountForRequest(ctx, request.userID); err != nil {
+		return 0, err
+	}
+	if err := f.profile.LockForDeletion(ctx, request.userID, timex.Now()); err != nil {
+		return 0, err
+	}
+
 	roles, err := f.roles.UserRoles(ctx, []uuid.UUID{request.userID})
 	if err != nil {
 		return 0, err
@@ -82,12 +91,6 @@ func (f *Filing) File(ctx context.Context, request Request) (int64, error) {
 		}
 	}
 
-	if err := f.accounts.LockAccountForRequest(ctx, request.userID); err != nil {
-		return 0, err
-	}
-	if err := f.profile.LockForDeletion(ctx, request.userID, timex.Now()); err != nil {
-		return 0, err
-	}
 	err = f.audit.Record(ctx, audit.Event{
 		ActorID: request.actorID,
 		Action:  "request_account_deletion",

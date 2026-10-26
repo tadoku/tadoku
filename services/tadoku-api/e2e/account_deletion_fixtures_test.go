@@ -111,8 +111,17 @@ func fileOperatorDeletion(t *testing.T, userID, operatorID, reason string) (int6
 	return jobID, err
 }
 
-// operatorFiling returns a filing that may run on another goroutine; it never touches t.
 func operatorFiling(t *testing.T, userID, operatorID, reason string) func() (int64, error) {
+	t.Helper()
+	request, err := accountdeletion.OperatorRequest(uuid.MustParse(userID), uuid.MustParse(operatorID), reason)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return deletionFiling(t, request)
+}
+
+// deletionFiling returns a filing that may run on another goroutine; it never touches t.
+func deletionFiling(t *testing.T, request accountdeletion.Request) func() (int64, error) {
 	t.Helper()
 	model, err := permissionmodel.New()
 	if err != nil {
@@ -127,10 +136,6 @@ func operatorFiling(t *testing.T, userID, operatorID, reason string) func() (int
 		featureaudit.NewService(featureaudit.NewRepository(pool)),
 		jobqueue.NewService(jobqueue.NewRepository(pool)),
 	)
-	request, err := accountdeletion.OperatorRequest(uuid.MustParse(userID), uuid.MustParse(operatorID), reason)
-	if err != nil {
-		t.Fatal(err)
-	}
 
 	ctx := tenant.WithKey(t.Context(), tenant.Production())
 	return func() (int64, error) { return worker.FileAccountDeletion(ctx, pool, filing, request) }

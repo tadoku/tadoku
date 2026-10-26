@@ -9,7 +9,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/tadoku/tadoku/services/tadoku-api/app/accountdeletion"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	featureprofile "github.com/tadoku/tadoku/services/tadoku-api/features/profile"
 )
@@ -226,6 +229,62 @@ func TestAccountDeletionRoleChangeWaitsForTheWorker(t *testing.T) {
 		where tenant = 'tadoku/prod' and subject_type = 'user' and subject_id = $1::text`, readerUserID)
 	if relationships != "0" {
 		t.Errorf("the deleted user has %s permission relationships", relationships)
+	}
+}
+
+func TestAccountDeletionFilingSeesARoleChangeHoldingTheUser(t *testing.T) {
+	operator, err := accountdeletion.OperatorRequest(
+		uuid.MustParse(readerUserID),
+		uuid.MustParse(adminUserID),
+		"Owner confirmed by email",
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	selfService := accountdeletion.SelfServiceRequest(uuid.MustParse(readerUserID))
+	cases := []struct {
+		name     string
+		relation string
+		request  accountdeletion.Request
+		want     error
+	}{
+		{"ban during a self-service filing", "banned", selfService, identity.ErrBannedAccount},
+		{"admin grant during an operator filing", "admins", operator, identity.ErrAdminAccount},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			resetAccountDeletion(t)
+			before := snapshot(t, targetSnapshotSQL, readerUserID)
+			change := holdRow(t, "select 1 from users where id = $1 for update", readerUserID)
+			_, err := change.Exec(t.Context(), `insert into permission_relationships
+				(tenant, object_type, object_id, relation, subject_type, subject_id)
+				values ('tadoku/prod', 'app', 'root', $1, 'user', $2)`, tc.relation, readerUserID)
+			if err != nil {
+				t.Fatal(err)
+			}
+			file := deletionFiling(t, tc.request)
+
+			filed := make(chan error, 1)
+			go func() {
+				_, err := file()
+				filed <- err
+			}()
+			waitForLockWaiters(t, 1, filed)
+			if err := change.Commit(t.Context()); err != nil {
+				t.Fatal(err)
+			}
+
+			if err := <-filed; !errors.Is(err, tc.want) {
+				t.Errorf("filing after the role change returned %v, want %v", err, tc.want)
+			}
+			if after := snapshot(t, targetSnapshotSQL, readerUserID); after != before {
+				t.Errorf("a refused filing changed state\nbefore=%s\nafter=%s", before, after)
+			}
+			if jobs := countJobs(t); jobs != 0 {
+				t.Errorf("a refused filing enqueued %d jobs", jobs)
+			}
+		})
 	}
 }
 

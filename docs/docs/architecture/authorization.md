@@ -92,11 +92,18 @@ administrator:
 ```sql
 begin;
 select set_config('tadoku.tenant', 'tadoku/prod', true);
+select deletion_locked_at, deleted_at from users where id = '<lowercase user UUID>' for update;
+-- If either value is set, the account is being deleted: run rollback; instead.
 insert into permission_relationships (tenant, object_type, object_id, relation, subject_type, subject_id)
 values ('tadoku/prod', 'app', 'root', 'admins', 'user', '<lowercase user UUID>')
 on conflict do nothing;
 commit;
 ```
+
+Locking the `users` row first, as role updates do, makes an account deletion
+filed at the same moment either see the new administrator and refuse, or be
+filed first. A filed deletion still runs, so roll the grant back when the lock
+shows `deletion_locked_at` or `deleted_at` set.
 
 To revoke one:
 

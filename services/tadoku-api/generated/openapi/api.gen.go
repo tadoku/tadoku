@@ -4706,6 +4706,14 @@ func (response AuthzRoleUpdate404Response) VisitAuthzRoleUpdateResponse(w http.R
 	return nil
 }
 
+type AuthzRoleUpdate409Response struct {
+}
+
+func (response AuthzRoleUpdate409Response) VisitAuthzRoleUpdateResponse(w http.ResponseWriter) error {
+	w.WriteHeader(409)
+	return nil
+}
+
 type AuthzRoleUpdate503Response struct {
 }
 

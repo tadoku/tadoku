@@ -54,6 +54,8 @@ paths:
           description: forbidden (not admin, or target is admin)
         "404":
           description: user not found
+        "409":
+          description: target's account deletion is filed
         "503":
           description: authorization unavailable
       x-tadoku-source: Authz

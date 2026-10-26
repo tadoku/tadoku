@@ -642,6 +642,10 @@ export type AuthzRoleUpdateErrors = {
      */
     404: unknown;
     /**
+     * target's account deletion is filed
+     */
+    409: unknown;
+    /**
      * authorization unavailable
      */
     503: unknown;

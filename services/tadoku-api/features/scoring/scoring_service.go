@@ -54,10 +54,6 @@ func (s *Service) ScoreLog(ctx context.Context, operation LogOperation, input lo
 		Tracking:     base,
 	}
 	for _, target := range targets {
-		parameters.Contests = append(parameters.Contests, PreviewContest{
-			RegistrationID: target.RegistrationID,
-			ContestID:      target.ContestID,
-		})
 		result.EligibleOfficial = result.EligibleOfficial || target.Official
 	}
 

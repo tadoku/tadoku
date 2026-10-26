@@ -1,6 +1,6 @@
 ---
 title: Account deletion
-description: How an administrator files an account deletion from the admin app, how filing locks the account and the worker's account.delete.v1 job removes its data, what a deletion keeps, the account-then-user lock order, and how to follow and replay a deletion.
+description: How a user requests their own account deletion and an administrator files one from the admin app, how filing locks the account and the worker's account.delete.v1 job removes its data, what a deletion keeps, the account-then-user lock order, and how to follow and replay a deletion.
 ---
 
 # Account deletion
@@ -59,11 +59,13 @@ user. Its body holds the account's email address.
   decoder cannot read, such as invalid JSON or a non-string `email`, gets a bare
   `400`, or `413` over the byte cap, and the identity pipeline's Origin and
   `Content-Type` checks answer `403` or `400`.
-- In one transaction, `identity.Service.RequestAccountDeletion` locks the
-  account row, rechecks the session and its recency, and compares the typed
-  address after normalization with the account's login address,
-  `email_normalized`. Another address returns `400` `confirmation_mismatch`.
-  Filing then runs with the user as actor and `source` `self_service`, so an
+- `IdentityRequestAccountDeletion` in
+  `services/tadoku-api/app/api/identity_account_deletion.go` then runs one
+  transaction. `identity.Service.RequestAccountDeletion` locks the account row,
+  rechecks the session and its recency, and compares the typed address,
+  normalized as login normalizes it, with the account's address. Another
+  address returns `400` `confirmation_mismatch`. Filing runs next in the same
+  transaction, with the user as actor and `source` `self_service`, so an
   administrator gets `409` `admin_account` and a banned user `409`
   `banned_account`.
 - Success returns `202` with a `Set-Cookie` that clears the tenant's session
@@ -201,12 +203,14 @@ order by created_at;
 commit;
 ```
 
-The request event names the administrator as the actor, with `source` `admin`
-and the reason. Once the job completes, the completion event holds the counts
-of deleted and kept logs and registrations and of owned contests, the user's
-display name is `Deleted participant` and `deleted_at` is set. The admin user
-list reads native accounts, so the account leaves it once the job completes;
-closing the deletion dialog reloads the list.
+The request event of an administrator's filing names the administrator as the
+actor, with `source` `admin` and the reason. A self-service request names the
+user as the actor, with `source` `self_service` and no reason. Once the job
+completes, the completion event holds the counts of deleted and kept logs and
+registrations and of owned contests, the user's display name is
+`Deleted participant` and `deleted_at` is set. The admin user list reads native
+accounts, so the account leaves it once the job completes; closing the deletion
+dialog reloads the list.
 
 ## Replay a failed deletion
 

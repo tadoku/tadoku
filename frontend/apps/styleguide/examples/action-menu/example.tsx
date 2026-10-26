@@ -1,5 +1,6 @@
 import { ActionMenu } from 'ui'
 import {
+  ArchiveBoxIcon,
   EllipsisVerticalIcon,
   PencilIcon,
   TrashIcon,
@@ -17,6 +18,12 @@ export default function ActionMenuExample() {
           IconComponent: TrashIcon,
           type: 'danger',
           onClick: () => toast.warn('Deleted...'),
+        },
+        {
+          label: 'Archive',
+          href: '#',
+          IconComponent: ArchiveBoxIcon,
+          disabledReason: 'Only finished items can be archived',
         },
       ]}
     >

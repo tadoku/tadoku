@@ -63,10 +63,14 @@ large account.
 
 Filing locks the account row before the `users` row, the order the settings
 writes use, so it waits for a settings write that already holds the account row.
-A settings write that waits for filing rechecks its session after the account
-lock and finds the account locked. The worker takes the opposite order: it
-locks the `users` row and then deletes the account row. This is safe because,
-once the deletion lock commits, every account row lock in
-`services/tadoku-api/sql/identity/identity.sql` either excludes
-deletion-locked users or skips locked rows, so no transaction holds an account
-row lock while it waits for that `users` row.
+The worker takes the opposite order: it locks the `users` row and then deletes
+the account row. This is safe because no transaction can hold the account row
+while it waits for that `users` row:
+
+- Every account row lock in `services/tadoku-api/sql/identity/identity.sql`
+  that starts after the deletion lock commits excludes deletion-locked users or
+  skips locked rows. That includes filing itself, so filing again for a pending
+  deletion takes no account lock.
+- A lock that was already queued behind filing still gets the account row. A
+  settings write then rechecks its session and fails before it touches the
+  `users` row; login and recovery never lock the `users` row.

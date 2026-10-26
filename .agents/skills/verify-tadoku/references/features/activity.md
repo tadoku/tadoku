@@ -60,6 +60,9 @@ does not prove the worker processed the write. Keep selected headers and actual
 before/after data as evidence. Years, dates and eligible contests affect where a
 log appears. An empty list and an API failure are different states.
 
+Contest end dates include the whole UTC day. Editing a log on that day must
+still apply its contest-specific scoring; scores in finished contests stay unchanged.
+
 Heatmap days and the `?date=` filter use UTC days, so a filtered Updates list
 can show rows with the neighbouring local date.
 

@@ -195,7 +195,7 @@ keeps the other tenant's warm page and that missing-tenant invalidation writes
 no key.
 
 Development seed SQL requires `psql` variables including `tenant`. Exercise
-the three files in `scripts/dev/seed/` against a disposable migrated database,
+the files in `scripts/dev/seed/` against a disposable migrated database,
 with canonical and test keys, and retain the command and row/ID comparison.
 If the test runner does not provide `psql`, attach that bounded manual run
 as verification evidence rather than skipping it silently.

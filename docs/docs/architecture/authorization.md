@@ -243,8 +243,7 @@ re-run.
   `TADOKU_DEV_ADMIN_PASSWORD` and `TADOKU_DEV_READER_PASSWORD`. An account with
   the same email that the seed does not own is never modified.
 - Grants the administrator `admins` on `app:root` in `tadoku/prod` with SQL,
-  keeping an existing grant. The reader gets no role. The API never reads the
-  `user_roles` rows the SQL fixtures write.
+  keeping an existing grant. The reader gets no role.
 - Loads the application seed data from `scripts/dev/seed/`.
 
 See [Development data](../develop/development-data.md#seed-data) for fixture UUIDs, reruns and branch seeding, and

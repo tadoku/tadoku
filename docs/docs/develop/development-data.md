@@ -86,7 +86,7 @@ startup creates no database, Postgres cluster, PVC or database dependency Job.
 - The Job reads Dev Admin and Dev Reader IDs from the canonical `tadoku/prod`
   fixture user rows in `users`. If they are missing, ask the operator to run
   `make dev-seed` first; it changes shared identities and base data, and the
-  branch task never seeds the base. Before loading its profiles, it
+  branch task never seeds the base. Before loading its fixtures, it
   creates native accounts with those same UUIDs and the names Dev Admin and
   Dev Reader in its own tenant. Passwords and emails use the same
   `TADOKU_DEV_ADMIN_*` / `TADOKU_DEV_READER_*` source and defaults as the base
@@ -132,7 +132,7 @@ the canonical fixture user's creation time when available, and new accounts
 retain their local user's creation time, preserving account-age rules. It creates
 no session; sign in through the configured branch API to create a native session.
 The SQL fixtures create no users; the native fixture command owns user
-initialization. Reseeding restores missing profiles, contests and content and
+initialization. Reseeding restores missing contests and content and
 keeps existing rows, as described in [Seed data](#seed-data).
 
 Dev Admin keeps its base UUID. Native sessions use the tenant-specific

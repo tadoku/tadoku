@@ -59,8 +59,7 @@ Custom and manual backups can also cost money.
    them.
 2. **List the tables in scope.** Native identity: `accounts`, `sessions`,
    `recovery_tokens`, `emails` and `access_tokens`, from migration 52. Related:
-   `users`, `profiles`, `user_roles`, `account_deletion_requests`, `tenants` and
-   `tenant_overrides`.
+   `users`, `tenants` and `tenant_overrides`.
 3. **Read coverage.** Record the backup schedule, retention, oldest backup and
    latest recoverable point. Point-in-time recovery needs a base backup plus
    write-ahead log covering the commits to recover.

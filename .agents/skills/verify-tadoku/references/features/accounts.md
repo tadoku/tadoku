@@ -71,9 +71,9 @@ backend image are deployed; a frontend overlay does not deploy these rules.
 The public
 identity rule forwards cookies with a guest JWT; the development configuration
 also switches other cookie-bearing routes to the identity callback and adds the
-private SSR session rule. Verify their deployed revision after source merge;
-the production gateway switch remains separately held. Confirm actual branch API
-responses rather than treating an API port-forward as the public journey.
+private SSR session rule. Verify their deployed revision after source merge.
+Confirm actual branch API responses rather than treating an API port-forward as
+the public journey.
 Provisioning seeds `identity-v2=true` automatically in the branch namespace.
 Use the native Dev Admin/Reader accounts and documented development password;
 verify their UUIDs/names, tenant cookie and session through the configured public

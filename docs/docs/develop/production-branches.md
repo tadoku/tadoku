@@ -66,8 +66,11 @@ is `tadoku-api`, `tadoku-worker`, `frontend-webv2`, `frontend-admin`,
 followed by the first 12 characters of the commit. An existing tag is reused
 because it names a clean, pushed commit. Workloads are deployed by digest.
 
-The branch packages are public. After each push dev-cli resolves the digest
-anonymously, which proves the cluster can pull it without an image pull Secret.
+Every branch package must be public. After each push dev-cli resolves the
+digest anonymously, which proves the cluster can pull it without an image pull
+Secret, and refuses a digest it cannot resolve. GitHub creates a package that
+does not exist yet as private on its first push; a maintainer then makes it
+public once in the package settings and reruns `dev up`.
 
 ### Branch image cleanup
 

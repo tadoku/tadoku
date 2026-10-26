@@ -150,8 +150,8 @@ yourself, and never add or remove the `deploy` label unless told to.
 - Before claiming an overlay result, prove it through `X-Dev-Backend` on the
   relevant document or API response. A base backend means production served
   the request.
-- Write only as a test account, and only to the branch tenant: a request
-  served by the branch API overlay, which rejects every other tenant. A branch
+- Write only as a test or disposable account, and only to the branch tenant:
+  a request served by the branch API overlay, which rejects every other tenant. A branch
   without an API overlay calls the production API deployment, under the branch
   tenant; do not write through it.
 - Evidence contains no cookies, passwords, session tokens or production user

@@ -518,9 +518,9 @@ export type IdentityAccount = {
 export type IdentitySession = {
     account: IdentityAccount | null;
     /**
-     * True when the session logged in within the last hour, the window in which email and password changes are allowed without a stale_session error. False for a guest.
+     * True when the session's authentication time is at most one hour ago and not in the future, the window in which email and password changes are allowed without a stale_session error. False otherwise and for a guest. The API always sends it.
      */
-    recent_login: boolean;
+    recent_login?: boolean;
 };
 
 export type IdentityRegistration = {

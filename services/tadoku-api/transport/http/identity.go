@@ -159,7 +159,7 @@ func identitySession(result api.IdentitySession) openapi.IdentitySession {
 		})
 		recentLogin = session.RecentLogin()
 	}
-	return openapi.IdentitySession{Account: account, RecentLogin: recentLogin}
+	return openapi.IdentitySession{Account: account, RecentLogin: &recentLogin}
 }
 
 // Responses keep the address part net/mail reads from a stored address and send an address it cannot read unchanged.

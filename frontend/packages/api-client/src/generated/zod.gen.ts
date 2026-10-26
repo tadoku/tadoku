@@ -455,7 +455,7 @@ export const zIdentityAccount = z.object({
 
 export const zIdentitySession = z.object({
     account: zIdentityAccount.nullable(),
-    recent_login: z.boolean()
+    recent_login: z.boolean().optional()
 });
 
 export const zIdentityRegistration = z.object({

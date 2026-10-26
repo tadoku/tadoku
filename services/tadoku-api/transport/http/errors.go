@@ -37,7 +37,7 @@ func writeResponseError(w stdhttp.ResponseWriter, request *stdhttp.Request, err 
 		writeJSON(w, stdhttp.StatusNotImplemented, map[string]string{"message": "not implemented"})
 	case errors.Is(err, api.ErrAccountDeletionInProgress):
 		writeJSON(w, stdhttp.StatusConflict, openapi.ImmersionAccountDeletionInProgress{
-			Error: openapi.AccountDeletionInProgress,
+			Error: openapi.ImmersionErrorResponseErrorAccountDeletionInProgress,
 		})
 	case errx.KindOf(err) == errx.Internal:
 		writeJSON(w, stdhttp.StatusInternalServerError, map[string]string{"message": "Internal Server Error"})

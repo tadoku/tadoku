@@ -1,5 +1,14 @@
 components:
   schemas:
+    AuthzErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          enum:
+            - account_deletion_in_progress
     AuthzUserRole:
       type: object
       required:

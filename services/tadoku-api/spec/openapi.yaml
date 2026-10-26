@@ -170,6 +170,10 @@ paths:
           description: user not found
         "409":
           description: target's account deletion is filed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthzErrorResponse"
         "503":
           description: authorization unavailable
       x-tadoku-source: Authz
@@ -3323,6 +3327,15 @@ paths:
       x-legacy-operation-id: sessionCheck
 components:
   schemas:
+    AuthzErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          enum:
+            - account_deletion_in_progress
     AuthzUserRole:
       type: object
       required:

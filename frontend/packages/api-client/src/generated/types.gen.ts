@@ -4,6 +4,10 @@ export type ClientOptions = {
     baseUrl: 'https://tadoku.app/api/internal' | (string & {});
 };
 
+export type AuthzErrorResponse = {
+    error: 'account_deletion_in_progress';
+};
+
 export type AuthzUserRole = {
     role: 'admin' | 'user' | 'guest' | 'banned';
 };
@@ -644,12 +648,14 @@ export type AuthzRoleUpdateErrors = {
     /**
      * target's account deletion is filed
      */
-    409: unknown;
+    409: AuthzErrorResponse;
     /**
      * authorization unavailable
      */
     503: unknown;
 };
+
+export type AuthzRoleUpdateError = AuthzRoleUpdateErrors[keyof AuthzRoleUpdateErrors];
 
 export type AuthzRoleUpdateResponses = {
     /**

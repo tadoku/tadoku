@@ -20,6 +20,21 @@ import (
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
+// Defines values for AuthzErrorResponseError.
+const (
+	AuthzErrorResponseErrorAccountDeletionInProgress AuthzErrorResponseError = "account_deletion_in_progress"
+)
+
+// Valid indicates whether the value is a known member of the AuthzErrorResponseError enum.
+func (e AuthzErrorResponseError) Valid() bool {
+	switch e {
+	case AuthzErrorResponseErrorAccountDeletionInProgress:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for AuthzRoleUpdateRequestRole.
 const (
 	AuthzRoleUpdateRequestRoleBanned AuthzRoleUpdateRequestRole = "banned"
@@ -214,13 +229,13 @@ func (e ImmersionContestEventEvent) Valid() bool {
 
 // Defines values for ImmersionErrorResponseError.
 const (
-	AccountDeletionInProgress ImmersionErrorResponseError = "account_deletion_in_progress"
+	ImmersionErrorResponseErrorAccountDeletionInProgress ImmersionErrorResponseError = "account_deletion_in_progress"
 )
 
 // Valid indicates whether the value is a known member of the ImmersionErrorResponseError enum.
 func (e ImmersionErrorResponseError) Valid() bool {
 	switch e {
-	case AccountDeletionInProgress:
+	case ImmersionErrorResponseErrorAccountDeletionInProgress:
 		return true
 	default:
 		return false
@@ -352,6 +367,14 @@ func (e ImmersionLogExportParamsFormat) Valid() bool {
 		return false
 	}
 }
+
+// AuthzErrorResponse defines model for AuthzErrorResponse.
+type AuthzErrorResponse struct {
+	Error AuthzErrorResponseError `json:"error"`
+}
+
+// AuthzErrorResponseError defines model for AuthzErrorResponse.Error.
+type AuthzErrorResponseError string
 
 // AuthzProxyProxyAdminCheckRequest defines model for AuthzProxyProxyAdminCheckRequest.
 type AuthzProxyProxyAdminCheckRequest struct {
@@ -4706,12 +4729,18 @@ func (response AuthzRoleUpdate404Response) VisitAuthzRoleUpdateResponse(w http.R
 	return nil
 }
 
-type AuthzRoleUpdate409Response struct {
-}
+type AuthzRoleUpdate409JSONResponse AuthzErrorResponse
 
-func (response AuthzRoleUpdate409Response) VisitAuthzRoleUpdateResponse(w http.ResponseWriter) error {
+func (response AuthzRoleUpdate409JSONResponse) VisitAuthzRoleUpdateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(409)
-	return nil
+	_, err := buf.WriteTo(w)
+	return err
 }
 
 type AuthzRoleUpdate503Response struct {

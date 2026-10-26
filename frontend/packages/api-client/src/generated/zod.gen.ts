@@ -2,6 +2,10 @@
 
 import * as z from 'zod';
 
+export const zAuthzErrorResponse = z.object({
+    error: z.enum(['account_deletion_in_progress'])
+});
+
 export const zAuthzUserRole = z.object({
     role: z.enum([
         'admin',

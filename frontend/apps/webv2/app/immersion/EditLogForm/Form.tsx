@@ -51,7 +51,7 @@ export const EditLogForm = ({ options, log }: Props) => {
     allActivities: options.activities,
   }
 
-  const methods = useForm({
+  const methods = useForm<NewLogFormV2Schema>({
     resolver: zodResolver(NewLogFormV2Schema),
     defaultValues,
   })

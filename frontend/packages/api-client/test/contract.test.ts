@@ -301,6 +301,7 @@ describe('generated client on values the contract constrains', () => {
   it.each([
     // The API counts characters; 25 emoji are 50 UTF-16 units.
     ['a 25-emoji display name', { display_name: '😀'.repeat(25) }],
+    ['a historical UUID without RFC version/variant bits', { id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' }],
     // Go's net/mail accepts a domain without a dot.
     ['a local-domain email', { email: 'reader@localhost' }],
     ['a time with a UTC offset and fractional seconds', { created_at: '2026-01-01T09:00:00.123456+09:00' }],

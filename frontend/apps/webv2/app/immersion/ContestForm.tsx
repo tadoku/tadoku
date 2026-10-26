@@ -52,7 +52,7 @@ export const ContestForm = ({
     activity_type_id_allow_list: activities.filter(a => a.default),
   }
 
-  const methods = useForm({
+  const methods = useForm<z.input<typeof ContestFormSchema>, unknown, ContestFormSchema>({
     resolver: zodResolver(ContestFormSchema),
     defaultValues,
   })

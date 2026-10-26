@@ -13,7 +13,9 @@ in data hooks; screens own product state and effects.
 
 ## Tooling
 
-Always use `pnpm`, never `npm`. Run commands from `frontend/`.
+Always use `pnpm`, never `npm`. Run commands from `frontend/`. Packages using
+the generated API client require TypeScript 5.5 or newer and an ES2015-or-later
+target for its Unicode regular expressions.
 
 ## Legacy applications
 
@@ -131,6 +133,9 @@ Zod response validation and TanStack Form. Its data source and local development
 commands are documented in [Webv3](webv3.md).
 
 ## Checks
+
+Vite tests of Next.js sources must transform JSX with the automatic runtime;
+Next.js keeps `jsx: preserve` in its TypeScript configuration for its own build.
 
 ```sh
 pnpm --filter <app> exec tsc --noEmit   # typecheck (Paper apps: pnpm --filter <app> typecheck)

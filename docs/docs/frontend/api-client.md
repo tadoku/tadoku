@@ -57,8 +57,11 @@ break the contract's constraints, which must fail.
 - Validators check JSON types, required properties, nullability, enum values,
   formats, lengths, patterns, ranges, item counts and objects the contract
   closes with `additionalProperties: false`.
-- Three rules in `openapi-ts.config.mjs` follow the API rather than Zod's
+- Four rules in `openapi-ts.config.mjs` follow the API rather than Zod's
   defaults:
+  - `format: uuid` accepts any well-formed 8-4-4-4-12 hexadecimal identifier,
+    including imported IDs without RFC version or variant bits, through Zod’s
+    GUID validator.
   - Lengths count characters (code points), not UTF-16 units, so a 25-emoji
     display name fits 32.
   - `format: email` accepts an address `net/mail` reads back unchanged, at most
@@ -111,13 +114,11 @@ credentials, caching and timeouts.
 | webv3 | `frontend/apps/webv3/src/lib/home.server.ts` makes anonymous home-page reads; `404` means no contest. `frontend/apps/webv3/src/lib/session.server.ts` reads the session and role with the visitor's session cookies, `frontend/apps/webv3/server/routes/logout.post.ts` logs out and `frontend/apps/webv3/src/lib/logs.server.ts` reads logging options and creates and reads logs. |
 | webv2, admin | `frontend/packages/ui/identity.ts` reads the session and logs out. `browserApi()` and `apiData()` in `frontend/packages/ui/api.ts` call operations from React Query hooks and throw `Error(<status>)` for API errors. |
 
-The validators must run on the package's own pinned Zod 3, whose UUID check
-accepts any well-formed UUID as the API does; Zod 4's rejects IDs that imported
-accounts keep. Bundlers resolve the generated `zod` import from the consuming app
-when `zod` stays external in a server build. An app should therefore not declare
-its own `zod` unless it uses it. One that needs Zod 4, like webv3, lists `zod` in
-`ssr.noExternal` in its `vite.config.ts`, so each import is bundled from its own
-package.
+The validators run on the package's pinned Zod 4 and use GUID validation for
+UUID fields to match the API. Their consumers require TypeScript 5.5 or newer.
+An application declares `zod` only when its own code uses it. Vite server builds
+keep `zod` in `ssr.noExternal`, so generated validators retain their package's
+runtime dependency instead of resolving it from the consuming application.
 
 Some contract properties are optional only because request bodies or drafts share
 the schema: contest and registration IDs, page HTML, post publish times and

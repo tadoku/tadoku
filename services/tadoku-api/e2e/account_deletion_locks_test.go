@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -183,6 +184,51 @@ func TestAccountDeletionWorkerLocksTheAccountBeforeTheUser(t *testing.T) {
 	}
 }
 
+func TestAccountDeletionRoleChangeWaitsForTheWorker(t *testing.T) {
+	resetAccountDeletion(t)
+	if _, err := fileOperatorDeletion(t, readerUserID, adminUserID, "Owner confirmed by email"); err != nil {
+		t.Fatal(err)
+	}
+	deletion := holdRow(t, "select 1 from accounts where user_id = $1 for update", readerUserID)
+	for _, statement := range []string{
+		"update users set display_name = 'Deleted participant', deleted_at = '2026-09-12 12:00:00' where id = $1",
+		"delete from permission_relationships where subject_type = 'user' and subject_id = $1::text",
+	} {
+		if _, err := deletion.Exec(t.Context(), statement, readerUserID); err != nil {
+			t.Fatal(err)
+		}
+	}
+	tokens, err := loadCast(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ban := httptest.NewRequest("PUT", "/authz/users/"+readerUserID+"/role",
+		strings.NewReader(`{"role":"banned","reason":"repeated abuse"}`))
+	ban.Header.Set("Content-Type", "application/json")
+	authorize(ban, admin, tokens)
+
+	response := httptest.NewRecorder()
+	banned := make(chan error, 1)
+	go func() {
+		atFixtureInstant(func() { api.handler.ServeHTTP(response, ban) })
+		banned <- nil
+	}()
+	waitForLockWaiters(t, 1, banned)
+
+	if err := deletion.Commit(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	<-banned
+	if response.Code != http.StatusConflict {
+		t.Errorf("banning a user during the deletion: status=%d body=%s, want 409", response.Code, response.Body)
+	}
+	relationships := snapshot(t, `select count(*)::text from permission_relationships
+		where tenant = 'tadoku/prod' and subject_type = 'user' and subject_id = $1::text`, readerUserID)
+	if relationships != "0" {
+		t.Errorf("the deleted user has %s permission relationships", relationships)
+	}
+}
+
 // holdRowAsync starts holdRow's transaction on another goroutine, for a lock that has to wait, and delivers it once
 // the lock is held. It fails the test from the test goroutine only.
 func holdRowAsync(t *testing.T, query string, arguments ...any) <-chan pgx.Tx {
@@ -225,14 +271,14 @@ func holdRow(t *testing.T, query string, arguments ...any) pgx.Tx {
 	return tx
 }
 
-// waitForLockWaiters fails the test if filing finishes before n backends wait on a row lock.
-func waitForLockWaiters(t *testing.T, n int, filed <-chan error) {
+// waitForLockWaiters fails the test if the operation behind done finishes before n backends wait on a row lock.
+func waitForLockWaiters(t *testing.T, n int, done <-chan error) {
 	t.Helper()
 	deadline := time.Now().Add(10 * time.Second)
 	for {
 		select {
-		case err := <-filed:
-			t.Fatalf("filing finished (%v) while another transaction held its row", err)
+		case err := <-done:
+			t.Fatalf("finished (%v) while another transaction held its row", err)
 		default:
 		}
 

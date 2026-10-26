@@ -61,6 +61,9 @@ func (a *Application) UpdateRole(ctx context.Context, parameters RoleUpdateParam
 	}
 
 	return postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) error {
+		if err := a.profile.LockUser(ctx, parameters.UserID); err != nil {
+			return err
+		}
 		if err := a.authorization.UpdateRole(ctx, update); err != nil {
 			return err
 		}

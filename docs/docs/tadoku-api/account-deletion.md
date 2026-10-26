@@ -54,7 +54,10 @@ user. Its body holds the account's email address.
 - Before a transaction opens, a guest gets `401`, a login older than one hour
   or in the future gets `401` `stale_session`, and a missing or malformed
   address, including one with a display name, gets `400` `invalid_email`. The
-  session checks come first, so a guest gets `401` whatever the body holds.
+  session checks come first, so a guest gets `401` whatever address the body
+  holds. A body the request decoder cannot read, such as invalid JSON or a
+  non-string `email`, gets a bare `400`, or `413` over the byte cap, before any
+  check.
 - In one transaction, `identity.Service.RequestAccountDeletion` locks the
   account row, rechecks the session and its recency, and compares the typed
   address after normalization with the account's login address,

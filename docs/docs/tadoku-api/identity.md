@@ -10,8 +10,9 @@ settings, or moving a caller to the identity entry point.
 
 Registration, login, logout, session lookup, recovery, profile/password
 settings, self-service account deletion and the Oathkeeper session callback are
-implemented. Every operation, including for guests, uses tenant-local accounts. Profile and moderation callers use
-`identity.Reader`, constructed by `identity.NewReader`.
+implemented. Every operation, including for guests, uses tenant-local accounts.
+Profile and moderation callers use `identity.Reader`, constructed by
+`identity.NewReader`.
 
 Account lookup and search are implemented by the separate `ReadService` used by
 profile and moderation. Users request their own deletion through identity
@@ -45,9 +46,11 @@ and generated decoder. Logout takes no body and never reads one, but still
 requires the JSON `Content-Type`; whatever body arrives, its `Origin` check
 comes first and its answer is never cached.
 
-An identity operation that refuses a request answers with JSON: identity errors
-carry a `code` and a `message`, while invalid input and a missing or ended
-session carry only a `message`.
+An identity operation that refuses a decoded request answers with JSON:
+identity errors carry a `code` and a `message`, while invalid input and a
+missing or ended session carry only a `message`. A body the request decoder
+cannot read gets a bare `400`, or `413` over the byte cap, before any identity
+check.
 
 `GET /identity/internal/v1/session` requires the callback bearer
 `API_OATHKEEPER_AUTHZ_TOKEN`, rather than a user JWT. It resolves canonical

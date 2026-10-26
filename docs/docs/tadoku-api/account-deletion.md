@@ -125,8 +125,8 @@ curl -sS -X POST "https://tadoku.app/api/internal/profile/users/<ACCOUNT_ID>/acc
   identity ID.
 - `email` confirms the target: type the account's address as that list shows
   it. Letter case and surrounding whitespace do not matter.
-- `reason` is required, at most 1,000 bytes, and stays in the audit log for
-  good. Describe the request and how you confirmed it; do not include the
+- `reason` is required, at most 1,000 characters after trimming, and stays in
+  the audit log for good. Describe the request and how you confirmed it; do not include the
   user's email address or display name.
 - `202` returns `{"job_id":<ID>}`, the `account.delete.v1` job. Record it.
   From then on the account cannot sign in, its sessions and recovery links stop

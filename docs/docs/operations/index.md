@@ -1,6 +1,6 @@
 ---
 title: Operations
-description: The Tadoku runbooks for the development base, failed migrations, operator account deletion and identity incident recovery, plus the content and backup policies that apply to operations.
+description: The Tadoku runbooks for the development base, failed migrations and identity incident recovery, plus the content and backup policies that apply to operations.
 sidebar_position: 1
 ---
 

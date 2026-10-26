@@ -104,7 +104,7 @@ oci.pull(
 )
 oci.pull(
     name = "tadoku_dev_node",
-    digest = "sha256:a723b54c35a76e947095a20a67d39585bb09c862e6b1adeb8a9f518f95e34fb0",
+    digest = "sha256:a98e6fda54fdbb22d4238054cca9a2a113bcd1191c09193a535aae22f400aa8e",
     image = "index.docker.io/library/node",
     platforms = ["linux/amd64"],
 )

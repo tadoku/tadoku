@@ -9,8 +9,10 @@ Read this when you file, follow or replay an account deletion, change how one
 is filed or executed, or need to know what a deletion removes and keeps.
 
 A deletion has two transactions: filing locks the account at once, and the
-worker deletes its data later. Administrators file from the admin app, which
-calls `POST /profile/users/{id}/account-deletion`; see
+worker deletes its data later. Users request their own deletion with
+`POST /identity/settings/account-deletion`; see
+[Self-service requests](#self-service-requests). Administrators file from the
+admin app, which calls `POST /profile/users/{id}/account-deletion`; see
 [File a deletion](#file-a-deletion).
 
 ## Filing
@@ -43,6 +45,26 @@ registration writes and role changes for the user return `409`
 `account_deletion_in_progress`. Those writes lock the `users` row, so a write
 that committed before the lock is visible to the worker and is deleted with the
 rest, and one still in flight waits for the deletion and is refused.
+
+## Self-service requests
+
+`POST /identity/settings/account-deletion` files a deletion for the signed-in
+user. Its body holds the account's email address.
+
+- Before a transaction opens, a guest gets `401`, a login older than one hour
+  or in the future gets `401` `stale_session`, and a missing or malformed
+  address gets `400` `invalid_email`.
+- In one transaction, `identity.Service.RequestAccountDeletion` locks the
+  account row, rechecks the session and its recency, and compares the typed
+  address after normalization with the account's login address,
+  `email_normalized`. Another address returns `400` `confirmation_mismatch`.
+  Filing then runs with the user as actor and `source` `self_service`, so an
+  administrator gets `409` `admin_account` and a banned user `409`
+  `banned_account`.
+- Success returns `202` with a `Set-Cookie` that clears the tenant's session
+  cookie. From the commit the cookie reads as a guest, so repeating the request
+  returns `401` and writes nothing. A request queued behind another filing's
+  account lock rechecks its session once it gets the row and returns `401`.
 
 ## Execution
 
@@ -81,8 +103,10 @@ large account.
 Every transaction that locks both an account row and its `users` row takes the
 account row first: the settings writes, login and recovery (whose session and
 token inserts lock the `users` row through their foreign keys), filing and the
-worker. Filing therefore waits for a settings write that already holds the
-account row, and the worker waits for any of them instead of deadlocking.
+worker. A self-service request locks the account row for its settings
+check before filing locks the `users` row, in one transaction. Filing therefore waits
+for a settings write that already holds the account row, and the worker waits
+for any of them instead of deadlocking.
 
 - Filing's account lock skips a user whose deletion was already filed when the
   statement started, and filing reads the committed deletion state before it

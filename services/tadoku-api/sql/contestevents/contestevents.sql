@@ -1,6 +1,11 @@
--- name: InsertContestEvent :exec
+-- name: InsertContestEvents :exec
 insert into contest_events (id, contest_id, log_id, event, occurred_at)
-values (sqlc.arg(id), sqlc.arg(contest_id), sqlc.arg(log_id), sqlc.arg(event), sqlc.arg(occurred_at));
+select
+  unnest(sqlc.arg(ids)::uuid[]),
+  unnest(sqlc.arg(contest_ids)::uuid[]),
+  unnest(sqlc.arg(log_ids)::uuid[]),
+  unnest(sqlc.arg(events)::text[]),
+  sqlc.arg(occurred_at);
 
 -- name: ReadContestEvents :many
 with cursor_event as materialized (

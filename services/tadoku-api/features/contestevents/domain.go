@@ -20,6 +20,11 @@ type Page struct {
 	HasMore    bool
 }
 
+type newEvent struct {
+	id     uuid.UUID
+	change contestevent.Change
+}
+
 type readParameters struct {
 	contestID uuid.UUID
 	cursorID  *uuid.UUID

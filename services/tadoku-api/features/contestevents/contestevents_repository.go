@@ -18,7 +18,7 @@ type Repository struct{ db *pgxpool.Pool }
 
 func NewRepository(db *pgxpool.Pool) *Repository { return &Repository{db: db} }
 
-func (r *Repository) Insert(ctx context.Context, id uuid.UUID, change contestevent.Change, occurredAt time.Time) error {
+func (r *Repository) Insert(ctx context.Context, events []newEvent, occurredAt time.Time) error {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return err
@@ -27,13 +27,14 @@ func (r *Repository) Insert(ctx context.Context, id uuid.UUID, change contesteve
 		return errors.New("contest event publication requires a transaction")
 	}
 
-	return queries.New(executor).InsertContestEvent(ctx, queries.InsertContestEventParams{
-		ID:         postgres.UUID(id),
-		ContestID:  postgres.UUID(change.ContestID),
-		LogID:      postgres.UUID(change.LogID),
-		Event:      string(change.Type),
-		OccurredAt: postgres.Timestamptz(occurredAt),
-	})
+	params := queries.InsertContestEventsParams{OccurredAt: postgres.Timestamptz(occurredAt)}
+	for _, event := range events {
+		params.Ids = append(params.Ids, postgres.UUID(event.id))
+		params.ContestIds = append(params.ContestIds, postgres.UUID(event.change.ContestID))
+		params.LogIds = append(params.LogIds, postgres.UUID(event.change.LogID))
+		params.Events = append(params.Events, string(event.change.Type))
+	}
+	return queries.New(executor).InsertContestEvents(ctx, params)
 }
 
 func (r *Repository) Read(ctx context.Context, parameters readParameters) (*Page, error) {

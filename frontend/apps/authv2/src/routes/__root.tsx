@@ -9,7 +9,8 @@ import 'paper-ui/styles.css'
 import '../styles.css'
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  beforeLoad: async () => ({ identity: await getSession() }),
+  // /deleted confirms a deletion the API has already accepted, so it neither reads nor waits for the session.
+  beforeLoad: async ({ location }) => ({ identity: await getSession({ data: location.pathname !== '/deleted' }) }),
   head: () => ({
     meta: [{ title: 'Account · Tadoku' }, { name: 'robots', content: 'noindex, nofollow' }],
     links: [{ rel: 'icon', type: 'image/svg+xml', href: favicon }],
@@ -21,7 +22,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function AccountLayout() {
   const { identity } = Route.useRouteContext()
-  return <Shell identity={identity}>{identity.status === 'ready' ? <Outlet /> : <Unavailable />}</Shell>
+  return <Shell identity={identity}>{identity.status === 'unavailable' ? <Unavailable /> : <Outlet />}</Shell>
 }
 
 function RootDocument({ children }: { children: ReactNode }) {

@@ -11,7 +11,10 @@ interface Props {
     IconComponent?: ComponentType<any>
     onClick?: () => void
     type?: 'normal' | 'danger'
-    /** Shows the item disabled, with this explanation under its label. */
+    /**
+     * Shows the item as unavailable, with this explanation under its label. It stays in the keyboard order so the
+     * reason can be read, and choosing it only closes the menu.
+     */
     disabledReason?: string
   }[]
 }
@@ -39,8 +42,11 @@ export const ActionMenu = ({
               i,
             ) =>
               disabledReason !== undefined ? (
-                <MenuItem key={i} disabled>
-                  <div className="flex px-3 py-2 text-sm font-medium text-gray-500 cursor-not-allowed">
+                <MenuItem key={i}>
+                  <div
+                    aria-disabled="true"
+                    className="flex px-3 py-2 text-sm font-medium text-gray-500 cursor-not-allowed data-[focus]:bg-secondary/5"
+                  >
                     {IconComponent && (
                       <IconComponent className="w-4 h-4 mr-3 mt-0.5 shrink-0" />
                     )}

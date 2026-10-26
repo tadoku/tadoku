@@ -102,8 +102,9 @@ Start only after you have confirmed that the request comes from the account's
 owner. Administrators delete:
 
 - a banned account;
-- an administrator's account, after removing the administrator role, because
-  filing refuses administrators;
+- an administrator's account, after
+  [revoking the administrator role](../architecture/authorization.md#granting-an-administrator),
+  because filing refuses administrators;
 - the account of a user who cannot sign in.
 
 A deletion cannot be undone. Only a database backup holds the earlier rows; see
@@ -175,7 +176,8 @@ The request event names the administrator as the actor, with `source` `admin`
 and the reason. Once the job completes, the completion event holds the counts
 of deleted and kept logs and registrations and of owned contests, the user's
 display name is `Deleted participant` and `deleted_at` is set. The admin user
-list reads native accounts, so the account disappears from it at once.
+list reads native accounts, so the account leaves it once the job completes;
+closing the deletion dialog reloads the list.
 
 ## Replay a failed deletion
 

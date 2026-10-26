@@ -357,7 +357,10 @@ const Page: NextPageWithLayout = () => {
       {deletingUser ? (
         <DeleteAccountDialog
           user={deletingUser}
-          onClose={() => setDeletingUser(null)}
+          onClose={() => {
+            setDeletingUser(null)
+            queryClient.invalidateQueries(['users', 'list'])
+          }}
         />
       ) : null}
     </>

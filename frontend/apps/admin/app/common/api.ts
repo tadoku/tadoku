@@ -10,7 +10,7 @@ import {
   type ProfileUserListEntry,
 } from 'api-client'
 import { apiData, browserApi } from 'ui/api'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 
 // Admin API
 
@@ -102,9 +102,8 @@ function accountDeletionRefusal(
 }
 
 /** Files an account deletion. Every answer, including a transport failure, resolves to an outcome. */
-export const useFileAccountDeletion = () => {
-  const queryClient = useQueryClient()
-  return useMutation({
+export const useFileAccountDeletion = () =>
+  useMutation({
     mutationFn: async ({
       userId,
       email,
@@ -127,10 +126,4 @@ export const useFileAccountDeletion = () => {
         return { kind: 'refused', reason: 'unavailable' }
       }
     },
-    onSuccess: outcome => {
-      if (outcome.kind === 'filed') {
-        queryClient.invalidateQueries(['users', 'list'])
-      }
-    },
   })
-}

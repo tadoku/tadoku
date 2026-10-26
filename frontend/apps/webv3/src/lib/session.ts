@@ -26,12 +26,12 @@ export function viewerKey(viewer: Viewer | undefined) {
 
 /** The authv2 login URL that returns to the current page. */
 export function useLoginUrl() {
-  const { accountUrl, appOrigin, requestPath } = useLoaderData({ from: rootRouteId })
+  const { accountUrl, pageUrl } = useLoaderData({ from: rootRouteId })
   const hydrated = useHydrated()
   // Re-render on every navigation: in the browser the return URL is the full current URL, fragment included, which
   // the server never receives.
   useRouterState({ select: state => state.location.href })
 
-  const current = hydrated ? window.location.href : appOrigin + requestPath
+  const current = hydrated ? window.location.href : pageUrl
   return `${accountUrl}/login?return_to=${encodeURIComponent(current)}`
 }

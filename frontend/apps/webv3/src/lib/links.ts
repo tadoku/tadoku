@@ -2,12 +2,13 @@ import { rootRouteId, useLoaderData } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { useMemo } from 'react'
 
-export const getWebUrl = createServerFn({ method: 'GET' }).handler(async () => {
+/** Where links lead for this request: Webv2, the account app and the requested page itself. */
+export const getPageUrls = createServerFn({ method: 'GET' }).handler(async () => {
   const { requestUrls } = await import('./urls.server')
-  const { webUrl, appOrigin, accountUrl } = requestUrls()
   const { getRequest } = await import('@tanstack/react-start/server')
+  const { webUrl, appOrigin, accountUrl } = requestUrls()
   const request = new URL(getRequest().url)
-  return { webUrl, appOrigin, accountUrl, requestPath: request.pathname + request.search }
+  return { webUrl, accountUrl, pageUrl: appOrigin + request.pathname + request.search }
 })
 
 export function useLinks() {

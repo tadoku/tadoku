@@ -3,14 +3,14 @@ import type { QueryClient } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 import { AppShell, themeBootScript } from '../components/AppShell'
 import { ErrorView, NotFoundView, PendingView } from '../components/StatusViews'
-import { getWebUrl } from '../lib/links'
+import { getPageUrls } from '../lib/links'
 import { viewerQueryOptions } from '../lib/session'
 import 'paper-ui/styles.css'
 import '../styles.css'
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   loader: async ({ context }) => {
-    const [urls] = await Promise.all([getWebUrl(), context.queryClient.ensureQueryData(viewerQueryOptions())])
+    const [urls] = await Promise.all([getPageUrls(), context.queryClient.ensureQueryData(viewerQueryOptions())])
     return urls
   },
   staleTime: Infinity,

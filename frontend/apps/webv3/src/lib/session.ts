@@ -14,13 +14,24 @@ export const getViewer = createServerFn({ method: 'GET' }).handler(async (): Pro
 })
 
 export const viewerQueryOptions = () => queryOptions({
-  queryKey: ['viewer'], queryFn: () => getViewer(), staleTime: 30_000,
+  queryKey: ['viewer'],
+  queryFn: () => getViewer(),
+  staleTime: 30_000,
 })
 
+/** Identifies whose view a cache entry of personalized data holds. */
+export function viewerKey(viewer: Viewer | undefined) {
+  return viewer && 'userId' in viewer ? viewer.userId : viewer?.status ?? 'anonymous'
+}
+
+/** The authv2 login URL that returns to the current page. */
 export function useLoginUrl() {
   const { accountUrl, appOrigin, requestPath } = useLoaderData({ from: rootRouteId })
-  useRouterState({ select: state => state.location.href })
   const hydrated = useHydrated()
+  // Re-render on every navigation: in the browser the return URL is the full current URL, fragment included, which
+  // the server never receives.
+  useRouterState({ select: state => state.location.href })
 
-  return `${accountUrl}/login?return_to=${encodeURIComponent(hydrated ? window.location.href : appOrigin + requestPath)}`
+  const current = hydrated ? window.location.href : appOrigin + requestPath
+  return `${accountUrl}/login?return_to=${encodeURIComponent(current)}`
 }

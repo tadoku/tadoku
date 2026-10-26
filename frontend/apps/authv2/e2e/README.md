@@ -8,7 +8,8 @@ pnpm --filter authv2 exec playwright install chromium
 AUTHV2_BASE_URL=https://<route>.account.tadoku.dev.lab \
   AUTHV2_READER_STATE_FILE=<private file outside the report> \
   PLAYWRIGHT_OUTPUT_DIR=/workspace/.scratch/authv2-smoke \
-  pnpm --filter authv2 exec playwright test e2e/credentials.spec.ts e2e/recovery.spec.ts e2e/settings.spec.ts
+  pnpm --filter authv2 exec playwright test e2e/credentials.spec.ts e2e/recovery.spec.ts e2e/settings.spec.ts \
+    e2e/settings-deletion.spec.ts
 ```
 
 The tenant must provide native Dev Reader and Dev Admin accounts, with the
@@ -28,6 +29,15 @@ The stale-session test is skipped unless `AUTHV2_STALE_SESSION_DIR` names a
 private directory. It logs the Reader in, writes `ready` there and waits for an
 `aged` file. Move only that tenant's Reader sessions' `authenticated_at` back
 more than an hour with an owner-scoped task, then create `aged`.
+
+`settings-deletion.spec.ts` registers three disposable accounts. It deletes two
+of them, one with and one without JavaScript, through the branch's API and
+worker. It also opens the delete page as the Reader and is refused as the
+Admin, changing neither. Its fresh-login test uses the same directory and keeps
+the third account: it opens the delete page and Settings with it, writes the
+account's email to `deletion-ready` and waits for `deletion-aged`. Move only
+that account's sessions in the branch tenant back more than an hour, then
+create `deletion-aged`.
 
 TLS verification stays enabled. Reports and videos contain synthetic fixture
 screens only. Tracing is disabled to avoid retaining authenticated requests or
@@ -57,7 +67,8 @@ The opt-in test fixture binds only `127.0.0.1:5195` and closes after the test.
 It returns synthetic session responses and records synthetic request headers.
 Assertions prove the application's server forwards Cookie and `X-Dev-Branch`,
 and 404/503/malformed responses show an unavailable message with a retry action
-and the shell's home link. A second test renders Settings for stored account
+and the shell's home link, while `/deleted` still shows its confirmation, also
+when the session read never answers. A second test renders Settings for stored account
 values: a version-0 account ID, and imported emails with an ideographic-space
 prefix or 321 raw bytes. Each must appear unchanged in the Email row, in the
 server HTML of its open editor and in the hydrated input, and fit 1280px and

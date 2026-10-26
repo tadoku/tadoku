@@ -60,8 +60,7 @@ Record `account_app`. Only an `identity-v2` flag absent from the canonical
 
 The base API and overlays supply the development cookie domain.
 Recovery and profile/password settings use the local identity API. Account
-lookup/search use the separate identity `ReadService` for profile and moderation;
-the `Accounts` service's Reader methods and account deletion remain `501` stubs.
+lookup/search use the separate identity `ReadService` for profile and moderation.
 Email list/detail
 routes accept a verified tenant `email:read` bearer or an administrator of
 that tenant; see [Retained email API](admin.md#retained-email-api).
@@ -175,6 +174,18 @@ Authv2 uses `/` for Settings, `/login`, `/register` and `/recovery` on `account.
   Resubmitting the unchanged email shows that it is already the account's
   address and sends no request; display-name and password saves send only their
   own field.
+- Delete a disposable account through **Delete account** at the bottom of
+  Settings, once with JavaScript and once without. The button must stay
+  disabled until the typed address matches; a mistyped address must return
+  `confirmation_mismatch` and keep the session. After `/deleted`, the old cookie
+  must read as a guest and the old password must fail. With a branch API and
+  worker, check the deletion's data effects as
+  [Account deletion](../../../../../docs/docs/tadoku-api/account-deletion.md)
+  describes: the verify query, the audit events, the retained and notice
+  emails, leaderboards after the worker and the contest event feed. Dev Admin
+  must be refused. A session aged past an hour must reach `/login?reauth=1`
+  with the fresh-login banner and its email prefilled, and return to the page
+  after login.
 - Request recovery through its form; use a separate native Admin context's cookie
   to read the newly held email. Follow its exact `params.recovery_url`, set a
   password in Settings, continue, log out and log in using the new password.

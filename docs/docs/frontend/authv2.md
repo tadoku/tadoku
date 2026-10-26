@@ -1,6 +1,6 @@
 ---
 title: Authv2
-description: Paper account screens, native and enhanced JSON submissions, recovery and Settings, session reads, manual browser smoke and deployment.
+description: Paper account screens, native and enhanced JSON submissions, recovery, Settings and account deletion, session reads, manual browser smoke and deployment.
 ---
 
 # Authv2
@@ -12,6 +12,7 @@ TanStack Start, Router, Query and Form, Zod, Vite, Nitro and Paper. `/` is
 Settings, the identity API's recovery redirect target; `/settings` opens the
 same screen for existing caller links. `/login`, `/register` and `/recovery`
 log in, create an account and request a password-reset email.
+`/delete-account` requests the account's deletion and `/deleted` confirms it.
 
 ## Forms and recovery
 
@@ -51,7 +52,9 @@ enter URLs. Native logins reach the API from the authv2 server, so the API's
 per-address throttle counts them under that server's address.
 
 Settings shows two groups of read-only rows: Profile holds the display name,
-and Sign-in and security holds the email address and password. Each row shows
+and Sign-in and security holds the email address and password. Below the
+groups, one plain, muted **Delete account** link opens `/delete-account` with
+the trusted `return_to`; Settings has no other delete control. Each row shows
 its stored value and a **Change** link. The `edit` query parameter
 (`display-name`, `email` or `password`) opens one editor in place of its row's
 value. `settingsView()` in `frontend/apps/authv2/src/lib/search.ts` reads it
@@ -95,10 +98,48 @@ links still return the identity API's `400` JSON response; request another at
 `/recovery`. Recovery requests show the same confirmation for known and unknown
 addresses. Development mail remains held.
 
+## Account deletion
+
+`/delete-account` says what a deletion removes and keeps and that it can't be
+undone, and links to the log export on the visitor's Webv2 profile. Its field,
+**Type your email address to confirm**, has autocomplete and spellcheck off.
+**Delete my account** is the destructive button; **Cancel** returns to Settings
+with the trusted `return_to`.
+
+The route's `beforeLoad` runs during server rendering as well as in the
+browser, so its redirects work without JavaScript. A guest goes to login and
+comes back. A session whose `recent_login` is false goes to `/login?reauth=1`,
+continuing to the page and its `return_to`; a `return_to` too long to nest is
+dropped, not the return to the page. `/login` with `reauth` and a session shows
+"Privileged actions require a fresh login. Log in again to continue." in place
+of the signed-in notice and prefills the account's email, also after a failed
+native login. A session without `recent_login` reaches the page, and the API's
+`stale_session` answer applies.
+
+Before hydration and without JavaScript, the button posts to
+`/actions/delete-account`. Once hydrated, it stays disabled until the typed
+value matches the account's address, ignoring letter case and surrounding
+whitespace; the identity API makes the authoritative comparison. Both paths
+send only `email` to `POST /identity/settings/account-deletion` and land on
+`/deleted` after its `202`; the native path forwards the API's cookie-clearing
+Set-Cookie. A `stale_session`, meaning the hour ran out while the page was
+open, or a 401 without a code goes to the same fresh-login URL.
+`confirmation_mismatch`, `admin_account` and `banned_account` show as error
+messages. A failed native submission returns to
+`/delete-account?error=…&form=delete-account`; the typed address never enters
+a URL.
+
+`/deleted` is static and reads no account: the account is deleted, removing
+its data finishes shortly and a notice went to the old address. It links to the
+Tadoku home page. The deletion it confirms has already been accepted, so the
+root loader skips the session read on this page and never waits for the
+identity API.
+
 ## Session
 
 `frontend/apps/authv2/src/lib/session.server.ts` requests `GET /identity/session`
-through the [generated client](api-client.md) from the configured Tadoku API root,
+for every page except `/deleted` through the [generated client](api-client.md)
+from the configured Tadoku API root,
 forwarding only the incoming Cookie and `X-Dev-Branch` request headers. The
 generated session schema checks the response shape; the
 API owns account field constraints, so imported display names and email formats
@@ -186,9 +227,12 @@ delayed hydration, the browser-to-API transport, `return_to`, wrong passwords,
 throttling, field errors and mobile containment. `settings.spec.ts` covers the
 guest continuation, profile and email persistence, the old-address notice,
 password errors, foreign-origin posts, logout and, when an operator ages the
-session, stale-session reauthentication. `recovery.spec.ts` follows a held
-recovery email's generated link through Settings and checks old passwords,
-sessions and links fail. See `frontend/apps/authv2/e2e/README.md` for setup and
+session, stale-session reauthentication. `settings-deletion.spec.ts` covers the
+Settings link as the only entry point, deletion with and without JavaScript, a
+mistyped address, administrator refusal, mobile containment and, when an
+operator ages the session, the fresh-login redirect and banner.
+`recovery.spec.ts` follows a held recovery email's generated link through
+Settings and checks old passwords, sessions and links fail. See `frontend/apps/authv2/e2e/README.md` for setup and
 for the loopback session fixture that checks header forwarding and failure
 responses, for the registration fixture that sends controlled
 API answers, including the registration `429`, through both the hydrated and

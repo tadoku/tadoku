@@ -1,12 +1,13 @@
 ---
 title: Module design
-description: How to prefer deep modules, hide implementation decisions, preserve meaningful boundaries, review the knowledge an interface requires of its callers and split a file over the size limit.
+description: How to prefer deep modules, hide implementation decisions, preserve meaningful boundaries, when a new Tadoku API application package needs the maintainer's approval, review the knowledge an interface requires of its callers and split a file over the size limit.
 ---
 
 # Module design
 
 Read this when you design or review a module boundary, public interface or
-shared abstraction in backend or frontend code.
+shared abstraction in backend or frontend code, or think the Tadoku API needs
+a new application package.
 
 Prefer **deep modules**: a small, coherent interface that hides meaningful
 implementation complexity. A module can be a package, service, component or
@@ -75,6 +76,23 @@ Document non-obvious caller obligations, such as an enclosing transaction or
 concurrency constraint, at the declaration under the existing
 [Go comment rules](../tadoku-api/conventions.md#readability). Make the contract
 sufficient to use the module without reading its implementation.
+
+## Tadoku API application packages
+
+A new package under `services/tadoku-api/app/` is a major architecture change.
+Requests always go through the API application (`app/api`), and the worker
+application (`app/worker`) only executes jobs; see
+[Code ownership](../tadoku-api/index.md#code-ownership).
+
+- The maintainer explicitly approves a new package there before any code for
+  it is written. Agents never create one on their own.
+- When the API application and the worker both seem to need the same code,
+  keep request handling in `app/api` and job execution in `app/worker`.
+  Business decisions they share belong in a feature and pure rules in a
+  [shared domain package](../tadoku-api/conventions.md#shared-domain-packages),
+  not in a shared application package.
+- An agent that believes a new package is needed stops and asks the
+  maintainer.
 
 ## Review a boundary through its callers
 

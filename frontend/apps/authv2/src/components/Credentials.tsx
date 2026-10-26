@@ -20,12 +20,14 @@ function SignedInNotice() {
 }
 
 export function Login({ search }: { readonly search: AccountSearch }) {
-  const { origin } = useIdentity()
+  const { origin, session } = useIdentity()
   const next = continuation(search.return_to, origin)
+  // A privileged page sent this signed-in visitor back for a fresh login.
+  const reauth = search.reauth ? session.account : null
   const { form, formProps, fieldId, pending, problem } = useAccountForm({
     operation: 'login',
     id: 'login',
-    defaultValues: { email: '', password: '' },
+    defaultValues: { email: reauth?.email ?? '', password: '' },
     nativeError: search.error,
     onSuccess: () => navigate(next ?? '/'),
   })
@@ -38,9 +40,14 @@ export function Login({ search }: { readonly search: AccountSearch }) {
     >
       <form.AppForm>
         <form.Form {...formProps} className="account-form">
-          <SignedInNotice />
+          {reauth ? (
+            <Flash variant="information" icon={<InformationCircleIcon className={iconClassName()} />}>
+              Privileged actions require a fresh login. Log in again to continue.
+            </Flash>
+          ) : <SignedInNotice />}
           <FormProblem problem={problem} />
           <ReturnTo value={next} />
+          {reauth ? <input type="hidden" name="reauth" value="1" /> : null}
           <form.AppField name="email" validators={{ onChange: ({ value }) => emailProblem(value) }}>
             {field => <field.Input id={fieldId('email')} label="Email" type="email" autoComplete="username" required maxLength={320} />}
           </form.AppField>

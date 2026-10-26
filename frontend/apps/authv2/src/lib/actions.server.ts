@@ -60,7 +60,9 @@ export async function handleNativeAction(request: Request, name: string) {
     headers.set('Location', new URL(location, urls.origin).href)
     return new Response(null, { status: 303, headers })
   }
-  const failure = (code: string) => redirect(withReturnTo(`${page}?error=${code}&form=${name}`, next))
+  // A failed fresh login keeps its banner.
+  const reauth = name === 'login' && form?.get('reauth') === '1' ? '&reauth=1' : ''
+  const failure = (code: string) => redirect(withReturnTo(`${page}?error=${code}&form=${name}${reauth}`, next))
   if (!form) return failure('invalid_origin')
 
   const values = Object.fromEntries(form)

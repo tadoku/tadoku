@@ -71,6 +71,7 @@ while it waits for that `users` row:
   that starts after the deletion lock commits excludes deletion-locked users or
   skips locked rows. That includes filing itself, so filing again for a pending
   deletion takes no account lock.
-- A lock that was already queued behind filing still gets the account row. A
-  settings write then rechecks its session and fails before it touches the
-  `users` row; login and recovery never lock the `users` row.
+- A lock that was already queued behind filing still gets the account row,
+  because filing only locked it. A settings write then rechecks its session, and
+  a second filing reads the committed deletion state; both fail before they
+  touch the `users` row. Login and recovery never lock the `users` row.

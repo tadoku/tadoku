@@ -78,7 +78,9 @@ Administrators can change only the `banned` relation through the API
 grants `admins`; see [Granting an administrator](#granting-an-administrator).
 A role update locks the target's `users` row, then writes the relationship and
 its `moderation_audit_log` entry, `ban_user` or `unban_user`, in one
-transaction. A target whose account deletion is filed or done returns `409`.
+transaction. A target whose account deletion is filed returns `409`, also when
+the update waited for the deletion worker; a target that is already deleted
+returns `404`.
 
 ### Granting an administrator
 

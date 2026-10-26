@@ -47,6 +47,14 @@ func (s *Service) LockUser(ctx context.Context, userID uuid.UUID) error {
 	return nil
 }
 
+func (s *Service) LockForDeletion(ctx context.Context, userID uuid.UUID, now time.Time) error {
+	return nil
+}
+
+func (s *Service) Tombstone(ctx context.Context, userID uuid.UUID, now time.Time) (bool, error) {
+	return true, nil
+}
+
 func (s *Service) DisplayNames(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]string, error) {
 	return s.repository.DisplayNames(ctx, ids)
 }

@@ -246,6 +246,13 @@ type MutationResult struct {
 	Events []contestevent.Change
 }
 
+type RemovalResult struct {
+	Jobs        []jobs.Job
+	Events      []contestevent.Change
+	DeletedLogs int
+	KeptLogs    int
+}
+
 type ExportedLog struct {
 	ID              uuid.UUID
 	CreatedAt       time.Time

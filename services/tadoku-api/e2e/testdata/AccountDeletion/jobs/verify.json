@@ -1,0 +1,48 @@
+[
+  {
+    "task_type": "account.delete.v1",
+    "state": "completed",
+    "payload": {
+      "user_id": "33333333-3333-4333-8333-333333333333"
+    },
+    "names_email": false
+  },
+  {
+    "task_type": "email.send.v1",
+    "state": "completed",
+    "payload": {},
+    "names_email": true
+  },
+  {
+    "task_type": "leaderboard.invalidate_contest.v1",
+    "state": "completed",
+    "payload": {
+      "contest_id": "f0000000-0000-4000-8000-0000000000a2"
+    },
+    "names_email": false
+  },
+  {
+    "task_type": "leaderboard.invalidate_contest.v1",
+    "state": "completed",
+    "payload": {
+      "contest_id": "f0000000-0000-4000-8000-0000000000a3"
+    },
+    "names_email": false
+  },
+  {
+    "task_type": "leaderboard.invalidate_official.v1",
+    "state": "completed",
+    "payload": {
+      "year": 2025
+    },
+    "names_email": false
+  },
+  {
+    "task_type": "leaderboard.invalidate_official.v1",
+    "state": "completed",
+    "payload": {
+      "year": 2026
+    },
+    "names_email": false
+  }
+]

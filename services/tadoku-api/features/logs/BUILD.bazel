@@ -8,6 +8,7 @@ go_library(
         "logs_contest_service.go",
         "logs_mutation_service.go",
         "logs_read_repository.go",
+        "logs_removal_service.go",
         "logs_repository.go",
         "logs_service.go",
         "logs_statistics_repository.go",

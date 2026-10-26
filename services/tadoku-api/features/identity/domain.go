@@ -24,6 +24,12 @@ var (
 	ErrRecoveryThrottled = &Error{
 		"throttled", errx.NewThrottledError("too many recovery requests; try again later"),
 	}
+	ErrAdminAccount = &Error{
+		"admin_account", errx.NewConflictError("remove the administrator role before deleting this account"),
+	}
+	ErrBannedAccount = &Error{
+		"banned_account", errx.NewConflictError("a banned account cannot be deleted through self-service"),
+	}
 	ErrWrongPassword   = &Error{"wrong_password", errx.NewUnauthorizedError("invalid email or password")}
 	ErrEmailTaken      = &Error{"email_taken", errx.NewConflictError("email is already registered")}
 	ErrThrottled       = &Error{"throttled", errx.NewThrottledError("too many login attempts; try again later")}

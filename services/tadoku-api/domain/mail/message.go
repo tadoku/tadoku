@@ -10,6 +10,7 @@ type Template string
 const (
 	AccountRecovery     Template = "account.recovery"
 	AccountEmailChanged Template = "account.email_changed"
+	AccountDeleted      Template = "account.deleted"
 )
 
 type Message struct {

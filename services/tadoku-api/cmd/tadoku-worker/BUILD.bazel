@@ -38,7 +38,10 @@ go_binary(
 
 go_test(
     name = "tadoku-worker_test",
-    srcs = ["main_test.go"],
+    srcs = [
+        "delete_account_test.go",
+        "main_test.go",
+    ],
     embed = [":tadoku-worker_lib"],
     env_inherit = ["TADOKU_TEST_POSTGRES_URL"],
     tags = [

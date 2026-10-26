@@ -1,0 +1,8 @@
+[
+  {
+    "tenant": "e2e/alpha-0000000a",
+    "object": "app:root",
+    "relation": "banned",
+    "subject": "user:33333333-3333-4333-8333-333333333333"
+  }
+]

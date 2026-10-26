@@ -22,6 +22,7 @@ type Dependencies struct {
 }
 
 type Config struct {
+	AccountDeletion *AccountDeletion
 	Scope           jobqueue.Scope
 	Concurrency     int
 	ShutdownTimeout time.Duration
@@ -30,9 +31,11 @@ type Config struct {
 }
 
 type Application struct {
-	runner      *runner
-	leaderboard *leaderboard.Service
-	email       *email.Service
+	runner          *runner
+	queue           *jobqueue.Service
+	leaderboard     *leaderboard.Service
+	email           *email.Service
+	accountDeletion *AccountDeletion
 }
 
 func NewApplication(deps Dependencies, config Config) (*Application, error) {
@@ -54,8 +57,18 @@ func NewApplication(deps Dependencies, config Config) (*Application, error) {
 		config.Metrics = NewMetrics(prometheus.NewRegistry())
 	}
 
-	a := &Application{leaderboard: deps.Leaderboard, email: deps.Email}
-	handlers, err := registrations(a.InvalidateContestLeaderboard, a.InvalidateOfficialLeaderboard, a.SendEmail)
+	a := &Application{
+		queue:           deps.JobQueue,
+		leaderboard:     deps.Leaderboard,
+		email:           deps.Email,
+		accountDeletion: config.AccountDeletion,
+	}
+	handlers, err := registrations(
+		a.InvalidateContestLeaderboard,
+		a.InvalidateOfficialLeaderboard,
+		a.SendEmail,
+		a.DeleteAccount,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -93,6 +106,7 @@ func registrations(
 	invalidateContest func(context.Context, jobs.InvalidateContestLeaderboardV1) error,
 	invalidateOfficial func(context.Context, jobs.InvalidateOfficialLeaderboardV1) error,
 	sendEmail func(context.Context, jobs.SendEmailV1) error,
+	deleteAccount func(context.Context, jobs.DeleteAccountV1) error,
 ) (*registry, error) {
 	leaderboardPolicy := policy{
 		Concurrency: 2,
@@ -103,6 +117,7 @@ func registrations(
 		handle(invalidateContest, leaderboardPolicy),
 		handle(invalidateOfficial, leaderboardPolicy),
 		handle(sendEmail, policy{Concurrency: 2, Timeout: 20 * time.Second, MaxAttempts: 5}),
+		handle(deleteAccount, policy{Concurrency: 1, Timeout: 60 * time.Second, MaxAttempts: 5}),
 	)
 }
 
@@ -122,7 +137,12 @@ func (a *Application) Run(ctx context.Context) error {
 }
 
 func Replay(ctx context.Context, queue *jobqueue.Service, id int64, actor, reason string) (int64, error) {
-	handlers, err := registrations(ignoreJob[jobs.InvalidateContestLeaderboardV1], ignoreJob[jobs.InvalidateOfficialLeaderboardV1], ignoreJob[jobs.SendEmailV1])
+	handlers, err := registrations(
+		ignoreJob[jobs.InvalidateContestLeaderboardV1],
+		ignoreJob[jobs.InvalidateOfficialLeaderboardV1],
+		ignoreJob[jobs.SendEmailV1],
+		ignoreJob[jobs.DeleteAccountV1],
+	)
 	if err != nil {
 		return 0, err
 	}

@@ -229,16 +229,24 @@ func replay(ctx context.Context, args []string, logger *slog.Logger) error {
 	return nil
 }
 
+func deleteAccount(ctx context.Context, args []string, logger *slog.Logger) error {
+	return nil
+}
+
 func main() {
 	logger := slog.New(observability.NewTenantHandler(slog.NewJSONHandler(os.Stdout, nil)))
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 	if len(os.Args) > 1 {
 		var err error
-		if os.Args[1] == "replay" {
+		switch os.Args[1] {
+		case "replay":
 			err = replay(ctx, os.Args[2:], logger)
-		} else {
-			err = errors.New("usage: tadoku-worker [replay --id <failed-id> --actor <actor> --reason <reason>]")
+		case "delete-account":
+			err = deleteAccount(ctx, os.Args[2:], logger)
+		default:
+			err = errors.New("usage: tadoku-worker [replay --id <failed-id> --actor <actor> --reason <reason>" +
+				" | delete-account --user <user-id> --actor <operator-user-id> --reason <reason>]")
 		}
 		if err != nil {
 			logger.Error("tadoku-worker command failed", "error", err)

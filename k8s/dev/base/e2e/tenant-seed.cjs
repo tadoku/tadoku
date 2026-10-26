@@ -30,13 +30,12 @@ function proveTenantSeed({ root, report, run }, db) {
     if (snapshot() !== before) throw new Error('Branch seed overwrote native fixture profile/account/session data')
   }
   const populated = run('docker', psql, `
-    select (select count(*) from profiles where tenant='${tenant}') = 2
-      and exists(select from contests where tenant='${tenant}')
+    select exists(select from contests where tenant='${tenant}')
       and exists(select from posts where tenant='${tenant}');
   `)
-  if (populated !== 't') throw new Error('Native reseed did not continue through branch profile/content/contest fixtures')
+  if (populated !== 't') throw new Error('Native reseed did not continue through branch content/contest fixtures')
   run('docker', psql, `delete from tenants where key='${tenant}';`)
-  report.tenantSeed = { repeats: 2, preserved: 'native users/accounts/sessions', populated: 'profiles/contests/posts' }
+  report.tenantSeed = { repeats: 2, preserved: 'native users/accounts/sessions', populated: 'contests/posts' }
 }
 
 module.exports = { proveTenantSeed }

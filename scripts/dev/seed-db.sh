@@ -255,10 +255,8 @@ wait_for_relation tadoku tadoku permission_relationships
 seed_admin "$ADMIN_USER_ID"
 
 wait_for_relation tadoku tadoku pages
-wait_for_relation tadoku tadoku profiles
 
 run_seed_sql tadoku tadoku "$ROOT/scripts/dev/seed/immersion.sql"
-run_seed_sql tadoku tadoku "$ROOT/scripts/dev/seed/profile.sql"
 run_seed_sql tadoku tadoku "$ROOT/scripts/dev/seed/content.sql"
 
 echo "dev seed complete"

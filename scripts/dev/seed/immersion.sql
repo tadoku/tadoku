@@ -44,15 +44,6 @@ select
 -- Stable fixtures: reruns insert only missing rows and keep existing ones, including
 -- user edits. Rows that reference a fixture user follow that user's current UUID.
 
-insert into user_roles (tenant, user_id, role, updated_at)
-values
-  (:'tenant', :'admin_user_id'::uuid, 'admin', now())
-on conflict (tenant, user_id) do update
-set
-  role = excluded.role,
-  updated_at = now()
-where user_roles.role is distinct from excluded.role;
-
 insert into contests (
   tenant,
   id,

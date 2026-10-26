@@ -15,7 +15,7 @@ func NewDeletion(repository *Repository) *Deletion { return &Deletion{repository
 // LockAccount requires the caller's transaction and must come before the users row lock, the order the settings writes
 // use. A deletion request then waits for a settings write that already holds the account row, and a settings write
 // that waits for the request rechecks its session and finds the account locked. Like every account row lock, it skips
-// a user whose deletion is already filed, so filing again never holds the account row the worker deletes.
+// a user whose deletion was already filed when the statement started.
 func (d *Deletion) LockAccount(ctx context.Context, userID uuid.UUID) error {
 	return d.repository.lockAccountForDeletion(ctx, userID)
 }

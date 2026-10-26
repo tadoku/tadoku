@@ -69,7 +69,7 @@ func TestAccountDeletionQueuedSettingsWriteFails(t *testing.T) {
 	}
 }
 
-func TestAccountDeletionRefilingTakesNoAccountLock(t *testing.T) {
+func TestAccountDeletionRefilingDoesNotWaitForTheWorker(t *testing.T) {
 	resetAccountDeletion(t)
 	if _, err := fileOperatorDeletion(t, readerUserID, adminUserID, "Owner confirmed by email"); err != nil {
 		t.Fatal(err)
@@ -82,22 +82,79 @@ func TestAccountDeletionRefilingTakesNoAccountLock(t *testing.T) {
 		_, err := file()
 		filed <- err
 	}()
-	waitForLockWaiters(t, 1, filed)
-	probe := holdRow(t, "select 1")
-	_, err := probe.Exec(t.Context(), "select 1 from accounts where user_id = $1 for update nowait", readerUserID)
-	if err != nil {
-		t.Errorf("filing again holds the account row while it waits for the users row: %v", err)
-	}
-	if err := probe.Rollback(t.Context()); err != nil {
-		t.Fatal(err)
+	select {
+	case err := <-filed:
+		if !errors.Is(err, featureprofile.ErrAccountDeletionInProgress) {
+			t.Errorf("filing again returned %v, want %v", err, featureprofile.ErrAccountDeletionInProgress)
+		}
+	case <-time.After(5 * time.Second):
+		t.Error("filing again waits for the users row the worker holds")
 	}
 
 	if err := deletion.Commit(t.Context()); err != nil {
 		t.Fatal(err)
 	}
-	if err := <-filed; !errors.Is(err, featureprofile.ErrAccountDeletionInProgress) {
-		t.Errorf("filing again returned %v, want %v", err, featureprofile.ErrAccountDeletionInProgress)
+}
+
+func TestAccountDeletionFilingQueuedBehindFilingTakesNoUserLock(t *testing.T) {
+	resetAccountDeletion(t)
+	first := holdRow(t, "select 1 from accounts where user_id = $1 for update", readerUserID)
+	if _, err := first.Exec(t.Context(), `update users set deletion_locked_at = '2026-09-12 12:00:00'
+		where id = $1`, readerUserID); err != nil {
+		t.Fatal(err)
 	}
+	file := operatorFiling(t, readerUserID, adminUserID, "Asked twice")
+
+	filed := make(chan error, 1)
+	go func() {
+		_, err := file()
+		filed <- err
+	}()
+	waitForLockWaiters(t, 1, filed)
+	deletion := holdRowAsync(t, "select 1 from users where id = $1 for update", readerUserID)
+	waitForLockWaiters(t, 2, filed)
+
+	if err := first.Commit(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	deletionTx, held := <-deletion
+	if !held {
+		t.Fatal("the stand-in worker could not lock the users row")
+	}
+	select {
+	case err := <-filed:
+		if !errors.Is(err, featureprofile.ErrAccountDeletionInProgress) {
+			t.Errorf("the second filing returned %v, want %v", err, featureprofile.ErrAccountDeletionInProgress)
+		}
+	case <-time.After(5 * time.Second):
+		t.Error("the second filing waits for the users row the worker holds")
+	}
+	if err := deletionTx.Commit(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// holdRowAsync starts holdRow's transaction on another goroutine, for a lock that has to wait, and delivers it once
+// the lock is held. It fails the test from the test goroutine only.
+func holdRowAsync(t *testing.T, query string, arguments ...any) <-chan pgx.Tx {
+	t.Helper()
+	tx, err := api.db.AppPool.Begin(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = tx.Rollback(context.Background()) })
+	if _, err := tx.Exec(t.Context(), "select set_config('tadoku.tenant', 'tadoku/prod', true)"); err != nil {
+		t.Fatal(err)
+	}
+
+	held := make(chan pgx.Tx, 1)
+	go func() {
+		if _, err := tx.Exec(context.Background(), query, arguments...); err == nil {
+			held <- tx
+		}
+		close(held)
+	}()
+	return held
 }
 
 // holdRow runs the locking query in a tadoku/prod transaction that stays open until the caller commits it or the

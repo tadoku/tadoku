@@ -75,6 +75,24 @@ func (q *Queries) MarkUserDeletionLocked(ctx context.Context, arg MarkUserDeleti
 	return err
 }
 
+const readUserDeletionState = `-- name: ReadUserDeletionState :one
+select deletion_locked_at, deleted_at
+from users
+where id = $1
+`
+
+type ReadUserDeletionStateRow struct {
+	DeletionLockedAt pgtype.Timestamp
+	DeletedAt        pgtype.Timestamp
+}
+
+func (q *Queries) ReadUserDeletionState(ctx context.Context, id pgtype.UUID) (ReadUserDeletionStateRow, error) {
+	row := q.db.QueryRow(ctx, readUserDeletionState, id)
+	var i ReadUserDeletionStateRow
+	err := row.Scan(&i.DeletionLockedAt, &i.DeletedAt)
+	return i, err
+}
+
 const synchronizeUser = `-- name: SynchronizeUser :one
 insert into users (id, display_name, created_at, updated_at)
 values ($1, $2, $3, $4)

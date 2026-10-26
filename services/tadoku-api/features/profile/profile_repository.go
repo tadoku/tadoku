@@ -67,6 +67,24 @@ func (r *Repository) LockUser(ctx context.Context, userID uuid.UUID) (userDeleti
 	}, nil
 }
 
+func (r *Repository) DeletionState(ctx context.Context, userID uuid.UUID) (userDeletionState, error) {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return userDeletionState{}, err
+	}
+	user, err := queries.New(executor).ReadUserDeletionState(ctx, postgres.UUID(userID))
+	if errors.Is(err, pgx.ErrNoRows) {
+		return userDeletionState{}, ErrLocalUserNotFound
+	}
+	if err != nil {
+		return userDeletionState{}, fmt.Errorf("read local user deletion state: %w", err)
+	}
+	return userDeletionState{
+		DeletionLocked: user.DeletionLockedAt.Valid,
+		Deleted:        user.DeletedAt.Valid,
+	}, nil
+}
+
 func (r *Repository) MarkDeletionLocked(ctx context.Context, userID uuid.UUID, now time.Time) error {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {

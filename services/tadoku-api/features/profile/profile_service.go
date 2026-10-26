@@ -48,9 +48,19 @@ func (s *Service) LockUser(ctx context.Context, userID uuid.UUID) error {
 }
 
 // LockForDeletion requires the caller's transaction. From its commit the user can no longer sign in or change data;
-// a user whose deletion is already requested or done returns ErrAccountDeletionInProgress.
+// a user whose deletion is already requested or done returns ErrAccountDeletionInProgress. It reads the committed
+// state before it waits for the users row, so a request that waited behind another request's account row returns at
+// once instead of waiting for the worker, which holds the users row while it deletes that account row.
 func (s *Service) LockForDeletion(ctx context.Context, userID uuid.UUID, now time.Time) error {
-	state, err := s.repository.LockUser(ctx, userID)
+	state, err := s.repository.DeletionState(ctx, userID)
+	if err != nil {
+		return err
+	}
+	if state.DeletionLocked || state.Deleted {
+		return ErrAccountDeletionInProgress
+	}
+
+	state, err = s.repository.LockUser(ctx, userID)
 	if err != nil {
 		return err
 	}

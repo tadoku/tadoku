@@ -7,6 +7,7 @@ go_library(
     visibility = [
         "//services/tadoku-api/app/tenantlifecycle:__pkg__",
         "//services/tadoku-api/cmd/tadoku-api:__pkg__",
+        "//services/tadoku-api/cmd/tadoku-worker:__pkg__",
         "//services/tadoku-api/e2e:__pkg__",
     ],
     deps = [

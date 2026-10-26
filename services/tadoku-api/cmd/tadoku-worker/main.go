@@ -16,19 +16,29 @@ import (
 	"time"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
 	"github.com/kelseyhightower/envconfig"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/tadoku/tadoku/services/common/postgresconfig"
+	"github.com/tadoku/tadoku/services/tadoku-api/app/accountdeletion"
+	"github.com/tadoku/tadoku/services/tadoku-api/app/permissionmodel"
 	"github.com/tadoku/tadoku/services/tadoku-api/app/worker"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/audit"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/authz"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/contestevents"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/contests"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/email"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/logs"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/profile"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/observability"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 	valkeyinfra "github.com/tadoku/tadoku/services/tadoku-api/infra/valkey"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
@@ -115,6 +125,10 @@ func run(ctx context.Context, cfg config, logger *slog.Logger) error {
 	)
 
 	metrics := worker.NewMetrics(registry)
+	model, err := permissionmodel.New()
+	if err != nil {
+		return fmt.Errorf("build permission model: %w", err)
+	}
 	application, err := worker.NewApplication(
 		worker.Dependencies{
 			JobQueue: jobqueue.NewService(jobqueue.NewRepository(pool)),
@@ -126,6 +140,16 @@ func run(ctx context.Context, cfg config, logger *slog.Logger) error {
 			IdentityExpiry: identity.NewExpiry(identity.NewRepository(pool)),
 		},
 		worker.Config{
+			AccountDeletion: &worker.AccountDeletion{
+				DB:            pool,
+				Profile:       profile.NewService(profile.NewRepository(pool), identity.NewReader(pool)),
+				Logs:          logs.NewService(logs.NewLogsRepository(pool), false),
+				Contests:      contests.NewService(contests.NewContestsRepository(pool)),
+				Relationships: permissions.NewRelationships(authz.NewRepository(pool), model),
+				Identity:      identity.NewDeletion(identity.NewRepository(pool)),
+				Audit:         audit.NewService(audit.NewRepository(pool)),
+				ContestEvents: contestevents.NewService(contestevents.NewRepository(pool)),
+			},
 			Scope:           cfg.scope,
 			Concurrency:     cfg.Concurrency,
 			ShutdownTimeout: cfg.ShutdownTimeout,
@@ -230,6 +254,60 @@ func replay(ctx context.Context, args []string, logger *slog.Logger) error {
 }
 
 func deleteAccount(ctx context.Context, args []string, logger *slog.Logger) error {
+	ctx = tenant.WithKey(ctx, tenant.Production())
+
+	flags := flag.NewFlagSet("delete-account", flag.ContinueOnError)
+	flags.SetOutput(io.Discard)
+	user := flags.String("user", "", "user ID to delete")
+	actor := flags.String("actor", "", "operator user ID")
+	reason := flags.String("reason", "", "reason for the deletion")
+
+	const usage = "usage: tadoku-worker delete-account --user <user-id> --actor <operator-user-id> --reason <reason>"
+	if err := flags.Parse(args); err != nil {
+		return fmt.Errorf("parse delete-account flags: %w", err)
+	}
+	userID, userErr := uuid.Parse(*user)
+	actorID, actorErr := uuid.Parse(*actor)
+	if flags.NArg() != 0 || userErr != nil || actorErr != nil {
+		return errors.New(usage)
+	}
+	request, err := accountdeletion.OperatorRequest(userID, actorID, *reason)
+	if err != nil {
+		return fmt.Errorf("%s: %w", usage, err)
+	}
+
+	postgresConfig, err := postgresconfig.Load("WORKER_POSTGRES", "WORKER_POSTGRES_URL")
+	if err != nil {
+		return err
+	}
+	openCtx, stop := context.WithTimeout(ctx, 3*time.Second)
+	pool, err := postgres.Open(
+		openCtx,
+		postgresConfig.WithApplicationName("tadoku-worker-delete-account").URL().Reveal(),
+		1,
+	)
+	stop()
+	if err != nil {
+		return fmt.Errorf("open delete-account postgres: %s", postgresConfig.Redact(err))
+	}
+	defer pool.Close()
+
+	model, err := permissionmodel.New()
+	if err != nil {
+		return err
+	}
+	tuples := authz.NewRepository(pool)
+	filing := accountdeletion.NewFiling(
+		authz.NewRoles(permissions.NewChecker(tuples, model), permissions.NewRelationships(tuples, model)),
+		profile.NewService(profile.NewRepository(pool), identity.NewReader(pool)),
+		audit.NewService(audit.NewRepository(pool)),
+		jobqueue.NewService(jobqueue.NewRepository(pool)),
+	)
+	jobID, err := worker.FileAccountDeletion(ctx, pool, filing, request)
+	if err != nil {
+		return fmt.Errorf("delete account %s: %w", userID, err)
+	}
+	logger.InfoContext(ctx, "account deletion requested", "user_id", userID, "job_id", jobID)
 	return nil
 }
 

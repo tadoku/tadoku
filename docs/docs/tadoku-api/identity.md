@@ -8,9 +8,9 @@ description: Tenant-owned accounts, password/session security, recovery and sett
 Read this before changing account or session behavior, implementing recovery or
 settings, or moving a caller to the identity entry point.
 
-Registration, login, logout, session lookup, recovery, profile/password settings,
-self-service account deletion and the Oathkeeper session callback are implemented. Every operation, including
-for guests, uses tenant-local accounts. Profile and moderation callers use
+Registration, login, logout, session lookup, recovery, profile/password
+settings, self-service account deletion and the Oathkeeper session callback are
+implemented. Every operation, including for guests, uses tenant-local accounts. Profile and moderation callers use
 `identity.Reader`, constructed by `identity.NewReader`.
 
 Account lookup and search are implemented by the separate `ReadService` used by
@@ -28,8 +28,9 @@ JWTs `401`, and another tenant on a scoped deployment `421`.
 `GET /identity/session` returns `account`: the signed-in account, or `null` for
 a guest. It also returns `recent_login`: `true` while the session's
 authentication time lies within the last hour, the window that email and
-password changes and account deletion require (see [Recovery and settings](#recovery-and-settings)),
-and `false` for an older or future authentication time and for a guest. One
+password changes and account deletion require (see
+[Recovery and settings](#recovery-and-settings)), and `false` for an older or
+future authentication time and for a guest. One
 rule decides both, so a client can send the user to log in again before
 a change would return `stale_session`. Registration and login return the same
 session shape, with `recent_login` `true`.
@@ -43,6 +44,10 @@ retain their path, query and fragment. Request bodies keep the shared byte cap
 and generated decoder. Logout takes no body and never reads one, but still
 requires the JSON `Content-Type`; whatever body arrives, its `Origin` check
 comes first and its answer is never cached.
+
+An identity operation that refuses a request answers with JSON: identity errors
+carry a `code` and a `message`, while invalid input and a missing or ended
+session carry only a `message`.
 
 `GET /identity/internal/v1/session` requires the callback bearer
 `API_OATHKEEPER_AUTHZ_TOKEN`, rather than a user JWT. It resolves canonical
@@ -237,7 +242,8 @@ tokens and queues `account.email_changed` to the old address, with `new_email`
 and RFC3339 `changed_at`. The response includes the
 existing session authentication time. A session older than one hour, or with an
 authentication time in the future, returns `stale_session` for email/password
-changes and account deletion. Re-authenticate through login to get a fresh cookie.
+changes and account deletion. Re-authenticate through login to get a fresh
+cookie.
 
 Password settings apply the same parsing and cost-12 bcrypt policy as
 registration, retain the current session, revoke other sessions and invalidate

@@ -53,7 +53,8 @@ user. Its body holds the account's email address.
 
 - Before a transaction opens, a guest gets `401`, a login older than one hour
   or in the future gets `401` `stale_session`, and a missing or malformed
-  address gets `400` `invalid_email`.
+  address, including one with a display name, gets `400` `invalid_email`. The
+  session checks come first, so a guest gets `401` whatever the body holds.
 - In one transaction, `identity.Service.RequestAccountDeletion` locks the
   account row, rechecks the session and its recency, and compares the typed
   address after normalization with the account's login address,
@@ -103,8 +104,8 @@ large account.
 Every transaction that locks both an account row and its `users` row takes the
 account row first: the settings writes, login and recovery (whose session and
 token inserts lock the `users` row through their foreign keys), filing and the
-worker. A self-service request locks the account row for its settings
-check before filing locks the `users` row, in one transaction. Filing therefore waits
+worker. A self-service request locks the account row for its settings check
+before filing locks the `users` row, in one transaction. Filing therefore waits
 for a settings write that already holds the account row, and the worker waits
 for any of them instead of deadlocking.
 

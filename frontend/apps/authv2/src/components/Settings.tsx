@@ -278,6 +278,9 @@ export function Settings({ search }: { readonly search: AccountSearch }) {
           <PasswordForm {...editor} />
         </SettingRow>
       </SettingsGroup>
+      <p className="settings-delete">
+        <Link to="/delete-account" search={{ return_to: next }}>Delete account</Link>
+      </p>
     </div>
   )
 }

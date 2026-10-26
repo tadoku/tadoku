@@ -59,6 +59,9 @@ a:where(:not(.paper-button)) { color: var(--paper-color-text-link); }
 /* The email hint holds the stored address, whose raw spaces would otherwise hang past the row. */
 .settings-row__editor .paper-field__hint { white-space: break-spaces; }
 .settings-row__editor .account-form { gap: 16px; }
+/* Deletion stays off the rows: one quiet link below the groups. */
+.settings-delete { margin: 40px 0 0; font-size: var(--paper-type-metadata-size); line-height: var(--paper-type-metadata-line-height); }
+.settings-delete a { color: var(--paper-color-text-muted); }
 .settings-saved { margin: 0; color: var(--paper-color-status-success); font-size: var(--paper-type-metadata-size); font-weight: 600; line-height: var(--paper-type-metadata-line-height); }
 
 @media (max-width: 720px) {

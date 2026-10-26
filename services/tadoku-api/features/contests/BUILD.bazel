@@ -3,6 +3,7 @@ load("@rules_go//go:def.bzl", "go_library", "go_test")
 go_library(
     name = "contests",
     srcs = [
+        "contests_removal_repository.go",
         "contests_removal_service.go",
         "contests_repository.go",
         "contests_service.go",

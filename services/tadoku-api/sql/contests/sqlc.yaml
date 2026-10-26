@@ -4,6 +4,7 @@ sql:
     schema: ../../migrations
     queries:
       - contests.sql
+      - user_removal.sql
     gen:
       go:
         package: contests

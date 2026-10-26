@@ -68,9 +68,9 @@ because it names a clean, pushed commit. Workloads are deployed by digest.
 
 Every branch package must be public. After each push dev-cli resolves the
 digest anonymously, which proves the cluster can pull it without an image pull
-Secret, and refuses a digest it cannot resolve. GitHub creates a package that
-does not exist yet as private on its first push; a maintainer then makes it
-public once in the package settings and reruns `dev up`.
+Secret, and refuses a digest it cannot resolve. GitHub creates a new package
+without public visibility on its first push; a maintainer then makes it public
+once in the package settings and reruns `dev up`.
 
 ### Branch image cleanup
 

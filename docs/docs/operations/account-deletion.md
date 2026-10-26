@@ -109,6 +109,8 @@ tadoku-worker delete-account --user <ACCOUNT_ID> --actor <YOUR_USER_ID> \
   --reason 'Owner asked by email on 2026-10-26'
 ```
 
+- The reason stays in the audit log for good. Describe the request and how you
+  confirmed it; do not include the user's email address or display name.
 - On success it logs `account deletion requested` with `user_id` and the new
   `job_id`. Record the job ID.
 - From then on the account cannot sign in, its sessions and recovery links stop

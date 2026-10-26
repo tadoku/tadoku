@@ -20,8 +20,9 @@ transaction:
 1. It refuses an administrator with `admin_account`, and a banned user who asks
    through self-service with `banned_account`, both `409`, before it writes
    anything. An operator request may delete a banned user.
-2. It locks the `users` row and sets `deletion_locked_at`. A user whose deletion
-   is already filed or done returns `account_deletion_in_progress`.
+2. It locks the account row, then the `users` row, and sets
+   `deletion_locked_at`. A user whose deletion is already filed or done returns
+   `account_deletion_in_progress`.
 3. It records `request_account_deletion` with the actor, the reason, the
    `target_user_id` and a `source` of `operator` or `self_service`.
 4. It enqueues `account.delete.v1` with the user ID.
@@ -53,11 +54,19 @@ the current UTC date, the rule that closes log editing.
 | `moderation_audit_log` | One `complete_account_deletion` event, with the deleted user as actor and the deleted and kept log and registration counts and the owned contest count. |
 | `emails` | Unchanged; the retention pass removes earlier messages after three days in production and fourteen elsewhere. The worker adds an `account.deleted` notice to the account's address, unless that address cannot receive mail. |
 
-Neither audit event stores the email address or display name.
+Neither audit event stores the email address or display name. The operator's
+reason is free text in the request event's description.
 
-The request and the worker take row locks in opposite orders. A settings write
-locks the account row and then the `users` row; the worker locks the `users`
-row and then deletes the account row. This is safe because every account row
-lock in `services/tadoku-api/sql/identity/identity.sql` either excludes
-deletion-locked users or skips locked rows, so once the deletion lock commits
-no transaction holds an account row lock while it waits for that `users` row.
+Every contest event of a deletion carries the time the worker started, but feed
+readers see them only when the transaction commits, which takes seconds on a
+large account.
+
+Filing locks the account row before the `users` row, the order the settings
+writes use, so it waits for a settings write that already holds the account row.
+A settings write that waits for filing rechecks its session after the account
+lock and finds the account locked. The worker takes the opposite order: it
+locks the `users` row and then deletes the account row. This is safe because,
+once the deletion lock commits, every account row lock in
+`services/tadoku-api/sql/identity/identity.sql` either excludes
+deletion-locked users or skips locked rows, so no transaction holds an account
+row lock while it waits for that `users` row.

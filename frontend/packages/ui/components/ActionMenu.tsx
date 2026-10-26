@@ -13,7 +13,7 @@ interface Props {
     type?: 'normal' | 'danger'
     /**
      * Shows the item as unavailable, with this explanation under its label. It stays in the keyboard order so the
-     * reason can be read, and choosing it only closes the menu.
+     * reason can be read, and never runs an action.
      */
     disabledReason?: string
   }[]

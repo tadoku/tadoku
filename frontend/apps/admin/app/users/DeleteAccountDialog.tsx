@@ -20,7 +20,7 @@ const refusalMessages: Record<AccountDeletionRefusal, string> = {
   unauthorized: 'Your session has expired. Log in again and retry.',
   forbidden: 'You no longer have permission to delete accounts.',
   unavailable:
-    'No answer from the API, so the deletion may or may not be filed. Trying again is safe: a filed deletion answers that it is already filed.',
+    'The API did not confirm the filing, so the deletion may or may not be filed. Trying again is safe: it files the deletion or says that it is already filed or the account no longer exists.',
 }
 
 const sameAddress = (typed: string, stored: string) =>
@@ -118,8 +118,10 @@ export function DeleteAccountDialog({ user, onClose }: Props) {
               spellCheck={false}
               options={{
                 validate: value =>
-                  sameAddress(value, user.email) ||
-                  'This does not match the account’s email address.',
+                  value.trim() === ''
+                    ? 'Enter the account’s email address.'
+                    : sameAddress(value, user.email) ||
+                      'This does not match the account’s email address.',
               }}
             />
             <TextArea

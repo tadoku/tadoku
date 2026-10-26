@@ -32,8 +32,8 @@ administrators.
   reload, and verify the affected user's real journey in another context. Record
   both UI state and API result. Do not ban shared fixture users or alter their roles.
 - Delete only accounts you registered in the branch tenant, never fixture
-  users. The worker deletes a filed account within seconds; it then leaves the
-  list, and filing again answers that it no longer exists.
+  users. The worker deletes a filed account within seconds; the next list load
+  no longer shows it, and filing again answers that it no longer exists.
 
 ## Traps
 

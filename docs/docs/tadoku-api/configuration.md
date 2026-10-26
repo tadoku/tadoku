@@ -106,8 +106,8 @@ the latter.
   for outgoing service-token exchange. `API_SERVICE_ACCOUNT_TOKEN_PATH`
   defaults to the projected credential at `/var/run/secrets/tokens/token`. A
   non-empty value must be an HTTP(S) base URL without credentials, query or
-  fragment; trailing slashes are removed. Empty is allowed when Flipt is
-  disabled.
+  fragment; trailing slashes are removed. Required when Flipt is enabled;
+  empty is allowed when Flipt is disabled.
 - `API_FLIPT_ENABLED`, `API_FLIPT_URL`, `API_FLIPT_ENVIRONMENT`,
   `API_FLIPT_NAMESPACE`, `API_FLIPT_TEST_ENVIRONMENT`, `API_FLIPT_UPDATE_INTERVAL`,
   `API_FLIPT_REQUEST_TIMEOUT` and `API_FLIPT_STARTUP_TIMEOUT` configure evaluation.

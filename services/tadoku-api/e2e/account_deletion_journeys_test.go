@@ -22,3 +22,20 @@ func TestAccountDeletionSelfServiceJourney(t *testing.T) {
 		{request: "finished_leaderboard_after", as: guest, want: http.StatusOK},
 	})
 }
+
+func TestAccountDeletionRefusalsJourney(t *testing.T) {
+	runJourney(t, api, "AccountDeletionRefusals", []step{
+		{request: "guest", as: guest, want: http.StatusUnauthorized},
+		{request: "guest_malformed_address", as: guest, want: http.StatusUnauthorized},
+		{request: "stale_session", as: guest, want: http.StatusUnauthorized},
+		{request: "missing_email", as: guest, want: http.StatusBadRequest},
+		{request: "malformed_email", as: guest, want: http.StatusBadRequest},
+		{request: "display_address", as: guest, want: http.StatusBadRequest},
+		{request: "another_address", as: guest, want: http.StatusBadRequest},
+		{request: "foreign_origin", as: guest, want: http.StatusForbidden},
+		{request: "non_json", as: guest, want: http.StatusBadRequest},
+		{request: "administrator", as: guest, want: http.StatusConflict},
+		{request: "banned_user", as: guest, want: http.StatusConflict},
+		{verify: "unchanged"},
+	})
+}

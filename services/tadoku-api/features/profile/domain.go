@@ -9,6 +9,7 @@ import (
 var (
 	ErrLocalUserNotFound         = errx.NewNotFoundError("local user not found")
 	ErrAccountDeletionInProgress = errx.NewConflictError("account deletion in progress")
+	ErrDeletionNotRequested      = errx.NewConflictError("account deletion was not requested")
 )
 
 type userDeletionState struct {

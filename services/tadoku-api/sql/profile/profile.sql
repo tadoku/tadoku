@@ -21,3 +21,13 @@ for update;
 
 -- name: FindUserDisplayNames :many
 select id, display_name from users where id = any(sqlc.arg('ids')::uuid[]);
+
+-- name: MarkUserDeletionLocked :exec
+update users
+set deletion_locked_at = sqlc.arg(now), updated_at = sqlc.arg(now)
+where id = sqlc.arg(id);
+
+-- name: TombstoneUser :exec
+update users
+set display_name = 'Deleted participant', deleted_at = sqlc.arg(now), updated_at = sqlc.arg(now)
+where id = sqlc.arg(id);

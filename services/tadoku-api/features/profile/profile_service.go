@@ -47,12 +47,34 @@ func (s *Service) LockUser(ctx context.Context, userID uuid.UUID) error {
 	return nil
 }
 
+// LockForDeletion requires the caller's transaction. From its commit the user can no longer sign in or change data;
+// a user whose deletion is already requested or done returns ErrAccountDeletionInProgress.
 func (s *Service) LockForDeletion(ctx context.Context, userID uuid.UUID, now time.Time) error {
-	return nil
+	state, err := s.repository.LockUser(ctx, userID)
+	if err != nil {
+		return err
+	}
+	if state.DeletionLocked || state.Deleted {
+		return ErrAccountDeletionInProgress
+	}
+	return s.repository.MarkDeletionLocked(ctx, userID, now)
 }
 
+// Tombstone requires the caller's transaction and locks the user row before any other row of the deletion. It returns
+// false without changes for a user who is already deleted, and ErrDeletionNotRequested for a user who is not locked
+// for deletion.
 func (s *Service) Tombstone(ctx context.Context, userID uuid.UUID, now time.Time) (bool, error) {
-	return true, nil
+	state, err := s.repository.LockUser(ctx, userID)
+	if err != nil {
+		return false, err
+	}
+	if state.Deleted {
+		return false, nil
+	}
+	if !state.DeletionLocked {
+		return false, ErrDeletionNotRequested
+	}
+	return true, s.repository.Tombstone(ctx, userID, now)
 }
 
 func (s *Service) DisplayNames(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]string, error) {

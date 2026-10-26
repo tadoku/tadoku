@@ -67,6 +67,28 @@ func (r *Repository) LockUser(ctx context.Context, userID uuid.UUID) (userDeleti
 	}, nil
 }
 
+func (r *Repository) MarkDeletionLocked(ctx context.Context, userID uuid.UUID, now time.Time) error {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return err
+	}
+	return queries.New(executor).MarkUserDeletionLocked(ctx, queries.MarkUserDeletionLockedParams{
+		ID:  postgres.UUID(userID),
+		Now: postgres.Timestamp(now),
+	})
+}
+
+func (r *Repository) Tombstone(ctx context.Context, userID uuid.UUID, now time.Time) error {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return err
+	}
+	return queries.New(executor).TombstoneUser(ctx, queries.TombstoneUserParams{
+		ID:  postgres.UUID(userID),
+		Now: postgres.Timestamp(now),
+	})
+}
+
 func (r *Repository) DisplayNames(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]string, error) {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {

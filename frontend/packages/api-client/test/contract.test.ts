@@ -171,9 +171,9 @@ describe('generated client on malformed answers', () => {
   })
 
   it('accepts a signed-out session', async () => {
-    const result = await session(200, json, '{"account":null,"recent_login":false}')
+    const result = await session(200, json, '{"account":null}')
     expect(result.error).toBeUndefined()
-    expect(result.data).toEqual({ account: null, recent_login: false })
+    expect(result.data).toEqual({ account: null })
   })
 
   it('sends plain-object headers with a JSON write', async () => {

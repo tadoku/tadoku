@@ -6,7 +6,7 @@ import wordmark from 'paper-ui/assets/brand/wordmark-accent.svg?url'
 import reversedWordmark from 'paper-ui/assets/brand/wordmark-reversed.svg?url'
 import type { ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { useLoginUrl, viewerQueryOptions } from '../lib/session'
+import { useLoginUrl, viewerQueryOptions, type Viewer } from '../lib/session'
 import { useLinks } from '../lib/links'
 
 const themeKey = 'tadoku-theme'
@@ -28,14 +28,6 @@ export function AppShell({ children }: { children: ReactNode }) {
   const currentPath = useRouterState({ select: state => state.location.pathname })
   const hydrated = useHydrated()
   const links = useLinks()
-  const { data: viewer } = useQuery(viewerQueryOptions())
-  const loginUrl = useLoginUrl()
-  const account = viewer?.status === 'anonymous'
-    ? <a href={loginUrl} className="text-link">Log in</a>
-    : viewer?.status === 'signed-in' || viewer?.status === 'banned' || viewer?.status === 'unavailable'
-      ? <><span>{viewer.status === 'unavailable' ? 'Account service unavailable' : viewer.status === 'banned' ? 'Your account is suspended' : viewer.displayName}</span>
-        <form method="post" action="/logout"><Button type="submit" variant="link">Log out</Button></form></>
-      : null
   const navigation: NavbarItem[] = [
     { type: 'link', id: 'leaderboard', label: 'Leaderboard', href: links.leaderboard },
     { type: 'link', id: 'contests', label: 'Contests', href: links.contests },
@@ -58,7 +50,12 @@ export function AppShell({ children }: { children: ReactNode }) {
           navigation={navigation}
           currentPath={currentPath}
           renderLink={renderLink}
-          actions={<div className="app-account-actions">{account}<a href={links.logs} className={buttonClassName({ className: 'app-header-action' })}>Log activity</a></div>}
+          actions={
+            <div className="app-account-actions">
+              <Account />
+              <a href={links.logs} className={buttonClassName({ className: 'app-header-action' })}>Log activity</a>
+            </div>
+          }
         />
       </header>
       <main id="main-content" className="app-content" tabIndex={-1}>{children}</main>
@@ -77,4 +74,31 @@ export function AppShell({ children }: { children: ReactNode }) {
       </footer>
     </div>
   )
+}
+
+function Account() {
+  const { data: viewer } = useQuery(viewerQueryOptions())
+  const loginUrl = useLoginUrl()
+
+  if (!viewer) return null
+  if (viewer.status === 'anonymous') return <a href={loginUrl} className="text-link">Log in</a>
+  return (
+    <>
+      <span>{accountLabel(viewer)}</span>
+      <form method="post" action="/logout">
+        <Button type="submit" variant="link">Log out</Button>
+      </form>
+    </>
+  )
+}
+
+function accountLabel(viewer: Exclude<Viewer, { status: 'anonymous' }>) {
+  switch (viewer.status) {
+    case 'signed-in':
+      return viewer.displayName
+    case 'banned':
+      return 'Your account is suspended'
+    case 'unavailable':
+      return 'Account service unavailable'
+  }
 }

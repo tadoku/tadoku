@@ -87,7 +87,7 @@ owned namespace. Do not repair a branch by changing canonical policy or restarti
 shared services. See [Development environment](../develop/environment.md) for the
 owner-scoped commands.
 
-## Changing the contract
+## Adding a flag
 
 Update declarations, typed public mappings and schema fragments together. Run
 the contract and generated-client checks, and regenerate the bundled OpenAPI,

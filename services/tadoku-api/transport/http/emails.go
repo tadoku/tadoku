@@ -6,7 +6,7 @@ import (
 
 	"github.com/oapi-codegen/nullable"
 	openapitypes "github.com/oapi-codegen/runtime/types"
-	"github.com/tadoku/tadoku/services/tadoku-api/app"
+	"github.com/tadoku/tadoku/services/tadoku-api/app/api"
 	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
 )
 
@@ -14,15 +14,15 @@ func (s *server) EmailList(
 	ctx context.Context,
 	request openapi.EmailListRequestObject,
 ) (openapi.EmailListResponseObject, error) {
-	filter := app.EmailFilter{Since: request.Params.Since}
+	filter := api.EmailFilter{Since: request.Params.Since}
 	if request.Params.Recipient != nil {
 		filter.Recipient = string(*request.Params.Recipient)
 	}
 	if request.Params.Template != nil {
-		filter.Template = app.EmailTemplate(*request.Params.Template)
+		filter.Template = api.EmailTemplate(*request.Params.Template)
 	}
 	if request.Params.Status != nil {
-		filter.Status = app.EmailStatus(*request.Params.Status)
+		filter.Status = api.EmailStatus(*request.Params.Status)
 	}
 	if request.Params.Limit != nil {
 		filter.Limit = *request.Params.Limit
@@ -60,7 +60,7 @@ func (s *server) EmailGet(
 	return openapi.EmailGet200JSONResponse(emailResponse(row)), nil
 }
 
-func emailResponse(row app.Email) openapi.EmailMessage {
+func emailResponse(row api.Email) openapi.EmailMessage {
 	result := openapi.EmailMessage{
 		Id:                row.ID,
 		Tenant:            row.Tenant.String(),
@@ -75,15 +75,15 @@ func emailResponse(row app.Email) openapi.EmailMessage {
 		Error:             nullable.NewNullNullable[string](),
 	}
 	switch delivery := row.Delivery.(type) {
-	case app.EmailPending:
+	case api.EmailPending:
 		result.Status = openapi.EmailStatus("pending")
-	case app.EmailHeld:
+	case api.EmailHeld:
 		result.Status = openapi.EmailStatus("held")
-	case app.EmailSent:
+	case api.EmailSent:
 		result.Status = openapi.EmailStatus("sent")
 		result.SentAt = nullable.NewNullableWithValue(delivery.At)
 		result.ProviderMessageId = nullable.NewNullableWithValue(delivery.ProviderMessageID)
-	case app.EmailFailed:
+	case api.EmailFailed:
 		result.Status = openapi.EmailStatus("failed")
 		result.Error = nullable.NewNullableWithValue(delivery.Error)
 	}

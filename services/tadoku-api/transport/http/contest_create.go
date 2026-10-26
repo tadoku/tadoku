@@ -5,7 +5,7 @@ import (
 
 	"github.com/oapi-codegen/nullable"
 	openapiTypes "github.com/oapi-codegen/runtime/types"
-	"github.com/tadoku/tadoku/services/tadoku-api/app"
+	"github.com/tadoku/tadoku/services/tadoku-api/app/api"
 	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
 )
 
@@ -13,9 +13,9 @@ func (s *server) ImmersionContestCreate(
 	ctx context.Context,
 	request openapi.ImmersionContestCreateRequestObject,
 ) (openapi.ImmersionContestCreateResponseObject, error) {
-	var parameters app.CreateContestParameters
+	var parameters api.CreateContestParameters
 	if request.Body != nil {
-		parameters = app.CreateContestParameters{
+		parameters = api.CreateContestParameters{
 			ContestStart:            request.Body.ContestStart.Time,
 			ContestEnd:              request.Body.ContestEnd.Time,
 			RegistrationEnd:         request.Body.RegistrationEnd.Time,
@@ -37,7 +37,7 @@ func (s *server) ImmersionContestCreate(
 	return openapi.ImmersionContestCreate200JSONResponse(contestResponse(contest)), nil
 }
 
-func contestResponse(item *app.Contest) openapi.ImmersionContest {
+func contestResponse(item *api.Contest) openapi.ImmersionContest {
 	deleted := item.Deleted
 	return openapi.ImmersionContest{
 		ActivityTypeIdAllowList: item.ActivityTypeIDAllowList,

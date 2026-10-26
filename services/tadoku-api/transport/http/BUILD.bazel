@@ -66,7 +66,7 @@ go_library(
         "//services/tadoku-api/e2e:__pkg__",
     ],
     deps = [
-        "//services/tadoku-api/app",
+        "//services/tadoku-api/app/api",
         "//services/tadoku-api/generated/openapi",
         "//services/tadoku-api/generated/openapi/callback",
         "//services/tadoku-api/internal/callbackauth",
@@ -97,7 +97,7 @@ go_test(
     ],
     embed = [":http"],
     deps = [
-        "//services/tadoku-api/app",
+        "//services/tadoku-api/app/api",
         "//services/tadoku-api/generated/openapi",
         "//services/tadoku-api/internal/errx",
         "//services/tadoku-api/internal/identity",

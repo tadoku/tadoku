@@ -3,12 +3,12 @@ package http
 import (
 	"context"
 
-	"github.com/tadoku/tadoku/services/tadoku-api/app"
+	"github.com/tadoku/tadoku/services/tadoku-api/app/api"
 	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
 )
 
 func (s *server) ImmersionContestFetchLeaderboard(ctx context.Context, request openapi.ImmersionContestFetchLeaderboardRequestObject) (openapi.ImmersionContestFetchLeaderboardResponseObject, error) {
-	result, err := s.application.FetchContestLeaderboard(ctx, app.ContestLeaderboardRequest{
+	result, err := s.application.FetchContestLeaderboard(ctx, api.ContestLeaderboardRequest{
 		ContestID: request.Id,
 		Request:   requestFromParams(request.Params.PageSize, request.Params.Page, request.Params.LanguageCode, request.Params.ActivityId),
 	})
@@ -20,7 +20,7 @@ func (s *server) ImmersionContestFetchLeaderboard(ctx context.Context, request o
 }
 
 func (s *server) ImmersionFetchLeaderboardForYear(ctx context.Context, request openapi.ImmersionFetchLeaderboardForYearRequestObject) (openapi.ImmersionFetchLeaderboardForYearResponseObject, error) {
-	result, err := s.application.FetchYearlyLeaderboard(ctx, app.YearlyLeaderboardRequest{
+	result, err := s.application.FetchYearlyLeaderboard(ctx, api.YearlyLeaderboardRequest{
 		Year:    int32(request.Year),
 		Request: requestFromParams(request.Params.PageSize, request.Params.Page, request.Params.LanguageCode, request.Params.ActivityId),
 	})
@@ -40,8 +40,8 @@ func (s *server) ImmersionFetchLeaderboardGlobal(ctx context.Context, request op
 	return openapi.ImmersionFetchLeaderboardGlobal200JSONResponse(responseLeaderboard(result)), nil
 }
 
-func requestFromParams(pageSize, page *int, languageCode *string, activityID *int32) app.LeaderboardRequest {
-	request := app.LeaderboardRequest{LanguageCode: languageCode, ActivityID: activityID}
+func requestFromParams(pageSize, page *int, languageCode *string, activityID *int32) api.LeaderboardRequest {
+	request := api.LeaderboardRequest{LanguageCode: languageCode, ActivityID: activityID}
 	if pageSize != nil {
 		request.PageSize = *pageSize
 	}
@@ -51,7 +51,7 @@ func requestFromParams(pageSize, page *int, languageCode *string, activityID *in
 	return request
 }
 
-func responseLeaderboard(result *app.Leaderboard) openapi.ImmersionLeaderboard {
+func responseLeaderboard(result *api.Leaderboard) openapi.ImmersionLeaderboard {
 	response := openapi.ImmersionLeaderboard{
 		Entries:       make([]openapi.ImmersionLeaderboardEntry, len(result.Entries)),
 		TotalSize:     result.TotalSize,

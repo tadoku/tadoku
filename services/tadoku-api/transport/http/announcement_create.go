@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/tadoku/tadoku/services/tadoku-api/app"
+	"github.com/tadoku/tadoku/services/tadoku-api/app/api"
 	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
 )
 
@@ -25,7 +25,7 @@ func (s *server) ContentAnnouncementCreate(
 		href = &value
 	}
 
-	item, err := s.application.CreateAnnouncement(ctx, app.CreateAnnouncementParameters{
+	item, err := s.application.CreateAnnouncement(ctx, api.CreateAnnouncementParameters{
 		ID:        id,
 		Namespace: request.Namespace,
 		Title:     body.Title,

@@ -3,7 +3,7 @@ package http
 import (
 	"context"
 
-	"github.com/tadoku/tadoku/services/tadoku-api/app"
+	"github.com/tadoku/tadoku/services/tadoku-api/app/api"
 	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
 )
 
@@ -11,7 +11,7 @@ func (s *server) ImmersionLanguageCreate(
 	ctx context.Context,
 	request openapi.ImmersionLanguageCreateRequestObject,
 ) (openapi.ImmersionLanguageCreateResponseObject, error) {
-	err := s.application.CreateLanguage(ctx, app.CreateLanguageParameters{
+	err := s.application.CreateLanguage(ctx, api.CreateLanguageParameters{
 		Code: request.Body.Code,
 		Name: request.Body.Name,
 	})

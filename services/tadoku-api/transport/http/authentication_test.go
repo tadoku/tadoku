@@ -15,7 +15,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/tadoku/tadoku/services/tadoku-api/app"
+	"github.com/tadoku/tadoku/services/tadoku-api/app/api"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
@@ -46,17 +46,17 @@ func TestAuthenticationRequiresConfiguration(t *testing.T) {
 	}
 
 	passthrough := func(next stdhttp.Handler) stdhttp.Handler { return next }
-	_, err := NewHandler(app.New(app.Dependencies{}), func(context.Context) error { return nil }, time.Second, prometheus.NewRegistry(), slog.Default(), nil, passthrough, passthrough)
+	_, err := NewHandler(api.New(api.Dependencies{}), func(context.Context) error { return nil }, time.Second, prometheus.NewRegistry(), slog.Default(), nil, passthrough, passthrough)
 	if err == nil {
 		t.Error("router accepted missing authentication middleware")
 	}
 
-	_, err = NewHandler(app.New(app.Dependencies{}), func(context.Context) error { return nil }, time.Second, prometheus.NewRegistry(), slog.Default(), passthrough, nil, passthrough)
+	_, err = NewHandler(api.New(api.Dependencies{}), func(context.Context) error { return nil }, time.Second, prometheus.NewRegistry(), slog.Default(), passthrough, nil, passthrough)
 	if err == nil {
 		t.Error("router accepted missing banned-user middleware")
 	}
 
-	_, err = NewHandler(app.New(app.Dependencies{}), func(context.Context) error { return nil }, time.Second, prometheus.NewRegistry(), slog.Default(), passthrough, passthrough, nil)
+	_, err = NewHandler(api.New(api.Dependencies{}), func(context.Context) error { return nil }, time.Second, prometheus.NewRegistry(), slog.Default(), passthrough, passthrough, nil)
 	if err == nil {
 		t.Error("router accepted missing callback authentication middleware")
 	}
@@ -175,7 +175,7 @@ func TestNewApplicationRoutesInheritSharedMiddleware(t *testing.T) {
 		})
 	}
 	router, err := NewHandler(
-		app.New(app.Dependencies{}),
+		api.New(api.Dependencies{}),
 		func(context.Context) error { return nil },
 		time.Second,
 		prometheus.NewRegistry(),
@@ -240,7 +240,7 @@ func TestCallbackAuthenticationIsScopedToExactOperation(t *testing.T) {
 	}
 	passthrough := func(next stdhttp.Handler) stdhttp.Handler { return next }
 	router, err := NewHandler(
-		app.New(app.Dependencies{}),
+		api.New(api.Dependencies{}),
 		func(context.Context) error { return nil },
 		time.Second,
 		prometheus.NewRegistry(),

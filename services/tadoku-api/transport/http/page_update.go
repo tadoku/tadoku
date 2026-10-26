@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/tadoku/tadoku/services/tadoku-api/app"
+	"github.com/tadoku/tadoku/services/tadoku-api/app/api"
 	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
 )
 
@@ -30,7 +30,7 @@ func (s *server) ContentPageUpdate(
 	if body.Html != nil {
 		html = *body.Html
 	}
-	item, err := s.application.UpdatePage(ctx, app.UpdatePageParameters{
+	item, err := s.application.UpdatePage(ctx, api.UpdatePageParameters{
 		ID:          id,
 		Namespace:   request.Namespace,
 		Slug:        body.Slug,

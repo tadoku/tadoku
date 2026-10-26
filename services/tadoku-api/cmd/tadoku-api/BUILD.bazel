@@ -11,7 +11,7 @@ go_library(
     deps = [
         "//services/common/client/s2s",
         "//services/common/postgresconfig",
-        "//services/tadoku-api/app",
+        "//services/tadoku-api/app/api",
         "//services/tadoku-api/app/permissionmodel",
         "//services/tadoku-api/features/announcements",
         "//services/tadoku-api/features/audit",

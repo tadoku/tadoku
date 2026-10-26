@@ -17,7 +17,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/tadoku/tadoku/services/common/client/s2s"
-	"github.com/tadoku/tadoku/services/tadoku-api/app"
+	"github.com/tadoku/tadoku/services/tadoku-api/app/api"
 	"github.com/tadoku/tadoku/services/tadoku-api/app/permissionmodel"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/announcements"
 	featureaudit "github.com/tadoku/tadoku/services/tadoku-api/features/audit"
@@ -242,7 +242,7 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 		cfg.IdentityCookieDomain,
 	)
 
-	api := app.New(app.Dependencies{
+	apiApplication := api.New(api.Dependencies{
 		Tokens:        tokens.NewService(tokens.NewRepository(pool), cfg.Production),
 		Deployment:    cfg.deployment,
 		Email:         email.NewService(email.NewRepository(pool), nil),
@@ -268,7 +268,7 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	rejectBanned := transporthttp.RejectBannedUsers(roles.Admit, logger)
 
 	handler, err := transporthttp.NewHandler(
-		api,
+		apiApplication,
 		pool.Ping,
 		cfg.RequestTimeout,
 		metrics,

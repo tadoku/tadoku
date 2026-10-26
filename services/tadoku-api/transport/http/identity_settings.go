@@ -3,7 +3,7 @@ package http
 import (
 	"context"
 
-	"github.com/tadoku/tadoku/services/tadoku-api/app"
+	"github.com/tadoku/tadoku/services/tadoku-api/app/api"
 	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
 )
 
@@ -12,11 +12,11 @@ func (s *server) IdentityRecoveryCreate(
 	request openapi.IdentityRecoveryCreateRequestObject,
 ) (openapi.IdentityRecoveryCreateResponseObject, error) {
 	metadata := ctx.Value(identityRequestKey{}).(identityRequestMetadata)
-	command := app.IdentityRecovery{IP: metadata.ip}
+	command := api.IdentityRecovery{IP: metadata.ip}
 	if request.Body != nil {
 		command.Email, command.ReturnTo = string(request.Body.Email), request.Body.ReturnTo
 	}
-	if err := app.ValidateIdentityReturnTo(command.ReturnTo); err != nil {
+	if err := api.ValidateIdentityReturnTo(command.ReturnTo); err != nil {
 		return nil, err
 	}
 	if err := s.application.IdentityRequestRecovery(ctx, command); err != nil {
@@ -35,7 +35,7 @@ func (s *server) IdentityRecoveryConsume(
 		value := *request.Params.ReturnTo
 		returnTo = &value
 	}
-	result, err := s.application.IdentityConsumeRecovery(ctx, app.IdentityRecoveryToken(request.Token), returnTo)
+	result, err := s.application.IdentityConsumeRecovery(ctx, api.IdentityRecoveryToken(request.Token), returnTo)
 	if err != nil {
 		s.logOperationError(ctx, "consume account recovery", err)
 		return nil, err
@@ -51,7 +51,7 @@ func (s *server) IdentityProfileUpdate(
 	request openapi.IdentityProfileUpdateRequestObject,
 ) (openapi.IdentityProfileUpdateResponseObject, error) {
 	metadata := ctx.Value(identityRequestKey{}).(identityRequestMetadata)
-	var command app.IdentityProfileSettings
+	var command api.IdentityProfileSettings
 	if request.Body != nil {
 		command.DisplayName = request.Body.DisplayName
 		if request.Body.Email != nil {

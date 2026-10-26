@@ -17,7 +17,7 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/tadoku/tadoku/services/tadoku-api/app"
+	"github.com/tadoku/tadoku/services/tadoku-api/app/api"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
@@ -91,7 +91,7 @@ func TestRequestObservationUsesVerifiedTenant(t *testing.T) {
 			passthrough := func(next stdhttp.Handler) stdhttp.Handler { return next }
 			registry := prometheus.NewRegistry()
 			router, err := NewHandler(
-				app.New(app.Dependencies{}),
+				api.New(api.Dependencies{}),
 				func(context.Context) error { return nil },
 				time.Second,
 				registry,
@@ -203,7 +203,7 @@ func TestRequestMetricUsesMatchedPattern(t *testing.T) {
 	}
 	passthrough := func(next stdhttp.Handler) stdhttp.Handler { return next }
 	router, err := NewHandler(
-		app.New(app.Dependencies{}),
+		api.New(api.Dependencies{}),
 		func(context.Context) error { return nil },
 		time.Second,
 		registry,

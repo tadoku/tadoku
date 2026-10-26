@@ -15,14 +15,14 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/tadoku/tadoku/services/tadoku-api/app"
+	"github.com/tadoku/tadoku/services/tadoku-api/app/api"
 )
 
 func TestApplicationPanicRecovery(t *testing.T) {
 	var logs bytes.Buffer
 	registry := prometheus.NewRegistry()
 	router, err := NewHandler(
-		app.New(app.Dependencies{}),
+		api.New(api.Dependencies{}),
 		func(context.Context) error { return nil },
 		time.Second,
 		registry,
@@ -111,7 +111,7 @@ func TestApplicationPanicRecovery(t *testing.T) {
 func TestApplicationPanicRecoveryPreservesWrittenStatus(t *testing.T) {
 	var logs bytes.Buffer
 	router, err := NewHandler(
-		app.New(app.Dependencies{}),
+		api.New(api.Dependencies{}),
 		func(context.Context) error { return nil },
 		time.Second,
 		prometheus.NewRegistry(),
@@ -161,7 +161,7 @@ func TestApplicationPanicRecoveryPreservesWrittenStatus(t *testing.T) {
 func TestApplicationPanicRecoveryHandlesInvalidStatusPanic(t *testing.T) {
 	var logs bytes.Buffer
 	router, err := NewHandler(
-		app.New(app.Dependencies{}),
+		api.New(api.Dependencies{}),
 		func(context.Context) error { return nil },
 		time.Second,
 		prometheus.NewRegistry(),
@@ -202,7 +202,7 @@ func TestApplicationPanicRecoveryHandlesInvalidStatusPanic(t *testing.T) {
 func TestApplicationPanicRecoveryTracksFlushedResponse(t *testing.T) {
 	var logs bytes.Buffer
 	router, err := NewHandler(
-		app.New(app.Dependencies{}),
+		api.New(api.Dependencies{}),
 		func(context.Context) error { return nil },
 		time.Second,
 		prometheus.NewRegistry(),

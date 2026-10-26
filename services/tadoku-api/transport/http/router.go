@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/tadoku/tadoku/services/tadoku-api/app"
+	"github.com/tadoku/tadoku/services/tadoku-api/app/api"
 	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
 	callbackopenapi "github.com/tadoku/tadoku/services/tadoku-api/generated/openapi/callback"
 )
@@ -53,7 +53,7 @@ func (r *routeRegistrar) ServeHTTP(w stdhttp.ResponseWriter, request *stdhttp.Re
 }
 
 type server struct {
-	application            *app.Application
+	application            *api.Application
 	logger                 *slog.Logger
 	identityTrustedProxies []netip.Prefix
 }
@@ -82,7 +82,7 @@ func (r *Router) ServeHTTP(w stdhttp.ResponseWriter, request *stdhttp.Request) {
 }
 
 func NewHandler(
-	application *app.Application,
+	application *api.Application,
 	ready func(context.Context) error,
 	timeout time.Duration,
 	registerer prometheus.Registerer,

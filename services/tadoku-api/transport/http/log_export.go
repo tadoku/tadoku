@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/oapi-codegen/nullable"
-	"github.com/tadoku/tadoku/services/tadoku-api/app"
+	"github.com/tadoku/tadoku/services/tadoku-api/app/api"
 	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
@@ -47,7 +47,7 @@ func (s *server) ImmersionLogExport(
 	}, nil
 }
 
-func logExportJSON(logs []app.ExportedLog) openapi.ImmersionLogExport {
+func logExportJSON(logs []api.ExportedLog) openapi.ImmersionLogExport {
 	body := openapi.ImmersionLogExport{Logs: make([]openapi.ImmersionLogExportEntry, 0, len(logs))}
 
 	for _, log := range logs {
@@ -83,7 +83,7 @@ func logExportJSON(logs []app.ExportedLog) openapi.ImmersionLogExport {
 	return body
 }
 
-func logExportCSV(logs []app.ExportedLog) (*bytes.Buffer, error) {
+func logExportCSV(logs []api.ExportedLog) (*bytes.Buffer, error) {
 	var body bytes.Buffer
 	body.WriteString("\xef\xbb\xbf")
 	writer := csv.NewWriter(&body)

@@ -135,7 +135,7 @@ go_test(
         "@platforms//os:linux",
     ],
     deps = [
-        "//services/tadoku-api/app",
+        "//services/tadoku-api/app/api",
         "//services/tadoku-api/app/permissionmodel",
         "//services/tadoku-api/app/worker",
         "//services/tadoku-api/domain/jobs",

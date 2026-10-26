@@ -3,7 +3,7 @@ package http
 import (
 	"context"
 
-	"github.com/tadoku/tadoku/services/tadoku-api/app"
+	"github.com/tadoku/tadoku/services/tadoku-api/app/api"
 	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
 )
 
@@ -11,9 +11,9 @@ func (s *server) AuthzRoleUpdate(
 	ctx context.Context,
 	request openapi.AuthzRoleUpdateRequestObject,
 ) (openapi.AuthzRoleUpdateResponseObject, error) {
-	parameters := app.RoleUpdateParameters{
+	parameters := api.RoleUpdateParameters{
 		UserID: request.Id,
-		Role:   app.Role(request.Body.Role),
+		Role:   api.Role(request.Body.Role),
 		Reason: request.Body.Reason,
 	}
 

@@ -18,7 +18,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/tadoku/tadoku/services/tadoku-api/app"
+	apiapp "github.com/tadoku/tadoku/services/tadoku-api/app/api"
 	"github.com/tadoku/tadoku/services/tadoku-api/app/permissionmodel"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/announcements"
 	featureaudit "github.com/tadoku/tadoku/services/tadoku-api/features/audit"
@@ -287,7 +287,7 @@ func newTestRouterWithLeaderboardService(
 	if endpoints.production != nil {
 		production = *endpoints.production
 	}
-	application := app.New(app.Dependencies{
+	application := apiapp.New(apiapp.Dependencies{
 		Tokens:        tokens.NewService(tokens.NewRepository(pool), production),
 		Deployment:    deployment,
 		Email:         email.NewService(email.NewRepository(pool), nil),

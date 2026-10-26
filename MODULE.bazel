@@ -104,25 +104,28 @@ oci.pull(
 )
 oci.pull(
     name = "tadoku_dev_node",
-    digest = "sha256:a98e6fda54fdbb22d4238054cca9a2a113bcd1191c09193a535aae22f400aa8e",
+    digest = "sha256:8f693eaa7e0a8e71560c9a82b55fd54c2ae920a2ba5d2cde28bac7d1c01c9ba5",
     image = "index.docker.io/library/node",
     platforms = ["linux/amd64"],
+    tag = "20",
 )
 use_repo(oci, "tadoku_dev_alpine", "tadoku_dev_alpine_linux_amd64", "tadoku_dev_node", "tadoku_dev_node_linux_amd64")
 
 oci.pull(
     name = "tadoku_dev_node22",
-    digest = "sha256:a98e6fda54fdbb22d4238054cca9a2a113bcd1191c09193a535aae22f400aa8e",
+    digest = "sha256:63538dfe497cc29dfafdda25ada09b46db68a3f4cc205abf1f5d6bf0913f3384",
     image = "index.docker.io/library/node",
     platforms = ["linux/amd64"],
+    tag = "22",
 )
 use_repo(oci, "tadoku_dev_node22", "tadoku_dev_node22_linux_amd64")
 
 oci.pull(
     name = "tadoku_dev_postgres",
-    digest = "sha256:edb0c08dc33befd0262ab3b5cf1c4f3f8cfd8b09e88c05b45adee29d6761ddb6",
+    digest = "sha256:b8faeff7712663c2773a190181e1246e37e364b887611c04658c28b44e2408fe",
     image = "index.docker.io/library/postgres",
     platforms = ["linux/amd64"],
+    tag = "17",
 )
 use_repo(oci, "tadoku_dev_postgres", "tadoku_dev_postgres_linux_amd64")
 

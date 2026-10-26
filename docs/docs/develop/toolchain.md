@@ -99,6 +99,11 @@ notes and marked test fixture safety notes.
 
 ### Release and branch image entrypoints
 
+Development runtime pulls in `MODULE.bazel` declare a major-version `tag` and
+an immutable `digest`. Keep both when updating an image: Bazel resolves the
+digest, while dependency tooling uses the tag to distinguish digest refreshes
+from runtime-major upgrades.
+
 `bazel build --config=release` pins Linux amd64 and pure Go. CI uses this
 configuration for backend image scanning and publication, and prints the API
 and worker image digests for comparison with a local build of the same commit.

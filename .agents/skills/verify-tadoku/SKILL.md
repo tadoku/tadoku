@@ -138,20 +138,22 @@ yourself, and never add or remove the `deploy` label unless told to.
   request redeploys automatically.
 - Branch pages are public. Open them anonymously; the branch API admits
   guests and signed-in users without any grant.
-- Pull-request branches have no test accounts. Unless the maintainer provides
-  accounts, verify only unauthenticated behavior: `X-Dev-Selected` and
-  `X-Dev-Backend` on document and API responses, pages loading anonymously,
-  and session-only pages such as `/logs/new` redirecting to the branch's login
-  page. Report signed-in journeys as unverified. Log in only with test
-  accounts the maintainer provides for that route. Never automate with a
-  production administrator account, and never register new accounts.
+- Pull-request branches have no test accounts. On a branch with an API
+  overlay, register a disposable account on its account host for signed-in
+  journeys, as [Production branches](../../../docs/docs/develop/production-branches.md#who-can-use-a-branch)
+  describes, or use test accounts the maintainer provides for that route.
+  Without an API overlay, verify only unauthenticated behavior:
+  `X-Dev-Selected` and `X-Dev-Backend` on document and API responses, pages
+  loading anonymously, and session-only pages such as `/logs/new` redirecting
+  to the branch's login page; report signed-in journeys as unverified. Never
+  automate with a production account.
 - Before claiming an overlay result, prove it through `X-Dev-Backend` on the
   relevant document or API response. A base backend means production served
   the request.
-- Write only as a test account, and only to the branch tenant: a request
-  served by the branch API overlay, which rejects every other tenant. A branch
-  without an API overlay calls the production API deployment, under the branch
-  tenant; do not write through it.
+- Write only as a test or disposable account, and only to the branch tenant:
+  a request served by the branch API overlay, which rejects every other
+  tenant. A branch without an API overlay calls the production API
+  deployment, under the branch tenant; do not write through it.
 - Evidence contains no cookies, passwords, session tokens or production user
   data. Crop or omit anything that shows a real user. Cleanup is the
   maintainer's `dev down` or, for a pull request, its teardown when the label

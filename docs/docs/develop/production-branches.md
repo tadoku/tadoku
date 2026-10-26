@@ -8,14 +8,6 @@ description: How a runtime branch is deployed beside production with dev-cli pro
 Read this when a branch is, or will be, deployed beside production, by hand or
 with a pull request's `deploy` label, or when you are asked to verify one.
 
-**Identity branch hold:** canonical production runs on native accounts through
-authv2 and the API's session callback, but branch support for that stack is not
-verified. Do not create a production branch or add a `deploy` label until the
-maintainer confirms it. A branch's API readers and sessions use that branch
-tenant's native accounts. See [Identity gateway
-configuration](../operations/identity-gateway.md#production) for the production
-gateway.
-
 dev-cli's production mode runs a pushed branch commit beside the production
 workloads, on its own hosts and its own test tenant. Production users and data
 stay on the base deployments. Only the maintainer deploys a branch by hand;
@@ -74,8 +66,11 @@ is `tadoku-api`, `tadoku-worker`, `frontend-webv2`, `frontend-admin`,
 followed by the first 12 characters of the commit. An existing tag is reused
 because it names a clean, pushed commit. Workloads are deployed by digest.
 
-The branch packages are public. After each push dev-cli resolves the digest
-anonymously, which proves the cluster can pull it without an image pull Secret.
+Every branch package must be public. After each push dev-cli resolves the
+digest anonymously, which proves the cluster can pull it without an image pull
+Secret, and refuses a digest it cannot resolve. GitHub creates a new package
+without public visibility on its first push; a maintainer then makes it public
+once in the package settings and reruns `dev up`.
 
 ### Branch image cleanup
 
@@ -136,10 +131,10 @@ well; `X-Dev-Backend` identifies the upstream that served a request.
 [Frontend conventions](../frontend/conventions.md#cross-app-urls)
 describe how the frontends resolve sibling branch hosts.
 
-Test tenants run on identity v2, but the production webv2 base keeps its held
-legacy image, which reads only Kratos sessions. On a branch without a webv2
-overlay, an account signed in on the account host appears signed out on the app
-host. Add `--service webv2` to `dev up` when a branch needs the signed-in app.
+A branch has its own native accounts and sessions in its test tenant. Every
+branch host, whether it serves an overlay or the production base, reads the
+tenant's own session cookie, and production hosts ignore it; see
+[Sessions and cookies](../tadoku-api/identity.md#sessions-and-cookies).
 
 The branch API and worker run with `API_BRANCH` and `WORKER_BRANCH` set to the
 branch tenant. The API rejects a request signed for any other tenant with HTTP
@@ -181,8 +176,12 @@ admission rules.
   marked with the route, using plus-aliased addresses of the project mailbox:
   reader, admin and outsider. Only admin holds a role, `admins`, granted with
   the operator SQL. Their passwords
-  exist only in the maintainer's local accounts file. Nobody registers new
-  accounts on a branch.
+  exist only in the maintainer's local accounts file.
+- **Disposable accounts.** To test a signed-in journey on a branch with an API
+  overlay, register an account on its account host with a synthetic address,
+  such as one under `example.com`. The account exists only in the branch
+  tenant, its email is held rather than sent, and teardown deletes it with the
+  tenant.
 
 ## Teardown and expiry
 

@@ -71,9 +71,9 @@ backend image are deployed; a frontend overlay does not deploy these rules.
 The public
 identity rule forwards cookies with a guest JWT; the development configuration
 also switches other cookie-bearing routes to the identity callback and adds the
-private SSR session rule. Verify their deployed revision after source merge;
-the production gateway switch remains separately held. Confirm actual branch API
-responses rather than treating an API port-forward as the public journey.
+private SSR session rule. Verify their deployed revision after source merge.
+Confirm actual branch API responses rather than treating an API port-forward as
+the public journey.
 Provisioning seeds `identity-v2=true` automatically in the branch namespace.
 Use the native Dev Admin/Reader accounts and documented development password;
 verify their UUIDs/names, tenant cookie and session through the configured public
@@ -96,11 +96,6 @@ signed-in server-rendered document content before hydration as well as the real
 Reader/Admin interactions; API curls and hydrated navigation alone are partial
 proof. Revoke the retained pair publicly only after every smoke gate passes and
 verify old-cookie 401. Keep secrets in the existing private storage states.
-
-New production branches and `deploy`-labelled pull requests using these callers
-are unsupported until the paired production identity routes, callback and authv2
-are ready. Source delivery does not activate held production branch-tooling
-adoption. See [Production branches](../../../../../docs/docs/develop/production-branches.md).
 
 ## Recovery and settings API journey
 

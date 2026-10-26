@@ -104,6 +104,16 @@ func resetAccountDeletion(t *testing.T) {
 
 func fileOperatorDeletion(t *testing.T, userID, operatorID, reason string) (int64, error) {
 	t.Helper()
+	file := operatorFiling(t, userID, operatorID, reason)
+	var jobID int64
+	var err error
+	atFixtureInstant(func() { jobID, err = file() })
+	return jobID, err
+}
+
+// operatorFiling returns a filing that may run on another goroutine; it never touches t.
+func operatorFiling(t *testing.T, userID, operatorID, reason string) func() (int64, error) {
+	t.Helper()
 	model, err := permissionmodel.New()
 	if err != nil {
 		t.Fatal(err)
@@ -122,12 +132,8 @@ func fileOperatorDeletion(t *testing.T, userID, operatorID, reason string) (int6
 		t.Fatal(err)
 	}
 
-	var jobID int64
-	atFixtureInstant(func() {
-		ctx := tenant.WithKey(t.Context(), tenant.Production())
-		jobID, err = worker.FileAccountDeletion(ctx, pool, filing, request)
-	})
-	return jobID, err
+	ctx := tenant.WithKey(t.Context(), tenant.Production())
+	return func() (int64, error) { return worker.FileAccountDeletion(ctx, pool, filing, request) }
 }
 
 func enqueueAccountDeletionJob(t *testing.T, userID string) {

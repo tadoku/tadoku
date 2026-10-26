@@ -330,7 +330,13 @@ func (q *Queries) LockAccount(ctx context.Context, userID pgtype.UUID) (LockAcco
 }
 
 const lockAccountForDeletion = `-- name: LockAccountForDeletion :exec
-select user_id from accounts where user_id = $1 for update
+select a.user_id
+from accounts a
+join users u on u.tenant = a.tenant and u.id = a.user_id
+where a.user_id = $1
+  and u.deleted_at is null
+  and u.deletion_locked_at is null
+for update of a
 `
 
 func (q *Queries) LockAccountForDeletion(ctx context.Context, userID pgtype.UUID) error {

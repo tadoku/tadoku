@@ -47,6 +47,14 @@ func identityRequest(
 	edit func(*http.Request),
 ) *httptest.ResponseRecorder {
 	t.Helper()
+	request := newIdentityRequest(t, tenantKey, method, path, body, cookie, edit)
+	response := httptest.NewRecorder()
+	atFixtureInstant(func() { handler.ServeHTTP(response, request) })
+	return response
+}
+
+func newIdentityRequest(t *testing.T, tenantKey, method, path, body, cookie string, edit func(*http.Request)) *http.Request {
+	t.Helper()
 	contents, err := os.ReadFile("testdata/IdentityV2/tokens.json")
 	if err != nil {
 		t.Fatal(err)
@@ -64,9 +72,7 @@ func identityRequest(
 	if edit != nil {
 		edit(request)
 	}
-	response := httptest.NewRecorder()
-	atFixtureInstant(func() { handler.ServeHTTP(response, request) })
-	return response
+	return request
 }
 
 func requireIdentityStatus(t *testing.T, response *httptest.ResponseRecorder, want int) {

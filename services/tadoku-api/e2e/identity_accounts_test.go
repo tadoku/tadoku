@@ -26,6 +26,7 @@ type identitySessionView struct {
 		CreatedAt       time.Time `json:"created_at"`
 		AuthenticatedAt time.Time `json:"authenticated_at"`
 	} `json:"account"`
+	RecentLogin *bool `json:"recent_login"`
 }
 
 func resetIdentity(t *testing.T, seedFiles ...string) {
@@ -230,6 +231,63 @@ func TestIdentityV2LoginTimingAndThrottle(t *testing.T) {
 	response = identityRequest(t, api.handler, identityBranchB, "POST", "/identity/login",
 		`{"email":"reader@example.test","password":"Fixture-login-482!"}`, "", nil)
 	requireIdentityStatus(t, response, http.StatusOK)
+}
+
+func requireRecentLogin(t *testing.T, response *httptest.ResponseRecorder, want bool) {
+	t.Helper()
+	var view identitySessionView
+	if err := json.Unmarshal(response.Body.Bytes(), &view); err != nil {
+		t.Fatal(err)
+	}
+	if view.RecentLogin == nil || *view.RecentLogin != want {
+		t.Errorf("body=%s, want recent_login %v", response.Body, want)
+	}
+}
+
+func TestIdentitySessionRecentLogin(t *testing.T) {
+	resetIdentity(t)
+
+	response := identityRequest(t, api.handler, identityBranchA, "POST", "/identity/registration",
+		`{"email":"new@example.test","display_name":"New Reader","password":"Independent-653!"}`, "", nil)
+	requireIdentityStatus(t, response, http.StatusCreated)
+	requireRecentLogin(t, response, true)
+
+	response = identityRequest(t, api.handler, identityBranchA, "POST", "/identity/login",
+		`{"email":"reader@example.test","password":"Fixture-login-482!"}`, "", nil)
+	requireIdentityStatus(t, response, http.StatusOK)
+	requireRecentLogin(t, response, true)
+	cookie := response.Result().Cookies()[0].String()
+
+	for _, tc := range []struct {
+		description, age string
+		want             bool
+	}{
+		{"fresh login", "0 seconds", true},
+		{"login exactly one hour ago", "1 hour", true},
+		{"login over one hour ago", "1 hour 1 second", false},
+		{"login in the future", "-1 second", false},
+	} {
+		t.Run(tc.description, func(t *testing.T) {
+			_, err := api.db.Pool.Exec(t.Context(), `update sessions
+				set authenticated_at = $2::timestamptz - $3::interval
+				where tenant = $1`, identityBranchA, fixtureInstant, tc.age)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			response := identityRequest(t, api.handler, identityBranchA, "GET", "/identity/session", "", cookie, nil)
+			if identityView(t, response).Account == nil {
+				t.Fatal("session no longer authenticates")
+			}
+			requireRecentLogin(t, response, tc.want)
+		})
+	}
+
+	response = identityRequest(t, api.handler, identityBranchA, "GET", "/identity/session", "", "", nil)
+	if identityView(t, response).Account != nil {
+		t.Fatal("guest session has an account")
+	}
+	requireRecentLogin(t, response, false)
 }
 
 func TestIdentityV2SessionJourney(t *testing.T) {

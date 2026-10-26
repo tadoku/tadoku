@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/mail"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
 
 var (
@@ -48,6 +49,12 @@ type AuthenticatedSession struct {
 }
 
 func (AuthenticatedSession) session() {}
+
+// RecentLogin reports whether email and password changes are allowed; when it is false they return ErrStaleSession.
+func (s AuthenticatedSession) RecentLogin() bool {
+	age := timex.Now().Sub(s.AuthenticatedAt)
+	return age >= 0 && age <= time.Hour
+}
 
 type Cookie struct {
 	Name, Value, Domain string

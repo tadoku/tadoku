@@ -133,7 +133,6 @@ export const LogFormV2 = ({
   }
 
   useEffect(() => {
-    let restoredLanguageCode = methods.getValues('languageCode')
     let restoredActivityId = methods.getValues('activityId')
     let restoredPreference = false
 
@@ -145,7 +144,6 @@ export const LogFormV2 = ({
           language => language.code === lastLoggedLanguage,
         )
       ) {
-        restoredLanguageCode = lastLoggedLanguage
         methods.setValue('languageCode', lastLoggedLanguage)
         restoredPreference = true
       }
@@ -172,17 +170,7 @@ export const LogFormV2 = ({
     if ((restoredActivity?.input_type ?? 'amount_primary') === 'time_primary') {
       methods.setValue('amountValue', undefined)
       methods.setValue('amountUnit', undefined)
-      return
     }
-
-    methods.setValue(
-      'amountUnit',
-      filterUnits(
-        options.units,
-        restoredActivityId,
-        restoredLanguageCode,
-      )[0]?.id,
-    )
   }, [
     methods,
     options.activities,
@@ -207,21 +195,38 @@ export const LogFormV2 = ({
         if (selectedInputType === 'time_primary') {
           methods.setValue('amountValue', undefined)
           methods.setValue('amountUnit', undefined)
-          return
-        }
-
-        const id = filterUnits(
-          options.units,
-          value.activityId,
-          value.languageCode,
-        )?.[0]?.id
-        if (id !== methods.getValues('amountUnit')) {
-          methods.setValue('amountUnit', id)
         }
       }
     })
     return () => subscription.unsubscribe()
   }, [methods, options.activities, options.units])
+
+  // Runs after render so the unit select already lists the new options;
+  // keeps the same kind of unit (e.g. characters) when the language changes.
+  const amountUnit = methods.watch('amountUnit')
+  useEffect(() => {
+    if (!usesAmountUnit) {
+      return
+    }
+
+    const units = filterUnits(options.units, activityId, languageCode)
+    if (units.some(it => it.id === amountUnit)) {
+      return
+    }
+
+    const unitKey = options.units.find(it => it.id === amountUnit)?.unit_key
+    methods.setValue(
+      'amountUnit',
+      (units.find(it => it.unit_key === unitKey) ?? units[0])?.id,
+    )
+  }, [
+    activityId,
+    amountUnit,
+    languageCode,
+    methods,
+    options.units,
+    usesAmountUnit,
+  ])
 
   return (
     <FormProvider {...methods}>

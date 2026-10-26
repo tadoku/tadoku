@@ -53,6 +53,7 @@ go_library(
         "post_update.go",
         "post_version_get.go",
         "post_version_list.go",
+        "profile_account_deletion.go",
         "profile_statistics.go",
         "profile_users_list.go",
         "request_body_limit.go",

@@ -1,0 +1,70 @@
+---
+id: account-deletion-create
+title: "Request the deletion of a user's account (admin only)"
+description: "Locks the account at once: from the commit the user cannot sign in, and their sessions and writes are refused. An account.delete.v1 job then deletes the account's data. The email confirms the target and must be the account's address, compared after normalization. Administrators are refused; banned users are accepted. The audit event records the signed-in administrator as the actor, with the reason."
+sidebar_label: "Request the deletion of a user's account (admin only)"
+hide_title: true
+hide_table_of_contents: true
+api: eJztV01v4zYQ/SsDXpoAiu1stwWqPaW7KRB0+4EkRQ+BYYzFsTWxRGpJKlmvof9eDCk5/tqc9lCgvSQyyeHMvHlvNNooTb5w3AS2RuXqoy1WHkJJgEVhWxMAA1hTUA4LZ+u4U9i65hAfW08OCjTGBvC8NMAmAzRaNtmBJ+/ZGh+Xnh0H8oCOwNGi9aRHcGUGPyNNFQUaPV3Co52LvYG0tBfOdx40BhzBfUlANXIFhTULdnU6FtAtKUR/desDzOnAGrV25H0mWTToSAMuAjkw1tVY8RcUIEZwpWs27IPDYN1e0O9gjsaQjrmnHSwKaoLkI1FhqzkAPZEJ4KiwTqfQBB/SF2wAdy8HHBIM1mXwzKGMvx2ht2akMmUbcjGsG61y1afyQbBha947wkAqUwGXXuUPKl6uppnyVLSOw1rlDxtVWLtiumpDqfKHaTfNVIMOawrkfDxgsCaVK9YqUyxMaDCUKlOOPrXsSKs8uJYy5YuSalT5RoV1IxY+ODZLlamFIBhUrtqWterEhxiTDz9bvRaLw7sKawKZIFvYNBUXMcvxoxcqbo5d2fkjFWEvqAcVSRDXBC9JvHGCWGDyYpv2T8Rb4+ePZJaCyPdvJtmBEO73WJOY1nNnW7G9Msr1GjjsMGtbyyP6nSJdBt5CRSFESXmKJPatc7Y1ms0SnksRUIMFgbYgkqtRTo/gJkCJHoyFVIR4FRrgurEuCMd7t6HEAOyjMcITVqwHFaEBH7iqRDK9pEiPVLdF9hSEbAYIL/cAvZxMjhD9u1zvNRb2vcB1BitqArBJ+1E/lV1KMrC0Vo/g7jQM7CE4riVQ+JAgYVNUraZtdzoqnnWg2TcVrkE4P1Jdl6nAoZLMrvbFdZv4q7quizj4xhqfaPVm8kb+7ad4kF5li5WAb4QXfbZsjWx9aqkl0do30cCjnc9YH3O/X3+xZhNoSW5XrWzCj2/VKfrffAC72C3ZUY/G8FqPfg3ZX7gi3eP6djI5hpJNYmffQt4JnVMhk1tLfpBAsScycBRaZ/xA4ojnrGYfT6a3kw0lORhcsGlakUxblCJthJq9F6Ylf9b1vTiLIotxNGENc+lq36qJOWfdid4Vl08Ij0xbi93JHFWWXgKzHhH5nZ5mAwVnbGaNs0tRhJru1ulaXN72TN8W6PK4QK3BNpTW8RcppBz6/vjQwro5a00GzmLLkbDO0+m3J670sScGWIjWBXisHKFeD40iWf50Wnj9q59jifZ789keHudy86EgB08LISacvQbY+X+j6j+cKuhQ8+gbWoNPyBXOK4pirymUVoaUxnoJIM4QuRrHUWm8Yd2N+5guhpiUDCruaRhDWlepXJUhND4fjwNqu2pH2DRjbHgs3csZrMaNs1Knsep25pw7wTwhuDvtbGHEhn+l9TDepCMqGwaf5GrWT6wxGynm7csEc/0Z60bQ2s4UL5UZXpHDSideFjZ67yHuY77AhlWmKi5IoM63k9dvN/cqO8h/yaFs56PC1j0Uw795ZefjGtmMP968v/797lo8CoipSpejyWgiS1KHGs2Omz6h2DG3/LcLwOFtObTRpBmwplqfH74eNi/8//+L4V/4xdAzPtDnMG4qZCNciNTa9Jp8iM3Wq0zlceQ/kuU0U6WIOH9Qm80cPf3lqq6T5U8tOfmomGbqCR1H8Yt0NXt51ipfYOXpFcqc3fZN8By+FuygWSOCfcKqlV8qUytap6+UbtplqiTU5KL3tPE++bi4F/MXw6MW3WWDxVWsxKtnpzuN7c8/7kSm8/6LprZabBw+SxPA5xSkjTnHThTXNqpCs2xxKWfTndJf8Kg/rWJ/6h8kq5MwHLSqART5K3mdtNlsUvvruu35tPVVix7bLeQCRNd1/wCcJrGF
+sidebar_class_name: "post api-method"
+info_path: api/profile/profile-api
+custom_edit_url: null
+hide_send_button: true
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+import Translate from "@docusaurus/Translate";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Request the deletion of a user's account (admin only)"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"post"}
+  path={"/users/{id}/account-deletion"}
+  context={"endpoint"}
+>
+  
+</MethodEndpoint>
+
+
+
+Locks the account at once: from the commit the user cannot sign in, and their sessions and writes are refused. An account.delete.v1 job then deletes the account's data. The email confirms the target and must be the account's address, compared after normalization. Administrators are refused; banned users are accepted. The audit event records the signed-in administrator as the actor, with the reason.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+>
+  <Translate id="theme.openapi.request.title">Request</Translate>
+</Heading>
+
+<ParamsDetails
+  {...require("./account-deletion-create.ParamsDetails.json")}
+>
+  
+</ParamsDetails>
+
+<RequestSchema
+  {...require("./account-deletion-create.RequestSchema.json")}
+>
+  
+</RequestSchema>
+
+<StatusCodes
+  {...require("./account-deletion-create.StatusCodes.json")}
+>
+  
+</StatusCodes>
+
+
+      

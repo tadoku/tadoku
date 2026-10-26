@@ -25,6 +25,20 @@ func (d *Deletion) LockAccountForDeletion(ctx context.Context, userID uuid.UUID)
 	return d.repository.lockAccountForDeletion(ctx, userID)
 }
 
+// ConfirmAccount requires the caller's transaction to hold the account row from LockAccountForRequest, so the address
+// cannot change before the transaction ends. Unless email, normalized as login normalizes it, is the account's
+// address, it returns ErrConfirmationMismatch.
+func (d *Deletion) ConfirmAccount(ctx context.Context, userID uuid.UUID, email string) error {
+	matches, err := d.repository.accountHasEmail(ctx, userID, normalizeEmail(email))
+	if err != nil {
+		return err
+	}
+	if !matches {
+		return ErrConfirmationMismatch
+	}
+	return nil
+}
+
 // DeleteAccount requires the caller's transaction and a user locked for deletion. It deletes the user's account,
 // sessions and recovery tokens and returns the account.deleted notice for the stored address. An address that cannot
 // receive mail gets no notice, so it never blocks the deletion.

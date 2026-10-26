@@ -11,7 +11,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/tadoku/tadoku/services/tadoku-api/app/accountdeletion"
+	apiapp "github.com/tadoku/tadoku/services/tadoku-api/app/api"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	featureprofile "github.com/tadoku/tadoku/services/tadoku-api/features/profile"
@@ -20,7 +20,7 @@ import (
 func TestAccountDeletionFilingWaitsForAccountWrites(t *testing.T) {
 	resetAccountDeletion(t)
 	holder := holdRow(t, "select 1 from accounts where user_id = $1 for update", readerUserID)
-	file := operatorFiling(t, readerUserID, adminUserID, "Owner confirmed by email")
+	file := adminFiling(t, readerUserID, adminUserID, "Owner confirmed by email")
 
 	filed := make(chan error, 1)
 	go func() {
@@ -37,11 +37,43 @@ func TestAccountDeletionFilingWaitsForAccountWrites(t *testing.T) {
 	}
 }
 
+func TestAccountDeletionConfirmsTheLockedAddress(t *testing.T) {
+	resetAccountDeletion(t)
+	before := snapshot(t, targetSnapshotSQL, readerUserID)
+	change := holdRow(t, "select 1 from accounts where user_id = $1 for update", readerUserID)
+	_, err := change.Exec(t.Context(), `update accounts set email = 'renamed@example.test',
+		email_normalized = 'renamed@example.test' where user_id = $1`, readerUserID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	file := adminFiling(t, readerUserID, adminUserID, "Owner confirmed by email")
+
+	filed := make(chan error, 1)
+	go func() {
+		_, err := file()
+		filed <- err
+	}()
+	waitForLockWaiters(t, 1, filed)
+	if err := change.Commit(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := <-filed; !errors.Is(err, identity.ErrConfirmationMismatch) {
+		t.Errorf("filing with the address before the change returned %v, want %v", err, identity.ErrConfirmationMismatch)
+	}
+	if after := snapshot(t, targetSnapshotSQL, readerUserID); after != before {
+		t.Errorf("a refused filing changed state\nbefore=%s\nafter=%s", before, after)
+	}
+	if jobs := countJobs(t); jobs != 0 {
+		t.Errorf("a refused filing enqueued %d jobs", jobs)
+	}
+}
+
 func TestAccountDeletionQueuedSettingsWriteFails(t *testing.T) {
 	resetAccountDeletion(t)
 	cookie := productionLoginCookie(t, "reader@example.test")
 	holder := holdRow(t, "select 1 from users where id = $1 for update", readerUserID)
-	file := operatorFiling(t, readerUserID, adminUserID, "Owner confirmed by email")
+	file := adminFiling(t, readerUserID, adminUserID, "Owner confirmed by email")
 	rename := newIdentityRequest(t, "tadoku/prod", "PATCH", "/identity/settings/profile",
 		`{"display_name":"Renamed Reader"}`, cookie, nil)
 
@@ -76,14 +108,14 @@ func TestAccountDeletionQueuedSettingsWriteFails(t *testing.T) {
 
 func TestAccountDeletionRefilingDoesNotWaitForTheWorker(t *testing.T) {
 	resetAccountDeletion(t)
-	if _, err := fileOperatorDeletion(t, readerUserID, adminUserID, "Owner confirmed by email"); err != nil {
+	if _, err := fileAdminDeletion(t, readerUserID, adminUserID, "Owner confirmed by email"); err != nil {
 		t.Fatal(err)
 	}
 	deletion := holdRow(t, "select 1 from accounts where user_id = $1 for update", readerUserID)
 	if _, err := deletion.Exec(t.Context(), "select 1 from users where id = $1 for update", readerUserID); err != nil {
 		t.Fatal(err)
 	}
-	file := operatorFiling(t, readerUserID, adminUserID, "Asked again")
+	file := adminFiling(t, readerUserID, adminUserID, "Asked again")
 
 	filed := make(chan error, 1)
 	go func() {
@@ -111,7 +143,7 @@ func TestAccountDeletionFilingQueuedBehindFilingTakesNoUserLock(t *testing.T) {
 		where id = $1`, readerUserID); err != nil {
 		t.Fatal(err)
 	}
-	file := operatorFiling(t, readerUserID, adminUserID, "Asked twice")
+	file := adminFiling(t, readerUserID, adminUserID, "Asked twice")
 
 	filed := make(chan error, 1)
 	go func() {
@@ -144,7 +176,7 @@ func TestAccountDeletionFilingQueuedBehindFilingTakesNoUserLock(t *testing.T) {
 
 func TestAccountDeletionWorkerLocksTheAccountBeforeTheUser(t *testing.T) {
 	resetAccountDeletion(t)
-	if _, err := fileOperatorDeletion(t, readerUserID, adminUserID, "Owner confirmed by email"); err != nil {
+	if _, err := fileAdminDeletion(t, readerUserID, adminUserID, "Owner confirmed by email"); err != nil {
 		t.Fatal(err)
 	}
 	login := holdRow(t, "select 1 from accounts where user_id = $1 for update", readerUserID)
@@ -189,7 +221,7 @@ func TestAccountDeletionWorkerLocksTheAccountBeforeTheUser(t *testing.T) {
 
 func TestAccountDeletionRoleChangeWaitsForTheWorker(t *testing.T) {
 	resetAccountDeletion(t)
-	if _, err := fileOperatorDeletion(t, readerUserID, adminUserID, "Owner confirmed by email"); err != nil {
+	if _, err := fileAdminDeletion(t, readerUserID, adminUserID, "Owner confirmed by email"); err != nil {
 		t.Fatal(err)
 	}
 	deletion := holdRow(t, "select 1 from accounts where user_id = $1 for update", readerUserID)
@@ -233,23 +265,24 @@ func TestAccountDeletionRoleChangeWaitsForTheWorker(t *testing.T) {
 }
 
 func TestAccountDeletionFilingSeesARoleChangeHoldingTheUser(t *testing.T) {
-	operator, err := accountdeletion.OperatorRequest(
+	byAdmin, err := apiapp.AdminAccountDeletion(
 		uuid.MustParse(readerUserID),
 		uuid.MustParse(adminUserID),
+		"reader@example.test",
 		"Owner confirmed by email",
 	)
 	if err != nil {
 		t.Fatal(err)
 	}
-	selfService := accountdeletion.SelfServiceRequest(uuid.MustParse(readerUserID))
+	selfService := apiapp.SelfServiceAccountDeletion(uuid.MustParse(readerUserID))
 	cases := []struct {
 		name     string
 		relation string
-		request  accountdeletion.Request
+		request  apiapp.AccountDeletionRequest
 		want     error
 	}{
 		{"ban during a self-service filing", "banned", selfService, identity.ErrBannedAccount},
-		{"admin grant during an operator filing", "admins", operator, identity.ErrAdminAccount},
+		{"admin grant during an admin filing", "admins", byAdmin, identity.ErrAdminAccount},
 	}
 
 	for _, tc := range cases {

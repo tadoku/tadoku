@@ -1,0 +1,6 @@
+>>> POST /profile/users/33333333-3333-4333-8333-333333333333/account-deletion
+HTTP/1.1 409 Conflict
+Content-Length: 41
+Content-Type: application/json; charset=UTF-8
+
+{"error":"account_deletion_in_progress"}

@@ -23,12 +23,16 @@ func (e *Error) Error() string { return e.cause.Error() }
 func (e *Error) Unwrap() error { return e.cause }
 
 func ParseEmail(raw string) (Email, error) {
-	value := strings.ToLower(strings.TrimSpace(raw))
+	value := normalizeEmail(raw)
 	address, err := mail.ParseAddress(value)
 	if err != nil || address.Address != value || len(value) > 320 {
 		return Email{}, &Error{"invalid_email", errx.NewInvalidInputError("email must be a valid address")}
 	}
 	return Email{value}, nil
+}
+
+func normalizeEmail(raw string) string {
+	return strings.ToLower(strings.TrimSpace(raw))
 }
 
 // recipient is the stored address without the spaces and tabs around it, which RFC 5322 reads as folding whitespace

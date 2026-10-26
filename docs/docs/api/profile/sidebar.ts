@@ -16,6 +16,12 @@ const sidebar: SidebarsConfig = {
           label: "Lists all users (admin only)",
           className: "api-method get",
         },
+        {
+          type: "doc",
+          id: "api/profile/account-deletion-create",
+          label: "Request the deletion of a user's account (admin only)",
+          className: "api-method post",
+        },
       ],
     },
   ],

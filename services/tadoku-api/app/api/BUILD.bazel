@@ -3,6 +3,7 @@ load("@rules_go//go:def.bzl", "go_library")
 go_library(
     name = "api",
     srcs = [
+        "account_deletion.go",
         "actor.go",
         "announcements.go",
         "app.go",
@@ -36,6 +37,7 @@ go_library(
     ],
     deps = [
         "//services/tadoku-api/domain/activities",
+        "//services/tadoku-api/domain/jobs",
         "//services/tadoku-api/domain/logscore",
         "//services/tadoku-api/domain/mail",
         "//services/tadoku-api/features/announcements",

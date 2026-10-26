@@ -17,7 +17,6 @@ go_library(
         "//services/tadoku-api/e2e:__pkg__",
     ],
     deps = [
-        "//services/tadoku-api/app/accountdeletion",
         "//services/tadoku-api/domain/jobs",
         "//services/tadoku-api/features/audit",
         "//services/tadoku-api/features/contestevents",

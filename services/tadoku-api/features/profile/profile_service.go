@@ -47,25 +47,26 @@ func (s *Service) LockUser(ctx context.Context, userID uuid.UUID) error {
 	return nil
 }
 
-// LockForDeletion requires the caller's transaction. From its commit the user can no longer sign in or change data;
-// a user whose deletion is already requested or done returns ErrAccountDeletionInProgress. It reads the committed
-// state before it waits for the users row, so filing again answers at once instead of waiting for whoever holds the
-// row, such as a running deletion or another request that got the account row first.
+// LockForDeletion requires the caller's transaction. From its commit the user can no longer sign in or change data.
+// A deleted user returns ErrLocalUserNotFound, and a user whose deletion is already requested returns
+// ErrAccountDeletionInProgress. It reads the committed state before it waits for the users row, so filing again
+// answers at once instead of waiting for whoever holds the row, such as a running deletion or another request that
+// got the account row first.
 func (s *Service) LockForDeletion(ctx context.Context, userID uuid.UUID, now time.Time) error {
 	state, err := s.repository.DeletionState(ctx, userID)
 	if err != nil {
 		return err
 	}
-	if state.DeletionLocked || state.Deleted {
-		return ErrAccountDeletionInProgress
+	if err := state.requireDeletable(); err != nil {
+		return err
 	}
 
 	state, err = s.repository.LockUser(ctx, userID)
 	if err != nil {
 		return err
 	}
-	if state.DeletionLocked || state.Deleted {
-		return ErrAccountDeletionInProgress
+	if err := state.requireDeletable(); err != nil {
+		return err
 	}
 	return s.repository.MarkDeletionLocked(ctx, userID, now)
 }

@@ -104,6 +104,14 @@ for update of a;
 -- name: LockAccountForDeletion :exec
 select user_id from accounts where user_id = sqlc.arg(user_id) for update;
 
+-- name: AccountHasEmail :one
+select exists (
+  select 1
+  from accounts
+  where user_id = sqlc.arg(user_id)
+    and email_normalized = sqlc.arg(email_normalized)
+)::boolean;
+
 -- name: DeleteAccount :many
 with deleted_recovery_tokens as (
   delete from recovery_tokens where recovery_tokens.user_id = sqlc.arg(user_id)::uuid

@@ -15,7 +15,7 @@ func TestAccountDeletionRefusesAdministrator(t *testing.T) {
 	resetAccountDeletion(t)
 	before := snapshot(t, targetSnapshotSQL, adminUserID)
 
-	_, err := fileOperatorDeletion(t, adminUserID, bystanderUserID, "Owner confirmed by email")
+	_, err := fileAdminDeletion(t, adminUserID, bystanderUserID, "Owner confirmed by email")
 
 	if !errors.Is(err, identity.ErrAdminAccount) {
 		t.Fatalf("filing for an administrator returned %v, want %v", err, identity.ErrAdminAccount)
@@ -33,7 +33,7 @@ func TestAccountDeletionFilingEndsAccess(t *testing.T) {
 	cookie := productionLoginCookie(t, "reader@example.test")
 	recoveryToken := seedProductionRecoveryToken(t, readerUserID)
 
-	jobID, err := fileOperatorDeletion(t, readerUserID, adminUserID, "Owner confirmed by email")
+	jobID, err := fileAdminDeletion(t, readerUserID, adminUserID, "Owner confirmed by email")
 
 	if err != nil {
 		t.Fatal(err)
@@ -75,7 +75,7 @@ func TestAccountDeletionRemovesData(t *testing.T) {
 	others := snapshot(t, othersSnapshotSQL, bannedUserID)
 	history := snapshot(t, finishedHistorySQL)
 
-	_, err := fileOperatorDeletion(t, bannedUserID, adminUserID, "Owner confirmed by email")
+	_, err := fileAdminDeletion(t, bannedUserID, adminUserID, "Owner confirmed by email")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -105,15 +105,15 @@ func TestAccountDeletionRemovesData(t *testing.T) {
 	}
 	checkVerifyGolden(t, api, accountDeletionDir+"/audit")
 
-	_, err = fileOperatorDeletion(t, bannedUserID, adminUserID, "Asked again")
-	if !errors.Is(err, featureprofile.ErrAccountDeletionInProgress) {
-		t.Errorf("filing again returned %v, want %v", err, featureprofile.ErrAccountDeletionInProgress)
+	_, err = fileAdminDeletion(t, bannedUserID, adminUserID, "Asked again")
+	if !errors.Is(err, featureprofile.ErrLocalUserNotFound) {
+		t.Errorf("filing for the deleted user returned %v, want %v", err, featureprofile.ErrLocalUserNotFound)
 	}
 	if after := snapshot(t, targetSnapshotSQL, bannedUserID); after != deleted {
-		t.Errorf("filing again changed the deleted user\nbefore=%s\nafter=%s", deleted, after)
+		t.Errorf("filing for the deleted user changed it\nbefore=%s\nafter=%s", deleted, after)
 	}
 	if after := countJobs(t); after != jobs+1 {
-		t.Errorf("filing again left %d jobs, want %d", after, jobs+1)
+		t.Errorf("filing for the deleted user left %d jobs, want %d", after, jobs+1)
 	}
 
 	response := identityRequest(t, api.handler, "tadoku/prod", "POST", "/identity/registration",

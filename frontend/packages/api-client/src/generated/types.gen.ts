@@ -503,6 +503,28 @@ export type ProfileUserListEntry = {
     role?: string;
 };
 
+export type ProfileAccountDeletionRequest = {
+    /**
+     * The account's email address as the administrator typed it, compared with the account's address after normalization, so letter case and surrounding whitespace do not matter. It has no format, so an imported address that is not a valid email can still be confirmed.
+     */
+    email: string;
+    /**
+     * Why the account is deleted, kept in the audit log for good. Surrounding whitespace is trimmed. Do not include the user's email address or display name.
+     */
+    reason: string;
+};
+
+export type ProfileAccountDeletionFiled = {
+    /**
+     * The ID of the account.delete.v1 job that deletes the account's data.
+     */
+    job_id: number;
+};
+
+export type ProfileErrorResponse = {
+    error: 'confirmation_mismatch' | 'admin_account' | 'account_deletion_in_progress';
+};
+
 export type IdentityErrorResponse = {
     message: string;
     code?: 'wrong_password' | 'throttled' | 'email_taken' | 'stale_session' | 'invalid_display_name' | 'invalid_email' | 'invalid_password' | 'invalid_recovery_token' | 'invalid_origin' | 'invalid_return_to' | 'not_implemented' | 'unavailable';
@@ -2690,6 +2712,53 @@ export type ProfileUsersListResponses = {
 };
 
 export type ProfileUsersListResponse = ProfileUsersListResponses[keyof ProfileUsersListResponses];
+
+export type ProfileAccountDeletionCreateData = {
+    body: ProfileAccountDeletionRequest;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/profile/users/{id}/account-deletion';
+};
+
+export type ProfileAccountDeletionCreateErrors = {
+    /**
+     * invalid request; an email that does not match the account returns confirmation_mismatch, and other invalid input, such as a missing email or reason, has an empty body
+     */
+    400: ProfileErrorResponse;
+    /**
+     * unauthorized
+     */
+    401: unknown;
+    /**
+     * forbidden (not admin)
+     */
+    403: unknown;
+    /**
+     * user not found or already deleted
+     */
+    404: unknown;
+    /**
+     * the target is an administrator (admin_account) or its deletion is already filed (account_deletion_in_progress)
+     */
+    409: ProfileErrorResponse;
+    /**
+     * authorization unavailable
+     */
+    503: unknown;
+};
+
+export type ProfileAccountDeletionCreateError = ProfileAccountDeletionCreateErrors[keyof ProfileAccountDeletionCreateErrors];
+
+export type ProfileAccountDeletionCreateResponses = {
+    /**
+     * the account is locked and its deletion is queued
+     */
+    202: ProfileAccountDeletionFiled;
+};
+
+export type ProfileAccountDeletionCreateResponse = ProfileAccountDeletionCreateResponses[keyof ProfileAccountDeletionCreateResponses];
 
 export type IdentityRegistrationCreateData = {
     body: IdentityRegistration;

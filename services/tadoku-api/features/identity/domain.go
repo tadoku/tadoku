@@ -30,6 +30,9 @@ var (
 	ErrBannedAccount = &Error{
 		"banned_account", errx.NewConflictError("a banned account cannot be deleted through self-service"),
 	}
+	ErrConfirmationMismatch = &Error{
+		"confirmation_mismatch", errx.NewInvalidInputError("the email address does not match the account"),
+	}
 	ErrWrongPassword   = &Error{"wrong_password", errx.NewUnauthorizedError("invalid email or password")}
 	ErrEmailTaken      = &Error{"email_taken", errx.NewConflictError("email is already registered")}
 	ErrThrottled       = &Error{"throttled", errx.NewThrottledError("too many login attempts; try again later")}

@@ -24,11 +24,13 @@ func (s *server) logOperationError(ctx context.Context, operation string, err er
 func writeResponseError(w stdhttp.ResponseWriter, request *stdhttp.Request, err error) {
 	var identityError *api.IdentityError
 	switch {
-	case errors.As(err, &identityError):
+	case errors.As(err, &identityError) && strings.HasPrefix(request.URL.Path, "/identity/"):
 		writeJSON(w, errorStatus(request.Context(), err), map[string]string{
 			"code":    identityError.Code,
 			"message": identityError.Error(),
 		})
+	case errors.As(err, &identityError):
+		writeJSON(w, errorStatus(request.Context(), err), map[string]string{"error": identityError.Code})
 	case strings.HasPrefix(request.URL.Path, "/identity/") && errx.KindOf(err) == errx.Unavailable:
 		writeJSON(w, errorStatus(request.Context(), err), map[string]string{"message": "identity service unavailable"})
 	case strings.HasPrefix(request.URL.Path, "/identity/") && errx.KindOf(err) == errx.InvalidInput:

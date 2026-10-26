@@ -108,7 +108,8 @@ var operationAccess = map[string]accessLevel{
 	"ImmersionLanguageUpdate":       accessAdmin,
 	"ImmersionFeatureFlagDecisions": accessPublic,
 
-	"ProfileUsersList": accessAdmin,
+	"ProfileAccountDeletionCreate": accessAdmin,
+	"ProfileUsersList":             accessAdmin,
 }
 
 var operationFixtures = map[string]string{
@@ -161,7 +162,8 @@ var operationFixtures = map[string]string{
 	"ImmersionLanguageCreate": "CreateLanguage",
 	"ImmersionLanguageUpdate": "UpdateLanguage",
 
-	"ProfileUsersList": "ProfileUsersList",
+	"ProfileAccountDeletionCreate": "ProfileAccountDeletionCreate",
+	"ProfileUsersList":             "ProfileUsersList",
 }
 
 func TestOperationAccessLevels(t *testing.T) {

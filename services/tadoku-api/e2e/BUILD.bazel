@@ -93,6 +93,7 @@ go_test(
         "post_update_test.go",
         "post_version_get_test.go",
         "post_version_list_test.go",
+        "profile_account_deletion_create_test.go",
         "profile_activity_split_test.go",
         "profile_activity_test.go",
         "profile_lookup_test.go",
@@ -139,7 +140,6 @@ go_test(
         "@platforms//os:linux",
     ],
     deps = [
-        "//services/tadoku-api/app/accountdeletion",
         "//services/tadoku-api/app/api",
         "//services/tadoku-api/app/permissionmodel",
         "//services/tadoku-api/app/worker",

@@ -350,6 +350,27 @@ func (e ImmersionScoringRuleSetDraftMode) Valid() bool {
 	}
 }
 
+// Defines values for ProfileErrorResponseError.
+const (
+	ProfileErrorResponseErrorAccountDeletionInProgress ProfileErrorResponseError = "account_deletion_in_progress"
+	ProfileErrorResponseErrorAdminAccount              ProfileErrorResponseError = "admin_account"
+	ProfileErrorResponseErrorConfirmationMismatch      ProfileErrorResponseError = "confirmation_mismatch"
+)
+
+// Valid indicates whether the value is a known member of the ProfileErrorResponseError enum.
+func (e ProfileErrorResponseError) Valid() bool {
+	switch e {
+	case ProfileErrorResponseErrorAccountDeletionInProgress:
+		return true
+	case ProfileErrorResponseErrorAdminAccount:
+		return true
+	case ProfileErrorResponseErrorConfirmationMismatch:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ImmersionLogExportParamsFormat.
 const (
 	Csv  ImmersionLogExportParamsFormat = "csv"
@@ -1273,6 +1294,29 @@ type ImmersionUserProfile struct {
 	Id          openapi_types.UUID `json:"id"`
 }
 
+// ProfileAccountDeletionFiled defines model for ProfileAccountDeletionFiled.
+type ProfileAccountDeletionFiled struct {
+	// JobId The ID of the account.delete.v1 job that deletes the account's data.
+	JobId int64 `json:"job_id"`
+}
+
+// ProfileAccountDeletionRequest defines model for ProfileAccountDeletionRequest.
+type ProfileAccountDeletionRequest struct {
+	// Email The account's email address as the administrator typed it, compared with the account's address after normalization, so letter case and surrounding whitespace do not matter. It has no format, so an imported address that is not a valid email can still be confirmed.
+	Email string `json:"email"`
+
+	// Reason Why the account is deleted, kept in the audit log for good. Surrounding whitespace is trimmed. Do not include the user's email address or display name.
+	Reason string `json:"reason"`
+}
+
+// ProfileErrorResponse defines model for ProfileErrorResponse.
+type ProfileErrorResponse struct {
+	Error ProfileErrorResponseError `json:"error"`
+}
+
+// ProfileErrorResponseError defines model for ProfileErrorResponse.Error.
+type ProfileErrorResponseError string
+
 // ProfileUserList defines model for ProfileUserList.
 type ProfileUserList struct {
 	TotalSize int                    `json:"total_size"`
@@ -1545,6 +1589,9 @@ type ImmersionLogContestRegistrationUpdateJSONRequestBody ImmersionLogContestReg
 
 // ImmersionScoringRuleSetCreatePlatformJSONRequestBody defines body for ImmersionScoringRuleSetCreatePlatform for application/json ContentType.
 type ImmersionScoringRuleSetCreatePlatformJSONRequestBody = ImmersionScoringRuleSetDraft
+
+// ProfileAccountDeletionCreateJSONRequestBody defines body for ProfileAccountDeletionCreate for application/json ContentType.
+type ProfileAccountDeletionCreateJSONRequestBody = ProfileAccountDeletionRequest
 
 // AsIdentityProxyGuest returns the union data inside the IdentityProxySession as a IdentityProxyGuest
 func (t IdentityProxySession) AsIdentityProxyGuest() (IdentityProxyGuest, error) {
@@ -1841,6 +1888,9 @@ type ServerInterface interface {
 	// ProfileUsersList Lists all users (admin only)
 	// (GET /profile/users)
 	ProfileUsersList(w http.ResponseWriter, r *http.Request, params ProfileUsersListParams)
+	// ProfileAccountDeletionCreate Request the deletion of a user's account (admin only)
+	// (POST /profile/users/{id}/account-deletion)
+	ProfileAccountDeletionCreate(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -4440,6 +4490,32 @@ func (siw *ServerInterfaceWrapper) ProfileUsersList(w http.ResponseWriter, r *ht
 	handler.ServeHTTP(w, r)
 }
 
+// ProfileAccountDeletionCreate operation middleware
+func (siw *ServerInterfaceWrapper) ProfileAccountDeletionCreate(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ProfileAccountDeletionCreate(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 type UnescapedCookieParamError struct {
 	ParamName string
 	Err       error
@@ -4627,6 +4703,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/immersion/languages", wrapper.ImmersionLanguageCreate)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/immersion/languages/{code}", wrapper.ImmersionLanguageUpdate)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/profile/users", wrapper.ProfileUsersList)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/profile/users/{id}/account-deletion", wrapper.ProfileAccountDeletionCreate)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/identity/registration", wrapper.IdentityRegistrationCreate)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/identity/login", wrapper.IdentityLoginCreate)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/identity/logout", wrapper.IdentityLogout)
@@ -8407,6 +8484,89 @@ func (response ProfileUsersList403Response) VisitProfileUsersListResponse(w http
 	return nil
 }
 
+type ProfileAccountDeletionCreateRequestObject struct {
+	Id   openapi_types.UUID `json:"id"`
+	Body *ProfileAccountDeletionCreateJSONRequestBody
+}
+
+type ProfileAccountDeletionCreateResponseObject interface {
+	VisitProfileAccountDeletionCreateResponse(w http.ResponseWriter) error
+}
+
+type ProfileAccountDeletionCreate202JSONResponse ProfileAccountDeletionFiled
+
+func (response ProfileAccountDeletionCreate202JSONResponse) VisitProfileAccountDeletionCreateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(202)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ProfileAccountDeletionCreate400JSONResponse ProfileErrorResponse
+
+func (response ProfileAccountDeletionCreate400JSONResponse) VisitProfileAccountDeletionCreateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ProfileAccountDeletionCreate401Response struct {
+}
+
+func (response ProfileAccountDeletionCreate401Response) VisitProfileAccountDeletionCreateResponse(w http.ResponseWriter) error {
+	w.WriteHeader(401)
+	return nil
+}
+
+type ProfileAccountDeletionCreate403Response struct {
+}
+
+func (response ProfileAccountDeletionCreate403Response) VisitProfileAccountDeletionCreateResponse(w http.ResponseWriter) error {
+	w.WriteHeader(403)
+	return nil
+}
+
+type ProfileAccountDeletionCreate404Response struct {
+}
+
+func (response ProfileAccountDeletionCreate404Response) VisitProfileAccountDeletionCreateResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type ProfileAccountDeletionCreate409JSONResponse ProfileErrorResponse
+
+func (response ProfileAccountDeletionCreate409JSONResponse) VisitProfileAccountDeletionCreateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ProfileAccountDeletionCreate503Response struct {
+}
+
+func (response ProfileAccountDeletionCreate503Response) VisitProfileAccountDeletionCreateResponse(w http.ResponseWriter) error {
+	w.WriteHeader(503)
+	return nil
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 	// AuthzRoleGet Fetches the role of the current user
@@ -8640,6 +8800,9 @@ type StrictServerInterface interface {
 	// ProfileUsersList Lists all users (admin only)
 	// (GET /profile/users)
 	ProfileUsersList(ctx context.Context, request ProfileUsersListRequestObject) (ProfileUsersListResponseObject, error)
+	// ProfileAccountDeletionCreate Request the deletion of a user's account (admin only)
+	// (POST /profile/users/{id}/account-deletion)
+	ProfileAccountDeletionCreate(ctx context.Context, request ProfileAccountDeletionCreateRequestObject) (ProfileAccountDeletionCreateResponseObject, error)
 }
 
 type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error)
@@ -10852,6 +11015,39 @@ func (sh *strictHandler) ProfileUsersList(w http.ResponseWriter, r *http.Request
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ProfileUsersListResponseObject); ok {
 		if err := validResponse.VisitProfileUsersListResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ProfileAccountDeletionCreate operation middleware
+func (sh *strictHandler) ProfileAccountDeletionCreate(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	var request ProfileAccountDeletionCreateRequestObject
+
+	request.Id = id
+
+	var body ProfileAccountDeletionCreateJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ProfileAccountDeletionCreate(ctx, request.(ProfileAccountDeletionCreateRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ProfileAccountDeletionCreate")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ProfileAccountDeletionCreateResponseObject); ok {
+		if err := validResponse.VisitProfileAccountDeletionCreateResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

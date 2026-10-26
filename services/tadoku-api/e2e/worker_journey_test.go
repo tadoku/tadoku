@@ -115,30 +115,24 @@ func runWorkerStep(t *testing.T, s *suite, forTenant string) {
 	defer tick.Stop()
 
 	for {
-		var completed, failed int
+		var outstanding, failed int
 		err := s.db.Pool.QueryRow(t.Context(), `select
-			count(*) filter (where state = 'completed'),
+			count(*) filter (where state in ('pending', 'running')),
 			count(*) filter (where state = 'failed') `+eligibleSQL,
 			arguments...,
-		).Scan(&completed, &failed)
+		).Scan(&outstanding, &failed)
 		if err != nil {
 			t.Fatal(err)
 		}
 		if failed != 0 {
-			t.Fatalf("worker failed %d jobs; completed=%d queued=%d", failed, completed, queued)
+			t.Fatalf("worker failed %d jobs; outstanding=%d queued=%d", failed, outstanding, queued)
 		}
-		if completed == queued {
+		if outstanding == 0 {
 			return
 		}
 		select {
 		case <-deadline.C:
-			t.Fatalf(
-				"worker did not complete %d jobs; completed=%d failed=%d outstanding=%d",
-				queued,
-				completed,
-				failed,
-				queued-completed-failed,
-			)
+			t.Fatalf("worker left %d jobs outstanding; queued=%d", outstanding, queued)
 		case <-tick.C:
 		}
 	}

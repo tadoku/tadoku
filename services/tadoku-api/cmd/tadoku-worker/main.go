@@ -16,13 +16,11 @@ import (
 	"time"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/google/uuid"
 	"github.com/kelseyhightower/envconfig"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/tadoku/tadoku/services/common/postgresconfig"
-	"github.com/tadoku/tadoku/services/tadoku-api/app/accountdeletion"
 	"github.com/tadoku/tadoku/services/tadoku-api/app/permissionmodel"
 	"github.com/tadoku/tadoku/services/tadoku-api/app/worker"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/audit"
@@ -253,79 +251,16 @@ func replay(ctx context.Context, args []string, logger *slog.Logger) error {
 	return nil
 }
 
-func deleteAccount(ctx context.Context, args []string, logger *slog.Logger) error {
-	ctx = tenant.WithKey(ctx, tenant.Production())
-
-	flags := flag.NewFlagSet("delete-account", flag.ContinueOnError)
-	flags.SetOutput(io.Discard)
-	user := flags.String("user", "", "user ID to delete")
-	actor := flags.String("actor", "", "operator user ID")
-	reason := flags.String("reason", "", "reason for the deletion")
-
-	const usage = "usage: tadoku-worker delete-account --user <user-id> --actor <operator-user-id> --reason <reason>"
-	if err := flags.Parse(args); err != nil {
-		return fmt.Errorf("parse delete-account flags: %w", err)
-	}
-	userID, userErr := uuid.Parse(*user)
-	actorID, actorErr := uuid.Parse(*actor)
-	if flags.NArg() != 0 || userErr != nil || actorErr != nil {
-		return errors.New(usage)
-	}
-	request, err := accountdeletion.OperatorRequest(userID, actorID, *reason)
-	if err != nil {
-		return fmt.Errorf("%s: %w", usage, err)
-	}
-
-	postgresConfig, err := postgresconfig.Load("WORKER_POSTGRES", "WORKER_POSTGRES_URL")
-	if err != nil {
-		return err
-	}
-	openCtx, stop := context.WithTimeout(ctx, 3*time.Second)
-	pool, err := postgres.Open(
-		openCtx,
-		postgresConfig.WithApplicationName("tadoku-worker-delete-account").URL().Reveal(),
-		1,
-	)
-	stop()
-	if err != nil {
-		return fmt.Errorf("open delete-account postgres: %s", postgresConfig.Redact(err))
-	}
-	defer pool.Close()
-
-	model, err := permissionmodel.New()
-	if err != nil {
-		return err
-	}
-	tuples := authz.NewRepository(pool)
-	filing := accountdeletion.NewFiling(
-		authz.NewRoles(permissions.NewChecker(tuples, model), permissions.NewRelationships(tuples, model)),
-		identity.NewDeletion(identity.NewRepository(pool)),
-		profile.NewService(profile.NewRepository(pool), identity.NewReader(pool)),
-		audit.NewService(audit.NewRepository(pool)),
-		jobqueue.NewService(jobqueue.NewRepository(pool)),
-	)
-	jobID, err := worker.FileAccountDeletion(ctx, pool, filing, request)
-	if err != nil {
-		return fmt.Errorf("delete account %s: %w", userID, err)
-	}
-	logger.InfoContext(ctx, "account deletion requested", "user_id", userID, "job_id", jobID)
-	return nil
-}
-
 func main() {
 	logger := slog.New(observability.NewTenantHandler(slog.NewJSONHandler(os.Stdout, nil)))
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 	if len(os.Args) > 1 {
 		var err error
-		switch os.Args[1] {
-		case "replay":
+		if os.Args[1] == "replay" {
 			err = replay(ctx, os.Args[2:], logger)
-		case "delete-account":
-			err = deleteAccount(ctx, os.Args[2:], logger)
-		default:
-			err = errors.New("usage: tadoku-worker [replay --id <failed-id> --actor <actor> --reason <reason>" +
-				" | delete-account --user <user-id> --actor <operator-user-id> --reason <reason>]")
+		} else {
+			err = errors.New("usage: tadoku-worker [replay --id <failed-id> --actor <actor> --reason <reason>]")
 		}
 		if err != nil {
 			logger.Error("tadoku-worker command failed", "error", err)

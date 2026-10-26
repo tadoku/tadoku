@@ -28,7 +28,7 @@ func TestAccountDeletionUpdatesLeaderboardsAndContestReads(t *testing.T) {
 		}
 	}
 
-	if _, err := fileOperatorDeletion(t, bannedUserID, adminUserID, "Owner confirmed by email"); err != nil {
+	if _, err := fileAdminDeletion(t, bannedUserID, adminUserID, "Owner confirmed by email"); err != nil {
 		t.Fatal(err)
 	}
 	runDeletionWorker(t)

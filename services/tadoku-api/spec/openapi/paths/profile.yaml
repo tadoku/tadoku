@@ -39,3 +39,64 @@ paths:
       x-tadoku-exposure: public
       x-legacy-path: /users
       x-legacy-operation-id: usersList
+  "/profile/users/{id}/account-deletion":
+    post:
+      summary: Request the deletion of a user's account (admin only)
+      description: >-
+        Locks the account at once: from the commit the user cannot sign in, and their sessions and writes are
+        refused. An account.delete.v1 job then deletes the account's data. The email confirms the target and must
+        be the account's address, compared after normalization. Administrators are refused; banned users are
+        accepted. The audit event records the signed-in administrator as the actor, with the reason.
+      operationId: ProfileAccountDeletionCreate
+      tags:
+        - admin
+      security:
+        - ProfilecookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfileAccountDeletionRequest"
+      responses:
+        "202":
+          description: the account is locked and its deletion is queued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfileAccountDeletionFiled"
+        "400":
+          description: >-
+            invalid request; an email that does not match the account returns confirmation_mismatch, and other
+            invalid input, such as a missing email or reason, has an empty body
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfileErrorResponse"
+        "401":
+          description: unauthorized
+        "403":
+          description: forbidden (not admin)
+        "404":
+          description: user not found or already deleted
+        "409":
+          description: >-
+            the target is an administrator (admin_account) or its deletion is already filed
+            (account_deletion_in_progress)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfileErrorResponse"
+        "503":
+          description: authorization unavailable
+      x-tadoku-source: Profile
+      x-tadoku-exposure: public
+      x-legacy-path: /users/{id}/account-deletion
+      x-legacy-operation-id: accountDeletionCreate

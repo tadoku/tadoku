@@ -12,9 +12,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/tadoku/tadoku/services/tadoku-api/app/accountdeletion"
+	apiapp "github.com/tadoku/tadoku/services/tadoku-api/app/api"
 	"github.com/tadoku/tadoku/services/tadoku-api/app/permissionmodel"
-	"github.com/tadoku/tadoku/services/tadoku-api/app/worker"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
 	featureaudit "github.com/tadoku/tadoku/services/tadoku-api/features/audit"
 	featureauthz "github.com/tadoku/tadoku/services/tadoku-api/features/authz"
@@ -102,18 +101,25 @@ func resetAccountDeletion(t *testing.T) {
 	}
 }
 
-func fileOperatorDeletion(t *testing.T, userID, operatorID, reason string) (int64, error) {
+func fileAdminDeletion(t *testing.T, userID, adminID, reason string) (int64, error) {
 	t.Helper()
-	file := operatorFiling(t, userID, operatorID, reason)
+	file := adminFiling(t, userID, adminID, reason)
 	var jobID int64
 	var err error
 	atFixtureInstant(func() { jobID, err = file() })
 	return jobID, err
 }
 
-func operatorFiling(t *testing.T, userID, operatorID, reason string) func() (int64, error) {
+// adminFiling confirms the target with the address that testdata/accounts.sql gives it.
+func adminFiling(t *testing.T, userID, adminID, reason string) func() (int64, error) {
 	t.Helper()
-	request, err := accountdeletion.OperatorRequest(uuid.MustParse(userID), uuid.MustParse(operatorID), reason)
+	emails := map[string]string{
+		readerUserID:    "reader@example.test",
+		adminUserID:     "admin@example.test",
+		bannedUserID:    "banned@example.test",
+		bystanderUserID: "user2@example.test",
+	}
+	request, err := apiapp.AdminAccountDeletion(uuid.MustParse(userID), uuid.MustParse(adminID), emails[userID], reason)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -121,7 +127,7 @@ func operatorFiling(t *testing.T, userID, operatorID, reason string) func() (int
 }
 
 // deletionFiling returns a filing that may run on another goroutine; it never touches t.
-func deletionFiling(t *testing.T, request accountdeletion.Request) func() (int64, error) {
+func deletionFiling(t *testing.T, request apiapp.AccountDeletionRequest) func() (int64, error) {
 	t.Helper()
 	model, err := permissionmodel.New()
 	if err != nil {
@@ -129,16 +135,17 @@ func deletionFiling(t *testing.T, request accountdeletion.Request) func() (int64
 	}
 	pool := api.db.AppPool
 	tuples := featureauthz.NewRepository(pool)
-	filing := accountdeletion.NewFiling(
-		featureauthz.NewRoles(permissions.NewChecker(tuples, model), permissions.NewRelationships(tuples, model)),
-		identity.NewDeletion(identity.NewRepository(pool)),
-		featureprofile.NewService(featureprofile.NewRepository(pool), identity.NewReader(pool)),
-		featureaudit.NewService(featureaudit.NewRepository(pool)),
-		jobqueue.NewService(jobqueue.NewRepository(pool)),
-	)
+	application := apiapp.New(apiapp.Dependencies{
+		DB:               pool,
+		Roles:            featureauthz.NewRoles(permissions.NewChecker(tuples, model), permissions.NewRelationships(tuples, model)),
+		IdentityDeletion: identity.NewDeletion(identity.NewRepository(pool)),
+		Profile:          featureprofile.NewService(featureprofile.NewRepository(pool), identity.NewReader(pool)),
+		Audit:            featureaudit.NewService(featureaudit.NewRepository(pool)),
+		JobQueue:         jobqueue.NewService(jobqueue.NewRepository(pool)),
+	})
 
 	ctx := tenant.WithKey(t.Context(), tenant.Production())
-	return func() (int64, error) { return worker.FileAccountDeletion(ctx, pool, filing, request) }
+	return func() (int64, error) { return application.FileAccountDeletion(ctx, request) }
 }
 
 func enqueueAccountDeletionJob(t *testing.T, userID string) {

@@ -11,6 +11,27 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const accountHasEmail = `-- name: AccountHasEmail :one
+select exists (
+  select 1
+  from accounts
+  where user_id = $1
+    and email_normalized = $2
+)::boolean
+`
+
+type AccountHasEmailParams struct {
+	UserID          pgtype.UUID
+	EmailNormalized string
+}
+
+func (q *Queries) AccountHasEmail(ctx context.Context, arg AccountHasEmailParams) (bool, error) {
+	row := q.db.QueryRow(ctx, accountHasEmail, arg.UserID, arg.EmailNormalized)
+	var column_1 bool
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
 const createRecoveryToken = `-- name: CreateRecoveryToken :exec
 insert into recovery_tokens (token_hash, user_id, expires_at)
 values ($1, $2, $3)

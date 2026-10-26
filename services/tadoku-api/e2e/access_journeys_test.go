@@ -196,6 +196,45 @@ func TestUserModerationJourney(t *testing.T) {
 	})
 }
 
+func TestAdminAccountDeletionJourney(t *testing.T) {
+	runJourney(t, api, "AdminAccountDeletion", []step{
+		{
+			request: "file_deletion",
+			as:      admin,
+			want:    http.StatusAccepted,
+			others: cast{
+				guest:  http.StatusUnauthorized,
+				user:   http.StatusForbidden,
+				banned: http.StatusForbidden,
+			},
+		},
+		{
+			request: "refile_refused",
+			as:      admin,
+			want:    http.StatusConflict,
+		},
+		{
+			verify: "deletion_filed",
+		},
+		{
+			job: "run_worker",
+		},
+		{
+			verify: "account_deleted",
+		},
+		{
+			request: "users_after_deletion",
+			as:      admin,
+			want:    http.StatusOK,
+		},
+		{
+			request: "deleted_user_not_found",
+			as:      admin,
+			want:    http.StatusNotFound,
+		},
+	})
+}
+
 func TestModerationAuditFailureJourney(t *testing.T) {
 	afterReset := func(t *testing.T) { failInserts(t, "moderation_audit_log") }
 

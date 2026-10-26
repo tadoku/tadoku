@@ -24,6 +24,17 @@ func (r *Repository) lockAccountForDeletion(ctx context.Context, id uuid.UUID) e
 	return queries.New(db).LockAccountForDeletion(ctx, postgres.UUID(id))
 }
 
+func (r *Repository) accountHasEmail(ctx context.Context, id uuid.UUID, emailNormalized string) (bool, error) {
+	db, err := postgres.Executor(ctx, r.pool)
+	if err != nil {
+		return false, err
+	}
+	return queries.New(db).AccountHasEmail(ctx, queries.AccountHasEmailParams{
+		UserID:          postgres.UUID(id),
+		EmailNormalized: emailNormalized,
+	})
+}
+
 func (r *Repository) deleteAccount(ctx context.Context, id uuid.UUID) ([]Email, error) {
 	db, err := postgres.Executor(ctx, r.pool)
 	if err != nil {

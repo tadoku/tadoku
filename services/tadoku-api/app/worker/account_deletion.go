@@ -8,7 +8,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/tadoku/tadoku/services/tadoku-api/app/accountdeletion"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/audit"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/contestevents"
@@ -113,22 +112,4 @@ func distinctJobs(batch []jobs.Job) []jobs.Job {
 		}
 	}
 	return distinct
-}
-
-func FileAccountDeletion(
-	ctx context.Context,
-	db *pgxpool.Pool,
-	filing *accountdeletion.Filing,
-	request accountdeletion.Request,
-) (int64, error) {
-	var jobID int64
-	err := postgres.RunInTransaction(ctx, db, func(ctx context.Context) error {
-		var err error
-		jobID, err = filing.File(ctx, request)
-		return err
-	})
-	if err != nil {
-		return 0, err
-	}
-	return jobID, nil
 }

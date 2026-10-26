@@ -17,6 +17,16 @@ type userDeletionState struct {
 	Deleted        bool
 }
 
+func (s userDeletionState) requireDeletable() error {
+	switch {
+	case s.Deleted:
+		return ErrLocalUserNotFound
+	case s.DeletionLocked:
+		return ErrAccountDeletionInProgress
+	}
+	return nil
+}
+
 type User struct {
 	ID          string
 	DisplayName string

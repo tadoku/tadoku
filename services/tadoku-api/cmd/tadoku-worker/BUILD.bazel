@@ -12,7 +12,6 @@ go_library(
     visibility = ["//visibility:private"],
     deps = [
         "//services/common/postgresconfig",
-        "//services/tadoku-api/app/accountdeletion",
         "//services/tadoku-api/app/permissionmodel",
         "//services/tadoku-api/app/worker",
         "//services/tadoku-api/features/audit",
@@ -32,7 +31,6 @@ go_library(
         "//services/tadoku-api/internal/permissions",
         "//services/tadoku-api/internal/tenant",
         "@com_github_go_playground_validator_v10//:validator",
-        "@com_github_google_uuid//:uuid",
         "@com_github_kelseyhightower_envconfig//:envconfig",
         "@com_github_prometheus_client_golang//prometheus",
         "@com_github_prometheus_client_golang//prometheus/collectors",
@@ -48,10 +46,7 @@ go_binary(
 
 go_test(
     name = "tadoku-worker_test",
-    srcs = [
-        "delete_account_test.go",
-        "main_test.go",
-    ],
+    srcs = ["main_test.go"],
     embed = [":tadoku-worker_lib"],
     env_inherit = ["TADOKU_TEST_POSTGRES_URL"],
     tags = [

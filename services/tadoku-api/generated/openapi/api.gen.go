@@ -684,8 +684,8 @@ type IdentityRegistration struct {
 type IdentitySession struct {
 	Account nullable.Nullable[IdentityAccount] `json:"account"`
 
-	// RecentLogin True when the session's authentication time is at most one hour ago and not in the future, the window in which email and password changes are allowed without a stale_session error. False otherwise and for a guest. The API always sends it.
-	RecentLogin *bool `json:"recent_login,omitempty"`
+	// RecentLogin True when the session's authentication time is at most one hour ago and not in the future, the window in which email and password changes are allowed without a stale_session error. False otherwise and for a guest.
+	RecentLogin bool `json:"recent_login"`
 }
 
 // ImmersionActivities defines model for ImmersionActivities.

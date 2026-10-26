@@ -162,6 +162,7 @@ describe('generated client on malformed answers', () => {
     ['an empty body', 200, { 'Content-Length': '0' }, null],
     ['no content', 204, {}, null],
     ['a missing account', 200, json, '{}'],
+    ['a missing recent_login', 200, json, '{"account":null}'],
     ['an account without an ID', 200, json, '{"account":{"email":"a@b.test","display_name":"Ab",'
       + '"created_at":"2026-01-01T00:00:00Z","authenticated_at":"2026-01-01T00:00:00Z"},"recent_login":true}'],
   ])('rejects %s', async (_, status, headers, body) => {
@@ -171,9 +172,9 @@ describe('generated client on malformed answers', () => {
   })
 
   it('accepts a signed-out session', async () => {
-    const result = await session(200, json, '{"account":null}')
+    const result = await session(200, json, '{"account":null,"recent_login":false}')
     expect(result.error).toBeUndefined()
-    expect(result.data).toEqual({ account: null })
+    expect(result.data).toEqual({ account: null, recent_login: false })
   })
 
   it('sends plain-object headers with a JSON write', async () => {

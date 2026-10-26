@@ -76,7 +76,7 @@ signals. Secrets are supplied through environment variables and never printed.
 
 ## Development accounts and cleanup inspection
 
-The development hook invokes `development-accounts` before profile seeding:
+The development hook invokes `development-accounts` before fixture seeding:
 
 ```sh
 TENANT_PRODUCTION=false tadoku-tenant development-accounts \

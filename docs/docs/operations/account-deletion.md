@@ -23,7 +23,7 @@ The steps have two stages with different effects:
   `deletion_locked_at` restores the account.
 - **Delete (step 3)** cannot be undone. It removes the native sign-in account,
   its sessions and recovery tokens, and the account's logs, contest
-  registrations, log tags, roles and profile rows, except the history of
+  registrations, log tags and roles, except the history of
   finished contests. Roles are the account's rows in
   `permission_relationships`; the Tadoku API never removes them itself.
 
@@ -56,9 +56,6 @@ the email address; a later registration with it creates a new, unrelated user.
   authorized disposition of retained legacy data can include it.
 - **Database backups** keep earlier copies until the provider's retention
   removes them; see [Database recovery](./identity-recovery.md#database-recovery).
-
-`account_deletion_requests` has request states, but no application operation
-reads or writes it; step 3 only removes rows for the account.
 
 ## Prerequisites
 
@@ -121,11 +118,8 @@ select
   (select count(*) from logs where user_id = :'account_id') as logs,
   (select count(*) from contest_registrations where user_id = :'account_id') as registrations,
   (select count(*) from contests where owner_user_id = :'account_id') as owned_contests,
-  (select count(*) from user_roles where user_id = :'account_id') as user_roles,
   (select count(*) from permission_relationships
     where subject_type = 'user' and subject_id = lower(:'account_id')) as permission_relationships,
-  (select count(*) from profiles where user_id = :'account_id') as profiles,
-  (select count(*) from account_deletion_requests where identity_id = :'account_id') as deletion_requests,
   (select count(*) from moderation_audit_log
     where user_id = :'account_id' or metadata->>'target_user_id' = :'account_id') as audit_entries;
 ```
@@ -277,11 +271,8 @@ delete from logs
 where user_id = :'account_id'
   and not exists (select 1 from contest_logs where contest_logs.log_id = logs.id);
 
-delete from user_roles where user_id = :'account_id';
 delete from permission_relationships
 where subject_type = 'user' and subject_id = lower(:'account_id');
-delete from profiles where user_id = :'account_id';
-delete from account_deletion_requests where identity_id = :'account_id';
 
 -- The native sign-in account and everything that authenticates as it.
 delete from sessions where user_id = :'account_id';
@@ -418,11 +409,8 @@ select
         or not exists (select 1 from contest_logs where contest_logs.log_id = logs.id)
       )) as unscrubbed_logs,
   (select count(*) from log_tags where user_id = :'account_id') as log_tags,
-  (select count(*) from user_roles where user_id = :'account_id') as user_roles,
   (select count(*) from permission_relationships
     where subject_type = 'user' and subject_id = lower(:'account_id')) as permission_relationships,
-  (select count(*) from profiles where user_id = :'account_id') as profiles,
-  (select count(*) from account_deletion_requests where identity_id = :'account_id') as deletion_requests,
   (select count(*) from accounts where user_id = :'account_id') as accounts,
   (select count(*) from sessions where user_id = :'account_id') as sessions,
   (select count(*) from recovery_tokens where user_id = :'account_id') as recovery_tokens,

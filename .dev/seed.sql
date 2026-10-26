@@ -16,5 +16,4 @@ select current_user = 'tadoku'
 commit;
 
 \ir /seed/immersion.sql
-\ir /seed/profile.sql
 \ir /seed/content.sql

@@ -49,12 +49,6 @@ func seedEveryTenantTable(t *testing.T, db *testpostgres.Database, key string) {
 		select set_config('tadoku.tenant', $1, true);
 		insert into users (tenant, id, display_name)
 		values ($1, uuid_generate_v5(uuid_nil(), $1 || '/user'), 'Lifecycle user');
-		insert into user_roles (tenant, user_id, role)
-		values ($1, uuid_generate_v5(uuid_nil(), $1 || '/user'), 'admin');
-		insert into profiles (tenant, user_id)
-		values ($1, uuid_generate_v5(uuid_nil(), $1 || '/user'));
-		insert into account_deletion_requests (tenant, identity_id, status, accepted_at)
-		values ($1, uuid_generate_v5(uuid_nil(), $1 || '/user'), 'receipt_pending', now());
 		insert into moderation_audit_log (tenant, user_id, action)
 		values ($1, uuid_generate_v5(uuid_nil(), $1 || '/user'), 'lifecycle-fixture');
 		insert into contests (tenant, id, owner_user_id, owner_user_display_name, private,
@@ -130,6 +124,27 @@ func seedEveryTenantTable(t *testing.T, db *testpostgres.Database, key string) {
 	if _, err := tx.Exec(t.Context(), seed, pgx.QueryExecModeSimpleProtocol, key); err != nil {
 		t.Fatalf("seed %s: %v", key, err)
 	}
+
+	var hasLegacyAccountTables bool
+	err = tx.QueryRow(t.Context(), "select to_regclass('account_deletion_requests') is not null").
+		Scan(&hasLegacyAccountTables)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if hasLegacyAccountTables {
+		_, err := tx.Exec(t.Context(), `
+			insert into user_roles (tenant, user_id, role)
+			values ($1, uuid_generate_v5(uuid_nil(), $1 || '/user'), 'admin');
+			insert into profiles (tenant, user_id)
+			values ($1, uuid_generate_v5(uuid_nil(), $1 || '/user'));
+			insert into account_deletion_requests (tenant, identity_id, status, accepted_at)
+			values ($1, uuid_generate_v5(uuid_nil(), $1 || '/user'), 'receipt_pending', now());
+		`, pgx.QueryExecModeSimpleProtocol, key)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
 	var hasContestEvents bool
 	if err := tx.QueryRow(t.Context(), "select to_regclass('contest_events') is not null").Scan(&hasContestEvents); err != nil {
 		t.Fatal(err)

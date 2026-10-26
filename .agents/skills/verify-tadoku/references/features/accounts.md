@@ -78,7 +78,7 @@ Provisioning seeds `identity-v2=true` automatically in the branch namespace.
 Use the native Dev Admin/Reader accounts and documented development password;
 verify their UUIDs/names, tenant cookie and session through the configured public
 branch API. Reseeding must preserve branch-changed credentials, display names and sessions,
-and continue through branch profile/content fixtures. New accounts retain the
+and continue through branch content fixtures. New accounts retain the
 canonical fixture user age; a missing fixture email held by another UUID must
 fail atomically. Never edit canonical
 flag policy or canonical sessions to exercise local account behavior.

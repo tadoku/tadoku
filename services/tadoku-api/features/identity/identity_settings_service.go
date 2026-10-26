@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/mail"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
@@ -120,6 +121,48 @@ func (s *Service) ApplyPasswordUpdate(ctx context.Context, update PasswordUpdate
 		session.Account.ID,
 		hashToken(cookieValue(update.header, s.cookie(ctx).Name)),
 	)
+}
+
+type AccountDeletion struct {
+	header CookieHeader
+	email  Email
+}
+
+// AdmitAccountDeletion must run before the application's business transaction.
+func (s *Service) AdmitAccountDeletion(ctx context.Context, header CookieHeader, email string) (AccountDeletion, error) {
+	session, err := s.SettingsSession(ctx, header)
+	if err != nil {
+		return AccountDeletion{}, err
+	}
+	if err := recentSession(session); err != nil {
+		return AccountDeletion{}, err
+	}
+	address, err := ParseEmail(email)
+	if err != nil {
+		return AccountDeletion{}, err
+	}
+	return AccountDeletion{header: header, email: address}, nil
+}
+
+// RequestAccountDeletion requires the transaction that files the deletion for the returned user. It locks the
+// account row before filing locks the users row, and returns the cookie that clears the session.
+func (s *Service) RequestAccountDeletion(ctx context.Context, deletion AccountDeletion) (uuid.UUID, Cookie, error) {
+	session, err := s.lockSettingsSession(ctx, deletion.header)
+	if err != nil {
+		return uuid.Nil, Cookie{}, err
+	}
+	if err := recentSession(session); err != nil {
+		return uuid.Nil, Cookie{}, err
+	}
+
+	matches, err := s.repository.accountHasEmail(ctx, session.Account.ID, deletion.email.value)
+	if err != nil {
+		return uuid.Nil, Cookie{}, err
+	}
+	if !matches {
+		return uuid.Nil, Cookie{}, ErrConfirmationMismatch
+	}
+	return session.Account.ID, s.clearedCookie(ctx), nil
 }
 
 func (s *Service) SettingsSession(ctx context.Context, header CookieHeader) (AuthenticatedSession, error) {

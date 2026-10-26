@@ -99,43 +99,49 @@ func (a *Application) RequestAccountDeletion(ctx context.Context, parameters Acc
 // change data.
 func (a *Application) FileAccountDeletion(ctx context.Context, request AccountDeletionRequest) error {
 	return postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) error {
-		if err := a.identityDeletion.LockAccountForRequest(ctx, request.userID); err != nil {
-			return err
-		}
-		if err := a.profile.LockForDeletion(ctx, request.userID, timex.Now()); err != nil {
-			return err
-		}
-		if request.source == adminDeletion {
-			if err := a.identityDeletion.ConfirmAccount(ctx, request.userID, request.email); err != nil {
-				return err
-			}
-		}
-
-		roles, err := a.roles.UserRoles(ctx, []uuid.UUID{request.userID})
-		if err != nil {
-			return err
-		}
-		switch roles[request.userID] {
-		case authz.RoleAdmin:
-			return identity.ErrAdminAccount
-		case authz.RoleBanned:
-			if request.source == selfServiceDeletion {
-				return identity.ErrBannedAccount
-			}
-		}
-
-		err = a.audit.Record(ctx, audit.Event{
-			ActorID: request.actorID,
-			Action:  "request_account_deletion",
-			Metadata: map[string]any{
-				"target_user_id": request.userID.String(),
-				"source":         string(request.source),
-			},
-			Description: request.reason,
-		})
-		if err != nil {
-			return err
-		}
-		return a.jobqueue.Enqueue(ctx, jobs.DeleteAccountV1{UserID: request.userID})
+		return a.fileAccountDeletion(ctx, request)
 	})
+}
+
+// fileAccountDeletion is FileAccountDeletion inside the caller's transaction. A caller that locks the account row
+// first, as a self-service request does, keeps the account-then-user lock order.
+func (a *Application) fileAccountDeletion(ctx context.Context, request AccountDeletionRequest) error {
+	if err := a.identityDeletion.LockAccountForRequest(ctx, request.userID); err != nil {
+		return err
+	}
+	if err := a.profile.LockForDeletion(ctx, request.userID, timex.Now()); err != nil {
+		return err
+	}
+	if request.source == adminDeletion {
+		if err := a.identityDeletion.ConfirmAccount(ctx, request.userID, request.email); err != nil {
+			return err
+		}
+	}
+
+	roles, err := a.roles.UserRoles(ctx, []uuid.UUID{request.userID})
+	if err != nil {
+		return err
+	}
+	switch roles[request.userID] {
+	case authz.RoleAdmin:
+		return identity.ErrAdminAccount
+	case authz.RoleBanned:
+		if request.source == selfServiceDeletion {
+			return identity.ErrBannedAccount
+		}
+	}
+
+	err = a.audit.Record(ctx, audit.Event{
+		ActorID: request.actorID,
+		Action:  "request_account_deletion",
+		Metadata: map[string]any{
+			"target_user_id": request.userID.String(),
+			"source":         string(request.source),
+		},
+		Description: request.reason,
+	})
+	if err != nil {
+		return err
+	}
+	return a.jobqueue.Enqueue(ctx, jobs.DeleteAccountV1{UserID: request.userID})
 }

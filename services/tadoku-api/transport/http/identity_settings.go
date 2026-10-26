@@ -5,7 +5,6 @@ import (
 
 	"github.com/tadoku/tadoku/services/tadoku-api/app/api"
 	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
 
 func (s *server) IdentityRecoveryCreate(
@@ -94,5 +93,18 @@ func (s *server) IdentityAccountDelete(
 	ctx context.Context,
 	request openapi.IdentityAccountDeleteRequestObject,
 ) (openapi.IdentityAccountDeleteResponseObject, error) {
-	return nil, errx.NewNotImplementedError()
+	metadata := ctx.Value(identityRequestKey{}).(identityRequestMetadata)
+	email := ""
+	if request.Body != nil {
+		email = string(request.Body.Email)
+	}
+	cookie, err := s.application.IdentityRequestAccountDeletion(ctx, metadata.cookies, email)
+	if err != nil {
+		s.logOperationError(ctx, "request account deletion", err)
+		return nil, err
+	}
+	cleared := identityCookie(cookie)
+	return openapi.IdentityAccountDelete202Response{
+		Headers: openapi.IdentityAccountDelete202ResponseHeaders{SetCookie: &cleared},
+	}, nil
 }

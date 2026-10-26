@@ -94,14 +94,12 @@ func (s *Service) Login(ctx context.Context, login Login) (LoginResult, error) {
 }
 
 func (s *Service) Logout(ctx context.Context, header CookieHeader) (Cookie, error) {
-	cookie := s.cookie(ctx)
+	cookie := s.clearedCookie(ctx)
 	if value := cookieValue(header, cookie.Name); validSessionToken(value) {
 		if err := s.repository.revokeSession(ctx, hashToken(value)); err != nil {
 			return Cookie{}, err
 		}
 	}
-
-	cookie.MaxAge, cookie.Expires = -1, time.Unix(1, 0).UTC()
 	return cookie, nil
 }
 
@@ -129,6 +127,12 @@ func (s *Service) cookie(ctx context.Context) Cookie {
 		Expires: timex.Now().Add(lifetime),
 		MaxAge:  int(lifetime.Seconds()),
 	}
+}
+
+func (s *Service) clearedCookie(ctx context.Context) Cookie {
+	cookie := s.cookie(ctx)
+	cookie.MaxAge, cookie.Expires = -1, time.Unix(1, 0).UTC()
+	return cookie
 }
 
 func (s *Service) loginSession(ctx context.Context, credential credentials) (LoginResult, error) {

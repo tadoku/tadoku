@@ -5,7 +5,7 @@ import { holdScripts, settingRow, settingValue, waitForHydration } from './suppo
 const fixtureEnabled = process.env.AUTHV2_SESSION_FIXTURE === 'true'
 let status = 200
 let contentType = 'application/json'
-let session: unknown = { account: null }
+let session: unknown = { account: null, recent_login: false }
 const requests: { cookie?: string; branch?: string; method?: string; path?: string }[] = []
 const profileUpdates: unknown[] = []
 const fixture = createServer((request, response) => {
@@ -85,6 +85,7 @@ test('account screen, session forwarding and unavailable API', async ({ page, re
 
 const account = (id: string, email: string) => ({
   account: { id, email, display_name: 'Reader', created_at: '2026-01-01T00:00:00Z', authenticated_at: '2026-01-01T00:00:00Z' },
+  recent_login: true,
 })
 
 test('Settings shows stored account values unchanged', async ({ page, request }, testInfo) => {

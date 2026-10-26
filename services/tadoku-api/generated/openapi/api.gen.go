@@ -683,6 +683,9 @@ type IdentityRegistration struct {
 // IdentitySession defines model for IdentitySession.
 type IdentitySession struct {
 	Account nullable.Nullable[IdentityAccount] `json:"account"`
+
+	// RecentLogin True when the session logged in within the last hour, the window in which email and password changes are allowed without a stale_session error. False for a guest.
+	RecentLogin bool `json:"recent_login"`
 }
 
 // ImmersionActivities defines model for ImmersionActivities.

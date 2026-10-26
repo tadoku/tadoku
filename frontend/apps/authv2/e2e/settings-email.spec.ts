@@ -13,7 +13,7 @@ const unchanged = 'This is already your email address. Enter a different one to 
 
 // Byte for byte what the API's generated session writer emits, with the email exactly as encoding/json escapes it.
 const emitted = (email: string) => '{"account":{"authenticated_at":"2026-01-01T00:00:00Z","created_at":"2026-01-01T00:00:00Z",'
-  + `"display_name":"Reader","email":${email},"id":"00000000-0000-4000-8000-000000000001"}}\n`
+  + `"display_name":"Reader","email":${email},"id":"00000000-0000-4000-8000-000000000001"},"recent_login":true}\n`
 
 const accounts = [
   { name: 'ordinary address', body: emitted('"reader@example.test"'), email: 'reader@example.test', shown: 'reader@example.test' },

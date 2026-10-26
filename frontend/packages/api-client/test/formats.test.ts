@@ -45,7 +45,7 @@ const answer = (body: unknown) => ({
 })
 
 const session = (fields: Record<string, string>) =>
-  api.identitySessionGet(answer({ account: { ...account, ...fields } }))
+  api.identitySessionGet(answer({ account: { ...account, ...fields }, recent_login: true }))
 
 const recipient = (value: string) =>
   api.emailGet({ ...answer({ ...message, recipient: value }), path: { id: message.id } })

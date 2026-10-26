@@ -25,7 +25,13 @@ Public identity paths are relative to `/api/internal` and enter the JWT and ban
 pipeline, including guest requests. Missing JWT credentials return `400`, invalid
 JWTs `401`, and another tenant on a scoped deployment `421`.
 `GET /identity/session` returns `account`: the signed-in account, or `null` for
-a guest.
+a guest. It also returns `recent_login`: `true` while the session's
+authentication time lies within the last hour, the window that email and
+password changes require (see [Recovery and settings](#recovery-and-settings)),
+and `false` for an older or future authentication time and for a guest. One
+rule decides both, so a client can send the user to log in again before
+a change would return `stale_session`. Registration and login return the same
+session shape, with `recent_login` `true`.
 
 Identity mutations require JSON and an HTTPS `Origin` on the Tadoku app
 allowlist. App hosts include the main, account, admin and Webv3 `next.` hosts,

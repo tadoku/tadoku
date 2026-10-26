@@ -9,29 +9,29 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as PlanRouteImport } from './routes/plan'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as LogsNewRouteImport } from './routes/logs/new'
+import { Route as PlanRouteImport } from './routes/plan'
 import { Route as LogsLogIdRouteImport } from './routes/logs/$logId'
+import { Route as LogsNewRouteImport } from './routes/logs/new'
 
-const PlanRoute = PlanRouteImport.update({
-  id: '/plan',
-  path: '/plan',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LogsNewRoute = LogsNewRouteImport.update({
-  id: '/logs/new',
-  path: '/logs/new',
+const PlanRoute = PlanRouteImport.update({
+  id: '/plan',
+  path: '/plan',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LogsLogIdRoute = LogsLogIdRouteImport.update({
   id: '/logs/$logId',
   path: '/logs/$logId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LogsNewRoute = LogsNewRouteImport.update({
+  id: '/logs/new',
+  path: '/logs/new',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -71,13 +71,6 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/plan': {
-      id: '/plan'
-      path: '/plan'
-      fullPath: '/plan'
-      preLoaderRoute: typeof PlanRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
@@ -85,11 +78,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/logs/new': {
-      id: '/logs/new'
-      path: '/logs/new'
-      fullPath: '/logs/new'
-      preLoaderRoute: typeof LogsNewRouteImport
+    '/plan': {
+      id: '/plan'
+      path: '/plan'
+      fullPath: '/plan'
+      preLoaderRoute: typeof PlanRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/logs/$logId': {
@@ -97,6 +90,13 @@ declare module '@tanstack/react-router' {
       path: '/logs/$logId'
       fullPath: '/logs/$logId'
       preLoaderRoute: typeof LogsLogIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/logs/new': {
+      id: '/logs/new'
+      path: '/logs/new'
+      fullPath: '/logs/new'
+      preLoaderRoute: typeof LogsNewRouteImport
       parentRoute: typeof rootRouteImport
     }
   }

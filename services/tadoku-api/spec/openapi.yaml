@@ -4583,8 +4583,15 @@ components:
           allOf:
           - $ref: '#/components/schemas/IdentityAccount'
           nullable: true
+        recent_login:
+          type: boolean
+          description: >-
+            True when the session logged in within the last hour, the window in
+            which email and password changes are allowed without a stale_session
+            error. False for a guest.
       required:
       - account
+      - recent_login
     IdentityRegistration:
       type: object
       properties:

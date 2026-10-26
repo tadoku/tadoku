@@ -148,6 +148,7 @@ func identityCookie(cookie api.IdentityCookie) string {
 
 func identitySession(result api.IdentitySession) openapi.IdentitySession {
 	account := nullable.NewNullNullable[openapi.IdentityAccount]()
+	recentLogin := false
 	if session, ok := result.(api.IdentityAuthenticatedSession); ok {
 		account = nullable.NewNullableWithValue(openapi.IdentityAccount{
 			Id:              session.Account.ID,
@@ -156,8 +157,9 @@ func identitySession(result api.IdentitySession) openapi.IdentitySession {
 			CreatedAt:       session.Account.CreatedAt,
 			AuthenticatedAt: session.AuthenticatedAt,
 		})
+		recentLogin = session.RecentLogin()
 	}
-	return openapi.IdentitySession{Account: account}
+	return openapi.IdentitySession{Account: account, RecentLogin: recentLogin}
 }
 
 // Responses keep the address part net/mail reads from a stored address and send an address it cannot read unchanged.

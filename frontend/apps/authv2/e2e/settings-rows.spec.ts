@@ -17,6 +17,7 @@ const session = JSON.stringify({
     created_at: '2026-01-01T00:00:00Z',
     authenticated_at: '2026-01-01T00:00:00Z',
   },
+  recent_login: true,
 })
 const fixture = createServer((request, response) => {
   if (request.url === '/api/internal/identity/session') {

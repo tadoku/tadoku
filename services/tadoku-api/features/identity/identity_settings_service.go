@@ -158,8 +158,7 @@ func (s *Service) lockSettingsSession(ctx context.Context, header CookieHeader) 
 }
 
 func recentSession(session AuthenticatedSession) error {
-	age := timex.Now().Sub(session.AuthenticatedAt)
-	if age < 0 || age > time.Hour {
+	if !session.RecentLogin() {
 		return ErrStaleSession
 	}
 	return nil

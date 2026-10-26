@@ -19,6 +19,7 @@ const created = json({
     created_at: '2026-01-01T00:00:00Z',
     authenticated_at: '2026-01-01T00:00:00Z',
   },
+  recent_login: true,
 })
 const cookie = 'tadoku_session_fixture=created; Path=/; HttpOnly; Secure; SameSite=Lax'
 const unavailable = 'Something went wrong on our side. Try again in a moment.'
@@ -71,7 +72,7 @@ function reply(response: ServerResponse) {
 
 const fixture = createServer((request, response) => {
   if (request.url === '/api/internal/identity/session') {
-    response.writeHead(200, { 'Content-Type': 'application/json' }).end(json({ account: null }))
+    response.writeHead(200, { 'Content-Type': 'application/json' }).end(json({ account: null, recent_login: false }))
     return
   }
   if (request.url !== '/api/internal/identity/registration' || request.method !== 'POST') {

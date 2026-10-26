@@ -517,6 +517,10 @@ export type IdentityAccount = {
 
 export type IdentitySession = {
     account: IdentityAccount | null;
+    /**
+     * True when the session logged in within the last hour, the window in which email and password changes are allowed without a stale_session error. False for a guest.
+     */
+    recent_login: boolean;
 };
 
 export type IdentityRegistration = {

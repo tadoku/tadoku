@@ -8,10 +8,12 @@ a:where(:not(.paper-button)) { color: var(--paper-color-text-link); }
 .account-skip:focus { transform: none; }
 .account-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; padding: 14px var(--account-gutter); border-bottom: 1px solid var(--paper-color-rule-default); background: var(--paper-color-surface-paper); }
 .account-brand { display: inline-flex; align-items: center; gap: 14px; color: var(--paper-color-text-muted); text-decoration: none; }
+.account-lockup { display: flex; align-items: center; gap: 7px; }
+.account-mark { display: block; width: 35px; height: auto; }
 .account-wordmark { display: block; width: 124px; height: auto; }
-.account-wordmark--dark { display: none; }
-[data-theme="dark"] .account-wordmark--light { display: none; }
-[data-theme="dark"] .account-wordmark--dark { display: block; }
+.account-mark--dark, .account-wordmark--dark { display: none; }
+[data-theme="dark"] .account-mark--light, [data-theme="dark"] .account-wordmark--light { display: none; }
+[data-theme="dark"] .account-mark--dark, [data-theme="dark"] .account-wordmark--dark { display: block; }
 .account-brand__label { padding-left: 14px; border-left: 1px solid var(--paper-color-rule-default); font-size: .875rem; font-weight: 600; line-height: 1.25rem; }
 .account-session { display: flex; align-items: center; gap: 16px; min-width: 0; margin: 0; }
 .account-session__name { min-width: 0; color: var(--paper-color-text-muted); font-size: .875rem; overflow-wrap: anywhere; }

@@ -1,4 +1,6 @@
 import { Button, buttonClassName } from 'paper-ui'
+import mark from 'paper-ui/assets/brand/cut-meter.svg?url'
+import reversedMark from 'paper-ui/assets/brand/cut-meter-reversed.svg?url'
 import wordmark from 'paper-ui/assets/brand/wordmark-accent.svg?url'
 import reversedWordmark from 'paper-ui/assets/brand/wordmark-reversed.svg?url'
 import type { ReactNode } from 'react'
@@ -14,8 +16,12 @@ export function Shell({ identity, children }: { readonly identity: Identity; rea
       <a className={buttonClassName({ className: 'account-skip' })} href="#main">Skip to content</a>
       <header className="account-header">
         <a className="account-brand" href={identity.webUrl}>
-          <img className="account-wordmark account-wordmark--light" src={wordmark} width="158" height="29" alt="Tadoku" />
-          <img className="account-wordmark account-wordmark--dark" src={reversedWordmark} width="158" height="29" alt="Tadoku" />
+          <span className="account-lockup">
+            <img className="account-mark account-mark--light" src={mark} width="35" height="35" alt="" />
+            <img className="account-mark account-mark--dark" src={reversedMark} width="35" height="35" alt="" />
+            <img className="account-wordmark account-wordmark--light" src={wordmark} width="158" height="29" alt="Tadoku" />
+            <img className="account-wordmark account-wordmark--dark" src={reversedWordmark} width="158" height="29" alt="Tadoku" />
+          </span>
           <span className="account-brand__label">Account</span>
         </a>
         {account ? (

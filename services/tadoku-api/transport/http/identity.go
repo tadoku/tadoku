@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/oapi-codegen/nullable"
-	"github.com/tadoku/tadoku/services/tadoku-api/app"
+	"github.com/tadoku/tadoku/services/tadoku-api/app/api"
 	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
 	callbackopenapi "github.com/tadoku/tadoku/services/tadoku-api/generated/openapi/callback"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
@@ -19,7 +19,7 @@ import (
 
 type identityRequestKey struct{}
 type identityRequestMetadata struct {
-	cookies app.IdentityCookieHeader
+	cookies api.IdentityCookieHeader
 	ip      string
 }
 
@@ -30,7 +30,7 @@ func (s *server) withIdentityRequest(next openapi.StrictHandlerFunc, operation s
 	return func(ctx context.Context, w stdhttp.ResponseWriter, r *stdhttp.Request, request any) (any, error) {
 		w.Header().Set("Cache-Control", "private, no-store")
 		if r.Method != stdhttp.MethodGet {
-			if err := app.ValidateIdentityOrigin(r.Header.Get("Origin")); err != nil {
+			if err := api.ValidateIdentityOrigin(r.Header.Get("Origin")); err != nil {
 				return nil, err
 			}
 			mediaType, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
@@ -53,7 +53,7 @@ func (s *server) withIdentityRequest(next openapi.StrictHandlerFunc, operation s
 			}
 		}
 		metadata := identityRequestMetadata{
-			cookies: app.IdentityCookieHeader(strings.Join(r.Header.Values("Cookie"), "; ")),
+			cookies: api.IdentityCookieHeader(strings.Join(r.Header.Values("Cookie"), "; ")),
 			ip:      ip,
 		}
 		return next(context.WithValue(ctx, identityRequestKey{}, metadata), w, r, request)
@@ -65,7 +65,7 @@ func (s *server) IdentityRegistrationCreate(
 	request openapi.IdentityRegistrationCreateRequestObject,
 ) (openapi.IdentityRegistrationCreateResponseObject, error) {
 	metadata := ctx.Value(identityRequestKey{}).(identityRequestMetadata)
-	command := app.IdentityRegistration{IP: metadata.ip}
+	command := api.IdentityRegistration{IP: metadata.ip}
 	if request.Body != nil {
 		command.Email = string(request.Body.Email)
 		command.DisplayName, command.Password = request.Body.DisplayName, request.Body.Password
@@ -87,7 +87,7 @@ func (s *server) IdentityLoginCreate(
 	request openapi.IdentityLoginCreateRequestObject,
 ) (openapi.IdentityLoginCreateResponseObject, error) {
 	metadata := ctx.Value(identityRequestKey{}).(identityRequestMetadata)
-	command := app.IdentityLoginCommand{IP: metadata.ip}
+	command := api.IdentityLoginCommand{IP: metadata.ip}
 	if request.Body != nil {
 		command.Email, command.Password = string(request.Body.Email), request.Body.Password
 	}
@@ -132,7 +132,7 @@ func (s *server) IdentitySessionGet(
 	return openapi.IdentitySessionGet200JSONResponse(identitySession(result)), nil
 }
 
-func identityCookie(cookie app.IdentityCookie) string {
+func identityCookie(cookie api.IdentityCookie) string {
 	return (&stdhttp.Cookie{
 		Name:     cookie.Name,
 		Value:    cookie.Value,
@@ -146,9 +146,9 @@ func identityCookie(cookie app.IdentityCookie) string {
 	}).String()
 }
 
-func identitySession(result app.IdentitySession) openapi.IdentitySession {
+func identitySession(result api.IdentitySession) openapi.IdentitySession {
 	account := nullable.NewNullNullable[openapi.IdentityAccount]()
-	if session, ok := result.(app.IdentityAuthenticatedSession); ok {
+	if session, ok := result.(api.IdentityAuthenticatedSession); ok {
 		account = nullable.NewNullableWithValue(openapi.IdentityAccount{
 			Id:              session.Account.ID,
 			Email:           accountEmail(session.Account.Email.String()),
@@ -173,15 +173,15 @@ func (s *server) IdentityProxySessionCheck(
 	ctx context.Context,
 	request callbackopenapi.IdentityProxySessionCheckRequestObject,
 ) (callbackopenapi.IdentityProxySessionCheckResponseObject, error) {
-	branch, cookies := "", app.IdentityCookieHeader("")
+	branch, cookies := "", api.IdentityCookieHeader("")
 	if request.Params.XDevBranch != nil {
 		branch = *request.Params.XDevBranch
 	}
 	if request.Params.Cookie != nil {
-		cookies = app.IdentityCookieHeader(*request.Params.Cookie)
+		cookies = api.IdentityCookieHeader(*request.Params.Cookie)
 	}
 	result, err := s.application.IdentityCheckSession(ctx, branch, cookies)
-	if errors.Is(err, app.ErrIdentityTenantNotServed) {
+	if errors.Is(err, api.ErrIdentityTenantNotServed) {
 		return callbackopenapi.IdentityProxySessionCheck421JSONResponse{Message: err.Error()}, nil
 	}
 	if err != nil {
@@ -189,7 +189,7 @@ func (s *server) IdentityProxySessionCheck(
 		return nil, err
 	}
 	var response callbackopenapi.IdentityProxySession
-	if session, ok := result.(app.IdentityAuthenticatedSession); ok {
+	if session, ok := result.(api.IdentityAuthenticatedSession); ok {
 		user := callbackopenapi.IdentityProxyUser{
 			AuthenticatedAt: session.AuthenticatedAt,
 			ExpiresAt:       session.ExpiresAt,

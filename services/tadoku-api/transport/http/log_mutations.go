@@ -3,15 +3,15 @@ package http
 import (
 	"context"
 
-	"github.com/tadoku/tadoku/services/tadoku-api/app"
+	"github.com/tadoku/tadoku/services/tadoku-api/app/api"
 	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
 )
 
 func (s *server) ImmersionLogCreate(ctx context.Context, request openapi.ImmersionLogCreateRequestObject) (openapi.ImmersionLogCreateResponseObject, error) {
 	body := request.Body
-	parameters := app.LogCreateParameters{}
+	parameters := api.LogCreateParameters{}
 	if body != nil {
-		parameters = app.LogCreateParameters{
+		parameters = api.LogCreateParameters{
 			UnitID:          body.UnitId,
 			UnitKey:         body.UnitKey,
 			ActivityID:      body.ActivityId,
@@ -35,7 +35,7 @@ func (s *server) ImmersionLogCreate(ctx context.Context, request openapi.Immersi
 
 func (s *server) ImmersionLogUpdate(ctx context.Context, request openapi.ImmersionLogUpdateRequestObject) (openapi.ImmersionLogUpdateResponseObject, error) {
 	body := request.Body
-	updated, err := s.application.UpdateLog(ctx, app.LogUpdateParameters{
+	updated, err := s.application.UpdateLog(ctx, api.LogUpdateParameters{
 		ID:              request.Id,
 		UnitID:          body.UnitId,
 		UnitKey:         body.UnitKey,

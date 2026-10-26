@@ -167,7 +167,7 @@ the gateway must use the anonymous-only identity rule.
 
 ## Checks in application operations
 
-Application operations in `services/tadoku-api/app/` own actor authorization; no
+Application operations in `services/tadoku-api/app/api/` own actor authorization; no
 HTTP middleware enforces administrator access. They call
 `*permissions.Checker` (`services/tadoku-api/internal/permissions/`) and, for
 administrator checks, `*authz.Roles` (`services/tadoku-api/features/authz/`):

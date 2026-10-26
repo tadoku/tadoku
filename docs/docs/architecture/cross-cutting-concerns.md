@@ -16,7 +16,7 @@ build again. It has four parts, each with one home:
 | Core logic | Generic logic that knows no feature names. It declares a small interface, a port, for the state it needs. | `services/tadoku-api/internal/<concern>` |
 | State | A table owned by one feature's repository, or an external system behind an adapter | `services/tadoku-api/features/<owner>` or `services/tadoku-api/infra/<provider>` |
 | Vocabulary | The concrete entries, such as which permissions exist | The feature they describe, or `services/tadoku-api/domain/<concept>` when one feature produces them and another consumes them |
-| Enforcement | When to check, write, enqueue or record | `services/tadoku-api/app/` |
+| Enforcement | When to check, write, enqueue or record | An application in `services/tadoku-api/app/`: `app/api` for HTTP operations, `app/worker` for job handlers |
 
 A composition root constructs the state owner, builds the core logic over it
 and hands both to `app/`. Using an existing concern needs only vocabulary in the

@@ -5,11 +5,11 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/oapi-codegen/nullable"
-	"github.com/tadoku/tadoku/services/tadoku-api/app"
+	"github.com/tadoku/tadoku/services/tadoku-api/app/api"
 	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
 )
 
-func announcementResponse(item *app.Announcement) openapi.ContentAnnouncement {
+func announcementResponse(item *api.Announcement) openapi.ContentAnnouncement {
 	href := nullable.NewNullNullable[string]()
 	if item.Href != nil {
 		href = nullable.NewNullableWithValue(*item.Href)

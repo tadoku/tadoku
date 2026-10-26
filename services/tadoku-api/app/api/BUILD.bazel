@@ -1,7 +1,7 @@
 load("@rules_go//go:def.bzl", "go_library")
 
 go_library(
-    name = "app",
+    name = "api",
     srcs = [
         "actor.go",
         "announcements.go",
@@ -28,7 +28,7 @@ go_library(
         "profile.go",
         "scoring.go",
     ],
-    importpath = "github.com/tadoku/tadoku/services/tadoku-api/app",
+    importpath = "github.com/tadoku/tadoku/services/tadoku-api/app/api",
     visibility = [
         "//services/tadoku-api/cmd/tadoku-api:__pkg__",
         "//services/tadoku-api/e2e:__pkg__",

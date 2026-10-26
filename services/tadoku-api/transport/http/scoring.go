@@ -3,13 +3,13 @@ package http
 import (
 	"context"
 
-	"github.com/tadoku/tadoku/services/tadoku-api/app"
+	"github.com/tadoku/tadoku/services/tadoku-api/app/api"
 	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
 )
 
 func (s *server) ImmersionScorePreview(ctx context.Context, request openapi.ImmersionScorePreviewRequestObject) (openapi.ImmersionScorePreviewResponseObject, error) {
 	body := request.Body
-	parameters := app.ScorePreviewParameters{
+	parameters := api.ScorePreviewParameters{
 		UnitID:          body.UnitId,
 		UnitKey:         body.UnitKey,
 		ActivityID:      body.ActivityId,
@@ -49,7 +49,7 @@ func (s *server) ImmersionScoringRuleSetListContest(ctx context.Context, request
 }
 
 func (s *server) ImmersionScoringRuleSetCreatePlatform(ctx context.Context, request openapi.ImmersionScoringRuleSetCreatePlatformRequestObject) (openapi.ImmersionScoringRuleSetCreatePlatformResponseObject, error) {
-	created, err := s.application.CreatePlatformScoringRuleSetDraft(ctx, app.PlatformScoringRuleSetDraftParameters{
+	created, err := s.application.CreatePlatformScoringRuleSetDraft(ctx, api.PlatformScoringRuleSetDraftParameters{
 		Rules: scoringRules(request.Body.Rules),
 	})
 	if err != nil {
@@ -60,7 +60,7 @@ func (s *server) ImmersionScoringRuleSetCreatePlatform(ctx context.Context, requ
 }
 
 func (s *server) ImmersionScoringRuleSetCreateContest(ctx context.Context, request openapi.ImmersionScoringRuleSetCreateContestRequestObject) (openapi.ImmersionScoringRuleSetCreateContestResponseObject, error) {
-	parameters := app.ContestScoringRuleSetDraftParameters{
+	parameters := api.ContestScoringRuleSetDraftParameters{
 		FallbackRuleSetID: request.Body.FallbackRuleSetId,
 		Rules:             scoringRules(request.Body.Rules),
 	}
@@ -93,17 +93,17 @@ func (s *server) ImmersionScoringRuleSetActivate(ctx context.Context, request op
 	return openapi.ImmersionScoringRuleSetActivate204Response{}, nil
 }
 
-func scoringRules(rules []openapi.ImmersionScoringRule) []app.ScoringRule {
-	result := make([]app.ScoringRule, len(rules))
+func scoringRules(rules []openapi.ImmersionScoringRule) []api.ScoringRule {
+	result := make([]api.ScoringRule, len(rules))
 	for i, rule := range rules {
-		result[i] = app.ScoringRule{
+		result[i] = api.ScoringRule{
 			Priority:     rule.Priority,
 			Stackable:    rule.Stackable,
 			ActivityID:   rule.ActivityId,
 			UnitKey:      scoringString(rule.UnitKey),
 			LanguageCode: scoringString(rule.LanguageCode),
 			Tag:          scoringString(rule.Tag),
-			Source:       app.ScoringSource(rule.ScoreSource),
+			Source:       api.ScoringSource(rule.ScoreSource),
 			Rate:         rule.Rate,
 		}
 	}
@@ -111,7 +111,7 @@ func scoringRules(rules []openapi.ImmersionScoringRule) []app.ScoringRule {
 	return result
 }
 
-func scorePreviewResponse(result *app.ScorePreview) openapi.ImmersionScorePreview {
+func scorePreviewResponse(result *api.ScorePreview) openapi.ImmersionScorePreview {
 	response := openapi.ImmersionScorePreview{
 		Platform: scoreEstimateResponse(result.Platform),
 		Contests: make([]openapi.ImmersionContestScoreEstimate, len(result.Contests)),
@@ -126,7 +126,7 @@ func scorePreviewResponse(result *app.ScorePreview) openapi.ImmersionScorePrevie
 	return response
 }
 
-func scoreEstimateResponse(estimate app.ScoreEstimate) openapi.ImmersionScoreEstimate {
+func scoreEstimateResponse(estimate api.ScoreEstimate) openapi.ImmersionScoreEstimate {
 	rules := make([]openapi.ImmersionAppliedScoringRule, len(estimate.Rules))
 	for i, rule := range estimate.Rules {
 		rules[i] = openapi.ImmersionAppliedScoringRule{
@@ -142,7 +142,7 @@ func scoreEstimateResponse(estimate app.ScoreEstimate) openapi.ImmersionScoreEst
 	}
 }
 
-func scoringRuleSetsResponse(sets []app.ScoringRuleSet) openapi.ImmersionScoringRuleSets {
+func scoringRuleSetsResponse(sets []api.ScoringRuleSet) openapi.ImmersionScoringRuleSets {
 	response := openapi.ImmersionScoringRuleSets{
 		RuleSets: make([]openapi.ImmersionScoringRuleSet, len(sets)),
 	}
@@ -183,8 +183,8 @@ func scoringRuleSetsResponse(sets []app.ScoringRuleSet) openapi.ImmersionScoring
 	return response
 }
 
-func scoringRuleSetResponse(set app.ScoringRuleSet) openapi.ImmersionScoringRuleSet {
-	return scoringRuleSetsResponse([]app.ScoringRuleSet{set}).RuleSets[0]
+func scoringRuleSetResponse(set api.ScoringRuleSet) openapi.ImmersionScoringRuleSet {
+	return scoringRuleSetsResponse([]api.ScoringRuleSet{set}).RuleSets[0]
 }
 
 func optionalScoringString(value string) *string {

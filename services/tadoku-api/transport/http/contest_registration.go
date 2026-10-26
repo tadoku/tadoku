@@ -6,7 +6,7 @@ import (
 
 	"github.com/oapi-codegen/nullable"
 	openapiTypes "github.com/oapi-codegen/runtime/types"
-	"github.com/tadoku/tadoku/services/tadoku-api/app"
+	"github.com/tadoku/tadoku/services/tadoku-api/app/api"
 	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
 )
 
@@ -18,7 +18,7 @@ func (s *server) ImmersionContestFindRegistration(
 	if err != nil {
 		s.logOperationError(ctx, "find contest registration", err)
 		switch {
-		case errors.Is(err, app.ErrContestRegistrationNotFound):
+		case errors.Is(err, api.ErrContestRegistrationNotFound):
 			return openapi.ImmersionContestFindRegistration204Response{}, nil
 		default:
 			return nil, err
@@ -45,7 +45,7 @@ func (s *server) ImmersionProfileYearlyContestRegistrationsByUserID(
 	ctx context.Context,
 	request openapi.ImmersionProfileYearlyContestRegistrationsByUserIDRequestObject,
 ) (openapi.ImmersionProfileYearlyContestRegistrationsByUserIDResponseObject, error) {
-	parameters := app.ListYearlyContestRegistrationsParameters{
+	parameters := api.ListYearlyContestRegistrationsParameters{
 		UserID: request.UserId,
 		Year:   request.Year,
 	}
@@ -65,7 +65,7 @@ func (s *server) ImmersionProfileYearlyContestRegistrationsByUserID(
 	return openapi.ImmersionProfileYearlyContestRegistrationsByUserID200JSONResponse(registrationListResponse(registrations)), nil
 }
 
-func registrationListResponse(registrations *app.ContestRegistrationList) openapi.ImmersionContestRegistrations {
+func registrationListResponse(registrations *api.ContestRegistrationList) openapi.ImmersionContestRegistrations {
 	response := openapi.ImmersionContestRegistrations{
 		Registrations: make([]openapi.ImmersionContestRegistration, 0, len(registrations.Registrations)),
 		TotalSize:     registrations.TotalSize,
@@ -82,7 +82,7 @@ func (s *server) ImmersionContestRegistrationUpsert(
 	ctx context.Context,
 	request openapi.ImmersionContestRegistrationUpsertRequestObject,
 ) (openapi.ImmersionContestRegistrationUpsertResponseObject, error) {
-	err := s.application.UpsertContestRegistration(ctx, app.ContestRegistrationUpsertParameters{
+	err := s.application.UpsertContestRegistration(ctx, api.ContestRegistrationUpsertParameters{
 		ContestID:     request.Id,
 		LanguageCodes: request.Body.LanguageCodes,
 	})
@@ -94,7 +94,7 @@ func (s *server) ImmersionContestRegistrationUpsert(
 	return openapi.ImmersionContestRegistrationUpsert200Response{}, nil
 }
 
-func registrationResponse(registration *app.ContestRegistration) openapi.ImmersionContestRegistration {
+func registrationResponse(registration *api.ContestRegistration) openapi.ImmersionContestRegistration {
 	response := openapi.ImmersionContestRegistration{
 		ContestId:       registration.ContestID,
 		Id:              &registration.ID,

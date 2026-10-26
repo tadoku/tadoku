@@ -1,4 +1,4 @@
-package app
+package api
 
 import "github.com/tadoku/tadoku/services/tadoku-api/features/identity"
 

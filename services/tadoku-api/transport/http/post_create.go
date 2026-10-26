@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/tadoku/tadoku/services/tadoku-api/app"
+	"github.com/tadoku/tadoku/services/tadoku-api/app/api"
 	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
 )
 
@@ -27,7 +27,7 @@ func (s *server) ContentPostCreate(
 		publishedAt = &instant
 	}
 
-	item, err := s.application.CreatePost(ctx, app.CreatePostParameters{
+	item, err := s.application.CreatePost(ctx, api.CreatePostParameters{
 		ID:          id,
 		Namespace:   request.Namespace,
 		Slug:        body.Slug,

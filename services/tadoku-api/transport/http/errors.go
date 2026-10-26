@@ -6,7 +6,7 @@ import (
 	stdhttp "net/http"
 	"strings"
 
-	"github.com/tadoku/tadoku/services/tadoku-api/app"
+	"github.com/tadoku/tadoku/services/tadoku-api/app/api"
 	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
@@ -22,7 +22,7 @@ func (s *server) logOperationError(ctx context.Context, operation string, err er
 }
 
 func writeResponseError(w stdhttp.ResponseWriter, request *stdhttp.Request, err error) {
-	var identityError *app.IdentityError
+	var identityError *api.IdentityError
 	switch {
 	case errors.As(err, &identityError):
 		writeJSON(w, errorStatus(request.Context(), err), map[string]string{
@@ -35,7 +35,7 @@ func writeResponseError(w stdhttp.ResponseWriter, request *stdhttp.Request, err 
 		writeJSON(w, errorStatus(request.Context(), err), map[string]string{"message": err.Error()})
 	case errx.KindOf(err) == errx.NotImplemented:
 		writeJSON(w, stdhttp.StatusNotImplemented, map[string]string{"message": "not implemented"})
-	case errors.Is(err, app.ErrAccountDeletionInProgress):
+	case errors.Is(err, api.ErrAccountDeletionInProgress):
 		writeJSON(w, stdhttp.StatusConflict, openapi.ImmersionAccountDeletionInProgress{
 			Error: openapi.AccountDeletionInProgress,
 		})

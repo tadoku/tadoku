@@ -5,7 +5,7 @@ import (
 	"time"
 
 	openapiTypes "github.com/oapi-codegen/runtime/types"
-	"github.com/tadoku/tadoku/services/tadoku-api/app"
+	"github.com/tadoku/tadoku/services/tadoku-api/app/api"
 	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
 )
 
@@ -20,7 +20,7 @@ func (s *server) ImmersionLogFindByID(ctx context.Context, request openapi.Immer
 	return openapi.ImmersionLogFindByID200JSONResponse(response), nil
 }
 
-func logDetailResponse(log app.Log) openapi.ImmersionLog {
+func logDetailResponse(log api.Log) openapi.ImmersionLog {
 	response := logResponse(log)
 	response.UnitId = log.UnitID
 	if log.UnitKey != "" {
@@ -43,7 +43,7 @@ func logDetailResponse(log app.Log) openapi.ImmersionLog {
 }
 
 func (s *server) ImmersionProfileListLogs(ctx context.Context, request openapi.ImmersionProfileListLogsRequestObject) (openapi.ImmersionProfileListLogsResponseObject, error) {
-	parameters := app.LogListParameters{}
+	parameters := api.LogListParameters{}
 	parameters.UserID = &request.UserId
 	if request.Params.PageSize != nil {
 		parameters.PageSize = *request.Params.PageSize
@@ -69,7 +69,7 @@ func (s *server) ImmersionProfileListLogs(ctx context.Context, request openapi.I
 }
 
 func (s *server) ImmersionContestListLogs(ctx context.Context, request openapi.ImmersionContestListLogsRequestObject) (openapi.ImmersionContestListLogsResponseObject, error) {
-	parameters := app.LogListParameters{}
+	parameters := api.LogListParameters{}
 	parameters.ContestID = request.Id
 	parameters.UserID = request.Params.UserId
 	if request.Params.PageSize != nil {
@@ -91,7 +91,7 @@ func (s *server) ImmersionContestListLogs(ctx context.Context, request openapi.I
 	return openapi.ImmersionContestListLogs200JSONResponse(logListResponse(result)), nil
 }
 
-func logListResponse(result *app.LogList) openapi.ImmersionLogs {
+func logListResponse(result *api.LogList) openapi.ImmersionLogs {
 	response := openapi.ImmersionLogs{
 		Logs:          make([]openapi.ImmersionLog, 0, len(result.Logs)),
 		TotalSize:     result.TotalSize,
@@ -103,7 +103,7 @@ func logListResponse(result *app.LogList) openapi.ImmersionLogs {
 	return response
 }
 
-func logResponse(log app.Log) openapi.ImmersionLog {
+func logResponse(log api.Log) openapi.ImmersionLog {
 	inputType := openapi.ImmersionActivityInputType(log.Activity.InputType)
 	return openapi.ImmersionLog{
 		Id: log.ID,

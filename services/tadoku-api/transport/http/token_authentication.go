@@ -5,7 +5,7 @@ import (
 	stdhttp "net/http"
 	"strings"
 
-	"github.com/tadoku/tadoku/services/tadoku-api/app"
+	"github.com/tadoku/tadoku/services/tadoku-api/app/api"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
@@ -23,7 +23,7 @@ func (s *server) authenticateEmailToken(next stdhttp.Handler) stdhttp.Handler {
 		}
 
 		ctx, err := s.application.AuthenticateEmailReader(request.Context(), token)
-		if errors.Is(err, app.ErrEmailTenantNotServed) {
+		if errors.Is(err, api.ErrEmailTenantNotServed) {
 			writeJSON(w, stdhttp.StatusMisdirectedRequest, map[string]string{"message": err.Error()})
 			return
 		}

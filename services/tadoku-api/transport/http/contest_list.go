@@ -3,7 +3,7 @@ package http
 import (
 	"context"
 
-	"github.com/tadoku/tadoku/services/tadoku-api/app"
+	"github.com/tadoku/tadoku/services/tadoku-api/app/api"
 	"github.com/tadoku/tadoku/services/tadoku-api/generated/openapi"
 )
 
@@ -11,7 +11,7 @@ func (s *server) ImmersionContestList(
 	ctx context.Context,
 	request openapi.ImmersionContestListRequestObject,
 ) (openapi.ImmersionContestListResponseObject, error) {
-	parameters := app.ListContestsParameters{Official: true}
+	parameters := api.ListContestsParameters{Official: true}
 	if request.Params.PageSize != nil {
 		parameters.PageSize = *request.Params.PageSize
 	}

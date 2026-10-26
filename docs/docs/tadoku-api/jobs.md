@@ -120,6 +120,18 @@ features through application composition. `email.Writer.Write` requires the
 business transaction and returns `WriteResult.Jobs`; the application enqueues
 all jobs before committing, together with the identity write.
 
+### Account deletion contract
+
+`jobs.DeleteAccountV1` has the persisted name `account.delete.v1` and carries
+exactly `{"user_id":"<uuid>"}`. A zero UUID is invalid. Only filing a deletion
+publishes it, in the transaction that locks the user. The handler reads current
+state: a user who is already deleted completes without changes, so duplicates
+and replays are safe. A user without a deletion lock or without a `users` row
+fails without retry as `invalid_payload` and changes nothing. There is no
+cancel path. The worker registers this handler with concurrency 1, a
+60-second bound and five attempts. See
+[Account deletion](./account-deletion.md) for its effects.
+
 ## Publish atomically
 
 A producing feature returns its ordinary result and `Jobs []jobs.Job`. It
@@ -173,6 +185,7 @@ func registrations(
     invalidateContest func(context.Context, jobs.InvalidateContestLeaderboardV1) error,
     invalidateOfficial func(context.Context, jobs.InvalidateOfficialLeaderboardV1) error,
     sendEmail func(context.Context, jobs.SendEmailV1) error,
+    deleteAccount func(context.Context, jobs.DeleteAccountV1) error,
 ) (*registry, error) {
     leaderboardPolicy := policy{
         Concurrency: 2,
@@ -183,6 +196,7 @@ func registrations(
         handle(invalidateContest, leaderboardPolicy),
         handle(invalidateOfficial, leaderboardPolicy),
         handle(sendEmail, policy{Concurrency: 2, Timeout: 20 * time.Second, MaxAttempts: 5}),
+        handle(deleteAccount, policy{Concurrency: 1, Timeout: 60 * time.Second, MaxAttempts: 5}),
     )
 }
 ```

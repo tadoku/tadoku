@@ -32,6 +32,9 @@ boundaries described in [Code ownership](./index.md#code-ownership).
   transport imports no other application.
 - The worker application (`app/worker`) is visible only to its binary
   (`cmd/tadoku-worker`) and E2E.
+- Account deletion filing (`app/accountdeletion`) composes features, like an
+  application, so that more than one application can file a deletion. It is
+  visible only to the worker application, its binary and E2E.
 - The owner-only lifecycle application (`app/tenantlifecycle`) is visible only
   to `cmd/tadoku-tenant` and E2E. Its generated sqlc package is visible only to
   that application; lifecycle SQL targets the tenant registry rather than an
@@ -43,7 +46,7 @@ boundaries described in [Code ownership](./index.md#code-ownership).
   [Cross-cutting concerns](../architecture/cross-cutting-concerns.md).
 - `app/permissionmodel`, the list of every feature's permission namespace, is
   visible only to the composition roots that build the model from it:
-  `cmd/tadoku-api`, `app/tenantlifecycle` and E2E.
+  `cmd/tadoku-api`, `cmd/tadoku-worker`, `app/tenantlifecycle` and E2E.
 - `services/tadoku-api/infra/flipt` owns the shared tenant-to-provider target
   mapping. Its ordinary consumers use `:infrastructure_consumers`; the exact test-only
   `internal/testflipt` fixture package may also depend on it so HTTP evaluation

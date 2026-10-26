@@ -83,6 +83,7 @@ files in an area, read its page; those rules are as binding as this file.
 | The OpenAPI contract in `services/tadoku-api/spec/openapi/` or a request or response shape | `docs/docs/tadoku-api/contract.md` |
 | A migration, SQL query or transaction | `docs/docs/tadoku-api/database.md` |
 | Background jobs, worker handlers, replay or message-version changes | `docs/docs/tadoku-api/jobs.md` |
+| Filing or executing an account deletion | `docs/docs/tadoku-api/account-deletion.md` |
 | Any Go test | `docs/docs/tadoku-api/testing.md` |
 | HTTP golden cases, fixture tokens or relationships | `docs/docs/tadoku-api/http-e2e.md` |
 | A user journey | `docs/docs/tadoku-api/user-journeys.md` |

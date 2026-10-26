@@ -1,79 +1,48 @@
 ---
 sidebar_position: 1
 title: Account deletion
-description: How to manually delete a Tadoku account, its native sign-in account, its sessions and its roles from the Tadoku API database, plus its leaderboard cache entries and feature access, keeping anonymised history for finished contests.
+description: When an operator deletes a Tadoku account, how to file the deletion with tadoku-worker delete-account, follow pending deletions and their audit events, replay a failed account.delete.v1 job and verify the result.
 ---
 
 # Account deletion
 
-Read this when a user has asked for their Tadoku account to be deleted.
+Read this when a user has asked an operator to delete their Tadoku account.
 
-Account deletion is manual. Tadoku has no self-service or API operation for it.
+An operator files the deletion with the worker's `delete-account` command. It
+locks the account at once, records a `request_account_deletion` audit event
+and enqueues an `account.delete.v1` job. The worker then deletes the data in
+one transaction, records a `complete_account_deletion` event and sends an
+`account.deleted` notice to the account's address.
+[Account deletion](../tadoku-api/account-deletion.md) lists what a deletion
+removes and keeps. This guide writes no SQL; every query below is
+read-only.
+
+## When an operator deletes
+
 Start only after you have confirmed that the request comes from the account's
-owner. Run the steps below in order. You can safely rerun any step.
+owner. Operators delete:
 
-The steps have two stages with different effects:
+- a banned account;
+- an administrator's account, after removing the administrator role, because
+  the command refuses administrators;
+- the account of a user who cannot sign in.
 
-- **Lock (step 2)** disables the account at once. Login, session lookup,
-  recovery and settings ignore a native account whose user is
-  deletion-locked, so its existing sessions stop authenticating and requests
-  that need a signed-in user return `401`. A log, contest or registration
-  write that reaches the API already authenticated as the locked user returns
-  `409`. Nothing is deleted yet: until step 3 commits, clearing
-  `deletion_locked_at` restores the account.
-- **Delete (step 3)** cannot be undone. It removes the native sign-in account,
-  its sessions and recovery tokens, and the account's logs, contest
-  registrations, log tags and roles, except the history of
-  finished contests. Roles are the account's rows in
-  `permission_relationships`; the Tadoku API never removes them itself.
-
-A contest is finished once its end date has passed and it has not been
-deleted. The account's registrations and logs in finished contests stay, so
-their final results and leaderboards do not change. Those logs are anonymised:
-their descriptions and tags are removed and `frozen_at` is set, which stops any
-further change to them.
-
-The `users` row stays as an anonymised tombstone that keeps the ID and
-`created_at`: contest queries join contest owners and participants to `users`,
-and the Tadoku API rejects writes and profile synchronisation for users whose
-`deletion_locked_at` or `deleted_at` is set. Deleting the `accounts` row frees
-the email address; a later registration with it creates a new, unrelated user.
-
-## Data this guide does not remove
-
-- **Moderation audit entries** stay in `moderation_audit_log`, both entries
-  where the account was the moderator and entries where it was the target.
-- **Retained email** rows addressed to the account, such as recovery messages
-  and old-address notices, are removed by the worker's
-  [email retention](../tadoku-api/email.md#retention-and-operations) after three
-  days in production. Deleting the recovery tokens in step 3 invalidates every
-  link in them.
-- **Legacy identity data.** Production accounts were imported from Ory Kratos.
-  Production Kratos is offline, and its database and Secrets are retained, so
-  they still hold the identity's pre-import email address and password hash.
-  This guide never starts Kratos or uses its self-service or admin APIs.
-  Record the account ID with the operation's evidence so that the separately
-  authorized disposition of retained legacy data can include it.
-- **Database backups** keep earlier copies until the provider's retention
-  removes them; see [Database recovery](./identity-recovery.md#database-recovery).
+A deletion cannot be undone. Only a database backup holds the earlier rows; see
+[Database recovery](./identity-recovery.md#database-recovery).
 
 ## Prerequisites
 
-- Write access to the Tadoku API database through `psql` as the non-owner
-  runtime role. Row-level security scopes every statement to the tenant that
-  its transaction sets, and each transaction below sets `tadoku/prod`. Never use
-  the owner role: it bypasses row-level security. See
-  [Tenancy](../tadoku-api/database.md#tenancy). The statements use unqualified
-  table names, like the migrations in `services/tadoku-api/migrations/`, so
-  connect with the `search_path` that the Tadoku API uses.
-- A running `tadoku-worker` release that registers both
-  `leaderboard.invalidate_contest.v1` and
-  `leaderboard.invalidate_official.v1`, connected to this exact database and
-  its matching Valkey cache prefix. Confirm the deployed release's registration
-  before proceeding.
-- An administrator session for the feature-flag routes.
 - The account ID, which is `accounts.user_id` and `users.id`. Imported accounts
   keep their former Kratos identity ID.
+- Your own Tadoku user ID. The command records it as the request's actor.
+- A shell in a running `tadoku-worker` container of a release that registers
+  `account.delete.v1`. The command needs only the worker's `WORKER_POSTGRES_*`
+  settings and, like `replay`, acts on `tadoku/prod` only.
+- For the queries, `psql` as the non-owner runtime role. Row-level security
+  returns no rows until a transaction sets the tenant; see
+  [Tenancy](../tadoku-api/database.md#tenancy). Never use the owner role: it
+  bypasses row-level security. Connect with the `search_path` that the Tadoku
+  API uses.
 
 Set the variables once for `psql`. The Tadoku API compares contest dates with
 the current UTC date, so set the `psql` session to UTC too:
@@ -85,84 +54,41 @@ set time zone 'UTC';
 ```
 
 To find the account ID from an email address, look it up by the address
-lowercased with surrounding whitespace removed, the form that login uses:
+lowercased with surrounding whitespace removed, the form that login uses, then
+set it:
 
 ```sql
 begin transaction read only;
 select set_config('tadoku.tenant', :'tenant', true);
 select user_id, state from accounts where email_normalized = '<NORMALIZED_EMAIL>';
 commit;
-```
 
-Then set the ID:
-
-```sql
 \set account_id '<ACCOUNT_ID>'
 ```
 
 ## 1. Preflight
 
-Run these read-only queries. First, list the data the account owns:
+Count the finished-contest history that the deletion keeps, and review the
+contests the account owns. A contest is finished once its end date is before
+the current UTC date.
 
 ```sql
 begin transaction read only;
 select set_config('tadoku.tenant', :'tenant', true);
 
-select
-  (select count(*) from users where id = :'account_id') as users,
-  (select deletion_locked_at from users where id = :'account_id') as deletion_locked_at,
-  (select deleted_at from users where id = :'account_id') as deleted_at,
-  (select count(*) from accounts where user_id = :'account_id') as accounts,
-  (select count(*) from sessions where user_id = :'account_id') as sessions,
-  (select count(*) from recovery_tokens where user_id = :'account_id') as recovery_tokens,
-  (select count(*) from logs where user_id = :'account_id') as logs,
-  (select count(*) from contest_registrations where user_id = :'account_id') as registrations,
-  (select count(*) from contests where owner_user_id = :'account_id') as owned_contests,
-  (select count(*) from permission_relationships
-    where subject_type = 'user' and subject_id = lower(:'account_id')) as permission_relationships,
-  (select count(*) from moderation_audit_log
-    where user_id = :'account_id' or metadata->>'target_user_id' = :'account_id') as audit_entries;
-```
-
-If `users` is `0`, the account has no other Tadoku API data. Run `commit;`,
-remove its permission relationships, then skip to
-[Feature access](#5-feature-access):
-
-```sql
-begin;
-select set_config('tadoku.tenant', :'tenant', true);
-delete from permission_relationships
-where subject_type = 'user' and subject_id = lower(:'account_id');
-commit;
-```
-
-Next, count the finished-contest history that the delete step keeps anonymised:
-
-```sql
 with finished_contests as (
-  select id from contests
-  where deleted_at is null
-    and contest_end < current_date
+  select id from contests where contest_end < current_date
 )
 select
   (select count(*) from contest_registrations
     where user_id = :'account_id'
       and contest_id in (select id from finished_contests)) as kept_registrations,
-  (select count(*) from logs
-    where user_id = :'account_id'
-      and deleted_at is null
-      and exists (
-        select 1 from contest_logs
-        where contest_logs.log_id = logs.id
-          and contest_logs.contest_id in (select id from finished_contests)
-      )) as kept_logs;
-```
+  (select count(distinct logs.id) from logs
+    join contest_logs on contest_logs.log_id = logs.id
+    where logs.user_id = :'account_id'
+      and logs.deleted_at is null
+      and contest_logs.contest_id in (select id from finished_contests)) as kept_logs;
 
-Every other log and registration of the account is deleted.
-
-Finally, review the contests that the account owns and end the transaction:
-
-```sql
 select id, title, contest_start, contest_end, "private", official, deleted_at
 from contests
 where owner_user_id = :'account_id';
@@ -170,214 +96,82 @@ where owner_user_id = :'account_id';
 commit;
 ```
 
-The delete step keeps owned contests and shows them with the organiser
-"Deleted organizer". Contest titles and descriptions are not changed.
+Record both counts. Every other log and registration of the account is
+deleted. Owned contests stay and show the organizer as "Deleted organizer";
+their titles and descriptions do not change.
 
-## 2. Lock the account
+## 2. File the deletion
 
-Commit the lock on its own before you delete anything:
+In the worker container:
 
-```sql
-begin;
-select set_config('tadoku.tenant', :'tenant', true);
-
-update users
-set deletion_locked_at = coalesce(deletion_locked_at, now())
-where id = :'account_id';
-
-commit;
+```sh
+tadoku-worker delete-account --user <ACCOUNT_ID> --actor <YOUR_USER_ID> \
+  --reason 'Owner asked by email on 2026-10-26'
 ```
 
-Once it is committed, the account cannot sign in and its recovery links stop
-working. Its session rows remain until step 3, but session lookup no longer
-finds them, so requests with its cookie are treated as a guest and signed-in
-writes return `401`. A log, contest or registration write that reaches the
-Tadoku API already authenticated as this user, such as one authenticated
-before the lock, returns `409` and `{"error":"account_deletion_in_progress"}`.
+- On success it logs `account deletion requested` with `user_id` and the new
+  `job_id`. Record the job ID.
+- From then on the account cannot sign in, its sessions and recovery links stop
+  working, and a log, contest or registration write that is already
+  authenticated as the user returns `409` with
+  `{"error":"account_deletion_in_progress"}`.
+- It changes nothing and exits with an error for an administrator
+  (`remove the administrator role before deleting this account`), for an
+  account whose deletion is already filed or done
+  (`account deletion in progress`) and for an unknown user ID
+  (`local user not found`).
 
-## 3. Delete the data
+## 3. Follow pending deletions
 
-Run this transaction in the same `psql` session. The statements must run in this
-order: the job insert reads the rows that the deletes remove, and the log
-statements treat every log still attached to a contest as finished-contest
-history. The CTE inserts the existing v1 contracts and captures their exact IDs
-in `deletion_job_ids`, including an empty array when no invalidation is needed.
-
-This direct SQL is part of this manual maintenance transaction. Application
-writes continue to use typed jobs returned by features and transactional
-`jobqueue.Enqueue`; see [Jobs and worker](../tadoku-api/jobs.md). Do not change
-these message names or payloads without the consumer-version preflight.
-
-```sql
-begin;
-select set_config('tadoku.tenant', :'tenant', true);
-
-with affected_contests as (
-  select contest_id from contest_registrations where user_id = :'account_id'
-  union
-  select contest_logs.contest_id
-  from contest_logs
-  join logs on logs.id = contest_logs.log_id
-  where logs.user_id = :'account_id'
-), queued as (
-  insert into jobs (task_type, payload)
-  select 'leaderboard.invalidate_contest.v1',
-         jsonb_build_object('contest_id', contest_id)
-  from affected_contests
-  where contest_id not in (
-    select id from contests where deleted_at is null and contest_end < current_date
-  )
-  union all
-  select distinct 'leaderboard.invalidate_official.v1',
-                  jsonb_build_object('year', year)
-  from logs
-  where user_id = :'account_id'
-    and eligible_official_leaderboard
-  returning id
-)
-select coalesce(array_agg(id order by id), '{}'::bigint[]) as deletion_job_ids
-from queued
-\gset
-
--- Keep contest logs only for live logs in finished contests.
-delete from contest_logs
-using logs
-where logs.id = contest_logs.log_id
-  and logs.user_id = :'account_id'
-  and (
-    logs.deleted_at is not null
-    or contest_logs.contest_id not in (
-      select id from contests where deleted_at is null and contest_end < current_date
-    )
-  );
-
-delete from contest_registrations
-where user_id = :'account_id'
-  and contest_id not in (
-    select id from contests where deleted_at is null and contest_end < current_date
-  );
-
--- Logs still attached to a contest are finished-contest history.
-update logs
-set
-  description = null,
-  frozen_at = coalesce(frozen_at, now())
-where user_id = :'account_id'
-  and exists (select 1 from contest_logs where contest_logs.log_id = logs.id);
-
-delete from log_tags where user_id = :'account_id';
-
-delete from logs
-where user_id = :'account_id'
-  and not exists (select 1 from contest_logs where contest_logs.log_id = logs.id);
-
-delete from permission_relationships
-where subject_type = 'user' and subject_id = lower(:'account_id');
-
--- The native sign-in account and everything that authenticates as it.
-delete from sessions where user_id = :'account_id';
-delete from recovery_tokens where user_id = :'account_id';
-delete from accounts where user_id = :'account_id';
-
-update contests
-set owner_user_display_name = 'Deleted organizer'
-where owner_user_id = :'account_id';
-
-update users
-set
-  display_name = 'Deleted participant',
-  deleted_at = coalesce(deleted_at, now()),
-  updated_at = now()
-where id = :'account_id'
-  and deletion_locked_at is not null;
-```
-
-Check the last statement's output. If it printed `UPDATE 1`, commit:
-
-```sql
-commit;
-\echo :deletion_job_ids
-```
-
-Record that exact job-ID array with the operation's evidence after the commit
-succeeds, and keep this `psql` session for step 4. If the session is lost, restore
-it with `\set deletion_job_ids '{123,124}'` using the recorded IDs. Keep every
-committed batch's IDs if you rerun the deletion; a later empty batch does not
-prove that an earlier batch completed.
-
-If it printed `UPDATE 0`, the lock is missing. Run `rollback;` and go back to
-step 2.
-
-## 4. Leaderboards
-
-The separate `tadoku-worker` processes the rows inserted into `jobs` in step 3.
-It invalidates the cached leaderboards of the contests that lose the account's
-registrations or logs, and the yearly and global leaderboards, in Valkey. On the next
-read, each leaderboard is rebuilt from the Tadoku API database. The rebuilt
-leaderboards leave out the account, because its registrations and logs in those
-contests are gone and official leaderboards skip users with `deleted_at` set.
-Finished contests keep their scores, so step 3 does not invalidate them. Every
-leaderboard reads display names from `users` on each request, so finished
-contests show the account as `Deleted participant`. You do not need to change
-the cache by hand.
-
-Use the recorded `deletion_job_ids` from the committed transaction to inspect
-these jobs and any linked replay attempts in the same `psql` session:
+The worker usually finishes within seconds. A pending deletion has
+`deletion_locked_at` set and `deleted_at` empty. List every pending deletion
+with its jobs, then the audit events of one account:
 
 ```sql
 begin transaction read only;
 select set_config('tadoku.tenant', :'tenant', true);
 
-with recursive requested as (
-  select unnest(:'deletion_job_ids'::bigint[]) as original_id
-), attempts as (
-  select requested.original_id, task.id, task.state
-  from requested
-  join jobs as task on task.id = requested.original_id
-  union all
-  select attempts.original_id, task.id, task.state
-  from attempts
-  join jobs as task on task.replay_of_id = attempts.id
-)
-select requested.original_id,
-       coalesce(bool_or(attempts.state = 'completed'), false) as completed,
-       array_agg(attempts.id order by attempts.id)
-         filter (where attempts.state in ('pending', 'running')) as outstanding_ids,
-       array_agg(attempts.id order by attempts.id)
-         filter (where attempts.state = 'failed') as failed_ids,
-       count(attempts.id) = 0 as missing
-from requested
-left join attempts using (original_id)
-group by requested.original_id
-order by requested.original_id;
+select users.id, users.deletion_locked_at, jobs.id as job_id, jobs.state,
+       jobs.attempts, jobs.last_error, jobs.replay_of_id
+from users
+left join jobs
+  on jobs.task_type = 'account.delete.v1'
+  and jobs.payload->>'user_id' = users.id::text
+where users.deletion_locked_at is not null
+  and users.deleted_at is null
+order by users.deletion_locked_at, jobs.id;
+
+select user_id as actor_id, action, metadata, description, created_at
+from moderation_audit_log
+where action in ('request_account_deletion', 'complete_account_deletion')
+  and metadata->>'target_user_id' = :'account_id'
+order by created_at;
 
 commit;
 ```
 
-A batch with no IDs needs no invalidation. Otherwise every original ID needs
-`completed = true` with `missing = false`; pending or running IDs remain work
-for the worker. For an incomplete effect with failed IDs, inspect the failure
-and repair its cause before using the [worker replay command](../tadoku-api/jobs-operations.md#inspect-and-replay-retained-work).
-Replay creates a linked job and leaves the failed original unchanged. Re-run
-this query to observe the linked completion; do not wait for the original
-failed row to become completed. A missing row is not proof of success: consult
-retained operation evidence, since successful jobs older than three UTC
-calendar months can be removed. Successful replay rows expire too while their
-failed originals remain. If recorded completion has aged out, use that retained
-evidence rather than replaying solely because the query no longer finds a
-completed descendant.
+The request event names you as the actor, with `source` `operator` and your
+reason. Once the job completes, the completion event holds the counts of
+deleted and kept logs and registrations and of owned contests.
 
-## 5. Feature access
+## 4. Replay a failed deletion
 
-Flipt stores named-user rollout membership by account ID. In the protected
-Flipt operator UI, select the account's environment and namespace, then inspect
-the allowlist segments declared by `k8s/dev/base/flipt/features.yaml`. Remove
-the account ID from each matching segment and save. Confirm the ID is absent
-after reloading the segment. The admin application has no feature-access API.
+A deletion that uses up its attempts leaves the account locked, its address
+taken and its job `failed`, and nothing is deleted. Read the job's
+`last_error` and the worker's `job failed` log line for the same job ID, repair
+the cause, then replay it with the
+[replay command](../tadoku-api/jobs-operations.md#inspect-and-replay-retained-work):
+
+```sh
+tadoku-worker replay --id <FAILED_JOB_ID> --actor <YOUR_NAME> --reason '<repaired cause>'
+```
+
+Follow the new job with the queries in step 3. A job that failed with
+`invalid_payload` named a user without a deletion lock or without a `users`
+row; it changed nothing and a replay fails the same way. Replaying a job for an
+account that is already deleted completes without changes.
 
 ## Verify
-
-In the Tadoku API database:
 
 ```sql
 begin transaction read only;
@@ -386,9 +180,7 @@ select set_config('tadoku.tenant', :'tenant', true);
 select display_name, deletion_locked_at, deleted_at from users where id = :'account_id';
 
 with finished_contests as (
-  select id from contests
-  where deleted_at is null
-    and contest_end < current_date
+  select id from contests where contest_end < current_date
 )
 select
   (select count(*) from contest_registrations where user_id = :'account_id') as kept_registrations,
@@ -421,10 +213,36 @@ select
 commit;
 ```
 
-The `users` query returns one row, with `Deleted participant` as the display name
-and both timestamps set. In the second query, `kept_registrations` and
-`kept_logs` match the preflight, and every other count is `0`, including
-`permission_relationships`.
+The `users` query returns one row, with `Deleted participant` as the display
+name and both timestamps set. In the second query, `kept_registrations` and
+`kept_logs` match the preflight, and every other count is `0`. Step 3's audit
+query returns exactly one request and one completion event. The
+[email read API](../tadoku-api/email.md#read-retained-messages) shows one
+`account.deleted` message to the account's address. The admin user list reads
+native accounts on each request, so the account disappears from it at once.
 
-The admin user list reads native accounts from the database on each request,
-so the account disappears from it immediately.
+The worker also invalidates the leaderboards of the unfinished contests that
+lost the account's logs or registrations and the yearly leaderboards of its
+official logs. Rebuilt leaderboards leave the account out, and finished
+contests keep its scores under `Deleted participant`. No cache step is needed.
+
+## Data a deletion keeps
+
+- **Moderation audit entries** in `moderation_audit_log`, both where the
+  account was the moderator and where it was the target.
+- **Retained email** rows addressed to the account, including the
+  `account.deleted` notice, until the worker's
+  [email retention](../tadoku-api/email.md#retention-and-operations) removes
+  them after three days in production. Deleting the recovery tokens invalidates
+  every link in them.
+- **Feature access.** Flipt allowlist segments declared in
+  `k8s/dev/base/flipt/features.yaml` may still name the account ID. The ID
+  stays on the tombstone `users` row and can no longer sign in.
+- **Legacy identity data.** Production accounts were imported from Ory Kratos.
+  Production Kratos is offline, and its database and Secrets are retained, so
+  they still hold the identity's pre-import email address and password hash.
+  This guide never starts Kratos or uses its self-service or admin APIs. Record
+  the account ID with the operation's evidence so that the separately
+  authorized disposition of retained legacy data can include it.
+- **Database backups** keep earlier copies until the provider's retention
+  removes them; see [Database recovery](./identity-recovery.md#database-recovery).

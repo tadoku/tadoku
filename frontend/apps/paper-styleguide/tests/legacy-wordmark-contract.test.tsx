@@ -41,10 +41,11 @@ describe('legacy design-system wordmark contract', () => {
 
     const home = screen.getByRole('link', { name: 'Tadoku' })
     const wordmark = screen.getByRole('img', { name: 'Tadoku' })
-    const logoImages = home.querySelectorAll('img')
+    const logoImages = home.querySelectorAll('.docs-wordmark__image')
 
     expect(wordmark).toHaveClass('docs-wordmark')
     expect(logoImages).toHaveLength(2)
+    expect(home.querySelectorAll('img')).toHaveLength(4)
     expect(home).not.toHaveTextContent('Tadoku Paper')
     expect(logoImages[0]).toHaveAttribute(
       'src',

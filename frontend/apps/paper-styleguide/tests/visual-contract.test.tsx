@@ -73,18 +73,15 @@ describe('responsive visual contract', () => {
     expect(browse.querySelector('svg')).not.toBeNull()
     expect(browse).toHaveClass('paper-button--ghost')
     expect(browse.querySelector('.mobile-nav-trigger__label')).not.toBeNull()
-    expect(brandMarks).toHaveLength(2)
-    expect(brandMarks[0]).toHaveAttribute(
-      'src',
+    expect(
+      Array.from(brandMarks, (mark) => mark.getAttribute('src')?.split('/').pop()),
+    ).toEqual([
+      expect.stringContaining('cut-meter.svg'),
+      expect.stringContaining('cut-meter-reversed.svg'),
       expect.stringContaining('wordmark-accent.svg'),
-    )
-    expect(brandMarks[1]).toHaveAttribute(
-      'src',
       expect.stringContaining('wordmark-reversed.svg'),
-    )
+    ])
     for (const mark of brandMarks) {
-      expect(mark).toHaveAttribute('width', '126.4')
-      expect(mark).toHaveAttribute('height', '23.2')
       expect(mark).toHaveAttribute('aria-hidden', 'true')
     }
 
@@ -96,9 +93,9 @@ describe('responsive visual contract', () => {
 
   it('renders the legacy wordmark at the original styleguide scale', () => {
     expect(styleguideStyles).toMatch(
-      /\.docs-wordmark\s*\{(?=[^}]*inline-size:\s*126\.4px;)(?=[^}]*block-size:\s*23\.2px;)[^}]*\}/su,
+      /\.docs-wordmark__image\s*\{(?=[^}]*inline-size:\s*126\.4px;)(?=[^}]*block-size:\s*23\.2px;)[^}]*\}/su,
     )
-    expect(styleguideStyles).not.toMatch(/\.docs-wordmark\s*\{[^}]*transform:/su)
+    expect(styleguideStyles).not.toMatch(/\.docs-wordmark[\w-]*\s*\{[^}]*transform:/su)
   })
 
   it('leaves the search trigger visual recipe to the public Paper Button', () => {
@@ -270,13 +267,15 @@ describe('responsive visual contract', () => {
     expect(styleguideStyles).not.toMatch(/scrollbar-width|::-webkit-scrollbar/)
   })
 
-  it('switches the wordmark to its exact legacy reversed asset in dark mode', () => {
-    expect(styleguideStyles).toContain(
+  it('switches the mark and wordmark to their reversed assets in dark mode', () => {
+    for (const selector of [
       ":root[data-theme='dark'] .docs-wordmark__image--accent",
-    )
-    expect(styleguideStyles).toContain(
       ":root[data-theme='dark'] .docs-wordmark__image--reversed",
-    )
+      ":root[data-theme='dark'] .docs-wordmark__mark--ink",
+      ":root[data-theme='dark'] .docs-wordmark__mark--reversed",
+    ]) {
+      expect(styleguideStyles).toContain(selector)
+    }
     expect(styleguideStyles).not.toContain('content: url(')
   })
 })

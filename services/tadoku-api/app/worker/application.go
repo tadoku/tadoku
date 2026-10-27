@@ -6,23 +6,37 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/audit"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/contestevents"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/contests"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/email"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/logs"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/profile"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
 )
 
 type Dependencies struct {
-	JobQueue       *jobqueue.Service
-	Leaderboard    *leaderboard.Service
-	Email          *email.Service
-	IdentityExpiry *identity.Expiry
+	DB               *pgxpool.Pool
+	JobQueue         *jobqueue.Service
+	Leaderboard      *leaderboard.Service
+	Email            *email.Service
+	IdentityExpiry   *identity.Expiry
+	IdentityDeletion *identity.Deletion
+	Profile          *profile.Service
+	Logs             *logs.Service
+	Contests         *contests.Service
+	Relationships    *permissions.Relationships
+	Audit            *audit.Service
+	ContestEvents    *contestevents.Service
 }
 
 type Config struct {
-	AccountDeletion *AccountDeletion
 	Scope           jobqueue.Scope
 	Concurrency     int
 	ShutdownTimeout time.Duration
@@ -31,11 +45,18 @@ type Config struct {
 }
 
 type Application struct {
-	runner          *runner
-	queue           *jobqueue.Service
-	leaderboard     *leaderboard.Service
-	email           *email.Service
-	accountDeletion *AccountDeletion
+	runner           *runner
+	db               *pgxpool.Pool
+	queue            *jobqueue.Service
+	leaderboard      *leaderboard.Service
+	email            *email.Service
+	identityDeletion *identity.Deletion
+	profile          *profile.Service
+	logs             *logs.Service
+	contests         *contests.Service
+	relationships    *permissions.Relationships
+	audit            *audit.Service
+	contestEvents    *contestevents.Service
 }
 
 func NewApplication(deps Dependencies, config Config) (*Application, error) {
@@ -58,10 +79,17 @@ func NewApplication(deps Dependencies, config Config) (*Application, error) {
 	}
 
 	a := &Application{
-		queue:           deps.JobQueue,
-		leaderboard:     deps.Leaderboard,
-		email:           deps.Email,
-		accountDeletion: config.AccountDeletion,
+		db:               deps.DB,
+		queue:            deps.JobQueue,
+		leaderboard:      deps.Leaderboard,
+		email:            deps.Email,
+		identityDeletion: deps.IdentityDeletion,
+		profile:          deps.Profile,
+		logs:             deps.Logs,
+		contests:         deps.Contests,
+		relationships:    deps.Relationships,
+		audit:            deps.Audit,
+		contestEvents:    deps.ContestEvents,
 	}
 	handlers, err := registrations(
 		a.InvalidateContestLeaderboard,
@@ -90,6 +118,8 @@ func NewApplication(deps Dependencies, config Config) (*Application, error) {
 
 func requireAll(deps Dependencies) error {
 	switch {
+	case deps.DB == nil:
+		return errors.New("worker requires DB")
 	case deps.JobQueue == nil:
 		return errors.New("worker requires JobQueue")
 	case deps.Leaderboard == nil:
@@ -98,6 +128,20 @@ func requireAll(deps Dependencies) error {
 		return errors.New("worker requires Email")
 	case deps.IdentityExpiry == nil:
 		return errors.New("worker requires IdentityExpiry")
+	case deps.IdentityDeletion == nil:
+		return errors.New("worker requires IdentityDeletion")
+	case deps.Profile == nil:
+		return errors.New("worker requires Profile")
+	case deps.Logs == nil:
+		return errors.New("worker requires Logs")
+	case deps.Contests == nil:
+		return errors.New("worker requires Contests")
+	case deps.Relationships == nil:
+		return errors.New("worker requires Relationships")
+	case deps.Audit == nil:
+		return errors.New("worker requires Audit")
+	case deps.ContestEvents == nil:
+		return errors.New("worker requires ContestEvents")
 	}
 	return nil
 }

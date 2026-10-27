@@ -7,44 +7,22 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/audit"
-	"github.com/tadoku/tadoku/services/tadoku-api/features/contestevents"
-	"github.com/tadoku/tadoku/services/tadoku-api/features/contests"
-	"github.com/tadoku/tadoku/services/tadoku-api/features/identity"
-	"github.com/tadoku/tadoku/services/tadoku-api/features/logs"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/profile"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
-
-type AccountDeletion struct {
-	DB            *pgxpool.Pool
-	Profile       *profile.Service
-	Logs          *logs.Service
-	Contests      *contests.Service
-	Relationships *permissions.Relationships
-	Identity      *identity.Deletion
-	Audit         *audit.Service
-	ContestEvents *contestevents.Service
-}
 
 // DeleteAccount locks the account row and then the user row, the order of every transaction that locks both, so it
 // waits for a login, recovery, settings write or filing that holds the account row instead of deadlocking with it.
 func (a *Application) DeleteAccount(ctx context.Context, job jobs.DeleteAccountV1) error {
-	deletion := a.accountDeletion
-	if deletion == nil || a.email == nil {
-		return &permanentError{err: errors.New("worker account deletion is not configured")}
-	}
-
 	now := timex.Now()
-	err := postgres.RunInTransaction(ctx, deletion.DB, func(ctx context.Context) error {
-		if err := deletion.Identity.LockAccountForDeletion(ctx, job.UserID); err != nil {
+	err := postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) error {
+		if err := a.identityDeletion.LockAccountForDeletion(ctx, job.UserID); err != nil {
 			return err
 		}
-		tombstoned, err := deletion.Profile.Tombstone(ctx, job.UserID, now)
+		tombstoned, err := a.profile.Tombstone(ctx, job.UserID, now)
 		if err != nil || !tombstoned {
 			return err
 		}
@@ -57,19 +35,18 @@ func (a *Application) DeleteAccount(ctx context.Context, job jobs.DeleteAccountV
 }
 
 func (a *Application) removeAccountData(ctx context.Context, userID uuid.UUID, now time.Time) error {
-	deletion := a.accountDeletion
-	removedLogs, err := deletion.Logs.RemoveUser(ctx, userID, now)
+	removedLogs, err := a.logs.RemoveUser(ctx, userID, now)
 	if err != nil {
 		return err
 	}
-	removedRegistrations, err := deletion.Contests.RemoveUser(ctx, userID, now)
+	removedRegistrations, err := a.contests.RemoveUser(ctx, userID, now)
 	if err != nil {
 		return err
 	}
-	if err := deletion.Relationships.RevokeUser(ctx, userID); err != nil {
+	if err := a.relationships.RevokeUser(ctx, userID); err != nil {
 		return err
 	}
-	notices, err := deletion.Identity.DeleteAccount(ctx, userID, now)
+	notices, err := a.identityDeletion.DeleteAccount(ctx, userID, now)
 	if err != nil {
 		return err
 	}
@@ -83,7 +60,7 @@ func (a *Application) removeAccountData(ctx context.Context, userID uuid.UUID, n
 		followUp = append(followUp, written.Jobs...)
 	}
 
-	err = deletion.Audit.Record(ctx, audit.Event{
+	err = a.audit.Record(ctx, audit.Event{
 		ActorID: userID,
 		Action:  "complete_account_deletion",
 		Metadata: map[string]any{
@@ -98,7 +75,7 @@ func (a *Application) removeAccountData(ctx context.Context, userID uuid.UUID, n
 	if err != nil {
 		return err
 	}
-	if err := deletion.ContestEvents.Append(ctx, removedLogs.Events, now); err != nil {
+	if err := a.contestEvents.Append(ctx, removedLogs.Events, now); err != nil {
 		return err
 	}
 	return a.queue.Enqueue(ctx, distinctJobs(followUp)...)

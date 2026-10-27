@@ -233,10 +233,11 @@ if err != nil {
 
 application, err := worker.NewApplication(
     worker.Dependencies{
-        JobQueue:       queue,
-        Leaderboard:    leaderboardService,
-        Email:          emailService,
-        IdentityExpiry: credentialExpiry,
+        DB:          pool,
+        JobQueue:    queue,
+        Leaderboard: leaderboardService,
+        Email:       emailService,
+        // One field for each other feature service a handler or maintenance uses.
     },
     worker.Config{
         Scope:           scope,

@@ -293,7 +293,7 @@ func runIsolationWorker(t *testing.T, scope jobqueue.Scope, production, test int
 	_, branch := tenant.FromContext(queueCtx)
 
 	provider := &isolationValkey{Client: leaderboardValkey.client, tenants: make(map[string]int)}
-	deps := workerDependencies(api.db.AppPool)
+	deps := workerDependencies(t, api.db.AppPool)
 	deps.Leaderboard = leaderboard.NewService(
 		leaderboard.NewRepository(api.db.AppPool),
 		leaderboard.NewCache(provider, time.Second),

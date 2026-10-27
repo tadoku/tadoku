@@ -129,25 +129,23 @@ func run(ctx context.Context, cfg config, logger *slog.Logger) error {
 	}
 	application, err := worker.NewApplication(
 		worker.Dependencies{
+			DB:       pool,
 			JobQueue: jobqueue.NewService(jobqueue.NewRepository(pool)),
 			Leaderboard: leaderboard.NewService(
 				leaderboard.NewRepository(pool),
 				leaderboard.NewCache(client, cfg.ValkeyTimeout),
 			),
-			Email:          email.NewService(email.NewRepository(pool), sender),
-			IdentityExpiry: identity.NewExpiry(identity.NewRepository(pool)),
+			Email:            email.NewService(email.NewRepository(pool), sender),
+			IdentityExpiry:   identity.NewExpiry(identity.NewRepository(pool)),
+			IdentityDeletion: identity.NewDeletion(identity.NewRepository(pool)),
+			Profile:          profile.NewService(profile.NewRepository(pool), identity.NewReader(pool)),
+			Logs:             logs.NewService(logs.NewLogsRepository(pool), false),
+			Contests:         contests.NewService(contests.NewContestsRepository(pool)),
+			Relationships:    permissions.NewRelationships(authz.NewRepository(pool), model),
+			Audit:            audit.NewService(audit.NewRepository(pool)),
+			ContestEvents:    contestevents.NewService(contestevents.NewRepository(pool)),
 		},
 		worker.Config{
-			AccountDeletion: &worker.AccountDeletion{
-				DB:            pool,
-				Profile:       profile.NewService(profile.NewRepository(pool), identity.NewReader(pool)),
-				Logs:          logs.NewService(logs.NewLogsRepository(pool), false),
-				Contests:      contests.NewService(contests.NewContestsRepository(pool)),
-				Relationships: permissions.NewRelationships(authz.NewRepository(pool), model),
-				Identity:      identity.NewDeletion(identity.NewRepository(pool)),
-				Audit:         audit.NewService(audit.NewRepository(pool)),
-				ContestEvents: contestevents.NewService(contestevents.NewRepository(pool)),
-			},
 			Scope:           cfg.scope,
 			Concurrency:     cfg.Concurrency,
 			ShutdownTimeout: cfg.ShutdownTimeout,

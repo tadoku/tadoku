@@ -27,24 +27,9 @@ import (
 
 func newWorkerApplication(t *testing.T, pool *pgxpool.Pool, scope jobqueue.Scope) *worker.Application {
 	t.Helper()
-	model, err := permissionmodel.New()
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	application, err := worker.NewApplication(
-		workerDependencies(pool),
+		workerDependencies(t, pool),
 		worker.Config{
-			AccountDeletion: &worker.AccountDeletion{
-				DB:            pool,
-				Profile:       featureprofile.NewService(featureprofile.NewRepository(pool), identity.NewReader(pool)),
-				Logs:          logs.NewService(logs.NewLogsRepository(pool), false),
-				Contests:      contests.NewService(contests.NewContestsRepository(pool)),
-				Relationships: permissions.NewRelationships(featureauthz.NewRepository(pool), model),
-				Identity:      identity.NewDeletion(identity.NewRepository(pool)),
-				Audit:         featureaudit.NewService(featureaudit.NewRepository(pool)),
-				ContestEvents: contestevents.NewService(contestevents.NewRepository(pool)),
-			},
 			Scope:           scope,
 			Concurrency:     4,
 			ShutdownTimeout: 2 * time.Second,
@@ -139,14 +124,28 @@ func runWorkerStep(t *testing.T, s *suite, forTenant string) {
 }
 
 // workerDependencies gives email no sender, so the worker holds every message.
-func workerDependencies(pool *pgxpool.Pool) worker.Dependencies {
+func workerDependencies(t *testing.T, pool *pgxpool.Pool) worker.Dependencies {
+	t.Helper()
+	model, err := permissionmodel.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	return worker.Dependencies{
+		DB:       pool,
 		JobQueue: jobqueue.NewService(jobqueue.NewRepository(pool)),
 		Leaderboard: leaderboard.NewService(
 			leaderboard.NewRepository(pool),
 			leaderboard.NewCache(leaderboardValkey.client, time.Second),
 		),
-		Email:          email.NewService(email.NewRepository(pool), nil),
-		IdentityExpiry: identity.NewExpiry(identity.NewRepository(pool)),
+		Email:            email.NewService(email.NewRepository(pool), nil),
+		IdentityExpiry:   identity.NewExpiry(identity.NewRepository(pool)),
+		IdentityDeletion: identity.NewDeletion(identity.NewRepository(pool)),
+		Profile:          featureprofile.NewService(featureprofile.NewRepository(pool), identity.NewReader(pool)),
+		Logs:             logs.NewService(logs.NewLogsRepository(pool), false),
+		Contests:         contests.NewService(contests.NewContestsRepository(pool)),
+		Relationships:    permissions.NewRelationships(featureauthz.NewRepository(pool), model),
+		Audit:            featureaudit.NewService(featureaudit.NewRepository(pool)),
+		ContestEvents:    contestevents.NewService(contestevents.NewRepository(pool)),
 	}
 }

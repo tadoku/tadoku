@@ -42,12 +42,12 @@ boundaries described in [Code ownership](./index.md#code-ownership).
   it reaches state through a port it declares. See
   [Cross-cutting concerns](../architecture/cross-cutting-concerns.md).
 - `app/permissionmodel`, the list of every feature's permission namespace, is
-  visible only to the composition roots that build the model from it:
-  `cmd/tadoku-api`, `cmd/tadoku-worker`, `app/tenantlifecycle` and E2E. It is
-  also visible to `app/worker` so the worker's tests build the same
-  dependencies the worker binary injects. Bazel visibility is per package, but
-  only those tests may import it; the worker library receives its
-  `Relationships` from `cmd/tadoku-worker`.
+  visible to the composition roots that build the model from it
+  (`cmd/tadoku-api`, `cmd/tadoku-worker`, `app/tenantlifecycle` and E2E) and to
+  `app/worker` for its tests only, so they build `Relationships` from the same
+  model `cmd/tadoku-worker` injects. Bazel visibility cannot separate a
+  package's tests from its library: the worker library must not import the
+  model.
 - `services/tadoku-api/infra/flipt` owns the shared tenant-to-provider target
   mapping. Its ordinary consumers use `:infrastructure_consumers`; the exact test-only
   `internal/testflipt` fixture package may also depend on it so HTTP evaluation

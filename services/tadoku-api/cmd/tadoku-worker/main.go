@@ -115,16 +115,17 @@ func run(ctx context.Context, cfg config, logger *slog.Logger) error {
 	)
 
 	metrics := worker.NewMetrics(registry)
-	leaderboardService := leaderboard.NewService(
-		leaderboard.NewRepository(pool),
-		leaderboard.NewCache(client, cfg.ValkeyTimeout),
-	)
 	application, err := worker.NewApplication(
-		jobqueue.NewService(jobqueue.NewRepository(pool)),
-		leaderboardService,
+		worker.Dependencies{
+			JobQueue: jobqueue.NewService(jobqueue.NewRepository(pool)),
+			Leaderboard: leaderboard.NewService(
+				leaderboard.NewRepository(pool),
+				leaderboard.NewCache(client, cfg.ValkeyTimeout),
+			),
+			Email:          email.NewService(email.NewRepository(pool), sender),
+			IdentityExpiry: identity.NewExpiry(identity.NewRepository(pool)),
+		},
 		worker.Config{
-			Email:           email.NewService(email.NewRepository(pool), sender),
-			Identity:        identity.NewExpiry(identity.NewRepository(pool)),
 			Scope:           cfg.scope,
 			Concurrency:     cfg.Concurrency,
 			ShutdownTimeout: cfg.ShutdownTimeout,

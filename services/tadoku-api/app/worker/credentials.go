@@ -8,9 +8,6 @@ import (
 )
 
 func (r *runner) expireCredentials(ctx context.Context) {
-	if r.identity == nil {
-		return
-	}
 	bounded, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 	keys, err := r.maintenanceTenants(bounded)

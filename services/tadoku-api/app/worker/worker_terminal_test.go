@@ -12,7 +12,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
-	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
@@ -42,9 +41,12 @@ func TestWorkerCountsOnlyTerminalFailures(t *testing.T) {
 		t.Fatal(err)
 	}
 	registry := prometheus.NewRegistry()
+	deps := workerDependencies(f.db, nil)
 	runtime := &runner{
 		scope:           baseWorkerScope(t),
-		queue:           jobqueue.NewService(jobqueue.NewRepository(f.db)),
+		queue:           deps.JobQueue,
+		email:           deps.Email,
+		identity:        deps.IdentityExpiry,
 		handlers:        handlers,
 		logger:          slog.New(slog.NewTextHandler(io.Discard, nil)),
 		metrics:         NewMetrics(registry),

@@ -160,12 +160,14 @@ func TestEmailWorkerDelivery(t *testing.T) {
 			if !tc.production {
 				scope, _ = jobqueue.OnlyTenant(key)
 			}
-			application, err := worker.NewApplication(jobqueue.NewService(jobqueue.NewRepository(api.db.AppPool)),
-				api.leaderboard,
-				worker.Config{
-					Email: service, Scope: scope, Concurrency: 1, ShutdownTimeout: time.Second, Logger: slog.New(slog.NewTextHandler(io.Discard,
-						nil)),
-				})
+			deps := workerDependencies(api.db.AppPool)
+			deps.Email = service
+			application, err := worker.NewApplication(deps, worker.Config{
+				Scope:           scope,
+				Concurrency:     1,
+				ShutdownTimeout: time.Second,
+				Logger:          slog.New(slog.NewTextHandler(io.Discard, nil)),
+			})
 			if err != nil {
 				t.Fatal(err)
 			}

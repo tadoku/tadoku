@@ -4,11 +4,14 @@ import (
 	"context"
 	"errors"
 	"math"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/email"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
 )
@@ -56,17 +59,32 @@ func TestNewApplicationRejectsInvalidConfig(t *testing.T) {
 		{"negative shutdown timeout", Config{Concurrency: 1, ShutdownTimeout: -time.Second}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			if _, err := NewApplication(new(jobqueue.Service), new(leaderboard.Service), tc.config); err == nil {
+			if _, err := NewApplication(allDependencies, tc.config); err == nil {
 				t.Fatal("invalid config accepted")
 			}
 		})
 	}
-	if _, err := NewApplication(new(jobqueue.Service), new(leaderboard.Service), Config{
+	if _, err := NewApplication(allDependencies, Config{
 		Scope:           baseWorkerScope(t),
 		Concurrency:     1,
 		ShutdownTimeout: time.Second,
 	}); err != nil {
 		t.Fatalf("valid config rejected: %v", err)
+	}
+}
+
+func TestNewApplicationRequiresEveryDependency(t *testing.T) {
+	config := Config{Scope: baseWorkerScope(t), Concurrency: 1, ShutdownTimeout: time.Second}
+	fields := reflect.TypeFor[Dependencies]()
+	for i := range fields.NumField() {
+		t.Run(fields.Field(i).Name, func(t *testing.T) {
+			deps := allDependencies
+			reflect.ValueOf(&deps).Elem().Field(i).SetZero()
+
+			if _, err := NewApplication(deps, config); err == nil {
+				t.Fatal("worker accepted a nil dependency")
+			}
+		})
 	}
 }
 
@@ -108,7 +126,7 @@ func TestRegistryValidatesPayloadBeforeCallingTypedHandler(t *testing.T) {
 }
 
 func TestNewApplicationRejectsZeroScope(t *testing.T) {
-	_, err := NewApplication(new(jobqueue.Service), new(leaderboard.Service), Config{
+	_, err := NewApplication(allDependencies, Config{
 		Concurrency:     1,
 		ShutdownTimeout: time.Second,
 	})
@@ -117,15 +135,11 @@ func TestNewApplicationRejectsZeroScope(t *testing.T) {
 	}
 }
 
-func TestSendEmailWithoutServiceFailsPermanently(t *testing.T) {
-	err := (&Application{}).SendEmail(t.Context(), jobs.SendEmailV1{})
-	var permanent *permanentError
-	if !errors.As(err, &permanent) {
-		t.Fatalf("got %v; want permanent failure", err)
-	}
-	if permanent.Error() != "worker email service is not configured" {
-		t.Errorf("got %q", permanent.Error())
-	}
+var allDependencies = Dependencies{
+	JobQueue:       new(jobqueue.Service),
+	Leaderboard:    new(leaderboard.Service),
+	Email:          new(email.Service),
+	IdentityExpiry: new(identity.Expiry),
 }
 
 func baseWorkerScope(t *testing.T) jobqueue.Scope {

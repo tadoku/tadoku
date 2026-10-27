@@ -6,41 +6,25 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/tadoku/tadoku/services/tadoku-api/domain/contestevent"
 	queries "github.com/tadoku/tadoku/services/tadoku-api/generated/sqlc/logs"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 )
 
-func (r *LogsRepository) UserContestLogRemovals(
-	ctx context.Context,
-	userID uuid.UUID,
-	now time.Time,
-) ([]contestevent.Change, error) {
+func (r *LogsRepository) UserContestLogViews(ctx context.Context, userID uuid.UUID) ([]contestLogView, error) {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return nil, err
 	}
-	rows, err := queries.New(executor).ListUserContestLogRemovals(ctx, queries.ListUserContestLogRemovalsParams{
-		UserID: postgres.UUID(userID),
-		Now:    pgtype.Date{Time: now, Valid: true},
-	})
+	rows, err := queries.New(executor).ReadUserContestLogViews(ctx, postgres.UUID(userID))
 	if err != nil {
 		return nil, err
 	}
 
-	changes := make([]contestevent.Change, 0, len(rows))
+	views := make([]contestLogView, 0, len(rows))
 	for _, row := range rows {
-		change := contestevent.Change{
-			ContestID: uuid.UUID(row.ContestID.Bytes),
-			LogID:     uuid.UUID(row.LogID.Bytes),
-			Type:      contestevent.Updated,
-		}
-		if row.Withdrawn {
-			change.Type = contestevent.Withdrawn
-		}
-		changes = append(changes, change)
+		views = append(views, contestLogViewFromRow(queries.ReadContestLogViewsRow(row)))
 	}
-	return changes, nil
+	return views, nil
 }
 
 func (r *LogsRepository) UserOfficialYears(ctx context.Context, userID uuid.UUID) ([]int16, error) {

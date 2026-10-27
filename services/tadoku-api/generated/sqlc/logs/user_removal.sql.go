@@ -102,45 +102,80 @@ func (q *Queries) ListOfficialYearsForUser(ctx context.Context, userID pgtype.UU
 	return items, nil
 }
 
-const listUserContestLogRemovals = `-- name: ListUserContestLogRemovals :many
+const readUserContestLogViews = `-- name: ReadUserContestLogViews :many
 select
   contest_logs.contest_id,
-  contest_logs.log_id,
-  (contests.contest_end >= $1)::boolean as withdrawn
+  logs.id,
+  logs.user_id,
+  users.display_name as user_display_name,
+  logs.language_code,
+  languages.name as language_name,
+  logs.log_activity_id as activity_id,
+  coalesce(log_units.name, '')::text as unit_name,
+  logs.description,
+  coalesce(contest_logs.amount, 0)::real as amount,
+  coalesce(contest_logs.modifier, 0)::real as modifier,
+  contest_logs.duration_seconds,
+  coalesce(contest_logs.computed_score, contest_logs.score, 0)::real as score,
+  logs.created_at,
+  coalesce(
+    (select array_agg(tag order by tag) from log_tags where log_id = logs.id),
+    array[]::text[]
+  )::text[] as tags
 from contest_logs
 inner join logs on logs.id = contest_logs.log_id
-inner join contests on contests.id = contest_logs.contest_id
-where logs.user_id = $2
+inner join users on users.id = logs.user_id
+inner join languages on languages.code = logs.language_code
+left join log_units on log_units.id = logs.unit_id
+where logs.user_id = $1
   and logs.deleted_at is null
-  and (
-    contests.contest_end >= $1
-    or logs.description is not null
-    or exists (select 1 from log_tags where log_tags.log_id = logs.id)
-  )
-order by contest_logs.log_id, contest_logs.contest_id
+order by logs.id, contest_logs.contest_id
 `
 
-type ListUserContestLogRemovalsParams struct {
-	Now    pgtype.Date
-	UserID pgtype.UUID
+type ReadUserContestLogViewsRow struct {
+	ContestID       pgtype.UUID
+	ID              pgtype.UUID
+	UserID          pgtype.UUID
+	UserDisplayName string
+	LanguageCode    string
+	LanguageName    string
+	ActivityID      int16
+	UnitName        string
+	Description     pgtype.Text
+	Amount          float32
+	Modifier        float32
+	DurationSeconds pgtype.Int4
+	Score           float32
+	CreatedAt       pgtype.Timestamp
+	Tags            []string
 }
 
-type ListUserContestLogRemovalsRow struct {
-	ContestID pgtype.UUID
-	LogID     pgtype.UUID
-	Withdrawn bool
-}
-
-func (q *Queries) ListUserContestLogRemovals(ctx context.Context, arg ListUserContestLogRemovalsParams) ([]ListUserContestLogRemovalsRow, error) {
-	rows, err := q.db.Query(ctx, listUserContestLogRemovals, arg.Now, arg.UserID)
+func (q *Queries) ReadUserContestLogViews(ctx context.Context, userID pgtype.UUID) ([]ReadUserContestLogViewsRow, error) {
+	rows, err := q.db.Query(ctx, readUserContestLogViews, userID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []ListUserContestLogRemovalsRow{}
+	items := []ReadUserContestLogViewsRow{}
 	for rows.Next() {
-		var i ListUserContestLogRemovalsRow
-		if err := rows.Scan(&i.ContestID, &i.LogID, &i.Withdrawn); err != nil {
+		var i ReadUserContestLogViewsRow
+		if err := rows.Scan(
+			&i.ContestID,
+			&i.ID,
+			&i.UserID,
+			&i.UserDisplayName,
+			&i.LanguageCode,
+			&i.LanguageName,
+			&i.ActivityID,
+			&i.UnitName,
+			&i.Description,
+			&i.Amount,
+			&i.Modifier,
+			&i.DurationSeconds,
+			&i.Score,
+			&i.CreatedAt,
+			&i.Tags,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

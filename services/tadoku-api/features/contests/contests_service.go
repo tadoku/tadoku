@@ -28,22 +28,12 @@ func (s *Service) FetchContestSummary(ctx context.Context, contestID uuid.UUID) 
 }
 
 func (s *Service) ValidateContestCreation(
-	ctx context.Context,
 	parameters CreateContestParameters,
 	creatorID uuid.UUID,
 	creatorDisplayName string,
 	admin bool,
 	now time.Time,
 ) error {
-	if !admin {
-		count, err := s.contests.CountContestsCreatedByUserForYear(ctx, creatorID, int32(now.Year()))
-		if err != nil {
-			return err
-		}
-		if err := checkContestCreationYearlyLimit(count); err != nil {
-			return err
-		}
-	}
 	return parameters.validate(creatorID, creatorDisplayName, admin, now)
 }
 

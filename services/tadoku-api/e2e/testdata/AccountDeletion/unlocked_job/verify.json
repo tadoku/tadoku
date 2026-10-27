@@ -1,0 +1,16 @@
+[
+  {
+    "display_name": "Reader One",
+    "deletion_locked_at": null,
+    "deleted_at": null,
+    "accounts": 1,
+    "jobs": [
+      {
+        "task_type": "account.delete.v1",
+        "state": "failed",
+        "last_error": "invalid_payload"
+      }
+    ],
+    "audit_events": 0
+  }
+]

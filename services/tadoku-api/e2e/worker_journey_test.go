@@ -25,24 +25,6 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
-func newWorkerApplication(t *testing.T, pool *pgxpool.Pool, scope jobqueue.Scope) *worker.Application {
-	t.Helper()
-	application, err := worker.NewApplication(
-		workerDependencies(t, pool),
-		worker.Config{
-			Scope:           scope,
-			Concurrency:     4,
-			ShutdownTimeout: 2 * time.Second,
-			Logger:          slog.New(slog.NewTextHandler(io.Discard, nil)),
-			Metrics:         worker.NewMetrics(prometheus.NewRegistry()),
-		},
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return application
-}
-
 func runWorkerStep(t *testing.T, s *suite, forTenant string) {
 	t.Helper()
 	eligible, arguments := eligibleJobs(forTenant)
@@ -81,7 +63,19 @@ func startWorker(t *testing.T, s *suite, forTenant string) (stop func()) {
 		}
 	}
 
-	application := newWorkerApplication(t, s.db.AppPool, scope)
+	application, err := worker.NewApplication(
+		workerDependencies(t, s.db.AppPool),
+		worker.Config{
+			Scope:           scope,
+			Concurrency:     4,
+			ShutdownTimeout: 2 * time.Second,
+			Logger:          slog.New(slog.NewTextHandler(io.Discard, nil)),
+			Metrics:         worker.NewMetrics(prometheus.NewRegistry()),
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	workerContext, cancelWorker := context.WithCancel(t.Context())
 	workerDone := make(chan error, 1)

@@ -1,0 +1,8 @@
+[
+  {
+    "email_normalized": "reader@example.test",
+    "reuses_deleted_user": false,
+    "display_name": "New Reader",
+    "deleted_at": null
+  }
+]

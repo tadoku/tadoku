@@ -20,47 +20,30 @@ type Service struct{ repository *Repository }
 func NewService(repository *Repository) *Service { return &Service{repository: repository} }
 
 func (s *Service) Enqueue(ctx context.Context, batch ...jobs.Job) error {
-	_, err := s.enqueue(ctx, batch)
-	return err
-}
-
-func (s *Service) EnqueueOne(ctx context.Context, job jobs.Job) (int64, error) {
-	ids, err := s.enqueue(ctx, []jobs.Job{job})
-	if err != nil {
-		return 0, err
-	}
-	return ids[0], nil
-}
-
-func (s *Service) enqueue(ctx context.Context, batch []jobs.Job) ([]int64, error) {
 	payloads := make([]json.RawMessage, len(batch))
 	for i, job := range batch {
 		if job == nil || (reflect.ValueOf(job).Kind() == reflect.Pointer && reflect.ValueOf(job).IsNil()) {
-			return nil, errx.NewInvalidInputError("job must not be nil")
+			return errx.NewInvalidInputError("job must not be nil")
 		}
 		if err := job.Validate(); err != nil {
-			return nil, errx.NewInvalidInputError(fmt.Sprintf("job %d: %s", i, err))
+			return errx.NewInvalidInputError(fmt.Sprintf("job %d: %s", i, err))
 		}
 		if job.Type() == "" {
-			return nil, errx.NewInvalidInputError("job type must not be empty")
+			return errx.NewInvalidInputError("job type must not be empty")
 		}
 
 		payload, err := json.Marshal(job)
 		if err != nil {
-			return nil, fmt.Errorf("encode job %d: %w", i, err)
+			return fmt.Errorf("encode job %d: %w", i, err)
 		}
 		payloads[i] = payload
 	}
-
-	ids := make([]int64, len(batch))
 	for i, job := range batch {
-		id, err := s.repository.Insert(ctx, job.Type(), payloads[i])
-		if err != nil {
-			return nil, err
+		if _, err := s.repository.Insert(ctx, job.Type(), payloads[i]); err != nil {
+			return err
 		}
-		ids[i] = id
 	}
-	return ids, nil
+	return nil
 }
 
 func (s *Service) Claim(ctx context.Context, typ jobs.Type, limit int, lease time.Duration, maxAttempts int) ([]ClaimedJob, error) {

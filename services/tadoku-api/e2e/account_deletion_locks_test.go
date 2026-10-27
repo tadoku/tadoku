@@ -188,26 +188,51 @@ func TestAccountDeletionRoleChangeWaitsForTheWorker(t *testing.T) {
 }
 
 func TestAccountDeletionFilingSeesARoleChangeHoldingTheUser(t *testing.T) {
-	tokens := resetAccountDeletion(t)
-	change := holdRow(t, "select 1 from users where id = $1 for update", readerUserID)
-	_, err := change.Exec(t.Context(), `insert into permission_relationships
-		(tenant, object_type, object_id, relation, subject_type, subject_id)
-		values ('tadoku/prod', 'app', 'root', 'admins', 'user', $1)`, readerUserID)
-	if err != nil {
-		t.Fatal(err)
+	cases := []struct {
+		name     string
+		relation string
+		filing   func(*testing.T, map[member]string) *http.Request
+		want     string
+	}{
+		{
+			name:     "admin grant during an admin filing",
+			relation: "admins",
+			filing:   func(_ *testing.T, tokens map[member]string) *http.Request { return readerDeletion(tokens) },
+			want:     `"error":"admin_account"`,
+		},
+		{
+			name:     "ban during a self-service filing",
+			relation: "banned",
+			filing:   func(t *testing.T, _ map[member]string) *http.Request { return selfServiceDeletion(t) },
+			want:     `"code":"banned_account"`,
+		},
 	}
 
-	atFixtureInstant(func() {
-		filed := serveAsync(readerDeletion(tokens))
-		waitForLockWaiters(t, 1, filed)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			tokens := resetAccountDeletion(t)
+			request := tc.filing(t, tokens)
+			change := holdRow(t, "select 1 from users where id = $1 for update", readerUserID)
+			_, err := change.Exec(t.Context(), `insert into permission_relationships
+				(tenant, object_type, object_id, relation, subject_type, subject_id)
+				values ('tadoku/prod', 'app', 'root', $1, 'user', $2)`, tc.relation, readerUserID)
+			if err != nil {
+				t.Fatal(err)
+			}
 
-		if err := change.Commit(t.Context()); err != nil {
-			t.Fatal(err)
-		}
-		requireBody(t, <-filed, http.StatusConflict, `"error":"admin_account"`)
-	})
+			atFixtureInstant(func() {
+				filed := serveAsync(request)
+				waitForLockWaiters(t, 1, filed)
 
-	checkVerifyGolden(t, api, refusedFilingDir)
+				if err := change.Commit(t.Context()); err != nil {
+					t.Fatal(err)
+				}
+				requireBody(t, <-filed, http.StatusConflict, tc.want)
+			})
+
+			checkVerifyGolden(t, api, refusedFilingDir)
+		})
+	}
 }
 
 // serveAsync serves request through api.handler on another goroutine. Call it inside atFixtureInstant and receive the

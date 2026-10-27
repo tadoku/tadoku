@@ -1,14 +1,10 @@
 package e2e_test
 
 import (
-	"crypto/sha256"
-	"encoding/base64"
-	"encoding/hex"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"time"
 )
 
 const (
@@ -17,45 +13,6 @@ const (
 	readerUserID              = "11111111-1111-4111-8111-111111111111"
 	readerLogin               = `{"email":"reader@example.test","password":"` + identityFixturePassword + `"}`
 )
-
-func TestAccountDeletionFilingEndsAccess(t *testing.T) {
-	tokens := resetAccountDeletion(t)
-	login := identityRequest(t, api.handler, "tadoku/prod", "POST", "/identity/login", readerLogin, "", nil)
-	requireIdentityStatus(t, login, http.StatusOK)
-	cookie := login.Result().Cookies()[0].String()
-
-	recoveryToken := base64.RawURLEncoding.EncodeToString([]byte(strings.Repeat("d", 32)))
-	digest := sha256.Sum256([]byte(recoveryToken))
-	_, err := api.db.Pool.Exec(t.Context(), `insert into recovery_tokens (tenant, token_hash, user_id, expires_at)
-		values ('tadoku/prod', $1, $2, $3)`,
-		hex.EncodeToString(digest[:]),
-		readerUserID,
-		fixtureInstant.Add(time.Hour),
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	fileReaderDeletion(t, tokens)
-
-	response := identityRequest(t, api.handler, "tadoku/prod", "GET", "/identity/session", "", cookie, nil)
-	if identityView(t, response).Account != nil {
-		t.Error("the session of a user with a pending deletion still authenticates")
-	}
-	response = identityRequest(t, api.handler, "tadoku/prod", "POST", "/identity/login", readerLogin, "", nil)
-	requireBody(t, response, http.StatusUnauthorized, `"code":"wrong_password"`)
-	response = identityRequest(t, api.handler, "tadoku/prod", "GET", "/identity/recovery/"+recoveryToken, "", "", nil)
-	requireBody(t, response, http.StatusBadRequest, `"code":"invalid_recovery_token"`)
-
-	request := httptest.NewRequest(http.MethodPost, "/immersion/logs", strings.NewReader(
-		`{"language_code":"eng","activity_id":1,"duration_seconds":60,"tags":[]}`,
-	))
-	request.Header.Set("Content-Type", "application/json")
-	authorize(request, user, tokens)
-	response = httptest.NewRecorder()
-	atFixtureInstant(func() { api.handler.ServeHTTP(response, request) })
-	requireBody(t, response, http.StatusConflict, `"error":"account_deletion_in_progress"`)
-}
 
 func TestAccountDeletionJobRequiresLock(t *testing.T) {
 	resetAccountDeletion(t)

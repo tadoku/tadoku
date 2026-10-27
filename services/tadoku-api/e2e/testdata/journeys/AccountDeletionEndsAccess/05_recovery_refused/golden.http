@@ -1,0 +1,7 @@
+>>> GET /identity/recovery/ZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGQ
+HTTP/1.1 400 Bad Request
+Content-Length: 80
+Cache-Control: private, no-store
+Content-Type: application/json; charset=UTF-8
+
+{"code":"invalid_recovery_token","message":"invalid or expired recovery token"}

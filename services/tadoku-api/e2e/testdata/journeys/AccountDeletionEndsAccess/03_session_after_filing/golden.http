@@ -1,0 +1,7 @@
+>>> GET /identity/session
+HTTP/1.1 200 OK
+Content-Length: 38
+Cache-Control: private, no-store
+Content-Type: application/json; charset=UTF-8
+
+{"account":null,"recent_login":false}

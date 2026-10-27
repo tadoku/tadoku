@@ -1,6 +1,6 @@
 ---
 title: Module design
-description: How to prefer deep modules, hide implementation decisions, preserve meaningful boundaries, review the knowledge an interface requires of its callers and split a file over the size limit, why a new Tadoku API application package needs the maintainer's approval, and when a Tadoku API feature may expose more than one service.
+description: How to prefer deep modules, hide implementation decisions, preserve meaningful boundaries, review the knowledge an interface requires of its callers and split a file over the size limit, and why a new Tadoku API application package needs the maintainer's approval.
 ---
 
 # Module design

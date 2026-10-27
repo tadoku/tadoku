@@ -45,16 +45,31 @@ func newWorkerApplication(t *testing.T, pool *pgxpool.Pool, scope jobqueue.Scope
 
 func runWorkerStep(t *testing.T, s *suite, forTenant string) {
 	t.Helper()
-	scope, err := jobqueue.AllTenantsExcept("tadoku-worker")
+	eligible, arguments := eligibleJobs(forTenant)
+	var queued int
+	err := s.db.Pool.QueryRow(t.Context(), "select count(*) "+eligible, arguments...).Scan(&queued)
 	if err != nil {
 		t.Fatal(err)
 	}
-	eligibleSQL := `from jobs
-		where not exists (
-			select 1 from tenant_overrides as o
-			where o.tenant = jobs.tenant and o.component = 'tadoku-worker'
-		)`
-	var arguments []any
+	if queued == 0 {
+		t.Fatal("API write did not enqueue jobs")
+	}
+
+	stop := startWorker(t, s, forTenant)
+	defer stop()
+	if failed := waitForWorker(t, s, forTenant); failed != 0 {
+		t.Fatalf("worker failed %d jobs; queued=%d", failed, queued)
+	}
+}
+
+// startWorker runs the base worker, or with forTenant only that tenant's worker, until stop returns. A caller that fixes
+// business time keeps its timex.TheWorld scope open until stop returns.
+func startWorker(t *testing.T, s *suite, forTenant string) (stop func()) {
+	t.Helper()
+	scope, err := jobqueue.AllTenantsExcept(jobqueue.WorkerComponent)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if forTenant != "" {
 		key, err := tenant.Parse(forTenant)
 		if err != nil {
@@ -64,17 +79,6 @@ func runWorkerStep(t *testing.T, s *suite, forTenant string) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		eligibleSQL = "from jobs where tenant = $1"
-		arguments = []any{forTenant}
-	}
-
-	var queued int
-	err = s.db.Pool.QueryRow(t.Context(), "select count(*) "+eligibleSQL, arguments...).Scan(&queued)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if queued == 0 {
-		t.Fatal("API write did not enqueue jobs")
 	}
 
 	application := newWorkerApplication(t, s.db.AppPool, scope)
@@ -82,7 +86,7 @@ func runWorkerStep(t *testing.T, s *suite, forTenant string) {
 	workerContext, cancelWorker := context.WithCancel(t.Context())
 	workerDone := make(chan error, 1)
 	go func() { workerDone <- application.Run(workerContext) }()
-	defer func() {
+	return func() {
 		cancelWorker()
 		select {
 		case err := <-workerDone:
@@ -92,7 +96,14 @@ func runWorkerStep(t *testing.T, s *suite, forTenant string) {
 		case <-time.After(10 * time.Second):
 			t.Error("standalone worker did not stop")
 		}
-	}()
+	}
+}
+
+// waitForWorker blocks until a job that the worker started for forTenant may claim has failed or none is pending or
+// running, and returns how many have failed.
+func waitForWorker(t *testing.T, s *suite, forTenant string) (failed int) {
+	t.Helper()
+	eligible, arguments := eligibleJobs(forTenant)
 
 	deadline := time.NewTimer(10 * time.Second)
 	defer deadline.Stop()
@@ -100,27 +111,35 @@ func runWorkerStep(t *testing.T, s *suite, forTenant string) {
 	defer tick.Stop()
 
 	for {
-		var outstanding, failed int
+		var outstanding int
 		err := s.db.Pool.QueryRow(t.Context(), `select
 			count(*) filter (where state in ('pending', 'running')),
-			count(*) filter (where state = 'failed') `+eligibleSQL,
+			count(*) filter (where state = 'failed') `+eligible,
 			arguments...,
 		).Scan(&outstanding, &failed)
 		if err != nil {
 			t.Fatal(err)
 		}
-		if failed != 0 {
-			t.Fatalf("worker failed %d jobs; outstanding=%d queued=%d", failed, outstanding, queued)
-		}
-		if outstanding == 0 {
-			return
+		if failed != 0 || outstanding == 0 {
+			return failed
 		}
 		select {
 		case <-deadline.C:
-			t.Fatalf("worker left %d jobs outstanding; queued=%d", outstanding, queued)
+			t.Fatalf("worker left %d jobs outstanding", outstanding)
 		case <-tick.C:
 		}
 	}
+}
+
+func eligibleJobs(forTenant string) (string, []any) {
+	if forTenant != "" {
+		return "from jobs where tenant = $1", []any{forTenant}
+	}
+	return `from jobs
+		where not exists (
+			select 1 from tenant_overrides as o
+			where o.tenant = jobs.tenant and o.component = 'tadoku-worker'
+		)`, nil
 }
 
 // workerDependencies gives email no sender, so the worker holds every message.

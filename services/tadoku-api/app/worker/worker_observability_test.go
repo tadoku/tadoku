@@ -148,7 +148,7 @@ func TestWorkerObservationUsesPersistedTenant(t *testing.T) {
 						)
 					}
 					if name == "tadoku_worker_failed_attempts_total" {
-						if labels["code"] != failureCode(failure) ||
+						if labels["code"] != "rejected" ||
 							len(labels) != 3 ||
 							metric.GetCounter().GetValue() != 1 {
 							t.Errorf("failed-attempt sample labels=%v count=%v", labels, metric.GetCounter().GetValue())

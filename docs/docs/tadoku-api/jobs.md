@@ -310,7 +310,7 @@ the error text.
 | --- | --- | --- |
 | Handler returns `nil` | `completed` | None |
 | Payload fails decoding or `Validate` | `failed`, without retry or handler call | `invalid_payload` |
-| Handler rejects a valid payload it can never complete | `failed`, without retry | `rejected` |
+| Handler returns `rejected(err)` for a valid payload it can never complete | `failed`, without retry | `rejected` |
 | Handler exceeds `policy.Timeout` | `pending` for retry, or `failed` after the last attempt | `deadline_exceeded` |
 | Handler returns another error, including cancellation at shutdown | `pending` for retry, or `failed` after the last attempt | `handler_error` |
 | Lease expires during the last attempt | `failed` by the next exhaustion pass | `lease_expired` |

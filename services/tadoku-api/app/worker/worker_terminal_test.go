@@ -32,6 +32,9 @@ func TestWorkerCountsOnlyTerminalFailures(t *testing.T) {
 		mu.Lock()
 		defer mu.Unlock()
 		calls[job.Year]++
+		if job.Year == 2005 {
+			return rejected(errors.New("rejected fixture failure"))
+		}
 		if job.Year == 2001 || calls[job.Year] == 1 {
 			return errors.New("terminal fixture failure")
 		}
@@ -69,6 +72,7 @@ func TestWorkerCountsOnlyTerminalFailures(t *testing.T) {
 		{"test-exhausted", test, `{"year":2001}`, "pending", 0, false},
 		{"lease-expired", production, `{"year":2003}`, "running", 2, true},
 		{"limit-lowered", production, `{"year":2004}`, "pending", 2, false},
+		{"rejected", production, `{"year":2005}`, "pending", 0, false},
 	} {
 		var id int64
 		err := f.db.QueryRow(
@@ -106,6 +110,7 @@ func TestWorkerCountsOnlyTerminalFailures(t *testing.T) {
 		"test-exhausted": "failed",
 		"lease-expired":  "failed",
 		"limit-lowered":  "failed",
+		"rejected":       "failed",
 	}
 	err = waitFor(tenant.WithKey(t.Context(), tenant.Production()), func() (bool, error) {
 		for name, state := range want {
@@ -138,6 +143,7 @@ func TestWorkerCountsOnlyTerminalFailures(t *testing.T) {
 	}
 	terminal[official+"|handler_error|production"] = 1
 	terminal[official+"|invalid_payload|production"] = 1
+	terminal[official+"|rejected|production"] = 1
 	terminal[official+"|handler_error|test"] = 1
 	terminal[official+"|lease_expired|production"] = 1
 	terminal[official+"|attempts_exhausted|production"] = 1
@@ -145,6 +151,7 @@ func TestWorkerCountsOnlyTerminalFailures(t *testing.T) {
 	assertCounters(t, registry, "tadoku_worker_failed_attempts_total", map[string]float64{
 		official + "|handler_error|production":   3,
 		official + "|invalid_payload|production": 1,
+		official + "|rejected|production":        1,
 		official + "|handler_error|test":         2,
 	})
 }

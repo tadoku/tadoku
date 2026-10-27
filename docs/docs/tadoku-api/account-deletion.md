@@ -192,7 +192,7 @@ tadoku-worker replay --id <FAILED_JOB_ID> --actor <YOUR_NAME> --reason '<repaire
 ```
 
 Follow the new job with the queries above. A job that failed with
-`invalid_payload` named a user without a deletion lock or without a `users`
+`rejected` named a user without a deletion lock or without a `users`
 row; it changed nothing and a replay fails the same way. Replaying a job for an
 account that is already deleted completes without changes.
 

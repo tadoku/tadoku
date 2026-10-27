@@ -8,7 +8,7 @@
       {
         "task_type": "account.delete.v1",
         "state": "failed",
-        "last_error": "invalid_payload"
+        "last_error": "rejected"
       }
     ],
     "audit_events": 0

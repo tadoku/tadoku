@@ -126,6 +126,7 @@ func TestWorkerCountsOnlyTerminalFailures(t *testing.T) {
 	terminal := map[string]float64{}
 	for _, code := range []string{
 		"invalid_payload",
+		"rejected",
 		"deadline_exceeded",
 		"handler_error",
 		"lease_expired",

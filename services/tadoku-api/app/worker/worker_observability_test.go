@@ -80,7 +80,7 @@ func TestWorkerObservationUsesPersistedTenant(t *testing.T) {
 				t.Fatalf("claim fixture: count=%d error=%v", len(claimed), err)
 			}
 
-			failure := &permanentError{err: errors.New("observation fixture failure")}
+			failure := rejected(errors.New("observation fixture failure"))
 			handlers, err := newRegistry(handle(
 				func(context.Context, jobs.InvalidateOfficialLeaderboardV1) error { return failure },
 				policy{Concurrency: 1, Timeout: time.Second, MaxAttempts: 1},

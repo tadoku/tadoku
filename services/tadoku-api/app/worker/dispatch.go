@@ -64,10 +64,10 @@ func handle[J jobs.Job](fn func(context.Context, J) error, spec policy) registra
 		invoke: func(ctx context.Context, raw json.RawMessage) error {
 			var payload J
 			if err := decode(raw, &payload); err != nil {
-				return &permanentError{err: err}
+				return invalidPayload(err)
 			}
 			if err := payload.Validate(); err != nil {
-				return &permanentError{err: err}
+				return invalidPayload(err)
 			}
 			return fn(ctx, payload)
 		},
@@ -129,10 +129,18 @@ func decode(raw json.RawMessage, dst any) error {
 	return nil
 }
 
-type permanentError struct{ err error }
+type permanentError struct {
+	code string
+	err  error
+}
 
 func (e *permanentError) Error() string { return e.err.Error() }
 func (e *permanentError) Unwrap() error { return e.err }
+
+func invalidPayload(err error) error { return &permanentError{code: "invalid_payload", err: err} }
+
+// rejected fails a job with a valid payload that its handler can never complete, so it is not retried.
+func rejected(err error) error { return &permanentError{code: "rejected", err: err} }
 
 type unknownTypeError struct{ typ jobs.Type }
 
@@ -141,7 +149,7 @@ func (e *unknownTypeError) Error() string { return fmt.Sprintf("unsupported job 
 func failureCode(err error) string {
 	var permanent *permanentError
 	if errors.As(err, &permanent) {
-		return "invalid_payload"
+		return permanent.code
 	}
 	if errors.Is(err, context.DeadlineExceeded) {
 		return "deadline_exceeded"

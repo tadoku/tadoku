@@ -29,7 +29,7 @@ func (a *Application) DeleteAccount(ctx context.Context, job jobs.DeleteAccountV
 		return a.removeAccountData(ctx, job.UserID, now)
 	})
 	if errors.Is(err, profile.ErrDeletionNotRequested) || errors.Is(err, profile.ErrLocalUserNotFound) {
-		return &permanentError{err: err}
+		return rejected(err)
 	}
 	return err
 }

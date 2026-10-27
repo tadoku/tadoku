@@ -137,4 +137,4 @@ images:
   - name: ghcr.io/tadoku/tadoku/frontend-authv2
     newName: ghcr.io/tadoku/tadoku/frontend-authv2
     newTag: latest
-    digest: sha256:e5e987efc2843d76f730a97c5876fb01366778210fc5b1d8c0db1c0bfe3fff3f
+    digest: sha256:96177f1e8d40236cddc0d95eddde3f2a7bea4d8f5c431b223d1fc1a0cc04bca2

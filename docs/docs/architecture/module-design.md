@@ -114,6 +114,15 @@ application (`app/worker`) executes jobs; see
   feature that owns it, and pure rules used by several features to a
   [shared domain package](../tadoku-api/conventions.md#shared-domain-packages).
 
+## Services in a Tadoku API feature
+
+A feature normally exposes one service. Add another service in the same
+feature package only when a caller needs a disjoint part of the feature with
+fewer dependencies than the main service, such as a read-only contract or work
+the worker runs. Build it from the feature's repository rather than making the
+main service's dependencies optional for that caller. The feature still owns
+the business decisions either way.
+
 ## Splitting a long file
 
 `./tools/ci/check_file_sizes.sh` fails when a handwritten text file is over

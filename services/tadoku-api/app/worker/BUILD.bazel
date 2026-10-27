@@ -63,6 +63,7 @@ go_test(
         "requires-network",
     ],
     deps = [
+        "//services/tadoku-api/app/permissionmodel",
         "//services/tadoku-api/domain/jobs",
         "//services/tadoku-api/features/audit",
         "//services/tadoku-api/features/authz",

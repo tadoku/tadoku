@@ -56,7 +56,7 @@ func TestWorkerJobLifecycle(t *testing.T) {
 
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	runner, err := NewApplication(
-		workerDependencies(db.Pool, leaderboard.NewCache(client, time.Second)),
+		workerDependencies(t, db.Pool, leaderboard.NewCache(client, time.Second)),
 		Config{
 			Scope:           baseWorkerScope(t),
 			Concurrency:     4,

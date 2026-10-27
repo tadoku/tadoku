@@ -217,23 +217,37 @@ if err != nil {
     return err
 }
 
-application, err := worker.NewApplication(queue, leaderboardService, worker.Config{
-    Scope:           scope,
-    Concurrency:     cfg.Concurrency,
-    ShutdownTimeout: cfg.ShutdownTimeout,
-    Logger:          logger,
-    Metrics:         metrics,
-})
+application, err := worker.NewApplication(
+    worker.Dependencies{
+        JobQueue:       queue,
+        Leaderboard:    leaderboardService,
+        Email:          emailService,
+        IdentityExpiry: credentialExpiry,
+    },
+    worker.Config{
+        Scope:           scope,
+        Concurrency:     cfg.Concurrency,
+        ShutdownTimeout: cfg.ShutdownTimeout,
+        Logger:          logger,
+        Metrics:         metrics,
+    },
+)
 if err != nil {
     return err
 }
 return application.Run(ctx)
 ```
 
-The command loads and validates its settings before construction, and
-`NewApplication` rejects a non-positive concurrency or shutdown timeout. See
-[Job worker configuration](./worker-configuration.md) for the settings
-and their defaults.
+`worker.Dependencies` lists each feature service the handlers and maintenance
+use, once. Every dependency is required: `NewApplication` rejects a nil one, so
+the worker never registers a handler conditionally or skips maintenance. A
+deployment disables email delivery with a nil sender, not a nil email service;
+the service then holds every message, as [Email](./email.md) describes.
+`worker.Config` holds only the runtime settings. The command loads and validates
+them before construction, and `NewApplication` rejects a non-positive
+concurrency or shutdown timeout. See
+[Job worker configuration](./worker-configuration.md) for the settings and
+their defaults.
 
 ## Execution and failure guarantees
 
@@ -339,7 +353,10 @@ dispatch path this test must cover.
    real workflow or repository check for the behavior that could regress.
 3. Implement the typed application method and add its `handle` entry, with
    concurrency, timeout and attempt limits, to `registrations`. Pass the method
-   from `NewApplication` and `ignoreJob` from `Replay`.
+   from `NewApplication` and `ignoreJob` from `Replay`. Add any feature service
+   it needs to `worker.Dependencies` as one more field, with its nil check in
+   `NewApplication`; `TestNewApplicationRequiresEveryDependency` fails until the
+   check exists.
 4. Return the typed job from each producing feature. Audit every application
    caller and enqueue all returned jobs in the same transaction.
 5. Release the worker that registers the new name before the API that publishes

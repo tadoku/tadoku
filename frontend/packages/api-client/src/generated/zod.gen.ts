@@ -2,6 +2,10 @@
 
 import * as z from 'zod';
 
+export const zAuthzErrorResponse = z.object({
+    error: z.enum(['account_deletion_in_progress'])
+});
+
 export const zAuthzUserRole = z.object({
     role: z.enum([
         'admin',
@@ -425,6 +429,15 @@ export const zProfileUserListEntry = z.object({
 export const zProfileUserList = z.object({
     users: z.array(zProfileUserListEntry),
     total_size: z.int()
+});
+
+export const zProfileAccountDeletionRequest = z.object({
+    email: z.string().regex(/^[\s\S]{0,320}$/u),
+    reason: z.string().regex(/^[\s\S]{1,1000}$/u)
+});
+
+export const zProfileErrorResponse = z.object({
+    error: z.enum(['admin_account', 'account_deletion_in_progress'])
 });
 
 export const zIdentityErrorResponse = z.object({
@@ -1184,6 +1197,12 @@ export const zProfileUsersListQuery = z.object({
  * successful operation
  */
 export const zProfileUsersListResponse = zProfileUserList;
+
+export const zProfileAccountDeletionCreateBody = zProfileAccountDeletionRequest;
+
+export const zProfileAccountDeletionCreatePath = z.object({
+    id: z.string().guid()
+});
 
 export const zIdentityRegistrationCreateBody = zIdentityRegistration;
 

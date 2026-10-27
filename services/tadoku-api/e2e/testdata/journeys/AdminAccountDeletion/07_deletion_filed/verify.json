@@ -1,0 +1,28 @@
+[
+  {
+    "display_name": "Banned One",
+    "deletion_locked_at": "2026-09-12T12:00:00",
+    "deleted_at": null,
+    "jobs": [
+      {
+        "task_type": "account.delete.v1",
+        "state": "pending",
+        "payload": {
+          "user_id": "33333333-3333-4333-8333-333333333333"
+        }
+      }
+    ],
+    "audit": [
+      {
+        "actor_id": "22222222-2222-4222-8222-222222222222",
+        "action": "request_account_deletion",
+        "metadata": {
+          "source": "admin",
+          "target_user_id": "33333333-3333-4333-8333-333333333333"
+        },
+        "description": "Owner confirmed by email",
+        "recorded_at": "2026-09-12T12:00:00"
+      }
+    ]
+  }
+]

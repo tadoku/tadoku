@@ -6,6 +6,7 @@ go_library(
         "contests.sql.go",
         "db.go",
         "models.go",
+        "user_removal.sql.go",
     ],
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/generated/sqlc/contests",
     visibility = ["//services/tadoku-api/features/contests:__pkg__"],

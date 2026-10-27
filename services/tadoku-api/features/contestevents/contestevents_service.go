@@ -17,12 +17,15 @@ func NewService(repository *Repository) *Service {
 
 // Append requires the source mutation's transaction and operation timestamp.
 func (s *Service) Append(ctx context.Context, changes []contestevent.Change, occurredAt time.Time) error {
-	for _, change := range changes {
-		if err := s.repository.Insert(ctx, uuid.New(), change, occurredAt); err != nil {
-			return err
-		}
+	if len(changes) == 0 {
+		return nil
 	}
-	return nil
+
+	events := make([]newEvent, 0, len(changes))
+	for _, change := range changes {
+		events = append(events, newEvent{id: uuid.New(), change: change})
+	}
+	return s.repository.Insert(ctx, events, occurredAt)
 }
 
 func (s *Service) List(ctx context.Context, contestID uuid.UUID, cursor string, limit int) (*Page, error) {

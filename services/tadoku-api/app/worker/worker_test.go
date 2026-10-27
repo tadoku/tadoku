@@ -9,11 +9,18 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/audit"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/contestevents"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/contests"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/email"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/logs"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/profile"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
 )
 
 func TestRegistryRejectsInvalidRegistrations(t *testing.T) {
@@ -136,10 +143,18 @@ func TestNewApplicationRejectsZeroScope(t *testing.T) {
 }
 
 var allDependencies = Dependencies{
-	JobQueue:       new(jobqueue.Service),
-	Leaderboard:    new(leaderboard.Service),
-	Email:          new(email.Service),
-	IdentityExpiry: new(identity.Expiry),
+	DB:               new(pgxpool.Pool),
+	JobQueue:         new(jobqueue.Service),
+	Leaderboard:      new(leaderboard.Service),
+	Email:            new(email.Service),
+	IdentityExpiry:   new(identity.Expiry),
+	IdentityDeletion: new(identity.Deletion),
+	Profile:          new(profile.Service),
+	Logs:             new(logs.Service),
+	Contests:         new(contests.Service),
+	Relationships:    new(permissions.Relationships),
+	Audit:            new(audit.Service),
+	ContestEvents:    new(contestevents.Service),
 }
 
 func baseWorkerScope(t *testing.T) jobqueue.Scope {

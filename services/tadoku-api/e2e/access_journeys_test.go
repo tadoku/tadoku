@@ -196,6 +196,111 @@ func TestUserModerationJourney(t *testing.T) {
 	})
 }
 
+func TestAdminAccountDeletionJourney(t *testing.T) {
+	useContestEventUUIDs(t)
+
+	runJourney(t, api, "AdminAccountDeletion", []step{
+		{
+			request: "finished_contest_leaderboard",
+			as:      guest,
+			want:    http.StatusOK,
+		},
+		{
+			request: "running_contest_leaderboard",
+			as:      guest,
+			want:    http.StatusOK,
+		},
+		{
+			request: "yearly_leaderboard",
+			as:      guest,
+			want:    http.StatusOK,
+		},
+		{
+			request: "global_leaderboard",
+			as:      guest,
+			want:    http.StatusOK,
+		},
+		{
+			request: "file_deletion",
+			as:      admin,
+			want:    http.StatusAccepted,
+			others: cast{
+				guest:  http.StatusUnauthorized,
+				user:   http.StatusForbidden,
+				banned: http.StatusForbidden,
+			},
+		},
+		{
+			request: "refile_refused",
+			as:      admin,
+			want:    http.StatusConflict,
+		},
+		{
+			verify: "deletion_filed",
+		},
+		{
+			job: "run_worker",
+		},
+		{
+			request: "deleted_user_not_found",
+			as:      admin,
+			want:    http.StatusNotFound,
+		},
+		{
+			verify: "account_deleted",
+		},
+		{
+			verify: "deletion_recorded",
+		},
+		{
+			verify: "others_untouched",
+		},
+		{
+			verify: "finished_history_kept",
+		},
+		{
+			request: "finished_contest_keeps_scores",
+			as:      guest,
+			want:    http.StatusOK,
+		},
+		{
+			request: "running_contest_drops_user",
+			as:      guest,
+			want:    http.StatusOK,
+		},
+		{
+			request: "yearly_leaderboard_drops_user",
+			as:      guest,
+			want:    http.StatusOK,
+		},
+		{
+			request: "global_leaderboard_drops_user",
+			as:      guest,
+			want:    http.StatusOK,
+		},
+		{
+			request: "organizer_shown_as_deleted",
+			as:      user2,
+			want:    http.StatusOK,
+		},
+		{
+			request: "running_contest_withdrawals",
+			as:      guest,
+			want:    http.StatusOK,
+		},
+		{
+			request: "finished_contest_updates",
+			as:      guest,
+			want:    http.StatusOK,
+		},
+		{
+			request: "users_after_deletion",
+			as:      admin,
+			want:    http.StatusOK,
+		},
+	})
+}
+
 func TestModerationAuditFailureJourney(t *testing.T) {
 	afterReset := func(t *testing.T) { failInserts(t, "moderation_audit_log") }
 

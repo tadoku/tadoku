@@ -22,6 +22,7 @@ the business write, email and queued work together.
 | --- | --- |
 | `account.recovery` | `recovery_url` |
 | `account.email_changed` | `new_email`, `changed_at` (RFC3339) |
+| `account.deleted` | `deleted_at` (RFC3339) |
 
 The writer rejects unknown templates, missing, empty or unexpected parameters,
 parameters over 4096 bytes, invalid addresses and recovery links outside the

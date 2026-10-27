@@ -1,0 +1,29 @@
+[
+  {
+    "contest_id": "f0000000-0000-4000-8000-0000000000a1",
+    "log_id": "d0000000-0000-4000-8000-000000000001",
+    "user_id": "33333333-3333-4333-8333-333333333333",
+    "language_code": "eng",
+    "duration_seconds": 600,
+    "score": 10,
+    "eligible_official": true
+  },
+  {
+    "contest_id": "f0000000-0000-4000-8000-0000000000a1",
+    "log_id": "d0000000-0000-4000-8000-000000000003",
+    "user_id": "33333333-3333-4333-8333-333333333333",
+    "language_code": "eng",
+    "duration_seconds": 900,
+    "score": 15,
+    "eligible_official": true
+  },
+  {
+    "contest_id": "f0000000-0000-4000-8000-0000000000a4",
+    "log_id": "d0000000-0000-4000-8000-000000000006",
+    "user_id": "33333333-3333-4333-8333-333333333333",
+    "language_code": "eng",
+    "duration_seconds": 1200,
+    "score": 20,
+    "eligible_official": true
+  }
+]

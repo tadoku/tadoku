@@ -92,6 +92,36 @@ delete from sessions
 where user_id = sqlc.arg(user_id)
   and token_hash <> sqlc.arg(keep_token_hash);
 
+-- name: LockAccountForRequest :exec
+select a.user_id
+from accounts a
+join users u on u.tenant = a.tenant and u.id = a.user_id
+where a.user_id = sqlc.arg(user_id)
+  and u.deleted_at is null
+  and u.deletion_locked_at is null
+for update of a;
+
+-- name: LockAccountForDeletion :exec
+select user_id from accounts where user_id = sqlc.arg(user_id) for update;
+
+-- name: AccountHasEmail :one
+select exists (
+  select 1
+  from accounts
+  where user_id = sqlc.arg(user_id)
+    and email_normalized = sqlc.arg(email_normalized)
+)::boolean;
+
+-- name: DeleteAccount :one
+with deleted_recovery_tokens as (
+  delete from recovery_tokens where recovery_tokens.user_id = sqlc.arg(user_id)::uuid
+), deleted_sessions as (
+  delete from sessions where sessions.user_id = sqlc.arg(user_id)::uuid
+)
+delete from accounts
+where accounts.user_id = sqlc.arg(user_id)::uuid
+returning accounts.email;
+
 -- name: DeleteExpiredCredentials :one
 with expired_sessions as (
   delete from sessions

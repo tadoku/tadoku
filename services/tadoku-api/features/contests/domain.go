@@ -36,6 +36,13 @@ type RegistrationResult struct {
 	Events []contestevent.Change
 }
 
+type RemovalResult struct {
+	Jobs                 []jobs.Job
+	DeletedRegistrations int
+	KeptRegistrations    int
+	OwnedContests        int
+}
+
 type Contest struct {
 	ID                      uuid.UUID
 	ContestStart            time.Time

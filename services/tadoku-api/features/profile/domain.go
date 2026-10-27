@@ -9,11 +9,22 @@ import (
 var (
 	ErrLocalUserNotFound         = errx.NewNotFoundError("local user not found")
 	ErrAccountDeletionInProgress = errx.NewConflictError("account deletion in progress")
+	ErrDeletionNotRequested      = errx.NewConflictError("account deletion was not requested")
 )
 
 type userDeletionState struct {
 	DeletionLocked bool
 	Deleted        bool
+}
+
+func (s userDeletionState) requireDeletable() error {
+	switch {
+	case s.Deleted:
+		return ErrLocalUserNotFound
+	case s.DeletionLocked:
+		return ErrAccountDeletionInProgress
+	}
+	return nil
 }
 
 type User struct {

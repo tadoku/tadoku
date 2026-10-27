@@ -134,7 +134,7 @@ func emailWorker(
 	scope jobqueue.Scope,
 ) *worker.Application {
 	t.Helper()
-	deps := workerDependencies(api.db.AppPool)
+	deps := workerDependencies(t, api.db.AppPool)
 	deps.JobQueue = jobqueue.NewService(repository)
 	deps.Email = service
 	application, err := worker.NewApplication(deps, worker.Config{

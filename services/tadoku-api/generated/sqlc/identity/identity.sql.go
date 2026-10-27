@@ -11,6 +11,27 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const accountHasEmail = `-- name: AccountHasEmail :one
+select exists (
+  select 1
+  from accounts
+  where user_id = $1
+    and email_normalized = $2
+)::boolean
+`
+
+type AccountHasEmailParams struct {
+	UserID          pgtype.UUID
+	EmailNormalized string
+}
+
+func (q *Queries) AccountHasEmail(ctx context.Context, arg AccountHasEmailParams) (bool, error) {
+	row := q.db.QueryRow(ctx, accountHasEmail, arg.UserID, arg.EmailNormalized)
+	var column_1 bool
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
 const createRecoveryToken = `-- name: CreateRecoveryToken :exec
 insert into recovery_tokens (token_hash, user_id, expires_at)
 values ($1, $2, $3)
@@ -60,6 +81,24 @@ func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) (i
 		return 0, err
 	}
 	return result.RowsAffected(), nil
+}
+
+const deleteAccount = `-- name: DeleteAccount :one
+with deleted_recovery_tokens as (
+  delete from recovery_tokens where recovery_tokens.user_id = $1::uuid
+), deleted_sessions as (
+  delete from sessions where sessions.user_id = $1::uuid
+)
+delete from accounts
+where accounts.user_id = $1::uuid
+returning accounts.email
+`
+
+func (q *Queries) DeleteAccount(ctx context.Context, userID pgtype.UUID) (string, error) {
+	row := q.db.QueryRow(ctx, deleteAccount, userID)
+	var email string
+	err := row.Scan(&email)
+	return email, err
 }
 
 const deleteExpiredCredentials = `-- name: DeleteExpiredCredentials :one
@@ -296,6 +335,30 @@ func (q *Queries) LockAccount(ctx context.Context, userID pgtype.UUID) (LockAcco
 		&i.PasswordHash,
 	)
 	return i, err
+}
+
+const lockAccountForDeletion = `-- name: LockAccountForDeletion :exec
+select user_id from accounts where user_id = $1 for update
+`
+
+func (q *Queries) LockAccountForDeletion(ctx context.Context, userID pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, lockAccountForDeletion, userID)
+	return err
+}
+
+const lockAccountForRequest = `-- name: LockAccountForRequest :exec
+select a.user_id
+from accounts a
+join users u on u.tenant = a.tenant and u.id = a.user_id
+where a.user_id = $1
+  and u.deleted_at is null
+  and u.deletion_locked_at is null
+for update of a
+`
+
+func (q *Queries) LockAccountForRequest(ctx context.Context, userID pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, lockAccountForRequest, userID)
+	return err
 }
 
 const lockRecoveryAccount = `-- name: LockRecoveryAccount :one

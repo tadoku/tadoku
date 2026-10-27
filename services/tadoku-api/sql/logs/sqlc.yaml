@@ -5,6 +5,7 @@ sql:
     queries:
       - logs.sql
       - contest_logs.sql
+      - user_removal.sql
     gen:
       go:
         package: logs

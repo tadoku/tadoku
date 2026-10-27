@@ -11,25 +11,30 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const insertContestEvent = `-- name: InsertContestEvent :exec
+const insertContestEvents = `-- name: InsertContestEvents :exec
 insert into contest_events (id, contest_id, log_id, event, occurred_at)
-values ($1, $2, $3, $4, $5)
+select
+  unnest($1::uuid[]),
+  unnest($2::uuid[]),
+  unnest($3::uuid[]),
+  unnest($4::text[]),
+  $5
 `
 
-type InsertContestEventParams struct {
-	ID         pgtype.UUID
-	ContestID  pgtype.UUID
-	LogID      pgtype.UUID
-	Event      string
+type InsertContestEventsParams struct {
+	Ids        []pgtype.UUID
+	ContestIds []pgtype.UUID
+	LogIds     []pgtype.UUID
+	Events     []string
 	OccurredAt pgtype.Timestamptz
 }
 
-func (q *Queries) InsertContestEvent(ctx context.Context, arg InsertContestEventParams) error {
-	_, err := q.db.Exec(ctx, insertContestEvent,
-		arg.ID,
-		arg.ContestID,
-		arg.LogID,
-		arg.Event,
+func (q *Queries) InsertContestEvents(ctx context.Context, arg InsertContestEventsParams) error {
+	_, err := q.db.Exec(ctx, insertContestEvents,
+		arg.Ids,
+		arg.ContestIds,
+		arg.LogIds,
+		arg.Events,
 		arg.OccurredAt,
 	)
 	return err

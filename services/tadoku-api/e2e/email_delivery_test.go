@@ -160,7 +160,7 @@ func TestEmailWorkerDelivery(t *testing.T) {
 			if !tc.production {
 				scope, _ = jobqueue.OnlyTenant(key)
 			}
-			deps := workerDependencies(api.db.AppPool)
+			deps := workerDependencies(t, api.db.AppPool)
 			deps.Email = service
 			application, err := worker.NewApplication(deps, worker.Config{
 				Scope:           scope,

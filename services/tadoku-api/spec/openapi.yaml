@@ -168,6 +168,12 @@ paths:
           description: forbidden (not admin, or target is admin)
         "404":
           description: user not found
+        "409":
+          description: target's account deletion is filed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthzErrorResponse"
         "503":
           description: authorization unavailable
       x-tadoku-source: Authz
@@ -2568,6 +2574,60 @@ paths:
       x-tadoku-exposure: public
       x-legacy-path: /users
       x-legacy-operation-id: usersList
+  "/profile/users/{id}/account-deletion":
+    post:
+      summary: Request the deletion of a user's account (admin only)
+      description: >-
+        Locks the account at once: from the commit the user cannot sign in, and their sessions and writes are
+        refused. An account.delete.v1 job then deletes the account's data. The email confirms the target and must
+        be the account's address, compared after normalization. Administrators are refused; banned users are
+        accepted. The audit event records the signed-in administrator as the actor, with the reason.
+      operationId: ProfileAccountDeletionCreate
+      tags:
+        - admin
+      security:
+        - ProfilecookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfileAccountDeletionRequest"
+      responses:
+        "202":
+          description: the account is locked and its deletion is queued
+        "400":
+          description: >-
+            invalid request. An email that does not match the account returns
+            {"error":"confirmation_mismatch"}; other invalid input, such as a missing email or reason, has an
+            empty body.
+        "401":
+          description: unauthorized
+        "403":
+          description: forbidden (not admin)
+        "404":
+          description: user not found or already deleted
+        "409":
+          description: >-
+            the target is an administrator (admin_account) or its deletion is already filed
+            (account_deletion_in_progress)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfileErrorResponse"
+        "503":
+          description: authorization unavailable
+      x-tadoku-source: Profile
+      x-tadoku-exposure: public
+      x-legacy-path: /users/{id}/account-deletion
+      x-legacy-operation-id: accountDeletionCreate
   /authz/internal/v1/proxy/admin-check:
     post:
       summary: Authorizes an account subject as a Tadoku administrator
@@ -3321,6 +3381,15 @@ paths:
       x-legacy-operation-id: sessionCheck
 components:
   schemas:
+    AuthzErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          enum:
+            - account_deletion_in_progress
     AuthzUserRole:
       type: object
       required:
@@ -4506,6 +4575,36 @@ components:
           type: string
         role:
           type: string
+    ProfileAccountDeletionRequest:
+      type: object
+      required:
+        - email
+        - reason
+      properties:
+        email:
+          type: string
+          maxLength: 320
+          description: >-
+            The account's email address as the administrator typed it, compared with the account's address after
+            normalization, so letter case and surrounding whitespace do not matter. It has no format, so an
+            imported address that is not a valid email can still be confirmed.
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 1000
+          description: >-
+            Why the account is deleted, kept in the audit log for good. Surrounding whitespace is trimmed before
+            the length is checked. Do not include the user's email address or display name.
+    ProfileErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          enum:
+            - admin_account
+            - account_deletion_in_progress
     AuthzProxyProxyAdminCheckRequest:
       type: object
       additionalProperties: false

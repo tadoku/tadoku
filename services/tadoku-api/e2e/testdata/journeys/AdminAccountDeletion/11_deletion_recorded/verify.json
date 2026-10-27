@@ -1,0 +1,102 @@
+[
+  {
+    "audit": [
+      {
+        "actor_id": "33333333-3333-4333-8333-333333333333",
+        "action": "complete_account_deletion",
+        "metadata": {
+          "kept_logs": 3,
+          "deleted_logs": 3,
+          "owned_contests": 1,
+          "target_user_id": "33333333-3333-4333-8333-333333333333",
+          "kept_registrations": 2,
+          "deleted_registrations": 2
+        },
+        "description": "",
+        "recorded_at": "2026-09-12T12:00:00"
+      },
+      {
+        "actor_id": "22222222-2222-4222-8222-222222222222",
+        "action": "request_account_deletion",
+        "metadata": {
+          "source": "admin",
+          "target_user_id": "33333333-3333-4333-8333-333333333333"
+        },
+        "description": "Owner confirmed by email",
+        "recorded_at": "2026-09-12T12:00:00"
+      }
+    ],
+    "emails": [
+      {
+        "template": "account.recovery",
+        "recipient": "banned@example.test",
+        "subject": "Recover your Tadoku account",
+        "body": "Earlier message",
+        "params": {
+          "recovery_url": "https://account.tadoku.app/x"
+        },
+        "status": "held",
+        "created_at": "2026-09-11T12:00:00+00:00"
+      },
+      {
+        "template": "account.deleted",
+        "recipient": "banned@example.test",
+        "subject": "Your Tadoku account was deleted",
+        "body": "Your Tadoku account was deleted at 2026-09-12T12:00:00Z.\n\nYour sign-in, your logs outside finished contests and your registrations in running contests were removed. Finished contests keep your scores as \"Deleted participant\", and contests you organized continue under \"Deleted organizer\".\n\nIf you did not ask for this, contact Tadoku support.\n",
+        "params": {
+          "deleted_at": "2026-09-12T12:00:00Z"
+        },
+        "status": "held",
+        "created_at": "2026-09-12T12:00:00+00:00"
+      }
+    ],
+    "jobs": [
+      {
+        "task_type": "account.delete.v1",
+        "state": "completed",
+        "payload": {
+          "user_id": "33333333-3333-4333-8333-333333333333"
+        },
+        "names_email": false
+      },
+      {
+        "task_type": "email.send.v1",
+        "state": "completed",
+        "payload": {},
+        "names_email": true
+      },
+      {
+        "task_type": "leaderboard.invalidate_contest.v1",
+        "state": "completed",
+        "payload": {
+          "contest_id": "f0000000-0000-4000-8000-0000000000a2"
+        },
+        "names_email": false
+      },
+      {
+        "task_type": "leaderboard.invalidate_contest.v1",
+        "state": "completed",
+        "payload": {
+          "contest_id": "f0000000-0000-4000-8000-0000000000a3"
+        },
+        "names_email": false
+      },
+      {
+        "task_type": "leaderboard.invalidate_official.v1",
+        "state": "completed",
+        "payload": {
+          "year": 2025
+        },
+        "names_email": false
+      },
+      {
+        "task_type": "leaderboard.invalidate_official.v1",
+        "state": "completed",
+        "payload": {
+          "year": 2026
+        },
+        "names_email": false
+      }
+    ]
+  }
+]

@@ -28,25 +28,29 @@ func (r *LogsRepository) ContestLogViews(
 
 	views := make([]contestLogView, 0, len(rows))
 	for _, row := range rows {
-		views = append(views, contestLogView{
-			ContestID: uuid.UUID(row.ContestID.Bytes),
-			Log: Log{
-				ID:              uuid.UUID(row.ID.Bytes),
-				UserID:          uuid.UUID(row.UserID.Bytes),
-				UserDisplayName: &row.UserDisplayName,
-				LanguageCode:    row.LanguageCode,
-				LanguageName:    row.LanguageName,
-				Activity:        activities.Activity{ID: int32(row.ActivityID)},
-				UnitName:        row.UnitName,
-				Description:     postgres.TextPointer(row.Description),
-				Amount:          row.Amount,
-				Modifier:        row.Modifier,
-				DurationSeconds: postgres.Int4Pointer(row.DurationSeconds),
-				Score:           row.Score,
-				CreatedAt:       row.CreatedAt.Time,
-				Tags:            row.Tags,
-			},
-		})
+		views = append(views, contestLogViewFromRow(row))
 	}
 	return views, nil
+}
+
+func contestLogViewFromRow(row queries.ReadContestLogViewsRow) contestLogView {
+	return contestLogView{
+		ContestID: uuid.UUID(row.ContestID.Bytes),
+		Log: Log{
+			ID:              uuid.UUID(row.ID.Bytes),
+			UserID:          uuid.UUID(row.UserID.Bytes),
+			UserDisplayName: &row.UserDisplayName,
+			LanguageCode:    row.LanguageCode,
+			LanguageName:    row.LanguageName,
+			Activity:        activities.Activity{ID: int32(row.ActivityID)},
+			UnitName:        row.UnitName,
+			Description:     postgres.TextPointer(row.Description),
+			Amount:          row.Amount,
+			Modifier:        row.Modifier,
+			DurationSeconds: postgres.Int4Pointer(row.DurationSeconds),
+			Score:           row.Score,
+			CreatedAt:       row.CreatedAt.Time,
+			Tags:            row.Tags,
+		},
+	}
 }

@@ -112,7 +112,7 @@ func runCredentialExpiry(t *testing.T, scope jobqueue.Scope, cancelTenant string
 	defer pool.Close()
 
 	application, err := worker.NewApplication(
-		workerDependencies(pool),
+		workerDependencies(t, pool),
 		worker.Config{
 			Scope:           scope,
 			Concurrency:     1,

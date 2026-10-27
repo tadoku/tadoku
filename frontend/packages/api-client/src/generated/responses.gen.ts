@@ -69,6 +69,7 @@ export const successResponses: Readonly<Record<string, Readonly<Record<number, b
   'POST /immersion/languages': { 200: false },
   'PUT /immersion/languages/{code}': { 200: false },
   'GET /profile/users': { 200: true },
+  'POST /profile/users/{id}/account-deletion': { 202: false },
   'POST /authz/internal/v1/proxy/admin-check': { 200: false },
   'POST /identity/registration': { 201: true },
   'POST /identity/login': { 200: true },

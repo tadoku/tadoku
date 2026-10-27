@@ -34,6 +34,17 @@ var templates = map[domainmail.Template]emailTemplate{
 				"If you did not make this change, recover your account or contact Tadoku support.\n",
 		)),
 	},
+	domainmail.AccountDeleted: {
+		params:  []string{"deleted_at"},
+		subject: "Your Tadoku account was deleted",
+		body: template.Must(template.New("deleted").Parse(
+			"Your Tadoku account was deleted at {{.deleted_at}}.\n\n" +
+				"Your sign-in, your logs outside finished contests and your registrations in running contests " +
+				"were removed. Finished contests keep your scores as \"Deleted participant\", and contests you " +
+				"organized continue under \"Deleted organizer\".\n\n" +
+				"If you did not ask for this, contact Tadoku support.\n",
+		)),
+	},
 }
 
 func render(message domainmail.Message) (string, string, error) {
@@ -66,6 +77,10 @@ func render(message domainmail.Message) (string, string, error) {
 		}
 		if _, err := time.Parse(time.RFC3339, message.Params["changed_at"]); err != nil {
 			return "", "", errx.NewInvalidInputError("changed_at must be an RFC3339 timestamp")
+		}
+	case domainmail.AccountDeleted:
+		if _, err := time.Parse(time.RFC3339, message.Params["deleted_at"]); err != nil {
+			return "", "", errx.NewInvalidInputError("deleted_at must be an RFC3339 timestamp")
 		}
 	}
 	var body bytes.Buffer

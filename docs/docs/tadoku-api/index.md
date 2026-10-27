@@ -83,6 +83,8 @@ see [Contributing workflow](../develop/contributing.md#cms-managed-content).
   current contest log contents for integrations.
 - [Database and migrations](./database.md): read before writing a migration,
   changing a SQL query or opening a transaction.
+- [Account deletion](./account-deletion.md): read before filing, following or
+  replaying an account deletion, or changing how one is filed or executed.
 - [Jobs and worker](./jobs.md): read before adding background work or changing
   how a job is defined, published or handled.
 - [Operate jobs and the worker](./jobs-operations.md): read before checking

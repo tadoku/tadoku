@@ -14,10 +14,17 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/audit"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/authz"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/contestevents"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/contests"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/email"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/logs"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/profile"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant/alltenants"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
@@ -196,13 +203,22 @@ func (f workerFixture) runner(t *testing.T, client valkeygo.Client, providerTime
 	return application
 }
 
-// workerDependencies gives email no sender, so the worker holds every message.
+// workerDependencies gives email no sender, so the worker holds every message. Relationships has an empty permission
+// model, because this package cannot import app/permissionmodel, so these tests must not run an account deletion.
 func workerDependencies(pool *pgxpool.Pool, cache *leaderboard.Cache) Dependencies {
 	return Dependencies{
-		JobQueue:       jobqueue.NewService(jobqueue.NewRepository(pool)),
-		Leaderboard:    leaderboard.NewService(leaderboard.NewRepository(pool), cache),
-		Email:          email.NewService(email.NewRepository(pool), nil),
-		IdentityExpiry: identity.NewExpiry(identity.NewRepository(pool)),
+		DB:               pool,
+		JobQueue:         jobqueue.NewService(jobqueue.NewRepository(pool)),
+		Leaderboard:      leaderboard.NewService(leaderboard.NewRepository(pool), cache),
+		Email:            email.NewService(email.NewRepository(pool), nil),
+		IdentityExpiry:   identity.NewExpiry(identity.NewRepository(pool)),
+		IdentityDeletion: identity.NewDeletion(identity.NewRepository(pool)),
+		Profile:          profile.NewService(profile.NewRepository(pool), identity.NewReader(pool)),
+		Logs:             logs.NewService(logs.NewLogsRepository(pool), false),
+		Contests:         contests.NewService(contests.NewContestsRepository(pool)),
+		Relationships:    permissions.NewRelationships(authz.NewRepository(pool), permissions.Model{}),
+		Audit:            audit.NewService(audit.NewRepository(pool)),
+		ContestEvents:    contestevents.NewService(contestevents.NewRepository(pool)),
 	}
 }
 

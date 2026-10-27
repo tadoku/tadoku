@@ -1,0 +1,4 @@
+>>> POST /profile/users/33333333-3333-4333-8333-333333333333/account-deletion
+HTTP/1.1 202 Accepted
+Content-Length: 0
+

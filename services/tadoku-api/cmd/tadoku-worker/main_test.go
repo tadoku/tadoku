@@ -14,7 +14,8 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
 )
 
-func TestReplayCommandCreatesLinkedJob(t *testing.T) {
+func workerTestDatabase(t *testing.T) *testpostgres.Database {
+	t.Helper()
 	db, err := testpostgres.New(t.Context())
 	if err != nil {
 		t.Fatal(err)
@@ -38,9 +39,14 @@ func TestReplayCommandCreatesLinkedJob(t *testing.T) {
 	t.Setenv("WORKER_POSTGRES_USER", parsed.User.Username())
 	t.Setenv("WORKER_POSTGRES_PASSWORD", password)
 	t.Setenv("WORKER_POSTGRES_SSLMODE", "disable")
+	return db
+}
+
+func TestReplayCommandCreatesLinkedJob(t *testing.T) {
+	db := workerTestDatabase(t)
 
 	var failedID int64
-	err = db.Pool.QueryRow(t.Context(), `insert into jobs (tenant, task_type, payload, state, attempts, failed_at, last_error)
+	err := db.Pool.QueryRow(t.Context(), `insert into jobs (tenant, task_type, payload, state, attempts, failed_at, last_error)
 		values ('tadoku/prod', 'leaderboard.invalidate_official.v1', '{"year":2025}', 'failed', 5, now(), 'handler_error') returning id`).Scan(&failedID)
 	if err != nil {
 		t.Fatal(err)

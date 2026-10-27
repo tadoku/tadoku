@@ -56,9 +56,9 @@ for attached issuance, limits, listing and revocation.
 
 Profile and moderation use `identity.Reader` for public profile details, account
 age, admin listing and ban-target existence. Targets must be active accounts in
-the request tenant. Account deletion has no API; see
-[Account deletion](../operations/account-deletion.md). Read access does not
-authorize shared provider mutations.
+the request tenant. Administrators file account deletions through the profile
+API; see [Account deletion](../tadoku-api/account-deletion.md). Read access does
+not authorize shared provider mutations.
 
 ## Permission model
 
@@ -76,8 +76,11 @@ administrators and no bans.
 Administrators can change only the `banned` relation through the API
 (`PUT /authz/users/{id}/role`), and never for another administrator. No API
 grants `admins`; see [Granting an administrator](#granting-an-administrator).
-A role update writes the relationship and its `moderation_audit_log` entry,
-`ban_user` or `unban_user`, in one transaction.
+A role update locks the target's `users` row, then writes the relationship and
+its `moderation_audit_log` entry, `ban_user` or `unban_user`, in one
+transaction. A target whose account deletion is filed returns `409`, also when
+the update waited for the deletion worker; a target that is already deleted
+returns `404`.
 
 ### Granting an administrator
 
@@ -89,11 +92,18 @@ administrator:
 ```sql
 begin;
 select set_config('tadoku.tenant', 'tadoku/prod', true);
+select deletion_locked_at, deleted_at from users where id = '<lowercase user UUID>' for update;
+-- If either value is set, the account is being deleted: run rollback; instead.
 insert into permission_relationships (tenant, object_type, object_id, relation, subject_type, subject_id)
 values ('tadoku/prod', 'app', 'root', 'admins', 'user', '<lowercase user UUID>')
 on conflict do nothing;
 commit;
 ```
+
+Locking the `users` row first, as role updates do, makes an account deletion
+filed at the same moment either see the new administrator and refuse, or be
+filed first. A filed deletion still runs, so roll the grant back when the lock
+shows `deletion_locked_at` or `deleted_at` set.
 
 To revoke one:
 

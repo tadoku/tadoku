@@ -236,34 +236,36 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 
 	scoringObserver := observability.NewScoringObserver(metrics, logger, cfg.ScoringEngineEnabled)
 	scoringService := scoring.NewService(scoringRepository, cfg.ScoringEngineEnabled, scoringObserver)
+	identityRepository := identity.NewRepository(pool)
 	identityService := identity.NewService(
-		identity.NewRepository(pool),
+		identityRepository,
 		identity.NewThrottle(valkeyClient, cfg.ValkeyTimeout, logger),
 		cfg.IdentityCookieDomain,
 	)
 
 	apiApplication := api.New(api.Dependencies{
-		Tokens:        tokens.NewService(tokens.NewRepository(pool), cfg.Production),
-		Deployment:    cfg.deployment,
-		Email:         email.NewService(email.NewRepository(pool), nil),
-		JobQueue:      jobQueue,
-		Announcements: announcementsService,
-		Audit:         auditService,
-		Authorization: authzService,
-		Contests:      contestsService,
-		ContestEvents: contestevents.NewService(contestevents.NewRepository(pool)),
-		Leaderboard:   leaderboardService,
-		Languages:     languagesService,
-		Logs:          logsService,
-		Pages:         pagesService,
-		Posts:         postsService,
-		Profile:       profileService,
-		Scoring:       scoringService,
-		FeatureFlags:  featureFlagService,
-		DB:            pool,
-		Permissions:   permissionChecker,
-		Roles:         roles,
-		Identity:      identityService,
+		Tokens:           tokens.NewService(tokens.NewRepository(pool), cfg.Production),
+		Deployment:       cfg.deployment,
+		Email:            email.NewService(email.NewRepository(pool), nil),
+		JobQueue:         jobQueue,
+		Announcements:    announcementsService,
+		Audit:            auditService,
+		Authorization:    authzService,
+		Contests:         contestsService,
+		ContestEvents:    contestevents.NewService(contestevents.NewRepository(pool)),
+		Leaderboard:      leaderboardService,
+		Languages:        languagesService,
+		Logs:             logsService,
+		Pages:            pagesService,
+		Posts:            postsService,
+		Profile:          profileService,
+		Scoring:          scoringService,
+		FeatureFlags:     featureFlagService,
+		DB:               pool,
+		Permissions:      permissionChecker,
+		Roles:            roles,
+		Identity:         identityService,
+		IdentityDeletion: identity.NewDeletion(identityRepository),
 	})
 	rejectBanned := transporthttp.RejectBannedUsers(roles.Admit, logger)
 

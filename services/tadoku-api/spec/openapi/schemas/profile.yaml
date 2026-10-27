@@ -30,3 +30,33 @@ components:
           type: string
         role:
           type: string
+    ProfileAccountDeletionRequest:
+      type: object
+      required:
+        - email
+        - reason
+      properties:
+        email:
+          type: string
+          maxLength: 320
+          description: >-
+            The account's email address as the administrator typed it, compared with the account's address after
+            normalization, so letter case and surrounding whitespace do not matter. It has no format, so an
+            imported address that is not a valid email can still be confirmed.
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 1000
+          description: >-
+            Why the account is deleted, kept in the audit log for good. Surrounding whitespace is trimmed before
+            the length is checked. Do not include the user's email address or display name.
+    ProfileErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          enum:
+            - admin_account
+            - account_deletion_in_progress

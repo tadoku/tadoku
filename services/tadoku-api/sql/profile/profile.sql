@@ -13,6 +13,11 @@ on conflict (tenant, id) do update set
 where users.deletion_locked_at is null and users.deleted_at is null
 returning id;
 
+-- name: ReadUserDeletionState :one
+select deletion_locked_at, deleted_at
+from users
+where id = sqlc.arg(id);
+
 -- name: LockUser :one
 select deletion_locked_at, deleted_at
 from users
@@ -21,3 +26,13 @@ for update;
 
 -- name: FindUserDisplayNames :many
 select id, display_name from users where id = any(sqlc.arg('ids')::uuid[]);
+
+-- name: MarkUserDeletionLocked :exec
+update users
+set deletion_locked_at = sqlc.arg(now), updated_at = sqlc.arg(now)
+where id = sqlc.arg(id);
+
+-- name: TombstoneUser :exec
+update users
+set display_name = 'Deleted participant', deleted_at = sqlc.arg(now), updated_at = sqlc.arg(now)
+where id = sqlc.arg(id);

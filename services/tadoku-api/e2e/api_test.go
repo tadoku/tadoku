@@ -277,8 +277,9 @@ func newTestRouterWithLeaderboardService(
 	registry := prometheus.NewRegistry()
 	scoringObserver := observability.NewScoringObserver(registry, logger, scoringEngineEnabled)
 	scoringService := scoring.NewService(scoringRepository, scoringEngineEnabled, scoringObserver)
+	identityRepository := identity.NewRepository(pool)
 	identityService := identity.NewService(
-		identity.NewRepository(pool),
+		identityRepository,
 		identity.NewThrottle(endpoints.identityValkey, time.Second, logger),
 		"tadoku.dev.lab",
 	)
@@ -288,27 +289,28 @@ func newTestRouterWithLeaderboardService(
 		production = *endpoints.production
 	}
 	application := apiapp.New(apiapp.Dependencies{
-		Tokens:        tokens.NewService(tokens.NewRepository(pool), production),
-		Deployment:    deployment,
-		Email:         email.NewService(email.NewRepository(pool), nil),
-		JobQueue:      jobQueue,
-		Announcements: announcementsService,
-		Audit:         auditService,
-		Authorization: authzService,
-		Contests:      contestsService,
-		ContestEvents: contestevents.NewService(contestevents.NewRepository(pool)),
-		Leaderboard:   leaderboardService,
-		Languages:     languagesService,
-		Logs:          logsService,
-		Pages:         pagesService,
-		Posts:         postsService,
-		Profile:       profileService,
-		Scoring:       scoringService,
-		FeatureFlags:  featureFlagsService,
-		DB:            pool,
-		Permissions:   permissionChecker,
-		Roles:         roles,
-		Identity:      identityService,
+		Tokens:           tokens.NewService(tokens.NewRepository(pool), production),
+		Deployment:       deployment,
+		Email:            email.NewService(email.NewRepository(pool), nil),
+		JobQueue:         jobQueue,
+		Announcements:    announcementsService,
+		Audit:            auditService,
+		Authorization:    authzService,
+		Contests:         contestsService,
+		ContestEvents:    contestevents.NewService(contestevents.NewRepository(pool)),
+		Leaderboard:      leaderboardService,
+		Languages:        languagesService,
+		Logs:             logsService,
+		Pages:            pagesService,
+		Posts:            postsService,
+		Profile:          profileService,
+		Scoring:          scoringService,
+		FeatureFlags:     featureFlagsService,
+		DB:               pool,
+		Permissions:      permissionChecker,
+		Roles:            roles,
+		Identity:         identityService,
+		IdentityDeletion: identity.NewDeletion(identityRepository),
 	})
 
 	authenticate, err := transport.NewJWTAuthentication(

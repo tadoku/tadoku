@@ -21,14 +21,22 @@ import (
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/tadoku/tadoku/services/common/postgresconfig"
+	"github.com/tadoku/tadoku/services/tadoku-api/app/permissionmodel"
 	"github.com/tadoku/tadoku/services/tadoku-api/app/worker"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/audit"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/authz"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/contestevents"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/contests"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/email"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/logs"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/profile"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/observability"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 	valkeyinfra "github.com/tadoku/tadoku/services/tadoku-api/infra/valkey"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/permissions"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
@@ -115,15 +123,27 @@ func run(ctx context.Context, cfg config, logger *slog.Logger) error {
 	)
 
 	metrics := worker.NewMetrics(registry)
+	model, err := permissionmodel.New()
+	if err != nil {
+		return fmt.Errorf("build permission model: %w", err)
+	}
 	application, err := worker.NewApplication(
 		worker.Dependencies{
+			DB:       pool,
 			JobQueue: jobqueue.NewService(jobqueue.NewRepository(pool)),
 			Leaderboard: leaderboard.NewService(
 				leaderboard.NewRepository(pool),
 				leaderboard.NewCache(client, cfg.ValkeyTimeout),
 			),
-			Email:          email.NewService(email.NewRepository(pool), sender),
-			IdentityExpiry: identity.NewExpiry(identity.NewRepository(pool)),
+			Email:            email.NewService(email.NewRepository(pool), sender),
+			IdentityExpiry:   identity.NewExpiry(identity.NewRepository(pool)),
+			IdentityDeletion: identity.NewDeletion(identity.NewRepository(pool)),
+			Profile:          profile.NewService(profile.NewRepository(pool), identity.NewReader(pool)),
+			Logs:             logs.NewService(logs.NewLogsRepository(pool), false),
+			Contests:         contests.NewService(contests.NewContestsRepository(pool)),
+			Relationships:    permissions.NewRelationships(authz.NewRepository(pool), model),
+			Audit:            audit.NewService(audit.NewRepository(pool)),
+			ContestEvents:    contestevents.NewService(contestevents.NewRepository(pool)),
 		},
 		worker.Config{
 			Scope:           cfg.scope,

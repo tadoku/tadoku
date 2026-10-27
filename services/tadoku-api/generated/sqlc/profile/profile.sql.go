@@ -59,6 +59,40 @@ func (q *Queries) LockUser(ctx context.Context, id pgtype.UUID) (LockUserRow, er
 	return i, err
 }
 
+const markUserDeletionLocked = `-- name: MarkUserDeletionLocked :exec
+update users
+set deletion_locked_at = $1, updated_at = $1
+where id = $2
+`
+
+type MarkUserDeletionLockedParams struct {
+	Now pgtype.Timestamp
+	ID  pgtype.UUID
+}
+
+func (q *Queries) MarkUserDeletionLocked(ctx context.Context, arg MarkUserDeletionLockedParams) error {
+	_, err := q.db.Exec(ctx, markUserDeletionLocked, arg.Now, arg.ID)
+	return err
+}
+
+const readUserDeletionState = `-- name: ReadUserDeletionState :one
+select deletion_locked_at, deleted_at
+from users
+where id = $1
+`
+
+type ReadUserDeletionStateRow struct {
+	DeletionLockedAt pgtype.Timestamp
+	DeletedAt        pgtype.Timestamp
+}
+
+func (q *Queries) ReadUserDeletionState(ctx context.Context, id pgtype.UUID) (ReadUserDeletionStateRow, error) {
+	row := q.db.QueryRow(ctx, readUserDeletionState, id)
+	var i ReadUserDeletionStateRow
+	err := row.Scan(&i.DeletionLockedAt, &i.DeletedAt)
+	return i, err
+}
+
 const synchronizeUser = `-- name: SynchronizeUser :one
 insert into users (id, display_name, created_at, updated_at)
 values ($1, $2, $3, $4)
@@ -94,4 +128,20 @@ func (q *Queries) SynchronizeUser(ctx context.Context, arg SynchronizeUserParams
 	var id pgtype.UUID
 	err := row.Scan(&id)
 	return id, err
+}
+
+const tombstoneUser = `-- name: TombstoneUser :exec
+update users
+set display_name = 'Deleted participant', deleted_at = $1, updated_at = $1
+where id = $2
+`
+
+type TombstoneUserParams struct {
+	Now pgtype.Timestamp
+	ID  pgtype.UUID
+}
+
+func (q *Queries) TombstoneUser(ctx context.Context, arg TombstoneUserParams) error {
+	_, err := q.db.Exec(ctx, tombstoneUser, arg.Now, arg.ID)
+	return err
 }

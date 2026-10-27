@@ -1,0 +1,26 @@
+[
+  {
+    "display_name": "Deleted participant",
+    "deletion_locked_at": "2026-09-12T12:00:00",
+    "deleted_at": "2026-09-12T12:00:00",
+    "accounts": 0,
+    "permission_relationships": 0,
+    "jobs": [
+      {
+        "task_type": "account.delete.v1",
+        "state": "completed"
+      },
+      {
+        "task_type": "email.send.v1",
+        "state": "completed"
+      }
+    ],
+    "audit_actions": [
+      "complete_account_deletion",
+      "request_account_deletion"
+    ],
+    "emails": [
+      "account.deleted"
+    ]
+  }
+]

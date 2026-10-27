@@ -24,7 +24,7 @@ to `runJourney`:
 | --- | --- |
 | `services/tadoku-api/e2e/user_journeys_test.go` | Tenant isolation, languages, contests, registrations and scoring rule sets |
 | `services/tadoku-api/e2e/log_journeys_test.go` | Logs and leaderboard jobs |
-| `services/tadoku-api/e2e/access_journeys_test.go` | Roles, bans and the user list |
+| `services/tadoku-api/e2e/access_journeys_test.go` | Roles, bans, the user list and account deletion |
 | `services/tadoku-api/e2e/content_journeys_test.go` | Announcements, pages and posts |
 
 Journeys keep dependent steps in one scenario and run the production API router

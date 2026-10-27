@@ -65,6 +65,10 @@ Each fragment holds one part of the contract and stays at or under about 16 KB:
   `docs/scripts/api-contract.test.mjs`) verify that the contract is valid, that
   server generation covers its operations, that each view holds exactly its
   source's operations and that operation and source exposures agree.
+- After the documentation build, `docs/scripts/api-publication.test.mjs`
+  checks that the generated and built reference has one page per operation in
+  the public views and one introduction per public view. Apart from tag and
+  schema pages in a view's directory, it allows no other page.
 
 ## Compatibility
 

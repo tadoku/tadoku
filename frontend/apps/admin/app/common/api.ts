@@ -73,7 +73,7 @@ export type AccountDeletionRefusal =
   | 'unavailable'
 
 export type AccountDeletionOutcome =
-  | { kind: 'filed'; jobId: number }
+  | { kind: 'filed' }
   | { kind: 'refused'; reason: AccountDeletionRefusal }
 
 const refusalByStatus: Record<number, AccountDeletionRefusal> = {
@@ -112,12 +112,12 @@ export const useFileAccountDeletion = () =>
       userId: string
     }): Promise<AccountDeletionOutcome> => {
       try {
-        const { data, error, response } = await profileAccountDeletionCreate({
+        const { error, response } = await profileAccountDeletionCreate({
           ...browserApi(),
           path: { id: userId },
           body: { email, reason },
         })
-        if (response?.ok && data) return { kind: 'filed', jobId: data.job_id }
+        if (response?.ok) return { kind: 'filed' }
         return {
           kind: 'refused',
           reason: accountDeletionRefusal(response?.status, error),

@@ -73,8 +73,7 @@ export function DeleteAccountDialog({ user, onClose }: Props) {
       {outcome?.kind === 'filed' ? (
         <>
           <div role="status" className="flash success">
-            Deletion filed. The account is locked, and job {outcome.jobId}{' '}
-            deletes its data in the background.
+            Deletion filed. The account is locked.
           </div>
           <div className="modal-actions">
             <button

@@ -189,7 +189,11 @@ func TestAccountDeletionWorkerLocksTheAccountBeforeTheUser(t *testing.T) {
 	application := newWorkerApplication(t, api.db.AppPool, scope)
 	ctx, stop := context.WithCancel(t.Context())
 	stopped := make(chan error, 1)
-	go atFixtureInstant(func() { stopped <- application.Run(ctx) })
+	go func() {
+		var err error
+		atFixtureInstant(func() { err = application.Run(ctx) })
+		stopped <- err
+	}()
 	defer func() {
 		stop()
 		<-stopped

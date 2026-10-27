@@ -40,24 +40,24 @@ func (d *Deletion) ConfirmAccount(ctx context.Context, userID uuid.UUID, email s
 }
 
 // DeleteAccount requires the caller's transaction and a user locked for deletion. It deletes the user's account,
-// sessions and recovery tokens and returns the account.deleted notice for the stored address. An address that cannot
-// receive mail gets no notice, so it never blocks the deletion.
-func (d *Deletion) DeleteAccount(ctx context.Context, userID uuid.UUID, deletedAt time.Time) ([]mail.Message, error) {
-	emails, err := d.repository.deleteAccount(ctx, userID)
-	if err != nil {
-		return nil, err
+// sessions and recovery tokens and returns the account.deleted notice for the stored address. It returns no notice
+// when the user has no account or the address cannot receive mail, so an address never blocks the deletion.
+func (d *Deletion) DeleteAccount(
+	ctx context.Context,
+	userID uuid.UUID,
+	deletedAt time.Time,
+) (mail.Message, bool, error) {
+	email, found, err := d.repository.deleteAccount(ctx, userID)
+	if err != nil || !found {
+		return mail.Message{}, false, err
+	}
+	if !mail.ValidAddress(email.recipient()) {
+		return mail.Message{}, false, nil
 	}
 
-	var notices []mail.Message
-	for _, email := range emails {
-		if !mail.ValidAddress(email.recipient()) {
-			continue
-		}
-		notices = append(notices, mail.Message{
-			Template:  mail.AccountDeleted,
-			Recipient: email.recipient(),
-			Params:    map[string]string{"deleted_at": deletedAt.Format(time.RFC3339)},
-		})
-	}
-	return notices, nil
+	return mail.Message{
+		Template:  mail.AccountDeleted,
+		Recipient: email.recipient(),
+		Params:    map[string]string{"deleted_at": deletedAt.Format(time.RFC3339)},
+	}, true, nil
 }

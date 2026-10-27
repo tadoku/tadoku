@@ -2,8 +2,10 @@ package identity
 
 import (
 	"context"
+	"errors"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	queries "github.com/tadoku/tadoku/services/tadoku-api/generated/sqlc/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 )
@@ -35,19 +37,17 @@ func (r *Repository) accountHasEmail(ctx context.Context, id uuid.UUID, emailNor
 	})
 }
 
-func (r *Repository) deleteAccount(ctx context.Context, id uuid.UUID) ([]Email, error) {
+func (r *Repository) deleteAccount(ctx context.Context, id uuid.UUID) (Email, bool, error) {
 	db, err := postgres.Executor(ctx, r.pool)
 	if err != nil {
-		return nil, err
+		return Email{}, false, err
 	}
 	stored, err := queries.New(db).DeleteAccount(ctx, postgres.UUID(id))
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Email{}, false, nil
+	}
 	if err != nil {
-		return nil, err
+		return Email{}, false, err
 	}
-
-	emails := make([]Email, 0, len(stored))
-	for _, value := range stored {
-		emails = append(emails, Email{value})
-	}
-	return emails, nil
+	return Email{stored}, true, nil
 }

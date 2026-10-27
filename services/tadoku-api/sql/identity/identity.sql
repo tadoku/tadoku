@@ -112,7 +112,7 @@ select exists (
     and email_normalized = sqlc.arg(email_normalized)
 )::boolean;
 
--- name: DeleteAccount :many
+-- name: DeleteAccount :one
 with deleted_recovery_tokens as (
   delete from recovery_tokens where recovery_tokens.user_id = sqlc.arg(user_id)::uuid
 ), deleted_sessions as (

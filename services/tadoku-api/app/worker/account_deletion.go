@@ -46,13 +46,13 @@ func (a *Application) removeAccountData(ctx context.Context, userID uuid.UUID, n
 	if err := a.relationships.RevokeUser(ctx, userID); err != nil {
 		return err
 	}
-	notices, err := a.identityDeletion.DeleteAccount(ctx, userID, now)
+	notice, hasNotice, err := a.identityDeletion.DeleteAccount(ctx, userID, now)
 	if err != nil {
 		return err
 	}
 
 	followUp := slices.Concat(removedLogs.Jobs, removedRegistrations.Jobs)
-	for _, notice := range notices {
+	if hasNotice {
 		written, err := a.email.Write(ctx, notice)
 		if err != nil {
 			return err

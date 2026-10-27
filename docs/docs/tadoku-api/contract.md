@@ -59,9 +59,12 @@ Each fragment holds one part of the contract and stays at or under about 16 KB:
 - Manually registered health and metrics endpoints are inventoried in the
   contract's `x-tadoku-operational-surfaces` metadata, not rendered as product
   API.
+- A source's `exposure` decides whether its view is published. Every
+  operation's `x-tadoku-exposure` must equal its source's `exposure`.
 - Contract tests (`services/tadoku-api/spec/openapi_test.go` and
   `docs/scripts/api-contract.test.mjs`) verify that the contract is valid, that
-  server generation covers its operations and the published view counts.
+  server generation covers its operations, that each view holds exactly its
+  source's operations and that operation and source exposures agree.
 
 ## Compatibility
 

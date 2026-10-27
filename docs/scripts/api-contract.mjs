@@ -41,3 +41,10 @@ export function sourceView(contract, sourceName) {
   }
   return view;
 }
+
+// The documentation build publishes exactly these views.
+export function publicViews(contract) {
+  return Object.entries(contract['x-tadoku-sources'])
+    .filter(([, source]) => source.exposure === 'public')
+    .map(([name, source]) => ({name, domain: source.domain, view: sourceView(contract, name)}));
+}

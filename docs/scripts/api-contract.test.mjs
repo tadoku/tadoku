@@ -21,8 +21,6 @@ test('bundled contract has unique YAML anchors', () => {
 });
 
 test('public views cover canonical operations', () => {
-  let operations = 0;
-  let publicOperations = 0;
   const ids = new Set();
   for (const [name, source] of Object.entries(contract['x-tadoku-sources'])) {
     const view = sourceView(contract, name);
@@ -41,12 +39,10 @@ test('public views cover canonical operations', () => {
     for (const operation of Object.values(item)) {
       assert.ok(!ids.has(operation.operationId), operation.operationId);
       ids.add(operation.operationId);
-      operations++;
-      if (operation['x-tadoku-exposure'] === 'public') publicOperations++;
+      const source = contract['x-tadoku-sources'][operation['x-tadoku-source']];
+      assert.equal(operation['x-tadoku-exposure'], source?.exposure, `${operation.operationId} exposure`);
     }
   }
-  assert.equal(operations, 81);
-  assert.equal(publicOperations, 79);
 });
 
 test('operations match server generation', () => {

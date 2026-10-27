@@ -134,8 +134,10 @@ func emailWorker(
 	scope jobqueue.Scope,
 ) *worker.Application {
 	t.Helper()
-	application, err := worker.NewApplication(jobqueue.NewService(repository), api.leaderboard, worker.Config{
-		Email:           service,
+	deps := workerDependencies(api.db.AppPool)
+	deps.JobQueue = jobqueue.NewService(repository)
+	deps.Email = service
+	application, err := worker.NewApplication(deps, worker.Config{
 		Scope:           scope,
 		Concurrency:     1,
 		ShutdownTimeout: time.Second,

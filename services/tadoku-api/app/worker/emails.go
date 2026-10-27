@@ -8,9 +8,6 @@ import (
 )
 
 func (r *runner) maintainEmails(ctx context.Context, retention bool) {
-	if r.email == nil {
-		return
-	}
 	bounded, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 	keys, err := r.maintenanceTenants(bounded)

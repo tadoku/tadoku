@@ -58,9 +58,12 @@ func TestBaseWorkerHousekeepingUsesAllTenants(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	deps := workerDependencies(pool, nil)
 	application := &Application{runner: &runner{
 		scope:           baseWorkerScope(t),
-		queue:           jobqueue.NewService(jobqueue.NewRepository(pool)),
+		queue:           deps.JobQueue,
+		email:           deps.Email,
+		identity:        deps.IdentityExpiry,
 		handlers:        handlers,
 		logger:          slog.New(slog.NewTextHandler(io.Discard, nil)),
 		metrics:         NewMetrics(registry),

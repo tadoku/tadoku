@@ -15,7 +15,6 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/tadoku/tadoku/services/tadoku-api/app/worker"
-	"github.com/tadoku/tadoku/services/tadoku-api/features/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
@@ -113,10 +112,8 @@ func runCredentialExpiry(t *testing.T, scope jobqueue.Scope, cancelTenant string
 	defer pool.Close()
 
 	application, err := worker.NewApplication(
-		jobqueue.NewService(jobqueue.NewRepository(pool)),
-		api.leaderboard,
+		workerDependencies(pool),
 		worker.Config{
-			Identity:        identity.NewExpiry(identity.NewRepository(pool)),
 			Scope:           scope,
 			Concurrency:     1,
 			ShutdownTimeout: time.Second,

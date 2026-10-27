@@ -14,6 +14,8 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/email"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
@@ -177,14 +179,9 @@ func (f workerFixture) Close() error {
 }
 
 func (f workerFixture) runner(t *testing.T, client valkeygo.Client, providerTimeout, shutdown time.Duration) *Application {
-	service := leaderboard.NewService(
-		leaderboard.NewRepository(f.db),
-		leaderboard.NewCache(client, providerTimeout),
-	)
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	application, err := NewApplication(
-		jobqueue.NewService(jobqueue.NewRepository(f.db)),
-		service,
+		workerDependencies(f.db, leaderboard.NewCache(client, providerTimeout)),
 		Config{
 			Scope:           baseWorkerScope(t),
 			Concurrency:     4,
@@ -197,6 +194,16 @@ func (f workerFixture) runner(t *testing.T, client valkeygo.Client, providerTime
 		t.Fatal(err)
 	}
 	return application
+}
+
+// workerDependencies gives email no sender, so the worker holds every message.
+func workerDependencies(pool *pgxpool.Pool, cache *leaderboard.Cache) Dependencies {
+	return Dependencies{
+		JobQueue:       jobqueue.NewService(jobqueue.NewRepository(pool)),
+		Leaderboard:    leaderboard.NewService(leaderboard.NewRepository(pool), cache),
+		Email:          email.NewService(email.NewRepository(pool), nil),
+		IdentityExpiry: identity.NewExpiry(identity.NewRepository(pool)),
+	}
 }
 
 func startWorker(t *testing.T, runner *Application) {

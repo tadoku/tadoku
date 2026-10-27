@@ -12,7 +12,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
-	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
@@ -55,14 +54,9 @@ func TestWorkerJobLifecycle(t *testing.T) {
 		}
 	}
 
-	service := leaderboard.NewService(
-		leaderboard.NewRepository(db.Pool),
-		leaderboard.NewCache(client, time.Second),
-	)
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	runner, err := NewApplication(
-		jobqueue.NewService(jobqueue.NewRepository(db.Pool)),
-		service,
+		workerDependencies(db.Pool, leaderboard.NewCache(client, time.Second)),
 		Config{
 			Scope:           baseWorkerScope(t),
 			Concurrency:     4,

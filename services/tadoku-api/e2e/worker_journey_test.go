@@ -7,8 +7,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/tadoku/tadoku/services/tadoku-api/app/worker"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/email"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
@@ -49,13 +52,8 @@ func runWorkerStep(t *testing.T, s *suite, forTenant string) {
 	}
 
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	leaderboardService := leaderboard.NewService(
-		leaderboard.NewRepository(s.db.AppPool),
-		leaderboard.NewCache(leaderboardValkey.client, time.Second),
-	)
 	application, err := worker.NewApplication(
-		jobqueue.NewService(jobqueue.NewRepository(s.db.AppPool)),
-		leaderboardService,
+		workerDependencies(s.db.AppPool),
 		worker.Config{
 			Scope:           scope,
 			Concurrency:     4,
@@ -115,5 +113,18 @@ func runWorkerStep(t *testing.T, s *suite, forTenant string) {
 			)
 		case <-tick.C:
 		}
+	}
+}
+
+// workerDependencies gives email no sender, so the worker holds every message.
+func workerDependencies(pool *pgxpool.Pool) worker.Dependencies {
+	return worker.Dependencies{
+		JobQueue: jobqueue.NewService(jobqueue.NewRepository(pool)),
+		Leaderboard: leaderboard.NewService(
+			leaderboard.NewRepository(pool),
+			leaderboard.NewCache(leaderboardValkey.client, time.Second),
+		),
+		Email:          email.NewService(email.NewRepository(pool), nil),
+		IdentityExpiry: identity.NewExpiry(identity.NewRepository(pool)),
 	}
 }

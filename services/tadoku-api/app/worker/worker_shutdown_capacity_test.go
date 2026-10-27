@@ -12,7 +12,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
-	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
@@ -193,13 +192,8 @@ func TestWorkerGlobalLimitLeavesDueRowsUnclaimed(t *testing.T) {
 		release: release,
 	}
 
-	service := leaderboard.NewService(
-		leaderboard.NewRepository(f.db),
-		leaderboard.NewCache(blocked, 8*time.Second),
-	)
 	application, err := NewApplication(
-		jobqueue.NewService(jobqueue.NewRepository(f.db)),
-		service,
+		workerDependencies(f.db, leaderboard.NewCache(blocked, 8*time.Second)),
 		Config{
 			Scope:           baseWorkerScope(t),
 			Concurrency:     3,
@@ -288,9 +282,12 @@ func TestWorkerRetainsSlotUntilCanceledHandlerReturns(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	deps := workerDependencies(f.db, nil)
 	runtime := &runner{
 		scope:           baseWorkerScope(t),
-		queue:           jobqueue.NewService(jobqueue.NewRepository(f.db)),
+		queue:           deps.JobQueue,
+		email:           deps.Email,
+		identity:        deps.IdentityExpiry,
 		handlers:        handlers,
 		concurrency:     1,
 		shutdownTimeout: time.Second,

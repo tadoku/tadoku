@@ -14,9 +14,14 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/features/leaderboard"
 )
 
+type Dependencies struct {
+	JobQueue       *jobqueue.Service
+	Leaderboard    *leaderboard.Service
+	Email          *email.Service
+	IdentityExpiry *identity.Expiry
+}
+
 type Config struct {
-	Email           *email.Service
-	Identity        *identity.Expiry
 	Scope           jobqueue.Scope
 	Concurrency     int
 	ShutdownTimeout time.Duration
@@ -30,9 +35,9 @@ type Application struct {
 	email       *email.Service
 }
 
-func NewApplication(queue *jobqueue.Service, leaderboard *leaderboard.Service, config Config) (*Application, error) {
-	if queue == nil || leaderboard == nil {
-		return nil, errors.New("worker requires queue and leaderboard services")
+func NewApplication(deps Dependencies, config Config) (*Application, error) {
+	if err := requireAll(deps); err != nil {
+		return nil, err
 	}
 	if config.Concurrency < 1 || config.ShutdownTimeout <= 0 {
 		return nil, errors.New("worker requires positive concurrency and shutdown timeout")
@@ -49,7 +54,7 @@ func NewApplication(queue *jobqueue.Service, leaderboard *leaderboard.Service, c
 		config.Metrics = NewMetrics(prometheus.NewRegistry())
 	}
 
-	a := &Application{leaderboard: leaderboard, email: config.Email}
+	a := &Application{leaderboard: deps.Leaderboard, email: deps.Email}
 	handlers, err := registrations(a.InvalidateContestLeaderboard, a.InvalidateOfficialLeaderboard, a.SendEmail)
 	if err != nil {
 		return nil, err
@@ -57,9 +62,9 @@ func NewApplication(queue *jobqueue.Service, leaderboard *leaderboard.Service, c
 
 	a.runner = &runner{
 		scope:           config.Scope,
-		email:           config.Email,
-		identity:        config.Identity,
-		queue:           queue,
+		email:           deps.Email,
+		identity:        deps.IdentityExpiry,
+		queue:           deps.JobQueue,
 		handlers:        handlers,
 		logger:          config.Logger,
 		metrics:         config.Metrics,
@@ -68,6 +73,20 @@ func NewApplication(queue *jobqueue.Service, leaderboard *leaderboard.Service, c
 	}
 	a.runner.metrics.initialize(handlers)
 	return a, nil
+}
+
+func requireAll(deps Dependencies) error {
+	switch {
+	case deps.JobQueue == nil:
+		return errors.New("worker requires JobQueue")
+	case deps.Leaderboard == nil:
+		return errors.New("worker requires Leaderboard")
+	case deps.Email == nil:
+		return errors.New("worker requires Email")
+	case deps.IdentityExpiry == nil:
+		return errors.New("worker requires IdentityExpiry")
+	}
+	return nil
 }
 
 func registrations(
@@ -113,9 +132,6 @@ func Replay(ctx context.Context, queue *jobqueue.Service, id int64, actor, reaso
 func ignoreJob[J jobs.Job](context.Context, J) error { return nil }
 
 func (a *Application) SendEmail(ctx context.Context, job jobs.SendEmailV1) error {
-	if a.email == nil {
-		return &permanentError{err: errors.New("worker email service is not configured")}
-	}
 	final, _ := ctx.Value(finalAttemptKey{}).(bool)
 	return a.email.SendAttempt(ctx, job.EmailID, final)
 }

@@ -68,10 +68,6 @@ paths:
       responses:
         "202":
           description: the account is locked and its deletion is queued
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ProfileAccountDeletionFiled"
         "400":
           description: >-
             invalid request. An email that does not match the account returns

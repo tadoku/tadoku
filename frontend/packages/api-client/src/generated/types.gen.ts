@@ -514,13 +514,6 @@ export type ProfileAccountDeletionRequest = {
     reason: string;
 };
 
-export type ProfileAccountDeletionFiled = {
-    /**
-     * The ID of the account.delete.v1 job that deletes the account's data.
-     */
-    job_id: number;
-};
-
 export type ProfileErrorResponse = {
     error: 'admin_account' | 'account_deletion_in_progress';
 };
@@ -2755,10 +2748,8 @@ export type ProfileAccountDeletionCreateResponses = {
     /**
      * the account is locked and its deletion is queued
      */
-    202: ProfileAccountDeletionFiled;
+    202: unknown;
 };
-
-export type ProfileAccountDeletionCreateResponse = ProfileAccountDeletionCreateResponses[keyof ProfileAccountDeletionCreateResponses];
 
 export type IdentityRegistrationCreateData = {
     body: IdentityRegistration;

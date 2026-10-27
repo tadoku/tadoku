@@ -436,10 +436,6 @@ export const zProfileAccountDeletionRequest = z.object({
     reason: z.string().regex(/^[\s\S]{1,1000}$/u)
 });
 
-export const zProfileAccountDeletionFiled = z.object({
-    job_id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' })
-});
-
 export const zProfileErrorResponse = z.object({
     error: z.enum(['admin_account', 'account_deletion_in_progress'])
 });
@@ -1207,11 +1203,6 @@ export const zProfileAccountDeletionCreateBody = zProfileAccountDeletionRequest;
 export const zProfileAccountDeletionCreatePath = z.object({
     id: z.string().guid()
 });
-
-/**
- * the account is locked and its deletion is queued
- */
-export const zProfileAccountDeletionCreateResponse = zProfileAccountDeletionFiled;
 
 export const zIdentityRegistrationCreateBody = zIdentityRegistration;
 

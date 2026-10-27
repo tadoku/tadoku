@@ -2603,10 +2603,6 @@ paths:
       responses:
         "202":
           description: the account is locked and its deletion is queued
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ProfileAccountDeletionFiled"
         "400":
           description: >-
             invalid request. An email that does not match the account returns
@@ -4599,15 +4595,6 @@ components:
           description: >-
             Why the account is deleted, kept in the audit log for good. Surrounding whitespace is trimmed before
             the length is checked. Do not include the user's email address or display name.
-    ProfileAccountDeletionFiled:
-      type: object
-      required:
-        - job_id
-      properties:
-        job_id:
-          type: integer
-          format: int64
-          description: The ID of the account.delete.v1 job that deletes the account's data.
     ProfileErrorResponse:
       type: object
       required:

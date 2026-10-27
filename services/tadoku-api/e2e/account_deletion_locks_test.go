@@ -22,7 +22,7 @@ func TestAccountDeletionFilingWaitsForAccountWrites(t *testing.T) {
 		if err := holder.Commit(t.Context()); err != nil {
 			t.Fatal(err)
 		}
-		requireBody(t, <-filed, http.StatusAccepted, `{"job_id":1}`)
+		requireBody(t, <-filed, http.StatusAccepted, "")
 	})
 }
 
@@ -65,7 +65,7 @@ func TestAccountDeletionQueuedSettingsWriteFails(t *testing.T) {
 		if err := holder.Commit(t.Context()); err != nil {
 			t.Fatal(err)
 		}
-		requireBody(t, <-filed, http.StatusAccepted, `{"job_id":1}`)
+		requireBody(t, <-filed, http.StatusAccepted, "")
 		if response := <-renamed; response.Code != http.StatusUnauthorized {
 			t.Errorf("settings write queued behind filing: status=%d body=%s, want 401", response.Code, response.Body)
 		}

@@ -75,31 +75,30 @@ func SelfServiceAccountDeletion(userID uuid.UUID) AccountDeletionRequest {
 
 // RequestAccountDeletion files an administrator's deletion request for another user, with the administrator as the
 // actor.
-func (a *Application) RequestAccountDeletion(ctx context.Context, parameters AccountDeletionParameters) (int64, error) {
+func (a *Application) RequestAccountDeletion(ctx context.Context, parameters AccountDeletionParameters) error {
 	if err := a.roles.RequireAdmin(ctx); err != nil {
-		return 0, err
+		return err
 	}
 
 	adminID, err := requestidentity.RequireActorID(ctx)
 	if err != nil {
-		return 0, err
+		return err
 	}
 	request, err := AdminAccountDeletion(parameters.UserID, adminID, parameters.Email, parameters.Reason)
 	if err != nil {
-		return 0, err
+		return err
 	}
 	return a.FileAccountDeletion(ctx, request)
 }
 
-// FileAccountDeletion files the request in its own transaction and returns the ID of the account.delete.v1 job. It
-// checks no actor: call it from an operation that has authorized the actor, such as RequestAccountDeletion. An
-// unknown or deleted user is not found. An administrator's request must name the account's address. It refuses an
-// administrator, and a banned user only when the user asks, and a refusal writes nothing. It reads roles once it
-// holds the users row, which role changes lock too, so a ban or grant that commits first counts. From its commit the
-// user can no longer sign in or change data.
-func (a *Application) FileAccountDeletion(ctx context.Context, request AccountDeletionRequest) (int64, error) {
-	var jobID int64
-	err := postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) error {
+// FileAccountDeletion files the request in its own transaction and queues account.delete.v1. It checks no actor:
+// call it from an operation that has authorized the actor, such as RequestAccountDeletion. An unknown or deleted user
+// is not found. An administrator's request must name the account's address. It refuses an administrator, and a banned
+// user only when the user asks, and a refusal writes nothing. It reads roles once it holds the users row, which role
+// changes lock too, so a ban or grant that commits first counts. From its commit the user can no longer sign in or
+// change data.
+func (a *Application) FileAccountDeletion(ctx context.Context, request AccountDeletionRequest) error {
+	return postgres.RunInTransaction(ctx, a.db, func(ctx context.Context) error {
 		if err := a.identityDeletion.LockAccountForRequest(ctx, request.userID); err != nil {
 			return err
 		}
@@ -137,11 +136,6 @@ func (a *Application) FileAccountDeletion(ctx context.Context, request AccountDe
 		if err != nil {
 			return err
 		}
-		jobID, err = a.jobqueue.EnqueueOne(ctx, jobs.DeleteAccountV1{UserID: request.userID})
-		return err
+		return a.jobqueue.Enqueue(ctx, jobs.DeleteAccountV1{UserID: request.userID})
 	})
-	if err != nil {
-		return 0, err
-	}
-	return jobID, nil
 }

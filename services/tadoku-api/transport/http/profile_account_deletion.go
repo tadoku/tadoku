@@ -17,11 +17,10 @@ func (s *server) ProfileAccountDeletionCreate(
 		Reason: request.Body.Reason,
 	}
 
-	jobID, err := s.application.RequestAccountDeletion(ctx, parameters)
-	if err != nil {
+	if err := s.application.RequestAccountDeletion(ctx, parameters); err != nil {
 		s.logOperationError(ctx, "request account deletion", err)
 		return nil, err
 	}
 
-	return openapi.ProfileAccountDeletionCreate202JSONResponse{JobId: jobID}, nil
+	return openapi.ProfileAccountDeletionCreate202Response{}, nil
 }

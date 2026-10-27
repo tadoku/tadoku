@@ -1291,12 +1291,6 @@ type ImmersionUserProfile struct {
 	Id          openapi_types.UUID `json:"id"`
 }
 
-// ProfileAccountDeletionFiled defines model for ProfileAccountDeletionFiled.
-type ProfileAccountDeletionFiled struct {
-	// JobId The ID of the account.delete.v1 job that deletes the account's data.
-	JobId int64 `json:"job_id"`
-}
-
 // ProfileAccountDeletionRequest defines model for ProfileAccountDeletionRequest.
 type ProfileAccountDeletionRequest struct {
 	// Email The account's email address as the administrator typed it, compared with the account's address after normalization, so letter case and surrounding whitespace do not matter. It has no format, so an imported address that is not a valid email can still be confirmed.
@@ -8490,18 +8484,12 @@ type ProfileAccountDeletionCreateResponseObject interface {
 	VisitProfileAccountDeletionCreateResponse(w http.ResponseWriter) error
 }
 
-type ProfileAccountDeletionCreate202JSONResponse ProfileAccountDeletionFiled
+type ProfileAccountDeletionCreate202Response struct {
+}
 
-func (response ProfileAccountDeletionCreate202JSONResponse) VisitProfileAccountDeletionCreateResponse(w http.ResponseWriter) error {
-
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
-		return err
-	}
-	w.Header().Set("Content-Type", "application/json")
+func (response ProfileAccountDeletionCreate202Response) VisitProfileAccountDeletionCreateResponse(w http.ResponseWriter) error {
 	w.WriteHeader(202)
-	_, err := buf.WriteTo(w)
-	return err
+	return nil
 }
 
 type ProfileAccountDeletionCreate400Response struct {

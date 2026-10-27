@@ -128,9 +128,11 @@ curl -sS -X POST "https://tadoku.app/api/internal/profile/users/<ACCOUNT_ID>/acc
 - `reason` is required, at most 1,000 characters after trimming, and stays in
   the audit log for good. Describe the request and how you confirmed it; do not include the
   user's email address or display name.
-- `202` returns `{"job_id":<ID>}`, the `account.delete.v1` job. Record it.
-  From then on the account cannot sign in, its sessions and recovery links stop
-  working, and its writes return `409` `account_deletion_in_progress`.
+- `202`, with no body, means the account is locked and its `account.delete.v1`
+  job is queued; [Follow pending deletions](#follow-pending-deletions) finds the
+  job by account ID. From then on the account cannot sign in, its sessions and
+  recovery links stop working, and its writes return `409`
+  `account_deletion_in_progress`.
 - A refusal changes nothing: `400` `confirmation_mismatch` for another
   address, `404` for an unknown or deleted user, and `409` with
   `admin_account` or `account_deletion_in_progress`.

@@ -26,7 +26,8 @@ func isolation(ctx context.Context, root string, args []string) error {
 	if err := flags.Parse(args); err != nil {
 		return err
 	}
-	if *candidateRoot == "" || *target == "" || *out == "" || *scale < 0 {
+	if *candidateRoot == "" || *target == "" || *out == "" || *scale < 0 ||
+		!ownedDatabase(*baselineDB) || !ownedDatabase(*candidateDB) || *baselineDB == *candidateDB {
 		return errors.New("isolation needs candidate root, read-only target, output and valid scale")
 	}
 	a, err := inventory(root)
@@ -41,9 +42,11 @@ func isolation(ctx context.Context, root string, args []string) error {
 		return errors.New("SQL inventory differs")
 	}
 	proof := bufferProof{
-		Target:   *target,
-		Queries:  map[string]string{},
-		Variance: map[string][]metrics{},
+		Target:            *target,
+		BaselineDatabase:  *baselineDB,
+		CandidateDatabase: *candidateDB,
+		Queries:           map[string]string{},
+		Variance:          map[string][]metrics{},
 	}
 	for _, original := range a {
 		changed, err := findQuery(b, original.Key)

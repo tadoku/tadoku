@@ -72,7 +72,7 @@ func pageEvidence(ctx context.Context, root string, args []string) error {
 	if err := flags.Parse(args); err != nil {
 		return err
 	}
-	if *offsetArg < 0 || *limitArg < 0 || *offsetArg == *limitArg || *out == "" {
+	if !ownedDatabase(*database) || *offsetArg < 0 || *limitArg < 0 || *offsetArg == *limitArg || *out == "" {
 		return errors.New("page evidence needs distinct pagination argument positions and output")
 	}
 	queries, err := inventory(root)
@@ -129,6 +129,7 @@ func pageEvidence(ctx context.Context, root string, args []string) error {
 			OffsetArg:  *offsetArg,
 			LimitArg:   *limitArg,
 			SQLHash:    digest(q.SQL),
+			Database:   conn.Config().Database,
 			Rows:       rows,
 		})
 	}

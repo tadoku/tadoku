@@ -295,6 +295,8 @@ inspection cases; it collects an independent prepared statement's sixth plan
 without changing the measured statement. Index or schema changes cannot use
 this exception. Target work, latency and noise gates stay strict. Every
 replacement assertion appears explicitly in the gate output.
+Oracles and identity proofs bind to the measured database names. Calibration
+observations must come from three distinct owned clones.
 
 Run the CLI qualification counterexamples with the frozen binary and a new
 external evidence directory:

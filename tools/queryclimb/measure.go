@@ -50,6 +50,7 @@ type metrics struct {
 	Returned      int             `json:"returned"`
 	Affected      int64           `json:"affected"`
 	SQLHash       string          `json:"sql_hash"`
+	Database      string          `json:"database"`
 	Tenant        string          `json:"tenant"`
 	Args          []*string       `json:"args"`
 	WarmArgs      [][]*string     `json:"warm_args,omitempty"`
@@ -178,6 +179,7 @@ func measure(ctx context.Context, conn *pgx.Conn, q query, c caseSpec) (metrics,
 		Indexes:     []string{},
 		Signatures:  []string{},
 		SQLHash:     digest(q.SQL),
+		Database:    conn.Config().Database,
 		Tenant:      c.Tenant,
 		Args:        c.Args,
 		WarmArgs:    c.WarmArgs,

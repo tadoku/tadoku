@@ -18,16 +18,19 @@ type pageOracle struct {
 	OffsetArg  int         `json:"offset_arg"`
 	LimitArg   int         `json:"limit_arg"`
 	SQLHash    string      `json:"sql_hash"`
+	Database   string      `json:"database"`
 	Rows       [][]*string `json:"rows"`
 }
 
 type bufferProof struct {
-	Target         string               `json:"target"`
-	TargetReadOnly bool                 `json:"target_read_only"`
-	Baseline       map[string]string    `json:"baseline"`
-	Candidate      map[string]string    `json:"candidate"`
-	Queries        map[string]string    `json:"queries"`
-	Variance       map[string][]metrics `json:"variance"`
+	Target            string               `json:"target"`
+	TargetReadOnly    bool                 `json:"target_read_only"`
+	BaselineDatabase  string               `json:"baseline_database"`
+	CandidateDatabase string               `json:"candidate_database"`
+	Baseline          map[string]string    `json:"baseline"`
+	Candidate         map[string]string    `json:"candidate"`
+	Queries           map[string]string    `json:"queries"`
+	Variance          map[string][]metrics `json:"variance"`
 }
 
 type qualifications struct {
@@ -62,6 +65,10 @@ func readQualifications(pageFiles, proofFiles, target string) (qualifications, e
 		}
 		if target == "" || proof.Target != target || !proof.TargetReadOnly {
 			return q, errors.New("buffer proof requires the same read-only target")
+		}
+		if !ownedDatabase(proof.BaselineDatabase) || !ownedDatabase(proof.CandidateDatabase) ||
+			proof.BaselineDatabase == proof.CandidateDatabase {
+			return q, errors.New("buffer proof needs two distinct owned measurement databases")
 		}
 		for _, part := range []string{"schema", "data", "statistics", "settings", "migrations"} {
 			if !isDigest(proof.Baseline[part]) || proof.Baseline[part] != proof.Candidate[part] {
@@ -102,6 +109,9 @@ func (q qualifications) buffers(key string, original, candidate metrics) error {
 	if !exists {
 		return errors.New("no documented buffer-variance proof")
 	}
+	if original.Database != proof.BaselineDatabase || candidate.Database != proof.CandidateDatabase {
+		return errors.New("buffer identity proof belongs to different measurement databases")
+	}
 	expected := proof.Queries[original.Query]
 	if original.Query == proof.Target || !isDigest(expected) ||
 		original.SQLHash != expected || candidate.SQLHash != expected {
@@ -121,7 +131,12 @@ func (q qualifications) buffers(key string, original, candidate metrics) error {
 		return errors.New("buffer proof needs three baseline observations")
 	}
 	varied := false
+	observedDatabases := map[string]bool{}
 	for _, observed := range witness {
+		if !ownedDatabase(observed.Database) || observedDatabases[observed.Database] {
+			return errors.New("buffer variance needs three distinct owned fresh clones")
+		}
+		observedDatabases[observed.Database] = true
 		first := witness[0]
 		if observed.Query != original.Query || observed.Case != original.Case ||
 			observed.SQLHash != expected || observed.PlanHash != original.PlanHash ||
@@ -144,7 +159,9 @@ func (q qualifications) page(key string, original, candidate metrics) error {
 	if !exists {
 		return errors.New("no baseline legal-page oracle")
 	}
-	if oracle.Query != original.Query || oracle.Case != original.Case || oracle.Tenant != original.Tenant ||
+	if !ownedDatabase(oracle.Database) || oracle.Database != original.Database ||
+		!ownedDatabase(candidate.Database) ||
+		oracle.Query != original.Query || oracle.Case != original.Case || oracle.Tenant != original.Tenant ||
 		!sameJSON(oracle.Args, original.Args) || !sameJSON(oracle.Args, candidate.Args) ||
 		candidate.Tenant != original.Tenant || !isDigest(oracle.SQLHash) || oracle.SQLHash != original.SQLHash ||
 		len(oracle.TieColumns) == 0 || !sameJSON(oracle.TieColumns, original.TieColumns) ||

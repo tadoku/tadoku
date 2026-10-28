@@ -35,6 +35,7 @@ after = [universe[4], universe[3], universe[6]]
 
 def metric(query, rows, sql):
     return dict(query=query, case='boundary', query_id=1, rows_processed=30,
+				database='qc_baseline',
                 shared_buffers=71, temp_buffers=3, plan_hash=digest('shape'),
                 fingerprint=fingerprint(rows), rows=rows, args=['3', '3'],
                 tenant='tadoku/prod', tie_columns=[1], sql_hash=digest(sql),
@@ -44,20 +45,24 @@ def metric(query, rows, sql):
 
 a = metric('target.Read', before, 'baseline')
 b = metric('target.Read', after, 'candidate')
+b['database'] = 'qc_candidate'
 other = metric('other.Read', [['x', '1', None]], 'unchanged')
 other_after = copy.deepcopy(other)
+other_after['database'] = 'qc_candidate'
 other_after['shared_buffers'] = 72
 other_after['temp_buffers'] = 4
 oracle = dict(query=a['query'], case=a['case'], tenant=a['tenant'], args=a['args'],
+			  database='qc_baseline',
               tie_columns=[1], offset_arg=0, limit_arg=1,
               sql_hash=a['sql_hash'], rows=universe)
 observations = []
-for shared, temp in [(71, 3), (72, 4), (71, 3)]:
+for i, (shared, temp) in enumerate([(71, 3), (72, 4), (71, 3)]):
     sample = copy.deepcopy(other)
-    sample.update(shared_buffers=shared, temp_buffers=temp)
+    sample.update(shared_buffers=shared, temp_buffers=temp, database='qc_calibration_' + str(i))
     observations.append(sample)
 snap = {key: digest(key) for key in ['schema', 'data', 'statistics', 'settings', 'migrations']}
 proof = dict(target='target.Read', target_read_only=True, baseline=snap,
+			 baseline_database='qc_baseline', candidate_database='qc_candidate',
              candidate=copy.deepcopy(snap), queries={'other.Read': other['sql_hash']},
              variance={'0/other.Read/boundary': observations})
 
@@ -81,6 +86,12 @@ def run(name, target=b, unchanged=other_after, page=oracle, identity=proof,
 
 run('legal-different-boundary-members')
 run('strict-default-stays-strict', expected=False, amended=False)
+changed = copy.deepcopy(proof)
+changed['candidate_database'] = 'qc_unrelated'
+run('wrong-identity-database', identity=changed, expected=False)
+changed_page = copy.deepcopy(oracle)
+changed_page['database'] = 'qc_unrelated'
+run('wrong-oracle-database', page=changed_page, expected=False)
 for name, rows in [
     ('outside-boundary-group', [universe[1], universe[3], universe[6]]),
     ('invented-full-row-value', [['e', '8', 'changed'], universe[3], universe[6]]),
@@ -111,13 +122,17 @@ changed = copy.deepcopy(proof)
 changed['target_read_only'] = False
 run('write-target-no-exemption', identity=changed, expected=False)
 changed = copy.deepcopy(proof)
-changed['variance']['0/other.Read/boundary'] = [other, other, other]
+changed['variance']['0/other.Read/boundary'] = [dict(other, database='qc_calibration_' + str(i)) for i in range(3)]
 run('no-observed-buffer-variance', identity=changed, expected=False)
+changed = copy.deepcopy(proof)
+changed['variance']['0/other.Read/boundary'][1]['database'] = 'qc_calibration_0'
+run('repeated-clone-is-not-three-fresh-clones', identity=changed, expected=False)
 
 # Full groups inside a page cannot lose a member even when boundary members vary.
 old_a, old_b, old_oracle = a, b, oracle
 a = metric('target.Read', universe[1:7], 'baseline')
 b = metric('target.Read', universe[1:7], 'candidate')
+b['database'] = 'qc_candidate'
 a['args'] = b['args'] = ['1', '6']
 oracle = dict(old_oracle, args=['1', '6'])
 run('complete-interior-group', target=b, page=oracle)

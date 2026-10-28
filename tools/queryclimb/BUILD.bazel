@@ -1,0 +1,32 @@
+load("@rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_binary(
+    name = "queryclimb",
+    embed = [":queryclimb_lib"],
+    visibility = ["//visibility:public"],
+)
+
+go_library(
+    name = "queryclimb_lib",
+    srcs = [
+        "attempt.go",
+        "baseline.go",
+        "dashboard.go",
+        "fidelity.go",
+        "gates.go",
+        "generator.go",
+        "interface.go",
+        "inventory.go",
+        "main.go",
+        "measure.go",
+        "postgres.go",
+        "selfcheck.go",
+    ],
+    embedsrcs = ["dashboard.html"],
+    importpath = "github.com/tadoku/tadoku/tools/queryclimb",
+    visibility = ["//visibility:private"],
+    deps = [
+        "@com_github_jackc_pgx_v5//:pgx",
+        "@com_github_pganalyze_pg_query_go_v6//:pg_query_go",
+    ],
+)

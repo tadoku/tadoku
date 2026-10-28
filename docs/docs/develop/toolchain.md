@@ -254,3 +254,22 @@ frontend workflows update `prod` only through a manual
 workflow dispatch on `main` with `publish_production: true`, after the owner approves
 production. This also lets frontend source land on main for future branch overlays
 while production remains on its previous image.
+
+## SQL performance measurements
+
+`tools/queryclimb/` contains the Bazel-built PostgreSQL measurement CLI and
+synthetic data generator. Keep its binary and source revision frozen outside
+the checkout whose SQL it measures. Store cases, templates, results and reports
+outside Git.
+
+The CLI permits only its owned loopback PostgreSQL instance and `qc_` databases.
+Run queries as the runtime role with a transaction-local tenant; migrations and
+fixtures use the owner role. Preserve production planner parameters and measure
+prepared statements after five executions. Writes roll back, and their
+fingerprints include affected table state with declared volatile columns masked.
+
+All commands share a host lock with `tools/queryclimb/run.sh`. Use that lock for
+external builds, tests and data loads too. Run one timed workload at a time and
+keep heavy work outside timed batches. A failed noise, equivalence, interface or
+global-work gate cannot authorize a performance change. Dashboard publication
+uses the same lock and the exact stored Draft revision.

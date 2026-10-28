@@ -7,7 +7,8 @@ host's sidebar exposes Posts, Pages, Announcements, Languages and Users.
 Content routes use namespace `tadoku`: `/posts/tadoku`, `/pages/tadoku`,
 `/announcements/tadoku`, each with `/new` and record edit routes.
 Platform/moderation routes are `/languages` and `/users`. User row action menus
-contain Ban/Unban User for non-admin users.
+contain Ban/Unban User for non-admin users and Delete account, disabled for
+administrators.
 
 ## Verify
 
@@ -30,6 +31,9 @@ contain Ban/Unban User for non-admin users.
 - Users: search by name/email, clear and verify empty results. For moderation changes, use a disposable identity, confirm/cancel the action,
   reload, and verify the affected user's real journey in another context. Record
   both UI state and API result. Do not ban shared fixture users or alter their roles.
+- Delete only accounts you registered in the branch tenant, never fixture
+  users. The worker deletes a filed account within seconds; the next list load
+  no longer shows it, and filing again answers that it no longer exists.
 
 ## Traps
 

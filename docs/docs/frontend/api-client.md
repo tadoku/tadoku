@@ -112,7 +112,7 @@ credentials, caching and timeouts.
 | --- | --- |
 | authv2 | `frontend/apps/authv2/src/lib/session.server.ts` reads the session. `sendIdentity()` in `frontend/apps/authv2/src/lib/identity.ts` sends every account form, from the browser or the native form route, and reads error codes with `zIdentityErrorResponse`. |
 | webv3 | `frontend/apps/webv3/src/lib/home.server.ts` makes anonymous home-page reads; `404` means no contest. `frontend/apps/webv3/src/lib/session.server.ts` reads the session and role with the visitor's session cookies, `frontend/apps/webv3/server/routes/logout.post.ts` logs out and `frontend/apps/webv3/src/lib/logs.server.ts` reads logging options and creates and reads logs. |
-| webv2, admin | `frontend/packages/ui/identity.ts` reads the session and logs out. `browserApi()` and `apiData()` in `frontend/packages/ui/api.ts` call operations from React Query hooks and throw `Error(<status>)` for API errors. |
+| webv2, admin | `frontend/packages/ui/identity.ts` reads the session and logs out. `browserApi()` and `apiData()` in `frontend/packages/ui/api.ts` call operations from React Query hooks and throw `Error(<status>)` for API errors. Admin's account deletion hook in `frontend/apps/admin/app/common/api.ts` resolves every answer to an outcome instead: it reads `409` codes with `zProfileErrorResponse` and a `400` `confirmation_mismatch` by its code, because that answer has no schema. |
 
 The validators run on the package's pinned Zod 4 and use GUID validation for
 UUID fields to match the API. Their consumers require TypeScript 5.5 or newer.

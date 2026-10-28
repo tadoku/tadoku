@@ -15,6 +15,9 @@ Source: `frontend/apps/admin`. Development host: `admin.tadoku.dev.lab`.
 - The dashboard (`pages/index.tsx`) shows the latest official contest, leaderboards and the total user count.
 - The CMS (`pages/pages/`, `pages/posts/`, `pages/announcements/`) manages pages, blog posts and announcements per namespace. It includes a CodeMirror editor, version history, and previews sanitised with DOMPurify and rehype-sanitize. CMS copy, such as the Contact and About pages, is changed here rather than in code.
 - Users (`pages/users.tsx`) can be listed, banned or unbanned, and granted or denied per-user feature access.
+  A row's actions menu also files an account deletion through `app/users/DeleteAccountDialog.tsx`, which requires the
+  account's email address and a reason and is disabled for administrators; see
+  [Account deletion](../tadoku-api/account-deletion.md#file-a-deletion).
 - Languages (`pages/languages.tsx`) manages the immersion language list.
 
 `pages/_app.tsx` requires an identity session and the `admin` role from Tadoku API. It sends visitors without a session to the [authv2](authv2.md) login page and shows other users an access-denied screen.

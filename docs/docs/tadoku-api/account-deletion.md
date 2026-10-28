@@ -1,6 +1,6 @@
 ---
 title: Account deletion
-description: How an administrator files an account deletion through the admin endpoint, how filing locks the account and the worker's account.delete.v1 job removes its data, what a deletion keeps, the account-then-user lock order, and how to follow and replay a deletion.
+description: How an administrator files an account deletion from the admin app, how filing locks the account and the worker's account.delete.v1 job removes its data, what a deletion keeps, the account-then-user lock order, and how to follow and replay a deletion.
 ---
 
 # Account deletion
@@ -9,8 +9,8 @@ Read this when you file, follow or replay an account deletion, change how one
 is filed or executed, or need to know what a deletion removes and keeps.
 
 A deletion has two transactions: filing locks the account at once, and the
-worker deletes its data later. Administrators file with
-`POST /profile/users/{id}/account-deletion`; see
+worker deletes its data later. Administrators file from the admin app, which
+calls `POST /profile/users/{id}/account-deletion`; see
 [File a deletion](#file-a-deletion).
 
 ## Filing
@@ -102,40 +102,39 @@ Start only after you have confirmed that the request comes from the account's
 owner. Administrators delete:
 
 - a banned account;
-- an administrator's account, after removing the administrator role, because
-  filing refuses administrators;
+- an administrator's account, after
+  [revoking the administrator role](../architecture/authorization.md#granting-an-administrator),
+  because filing refuses administrators;
 - the account of a user who cannot sign in.
 
 A deletion cannot be undone. Only a database backup holds the earlier rows; see
 [Database recovery](../operations/identity-recovery.md#database-recovery).
 
-The admin UI cannot file a deletion yet. Until it can, send the request with
-your administrator session. In production, the session cookie is
-`tadoku_session`:
+In the admin app, open **Users**, search for the account, open its row's
+actions menu and choose **Delete account**. The action is disabled for an
+administrator until the role is removed. The dialog asks for:
 
-```sh
-curl -sS -X POST "https://tadoku.app/api/internal/profile/users/<ACCOUNT_ID>/account-deletion" \
-  --cookie "tadoku_session=<YOUR_SESSION>" \
-  -H 'Content-Type: application/json' \
-  --data '{"email":"<ACCOUNT_EMAIL>","reason":"<HOW_THE_OWNER_ASKED_AND_HOW_YOU_CONFIRMED_IT>"}'
-```
-
-- The account ID is `accounts.user_id` and `users.id`, the `id` that
-  `GET /profile/users` lists. Imported accounts keep their former Kratos
-  identity ID.
-- `email` confirms the target: type the account's address as that list shows
-  it. Letter case and surrounding whitespace do not matter.
-- `reason` is required, at most 1,000 characters after trimming, and stays in
-  the audit log for good. Describe the request and how you confirmed it; do not include the
+- the account's email address. Type it from the owner's request rather than
+  copying it from the list, so a mismatch shows that the request names another
+  account. Letter case and surrounding whitespace do not matter;
+- a reason of 1 to 1,000 characters after trimming, kept in the audit log for
+  good. Describe the request and how you confirmed it; do not include the
   user's email address or display name.
-- `202`, with no body, means the account is locked and its `account.delete.v1`
-  job is queued; [Follow pending deletions](#follow-pending-deletions) finds the
-  job by account ID. From then on the account cannot sign in, its sessions and
-  recovery links stop working, and its writes return `409`
-  `account_deletion_in_progress`.
-- A refusal changes nothing: `400` `confirmation_mismatch` for another
-  address, `404` for an unknown or deleted user, and `409` with
-  `admin_account` or `account_deletion_in_progress`.
+
+Its **Delete account** button stays disabled until the address matches and the
+reason fits. A filed deletion shows that the account is locked;
+[Follow pending deletions](#follow-pending-deletions) finds its
+`account.delete.v1` job by account ID. From then on the account cannot sign in,
+its sessions and recovery links stop working, and its writes return `409`
+`account_deletion_in_progress`.
+
+A refusal changes nothing, and the dialog says why: the address does not match
+(`400` `confirmation_mismatch`), the account is an administrator (`409`
+`admin_account`), its deletion is already filed (`409`
+`account_deletion_in_progress`) or it no longer exists (`404`). The dialog
+files with your administrator session; the account ID it sends is
+`accounts.user_id` and `users.id`, and imported accounts keep their former
+Kratos identity ID.
 
 ## Follow pending deletions
 
@@ -177,7 +176,8 @@ The request event names the administrator as the actor, with `source` `admin`
 and the reason. Once the job completes, the completion event holds the counts
 of deleted and kept logs and registrations and of owned contests, the user's
 display name is `Deleted participant` and `deleted_at` is set. The admin user
-list reads native accounts, so the account disappears from it at once.
+list reads native accounts, so the account leaves it once the job completes;
+closing the deletion dialog reloads the list.
 
 ## Replay a failed deletion
 

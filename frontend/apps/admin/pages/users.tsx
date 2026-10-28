@@ -5,6 +5,7 @@ import {
   NoSymbolIcon,
   CheckCircleIcon,
   HomeIcon,
+  TrashIcon,
 } from '@heroicons/react/20/solid'
 import Head from 'next/head'
 import {
@@ -17,6 +18,7 @@ import {
 } from 'ui'
 import { NextPageWithLayout } from './_app'
 import { getDashboardLayout } from '@app/ui/DashboardLayout'
+import { DeleteAccountDialog } from '@app/users/DeleteAccountDialog'
 import { useUserList, useUpdateUserRole, UserListEntry } from '@app/common/api'
 import { useEffect, useState } from 'react'
 import { DateTime } from 'luxon'
@@ -51,6 +53,7 @@ const Page: NextPageWithLayout = () => {
   const [search, setSearch] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState<UserListEntry | null>(null)
+  const [deletingUser, setDeletingUser] = useState<UserListEntry | null>(null)
   const pageSize = 20
   const queryClient = useQueryClient()
 
@@ -216,32 +219,53 @@ const Page: NextPageWithLayout = () => {
                         : 'N/A'}
                     </td>
                     <td className="default">
-                      {user.role !== 'admin' ? (
-                        <ActionMenu
-                          orientation="right"
-                          links={[
-                            {
-                              label:
-                                user.role === 'banned'
-                                  ? 'Unban User'
-                                  : 'Ban User',
-                              href: '#',
-                              IconComponent:
-                                user.role === 'banned'
-                                  ? CheckCircleIcon
-                                  : NoSymbolIcon,
-                              type:
-                                user.role === 'banned' ? undefined : 'danger',
-                              onClick: () => {
-                                setSelectedUser(user)
-                                setModalOpen(true)
-                              },
-                            },
-                          ]}
-                        >
-                          <EllipsisVerticalIcon className="w-5 h-5" />
-                        </ActionMenu>
-                      ) : null}
+                      <ActionMenu
+                        orientation="right"
+                        links={[
+                          ...(user.role !== 'admin'
+                            ? [
+                                {
+                                  label:
+                                    user.role === 'banned'
+                                      ? 'Unban User'
+                                      : 'Ban User',
+                                  href: '#',
+                                  IconComponent:
+                                    user.role === 'banned'
+                                      ? CheckCircleIcon
+                                      : NoSymbolIcon,
+                                  type:
+                                    user.role === 'banned'
+                                      ? undefined
+                                      : ('danger' as const),
+                                  onClick: () => {
+                                    setSelectedUser(user)
+                                    setModalOpen(true)
+                                  },
+                                },
+                              ]
+                            : []),
+                          {
+                            label: 'Delete account',
+                            href: '#',
+                            IconComponent: TrashIcon,
+                            type: 'danger',
+                            onClick: () => setDeletingUser(user),
+                            disabledReason:
+                              user.role === 'admin'
+                                ? 'Remove the admin role first'
+                                : undefined,
+                          },
+                        ]}
+                      >
+                        <EllipsisVerticalIcon
+                          className="w-5 h-5"
+                          aria-hidden="true"
+                        />
+                        <span className="sr-only">
+                          Actions for {user.display_name || user.email}
+                        </span>
+                      </ActionMenu>
                     </td>
                   </tr>
                 ))}
@@ -329,6 +353,16 @@ const Page: NextPageWithLayout = () => {
           </div>
         </FormProvider>
       </Modal>
+
+      {deletingUser ? (
+        <DeleteAccountDialog
+          user={deletingUser}
+          onClose={() => {
+            setDeletingUser(null)
+            queryClient.invalidateQueries(['users', 'list'])
+          }}
+        />
+      ) : null}
     </>
   )
 }

@@ -228,7 +228,7 @@ func attempt(ctx context.Context, root string, args []string) error {
 			return err
 		}
 		samples, err := collectBaseline(
-			ctx, root, *candidate, baselineDB, candidateDB, targetPath, *iterations, 15, latencyPath,
+			ctx, root, *candidate, baselineDB, candidateDB, targetPath, *iterations, 15, latencyPath, "",
 		)
 		if err != nil {
 			return err

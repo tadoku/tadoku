@@ -18,6 +18,8 @@ func gate(args []string) error {
 	baselineFiles := flags.String("baseline", "", "comma-separated baseline metrics files")
 	candidateFiles := flags.String("candidate", "", "comma-separated candidate metrics files")
 	latencyFiles := flags.String("latency", "", "comma-separated paired latency files")
+	pageFiles := flags.String("page-oracles", "", "baseline legal-page oracles, one file per scale")
+	proofFiles := flags.String("buffer-proof", "", "checked unchanged-input proofs for documented buffer variance")
 	if err := flags.Parse(args); err != nil {
 		return err
 	}
@@ -32,6 +34,11 @@ func gate(args []string) error {
 	if err != nil {
 		return err
 	}
+	qualification, err := readQualifications(*pageFiles, *proofFiles, *target)
+	if err != nil {
+		return err
+	}
+	replacements := []string{}
 	failures := []string{}
 	if len(a) != len(b) {
 		failures = append(failures, "coverage differs")
@@ -42,14 +49,27 @@ func gate(args []string) error {
 			failures = append(failures, key+": missing")
 			continue
 		}
-		if candidate.Fingerprint != original.Fingerprint {
+		if _, hasOracle := qualification.pages[key]; hasOracle {
+			if err := qualification.page(key, original, candidate); err != nil {
+				failures = append(failures, key+": legal-page check: "+err.Error())
+			} else {
+				replacements = append(replacements, key+": exact legal boundary-page multiset")
+			}
+		} else if candidate.Fingerprint != original.Fingerprint {
 			failures = append(failures, key+": fingerprint mismatch")
 		}
+		buffersDiffer := candidate.SharedBuffers != original.SharedBuffers || candidate.TempBuffers != original.TempBuffers
 		if *mode == "determinism" {
-			if candidate.RowsProcessed != original.RowsProcessed || candidate.SharedBuffers != original.SharedBuffers ||
-				candidate.TempBuffers != original.TempBuffers || candidate.PlanHash != original.PlanHash ||
+			if candidate.RowsProcessed != original.RowsProcessed || candidate.PlanHash != original.PlanHash ||
 				candidate.CustomPlans != original.CustomPlans || candidate.GenericPlans != original.GenericPlans {
 				failures = append(failures, key+": deterministic metrics differ")
+			}
+			if buffersDiffer {
+				if err := qualification.buffers(key, original, candidate); err != nil {
+					failures = append(failures, key+": buffers differ: "+err.Error())
+				} else {
+					replacements = append(replacements, key+": unchanged-input and full estimated-plan identity")
+				}
 			}
 		} else {
 			if candidate.RowsProcessed > original.RowsProcessed {
@@ -57,7 +77,11 @@ func gate(args []string) error {
 			}
 			buffersIncreased := candidate.SharedBuffers > original.SharedBuffers || candidate.TempBuffers > original.TempBuffers
 			if original.Query != *target && buffersIncreased {
-				failures = append(failures, key+": global buffers increased")
+				if err := qualification.buffers(key, original, candidate); err != nil {
+					failures = append(failures, key+": global buffers increased: "+err.Error())
+				} else {
+					replacements = append(replacements, key+": unchanged-input and full estimated-plan identity")
+				}
 			}
 		}
 	}
@@ -120,7 +144,7 @@ func gate(args []string) error {
 		}
 	}
 	result := map[string]any{"mode": *mode, "pass": len(failures) == 0, "cases": len(a),
-		"latency_ratio": ratio, "failures": failures}
+		"latency_ratio": ratio, "failures": failures, "assertion_replacements": replacements}
 	if *outputPath == "" {
 		if err := output(result); err != nil {
 			return err

@@ -273,3 +273,40 @@ external builds, tests and data loads too. Run one timed workload at a time and
 keep heavy work outside timed batches. A failed noise, equivalence, interface or
 global-work gate cannot authorize a performance change. Dashboard publication
 uses the same lock and the exact stored Draft revision.
+
+The host-load check reserves half the visible CPUs, with a minimum ceiling of
+two. An absolute load of two can be the measured PostgreSQL query's own parallel
+workers on a larger machine. Builds remain excluded, and the independent A/A
+noise probe still decides whether each batch is usable.
+
+The default gate compares exact fingerprints and measured buffer counters.
+When a baseline varies against itself, keep its raw failures. A boundary-cut
+page can instead use `page-evidence` from the baseline SQL: the gate checks
+full row values, multiplicities, ordering groups and the exact number selected
+from each boundary group. Enable `include_rows` only in the inspection cases
+that need this evidence. Empty pages and stable pages retain exact fingerprints.
+
+For read-only SQL changes, `isolation` can attest matching migration files,
+schema, table and sequence data, statistics and planner settings in two owned
+databases. A buffer exception additionally requires three baseline observations
+showing buffer variance, byte-identical unchanged SQL and identical complete
+estimated plans and prepared-plan counters. Enable `include_estimate` for these
+inspection cases; it collects an independent prepared statement's sixth plan
+without changing the measured statement. Index or schema changes cannot use
+this exception. Target work, latency and noise gates stay strict. Every
+replacement assertion appears explicitly in the gate output.
+
+Run the CLI qualification counterexamples with the frozen binary and a new
+external evidence directory:
+
+```sh
+python3 tools/queryclimb/qualification_journey.py <binary> <evidence-dir>
+python3 tools/queryclimb/isolation_journey.py <binary> <repo-root> <evidence-dir> <template>
+python3 tools/queryclimb/page_journey.py <binary> <repo-root> <evidence-dir> <template> <cases>
+```
+
+The first journey drives the gate using synthetic measurement artifacts. The
+second clones an owned PostgreSQL template and proves that changes to data,
+schema, statistics or planner settings reject the identity check. The page
+journey needs the boundary-cut fixture cases; it collects real rows and an
+oracle, accepts a legal tied alternative and rejects an invented row.

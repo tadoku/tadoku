@@ -267,6 +267,9 @@ Run queries as the runtime role with a transaction-local tenant; migrations and
 fixtures use the owner role. Preserve production planner parameters and measure
 prepared statements after five executions. Writes roll back, and their
 fingerprints include affected table state with declared volatile columns masked.
+Table fingerprints stream sorted SHA-256 row digests, preserving row order
+independence, duplicate counts and NULLs without sorting or transferring full
+JSON rows.
 
 All commands share a host lock with `tools/queryclimb/run.sh`. Use that lock for
 external builds, tests and data loads too. Run one timed workload at a time and

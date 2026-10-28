@@ -345,8 +345,9 @@ func tableState(ctx context.Context, conn *pgx.Conn, tables []string, masks map[
 			projection += " || jsonb_build_object(" + literal + ",\n case\n when to_jsonb(t)->" + literal +
 				" = 'null'::jsonb then 'null'::jsonb\n else to_jsonb('<volatile>'::text)\n end)"
 		}
-		sql := "select row_data from (select (" + projection + ")::text as row_data from " +
-			pgx.Identifier{table}.Sanitize() + " t) s order by row_data collate \"C\""
+		sql := "select row_hash from (select sha256(convert_to((" + projection +
+			")::text, 'UTF8')) as row_hash from " +
+			pgx.Identifier{table}.Sanitize() + " t) s order by row_hash"
 		rows, err := conn.Query(ctx, sql)
 		if err != nil {
 			return "", err
@@ -354,14 +355,14 @@ func tableState(ctx context.Context, conn *pgx.Conn, tables []string, masks map[
 		hash := sha256.New()
 		var frame [8]byte
 		for rows.Next() {
-			var row string
+			var row []byte
 			if err := rows.Scan(&row); err != nil {
 				rows.Close()
 				return "", err
 			}
 			binary.BigEndian.PutUint64(frame[:], uint64(len(row)))
 			hash.Write(frame[:])
-			hash.Write([]byte(row))
+			hash.Write(row)
 		}
 		rows.Close()
 		if err := rows.Err(); err != nil {

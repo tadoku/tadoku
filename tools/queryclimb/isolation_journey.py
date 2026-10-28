@@ -25,12 +25,22 @@ def sql(db, statement):
     assert p.returncode == 0, p.stderr
 
 created = []
-for scenario in ['same', 'data', 'schema', 'statistics', 'settings']:
-    a, b = prefix + '_' + scenario + '_a', prefix + '_' + scenario + '_b'
+for scenario in ['same', 'row-order', 'multiplicity', 'data', 'schema', 'statistics', 'settings']:
+    suffix = scenario.replace('-', '_')
+    a, b = prefix + '_' + suffix + '_a', prefix + '_' + suffix + '_b'
     for db in [a, b]:
         call('clone-' + db, 'clone', template, db)
         created.append(db)
-    if scenario == 'data':
+    if scenario in ['row-order', 'multiplicity']:
+        for db in [a, b]:
+            sql(db, 'create table fingerprint_edge (value text)')
+        if scenario == 'row-order':
+            sql(a, "insert into fingerprint_edge values ('a'), ('b'), (null)")
+            sql(b, "insert into fingerprint_edge values (null), ('b'), ('a')")
+        else:
+            sql(a, "insert into fingerprint_edge values ('same'), ('same')")
+            sql(b, "insert into fingerprint_edge values ('same')")
+    elif scenario == 'data':
         sql(b, "update languages set name = name || ' changed' where code = 'jpn'")
     elif scenario == 'schema':
         sql(b, 'alter table logs add column identity_probe integer')
@@ -40,9 +50,10 @@ for scenario in ['same', 'data', 'schema', 'statistics', 'settings']:
         sql(b, 'alter database ' + b + " set work_mem = '3MB'")
     call(scenario, 'isolation', '--baseline-name', a, '--candidate-name', b,
          '--candidate-root', root, '--target', 'logs.ListLogsForContest',
-         '--output', str(out / (scenario + '.json')), ok=scenario == 'same')
+         '--output', str(out / (scenario + '.json')), ok=scenario in ['same', 'row-order'])
 
 (out / 'summary.json').write_text(json.dumps({'status': 'passed', 'binary': binary,
     'template': template, 'databases_retained': created,
-    'checks': ['same clones', 'changed data', 'changed schema', 'changed statistics', 'changed settings']}, indent=2))
+    'checks': ['same clones', 'row order and NULLs', 'row multiplicity', 'changed data',
+               'changed schema', 'changed statistics', 'changed settings']}, indent=2))
 print('PASS: live PostgreSQL identity collector and counterexamples')

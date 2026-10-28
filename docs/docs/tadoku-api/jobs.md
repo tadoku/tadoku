@@ -127,7 +127,7 @@ exactly `{"user_id":"<uuid>"}`. A zero UUID is invalid. Only filing a deletion
 publishes it, in the transaction that locks the user. The handler reads current
 state: a user who is already deleted completes without changes, so duplicates
 and replays are safe. A user without a deletion lock or without a `users` row
-fails without retry as `invalid_payload` and changes nothing. There is no
+fails without retry as `rejected` and changes nothing. There is no
 cancel path. The worker registers this handler with concurrency 1, a
 60-second bound and five attempts. See
 [Account deletion](./account-deletion.md) for its effects.
@@ -310,6 +310,7 @@ the error text.
 | --- | --- | --- |
 | Handler returns `nil` | `completed` | None |
 | Payload fails decoding or `Validate` | `failed`, without retry or handler call | `invalid_payload` |
+| Handler returns `rejected(err)` for a valid payload it can never complete | `failed`, without retry | `rejected` |
 | Handler exceeds `policy.Timeout` | `pending` for retry, or `failed` after the last attempt | `deadline_exceeded` |
 | Handler returns another error, including cancellation at shutdown | `pending` for retry, or `failed` after the last attempt | `handler_error` |
 | Lease expires during the last attempt | `failed` by the next exhaustion pass | `lease_expired` |

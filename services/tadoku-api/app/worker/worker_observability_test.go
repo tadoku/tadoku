@@ -80,7 +80,7 @@ func TestWorkerObservationUsesPersistedTenant(t *testing.T) {
 				t.Fatalf("claim fixture: count=%d error=%v", len(claimed), err)
 			}
 
-			failure := &permanentError{err: errors.New("observation fixture failure")}
+			failure := rejected(errors.New("observation fixture failure"))
 			handlers, err := newRegistry(handle(
 				func(context.Context, jobs.InvalidateOfficialLeaderboardV1) error { return failure },
 				policy{Concurrency: 1, Timeout: time.Second, MaxAttempts: 1},
@@ -148,7 +148,7 @@ func TestWorkerObservationUsesPersistedTenant(t *testing.T) {
 						)
 					}
 					if name == "tadoku_worker_failed_attempts_total" {
-						if labels["code"] != failureCode(failure) ||
+						if labels["code"] != "rejected" ||
 							len(labels) != 3 ||
 							metric.GetCounter().GetValue() != 1 {
 							t.Errorf("failed-attempt sample labels=%v count=%v", labels, metric.GetCounter().GetValue())

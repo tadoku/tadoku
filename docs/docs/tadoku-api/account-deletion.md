@@ -50,10 +50,10 @@ The worker's `account.delete.v1` handler makes every change in one
 transaction. It locks the account row and then the `users` row, and changes
 nothing for a user who is already deleted, so a duplicate or replayed job is
 harmless. A job for a user without a deletion lock or without a `users` row
-fails without retry. Any other
-failure rolls the whole deletion back and leaves the account locked until the
-job is retried or replayed. A finished contest is one whose end date is before
-the current UTC date, the rule that closes log editing.
+fails without retry as `rejected`. Any other failure rolls the whole deletion
+back and leaves the account locked until the job is retried or replayed. A
+finished contest is one whose end date is before the current UTC date, the rule
+that closes log editing.
 
 | Data | Effect |
 | --- | --- |
@@ -192,7 +192,7 @@ tadoku-worker replay --id <FAILED_JOB_ID> --actor <YOUR_NAME> --reason '<repaire
 ```
 
 Follow the new job with the queries above. A job that failed with
-`invalid_payload` named a user without a deletion lock or without a `users`
+`rejected` named a user without a deletion lock or without a `users`
 row; it changed nothing and a replay fails the same way. Replaying a job for an
 account that is already deleted completes without changes.
 

@@ -4,6 +4,7 @@ import "github.com/prometheus/client_golang/prometheus"
 
 var terminalCodes = []string{
 	"invalid_payload",
+	"rejected",
 	"deadline_exceeded",
 	"handler_error",
 	"lease_expired",

@@ -145,7 +145,7 @@ func TestWorkerProcessUsesPersistedTenant(t *testing.T) {
 	}{
 		{"complete", nil, "completed", "Complete"},
 		{"retry", errors.New("temporary fixture error"), "pending", "Retry"},
-		{"fail", &permanentError{err: errors.New("permanent fixture error")}, "failed", "Fail"},
+		{"fail", rejected(errors.New("permanent fixture error")), "failed", "Fail"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			var id int64

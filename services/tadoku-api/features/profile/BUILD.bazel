@@ -25,7 +25,10 @@ go_library(
 go_test(
     name = "profile_test",
     size = "medium",
-    srcs = ["profile_repository_test.go"],
+    srcs = [
+        "profile_repository_test.go",
+        "profile_service_test.go",
+    ],
     data = glob(["testdata/**"]),
     embed = [":profile"],
     env_inherit = ["TADOKU_TEST_POSTGRES_URL"],
@@ -40,6 +43,7 @@ go_test(
     ],
     deps = [
         "//services/tadoku-api/infra/postgres",
+        "//services/tadoku-api/internal/errx",
         "//services/tadoku-api/internal/tenant",
         "//services/tadoku-api/internal/testpostgres",
         "@com_github_google_uuid//:uuid",

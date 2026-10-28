@@ -98,7 +98,10 @@ func (s *Service) ListUsers(
 	query string,
 	roles RoleLookup,
 ) (*UserList, error) {
-	pageSize, page = normalizeUserPage(pageSize, page)
+	pageSize, page, err := normalizeUserPage(pageSize, page)
+	if err != nil {
+		return nil, err
+	}
 
 	accounts, err := s.identities.ListAllAccounts(ctx, query)
 	if err != nil {
@@ -131,17 +134,20 @@ func (s *Service) ListUsers(
 	return &UserList{Users: result, TotalSize: totalSize}, nil
 }
 
-func normalizeUserPage(pageSize, page int) (int, int) {
-	if pageSize <= 0 {
+func normalizeUserPage(pageSize, page int) (int, int, error) {
+	if pageSize < 0 {
+		return 0, 0, errx.NewInvalidInputError("page_size must not be negative")
+	}
+	if page < 0 {
+		return 0, 0, errx.NewInvalidInputError("page must not be negative")
+	}
+	if pageSize == 0 {
 		pageSize = 20
 	}
 	if pageSize > 100 {
 		pageSize = 100
 	}
-	if page < 0 {
-		page = 0
-	}
-	return pageSize, page
+	return pageSize, page, nil
 }
 
 func userPage(users []identity.Account, pageSize, page int) []identity.Account {

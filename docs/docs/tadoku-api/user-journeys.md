@@ -24,7 +24,7 @@ to `runJourney`:
 | --- | --- |
 | `services/tadoku-api/e2e/user_journeys_test.go` | Tenant isolation, languages, contests, registrations and scoring rule sets |
 | `services/tadoku-api/e2e/log_journeys_test.go` | Logs and leaderboard jobs |
-| `services/tadoku-api/e2e/access_journeys_test.go` | Roles, bans and the user list |
+| `services/tadoku-api/e2e/access_journeys_test.go` | Roles, bans, the user list and account deletion |
 | `services/tadoku-api/e2e/content_journeys_test.go` | Announcements, pages and posts |
 
 Journeys keep dependent steps in one scenario and run the production API router
@@ -53,6 +53,10 @@ e2e/testdata/journeys/
 - A request step names the cast member that sends `request.http`; the runner
   injects that member's token, and `none` sends no credentials. Do not embed
   tokens in journey `request.http` files.
+- An identity step that needs a signed-in account sends a synthetic
+  `Cookie: tadoku_session=…` in `request.http`. The journey's `setup.sql` seeds
+  the session with the cookie value's SHA-256 hex digest and a `-- Test safety:`
+  comment naming the raw value.
 - A request step's optional `others` map replays the same request as other
   members before the primary request and checks only their status. Add replays
   only where they add information: identities that must be rejected on

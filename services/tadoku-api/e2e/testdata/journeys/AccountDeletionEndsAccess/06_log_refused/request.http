@@ -1,0 +1,6 @@
+POST /immersion/logs HTTP/1.1
+Host: api.test
+Content-Type: application/json
+Content-Length: 71
+
+{"language_code":"eng","activity_id":1,"duration_seconds":60,"tags":[]}

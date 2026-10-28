@@ -1,0 +1,7 @@
+POST /identity/login HTTP/1.1
+Host: api.test
+Content-Type: application/json
+Origin: https://account.tadoku.dev.lab
+Content-Length: 63
+
+{"email":"reader@example.test","password":"Fixture-login-482!"}

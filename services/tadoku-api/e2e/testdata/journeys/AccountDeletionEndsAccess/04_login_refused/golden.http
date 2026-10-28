@@ -1,0 +1,7 @@
+>>> POST /identity/login
+HTTP/1.1 401 Unauthorized
+Content-Length: 64
+Cache-Control: private, no-store
+Content-Type: application/json; charset=UTF-8
+
+{"code":"wrong_password","message":"invalid email or password"}

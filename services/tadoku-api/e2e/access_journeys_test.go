@@ -301,6 +301,41 @@ func TestAdminAccountDeletionJourney(t *testing.T) {
 	})
 }
 
+func TestAccountDeletionEndsAccessJourney(t *testing.T) {
+	runJourney(t, api, "AccountDeletionEndsAccess", []step{
+		{
+			request: "session_before_filing",
+			as:      guest,
+			want:    http.StatusOK,
+		},
+		{
+			request: "file_deletion",
+			as:      admin,
+			want:    http.StatusAccepted,
+		},
+		{
+			request: "session_after_filing",
+			as:      guest,
+			want:    http.StatusOK,
+		},
+		{
+			request: "login_refused",
+			as:      guest,
+			want:    http.StatusUnauthorized,
+		},
+		{
+			request: "recovery_refused",
+			as:      guest,
+			want:    http.StatusBadRequest,
+		},
+		{
+			request: "log_refused",
+			as:      user,
+			want:    http.StatusConflict,
+		},
+	})
+}
+
 func TestModerationAuditFailureJourney(t *testing.T) {
 	afterReset := func(t *testing.T) { failInserts(t, "moderation_audit_log") }
 

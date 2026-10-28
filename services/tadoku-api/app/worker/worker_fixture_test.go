@@ -14,6 +14,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/tadoku/tadoku/services/tadoku-api/app/permissionmodel"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/audit"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/authz"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/contestevents"
@@ -188,7 +189,7 @@ func (f workerFixture) Close() error {
 func (f workerFixture) runner(t *testing.T, client valkeygo.Client, providerTimeout, shutdown time.Duration) *Application {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	application, err := NewApplication(
-		workerDependencies(f.db, leaderboard.NewCache(client, providerTimeout)),
+		workerDependencies(t, f.db, leaderboard.NewCache(client, providerTimeout)),
 		Config{
 			Scope:           baseWorkerScope(t),
 			Concurrency:     4,
@@ -203,9 +204,15 @@ func (f workerFixture) runner(t *testing.T, client valkeygo.Client, providerTime
 	return application
 }
 
-// workerDependencies gives email no sender, so the worker holds every message. Relationships has an empty permission
-// model, because this package cannot import app/permissionmodel, so these tests must not run an account deletion.
-func workerDependencies(pool *pgxpool.Pool, cache *leaderboard.Cache) Dependencies {
+// workerDependencies gives email no sender, so the worker holds every message.
+func workerDependencies(t *testing.T, pool *pgxpool.Pool, cache *leaderboard.Cache) Dependencies {
+	t.Helper()
+
+	model, err := permissionmodel.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	return Dependencies{
 		DB:               pool,
 		JobQueue:         jobqueue.NewService(jobqueue.NewRepository(pool)),
@@ -216,7 +223,7 @@ func workerDependencies(pool *pgxpool.Pool, cache *leaderboard.Cache) Dependenci
 		Profile:          profile.NewService(profile.NewRepository(pool), identity.NewReader(pool)),
 		Logs:             logs.NewService(logs.NewLogsRepository(pool), false),
 		Contests:         contests.NewService(contests.NewContestsRepository(pool)),
-		Relationships:    permissions.NewRelationships(authz.NewRepository(pool), permissions.Model{}),
+		Relationships:    permissions.NewRelationships(authz.NewRepository(pool), model),
 		Audit:            audit.NewService(audit.NewRepository(pool)),
 		ContestEvents:    contestevents.NewService(contestevents.NewRepository(pool)),
 	}

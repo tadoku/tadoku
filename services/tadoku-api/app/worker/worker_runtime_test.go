@@ -341,7 +341,7 @@ func TestWorkerCompletesWhenRenewalIsCanceledByFinishedHandler(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	repository := jobqueue.NewRepository(limitedPool)
 	runner, err := NewApplication(
-		workerDependencies(limitedPool, leaderboard.NewCache(blocked, 8*time.Second)),
+		workerDependencies(t, limitedPool, leaderboard.NewCache(blocked, 8*time.Second)),
 		Config{
 			Scope:           baseWorkerScope(t),
 			Concurrency:     4,

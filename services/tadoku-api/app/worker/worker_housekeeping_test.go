@@ -58,7 +58,7 @@ func TestBaseWorkerHousekeepingUsesAllTenants(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	deps := workerDependencies(pool, nil)
+	deps := workerDependencies(t, pool, nil)
 	application := &Application{runner: &runner{
 		scope:           baseWorkerScope(t),
 		queue:           deps.JobQueue,

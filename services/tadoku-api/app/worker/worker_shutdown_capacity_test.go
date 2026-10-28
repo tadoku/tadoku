@@ -193,7 +193,7 @@ func TestWorkerGlobalLimitLeavesDueRowsUnclaimed(t *testing.T) {
 	}
 
 	application, err := NewApplication(
-		workerDependencies(f.db, leaderboard.NewCache(blocked, 8*time.Second)),
+		workerDependencies(t, f.db, leaderboard.NewCache(blocked, 8*time.Second)),
 		Config{
 			Scope:           baseWorkerScope(t),
 			Concurrency:     3,
@@ -282,7 +282,7 @@ func TestWorkerRetainsSlotUntilCanceledHandlerReturns(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	deps := workerDependencies(f.db, nil)
+	deps := workerDependencies(t, f.db, nil)
 	runtime := &runner{
 		scope:           baseWorkerScope(t),
 		queue:           deps.JobQueue,

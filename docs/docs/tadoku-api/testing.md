@@ -23,8 +23,11 @@ Read this when you add or change a Tadoku API test. HTTP golden cases are in
   error-wrapper assertions without distinct behavior, or coverage already
   provided at a shared boundary.
 - Do not export internals, broaden visibility, or add dependencies or
-  abstractions solely to enable such assertions. When a test is explicitly
-  removed, do not recreate equivalent coverage elsewhere unless asked.
+  abstractions solely to enable such assertions. Broadening visibility so a
+  test fixture builds a dependency the way production does is not such an
+  assertion; record it in [Import boundaries](./import-boundaries.md). When a
+  test is explicitly removed, do not recreate equivalent coverage elsewhere
+  unless asked.
 - Prefer real-database repository tests plus HTTP E2Es over isolated
   feature-service tests:
   - Repository tests are highly recommended for query behavior, row mapping,

@@ -118,6 +118,15 @@ missing, deleted and cross-tenant rows under the runtime role, and measure
 prepared plans at both representative and larger data sizes. Retain the
 change only when the measured latency and whole-query work checks pass.
 
+## Aggregate before reference enrichment
+
+When reference columns do not filter aggregate inputs, aggregate on the
+reference key before looking up its presentation columns. Verify the key is
+unique and retain the original inner or outer join semantics, aggregate casts
+and final ordering. A bounded lateral lookup can avoid scanning the entire
+reference table for a small set of groups; retain it only after work and
+latency checks at both data scales, including empty and cross-tenant cases.
+
 ## Tenancy
 
 The canonical tenant is `tadoku/prod`, in both production and development.

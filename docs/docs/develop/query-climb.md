@@ -48,6 +48,16 @@ Index or schema changes cannot use exceptions; work, latency and noise gates
 stay strict. Gate output lists every replacement assertion. Oracles bind to the
 baseline measurement database.
 
+When `baseline` receives the same source database for both sides, it creates
+fresh measurement clones under the host lock. Only after both clones succeed,
+it rebinds in-memory page oracles whose database exactly matches that source
+to the actual baseline clone; SQL, case inputs and row evidence stay intact.
+It logs source and clone names. Unrelated oracles and explicit distinct-database
+A/B runs retain exact database binding. `tools/queryclimb/aa_page_journey.py`
+checks this with one real boundary case and a source oracle; accepted preflights
+stop the owned CLI after legal-page validation and retain clones, without
+claiming completed timing batches.
+
 `isolation --baseline-buffer-case <case>` additionally certifies one target
 case at `--scale-index`. Both roots must contain byte-identical read-only target
 SQL. The proof retains its SQL digest, complete case key, all three full witness
@@ -74,6 +84,8 @@ external evidence directory:
 python3 tools/queryclimb/qualification_journey.py <binary> <evidence-dir>
 python3 tools/queryclimb/baseline_buffer_journey.py <binary> <evidence-dir>
 python3 tools/queryclimb/aa_calibration_journey.py <binary> <evidence-dir>
+python3 tools/queryclimb/aa_page_journey.py <binary> <repo-root> <evidence-dir> \
+  <source-db> <candidate-db> <single-case-file> <source-oracle-file>
 python3 tools/queryclimb/isolation_journey.py <binary> <repo-root> <evidence-dir> <template>
 python3 tools/queryclimb/page_journey.py <binary> <repo-root> <evidence-dir> <template> <cases>
 ```

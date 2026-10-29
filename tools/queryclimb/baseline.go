@@ -153,6 +153,14 @@ func collectBaseline(
 			}
 			cleanup = append(cleanup, name)
 		}
+		for key, oracle := range qualification.pages {
+			if oracle.Database == original {
+				oracle.Database = database
+				qualification.pages[key] = oracle
+			}
+		}
+		fmt.Fprintf(os.Stderr, "measurement clones: source=%s baseline=%s candidate=%s probe=%s\n",
+			original, database, candidateDB, probeDB)
 	}
 	connections := []*pgx.Conn{}
 	for _, db := range []string{database, candidateDB, probeDB} {

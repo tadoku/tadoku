@@ -1,10 +1,13 @@
 import { useRouteContext } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 
-export const getSession = createServerFn({ method: 'GET' }).handler(async () => {
-  const { readSession } = await import('./session.server')
-  return readSession()
-})
+/** The request's session, or with `false` only its URLs, for a page that must not wait for the identity API. */
+export const getSession = createServerFn({ method: 'GET' })
+  .inputValidator((read: boolean) => read)
+  .handler(async ({ data: read }) => {
+    const { readSession } = await import('./session.server')
+    return readSession(read)
+  })
 
 export type Identity = Awaited<ReturnType<typeof getSession>>
 export type ReadyIdentity = Extract<Identity, { status: 'ready' }>

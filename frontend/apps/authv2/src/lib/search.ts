@@ -15,6 +15,8 @@ export type AccountSearch = {
   readonly saved?: SettingsEditor
   /** Set by a native recovery request. */
   readonly sent?: true
+  /** Asks a signed-in visitor at /login for a fresh login before a privileged action; 1 keeps the URL `reauth=1`. */
+  readonly reauth?: 1
 }
 
 /** Parses untrusted query parameters. The router also re-parses this function's own output, so it must accept it. */
@@ -26,6 +28,7 @@ export function accountSearch(search: Record<string, unknown>): AccountSearch {
     edit: settingsEditors.find(value => value === search.edit),
     saved: settingsEditors.find(value => value === search.saved),
     sent: [true, 1, '1'].includes(search.sent as never) ? true : undefined,
+    reauth: [true, 1, '1'].includes(search.reauth as never) ? 1 : undefined,
   }
 }
 

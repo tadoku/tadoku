@@ -30,12 +30,16 @@ export function navigate(url: string) {
  * any values already typed and sends JSON from the browser to the identity API, mapping rejections onto the field
  * they concern or onto the form.
  */
-export function useAccountForm<V extends Values>({ operation, id, defaultValues, nativeError, body, onSuccess }: {
+export function useAccountForm<V extends Values>({
+  operation, id, defaultValues, nativeError, reauthenticate, body, onSuccess,
+}: {
   readonly operation: Operation
   readonly id: string
   readonly defaultValues: V
   /** An error code returned to this page by a native submission. */
   readonly nativeError?: Code
+  /** Where to go, instead of showing the problem, when only a fresh login resolves it. */
+  readonly reauthenticate?: string
   readonly body?: (values: V) => Values
   readonly onSuccess: (values: V) => unknown
 }) {
@@ -51,6 +55,7 @@ export function useAccountForm<V extends Values>({ operation, id, defaultValues,
         const result = await sendIdentity(operation, browser, body ? body(value) : value)
         if (result.ok) return
         const problem = problemFor(result.code, operation, value)
+        if (problem.reauthenticate && reauthenticate) return navigate(reauthenticate)
         return problem.field ? { fields: { [problem.field]: problem.message } } : { form: problem, fields: {} }
       },
     },

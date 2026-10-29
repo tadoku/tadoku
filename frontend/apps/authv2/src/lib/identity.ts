@@ -1,4 +1,5 @@
 import {
+  identityAccountDelete,
   identityLoginCreate,
   identityLogout,
   identityPasswordUpdate,
@@ -60,6 +61,10 @@ export const operations = {
   logout: {
     page: '/',
     send: request => identityLogout(request),
+  },
+  'delete-account': {
+    page: '/delete-account',
+    send: (request, v) => identityAccountDelete({ ...request, body: { email: v.email } }),
   },
 } satisfies Record<string, { page: string; send: Send }>
 
@@ -134,7 +139,12 @@ function describe(code: Code, operation: Operation, values?: Record<string, stri
     case 'email_taken':
       return { field: 'email', message: 'This email is already registered. Log in or reset your password instead.' }
     case 'stale_session':
-      return { reauthenticate: true, message: 'For your security, log in again before changing your email or password.' }
+      return {
+        reauthenticate: true,
+        message: operation === 'delete-account'
+          ? 'For your security, log in again before deleting your account.'
+          : 'For your security, log in again before changing your email or password.',
+      }
     case 'unauthorized':
       return { reauthenticate: true, message: 'Your session has ended. Log in again to continue.' }
     case 'invalid_display_name':
@@ -157,11 +167,11 @@ function describe(code: Code, operation: Operation, values?: Record<string, stri
     case 'invalid_recovery_token':
       return { message: 'This recovery link is invalid or has expired. Request a new one.' }
     case 'confirmation_mismatch':
-      return { field: 'email', message: 'This doesn’t match your account’s email address.' }
+      return { field: 'email', message: 'This doesn’t match your account’s email address. Check it and try again.' }
     case 'admin_account':
-      return { message: 'Remove the administrator role before deleting this account.' }
+      return { message: 'Administrator accounts can’t be deleted. Ask another administrator to remove your role first.' }
     case 'banned_account':
-      return { message: 'This account can’t be deleted here. Contact Tadoku support.' }
+      return { message: 'This account can’t be deleted here. Contact Tadoku support to delete it.' }
     case 'not_implemented':
     case 'unavailable':
       return { message: 'Something went wrong on our side. Try again in a moment.' }
@@ -224,4 +234,15 @@ export function continuation(raw: unknown, origin: string): string | undefined {
 export function withReturnTo(path: string, destination: string | undefined) {
   if (!destination) return path
   return `${path}${path.includes('?') ? '&' : '?'}return_to=${encodeURIComponent(destination)}`
+}
+
+/**
+ * Login that comes back to the delete page, keeping its trusted continuation. `reauth` asks a signed-in visitor for a
+ * fresh login under a banner.
+ */
+export function deleteAccountLogin(origin: string, next: string | undefined, reauth: boolean) {
+  const page = `${origin}/delete-account`
+  // A continuation too long to nest in the page's own URL is dropped, not the return to the page.
+  const here = [withReturnTo(page, next), page].find(url => continuation(url, origin))
+  return withReturnTo(reauth ? '/login?reauth=1' : '/login', here)
 }

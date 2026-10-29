@@ -27,6 +27,7 @@ a:where(:not(.paper-button)) { color: var(--paper-color-text-link); }
 .card-page__footer { margin: 24px 0 0; text-align: center; color: var(--paper-color-text-muted); font-size: .9375rem; }
 .account-confirmation { display: grid; gap: 16px; }
 .account-confirmation p { margin: 0; line-height: 1.7; }
+.account-confirmation--spaced { margin-bottom: 28px; }
 
 /* Forms */
 .account-form { display: grid; gap: 20px; min-width: 0; }
@@ -35,6 +36,9 @@ a:where(:not(.paper-button)) { color: var(--paper-color-text-link); }
 .account-form__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; }
 .account-form__actions > .paper-button { flex-shrink: 0; }
 .account-form .paper-flash a { white-space: nowrap; }
+
+/* Account deletion: the confirming field's hint holds the stored address. */
+.delete-account__form .paper-field__hint { overflow-wrap: anywhere; white-space: break-spaces; }
 
 /* Settings: headed groups of rows; the row the URL opens shows its editor on the raised surface. */
 .settings { width: min(100%, 760px); margin-inline: auto; }
@@ -55,6 +59,9 @@ a:where(:not(.paper-button)) { color: var(--paper-color-text-link); }
 /* The email hint holds the stored address, whose raw spaces would otherwise hang past the row. */
 .settings-row__editor .paper-field__hint { white-space: break-spaces; }
 .settings-row__editor .account-form { gap: 16px; }
+/* Deletion stays off the rows: one quiet link below the groups. */
+.settings-delete { margin: 40px 0 0; font-size: var(--paper-type-metadata-size); line-height: var(--paper-type-metadata-line-height); }
+.settings-delete a { color: var(--paper-color-text-muted); }
 .settings-saved { margin: 0; color: var(--paper-color-status-success); font-size: var(--paper-type-metadata-size); font-weight: 600; line-height: var(--paper-type-metadata-line-height); }
 
 @media (max-width: 720px) {

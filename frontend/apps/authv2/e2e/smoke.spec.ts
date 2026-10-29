@@ -1,4 +1,4 @@
-import { createServer } from 'node:http'
+import { createServer, type ServerResponse } from 'node:http'
 import { test, expect } from '@playwright/test'
 import { holdScripts, settingRow, settingValue, waitForHydration } from './support'
 
@@ -8,6 +8,9 @@ let contentType = 'application/json'
 let session: unknown = { account: null, recent_login: false }
 const requests: { cookie?: string; branch?: string; method?: string; path?: string }[] = []
 const profileUpdates: unknown[] = []
+// Session reads left unanswered while a test checks that a page doesn't wait for them.
+let stall = false
+const stalled: ServerResponse[] = []
 const fixture = createServer((request, response) => {
   const cors = request.headers.origin
     ? { 'Access-Control-Allow-Origin': request.headers.origin, 'Access-Control-Allow-Credentials': 'true' }
@@ -32,6 +35,10 @@ const fixture = createServer((request, response) => {
     return
   }
   requests.push({ cookie: request.headers.cookie, branch: request.headers['x-dev-branch']?.toString(), method: request.method, path: request.url })
+  if (stall) {
+    stalled.push(response)
+    return
+  }
   response.writeHead(status, { 'Content-Type': contentType }).end(typeof session === 'string' ? session : JSON.stringify(session))
 })
 
@@ -79,6 +86,22 @@ test('account screen, session forwarding and unavailable API', async ({ page, re
       expect.soft(label[0], 'retry label differs from its background').not.toBe(label[1])
       await expect.soft(page.getByLabel('Email')).toHaveCount(0)
       expect((await request.get('/healthz')).status()).toBe(200)
+
+      // The API already accepted the deletion, so its confirmation can't depend on the session read.
+      await page.goto('/deleted')
+      await expect.soft(page.getByRole('heading', { level: 1, name: 'Your account is deleted' })).toBeVisible()
+      await expect.soft(page.getByRole('link', { name: 'Go to Tadoku' })).toHaveAttribute('href', 'http://localhost:5195')
+    }
+
+    // Nor does it wait for a session read that never answers; the server gives up on one after 10 seconds.
+    stall = true
+    try {
+      await page.goto('/deleted', { timeout: 4_000 })
+      await expect.soft(page.getByRole('heading', { level: 1, name: 'Your account is deleted' })).toBeVisible()
+      expect.soft(stalled, 'no session read').toHaveLength(0)
+    } finally {
+      stall = false
+      for (const response of stalled.splice(0)) response.writeHead(503).end()
     }
   })
 })

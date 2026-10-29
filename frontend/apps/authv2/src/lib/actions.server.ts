@@ -1,5 +1,7 @@
 import { getRequestHeader } from '@tanstack/react-start/server'
-import { continuation, isOperation, operations, sendIdentity, withReturnTo, type Operation } from './identity'
+import {
+  continuation, deleteAccountLogin, isOperation, operations, problemFor, sendIdentity, withReturnTo, type Operation,
+} from './identity'
 import { requestUrls } from './urls.server'
 
 async function readForm(request: Request) {
@@ -37,6 +39,8 @@ function success(operation: Operation, next: string | undefined) {
       return next ?? '/?saved=password'
     case 'logout':
       return '/login'
+    case 'delete-account':
+      return '/deleted'
   }
 }
 
@@ -60,7 +64,9 @@ export async function handleNativeAction(request: Request, name: string) {
     headers.set('Location', new URL(location, urls.origin).href)
     return new Response(null, { status: 303, headers })
   }
-  const failure = (code: string) => redirect(withReturnTo(`${page}?error=${code}&form=${name}`, next))
+  // A failed fresh login keeps its banner.
+  const reauth = name === 'login' && form?.get('reauth') === '1' ? '&reauth=1' : ''
+  const failure = (code: string) => redirect(withReturnTo(`${page}?error=${code}&form=${name}${reauth}`, next))
   if (!form) return failure('invalid_origin')
 
   const values = Object.fromEntries(form)
@@ -71,7 +77,13 @@ export async function handleNativeAction(request: Request, name: string) {
     if (value) forwarded[header] = value
   }
   const result = await sendIdentity(name, { baseUrl: urls.apiUrl, headers: forwarded }, values)
-  if (!result.ok) return name === 'logout' && result.code === 'unauthorized' ? redirect('/login') : failure(result.code)
+  if (!result.ok) {
+    if (name === 'logout' && result.code === 'unauthorized') return redirect('/login')
+    if (name === 'delete-account' && problemFor(result.code, name).reauthenticate) {
+      return redirect(deleteAccountLogin(urls.origin, next, true))
+    }
+    return failure(result.code)
+  }
   for (const cookie of result.response.headers.getSetCookie()) headers.append('Set-Cookie', cookie)
   return redirect(success(name, next))
 }

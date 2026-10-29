@@ -239,8 +239,8 @@ console output; they include assertion output and fixture cleanup errors.
 | `build-frontend-admin.yaml` | Pushes touching admin, `ui` or the lockfile | Builds admin; publishes its image from `main` |
 | `build-frontend-styleguide.yaml` | Pushes touching styleguide, `ui` or the lockfile | Builds the `ui` styleguide; publishes its image from `main` |
 | `build-frontend-paper-styleguide.yaml` | PRs and `main` pushes touching Paper | Paper boundaries, `paper-ui` and `paper-styleguide` lint, typecheck, test and build, package checks, image smoke test; publishes from `main` |
-| `build-frontend-authv2.yaml` | PRs and main pushes touching authv2 or Paper | Node 22 typecheck, lint, boundaries and container build; main publishes commit/latest, owner-approved manual dispatch promotes prod; Playwright remains manual |
-| `build-frontend-webv3.yaml` | PRs and `main` pushes touching Webv3 or Paper inputs | Node 22 lint, typecheck, boundaries, standalone container and synthetic read-only browser journeys; publishes commit/`latest` for automatic Webv3 preview updates |
+| `build-frontend-authv2.yaml` | PRs and main pushes touching authv2 or Paper | Node 22 typecheck, lint, boundaries and container build; main publishes commit, `latest` and `prod`; Playwright remains manual |
+| `build-frontend-webv3.yaml` | PRs and `main` pushes touching Webv3 or Paper inputs | Node 22 lint, typecheck, boundaries, standalone container and synthetic read-only browser journeys; publishes commit, `latest` and `prod` from `main` |
 | `check-paper-playground.yaml` | PRs and `main` pushes touching the playground or `paper-ui` | Paper boundaries and `paper-playground` lint, typecheck, test and build; never published |
 | `pr-branch.yaml` | `pull_request_target` label, push, reopen and close events | Authorizes the `deploy` label, deploys the pinned commit beside production with dev-cli and tears the branch down when the label is removed or the pull request closes. Its deploy and teardown jobs are the called workflows `pr-branch-called-deploy.yaml` and `pr-branch-called-teardown.yaml`. See [Pull-request deploys](./pull-request-deploys.md) |
 | `pr-branch-reconcile.yaml` | Manual dispatch, started every 15 minutes by a homelab CronJob | Tears down pull-request branches whose pull request is closed or unlabelled, or whose branch expired; never runs `dev cleanup`. See [Pull-request deploys](./pull-request-deploys.md#the-reconciler) |
@@ -249,12 +249,10 @@ console output; they include assertion output and fixture cleanup errors.
 
 Frontend application images from `dev/` branches publish only their immutable commit tag.
 They never update `latest` or `prod`. Development manifests can pin those images
-without a production release. Main publication updates the commit tag and `latest`
-for development and automatic Webv3 preview updates. The existing production
-frontend workflows update `prod` only through a manual
-workflow dispatch on `main` with `publish_production: true`, after the owner approves
-production. This also lets frontend source land on main for future branch overlays
-while production remains on its previous image.
+without a production release. Main publication updates the commit tag, `latest`
+and `prod`. Development follows `latest` and production follows `prod`, so merging
+frontend source to `main` releases each affected frontend to production, as it
+does for the backend images.
 
 ## SQL performance measurements
 

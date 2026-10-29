@@ -43,10 +43,9 @@ identity API owns session reads, logout and CSRF.
 
 A source merge automatically releases the API and worker to production through
 `build-bazel.yaml`, Image Updater and Argo CD. Treat it as a real production
-release. It also publishes development frontend images; development
-reconciliation switches the shared callback and private SSR routes. Legacy
-webv2 and admin publish `prod` only through a separately authorized
-`workflow_dispatch` with `publish_production: true`. See
+release. Frontend workflows publish `prod` from `main` the same way, so a
+merge also releases every affected frontend; development reconciliation
+switches the shared callback and private SSR routes. See
 [Production branches](../develop/production-branches.md) for branch support.
 
 Change production gateway rules only through a reviewed GitOps pull request,

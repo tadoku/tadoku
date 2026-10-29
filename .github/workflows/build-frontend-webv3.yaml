@@ -111,6 +111,7 @@ jobs:
           tags: |
             ghcr.io/tadoku/tadoku/frontend-webv3:${{ github.sha }}
             ghcr.io/tadoku/tadoku/frontend-webv3:latest
+            ghcr.io/tadoku/tadoku/frontend-webv3:prod
       - name: Record release identity
         run: |
           {

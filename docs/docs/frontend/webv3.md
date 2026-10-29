@@ -185,13 +185,12 @@ its digest can differ from the smoke-checked image. No pull request publishes an
 image.
 
 The active production GitOps configuration makes `next.tadoku.app` follow
-the `latest` digest automatically through Image Updater and Argo CD. No manual
-production tag promotion is required for Webv3. Webv3 uses the same production
+the `prod` digest automatically through Image Updater and Argo CD. Webv3 uses the same production
 backend as Webv2; the current homepage reads public data and native logging uses its existing account and activity API. Unfinished journeys
 continue to open production Webv2.
 Merging source that matches the Webv3 workflow's paths, including the shared
-lockfile, therefore republishes `latest` and rolls this production preview through
-Image Updater's periodic digest reconciliation and Argo CD's automatic sync.
+lockfile, therefore republishes `latest` and `prod` and rolls this production
+preview through Image Updater and Argo CD's automatic sync.
 Require `webv3 / container journeys` on the exact reviewed source head before
 landing such changes. An authv2 production hold does not hold this Webv3 pipeline.
 

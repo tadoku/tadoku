@@ -1,12 +1,6 @@
 name: build-frontend-admin
 on:
   workflow_dispatch:
-    inputs:
-      publish_production:
-        description: Publish the production image after owner approval
-        type: boolean
-        default: false
-        required: true
   schedule:
     # monthly at 10th of every month
     - cron: "0 0 10 * *"
@@ -79,16 +73,12 @@ jobs:
 
       - name: Publish images
         env:
-          PUBLISH_PRODUCTION: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_production }}
           IMAGE_NAME: ghcr.io/tadoku/tadoku/frontend-admin
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" |
             docker login ghcr.io -u tadoku --password-stdin
           tags=(--tag "$GITHUB_SHA")
           if [ "$GITHUB_REF" = refs/heads/main ]; then
-            tags+=(--tag latest)
-          fi
-          if [ "$GITHUB_REF" = refs/heads/main ] && [ "$PUBLISH_PRODUCTION" = true ]; then
-            tags+=(--tag prod)
+            tags+=(--tag latest --tag prod)
           fi
           ./scripts/publish-image.sh admin --repository "$IMAGE_NAME" "${tags[@]}"

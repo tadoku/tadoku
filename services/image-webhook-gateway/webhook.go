@@ -67,9 +67,16 @@ func (g *gateway) handleWebhook(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	if eventPayload.tag() != "prod" {
+
+	resource, err := g.kube.get(r.Context())
+	if err != nil {
+		slog.Error("read ImageUpdater for webhook event", "error", err)
+		http.Error(w, "ImageUpdater is unavailable", http.StatusServiceUnavailable)
+		return
+	}
+	if !resource.tracks(eventPayload.image()) {
 		w.WriteHeader(http.StatusAccepted)
-		_, _ = w.Write([]byte("ignored non-prod package event"))
+		_, _ = w.Write([]byte("ignored untracked image"))
 		return
 	}
 
@@ -123,6 +130,10 @@ func (e packageEvent) tag() string {
 		return tag
 	}
 	return e.Package.PackageVersion.Version
+}
+
+func (e packageEvent) image() string {
+	return "ghcr.io/" + e.Package.Owner.Login + "/" + e.Package.Name + ":" + e.tag()
 }
 
 func signature(secret, body []byte) string {

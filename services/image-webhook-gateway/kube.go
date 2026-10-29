@@ -16,6 +16,13 @@ import (
 )
 
 type imageUpdater struct {
+	Spec struct {
+		ApplicationRefs []struct {
+			Images []struct {
+				ImageName string `json:"imageName"`
+			} `json:"images"`
+		} `json:"applicationRefs"`
+	} `json:"spec"`
 	Status struct {
 		LastCheckedAt string `json:"lastCheckedAt"`
 		Conditions    []struct {
@@ -25,6 +32,17 @@ type imageUpdater struct {
 			Message string `json:"message"`
 		} `json:"conditions"`
 	} `json:"status"`
+}
+
+func (u *imageUpdater) tracks(image string) bool {
+	for _, ref := range u.Spec.ApplicationRefs {
+		for _, tracked := range ref.Images {
+			if tracked.ImageName == image {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 type kubeClient struct {

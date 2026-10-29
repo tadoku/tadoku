@@ -21,7 +21,9 @@ reconciliation has finished.
 For each incoming request, the gateway:
 
 1. verifies the GitHub HMAC signature;
-2. accepts only published container-package events for the `prod` tag;
+2. accepts only published container-package events whose image reference,
+   `ghcr.io/<owner>/<package>:<tag>`, matches an `imageName` in the configured
+   `ImageUpdater` resource's `spec.applicationRefs[].images[]`;
 3. stores the original request body in one bounded, in-memory FIFO;
 4. forwards that unchanged body to the internal Image Updater webhook;
 5. waits for the configured `ImageUpdater` resource's `lastCheckedAt` value to
@@ -68,8 +70,10 @@ Deployment-specific values belong in the private GitOps repository.
 | `/readyz` | Readiness probe; becomes unavailable during graceful shutdown |
 
 Accepted events return `202` after entering the queue. If the queue is full,
-the gateway returns `503` so the sender can retry. Valid non-`prod` events
-return `202` without entering the queue.
+the gateway returns `503` so the sender can retry. Valid events for image
+tags the `ImageUpdater` does not track return `202` without entering the
+queue. If the gateway cannot read the `ImageUpdater`, it returns `503` without
+queueing the event.
 
 ## Shutdown and recovery
 

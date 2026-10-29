@@ -289,23 +289,31 @@ full row values, multiplicities, ordering groups and the exact number selected
 from each boundary group. Enable `include_rows` only in the inspection cases
 that need this evidence. Empty pages and stable pages retain exact fingerprints.
 
-For read-only SQL changes, `isolation` can attest matching migration files,
-schema, table and sequence data, statistics and planner settings in two owned
-databases. A buffer exception additionally requires three baseline observations
-showing buffer variance, byte-identical unchanged SQL and identical complete
-estimated plans and prepared-plan counters. Enable `include_estimate` for these
-inspection cases; it collects an independent prepared statement's sixth plan
-without changing the measured statement. Index or schema changes cannot use
-this exception. Target work, latency and noise gates stay strict. Every
-replacement assertion appears explicitly in the gate output.
-Oracles and identity proofs bind to the measured database names. Calibration
-observations must come from three distinct owned clones.
+For read-only SQL changes, `isolation` attests matching migrations, schema,
+data, statistics and planner settings in the two named measurement databases.
+Unchanged-query buffer exceptions require byte-identical SQL, three distinct
+baseline clones with observed variance, identical full estimated plans and
+prepared-plan counters. Enable `include_estimate` in those inspection cases.
+Index or schema changes cannot use exceptions; work, latency and noise gates
+stay strict. Gate output lists every replacement assertion. Oracles bind to the
+baseline measurement database.
+
+`isolation --baseline-buffer-case <case>` additionally certifies one target
+case at `--scale-index`. Both roots must contain byte-identical read-only target
+SQL. The proof retains its SQL digest, complete case key, all three full witness
+plans and all five identities hashed from the actual distinct clones; baseline
+and candidate identities are reused. Only `gate --mode determinism` accepts
+this certificate. It permits temporary-buffer variance while requiring exact
+fingerprints, shared buffers, work, inputs, prepared counters and full plans.
+Missing witness plans or identities fail closed. Guard and candidate modes
+retain their existing behavior and reject baseline certificates.
 
 Run the CLI qualification counterexamples with the frozen binary and a new
 external evidence directory:
 
 ```sh
 python3 tools/queryclimb/qualification_journey.py <binary> <evidence-dir>
+python3 tools/queryclimb/baseline_buffer_journey.py <binary> <evidence-dir>
 python3 tools/queryclimb/isolation_journey.py <binary> <repo-root> <evidence-dir> <template>
 python3 tools/queryclimb/page_journey.py <binary> <repo-root> <evidence-dir> <template> <cases>
 ```

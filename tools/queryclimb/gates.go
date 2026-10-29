@@ -34,7 +34,7 @@ func gate(args []string) error {
 	if err != nil {
 		return err
 	}
-	qualification, err := readQualifications(*pageFiles, *proofFiles, *target)
+	qualification, err := readQualifications(*pageFiles, *proofFiles, *target, *mode == "determinism")
 	if err != nil {
 		return err
 	}
@@ -65,7 +65,7 @@ func gate(args []string) error {
 				failures = append(failures, key+": deterministic metrics differ")
 			}
 			if buffersDiffer {
-				if err := qualification.buffers(key, original, candidate); err != nil {
+				if err := qualification.buffers(key, original, candidate, *mode == "determinism"); err != nil {
 					failures = append(failures, key+": buffers differ: "+err.Error())
 				} else {
 					replacements = append(replacements, key+": unchanged-input and full estimated-plan identity")
@@ -77,7 +77,7 @@ func gate(args []string) error {
 			}
 			buffersIncreased := candidate.SharedBuffers > original.SharedBuffers || candidate.TempBuffers > original.TempBuffers
 			if original.Query != *target && buffersIncreased {
-				if err := qualification.buffers(key, original, candidate); err != nil {
+				if err := qualification.buffers(key, original, candidate, *mode == "determinism"); err != nil {
 					failures = append(failures, key+": global buffers increased: "+err.Error())
 				} else {
 					replacements = append(replacements, key+": unchanged-input and full estimated-plan identity")

@@ -119,7 +119,7 @@ func collectBaseline(
 	if err != nil {
 		return nil, err
 	}
-	qualification, err := readQualifications(pageOracles, "", "")
+	qualification, err := readQualifications(pageOracles, "", "", false)
 	if err != nil {
 		return nil, err
 	}

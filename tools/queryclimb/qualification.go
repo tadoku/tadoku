@@ -22,7 +22,14 @@ type pageOracle struct {
 	Rows       [][]*string `json:"rows"`
 }
 
+type baselineBuffer struct {
+	Key        string                       `json:"key"`
+	SQLHash    string                       `json:"sql_hash"`
+	Identities map[string]map[string]string `json:"identities"`
+}
+
 type bufferProof struct {
+	BaselineBuffer    *baselineBuffer      `json:"baseline_buffer,omitempty"`
 	Target            string               `json:"target"`
 	TargetReadOnly    bool                 `json:"target_read_only"`
 	BaselineDatabase  string               `json:"baseline_database"`
@@ -38,7 +45,7 @@ type qualifications struct {
 	proofs map[string]bufferProof
 }
 
-func readQualifications(pageFiles, proofFiles, target string) (qualifications, error) {
+func readQualifications(pageFiles, proofFiles, target string, determinism bool) (qualifications, error) {
 	q := qualifications{pages: map[string]pageOracle{}, proofs: map[string]bufferProof{}}
 	if pageFiles != "" {
 		for scale, path := range strings.Split(pageFiles, ",") {
@@ -75,6 +82,9 @@ func readQualifications(pageFiles, proofFiles, target string) (qualifications, e
 				return q, fmt.Errorf("buffer proof differs or omits %s", part)
 			}
 		}
+		if proof.BaselineBuffer != nil && !determinism {
+			return q, errors.New("baseline buffer certification requires determinism mode")
+		}
 		for key := range proof.Variance {
 			if _, exists := q.proofs[key]; exists {
 				return q, fmt.Errorf("duplicate buffer proof: %s", key)
@@ -104,7 +114,7 @@ func samePlan(a, b json.RawMessage) bool {
 	return left != nil && right != nil && sameJSON(left, right)
 }
 
-func (q qualifications) buffers(key string, original, candidate metrics) error {
+func (q qualifications) buffers(key string, original, candidate metrics, determinism bool) error {
 	proof, exists := q.proofs[key]
 	if !exists {
 		return errors.New("no documented buffer-variance proof")
@@ -112,8 +122,22 @@ func (q qualifications) buffers(key string, original, candidate metrics) error {
 	if original.Database != proof.BaselineDatabase || candidate.Database != proof.CandidateDatabase {
 		return errors.New("buffer identity proof belongs to different measurement databases")
 	}
+	baseline := original.Query == proof.Target
 	expected := proof.Queries[original.Query]
-	if original.Query == proof.Target || !isDigest(expected) ||
+	if baseline {
+		cert := proof.BaselineBuffer
+		if !determinism || cert == nil || cert.Key != key {
+			return errors.New("no scoped baseline-only buffer certification")
+		}
+		expected = cert.SQLHash
+		if err := proof.baselineIdentities(); err != nil {
+			return err
+		}
+		if !sameBaselineWork(original, candidate) {
+			return errors.New("baseline observations differ outside temporary buffers")
+		}
+	}
+	if !isDigest(expected) ||
 		original.SQLHash != expected || candidate.SQLHash != expected {
 		return errors.New("buffer proof does not cover byte-identical unchanged SQL")
 	}
@@ -138,6 +162,9 @@ func (q qualifications) buffers(key string, original, candidate metrics) error {
 		}
 		observedDatabases[observed.Database] = true
 		first := witness[0]
+		if baseline && !sameBaselineWork(original, observed) {
+			return errors.New("baseline witnesses differ outside temporary buffers")
+		}
 		if observed.Query != original.Query || observed.Case != original.Case ||
 			observed.SQLHash != expected || observed.PlanHash != original.PlanHash ||
 			observed.Fingerprint != original.Fingerprint || observed.RowsProcessed != original.RowsProcessed ||
@@ -152,6 +179,41 @@ func (q qualifications) buffers(key string, original, candidate metrics) error {
 		return errors.New("baseline buffers did not vary in the supplied observations")
 	}
 	return nil
+}
+
+func (proof bufferProof) baselineIdentities() error {
+	cert := proof.BaselineBuffer
+	witness := proof.Variance[cert.Key]
+	if len(witness) != 3 || len(cert.Identities) != 3 || len(proof.Baseline) != 5 {
+		return errors.New("baseline certification needs three complete clone identities and witnesses")
+	}
+	for _, part := range []string{"schema", "data", "statistics", "settings", "migrations"} {
+		if !isDigest(proof.Baseline[part]) {
+			return fmt.Errorf("baseline certification omits %s", part)
+		}
+	}
+	if !sameJSON(proof.Baseline, proof.Candidate) ||
+		!sameJSON(cert.Identities[proof.BaselineDatabase], proof.Baseline) ||
+		!sameJSON(cert.Identities[proof.CandidateDatabase], proof.Candidate) {
+		return errors.New("baseline certification identities differ from the measured databases")
+	}
+	for _, sample := range witness {
+		if !sameJSON(cert.Identities[sample.Database], proof.Baseline) {
+			return errors.New("baseline witness identity is missing or differs")
+		}
+	}
+	return nil
+}
+
+func sameBaselineWork(a, b metrics) bool {
+	if !samePlan(a.EstimatedPlan, b.EstimatedPlan) || a.GenericPlans+a.CustomPlans != 6 {
+		return false
+	}
+	a.Plan, b.Plan = nil, nil
+	a.EstimatedPlan, b.EstimatedPlan = nil, nil
+	a.TempBuffers, b.TempBuffers = 0, 0
+	a.Database, b.Database = "", ""
+	return sameJSON(a, b)
 }
 
 func (q qualifications) page(key string, original, candidate metrics) error {

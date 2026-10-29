@@ -20,6 +20,7 @@ func isolation(ctx context.Context, root string, args []string) error {
 	candidateDB := flags.String("candidate-name", "", "owned candidate database")
 	candidateRoot := flags.String("candidate-root", "", "candidate checkout")
 	target := flags.String("target", "", "one read-only SQL target")
+	baselineCase := flags.String("baseline-buffer-case", "", "one baseline-only temporary-buffer case to certify")
 	calibration := flags.String("calibration", "", "three comma-separated baseline observation files at this scale")
 	scale := flags.Int("scale-index", 0, "zero-based scale position in the gate inputs")
 	out := flags.String("output", "", "identity and observed-variance evidence JSON")
@@ -29,6 +30,9 @@ func isolation(ctx context.Context, root string, args []string) error {
 	if *candidateRoot == "" || *target == "" || *out == "" || *scale < 0 ||
 		!ownedDatabase(*baselineDB) || !ownedDatabase(*candidateDB) || *baselineDB == *candidateDB {
 		return errors.New("isolation needs candidate root, read-only target, output and valid scale")
+	}
+	if *baselineCase != "" && *calibration == "" {
+		return errors.New("baseline buffer certification requires three calibration observations")
 	}
 	a, err := inventory(root)
 	if err != nil {
@@ -58,6 +62,15 @@ func isolation(ctx context.Context, root string, args []string) error {
 				return errors.New("identity exemption permits only a read-only target")
 			}
 			proof.TargetReadOnly = true
+			if *baselineCase != "" {
+				if original.SQL != changed.SQL {
+					return errors.New("baseline buffer certification requires byte-identical target SQL")
+				}
+				proof.BaselineBuffer = &baselineBuffer{
+					Key:     strconv.Itoa(*scale) + "/" + *target + "/" + *baselineCase,
+					SQLHash: digest(original.SQL),
+				}
+			}
 		} else if original.SQL != changed.SQL {
 			return fmt.Errorf("non-target SQL differs: %s", original.Key)
 		} else if !original.Write {
@@ -99,7 +112,8 @@ func isolation(ctx context.Context, root string, args []string) error {
 			}
 			seen := map[string]bool{}
 			for _, sample := range observations {
-				if proof.Queries[sample.Query] == "" {
+				baseline := proof.BaselineBuffer != nil && sample.Query == *target && sample.Case == *baselineCase
+				if proof.Queries[sample.Query] == "" && !baseline {
 					continue
 				}
 				key := strconv.Itoa(*scale) + "/" + sample.Query + "/" + sample.Case
@@ -107,7 +121,10 @@ func isolation(ctx context.Context, root string, args []string) error {
 					return fmt.Errorf("duplicate calibration case: %s", key)
 				}
 				seen[key] = true
-				sample.Plan, sample.Rows, sample.EstimatedPlan = nil, nil, nil
+				sample.Plan, sample.Rows = nil, nil
+				if !baseline {
+					sample.EstimatedPlan = nil
+				}
 				proof.Variance[key] = append(proof.Variance[key], sample)
 			}
 		}
@@ -123,8 +140,46 @@ func isolation(ctx context.Context, root string, args []string) error {
 			}
 		}
 	}
+	if proof.BaselineBuffer != nil {
+		cert := proof.BaselineBuffer
+		identities := map[string]map[string]string{
+			*baselineDB:  proof.Baseline,
+			*candidateDB: proof.Candidate,
+		}
+		cert.Identities = map[string]map[string]string{}
+		for _, sample := range proof.Variance[cert.Key] {
+			if !ownedDatabase(sample.Database) {
+				return errors.New("baseline witness must name an owned database")
+			}
+			identity, exists := identities[sample.Database]
+			if !exists {
+				identity, err = databaseIdentity(ctx, root, sample.Database)
+				if err != nil {
+					return err
+				}
+				identities[sample.Database] = identity
+			}
+			cert.Identities[sample.Database] = identity
+		}
+	}
 	if err := writeJSON(*out, proof); err != nil {
 		return err
+	}
+	if proof.BaselineBuffer != nil {
+		key := proof.BaselineBuffer.Key
+		var original, candidate metrics
+		for _, sample := range proof.Variance[key] {
+			if sample.Database == *baselineDB {
+				original = sample
+			}
+			if sample.Database == *candidateDB {
+				candidate = sample
+			}
+		}
+		q := qualifications{proofs: map[string]bufferProof{key: proof}}
+		if err := q.buffers(key, original, candidate, true); err != nil {
+			return fmt.Errorf("baseline certification failed: %w", err)
+		}
 	}
 	for _, part := range []string{"schema", "data", "statistics", "settings", "migrations"} {
 		if proof.Baseline[part] != proof.Candidate[part] {

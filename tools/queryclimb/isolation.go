@@ -121,9 +121,9 @@ func isolation(ctx context.Context, root string, args []string) error {
 					return fmt.Errorf("duplicate calibration case: %s", key)
 				}
 				seen[key] = true
-				sample.Plan, sample.Rows = nil, nil
+				sample.Plan = nil
 				if !baseline {
-					sample.EstimatedPlan = nil
+					sample.Rows, sample.EstimatedPlan = nil, nil
 				}
 				proof.Variance[key] = append(proof.Variance[key], sample)
 			}

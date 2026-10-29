@@ -51,7 +51,7 @@ baseline measurement database.
 `isolation --baseline-buffer-case <case>` additionally certifies one target
 case at `--scale-index`. Both roots must contain byte-identical read-only target
 SQL. The proof retains its SQL digest, complete case key, all three full witness
-plans and all five identities hashed from the actual distinct clones; baseline
+plans, returned rows and all five identities hashed from the actual distinct clones; baseline
 and candidate identities are reused. Only `gate --mode determinism` accepts
 this certificate. It permits temporary-buffer variance while requiring exact
 fingerprints, shared buffers, work, inputs, prepared counters and full plans.

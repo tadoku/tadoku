@@ -1,6 +1,6 @@
 ---
 title: Account deletion
-description: How an administrator files an account deletion from the admin app, how filing locks the account and the worker's account.delete.v1 job removes its data, what a deletion keeps, the account-then-user lock order, and how to follow and replay a deletion.
+description: How a user requests their own account deletion and an administrator files one from the admin app, how filing locks the account and the worker's account.delete.v1 job removes its data, what a deletion keeps, the account-then-user lock order, and how to follow and replay a deletion.
 ---
 
 # Account deletion
@@ -9,8 +9,10 @@ Read this when you file, follow or replay an account deletion, change how one
 is filed or executed, or need to know what a deletion removes and keeps.
 
 A deletion has two transactions: filing locks the account at once, and the
-worker deletes its data later. Administrators file from the admin app, which
-calls `POST /profile/users/{id}/account-deletion`; see
+worker deletes its data later. Users request their own deletion with
+`POST /identity/settings/account-deletion`; see
+[Self-service requests](#self-service-requests). Administrators file from the
+admin app, which calls `POST /profile/users/{id}/account-deletion`; see
 [File a deletion](#file-a-deletion).
 
 ## Filing
@@ -43,6 +45,33 @@ registration writes and role changes for the user return `409`
 `account_deletion_in_progress`. Those writes lock the `users` row, so a write
 that committed before the lock is visible to the worker and is deleted with the
 rest, and one still in flight waits for the deletion and is refused.
+
+## Self-service requests
+
+`POST /identity/settings/account-deletion` files a deletion for the signed-in
+user. Its body holds the account's email address.
+
+- Before a transaction opens, a guest gets `401`, a login older than one hour
+  or in the future gets `401` `stale_session`, and a missing or malformed
+  address, including one with a display name, gets `400` `invalid_email`. The
+  session checks come before the address check, so a guest gets `401` whatever
+  address the body holds. Earlier gates answer first: a body the request
+  decoder cannot read, such as invalid JSON or a non-string `email`, gets a bare
+  `400`, or `413` over the byte cap, and the identity pipeline's Origin and
+  `Content-Type` checks answer `403` or `400`.
+- `IdentityRequestAccountDeletion` in
+  `services/tadoku-api/app/api/identity_account_deletion.go` then runs one
+  transaction. `identity.Service.RequestAccountDeletion` locks the account row,
+  rechecks the session and its recency, and compares the typed address,
+  normalized as login normalizes it, with the account's address. Another
+  address returns `400` `confirmation_mismatch`. Filing runs next in the same
+  transaction, with the user as actor and `source` `self_service`, so an
+  administrator gets `409` `admin_account` and a banned user `409`
+  `banned_account`.
+- Success returns `202` with a `Set-Cookie` that clears the tenant's session
+  cookie. From the commit the cookie reads as a guest, so repeating the request
+  returns `401` and writes nothing. A request queued behind another filing's
+  account lock rechecks its session once it gets the row and returns `401`.
 
 ## Execution
 
@@ -81,8 +110,10 @@ large account.
 Every transaction that locks both an account row and its `users` row takes the
 account row first: the settings writes, login and recovery (whose session and
 token inserts lock the `users` row through their foreign keys), filing and the
-worker. Filing therefore waits for a settings write that already holds the
-account row, and the worker waits for any of them instead of deadlocking.
+worker. A self-service request locks the account row for its settings check
+before filing locks the `users` row, in one transaction. Filing therefore waits
+for a settings write that already holds the account row, and the worker waits
+for any of them instead of deadlocking.
 
 - Filing's account lock skips a user whose deletion was already filed when the
   statement started, and filing reads the committed deletion state before it
@@ -172,12 +203,14 @@ order by created_at;
 commit;
 ```
 
-The request event names the administrator as the actor, with `source` `admin`
-and the reason. Once the job completes, the completion event holds the counts
-of deleted and kept logs and registrations and of owned contests, the user's
-display name is `Deleted participant` and `deleted_at` is set. The admin user
-list reads native accounts, so the account leaves it once the job completes;
-closing the deletion dialog reloads the list.
+The request event of an administrator's filing names the administrator as the
+actor, with `source` `admin` and the reason. A self-service request names the
+user as the actor, with `source` `self_service` and no reason. Once the job
+completes, the completion event holds the counts of deleted and kept logs and
+registrations and of owned contests, the user's display name is
+`Deleted participant` and `deleted_at` is set. The admin user list reads native
+accounts, so the account leaves it once the job completes; closing the deletion
+dialog reloads the list.
 
 ## Replay a failed deletion
 

@@ -8,15 +8,16 @@ description: Tenant-owned accounts, password/session security, recovery and sett
 Read this before changing account or session behavior, implementing recovery or
 settings, or moving a caller to the identity entry point.
 
-Registration, login, logout, session lookup, recovery, profile/password settings
-and the Oathkeeper session callback are implemented. Every operation, including
-for guests, uses tenant-local accounts. Profile and moderation callers use
-`identity.Reader`, constructed by `identity.NewReader`.
+Registration, login, logout, session lookup, recovery, profile/password
+settings, self-service account deletion and the Oathkeeper session callback are
+implemented. Every operation, including for guests, uses tenant-local accounts.
+Profile and moderation callers use `identity.Reader`, constructed by
+`identity.NewReader`.
 
 Account lookup and search are implemented by the separate `ReadService` used by
-profile and moderation. Administrators file account deletions through the
-profile API, and the worker deletes the accounts; see
-[Account deletion](./account-deletion.md).
+profile and moderation. Users request their own deletion through identity
+settings and administrators file deletions through the profile API; the worker
+deletes the accounts. See [Account deletion](./account-deletion.md).
 [Retained email](./email.md) provides recovery messages and old-address notices
 through transactional writes and queue publication.
 
@@ -28,8 +29,9 @@ JWTs `401`, and another tenant on a scoped deployment `421`.
 `GET /identity/session` returns `account`: the signed-in account, or `null` for
 a guest. It also returns `recent_login`: `true` while the session's
 authentication time lies within the last hour, the window that email and
-password changes require (see [Recovery and settings](#recovery-and-settings)),
-and `false` for an older or future authentication time and for a guest. One
+password changes and account deletion require (see
+[Recovery and settings](#recovery-and-settings)), and `false` for an older or
+future authentication time and for a guest. One
 rule decides both, so a client can send the user to log in again before
 a change would return `stale_session`. Registration and login return the same
 session shape, with `recent_login` `true`.
@@ -43,6 +45,12 @@ retain their path, query and fragment. Request bodies keep the shared byte cap
 and generated decoder. Logout takes no body and never reads one, but still
 requires the JSON `Content-Type`; whatever body arrives, its `Origin` check
 comes first and its answer is never cached.
+
+An identity operation that refuses a decoded request answers with JSON:
+identity errors carry a `code` and a `message`, while invalid input and a
+missing or ended session carry only a `message`. A body the request decoder
+cannot read gets a bare `400`, or `413` over the byte cap, before any identity
+check.
 
 `GET /identity/internal/v1/session` requires the callback bearer
 `API_OATHKEEPER_AUTHZ_TOKEN`, rather than a user JWT. It resolves canonical
@@ -237,7 +245,8 @@ tokens and queues `account.email_changed` to the old address, with `new_email`
 and RFC3339 `changed_at`. The response includes the
 existing session authentication time. A session older than one hour, or with an
 authentication time in the future, returns `stale_session` for email/password
-changes. Re-authenticate through login to get a fresh cookie.
+changes and account deletion. Re-authenticate through login to get a fresh
+cookie.
 
 Password settings apply the same parsing and cost-12 bcrypt policy as
 registration, retain the current session, revoke other sessions and invalidate
@@ -251,6 +260,10 @@ consumption serialize on the account row and recheck session/token state after
 acquiring the lock. Login session creation locks that same row and requires the
 password hash it verified still to match, preventing an in-flight old-password
 login from surviving a credential replacement.
+
+`POST /identity/settings/account-deletion` takes the account's own email address
+and requires the same recent login. It answers `202` and clears the session
+cookie; see [Self-service requests](./account-deletion.md#self-service-requests).
 
 The application owns each business transaction. Identity writes, rendered email
 rows and every ID-only `email.send.v1` job commit together; a rendering or enqueue

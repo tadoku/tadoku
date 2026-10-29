@@ -156,6 +156,12 @@ function describe(code: Code, operation: Operation, values?: Record<string, stri
       return { message: 'The link you followed has a return address Tadoku doesn’t allow.' }
     case 'invalid_recovery_token':
       return { message: 'This recovery link is invalid or has expired. Request a new one.' }
+    case 'confirmation_mismatch':
+      return { field: 'email', message: 'This doesn’t match your account’s email address.' }
+    case 'admin_account':
+      return { message: 'Remove the administrator role before deleting this account.' }
+    case 'banned_account':
+      return { message: 'This account can’t be deleted here. Contact Tadoku support.' }
     case 'not_implemented':
     case 'unavailable':
       return { message: 'Something went wrong on our side. Try again in a moment.' }

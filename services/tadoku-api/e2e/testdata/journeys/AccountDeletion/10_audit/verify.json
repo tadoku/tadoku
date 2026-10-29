@@ -1,0 +1,26 @@
+[
+  {
+    "actor_id": "11111111-1111-4111-8111-111111111111",
+    "action": "complete_account_deletion",
+    "metadata": {
+      "kept_logs": 3,
+      "deleted_logs": 3,
+      "owned_contests": 1,
+      "target_user_id": "11111111-1111-4111-8111-111111111111",
+      "kept_registrations": 2,
+      "deleted_registrations": 2
+    },
+    "description": "",
+    "recorded_at": "2026-09-12T12:00:00"
+  },
+  {
+    "actor_id": "11111111-1111-4111-8111-111111111111",
+    "action": "request_account_deletion",
+    "metadata": {
+      "source": "self_service",
+      "target_user_id": "11111111-1111-4111-8111-111111111111"
+    },
+    "description": "",
+    "recorded_at": "2026-09-12T12:00:00"
+  }
+]

@@ -15,6 +15,7 @@ go_library(
         "emails.go",
         "feature_flags.go",
         "identity.go",
+        "identity_account_deletion.go",
         "identity_settings.go",
         "identity_types.go",
         "languages.go",

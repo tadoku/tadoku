@@ -520,7 +520,7 @@ export type ProfileErrorResponse = {
 
 export type IdentityErrorResponse = {
     message: string;
-    code?: 'wrong_password' | 'throttled' | 'email_taken' | 'stale_session' | 'invalid_display_name' | 'invalid_email' | 'invalid_password' | 'invalid_recovery_token' | 'invalid_origin' | 'invalid_return_to' | 'not_implemented' | 'unavailable';
+    code?: 'wrong_password' | 'throttled' | 'email_taken' | 'stale_session' | 'invalid_display_name' | 'invalid_email' | 'invalid_password' | 'invalid_recovery_token' | 'invalid_origin' | 'invalid_return_to' | 'confirmation_mismatch' | 'admin_account' | 'banned_account' | 'not_implemented' | 'unavailable';
 };
 
 export type IdentityAccount = {
@@ -577,6 +577,13 @@ export type IdentityPasswordSettings = {
      * At least 8 characters, at most 72 UTF-8 bytes; rejects a password whose lowercase form is within Levenshtein distance 4 of the lowercase email or shares with it a common substring longer than half the password.
      */
     password: string;
+};
+
+export type IdentityAccountDeletion = {
+    /**
+     * The account's email address, compared with it after normalization, so letter case and surrounding whitespace do not matter. The API validates it after the session checks, so it has no format.
+     */
+    email: string;
 };
 
 export type EmailErrorResponse = {
@@ -3102,6 +3109,45 @@ export type IdentityPasswordUpdateResponses = {
 };
 
 export type IdentityPasswordUpdateResponse = IdentityPasswordUpdateResponses[keyof IdentityPasswordUpdateResponses];
+
+export type IdentityAccountDeleteData = {
+    body: IdentityAccountDeletion;
+    path?: never;
+    query?: never;
+    url: '/identity/settings/account-deletion';
+};
+
+export type IdentityAccountDeleteErrors = {
+    /**
+     * Request rejected
+     */
+    400: IdentityErrorResponse;
+    /**
+     * Request rejected
+     */
+    401: IdentityErrorResponse;
+    /**
+     * Request rejected
+     */
+    403: IdentityErrorResponse;
+    /**
+     * Request rejected
+     */
+    409: IdentityErrorResponse;
+    /**
+     * Request rejected
+     */
+    503: IdentityErrorResponse;
+};
+
+export type IdentityAccountDeleteError = IdentityAccountDeleteErrors[keyof IdentityAccountDeleteErrors];
+
+export type IdentityAccountDeleteResponses = {
+    /**
+     * Accepted; the account is locked and its deletion is queued
+     */
+    202: unknown;
+};
 
 export type EmailListData = {
     body?: never;

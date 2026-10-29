@@ -1,0 +1,7 @@
+>>> POST /identity/settings/account-deletion
+HTTP/1.1 400 Bad Request
+Content-Length: 90
+Cache-Control: private, no-store
+Content-Type: application/json; charset=UTF-8
+
+{"code":"confirmation_mismatch","message":"the email address does not match the account"}

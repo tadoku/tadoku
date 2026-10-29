@@ -1,0 +1,23 @@
+[
+  {
+    "display_name": "Reader One",
+    "deletion_locked_at": null,
+    "sessions": 2,
+    "jobs": 0,
+    "audit_events": 0
+  },
+  {
+    "display_name": "Admin One",
+    "deletion_locked_at": null,
+    "sessions": 1,
+    "jobs": 0,
+    "audit_events": 0
+  },
+  {
+    "display_name": "Banned One",
+    "deletion_locked_at": null,
+    "sessions": 1,
+    "jobs": 0,
+    "audit_events": 0
+  }
+]

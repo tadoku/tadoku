@@ -127,46 +127,55 @@ func (e EmailStatus) Valid() bool {
 
 // Defines values for IdentityErrorResponseCode.
 const (
-	EmailTaken           IdentityErrorResponseCode = "email_taken"
-	InvalidDisplayName   IdentityErrorResponseCode = "invalid_display_name"
-	InvalidEmail         IdentityErrorResponseCode = "invalid_email"
-	InvalidOrigin        IdentityErrorResponseCode = "invalid_origin"
-	InvalidPassword      IdentityErrorResponseCode = "invalid_password"
-	InvalidRecoveryToken IdentityErrorResponseCode = "invalid_recovery_token"
-	InvalidReturnTo      IdentityErrorResponseCode = "invalid_return_to"
-	NotImplemented       IdentityErrorResponseCode = "not_implemented"
-	StaleSession         IdentityErrorResponseCode = "stale_session"
-	Throttled            IdentityErrorResponseCode = "throttled"
-	Unavailable          IdentityErrorResponseCode = "unavailable"
-	WrongPassword        IdentityErrorResponseCode = "wrong_password"
+	IdentityErrorResponseCodeAdminAccount         IdentityErrorResponseCode = "admin_account"
+	IdentityErrorResponseCodeBannedAccount        IdentityErrorResponseCode = "banned_account"
+	IdentityErrorResponseCodeConfirmationMismatch IdentityErrorResponseCode = "confirmation_mismatch"
+	IdentityErrorResponseCodeEmailTaken           IdentityErrorResponseCode = "email_taken"
+	IdentityErrorResponseCodeInvalidDisplayName   IdentityErrorResponseCode = "invalid_display_name"
+	IdentityErrorResponseCodeInvalidEmail         IdentityErrorResponseCode = "invalid_email"
+	IdentityErrorResponseCodeInvalidOrigin        IdentityErrorResponseCode = "invalid_origin"
+	IdentityErrorResponseCodeInvalidPassword      IdentityErrorResponseCode = "invalid_password"
+	IdentityErrorResponseCodeInvalidRecoveryToken IdentityErrorResponseCode = "invalid_recovery_token"
+	IdentityErrorResponseCodeInvalidReturnTo      IdentityErrorResponseCode = "invalid_return_to"
+	IdentityErrorResponseCodeNotImplemented       IdentityErrorResponseCode = "not_implemented"
+	IdentityErrorResponseCodeStaleSession         IdentityErrorResponseCode = "stale_session"
+	IdentityErrorResponseCodeThrottled            IdentityErrorResponseCode = "throttled"
+	IdentityErrorResponseCodeUnavailable          IdentityErrorResponseCode = "unavailable"
+	IdentityErrorResponseCodeWrongPassword        IdentityErrorResponseCode = "wrong_password"
 )
 
 // Valid indicates whether the value is a known member of the IdentityErrorResponseCode enum.
 func (e IdentityErrorResponseCode) Valid() bool {
 	switch e {
-	case EmailTaken:
+	case IdentityErrorResponseCodeAdminAccount:
 		return true
-	case InvalidDisplayName:
+	case IdentityErrorResponseCodeBannedAccount:
 		return true
-	case InvalidEmail:
+	case IdentityErrorResponseCodeConfirmationMismatch:
 		return true
-	case InvalidOrigin:
+	case IdentityErrorResponseCodeEmailTaken:
 		return true
-	case InvalidPassword:
+	case IdentityErrorResponseCodeInvalidDisplayName:
 		return true
-	case InvalidRecoveryToken:
+	case IdentityErrorResponseCodeInvalidEmail:
 		return true
-	case InvalidReturnTo:
+	case IdentityErrorResponseCodeInvalidOrigin:
 		return true
-	case NotImplemented:
+	case IdentityErrorResponseCodeInvalidPassword:
 		return true
-	case StaleSession:
+	case IdentityErrorResponseCodeInvalidRecoveryToken:
 		return true
-	case Throttled:
+	case IdentityErrorResponseCodeInvalidReturnTo:
 		return true
-	case Unavailable:
+	case IdentityErrorResponseCodeNotImplemented:
 		return true
-	case WrongPassword:
+	case IdentityErrorResponseCodeStaleSession:
+		return true
+	case IdentityErrorResponseCodeThrottled:
+		return true
+	case IdentityErrorResponseCodeUnavailable:
+		return true
+	case IdentityErrorResponseCodeWrongPassword:
 		return true
 	default:
 		return false
@@ -635,6 +644,12 @@ type IdentityAccount struct {
 	// Email The account's stored address: the normalized address registration or settings stored, or an imported address as written. When Go's net/mail reads an address from it, the API writes that address part, so a quoted local part arrives unquoted and surrounding ASCII spaces and tabs are dropped; letter case, every other character and its length are kept. Otherwise, such as for an imported address with a leading vertical tab, the API writes the stored address unchanged. It is not normalized like email input and need not satisfy format: email.
 	Email string             `json:"email"`
 	Id    openapi_types.UUID `json:"id"`
+}
+
+// IdentityAccountDeletion defines model for IdentityAccountDeletion.
+type IdentityAccountDeletion struct {
+	// Email The account's email address, compared with it after normalization, so letter case and surrounding whitespace do not matter. The API validates it after the session checks, so it has no format.
+	Email string `json:"email"`
 }
 
 // IdentityErrorResponse defines model for IdentityErrorResponse.
@@ -1542,6 +1557,9 @@ type IdentityRecoveryCreateJSONRequestBody = IdentityRecovery
 // IdentityRegistrationCreateJSONRequestBody defines body for IdentityRegistrationCreate for application/json ContentType.
 type IdentityRegistrationCreateJSONRequestBody = IdentityRegistration
 
+// IdentityAccountDeleteJSONRequestBody defines body for IdentityAccountDelete for application/json ContentType.
+type IdentityAccountDeleteJSONRequestBody = IdentityAccountDeletion
+
 // IdentityPasswordUpdateJSONRequestBody defines body for IdentityPasswordUpdate for application/json ContentType.
 type IdentityPasswordUpdateJSONRequestBody = IdentityPasswordSettings
 
@@ -1738,6 +1756,9 @@ type ServerInterface interface {
 	// IdentitySessionGet Resolve the tenant account app and current account
 	// (GET /identity/session)
 	IdentitySessionGet(w http.ResponseWriter, r *http.Request)
+	// IdentityAccountDelete Delete the signed-in account after a recent login
+	// (POST /identity/settings/account-deletion)
+	IdentityAccountDelete(w http.ResponseWriter, r *http.Request)
 	// IdentityPasswordUpdate Update password after a recent login and revoke other sessions
 	// (PUT /identity/settings/password)
 	IdentityPasswordUpdate(w http.ResponseWriter, r *http.Request)
@@ -2928,6 +2949,20 @@ func (siw *ServerInterfaceWrapper) IdentitySessionGet(w http.ResponseWriter, r *
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.IdentitySessionGet(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// IdentityAccountDelete operation middleware
+func (siw *ServerInterfaceWrapper) IdentityAccountDelete(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.IdentityAccountDelete(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -4703,6 +4738,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/identity/recovery/{token}", wrapper.IdentityRecoveryConsume)
 	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/identity/settings/profile", wrapper.IdentityProfileUpdate)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/identity/settings/password", wrapper.IdentityPasswordUpdate)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/identity/settings/account-deletion", wrapper.IdentityAccountDelete)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/emails", wrapper.EmailList)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/emails/{id}", wrapper.EmailGet)
 
@@ -6365,6 +6401,100 @@ func (response IdentitySessionGet403JSONResponse) VisitIdentitySessionGetRespons
 type IdentitySessionGet503JSONResponse IdentityErrorResponse
 
 func (response IdentitySessionGet503JSONResponse) VisitIdentitySessionGetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityAccountDeleteRequestObject struct {
+	Body *IdentityAccountDeleteJSONRequestBody
+}
+
+type IdentityAccountDeleteResponseObject interface {
+	VisitIdentityAccountDeleteResponse(w http.ResponseWriter) error
+}
+
+type IdentityAccountDelete202ResponseHeaders struct {
+	SetCookie *string
+}
+
+type IdentityAccountDelete202Response struct {
+	Headers IdentityAccountDelete202ResponseHeaders
+}
+
+func (response IdentityAccountDelete202Response) VisitIdentityAccountDeleteResponse(w http.ResponseWriter) error {
+	if response.Headers.SetCookie != nil {
+		w.Header().Set("Set-Cookie", fmt.Sprint(*response.Headers.SetCookie))
+	}
+	w.WriteHeader(202)
+	return nil
+}
+
+type IdentityAccountDelete400JSONResponse IdentityErrorResponse
+
+func (response IdentityAccountDelete400JSONResponse) VisitIdentityAccountDeleteResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityAccountDelete401JSONResponse IdentityErrorResponse
+
+func (response IdentityAccountDelete401JSONResponse) VisitIdentityAccountDeleteResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityAccountDelete403JSONResponse IdentityErrorResponse
+
+func (response IdentityAccountDelete403JSONResponse) VisitIdentityAccountDeleteResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityAccountDelete409JSONResponse IdentityErrorResponse
+
+func (response IdentityAccountDelete409JSONResponse) VisitIdentityAccountDeleteResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type IdentityAccountDelete503JSONResponse IdentityErrorResponse
+
+func (response IdentityAccountDelete503JSONResponse) VisitIdentityAccountDeleteResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
@@ -8638,6 +8768,9 @@ type StrictServerInterface interface {
 	// IdentitySessionGet Resolve the tenant account app and current account
 	// (GET /identity/session)
 	IdentitySessionGet(ctx context.Context, request IdentitySessionGetRequestObject) (IdentitySessionGetResponseObject, error)
+	// IdentityAccountDelete Delete the signed-in account after a recent login
+	// (POST /identity/settings/account-deletion)
+	IdentityAccountDelete(ctx context.Context, request IdentityAccountDeleteRequestObject) (IdentityAccountDeleteResponseObject, error)
 	// IdentityPasswordUpdate Update password after a recent login and revoke other sessions
 	// (PUT /identity/settings/password)
 	IdentityPasswordUpdate(ctx context.Context, request IdentityPasswordUpdateRequestObject) (IdentityPasswordUpdateResponseObject, error)
@@ -9691,6 +9824,37 @@ func (sh *strictHandler) IdentitySessionGet(w http.ResponseWriter, r *http.Reque
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(IdentitySessionGetResponseObject); ok {
 		if err := validResponse.VisitIdentitySessionGetResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// IdentityAccountDelete operation middleware
+func (sh *strictHandler) IdentityAccountDelete(w http.ResponseWriter, r *http.Request) {
+	var request IdentityAccountDeleteRequestObject
+
+	var body IdentityAccountDeleteJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.IdentityAccountDelete(ctx, request.(IdentityAccountDeleteRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "IdentityAccountDelete")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(IdentityAccountDeleteResponseObject); ok {
+		if err := validResponse.VisitIdentityAccountDeleteResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

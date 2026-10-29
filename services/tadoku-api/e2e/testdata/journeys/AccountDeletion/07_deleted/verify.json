@@ -1,0 +1,18 @@
+[
+  {
+    "display_name": "Deleted participant",
+    "deletion_locked_at": "2026-09-12T12:00:00",
+    "deleted_at": "2026-09-12T12:00:00",
+    "kept_registrations": 2,
+    "kept_logs": 3,
+    "other_registrations": 0,
+    "other_contest_logs": 0,
+    "unscrubbed_logs": 0,
+    "log_tags": 0,
+    "permission_relationships": 0,
+    "accounts": 0,
+    "sessions": 0,
+    "recovery_tokens": 0,
+    "named_contests": 0
+  }
+]

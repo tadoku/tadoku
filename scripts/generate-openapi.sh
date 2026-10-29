@@ -21,6 +21,7 @@ PATH_FRAGMENTS=(
   profile
   authz-proxy
   identity
+  identity-settings
   email
   identity-proxy
 )

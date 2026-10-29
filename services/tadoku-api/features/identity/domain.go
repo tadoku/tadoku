@@ -13,7 +13,7 @@ import (
 
 var (
 	ErrStaleSession = &Error{
-		"stale_session", errx.NewUnauthorizedError("log in again to change email or password"),
+		"stale_session", errx.NewUnauthorizedError("log in again to change email or password or delete the account"),
 	}
 	ErrInvalidRecoveryToken = &Error{
 		"invalid_recovery_token", errx.NewInvalidInputError("invalid or expired recovery token"),
@@ -59,7 +59,8 @@ type AuthenticatedSession struct {
 
 func (AuthenticatedSession) session() {}
 
-// RecentLogin reports whether email and password changes are allowed; when it is false they return ErrStaleSession.
+// RecentLogin reports whether email and password changes and account deletion are allowed; when it is false they
+// return ErrStaleSession.
 func (s AuthenticatedSession) RecentLogin() bool {
 	age := timex.Now().Sub(s.AuthenticatedAt)
 	return age >= 0 && age <= time.Hour

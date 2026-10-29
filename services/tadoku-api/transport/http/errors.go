@@ -33,7 +33,8 @@ func writeResponseError(w stdhttp.ResponseWriter, request *stdhttp.Request, err 
 		writeJSON(w, errorStatus(request.Context(), err), map[string]string{"error": identityError.Code})
 	case strings.HasPrefix(request.URL.Path, "/identity/") && errx.KindOf(err) == errx.Unavailable:
 		writeJSON(w, errorStatus(request.Context(), err), map[string]string{"message": "identity service unavailable"})
-	case strings.HasPrefix(request.URL.Path, "/identity/") && errx.KindOf(err) == errx.InvalidInput:
+	case strings.HasPrefix(request.URL.Path, "/identity/") &&
+		(errx.KindOf(err) == errx.InvalidInput || errx.KindOf(err) == errx.Unauthorized):
 		writeJSON(w, errorStatus(request.Context(), err), map[string]string{"message": err.Error()})
 	case errx.KindOf(err) == errx.NotImplemented:
 		writeJSON(w, stdhttp.StatusNotImplemented, map[string]string{"message": "not implemented"})

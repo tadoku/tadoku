@@ -1,0 +1,68 @@
+---
+id: identity-account-delete
+title: "Delete the signed-in account after a recent login"
+description: "Requires a login within the last hour and the account's own email address, compared after normalization. The request locks the account at once: from its commit the cookie reads as a guest and login answers wrong_password. A worker job then deletes the account's data. Administrators and banned accounts are refused."
+sidebar_label: "Delete the signed-in account after a recent login"
+hide_title: true
+hide_table_of_contents: true
+api: eJztWE1v4zYQ/SvEXHpRbCebLrDaU7rdQ9ACXSTpKTCMiTiWGEukQo7iuIb+ezGklChOdvfQHn3xBzWcjzdvKD3twbXkkY2zlxpyuNRk2fDuoihcZ/l3qokJMtAUCm9asYMcruihM56CQlW70li1NVwZq7giVWNgVbnOK7Q6rmDy9UtQbmsVNWhqhVp7CiFThWta9KQVrpm8ss43WJt/YkYzdVOR8vTQUWBVu2ITpg4VsnK2oFytvWuU4SDeGsPRqHBuY2Q36qBQUi2jG8kqJY02bMkHtfXOlqsWQ9g6r2fqQm2d35BX9+5OXFmlIwzhoBqNjDN1oRtjTWCP7HyI7u/QWqkoWQaFXvJYd4H0DDJgLAPkt2AGrGGZQaCi8/I7v91DSv2i4wry22W/zMBTaJ0NFCDfw9niTL5et+SiKKhl0p9fIWRChE2SsToiFEsxzsqlh4460pBBRajJR+fXxCdfYvy3Mb7UhD6hwGTR8kloqTBrU6hAIYjXlLpUGYqKGhQnvGsJcgjsjS0hgwaf/iRbSnXni08f+77vMzhfLN4GvBpa7+meCo6pFs4yWRZbbNvaFJEp8/sgG/Zvo7o72QoZtF6YziZh2FAIWNJP0jtdLBa9xNQ/s/x4ngHZrpG+vuaTNLzyjrmO+Uf6rxg3ZAUkxppWA3iQgbGPWBu90ia0Ne5WFhuaLMfNk/+TGOOSp8I9kt+t2KUQ4wXnTWnsK0vuvF2xS6iujW8ilqvGhAa5qCADFHKvBjZBBonZkwXreGWatqaGbGpQZ/ERTY13NcFSOuvTYaEFmhH2ZQZsuBY0v3rv/NXAbxjJcHokw5EMIxk+HMlwJMNIhk9HMhzJkMjw6/FkOJIhkWHYQ4F/c3onwL+4YN/R/0aCBOePG/vhbHGomG5eKYfvaSCRUcrwe1ooU8GpmlguFBgoPtCHznvXWW1sqbaVYQotFqS0U9axalCsk4i6+HapYgtRdMxzCHmUf350r6jYhBjHsKowKOvUWnLgGRw2JcEwaclUMErJqScNceVEV7YuRCxR8IH5KH3mgZiNLcN8AOdk1CdCdPKPUZXc7qHzNeRQMbchn88Ztdt0M2zbObZmbiyTt1hDP1FS19LQ1LOpnnpuHLbmD9pFbkM+mAg5ZXpySBGep0xqEaZcvXDs6xMKhyecGLnQi8+1i7EGdMZ6T7A176jpMunH1OYUMmRqHMvU6gEoJTz2WHAQkSX4JCens8VsIaEF6QYjp4dakohPvTalJX0i4nfU0JEHKMHIclLGhxnuX4bnKP3/m/RP3GN64nlbo7HSscjt/TAbk9cCwuXUdDlVD+djmUElQ5Xfwn5/h4H+9nXfy/JDR15eJCwzeERv4qkq7xFGnR8HakM7UfSpryc3kpeY112ajYMDss/GHek9ww9tl5O5//bX9Y3cA4ZDuYl3RfC4hSx+5gAZuMizOKpxbQ812rKL91pIPmUA8c0Ab+IADz+kqvGS3U0yPJjlbKhEPqWud/fs9+l86Ptn+3TpuzsGbEdrae2y7/t/AdfD4Z8=
+sidebar_class_name: "post api-method"
+info_path: api/identity/identity-api
+custom_edit_url: null
+hide_send_button: true
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+import Translate from "@docusaurus/Translate";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Delete the signed-in account after a recent login"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"post"}
+  path={"/identity/settings/account-deletion"}
+  context={"endpoint"}
+>
+  
+</MethodEndpoint>
+
+
+
+Requires a login within the last hour and the account's own email address, compared after normalization. The request locks the account at once: from its commit the cookie reads as a guest and login answers wrong_password. A worker job then deletes the account's data. Administrators and banned accounts are refused.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+>
+  <Translate id="theme.openapi.request.title">Request</Translate>
+</Heading>
+
+<ParamsDetails>
+  
+</ParamsDetails>
+
+<RequestSchema
+  {...require("./identity-account-delete.RequestSchema.json")}
+>
+  
+</RequestSchema>
+
+<StatusCodes
+  {...require("./identity-account-delete.StatusCodes.json")}
+>
+  
+</StatusCodes>
+
+
+      

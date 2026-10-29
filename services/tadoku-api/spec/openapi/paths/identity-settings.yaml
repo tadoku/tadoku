@@ -1,0 +1,193 @@
+paths:
+  /identity/settings/profile:
+    patch:
+      operationId: IdentityProfileUpdate
+      summary: Update profile; email changes require a recent login
+      tags:
+      - identity
+      security:
+      - IdentitycookieAuth: []
+      x-tadoku-source: Identity
+      x-tadoku-exposure: public
+      x-legacy-path: /identity/settings/profile
+      x-legacy-operation-id: IdentityProfileUpdate
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityAccount'
+        '400':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '401':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '403':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '404':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '409':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '429':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '503':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IdentityProfileSettings'
+  /identity/settings/password:
+    put:
+      operationId: IdentityPasswordUpdate
+      summary: Update password after a recent login and revoke other sessions
+      tags:
+      - identity
+      security:
+      - IdentitycookieAuth: []
+      x-tadoku-source: Identity
+      x-tadoku-exposure: public
+      x-legacy-path: /identity/settings/password
+      x-legacy-operation-id: IdentityPasswordUpdate
+      responses:
+        '204':
+          description: Success
+        '400':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '401':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '403':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '404':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '409':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '429':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '503':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IdentityPasswordSettings'
+  /identity/settings/account-deletion:
+    post:
+      operationId: IdentityAccountDelete
+      summary: Delete the signed-in account after a recent login
+      description: >-
+        Requires a login within the last hour and the account's own email address, compared after
+        normalization. The request locks the account at once: from its commit the cookie reads as a guest
+        and login answers wrong_password. A worker job then deletes the account's data. Administrators
+        and banned accounts are refused.
+      tags:
+      - identity
+      security:
+      - IdentitycookieAuth: []
+      x-tadoku-source: Identity
+      x-tadoku-exposure: public
+      x-legacy-path: /identity/settings/account-deletion
+      x-legacy-operation-id: IdentityAccountDelete
+      responses:
+        '202':
+          description: Accepted; the account is locked and its deletion is queued
+          headers:
+            Set-Cookie:
+              description: Clears the tenant-specific session cookie.
+              schema:
+                type: string
+                maxLength: 4096
+        '400':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '401':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '403':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '409':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+        '503':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityErrorResponse'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IdentityAccountDeletion'

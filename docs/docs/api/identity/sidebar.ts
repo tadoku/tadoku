@@ -58,6 +58,12 @@ const sidebar: SidebarsConfig = {
           label: "Update password after a recent login and revoke other sessions",
           className: "api-method put",
         },
+        {
+          type: "doc",
+          id: "api/identity/identity-account-delete",
+          label: "Delete the signed-in account after a recent login",
+          className: "api-method post",
+        },
       ],
     },
   ],

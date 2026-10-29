@@ -1,0 +1,7 @@
+>>> POST /identity/settings/account-deletion
+HTTP/1.1 409 Conflict
+Content-Length: 94
+Cache-Control: private, no-store
+Content-Type: application/json; charset=UTF-8
+
+{"code":"banned_account","message":"a banned account cannot be deleted through self-service"}

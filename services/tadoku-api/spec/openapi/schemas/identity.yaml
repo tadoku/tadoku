@@ -20,6 +20,9 @@ components:
           - invalid_recovery_token
           - invalid_origin
           - invalid_return_to
+          - confirmation_mismatch
+          - admin_account
+          - banned_account
           - not_implemented
           - unavailable
       required:
@@ -161,3 +164,14 @@ components:
             password.
       required:
       - password
+    IdentityAccountDeletion:
+      type: object
+      properties:
+        email:
+          type: string
+          maxLength: 320
+          description: The account's email address, compared with it after normalization, so letter case and
+            surrounding whitespace do not matter. The API validates it after the session checks, so it has no
+            format.
+      required:
+      - email

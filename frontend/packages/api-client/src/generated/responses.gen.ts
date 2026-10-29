@@ -79,6 +79,7 @@ export const successResponses: Readonly<Record<string, Readonly<Record<number, b
   'GET /identity/recovery/{token}': {},
   'PATCH /identity/settings/profile': { 200: true },
   'PUT /identity/settings/password': { 204: false },
+  'POST /identity/settings/account-deletion': { 202: false },
   'GET /emails': { 200: true },
   'GET /emails/{id}': { 200: true },
   'GET /identity/internal/v1/session': { 200: true },

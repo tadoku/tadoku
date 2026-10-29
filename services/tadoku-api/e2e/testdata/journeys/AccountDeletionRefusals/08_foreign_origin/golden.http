@@ -1,0 +1,7 @@
+>>> POST /identity/settings/account-deletion
+HTTP/1.1 403 Forbidden
+Content-Length: 74
+Cache-Control: private, no-store
+Content-Type: application/json; charset=UTF-8
+
+{"code":"invalid_origin","message":"origin is not an allowed Tadoku app"}

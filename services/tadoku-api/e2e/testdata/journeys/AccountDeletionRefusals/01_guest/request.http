@@ -1,0 +1,7 @@
+POST /identity/settings/account-deletion HTTP/1.1
+Host: api.test
+Content-Type: application/json
+Origin: https://account.tadoku.dev.lab
+Content-Length: 31
+
+{"email":"reader@example.test"}

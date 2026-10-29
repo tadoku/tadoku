@@ -1,0 +1,7 @@
+>>> POST /identity/settings/account-deletion
+HTTP/1.1 409 Conflict
+Content-Length: 96
+Cache-Control: private, no-store
+Content-Type: application/json; charset=UTF-8
+
+{"code":"admin_account","message":"remove the administrator role before deleting this account"}

@@ -1,0 +1,6 @@
+>>> POST /identity/settings/account-deletion
+HTTP/1.1 202 Accepted
+Cache-Control: private, no-store
+Set-Cookie: tadoku_session=; Path=/; Domain=tadoku.dev.lab; Expires=Thu, 01 Jan 1970 00:00:01 GMT; Max-Age=0; HttpOnly; Secure; SameSite=Lax
+Content-Length: 0
+

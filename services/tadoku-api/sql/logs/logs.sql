@@ -38,18 +38,24 @@ group by "date"
 order by date asc;
 
 -- name: FetchScoresForProfile :many
-select
-  language_code,
-  sum(coalesce(logs.computed_score, logs.score))::real as score,
-  languages.name as language_name
-from logs
-inner join languages on (languages.code = logs.language_code)
-where
-  user_id = sqlc.arg('user_id')
-  and year = sqlc.arg('year')
-  and logs.deleted_at is null
-group by language_code, languages.name
-order by score desc, language_code asc;
+select scores.language_code, scores.score, languages.name as language_name
+from (
+  select
+    language_code,
+    sum(coalesce(logs.computed_score, logs.score))::real as score
+  from logs
+  where user_id = sqlc.arg('user_id')
+    and year = sqlc.arg('year')
+    and logs.deleted_at is null
+  group by language_code
+) scores
+inner join lateral (
+  select name
+  from languages
+  where languages.code = scores.language_code
+  limit 2
+) languages on true
+order by scores.score desc, scores.language_code asc;
 
 -- name: YearlyActivitySplitForUser :many
 select

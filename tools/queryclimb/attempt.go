@@ -25,12 +25,13 @@ func attempt(ctx context.Context, root string, args []string) error {
 	caseFiles := flags.String("cases", "", "comma-separated frozen 1x and 10x case files")
 	target := flags.String("target", "", "one query to judge")
 	dir := flags.String("output", "", "new attempt evidence directory")
+	aaFiles := flags.String("aa-calibration", "", "existing raw baseline A/A calibration files, one per scale")
 	iterations := flags.Int("iterations", 0, "executions per latency batch; zero chooses automatically")
 	if err := flags.Parse(args); err != nil {
 		return err
 	}
-	if *candidate == "" || *target == "" || *dir == "" {
-		return errors.New("attempt requires candidate-root, target and output")
+	if *candidate == "" || *target == "" || *dir == "" || *aaFiles == "" {
+		return errors.New("attempt requires candidate-root, target, output and aa-calibration")
 	}
 	templateNames, cases := strings.Split(*templates, ","), strings.Split(*caseFiles, ",")
 	if len(templateNames) != 2 || len(cases) != 2 {
@@ -239,7 +240,7 @@ func attempt(ctx context.Context, root string, args []string) error {
 	}
 	return gate([]string{"--mode", "candidate", "--target", *target,
 		"--baseline", strings.Join(baselinePaths, ","), "--candidate", strings.Join(candidatePaths, ","),
-		"--latency", strings.Join(latencyPaths, ",")})
+		"--latency", strings.Join(latencyPaths, ","), "--aa-calibration", *aaFiles})
 }
 
 func inspectCases(ctx context.Context, database string, queries []query, cases []caseSpec) ([]metrics, error) {

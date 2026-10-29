@@ -46,10 +46,11 @@ def run(name, original=a, candidate=b, identity=proof, mode='determinism', expec
                '--baseline', str(folder / 'a.json'), '--candidate', str(folder / 'b.json'),
                '--buffer-proof', str(folder / 'proof.json'), '--output', str(folder / 'gate.json')]
     if mode == 'candidate':
-        latency = dict(query=query, case=case, baseline=[100] * 15, candidate=[90] * 15,
-                       probe=[[100] * 5, [100] * 5], batch_noise=[0] * 30)
+        latency = dict(query=query, case=case, baseline_ms=[100] * 15, candidate_ms=[90] * 15,
+                       probe_ms=[[100] * 5, [100] * 5], batch_noise=[0] * 30, aa_control=False)
         (folder / 'latency.json').write_text(json.dumps([latency]))
-        command += ['--latency', str(folder / 'latency.json')]
+        (folder / 'aa.json').write_text(json.dumps([dict(latency, aa_control=True, candidate_ms=[100] * 15)]))
+        command += ['--latency', str(folder / 'latency.json'), '--aa-calibration', str(folder / 'aa.json')]
     result = subprocess.run(command, capture_output=True, text=True)
     (folder / 'command.json').write_text(json.dumps(command))
     (folder / 'output.log').write_text(result.stdout + result.stderr)

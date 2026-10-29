@@ -212,6 +212,7 @@ From `docs/`, after `pnpm install --frozen-lockfile`:
 | `pnpm typecheck` | Type-checks the site's TypeScript, such as its configuration and sidebars |
 | `pnpm api:generate` | Regenerates the API reference from the Tadoku API contract |
 | `pnpm api:check` | Tests the contract views, regenerates and fails if `docs/docs/api` changed |
+| `pnpm api:check-build` | After `pnpm build`, fails unless the generated and built API reference has exactly one page per operation in the public views, one introduction per public view and, apart from tag and schema pages in a view's directory, no other page |
 | `pnpm docs:check` | Fails when a page lacks a `description`, an inline repository path is missing, or a relative link in `AGENTS.md`, a README or a skill is broken |
 
 ## CI workflows
@@ -244,7 +245,7 @@ console output; they include assertion output and fixture cleanup errors.
 | `pr-branch.yaml` | `pull_request_target` label, push, reopen and close events | Authorizes the `deploy` label, deploys the pinned commit beside production with dev-cli and tears the branch down when the label is removed or the pull request closes. Its deploy and teardown jobs are the called workflows `pr-branch-called-deploy.yaml` and `pr-branch-called-teardown.yaml`. See [Pull-request deploys](./pull-request-deploys.md) |
 | `pr-branch-reconcile.yaml` | Manual dispatch, started every 15 minutes by a homelab CronJob | Tears down pull-request branches whose pull request is closed or unlabelled, or whose branch expired; never runs `dev cleanup`. See [Pull-request deploys](./pull-request-deploys.md#the-reconciler) |
 | `clean-branch-images.yaml` | Daily, and manual dispatch as a dry run by default | Deletes old production-branch image versions; see [Production branches](./production-branches.md#branch-image-cleanup) |
-| `deploy-docs.yaml` | PRs and `main` pushes touching `docs/` or the API spec | `pnpm api:check`, typecheck, build and the public API boundary (fixed page counts, no internal paths); deploys GitHub Pages from `main` |
+| `deploy-docs.yaml` | PRs and `main` pushes touching `docs/` or the API spec | `pnpm api:check`, typecheck, build and the public API boundary (`pnpm api:check-build` and no internal paths); deploys GitHub Pages from `main` |
 
 Frontend application images from `dev/` branches publish only their immutable commit tag.
 They never update `latest` or `prod`. Development manifests can pin those images

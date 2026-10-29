@@ -100,7 +100,11 @@ group by language_code, "date"
 order by "date" asc;
 
 -- name: ListLogsForContest :many
-with eligible_logs as (
+with filters as not materialized (
+  select
+    sqlc.arg('include_deleted')::boolean as include_deleted,
+    sqlc.narg('user_id')::uuid as user_id
+), eligible_logs as (
   select
     logs.id,
     logs.user_id,
@@ -123,18 +127,22 @@ with eligible_logs as (
     logs.updated_at,
     logs.deleted_at,
     users.display_name as user_display_name,
-    coalesce(
-      (select array_agg(tag order by tag) from log_tags where log_id = logs.id),
-      array[]::text[]
-    )::text[] as tags
+    case
+      when filters.user_id is not null then coalesce(
+        (select array_agg(tag order by tag) from log_tags where log_id = logs.id),
+        array[]::text[]
+      )::text[]
+      else null::text[]
+    end as tags
   from contest_logs
   inner join logs on (logs.id = contest_logs.log_id)
   inner join languages on (languages.code = logs.language_code)
   left join log_units on (log_units.id = logs.unit_id)
   inner join users on (users.id = logs.user_id)
+  cross join filters
   where
-    (sqlc.arg('include_deleted')::boolean or logs.deleted_at is null)
-    and (logs.user_id = sqlc.narg('user_id') or sqlc.narg('user_id') is null)
+    (filters.include_deleted or logs.deleted_at is null)
+    and (logs.user_id = filters.user_id or filters.user_id is null)
     and contest_logs.contest_id = sqlc.arg('contest_id')
 ), page as (
   select
@@ -190,9 +198,17 @@ select
   page.updated_at,
   page.deleted_at,
   page.user_display_name,
-  page.tags,
+  case
+    when page.id is null then null::text[]
+    when filters.user_id is not null then page.tags
+    else coalesce(
+      (select array_agg(tag order by tag) from log_tags where log_id = page.id),
+      array[]::text[]
+    )::text[]
+  end as tags,
   total.total_size
 from total
+cross join filters
 left join page on true
 order by page.created_at desc;
 

@@ -91,6 +91,20 @@ Go:
 - Separate items in column and value lists with `, `.
 - An `insert` with several rows puts one row per line.
 
+## Paginated query enrichment
+
+When optimizing a paginated query that shares an eligible-row CTE with its
+total count, consider aggregating presentation-only values after pagination
+when those values do not affect filtering or ordering. Preserve the count-only
+row emitted for an empty page, including its null result columns, and preserve
+empty arrays for returned rows without related values.
+
+Optional filters can produce different custom and generic plans. Measure
+filtered, unfiltered and empty cases with production planner settings and the
+prepared statement's sixth execution. Retain aggregation before pagination on
+branches where deferring it increases work. Preserve parameter order and sqlc
+result types when changing query structure.
+
 ## Tenancy
 
 The canonical tenant is `tadoku/prod`, in both production and development.

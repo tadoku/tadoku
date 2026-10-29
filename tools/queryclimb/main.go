@@ -26,7 +26,7 @@ func run(ctx context.Context, args []string) error {
 	}
 	if flags.NArg() < 1 {
 		return errors.New("command required: inventory, init, clone, seed, inspect, baseline, gate, " +
-			"selfcheck, sqlc, attempt, record, dashboard, fidelity or exec")
+			"page-evidence, isolation, selfcheck, sqlc, attempt, record, dashboard, fidelity or exec")
 	}
 	rootPath, err := filepath.Abs(*root)
 	if err != nil {
@@ -50,6 +50,10 @@ func run(ctx context.Context, args []string) error {
 
 	rest := flags.Args()[1:]
 	switch command {
+	case "page-evidence":
+		return pageEvidence(ctx, rootPath, rest)
+	case "isolation":
+		return isolation(ctx, rootPath, rest)
 	case "attempt":
 		return attempt(ctx, rootPath, rest)
 	case "record":

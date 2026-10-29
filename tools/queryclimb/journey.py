@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import json
 import pathlib
+import re
 import subprocess
 import sys
 import fcntl
@@ -30,11 +31,13 @@ with open('/tmp/tadoku-query-climb.lock', 'a') as lock:
     assert queued.returncode == 0
 (out / 'inventory.log').write_text(inventory_output)
 queries = json.loads(inventory_output)
-assert len(queries) == 157
-assert len({q['key'] for q in queries}) == 157
+source_count = sum(len(re.findall(r'^-- name:', p.read_text(), re.MULTILINE))
+                   for p in pathlib.Path(root, 'services/tadoku-api/sql').rglob('*.sql'))
+assert len(queries) == source_count
+assert len({q['key'] for q in queries}) == source_count
 assert any(q['key'] == 'identityreads.FindAccount' for q in queries)
 assert all(isinstance(q['tables'], list) and q['fingerprint'] for q in queries)
 run('inspect', '--database', 'postgres://localhost/not-local', ok=False,
     contains='only the owned query-climb loopback instance')
 run('selfcheck', '--name', database)
-print('PASS: 157-query inventory and real PostgreSQL harness journey')
+print(f'PASS: {source_count}-query inventory and real PostgreSQL harness journey')

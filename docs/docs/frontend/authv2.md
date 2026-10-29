@@ -260,8 +260,7 @@ The production image defaults runtime origins to `https://tadoku.app` and
 `frontend/scripts/publish-image.sh` and `//frontend:authv2_branch_push` publish
 explicitly requested tags from committed source. The authv2 build workflow
 checks types, lint, boundaries and the container without running Playwright.
-Main publication creates commit and `latest` tags; only an owner-approved manual
-workflow dispatch with `publish_production` creates `prod`. Production serves
+Main publication creates commit, `latest` and `prod` tags. Production serves
 authv2 at `account.tadoku.app`; the maintainer owns its manifests, DNS,
 certificates and deployment in the separate GitOps repository.
 
@@ -272,7 +271,7 @@ public. Follow this order:
 
 1. Merge reviewed source with its current-head container journeys passing.
    The normal `build-frontend-authv2` workflow checks the image, then publishes
-   `ghcr.io/tadoku/tadoku/frontend-authv2:<merge-sha>` and `:latest`.
+   `ghcr.io/tadoku/tadoku/frontend-authv2:<merge-sha>`, `:latest` and `:prod`.
 2. After that publication succeeds, a package administrator opens
    [authv2 package settings](https://github.com/orgs/tadoku/packages/container/tadoku%2Ffrontend-authv2/settings)
    and changes only this new package's visibility to Public. Verify an anonymous
@@ -297,7 +296,7 @@ Pod recovers, the maintainer must assess the failed operation and approve any
 required full sync separately.
 
 Source changes to Webv3 or the workspace lockfile also trigger its normal
-publication workflow. Production already follows `frontend-webv3:latest` by
+publication workflow. Production follows `frontend-webv3:prod` by
 digest: Image Updater writes to the production GitOps repository and Argo CD
 automatically rolls `next.tadoku.app`. This is a source-merge effect. Webv3's SSR bundles
 `@tanstack/query-core` to keep its build compatible with this workspace; the

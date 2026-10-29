@@ -2,12 +2,6 @@ name: build-frontend-authv2
 
 on:
   workflow_dispatch:
-    inputs:
-      publish_production:
-        description: Publish the production image after owner approval
-        type: boolean
-        default: false
-        required: true
   pull_request:
     paths:
       - "frontend/apps/authv2/**"
@@ -90,11 +84,8 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Publish requested image tags
-        env:
-          PUBLISH_PRODUCTION: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_production }}
+      - name: Publish image tags
         working-directory: frontend
         run: |
-          tags=(--tag "$GITHUB_SHA" --tag latest)
-          if [ "$PUBLISH_PRODUCTION" = true ]; then tags+=(--tag prod); fi
-          ./scripts/publish-image.sh authv2 --repository ghcr.io/tadoku/tadoku/frontend-authv2 "${tags[@]}"
+          ./scripts/publish-image.sh authv2 --repository ghcr.io/tadoku/tadoku/frontend-authv2 \
+            --tag "$GITHUB_SHA" --tag latest --tag prod

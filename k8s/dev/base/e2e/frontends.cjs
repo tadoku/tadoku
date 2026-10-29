@@ -127,7 +127,10 @@ function proveFrontends({ evidence, prefix, containers, report, run }, docs) {
             observed.push({method: request.method, url: request.url, cookie: request.headers.cookie, branch: request.headers['x-dev-branch']});
             response.setHeader('Content-Type', 'application/json');
             if (request.url !== '/api/internal/identity/session') { response.statusCode = 404; response.end('{}'); return }
-            response.end(JSON.stringify({account: request.headers.cookie ? account : null}));
+            response.end(JSON.stringify({
+              account: request.headers.cookie ? account : null,
+              recent_login: Boolean(request.headers.cookie),
+            }));
           }), privateSession.port);
           await listen(require('node:net').createServer(socket => { publicConnections++; socket.destroy() }), 443);
           const readHtml = (host, headers) => new Promise((resolve, reject) => {

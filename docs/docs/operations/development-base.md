@@ -64,14 +64,14 @@ notification configuration.
 
 - The repository's existing CI publishes the GHCR runtime and migration images.
   Do not add another build or push pipeline.
-- Backend images, Webv3 and authv2 select `latest` in
-  `k8s/dev/base/kustomization.yaml`; Webv2 and admin select reviewed
-  immutable commit tags. The development Image Updater uses the **digest**
-  strategy and writes the immutable resolutions back to that file.
+- Every Tadoku image selects `latest` in `k8s/dev/base/kustomization.yaml`, so
+  development rolls out each `main` publication. The development Image Updater
+  uses the **digest** strategy and writes the immutable resolutions back to that
+  file.
 - The `image-list` annotation of the homelab repository's `tadoku-dev` Argo CD
-  Application (clusters/talos/dev/root/tadoku-dev.yaml) owns the Webv2 and
-  admin tag selections. Change them there; Image Updater reverts a
-  selection edited only in the Kustomization.
+  Application (clusters/talos/dev/root/tadoku-dev.yaml) owns the tag
+  selections. Change them there; Image Updater reverts a selection edited only
+  in the Kustomization.
 - The worker has its own GHCR image and Kustomize image entry. Image Updater
   tracks its digest independently of the API image.
 - Webv3 tracks its published `latest` digest independently at

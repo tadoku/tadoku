@@ -8,9 +8,9 @@ import {
 
 // Failure modes: a delete control on Settings other than the quiet link, or a link that drops return_to; guests or
 // old logins shown the form instead of a login that comes back to it; the fresh-login banner missing or the email not
-// prefilled; a hydrated button that enables before the typed address matches, or a native form that can't submit; a
-// mistyped address, an administrator or a stale session that deletes anything; a deletion that leaves the cookie or
-// password usable, or doesn't land on /deleted; pages that overflow 390px.
+// prefilled; a page that shows the address to type; a hydrated button that enables before the typed address matches, or
+// a native form that can't submit; a mistyped address, an administrator or a stale session that deletes anything; a
+// deletion that leaves the cookie or password usable, or doesn't land on /deleted; pages that overflow 390px.
 
 const confirmLabel = 'Type your email address to confirm'
 const banner = 'Privileged actions require a fresh login. Log in again to continue.'
@@ -125,6 +125,8 @@ test('a hydrated deletion waits for the address, ends the session and lands on /
   await page.getByRole('link', { name: 'Delete account', exact: true }).click()
   await expectDeletePage(page)
 
+  await expect(page.getByText(account.email)).toHaveCount(0)
+
   const field = page.getByRole('textbox', { name: confirmLabel })
   const submit = page.getByRole('button', { name: 'Delete my account', exact: true })
   await expect(field).toHaveAttribute('autocomplete', 'off')
@@ -173,6 +175,7 @@ test('a deletion without JavaScript refuses a mistyped address, then deletes and
   await page.getByRole('link', { name: 'Delete account', exact: true }).click()
   await expectDeletePage(page)
   await expectContained(page)
+  await expect(page.getByText(account.email)).toHaveCount(0)
 
   const field = page.getByRole('textbox', { name: confirmLabel })
   const submit = page.getByRole('button', { name: 'Delete my account', exact: true })

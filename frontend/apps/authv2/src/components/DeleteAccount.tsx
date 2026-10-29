@@ -48,7 +48,7 @@ export function DeleteAccount({ search }: { readonly search: AccountSearch }) {
         <p><a href={`${webUrl}/profile/${account.id}/updates`}>Export your logs first</a> if you want to keep a copy.</p>
       </div>
       <form.AppForm>
-        <form.Form {...formProps} className="account-form delete-account__form">
+        <form.Form {...formProps} className="account-form">
           <FormProblem problem={problem} />
           <ReturnTo value={next} />
           <form.AppField name="email" validators={{ onChange: ({ value }) => value.trim() ? undefined : 'Type your email address.' }}>
@@ -62,9 +62,6 @@ export function DeleteAccount({ search }: { readonly search: AccountSearch }) {
                 spellCheck={false}
                 required
                 maxLength={320}
-                hint={hydrated && !matched
-                  ? `Enter ${account.email}. The delete button turns on once it matches.`
-                  : `Enter ${account.email}.`}
               />
             )}
           </form.AppField>

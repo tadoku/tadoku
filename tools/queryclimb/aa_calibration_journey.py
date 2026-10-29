@@ -56,6 +56,7 @@ run('missing-case', calibration=((),))
 run('duplicate-case', calibration=((aa, aa),))
 run('extra-case', calibration=((aa, dict(aa, case='extra')),))
 run('wrong-scale', calibration=((), (aa,)))
+run('extra-empty-scale', calibration=((aa,), ()))
 run('malformed-json-shape', calibration=({'invalid': 1},))
 # Stored aggregate claims cannot hide actual A/A noise. A 5% gain clears the
 # A/B-only 2% floor, but cannot clear the 12% threshold from 6% A/A noise.

@@ -91,6 +91,9 @@ func gate(args []string) error {
 		if *target == "" || *latencyFiles == "" || *aaFiles == "" {
 			return errors.New("candidate gate needs target, paired latency files and aa-calibration")
 		}
+		if len(strings.Split(*aaFiles, ",")) != len(strings.Split(*baselineFiles, ",")) {
+			return errors.New("A/A calibration needs one file per measured scale")
+		}
 		aaNoise, err := aaCalibration(*aaFiles, *target, a)
 		if err != nil {
 			return err

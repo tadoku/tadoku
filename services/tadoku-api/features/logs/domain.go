@@ -89,6 +89,10 @@ func validateYear(year int) error {
 	return nil
 }
 
+type lockedLog struct {
+	Frozen bool
+}
+
 type logMutation struct {
 	ID                          uuid.UUID
 	UserID                      uuid.UUID

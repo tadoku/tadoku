@@ -19,22 +19,19 @@ type LogsRepository struct{ db *pgxpool.Pool }
 
 func NewLogsRepository(db *pgxpool.Pool) *LogsRepository { return &LogsRepository{db: db} }
 
-func (r *LogsRepository) LockLog(ctx context.Context, id uuid.UUID) error {
+func (r *LogsRepository) LockLog(ctx context.Context, id uuid.UUID) (lockedLog, error) {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
-		return err
+		return lockedLog{}, err
 	}
-	frozen, err := queries.New(executor).LockLogForMutation(ctx, postgres.UUID(id))
+	frozenAt, err := queries.New(executor).LockLogForMutation(ctx, postgres.UUID(id))
 	if errors.Is(err, pgx.ErrNoRows) {
-		return ErrLogNotFound
+		return lockedLog{}, ErrLogNotFound
 	}
 	if err != nil {
-		return fmt.Errorf("lock log: %w", err)
+		return lockedLog{}, fmt.Errorf("lock log: %w", err)
 	}
-	if frozen.Valid {
-		return ErrLogFrozen
-	}
-	return nil
+	return lockedLog{Frozen: frozenAt.Valid}, nil
 }
 
 func (r *LogsRepository) CreateLog(ctx context.Context, mutation logMutation) error {

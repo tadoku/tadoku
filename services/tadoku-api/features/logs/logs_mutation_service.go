@@ -53,7 +53,7 @@ func (s *Service) UpdateContestRegistrations(
 	detachments []uuid.UUID,
 ) (MutationResult, error) {
 	result := MutationResult{}
-	if err := s.logs.LockLog(ctx, logID); err != nil {
+	if err := s.lockMutableLog(ctx, logID); err != nil {
 		return MutationResult{}, err
 	}
 	beforeViews, err := s.logs.ContestLogViews(ctx, logID, nil)
@@ -105,9 +105,20 @@ func (s *Service) UpdateContestRegistrations(
 	return result, nil
 }
 
+func (s *Service) lockMutableLog(ctx context.Context, logID uuid.UUID) error {
+	locked, err := s.logs.LockLog(ctx, logID)
+	if err != nil {
+		return err
+	}
+	if locked.Frozen {
+		return ErrLogFrozen
+	}
+	return nil
+}
+
 func (s *Service) Delete(ctx context.Context, logID uuid.UUID, now time.Time) (MutationResult, error) {
 	result := MutationResult{}
-	if err := s.logs.LockLog(ctx, logID); err != nil {
+	if err := s.lockMutableLog(ctx, logID); err != nil {
 		return MutationResult{}, err
 	}
 	allowed, err := s.logs.CanDelete(ctx, logID, now)
@@ -274,7 +285,7 @@ func (s *Service) Update(
 
 func (s *Service) update(ctx context.Context, mutation logMutation) (MutationResult, error) {
 	result := MutationResult{}
-	if err := s.logs.LockLog(ctx, mutation.ID); err != nil {
+	if err := s.lockMutableLog(ctx, mutation.ID); err != nil {
 		return MutationResult{}, err
 	}
 	beforeViews, err := s.logs.ContestLogViews(ctx, mutation.ID, nil)

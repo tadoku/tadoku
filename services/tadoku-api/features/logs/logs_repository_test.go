@@ -213,11 +213,11 @@ func TestLogsRepositorySoftDeleteVisibility(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := repository.LockLog(tenantCtx, logID); err != nil {
-		t.Errorf("lock live log error=%v, want nil", err)
+	if locked, err := repository.LockLog(tenantCtx, logID); err != nil || locked.Frozen {
+		t.Errorf("lock live log=%+v error=%v, want unfrozen", locked, err)
 	}
-	if err := repository.LockLog(tenantCtx, frozenLogID); !errors.Is(err, ErrLogFrozen) {
-		t.Errorf("lock frozen log error=%v, want frozen", err)
+	if locked, err := repository.LockLog(tenantCtx, frozenLogID); err != nil || !locked.Frozen {
+		t.Errorf("lock frozen log=%+v error=%v, want frozen", locked, err)
 	}
 
 	for _, id := range []uuid.UUID{logID, frozenLogID} {
@@ -229,7 +229,7 @@ func TestLogsRepositorySoftDeleteVisibility(t *testing.T) {
 	if _, err := repository.FindLog(tenantCtx, logID, false); !errors.Is(err, ErrLogNotFound) {
 		t.Errorf("deleted log without deleted rows error=%v, want not found", err)
 	}
-	if err := repository.LockLog(tenantCtx, logID); !errors.Is(err, ErrLogNotFound) {
+	if _, err := repository.LockLog(tenantCtx, logID); !errors.Is(err, ErrLogNotFound) {
 		t.Errorf("lock deleted log error=%v, want not found", err)
 	}
 	found, err := repository.FindLog(tenantCtx, logID, true)

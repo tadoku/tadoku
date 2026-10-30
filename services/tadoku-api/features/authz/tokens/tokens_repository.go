@@ -35,16 +35,11 @@ func (r *Repository) insert(ctx context.Context, row Token, hash string, activeL
 		return false, err
 	}
 
-	scopes := make([]string, 0, len(row.Scopes))
-	for _, scope := range row.Scopes {
-		scopes = append(scopes, string(scope))
-	}
-
 	_, err = queries.New(db).Insert(ctx, queries.InsertParams{
 		ID:          postgres.UUID(row.ID),
 		Name:        row.Name,
 		TokenHash:   hash,
-		Scopes:      scopes,
+		Scopes:      scopeStrings(row.Scopes),
 		CreatedAt:   postgres.Timestamptz(row.CreatedAt),
 		ExpiresAt:   postgres.Timestamptz(row.ExpiresAt),
 		ActiveLimit: int64(activeLimit),
@@ -55,13 +50,17 @@ func (r *Repository) insert(ctx context.Context, row Token, hash string, activeL
 	return err == nil, err
 }
 
-func (r *Repository) verify(ctx context.Context, hash string, now time.Time) (Token, bool, error) {
+func (r *Repository) verify(ctx context.Context, hash string, accepted []Scope, now time.Time) (Token, bool, error) {
 	db, err := postgres.Executor(ctx, r.pool)
 	if err != nil {
 		return Token{}, false, err
 	}
 
-	row, err := queries.New(db).Verify(ctx, queries.VerifyParams{TokenHash: hash, Now: postgres.Timestamptz(now)})
+	row, err := queries.New(db).Verify(ctx, queries.VerifyParams{
+		Now:            postgres.Timestamptz(now),
+		TokenHash:      hash,
+		AcceptedScopes: scopeStrings(accepted),
+	})
 	if errors.Is(err, pgx.ErrNoRows) {
 		return Token{}, false, nil
 	}
@@ -97,6 +96,14 @@ func (r *Repository) revoke(ctx context.Context, id uuid.UUID, now time.Time) er
 		return errx.NewNotFoundError("access token not found")
 	}
 	return err
+}
+
+func scopeStrings(scopes []Scope) []string {
+	result := make([]string, 0, len(scopes))
+	for _, scope := range scopes {
+		result = append(result, string(scope))
+	}
+	return result
 }
 
 func tokenFromRow(row queries.ListRow) Token {

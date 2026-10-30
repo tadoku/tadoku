@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -18,6 +19,8 @@ import (
 )
 
 const maxActiveTokens = 10
+
+var acceptedScopes = []Scope{EmailRead}
 
 type Service struct {
 	repository *Repository
@@ -51,7 +54,7 @@ func (s *Service) Verify(ctx context.Context, raw string, deployment tenant.Depl
 		return Principal{}, errx.NewUnauthorizedError("access token tenant mismatch")
 	}
 
-	row, found, err := s.repository.verify(tenant.WithKey(ctx, key), tokenHash(raw), timex.Now())
+	row, found, err := s.repository.verify(tenant.WithKey(ctx, key), tokenHash(raw), acceptedScopes, timex.Now())
 	if err != nil {
 		return Principal{}, err
 	}
@@ -123,7 +126,7 @@ func (s *Service) Revoke(ctx context.Context, id uuid.UUID) error {
 }
 
 func emailReadOnly(scopes []Scope) bool {
-	return len(scopes) == 1 && scopes[0] == EmailRead
+	return slices.Equal(scopes, acceptedScopes)
 }
 
 func invalidToken() error {

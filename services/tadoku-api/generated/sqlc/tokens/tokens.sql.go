@@ -134,12 +134,14 @@ where tenant = current_setting('tadoku.tenant')
   and token_hash = $2
   and revoked_at is null
   and expires_at > $1
+  and scopes = $3::text[]
 returning id, name, scopes, created_at, expires_at, last_used_at, revoked_at
 `
 
 type VerifyParams struct {
-	Now       pgtype.Timestamptz
-	TokenHash string
+	Now            pgtype.Timestamptz
+	TokenHash      string
+	AcceptedScopes []string
 }
 
 type VerifyRow struct {
@@ -153,7 +155,7 @@ type VerifyRow struct {
 }
 
 func (q *Queries) Verify(ctx context.Context, arg VerifyParams) (VerifyRow, error) {
-	row := q.db.QueryRow(ctx, verify, arg.Now, arg.TokenHash)
+	row := q.db.QueryRow(ctx, verify, arg.Now, arg.TokenHash, arg.AcceptedScopes)
 	var i VerifyRow
 	err := row.Scan(
 		&i.ID,

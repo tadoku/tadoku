@@ -140,10 +140,11 @@ state is `active` and its user is neither deleted nor locked for deletion. The
 repository maps `accounts.state`, `users.deleted_at` and
 `users.deletion_locked_at` to one account status, failing on an unknown state,
 and the service decides usability from it
-(`services/tadoku-api/features/identity/domain.go`), after the row lock where
-there is one. Login reads credentials outside a transaction, so its session
-insert in `services/tadoku-api/sql/identity/identity.sql` repeats the rule as
-an atomic guard; change both together.
+(`services/tadoku-api/features/identity/domain.go`). Atomic guards in
+`services/tadoku-api/sql/identity/identity.sql` mirror that definition; change
+them together. Login's session insert rejects an account that became unusable
+after its credentials were read. The recovery and settings account locks skip
+unusable rows, so they never wait on a deletion worker.
 
 Two statements apply other rules on purpose:
 

@@ -319,6 +319,9 @@ select a.user_id, a.email, u.display_name, a.created_at, a.password_hash,
 from accounts a
 join users u on u.tenant = a.tenant and u.id = a.user_id
 where a.user_id = $1
+  and a.state = 'active'
+  and u.deleted_at is null
+  and u.deletion_locked_at is null
 for update of a
 `
 
@@ -379,6 +382,9 @@ select a.user_id, a.email, u.display_name, a.created_at, a.password_hash,
 from accounts a
 join users u on u.tenant = a.tenant and u.id = a.user_id
 where a.email_normalized = $1
+  and a.state = 'active'
+  and u.deleted_at is null
+  and u.deletion_locked_at is null
 for update of a
 `
 

@@ -49,9 +49,9 @@ const (
 	accountDeleted
 )
 
-// usable reports whether the account may sign in, hold a session and recover its password. The CreateSession guard in
-// sql/identity/identity.sql repeats this rule so login stores no session for an account that stopped being usable
-// after its credentials were read; change both together.
+// usable reports whether the account may sign in, hold a session and recover its password. The CreateSession,
+// LockRecoveryAccount and LockAccount guards in sql/identity/identity.sql repeat this rule atomically; change them
+// together.
 func (s accountStatus) usable() bool { return s == accountActive }
 
 type Account struct {

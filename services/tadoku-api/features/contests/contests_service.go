@@ -274,7 +274,12 @@ func (s *Service) CheckYearlyCreationLimit(ctx context.Context, userID uuid.UUID
 	return checkContestCreationYearlyLimit(count)
 }
 
-func (s *Service) ListContests(ctx context.Context, parameters ListParameters, actorIsAdmin bool) (*ContestList, error) {
+func (s *Service) ListContests(
+	ctx context.Context,
+	parameters ListParameters,
+	actorID *uuid.UUID,
+	actorIsAdmin bool,
+) (*ContestList, error) {
 	if err := parameters.Validate(); err != nil {
 		return nil, err
 	}
@@ -286,7 +291,7 @@ func (s *Service) ListContests(ctx context.Context, parameters ListParameters, a
 		parameters.PageSize = 100
 	}
 
-	items, total, err := s.contests.ListContests(ctx, parameters, parameters.visibility(actorIsAdmin))
+	items, total, err := s.contests.ListContests(ctx, parameters, newListVisibility(actorID, actorIsAdmin))
 	if err != nil {
 		return nil, err
 	}

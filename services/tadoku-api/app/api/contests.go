@@ -120,7 +120,12 @@ func (a *Application) CreateContest(ctx context.Context, parameters CreateContes
 }
 
 func (a *Application) ListContests(ctx context.Context, parameters ListContestsParameters) (*contests.ContestList, error) {
-	return a.contests.ListContests(ctx, parameters, a.roles.IsAdminOrFalse(ctx))
+	var actorID *uuid.UUID
+	if id, ok := identity.ActorID(ctx); ok {
+		actorID = &id
+	}
+
+	return a.contests.ListContests(ctx, parameters, actorID, a.roles.IsAdminOrFalse(ctx))
 }
 
 func (a *Application) FindContestByID(ctx context.Context, id uuid.UUID) (*contests.ContestView, error) {

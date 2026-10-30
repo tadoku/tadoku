@@ -475,8 +475,7 @@ with matches as materialized (
   from matches
   inner join users on users.id = matches.owner_user_id
   where matches."private" = false
-    or $5::boolean
-    or matches.owner_user_id = $2::uuid
+    or not $5::boolean
   order by matches.created_at desc
   limit $7
   offset $6
@@ -511,7 +510,7 @@ type ListContestsParams struct {
 	UserID               pgtype.UUID
 	Official             bool
 	DeletedOrganizerName string
-	IncludePrivate       bool
+	PublicOnly           bool
 	StartFrom            int32
 	PageSize             int32
 }
@@ -541,7 +540,7 @@ func (q *Queries) ListContests(ctx context.Context, arg ListContestsParams) ([]L
 		arg.UserID,
 		arg.Official,
 		arg.DeletedOrganizerName,
-		arg.IncludePrivate,
+		arg.PublicOnly,
 		arg.StartFrom,
 		arg.PageSize,
 	)

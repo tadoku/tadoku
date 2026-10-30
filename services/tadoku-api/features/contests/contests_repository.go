@@ -248,7 +248,11 @@ func (r *ContestsRepository) CreateContest(ctx context.Context, contest Contest)
 	return nil
 }
 
-func (r *ContestsRepository) ListContests(ctx context.Context, parameters ListParameters) ([]Contest, int, error) {
+func (r *ContestsRepository) ListContests(
+	ctx context.Context,
+	parameters ListParameters,
+	visibility listVisibility,
+) ([]Contest, int, error) {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return nil, 0, err
@@ -259,7 +263,7 @@ func (r *ContestsRepository) ListContests(ctx context.Context, parameters ListPa
 		UserID:               postgres.NullableUUID(parameters.UserID),
 		Official:             parameters.Official,
 		DeletedOrganizerName: deleteduser.OrganizerName,
-		IncludePrivate:       parameters.includePrivate,
+		PublicOnly:           visibility == publicContests,
 		StartFrom:            parameters.offset(),
 		PageSize:             int32(parameters.PageSize),
 	})

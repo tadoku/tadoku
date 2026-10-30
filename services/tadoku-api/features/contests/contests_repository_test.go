@@ -62,7 +62,7 @@ func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
 		Official: true,
 		PageSize: 10,
 	}
-	items, total, err := repository.ListContests(tenantCtx, parameters)
+	items, total, err := repository.ListContests(tenantCtx, parameters, publicContests)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -71,7 +71,7 @@ func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
 	}
 
 	parameters.Page = 1
-	items, total, err = repository.ListContests(tenantCtx, parameters)
+	items, total, err = repository.ListContests(tenantCtx, parameters, publicContests)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -79,10 +79,14 @@ func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
 		t.Errorf("out-of-range list=%+v total=%d, want empty page with three matches", items, total)
 	}
 
-	items, total, err = repository.ListContests(tenantCtx, ListParameters{
-		Official: false,
-		PageSize: 10,
-	})
+	items, total, err = repository.ListContests(
+		tenantCtx,
+		ListParameters{
+			Official: false,
+			PageSize: 10,
+		},
+		publicContests,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -91,11 +95,15 @@ func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
 	}
 
 	orphanOwnerID := uuid.MustParse("33333333-3333-4333-8333-333333333333")
-	items, total, err = repository.ListContests(tenantCtx, ListParameters{
-		UserID:   &orphanOwnerID,
-		Official: true,
-		PageSize: 10,
-	})
+	items, total, err = repository.ListContests(
+		tenantCtx,
+		ListParameters{
+			UserID:   &orphanOwnerID,
+			Official: true,
+			PageSize: 10,
+		},
+		filteredOwnerContests,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -109,7 +117,7 @@ func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
 		Official: false,
 		PageSize: 10,
 	}
-	items, total, err = repository.ListContests(tenantCtx, parameters)
+	items, total, err = repository.ListContests(tenantCtx, parameters, filteredOwnerContests)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -118,11 +126,15 @@ func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
 	}
 
 	missingOwnerID := uuid.MustParse("44444444-4444-4444-8444-444444444444")
-	items, total, err = repository.ListContests(tenantCtx, ListParameters{
-		UserID:   &missingOwnerID,
-		Official: false,
-		PageSize: 10,
-	})
+	items, total, err = repository.ListContests(
+		tenantCtx,
+		ListParameters{
+			UserID:   &missingOwnerID,
+			Official: false,
+			PageSize: 10,
+		},
+		filteredOwnerContests,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}

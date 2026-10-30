@@ -120,9 +120,7 @@ func (a *Application) CreateContest(ctx context.Context, parameters CreateContes
 }
 
 func (a *Application) ListContests(ctx context.Context, parameters ListContestsParameters) (*contests.ContestList, error) {
-	includePrivate := a.roles.IsAdminOrFalse(ctx)
-
-	return a.contests.ListContests(ctx, parameters, includePrivate)
+	return a.contests.ListContests(ctx, parameters, a.roles.IsAdminOrFalse(ctx))
 }
 
 func (a *Application) FindContestByID(ctx context.Context, id uuid.UUID) (*contests.ContestView, error) {

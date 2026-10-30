@@ -32,12 +32,12 @@ returning contest_registrations.contest_id
 `
 
 type DeleteUnfinishedRegistrationsForUserParams struct {
-	UserID pgtype.UUID
-	Now    pgtype.Date
+	UserID             pgtype.UUID
+	OpenIfEndOnOrAfter pgtype.Date
 }
 
 func (q *Queries) DeleteUnfinishedRegistrationsForUser(ctx context.Context, arg DeleteUnfinishedRegistrationsForUserParams) ([]pgtype.UUID, error) {
-	rows, err := q.db.Query(ctx, deleteUnfinishedRegistrationsForUser, arg.UserID, arg.Now)
+	rows, err := q.db.Query(ctx, deleteUnfinishedRegistrationsForUser, arg.UserID, arg.OpenIfEndOnOrAfter)
 	if err != nil {
 		return nil, err
 	}

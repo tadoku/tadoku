@@ -369,6 +369,16 @@ func TestContestRegistrationDetachJourney(t *testing.T) {
 	})
 }
 
+func TestContestRegistrationFrozenAfterEndJourney(t *testing.T) {
+	dayAfterEnd := time.Date(2026, 10, 1, 0, 0, 0, 0, time.UTC)
+
+	runJourney(t, api, "ContestRegistrationFrozenAfterEnd", []step{
+		{request: "remove_language_after_end", as: user, want: http.StatusForbidden, at: dayAfterEnd},
+		{request: "registration_unchanged", as: user, want: http.StatusOK, at: dayAfterEnd},
+		{verify: "logs_and_registration_kept"},
+	})
+}
+
 func TestYearlyScoresLanguageNameChangeJourney(t *testing.T) {
 	runJourney(t, api, "YearlyScoresLanguageNameChange", []step{
 		{request: "scores_before", as: user, want: http.StatusOK},

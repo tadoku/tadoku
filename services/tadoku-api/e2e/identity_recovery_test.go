@@ -1,6 +1,7 @@
 package e2e_test
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
@@ -250,10 +251,22 @@ func TestIdentityRecoveryRequiresUsableAccount(t *testing.T) {
 		name, change string
 		usable       bool
 	}{
-		{"active", "", true},
-		{"inactive", "update accounts set state = 'inactive' where tenant = $1 and user_id = $2", false},
-		{"deleted", "update users set deleted_at = '2026-01-05' where tenant = $1 and id = $2", false},
-		{"deletion locked", "update users set deletion_locked_at = '2026-01-05' where tenant = $1 and id = $2", false},
+		{
+			name:   "active",
+			usable: true,
+		},
+		{
+			name:   "inactive",
+			change: "update accounts set state = 'inactive' where tenant = $1 and user_id = $2",
+		},
+		{
+			name:   "deleted",
+			change: "update users set deleted_at = '2026-01-05' where tenant = $1 and id = $2",
+		},
+		{
+			name:   "deletion locked",
+			change: "update users set deletion_locked_at = '2026-01-05' where tenant = $1 and id = $2",
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			resetIdentity(t)
@@ -269,7 +282,14 @@ func TestIdentityRecoveryRequiresUsableAccount(t *testing.T) {
 				}
 			}
 
-			requested := recoverFrom(t, api.handler, identityBranchA, "reader@example.test", "198.51.100.20", "")
+			requested := recoverFrom(
+				t,
+				api.handler,
+				identityBranchA,
+				"reader@example.test",
+				"198.51.100.20",
+				"",
+			)
 			requireRecoveryAccepted(t, requested)
 			written := 0
 			if test.usable {
@@ -278,12 +298,83 @@ func TestIdentityRecoveryRequiresUsableAccount(t *testing.T) {
 			requireRecoveryWrites(t, identityBranchA, written)
 
 			token := seedRecoveryToken(t, 'z', fixtureInstant.Add(time.Hour), nil)
-			consumed := identityRequest(t, api.handler, identityBranchA, "GET", "/identity/recovery/"+token, "", "", nil)
+			consumed := identityRequest(
+				t,
+				api.handler,
+				identityBranchA,
+				"GET",
+				"/identity/recovery/"+token,
+				"",
+				"",
+				nil,
+			)
 			if test.usable {
 				requireIdentityStatus(t, consumed, http.StatusSeeOther)
 				return
 			}
 			requireRecoveryRejected(t, consumed, http.StatusBadRequest, "invalid_recovery_token")
+		})
+	}
+}
+
+func TestIdentityRecoveryDoesNotWaitForTheDeletionWorker(t *testing.T) {
+	for _, consume := range []bool{false, true} {
+		t.Run(fmt.Sprintf("consume=%t", consume), func(t *testing.T) {
+			resetIdentity(t)
+			const reader = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"
+			_, err := api.db.Pool.Exec(
+				t.Context(),
+				"update users set deletion_locked_at = '2026-01-05' where tenant = $1 and id = $2",
+				identityBranchA,
+				reader,
+			)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			body := fmt.Sprintf(`{"email":"reader@example.test","return_to":%q}`, recoverySettingsURL)
+			request := newIdentityRequest(t, identityBranchA, "POST", "/identity/recovery", body, "", nil)
+			if consume {
+				token := seedRecoveryToken(t, 'z', fixtureInstant.Add(time.Hour), nil)
+				path := "/identity/recovery/" + token
+				request = newIdentityRequest(t, identityBranchA, "GET", path, "", "", nil)
+			}
+			worker, err := api.db.Pool.Begin(t.Context())
+			if err != nil {
+				t.Fatal(err)
+			}
+			t.Cleanup(func() { _ = worker.Rollback(context.Background()) })
+			_, err = worker.Exec(
+				t.Context(),
+				"select 1 from accounts where tenant = $1 and user_id = $2 for update",
+				identityBranchA,
+				reader,
+			)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			atFixtureInstant(func() {
+				served := serveAsync(request)
+				select {
+				case response := <-served:
+					if consume {
+						requireRecoveryRejected(
+							t,
+							response,
+							http.StatusBadRequest,
+							"invalid_recovery_token",
+						)
+						return
+					}
+					requireRecoveryAccepted(t, response)
+					requireRecoveryWrites(t, identityBranchA, 0)
+				case <-time.After(5 * time.Second):
+					t.Error("recovery waits for the deletion worker holding the account row")
+					_ = worker.Rollback(t.Context())
+					<-served
+				}
+			})
 		})
 	}
 }

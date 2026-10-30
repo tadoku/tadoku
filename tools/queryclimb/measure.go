@@ -18,16 +18,18 @@ import (
 )
 
 type caseSpec struct {
-	Name        string              `json:"name"`
-	Query       string              `json:"query"`
-	Tenant      string              `json:"tenant"`
-	Args        []*string           `json:"args"`
-	TieColumns  []int               `json:"tie_columns"`
-	MaskColumns []int               `json:"mask_columns,omitempty"`
-	TableMasks  map[string][]string `json:"table_masks,omitempty"`
-	EmptyEdge   bool                `json:"empty_edge,omitempty"`
-	WarmArgs    [][]*string         `json:"warm_args,omitempty"`
-	StateTables []string            `json:"state_tables,omitempty"`
+	Name            string              `json:"name"`
+	Query           string              `json:"query"`
+	Tenant          string              `json:"tenant"`
+	Args            []*string           `json:"args"`
+	TieColumns      []int               `json:"tie_columns"`
+	MaskColumns     []int               `json:"mask_columns,omitempty"`
+	TableMasks      map[string][]string `json:"table_masks,omitempty"`
+	EmptyEdge       bool                `json:"empty_edge,omitempty"`
+	WarmArgs        [][]*string         `json:"warm_args,omitempty"`
+	StateTables     []string            `json:"state_tables,omitempty"`
+	IncludeRows     bool                `json:"include_rows,omitempty"`
+	IncludeEstimate bool                `json:"include_estimate,omitempty"`
 }
 
 type metrics struct {
@@ -47,6 +49,15 @@ type metrics struct {
 	CustomPlans   int64           `json:"custom_plans"`
 	Returned      int             `json:"returned"`
 	Affected      int64           `json:"affected"`
+	SQLHash       string          `json:"sql_hash"`
+	Database      string          `json:"database"`
+	Tenant        string          `json:"tenant"`
+	Args          []*string       `json:"args"`
+	WarmArgs      [][]*string     `json:"warm_args,omitempty"`
+	TieColumns    []int           `json:"tie_columns"`
+	MaskColumns   []int           `json:"mask_columns,omitempty"`
+	Rows          [][]*string     `json:"rows,omitempty"`
+	EstimatedPlan json.RawMessage `json:"estimated_plan"`
 }
 
 func inspect(ctx context.Context, root string, args []string) error {
@@ -134,13 +145,17 @@ func scoped(ctx context.Context, conn *pgx.Conn, tenant string, work func() erro
 }
 
 func execute(ctx context.Context, conn *pgx.Conn, c caseSpec) ([][]*string, int64, error) {
+	return executeNamed(ctx, conn, c, "qc_query")
+}
+
+func executeNamed(ctx context.Context, conn *pgx.Conn, c caseSpec, name string) ([][]*string, int64, error) {
 	params := make([][]byte, len(c.Args))
 	for i, arg := range c.Args {
 		if arg != nil {
 			params[i] = []byte(*arg)
 		}
 	}
-	result := conn.PgConn().ExecPrepared(ctx, "qc_query", params, nil, []int16{0}).Read()
+	result := conn.PgConn().ExecPrepared(ctx, name, params, nil, []int16{0}).Read()
 	if result.Err != nil {
 		return nil, 0, result.Err
 	}
@@ -158,7 +173,19 @@ func execute(ctx context.Context, conn *pgx.Conn, c caseSpec) ([][]*string, int6
 }
 
 func measure(ctx context.Context, conn *pgx.Conn, q query, c caseSpec) (metrics, error) {
-	result := metrics{Query: q.Key, Case: c.Name, Indexes: []string{}, Signatures: []string{}}
+	result := metrics{
+		Query:       q.Key,
+		Case:        c.Name,
+		Indexes:     []string{},
+		Signatures:  []string{},
+		SQLHash:     digest(q.SQL),
+		Database:    conn.Config().Database,
+		Tenant:      c.Tenant,
+		Args:        c.Args,
+		WarmArgs:    c.WarmArgs,
+		TieColumns:  c.TieColumns,
+		MaskColumns: c.MaskColumns,
+	}
 	if err := conn.Deallocate(ctx, "qc_query"); err != nil {
 		return result, err
 	}
@@ -234,6 +261,9 @@ func measure(ctx context.Context, conn *pgx.Conn, q query, c caseSpec) (metrics,
 			return err
 		}
 		result.Returned, result.Affected = len(rows), affected
+		if c.IncludeRows {
+			result.Rows = rows
+		}
 		result.Fingerprint, err = fingerprint(rows, c.TieColumns, c.MaskColumns)
 		if err != nil {
 			return err
@@ -258,6 +288,12 @@ func measure(ctx context.Context, conn *pgx.Conn, q query, c caseSpec) (metrics,
 		}
 		return nil
 	})
+	if err == nil && c.IncludeEstimate {
+		if q.Write {
+			return result, errors.New("estimated-plan identity evidence is limited to read queries")
+		}
+		result.EstimatedPlan, err = estimateAtSix(ctx, conn, q, c, executeSQL, result)
+	}
 	return result, err
 }
 
@@ -309,8 +345,9 @@ func tableState(ctx context.Context, conn *pgx.Conn, tables []string, masks map[
 			projection += " || jsonb_build_object(" + literal + ",\n case\n when to_jsonb(t)->" + literal +
 				" = 'null'::jsonb then 'null'::jsonb\n else to_jsonb('<volatile>'::text)\n end)"
 		}
-		sql := "select row_data from (select (" + projection + ")::text as row_data from " +
-			pgx.Identifier{table}.Sanitize() + " t) s order by row_data collate \"C\""
+		sql := "select row_hash from (select sha256(convert_to((" + projection +
+			")::text, 'UTF8')) as row_hash from " +
+			pgx.Identifier{table}.Sanitize() + " t) s order by row_hash"
 		rows, err := conn.Query(ctx, sql)
 		if err != nil {
 			return "", err
@@ -318,14 +355,14 @@ func tableState(ctx context.Context, conn *pgx.Conn, tables []string, masks map[
 		hash := sha256.New()
 		var frame [8]byte
 		for rows.Next() {
-			var row string
+			var row []byte
 			if err := rows.Scan(&row); err != nil {
 				rows.Close()
 				return "", err
 			}
 			binary.BigEndian.PutUint64(frame[:], uint64(len(row)))
 			hash.Write(frame[:])
-			hash.Write([]byte(row))
+			hash.Write(row)
 		}
 		rows.Close()
 		if err := rows.Err(); err != nil {

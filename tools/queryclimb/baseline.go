@@ -9,6 +9,7 @@ import (
 	"math"
 	"os"
 	"os/exec"
+	"runtime"
 	"slices"
 	"strconv"
 	"strings"
@@ -42,8 +43,9 @@ func machineQuiet() error {
 	if err != nil {
 		return err
 	}
-	if load > 2 {
-		return fmt.Errorf("machine load %.2f exceeds timing ceiling 2; retry later", load)
+	ceiling := math.Max(2, float64(runtime.NumCPU())/2)
+	if load > ceiling {
+		return fmt.Errorf("machine load %.2f exceeds timing ceiling %.2f; retry later", load, ceiling)
 	}
 
 	entries, err := os.ReadDir("/proc")
@@ -77,6 +79,7 @@ func baseline(ctx context.Context, root string, args []string) error {
 	iterations := flags.Int("iterations", 0, "executions per batch; zero chooses from baseline plan cost")
 	batches := flags.Int("batches", 15, "alternating batches per side; minimum 15")
 	outputPath := flags.String("output", "", "retain each completed case even if a later case fails")
+	pageOracles := flags.String("page-oracles", "", "baseline legal-page oracle file for this scale")
 	if err := flags.Parse(args); err != nil {
 		return err
 	}
@@ -90,7 +93,7 @@ func baseline(ctx context.Context, root string, args []string) error {
 		*candidateDB = *database
 	}
 	results, err := collectBaseline(
-		ctx, root, *candidateRoot, *database, *candidateDB, *casesPath, *iterations, *batches, *outputPath,
+		ctx, root, *candidateRoot, *database, *candidateDB, *casesPath, *iterations, *batches, *outputPath, *pageOracles,
 	)
 	if err != nil {
 		return err
@@ -102,7 +105,7 @@ func collectBaseline(
 	ctx context.Context,
 	root, candidateRoot, database, candidateDB, casesPath string,
 	iterations, batches int,
-	outputPath string,
+	outputPath, pageOracles string,
 ) ([]latency, error) {
 	queries, err := inventory(root)
 	if err != nil {
@@ -113,6 +116,10 @@ func collectBaseline(
 		return nil, err
 	}
 	cases, err := readCases(casesPath)
+	if err != nil {
+		return nil, err
+	}
+	qualification, err := readQualifications(pageOracles, "", "", false)
 	if err != nil {
 		return nil, err
 	}
@@ -146,6 +153,14 @@ func collectBaseline(
 			}
 			cleanup = append(cleanup, name)
 		}
+		for key, oracle := range qualification.pages {
+			if oracle.Database == original {
+				oracle.Database = database
+				qualification.pages[key] = oracle
+			}
+		}
+		fmt.Fprintf(os.Stderr, "measurement clones: source=%s baseline=%s candidate=%s probe=%s\n",
+			original, database, candidateDB, probeDB)
 	}
 	connections := []*pgx.Conn{}
 	for _, db := range []string{database, candidateDB, probeDB} {
@@ -168,7 +183,7 @@ func collectBaseline(
 		}
 		caseIterations := iterations
 		queryIDs := make([]int64, 3)
-		baselineFingerprint := ""
+		var baselineSample metrics
 		for i, q := range []query{a, b, a} {
 			sample, err := measure(ctx, connections[i], q, c)
 			if err != nil {
@@ -176,10 +191,17 @@ func collectBaseline(
 			}
 			queryIDs[i] = sample.QueryID
 			if i == 0 {
-				baselineFingerprint = sample.Fingerprint
+				baselineSample = sample
 			}
-			if i == 1 && sample.Fingerprint != baselineFingerprint {
-				return nil, errors.New("baseline/candidate fingerprints differ before timing")
+			if i == 1 {
+				key := "0/" + c.Query + "/" + c.Name
+				if _, hasOracle := qualification.pages[key]; hasOracle {
+					if err := qualification.page(key, baselineSample, sample); err != nil {
+						return nil, fmt.Errorf("legal page before timing: %w", err)
+					}
+				} else if sample.Fingerprint != baselineSample.Fingerprint {
+					return nil, errors.New("baseline/candidate fingerprints differ before timing")
+				}
 			}
 			if i == 0 && caseIterations == 0 {
 				var plan []map[string]any

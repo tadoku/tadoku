@@ -14,6 +14,7 @@ const sidebars: SidebarsConfig = {
       label: 'Develop',
       items: [
         'develop/toolchain',
+        'develop/query-climb',
         'develop/environment',
         'develop/development-data',
         'develop/verifying-changes',

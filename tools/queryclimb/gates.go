@@ -17,7 +17,10 @@ func gate(args []string) error {
 	outputPath := flags.String("output", "", "JSON result file; default stdout")
 	baselineFiles := flags.String("baseline", "", "comma-separated baseline metrics files")
 	candidateFiles := flags.String("candidate", "", "comma-separated candidate metrics files")
+	aaFiles := flags.String("aa-calibration", "", "raw A/A calibration files, one per scale; required for candidate mode")
 	latencyFiles := flags.String("latency", "", "comma-separated paired latency files")
+	pageFiles := flags.String("page-oracles", "", "baseline legal-page oracles, one file per scale")
+	proofFiles := flags.String("buffer-proof", "", "checked unchanged-input proofs for documented buffer variance")
 	if err := flags.Parse(args); err != nil {
 		return err
 	}
@@ -32,6 +35,11 @@ func gate(args []string) error {
 	if err != nil {
 		return err
 	}
+	qualification, err := readQualifications(*pageFiles, *proofFiles, *target, *mode == "determinism")
+	if err != nil {
+		return err
+	}
+	replacements := []string{}
 	failures := []string{}
 	if len(a) != len(b) {
 		failures = append(failures, "coverage differs")
@@ -42,14 +50,27 @@ func gate(args []string) error {
 			failures = append(failures, key+": missing")
 			continue
 		}
-		if candidate.Fingerprint != original.Fingerprint {
+		if _, hasOracle := qualification.pages[key]; hasOracle {
+			if err := qualification.page(key, original, candidate); err != nil {
+				failures = append(failures, key+": legal-page check: "+err.Error())
+			} else {
+				replacements = append(replacements, key+": exact legal boundary-page multiset")
+			}
+		} else if candidate.Fingerprint != original.Fingerprint {
 			failures = append(failures, key+": fingerprint mismatch")
 		}
+		buffersDiffer := candidate.SharedBuffers != original.SharedBuffers || candidate.TempBuffers != original.TempBuffers
 		if *mode == "determinism" {
-			if candidate.RowsProcessed != original.RowsProcessed || candidate.SharedBuffers != original.SharedBuffers ||
-				candidate.TempBuffers != original.TempBuffers || candidate.PlanHash != original.PlanHash ||
+			if candidate.RowsProcessed != original.RowsProcessed || candidate.PlanHash != original.PlanHash ||
 				candidate.CustomPlans != original.CustomPlans || candidate.GenericPlans != original.GenericPlans {
 				failures = append(failures, key+": deterministic metrics differ")
+			}
+			if buffersDiffer {
+				if err := qualification.buffers(key, original, candidate, *mode == "determinism"); err != nil {
+					failures = append(failures, key+": buffers differ: "+err.Error())
+				} else {
+					replacements = append(replacements, key+": unchanged-input and full estimated-plan identity")
+				}
 			}
 		} else {
 			if candidate.RowsProcessed > original.RowsProcessed {
@@ -57,14 +78,25 @@ func gate(args []string) error {
 			}
 			buffersIncreased := candidate.SharedBuffers > original.SharedBuffers || candidate.TempBuffers > original.TempBuffers
 			if original.Query != *target && buffersIncreased {
-				failures = append(failures, key+": global buffers increased")
+				if err := qualification.buffers(key, original, candidate, *mode == "determinism"); err != nil {
+					failures = append(failures, key+": global buffers increased: "+err.Error())
+				} else {
+					replacements = append(replacements, key+": unchanged-input and full estimated-plan identity")
+				}
 			}
 		}
 	}
 	ratio := 1.0
 	if *mode == "candidate" {
-		if *target == "" || *latencyFiles == "" {
-			return errors.New("candidate gate needs target and paired latency files")
+		if *target == "" || *latencyFiles == "" || *aaFiles == "" {
+			return errors.New("candidate gate needs target, paired latency files and aa-calibration")
+		}
+		if len(strings.Split(*aaFiles, ",")) != len(strings.Split(*baselineFiles, ",")) {
+			return errors.New("A/A calibration needs one file per measured scale")
+		}
+		aaNoise, err := aaCalibration(*aaFiles, *target, a)
+		if err != nil {
+			return err
 		}
 		logRatio, count, minimumThreshold := 0.0, 0, 0.02
 		seen := map[string]bool{}
@@ -96,7 +128,7 @@ func gate(args []string) error {
 				if noise > 0.1 {
 					failures = append(failures, key+": noise exceeds ceiling")
 				}
-				threshold := math.Max(0.02, 2*noise)
+				threshold := math.Max(0.02, 2*math.Max(noise, aaNoise[key]))
 				minimumThreshold = math.Max(minimumThreshold, threshold)
 				r := median(sample.Candidate) / median(sample.Baseline)
 				if r > 1+threshold {
@@ -120,7 +152,7 @@ func gate(args []string) error {
 		}
 	}
 	result := map[string]any{"mode": *mode, "pass": len(failures) == 0, "cases": len(a),
-		"latency_ratio": ratio, "failures": failures}
+		"latency_ratio": ratio, "failures": failures, "assertion_replacements": replacements}
 	if *outputPath == "" {
 		if err := output(result); err != nil {
 			return err
@@ -188,6 +220,45 @@ func measuredNoise(sample latency) (float64, error) {
 			return 0, errors.New("unpaired A/A sample")
 		}
 		noise = math.Max(noise, pairedNoise(sample.Baseline, sample.Candidate))
+	}
+	return noise, nil
+}
+
+func aaCalibration(paths, target string, baseline map[string]metrics) (map[string]float64, error) {
+	noise := map[string]float64{}
+	for scale, path := range strings.Split(paths, ",") {
+		var samples []latency
+		if err := readJSON(path, &samples); err != nil {
+			return nil, err
+		}
+		for _, sample := range samples {
+			key := fmt.Sprintf("%d/%s/%s", scale, sample.Query, sample.Case)
+			if _, exists := noise[key]; exists {
+				return nil, fmt.Errorf("duplicate A/A calibration: %s", key)
+			}
+			original, exists := baseline[key]
+			if !exists || original.Query != target || sample.Query != target || !sample.AA {
+				return nil, fmt.Errorf("A/A calibration does not match a target baseline case: %s", key)
+			}
+			if len(sample.Baseline) < 15 || len(sample.Candidate) < 15 {
+				return nil, fmt.Errorf("A/A calibration has fewer than 15 batches per side: %s", key)
+			}
+			value, err := measuredNoise(sample)
+			if err != nil {
+				return nil, fmt.Errorf("%s: %w", key, err)
+			}
+			if value > 0.1 {
+				return nil, fmt.Errorf("A/A calibration noise exceeds ceiling: %s", key)
+			}
+			noise[key] = value
+		}
+	}
+	for key, original := range baseline {
+		if original.Query == target {
+			if _, exists := noise[key]; !exists {
+				return nil, fmt.Errorf("missing A/A calibration: %s", key)
+			}
+		}
 	}
 	return noise, nil
 }

@@ -123,14 +123,6 @@ func (r *Repository) retain(ctx context.Context, now time.Time) error {
 	return err
 }
 
-func (r *Repository) reconcileFailures(ctx context.Context, hold bool) error {
-	executor, err := postgres.Executor(ctx, r.pool)
-	if err != nil {
-		return err
-	}
-	return queries.New(executor).ReconcileFailures(ctx, hold)
-}
-
 func emailFromRow(row queries.FindRow) (Email, error) {
 	key, err := tenant.Parse(row.Tenant)
 	if err != nil {

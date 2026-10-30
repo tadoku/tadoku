@@ -103,6 +103,23 @@ func (r *Repository) FailExhausted(ctx context.Context, typ jobs.Type, maxAttemp
 	return failed, nil
 }
 
+func (r *Repository) Failures(ctx context.Context, typ jobs.Type) ([]Failure, error) {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := queries.New(executor).Failures(ctx, string(typ))
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]Failure, len(rows))
+	for i, row := range rows {
+		result[i] = Failure{Payload: row.Payload, Code: row.LastError}
+	}
+	return result, nil
+}
+
 func (r *Repository) Renew(ctx context.Context, task ClaimedJob, lease time.Duration) (time.Time, bool, error) {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {

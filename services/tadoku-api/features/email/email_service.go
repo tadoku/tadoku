@@ -128,7 +128,7 @@ func (s *Service) SendAttempt(ctx context.Context, id uuid.UUID, final bool) err
 	if _, ok := row.Delivery.(Pending); !ok {
 		return nil
 	}
-	if row.Tenant != tenant.Production() || s.sender == nil {
+	if s.holds(row.Tenant) {
 		return s.repository.finish(ctx, id, Held{})
 	}
 
@@ -152,6 +152,25 @@ func (s *Service) Retain(ctx context.Context) error {
 	return s.repository.retain(ctx, timex.Now())
 }
 
-func (s *Service) ReconcileFailures(ctx context.Context) error {
-	return s.repository.reconcileFailures(ctx, s.sender == nil)
+// Pass only failures of send jobs in the context tenant whose payloads have no unfailed job.
+func (s *Service) ReconcileFailures(ctx context.Context, failures []SendFailure) error {
+	key, ok := tenant.FromContext(ctx)
+	if !ok {
+		return errx.NewUnavailableError("email tenant missing", nil)
+	}
+
+	for _, failure := range failures {
+		var delivery Delivery = Failed{Error: failure.Error}
+		if s.holds(key) {
+			delivery = Held{}
+		}
+		if err := s.repository.finish(ctx, failure.EmailID, delivery); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *Service) holds(key tenant.Key) bool {
+	return key != tenant.Production() || s.sender == nil
 }

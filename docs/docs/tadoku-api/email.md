@@ -56,9 +56,12 @@ the email ID, but [SES replaces Message-ID and Date headers](https://docs.aws.am
 Use the recorded provider message ID to investigate a delivered message.
 A failed SMTP attempt leaves the email pending until the fifth attempt, which
 records `failed` and its error. Worker maintenance also reconciles pending rows
-whose corresponding delivery jobs have exhausted their attempts, including
-abandoned final leases. Reconciliation runs at startup and with the worker's
-15-second maintenance pass.
+whose delivery jobs have all failed, including abandoned final leases. For each
+tenant, `jobqueue.Service.Failures` returns the latest failed `email.send.v1`
+job of every email without a pending, running or completed send job, and
+`email.Service.ReconcileFailures` applies the delivery hold rule: the email
+becomes `held`, or `failed` with that job's `last_error`. Reconciliation runs at
+startup and with the worker's 15-second maintenance pass.
 
 SMTP cannot make the external send and PostgreSQL update atomic. A crash after
 SMTP accepts a message and before `sent` is persisted can deliver twice. The

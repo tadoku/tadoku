@@ -186,41 +186,6 @@ func (q *Queries) List(ctx context.Context, arg ListParams) ([]ListRow, error) {
 	return items, nil
 }
 
-const reconcileFailures = `-- name: ReconcileFailures :exec
-update emails as e
-set status = case
-  when $1::boolean or e.tenant <> 'tadoku/prod' then 'held'
-  else 'failed'
-end,
-error = case
-  when $1::boolean or e.tenant <> 'tadoku/prod' then null
-  else (
-  select coalesce(j.last_error, 'attempts_exhausted')
-  from jobs as j
-  where j.tenant = e.tenant and j.task_type = 'email.send.v1'
-    and j.payload->>'email_id' = e.id::text and j.state = 'failed'
-  order by j.id desc
-  limit 1
-  )
-end
-where e.status = 'pending'
-  and exists (
-    select 1 from jobs as j
-    where j.tenant = e.tenant and j.task_type = 'email.send.v1'
-      and j.payload->>'email_id' = e.id::text and j.state = 'failed'
-  )
-  and not exists (
-    select 1 from jobs as j
-    where j.tenant = e.tenant and j.task_type = 'email.send.v1'
-      and j.payload->>'email_id' = e.id::text and j.state <> 'failed'
-  )
-`
-
-func (q *Queries) ReconcileFailures(ctx context.Context, hold bool) error {
-	_, err := q.db.Exec(ctx, reconcileFailures, hold)
-	return err
-}
-
 const retain = `-- name: Retain :execrows
 delete from emails
 where created_at < $1::timestamptz - case

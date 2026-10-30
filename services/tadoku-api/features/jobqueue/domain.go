@@ -36,6 +36,11 @@ type ExhaustedJob struct {
 	Code   string
 }
 
+type Failure struct {
+	Payload json.RawMessage
+	Code    string
+}
+
 type Stats struct {
 	Pending     int64
 	Failed      int64

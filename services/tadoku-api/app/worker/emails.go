@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
+	"github.com/tadoku/tadoku/services/tadoku-api/features/email"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 )
 
@@ -17,7 +19,7 @@ func (r *runner) maintainEmails(ctx context.Context, retention bool) {
 	}
 	for _, key := range keys {
 		tenantCtx := tenant.WithKey(bounded, key)
-		if err := r.email.ReconcileFailures(tenantCtx); err != nil {
+		if err := r.reconcileEmailFailures(tenantCtx); err != nil {
 			r.logger.ErrorContext(tenantCtx, "reconcile failed emails", "error", err)
 		}
 		if retention {
@@ -26,6 +28,23 @@ func (r *runner) maintainEmails(ctx context.Context, retention bool) {
 			}
 		}
 	}
+}
+
+func (r *runner) reconcileEmailFailures(ctx context.Context) error {
+	failed, err := r.queue.Failures(ctx, jobs.EmailSendV1)
+	if err != nil {
+		return err
+	}
+
+	failures := make([]email.SendFailure, 0, len(failed))
+	for _, job := range failed {
+		var payload jobs.SendEmailV1
+		if decode(job.Payload, &payload) != nil || payload.Validate() != nil {
+			continue
+		}
+		failures = append(failures, email.SendFailure{EmailID: payload.EmailID, Error: job.Code})
+	}
+	return r.email.ReconcileFailures(ctx, failures)
 }
 
 func (r *runner) maintenanceTenants(ctx context.Context) ([]tenant.Key, error) {

@@ -28,6 +28,18 @@ from exhausted
 where task.id = exhausted.id
 returning task.tenant, task.last_error;
 
+-- name: Failures :many
+select distinct on (failed.payload) failed.payload,
+  coalesce(failed.last_error, 'attempts_exhausted')::text as last_error
+from jobs as failed
+where failed.task_type = sqlc.arg('task_type')::text and failed.state = 'failed'
+  and not exists (
+    select 1 from jobs as other
+    where other.task_type = failed.task_type and other.payload = failed.payload
+      and other.state <> 'failed'
+  )
+order by failed.payload, failed.id desc;
+
 -- name: Claim :many
 with picked as (
   select id, (state = 'running') as reclaimed from jobs

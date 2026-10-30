@@ -32,32 +32,3 @@ where created_at < sqlc.arg('now')::timestamptz - case
   when tenant = 'tadoku/prod' then interval '3 days'
   else interval '14 days'
 end;
-
--- name: ReconcileFailures :exec
-update emails as e
-set status = case
-  when sqlc.arg('hold')::boolean or e.tenant <> 'tadoku/prod' then 'held'
-  else 'failed'
-end,
-error = case
-  when sqlc.arg('hold')::boolean or e.tenant <> 'tadoku/prod' then null
-  else (
-  select coalesce(j.last_error, 'attempts_exhausted')
-  from jobs as j
-  where j.tenant = e.tenant and j.task_type = 'email.send.v1'
-    and j.payload->>'email_id' = e.id::text and j.state = 'failed'
-  order by j.id desc
-  limit 1
-  )
-end
-where e.status = 'pending'
-  and exists (
-    select 1 from jobs as j
-    where j.tenant = e.tenant and j.task_type = 'email.send.v1'
-      and j.payload->>'email_id' = e.id::text and j.state = 'failed'
-  )
-  and not exists (
-    select 1 from jobs as j
-    where j.tenant = e.tenant and j.task_type = 'email.send.v1'
-      and j.payload->>'email_id' = e.id::text and j.state <> 'failed'
-  );

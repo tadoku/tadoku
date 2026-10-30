@@ -244,3 +244,46 @@ func TestIdentityRecoveryRejectsUnrepresentableReturnTo(t *testing.T) {
 		})
 	}
 }
+
+func TestIdentityRecoveryRequiresUsableAccount(t *testing.T) {
+	for _, test := range []struct {
+		name, change string
+		usable       bool
+	}{
+		{"active", "", true},
+		{"inactive", "update accounts set state = 'inactive' where tenant = $1 and user_id = $2", false},
+		{"deleted", "update users set deleted_at = '2026-01-05' where tenant = $1 and id = $2", false},
+		{"deletion locked", "update users set deletion_locked_at = '2026-01-05' where tenant = $1 and id = $2", false},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			resetIdentity(t)
+			if test.change != "" {
+				_, err := api.db.Pool.Exec(
+					t.Context(),
+					test.change,
+					identityBranchA,
+					"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+				)
+				if err != nil {
+					t.Fatal(err)
+				}
+			}
+
+			requested := recoverFrom(t, api.handler, identityBranchA, "reader@example.test", "198.51.100.20", "")
+			requireRecoveryAccepted(t, requested)
+			written := 0
+			if test.usable {
+				written = 1
+			}
+			requireRecoveryWrites(t, identityBranchA, written)
+
+			token := seedRecoveryToken(t, 'z', fixtureInstant.Add(time.Hour), nil)
+			consumed := identityRequest(t, api.handler, identityBranchA, "GET", "/identity/recovery/"+token, "", "", nil)
+			if test.usable {
+				requireIdentityStatus(t, consumed, http.StatusSeeOther)
+				return
+			}
+			requireRecoveryRejected(t, consumed, http.StatusBadRequest, "invalid_recovery_token")
+		})
+	}
+}

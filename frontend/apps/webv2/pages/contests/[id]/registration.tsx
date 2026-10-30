@@ -36,9 +36,28 @@ const Page = () => {
     )
   }
 
+  if (registration.isError) {
+    return (
+      <div role="alert" className="v-stack spaced">
+        <span className="flash error">
+          Could not load your registration, please try again.
+        </span>
+        <div>
+          <button
+            type="button"
+            className="btn primary"
+            onClick={() => registration.refetch()}
+          >
+            Try again
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   const registrationClosed =
-    !registration.isLoading &&
-    !registration.data &&
+    registration.isSuccess &&
+    registration.data === null &&
     !acceptsNewRegistrations(contest.data, now)
 
   return (

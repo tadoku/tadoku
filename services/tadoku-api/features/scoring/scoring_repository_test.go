@@ -10,7 +10,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
 )
@@ -370,75 +369,62 @@ func TestScoringRepositoryUnitLookups(t *testing.T) {
 	}
 
 	jpn := "jpn"
-	fallback := seededUnit("reading_character", nil)
-	japanese := seededUnit("reading_character", &jpn)
-	jpnOnly := seededUnit("reading_two_column_page", &jpn)
+	fallback := unitCandidate{logUnit: seededUnit("reading_character", nil)}
+	japanese := unitCandidate{logUnit: seededUnit("reading_character", &jpn), languageCode: &jpn}
+	jpnOnly := unitCandidate{logUnit: seededUnit("reading_two_column_page", &jpn), languageCode: &jpn}
 
 	repository := NewScoringRepository(db.Pool)
 	missingID := uuid.MustParse("ffffffff-ffff-4fff-8fff-ffffffffffff")
 
 	idTests := []struct {
-		name         string
-		id           uuid.UUID
-		activityID   int32
-		languageCode string
-		want         *logUnit
+		name string
+		id   uuid.UUID
+		want []unitCandidate
 	}{
-		{name: "language specific", id: japanese.ID, activityID: 1, languageCode: "jpn", want: &japanese},
-		{name: "fallback for any language", id: fallback.ID, activityID: 1, languageCode: "eng", want: &fallback},
-		{name: "other language", id: japanese.ID, activityID: 1, languageCode: "eng"},
-		{name: "other activity", id: fallback.ID, activityID: 2, languageCode: "jpn"},
-		{name: "missing", id: missingID, activityID: 1, languageCode: "jpn"},
+		{name: "language specific", id: japanese.ID, want: []unitCandidate{japanese}},
+		{name: "without language", id: fallback.ID, want: []unitCandidate{fallback}},
+		{name: "missing", id: missingID},
 	}
 	for _, tt := range idTests {
 		t.Run("by id "+tt.name, func(t *testing.T) {
-			key, err := repository.FindUnitKeyByID(tenantCtx, tt.id, tt.activityID, tt.languageCode)
-			unit, unitErr := repository.FindLogUnitByID(tenantCtx, tt.id, tt.activityID, tt.languageCode)
-			assertUnitLookup(t, key, err, unit, unitErr, tt.want)
+			candidates, err := repository.ListUnitsByID(tenantCtx, tt.id)
+
+			assertUnitCandidates(t, candidates, err, tt.want)
 		})
 	}
 
 	keyTests := []struct {
-		name         string
-		key          string
-		activityID   int32
-		languageCode string
-		want         *logUnit
+		name string
+		key  string
+		want []unitCandidate
 	}{
-		{name: "prefers language specific", key: "reading_character", activityID: 1, languageCode: "jpn", want: &japanese},
-		{name: "falls back without language match", key: "reading_character", activityID: 1, languageCode: "eng", want: &fallback},
-		{name: "language specific only", key: "reading_two_column_page", activityID: 1, languageCode: "jpn", want: &jpnOnly},
-		{name: "other language", key: "reading_two_column_page", activityID: 1, languageCode: "eng"},
-		{name: "other activity", key: "reading_character", activityID: 2, languageCode: "jpn"},
-		{name: "missing", key: "missing_unit", activityID: 1, languageCode: "jpn"},
+		{name: "with and without language", key: "reading_character", want: []unitCandidate{fallback, japanese}},
+		{name: "language specific only", key: "reading_two_column_page", want: []unitCandidate{jpnOnly}},
+		{name: "missing", key: "missing_unit"},
 	}
 	for _, tt := range keyTests {
 		t.Run("by key "+tt.name, func(t *testing.T) {
-			key, err := repository.FindUnitKeyByKey(tenantCtx, tt.key, tt.activityID, tt.languageCode)
-			unit, unitErr := repository.FindLogUnitByKey(tenantCtx, tt.key, tt.activityID, tt.languageCode)
-			assertUnitLookup(t, key, err, unit, unitErr, tt.want)
+			candidates, err := repository.ListUnitsByKey(tenantCtx, tt.key)
+
+			assertUnitCandidates(t, candidates, err, tt.want)
 		})
 	}
 }
 
-func assertUnitLookup(t *testing.T, key string, keyErr error, unit *logUnit, unitErr error, want *logUnit) {
+func assertUnitCandidates(t *testing.T, candidates []unitCandidate, err error, want []unitCandidate) {
 	t.Helper()
 
-	if want == nil {
-		if errx.KindOf(keyErr) != errx.InvalidInput || key != "" {
-			t.Errorf("unit key=%q err=%v, want invalid input", key, keyErr)
-		}
-		if errx.KindOf(unitErr) != errx.InvalidInput || unit != nil {
-			t.Errorf("log unit=%+v err=%v, want invalid input", unit, unitErr)
-		}
-		return
+	if err != nil {
+		t.Fatal(err)
 	}
-
-	if keyErr != nil || key != want.Key {
-		t.Errorf("unit key=%q err=%v, want %q", key, keyErr, want.Key)
+	if len(want) == 0 && len(candidates) != 0 {
+		t.Errorf("unit candidates=%+v, want none", candidates)
 	}
-	if unitErr != nil || unit == nil || *unit != *want {
-		t.Errorf("log unit=%+v err=%v, want %+v", unit, unitErr, *want)
+	for _, wanted := range want {
+		matches := func(candidate unitCandidate) bool { return reflect.DeepEqual(candidate, wanted) }
+		if !slices.ContainsFunc(candidates, matches) {
+			t.Errorf("unit candidates=%+v, want %+v with language %v", candidates, wanted.logUnit, wanted.languageCode)
+		}
 	}
 }
 

@@ -451,24 +451,21 @@ func TestLogsRepositoryContestLogs(t *testing.T) {
 		})
 	}
 
-	contestEnd := time.Date(2026, 9, 30, 23, 0, 0, 0, time.UTC)
-	afterContestEnd := time.Date(2026, 10, 1, 0, 0, 0, 0, time.UTC)
+	contestEnd := time.Date(2026, 9, 30, 0, 0, 0, 0, time.UTC)
 	for _, tt := range []struct {
 		id   uuid.UUID
-		now  time.Time
-		want bool
+		want []attachedContest
 	}{
-		{id: oldest, now: contestEnd, want: true},
-		{id: oldest, now: afterContestEnd, want: false},
-		{id: deleted, now: afterContestEnd, want: false},
-		{id: unattached, now: afterContestEnd, want: true},
+		{id: oldest, want: []attachedContest{{ID: contestID, End: contestEnd}}},
+		{id: deleted, want: []attachedContest{{ID: contestID, End: contestEnd}}},
+		{id: unattached, want: []attachedContest{}},
 	} {
-		got, err := repository.CanDelete(tenantCtx, tt.id, tt.now)
+		got, err := repository.AttachedContests(tenantCtx, tt.id)
 		if err != nil {
 			t.Fatal(err)
 		}
-		if got != tt.want {
-			t.Errorf("can delete %s at %s=%t, want %t", tt.id, tt.now, got, tt.want)
+		if !reflect.DeepEqual(got, tt.want) {
+			t.Errorf("attached contests of %s=%v, want %v", tt.id, got, tt.want)
 		}
 	}
 }

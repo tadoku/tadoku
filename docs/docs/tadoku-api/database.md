@@ -105,6 +105,19 @@ prepared statement's sixth execution. Retain aggregation before pagination on
 branches where deferring it increases work. Preserve parameter order and sqlc
 result types when changing query structure.
 
+## Bounded reference lookups
+
+A single-row lookup can still scan entire reference tables when the planner
+chooses hash joins. For an equality lookup on an enforced unique reference
+key, a lateral subquery with `limit 1` can bound that work without changing
+which row is eligible. Keep required references as inner joins and optional
+references as left joins, preserving null handling and result types.
+
+Verify uniqueness in the schema before using this pattern. Compare existing,
+missing, deleted and cross-tenant rows under the runtime role, and measure
+prepared plans at both representative and larger data sizes. Retain the
+change only when the measured latency and whole-query work checks pass.
+
 ## Tenancy
 
 The canonical tenant is `tadoku/prod`, in both production and development.

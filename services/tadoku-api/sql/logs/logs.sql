@@ -333,8 +333,12 @@ select
     array[]::text[]
   )::text[] as tags
 from logs
-inner join languages on (languages.code = logs.language_code)
-left join log_units on (log_units.id = logs.unit_id)
+inner join lateral (
+  select name from languages where code = logs.language_code limit 1
+) languages on true
+left join lateral (
+  select name from log_units where id = logs.unit_id limit 1
+) log_units on true
 inner join users on (users.id = logs.user_id)
 where
   (sqlc.arg('include_deleted')::boolean or logs.deleted_at is null)

@@ -175,7 +175,7 @@ where contests.id = sqlc.arg('contest_id');
 select code, name
 from languages
 left join contests
-  on languages.code = any(language_code_allow_list) or language_code_allow_list is null
+  on languages.code = any(language_code_allow_list)
 where id = sqlc.arg(contest_id)
 order by name asc;
 

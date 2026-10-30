@@ -572,7 +572,7 @@ const listLanguagesForContest = `-- name: ListLanguagesForContest :many
 select code, name
 from languages
 left join contests
-  on languages.code = any(language_code_allow_list) or language_code_allow_list is null
+  on languages.code = any(language_code_allow_list)
 where id = $1
 order by name asc
 `

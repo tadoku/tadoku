@@ -178,7 +178,12 @@ func TestCleanupCompletedDeletesOnlyBeforeCutoff(t *testing.T) {
 	}
 
 	var retained int
-	if err := db.Pool.QueryRow(tenantCtx, `select count(*) from jobs where completed_at >= $1`, cutoff).Scan(&retained); err != nil {
+	err = db.Pool.QueryRow(
+		tenantCtx,
+		`select count(*) from jobs where completed_at >= $1`,
+		cutoff,
+	).Scan(&retained)
+	if err != nil {
 		t.Fatal(err)
 	}
 	if retained != 2 {

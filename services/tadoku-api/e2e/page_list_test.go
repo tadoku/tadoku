@@ -13,6 +13,7 @@ func TestListPages(t *testing.T) {
 		{description: []string{"admin", "default", "excludes", "drafts"}, want: http.StatusOK},
 		{description: []string{"admin", "includes", "drafts", "and", "scheduled"}, want: http.StatusOK},
 		{description: []string{"scheduled", "pages", "hidden"}, want: http.StatusOK},
+		{description: []string{"publication", "boundary"}, want: http.StatusOK},
 		{description: []string{"guest"}, want: http.StatusUnauthorized},
 		{description: []string{"non", "admin"}, want: http.StatusForbidden},
 		{description: []string{"non", "admin", "without", "drafts"}, want: http.StatusForbidden},

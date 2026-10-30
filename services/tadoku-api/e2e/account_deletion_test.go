@@ -10,6 +10,7 @@ import (
 const (
 	accountDeletionJourneyDir = "testdata/journeys/AdminAccountDeletion"
 	refusedFilingDir          = "testdata/AccountDeletion/refused_filing"
+	contestEndDayDir          = "testdata/AccountDeletion/contest_end_day"
 	readerUserID              = "11111111-1111-4111-8111-111111111111"
 	readerLogin               = `{"email":"reader@example.test","password":"` + identityFixturePassword + `"}`
 )
@@ -52,6 +53,21 @@ func TestAccountDeletionFreesTheAddress(t *testing.T) {
 
 	requireIdentityStatus(t, response, http.StatusCreated)
 	checkVerifyGolden(t, api, "testdata/AccountDeletion/address_registered_again")
+}
+
+func TestAccountDeletionKeepsContestsEndedBeforeToday(t *testing.T) {
+	resetJourney(t, api, contestEndDayDir)
+	tokens, err := loadCast(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	fileReaderDeletion(t, tokens)
+	if failed := runJobs(t); failed != 0 {
+		t.Fatalf("worker failed %d jobs of the deletion", failed)
+	}
+
+	checkVerifyGolden(t, api, contestEndDayDir)
 }
 
 // enqueueReaderDeletionJob inserts account.delete.v1 for the reader as fixture SQL, so it reaches the worker without a

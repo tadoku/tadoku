@@ -671,7 +671,11 @@ func (q *Queries) ListDistinctLanguageCodesForUser(ctx context.Context, userID p
 }
 
 const listLogsForContest = `-- name: ListLogsForContest :many
-with eligible_logs as (
+with filters as not materialized (
+  select
+    $1::boolean as include_deleted,
+    $2::uuid as user_id
+), eligible_logs as (
   select
     logs.id,
     logs.user_id,
@@ -694,18 +698,22 @@ with eligible_logs as (
     logs.updated_at,
     logs.deleted_at,
     users.display_name as user_display_name,
-    coalesce(
-      (select array_agg(tag order by tag) from log_tags where log_id = logs.id),
-      array[]::text[]
-    )::text[] as tags
+    case
+      when filters.user_id is not null then coalesce(
+        (select array_agg(tag order by tag) from log_tags where log_id = logs.id),
+        array[]::text[]
+      )::text[]
+      else null::text[]
+    end as tags
   from contest_logs
   inner join logs on (logs.id = contest_logs.log_id)
   inner join languages on (languages.code = logs.language_code)
   left join log_units on (log_units.id = logs.unit_id)
   inner join users on (users.id = logs.user_id)
+  cross join filters
   where
-    ($1::boolean or logs.deleted_at is null)
-    and (logs.user_id = $2 or $2 is null)
+    (filters.include_deleted or logs.deleted_at is null)
+    and (logs.user_id = filters.user_id or filters.user_id is null)
     and contest_logs.contest_id = $3
 ), page as (
   select
@@ -761,9 +769,17 @@ select
   page.updated_at,
   page.deleted_at,
   page.user_display_name,
-  page.tags,
+  case
+    when page.id is null then null::text[]
+    when filters.user_id is not null then page.tags
+    else coalesce(
+      (select array_agg(tag order by tag) from log_tags where log_id = page.id),
+      array[]::text[]
+    )::text[]
+  end as tags,
   total.total_size
 from total
+cross join filters
 left join page on true
 order by page.created_at desc
 `

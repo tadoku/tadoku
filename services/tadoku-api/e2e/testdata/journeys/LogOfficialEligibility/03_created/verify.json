@@ -1,0 +1,10 @@
+[
+  {
+    "description": "attached later",
+    "eligible_official_leaderboard": false
+  },
+  {
+    "description": "created with official",
+    "eligible_official_leaderboard": true
+  }
+]

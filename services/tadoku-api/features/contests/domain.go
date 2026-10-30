@@ -20,6 +20,7 @@ var (
 	ErrContestNotFound          = errx.NewNotFoundError("contest not found")
 	ErrContestCreationForbidden = errx.NewForbiddenError("contest creation forbidden")
 	ErrContestCreatorTooYoung   = errx.NewForbiddenError("contest creator account too young")
+	ErrContestEnded             = errx.NewForbiddenError("contest has ended")
 	ErrInvalidActivity          = errx.NewInvalidInputError("invalid contest activity")
 	ErrRegistrationNotFound     = errx.NewNotFoundError("contest registration not found")
 )

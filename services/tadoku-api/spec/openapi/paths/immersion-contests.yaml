@@ -226,6 +226,8 @@ paths:
           description: language combination is invalid
         "401":
           description: unauthorized
+        "403":
+          description: forbidden, including changes to an existing registration after the contest has ended
         "404":
           description: contest not found
         "409":

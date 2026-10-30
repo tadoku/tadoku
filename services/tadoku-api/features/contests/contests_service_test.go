@@ -24,7 +24,7 @@ func TestApplyRegistrationDetachesUsingLanguageCodes(t *testing.T) {
 	registrationID := uuid.MustParse("bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb")
 	createdAt := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
 	now := time.Date(2026, 9, 12, 12, 0, 0, 0, time.UTC)
-	contest := Contest{ID: contestID, Official: false}
+	contest := Contest{ID: contestID, Official: false, ContestEnd: time.Date(2026, 9, 12, 0, 0, 0, 0, time.UTC)}
 
 	tests := []struct {
 		name            string

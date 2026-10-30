@@ -280,8 +280,9 @@ func newTestRouterWithLeaderboardService(
 	identityRepository := identity.NewRepository(pool)
 	identityService := identity.NewService(
 		identityRepository,
-		identity.NewThrottle(endpoints.identityValkey, time.Second, logger),
+		identity.NewThrottle(endpoints.identityValkey, time.Second),
 		"tadoku.dev.lab",
+		logger,
 	)
 
 	production := true

@@ -239,8 +239,9 @@ func start(ctx context.Context, cfg config, logger *slog.Logger) (*application, 
 	identityRepository := identity.NewRepository(pool)
 	identityService := identity.NewService(
 		identityRepository,
-		identity.NewThrottle(valkeyClient, cfg.ValkeyTimeout, logger),
+		identity.NewThrottle(valkeyClient, cfg.ValkeyTimeout),
 		cfg.IdentityCookieDomain,
+		logger,
 	)
 
 	apiApplication := api.New(api.Dependencies{

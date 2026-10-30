@@ -1,6 +1,10 @@
 package worker
 
-import "github.com/prometheus/client_golang/prometheus"
+import (
+	"github.com/prometheus/client_golang/prometheus"
+
+	"github.com/tadoku/tadoku/services/tadoku-api/features/jobqueue"
+)
 
 var terminalCodes = []string{
 	"invalid_payload",
@@ -8,7 +12,7 @@ var terminalCodes = []string{
 	"deadline_exceeded",
 	"handler_error",
 	"lease_expired",
-	"attempts_exhausted",
+	jobqueue.AttemptsExhausted,
 }
 
 type Metrics struct {

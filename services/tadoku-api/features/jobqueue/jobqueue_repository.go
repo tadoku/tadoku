@@ -83,10 +83,11 @@ func (r *Repository) FailExhausted(ctx context.Context, typ jobs.Type, maxAttemp
 	}
 
 	rows, err := queries.New(executor).FailExhausted(ctx, queries.FailExhaustedParams{
-		Now:         postgres.Timestamptz(timex.Now()),
-		TaskType:    string(typ),
-		Component:   postgres.NullableText(componentFromContext(ctx)),
-		MaxAttempts: int32(maxAttempts),
+		Now:            postgres.Timestamptz(timex.Now()),
+		TaskType:       string(typ),
+		Component:      postgres.NullableText(componentFromContext(ctx)),
+		MaxAttempts:    int32(maxAttempts),
+		ExhaustedError: AttemptsExhausted,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("fail exhausted jobs: %w", err)

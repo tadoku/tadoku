@@ -239,6 +239,9 @@ TADOKU_GOLDEN_SOURCE_ROOT="$PWD/services/tadoku-api/e2e/testdata" \
   non-nested scopes for different times, and business time can move
   independently of token expiry. No test-only request-context wrapper is
   needed.
+- To let business time pass while a request is in flight, call `timex.Advance`
+  inside one scope. Release whatever the request waits on and wait for it to
+  finish before that scope returns, on failure paths too.
 - Tests that use `timex.TheWorld` or override the JWT clock, and their parent
   tests, must not call `t.Parallel`.
 

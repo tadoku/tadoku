@@ -241,8 +241,8 @@ inner join contests on contests.id = contest_registrations.contest_id
 inner join users on users.id = contest_registrations.user_id
 inner join users as owner_users on owner_users.id = contests.owner_user_id
 where contest_registrations.user_id = sqlc.arg(user_id)
-  and contests.contest_start <= sqlc.arg(now)::timestamp
-  and (contests.contest_end + '1 day'::interval) > sqlc.arg(now)::timestamp
+  and contests.contest_start <= sqlc.arg(started_if_start_on_or_before)
+  and contests.contest_end >= sqlc.arg(open_if_end_on_or_after)
   and contest_registrations.deleted_at is null;
 
 -- name: UpsertContestRegistration :exec

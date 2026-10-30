@@ -14,6 +14,7 @@ go_library(
     deps = [
         "//services/tadoku-api/domain/activities",
         "//services/tadoku-api/domain/contestevent",
+        "//services/tadoku-api/domain/contestwindow",
         "//services/tadoku-api/domain/jobs",
         "//services/tadoku-api/domain/languages",
         "//services/tadoku-api/domain/logscore",
@@ -43,6 +44,7 @@ go_test(
         "requires-network",
     ],
     deps = [
+        "//services/tadoku-api/domain/contestwindow",
         "//services/tadoku-api/infra/postgres",
         "//services/tadoku-api/internal/errx",
         "//services/tadoku-api/internal/tenant",

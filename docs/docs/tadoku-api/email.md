@@ -94,8 +94,9 @@ verification. See [access-token commands](./tenant-lifecycle.md#email-access-tok
 ## Retention and operations
 
 `email.Service.Retain` owns the retention periods. It deletes the context
-tenant's rows strictly older than three days in production and fourteen days in
-other tenants. Exact-boundary rows remain.
+tenant's rows strictly older than three calendar days in production and fourteen
+in other tenants, counted in the database session's time zone. Exact-boundary
+rows remain.
 It runs retention at startup and daily. A branch worker maintains only its own
 tenant; the base enumerates registered tenants and runs each statement within
 that tenant's ordinary row-level security scope. Deleting a tenant cascades to

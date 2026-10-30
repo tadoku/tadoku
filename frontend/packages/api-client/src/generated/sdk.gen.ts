@@ -1159,7 +1159,7 @@ export const identityAccountDelete = <ThrowOnError extends boolean = false>(opti
 /**
  * List retained tenant emails, newest first
  *
- * Requires a tenant administrator, or outside the production deployment an email:read tenant access token. Production email reads are audited. Retention is 3 days for tadoku/prod, 14 days otherwise.
+ * Requires a tenant administrator, or outside the production deployment an email:read tenant access token. Production email reads are audited. See [Retained email](https://tadoku.github.io/tadoku/tadoku-api/email#retention-and-operations) for retention.
  */
 export const emailList = <ThrowOnError extends boolean = false>(options?: Options<EmailListData, ThrowOnError>): RequestResult<EmailListResponses, EmailListErrors, ThrowOnError> => (options?.client ?? client).get<EmailListResponses, EmailListErrors, ThrowOnError>({
     responseValidator: async (data) => await zEmailListResponse.parseAsync(data),
@@ -1180,7 +1180,7 @@ export const emailList = <ThrowOnError extends boolean = false>(options?: Option
 /**
  * Read a retained tenant email including parameters
  *
- * Requires a tenant administrator, or outside the production deployment an email:read tenant access token. Production email reads are audited. Retention is 3 days for tadoku/prod, 14 days otherwise.
+ * Requires a tenant administrator, or outside the production deployment an email:read tenant access token. Production email reads are audited. See [Retained email](https://tadoku.github.io/tadoku/tadoku-api/email#retention-and-operations) for retention.
  */
 export const emailGet = <ThrowOnError extends boolean = false>(options: Options<EmailGetData, ThrowOnError>): RequestResult<EmailGetResponses, EmailGetErrors, ThrowOnError> => (options.client ?? client).get<EmailGetResponses, EmailGetErrors, ThrowOnError>({
     responseValidator: async (data) => await zEmailGetResponse.parseAsync(data),

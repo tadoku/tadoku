@@ -1,7 +1,7 @@
 ---
 sidebar_position: 3
 title: Authentication and authorization
-description: How Tadoku API authenticates gateway JWTs, admits requests on every tenant, checks tenant-scoped administrator and ban permits stored in PostgreSQL and restricts shared-data writes to production.
+description: How Tadoku API authenticates gateway JWTs, admits requests on every tenant, checks tenant-scoped administrator and ban permits stored in PostgreSQL, decides who sees private contests and restricts shared-data writes to production.
 ---
 
 # Authentication and authorization
@@ -202,6 +202,24 @@ operation the application has already authorized, and never repeat the ban
 gate. Roles of other users come from `authz.Roles.UserRoles` and never
 authorize the actor. Relationship writes and reads use the
 [building blocks](./permission-model.md#building-blocks).
+
+## Private contests
+
+A private contest is unlisted rather than access-controlled: reads of one
+contest by its ID do not check privacy. Privacy only changes which contests
+listings return, and official contests cannot be private.
+
+- The contest list shows private contests to administrators, and to any
+  caller who filters the list by an owner (`user_id`), for that owner's
+  contests. Everyone else sees only public contests, but the list total and
+  next-page token still count the private contests that match the filters.
+  The contests service chooses the visibility from the administrator status
+  the application reports; see `ListParameters.visibility` in
+  `services/tadoku-api/features/contests/domain.go`.
+- A user's yearly contest registrations include private contests only when
+  the actor is that user or an administrator, and their total excludes the
+  private contests they hide. The application decides this in
+  `services/tadoku-api/app/api/contests.go`.
 
 ## Shared data
 

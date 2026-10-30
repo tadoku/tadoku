@@ -91,12 +91,15 @@ that closes log editing.
 | Logs attached to a finished contest | Kept with their contest scores, without description or tags, and frozen. |
 | Every other log, including soft-deleted logs, with its contest logs and tags | Deleted. |
 | Registrations | Deleted in unfinished contests, kept in finished ones. |
-| Contests the user owns | Kept; the stored organizer name becomes `Deleted organizer`. |
+| Contests the user owns | Kept. Contest and log reads show the organizer as `Deleted organizer` because the owner is deleted, never from the stored name. The stored copy of the organizer name is overwritten with the same label so it keeps no former name. |
 | `permission_relationships` with the user as subject | Deleted. |
 | Leaderboards | One invalidation job per unfinished contest that loses a log or registration and per year with official logs. |
 | Contest event feeds | `log.withdrawn` for each log leaving an unfinished contest and `log.updated` for each kept log whose description or tags were cleared. |
 | `moderation_audit_log` | One `complete_account_deletion` event, with the deleted user as actor and the deleted and kept log and registration counts and the owned contest count. |
 | `emails` | Unchanged; the retention pass removes earlier messages after three days in production and fourteen elsewhere. The worker adds an `account.deleted` notice to the account's address, unless that address cannot receive mail. |
+
+Both labels come from `services/tadoku-api/domain/deleteduser/`; the email
+notice quotes them from there.
 
 Neither audit event stores the email address or display name. The
 administrator's reason is free text in the request event's description.

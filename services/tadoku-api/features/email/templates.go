@@ -7,6 +7,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/tadoku/tadoku/services/tadoku-api/domain/deleteduser"
 	domainmail "github.com/tadoku/tadoku/services/tadoku-api/domain/mail"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
@@ -40,8 +41,8 @@ var templates = map[domainmail.Template]emailTemplate{
 		body: template.Must(template.New("deleted").Parse(
 			"Your Tadoku account was deleted at {{.deleted_at}}.\n\n" +
 				"Your sign-in, your logs outside finished contests and your registrations in running contests " +
-				"were removed. Finished contests keep your scores as \"Deleted participant\", and contests you " +
-				"organized continue under \"Deleted organizer\".\n\n" +
+				"were removed. Finished contests keep your scores as \"" + deleteduser.ParticipantName +
+				"\", and contests you organized continue under \"" + deleteduser.OrganizerName + "\".\n\n" +
 				"If you did not ask for this, contact Tadoku support.\n",
 		)),
 	},

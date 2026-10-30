@@ -367,7 +367,10 @@ select
   contests.title,
   contest_registrations.id,
   contests.contest_end,
-  case when owner_users.deleted_at is not null then 'Deleted organizer' else owner_users.display_name end::varchar as owner_user_display_name,
+  case
+    when owner_users.deleted_at is not null then $1::varchar
+    else owner_users.display_name
+  end::varchar as owner_user_display_name,
   contests.official,
   coalesce(contest_logs.computed_score, contest_logs.score) as score
 from contest_logs
@@ -378,9 +381,14 @@ inner join contest_registrations on (
   and contest_registrations.user_id = logs.user_id
 )
 inner join users as owner_users on (owner_users.id = contests.owner_user_id)
-where log_id = $1
+where log_id = $2
 order by contest_logs.contest_id
 `
+
+type FindAttachedContestRegistrationsForLogParams struct {
+	DeletedOrganizerName string
+	ID                   pgtype.UUID
+}
 
 type FindAttachedContestRegistrationsForLogRow struct {
 	ContestID            pgtype.UUID
@@ -392,8 +400,8 @@ type FindAttachedContestRegistrationsForLogRow struct {
 	Score                pgtype.Float4
 }
 
-func (q *Queries) FindAttachedContestRegistrationsForLog(ctx context.Context, id pgtype.UUID) ([]FindAttachedContestRegistrationsForLogRow, error) {
-	rows, err := q.db.Query(ctx, findAttachedContestRegistrationsForLog, id)
+func (q *Queries) FindAttachedContestRegistrationsForLog(ctx context.Context, arg FindAttachedContestRegistrationsForLogParams) ([]FindAttachedContestRegistrationsForLogRow, error) {
+	rows, err := q.db.Query(ctx, findAttachedContestRegistrationsForLog, arg.DeletedOrganizerName, arg.ID)
 	if err != nil {
 		return nil, err
 	}

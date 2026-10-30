@@ -10,6 +10,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/tadoku/tadoku/services/tadoku-api/domain/deleteduser"
 	queries "github.com/tadoku/tadoku/services/tadoku-api/generated/sqlc/contests"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 )
@@ -113,8 +114,9 @@ func (r *ContestsRepository) ListOngoingRegistrations(ctx context.Context, userI
 	}
 
 	rows, err := queries.New(executor).ListOngoingContestRegistrations(ctx, queries.ListOngoingContestRegistrationsParams{
-		UserID: postgres.UUID(userID),
-		Now:    postgres.Timestamp(now),
+		DeletedOrganizerName: deleteduser.OrganizerName,
+		UserID:               postgres.UUID(userID),
+		Now:                  postgres.Timestamp(now),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("list ongoing contest registrations: %w", err)
@@ -253,12 +255,13 @@ func (r *ContestsRepository) ListContests(ctx context.Context, parameters ListPa
 	}
 
 	rows, err := queries.New(executor).ListContests(ctx, queries.ListContestsParams{
-		IncludeDeleted: parameters.IncludeDeleted,
-		UserID:         postgres.NullableUUID(parameters.UserID),
-		Official:       parameters.Official,
-		IncludePrivate: parameters.includePrivate,
-		StartFrom:      parameters.offset(),
-		PageSize:       int32(parameters.PageSize),
+		IncludeDeleted:       parameters.IncludeDeleted,
+		UserID:               postgres.NullableUUID(parameters.UserID),
+		Official:             parameters.Official,
+		DeletedOrganizerName: deleteduser.OrganizerName,
+		IncludePrivate:       parameters.includePrivate,
+		StartFrom:            parameters.offset(),
+		PageSize:             int32(parameters.PageSize),
 	})
 	if err != nil {
 		return nil, 0, fmt.Errorf("list contests: %w", err)
@@ -299,8 +302,9 @@ func (r *ContestsRepository) FindContestByID(ctx context.Context, parameters fin
 	}
 
 	row, err := queries.New(executor).FindContestByID(ctx, queries.FindContestByIDParams{
-		ID:             postgres.UUID(parameters.ID),
-		IncludeDeleted: parameters.includeDeleted,
+		DeletedOrganizerName: deleteduser.OrganizerName,
+		ID:                   postgres.UUID(parameters.ID),
+		IncludeDeleted:       parameters.includeDeleted,
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrContestNotFound
@@ -319,7 +323,7 @@ func (r *ContestsRepository) FindLatestOfficialContest(ctx context.Context) (*Co
 		return nil, err
 	}
 
-	row, err := queries.New(executor).FindLatestOfficialContest(ctx)
+	row, err := queries.New(executor).FindLatestOfficialContest(ctx, deleteduser.OrganizerName)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrContestNotFound
 	}

@@ -132,16 +132,17 @@ func (q *Queries) SynchronizeUser(ctx context.Context, arg SynchronizeUserParams
 
 const tombstoneUser = `-- name: TombstoneUser :exec
 update users
-set display_name = 'Deleted participant', deleted_at = $1, updated_at = $1
-where id = $2
+set display_name = $1, deleted_at = $2, updated_at = $2
+where id = $3
 `
 
 type TombstoneUserParams struct {
-	Now pgtype.Timestamp
-	ID  pgtype.UUID
+	DisplayName string
+	Now         pgtype.Timestamp
+	ID          pgtype.UUID
 }
 
 func (q *Queries) TombstoneUser(ctx context.Context, arg TombstoneUserParams) error {
-	_, err := q.db.Exec(ctx, tombstoneUser, arg.Now, arg.ID)
+	_, err := q.db.Exec(ctx, tombstoneUser, arg.DisplayName, arg.Now, arg.ID)
 	return err
 }

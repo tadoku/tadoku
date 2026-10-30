@@ -176,7 +176,10 @@ const findContestByID = `-- name: FindContestByID :one
 select
   contests.id,
   owner_user_id,
-  case when users.deleted_at is not null then 'Deleted organizer' else users.display_name end::varchar as owner_user_display_name,
+  case
+    when users.deleted_at is not null then $1::varchar
+    else users.display_name
+  end::varchar as owner_user_display_name,
   "private",
   contest_start,
   contest_end,
@@ -192,14 +195,15 @@ select
 from contests
 inner join users on users.id = contests.owner_user_id
 where
-  contests.id = $1
-  and ($2::boolean or contests.deleted_at is null)
+  contests.id = $2
+  and ($3::boolean or contests.deleted_at is null)
 order by contests.created_at desc
 `
 
 type FindContestByIDParams struct {
-	ID             pgtype.UUID
-	IncludeDeleted bool
+	DeletedOrganizerName string
+	ID                   pgtype.UUID
+	IncludeDeleted       bool
 }
 
 type FindContestByIDRow struct {
@@ -221,7 +225,7 @@ type FindContestByIDRow struct {
 }
 
 func (q *Queries) FindContestByID(ctx context.Context, arg FindContestByIDParams) (FindContestByIDRow, error) {
-	row := q.db.QueryRow(ctx, findContestByID, arg.ID, arg.IncludeDeleted)
+	row := q.db.QueryRow(ctx, findContestByID, arg.DeletedOrganizerName, arg.ID, arg.IncludeDeleted)
 	var i FindContestByIDRow
 	err := row.Scan(
 		&i.ID,
@@ -362,7 +366,10 @@ const findLatestOfficialContest = `-- name: FindLatestOfficialContest :one
 select
   contests.id,
   owner_user_id,
-  case when users.deleted_at is not null then 'Deleted organizer' else users.display_name end::varchar as owner_user_display_name,
+  case
+    when users.deleted_at is not null then $1::varchar
+    else users.display_name
+  end::varchar as owner_user_display_name,
   "private",
   contest_start,
   contest_end,
@@ -400,8 +407,8 @@ type FindLatestOfficialContestRow struct {
 	DeletedAt               pgtype.Timestamp
 }
 
-func (q *Queries) FindLatestOfficialContest(ctx context.Context) (FindLatestOfficialContestRow, error) {
-	row := q.db.QueryRow(ctx, findLatestOfficialContest)
+func (q *Queries) FindLatestOfficialContest(ctx context.Context, deletedOrganizerName string) (FindLatestOfficialContestRow, error) {
+	row := q.db.QueryRow(ctx, findLatestOfficialContest, deletedOrganizerName)
 	var i FindLatestOfficialContestRow
 	err := row.Scan(
 		&i.ID,
@@ -449,7 +456,10 @@ with matches as materialized (
   select
     matches.id,
     matches.owner_user_id,
-    case when users.deleted_at is not null then 'Deleted organizer' else users.display_name end::varchar as owner_user_display_name,
+    case
+      when users.deleted_at is not null then $4::varchar
+      else users.display_name
+    end::varchar as owner_user_display_name,
     matches."private",
     matches.contest_start,
     matches.contest_end,
@@ -465,11 +475,11 @@ with matches as materialized (
   from matches
   inner join users on users.id = matches.owner_user_id
   where matches."private" = false
-    or $4::boolean
+    or $5::boolean
     or matches.owner_user_id = $2::uuid
   order by matches.created_at desc
-  limit $6
-  offset $5
+  limit $7
+  offset $6
 ), total as (
   select count(*) as total_size
   from matches
@@ -497,12 +507,13 @@ order by page.created_at desc
 `
 
 type ListContestsParams struct {
-	IncludeDeleted bool
-	UserID         pgtype.UUID
-	Official       bool
-	IncludePrivate bool
-	StartFrom      int32
-	PageSize       int32
+	IncludeDeleted       bool
+	UserID               pgtype.UUID
+	Official             bool
+	DeletedOrganizerName string
+	IncludePrivate       bool
+	StartFrom            int32
+	PageSize             int32
 }
 
 type ListContestsRow struct {
@@ -529,6 +540,7 @@ func (q *Queries) ListContests(ctx context.Context, arg ListContestsParams) ([]L
 		arg.IncludeDeleted,
 		arg.UserID,
 		arg.Official,
+		arg.DeletedOrganizerName,
 		arg.IncludePrivate,
 		arg.StartFrom,
 		arg.PageSize,
@@ -613,21 +625,24 @@ select
   contests.title,
   contests.description,
   contests.owner_user_id,
-  case when owner_users.deleted_at is not null then 'Deleted organizer' else owner_users.display_name end::varchar
-    as owner_user_display_name
+  case
+    when owner_users.deleted_at is not null then $1::varchar
+    else owner_users.display_name
+  end::varchar as owner_user_display_name
 from contest_registrations
 inner join contests on contests.id = contest_registrations.contest_id
 inner join users on users.id = contest_registrations.user_id
 inner join users as owner_users on owner_users.id = contests.owner_user_id
-where contest_registrations.user_id = $1
-  and contests.contest_start <= $2::timestamp
-  and (contests.contest_end + '1 day'::interval) > $2::timestamp
+where contest_registrations.user_id = $2
+  and contests.contest_start <= $3::timestamp
+  and (contests.contest_end + '1 day'::interval) > $3::timestamp
   and contest_registrations.deleted_at is null
 `
 
 type ListOngoingContestRegistrationsParams struct {
-	UserID pgtype.UUID
-	Now    pgtype.Timestamp
+	DeletedOrganizerName string
+	UserID               pgtype.UUID
+	Now                  pgtype.Timestamp
 }
 
 type ListOngoingContestRegistrationsRow struct {
@@ -649,7 +664,7 @@ type ListOngoingContestRegistrationsRow struct {
 }
 
 func (q *Queries) ListOngoingContestRegistrations(ctx context.Context, arg ListOngoingContestRegistrationsParams) ([]ListOngoingContestRegistrationsRow, error) {
-	rows, err := q.db.Query(ctx, listOngoingContestRegistrations, arg.UserID, arg.Now)
+	rows, err := q.db.Query(ctx, listOngoingContestRegistrations, arg.DeletedOrganizerName, arg.UserID, arg.Now)
 	if err != nil {
 		return nil, err
 	}

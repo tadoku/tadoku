@@ -11,6 +11,7 @@ go_library(
     importpath = "github.com/tadoku/tadoku/services/tadoku-api/features/email",
     visibility = ["//services/tadoku-api:feature_consumers"],
     deps = [
+        "//services/tadoku-api/domain/deleteduser",
         "//services/tadoku-api/domain/jobs",
         "//services/tadoku-api/domain/mail",
         "//services/tadoku-api/generated/sqlc/email",

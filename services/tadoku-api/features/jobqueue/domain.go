@@ -20,6 +20,8 @@ var (
 
 const WorkerComponent = "tadoku-worker"
 
+const AttemptsExhausted = "attempts_exhausted"
+
 type ClaimedJob struct {
 	ID             int64
 	Tenant         tenant.Key
@@ -34,11 +36,6 @@ type ClaimedJob struct {
 type ExhaustedJob struct {
 	Tenant tenant.Key
 	Code   string
-}
-
-type Failure struct {
-	Payload json.RawMessage
-	Code    string
 }
 
 type Stats struct {

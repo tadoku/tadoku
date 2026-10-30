@@ -60,10 +60,6 @@ type Page struct {
 	Emails     []Email
 	NextCursor string
 }
-type SendFailure struct {
-	EmailID uuid.UUID
-	Error   string
-}
 type WriteResult struct {
 	EmailID uuid.UUID
 	Jobs    []jobs.Job

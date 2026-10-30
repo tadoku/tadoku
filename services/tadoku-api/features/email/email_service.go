@@ -152,23 +152,14 @@ func (s *Service) Retain(ctx context.Context) error {
 	return s.repository.retain(ctx, timex.Now())
 }
 
-// Pass only failures of send jobs in the context tenant whose payloads have no unfailed job.
-func (s *Service) ReconcileFailures(ctx context.Context, failures []SendFailure) error {
+// Pass the job queue's error code for a failed job that recorded none.
+func (s *Service) ReconcileFailures(ctx context.Context, exhaustedCode string) error {
 	key, ok := tenant.FromContext(ctx)
 	if !ok {
 		return errx.NewUnavailableError("email tenant missing", nil)
 	}
 
-	for _, failure := range failures {
-		var delivery Delivery = Failed{Error: failure.Error}
-		if s.holds(key) {
-			delivery = Held{}
-		}
-		if err := s.repository.finish(ctx, failure.EmailID, delivery); err != nil {
-			return err
-		}
-	}
-	return nil
+	return s.repository.reconcileFailures(ctx, s.holds(key), exhaustedCode)
 }
 
 func (s *Service) holds(key tenant.Key) bool {

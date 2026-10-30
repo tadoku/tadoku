@@ -263,44 +263,6 @@ func (q *Queries) FailExhausted(ctx context.Context, arg FailExhaustedParams) ([
 	return items, nil
 }
 
-const failures = `-- name: Failures :many
-select distinct on (failed.payload) failed.payload,
-  coalesce(failed.last_error, 'attempts_exhausted')::text as last_error
-from jobs as failed
-where failed.task_type = $1::text and failed.state = 'failed'
-  and not exists (
-    select 1 from jobs as other
-    where other.task_type = failed.task_type and other.payload = failed.payload
-      and other.state <> 'failed'
-  )
-order by failed.payload, failed.id desc
-`
-
-type FailuresRow struct {
-	Payload   []byte
-	LastError string
-}
-
-func (q *Queries) Failures(ctx context.Context, taskType string) ([]FailuresRow, error) {
-	rows, err := q.db.Query(ctx, failures, taskType)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []FailuresRow{}
-	for rows.Next() {
-		var i FailuresRow
-		if err := rows.Scan(&i.Payload, &i.LastError); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const renew = `-- name: Renew :one
 with locked as materialized (
   select id, lease_expires_at from jobs

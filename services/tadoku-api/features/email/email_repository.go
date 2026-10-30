@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/mail"
 	queries "github.com/tadoku/tadoku/services/tadoku-api/generated/sqlc/email"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
@@ -121,6 +122,18 @@ func (r *Repository) retain(ctx context.Context, now time.Time) error {
 	}
 	_, err = queries.New(executor).Retain(ctx, postgres.Timestamptz(now))
 	return err
+}
+
+func (r *Repository) reconcileFailures(ctx context.Context, hold bool, exhaustedCode string) error {
+	executor, err := postgres.Executor(ctx, r.pool)
+	if err != nil {
+		return err
+	}
+	return queries.New(executor).ReconcileFailures(ctx, queries.ReconcileFailuresParams{
+		Hold:           hold,
+		ExhaustedError: exhaustedCode,
+		TaskType:       string(jobs.EmailSendV1),
+	})
 }
 
 func emailFromRow(row queries.FindRow) (Email, error) {

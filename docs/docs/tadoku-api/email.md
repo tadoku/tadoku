@@ -57,10 +57,12 @@ Use the recorded provider message ID to investigate a delivered message.
 A failed SMTP attempt leaves the email pending until the fifth attempt, which
 records `failed` and its error. Worker maintenance also reconciles pending rows
 whose delivery jobs have all failed, including abandoned final leases. For each
-tenant, `jobqueue.Service.Failures` returns the latest failed `email.send.v1`
-job of every email without a pending, running or completed send job, and
-`email.Service.ReconcileFailures` applies the delivery hold rule: the email
-becomes `held`, or `failed` with that job's `last_error`. Reconciliation runs at
+tenant, `email.Service.ReconcileFailures` applies the delivery hold rule that
+`SendAttempt` uses and settles those emails in one statement, matching
+`email.send.v1` jobs by their payload's `email_id`. An email with a pending,
+running or completed send job stays pending. A settled email becomes `held`, or
+`failed` with the latest failed job's `last_error`, or the job queue's
+`attempts_exhausted` when that job recorded none. Reconciliation runs at
 startup and with the worker's 15-second maintenance pass.
 
 SMTP cannot make the external send and PostgreSQL update atomic. A crash after

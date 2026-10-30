@@ -76,16 +76,6 @@ func (s *Service) FailExhausted(ctx context.Context, typ jobs.Type, maxAttempts 
 	return s.repository.FailExhausted(ctx, typ, maxAttempts)
 }
 
-// Failures returns the latest failed job of typ per payload in the context tenant, skipping payloads that
-// another job of typ has pending, running or completed.
-func (s *Service) Failures(ctx context.Context, typ jobs.Type) ([]Failure, error) {
-	if typ == "" {
-		return nil, errx.NewInvalidInputError("job type must not be empty")
-	}
-
-	return s.repository.Failures(ctx, typ)
-}
-
 func (s *Service) Renew(ctx context.Context, task ClaimedJob, lease time.Duration) (time.Time, bool, error) {
 	if lease < time.Microsecond {
 		return time.Time{}, false, errx.NewInvalidInputError("job lease must be at least one microsecond")

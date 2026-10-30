@@ -157,6 +157,22 @@ func TestEmailWorkerReconciliationRules(t *testing.T) {
 	const pendingOtherType = `insert into jobs (tenant, task_type, payload, next_attempt_at)
 		select tenant, 'email.other.v1', payload, now() + interval '1 day'
 		from jobs where tenant = $1 and payload->>'email_id' = $2`
+	const extraFields = `update jobs
+		set state = 'failed', attempts = 5, failed_at = now(), last_error = 'handler_error',
+			payload = payload || '{"extra":true}'
+		where tenant = $1 and payload->>'email_id' = $2`
+	const failExtraReplay = `insert into jobs (
+			tenant, task_type, payload, state, attempts, failed_at, last_error,
+			replay_of_id, replay_actor, replay_reason
+		)
+		select tenant, task_type, payload || '{"extra":true}', 'failed', 5, now(), 'rejected', id, 'fixture', 'retried'
+		from jobs where tenant = $1 and payload->>'email_id' = $2`
+	const pendingExtraFields = `insert into jobs (tenant, task_type, payload, next_attempt_at)
+		select tenant, task_type, payload || '{"extra":true}', now() + interval '1 day'
+		from jobs where tenant = $1 and payload->>'email_id' = $2`
+	const completedSend = `insert into jobs (tenant, task_type, payload, state, attempts, completed_at)
+		select tenant, task_type, payload, 'completed', 1, now()
+		from jobs where tenant = $1 and payload->>'email_id' = $2`
 	cases := []struct {
 		name     string
 		key      tenant.Key
@@ -193,6 +209,30 @@ func TestEmailWorkerReconciliationRules(t *testing.T) {
 			want: email.Pending{},
 		},
 		{
+			name:     "failed job with extra payload fields",
+			key:      tenant.Production(),
+			fixtures: []string{extraFields},
+			want:     email.Failed{Error: "handler_error"},
+		},
+		{
+			name:     "latest failed replay with extra payload fields",
+			key:      tenant.Production(),
+			fixtures: []string{failSend, failExtraReplay},
+			want:     email.Failed{Error: "rejected"},
+		},
+		{
+			name:     "pending job with extra payload fields",
+			key:      tenant.Production(),
+			fixtures: []string{failSend, pendingExtraFields},
+			want:     email.Pending{},
+		},
+		{
+			name:     "completed job",
+			key:      tenant.Production(),
+			fixtures: []string{failSend, completedSend},
+			want:     email.Pending{},
+		},
+		{
 			name:     "test tenant with delivery enabled",
 			key:      branch,
 			fixtures: []string{failSend},
@@ -200,7 +240,11 @@ func TestEmailWorkerReconciliationRules(t *testing.T) {
 		},
 	}
 	ids := make([]uuid.UUID, 0, len(cases))
+	stillPending := 0
 	for _, tc := range cases {
+		if tc.want == (email.Pending{}) {
+			stillPending++
+		}
 		ctx := tenant.WithKey(t.Context(), tc.key)
 		id := writeEmail(t, ctx, service, recoveryMail())
 		ids = append(ids, id)
@@ -224,7 +268,7 @@ func TestEmailWorkerReconciliationRules(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if pending == 1 || time.Now().After(deadline) {
+		if pending == stillPending || time.Now().After(deadline) {
 			break
 		}
 		time.Sleep(20 * time.Millisecond)

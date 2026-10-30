@@ -39,9 +39,9 @@ const Page = () => {
   if (registration.isError) {
     return (
       <div role="alert" className="v-stack spaced">
-        <span className="flash error">
+        <Flash style="error" IconComponent={ExclamationCircleIcon}>
           Could not load your registration, please try again.
-        </span>
+        </Flash>
         <div>
           <button
             type="button"

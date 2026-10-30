@@ -1,0 +1,4 @@
+>>> POST /immersion/contests/f0000000-0000-4000-8000-000000000001/moderation/detach/81855ad8-681d-4d86-91e9-1e00167939cb
+HTTP/1.1 200 OK
+Content-Length: 0
+

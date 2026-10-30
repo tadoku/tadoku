@@ -177,10 +177,11 @@ func emailRetention(t *testing.T, ctx context.Context, now time.Time) {
 			t.Error(err)
 		}
 	})
-	for _, tc := range []struct {
+	cases := []struct {
 		key  tenant.Key
 		days int
-	}{{tenant.Production(), 3}, {key, 14}} {
+	}{{tenant.Production(), 3}, {key, 14}}
+	for _, tc := range cases {
 		scoped := tenant.WithKey(t.Context(), tc.key)
 		for _, age := range []time.Duration{time.Duration(tc.days)*24*time.Hour + time.Microsecond,
 			time.Duration(tc.days) * 24 * time.Hour,
@@ -194,14 +195,22 @@ func emailRetention(t *testing.T, ctx context.Context, now time.Time) {
 				t.Fatal(err)
 			}
 		}
-		if err := emailService().Retain(scoped); err != nil {
+	}
+	for retained, tc := range cases {
+		if err := emailService().Retain(tenant.WithKey(t.Context(), tc.key)); err != nil {
 			t.Fatal(err)
 		}
-		var count int
-		if err := api.db.Pool.QueryRow(ctx,
-			"select count(*) from emails where tenant=$1",
-			tc.key.String()).Scan(&count); err != nil || count != 2 {
-			t.Fatalf("tenant=%s count=%d err=%v", tc.key, count, err)
+		for i, other := range cases {
+			want := 3
+			if i <= retained {
+				want = 2
+			}
+			var count int
+			if err := api.db.Pool.QueryRow(ctx,
+				"select count(*) from emails where tenant=$1",
+				other.key.String()).Scan(&count); err != nil || count != want {
+				t.Fatalf("after %s retention: tenant=%s count=%d want=%d err=%v", tc.key, other.key, count, want, err)
+			}
 		}
 	}
 	if _, err := api.db.Pool.Exec(ctx, "delete from tenants where key=$1", key.String()); err != nil {

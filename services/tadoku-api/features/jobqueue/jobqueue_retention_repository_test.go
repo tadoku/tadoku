@@ -87,7 +87,10 @@ func TestRetryReplayAndRetention(t *testing.T) {
 		values ('tadoku/prod', 'leaderboard.invalidate_official.v1', '{}', 'completed', $1, $1)`, jobTestTime); err != nil {
 		t.Fatal(err)
 	}
-	deleted, err := repo.CleanupCompleted(tenantCtx, jobTestTime.AddDate(0, 3, 0).Add(time.Minute), 10)
+	var deleted int64
+	at(t, jobTestTime.AddDate(0, 3, 0).Add(time.Minute), func() {
+		deleted, err = NewService(repo).CleanupCompleted(tenantCtx, 10)
+	})
 	if err != nil || deleted != 1 {
 		t.Errorf("cleanup deleted = %d, %v; want only unlinked completion", deleted, err)
 	}
@@ -196,7 +199,8 @@ func TestCleanupCompletedRetainsThreeUTCCalendarMonths(t *testing.T) {
 					return err
 				}
 
-				deleted, err := repo.CleanupCompleted(ctx, tc.now, 10)
+				var deleted int64
+				at(t, tc.now, func() { deleted, err = NewService(repo).CleanupCompleted(ctx, 10) })
 				if err != nil {
 					return err
 				}
@@ -251,7 +255,8 @@ func TestCleanupCompletedExpiresSuccessfulReplayAndPreservesOtherStates(t *testi
 		t.Fatal(err)
 	}
 
-	deleted, err := repo.CleanupCompleted(tenantCtx, now, 1)
+	var deleted int64
+	at(t, now, func() { deleted, err = NewService(repo).CleanupCompleted(tenantCtx, 1) })
 	if err != nil || deleted != 1 {
 		t.Fatalf("bounded cleanup = %d, %v", deleted, err)
 	}
@@ -263,7 +268,7 @@ func TestCleanupCompletedExpiresSuccessfulReplayAndPreservesOtherStates(t *testi
 		t.Errorf("expired successful replay was retained")
 	}
 
-	deleted, err = repo.CleanupCompleted(tenantCtx, now, 10)
+	at(t, now, func() { deleted, err = NewService(repo).CleanupCompleted(tenantCtx, 10) })
 	if err != nil || deleted != 1 {
 		t.Fatalf("remaining cleanup = %d, %v", deleted, err)
 	}

@@ -114,12 +114,12 @@ func (r *Repository) finish(ctx context.Context, id uuid.UUID, delivery Delivery
 	return queries.New(executor).Finish(ctx, args)
 }
 
-func (r *Repository) retain(ctx context.Context, now time.Time) error {
+func (r *Repository) retain(ctx context.Context, cutoff time.Time) error {
 	executor, err := postgres.Executor(ctx, r.pool)
 	if err != nil {
 		return err
 	}
-	_, err = queries.New(executor).Retain(ctx, postgres.Timestamptz(now))
+	_, err = queries.New(executor).Retain(ctx, postgres.Timestamptz(cutoff))
 	return err
 }
 

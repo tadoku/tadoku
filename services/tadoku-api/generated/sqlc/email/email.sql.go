@@ -223,14 +223,11 @@ func (q *Queries) ReconcileFailures(ctx context.Context, hold bool) error {
 
 const retain = `-- name: Retain :execrows
 delete from emails
-where created_at < $1::timestamptz - case
-  when tenant = 'tadoku/prod' then interval '3 days'
-  else interval '14 days'
-end
+where created_at < $1::timestamptz
 `
 
-func (q *Queries) Retain(ctx context.Context, now pgtype.Timestamptz) (int64, error) {
-	result, err := q.db.Exec(ctx, retain, now)
+func (q *Queries) Retain(ctx context.Context, cutoff pgtype.Timestamptz) (int64, error) {
+	result, err := q.db.Exec(ctx, retain, cutoff)
 	if err != nil {
 		return 0, err
 	}

@@ -135,7 +135,22 @@ func (s *Service) CleanupCompleted(ctx context.Context, limit int) (int64, error
 		return 0, errx.NewInvalidInputError("cleanup limit must be between 1 and 1000")
 	}
 
-	return s.repository.CleanupCompleted(ctx, now, limit)
+	return s.repository.CleanupCompleted(ctx, threeCalendarMonthsBefore(now), limit)
+}
+
+func threeCalendarMonthsBefore(now time.Time) time.Time {
+	now = now.UTC()
+	lastDay := time.Date(now.Year(), now.Month()-2, 0, 0, 0, 0, 0, time.UTC).Day()
+	return time.Date(
+		now.Year(),
+		now.Month()-3,
+		min(now.Day(), lastDay),
+		now.Hour(),
+		now.Minute(),
+		now.Second(),
+		now.Nanosecond(),
+		time.UTC,
+	)
 }
 
 func (s *Service) Tenants(ctx context.Context) ([]tenant.Key, error) {

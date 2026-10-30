@@ -191,13 +191,13 @@ func (r *Repository) Replay(ctx context.Context, failedID int64, actor, reason s
 	return id, nil
 }
 
-func (r *Repository) CleanupCompleted(ctx context.Context, now time.Time, limit int) (int64, error) {
+func (r *Repository) CleanupCompleted(ctx context.Context, cutoff time.Time, limit int) (int64, error) {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return 0, err
 	}
 	return queries.New(executor).CleanupCompleted(ctx, queries.CleanupCompletedParams{
-		Now:       postgres.Timestamptz(now),
+		Cutoff:    postgres.Timestamptz(cutoff),
 		BatchSize: int32(limit),
 	})
 }

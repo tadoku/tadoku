@@ -154,11 +154,11 @@ func (s *Service) Retain(ctx context.Context) error {
 		return errx.NewUnavailableError("email tenant missing", nil)
 	}
 
-	retention := 14 * 24 * time.Hour
+	days := int32(14)
 	if key == tenant.Production() {
-		retention = 3 * 24 * time.Hour
+		days = 3
 	}
-	return s.repository.retain(ctx, timex.Now().Add(-retention))
+	return s.repository.retain(ctx, timex.Now(), days)
 }
 
 func (s *Service) ReconcileFailures(ctx context.Context) error {

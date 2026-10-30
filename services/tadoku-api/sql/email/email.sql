@@ -28,7 +28,7 @@ where id = $1 and status = 'pending';
 
 -- name: Retain :execrows
 delete from emails
-where created_at < sqlc.arg('cutoff')::timestamptz;
+where created_at < sqlc.arg('now')::timestamptz - sqlc.arg('retention')::interval;
 
 -- name: ReconcileFailures :exec
 update emails as e

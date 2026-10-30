@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/tadoku/tadoku/services/tadoku-api/features/email"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
@@ -221,6 +222,51 @@ func emailRetention(t *testing.T, ctx context.Context, now time.Time) {
 		"select count(*) from emails where tenant=$1",
 		key.String()).Scan(&count); err != nil || count != 0 {
 		t.Fatalf("cascade count=%d err=%v", count, err)
+	}
+}
+
+func TestEmailRetentionCountsSessionCalendarDays(t *testing.T) {
+	api.reset(t, "")
+	ctx := tenant.WithKey(t.Context(), tenant.Production())
+	config := api.db.AppPool.Config()
+	config.ConnConfig.RuntimeParams["timezone"] = "America/New_York"
+	pool, err := pgxpool.NewWithConfig(t.Context(), config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer pool.Close()
+
+	now := time.Date(2026, 11, 3, 17, 0, 0, 0, time.UTC)
+	cutoff := time.Date(2026, 10, 31, 16, 0, 0, 0, time.UTC)
+	for _, created := range []time.Time{
+		cutoff.Add(-time.Microsecond),
+		cutoff,
+		cutoff.Add(30 * time.Minute),
+		now.Add(-time.Hour),
+	} {
+		id := writeEmail(t, ctx, emailService(), recoveryMail())
+		if _, err := api.db.Pool.Exec(ctx,
+			"update emails set created_at=$1 where tenant=$2 and id=$3",
+			created,
+			tenant.Production().String(),
+			id); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	timex.TheWorld(now, func() {
+		err = email.NewService(email.NewRepository(pool), nil).Retain(ctx)
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var retained, total int
+	if err := api.db.Pool.QueryRow(ctx,
+		"select count(*) filter (where created_at >= $2), count(*) from emails where tenant=$1",
+		tenant.Production().String(),
+		cutoff).Scan(&retained, &total); err != nil || retained != 3 || total != 3 {
+		t.Fatalf("since %s retained=%d total=%d want 3 and 3 err=%v", cutoff, retained, total, err)
 	}
 }
 

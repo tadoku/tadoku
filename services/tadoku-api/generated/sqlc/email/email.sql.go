@@ -223,11 +223,16 @@ func (q *Queries) ReconcileFailures(ctx context.Context, hold bool) error {
 
 const retain = `-- name: Retain :execrows
 delete from emails
-where created_at < $1::timestamptz
+where created_at < $1::timestamptz - $2::interval
 `
 
-func (q *Queries) Retain(ctx context.Context, cutoff pgtype.Timestamptz) (int64, error) {
-	result, err := q.db.Exec(ctx, retain, cutoff)
+type RetainParams struct {
+	Now       pgtype.Timestamptz
+	Retention pgtype.Interval
+}
+
+func (q *Queries) Retain(ctx context.Context, arg RetainParams) (int64, error) {
+	result, err := q.db.Exec(ctx, retain, arg.Now, arg.Retention)
 	if err != nil {
 		return 0, err
 	}

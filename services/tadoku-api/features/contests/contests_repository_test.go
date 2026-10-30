@@ -62,7 +62,7 @@ func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
 		Official: true,
 		PageSize: 10,
 	}
-	items, total, err := repository.ListContests(tenantCtx, parameters, publicContests)
+	items, total, err := repository.ListContests(tenantCtx, parameters, publicContests{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -71,7 +71,7 @@ func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
 	}
 
 	parameters.Page = 1
-	items, total, err = repository.ListContests(tenantCtx, parameters, publicContests)
+	items, total, err = repository.ListContests(tenantCtx, parameters, publicContests{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -85,7 +85,7 @@ func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
 			Official: false,
 			PageSize: 10,
 		},
-		publicContests,
+		publicContests{},
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -94,15 +94,29 @@ func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
 		t.Errorf("hidden-only list=%+v total=%d, want empty page with one private match", items, total)
 	}
 
+	items, total, err = repository.ListContests(
+		tenantCtx,
+		ListParameters{
+			Official: false,
+			PageSize: 10,
+		},
+		nil,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(items) != 0 || total != 1 {
+		t.Errorf("missing-visibility list=%+v total=%d, want private contests hidden", items, total)
+	}
+
 	orphanOwnerID := uuid.MustParse("33333333-3333-4333-8333-333333333333")
 	items, total, err = repository.ListContests(
 		tenantCtx,
 		ListParameters{
-			UserID:   &orphanOwnerID,
 			Official: true,
 			PageSize: 10,
 		},
-		filteredOwnerContests,
+		filteredOwnerContests{ownerID: orphanOwnerID},
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -113,11 +127,10 @@ func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
 
 	ownerID := uuid.MustParse("11111111-1111-4111-8111-111111111111")
 	parameters = ListParameters{
-		UserID:   &ownerID,
 		Official: false,
 		PageSize: 10,
 	}
-	items, total, err = repository.ListContests(tenantCtx, parameters, filteredOwnerContests)
+	items, total, err = repository.ListContests(tenantCtx, parameters, filteredOwnerContests{ownerID: ownerID})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -129,11 +142,10 @@ func TestContestsRepositoryDiscoveryQueries(t *testing.T) {
 	items, total, err = repository.ListContests(
 		tenantCtx,
 		ListParameters{
-			UserID:   &missingOwnerID,
 			Official: false,
 			PageSize: 10,
 		},
-		filteredOwnerContests,
+		filteredOwnerContests{ownerID: missingOwnerID},
 	)
 	if err != nil {
 		t.Fatal(err)

@@ -87,7 +87,15 @@ func TestCreateAnnouncementParametersHrefValidation(t *testing.T) {
 		EndsAt:    time.Date(2026, 9, 13, 0, 0, 0, 0, time.UTC),
 	}
 
-	for _, href := range []string{"", "/news", "https://example.test/news", "http://example.test", "/" + strings.Repeat("a", 2047)} {
+	for _, href := range []string{
+		"",
+		"/news",
+		"/contests/123",
+		"/news?x=1#frag",
+		"https://example.test/news",
+		"http://example.test",
+		"/" + strings.Repeat("a", 2047),
+	} {
 		t.Run("valid "+href, func(t *testing.T) {
 			parameters := parameters
 			parameters.Href = &href
@@ -104,6 +112,13 @@ func TestCreateAnnouncementParametersHrefValidation(t *testing.T) {
 		{href: "news", message: "href must be an http(s) URL or a root-relative path"},
 		{href: "//example.test/news", message: "href must be an http(s) URL or a root-relative path"},
 		{href: `/\example.test/news`, message: "href must be an http(s) URL or a root-relative path"},
+		{href: "/%5cevil.com", message: "href must be an http(s) URL or a root-relative path"},
+		{href: "/%2fevil.com", message: "href must be an http(s) URL or a root-relative path"},
+		{href: "http:", message: "href must be an http(s) URL or a root-relative path"},
+		{href: "https://", message: "href must be an http(s) URL or a root-relative path"},
+		{href: "http:evil.com", message: "href must be an http(s) URL or a root-relative path"},
+		{href: "https:/evil.com", message: "href must be an http(s) URL or a root-relative path"},
+		{href: "https://user@host/path", message: "href must be an http(s) URL or a root-relative path"},
 		{href: "javascript:alert(1)", message: "href must be an http(s) URL or a root-relative path"},
 		{href: "data:text/html,<script>alert(1)</script>", message: "href must be an http(s) URL or a root-relative path"},
 		{href: "vbscript:msgbox(1)", message: "href must be an http(s) URL or a root-relative path"},

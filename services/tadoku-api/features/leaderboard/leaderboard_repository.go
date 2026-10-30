@@ -26,148 +26,45 @@ func (r *Repository) contestExists(ctx context.Context, id uuid.UUID) (bool, err
 	return exists, nil
 }
 
-func (r *Repository) contest(ctx context.Context, request ContestRequest) (*page, error) {
+func (r *Repository) contestScores(ctx context.Context, request ContestRequest) ([]score, error) {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return nil, err
 	}
-	rows, err := queries.New(executor).LeaderboardForContest(ctx, queries.LeaderboardForContestParams{
+	rows, err := queries.New(executor).ContestLeaderboard(ctx, queries.ContestLeaderboardParams{
 		ContestID:    postgres.UUID(request.ContestID),
 		LanguageCode: postgres.NullableNonEmptyText(request.LanguageCode),
 		ActivityID:   postgres.NullableInt4(request.ActivityID),
-		StartFrom:    request.offset(),
-		PageSize:     int32(request.PageSize),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("fetch contest leaderboard: %w", err)
 	}
-	board := &page{
-		scores: make([]score, 0, len(rows)),
-		offset: int(request.offset()),
+
+	scores := make([]score, len(rows))
+	for i, row := range rows {
+		scores[i] = score{userID: uuid.UUID(row.UserID.Bytes), value: float64(row.Score)}
 	}
-	for _, row := range rows {
-		board.totalCount = int(row.TotalSize)
-		board.aboveFirst = int(row.AboveFirst)
-		board.throughLast = int(row.ThroughLast)
-		if row.UserID.Valid {
-			board.scores = append(board.scores, score{
-				userID: uuid.UUID(row.UserID.Bytes),
-				value:  float64(row.Score.Float32),
-			})
-		}
-	}
-	return board, nil
+	return scores, nil
 }
 
-func (r *Repository) yearly(ctx context.Context, request YearlyRequest) (*page, error) {
+// officialScores reads the yearly board for year, or the global board when year is nil.
+func (r *Repository) officialScores(ctx context.Context, year *int16, request Request) ([]score, error) {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return nil, err
 	}
-	rows, err := queries.New(executor).YearlyLeaderboard(ctx, queries.YearlyLeaderboardParams{
-		Year:         int16(request.Year),
+	rows, err := queries.New(executor).OfficialLeaderboard(ctx, queries.OfficialLeaderboardParams{
+		Year:         postgres.NullableInt2(year),
 		LanguageCode: postgres.NullableNonEmptyText(request.LanguageCode),
 		ActivityID:   postgres.NullableInt4(request.ActivityID),
-		StartFrom:    request.offset(),
-		PageSize:     int32(request.PageSize),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("fetch yearly leaderboard: %w", err)
+		return nil, fmt.Errorf("fetch official leaderboard: %w", err)
 	}
-	board := &page{
-		scores: make([]score, 0, len(rows)),
-		offset: int(request.offset()),
-	}
-	for _, row := range rows {
-		board.totalCount = int(row.TotalSize)
-		board.aboveFirst = int(row.AboveFirst)
-		board.throughLast = int(row.ThroughLast)
-		if row.UserID.Valid {
-			board.scores = append(board.scores, score{
-				userID: uuid.UUID(row.UserID.Bytes),
-				value:  float64(row.Score.Float32),
-			})
-		}
-	}
-	return board, nil
-}
 
-func (r *Repository) global(ctx context.Context, request Request) (*page, error) {
-	executor, err := postgres.Executor(ctx, r.db)
-	if err != nil {
-		return nil, err
-	}
-	rows, err := queries.New(executor).GlobalLeaderboard(ctx, queries.GlobalLeaderboardParams{
-		LanguageCode: postgres.NullableNonEmptyText(request.LanguageCode),
-		ActivityID:   postgres.NullableInt4(request.ActivityID),
-		StartFrom:    request.offset(),
-		PageSize:     int32(request.PageSize),
-	})
-	if err != nil {
-		return nil, fmt.Errorf("fetch global leaderboard: %w", err)
-	}
-	board := &page{
-		scores: make([]score, 0, len(rows)),
-		offset: int(request.offset()),
-	}
-	for _, row := range rows {
-		board.totalCount = int(row.TotalSize)
-		board.aboveFirst = int(row.AboveFirst)
-		board.throughLast = int(row.ThroughLast)
-		if row.UserID.Valid {
-			board.scores = append(board.scores, score{
-				userID: uuid.UUID(row.UserID.Bytes),
-				value:  float64(row.Score.Float32),
-			})
-		}
-	}
-	return board, nil
-}
-
-func (r *Repository) allContestScores(ctx context.Context, id uuid.UUID) ([]score, error) {
-	executor, err := postgres.Executor(ctx, r.db)
-	if err != nil {
-		return nil, err
-	}
-	rows, err := queries.New(executor).ContestLeaderboardAllScores(ctx, postgres.UUID(id))
-	if err != nil {
-		return nil, fmt.Errorf("fetch all contest leaderboard scores: %w", err)
-	}
-	res := make([]score, len(rows))
+	scores := make([]score, len(rows))
 	for i, row := range rows {
-		res[i] = score{userID: uuid.UUID(row.UserID.Bytes), value: float64(row.Score)}
+		scores[i] = score{userID: uuid.UUID(row.UserID.Bytes), value: float64(row.Score)}
 	}
-	return res, nil
-}
-
-func (r *Repository) allYearlyScores(ctx context.Context, year int) ([]score, error) {
-	executor, err := postgres.Executor(ctx, r.db)
-	if err != nil {
-		return nil, err
-	}
-	rows, err := queries.New(executor).YearlyLeaderboardAllScores(ctx, int16(year))
-	if err != nil {
-		return nil, fmt.Errorf("fetch all yearly leaderboard scores: %w", err)
-	}
-	res := make([]score, len(rows))
-	for i, row := range rows {
-		res[i] = score{userID: uuid.UUID(row.UserID.Bytes), value: float64(row.Score)}
-	}
-	return res, nil
-}
-
-func (r *Repository) allGlobalScores(ctx context.Context) ([]score, error) {
-	executor, err := postgres.Executor(ctx, r.db)
-	if err != nil {
-		return nil, err
-	}
-	rows, err := queries.New(executor).GlobalLeaderboardAllScores(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("fetch all global leaderboard scores: %w", err)
-	}
-	res := make([]score, len(rows))
-	for i, row := range rows {
-		res[i] = score{userID: uuid.UUID(row.UserID.Bytes), value: float64(row.Score)}
-	}
-	return res, nil
+	return scores, nil
 }

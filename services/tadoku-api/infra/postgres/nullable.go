@@ -21,6 +21,13 @@ func NullableNonEmptyText(value *string) pgtype.Text {
 	return NullableText(value)
 }
 
+func NullableInt2(value *int16) pgtype.Int2 {
+	if value == nil {
+		return pgtype.Int2{}
+	}
+	return pgtype.Int2{Int16: *value, Valid: true}
+}
+
 func NullableInt4(value *int32) pgtype.Int4 {
 	if value == nil {
 		return pgtype.Int4{}

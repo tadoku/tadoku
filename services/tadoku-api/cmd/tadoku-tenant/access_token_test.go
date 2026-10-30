@@ -99,15 +99,19 @@ func TestAccessTokenCommandLifecycle(t *testing.T) {
 	hash := sha256.Sum256([]byte(raw))
 	var stored string
 	var id uuid.UUID
+	var scopes []string
 	err = db.Pool.QueryRow(t.Context(),
-		"select id, token_hash from access_tokens where tenant='e2e/tokens-0123abcd'",
-	).Scan(&id, &stored)
+		"select id, token_hash, scopes from access_tokens where tenant='e2e/tokens-0123abcd'",
+	).Scan(&id, &stored, &scopes)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	if stored != hex.EncodeToString(hash[:]) || stored == raw {
 		t.Fatal("database did not store only the token SHA-256 hash")
+	}
+	if len(scopes) != 1 || scopes[0] != "email:read" {
+		t.Errorf("stored scopes=%v, want [email:read]", scopes)
 	}
 
 	list, err := tokenCommand(t, "list", "--tenant", "e2e/tokens-0123abcd")
@@ -118,12 +122,14 @@ func TestAccessTokenCommandLifecycle(t *testing.T) {
 	var metadata []struct {
 		ID        uuid.UUID
 		Name      string
+		Scopes    []string
 		ExpiresAt time.Time
 		RevokedAt *time.Time
 	}
 
 	if json.Unmarshal([]byte(list), &metadata) != nil || len(metadata) != 1 ||
-		metadata[0].ID != id || metadata[0].Name != "reader" {
+		metadata[0].ID != id || metadata[0].Name != "reader" ||
+		len(metadata[0].Scopes) != 1 || metadata[0].Scopes[0] != "email:read" {
 		t.Fatal("list did not return token metadata")
 	}
 	if strings.Contains(list, raw) || strings.Contains(list, stored) {
@@ -158,8 +164,25 @@ func TestAccessTokenCommandLimits(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if _, err := tokenCommand(t, create...); err == nil || !strings.Contains(err.Error(), "10 active") {
+	_, err := tokenCommand(t, create...)
+	if err == nil || err.Error() != "tenant already has 10 active tokens" {
 		t.Errorf("eleventh token: %v, want active-token limit", err)
+	}
+
+	for _, release := range []string{
+		"update access_tokens set revoked_at=now() where token_hash='1'",
+		"update access_tokens set expires_at=now()-interval '1 second' where token_hash='2'",
+	} {
+		if _, err := db.Pool.Exec(t.Context(), release); err != nil {
+			t.Fatal(err)
+		}
+
+		if _, err := tokenCommand(t, create...); err != nil {
+			t.Errorf("tenth active token after %q: %v", release, err)
+		}
+		if _, err := tokenCommand(t, create...); err == nil || !strings.Contains(err.Error(), "10 active") {
+			t.Errorf("eleventh active token after %q: %v, want active-token limit", release, err)
+		}
 	}
 
 	create[len(create)-1] = "720h1ns"

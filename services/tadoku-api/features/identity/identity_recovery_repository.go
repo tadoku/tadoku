@@ -23,6 +23,10 @@ func (r *Repository) lockRecoveryAccount(ctx context.Context, email Email) (cred
 	if err != nil {
 		return credentials{}, err
 	}
+	status, err := parseAccountStatus(row.State, row.DeletedAt, row.DeletionLockedAt)
+	if err != nil {
+		return credentials{}, err
+	}
 	return credentials{
 		account: Account{
 			ID:          uuid.UUID(row.UserID.Bytes),
@@ -31,7 +35,7 @@ func (r *Repository) lockRecoveryAccount(ctx context.Context, email Email) (cred
 			CreatedAt:   row.CreatedAt.Time,
 		},
 		passwordHash: row.PasswordHash,
-		active:       true,
+		status:       status,
 	}, nil
 }
 
@@ -47,6 +51,10 @@ func (r *Repository) lockAccount(ctx context.Context, id uuid.UUID) (credentials
 	if err != nil {
 		return credentials{}, err
 	}
+	status, err := parseAccountStatus(row.State, row.DeletedAt, row.DeletionLockedAt)
+	if err != nil {
+		return credentials{}, err
+	}
 	return credentials{
 		account: Account{
 			ID:          uuid.UUID(row.UserID.Bytes),
@@ -55,7 +63,7 @@ func (r *Repository) lockAccount(ctx context.Context, id uuid.UUID) (credentials
 			CreatedAt:   row.CreatedAt.Time,
 		},
 		passwordHash: row.PasswordHash,
-		active:       true,
+		status:       status,
 	}, nil
 }
 

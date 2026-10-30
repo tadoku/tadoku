@@ -16,7 +16,7 @@ from new_account;
 
 -- name: FindCredentials :one
 select a.user_id, a.email, u.display_name, a.created_at, a.password_hash,
-  (a.state = 'active' and u.deleted_at is null and u.deletion_locked_at is null)::boolean as active
+  a.state, u.deleted_at, u.deletion_locked_at
 from accounts a
 join users u on u.tenant = a.tenant and u.id = a.user_id
 where a.email_normalized = sqlc.arg(email_normalized);
@@ -34,37 +34,31 @@ where a.user_id = sqlc.arg(user_id)
 for update of a;
 
 -- name: FindSession :one
-select a.user_id, a.email, u.display_name, a.created_at, s.authenticated_at, s.expires_at
+select a.user_id, a.email, u.display_name, a.created_at, s.authenticated_at, s.expires_at,
+  a.state, u.deleted_at, u.deletion_locked_at
 from sessions s
 join accounts a on a.tenant = s.tenant and a.user_id = s.user_id
 join users u on u.tenant = a.tenant and u.id = a.user_id
 where s.token_hash = sqlc.arg(token_hash)
-  and s.expires_at > sqlc.arg(now)
-  and a.state = 'active'
-  and u.deleted_at is null
-  and u.deletion_locked_at is null;
+  and s.expires_at > sqlc.arg(now);
 
 -- name: DeleteSession :exec
 delete from sessions where token_hash = sqlc.arg(token_hash);
 
 -- name: LockRecoveryAccount :one
-select a.user_id, a.email, u.display_name, a.created_at, a.password_hash
+select a.user_id, a.email, u.display_name, a.created_at, a.password_hash,
+  a.state, u.deleted_at, u.deletion_locked_at
 from accounts a
 join users u on u.tenant = a.tenant and u.id = a.user_id
 where a.email_normalized = sqlc.arg(email_normalized)
-  and a.state = 'active'
-  and u.deleted_at is null
-  and u.deletion_locked_at is null
 for update of a;
 
 -- name: LockAccount :one
-select a.user_id, a.email, u.display_name, a.created_at, a.password_hash
+select a.user_id, a.email, u.display_name, a.created_at, a.password_hash,
+  a.state, u.deleted_at, u.deletion_locked_at
 from accounts a
 join users u on u.tenant = a.tenant and u.id = a.user_id
 where a.user_id = sqlc.arg(user_id)
-  and a.state = 'active'
-  and u.deleted_at is null
-  and u.deletion_locked_at is null
 for update of a;
 
 -- name: CreateRecoveryToken :exec

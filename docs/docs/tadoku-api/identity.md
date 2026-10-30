@@ -133,12 +133,32 @@ cause while leaving room for several people to sign up behind one shared
 address. Without trusted proxy configuration, every client behind one proxy
 shares the budget.
 
+## Usable accounts
+
+An account may sign in, hold a session and recover its password only while its
+state is `active` and its user is neither deleted nor locked for deletion. The
+repository maps `accounts.state`, `users.deleted_at` and
+`users.deletion_locked_at` to one account status, failing on an unknown state,
+and the service decides usability from it
+(`services/tadoku-api/features/identity/domain.go`), after the row lock where
+there is one. Login reads credentials outside a transaction, so its session
+insert in `services/tadoku-api/sql/identity/identity.sql` repeats the rule as
+an atomic guard; change both together.
+
+Two statements apply other rules on purpose:
+
+- Account reads, including the admin user list, show active accounts of
+  undeleted users, so a user locked for deletion stays listed until the job
+  completes.
+- Filing's account lock skips deleted and deletion-locked users in any
+  account state, so an inactive account can be filed for deletion.
+
 ## Sessions and cookies
 
 Each registration or login generates a fresh 256-bit secret. Only its SHA-256
 hash is persisted, together with its tenant, account, authentication time and
-expiry. Lookups join active accounts and available users inside the request's
-RLS scope. Logout revokes only the selected session, remains idempotent, and
+expiry. Lookups run inside the request's RLS scope and authenticate only a
+[usable account](#usable-accounts). Logout revokes only the selected session, remains idempotent, and
 clears that tenant's cookie.
 
 | Tenant | Cookie | Lifetime |

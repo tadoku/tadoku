@@ -3,10 +3,12 @@ package identity
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	queries "github.com/tadoku/tadoku/services/tadoku-api/generated/sqlc/identity"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
@@ -19,7 +21,27 @@ func NewRepository(pool *pgxpool.Pool) *Repository { return &Repository{pool: po
 type credentials struct {
 	account      Account
 	passwordHash string
-	active       bool
+	status       accountStatus
+}
+
+func parseAccountStatus(state string, deletedAt, deletionLockedAt pgtype.Timestamp) (accountStatus, error) {
+	var status accountStatus
+	switch state {
+	case "active":
+		status = accountActive
+	case "inactive":
+		status = accountInactive
+	default:
+		return 0, fmt.Errorf("unknown account state %q", state)
+	}
+
+	if deletionLockedAt.Valid {
+		status = accountDeletionLocked
+	}
+	if deletedAt.Valid {
+		status = accountDeleted
+	}
+	return status, nil
 }
 
 func (r *Repository) register(ctx context.Context, result LoginResult, passwordHash string) error {
@@ -58,6 +80,10 @@ func (r *Repository) credentials(ctx context.Context, email Email) (credentials,
 	if err != nil {
 		return credentials{}, err
 	}
+	status, err := parseAccountStatus(row.State, row.DeletedAt, row.DeletionLockedAt)
+	if err != nil {
+		return credentials{}, err
+	}
 	return credentials{
 		account: Account{
 			ID:          uuid.UUID(row.UserID.Bytes),
@@ -66,7 +92,7 @@ func (r *Repository) credentials(ctx context.Context, email Email) (credentials,
 			CreatedAt:   row.CreatedAt.Time,
 		},
 		passwordHash: row.PasswordHash,
-		active:       row.Active,
+		status:       status,
 	}, nil
 }
 
@@ -95,20 +121,28 @@ func (r *Repository) createSession(
 	return nil
 }
 
-func (r *Repository) session(ctx context.Context, tokenHash string, now time.Time) (Session, error) {
+func (r *Repository) session(
+	ctx context.Context,
+	tokenHash string,
+	now time.Time,
+) (AuthenticatedSession, accountStatus, error) {
 	db, err := postgres.Executor(ctx, r.pool)
 	if err != nil {
-		return nil, err
+		return AuthenticatedSession{}, 0, err
 	}
 	row, err := queries.New(db).FindSession(ctx, queries.FindSessionParams{
 		TokenHash: tokenHash,
 		Now:       postgres.Timestamptz(now),
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
-		return GuestSession{}, nil
+		return AuthenticatedSession{}, 0, errSessionNotFound
 	}
 	if err != nil {
-		return nil, err
+		return AuthenticatedSession{}, 0, err
+	}
+	status, err := parseAccountStatus(row.State, row.DeletedAt, row.DeletionLockedAt)
+	if err != nil {
+		return AuthenticatedSession{}, 0, err
 	}
 	return AuthenticatedSession{
 		Account: Account{
@@ -119,7 +153,7 @@ func (r *Repository) session(ctx context.Context, tokenHash string, now time.Tim
 		},
 		AuthenticatedAt: row.AuthenticatedAt.Time,
 		ExpiresAt:       row.ExpiresAt.Time,
-	}, nil
+	}, status, nil
 }
 
 func (r *Repository) revokeSession(ctx context.Context, tokenHash string) error {

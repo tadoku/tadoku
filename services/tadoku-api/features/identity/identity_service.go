@@ -86,7 +86,7 @@ func (s *Service) Login(ctx context.Context, login Login) (LoginResult, error) {
 	}
 
 	comparison := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
-	if comparison != nil || !found || !credential.active || len(login.Password) > 72 {
+	if comparison != nil || !found || !credential.status.usable() || len(login.Password) > 72 {
 		return LoginResult{}, ErrWrongPassword
 	}
 
@@ -108,7 +108,28 @@ func (s *Service) Session(ctx context.Context, header CookieHeader) (Session, er
 	if !validSessionToken(value) {
 		return GuestSession{}, nil
 	}
-	return s.repository.session(ctx, hashToken(value), timex.Now())
+	return s.session(ctx, value)
+}
+
+func (s *Service) session(ctx context.Context, token string) (Session, error) {
+	session, status, err := s.repository.session(ctx, hashToken(token), timex.Now())
+	if errors.Is(err, errSessionNotFound) {
+		return GuestSession{}, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	if !status.usable() {
+		return GuestSession{}, nil
+	}
+	return session, nil
+}
+
+func usableAccount(credential credentials, err error) (credentials, error) {
+	if err == nil && !credential.status.usable() {
+		return credentials{}, errAccountNotFound
+	}
+	return credential, err
 }
 
 const dummyPasswordHash = "$2b$12$hady7Vf2de/ngyT9TV6N/usj/9yeHugOWtf8eCYGfnWNO.z9CGeeu"

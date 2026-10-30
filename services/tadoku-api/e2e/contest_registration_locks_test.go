@@ -1,6 +1,7 @@
 package e2e_test
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -13,7 +14,6 @@ import (
 func TestContestRegistrationEditWaitingPastContestEndIsRefused(t *testing.T) {
 	const journey = "testdata/journeys/ContestRegistrationFrozenAfterEnd"
 	lastSecond := time.Date(2026, 9, 30, 23, 59, 59, 0, time.UTC)
-	dayAfterEnd := time.Date(2026, 10, 1, 0, 0, 0, 0, time.UTC)
 
 	resetJourney(t, api, journey)
 	tokens, err := loadCast([]step{{as: user}})
@@ -27,14 +27,24 @@ func TestContestRegistrationEditWaitingPastContestEndIsRefused(t *testing.T) {
 	authorize(request, user, tokens)
 	holder := holdRow(t, "select 1 from users where id = $1 for update", readerUserID)
 
-	// Test safety: the request starts on the contest's last second and stays parked on the held users row while the
-	// clock moves past midnight, so it reads business time only inside the two scopes.
-	var served <-chan *httptest.ResponseRecorder
 	timex.TheWorld(lastSecond, func() {
-		served = serveAsync(request)
+		served := make(chan *httptest.ResponseRecorder, 1)
+		finished := make(chan struct{})
+		go func() {
+			defer close(finished)
+			response := httptest.NewRecorder()
+			api.handler.ServeHTTP(response, request)
+			served <- response
+		}()
+		// Test safety: releasing the row and waiting for the request here keeps it inside this scope on every path,
+		// including a failed lock wait.
+		defer func() {
+			_ = holder.Rollback(context.Background())
+			<-finished
+		}()
+
 		waitForLockWaiters(t, 1, served)
-	})
-	timex.TheWorld(dayAfterEnd, func() {
+		timex.Advance(time.Second)
 		if err := holder.Commit(t.Context()); err != nil {
 			t.Fatal(err)
 		}

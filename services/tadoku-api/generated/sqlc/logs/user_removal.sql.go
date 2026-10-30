@@ -21,12 +21,12 @@ where logs.id = contest_logs.log_id
 `
 
 type DeleteUserContestLogsOutsideFinishedContestsParams struct {
-	UserID pgtype.UUID
-	Now    pgtype.Date
+	UserID             pgtype.UUID
+	OpenIfEndOnOrAfter pgtype.Date
 }
 
 func (q *Queries) DeleteUserContestLogsOutsideFinishedContests(ctx context.Context, arg DeleteUserContestLogsOutsideFinishedContestsParams) error {
-	_, err := q.db.Exec(ctx, deleteUserContestLogsOutsideFinishedContests, arg.UserID, arg.Now)
+	_, err := q.db.Exec(ctx, deleteUserContestLogsOutsideFinishedContests, arg.UserID, arg.OpenIfEndOnOrAfter)
 	return err
 }
 

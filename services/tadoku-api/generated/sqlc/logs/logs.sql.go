@@ -65,28 +65,6 @@ func (q *Queries) ActivityPerLanguageForContestProfile(ctx context.Context, arg 
 	return items, nil
 }
 
-const canDeleteLog = `-- name: CanDeleteLog :one
-select not exists (
-  select 1
-  from contest_logs
-  inner join contests on contests.id = contest_logs.contest_id
-  where contest_logs.log_id = $1
-    and contests.contest_end < $2
-) as can_delete
-`
-
-type CanDeleteLogParams struct {
-	LogID pgtype.UUID
-	Now   pgtype.Date
-}
-
-func (q *Queries) CanDeleteLog(ctx context.Context, arg CanDeleteLogParams) (bool, error) {
-	row := q.db.QueryRow(ctx, canDeleteLog, arg.LogID, arg.Now)
-	var can_delete bool
-	err := row.Scan(&can_delete)
-	return can_delete, err
-}
-
 const createContestLog = `-- name: CreateContestLog :exec
 insert into contest_logs (
   contest_id, log_id, unit_key, amount, modifier, duration_seconds, computed_score,
@@ -231,37 +209,6 @@ func (q *Queries) FetchLogJobContext(ctx context.Context, logID pgtype.UUID) (Fe
 	var i FetchLogJobContextRow
 	err := row.Scan(&i.UserID, &i.Year, &i.EligibleOfficialLeaderboard)
 	return i, err
-}
-
-const fetchOngoingContestIDsForLog = `-- name: FetchOngoingContestIDsForLog :many
-select distinct contest_logs.contest_id
-from contest_logs inner join contests on contests.id = contest_logs.contest_id
-where contest_logs.log_id = $1 and contests.contest_end >= $2
-`
-
-type FetchOngoingContestIDsForLogParams struct {
-	LogID pgtype.UUID
-	Now   pgtype.Date
-}
-
-func (q *Queries) FetchOngoingContestIDsForLog(ctx context.Context, arg FetchOngoingContestIDsForLogParams) ([]pgtype.UUID, error) {
-	rows, err := q.db.Query(ctx, fetchOngoingContestIDsForLog, arg.LogID, arg.Now)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []pgtype.UUID{}
-	for rows.Next() {
-		var contest_id pgtype.UUID
-		if err := rows.Scan(&contest_id); err != nil {
-			return nil, err
-		}
-		items = append(items, contest_id)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
 }
 
 const fetchScoresForContestProfile = `-- name: FetchScoresForContestProfile :many
@@ -629,23 +576,32 @@ func (q *Queries) ListActiveLogsForUserAfter(ctx context.Context, arg ListActive
 	return items, nil
 }
 
-const listAttachedContestIDs = `-- name: ListAttachedContestIDs :many
-select contest_id from contest_logs where log_id = $1
+const listAttachedContests = `-- name: ListAttachedContests :many
+select contest_logs.contest_id, contests.contest_end
+from contest_logs
+inner join contests on contests.id = contest_logs.contest_id
+where contest_logs.log_id = $1
+order by contest_logs.contest_id
 `
 
-func (q *Queries) ListAttachedContestIDs(ctx context.Context, logID pgtype.UUID) ([]pgtype.UUID, error) {
-	rows, err := q.db.Query(ctx, listAttachedContestIDs, logID)
+type ListAttachedContestsRow struct {
+	ContestID  pgtype.UUID
+	ContestEnd pgtype.Date
+}
+
+func (q *Queries) ListAttachedContests(ctx context.Context, logID pgtype.UUID) ([]ListAttachedContestsRow, error) {
+	rows, err := q.db.Query(ctx, listAttachedContests, logID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []pgtype.UUID{}
+	items := []ListAttachedContestsRow{}
 	for rows.Next() {
-		var contest_id pgtype.UUID
-		if err := rows.Scan(&contest_id); err != nil {
+		var i ListAttachedContestsRow
+		if err := rows.Scan(&i.ContestID, &i.ContestEnd); err != nil {
 			return nil, err
 		}
-		items = append(items, contest_id)
+		items = append(items, i)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -1247,22 +1203,23 @@ update contest_logs set
 from contests, logs
 where contest_logs.log_id = $10 and logs.id = contest_logs.log_id
   and logs.frozen_at is null and contest_logs.contest_id = $11
-  and contest_logs.contest_id = contests.id and contests.contest_end >= $12
+  and contest_logs.contest_id = contests.id
+  and contests.contest_end >= $12
 `
 
 type UpdateOngoingContestLogParams struct {
-	UnitKey         pgtype.Text
-	Amount          pgtype.Float4
-	Modifier        pgtype.Float4
-	DurationSeconds pgtype.Int4
-	ComputedScore   pgtype.Float4
-	ScoreRuleSetID  pgtype.UUID
-	ScoreRuleIds    []pgtype.UUID
-	ScoreRates      []float32
-	ScoreSource     pgtype.Text
-	LogID           pgtype.UUID
-	ContestID       pgtype.UUID
-	Now             pgtype.Date
+	UnitKey            pgtype.Text
+	Amount             pgtype.Float4
+	Modifier           pgtype.Float4
+	DurationSeconds    pgtype.Int4
+	ComputedScore      pgtype.Float4
+	ScoreRuleSetID     pgtype.UUID
+	ScoreRuleIds       []pgtype.UUID
+	ScoreRates         []float32
+	ScoreSource        pgtype.Text
+	LogID              pgtype.UUID
+	ContestID          pgtype.UUID
+	OpenIfEndOnOrAfter pgtype.Date
 }
 
 func (q *Queries) UpdateOngoingContestLog(ctx context.Context, arg UpdateOngoingContestLogParams) error {
@@ -1278,7 +1235,7 @@ func (q *Queries) UpdateOngoingContestLog(ctx context.Context, arg UpdateOngoing
 		arg.ScoreSource,
 		arg.LogID,
 		arg.ContestID,
-		arg.Now,
+		arg.OpenIfEndOnOrAfter,
 	)
 	return err
 }
@@ -1296,17 +1253,17 @@ where contest_logs.log_id = $10 and logs.id = contest_logs.log_id
 `
 
 type UpdateOngoingContestLogsParams struct {
-	UnitKey         pgtype.Text
-	Amount          pgtype.Float4
-	Modifier        pgtype.Float4
-	DurationSeconds pgtype.Int4
-	ComputedScore   pgtype.Float4
-	ScoreRuleSetID  pgtype.UUID
-	ScoreRuleIds    []pgtype.UUID
-	ScoreRates      []float32
-	ScoreSource     pgtype.Text
-	LogID           pgtype.UUID
-	Now             pgtype.Date
+	UnitKey            pgtype.Text
+	Amount             pgtype.Float4
+	Modifier           pgtype.Float4
+	DurationSeconds    pgtype.Int4
+	ComputedScore      pgtype.Float4
+	ScoreRuleSetID     pgtype.UUID
+	ScoreRuleIds       []pgtype.UUID
+	ScoreRates         []float32
+	ScoreSource        pgtype.Text
+	LogID              pgtype.UUID
+	OpenIfEndOnOrAfter pgtype.Date
 }
 
 func (q *Queries) UpdateOngoingContestLogs(ctx context.Context, arg UpdateOngoingContestLogsParams) error {
@@ -1321,7 +1278,7 @@ func (q *Queries) UpdateOngoingContestLogs(ctx context.Context, arg UpdateOngoin
 		arg.ScoreRates,
 		arg.ScoreSource,
 		arg.LogID,
-		arg.Now,
+		arg.OpenIfEndOnOrAfter,
 	)
 	return err
 }

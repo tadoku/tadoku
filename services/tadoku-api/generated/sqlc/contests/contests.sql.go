@@ -445,6 +445,11 @@ with matches as materialized (
     ($1::boolean or contests.deleted_at is null)
     and (owner_user_id = $2::uuid or $2::uuid is null)
     and official = $3
+    and (
+      "private" = false
+      or $4::boolean
+      or owner_user_id = $5::uuid
+    )
 ), page as (
   select
     matches.id,
@@ -464,11 +469,9 @@ with matches as materialized (
     matches.deleted_at
   from matches
   inner join users on users.id = matches.owner_user_id
-  where matches."private" = false
-    or not $4::boolean
   order by matches.created_at desc
-  limit $6
-  offset $5
+  limit $7
+  offset $6
 ), total as (
   select count(*) as total_size
   from matches
@@ -499,7 +502,8 @@ type ListContestsParams struct {
 	IncludeDeleted bool
 	UserID         pgtype.UUID
 	Official       bool
-	PublicOnly     bool
+	IncludePrivate bool
+	PrivateOwnerID pgtype.UUID
 	StartFrom      int32
 	PageSize       int32
 }
@@ -528,7 +532,8 @@ func (q *Queries) ListContests(ctx context.Context, arg ListContestsParams) ([]L
 		arg.IncludeDeleted,
 		arg.UserID,
 		arg.Official,
-		arg.PublicOnly,
+		arg.IncludePrivate,
+		arg.PrivateOwnerID,
 		arg.StartFrom,
 		arg.PageSize,
 	)

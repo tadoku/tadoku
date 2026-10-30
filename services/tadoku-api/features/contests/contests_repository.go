@@ -256,22 +256,21 @@ func (r *ContestsRepository) ListContests(
 		return nil, 0, err
 	}
 
-	ownerID := pgtype.UUID{}
-	publicOnly := true
+	includePrivate := false
+	privateOwnerID := pgtype.UUID{}
 	switch visibility := visibility.(type) {
-	case filteredOwnerContests:
-		ownerID = postgres.UUID(visibility.ownerID)
-		publicOnly = false
 	case allContests:
-		ownerID = postgres.NullableUUID(visibility.ownerID)
-		publicOnly = false
+		includePrivate = true
+	case publicAndOwnContests:
+		privateOwnerID = postgres.UUID(visibility.ownerID)
 	}
 
 	rows, err := queries.New(executor).ListContests(ctx, queries.ListContestsParams{
 		IncludeDeleted: parameters.IncludeDeleted,
-		UserID:         ownerID,
+		UserID:         postgres.NullableUUID(parameters.UserID),
 		Official:       parameters.Official,
-		PublicOnly:     publicOnly,
+		IncludePrivate: includePrivate,
+		PrivateOwnerID: privateOwnerID,
 		StartFrom:      parameters.offset(),
 		PageSize:       int32(parameters.PageSize),
 	})

@@ -20,6 +20,11 @@ with matches as materialized (
     (sqlc.arg(include_deleted)::boolean or contests.deleted_at is null)
     and (owner_user_id = sqlc.narg(user_id)::uuid or sqlc.narg(user_id)::uuid is null)
     and official = sqlc.arg(official)
+    and (
+      "private" = false
+      or sqlc.arg(include_private)::boolean
+      or owner_user_id = sqlc.narg(private_owner_id)::uuid
+    )
 ), page as (
   select
     matches.id,
@@ -39,8 +44,6 @@ with matches as materialized (
     matches.deleted_at
   from matches
   inner join users on users.id = matches.owner_user_id
-  where matches."private" = false
-    or not sqlc.arg(public_only)::boolean
   order by matches.created_at desc
   limit sqlc.arg(page_size)
   offset sqlc.arg(start_from)

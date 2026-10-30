@@ -205,16 +205,16 @@ authorize the actor. Relationship writes and reads use the
 
 ## Private contests
 
-A private contest is unlisted rather than access-controlled: reads of one
-contest by its ID do not check privacy. Privacy only changes which contests
-listings return, and official contests cannot be private.
+A private contest is unlisted: anyone with its link can read it, because reads
+of one contest by its ID do not check privacy. Privacy only changes which
+contests listings return, and official contests cannot be private.
 
-- The contest list shows private contests to administrators, and to any
-  caller who filters the list by an owner (`user_id`), for that owner's
-  contests. Everyone else sees only public contests, but the list total and
-  next-page token still count the private contests that match the filters.
-  The contests service chooses the visibility from the administrator status
-  the application reports; see `ListParameters.visibility` in
+- The contest list includes a private contest only for its owner and for
+  administrators, with or without the owner filter (`user_id`). Filtering by
+  another user's ID does not reveal that user's private contests. The list
+  total and next-page token count only the contests the caller can see. The
+  contests service chooses the visibility from the actor and the
+  administrator status the application reports; see `newListVisibility` in
   `services/tadoku-api/features/contests/domain.go`.
 - A user's yearly contest registrations include private contests only when
   the actor is that user or an administrator, and their total excludes the

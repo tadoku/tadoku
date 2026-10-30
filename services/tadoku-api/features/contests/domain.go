@@ -270,24 +270,22 @@ type publicContests struct{}
 
 func (publicContests) isListVisibility() {}
 
-type filteredOwnerContests struct {
+type publicAndOwnContests struct {
 	ownerID uuid.UUID
 }
 
-func (filteredOwnerContests) isListVisibility() {}
+func (publicAndOwnContests) isListVisibility() {}
 
-type allContests struct {
-	ownerID *uuid.UUID
-}
+type allContests struct{}
 
 func (allContests) isListVisibility() {}
 
-func (p ListParameters) visibility(actorIsAdmin bool) listVisibility {
+func newListVisibility(actorID *uuid.UUID, actorIsAdmin bool) listVisibility {
 	switch {
 	case actorIsAdmin:
-		return allContests{ownerID: p.UserID}
-	case p.UserID != nil:
-		return filteredOwnerContests{ownerID: *p.UserID}
+		return allContests{}
+	case actorID != nil:
+		return publicAndOwnContests{ownerID: *actorID}
 	default:
 		return publicContests{}
 	}

@@ -144,8 +144,8 @@ func (a *Application) CreateContestScoringRuleSetDraft(ctx context.Context, cont
 	if err := a.requireOwnerOrAdmin(ctx, contest.OwnerUserID); err != nil {
 		return nil, err
 	}
-	if !timex.Now().Before(contest.ContestStart) {
-		return nil, errx.NewConflictError("contest scoring cannot change after the contest starts")
+	if err := a.scoring.RequireContestScoringChangeable(contest.ContestStart, timex.Now()); err != nil {
+		return nil, err
 	}
 
 	configuration, err := scoring.NewContestDraftConfiguration(parameters.Mode, parameters.FallbackRuleSetID)
@@ -236,10 +236,7 @@ func (a *Application) authorizeScoringRuleSetChange(ctx context.Context, ruleSet
 		if err := a.requireOwnerOrAdmin(ctx, contest.OwnerUserID); err != nil {
 			return err
 		}
-		if !timex.Now().Before(contest.ContestStart) {
-			return errx.NewConflictError("contest scoring cannot change after the contest starts")
-		}
-		return nil
+		return a.scoring.RequireContestScoringChangeable(contest.ContestStart, timex.Now())
 	default:
 		return errx.NewInternalError("scoring rule set scope is invalid")
 	}

@@ -20,6 +20,7 @@ func TestImmersionFetchLeaderboardGlobal(t *testing.T) {
 		{description: []string{"empty", "language"}, want: http.StatusOK, cache: "hit"},
 		{description: []string{"tie", "page", "boundary"}, want: http.StatusOK, cache: "hit_tie"},
 		{description: []string{"tie", "first", "page"}, want: http.StatusOK, cache: "hit_tie"},
+		{description: []string{"tie", "order", "across", "paths"}, want: http.StatusOK, cache: "miss_then_hit"},
 		{description: []string{"invalid", "activity"}, want: http.StatusBadRequest},
 		{description: []string{"negative", "page"}, want: http.StatusBadRequest},
 		{description: []string{"negative", "page", "size"}, want: http.StatusBadRequest},
@@ -44,6 +45,7 @@ func TestImmersionFetchLeaderboardForYear(t *testing.T) {
 	}{
 		{description: []string{"zero", "score", "cache", "miss"}, want: http.StatusOK, cache: "miss"},
 		{description: []string{"zero", "score", "cache", "hit"}, want: http.StatusOK, cache: "miss_then_hit"},
+		{description: []string{"tie", "order", "across", "paths"}, want: http.StatusOK, cache: "miss_then_hit"},
 		{description: []string{"cache", "miss", "past", "end"}, want: http.StatusOK, cache: "miss"},
 		{description: []string{"cache", "hit"}, want: http.StatusOK, cache: "hit"},
 		{description: []string{"activity", "filtered"}, want: http.StatusOK, cache: "hit"},
@@ -78,6 +80,7 @@ func TestImmersionContestFetchLeaderboard(t *testing.T) {
 		{description: []string{"language", "filtered"}, want: http.StatusOK, cache: "hit"},
 		{description: []string{"tie", "page", "boundary"}, want: http.StatusOK, cache: "hit_tie"},
 		{description: []string{"tie", "first", "page"}, want: http.StatusOK, cache: "hit_tie"},
+		{description: []string{"tie", "order", "across", "paths"}, want: http.StatusOK, cache: "miss_then_hit"},
 		{description: []string{"missing", "organizer"}, want: http.StatusNotFound},
 		{description: []string{"missing", "organizer", "filtered"}, want: http.StatusNotFound, cache: "hit"},
 		{description: []string{"missing", "contest", "cache", "miss"}, want: http.StatusNotFound, cache: "miss_then_miss"},

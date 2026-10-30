@@ -109,62 +109,53 @@ func (c *Cache) fetchPage(ctx context.Context, key string, start int64, pageSize
 	if err != nil {
 		return nil, false, fmt.Errorf("get leaderboard cardinality %s: %w", key, err)
 	}
-	if total == 0 {
-		current, err := c.cacheCurrent(ctx, key, marker, generation)
-		if err != nil || !current {
-			return nil, false, err
-		}
-		return &page{scores: []score{}, startRank: 1}, true, nil
-	}
 
-	stop := start + int64(pageSize) - 1
-	fetchStart := start
-	if fetchStart > 0 {
-		fetchStart--
-	}
-	values, err := c.client.Do(ctx, c.client.B().Zrange().Key(key).Min(strconv.FormatInt(fetchStart, 10)).Max(strconv.FormatInt(stop+1, 10)).Rev().Withscores().Build()).AsZScores()
+	stop := strconv.FormatInt(start+int64(pageSize)-1, 10)
+	values, err := c.client.Do(
+		ctx,
+		c.client.B().Zrange().Key(key).Min(strconv.FormatInt(start, 10)).Max(stop).Rev().Withscores().Build(),
+	).AsZScores()
 	if err != nil {
 		return nil, false, fmt.Errorf("fetch leaderboard page %s: %w", key, err)
 	}
-	hasPrevious := fetchStart < start && len(values) > 0
-	previous := float64(0)
-	if hasPrevious {
-		previous = values[0].Score
-		values = values[1:]
+	board := &page{
+		scores:     make([]score, len(values)),
+		offset:     int(start),
+		totalCount: int(total),
 	}
-	hasNext := int64(len(values)) > int64(pageSize)
-	next := float64(0)
-	if hasNext {
-		next = values[len(values)-1].Score
-		values = values[:len(values)-1]
-	}
-	scores := make([]score, len(values))
 	for i, value := range values {
 		id, err := uuid.Parse(value.Member)
 		if err != nil {
 			return nil, false, fmt.Errorf("parse leaderboard member %q: %w", value.Member, err)
 		}
-		scores[i] = score{userID: id, value: value.Score}
+		board.scores[i] = score{userID: id, value: value.Score}
 	}
-	startRank := int(start) + 1
-	if len(scores) > 0 {
-		higher, err := c.client.Do(ctx, c.client.B().Zcount().Key(key).Min("("+strconv.FormatFloat(scores[0].value, 'f', -1, 64)).Max("+inf").Build()).AsInt64()
+
+	if len(values) > 0 {
+		first := strconv.FormatFloat(values[0].Score, 'f', -1, 64)
+		last := strconv.FormatFloat(values[len(values)-1].Score, 'f', -1, 64)
+		board.aboveFirst, err = c.countFrom(ctx, key, "("+first)
 		if err != nil {
-			return nil, false, fmt.Errorf("count higher leaderboard scores %s: %w", key, err)
+			return nil, false, err
 		}
-		startRank = int(higher) + 1
+		board.throughLast, err = c.countFrom(ctx, key, last)
+		if err != nil {
+			return nil, false, err
+		}
 	}
 	current, err := c.cacheCurrent(ctx, key, marker, generation)
 	if err != nil || !current {
 		return nil, false, err
 	}
-	return &page{
-		scores:     scores,
-		totalCount: int(total),
-		startRank:  startRank,
-		hasPrevTie: hasPrevious && len(scores) > 0 && previous == scores[0].value,
-		hasNextTie: hasNext && len(scores) > 0 && next == scores[len(scores)-1].value,
-	}, true, nil
+	return board, true, nil
+}
+
+func (c *Cache) countFrom(ctx context.Context, key, from string) (int, error) {
+	count, err := c.client.Do(ctx, c.client.B().Zcount().Key(key).Min(from).Max("+inf").Build()).AsInt64()
+	if err != nil {
+		return 0, fmt.Errorf("count leaderboard scores from %s in %s: %w", from, key, err)
+	}
+	return int(count), nil
 }
 
 func (c *Cache) cacheCurrent(ctx context.Context, key, marker, generation string) (bool, error) {

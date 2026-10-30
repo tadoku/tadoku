@@ -25,6 +25,7 @@ import {
 } from 'api-client'
 import { apiData, browserApi, requireFields, type WithRequired } from 'ui/api'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { DateTime } from 'luxon'
 import type { ContestFormSchema } from '@app/immersion/ContestForm'
 import type { ContestRegistrationFormSchema } from '@app/immersion/ContestRegistration'
 import type { Logs } from '@app/immersion/api'
@@ -114,6 +115,14 @@ export const useContestList = (
   )
 
 export type ContestView = ImmersionContestView
+
+/** Whether the API still accepts new registrations: through the whole `registration_end` day in UTC. */
+export const acceptsNewRegistrations = (
+  contest: Pick<ContestView, 'registration_end'>,
+  now: DateTime,
+) =>
+  now <
+  DateTime.fromISO(contest.registration_end, { zone: 'utc' }).plus({ days: 1 })
 
 export const useContest = (id: string, options?: { enabled?: boolean }) =>
   useQuery(

@@ -146,6 +146,16 @@ export const ContestRegistrationForm = ({ contest, data, isClosed }: Props) => {
             />
             <RemovedLanguagesWarning previousLanguages={data?.languages} />
           </div>
+          <Flash
+            visible={createRegistrationMutation.isError}
+            style="error"
+            IconComponent={ExclamationCircleIcon}
+          >
+            {createRegistrationMutation.error instanceof Error &&
+            createRegistrationMutation.error.message === '403'
+              ? 'Registration for this contest has closed.'
+              : 'Could not save your registration, please try again later.'}
+          </Flash>
           <div className="h-stack spaced justify-end">
             <a
               href={routes.contestLeaderboard(contest.id!)}

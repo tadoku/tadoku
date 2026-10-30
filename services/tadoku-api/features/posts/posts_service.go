@@ -59,7 +59,7 @@ func (s *Service) FindPostBySlug(ctx context.Context, namespace, slug string) (*
 	if err != nil {
 		return nil, err
 	}
-	if post.PublishedAt == nil || post.PublishedAt.After(timex.Now()) {
+	if !post.IsPublishedAt(timex.Now()) {
 		return nil, ErrPostNotFound
 	}
 
@@ -142,9 +142,30 @@ func (s *Service) UpdatePost(ctx context.Context, parameters UpdatePostParameter
 }
 
 func (s *Service) GetPostVersion(ctx context.Context, namespace string, postID, contentID uuid.UUID) (*PostVersion, error) {
-	return s.posts.GetPostVersion(ctx, namespace, postID, contentID)
+	versions, err := s.ListPostVersions(ctx, namespace, postID)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, version := range versions {
+		if version.ID == contentID {
+			return &version, nil
+		}
+	}
+
+	return nil, ErrPostNotFound
 }
 
 func (s *Service) ListPostVersions(ctx context.Context, namespace string, id uuid.UUID) ([]PostVersion, error) {
-	return s.posts.ListPostVersions(ctx, namespace, id)
+	contents, err := s.posts.ListPostVersions(ctx, namespace, id)
+	if err != nil {
+		return nil, err
+	}
+
+	versions := make([]PostVersion, 0, len(contents))
+	for i, content := range contents {
+		versions = append(versions, PostVersion{PostContent: content, Version: i + 1})
+	}
+
+	return versions, nil
 }

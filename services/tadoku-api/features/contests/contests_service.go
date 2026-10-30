@@ -189,6 +189,10 @@ func (s *Service) ValidateRegistrationUpsert(
 		}
 	}
 
+	if !contest.RegistrationEnd.Add(24 * time.Hour).After(timex.Now()) {
+		return nil, ErrRegistrationClosed
+	}
+
 	return contest, nil
 }
 

@@ -47,14 +47,16 @@ func (s *Service) ScoreLog(ctx context.Context, operation LogOperation, input lo
 		DurationSeconds: input.DurationSeconds,
 		Tags:            tags,
 	}
-	result := logscore.Result{
-		ActivityID:   input.ActivityID,
-		LanguageCode: input.LanguageCode,
-		Tags:         tags,
-		Tracking:     base,
-	}
+	official := make([]bool, 0, len(targets))
 	for _, target := range targets {
-		result.EligibleOfficial = result.EligibleOfficial || target.Official
+		official = append(official, target.Official)
+	}
+	result := logscore.Result{
+		ActivityID:       input.ActivityID,
+		LanguageCode:     input.LanguageCode,
+		Tags:             tags,
+		Tracking:         base,
+		EligibleOfficial: logscore.EligibleOfficial(official),
 	}
 
 	platform, matched, scoringErr := s.ScorePlatform(ctx, parameters)

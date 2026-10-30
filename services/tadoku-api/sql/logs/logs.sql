@@ -454,14 +454,15 @@ where contest_logs.log_id = sqlc.arg('log_id') and contests.contest_end >= sqlc.
 delete from contest_logs
 where log_id = sqlc.arg('log_id') and contest_id = sqlc.arg('contest_id');
 
--- name: RecomputeLogOfficialEligibility :exec
+-- name: ListAttachedContestOfficialFlags :many
+select contests.official
+from contest_logs
+inner join contests on contests.id = contest_logs.contest_id
+where contest_logs.log_id = sqlc.arg('log_id');
+
+-- name: SetLogOfficialEligibility :exec
 update logs set
-  eligible_official_leaderboard = (
-    select coalesce(bool_or(contests.official), false)
-    from contest_logs
-    inner join contests on contests.id = contest_logs.contest_id
-    where contest_logs.log_id = sqlc.arg('log_id')
-  ),
+  eligible_official_leaderboard = sqlc.arg('eligible_official_leaderboard'),
   updated_at = sqlc.arg('updated_at')
 where id = sqlc.arg('log_id');
 

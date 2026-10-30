@@ -1,6 +1,10 @@
 package logscore
 
-import "github.com/google/uuid"
+import (
+	"slices"
+
+	"github.com/google/uuid"
+)
 
 type Input struct {
 	UnitID          *uuid.UUID
@@ -44,4 +48,8 @@ type Result struct {
 	Tracking         Tracking
 	ContestTrackings []ContestTracking
 	EligibleOfficial bool
+}
+
+func EligibleOfficial(attachedContestOfficial []bool) bool {
+	return slices.Contains(attachedContestOfficial, true)
 }

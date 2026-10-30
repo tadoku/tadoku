@@ -1,10 +1,14 @@
+import { DateTime } from 'luxon'
 import { describe, expect, it, vi } from 'vitest'
 
 vi.mock('next/config', () => ({
   default: () => ({ publicRuntimeConfig: { apiEndpoint: '' } }),
 }))
 
-import { ContestRegistrationFormSchema } from './ContestRegistration'
+import {
+  ContestRegistrationFormSchema,
+  registrationChangesClosed,
+} from './ContestRegistration'
 
 describe('ContestRegistrationFormSchema', () => {
   it('rejects duplicate language codes', () => {
@@ -48,5 +52,25 @@ describe('ContestRegistrationFormSchema', () => {
 
       expect(result.success).toBe(true)
     }
+  })
+})
+
+describe('registrationChangesClosed', () => {
+  it('keeps changes open through the last UTC second of contest_end', () => {
+    const now = DateTime.fromISO('2026-09-30T23:59:59.999Z')
+
+    expect(registrationChangesClosed('2026-09-30', now)).toBe(false)
+  })
+
+  it('closes changes from the first instant after contest_end in UTC', () => {
+    const now = DateTime.fromISO('2026-10-01T00:00:00.000Z')
+
+    expect(registrationChangesClosed('2026-09-30', now)).toBe(true)
+  })
+
+  it('uses the UTC day when the browser is ahead of UTC', () => {
+    const now = DateTime.fromISO('2026-10-01T05:00:00', { zone: 'Asia/Tokyo' })
+
+    expect(registrationChangesClosed('2026-09-30', now)).toBe(false)
   })
 })

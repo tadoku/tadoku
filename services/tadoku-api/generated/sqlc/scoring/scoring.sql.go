@@ -469,16 +469,17 @@ func (q *Queries) ListScoringRulesForRuleSet(ctx context.Context, ruleSetID pgty
 }
 
 const listUnitsForScoringByID = `-- name: ListUnitsForScoringByID :many
-select id, unit_key, modifier, language_code
+select id, unit_key, modifier, log_activity_id, language_code
 from log_units
 where id = $1
 `
 
 type ListUnitsForScoringByIDRow struct {
-	ID           pgtype.UUID
-	UnitKey      string
-	Modifier     float32
-	LanguageCode pgtype.Text
+	ID            pgtype.UUID
+	UnitKey       string
+	Modifier      float32
+	LogActivityID int16
+	LanguageCode  pgtype.Text
 }
 
 func (q *Queries) ListUnitsForScoringByID(ctx context.Context, id pgtype.UUID) ([]ListUnitsForScoringByIDRow, error) {
@@ -494,6 +495,7 @@ func (q *Queries) ListUnitsForScoringByID(ctx context.Context, id pgtype.UUID) (
 			&i.ID,
 			&i.UnitKey,
 			&i.Modifier,
+			&i.LogActivityID,
 			&i.LanguageCode,
 		); err != nil {
 			return nil, err
@@ -507,16 +509,17 @@ func (q *Queries) ListUnitsForScoringByID(ctx context.Context, id pgtype.UUID) (
 }
 
 const listUnitsForScoringByKey = `-- name: ListUnitsForScoringByKey :many
-select id, unit_key, modifier, language_code
+select id, unit_key, modifier, log_activity_id, language_code
 from log_units
 where unit_key = $1
 `
 
 type ListUnitsForScoringByKeyRow struct {
-	ID           pgtype.UUID
-	UnitKey      string
-	Modifier     float32
-	LanguageCode pgtype.Text
+	ID            pgtype.UUID
+	UnitKey       string
+	Modifier      float32
+	LogActivityID int16
+	LanguageCode  pgtype.Text
 }
 
 func (q *Queries) ListUnitsForScoringByKey(ctx context.Context, unitKey string) ([]ListUnitsForScoringByKeyRow, error) {
@@ -532,6 +535,7 @@ func (q *Queries) ListUnitsForScoringByKey(ctx context.Context, unitKey string) 
 			&i.ID,
 			&i.UnitKey,
 			&i.Modifier,
+			&i.LogActivityID,
 			&i.LanguageCode,
 		); err != nil {
 			return nil, err

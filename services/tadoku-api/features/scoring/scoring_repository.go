@@ -159,6 +159,7 @@ func (r *ScoringRepository) ListUnitsByKey(ctx context.Context, key string) ([]u
 func unitCandidateFromRow(row queries.ListUnitsForScoringByIDRow) unitCandidate {
 	return unitCandidate{
 		logUnit:      logUnit{ID: row.ID.Bytes, Key: row.UnitKey, Modifier: row.Modifier},
+		activityID:   int32(row.LogActivityID),
 		languageCode: postgres.TextPointer(row.LanguageCode),
 	}
 }

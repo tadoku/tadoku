@@ -369,9 +369,14 @@ func TestScoringRepositoryUnitLookups(t *testing.T) {
 	}
 
 	jpn := "jpn"
-	fallback := unitCandidate{logUnit: seededUnit("reading_character", nil)}
-	japanese := unitCandidate{logUnit: seededUnit("reading_character", &jpn), languageCode: &jpn}
-	jpnOnly := unitCandidate{logUnit: seededUnit("reading_two_column_page", &jpn), languageCode: &jpn}
+	fallback := unitCandidate{logUnit: seededUnit("reading_character", nil), activityID: 1}
+	characters := []unitCandidate{fallback}
+	for _, code := range []string{"jpn", "kor", "zho", "cmn", "yue", "wuu"} {
+		unit := seededUnit("reading_character", &code)
+		characters = append(characters, unitCandidate{logUnit: unit, activityID: 1, languageCode: &code})
+	}
+	japanese := characters[1]
+	jpnOnly := unitCandidate{logUnit: seededUnit("reading_two_column_page", &jpn), activityID: 1, languageCode: &jpn}
 
 	repository := NewScoringRepository(db.Pool)
 	missingID := uuid.MustParse("ffffffff-ffff-4fff-8fff-ffffffffffff")
@@ -398,7 +403,7 @@ func TestScoringRepositoryUnitLookups(t *testing.T) {
 		key  string
 		want []unitCandidate
 	}{
-		{name: "with and without language", key: "reading_character", want: []unitCandidate{fallback, japanese}},
+		{name: "with and without language", key: "reading_character", want: characters},
 		{name: "language specific only", key: "reading_two_column_page", want: []unitCandidate{jpnOnly}},
 		{name: "missing", key: "missing_unit"},
 	}
@@ -417,8 +422,8 @@ func assertUnitCandidates(t *testing.T, candidates []unitCandidate, err error, w
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(want) == 0 && len(candidates) != 0 {
-		t.Errorf("unit candidates=%+v, want none", candidates)
+	if len(candidates) != len(want) {
+		t.Fatalf("unit candidates=%+v, want %d candidates", candidates, len(want))
 	}
 	for _, wanted := range want {
 		matches := func(candidate unitCandidate) bool { return reflect.DeepEqual(candidate, wanted) }

@@ -40,8 +40,7 @@ with matches as materialized (
   from matches
   inner join users on users.id = matches.owner_user_id
   where matches."private" = false
-    or sqlc.arg(include_private)::boolean
-    or matches.owner_user_id = sqlc.narg(user_id)::uuid
+    or not sqlc.arg(public_only)::boolean
   order by matches.created_at desc
   limit sqlc.arg(page_size)
   offset sqlc.arg(start_from)

@@ -66,6 +66,13 @@ browser → ingress-nginx → Envoy → webv2 / authv2 / admin
   terminal failure it stays stale until the next write to the same contest or
   year, or a replay. See
   [Leaderboard freshness and worker health](../tadoku-api/jobs-operations.md#leaderboard-freshness-and-worker-health).
+- Filtered requests, cache misses and cache errors read a leaderboard page from
+  PostgreSQL; other requests read it from Valkey. Both stores order a board by
+  score descending, then user ID descending, so pages from either store line
+  up. Each store returns the page with counts of the entries above and level
+  with its edges, and `buildEntries` in
+  `services/tadoku-api/features/leaderboard/leaderboard_service.go` assigns
+  competition ranks and tie flags for both.
 - Administrator and ban relationships are tenant-owned rows in the Tadoku API
   database; see [Authorization](./authorization.md#permission-model).
 - The former Keto database and namespace are retained without a service. Their

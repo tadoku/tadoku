@@ -40,7 +40,8 @@ Anonymous requests and forged JWTs are rejected.
 
 The authz token feature parses the tenant from the token, checks `API_BRANCH`,
 and looks up its SHA-256 hash under that tenant's row-level security scope.
-The hash must be unrevoked, unexpired and scoped exactly to `email:read`.
+The lookup returns only an unrevoked, unexpired token, and the tokens service
+then accepts it only when its scopes are exactly `email:read`.
 Successful verification updates `last_used_at` and creates a private application
 email-reader context, without creating a user identity or bypassing other routes.
 Token authentication rejects `tadoku/prod` when `API_PRODUCTION` is true (the

@@ -20,17 +20,18 @@ where (
   where tenant = current_setting('tadoku.tenant')
     and revoked_at is null
     and expires_at > $5
-) < 10
+) < $7::bigint
 returning id
 `
 
 type InsertParams struct {
-	ID        pgtype.UUID
-	Name      string
-	TokenHash string
-	Scopes    []string
-	CreatedAt pgtype.Timestamptz
-	ExpiresAt pgtype.Timestamptz
+	ID          pgtype.UUID
+	Name        string
+	TokenHash   string
+	Scopes      []string
+	CreatedAt   pgtype.Timestamptz
+	ExpiresAt   pgtype.Timestamptz
+	ActiveLimit int64
 }
 
 func (q *Queries) Insert(ctx context.Context, arg InsertParams) (pgtype.UUID, error) {
@@ -41,6 +42,7 @@ func (q *Queries) Insert(ctx context.Context, arg InsertParams) (pgtype.UUID, er
 		arg.Scopes,
 		arg.CreatedAt,
 		arg.ExpiresAt,
+		arg.ActiveLimit,
 	)
 	var id pgtype.UUID
 	err := row.Scan(&id)
@@ -132,7 +134,6 @@ where tenant = current_setting('tadoku.tenant')
   and token_hash = $2
   and revoked_at is null
   and expires_at > $1
-  and scopes = array['email:read']::text[]
 returning id, name, scopes, created_at, expires_at, last_used_at, revoked_at
 `
 

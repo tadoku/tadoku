@@ -29,8 +29,7 @@ func (a *Application) AuthenticateEmailReader(ctx context.Context, raw string) (
 func (a *Application) hasEmailReader(ctx context.Context) bool {
 	principal, ok := ctx.Value(emailReaderKey{}).(tokens.Principal)
 	key, present := tenant.FromContext(ctx)
-	return ok && present && principal.Tenant == key &&
-		len(principal.Scopes) == 1 && principal.Scopes[0] == tokens.EmailRead
+	return ok && present && principal.Tenant == key
 }
 
 func (a *Application) requireEmailReader(ctx context.Context) error {

@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
+	"fmt"
 	"strings"
 	"time"
 
@@ -15,6 +16,8 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
+
+const maxActiveTokens = 10
 
 type Service struct {
 	repository *Repository
@@ -41,19 +44,22 @@ func (s *Service) Verify(ctx context.Context, raw string, deployment tenant.Depl
 	}
 
 	if s.production && key == tenant.Production() {
-		return Principal{}, errx.NewUnauthorizedError("invalid or expired access token")
+		return Principal{}, invalidToken()
 	}
 
 	if current, ok := tenant.FromContext(ctx); ok && current != key {
 		return Principal{}, errx.NewUnauthorizedError("access token tenant mismatch")
 	}
 
-	row, err := s.repository.verify(tenant.WithKey(ctx, key), tokenHash(raw), timex.Now())
+	row, found, err := s.repository.verify(tenant.WithKey(ctx, key), tokenHash(raw), timex.Now())
 	if err != nil {
 		return Principal{}, err
 	}
+	if !found || !emailReadOnly(row.Scopes) {
+		return Principal{}, invalidToken()
+	}
 
-	return Principal{Tenant: key, TokenID: row.ID, Scopes: row.Scopes}, nil
+	return Principal{Tenant: key, TokenID: row.ID}, nil
 }
 
 // Create requires the caller's tenant transaction; publish Secret only after commit, through an attached invocation.
@@ -71,7 +77,7 @@ func (s *Service) Create(ctx context.Context, request Create) (Issued, error) {
 		return Issued{}, errx.NewInvalidInputError("token name must contain 1–128 bytes")
 	}
 
-	if len(request.Scopes) != 1 || request.Scopes[0] != EmailRead {
+	if !emailReadOnly(request.Scopes) {
 		return Issued{}, errx.NewInvalidInputError("token scope must be email:read")
 	}
 
@@ -96,12 +102,16 @@ func (s *Service) Create(ctx context.Context, request Create) (Issued, error) {
 	row := Token{
 		ID:        uuid.New(),
 		Name:      request.Name,
-		Scopes:    []Scope{EmailRead},
+		Scopes:    request.Scopes,
 		CreatedAt: now,
 		ExpiresAt: now.Add(request.ExpiresIn),
 	}
-	if err := s.repository.insert(ctx, row, tokenHash(raw)); err != nil {
+	inserted, err := s.repository.insert(ctx, row, tokenHash(raw), maxActiveTokens)
+	if err != nil {
 		return Issued{}, err
+	}
+	if !inserted {
+		return Issued{}, errx.NewInvalidInputError(fmt.Sprintf("tenant already has %d active tokens", maxActiveTokens))
 	}
 
 	return Issued{Token: row, Secret: raw}, nil
@@ -112,13 +122,21 @@ func (s *Service) Revoke(ctx context.Context, id uuid.UUID) error {
 	return s.repository.revoke(ctx, id, timex.Now())
 }
 
+func emailReadOnly(scopes []Scope) bool {
+	return len(scopes) == 1 && scopes[0] == EmailRead
+}
+
+func invalidToken() error {
+	return errx.NewUnauthorizedError("invalid or expired access token")
+}
+
 func tokenHash(raw string) string {
 	hash := sha256.Sum256([]byte(raw))
 	return hex.EncodeToString(hash[:])
 }
 
 func tokenTenant(raw string) (tenant.Key, error) {
-	invalid := errx.NewUnauthorizedError("invalid or expired access token")
+	invalid := invalidToken()
 	rest, ok := strings.CutPrefix(raw, "tdk_at_")
 	if !ok {
 		return tenant.Key{}, invalid

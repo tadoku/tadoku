@@ -29,38 +29,46 @@ func (r *Repository) lockTenant(ctx context.Context) error {
 	return err
 }
 
-func (r *Repository) insert(ctx context.Context, row Token, hash string) error {
+func (r *Repository) insert(ctx context.Context, row Token, hash string, activeLimit int) (bool, error) {
 	db, err := postgres.Executor(ctx, r.pool)
 	if err != nil {
-		return err
+		return false, err
 	}
+
+	scopes := make([]string, 0, len(row.Scopes))
+	for _, scope := range row.Scopes {
+		scopes = append(scopes, string(scope))
+	}
+
 	_, err = queries.New(db).Insert(ctx, queries.InsertParams{
-		ID:        postgres.UUID(row.ID),
-		Name:      row.Name,
-		TokenHash: hash,
-		Scopes:    []string{string(EmailRead)},
-		CreatedAt: postgres.Timestamptz(row.CreatedAt),
-		ExpiresAt: postgres.Timestamptz(row.ExpiresAt),
+		ID:          postgres.UUID(row.ID),
+		Name:        row.Name,
+		TokenHash:   hash,
+		Scopes:      scopes,
+		CreatedAt:   postgres.Timestamptz(row.CreatedAt),
+		ExpiresAt:   postgres.Timestamptz(row.ExpiresAt),
+		ActiveLimit: int64(activeLimit),
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
-		return errx.NewInvalidInputError("tenant already has 10 active tokens")
+		return false, nil
 	}
-	return err
+	return err == nil, err
 }
 
-func (r *Repository) verify(ctx context.Context, hash string, now time.Time) (Token, error) {
+func (r *Repository) verify(ctx context.Context, hash string, now time.Time) (Token, bool, error) {
 	db, err := postgres.Executor(ctx, r.pool)
 	if err != nil {
-		return Token{}, err
+		return Token{}, false, err
 	}
+
 	row, err := queries.New(db).Verify(ctx, queries.VerifyParams{TokenHash: hash, Now: postgres.Timestamptz(now)})
 	if errors.Is(err, pgx.ErrNoRows) {
-		return Token{}, errx.NewUnauthorizedError("invalid or expired access token")
+		return Token{}, false, nil
 	}
 	if err != nil {
-		return Token{}, err
+		return Token{}, false, err
 	}
-	return tokenFromRow(queries.ListRow(row)), nil
+	return tokenFromRow(queries.ListRow(row)), true, nil
 }
 
 func (r *Repository) list(ctx context.Context) ([]Token, error) {

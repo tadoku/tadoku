@@ -13,7 +13,7 @@ where (
   where tenant = current_setting('tadoku.tenant')
     and revoked_at is null
     and expires_at > @created_at
-) < 10
+) < sqlc.arg(active_limit)::bigint
 returning id;
 
 -- name: Verify :one
@@ -23,7 +23,6 @@ where tenant = current_setting('tadoku.tenant')
   and token_hash = @token_hash
   and revoked_at is null
   and expires_at > sqlc.arg(now)
-  and scopes = array['email:read']::text[]
 returning id, name, scopes, created_at, expires_at, last_used_at, revoked_at;
 
 -- name: List :many

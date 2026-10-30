@@ -213,6 +213,9 @@ func (s *Service) ApplyRegistration(
 	if existing == nil && !contestwindow.RegistrationOpen(contest.RegistrationEnd, timex.Now()) {
 		return RegistrationResult{}, ErrRegistrationClosed
 	}
+	if existing != nil && !contestwindow.Unfinished(contest.ContestEnd, registration.UpdatedAt) {
+		return RegistrationResult{}, ErrContestEnded
+	}
 
 	result := RegistrationResult{}
 	removedLanguages := []string{}

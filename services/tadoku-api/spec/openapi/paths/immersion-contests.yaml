@@ -227,7 +227,7 @@ paths:
         "401":
           description: unauthorized
         "403":
-          description: registration for the contest has closed
+          description: registration for the contest has closed to new registrants
         "404":
           description: contest not found
         "409":

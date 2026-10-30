@@ -1,4 +1,4 @@
 >>> POST /immersion/contests/cccccccc-cccc-4ccc-8ccc-ccccccccccc8/registration
-HTTP/1.1 403 Forbidden
+HTTP/1.1 200 OK
 Content-Length: 0
 

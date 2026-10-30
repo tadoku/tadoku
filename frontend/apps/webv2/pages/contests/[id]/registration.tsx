@@ -2,7 +2,10 @@ import { useCurrentDateTime } from '@app/common/hooks'
 import { useRoutes } from '@app/common/routes'
 import { useSessionOrRedirect } from '@app/common/session'
 import { useContest, useContestRegistration } from '@app/immersion/contest-api'
-import { ContestRegistrationForm } from '@app/immersion/ContestRegistration'
+import {
+  ContestRegistrationForm,
+  registrationChangesClosed,
+} from '@app/immersion/ContestRegistration'
 import { ExclamationCircleIcon, HomeIcon } from '@heroicons/react/20/solid'
 import { DateTime, Interval } from 'luxon'
 import Head from 'next/head'
@@ -37,6 +40,9 @@ const Page = () => {
     DateTime.fromISO(contest.data.contest_start),
     DateTime.fromISO(contest.data.registration_end).endOf('day'),
   ).isBefore(now)
+  const changesClosed =
+    !!registration.data &&
+    registrationChangesClosed(contest.data.contest_end, now)
 
   return (
     <>
@@ -64,12 +70,14 @@ const Page = () => {
         />
       </div>
       <Flash
-        visible={registrationClosed}
+        visible={registrationClosed || changesClosed}
         style="error"
         IconComponent={ExclamationCircleIcon}
         className="mb-4"
       >
-        Unfortunately, registrations for this contest have ended.
+        {registrationClosed
+          ? 'Unfortunately, registrations for this contest have ended.'
+          : 'This contest has ended, so your registration can no longer be changed.'}
       </Flash>
 
       {registration.isLoading ? (
@@ -78,7 +86,7 @@ const Page = () => {
         <ContestRegistrationForm
           contest={contest.data}
           data={registration.data ?? undefined}
-          isClosed={registrationClosed}
+          isClosed={registrationClosed || changesClosed}
         />
       )}
     </>

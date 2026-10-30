@@ -11,6 +11,7 @@ import {
 } from '@app/immersion/contest-api'
 import { useRouter } from 'next/router'
 import { useDebounce } from 'use-debounce'
+import { DateTime } from 'luxon'
 import { routes } from '@app/common/routes'
 import {
   ExclamationCircleIcon,
@@ -35,6 +36,15 @@ export const ContestRegistrationFormSchema = z.object({
 export type ContestRegistrationFormSchema = z.infer<
   typeof ContestRegistrationFormSchema
 >
+
+/** Whether an existing registration may no longer change: after the last UTC day of `contestEnd`, as the API rules. */
+export const registrationChangesClosed = (contestEnd: string, now: DateTime) =>
+  DateTime.fromISO(contestEnd, { zone: 'utc' }).endOf('day') < now
+
+const registrationErrorMessage = (error: unknown) =>
+  error instanceof Error && error.message === '403'
+    ? 'This registration can no longer be changed.'
+    : 'Could not save your registration, please try again later.'
 
 interface Props {
   contest: ContestView
@@ -146,6 +156,13 @@ export const ContestRegistrationForm = ({ contest, data, isClosed }: Props) => {
             />
             <RemovedLanguagesWarning previousLanguages={data?.languages} />
           </div>
+          <Flash
+            visible={createRegistrationMutation.isError}
+            style="error"
+            IconComponent={ExclamationCircleIcon}
+          >
+            {registrationErrorMessage(createRegistrationMutation.error)}
+          </Flash>
           <div className="h-stack spaced justify-end">
             <a
               href={routes.contestLeaderboard(contest.id!)}

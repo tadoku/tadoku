@@ -201,8 +201,7 @@ func (a *Application) UpsertContestRegistration(ctx context.Context, parameters 
 	}
 
 	user := identity.FromContext(ctx)
-	now := timex.Now()
-	userID, err := a.profile.SynchronizeUser(ctx, user, now)
+	userID, err := a.profile.SynchronizeUser(ctx, user, timex.Now())
 	if err != nil {
 		return err
 	}
@@ -224,6 +223,7 @@ func (a *Application) UpsertContestRegistration(ctx context.Context, parameters 
 		if err := a.profile.LockUser(ctx, userID); err != nil {
 			return err
 		}
+		now := timex.Now()
 
 		registrationID := uuid.New()
 		existing, err := a.contests.FindRegistration(ctx, userID, parameters.ContestID, languages)

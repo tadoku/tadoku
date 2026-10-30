@@ -93,7 +93,8 @@ func (s *Service) SelectRegistrationsForScoring(ctx context.Context, userID uuid
 func (s *Service) ListYearlyRegistrations(
 	ctx context.Context,
 	parameters YearlyRegistrationsParameters,
-	includePrivate bool,
+	actorID *uuid.UUID,
+	actorIsAdmin bool,
 	languages []domainlanguages.Language,
 ) (*RegistrationList, error) {
 	if err := parameters.Validate(); err != nil {
@@ -103,7 +104,7 @@ func (s *Service) ListYearlyRegistrations(
 	if parameters.PageSize == 0 || parameters.PageSize > yearlyRegistrationsMaxPageSize {
 		parameters.PageSize = yearlyRegistrationsMaxPageSize
 	}
-	parameters.includePrivate = includePrivate
+	parameters.includePrivate = actorIsAdmin || (actorID != nil && *actorID == parameters.UserID)
 
 	registrations, total, err := s.contests.ListYearlyRegistrations(ctx, parameters)
 	if err != nil {

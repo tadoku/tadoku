@@ -264,13 +264,15 @@ func (a *Application) ListYearlyContestRegistrations(
 	ctx context.Context,
 	parameters ListYearlyContestRegistrationsParameters,
 ) (*ContestRegistrationList, error) {
-	actorID, ok := identity.ActorID(ctx)
-	includePrivate := a.roles.IsAdminOrFalse(ctx) || (ok && actorID == parameters.UserID)
+	var actorID *uuid.UUID
+	if id, ok := identity.ActorID(ctx); ok {
+		actorID = &id
+	}
 
 	languages, err := a.languages.ListLanguages(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return a.contests.ListYearlyRegistrations(ctx, parameters, includePrivate, languages)
+	return a.contests.ListYearlyRegistrations(ctx, parameters, actorID, a.roles.IsAdminOrFalse(ctx), languages)
 }

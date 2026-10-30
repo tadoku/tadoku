@@ -29,6 +29,19 @@ redis.call('SET', KEYS[2], 'native:' .. ARGV[1])
 return 1
 `)
 
+var pageScript = valkeygo.NewLuaScript(`
+local values = redis.call('ZRANGE', KEYS[1], ARGV[1], ARGV[2], 'REV', 'WITHSCORES')
+local reply = {redis.call('ZCARD', KEYS[1]), 0, 0}
+if #values > 0 then
+  reply[2] = redis.call('ZCOUNT', KEYS[1], '(' .. values[2], '+inf')
+  reply[3] = redis.call('ZCOUNT', KEYS[1], values[#values], '+inf')
+end
+for _, value in ipairs(values) do
+  table.insert(reply, value)
+end
+return reply
+`)
+
 var invalidateScript = valkeygo.NewLuaScript(`
 redis.call('INCR', KEYS[3])
 redis.call('DEL', KEYS[1], KEYS[2])
@@ -105,44 +118,17 @@ func (c *Cache) fetchPage(ctx context.Context, key string, start int64, pageSize
 	if generation != "0" && marker != "native:"+generation {
 		return nil, false, nil
 	}
-	total, err := c.client.Do(ctx, c.client.B().Zcard().Key(key).Build()).AsInt64()
-	if err != nil {
-		return nil, false, fmt.Errorf("get leaderboard cardinality %s: %w", key, err)
-	}
 
-	stop := strconv.FormatInt(start+int64(pageSize)-1, 10)
-	values, err := c.client.Do(
-		ctx,
-		c.client.B().Zrange().Key(key).Min(strconv.FormatInt(start, 10)).Max(stop).Rev().Withscores().Build(),
-	).AsZScores()
+	bounds := []string{strconv.FormatInt(start, 10), strconv.FormatInt(start+int64(pageSize)-1, 10)}
+	reply, err := pageScript.Exec(ctx, c.client, []string{key}, bounds).ToArray()
 	if err != nil {
 		return nil, false, fmt.Errorf("fetch leaderboard page %s: %w", key, err)
 	}
-	board := &page{
-		scores:     make([]score, len(values)),
-		offset:     int(start),
-		totalCount: int(total),
-	}
-	for i, value := range values {
-		id, err := uuid.Parse(value.Member)
-		if err != nil {
-			return nil, false, fmt.Errorf("parse leaderboard member %q: %w", value.Member, err)
-		}
-		board.scores[i] = score{userID: id, value: value.Score}
+	board, err := parsePage(reply, int(start))
+	if err != nil {
+		return nil, false, fmt.Errorf("parse leaderboard page %s: %w", key, err)
 	}
 
-	if len(values) > 0 {
-		first := strconv.FormatFloat(values[0].Score, 'f', -1, 64)
-		last := strconv.FormatFloat(values[len(values)-1].Score, 'f', -1, 64)
-		board.aboveFirst, err = c.countFrom(ctx, key, "("+first)
-		if err != nil {
-			return nil, false, err
-		}
-		board.throughLast, err = c.countFrom(ctx, key, last)
-		if err != nil {
-			return nil, false, err
-		}
-	}
 	current, err := c.cacheCurrent(ctx, key, marker, generation)
 	if err != nil || !current {
 		return nil, false, err
@@ -150,12 +136,40 @@ func (c *Cache) fetchPage(ctx context.Context, key string, start int64, pageSize
 	return board, true, nil
 }
 
-func (c *Cache) countFrom(ctx context.Context, key, from string) (int, error) {
-	count, err := c.client.Do(ctx, c.client.B().Zcount().Key(key).Min(from).Max("+inf").Build()).AsInt64()
-	if err != nil {
-		return 0, fmt.Errorf("count leaderboard scores from %s in %s: %w", from, key, err)
+func parsePage(reply []valkeygo.ValkeyMessage, offset int) (*page, error) {
+	counts := make([]int64, 3)
+	for i := range counts {
+		count, err := reply[i].AsInt64()
+		if err != nil {
+			return nil, err
+		}
+		counts[i] = count
 	}
-	return int(count), nil
+
+	members := reply[3:]
+	board := &page{
+		scores:      make([]score, len(members)/2),
+		offset:      offset,
+		totalCount:  int(counts[0]),
+		aboveFirst:  int(counts[1]),
+		throughLast: int(counts[2]),
+	}
+	for i := range board.scores {
+		member, err := members[2*i].ToString()
+		if err != nil {
+			return nil, err
+		}
+		id, err := uuid.Parse(member)
+		if err != nil {
+			return nil, fmt.Errorf("parse member %q: %w", member, err)
+		}
+		value, err := members[2*i+1].AsFloat64()
+		if err != nil {
+			return nil, err
+		}
+		board.scores[i] = score{userID: id, value: value}
+	}
+	return board, nil
 }
 
 func (c *Cache) cacheCurrent(ctx context.Context, key, marker, generation string) (bool, error) {

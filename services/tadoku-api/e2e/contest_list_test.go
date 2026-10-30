@@ -12,6 +12,8 @@ func TestListContests(t *testing.T) {
 	}{
 		{description: []string{"guest", "defaults", "hide", "private", "but", "count", "it"}, want: http.StatusOK},
 		{description: []string{"guest", "owner", "filter", "shows", "private", "unofficial"}, want: http.StatusOK},
+		{description: []string{"user", "owner", "filter", "shows", "other", "users", "private"}, want: http.StatusOK},
+		{description: []string{"owner", "without", "filter", "hides", "own", "private"}, want: http.StatusOK},
 		{description: []string{"guest", "includes", "deleted"}, want: http.StatusOK},
 		{description: []string{"admin", "includes", "private", "and", "deleted"}, want: http.StatusOK},
 		{description: []string{"first", "page", "token", "counts", "hidden", "private"}, want: http.StatusOK},

@@ -167,7 +167,7 @@ func (s *Service) FindRuleSet(ctx context.Context, id uuid.UUID) (*RuleSet, erro
 
 func (s *Service) PublishRuleSet(ctx context.Context, ruleSet RuleSet, publishedAt time.Time) (*RuleSet, error) {
 	if ruleSet.Status != "draft" {
-		return nil, errx.NewConflictError("only draft scoring rule sets can be published")
+		return nil, ErrRuleSetNotDraft
 	}
 
 	published, err := s.repository.PublishRuleSet(ctx, ruleSet.ID, publishedAt)

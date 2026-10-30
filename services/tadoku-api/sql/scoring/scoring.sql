@@ -122,7 +122,7 @@ insert into scoring_rule_sets (
   sqlc.arg('scope'),
   sqlc.arg('contest_id'),
   sqlc.arg('version'),
-  'draft',
+  sqlc.arg('status'),
   sqlc.arg('mode'),
   sqlc.arg('fallback_rule_set_id'),
   sqlc.arg('created_at')

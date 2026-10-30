@@ -15,6 +15,7 @@ import (
 var (
 	ErrRuleSetNotFound = errx.NewNotFoundError("scoring rule set not found")
 	ErrContestNotFound = errx.NewNotFoundError("contest not found")
+	ErrRuleSetNotDraft = errx.NewConflictError("only draft scoring rule sets can be published")
 )
 
 type Source string

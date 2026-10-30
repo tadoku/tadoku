@@ -59,7 +59,7 @@ func (s *Service) FindPageBySlug(ctx context.Context, namespace, slug string) (*
 	if err != nil {
 		return nil, err
 	}
-	if page.PublishedAt == nil || page.PublishedAt.After(timex.Now()) {
+	if !page.IsPublishedAt(timex.Now()) {
 		return nil, ErrPageNotFound
 	}
 
@@ -138,9 +138,30 @@ func (s *Service) UpdatePage(ctx context.Context, parameters UpdatePageParameter
 }
 
 func (s *Service) GetPageVersion(ctx context.Context, namespace string, pageID, contentID uuid.UUID) (*PageVersion, error) {
-	return s.pages.GetPageVersion(ctx, namespace, pageID, contentID)
+	versions, err := s.ListPageVersions(ctx, namespace, pageID)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, version := range versions {
+		if version.ID == contentID {
+			return &version, nil
+		}
+	}
+
+	return nil, ErrPageNotFound
 }
 
 func (s *Service) ListPageVersions(ctx context.Context, namespace string, id uuid.UUID) ([]PageVersion, error) {
-	return s.pages.ListPageVersions(ctx, namespace, id)
+	contents, err := s.pages.ListPageVersions(ctx, namespace, id)
+	if err != nil {
+		return nil, err
+	}
+
+	versions := make([]PageVersion, 0, len(contents))
+	for i, content := range contents {
+		versions = append(versions, PageVersion{PageContent: content, Version: i + 1})
+	}
+
+	return versions, nil
 }

@@ -20,12 +20,21 @@ type Page struct {
 	UpdatedAt   *time.Time
 }
 
-type PageVersion struct {
+// IsPublishedAt is the publication rule. ListPages applies it in SQL to the cutoff it receives, so change both together.
+func (p Page) IsPublishedAt(t time.Time) bool {
+	return p.PublishedAt != nil && !p.PublishedAt.After(t)
+}
+
+type PageContent struct {
 	ID        uuid.UUID
-	Version   int
 	Title     string
 	HTML      string
 	CreatedAt time.Time
+}
+
+type PageVersion struct {
+	PageContent
+	Version int
 }
 
 var (

@@ -219,34 +219,8 @@ func (r *PagesRepository) UpdatePage(ctx context.Context, item *Page, contentID 
 	return nil
 }
 
-func (r *PagesRepository) GetPageVersion(ctx context.Context, namespace string, pageID, contentID uuid.UUID) (*PageVersion, error) {
-	executor, err := postgres.Executor(ctx, r.db)
-	if err != nil {
-		return nil, err
-	}
-
-	row, err := queries.New(executor).GetPageVersion(ctx, queries.GetPageVersionParams{
-		Namespace: namespace,
-		PageID:    postgres.UUID(pageID),
-		ContentID: postgres.UUID(contentID),
-	})
-	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, ErrPageNotFound
-	}
-	if err != nil {
-		return nil, fmt.Errorf("get page version: %w", err)
-	}
-
-	return &PageVersion{
-		ID:        uuid.UUID(row.ID.Bytes),
-		Version:   int(row.Version),
-		Title:     row.Title,
-		HTML:      row.Html,
-		CreatedAt: row.CreatedAt.Time,
-	}, nil
-}
-
-func (r *PagesRepository) ListPageVersions(ctx context.Context, namespace string, id uuid.UUID) ([]PageVersion, error) {
+// ListPageVersions returns the page's contents in version order, oldest first.
+func (r *PagesRepository) ListPageVersions(ctx context.Context, namespace string, id uuid.UUID) ([]PageContent, error) {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return nil, err
@@ -260,15 +234,15 @@ func (r *PagesRepository) ListPageVersions(ctx context.Context, namespace string
 		return nil, fmt.Errorf("list page versions: %w", err)
 	}
 
-	versions := make([]PageVersion, 0, len(rows))
-	for i, row := range rows {
-		versions = append(versions, PageVersion{
+	contents := make([]PageContent, 0, len(rows))
+	for _, row := range rows {
+		contents = append(contents, PageContent{
 			ID:        uuid.UUID(row.ID.Bytes),
-			Version:   i + 1,
 			Title:     row.Title,
+			HTML:      row.Html,
 			CreatedAt: row.CreatedAt.Time,
 		})
 	}
 
-	return versions, nil
+	return contents, nil
 }

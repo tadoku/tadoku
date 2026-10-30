@@ -9,7 +9,6 @@ sql:
       - page_update.sql
       - page_delete.sql
       - page_version_list.sql
-      - page_version_get.sql
     gen:
       go:
         package: pages

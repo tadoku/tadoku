@@ -262,22 +262,34 @@ func (p ListParameters) Validate() error {
 	return validatePage(p.PageSize, p.Page)
 }
 
-type listVisibility int
+type listVisibility interface {
+	isListVisibility()
+}
 
-const (
-	publicContests listVisibility = iota
-	filteredOwnerContests
-	allContests
-)
+type publicContests struct{}
+
+func (publicContests) isListVisibility() {}
+
+type filteredOwnerContests struct {
+	ownerID uuid.UUID
+}
+
+func (filteredOwnerContests) isListVisibility() {}
+
+type allContests struct {
+	ownerID *uuid.UUID
+}
+
+func (allContests) isListVisibility() {}
 
 func (p ListParameters) visibility(actorIsAdmin bool) listVisibility {
 	switch {
 	case actorIsAdmin:
-		return allContests
+		return allContests{ownerID: p.UserID}
 	case p.UserID != nil:
-		return filteredOwnerContests
+		return filteredOwnerContests{ownerID: *p.UserID}
 	default:
-		return publicContests
+		return publicContests{}
 	}
 }
 

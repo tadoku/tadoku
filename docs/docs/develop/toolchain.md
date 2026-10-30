@@ -175,8 +175,18 @@ Bazel version as the repo root via `tools/oapi-codegen/.bazelversion`. See
 ## pnpm workspaces
 
 `frontend/` and `docs/` are separate pnpm projects with their own lockfiles.
-Always use `pnpm`, never `npm`. Use pnpm 10.10.0: it is the `packageManager` in
-`docs/package.json` and the version CI installs for `frontend/`. CI uses Node 20.
+Always use `pnpm`, never `npm`. Use pnpm 10.10.0: `frontend/package.json` and
+`docs/package.json` pin it as `packageManager`. Keep that pin equal to the
+version CI, the Dockerfiles and the dev image install. Dependabot regenerates
+lockfiles with the pinned version; newer pnpm majors drop the `pnpm` settings in
+`frontend/package.json` and write a lockfile CI rejects. CI uses Node 20, and
+Node 22 for webv3, authv2 and the API client check.
+
+pnpm 10 cannot apply Dependabot's update of an indirect dependency, so Dependabot
+reports those security updates as not possible. Bump one by hand: add the fixed
+version to `pnpm.overrides` in `frontend/package.json`, run
+`pnpm install --lockfile-only`, then remove the override and run it again. The
+lockfile keeps the new version and changes nothing else.
 
 `frontend/patches/` holds pnpm `patchedDependencies`, declared in
 `frontend/package.json`. `react-dom@18.2.0.patch` applies React 19.0.0's fix to

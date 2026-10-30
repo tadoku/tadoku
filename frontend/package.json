@@ -3,6 +3,7 @@
   "repository": "github.com/tadoku/tadoku/frontend",
   "license": "MIT",
   "private": true,
+  "packageManager": "pnpm@10.10.0",
   "pnpm": {
     "overrides": {
       "react": "18.2.0",

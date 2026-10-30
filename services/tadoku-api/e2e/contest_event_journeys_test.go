@@ -22,11 +22,15 @@ func useContestEventUUIDs(t *testing.T) {
 
 func cleanupContestEventUnit(t *testing.T) {
 	t.Helper()
+	cleanupLogUnit(t, "7e000000-0000-4000-8000-000000000001")
+}
+
+func cleanupLogUnit(t *testing.T, id string) {
+	t.Helper()
 	t.Cleanup(func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
-		_, err := api.db.Pool.Exec(ctx,
-			"delete from log_units where id = '7e000000-0000-4000-8000-000000000001'")
+		_, err := api.db.Pool.Exec(ctx, "delete from log_units where id = $1", id)
 		if err != nil {
 			t.Error(err)
 		}

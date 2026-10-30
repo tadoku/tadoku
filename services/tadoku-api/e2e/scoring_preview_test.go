@@ -5,7 +5,12 @@ import (
 	"testing"
 )
 
+// Test safety: cases seeding this shared log unit must run inside a test that removes it on cleanup.
+const mismatchedActivityUnitID = "556e957a-f75a-1692-1d44-b455a20a06ea"
+
 func TestImmersionScorePreview(t *testing.T) {
+	cleanupLogUnit(t, mismatchedActivityUnitID)
+
 	tests := []struct {
 		description []string
 		want        int
@@ -30,6 +35,8 @@ func TestImmersionScorePreview(t *testing.T) {
 		{description: []string{"unit", "id", "other", "activity"}, want: http.StatusBadRequest},
 		{description: []string{"unknown", "unit", "id"}, want: http.StatusBadRequest},
 		{description: []string{"unit", "key", "other", "language"}, want: http.StatusBadRequest},
+		{description: []string{"unit", "id", "stored", "activity", "mismatch"}, want: http.StatusBadRequest},
+		{description: []string{"unit", "id", "key", "activity", "mismatch"}, want: http.StatusBadRequest},
 		{description: []string{"duration", "with", "unit", "without", "amount"}, want: http.StatusBadRequest},
 		{description: []string{"invalid", "duration", "with", "amount"}, want: http.StatusBadRequest},
 		{description: []string{"invalid", "tags"}, want: http.StatusBadRequest},

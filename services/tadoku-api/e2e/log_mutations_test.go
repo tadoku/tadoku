@@ -7,6 +7,8 @@ import (
 )
 
 func TestImmersionLogCreate(t *testing.T) {
+	cleanupLogUnit(t, mismatchedActivityUnitID)
+
 	tests := []struct {
 		description          []string
 		want                 int
@@ -16,6 +18,7 @@ func TestImmersionLogCreate(t *testing.T) {
 		{description: []string{"language", "specific", "unit", "disabled"}, want: http.StatusOK},
 		{description: []string{"generic", "unit", "for", "other", "language"}, want: http.StatusOK},
 		{description: []string{"language", "specific", "unit", "by", "id"}, want: http.StatusOK},
+		{description: []string{"unit", "key", "skips", "stored", "activity", "mismatch"}, want: http.StatusOK},
 		{description: []string{"duration", "disabled", "without", "platform"}, want: http.StatusOK},
 		{description: []string{"both", "authoritative", "priority", "modifiers"}, want: http.StatusOK, scoringEngineEnabled: true},
 		{description: []string{"authoritative", "contest", "modes"}, want: http.StatusOK, scoringEngineEnabled: true},
@@ -33,6 +36,8 @@ func TestImmersionLogCreate(t *testing.T) {
 		{description: []string{"unit", "id", "other", "activity"}, want: http.StatusBadRequest},
 		{description: []string{"unknown", "unit", "id"}, want: http.StatusBadRequest},
 		{description: []string{"unit", "key", "other", "language"}, want: http.StatusBadRequest},
+		{description: []string{"unit", "id", "stored", "activity", "mismatch"}, want: http.StatusBadRequest},
+		{description: []string{"unit", "id", "key", "activity", "mismatch"}, want: http.StatusBadRequest},
 		{description: []string{"account", "deletion", "locked"}, want: http.StatusConflict},
 		{description: []string{"duration", "unknown", "language", "readback"}, want: http.StatusNotFound},
 		{description: []string{"guest", "empty", "body"}, want: http.StatusUnauthorized},

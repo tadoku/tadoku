@@ -218,8 +218,10 @@ contests listings return, and official contests cannot be private.
   `services/tadoku-api/features/contests/domain.go`.
 - A user's yearly contest registrations include private contests only when
   the actor is that user or an administrator, and their total excludes the
-  private contests they hide. The application decides this in
-  `services/tadoku-api/app/api/contests.go`.
+  private contests they hide. The contests service decides this from the
+  actor and the administrator status the application reports; see
+  `ListYearlyRegistrations` in
+  `services/tadoku-api/features/contests/contests_service.go`.
 
 ## Shared data
 

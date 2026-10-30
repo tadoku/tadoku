@@ -66,6 +66,7 @@ type logUnit struct {
 
 type unitCandidate struct {
 	logUnit
+	activityID   int32
 	languageCode *string
 }
 
@@ -74,7 +75,7 @@ func applicableUnit(candidates []unitCandidate, activityID int32, languageCode s
 	for i := range candidates {
 		candidate := &candidates[i]
 		unitActivity, knownUnit := activities.UnitActivityID(candidate.Key)
-		if !knownUnit || unitActivity != activityID {
+		if candidate.activityID != activityID || !knownUnit || unitActivity != activityID {
 			continue
 		}
 

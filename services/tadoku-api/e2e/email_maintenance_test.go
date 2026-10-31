@@ -127,6 +127,174 @@ func TestEmailWorkerReconciliation(t *testing.T) {
 	}
 }
 
+func TestEmailWorkerReconciliationRules(t *testing.T) {
+	api.reset(t, "")
+	fixture := emailSMTPServer(t, false)
+	sender, err := smtpinfra.New(fixture.config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	service := email.NewService(email.NewRepository(api.db.AppPool), sender)
+
+	branch, _ := tenant.Parse("e2e/email-reconcile")
+	_, err = api.db.Pool.Exec(t.Context(), "insert into tenants (key, kind) values ($1, 'test')", branch.String())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		_, _ = api.db.Pool.Exec(context.Background(), "delete from tenants where key = $1", branch.String())
+	})
+
+	const failSend = `update jobs
+		set state = 'failed', attempts = 5, failed_at = now(), last_error = 'handler_error'
+		where tenant = $1 and task_type = 'email.send.v1' and payload->>'email_id' = $2`
+	const failReplay = `insert into jobs (
+			tenant, task_type, payload, state, attempts, failed_at, last_error,
+			replay_of_id, replay_actor, replay_reason
+		)
+		select tenant, task_type, payload, 'failed', 5, now(), 'rejected', id, 'fixture', 'retried'
+		from jobs where tenant = $1 and payload->>'email_id' = $2`
+	const pendingOtherType = `insert into jobs (tenant, task_type, payload, next_attempt_at)
+		select tenant, 'email.other.v1', payload, now() + interval '1 day'
+		from jobs where tenant = $1 and payload->>'email_id' = $2`
+	const extraFields = `update jobs
+		set state = 'failed', attempts = 5, failed_at = now(), last_error = 'handler_error',
+			payload = payload || '{"extra":true}'
+		where tenant = $1 and payload->>'email_id' = $2`
+	const failExtraReplay = `insert into jobs (
+			tenant, task_type, payload, state, attempts, failed_at, last_error,
+			replay_of_id, replay_actor, replay_reason
+		)
+		select tenant, task_type, payload || '{"extra":true}', 'failed', 5, now(), 'rejected', id, 'fixture', 'retried'
+		from jobs where tenant = $1 and payload->>'email_id' = $2`
+	const pendingExtraFields = `insert into jobs (tenant, task_type, payload, next_attempt_at)
+		select tenant, task_type, payload || '{"extra":true}', now() + interval '1 day'
+		from jobs where tenant = $1 and payload->>'email_id' = $2`
+	const completedSend = `insert into jobs (tenant, task_type, payload, state, attempts, completed_at)
+		select tenant, task_type, payload, 'completed', 1, now()
+		from jobs where tenant = $1 and payload->>'email_id' = $2`
+	cases := []struct {
+		name     string
+		key      tenant.Key
+		fixtures []string
+		want     email.Delivery
+	}{
+		{
+			name: "missing error code",
+			key:  tenant.Production(),
+			fixtures: []string{`update jobs
+				set state = 'failed', attempts = 5, failed_at = now(), last_error = null
+				where tenant = $1 and payload->>'email_id' = $2`},
+			want: email.Failed{Error: "attempts_exhausted"},
+		},
+		{
+			name:     "latest failed replay",
+			key:      tenant.Production(),
+			fixtures: []string{failSend, failReplay},
+			want:     email.Failed{Error: "rejected"},
+		},
+		{
+			name:     "pending job of another type",
+			key:      tenant.Production(),
+			fixtures: []string{pendingOtherType, failSend},
+			want:     email.Failed{Error: "handler_error"},
+		},
+		{
+			name: "failed job of another type",
+			key:  tenant.Production(),
+			fixtures: []string{`update jobs
+				set task_type = 'email.other.v1', state = 'failed', attempts = 5, failed_at = now(),
+					last_error = 'handler_error'
+				where tenant = $1 and payload->>'email_id' = $2`},
+			want: email.Pending{},
+		},
+		{
+			name:     "failed job with extra payload fields",
+			key:      tenant.Production(),
+			fixtures: []string{extraFields},
+			want:     email.Failed{Error: "handler_error"},
+		},
+		{
+			name:     "latest failed replay with extra payload fields",
+			key:      tenant.Production(),
+			fixtures: []string{failSend, failExtraReplay},
+			want:     email.Failed{Error: "rejected"},
+		},
+		{
+			name:     "pending job with extra payload fields",
+			key:      tenant.Production(),
+			fixtures: []string{failSend, pendingExtraFields},
+			want:     email.Pending{},
+		},
+		{
+			name:     "completed job",
+			key:      tenant.Production(),
+			fixtures: []string{failSend, completedSend},
+			want:     email.Pending{},
+		},
+		{
+			name:     "test tenant with delivery enabled",
+			key:      branch,
+			fixtures: []string{failSend},
+			want:     email.Held{},
+		},
+	}
+	ids := make([]uuid.UUID, 0, len(cases))
+	stillPending := 0
+	for _, tc := range cases {
+		if tc.want == (email.Pending{}) {
+			stillPending++
+		}
+		ctx := tenant.WithKey(t.Context(), tc.key)
+		id := writeEmail(t, ctx, service, recoveryMail())
+		ids = append(ids, id)
+		for _, fixtureSQL := range tc.fixtures {
+			if _, err := api.db.Pool.Exec(ctx, fixtureSQL, tc.key.String(), id.String()); err != nil {
+				t.Fatalf("%s: %v", tc.name, err)
+			}
+		}
+	}
+
+	scope, _ := jobqueue.AllTenantsExcept(jobqueue.WorkerComponent)
+	application := emailWorker(t, service, jobqueue.NewRepository(api.db.AppPool), scope)
+	workerCtx, cancel := context.WithCancel(t.Context())
+	done := make(chan error, 1)
+	go func() { done <- application.Run(workerCtx) }()
+
+	deadline := time.Now().Add(20 * time.Second)
+	for {
+		var pending int
+		err := api.db.Pool.QueryRow(t.Context(), "select count(*) from emails where status = 'pending'").Scan(&pending)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if pending == stillPending || time.Now().After(deadline) {
+			break
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+	cancel()
+	if err := <-done; err != nil {
+		t.Error(err)
+	}
+
+	for i, tc := range cases {
+		row, err := service.Find(tenant.WithKey(t.Context(), tc.key), ids[i])
+		if err != nil {
+			t.Fatalf("%s: %v", tc.name, err)
+		}
+		if row.Delivery != tc.want {
+			t.Errorf("%s: delivery=%+v want %+v", tc.name, row.Delivery, tc.want)
+		}
+	}
+
+	fixture.mu.Lock()
+	defer fixture.mu.Unlock()
+	if fixture.attempts != 0 {
+		t.Errorf("maintenance made %d SMTP attempts", fixture.attempts)
+	}
+}
+
 func emailWorker(
 	t *testing.T,
 	service *email.Service,

@@ -188,16 +188,13 @@ func (q *Queries) List(ctx context.Context, arg ListParams) ([]ListRow, error) {
 
 const reconcileFailures = `-- name: ReconcileFailures :exec
 update emails as e
-set status = case
-  when $1::boolean or e.tenant <> 'tadoku/prod' then 'held'
-  else 'failed'
-end,
+set status = case when $1::boolean then 'held' else 'failed' end,
 error = case
-  when $1::boolean or e.tenant <> 'tadoku/prod' then null
+  when $1::boolean then null
   else (
-  select coalesce(j.last_error, 'attempts_exhausted')
+  select coalesce(j.last_error, $2::text)
   from jobs as j
-  where j.tenant = e.tenant and j.task_type = 'email.send.v1'
+  where j.tenant = e.tenant and j.task_type = $3::text
     and j.payload->>'email_id' = e.id::text and j.state = 'failed'
   order by j.id desc
   limit 1
@@ -206,18 +203,24 @@ end
 where e.status = 'pending'
   and exists (
     select 1 from jobs as j
-    where j.tenant = e.tenant and j.task_type = 'email.send.v1'
+    where j.tenant = e.tenant and j.task_type = $3::text
       and j.payload->>'email_id' = e.id::text and j.state = 'failed'
   )
   and not exists (
     select 1 from jobs as j
-    where j.tenant = e.tenant and j.task_type = 'email.send.v1'
+    where j.tenant = e.tenant and j.task_type = $3::text
       and j.payload->>'email_id' = e.id::text and j.state <> 'failed'
   )
 `
 
-func (q *Queries) ReconcileFailures(ctx context.Context, hold bool) error {
-	_, err := q.db.Exec(ctx, reconcileFailures, hold)
+type ReconcileFailuresParams struct {
+	Hold           bool
+	ExhaustedError string
+	TaskType       string
+}
+
+func (q *Queries) ReconcileFailures(ctx context.Context, arg ReconcileFailuresParams) error {
+	_, err := q.db.Exec(ctx, reconcileFailures, arg.Hold, arg.ExhaustedError, arg.TaskType)
 	return err
 }
 

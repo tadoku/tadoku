@@ -204,13 +204,13 @@ func (q *Queries) Fail(ctx context.Context, arg FailParams) (int64, error) {
 const failExhausted = `-- name: FailExhausted :many
 with exhausted as (
   select id from jobs
-  where task_type = $2::text
-    and ($3::text is null or not exists (
+  where task_type = $3::text
+    and ($4::text is null or not exists (
       select 1 from tenant_overrides as o
       where o.tenant = jobs.tenant
-        and o.component = $3::text
+        and o.component = $4::text
     ))
-    and attempts >= $4::integer
+    and attempts >= $5::integer
     and ((state = 'pending' and next_attempt_at <= $1::timestamptz)
       or (state = 'running' and lease_expires_at <= clock_timestamp()))
   order by next_attempt_at, id
@@ -220,17 +220,18 @@ with exhausted as (
 update jobs as task
 set state = 'failed', claim_token = null, lease_expires_at = null,
   failed_at = $1::timestamptz,
-  last_error = case when task.state = 'running' then 'lease_expired' else 'attempts_exhausted' end
+  last_error = case when task.state = 'running' then 'lease_expired' else $2::text end
 from exhausted
 where task.id = exhausted.id
 returning task.tenant, task.last_error
 `
 
 type FailExhaustedParams struct {
-	Now         pgtype.Timestamptz
-	TaskType    string
-	Component   pgtype.Text
-	MaxAttempts int32
+	Now            pgtype.Timestamptz
+	ExhaustedError string
+	TaskType       string
+	Component      pgtype.Text
+	MaxAttempts    int32
 }
 
 type FailExhaustedRow struct {
@@ -241,6 +242,7 @@ type FailExhaustedRow struct {
 func (q *Queries) FailExhausted(ctx context.Context, arg FailExhaustedParams) ([]FailExhaustedRow, error) {
 	rows, err := q.db.Query(ctx, failExhausted,
 		arg.Now,
+		arg.ExhaustedError,
 		arg.TaskType,
 		arg.Component,
 		arg.MaxAttempts,

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/activities"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/logscore"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/observability"
@@ -140,22 +141,17 @@ func (s *Service) resolveLogTracking(ctx context.Context, input logscore.Input) 
 		return logscore.Tracking{}, errx.NewInvalidInputError("unit_key is not valid for activity_id")
 	}
 	var unit *logUnit
-	var err error
-	if input.Amount != nil {
-		switch {
-		case input.UnitID != nil:
-			unit, err = s.repository.FindLogUnitByID(ctx, *input.UnitID, input.ActivityID, input.LanguageCode)
-		case input.UnitKey != nil:
-			unit, err = s.repository.FindLogUnitByKey(ctx, *input.UnitKey, input.ActivityID, input.LanguageCode)
-		}
+	if input.Amount != nil && (input.UnitID != nil || input.UnitKey != nil) {
+		var err error
+		unit, err = s.findApplicableUnit(ctx, input.UnitID, input.UnitKey, input.ActivityID, input.LanguageCode)
 		if err != nil {
 			return logscore.Tracking{}, err
 		}
-	}
-	if unit != nil {
-		unitActivity, knownUnit = activities.UnitActivityID(unit.Key)
-		if !knownUnit || unitActivity != input.ActivityID {
-			return logscore.Tracking{}, errx.NewInvalidInputError("resolved unit is not valid for activity_id")
+		if unit == nil && input.UnitID != nil {
+			return logscore.Tracking{}, errx.NewInvalidInputError("unit_id is not valid")
+		}
+		if unit == nil {
+			return logscore.Tracking{}, errx.NewInvalidInputError("unit_key is not valid")
 		}
 	}
 	if unit != nil && input.UnitKey != nil && unit.Key != *input.UnitKey {
@@ -189,6 +185,26 @@ func (s *Service) resolveLogTracking(ctx context.Context, input logscore.Input) 
 		tracking.Score = float32(*input.DurationSeconds) / 60 * legacyDurationRate
 	}
 	return tracking, nil
+}
+
+func (s *Service) findApplicableUnit(
+	ctx context.Context,
+	id *uuid.UUID,
+	key *string,
+	activityID int32,
+	languageCode string,
+) (*logUnit, error) {
+	var candidates []unitCandidate
+	var err error
+	if id != nil {
+		candidates, err = s.repository.ListUnitsByID(ctx, *id)
+	} else {
+		candidates, err = s.repository.ListUnitsByKey(ctx, *key)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return applicableUnit(candidates, activityID, languageCode), nil
 }
 
 func scoringErrorType(err error) string {

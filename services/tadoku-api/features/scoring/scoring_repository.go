@@ -11,7 +11,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	queries "github.com/tadoku/tadoku/services/tadoku-api/generated/sqlc/scoring"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
-	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 )
 
 type ScoringRepository struct{ db *pgxpool.Pool }
@@ -123,90 +122,46 @@ func (r *ScoringRepository) ListRules(ctx context.Context, ruleSetID uuid.UUID) 
 	return rules, nil
 }
 
-func (r *ScoringRepository) FindUnitKeyByID(ctx context.Context, id uuid.UUID, activityID int32, languageCode string) (string, error) {
-	q, err := r.queries(ctx)
-	if err != nil {
-		return "", err
-	}
-
-	row, err := q.FindUnitForScoringByID(ctx, queries.FindUnitForScoringByIDParams{
-		ID:           postgres.UUID(id),
-		ActivityID:   int16(activityID),
-		LanguageCode: postgres.NullableText(&languageCode),
-	})
-	if errors.Is(err, pgx.ErrNoRows) {
-		return "", errx.NewInvalidInputError("unit_id is not valid for activity_id and language_code")
-	}
-	if err != nil {
-		return "", fmt.Errorf("find unit for scoring: %w", err)
-	}
-	return row.UnitKey, nil
-}
-
-func (r *ScoringRepository) FindUnitKeyByKey(ctx context.Context, key string, activityID int32, languageCode string) (string, error) {
-	q, err := r.queries(ctx)
-	if err != nil {
-		return "", err
-	}
-
-	row, err := q.FindUnitForScoringByKey(ctx, queries.FindUnitForScoringByKeyParams{
-		UnitKey:      key,
-		ActivityID:   int16(activityID),
-		LanguageCode: postgres.NullableText(&languageCode),
-	})
-	if errors.Is(err, pgx.ErrNoRows) {
-		return "", errx.NewInvalidInputError("unit_key is not valid for activity_id and language_code")
-	}
-	if err != nil {
-		return "", fmt.Errorf("find unit for scoring: %w", err)
-	}
-	return row.UnitKey, nil
-}
-
-type logUnit struct {
-	ID       uuid.UUID
-	Key      string
-	Modifier float32
-}
-
-func (r *ScoringRepository) FindLogUnitByID(ctx context.Context, id uuid.UUID, activityID int32, languageCode string) (*logUnit, error) {
+func (r *ScoringRepository) ListUnitsByID(ctx context.Context, id uuid.UUID) ([]unitCandidate, error) {
 	q, err := r.queries(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	row, err := q.FindUnitForScoringByID(ctx, queries.FindUnitForScoringByIDParams{
-		ID:           postgres.UUID(id),
-		ActivityID:   int16(activityID),
-		LanguageCode: postgres.NullableText(&languageCode),
-	})
-	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, errx.NewInvalidInputError("unit_id is not valid")
-	}
+	rows, err := q.ListUnitsForScoringByID(ctx, postgres.UUID(id))
 	if err != nil {
-		return nil, fmt.Errorf("find log unit: %w", err)
+		return nil, fmt.Errorf("list units for scoring: %w", err)
 	}
-	return &logUnit{ID: row.ID.Bytes, Key: row.UnitKey, Modifier: row.Modifier}, nil
+	candidates := make([]unitCandidate, len(rows))
+	for i, row := range rows {
+		candidates[i] = unitCandidateFromRow(row)
+	}
+	return candidates, nil
 }
 
-func (r *ScoringRepository) FindLogUnitByKey(ctx context.Context, key string, activityID int32, languageCode string) (*logUnit, error) {
+func (r *ScoringRepository) ListUnitsByKey(ctx context.Context, key string) ([]unitCandidate, error) {
 	q, err := r.queries(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	row, err := q.FindUnitForScoringByKey(ctx, queries.FindUnitForScoringByKeyParams{
-		UnitKey:      key,
-		ActivityID:   int16(activityID),
-		LanguageCode: postgres.NullableText(&languageCode),
-	})
-	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, errx.NewInvalidInputError("unit_key is not valid")
-	}
+	rows, err := q.ListUnitsForScoringByKey(ctx, key)
 	if err != nil {
-		return nil, fmt.Errorf("find log unit: %w", err)
+		return nil, fmt.Errorf("list units for scoring: %w", err)
 	}
-	return &logUnit{ID: row.ID.Bytes, Key: row.UnitKey, Modifier: row.Modifier}, nil
+	candidates := make([]unitCandidate, len(rows))
+	for i, row := range rows {
+		candidates[i] = unitCandidateFromRow(queries.ListUnitsForScoringByIDRow(row))
+	}
+	return candidates, nil
+}
+
+func unitCandidateFromRow(row queries.ListUnitsForScoringByIDRow) unitCandidate {
+	return unitCandidate{
+		logUnit:      logUnit{ID: row.ID.Bytes, Key: row.UnitKey, Modifier: row.Modifier},
+		activityID:   int32(row.LogActivityID),
+		languageCode: postgres.TextPointer(row.LanguageCode),
+	}
 }
 
 func (r *ScoringRepository) NextPlatformDraftVersion(ctx context.Context) (int32, error) {

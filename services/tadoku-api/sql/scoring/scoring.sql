@@ -80,21 +80,15 @@ where scope = 'contest'
   and contest_id = sqlc.arg('contest_id')
 order by version desc;
 
--- name: FindUnitForScoringByID :one
-select id, unit_key, modifier
+-- name: ListUnitsForScoringByID :many
+select id, unit_key, modifier, log_activity_id, language_code
 from log_units
-where id = sqlc.arg('id')
-  and log_activity_id = sqlc.arg('activity_id')
-  and (language_code is null or language_code = sqlc.arg('language_code'));
+where id = sqlc.arg('id');
 
--- name: FindUnitForScoringByKey :one
-select id, unit_key, modifier
+-- name: ListUnitsForScoringByKey :many
+select id, unit_key, modifier, log_activity_id, language_code
 from log_units
-where unit_key = sqlc.arg('unit_key')
-  and log_activity_id = sqlc.arg('activity_id')
-  and (language_code is null or language_code = sqlc.arg('language_code'))
-order by language_code is null asc
-limit 1;
+where unit_key = sqlc.arg('unit_key');
 
 -- name: NextPlatformScoringRuleSetVersion :one
 select (coalesce(max(version), 0) + 1)::integer

@@ -46,10 +46,14 @@ func isValidAnnouncementHref(href string) bool {
 		return false
 	}
 	if parsed.Scheme == "http" || parsed.Scheme == "https" {
-		return true
+		return parsed.Hostname() != "" && parsed.User == nil && parsed.Opaque == ""
 	}
-	return parsed.Scheme == "" && strings.HasPrefix(href, "/") &&
-		!strings.HasPrefix(href, "//") && !strings.HasPrefix(href, `/\`)
+	if parsed.Scheme != "" || !strings.HasPrefix(href, "/") ||
+		strings.HasPrefix(href, "//") || strings.HasPrefix(href, `/\`) {
+		return false
+	}
+	return !strings.Contains(parsed.Path, `\`) &&
+		(len(parsed.Path) < 2 || parsed.Path[1] != '/')
 }
 
 var (

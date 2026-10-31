@@ -222,34 +222,8 @@ func (r *PostsRepository) UpdatePost(ctx context.Context, item *Post, contentID 
 	return nil
 }
 
-func (r *PostsRepository) GetPostVersion(ctx context.Context, namespace string, postID, contentID uuid.UUID) (*PostVersion, error) {
-	executor, err := postgres.Executor(ctx, r.db)
-	if err != nil {
-		return nil, err
-	}
-
-	row, err := queries.New(executor).GetPostVersion(ctx, queries.GetPostVersionParams{
-		Namespace: namespace,
-		PostID:    postgres.UUID(postID),
-		ContentID: postgres.UUID(contentID),
-	})
-	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, ErrPostNotFound
-	}
-	if err != nil {
-		return nil, fmt.Errorf("get post version: %w", err)
-	}
-
-	return &PostVersion{
-		ID:        uuid.UUID(row.ID.Bytes),
-		Version:   int(row.Version),
-		Title:     row.Title,
-		Content:   row.Content,
-		CreatedAt: row.CreatedAt.Time,
-	}, nil
-}
-
-func (r *PostsRepository) ListPostVersions(ctx context.Context, namespace string, id uuid.UUID) ([]PostVersion, error) {
+// ListPostVersions returns the post's contents in version order, oldest first.
+func (r *PostsRepository) ListPostVersions(ctx context.Context, namespace string, id uuid.UUID) ([]PostContent, error) {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return nil, err
@@ -263,15 +237,15 @@ func (r *PostsRepository) ListPostVersions(ctx context.Context, namespace string
 		return nil, fmt.Errorf("list post versions: %w", err)
 	}
 
-	versions := make([]PostVersion, 0, len(rows))
-	for i, row := range rows {
-		versions = append(versions, PostVersion{
+	contents := make([]PostContent, 0, len(rows))
+	for _, row := range rows {
+		contents = append(contents, PostContent{
 			ID:        uuid.UUID(row.ID.Bytes),
-			Version:   i + 1,
 			Title:     row.Title,
+			Content:   row.Content,
 			CreatedAt: row.CreatedAt.Time,
 		})
 	}
 
-	return versions, nil
+	return contents, nil
 }

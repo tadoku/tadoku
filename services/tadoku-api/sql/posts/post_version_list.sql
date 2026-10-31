@@ -2,6 +2,7 @@
 select
   posts_content.id,
   posts_content.title,
+  posts_content.content,
   posts_content.created_at
 from posts_content
 inner join posts on posts.id = posts_content.post_id

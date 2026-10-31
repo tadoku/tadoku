@@ -2,6 +2,7 @@
 select
   pages_content.id,
   pages_content.title,
+  pages_content.html,
   pages_content.created_at
 from pages_content
 inner join pages on pages.id = pages_content.page_id

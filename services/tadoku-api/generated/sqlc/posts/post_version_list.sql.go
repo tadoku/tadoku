@@ -15,6 +15,7 @@ const listPostVersions = `-- name: ListPostVersions :many
 select
   posts_content.id,
   posts_content.title,
+  posts_content.content,
   posts_content.created_at
 from posts_content
 inner join posts on posts.id = posts_content.post_id
@@ -32,6 +33,7 @@ type ListPostVersionsParams struct {
 type ListPostVersionsRow struct {
 	ID        pgtype.UUID
 	Title     string
+	Content   string
 	CreatedAt pgtype.Timestamp
 }
 
@@ -44,7 +46,12 @@ func (q *Queries) ListPostVersions(ctx context.Context, arg ListPostVersionsPara
 	items := []ListPostVersionsRow{}
 	for rows.Next() {
 		var i ListPostVersionsRow
-		if err := rows.Scan(&i.ID, &i.Title, &i.CreatedAt); err != nil {
+		if err := rows.Scan(
+			&i.ID,
+			&i.Title,
+			&i.Content,
+			&i.CreatedAt,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

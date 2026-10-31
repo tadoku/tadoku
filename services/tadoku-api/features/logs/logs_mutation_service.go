@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/contestevent"
+	"github.com/tadoku/tadoku/services/tadoku-api/domain/contestwindow"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/logscore"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
@@ -22,7 +23,7 @@ func (s *Service) PlanContestRegistrationUpdate(
 	}
 	current := make(map[uuid.UUID]RegistrationReference, len(log.Registrations))
 	for _, reference := range log.Registrations {
-		if reference.ContestEnd.Add(24 * time.Hour).After(now) {
+		if contestwindow.Open(reference.ContestEnd, now) {
 			current[reference.RegistrationID] = reference
 		}
 	}
@@ -110,28 +111,26 @@ func (s *Service) Delete(ctx context.Context, logID uuid.UUID, now time.Time) (M
 	if err := s.logs.LockLog(ctx, logID); err != nil {
 		return MutationResult{}, err
 	}
-	allowed, err := s.logs.CanDelete(ctx, logID, now)
+	contests, err := s.logs.AttachedContests(ctx, logID)
 	if err != nil {
 		return MutationResult{}, err
 	}
-	if !allowed {
-		return MutationResult{}, errx.NewForbiddenError("forbidden")
+	for _, contest := range contests {
+		if !contestwindow.Open(contest.End, now) {
+			return MutationResult{}, errx.NewForbiddenError("forbidden")
+		}
 	}
 	jobContext, err := s.logs.JobContext(ctx, logID)
-	if err != nil {
-		return MutationResult{}, err
-	}
-	contestIDs, err := s.logs.AttachedContestIDs(ctx, logID)
 	if err != nil {
 		return MutationResult{}, err
 	}
 	if err := s.logs.SoftDelete(ctx, logID, now); err != nil {
 		return MutationResult{}, err
 	}
-	for _, contestID := range contestIDs {
-		result.Jobs = append(result.Jobs, jobs.InvalidateContestLeaderboardV1{ContestID: contestID})
+	for _, contest := range contests {
+		result.Jobs = append(result.Jobs, jobs.InvalidateContestLeaderboardV1{ContestID: contest.ID})
 		result.Events = append(result.Events, contestevent.Change{
-			ContestID: contestID,
+			ContestID: contest.ID,
 			LogID:     logID,
 			Type:      contestevent.Withdrawn,
 		})
@@ -289,18 +288,19 @@ func (s *Service) update(ctx context.Context, mutation logMutation) (MutationRes
 	if err := s.logs.UpdateLog(ctx, mutation); err != nil {
 		return MutationResult{}, err
 	}
+	openIfEndOnOrAfter := contestwindow.OpenIfEndOnOrAfter(mutation.Now)
 	if len(mutation.ContestTrackings) == 0 {
 		inherited := mutation.Tracking
 		inherited.RuleSetID = nil
 		inherited.RuleIDs = nil
 		inherited.Rates = nil
 		inherited.Source = ""
-		if err := s.logs.UpdateOngoingContestLogs(ctx, mutation.ID, inherited, mutation.Now); err != nil {
+		if err := s.logs.UpdateOngoingContestLogs(ctx, mutation.ID, inherited, openIfEndOnOrAfter); err != nil {
 			return MutationResult{}, err
 		}
 	} else {
 		for _, tracking := range mutation.ContestTrackings {
-			if err := s.logs.UpdateContestLog(ctx, mutation.ID, tracking, mutation.Now); err != nil {
+			if err := s.logs.UpdateContestLog(ctx, mutation.ID, tracking, openIfEndOnOrAfter); err != nil {
 				return MutationResult{}, err
 			}
 		}
@@ -313,12 +313,14 @@ func (s *Service) update(ctx context.Context, mutation logMutation) (MutationRes
 			return MutationResult{}, err
 		}
 	}
-	contestIDs, err := s.logs.OngoingContestIDs(ctx, mutation.ID, mutation.Now)
+	contests, err := s.logs.AttachedContests(ctx, mutation.ID)
 	if err != nil {
 		return MutationResult{}, err
 	}
-	for _, id := range contestIDs {
-		result.Jobs = append(result.Jobs, jobs.InvalidateContestLeaderboardV1{ContestID: id})
+	for _, contest := range contests {
+		if contestwindow.Open(contest.End, mutation.Now) {
+			result.Jobs = append(result.Jobs, jobs.InvalidateContestLeaderboardV1{ContestID: contest.ID})
+		}
 	}
 	if jobContext.EligibleOfficial {
 		year := jobContext.Year
@@ -338,7 +340,7 @@ func (s *Service) RegistrationsForRescoring(log *Log, now time.Time) []logscore.
 	}
 	selected := make([]logscore.Target, 0, len(log.Registrations))
 	for _, registration := range log.Registrations {
-		if registration.ContestEnd.Add(24 * time.Hour).After(now) {
+		if contestwindow.Open(registration.ContestEnd, now) {
 			selected = append(selected, logscore.Target{
 				RegistrationID: registration.RegistrationID,
 				ContestID:      registration.ContestID,

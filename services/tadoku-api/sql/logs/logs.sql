@@ -429,7 +429,8 @@ update contest_logs set
 from contests, logs
 where contest_logs.log_id = sqlc.arg('log_id') and logs.id = contest_logs.log_id
   and logs.frozen_at is null and contest_logs.contest_id = sqlc.arg('contest_id')
-  and contest_logs.contest_id = contests.id and contests.contest_end >= sqlc.arg('now');
+  and contest_logs.contest_id = contests.id
+  and contests.contest_end >= sqlc.arg('open_if_end_on_or_after');
 
 -- name: UpdateOngoingContestLogs :exec
 update contest_logs set
@@ -440,15 +441,10 @@ update contest_logs set
 from contests, logs
 where contest_logs.log_id = sqlc.arg('log_id') and logs.id = contest_logs.log_id
   and logs.frozen_at is null and contest_logs.contest_id = contests.id
-  and contests.contest_end >= sqlc.arg('now');
+  and contests.contest_end >= sqlc.arg('open_if_end_on_or_after');
 
 -- name: DeleteLogTags :exec
 delete from log_tags where log_id = sqlc.arg('log_id');
-
--- name: FetchOngoingContestIDsForLog :many
-select distinct contest_logs.contest_id
-from contest_logs inner join contests on contests.id = contest_logs.contest_id
-where contest_logs.log_id = sqlc.arg('log_id') and contests.contest_end >= sqlc.arg('now');
 
 -- name: DetachContestLog :exec
 delete from contest_logs
@@ -465,17 +461,12 @@ update logs set
   updated_at = sqlc.arg('updated_at')
 where id = sqlc.arg('log_id');
 
--- name: CanDeleteLog :one
-select not exists (
-  select 1
-  from contest_logs
-  inner join contests on contests.id = contest_logs.contest_id
-  where contest_logs.log_id = sqlc.arg('log_id')
-    and contests.contest_end < sqlc.arg('now')
-) as can_delete;
-
--- name: ListAttachedContestIDs :many
-select contest_id from contest_logs where log_id = sqlc.arg('log_id');
+-- name: ListAttachedContests :many
+select contest_logs.contest_id, contests.contest_end
+from contest_logs
+inner join contests on contests.id = contest_logs.contest_id
+where contest_logs.log_id = sqlc.arg('log_id')
+order by contest_logs.contest_id;
 
 -- name: SoftDeleteLog :exec
 update logs set deleted_at = sqlc.arg('deleted_at')

@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/contestevent"
+	"github.com/tadoku/tadoku/services/tadoku-api/domain/contestwindow"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
 )
 
@@ -22,7 +23,8 @@ func (s *Service) RemoveUser(ctx context.Context, userID uuid.UUID, now time.Tim
 		return RemovalResult{}, err
 	}
 
-	if err := s.logs.DeleteUserContestLogsOutsideFinishedContests(ctx, userID, now); err != nil {
+	openIfEndOnOrAfter := contestwindow.OpenIfEndOnOrAfter(now)
+	if err := s.logs.DeleteUserContestLogsOutsideFinishedContests(ctx, userID, openIfEndOnOrAfter); err != nil {
 		return RemovalResult{}, err
 	}
 	kept, err := s.logs.FreezeUserContestHistory(ctx, userID, now)

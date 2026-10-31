@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/contestevent"
+	"github.com/tadoku/tadoku/services/tadoku-api/domain/contestwindow"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/jobs"
 	domainlanguages "github.com/tadoku/tadoku/services/tadoku-api/domain/languages"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/logscore"
@@ -58,7 +59,7 @@ func (s *Service) FindRegistrationWithContest(ctx context.Context, userID, conte
 }
 
 func (s *Service) ListOngoingRegistrations(ctx context.Context, userID uuid.UUID, languages []domainlanguages.Language) (*RegistrationList, error) {
-	registrations, err := s.contests.ListOngoingRegistrations(ctx, userID, timex.Now())
+	registrations, err := s.listOngoingRegistrations(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -66,8 +67,18 @@ func (s *Service) ListOngoingRegistrations(ctx context.Context, userID uuid.UUID
 	return hydrateRegistrations(registrations, languages)
 }
 
+func (s *Service) listOngoingRegistrations(ctx context.Context, userID uuid.UUID) ([]Registration, error) {
+	now := timex.Now()
+	return s.contests.ListOngoingRegistrations(
+		ctx,
+		userID,
+		contestwindow.StartedIfStartOnOrBefore(now),
+		contestwindow.OpenIfEndOnOrAfter(now),
+	)
+}
+
 func (s *Service) SelectRegistrationsForScoring(ctx context.Context, userID uuid.UUID, requested []uuid.UUID, languageCode string, activityID int32) ([]logscore.Target, error) {
-	registrations, err := s.contests.ListOngoingRegistrations(ctx, userID, timex.Now())
+	registrations, err := s.listOngoingRegistrations(ctx, userID)
 	if err != nil {
 		return nil, err
 	}

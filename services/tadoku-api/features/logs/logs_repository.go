@@ -146,62 +146,57 @@ func (r *LogsRepository) UpdateLog(ctx context.Context, mutation logMutation) er
 		LogID:           postgres.UUID(mutation.ID),
 	})
 }
-func (r *LogsRepository) UpdateContestLog(ctx context.Context, logID uuid.UUID, tracking logscore.ContestTracking, now time.Time) error {
+func (r *LogsRepository) UpdateContestLog(
+	ctx context.Context,
+	logID uuid.UUID,
+	tracking logscore.ContestTracking,
+	openIfEndOnOrAfter time.Time,
+) error {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return err
 	}
 	p := trackingParams(tracking.Tracking)
 	return queries.New(executor).UpdateOngoingContestLog(ctx, queries.UpdateOngoingContestLogParams{
-		UnitKey:         p.unitKey,
-		Amount:          p.amount,
-		Modifier:        p.modifier,
-		DurationSeconds: p.duration,
-		ComputedScore:   pgtype.Float4{Float32: tracking.Tracking.Score, Valid: true},
-		ScoreRuleSetID:  p.ruleSetID,
-		ScoreRuleIds:    p.ruleIDs,
-		ScoreRates:      tracking.Tracking.Rates,
-		ScoreSource:     p.source,
-		LogID:           postgres.UUID(logID),
-		ContestID:       postgres.UUID(tracking.ContestID),
-		Now:             pgtype.Date{Time: now, Valid: true},
+		UnitKey:            p.unitKey,
+		Amount:             p.amount,
+		Modifier:           p.modifier,
+		DurationSeconds:    p.duration,
+		ComputedScore:      pgtype.Float4{Float32: tracking.Tracking.Score, Valid: true},
+		ScoreRuleSetID:     p.ruleSetID,
+		ScoreRuleIds:       p.ruleIDs,
+		ScoreRates:         tracking.Tracking.Rates,
+		ScoreSource:        p.source,
+		LogID:              postgres.UUID(logID),
+		ContestID:          postgres.UUID(tracking.ContestID),
+		OpenIfEndOnOrAfter: pgtype.Date{Time: openIfEndOnOrAfter, Valid: true},
 	})
 }
 
-func (r *LogsRepository) UpdateOngoingContestLogs(ctx context.Context, logID uuid.UUID, tracking logscore.Tracking, now time.Time) error {
+func (r *LogsRepository) UpdateOngoingContestLogs(
+	ctx context.Context,
+	logID uuid.UUID,
+	tracking logscore.Tracking,
+	openIfEndOnOrAfter time.Time,
+) error {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return err
 	}
 	p := trackingParams(tracking)
 	return queries.New(executor).UpdateOngoingContestLogs(ctx, queries.UpdateOngoingContestLogsParams{
-		UnitKey:         p.unitKey,
-		Amount:          p.amount,
-		Modifier:        p.modifier,
-		DurationSeconds: p.duration,
-		ComputedScore:   pgtype.Float4{Float32: tracking.Score, Valid: true},
-		ScoreRuleSetID:  p.ruleSetID,
-		ScoreRuleIds:    p.ruleIDs,
-		ScoreRates:      tracking.Rates,
-		ScoreSource:     p.source,
-		LogID:           postgres.UUID(logID),
-		Now:             pgtype.Date{Time: now, Valid: true},
+		UnitKey:            p.unitKey,
+		Amount:             p.amount,
+		Modifier:           p.modifier,
+		DurationSeconds:    p.duration,
+		ComputedScore:      pgtype.Float4{Float32: tracking.Score, Valid: true},
+		ScoreRuleSetID:     p.ruleSetID,
+		ScoreRuleIds:       p.ruleIDs,
+		ScoreRates:         tracking.Rates,
+		ScoreSource:        p.source,
+		LogID:              postgres.UUID(logID),
+		OpenIfEndOnOrAfter: pgtype.Date{Time: openIfEndOnOrAfter, Valid: true},
 	})
-}
-
-func (r *LogsRepository) OngoingContestIDs(ctx context.Context, id uuid.UUID, now time.Time) ([]uuid.UUID, error) {
-	executor, err := postgres.Executor(ctx, r.db)
-	if err != nil {
-		return nil, err
-	}
-	rows, err := queries.New(executor).FetchOngoingContestIDsForLog(ctx, queries.FetchOngoingContestIDsForLogParams{
-		LogID: postgres.UUID(id),
-		Now:   pgtype.Date{Time: now, Valid: true},
-	})
-	if err != nil {
-		return nil, err
-	}
-	return postgres.UUIDs(rows), nil
 }
 
 type logTrackingParams struct {
@@ -255,30 +250,22 @@ func (r *LogsRepository) RecomputeOfficialEligibility(ctx context.Context, logID
 	})
 }
 
-func (r *LogsRepository) CanDelete(ctx context.Context, logID uuid.UUID, now time.Time) (bool, error) {
-	executor, err := postgres.Executor(ctx, r.db)
-	if err != nil {
-		return false, err
-	}
-
-	return queries.New(executor).CanDeleteLog(ctx, queries.CanDeleteLogParams{
-		LogID: postgres.UUID(logID),
-		Now:   pgtype.Date{Time: now, Valid: true},
-	})
-}
-
-func (r *LogsRepository) AttachedContestIDs(ctx context.Context, logID uuid.UUID) ([]uuid.UUID, error) {
+func (r *LogsRepository) AttachedContests(ctx context.Context, logID uuid.UUID) ([]attachedContest, error) {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return nil, err
 	}
 
-	rows, err := queries.New(executor).ListAttachedContestIDs(ctx, postgres.UUID(logID))
+	rows, err := queries.New(executor).ListAttachedContests(ctx, postgres.UUID(logID))
 	if err != nil {
 		return nil, err
 	}
 
-	return postgres.UUIDs(rows), nil
+	contests := make([]attachedContest, 0, len(rows))
+	for _, row := range rows {
+		contests = append(contests, attachedContest{ID: row.ContestID.Bytes, End: row.ContestEnd.Time})
+	}
+	return contests, nil
 }
 
 func (r *LogsRepository) SoftDelete(ctx context.Context, logID uuid.UUID, now time.Time) error {

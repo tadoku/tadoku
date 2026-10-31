@@ -620,14 +620,15 @@ inner join contests on contests.id = contest_registrations.contest_id
 inner join users on users.id = contest_registrations.user_id
 inner join users as owner_users on owner_users.id = contests.owner_user_id
 where contest_registrations.user_id = $1
-  and contests.contest_start <= $2::timestamp
-  and (contests.contest_end + '1 day'::interval) > $2::timestamp
+  and contests.contest_start <= $2
+  and contests.contest_end >= $3
   and contest_registrations.deleted_at is null
 `
 
 type ListOngoingContestRegistrationsParams struct {
-	UserID pgtype.UUID
-	Now    pgtype.Timestamp
+	UserID                   pgtype.UUID
+	StartedIfStartOnOrBefore pgtype.Date
+	OpenIfEndOnOrAfter       pgtype.Date
 }
 
 type ListOngoingContestRegistrationsRow struct {
@@ -649,7 +650,7 @@ type ListOngoingContestRegistrationsRow struct {
 }
 
 func (q *Queries) ListOngoingContestRegistrations(ctx context.Context, arg ListOngoingContestRegistrationsParams) ([]ListOngoingContestRegistrationsRow, error) {
-	rows, err := q.db.Query(ctx, listOngoingContestRegistrations, arg.UserID, arg.Now)
+	rows, err := q.db.Query(ctx, listOngoingContestRegistrations, arg.UserID, arg.StartedIfStartOnOrBefore, arg.OpenIfEndOnOrAfter)
 	if err != nil {
 		return nil, err
 	}

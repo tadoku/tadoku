@@ -13,7 +13,7 @@ import (
 func (r *ContestsRepository) DeleteUnfinishedRegistrations(
 	ctx context.Context,
 	userID uuid.UUID,
-	now time.Time,
+	openIfEndOnOrAfter time.Time,
 ) ([]uuid.UUID, error) {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
@@ -22,8 +22,8 @@ func (r *ContestsRepository) DeleteUnfinishedRegistrations(
 	rows, err := queries.New(executor).DeleteUnfinishedRegistrationsForUser(
 		ctx,
 		queries.DeleteUnfinishedRegistrationsForUserParams{
-			UserID: postgres.UUID(userID),
-			Now:    pgtype.Date{Time: now, Valid: true},
+			UserID:             postgres.UUID(userID),
+			OpenIfEndOnOrAfter: pgtype.Date{Time: openIfEndOnOrAfter, Valid: true},
 		},
 	)
 	if err != nil {

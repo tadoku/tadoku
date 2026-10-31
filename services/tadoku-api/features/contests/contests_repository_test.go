@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/tadoku/tadoku/services/tadoku-api/domain/contestwindow"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/testpostgres"
@@ -375,7 +376,15 @@ func TestContestsRepositoryRegistrationPersistenceAndTransaction(t *testing.T) {
 		t.Errorf("registration with contest=%+v", withContest)
 	}
 
-	ongoing, err := repository.ListOngoingRegistrations(tenantCtx, userID, time.Date(2026, 9, 12, 23, 59, 59, 0, time.UTC))
+	listOngoing := func(now time.Time) ([]Registration, error) {
+		return repository.ListOngoingRegistrations(
+			tenantCtx,
+			userID,
+			contestwindow.StartedIfStartOnOrBefore(now),
+			contestwindow.OpenIfEndOnOrAfter(now),
+		)
+	}
+	ongoing, err := listOngoing(time.Date(2026, 9, 12, 23, 59, 59, 0, time.UTC))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -384,7 +393,7 @@ func TestContestsRepositoryRegistrationPersistenceAndTransaction(t *testing.T) {
 		t.Errorf("ongoing registration=%+v", ongoing)
 	}
 
-	ongoing, err = repository.ListOngoingRegistrations(tenantCtx, userID, time.Date(2026, 9, 13, 0, 0, 0, 0, time.UTC))
+	ongoing, err = listOngoing(time.Date(2026, 9, 13, 0, 0, 0, 0, time.UTC))
 	if err != nil {
 		t.Fatal(err)
 	}

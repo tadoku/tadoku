@@ -7379,6 +7379,14 @@ func (response ImmersionContestRegistrationUpsert401Response) VisitImmersionCont
 	return nil
 }
 
+type ImmersionContestRegistrationUpsert403Response struct {
+}
+
+func (response ImmersionContestRegistrationUpsert403Response) VisitImmersionContestRegistrationUpsertResponse(w http.ResponseWriter) error {
+	w.WriteHeader(403)
+	return nil
+}
+
 type ImmersionContestRegistrationUpsert404Response struct {
 }
 

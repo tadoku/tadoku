@@ -1,6 +1,10 @@
 import { useCurrentDateTime } from '@app/common/hooks'
 import { useSession, useUserRole } from '@app/common/session'
-import { useContest, useContestRegistration } from '@app/immersion/contest-api'
+import {
+  acceptsNewRegistrations,
+  useContest,
+  useContestRegistration,
+} from '@app/immersion/contest-api'
 import { useRouter } from 'next/router'
 import { Breadcrumb, ButtonGroup, Loading, Tabbar } from 'ui'
 import { DateTime, Interval } from 'luxon'
@@ -45,8 +49,6 @@ const Page = () => {
   const hasEnded = contestInterval.isBefore(now)
   const hasStarted = contestInterval.contains(now) || hasEnded
   const isOngoing = hasStarted && !hasEnded
-  const registrationsOpen =
-    DateTime.fromISO(contest.data.registration_end) > now
 
   return (
     <>
@@ -85,13 +87,16 @@ const Page = () => {
                 label: 'Join contest',
                 IconComponent: PlusIcon,
                 style: 'primary',
-                visible: !hasEnded && !registration.data,
+                visible:
+                  !hasEnded &&
+                  !registration.data &&
+                  acceptsNewRegistrations(contest.data, now),
               },
               {
                 href: routes.contestJoin(id),
                 label: 'Update registration',
                 style: 'secondary',
-                visible: registrationsOpen && !!registration.data,
+                visible: !!registration.data,
               },
               {
                 href: routes.logCreate(),

@@ -22,6 +22,7 @@ var (
 	ErrContestCreatorTooYoung   = errx.NewForbiddenError("contest creator account too young")
 	ErrInvalidActivity          = errx.NewInvalidInputError("invalid contest activity")
 	ErrRegistrationNotFound     = errx.NewNotFoundError("contest registration not found")
+	ErrRegistrationClosed       = errx.NewForbiddenError("contest registration closed")
 )
 
 type Language struct {

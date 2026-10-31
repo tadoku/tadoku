@@ -1488,6 +1488,10 @@ export type ImmersionContestRegistrationUpsertErrors = {
      */
     401: unknown;
     /**
+     * registration for the contest has closed to new registrants
+     */
+    403: unknown;
+    /**
      * contest not found
      */
     404: unknown;

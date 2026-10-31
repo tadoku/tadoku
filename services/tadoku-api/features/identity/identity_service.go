@@ -5,11 +5,13 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"errors"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/tadoku/tadoku/services/tadoku-api/internal/errx"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/tenant"
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 	"golang.org/x/crypto/bcrypt"
@@ -19,11 +21,21 @@ type Service struct {
 	repository   *Repository
 	throttle     *Throttle
 	cookieDomain string
+	logger       *slog.Logger
 }
 
-func NewService(repository *Repository, throttle *Throttle, cookieDomain string) *Service {
-	return &Service{repository: repository, throttle: throttle, cookieDomain: cookieDomain}
+func NewService(repository *Repository, throttle *Throttle, cookieDomain string, logger *slog.Logger) *Service {
+	return &Service{repository: repository, throttle: throttle, cookieDomain: cookieDomain, logger: logger}
 }
+
+const (
+	throttleWindow         = 15 * time.Minute
+	loginEmailLimit        = 10
+	loginIPLimit           = 50
+	registrationIPLimit    = 10
+	recoveryClientLimit    = 10
+	recoveryRecipientLimit = 3
+)
 
 func (s *Service) Register(ctx context.Context, registration Registration) (LoginResult, error) {
 	email, err := ParseEmail(registration.Email)
@@ -38,8 +50,12 @@ func (s *Service) Register(ctx context.Context, registration Registration) (Logi
 	if err != nil {
 		return LoginResult{}, err
 	}
-	if err := s.throttle.admitRegistration(ctx, registration.IP); err != nil {
-		return LoginResult{}, err
+	attempts, err := s.throttle.countRegistration(ctx, throttleWindow, registration.IP)
+	if err != nil {
+		return LoginResult{}, errx.NewUnavailableError("registration admission unavailable", err)
+	}
+	if attempts > registrationIPLimit {
+		return LoginResult{}, ErrRegistrationThrottled
 	}
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(password.value), 12)
@@ -67,8 +83,14 @@ func (s *Service) Login(ctx context.Context, login Login) (LoginResult, error) {
 	if err != nil {
 		return LoginResult{}, err
 	}
-	if err := s.throttle.allow(ctx, email, login.IP); err != nil {
-		return LoginResult{}, err
+	attempts, err := s.throttle.countLogin(ctx, throttleWindow, email, login.IP)
+	switch {
+	case errors.Is(err, errCountersUnavailable):
+		s.logger.WarnContext(ctx, "login throttling unavailable; allowing attempt", "error", err)
+	case err != nil:
+		return LoginResult{}, errx.NewUnavailableError("login throttling unavailable", err)
+	case attempts.email > loginEmailLimit || attempts.ip > loginIPLimit:
+		return LoginResult{}, ErrThrottled
 	}
 
 	credential, err := s.repository.credentials(ctx, email)

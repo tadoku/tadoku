@@ -53,9 +53,15 @@ func (s *Service) AdmitRecovery(ctx context.Context, recovery Recovery) (*Recove
 		}
 	}
 
-	admitted, err := s.throttle.admitRecovery(ctx, email, recovery.IP)
-	if err != nil || !admitted {
-		return nil, err
+	attempts, err := s.throttle.countRecovery(ctx, throttleWindow, recoveryClientLimit, email, recovery.IP)
+	if err != nil {
+		return nil, errx.NewUnavailableError("recovery admission unavailable", err)
+	}
+	if attempts.client > recoveryClientLimit {
+		return nil, ErrRecoveryThrottled
+	}
+	if attempts.recipient > recoveryRecipientLimit {
+		return nil, nil
 	}
 	return &RecoveryRequest{email: email, link: link, token: token}, nil
 }

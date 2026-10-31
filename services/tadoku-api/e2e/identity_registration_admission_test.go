@@ -126,3 +126,41 @@ func TestIdentityV2RegistrationAdmissionUnavailable(t *testing.T) {
 		`{"email":"reader@example.test","password":"Fixture-login-482!"}`, "", nil)
 	requireIdentityStatus(t, response, http.StatusOK)
 }
+
+func TestIdentityLoginAndRegistrationThrottleWindows(t *testing.T) {
+	resetIdentity(t)
+	const peer = "198.51.100.25"
+	login := func() {
+		response := identityRequest(t, api.handler, identityBranchA, "POST", "/identity/login",
+			`{"email":"reader@example.test","password":"wrong-password"}`, "", nil)
+		requireIdentityStatus(t, response, http.StatusUnauthorized)
+	}
+
+	login()
+	requireIdentityStatus(t, registerFrom(t, api.handler, identityBranchA, "window@example.test", peer, ""),
+		http.StatusCreated)
+	first := map[string]int64{}
+	for operation, counters := range map[string]int{"login": 2, "registration": 1} {
+		keys := identityThrottleKeys(t, identityBranchA, operation)
+		if len(keys) != counters {
+			t.Fatalf("%s throttle keys = %v, want %d counters", operation, keys, counters)
+		}
+		for key, ttl := range keys {
+			if ttl <= 890_000 || ttl > 900_000 {
+				t.Errorf("%s throttle key %q has window %dms, want 900000ms", operation, key, ttl)
+			}
+			first[key] = ttl
+		}
+	}
+
+	login()
+	requireIdentityStatus(t, registerFrom(t, api.handler, identityBranchA, "window2@example.test", peer, ""),
+		http.StatusCreated)
+	for _, operation := range []string{"login", "registration"} {
+		for key, ttl := range identityThrottleKeys(t, identityBranchA, operation) {
+			if ttl > first[key] {
+				t.Errorf("later %s attempt extended %q from %dms to %dms", operation, key, first[key], ttl)
+			}
+		}
+	}
+}

@@ -226,11 +226,11 @@ func TestIdentityRecoveryAdmissionConcurrency(t *testing.T) {
 	requireRecoveryWrites(t, identityBranchA, recoveryRecipientBudget)
 }
 
-func recoveryAdmissionKeys(t *testing.T, tenantKey string) map[string]int64 {
+func identityThrottleKeys(t *testing.T, tenantKey, operation string) map[string]int64 {
 	t.Helper()
 	client := leaderboardValkey.client
 	keys, err := client.Do(t.Context(),
-		client.B().Keys().Pattern("tenant:"+tenantKey+":identity:recovery:*").Build()).AsStrSlice()
+		client.B().Keys().Pattern("tenant:"+tenantKey+":identity:"+operation+":*").Build()).AsStrSlice()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -252,7 +252,7 @@ func TestIdentityRecoveryAdmissionWindow(t *testing.T) {
 		requireRecoveryAccepted(t, recoverFrom(t, api.handler, identityBranchA, "reader@example.test", peer, ""))
 	}
 
-	first := recoveryAdmissionKeys(t, identityBranchA)
+	first := identityThrottleKeys(t, identityBranchA, "recovery")
 	if len(first) != 2 {
 		t.Fatalf("recovery admission keys = %v, want one client and one recipient counter", first)
 	}
@@ -262,7 +262,7 @@ func TestIdentityRecoveryAdmissionWindow(t *testing.T) {
 		}
 	}
 	requireRecoveryAccepted(t, recoverFrom(t, api.handler, identityBranchA, "reader@example.test", peer, ""))
-	for key, ttl := range recoveryAdmissionKeys(t, identityBranchA) {
+	for key, ttl := range identityThrottleKeys(t, identityBranchA, "recovery") {
 		if ttl > first[key] {
 			t.Fatalf("suppressed request extended %q from %dms to %dms", key, first[key], ttl)
 		}

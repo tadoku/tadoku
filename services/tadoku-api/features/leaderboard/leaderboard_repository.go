@@ -26,7 +26,7 @@ func (r *Repository) contestExists(ctx context.Context, id uuid.UUID) (bool, err
 	return exists, nil
 }
 
-func (r *Repository) contest(ctx context.Context, request ContestRequest) (*Leaderboard, error) {
+func (r *Repository) contest(ctx context.Context, request ContestRequest) (*page, error) {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return nil, err
@@ -41,25 +41,25 @@ func (r *Repository) contest(ctx context.Context, request ContestRequest) (*Lead
 	if err != nil {
 		return nil, fmt.Errorf("fetch contest leaderboard: %w", err)
 	}
-	entries := make([]Entry, 0, len(rows))
-	total := 0
-	for _, row := range rows {
-		total = int(row.TotalSize)
-		if !row.UserID.Valid {
-			continue
-		}
-		entries = append(entries, Entry{
-			Rank:            int(row.Rank.Int64),
-			UserID:          uuid.UUID(row.UserID.Bytes),
-			UserDisplayName: row.UserDisplayName.String,
-			Score:           row.Score.Float32,
-			IsTie:           row.IsTie.Bool,
-		})
+	board := &page{
+		scores: make([]score, 0, len(rows)),
+		offset: int(request.offset()),
 	}
-	return result(entries, total, request.Request), nil
+	for _, row := range rows {
+		board.totalCount = int(row.TotalSize)
+		board.aboveFirst = int(row.AboveFirst)
+		board.throughLast = int(row.ThroughLast)
+		if row.UserID.Valid {
+			board.scores = append(board.scores, score{
+				userID: uuid.UUID(row.UserID.Bytes),
+				value:  float64(row.Score.Float32),
+			})
+		}
+	}
+	return board, nil
 }
 
-func (r *Repository) yearly(ctx context.Context, request YearlyRequest) (*Leaderboard, error) {
+func (r *Repository) yearly(ctx context.Context, request YearlyRequest) (*page, error) {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return nil, err
@@ -74,25 +74,25 @@ func (r *Repository) yearly(ctx context.Context, request YearlyRequest) (*Leader
 	if err != nil {
 		return nil, fmt.Errorf("fetch yearly leaderboard: %w", err)
 	}
-	entries := make([]Entry, 0, len(rows))
-	total := 0
-	for _, row := range rows {
-		total = int(row.TotalSize)
-		if !row.UserID.Valid {
-			continue
-		}
-		entries = append(entries, Entry{
-			Rank:            int(row.Rank.Int64),
-			UserID:          uuid.UUID(row.UserID.Bytes),
-			UserDisplayName: row.UserDisplayName.String,
-			Score:           row.Score.Float32,
-			IsTie:           row.IsTie.Bool,
-		})
+	board := &page{
+		scores: make([]score, 0, len(rows)),
+		offset: int(request.offset()),
 	}
-	return result(entries, total, request.Request), nil
+	for _, row := range rows {
+		board.totalCount = int(row.TotalSize)
+		board.aboveFirst = int(row.AboveFirst)
+		board.throughLast = int(row.ThroughLast)
+		if row.UserID.Valid {
+			board.scores = append(board.scores, score{
+				userID: uuid.UUID(row.UserID.Bytes),
+				value:  float64(row.Score.Float32),
+			})
+		}
+	}
+	return board, nil
 }
 
-func (r *Repository) global(ctx context.Context, request Request) (*Leaderboard, error) {
+func (r *Repository) global(ctx context.Context, request Request) (*page, error) {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return nil, err
@@ -106,22 +106,22 @@ func (r *Repository) global(ctx context.Context, request Request) (*Leaderboard,
 	if err != nil {
 		return nil, fmt.Errorf("fetch global leaderboard: %w", err)
 	}
-	entries := make([]Entry, 0, len(rows))
-	total := 0
-	for _, row := range rows {
-		total = int(row.TotalSize)
-		if !row.UserID.Valid {
-			continue
-		}
-		entries = append(entries, Entry{
-			Rank:            int(row.Rank.Int64),
-			UserID:          uuid.UUID(row.UserID.Bytes),
-			UserDisplayName: row.UserDisplayName.String,
-			Score:           row.Score.Float32,
-			IsTie:           row.IsTie.Bool,
-		})
+	board := &page{
+		scores: make([]score, 0, len(rows)),
+		offset: int(request.offset()),
 	}
-	return result(entries, total, request), nil
+	for _, row := range rows {
+		board.totalCount = int(row.TotalSize)
+		board.aboveFirst = int(row.AboveFirst)
+		board.throughLast = int(row.ThroughLast)
+		if row.UserID.Valid {
+			board.scores = append(board.scores, score{
+				userID: uuid.UUID(row.UserID.Bytes),
+				value:  float64(row.Score.Float32),
+			})
+		}
+	}
+	return board, nil
 }
 
 func (r *Repository) allContestScores(ctx context.Context, id uuid.UUID) ([]score, error) {

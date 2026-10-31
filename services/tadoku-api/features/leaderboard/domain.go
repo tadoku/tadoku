@@ -58,11 +58,6 @@ type Leaderboard struct {
 	NextPageToken string
 }
 
-type Result struct {
-	Leaderboard         *Leaderboard
-	HydrateDisplayNames bool
-}
-
 type Entry struct {
 	Rank            int
 	UserID          uuid.UUID
@@ -76,22 +71,25 @@ type score struct {
 	value  float64
 }
 
+// A page holds scores ordered by score descending, then user ID descending, starting at offset.
+// aboveFirst counts board entries scoring above the first score, and throughLast counts entries
+// scoring at least the last score; both are zero for an empty page.
 type page struct {
-	scores     []score
-	totalCount int
-	startRank  int
-	hasPrevTie bool
-	hasNextTie bool
+	scores      []score
+	offset      int
+	totalCount  int
+	aboveFirst  int
+	throughLast int
 }
 
-func result(entries []Entry, total int, request Request) *Leaderboard {
+func result(board *page, request Request) *Leaderboard {
 	next := ""
-	if int64(request.offset())+int64(request.PageSize) < int64(total) {
+	if int64(request.offset())+int64(request.PageSize) < int64(board.totalCount) {
 		next = fmt.Sprint(request.Page + 1)
 	}
 	return &Leaderboard{
-		Entries:       entries,
-		TotalSize:     total,
+		Entries:       buildEntries(board),
+		TotalSize:     board.totalCount,
 		NextPageToken: next,
 	}
 }

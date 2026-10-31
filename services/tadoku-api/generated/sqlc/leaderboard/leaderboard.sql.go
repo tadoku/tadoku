@@ -75,52 +75,32 @@ with leaderboard as (
     and (logs.language_code = $1 or $1 is null)
     and (logs.log_activity_id = $2::integer or $2 is null)
   group by logs.user_id
-), ranked_leaderboard as (
-  select user_id, score, rank() over(order by score desc) as "rank" from leaderboard where score > 0
-), enriched_leaderboard as (
-  select
-    rank() over(order by coalesce(ranked_leaderboard.score, 0) desc) as "rank",
-    ranked_leaderboard.user_id,
-    users.display_name::varchar as user_display_name,
-    coalesce(ranked_leaderboard.score, 0)::real as score
-  from ranked_leaderboard
-  inner join users on users.id = ranked_leaderboard.user_id
-), tied_leaderboard as (
-  select
-    enriched_leaderboard."rank",
-    enriched_leaderboard.user_id,
-    enriched_leaderboard.user_display_name,
-    enriched_leaderboard.score,
-    coalesce((
-      "rank" = lag("rank", 1, -1::bigint) over (order by "rank")
-      or "rank" = lead("rank", 1, -1::bigint) over (order by "rank")
-    ), false)::boolean as is_tie
-  from enriched_leaderboard
+), board as (
+  select leaderboard.user_id, leaderboard.score::real as score
+  from leaderboard
+  where leaderboard.score > 0
 ), page as (
-  select
-    tied_leaderboard."rank",
-    tied_leaderboard.user_id,
-    tied_leaderboard.user_display_name,
-    tied_leaderboard.score,
-    tied_leaderboard.is_tie
-  from tied_leaderboard
-  order by tied_leaderboard.score desc, tied_leaderboard.user_display_name asc
+  select board.user_id, board.score
+  from board
+  order by board.score desc, board.user_id desc
   limit $4
   offset $3
-), total as (
-  select count(*) as total_size
-  from tied_leaderboard
+), counts as (
+  select
+    count(*) as total_size,
+    count(*) filter (where board.score > (select max(page.score) from page)) as above_first,
+    count(*) filter (where board.score >= (select min(page.score) from page)) as through_last
+  from board
 )
 select
-  page."rank",
   page.user_id,
-  page.user_display_name,
   page.score,
-  page.is_tie,
-  total.total_size
-from total
+  counts.total_size,
+  counts.above_first,
+  counts.through_last
+from counts
 left join page on true
-order by page.score desc, page.user_display_name asc
+order by page.score desc, page.user_id desc
 `
 
 type GlobalLeaderboardParams struct {
@@ -131,12 +111,11 @@ type GlobalLeaderboardParams struct {
 }
 
 type GlobalLeaderboardRow struct {
-	Rank            pgtype.Int8
-	UserID          pgtype.UUID
-	UserDisplayName pgtype.Text
-	Score           pgtype.Float4
-	IsTie           pgtype.Bool
-	TotalSize       int64
+	UserID      pgtype.UUID
+	Score       pgtype.Float4
+	TotalSize   int64
+	AboveFirst  int64
+	ThroughLast int64
 }
 
 func (q *Queries) GlobalLeaderboard(ctx context.Context, arg GlobalLeaderboardParams) ([]GlobalLeaderboardRow, error) {
@@ -154,12 +133,11 @@ func (q *Queries) GlobalLeaderboard(ctx context.Context, arg GlobalLeaderboardPa
 	for rows.Next() {
 		var i GlobalLeaderboardRow
 		if err := rows.Scan(
-			&i.Rank,
 			&i.UserID,
-			&i.UserDisplayName,
 			&i.Score,
-			&i.IsTie,
 			&i.TotalSize,
+			&i.AboveFirst,
+			&i.ThroughLast,
 		); err != nil {
 			return nil, err
 		}
@@ -215,63 +193,39 @@ with leaderboard as (
     and (logs.language_code = $2 or $2 is null)
     and (logs.log_activity_id = $3::integer or $3 is null)
   group by logs.user_id
-), ranked_leaderboard as (
-  select user_id, score, rank() over(order by score desc) as "rank"
-  from leaderboard
 ), registrations as (
-  select contest_registrations.user_id, users.display_name as user_display_name, contest_registrations.created_at
+  select contest_registrations.user_id
   from contest_registrations
   inner join users on users.id = contest_registrations.user_id
   where contest_id = $1
     and contest_registrations.deleted_at is null
     and ($2 = any(language_codes) or $2 is null)
-), enriched_leaderboard as (
-  select
-    rank() over(order by coalesce(ranked_leaderboard.score, 0) desc) as "rank",
-    registrations.user_id,
-    registrations.user_display_name,
-    coalesce(ranked_leaderboard.score, 0)::real as score,
-    registrations.created_at as registered_at
+), board as (
+  select registrations.user_id, coalesce(leaderboard.score, 0)::real as score
   from registrations
-  left join ranked_leaderboard using(user_id)
-), tied_leaderboard as (
-  select
-    enriched_leaderboard."rank",
-    enriched_leaderboard.user_id,
-    enriched_leaderboard.user_display_name,
-    enriched_leaderboard.score,
-    enriched_leaderboard.registered_at,
-    coalesce((
-      "rank" = lag("rank", 1, -1::bigint) over (order by "rank")
-      or "rank" = lead("rank", 1, -1::bigint) over (order by "rank")
-    ), false)::boolean as is_tie
-  from enriched_leaderboard
+  left join leaderboard using(user_id)
 ), page as (
-  select
-    tied_leaderboard."rank",
-    tied_leaderboard.user_id,
-    tied_leaderboard.user_display_name,
-    tied_leaderboard.score,
-    tied_leaderboard.registered_at,
-    tied_leaderboard.is_tie
-  from tied_leaderboard
-  order by tied_leaderboard.score desc, tied_leaderboard.registered_at asc, tied_leaderboard.user_id desc
+  select board.user_id, board.score
+  from board
+  order by board.score desc, board.user_id desc
   limit $5
   offset $4
-), total as (
-  select count(*) as total_size
-  from tied_leaderboard
+), counts as (
+  select
+    count(*) as total_size,
+    count(*) filter (where board.score > (select max(page.score) from page)) as above_first,
+    count(*) filter (where board.score >= (select min(page.score) from page)) as through_last
+  from board
 )
 select
-  page."rank",
   page.user_id,
-  page.user_display_name,
   page.score,
-  page.is_tie,
-  total.total_size
-from total
+  counts.total_size,
+  counts.above_first,
+  counts.through_last
+from counts
 left join page on true
-order by page.score desc, page.registered_at asc, page.user_id desc
+order by page.score desc, page.user_id desc
 `
 
 type LeaderboardForContestParams struct {
@@ -283,12 +237,11 @@ type LeaderboardForContestParams struct {
 }
 
 type LeaderboardForContestRow struct {
-	Rank            pgtype.Int8
-	UserID          pgtype.UUID
-	UserDisplayName pgtype.Text
-	Score           pgtype.Float4
-	IsTie           pgtype.Bool
-	TotalSize       int64
+	UserID      pgtype.UUID
+	Score       pgtype.Float4
+	TotalSize   int64
+	AboveFirst  int64
+	ThroughLast int64
 }
 
 func (q *Queries) LeaderboardForContest(ctx context.Context, arg LeaderboardForContestParams) ([]LeaderboardForContestRow, error) {
@@ -307,12 +260,11 @@ func (q *Queries) LeaderboardForContest(ctx context.Context, arg LeaderboardForC
 	for rows.Next() {
 		var i LeaderboardForContestRow
 		if err := rows.Scan(
-			&i.Rank,
 			&i.UserID,
-			&i.UserDisplayName,
 			&i.Score,
-			&i.IsTie,
 			&i.TotalSize,
+			&i.AboveFirst,
+			&i.ThroughLast,
 		); err != nil {
 			return nil, err
 		}
@@ -335,52 +287,32 @@ with leaderboard as (
     and (logs.language_code = $2 or $2 is null)
     and (logs.log_activity_id = $3::integer or $3 is null)
   group by logs.user_id
-), ranked_leaderboard as (
-  select user_id, score, rank() over(order by score desc) as "rank" from leaderboard where score > 0
-), enriched_leaderboard as (
-  select
-    rank() over(order by coalesce(ranked_leaderboard.score, 0) desc) as "rank",
-    ranked_leaderboard.user_id,
-    users.display_name::varchar as user_display_name,
-    coalesce(ranked_leaderboard.score, 0)::real as score
-  from ranked_leaderboard
-  inner join users on users.id = ranked_leaderboard.user_id
-), tied_leaderboard as (
-  select
-    enriched_leaderboard."rank",
-    enriched_leaderboard.user_id,
-    enriched_leaderboard.user_display_name,
-    enriched_leaderboard.score,
-    coalesce((
-      "rank" = lag("rank", 1, -1::bigint) over (order by "rank")
-      or "rank" = lead("rank", 1, -1::bigint) over (order by "rank")
-    ), false)::boolean as is_tie
-  from enriched_leaderboard
+), board as (
+  select leaderboard.user_id, leaderboard.score::real as score
+  from leaderboard
+  where leaderboard.score > 0
 ), page as (
-  select
-    tied_leaderboard."rank",
-    tied_leaderboard.user_id,
-    tied_leaderboard.user_display_name,
-    tied_leaderboard.score,
-    tied_leaderboard.is_tie
-  from tied_leaderboard
-  order by tied_leaderboard.score desc, tied_leaderboard.user_display_name asc
+  select board.user_id, board.score
+  from board
+  order by board.score desc, board.user_id desc
   limit $5
   offset $4
-), total as (
-  select count(*) as total_size
-  from tied_leaderboard
+), counts as (
+  select
+    count(*) as total_size,
+    count(*) filter (where board.score > (select max(page.score) from page)) as above_first,
+    count(*) filter (where board.score >= (select min(page.score) from page)) as through_last
+  from board
 )
 select
-  page."rank",
   page.user_id,
-  page.user_display_name,
   page.score,
-  page.is_tie,
-  total.total_size
-from total
+  counts.total_size,
+  counts.above_first,
+  counts.through_last
+from counts
 left join page on true
-order by page.score desc, page.user_display_name asc
+order by page.score desc, page.user_id desc
 `
 
 type YearlyLeaderboardParams struct {
@@ -392,12 +324,11 @@ type YearlyLeaderboardParams struct {
 }
 
 type YearlyLeaderboardRow struct {
-	Rank            pgtype.Int8
-	UserID          pgtype.UUID
-	UserDisplayName pgtype.Text
-	Score           pgtype.Float4
-	IsTie           pgtype.Bool
-	TotalSize       int64
+	UserID      pgtype.UUID
+	Score       pgtype.Float4
+	TotalSize   int64
+	AboveFirst  int64
+	ThroughLast int64
 }
 
 func (q *Queries) YearlyLeaderboard(ctx context.Context, arg YearlyLeaderboardParams) ([]YearlyLeaderboardRow, error) {
@@ -416,12 +347,11 @@ func (q *Queries) YearlyLeaderboard(ctx context.Context, arg YearlyLeaderboardPa
 	for rows.Next() {
 		var i YearlyLeaderboardRow
 		if err := rows.Scan(
-			&i.Rank,
 			&i.UserID,
-			&i.UserDisplayName,
 			&i.Score,
-			&i.IsTie,
 			&i.TotalSize,
+			&i.AboveFirst,
+			&i.ThroughLast,
 		); err != nil {
 			return nil, err
 		}

@@ -10,7 +10,7 @@ import (
 func TestRecoveryWithoutTenant(t *testing.T) {
 	t.Parallel()
 
-	service := NewService(nil, nil, "tadoku.app")
+	service := NewService(nil, nil, "tadoku.app", nil)
 	ctx := context.Background()
 
 	_, admitErr := service.AdmitRecovery(ctx, Recovery{Email: "user@example.com", IP: "192.0.2.1"})

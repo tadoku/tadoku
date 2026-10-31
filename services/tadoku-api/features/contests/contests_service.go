@@ -93,7 +93,8 @@ func (s *Service) SelectRegistrationsForScoring(ctx context.Context, userID uuid
 func (s *Service) ListYearlyRegistrations(
 	ctx context.Context,
 	parameters YearlyRegistrationsParameters,
-	includePrivate bool,
+	actorID *uuid.UUID,
+	actorIsAdmin bool,
 	languages []domainlanguages.Language,
 ) (*RegistrationList, error) {
 	if err := parameters.Validate(); err != nil {
@@ -103,7 +104,7 @@ func (s *Service) ListYearlyRegistrations(
 	if parameters.PageSize == 0 || parameters.PageSize > yearlyRegistrationsMaxPageSize {
 		parameters.PageSize = yearlyRegistrationsMaxPageSize
 	}
-	parameters.includePrivate = includePrivate
+	parameters.includePrivate = actorIsAdmin || (actorID != nil && *actorID == parameters.UserID)
 
 	registrations, total, err := s.contests.ListYearlyRegistrations(ctx, parameters)
 	if err != nil {
@@ -274,7 +275,12 @@ func (s *Service) CheckYearlyCreationLimit(ctx context.Context, userID uuid.UUID
 	return checkContestCreationYearlyLimit(count)
 }
 
-func (s *Service) ListContests(ctx context.Context, parameters ListParameters, includePrivate bool) (*ContestList, error) {
+func (s *Service) ListContests(
+	ctx context.Context,
+	parameters ListParameters,
+	actorID *uuid.UUID,
+	actorIsAdmin bool,
+) (*ContestList, error) {
 	if err := parameters.Validate(); err != nil {
 		return nil, err
 	}
@@ -285,9 +291,8 @@ func (s *Service) ListContests(ctx context.Context, parameters ListParameters, i
 	if parameters.PageSize > 100 {
 		parameters.PageSize = 100
 	}
-	parameters.includePrivate = includePrivate
 
-	items, total, err := s.contests.ListContests(ctx, parameters)
+	items, total, err := s.contests.ListContests(ctx, parameters, newListVisibility(actorID, actorIsAdmin))
 	if err != nil {
 		return nil, err
 	}

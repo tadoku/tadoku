@@ -256,12 +256,39 @@ type ListParameters struct {
 	IncludeDeleted bool
 	PageSize       int
 	Page           int
-
-	includePrivate bool
 }
 
 func (p ListParameters) Validate() error {
 	return validatePage(p.PageSize, p.Page)
+}
+
+type listVisibility interface {
+	isListVisibility()
+}
+
+type publicContests struct{}
+
+func (publicContests) isListVisibility() {}
+
+type publicAndOwnContests struct {
+	ownerID uuid.UUID
+}
+
+func (publicAndOwnContests) isListVisibility() {}
+
+type allContests struct{}
+
+func (allContests) isListVisibility() {}
+
+func newListVisibility(actorID *uuid.UUID, actorIsAdmin bool) listVisibility {
+	switch {
+	case actorIsAdmin:
+		return allContests{}
+	case actorID != nil:
+		return publicAndOwnContests{ownerID: *actorID}
+	default:
+		return publicContests{}
+	}
 }
 
 func (p ListParameters) offset() int32 {

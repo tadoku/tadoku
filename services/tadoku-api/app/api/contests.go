@@ -120,9 +120,12 @@ func (a *Application) CreateContest(ctx context.Context, parameters CreateContes
 }
 
 func (a *Application) ListContests(ctx context.Context, parameters ListContestsParameters) (*contests.ContestList, error) {
-	includePrivate := a.roles.IsAdminOrFalse(ctx)
+	var actorID *uuid.UUID
+	if id, ok := identity.ActorID(ctx); ok {
+		actorID = &id
+	}
 
-	return a.contests.ListContests(ctx, parameters, includePrivate)
+	return a.contests.ListContests(ctx, parameters, actorID, a.roles.IsAdminOrFalse(ctx))
 }
 
 func (a *Application) FindContestByID(ctx context.Context, id uuid.UUID) (*contests.ContestView, error) {
@@ -261,13 +264,15 @@ func (a *Application) ListYearlyContestRegistrations(
 	ctx context.Context,
 	parameters ListYearlyContestRegistrationsParameters,
 ) (*ContestRegistrationList, error) {
-	actorID, ok := identity.ActorID(ctx)
-	includePrivate := a.roles.IsAdminOrFalse(ctx) || (ok && actorID == parameters.UserID)
+	var actorID *uuid.UUID
+	if id, ok := identity.ActorID(ctx); ok {
+		actorID = &id
+	}
 
 	languages, err := a.languages.ListLanguages(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return a.contests.ListYearlyRegistrations(ctx, parameters, includePrivate, languages)
+	return a.contests.ListYearlyRegistrations(ctx, parameters, actorID, a.roles.IsAdminOrFalse(ctx), languages)
 }

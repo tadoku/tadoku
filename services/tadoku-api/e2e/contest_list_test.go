@@ -10,11 +10,15 @@ func TestListContests(t *testing.T) {
 		description []string
 		want        int
 	}{
-		{description: []string{"guest", "defaults", "hide", "private", "but", "count", "it"}, want: http.StatusOK},
-		{description: []string{"guest", "owner", "filter", "shows", "private", "unofficial"}, want: http.StatusOK},
+		{description: []string{"guest", "defaults", "hide", "private", "from", "total"}, want: http.StatusOK},
+		{description: []string{"guest", "owner", "filter", "hides", "private", "unofficial"}, want: http.StatusOK},
+		{description: []string{"user", "owner", "filter", "hides", "other", "users", "private"}, want: http.StatusOK},
+		{description: []string{"owner", "filter", "shows", "own", "private"}, want: http.StatusOK},
+		{description: []string{"owner", "without", "filter", "shows", "own", "private"}, want: http.StatusOK},
 		{description: []string{"guest", "includes", "deleted"}, want: http.StatusOK},
 		{description: []string{"admin", "includes", "private", "and", "deleted"}, want: http.StatusOK},
-		{description: []string{"first", "page", "token", "counts", "hidden", "private"}, want: http.StatusOK},
+		{description: []string{"admin", "owner", "filter", "shows", "other", "users", "private"}, want: http.StatusOK},
+		{description: []string{"first", "page", "token", "excludes", "hidden", "private"}, want: http.StatusOK},
 		{
 			description: []string{"invalid", "user", "id"},
 			want:        http.StatusBadRequest,

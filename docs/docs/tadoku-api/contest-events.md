@@ -29,9 +29,10 @@ produces no event there. Submitting the log again produces another submitted
 event. Removing registered languages produces withdrawals for the affected logs.
 New registrations are accepted only through the contest's `registration_end`
 date in UTC. Existing registrations can still change their languages after it.
-A finished contest's registrations cannot change, so its logs stay attached.
-Deleting an account withdraws its logs from unfinished contests and updates its
-logs kept in finished contests, whose description and tags it clears.
+A finished contest accepts no new or changed registrations, so its logs stay
+attached. Deleting an account withdraws its logs from unfinished contests and
+updates its logs kept in finished contests, whose description and tags it
+clears.
 
 Updates describe the fields visible in the contest. A personal score change can
 leave a closed contest's score frozen and produce no event there; shared

@@ -210,11 +210,11 @@ func (s *Service) ApplyRegistration(
 	existing *Registration,
 	contest Contest,
 ) (RegistrationResult, error) {
+	if !contestwindow.Unfinished(contest.ContestEnd, registration.UpdatedAt) {
+		return RegistrationResult{}, ErrContestEnded
+	}
 	if existing == nil && !contestwindow.RegistrationOpen(contest.RegistrationEnd, timex.Now()) {
 		return RegistrationResult{}, ErrRegistrationClosed
-	}
-	if existing != nil && !contestwindow.Unfinished(contest.ContestEnd, registration.UpdatedAt) {
-		return RegistrationResult{}, ErrContestEnded
 	}
 
 	result := RegistrationResult{}

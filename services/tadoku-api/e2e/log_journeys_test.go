@@ -102,6 +102,16 @@ func TestLogAttachmentAndDeleteJourney(t *testing.T) {
 	})
 }
 
+func TestFrozenLogRefusalsJourney(t *testing.T) {
+	runJourneyWithHandler(t, api, scoringEnabledHandler, "FrozenLogRefusals", []step{
+		{request: "update_refused", as: user, want: http.StatusConflict},
+		{request: "registrations_refused", as: user, want: http.StatusConflict},
+		{request: "delete_refused", as: user, want: http.StatusConflict},
+		{request: "read_unchanged", as: user, want: http.StatusOK},
+		{verify: "no_effects"},
+	})
+}
+
 func TestLogAttachmentAtomicFailureJourney(t *testing.T) {
 	runJourneyWithHandler(t, api, scoringEnabledHandler, "LogAttachmentAtomicFailure", []step{
 		{request: "replace_with_duplicate", as: user, want: http.StatusInternalServerError},

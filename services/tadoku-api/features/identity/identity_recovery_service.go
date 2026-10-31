@@ -37,7 +37,11 @@ func (s *Service) AdmitRecovery(ctx context.Context, recovery Recovery) (*Recove
 		return nil, err
 	}
 	token := base64.RawURLEncoding.EncodeToString(secret)
-	origin := strings.TrimSuffix(s.appURL(ctx, ""), "/")
+	base, err := s.appURL(ctx, "")
+	if err != nil {
+		return nil, err
+	}
+	origin := strings.TrimSuffix(base, "/")
 	if err := ValidateOrigin(origin); err != nil {
 		return nil, err
 	}
@@ -112,11 +116,19 @@ func (s *Service) ConsumeRecovery(ctx context.Context, raw RecoveryToken) (Recov
 	if err != nil {
 		return RecoveryLogin{}, err
 	}
-	return RecoveryLogin{Login: login, RedirectTo: s.appURL(ctx, "account")}, nil
+	redirectTo, err := s.appURL(ctx, "account")
+	if err != nil {
+		return RecoveryLogin{}, err
+	}
+	return RecoveryLogin{Login: login, RedirectTo: redirectTo}, nil
 }
 
 func (s *Service) RecoverySettingsURL(ctx context.Context, returnTo *string) (string, error) {
-	location := s.appURL(ctx, "account") + "?edit=password"
+	location, err := s.appURL(ctx, "account")
+	if err != nil {
+		return "", err
+	}
+	location += "?edit=password"
 	if returnTo != nil {
 		if err := ValidateReturnTo(*returnTo); err != nil {
 			return "", err
@@ -132,14 +144,20 @@ func (s *Service) RecoverySettingsURL(ctx context.Context, returnTo *string) (st
 	return location, nil
 }
 
-func (s *Service) appURL(ctx context.Context, app string) string {
-	key, _ := tenant.FromContext(ctx)
+func (s *Service) appURL(ctx context.Context, app string) (string, error) {
+	key, ok := tenant.FromContext(ctx)
+	if !ok {
+		return "", errx.NewUnavailableError("tenant is required for recovery links", nil)
+	}
 	host := s.cookieDomain
 	if app != "" {
 		host = app + "." + host
 	}
 	if key != tenant.Production() {
-		route := strings.Split(key.String(), "/")[1]
+		_, route, found := strings.Cut(key.String(), "/")
+		if !found {
+			return "", errx.NewUnavailableError("tenant key has no route for recovery links", nil)
+		}
 		if s.cookieDomain == "tadoku.app" {
 			host = "preview.tadoku.app"
 			if app != "" {
@@ -148,5 +166,5 @@ func (s *Service) appURL(ctx context.Context, app string) string {
 		}
 		host = route + "." + host
 	}
-	return "https://" + host + "/"
+	return "https://" + host + "/", nil
 }

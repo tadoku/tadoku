@@ -12,6 +12,7 @@ import {
 } from '@heroicons/react/24/solid'
 import { routes } from '@app/common/routes'
 import { ContestLeaderboard } from '@app/immersion/ContestLeaderboard'
+import { registrationChangesClosed } from '@app/immersion/ContestRegistration'
 import Head from 'next/head'
 
 const Page = () => {
@@ -91,7 +92,10 @@ const Page = () => {
                 href: routes.contestJoin(id),
                 label: 'Update registration',
                 style: 'secondary',
-                visible: registrationsOpen && !!registration.data,
+                visible:
+                  registrationsOpen &&
+                  !!registration.data &&
+                  !registrationChangesClosed(contest.data.contest_end, now),
               },
               {
                 href: routes.logCreate(),

@@ -209,6 +209,10 @@ func (s *Service) ApplyRegistration(
 	existing *Registration,
 	contest Contest,
 ) (RegistrationResult, error) {
+	if !contestwindow.Open(contest.ContestEnd, registration.UpdatedAt) {
+		return RegistrationResult{}, ErrContestEnded
+	}
+
 	result := RegistrationResult{}
 	removedLanguages := []string{}
 	if existing != nil {

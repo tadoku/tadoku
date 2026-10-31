@@ -96,7 +96,7 @@ that closes log editing.
 | Leaderboards | One invalidation job per unfinished contest that loses a log or registration and per year with official logs. |
 | Contest event feeds | `log.withdrawn` for each log leaving an unfinished contest and `log.updated` for each kept log whose description or tags were cleared. |
 | `moderation_audit_log` | One `complete_account_deletion` event, with the deleted user as actor and the deleted and kept log and registration counts and the owned contest count. |
-| `emails` | Unchanged; the retention pass removes earlier messages after three days in production and fourteen elsewhere. The worker adds an `account.deleted` notice to the account's address, unless that address cannot receive mail. |
+| `emails` | Unchanged; [email retention](./email.md#retention-and-operations) removes earlier messages. The worker adds an `account.deleted` notice to the account's address, unless that address cannot receive mail. |
 
 Neither audit event stores the email address or display name. The
 administrator's reason is free text in the request event's description.

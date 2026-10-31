@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/mail"
 	queries "github.com/tadoku/tadoku/services/tadoku-api/generated/sqlc/email"
@@ -114,12 +115,15 @@ func (r *Repository) finish(ctx context.Context, id uuid.UUID, delivery Delivery
 	return queries.New(executor).Finish(ctx, args)
 }
 
-func (r *Repository) retain(ctx context.Context, now time.Time) error {
+func (r *Repository) retain(ctx context.Context, now time.Time, days int32) error {
 	executor, err := postgres.Executor(ctx, r.pool)
 	if err != nil {
 		return err
 	}
-	_, err = queries.New(executor).Retain(ctx, postgres.Timestamptz(now))
+	_, err = queries.New(executor).Retain(ctx, queries.RetainParams{
+		Now:       postgres.Timestamptz(now),
+		Retention: pgtype.Interval{Days: days, Valid: true},
+	})
 	return err
 }
 

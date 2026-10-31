@@ -103,3 +103,28 @@ func TestQueueScopeRejectsInvalidInputs(t *testing.T) {
 		t.Error("zero scope granted a context")
 	}
 }
+
+func TestThreeCalendarMonthsBeforeClampsInUTC(t *testing.T) {
+	cases := []struct {
+		name string
+		now  time.Time
+		want time.Time
+	}{
+		{"month_end", time.Date(2026, 5, 31, 12, 30, 0, 0, time.UTC), time.Date(2026, 2, 28, 12, 30, 0, 0, time.UTC)},
+		{"leap_year", time.Date(2024, 5, 31, 12, 30, 0, 0, time.UTC), time.Date(2024, 2, 29, 12, 30, 0, 0, time.UTC)},
+		{"year_boundary", time.Date(2026, 1, 31, 12, 30, 0, 0, time.UTC), time.Date(2025, 10, 31, 12, 30, 0, 0, time.UTC)},
+		{
+			"utc_instant",
+			time.Date(2026, 6, 1, 1, 30, 0, 0, time.FixedZone("UTC+13", 13*60*60)),
+			time.Date(2026, 2, 28, 12, 30, 0, 0, time.UTC),
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := threeCalendarMonthsBefore(tc.now); !got.Equal(tc.want) {
+				t.Errorf("threeCalendarMonthsBefore(%s) = %s, want %s", tc.now, got, tc.want)
+			}
+		})
+	}
+}

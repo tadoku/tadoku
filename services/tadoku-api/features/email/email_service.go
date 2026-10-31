@@ -149,7 +149,16 @@ func (s *Service) SendAttempt(ctx context.Context, id uuid.UUID, final bool) err
 }
 
 func (s *Service) Retain(ctx context.Context) error {
-	return s.repository.retain(ctx, timex.Now())
+	key, ok := tenant.FromContext(ctx)
+	if !ok {
+		return errx.NewUnavailableError("email tenant missing", nil)
+	}
+
+	days := int32(14)
+	if key == tenant.Production() {
+		days = 3
+	}
+	return s.repository.retain(ctx, timex.Now(), days)
 }
 
 func (s *Service) ReconcileFailures(ctx context.Context) error {

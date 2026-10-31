@@ -10,7 +10,7 @@ func TestUpsertContestRegistration(t *testing.T) {
 		description []string
 		want        int
 	}{
-		{description: []string{"creates", "for", "private", "ended", "contest"}, want: http.StatusOK},
+		{description: []string{"refuses", "new", "registration", "for", "ended", "contest"}, want: http.StatusForbidden},
 		{description: []string{"updates", "existing", "registration"}, want: http.StatusOK},
 		{description: []string{"malformed", "json"}, want: http.StatusBadRequest},
 		{

@@ -27,9 +27,10 @@ Creating a log before submitting it produces no event for the contest. Creating
 and submitting together produces one submitted event. Editing after withdrawal
 produces no event there. Submitting the log again produces another submitted
 event. Removing registered languages produces withdrawals for the affected logs.
-A finished contest's registrations cannot change, so its logs stay attached.
-Deleting an account withdraws its logs from unfinished contests and updates its
-logs kept in finished contests, whose description and tags it clears.
+A finished contest accepts no new or changed registrations, so its logs stay
+attached. Deleting an account withdraws its logs from unfinished contests and
+updates its logs kept in finished contests, whose description and tags it
+clears.
 
 Updates describe the fields visible in the contest. A personal score change can
 leave a closed contest's score frozen and produce no event there; shared

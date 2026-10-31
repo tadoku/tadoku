@@ -209,7 +209,7 @@ func (s *Service) ApplyRegistration(
 	existing *Registration,
 	contest Contest,
 ) (RegistrationResult, error) {
-	if existing != nil && !contestwindow.Open(contest.ContestEnd, registration.UpdatedAt) {
+	if !contestwindow.Open(contest.ContestEnd, registration.UpdatedAt) {
 		return RegistrationResult{}, ErrContestEnded
 	}
 

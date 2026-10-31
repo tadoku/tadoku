@@ -121,10 +121,10 @@ insert into scoring_rule_sets (
   $2,
   $3,
   $4,
-  'draft',
   $5,
   $6,
-  $7
+  $7,
+  $8
 )
 returning
   scope,
@@ -143,6 +143,7 @@ type CreateScoringRuleSetParams struct {
 	Scope             string
 	ContestID         pgtype.UUID
 	Version           int32
+	Status            string
 	Mode              pgtype.Text
 	FallbackRuleSetID pgtype.UUID
 	CreatedAt         pgtype.Timestamp
@@ -166,6 +167,7 @@ func (q *Queries) CreateScoringRuleSet(ctx context.Context, arg CreateScoringRul
 		arg.Scope,
 		arg.ContestID,
 		arg.Version,
+		arg.Status,
 		arg.Mode,
 		arg.FallbackRuleSetID,
 		arg.CreatedAt,

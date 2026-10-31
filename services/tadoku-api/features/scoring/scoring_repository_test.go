@@ -62,6 +62,7 @@ func TestScoringRepositoryPlatformRuleSetLifecycle(t *testing.T) {
 		ID:        uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1"),
 		Scope:     "platform",
 		Version:   version,
+		Status:    "draft",
 		CreatedAt: createdAt,
 	})
 	if err != nil {
@@ -87,6 +88,7 @@ func TestScoringRepositoryPlatformRuleSetLifecycle(t *testing.T) {
 		ID:        uuid.New(),
 		Scope:     "platform",
 		Version:   version,
+		Status:    "draft",
 		CreatedAt: createdAt,
 	})
 	assertConstraintViolation(
@@ -150,11 +152,14 @@ func TestScoringRepositoryPlatformRuleSetLifecycle(t *testing.T) {
 		t.Errorf("published=%+v, want published at %s", published, publishedAt)
 	}
 
-	if _, err := repository.PublishRuleSet(tenantCtx, draft.ID, publishedAt); errx.KindOf(err) != errx.Conflict {
-		t.Errorf("republish error=%v, want conflict", err)
+	_, err = repository.PublishRuleSet(tenantCtx, draft.ID, publishedAt)
+	if !errors.Is(err, ErrRuleSetNotDraft) {
+		t.Errorf("republish error=%v, want %v", err, ErrRuleSetNotDraft)
 	}
-	if _, err := repository.PublishRuleSet(tenantCtx, uuid.New(), publishedAt); errx.KindOf(err) != errx.Conflict {
-		t.Errorf("publish missing error=%v, want conflict", err)
+
+	_, err = repository.PublishRuleSet(tenantCtx, uuid.New(), publishedAt)
+	if !errors.Is(err, ErrRuleSetNotDraft) {
+		t.Errorf("publish missing error=%v, want %v", err, ErrRuleSetNotDraft)
 	}
 
 	if err := repository.ActivatePlatformRuleSet(tenantCtx, draft.ID); err != nil {
@@ -239,6 +244,7 @@ func TestScoringRepositoryContestRuleSets(t *testing.T) {
 		Scope:     "contest",
 		ContestID: &contestID,
 		Version:   1,
+		Status:    "draft",
 		Mode:      string(modeReplace),
 		CreatedAt: createdAt,
 	})
@@ -251,6 +257,7 @@ func TestScoringRepositoryContestRuleSets(t *testing.T) {
 		Scope:             "contest",
 		ContestID:         &contestID,
 		Version:           2,
+		Status:            "draft",
 		Mode:              string(modeOverride),
 		FallbackRuleSetID: &replace.ID,
 		CreatedAt:         createdAt,
@@ -264,6 +271,7 @@ func TestScoringRepositoryContestRuleSets(t *testing.T) {
 		Scope:     "contest",
 		ContestID: &contestID,
 		Version:   3,
+		Status:    "draft",
 		Mode:      string(modeOverride),
 		CreatedAt: createdAt,
 	})

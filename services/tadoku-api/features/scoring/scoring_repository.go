@@ -238,6 +238,7 @@ func (r *ScoringRepository) CreateDraft(ctx context.Context, draft RuleSet) (*Ru
 		Scope:             draft.Scope,
 		ContestID:         postgres.NullableUUID(draft.ContestID),
 		Version:           draft.Version,
+		Status:            draft.Status,
 		Mode:              postgres.NullableNonEmptyText(&draft.Mode),
 		FallbackRuleSetID: postgres.NullableUUID(draft.FallbackRuleSetID),
 		CreatedAt:         postgres.Timestamp(draft.CreatedAt),
@@ -282,7 +283,7 @@ func (r *ScoringRepository) PublishRuleSet(ctx context.Context, id uuid.UUID, pu
 		PublishedAt: postgres.Timestamp(publishedAt),
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, errx.NewConflictError("only draft scoring rule sets can be published")
+		return nil, ErrRuleSetNotDraft
 	}
 	if err != nil {
 		return nil, fmt.Errorf("publish scoring rule set: %w", err)

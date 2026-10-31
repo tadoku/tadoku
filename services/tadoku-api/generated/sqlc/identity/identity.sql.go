@@ -172,19 +172,21 @@ func (q *Queries) DevelopmentAccountExists(ctx context.Context, userID pgtype.UU
 
 const findCredentials = `-- name: FindCredentials :one
 select a.user_id, a.email, u.display_name, a.created_at, a.password_hash,
-  (a.state = 'active' and u.deleted_at is null and u.deletion_locked_at is null)::boolean as active
+  a.state, u.deleted_at, u.deletion_locked_at
 from accounts a
 join users u on u.tenant = a.tenant and u.id = a.user_id
 where a.email_normalized = $1
 `
 
 type FindCredentialsRow struct {
-	UserID       pgtype.UUID
-	Email        string
-	DisplayName  string
-	CreatedAt    pgtype.Timestamptz
-	PasswordHash string
-	Active       bool
+	UserID           pgtype.UUID
+	Email            string
+	DisplayName      string
+	CreatedAt        pgtype.Timestamptz
+	PasswordHash     string
+	State            string
+	DeletedAt        pgtype.Timestamp
+	DeletionLockedAt pgtype.Timestamp
 }
 
 func (q *Queries) FindCredentials(ctx context.Context, emailNormalized string) (FindCredentialsRow, error) {
@@ -196,21 +198,21 @@ func (q *Queries) FindCredentials(ctx context.Context, emailNormalized string) (
 		&i.DisplayName,
 		&i.CreatedAt,
 		&i.PasswordHash,
-		&i.Active,
+		&i.State,
+		&i.DeletedAt,
+		&i.DeletionLockedAt,
 	)
 	return i, err
 }
 
 const findSession = `-- name: FindSession :one
-select a.user_id, a.email, u.display_name, a.created_at, s.authenticated_at, s.expires_at
+select a.user_id, a.email, u.display_name, a.created_at, s.authenticated_at, s.expires_at,
+  a.state, u.deleted_at, u.deletion_locked_at
 from sessions s
 join accounts a on a.tenant = s.tenant and a.user_id = s.user_id
 join users u on u.tenant = a.tenant and u.id = a.user_id
 where s.token_hash = $1
   and s.expires_at > $2
-  and a.state = 'active'
-  and u.deleted_at is null
-  and u.deletion_locked_at is null
 `
 
 type FindSessionParams struct {
@@ -219,12 +221,15 @@ type FindSessionParams struct {
 }
 
 type FindSessionRow struct {
-	UserID          pgtype.UUID
-	Email           string
-	DisplayName     string
-	CreatedAt       pgtype.Timestamptz
-	AuthenticatedAt pgtype.Timestamptz
-	ExpiresAt       pgtype.Timestamptz
+	UserID           pgtype.UUID
+	Email            string
+	DisplayName      string
+	CreatedAt        pgtype.Timestamptz
+	AuthenticatedAt  pgtype.Timestamptz
+	ExpiresAt        pgtype.Timestamptz
+	State            string
+	DeletedAt        pgtype.Timestamp
+	DeletionLockedAt pgtype.Timestamp
 }
 
 func (q *Queries) FindSession(ctx context.Context, arg FindSessionParams) (FindSessionRow, error) {
@@ -237,6 +242,9 @@ func (q *Queries) FindSession(ctx context.Context, arg FindSessionParams) (FindS
 		&i.CreatedAt,
 		&i.AuthenticatedAt,
 		&i.ExpiresAt,
+		&i.State,
+		&i.DeletedAt,
+		&i.DeletionLockedAt,
 	)
 	return i, err
 }
@@ -306,7 +314,8 @@ func (q *Queries) InvalidateRecoveryTokens(ctx context.Context, arg InvalidateRe
 }
 
 const lockAccount = `-- name: LockAccount :one
-select a.user_id, a.email, u.display_name, a.created_at, a.password_hash
+select a.user_id, a.email, u.display_name, a.created_at, a.password_hash,
+  a.state, u.deleted_at, u.deletion_locked_at
 from accounts a
 join users u on u.tenant = a.tenant and u.id = a.user_id
 where a.user_id = $1
@@ -317,11 +326,14 @@ for update of a
 `
 
 type LockAccountRow struct {
-	UserID       pgtype.UUID
-	Email        string
-	DisplayName  string
-	CreatedAt    pgtype.Timestamptz
-	PasswordHash string
+	UserID           pgtype.UUID
+	Email            string
+	DisplayName      string
+	CreatedAt        pgtype.Timestamptz
+	PasswordHash     string
+	State            string
+	DeletedAt        pgtype.Timestamp
+	DeletionLockedAt pgtype.Timestamp
 }
 
 func (q *Queries) LockAccount(ctx context.Context, userID pgtype.UUID) (LockAccountRow, error) {
@@ -333,6 +345,9 @@ func (q *Queries) LockAccount(ctx context.Context, userID pgtype.UUID) (LockAcco
 		&i.DisplayName,
 		&i.CreatedAt,
 		&i.PasswordHash,
+		&i.State,
+		&i.DeletedAt,
+		&i.DeletionLockedAt,
 	)
 	return i, err
 }
@@ -362,7 +377,8 @@ func (q *Queries) LockAccountForRequest(ctx context.Context, userID pgtype.UUID)
 }
 
 const lockRecoveryAccount = `-- name: LockRecoveryAccount :one
-select a.user_id, a.email, u.display_name, a.created_at, a.password_hash
+select a.user_id, a.email, u.display_name, a.created_at, a.password_hash,
+  a.state, u.deleted_at, u.deletion_locked_at
 from accounts a
 join users u on u.tenant = a.tenant and u.id = a.user_id
 where a.email_normalized = $1
@@ -373,11 +389,14 @@ for update of a
 `
 
 type LockRecoveryAccountRow struct {
-	UserID       pgtype.UUID
-	Email        string
-	DisplayName  string
-	CreatedAt    pgtype.Timestamptz
-	PasswordHash string
+	UserID           pgtype.UUID
+	Email            string
+	DisplayName      string
+	CreatedAt        pgtype.Timestamptz
+	PasswordHash     string
+	State            string
+	DeletedAt        pgtype.Timestamp
+	DeletionLockedAt pgtype.Timestamp
 }
 
 func (q *Queries) LockRecoveryAccount(ctx context.Context, emailNormalized string) (LockRecoveryAccountRow, error) {
@@ -389,6 +408,9 @@ func (q *Queries) LockRecoveryAccount(ctx context.Context, emailNormalized strin
 		&i.DisplayName,
 		&i.CreatedAt,
 		&i.PasswordHash,
+		&i.State,
+		&i.DeletedAt,
+		&i.DeletionLockedAt,
 	)
 	return i, err
 }

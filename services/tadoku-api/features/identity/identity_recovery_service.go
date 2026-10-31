@@ -58,7 +58,7 @@ func (s *Service) AdmitRecovery(ctx context.Context, recovery Recovery) (*Recove
 
 // WriteRecovery requires the application's business transaction, including email writes and enqueue.
 func (s *Service) WriteRecovery(ctx context.Context, request RecoveryRequest) (RecoveryResult, error) {
-	credential, err := s.repository.lockRecoveryAccount(ctx, request.email)
+	credential, err := usableAccount(s.repository.lockRecoveryAccount(ctx, request.email))
 	if errors.Is(err, errAccountNotFound) {
 		return RecoveryResult{}, nil
 	}
@@ -91,7 +91,7 @@ func (s *Service) ConsumeRecovery(ctx context.Context, raw RecoveryToken) (Recov
 	if err != nil {
 		return RecoveryLogin{}, err
 	}
-	credential, err := s.repository.lockAccount(ctx, id)
+	credential, err := usableAccount(s.repository.lockAccount(ctx, id))
 	if errors.Is(err, errAccountNotFound) {
 		return RecoveryLogin{}, ErrInvalidRecoveryToken
 	}

@@ -37,7 +37,7 @@ export type ContestRegistrationFormSchema = z.infer<
   typeof ContestRegistrationFormSchema
 >
 
-/** Whether an existing registration may no longer change: after the last UTC day of `contestEnd`, as the API rules. */
+/** Whether the API refuses new and changed registrations: after the last UTC day of `contestEnd`. */
 export const registrationChangesClosed = (contestEnd: string, now: DateTime) =>
   DateTime.fromISO(contestEnd, { zone: 'utc' }).endOf('day') < now
 

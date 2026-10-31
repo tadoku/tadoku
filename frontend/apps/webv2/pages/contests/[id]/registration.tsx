@@ -62,9 +62,7 @@ const Page = () => {
     registration.isSuccess &&
     registration.data === null &&
     !acceptsNewRegistrations(contest.data, now)
-  const changesClosed =
-    !!registration.data &&
-    registrationChangesClosed(contest.data.contest_end, now)
+  const contestEnded = registrationChangesClosed(contest.data.contest_end, now)
 
   return (
     <>
@@ -92,14 +90,16 @@ const Page = () => {
         />
       </div>
       <Flash
-        visible={registrationClosed || changesClosed}
+        visible={registrationClosed || contestEnded}
         style="error"
         IconComponent={ExclamationCircleIcon}
         className="mb-4"
       >
-        {registrationClosed
+        {!contestEnded
           ? 'Unfortunately, registrations for this contest have ended.'
-          : 'This contest has ended, so your registration can no longer be changed.'}
+          : registration.data
+            ? 'This contest has ended, so your registration can no longer be changed.'
+            : 'This contest has ended, so it no longer accepts registrations.'}
       </Flash>
 
       {registration.isLoading ? (
@@ -108,7 +108,7 @@ const Page = () => {
         <ContestRegistrationForm
           contest={contest.data}
           data={registration.data ?? undefined}
-          isClosed={registrationClosed || changesClosed}
+          isClosed={registrationClosed || contestEnded}
         />
       )}
     </>

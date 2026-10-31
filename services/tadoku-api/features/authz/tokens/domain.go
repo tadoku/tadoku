@@ -25,7 +25,6 @@ type Token struct {
 type Principal struct {
 	Tenant  tenant.Key
 	TokenID uuid.UUID
-	Scopes  []Scope
 }
 type Create struct {
 	Name      string
@@ -37,6 +36,7 @@ type Issued struct {
 	Secret string
 }
 
+// Verifier accepts only unrevoked, unexpired tokens scoped exactly to email:read.
 type Verifier interface {
 	Verify(context.Context, string, tenant.Deployment) (Principal, error)
 }

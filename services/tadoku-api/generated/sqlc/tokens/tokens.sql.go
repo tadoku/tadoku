@@ -20,17 +20,18 @@ where (
   where tenant = current_setting('tadoku.tenant')
     and revoked_at is null
     and expires_at > $5
-) < 10
+) < $7::bigint
 returning id
 `
 
 type InsertParams struct {
-	ID        pgtype.UUID
-	Name      string
-	TokenHash string
-	Scopes    []string
-	CreatedAt pgtype.Timestamptz
-	ExpiresAt pgtype.Timestamptz
+	ID          pgtype.UUID
+	Name        string
+	TokenHash   string
+	Scopes      []string
+	CreatedAt   pgtype.Timestamptz
+	ExpiresAt   pgtype.Timestamptz
+	ActiveLimit int64
 }
 
 func (q *Queries) Insert(ctx context.Context, arg InsertParams) (pgtype.UUID, error) {
@@ -41,6 +42,7 @@ func (q *Queries) Insert(ctx context.Context, arg InsertParams) (pgtype.UUID, er
 		arg.Scopes,
 		arg.CreatedAt,
 		arg.ExpiresAt,
+		arg.ActiveLimit,
 	)
 	var id pgtype.UUID
 	err := row.Scan(&id)
@@ -132,13 +134,14 @@ where tenant = current_setting('tadoku.tenant')
   and token_hash = $2
   and revoked_at is null
   and expires_at > $1
-  and scopes = array['email:read']::text[]
+  and scopes = $3::text[]
 returning id, name, scopes, created_at, expires_at, last_used_at, revoked_at
 `
 
 type VerifyParams struct {
-	Now       pgtype.Timestamptz
-	TokenHash string
+	Now            pgtype.Timestamptz
+	TokenHash      string
+	AcceptedScopes []string
 }
 
 type VerifyRow struct {
@@ -152,7 +155,7 @@ type VerifyRow struct {
 }
 
 func (q *Queries) Verify(ctx context.Context, arg VerifyParams) (VerifyRow, error) {
-	row := q.db.QueryRow(ctx, verify, arg.Now, arg.TokenHash)
+	row := q.db.QueryRow(ctx, verify, arg.Now, arg.TokenHash, arg.AcceptedScopes)
 	var i VerifyRow
 	err := row.Scan(
 		&i.ID,

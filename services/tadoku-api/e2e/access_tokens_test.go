@@ -109,17 +109,45 @@ func TestAccessTokenEmailRoutes(t *testing.T) {
 		}
 	})
 
-	for _, tc := range []struct{ name, sql string }{
-		{"expired", "update access_tokens set expires_at=now()-interval '1 second' where id=$1"},
-		{"revoked", "update access_tokens set expires_at=now()+interval '1 hour',revoked_at=now() where id=$1"},
-		{"wrong scope", "update access_tokens set revoked_at=null,scopes=array['other'] where id=$1"},
+	for _, tc := range []struct {
+		name, sql string
+		status    int
+	}{
+		{"expired", "update access_tokens set expires_at=now()-interval '1 second' where id=$1", 401},
+		{"revoked", "update access_tokens set expires_at=now()+interval '1 hour',revoked_at=now() where id=$1", 401},
+		{"wrong scope", "update access_tokens set revoked_at=null,scopes=array['other'] where id=$1", 401},
+		{"extra scope", "update access_tokens set scopes=array['email:read','other'] where id=$1", 401},
+		{"no scope", "update access_tokens set scopes=array[]::text[] where id=$1", 401},
+		{"nonstandard bounds", "update access_tokens set scopes='[0:0]={email:read}'::text[] where id=$1", 401},
+		{"two dimensions", "update access_tokens set scopes=array[['email:read']] where id=$1", 401},
+		{"null scope", "update access_tokens set scopes=array[null]::text[] where id=$1", 401},
+		{"restored scope", "update access_tokens set scopes=array['email:read'] where id=$1", 200},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			seeded := time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)
 			if _, err := api.db.Pool.Exec(t.Context(), tc.sql, tokenID); err != nil {
 				t.Fatal(err)
 			}
+			_, err := api.db.Pool.Exec(t.Context(), "update access_tokens set last_used_at=$2 where id=$1", tokenID, seeded)
+			if err != nil {
+				t.Fatal(err)
+			}
 
-			request(t, handler, raw, "/emails", 401)
+			body := request(t, handler, raw, "/emails", tc.status)
+
+			if tc.status == 401 && len(body) != 0 {
+				t.Errorf("rejected token body=%s, want empty", body)
+			}
+
+			var lastUsed time.Time
+			err = api.db.Pool.QueryRow(t.Context(), "select last_used_at from access_tokens where id=$1", tokenID).
+				Scan(&lastUsed)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if used := !lastUsed.Equal(seeded); used != (tc.status == 200) {
+				t.Errorf("last_used_at=%s after status %d, seeded %s", lastUsed, tc.status, seeded)
+			}
 		})
 	}
 

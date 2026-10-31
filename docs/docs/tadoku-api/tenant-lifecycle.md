@@ -151,7 +151,8 @@ be recovered. List returns JSON metadata (`ID`, `Name`, `Scopes`, `CreatedAt`,
 the listed UUID, is tenant-scoped and is safe to repeat. A missing UUID is an error.
 Creation requires a nonblank name of at most 128 bytes, exactly `email:read`,
 and a positive Go duration no longer than `720h` (30 days). At most ten unrevoked,
-unexpired tokens may exist per tenant. Concurrent creates serialize on that
+unexpired tokens may exist per tenant; the tokens service sets that limit and the
+insert enforces it atomically. Concurrent creates serialize on that
 tenant's registry row; expired and revoked tokens release slots.
 
 `TENANT_PRODUCTION` defaults to `true`, which refuses creation for `tadoku/prod`.

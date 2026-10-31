@@ -11,5 +11,5 @@ select count(*) from contest_registrations where user_id = sqlc.arg(user_id);
 
 -- name: RenameContestsOwnedByUser :execrows
 update contests
-set owner_user_display_name = 'Deleted organizer'
+set owner_user_display_name = sqlc.arg(deleted_organizer_name)::varchar
 where owner_user_id = sqlc.arg(user_id);

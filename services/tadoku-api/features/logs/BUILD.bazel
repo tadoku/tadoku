@@ -19,6 +19,7 @@ go_library(
     deps = [
         "//services/tadoku-api/domain/activities",
         "//services/tadoku-api/domain/contestevent",
+        "//services/tadoku-api/domain/deleteduser",
         "//services/tadoku-api/domain/jobs",
         "//services/tadoku-api/domain/logscore",
         "//services/tadoku-api/generated/sqlc/logs",

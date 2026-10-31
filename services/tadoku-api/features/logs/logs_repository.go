@@ -10,6 +10,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/tadoku/tadoku/services/tadoku-api/domain/deleteduser"
 	"github.com/tadoku/tadoku/services/tadoku-api/domain/logscore"
 	queries "github.com/tadoku/tadoku/services/tadoku-api/generated/sqlc/logs"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
@@ -299,7 +300,11 @@ func (r *LogsRepository) AttachedRegistrations(ctx context.Context, id uuid.UUID
 		return nil, err
 	}
 
-	rows, err := queries.New(executor).FindAttachedContestRegistrationsForLog(ctx, postgres.UUID(id))
+	parameters := queries.FindAttachedContestRegistrationsForLogParams{
+		DeletedOrganizerName: deleteduser.OrganizerName,
+		ID:                   postgres.UUID(id),
+	}
+	rows, err := queries.New(executor).FindAttachedContestRegistrationsForLog(ctx, parameters)
 	if err != nil {
 		return nil, fmt.Errorf("find attached registrations: %w", err)
 	}

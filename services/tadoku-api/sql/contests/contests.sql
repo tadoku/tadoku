@@ -24,7 +24,10 @@ with matches as materialized (
   select
     matches.id,
     matches.owner_user_id,
-    case when users.deleted_at is not null then 'Deleted organizer' else users.display_name end::varchar as owner_user_display_name,
+    case
+      when users.deleted_at is not null then sqlc.arg(deleted_organizer_name)::varchar
+      else users.display_name
+    end::varchar as owner_user_display_name,
     matches."private",
     matches.contest_start,
     matches.contest_end,
@@ -113,7 +116,10 @@ insert into contests (
 select
   contests.id,
   owner_user_id,
-  case when users.deleted_at is not null then 'Deleted organizer' else users.display_name end::varchar as owner_user_display_name,
+  case
+    when users.deleted_at is not null then sqlc.arg(deleted_organizer_name)::varchar
+    else users.display_name
+  end::varchar as owner_user_display_name,
   "private",
   contest_start,
   contest_end,
@@ -137,7 +143,10 @@ order by contests.created_at desc;
 select
   contests.id,
   owner_user_id,
-  case when users.deleted_at is not null then 'Deleted organizer' else users.display_name end::varchar as owner_user_display_name,
+  case
+    when users.deleted_at is not null then sqlc.arg(deleted_organizer_name)::varchar
+    else users.display_name
+  end::varchar as owner_user_display_name,
   "private",
   contest_start,
   contest_end,
@@ -234,8 +243,10 @@ select
   contests.title,
   contests.description,
   contests.owner_user_id,
-  case when owner_users.deleted_at is not null then 'Deleted organizer' else owner_users.display_name end::varchar
-    as owner_user_display_name
+  case
+    when owner_users.deleted_at is not null then sqlc.arg(deleted_organizer_name)::varchar
+    else owner_users.display_name
+  end::varchar as owner_user_display_name
 from contest_registrations
 inner join contests on contests.id = contest_registrations.contest_id
 inner join users on users.id = contest_registrations.user_id

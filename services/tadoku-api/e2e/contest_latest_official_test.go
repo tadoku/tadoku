@@ -11,6 +11,7 @@ func TestFindLatestOfficialContest(t *testing.T) {
 		want        int
 	}{
 		{description: []string{"greatest", "start", "includes", "future", "deleted"}, want: http.StatusOK},
+		{description: []string{"deleted", "organizer"}, want: http.StatusOK},
 		{description: []string{"empty"}, want: http.StatusNotFound},
 	}
 

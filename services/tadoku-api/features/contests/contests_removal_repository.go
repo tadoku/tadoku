@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/tadoku/tadoku/services/tadoku-api/domain/deleteduser"
 	queries "github.com/tadoku/tadoku/services/tadoku-api/generated/sqlc/contests"
 	"github.com/tadoku/tadoku/services/tadoku-api/infra/postgres"
 )
@@ -46,6 +47,9 @@ func (r *ContestsRepository) RenameContestsOwnedBy(ctx context.Context, userID u
 	if err != nil {
 		return 0, err
 	}
-	renamed, err := queries.New(executor).RenameContestsOwnedByUser(ctx, postgres.UUID(userID))
+	renamed, err := queries.New(executor).RenameContestsOwnedByUser(ctx, queries.RenameContestsOwnedByUserParams{
+		DeletedOrganizerName: deleteduser.OrganizerName,
+		UserID:               postgres.UUID(userID),
+	})
 	return int(renamed), err
 }

@@ -13,6 +13,7 @@
 - [x] Restructure the Tadoku API documentation for progressive disclosure for agents: a short entry point with focused documents behind it instead of one long README.
 - [ ] Rename the standard test identity from `Reader One` to `User One` across account seeds, tests and HTTP goldens; regenerate affected signed JWT fixtures and update the public JWKS together.
 - [ ] Rename `moderation_audit_log` to an audit-owned table in a standalone migration.
+- [ ] Drop `contests.owner_user_display_name`: no query reads it. First stop writing it in `CreateContest` and in the official-contest automation, then drop the column in a standalone migration, then delete `RenameContestsOwnedByUser`, which only erases the stored name on account deletion.
 - [ ] Replace `github.com/google/uuid` with the standard-library UUID API when it is available in the adopted Go toolchain.
 - [ ] Introduce a generic paginated request type and convert every existing paginated operation to use it.
 - [ ] Support two-step audit recording for external actions: persist the start before calling the external system, then record the correlated completion and outcome. External changes cannot share an atomic PostgreSQL transaction with the audit write.

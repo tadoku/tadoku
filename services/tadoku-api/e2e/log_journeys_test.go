@@ -112,6 +112,23 @@ func TestFrozenLogRefusalsJourney(t *testing.T) {
 	})
 }
 
+func TestLogOfficialEligibilityJourney(t *testing.T) {
+	uuid.SetRand(rand.New(rand.NewSource(1)))
+	defer uuid.SetRand(nil)
+
+	runJourney(t, api, "LogOfficialEligibility", []step{
+		{request: "create_unofficial", as: user, want: http.StatusOK},
+		{request: "create_official", as: user, want: http.StatusOK},
+		{verify: "created"},
+		{request: "attach_official", as: user, want: http.StatusOK},
+		{verify: "attached"},
+		{request: "detach_official", as: user, want: http.StatusOK},
+		{verify: "detached"},
+		{request: "moderate_detach_official", as: admin, want: http.StatusOK},
+		{verify: "moderated"},
+	})
+}
+
 func TestLogAttachmentAtomicFailureJourney(t *testing.T) {
 	runJourneyWithHandler(t, api, scoringEnabledHandler, "LogAttachmentAtomicFailure", []step{
 		{request: "replace_with_duplicate", as: user, want: http.StatusInternalServerError},

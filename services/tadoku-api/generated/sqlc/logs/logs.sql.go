@@ -653,6 +653,33 @@ func (q *Queries) ListAttachedContestIDs(ctx context.Context, logID pgtype.UUID)
 	return items, nil
 }
 
+const listAttachedContestOfficialFlags = `-- name: ListAttachedContestOfficialFlags :many
+select contests.official
+from contest_logs
+inner join contests on contests.id = contest_logs.contest_id
+where contest_logs.log_id = $1
+`
+
+func (q *Queries) ListAttachedContestOfficialFlags(ctx context.Context, logID pgtype.UUID) ([]bool, error) {
+	rows, err := q.db.Query(ctx, listAttachedContestOfficialFlags, logID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []bool{}
+	for rows.Next() {
+		var official bool
+		if err := rows.Scan(&official); err != nil {
+			return nil, err
+		}
+		items = append(items, official)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listDistinctLanguageCodesForUser = `-- name: ListDistinctLanguageCodesForUser :many
 select distinct language_code
 from logs
@@ -1155,25 +1182,21 @@ func (q *Queries) LockLogForMutation(ctx context.Context, logID pgtype.UUID) (pg
 	return frozen_at, err
 }
 
-const recomputeLogOfficialEligibility = `-- name: RecomputeLogOfficialEligibility :exec
+const setLogOfficialEligibility = `-- name: SetLogOfficialEligibility :exec
 update logs set
-  eligible_official_leaderboard = (
-    select coalesce(bool_or(contests.official), false)
-    from contest_logs
-    inner join contests on contests.id = contest_logs.contest_id
-    where contest_logs.log_id = $1
-  ),
+  eligible_official_leaderboard = $1,
   updated_at = $2
-where id = $1
+where id = $3
 `
 
-type RecomputeLogOfficialEligibilityParams struct {
-	LogID     pgtype.UUID
-	UpdatedAt pgtype.Timestamp
+type SetLogOfficialEligibilityParams struct {
+	EligibleOfficialLeaderboard bool
+	UpdatedAt                   pgtype.Timestamp
+	LogID                       pgtype.UUID
 }
 
-func (q *Queries) RecomputeLogOfficialEligibility(ctx context.Context, arg RecomputeLogOfficialEligibilityParams) error {
-	_, err := q.db.Exec(ctx, recomputeLogOfficialEligibility, arg.LogID, arg.UpdatedAt)
+func (q *Queries) SetLogOfficialEligibility(ctx context.Context, arg SetLogOfficialEligibilityParams) error {
+	_, err := q.db.Exec(ctx, setLogOfficialEligibility, arg.EligibleOfficialLeaderboard, arg.UpdatedAt, arg.LogID)
 	return err
 }
 

@@ -240,15 +240,30 @@ func (r *LogsRepository) DetachContest(ctx context.Context, logID, contestID uui
 	})
 }
 
-func (r *LogsRepository) RecomputeOfficialEligibility(ctx context.Context, logID uuid.UUID, now time.Time) error {
+func (r *LogsRepository) AttachedContestOfficialFlags(ctx context.Context, logID uuid.UUID) ([]bool, error) {
+	executor, err := postgres.Executor(ctx, r.db)
+	if err != nil {
+		return nil, err
+	}
+
+	return queries.New(executor).ListAttachedContestOfficialFlags(ctx, postgres.UUID(logID))
+}
+
+func (r *LogsRepository) SetOfficialEligibility(
+	ctx context.Context,
+	logID uuid.UUID,
+	eligible bool,
+	now time.Time,
+) error {
 	executor, err := postgres.Executor(ctx, r.db)
 	if err != nil {
 		return err
 	}
 
-	return queries.New(executor).RecomputeLogOfficialEligibility(ctx, queries.RecomputeLogOfficialEligibilityParams{
-		LogID:     postgres.UUID(logID),
-		UpdatedAt: postgres.Timestamp(now),
+	return queries.New(executor).SetLogOfficialEligibility(ctx, queries.SetLogOfficialEligibilityParams{
+		LogID:                       postgres.UUID(logID),
+		EligibleOfficialLeaderboard: eligible,
+		UpdatedAt:                   postgres.Timestamp(now),
 	})
 }
 

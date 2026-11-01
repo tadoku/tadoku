@@ -28,10 +28,7 @@ where id = $1 and status = 'pending';
 
 -- name: Retain :execrows
 delete from emails
-where created_at < sqlc.arg('now')::timestamptz - case
-  when tenant = 'tadoku/prod' then interval '3 days'
-  else interval '14 days'
-end;
+where created_at < sqlc.arg('now')::timestamptz - sqlc.arg('retention')::interval;
 
 -- name: ReconcileFailures :exec
 update emails as e

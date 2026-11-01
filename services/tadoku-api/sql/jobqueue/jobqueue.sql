@@ -121,7 +121,7 @@ returning id;
 with removable as (
   select parent.id from jobs as parent
   where parent.state = 'completed'
-    and parent.completed_at < ((sqlc.arg('now')::timestamptz at time zone 'UTC') - interval '3 months') at time zone 'UTC'
+    and parent.completed_at < sqlc.arg('cutoff')::timestamptz
     and not exists (select 1 from jobs child where child.replay_of_id = parent.id)
   order by parent.completed_at, parent.id
   limit sqlc.arg('batch_size')::integer

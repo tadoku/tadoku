@@ -9,8 +9,8 @@ paths:
       - EmailcookieAuth: []
       - EmailaccessTokenAuth: []
       description: Requires a tenant administrator, or outside the production deployment an email:read
-        tenant access token. Production email reads are audited. Retention is 3 days for tadoku/prod,
-        14 days otherwise.
+        tenant access token. Production email reads are audited. See [Retained
+        email](https://tadoku.github.io/tadoku/tadoku-api/email#retention-and-operations) for retention.
       x-tadoku-source: Email
       x-tadoku-exposure: public
       x-legacy-path: /emails
@@ -107,8 +107,8 @@ paths:
       - EmailcookieAuth: []
       - EmailaccessTokenAuth: []
       description: Requires a tenant administrator, or outside the production deployment an email:read
-        tenant access token. Production email reads are audited. Retention is 3 days for tadoku/prod,
-        14 days otherwise.
+        tenant access token. Production email reads are audited. See [Retained
+        email](https://tadoku.github.io/tadoku/tadoku-api/email#retention-and-operations) for retention.
       x-tadoku-source: Email
       x-tadoku-exposure: public
       x-legacy-path: /emails/{id}

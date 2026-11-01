@@ -15,6 +15,8 @@ import (
 	"github.com/tadoku/tadoku/services/tadoku-api/internal/timex"
 )
 
+const completedJobRetention = 90 * 24 * time.Hour
+
 type Service struct{ repository *Repository }
 
 func NewService(repository *Repository) *Service { return &Service{repository: repository} }
@@ -135,7 +137,7 @@ func (s *Service) CleanupCompleted(ctx context.Context, limit int) (int64, error
 		return 0, errx.NewInvalidInputError("cleanup limit must be between 1 and 1000")
 	}
 
-	return s.repository.CleanupCompleted(ctx, now, limit)
+	return s.repository.CleanupCompleted(ctx, now.Add(-completedJobRetention), limit)
 }
 
 func (s *Service) Tenants(ctx context.Context) ([]tenant.Key, error) {

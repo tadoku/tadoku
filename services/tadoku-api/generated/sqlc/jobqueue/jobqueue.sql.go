@@ -101,7 +101,7 @@ const cleanupCompleted = `-- name: CleanupCompleted :execrows
 with removable as (
   select parent.id from jobs as parent
   where parent.state = 'completed'
-    and parent.completed_at < (($1::timestamptz at time zone 'UTC') - interval '3 months') at time zone 'UTC'
+    and parent.completed_at < $1::timestamptz
     and not exists (select 1 from jobs child where child.replay_of_id = parent.id)
   order by parent.completed_at, parent.id
   limit $2::integer
@@ -110,12 +110,12 @@ delete from jobs as task using removable where task.id = removable.id
 `
 
 type CleanupCompletedParams struct {
-	Now       pgtype.Timestamptz
+	Cutoff    pgtype.Timestamptz
 	BatchSize int32
 }
 
 func (q *Queries) CleanupCompleted(ctx context.Context, arg CleanupCompletedParams) (int64, error) {
-	result, err := q.db.Exec(ctx, cleanupCompleted, arg.Now, arg.BatchSize)
+	result, err := q.db.Exec(ctx, cleanupCompleted, arg.Cutoff, arg.BatchSize)
 	if err != nil {
 		return 0, err
 	}

@@ -150,6 +150,14 @@ jobs:
             --cacert /usr/local/share/ca-certificates/ca.crt \
             https://bazel-cache.lab/status | tee "$RUNNER_TEMP/bazel-cache-before.json"
 
+      - name: Ensure wrapper verification tools
+        run: |
+          if ! command -v fuser >/dev/null; then
+            sudo apt-get update --quiet
+            sudo apt-get install --yes --no-install-recommends psmisc
+          fi
+          fuser --version
+
       - name: Verify safe Bazel execution
         run: python3 tools/ci/check_bazel_wrapper.py --evidence-dir "$RUNNER_TEMP/bazel-wrapper"
 

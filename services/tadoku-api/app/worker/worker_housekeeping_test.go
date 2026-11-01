@@ -148,7 +148,7 @@ func TestWorkerCleansUpExpiredCompletedJobsAtStartup(t *testing.T) {
 	}
 }
 
-func TestWorkerCleanupRetainsThreeMonthsAndFailures(t *testing.T) {
+func TestWorkerCleanupRetainsNinetyDaysAndFailures(t *testing.T) {
 	tenantCtx := tenant.WithKey(t.Context(), tenant.Production())
 	f, fixtureErr := newWorkerFixture(tenantCtx)
 	if fixtureErr != nil {
@@ -167,8 +167,9 @@ func TestWorkerCleanupRetainsThreeMonthsAndFailures(t *testing.T) {
 	}
 
 	now := time.Date(2026, time.May, 31, 12, 0, 0, 0, time.UTC)
-	recent := time.Date(2026, time.April, 30, 12, 0, 0, 0, time.UTC)
-	old := now.AddDate(-1, 0, 0)
+	cutoff := now.Add(-90 * 24 * time.Hour)
+	recent := cutoff
+	old := cutoff.Add(-time.Microsecond)
 	var recentID, oldID, failedID, replayID, pendingID, runningID int64
 
 	for _, item := range []struct {
@@ -248,7 +249,7 @@ func TestWorkerCleanupRetainsThreeMonthsAndFailures(t *testing.T) {
 		id     int64
 		retain bool
 	}{
-		{"one-month-old success", recentID, true},
+		{"success at the cutoff", recentID, true},
 		{"expired success", oldID, false},
 		{"failed original", failedID, true},
 		{"expired successful replay", replayID, false},

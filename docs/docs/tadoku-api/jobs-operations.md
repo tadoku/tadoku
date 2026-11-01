@@ -114,16 +114,12 @@ deletes batches of 100 rows for at most five seconds; a larger backlog continues
 at the next run. A base worker cleans every tenant, including tenants with an
 override. A branch worker cleans only its own tenant.
 `jobqueue.Service.CleanupCompleted(ctx, limit)` owns the retention rule; callers
-do not supply an arbitrary cutoff. The service subtracts three calendar months
-in UTC from the business clock and passes that cutoff to a single repository
-statement.
+do not supply an arbitrary cutoff. The service subtracts 90 days from the
+business clock and passes that cutoff to a single repository statement.
 
 A row is eligible only when `state = 'completed'` and `completed_at` is strictly
-earlier than that cutoff. Exact-boundary completions remain. UTC time of day is
-preserved; the day clamps to the last valid day of the target month. For
-example, May 31 at 10:30 UTC has a February 28 cutoff at 10:30 UTC, or February
-29 in a leap year. This is not a fixed number of days and does not depend on the
-database session's timezone.
+earlier than that cutoff. Exact-boundary completions remain. The cutoff does not
+depend on the database session's timezone.
 
 Successful replay rows expire under the same rule when no retained child
 references them. The failed original stays indefinitely. The self-referencing
